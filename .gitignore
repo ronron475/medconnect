@@ -1,0 +1,15 @@
+    # Database exports (don't push your actual SQL data if it has real passwords)
+*.sql
+
+# XAMPP/OS specific
+.DS_Store
+Thumbs.db
+
+# Private IDE settings
+.vscode/
+
+# Uploaded patient IDs (Optional: Keep this if you want to show sample data,
+# but usually, you ignore the contents of storage/uploads)
+storage/uploads/ids/*
+!storage/uploads/ids/.htaccess
+
