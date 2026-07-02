@@ -1,0 +1,1475 @@
+/* NLP Step 3 demo — Step 1 UI */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+.nlp-demo-body {
+  margin: 0;
+  min-height: 100vh;
+  font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+  font-size: 16px;
+  line-height: 1.5;
+  color: #0f172a;
+  background: linear-gradient(160deg, #f0fdfa 0%, #f8fafc 50%, #ecfeff 100%);
+}
+
+.nlp-demo-main {
+  max-width: 960px;
+  margin: 0 auto;
+  padding: 32px 20px 48px;
+}
+
+.nlp-demo-header {
+  margin-bottom: 28px;
+}
+
+.nlp-demo-title {
+  margin: 0 0 6px;
+  font-size: 1.35rem;
+  font-weight: 800;
+  color: #012a4a;
+}
+
+.nlp-demo-sub {
+  margin: 0;
+  font-size: 0.875rem;
+  color: #64748b;
+}
+
+.nlp-demo-form {
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 14px;
+  padding: 24px 22px 22px;
+  box-shadow: 0 8px 28px rgba(1, 42, 74, 0.06);
+}
+
+.nlp-field {
+  margin-bottom: 20px;
+}
+
+.nlp-field:last-of-type {
+  margin-bottom: 24px;
+}
+
+.nlp-label {
+  display: block;
+  margin-bottom: 8px;
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: #334155;
+}
+
+.nlp-input {
+  display: block;
+  width: 100%;
+  min-height: 88px;
+  padding: 12px 14px;
+  font: inherit;
+  font-size: 16px;
+  color: #0f172a;
+  background: #f8fafc;
+  border: 1px solid #cbd5e1;
+  border-radius: 10px;
+  resize: vertical;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+.nlp-input::placeholder {
+  color: #94a3b8;
+}
+
+.nlp-input:focus {
+  outline: none;
+  border-color: #018a93;
+  box-shadow: 0 0 0 3px rgba(1, 138, 147, 0.15);
+  background: #fff;
+}
+
+.nlp-btn-validate {
+  display: block;
+  width: 100%;
+  min-height: 48px;
+  padding: 12px 20px;
+  border: none;
+  border-radius: 10px;
+  font: inherit;
+  font-size: 1rem;
+  font-weight: 700;
+  color: #fff;
+  background: linear-gradient(135deg, #018a93 0%, #016d75 100%);
+  cursor: pointer;
+  transition: opacity 0.15s, transform 0.1s;
+}
+
+.nlp-btn-validate:hover:not(:disabled) {
+  opacity: 0.94;
+}
+
+.nlp-btn-validate:active:not(:disabled) {
+  transform: scale(0.99);
+}
+
+.nlp-btn-validate:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.nlp-wv-samples {
+  margin-top: 1.25rem;
+  padding: 1rem 1.25rem 1.15rem;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 14px;
+}
+
+.nlp-wv-samples__title {
+  margin: 0 0 0.35rem;
+  font-size: 1rem;
+  font-weight: 650;
+  color: #0f172a;
+}
+
+.nlp-wv-samples__hint {
+  margin: 0 0 0.85rem;
+  font-size: 0.875rem;
+  color: #64748b;
+  line-height: 1.45;
+}
+
+.nlp-wv-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.nlp-wv-chip {
+  border: 1px solid #cbd5e1;
+  background: #fff;
+  color: #334155;
+  border-radius: 999px;
+  padding: 0.35rem 0.75rem;
+  font-size: 0.8125rem;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+}
+
+.nlp-wv-chip:hover {
+  background: #eff6ff;
+  border-color: #93c5fd;
+  color: #1e40af;
+}
+
+.nlp-wv-chip:focus-visible {
+  outline: 2px solid #3b82f6;
+  outline-offset: 2px;
+}
+
+.nlp-step6-samples {
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 1rem 1.15rem 1.15rem;
+  background: linear-gradient(180deg, #f8fafc 0%, #fff 100%);
+}
+
+.nlp-triage-samples__level {
+  margin: 1rem 0 0.5rem;
+  font-size: 0.9rem;
+  font-weight: 650;
+  color: #334155;
+}
+
+.nlp-triage-samples__level:first-of-type {
+  margin-top: 0.35rem;
+}
+
+.nlp-wv-chip--routine {
+  border-color: #86efac;
+  background: #f0fdf4;
+  color: #166534;
+}
+
+.nlp-wv-chip--routine:hover {
+  background: #dcfce7;
+  border-color: #4ade80;
+  color: #14532d;
+}
+
+.nlp-wv-chip--urgent {
+  border-color: #fcd34d;
+  background: #fffbeb;
+  color: #92400e;
+}
+
+.nlp-wv-chip--urgent:hover {
+  background: #fef3c7;
+  border-color: #fbbf24;
+  color: #78350f;
+}
+
+.nlp-wv-chip--emergency {
+  border-color: #fca5a5;
+  background: #fef2f2;
+  color: #991b1b;
+}
+
+.nlp-wv-chip--emergency:hover {
+  background: #fee2e2;
+  border-color: #f87171;
+  color: #7f1d1d;
+}
+
+.nlp-wv-chip--selected {
+  box-shadow: 0 0 0 2px #3b82f6;
+}
+
+.nlp-feedback {
+  margin-top: 16px;
+  padding: 12px 14px;
+  border-radius: 10px;
+  font-size: 0.875rem;
+  font-weight: 600;
+}
+
+.nlp-service-status {
+  margin-top: 12px;
+  padding: 12px 14px;
+  border-radius: 8px;
+  font-size: 0.85rem;
+  line-height: 1.5;
+}
+
+.nlp-status-line {
+  margin: 2px 0;
+}
+
+.nlp-status-line--ok {
+  font-weight: 600;
+}
+
+.nlp-status-line--warn {
+  color: inherit;
+}
+
+.nlp-status-line--fallback {
+  margin-top: 6px;
+  font-weight: 600;
+}
+
+.nlp-status-line--muted {
+  opacity: 0.85;
+  font-size: 0.8rem;
+}
+
+.nlp-service-status--ok {
+  background: #eff6ff;
+  color: #1e40af;
+  border: 1px solid #bfdbfe;
+}
+
+.nlp-service-status--warn {
+  background: #fffbeb;
+  color: #92400e;
+  border: 1px solid #fde68a;
+}
+
+.nlp-service-status[hidden],
+.nlp-feedback[hidden],
+.nlp-results[hidden] {
+  display: none !important;
+}
+
+.nlp-feedback.error {
+  background: #fef2f2;
+  color: #b91c1c;
+  border: 1px solid #fecaca;
+}
+
+.nlp-feedback.ok {
+  background: #f0fdf4;
+  color: #166534;
+  border: 1px solid #86efac;
+}
+
+.nlp-results {
+  margin-top: 16px;
+  padding: 16px 18px;
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  font-size: 0.875rem;
+  color: #334155;
+}
+
+.nlp-results h3 {
+  margin: 0 0 10px;
+  font-size: 0.8rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: #64748b;
+}
+
+.nlp-results p {
+  margin: 0 0 8px;
+  line-height: 1.55;
+}
+
+.nlp-results p:last-child {
+  margin-bottom: 0;
+}
+
+.nlp-section {
+  margin-bottom: 24px;
+  padding-bottom: 20px;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.nlp-section:last-child {
+  border-bottom: none;
+  margin-bottom: 0;
+  padding-bottom: 0;
+}
+
+.nlp-section h3 {
+  margin: 0 0 8px;
+  font-size: 1rem;
+  font-weight: 800;
+  color: #012a4a;
+}
+
+.nlp-section-desc {
+  margin: 0 0 14px;
+  font-size: 0.85rem;
+  color: #64748b;
+}
+
+.nlp-section--prep {
+  background: #f8fafc;
+  margin: -16px -18px 20px;
+  padding: 16px 18px 18px;
+  border-radius: 10px;
+  border: 1px solid #e2e8f0;
+}
+
+.nlp-dict-meta {
+  font-size: 0.8rem;
+  color: #64748b;
+  margin: 0 0 14px;
+}
+
+.nlp-prep-block {
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  padding: 14px 16px;
+  margin-bottom: 12px;
+}
+
+.nlp-prep-block:last-child {
+  margin-bottom: 0;
+}
+
+.nlp-prep-title {
+  margin: 0 0 10px;
+  font-size: 0.85rem;
+  font-weight: 800;
+  color: #018a93;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.nlp-prep-dl {
+  margin: 0;
+}
+
+.nlp-prep-dl > div {
+  margin-bottom: 10px;
+}
+
+.nlp-prep-dl > div:last-child {
+  margin-bottom: 0;
+}
+
+.nlp-prep-dl dt {
+  font-size: 0.7rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: #94a3b8;
+  margin-bottom: 2px;
+}
+
+.nlp-prep-dl dd {
+  margin: 0;
+  font-size: 0.9rem;
+  color: #334155;
+  word-break: break-word;
+}
+
+.nlp-prep-dl code {
+  background: #ecfeff;
+  color: #0e7490;
+  padding: 2px 8px;
+  border-radius: 6px;
+  font-size: 0.88rem;
+}
+
+.nlp-prep-sub {
+  margin: 12px 0 6px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: #64748b;
+}
+
+.nlp-kw-list {
+  margin: 0;
+  padding-left: 18px;
+  font-size: 0.85rem;
+}
+
+.nlp-kw-local {
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.nlp-kw-en {
+  color: #018a93;
+  font-weight: 600;
+}
+
+.nlp-label-inline {
+  font-weight: 700;
+  color: #475569;
+}
+
+.nlp-engine {
+  font-size: 0.8rem;
+  color: #94a3b8;
+  margin-top: 12px;
+}
+
+.nlp-section--translate {
+  scroll-margin-top: 80px;
+  background: #fffbeb;
+  margin: 0 -18px 20px;
+  padding: 16px 18px 18px;
+  border-radius: 10px;
+  border: 1px solid #fde68a;
+}
+
+/* Step 2 — Translation pipeline flow */
+.nlp-pipeline-flow {
+  margin: 0 0 20px;
+  padding: 16px 18px;
+  border-radius: 12px;
+  border: 1px solid #e2e8f0;
+  background: #fff;
+}
+
+.nlp-pipeline-desc {
+  margin: 0 0 14px;
+  font-size: 0.8125rem;
+  color: #64748b;
+  line-height: 1.45;
+}
+
+.nlp-pipeline-stages {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: stretch;
+  gap: 6px 4px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.nlp-pipe-stage {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  min-width: 140px;
+  max-width: 220px;
+  flex: 1 1 140px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1px solid #e2e8f0;
+  background: #f8fafc;
+}
+
+.nlp-pipe-stage--ok {
+  border-color: rgba(6, 147, 150, 0.35);
+  background: rgba(6, 147, 150, 0.06);
+}
+
+.nlp-pipe-stage--warn {
+  border-color: rgba(234, 179, 8, 0.4);
+  background: rgba(234, 179, 8, 0.06);
+}
+
+.nlp-pipe-stage--muted {
+  opacity: 0.75;
+}
+
+.nlp-pipe-stage--downstream {
+  border-style: dashed;
+  background: #f1f5f9;
+}
+
+.nlp-pipe-stage-num {
+  flex-shrink: 0;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: #012a4a;
+  color: #fff;
+  font-size: 0.7rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.nlp-pipe-stage-body {
+  min-width: 0;
+}
+
+.nlp-pipe-stage-label {
+  display: block;
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: #012a4a;
+  margin-bottom: 4px;
+}
+
+.nlp-pipe-detail {
+  display: block;
+  font-size: 0.72rem;
+  color: #64748b;
+  line-height: 1.35;
+  word-break: break-word;
+}
+
+.nlp-pipe-detail code {
+  font-size: 0.7rem;
+}
+
+.nlp-pipe-arrow {
+  display: flex;
+  align-items: center;
+  padding: 0 2px;
+  font-size: 1rem;
+  color: #94a3b8;
+  font-weight: 700;
+  list-style: none;
+}
+
+.nlp-pipe-arrow--downstream {
+  color: #069396;
+}
+
+.nlp-entity-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 8px 16px;
+  margin: 12px 0 14px;
+  font-size: 0.8125rem;
+}
+
+.nlp-diagnostics-panel {
+  margin: 0 0 16px;
+  padding: 14px 16px;
+  border-radius: 10px;
+  border: 1px solid #fde68a;
+  background: #fffbeb;
+}
+
+.nlp-diag-meta {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 8px 12px;
+  margin: 0;
+  font-size: 0.8125rem;
+}
+
+.nlp-diag-meta dt {
+  font-weight: 700;
+  color: #64748b;
+}
+
+.nlp-warn-list {
+  margin: 0 0 10px;
+  padding-left: 1.2rem;
+  color: #b45309;
+  font-size: 0.8125rem;
+}
+
+.nlp-step2-detail {
+  margin: 0 0 16px;
+  padding: 12px 14px;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  background: #fafafa;
+}
+
+.nlp-table--compact th,
+.nlp-table--compact td {
+  font-size: 0.78rem;
+  padding: 6px 8px;
+}
+
+/* Step 2 — AI interpretation panel */
+.nlp-ai-panel {
+  margin: 0 0 18px;
+  padding: 16px 18px;
+  border-radius: 12px;
+  border: 1px solid #cbd5e1;
+  background: #f8fafc;
+}
+
+.nlp-ai-panel--ok {
+  border-color: rgba(6, 147, 150, 0.4);
+  background: linear-gradient(180deg, rgba(6, 147, 150, 0.08) 0%, #fff 100%);
+}
+
+.nlp-ai-panel--warn {
+  border-color: rgba(234, 179, 8, 0.35);
+  background: rgba(234, 179, 8, 0.06);
+}
+
+.nlp-ai-panel--muted {
+  background: #f1f5f9;
+}
+
+.nlp-ai-policy {
+  margin: 0 0 12px;
+  font-size: 0.8125rem;
+  color: #64748b;
+}
+
+.nlp-ai-meta {
+  display: grid;
+  gap: 8px;
+  margin: 0 0 12px;
+}
+
+.nlp-ai-meta div {
+  display: grid;
+  grid-template-columns: 130px 1fr;
+  gap: 8px;
+  font-size: 0.8125rem;
+}
+
+.nlp-ai-meta dt {
+  font-weight: 700;
+  color: #475569;
+}
+
+.nlp-ai-meta dd {
+  margin: 0;
+}
+
+.nlp-ai-interpretation {
+  margin: 0 0 12px;
+  padding: 12px 14px;
+  border-radius: 8px;
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  line-height: 1.6;
+}
+
+.nlp-ai-concepts-title {
+  margin: 0 0 8px;
+  font-size: 0.875rem;
+  font-weight: 800;
+  color: #012a4a;
+}
+
+.nlp-table--ai-concepts {
+  font-size: 0.8125rem;
+}
+
+.nlp-ai-tag {
+  display: inline-block;
+  margin-left: 6px;
+  padding: 1px 6px;
+  border-radius: 999px;
+  font-size: 0.6875rem;
+  font-weight: 800;
+  color: #0e7490;
+  background: rgba(6, 147, 150, 0.15);
+  border: 1px solid rgba(6, 147, 150, 0.3);
+  vertical-align: middle;
+}
+
+.nlp-ai-conf {
+  font-size: 0.75rem;
+  color: #64748b;
+  font-weight: 600;
+}
+
+.nlp-row--ai {
+  background: rgba(6, 147, 150, 0.04);
+}
+
+.nlp-ai-field-summary {
+  margin: 0 0 8px;
+  font-size: 0.8125rem;
+  color: #334155;
+}
+
+.nlp-section--fuzzy {
+  background: #eff6ff;
+  margin: 0 -18px 20px;
+  padding: 16px 18px 18px;
+  border-radius: 10px;
+  border: 1px solid #bfdbfe;
+}
+
+.nlp-section--validate {
+  background: #f0fdf4;
+  margin: 0 -18px 0;
+  padding: 16px 18px 18px;
+  border-radius: 10px;
+  border: 1px solid #bbf7d0;
+}
+
+.nlp-threshold-note,
+.nlp-engine-inline {
+  margin: 0 0 10px;
+  font-size: 0.8rem;
+  color: #64748b;
+}
+
+.nlp-muted {
+  color: #94a3b8;
+}
+
+.nlp-id {
+  font-size: 0.75rem;
+  color: #94a3b8;
+}
+
+.nlp-source {
+  font-size: 0.72rem;
+  word-break: break-all;
+}
+
+.nlp-val-result {
+  font-weight: 700;
+  font-size: 0.78rem;
+  color: #334155;
+}
+
+.nlp-val-msg {
+  font-size: 0.72rem;
+  color: #64748b;
+}
+
+.nlp-rec-cat {
+  font-size: 0.72rem;
+  color: #64748b;
+}
+
+.nlp-row--valid {
+  background: #f0fdf4;
+}
+
+.nlp-row--invalid {
+  background: #fef2f2;
+}
+
+.nlp-registration {
+  margin: 0 0 16px;
+  padding: 12px 14px;
+  border-radius: 10px;
+  border: 1px solid #e2e8f0;
+}
+
+.nlp-registration--ok {
+  background: #ecfdf5;
+  border-color: #86efac;
+}
+
+.nlp-registration--blocked {
+  background: #fef2f2;
+  border-color: #fecaca;
+}
+
+.nlp-reg-label {
+  margin: 0 0 10px;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.9rem;
+}
+
+.nlp-reg-list,
+.nlp-reg-rejected {
+  margin: 0 0 8px;
+  font-size: 0.85rem;
+}
+
+.nlp-reg-rejected ul {
+  margin: 4px 0 0;
+  padding-left: 18px;
+  font-size: 0.82rem;
+  color: #991b1b;
+}
+
+.nlp-table--validation {
+  font-size: 0.75rem;
+}
+
+.nlp-section--invalid {
+  background: #fff1f2;
+  margin: 20px -18px -16px;
+  padding: 16px 18px 18px;
+  border-radius: 10px;
+  border: 1px solid #fecdd3;
+}
+
+.nlp-error-banner {
+  margin: 0 0 14px;
+  padding: 14px 16px;
+  background: #fef2f2;
+  border: 1px solid #fca5a5;
+  border-radius: 10px;
+}
+
+.nlp-ok-banner {
+  margin: 0 0 14px;
+  padding: 12px 16px;
+  background: #ecfdf5;
+  border: 1px solid #86efac;
+  border-radius: 10px;
+}
+
+.nlp-error-title {
+  margin: 0 0 6px;
+  font-weight: 800;
+  font-size: 0.95rem;
+  color: #991b1b;
+}
+
+.nlp-error-msg {
+  margin: 0;
+  font-size: 0.88rem;
+  line-height: 1.55;
+  color: #7f1d1d;
+}
+
+.nlp-ok-banner .nlp-error-msg {
+  color: #166534;
+}
+
+.nlp-policy-note {
+  margin: 0 0 12px;
+  font-size: 0.82rem;
+  color: #64748b;
+}
+
+.nlp-user-err {
+  font-size: 0.78rem;
+  line-height: 1.45;
+  color: #991b1b;
+}
+
+.nlp-save-blocked {
+  margin: 12px 0 0;
+  font-size: 0.85rem;
+  color: #991b1b;
+}
+
+.nlp-table--invalid {
+  font-size: 0.75rem;
+}
+
+.nlp-section--workflow {
+  scroll-margin-top: 80px;
+  background: #fff;
+  margin: -16px -18px 20px;
+  padding: 16px 18px 18px;
+  border-radius: 10px;
+  border: 2px solid #018a93;
+}
+
+.nlp-section--confidence {
+  scroll-margin-top: 80px;
+}
+
+.nlp-section--decision {
+  scroll-margin-top: 80px;
+}
+
+.nlp-step-summary {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 12px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.nlp-step-summary__chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  background: #f1f5f9;
+  border: 1px solid #e2e8f0;
+  color: #475569;
+}
+
+.nlp-step-summary__chip--active {
+  background: rgba(6, 147, 150, 0.14);
+  border-color: rgba(6, 147, 150, 0.4);
+  color: #012a4a;
+}
+
+.nlp-step-summary__chip a {
+  color: inherit;
+  text-decoration: none;
+}
+
+.nlp-step6-callout {
+  margin: 14px 0 0;
+  padding: 14px 16px;
+  border-radius: 10px;
+  border: 2px solid rgba(6, 147, 150, 0.35);
+  background: rgba(6, 147, 150, 0.08);
+}
+
+.nlp-step6-callout__title {
+  margin: 0 0 6px;
+  font-size: 0.8125rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: #069396;
+}
+
+.nlp-step6-callout__value {
+  margin: 0;
+  font-size: 1.05rem;
+  font-weight: 800;
+  color: #012a4a;
+}
+
+.nlp-classification-levels {
+  margin: 16px 0;
+  padding: 14px 16px;
+  border-radius: 10px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+}
+
+.nlp-classification-levels__title {
+  margin: 0 0 10px;
+  font-size: 0.875rem;
+  font-weight: 800;
+  color: #012a4a;
+}
+
+.nlp-classification-levels__grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+}
+
+.nlp-classification-level {
+  padding: 10px 12px;
+  border-radius: 8px;
+  font-size: 0.8125rem;
+  background: #fff;
+  border: 1px solid #e2e8f0;
+}
+
+@media (max-width: 768px) {
+  .nlp-classification-levels__grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.nlp-table--workflow {
+  font-size: 0.8rem;
+}
+
+.nlp-en-preview,
+.nlp-en-highlight {
+  color: #0e7490;
+}
+
+.nlp-valid-term {
+  color: #166534;
+}
+
+.nlp-en-highlight {
+  background: #ecfeff;
+  padding: 1px 6px;
+  border-radius: 4px;
+}
+
+.nlp-subheading {
+  margin: 16px 0 8px;
+  font-size: 0.8rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: #64748b;
+}
+
+.nlp-overall-status,
+.nlp-trans-status {
+  margin: 0 0 12px;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.nlp-trans-status-label {
+  font-size: 0.85rem;
+  color: #475569;
+}
+
+.nlp-combined-en,
+.nlp-trans-english,
+.nlp-summary {
+  margin: 0 0 12px;
+  font-size: 0.9rem;
+  word-break: break-word;
+}
+
+.nlp-summary--lead {
+  padding: 10px 12px;
+  background: #f0fdfa;
+  border: 1px solid #99f6e4;
+  border-radius: 8px;
+  color: #134e4a;
+}
+
+.nlp-badge {
+  display: inline-block;
+  padding: 2px 10px;
+  border-radius: 999px;
+  font-size: 0.7rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.nlp-badge--ok {
+  background: #dcfce7;
+  color: #166534;
+}
+
+.nlp-badge--warn {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+.nlp-badge--bad {
+  background: #fee2e2;
+  color: #991b1b;
+}
+
+.nlp-badge--muted {
+  background: #f1f5f9;
+  color: #64748b;
+}
+
+.nlp-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.8rem;
+  margin-bottom: 8px;
+}
+
+.nlp-table th,
+.nlp-table td {
+  padding: 8px 10px;
+  text-align: left;
+  border-bottom: 1px solid #e2e8f0;
+  vertical-align: top;
+}
+
+.nlp-table th {
+  font-size: 0.68rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: #94a3b8;
+  background: #f8fafc;
+}
+
+.nlp-table code {
+  background: #f1f5f9;
+  padding: 1px 6px;
+  border-radius: 4px;
+  font-size: 0.85em;
+}
+
+.nlp-empty {
+  margin: 0 0 12px;
+  font-size: 0.85rem;
+  color: #94a3b8;
+  font-style: italic;
+}
+
+.nlp-cat-warn {
+  color: #d97706;
+  font-weight: 800;
+}
+
+.nlp-trans-field,
+.nlp-val-field {
+  margin-bottom: 8px;
+}
+
+/* Process guide */
+.nlp-process-guide {
+  margin-bottom: 24px;
+  padding: 20px 22px;
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 14px;
+  box-shadow: 0 6px 20px rgba(1, 42, 74, 0.05);
+}
+
+.nlp-process-guide__title {
+  margin: 0 0 12px;
+  font-size: 1rem;
+  font-weight: 800;
+  color: #012a4a;
+}
+
+.nlp-process-steps {
+  margin: 0 0 12px;
+  padding-left: 1.25rem;
+  color: #475569;
+  font-size: 0.875rem;
+  line-height: 1.65;
+}
+
+.nlp-process-steps li {
+  margin-bottom: 6px;
+}
+
+.nlp-process-steps__item--highlight {
+  padding: 10px 12px;
+  margin: 8px 0 8px -12px;
+  list-style: none;
+  background: rgba(6, 147, 150, 0.1);
+  border: 1px solid rgba(6, 147, 150, 0.35);
+  border-radius: 10px;
+  color: #012a4a;
+}
+
+.nlp-process-engine {
+  margin: 0;
+  font-size: 0.8125rem;
+  color: #64748b;
+}
+
+.nlp-step-bullets {
+  margin: 0 0 12px;
+  padding-left: 1.25rem;
+  color: #475569;
+  font-size: 0.875rem;
+}
+
+.nlp-engine-inline {
+  margin: 0 0 12px;
+  font-size: 0.8125rem;
+  color: #64748b;
+}
+
+/* Step 5 — Confidence */
+.nlp-confidence-list {
+  list-style: none;
+  margin: 12px 0 0;
+  padding: 0;
+  display: grid;
+  gap: 10px;
+}
+
+.nlp-confidence-item {
+  display: grid;
+  grid-template-columns: 1fr auto auto;
+  gap: 12px;
+  align-items: center;
+  padding: 12px 14px;
+  border-radius: 10px;
+  border: 1px solid #e2e8f0;
+  background: #f8fafc;
+}
+
+.nlp-confidence-item--ok {
+  border-color: rgba(6, 147, 150, 0.25);
+  background: rgba(6, 147, 150, 0.06);
+}
+
+.nlp-confidence-item--bad {
+  border-color: rgba(239, 68, 68, 0.25);
+  background: rgba(239, 68, 68, 0.04);
+}
+
+.nlp-confidence-term {
+  font-weight: 700;
+  color: #012a4a;
+}
+
+.nlp-confidence-score {
+  font-size: 0.875rem;
+  color: #334155;
+}
+
+.nlp-confidence-label {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: #069396;
+}
+
+/* Step 6 — Triage */
+.nlp-section--triage {
+  border: 2px solid rgba(6, 147, 150, 0.35);
+  background: linear-gradient(180deg, rgba(6, 147, 150, 0.06) 0%, #fff 100%);
+  scroll-margin-top: 80px;
+}
+
+.nlp-section--triage.nlp-step-highlight {
+  box-shadow: 0 0 0 3px rgba(6, 147, 150, 0.2);
+}
+
+.nlp-step-nav {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  margin-bottom: 16px;
+  padding: 10px 12px;
+  background: rgba(255, 255, 255, 0.96);
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  backdrop-filter: blur(6px);
+}
+
+.nlp-step-nav__list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.nlp-step-nav__link {
+  display: inline-block;
+  padding: 6px 12px;
+  border-radius: 999px;
+  font-size: 0.8125rem;
+  font-weight: 700;
+  color: #012a4a;
+  text-decoration: none;
+  background: #f1f5f9;
+  border: 1px solid #e2e8f0;
+}
+
+.nlp-step-nav__link:hover {
+  background: rgba(6, 147, 150, 0.12);
+  border-color: rgba(6, 147, 150, 0.3);
+}
+
+.nlp-step-nav__link[href="#nlp-step-6"] {
+  background: rgba(6, 147, 150, 0.14);
+  border-color: rgba(6, 147, 150, 0.35);
+}
+
+.nlp-urgency-examples {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+  margin-top: 16px;
+}
+
+.nlp-urgency-card {
+  padding: 14px;
+  border-radius: 10px;
+  border: 1px solid #e2e8f0;
+  background: #fff;
+}
+
+.nlp-urgency-card--routine {
+  border-color: rgba(34, 197, 94, 0.3);
+  background: rgba(34, 197, 94, 0.05);
+}
+
+.nlp-urgency-card--urgent {
+  border-color: rgba(234, 179, 8, 0.35);
+  background: rgba(234, 179, 8, 0.07);
+}
+
+.nlp-urgency-card--emergency {
+  border-color: rgba(239, 68, 68, 0.35);
+  background: rgba(239, 68, 68, 0.06);
+}
+
+.nlp-urgency-card__title {
+  margin: 0 0 4px;
+  font-size: 0.875rem;
+  font-weight: 800;
+}
+
+.nlp-urgency-card__meta {
+  margin: 0 0 8px;
+  font-size: 0.75rem;
+  color: #64748b;
+}
+
+.nlp-urgency-card__list {
+  margin: 0;
+  padding-left: 1.1rem;
+  font-size: 0.8125rem;
+  color: #334155;
+}
+
+.nlp-triage-urgency-label {
+  font-size: 1.05rem;
+}
+
+@media (max-width: 768px) {
+  .nlp-urgency-examples {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Step 6 — Triage panel (existing) */
+.nlp-triage-panel {
+  padding: 18px 20px;
+  border-radius: 12px;
+  border: 1px solid #e2e8f0;
+  background: #f8fafc;
+}
+
+.nlp-triage--routine {
+  border-color: rgba(34, 197, 94, 0.25);
+  background: rgba(34, 197, 94, 0.06);
+}
+
+.nlp-triage--urgent {
+  border-color: rgba(234, 179, 8, 0.35);
+  background: rgba(234, 179, 8, 0.08);
+}
+
+.nlp-triage--emergency {
+  border-color: rgba(239, 68, 68, 0.35);
+  background: rgba(239, 68, 68, 0.06);
+}
+
+.nlp-symptom-list,
+.nlp-flag-list,
+.nlp-rules-list,
+.nlp-blocked-list {
+  margin: 8px 0 12px;
+  padding-left: 1.25rem;
+  color: #334155;
+}
+
+.nlp-flag-item {
+  color: #b91c1c;
+  font-weight: 600;
+}
+
+.nlp-flag-item--alert {
+  list-style: disc;
+}
+
+.nlp-triage-reasoning {
+  margin: 14px 0 0;
+  padding: 12px 14px;
+  border-radius: 8px;
+  background: rgba(15, 23, 42, 0.04);
+  border-left: 3px solid #64748b;
+}
+
+.nlp-triage--emergency .nlp-triage-reasoning {
+  border-left-color: #dc2626;
+  background: rgba(239, 68, 68, 0.06);
+}
+
+.nlp-triage--urgent .nlp-triage-reasoning {
+  border-left-color: #d97706;
+  background: rgba(245, 158, 11, 0.06);
+}
+
+.nlp-triage-factors {
+  margin-top: 14px;
+  font-size: 0.875rem;
+}
+
+.nlp-triage-factors summary {
+  cursor: pointer;
+  font-weight: 600;
+  color: #334155;
+}
+
+.nlp-triage-reason,
+.nlp-triage-final {
+  margin: 10px 0 0;
+  line-height: 1.65;
+}
+
+/* Step 7 — Registration decision */
+.nlp-registration--emergency {
+  border-color: rgba(239, 68, 68, 0.35) !important;
+  background: rgba(239, 68, 68, 0.06) !important;
+}
+
+.nlp-decision-dl {
+  margin: 12px 0;
+  display: grid;
+  gap: 8px;
+}
+
+.nlp-decision-dl div {
+  display: grid;
+  grid-template-columns: 140px 1fr;
+  gap: 8px;
+  font-size: 0.875rem;
+}
+
+.nlp-decision-dl dt {
+  font-weight: 700;
+  color: #64748b;
+}
+
+.nlp-decision-dl dd {
+  margin: 0;
+}
+
+@media (max-width: 640px) {
+  .nlp-confidence-item {
+    grid-template-columns: 1fr;
+    gap: 4px;
+  }
+
+  .nlp-decision-dl div {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 480px) {
+  .nlp-demo-main {
+    padding: 20px 14px 36px;
+  }
+
+  .nlp-demo-form {
+    padding: 18px 16px 16px;
+  }
+}

@@ -1,0 +1,388 @@
+/* ===== Sign-In Card — polished modal UI (MedConnect) ===== */
+
+.signin-modal-inner .signin-card {
+  --signin-space-xs: 8px;
+  --signin-space-sm: 12px;
+  --signin-space-md: 16px;
+  --signin-space-lg: 24px;
+  --signin-space-xl: 28px;
+  --signin-border-soft: #e4eef2;
+  --signin-input-bg: #f4f9fa;
+  --signin-input-height: 50px;
+
+  padding: 36px 36px 30px;
+  border-radius: 20px;
+  box-shadow:
+    0 4px 6px rgba(1, 42, 74, 0.04),
+    0 20px 48px rgba(1, 42, 74, 0.12);
+  border: 1px solid var(--signin-border-soft);
+}
+
+/* Header */
+.signin-modal-inner .signin-card .card-top {
+  align-items: flex-start;
+  gap: 18px;
+  margin-bottom: var(--signin-space-lg);
+  padding-bottom: var(--signin-space-lg);
+  border-bottom: 1px solid var(--signin-border-soft);
+}
+
+.signin-modal-inner .signin-card .signin-card__logo {
+  width: 52px;
+  height: 52px;
+  object-fit: contain;
+  flex-shrink: 0;
+}
+
+.signin-modal-inner .signin-card .card-title {
+  font-size: 1.375rem;
+  font-weight: 800;
+  color: var(--text-header);
+  margin: 0 0 6px;
+  line-height: 1.25;
+  letter-spacing: -0.025em;
+}
+
+.signin-modal-inner .signin-card .card-sub {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--text-body);
+  line-height: 1.55;
+  margin: 0;
+  max-width: 28ch;
+}
+
+/* Alerts */
+.signin-modal-inner .signin-card .alert {
+  margin-bottom: var(--signin-space-md);
+  border-radius: 10px;
+  padding: 12px 14px;
+  font-size: 0.8125rem;
+  line-height: 1.55;
+}
+
+.signin-modal-inner .signin-card #login-form {
+  margin-top: 4px;
+}
+
+/* Form fields */
+.signin-modal-inner .signin-card .form-group {
+  margin-bottom: var(--signin-space-md);
+}
+
+.signin-modal-inner .signin-card .form-group:last-of-type {
+  margin-bottom: var(--signin-space-sm);
+}
+
+.signin-modal-inner .signin-card .form-group label {
+  display: block;
+  font-size: 0.8125rem;
+  font-weight: 700;
+  color: var(--text-header);
+  margin-bottom: var(--signin-space-xs);
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+.signin-modal-inner .signin-card .input-wrap input,
+.signin-modal-inner .signin-card .input-wrap select {
+  height: var(--signin-input-height);
+  padding: 0 16px 0 44px;
+  border: 1.5px solid var(--signin-border-soft);
+  border-radius: 12px;
+  font-size: 0.9375rem;
+  color: var(--text-header);
+  background: var(--signin-input-bg);
+  transition:
+    border-color 0.22s ease,
+    box-shadow 0.22s ease,
+    background-color 0.22s ease;
+}
+
+.signin-modal-inner .signin-card .input-wrap input:focus,
+.signin-modal-inner .signin-card .input-wrap select:focus {
+  background: var(--white);
+  border-color: var(--teal);
+  box-shadow: 0 0 0 4px rgba(6, 147, 150, 0.12);
+  outline: none;
+}
+
+.signin-modal-inner .signin-card .input-wrap input::placeholder {
+  color: #94a3b8;
+}
+
+.signin-modal-inner .signin-card #password {
+  padding-right: 48px;
+}
+
+.signin-modal-inner .signin-card .input-icon {
+  left: 15px;
+  color: #94a3b8;
+}
+
+.signin-modal-inner .signin-card .toggle-pwd {
+  right: 12px;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  border-radius: 8px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: color 0.2s ease, background-color 0.2s ease;
+}
+
+.signin-modal-inner .signin-card .toggle-pwd:hover {
+  color: var(--teal);
+  background: rgba(6, 147, 150, 0.08);
+}
+
+.signin-modal-inner .signin-card .field-error {
+  font-size: 0.75rem;
+  margin-top: 6px;
+  min-height: 16px;
+}
+
+/* Forgot password */
+.signin-modal-inner .signin-card .form-footer-row {
+  margin-top: var(--signin-space-sm);
+  margin-bottom: var(--signin-space-lg);
+}
+
+.signin-modal-inner .signin-card .forgot-link {
+  display: inline-block;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--teal);
+  text-decoration: none;
+  padding: 6px 4px;
+  border-radius: 6px;
+  transition: color 0.2s ease, background-color 0.2s ease;
+}
+
+.signin-modal-inner .signin-card .forgot-link:hover {
+  color: var(--teal-mid);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+/* Sign In button */
+.signin-modal-inner .signin-card .btn-signin {
+  width: 100%;
+  height: 52px;
+  margin-top: 4px;
+  border-radius: 12px;
+  font-size: 0.9375rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  background: linear-gradient(135deg, var(--teal) 0%, #0ea5e9 100%);
+  box-shadow: 0 6px 20px rgba(6, 147, 150, 0.32);
+  transition:
+    transform 0.22s cubic-bezier(0.22, 1, 0.36, 1),
+    box-shadow 0.22s ease,
+    opacity 0.22s ease;
+}
+
+.signin-modal-inner .signin-card .btn-signin:hover {
+  opacity: 1;
+  transform: translateY(-2px);
+  box-shadow: 0 10px 28px rgba(6, 147, 150, 0.4);
+}
+
+.signin-modal-inner .signin-card .btn-signin:active {
+  transform: translateY(0);
+  box-shadow: 0 4px 14px rgba(6, 147, 150, 0.28);
+}
+
+.signin-modal-inner .signin-card .btn-signin:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+/* Create account */
+.signin-modal-inner .signin-card .card-register {
+  margin: var(--signin-space-lg) 0 var(--signin-space-md);
+  font-size: 0.875rem;
+  color: var(--text-body);
+  line-height: 1.6;
+}
+
+.signin-modal-inner .signin-card .card-register a {
+  color: var(--teal);
+  font-weight: 700;
+  text-decoration: none;
+  border-bottom: 1px solid transparent;
+  transition: color 0.2s ease, border-color 0.2s ease;
+}
+
+.signin-modal-inner .signin-card .card-register a:hover {
+  color: var(--teal-mid);
+  border-bottom-color: var(--teal-mid);
+  text-decoration: none;
+}
+
+/* Provider info card */
+.signin-modal-inner .signin-card .provider-note {
+  display: flex;
+  align-items: center;
+  gap: var(--signin-space-sm);
+  background: linear-gradient(135deg, #f0fdfa 0%, #f4f9fa 100%);
+  border: 1px solid rgba(6, 147, 150, 0.18);
+  border-radius: 12px;
+  padding: 16px 18px;
+  margin: 0 0 var(--signin-space-md);
+}
+
+.signin-modal-inner .signin-card .provider-note svg {
+  flex-shrink: 0;
+  width: 18px;
+  height: 18px;
+  color: var(--teal);
+  margin-top: 0;
+}
+
+.signin-modal-inner .signin-card .provider-note__text {
+  font-size: 0.8125rem;
+  line-height: 1.6;
+  color: var(--text-header);
+}
+
+.signin-modal-inner .signin-card .provider-note__text strong {
+  font-weight: 700;
+  color: var(--text-header);
+}
+
+/* Emergency notice */
+.signin-modal-inner .signin-card .emergency-note {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  background: #fffbeb;
+  border: 1px solid #fcd34d;
+  border-radius: 12px;
+  padding: 14px 16px;
+  margin-top: 0;
+  font-size: 0.8125rem;
+  line-height: 1.6;
+  color: #92400e;
+}
+
+.signin-modal-inner .signin-card .emergency-note svg {
+  flex-shrink: 0;
+  width: 18px;
+  height: 18px;
+  margin-top: 1px;
+  color: #d97706;
+}
+
+.signin-modal-inner .signin-card .emergency-note strong {
+  font-weight: 700;
+  color: #78350f;
+}
+
+/* Trust badges */
+.signin-modal-inner .signin-card .card-badges {
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 12px 16px;
+  margin-top: var(--signin-space-lg);
+  padding-top: var(--signin-space-lg);
+  border-top: 1px solid var(--signin-border-soft);
+}
+
+.signin-modal-inner .signin-card .trust-badge {
+  font-size: 0.6875rem;
+  color: var(--text-muted);
+  border-right: none;
+  padding: 0;
+  font-weight: 600;
+}
+
+/* Card entrance — subtle polish on open */
+.signin-modal-overlay.is-open .signin-modal-inner .signin-card {
+  animation: signinCardFadeIn 0.42s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@keyframes signinCardFadeIn {
+  from {
+    opacity: 0.88;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* Tablet */
+@media (max-width: 768px) {
+  .signin-modal-inner .signin-card {
+    padding: 30px 28px 26px;
+    border-radius: 18px;
+  }
+
+  .signin-modal-inner .signin-card .card-title {
+    font-size: 1.25rem;
+  }
+
+  .signin-modal-inner .signin-card .card-sub {
+    font-size: 0.8125rem;
+  }
+}
+
+/* Mobile */
+@media (max-width: 480px) {
+  .signin-modal-inner .signin-card {
+    padding: 26px 22px 22px;
+    border-radius: 16px;
+  }
+
+  .signin-modal-inner .signin-card .card-top {
+    gap: 14px;
+    margin-bottom: 20px;
+    padding-bottom: 20px;
+  }
+
+  .signin-modal-inner .signin-card .signin-card__logo {
+    width: 46px;
+    height: 46px;
+  }
+
+  .signin-modal-inner .signin-card .card-title {
+    font-size: 1.125rem;
+  }
+
+  .signin-modal-inner .signin-card .input-wrap input,
+  .signin-modal-inner .signin-card .input-wrap select {
+    height: 48px;
+    font-size: 16px; /* prevents iOS zoom */
+  }
+
+  .signin-modal-inner .signin-card .btn-signin {
+    height: 50px;
+  }
+
+  .signin-modal-inner .signin-card .card-badges {
+    gap: 10px;
+  }
+
+  .signin-modal-inner .signin-card .trust-badge {
+    font-size: 0.625rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .signin-modal-overlay.is-open .signin-modal-inner .signin-card {
+    animation: none;
+  }
+
+  .signin-modal-inner .signin-card .input-wrap input,
+  .signin-modal-inner .signin-card .input-wrap select,
+  .signin-modal-inner .signin-card .btn-signin,
+  .signin-modal-inner .signin-card .forgot-link,
+  .signin-modal-inner .signin-card .card-register a,
+  .signin-modal-inner .signin-card .toggle-pwd {
+    transition: none;
+  }
+}

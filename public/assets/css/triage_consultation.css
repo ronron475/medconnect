@@ -1,0 +1,267 @@
+/* ── medConnect Triage & Consultation Cards ── */
+
+/* Two-column grid, stacks on tablet */
+.tc-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+  align-items: start;
+}
+
+@media (max-width: 860px) {
+  .tc-grid { grid-template-columns: 1fr; }
+}
+
+/* ── Base card ── */
+.tc-card {
+  background: #ffffff;
+  border-radius: var(--mc-r-lg);
+  border: 1px solid var(--mc-border);
+  box-shadow: var(--mc-shadow-sm);
+  padding: 28px;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  transition: transform var(--mc-duration) var(--mc-ease), box-shadow var(--mc-duration) var(--mc-ease);
+}
+
+.tc-card:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--mc-shadow-md);
+}
+
+/* ── Card header row ── */
+.tc-card-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.tc-card-icon {
+  width: 42px;
+  height: 42px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.tc-card-icon--triage  { background: #fef3c7; color: #d97706; }
+.tc-card-icon--consult { background: #eff6ff; color: #2563eb; }
+
+.tc-card-title {
+  font-size: 15px;
+  font-weight: 800;
+  color: #0f172a;
+  line-height: 1.2;
+}
+
+.tc-card-sub {
+  font-size: 11.5px;
+  color: #94a3b8;
+  margin-top: 2px;
+}
+
+/* push badge to the right */
+.tc-card-header .tc-badge { margin-left: auto; }
+
+/* ── Risk badges ── */
+.tc-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 11.5px;
+  font-weight: 700;
+  padding: 4px 10px 4px 8px;
+  border-radius: 20px;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.tc-badge-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.badge--green { background: #f0fdf4; color: #16a34a; border: 1px solid #bbf7d0; }
+.badge--green .tc-badge-dot { background: #22c55e; }
+
+.badge--amber { background: #fffbeb; color: #d97706; border: 1px solid #fde68a; }
+.badge--amber .tc-badge-dot { background: #f59e0b; }
+
+.badge--red   { background: #fef2f2; color: #dc2626; border: 1px solid #fecaca; }
+.badge--red   .tc-badge-dot { background: #ef4444; }
+
+/* ── Triage body ── */
+.tc-triage-body {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.tc-triage-level {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: #f8fafc;
+  border-radius: 10px;
+  padding: 12px 16px;
+  border: 1px solid #e2e8f0;
+}
+
+.tc-triage-level-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+}
+
+.tc-triage-level-value {
+  font-size: 16px;
+  font-weight: 800;
+  letter-spacing: -0.2px;
+}
+
+.level--low      { color: #16a34a; }
+.level--moderate { color: #d97706; }
+.level--high     { color: #dc2626; }
+
+.tc-field-label {
+  display: block;
+  font-size: 11px;
+  font-weight: 700;
+  color: #94a3b8;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 5px;
+}
+
+.tc-field-value {
+  font-size: 13.5px;
+  color: #334155;
+  line-height: 1.6;
+}
+
+.tc-triage-date {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: #94a3b8;
+  font-weight: 500;
+}
+
+.tc-triage-date svg { color: #cbd5e1; flex-shrink: 0; }
+
+/* ── Consultation list ── */
+.tc-consult-list {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.tc-consult-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 13px 14px;
+  background: #f8fafc;
+  border-radius: 12px;
+  border: 1px solid #e2e8f0;
+  transition: background 0.15s;
+}
+
+.tc-consult-item:hover { background: #f1f5f9; }
+
+/* type icon circle */
+.tc-consult-type-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.type-icon--video  { background: #eff6ff; color: #2563eb; }
+.type-icon--person { background: #f0fdf4; color: #16a34a; }
+
+.tc-consult-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex: 1;
+  min-width: 0;
+}
+
+.tc-consult-provider {
+  font-size: 13.5px;
+  font-weight: 700;
+  color: #0f172a;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.tc-consult-meta {
+  font-size: 11.5px;
+  color: #64748b;
+}
+
+.tc-consult-type-label {
+  font-size: 10.5px;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 6px;
+  width: fit-content;
+  margin-top: 2px;
+}
+
+.type-label--video  { background: #dbeafe; color: #1d4ed8; }
+.type-label--person { background: #dcfce7; color: #15803d; }
+
+/* action button on each row */
+.tc-consult-action {
+  font-size: 12px;
+  font-weight: 700;
+  padding: 7px 13px;
+  border-radius: 8px;
+  text-decoration: none;
+  white-space: nowrap;
+  flex-shrink: 0;
+  transition: opacity 0.15s, transform 0.15s;
+}
+
+.tc-consult-action:hover { opacity: 0.85; transform: translateY(-1px); }
+
+.tc-btn--join    { background: linear-gradient(135deg, #0d9488, #0ea5e9); color: #fff; }
+.tc-btn--details { background: #f1f5f9; color: #334155; border: 1px solid #e2e8f0; }
+
+/* ── Shared outline CTA button ── */
+.tc-btn--outline {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 10px 16px;
+  border-radius: 10px;
+  border: 1px solid #e2e8f0;
+  background: #f8fafc;
+  color: #334155;
+  font-size: 13px;
+  font-weight: 600;
+  text-decoration: none;
+  transition: background 0.15s, border-color 0.15s, color 0.15s;
+}
+
+.tc-btn--outline:hover {
+  background: #f1f5f9;
+  border-color: #0d9488;
+  color: #0d9488;
+}

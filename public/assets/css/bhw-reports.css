@@ -1,0 +1,435 @@
+/* BHW Reports & Activity Log styles */
+.bhw-reports-page,
+.bhw-activity-page {
+  width: 100%;
+  max-width: none;
+  animation: bhwFadeIn 0.35s ease;
+}
+
+.bhw-reports-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px 24px;
+  margin-bottom: 20px;
+}
+
+.bhw-reports-header h2 {
+  color: var(--bhw-navy, #012a4a);
+  font-weight: 800;
+  margin-bottom: 6px;
+}
+
+.bhw-reports-sub {
+  color: #64748b;
+  font-size: 14px;
+  margin: 0;
+  max-width: 720px;
+  line-height: 1.55;
+}
+
+.bhw-reports-export-btns {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.bhw-reports-export-btns .bhw-btn-outline {
+  min-height: 40px;
+  padding: 8px 16px;
+  border-radius: 10px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.bhw-reports-filters {
+  padding: 20px 24px;
+  margin-bottom: 20px;
+}
+
+.bhw-reports-filter-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: 14px 16px;
+  align-items: end;
+}
+
+.bhw-reports-filter-grid .span-2 {
+  grid-column: span 2;
+}
+
+.bhw-reports-filter-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.bhw-reports-filter-actions .bhw-btn-teal,
+.bhw-reports-filter-actions .bhw-btn-outline {
+  min-height: 40px;
+  padding: 8px 16px;
+  border-radius: 10px;
+}
+
+.bhw-reports-summary {
+  margin-bottom: 24px;
+}
+
+.bhw-reports-skeleton-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap: 12px;
+}
+
+.bhw-reports-skeleton-card {
+  height: 88px;
+  border-radius: 12px;
+  background: linear-gradient(90deg, #f1f5f9 25%, #e2e8f0 50%, #f1f5f9 75%);
+  background-size: 200% 100%;
+  animation: bhwShimmer 1.2s infinite;
+}
+
+@keyframes bhwShimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+.bhw-report-metric {
+  background: #fff;
+  border: 1px solid var(--mc-border-thin, #e2edf1);
+  border-radius: 14px;
+  padding: 16px 18px;
+  box-shadow: var(--mc-shadow-micro, 0 1px 3px rgba(0, 0, 0, 0.04));
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  height: 100%;
+}
+
+.bhw-report-metric:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(1, 42, 74, 0.08);
+}
+
+.bhw-report-metric-label {
+  font-size: 10px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: #64748b;
+  margin-bottom: 6px;
+}
+
+.bhw-report-metric-val {
+  font-size: 22px;
+  font-weight: 800;
+  color: var(--bhw-navy, #012a4a);
+  line-height: 1.2;
+}
+
+.bhw-reports-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 20px;
+  padding-bottom: 4px;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.bhw-reports-tab {
+  border: none;
+  background: transparent;
+  color: #64748b;
+  font-size: 12px;
+  font-weight: 700;
+  padding: 10px 14px;
+  border-radius: 10px 10px 0 0;
+  cursor: pointer;
+  transition: color 0.2s, background 0.2s;
+}
+
+.bhw-reports-tab:hover {
+  color: var(--bhw-teal, #018a93);
+  background: rgba(1, 138, 147, 0.06);
+}
+
+.bhw-reports-tab.is-active {
+  color: var(--bhw-teal, #018a93);
+  background: #fff;
+  box-shadow: 0 -2px 0 var(--bhw-teal, #018a93) inset;
+}
+
+.bhw-reports-panel {
+  display: none;
+}
+
+.bhw-reports-panel.is-active {
+  display: block;
+  animation: bhwFadeIn 0.3s ease;
+}
+
+.bhw-chart-card {
+  padding: 22px 24px;
+  min-height: 200px;
+}
+
+.bhw-chart-card h3 {
+  font-size: 13px;
+  font-weight: 800;
+  color: var(--bhw-navy, #012a4a);
+  margin: 0 0 16px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.bhw-reports-table-wrap {
+  overflow-x: auto;
+}
+
+/* Activity log */
+.bhw-activity-table-card {
+  padding: 0;
+  overflow: hidden;
+}
+
+.bhw-activity-table-wrap {
+  overflow-x: auto;
+}
+
+.bhw-activity-table tbody tr {
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.bhw-activity-table tbody tr:hover {
+  background: rgba(1, 138, 147, 0.04);
+}
+
+.bhw-activity-status {
+  display: inline-block;
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-size: 10px;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.bhw-activity-status.is-success {
+  background: #dcfce7;
+  color: #15803d;
+}
+
+.bhw-activity-status.is-failed {
+  background: #fee2e2;
+  color: #dc2626;
+}
+
+.bhw-activity-cards {
+  display: none;
+  padding: 12px;
+  gap: 10px;
+  flex-direction: column;
+}
+
+.bhw-activity-card {
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 14px 16px;
+  background: #f8fafc;
+  cursor: pointer;
+}
+
+.bhw-activity-card strong {
+  display: block;
+  color: var(--bhw-navy, #012a4a);
+  font-size: 14px;
+  margin-bottom: 4px;
+}
+
+.bhw-activity-card span {
+  display: block;
+  font-size: 12px;
+  color: #64748b;
+  margin-top: 2px;
+}
+
+.bhw-activity-pagination {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 8px;
+  padding: 16px;
+  border-top: 1px solid #f1f5f9;
+}
+
+.bhw-activity-pagination button {
+  border: 1px solid #cbd5e1;
+  background: #fff;
+  border-radius: 8px;
+  padding: 6px 12px;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  color: #64748b;
+}
+
+.bhw-activity-pagination button:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.bhw-activity-pagination button.is-active {
+  background: var(--bhw-teal, #018a93);
+  border-color: var(--bhw-teal, #018a93);
+  color: #fff;
+}
+
+.bhw-activity-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 9990;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+
+.bhw-activity-modal.is-open {
+  display: flex;
+}
+
+.bhw-activity-modal-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.45);
+  backdrop-filter: blur(3px);
+}
+
+.bhw-activity-modal-dialog {
+  position: relative;
+  background: #fff;
+  border-radius: 16px;
+  padding: 28px 32px;
+  max-width: 520px;
+  width: 100%;
+  max-height: 85vh;
+  overflow-y: auto;
+  box-shadow: 0 20px 50px rgba(1, 42, 74, 0.18);
+}
+
+.bhw-activity-modal-close {
+  position: absolute;
+  top: 12px;
+  right: 14px;
+  border: none;
+  background: transparent;
+  font-size: 24px;
+  line-height: 1;
+  color: #94a3b8;
+  cursor: pointer;
+}
+
+.bhw-activity-detail div {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 0;
+  border-bottom: 1px solid #f1f5f9;
+  font-size: 13px;
+}
+
+.bhw-activity-detail dt {
+  color: #64748b;
+  font-weight: 600;
+  margin: 0;
+}
+
+.bhw-activity-detail dd {
+  color: var(--bhw-navy, #012a4a);
+  font-weight: 700;
+  margin: 0;
+  text-align: right;
+  word-break: break-word;
+  max-width: 60%;
+}
+
+@media print {
+  .no-print,
+  .bhw-sidebar,
+  .topbar,
+  .bhw-reports-tabs,
+  .bhw-reports-filters {
+    display: none !important;
+  }
+  .portal-main {
+    margin: 0 !important;
+  }
+  .bhw-reports-panel {
+    display: block !important;
+    page-break-inside: avoid;
+  }
+  .bhw-activity-table-wrap {
+    display: block !important;
+  }
+  .bhw-activity-cards,
+  .bhw-activity-pagination {
+    display: none !important;
+  }
+}
+
+@media (max-width: 991px) {
+  .bhw-reports-filter-grid .span-2 {
+    grid-column: span 1;
+  }
+}
+
+@media (max-width: 768px) {
+  .bhw-activity-table-wrap {
+    display: none;
+  }
+  .bhw-activity-cards {
+    display: flex;
+  }
+  .bhw-reports-header {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .bhw-reports-export-btns {
+    width: 100%;
+  }
+  .bhw-reports-export-btns .bhw-btn-outline {
+    flex: 1;
+    min-height: 44px;
+    justify-content: center;
+    display: inline-flex;
+    align-items: center;
+  }
+  .bhw-reports-filter-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+  .bhw-reports-filter-actions {
+    grid-column: 1 / -1;
+  }
+  .bhw-reports-filter-actions .bhw-btn-teal,
+  .bhw-reports-filter-actions .bhw-btn-outline {
+    flex: 1;
+  }
+}
+
+@media (max-width: 480px) {
+  .bhw-reports-filter-grid {
+    grid-template-columns: 1fr;
+  }
+  .bhw-chart-card {
+    padding: 16px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .bhw-reports-page,
+  .bhw-activity-page,
+  .bhw-reports-panel,
+  .bhw-report-metric {
+    animation: none !important;
+    transition: none !important;
+  }
+}

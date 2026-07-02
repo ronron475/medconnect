@@ -1,0 +1,289 @@
+/* AI-Assisted Medical Assessment Dashboard */
+
+.ai-assessment-wrap {
+  margin-top: 20px;
+}
+
+.ai-assessment-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 16px;
+  margin-bottom: 8px;
+}
+
+.ai-assessment-processing {
+  border: 1px solid var(--mc-border-thin, #e2e8f0);
+  border-radius: 14px;
+  padding: 20px;
+  background: var(--mc-surface, #fff);
+  margin-top: 16px;
+}
+
+.ai-assessment-processing__title {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--mc-navy-dark, #012a4a);
+  margin: 0 0 14px;
+}
+
+.ai-assessment-steps {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 10px;
+}
+
+.ai-assessment-step {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 0.88rem;
+  color: var(--mc-slate-muted, #64748b);
+  transition: color 0.25s ease;
+}
+
+.ai-assessment-step.is-active {
+  color: var(--mc-aqua-medium, #018a93);
+  font-weight: 600;
+}
+
+.ai-assessment-step.is-done {
+  color: var(--mc-navy-dark, #012a4a);
+}
+
+.ai-assessment-step__dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: #cbd5e1;
+  flex-shrink: 0;
+  transition: background 0.25s ease, transform 0.25s ease;
+}
+
+.ai-assessment-step.is-active .ai-assessment-step__dot {
+  background: var(--mc-aqua-medium, #018a93);
+  animation: aiPulse 1s ease-in-out infinite;
+}
+
+.ai-assessment-step.is-done .ai-assessment-step__dot {
+  background: #22c55e;
+}
+
+@keyframes aiPulse {
+  0%, 100% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(1.25); opacity: 0.7; }
+}
+
+.ai-assessment-card {
+  border: 1px solid var(--mc-border-thin, #e2e8f0);
+  border-radius: 16px;
+  padding: 22px;
+  background: linear-gradient(180deg, #ffffff 0%, #f8fbfc 100%);
+  box-shadow: 0 8px 24px rgba(1, 42, 74, 0.06);
+  margin-top: 16px;
+}
+
+.ai-assessment-card__header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 18px;
+}
+
+.ai-assessment-card__title {
+  margin: 0;
+  font-size: 1.1rem;
+  font-weight: 800;
+  color: var(--mc-navy-dark, #012a4a);
+}
+
+.ai-assessment-card__subtitle {
+  margin: 4px 0 0;
+  font-size: 0.82rem;
+  color: var(--mc-slate-muted, #64748b);
+}
+
+.ai-assessment-section {
+  margin-bottom: 18px;
+}
+
+.ai-assessment-section__label {
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--mc-slate-muted, #64748b);
+  margin-bottom: 8px;
+}
+
+.ai-symptom-list,
+.ai-condition-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.ai-symptom-list li,
+.ai-condition-list li {
+  font-size: 0.85rem;
+  padding: 6px 12px;
+  border-radius: 999px;
+  background: #e0f7fa;
+  color: #015f6b;
+  border: 1px solid #b2ebf2;
+}
+
+.ai-condition-list li {
+  background: #f1f5f9;
+  color: #334155;
+  border-color: #e2e8f0;
+}
+
+.ai-confidence {
+  display: grid;
+  gap: 8px;
+}
+
+.ai-confidence__bar {
+  height: 10px;
+  border-radius: 999px;
+  background: #e2e8f0;
+  overflow: hidden;
+}
+
+.ai-confidence__fill {
+  height: 100%;
+  border-radius: 999px;
+  background: linear-gradient(90deg, #018a93, #02a8b5);
+  transition: width 0.6s ease;
+}
+
+.ai-confidence__meta {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 8px;
+  font-size: 0.88rem;
+}
+
+.ai-confidence__score {
+  font-weight: 800;
+  color: var(--mc-navy-dark, #012a4a);
+}
+
+.ai-confidence__level {
+  color: var(--mc-aqua-medium, #018a93);
+  font-weight: 600;
+}
+
+.ai-badge-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 4px;
+}
+
+.severity-badge,
+.triage-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: 10px;
+  font-size: 0.82rem;
+  font-weight: 700;
+}
+
+.severity-badge--mild {
+  background: #ecfdf5;
+  color: #047857;
+  border: 1px solid #a7f3d0;
+}
+
+.severity-badge--moderate {
+  background: #fff7ed;
+  color: #c2410c;
+  border: 1px solid #fed7aa;
+}
+
+.severity-badge--severe {
+  background: #fef2f2;
+  color: #b91c1c;
+  border: 1px solid #fecaca;
+}
+
+.triage-badge--green {
+  background: #ecfdf5;
+  color: #166534;
+  border: 1px solid #86efac;
+}
+
+.triage-badge--yellow {
+  background: #fefce8;
+  color: #a16207;
+  border: 1px solid #fde047;
+}
+
+.triage-badge--red {
+  background: #fef2f2;
+  color: #b91c1c;
+  border: 1px solid #fca5a5;
+}
+
+.ai-recommendation-box {
+  padding: 14px;
+  border-radius: 12px;
+  background: #f0f9ff;
+  border: 1px solid #bae6fd;
+  font-size: 0.9rem;
+  color: #0c4a6e;
+  line-height: 1.55;
+}
+
+.ai-translation-box {
+  font-size: 0.88rem;
+  color: #334155;
+  padding: 12px;
+  border-radius: 10px;
+  background: #f8fafc;
+  border: 1px dashed #cbd5e1;
+}
+
+.ai-disclaimer {
+  margin-top: 16px;
+  padding: 12px;
+  border-radius: 10px;
+  background: #fffbeb;
+  border: 1px solid #fde68a;
+  font-size: 0.78rem;
+  line-height: 1.5;
+  color: #92400e;
+}
+
+.ai-assessment-empty {
+  font-size: 0.88rem;
+  color: var(--mc-slate-muted, #64748b);
+  margin-top: 12px;
+}
+
+@media (max-width: 640px) {
+  .ai-assessment-card {
+    padding: 16px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ai-assessment-step.is-active .ai-assessment-step__dot {
+    animation: none;
+  }
+  .ai-confidence__fill {
+    transition: none;
+  }
+}

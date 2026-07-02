@@ -1,0 +1,55 @@
+id,english_alias,canonical_english,official_symptom,body_part,notes
+1,eye pain,eye pain,Eye Pain,eye,ophthalmalgia
+2,headache,headache,Headache,head,cephalalgia
+3,head pain,head pain,Headache,head,cephalalgia
+4,ear pain,ear pain,Ear Pain,ear,otalgia
+5,toothache,toothache,Toothache,tooth,odontalgia
+6,tooth pain,tooth pain,Toothache,tooth,odontalgia
+7,throat pain,throat pain,Throat Pain,throat,pharyngalgia
+8,sore throat,sore throat,Sore Throat,throat,pharyngitis symptom
+9,chest pain,chest pain,Chest Pain,chest,cardiac/respiratory
+10,neck pain,neck pain,Neck Pain,neck,cervicalgia
+11,shoulder pain,shoulder pain,Shoulder Pain,shoulder,musculoskeletal
+12,arm pain,arm pain,Upper Arm Pain,arm,upper limb
+13,hand pain,hand pain,Hand Pain,hand,musculoskeletal
+14,back pain,back pain,Back Pain,back,dorsalgia
+15,abdominal pain,abdominal pain,Abdominal Pain,abdomen,abdominal
+16,stomach pain,stomach pain,Stomach Pain,abdomen,abdominal
+17,hip pain,hip pain,Hip Pain,hip,musculoskeletal
+18,leg pain,leg pain,Leg Pain,leg,lower limb
+19,knee pain,knee pain,Knee Pain,knee,musculoskeletal
+20,foot pain,foot pain,Foot Pain,foot,musculoskeletal
+21,joint pain,joint pain,Joint Pain,joint,arthralgia
+22,muscle pain,muscle pain,Muscle Pain,muscle,myalgia
+23,generalized pain,generalized pain,Myalgia,body,whole body
+24,body pain,body pain,Myalgia,body,whole body
+25,whole body pain,whole body pain,Myalgia,body,whole body
+26,mata pain,eye pain,Eye Pain,eye,Hiligaynon part alias: mata
+27,ulo pain,headache,Headache,head,Hiligaynon part alias: ulo
+28,utok pain,headache,Headache,head,Hiligaynon part alias: utok
+29,dalunggan pain,ear pain,Ear Pain,ear,Hiligaynon part alias: dalunggan
+30,dulunggan pain,ear pain,Ear Pain,ear,Hiligaynon part alias: dulunggan
+31,ngipon pain,toothache,Toothache,tooth,Hiligaynon part alias: ngipon
+32,ngipun pain,toothache,Toothache,tooth,Hiligaynon part alias: ngipun
+33,tutunlan pain,throat pain,Throat Pain,throat,Hiligaynon part alias: tutunlan
+34,dughan pain,chest pain,Chest Pain,chest,Hiligaynon part alias: dughan
+35,dibdib pain,chest pain,Chest Pain,chest,Hiligaynon part alias: dibdib
+36,liog pain,neck pain,Neck Pain,neck,Hiligaynon part alias: liog
+37,abaga pain,shoulder pain,Shoulder Pain,shoulder,Hiligaynon part alias: abaga
+38,kamot pain,arm pain,Upper Arm Pain,arm,Hiligaynon part alias: kamot
+39,bukton pain,arm pain,Upper Arm Pain,arm,Hiligaynon part alias: bukton
+40,palad pain,hand pain,Hand Pain,hand,Hiligaynon part alias: palad
+41,likod pain,back pain,Back Pain,back,Hiligaynon part alias: likod
+42,tiyan pain,abdominal pain,Abdominal Pain,abdomen,Hiligaynon part alias: tiyan
+43,tyan pain,abdominal pain,Abdominal Pain,abdomen,Hiligaynon part alias: tyan
+44,tian pain,abdominal pain,Abdominal Pain,abdomen,Hiligaynon part alias: tian
+45,pus-on pain,abdominal pain,Abdominal Pain,abdomen,Hiligaynon part alias: pus-on
+46,sikmura pain,abdominal pain,Abdominal Pain,abdomen,Hiligaynon part alias: sikmura
+47,hawak pain,hip pain,Hip Pain,hip,Hiligaynon part alias: hawak
+48,tiil pain,leg pain,Leg Pain,leg,Hiligaynon part alias: tiil
+49,tuhod pain,knee pain,Knee Pain,knee,Hiligaynon part alias: tuhod
+50,tuhud pain,knee pain,Knee Pain,knee,Hiligaynon part alias: tuhud
+51,talampakan pain,foot pain,Foot Pain,foot,Hiligaynon part alias: talampakan
+52,lutahan pain,joint pain,Joint Pain,joint,Hiligaynon part alias: lutahan
+53,kalawasan pain,muscle pain,Muscle Pain,muscle,Hiligaynon part alias: kalawasan
+54,lawas pain,muscle pain,Muscle Pain,muscle,Hiligaynon part alias: lawas

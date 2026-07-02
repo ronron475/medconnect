@@ -1,0 +1,129 @@
+hiligaynon_term,english_term,medical_category,severity,triage_level,status
+daw indi ko makabaton sang kamot ko,arm weakness,neurological,Severe,emergency,active
+indi ko makabaton sang kamot ko ko,arm weakness,neurological,Severe,emergency,active
+lemah ang kamot ko ko,arm weakness,neurological,Severe,emergency,active
+gahubag lawas kag gakatol ko,allergic reaction,allergy,Severe,emergency,active
+gahubag lawas ko kag gakatol ko,allergic reaction,allergy,Severe,emergency,active
+gahubag kag gakatol lawas ko ko,allergic reaction,allergy,Severe,emergency,active
+ginahilanat gid ko ko,high fever,general,Moderate,urgent,active
+hilanat gid ko,high fever,general,Moderate,urgent,active
+ginahilanat ko 3 ka adlaw na ko,high fever,general,Moderate,urgent,active
+39 hilanat ko ko,high fever,general,Moderate,urgent,active
+nabunggo ko sa salakyan ko,vehicle collision injury,trauma,Critical,emergency,active
+nabunggo sa salakyan ko,vehicle collision injury,trauma,Critical,emergency,active
+naaksidente ko ko,vehicle collision injury,trauma,Critical,emergency,active
+indi ko makahambal ko,speech difficulty,neurological,Severe,emergency,active
+daw indi ko makahambal ko,speech difficulty,neurological,Severe,emergency,active
+dili ko makahambal ko,speech difficulty,neurological,Severe,emergency,active
+gusto ko magpakamatay ko,suicidal ideation,mental_health,Critical,emergency,active
+gusto ko magpatay ko,suicidal ideation,mental_health,Critical,emergency,active
+buot ko magpakamatay ko,suicidal ideation,mental_health,Critical,emergency,active
+ginkagat sang ido ko,dog bite,infection,Moderate,urgent,active
+ginkagat sang ido ko ko,dog bite,infection,Moderate,urgent,active
+ginkagat ko sang ido ko,dog bite,infection,Moderate,urgent,active
+ginabaldom gid ko ko,severe abdominal pain,gastrointestinal,Severe,urgent,active
+masakit gid tiyan ko ko,severe abdominal pain,gastrointestinal,Severe,urgent,active
+grabe sakit tiyan ko ko,severe abdominal pain,gastrointestinal,Severe,urgent,active
+budlay magginhawa ko,difficulty breathing,respiratory,Critical,emergency,active
+dula ginhawa ko,difficulty breathing,respiratory,Critical,emergency,active
+indi ko makaginhawa ko,difficulty breathing,respiratory,Critical,emergency,active
+ginakapos ko,difficulty breathing,respiratory,Critical,emergency,active
+nagdugo ko,bleeding,bleeding,Moderate,urgent,active
+gadugo ko,bleeding,bleeding,Moderate,urgent,active
+nagadugo ko,bleeding,bleeding,Moderate,urgent,active
+grabe gid nagadugo ko,bleeding,bleeding,Moderate,urgent,active
+nagdugo gid ko,bleeding,bleeding,Moderate,urgent,active
+masakit pag-ihi ko,painful urination,urinary,Moderate,urgent,active
+masakit pagihi ko,painful urination,urinary,Moderate,urgent,active
+sakit pag-ihi ko ko,painful urination,urinary,Moderate,urgent,active
+masakit pag-ihi ko ko,painful urination,urinary,Moderate,urgent,active
+galagas buhok ko,hair loss,dermatological,Mild,non_urgent,active
+galagas buhok ko ko,hair loss,dermatological,Mild,non_urgent,active
+nagalagas buhok ko ko,hair loss,dermatological,Mild,non_urgent,active
+gakitol mata ko,eye irritation,ophthalmologic,Mild,non_urgent,active
+mahamok mata ko ko,eye irritation,ophthalmologic,Mild,non_urgent,active
+may butlig sa mata ko,eye irritation,ophthalmologic,Mild,non_urgent,active
+nakuryente ko ko,electrical injury,trauma,Critical,emergency,active
+nakuryente gid ko ko,electrical injury,trauma,Critical,emergency,active
+nakuryente ko,electrical injury,trauma,Critical,emergency,active
+wala ko maka-ihi ko,urinary retention,urinary,Severe,emergency,active
+indi ko maka-ihi ko,urinary retention,urinary,Severe,emergency,active
+wala maka-ihi ko,urinary retention,urinary,Severe,emergency,active
+ginahilanat ko,fever,general,Moderate,urgent,active
+hilanat ko,fever,general,Moderate,urgent,active
+ginahilanat gid ko,fever,general,Moderate,urgent,active
+ginahilanat ko ko,fever,general,Moderate,urgent,active
+alta presyon ko,hypertension,cardiovascular,Moderate,urgent,active
+alta presyon ko ko,hypertension,cardiovascular,Moderate,urgent,active
+mataas presyon ko,hypertension,cardiovascular,Moderate,urgent,active
+taas presyon ko,hypertension,cardiovascular,Moderate,urgent,active
+nabun-og ulo ko,head injury,trauma,Severe,emergency,active
+nabunog ulo ko,head injury,trauma,Severe,emergency,active
+nabun-og ulo ko ko,head injury,trauma,Severe,emergency,active
+nasumbag ulo ko ko,head injury,trauma,Severe,emergency,active
+masakit dughan ko,chest pain,cardiovascular,Severe,emergency,active
+sakit dughan ko,chest pain,cardiovascular,Severe,emergency,active
+gasakit dughan ko,chest pain,cardiovascular,Severe,emergency,active
+naguyam ko,seizure,neurological,Critical,emergency,active
+nag-uyam ko,seizure,neurological,Critical,emergency,active
+naguyam ko ko,seizure,neurological,Critical,emergency,active
+nag convulsion ko,seizure,neurological,Critical,emergency,active
+nasunog ko,burn,burn,Moderate,urgent,active
+nasunog ko ko,burn,burn,Moderate,urgent,active
+nasunog sang ko,burn,burn,Moderate,urgent,active
+ginadudul-om ko,diarrhea,gastrointestinal,Moderate,urgent,active
+ginadudulom ko,diarrhea,gastrointestinal,Moderate,urgent,active
+dul-om ko,diarrhea,gastrointestinal,Moderate,urgent,active
+dulom ko,diarrhea,gastrointestinal,Moderate,urgent,active
+sakit ulo ko,headache,neurological,Mild,non_urgent,active
+gasakit ulo ko,headache,neurological,Mild,non_urgent,active
+masakit ulo ko,headache,neurological,Mild,non_urgent,active
+sakit sa ulo ko,headache,neurological,Mild,non_urgent,active
+nahilo tiyan ko,nausea,gastrointestinal,Mild,non_urgent,active
+ginasuka-uka ko,nausea,gastrointestinal,Mild,non_urgent,active
+ginabaldom ko,nausea,gastrointestinal,Mild,non_urgent,active
+gahabok ko,swelling,general,Moderate,urgent,active
+gahubag ko,swelling,general,Moderate,urgent,active
+hubag ko,swelling,general,Moderate,urgent,active
+habok ko,swelling,general,Moderate,urgent,active
+namaga ko,swelling,general,Moderate,urgent,active
+gahubag gid ko,swelling,general,Moderate,urgent,active
+may nana ko,infection with pus,infection,Moderate,urgent,active
+nana ko,infection with pus,infection,Moderate,urgent,active
+may nana sa ko,infection with pus,infection,Moderate,urgent,active
+ginasuka ko,vomiting,gastrointestinal,Moderate,urgent,active
+ginasuka ko ko,vomiting,gastrointestinal,Moderate,urgent,active
+nagsuka ko,vomiting,gastrointestinal,Moderate,urgent,active
+gasakit ko,pain,pain,Moderate,urgent,active
+masakit ko,pain,pain,Moderate,urgent,active
+sakit ko,pain,pain,Moderate,urgent,active
+ginabaldom ko,pain,pain,Moderate,urgent,active
+gakatol ko,itching,dermatological,Mild,non_urgent,active
+kakatol ko,itching,dermatological,Mild,non_urgent,active
+ginakamang ko,itching,dermatological,Mild,non_urgent,active
+nabali ko,fracture,trauma,Severe,urgent,active
+naukas ko,fracture,trauma,Severe,urgent,active
+nabali ko ko,fracture,trauma,Severe,urgent,active
+nabali ang ko,fracture,trauma,Severe,urgent,active
+galuya ko,weakness,general,Moderate,non_urgent,active
+maluya ko,weakness,general,Moderate,non_urgent,active
+kapoy gid ko,weakness,general,Moderate,non_urgent,active
+may pilas ko,wound,wound,Moderate,urgent,active
+pilas ko,wound,wound,Moderate,urgent,active
+pilas ko ko,wound,wound,Moderate,urgent,active
+nautod ko,traumatic amputation,trauma,Critical,emergency,active
+na-utod ko,traumatic amputation,trauma,Critical,emergency,active
+nautod ko ko,traumatic amputation,trauma,Critical,emergency,active
+nahilo ko,dizziness,neurological,Moderate,urgent,active
+nahilo ko ko,dizziness,neurological,Moderate,urgent,active
+nahihilo ko,dizziness,neurological,Moderate,urgent,active
+gapula ko,redness,dermatological,Mild,non_urgent,active
+mapula ko,redness,dermatological,Mild,non_urgent,active
+ginapula ko,redness,dermatological,Mild,non_urgent,active
+gahika ko,cough,respiratory,Mild,non_urgent,active
+ubo ko,cough,respiratory,Mild,non_urgent,active
+ginauubo ko,cough,respiratory,Mild,non_urgent,active
+ginahika ko,cough,respiratory,Mild,non_urgent,active
+nabun-og ko,bruise,dermatological,Mild,non_urgent,active
+nabunog ko,bruise,dermatological,Mild,non_urgent,active
+may pasa ko,bruise,dermatological,Mild,non_urgent,active

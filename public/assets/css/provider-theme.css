@@ -1,0 +1,46 @@
+/* Provider theme — light / dark / system */
+
+body.provider-body[data-provider-theme-resolved='dark'] {
+  --mc-bg: #0f172a;
+  --mc-text-main: #e2e8f0;
+  --mc-text-muted: #94a3b8;
+  --mc-border: #334155;
+  --mc-slate-50: #1e293b;
+  --mc-slate-900: #f8fafc;
+  background: #0f172a;
+  color: #e2e8f0;
+}
+
+body.provider-body[data-provider-theme-resolved='dark'] .pd-panel {
+  background: #1e293b;
+  border-color: #334155;
+}
+
+body.provider-body[data-provider-theme-resolved='dark'] .pd-panel-header {
+  background: #162032;
+  border-bottom-color: #334155;
+}
+
+body.provider-body[data-provider-theme-resolved='dark'] .pd-panel-title,
+body.provider-body[data-provider-theme-resolved='dark'] .ps-toggle-label,
+body.provider-body[data-provider-theme-resolved='dark'] .ps-field label {
+  color: #e2e8f0;
+}
+
+body.provider-body[data-provider-theme-resolved='dark'] .ps-input,
+body.provider-body[data-provider-theme-resolved='dark'] .ps-select {
+  background: #0f172a;
+  border-color: #475569;
+  color: #f8fafc;
+}
+
+body.provider-body[data-provider-theme-resolved='dark'] .pd-header {
+  background: #1e293b;
+  border-bottom-color: #334155;
+}
+
+body.provider-body[data-provider-theme-resolved='dark'] .pd-header-date,
+body.provider-body[data-provider-theme-resolved='dark'] .pd-header-page,
+body.provider-body[data-provider-theme-resolved='dark'] .pd-header-user-name {
+  color: #f8fafc;
+}

@@ -1,0 +1,360 @@
+/* ==========================================================================
+   MedConnect — Patient Messages (Responsive)
+   Desktop: two-panel layout
+   Mobile: list -> full-screen chat with back button
+   ========================================================================== */
+
+:root {
+  --msg-gap: 16px;
+  --msg-radius: 14px;
+  --msg-border: var(--mc-border-thin, #e2edf1);
+  --msg-bg: #fff;
+  --msg-canvas: var(--mc-ice-blue, #f4f8fa);
+  --msg-teal: var(--mc-aqua-medium, #018a93);
+  --msg-text: var(--mc-navy-dark, #012a4a);
+  --msg-muted: var(--mc-slate-muted, #608395);
+}
+
+/* Root shell */
+body.patient-portal .messages-shell {
+  display: grid;
+  grid-template-columns: minmax(280px, 360px) 1fr;
+  gap: var(--msg-gap);
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+  min-height: 0;
+}
+
+/* Panels */
+body.patient-portal .msg-panel {
+  background: var(--msg-bg);
+  border: 1px solid var(--msg-border);
+  border-radius: var(--msg-radius);
+  box-shadow: var(--mc-shadow-micro, 0 4px 20px rgba(1, 42, 74, 0.06));
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Sticky-ish headers inside panels */
+body.patient-portal .msg-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--msg-border);
+  background: #fff;
+  min-height: 56px;
+}
+
+body.patient-portal .msg-title {
+  font-size: 15px;
+  font-weight: 900;
+  color: var(--msg-text);
+  letter-spacing: -0.01em;
+}
+
+body.patient-portal .msg-count {
+  font-size: 12px;
+  font-weight: 800;
+  color: var(--msg-muted);
+}
+
+/* Conversation list */
+body.patient-portal .msg-list {
+  display: flex;
+  flex-direction: column;
+  overflow: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+body.patient-portal .msg-list-empty {
+  padding: 16px;
+  color: var(--msg-muted);
+  font-weight: 700;
+  font-size: 13px;
+}
+
+body.patient-portal .msg-item {
+  width: 100%;
+  border: 0;
+  background: transparent;
+  text-align: left;
+  display: grid;
+  grid-template-columns: 40px 1fr auto;
+  gap: 12px;
+  padding: 12px 14px;
+  border-bottom: 1px solid rgba(226, 237, 241, 0.75);
+  cursor: pointer;
+  min-height: 64px;
+}
+
+body.patient-portal .msg-item:last-child {
+  border-bottom: 0;
+}
+
+body.patient-portal .msg-item.active {
+  background: rgba(1, 138, 147, 0.06);
+}
+
+body.patient-portal .msg-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  background: rgba(1, 138, 147, 0.12);
+  color: var(--msg-teal);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 900;
+  font-size: 12px;
+  flex-shrink: 0;
+}
+
+body.patient-portal .msg-item-body {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+body.patient-portal .msg-name-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+  min-width: 0;
+}
+
+body.patient-portal .msg-name {
+  font-size: 13.5px;
+  font-weight: 900;
+  color: var(--msg-text);
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+body.patient-portal .msg-time {
+  font-size: 11px;
+  font-weight: 800;
+  color: var(--msg-muted);
+  flex-shrink: 0;
+}
+
+body.patient-portal .msg-preview {
+  font-size: 12.5px;
+  font-weight: 700;
+  color: var(--msg-muted);
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Status pill */
+body.patient-portal .msg-status-pill {
+  align-self: start;
+  font-size: 10px;
+  font-weight: 900;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  padding: 6px 10px;
+  border-radius: 999px;
+  border: 1px solid rgba(1, 138, 147, 0.18);
+  color: var(--msg-teal);
+  background: rgba(1, 138, 147, 0.08);
+  white-space: nowrap;
+}
+
+body.patient-portal .msg-status-pill--completed { background: rgba(22, 163, 74, 0.10); border-color: rgba(22, 163, 74, 0.20); color: #16a34a; }
+body.patient-portal .msg-status-pill--cancelled { background: rgba(220, 38, 38, 0.08); border-color: rgba(220, 38, 38, 0.18); color: #dc2626; }
+body.patient-portal .msg-status-pill--pending,
+body.patient-portal .msg-status-pill--scheduled { background: rgba(2, 132, 199, 0.08); border-color: rgba(2, 132, 199, 0.18); color: #0284c7; }
+
+/* Thread header */
+body.patient-portal .msg-thread-head {
+  justify-content: flex-start;
+}
+
+body.patient-portal .msg-thread-head-main {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+  width: 100%;
+}
+
+body.patient-portal .msg-thread-head-text {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+body.patient-portal .msg-thread-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+  min-width: 0;
+}
+
+body.patient-portal .msg-thread-meta > span:first-child {
+  color: var(--msg-muted);
+  font-size: 12px;
+  font-weight: 700;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 46vw;
+}
+
+/* Thread body + composer */
+body.patient-portal .thread-body {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  -webkit-overflow-scrolling: touch;
+  padding: 14px 14px 10px;
+  background: var(--msg-canvas);
+}
+
+body.patient-portal .composer {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 10px;
+  padding: 12px 14px;
+  border-top: 1px solid var(--msg-border);
+  background: #fff;
+}
+
+body.patient-portal .composer input {
+  width: 100%;
+  height: 44px;
+  border-radius: 12px;
+  border: 1px solid var(--msg-border);
+  background: #fff;
+  padding: 0 12px;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--msg-text);
+}
+
+body.patient-portal .composer input:focus {
+  outline: none;
+  border-color: rgba(1, 138, 147, 0.45);
+  box-shadow: 0 0 0 4px rgba(1, 138, 147, 0.10);
+}
+
+body.patient-portal .msg-action {
+  height: 44px;
+  min-width: 88px;
+  border-radius: 12px;
+  border: 0;
+  background: var(--msg-teal);
+  color: #fff;
+  font-weight: 900;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+body.patient-portal .msg-action:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* Bubble layout helpers (existing HTML uses .bubble-row/.bubble-time) */
+body.patient-portal .bubble-row {
+  display: flex;
+  gap: 10px;
+  align-items: flex-end;
+  margin-bottom: 10px;
+}
+
+body.patient-portal .bubble-row.mine {
+  flex-direction: row-reverse;
+}
+
+body.patient-portal .bubble-time {
+  margin-top: 4px;
+  font-size: 11px;
+  font-weight: 800;
+  color: var(--msg-muted);
+}
+
+/* Mobile: single-panel app-like flow (force override so it never "shrinks desktop") */
+@media (max-width: 767.98px) {
+  body.patient-portal .messages-shell {
+    display: block !important;
+    max-width: 100% !important;
+    margin: 0 auto;
+  }
+
+  body.patient-portal .messages-shell .msg-panel {
+    border-radius: 16px;
+  }
+
+  /* Only one "screen" visible at a time */
+  body.patient-portal .messages-shell:not(.is-thread-open) .msg-panel--thread {
+    display: none !important;
+  }
+  body.patient-portal .messages-shell.is-thread-open .msg-panel--list {
+    display: none !important;
+  }
+
+  body.patient-portal .messages-shell .msg-panel--list,
+  body.patient-portal .messages-shell .msg-panel--thread {
+    width: 100% !important;
+    height: calc(100svh - var(--portal-header-h, 64px) - 24px) !important;
+  }
+
+  /* Back button */
+  body.patient-portal .msg-back {
+    display: inline-flex !important;
+  }
+
+  body.patient-portal .msg-thread-meta > span:first-child {
+    max-width: 60vw;
+  }
+}
+
+/* Tablet: keep two panels but give thread more room */
+@media (min-width: 768px) and (max-width: 1023px) {
+  body.patient-portal .messages-shell {
+    grid-template-columns: minmax(240px, 320px) 1fr;
+  }
+}
+
+/* Back button (hidden by default) */
+body.patient-portal .msg-back {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  border: 1px solid var(--msg-border);
+  background: #fff;
+  color: var(--msg-teal);
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+body.patient-portal .msg-back:active {
+  transform: translateY(0.5px);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  body.patient-portal .msg-panel,
+  body.patient-portal .msg-item {
+    transition: none !important;
+  }
+}
+

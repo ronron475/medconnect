@@ -1,0 +1,191 @@
+.profile-avatar {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  overflow: hidden;
+  background: linear-gradient(135deg, rgba(6, 147, 150, 0.18), rgba(2, 128, 144, 0.28));
+  color: var(--mc-navy-dark, #0d1b3e);
+  font-weight: 800;
+  flex-shrink: 0;
+}
+
+.profile-avatar--xs {
+  width: 30px;
+  height: 30px;
+  font-size: 10px;
+}
+
+.profile-avatar--sm {
+  width: 36px;
+  height: 36px;
+  font-size: 12px;
+}
+
+.profile-avatar--md {
+  width: 56px;
+  height: 56px;
+  font-size: 18px;
+}
+
+.profile-avatar--lg {
+  width: 88px;
+  height: 88px;
+  font-size: 28px;
+}
+
+.profile-avatar--xl {
+  width: 112px;
+  height: 112px;
+  font-size: 34px;
+}
+
+.profile-avatar__img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.profile-avatar__initials {
+  line-height: 1;
+}
+
+.profile-picture-upload {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  padding-bottom: 20px;
+  margin-bottom: 20px;
+  border-bottom: 1px solid var(--mc-border-thin, #c8eef2);
+}
+
+.profile-picture-upload__meta h4 {
+  margin: 0 0 4px;
+  font-size: 15px;
+  font-weight: 800;
+  color: var(--mc-navy-dark, #0d1b3e);
+}
+
+.profile-picture-upload__meta p {
+  margin: 0 0 12px;
+  font-size: 12px;
+  color: var(--mc-slate-muted, #64748b);
+}
+
+.profile-picture-upload input[type='file'] {
+  display: none;
+}
+
+.profile-picture-status {
+  margin-top: 8px;
+  font-size: 12px;
+  color: var(--mc-slate-muted, #64748b);
+}
+
+.profile-picture-status.is-success {
+  color: #166534;
+}
+
+.profile-picture-status.is-error {
+  color: #dc2626;
+}
+
+.sb-avatar .profile-avatar__img,
+.topbar-avatar .profile-avatar__img,
+.sba-avatar .profile-avatar__img,
+.patient-greeting__avatar .profile-avatar__img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 50%;
+}
+
+.pd-avatar.profile-avatar,
+.pd-avatar .profile-avatar__img {
+  border-radius: 50%;
+}
+
+/* Light provider panels (default) */
+.pd-panel .profile-picture-upload {
+  border-bottom-color: #e2e8f0;
+}
+
+.pd-panel .profile-picture-upload__meta h4 {
+  color: #0f172a;
+}
+
+.pd-panel .profile-picture-upload__meta p,
+.pd-panel .profile-picture-status {
+  color: #64748b;
+}
+
+.pd-header .pd-avatar,
+.pd-header .pd-header-avatar {
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  overflow: hidden;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.12);
+}
+
+.pd-header .pd-avatar .profile-avatar,
+.pd-header .pd-header-avatar.profile-avatar {
+  width: 40px;
+  height: 40px;
+  font-size: 13px;
+}
+
+.pd-header .pd-avatar .profile-avatar__img,
+.pd-header .pd-header-avatar .profile-avatar__img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 50%;
+}
+
+.patient-greeting__avatar .profile-avatar {
+  width: 56px;
+  height: 56px;
+}
+
+.bhw-summary-avatar .profile-avatar,
+.bhw-sb-profile-avatar .profile-avatar {
+  width: 100%;
+  height: 100%;
+  font-size: inherit;
+  background: transparent;
+}
+
+.bhw-summary-avatar .profile-avatar--lg {
+  width: 72px;
+  height: 72px;
+  font-size: 24px;
+}
+
+.bhw-sb-profile-avatar .profile-avatar,
+.bhw-sb-profile-avatar .profile-avatar__img {
+  width: 34px;
+  height: 34px;
+  font-size: 12px;
+}
+
+.bhw-sb-profile-avatar .profile-avatar--sm {
+  width: 34px;
+  height: 34px;
+  font-size: 12px;
+}
+
+.adm-profile-avatar .profile-avatar,
+.adm-profile-avatar .profile-avatar__img {
+  width: 34px;
+  height: 34px;
+  font-size: 12px;
+}
+
+.adm-profile-card .profile-picture-upload {
+  margin-bottom: 0;
+  padding-bottom: 0;
+  border-bottom: none;
+}

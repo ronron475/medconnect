@@ -1,0 +1,509 @@
+/**
+
+ * Portal shell — loads after responsive.css.
+
+ * Fixed full-width topbar for admin, BHW, and patient accounts.
+
+ */
+
+
+
+/* Header offset variables (JS updates --mc-header-offset on <html>). */
+
+html {
+
+    --portal-sidebar-w: 260px;
+
+    --portal-header-h: 64px;
+
+    --mc-safe-top: env(safe-area-inset-top, 0px);
+
+    --mc-header-offset: calc(var(--portal-header-h) + var(--mc-safe-top));
+
+}
+
+
+
+@supports (padding-top: constant(safe-area-inset-top)) {
+
+    html {
+
+        --mc-safe-top: constant(safe-area-inset-top);
+
+    }
+
+}
+
+
+
+body.admin-body .topbar,
+
+body.bhw-body .topbar,
+
+body.patient-portal .topbar {
+
+    position: fixed !important;
+
+    top: 0 !important;
+
+    left: var(--portal-sidebar-w) !important;
+
+    width: calc(100% - var(--portal-sidebar-w)) !important;
+
+    right: auto !important;
+
+    padding-top: var(--mc-safe-top) !important;
+
+    height: auto !important;
+
+    min-height: calc(var(--portal-header-h) + var(--mc-safe-top)) !important;
+
+    margin: 0 !important;
+
+    z-index: 500;
+
+    box-sizing: border-box;
+
+    overflow: visible;
+
+    flex-wrap: nowrap;
+
+}
+
+
+
+body.admin-body .main.portal-main,
+
+body.bhw-body .main.portal-main,
+
+body.patient-portal .main-content.portal-main {
+
+    margin-left: var(--portal-sidebar-w) !important;
+
+    width: calc(100% - var(--portal-sidebar-w)) !important;
+
+    max-width: none !important;
+
+    padding: 0 !important;
+
+    min-height: 100vh;
+
+    display: block !important;
+
+    overflow-x: hidden;
+
+}
+
+
+
+body.admin-body .portal-page-body,
+
+body.bhw-body .portal-page-body {
+
+    width: 100%;
+
+    box-sizing: border-box;
+
+    padding: 24px 32px 32px;
+
+    padding-top: calc(var(--mc-header-offset, var(--portal-header-h, 64px)) + 24px);
+
+}
+
+
+
+body.patient-portal .portal-page-body {
+
+    width: 100%;
+
+    box-sizing: border-box;
+
+    padding: 24px 32px 32px;
+
+    padding-top: calc(var(--mc-header-offset, var(--portal-header-h, 64px)) + 24px);
+
+    max-width: 100%;
+
+    overflow-x: hidden;
+
+}
+
+
+
+/* ── Tablet: sidebar drawer ── */
+
+@media (max-width: 1024px) {
+
+    body.admin-body .topbar,
+
+    body.bhw-body .topbar,
+
+    body.patient-portal .topbar {
+
+        left: 0 !important;
+
+        width: 100% !important;
+
+        padding-left: calc(14px + env(safe-area-inset-left, 0px)) !important;
+
+        padding-right: calc(14px + env(safe-area-inset-right, 0px)) !important;
+
+    }
+
+
+
+    body.admin-body .main.portal-main,
+
+    body.bhw-body .main.portal-main,
+
+    body.patient-portal .main-content.portal-main {
+
+        margin-left: 0 !important;
+
+        width: 100% !important;
+
+    }
+
+
+
+    body.admin-body .portal-page-body,
+
+    body.bhw-body .portal-page-body,
+
+    body.patient-portal .portal-page-body {
+
+        padding: 16px;
+
+        padding-top: calc(var(--mc-header-offset, var(--portal-header-h, 64px)) + 16px);
+
+    }
+
+}
+
+
+
+/* ── Patient clinical header (matches provider dashboard) ── */
+
+@media (max-width: 768px) {
+
+    body.patient-portal .topbar--clinical {
+
+        display: grid !important;
+
+        grid-template-columns: 44px minmax(0, 1fr) auto;
+
+        grid-template-areas: "toggle title actions";
+
+        gap: 6px 10px;
+
+        align-items: center;
+
+        flex-wrap: nowrap !important;
+
+        padding: 10px var(--mob-dash-pad, 16px) !important;
+
+        padding-top: calc(10px + var(--mc-safe-top, env(safe-area-inset-top, 0px))) !important;
+
+        min-height: auto !important;
+
+    }
+
+
+
+    body.patient-portal .topbar--clinical .mc-nav-toggle {
+
+        grid-area: toggle;
+
+        display: inline-flex !important;
+
+        width: 44px;
+
+        height: 44px;
+
+        margin: 0;
+
+    }
+
+
+
+    body.patient-portal .topbar--clinical .topbar-left {
+
+        grid-area: title;
+
+        min-width: 0;
+
+        max-width: 100%;
+
+        flex: none;
+
+        gap: 0;
+
+    }
+
+
+
+    body.patient-portal .topbar--clinical .topbar-title-block {
+
+        min-width: 0;
+
+    }
+
+
+
+  body.patient-portal .topbar--clinical .topbar-date-label {
+
+        font-size: 10px;
+
+        font-weight: 700;
+
+        letter-spacing: 0.05em;
+
+        line-height: 1.25;
+
+        margin-bottom: 1px;
+
+        white-space: nowrap;
+
+        overflow: hidden;
+
+        text-overflow: ellipsis;
+
+    }
+
+
+
+    body.patient-portal .topbar--clinical .topbar-title {
+
+        font-size: 1rem !important;
+
+        font-weight: 800;
+
+        line-height: 1.2 !important;
+
+        white-space: nowrap;
+
+        overflow: hidden;
+
+        text-overflow: ellipsis;
+
+        word-break: normal;
+
+    }
+
+
+
+    body.patient-portal .topbar--clinical .topbar-right {
+
+        grid-area: actions;
+
+        display: flex;
+
+        align-items: center;
+
+        justify-content: flex-end;
+
+        flex-wrap: nowrap;
+
+        gap: 6px;
+
+        width: auto;
+
+        margin-left: 0;
+
+        padding-top: 0;
+
+        border-top: none;
+
+        flex-shrink: 0;
+
+    }
+
+
+
+    body.patient-portal .topbar--clinical .topbar-avatar {
+
+        display: none;
+
+    }
+
+
+
+    body.patient-portal .topbar--clinical .mc-theme-toggle__label {
+
+        display: none;
+
+    }
+
+
+
+    body.patient-portal .topbar--clinical .mc-theme-toggle__btn {
+
+        min-width: 44px;
+
+        min-height: 44px;
+
+        padding: 8px;
+
+    }
+
+
+
+    body.patient-portal .topbar--clinical .mc-notif-btn,
+
+    body.patient-portal .topbar--clinical .topbar-icon-btn {
+
+        width: 44px;
+
+        height: 44px;
+
+        min-width: 44px;
+
+        min-height: 44px;
+
+    }
+
+
+
+    body.patient-portal .topbar--clinical .topbar-avatar {
+
+        width: 40px;
+
+        height: 40px;
+
+        flex-shrink: 0;
+
+    }
+
+
+
+    body.patient-portal .topbar--clinical .topbar-logout {
+
+        display: inline-flex;
+
+        align-items: center;
+
+        justify-content: center;
+
+        width: 44px;
+
+        height: 44px;
+
+        min-width: 44px;
+
+        min-height: 44px;
+
+        padding: 0 !important;
+
+        border-radius: 10px;
+
+    }
+
+
+
+    body.patient-portal .topbar--clinical .mc-notif-panel {
+
+        position: fixed;
+
+        top: auto;
+
+        bottom: 0;
+
+        left: 0;
+
+        right: 0;
+
+        width: 100%;
+
+        max-width: 100%;
+
+        max-height: min(75vh, calc(100dvh - 80px));
+
+        border-radius: 16px 16px 0 0;
+
+        z-index: 1300;
+
+    }
+
+
+
+    body.patient-portal .topbar--clinical .mc-theme-toggle__menu {
+
+        z-index: 1300;
+
+    }
+
+
+
+    body.patient-portal .portal-page-body {
+
+        padding-left: 16px !important;
+
+        padding-right: 16px !important;
+
+        padding-top: calc(var(--mc-header-offset, 72px) + 12px) !important;
+
+    }
+
+}
+
+
+
+@media (max-width: 640px) {
+
+    body.admin-body .topbar,
+
+    body.bhw-body .topbar {
+
+        flex-wrap: wrap !important;
+
+        row-gap: 6px;
+
+        padding: 0 16px !important;
+
+        padding-top: var(--mc-safe-top) !important;
+
+    }
+
+
+
+    body.patient-portal .topbar--clinical .topbar-right {
+
+        gap: 6px;
+
+    }
+
+}
+
+
+
+@media (max-width: 480px) {
+
+    body.patient-portal .topbar--clinical {
+
+        padding-left: 12px !important;
+
+        padding-right: 12px !important;
+
+    }
+
+
+
+    body.patient-portal .portal-page-body {
+
+        padding-left: 12px !important;
+
+        padding-right: 12px !important;
+
+    }
+
+}
+
+
+
+html[data-theme-resolved='dark'] body.patient-portal .topbar--clinical .topbar-right {
+
+    border-top-color: transparent;
+
+}
+
+

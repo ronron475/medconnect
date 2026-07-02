@@ -1,15 +1,73 @@
-    # Database exports (don't push your actual SQL data if it has real passwords)
+# Database exports
 *.sql
+!database/schema.sql
+!database/migrations/*.sql
+!database/exports/.gitkeep
 
-# XAMPP/OS specific
-.DS_Store
-Thumbs.db
+# Media / accidental artifacts
+*.mp3
+,*.mp3
 
-# Private IDE settings
-.vscode/
+# Secrets
+.env
+.env.local
+.env.*.local
+ai_service/.env
 
-# Uploaded patient IDs (Optional: Keep this if you want to show sample data,
-# but usually, you ignore the contents of storage/uploads)
+# Dependencies
+/vendor/
+ai_service/.venv/
+node_modules/
+
+# Python bytecode / cache
+__pycache__/
+*.py[cod]
+*$py.class
+*.pyo
+.Python
+*.egg-info/
+.eggs/
+dist/
+build/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# Runtime storage (keep structure, not user data)
 storage/uploads/ids/*
 !storage/uploads/ids/.htaccess
+!storage/uploads/ids/.gitkeep
+storage/cache/*
+!storage/cache/.gitkeep
+storage/temp/*
+!storage/temp/.gitkeep
+storage/logs/*
+!storage/logs/.gitkeep
+!storage/logs/audit/.gitkeep
+storage/logs/*.log
+storage/logs/audit/*.log
+storage/logs/*.lock
 
+# XAMPP/OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# IDE / editor
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Dev-only scripts (never deploy to production)
+public/genhash.php
+public/setup_admin.php
+public/seed_provider.php
+public/test_db_connection.php
+public/debug_profile.php
+public/delete_user.php
+
+
+# Windows junction (API mirror under public/)
+public/app/

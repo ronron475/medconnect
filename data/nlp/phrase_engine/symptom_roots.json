@@ -1,0 +1,351 @@
+{
+  "version": "1.0",
+  "description": "Hiligaynon symptom roots for combinatorial phrase generation",
+  "roots": [
+    {
+      "id": "swelling",
+      "terms": ["gahabok", "gahubag", "hubag", "habok", "namaga", "gahubag gid"],
+      "english_symptom": "swelling",
+      "english_phrase": "swelling",
+      "default_severity": "moderate",
+      "default_triage": "urgent",
+      "category": "general"
+    },
+    {
+      "id": "pain",
+      "terms": ["gasakit", "masakit", "sakit", "ginabaldom"],
+      "english_symptom": "pain",
+      "english_phrase": "pain",
+      "default_severity": "moderate",
+      "default_triage": "urgent",
+      "category": "pain"
+    },
+    {
+      "id": "pus_infection",
+      "terms": ["may nana", "nana", "may nana sa"],
+      "english_symptom": "infection",
+      "english_phrase": "infection with pus",
+      "default_severity": "moderate",
+      "default_triage": "urgent",
+      "category": "infection",
+      "is_condition": true
+    },
+    {
+      "id": "bleeding",
+      "terms": ["nagdugo", "gadugo", "nagadugo", "grabe gid nagadugo", "nagdugo gid"],
+      "english_symptom": "bleeding",
+      "english_phrase": "bleeding",
+      "default_severity": "moderate",
+      "default_triage": "urgent",
+      "category": "bleeding"
+    },
+    {
+      "id": "itching",
+      "terms": ["gakatol", "kakatol", "ginakamang"],
+      "english_symptom": "itching",
+      "english_phrase": "itching",
+      "default_severity": "mild",
+      "default_triage": "non_urgent",
+      "category": "dermatological"
+    },
+    {
+      "id": "redness",
+      "terms": ["gapula", "mapula", "ginapula"],
+      "english_symptom": "redness",
+      "english_phrase": "redness",
+      "default_severity": "mild",
+      "default_triage": "non_urgent",
+      "category": "dermatological"
+    },
+    {
+      "id": "weakness",
+      "terms": ["galuya", "maluya", "kapoy gid"],
+      "english_symptom": "weakness",
+      "english_phrase": "weakness",
+      "default_severity": "moderate",
+      "default_triage": "non_urgent",
+      "category": "general"
+    },
+    {
+      "id": "wound",
+      "terms": ["may pilas", "pilas", "pilas ko"],
+      "english_symptom": "wound",
+      "english_phrase": "wound",
+      "default_severity": "moderate",
+      "default_triage": "urgent",
+      "category": "wound"
+    },
+    {
+      "id": "amputation",
+      "terms": ["nautod", "na-utod", "nautod ko"],
+      "english_symptom": "amputation",
+      "english_phrase": "traumatic amputation",
+      "default_severity": "critical",
+      "default_triage": "emergency",
+      "category": "trauma",
+      "is_condition": true
+    },
+    {
+      "id": "fracture",
+      "terms": ["nabali", "naukas", "nabali ko", "nabali ang"],
+      "english_symptom": "fracture",
+      "english_phrase": "fracture",
+      "default_severity": "severe",
+      "default_triage": "urgent",
+      "category": "trauma",
+      "is_condition": true
+    },
+    {
+      "id": "fever",
+      "terms": ["ginahilanat", "hilanat", "ginahilanat gid", "ginahilanat ko"],
+      "english_symptom": "fever",
+      "english_phrase": "fever",
+      "default_severity": "moderate",
+      "default_triage": "urgent",
+      "category": "general"
+    },
+    {
+      "id": "cough",
+      "terms": ["gahika", "ubo", "ginauubo", "ginahika"],
+      "english_symptom": "cough",
+      "english_phrase": "cough",
+      "default_severity": "mild",
+      "default_triage": "non_urgent",
+      "category": "respiratory"
+    },
+    {
+      "id": "breathing_difficulty",
+      "terms": ["budlay magginhawa", "dula ginhawa", "indi ko makaginhawa", "ginakapos"],
+      "english_symptom": "difficulty breathing",
+      "english_phrase": "difficulty breathing",
+      "default_severity": "critical",
+      "default_triage": "emergency",
+      "category": "respiratory"
+    },
+    {
+      "id": "chest_pain",
+      "terms": ["masakit dughan", "sakit dughan", "gasakit dughan"],
+      "english_symptom": "chest pain",
+      "english_phrase": "chest pain",
+      "default_severity": "severe",
+      "default_triage": "emergency",
+      "category": "cardiovascular"
+    },
+    {
+      "id": "burn",
+      "terms": ["nasunog", "nasunog ko", "nasunog sang"],
+      "english_symptom": "burn",
+      "english_phrase": "burn",
+      "default_severity": "moderate",
+      "default_triage": "urgent",
+      "category": "burn"
+    },
+    {
+      "id": "urinary_retention",
+      "terms": ["wala ko maka-ihi", "indi ko maka-ihi", "wala maka-ihi"],
+      "english_symptom": "urinary retention",
+      "english_phrase": "urinary retention",
+      "default_severity": "severe",
+      "default_triage": "emergency",
+      "category": "urinary",
+      "is_condition": true
+    },
+    {
+      "id": "speech_difficulty",
+      "terms": ["indi ko makahambal", "daw indi ko makahambal", "dili ko makahambal"],
+      "english_symptom": "speech difficulty",
+      "english_phrase": "speech difficulty",
+      "default_severity": "severe",
+      "default_triage": "emergency",
+      "category": "neurological"
+    },
+    {
+      "id": "dizziness",
+      "terms": ["nahilo", "nahilo ko", "nahihilo"],
+      "english_symptom": "dizziness",
+      "english_phrase": "dizziness",
+      "default_severity": "moderate",
+      "default_triage": "urgent",
+      "category": "neurological"
+    },
+    {
+      "id": "vomiting",
+      "terms": ["ginasuka", "ginasuka ko", "nagsuka"],
+      "english_symptom": "vomiting",
+      "english_phrase": "vomiting",
+      "default_severity": "moderate",
+      "default_triage": "urgent",
+      "category": "gastrointestinal"
+    },
+    {
+      "id": "diarrhea",
+      "terms": ["ginadudul-om", "ginadudulom", "dul-om", "dulom"],
+      "english_symptom": "diarrhea",
+      "english_phrase": "diarrhea",
+      "default_severity": "moderate",
+      "default_triage": "urgent",
+      "category": "gastrointestinal"
+    },
+    {
+      "id": "headache",
+      "terms": ["sakit ulo", "gasakit ulo", "masakit ulo", "sakit sa ulo"],
+      "english_symptom": "headache",
+      "english_phrase": "headache",
+      "default_severity": "mild",
+      "default_triage": "non_urgent",
+      "category": "neurological"
+    },
+    {
+      "id": "hypertension",
+      "terms": ["alta presyon", "alta presyon ko", "mataas presyon", "taas presyon"],
+      "english_symptom": "hypertension",
+      "english_phrase": "hypertension",
+      "default_severity": "moderate",
+      "default_triage": "urgent",
+      "category": "cardiovascular",
+      "is_condition": true
+    },
+    {
+      "id": "seizure",
+      "terms": ["naguyam", "nag-uyam", "naguyam ko", "nag convulsion"],
+      "english_symptom": "seizure",
+      "english_phrase": "seizure",
+      "default_severity": "critical",
+      "default_triage": "emergency",
+      "category": "neurological",
+      "is_condition": true
+    },
+    {
+      "id": "vehicle_trauma",
+      "terms": ["nabunggo ko sa salakyan", "nabunggo sa salakyan", "naaksidente ko"],
+      "english_symptom": "vehicle collision injury",
+      "english_phrase": "vehicle collision injury",
+      "default_severity": "critical",
+      "default_triage": "emergency",
+      "category": "trauma",
+      "is_condition": true
+    },
+    {
+      "id": "electrical_injury",
+      "terms": ["nakuryente ko", "nakuryente gid ko", "nakuryente"],
+      "english_symptom": "electrical injury",
+      "english_phrase": "electrical injury",
+      "default_severity": "critical",
+      "default_triage": "emergency",
+      "category": "trauma",
+      "is_condition": true
+    },
+    {
+      "id": "dog_bite",
+      "terms": ["ginkagat sang ido", "ginkagat sang ido ko", "ginkagat ko sang ido"],
+      "english_symptom": "dog bite",
+      "english_phrase": "dog bite",
+      "default_severity": "moderate",
+      "default_triage": "urgent",
+      "category": "infection",
+      "is_condition": true
+    },
+    {
+      "id": "dysuria",
+      "terms": ["masakit pag-ihi", "masakit pagihi", "sakit pag-ihi ko", "masakit pag-ihi ko"],
+      "english_symptom": "painful urination",
+      "english_phrase": "painful urination",
+      "default_severity": "moderate",
+      "default_triage": "urgent",
+      "category": "urinary"
+    },
+    {
+      "id": "hair_loss",
+      "terms": ["galagas buhok", "galagas buhok ko", "nagalagas buhok ko"],
+      "english_symptom": "hair loss",
+      "english_phrase": "hair loss",
+      "default_severity": "mild",
+      "default_triage": "non_urgent",
+      "category": "dermatological"
+    },
+    {
+      "id": "head_injury",
+      "terms": ["nabun-og ulo", "nabunog ulo", "nabun-og ulo ko", "nasumbag ulo ko"],
+      "english_symptom": "head injury",
+      "english_phrase": "head injury",
+      "default_severity": "severe",
+      "default_triage": "emergency",
+      "category": "trauma",
+      "is_condition": true
+    },
+    {
+      "id": "allergic_reaction",
+      "terms": ["gahubag lawas kag gakatol", "gahubag lawas ko kag gakatol", "gahubag kag gakatol lawas ko"],
+      "english_symptom": "allergic reaction",
+      "english_phrase": "allergic reaction",
+      "default_severity": "severe",
+      "default_triage": "emergency",
+      "category": "allergy",
+      "is_condition": true
+    },
+    {
+      "id": "suicidal_ideation",
+      "terms": ["gusto ko magpakamatay", "gusto ko magpatay", "buot ko magpakamatay"],
+      "english_symptom": "suicidal ideation",
+      "english_phrase": "suicidal ideation",
+      "default_severity": "critical",
+      "default_triage": "emergency",
+      "category": "mental_health",
+      "is_condition": true
+    },
+    {
+      "id": "high_fever",
+      "terms": ["ginahilanat gid ko", "hilanat gid", "ginahilanat ko 3 ka adlaw na", "39 hilanat ko"],
+      "english_symptom": "high fever",
+      "english_phrase": "high fever",
+      "default_severity": "moderate",
+      "default_triage": "urgent",
+      "category": "general"
+    },
+    {
+      "id": "eye_irritation",
+      "terms": ["gakitol mata", "mahamok mata ko", "may butlig sa mata"],
+      "english_symptom": "eye irritation",
+      "english_phrase": "eye irritation",
+      "default_severity": "mild",
+      "default_triage": "non_urgent",
+      "category": "ophthalmologic"
+    },
+    {
+      "id": "arm_weakness",
+      "terms": ["daw indi ko makabaton sang kamot", "indi ko makabaton sang kamot ko", "lemah ang kamot ko"],
+      "english_symptom": "arm weakness",
+      "english_phrase": "arm weakness",
+      "default_severity": "severe",
+      "default_triage": "emergency",
+      "category": "neurological"
+    },
+    {
+      "id": "severe_abdominal_pain",
+      "terms": ["ginabaldom gid ko", "masakit gid tiyan ko", "grabe sakit tiyan ko"],
+      "english_symptom": "severe abdominal pain",
+      "english_phrase": "severe abdominal pain",
+      "default_severity": "severe",
+      "default_triage": "urgent",
+      "category": "gastrointestinal"
+    },
+    {
+      "id": "bruise",
+      "terms": ["nabun-og", "nabunog", "may pasa"],
+      "english_symptom": "bruise",
+      "english_phrase": "bruise",
+      "default_severity": "mild",
+      "default_triage": "non_urgent",
+      "category": "dermatological"
+    },
+    {
+      "id": "nausea",
+      "terms": ["nahilo tiyan", "ginasuka-uka", "ginabaldom"],
+      "english_symptom": "nausea",
+      "english_phrase": "nausea",
+      "default_severity": "mild",
+      "default_triage": "non_urgent",
+      "category": "gastrointestinal"
+    }
+  ]
+}

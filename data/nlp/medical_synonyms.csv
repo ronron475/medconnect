@@ -1,0 +1,129 @@
+hiligaynon_term,english_term,synonym_group,status
+daw indi ko makabaton sang kamot,arm weakness,arm_weakness,active
+indi ko makabaton sang kamot ko,arm weakness,arm_weakness,active
+lemah ang kamot ko,arm weakness,arm_weakness,active
+gahubag lawas kag gakatol,allergic reaction,allergic_reaction,active
+gahubag lawas ko kag gakatol,allergic reaction,allergic_reaction,active
+gahubag kag gakatol lawas ko,allergic reaction,allergic_reaction,active
+ginahilanat gid ko,high fever,high_fever,active
+hilanat gid,high fever,high_fever,active
+ginahilanat ko 3 ka adlaw na,high fever,high_fever,active
+39 hilanat ko,high fever,high_fever,active
+nabunggo ko sa salakyan,vehicle collision injury,vehicle_trauma,active
+nabunggo sa salakyan,vehicle collision injury,vehicle_trauma,active
+naaksidente ko,vehicle collision injury,vehicle_trauma,active
+indi ko makahambal,speech difficulty,speech_difficulty,active
+daw indi ko makahambal,speech difficulty,speech_difficulty,active
+dili ko makahambal,speech difficulty,speech_difficulty,active
+gusto ko magpakamatay,suicidal ideation,suicidal_ideation,active
+gusto ko magpatay,suicidal ideation,suicidal_ideation,active
+buot ko magpakamatay,suicidal ideation,suicidal_ideation,active
+ginkagat sang ido,dog bite,dog_bite,active
+ginkagat sang ido ko,dog bite,dog_bite,active
+ginkagat ko sang ido,dog bite,dog_bite,active
+ginabaldom gid ko,severe abdominal pain,severe_abdominal_pain,active
+masakit gid tiyan ko,severe abdominal pain,severe_abdominal_pain,active
+grabe sakit tiyan ko,severe abdominal pain,severe_abdominal_pain,active
+budlay magginhawa,difficulty breathing,breathing_difficulty,active
+dula ginhawa,difficulty breathing,breathing_difficulty,active
+indi ko makaginhawa,difficulty breathing,breathing_difficulty,active
+ginakapos,difficulty breathing,breathing_difficulty,active
+nagdugo,bleeding,bleeding,active
+gadugo,bleeding,bleeding,active
+nagadugo,bleeding,bleeding,active
+grabe gid nagadugo,bleeding,bleeding,active
+nagdugo gid,bleeding,bleeding,active
+masakit pag-ihi,painful urination,dysuria,active
+masakit pagihi,painful urination,dysuria,active
+sakit pag-ihi ko,painful urination,dysuria,active
+masakit pag-ihi ko,painful urination,dysuria,active
+galagas buhok,hair loss,hair_loss,active
+galagas buhok ko,hair loss,hair_loss,active
+nagalagas buhok ko,hair loss,hair_loss,active
+gakitol mata,eye irritation,eye_irritation,active
+mahamok mata ko,eye irritation,eye_irritation,active
+may butlig sa mata,eye irritation,eye_irritation,active
+nakuryente ko,electrical injury,electrical_injury,active
+nakuryente gid ko,electrical injury,electrical_injury,active
+nakuryente,electrical injury,electrical_injury,active
+wala ko maka-ihi,urinary retention,urinary_retention,active
+indi ko maka-ihi,urinary retention,urinary_retention,active
+wala maka-ihi,urinary retention,urinary_retention,active
+ginahilanat,fever,fever,active
+hilanat,fever,fever,active
+ginahilanat gid,fever,fever,active
+ginahilanat ko,fever,fever,active
+alta presyon,hypertension,hypertension,active
+alta presyon ko,hypertension,hypertension,active
+mataas presyon,hypertension,hypertension,active
+taas presyon,hypertension,hypertension,active
+nabun-og ulo,head injury,head_injury,active
+nabunog ulo,head injury,head_injury,active
+nabun-og ulo ko,head injury,head_injury,active
+nasumbag ulo ko,head injury,head_injury,active
+masakit dughan,chest pain,chest_pain,active
+sakit dughan,chest pain,chest_pain,active
+gasakit dughan,chest pain,chest_pain,active
+naguyam,seizure,seizure,active
+nag-uyam,seizure,seizure,active
+naguyam ko,seizure,seizure,active
+nag convulsion,seizure,seizure,active
+nasunog,burn,burn,active
+nasunog ko,burn,burn,active
+nasunog sang,burn,burn,active
+ginadudul-om,diarrhea,diarrhea,active
+ginadudulom,diarrhea,diarrhea,active
+dul-om,diarrhea,diarrhea,active
+dulom,diarrhea,diarrhea,active
+sakit ulo,headache,headache,active
+gasakit ulo,headache,headache,active
+masakit ulo,headache,headache,active
+sakit sa ulo,headache,headache,active
+nahilo tiyan,nausea,nausea,active
+ginasuka-uka,nausea,nausea,active
+ginabaldom,nausea,nausea,active
+gahabok,swelling,swelling,active
+gahubag,swelling,swelling,active
+hubag,swelling,swelling,active
+habok,swelling,swelling,active
+namaga,swelling,swelling,active
+gahubag gid,swelling,swelling,active
+may nana,infection,pus_infection,active
+nana,infection,pus_infection,active
+may nana sa,infection,pus_infection,active
+ginasuka,vomiting,vomiting,active
+ginasuka ko,vomiting,vomiting,active
+nagsuka,vomiting,vomiting,active
+gasakit,pain,pain,active
+masakit,pain,pain,active
+sakit,pain,pain,active
+ginabaldom,pain,pain,active
+gakatol,itching,itching,active
+kakatol,itching,itching,active
+ginakamang,itching,itching,active
+nabali,fracture,fracture,active
+naukas,fracture,fracture,active
+nabali ko,fracture,fracture,active
+nabali ang,fracture,fracture,active
+galuya,weakness,weakness,active
+maluya,weakness,weakness,active
+kapoy gid,weakness,weakness,active
+may pilas,wound,wound,active
+pilas,wound,wound,active
+pilas ko,wound,wound,active
+nautod,amputation,amputation,active
+na-utod,amputation,amputation,active
+nautod ko,amputation,amputation,active
+nahilo,dizziness,dizziness,active
+nahilo ko,dizziness,dizziness,active
+nahihilo,dizziness,dizziness,active
+gapula,redness,redness,active
+mapula,redness,redness,active
+ginapula,redness,redness,active
+gahika,cough,cough,active
+ubo,cough,cough,active
+ginauubo,cough,cough,active
+ginahika,cough,cough,active
+nabun-og,bruise,bruise,active
+nabunog,bruise,bruise,active
+may pasa,bruise,bruise,active

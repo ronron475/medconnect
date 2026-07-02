@@ -1,0 +1,160 @@
+/**
+ * medConnect Design System v4.0 — Muted Aqua-Slate Compact Edition
+ * A space-efficient, data-dense clinical UI framework.
+ */
+
+:root {
+    /* --- Palette --- */
+    --mc-ice-blue:      #F4F8FA;    /* Main workspace background (non-glare) */
+    --mc-aqua-medium:   #018A93;    /* Anchored Sidebar (toned down) */
+    --mc-aqua-soft:     #D8EAEE;    /* Secondary background / Greeting card */
+    --mc-navy-dark:     #012A4A;    /* Main text, headers, numbers */
+    --mc-slate-muted:   #608395;    /* Status lines, empty states, placeholders */
+    --mc-border-thin:   #E2EDF1;    /* Subtle borders */
+    --mc-white:         #FFFFFF;    /* Pure white containers */
+
+    /* --- Surfaces --- */
+    --mc-bg: var(--mc-ice-blue);
+    --mc-surface: var(--mc-white);
+    --mc-border: var(--mc-border-thin);
+    
+    /* --- Spacing (Compact) --- */
+    --mc-space-xs: 4px;
+    --mc-space-sm: 8px;
+    --mc-space-md: 12px;  /* Tighter padding */
+    --mc-space-lg: 20px;
+    --mc-space-xl: 32px;
+    
+    /* --- Typography (Compact) --- */
+    --mc-font: 'Inter', system-ui, -apple-system, sans-serif;
+    --mc-fs-h1: 1.5rem;    /* Smaller h1 */
+    --mc-fs-h2: 1.25rem;
+    --mc-fs-h3: 1.1rem;
+    --mc-fs-body: 0.875rem; /* Proportional body font */
+    --mc-fs-sm: 0.8125rem;
+    --mc-fs-xs: 0.75rem;
+    
+    /* --- UI Specs --- */
+    --mc-radius: 12px;      /* Strict 12px rounding */
+    --mc-shadow-micro: 0 1px 3px rgba(1, 42, 74, 0.06); /* Soft micro-shadow */
+    --header-h: 120px;      /* Enlarged header height for prominent branding */
+    --sidebar-width: 260px;
+}
+
+/* --- Root Layout Wrapper --- */
+.root-wrapper {
+    display: flex;
+    min-height: 100vh;
+}
+
+.sidebar {
+    position: fixed !important;
+    width: var(--sidebar-width) !important;
+    height: 100vh !important;
+    top: 0 !important;
+    left: 0 !important;
+    z-index: 1050 !important;
+}
+
+.main-content {
+    margin-left: var(--sidebar-width) !important;
+    width: calc(100% - var(--sidebar-width)) !important;
+    padding: 2.5rem !important;
+    min-height: 100vh;
+    display: block !important;
+}
+
+@media (max-width: 1024px) {
+    .main-content {
+        margin-left: 0 !important;
+        width: 100% !important;
+        padding: 16px !important;
+    }
+}
+
+/* --- Base Reset --- */
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+    font-family: var(--mc-font);
+    background-color: var(--mc-bg);
+    color: var(--mc-navy-dark);
+    line-height: 1.4; /* Compact line height */
+    -webkit-font-smoothing: antialiased;
+    font-size: var(--mc-fs-body);
+}
+
+/* --- Content Headers --- */
+.text-h1 { font-size: var(--mc-fs-h1); font-weight: 800; color: var(--mc-navy-dark); letter-spacing: -0.01em; }
+.text-h2 { font-size: var(--mc-fs-h2); font-weight: 700; color: var(--mc-navy-dark); }
+.text-h3 { font-size: var(--mc-fs-h3); font-weight: 600; color: var(--mc-navy-dark); }
+.text-muted { color: var(--mc-slate-muted); font-size: var(--mc-fs-sm); }
+
+/* --- Unified Compact Card --- */
+.mc-card {
+    background: var(--mc-surface);
+    border-radius: var(--mc-radius);
+    border: 1px solid var(--mc-border);
+    box-shadow: var(--mc-shadow-micro);
+    padding: var(--mc-space-lg);
+}
+
+/* --- Buttons (Pill) --- */
+.mc-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 8px 18px;
+    border-radius: 99px; /* Styled pill buttons */
+    font-weight: 700;
+    font-size: 0.8125rem;
+    cursor: pointer;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    border: 1px solid transparent;
+    gap: 8px;
+    text-decoration: none;
+    white-space: nowrap;
+}
+
+.mc-btn--primary {
+    background: var(--mc-aqua-medium);
+    color: #fff;
+}
+.mc-btn--primary:hover {
+    background: var(--mc-navy-dark);
+    transform: translateY(-1px);
+}
+
+.mc-btn--outline {
+    background: transparent;
+    border-color: var(--mc-border-thin);
+    color: var(--mc-aqua-medium);
+}
+.mc-btn--outline:hover {
+    background: var(--mc-ice-blue);
+    border-color: var(--mc-aqua-medium);
+}
+
+/* --- Badges & Pills --- */
+.mc-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 2px 10px;
+    border-radius: 99px; /* Small tightly padded pill badges */
+    font-size: 0.7rem;
+    font-weight: 700;
+    background: var(--mc-ice-blue);
+    color: var(--mc-slate-muted);
+    border: 1px solid var(--mc-border-thin);
+    text-transform: uppercase;
+    letter-spacing: 0.02em;
+}
+
+/* --- Utility --- */
+.flex-between { display: flex; justify-content: space-between; align-items: center; }
+.flex-center { display: flex; align-items: center; }
+.gap-xs { gap: var(--mc-space-xs); }
+.gap-sm { gap: var(--mc-space-sm); }
+.gap-md { gap: var(--mc-space-md); }
+.mb-sm { margin-bottom: var(--mc-space-sm); }
+.mb-md { margin-bottom: var(--mc-space-md); }

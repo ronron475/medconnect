@@ -1,0 +1,251 @@
+/* ═══════════════════════════════════════════════════════════
+   medConnect — Aqua Provider Sidebar
+   Medium aqua #028090 · White text · Clean right border
+═══════════════════════════════════════════════════════════ */
+
+:root {
+  --sba-w:          260px;
+  --sba-bg:         #069396;   /* Deep Teal - updated per branding requirement */
+  --sba-bg-dark:    #057a7c;   /* slightly deeper for logo area */
+  --sba-bg-hover:   rgba(255,255,255,0.12);
+  --sba-bg-active:  rgba(255,255,255,0.18);
+  --sba-border-r:   rgba(255,255,255,0.10); /* right-edge separator */
+  --sba-text:       rgba(255,255,255,0.72);
+  --sba-text-active:#ffffff;
+  --sba-accent:     #67E8F9;   /* bright cyan — active bar + logo span */
+  --sba-radius:     10px;
+}
+
+/* ── Shell ── */
+.sb-aqua {
+  width: var(--sba-w);
+  background: var(--sba-bg);
+  position: fixed;
+  top: 0; left: 0; bottom: 0;
+  display: flex;
+  flex-direction: column;
+  z-index: 9999 !important;
+  /* clean right-hand border separating sidebar from workspace */
+  border-right: 1px solid var(--sba-border-r);
+  /* subtle depth shadow */
+  box-shadow: 2px 0 16px rgba(2,128,144,0.20);
+  pointer-events: all !important;
+}
+
+/* ── Logo area ── */
+.sba-logo {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  padding: 22px 20px 18px;
+  text-decoration: none;
+  background: var(--sba-bg-dark);
+  border-bottom: 1px solid rgba(255,255,255,0.08);
+  flex-shrink: 0;
+  transition: background 0.14s;
+}
+
+.sba-logo:hover {
+  background: rgba(0,0,0,0.08);
+}
+
+.sba-logo-text {
+  font-size: 19px;
+  font-weight: 800;
+  color: #ffffff;
+  letter-spacing: -0.3px;
+  line-height: 1;
+  font-family: 'Inter', 'Segoe UI', system-ui, sans-serif;
+}
+
+/* "Connect" in bright cyan */
+.sba-logo-text span {
+  color: var(--sba-accent);
+}
+
+/* ── Navigation ── */
+.sba-nav {
+  flex: 1;
+  padding: 14px 12px 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  overflow-y: auto;
+  scrollbar-width: none;
+}
+.sba-nav::-webkit-scrollbar { display: none; }
+
+/* Nav item */
+.sba-item {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  padding: 11px 14px;
+  border-radius: var(--sba-radius);
+  color: var(--sba-text);
+  text-decoration: none;
+  font-size: 13.5px;
+  font-weight: 500;
+  border: 1px solid transparent;
+  position: relative;
+  transition: background 0.14s ease, color 0.14s ease, border-color 0.14s ease;
+  font-family: 'Inter', 'Segoe UI', system-ui, sans-serif;
+  letter-spacing: 0.01em;
+}
+
+.sba-icon {
+  width: 17px; height: 17px;
+  flex-shrink: 0;
+  stroke-width: 1.8;
+  opacity: 0.85;
+  transition: opacity 0.14s;
+}
+
+/* Hover */
+.sba-item:hover {
+  background: var(--sba-bg-hover);
+  color: #ffffff;
+}
+.sba-item:hover .sba-icon {
+  opacity: 1;
+}
+
+/* Active */
+.sba-item.is-active {
+  background: var(--sba-bg-active);
+  color: var(--sba-text-active);
+  font-weight: 700;
+  border-color: rgba(255,255,255,0.15);
+}
+.sba-item.is-active .sba-icon {
+  opacity: 1;
+}
+
+/* Active left accent bar */
+.sba-item.is-active::before {
+  content: '';
+  position: absolute;
+  left: 0; top: 20%; bottom: 20%;
+  width: 3px;
+  background: var(--sba-accent);
+  border-radius: 0 3px 3px 0;
+}
+
+/* ── Grouped navigation sections ── */
+.sba-group-label {
+  margin: 14px 4px 6px;
+  padding: 0 10px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.45);
+  font-family: 'Inter', 'Segoe UI', system-ui, sans-serif;
+}
+
+.sba-group-label:first-child {
+  margin-top: 4px;
+}
+
+.sba-group-label--secondary {
+  margin-top: 18px;
+  padding-top: 12px;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  color: rgba(255, 255, 255, 0.35);
+}
+
+.sba-item--secondary {
+  font-size: 13px;
+  opacity: 0.92;
+}
+
+.sba-item--secondary:not(.is-active) {
+  color: rgba(255, 255, 255, 0.58);
+}
+
+/* ── Profile chip ── */
+.sba-profile {
+  margin: 6px 12px 8px;
+  padding: 12px 13px;
+  background: rgba(0,0,0,0.12);
+  border: 1px solid rgba(255,255,255,0.10);
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-shrink: 0;
+}
+
+.sba-avatar {
+  width: 34px; height: 34px;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.20);
+  border: 2px solid rgba(255,255,255,0.30);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 12px; font-weight: 800;
+  color: #ffffff;
+  flex-shrink: 0;
+  font-family: 'Inter', 'Segoe UI', system-ui, sans-serif;
+}
+
+.sba-profile-info { min-width: 0; }
+
+.sba-name {
+  font-size: 12.5px;
+  font-weight: 700;
+  color: #ffffff;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-family: 'Inter', 'Segoe UI', system-ui, sans-serif;
+}
+
+.sba-role {
+  font-size: 10.5px;
+  color: rgba(255,255,255,0.50);
+  margin-top: 1px;
+}
+
+/* ── Logout ── */
+.sba-logout {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 0 12px 18px;
+  padding: 10px 14px;
+  border-radius: var(--sba-radius);
+  color: rgba(255,255,255,0.50);
+  text-decoration: none;
+  font-size: 13.5px;
+  font-weight: 500;
+  border: 1px solid rgba(255,255,255,0.08);
+  transition: background 0.14s, color 0.14s, border-color 0.14s;
+  flex-shrink: 0;
+  font-family: 'Inter', 'Segoe UI', system-ui, sans-serif;
+  background: none;
+  cursor: pointer;
+}
+.sba-logout:hover {
+  background: rgba(220,38,38,0.22);
+  color: #fca5a5;
+  border-color: rgba(220,38,38,0.30);
+}
+
+/* ── Layout helper — push main content past sidebar ── */
+.has-aqua-sidebar {
+  margin-left: var(--sba-w);
+}
+
+/* ── Responsive ── */
+@media (max-width: 860px) {
+  .sb-aqua {
+    transform: translateX(-100%);
+    transition: transform 0.25s ease;
+  }
+  .sb-aqua.is-open {
+    transform: translateX(0);
+  }
+  .has-aqua-sidebar {
+    margin-left: 0;
+  }
+}

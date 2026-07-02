@@ -1,0 +1,250 @@
+/* ── medConnect Consultation Summary & Follow-Up Cards ── */
+
+.sf-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+  align-items: start;
+}
+
+@media (max-width: 860px) {
+  .sf-grid { grid-template-columns: 1fr; }
+}
+
+/* ── Base card ── */
+.sf-card {
+  background: #ffffff;
+  border-radius: 18px;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 2px 14px rgba(15, 23, 42, 0.06);
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+/* accent top border per card type */
+.sf-card--summary { border-top: 3px solid #2563eb; }
+.sf-card--followup { border-top: 3px solid #0d9488; }
+
+/* ── Header row ── */
+.sf-card-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.sf-icon {
+  width: 42px;
+  height: 42px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.sf-icon--blue { background: #eff6ff; color: #2563eb; }
+.sf-icon--teal { background: #f0fdfa; color: #0d9488; }
+
+.sf-card-titles { flex: 1; min-width: 0; }
+
+.sf-card-title {
+  font-size: 15px;
+  font-weight: 800;
+  color: #0f172a;
+  line-height: 1.2;
+}
+
+.sf-card-sub {
+  font-size: 11.5px;
+  color: #94a3b8;
+  margin-top: 2px;
+}
+
+/* ── Status badge ── */
+.sf-status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 11.5px;
+  font-weight: 700;
+  padding: 4px 10px 4px 8px;
+  border-radius: 20px;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.sf-badge-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.sf-badge--pending {
+  background: #fffbeb;
+  color: #d97706;
+  border: 1px solid #fde68a;
+}
+.sf-badge--pending .sf-badge-dot { background: #f59e0b; }
+
+.sf-badge--done {
+  background: #f0fdf4;
+  color: #16a34a;
+  border: 1px solid #bbf7d0;
+}
+.sf-badge--done .sf-badge-dot { background: #22c55e; }
+
+/* ── Summary meta row ── */
+.sf-summary-meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.sf-meta-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 12px;
+  color: #64748b;
+  font-weight: 500;
+}
+
+.sf-meta-item svg { color: #cbd5e1; flex-shrink: 0; }
+
+.sf-meta-dot {
+  width: 3px;
+  height: 3px;
+  border-radius: 50%;
+  background: #cbd5e1;
+}
+
+/* ── Summary body fields ── */
+.sf-summary-body {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.sf-field {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.sf-field-label {
+  font-size: 10.5px;
+  font-weight: 700;
+  color: #94a3b8;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.sf-field-value {
+  font-size: 13.5px;
+  color: #334155;
+  line-height: 1.65;
+}
+
+.sf-field-value--diagnosis {
+  font-size: 14px;
+  font-weight: 700;
+  color: #0f172a;
+  background: #f8fafc;
+  border-left: 3px solid #2563eb;
+  padding: 8px 12px;
+  border-radius: 0 8px 8px 0;
+}
+
+/* ── Follow-up date block ── */
+.sf-followup-date-block {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  background: #f0fdfa;
+  border: 1px solid #ccfbf1;
+  border-radius: 12px;
+  padding: 14px 16px;
+}
+
+.sf-date-icon {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  background: #ffffff;
+  border: 1px solid #99f6e4;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #0d9488;
+  flex-shrink: 0;
+}
+
+.sf-date-label {
+  display: block;
+  font-size: 10.5px;
+  font-weight: 700;
+  color: #0f766e;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 3px;
+}
+
+.sf-date-value {
+  display: block;
+  font-size: 16px;
+  font-weight: 800;
+  color: #0f172a;
+  letter-spacing: -0.2px;
+}
+
+/* ── Follow-up message ── */
+.sf-followup-message {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+/* ── CTA buttons ── */
+.sf-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 11px 18px;
+  border-radius: 10px;
+  font-size: 13px;
+  font-weight: 700;
+  text-decoration: none;
+  transition: opacity 0.15s, transform 0.15s, background 0.15s, border-color 0.15s;
+}
+
+.sf-btn:hover { opacity: 0.88; transform: translateY(-1px); }
+
+.sf-btn--primary {
+  background: linear-gradient(135deg, #1d4ed8, #2563eb);
+  color: #ffffff;
+  box-shadow: 0 4px 14px rgba(37, 99, 235, 0.25);
+}
+
+.sf-btn--teal {
+  background: linear-gradient(135deg, #0d9488, #0ea5e9);
+  color: #ffffff;
+  box-shadow: 0 4px 14px rgba(13, 148, 136, 0.25);
+}
+
+.sf-btn--outline {
+  background: #f8fafc;
+  color: #334155;
+  border: 1px solid #e2e8f0;
+}
+
+.sf-btn--outline:hover {
+  background: #f1f5f9;
+  border-color: #0d9488;
+  color: #0d9488;
+  opacity: 1;
+}

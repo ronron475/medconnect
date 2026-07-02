@@ -1,0 +1,777 @@
+allergy_id,allergy_name,category,search_name,source
+1,Acrylate,chemical,acrylate,clinical_reference_compendium
+2,Bacitracin,chemical,bacitracin,clinical_reference_compendium
+3,Balsam of Peru,chemical,balsam of peru,clinical_reference_compendium
+4,Benzalkonium chloride,chemical,benzalkonium chloride,clinical_reference_compendium
+5,Benzophenone,chemical,benzophenone,clinical_reference_compendium
+6,Carba mix,chemical,carba mix,clinical_reference_compendium
+7,Chlorhexidine gluconate,chemical,chlorhexidine gluconate,clinical_reference_compendium
+8,Chlorine,chemical,chlorine,clinical_reference_compendium
+9,Chromium,chemical,chromium,clinical_reference_compendium
+10,Cobalt,chemical,cobalt,clinical_reference_compendium
+11,Colophony,chemical,colophony,clinical_reference_compendium
+12,Epoxy resin,chemical,epoxy resin,clinical_reference_compendium
+13,Ethyl cyanoacrylate,chemical,ethyl cyanoacrylate,clinical_reference_compendium
+14,Formaldehyde,chemical,formaldehyde,clinical_reference_compendium
+15,Fragrance mix,chemical,fragrance mix,clinical_reference_compendium
+16,Glutaraldehyde,chemical,glutaraldehyde,clinical_reference_compendium
+17,Gold,chemical,gold,clinical_reference_compendium
+18,Hair dye chemical,chemical,hair dye chemical,clinical_reference_compendium
+19,Iodine,chemical,iodine,clinical_reference_compendium
+20,Isothiazolinone,chemical,isothiazolinone,clinical_reference_compendium
+21,Lanolin,chemical,lanolin,clinical_reference_compendium
+22,Latex chemical,chemical,latex chemical,clinical_reference_compendium
+23,Latex chemical accelerator,chemical,latex chemical accelerator,clinical_reference_compendium
+24,Latex-adjacent chemical sensitizer,chemical,latex-adjacent chemical sensitizer,clinical_reference_compendium
+25,Lidocaine patch adhesive,chemical,lidocaine patch adhesive,clinical_reference_compendium
+26,Medical tape adhesive,chemical,medical tape adhesive,clinical_reference_compendium
+27,Mercury,chemical,mercury,clinical_reference_compendium
+28,Methacrylate,chemical,methacrylate,clinical_reference_compendium
+29,Methylisothiazolinone,chemical,methylisothiazolinone,clinical_reference_compendium
+30,Methylparaben,chemical,methylparaben,clinical_reference_compendium
+31,Neomycin sulfate,chemical,neomycin sulfate,clinical_reference_compendium
+32,Nickel,chemical,nickel,clinical_reference_compendium
+33,Octocrylene,chemical,octocrylene,clinical_reference_compendium
+34,Palladium,chemical,palladium,clinical_reference_compendium
+35,Paraben,chemical,paraben,clinical_reference_compendium
+36,Paraphenylenediamine,chemical,paraphenylenediamine,clinical_reference_compendium
+37,Propylparaben,chemical,propylparaben,clinical_reference_compendium
+38,Rosin,chemical,rosin,clinical_reference_compendium
+39,Rubber chemical,chemical,rubber chemical,clinical_reference_compendium
+40,Sunscreen chemical,chemical,sunscreen chemical,clinical_reference_compendium
+41,Thiuram mix,chemical,thiuram mix,clinical_reference_compendium
+42,Titanium,chemical,titanium,clinical_reference_compendium
+43,Topical antibiotic,chemical,topical antibiotic,clinical_reference_compendium
+44,Wool alcohol,chemical,wool alcohol,clinical_reference_compendium
+45,Alder pollen,environmental,alder pollen,clinical_reference_compendium
+46,Alternaria alternata,environmental,alternaria alternata,clinical_reference_compendium
+47,American cockroach,environmental,american cockroach,clinical_reference_compendium
+48,Animal dander,environmental,animal dander,clinical_reference_compendium
+49,Ash pollen,environmental,ash pollen,clinical_reference_compendium
+50,Aspergillus fumigatus,environmental,aspergillus fumigatus,clinical_reference_compendium
+51,Bermuda grass pollen,environmental,bermuda grass pollen,clinical_reference_compendium
+52,Birch pollen,environmental,birch pollen,clinical_reference_compendium
+53,Blomia tropicalis,environmental,blomia tropicalis,clinical_reference_compendium
+54,Cat dander,environmental,cat dander,clinical_reference_compendium
+55,Cedar pollen,environmental,cedar pollen,clinical_reference_compendium
+56,Cladosporium herbarum,environmental,cladosporium herbarum,clinical_reference_compendium
+57,Cockroach,environmental,cockroach,clinical_reference_compendium
+58,Common ragweed pollen,environmental,common ragweed pollen,clinical_reference_compendium
+59,Cottonwood pollen,environmental,cottonwood pollen,clinical_reference_compendium
+60,Dermatophagoides farinae,environmental,dermatophagoides farinae,clinical_reference_compendium
+61,Dermatophagoides pteronyssinus,environmental,dermatophagoides pteronyssinus,clinical_reference_compendium
+62,Dog dander,environmental,dog dander,clinical_reference_compendium
+63,Down feather,environmental,down feather,clinical_reference_compendium
+64,Elm pollen,environmental,elm pollen,clinical_reference_compendium
+65,English plantain pollen,environmental,english plantain pollen,clinical_reference_compendium
+66,Epicoccum nigrum,environmental,epicoccum nigrum,clinical_reference_compendium
+67,Feather,environmental,feather,clinical_reference_compendium
+68,Fusarium,environmental,fusarium,clinical_reference_compendium
+69,German cockroach,environmental,german cockroach,clinical_reference_compendium
+70,Giant ragweed pollen,environmental,giant ragweed pollen,clinical_reference_compendium
+71,Grass pollen,environmental,grass pollen,clinical_reference_compendium
+72,Hazel pollen,environmental,hazel pollen,clinical_reference_compendium
+73,Helminthosporium halodes,environmental,helminthosporium halodes,clinical_reference_compendium
+74,Horse dander,environmental,horse dander,clinical_reference_compendium
+75,House dust mite,environmental,house dust mite,clinical_reference_compendium
+76,Indoor allergen,environmental,indoor allergen,clinical_reference_compendium
+77,Kentucky bluegrass pollen,environmental,kentucky bluegrass pollen,clinical_reference_compendium
+78,Lamb quarters pollen,environmental,lamb quarters pollen,clinical_reference_compendium
+79,Maple pollen,environmental,maple pollen,clinical_reference_compendium
+80,Mold,environmental,mold,clinical_reference_compendium
+81,Mountain cedar pollen,environmental,mountain cedar pollen,clinical_reference_compendium
+82,Mugwort pollen,environmental,mugwort pollen,clinical_reference_compendium
+83,Oak pollen,environmental,oak pollen,clinical_reference_compendium
+84,Orchard grass pollen,environmental,orchard grass pollen,clinical_reference_compendium
+85,Outdoor allergen,environmental,outdoor allergen,clinical_reference_compendium
+86,Penicillium chrysogenum,environmental,penicillium chrysogenum,clinical_reference_compendium
+87,Pigeon feather,environmental,pigeon feather,clinical_reference_compendium
+88,Pigweed pollen,environmental,pigweed pollen,clinical_reference_compendium
+89,Pine pollen,environmental,pine pollen,clinical_reference_compendium
+90,Pollen,environmental,pollen,clinical_reference_compendium
+91,Ragweed pollen,environmental,ragweed pollen,clinical_reference_compendium
+92,Rhizopus,environmental,rhizopus,clinical_reference_compendium
+93,Rodent urine protein,environmental,rodent urine protein,clinical_reference_compendium
+94,Ryegrass pollen,environmental,ryegrass pollen,clinical_reference_compendium
+95,Sagebrush pollen,environmental,sagebrush pollen,clinical_reference_compendium
+96,Storage mite,environmental,storage mite,clinical_reference_compendium
+97,Sweet vernal grass pollen,environmental,sweet vernal grass pollen,clinical_reference_compendium
+98,Timothy grass pollen,environmental,timothy grass pollen,clinical_reference_compendium
+99,Tree pollen,environmental,tree pollen,clinical_reference_compendium
+100,Weed pollen,environmental,weed pollen,clinical_reference_compendium
+101,Almond,food,almond,clinical_reference_compendium
+102,Almond allergy,food,almond allergy,clinical_reference_compendium
+103,Amaranth,food,amaranth,clinical_reference_compendium
+104,Amaranth allergy,food,amaranth allergy,clinical_reference_compendium
+105,Anchovy,food,anchovy,clinical_reference_compendium
+106,Anchovy allergy,food,anchovy allergy,clinical_reference_compendium
+107,Apple,food,apple,clinical_reference_compendium
+108,Apple allergy,food,apple allergy,clinical_reference_compendium
+109,Apricot,food,apricot,clinical_reference_compendium
+110,Apricot allergy,food,apricot allergy,clinical_reference_compendium
+111,Atlantic salmon,food,atlantic salmon,clinical_reference_compendium
+112,Atlantic salmon allergy,food,atlantic salmon allergy,clinical_reference_compendium
+113,Avocado,food,avocado,clinical_reference_compendium
+114,Avocado allergy,food,avocado allergy,clinical_reference_compendium
+115,Baker yeast,food,baker yeast,clinical_reference_compendium
+116,Baker yeast allergy,food,baker yeast allergy,clinical_reference_compendium
+117,Banana,food,banana,clinical_reference_compendium
+118,Banana allergy,food,banana allergy,clinical_reference_compendium
+119,Barley,food,barley,clinical_reference_compendium
+120,Barley allergy,food,barley allergy,clinical_reference_compendium
+121,Bass,food,bass,clinical_reference_compendium
+122,Bass allergy,food,bass allergy,clinical_reference_compendium
+123,Beef,food,beef,clinical_reference_compendium
+124,Beef allergy,food,beef allergy,clinical_reference_compendium
+125,Bell pepper,food,bell pepper,clinical_reference_compendium
+126,Bell pepper allergy,food,bell pepper allergy,clinical_reference_compendium
+127,Blackberry,food,blackberry,clinical_reference_compendium
+128,Blackberry allergy,food,blackberry allergy,clinical_reference_compendium
+129,Blueberry,food,blueberry,clinical_reference_compendium
+130,Blueberry allergy,food,blueberry allergy,clinical_reference_compendium
+131,Bovine gelatin,food,bovine gelatin,clinical_reference_compendium
+132,Bovine gelatin allergy,food,bovine gelatin allergy,clinical_reference_compendium
+133,Brazil nut,food,brazil nut,clinical_reference_compendium
+134,Brazil nut allergy,food,brazil nut allergy,clinical_reference_compendium
+135,Brewer yeast,food,brewer yeast,clinical_reference_compendium
+136,Brewer yeast allergy,food,brewer yeast allergy,clinical_reference_compendium
+137,Buckwheat,food,buckwheat,clinical_reference_compendium
+138,Buckwheat allergy,food,buckwheat allergy,clinical_reference_compendium
+139,Carrageenan,food,carrageenan,clinical_reference_compendium
+140,Carrageenan allergy,food,carrageenan allergy,clinical_reference_compendium
+141,Carrot,food,carrot,clinical_reference_compendium
+142,Carrot allergy,food,carrot allergy,clinical_reference_compendium
+143,Casein,food,casein,clinical_reference_compendium
+144,Cashew,food,cashew,clinical_reference_compendium
+145,Cashew allergy,food,cashew allergy,clinical_reference_compendium
+146,Celery,food,celery,clinical_reference_compendium
+147,Celery allergy,food,celery allergy,clinical_reference_compendium
+148,Cherry,food,cherry,clinical_reference_compendium
+149,Cherry allergy,food,cherry allergy,clinical_reference_compendium
+150,Chestnut,food,chestnut,clinical_reference_compendium
+151,Chestnut allergy,food,chestnut allergy,clinical_reference_compendium
+152,Chia seed,food,chia seed,clinical_reference_compendium
+153,Chia seed allergy,food,chia seed allergy,clinical_reference_compendium
+154,Chicken,food,chicken,clinical_reference_compendium
+155,Chicken allergy,food,chicken allergy,clinical_reference_compendium
+156,Chicken egg,food,chicken egg,clinical_reference_compendium
+157,Chicken egg allergy,food,chicken egg allergy,clinical_reference_compendium
+158,Chocolate,food,chocolate,clinical_reference_compendium
+159,Chocolate allergy,food,chocolate allergy,clinical_reference_compendium
+160,Clam,food,clam,clinical_reference_compendium
+161,Clam allergy,food,clam allergy,clinical_reference_compendium
+162,Cocoa,food,cocoa,clinical_reference_compendium
+163,Cocoa allergy,food,cocoa allergy,clinical_reference_compendium
+164,Coconut,food,coconut,clinical_reference_compendium
+165,Coconut allergy,food,coconut allergy,clinical_reference_compendium
+166,Coffee,food,coffee,clinical_reference_compendium
+167,Coffee allergy,food,coffee allergy,clinical_reference_compendium
+168,Corn,food,corn,clinical_reference_compendium
+169,Corn allergy,food,corn allergy,clinical_reference_compendium
+170,Cow milk,food,cow milk,clinical_reference_compendium
+171,Cow milk allergy,food,cow milk allergy,clinical_reference_compendium
+172,Crab,food,crab,clinical_reference_compendium
+173,Crab allergy,food,crab allergy,clinical_reference_compendium
+174,Crayfish,food,crayfish,clinical_reference_compendium
+175,Crayfish allergy,food,crayfish allergy,clinical_reference_compendium
+176,Cucumber,food,cucumber,clinical_reference_compendium
+177,Cucumber allergy,food,cucumber allergy,clinical_reference_compendium
+178,Duck,food,duck,clinical_reference_compendium
+179,Duck allergy,food,duck allergy,clinical_reference_compendium
+180,Egg,food,egg,clinical_reference_compendium
+181,Egg allergy,food,egg allergy,clinical_reference_compendium
+182,Egg white,food,egg white,clinical_reference_compendium
+183,Egg white allergy,food,egg white allergy,clinical_reference_compendium
+184,Egg yolk,food,egg yolk,clinical_reference_compendium
+185,Egg yolk allergy,food,egg yolk allergy,clinical_reference_compendium
+186,Fish,food,fish,clinical_reference_compendium
+187,Fish allergy,food,fish allergy,clinical_reference_compendium
+188,Flax seed,food,flax seed,clinical_reference_compendium
+189,Flax seed allergy,food,flax seed allergy,clinical_reference_compendium
+190,Food coloring,food,food coloring,clinical_reference_compendium
+191,Food coloring allergy,food,food coloring allergy,clinical_reference_compendium
+192,Garlic,food,garlic,clinical_reference_compendium
+193,Garlic allergy,food,garlic allergy,clinical_reference_compendium
+194,Gelatin,food,gelatin,clinical_reference_compendium
+195,Gelatin allergy,food,gelatin allergy,clinical_reference_compendium
+196,Gluten,food,gluten,clinical_reference_compendium
+197,Goat milk,food,goat milk,clinical_reference_compendium
+198,Goat milk allergy,food,goat milk allergy,clinical_reference_compendium
+199,Grape,food,grape,clinical_reference_compendium
+200,Grape allergy,food,grape allergy,clinical_reference_compendium
+201,Grapefruit,food,grapefruit,clinical_reference_compendium
+202,Grapefruit allergy,food,grapefruit allergy,clinical_reference_compendium
+203,Guar gum,food,guar gum,clinical_reference_compendium
+204,Guar gum allergy,food,guar gum allergy,clinical_reference_compendium
+205,Haddock,food,haddock,clinical_reference_compendium
+206,Haddock allergy,food,haddock allergy,clinical_reference_compendium
+207,Halibut,food,halibut,clinical_reference_compendium
+208,Halibut allergy,food,halibut allergy,clinical_reference_compendium
+209,Hazelnut,food,hazelnut,clinical_reference_compendium
+210,Hazelnut allergy,food,hazelnut allergy,clinical_reference_compendium
+211,Honey,food,honey,clinical_reference_compendium
+212,Honey allergy,food,honey allergy,clinical_reference_compendium
+213,Kamut,food,kamut,clinical_reference_compendium
+214,Kamut allergy,food,kamut allergy,clinical_reference_compendium
+215,Kiwi,food,kiwi,clinical_reference_compendium
+216,Kiwi allergy,food,kiwi allergy,clinical_reference_compendium
+217,Lactose,food,lactose,clinical_reference_compendium
+218,Lamb,food,lamb,clinical_reference_compendium
+219,Lamb allergy,food,lamb allergy,clinical_reference_compendium
+220,Lecithin,food,lecithin,clinical_reference_compendium
+221,Lecithin allergy,food,lecithin allergy,clinical_reference_compendium
+222,Lemon,food,lemon,clinical_reference_compendium
+223,Lemon allergy,food,lemon allergy,clinical_reference_compendium
+224,Lime,food,lime,clinical_reference_compendium
+225,Lime allergy,food,lime allergy,clinical_reference_compendium
+226,Lobster,food,lobster,clinical_reference_compendium
+227,Lobster allergy,food,lobster allergy,clinical_reference_compendium
+228,Lupin,food,lupin,clinical_reference_compendium
+229,Lupin allergy,food,lupin allergy,clinical_reference_compendium
+230,Macadamia nut,food,macadamia nut,clinical_reference_compendium
+231,Macadamia nut allergy,food,macadamia nut allergy,clinical_reference_compendium
+232,Mango,food,mango,clinical_reference_compendium
+233,Mango allergy,food,mango allergy,clinical_reference_compendium
+234,Melon,food,melon,clinical_reference_compendium
+235,Melon allergy,food,melon allergy,clinical_reference_compendium
+236,Milk,food,milk,clinical_reference_compendium
+237,Milk allergy,food,milk allergy,clinical_reference_compendium
+238,Millet,food,millet,clinical_reference_compendium
+239,Millet allergy,food,millet allergy,clinical_reference_compendium
+240,Monosodium glutamate,food,monosodium glutamate,clinical_reference_compendium
+241,Monosodium glutamate allergy,food,monosodium glutamate allergy,clinical_reference_compendium
+242,Mussel,food,mussel,clinical_reference_compendium
+243,Mussel allergy,food,mussel allergy,clinical_reference_compendium
+244,Mustard,food,mustard,clinical_reference_compendium
+245,Mustard allergy,food,mustard allergy,clinical_reference_compendium
+246,Mustard seed,food,mustard seed,clinical_reference_compendium
+247,Mustard seed allergy,food,mustard seed allergy,clinical_reference_compendium
+248,Nectarine,food,nectarine,clinical_reference_compendium
+249,Nectarine allergy,food,nectarine allergy,clinical_reference_compendium
+250,Oat,food,oat,clinical_reference_compendium
+251,Oat allergy,food,oat allergy,clinical_reference_compendium
+252,Octopus,food,octopus,clinical_reference_compendium
+253,Octopus allergy,food,octopus allergy,clinical_reference_compendium
+254,Onion,food,onion,clinical_reference_compendium
+255,Onion allergy,food,onion allergy,clinical_reference_compendium
+256,Orange,food,orange,clinical_reference_compendium
+257,Orange allergy,food,orange allergy,clinical_reference_compendium
+258,Oyster,food,oyster,clinical_reference_compendium
+259,Oyster allergy,food,oyster allergy,clinical_reference_compendium
+260,Pacific cod,food,pacific cod,clinical_reference_compendium
+261,Pacific cod allergy,food,pacific cod allergy,clinical_reference_compendium
+262,Papaya,food,papaya,clinical_reference_compendium
+263,Papaya allergy,food,papaya allergy,clinical_reference_compendium
+264,Peach,food,peach,clinical_reference_compendium
+265,Peach allergy,food,peach allergy,clinical_reference_compendium
+266,Peanut,food,peanut,clinical_reference_compendium
+267,Peanut allergy,food,peanut allergy,clinical_reference_compendium
+268,Pear,food,pear,clinical_reference_compendium
+269,Pear allergy,food,pear allergy,clinical_reference_compendium
+270,Pecan,food,pecan,clinical_reference_compendium
+271,Pecan allergy,food,pecan allergy,clinical_reference_compendium
+272,Pine nut,food,pine nut,clinical_reference_compendium
+273,Pine nut allergy,food,pine nut allergy,clinical_reference_compendium
+274,Pineapple,food,pineapple,clinical_reference_compendium
+275,Pineapple allergy,food,pineapple allergy,clinical_reference_compendium
+276,Pistachio,food,pistachio,clinical_reference_compendium
+277,Pistachio allergy,food,pistachio allergy,clinical_reference_compendium
+278,Plum,food,plum,clinical_reference_compendium
+279,Plum allergy,food,plum allergy,clinical_reference_compendium
+280,Poppy seed,food,poppy seed,clinical_reference_compendium
+281,Poppy seed allergy,food,poppy seed allergy,clinical_reference_compendium
+282,Porcine gelatin,food,porcine gelatin,clinical_reference_compendium
+283,Porcine gelatin allergy,food,porcine gelatin allergy,clinical_reference_compendium
+284,Pork,food,pork,clinical_reference_compendium
+285,Pork allergy,food,pork allergy,clinical_reference_compendium
+286,Potato,food,potato,clinical_reference_compendium
+287,Potato allergy,food,potato allergy,clinical_reference_compendium
+288,Pumpkin seed,food,pumpkin seed,clinical_reference_compendium
+289,Pumpkin seed allergy,food,pumpkin seed allergy,clinical_reference_compendium
+290,Quinoa,food,quinoa,clinical_reference_compendium
+291,Quinoa allergy,food,quinoa allergy,clinical_reference_compendium
+292,Raspberry,food,raspberry,clinical_reference_compendium
+293,Raspberry allergy,food,raspberry allergy,clinical_reference_compendium
+294,Rice,food,rice,clinical_reference_compendium
+295,Rice allergy,food,rice allergy,clinical_reference_compendium
+296,Rye,food,rye,clinical_reference_compendium
+297,Rye allergy,food,rye allergy,clinical_reference_compendium
+298,Sardine,food,sardine,clinical_reference_compendium
+299,Sardine allergy,food,sardine allergy,clinical_reference_compendium
+300,Scallop,food,scallop,clinical_reference_compendium
+301,Scallop allergy,food,scallop allergy,clinical_reference_compendium
+302,Sesame,food,sesame,clinical_reference_compendium
+303,Sesame allergy,food,sesame allergy,clinical_reference_compendium
+304,Sesame seed,food,sesame seed,clinical_reference_compendium
+305,Sesame seed allergy,food,sesame seed allergy,clinical_reference_compendium
+306,Sheep milk,food,sheep milk,clinical_reference_compendium
+307,Sheep milk allergy,food,sheep milk allergy,clinical_reference_compendium
+308,Shellfish,food,shellfish,clinical_reference_compendium
+309,Shellfish allergy,food,shellfish allergy,clinical_reference_compendium
+310,Shrimp,food,shrimp,clinical_reference_compendium
+311,Shrimp allergy,food,shrimp allergy,clinical_reference_compendium
+312,Soy,food,soy,clinical_reference_compendium
+313,Soy allergy,food,soy allergy,clinical_reference_compendium
+314,Soy lecithin,food,soy lecithin,clinical_reference_compendium
+315,Soy lecithin allergy,food,soy lecithin allergy,clinical_reference_compendium
+316,Soybean,food,soybean,clinical_reference_compendium
+317,Soybean allergy,food,soybean allergy,clinical_reference_compendium
+318,Spelt,food,spelt,clinical_reference_compendium
+319,Spelt allergy,food,spelt allergy,clinical_reference_compendium
+320,Squid,food,squid,clinical_reference_compendium
+321,Squid allergy,food,squid allergy,clinical_reference_compendium
+322,Strawberry,food,strawberry,clinical_reference_compendium
+323,Strawberry allergy,food,strawberry allergy,clinical_reference_compendium
+324,Sulfite,food,sulfite,clinical_reference_compendium
+325,Sulfite allergy,food,sulfite allergy,clinical_reference_compendium
+326,Sunflower seed,food,sunflower seed,clinical_reference_compendium
+327,Sunflower seed allergy,food,sunflower seed allergy,clinical_reference_compendium
+328,Tea,food,tea,clinical_reference_compendium
+329,Tea allergy,food,tea allergy,clinical_reference_compendium
+330,Tomato,food,tomato,clinical_reference_compendium
+331,Tomato allergy,food,tomato allergy,clinical_reference_compendium
+332,Tree nut,food,tree nut,clinical_reference_compendium
+333,Tree nut allergy,food,tree nut allergy,clinical_reference_compendium
+334,Trout,food,trout,clinical_reference_compendium
+335,Trout allergy,food,trout allergy,clinical_reference_compendium
+336,Tuna,food,tuna,clinical_reference_compendium
+337,Tuna allergy,food,tuna allergy,clinical_reference_compendium
+338,Turkey,food,turkey,clinical_reference_compendium
+339,Turkey allergy,food,turkey allergy,clinical_reference_compendium
+340,Walnut,food,walnut,clinical_reference_compendium
+341,Walnut allergy,food,walnut allergy,clinical_reference_compendium
+342,Watermelon,food,watermelon,clinical_reference_compendium
+343,Watermelon allergy,food,watermelon allergy,clinical_reference_compendium
+344,Wheat,food,wheat,clinical_reference_compendium
+345,Wheat allergy,food,wheat allergy,clinical_reference_compendium
+346,Whey,food,whey,clinical_reference_compendium
+347,Xanthan gum,food,xanthan gum,clinical_reference_compendium
+348,Xanthan gum allergy,food,xanthan gum allergy,clinical_reference_compendium
+349,Yeast,food,yeast,clinical_reference_compendium
+350,Yeast allergy,food,yeast allergy,clinical_reference_compendium
+351,Caterpillar allergen,insect,caterpillar allergen,clinical_reference_compendium
+352,European hornet venom,insect,european hornet venom,clinical_reference_compendium
+353,Fire ant venom,insect,fire ant venom,clinical_reference_compendium
+354,Honeybee venom,insect,honeybee venom,clinical_reference_compendium
+355,Hornet venom,insect,hornet venom,clinical_reference_compendium
+356,Horsefly bite allergy,insect,horsefly bite allergy,clinical_reference_compendium
+357,Hymenoptera venom,insect,hymenoptera venom,clinical_reference_compendium
+358,Imported fire ant venom,insect,imported fire ant venom,clinical_reference_compendium
+359,Mosquito bite allergy,insect,mosquito bite allergy,clinical_reference_compendium
+360,Paper wasp venom,insect,paper wasp venom,clinical_reference_compendium
+361,Silk moth allergen,insect,silk moth allergen,clinical_reference_compendium
+362,Solenopsis invicta venom,insect,solenopsis invicta venom,clinical_reference_compendium
+363,Venom immunotherapy,insect,venom immunotherapy,clinical_reference_compendium
+364,Wasp venom,insect,wasp venom,clinical_reference_compendium
+365,White-faced hornet venom,insect,white-faced hornet venom,clinical_reference_compendium
+366,Yellow jacket venom,insect,yellow jacket venom,clinical_reference_compendium
+367,Hevea brasiliensis latex,latex,hevea brasiliensis latex,clinical_reference_compendium
+368,Latex,latex,latex,clinical_reference_compendium
+369,Latex balloon,latex,latex balloon,clinical_reference_compendium
+370,Latex catheter,latex,latex catheter,clinical_reference_compendium
+371,Latex glove,latex,latex glove,clinical_reference_compendium
+372,Natural rubber latex,latex,natural rubber latex,clinical_reference_compendium
+373,5-Fluorouracil,medication,5-fluorouracil,clinical_reference_compendium
+374,5-Fluorouracil allergy,medication,5-fluorouracil allergy,clinical_reference_compendium
+375,Acetaminophen,medication,acetaminophen,clinical_reference_compendium
+376,Acetaminophen allergy,medication,acetaminophen allergy,clinical_reference_compendium
+377,Acetylsalicylic acid,medication,acetylsalicylic acid,clinical_reference_compendium
+378,Acetylsalicylic acid allergy,medication,acetylsalicylic acid allergy,clinical_reference_compendium
+379,Adalimumab,medication,adalimumab,clinical_reference_compendium
+380,Adalimumab allergy,medication,adalimumab allergy,clinical_reference_compendium
+381,Albuterol,medication,albuterol,clinical_reference_compendium
+382,Albuterol allergy,medication,albuterol allergy,clinical_reference_compendium
+383,Allopurinol,medication,allopurinol,clinical_reference_compendium
+384,Allopurinol allergy,medication,allopurinol allergy,clinical_reference_compendium
+385,Amikacin,medication,amikacin,clinical_reference_compendium
+386,Amikacin allergy,medication,amikacin allergy,clinical_reference_compendium
+387,Amitriptyline,medication,amitriptyline,clinical_reference_compendium
+388,Amitriptyline allergy,medication,amitriptyline allergy,clinical_reference_compendium
+389,Amlodipine,medication,amlodipine,clinical_reference_compendium
+390,Amlodipine allergy,medication,amlodipine allergy,clinical_reference_compendium
+391,Amoxicillin,medication,amoxicillin,clinical_reference_compendium
+392,Amoxicillin allergy,medication,amoxicillin allergy,clinical_reference_compendium
+393,Amoxicillin and clavulanate,medication,amoxicillin and clavulanate,clinical_reference_compendium
+394,Amoxicillin and clavulanate allergy,medication,amoxicillin and clavulanate allergy,clinical_reference_compendium
+395,Ampicillin,medication,ampicillin,clinical_reference_compendium
+396,Ampicillin allergy,medication,ampicillin allergy,clinical_reference_compendium
+397,Angiotensin-converting enzyme inhibitor,medication,angiotensin-converting enzyme inhibitor,clinical_reference_compendium
+398,Angiotensin-converting enzyme inhibitor allergy,medication,angiotensin-converting enzyme inhibitor allergy,clinical_reference_compendium
+399,Antibiotic,medication,antibiotic,clinical_reference_compendium
+400,Antibiotic allergy,medication,antibiotic allergy,clinical_reference_compendium
+401,Antifungal agent,medication,antifungal agent,clinical_reference_compendium
+402,Antifungal agent allergy,medication,antifungal agent allergy,clinical_reference_compendium
+403,Antiseizure medication,medication,antiseizure medication,clinical_reference_compendium
+404,Antiseizure medication allergy,medication,antiseizure medication allergy,clinical_reference_compendium
+405,Antiviral agent,medication,antiviral agent,clinical_reference_compendium
+406,Antiviral agent allergy,medication,antiviral agent allergy,clinical_reference_compendium
+407,Apixaban,medication,apixaban,clinical_reference_compendium
+408,Apixaban allergy,medication,apixaban allergy,clinical_reference_compendium
+409,Aripiprazole,medication,aripiprazole,clinical_reference_compendium
+410,Aripiprazole allergy,medication,aripiprazole allergy,clinical_reference_compendium
+411,Aspirin,medication,aspirin,clinical_reference_compendium
+412,Aspirin allergy,medication,aspirin allergy,clinical_reference_compendium
+413,Atenolol,medication,atenolol,clinical_reference_compendium
+414,Atenolol allergy,medication,atenolol allergy,clinical_reference_compendium
+415,Atorvastatin,medication,atorvastatin,clinical_reference_compendium
+416,Atorvastatin allergy,medication,atorvastatin allergy,clinical_reference_compendium
+417,Azathioprine,medication,azathioprine,clinical_reference_compendium
+418,Azathioprine allergy,medication,azathioprine allergy,clinical_reference_compendium
+419,Azithromycin,medication,azithromycin,clinical_reference_compendium
+420,Azithromycin allergy,medication,azithromycin allergy,clinical_reference_compendium
+421,Aztreonam,medication,aztreonam,clinical_reference_compendium
+422,Aztreonam allergy,medication,aztreonam allergy,clinical_reference_compendium
+423,Bacitracin topical,medication,bacitracin topical,clinical_reference_compendium
+424,Bacitracin topical allergy,medication,bacitracin topical allergy,clinical_reference_compendium
+425,Benzocaine,medication,benzocaine,clinical_reference_compendium
+426,Benzocaine allergy,medication,benzocaine allergy,clinical_reference_compendium
+427,Biologic agent,medication,biologic agent,clinical_reference_compendium
+428,Biologic agent allergy,medication,biologic agent allergy,clinical_reference_compendium
+429,Bleomycin,medication,bleomycin,clinical_reference_compendium
+430,Bleomycin allergy,medication,bleomycin allergy,clinical_reference_compendium
+431,Budesonide,medication,budesonide,clinical_reference_compendium
+432,Budesonide allergy,medication,budesonide allergy,clinical_reference_compendium
+433,Bupivacaine,medication,bupivacaine,clinical_reference_compendium
+434,Bupivacaine allergy,medication,bupivacaine allergy,clinical_reference_compendium
+435,Capecitabine,medication,capecitabine,clinical_reference_compendium
+436,Capecitabine allergy,medication,capecitabine allergy,clinical_reference_compendium
+437,Captopril,medication,captopril,clinical_reference_compendium
+438,Captopril allergy,medication,captopril allergy,clinical_reference_compendium
+439,Carbamazepine,medication,carbamazepine,clinical_reference_compendium
+440,Carbamazepine allergy,medication,carbamazepine allergy,clinical_reference_compendium
+441,Carbapenem,medication,carbapenem,clinical_reference_compendium
+442,Carbapenem allergy,medication,carbapenem allergy,clinical_reference_compendium
+443,Carboplatin,medication,carboplatin,clinical_reference_compendium
+444,Carboplatin allergy,medication,carboplatin allergy,clinical_reference_compendium
+445,Cefaclor,medication,cefaclor,clinical_reference_compendium
+446,Cefaclor allergy,medication,cefaclor allergy,clinical_reference_compendium
+447,Cefazolin,medication,cefazolin,clinical_reference_compendium
+448,Cefazolin allergy,medication,cefazolin allergy,clinical_reference_compendium
+449,Cefdinir,medication,cefdinir,clinical_reference_compendium
+450,Cefdinir allergy,medication,cefdinir allergy,clinical_reference_compendium
+451,Cefepime,medication,cefepime,clinical_reference_compendium
+452,Cefepime allergy,medication,cefepime allergy,clinical_reference_compendium
+453,Ceftriaxone,medication,ceftriaxone,clinical_reference_compendium
+454,Ceftriaxone allergy,medication,ceftriaxone allergy,clinical_reference_compendium
+455,Cefuroxime,medication,cefuroxime,clinical_reference_compendium
+456,Cefuroxime allergy,medication,cefuroxime allergy,clinical_reference_compendium
+457,Celecoxib,medication,celecoxib,clinical_reference_compendium
+458,Celecoxib allergy,medication,celecoxib allergy,clinical_reference_compendium
+459,Cephalexin,medication,cephalexin,clinical_reference_compendium
+460,Cephalexin allergy,medication,cephalexin allergy,clinical_reference_compendium
+461,Cephalosporin,medication,cephalosporin,clinical_reference_compendium
+462,Cephalosporin allergy,medication,cephalosporin allergy,clinical_reference_compendium
+463,Cetirizine,medication,cetirizine,clinical_reference_compendium
+464,Cetirizine allergy,medication,cetirizine allergy,clinical_reference_compendium
+465,Chemotherapy agent,medication,chemotherapy agent,clinical_reference_compendium
+466,Chemotherapy agent allergy,medication,chemotherapy agent allergy,clinical_reference_compendium
+467,Chlorhexidine,medication,chlorhexidine,clinical_reference_compendium
+468,Chlorhexidine allergy,medication,chlorhexidine allergy,clinical_reference_compendium
+469,Chlorpheniramine,medication,chlorpheniramine,clinical_reference_compendium
+470,Chlorpheniramine allergy,medication,chlorpheniramine allergy,clinical_reference_compendium
+471,Chlorthalidone,medication,chlorthalidone,clinical_reference_compendium
+472,Chlorthalidone allergy,medication,chlorthalidone allergy,clinical_reference_compendium
+473,Cimetidine,medication,cimetidine,clinical_reference_compendium
+474,Cimetidine allergy,medication,cimetidine allergy,clinical_reference_compendium
+475,Ciprofloxacin,medication,ciprofloxacin,clinical_reference_compendium
+476,Ciprofloxacin allergy,medication,ciprofloxacin allergy,clinical_reference_compendium
+477,Cisplatin,medication,cisplatin,clinical_reference_compendium
+478,Cisplatin allergy,medication,cisplatin allergy,clinical_reference_compendium
+479,Citalopram,medication,citalopram,clinical_reference_compendium
+480,Citalopram allergy,medication,citalopram allergy,clinical_reference_compendium
+481,Clarithromycin,medication,clarithromycin,clinical_reference_compendium
+482,Clarithromycin allergy,medication,clarithromycin allergy,clinical_reference_compendium
+483,Clindamycin,medication,clindamycin,clinical_reference_compendium
+484,Clindamycin allergy,medication,clindamycin allergy,clinical_reference_compendium
+485,Clopidogrel,medication,clopidogrel,clinical_reference_compendium
+486,Clopidogrel allergy,medication,clopidogrel allergy,clinical_reference_compendium
+487,Codeine,medication,codeine,clinical_reference_compendium
+488,Codeine allergy,medication,codeine allergy,clinical_reference_compendium
+489,Colchicine,medication,colchicine,clinical_reference_compendium
+490,Colchicine allergy,medication,colchicine allergy,clinical_reference_compendium
+491,Cyclophosphamide,medication,cyclophosphamide,clinical_reference_compendium
+492,Cyclophosphamide allergy,medication,cyclophosphamide allergy,clinical_reference_compendium
+493,Cyclosporine,medication,cyclosporine,clinical_reference_compendium
+494,Cyclosporine allergy,medication,cyclosporine allergy,clinical_reference_compendium
+495,Dapsone,medication,dapsone,clinical_reference_compendium
+496,Dapsone allergy,medication,dapsone allergy,clinical_reference_compendium
+497,Daptomycin,medication,daptomycin,clinical_reference_compendium
+498,Daptomycin allergy,medication,daptomycin allergy,clinical_reference_compendium
+499,Dexamethasone,medication,dexamethasone,clinical_reference_compendium
+500,Dexamethasone allergy,medication,dexamethasone allergy,clinical_reference_compendium
+501,Diclofenac,medication,diclofenac,clinical_reference_compendium
+502,Diclofenac allergy,medication,diclofenac allergy,clinical_reference_compendium
+503,Diltiazem,medication,diltiazem,clinical_reference_compendium
+504,Diltiazem allergy,medication,diltiazem allergy,clinical_reference_compendium
+505,Diphenhydramine,medication,diphenhydramine,clinical_reference_compendium
+506,Diphenhydramine allergy,medication,diphenhydramine allergy,clinical_reference_compendium
+507,Docetaxel,medication,docetaxel,clinical_reference_compendium
+508,Docetaxel allergy,medication,docetaxel allergy,clinical_reference_compendium
+509,Doxorubicin,medication,doxorubicin,clinical_reference_compendium
+510,Doxorubicin allergy,medication,doxorubicin allergy,clinical_reference_compendium
+511,Doxycycline,medication,doxycycline,clinical_reference_compendium
+512,Doxycycline allergy,medication,doxycycline allergy,clinical_reference_compendium
+513,Duloxetine,medication,duloxetine,clinical_reference_compendium
+514,Duloxetine allergy,medication,duloxetine allergy,clinical_reference_compendium
+515,Egg protein vaccine,medication,egg protein vaccine,clinical_reference_compendium
+516,Egg protein vaccine allergy,medication,egg protein vaccine allergy,clinical_reference_compendium
+517,Enalapril,medication,enalapril,clinical_reference_compendium
+518,Enalapril allergy,medication,enalapril allergy,clinical_reference_compendium
+519,Enoxaparin,medication,enoxaparin,clinical_reference_compendium
+520,Enoxaparin allergy,medication,enoxaparin allergy,clinical_reference_compendium
+521,Epinephrine,medication,epinephrine,clinical_reference_compendium
+522,Epinephrine allergy,medication,epinephrine allergy,clinical_reference_compendium
+523,Erythromycin,medication,erythromycin,clinical_reference_compendium
+524,Erythromycin allergy,medication,erythromycin allergy,clinical_reference_compendium
+525,Escitalopram,medication,escitalopram,clinical_reference_compendium
+526,Escitalopram allergy,medication,escitalopram allergy,clinical_reference_compendium
+527,Esomeprazole,medication,esomeprazole,clinical_reference_compendium
+528,Esomeprazole allergy,medication,esomeprazole allergy,clinical_reference_compendium
+529,Etanercept,medication,etanercept,clinical_reference_compendium
+530,Etanercept allergy,medication,etanercept allergy,clinical_reference_compendium
+531,Famotidine,medication,famotidine,clinical_reference_compendium
+532,Famotidine allergy,medication,famotidine allergy,clinical_reference_compendium
+533,Fentanyl,medication,fentanyl,clinical_reference_compendium
+534,Fentanyl allergy,medication,fentanyl allergy,clinical_reference_compendium
+535,Fexofenadine,medication,fexofenadine,clinical_reference_compendium
+536,Fexofenadine allergy,medication,fexofenadine allergy,clinical_reference_compendium
+537,Fluoroquinolone antibiotic,medication,fluoroquinolone antibiotic,clinical_reference_compendium
+538,Fluoroquinolone antibiotic allergy,medication,fluoroquinolone antibiotic allergy,clinical_reference_compendium
+539,Fluoxetine,medication,fluoxetine,clinical_reference_compendium
+540,Fluoxetine allergy,medication,fluoxetine allergy,clinical_reference_compendium
+541,Fluticasone,medication,fluticasone,clinical_reference_compendium
+542,Fluticasone allergy,medication,fluticasone allergy,clinical_reference_compendium
+543,Formaldehyde releaser,medication,formaldehyde releaser,clinical_reference_compendium
+544,Formaldehyde releaser allergy,medication,formaldehyde releaser allergy,clinical_reference_compendium
+545,Furosemide,medication,furosemide,clinical_reference_compendium
+546,Furosemide allergy,medication,furosemide allergy,clinical_reference_compendium
+547,Gadolinium contrast media,medication,gadolinium contrast media,clinical_reference_compendium
+548,Gadolinium contrast media allergy,medication,gadolinium contrast media allergy,clinical_reference_compendium
+549,Gelatin vaccine,medication,gelatin vaccine,clinical_reference_compendium
+550,Gelatin vaccine allergy,medication,gelatin vaccine allergy,clinical_reference_compendium
+551,Gentamicin,medication,gentamicin,clinical_reference_compendium
+552,Gentamicin allergy,medication,gentamicin allergy,clinical_reference_compendium
+553,Haloperidol,medication,haloperidol,clinical_reference_compendium
+554,Haloperidol allergy,medication,haloperidol allergy,clinical_reference_compendium
+555,Heparin,medication,heparin,clinical_reference_compendium
+556,Heparin allergy,medication,heparin allergy,clinical_reference_compendium
+557,Heparin-induced thrombocytopenia antibody,medication,heparin-induced thrombocytopenia antibody,clinical_reference_compendium
+558,Heparin-induced thrombocytopenia antibody allergy,medication,heparin-induced thrombocytopenia antibody allergy,clinical_reference_compendium
+559,Hydrochlorothiazide,medication,hydrochlorothiazide,clinical_reference_compendium
+560,Hydrochlorothiazide allergy,medication,hydrochlorothiazide allergy,clinical_reference_compendium
+561,Hydrocodone,medication,hydrocodone,clinical_reference_compendium
+562,Hydrocodone allergy,medication,hydrocodone allergy,clinical_reference_compendium
+563,Hydrocortisone,medication,hydrocortisone,clinical_reference_compendium
+564,Hydrocortisone allergy,medication,hydrocortisone allergy,clinical_reference_compendium
+565,Hydroxyzine,medication,hydroxyzine,clinical_reference_compendium
+566,Hydroxyzine allergy,medication,hydroxyzine allergy,clinical_reference_compendium
+567,Ibuprofen,medication,ibuprofen,clinical_reference_compendium
+568,Ibuprofen allergy,medication,ibuprofen allergy,clinical_reference_compendium
+569,Ifosfamide,medication,ifosfamide,clinical_reference_compendium
+570,Ifosfamide allergy,medication,ifosfamide allergy,clinical_reference_compendium
+571,Imipenem,medication,imipenem,clinical_reference_compendium
+572,Imipenem allergy,medication,imipenem allergy,clinical_reference_compendium
+573,Imipramine,medication,imipramine,clinical_reference_compendium
+574,Imipramine allergy,medication,imipramine allergy,clinical_reference_compendium
+575,Indomethacin,medication,indomethacin,clinical_reference_compendium
+576,Indomethacin allergy,medication,indomethacin allergy,clinical_reference_compendium
+577,Infliximab,medication,infliximab,clinical_reference_compendium
+578,Infliximab allergy,medication,infliximab allergy,clinical_reference_compendium
+579,Insulin,medication,insulin,clinical_reference_compendium
+580,Insulin allergy,medication,insulin allergy,clinical_reference_compendium
+581,Insulin aspart,medication,insulin aspart,clinical_reference_compendium
+582,Insulin aspart allergy,medication,insulin aspart allergy,clinical_reference_compendium
+583,Insulin glargine,medication,insulin glargine,clinical_reference_compendium
+584,Insulin glargine allergy,medication,insulin glargine allergy,clinical_reference_compendium
+585,Insulin human,medication,insulin human,clinical_reference_compendium
+586,Insulin human allergy,medication,insulin human allergy,clinical_reference_compendium
+587,Insulin lispro,medication,insulin lispro,clinical_reference_compendium
+588,Insulin lispro allergy,medication,insulin lispro allergy,clinical_reference_compendium
+589,Iodinated contrast media,medication,iodinated contrast media,clinical_reference_compendium
+590,Iodinated contrast media allergy,medication,iodinated contrast media allergy,clinical_reference_compendium
+591,Isoniazid,medication,isoniazid,clinical_reference_compendium
+592,Isoniazid allergy,medication,isoniazid allergy,clinical_reference_compendium
+593,Ketoprofen,medication,ketoprofen,clinical_reference_compendium
+594,Ketoprofen allergy,medication,ketoprofen allergy,clinical_reference_compendium
+595,Lamotrigine,medication,lamotrigine,clinical_reference_compendium
+596,Lamotrigine allergy,medication,lamotrigine allergy,clinical_reference_compendium
+597,Lansoprazole,medication,lansoprazole,clinical_reference_compendium
+598,Lansoprazole allergy,medication,lansoprazole allergy,clinical_reference_compendium
+599,Levetiracetam,medication,levetiracetam,clinical_reference_compendium
+600,Levetiracetam allergy,medication,levetiracetam allergy,clinical_reference_compendium
+601,Levofloxacin,medication,levofloxacin,clinical_reference_compendium
+602,Levofloxacin allergy,medication,levofloxacin allergy,clinical_reference_compendium
+603,Lidocaine,medication,lidocaine,clinical_reference_compendium
+604,Lidocaine allergy,medication,lidocaine allergy,clinical_reference_compendium
+605,Linezolid,medication,linezolid,clinical_reference_compendium
+606,Linezolid allergy,medication,linezolid allergy,clinical_reference_compendium
+607,Lisinopril,medication,lisinopril,clinical_reference_compendium
+608,Lisinopril allergy,medication,lisinopril allergy,clinical_reference_compendium
+609,Lithium carbonate,medication,lithium carbonate,clinical_reference_compendium
+610,Lithium carbonate allergy,medication,lithium carbonate allergy,clinical_reference_compendium
+611,Local anesthetic,medication,local anesthetic,clinical_reference_compendium
+612,Local anesthetic allergy,medication,local anesthetic allergy,clinical_reference_compendium
+613,Loratadine,medication,loratadine,clinical_reference_compendium
+614,Loratadine allergy,medication,loratadine allergy,clinical_reference_compendium
+615,Losartan,medication,losartan,clinical_reference_compendium
+616,Losartan allergy,medication,losartan allergy,clinical_reference_compendium
+617,Meloxicam,medication,meloxicam,clinical_reference_compendium
+618,Meloxicam allergy,medication,meloxicam allergy,clinical_reference_compendium
+619,Meperidine,medication,meperidine,clinical_reference_compendium
+620,Meperidine allergy,medication,meperidine allergy,clinical_reference_compendium
+621,Meropenem,medication,meropenem,clinical_reference_compendium
+622,Meropenem allergy,medication,meropenem allergy,clinical_reference_compendium
+623,Metformin,medication,metformin,clinical_reference_compendium
+624,Metformin allergy,medication,metformin allergy,clinical_reference_compendium
+625,Methotrexate,medication,methotrexate,clinical_reference_compendium
+626,Methotrexate allergy,medication,methotrexate allergy,clinical_reference_compendium
+627,Methotrexate chemotherapy,medication,methotrexate chemotherapy,clinical_reference_compendium
+628,Methotrexate chemotherapy allergy,medication,methotrexate chemotherapy allergy,clinical_reference_compendium
+629,Methylprednisolone,medication,methylprednisolone,clinical_reference_compendium
+630,Methylprednisolone allergy,medication,methylprednisolone allergy,clinical_reference_compendium
+631,Metoprolol,medication,metoprolol,clinical_reference_compendium
+632,Metoprolol allergy,medication,metoprolol allergy,clinical_reference_compendium
+633,Metronidazole,medication,metronidazole,clinical_reference_compendium
+634,Metronidazole allergy,medication,metronidazole allergy,clinical_reference_compendium
+635,Minocycline,medication,minocycline,clinical_reference_compendium
+636,Minocycline allergy,medication,minocycline allergy,clinical_reference_compendium
+637,Montelukast,medication,montelukast,clinical_reference_compendium
+638,Montelukast allergy,medication,montelukast allergy,clinical_reference_compendium
+639,Morphine,medication,morphine,clinical_reference_compendium
+640,Morphine allergy,medication,morphine allergy,clinical_reference_compendium
+641,Moxifloxacin,medication,moxifloxacin,clinical_reference_compendium
+642,Moxifloxacin allergy,medication,moxifloxacin allergy,clinical_reference_compendium
+643,Mycophenolate mofetil,medication,mycophenolate mofetil,clinical_reference_compendium
+644,Mycophenolate mofetil allergy,medication,mycophenolate mofetil allergy,clinical_reference_compendium
+645,Naproxen,medication,naproxen,clinical_reference_compendium
+646,Naproxen allergy,medication,naproxen allergy,clinical_reference_compendium
+647,Neomycin,medication,neomycin,clinical_reference_compendium
+648,Neomycin allergy,medication,neomycin allergy,clinical_reference_compendium
+649,Neomycin topical,medication,neomycin topical,clinical_reference_compendium
+650,Neomycin topical allergy,medication,neomycin topical allergy,clinical_reference_compendium
+651,Nifedipine,medication,nifedipine,clinical_reference_compendium
+652,Nifedipine allergy,medication,nifedipine allergy,clinical_reference_compendium
+653,Nitrofurantoin,medication,nitrofurantoin,clinical_reference_compendium
+654,Nitrofurantoin allergy,medication,nitrofurantoin allergy,clinical_reference_compendium
+655,Nonsteroidal anti-inflammatory drug,medication,nonsteroidal anti-inflammatory drug,clinical_reference_compendium
+656,Nonsteroidal anti-inflammatory drug allergy,medication,nonsteroidal anti-inflammatory drug allergy,clinical_reference_compendium
+657,Norepinephrine,medication,norepinephrine,clinical_reference_compendium
+658,Norepinephrine allergy,medication,norepinephrine allergy,clinical_reference_compendium
+659,Nortriptyline,medication,nortriptyline,clinical_reference_compendium
+660,Nortriptyline allergy,medication,nortriptyline allergy,clinical_reference_compendium
+661,Olanzapine,medication,olanzapine,clinical_reference_compendium
+662,Olanzapine allergy,medication,olanzapine allergy,clinical_reference_compendium
+663,Olmesartan,medication,olmesartan,clinical_reference_compendium
+664,Olmesartan allergy,medication,olmesartan allergy,clinical_reference_compendium
+665,Omeprazole,medication,omeprazole,clinical_reference_compendium
+666,Omeprazole allergy,medication,omeprazole allergy,clinical_reference_compendium
+667,Opioid,medication,opioid,clinical_reference_compendium
+668,Opioid allergy,medication,opioid allergy,clinical_reference_compendium
+669,Oxaliplatin,medication,oxaliplatin,clinical_reference_compendium
+670,Oxaliplatin allergy,medication,oxaliplatin allergy,clinical_reference_compendium
+671,Oxycodone,medication,oxycodone,clinical_reference_compendium
+672,Oxycodone allergy,medication,oxycodone allergy,clinical_reference_compendium
+673,Paclitaxel,medication,paclitaxel,clinical_reference_compendium
+674,Paclitaxel allergy,medication,paclitaxel allergy,clinical_reference_compendium
+675,Pantoprazole,medication,pantoprazole,clinical_reference_compendium
+676,Pantoprazole allergy,medication,pantoprazole allergy,clinical_reference_compendium
+677,Paracetamol,medication,paracetamol,clinical_reference_compendium
+678,Paracetamol allergy,medication,paracetamol allergy,clinical_reference_compendium
+679,Paroxetine,medication,paroxetine,clinical_reference_compendium
+680,Paroxetine allergy,medication,paroxetine allergy,clinical_reference_compendium
+681,Penicillin,medication,penicillin,clinical_reference_compendium
+682,Penicillin allergy,medication,penicillin allergy,clinical_reference_compendium
+683,Phenobarbital,medication,phenobarbital,clinical_reference_compendium
+684,Phenobarbital allergy,medication,phenobarbital allergy,clinical_reference_compendium
+685,Phenytoin,medication,phenytoin,clinical_reference_compendium
+686,Phenytoin allergy,medication,phenytoin allergy,clinical_reference_compendium
+687,Piperacillin,medication,piperacillin,clinical_reference_compendium
+688,Piperacillin allergy,medication,piperacillin allergy,clinical_reference_compendium
+689,Piperacillin and tazobactam,medication,piperacillin and tazobactam,clinical_reference_compendium
+690,Piperacillin and tazobactam allergy,medication,piperacillin and tazobactam allergy,clinical_reference_compendium
+691,Polymyxin B,medication,polymyxin b,clinical_reference_compendium
+692,Polymyxin B allergy,medication,polymyxin b allergy,clinical_reference_compendium
+693,Povidone-iodine,medication,povidone-iodine,clinical_reference_compendium
+694,Povidone-iodine allergy,medication,povidone-iodine allergy,clinical_reference_compendium
+695,Pravastatin,medication,pravastatin,clinical_reference_compendium
+696,Pravastatin allergy,medication,pravastatin allergy,clinical_reference_compendium
+697,Prednisolone,medication,prednisolone,clinical_reference_compendium
+698,Prednisolone allergy,medication,prednisolone allergy,clinical_reference_compendium
+699,Prednisone,medication,prednisone,clinical_reference_compendium
+700,Prednisone allergy,medication,prednisone allergy,clinical_reference_compendium
+701,Probenecid,medication,probenecid,clinical_reference_compendium
+702,Probenecid allergy,medication,probenecid allergy,clinical_reference_compendium
+703,Procaine,medication,procaine,clinical_reference_compendium
+704,Procaine allergy,medication,procaine allergy,clinical_reference_compendium
+705,Propranolol,medication,propranolol,clinical_reference_compendium
+706,Propranolol allergy,medication,propranolol allergy,clinical_reference_compendium
+707,Proton pump inhibitor,medication,proton pump inhibitor,clinical_reference_compendium
+708,Proton pump inhibitor allergy,medication,proton pump inhibitor allergy,clinical_reference_compendium
+709,Quetiapine,medication,quetiapine,clinical_reference_compendium
+710,Quetiapine allergy,medication,quetiapine allergy,clinical_reference_compendium
+711,Radiocontrast media,medication,radiocontrast media,clinical_reference_compendium
+712,Radiocontrast media allergy,medication,radiocontrast media allergy,clinical_reference_compendium
+713,Ranitidine,medication,ranitidine,clinical_reference_compendium
+714,Ranitidine allergy,medication,ranitidine allergy,clinical_reference_compendium
+715,Rifampin,medication,rifampin,clinical_reference_compendium
+716,Rifampin allergy,medication,rifampin allergy,clinical_reference_compendium
+717,Risperidone,medication,risperidone,clinical_reference_compendium
+718,Risperidone allergy,medication,risperidone allergy,clinical_reference_compendium
+719,Rituximab,medication,rituximab,clinical_reference_compendium
+720,Rituximab allergy,medication,rituximab allergy,clinical_reference_compendium
+721,Rivaroxaban,medication,rivaroxaban,clinical_reference_compendium
+722,Rivaroxaban allergy,medication,rivaroxaban allergy,clinical_reference_compendium
+723,Rosuvastatin,medication,rosuvastatin,clinical_reference_compendium
+724,Rosuvastatin allergy,medication,rosuvastatin allergy,clinical_reference_compendium
+725,Salbutamol,medication,salbutamol,clinical_reference_compendium
+726,Salbutamol allergy,medication,salbutamol allergy,clinical_reference_compendium
+727,Salmeterol,medication,salmeterol,clinical_reference_compendium
+728,Salmeterol allergy,medication,salmeterol allergy,clinical_reference_compendium
+729,Sertraline,medication,sertraline,clinical_reference_compendium
+730,Sertraline allergy,medication,sertraline allergy,clinical_reference_compendium
+731,Simvastatin,medication,simvastatin,clinical_reference_compendium
+732,Simvastatin allergy,medication,simvastatin allergy,clinical_reference_compendium
+733,Spironolactone,medication,spironolactone,clinical_reference_compendium
+734,Spironolactone allergy,medication,spironolactone allergy,clinical_reference_compendium
+735,Statin medication,medication,statin medication,clinical_reference_compendium
+736,Statin medication allergy,medication,statin medication allergy,clinical_reference_compendium
+737,Streptomycin,medication,streptomycin,clinical_reference_compendium
+738,Streptomycin allergy,medication,streptomycin allergy,clinical_reference_compendium
+739,Sulfamethoxazole,medication,sulfamethoxazole,clinical_reference_compendium
+740,Sulfamethoxazole allergy,medication,sulfamethoxazole allergy,clinical_reference_compendium
+741,Sulfasalazine,medication,sulfasalazine,clinical_reference_compendium
+742,Sulfasalazine allergy,medication,sulfasalazine allergy,clinical_reference_compendium
+743,Sulfonamide antibiotic,medication,sulfonamide antibiotic,clinical_reference_compendium
+744,Sulfonamide antibiotic allergy,medication,sulfonamide antibiotic allergy,clinical_reference_compendium
+745,Tacrolimus,medication,tacrolimus,clinical_reference_compendium
+746,Tacrolimus allergy,medication,tacrolimus allergy,clinical_reference_compendium
+747,Tetracycline,medication,tetracycline,clinical_reference_compendium
+748,Tetracycline allergy,medication,tetracycline allergy,clinical_reference_compendium
+749,Thimerosal,medication,thimerosal,clinical_reference_compendium
+750,Thimerosal allergy,medication,thimerosal allergy,clinical_reference_compendium
+751,Tobramycin,medication,tobramycin,clinical_reference_compendium
+752,Tobramycin allergy,medication,tobramycin allergy,clinical_reference_compendium
+753,Tramadol,medication,tramadol,clinical_reference_compendium
+754,Tramadol allergy,medication,tramadol allergy,clinical_reference_compendium
+755,Trastuzumab,medication,trastuzumab,clinical_reference_compendium
+756,Trastuzumab allergy,medication,trastuzumab allergy,clinical_reference_compendium
+757,Trimethoprim,medication,trimethoprim,clinical_reference_compendium
+758,Trimethoprim allergy,medication,trimethoprim allergy,clinical_reference_compendium
+759,Trimethoprim and sulfamethoxazole,medication,trimethoprim and sulfamethoxazole,clinical_reference_compendium
+760,Trimethoprim and sulfamethoxazole allergy,medication,trimethoprim and sulfamethoxazole allergy,clinical_reference_compendium
+761,Vaccine component,medication,vaccine component,clinical_reference_compendium
+762,Vaccine component allergy,medication,vaccine component allergy,clinical_reference_compendium
+763,Valproic acid,medication,valproic acid,clinical_reference_compendium
+764,Valproic acid allergy,medication,valproic acid allergy,clinical_reference_compendium
+765,Valsartan,medication,valsartan,clinical_reference_compendium
+766,Valsartan allergy,medication,valsartan allergy,clinical_reference_compendium
+767,Vancomycin,medication,vancomycin,clinical_reference_compendium
+768,Vancomycin allergy,medication,vancomycin allergy,clinical_reference_compendium
+769,Venlafaxine,medication,venlafaxine,clinical_reference_compendium
+770,Venlafaxine allergy,medication,venlafaxine allergy,clinical_reference_compendium
+771,Verapamil,medication,verapamil,clinical_reference_compendium
+772,Verapamil allergy,medication,verapamil allergy,clinical_reference_compendium
+773,Vincristine,medication,vincristine,clinical_reference_compendium
+774,Vincristine allergy,medication,vincristine allergy,clinical_reference_compendium
+775,Warfarin,medication,warfarin,clinical_reference_compendium
+776,Warfarin allergy,medication,warfarin allergy,clinical_reference_compendium

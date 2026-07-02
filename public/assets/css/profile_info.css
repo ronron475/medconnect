@@ -1,0 +1,211 @@
+/* ── medConnect Patient Profile — Personal Information Card ── */
+
+.pi-card {
+  background: #ffffff;
+  border-radius: var(--mc-r-lg);
+  border: 1px solid #e2e8f0;
+  border-top: 3px solid #2563eb;
+  box-shadow: var(--mc-shadow-sm);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+/* ── Header ── */
+.pi-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 18px 22px;
+  border-bottom: 1px solid #f1f5f9;
+  gap: 12px;
+}
+
+.pi-header-left {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+}
+
+.pi-header-icon {
+  width: 38px;
+  height: 38px;
+  border-radius: var(--mc-r-sm);
+  background: #eff6ff;
+  color: #2563eb;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.pi-card-title {
+  font-size: 14.5px;
+  font-weight: 800;
+  color: #0f172a;
+  letter-spacing: -0.1px;
+  line-height: 1.2;
+}
+
+.pi-card-sub {
+  font-size: 11px;
+  color: #94a3b8;
+  margin-top: 2px;
+}
+
+/* View-only badge */
+.pi-readonly-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 10.5px;
+  font-weight: 700;
+  color: #64748b;
+  background: #f1f5f9;
+  border: 1px solid #e2e8f0;
+  padding: 3px 9px 3px 7px;
+  border-radius: 20px;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+/* ── Field grid ── */
+.pi-field-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0;
+  padding: 4px 0;
+}
+
+/* Individual field */
+.pi-field {
+  padding: 16px 22px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  border-bottom: 1px solid #f8fafc;
+  transition: background 0.14s;
+}
+
+.pi-field:hover { background: #fafbfc; }
+
+/* Full-width field */
+.pi-field--full {
+  grid-column: 1 / -1;
+}
+
+/* Alternating right-column separator */
+.pi-field-grid .pi-field:not(.pi-field--full):nth-child(odd) {
+  border-right: 1px solid #f1f5f9;
+}
+
+/* ── Label ── */
+.pi-field-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 10.5px;
+  font-weight: 700;
+  color: #94a3b8;
+  text-transform: uppercase;
+  letter-spacing: 0.55px;
+}
+
+.pi-field-label svg {
+  color: #cbd5e1;
+  flex-shrink: 0;
+}
+
+/* ── Value ── */
+.pi-field-value {
+  font-size: 14px;
+  font-weight: 600;
+  color: #0f172a;
+  line-height: 1.4;
+  display: flex;
+  align-items: baseline;
+  gap: 5px;
+  flex-wrap: wrap;
+}
+
+.pi-field-value--name {
+  font-size: 15.5px;
+  font-weight: 800;
+  letter-spacing: -0.2px;
+}
+
+.pi-field-value--email {
+  font-size: 13px;
+  font-weight: 600;
+  color: #334155;
+  word-break: break-all;
+}
+
+.pi-field-value--address {
+  font-size: 13.5px;
+  color: #334155;
+  font-weight: 500;
+}
+
+.pi-field-unit {
+  font-size: 11.5px;
+  font-weight: 500;
+  color: #94a3b8;
+}
+
+/* Patient ID code chip */
+.pi-id-code {
+  font-family: 'Courier New', Courier, monospace;
+  font-size: 13px;
+  font-weight: 700;
+  color: #1d4ed8;
+  background: #eff6ff;
+  border: 1px solid #bfdbfe;
+  padding: 3px 10px;
+  border-radius: 6px;
+  letter-spacing: 0.5px;
+}
+
+/* Gender pill */
+.pi-gender-pill {
+  display: inline-flex;
+  align-items: center;
+  font-size: 12.5px;
+  font-weight: 700;
+  padding: 3px 11px;
+  border-radius: 20px;
+  background: #f1f5f9;
+  color: #475569;
+  border: 1px solid #e2e8f0;
+}
+
+.pi-gender--male   { background: #eff6ff; color: #1d4ed8; border-color: #bfdbfe; }
+.pi-gender--female { background: #fdf4ff; color: #7e22ce; border-color: #e9d5ff; }
+
+/* ── Footer note ── */
+.pi-card-footer {
+  display: flex;
+  align-items: flex-start;
+  gap: 7px;
+  padding: 13px 22px;
+  background: #f8fafc;
+  border-top: 1px solid #f1f5f9;
+  font-size: 11.5px;
+  color: #94a3b8;
+  line-height: 1.55;
+}
+
+.pi-card-footer svg {
+  flex-shrink: 0;
+  margin-top: 1px;
+  color: #cbd5e1;
+}
+
+/* ── Responsive ── */
+@media (max-width: 640px) {
+  .pi-field-grid { grid-template-columns: 1fr; }
+  .pi-field:not(.pi-field--full):nth-child(odd) { border-right: none; }
+  .pi-field { padding: 14px 16px; }
+  .pi-card-header { padding: 14px 16px; }
+  .pi-card-footer { padding: 12px 16px; }
+}

@@ -1,0 +1,41 @@
+# MedConnect — GitLab CI (validate on push; deploy jobs are manual placeholders).
+# Set CI/CD variables in GitLab: GROQ_API_KEY, OCR_SPACE_API_KEY, DB_*, MEDCONNECT_AI_SERVICE_URL
+
+stages:
+  - validate
+
+variables:
+  PIP_DISABLE_PIP_VERSION_CHECK: "1"
+  PYTHON_VERSION: "3.11"
+
+# Quick PHP syntax check on changed files
+php:syntax:
+  stage: validate
+  image: php:8.2-cli
+  script:
+    - |
+      set -e
+      FILES=$(git diff-tree --no-commit-id --name-only -r "$CI_COMMIT_SHA" 2>/dev/null | grep '\.php$' || true)
+      if [ -z "$FILES" ]; then
+        FILES=$(find app public config bootstrap -name '*.php' 2>/dev/null | head -200)
+      fi
+      for f in $FILES; do
+        [ -f "$f" ] || continue
+        php -l "$f" || exit 1
+      done
+      echo "PHP syntax OK"
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+    - if: $CI_COMMIT_BRANCH
+
+# FastAPI app import smoke test
+python:fastapi:
+  stage: validate
+  image: python:3.11-slim
+  before_script:
+    - pip install --quiet -r ai_service/requirements.txt
+  script:
+    - cd ai_service && python -c "from app.main import app; print('FastAPI OK:', app.title)"
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+    - if: $CI_COMMIT_BRANCH

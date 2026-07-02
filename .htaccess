@@ -1,0 +1,128 @@
+Options -Indexes
+
+RewriteEngine On
+
+
+
+# ── Legacy controllers URL (backward-compatible) ───────────────
+RewriteRule ^controllers/(.*)$ app/controllers/$1 [L]
+
+# ── Static assets (now under public/assets/) ───────────────────
+
+RewriteRule ^assets/(.*)$ public/assets/$1 [L]
+
+
+
+# ── Landing page via public front controller ───────────────────
+
+RewriteRule ^$ public/index.php [L]
+
+
+
+# ── Portal views → router (resources/views not web-accessible) ─
+
+RewriteRule ^views/(.*)$ public/view.php?path=$1 [L,QSA]
+
+
+
+# ── Hospital referral module (backward-compatible URL) ─────────
+
+RewriteRule ^hospital-referral/(.*)$ modules/hospital_referral/$1 [L]
+
+# ── Philippine address selector (backward-compatible URL) ──────
+RewriteRule ^philippine-address-selector-main/(.*)$ modules/address_selector/$1 [L]
+
+
+
+# ── Serve real files and directories directly ──────────────────
+
+RewriteCond %{REQUEST_FILENAME} -f
+
+RewriteRule ^ - [L]
+
+
+
+RewriteCond %{REQUEST_FILENAME} -d
+
+RewriteRule ^ - [L]
+
+
+
+# ── Ensure trailing-slash requests don't break POST APIs ───────
+
+RewriteCond %{REQUEST_URI} /app/api/(.+)\.php/$
+
+RewriteRule ^app/api/(.+)\.php/$ app/api/$1.php [L]
+
+
+
+# ── AI health check aliases ────────────────────────────────────
+
+RewriteRule ^api/health$ app/api/ai/health.php [L]
+
+RewriteRule ^api/groq_health$ app/api/ai/groq_health.php [L]
+
+
+
+# ── Standalone public pages ────────────────────────────────────
+
+RewriteRule ^ocr-demo$ public/nlp_step3_demo.php [L]
+
+
+
+# ── Block internal application directories ─────────────────────
+
+RewriteRule ^(bootstrap|config|data|database|resources|storage|scripts|modules)/ - [F,L]
+
+RewriteRule ^app/(core|includes|models)/ - [F,L]
+
+
+
+# config/ — database credentials and API keys
+
+RewriteRule ^config/ - [F,L]
+
+
+
+# bootstrap.php — internal only
+
+RewriteRule ^bootstrap\.php$ - [F,L]
+
+RewriteRule ^bootstrap/ - [F,L]
+
+
+
+# ── Block sensitive file types ─────────────────────────────────
+
+<FilesMatch "\.(env|sql|log|md|lock|git|sh|bak)$">
+
+    Require all denied
+
+</FilesMatch>
+
+
+
+# ── Backward-compatible redirects ─────────────────────────────
+
+RewriteRule ^login\.php$                    app/api/login.php [R=307,L]
+
+RewriteRule ^logout\.php$                   app/api/logout.php [R=307,L]
+
+RewriteRule ^register\.php$                 app/api/register.php [R=307,L]
+
+RewriteRule ^send_otp\.php$                 app/api/send_otp.php [R=307,L]
+
+RewriteRule ^verify_otp\.php$               app/api/verify_otp.php [R=307,L]
+
+RewriteRule ^request_password_reset\.php$   app/api/request_password_reset.php [R=307,L]
+
+RewriteRule ^reset_password_otp\.php$       app/api/reset_password_otp.php [R=307,L]
+
+
+
+# ── Protect uploaded ID files from direct browser access ───────
+
+RewriteRule ^storage/uploads/ids/ - [F,L]
+
+RewriteRule ^uploads/ids/ - [F,L]
+

@@ -1,0 +1,447 @@
+/**
+ * Unified mobile dashboard design system (Patient + Provider)
+ * Applies only at max-width: 768px — desktop/tablet unchanged.
+ */
+
+@media (max-width: 768px) {
+  body.patient-portal,
+  body.provider-body {
+    --mob-dash-pad: 16px;
+    --mob-dash-gap: 12px;
+    --mob-dash-gap-sm: 8px;
+    --mob-dash-card-pad: 14px;
+    --mob-dash-strip-pad: 10px;
+    --mob-dash-radius: 12px;
+    --mob-dash-stat-min-h: 76px;
+    --mob-dash-shadow: 0 1px 6px rgba(1, 42, 74, 0.05);
+    --pt-dash-space: 12px;
+    --pt-dash-space-sm: 8px;
+    --pt-dash-card-pad: 14px;
+    --pt-dash-strip-pad: 10px;
+    --pt-dash-radius: 12px;
+  }
+
+  /* ── Dashboard page shell spacing ── */
+  body.patient-portal .portal-page-body,
+  body.provider-body .provider-page-body {
+    padding-left: var(--mob-dash-pad) !important;
+    padding-right: var(--mob-dash-pad) !important;
+    padding-top: calc(var(--mc-header-offset, 64px) + 10px) !important;
+    padding-bottom: calc(var(--mob-dash-pad) * 1.5) !important;
+  }
+
+  body.patient-portal .view-container.prov-dash.active,
+  body.patient-portal #view-dashboard.prov-dash,
+  body.provider-body .prov-dash {
+    gap: var(--mob-dash-gap);
+  }
+
+  /* ── Hero / Welcome cards ── */
+  body.patient-portal .prov-dash .adm-banner.patient-dash-banner {
+    padding: 14px var(--mob-dash-pad);
+    gap: 10px;
+    border-radius: var(--mob-dash-radius);
+    box-shadow: var(--mob-dash-shadow);
+    align-items: flex-start;
+  }
+
+  body.patient-portal .prov-dash .adm-banner.patient-dash-banner::before,
+  body.patient-portal .prov-dash .adm-banner.patient-dash-banner::after {
+    display: none;
+  }
+
+  body.patient-portal .prov-dash .adm-banner-eyebrow {
+    font-size: 10px;
+    letter-spacing: 0.06em;
+    margin-bottom: 4px;
+  }
+
+  body.patient-portal .prov-dash .adm-banner-title {
+    font-size: clamp(1.05rem, 4.2vw, 1.2rem);
+    line-height: 1.2;
+    margin: 0 0 4px;
+  }
+
+  body.patient-portal .prov-dash .adm-banner-sub {
+    font-size: 12px;
+    line-height: 1.4;
+    max-width: none;
+  }
+
+  body.patient-portal .prov-dash .patient-dash-banner-actions {
+    width: 100%;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+
+  body.patient-portal .prov-dash .patient-dash-pill,
+  body.patient-portal .prov-dash .mc-badge--patient,
+  body.patient-portal .prov-dash .patient-dash-pill--pending {
+    font-size: 10px;
+    padding: 5px 10px;
+  }
+
+  body.patient-portal .prov-dash .prov-dash-welcome,
+  body.provider-body .prov-dash .prov-dash-welcome {
+    padding: 12px var(--mob-dash-pad);
+    gap: 10px;
+    border-radius: var(--mob-dash-radius);
+    box-shadow: var(--mob-dash-shadow);
+    flex-wrap: wrap;
+    align-items: center;
+  }
+
+  body.patient-portal .prov-dash .prov-dash-welcome__left,
+  body.provider-body .prov-dash .prov-dash-welcome__left {
+    gap: 10px;
+    min-width: 0;
+    flex: 1 1 auto;
+  }
+
+  body.provider-body .prov-dash .prov-dash-welcome__left [data-profile-avatar-wrap] .profile-avatar,
+  body.provider-body .prov-dash .prov-dash-welcome__left .profile-avatar {
+    width: 40px;
+    height: 40px;
+    font-size: 12px;
+  }
+
+  body.patient-portal .prov-dash .prov-dash-welcome__eyebrow,
+  body.provider-body .prov-dash .prov-dash-welcome__eyebrow {
+    font-size: 10px;
+    letter-spacing: 0.05em;
+    margin-bottom: 0;
+    line-height: 1.3;
+  }
+
+  body.patient-portal .prov-dash .prov-dash-welcome__title,
+  body.provider-body .prov-dash .prov-dash-welcome__title {
+    font-size: clamp(1.05rem, 4.2vw, 1.2rem);
+    line-height: 1.2;
+  }
+
+  body.provider-body .prov-dash .prov-dash-welcome__title {
+    display: none;
+  }
+
+  body.patient-portal .prov-dash .prov-dash-welcome__meta,
+  body.provider-body .prov-dash .prov-dash-welcome__meta {
+    width: 100%;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+
+  body.patient-portal .prov-dash .prov-dash-badge,
+  body.provider-body .prov-dash .prov-dash-badge {
+    font-size: 10px;
+    padding: 4px 10px;
+  }
+
+  body.patient-portal .prov-dash .prov-dash-staff-id,
+  body.provider-body .prov-dash .prov-dash-staff-id {
+    font-size: 11px;
+  }
+
+  /* ── Metrics row ── */
+  body.patient-portal .prov-dash .prov-dash-metrics,
+  body.provider-body .prov-dash .prov-dash-metrics {
+    gap: var(--mob-dash-gap);
+  }
+
+  /* ── Statistics cards ── */
+  body.patient-portal .prov-dash .prov-dash-stats,
+  body.provider-body .prov-dash .prov-dash-stats {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+    align-items: stretch;
+  }
+
+  body.patient-portal .prov-dash .prov-dash-stat,
+  body.provider-body .prov-dash .prov-dash-stat {
+    min-height: var(--mob-dash-stat-min-h);
+    height: 100%;
+    padding: 10px 12px;
+    border-radius: var(--mob-dash-radius);
+    box-shadow: var(--mob-dash-shadow);
+    justify-content: flex-start;
+  }
+
+  body.patient-portal .prov-dash .prov-dash-stat__icon,
+  body.provider-body .prov-dash .prov-dash-stat__icon {
+    top: 10px;
+    right: 10px;
+    width: 30px;
+    height: 30px;
+    border-radius: 8px;
+  }
+
+  body.patient-portal .prov-dash .prov-dash-stat__icon svg,
+  body.provider-body .prov-dash .prov-dash-stat__icon svg {
+    width: 14px;
+    height: 14px;
+  }
+
+  body.patient-portal .prov-dash .prov-dash-stat strong,
+  body.provider-body .prov-dash .prov-dash-stat strong {
+    font-size: 1.5rem;
+    font-weight: 800;
+    line-height: 1;
+    padding-right: 34px;
+  }
+
+  body.patient-portal .prov-dash .prov-dash-stat span,
+  body.provider-body .prov-dash .prov-dash-stat span {
+    font-size: 9px;
+    line-height: 1.35;
+    letter-spacing: 0.03em;
+    padding-top: 6px;
+    margin-top: auto;
+  }
+
+  /* ── Widget strip (How it works, live widgets) ── */
+  body.patient-portal .prov-dash .prov-dash-widget-strip,
+  body.provider-body .prov-dash .prov-dash-widget-strip {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+    align-items: stretch;
+  }
+
+  body.patient-portal .prov-dash .prov-dash-widget-strip > .prov-how-it-works,
+  body.provider-body .prov-dash .prov-dash-widget-strip > .prov-how-it-works {
+    grid-column: 1 / -1;
+  }
+
+  body.patient-portal .prov-dash .prov-dash-widget-strip > .prov-how-it-works,
+  body.provider-body .prov-dash .prov-dash-widget-strip > .prov-how-it-works,
+  body.patient-portal .prov-dash .prov-dash-widget-strip > .mc-notif-widget,
+  body.provider-body .prov-dash .prov-dash-widget-strip > .mc-notif-widget {
+    min-height: 72px;
+    border-radius: var(--mob-dash-radius);
+    box-shadow: var(--mob-dash-shadow);
+  }
+
+  body.patient-portal .prov-dash .prov-how-it-works,
+  body.provider-body .prov-dash .prov-how-it-works {
+    padding: var(--mob-dash-strip-pad);
+    gap: 6px;
+  }
+
+  body.patient-portal .prov-dash .prov-how-it-works__play,
+  body.provider-body .prov-dash .prov-how-it-works__play {
+    width: 32px;
+    height: 32px;
+    min-width: 32px;
+    min-height: 32px;
+  }
+
+  body.patient-portal .prov-dash .prov-dash-widget-strip .mc-notif-widget,
+  body.provider-body .prov-dash .prov-dash-widget-strip .mc-notif-widget {
+    padding: var(--mob-dash-strip-pad);
+    grid-template-columns: 30px 1fr;
+    gap: 2px 8px;
+  }
+
+  body.patient-portal .prov-dash .prov-dash-widget-strip .mc-notif-widget::before,
+  body.provider-body .prov-dash .prov-dash-widget-strip .mc-notif-widget::before {
+    width: 30px;
+    height: 30px;
+    border-radius: 8px;
+  }
+
+  body.patient-portal .prov-dash .prov-dash-widget-strip .mc-notif-widget-value,
+  body.provider-body .prov-dash .prov-dash-widget-strip .mc-notif-widget-value {
+    font-size: 1.15rem;
+  }
+
+  body.patient-portal .prov-dash .prov-dash-widget-strip .mc-notif-widget-label,
+  body.provider-body .prov-dash .prov-dash-widget-strip .mc-notif-widget-label {
+    font-size: 8px;
+    white-space: normal;
+    line-height: 1.25;
+    overflow: visible;
+    text-overflow: unset;
+  }
+
+  /* ── Main grid & section cards ── */
+  body.patient-portal .prov-dash .prov-dash-grid,
+  body.provider-body .prov-dash .prov-dash-grid {
+    grid-template-columns: 1fr;
+    gap: var(--mob-dash-gap);
+  }
+
+  body.patient-portal .prov-dash .prov-dash-main,
+  body.provider-body .prov-dash .prov-dash-main,
+  body.patient-portal .prov-dash .prov-dash-side,
+  body.provider-body .prov-dash .prov-dash-side {
+    gap: var(--mob-dash-gap);
+  }
+
+  body.patient-portal .prov-dash .prov-dash-card,
+  body.provider-body .prov-dash .prov-dash-card {
+    padding: var(--mob-dash-card-pad);
+    border-radius: var(--mob-dash-radius);
+    box-shadow: var(--mob-dash-shadow);
+  }
+
+  body.patient-portal .prov-dash .prov-dash-card__head,
+  body.provider-body .prov-dash .prov-dash-card__head {
+    margin-bottom: 10px;
+    gap: 8px;
+  }
+
+  body.patient-portal .prov-dash .prov-dash-card__title,
+  body.provider-body .prov-dash .prov-dash-card__title {
+    font-size: 0.9rem;
+    gap: 6px;
+  }
+
+  body.patient-portal .prov-dash .prov-dash-card__title svg,
+  body.provider-body .prov-dash .prov-dash-card__title svg {
+    width: 16px;
+    height: 16px;
+    flex-shrink: 0;
+  }
+
+  body.patient-portal .prov-dash .prov-dash-card .mc-badge,
+  body.provider-body .prov-dash .prov-dash-card .mc-badge {
+    font-size: 9px;
+    padding: 3px 8px;
+  }
+
+  body.patient-portal .prov-dash .prov-dash-cta,
+  body.provider-body .prov-dash .prov-dash-cta {
+    padding: var(--mob-dash-card-pad);
+    border-radius: var(--mob-dash-radius);
+  }
+
+  body.patient-portal .prov-dash .prov-dash-cta p,
+  body.provider-body .prov-dash .prov-dash-cta p {
+    font-size: 12px;
+    margin-bottom: 10px;
+    line-height: 1.45;
+  }
+
+  body.patient-portal .prov-dash .prov-dash-cta .mc-btn,
+  body.provider-body .prov-dash .prov-dash-cta .mc-btn {
+    padding: 10px 16px;
+    min-height: 44px;
+    font-size: 13px;
+  }
+
+  /* Chart */
+  body.patient-portal .prov-dash .prov-chart,
+  body.provider-body .prov-dash .prov-chart {
+    height: 120px;
+    margin-bottom: 8px;
+    padding: 0 2px;
+  }
+
+  body.patient-portal .prov-dash .prov-chart-legend,
+  body.provider-body .prov-dash .prov-chart-legend {
+    font-size: 10px;
+    margin-top: 6px;
+    padding-top: 6px;
+  }
+
+  /* Tables */
+  body.patient-portal .prov-dash .prov-dash-table .mc-table th,
+  body.provider-body .prov-dash .prov-dash-table .mc-table th {
+    padding: 10px 12px;
+    font-size: 9px;
+  }
+
+  body.patient-portal .prov-dash .prov-dash-table .mc-table td,
+  body.provider-body .prov-dash .prov-dash-table .mc-table td {
+    padding: 10px 12px;
+    font-size: 12px;
+  }
+
+  body.patient-portal .prov-dash .prov-dash-action-btn,
+  body.provider-body .prov-dash .prov-dash-action-btn {
+    min-height: 36px;
+    padding: 6px 12px;
+    font-size: 10px;
+  }
+
+  body.patient-portal .prov-dash .mc-table-empty,
+  body.provider-body .prov-dash .mc-table-empty {
+    padding: 20px 12px;
+  }
+
+  body.patient-portal .prov-dash .prov-dash-notif-wrap,
+  body.provider-body .prov-dash .prov-dash-notif-wrap {
+    margin-top: 0;
+  }
+
+  body.patient-portal .prov-dash .prov-dash-notif-card,
+  body.provider-body .prov-dash .prov-dash-notif-card,
+  body.patient-portal .prov-dash .adm-notif-recent,
+  body.provider-body .prov-dash .adm-notif-recent {
+    border-radius: var(--mob-dash-radius);
+    box-shadow: var(--mob-dash-shadow);
+    margin-bottom: 0;
+  }
+
+  body.patient-portal .prov-dash .table-responsive,
+  body.provider-body .prov-dash .table-responsive {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    max-width: 100%;
+  }
+
+  body.patient-portal .prov-dash .prov-dash-empty-cta,
+  body.provider-body .prov-dash .prov-dash-empty-cta {
+    min-height: 44px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  /* Sidebar status list */
+  body.patient-portal .prov-dash .prov-status-list,
+  body.provider-body .prov-dash .prov-status-list {
+    gap: 8px;
+  }
+
+  body.patient-portal .prov-dash .prov-status-item,
+  body.provider-body .prov-dash .prov-status-item {
+    padding: 10px 12px;
+    border-radius: 8px;
+  }
+
+  body.patient-portal .prov-dash .prov-status-item__label,
+  body.provider-body .prov-dash .prov-status-item__label {
+    font-size: 12px;
+  }
+
+  body.patient-portal .prov-dash .prov-recording-item,
+  body.provider-body .prov-dash .prov-recording-item {
+    padding: 10px 12px;
+    border-radius: 8px;
+  }
+}
+
+/* Narrow phones — keep 2-up grid, tighten gutters */
+@media (max-width: 480px) {
+  body.patient-portal,
+  body.provider-body {
+    --mob-dash-pad: 14px;
+    --mob-dash-stat-min-h: 72px;
+  }
+
+  body.patient-portal .prov-dash .prov-dash-stat strong,
+  body.provider-body .prov-dash .prov-dash-stat strong {
+    font-size: 1.35rem;
+  }
+}
+
+/* Extra-narrow — single column only below 320px */
+@media (max-width: 319px) {
+  body.patient-portal .prov-dash .prov-dash-stats,
+  body.provider-body .prov-dash .prov-dash-stats,
+  body.patient-portal .prov-dash .prov-dash-widget-strip,
+  body.provider-body .prov-dash .prov-dash-widget-strip {
+    grid-template-columns: 1fr;
+  }
+}
