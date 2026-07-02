@@ -1,10 +1,17 @@
+﻿<?php
+require_once __DIR__ . '/../bootstrap.php';
+$asset = ASSET_BASE;
+?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+  <link rel="icon" type="image/png" href="<?= $asset ?>/assets/img/medcon_logo.png"/>
+  <link rel="shortcut icon" href="<?= $asset ?>/assets/img/medcon_logo.png"/>
+  <link rel="apple-touch-icon" href="<?= $asset ?>/assets/img/medcon_logo.png"/>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Email Verified - MedConnect</title>
-    <link rel="stylesheet" href="../assets/css/style.css">
+    <link rel="stylesheet" href="<?= $asset ?>/assets/css/style.css">
     <style>
         .success-container {
             max-width: 500px;
@@ -78,9 +85,10 @@
             You can log in right away.
         </p>
         
-        <a href="index.php" class="btn-login">Login to Your Account</a>
+        <a href="/index.php" class="btn-login">Login to Your Account</a>
     </div>
 
-    <script src="../assets/js/register.js"></script>
+    <script src="<?= $asset ?>/assets/js/register.js"></script>
 </body>
 </html>
+

@@ -1,0 +1,209 @@
+/* ── medConnect SLEEK Sidebar (Compact Edition) ── */
+
+:root {
+  --sb-width: 240px; /* Slimmer width */
+}
+
+.sidebar {
+  width: var(--sb-width);
+  background: var(--mc-aqua-medium); /* medium aqua-blue #018A93 */
+  color: #ffffff;
+  height: 100vh;
+  position: fixed;
+  left: 0;
+  top: 0;
+  display: flex;
+  flex-direction: column;
+  padding: 0 16px 32px; /* Top padding removed for seamless line */
+  z-index: 100;
+  /* Keep footer actions reachable on small screens */
+  min-height: 0;
+}
+
+.sb-logo {
+  display: flex;
+  align-items: center;
+  justify-content: center; /* Perfectly centered both horizontally and vertically */
+  text-decoration: none;
+  height: auto; /* Height auto for logo-driven scale */
+  margin-top: 20px; /* 20px padding separator from top margin */
+  margin-bottom: 24px;
+  padding: 0;
+  flex-shrink: 0;
+}
+
+.sb-logo-img {
+  height: 40px; /* Small, professional icon size */
+  width: auto; /* Protect original vertical scale */
+  object-fit: contain;
+  display: block;
+}
+
+.sb-nav {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 6px; /* Space-efficient vertical spacing */
+  min-height: 0;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  padding-bottom: 12px;
+}
+
+.sb-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 14px;
+  border-radius: 10px;
+  color: rgba(255, 255, 255, 0.75);
+  text-decoration: none;
+  font-size: 0.875rem;
+  font-weight: 600;
+  transition: all 0.2s ease;
+}
+
+.sb-item svg {
+  width: 18px;
+  height: 18px;
+  stroke: #ffffff; /* white minimalist icons */
+  opacity: 0.8;
+}
+
+.sb-item.active {
+  background: rgba(255, 255, 255, 0.15);
+  color: #ffffff;
+  box-shadow: inset 4px 0 0 #ffffff; /* soft highlight wrapper/indicator */
+}
+
+.sb-item:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: #ffffff;
+}
+
+.sb-item.active svg {
+  opacity: 1;
+}
+
+.sb-footer {
+  flex-shrink: 0;
+  /* Desktop default: keep original visual layout */
+  position: static;
+  padding-top: 0;
+  background: transparent;
+}
+
+.sb-profile {
+  background: rgba(255, 255, 255, 0.08);
+  padding: 14px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 12px;
+  flex-shrink: 0;
+}
+
+.sb-avatar {
+  width: 34px;
+  height: 34px;
+  background: var(--mc-aqua-soft);
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 800;
+  font-size: 12px;
+  color: var(--mc-aqua-medium);
+}
+
+.sb-profile-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.sb-name {
+  font-size: 12px;
+  font-weight: 700;
+  color: #ffffff;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.sb-role {
+  font-size: 10px;
+  color: rgba(255, 255, 255, 0.5);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  font-weight: 700;
+}
+
+.sb-logout {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 14px;
+  border-radius: 10px;
+  color: rgba(255, 255, 255, 0.75);
+  text-decoration: none;
+  font-size: 0.875rem;
+  font-weight: 600;
+  transition: all 0.2s ease;
+  /* Reset button defaults */
+  background: none;
+  border: none;
+  width: 100%;
+  cursor: pointer;
+  text-align: left;
+  flex-shrink: 0;
+}
+
+.sb-logout svg {
+  width: 18px;
+  height: 18px;
+  stroke: currentColor;
+  opacity: 0.85;
+  flex-shrink: 0;
+}
+
+.sb-logout:hover {
+  background: rgba(239, 35, 60, 0.1);
+  color: #ffffff;
+}
+
+/* Mobile/tablet drawer: pin footer actions */
+@media (max-width: 1024px) {
+  .sb-nav {
+    /* Leave room so last items aren't hidden behind sticky footer */
+    padding-bottom: 180px;
+  }
+
+  .sb-footer {
+    position: sticky;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    padding-top: 12px;
+    background: var(--mc-aqua-medium);
+    color: #fff;
+  }
+}
+
+/* Patient portal: sidebar is light, keep Logout muted like desktop */
+@media (max-width: 1024px) {
+  body.patient-portal .sidebar .sb-footer {
+    background: #fff;
+    color: inherit;
+    border-top: 1px solid var(--mc-border-thin);
+  }
+
+  body.patient-portal .sidebar .sb-footer .sb-logout {
+    color: var(--mc-slate-muted);
+  }
+
+  body.patient-portal .sidebar .sb-footer .sb-logout:hover {
+    background: #fef2f2;
+    color: #dc2626;
+  }
+}

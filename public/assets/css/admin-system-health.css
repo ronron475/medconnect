@@ -1,0 +1,333 @@
+/**
+ * MedConnect — System Health Monitor (Admin & Super Admin)
+ */
+
+.sys-health-page {
+  animation: staffAppsFadeIn 0.35s ease;
+}
+
+.sys-health-overall {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  flex-wrap: wrap;
+  padding: 20px 24px;
+  margin-bottom: 24px;
+  border-radius: 16px;
+  border: 1px solid transparent;
+}
+
+.sys-health-overall--healthy {
+  background: linear-gradient(135deg, #f0fdf4 0%, #ecfdf5 100%);
+  border-color: #bbf7d0;
+}
+
+.sys-health-overall--warning {
+  background: linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%);
+  border-color: #fde68a;
+}
+
+.sys-health-overall--critical {
+  background: linear-gradient(135deg, #fef2f2 0%, #fee2e2 100%);
+  border-color: #fecaca;
+}
+
+.sys-health-overall__left {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.sys-health-overall__dot {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  animation: sysHealthPulse 2s ease infinite;
+}
+
+.sys-health-overall--healthy .sys-health-overall__dot { background: #22c55e; box-shadow: 0 0 0 4px rgba(34, 197, 94, 0.2); }
+.sys-health-overall--warning .sys-health-overall__dot { background: #f59e0b; box-shadow: 0 0 0 4px rgba(245, 158, 11, 0.2); }
+.sys-health-overall--critical .sys-health-overall__dot { background: #ef4444; box-shadow: 0 0 0 4px rgba(239, 68, 68, 0.2); }
+
+@keyframes sysHealthPulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.7; transform: scale(0.92); }
+}
+
+.sys-health-overall__title {
+  font-size: 1.125rem;
+  font-weight: 800;
+  color: #0f172a;
+  margin: 0 0 4px;
+}
+
+.sys-health-overall__sub {
+  font-size: 0.8125rem;
+  color: #64748b;
+  margin: 0;
+}
+
+.sys-health-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.sys-health-toolbar .mc-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 18px;
+  border-radius: 12px;
+  font-weight: 700;
+  font-size: 0.875rem;
+}
+
+.sys-health-toolbar .mc-btn.is-loading {
+  opacity: 0.75;
+  pointer-events: none;
+}
+
+.sys-health-toolbar__updated {
+  font-size: 0.8125rem;
+  color: #94a3b8;
+  font-weight: 600;
+}
+
+.sys-health-section {
+  margin-bottom: 24px;
+}
+
+.sys-health-section__title {
+  font-size: 0.8125rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--mc-aqua-medium, #018a93);
+  margin: 0 0 14px;
+}
+
+.sys-health-services {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 16px;
+}
+
+.sys-health-service {
+  background: #fff;
+  border: 1px solid #edf0f5;
+  border-radius: 14px;
+  padding: 18px 20px;
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04);
+  transition: box-shadow 0.18s ease, transform 0.18s ease;
+}
+
+.sys-health-service:hover {
+  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.08);
+  transform: translateY(-1px);
+}
+
+.sys-health-service__head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.sys-health-service__label {
+  font-size: 0.875rem;
+  font-weight: 700;
+  color: #0f172a;
+  margin: 0;
+}
+
+.sys-health-service__detail {
+  font-size: 0.8125rem;
+  color: #64748b;
+  margin: 0;
+  line-height: 1.5;
+}
+
+.sys-health-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 0.6875rem;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.sys-health-pill::before {
+  content: '';
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+}
+
+.sys-health-pill--online,
+.sys-health-pill--healthy {
+  background: #dcfce7;
+  color: #15803d;
+}
+.sys-health-pill--online::before,
+.sys-health-pill--healthy::before { background: #22c55e; }
+
+.sys-health-pill--warning,
+.sys-health-pill--unknown {
+  background: #fef3c7;
+  color: #b45309;
+}
+.sys-health-pill--warning::before,
+.sys-health-pill--unknown::before { background: #f59e0b; }
+
+.sys-health-pill--critical,
+.sys-health-pill--offline {
+  background: #fee2e2;
+  color: #b91c1c;
+}
+.sys-health-pill--critical::before,
+.sys-health-pill--offline::before { background: #ef4444; }
+
+.sys-health-pill--disabled {
+  background: #f1f5f9;
+  color: #64748b;
+}
+.sys-health-pill--disabled::before { background: #94a3b8; }
+
+.sys-health-pill--info {
+  background: #e0f2fe;
+  color: #0369a1;
+}
+.sys-health-pill--info::before { background: #0ea5e9; }
+
+/* Metrics */
+.sys-health-metrics {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 16px;
+}
+
+.sys-health-metric {
+  background: #fff;
+  border: 1px solid #edf0f5;
+  border-radius: 14px;
+  padding: 20px;
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04);
+}
+
+.sys-health-metric__value {
+  font-size: 1.75rem;
+  font-weight: 800;
+  color: #0f172a;
+  line-height: 1;
+  letter-spacing: -0.03em;
+}
+
+.sys-health-metric__value--warning { color: #b45309; }
+.sys-health-metric__value--info { color: #0369a1; }
+
+.sys-health-metric__label {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: #64748b;
+  margin-top: 8px;
+}
+
+.sys-health-metric__unit {
+  font-size: 0.875rem;
+  font-weight: 700;
+  color: #94a3b8;
+  margin-left: 2px;
+}
+
+/* Detail cards row */
+.sys-health-details {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.sys-health-detail-card {
+  background: #fff;
+  border: 1px solid #edf0f5;
+  border-radius: 14px;
+  padding: 20px 22px;
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04);
+}
+
+.sys-health-detail-card__title {
+  font-size: 0.9375rem;
+  font-weight: 800;
+  color: #0f172a;
+  margin: 0 0 14px;
+}
+
+.sys-health-progress {
+  height: 10px;
+  background: #f1f5f9;
+  border-radius: 999px;
+  overflow: hidden;
+  margin: 10px 0 8px;
+}
+
+.sys-health-progress__bar {
+  height: 100%;
+  border-radius: 999px;
+  background: linear-gradient(90deg, #14b8a6, #0d9488);
+  transition: width 0.4s ease;
+}
+
+.sys-health-progress__bar--warning {
+  background: linear-gradient(90deg, #fbbf24, #f59e0b);
+}
+
+.sys-health-progress__bar--critical {
+  background: linear-gradient(90deg, #f87171, #ef4444);
+}
+
+.sys-health-detail-meta {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  font-size: 0.8125rem;
+  color: #64748b;
+  font-weight: 600;
+}
+
+.sys-health-backup-text {
+  font-size: 0.9375rem;
+  font-weight: 700;
+  color: #334155;
+  margin: 0 0 6px;
+  line-height: 1.4;
+}
+
+.sys-health-backup-sub {
+  font-size: 0.8125rem;
+  color: #94a3b8;
+  margin: 0;
+}
+
+@media (max-width: 768px) {
+  .sys-health-details {
+    grid-template-columns: 1fr;
+  }
+
+  .sys-health-overall {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .sys-health-toolbar {
+    justify-content: space-between;
+  }
+}

@@ -1,0 +1,132 @@
+.bubble-wrap {
+  position: relative;
+  display: inline-block;
+  max-width: 100%;
+  z-index: 1;
+}
+
+.bubble-wrap .bubble,
+.bubble-wrap .chat-bubble {
+  cursor: pointer;
+  user-select: none;
+}
+
+.bubble-wrap .bubble.is-deleted {
+  font-style: italic;
+  color: #64748b;
+  background: #f1f5f9 !important;
+  border: 1px dashed #cbd5e1;
+}
+
+.bubble-wrap .bubble.is-deleted.mine {
+  color: #475569;
+  background: #e2e8f0 !important;
+}
+
+.msg-options-btn {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  width: 22px;
+  height: 22px;
+  border: 1px solid #dbe4ea;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.95);
+  color: #64748b;
+  font-size: 14px;
+  line-height: 1;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow: 0 2px 6px rgba(15, 23, 42, 0.08);
+  z-index: 2;
+}
+
+.bubble-wrap:hover .msg-options-btn,
+.bubble-wrap:focus-within .msg-options-btn,
+.bubble-wrap.is-menu-open .msg-options-btn {
+  display: inline-flex;
+}
+
+.bubble.provider .msg-options-btn,
+.chat-bubble.mine .msg-options-btn {
+  background: rgba(255, 255, 255, 0.92);
+  border-color: #99f6e4;
+}
+
+.msg-delete-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.35);
+  z-index: 12000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+}
+
+.msg-delete-dialog {
+  width: min(360px, 100%);
+  background: #fff;
+  border-radius: 14px;
+  box-shadow: 0 18px 48px rgba(15, 23, 42, 0.18);
+  overflow: hidden;
+}
+
+.msg-delete-dialog h3 {
+  margin: 0;
+  padding: 16px 18px 8px;
+  font-size: 16px;
+  color: #0f172a;
+}
+
+.msg-delete-dialog p {
+  margin: 0;
+  padding: 0 18px 14px;
+  font-size: 13px;
+  color: #64748b;
+  line-height: 1.45;
+}
+
+.msg-delete-actions {
+  display: flex;
+  flex-direction: column;
+  border-top: 1px solid #e2e8f0;
+}
+
+.msg-delete-actions button {
+  border: 0;
+  background: #fff;
+  padding: 13px 18px;
+  text-align: left;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 700;
+  color: #0f172a;
+  cursor: pointer;
+}
+
+.msg-delete-actions button:hover {
+  background: #f8fafc;
+}
+
+.msg-delete-actions button.danger {
+  color: #b91c1c;
+}
+
+.msg-delete-actions button.cancel {
+  color: #64748b;
+  border-top: 1px solid #e2e8f0;
+}
+
+.chat-bubble.is-deleted {
+  font-style: italic;
+  color: #64748b;
+  background: #f1f5f9 !important;
+  border: 1px dashed #cbd5e1;
+}
+
+.chat-bubble.is-deleted.mine {
+  background: #e2e8f0 !important;
+}

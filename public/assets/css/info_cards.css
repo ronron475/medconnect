@@ -1,0 +1,158 @@
+/* ── medConnect Patient Info Cards ── */
+
+.info-cards-section {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 16px;
+}
+
+/* ── Base card ── */
+.info-card-item {
+  position: relative;
+  overflow: hidden;
+  background: #ffffff;
+  border-radius: var(--mc-r-lg);
+  padding: 24px;
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+  border: 1px solid var(--mc-border);
+  box-shadow: var(--mc-shadow-sm);
+  transition: transform var(--mc-duration) var(--mc-ease), box-shadow var(--mc-duration) var(--mc-ease);
+}
+
+.info-card-item:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--mc-shadow-md);
+}
+
+/* ── Icon wrapper ── */
+.ic-icon-wrap {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+/* colour variants */
+.ic-icon-wrap--red    { background: #fef2f2; color: #ef4444; }
+.ic-icon-wrap--teal   { background: #f0fdfa; color: #0d9488; }
+.ic-icon-wrap--navy   { background: #eff6ff; color: #0f2d50; }
+.ic-icon-wrap--cyan   { background: #f0f9ff; color: #0ea5e9; }
+.ic-icon-wrap--purple { background: #faf5ff; color: #7c3aed; }
+.ic-icon-wrap--slate  { background: #f8fafc; color: #475569; }
+
+/* ── Body text ── */
+.ic-body {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  min-width: 0;
+  flex: 1;
+}
+
+.ic-label {
+  font-size: 11px;
+  font-weight: 700;
+  color: #94a3b8;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.ic-value {
+  font-size: 15px;
+  font-weight: 700;
+  color: #0f172a;
+  word-break: break-word;
+}
+
+.ic-value--large {
+  font-size: 28px;
+  font-weight: 800;
+  letter-spacing: -0.5px;
+  line-height: 1;
+}
+
+.ic-value--email {
+  font-size: 13px;
+  font-weight: 600;
+  color: #334155;
+  word-break: break-all;
+}
+
+/* ── PhilHealth badge ── */
+.ic-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: 700;
+  padding: 4px 10px 4px 8px;
+  border-radius: 20px;
+}
+
+.ic-badge--active {
+  background: #f0fdf4;
+  color: #16a34a;
+  border: 1px solid #bbf7d0;
+}
+
+.ic-badge--inactive {
+  background: #fef2f2;
+  color: #dc2626;
+  border: 1px solid #fecaca;
+}
+
+.ic-badge-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.ic-badge--active   .ic-badge-dot { background: #22c55e; }
+.ic-badge--inactive .ic-badge-dot { background: #ef4444; }
+
+/* ── Corner badge (decorative label) ── */
+.ic-corner-badge {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  font-size: 9.5px;
+  font-weight: 800;
+  letter-spacing: 0.6px;
+  padding: 2px 7px;
+  border-radius: 6px;
+  opacity: 0.55;
+}
+
+.ic-corner-badge--red    { background: #fee2e2; color: #b91c1c; }
+.ic-corner-badge--teal   { background: #ccfbf1; color: #0f766e; }
+.ic-corner-badge--navy   { background: #dbeafe; color: #1e40af; }
+.ic-corner-badge--cyan   { background: #e0f2fe; color: #0369a1; }
+.ic-corner-badge--purple { background: #ede9fe; color: #6d28d9; }
+.ic-corner-badge--slate  { background: #f1f5f9; color: #475569; }
+
+/* ── Left accent stripe per card type ── */
+.info-card-item--blood  { border-left: 3px solid #ef4444; }
+.info-card-item--teal   { border-left: 3px solid #0d9488; }
+.info-card-item--navy   { border-left: 3px solid #0f2d50; }
+.info-card-item--cyan   { border-left: 3px solid #0ea5e9; }
+.info-card-item--purple { border-left: 3px solid #7c3aed; }
+.info-card-item--slate  { border-left: 3px solid #94a3b8; }
+
+/* ── Responsive ── */
+@media (max-width: 768px) {
+  .info-cards-section {
+    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+    gap: 12px;
+  }
+  .ic-value--large { font-size: 22px; }
+}
+
+@media (max-width: 480px) {
+  .info-cards-section { grid-template-columns: 1fr 1fr; }
+}

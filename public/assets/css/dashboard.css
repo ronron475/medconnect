@@ -1,0 +1,175 @@
+/**
+ * medConnect Dashboard — COMPACT REFINEMENT
+ */
+
+:root {
+    --sidebar-width: 260px;
+}
+
+.main {
+    margin-left: var(--sidebar-width) !important;
+    width: calc(100% - var(--sidebar-width)) !important;
+    min-height: 100vh;
+    background-color: var(--mc-ice-blue); /* non-glare desaturated ice-blue */
+    display: flex;
+    flex-direction: column;
+    position: relative;
+}
+
+.sidebar {
+    width: var(--sidebar-width);
+    height: 100vh;
+    position: fixed;
+    top: 0;
+    left: 0;
+    z-index: 1050; /* Keeps sidebar floating on top */
+}
+
+.main-workspace {
+    margin-left: var(--sidebar-width) !important; /* Forces layout to start past the sidebar */
+    width: calc(100% - var(--sidebar-width)) !important; /* Constrains content to remaining width */
+    padding: 2.5rem !important;
+    position: relative;
+    display: block;
+}
+
+.content {
+    padding: 24px 32px; /* Tighter padding */
+    max-width: 1440px;
+    width: 100%;
+}
+
+/* --- Modular Panels / Cards --- */
+.mc-card {
+    background: var(--mc-white);
+    border-radius: 12px; /* strict twelve-pixel corner rounding */
+    border: 1px solid var(--mc-border-thin); /* thin, subtle borders */
+    box-shadow: var(--mc-shadow-micro);
+    padding: 20px; /* significantly tighter padding */
+    margin-bottom: 20px;
+}
+
+/* --- Card Headers --- */
+.mc-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 16px;
+}
+
+/* --- Compact Data Tables --- */
+.mc-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.mc-table th {
+    background: var(--mc-ice-blue);
+    padding: 10px 12px;
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--mc-aqua-medium);
+    text-align: left;
+    border-bottom: 1px solid var(--mc-border-thin);
+}
+
+.mc-table td {
+    padding: 12px;
+    border-bottom: 1px solid #f1f7f9;
+    color: var(--mc-navy-dark);
+    font-size: 0.8125rem;
+}
+
+.mc-table tr:hover td {
+    background-color: #f9fbfc;
+}
+
+/* --- Grid Layouts (Disciplined 2-Col) --- */
+.dashboard-main-grid {
+    display: grid;
+    grid-template-columns: 1fr 340px; /* Two-column grid system */
+    gap: 24px; /* Uniform twenty-four-pixel gap spacing */
+    align-items: start;
+}
+
+@media (max-width: 1024px) {
+    .dashboard-main-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .main {
+        margin-left: 0 !important;
+        width: 100% !important;
+    }
+
+    .sidebar {
+        transform: translateX(-100%);
+        transition: transform 0.25s ease;
+    }
+
+    .sidebar.is-open {
+        transform: translateX(0);
+    }
+
+    .content {
+        padding: 16px;
+    }
+}
+
+@media (max-width: 640px) {
+    .greeting-banner {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 14px;
+        padding: 18px 16px;
+    }
+
+    .mc-table-wrap,
+    .data-card {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+}
+
+/* --- Greeting Banner (Highly Polished) --- */
+.greeting-banner {
+    background: var(--mc-white); /* crisp white background */
+    border-radius: 12px;
+    border: 1px solid var(--mc-border-thin);
+    border-left: 4px solid var(--mc-aqua-medium); /* medium aqua-blue vertical border strip */
+    padding: 24px 32px;
+    margin-bottom: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    box-shadow: var(--mc-shadow-micro);
+}
+
+/* --- Empty States (Deliberate & Professional) --- */
+.mc-table-empty {
+    padding: 48px 24px;
+    text-align: center;
+    color: var(--mc-slate-muted); /* muted gray-blue text placeholder */
+    font-size: var(--mc-fs-sm);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+}
+
+.mc-table-empty svg {
+    opacity: 0.3;
+    margin-bottom: 4px;
+}
+
+.mc-table-empty p {
+    margin: 0;
+    font-weight: 500;
+}
+
+/* --- Compact Typography Adjustments --- */
+h1, h2, h3 { line-height: 1.2; }
+p { margin-bottom: 8px; }

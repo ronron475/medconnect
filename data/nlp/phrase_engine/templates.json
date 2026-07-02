@@ -1,0 +1,42 @@
+{
+  "version": "1.0",
+  "description": "Phrase templates — used for generation stats and parsing hints, not stored as millions of rows",
+  "possessives": ["ko", "akon", "ko akon", "akon ko", "nakon"],
+  "intensifiers": ["gid", "grabe", "grabe gid", "daw", "subong", "karon", "talaga"],
+  "connectors": ["sa", "sang", "kag", "nga"],
+  "prefixes": ["may", "may ara", "daw may"],
+  "word_orders": [
+    "{symptom} {body} {possessive}",
+    "{symptom} {possessive} {body}",
+    "{symptom} {intensifier} {body} {possessive}",
+    "{symptom} {intensifier} {body}",
+    "may {symptom} sa {body} {possessive}",
+    "may {symptom} {body} {possessive}",
+    "{body} {possessive} {symptom}",
+    "{possessive} {body} {symptom}",
+    "{symptom} gid {possessive} {body}",
+    "{symptom} gid {body} {possessive}",
+    "{intensifier} {symptom} {body} {possessive}",
+    "{body} {symptom}",
+    "{symptom} {body}"
+  ],
+  "standalone_orders": [
+    "{symptom} {possessive}",
+    "{symptom} {intensifier} {possessive}",
+    "{symptom}",
+    "{intensifier} {symptom} {possessive}"
+  ],
+  "duration_patterns": [
+    "{duration} {phrase}",
+    "{phrase} {duration}"
+  ],
+  "duration_tokens": [
+    "3 ka adlaw na",
+    "5 ka adlaw na",
+    "dugay na",
+    "bag-o lang",
+    "gahapon",
+    "semana na"
+  ],
+  "filler_strip": ["kag", "nga", "sang", "ang", "ko", "akon", "gid", "daw", "subong", "karon", "may", "sa", "ara"]
+}

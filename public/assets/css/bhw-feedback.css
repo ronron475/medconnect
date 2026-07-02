@@ -1,0 +1,155 @@
+/* BHW feedback modal — matches MedConnect clinical design system */
+
+.bhw-feedback-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  z-index: 10050;
+  background: rgba(1, 42, 74, 0.48);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+
+.bhw-feedback-overlay.is-visible {
+  display: flex;
+  animation: bhwFeedbackFadeIn 0.22s ease;
+}
+
+.bhw-feedback-dialog {
+  background: #fff;
+  width: min(420px, 100%);
+  border-radius: 16px;
+  border: 1px solid var(--mc-border-thin, #e2edf1);
+  box-shadow: 0 24px 60px rgba(1, 42, 74, 0.18);
+  padding: 32px 32px 28px;
+  text-align: center;
+  transform: scale(0.94) translateY(8px);
+  opacity: 0;
+  transition: transform 0.25s cubic-bezier(0.34, 1.4, 0.64, 1), opacity 0.2s ease;
+}
+
+.bhw-feedback-overlay.is-visible .bhw-feedback-dialog {
+  transform: scale(1) translateY(0);
+  opacity: 1;
+}
+
+@keyframes bhwFeedbackFadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.bhw-feedback-icon {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 18px;
+}
+
+.bhw-feedback-icon--success {
+  background: rgba(1, 138, 147, 0.12);
+  border: 2px solid rgba(1, 138, 147, 0.35);
+  color: #018a93;
+}
+
+.bhw-feedback-icon--error {
+  background: rgba(220, 38, 38, 0.08);
+  border: 2px solid rgba(220, 38, 38, 0.28);
+  color: #dc2626;
+}
+
+.bhw-feedback-title {
+  margin: 0 0 8px;
+  font-size: 1.2rem;
+  font-weight: 800;
+  color: var(--bhw-navy, #012a4a);
+  letter-spacing: -0.02em;
+}
+
+.bhw-feedback-message {
+  margin: 0 0 24px;
+  font-size: 0.925rem;
+  line-height: 1.55;
+  color: #64748b;
+  font-weight: 500;
+}
+
+.bhw-feedback-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+@media (min-width: 480px) {
+  .bhw-feedback-actions--dual {
+    flex-direction: row;
+  }
+
+  .bhw-feedback-actions--dual .bhw-feedback-btn {
+    flex: 1;
+  }
+}
+
+.bhw-feedback-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 46px;
+  padding: 12px 20px;
+  border-radius: 12px;
+  font-size: 0.9rem;
+  font-weight: 700;
+  cursor: pointer;
+  border: none;
+  text-decoration: none;
+  transition: background 0.25s ease, color 0.25s ease, border-color 0.25s ease, transform 0.2s ease;
+}
+
+.bhw-feedback-btn:focus-visible {
+  outline: 2px solid #018a93;
+  outline-offset: 2px;
+}
+
+.bhw-feedback-btn--primary {
+  background: linear-gradient(135deg, #018a93, #016970);
+  color: #fff;
+  box-shadow: 0 4px 14px rgba(1, 138, 147, 0.28);
+}
+
+.bhw-feedback-btn--primary:hover {
+  background: linear-gradient(135deg, #016970, #015560);
+  transform: translateY(-1px);
+}
+
+.bhw-feedback-btn--secondary {
+  background: #fff;
+  color: #018a93;
+  border: 1px solid rgba(1, 138, 147, 0.35);
+}
+
+.bhw-feedback-btn--secondary:hover {
+  background: rgba(1, 138, 147, 0.06);
+}
+
+.bhw-feedback-btn--danger {
+  background: #dc2626;
+  color: #fff;
+}
+
+.bhw-feedback-btn--danger:hover {
+  background: #b91c1c;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .bhw-feedback-overlay,
+  .bhw-feedback-dialog,
+  .bhw-feedback-btn {
+    animation: none !important;
+    transition: none !important;
+  }
+}

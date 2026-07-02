@@ -1,0 +1,174 @@
+/* ── medConnect COMPACT Topbar ── */
+
+.topbar {
+  height: var(--header-h); /* Synchronized with sidebar logo area */
+  background: var(--mc-white);
+  display: flex;
+  align-items: center; /* Locked onto horizontal center baseline */
+  justify-content: space-between;
+  padding: 0 32px; /* Balanced padding */
+  position: sticky;
+  top: 0;
+  z-index: 90;
+  border-bottom: 1px solid var(--mc-border-thin); /* Seamless line extension */
+  box-shadow: none; /* Removed in favor of clean border line */
+}
+
+.topbar-left {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  min-width: 0;
+  flex: 1 1 auto;
+}
+
+.topbar-title-block {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.topbar-eyebrow {
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--mc-aqua-medium);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.topbar-title {
+  font-size: 1.1rem; /* Compact font size */
+  font-weight: 800;
+  color: var(--mc-navy-dark); /* dark navy typography */
+  letter-spacing: -0.01em;
+  line-height: 1.1;
+}
+
+.topbar-right {
+  display: flex;
+  align-items: center; /* Shared center axis */
+  gap: 20px;
+  flex-shrink: 0; /* keep actions visible */
+}
+
+.topbar-sep {
+  width: 1px;
+  height: 24px;
+  background: var(--mc-border-thin);
+}
+
+.topbar-datetime {
+  text-align: right;
+  display: flex;
+  flex-direction: column;
+  justify-content: center; /* Vertical center */
+  padding-right: 20px;
+  border-right: 1px solid var(--mc-border-thin);
+  height: 32px; /* Fixed height for consistent vertical centering */
+}
+
+.topbar-date {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--mc-navy-dark);
+}
+
+.topbar-time {
+  font-size: 11px;
+  color: var(--mc-slate-muted); /* muted gray-blue */
+  font-weight: 500;
+}
+
+.topbar-icon-btn {
+  width: 36px; /* Compact sizing */
+  height: 36px;
+  border-radius: 8px; /* micro-rounding */
+  border: 1px solid var(--mc-border-thin);
+  background: var(--mc-white);
+  color: var(--mc-aqua-medium);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.topbar-icon-btn:hover {
+  background: var(--mc-ice-blue);
+  transform: translateY(-1px);
+}
+
+.topbar-user {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.topbar-avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: var(--mc-aqua-medium);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 800;
+  font-size: 11px;
+}
+
+.topbar-logout {
+  color: var(--mc-slate-muted); /* minimal exit icon */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 6px;
+  border-radius: 8px;
+  transition: all 0.2s ease;
+}
+
+.topbar-logout:hover {
+  background: #fee2e2;
+  color: #ef233c;
+}
+
+@media (max-width: 1024px) {
+  .topbar {
+    height: auto;
+    min-height: 64px;
+    padding: 10px 14px;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .topbar-left {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex: 1;
+    min-width: 0;
+  }
+
+  .topbar-datetime {
+    display: none;
+  }
+
+  /* No need to waste horizontal space once the clock is hidden */
+  .topbar-sep {
+    display: none;
+  }
+}
+
+@media (max-width: 480px) {
+  .topbar-right {
+    gap: 10px;
+  }
+
+  .topbar-right .topbar-avatar {
+    display: none;
+  }
+}

@@ -1,0 +1,26 @@
+flag_id,flag_name,hiligaynon_pattern,english_pattern,body_system,category,auto_triage,severity,clinical_rationale,status
+EF001,Chest Pain,masakit dughan ko,chest pain,cardiovascular,cardiac,EMERGENCY,critical,Acute chest pain may indicate myocardial ischemia or pulmonary embolism,active
+EF002,Chest Pain,sakit dughan,chest pain,cardiovascular,cardiac,EMERGENCY,critical,Chest pain requires immediate emergency evaluation,active
+EF003,Respiratory Distress,budlay magginhawa ko,difficulty breathing,respiratory,breathing,EMERGENCY,critical,Airway or respiratory compromise,active
+EF004,Respiratory Distress,indi ko makaginhawa,cannot breathe,respiratory,breathing,EMERGENCY,critical,Severe respiratory distress,active
+EF005,Respiratory Distress,dula ginhawa ko,shortness of breath,respiratory,breathing,EMERGENCY,critical,Hypoxia risk — emergency assessment required,active
+EF006,Severe Bleeding,grabe gid nagadugo,severe bleeding,general,bleeding,EMERGENCY,critical,Uncontrolled hemorrhage,active
+EF007,Severe Bleeding,indi mapunggan ang dugo,uncontrolled bleeding,general,bleeding,EMERGENCY,critical,Hemorrhage not controlled,active
+EF008,Severe Bleeding,nagdugo ulo ko,head bleeding,neurological,bleeding,EMERGENCY,critical,Head trauma with bleeding,active
+EF009,Loss of Consciousness,nadulaan ko malay,loss of consciousness,neurological,consciousness,EMERGENCY,critical,Altered consciousness — ABCs priority,active
+EF010,Loss of Consciousness,nagpunaw ko,loss of consciousness,neurological,consciousness,EMERGENCY,critical,Syncope or collapse,active
+EF011,Stroke Symptoms,daw indi ko makahambal,speech difficulty,neurological,neurological,EMERGENCY,critical,Possible acute stroke — FAST criteria,active
+EF012,Stroke Symptoms,daw indi ko makabaton sang kamot ko,arm weakness,neurological,neurological,EMERGENCY,critical,Focal neurological deficit,active
+EF013,Seizure,naguyam ko,seizure,neurological,neurological,EMERGENCY,critical,Active or recent seizure activity,active
+EF014,Severe Allergic Reaction,gahubag lawas ko kag budlay magginhawa,anaphylaxis,allergy,allergy,EMERGENCY,critical,Anaphylaxis with airway involvement,active
+EF015,Suicidal Ideation,gusto ko magpakamatay,suicidal ideation,mental_health,psychiatric,EMERGENCY,critical,Suicide risk — immediate safety assessment,active
+EF016,Major Trauma,nabunggo ko sa salakyan,vehicle collision injury,trauma,trauma,EMERGENCY,critical,High-energy trauma mechanism,active
+EF017,Amputation,nautod ari ko,penile amputation,trauma,trauma,EMERGENCY,critical,Major tissue loss — surgical emergency,active
+EF018,Amputation,nautod tudlo ko,amputated finger,trauma,trauma,EMERGENCY,critical,Traumatic amputation,active
+EF019,Electrical Injury,nakuryente ko kag nadulaan ko malay,electrical injury with altered consciousness,trauma,trauma,EMERGENCY,critical,Electrical injury with neurological compromise,active
+EF020,Electrical Injury,nakuryente gid ko,electrical injury,trauma,trauma,EMERGENCY,critical,Electrical injury — cardiac arrhythmia risk,active
+EF021,Severe Burns,nasunog lawas ko,body burn,dermatological,burn,EMERGENCY,critical,Major burn — fluid resuscitation may be required,active
+EF022,Urinary Retention,wala ko maka-ihi,urinary retention,urinary,urinary,EMERGENCY,severe,Acute urinary retention,active
+EF023,Severe Head Injury,nagdugo ulo ko pagkatapos natumba,head bleeding after fall,neurological,trauma,EMERGENCY,critical,Head injury with bleeding post fall,active
+EF024,Choking,wala ko maka-ginhawa tungod sa pagkaon,choking,respiratory,breathing,EMERGENCY,critical,Airway obstruction,active
+EF025,Poisoning,naka-inom ko sang lason,poisoning,general,toxicology,EMERGENCY,critical,Toxic ingestion,active

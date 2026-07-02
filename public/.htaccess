@@ -1,0 +1,37 @@
+Options -Indexes
+RewriteEngine On
+RewriteBase /
+
+# Serve static files and existing PHP scripts directly
+RewriteCond %{REQUEST_FILENAME} -f
+RewriteRule ^ - [L]
+
+RewriteCond %{REQUEST_FILENAME} -d
+RewriteRule ^ - [L]
+
+# Portal views → router (resources/views is outside docroot)
+RewriteRule ^views/(.*)$ view.php?path=$1 [L,QSA]
+
+# Legacy API aliases
+RewriteRule ^api/health$ app/api/ai/health.php [L]
+RewriteRule ^api/groq_health$ app/api/ai/groq_health.php [L]
+
+# Trailing slash fix for API POST
+RewriteCond %{REQUEST_URI} /app/api/(.+)\.php/$
+RewriteRule ^app/api/(.+)\.php/$ app/api/$1.php [L]
+
+# Hospital referral module (backward-compatible URL)
+RewriteRule ^hospital-referral/(.*)$ ../modules/hospital_referral/$1 [L]
+
+# Philippine address selector (backward-compatible URL)
+RewriteRule ^philippine-address-selector-main/(.*)$ ../modules/address_selector/$1 [L]
+
+# Block sensitive paths when docroot is public/
+RewriteRule ^app/(core|includes|models)/ - [F,L]
+
+# Legacy controllers URL (backward-compatible)
+RewriteRule ^controllers/(.*)$ app/controllers/$1 [L]
+
+<FilesMatch "\.(env|sql|log|md|lock|git|sh|bak)$">
+    Require all denied
+</FilesMatch>

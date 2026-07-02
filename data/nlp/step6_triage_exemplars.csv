@@ -1,0 +1,345 @@
+hiligaynon_term,english_term,medical_category,severity,triage_level,status,expected_triage
+kakatol bilat ko,vaginal itching,dermatological,Mild,non_urgent,active,non_urgent
+gapula mata ko kag gakatol,eye redness,ophthalmologic,Mild,non_urgent,active,non_urgent
+sakit ulo ko,headache,neurological,Mild,non_urgent,active,non_urgent
+galagas buhok ko,hair loss,dermatological,Mild,non_urgent,active,non_urgent
+ubo ko,cough,respiratory,Mild,non_urgent,active,non_urgent
+gakatol kamot ko,hand itching,dermatological,Mild,non_urgent,active,non_urgent
+gapula mata ko,eye redness,ophthalmologic,Mild,non_urgent,active,non_urgent
+nahilo tiyan ko,abdomen nausea,gastrointestinal,Mild,non_urgent,active,non_urgent
+nabun-og kamot ko,hand bruise,dermatological,Mild,non_urgent,active,non_urgent
+gahabok tudlo ko,finger swelling,musculoskeletal_symptom,Mild,non_urgent,active,non_urgent
+may nana sa bilat ko,infection with pus,infection,Moderate,urgent,active,urgent
+may nana akon mata,eye infection,infection,Moderate,urgent,active,urgent
+gahabok itlog ko,swelling,general,Moderate,urgent,active,urgent
+gadugo bilat ko,vagina bleeding,gynecologic,Moderate,urgent,active,urgent
+masakit ari ko,penis pain,male_reproductive,Moderate,urgent,active,urgent
+ginahilanat ko kag gahika ko,fever,general,Moderate,urgent,active,urgent
+ginahilanat ko 3 ka adlaw na,fever,general,Moderate,urgent,active,urgent
+gahabok mata ko,eye swelling,eye_condition,Moderate,urgent,active,urgent
+gahubag kamot ko,hand swelling,musculoskeletal_symptom,Moderate,urgent,active,urgent
+masakit pag-ihi ko,painful urination,urinary,Moderate,urgent,active,urgent
+ginabaldom gid ko,severe abdominal pain,gastrointestinal,Severe,urgent,active,urgent
+alta presyon ko,hypertension,cardiovascular,Moderate,urgent,active,urgent
+ginkagat sang ido ko,dog bite,infection,Moderate,urgent,active,urgent
+may pilas ko sa kamot kag nagdugo,hand wound,wound,Moderate,urgent,active,urgent
+nabali kamot ko,hand fracture,trauma,Moderate,urgent,active,urgent
+nasunog kamot ko sang mantika,hand burn,burn,Moderate,urgent,active,urgent
+gahubag tungod ko kag ginahilanat ko,throat swelling,ent,Severe,emergency,active,urgent
+namaga mata ko,eye swelling,eye_condition,Moderate,urgent,active,urgent
+gahabok dila ko,tongue swelling,oral,Severe,emergency,active,urgent
+budlay magginhawa ko,difficulty breathing,respiratory,Critical,emergency,active,emergency
+masakit dughan ko kag dula ginhawa ko,shortness of breath,respiratory,Critical,emergency,active,emergency
+grabe gid nagadugo bilat ko,severe bleeding,bleeding,Critical,emergency,active,emergency
+nautod tudlo ko,amputation,trauma,Critical,emergency,active,emergency
+nabunggo ko sa salakyan,vehicle collision,trauma,Critical,emergency,active,emergency
+nakuryente ko,electrical injury,trauma,Critical,emergency,active,emergency
+daw indi ko makahambal,speech difficulty,neurological,Severe,emergency,active,emergency
+wala ko maka-ihi,urinary retention,urinary,Severe,emergency,active,emergency
+gahubag lawas ko kag gakatol,body swelling,allergy,Severe,emergency,active,emergency
+ginsumbag ko kag nabun-og ulo ko,head head injury,trauma,Severe,emergency,active,emergency
+namaga gid dila ko,tongue swelling,oral,Severe,emergency,active,emergency
+naguyam ko,seizure,neurological,Critical,emergency,active,emergency
+gusto ko magpakamatay,suicidal ideation,mental_health,Critical,emergency,active,emergency
+nagdugo ulo ko,head bleeding,trauma,Critical,emergency,active,emergency
+daw indi ko makabaton sang kamot ko,arm weakness,neurological,Severe,emergency,active,emergency
+masakit dughan ko,chest pain,cardiovascular,Severe,emergency,active,emergency
+gahubag ngabil ko,lip swelling,oral,Severe,emergency,active,emergency
+galagas buhok talukap mata ko,hair loss,dermatological,Mild,non_urgent,active,non_urgent
+galagas buhok talukap mata akon,hair loss,dermatological,Mild,non_urgent,active,non_urgent
+galagas buhok talukap mata ko akon,hair loss,dermatological,Mild,non_urgent,active,non_urgent
+galagas buhok talukap mata akon ko,hair loss,dermatological,Mild,non_urgent,active,non_urgent
+galagas buhok ko talukap mata,hair loss,dermatological,Mild,non_urgent,active,non_urgent
+galagas buhok akon talukap mata,hair loss,dermatological,Mild,non_urgent,active,non_urgent
+galagas buhok ko akon talukap mata,hair loss,dermatological,Mild,non_urgent,active,non_urgent
+galagas buhok akon ko talukap mata,hair loss,dermatological,Mild,non_urgent,active,non_urgent
+galagas buhok gid talukap mata ko,hair loss,dermatological,Mild,non_urgent,active,non_urgent
+galagas buhok grabe talukap mata ko,hair loss,dermatological,Mild,non_urgent,active,non_urgent
+galagas buhok grabe gid talukap mata ko,hair loss,dermatological,Mild,non_urgent,active,non_urgent
+galagas buhok gid talukap mata akon,hair loss,dermatological,Mild,non_urgent,active,non_urgent
+galagas buhok grabe talukap mata akon,hair loss,dermatological,Mild,non_urgent,active,non_urgent
+galagas buhok grabe gid talukap mata akon,hair loss,dermatological,Mild,non_urgent,active,non_urgent
+galagas buhok gid talukap mata ko akon,hair loss,dermatological,Mild,non_urgent,active,non_urgent
+galagas buhok grabe talukap mata ko akon,hair loss,dermatological,Mild,non_urgent,active,non_urgent
+galagas buhok grabe gid talukap mata ko akon,hair loss,dermatological,Mild,non_urgent,active,non_urgent
+galagas buhok gid talukap mata akon ko,hair loss,dermatological,Mild,non_urgent,active,non_urgent
+galagas buhok grabe talukap mata akon ko,hair loss,dermatological,Mild,non_urgent,active,non_urgent
+galagas buhok grabe gid talukap mata akon ko,hair loss,dermatological,Mild,non_urgent,active,non_urgent
+galagas buhok talukap mata,hair loss,dermatological,Mild,non_urgent,active,non_urgent
+galagas buhok gid talukap mata,hair loss,dermatological,Mild,non_urgent,active,non_urgent
+galagas buhok grabe talukap mata,hair loss,dermatological,Mild,non_urgent,active,non_urgent
+galagas buhok grabe gid talukap mata,hair loss,dermatological,Mild,non_urgent,active,non_urgent
+may galagas buhok sa talukap mata ko,hair loss,dermatological,Mild,non_urgent,active,non_urgent
+may galagas buhok sa talukap mata akon,hair loss,dermatological,Mild,non_urgent,active,non_urgent
+may galagas buhok sa talukap mata ko akon,hair loss,dermatological,Mild,non_urgent,active,non_urgent
+may galagas buhok sa talukap mata akon ko,hair loss,dermatological,Mild,non_urgent,active,non_urgent
+may galagas buhok talukap mata ko,hair loss,dermatological,Mild,non_urgent,active,non_urgent
+may galagas buhok talukap mata akon,hair loss,dermatological,Mild,non_urgent,active,non_urgent
+may galagas buhok talukap mata ko akon,hair loss,dermatological,Mild,non_urgent,active,non_urgent
+may galagas buhok talukap mata akon ko,hair loss,dermatological,Mild,non_urgent,active,non_urgent
+talukap mata ko galagas buhok,hair loss,dermatological,Mild,non_urgent,active,non_urgent
+talukap mata akon galagas buhok,hair loss,dermatological,Mild,non_urgent,active,non_urgent
+talukap mata ko akon galagas buhok,hair loss,dermatological,Mild,non_urgent,active,non_urgent
+talukap mata akon ko galagas buhok,hair loss,dermatological,Mild,non_urgent,active,non_urgent
+ko talukap mata galagas buhok,hair loss,dermatological,Mild,non_urgent,active,non_urgent
+akon talukap mata galagas buhok,hair loss,dermatological,Mild,non_urgent,active,non_urgent
+ko akon talukap mata galagas buhok,hair loss,dermatological,Mild,non_urgent,active,non_urgent
+akon ko talukap mata galagas buhok,hair loss,dermatological,Mild,non_urgent,active,non_urgent
+galagas buhok gid ko talukap mata,hair loss,dermatological,Mild,non_urgent,active,non_urgent
+galagas buhok gid akon talukap mata,hair loss,dermatological,Mild,non_urgent,active,non_urgent
+galagas buhok gid ko akon talukap mata,hair loss,dermatological,Mild,non_urgent,active,non_urgent
+galagas buhok gid akon ko talukap mata,hair loss,dermatological,Mild,non_urgent,active,non_urgent
+gid galagas buhok talukap mata ko,hair loss,dermatological,Mild,non_urgent,active,non_urgent
+grabe galagas buhok talukap mata ko,hair loss,dermatological,Mild,non_urgent,active,non_urgent
+grabe gid galagas buhok talukap mata ko,hair loss,dermatological,Mild,non_urgent,active,non_urgent
+gid galagas buhok talukap mata akon,hair loss,dermatological,Mild,non_urgent,active,non_urgent
+grabe galagas buhok talukap mata akon,hair loss,dermatological,Mild,non_urgent,active,non_urgent
+grabe gid galagas buhok talukap mata akon,hair loss,dermatological,Mild,non_urgent,active,non_urgent
+gid galagas buhok talukap mata ko akon,hair loss,dermatological,Mild,non_urgent,active,non_urgent
+grabe galagas buhok talukap mata ko akon,hair loss,dermatological,Mild,non_urgent,active,non_urgent
+grabe gid galagas buhok talukap mata ko akon,hair loss,dermatological,Mild,non_urgent,active,non_urgent
+gid galagas buhok talukap mata akon ko,hair loss,dermatological,Mild,non_urgent,active,non_urgent
+grabe galagas buhok talukap mata akon ko,hair loss,dermatological,Mild,non_urgent,active,non_urgent
+grabe gid galagas buhok talukap mata akon ko,hair loss,dermatological,Mild,non_urgent,active,non_urgent
+talukap mata galagas buhok,hair loss,dermatological,Mild,non_urgent,active,non_urgent
+galagas buhok bukongbukong ko,hair loss,dermatological,Mild,non_urgent,active,non_urgent
+galagas buhok bukongbukong akon,hair loss,dermatological,Mild,non_urgent,active,non_urgent
+galagas buhok bukongbukong ko akon,hair loss,dermatological,Mild,non_urgent,active,non_urgent
+galagas buhok bukongbukong akon ko,hair loss,dermatological,Mild,non_urgent,active,non_urgent
+galagas buhok ko bukongbukong,hair loss,dermatological,Mild,non_urgent,active,non_urgent
+galagas buhok akon bukongbukong,hair loss,dermatological,Mild,non_urgent,active,non_urgent
+galagas buhok ko akon bukongbukong,hair loss,dermatological,Mild,non_urgent,active,non_urgent
+galagas buhok akon ko bukongbukong,hair loss,dermatological,Mild,non_urgent,active,non_urgent
+galagas buhok gid bukongbukong ko,hair loss,dermatological,Mild,non_urgent,active,non_urgent
+galagas buhok grabe bukongbukong ko,hair loss,dermatological,Mild,non_urgent,active,non_urgent
+galagas buhok grabe gid bukongbukong ko,hair loss,dermatological,Mild,non_urgent,active,non_urgent
+galagas buhok gid bukongbukong akon,hair loss,dermatological,Mild,non_urgent,active,non_urgent
+galagas buhok grabe bukongbukong akon,hair loss,dermatological,Mild,non_urgent,active,non_urgent
+galagas buhok grabe gid bukongbukong akon,hair loss,dermatological,Mild,non_urgent,active,non_urgent
+galagas buhok gid bukongbukong ko akon,hair loss,dermatological,Mild,non_urgent,active,non_urgent
+galagas buhok grabe bukongbukong ko akon,hair loss,dermatological,Mild,non_urgent,active,non_urgent
+galagas buhok grabe gid bukongbukong ko akon,hair loss,dermatological,Mild,non_urgent,active,non_urgent
+galagas buhok gid bukongbukong akon ko,hair loss,dermatological,Mild,non_urgent,active,non_urgent
+galagas buhok grabe bukongbukong akon ko,hair loss,dermatological,Mild,non_urgent,active,non_urgent
+galagas buhok grabe gid bukongbukong akon ko,hair loss,dermatological,Mild,non_urgent,active,non_urgent
+galagas buhok bukongbukong,hair loss,dermatological,Mild,non_urgent,active,non_urgent
+galagas buhok gid bukongbukong,hair loss,dermatological,Mild,non_urgent,active,non_urgent
+galagas buhok grabe bukongbukong,hair loss,dermatological,Mild,non_urgent,active,non_urgent
+galagas buhok grabe gid bukongbukong,hair loss,dermatological,Mild,non_urgent,active,non_urgent
+may galagas buhok sa bukongbukong ko,hair loss,dermatological,Mild,non_urgent,active,non_urgent
+may galagas buhok sa bukongbukong akon,hair loss,dermatological,Mild,non_urgent,active,non_urgent
+may galagas buhok sa bukongbukong ko akon,hair loss,dermatological,Mild,non_urgent,active,non_urgent
+may galagas buhok sa bukongbukong akon ko,hair loss,dermatological,Mild,non_urgent,active,non_urgent
+may galagas buhok bukongbukong ko,hair loss,dermatological,Mild,non_urgent,active,non_urgent
+may galagas buhok bukongbukong akon,hair loss,dermatological,Mild,non_urgent,active,non_urgent
+may galagas buhok bukongbukong ko akon,hair loss,dermatological,Mild,non_urgent,active,non_urgent
+may galagas buhok bukongbukong akon ko,hair loss,dermatological,Mild,non_urgent,active,non_urgent
+bukongbukong ko galagas buhok,hair loss,dermatological,Mild,non_urgent,active,non_urgent
+bukongbukong akon galagas buhok,hair loss,dermatological,Mild,non_urgent,active,non_urgent
+bukongbukong ko akon galagas buhok,hair loss,dermatological,Mild,non_urgent,active,non_urgent
+bukongbukong akon ko galagas buhok,hair loss,dermatological,Mild,non_urgent,active,non_urgent
+ko bukongbukong galagas buhok,hair loss,dermatological,Mild,non_urgent,active,non_urgent
+akon bukongbukong galagas buhok,hair loss,dermatological,Mild,non_urgent,active,non_urgent
+ko akon bukongbukong galagas buhok,hair loss,dermatological,Mild,non_urgent,active,non_urgent
+akon ko bukongbukong galagas buhok,hair loss,dermatological,Mild,non_urgent,active,non_urgent
+galagas buhok gid ko bukongbukong,hair loss,dermatological,Mild,non_urgent,active,non_urgent
+galagas buhok gid akon bukongbukong,hair loss,dermatological,Mild,non_urgent,active,non_urgent
+galagas buhok gid ko akon bukongbukong,hair loss,dermatological,Mild,non_urgent,active,non_urgent
+ginahilanat gid ko,fever,general,Moderate,urgent,active,urgent
+3 ka adlaw na ginahilanat gid ko,fever,general,Moderate,urgent,active,urgent
+5 ka adlaw na ginahilanat gid ko,fever,general,Moderate,urgent,active,urgent
+dugay na ginahilanat gid ko,fever,general,Moderate,urgent,active,urgent
+bag-o lang ginahilanat gid ko,fever,general,Moderate,urgent,active,urgent
+hilanat gid talukap mata ko,eyelid high fever,general,Moderate,urgent,active,urgent
+hilanat gid talukap mata akon,eyelid high fever,general,Moderate,urgent,active,urgent
+hilanat gid talukap mata ko akon,eyelid high fever,general,Moderate,urgent,active,urgent
+hilanat gid talukap mata akon ko,eyelid high fever,general,Moderate,urgent,active,urgent
+hilanat gid ko talukap mata,eyelid high fever,general,Moderate,urgent,active,urgent
+hilanat gid akon talukap mata,eyelid high fever,general,Moderate,urgent,active,urgent
+hilanat gid ko akon talukap mata,eyelid high fever,general,Moderate,urgent,active,urgent
+hilanat gid akon ko talukap mata,eyelid high fever,general,Moderate,urgent,active,urgent
+hilanat gid gid talukap mata ko,eyelid high fever,general,Moderate,urgent,active,urgent
+hilanat gid grabe talukap mata ko,eyelid high fever,general,Moderate,urgent,active,urgent
+hilanat gid grabe gid talukap mata ko,eyelid high fever,general,Moderate,urgent,active,urgent
+hilanat gid gid talukap mata akon,eyelid high fever,general,Moderate,urgent,active,urgent
+hilanat gid grabe talukap mata akon,eyelid high fever,general,Moderate,urgent,active,urgent
+hilanat gid grabe gid talukap mata akon,eyelid high fever,general,Moderate,urgent,active,urgent
+hilanat gid gid talukap mata ko akon,eyelid high fever,general,Moderate,urgent,active,urgent
+hilanat gid grabe talukap mata ko akon,eyelid high fever,general,Moderate,urgent,active,urgent
+hilanat gid grabe gid talukap mata ko akon,eyelid high fever,general,Moderate,urgent,active,urgent
+hilanat gid gid talukap mata akon ko,eyelid high fever,general,Moderate,urgent,active,urgent
+hilanat gid grabe talukap mata akon ko,eyelid high fever,general,Moderate,urgent,active,urgent
+hilanat gid grabe gid talukap mata akon ko,eyelid high fever,general,Moderate,urgent,active,urgent
+hilanat gid talukap mata,eyelid high fever,general,Moderate,urgent,active,urgent
+hilanat gid gid talukap mata,eyelid high fever,general,Moderate,urgent,active,urgent
+hilanat gid grabe talukap mata,eyelid high fever,general,Moderate,urgent,active,urgent
+hilanat gid grabe gid talukap mata,eyelid high fever,general,Moderate,urgent,active,urgent
+may hilanat gid sa talukap mata ko,eyelid high fever,general,Moderate,urgent,active,urgent
+may hilanat gid sa talukap mata akon,eyelid high fever,general,Moderate,urgent,active,urgent
+may hilanat gid sa talukap mata ko akon,eyelid high fever,general,Moderate,urgent,active,urgent
+may hilanat gid sa talukap mata akon ko,eyelid high fever,general,Moderate,urgent,active,urgent
+may hilanat gid talukap mata ko,eyelid high fever,general,Moderate,urgent,active,urgent
+may hilanat gid talukap mata akon,eyelid high fever,general,Moderate,urgent,active,urgent
+may hilanat gid talukap mata ko akon,eyelid high fever,general,Moderate,urgent,active,urgent
+may hilanat gid talukap mata akon ko,eyelid high fever,general,Moderate,urgent,active,urgent
+talukap mata ko hilanat gid,eyelid high fever,general,Moderate,urgent,active,urgent
+talukap mata akon hilanat gid,eyelid high fever,general,Moderate,urgent,active,urgent
+talukap mata ko akon hilanat gid,eyelid high fever,general,Moderate,urgent,active,urgent
+talukap mata akon ko hilanat gid,eyelid high fever,general,Moderate,urgent,active,urgent
+ko talukap mata hilanat gid,eyelid high fever,general,Moderate,urgent,active,urgent
+akon talukap mata hilanat gid,eyelid high fever,general,Moderate,urgent,active,urgent
+ko akon talukap mata hilanat gid,eyelid high fever,general,Moderate,urgent,active,urgent
+akon ko talukap mata hilanat gid,eyelid high fever,general,Moderate,urgent,active,urgent
+hilanat gid gid ko talukap mata,eyelid high fever,general,Moderate,urgent,active,urgent
+hilanat gid gid akon talukap mata,eyelid high fever,general,Moderate,urgent,active,urgent
+hilanat gid gid ko akon talukap mata,eyelid high fever,general,Moderate,urgent,active,urgent
+hilanat gid gid akon ko talukap mata,eyelid high fever,general,Moderate,urgent,active,urgent
+gid hilanat gid talukap mata ko,eyelid high fever,general,Moderate,urgent,active,urgent
+grabe hilanat gid talukap mata ko,eyelid high fever,general,Moderate,urgent,active,urgent
+grabe gid hilanat gid talukap mata ko,eyelid high fever,general,Moderate,urgent,active,urgent
+gid hilanat gid talukap mata akon,eyelid high fever,general,Moderate,urgent,active,urgent
+grabe hilanat gid talukap mata akon,eyelid high fever,general,Moderate,urgent,active,urgent
+grabe gid hilanat gid talukap mata akon,eyelid high fever,general,Moderate,urgent,active,urgent
+gid hilanat gid talukap mata ko akon,eyelid high fever,general,Moderate,urgent,active,urgent
+grabe hilanat gid talukap mata ko akon,eyelid high fever,general,Moderate,urgent,active,urgent
+grabe gid hilanat gid talukap mata ko akon,eyelid high fever,general,Moderate,urgent,active,urgent
+gid hilanat gid talukap mata akon ko,eyelid high fever,general,Moderate,urgent,active,urgent
+grabe hilanat gid talukap mata akon ko,eyelid high fever,general,Moderate,urgent,active,urgent
+grabe gid hilanat gid talukap mata akon ko,eyelid high fever,general,Moderate,urgent,active,urgent
+talukap mata hilanat gid,eyelid high fever,general,Moderate,urgent,active,urgent
+hilanat gid bukongbukong ko,ankle high fever,general,Moderate,urgent,active,urgent
+hilanat gid bukongbukong akon,ankle high fever,general,Moderate,urgent,active,urgent
+hilanat gid bukongbukong ko akon,ankle high fever,general,Moderate,urgent,active,urgent
+hilanat gid bukongbukong akon ko,ankle high fever,general,Moderate,urgent,active,urgent
+hilanat gid ko bukongbukong,ankle high fever,general,Moderate,urgent,active,urgent
+hilanat gid akon bukongbukong,ankle high fever,general,Moderate,urgent,active,urgent
+hilanat gid ko akon bukongbukong,ankle high fever,general,Moderate,urgent,active,urgent
+hilanat gid akon ko bukongbukong,ankle high fever,general,Moderate,urgent,active,urgent
+hilanat gid gid bukongbukong ko,ankle high fever,general,Moderate,urgent,active,urgent
+hilanat gid grabe bukongbukong ko,ankle high fever,general,Moderate,urgent,active,urgent
+hilanat gid grabe gid bukongbukong ko,ankle high fever,general,Moderate,urgent,active,urgent
+hilanat gid gid bukongbukong akon,ankle high fever,general,Moderate,urgent,active,urgent
+hilanat gid grabe bukongbukong akon,ankle high fever,general,Moderate,urgent,active,urgent
+hilanat gid grabe gid bukongbukong akon,ankle high fever,general,Moderate,urgent,active,urgent
+hilanat gid gid bukongbukong ko akon,ankle high fever,general,Moderate,urgent,active,urgent
+hilanat gid grabe bukongbukong ko akon,ankle high fever,general,Moderate,urgent,active,urgent
+hilanat gid grabe gid bukongbukong ko akon,ankle high fever,general,Moderate,urgent,active,urgent
+hilanat gid gid bukongbukong akon ko,ankle high fever,general,Moderate,urgent,active,urgent
+hilanat gid grabe bukongbukong akon ko,ankle high fever,general,Moderate,urgent,active,urgent
+hilanat gid grabe gid bukongbukong akon ko,ankle high fever,general,Moderate,urgent,active,urgent
+hilanat gid bukongbukong,ankle high fever,general,Moderate,urgent,active,urgent
+hilanat gid gid bukongbukong,ankle high fever,general,Moderate,urgent,active,urgent
+hilanat gid grabe bukongbukong,ankle high fever,general,Moderate,urgent,active,urgent
+hilanat gid grabe gid bukongbukong,ankle high fever,general,Moderate,urgent,active,urgent
+may hilanat gid sa bukongbukong ko,ankle high fever,general,Moderate,urgent,active,urgent
+may hilanat gid sa bukongbukong akon,ankle high fever,general,Moderate,urgent,active,urgent
+may hilanat gid sa bukongbukong ko akon,ankle high fever,general,Moderate,urgent,active,urgent
+may hilanat gid sa bukongbukong akon ko,ankle high fever,general,Moderate,urgent,active,urgent
+may hilanat gid bukongbukong ko,ankle high fever,general,Moderate,urgent,active,urgent
+may hilanat gid bukongbukong akon,ankle high fever,general,Moderate,urgent,active,urgent
+may hilanat gid bukongbukong ko akon,ankle high fever,general,Moderate,urgent,active,urgent
+may hilanat gid bukongbukong akon ko,ankle high fever,general,Moderate,urgent,active,urgent
+bukongbukong ko hilanat gid,ankle high fever,general,Moderate,urgent,active,urgent
+bukongbukong akon hilanat gid,ankle high fever,general,Moderate,urgent,active,urgent
+bukongbukong ko akon hilanat gid,ankle high fever,general,Moderate,urgent,active,urgent
+bukongbukong akon ko hilanat gid,ankle high fever,general,Moderate,urgent,active,urgent
+ko bukongbukong hilanat gid,ankle high fever,general,Moderate,urgent,active,urgent
+akon bukongbukong hilanat gid,ankle high fever,general,Moderate,urgent,active,urgent
+daw indi ko makabaton sang kamot,arm weakness,neurological,Severe,emergency,active,emergency
+3 ka adlaw na daw indi ko makabaton sang kamot,arm weakness,neurological,Severe,emergency,active,emergency
+5 ka adlaw na daw indi ko makabaton sang kamot,arm weakness,neurological,Severe,emergency,active,emergency
+dugay na daw indi ko makabaton sang kamot,arm weakness,neurological,Severe,emergency,active,emergency
+bag-o lang daw indi ko makabaton sang kamot,arm weakness,neurological,Severe,emergency,active,emergency
+indi ko makabaton sang kamot ko,hand arm weakness,neurological,Severe,emergency,active,emergency
+3 ka adlaw na indi ko makabaton sang kamot ko,hand arm weakness,neurological,Severe,emergency,active,emergency
+5 ka adlaw na indi ko makabaton sang kamot ko,hand arm weakness,neurological,Severe,emergency,active,emergency
+dugay na indi ko makabaton sang kamot ko,hand arm weakness,neurological,Severe,emergency,active,emergency
+bag-o lang indi ko makabaton sang kamot ko,hand arm weakness,neurological,Severe,emergency,active,emergency
+lemah ang kamot ko,hand arm weakness,neurological,Severe,emergency,active,emergency
+3 ka adlaw na lemah ang kamot ko,hand arm weakness,neurological,Severe,emergency,active,emergency
+5 ka adlaw na lemah ang kamot ko,hand arm weakness,neurological,Severe,emergency,active,emergency
+dugay na lemah ang kamot ko,hand arm weakness,neurological,Severe,emergency,active,emergency
+bag-o lang lemah ang kamot ko,hand arm weakness,neurological,Severe,emergency,active,emergency
+gahubag lawas kag gakatol,body swelling,allergy,Severe,emergency,active,emergency
+3 ka adlaw na gahubag lawas kag gakatol,body swelling,allergy,Severe,emergency,active,emergency
+5 ka adlaw na gahubag lawas kag gakatol,body swelling,allergy,Severe,emergency,active,emergency
+dugay na gahubag lawas kag gakatol,body swelling,allergy,Severe,emergency,active,emergency
+bag-o lang gahubag lawas kag gakatol,body swelling,allergy,Severe,emergency,active,emergency
+3 ka adlaw na gahubag lawas ko kag gakatol,body swelling,allergy,Severe,emergency,active,emergency
+5 ka adlaw na gahubag lawas ko kag gakatol,body swelling,allergy,Severe,emergency,active,emergency
+dugay na gahubag lawas ko kag gakatol,body swelling,allergy,Severe,emergency,active,emergency
+bag-o lang gahubag lawas ko kag gakatol,body swelling,allergy,Severe,emergency,active,emergency
+gahubag kag gakatol lawas ko,body swelling,allergy,Severe,emergency,active,emergency
+3 ka adlaw na gahubag kag gakatol lawas ko,body swelling,allergy,Severe,emergency,active,emergency
+5 ka adlaw na gahubag kag gakatol lawas ko,body swelling,allergy,Severe,emergency,active,emergency
+dugay na gahubag kag gakatol lawas ko,body swelling,allergy,Severe,emergency,active,emergency
+bag-o lang gahubag kag gakatol lawas ko,body swelling,allergy,Severe,emergency,active,emergency
+3 ka adlaw na nabunggo ko sa salakyan,vehicle collision,trauma,Critical,emergency,active,emergency
+5 ka adlaw na nabunggo ko sa salakyan,vehicle collision,trauma,Critical,emergency,active,emergency
+dugay na nabunggo ko sa salakyan,vehicle collision,trauma,Critical,emergency,active,emergency
+bag-o lang nabunggo ko sa salakyan,vehicle collision,trauma,Critical,emergency,active,emergency
+nabunggo sa salakyan,vehicle collision injury,trauma,Critical,emergency,active,emergency
+3 ka adlaw na nabunggo sa salakyan,vehicle collision injury,trauma,Critical,emergency,active,emergency
+5 ka adlaw na nabunggo sa salakyan,vehicle collision injury,trauma,Critical,emergency,active,emergency
+dugay na nabunggo sa salakyan,vehicle collision injury,trauma,Critical,emergency,active,emergency
+bag-o lang nabunggo sa salakyan,vehicle collision injury,trauma,Critical,emergency,active,emergency
+naaksidente ko talukap mata ko,eyelid vehicle collision injury,trauma,Critical,emergency,active,emergency
+naaksidente ko talukap mata akon,eyelid vehicle collision injury,trauma,Critical,emergency,active,emergency
+naaksidente ko talukap mata ko akon,eyelid vehicle collision injury,trauma,Critical,emergency,active,emergency
+naaksidente ko talukap mata akon ko,eyelid vehicle collision injury,trauma,Critical,emergency,active,emergency
+naaksidente ko ko talukap mata,eyelid vehicle collision injury,trauma,Critical,emergency,active,emergency
+naaksidente ko akon talukap mata,eyelid vehicle collision injury,trauma,Critical,emergency,active,emergency
+naaksidente ko ko akon talukap mata,eyelid vehicle collision injury,trauma,Critical,emergency,active,emergency
+naaksidente ko akon ko talukap mata,eyelid vehicle collision injury,trauma,Critical,emergency,active,emergency
+naaksidente ko gid talukap mata ko,eyelid vehicle collision injury,trauma,Critical,emergency,active,emergency
+naaksidente ko grabe talukap mata ko,eyelid vehicle collision injury,trauma,Critical,emergency,active,emergency
+naaksidente ko grabe gid talukap mata ko,eyelid vehicle collision injury,trauma,Critical,emergency,active,emergency
+naaksidente ko gid talukap mata akon,eyelid vehicle collision injury,trauma,Critical,emergency,active,emergency
+naaksidente ko grabe talukap mata akon,eyelid vehicle collision injury,trauma,Critical,emergency,active,emergency
+naaksidente ko grabe gid talukap mata akon,eyelid vehicle collision injury,trauma,Critical,emergency,active,emergency
+naaksidente ko gid talukap mata ko akon,eyelid vehicle collision injury,trauma,Critical,emergency,active,emergency
+naaksidente ko grabe talukap mata ko akon,eyelid vehicle collision injury,trauma,Critical,emergency,active,emergency
+naaksidente ko grabe gid talukap mata ko akon,eyelid vehicle collision injury,trauma,Critical,emergency,active,emergency
+naaksidente ko gid talukap mata akon ko,eyelid vehicle collision injury,trauma,Critical,emergency,active,emergency
+naaksidente ko grabe talukap mata akon ko,eyelid vehicle collision injury,trauma,Critical,emergency,active,emergency
+naaksidente ko grabe gid talukap mata akon ko,eyelid vehicle collision injury,trauma,Critical,emergency,active,emergency
+naaksidente ko talukap mata,eyelid vehicle collision injury,trauma,Critical,emergency,active,emergency
+naaksidente ko gid talukap mata,eyelid vehicle collision injury,trauma,Critical,emergency,active,emergency
+naaksidente ko grabe talukap mata,eyelid vehicle collision injury,trauma,Critical,emergency,active,emergency
+naaksidente ko grabe gid talukap mata,eyelid vehicle collision injury,trauma,Critical,emergency,active,emergency
+may naaksidente ko sa talukap mata ko,eyelid vehicle collision injury,trauma,Critical,emergency,active,emergency
+may naaksidente ko sa talukap mata akon,eyelid vehicle collision injury,trauma,Critical,emergency,active,emergency
+may naaksidente ko sa talukap mata ko akon,eyelid vehicle collision injury,trauma,Critical,emergency,active,emergency
+may naaksidente ko sa talukap mata akon ko,eyelid vehicle collision injury,trauma,Critical,emergency,active,emergency
+may naaksidente ko talukap mata ko,eyelid vehicle collision injury,trauma,Critical,emergency,active,emergency
+may naaksidente ko talukap mata akon,eyelid vehicle collision injury,trauma,Critical,emergency,active,emergency
+may naaksidente ko talukap mata ko akon,eyelid vehicle collision injury,trauma,Critical,emergency,active,emergency
+may naaksidente ko talukap mata akon ko,eyelid vehicle collision injury,trauma,Critical,emergency,active,emergency
+talukap mata ko naaksidente ko,eyelid vehicle collision injury,trauma,Critical,emergency,active,emergency
+talukap mata akon naaksidente ko,eyelid vehicle collision injury,trauma,Critical,emergency,active,emergency
+talukap mata ko akon naaksidente ko,eyelid vehicle collision injury,trauma,Critical,emergency,active,emergency
+talukap mata akon ko naaksidente ko,eyelid vehicle collision injury,trauma,Critical,emergency,active,emergency
+ko talukap mata naaksidente ko,eyelid vehicle collision injury,trauma,Critical,emergency,active,emergency
+akon talukap mata naaksidente ko,eyelid vehicle collision injury,trauma,Critical,emergency,active,emergency
+ko akon talukap mata naaksidente ko,eyelid vehicle collision injury,trauma,Critical,emergency,active,emergency
+akon ko talukap mata naaksidente ko,eyelid vehicle collision injury,trauma,Critical,emergency,active,emergency
+naaksidente ko gid ko talukap mata,eyelid vehicle collision injury,trauma,Critical,emergency,active,emergency
+naaksidente ko gid akon talukap mata,eyelid vehicle collision injury,trauma,Critical,emergency,active,emergency
+naaksidente ko gid ko akon talukap mata,eyelid vehicle collision injury,trauma,Critical,emergency,active,emergency
+naaksidente ko gid akon ko talukap mata,eyelid vehicle collision injury,trauma,Critical,emergency,active,emergency
+gid naaksidente ko talukap mata ko,eyelid vehicle collision injury,trauma,Critical,emergency,active,emergency
+grabe naaksidente ko talukap mata ko,eyelid vehicle collision injury,trauma,Critical,emergency,active,emergency
+grabe gid naaksidente ko talukap mata ko,eyelid vehicle collision injury,trauma,Critical,emergency,active,emergency
+gid naaksidente ko talukap mata akon,eyelid vehicle collision injury,trauma,Critical,emergency,active,emergency
+grabe naaksidente ko talukap mata akon,eyelid vehicle collision injury,trauma,Critical,emergency,active,emergency
+grabe gid naaksidente ko talukap mata akon,eyelid vehicle collision injury,trauma,Critical,emergency,active,emergency
+gid naaksidente ko talukap mata ko akon,eyelid vehicle collision injury,trauma,Critical,emergency,active,emergency
+grabe naaksidente ko talukap mata ko akon,eyelid vehicle collision injury,trauma,Critical,emergency,active,emergency
+grabe gid naaksidente ko talukap mata ko akon,eyelid vehicle collision injury,trauma,Critical,emergency,active,emergency
+gid naaksidente ko talukap mata akon ko,eyelid vehicle collision injury,trauma,Critical,emergency,active,emergency
+grabe naaksidente ko talukap mata akon ko,eyelid vehicle collision injury,trauma,Critical,emergency,active,emergency
+grabe gid naaksidente ko talukap mata akon ko,eyelid vehicle collision injury,trauma,Critical,emergency,active,emergency
+talukap mata naaksidente ko,eyelid vehicle collision injury,trauma,Critical,emergency,active,emergency
+naaksidente ko bukongbukong ko,ankle vehicle collision injury,trauma,Critical,emergency,active,emergency
+naaksidente ko bukongbukong akon,ankle vehicle collision injury,trauma,Critical,emergency,active,emergency
+naaksidente ko bukongbukong ko akon,ankle vehicle collision injury,trauma,Critical,emergency,active,emergency

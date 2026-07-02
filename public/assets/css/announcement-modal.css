@@ -1,0 +1,296 @@
+/* ===== ANNOUNCEMENT MODAL — matches landing page aesthetic ===== */
+
+@keyframes ann-bell-ring {
+  0%   { transform: rotate(0deg); }
+  10%  { transform: rotate(14deg); }
+  20%  { transform: rotate(-12deg); }
+  30%  { transform: rotate(10deg); }
+  40%  { transform: rotate(-8deg); }
+  50%  { transform: rotate(5deg); }
+  60%  { transform: rotate(-3deg); }
+  70%  { transform: rotate(2deg); }
+  80%  { transform: rotate(-1deg); }
+  100% { transform: rotate(0deg); }
+}
+
+.landing-page .ann-bell-ring {
+  transform-origin: top center;
+  animation: ann-bell-ring 0.7s cubic-bezier(0.36, 0.07, 0.19, 0.97) both;
+}
+
+.landing-page #announcement-modal {
+  display: none;
+  position: fixed;
+  inset: 0;
+  z-index: 1200;
+  background: rgba(1, 42, 74, 0.32);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  opacity: 0;
+  transition: opacity 0.28s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.landing-page #announcement-modal.ann-open {
+  display: flex;
+  opacity: 1;
+}
+
+.landing-page #announcement-modal.ann-closing {
+  opacity: 0;
+}
+
+.landing-page .ann-box {
+  position: relative;
+  width: 100%;
+  max-width: 520px;
+  max-height: min(90vh, 720px);
+  background: var(--white);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  box-shadow:
+    0 24px 64px rgba(1, 42, 74, 0.12),
+    0 4px 20px rgba(6, 147, 150, 0.06);
+  overflow: hidden;
+  transform: scale(0.96) translateY(12px);
+  opacity: 0;
+  transition:
+    transform 0.32s cubic-bezier(0.22, 1, 0.36, 1),
+    opacity 0.28s cubic-bezier(0.22, 1, 0.36, 1);
+  display: flex;
+  flex-direction: column;
+}
+
+.landing-page #announcement-modal.ann-open .ann-box.ann-box--detail {
+  max-width: 640px;
+}
+
+.landing-page #announcement-modal.ann-open .ann-box {
+  transform: scale(1) translateY(0);
+  opacity: 1;
+}
+
+.landing-page #announcement-modal.ann-closing .ann-box {
+  transform: scale(0.98) translateY(8px);
+  opacity: 0;
+}
+
+.landing-page .ann-accent {
+  height: 3px;
+  background: linear-gradient(90deg, var(--teal), var(--cyan));
+}
+
+.landing-page .ann-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 20px 24px 18px;
+  border-bottom: 1px solid var(--border);
+  background: linear-gradient(180deg, rgba(244, 248, 250, 0.9) 0%, var(--white) 100%);
+}
+
+.landing-page .ann-header-left {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  min-width: 0;
+}
+
+.landing-page .ann-header-icon {
+  width: 44px;
+  height: 44px;
+  border-radius: 13px;
+  background: rgba(6, 147, 150, 0.1);
+  border: 1px solid rgba(6, 147, 150, 0.16);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--teal);
+  flex-shrink: 0;
+}
+
+.landing-page .ann-header-text {
+  min-width: 0;
+}
+
+.landing-page .ann-eyebrow {
+  margin: 0 0 2px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--teal);
+}
+
+.landing-page .ann-title {
+  font-size: 18px;
+  font-weight: 800;
+  color: var(--navy);
+  margin: 0;
+  letter-spacing: -0.3px;
+  line-height: 1.25;
+}
+
+.landing-page .ann-close-btn {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: var(--white);
+  color: var(--text-body);
+  font-size: 20px;
+  line-height: 1;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition:
+    background 0.2s ease,
+    color 0.2s ease,
+    border-color 0.2s ease,
+    transform 0.2s ease,
+    box-shadow 0.2s ease;
+  flex-shrink: 0;
+}
+
+.landing-page .ann-close-btn:hover {
+  background: rgba(6, 147, 150, 0.08);
+  color: var(--navy);
+  border-color: rgba(6, 147, 150, 0.25);
+  box-shadow: 0 4px 14px rgba(6, 147, 150, 0.1);
+}
+
+.landing-page .ann-close-btn:active {
+  transform: scale(0.96);
+}
+
+.landing-page .ann-body {
+  padding: 36px 32px 32px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 18px;
+  text-align: center;
+  background: var(--white);
+  overflow-y: auto;
+  flex: 1;
+  min-height: 0;
+}
+
+.landing-page .ann-body.ann-body--detail {
+  align-items: stretch;
+  text-align: left;
+  padding: 24px 28px 28px;
+}
+
+.landing-page .ann-body.ann-body--detail #ann-modal-content {
+  width: 100%;
+}
+
+.landing-page .ann-body-icon-wrap {
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  background: rgba(6, 147, 150, 0.08);
+  border: 1.5px solid rgba(6, 147, 150, 0.14);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--teal);
+}
+
+.landing-page .ann-body-msg {
+  font-size: 15px;
+  color: var(--text-body);
+  line-height: 1.75;
+  max-width: 360px;
+  margin: 0;
+}
+
+.landing-page .ann-body-msg strong {
+  color: var(--navy);
+  font-weight: 700;
+}
+
+.landing-page .ann-footer {
+  padding: 16px 24px 22px;
+  border-top: 1px solid var(--border);
+  display: flex;
+  justify-content: flex-end;
+  background: var(--bg-light);
+}
+
+.landing-page .ann-btn-close {
+  height: 42px;
+  padding: 0 28px;
+  border-radius: 99px;
+  border: none;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 700;
+  font-family: inherit;
+  background: var(--teal);
+  color: var(--white);
+  box-shadow: 0 8px 24px rgba(6, 147, 150, 0.28);
+  transition:
+    transform 0.22s ease,
+    box-shadow 0.22s ease,
+    background 0.22s ease;
+}
+
+.landing-page .ann-btn-close:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 12px 32px rgba(6, 147, 150, 0.34);
+  background: var(--teal-mid);
+}
+
+.landing-page .ann-btn-close:active {
+  transform: translateY(0) scale(0.98);
+}
+
+@media (max-width: 480px) {
+  .landing-page .ann-box {
+    border-radius: 16px;
+  }
+
+  .landing-page .ann-header {
+    padding: 16px 18px 14px;
+  }
+
+  .landing-page .ann-body {
+    padding: 28px 20px 24px;
+  }
+
+  .landing-page .ann-footer {
+    padding: 14px 18px 18px;
+  }
+
+  .landing-page .ann-title {
+    font-size: 16px;
+  }
+
+  .landing-page .ann-btn-close {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .landing-page .ann-footer {
+    justify-content: stretch;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .landing-page #announcement-modal,
+  .landing-page .ann-box,
+  .landing-page .ann-btn-close,
+  .landing-page .ann-close-btn {
+    transition: none;
+  }
+
+  .landing-page .ann-bell-ring {
+    animation: none;
+  }
+}

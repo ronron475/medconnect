@@ -1,0 +1,5 @@
+RewriteEngine On
+
+# REST-style routes (DELETE /app/api/messages/{id}/delete-for-me)
+RewriteRule ^([0-9]+)/delete-for-me/?$ delete_for_me.php?id=$1 [L,QSA]
+RewriteRule ^([0-9]+)/delete-for-everyone/?$ delete_for_everyone.php?id=$1 [L,QSA]

@@ -1,0 +1,723 @@
+/**
+ * medConnect — Patient portal theme (landing page palette)
+ * Deep navy #012A4A · Vibrant teal #069396 · White on dark surfaces
+ */
+
+body.patient-portal {
+  --landing-navy: #012A4A;
+  --landing-navy-mid: #023a66;
+  --landing-teal: #069396;
+  --landing-teal-mid: #057a7c;
+  --landing-surface: #f8fcfc;
+  --landing-bg: #f4f8fa;
+
+  --mc-aqua-medium: var(--landing-teal);
+  --mc-aqua-soft: rgba(6, 147, 150, 0.12);
+  --mc-navy-dark: var(--landing-navy);
+  --mc-ice-blue: var(--landing-bg);
+  --mc-border-thin: #e2edf1;
+  --mc-shadow-micro: 0 4px 20px rgba(1, 42, 74, 0.06);
+
+  --pt-dash-space: 24px;
+  --pt-dash-space-sm: 12px;
+  --pt-dash-gap: var(--pt-dash-space);
+  --pt-dash-gutter: var(--pt-dash-space);
+  --pt-dash-card-pad: 22px;
+  --pt-dash-strip-pad: 16px;
+  --pt-dash-radius: 14px;
+
+  background: var(--landing-bg);
+}
+
+/* ── Sidebar (light mock style) ── */
+body.patient-portal .sidebar {
+  background: #fff;
+  border-right: 1px solid var(--mc-border-thin);
+  box-shadow: 2px 0 16px rgba(1, 42, 74, 0.04);
+}
+
+body.patient-portal .sb-item {
+  color: var(--mc-slate-muted);
+}
+
+body.patient-portal .sb-item svg {
+  stroke: var(--mc-slate-muted);
+  opacity: 1;
+}
+
+body.patient-portal .sb-item.active {
+  background: var(--landing-teal, #069396);
+  color: #fff;
+  box-shadow: 0 4px 14px rgba(6, 147, 150, 0.28);
+}
+
+body.patient-portal .sb-item.active:hover {
+  background: var(--landing-teal-mid, #057a7c);
+  color: #fff;
+}
+
+body.patient-portal .sb-item.active svg {
+  stroke: #fff;
+}
+
+body.patient-portal .sb-item:hover {
+  background: rgba(6, 147, 150, 0.06);
+  color: var(--landing-navy);
+}
+
+body.patient-portal .sb-avatar {
+  background: rgba(6, 147, 150, 0.12);
+  color: var(--landing-teal);
+}
+
+body.patient-portal .sb-profile {
+  background: #f8fcfc;
+  border: 1px solid var(--mc-border-thin);
+}
+
+body.patient-portal .sb-profile--patient {
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+body.patient-portal .sb-profile--patient .sb-avatar {
+  width: 48px;
+  height: 48px;
+}
+
+body.patient-portal .sb-name {
+  color: var(--landing-navy);
+  font-weight: 800;
+}
+
+body.patient-portal .sb-role {
+  color: var(--mc-slate-muted) !important;
+  opacity: 1 !important;
+}
+
+body.patient-portal .sb-patient-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 8px;
+}
+
+body.patient-portal .sb-patient-id {
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--mc-slate-muted);
+  padding: 3px 8px;
+  border-radius: 99px;
+  background: #fff;
+  border: 1px solid var(--mc-border-thin);
+}
+
+body.patient-portal .sb-patient-verified {
+  font-size: 9px;
+  font-weight: 800;
+  color: var(--landing-teal);
+  padding: 3px 8px;
+  border-radius: 99px;
+  background: rgba(6, 147, 150, 0.1);
+  border: 1px solid rgba(6, 147, 150, 0.25);
+}
+
+body.patient-portal .sb-logout {
+  color: var(--mc-slate-muted);
+  border-color: var(--mc-border-thin);
+}
+
+body.patient-portal .sb-logout:hover {
+  background: #fef2f2;
+  color: #dc2626;
+}
+
+/* ── Sidebar logo ── */
+body.patient-portal .sb-logo {
+  margin-top: 14px;
+  margin-bottom: 20px;
+  padding: 4px 0;
+}
+
+body.patient-portal .sb-logo-img {
+  height: 68px;
+  width: auto;
+  max-width: 100%;
+  padding: 0;
+  background: transparent;
+  border-radius: 0;
+  box-shadow: none;
+  object-fit: contain;
+}
+
+/* ── Sidebar nav — cleaner spacing ── */
+body.patient-portal .sb-nav {
+  gap: 4px;
+}
+
+body.patient-portal .sb-item {
+  border-radius: 10px;
+  font-size: 0.8125rem;
+}
+
+body.patient-portal .sb-profile--patient {
+  border-radius: 12px;
+  padding: 14px;
+}
+
+/* ── Topbar (light mock style) ── */
+body.patient-portal .topbar {
+  background: #fff;
+  border-bottom: 1px solid var(--mc-border-thin);
+  box-shadow: 0 1px 0 rgba(1, 42, 74, 0.04);
+}
+
+body.patient-portal .topbar-left {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+  flex: 1 1 auto;
+}
+
+body.patient-portal .topbar-title-block {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+body.patient-portal .topbar-date-label {
+  font-size: 10.5px;
+  font-weight: 700;
+  color: var(--landing-teal);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  line-height: 1.3;
+}
+
+body.patient-portal .topbar--clinical .topbar-eyebrow {
+  color: var(--landing-teal);
+}
+
+body.patient-portal .topbar-title {
+  color: var(--landing-navy);
+  font-size: 1.05rem;
+  font-weight: 800;
+  line-height: 1.2;
+  letter-spacing: -0.02em;
+  margin: 0;
+}
+
+body.patient-portal .topbar-date {
+  color: var(--landing-navy);
+}
+
+body.patient-portal .topbar-time {
+  color: var(--mc-slate-muted);
+}
+
+body.patient-portal .topbar-datetime {
+  border-right-color: var(--mc-border-thin);
+}
+
+body.patient-portal .topbar-icon-btn,
+body.patient-portal .mc-nav-toggle {
+  background: #fff;
+  border-color: var(--mc-border-thin);
+  color: var(--landing-teal);
+}
+
+body.patient-portal .topbar-icon-btn:hover,
+body.patient-portal .mc-nav-toggle:hover {
+  background: rgba(6, 147, 150, 0.08);
+  border-color: rgba(6, 147, 150, 0.3);
+  color: var(--landing-teal);
+}
+
+body.patient-portal .topbar-avatar {
+  background: var(--landing-teal);
+  box-shadow: 0 0 0 2px #fff, 0 0 0 4px rgba(6, 147, 150, 0.2);
+}
+
+body.patient-portal .topbar-logout {
+  color: var(--mc-slate-muted);
+}
+
+body.patient-portal .topbar-logout:hover {
+  background: #fef2f2;
+  color: #dc2626;
+}
+
+body.patient-portal .topbar-right > div[style*="background"] {
+  background: var(--mc-border-thin) !important;
+}
+
+body.patient-portal .mc-notif-btn {
+  background: #fff;
+  border-color: var(--mc-border-thin);
+  color: var(--landing-navy);
+}
+
+body.patient-portal .mc-notif-btn:hover,
+body.patient-portal .mc-notif-btn[aria-expanded="true"] {
+  background: rgba(6, 147, 150, 0.08);
+  border-color: rgba(6, 147, 150, 0.3);
+  color: var(--landing-teal);
+}
+
+body.patient-portal .mc-theme-toggle__btn {
+  background: #fff;
+  border-color: var(--mc-border-thin);
+  color: var(--landing-navy);
+}
+
+body.patient-portal .mc-theme-toggle__btn:hover,
+body.patient-portal .mc-theme-toggle__btn:focus-visible,
+body.patient-portal .mc-theme-toggle.is-open .mc-theme-toggle__btn {
+  background: rgba(6, 147, 150, 0.08);
+  border-color: rgba(6, 147, 150, 0.3);
+  color: var(--landing-teal);
+  box-shadow: none;
+}
+
+body.patient-portal .mc-theme-toggle__option.is-active {
+  background: rgba(6, 147, 150, 0.12);
+  color: var(--landing-teal);
+}
+
+body.patient-portal .topbar--clinical {
+  overflow: visible;
+}
+
+body.patient-portal .mc-notif-wrap,
+body.patient-portal .mc-theme-toggle {
+  position: relative;
+  z-index: 510;
+}
+
+body.patient-portal .prov-dash-welcome__eyebrow {
+  color: var(--landing-teal, #069396) !important;
+}
+
+/* ── Dashboard welcome banner (white card — matches dashboard surface) ── */
+body.patient-portal .adm-banner.patient-dash-banner {
+  background: #fff;
+  border: 1px solid var(--mc-border-thin, #e2edf1);
+  border-radius: var(--pt-dash-radius, 14px);
+  box-shadow: var(--mc-shadow-micro, 0 4px 20px rgba(1, 42, 74, 0.06));
+  padding: 28px 32px;
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  flex-wrap: wrap;
+}
+
+body.patient-portal .adm-banner.patient-dash-banner::before {
+  content: '';
+  position: absolute;
+  top: -40px;
+  right: -40px;
+  width: 180px;
+  height: 180px;
+  border-radius: 50%;
+  background: rgba(6, 147, 150, 0.06);
+  pointer-events: none;
+}
+
+body.patient-portal .adm-banner.patient-dash-banner::after {
+  content: '';
+  position: absolute;
+  bottom: -60px;
+  right: 100px;
+  width: 140px;
+  height: 140px;
+  border-radius: 50%;
+  background: rgba(1, 42, 74, 0.04);
+  pointer-events: none;
+}
+
+body.patient-portal .adm-banner-inner {
+  position: relative;
+  z-index: 1;
+  min-width: 0;
+  flex: 1 1 280px;
+}
+
+body.patient-portal .adm-banner-eyebrow {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--landing-teal, #069396);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  margin-bottom: 8px;
+}
+
+body.patient-portal .adm-banner-title {
+  font-size: clamp(1.35rem, 2.5vw, 1.625rem);
+  font-weight: 800;
+  color: var(--landing-navy, #012a4a);
+  letter-spacing: -0.02em;
+  line-height: 1.15;
+  margin: 0 0 8px;
+}
+
+body.patient-portal .adm-banner-sub {
+  font-size: 13.5px;
+  color: var(--mc-slate-muted, #608395);
+  font-weight: 500;
+  line-height: 1.5;
+  margin: 0;
+  max-width: 52ch;
+}
+
+body.patient-portal .patient-dash-banner-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  position: relative;
+  z-index: 1;
+}
+
+body.patient-portal .mc-badge--patient {
+  background: linear-gradient(135deg, #0d9488, #0891b2);
+  color: #fff;
+  border: none;
+  font-size: 11px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  padding: 6px 14px;
+  border-radius: 999px;
+}
+
+body.patient-portal .patient-dash-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+body.patient-portal .patient-dash-pill strong {
+  font-weight: 800;
+  text-transform: none;
+  letter-spacing: 0;
+}
+
+body.patient-portal .patient-dash-pill--id {
+  background: var(--landing-surface, #f8fcfc);
+  color: var(--landing-navy, #012a4a);
+  border: 1px solid var(--mc-border-thin, #e2edf1);
+}
+
+body.patient-portal .patient-dash-pill--pending {
+  background: #fef3c7;
+  color: #b45309;
+  border: none;
+}
+
+@media (max-width: 768px) {
+  body.patient-portal .prov-dash .adm-banner.patient-dash-banner {
+    padding: 14px 16px;
+  }
+
+  body.patient-portal .prov-dash .patient-dash-banner-actions {
+    width: 100%;
+  }
+}
+
+/* Widget strip styling → patient-dashboard-mock.css */
+
+/* ── Greeting banner (hero-style) ── */
+body.patient-portal .greeting-banner.patient-greeting {
+  background:
+    linear-gradient(
+      135deg,
+      rgba(1, 42, 74, 0.98) 0%,
+      rgba(1, 42, 74, 0.92) 55%,
+      rgba(6, 147, 150, 0.28) 100%
+    );
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-left: 4px solid var(--landing-teal);
+  border-radius: 14px;
+  box-shadow: 0 12px 40px rgba(1, 42, 74, 0.18);
+  padding: 28px 32px;
+  position: relative;
+  overflow: hidden;
+}
+
+body.patient-portal .greeting-banner.patient-greeting::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-image: radial-gradient(circle at 2px 2px, rgba(6, 147, 150, 0.08) 1px, transparent 0);
+  background-size: 40px 40px;
+  pointer-events: none;
+  opacity: 0.6;
+}
+
+body.patient-portal .patient-greeting__user,
+body.patient-portal .patient-greeting__badges {
+  position: relative;
+  z-index: 1;
+}
+
+body.patient-portal .patient-greeting__eyebrow {
+  color: var(--landing-teal);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  font-size: 11px;
+  margin-bottom: 4px;
+}
+
+body.patient-portal .patient-greeting__name {
+  color: #fff;
+  line-height: 1.1;
+}
+
+body.patient-portal .patient-greeting__avatar {
+  background: rgba(6, 147, 150, 0.22);
+  border-color: rgba(6, 147, 150, 0.45);
+  color: #fff;
+}
+
+body.patient-portal .patient-greeting .mc-badge {
+  background: rgba(255, 255, 255, 0.08);
+  color: rgba(255, 255, 255, 0.88);
+  border-color: rgba(255, 255, 255, 0.16);
+}
+
+body.patient-portal .patient-greeting .mc-badge--verified {
+  background: rgba(6, 147, 150, 0.22);
+  color: #7ee8ea;
+  border-color: rgba(6, 147, 150, 0.45);
+}
+
+/* ── Buttons (landing CTA style) ── */
+body.patient-portal .mc-btn--primary {
+  background: var(--landing-teal);
+  color: #fff;
+  box-shadow: 0 4px 16px rgba(6, 147, 150, 0.28);
+}
+
+body.patient-portal .mc-btn--primary:hover {
+  background: var(--landing-teal-mid);
+  box-shadow: 0 8px 24px rgba(6, 147, 150, 0.38);
+  transform: translateY(-1px);
+}
+
+body.patient-portal .mc-btn--outline {
+  color: var(--landing-teal);
+  border-color: rgba(6, 147, 150, 0.35);
+}
+
+body.patient-portal .mc-btn--outline:hover {
+  background: rgba(6, 147, 150, 0.08);
+  border-color: var(--landing-teal);
+}
+
+/* ── Cards & tables ── */
+body.patient-portal .mc-card {
+  border-color: var(--mc-border-thin);
+  box-shadow: var(--mc-shadow-micro);
+}
+
+body.patient-portal .mc-table th {
+  background: var(--landing-surface);
+  color: var(--landing-teal);
+}
+
+body.patient-portal .patient-consult-row {
+  background: var(--landing-surface);
+  border-color: var(--mc-border-thin);
+}
+
+body.patient-portal .patient-consult-row__icon {
+  color: var(--landing-teal);
+}
+
+/* ── Tabs & forms ── */
+body.patient-portal .tab-filters .tab-btn.active,
+body.patient-portal .tab-filters button.active {
+  color: var(--landing-teal);
+  border-bottom-color: var(--landing-teal);
+}
+
+body.patient-portal .form-control:focus {
+  border-color: var(--landing-teal);
+  box-shadow: 0 0 0 3px rgba(6, 147, 150, 0.14);
+}
+
+/* ── Messages & avatars ── */
+body.patient-portal .msg-item.active,
+body.patient-portal .msg-item:hover {
+  background: rgba(6, 147, 150, 0.06);
+  box-shadow: inset 3px 0 0 var(--landing-teal);
+}
+
+body.patient-portal .msg-avatar {
+  background: linear-gradient(135deg, var(--landing-teal), var(--landing-navy-mid));
+}
+
+body.patient-portal .bubble.mine {
+  background: rgba(6, 147, 150, 0.12);
+  border-color: rgba(6, 147, 150, 0.28);
+  color: var(--landing-navy);
+}
+
+/* ── Notification bell ── */
+html[data-theme-resolved='dark'] body.patient-portal {
+  --mc-aqua-medium: var(--landing-teal);
+  --mc-navy-dark: #f8fafc;
+  --mc-ice-blue: #0f172a;
+  --mc-white: #1e293b;
+  --mc-border-thin: #334155;
+  background: #0b1628;
+}
+
+html[data-theme-resolved='dark'] body.patient-portal .sidebar {
+  background: #1e293b !important;
+  border-right-color: #334155 !important;
+}
+
+html[data-theme-resolved='dark'] body.patient-portal .topbar {
+  background: #1e293b !important;
+  border-bottom-color: #334155 !important;
+}
+
+html[data-theme-resolved='dark'] body.patient-portal .sb-name,
+html[data-theme-resolved='dark'] body.patient-portal .topbar-date {
+  color: #f8fafc !important;
+}
+
+html[data-theme-resolved='dark'] body.patient-portal .sb-item {
+  color: #cbd5e1;
+}
+
+html[data-theme-resolved='dark'] body.patient-portal .sb-item.active {
+  background: rgba(6, 147, 150, 0.22);
+  color: #5eead4;
+  box-shadow: none;
+}
+
+html[data-theme-resolved='dark'] body.patient-portal .sb-item.active svg {
+  stroke: #5eead4;
+}
+
+html[data-theme-resolved='dark'] body.patient-portal .topbar-title {
+  color: #f8fafc !important;
+}
+
+html[data-theme-resolved='dark'] body.patient-portal .topbar-eyebrow {
+  color: #5eead4 !important;
+}
+
+html[data-theme-resolved='dark'] body.patient-portal .topbar-time,
+html[data-theme-resolved='dark'] body.patient-portal .mc-theme-toggle__btn {
+  color: #cbd5e1;
+}
+
+html[data-theme-resolved='dark'] body.patient-portal .mc-theme-toggle__btn {
+  background: #1e293b;
+  border-color: #334155;
+}
+
+html[data-theme-resolved='dark'] body.patient-portal .topbar-icon-btn,
+html[data-theme-resolved='dark'] body.patient-portal .mc-nav-toggle {
+  background: #1e293b;
+  border-color: #334155;
+  color: #5eead4;
+}
+
+html[data-theme-resolved='dark'] body.patient-portal .adm-banner.patient-dash-banner {
+  background: #1e293b;
+  border-color: #334155;
+  box-shadow: none;
+}
+
+html[data-theme-resolved='dark'] body.patient-portal .adm-banner-title {
+  color: #f8fafc;
+}
+
+html[data-theme-resolved='dark'] body.patient-portal .adm-banner-sub {
+  color: #94a3b8;
+}
+
+html[data-theme-resolved='dark'] body.patient-portal .adm-banner-eyebrow {
+  color: #5eead4;
+}
+
+html[data-theme-resolved='dark'] body.patient-portal .patient-dash-pill--id {
+  background: #243449;
+  color: #e2e8f0;
+  border-color: #334155;
+}
+
+html[data-theme-resolved='dark'] body.patient-portal .greeting-banner.patient-greeting {
+  background:
+    linear-gradient(
+      135deg,
+      rgba(1, 42, 74, 0.98) 0%,
+      rgba(1, 42, 74, 0.92) 55%,
+      rgba(6, 147, 150, 0.28) 100%
+    );
+  border-color: rgba(255, 255, 255, 0.08);
+}
+
+/* ── Dashboard home polish ── */
+body.patient-portal .pt-dash-action:focus-visible {
+  outline: 2px solid var(--landing-teal);
+  outline-offset: 2px;
+}
+
+html[data-theme-resolved='dark'] body.patient-portal .pt-dash-action,
+html[data-theme-resolved='dark'] body.patient-portal .pt-dash-stat,
+html[data-theme-resolved='dark'] body.patient-portal .pt-dash-card {
+  background: var(--mc-white);
+  border-color: var(--mc-border-thin);
+}
+
+html[data-theme-resolved='dark'] body.patient-portal .pt-dash-action__label,
+html[data-theme-resolved='dark'] body.patient-portal .pt-dash-card__title,
+html[data-theme-resolved='dark'] body.patient-portal .pt-dash-stat strong,
+html[data-theme-resolved='dark'] body.patient-portal .pt-dash-consult__name,
+html[data-theme-resolved='dark'] body.patient-portal .pt-dash-identity__value,
+html[data-theme-resolved='dark'] body.patient-portal .pt-dash-triage__level {
+  color: var(--mc-navy-dark);
+}
+
+html[data-theme-resolved='dark'] body.patient-portal .pt-dash-consult {
+  background: linear-gradient(135deg, rgba(6, 147, 150, 0.06) 0%, var(--mc-white) 100%);
+}
+
+/* ── Patient dashboard — clean clinical polish ── */
+body.patient-portal .portal-page-body {
+  padding: var(--pt-dash-space) 36px calc(var(--pt-dash-space) * 1.75);
+  padding-top: calc(var(--portal-header-h, 64px) + var(--pt-dash-space));
+}
+
+/* Dashboard spacing → patient-dashboard-mock.css */
+
+body.patient-portal .topbar {
+  box-shadow: none;
+}
+
+body.patient-portal .topbar-title {
+  font-size: 1.05rem;
+  font-weight: 800;
+}
+
+body.patient-portal .topbar-eyebrow {
+  font-size: 10px;
+  letter-spacing: 0.06em;
+}

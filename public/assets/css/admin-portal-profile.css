@@ -1,0 +1,326 @@
+/**
+ * MedConnect Admin & Super Admin — My Profile page
+ */
+
+.portal-profile-page {
+  animation: staffAppsFadeIn 0.35s ease;
+}
+
+.portal-profile-grid {
+  display: grid;
+  grid-template-columns: minmax(280px, 360px) minmax(0, 1fr);
+  gap: 20px;
+  align-items: start;
+  margin-bottom: 24px;
+}
+
+.portal-profile-card {
+  background: #fff;
+  border: 1px solid #edf0f5;
+  border-radius: 16px;
+  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.04);
+  overflow: hidden;
+}
+
+.portal-profile-card__head {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  padding: 22px 24px 18px;
+  border-bottom: 1px solid #f1f5f9;
+  background: linear-gradient(180deg, #fafbfc 0%, #fff 100%);
+}
+
+.portal-profile-card__icon {
+  flex-shrink: 0;
+  width: 42px;
+  height: 42px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #f0fdfa;
+  color: var(--mc-aqua-medium, #018a93);
+}
+
+.portal-profile-card__icon--indigo {
+  background: #eef2ff;
+  color: #4f46e5;
+}
+
+.portal-profile-card__title {
+  font-size: 1rem;
+  font-weight: 800;
+  color: #0f172a;
+  margin: 0 0 4px;
+  letter-spacing: -0.01em;
+}
+
+.portal-profile-card__sub {
+  font-size: 0.8125rem;
+  color: #64748b;
+  margin: 0;
+  line-height: 1.5;
+  max-width: 42ch;
+}
+
+.portal-profile-card__body {
+  padding: 24px;
+}
+
+.portal-profile-card--photo .portal-profile-card__body {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: 28px 24px 32px;
+}
+
+/* Photo upload — stacked portal layout */
+.portal-profile-card .profile-picture-upload--portal {
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 16px;
+  margin: 0;
+  padding: 0;
+  border: none;
+  width: 100%;
+}
+
+.portal-profile-card .profile-picture-upload--portal [data-profile-preview] {
+  margin-bottom: 4px;
+}
+
+.portal-profile-card .profile-picture-upload--portal .profile-avatar--xl {
+  width: 120px;
+  height: 120px;
+  font-size: 2rem;
+  box-shadow: 0 8px 24px rgba(1, 138, 147, 0.15);
+  border: 4px solid #fff;
+  outline: 1px solid #e2e8f0;
+}
+
+.portal-profile-card .profile-picture-upload--portal .profile-picture-upload__meta {
+  width: 100%;
+}
+
+.portal-profile-card .profile-picture-upload--portal .profile-picture-upload__meta h4 {
+  font-size: 1.125rem;
+  font-weight: 800;
+  color: #0f172a;
+  margin-bottom: 6px;
+}
+
+.portal-profile-card .profile-picture-upload--portal .profile-picture-upload__meta p {
+  font-size: 0.8125rem;
+  color: #64748b;
+  margin-bottom: 16px;
+}
+
+.portal-profile-card .profile-picture-upload--portal .mc-btn {
+  width: 100%;
+  max-width: 220px;
+  padding: 11px 18px;
+  border-radius: 12px;
+  font-weight: 700;
+  font-size: 0.875rem;
+}
+
+.portal-profile-card .profile-picture-upload--portal .profile-picture-status {
+  font-size: 0.75rem;
+  margin-top: 10px;
+}
+
+.portal-profile-role-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 4px;
+  padding: 5px 12px;
+  border-radius: 999px;
+  font-size: 0.6875rem;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  background: #eef2ff;
+  color: #4338ca;
+}
+
+.portal-profile-role-badge--super {
+  background: #fef3c7;
+  color: #b45309;
+}
+
+.portal-profile-photo-tips {
+  margin-top: 20px;
+  padding-top: 20px;
+  border-top: 1px solid #f1f5f9;
+  width: 100%;
+  text-align: left;
+}
+
+.portal-profile-photo-tips__title {
+  font-size: 0.6875rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #94a3b8;
+  margin: 0 0 10px;
+}
+
+.portal-profile-photo-tips ul {
+  margin: 0;
+  padding: 0 0 0 18px;
+  font-size: 0.8125rem;
+  color: #64748b;
+  line-height: 1.6;
+}
+
+/* Account details grid */
+.portal-profile-fields {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px 24px;
+}
+
+.portal-profile-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+  padding: 14px 16px;
+  background: #f8fafc;
+  border: 1px solid #eef2f6;
+  border-radius: 12px;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.portal-profile-field:hover {
+  border-color: #dbeafe;
+  box-shadow: 0 2px 6px rgba(15, 23, 42, 0.04);
+}
+
+.portal-profile-field--full {
+  grid-column: 1 / -1;
+}
+
+.portal-profile-field__label {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.6875rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: #94a3b8;
+}
+
+.portal-profile-field__label svg {
+  flex-shrink: 0;
+  opacity: 0.85;
+}
+
+.portal-profile-field__value {
+  font-size: 0.9375rem;
+  font-weight: 700;
+  color: #0f172a;
+  line-height: 1.4;
+  word-break: break-word;
+}
+
+.portal-profile-field__value--muted {
+  font-weight: 600;
+  color: #64748b;
+}
+
+.portal-profile-field__value code {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 0.875rem;
+  font-weight: 700;
+  color: #0369a1;
+  background: #e0f2fe;
+  padding: 2px 8px;
+  border-radius: 6px;
+}
+
+/* Status pills */
+.portal-profile-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 0.6875rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.portal-profile-pill::before {
+  content: '';
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.portal-profile-pill--active {
+  background: #dcfce7;
+  color: #15803d;
+}
+
+.portal-profile-pill--active::before {
+  background: #22c55e;
+}
+
+.portal-profile-pill--inactive {
+  background: #f1f5f9;
+  color: #64748b;
+}
+
+.portal-profile-pill--inactive::before {
+  background: #94a3b8;
+}
+
+.portal-profile-pill--verified {
+  background: #dbeafe;
+  color: #1d4ed8;
+}
+
+.portal-profile-pill--verified::before {
+  background: #3b82f6;
+}
+
+.portal-profile-pill--unverified {
+  background: #fef3c7;
+  color: #b45309;
+}
+
+.portal-profile-pill--unverified::before {
+  background: #f59e0b;
+}
+
+@media (max-width: 960px) {
+  .portal-profile-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .portal-profile-fields {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 560px) {
+  .portal-profile-card__head {
+    padding: 18px 20px 14px;
+  }
+
+  .portal-profile-card__body {
+    padding: 20px;
+  }
+
+  .portal-profile-card--photo .portal-profile-card__body {
+    padding: 24px 20px 28px;
+  }
+}

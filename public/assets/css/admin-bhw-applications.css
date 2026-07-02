@@ -1,0 +1,161 @@
+.bhw-page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 16px;
+  margin-bottom: 24px;
+  flex-wrap: wrap;
+}
+.bhw-flash {
+  margin-bottom: 20px;
+  border-left: 4px solid #16a34a;
+  background: #f0fdf4;
+  padding: 14px 18px;
+}
+.bhw-flash--warn {
+  border-left-color: #dc2626;
+  background: #fef2f2;
+}
+.bhw-pending-badge {
+  background: #fef3c7;
+  color: #b45309;
+  font-weight: 700;
+  padding: 8px 14px;
+}
+.admin-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(7, 20, 40, 0.6);
+  backdrop-filter: blur(4px);
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 20px;
+}
+.admin-modal-dialog--wide {
+  width: min(720px, 100%);
+  max-height: 92vh;
+  overflow-y: auto;
+  padding: 28px 32px;
+  border-radius: 16px;
+}
+.admin-modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 16px;
+  margin-bottom: 20px;
+}
+.admin-modal-close {
+  background: none;
+  border: none;
+  font-size: 28px;
+  cursor: pointer;
+  color: #94a3b8;
+}
+.admin-modal-title {
+  font-size: 20px;
+  font-weight: 800;
+  color: var(--mc-navy-deep, #0f172a);
+  margin: 0;
+}
+.admin-modal-subtitle { font-size: 13px; margin: 6px 0 0; }
+.admin-form-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+.admin-form-grid--3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.admin-form-section-title {
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--mc-aqua-medium, #0891b2);
+  margin: 16px 0 10px;
+  padding-bottom: 6px;
+  border-bottom: 1px solid #e2e8f0;
+}
+.admin-form-label {
+  display: block;
+  font-size: 12px;
+  font-weight: 700;
+  color: #64748b;
+  text-transform: uppercase;
+  margin-bottom: 8px;
+}
+.admin-form-input {
+  width: 100%;
+  padding: 12px;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  font-size: 14px;
+  box-sizing: border-box;
+}
+.admin-form-hint { font-size: 12px; color: #64748b; margin: 0 0 12px; }
+.admin-form-error { color: #dc2626; font-size: 13px; margin-bottom: 12px; }
+.admin-form-warning {
+  color: #b45309;
+  background: #fffbeb;
+  border: 1px solid #fde68a;
+  border-radius: 10px;
+  padding: 10px 12px;
+  font-size: 13px;
+  margin-bottom: 12px;
+}
+.admin-modal-actions {
+  display: flex;
+  gap: 12px;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  margin-top: 16px;
+}
+.form-group { margin-bottom: 16px; }
+.bhw-doc-upload-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 16px;
+  margin-bottom: 12px;
+}
+.bhw-doc-list { list-style: none; padding: 0; margin: 0 0 16px; }
+.bhw-doc-list li {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 8px 12px;
+  background: #f8fafc;
+  border-radius: 8px;
+  margin-bottom: 6px;
+  font-size: 13px;
+}
+.bhw-status {
+  display: inline-block;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+.bhw-status--draft { background: #f1f5f9; color: #475569; }
+.bhw-status--pending { background: #fef3c7; color: #b45309; }
+.bhw-status--active { background: #dcfce7; color: #15803d; }
+.bhw-status--rejected { background: #fee2e2; color: #b91c1c; }
+.bhw-status--docs { background: #e0f2fe; color: #0369a1; }
+.bhw-checklist { margin: 16px 0; padding: 16px; background: #f8fafc; border-radius: 12px; border: 1px solid #e2e8f0; }
+.bhw-check-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  margin-bottom: 10px;
+  font-size: 14px;
+  cursor: pointer;
+}
+.bhw-check-item input { margin-top: 3px; }
+.bhw-review-meta { font-size: 14px; line-height: 1.6; margin-bottom: 16px; }
+.bhw-review-meta dt { font-weight: 700; color: #64748b; font-size: 11px; text-transform: uppercase; margin-top: 8px; }
+.bhw-review-meta dd { margin: 2px 0 0; }
+.bhw-btn-reject { color: #b91c1c; border-color: #fecaca; }
+@media (max-width: 640px) {
+  .admin-form-grid, .admin-form-grid--3 { grid-template-columns: 1fr; }
+}

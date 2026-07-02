@@ -1,0 +1,235 @@
+/* ===== LANDING FAB — FireGuard-style pop-out stack ===== */
+
+.landing-fab {
+  --fab-size: 60px;
+  --fab-gap: 1rem;
+
+  position: fixed;
+  bottom: 30px;
+  right: 30px;
+  z-index: 1200;
+  display: flex;
+  flex-direction: column-reverse;
+  align-items: flex-end;
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
+  transition:
+    opacity 0.28s cubic-bezier(0.22, 1, 0.36, 1),
+    visibility 0s linear 0s;
+}
+
+#fab-modal-root {
+  transition:
+    opacity 0.28s cubic-bezier(0.22, 1, 0.36, 1),
+    visibility 0s linear 0s;
+}
+
+/* Hide landing FAB + its modals while Sign-In is open */
+body.signin-active .landing-fab,
+body.signin-active #fab-modal-root {
+  opacity: 0 !important;
+  visibility: hidden !important;
+  pointer-events: none !important;
+  transition:
+    opacity 0.28s cubic-bezier(0.22, 1, 0.36, 1),
+    visibility 0s linear 0.28s;
+}
+
+.landing-fab__backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  background: rgba(1, 42, 74, 0.08);
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transition: opacity 0.3s ease, visibility 0s linear 0.3s;
+}
+
+.landing-fab[data-open="true"] .landing-fab__backdrop {
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
+  transition: opacity 0.3s ease, visibility 0s linear 0s;
+}
+
+.landing-fab__toggle {
+  width: var(--fab-size);
+  height: var(--fab-size);
+  border: none;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--teal) 0%, #0ea5e9 100%);
+  color: var(--white);
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  flex-shrink: 0;
+  position: relative;
+  z-index: 1001;
+  box-shadow: 0 4px 15px rgba(6, 147, 150, 0.4);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.landing-fab__toggle:hover {
+  transform: scale(1.1);
+  box-shadow: 0 6px 20px rgba(6, 147, 150, 0.5);
+}
+
+.landing-fab__toggle:active {
+  transform: scale(0.95);
+}
+
+.landing-fab__toggle:focus-visible {
+  outline: 2px solid var(--white);
+  outline-offset: 3px;
+}
+
+.landing-fab__bar {
+  display: block;
+  width: 25px;
+  height: 3px;
+  border-radius: 3px;
+  background: currentColor;
+  transition: transform 0.3s ease, opacity 0.3s ease;
+}
+
+.landing-fab__toggle.is-active .landing-fab__bar:nth-child(1) {
+  transform: rotate(45deg) translate(8px, 8px);
+}
+
+.landing-fab__toggle.is-active .landing-fab__bar:nth-child(2) {
+  opacity: 0;
+}
+
+.landing-fab__toggle.is-active .landing-fab__bar:nth-child(3) {
+  transform: rotate(-45deg) translate(7px, -7px);
+}
+
+/* Stack slides up from behind the main FAB — same as FireGuard */
+.landing-fab__stack {
+  display: flex;
+  flex-direction: column;
+  gap: var(--fab-gap);
+  margin-bottom: var(--fab-gap);
+  transition: transform 0.4s ease-out, opacity 0.3s ease-out;
+}
+
+.landing-fab__stack--hidden {
+  transform: translateY(calc(100% + 80px));
+  opacity: 0;
+  pointer-events: none;
+  margin-bottom: 0;
+}
+
+.landing-fab__stack:not(.landing-fab__stack--hidden) {
+  transform: translateY(0);
+  opacity: 1;
+  pointer-events: all;
+}
+
+.landing-fab__nav {
+  display: flex;
+  flex-direction: column;
+  gap: var(--fab-gap);
+}
+
+.landing-fab__btn {
+  position: relative;
+  width: var(--fab-size);
+  height: var(--fab-size);
+  border-radius: 50%;
+  border: none;
+  color: var(--white);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  text-decoration: none;
+  cursor: pointer;
+  padding: 0;
+  box-shadow: 0 4px 15px rgba(1, 42, 74, 0.22);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.landing-fab__btn--announcements { background: #069396; }
+.landing-fab__btn--services { background: #0ea5e9; }
+.landing-fab__btn--how { background: #1e3a8a; }
+.landing-fab__btn--contact { background: #057a7c; }
+
+.landing-fab__btn svg {
+  stroke: currentColor;
+}
+
+.landing-fab__btn:hover,
+.landing-fab__btn:focus-visible {
+  transform: scale(1.1);
+  box-shadow: 0 6px 20px rgba(1, 42, 74, 0.28);
+}
+
+.landing-fab__btn:focus-visible {
+  outline: 2px solid var(--white);
+  outline-offset: 3px;
+}
+
+.landing-fab__tooltip {
+  position: absolute;
+  right: calc(100% + 12px);
+  top: 50%;
+  transform: translateY(-50%);
+  padding: 6px 12px;
+  border-radius: 8px;
+  background: rgba(248, 252, 252, 0.96);
+  border: 1px solid rgba(6, 147, 150, 0.12);
+  color: var(--text-header);
+  font-size: 13px;
+  font-weight: 600;
+  white-space: nowrap;
+  box-shadow: 0 4px 12px rgba(1, 42, 74, 0.12);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s ease;
+}
+
+.landing-fab__btn:hover .landing-fab__tooltip,
+.landing-fab__btn:focus-visible .landing-fab__tooltip {
+  opacity: 1;
+}
+
+@media (max-width: 768px) {
+  .landing-fab {
+    bottom: 20px;
+    right: 20px;
+    --fab-size: 50px;
+  }
+
+  .landing-fab__bar {
+    width: 20px;
+  }
+
+  .landing-fab__stack:not(.landing-fab__stack--hidden) .landing-fab__tooltip {
+    opacity: 1;
+  }
+}
+
+@media (max-width: 480px) {
+  .landing-fab {
+    bottom: 10px;
+    right: 10px;
+    --fab-size: 45px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .landing-fab,
+  #fab-modal-root,
+  .landing-fab__stack,
+  .landing-fab__btn,
+  .landing-fab__toggle,
+  .landing-fab__bar,
+  .landing-fab__backdrop {
+    transition: none !important;
+  }
+}

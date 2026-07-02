@@ -1,6 +1,9 @@
-<?php
+﻿<?php
 session_start();
+require_once __DIR__ . '/../bootstrap.php';
 require_once __DIR__ . '/../config/db.php';
+require_once __DIR__ . '/../app/includes/recaptcha.php';
+require_once __DIR__ . '/../app/includes/login_security.php';
 
 $token   = trim($_GET['token'] ?? '');
 $error   = '';
@@ -21,9 +24,17 @@ if (empty($token)) {
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && $valid) {
     $password = $_POST['password'] ?? '';
     $confirm  = $_POST['confirm_password'] ?? '';
-    if (strlen($password) < 6) {
+    $recaptchaToken = (string) ($_POST['recaptcha_token'] ?? ($_POST['g-recaptcha-response'] ?? ''));
+    if (recaptcha_is_configured()) {
+        $ip = login_security_ip();
+        $verify = recaptcha_verify_token($recaptchaToken, 'reset_password', $ip);
+        if (empty($verify['ok'])) {
+            $error = 'Please verify that you are not a robot.';
+        }
+    }
+    if (!$error && strlen($password) < 6) {
         $error = 'Password must be at least 6 characters.';
-    } elseif ($password !== $confirm) {
+    } elseif (!$error && $password !== $confirm) {
         $error = 'Passwords do not match.';
     } else {
         $hash = password_hash($password, PASSWORD_BCRYPT, ['cost' => 12]);
@@ -33,6 +44,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $valid) {
         $valid = false;
     }
 }
+$asset = ASSET_BASE;
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -40,8 +52,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $valid) {
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Reset Password — medConnect</title>
-  <link rel="stylesheet" href="../assets/css/style.css"/>
-  <link rel="stylesheet" href="../assets/css/register.css"/>
+  <link rel="stylesheet" href="<?= $asset ?>/assets/css/style.css"/>
+  <link rel="stylesheet" href="<?= $asset ?>/assets/css/register.css"/>
   <style>
     /* Page uses register.css animated background */
     .reset-page {
@@ -174,17 +186,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $valid) {
 <!-- Navbar — matches register page -->
 <nav class="navbar" id="navbar">
   <div class="nav-container">
-    <a href="index.php" class="nav-logo">
-      <span class="logo-icon" aria-hidden="true">
-        <svg width="30" height="30" viewBox="0 0 30 30" fill="none">
-          <rect width="30" height="30" rx="9" fill="url(#lg2)"/>
-          <path d="M15 8v14M8 15h14" stroke="#fff" stroke-width="2.8" stroke-linecap="round"/>
-          <defs><linearGradient id="lg2" x1="0" y1="0" x2="30" y2="30" gradientUnits="userSpaceOnUse"><stop stop-color="#1a6db5"/><stop offset="1" stop-color="#3b82f6"/></linearGradient></defs>
-        </svg>
-      </span>
+    <a href="<?= $asset ?>/index.php" class="nav-logo">
+      <img src="<?= $asset ?>/assets/img/medcon_logo.png" alt="medConnect" class="nav-logo-img"/>
       <span class="logo-text">med<span class="logo-accent">Connect</span></span>
     </a>
-    <a href="index.php" class="btn-nav-back">&#8592; Back to Sign In</a>
+    <a href="/index.php" class="btn-nav-back">&#8592; Back to Sign In</a>
   </div>
 </nav>
 
@@ -218,15 +224,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $valid) {
             <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
           </div>
           <div class="reset-alert success" style="text-align:left"><?= htmlspecialchars($success) ?></div>
-          <a href="index.php" style="display:inline-flex;align-items:center;justify-content:center;width:100%;height:58px;border-radius:12px;background:linear-gradient(135deg,#1a6db5,#3b82f6);color:#fff;font-size:15px;font-weight:700;text-decoration:none;box-shadow:0 4px 18px rgba(26,109,181,.28)">Sign In Now</a>
+          <a href="/index.php" style="display:inline-flex;align-items:center;justify-content:center;width:100%;height:58px;border-radius:12px;background:linear-gradient(135deg,#1a6db5,#3b82f6);color:#fff;font-size:15px;font-weight:700;text-decoration:none;box-shadow:0 4px 18px rgba(26,109,181,.28)">Sign In Now</a>
         </div>
 
       <?php elseif ($valid): ?>
         <?php if ($error): ?>
           <div class="reset-alert error"><?= htmlspecialchars($error) ?></div>
         <?php endif; ?>
-        <form method="POST">
+        <form method="POST" id="reset-form">
           <input type="hidden" name="token" value="<?= htmlspecialchars($token) ?>"/>
+          <input type="hidden" name="recaptcha_token" id="recaptcha_token" value=""/>
           <div class="reset-form-group">
             <label>New Password <span style="color:#dc2626">*</span></label>
             <div class="reset-input-wrap">
@@ -250,13 +257,43 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $valid) {
 
       <?php else: ?>
         <div class="reset-alert error"><?= htmlspecialchars($error) ?></div>
-        <a href="index.php" style="display:inline-flex;align-items:center;justify-content:center;width:100%;height:58px;border-radius:12px;background:linear-gradient(135deg,#1a6db5,#3b82f6);color:#fff;font-size:15px;font-weight:700;text-decoration:none;box-shadow:0 4px 18px rgba(26,109,181,.28)">Back to Sign In</a>
+        <a href="/index.php" style="display:inline-flex;align-items:center;justify-content:center;width:100%;height:58px;border-radius:12px;background:linear-gradient(135deg,#1a6db5,#3b82f6);color:#fff;font-size:15px;font-weight:700;text-decoration:none;box-shadow:0 4px 18px rgba(26,109,181,.28)">Back to Sign In</a>
       <?php endif; ?>
 
     </div>
   </div>
 </div>
 
-<script src="../assets/js/register.js"></script>
+<script src="<?= $asset ?>/assets/js/register.js"></script>
+<script>
+  window.RECAPTCHA_SITE_KEY = <?= json_encode((string) (defined('RECAPTCHA_SITE_KEY') ? RECAPTCHA_SITE_KEY : '')) ?>;
+  window.RECAPTCHA_VERSION = <?= json_encode((string) (defined('RECAPTCHA_VERSION') ? RECAPTCHA_VERSION : 'v3')) ?>;
+</script>
+<?php if (!empty((string) (defined('RECAPTCHA_SITE_KEY') ? RECAPTCHA_SITE_KEY : '')) && !empty((string) (defined('RECAPTCHA_SECRET_KEY') ? RECAPTCHA_SECRET_KEY : ''))): ?>
+  <?php if (strtolower((string) (defined('RECAPTCHA_VERSION') ? RECAPTCHA_VERSION : 'v3')) === 'v2'): ?>
+    <script src="https://www.google.com/recaptcha/api.js" async defer></script>
+  <?php else: ?>
+    <script src="https://www.google.com/recaptcha/api.js?render=<?= htmlspecialchars((string) (defined('RECAPTCHA_SITE_KEY') ? RECAPTCHA_SITE_KEY : '')) ?>"></script>
+    <script>
+      (function () {
+        const form = document.getElementById('reset-form');
+        const key = window.RECAPTCHA_SITE_KEY;
+        if (!form || !key || !window.grecaptcha?.execute) return;
+        form.addEventListener('submit', async (e) => {
+          const tokenEl = document.getElementById('recaptcha_token');
+          if (tokenEl && tokenEl.value) return;
+          e.preventDefault();
+          try {
+            const token = await window.grecaptcha.execute(key, { action: 'reset_password' });
+            if (tokenEl) tokenEl.value = token || '';
+          } catch (_) {}
+          form.submit();
+        });
+      })();
+    </script>
+  <?php endif; ?>
+<?php endif; ?>
 </body>
 </html>
+
+

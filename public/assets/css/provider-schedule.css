@@ -1,0 +1,415 @@
+/* Provider — Schedule & Availability */
+
+.sched-page-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+  margin-bottom: 20px;
+}
+
+.sched-page-header h2 {
+  margin: 0 0 4px;
+}
+
+.sched-page-header p {
+  margin: 0;
+  font-size: 13px;
+  color: var(--mc-slate-muted);
+  max-width: 520px;
+  line-height: 1.5;
+}
+
+.sched-summary {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.sched-summary-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 700;
+  border: 1px solid transparent;
+}
+
+.sched-summary-chip--today {
+  background: rgba(6, 147, 150, 0.1);
+  color: #057a7c;
+  border-color: rgba(6, 147, 150, 0.2);
+}
+
+.sched-summary-chip--slots {
+  background: #f8fafc;
+  color: var(--mc-navy-dark);
+  border-color: var(--mc-border-thin);
+}
+
+/* Configuration table */
+.sched-table-wrap {
+  overflow-x: auto;
+}
+
+.sched-table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+}
+
+.sched-table th {
+  text-align: left;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--mc-slate-muted);
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--mc-border-thin);
+  background: #f8fafc;
+}
+
+.sched-table td {
+  padding: 12px 14px;
+  border-bottom: 1px solid #f1f5f9;
+  vertical-align: middle;
+}
+
+.sched-table tr:last-child td {
+  border-bottom: none;
+}
+
+.sched-row--today {
+  background: rgba(6, 147, 150, 0.05);
+}
+
+.sched-row--today td:first-child {
+  box-shadow: inset 3px 0 0 #069396;
+}
+
+.sched-row--locked {
+  background: #fafbfc;
+}
+
+.sched-day-name {
+  font-weight: 700;
+  color: var(--mc-navy-dark);
+  font-size: 13px;
+}
+
+.sched-today-badge {
+  display: inline-block;
+  margin-left: 8px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 10px;
+  font-weight: 700;
+  color: #069396;
+  background: rgba(6, 147, 150, 0.12);
+  vertical-align: middle;
+}
+
+.sched-status-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.sched-status-pill::before {
+  content: '';
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.sched-status-pill--active {
+  background: rgba(34, 197, 94, 0.12);
+  color: #166534;
+}
+
+.sched-status-pill--active::before {
+  background: #22c55e;
+}
+
+.sched-status-pill--inactive {
+  background: #f1f5f9;
+  color: #64748b;
+}
+
+.sched-status-pill--inactive::before {
+  background: #94a3b8;
+}
+
+.sched-readonly {
+  font-size: 13px;
+  color: #64748b;
+  font-weight: 500;
+}
+
+.sched-locked-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 11px;
+  font-weight: 700;
+  color: #94a3b8;
+}
+
+.sched-locked-label svg {
+  width: 13px;
+  height: 13px;
+  opacity: 0.85;
+}
+
+/* Toggle — today row only */
+.sched-toggle {
+  position: relative;
+  display: inline-block;
+  width: 44px;
+  height: 24px;
+  flex-shrink: 0;
+}
+
+.sched-toggle input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+  position: absolute;
+}
+
+.sched-toggle__track {
+  position: absolute;
+  inset: 0;
+  background: #cbd5e1;
+  border-radius: 999px;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.sched-toggle__thumb {
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 18px;
+  height: 18px;
+  background: #fff;
+  border-radius: 50%;
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.18);
+  transition: transform 0.2s ease;
+  pointer-events: none;
+}
+
+.sched-toggle input:checked + .sched-toggle__track {
+  background: #069396;
+}
+
+.sched-toggle input:checked + .sched-toggle__track .sched-toggle__thumb {
+  transform: translateX(20px);
+}
+
+.sched-toggle input:focus-visible + .sched-toggle__track {
+  outline: 2px solid rgba(6, 147, 150, 0.45);
+  outline-offset: 2px;
+}
+
+.sched-field {
+  width: 100%;
+  min-width: 0;
+  background: #fff;
+  border: 1px solid var(--mc-border-thin);
+  border-radius: 8px;
+  color: var(--mc-navy-dark);
+  padding: 8px 10px;
+  font-size: 13px;
+  font-family: inherit;
+}
+
+.sched-field:focus {
+  outline: none;
+  border-color: #069396;
+  box-shadow: 0 0 0 3px rgba(6, 147, 150, 0.12);
+}
+
+.sched-save-btn {
+  padding: 6px 14px !important;
+  font-size: 12px !important;
+  min-width: 72px;
+}
+
+.sched-save-btn.is-saving {
+  opacity: 0.75;
+  pointer-events: none;
+}
+
+.sched-save-btn.is-success {
+  background: #22c55e !important;
+  border-color: #22c55e !important;
+}
+
+/* Preview panel */
+.sched-preview-card .mc-card-body {
+  padding-top: 0;
+}
+
+.sched-status-banner {
+  border-radius: 10px;
+  padding: 12px 14px;
+  font-size: 12px;
+  line-height: 1.55;
+  margin-bottom: 16px;
+}
+
+.sched-status-banner--ok {
+  background: rgba(34, 197, 94, 0.08);
+  border: 1px solid rgba(34, 197, 94, 0.22);
+  color: #166534;
+}
+
+.sched-status-banner--warn {
+  background: rgba(245, 158, 11, 0.08);
+  border: 1px solid rgba(245, 158, 11, 0.22);
+  color: #92400e;
+}
+
+.sched-slot-stats {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  margin-bottom: 14px;
+}
+
+.sched-slot-stat {
+  text-align: center;
+  padding: 10px 8px;
+  border-radius: 10px;
+  background: #f8fafc;
+  border: 1px solid var(--mc-border-thin);
+}
+
+.sched-slot-stat strong {
+  display: block;
+  font-size: 18px;
+  line-height: 1.1;
+  color: var(--mc-navy-dark);
+}
+
+.sched-slot-stat span {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--mc-slate-muted);
+}
+
+.sched-slot-stat--open strong { color: #069396; }
+.sched-slot-stat--booked strong { color: #dc2626; }
+.sched-slot-stat--past strong { color: #94a3b8; }
+
+.sched-preview-title {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--mc-navy-dark);
+  margin: 0 0 10px;
+}
+
+.sched-slot-grid-wrap {
+  max-height: 320px;
+  overflow-y: auto;
+  padding-right: 4px;
+  margin-bottom: 8px;
+}
+
+.sched-slot-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.sched-slot-card {
+  padding: 10px 8px;
+  border-radius: 10px;
+  text-align: center;
+  border: 1px solid transparent;
+}
+
+.sched-slot-card.is-available {
+  border-color: rgba(6, 147, 150, 0.25);
+  background: rgba(6, 147, 150, 0.06);
+}
+
+.sched-slot-card.is-booked {
+  border-color: #fecaca;
+  background: #fef2f2;
+}
+
+.sched-slot-card.is-past {
+  border-color: #e2e8f0;
+  background: #f8fafc;
+  opacity: 0.8;
+}
+
+.sched-slot-time {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--mc-navy-dark);
+}
+
+.sched-slot-status {
+  font-size: 10px;
+  font-weight: 700;
+  margin-top: 3px;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.sched-slot-card.is-available .sched-slot-status { color: #069396; }
+.sched-slot-card.is-booked .sched-slot-status { color: #dc2626; }
+.sched-slot-card.is-past .sched-slot-status { color: #94a3b8; }
+
+.sched-slot-patient {
+  font-size: 10px;
+  color: #64748b;
+  margin-top: 4px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.sched-preview-empty {
+  font-size: 12px;
+  line-height: 1.55;
+  color: var(--mc-slate-muted);
+  padding: 20px 12px;
+  text-align: center;
+  background: #f8fafc;
+  border-radius: 10px;
+  border: 1px dashed #e2e8f0;
+}
+
+.sched-note-card {
+  background: rgba(6, 147, 150, 0.04);
+  border: 1px dashed rgba(6, 147, 150, 0.35);
+}
+
+.sched-note-card p {
+  font-size: 12px;
+  color: var(--mc-slate-muted);
+  line-height: 1.55;
+  margin: 0;
+}
+
+@media (max-width: 991px) {
+  .sched-slot-stats {
+    grid-template-columns: 1fr;
+  }
+}

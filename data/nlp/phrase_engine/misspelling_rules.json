@@ -1,0 +1,39 @@
+{
+  "version": "1.0",
+  "description": "Algorithmic misspelling generation and correction rules for symptom roots",
+  "character_substitutions": [
+    {"from": "ok", "to": ["oc", "uk", "og"]},
+    {"from": "ag", "to": ["ak", "ug", "eg"]},
+    {"from": "ub", "to": ["ob", "ab", "up"]},
+    {"from": "hab", "to": ["habb", "ahb", "hab"]},
+    {"from": "ga", "to": ["ka", "gha", "qa"]},
+    {"from": "gi", "to": ["ki", "ji", "ghi"]},
+    {"from": "na", "to": ["no", "nga", "nah"]},
+    {"from": "ko", "to": ["ku", "coh", "koh"]},
+    {"from": "it", "to": ["et", "yt", "itt"]},
+    {"from": "bil", "to": ["bel", "bul", "bil"]},
+    {"from": "at", "to": ["ad", "et", "aad"]}
+  ],
+  "known_variants": {
+    "gahabok": ["gahbok", "gahabuk", "gahaboc", "gahubok", "gahubg"],
+    "gahubag": ["gahubg", "gahubak", "gahabag", "gahubeg", "gahubug"],
+    "hubag": ["hubak", "hubg", "habag", "hobag"],
+    "habok": ["habuk", "haboc", "habog"],
+    "namaga": ["namago", "namaka", "namaga"],
+    "gasakit": ["gasaket", "gasakut", "gasakit"],
+    "masakit": ["masaket", "masakut", "masaket"],
+    "gakatol": ["gakatul", "kakatol", "gakatul"],
+    "kakatol": ["kakatul", "gakatol", "kakatul"],
+    "gapula": ["gapola", "gapula", "gapula"],
+    "bilat": ["bilad"],
+    "itlog": ["itlug", "itlogg"],
+    "itlug": ["itlog"],
+    "ari": ["ary", "are"],
+    "mata": ["mataa"],
+    "kamot": ["kamut"],
+    "dughan": ["dughan ko", "dughang"],
+    "ginahilanat": ["ginahilanat ko", "ginahilanat gid", "ginahilanat"]
+  },
+  "max_edit_distance": 2,
+  "min_term_length": 4
+}

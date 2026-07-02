@@ -1,0 +1,139 @@
+================================================================================
+medConnect — PATIENT SAYINGS FOR TRAINING & DEMO
+================================================================================
+Use these when testing video calls, live transcription, and AI/ML analysis.
+Doctor: open consultation_session.php → Start Video → Minimize video → Analyze Transcript
+Patient: say the lines below (or read from phone) during the call.
+
+--------------------------------------------------------------------------------
+QUICK START (read these first — 5 easy lines)
+--------------------------------------------------------------------------------
+
+1. Hiligaynon (fever + cough):
+   "May hilanat kag ubo ako tatlo ka adlaw na. Nag-inom sang paracetamol."
+
+2. Hiligaynon (stomach):
+   "May sakit tiyan ako kag nagsuka. Wala ako gana magkaon."
+
+3. English (chest — URGENT test):
+   "I have chest pain and difficulty breathing since this morning."
+
+4. Mixed (common teleconsult):
+   "May hilanat kag ubo. I also feel tired and my head hurts."
+
+5. Hiligaynon (allergy):
+   "May sip-on ako, ginapanas-an, kag nagaluha ang mata. Daw may allergy."
+
+--------------------------------------------------------------------------------
+FOR LIVE VIDEO CALL — say slowly, pause 3 seconds between sentences
+--------------------------------------------------------------------------------
+
+SCRIPT A — Common cold / flu style
+  "Doctor, may hilanat ako."
+  "May ubo man kag sip-on."
+  "Ginakapoy ako permi."
+  "Wala ako gana magkaon."
+
+SCRIPT B — Stomach / GERD style
+  "May sakit tiyan ako human magkaon."
+  "Nagsuka ako kag may acidity."
+  "May hapdi man sa dughan gamay lang."
+
+SCRIPT C — Urgent (triage should flag HIGH)
+  "May sakit dughan ako."
+  "Budlay ang ginhawa ko."
+  "May hilanat man."
+
+SCRIPT D — Diabetes / fatigue style (English)
+  "I feel very tired all day."
+  "I am thirsty often and urinate frequently."
+  "I have lost some weight."
+
+SCRIPT E — Skin / rash style
+  "May katol ako kag may rashes sa panit."
+  "Red patches on my skin for one week."
+
+--------------------------------------------------------------------------------
+HILIGAYNON CHEAT SHEET (symptom → word to say)
+--------------------------------------------------------------------------------
+
+  hilanat ............... fever
+  ubo ................... cough
+  sip-on ................ runny nose
+  sakit ulo ............. headache
+  sakit dughan .......... chest pain
+  budlay ginhawa ........ difficulty breathing
+  sakit tiyan ........... stomach pain
+  suka / nagsuka ........ vomiting
+  kalibanga ............. diarrhea
+  katol ................. itching
+  hubag ................. swelling
+  kakapoy ............... fatigue
+  kalipong .............. dizziness
+
+--------------------------------------------------------------------------------
+ENGLISH LINES BY CONDITION (for ML training test)
+--------------------------------------------------------------------------------
+
+ALLERGY:
+  "I have been sneezing, shivering, and my eyes are watering."
+
+GERD:
+  "I have stomach pain, acidity, vomiting, and some chest pain."
+
+MALARIA:
+  "High fever, chills, sweating, and headache for three days."
+
+DIABETES:
+  "I am always tired, thirsty, and urinating more than usual."
+
+PNEUMONIA:
+  "Cough with phlegm, high fever, chest pain, and breathlessness."
+
+MIGRAINE:
+  "Severe headache, nausea, and pain behind my eyes."
+
+HYPERTENSION:
+  "Headache, chest pain, and dizziness. My blood pressure feels high."
+
+URINARY TRACT INFECTION:
+  "Burning when I urinate and pain in my lower abdomen."
+
+--------------------------------------------------------------------------------
+MIXED HILIGAYNON + ENGLISH (realistic patient talk)
+--------------------------------------------------------------------------------
+
+  "May hilanat kag ubo ang pasyente. Also reports fatigue."
+  "May sakit tiyan ako. I feel nausea and stomach pain."
+  "May hilanat. Nag-inom sang paracetamol pero wala gihapon maayo."
+  "Doctor, may sip-on kag ubo. My throat is irritated too."
+
+--------------------------------------------------------------------------------
+MEDICINES TO MENTION (tests medicine extraction)
+--------------------------------------------------------------------------------
+
+  "Nag-inom ako sang paracetamol kag biogesic."
+  "I took amoxicillin yesterday."
+  "Ginahatagan ako sang metformin para sa diabetes."
+
+--------------------------------------------------------------------------------
+WHAT THE DOCTOR SHOULD SEE AFTER "ANALYZE TRANSCRIPT"
+--------------------------------------------------------------------------------
+
+  ✓ Extracted symptoms (chips)
+  ✓ Triage level (low / moderate / high / critical)
+  ✓ Possible Conditions (ML) with %
+  ✓ English translation (if Hiligaynon)
+  ✓ Disclaimer: AI suggestion only — doctor must verify
+
+--------------------------------------------------------------------------------
+TIPS FOR TRAINING DEMO
+--------------------------------------------------------------------------------
+
+  • Patient speaks for 15–20 seconds before doctor analyzes
+  • Use consultation_session.php (doctor) — not video_room.php alone
+  • Click "Minimize video" to see AI below
+  • AI service must be running: ai_service\start_ai_service.bat
+  • For phone patient: use ngrok HTTPS link
+
+================================================================================

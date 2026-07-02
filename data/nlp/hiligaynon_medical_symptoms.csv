@@ -1,0 +1,851 @@
+hiligaynon_term,alternative_spellings,english_translation,medical_term,category,severity_level,confidence_keywords
+chest tightness heart,ginatight dughan;chest-tightness-heart,angina,angina,Cardiovascular,Critical,chest;heart;angina
+ginatight dughan,chest tightness heart;ginatight-dughan,angina,angina,Cardiovascular,Critical,chest;heart;angina
+ginatibok sing irregular,irregular heartbeat;ginatibok-sing-irregular,arrhythmia,arrhythmia,Cardiovascular,High,heart;irregular;arrhythmia
+irregular heartbeat,ginatibok sing irregular;irregular-heartbeat,arrhythmia,arrhythmia,Cardiovascular,High,heart;irregular;arrhythmia
+heart breathless,nagadula ginhawa tungod heart;heart-breathless,cardiac dyspnea,heart failure,Cardiovascular,Critical,heart;breath;failure
+nagadula ginhawa tungod heart,heart breathless;nagadula-ginhawa-tungod-heart,cardiac dyspnea,heart failure,Cardiovascular,Critical,heart;breath;failure
+chest pain,sakit dughan;hapdi dughan;masakit dughan;masakit dibdib;sakit dibdib;ginasakit dughan;chest-pain,chest pain,chest pain,Cardiovascular,Critical,chest;heart;pain;emergency
+ginasakit dughan,sakit dughan;hapdi dughan;masakit dughan;masakit dibdib;sakit dibdib;chest pain;ginasakit-dughan,chest pain,chest pain,Cardiovascular,Critical,chest;heart;pain;emergency
+hapdi dughan,sakit dughan;masakit dughan;masakit dibdib;sakit dibdib;ginasakit dughan;chest pain;ginhapdi dughan;may hapdi dughan;hapdi-dughan;naghapdi dughan,chest pain,chest pain,Cardiovascular,Critical,chest;heart;pain;emergency
+masakit dibdib,sakit dughan;hapdi dughan;masakit dughan;sakit dibdib;ginasakit dughan;chest pain;masakit-dibdib;ginmasakit dibdib;nagmasakit dibdib;may masakit dibdib,chest pain,chest pain,Cardiovascular,Critical,chest;heart;pain;emergency
+masakit dughan,sakit dughan;hapdi dughan;masakit dibdib;sakit dibdib;ginasakit dughan;chest pain;ginmasakit dughan;nagmasakit dughan;may masakit dughan;masakit-dughan,chest pain,chest pain,Cardiovascular,Critical,chest;heart;pain;emergency
+sakit dibdib,sakit dughan;hapdi dughan;masakit dughan;masakit dibdib;ginasakit dughan;chest pain;may sakit dibdib;ginsakit dibdib;nagsakit dibdib;sakit-dibdib,chest pain,chest pain,Cardiovascular,Critical,chest;heart;pain;emergency
+sakit dughan,hapdi dughan;masakit dughan;masakit dibdib;sakit dibdib;ginasakit dughan;chest pain;may sakit dughan;nagsakit dughan;sakit-dughan;ginsakit dughan,chest pain,chest pain,Cardiovascular,Critical,chest;heart;pain;emergency
+ginapamulang tiil,swollen feet;hubag tiil;ginapamulang-tiil,edema,edema,Cardiovascular,Medium,swelling;feet;heart;kidney
+hubag tiil,ginapamulang tiil;swollen feet;hubag-tiil;naghubag tiil;ginhubag tiil;may hubag tiil,edema,edema,Cardiovascular,Medium,swelling;feet;heart;kidney
+swollen feet,ginapamulang tiil;hubag tiil;swollen-feet,edema,edema,Cardiovascular,Medium,swelling;feet;heart;kidney
+ginadugo ilong heart,nosebleed hypertension;ginadugo-ilong-heart,epistaxis,epistaxis,Cardiovascular,Low,nose;bleed;blood pressure
+nosebleed hypertension,ginadugo ilong heart;nosebleed-hypertension,epistaxis,epistaxis,Cardiovascular,Low,nose;bleed;blood pressure
+breathless walking,ginadula ginhawa mag hilod;breathless-walking,exertional dyspnea,exertional dyspnea,Cardiovascular,High,breath;heart;exertion
+ginadula ginhawa mag hilod,breathless walking;ginadula-ginhawa-mag-hilod,exertional dyspnea,exertional dyspnea,Cardiovascular,High,breath;heart;exertion
+alta presyon,mataas nga presyon;altapresyon;high blood;hypertension;alta-presyon,hypertension,hypertension,Cardiovascular,Medium,blood pressure;hypertension
+altapresyon,mataas nga presyon;alta presyon;high blood;hypertension,hypertension,hypertension,Cardiovascular,Medium,blood pressure;hypertension
+high blood,mataas nga presyon;altapresyon;alta presyon;hypertension;high-blood,hypertension,hypertension,Cardiovascular,Medium,blood pressure;hypertension
+hypertension,mataas nga presyon;altapresyon;alta presyon;high blood,hypertension,hypertension,Cardiovascular,Medium,blood pressure;hypertension
+mataas nga presyon,altapresyon;alta presyon;high blood;hypertension;mataas-nga-presyon;may mataas nga presyon;ginmataas nga presyon;nagmataas nga presyon,hypertension,hypertension,Cardiovascular,Medium,blood pressure;hypertension
+ginakusog tibok,naga palpitations;palpitations;kusog tibok sang tagipusuon;kusog tibok;mabilis tibok;ginakusog-tibok,palpitations,palpitations,Cardiovascular,Medium,heart;palpitation;arrhythmia
+kusog tibok,naga palpitations;palpitations;kusog tibok sang tagipusuon;ginakusog tibok;mabilis tibok;kusog-tibok,palpitations,palpitations,Cardiovascular,Medium,heart;palpitation;arrhythmia
+kusog tibok sang tagipusuon,naga palpitations;palpitations;kusog tibok;ginakusog tibok;mabilis tibok;kusog-tibok-sang-tagipusuon,palpitations,palpitations,Cardiovascular,Medium,heart;palpitation;arrhythmia
+mabilis tibok,naga palpitations;palpitations;kusog tibok sang tagipusuon;kusog tibok;ginakusog tibok;mabilis-tibok,palpitations,palpitations,Cardiovascular,Medium,heart;palpitation;arrhythmia
+naga palpitations,palpitations;kusog tibok sang tagipusuon;kusog tibok;ginakusog tibok;mabilis tibok;naga-palpitations,palpitations,palpitations,Cardiovascular,Medium,heart;palpitation;arrhythmia
+palpitations,naga palpitations;kusog tibok sang tagipusuon;kusog tibok;ginakusog tibok;mabilis tibok,palpitations,palpitations,Cardiovascular,Medium,heart;palpitation;arrhythmia
+breathless sleeping,ginadula ginhawa pagtulog;breathless-sleeping,paroxysmal nocturnal dyspnea,paroxysmal nocturnal dyspnea,Cardiovascular,High,breath;heart;night
+ginadula ginhawa pagtulog,breathless sleeping;ginadula-ginhawa-pagtulog,paroxysmal nocturnal dyspnea,paroxysmal nocturnal dyspnea,Cardiovascular,High,breath;heart;night
+back rash,nagapula sa likod;back-rash,back rash,rash,Dermatology,Low,rash;back;skin
+nagapula sa likod,back rash;nagapula-sa-likod,back rash,rash,Dermatology,Low,rash;back;skin
+ginatulo sing dugo kag panit,ginatulo-sing-dugo-kag-panit,bleeding skin,skin hemorrhage,Dermatology,Medium,blood;skin;wound
+ga katol lawas,kakatol lawas;kumakati lawas;katol sa lawas;kakatol sa bilog lawas;nagga katol lawas;gina katol lawas;ga-katol-lawas;may ga katol lawas;naga katol lawas;ginga katol lawas,body itchiness,pruritus,Dermatology,Low,itch;body;skin
+kakatol lawas,kumakati lawas;ga katol lawas;katol sa lawas;kakatol sa bilog lawas;may kakatol lawas;kakatol-lawas;ginkakatol lawas;nagkakatol lawas,body itchiness,pruritus,Dermatology,Low,itch;body;skin
+kakatol sa bilog lawas,kakatol lawas;kumakati lawas;ga katol lawas;katol sa lawas;kakatol-sa-bilog-lawas;may kakatol sa bilog lawas;nagkakatol sa bilog lawas;ginkakatol sa bilog lawas,body itchiness,pruritus,Dermatology,Low,itch;body;skin
+katol sa lawas,kakatol lawas;kumakati lawas;ga katol lawas;kakatol sa bilog lawas;may katol sa lawas;ginkatol sa lawas;katol-sa-lawas;nagkatol sa lawas,body itchiness,pruritus,Dermatology,Low,itch;body;skin
+kumakati lawas,kakatol lawas;ga katol lawas;katol sa lawas;kakatol sa bilog lawas;kumakati-lawas;nagkumakati lawas;ginkumakati lawas;may kumakati lawas,body itchiness,pruritus,Dermatology,Low,itch;body;skin
+ga katol akon lawas,kumakati gid lawas;ga-katol-akon-lawas;gina katol akon lawas;ginga katol akon lawas;naga katol akon lawas;nagga katol akon lawas;may ga katol akon lawas,body itching phrase,pruritus,Dermatology,Low,itch;body;phrase
+kumakati gid lawas,ga katol akon lawas;ginkumakati gid lawas;kumakati-gid-lawas;nagkumakati gid lawas;may kumakati gid lawas,body itching phrase,pruritus,Dermatology,Low,itch;body;phrase
+barado pores,nagabara pores;blackheads;barado-pores,clogged pores,comedones,Dermatology,Low,acne;skin;pores
+blackheads,nagabara pores;barado pores,clogged pores,comedones,Dermatology,Low,acne;skin;pores
+nagabara pores,barado pores;blackheads;nagabara-pores,clogged pores,comedones,Dermatology,Low,acne;skin;pores
+dry skin,nagadula timbas;weight loss skin;dry-skin,dry skin,xerosis,Dermatology,Low,dry;skin;dehydration
+nagadula timbas,weight loss skin;dry skin;nagadula-timbas,dry skin,xerosis,Dermatology,Low,dry;skin;dehydration
+weight loss skin,nagadula timbas;dry skin;weight-loss-skin,dry skin,xerosis,Dermatology,Low,dry;skin;dehydration
+eczema area,nagakati tuhod;nagakati siko;eczema-area,eczema,eczema,Dermatology,Medium,itch;dry;skin;atopic
+nagakati siko,nagakati tuhod;eczema area;nagakati-siko,eczema,eczema,Dermatology,Medium,itch;dry;skin;atopic
+nagakati tuhod,nagakati siko;eczema area;nagakati-tuhod,eczema,eczema,Dermatology,Medium,itch;dry;skin;atopic
+bald spot,nagadula buhok;hair loss;bald-spot,hair loss,alopecia,Dermatology,Low,hair;balding;alopecia
+hair loss,nagadula buhok;bald spot;hair-loss,hair loss,alopecia,Dermatology,Low,hair;balding;alopecia
+nagadula buhok,hair loss;bald spot;nagadula-buhok,hair loss,alopecia,Dermatology,Low,hair;balding;alopecia
+falling hair,nagalagas buhok;falling-hair,hair shedding,telogen effluvium,Dermatology,Low,hair;loss;stress
+nagalagas buhok,falling hair;nagalagas-buhok,hair shedding,telogen effluvium,Dermatology,Low,hair;loss;stress
+alipunga,hubag;hubag-hubag;kalisngaw;nagahubag;ginahubag,hives,urticaria,Dermatology,Medium,swelling;allergy;skin;wheals
+ginahubag,hubag;hubag-hubag;kalisngaw;alipunga;nagahubag,hives,urticaria,Dermatology,Medium,swelling;allergy;skin;wheals
+hubag,hubag-hubag;kalisngaw;alipunga;nagahubag;ginahubag;naghubag;may hubag;ginhubag,hives,urticaria,Dermatology,Medium,swelling;allergy;skin;wheals
+hubag-hubag,hubag;kalisngaw;alipunga;nagahubag;ginahubag;may hubag-hubag;ginhubag-hubag;naghubag-hubag;hubaghubag;hubag hubag,hives,urticaria,Dermatology,Medium,swelling;allergy;skin;wheals
+kalisngaw,hubag;hubag-hubag;alipunga;nagahubag;ginahubag;may kalisngaw;nagkalisngaw;ginkalisngaw,hives,urticaria,Dermatology,Medium,swelling;allergy;skin;wheals
+nagahubag,hubag;hubag-hubag;kalisngaw;alipunga;ginahubag,hives,urticaria,Dermatology,Medium,swelling;allergy;skin;wheals
+ga katol,kakatol;kakatul;katol;makatol;gina katol;nagakakatol;kumakati;kinatol;kinatulan;ga-katol;naga katol;may ga katol;nagga katol;ginga katol,itchiness,pruritus,Dermatology,Low,itch;skin;allergy;rash;scratch
+gina katol,kakatol;kakatul;katol;makatol;ga katol;nagakakatol;kumakati;kinatol;kinatulan;gina-katol,itchiness,pruritus,Dermatology,Low,itch;skin;allergy;rash;scratch
+kakatol,kakatul;katol;makatol;ga katol;gina katol;nagakakatol;kumakati;kinatol;kinatulan;nagkakatol;may kakatol;ginkakatol,itchiness,pruritus,Dermatology,Low,itch;skin;allergy;rash;scratch
+kakatul,kakatol;katol;makatol;ga katol;gina katol;nagakakatol;kumakati;kinatol;kinatulan,itchiness,pruritus,Dermatology,Low,itch;skin;allergy;rash;scratch
+katol,kakatol;kakatul;makatol;ga katol;gina katol;nagakakatol;kumakati;kinatol;kinatulan;nagkatol;may katol;ginkatol,itchiness,pruritus,Dermatology,Low,itch;skin;allergy;rash;scratch
+kinatol,kakatol;kakatul;katol;makatol;ga katol;gina katol;nagakakatol;kumakati;kinatulan,itchiness,pruritus,Dermatology,Low,itch;skin;allergy;rash;scratch
+kinatulan,kakatol;kakatul;katol;makatol;ga katol;gina katol;nagakakatol;kumakati;kinatol,itchiness,pruritus,Dermatology,Low,itch;skin;allergy;rash;scratch
+kumakati,kakatol;kakatul;katol;makatol;ga katol;gina katol;nagakakatol;kinatol;kinatulan,itchiness,pruritus,Dermatology,Low,itch;skin;allergy;rash;scratch
+makatol,kakatol;kakatul;katol;ga katol;gina katol;nagakakatol;kumakati;kinatol;kinatulan;may makatol;ginmakatol;nagmakatol,itchiness,pruritus,Dermatology,Low,itch;skin;allergy;rash;scratch
+nagakakatol,kakatol;kakatul;katol;makatol;ga katol;gina katol;kumakati;kinatol;kinatulan,itchiness,pruritus,Dermatology,Low,itch;skin;allergy;rash;scratch
+bugas,butlig;galis;pamula;pantal;pantal-pantal;rashes;nagapamula;naga pula panit,rash,rash,Dermatology,Low,skin;spots;allergy;eruption
+butlig,bugas;galis;pamula;pantal;pantal-pantal;rashes;nagapamula;naga pula panit,rash,rash,Dermatology,Low,skin;spots;allergy;eruption
+galis,bugas;butlig;pamula;pantal;pantal-pantal;rashes;nagapamula;naga pula panit,rash,rash,Dermatology,Low,skin;spots;allergy;eruption
+naga pula panit,bugas;butlig;galis;pamula;pantal;pantal-pantal;rashes;nagapamula;naga-pula-panit,rash,rash,Dermatology,Low,skin;spots;allergy;eruption
+nagapamula,bugas;butlig;galis;pamula;pantal;pantal-pantal;rashes;naga pula panit,rash,rash,Dermatology,Low,skin;spots;allergy;eruption
+pamula,bugas;butlig;galis;pantal;pantal-pantal;rashes;nagapamula;naga pula panit,rash,rash,Dermatology,Low,skin;spots;allergy;eruption
+pantal,bugas;butlig;galis;pamula;pantal-pantal;rashes;nagapamula;naga pula panit,rash,rash,Dermatology,Low,skin;spots;allergy;eruption
+pantal-pantal,bugas;butlig;galis;pamula;pantal;rashes;nagapamula;naga pula panit;pantal pantal;pantalpantal,rash,rash,Dermatology,Low,skin;spots;allergy;eruption
+rashes,bugas;butlig;galis;pamula;pantal;pantal-pantal;nagapamula;naga pula panit,rash,rash,Dermatology,Low,skin;spots;allergy;eruption
+boil,nagatubok;ginatubok;tubok,skin boil,furuncle,Dermatology,Medium,abscess;infection;boil
+ginatubok,nagatubok;tubok;boil,skin boil,furuncle,Dermatology,Medium,abscess;infection;boil
+nagatubok,ginatubok;tubok;boil,skin boil,furuncle,Dermatology,Medium,abscess;infection;boil
+tubok,nagatubok;ginatubok;boil;gintubok;may tubok;nagtubok,skin boil,furuncle,Dermatology,Medium,abscess;infection;boil
+nagadula panit,nagakalas panit;skin peeling;nagadula-panit,skin peeling,desquamation,Dermatology,Low,peeling;skin;dermatitis
+nagakalas panit,nagadula panit;skin peeling;nagakalas-panit,skin peeling,desquamation,Dermatology,Low,peeling;skin;dermatitis
+skin peeling,nagadula panit;nagakalas panit;skin-peeling,skin peeling,desquamation,Dermatology,Low,peeling;skin;dermatitis
+ginapula panit,nagapula panit;mapula ang panit;pamula sa panit;ginapula-panit,skin redness,erythema,Dermatology,Low,red;inflammation;skin
+mapula ang panit,nagapula panit;ginapula panit;pamula sa panit;mapula-ang-panit,skin redness,erythema,Dermatology,Low,red;inflammation;skin
+nagapula panit,ginapula panit;mapula ang panit;pamula sa panit;nagapula-panit,skin redness,erythema,Dermatology,Low,red;inflammation;skin
+pamula sa panit,nagapula panit;ginapula panit;mapula ang panit;pamula-sa-panit,skin redness,erythema,Dermatology,Low,red;inflammation;skin
+buka sa panit,nagabuka panit;ginabuka panit;open wound;buka-sa-panit,skin wound,skin lesion,Dermatology,Medium,wound;cut;abrasion
+ginabuka panit,nagabuka panit;buka sa panit;open wound;ginabuka-panit,skin wound,skin lesion,Dermatology,Medium,wound;cut;abrasion
+nagabuka panit,ginabuka panit;buka sa panit;open wound;nagabuka-panit,skin wound,skin lesion,Dermatology,Medium,wound;cut;abrasion
+open wound,nagabuka panit;ginabuka panit;buka sa panit;open-wound,skin wound,skin lesion,Dermatology,Medium,wound;cut;abrasion
+mapula sa init,nagatina;sunburn;mapula-sa-init,sunburn,sunburn,Dermatology,Low,sun;burn;red;skin
+nagatina,sunburn;mapula sa init,sunburn,sunburn,Dermatology,Low,sun;burn;red;skin
+sunburn,nagatina;mapula sa init,sunburn,sunburn,Dermatology,Low,sun;burn;red;skin
+ginatulo sing dugo kag accident,ginatulo-sing-dugo-kag-accident,accident bleeding,traumatic hemorrhage,Emergency,Critical,blood;accident;trauma
+allergy breathless,nagadula ginhawa allergy;allergy-breathless,allergic dyspnea,anaphylaxis,Emergency,Critical,allergy;breath;emergency
+nagadula ginhawa allergy,allergy breathless;nagadula-ginhawa-allergy,allergic dyspnea,anaphylaxis,Emergency,Critical,allergy;breath;emergency
+alergy,allergy;ginallergy;allergic reaction,allergic reaction,allergic reaction,Emergency,High,allergy;rash;breathing;swelling
+allergic reaction,allergy;alergy;ginallergy;allergic-reaction,allergic reaction,allergic reaction,Emergency,High,allergy;rash;breathing;swelling
+allergy,alergy;ginallergy;allergic reaction,allergic reaction,allergic reaction,Emergency,High,allergy;rash;breathing;swelling
+ginallergy,allergy;alergy;allergic reaction,allergic reaction,allergic reaction,Emergency,High,allergy;rash;breathing;swelling
+allergy hives,nagahubag lawas allergy;allergy-hives,allergic urticaria,urticaria,Emergency,High,allergy;hives;skin
+nagahubag lawas allergy,allergy hives;nagahubag-lawas-allergy,allergic urticaria,urticaria,Emergency,High,allergy;hives;skin
+anaphylaxis signs,nagadula ginhawa kag hubag liog;anaphylaxis-signs,anaphylaxis,anaphylaxis,Emergency,Critical,allergy;breathing;swelling;emergency
+nagadula ginhawa kag hubag liog,anaphylaxis signs;nagadula-ginhawa-kag-hubag-liog,anaphylaxis,anaphylaxis,Emergency,Critical,allergy;breathing;swelling;emergency
+ginatulo sing dugo kag aneurysm,ginatulo-sing-dugo-kag-aneurysm,aneurysm bleeding,aneurysm rupture,Emergency,Critical,blood;aneurysm;emergency
+ginatulo sing dugo kag anticoagulant,ginatulo-sing-dugo-kag-anticoagulant,anticoagulant bleeding,anticoagulant complication,Emergency,Critical,blood;anticoagulant;bleeding
+ginatulo sing dugo kag aortic,ginatulo-sing-dugo-kag-aortic,aortic bleeding,aortic rupture,Emergency,Critical,blood;aorta;emergency
+appendix pain,ginasakit tuod;sakit tuod;appendix-pain,appendicitis pain,appendicitis,Emergency,Critical,appendix;pain;abdomen
+ginasakit tuod,appendix pain;sakit tuod;ginasakit-tuod,appendicitis pain,appendicitis,Emergency,Critical,appendix;pain;abdomen
+sakit tuod,ginasakit tuod;appendix pain;nagsakit tuod;sakit-tuod;may sakit tuod;ginsakit tuod,appendicitis pain,appendicitis,Emergency,Critical,appendix;pain;abdomen
+ginatulo sing dugo kag appendix,ginatulo-sing-dugo-kag-appendix,appendix bleeding,appendicitis complication,Emergency,Critical,blood;appendix
+ginatulo sing dugo kag aspirin,ginatulo-sing-dugo-kag-aspirin,aspirin bleeding,aspirin complication,Emergency,High,blood;aspirin;bleeding
+ginatulo sing itom,ginatulo-sing-itom,black stool,melena,Emergency,Critical,blood;stool;gi
+ginatulo sing dugo kag bladder injury,ginatulo-sing-dugo-kag-bladder-injury,bladder injury bleeding,bladder trauma,Emergency,Critical,blood;bladder;trauma
+dugo sa sugat,nagatulo dugo sa sugat;nagabulos dugo;nagdugo sa sugat;may dugo sa sugat;gindugo sa sugat;dugo-sa-sugat,bleeding wound,hemorrhage,Emergency,Critical,bleeding;wound;trauma
+nagabulos dugo,nagatulo dugo sa sugat;dugo sa sugat;nagabulos-dugo,bleeding wound,hemorrhage,Emergency,Critical,bleeding;wound;trauma
+nagatulo dugo sa sugat,dugo sa sugat;nagabulos dugo;nagatulo-dugo-sa-sugat,bleeding wound,hemorrhage,Emergency,Critical,bleeding;wound;trauma
+ginatulo sing dugo kag tiyan,ginatulo sing dugo kag tyan;ginatulo-sing-dugo-kag-tiyan,bloody abdominal,gastrointestinal bleeding,Emergency,Critical,blood;abdomen;gi
+ginatulo sing dugo kag lawas,ginatulo-sing-dugo-kag-lawas,bloody body weak,hemorrhagic fever,Emergency,Critical,blood;fever;weak
+ginatulo sing dugo kag dughan,ginatulo-sing-dugo-kag-dughan,bloody chest,hemothorax,Emergency,Critical,blood;chest;trauma
+ginatulo sing dugo kag ulo,ginatulo-sing-dugo-kag-ulo,bloody headache,subarachnoid hemorrhage,Emergency,Critical,blood;head;emergency
+ginatulo sing dugo kag ihi,ginatulo-sing-dugo-kag-ihi,bloody urine stool,systemic bleeding,Emergency,Critical,blood;urine;stool
+ginatulo sing dugo kag suka,ginatulo-sing-dugo-kag-suka,bloody vomit stool,gastrointestinal bleeding,Emergency,Critical,blood;vomit;stool
+ginatulo sing dugo kag brain injury,ginatulo-sing-dugo-kag-brain-injury,brain injury bleeding,intracranial hemorrhage,Emergency,Critical,blood;brain;trauma
+ginatulo sing dugo kag cancer,ginatulo-sing-dugo-kag-cancer,cancer bleeding,malignancy bleeding,Emergency,Critical,cancer;blood;bleeding
+ginatulo sing dugo kag chemotherapy,ginatulo-sing-dugo-kag-chemotherapy,chemotherapy bleeding,chemotherapy complication,Emergency,Critical,blood;chemotherapy;cancer
+collapse unconscious,nagahulog wala malay;collapse-unconscious,collapse unconscious,syncope,Emergency,Critical,unconscious;collapse;emergency
+nagahulog wala malay,collapse unconscious;nagahulog-wala-malay,collapse unconscious,syncope,Emergency,Critical,unconscious;collapse;emergency
+ginatulo sing dugo kag dengue,ginatulo-sing-dugo-kag-dengue,dengue bleeding,dengue hemorrhagic fever,Emergency,Critical,dengue;blood;fever
+dengue bleeding,dugo dengue;dengue-bleeding,dengue hemorrhagic fever,dengue hemorrhagic fever,Emergency,Critical,dengue;bleeding;emergency
+dugo dengue,dengue bleeding;nagdugo dengue;may dugo dengue;dugo-dengue;gindugo dengue,dengue hemorrhagic fever,dengue hemorrhagic fever,Emergency,Critical,dengue;bleeding;emergency
+indi maathag maghambal,nagadula speech;slurred speech;indi-maathag-maghambal,dysarthria,dysarthria,Emergency,Critical,speech;stroke;slurred
+nagadula speech,slurred speech;indi maathag maghambal;nagadula-speech,dysarthria,dysarthria,Emergency,Critical,speech;stroke;slurred
+slurred speech,nagadula speech;indi maathag maghambal;slurred-speech,dysarthria,dysarthria,Emergency,Critical,speech;stroke;slurred
+ginatulo sing dugo kag geriatric injury,ginatulo-sing-dugo-kag-geriatric-injury,elderly injury bleeding,geriatric trauma,Emergency,Critical,blood;elderly;trauma
+ginatulo sing dugo kag boerhaave,ginatulo-sing-dugo-kag-boerhaave,esophageal rupture,boerhaave syndrome,Emergency,Critical,blood;esophagus;rupture
+chest pain exertion,ginahapdi dughan mag hilod;chest-pain-exertion,exertional chest pain,angina pectoris,Emergency,Critical,chest;heart;exertion
+ginahapdi dughan mag hilod,chest pain exertion;ginahapdi-dughan-mag-hilod,exertional chest pain,angina pectoris,Emergency,Critical,chest;heart;exertion
+fainting breath,nagapunaw;ginapunaw;fainting-breath,fainting,syncope,Emergency,Critical,unconscious;faint;collapse
+ginapunaw,nagapunaw;fainting breath,fainting,syncope,Emergency,Critical,unconscious;faint;collapse
+nagapunaw,fainting breath;ginapunaw,fainting,syncope,Emergency,Critical,unconscious;faint;collapse
+ginatulo sing dugo kag fall,ginatulo-sing-dugo-kag-fall,fall bleeding,fall trauma,Emergency,High,blood;fall;trauma
+ginatulo sing dugo kag femur fracture,ginatulo-sing-dugo-kag-femur-fracture,femur fracture bleeding,femur fracture,Emergency,Critical,blood;fracture;trauma
+fracture,nagabali;nabali,fracture,fracture,Emergency,Critical,fracture;bone;trauma
+nabali,nagabali;fracture,fracture,fracture,Emergency,Critical,fracture;bone;trauma
+nagabali,fracture;nabali,fracture,fracture,Emergency,Critical,fracture;bone;trauma
+ginatulo sing dugo kag gunshot,ginatulo-sing-dugo-kag-gunshot,gunshot bleeding,gunshot wound,Emergency,Critical,blood;gunshot;trauma
+ginatulo sing dugo kag head injury,ginatulo-sing-dugo-kag-head-injury,head injury bleeding,head trauma,Emergency,Critical,blood;head;trauma
+atake puso,atake sa puso;heart attack;heartattack;atake-puso,heart attack,myocardial infarction,Emergency,Critical,heart;attack;chest;emergency
+atake sa puso,atake puso;heart attack;heartattack;atake-sa-puso,heart attack,myocardial infarction,Emergency,Critical,heart;attack;chest;emergency
+heart attack,atake sa puso;atake puso;heartattack;heart-attack,heart attack,myocardial infarction,Emergency,Critical,heart;attack;chest;emergency
+heartattack,atake sa puso;atake puso;heart attack,heart attack,myocardial infarction,Emergency,Critical,heart;attack;chest;emergency
+bloody cough,dugo sa ubo;nagauubo sing dugo;bloody-cough,hemoptysis,hemoptysis,Emergency,Critical,blood;cough;lung;emergency
+dugo sa ubo,nagauubo sing dugo;bloody cough;may dugo sa ubo;dugo-sa-ubo;gindugo sa ubo;nagdugo sa ubo,hemoptysis,hemoptysis,Emergency,Critical,blood;cough;lung;emergency
+nagauubo sing dugo,dugo sa ubo;bloody cough;nagauubo-sing-dugo,hemoptysis,hemoptysis,Emergency,Critical,blood;cough;lung;emergency
+high blood sugar,hyperglycemia;mataas asukal;high-blood-sugar,hyperglycemia,hyperglycemia,Emergency,High,diabetes;sugar;high;emergency
+hyperglycemia,mataas asukal;high blood sugar,hyperglycemia,hyperglycemia,Emergency,High,diabetes;sugar;high;emergency
+mataas asukal,hyperglycemia;high blood sugar;ginmataas asukal;mataas-asukal;nagmataas asukal;may mataas asukal,hyperglycemia,hyperglycemia,Emergency,High,diabetes;sugar;high;emergency
+altapresyon sing grabe,severe hypertension;altapresyon-sing-grabe,hypertensive emergency,hypertensive emergency,Emergency,Critical,blood pressure;emergency;stroke
+severe hypertension,altapresyon sing grabe;severe-hypertension,hypertensive emergency,hypertensive emergency,Emergency,Critical,blood pressure;emergency;stroke
+hypoglycemia,mababang asukal;low blood sugar,hypoglycemia,hypoglycemia,Emergency,Critical,diabetes;sugar;low;emergency
+low blood sugar,hypoglycemia;mababang asukal;low-blood-sugar,hypoglycemia,hypoglycemia,Emergency,Critical,diabetes;sugar;low;emergency
+mababang asukal,hypoglycemia;low blood sugar;may mababang asukal;nagmababang asukal;ginmababang asukal;mababang-asukal,hypoglycemia,hypoglycemia,Emergency,Critical,diabetes;sugar;low;emergency
+ginatulo sing dugo kag intraop,ginatulo-sing-dugo-kag-intraop,intraop bleeding,intraoperative hemorrhage,Emergency,Critical,blood;intraoperative
+ginatulo sing dugo kag kidney injury,ginatulo-sing-dugo-kag-kidney-injury,kidney injury bleeding,renal trauma,Emergency,Critical,blood;kidney;trauma
+ginatulo sing dugo kag liver injury,ginatulo-sing-dugo-kag-liver-injury,liver injury bleeding,hepatic trauma,Emergency,Critical,blood;liver;trauma
+ginadula malay,loss consciousness;wala malay;unconscious;ginadula-malay,loss of consciousness,loss of consciousness,Emergency,Critical,unconscious;emergency;collapse
+loss consciousness,ginadula malay;wala malay;unconscious;loss-consciousness,loss of consciousness,loss of consciousness,Emergency,Critical,unconscious;emergency;collapse
+unconscious,ginadula malay;loss consciousness;wala malay,loss of consciousness,loss of consciousness,Emergency,Critical,unconscious;emergency;collapse
+wala malay,ginadula malay;loss consciousness;unconscious;wala-malay,loss of consciousness,loss of consciousness,Emergency,Critical,unconscious;emergency;collapse
+ginatulo sing dugo kag lung injury,ginatulo-sing-dugo-kag-lung-injury,lung injury bleeding,pulmonary hemorrhage,Emergency,Critical,blood;lung;trauma
+ginatulo sing dugo kag mallory weiss,ginatulo-sing-dugo-kag-mallory-weiss,mallory weiss tear,mallory-weiss syndrome,Emergency,Critical,blood;vomit;gi
+black stool,itom nga dumi;tae itom;black-stool,melena,melena,Emergency,Critical,blood;stool;gi;ulcer
+itom nga dumi,black stool;tae itom;itom-nga-dumi,melena,melena,Emergency,Critical,blood;stool;gi;ulcer
+tae itom,itom nga dumi;black stool;tae-itom,melena,melena,Emergency,Critical,blood;stool;gi;ulcer
+monocular vision loss,nagadula panulok isa ka mata;monocular-vision-loss,monocular vision loss,monocular vision loss,Emergency,Critical,eye;vision;emergency
+nagadula panulok isa ka mata,monocular vision loss;nagadula-panulok-isa-ka-mata,monocular vision loss,monocular vision loss,Emergency,Critical,eye;vision;emergency
+ginatulo sing dugo kag ilong,ginatulo-sing-dugo-kag-ilong,nosebleed severe,epistaxis,Emergency,High,blood;nose;bleeding
+dili makagalaw,nagaparalisa;paralysis;indi makahilod;dili-makagalaw,paralysis,paralysis,Emergency,Critical,paralysis;stroke;weakness
+indi makahilod,nagaparalisa;paralysis;dili makagalaw;indi-makahilod,paralysis,paralysis,Emergency,Critical,paralysis;stroke;weakness
+nagaparalisa,paralysis;dili makagalaw;indi makahilod,paralysis,paralysis,Emergency,Critical,paralysis;stroke;weakness
+paralysis,nagaparalisa;dili makagalaw;indi makahilod,paralysis,paralysis,Emergency,Critical,paralysis;stroke;weakness
+ginatulo sing dugo kag pelvic injury,ginatulo-sing-dugo-kag-pelvic-injury,pelvic injury bleeding,pelvic fracture,Emergency,Critical,blood;pelvis;trauma
+ginatulo sing dugo kag perioperative,ginatulo-sing-dugo-kag-perioperative,perioperative bleeding,perioperative hemorrhage,Emergency,Critical,blood;perioperative
+ginatulo sing dugo kag perioperative complication,ginatulo-sing-dugo-kag-perioperative-complication,perioperative complication bleeding,perioperative complication,Emergency,Critical,blood;complication;surgery
+ginatulo sing dugo kag postop,ginatulo-sing-dugo-kag-postop,postop bleeding,postoperative hemorrhage,Emergency,Critical,blood;postoperative
+ginatulo sing dugo kag operasyon,ginatulo-sing-dugo-kag-operasyon,postoperative bleeding,postoperative hemorrhage,Emergency,Critical,blood;surgery;bleeding
+ginatulo sing dugo kag preop,ginatulo-sing-dugo-kag-preop,preop bleeding,preoperative bleeding,Emergency,High,blood;preoperative
+nagakonvulsyon indi mauntat,prolonged seizure;nagakonvulsyon-indi-mauntat,prolonged seizure,status epilepticus,Emergency,Critical,seizure;emergency;convulsion
+prolonged seizure,nagakonvulsyon indi mauntat;prolonged-seizure,prolonged seizure,status epilepticus,Emergency,Critical,seizure;emergency;convulsion
+ginatulo sing dugo kag radiation,ginatulo-sing-dugo-kag-radiation,radiation bleeding,radiation complication,Emergency,High,blood;radiation;cancer
+breathing problem general,ginadula ginhawa;breathing-problem-general,respiratory distress,respiratory distress,Emergency,Critical,breath;emergency;lung
+ginadula ginhawa,breathing problem general;ginadula-ginhawa,respiratory distress,respiratory distress,Emergency,Critical,breath;emergency;lung
+ginatulo sing dugo kag rib fracture,ginatulo-sing-dugo-kag-rib-fracture,rib fracture bleeding,rib fracture,Emergency,High,blood;rib;trauma
+atake,kombulsyon;konvulsyon;nagakonvulsyon;ginakonvulsyon;seizure,seizure,seizure,Emergency,Critical,seizure;convulsion;epilepsy
+ginakonvulsyon,kombulsyon;konvulsyon;nagakonvulsyon;seizure;atake,seizure,seizure,Emergency,Critical,seizure;convulsion;epilepsy
+kombulsyon,konvulsyon;nagakonvulsyon;ginakonvulsyon;seizure;atake,seizure,seizure,Emergency,Critical,seizure;convulsion;epilepsy
+konvulsyon,kombulsyon;nagakonvulsyon;ginakonvulsyon;seizure;atake,seizure,seizure,Emergency,Critical,seizure;convulsion;epilepsy
+nagakonvulsyon,kombulsyon;konvulsyon;ginakonvulsyon;seizure;atake,seizure,seizure,Emergency,Critical,seizure;convulsion;epilepsy
+seizure,kombulsyon;konvulsyon;nagakonvulsyon;ginakonvulsyon;atake,seizure,seizure,Emergency,Critical,seizure;convulsion;epilepsy
+blood infection,sepsis;ginasepsis;blood-infection,sepsis,sepsis,Emergency,Critical,sepsis;infection;fever;emergency
+ginasepsis,sepsis;blood infection,sepsis,sepsis,Emergency,Critical,sepsis;infection;fever;emergency
+sepsis,blood infection;ginasepsis,sepsis,sepsis,Emergency,Critical,sepsis;infection;fever;emergency
+dugo sing damo,ginadugo sing grabe;severe bleeding;gindugo sing damo;may dugo sing damo;nagdugo sing damo;dugo-sing-damo,severe bleeding,hemorrhage,Emergency,Critical,bleeding;emergency;trauma
+ginadugo sing grabe,severe bleeding;dugo sing damo;ginadugo-sing-grabe,severe bleeding,hemorrhage,Emergency,Critical,bleeding;emergency;trauma
+severe bleeding,ginadugo sing grabe;dugo sing damo;severe-bleeding,severe bleeding,hemorrhage,Emergency,Critical,bleeding;emergency;trauma
+budlay gid akon ginhawa,lisod gid magginhawa;may budlay gid akon ginhawa;budlay-gid-akon-ginhawa;ginbudlay gid akon ginhawa;nagbudlay gid akon ginhawa,severe breathlessness phrase,dyspnea,Emergency,Critical,breath;emergency;phrase
+lisod gid magginhawa,budlay gid akon ginhawa;ginlisod gid magginhawa;naglisod gid magginhawa;may lisod gid magginhawa;lisod-gid-magginhawa,severe breathlessness phrase,dyspnea,Emergency,Critical,breath;emergency;phrase
+hapdi gid dughan,masakit gid akon dughan;naghapdi gid dughan;hapdi-gid-dughan;may hapdi gid dughan;ginhapdi gid dughan,severe chest pain phrase,chest pain,Emergency,Critical,chest;heart;emergency
+masakit gid akon dughan,hapdi gid dughan;nagmasakit gid akon dughan;ginmasakit gid akon dughan;masakit-gid-akon-dughan;may masakit gid akon dughan,severe chest pain phrase,chest pain,Emergency,Critical,chest;heart;emergency
+ginadugo ihi sing grabe,severe hematuria;ginadugo-ihi-sing-grabe,severe hematuria,hematuria,Emergency,Critical,blood;urine;emergency
+severe hematuria,ginadugo ihi sing grabe;severe-hematuria,severe hematuria,hematuria,Emergency,Critical,blood;urine;emergency
+ginahapdi gid,severe pain;ginahapdi-gid,severe pain,severe pain,Emergency,High,pain;severe;emergency
+severe pain,ginahapdi gid;severe-pain,severe pain,severe pain,Emergency,High,pain;severe;emergency
+ginatulo sing dugo kag spinal injury,ginatulo-sing-dugo-kag-spinal-injury,spinal injury bleeding,spinal trauma,Emergency,Critical,blood;spine;trauma
+ginatulo sing dugo kag spleen,ginatulo-sing-dugo-kag-spleen,spleen bleeding,splenic rupture,Emergency,Critical,blood;spleen;trauma
+ginatulo sing dugo kag spleen injury,ginatulo-sing-dugo-kag-spleen-injury,spleen injury bleeding,splenic trauma,Emergency,Critical,blood;spleen;trauma
+ginatulo sing dugo kag stab,ginatulo-sing-dugo-kag-stab,stab wound bleeding,penetrating trauma,Emergency,Critical,blood;stab;trauma
+atake sa utok,stroke;nagastroke;brain attack;atake-sa-utok,stroke,cerebrovascular accident,Emergency,Critical,stroke;brain;paralysis;speech
+brain attack,stroke;atake sa utok;nagastroke;brain-attack,stroke,cerebrovascular accident,Emergency,Critical,stroke;brain;paralysis;speech
+nagastroke,stroke;atake sa utok;brain attack,stroke,cerebrovascular accident,Emergency,Critical,stroke;brain;paralysis;speech
+stroke,atake sa utok;nagastroke;brain attack,stroke,cerebrovascular accident,Emergency,Critical,stroke;brain;paralysis;speech
+nagadula speech kag pamamanhid,stroke symptoms phrase;nagadula-speech-kag-pamamanhid,stroke symptoms,cerebrovascular accident,Emergency,Critical,stroke;speech;numb;emergency
+stroke symptoms phrase,nagadula speech kag pamamanhid;stroke-symptoms-phrase,stroke symptoms,cerebrovascular accident,Emergency,Critical,stroke;speech;numb;emergency
+nagadula panulok bigla,sudden vision loss;nagadula-panulok-bigla,sudden vision loss,sudden vision loss,Emergency,Critical,vision;sudden;emergency
+sudden vision loss,nagadula panulok bigla;sudden-vision-loss,sudden vision loss,sudden vision loss,Emergency,Critical,vision;sudden;emergency
+nagahunahuna magpakamatay,suicidal thoughts;nagahunahuna-magpakamatay,suicidal ideation,suicidal ideation,Emergency,Critical,suicide;mental;emergency
+suicidal thoughts,nagahunahuna magpakamatay;suicidal-thoughts,suicidal ideation,suicidal ideation,Emergency,Critical,suicide;mental;emergency
+ginatulo sing dugo kag surgery,ginatulo-sing-dugo-kag-surgery,surgery bleeding,postoperative hemorrhage,Emergency,Critical,blood;surgery;bleeding
+fainting dizzy,nagalipong dayon nagahulog;fainting-dizzy,syncope with dizziness,syncope,Emergency,Critical,faint;dizzy;collapse
+nagalipong dayon nagahulog,fainting dizzy;nagalipong-dayon-nagahulog,syncope with dizziness,syncope,Emergency,Critical,faint;dizzy;collapse
+nagasingal tutunlan,swollen throat;nagasingal-tutunlan,throat swelling,pharyngeal edema,Emergency,Critical,throat;swelling;allergy;anaphylaxis
+swollen throat,nagasingal tutunlan;swollen-throat,throat swelling,pharyngeal edema,Emergency,Critical,throat;swelling;allergy;anaphylaxis
+nagahapdi ulo sing grabe,thunderclap headache;nagahapdi-ulo-sing-grabe,thunderclap headache,thunderclap headache,Emergency,Critical,headache;sudden;emergency;stroke
+thunderclap headache,nagahapdi ulo sing grabe;thunderclap-headache,thunderclap headache,thunderclap headache,Emergency,Critical,headache;sudden;emergency;stroke
+ginatulo sing dugo kag tonsil bunot,ginatulo-sing-dugo-kag-tonsil-bunot,tonsil removal bleeding,postoperative bleeding,Emergency,High,blood;throat
+ginatulo sing dugo kag tonsil surgery,ginatulo-sing-dugo-kag-tonsil-surgery,tonsillectomy bleeding,post-tonsillectomy hemorrhage,Emergency,High,blood;throat;surgery
+ginatulo sing dugo kag trauma,ginatulo-sing-dugo-kag-trauma,trauma bleeding,traumatic hemorrhage,Emergency,Critical,blood;trauma;emergency
+nagadugo sing indi mauntat,uncontrolled bleeding;nagadugo-sing-indi-mauntat,uncontrolled bleeding,hemorrhage,Emergency,Critical,bleeding;emergency;trauma
+uncontrolled bleeding,nagadugo sing indi mauntat;uncontrolled-bleeding,uncontrolled bleeding,hemorrhage,Emergency,Critical,bleeding;emergency;trauma
+ginatulo sing dugo kag urethral injury,ginatulo-sing-dugo-kag-urethral-injury,urethral injury bleeding,urethral trauma,Emergency,High,blood;urethra;trauma
+ginatulo sing dugo kag varices,ginatulo-sing-dugo-kag-varices,variceal bleeding,esophageal varices,Emergency,Critical,blood;liver;varices
+bulag,nagadula panulok;vision loss,vision loss,vision loss,Emergency,Critical,vision;blind;eye;emergency
+vision loss,nagadula panulok;bulag;vision-loss,vision loss,vision loss,Emergency,Critical,vision;blind;eye;emergency
+ginatulo sing dugo kag warfarin,ginatulo-sing-dugo-kag-warfarin,warfarin bleeding,warfarin complication,Emergency,Critical,blood;warfarin;bleeding
+ginatulo sing dugo kag sugat,ginatulo-sing-dugo-kag-sugat,wound bleeding,wound hemorrhage,Emergency,Critical,blood;wound;trauma
+cramping stomach,ginatight tiyan;cramping-stomach,abdominal cramping,abdominal cramps,Gastroenterology,Medium,cramp;stomach;gi
+ginatight tiyan,cramping stomach;ginatight-tiyan;ginatight tyan,abdominal cramping,abdominal cramps,Gastroenterology,Medium,cramp;stomach;gi
+fever stomach,ginahilanat tiyan;fever-stomach,abdominal fever,intra-abdominal infection,Gastroenterology,High,fever;abdomen;infection
+ginahilanat tiyan,fever stomach;ginahilanat-tiyan;ginahilanat tyan,abdominal fever,intra-abdominal infection,Gastroenterology,High,fever;abdomen;infection
+ginatubo tiyan,swollen belly;ginatubo tyan;ginatubo-tiyan,abdominal swelling,ascites,Gastroenterology,High,swelling;liver;abdomen
+swollen belly,ginatubo tiyan;swollen-belly,abdominal swelling,ascites,Gastroenterology,High,swelling;liver;abdomen
+ginatulo sing dugo kag anal,ginatulo-sing-dugo-kag-anal,anal bleeding,anal hemorrhage,Gastroenterology,Medium,blood;anal;hemorrhoids
+ginatulo sing dugo kag fissure,ginatulo-sing-dugo-kag-fissure,anal fissure bleeding,anal fissure,Gastroenterology,Medium,blood;anal;fissure
+ginadula gana tungod tiyan,no appetite stomach;ginadula-gana-tungod-tiyan;ginadula gana tungod tyan,anorexia abdominal,anorexia,Gastroenterology,Low,appetite;stomach
+no appetite stomach,ginadula gana tungod tiyan;no-appetite-stomach,anorexia abdominal,anorexia,Gastroenterology,Low,appetite;stomach
+bloated stomach,ginapanuhot;panuhot;ginapanuhot tiyan;busog tiyan;bloated-stomach,bloating,abdominal distension,Gastroenterology,Low,bloat;gas;stomach
+busog tiyan,ginapanuhot;panuhot;ginapanuhot tiyan;bloated stomach;may busog tiyan;nagbusog tiyan;busog tyan;busog-tiyan;ginbusog tiyan,bloating,abdominal distension,Gastroenterology,Low,bloat;gas;stomach
+ginapanuhot,panuhot;ginapanuhot tiyan;busog tiyan;bloated stomach,bloating,abdominal distension,Gastroenterology,Low,bloat;gas;stomach
+ginapanuhot tiyan,ginapanuhot;panuhot;busog tiyan;bloated stomach;ginapanuhot-tiyan;ginapanuhot tyan,bloating,abdominal distension,Gastroenterology,Low,bloat;gas;stomach
+panuhot,ginapanuhot;ginapanuhot tiyan;busog tiyan;bloated stomach,bloating,abdominal distension,Gastroenterology,Low,bloat;gas;stomach
+dugo sa dumi,may dugo sa dumi;ginadugo tae;dugo sa tae;gindugo sa dumi;nagdugo sa dumi;dugo-sa-dumi,bloody stool,hematochezia,Gastroenterology,High,blood;stool;gi;bleeding
+dugo sa tae,dugo sa dumi;may dugo sa dumi;ginadugo tae;may dugo sa tae;nagdugo sa tae;dugo-sa-tae;gindugo sa tae,bloody stool,hematochezia,Gastroenterology,High,blood;stool;gi;bleeding
+ginadugo tae,dugo sa dumi;may dugo sa dumi;dugo sa tae;ginadugo-tae,bloody stool,hematochezia,Gastroenterology,High,blood;stool;gi;bleeding
+may dugo sa dumi,dugo sa dumi;ginadugo tae;dugo sa tae;may-dugo-sa-dumi,bloody stool,hematochezia,Gastroenterology,High,blood;stool;gi;bleeding
+ginatulo sing dugo kag colitis,ginatulo-sing-dugo-kag-colitis,colitis bleeding,colitis,Gastroenterology,High,blood;colitis;gi
+buot,constipation;dili makalibang;ginabuot;ginadula kalibanga,constipation,constipation,Gastroenterology,Low,constipation;bowel;gi
+constipation,buot;dili makalibang;ginabuot;ginadula kalibanga,constipation,constipation,Gastroenterology,Low,constipation;bowel;gi
+dili makalibang,buot;constipation;ginabuot;ginadula kalibanga;may dili makalibang;nagdili makalibang;dili-makalibang;gindili makalibang,constipation,constipation,Gastroenterology,Low,constipation;bowel;gi
+ginabuot,buot;constipation;dili makalibang;ginadula kalibanga,constipation,constipation,Gastroenterology,Low,constipation;bowel;gi
+ginadula kalibanga,buot;constipation;dili makalibang;ginabuot;ginadula-kalibanga,constipation,constipation,Gastroenterology,Low,constipation;bowel;gi
+ginatulo sing dugo kag crohn,ginatulo-sing-dugo-kag-crohn,crohn bleeding,crohn disease,Gastroenterology,High,blood;crohn;gi
+gakalibanga,kalibanga;ginakalibanga;nagakalibanga;ginatulo;tulo-tulo;lbm;ginatulo sing dugo;naggakalibanga;gingakalibanga;may gakalibanga,diarrhea,diarrhea,Gastroenterology,Medium,diarrhea;stool;gi;infection
+ginakalibanga,kalibanga;gakalibanga;nagakalibanga;ginatulo;tulo-tulo;lbm;ginatulo sing dugo,diarrhea,diarrhea,Gastroenterology,Medium,diarrhea;stool;gi;infection
+ginatulo,kalibanga;gakalibanga;ginakalibanga;nagakalibanga;tulo-tulo;lbm;ginatulo sing dugo,diarrhea,diarrhea,Gastroenterology,Medium,diarrhea;stool;gi;infection
+ginatulo sing dugo,kalibanga;gakalibanga;ginakalibanga;nagakalibanga;ginatulo;tulo-tulo;lbm;ginatulo-sing-dugo,diarrhea,diarrhea,Gastroenterology,Medium,diarrhea;stool;gi;infection
+kalibanga,gakalibanga;ginakalibanga;nagakalibanga;ginatulo;tulo-tulo;lbm;ginatulo sing dugo;ginkalibanga;nagkalibanga;may kalibanga,diarrhea,diarrhea,Gastroenterology,Medium,diarrhea;stool;gi;infection
+lbm,kalibanga;gakalibanga;ginakalibanga;nagakalibanga;ginatulo;tulo-tulo;ginatulo sing dugo,diarrhea,diarrhea,Gastroenterology,Medium,diarrhea;stool;gi;infection
+nagakalibanga,kalibanga;gakalibanga;ginakalibanga;ginatulo;tulo-tulo;lbm;ginatulo sing dugo,diarrhea,diarrhea,Gastroenterology,Medium,diarrhea;stool;gi;infection
+tulo-tulo,kalibanga;gakalibanga;ginakalibanga;nagakalibanga;ginatulo;lbm;ginatulo sing dugo;may tulo-tulo;tulotulo;nagtulo-tulo;gintulo-tulo;tulo tulo,diarrhea,diarrhea,Gastroenterology,Medium,diarrhea;stool;gi;infection
+masakit likod tiyan,pain upper stomach;masakit-likod-tiyan;ginmasakit likod tiyan;may masakit likod tiyan;nagmasakit likod tiyan;masakit likod tyan,epigastric pain,epigastric pain,Gastroenterology,Medium,stomach;ulcer;pain
+pain upper stomach,masakit likod tiyan;pain-upper-stomach,epigastric pain,epigastric pain,Gastroenterology,Medium,stomach;ulcer;pain
+ginatulo sing dugo kag esophagitis,ginatulo-sing-dugo-kag-esophagitis,esophagitis bleeding,esophagitis,Gastroenterology,Medium,blood;esophagus;gi
+extreme thirst,ginauhaw gid;sobra uhaw;extreme-thirst,excessive thirst,polydipsia,Gastroenterology,Medium,thirst;diabetes;dehydration
+ginauhaw gid,extreme thirst;sobra uhaw;ginauhaw-gid,excessive thirst,polydipsia,Gastroenterology,Medium,thirst;diabetes;dehydration
+sobra uhaw,ginauhaw gid;extreme thirst;sobra-uhaw,excessive thirst,polydipsia,Gastroenterology,Medium,thirst;diabetes;dehydration
+ginatulo sing dugo kag fistula,ginatulo-sing-dugo-kag-fistula,fistula bleeding,fistula,Gastroenterology,High,blood;fistula;gi
+ginasakit kilid tiyan,side abdominal pain;ginasakit kilid tyan;ginasakit-kilid-tiyan,flank pain,flank pain,Gastroenterology,Medium,kidney;flank;pain
+side abdominal pain,ginasakit kilid tiyan;side-abdominal-pain,flank pain,flank pain,Gastroenterology,Medium,kidney;flank;pain
+ginatulo sing mabaho,ginatulo-sing-mabaho,foul stool,malodorous stool,Gastroenterology,Low,stool;infection;gi
+ginatulo sing madamo,ginatulo-sing-madamo,frequent stool,frequent bowel movements,Gastroenterology,Medium,diarrhea;stool;gi
+ginatulo sing dugo kag gallbladder,ginatulo-sing-dugo-kag-gallbladder,gallbladder bleeding,biliary bleeding,Gastroenterology,High,blood;gallbladder
+ginatulo sing dugo kag gastritis,ginatulo-sing-dugo-kag-gastritis,gastritis bleeding,gastritis,Gastroenterology,Medium,blood;gastritis;gi
+acid reflux,ginakabog;kabog;heartburn;acid-reflux,heartburn,gastroesophageal reflux,Gastroenterology,Low,reflux;acid;heartburn
+ginakabog,kabog;heartburn;acid reflux,heartburn,gastroesophageal reflux,Gastroenterology,Low,reflux;acid;heartburn
+heartburn,ginakabog;kabog;acid reflux,heartburn,gastroesophageal reflux,Gastroenterology,Low,reflux;acid;heartburn
+kabog,ginakabog;heartburn;acid reflux,heartburn,gastroesophageal reflux,Gastroenterology,Low,reflux;acid;heartburn
+ginatulo sing dugo kag hemorrhoids,ginatulo-sing-dugo-kag-hemorrhoids,hemorrhoid bleeding,hemorrhoids,Gastroenterology,Medium,blood;stool;hemorrhoids
+ginatulo sing dugo kag hemorrhoid,ginatulo-sing-dugo-kag-hemorrhoid,hemorrhoid bleeding severe,hemorrhoids,Gastroenterology,Medium,blood;hemorrhoid
+hepatitis,sakit atay;liver pain,hepatitis,hepatitis,Gastroenterology,High,liver;hepatitis;jaundice
+liver pain,hepatitis;sakit atay;liver-pain,hepatitis,hepatitis,Gastroenterology,High,liver;hepatitis;jaundice
+sakit atay,hepatitis;liver pain;nagsakit atay;may sakit atay;ginsakit atay;sakit-atay,hepatitis,hepatitis,Gastroenterology,High,liver;hepatitis;jaundice
+ginatulo sing dugo kag ibd,ginatulo-sing-dugo-kag-ibd,ibd bleeding,inflammatory bowel disease,Gastroenterology,High,blood;ibd;gi
+jaundice,panuhot yellow;yellow skin,jaundice,jaundice,Gastroenterology,High,liver;yellow;jaundice
+panuhot yellow,yellow skin;jaundice;panuhot-yellow,jaundice,jaundice,Gastroenterology,High,liver;yellow;jaundice
+yellow skin,panuhot yellow;jaundice;yellow-skin,jaundice,jaundice,Gastroenterology,High,liver;yellow;jaundice
+ginatulo sing dugo kag liver,ginatulo-sing-dugo-kag-liver,liver bleeding,hepatic hemorrhage,Gastroenterology,Critical,blood;liver
+dili gana kaon,wala gana kaon;gakadula gana kaon;wala gana;wala ko gana magkaon;ginawala gana;dili-gana-kaon,loss of appetite,anorexia,Gastroenterology,Low,appetite;eat;anorexia
+gakadula gana kaon,wala gana kaon;wala gana;dili gana kaon;wala ko gana magkaon;ginawala gana;gakadula-gana-kaon,loss of appetite,anorexia,Gastroenterology,Low,appetite;eat;anorexia
+ginawala gana,wala gana kaon;gakadula gana kaon;wala gana;dili gana kaon;wala ko gana magkaon;ginawala-gana,loss of appetite,anorexia,Gastroenterology,Low,appetite;eat;anorexia
+wala gana,wala gana kaon;gakadula gana kaon;dili gana kaon;wala ko gana magkaon;ginawala gana;wala-gana,loss of appetite,anorexia,Gastroenterology,Low,appetite;eat;anorexia
+wala gana kaon,gakadula gana kaon;wala gana;dili gana kaon;wala ko gana magkaon;ginawala gana;wala-gana-kaon,loss of appetite,anorexia,Gastroenterology,Low,appetite;eat;anorexia
+wala ko gana magkaon,wala gana kaon;gakadula gana kaon;wala gana;dili gana kaon;ginawala gana;wala-ko-gana-magkaon,loss of appetite,anorexia,Gastroenterology,Low,appetite;eat;anorexia
+ginatulo sing puti,ginatulo-sing-puti,mucus stool,mucous stool,Gastroenterology,Low,stool;mucus;gi
+ginabalik tiyan,kasukaon;ginakasukaon;nahihilo tiyan;nausea;ginabalik tyan;ginabalik-tiyan,nausea,nausea,Gastroenterology,Low,nausea;vomit;stomach
+ginakasukaon,kasukaon;nahihilo tiyan;ginabalik tiyan;nausea,nausea,nausea,Gastroenterology,Low,nausea;vomit;stomach
+kasukaon,ginakasukaon;nahihilo tiyan;ginabalik tiyan;nausea;may kasukaon;nagkasukaon;ginkasukaon,nausea,nausea,Gastroenterology,Low,nausea;vomit;stomach
+nahihilo tiyan,kasukaon;ginakasukaon;ginabalik tiyan;nausea;ginnahihilo tiyan;may nahihilo tiyan;nahihilo tyan;nahihilo-tiyan;nagnahihilo tiyan,nausea,nausea,Gastroenterology,Low,nausea;vomit;stomach
+nausea,kasukaon;ginakasukaon;nahihilo tiyan;ginabalik tiyan,nausea,nausea,Gastroenterology,Low,nausea;vomit;stomach
+ginatulo sing dugo kag nsaid,ginatulo-sing-dugo-kag-nsaid,nsaid bleeding,nsaid complication,Gastroenterology,High,blood;nsaid;ulcer
+ginatulo sing dilaw,ginatulo-sing-dilaw,pale stool,clay colored stool,Gastroenterology,Medium,liver;stool;jaundice
+ginatulo sing dugo kag pancreas,ginatulo-sing-dugo-kag-pancreas,pancreatic bleeding,pancreatic hemorrhage,Gastroenterology,Critical,blood;pancreas
+ginatulo sing dugo kag rectal,ginatulo-sing-dugo-kag-rectal,rectal bleeding,rectal hemorrhage,Gastroenterology,High,blood;rectal;gi
+ginatulo sing diutay,ginatulo-sing-diutay,scanty stool,scanty stool,Gastroenterology,Low,constipation;stool
+ginatulo sing grabe,ginatulo-sing-grabe,severe diarrhea,severe diarrhea,Gastroenterology,High,diarrhea;dehydration
+ginalain tiyan,sakit tiyan;sakit tyan;masakit tiyan;panakit tiyan;sakit sikmura;masakit sikmura;ginasakit tiyan;ginalain-tiyan;ginalain tyan,stomach pain,abdominal pain,Gastroenterology,Medium,stomach;abdomen;pain;gi
+ginasakit tiyan,sakit tiyan;sakit tyan;masakit tiyan;ginalain tiyan;panakit tiyan;sakit sikmura;masakit sikmura;ginasakit tyan;ginasakit-tiyan,stomach pain,abdominal pain,Gastroenterology,Medium,stomach;abdomen;pain;gi
+masakit sikmura,sakit tiyan;sakit tyan;masakit tiyan;ginalain tiyan;panakit tiyan;sakit sikmura;ginasakit tiyan;masakit-sikmura;nagmasakit sikmura;ginmasakit sikmura;may masakit sikmura,stomach pain,abdominal pain,Gastroenterology,Medium,stomach;abdomen;pain;gi
+masakit tiyan,sakit tiyan;sakit tyan;ginalain tiyan;panakit tiyan;sakit sikmura;masakit sikmura;ginasakit tiyan;masakit tyan;nagmasakit tiyan;masakit-tiyan;may masakit tiyan;ginmasakit tiyan,stomach pain,abdominal pain,Gastroenterology,Medium,stomach;abdomen;pain;gi
+panakit tiyan,sakit tiyan;sakit tyan;masakit tiyan;ginalain tiyan;sakit sikmura;masakit sikmura;ginasakit tiyan;panakit-tiyan;may panakit tiyan;panakit tyan;ginpanakit tiyan;nagpanakit tiyan,stomach pain,abdominal pain,Gastroenterology,Medium,stomach;abdomen;pain;gi
+sakit sikmura,sakit tiyan;sakit tyan;masakit tiyan;ginalain tiyan;panakit tiyan;masakit sikmura;ginasakit tiyan;sakit-sikmura;nagsakit sikmura;ginsakit sikmura;may sakit sikmura,stomach pain,abdominal pain,Gastroenterology,Medium,stomach;abdomen;pain;gi
+sakit tiyan,sakit tyan;masakit tiyan;ginalain tiyan;panakit tiyan;sakit sikmura;masakit sikmura;ginasakit tiyan;ginsakit tiyan;nagsakit tiyan;sakit-tiyan;may sakit tiyan,stomach pain,abdominal pain,Gastroenterology,Medium,stomach;abdomen;pain;gi
+sakit tyan,sakit tiyan;masakit tiyan;ginalain tiyan;panakit tiyan;sakit sikmura;masakit sikmura;ginasakit tiyan;ginsakit tyan;sakit-tyan;nagsakit tyan;may sakit tyan,stomach pain,abdominal pain,Gastroenterology,Medium,stomach;abdomen;pain;gi
+ginatulo sing dugo kag ulcer,ginatulo-sing-dugo-kag-ulcer,ulcer bleeding,peptic ulcer bleeding,Gastroenterology,Critical,ulcer;blood;gi
+ginagsuka,suka;nagsuka;nagsusuka;sumuka;ginasuka;sige ko suka,vomiting,vomiting,Gastroenterology,Medium,vomit;nausea;gi
+ginasuka,suka;nagsuka;nagsusuka;sumuka;ginagsuka;sige ko suka,vomiting,vomiting,Gastroenterology,Medium,vomit;nausea;gi
+nagsuka,suka;nagsusuka;sumuka;ginagsuka;ginasuka;sige ko suka,vomiting,vomiting,Gastroenterology,Medium,vomit;nausea;gi
+nagsusuka,suka;nagsuka;sumuka;ginagsuka;ginasuka;sige ko suka,vomiting,vomiting,Gastroenterology,Medium,vomit;nausea;gi
+sige ko suka,suka;nagsuka;nagsusuka;sumuka;ginagsuka;ginasuka;sige-ko-suka,vomiting,vomiting,Gastroenterology,Medium,vomit;nausea;gi
+suka,nagsuka;nagsusuka;sumuka;ginagsuka;ginasuka;sige ko suka,vomiting,vomiting,Gastroenterology,Medium,vomit;nausea;gi
+sumuka,suka;nagsuka;nagsusuka;ginagsuka;ginasuka;sige ko suka,vomiting,vomiting,Gastroenterology,Medium,vomit;nausea;gi
+ginadula timbang tungod suka,weight loss vomiting;ginadula-timbang-tungod-suka,weight loss with vomiting,malnutrition,Gastroenterology,Medium,vomit;weight;dehydration
+weight loss vomiting,ginadula timbang tungod suka;weight-loss-vomiting,weight loss with vomiting,malnutrition,Gastroenterology,Medium,vomit;weight;dehydration
+anemia,kulang dugo;low blood,anemia,anemia,General Medicine,Medium,anemia;blood;pale;fatigue
+kulang dugo,anemia;low blood;ginkulang dugo;may kulang dugo;nagkulang dugo;kulang-dugo,anemia,anemia,General Medicine,Medium,anemia;blood;pale;fatigue
+low blood,anemia;kulang dugo;low-blood,anemia,anemia,General Medicine,Medium,anemia;blood;pale;fatigue
+ginatulo sing dugo kag biopsy,ginatulo-sing-dugo-kag-biopsy,biopsy bleeding,procedure bleeding,General Medicine,Medium,blood;biopsy;procedure
+ginatulo sing dugo kag ngipon,ginatulo-sing-dugo-kag-ngipon,bleeding gums,gingival bleeding,General Medicine,Low,blood;gums;dental
+body ache,ginahapdi lawas;masakit lawas gid;body-ache,body aches,myalgia,General Medicine,Low,ache;body;muscle;flu
+ginahapdi lawas,body ache;masakit lawas gid;ginahapdi-lawas,body aches,myalgia,General Medicine,Low,ache;body;muscle;flu
+masakit lawas gid,ginahapdi lawas;body ache;nagmasakit lawas gid;ginmasakit lawas gid;may masakit lawas gid;masakit-lawas-gid,body aches,myalgia,General Medicine,Low,ache;body;muscle;flu
+chills,ginatugnaw;tugnaw;ginatugnaw lawas;ginakaligtan,chills,chills,General Medicine,Low,chills;fever;cold
+ginakaligtan,ginatugnaw;tugnaw;ginatugnaw lawas;chills,chills,chills,General Medicine,Low,chills;fever;cold
+ginatugnaw,tugnaw;ginatugnaw lawas;ginakaligtan;chills,chills,chills,General Medicine,Low,chills;fever;cold
+ginatugnaw lawas,ginatugnaw;tugnaw;ginakaligtan;chills;ginatugnaw-lawas,chills,chills,General Medicine,Low,chills;fever;cold
+tugnaw,ginatugnaw;ginatugnaw lawas;ginakaligtan;chills,chills,chills,General Medicine,Low,chills;fever;cold
+ginatulo sing dugo kag tooth extraction,ginatulo-sing-dugo-kag-tooth-extraction,dental bleeding,post-extraction hemorrhage,General Medicine,Low,blood;dental;tooth
+diabetes,diyabetes;diabetis;may sugar;high sugar;mataas nga asukal,diabetes,diabetes mellitus,General Medicine,Medium,diabetes;sugar;thirst;urine
+diabetis,diyabetes;diabetes;may sugar;high sugar;mataas nga asukal,diabetes,diabetes mellitus,General Medicine,Medium,diabetes;sugar;thirst;urine
+diyabetes,diabetes;diabetis;may sugar;high sugar;mataas nga asukal,diabetes,diabetes mellitus,General Medicine,Medium,diabetes;sugar;thirst;urine
+high sugar,diyabetes;diabetes;diabetis;may sugar;mataas nga asukal;high-sugar,diabetes,diabetes mellitus,General Medicine,Medium,diabetes;sugar;thirst;urine
+mataas nga asukal,diyabetes;diabetes;diabetis;may sugar;high sugar;nagmataas nga asukal;may mataas nga asukal;ginmataas nga asukal;mataas-nga-asukal,diabetes,diabetes mellitus,General Medicine,Medium,diabetes;sugar;thirst;urine
+may sugar,diyabetes;diabetes;diabetis;high sugar;mataas nga asukal;may-sugar,diabetes,diabetes mellitus,General Medicine,Medium,diabetes;sugar;thirst;urine
+fatigue,kapoy gid;kapoy;kakapoy;ginakapoy;ginakapoy gid;mahina lawas;luya,fatigue,fatigue,General Medicine,Low,fatigue;tired;weakness
+ginakapoy,kapoy gid;kapoy;kakapoy;ginakapoy gid;mahina lawas;luya;fatigue,fatigue,fatigue,General Medicine,Low,fatigue;tired;weakness
+ginakapoy gid,kapoy gid;kapoy;kakapoy;ginakapoy;mahina lawas;luya;fatigue;ginakapoy-gid,fatigue,fatigue,General Medicine,Low,fatigue;tired;weakness
+kakapoy,kapoy gid;kapoy;ginakapoy;ginakapoy gid;mahina lawas;luya;fatigue;ginkakapoy;nagkakapoy;may kakapoy,fatigue,fatigue,General Medicine,Low,fatigue;tired;weakness
+kapoy,kapoy gid;kakapoy;ginakapoy;ginakapoy gid;mahina lawas;luya;fatigue;ginkapoy;nagkapoy;may kapoy,fatigue,fatigue,General Medicine,Low,fatigue;tired;weakness
+kapoy gid,kapoy;kakapoy;ginakapoy;ginakapoy gid;mahina lawas;luya;fatigue;nagkapoy gid;kapoy-gid;may kapoy gid;ginkapoy gid,fatigue,fatigue,General Medicine,Low,fatigue;tired;weakness
+luya,kapoy gid;kapoy;kakapoy;ginakapoy;ginakapoy gid;mahina lawas;fatigue;nagluya;ginluya;may luya,fatigue,fatigue,General Medicine,Low,fatigue;tired;weakness
+mahina lawas,kapoy gid;kapoy;kakapoy;ginakapoy;ginakapoy gid;luya;fatigue;ginmahina lawas;may mahina lawas;mahina-lawas;nagmahina lawas,fatigue,fatigue,General Medicine,Low,fatigue;tired;weakness
+fever,hilanat;gilantan;ginahilantan;ginahilanat;mainit lawas;may lagnat;lagnat;init lawas,fever,pyrexia,General Medicine,Medium,fever;temperature;infection
+gilantan,hilanat;ginahilantan;ginahilanat;mainit lawas;may lagnat;lagnat;init lawas;fever,fever,pyrexia,General Medicine,Medium,fever;temperature;infection
+ginahilanat,hilanat;gilantan;ginahilantan;mainit lawas;may lagnat;lagnat;init lawas;fever,fever,pyrexia,General Medicine,Medium,fever;temperature;infection
+ginahilantan,hilanat;gilantan;ginahilanat;mainit lawas;may lagnat;lagnat;init lawas;fever,fever,pyrexia,General Medicine,Medium,fever;temperature;infection
+hilanat,gilantan;ginahilantan;ginahilanat;mainit lawas;may lagnat;lagnat;init lawas;fever;may hilanat;naghilanat;ginhilanat,fever,pyrexia,General Medicine,Medium,fever;temperature;infection
+init lawas,hilanat;gilantan;ginahilantan;ginahilanat;mainit lawas;may lagnat;lagnat;fever;gininit lawas;may init lawas;init-lawas;naginit lawas,fever,pyrexia,General Medicine,Medium,fever;temperature;infection
+lagnat,hilanat;gilantan;ginahilantan;ginahilanat;mainit lawas;may lagnat;init lawas;fever,fever,pyrexia,General Medicine,Medium,fever;temperature;infection
+mainit lawas,hilanat;gilantan;ginahilantan;ginahilanat;may lagnat;lagnat;init lawas;fever;nagmainit lawas;mainit-lawas;ginmainit lawas;may mainit lawas,fever,pyrexia,General Medicine,Medium,fever;temperature;infection
+may lagnat,hilanat;gilantan;ginahilantan;ginahilanat;mainit lawas;lagnat;init lawas;fever;may-lagnat,fever,pyrexia,General Medicine,Medium,fever;temperature;infection
+ginadula gana,loss energy;ginadula-gana,lethargy,lethargy,General Medicine,Medium,tired;weak;lethargy
+loss energy,ginadula gana;loss-energy,lethargy,lethargy,General Medicine,Medium,tired;weak;lethargy
+loss appetite skin,nagadula gana;malnutrition sign;loss-appetite-skin,malnutrition signs,malnutrition,General Medicine,Medium,weight;nutrition;weak
+malnutrition sign,nagadula gana;loss appetite skin;malnutrition-sign,malnutrition signs,malnutrition,General Medicine,Medium,weight;nutrition;weak
+nagadula gana,loss appetite skin;malnutrition sign;nagadula-gana,malnutrition signs,malnutrition,General Medicine,Medium,weight;nutrition;weak
+ginadula gana kaon,poor appetite;ginadula-gana-kaon,poor appetite,anorexia,General Medicine,Low,appetite;eat;anorexia
+poor appetite,ginadula gana kaon;poor-appetite,poor appetite,anorexia,General Medicine,Low,appetite;eat;anorexia
+ginatulo sing dugo kag steroid,ginatulo-sing-dugo-kag-steroid,steroid bleeding,steroid complication,General Medicine,Medium,blood;steroid;ulcer
+ginauhaw,thirst;uhaw,thirst,polydipsia,General Medicine,Low,thirst;dehydration;diabetes
+thirst,ginauhaw;uhaw,thirst,polydipsia,General Medicine,Low,thirst;dehydration;diabetes
+uhaw,ginauhaw;thirst,thirst,polydipsia,General Medicine,Low,thirst;dehydration;diabetes
+ginatulo sing dugo kag ngipon bunot,ginatulo-sing-dugo-kag-ngipon-bunot,tooth extraction bleeding,dental hemorrhage,General Medicine,Low,blood;dental
+ginadugang timbang,weight gain;ginadugang-timbang,weight gain,weight gain,General Medicine,Low,weight;gain;obesity
+weight gain,ginadugang timbang;weight-gain,weight gain,weight gain,General Medicine,Low,weight;gain;obesity
+ginadula timbang,weight loss;nagpayupay;ginadula-timbang,weight loss,weight loss,General Medicine,Medium,weight;loss;malnutrition
+nagpayupay,ginadula timbang;weight loss,weight loss,weight loss,General Medicine,Medium,weight;loss;malnutrition
+weight loss,ginadula timbang;nagpayupay;weight-loss,weight loss,weight loss,General Medicine,Medium,weight;loss;malnutrition
+nagapus,sore with pus,abscess,abscess,Infectious Disease,Medium,pus;infection;wound
+sore with pus,nagapus;sore-with-pus,abscess,abscess,Infectious Disease,Medium,pus;infection;wound
+ginatulo sing dugo kag ubo,ginatulo-sing-dugo-kag-ubo,bloody cough stool,tuberculosis bleeding,Infectious Disease,Critical,blood;cough;tb
+ginatulo sing dugo kag hilanat,ginatulo-sing-dugo-kag-hilanat,bloody fever,infectious colitis,Infectious Disease,High,blood;fever;infection
+covid breathless,nagadula ginhawa tungod covid;covid-breathless,covid dyspnea,covid-19,Infectious Disease,Critical,covid;breath;fever
+nagadula ginhawa tungod covid,covid breathless;nagadula-ginhawa-tungod-covid,covid dyspnea,covid-19,Infectious Disease,Critical,covid;breath;fever
+corona,covid;covid-19;coronavirus,covid-19,covid-19,Infectious Disease,High,covid;fever;cough;respiratory
+coronavirus,covid;covid-19;corona,covid-19,covid-19,Infectious Disease,High,covid;fever;cough;respiratory
+covid,covid-19;corona;coronavirus,covid-19,covid-19,Infectious Disease,High,covid;fever;cough;respiratory
+covid-19,covid;corona;coronavirus;covid 19;covid19,covid-19,covid-19,Infectious Disease,High,covid;fever;cough;respiratory
+denggi,dengue;dengue fever;ginadengue,dengue,dengue fever,Infectious Disease,High,dengue;fever;mosquito;bleeding
+dengue,denggi;dengue fever;ginadengue,dengue,dengue fever,Infectious Disease,High,dengue;fever;mosquito;bleeding
+dengue fever,dengue;denggi;ginadengue;dengue-fever,dengue,dengue fever,Infectious Disease,High,dengue;fever;mosquito;bleeding
+ginadengue,dengue;denggi;dengue fever,dengue,dengue fever,Infectious Disease,High,dengue;fever;mosquito;bleeding
+dengue breathless,nagadula ginhawa tungod dengue;dengue-breathless,dengue with dyspnea,dengue fever,Infectious Disease,Critical,dengue;breath;bleeding
+nagadula ginhawa tungod dengue,dengue breathless;nagadula-ginhawa-tungod-dengue,dengue with dyspnea,dengue fever,Infectious Disease,Critical,dengue;breath;bleeding
+fever anorexia,nagadula gana tungod hilanat;fever-anorexia,fever with anorexia,pyrexia,Infectious Disease,Medium,fever;appetite;infection
+nagadula gana tungod hilanat,fever anorexia;nagadula-gana-tungod-hilanat,fever with anorexia,pyrexia,Infectious Disease,Medium,fever;appetite;infection
+ginahilanat sing taas,high fever;sobra hilanat;ginahilanat-sing-taas,high fever,hyperpyrexia,Infectious Disease,High,fever;high;infection
+high fever,ginahilanat sing taas;sobra hilanat;high-fever,high fever,hyperpyrexia,Infectious Disease,High,fever;high;infection
+sobra hilanat,ginahilanat sing taas;high fever;sobra-hilanat;ginsobra hilanat;may sobra hilanat;nagsobra hilanat,high fever,hyperpyrexia,Infectious Disease,High,fever;high;infection
+ginaimpeksyon,impeksyon;infection,infection,infection,Infectious Disease,Medium,infection;fever;bacteria
+impeksyon,infection;ginaimpeksyon,infection,infection,Infectious Disease,Medium,infection;fever;bacteria
+infection,impeksyon;ginaimpeksyon,infection,infection,Infectious Disease,Medium,infection;fever;bacteria
+flu,trangkaso;influenza;ginatrangkaso,influenza,influenza,Infectious Disease,Medium,flu;fever;viral;respiratory
+ginatrangkaso,trangkaso;flu;influenza,influenza,influenza,Infectious Disease,Medium,flu;fever;viral;respiratory
+influenza,trangkaso;flu;ginatrangkaso,influenza,influenza,Infectious Disease,Medium,flu;fever;viral;respiratory
+trangkaso,flu;influenza;ginatrangkaso,influenza,influenza,Infectious Disease,Medium,flu;fever;viral;respiratory
+ginamalaria,malaria,malaria,malaria,Infectious Disease,High,fever;malaria;chills
+malaria,ginamalaria,malaria,malaria,Infectious Disease,High,fever;malaria;chills
+ginatulo sing dugo kag tb,ginatulo-sing-dugo-kag-tb,tb bleeding,tuberculosis hemoptysis,Infectious Disease,Critical,tb;blood;cough
+fever travel,nagahilanat tapos travel;fever-travel,travel-related fever,fever of unknown origin,Infectious Disease,Medium,fever;travel;tropical
+nagahilanat tapos travel,fever travel;nagahilanat-tapos-travel,travel-related fever,fever of unknown origin,Infectious Disease,Medium,fever;travel;tropical
+ptb,tb;tuberculosis;t.b.;tbc,tuberculosis,tuberculosis,Infectious Disease,High,tb;lung;cough;fever
+t.b.,tb;tuberculosis;tbc;ptb;nagt.b.;gint.b.;may t.b.,tuberculosis,tuberculosis,Infectious Disease,High,tb;lung;cough;fever
+tb,tuberculosis;t.b.;tbc;ptb,tuberculosis,tuberculosis,Infectious Disease,High,tb;lung;cough;fever
+tbc,tb;tuberculosis;t.b.;ptb,tuberculosis,tuberculosis,Infectious Disease,High,tb;lung;cough;fever
+tuberculosis,tb;t.b.;tbc;ptb;gintuberculosis;may tuberculosis;nagtuberculosis,tuberculosis,tuberculosis,Infectious Disease,High,tb;lung;cough;fever
+tipus,typhoid;typhoid fever,typhoid fever,typhoid fever,Infectious Disease,High,fever;typhoid;infection
+typhoid,typhoid fever;tipus,typhoid fever,typhoid fever,Infectious Disease,High,fever;typhoid;infection
+typhoid fever,typhoid;tipus;typhoid-fever,typhoid fever,typhoid fever,Infectious Disease,High,fever;typhoid;infection
+agitation,nagabangis;irritable,agitation,agitation,Mental Health,Medium,agitation;mania;psychiatric
+irritable,nagabangis;agitation,agitation,agitation,Mental Health,Medium,agitation;mania;psychiatric
+nagabangis,agitation;irritable,agitation,agitation,Mental Health,Medium,agitation;mania;psychiatric
+loss interest life,nagadula gana buhi;loss-interest-life,anhedonia,anhedonia,Mental Health,Medium,depression;interest;mood
+nagadula gana buhi,loss interest life;nagadula-gana-buhi,anhedonia,anhedonia,Mental Health,Medium,depression;interest;mood
+anxiety chest,kulba;ginakulba;nagakulba;kaba;ginakaba;anxiety-chest,anxiety,anxiety,Mental Health,Medium,anxiety;stress;worry
+ginakaba,kulba;ginakulba;nagakulba;kaba;anxiety chest,anxiety,anxiety,Mental Health,Medium,anxiety;stress;worry
+ginakulba,kulba;nagakulba;kaba;ginakaba;anxiety chest,anxiety,anxiety,Mental Health,Medium,anxiety;stress;worry
+kaba,kulba;ginakulba;nagakulba;ginakaba;anxiety chest;ginkaba;nagkaba;may kaba,anxiety,anxiety,Mental Health,Medium,anxiety;stress;worry
+kulba,ginakulba;nagakulba;kaba;ginakaba;anxiety chest,anxiety,anxiety,Mental Health,Medium,anxiety;stress;worry
+nagakulba,kulba;ginakulba;kaba;ginakaba;anxiety chest,anxiety,anxiety,Mental Health,Medium,anxiety;stress;worry
+ginakatulog sing damo,sobra katulog;hypersomnia;ginakatulog-sing-damo,excessive sleepiness,hypersomnia,Mental Health,Low,sleep;fatigue;depression
+hypersomnia,sobra katulog;ginakatulog sing damo,excessive sleepiness,hypersomnia,Mental Health,Low,sleep;fatigue;depression
+sobra katulog,ginakatulog sing damo;hypersomnia;may sobra katulog;nagsobra katulog;sobra-katulog;ginsobra katulog,excessive sleepiness,hypersomnia,Mental Health,Low,sleep;fatigue;depression
+fatigue insomnia,nagadula tulog kag kapoy;fatigue-insomnia,fatigue with insomnia,insomnia,Mental Health,Medium,sleep;fatigue;depression
+nagadula tulog kag kapoy,fatigue insomnia;nagadula-tulog-kag-kapoy,fatigue with insomnia,insomnia,Mental Health,Medium,sleep;fatigue;depression
+dili katulog,indi katulog;dili makatulog;ginadula katulog;insomnia;may dili katulog;dili-katulog;gindili katulog;nagdili katulog,insomnia,insomnia,Mental Health,Medium,sleep;insomnia;anxiety
+dili makatulog,indi katulog;dili katulog;ginadula katulog;insomnia;nagdili makatulog;may dili makatulog;dili-makatulog;gindili makatulog,insomnia,insomnia,Mental Health,Medium,sleep;insomnia;anxiety
+ginadula katulog,indi katulog;dili makatulog;dili katulog;insomnia;ginadula-katulog,insomnia,insomnia,Mental Health,Medium,sleep;insomnia;anxiety
+indi katulog,dili makatulog;dili katulog;ginadula katulog;insomnia;ginindi katulog;may indi katulog;indi-katulog;nagindi katulog,insomnia,insomnia,Mental Health,Medium,sleep;insomnia;anxiety
+insomnia,indi katulog;dili makatulog;dili katulog;ginadula katulog,insomnia,insomnia,Mental Health,Medium,sleep;insomnia;anxiety
+nagakurog kabalaka,panic attack;panic;nagakurog-kabalaka,panic attack,panic disorder,Mental Health,High,panic;anxiety;chest
+panic,nagakurog kabalaka;panic attack,panic attack,panic disorder,Mental Health,High,panic;anxiety;chest
+panic attack,nagakurog kabalaka;panic;panic-attack,panic attack,panic disorder,Mental Health,High,panic;anxiety;chest
+nagadula focus,poor concentration;nagadula-focus,poor concentration,poor concentration,Mental Health,Low,focus;adhd;anxiety
+poor concentration,nagadula focus;poor-concentration,poor concentration,poor concentration,Mental Health,Low,focus;adhd;anxiety
+depression,nagabatyag kasubo;ginakasubo;kasubo;malungkot;depresyon,sadness,depression,Mental Health,Medium,depression;sad;mood
+depresyon,nagabatyag kasubo;ginakasubo;kasubo;malungkot;depression,sadness,depression,Mental Health,Medium,depression;sad;mood
+ginakasubo,nagabatyag kasubo;kasubo;malungkot;depresyon;depression,sadness,depression,Mental Health,Medium,depression;sad;mood
+kasubo,nagabatyag kasubo;ginakasubo;malungkot;depresyon;depression;may kasubo;ginkasubo;nagkasubo,sadness,depression,Mental Health,Medium,depression;sad;mood
+malungkot,nagabatyag kasubo;ginakasubo;kasubo;depresyon;depression,sadness,depression,Mental Health,Medium,depression;sad;mood
+nagabatyag kasubo,ginakasubo;kasubo;malungkot;depresyon;depression;nagabatyag-kasubo,sadness,depression,Mental Health,Medium,depression;sad;mood
+nagadula gana social,social withdrawal;nagadula-gana-social,social withdrawal,social withdrawal,Mental Health,Medium,depression;isolation;social
+social withdrawal,nagadula gana social;social-withdrawal,social withdrawal,social withdrawal,Mental Health,Medium,depression;isolation;social
+ginakabalaka,kabalaka;stress;ginastress;sobra kabalaka;worry,stress,stress,Mental Health,Low,stress;anxiety;worry
+ginastress,kabalaka;ginakabalaka;stress;sobra kabalaka;worry,stress,stress,Mental Health,Low,stress;anxiety;worry
+kabalaka,ginakabalaka;stress;ginastress;sobra kabalaka;worry;may kabalaka;ginkabalaka;nagkabalaka,stress,stress,Mental Health,Low,stress;anxiety;worry
+sobra kabalaka,kabalaka;ginakabalaka;stress;ginastress;worry;ginsobra kabalaka;sobra-kabalaka;nagsobra kabalaka;may sobra kabalaka,stress,stress,Mental Health,Low,stress;anxiety;worry
+stress,kabalaka;ginakabalaka;ginastress;sobra kabalaka;worry,stress,stress,Mental Health,Low,stress;anxiety;worry
+worry,kabalaka;ginakabalaka;stress;ginastress;sobra kabalaka,stress,stress,Mental Health,Low,stress;anxiety;worry
+ankle pain,masakit buko-buko;sakit buko-buko;ankle-pain,ankle pain,ankle pain,Musculoskeletal,Low,ankle;joint;sprain
+masakit buko-buko,ankle pain;sakit buko-buko;may masakit buko-buko;masakit-buko-buko;masakit buko buko;masakit bukobuko;nagmasakit buko-buko;ginmasakit buko-buko,ankle pain,ankle pain,Musculoskeletal,Low,ankle;joint;sprain
+sakit buko-buko,masakit buko-buko;ankle pain;may sakit buko-buko;nagsakit buko-buko;sakit buko buko;sakit-buko-buko;sakit bukobuko;ginsakit buko-buko,ankle pain,ankle pain,Musculoskeletal,Low,ankle;joint;sprain
+mahina kamot,luya kamot;ginahina kamot;weak hands;mahina-kamot,arm weakness,upper limb weakness,Musculoskeletal,Medium,arm;weak;muscle
+weak hands,luya kamot;ginahina kamot;mahina kamot;weak-hands,arm weakness,upper limb weakness,Musculoskeletal,Medium,arm;weak;muscle
+back pain,masakit likod;sakit likod;ginasakit likod;panakit likod;back-pain,back pain,back pain,Musculoskeletal,Medium,back;pain;spine;muscle
+ginasakit likod,masakit likod;sakit likod;panakit likod;back pain;ginasakit-likod,back pain,back pain,Musculoskeletal,Medium,back;pain;spine;muscle
+masakit likod,sakit likod;ginasakit likod;panakit likod;back pain;may masakit likod;nagmasakit likod;masakit-likod;ginmasakit likod,back pain,back pain,Musculoskeletal,Medium,back;pain;spine;muscle
+panakit likod,masakit likod;sakit likod;ginasakit likod;back pain;nagpanakit likod;ginpanakit likod;panakit-likod;may panakit likod,back pain,back pain,Musculoskeletal,Medium,back;pain;spine;muscle
+sakit likod,masakit likod;ginasakit likod;panakit likod;back pain;sakit-likod;nagsakit likod;ginsakit likod;may sakit likod,back pain,back pain,Musculoskeletal,Medium,back;pain;spine;muscle
+ginatulo sing dugo kag hubag,ginatulo-sing-dugo-kag-hubag,bleeding swelling,hematoma,Musculoskeletal,Medium,blood;swelling;trauma
+body pain,masakit kalawasan;sakit lawas;kakatol lawas;masakit lawas;sakit kalawasan;body-pain,body pain,myalgia,Musculoskeletal,Low,body;pain;muscle;ache
+masakit kalawasan,sakit lawas;kakatol lawas;masakit lawas;sakit kalawasan;body pain;may masakit kalawasan;masakit-kalawasan;nagmasakit kalawasan;ginmasakit kalawasan,body pain,myalgia,Musculoskeletal,Low,body;pain;muscle;ache
+masakit lawas,masakit kalawasan;sakit lawas;kakatol lawas;sakit kalawasan;body pain;nagmasakit lawas;ginmasakit lawas;may masakit lawas;masakit-lawas,body pain,myalgia,Musculoskeletal,Low,body;pain;muscle;ache
+sakit kalawasan,masakit kalawasan;sakit lawas;kakatol lawas;masakit lawas;body pain;sakit-kalawasan;may sakit kalawasan;ginsakit kalawasan;nagsakit kalawasan,body pain,myalgia,Musculoskeletal,Low,body;pain;muscle;ache
+sakit lawas,masakit kalawasan;kakatol lawas;masakit lawas;sakit kalawasan;body pain;sakit-lawas;ginsakit lawas;nagsakit lawas;may sakit lawas,body pain,myalgia,Musculoskeletal,Low,body;pain;muscle;ache
+elbow pain,masakit siko;sakit siko;elbow-pain,elbow pain,elbow pain,Musculoskeletal,Low,elbow;joint;pain
+masakit siko,elbow pain;sakit siko;may masakit siko;ginmasakit siko;masakit-siko;nagmasakit siko,elbow pain,elbow pain,Musculoskeletal,Low,elbow;joint;pain
+sakit siko,masakit siko;elbow pain;may sakit siko;sakit-siko;ginsakit siko;nagsakit siko,elbow pain,elbow pain,Musculoskeletal,Low,elbow;joint;pain
+breathless climbing,nagadula ginhawa mag bukton;breathless-climbing,exertional breathlessness,exertional dyspnea,Musculoskeletal,Medium,breath;exertion
+nagadula ginhawa mag bukton,breathless climbing;nagadula-ginhawa-mag-bukton,exertional breathlessness,exertional dyspnea,Musculoskeletal,Medium,breath;exertion
+foot pain,masakit paa;sakit paa;foot-pain,foot pain,foot pain,Musculoskeletal,Low,foot;pain;walk
+masakit paa,foot pain;sakit paa;nagmasakit paa;masakit-paa;may masakit paa;ginmasakit paa,foot pain,foot pain,Musculoskeletal,Low,foot;pain;walk
+sakit paa,masakit paa;foot pain;ginsakit paa;may sakit paa;nagsakit paa;sakit-paa,foot pain,foot pain,Musculoskeletal,Low,foot;pain;walk
+nagapamulang tiil,swollen foot;nagapamulang-tiil,foot swelling,foot edema,Musculoskeletal,Medium,foot;swelling;injury
+swollen foot,nagapamulang tiil;swollen-foot,foot swelling,foot edema,Musculoskeletal,Medium,foot;swelling;injury
+nagapamulang kamot,swollen hand;nagapamulang-kamot,hand swelling,hand edema,Musculoskeletal,Medium,hand;swelling;injury
+swollen hand,nagapamulang kamot;swollen-hand,hand swelling,hand edema,Musculoskeletal,Medium,hand;swelling;injury
+nagakurog sendi,stiff joints;rigidity;nagakurog-sendi,joint stiffness,joint stiffness,Musculoskeletal,Medium,joint;stiff;arthritis
+rigidity,nagakurog sendi;stiff joints,joint stiffness,joint stiffness,Musculoskeletal,Medium,joint;stiff;arthritis
+stiff joints,nagakurog sendi;rigidity;stiff-joints,joint stiffness,joint stiffness,Musculoskeletal,Medium,joint;stiff;arthritis
+hubag sendi,nagapamulang sendi;swollen joints;naghubag sendi;hubag-sendi;may hubag sendi;ginhubag sendi,joint swelling,arthritis,Musculoskeletal,Medium,joint;swelling;arthritis
+nagapamulang sendi,swollen joints;hubag sendi;nagapamulang-sendi,joint swelling,arthritis,Musculoskeletal,Medium,joint;swelling;arthritis
+swollen joints,nagapamulang sendi;hubag sendi;swollen-joints,joint swelling,arthritis,Musculoskeletal,Medium,joint;swelling;arthritis
+ginasakit tuhod,masakit tuhod;sakit tuhod;knee pain;ginasakit-tuhod,knee pain,knee pain,Musculoskeletal,Medium,knee;pain;joint
+knee pain,masakit tuhod;sakit tuhod;ginasakit tuhod;knee-pain,knee pain,knee pain,Musculoskeletal,Medium,knee;pain;joint
+masakit tuhod,sakit tuhod;ginasakit tuhod;knee pain;ginmasakit tuhod;nagmasakit tuhod;may masakit tuhod;masakit-tuhod,knee pain,knee pain,Musculoskeletal,Medium,knee;pain;joint
+sakit tuhod,masakit tuhod;ginasakit tuhod;knee pain;ginsakit tuhod;nagsakit tuhod;may sakit tuhod;sakit-tuhod,knee pain,knee pain,Musculoskeletal,Medium,knee;pain;joint
+mahina tiil,luya tiil;ginahina tiil;weak legs;mahina-tiil,leg weakness,lower limb weakness,Musculoskeletal,Medium,leg;weak;muscle
+weak legs,luya tiil;ginahina tiil;mahina tiil;weak-legs,leg weakness,lower limb weakness,Musculoskeletal,Medium,leg;weak;muscle
+masakit liog,neck pain;sakit liog;ginmasakit liog;masakit-liog;nagmasakit liog;may masakit liog,neck pain,neck pain,Musculoskeletal,Low,neck;pain;cervical
+neck pain,masakit liog;sakit liog;neck-pain,neck pain,neck pain,Musculoskeletal,Low,neck;pain;cervical
+sakit liog,masakit liog;neck pain;may sakit liog;sakit-liog;nagsakit liog;ginsakit liog,neck pain,neck pain,Musculoskeletal,Low,neck;pain;cervical
+limited movement,nagadula lihok;limited-movement,reduced mobility,reduced mobility,Musculoskeletal,Medium,mobility;joint;pain
+nagadula lihok,limited movement;nagadula-lihok,reduced mobility,reduced mobility,Musculoskeletal,Medium,mobility;joint;pain
+masakit balikat,shoulder pain;sakit balikat;may masakit balikat;masakit-balikat;ginmasakit balikat;nagmasakit balikat,shoulder pain,shoulder pain,Musculoskeletal,Medium,shoulder;joint;pain
+sakit balikat,masakit balikat;shoulder pain;nagsakit balikat;ginsakit balikat;may sakit balikat;sakit-balikat,shoulder pain,shoulder pain,Musculoskeletal,Medium,shoulder;joint;pain
+shoulder pain,masakit balikat;sakit balikat;shoulder-pain,shoulder pain,shoulder pain,Musculoskeletal,Medium,shoulder;joint;pain
+nagapilas,sprain;napilas,sprain,sprain,Musculoskeletal,Medium,sprain;ligament;injury
+napilas,nagapilas;sprain,sprain,sprain,Musculoskeletal,Medium,sprain;ligament;injury
+sprain,nagapilas;napilas,sprain,sprain,Musculoskeletal,Medium,sprain;ligament;injury
+ginahina kamot,nagaluya kamot;weak arm;luya kamot;ginahina-kamot,arm weakness,upper limb weakness,Neurological,High,arm;weak;stroke
+luya kamot,nagaluya kamot;weak arm;ginahina kamot;may luya kamot;ginluya kamot;nagluya kamot;luya-kamot,arm weakness,upper limb weakness,Neurological,High,arm;weak;stroke
+nagaluya kamot,weak arm;luya kamot;ginahina kamot;nagaluya-kamot,arm weakness,upper limb weakness,Neurological,High,arm;weak;stroke
+weak arm,nagaluya kamot;luya kamot;ginahina kamot;weak-arm,arm weakness,upper limb weakness,Neurological,High,arm;weak;stroke
+nagakurog lawas,shaking body;nagakurog-lawas,body tremor,tremor,Neurological,Medium,tremor;shaking;fever
+shaking body,nagakurog lawas;shaking-body,body tremor,tremor,Neurological,Medium,tremor;shaking;fever
+double vision,nagatulin panulok;double-vision,diplopia,diplopia,Neurological,High,vision;double;neuro
+nagatulin panulok,double vision;nagatulin-panulok,diplopia,diplopia,Neurological,High,vision;double;neuro
+ginahilo,kalipong;nalipong;nagalipong;nahihilo;nahilo;ginakalipong;lipong,dizziness,dizziness,Neurological,Medium,dizzy;vertigo;balance
+ginakalipong,kalipong;nalipong;nagalipong;nahihilo;nahilo;lipong;ginahilo,dizziness,dizziness,Neurological,Medium,dizzy;vertigo;balance
+kalipong,nalipong;nagalipong;nahihilo;nahilo;ginakalipong;lipong;ginahilo;nagkalipong;ginkalipong;may kalipong,dizziness,dizziness,Neurological,Medium,dizzy;vertigo;balance
+lipong,kalipong;nalipong;nagalipong;nahihilo;nahilo;ginakalipong;ginahilo,dizziness,dizziness,Neurological,Medium,dizzy;vertigo;balance
+nagalipong,kalipong;nalipong;nahihilo;nahilo;ginakalipong;lipong;ginahilo,dizziness,dizziness,Neurological,Medium,dizzy;vertigo;balance
+nahihilo,kalipong;nalipong;nagalipong;nahilo;ginakalipong;lipong;ginahilo;nagnahihilo;may nahihilo;ginnahihilo,dizziness,dizziness,Neurological,Medium,dizzy;vertigo;balance
+nahilo,kalipong;nalipong;nagalipong;nahihilo;ginakalipong;lipong;ginahilo,dizziness,dizziness,Neurological,Medium,dizzy;vertigo;balance
+nalipong,kalipong;nagalipong;nahihilo;nahilo;ginakalipong;lipong;ginahilo,dizziness,dizziness,Neurological,Medium,dizzy;vertigo;balance
+nagadula balatyag,numb face;nagadula-balatyag,facial numbness,facial paresthesia,Neurological,High,face;numb;stroke
+numb face,nagadula balatyag;numb-face,facial numbness,facial paresthesia,Neurological,High,face;numb;stroke
+ginahina lawas,nagaluya lawas;weakness body;luya lawas;ginahina-lawas,generalized weakness,asthenia,Neurological,Medium,weak;fatigue;paralysis
+luya lawas,nagaluya lawas;weakness body;ginahina lawas;ginluya lawas;may luya lawas;luya-lawas;nagluya lawas,generalized weakness,asthenia,Neurological,Medium,weak;fatigue;paralysis
+nagaluya lawas,weakness body;luya lawas;ginahina lawas;nagaluya-lawas,generalized weakness,asthenia,Neurological,Medium,weak;fatigue;paralysis
+weakness body,nagaluya lawas;luya lawas;ginahina lawas;weakness-body,generalized weakness,asthenia,Neurological,Medium,weak;fatigue;paralysis
+nagakurog kamot,shaking hands;nagakurog-kamot,hand tremor,tremor,Neurological,Low,tremor;hand;parkinson
+shaking hands,nagakurog kamot;shaking-hands,hand tremor,tremor,Neurological,Low,tremor;hand;parkinson
+aking ulo,sakit ulo;masakit ulo;ulo masakit;sakit sang ulo;labad ulo;labad ang ulo;ginasakit ulo;masakit gid akon ulo;sakit sa ulo;nagaking ulo;ginaking ulo;aking-ulo;may aking ulo,headache,cephalalgia,Neurological,Medium,head;pain;migraine;cephalgia
+ginasakit ulo,sakit ulo;masakit ulo;ulo masakit;sakit sang ulo;labad ulo;labad ang ulo;aking ulo;masakit gid akon ulo;sakit sa ulo;ginasakit-ulo,headache,cephalalgia,Neurological,Medium,head;pain;migraine;cephalgia
+labad ang ulo,sakit ulo;masakit ulo;ulo masakit;sakit sang ulo;labad ulo;ginasakit ulo;aking ulo;masakit gid akon ulo;sakit sa ulo;may labad ang ulo;naglabad ang ulo;labad-ang-ulo;ginlabad ang ulo,headache,cephalalgia,Neurological,Medium,head;pain;migraine;cephalgia
+labad ulo,sakit ulo;masakit ulo;ulo masakit;sakit sang ulo;labad ang ulo;ginasakit ulo;aking ulo;masakit gid akon ulo;sakit sa ulo;ginlabad ulo;labad-ulo;naglabad ulo;may labad ulo,headache,cephalalgia,Neurological,Medium,head;pain;migraine;cephalgia
+masakit gid akon ulo,sakit ulo;masakit ulo;ulo masakit;sakit sang ulo;labad ulo;labad ang ulo;ginasakit ulo;aking ulo;sakit sa ulo;may masakit gid akon ulo;ginmasakit gid akon ulo;masakit-gid-akon-ulo;nagmasakit gid akon ulo,headache,cephalalgia,Neurological,Medium,head;pain;migraine;cephalgia
+masakit ulo,sakit ulo;ulo masakit;sakit sang ulo;labad ulo;labad ang ulo;ginasakit ulo;aking ulo;masakit gid akon ulo;sakit sa ulo;ginmasakit ulo;may masakit ulo;masakit-ulo;nagmasakit ulo,headache,cephalalgia,Neurological,Medium,head;pain;migraine;cephalgia
+sakit sa ulo,sakit ulo;masakit ulo;ulo masakit;sakit sang ulo;labad ulo;labad ang ulo;ginasakit ulo;aking ulo;masakit gid akon ulo;sakit-sa-ulo;may sakit sa ulo;nagsakit sa ulo;ginsakit sa ulo,headache,cephalalgia,Neurological,Medium,head;pain;migraine;cephalgia
+sakit sang ulo,sakit ulo;masakit ulo;ulo masakit;labad ulo;labad ang ulo;ginasakit ulo;aking ulo;masakit gid akon ulo;sakit sa ulo;nagsakit sang ulo;may sakit sang ulo;ginsakit sang ulo;sakit-sang-ulo,headache,cephalalgia,Neurological,Medium,head;pain;migraine;cephalgia
+sakit ulo,masakit ulo;ulo masakit;sakit sang ulo;labad ulo;labad ang ulo;ginasakit ulo;aking ulo;masakit gid akon ulo;sakit sa ulo;nagsakit ulo;sakit-ulo;ginsakit ulo;may sakit ulo,headache,cephalalgia,Neurological,Medium,head;pain;migraine;cephalgia
+ulo masakit,sakit ulo;masakit ulo;sakit sang ulo;labad ulo;labad ang ulo;ginasakit ulo;aking ulo;masakit gid akon ulo;sakit sa ulo;nagulo masakit;ulo-masakit;may ulo masakit;ginulo masakit,headache,cephalalgia,Neurological,Medium,head;pain;migraine;cephalgia
+ginahina tiil,nagaluya tiil;weak leg;luya tiil;ginahina-tiil,leg weakness,lower limb weakness,Neurological,High,leg;weak;stroke
+luya tiil,nagaluya tiil;weak leg;ginahina tiil;may luya tiil;ginluya tiil;luya-tiil;nagluya tiil,leg weakness,lower limb weakness,Neurological,High,leg;weak;stroke
+nagaluya tiil,weak leg;luya tiil;ginahina tiil;nagaluya-tiil,leg weakness,lower limb weakness,Neurological,High,leg;weak;stroke
+weak leg,nagaluya tiil;luya tiil;ginahina tiil;weak-leg,leg weakness,lower limb weakness,Neurological,High,leg;weak;stroke
+kalimot,nagadula memorya;memory loss;ginkalimot;nagkalimot;may kalimot,memory loss,amnesia,Neurological,Medium,memory;cognitive;dementia
+memory loss,nagadula memorya;kalimot;memory-loss,memory loss,amnesia,Neurological,Medium,memory;cognitive;dementia
+nagadula memorya,memory loss;kalimot;nagadula-memorya,memory loss,amnesia,Neurological,Medium,memory;cognitive;dementia
+labad ulo sing grabe,nagapamigraine;migraine;labad-ulo-sing-grabe;may labad ulo sing grabe;naglabad ulo sing grabe;ginlabad ulo sing grabe,migraine,migraine,Neurological,Medium,migraine;headache;severe
+migraine,nagapamigraine;labad ulo sing grabe,migraine,migraine,Neurological,Medium,migraine;headache;severe
+nagapamigraine,migraine;labad ulo sing grabe,migraine,migraine,Neurological,Medium,migraine;headache;severe
+ginamanhid,pamamanhid;ginapamamanhid;manhid;nagamanhid;walay pagbati,numbness,paresthesia,Neurological,Medium,tingling;nerve;loss;sensation
+ginapamamanhid,pamamanhid;manhid;ginamanhid;nagamanhid;walay pagbati,numbness,paresthesia,Neurological,Medium,tingling;nerve;loss;sensation
+manhid,pamamanhid;ginapamamanhid;ginamanhid;nagamanhid;walay pagbati,numbness,paresthesia,Neurological,Medium,tingling;nerve;loss;sensation
+nagamanhid,pamamanhid;ginapamamanhid;manhid;ginamanhid;walay pagbati,numbness,paresthesia,Neurological,Medium,tingling;nerve;loss;sensation
+pamamanhid,ginapamamanhid;manhid;ginamanhid;nagamanhid;walay pagbati,numbness,paresthesia,Neurological,Medium,tingling;nerve;loss;sensation
+walay pagbati,pamamanhid;ginapamamanhid;manhid;ginamanhid;nagamanhid;walay-pagbati,numbness,paresthesia,Neurological,Medium,tingling;nerve;loss;sensation
+loss sensation,nagadula panimuot;loss-sensation,sensory loss,sensory loss,Neurological,High,numb;nerve;sensation
+nagadula panimuot,loss sensation;nagadula-panimuot,sensory loss,sensory loss,Neurological,High,numb;nerve;sensation
+ginakurog,nagakurog;kurog;ginatay-og;nagatay-og;nagauyog,tremor,tremor,Neurological,Medium,shaking;trembling;parkinson
+ginatay-og,nagakurog;ginakurog;kurog;nagatay-og;nagauyog;ginatayog;ginatay og,tremor,tremor,Neurological,Medium,shaking;trembling;parkinson
+kurog,nagakurog;ginakurog;ginatay-og;nagatay-og;nagauyog,tremor,tremor,Neurological,Medium,shaking;trembling;parkinson
+nagakurog,ginakurog;kurog;ginatay-og;nagatay-og;nagauyog,tremor,tremor,Neurological,Medium,shaking;trembling;parkinson
+nagatay-og,nagakurog;ginakurog;kurog;ginatay-og;nagauyog;nagatayog;nagatay og,tremor,tremor,Neurological,Medium,shaking;trembling;parkinson
+nagauyog,nagakurog;ginakurog;kurog;ginatay-og;nagatay-og,tremor,tremor,Neurological,Medium,shaking;trembling;parkinson
+nagatulin ulo,spinning head;vertigo;nagatulin-ulo,vertigo,vertigo,Neurological,Medium,vertigo;dizzy;inner ear
+spinning head,nagatulin ulo;vertigo;spinning-head,vertigo,vertigo,Neurological,Medium,vertigo;dizzy;inner ear
+vertigo,nagatulin ulo;spinning head,vertigo,vertigo,Neurological,Medium,vertigo;dizzy;inner ear
+blurred vision neuro,nagadula panulok;blurred-vision-neuro,visual disturbance,visual disturbance,Neurological,Medium,vision;neuro;stroke
+nagadula panulok,blurred vision neuro;nagadula-panulok,visual disturbance,visual disturbance,Neurological,Medium,vision;neuro;stroke
+ginatulo sing dugo kag mata,ginatulo-sing-dugo-kag-mata,bleeding eye,ocular hemorrhage,Ophthalmology,High,blood;eye;trauma
+blurred vision,malain panulok;malabo panulok;ginamalabo panulok;blurred-vision,blurred vision,blurred vision,Ophthalmology,Medium,vision;blur;eye
+ginamalabo panulok,malain panulok;malabo panulok;blurred vision;ginamalabo-panulok,blurred vision,blurred vision,Ophthalmology,Medium,vision;blur;eye
+malabo panulok,malain panulok;ginamalabo panulok;blurred vision;may malabo panulok;ginmalabo panulok;nagmalabo panulok;malabo-panulok,blurred vision,blurred vision,Ophthalmology,Medium,vision;blur;eye
+malain panulok,malabo panulok;ginamalabo panulok;blurred vision;nagmalain panulok;may malain panulok;ginmalain panulok;malain-panulok,blurred vision,blurred vision,Ophthalmology,Medium,vision;blur;eye
+color vision loss,nagadula kulay panulok;color-vision-loss,color vision defect,color vision defect,Ophthalmology,Medium,vision;color;eye
+nagadula kulay panulok,color vision loss;nagadula-kulay-panulok,color vision defect,color vision defect,Ophthalmology,Medium,vision;color;eye
+ginakati mata,nagakati mata;katol sa mata;ginakati-mata,itchy eyes,ocular pruritus,Ophthalmology,Low,eye;itch;allergy
+katol sa mata,nagakati mata;ginakati mata;ginkatol sa mata;nagkatol sa mata;katol-sa-mata;may katol sa mata,itchy eyes,ocular pruritus,Ophthalmology,Low,eye;itch;allergy
+nagakati mata,ginakati mata;katol sa mata;nagakati-mata,itchy eyes,ocular pruritus,Ophthalmology,Low,eye;itch;allergy
+itchy eyes,nagakati mata;katol mata;itchy-eyes,ocular itching,ocular pruritus,Ophthalmology,Low,eye;itch;allergy
+katol mata,nagakati mata;itchy eyes;ginkatol mata;nagkatol mata;katol-mata;may katol mata,ocular itching,ocular pruritus,Ophthalmology,Low,eye;itch;allergy
+hubag mata,nagapamulang mata;swollen eyes;ginhubag mata;naghubag mata;hubag-mata;may hubag mata,periorbital edema,periorbital edema,Ophthalmology,Medium,eye;swelling;allergy
+nagapamulang mata,swollen eyes;hubag mata;nagapamulang-mata,periorbital edema,periorbital edema,Ophthalmology,Medium,eye;swelling;allergy
+swollen eyes,nagapamulang mata;hubag mata;swollen-eyes,periorbital edema,periorbital edema,Ophthalmology,Medium,eye;swelling;allergy
+flashing lights vision,nagakurog panulok;flashing-lights-vision,photopsia,photopsia,Ophthalmology,Medium,vision;flashes;retina
+nagakurog panulok,flashing lights vision;nagakurog-panulok,photopsia,photopsia,Ophthalmology,Medium,vision;flashes;retina
+ginapula mata,naga pula mata;nagapula mata;pamula mata;mapula mata;red eyes;ginapula-mata,red eyes,conjunctivitis,Ophthalmology,Low,eye;red;infection;allergy
+mapula mata,naga pula mata;nagapula mata;pamula mata;ginapula mata;red eyes;mapula-mata;may mapula mata;ginmapula mata;nagmapula mata,red eyes,conjunctivitis,Ophthalmology,Low,eye;red;infection;allergy
+naga pula mata,nagapula mata;pamula mata;ginapula mata;mapula mata;red eyes;naga-pula-mata,red eyes,conjunctivitis,Ophthalmology,Low,eye;red;infection;allergy
+nagapula mata,naga pula mata;pamula mata;ginapula mata;mapula mata;red eyes;nagapula-mata,red eyes,conjunctivitis,Ophthalmology,Low,eye;red;infection;allergy
+pamula mata,naga pula mata;nagapula mata;ginapula mata;mapula mata;red eyes;pamula-mata;nagpamula mata;ginpamula mata;may pamula mata,red eyes,conjunctivitis,Ophthalmology,Low,eye;red;infection;allergy
+red eyes,naga pula mata;nagapula mata;pamula mata;ginapula mata;mapula mata;red-eyes,red eyes,conjunctivitis,Ophthalmology,Low,eye;red;infection;allergy
+bloody eye,nagatulo dugo mata;bloody-eye,subconjunctival hemorrhage,subconjunctival hemorrhage,Ophthalmology,Medium,eye;blood;hemorrhage
+nagatulo dugo mata,bloody eye;nagatulo-dugo-mata,subconjunctival hemorrhage,subconjunctival hemorrhage,Ophthalmology,Medium,eye;blood;hemorrhage
+dugay magluha,nagatulo luha;watery eyes;dugay-magluha,watery eyes,epiphora,Ophthalmology,Low,eye;water;tear
+nagatulo luha,watery eyes;dugay magluha;nagatulo-luha,watery eyes,epiphora,Ophthalmology,Low,eye;water;tear
+watery eyes,nagatulo luha;dugay magluha;watery-eyes,watery eyes,epiphora,Ophthalmology,Low,eye;water;tear
+itchy ear,nagakati dalunggan;itchy-ear,ear itching,pruritus aurium,Otology,Low,ear;itch;infection
+nagakati dalunggan,itchy ear;nagakati-dalunggan,ear itching,pruritus aurium,Otology,Low,ear;itch;infection
+ear pain,masakit dalunggan;sakit dalunggan;ginasakit dalunggan;ear-pain,ear pain,otalgia,Otology,Medium,ear;pain;infection
+ginasakit dalunggan,masakit dalunggan;sakit dalunggan;ear pain;ginasakit-dalunggan,ear pain,otalgia,Otology,Medium,ear;pain;infection
+masakit dalunggan,sakit dalunggan;ginasakit dalunggan;ear pain;masakit-dalunggan;may masakit dalunggan;nagmasakit dalunggan;ginmasakit dalunggan,ear pain,otalgia,Otology,Medium,ear;pain;infection
+sakit dalunggan,masakit dalunggan;ginasakit dalunggan;ear pain;ginsakit dalunggan;nagsakit dalunggan;may sakit dalunggan;sakit-dalunggan,ear pain,otalgia,Otology,Medium,ear;pain;infection
+nagapamulang dalunggan,swollen ear;nagapamulang-dalunggan,ear swelling,otitis externa,Otology,Medium,ear;swelling;infection
+swollen ear,nagapamulang dalunggan;swollen-ear,ear swelling,otitis externa,Otology,Medium,ear;swelling;infection
+bulag pandungog,nagadula pandungog;hearing loss;bulag-pandungog,hearing loss,hearing loss,Otology,Medium,hearing;deaf;ear
+hearing loss,nagadula pandungog;bulag pandungog;hearing-loss,hearing loss,hearing loss,Otology,Medium,hearing;deaf;ear
+nagadula pandungog,hearing loss;bulag pandungog;nagadula-pandungog,hearing loss,hearing loss,Otology,Medium,hearing;deaf;ear
+ear discharge,nagatulo dalunggan;tulo sa dalunggan;ear-discharge,otorrhea,otorrhea,Otology,Medium,ear;discharge;infection
+nagatulo dalunggan,ear discharge;tulo sa dalunggan;nagatulo-dalunggan,otorrhea,otorrhea,Otology,Medium,ear;discharge;infection
+tulo sa dalunggan,nagatulo dalunggan;ear discharge;nagtulo sa dalunggan;tulo-sa-dalunggan;gintulo sa dalunggan;may tulo sa dalunggan,otorrhea,otorrhea,Otology,Medium,ear;discharge;infection
+naga tingog dalunggan,nagatingog dalunggan;singog dalunggan;tinnitus;naga-tingog-dalunggan,ringing in ears,tinnitus,Otology,Low,ear;ringing;tinnitus
+nagatingog dalunggan,naga tingog dalunggan;singog dalunggan;tinnitus;nagatingog-dalunggan,ringing in ears,tinnitus,Otology,Low,ear;ringing;tinnitus
+singog dalunggan,naga tingog dalunggan;nagatingog dalunggan;tinnitus;may singog dalunggan;nagsingog dalunggan;singog-dalunggan;ginsingog dalunggan,ringing in ears,tinnitus,Otology,Low,ear;ringing;tinnitus
+tinnitus,naga tingog dalunggan;nagatingog dalunggan;singog dalunggan,ringing in ears,tinnitus,Otology,Low,ear;ringing;tinnitus
+balance problem ear,nagadula balanse;balance-problem-ear,vestibular disorder,vestibular disorder,Otology,Medium,balance;dizzy;ear
+nagadula balanse,balance problem ear;nagadula-balanse,vestibular disorder,vestibular disorder,Otology,Medium,balance;dizzy;ear
+ginatulo sing dugo kag bata,ginatulo-sing-dugo-kag-bata,child bleeding,pediatric hemorrhage,Pediatric,Critical,blood;child;emergency
+ginatulo sing dugo kag circumcision bata,ginatulo-sing-dugo-kag-circumcision-bata,child circumcision bleeding,pediatric bleeding,Pediatric,High,blood;child;surgery
+ginatulo sing dugo kag circumcision,ginatulo-sing-dugo-kag-circumcision,circumcision bleeding,post-circumcision bleeding,Pediatric,Medium,blood;child;surgery
+ginatulo sing dugo kag neonatal injury,ginatulo-sing-dugo-kag-neonatal-injury,neonatal injury bleeding,neonatal trauma,Pediatric,Critical,blood;newborn;trauma
+ginatulo sing dugo kag newborn,ginatulo-sing-dugo-kag-newborn,newborn bleeding,neonatal hemorrhage,Pediatric,Critical,blood;newborn;emergency
+child poor appetite,nagadula gana kaon bata;child-poor-appetite,pediatric anorexia,anorexia,Pediatric,Medium,child;appetite;eat
+nagadula gana kaon bata,child poor appetite;nagadula-gana-kaon-bata,pediatric anorexia,anorexia,Pediatric,Medium,child;appetite;eat
+cough child,ubo bata;ginauubo ang bata;cough-child,pediatric cough,cough,Pediatric,Low,child;cough;respiratory
+ginauubo ang bata,ubo bata;cough child;ginauubo-ang-bata,pediatric cough,cough,Pediatric,Low,child;cough;respiratory
+ubo bata,cough child;ginauubo ang bata;nagubo bata;may ubo bata;ubo-bata;ginubo bata,pediatric cough,cough,Pediatric,Low,child;cough;respiratory
+diarrhea child,kalibanga bata;ginakalibanga ang bata;diarrhea-child,pediatric diarrhea,diarrhea,Pediatric,Medium,child;diarrhea;dehydration
+ginakalibanga ang bata,kalibanga bata;diarrhea child;ginakalibanga-ang-bata,pediatric diarrhea,diarrhea,Pediatric,Medium,child;diarrhea;dehydration
+kalibanga bata,diarrhea child;ginakalibanga ang bata;kalibanga-bata;ginkalibanga bata;may kalibanga bata;nagkalibanga bata,pediatric diarrhea,diarrhea,Pediatric,Medium,child;diarrhea;dehydration
+child breathless,nagadula ginhawa bata;child-breathless,pediatric dyspnea,dyspnea,Pediatric,Critical,child;breath;emergency
+nagadula ginhawa bata,child breathless;nagadula-ginhawa-bata,pediatric dyspnea,dyspnea,Pediatric,Critical,child;breath;emergency
+luya ang bata,nagakapoy bata;tired child;may luya ang bata;nagluya ang bata;luya-ang-bata;ginluya ang bata,pediatric fatigue,fatigue,Pediatric,Low,child;tired;weak
+nagakapoy bata,tired child;luya ang bata;nagakapoy-bata,pediatric fatigue,fatigue,Pediatric,Low,child;tired;weak
+tired child,nagakapoy bata;luya ang bata;tired-child,pediatric fatigue,fatigue,Pediatric,Low,child;tired;weak
+fever child,hilanat bata;ginahilanat ang bata;fever-child,pediatric fever,pyrexia,Pediatric,Medium,child;fever;infection
+ginahilanat ang bata,hilanat bata;fever child;ginahilanat-ang-bata,pediatric fever,pyrexia,Pediatric,Medium,child;fever;infection
+hilanat bata,fever child;ginahilanat ang bata;may hilanat bata;ginhilanat bata;hilanat-bata;naghilanat bata,pediatric fever,pyrexia,Pediatric,Medium,child;fever;infection
+high fever child,nagahilanat sing taas bata;high-fever-child,pediatric high fever,hyperpyrexia,Pediatric,High,child;fever;emergency
+nagahilanat sing taas bata,high fever child;nagahilanat-sing-taas-bata,pediatric high fever,hyperpyrexia,Pediatric,High,child;fever;emergency
+ginatulo sing dugo kag pediatric injury,ginatulo-sing-dugo-kag-pediatric-injury,pediatric injury bleeding,pediatric trauma,Pediatric,Critical,blood;child;trauma
+itch child,nagakati bata;itch-child,pediatric pruritus,pruritus,Pediatric,Low,child;itch;skin
+nagakati bata,itch child;nagakati-bata,pediatric pruritus,pruritus,Pediatric,Low,child;itch;skin
+bugas bata,nagapula bata;rash child;may bugas bata;nagbugas bata;bugas-bata;ginbugas bata,pediatric rash,rash,Pediatric,Medium,child;rash;skin
+nagapula bata,rash child;bugas bata;nagapula-bata,pediatric rash,rash,Pediatric,Medium,child;rash;skin
+rash child,nagapula bata;bugas bata;rash-child,pediatric rash,rash,Pediatric,Medium,child;rash;skin
+konvulsyon bata,nagakurog bata;seizure child;konvulsyon-bata;ginkonvulsyon bata;nagkonvulsyon bata;may konvulsyon bata,pediatric seizure,seizure,Pediatric,Critical,child;seizure;emergency
+nagakurog bata,seizure child;konvulsyon bata;nagakurog-bata,pediatric seizure,seizure,Pediatric,Critical,child;seizure;emergency
+seizure child,nagakurog bata;konvulsyon bata;seizure-child,pediatric seizure,seizure,Pediatric,Critical,child;seizure;emergency
+nagahubag bata,swelling child;nagahubag-bata,pediatric swelling,edema,Pediatric,Medium,child;swelling;allergy
+swelling child,nagahubag bata;swelling-child,pediatric swelling,edema,Pediatric,Medium,child;swelling;allergy
+ginagsuka ang bata,nagsuka bata;vomiting child;ginagsuka-ang-bata,pediatric vomiting,vomiting,Pediatric,Medium,child;vomit;dehydration
+nagsuka bata,vomiting child;ginagsuka ang bata;nagsuka-bata,pediatric vomiting,vomiting,Pediatric,Medium,child;vomit;dehydration
+vomiting child,nagsuka bata;ginagsuka ang bata;vomiting-child,pediatric vomiting,vomiting,Pediatric,Medium,child;vomit;dehydration
+asma,asthma;hika;ginahika;may hika;ginasma,asthma,asthma,Respiratory,High,asthma;wheezing;breathing
+asthma,asma;hika;ginahika;may hika;ginasma,asthma,asthma,Respiratory,High,asthma;wheezing;breathing
+ginahika,asma;asthma;hika;may hika;ginasma,asthma,asthma,Respiratory,High,asthma;wheezing;breathing
+ginasma,asma;asthma;hika;ginahika;may hika,asthma,asthma,Respiratory,High,asthma;wheezing;breathing
+hika,asma;asthma;ginahika;may hika;ginasma,asthma,asthma,Respiratory,High,asthma;wheezing;breathing
+may hika,asma;asthma;hika;ginahika;ginasma;may-hika,asthma,asthma,Respiratory,High,asthma;wheezing;breathing
+asthma breathless,nagadula ginhawa tungod hika;asthma-breathless,asthma dyspnea,asthma,Respiratory,High,asthma;breath;wheezing
+nagadula ginhawa tungod hika,asthma breathless;nagadula-ginhawa-tungod-hika,asthma dyspnea,asthma,Respiratory,High,asthma;breath;wheezing
+bahing,ginabahing;ginahingal;hingal;nagahingal,breathlessness,dyspnea,Respiratory,High,breath;gasping;exertion
+ginabahing,bahing;ginahingal;hingal;nagahingal,breathlessness,dyspnea,Respiratory,High,breath;gasping;exertion
+ginahingal,bahing;ginabahing;hingal;nagahingal,breathlessness,dyspnea,Respiratory,High,breath;gasping;exertion
+hingal,bahing;ginabahing;ginahingal;nagahingal,breathlessness,dyspnea,Respiratory,High,breath;gasping;exertion
+nagahingal,bahing;ginabahing;ginahingal;hingal,breathlessness,dyspnea,Respiratory,High,breath;gasping;exertion
+bronchitis,bronkitis;ginabronkitis,bronchitis,bronchitis,Respiratory,Medium,cough;lung;bronchitis
+bronkitis,bronchitis;ginabronkitis,bronchitis,bronchitis,Respiratory,Medium,cough;lung;bronchitis
+ginabronkitis,bronkitis;bronchitis,bronchitis,bronchitis,Respiratory,Medium,cough;lung;bronchitis
+ginatight dughan mag ginhawa,tight chest breathing;ginatight-dughan-mag-ginhawa,chest tightness,chest tightness,Respiratory,High,chest;asthma;breathing
+tight chest breathing,ginatight dughan mag ginhawa;tight-chest-breathing,chest tightness,chest tightness,Respiratory,High,chest;asthma;breathing
+common cold,sipon kag ubo;sipon ug ubo;common-cold,common cold,upper respiratory infection,Respiratory,Low,cold;viral;nose;cough
+sipon kag ubo,sipon ug ubo;common cold;nagsipon kag ubo;may sipon kag ubo;sipon-kag-ubo;ginsipon kag ubo,common cold,upper respiratory infection,Respiratory,Low,cold;viral;nose;cough
+sipon ug ubo,sipon kag ubo;common cold;nagsipon ug ubo;may sipon ug ubo;sipon-ug-ubo;ginsipon ug ubo,common cold,upper respiratory infection,Respiratory,Low,cold;viral;nose;cough
+ginakuhul,ubo;ginaubo;ginauubo;nagaubo;nagauubo;ubuhan;ubuhon;kuhul,cough,cough,Respiratory,Low,cough;respiratory;lung;throat
+ginaubo,ubo;ginauubo;nagaubo;nagauubo;ubuhan;ubuhon;kuhul;ginakuhul,cough,cough,Respiratory,Low,cough;respiratory;lung;throat
+ginauubo,ubo;ginaubo;nagaubo;nagauubo;ubuhan;ubuhon;kuhul;ginakuhul,cough,cough,Respiratory,Low,cough;respiratory;lung;throat
+kuhul,ubo;ginaubo;ginauubo;nagaubo;nagauubo;ubuhan;ubuhon;ginakuhul,cough,cough,Respiratory,Low,cough;respiratory;lung;throat
+nagaubo,ubo;ginaubo;ginauubo;nagauubo;ubuhan;ubuhon;kuhul;ginakuhul,cough,cough,Respiratory,Low,cough;respiratory;lung;throat
+nagauubo,ubo;ginaubo;ginauubo;nagaubo;ubuhan;ubuhon;kuhul;ginakuhul,cough,cough,Respiratory,Low,cough;respiratory;lung;throat
+ubo,ginaubo;ginauubo;nagaubo;nagauubo;ubuhan;ubuhon;kuhul;ginakuhul;may ubo;ginubo;nagubo,cough,cough,Respiratory,Low,cough;respiratory;lung;throat
+ubuhan,ubo;ginaubo;ginauubo;nagaubo;nagauubo;ubuhon;kuhul;ginakuhul,cough,cough,Respiratory,Low,cough;respiratory;lung;throat
+ubuhon,ubo;ginaubo;ginauubo;nagaubo;nagauubo;ubuhan;kuhul;ginakuhul,cough,cough,Respiratory,Low,cough;respiratory;lung;throat
+loss appetite cough,nagadula gana tungod ubo;loss-appetite-cough,cough with anorexia,anorexia,Respiratory,Low,cough;appetite
+nagadula gana tungod ubo,loss appetite cough;nagadula-gana-tungod-ubo,cough with anorexia,anorexia,Respiratory,Low,cough;appetite
+hoarse voice,nagadula boses;pamalat boses;hoarse-voice,hoarseness,dysphonia,Respiratory,Low,voice;throat;larynx
+nagadula boses,hoarse voice;pamalat boses;nagadula-boses,hoarseness,dysphonia,Respiratory,Low,voice;throat;larynx
+pamalat boses,nagadula boses;hoarse voice;pamalat-boses,hoarseness,dysphonia,Respiratory,Low,voice;throat;larynx
+ginapulmonya,pulmonya;pneumonia,pneumonia,pneumonia,Respiratory,High,lung;infection;fever;cough
+pneumonia,pulmonya;ginapulmonya,pneumonia,pneumonia,Respiratory,High,lung;infection;fever;cough
+pulmonya,pneumonia;ginapulmonya,pneumonia,pneumonia,Respiratory,High,lung;infection;fever;cough
+nagadula ginhawa tungod pulmonya,pneumonia breathless;nagadula-ginhawa-tungod-pulmonya,pneumonia dyspnea,pneumonia,Respiratory,High,pneumonia;breath;fever
+pneumonia breathless,nagadula ginhawa tungod pulmonya;pneumonia-breathless,pneumonia dyspnea,pneumonia,Respiratory,High,pneumonia;breath;fever
+barado ilong,sip-on;sipon;sip on;ginasip-on;ginasipon;nagasipon;ginabarado ilong;barado-ilong,runny nose,rhinitis,Respiratory,Low,nose;congestion;cold;rhinitis
+ginabarado ilong,sip-on;sipon;sip on;ginasip-on;ginasipon;nagasipon;barado ilong;ginabarado-ilong,runny nose,rhinitis,Respiratory,Low,nose;congestion;cold;rhinitis
+ginasip-on,sip-on;sipon;sip on;ginasipon;nagasipon;barado ilong;ginabarado ilong;ginasip on,runny nose,rhinitis,Respiratory,Low,nose;congestion;cold;rhinitis
+ginasipon,sip-on;sipon;sip on;ginasip-on;nagasipon;barado ilong;ginabarado ilong,runny nose,rhinitis,Respiratory,Low,nose;congestion;cold;rhinitis
+nagasipon,sip-on;sipon;sip on;ginasip-on;ginasipon;barado ilong;ginabarado ilong,runny nose,rhinitis,Respiratory,Low,nose;congestion;cold;rhinitis
+sip on,sip-on;sipon;ginasip-on;ginasipon;nagasipon;barado ilong;ginabarado ilong;may sip on;ginsip on;nagsip on,runny nose,rhinitis,Respiratory,Low,nose;congestion;cold;rhinitis
+sip-on,sipon;sip on;ginasip-on;ginasipon;nagasipon;barado ilong;ginabarado ilong;ginsip-on;nagsip-on;may sip-on,runny nose,rhinitis,Respiratory,Low,nose;congestion;cold;rhinitis
+sipon,sip-on;sip on;ginasip-on;ginasipon;nagasipon;barado ilong;ginabarado ilong;may sipon;nagsipon;ginsipon,runny nose,rhinitis,Respiratory,Low,nose;congestion;cold;rhinitis
+asma attack,asma sing grabe;severe asthma;asma-attack,severe asthma,asthma exacerbation,Respiratory,Critical,asthma;breath;emergency
+asma sing grabe,asma attack;severe asthma;asma-sing-grabe,severe asthma,asthma exacerbation,Respiratory,Critical,asthma;breath;emergency
+severe asthma,asma attack;asma sing grabe;severe-asthma,severe asthma,asthma exacerbation,Respiratory,Critical,asthma;breath;emergency
+ginauubo sing malala,masakit tutunlan mag ubo;ubo sing malala;ginauubo-sing-malala,severe cough,severe cough,Respiratory,Medium,cough;severe;lung
+masakit tutunlan mag ubo,ubo sing malala;ginauubo sing malala;may masakit tutunlan mag ubo;ginmasakit tutunlan mag ubo;nagmasakit tutunlan mag ubo;masakit-tutunlan-mag-ubo,severe cough,severe cough,Respiratory,Medium,cough;severe;lung
+ubo sing malala,masakit tutunlan mag ubo;ginauubo sing malala;may ubo sing malala;ubo-sing-malala;nagubo sing malala;ginubo sing malala,severe cough,severe cough,Respiratory,Medium,cough;severe;lung
+budlay ginhawa,ginakapos ginhawa;ginaginhawa budlay;ginabudlayan ginhawa;lisod magginhawa;ginakapos;ginagutok;nagbudlay ginhawa;may budlay ginhawa;ginbudlay ginhawa;budlay-ginhawa,shortness of breath,dyspnea,Respiratory,High,breathing;dyspnea;asthma;lung
+ginabudlayan ginhawa,ginakapos ginhawa;ginaginhawa budlay;budlay ginhawa;lisod magginhawa;ginakapos;ginagutok;ginabudlayan-ginhawa,shortness of breath,dyspnea,Respiratory,High,breathing;dyspnea;asthma;lung
+ginaginhawa budlay,ginakapos ginhawa;ginabudlayan ginhawa;budlay ginhawa;lisod magginhawa;ginakapos;ginagutok;ginaginhawa-budlay,shortness of breath,dyspnea,Respiratory,High,breathing;dyspnea;asthma;lung
+ginagutok,ginakapos ginhawa;ginaginhawa budlay;ginabudlayan ginhawa;budlay ginhawa;lisod magginhawa;ginakapos,shortness of breath,dyspnea,Respiratory,High,breathing;dyspnea;asthma;lung
+ginakapos,ginakapos ginhawa;ginaginhawa budlay;ginabudlayan ginhawa;budlay ginhawa;lisod magginhawa;ginagutok,shortness of breath,dyspnea,Respiratory,High,breathing;dyspnea;asthma;lung
+ginakapos ginhawa,ginaginhawa budlay;ginabudlayan ginhawa;budlay ginhawa;lisod magginhawa;ginakapos;ginagutok;ginakapos-ginhawa,shortness of breath,dyspnea,Respiratory,High,breathing;dyspnea;asthma;lung
+lisod magginhawa,ginakapos ginhawa;ginaginhawa budlay;ginabudlayan ginhawa;budlay ginhawa;ginakapos;ginagutok;may lisod magginhawa;naglisod magginhawa;lisod-magginhawa;ginlisod magginhawa,shortness of breath,dyspnea,Respiratory,High,breathing;dyspnea;asthma;lung
+ginasakit tutunlan,masakit tutunlan;sakit tutunlan;hapdi tutunlan;sore throat;ginasakit-tutunlan,sore throat,pharyngitis,Respiratory,Low,throat;pain;pharyngitis
+hapdi tutunlan,masakit tutunlan;sakit tutunlan;ginasakit tutunlan;sore throat;naghapdi tutunlan;hapdi-tutunlan;may hapdi tutunlan;ginhapdi tutunlan,sore throat,pharyngitis,Respiratory,Low,throat;pain;pharyngitis
+masakit tutunlan,sakit tutunlan;hapdi tutunlan;ginasakit tutunlan;sore throat;ginmasakit tutunlan;may masakit tutunlan;nagmasakit tutunlan;masakit-tutunlan,sore throat,pharyngitis,Respiratory,Low,throat;pain;pharyngitis
+sakit tutunlan,masakit tutunlan;hapdi tutunlan;ginasakit tutunlan;sore throat;sakit-tutunlan;ginsakit tutunlan;may sakit tutunlan;nagsakit tutunlan,sore throat,pharyngitis,Respiratory,Low,throat;pain;pharyngitis
+sore throat,masakit tutunlan;sakit tutunlan;hapdi tutunlan;ginasakit tutunlan;sore-throat,sore throat,pharyngitis,Respiratory,Low,throat;pain;pharyngitis
+ginatulo sing dugo kag tonsil,ginatulo-sing-dugo-kag-tonsil,tonsil bleeding,tonsillar hemorrhage,Respiratory,Medium,blood;throat;tonsil
+ginahubak,hubak;nagahubak;singaw;ginasingaw;wheezing,wheezing,wheezing,Respiratory,High,wheezing;asthma;lung;breathing
+ginasingaw,hubak;ginahubak;nagahubak;singaw;wheezing,wheezing,wheezing,Respiratory,High,wheezing;asthma;lung;breathing
+hubak,ginahubak;nagahubak;singaw;ginasingaw;wheezing,wheezing,wheezing,Respiratory,High,wheezing;asthma;lung;breathing
+nagahubak,hubak;ginahubak;singaw;ginasingaw;wheezing,wheezing,wheezing,Respiratory,High,wheezing;asthma;lung;breathing
+singaw,hubak;ginahubak;nagahubak;ginasingaw;wheezing,wheezing,wheezing,Respiratory,High,wheezing;asthma;lung;breathing
+wheezing,hubak;ginahubak;nagahubak;singaw;ginasingaw,wheezing,wheezing,Respiratory,High,wheezing;asthma;lung;breathing
+ginatulo sing dugo kag circumcision adult,ginatulo-sing-dugo-kag-circumcision-adult,adult circumcision bleeding,postoperative bleeding,Urology,Medium,blood;surgery;urology
+ginatulo sing dugo kag bladder,ginatulo-sing-dugo-kag-bladder,bladder bleeding,bladder hemorrhage,Urology,High,blood;bladder
+bladder pain,masakit tiyan mag ihi;bladder-pain,bladder pain,cystitis,Urology,Medium,bladder;uti;pain
+masakit tiyan mag ihi,bladder pain;masakit tyan mag ihi;may masakit tiyan mag ihi;ginmasakit tiyan mag ihi;masakit-tiyan-mag-ihi;nagmasakit tiyan mag ihi,bladder pain,cystitis,Urology,Medium,bladder;uti;pain
+bloody urine,may dugo sa ihi;dugo sa ihi;ginadugo ihi;ginadugo sa ihi;bloody-urine,blood in urine,hematuria,Urology,High,blood;urine;kidney;uti
+dugo sa ihi,may dugo sa ihi;ginadugo ihi;ginadugo sa ihi;bloody urine;gindugo sa ihi;dugo-sa-ihi;nagdugo sa ihi,blood in urine,hematuria,Urology,High,blood;urine;kidney;uti
+ginadugo ihi,may dugo sa ihi;dugo sa ihi;ginadugo sa ihi;bloody urine;ginadugo-ihi,blood in urine,hematuria,Urology,High,blood;urine;kidney;uti
+ginadugo sa ihi,may dugo sa ihi;dugo sa ihi;ginadugo ihi;bloody urine;ginadugo-sa-ihi,blood in urine,hematuria,Urology,High,blood;urine;kidney;uti
+may dugo sa ihi,dugo sa ihi;ginadugo ihi;ginadugo sa ihi;bloody urine;may-dugo-sa-ihi,blood in urine,hematuria,Urology,High,blood;urine;kidney;uti
+ginatulo sing dugo kag catheter,ginatulo-sing-dugo-kag-catheter,catheter bleeding,catheter complication,Urology,Medium,blood;catheter;urine
+ginauhaw tungod ihi,thirst frequent urine;ginauhaw-tungod-ihi,diabetes symptoms,diabetes mellitus,Urology,Medium,diabetes;urine;thirst
+thirst frequent urine,ginauhaw tungod ihi;thirst-frequent-urine,diabetes symptoms,diabetes mellitus,Urology,Medium,diabetes;urine;thirst
+ginatulo sing dugo kag dialysis,ginatulo-sing-dugo-kag-dialysis,dialysis bleeding,dialysis complication,Urology,High,blood;dialysis;kidney
+flank pain urination,masakit kilid mag ihi;flank-pain-urination,flank pain urinary,pyelonephritis,Urology,High,kidney;flank;uti
+masakit kilid mag ihi,flank pain urination;masakit-kilid-mag-ihi;nagmasakit kilid mag ihi;may masakit kilid mag ihi;ginmasakit kilid mag ihi,flank pain urinary,pyelonephritis,Urology,High,kidney;flank;uti
+frequent urination,sige ihi;ginasige ihi;madamo ihi;ginamadamo ihi;frequent-urination,frequent urination,polyuria,Urology,Medium,urine;frequent;diabetes;uti
+ginamadamo ihi,sige ihi;ginasige ihi;madamo ihi;frequent urination;ginamadamo-ihi,frequent urination,polyuria,Urology,Medium,urine;frequent;diabetes;uti
+ginasige ihi,sige ihi;madamo ihi;ginamadamo ihi;frequent urination;ginasige-ihi,frequent urination,polyuria,Urology,Medium,urine;frequent;diabetes;uti
+madamo ihi,sige ihi;ginasige ihi;ginamadamo ihi;frequent urination;ginmadamo ihi;nagmadamo ihi;madamo-ihi;may madamo ihi,frequent urination,polyuria,Urology,Medium,urine;frequent;diabetes;uti
+sige ihi,ginasige ihi;madamo ihi;ginamadamo ihi;frequent urination;sige-ihi;may sige ihi;ginsige ihi;nagsige ihi,frequent urination,polyuria,Urology,Medium,urine;frequent;diabetes;uti
+dili maka ihi,indi maka ihi;indi makaihi;dili makaihi;urinary retention;nagdili maka ihi;gindili maka ihi;dili-maka-ihi;may dili maka ihi,inability to urinate,urinary retention,Urology,High,urine;retention;blockage
+dili makaihi,indi maka ihi;dili maka ihi;indi makaihi;urinary retention;nagdili makaihi;dili-makaihi;gindili makaihi;may dili makaihi,inability to urinate,urinary retention,Urology,High,urine;retention;blockage
+indi maka ihi,dili maka ihi;indi makaihi;dili makaihi;urinary retention;nagindi maka ihi;ginindi maka ihi;indi-maka-ihi;may indi maka ihi,inability to urinate,urinary retention,Urology,High,urine;retention;blockage
+indi makaihi,indi maka ihi;dili maka ihi;dili makaihi;urinary retention;nagindi makaihi;ginindi makaihi;indi-makaihi;may indi makaihi,inability to urinate,urinary retention,Urology,High,urine;retention;blockage
+urinary retention,indi maka ihi;dili maka ihi;indi makaihi;dili makaihi;urinary-retention,inability to urinate,urinary retention,Urology,High,urine;retention;blockage
+ginatulo sing dugo kag kidney,ginatulo-sing-dugo-kag-kidney,kidney bleeding,renal hemorrhage,Urology,Critical,blood;kidney
+kidney pain,sakit kidney;sakit sa batok;kidney-pain,kidney pain,renal pain,Urology,High,kidney;pain;stone
+sakit kidney,sakit sa batok;kidney pain;nagsakit kidney;sakit-kidney;ginsakit kidney;may sakit kidney,kidney pain,renal pain,Urology,High,kidney;pain;stone
+sakit sa batok,sakit kidney;kidney pain;sakit-sa-batok;ginsakit sa batok;may sakit sa batok;nagsakit sa batok,kidney pain,renal pain,Urology,High,kidney;pain;stone
+bato sa kidney,kidney stones;renal stone;bato-sa-kidney,kidney stones,nephrolithiasis,Urology,High,kidney;stone;pain
+kidney stones,bato sa kidney;renal stone;kidney-stones,kidney stones,nephrolithiasis,Urology,High,kidney;stone;pain
+renal stone,bato sa kidney;kidney stones;renal-stone,kidney stones,nephrolithiasis,Urology,High,kidney;stone;pain
+decreased urine,ginadula ihi;decreased-urine,oliguria,oliguria,Urology,High,kidney;urine;dehydration
+ginadula ihi,decreased urine;ginadula-ihi,oliguria,oliguria,Urology,High,kidney;urine;dehydration
+ginasakit mag ihi,masakit mag ihi;masakit mag-ihi;masakit pag-ihi;sakit pag-ihi;ginasakit-mag-ihi,painful urination,dysuria,Urology,Medium,urine;pain;uti;infection
+masakit mag ihi,masakit mag-ihi;masakit pag-ihi;sakit pag-ihi;ginasakit mag ihi;ginmasakit mag ihi;nagmasakit mag ihi;masakit-mag-ihi;may masakit mag ihi,painful urination,dysuria,Urology,Medium,urine;pain;uti;infection
+masakit mag-ihi,masakit mag ihi;masakit pag-ihi;sakit pag-ihi;ginasakit mag ihi;may masakit mag-ihi;ginmasakit mag-ihi;masakit magihi;nagmasakit mag-ihi;masakit-mag-ihi,painful urination,dysuria,Urology,Medium,urine;pain;uti;infection
+masakit pag-ihi,masakit mag ihi;masakit mag-ihi;sakit pag-ihi;ginasakit mag ihi;masakit-pag-ihi;may masakit pag-ihi;masakit pagihi;ginmasakit pag-ihi;nagmasakit pag-ihi;masakit pag ihi,painful urination,dysuria,Urology,Medium,urine;pain;uti;infection
+sakit pag-ihi,masakit mag ihi;masakit mag-ihi;masakit pag-ihi;ginasakit mag ihi;ginsakit pag-ihi;sakit pag ihi;sakit pagihi;sakit-pag-ihi;may sakit pag-ihi;nagsakit pag-ihi,painful urination,dysuria,Urology,Medium,urine;pain;uti;infection
+ginauhaw kag sige ihi,thirst polyuria;ginauhaw-kag-sige-ihi,polyuria polydipsia,diabetes mellitus,Urology,Medium,diabetes;urine;thirst
+thirst polyuria,ginauhaw kag sige ihi;thirst-polyuria,polyuria polydipsia,diabetes mellitus,Urology,Medium,diabetes;urine;thirst
+ginatulo sing dugo kag prostate,ginatulo-sing-dugo-kag-prostate,prostate bleeding,prostatic hemorrhage,Urology,Medium,blood;prostate
+ginatulo sing dugo kag testicular injury,ginatulo-sing-dugo-kag-testicular-injury,testicular injury bleeding,testicular trauma,Urology,High,blood;testicle;trauma
+ginatulo ihi,leaking urine;ginatulo-ihi,urinary incontinence,urinary incontinence,Urology,Medium,incontinence;urine;elderly
+leaking urine,ginatulo ihi;leaking-urine,urinary incontinence,urinary incontinence,Urology,Medium,incontinence;urine;elderly
+sakit pagihi,uti;urinary tract infection;may sakit pagihi;nagsakit pagihi;sakit-pagihi;ginsakit pagihi,urinary tract infection,urinary tract infection,Urology,Medium,uti;urine;infection
+urinary tract infection,uti;sakit pagihi;urinary-tract-infection,urinary tract infection,urinary tract infection,Urology,Medium,uti;urine;infection
+uti,urinary tract infection;sakit pagihi,urinary tract infection,urinary tract infection,Urology,Medium,uti;urine;infection
+amenorrhea,wala regla;missed period,amenorrhea,amenorrhea,Women's Health,Medium,menstruation;missed;pregnancy
+missed period,wala regla;amenorrhea;missed-period,amenorrhea,amenorrhea,Women's Health,Medium,menstruation;missed;pregnancy
+wala regla,missed period;amenorrhea;ginwala regla;wala-regla;may wala regla;nagwala regla,amenorrhea,amenorrhea,Women's Health,Medium,menstruation;missed;pregnancy
+breast pain,masakit suso;mastalgia;breast-pain,breast pain,mastalgia,Women's Health,Medium,breast;pain;lump
+masakit suso,breast pain;mastalgia;ginmasakit suso;masakit-suso;nagmasakit suso;may masakit suso,breast pain,mastalgia,Women's Health,Medium,breast;pain;lump
+mastalgia,masakit suso;breast pain,breast pain,mastalgia,Women's Health,Medium,breast;pain;lump
+breast swelling,nagapamulang suso;breast-swelling,breast swelling,mastitis,Women's Health,Medium,breast;swelling;infection
+nagapamulang suso,breast swelling;nagapamulang-suso,breast swelling,mastitis,Women's Health,Medium,breast;swelling;infection
+ginatulo sing dugo kag cervical,ginatulo-sing-dugo-kag-cervical,cervical bleeding,cervical hemorrhage,Women's Health,High,blood;cervix
+dysmenorrhea,masakit regla;painful menstruation,dysmenorrhea,dysmenorrhea,Women's Health,Medium,menstruation;pain;period
+masakit regla,painful menstruation;dysmenorrhea;may masakit regla;masakit-regla;ginmasakit regla;nagmasakit regla,dysmenorrhea,dysmenorrhea,Women's Health,Medium,menstruation;pain;period
+painful menstruation,masakit regla;dysmenorrhea;painful-menstruation,dysmenorrhea,dysmenorrhea,Women's Health,Medium,menstruation;pain;period
+breathless pregnancy,nagadula ginhawa buntis;breathless-pregnancy,dyspnea in pregnancy,dyspnea in pregnancy,Women's Health,High,pregnancy;breath;emergency
+nagadula ginhawa buntis,breathless pregnancy;nagadula-ginhawa-buntis,dyspnea in pregnancy,dyspnea in pregnancy,Women's Health,High,pregnancy;breath;emergency
+ginatulo sing dugo kag ectopic,ginatulo-sing-dugo-kag-ectopic,ectopic bleeding,ectopic pregnancy,Women's Health,Critical,blood;ectopic;emergency
+ginatulo sing dugo kag fetal injury,ginatulo-sing-dugo-kag-fetal-injury,fetal injury bleeding,fetal trauma,Women's Health,Critical,blood;fetus;trauma
+fever pregnancy,nagahilanat buntis;fever-pregnancy,fever in pregnancy,fever in pregnancy,Women's Health,High,pregnancy;fever;infection
+nagahilanat buntis,fever pregnancy;nagahilanat-buntis,fever in pregnancy,fever in pregnancy,Women's Health,High,pregnancy;fever;infection
+ginatulo sing dugo kag regla,ginatulo-sing-dugo-kag-regla,heavy menstrual bleeding,menorrhagia,Women's Health,High,blood;period;menstruation
+irregular period,nagadula regla;irregular-period,irregular menstruation,irregular menstruation,Women's Health,Low,period;irregular;hormone
+nagadula regla,irregular period;nagadula-regla,irregular menstruation,irregular menstruation,Women's Health,Low,period;irregular;hormone
+ginatulo sing dugo kag labor,ginatulo-sing-dugo-kag-labor,labor bleeding,obstetric hemorrhage,Women's Health,Critical,blood;labor;delivery
+heavy period,madamo dugo regla;heavy-period,menorrhagia,menorrhagia,Women's Health,Medium,menstruation;bleeding;period
+madamo dugo regla,heavy period;may madamo dugo regla;nagmadamo dugo regla;madamo-dugo-regla;ginmadamo dugo regla,menorrhagia,menorrhagia,Women's Health,Medium,menstruation;bleeding;period
+ginatulo sing dugo kag menstruation,ginatulo-sing-dugo-kag-menstruation,menstrual bleeding severe,menorrhagia,Women's Health,High,blood;period;severe
+masakit tiyan regla,menstrual cramps;ginmasakit tiyan regla;nagmasakit tiyan regla;masakit-tiyan-regla;may masakit tiyan regla;masakit tyan regla,menstrual cramps,dysmenorrhea,Women's Health,Medium,period;cramps;abdomen
+menstrual cramps,masakit tiyan regla;menstrual-cramps,menstrual cramps,dysmenorrhea,Women's Health,Medium,period;cramps;abdomen
+ginatulo sing dugo kag miscarriage,ginatulo-sing-dugo-kag-miscarriage,miscarriage bleeding,spontaneous abortion,Women's Health,Critical,blood;pregnancy;miscarriage
+ginatulo sing dugo kag molar,ginatulo-sing-dugo-kag-molar,molar pregnancy bleeding,molar pregnancy,Women's Health,Critical,blood;pregnancy;molar
+ginatulo sing dugo kag ovary,ginatulo-sing-dugo-kag-ovary,ovarian bleeding,ovarian hemorrhage,Women's Health,High,blood;ovary
+ginatulo sing dugo kag ovarian injury,ginatulo-sing-dugo-kag-ovarian-injury,ovarian injury bleeding,ovarian trauma,Women's Health,High,blood;ovary;trauma
+ginatulo sing dugo kag placenta,ginatulo-sing-dugo-kag-placenta,placental bleeding,placental abruption,Women's Health,Critical,blood;pregnancy;placenta
+ginatulo sing dugo kag placental injury,ginatulo-sing-dugo-kag-placental-injury,placental injury bleeding,placental trauma,Women's Health,Critical,blood;placenta;trauma
+ginatulo sing dugo kag postpartum,ginatulo-sing-dugo-kag-postpartum,postpartum bleeding,postpartum hemorrhage,Women's Health,Critical,blood;postpartum;emergency
+masakit tiyan buntis,pregnancy abdominal pain;ginmasakit tiyan buntis;masakit tyan buntis;may masakit tiyan buntis;masakit-tiyan-buntis;nagmasakit tiyan buntis,pregnancy abdominal pain,pregnancy complication,Women's Health,High,pregnancy;abdomen;pain
+pregnancy abdominal pain,masakit tiyan buntis;pregnancy-abdominal-pain,pregnancy abdominal pain,pregnancy complication,Women's Health,High,pregnancy;abdomen;pain
+nagadugo buntis,pregnancy bleeding;nagadugo-buntis,pregnancy bleeding,pregnancy bleeding,Women's Health,Critical,pregnancy;bleeding;emergency
+pregnancy bleeding,nagadugo buntis;pregnancy-bleeding,pregnancy bleeding,pregnancy bleeding,Women's Health,Critical,pregnancy;bleeding;emergency
+ginatulo sing dugo kag buntis,ginatulo-sing-dugo-kag-buntis,pregnancy bleeding severe,obstetric hemorrhage,Women's Health,Critical,blood;pregnancy;emergency
+PMS appetite,nagadula gana regla;PMS-appetite,premenstrual symptoms,premenstrual syndrome,Women's Health,Low,period;PMS;mood
+nagadula gana regla,PMS appetite;nagadula-gana-regla,premenstrual symptoms,premenstrual syndrome,Women's Health,Low,period;PMS;mood
+ginatulo sing dugo kag fallopian,ginatulo-sing-dugo-kag-fallopian,tubal bleeding,ectopic pregnancy,Women's Health,Critical,blood;pregnancy;ectopic
+ginatulo sing dugo kag uterus,ginatulo-sing-dugo-kag-uterus,uterine bleeding,uterine hemorrhage,Women's Health,High,blood;uterus
+ginatulo sing dugo kag uterine injury,ginatulo-sing-dugo-kag-uterine-injury,uterine injury bleeding,uterine trauma,Women's Health,High,blood;uterus;trauma
+ginatulo sing dugo kag vaginal,ginatulo-sing-dugo-kag-vaginal,vaginal bleeding,vaginal hemorrhage,Women's Health,High,blood;vaginal

@@ -65,7 +65,7 @@ try {
         ]);
     } catch (Exception $e) { /* non-fatal */ }
 
-    header('Location: verification-success.php');
+    header('Location: /public/verification-success.php');
     exit;
 
 } catch (Exception $e) {

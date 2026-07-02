@@ -1,0 +1,390 @@
+/**
+ * MedConnect Admin — Patient Case Viewer (Admin & Super Admin)
+ */
+
+.case-viewer-page {
+  animation: staffAppsFadeIn 0.35s ease;
+}
+
+.case-viewer-layout {
+  display: grid;
+  grid-template-columns: minmax(260px, 320px) minmax(0, 1fr);
+  gap: 20px;
+  align-items: start;
+}
+
+/* ── Patient list panel ── */
+.case-viewer-list-card {
+  background: #fff;
+  border: 1px solid #edf0f5;
+  border-radius: 16px;
+  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.04);
+  overflow: hidden;
+  position: sticky;
+  top: 16px;
+  max-height: calc(100vh - 120px);
+  display: flex;
+  flex-direction: column;
+}
+
+.case-viewer-list-card__head {
+  padding: 16px 18px;
+  border-bottom: 1px solid #f1f5f9;
+  background: #fafbfc;
+}
+
+.case-viewer-list-card__title {
+  font-size: 0.8125rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--mc-aqua-medium, #018a93);
+  margin: 0 0 12px;
+}
+
+.case-viewer-list-card__search {
+  position: relative;
+}
+
+.case-viewer-list-card__search svg {
+  position: absolute;
+  left: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 15px;
+  height: 15px;
+  color: #94a3b8;
+  pointer-events: none;
+}
+
+.case-viewer-list-card__search input {
+  width: 100%;
+  padding: 10px 12px 10px 36px;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  font-size: 0.8125rem;
+  box-sizing: border-box;
+  background: #fff;
+}
+
+.case-viewer-list-card__search input:focus {
+  outline: none;
+  border-color: var(--mc-aqua-medium, #018a93);
+  box-shadow: 0 0 0 3px rgba(1, 138, 147, 0.12);
+}
+
+.case-viewer-list {
+  overflow-y: auto;
+  flex: 1;
+}
+
+.case-viewer-patient {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 18px;
+  border-bottom: 1px solid #f1f5f9;
+  text-decoration: none;
+  color: inherit;
+  transition: background 0.12s ease;
+}
+
+.case-viewer-patient:hover {
+  background: #f8fafc;
+}
+
+.case-viewer-patient.is-active {
+  background: linear-gradient(90deg, #f0fdfa 0%, #fff 100%);
+  border-left: 3px solid var(--mc-aqua-medium, #018a93);
+  padding-left: 15px;
+}
+
+.case-viewer-patient__avatar {
+  flex-shrink: 0;
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  background: linear-gradient(135deg, #e0f2fe, #dbeafe);
+  color: #0369a1;
+  font-size: 0.6875rem;
+  font-weight: 800;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.case-viewer-patient__name {
+  font-size: 0.875rem;
+  font-weight: 700;
+  color: #0f172a;
+  line-height: 1.3;
+}
+
+.case-viewer-patient__email {
+  font-size: 0.75rem;
+  color: #94a3b8;
+  margin-top: 2px;
+  word-break: break-all;
+}
+
+.case-viewer-patient__badge {
+  margin-left: auto;
+  flex-shrink: 0;
+  font-size: 0.625rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  padding: 3px 8px;
+  border-radius: 999px;
+  background: #dcfce7;
+  color: #15803d;
+}
+
+.case-viewer-patient__badge--inactive {
+  background: #f1f5f9;
+  color: #64748b;
+}
+
+.case-viewer-list-empty {
+  padding: 32px 20px;
+  text-align: center;
+  color: #94a3b8;
+  font-size: 0.875rem;
+}
+
+/* ── Detail panel ── */
+.case-viewer-detail {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  min-width: 0;
+}
+
+.case-viewer-empty {
+  background: #fff;
+  border: 1px solid #edf0f5;
+  border-radius: 16px;
+  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.04);
+  padding: 72px 32px;
+  text-align: center;
+}
+
+.case-viewer-empty__icon {
+  width: 64px;
+  height: 64px;
+  margin: 0 auto 18px;
+  border-radius: 16px;
+  background: #f1f5f9;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #94a3b8;
+}
+
+.case-viewer-empty__title {
+  font-size: 1.0625rem;
+  font-weight: 700;
+  color: #334155;
+  margin: 0 0 8px;
+}
+
+.case-viewer-empty__text {
+  font-size: 0.875rem;
+  color: #94a3b8;
+  margin: 0;
+  line-height: 1.55;
+}
+
+.case-viewer-profile {
+  background: #fff;
+  border: 1px solid #edf0f5;
+  border-radius: 16px;
+  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.04);
+  padding: 24px 28px;
+}
+
+.case-viewer-profile__top {
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.case-viewer-profile__avatar {
+  width: 56px;
+  height: 56px;
+  border-radius: 14px;
+  background: linear-gradient(135deg, #ccfbf1, #e0f2fe);
+  color: #0e7490;
+  font-size: 1rem;
+  font-weight: 800;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.case-viewer-profile__name {
+  font-size: 1.375rem;
+  font-weight: 800;
+  color: #0f172a;
+  margin: 0 0 4px;
+  letter-spacing: -0.02em;
+}
+
+.case-viewer-profile__meta {
+  font-size: 0.875rem;
+  color: #64748b;
+  margin: 0;
+}
+
+.case-viewer-profile__status {
+  margin-left: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: 999px;
+  font-size: 0.6875rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  background: #dcfce7;
+  color: #15803d;
+}
+
+.case-viewer-profile__status--inactive {
+  background: #f1f5f9;
+  color: #64748b;
+}
+
+.case-viewer-profile__grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px 20px;
+  margin-top: 20px;
+  padding-top: 20px;
+  border-top: 1px solid #f1f5f9;
+}
+
+.case-viewer-profile__field dt {
+  font-size: 0.6875rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: #94a3b8;
+  margin: 0 0 4px;
+}
+
+.case-viewer-profile__field dd {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #334155;
+  margin: 0;
+}
+
+.case-viewer-readonly {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 16px;
+  padding: 8px 12px;
+  border-radius: 10px;
+  background: #fffbeb;
+  border: 1px solid #fde68a;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #92400e;
+}
+
+/* ── Record sections ── */
+.case-viewer-section {
+  background: #fff;
+  border: 1px solid #edf0f5;
+  border-radius: 14px;
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04);
+  overflow: hidden;
+}
+
+.case-viewer-section__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 14px 20px;
+  background: #fafbfc;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.case-viewer-section__title {
+  font-size: 0.875rem;
+  font-weight: 700;
+  color: #0f172a;
+  margin: 0;
+}
+
+.case-viewer-section__count {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--mc-aqua-medium, #018a93);
+  background: #f0fdfa;
+  padding: 4px 10px;
+  border-radius: 999px;
+}
+
+.case-viewer-section__body {
+  padding: 0;
+}
+
+.case-viewer-record {
+  padding: 14px 20px;
+  border-bottom: 1px solid #f8fafc;
+}
+
+.case-viewer-record:last-child {
+  border-bottom: none;
+}
+
+.case-viewer-record__title {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #334155;
+  margin: 0 0 4px;
+}
+
+.case-viewer-record__meta {
+  font-size: 0.75rem;
+  color: #94a3b8;
+  margin: 0;
+  line-height: 1.5;
+}
+
+.case-viewer-section__empty {
+  padding: 20px;
+  font-size: 0.8125rem;
+  color: #94a3b8;
+  text-align: center;
+}
+
+@media (max-width: 960px) {
+  .case-viewer-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .case-viewer-list-card {
+    position: static;
+    max-height: 360px;
+  }
+
+  .case-viewer-profile__grid {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+@media (max-width: 560px) {
+  .case-viewer-profile__grid {
+    grid-template-columns: 1fr;
+  }
+
+  .case-viewer-profile__status {
+    margin-left: 0;
+  }
+}

@@ -1,0 +1,466 @@
+/**
+ * medConnect — Global responsive layer
+ * Load after design-system / dashboard / page-specific CSS.
+ */
+
+/* ── Base ── */
+html {
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+
+img,
+video,
+svg {
+  max-width: 100%;
+  height: auto;
+}
+
+/* ── Mobile nav toggle (hidden on desktop) ── */
+.mc-nav-toggle,
+.pd-hamburger {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  margin-right: 8px;
+  border: 1px solid var(--mc-border-thin, #e2edf1);
+  border-radius: 10px;
+  background: var(--mc-white, #fff);
+  color: var(--mc-aqua-medium, #018a93);
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: background 0.15s ease, border-color 0.15s ease;
+}
+
+.mc-nav-toggle:hover,
+.pd-hamburger:hover {
+  background: var(--mc-ice-blue, #f4f8fa);
+}
+
+.mc-nav-toggle[aria-expanded="true"],
+.pd-hamburger[aria-expanded="true"] {
+  background: var(--mc-ice-blue, #f4f8fa);
+  border-color: var(--mc-aqua-medium, #018a93);
+}
+
+/* Sidebar drawer backdrop */
+.mc-nav-backdrop {
+  display: none;
+  position: fixed;
+  inset: 0;
+  /* Must sit ABOVE page content but BELOW the fixed topbar + toggle button. */
+  z-index: 480;
+  background: rgba(1, 42, 74, 0.45);
+  backdrop-filter: blur(2px);
+  -webkit-backdrop-filter: blur(2px);
+}
+
+.mc-nav-backdrop.is-visible {
+  display: block;
+}
+
+body.mc-nav-open {
+  overflow: hidden;
+  touch-action: none;
+}
+
+/* ── Tables: horizontal scroll on small screens ── */
+.mc-table-wrap,
+.table-responsive,
+.adm-table-wrap,
+.pd-table-wrap {
+  width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.mc-table-wrap .mc-table,
+.table-responsive table {
+  min-width: 520px;
+}
+
+/* ── Forms & buttons ── */
+@media (max-width: 640px) {
+  .mc-btn,
+  .h-btn,
+  .session-btn,
+  .pd-btn {
+    min-height: 44px;
+  }
+
+  .flex-between {
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+
+  .mc-card-header {
+    flex-direction: column;
+    align-items: flex-start !important;
+    gap: 10px;
+  }
+
+  .greeting-banner {
+    flex-direction: column;
+    align-items: flex-start !important;
+    gap: 16px;
+    padding: 20px 18px !important;
+  }
+
+  .greeting-banner-id-group {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .content,
+  .main-content,
+  .pd-content,
+  .adm-content {
+    padding: 16px !important;
+  }
+
+  .topbar {
+    height: auto !important;
+    min-height: 64px;
+    padding: 10px 14px !important;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .topbar-left {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex: 1;
+    min-width: 0;
+  }
+
+  .topbar-title {
+    font-size: 1rem !important;
+    word-break: break-word;
+  }
+
+  .topbar-eyebrow {
+    font-size: 9px;
+  }
+
+  .topbar-right {
+    gap: 10px;
+  }
+
+  .pd-header {
+    flex-wrap: wrap;
+    gap: 10px;
+    padding: 10px 14px !important;
+    min-height: 64px;
+    height: auto !important;
+    overflow: visible;
+  }
+
+  .pd-header-title {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .pd-header-page {
+    font-size: 15px !important;
+    line-height: 1.25 !important;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .pd-header-date {
+    font-size: 11px;
+  }
+
+  .pd-header-right {
+    flex-shrink: 0;
+  }
+}
+
+/* ── Sidebar drawer: tablet & mobile ── */
+@media (max-width: 1024px) {
+  .mc-nav-toggle,
+  .pd-hamburger {
+    display: inline-flex;
+  }
+
+  .sidebar,
+  .sb-aqua,
+  .adm-sidebar,
+  .bhw-sidebar {
+    /* Keep the drawer above the backdrop overlay */
+    z-index: 520;
+    transform: translateX(-100%);
+    transition: transform 0.25s ease;
+    box-shadow: 4px 0 24px rgba(0, 0, 0, 0.15);
+  }
+
+  .sidebar.is-open,
+  .sb-aqua.is-open,
+  .adm-sidebar.is-open,
+  .bhw-sidebar.is-open {
+    transform: translateX(0);
+  }
+
+  .main,
+  .main-content,
+  .adm-main,
+  .has-aqua-sidebar,
+  .root-wrapper .main-content {
+    margin-left: 0 !important;
+    width: 100% !important;
+  }
+
+  .main-workspace {
+    margin-left: 0 !important;
+    width: 100% !important;
+    padding: 16px !important;
+  }
+
+  .topbar-datetime,
+  .pd-header-clock,
+  .pd-header-user-info,
+  .adm-topbar-datetime,
+  .adm-topbar-user-info {
+    display: none !important;
+  }
+}
+
+@media (max-width: 768px) {
+  :root {
+    --header-h: 64px;
+    --mc-fs-h1: 1.25rem;
+    --mc-fs-h2: 1.1rem;
+  }
+
+  .mc-btn {
+    white-space: normal;
+    text-align: center;
+  }
+
+  /* Stack inline flex rows in patient dashboard cards */
+  .view-container [style*="justify-content: space-between"] {
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+
+  .view-container [style*="display: flex"][style*="justify-content: space-between"] {
+    flex-direction: column;
+    align-items: flex-start !important;
+  }
+
+  .view-container [style*="text-align: right"] {
+    text-align: left !important;
+    width: 100%;
+  }
+
+  .view-container .mc-btn--primary,
+  .view-container a.mc-btn {
+    width: 100%;
+    justify-content: center;
+  }
+
+  /* BHW Bootstrap rows (non-dashboard pages) */
+  .bhw-body .portal-page-body:not(:has(#bhwMetricsRow)) .row {
+    --bs-gutter-x: 0.75rem;
+  }
+
+  .bhw-body .portal-page-body:not(:has(#bhwMetricsRow)) .bhw-metric-card {
+    flex-direction: column;
+    align-items: flex-start !important;
+    gap: 12px;
+  }
+
+  .bhw-body .portal-page-body:not(:has(#bhwMetricsRow)) .bhw-table {
+    display: block;
+    overflow-x: auto;
+    white-space: nowrap;
+  }
+}
+
+@media (max-width: 480px) {
+  .content,
+  .main-content,
+  .pd-content,
+  .adm-content {
+    padding: 12px !important;
+  }
+
+  .mc-card {
+    padding: 16px !important;
+  }
+
+  .adm-metrics {
+    grid-template-columns: 1fr !important;
+  }
+
+  .card-badges,
+  .trust-badge {
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+}
+
+/* ── Consultation session (provider) ── */
+@media (max-width: 1100px) {
+  .session-page {
+    grid-template-columns: 1fr !important;
+  }
+
+  .session-side {
+    order: 2;
+  }
+
+  .video-shell {
+    min-height: 220px !important;
+  }
+}
+
+@media (max-width: 640px) {
+  .session-card-header {
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+
+  .session-card-body {
+    padding: 14px !important;
+  }
+
+  .session-actions,
+  .session-toolbar {
+    flex-direction: column;
+    width: 100%;
+  }
+
+  .session-btn {
+    width: 100%;
+    justify-content: center;
+  }
+
+  #transcriptArea,
+  .session-transcript {
+    font-size: 13px;
+    min-height: 120px;
+  }
+}
+
+/* ── Video room ── */
+@media (max-width: 900px) {
+  .video-container {
+    grid-template-columns: 1fr !important;
+    height: auto !important;
+    min-height: 50vh;
+  }
+
+  .video-container video {
+    min-height: 200px;
+    max-height: 40vh;
+  }
+
+  .controls {
+    width: calc(100% - 24px);
+    padding: 12px 16px !important;
+    gap: 12px !important;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+
+  .btn-end {
+    width: 100% !important;
+    max-width: 200px;
+  }
+}
+
+/* ── Modals ── */
+@media (max-width: 640px) {
+  /* Patient pages: prevent header text clipping/overflow in cards/titles */
+  body.patient-portal .topbar,
+  body.patient-portal .portal-page-body,
+  body.patient-portal .patient-page {
+    max-width: 100%;
+    overflow-x: hidden;
+  }
+
+  body.patient-portal .mc-card,
+  body.patient-portal .adm-card,
+  body.patient-portal .patient-card,
+  body.patient-portal .patient-page * {
+    min-width: 0;
+  }
+
+  body.patient-portal h1,
+  body.patient-portal h2,
+  body.patient-portal h3,
+  body.patient-portal .title,
+  body.patient-portal .subtitle {
+    word-break: break-word;
+  }
+
+  .signin-modal-overlay,
+  #forgot-modal,
+  #announcement-modal {
+    padding: 12px !important;
+    align-items: flex-end !important;
+  }
+
+  .signin-modal-wrap .signin-card,
+  .ann-box,
+  #forgot-modal > div {
+    max-width: 100% !important;
+    width: 100% !important;
+    border-radius: 16px 16px 0 0 !important;
+    max-height: 92vh;
+    overflow-y: auto;
+  }
+
+  #logout-modal-box {
+    width: 100% !important;
+    max-width: 100% !important;
+    margin: 12px;
+    padding: 28px 20px !important;
+  }
+}
+
+/* ── Register / auth pages ── */
+@media (max-width: 768px) {
+  .reg-body .reg-layout,
+  .reg-container {
+    flex-direction: column !important;
+  }
+
+  .reg-panel-left,
+  .reg-panel-right {
+    width: 100% !important;
+    max-width: 100% !important;
+    min-height: auto !important;
+  }
+}
+
+/* ── Safe area (notched phones) ── */
+@supports (padding: max(0px)) {
+  .navbar,
+  .topbar,
+  .pd-header {
+    padding-left: max(16px, env(safe-area-inset-left));
+    padding-right: max(16px, env(safe-area-inset-right));
+  }
+
+  .controls {
+    bottom: max(20px, env(safe-area-inset-bottom));
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sidebar,
+  .sb-aqua,
+  .adm-sidebar,
+  .bhw-sidebar,
+  .mc-nav-backdrop {
+    transition: none !important;
+  }
+}

@@ -1,0 +1,213 @@
+/* BHW Triage & Book — compact layout */
+.bhw-triage-page {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(280px, 340px);
+  gap: 14px;
+  align-items: start;
+}
+
+@media (max-width: 992px) {
+  .bhw-triage-page {
+    grid-template-columns: 1fr;
+  }
+}
+
+.bhw-triage-main,
+.bhw-triage-aside {
+  background: #fff;
+  border: 1px solid var(--mc-border-thin, #e2edf1);
+  border-radius: 14px;
+  box-shadow: var(--mc-shadow-micro);
+}
+
+.bhw-triage-main {
+  padding: 16px 18px 14px;
+}
+
+.bhw-triage-aside {
+  padding: 14px 16px;
+  position: sticky;
+  top: calc(var(--mc-header-offset, 64px) + 12px);
+}
+
+.bhw-triage-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px 16px;
+  margin-bottom: 12px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--mc-border-thin, #e2edf1);
+}
+
+.bhw-triage-head h2 {
+  margin: 0;
+  font-size: 1.1rem;
+  font-weight: 800;
+  color: var(--bhw-navy, #012a4a);
+  line-height: 1.25;
+}
+
+.bhw-triage-head p {
+  margin: 4px 0 0;
+  font-size: 12px;
+  line-height: 1.45;
+  color: #64748b;
+  max-width: 56ch;
+}
+
+.bhw-triage-head__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+
+.bhw-triage-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px 12px;
+}
+
+.bhw-triage-grid .span-2 {
+  grid-column: 1 / -1;
+}
+
+.bhw-triage-field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.bhw-triage-field label {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: #64748b;
+  margin: 0;
+}
+
+.bhw-triage-field .form-control,
+.bhw-triage-field .form-select {
+  min-height: 36px;
+  padding: 7px 10px;
+  font-size: 13px;
+  font-weight: 500;
+  border-radius: 8px;
+}
+
+.bhw-triage-field textarea.form-control {
+  min-height: 64px;
+  resize: vertical;
+}
+
+.bhw-triage-consent {
+  grid-column: 1 / -1;
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1px solid rgba(6, 147, 150, 0.18);
+  background: rgba(244, 248, 250, 0.9);
+}
+
+.bhw-triage-consent .form-check {
+  margin: 0;
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+}
+
+.bhw-triage-consent .form-check-input {
+  margin-top: 2px;
+  flex-shrink: 0;
+}
+
+.bhw-triage-consent .form-check-label {
+  font-size: 12px;
+  line-height: 1.45;
+  color: #334155;
+}
+
+.bhw-triage-consent__note {
+  margin: 6px 0 0 24px;
+  font-size: 11px;
+  color: #94a3b8;
+}
+
+.bhw-triage-actions {
+  grid-column: 1 / -1;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding-top: 4px;
+}
+
+.bhw-triage-actions .bhw-btn-teal,
+.bhw-triage-actions .bhw-btn-outline {
+  min-height: 36px;
+  padding: 7px 14px;
+  font-size: 12px;
+}
+
+.bhw-triage-emergency {
+  margin-bottom: 10px;
+  padding: 8px 12px;
+  font-size: 12px;
+  border-radius: 8px;
+}
+
+.bhw-triage-aside__title {
+  margin: 0 0 8px;
+  font-size: 12px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--bhw-teal, #069396);
+}
+
+.bhw-triage-aside__placeholder {
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.5;
+  color: #94a3b8;
+}
+
+.bhw-triage-aside__out {
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.55;
+  white-space: pre-wrap;
+  color: #334155;
+  max-height: min(52vh, 420px);
+  overflow: auto;
+}
+
+.bhw-triage-aside__out.is-emergency {
+  color: #b91c1c;
+  font-weight: 600;
+}
+
+.bhw-triage-aside__tips {
+  margin-top: 12px;
+  padding-top: 10px;
+  border-top: 1px dashed var(--mc-border-thin, #e2edf1);
+}
+
+.bhw-triage-aside__tips li {
+  font-size: 11px;
+  line-height: 1.45;
+  color: #64748b;
+  margin-bottom: 4px;
+}
+
+@media (max-width: 576px) {
+  .bhw-triage-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .bhw-triage-main {
+    padding: 14px;
+  }
+}

@@ -1,0 +1,323 @@
+/* ── medConnect Patient — Contact & Address Update Form ── */
+
+.cuf-card {
+  background: #ffffff;
+  border-radius: var(--mc-r-lg);
+  border: 1px solid #e2e8f0;
+  border-top: 3px solid #0d9488;
+  box-shadow: var(--mc-shadow-sm);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+/* ── Header ── */
+.cuf-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 18px 22px;
+  border-bottom: 1px solid #f1f5f9;
+  gap: 12px;
+}
+
+.cuf-header-left {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+}
+
+.cuf-header-icon {
+  width: 38px;
+  height: 38px;
+  border-radius: var(--mc-r-sm);
+  background: #f0fdfa;
+  color: #0d9488;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.cuf-title {
+  font-size: 14.5px;
+  font-weight: 800;
+  color: #0f172a;
+  letter-spacing: -0.1px;
+  line-height: 1.2;
+}
+
+.cuf-sub {
+  font-size: 11px;
+  color: #94a3b8;
+  margin-top: 2px;
+}
+
+/* Editable badge */
+.cuf-editable-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 10.5px;
+  font-weight: 700;
+  color: #0d9488;
+  background: #f0fdfa;
+  border: 1px solid #99f6e4;
+  padding: 3px 9px 3px 7px;
+  border-radius: 20px;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+/* ── Flash alerts ── */
+.cuf-alert {
+  display: flex;
+  align-items: flex-start;
+  gap: 9px;
+  margin: 16px 22px 0;
+  padding: 11px 14px;
+  border-radius: var(--mc-r-sm);
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 1.5;
+}
+
+.cuf-alert svg { flex-shrink: 0; margin-top: 1px; }
+
+.cuf-alert--success {
+  background: #f0fdf4;
+  color: #15803d;
+  border: 1px solid #bbf7d0;
+}
+.cuf-alert--success svg { color: #22c55e; }
+
+.cuf-alert--error {
+  background: #fef2f2;
+  color: #dc2626;
+  border: 1px solid #fecaca;
+}
+.cuf-alert--error svg { color: #ef4444; }
+
+/* ── Form ── */
+.cuf-form {
+  padding: 20px 22px;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.cuf-form-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 18px;
+  margin-bottom: 22px;
+}
+
+/* ── Field ── */
+.cuf-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+/* ── Label ── */
+.cuf-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 11px;
+  font-weight: 700;
+  color: #475569;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  cursor: pointer;
+}
+
+.cuf-label svg { color: #94a3b8; flex-shrink: 0; }
+
+.cuf-required {
+  color: #ef4444;
+  font-size: 13px;
+  line-height: 1;
+  margin-left: 1px;
+}
+
+/* ── Input wrapper ── */
+.cuf-input-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+/* ── Input ── */
+.cuf-input {
+  width: 100%;
+  height: 42px;
+  padding: 0 14px;
+  font-size: 13.5px;
+  font-weight: 500;
+  color: #0f172a;
+  background: #f8fafc;
+  border: 1.5px solid #e2e8f0;
+  border-radius: var(--mc-r-sm);
+  outline: none;
+  transition: border-color 0.18s, background 0.18s, box-shadow 0.18s;
+  font-family: inherit;
+}
+
+.cuf-input::placeholder { color: #cbd5e1; font-weight: 400; }
+
+.cuf-input:focus {
+  background: #ffffff;
+  border-color: #0d9488;
+  box-shadow: 0 0 0 3px rgba(13, 148, 136, 0.12);
+}
+
+.cuf-input:hover:not(:focus):not(.cuf-input--readonly) {
+  border-color: #cbd5e1;
+  background: #ffffff;
+}
+
+/* Readonly / locked input */
+.cuf-input--readonly {
+  color: #94a3b8;
+  background: #f1f5f9;
+  cursor: not-allowed;
+  padding-right: 36px;
+}
+
+.cuf-input--readonly:focus {
+  border-color: #e2e8f0;
+  box-shadow: none;
+}
+
+/* Lock icon inside readonly input */
+.cuf-input-lock {
+  position: absolute;
+  right: 11px;
+  color: #cbd5e1;
+  display: flex;
+  align-items: center;
+  pointer-events: none;
+}
+
+/* ── Error state ── */
+.cuf-field--error .cuf-input {
+  border-color: #ef4444;
+  background: #fff5f5;
+}
+
+.cuf-field--error .cuf-input:focus {
+  border-color: #ef4444;
+  box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.1);
+}
+
+.cuf-field-error {
+  font-size: 11.5px;
+  color: #dc2626;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.cuf-field-error::before {
+  content: '';
+  display: inline-block;
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: #ef4444;
+  flex-shrink: 0;
+}
+
+/* ── Hint text ── */
+.cuf-field-hint {
+  font-size: 11px;
+  color: #94a3b8;
+  font-style: italic;
+}
+
+/* ── Actions row ── */
+.cuf-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding-top: 4px;
+}
+
+/* Submit button */
+.cuf-btn-submit {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  background: linear-gradient(135deg, #0d9488, #0ea5e9);
+  color: #ffffff;
+  border: none;
+  border-radius: var(--mc-r-sm);
+  font-size: 13px;
+  font-weight: 700;
+  padding: 10px 20px;
+  cursor: pointer;
+  box-shadow: 0 4px 14px rgba(13, 148, 136, 0.28);
+  transition: opacity 0.18s, transform 0.18s, box-shadow 0.18s;
+  font-family: inherit;
+}
+
+.cuf-btn-submit:hover {
+  opacity: 0.9;
+  transform: translateY(-1px);
+  box-shadow: 0 6px 20px rgba(13, 148, 136, 0.38);
+}
+
+.cuf-btn-submit:active { transform: translateY(0); opacity: 1; }
+
+/* Reset button */
+.cuf-btn-reset {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  background: #f8fafc;
+  color: #475569;
+  border: 1.5px solid #e2e8f0;
+  border-radius: var(--mc-r-sm);
+  font-size: 13px;
+  font-weight: 600;
+  padding: 10px 16px;
+  cursor: pointer;
+  transition: background 0.18s, border-color 0.18s, color 0.18s;
+  font-family: inherit;
+}
+
+.cuf-btn-reset:hover {
+  background: #f1f5f9;
+  border-color: #cbd5e1;
+  color: #0f172a;
+}
+
+/* ── Footer note ── */
+.cuf-footer {
+  display: flex;
+  align-items: flex-start;
+  gap: 7px;
+  padding: 13px 22px;
+  background: #f8fafc;
+  border-top: 1px solid #f1f5f9;
+  font-size: 11.5px;
+  color: #94a3b8;
+  line-height: 1.55;
+}
+
+.cuf-footer svg { flex-shrink: 0; margin-top: 1px; color: #0d9488; opacity: 0.6; }
+
+/* ── Responsive ── */
+@media (max-width: 640px) {
+  .cuf-form-grid { grid-template-columns: 1fr; gap: 14px; }
+  .cuf-header { padding: 14px 16px; }
+  .cuf-form  { padding: 16px; }
+  .cuf-footer { padding: 12px 16px; }
+  .cuf-alert { margin: 12px 16px 0; }
+  .cuf-actions { flex-direction: column; }
+  .cuf-btn-submit,
+  .cuf-btn-reset { width: 100%; justify-content: center; }
+}

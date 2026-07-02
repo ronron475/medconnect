@@ -1,0 +1,220 @@
+/* BHW Consultation Center */
+.bhw-cons-page {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.bhw-cons-hero {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 16px;
+}
+
+.bhw-cons-hero__title {
+  margin: 0 0 6px;
+  font-size: 1.35rem;
+  font-weight: 800;
+  color: var(--bhw-navy);
+}
+
+.bhw-cons-hero__sub {
+  margin: 0;
+  font-size: 14px;
+  color: #64748b;
+  max-width: 52ch;
+}
+
+.bhw-cons-sync {
+  font-size: 11px;
+  font-weight: 600;
+  color: #94a3b8;
+  white-space: nowrap;
+}
+
+.bhw-cons-metrics {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+}
+
+@media (max-width: 992px) {
+  .bhw-cons-metrics {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 480px) {
+  .bhw-cons-metrics {
+    grid-template-columns: 1fr;
+  }
+}
+
+.bhw-cons-metric {
+  background: #fff;
+  border: 1px solid var(--mc-border-thin);
+  border-radius: var(--bhw-radius, 14px);
+  padding: 16px 18px;
+  box-shadow: var(--mc-shadow-micro);
+}
+
+.bhw-cons-metric__label {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #94a3b8;
+  margin-bottom: 4px;
+}
+
+.bhw-cons-metric__val {
+  font-size: 1.65rem;
+  font-weight: 800;
+  color: var(--bhw-navy);
+  line-height: 1.1;
+}
+
+.bhw-cons-metric--active .bhw-cons-metric__val { color: #0369a1; }
+.bhw-cons-metric--live .bhw-cons-metric__val { color: var(--bhw-teal); }
+.bhw-cons-metric--done .bhw-cons-metric__val { color: #15803d; }
+
+.bhw-cons-panel {
+  background: #fff;
+  border: 1px solid var(--mc-border-thin);
+  border-radius: var(--bhw-radius, 14px);
+  box-shadow: var(--mc-shadow-micro);
+  overflow: hidden;
+}
+
+.bhw-cons-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  padding: 16px 18px;
+  border-bottom: 1px solid var(--mc-border-thin);
+  background: #f8fbff;
+}
+
+.bhw-cons-toolbar .form-control,
+.bhw-cons-toolbar .form-select {
+  min-height: 38px;
+  font-size: 13px;
+  font-weight: 600;
+  border-radius: 10px;
+}
+
+.bhw-cons-search-wrap {
+  flex: 1 1 200px;
+  max-width: 280px;
+  position: relative;
+}
+
+.bhw-cons-search-wrap svg {
+  position: absolute;
+  left: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #94a3b8;
+  pointer-events: none;
+}
+
+.bhw-cons-search-wrap input {
+  padding-left: 36px !important;
+}
+
+.bhw-cons-table-wrap {
+  padding: 0 8px 8px;
+  background: var(--bhw-canvas, #f4f8fa);
+}
+
+.bhw-cons-table .bhw-cons-row--live {
+  background: rgba(6, 147, 150, 0.04);
+}
+
+.bhw-cons-empty,
+.bhw-cons-error,
+.bhw-cons-loading {
+  text-align: center;
+  padding: 40px 20px !important;
+  color: #64748b;
+  font-size: 14px;
+}
+
+.bhw-cons-empty strong,
+.bhw-cons-error strong {
+  display: block;
+  color: var(--bhw-navy);
+  margin-bottom: 6px;
+}
+
+.bhw-cons-help {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+
+@media (max-width: 768px) {
+  .bhw-cons-help {
+    grid-template-columns: 1fr;
+  }
+}
+
+.bhw-cons-help__card {
+  background: #fff;
+  border: 1px solid var(--mc-border-thin);
+  border-radius: 12px;
+  padding: 14px 16px;
+}
+
+.bhw-cons-help__step {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: rgba(6, 147, 150, 0.12);
+  color: var(--bhw-teal);
+  font-size: 11px;
+  font-weight: 800;
+  margin-bottom: 8px;
+}
+
+.bhw-cons-help__title {
+  margin: 0 0 4px;
+  font-size: 13px;
+  font-weight: 800;
+  color: var(--bhw-navy);
+}
+
+.bhw-cons-help__text {
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.5;
+  color: #64748b;
+}
+
+.bhw-cons-action-muted {
+  font-size: 12px;
+  color: #94a3b8;
+  font-weight: 600;
+}
+
+.bhw-cons-spin {
+  display: inline-block;
+  width: 14px;
+  height: 14px;
+  border: 2px solid rgba(6, 147, 150, 0.25);
+  border-top-color: var(--bhw-teal);
+  border-radius: 50%;
+  animation: bhw-cons-spin 0.7s linear infinite;
+  vertical-align: -2px;
+  margin-right: 6px;
+}
+
+@keyframes bhw-cons-spin {
+  to { transform: rotate(360deg); }
+}
