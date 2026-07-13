@@ -15,7 +15,7 @@ if ($user_role === 'admin') {
 } elseif ($user_role === 'provider') {
     $breadcrumb = 'Clinical Portal';
 } elseif ($user_role === 'bhw') {
-    $breadcrumb = 'BHW Operations';
+    $breadcrumb = 'Barangay Health Operations';
 } else {
     $breadcrumb = 'Patient Care';
 }
@@ -26,13 +26,34 @@ require_once BASE_PATH . '/app/includes/profile_picture.php';
 
 $initials = profile_picture_initials($_SESSION['first_name'] ?? 'U', $_SESSION['last_name'] ?? '');
 $header_picture_url = profile_picture_public_url($_SESSION['profile_picture'] ?? null);
+  $full_name_header = trim(($_SESSION['first_name'] ?? '') . ' ' . ($_SESSION['last_name'] ?? ''));
+  if ($full_name_header === '') $full_name_header = 'User';
+  $portal_label = strtoupper($user_role ?: 'USER');
+  $member_since = '';
+  $raw_created = $_SESSION['created_at'] ?? $_SESSION['registered_at'] ?? $_SESSION['member_since'] ?? '';
+  if (!empty($raw_created)) {
+      try {
+          $dt = new DateTime((string) $raw_created);
+          $member_since = $dt->format('M. Y');
+      } catch (Throwable $e) {
+          $member_since = '';
+      }
+  }
 
 // Server-side seed for clock
 $today = date('F j, Y');
 $now   = date('h:i A');
 $header_date_caps = strtoupper(date('l, M j, Y'));
+$is_bhw_portal = $user_role === 'bhw';
+
+$profile_menu_href = ASSET_BASE . '/views/' . htmlspecialchars($user_role === 'provider' ? 'provider' : ($user_role === 'admin' ? 'admin' : ($user_role === 'superadmin' ? 'superadmin' : ($user_role === 'bhw' ? 'bhw' : 'patient')))) . '/profile.php';
+$settings_menu_href = ASSET_BASE . '/views/' . htmlspecialchars($user_role === 'provider' ? 'provider' : ($user_role === 'admin' ? 'admin' : ($user_role === 'superadmin' ? 'superadmin' : ($user_role === 'bhw' ? 'bhw' : 'patient')))) . '/settings.php';
+if ($is_bhw_portal) {
+    $profile_menu_href = ASSET_BASE . '/views/bhw/settings/profile.php';
+    $settings_menu_href = $profile_menu_href;
+}
 ?>
-<header class="topbar<?= $is_patient_portal ? ' topbar--clinical' : '' ?>">
+<header class="topbar<?= $is_patient_portal ? ' topbar--clinical' : '' ?><?= $is_bhw_portal ? ' topbar--bhw-formal' : '' ?>">
 
   <button type="button" class="mc-nav-toggle" id="mcNavToggle" aria-label="Open navigation menu" aria-expanded="false" aria-controls="app-sidebar">
     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
@@ -42,6 +63,11 @@ $header_date_caps = strtoupper(date('l, M j, Y'));
 
   <!-- ── Left: Date + page title (patient) or breadcrumb + title ── -->
   <div class="topbar-left">
+    <?php if (!$is_bhw_portal): ?>
+    <a class="topbar-brand" href="<?= ASSET_BASE ?>/views/<?= htmlspecialchars($user_role === 'provider' ? 'provider' : ($user_role === 'admin' ? 'admin' : ($user_role === 'superadmin' ? 'superadmin' : ($user_role === 'bhw' ? 'bhw' : 'patient'))) ) ?>/dashboard.php" aria-label="Home">
+      <img src="<?= ASSET_BASE ?>/assets/img/medcon_logo.png" alt="" class="topbar-brand__img"/>
+    </a>
+    <?php endif; ?>
     <?php if ($is_patient_portal): ?>
     <div class="topbar-title-block">
       <div class="topbar-eyebrow topbar-date-label"><?= htmlspecialchars($header_date_caps) ?></div>
@@ -49,7 +75,15 @@ $header_date_caps = strtoupper(date('l, M j, Y'));
     </div>
     <?php else: ?>
     <div class="topbar-title-block">
-      <div class="topbar-eyebrow"><?= htmlspecialchars($breadcrumb) ?></div>
+      <div class="topbar-eyebrow">
+        <?php if ($is_bhw_portal): ?>
+        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+             stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+        </svg>
+        <?php endif; ?>
+        <?= htmlspecialchars($breadcrumb) ?>
+      </div>
       <h1 class="topbar-title"><?= htmlspecialchars($page_title) ?></h1>
     </div>
     <?php endif; ?>
@@ -60,13 +94,16 @@ $header_date_caps = strtoupper(date('l, M j, Y'));
 
     <?php if (!$is_patient_portal): ?>
     <!-- Live Digital Clock -->
-    <div class="topbar-datetime">
+    <div class="topbar-datetime" aria-label="Current date and time">
       <span class="topbar-date" id="global-date"><?= $today ?></span>
+      <?php if ($is_bhw_portal): ?>
+      <span class="topbar-time-sep" aria-hidden="true">|</span>
+      <?php endif; ?>
       <span class="topbar-time" id="global-time"><?= $now ?></span>
     </div>
 
-    <!-- Thin vertical aqua separator rule -->
-    <div class="topbar-sep" aria-hidden="true"></div>
+    <!-- Thin vertical separator rule -->
+    <div class="topbar-sep<?= $is_bhw_portal ? ' topbar-divider' : '' ?>" aria-hidden="true"></div>
     <?php endif; ?>
 
     <?php require_once VIEWS_PATH . '/partials/theme_toggle.php'; ?>
@@ -77,8 +114,33 @@ $header_date_caps = strtoupper(date('l, M j, Y'));
     ?>
 
     <!-- Circular aqua user avatar badge -->
-    <div class="topbar-avatar" title="<?= $first . ' ' . $last ?>" data-profile-avatar-wrap>
+    <button type="button"
+            class="topbar-avatar"
+            title="<?= $first . ' ' . $last ?>"
+            data-profile-avatar-wrap
+            data-profile-menu-trigger="global"
+            aria-label="Open profile menu">
       <?= profile_picture_render($initials, $header_picture_url, '', 'sm') ?>
+    </button>
+
+    <div class="mc-profmenu" data-profile-menu="global" hidden>
+      <div class="mc-profmenu__hero">
+        <div class="mc-profmenu__seal">
+          <img src="<?= ASSET_BASE ?>/assets/img/medcon_logo.png" alt=""/>
+        </div>
+        <div class="mc-profmenu__name"><?= htmlspecialchars($full_name_header) ?></div>
+        <div class="mc-profmenu__meta">
+          <?= htmlspecialchars(ucfirst(strtolower($portal_label))) ?>
+          <?php if ($member_since !== ''): ?>
+            — Member since <?= htmlspecialchars($member_since) ?>
+          <?php endif; ?>
+        </div>
+      </div>
+      <div class="mc-profmenu__actions">
+        <a class="mc-profmenu__btn mc-profmenu__btn--primary" href="<?= $profile_menu_href ?>">My Profile</a>
+        <a class="mc-profmenu__btn" href="<?= $settings_menu_href ?>">Settings</a>
+        <button type="button" class="mc-profmenu__btn mc-profmenu__btn--danger" data-profmenu-logout>Sign out</button>
+      </div>
     </div>
 
     <!-- Minimal logout icon -->

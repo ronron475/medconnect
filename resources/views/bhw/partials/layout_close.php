@@ -17,8 +17,8 @@
   }
 })();
 </script>
-<script src="<?= ASSET_BASE ?>/assets/js/bhw-sidebar.js"></script>
 <?php require __DIR__ . '/feedback_modal.php'; ?>
+<?php require_once VIEWS_PATH . '/partials/theme_scripts.php'; ?>
 <script src="<?= ASSET_BASE ?>/assets/js/bhw-portal.js"></script>
 <?php if (!empty($bhw_extra_js) && is_array($bhw_extra_js)): ?>
 <?php foreach ($bhw_extra_js as $bhwJsSrc): ?>
@@ -30,6 +30,5 @@
 <?php endif; ?>
 <?php $responsive_scripts_only = true; require VIEWS_PATH . '/partials/responsive_assets.php'; ?>
 <?php $notification_scripts_only = true; require VIEWS_PATH . '/partials/notification_assets.php'; ?>
-<?php require_once VIEWS_PATH . '/partials/theme_scripts.php'; ?>
 </body>
 </html>

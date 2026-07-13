@@ -4,10 +4,11 @@
  */
 $active_page = 'dashboard';
 $page_title  = 'Clinical Dashboard';
-$page_styles = ['provider-dashboard-home.css'];
+$page_styles = ['provider-dashboard-home.css', 'provider_session_alert.css'];
 
 require __DIR__.'/partials/icons.php';
 require __DIR__.'/partials/data.php';
+require __DIR__.'/partials/queue_helpers.php';
 require __DIR__.'/partials/layout_open.php';
 
 $queue = $queue ?? [];
@@ -61,62 +62,55 @@ $last_name = $provider['last_name'] ?? 'Provider';
 <div class="prov-dash">
 
   <!-- Welcome -->
-  <section class="prov-dash-welcome">
+  <section class="prov-dash-welcome prov-dash-welcome--compact">
     <div class="prov-dash-welcome__left">
       <a href="<?= ASSET_BASE ?>/views/provider/settings.php" data-profile-avatar-wrap title="Profile settings" style="text-decoration:none;flex-shrink:0;">
-        <?= profile_picture_render($provider['initials'] ?? 'DR', $provider['picture_url'] ?? null, '', 'md') ?>
+        <?= profile_picture_render($provider['initials'] ?? 'DR', $provider['picture_url'] ?? null, '', 'sm') ?>
       </a>
-      <div>
+      <div class="prov-dash-welcome__text">
         <div class="prov-dash-welcome__eyebrow"><?= htmlspecialchars($greeting) ?>, Dr. <?= htmlspecialchars($last_name) ?></div>
-        <h2 class="prov-dash-welcome__title">Clinical Dashboard</h2>
+        <span class="prov-dash-staff-id">Staff ID: <strong>MC-<?= str_pad((string) $provider_id, 5, '0', STR_PAD_LEFT) ?></strong></span>
       </div>
     </div>
-    <div class="prov-dash-welcome__meta">
-      <span class="prov-dash-badge">Active Duty</span>
-      <span class="prov-dash-staff-id">Staff ID: <strong>MC-<?= str_pad((string) $provider_id, 5, '0', STR_PAD_LEFT) ?></strong></span>
-    </div>
+    <span class="prov-dash-badge">Active Duty</span>
   </section>
 
-  <div class="prov-dash-metrics">
-    <section class="prov-dash-stats" aria-label="Today's summary">
-      <div class="prov-dash-stat prov-dash-stat--ok">
-        <span class="prov-dash-stat__icon" aria-hidden="true">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/></svg>
-        </span>
-        <strong><?= (int) ($stats['appointments'] ?? 0) ?></strong>
-        <span>Today's Appointments</span>
-      </div>
-      <div class="prov-dash-stat prov-dash-stat--warn">
-        <span class="prov-dash-stat__icon" aria-hidden="true">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
-        </span>
-        <strong><?= (int) ($stats['pending'] ?? 0) ?></strong>
-        <span>Waiting in Queue</span>
-      </div>
-      <div class="prov-dash-stat">
-        <span class="prov-dash-stat__icon" aria-hidden="true">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
-        </span>
-        <strong><?= (int) ($stats['ongoing'] ?? 0) ?></strong>
-        <span>In Consultation</span>
-      </div>
-      <div class="prov-dash-stat">
-        <span class="prov-dash-stat__icon" aria-hidden="true">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
-        </span>
-        <strong><?= (int) ($stats['completed'] ?? 0) ?></strong>
-        <span>Completed This Month</span>
-      </div>
-    </section>
-
-    <section class="prov-dash-widget-strip" data-notif-widgets aria-label="Live operations summary">
-      <?php
-      $notif_widget_mode = 'strip';
-      $notif_widget_bare = true;
-      require VIEWS_PATH . '/partials/notification_widgets.php';
-      ?>
-    </section>
-  </div>
+  <section class="prov-dash-metrics prov-dash-metrics--unified" data-notif-widgets aria-label="Operations summary">
+    <div class="prov-dash-stat prov-dash-stat--ok">
+      <span class="prov-dash-stat__icon" aria-hidden="true">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/></svg>
+      </span>
+      <strong><?= (int) ($stats['appointments'] ?? 0) ?></strong>
+      <span>Today's Appointments</span>
+    </div>
+    <div class="prov-dash-stat prov-dash-stat--warn">
+      <span class="prov-dash-stat__icon" aria-hidden="true">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
+      </span>
+      <strong><?= (int) ($stats['pending'] ?? 0) ?></strong>
+      <span>Waiting in Queue</span>
+    </div>
+    <div class="prov-dash-stat">
+      <span class="prov-dash-stat__icon" aria-hidden="true">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+      </span>
+      <strong><?= (int) ($stats['ongoing'] ?? 0) ?></strong>
+      <span>In Consultation</span>
+    </div>
+    <div class="prov-dash-stat">
+      <span class="prov-dash-stat__icon" aria-hidden="true">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+      </span>
+      <strong><?= (int) ($stats['completed'] ?? 0) ?></strong>
+      <span>Completed (Month)</span>
+    </div>
+    <?php
+    $notif_widget_mode = 'strip';
+    $notif_widget_bare = true;
+    $notif_widget_exclude = ['today_appointments'];
+    require VIEWS_PATH . '/partials/notification_widgets.php';
+    ?>
+  </section>
 
   <div class="prov-dash-grid">
 
@@ -176,6 +170,13 @@ $last_name = $provider['last_name'] ?? 'Provider';
                 $urg_color = $is_urgent ? '#ef4444' : '#0369a1';
                 $sched_date = !empty($item['date']) ? date('M j, Y', strtotime($item['date'])) : 'Today';
                 $sched_time = !empty($item['time']) ? date('g:i A', strtotime($item['time'])) : '';
+                $session_access = queue_session_access([
+                    'status'       => $item['raw_status'] ?? 'pending',
+                    'consult_date' => $item['date'] ?? '',
+                    'consult_time' => $item['time'] ?? '',
+                    'slot_date'    => $item['slot_date'] ?? '',
+                    'slot_start'   => $item['slot_start'] ?? '',
+                ]);
               ?>
               <tr>
                 <td style="font-weight:700;"><?= htmlspecialchars($item['patient_name'] ?? 'Patient') ?></td>
@@ -192,9 +193,15 @@ $last_name = $provider['last_name'] ?? 'Provider';
                   <?php endif; ?>
                 </td>
                 <td>
+                  <?php if ($session_access['allowed']): ?>
                   <a href="<?= ASSET_BASE ?>/views/provider/consultation_session.php?id=<?= (int) ($item['id'] ?? 0) ?>" class="mc-btn mc-btn--primary" style="padding:4px 12px;font-size:10px;white-space:nowrap;">
                     Start Session
                   </a>
+                  <?php else: ?>
+                  <button type="button" class="mc-btn mc-btn--outline queue-open-session-blocked" style="padding:4px 12px;font-size:10px;white-space:nowrap;opacity:.65;" data-reason="<?= htmlspecialchars($session_access['reason'], ENT_QUOTES, 'UTF-8') ?>" title="<?= htmlspecialchars($session_access['reason'], ENT_QUOTES, 'UTF-8') ?>">
+                    Start Session
+                  </button>
+                  <?php endif; ?>
                 </td>
               </tr>
               <?php endforeach; ?>
@@ -269,6 +276,27 @@ $last_name = $provider['last_name'] ?? 'Provider';
 
       <section class="prov-dash-card">
         <div class="prov-dash-card__head">
+          <h3 class="prov-dash-card__title"><?= icon('activity') ?> Recent Activity</h3>
+        </div>
+        <?php if (empty($activity)): ?>
+        <p class="text-xs text-muted" style="text-align:center;padding:12px 0;margin:0;">No recent activity yet.</p>
+        <?php else: ?>
+        <div class="prov-activity-list">
+          <?php foreach ($activity as $act): ?>
+          <div class="prov-activity-item">
+            <span class="prov-activity-item__icon" aria-hidden="true"><?= icon((string) ($act['icon'] ?? 'activity')) ?></span>
+            <div class="prov-activity-item__body">
+              <div class="prov-activity-item__msg"><?= htmlspecialchars((string) ($act['msg'] ?? '')) ?></div>
+              <div class="prov-activity-item__time"><?= htmlspecialchars((string) ($act['time'] ?? '')) ?></div>
+            </div>
+          </div>
+          <?php endforeach; ?>
+        </div>
+        <?php endif; ?>
+      </section>
+
+      <section class="prov-dash-card">
+        <div class="prov-dash-card__head">
           <h3 class="prov-dash-card__title"><?= icon('video') ?> Session Recordings</h3>
         </div>
         <?php if (empty($recordings)): ?>
@@ -294,4 +322,6 @@ $last_name = $provider['last_name'] ?? 'Provider';
   </div>
 </div>
 
+<?php require __DIR__ . '/partials/session_schedule_modal.php'; ?>
+<script src="<?= ASSET_BASE ?>/assets/js/provider-session-alert.js"></script>
 <?php require __DIR__.'/partials/layout_close.php'; ?>

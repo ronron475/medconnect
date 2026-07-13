@@ -1,117 +1,402 @@
 /* ==========================================================================
-   MedConnect — Patient Messages (Responsive)
-   Desktop: two-panel layout
-   Mobile: list -> full-screen chat with back button
+   MedConnect — Patient Messages (reference two-pane chat UI)
+   Load AFTER patient-ui-system.css
    ========================================================================== */
 
-:root {
-  --msg-gap: 16px;
-  --msg-radius: 14px;
-  --msg-border: var(--mc-border-thin, #e2edf1);
-  --msg-bg: #fff;
-  --msg-canvas: var(--mc-ice-blue, #f4f8fa);
-  --msg-teal: var(--mc-aqua-medium, #018a93);
-  --msg-text: var(--mc-navy-dark, #012a4a);
-  --msg-muted: var(--mc-slate-muted, #608395);
+body.patient-portal .portal-page-body:has(.messages-page) {
+  padding-bottom: 12px;
 }
 
-/* Root shell */
-body.patient-portal .messages-shell {
-  display: grid;
-  grid-template-columns: minmax(280px, 360px) 1fr;
-  gap: var(--msg-gap);
+body.patient-portal .messages-page {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
   width: 100%;
-  max-width: 1200px;
-  margin: 0 auto;
+  max-width: 100%;
+  margin: 0;
   min-height: 0;
 }
 
-/* Panels */
-body.patient-portal .msg-panel {
-  background: var(--msg-bg);
-  border: 1px solid var(--msg-border);
-  border-radius: var(--msg-radius);
-  box-shadow: var(--mc-shadow-micro, 0 4px 20px rgba(1, 42, 74, 0.06));
-  min-width: 0;
+body.patient-portal .messages-page-head {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 12px;
   min-height: 0;
+}
+
+/* Inbox / Archived / All tabs */
+body.patient-portal .mc-msg-filters {
+  display: flex;
+  gap: 10px;
+  margin-top: -4px;
+}
+body.patient-portal .mc-msg-filter {
+  display: inline-flex;
+  align-items: center;
+  padding: 7px 10px;
+  border-radius: 999px;
+  border: 1px solid rgba(15, 23, 42, 0.12);
+  text-decoration: none;
+  color: #64748b;
+  font-size: 12px;
+  font-weight: 900;
+  transition: 0.15s ease;
+}
+body.patient-portal .mc-msg-filter:hover {
+  transform: translateY(-1px);
+  border-color: rgba(1, 138, 147, 0.35);
+}
+body.patient-portal .mc-msg-filter.is-active {
+  background: rgba(1, 138, 147, 0.10);
+  border-color: rgba(1, 138, 147, 0.28);
+  color: #018a93;
+}
+
+body.patient-portal .messages-page-title {
+  margin: 0;
+  font-size: 1.125rem;
+  font-weight: 800;
+  color: var(--mc-navy-dark, #012a4a);
+  letter-spacing: -0.02em;
+}
+
+body.patient-portal .messages-page-count {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--mc-slate-muted, #608395);
+}
+
+/* Two-pane shell — 30% / 70% */
+body.patient-portal .messages-shell {
+  display: grid !important;
+  grid-template-columns: minmax(240px, 30%) minmax(0, 1fr) !important;
+  gap: 0;
+  width: 100%;
+  max-width: 100%;
+  margin: 0;
+  height: calc(100vh - var(--mc-header-offset, 64px) - 56px);
+  min-height: 520px;
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  box-shadow: 0 4px 24px rgba(15, 23, 42, 0.06);
+  overflow: hidden;
+}
+
+body.patient-portal .msg-panel {
+  background: #fff;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
   overflow: hidden;
   display: flex;
   flex-direction: column;
+  min-height: 0;
 }
 
-/* Sticky-ish headers inside panels */
-body.patient-portal .msg-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 10px;
-  padding: 14px 16px;
-  border-bottom: 1px solid var(--msg-border);
+body.patient-portal .msg-panel--list {
+  border-right: 1px solid #e2e8f0;
+}
+
+/* Search */
+body.patient-portal .msg-sidebar-top {
+  padding: 12px;
+  border-bottom: 1px solid #e2e8f0;
+  flex-shrink: 0;
+}
+
+body.patient-portal .msg-search-wrap {
+  position: relative;
+}
+
+body.patient-portal .msg-search-wrap .msg-search-icon {
+  position: absolute;
+  left: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #64748b;
+  pointer-events: none;
+  display: inline-flex;
+}
+
+body.patient-portal .msg-search-wrap input {
+  width: 100%;
+  height: 36px;
+  border: 1px solid #e2e8f0;
+  border-radius: 999px;
+  background: #f8fafc;
+  color: #0f172a;
+  padding: 0 12px 0 36px;
+  font: inherit;
+  font-size: 13px;
+  outline: none;
+}
+
+body.patient-portal .msg-search-wrap input:focus {
+  border-color: rgba(1, 138, 147, 0.45);
   background: #fff;
-  min-height: 56px;
-}
-
-body.patient-portal .msg-title {
-  font-size: 15px;
-  font-weight: 900;
-  color: var(--msg-text);
-  letter-spacing: -0.01em;
-}
-
-body.patient-portal .msg-count {
-  font-size: 12px;
-  font-weight: 800;
-  color: var(--msg-muted);
+  box-shadow: 0 0 0 3px rgba(1, 138, 147, 0.1);
 }
 
 /* Conversation list */
 body.patient-portal .msg-list {
-  display: flex;
-  flex-direction: column;
-  overflow: auto;
+  flex: 1;
+  overflow-y: auto;
   -webkit-overflow-scrolling: touch;
 }
 
 body.patient-portal .msg-list-empty {
   padding: 16px;
-  color: var(--msg-muted);
-  font-weight: 700;
+  color: #64748b;
   font-size: 13px;
+  font-weight: 600;
 }
 
 body.patient-portal .msg-item {
   width: 100%;
   border: 0;
-  background: transparent;
-  text-align: left;
+  border-bottom: 1px solid #f1f5f9;
+  background: #fff;
+  padding: 10px 12px;
   display: grid;
-  grid-template-columns: 40px 1fr auto;
-  gap: 12px;
-  padding: 12px 14px;
-  border-bottom: 1px solid rgba(226, 237, 241, 0.75);
+  grid-template-columns: 40px minmax(0, 1fr) auto;
+  gap: 10px;
+  align-items: center;
+  text-align: left;
   cursor: pointer;
-  min-height: 64px;
+  transition: background 0.15s ease;
 }
 
-body.patient-portal .msg-item:last-child {
-  border-bottom: 0;
+body.patient-portal .msg-item.is-unread .msg-name,
+body.patient-portal .msg-item.is-unread .msg-preview {
+  font-weight: 900;
+  color: #0f172a;
+}
+
+body.patient-portal .msg-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+body.patient-portal .msg-unread-badge {
+  min-width: 20px;
+  height: 20px;
+  padding: 0 6px;
+  border-radius: 999px;
+  background: #dc2626;
+  color: #fff;
+  font-size: 11px;
+  font-weight: 900;
+  line-height: 20px;
+  text-align: center;
+}
+
+body.patient-portal .msg-kebab {
+  width: 28px;
+  height: 28px;
+  border-radius: 10px;
+  border: 1px solid rgba(15, 23, 42, 0.10);
+  background: #fff;
+  color: #0f172a;
+  font-weight: 900;
+  cursor: pointer;
+  transition: 0.15s ease;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+body.patient-portal .msg-kebab:hover {
+  background: #f8fafc;
+  transform: translateY(-1px);
+}
+
+body.patient-portal .msg-kebab__dots {
+  width: 4px;
+  height: 4px;
+  border-radius: 999px;
+  background: #0f172a;
+  box-shadow: 0 -6px 0 #0f172a, 0 6px 0 #0f172a;
+  opacity: 0.75;
+}
+
+/* Busy row state */
+body.patient-portal .msg-item[data-thread-busy="1"] {
+  opacity: 0.65;
+  pointer-events: none;
+}
+
+/* Re-insert animation (Undo) */
+body.patient-portal .msg-item.mc-row-reinsert {
+  animation: mcRowReinsert 220ms ease-out both;
+}
+@keyframes mcRowReinsert {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* Toast */
+.mc-toast-root {
+  position: fixed;
+  left: 50%;
+  bottom: calc(18px + env(safe-area-inset-bottom, 0px));
+  transform: translateX(-50%);
+  z-index: 100070;
+  width: min(560px, calc(100vw - 24px));
+}
+
+.mc-toast {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  background: rgba(15, 23, 42, 0.96);
+  color: #fff;
+  border: 1px solid rgba(255,255,255,0.10);
+  border-radius: 16px;
+  padding: 12px 12px;
+  box-shadow: 0 18px 52px rgba(2, 6, 23, 0.35);
+}
+
+.mc-toast__msg {
+  font-size: 13px;
+  font-weight: 800;
+  line-height: 1.35;
+}
+
+.mc-toast__actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.mc-toast__btn {
+  border: 1px solid rgba(255,255,255,0.16);
+  background: rgba(255,255,255,0.08);
+  color: #fff;
+  font-weight: 900;
+  font-size: 12px;
+  padding: 7px 10px;
+  border-radius: 999px;
+  cursor: pointer;
+}
+
+.mc-toast__btn:hover { background: rgba(255,255,255,0.14); }
+.mc-toast__btn--ghost { width: 34px; height: 34px; padding: 0; border-radius: 12px; font-size: 18px; line-height: 1; }
+.mc-toast__btn:focus-visible { outline: 3px solid rgba(1,138,147,0.35); outline-offset: 2px; }
+
+/* Confirm modal */
+.mc-confirm-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(2, 6, 23, 0.55);
+  backdrop-filter: blur(3px);
+  z-index: 100060;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 18px;
+}
+
+.mc-confirm {
+  width: 420px;
+  max-width: 100%;
+  background: #fff;
+  border: 1px solid rgba(15, 23, 42, 0.12);
+  border-radius: 16px;
+  box-shadow: 0 24px 64px rgba(2, 6, 23, 0.35);
+  padding: 16px 16px 14px;
+}
+
+.mc-confirm__title {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 900;
+  color: #0f172a;
+}
+
+.mc-confirm__desc {
+  margin: 8px 0 0;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: #475569;
+  line-height: 1.45;
+}
+
+.mc-confirm__actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 14px;
+}
+
+.mc-confirm__btn {
+  border-radius: 12px;
+  padding: 9px 12px;
+  font-size: 12px;
+  font-weight: 900;
+  cursor: pointer;
+  border: 1px solid rgba(15, 23, 42, 0.12);
+  background: #fff;
+  color: #0f172a;
+}
+
+.mc-confirm__btn:hover { background: #f8fafc; }
+.mc-confirm__btn--danger {
+  border: none;
+  background: #dc2626;
+  color: #fff;
+}
+.mc-confirm__btn--danger:hover { background: #b91c1c; }
+.mc-confirm__btn:focus-visible { outline: 3px solid rgba(1,138,147,0.25); outline-offset: 2px; }
+
+/* Thread menu popover */
+.mc-threadmenu {
+  width: 190px;
+  background: #ffffff;
+  border: 1px solid rgba(15, 23, 42, 0.12);
+  border-radius: 14px;
+  box-shadow: 0 18px 48px rgba(15, 23, 42, 0.18);
+  overflow: hidden;
+}
+.mc-threadmenu__item {
+  width: 100%;
+  text-align: left;
+  padding: 10px 12px;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 800;
+  color: #0f172a;
+}
+.mc-threadmenu__item:hover { background: #f8fafc; }
+.mc-threadmenu__item:focus-visible { outline: 3px solid rgba(1, 138, 147, 0.25); outline-offset: -3px; }
+.mc-threadmenu__item--danger { color: #dc2626; }
+.mc-threadmenu__item--danger:hover { background: #fef2f2; }
+
+body.patient-portal .msg-item:hover {
+  background: #f8fafc;
 }
 
 body.patient-portal .msg-item.active {
-  background: rgba(1, 138, 147, 0.06);
+  background: #eef6ff;
+  box-shadow: inset 3px 0 0 #3b82f6;
 }
 
 body.patient-portal .msg-avatar {
   width: 40px;
   height: 40px;
-  border-radius: 12px;
+  border-radius: 50%;
   background: rgba(1, 138, 147, 0.12);
-  color: var(--msg-teal);
-  display: inline-flex;
+  color: #018a93;
+  display: flex;
   align-items: center;
   justify-content: center;
-  font-weight: 900;
   font-size: 12px;
+  font-weight: 800;
   flex-shrink: 0;
 }
 
@@ -119,242 +404,362 @@ body.patient-portal .msg-item-body {
   min-width: 0;
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 2px;
 }
 
 body.patient-portal .msg-name-row {
   display: flex;
-  align-items: baseline;
+  align-items: center;
   justify-content: space-between;
-  gap: 10px;
+  gap: 8px;
   min-width: 0;
 }
 
 body.patient-portal .msg-name {
-  font-size: 13.5px;
-  font-weight: 900;
-  color: var(--msg-text);
-  min-width: 0;
+  color: #0f172a;
+  font-size: 13px;
+  font-weight: 800;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
 body.patient-portal .msg-time {
+  color: #64748b;
   font-size: 11px;
-  font-weight: 800;
-  color: var(--msg-muted);
-  flex-shrink: 0;
+  font-weight: 600;
+  white-space: nowrap;
 }
 
 body.patient-portal .msg-preview {
-  font-size: 12.5px;
-  font-weight: 700;
-  color: var(--msg-muted);
-  min-width: 0;
+  color: #64748b;
+  font-size: 12px;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
-/* Status pill */
 body.patient-portal .msg-status-pill {
-  align-self: start;
-  font-size: 10px;
-  font-weight: 900;
+  align-self: center;
+  font-size: 9px;
+  font-weight: 800;
   letter-spacing: 0.04em;
   text-transform: uppercase;
-  padding: 6px 10px;
+  padding: 4px 8px;
   border-radius: 999px;
   border: 1px solid rgba(1, 138, 147, 0.18);
-  color: var(--msg-teal);
+  color: #018a93;
   background: rgba(1, 138, 147, 0.08);
   white-space: nowrap;
 }
 
-body.patient-portal .msg-status-pill--completed { background: rgba(22, 163, 74, 0.10); border-color: rgba(22, 163, 74, 0.20); color: #16a34a; }
-body.patient-portal .msg-status-pill--cancelled { background: rgba(220, 38, 38, 0.08); border-color: rgba(220, 38, 38, 0.18); color: #dc2626; }
-body.patient-portal .msg-status-pill--pending,
-body.patient-portal .msg-status-pill--scheduled { background: rgba(2, 132, 199, 0.08); border-color: rgba(2, 132, 199, 0.18); color: #0284c7; }
-
-/* Thread header */
-body.patient-portal .msg-thread-head {
-  justify-content: flex-start;
+body.patient-portal .msg-status-pill--completed {
+  background: rgba(22, 163, 74, 0.1);
+  border-color: rgba(22, 163, 74, 0.2);
+  color: #16a34a;
 }
 
-body.patient-portal .msg-thread-head-main {
+body.patient-portal .msg-status-pill--cancelled {
+  background: rgba(220, 38, 38, 0.08);
+  border-color: rgba(220, 38, 38, 0.18);
+  color: #dc2626;
+}
+
+body.patient-portal .msg-status-pill--pending,
+body.patient-portal .msg-status-pill--scheduled,
+body.patient-portal .msg-status-pill--in_consultation {
+  background: rgba(2, 132, 199, 0.08);
+  border-color: rgba(2, 132, 199, 0.18);
+  color: #0284c7;
+}
+
+/* Thread header */
+body.patient-portal .msg-thread-header {
   display: flex;
   align-items: center;
+  justify-content: space-between;
   gap: 12px;
+  padding: 10px 14px;
+  border-bottom: 1px solid #e2e8f0;
+  background: #fff;
+  flex-shrink: 0;
+  min-height: 56px;
+}
+
+body.patient-portal .msg-thread-header-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
   min-width: 0;
-  width: 100%;
+}
+
+body.patient-portal .msg-thread-header-left .msg-avatar {
+  width: 38px;
+  height: 38px;
 }
 
 body.patient-portal .msg-thread-head-text {
   min-width: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
 }
 
 body.patient-portal .msg-thread-meta {
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
   align-items: center;
-  min-width: 0;
+  gap: 8px;
+  margin-top: 2px;
 }
 
 body.patient-portal .msg-thread-meta > span:first-child {
-  color: var(--msg-muted);
-  font-size: 12px;
-  font-weight: 700;
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  max-width: 46vw;
+  font-size: 11px;
+  font-weight: 600;
+  color: #64748b;
 }
 
-/* Thread body + composer */
+body.patient-portal .msg-presence {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 2px;
+  font-size: 11px;
+  font-weight: 600;
+  color: #64748b;
+}
+
+body.patient-portal .msg-presence-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #94a3b8;
+}
+
+body.patient-portal .msg-presence.is-online .msg-presence-dot {
+  background: #22c55e;
+  box-shadow: 0 0 0 2px rgba(34, 197, 94, 0.2);
+}
+
+body.patient-portal .msg-presence.is-online {
+  color: #16a34a;
+}
+
+/* Thread body */
 body.patient-portal .thread-body {
   flex: 1;
+  overflow-y: auto;
+  padding: 14px 16px;
+  background: #f8fafc;
   min-height: 0;
-  overflow: auto;
-  -webkit-overflow-scrolling: touch;
-  padding: 14px 14px 10px;
-  background: var(--msg-canvas);
 }
 
-body.patient-portal .composer {
-  display: grid;
-  grid-template-columns: 1fr auto;
-  gap: 10px;
-  padding: 12px 14px;
-  border-top: 1px solid var(--msg-border);
-  background: #fff;
+body.patient-portal .msg-thread-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 200px;
+  color: #64748b;
+  text-align: center;
 }
 
-body.patient-portal .composer input {
-  width: 100%;
-  height: 44px;
-  border-radius: 12px;
-  border: 1px solid var(--msg-border);
-  background: #fff;
-  padding: 0 12px;
+body.patient-portal .msg-thread-empty[hidden] {
+  display: none !important;
+}
+
+body.patient-portal .msg-thread-empty p {
+  margin: 0;
   font-size: 14px;
-  font-weight: 700;
-  color: var(--msg-text);
+  font-weight: 800;
+  color: #0f172a;
 }
 
-body.patient-portal .composer input:focus {
-  outline: none;
-  border-color: rgba(1, 138, 147, 0.45);
-  box-shadow: 0 0 0 4px rgba(1, 138, 147, 0.10);
+body.patient-portal .msg-thread-empty span {
+  font-size: 12px;
 }
 
-body.patient-portal .msg-action {
-  height: 44px;
-  min-width: 88px;
-  border-radius: 12px;
-  border: 0;
-  background: var(--msg-teal);
-  color: #fff;
-  font-weight: 900;
-  font-size: 13px;
-  cursor: pointer;
-}
-
-body.patient-portal .msg-action:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
-}
-
-/* Bubble layout helpers (existing HTML uses .bubble-row/.bubble-time) */
 body.patient-portal .bubble-row {
   display: flex;
-  gap: 10px;
+  gap: 8px;
   align-items: flex-end;
-  margin-bottom: 10px;
+  margin-bottom: 12px;
 }
 
 body.patient-portal .bubble-row.mine {
   flex-direction: row-reverse;
 }
 
+body.patient-portal .bubble-row .msg-avatar {
+  width: 32px;
+  height: 32px;
+  font-size: 10px;
+}
+
+body.patient-portal .bubble {
+  max-width: 72%;
+  border-radius: 12px;
+  padding: 10px 12px;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+body.patient-portal .bubble.provider,
+body.patient-portal .bubble.patient {
+  background: #f1f5f9;
+  border: 0;
+  color: #0f172a;
+  border-bottom-left-radius: 4px;
+}
+
+body.patient-portal .bubble.mine {
+  background: #dbeafe;
+  border: 0;
+  color: #0f172a;
+  border-bottom-right-radius: 4px;
+}
+
 body.patient-portal .bubble-time {
   margin-top: 4px;
-  font-size: 11px;
-  font-weight: 800;
-  color: var(--msg-muted);
+  font-size: 10px;
+  font-weight: 600;
+  color: #64748b;
 }
 
-/* Mobile: single-panel app-like flow (force override so it never "shrinks desktop") */
-@media (max-width: 767.98px) {
-  body.patient-portal .messages-shell {
-    display: block !important;
-    max-width: 100% !important;
-    margin: 0 auto;
-  }
-
-  body.patient-portal .messages-shell .msg-panel {
-    border-radius: 16px;
-  }
-
-  /* Only one "screen" visible at a time */
-  body.patient-portal .messages-shell:not(.is-thread-open) .msg-panel--thread {
-    display: none !important;
-  }
-  body.patient-portal .messages-shell.is-thread-open .msg-panel--list {
-    display: none !important;
-  }
-
-  body.patient-portal .messages-shell .msg-panel--list,
-  body.patient-portal .messages-shell .msg-panel--thread {
-    width: 100% !important;
-    height: calc(100svh - var(--portal-header-h, 64px) - 24px) !important;
-  }
-
-  /* Back button */
-  body.patient-portal .msg-back {
-    display: inline-flex !important;
-  }
-
-  body.patient-portal .msg-thread-meta > span:first-child {
-    max-width: 60vw;
-  }
-}
-
-/* Tablet: keep two panels but give thread more room */
-@media (min-width: 768px) and (max-width: 1023px) {
-  body.patient-portal .messages-shell {
-    grid-template-columns: minmax(240px, 320px) 1fr;
-  }
-}
-
-/* Back button (hidden by default) */
-body.patient-portal .msg-back {
-  display: none;
-  align-items: center;
-  justify-content: center;
-  width: 40px;
-  height: 40px;
-  border-radius: 12px;
-  border: 1px solid var(--msg-border);
+/* Composer */
+body.patient-portal .composer {
+  padding: 10px 14px;
+  border-top: 1px solid #e2e8f0;
   background: #fff;
-  color: var(--msg-teal);
+  flex-shrink: 0;
+}
+
+body.patient-portal .composer-inner {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  border: 1px solid #e2e8f0;
+  border-radius: 999px;
+  padding: 4px 6px 4px 14px;
+  background: #f8fafc;
+}
+
+body.patient-portal .composer input {
+  flex: 1;
+  height: 36px;
+  border: 0;
+  background: transparent;
+  padding: 0;
+  font: inherit;
+  font-size: 13px;
+  color: #0f172a;
+  outline: none;
+}
+
+body.patient-portal .composer .msg-send-btn {
+  height: 32px;
+  min-width: 72px;
+  border-radius: 999px;
+  border: 0;
+  background: #018a93;
+  color: #fff;
+  padding: 0 14px;
+  font-size: 12px;
+  font-weight: 800;
   cursor: pointer;
   flex-shrink: 0;
 }
 
-body.patient-portal .msg-back:active {
-  transform: translateY(0.5px);
+body.patient-portal .composer .msg-send-btn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
 }
 
-@media (prefers-reduced-motion: reduce) {
-  body.patient-portal .msg-panel,
+/* Alerts */
+body.patient-portal .msg-alert {
+  display: none;
+  padding: 8px 14px;
+  font-size: 12px;
+  font-weight: 700;
+  border-bottom: 1px solid transparent;
+}
+
+body.patient-portal .msg-alert.show {
+  display: block;
+}
+
+body.patient-portal .msg-alert.error {
+  background: #fef2f2;
+  color: #991b1b;
+  border-bottom-color: #fecaca;
+}
+
+body.patient-portal .msg-alert.success {
+  background: #ecfdf5;
+  color: #047857;
+  border-bottom-color: #a7f3d0;
+}
+
+/* Mobile back */
+body.patient-portal .msg-back {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  border: 1px solid #e2e8f0;
+  background: #fff;
+  color: #018a93;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+/* Mobile: single panel toggle */
+@media (max-width: 767.98px) {
+  body.patient-portal .messages-shell {
+    display: block !important;
+    height: calc(100svh - var(--mc-header-offset, 64px) - 48px);
+  }
+
+  body.patient-portal .messages-shell:not(.is-thread-open) .msg-panel--thread {
+    display: none;
+  }
+
+  body.patient-portal .messages-shell.is-thread-open .msg-panel--list {
+    display: none;
+  }
+
+  body.patient-portal .msg-panel--list,
+  body.patient-portal .msg-panel--thread {
+    height: 100%;
+  }
+
+  body.patient-portal .msg-panel--list {
+    border-right: 0;
+  }
+
+  body.patient-portal .msg-back {
+    display: inline-flex;
+  }
+
+  body.patient-portal .msg-status-pill {
+    display: none;
+  }
+
   body.patient-portal .msg-item {
-    transition: none !important;
+    grid-template-columns: 40px minmax(0, 1fr);
+  }
+
+  body.patient-portal .bubble {
+    max-width: 85%;
   }
 }
 
+@media (min-width: 768px) {
+  body.patient-portal .messages-shell.is-thread-open .msg-panel--list {
+    display: flex !important;
+  }
+
+  body.patient-portal .messages-shell.is-thread-open .msg-panel--thread {
+    display: flex !important;
+  }
+}

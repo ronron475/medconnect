@@ -10,9 +10,40 @@ final class AiServiceLauncher
     private const HEALTH_WAIT_ITERATIONS = 12;
     private const HEALTH_WAIT_SLEEP_US = 500000;
     private const LOG_FILE = 'storage/logs/ai_service.log';
+    private const DIAGNOSTICS_CACHE_TTL_SEC = 10;
+
+    /** @var array<string, mixed>|null */
+    private static ?array $diagnosticsCache = null;
+    private static int $diagnosticsCacheAt = 0;
+    private static ?string $resolvedPython = null;
+    private static bool $pythonResolved = false;
+    private static ?bool $venvRapidfuzz = null;
+
+    public static function invalidateDiagnosticsCache(): void
+    {
+        self::$diagnosticsCache = null;
+        self::$diagnosticsCacheAt = 0;
+    }
 
     /** @return array<string, mixed> */
     public static function diagnostics(): array
+    {
+        if (
+            self::$diagnosticsCache !== null
+            && (time() - self::$diagnosticsCacheAt) < self::DIAGNOSTICS_CACHE_TTL_SEC
+        ) {
+            return self::$diagnosticsCache;
+        }
+
+        $result = self::buildDiagnostics();
+        self::$diagnosticsCache = $result;
+        self::$diagnosticsCacheAt = time();
+
+        return $result;
+    }
+
+    /** @return array<string, mixed> */
+    private static function buildDiagnostics(): array
     {
         if (!AI_SERVICE_ENABLED) {
             return [
@@ -113,6 +144,8 @@ final class AiServiceLauncher
         }
 
         @touch($lockFile);
+
+        self::invalidateDiagnosticsCache();
 
         $python = self::resolvePythonExecutable();
         if ($python === null) {
@@ -238,6 +271,11 @@ final class AiServiceLauncher
 
     public static function resolvePythonExecutable(): ?string
     {
+        if (self::$pythonResolved) {
+            return self::$resolvedPython;
+        }
+        self::$pythonResolved = true;
+
         $candidates = [
             BASE_PATH . '/ai_service/.venv/Scripts/python.exe',
             'C:/Users/Lenovo/AppData/Local/Programs/Python/Python311/python.exe',
@@ -246,7 +284,8 @@ final class AiServiceLauncher
 
         foreach ($candidates as $path) {
             if (self::pythonExecutableWorks($path)) {
-                return $path;
+                self::$resolvedPython = $path;
+                return self::$resolvedPython;
             }
         }
 
@@ -256,7 +295,8 @@ final class AiServiceLauncher
             $code = 0;
             @exec('cmd /c "' . str_replace('/', '\\', $resolver) . '" 2>nul', $out, $code);
             if ($code === 0 && isset($out[0]) && self::pythonExecutableWorks(trim($out[0]))) {
-                return trim($out[0]);
+                self::$resolvedPython = trim($out[0]);
+                return self::$resolvedPython;
             }
         }
 
@@ -265,10 +305,12 @@ final class AiServiceLauncher
             $code = 0;
             @exec($cmd . ' 2>nul', $out, $code);
             if ($code === 0 && isset($out[0]) && self::pythonExecutableWorks(trim($out[0]))) {
-                return trim($out[0]);
+                self::$resolvedPython = trim($out[0]);
+                return self::$resolvedPython;
             }
         }
 
+        self::$resolvedPython = null;
         return null;
     }
 
@@ -290,11 +332,15 @@ final class AiServiceLauncher
         if ($python === null) {
             return false;
         }
+        if (self::$venvRapidfuzz !== null) {
+            return self::$venvRapidfuzz;
+        }
         $out = [];
         $code = 0;
         @exec('"' . str_replace('/', '\\', $python) . '" -c "import rapidfuzz" 2>nul', $out, $code);
 
-        return $code === 0;
+        self::$venvRapidfuzz = ($code === 0);
+        return self::$venvRapidfuzz;
     }
 
     private static function startBackgroundProcess(string $python): bool

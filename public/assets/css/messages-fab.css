@@ -1,0 +1,208 @@
+/**
+ * medConnect — Floating Messages quick-access FAB
+ * Patient & provider authenticated portal pages.
+ */
+
+:root {
+  --mc-messages-fab-size: 56px;
+  --mc-messages-fab-bg: #0097a7;
+  --mc-messages-fab-bg-hover: #00838f;
+  --mc-messages-fab-right: 24px;
+  --mc-messages-fab-bottom: 95px;
+  /* Keep above dashboard overlays/modals (except critical loaders). */
+  --mc-messages-fab-z: 200005;
+  --mc-messages-fab-shadow: 0 8px 24px rgba(0, 0, 0, 0.18);
+  --mc-messages-fab-shadow-hover: 0 12px 32px rgba(0, 0, 0, 0.24);
+}
+
+/* Stack above help/support FAB when present (56px + 18px gap). */
+body:has(.signin-req-fab-wrap) .mc-messages-fab,
+body:has(.landing-fab) .mc-messages-fab {
+  bottom: calc(var(--mc-messages-fab-bottom) + var(--mc-messages-fab-size) + 18px);
+}
+
+.mc-messages-fab {
+  position: fixed;
+  right: var(--mc-messages-fab-right);
+  bottom: calc(var(--mc-messages-fab-bottom) + env(safe-area-inset-bottom, 0px));
+  z-index: var(--mc-messages-fab-z);
+  width: var(--mc-messages-fab-size);
+  height: var(--mc-messages-fab-size);
+  border: none;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  margin: 0;
+  font: inherit;
+  appearance: none;
+  -webkit-appearance: none;
+  background: var(--mc-messages-fab-bg);
+  color: #fff;
+  box-shadow: var(--mc-messages-fab-shadow);
+  cursor: grab;
+  text-decoration: none;
+  pointer-events: auto;
+  touch-action: none;
+  user-select: none;
+  -webkit-user-drag: none;
+  transition:
+    transform 0.25s ease,
+    background 0.25s ease,
+    box-shadow 0.25s ease,
+    opacity 0.3s ease;
+  opacity: 0;
+  transform: translateY(12px);
+  animation: mc-messages-fab-enter 0.3s ease forwards;
+  -webkit-tap-highlight-color: transparent;
+}
+
+@keyframes mc-messages-fab-enter {
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.mc-messages-fab:hover {
+  background: var(--mc-messages-fab-bg-hover);
+  transform: scale(1.08);
+  box-shadow: var(--mc-messages-fab-shadow-hover);
+}
+
+.mc-messages-fab:focus-visible {
+  outline: 3px solid rgba(0, 151, 167, 0.45);
+  outline-offset: 3px;
+}
+
+.mc-messages-fab:active {
+  transform: scale(1.02);
+}
+
+.mc-messages-fab.is-dragging {
+  cursor: grabbing;
+  transition: none;
+  transform: none;
+  animation: none;
+  opacity: 1;
+  box-shadow: var(--mc-messages-fab-shadow-hover);
+}
+
+.mc-messages-fab.is-positioned {
+  right: auto !important;
+  bottom: auto !important;
+}
+
+body.mc-messages-fab-dragging {
+  overflow: hidden !important;
+  touch-action: none;
+}
+
+.mc-messages-fab.is-positioned:hover {
+  transform: scale(1.05);
+}
+
+.mc-messages-fab__icon {
+  width: 26px;
+  height: 26px;
+  flex-shrink: 0;
+}
+
+.mc-messages-fab__badge {
+  position: absolute;
+  top: -2px;
+  right: -2px;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 5px;
+  border-radius: 999px;
+  background: #dc2626;
+  color: #fff;
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 20px;
+  text-align: center;
+  box-shadow: 0 2px 8px rgba(220, 38, 38, 0.45);
+  pointer-events: none;
+}
+
+.mc-messages-fab.has-unread .mc-messages-fab__badge {
+  animation: mc-messages-fab-pulse 2.8s ease-in-out infinite;
+}
+
+@keyframes mc-messages-fab-pulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.08); }
+}
+
+/* Sidebar nav badge — synced with FAB */
+[data-nav-messages] {
+  position: relative;
+}
+
+.mc-nav-messages-badge {
+  margin-left: auto;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  border-radius: 999px;
+  background: #dc2626;
+  color: #fff;
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 18px;
+  text-align: center;
+  flex-shrink: 0;
+}
+
+.sba-item .mc-nav-messages-badge {
+  background: #fecaca;
+  color: #991b1b;
+}
+
+/* Tablet */
+@media (max-width: 1024px) {
+  :root {
+    --mc-messages-fab-right: 20px;
+    --mc-messages-fab-bottom: 88px;
+  }
+}
+
+/* Mobile */
+@media (max-width: 767px) {
+  :root {
+    --mc-messages-fab-size: 52px;
+    --mc-messages-fab-right: 16px;
+    --mc-messages-fab-bottom: calc(72px + env(safe-area-inset-bottom, 0px));
+  }
+
+  .mc-messages-fab__icon {
+    width: 24px;
+    height: 24px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mc-messages-fab {
+    animation: none;
+    opacity: 1;
+    transform: none;
+  }
+
+  .mc-messages-fab:hover {
+    transform: none;
+  }
+
+  .mc-messages-fab.is-positioned:hover {
+    transform: none;
+  }
+
+  .mc-messages-fab.is-dragging {
+    transform: none;
+  }
+
+  .mc-messages-fab.has-unread .mc-messages-fab__badge {
+    animation: none;
+  }
+}

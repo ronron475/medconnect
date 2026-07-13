@@ -153,6 +153,54 @@ $annItems = array_slice($landing_announcements ?? [], 0, 4);
     </div>
   </div>
 
+  <!-- About -->
+  <div
+    class="fab-modal"
+    id="fab-modal-about"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="fab-modal-about-title"
+    hidden
+  >
+    <div class="fab-modal__overlay" data-fab-modal-close tabindex="-1"></div>
+    <div class="fab-modal__dialog">
+      <header class="fab-modal__header">
+        <div>
+          <h2 class="fab-modal__title" id="fab-modal-about-title">About Us</h2>
+          <p class="fab-modal__subtitle">BSIS capstone project by Bago City College students for the City Health Office of Bago City.</p>
+        </div>
+        <button type="button" class="fab-modal__close" data-fab-modal-close aria-label="Close">&times;</button>
+      </header>
+      <div class="fab-modal__body">
+        <div class="fab-modal__grid">
+          <article class="fab-modal__card">
+            <span class="fab-modal__card-accent" aria-hidden="true"></span>
+            <h3 class="fab-modal__card-title">Our Team</h3>
+            <p class="fab-modal__card-desc">Ronald Gonzales, Janica Jade Sumagaysay, and Joy Gonzaga — fourth-year BSIS students at Bago City College.</p>
+          </article>
+          <article class="fab-modal__card">
+            <span class="fab-modal__card-accent" aria-hidden="true"></span>
+            <h3 class="fab-modal__card-title">medConnect</h3>
+            <p class="fab-modal__card-desc">An online medical video consultation and AI-powered triage system designed to improve healthcare accessibility for Bago City.</p>
+          </article>
+          <article class="fab-modal__card">
+            <span class="fab-modal__card-accent" aria-hidden="true"></span>
+            <h3 class="fab-modal__card-title">Our Mission</h3>
+            <p class="fab-modal__card-desc">Streamline consultations, centralize medical records, and strengthen follow-up care through modern digital health tools.</p>
+          </article>
+          <article class="fab-modal__card">
+            <span class="fab-modal__card-accent" aria-hidden="true"></span>
+            <h3 class="fab-modal__card-title">Partnership</h3>
+            <p class="fab-modal__card-desc">Developed in partnership with the City Health Office of Bago City as a capstone contribution to public healthcare.</p>
+          </article>
+        </div>
+      </div>
+      <footer class="fab-modal__footer">
+        <a href="#about-section" class="fab-modal__cta" data-fab-scroll="about-section">Read our full story</a>
+      </footer>
+    </div>
+  </div>
+
   <!-- Contact -->
   <div
     class="fab-modal"

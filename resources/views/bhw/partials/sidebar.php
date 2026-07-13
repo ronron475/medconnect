@@ -1,6 +1,6 @@
 <?php
 /**
- * BHW Panel — grouped sidebar navigation (matches Admin/Provider design system).
+ * BHW Panel — admin-style flat sidebar navigation.
  */
 require_once __DIR__ . '/bhw_nav.php';
 require_once BASE_PATH . '/app/includes/profile_picture.php';
@@ -21,9 +21,9 @@ if ($current_page === 'view.php') {
 } elseif (preg_match('#/views/bhw/(.+?)(?:\?|#|$)#', (string) ($_SERVER['REQUEST_URI'] ?? ''), $uri_match)) {
     $current_route = $uri_match[1];
 }
+
 $bhw_base = ASSET_BASE . '/views/bhw';
-$dashboard = bhw_nav_dashboard();
-$bhw_nav_groups = bhw_nav_groups();
+$nav_sections = bhw_nav_sections();
 
 $initials = profile_picture_initials($_SESSION['first_name'] ?? 'U', $_SESSION['last_name'] ?? '');
 $sidebar_picture_url = profile_picture_public_url($_SESSION['profile_picture'] ?? null);
@@ -55,143 +55,57 @@ function bhw_nav_is_active(string $file, string $current_page, string $current_p
     }
     return false;
 }
-
-function bhw_group_is_open(array $group, string $current_page, string $current_path, string $current_route = ''): bool
-{
-    foreach ($group['children'] as $child) {
-        if (($child['type'] ?? '') === 'logout') {
-            continue;
-        }
-        if (bhw_nav_is_active($child['file'], $current_page, $current_path, $current_route)) {
-            return true;
-        }
-    }
-    // Highlight group when on a legacy route mapped to this section
-    $legacyPaths = [
-        'triage' => ['triage/encode.php', 'appointments/book.php'],
-        'consultations' => ['appointments/schedule.php', 'consultation/assist.php', 'consultation/status.php'],
-    ];
-    $groupId = $group['id'] ?? '';
-    if (!empty($legacyPaths[$groupId])) {
-        foreach ($legacyPaths[$groupId] as $legacy) {
-            if ($legacy === $current_page
-                || $legacy === $current_route
-                || str_ends_with($current_path, '/views/bhw/' . $legacy)
-                || str_ends_with($current_route, $legacy)) {
-                return true;
-            }
-        }
-    }
-    return false;
-}
-
-$dashboard_active = bhw_nav_is_active('dashboard.php', $current_page, $current_path, $current_route);
 ?>
-<aside class="bhw-sidebar" id="bhw-sidebar" aria-label="BHW navigation">
+<aside class="adm-sidebar adm-sidebar--bhw" id="bhw-sidebar" aria-label="BHW navigation">
 
-  <a href="<?= $bhw_base ?>/dashboard.php" class="bhw-sb-logo">
-    <img src="<?= ASSET_BASE ?>/assets/img/medcon_logo.png" alt="medConnect" class="bhw-sb-logo-img">
-    <div class="bhw-sb-logo-text">
-      med<span>Connect</span>
-      <em>BHW</em>
-    </div>
+  <a href="<?= $bhw_base ?>/dashboard.php" class="adm-logo">
+    <img src="<?= ASSET_BASE ?>/assets/img/medcon_logo.png" alt="medConnect" style="height: 35px; width: auto; object-fit: contain; margin-right: 10px;">
+    <div class="adm-logo-text">med<span>Connect</span><em>Operations</em></div>
   </a>
 
-  <nav class="bhw-sb-nav" aria-label="BHW panel navigation">
-    <a href="<?= $bhw_base ?>/dashboard.php"
-       class="bhw-sb-item <?= $dashboard_active ? 'is-active' : '' ?>"
-       title="<?= htmlspecialchars($dashboard['description']) ?>"
-       <?= $dashboard_active ? 'aria-current="page"' : '' ?>>
-      <?= bhw_nav_render_icon($dashboard['icon']) ?>
-      <span class="bhw-sb-item-body">
-        <span class="bhw-sb-item-label"><?= htmlspecialchars($dashboard['label']) ?></span>
-        <span class="bhw-sb-item-desc"><?= htmlspecialchars($dashboard['description']) ?></span>
-      </span>
-    </a>
-
-    <?php foreach ($bhw_nav_groups as $group):
-        $group_id = $group['id'] ?? '';
-        if ($group_id === 'patients'): ?>
-    <div class="bhw-sb-nav-section">Barangay Operations</div>
-        <?php elseif ($group_id === 'reports'): ?>
-    <div class="bhw-sb-nav-section">Reports</div>
-        <?php elseif ($group_id === 'settings'): ?>
-    <div class="bhw-sb-nav-section">Account</div>
-        <?php endif;
-        $group_open = bhw_group_is_open($group, $current_page, $current_path, $current_route);
-        $group_has_active = $group_open;
-    ?>
-    <div class="bhw-sb-group <?= $group_open ? 'is-open' : '' ?>" data-bhw-group="<?= htmlspecialchars($group['id']) ?>">
-      <button type="button"
-              class="bhw-sb-group-btn<?= $group_open ? ' is-expanded' : '' ?><?= $group_has_active ? ' has-active-child is-active' : '' ?>"
-              aria-expanded="<?= $group_open ? 'true' : 'false' ?>"
-              aria-controls="bhw-group-<?= htmlspecialchars($group['id']) ?>"
-              title="<?= htmlspecialchars($group['description']) ?>">
-        <?= bhw_nav_render_icon($group['icon']) ?>
-        <span class="bhw-sb-item-body">
-          <span class="bhw-sb-item-label"><?= htmlspecialchars($group['label']) ?></span>
-          <span class="bhw-sb-item-desc"><?= htmlspecialchars($group['description']) ?></span>
-        </span>
-        <svg class="bhw-sb-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true">
-          <polyline points="6 9 12 15 18 9"/>
-        </svg>
-      </button>
-      <div class="bhw-sb-submenu" id="bhw-group-<?= htmlspecialchars($group['id']) ?>" role="group" aria-label="<?= htmlspecialchars($group['label']) ?>">
-        <?php foreach ($group['children'] as $child): ?>
-          <?php if (($child['type'] ?? '') === 'logout'): ?>
-            <button type="button" class="bhw-sb-subitem bhw-sb-subitem--logout" data-logout-trigger>
-              <?= htmlspecialchars($child['label']) ?>
-            </button>
-          <?php else:
-            $child_active = bhw_nav_is_active($child['file'], $current_page, $current_path, $current_route);
-          ?>
-            <a href="<?= $bhw_base ?>/<?= htmlspecialchars($child['file']) ?>"
-               class="bhw-sb-subitem <?= $child_active ? 'is-active' : '' ?>"
-               data-bhw-route="<?= htmlspecialchars($child['file']) ?>"
-               title="<?= htmlspecialchars($child['hint'] ?? $child['label']) ?>"
-               <?= $child_active ? 'aria-current="page"' : '' ?>>
-              <?php if (!empty($child['icon'])): ?>
-                <?= bhw_nav_render_subitem_icon($child['icon']) ?>
-              <?php endif; ?>
-              <span class="bhw-sb-subitem-body">
-                <span class="bhw-sb-subitem-label"><?= htmlspecialchars($child['label']) ?></span>
-                <?php if (!empty($child['hint'])): ?>
-                <span class="bhw-sb-subitem-hint"><?= htmlspecialchars($child['hint']) ?></span>
-                <?php endif; ?>
-              </span>
-            </a>
-          <?php endif; ?>
-        <?php endforeach; ?>
-      </div>
+  <nav class="adm-nav" aria-label="BHW panel navigation">
+    <?php foreach ($nav_sections as $section):
+      if (!empty($section['section'])): ?>
+    <div class="adm-nav-section" style="padding: 14px 16px 6px; font-size: 9.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; color: rgba(255,255,255,0.38);">
+      <?= htmlspecialchars($section['section']) ?>
     </div>
-    <?php endforeach; ?>
+    <?php endif;
+      foreach ($section['items'] as $item):
+        [$file, $label, $icon_path] = $item;
+        $href = $bhw_base . '/' . $file;
+        $is_active = bhw_nav_is_active($file, $current_page, $current_path, $current_route);
+    ?>
+    <a href="<?= htmlspecialchars($href) ?>"
+       class="adm-nav-item <?= $is_active ? 'is-active' : '' ?>"
+       <?= $is_active ? 'aria-current="page"' : '' ?>>
+      <svg class="adm-nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+           stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <?= $icon_path ?>
+      </svg>
+      <span class="adm-label"><?= htmlspecialchars($label) ?></span>
+    </a>
+    <?php endforeach; endforeach; ?>
   </nav>
 
-  <div class="bhw-sb-footer">
-  <?php if (!empty($_SESSION['user_id'])): ?>
-  <a href="<?= $bhw_base ?>/settings/profile.php" class="bhw-sb-profile" title="BHW profile settings">
-    <div class="bhw-sb-profile-avatar" data-profile-avatar-wrap>
+  <a href="<?= $bhw_base ?>/settings/profile.php" class="adm-profile" title="BHW profile settings">
+    <div class="adm-profile-avatar" data-profile-avatar-wrap>
       <?= profile_picture_render($initials, $sidebar_picture_url, '', 'sm') ?>
     </div>
-    <div class="bhw-sb-profile-info">
-      <div class="bhw-sb-profile-name"><?= htmlspecialchars($full_name ?: 'Barangay Health Worker') ?></div>
-      <div class="bhw-sb-profile-role">Barangay Health Worker</div>
-      <div class="bhw-sb-profile-sector">Brgy. <?= htmlspecialchars($barangay_name) ?></div>
-      <span class="bhw-sb-profile-status">Active</span>
+    <div class="adm-profile-info">
+      <div class="adm-profile-name"><?= htmlspecialchars($full_name ?: 'Barangay Health Worker') ?></div>
+      <div class="adm-profile-role">Barangay Health Worker · Brgy. <?= htmlspecialchars($barangay_name) ?></div>
     </div>
   </a>
-  <?php endif; ?>
 
-  <button type="button" class="bhw-sb-logout" data-logout-trigger aria-label="Sign out of BHW panel">
+  <button type="button" class="adm-logout" data-logout-trigger aria-label="Sign out of BHW panel">
     <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor"
          stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
       <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
       <polyline points="16 17 21 12 16 7"/>
       <line x1="21" y1="12" x2="9" y2="12"/>
     </svg>
-    Sign Out
+    <span class="adm-label">Sign Out</span>
   </button>
-  </div>
 
 </aside>
 

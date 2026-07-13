@@ -44,8 +44,10 @@ function remember_me_ensure_schema(PDO $pdo): void
 
 function remember_me_cookie_params(): array
 {
-    $isHttps = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off')
-        || (isset($_SERVER['SERVER_PORT']) && (int) $_SERVER['SERVER_PORT'] === 443);
+    $isHttps = function_exists('medconnect_request_is_https')
+        ? medconnect_request_is_https()
+        : ((!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off')
+            || (isset($_SERVER['SERVER_PORT']) && (int) $_SERVER['SERVER_PORT'] === 443));
     return [
         'expires'  => time() + (REMEMBER_ME_DAYS * 86400),
         'path'     => '/',
@@ -68,6 +70,38 @@ function remember_me_clear_cookie(): void
         'samesite' => $params['samesite'],
     ]);
     unset($_COOKIE[REMEMBER_ME_COOKIE]);
+}
+
+function remember_me_revoke_selector(PDO $pdo, string $selector): void
+{
+    if ($selector === '') {
+        return;
+    }
+    remember_me_ensure_schema($pdo);
+    try {
+        $pdo->prepare('DELETE FROM remember_tokens WHERE selector = ?')->execute([$selector]);
+    } catch (Throwable $e) { /* non-fatal */ }
+}
+
+function remember_me_revoke_for_user(PDO $pdo, int $userId): void
+{
+    if ($userId <= 0) {
+        return;
+    }
+    remember_me_ensure_schema($pdo);
+    try {
+        $pdo->prepare('DELETE FROM remember_tokens WHERE user_id = ?')->execute([$userId]);
+    } catch (Throwable $e) { /* non-fatal */ }
+}
+
+function remember_me_revoke_current_cookie(PDO $pdo): void
+{
+    $raw = (string) ($_COOKIE[REMEMBER_ME_COOKIE] ?? '');
+    if ($raw !== '' && str_contains($raw, ':')) {
+        [$selector] = explode(':', $raw, 2);
+        remember_me_revoke_selector($pdo, (string) $selector);
+    }
+    remember_me_clear_cookie();
 }
 
 function remember_me_issue_token(PDO $pdo, int $userId): void
@@ -137,11 +171,29 @@ function remember_me_restore_session(PDO $pdo): void
     }
     if (!password_verify($validator, (string) $row['validator_hash'])) {
         // Possible theft. Revoke this selector.
-        try {
-            $pdo->prepare('DELETE FROM remember_tokens WHERE selector = ?')->execute([$selector]);
-        } catch (Throwable $e) { /* non-fatal */ }
+        remember_me_revoke_selector($pdo, $selector);
         remember_me_clear_cookie();
         return;
+    }
+
+    $role = (string) ($row['role'] ?? '');
+    if ($role === 'provider') {
+        try {
+            require_once __DIR__ . '/provider_verification.php';
+            provider_verification_ensure_schema($pdo);
+            $pStmt = $pdo->prepare('SELECT verification_status FROM provider_profiles WHERE user_id = ? LIMIT 1');
+            $pStmt->execute([(int) $row['user_id']]);
+            $verification = $pStmt->fetchColumn();
+            if ($verification && $verification !== 'verified') {
+                remember_me_revoke_selector($pdo, $selector);
+                remember_me_clear_cookie();
+                return;
+            }
+        } catch (Throwable $e) {
+            remember_me_revoke_selector($pdo, $selector);
+            remember_me_clear_cookie();
+            return;
+        }
     }
 
     // Successful remember-me login -> rotate validator (prevents replay).
@@ -164,5 +216,6 @@ function remember_me_restore_session(PDO $pdo): void
     $_SESSION['last_name'] = (string) ($row['last_name'] ?? '');
     $_SESSION['last_activity'] = time();
     $_SESSION['login_time'] = time();
+    $_SESSION['remember_me_extended'] = true;
 }
 

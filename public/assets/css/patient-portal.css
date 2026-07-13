@@ -13,11 +13,10 @@ body.patient-portal {
   padding: 0;
 }
 
+/* Page body rhythm — tokens defined in patient-ui-system.css */
 .patient-portal .portal-page-body {
   width: 100%;
   box-sizing: border-box;
-  padding: 24px 28px 40px;
-  padding-top: calc(var(--mc-header-offset, var(--portal-header-h, 64px)) + 24px);
   max-width: none;
   margin: 0;
 }
@@ -25,8 +24,8 @@ body.patient-portal {
 .patient-portal .portal-page-body > .view-container,
 .patient-portal .portal-page-body > .patient-page {
   padding: 0;
-  max-width: 1440px;
-  margin: 0 auto;
+  max-width: 100%;
+  margin: 0;
 }
 
 /* ── View switching (dashboard SPA) ── */
@@ -386,27 +385,6 @@ body.patient-portal {
   .patient-portal .mc-card-header .mc-btn {
     width: 100%;
     justify-content: center;
-  }
-
-  .patient-portal .messages-shell {
-    grid-template-columns: 1fr;
-    min-height: auto;
-  }
-
-  .patient-portal .msg-panel--thread {
-    min-height: 420px;
-  }
-
-  .patient-portal .msg-list {
-    max-height: 260px;
-  }
-
-  .patient-portal .msg-item {
-    grid-template-columns: 40px minmax(0, 1fr);
-  }
-
-  .patient-portal .msg-status-pill {
-    display: none;
   }
 
   .patient-portal .tab-filters {
@@ -980,4 +958,354 @@ body.patient-portal {
   border-color: #e2e8f0;
   background: #f8fafc;
   color: #94a3b8;
+}
+
+/* Silent booking overlay (patient — no AI technical output) */
+body.patient-booking-overlay-open {
+  overflow: hidden;
+}
+
+.patient-booking-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 3200;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  background: rgba(4, 12, 24, 0.82);
+  backdrop-filter: blur(8px);
+}
+
+.patient-booking-overlay[hidden] {
+  display: none !important;
+}
+
+.patient-booking-overlay__card {
+  width: min(420px, 100%);
+  border-radius: 20px;
+  padding: 28px 26px 24px;
+  background: linear-gradient(165deg, #ffffff 0%, #f0fdfa 100%);
+  box-shadow: 0 28px 64px rgba(0, 0, 0, 0.35);
+  text-align: center;
+}
+
+.patient-booking-overlay__pulse {
+  position: relative;
+  width: 68px;
+  height: 68px;
+  margin: 0 auto 16px;
+}
+
+.patient-booking-overlay__icon {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 26px;
+  border-radius: 50%;
+  background: rgba(45, 212, 191, 0.18);
+  border: 1px solid rgba(45, 212, 191, 0.4);
+  animation: patientBookingPulse 1.6s ease-in-out infinite;
+}
+
+.patient-booking-overlay__spinner {
+  position: absolute;
+  inset: -4px;
+  border-radius: 50%;
+  border: 3px solid rgba(13, 148, 136, 0.15);
+  border-top-color: #0d9488;
+  animation: patientBookingSpin 0.9s linear infinite;
+}
+
+@keyframes patientBookingPulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.06); }
+}
+
+@keyframes patientBookingSpin {
+  to { transform: rotate(360deg); }
+}
+
+.patient-booking-overlay__title {
+  margin: 0 0 8px;
+  font-size: 18px;
+  font-weight: 800;
+  color: #0f766e;
+}
+
+.patient-booking-overlay__sub {
+  margin: 0 0 16px;
+  font-size: 13.5px;
+  line-height: 1.55;
+  color: #475569;
+}
+
+.patient-booking-overlay__progress {
+  height: 7px;
+  border-radius: 999px;
+  background: rgba(13, 148, 136, 0.12);
+  overflow: hidden;
+  margin: 0 0 16px;
+}
+
+.patient-booking-overlay__progress-bar {
+  display: block;
+  height: 100%;
+  width: 40%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, #5eead4, #0d9488, #5eead4);
+  background-size: 200% 100%;
+  animation: patientBookingProgress 1.25s ease-in-out infinite;
+}
+
+@keyframes patientBookingProgress {
+  0% { transform: translateX(-40%); }
+  50% { transform: translateX(120%); }
+  100% { transform: translateX(260%); }
+}
+
+.patient-booking-overlay__steps {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 10px;
+  text-align: left;
+}
+
+.patient-booking-overlay__step {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 13.5px;
+  color: #64748b;
+}
+
+.patient-booking-overlay__step.is-done {
+  color: #0f766e;
+  font-weight: 600;
+}
+
+.patient-booking-overlay__step.is-active {
+  color: #115e59;
+  font-weight: 700;
+}
+
+/* My Health — tabbed page */
+.patient-health-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+.patient-health-count-badge {
+  background: #e0f7fa;
+  color: var(--mc-aqua-medium);
+  border-color: #b2ebf2;
+  font-weight: 700;
+}
+
+.patient-health-tabs {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 20px;
+  border-bottom: 1px solid var(--mc-border-thin);
+  padding-bottom: 0;
+}
+
+.patient-health-tab {
+  display: inline-flex;
+  align-items: center;
+  padding: 10px 16px;
+  border-radius: 10px 10px 0 0;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--mc-slate-muted);
+  text-decoration: none;
+  border: 1px solid transparent;
+  border-bottom: 0;
+  margin-bottom: -1px;
+}
+
+.patient-health-tab.is-active {
+  color: var(--mc-aqua-medium);
+  background: #fff;
+  border-color: var(--mc-border-thin);
+}
+
+.patient-health-panel {
+  min-height: 120px;
+}
+
+.patient-health-timeline {
+  position: relative;
+  padding-left: 28px;
+}
+
+.patient-health-timeline::before {
+  content: '';
+  position: absolute;
+  left: 8px;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  background: #c8eef2;
+}
+
+.patient-health-event {
+  position: relative;
+  margin-bottom: 28px;
+}
+
+.patient-health-event__dot {
+  position: absolute;
+  left: -24px;
+  top: 6px;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: #00b4d8;
+  border: 3px solid #fff;
+  box-shadow: 0 0 0 2px #b2ebf2;
+}
+
+.patient-health-event__date {
+  display: block;
+  font-size: 11px;
+  font-weight: 700;
+  color: #94a3b8;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin-bottom: 8px;
+}
+
+.patient-health-event__card {
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 18px 20px;
+  box-shadow: var(--mc-shadow-micro);
+}
+
+.patient-health-event__title {
+  margin: 0 0 12px;
+  font-size: 16px;
+  font-weight: 800;
+  color: var(--mc-navy-dark);
+}
+
+.patient-health-event__grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+}
+
+.patient-health-label {
+  display: block;
+  font-size: 10px;
+  font-weight: 700;
+  color: #94a3b8;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin-bottom: 4px;
+}
+
+.patient-health-event__grid p,
+.patient-health-event__rx p {
+  margin: 0;
+  font-size: 13.5px;
+  line-height: 1.5;
+  color: #334155;
+}
+
+.patient-health-event__rx {
+  margin-top: 16px;
+  padding-top: 14px;
+  border-top: 1px solid #f1f5f9;
+}
+
+.patient-health-event__rx ul {
+  margin: 6px 0 0;
+  padding-left: 18px;
+  font-size: 14px;
+  color: #1a6db5;
+  font-weight: 600;
+}
+
+.patient-health-folders .rec-filter-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 16px 12px;
+  border-radius: 12px;
+  height: auto;
+}
+
+.patient-health-folder-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.patient-health-folder-label {
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.patient-health-folder-count {
+  font-size: 11px;
+  opacity: 0.7;
+}
+
+.patient-health-record-name {
+  font-weight: 700;
+  color: var(--mc-navy-dark);
+  max-width: 200px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.patient-health-empty {
+  padding: 32px 20px;
+}
+
+.patient-care-steps {
+  margin: 10px 0 0;
+  padding-left: 20px;
+  font-size: 13px;
+  line-height: 1.55;
+  color: #475569;
+}
+
+.patient-care-steps li + li {
+  margin-top: 6px;
+}
+
+.prov-how-it-works--steps {
+  padding-bottom: 4px;
+}
+
+.sb-patient-verified--pending {
+  background: #fef3c7 !important;
+  color: #92400e !important;
+  border-color: #fde68a !important;
+}
+
+@media (max-width: 768px) {
+  .patient-health-event__grid {
+    grid-template-columns: 1fr;
+  }
+
+  .patient-health-header {
+    flex-direction: column;
+  }
 }

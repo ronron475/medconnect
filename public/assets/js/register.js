@@ -264,8 +264,8 @@ if (navbar) {
       if (data.success) {
         emailPanel.hidden = true;
         codePanel.hidden  = false;
+        clearAlert('otp-alert');
         sentNote.textContent = `OTP sent to ${email}. Check your inbox (and spam folder).`;
-        showAlert('otp-alert', data.message, 'success');
         startResendCountdown(60);
         otpInput.focus();
       } else {
@@ -296,7 +296,8 @@ if (navbar) {
     try {
       const data = await sendOtp(email);
       if (data.success) {
-        showAlert('otp-alert', 'New OTP sent. Please check your inbox.', 'success');
+        clearAlert('otp-alert');
+        if (sentNote) sentNote.textContent = `OTP sent to ${email}. Check your inbox (and spam folder).`;
         startResendCountdown(60);
         otpInput.value = '';
         otpInput.focus();
@@ -354,8 +355,10 @@ if (navbar) {
         step0Panel.setAttribute('hidden', '');
         step1Panel.removeAttribute('hidden');
         stepDot0.classList.remove('active');
+        stepDot0.removeAttribute('aria-current');
         stepDot0.classList.add('done');
         stepDot1.classList.add('active');
+        stepDot1.setAttribute('aria-current', 'step');
         window.scrollTo({ top: 0, behavior: 'smooth' });
       } else {
         showAlert('otp-alert', data.message);
@@ -406,7 +409,7 @@ const step1Rules = {
 const step2Rules = {
   'reg-password': v => {
     if (!v) return 'Password is required.';
-    if (v.length < 8) return 'Password must be at least 8 characters.';
+    if (v.length < 12) return 'Password must be at least 12 characters.';
     if (!/[A-Z]/.test(v)) return 'Password must contain at least one uppercase letter.';
     if (!/[a-z]/.test(v)) return 'Password must contain at least one lowercase letter.';
     if (!/[0-9]/.test(v)) return 'Password must contain at least one number.';
@@ -431,6 +434,13 @@ const step2Rules = {
                           : !/^(09|\+639)\d{9}$/.test(v.trim().replace(/\s/g,'')) ? 'Enter a valid PH mobile number (e.g. 09171234567).' : '',
   'philhealth-status': v => !v ? 'Please select a PhilHealth status.' : '',
   'blood-type':        v => !v ? 'Please select a blood type.' : '',
+  'chief-complaint':   v => {
+    const t = (v || '').trim();
+    if (!t) return 'Please describe your current health concern (chief complaint).';
+    if (t.length < 10) return 'Please provide a bit more detail (at least 10 characters).';
+    if (t.length > 500) return 'Chief complaint must be 500 characters or fewer.';
+    return '';
+  },
 };
 
 /* ===== BLUR VALIDATION ===== */
@@ -528,8 +538,10 @@ function goToStep2() {
   step1Panel.setAttribute('hidden', '');
   step2Panel.removeAttribute('hidden');
   stepDot1.classList.remove('active');
+  stepDot1.removeAttribute('aria-current');
   stepDot1.classList.add('done');
   stepDot2.classList.add('active');
+  stepDot2.setAttribute('aria-current', 'step');
   window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
@@ -537,19 +549,18 @@ function goToStep1() {
   step2Panel.setAttribute('hidden', '');
   step1Panel.removeAttribute('hidden');
   stepDot2.classList.remove('active');
+  stepDot2.removeAttribute('aria-current');
   stepDot1.classList.remove('done');
   stepDot1.classList.add('active');
+  stepDot1.setAttribute('aria-current', 'step');
   window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
 // Back button
 document.getElementById('btn-back-step').addEventListener('click', goToStep1);
 
-// Proceed button — only enabled after Bago confirmed
-btnProceed.addEventListener('click', () => {
-  if (!window.__ocrIsVerified()) return;
-
-  // Validate Step 1 fields before proceeding
+// Proceed button — enabled when ID extracted and Step 1 is complete (verify runs on click)
+btnProceed.addEventListener('click', async () => {
   let valid = true;
   Object.keys(step1Rules).forEach(id => {
     const el = document.getElementById(id);
@@ -562,26 +573,151 @@ btnProceed.addEventListener('click', () => {
   });
   if (!validateAddress()) valid = false;
 
-  const cityText = (document.getElementById('city-text') || {}).value || '';
-  if (cityText && !cityText.toLowerCase().includes('bago')) {
+  if (!valid) {
+    showAlert('step1-alert', 'Please fill in all required fields correctly.');
+    return;
+  }
+
+  const confirmEl = document.getElementById('ocr-info-confirm');
+  if (confirmEl && !confirmEl.checked) {
+    showAlert('step1-alert', 'Please confirm that the information matches your government-issued National ID before continuing.');
+    confirmEl.focus();
+    return;
+  }
+
+  if (typeof window.__ocrIsBagoCity === 'function' && !window.__ocrIsBagoCity()) {
     const cityErr = document.getElementById('city-error');
     if (cityErr) cityErr.textContent = 'Only residents of Bago City may register.';
     const citySel = document.getElementById('city');
     if (citySel) citySel.classList.add('invalid');
-    valid = false;
+    if (typeof window.__ocrShowNonBagoReferral === 'function') window.__ocrShowNonBagoReferral();
+    showAlert('step1-alert', 'Only Bago City residents can create a patient account on MedConnect. Please use the hospital referral to find care in your area.');
+    return;
   }
 
-  if (!valid) {
-    showAlert('step1-alert', 'Please fill in all required fields correctly.');
-    return;
+  if (!window.__ocrIsVerified || !window.__ocrIsVerified()) {
+    if (typeof window.__ocrRunVerify !== 'function') {
+      showAlert('step1-alert', 'Please upload your National ID first.');
+      return;
+    }
+    btnProceed.disabled = true;
+    const verified = await window.__ocrRunVerify();
+    if (typeof window.__ocrUpdateProceedState === 'function') window.__ocrUpdateProceedState();
+    if (!verified) return;
   }
 
   clearAlert('step1-alert');
   goToStep2();
 });
 
-/* ===== CONSENT CHECKBOX ===== */
+/* ===== CONSENT + CONDITIONAL MEDICAL FIELDS ===== */
 const consentCheckbox = document.getElementById('consent-checkbox');
+const submitBtnEl = document.getElementById('reg-submit');
+const submitHintEl = document.getElementById('step2-submit-hint');
+const allergyYes = document.getElementById('allergy-yes');
+const allergyNo = document.getElementById('allergy-no');
+const allergyDetails = document.getElementById('allergy-details');
+const allergiesInput = document.getElementById('allergies');
+const medsYes = document.getElementById('meds-yes');
+const medsNo = document.getElementById('meds-no');
+const medsDetails = document.getElementById('meds-details');
+const medsInput = document.getElementById('current-medications');
+const conditionsYes = document.getElementById('conditions-yes');
+const conditionsNo = document.getElementById('conditions-no');
+const conditionsDetails = document.getElementById('conditions-details');
+const conditionsInput = document.getElementById('existing-conditions');
+const chiefComplaintInput = document.getElementById('chief-complaint');
+const chiefComplaintCount = document.getElementById('chief-complaint-count');
+const NO_KNOWN_ALLERGIES = 'No Known Allergies';
+const NO_MAINTENANCE_MEDS = 'None';
+const NO_MEDICAL_CONDITIONS = 'None';
+
+function syncConditionalDetails(yesEl, noEl, detailsEl, inputEl, noValue) {
+  if (!detailsEl || !inputEl) return;
+  const show = !!(yesEl && yesEl.checked);
+  if (show) {
+    detailsEl.hidden = false;
+    requestAnimationFrame(() => detailsEl.classList.add('is-open'));
+    if (inputEl.value.trim() === noValue) inputEl.value = '';
+  } else {
+    detailsEl.classList.remove('is-open');
+    window.setTimeout(() => {
+      if (noEl && noEl.checked) detailsEl.hidden = true;
+    }, 260);
+    inputEl.value = noValue;
+    const errEl = document.getElementById(inputEl.id + '-error');
+    if (errEl) errEl.textContent = '';
+    inputEl.classList.remove('invalid');
+  }
+}
+
+function syncAllergyUi() {
+  syncConditionalDetails(allergyYes, allergyNo, allergyDetails, allergiesInput, NO_KNOWN_ALLERGIES);
+}
+function syncMedsUi() {
+  syncConditionalDetails(medsYes, medsNo, medsDetails, medsInput, NO_MAINTENANCE_MEDS);
+}
+function syncConditionsUi() {
+  syncConditionalDetails(conditionsYes, conditionsNo, conditionsDetails, conditionsInput, NO_MEDICAL_CONDITIONS);
+}
+
+function updateChiefComplaintCount() {
+  if (!chiefComplaintInput || !chiefComplaintCount) return;
+  const len = (chiefComplaintInput.value || '').length;
+  chiefComplaintCount.textContent = `${len}/500`;
+  chiefComplaintCount.classList.toggle('is-near-limit', len >= 450);
+}
+
+function updateSubmitEnabled() {
+  // Prefer NLP module gate (consent + analysis) when present
+  if (window.MedConnectRegisterNlp && typeof window.MedConnectRegisterNlp.updateSubmitGate === 'function') {
+    window.MedConnectRegisterNlp.updateSubmitGate();
+    return;
+  }
+  if (!submitBtnEl) return;
+  const ok = !!(consentCheckbox && consentCheckbox.checked);
+  if (submitBtnEl.dataset.loading === '1') {
+    submitBtnEl.disabled = true;
+    return;
+  }
+  submitBtnEl.disabled = !ok;
+  if (submitHintEl) {
+    if (ok) {
+      submitHintEl.textContent = 'Consent accepted. You can submit your registration.';
+      submitHintEl.classList.add('is-ready');
+    } else {
+      submitHintEl.textContent = 'Please accept the privacy consent to enable submission.';
+      submitHintEl.classList.remove('is-ready');
+    }
+  }
+}
+
+function requireDetailsIfYes(yesEl, inputEl, label) {
+  if (yesEl && yesEl.checked && inputEl && !inputEl.value.trim()) {
+    const errEl = document.getElementById(inputEl.id + '-error');
+    if (errEl) errEl.textContent = `Please specify your ${label}, or select No.`;
+    inputEl.classList.add('invalid');
+    showAlert('step2-alert', `Please specify your ${label}.`);
+    inputEl.focus();
+    return false;
+  }
+  return true;
+}
+
+if (allergyYes) allergyYes.addEventListener('change', syncAllergyUi);
+if (allergyNo) allergyNo.addEventListener('change', syncAllergyUi);
+if (medsYes) medsYes.addEventListener('change', syncMedsUi);
+if (medsNo) medsNo.addEventListener('change', syncMedsUi);
+if (conditionsYes) conditionsYes.addEventListener('change', syncConditionsUi);
+if (conditionsNo) conditionsNo.addEventListener('change', syncConditionsUi);
+if (chiefComplaintInput) {
+  chiefComplaintInput.addEventListener('input', updateChiefComplaintCount);
+  updateChiefComplaintCount();
+}
+syncAllergyUi();
+syncMedsUi();
+syncConditionsUi();
+
 if (consentCheckbox) {
   consentCheckbox.addEventListener('change', () => {
     const errEl = document.getElementById('consent-error');
@@ -593,7 +729,9 @@ if (consentCheckbox) {
       if (errEl) errEl.textContent = '';
       if (label) label.classList.remove('invalid');
     }
+    updateSubmitEnabled();
   });
+  updateSubmitEnabled();
 }
 
 /* ===== STEP 2 FORM SUBMIT ===== */
@@ -601,11 +739,134 @@ const step2Form = document.getElementById('step2-form');
 const submitBtn = document.getElementById('reg-submit');
 const btnText   = document.getElementById('reg-btn-text');
 const spinner   = document.getElementById('reg-spinner');
-const setLoading = on => { submitBtn.disabled = on; btnText.hidden = on; spinner.hidden = !on; };
+const setLoading = on => {
+  if (submitBtn) {
+    submitBtn.dataset.loading = on ? '1' : '0';
+    submitBtn.disabled = on || !(consentCheckbox && consentCheckbox.checked);
+  }
+  if (btnText) btnText.hidden = on;
+  if (spinner) spinner.hidden = !on;
+  if (window.MedConnectRegisterNlp && typeof window.MedConnectRegisterNlp.updateSubmitGate === 'function') {
+    window.MedConnectRegisterNlp.updateSubmitGate();
+  }
+};
+
+function signInPath(fallback) {
+  return fallback || ((typeof window.APP_BASE !== 'undefined' ? window.APP_BASE : '') + '/index.php');
+}
+
+function hideOutcomeModals() {
+  ['reg-outcome-success', 'reg-outcome-urgent', 'reg-outcome-emergency'].forEach(function (id) {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.hidden = true;
+    el.setAttribute('aria-hidden', 'true');
+  });
+  document.body.classList.remove('reg-outcome-open');
+}
+
+function showOutcomeModal(id) {
+  hideOutcomeModals();
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.hidden = false;
+  el.setAttribute('aria-hidden', 'false');
+  document.body.classList.add('reg-outcome-open');
+}
+
+function persistPostRegIntent(urgency, nlpResult, redirectUrl) {
+  try {
+    if (chiefComplaintInput && chiefComplaintInput.value.trim()) {
+      sessionStorage.setItem('medconnect_pending_chief_complaint', chiefComplaintInput.value.trim());
+    }
+    if (nlpResult) {
+      sessionStorage.setItem('medconnect_pending_nlp_result', JSON.stringify(nlpResult));
+    }
+    sessionStorage.setItem('medconnect_post_reg_urgency', urgency || 'NON-URGENT');
+    if (urgency === 'URGENT') {
+      sessionStorage.setItem('medconnect_prefer_earliest_slot', '1');
+    } else {
+      sessionStorage.removeItem('medconnect_prefer_earliest_slot');
+    }
+    if (urgency === 'EMERGENCY') {
+      sessionStorage.setItem('medconnect_block_telemedicine', '1');
+    } else {
+      sessionStorage.removeItem('medconnect_block_telemedicine');
+    }
+  } catch (_) { /* ignore */ }
+}
+
+function wireOutcomeActions(redirectUrl) {
+  const goSignIn = () => {
+    window.location.href = signInPath(redirectUrl);
+  };
+
+  const successGo = document.getElementById('reg-outcome-success-go');
+  if (successGo) {
+    successGo.onclick = goSignIn;
+  }
+
+  const urgentView = document.getElementById('reg-outcome-urgent-view');
+  const urgentContinue = document.getElementById('reg-outcome-urgent-continue');
+  if (urgentView) {
+    urgentView.onclick = () => {
+      try {
+        sessionStorage.setItem('medconnect_prefer_earliest_slot', '1');
+        sessionStorage.setItem('medconnect_post_reg_next', 'triage_earliest');
+      } catch (_) { /* ignore */ }
+      goSignIn();
+    };
+  }
+  if (urgentContinue) {
+    urgentContinue.onclick = goSignIn;
+  }
+
+  const emergHospitals = document.getElementById('reg-outcome-emergency-hospitals');
+  const emergAck = document.getElementById('reg-outcome-emergency-ack');
+  if (emergHospitals) {
+    emergHospitals.onclick = () => {
+      if (window.BagoReferral && typeof window.BagoReferral.show === 'function') {
+        window.BagoReferral.show();
+      } else {
+        showAlert('step2-alert', 'Opening hospital finder…', 'success');
+      }
+    };
+  }
+  if (emergAck) {
+    emergAck.onclick = goSignIn;
+  }
+}
+
+function presentPostRegistrationOutcome(urgency, redirectUrl) {
+  const nlp = window.MedConnectRegisterNlp;
+  if (nlp && typeof nlp.hideOverlay === 'function') nlp.hideOverlay();
+  setLoading(false);
+  wireOutcomeActions(redirectUrl);
+
+  const u = String(urgency || 'NON-URGENT').toUpperCase();
+  if (u === 'EMERGENCY') {
+    showOutcomeModal('reg-outcome-emergency');
+    return;
+  }
+  if (u === 'URGENT') {
+    showOutcomeModal('reg-outcome-urgent');
+    return;
+  }
+  showOutcomeModal('reg-outcome-success');
+}
 
 step2Form.addEventListener('submit', async e => {
   e.preventDefault();
   clearAlert('step2-alert');
+
+  // Sync conditional medical values before validation/submit
+  if (allergyNo && allergyNo.checked && allergiesInput) allergiesInput.value = NO_KNOWN_ALLERGIES;
+  if (medsNo && medsNo.checked && medsInput) medsInput.value = NO_MAINTENANCE_MEDS;
+  if (conditionsNo && conditionsNo.checked && conditionsInput) conditionsInput.value = NO_MEDICAL_CONDITIONS;
+
+  if (!requireDetailsIfYes(allergyYes, allergiesInput, 'allergies')) return;
+  if (!requireDetailsIfYes(medsYes, medsInput, 'maintenance medications')) return;
+  if (!requireDetailsIfYes(conditionsYes, conditionsInput, 'medical conditions')) return;
 
   let valid = true;
   Object.keys(step2Rules).forEach(id => {
@@ -637,7 +898,47 @@ step2Form.addEventListener('submit', async e => {
     return;
   }
 
+  const nlp = window.MedConnectRegisterNlp;
+  let urgency = 'NON-URGENT';
+  let nlpResult = null;
+
   setLoading(true);
+  if (nlp && typeof nlp.showOverlay === 'function') {
+    nlp.showOverlay(true);
+  }
+
+  // Silent NLP — patient never sees technical analysis; only loading overlay
+  if (nlp && typeof nlp.runAnalysis === 'function') {
+    try {
+      const analysis = await nlp.runAnalysis({
+        manual: true,
+        force: true,
+        showOverlay: false,
+        keepOverlay: true,
+      });
+      if (analysis && analysis.ok) {
+        urgency = analysis.urgency || 'NON-URGENT';
+        nlpResult = analysis.result || nlp.getLastResult?.() || null;
+      } else if (analysis && analysis.error === 'aborted') {
+        if (nlp.hideOverlay) nlp.hideOverlay();
+        setLoading(false);
+        return;
+      } else {
+        // Soft-fail: allow registration as non-urgent when NLP is unavailable
+        if (typeof nlp.allowContinueWithoutNlp === 'function') {
+          nlpResult = nlp.allowContinueWithoutNlp();
+        }
+        urgency = 'NON-URGENT';
+      }
+    } catch (_) {
+      if (typeof nlp.allowContinueWithoutNlp === 'function') {
+        nlpResult = nlp.allowContinueWithoutNlp();
+      }
+      urgency = 'NON-URGENT';
+    }
+  }
+
+  persistPostRegIntent(urgency, nlpResult);
 
   // Build path to register API using APP_BASE for subfolder compatibility
   const base = (typeof window.APP_BASE !== 'undefined') ? window.APP_BASE : '';
@@ -657,6 +958,14 @@ step2Form.addEventListener('submit', async e => {
       }
     } catch (_) { /* non-fatal */ }
 
+    // Attach urgency for server logging / future hooks (registration API ignores unknown fields)
+    fd.append('triage_urgency', urgency);
+    if (nlpResult) {
+      try {
+        fd.append('nlp_result_json', JSON.stringify(nlpResult));
+      } catch (_) { /* ignore */ }
+    }
+
     const res = await fetch(registerUrl, { method: 'POST', body: fd });
 
     // Server responded but with an error status (4xx / 5xx)
@@ -671,6 +980,7 @@ step2Form.addEventListener('submit', async e => {
         const raw = await res.text().catch(() => '');
         console.error('Non-JSON server response:', raw);
       }
+      if (nlp && nlp.hideOverlay) nlp.hideOverlay();
       showAlert('step2-alert', errMsg);
       setLoading(false);
       return;
@@ -683,16 +993,17 @@ step2Form.addEventListener('submit', async e => {
     } catch (_) {
       const raw = await res.clone().text().catch(() => '(unreadable)');
       console.error('JSON parse failed. Raw response:', raw);
+      if (nlp && nlp.hideOverlay) nlp.hideOverlay();
       showAlert('step2-alert', 'Server returned an unexpected response. Check the console for details.');
       setLoading(false);
       return;
     }
 
     if (data.success) {
-      showAlert('step2-alert', 'Account created! Please check your email to verify your account.', 'success');
-      setTimeout(() => { window.location.href = data.redirect || '/index.php'; }, 1800);
+      presentPostRegistrationOutcome(urgency, data.redirect);
     } else {
       // Show the exact backend message (e.g. "Email already exists", "OCR not verified")
+      if (nlp && nlp.hideOverlay) nlp.hideOverlay();
       showAlert('step2-alert', data.message || 'Registration failed. Please try again.');
       if (data.error_details) console.error('Backend error:', data.error_details, 'at', data.error_file, 'line', data.error_line);
       setLoading(false);
@@ -701,6 +1012,7 @@ step2Form.addEventListener('submit', async e => {
   } catch (err) {
     // Only reaches here on true network failure (offline, DNS, CORS block)
     console.error('Fetch failed:', err);
+    if (nlp && nlp.hideOverlay) nlp.hideOverlay();
     if (!navigator.onLine) {
       showAlert('step2-alert', 'You appear to be offline. Please check your internet connection.');
     } else {
@@ -824,6 +1136,8 @@ step2Form.addEventListener('submit', async e => {
   const fileInput    = document.getElementById('national-id-image');
   const uploadArea   = document.getElementById('ocr-upload-area');
   const placeholder  = document.getElementById('ocr-placeholder');
+  const uploadSuccess = document.getElementById('ocr-upload-success');
+  const uploadSuccessFile = document.getElementById('ocr-upload-success-file');
   const previewWrap  = document.getElementById('ocr-preview-wrap');
   const previewImg   = document.getElementById('ocr-preview');
   const pdfIndicator = document.getElementById('ocr-pdf-indicator');
@@ -840,6 +1154,19 @@ step2Form.addEventListener('submit', async e => {
   const progressEl   = document.getElementById('ocr-progress');
   const progressText = document.getElementById('ocr-progress-text');
   const progressFill = document.getElementById('ocr-progress-fill');
+  const statusPanel  = document.getElementById('ocr-status-panel');
+  const statusPanelTitle = document.getElementById('ocr-status-panel-title');
+  const statusSpinner = document.getElementById('ocr-status-spinner');
+  const reviewNotice = document.getElementById('ocr-review-notice');
+  const summaryCard  = document.getElementById('ocr-summary-card');
+  const summaryStats = document.getElementById('ocr-summary-stats');
+  const summaryToggle = document.getElementById('ocr-summary-toggle');
+  const summaryBody  = document.getElementById('ocr-summary-body');
+  const errorCard    = document.getElementById('ocr-error-card');
+  const errorMessage = document.getElementById('ocr-error-message');
+  const btnErrorReupload = document.getElementById('btn-ocr-error-reupload');
+  const btnManualEntry = document.getElementById('btn-ocr-manual-entry');
+  const confirmCheck = document.getElementById('ocr-info-confirm');
   const resultBox    = document.getElementById('ocr-result-box');
   const resultHeader = document.getElementById('ocr-result-header');
   const checkList    = document.getElementById('ocr-check-list');
@@ -850,7 +1177,37 @@ step2Form.addEventListener('submit', async e => {
 
   if (!fileInput || !scanBtn) return;
 
+  let summaryHideTimer = null;
+  const OCR_STATUS_ORDER = ['uploaded', 'reading', 'extracting', 'validating', 'done'];
+
   const ocrApi = window.NationalIdOcr;
+  if (ocrApi) {
+    ocrApi.clearAllClientCache();
+    ocrApi.lockOcrFields();
+    [0, 150, 400, 900].forEach((ms) => {
+      setTimeout(() => ocrApi.guardAgainstBrowserAutofill(), ms);
+    });
+  }
+  fetch((typeof window.APP_BASE !== 'undefined' ? window.APP_BASE : '') + '/app/controllers/patient/process_id_ocr.php?clear_session=1', { method: 'POST' }).catch(() => {});
+
+  function clearStep1AddressFields() {
+    ['region-text', 'province-text', 'city-text', 'barangay-text'].forEach((id) => {
+      const el = document.getElementById(id);
+      if (el) el.value = '';
+    });
+    ['region', 'province', 'city', 'barangay'].forEach((id) => {
+      const sel = document.getElementById(id);
+      if (!sel) return;
+      const label = id === 'region' ? 'Choose Region'
+        : id === 'province' ? 'Choose Province'
+        : id === 'city' ? 'Choose City / Municipality'
+        : 'Choose Barangay';
+      sel.innerHTML = `<option value="" disabled selected>${label}</option>`;
+      sel.value = '';
+      sel.disabled = id !== 'region';
+    });
+  }
+
   let selectedFile     = null;
   let ocrVerified      = false;
   let ocrBagoConfirmed = false;
@@ -878,21 +1235,237 @@ step2Form.addEventListener('submit', async e => {
     });
   }
 
-  function enableProceed() {
+  function isStep1FormComplete() {
+    for (const id of Object.keys(step1Rules)) {
+      const el = document.getElementById(id);
+      if (!el || step1Rules[id](el.value)) return false;
+    }
+    return ['region', 'province', 'city', 'barangay'].every((id) => {
+      const sel = document.getElementById(id);
+      return sel && sel.value;
+    });
+  }
+
+  function isBagoCitySelected() {
+    const cityText = (document.getElementById('city-text') || {}).value || '';
+    const citySel = document.getElementById('city');
+    let label = cityText;
+    if (citySel && citySel.selectedIndex >= 0 && citySel.value) {
+      label = citySel.options[citySel.selectedIndex].text || cityText;
+    }
+    const n = label.toLowerCase().replace(/[^a-z\s]/g, ' ').replace(/\s+/g, ' ').trim();
+    return n === 'bago city' || n === 'city of bago' || /\bbago\s+city\b/.test(n);
+  }
+
+  let nonBagoReferralShown = false;
+
+  function showNonBagoReferral() {
+    disableProceed('Registration is only for Bago City residents.');
+    const notice = document.getElementById('non-bago-notice');
+    if (notice) notice.hidden = false;
+    showAlert(
+      'step1-alert',
+      'Only Bago City residents can create a patient account on MedConnect. If you live outside Bago City, please use the hospital referral below.'
+    );
+    const cityErr = document.getElementById('city-error');
+    if (cityErr) cityErr.textContent = 'Only residents of Bago City may register.';
+    const citySel = document.getElementById('city');
+    if (citySel) citySel.classList.add('invalid');
+    if (!nonBagoReferralShown && window.BagoReferral) {
+      nonBagoReferralShown = true;
+      setTimeout(() => window.BagoReferral.show(), 500);
+    }
+  }
+
+  function clearNonBagoReferral() {
+    nonBagoReferralShown = false;
+    const notice = document.getElementById('non-bago-notice');
+    if (notice) notice.hidden = true;
+    const citySel = document.getElementById('city');
+    if (citySel) citySel.classList.remove('invalid');
+    const cityErr = document.getElementById('city-error');
+    if (cityErr) cityErr.textContent = '';
+  }
+
+  function isInfoConfirmed() {
+    return !!(confirmCheck && confirmCheck.checked);
+  }
+
+  function enableProceed(hint) {
+    if (!isInfoConfirmed()) {
+      btnProceed.disabled = true;
+      btnProceed.classList.remove('btn-proceed-ready');
+      if (proceedHint) {
+        proceedHint.textContent = 'Please confirm that the information matches your National ID before continuing.';
+        proceedHint.className = 'step1-cta-hint';
+      }
+      return;
+    }
     btnProceed.disabled = false;
     btnProceed.classList.add('btn-proceed-ready');
     if (proceedHint) {
-      proceedHint.textContent = 'Bago City residency confirmed. You may now proceed.';
+      proceedHint.textContent = hint || 'All required details complete. Click Create Patient Account to continue.';
       proceedHint.className = 'step1-cta-hint step1-cta-hint--ready';
     }
   }
-  function disableProceed() {
+  function disableProceed(hint) {
     btnProceed.disabled = true;
     btnProceed.classList.remove('btn-proceed-ready');
     if (proceedHint) {
-      proceedHint.textContent = 'Upload your National ID, review auto-filled details, then verify residency to enable this button.';
+      proceedHint.textContent = hint || 'Upload your National ID to auto-fill the form, complete any missing fields, confirm the details, then create your account.';
       proceedHint.className = 'step1-cta-hint';
     }
+  }
+
+  function updateProceedState() {
+    const citySel = document.getElementById('city');
+    const hasCity = !!(citySel && citySel.value);
+
+    if (hasCity && !isBagoCitySelected()) {
+      showNonBagoReferral();
+      return;
+    }
+    clearNonBagoReferral();
+
+    if (ocrVerified) {
+      if (!isBagoCitySelected()) {
+        showNonBagoReferral();
+        return;
+      }
+      enableProceed('Bago City residency confirmed. You may now proceed.');
+      return;
+    }
+    if (!extractComplete || !selectedFile) {
+      disableProceed();
+      return;
+    }
+    if (!isStep1FormComplete()) {
+      disableProceed('Complete all required fields, then create your account.');
+      return;
+    }
+    if (!isBagoCitySelected()) {
+      showNonBagoReferral();
+      return;
+    }
+    enableProceed();
+  }
+
+  function resetOcrStatusPanel() {
+    if (!statusPanel) return;
+    statusPanel.hidden = true;
+    statusPanel.classList.remove('is-complete', 'is-error', 'is-processing');
+    if (statusSpinner) statusSpinner.hidden = true;
+    if (statusPanelTitle) statusPanelTitle.textContent = 'Processing your National ID';
+    statusPanel.querySelectorAll('.ocr-status-step').forEach((li) => {
+      li.classList.remove('is-active', 'is-done', 'is-pending');
+      li.classList.add('is-pending');
+    });
+  }
+
+  function showOcrStatusPanel() {
+    if (!statusPanel) return;
+    statusPanel.hidden = false;
+    statusPanel.classList.add('is-processing');
+    statusPanel.classList.remove('is-complete', 'is-error');
+    if (statusSpinner) statusSpinner.hidden = false;
+  }
+
+  function setOcrStatusStep(activeKey) {
+    if (!statusPanel) return;
+    showOcrStatusPanel();
+    const activeIdx = OCR_STATUS_ORDER.indexOf(activeKey);
+    statusPanel.querySelectorAll('.ocr-status-step').forEach((li) => {
+      const key = li.getAttribute('data-step');
+      const idx = OCR_STATUS_ORDER.indexOf(key);
+      li.classList.remove('is-active', 'is-done', 'is-pending');
+      if (activeIdx < 0) {
+        li.classList.add('is-pending');
+      } else if (idx < activeIdx) {
+        li.classList.add('is-done');
+      } else if (idx === activeIdx) {
+        li.classList.add(activeKey === 'done' ? 'is-done' : 'is-active');
+      } else {
+        li.classList.add('is-pending');
+      }
+    });
+    if (activeKey === 'done') {
+      statusPanel.classList.remove('is-processing');
+      statusPanel.classList.add('is-complete');
+      if (statusSpinner) statusSpinner.hidden = true;
+      if (statusPanelTitle) statusPanelTitle.textContent = 'OCR completed successfully';
+    } else if (statusPanelTitle) {
+      const labels = {
+        uploaded: 'National ID uploaded',
+        reading: 'Reading your National ID',
+        extracting: 'Extracting personal information',
+        validating: 'Validating residency',
+      };
+      statusPanelTitle.textContent = labels[activeKey] || 'Processing your National ID';
+    }
+  }
+
+  function mapProgressMessageToStep(msg) {
+    const m = String(msg || '').toLowerCase();
+    if (m.includes('validat') || m.includes('residenc') || m.includes('almost')) return 'validating';
+    if (m.includes('extract')) return 'extracting';
+    return 'reading';
+  }
+
+  function hideReviewAndSummary() {
+    if (reviewNotice) reviewNotice.hidden = true;
+    if (summaryCard) {
+      summaryCard.hidden = true;
+      summaryCard.classList.remove('is-collapsed');
+    }
+    if (summaryHideTimer) {
+      clearTimeout(summaryHideTimer);
+      summaryHideTimer = null;
+    }
+  }
+
+  function showReviewNotice() {
+    if (reviewNotice) reviewNotice.hidden = false;
+  }
+
+  function showSummaryCard(filled, reviewCount, missingCount) {
+    if (!summaryCard || !summaryStats) return;
+    const review = (reviewCount || 0) + (missingCount || 0);
+    let html = `<span class="ocr-summary-ok">✓ ${filled} field${filled === 1 ? '' : 's'} successfully extracted</span>`;
+    if (review > 0) {
+      html += `<span class="ocr-summary-warn">⚠ ${review} field${review === 1 ? '' : 's'} require${review === 1 ? 's' : ''} manual review</span>`;
+    }
+    summaryStats.innerHTML = html;
+    summaryCard.hidden = false;
+    summaryCard.classList.remove('is-collapsed');
+    if (summaryToggle) summaryToggle.setAttribute('aria-expanded', 'true');
+    if (summaryHideTimer) clearTimeout(summaryHideTimer);
+    summaryHideTimer = setTimeout(() => {
+      summaryCard.classList.add('is-collapsed');
+      if (summaryToggle) summaryToggle.setAttribute('aria-expanded', 'false');
+    }, 8000);
+  }
+
+  function hideErrorCard() {
+    if (errorCard) errorCard.hidden = true;
+  }
+
+  function showErrorCard(msg) {
+    if (!errorCard) return;
+    hideReviewAndSummary();
+    if (errorMessage) {
+      errorMessage.textContent = msg || 'Please upload a clearer image or manually complete the missing fields.';
+    }
+    errorCard.hidden = false;
+    if (statusPanel) {
+      statusPanel.classList.add('is-error');
+      statusPanel.classList.remove('is-processing', 'is-complete');
+      if (statusSpinner) statusSpinner.hidden = true;
+      if (statusPanelTitle) statusPanelTitle.textContent = 'OCR needs your attention';
+    }
+  }
+
+  function resetConfirmCheck() {
+    if (confirmCheck) confirmCheck.checked = false;
   }
 
   function setUploadLocked(on) {
@@ -906,15 +1479,19 @@ step2Form.addEventListener('submit', async e => {
   function showProgress(on) {
     if (!progressEl) return;
     progressEl.hidden = !on;
-    if (on && progressFill) {
-      progressFill.style.width = '0%';
-      requestAnimationFrame(() => { progressFill.style.width = '85%'; });
+    if (on) {
+      showOcrStatusPanel();
+      if (progressFill) {
+        progressFill.style.width = '0%';
+        requestAnimationFrame(() => { progressFill.style.width = '85%'; });
+      }
     }
     if (!on && progressFill) progressFill.style.width = '0%';
   }
 
   function updateProgress(msg) {
     if (progressText) progressText.textContent = msg;
+    setOcrStatusStep(mapProgressMessageToStep(msg));
     showStatus(msg, 'scanning');
   }
 
@@ -922,11 +1499,16 @@ step2Form.addEventListener('submit', async e => {
     if (!ocrApi || extractRunning) return;
     extractRunning = true;
     setUploadLocked(true);
+    hideErrorCard();
+    hideReviewAndSummary();
     showProgress(true);
     resetVerification();
     resetResultPanel();
+    resetConfirmCheck();
     if (ocrApi) ocrApi.resetExtractionPreview();
     extractComplete = false;
+    setOcrStatusStep('uploaded');
+    setTimeout(() => setOcrStatusStep('reading'), 300);
 
     ocrApi.startProgress(updateProgress);
 
@@ -938,31 +1520,63 @@ step2Form.addEventListener('submit', async e => {
 
       if (!data.success) {
         showStatus(data.message || "We couldn't accurately read your National ID. Please upload a clearer photo taken in good lighting.", 'error');
+        showErrorCard(data.message || 'Please upload a clearer image or manually complete the missing fields.');
         if (retryBtn) retryBtn.hidden = false;
+        if (ocrApi) ocrApi.unlockOcrFields();
         return;
       }
 
       if (data.low_confidence || !data.confidence_ok) {
         showStatus(data.message || 'We could not read your National ID with enough confidence. Please upload a clearer photo.', 'error');
+        showErrorCard(data.message || 'Please upload a clearer image or manually complete the missing fields.');
         if (retryBtn) retryBtn.hidden = false;
+        if (ocrApi) ocrApi.unlockOcrFields();
         return;
       }
 
-      const { filled } = await ocrApi.applyAutofill(data);
+      setOcrStatusStep('extracting');
+      const { filled, reviewCount, missingCount, isBagoResident } = await ocrApi.applyAutofill(data);
+      setOcrStatusStep('validating');
+      await new Promise((r) => setTimeout(r, 350));
+      setOcrStatusStep('done');
+
       extractComplete = true;
       if (retryBtn) retryBtn.hidden = false;
+      showReviewNotice();
+      showSummaryCard(filled, reviewCount || 0, missingCount || 0);
+      hideErrorCard();
 
       const cacheNote = data.cached || data.client_cached ? ' (cached)' : '';
-      showStatus(
-        `Successfully extracted and filled ${filled} field(s). Please review your details, then click Verify Residency.${cacheNote}`,
-        'success'
-      );
+      if (isBagoResident === false) {
+        const street = document.getElementById('street-address')?.value || data.extracted?.address?.value || '';
+        const streetNorm = street.toLowerCase();
+        if (/\b(bago|bgo)\b/.test(streetNorm) && /\bnegros\b/.test(streetNorm) && window.PhAddressAutofill) {
+          const retry = await window.PhAddressAutofill.fillFromText(street);
+          if (retry.isBagoResident) {
+            showStatus(
+              `Successfully auto-filled ${retry.filled || filled} field(s). Bago City address detected.${cacheNote}`,
+              'success'
+            );
+            updateProceedState();
+            return;
+          }
+        }
+        showStatus('Your National ID shows an address outside Bago City. Please use hospital referral for registration in your area.', 'error');
+      } else {
+        showStatus(
+          `Successfully auto-filled ${filled} field(s). Please review every field, confirm accuracy, then create your account.${cacheNote}`,
+          'success'
+        );
+      }
+      updateProceedState();
     } catch (err) {
       ocrApi.stopProgress();
       showProgress(false);
       console.error('OCR extract error:', err);
       showStatus("We couldn't accurately read your National ID. Please upload a clearer photo taken in good lighting.", 'error');
+      showErrorCard("We couldn't accurately read your National ID. Please upload a clearer image or manually complete the missing fields.");
       if (retryBtn) retryBtn.hidden = false;
+      if (ocrApi) ocrApi.unlockOcrFields();
     } finally {
       extractRunning = false;
       setUploadLocked(false);
@@ -988,13 +1602,26 @@ step2Form.addEventListener('submit', async e => {
     selectedFile = dropped; handleFile(dropped);
     runExtract(dropped, false);
   });
+  uploadArea.addEventListener('click', () => {
+    if (extractRunning || fileInput.disabled) return;
+    if (!selectedFile) fileInput.click();
+  });
+  uploadArea.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      if (!extractRunning && !fileInput.disabled && !selectedFile) fileInput.click();
+    }
+  });
 
   function handleFile(file) {
-    resetVerification(); hideStatus();
+    resetVerification(); hideStatus(); hideErrorCard(); hideReviewAndSummary(); resetConfirmCheck();
     filenameText.textContent = file.name;
     filenameEl.classList.add('visible');
+    if (uploadSuccessFile) uploadSuccessFile.textContent = file.name;
+    if (uploadSuccess) uploadSuccess.hidden = false;
     previewWrap.removeAttribute('hidden');
     placeholder.setAttribute('hidden', '');
+    uploadArea.classList.add('has-file');
     if (file.type.startsWith('image/')) {
       pdfIndicator.setAttribute('hidden', '');
       previewImg.src = ''; previewImg.removeAttribute('hidden');
@@ -1007,21 +1634,35 @@ step2Form.addEventListener('submit', async e => {
     }
     actionsRow.removeAttribute('hidden');
     if (retryBtn) retryBtn.hidden = true;
+    setOcrStatusStep('uploaded');
   }
 
   clearBtn.addEventListener('click', () => {
     if (extractRunning) return;
     if (selectedFile && ocrApi) ocrApi.clearCache(selectedFile);
+    if (ocrApi) ocrApi.clearAllClientCache();
     fileInput.value = ''; selectedFile = null; extractComplete = false;
     previewImg.src = ''; previewImg.setAttribute('hidden', '');
     pdfIndicator.setAttribute('hidden', ''); previewWrap.setAttribute('hidden', '');
     placeholder.removeAttribute('hidden');
+    if (uploadSuccess) uploadSuccess.hidden = true;
+    if (uploadSuccessFile) uploadSuccessFile.textContent = '';
+    uploadArea.classList.remove('has-file');
     filenameEl.classList.remove('visible'); filenameText.textContent = '';
     actionsRow.setAttribute('hidden', '');
     if (retryBtn) retryBtn.hidden = true;
-    if (ocrApi) ocrApi.resetExtractionPreview();
+    if (ocrApi) {
+      ocrApi.resetExtractionPreview();
+      ocrApi.resetOcrFieldLock();
+    }
+    clearStep1AddressFields();
     showProgress(false);
+    resetOcrStatusPanel();
+    hideReviewAndSummary();
+    hideErrorCard();
+    resetConfirmCheck();
     resetVerification(); hideStatus();
+    fetch((typeof window.APP_BASE !== 'undefined' ? window.APP_BASE : '') + '/app/controllers/patient/process_id_ocr.php?clear_session=1', { method: 'POST' }).catch(() => {});
   });
 
   if (retryBtn) {
@@ -1033,9 +1674,12 @@ step2Form.addEventListener('submit', async e => {
     });
   }
 
-  scanBtn.addEventListener('click', async () => {
+  async function runVerify() {
     const file = (fileInput.files && fileInput.files[0]) || selectedFile;
-    if (!file) { showStatus('No file selected. Please upload your National ID first.', 'error'); return; }
+    if (!file) {
+      showStatus('No file selected. Please upload your National ID first.', 'error');
+      return false;
+    }
 
     const firstName  = document.getElementById('first-name').value.trim();
     const middleName = document.getElementById('middle-name')?.value?.trim() || '';
@@ -1046,18 +1690,23 @@ step2Form.addEventListener('submit', async e => {
 
     if (!firstName || !lastName || !dob || !nationalId) {
       showStatus('Please ensure First Name, Last Name, Date of Birth, and National ID Number are filled (upload your ID to auto-fill).', 'error');
-      return;
+      return false;
     }
 
     setScanLoading(true);
     showStatus('Verifying your National ID and Bago City residency…', 'scanning');
-    scanRanOnce = false; resetVerification(); resetResultPanel();
+    scanRanOnce = false;
+    resetVerification({ keepExtract: true });
+    resetResultPanel();
 
     const fd = new FormData();
     fd.append('national_id_image', file, file.name);
-    fd.append('first_name', firstName); fd.append('middle_name', middleName);
-    fd.append('last_name', lastName);   fd.append('date_of_birth', dob);
-    fd.append('national_id', nationalId); fd.append('barangay', barangay);
+    fd.append('first_name', firstName);
+    fd.append('middle_name', middleName);
+    fd.append('last_name', lastName);
+    fd.append('date_of_birth', dob);
+    fd.append('national_id', nationalId);
+    fd.append('barangay', barangay);
 
     try {
       const base = (typeof window.APP_BASE !== 'undefined') ? window.APP_BASE : '';
@@ -1067,7 +1716,7 @@ step2Form.addEventListener('submit', async e => {
         const raw = await res.text().catch(() => '');
         const msg = raw.length < 300 ? raw : `Server error (${res.status})`;
         showStatus('Server error: ' + msg.replace(/<[^>]+>/g, '').trim(), 'error');
-        setScanLoading(false); return;
+        return false;
       }
 
       let data;
@@ -1077,12 +1726,15 @@ step2Form.addEventListener('submit', async e => {
         const raw = await res.clone().text().catch(() => '(unreadable)');
         console.error('OCR JSON parse failed. Raw response:', raw);
         showStatus('Server returned invalid data. Open F12 → Console to see the raw response.', 'error');
-        setScanLoading(false); return;
+        return false;
       }
 
       if (!data.success) {
         showStatus(data.message || 'Verification failed. Please try again.', 'error');
-        ocrVerified = false; scanRanOnce = true; unlockAddress(); disableProceed(); return;
+        ocrVerified = false;
+        scanRanOnce = true;
+        unlockAddress();
+        return false;
       }
 
       ocrVerified      = data.verified === true && data.bago_city === true;
@@ -1092,14 +1744,12 @@ step2Form.addEventListener('submit', async e => {
       if (data.bago_city === true) { lockAddress(); } else { unlockAddress(); }
 
       if (ocrVerified) {
-        showStatus('National ID verified. Bago City residency confirmed. You may now proceed.', 'success');
-        enableProceed();
+        showStatus('National ID verified. Bago City residency confirmed.', 'success');
       } else {
         const errMsg = (data.errors && data.errors.length)
           ? data.errors[0]
           : 'National ID verification failed. Please make sure the entered details exactly match your uploaded National ID.';
         showStatus(errMsg, 'error');
-        disableProceed();
         unlockAddress();
 
         const residencyFailed = (data.bago_city === false)
@@ -1114,30 +1764,109 @@ step2Form.addEventListener('submit', async e => {
       }
 
       renderResult(data);
+      return ocrVerified;
     } catch (err) {
       console.error('OCR verify error:', err);
       showStatus("We couldn't accurately read your National ID. Please upload a clearer photo taken in good lighting.", 'error');
-      ocrVerified = false; ocrBagoConfirmed = false; scanRanOnce = true;
-      unlockAddress(); disableProceed();
+      ocrVerified = false;
+      ocrBagoConfirmed = false;
+      scanRanOnce = true;
+      unlockAddress();
+      return false;
     } finally {
       setScanLoading(false);
+      updateProceedState();
     }
-  });
+  }
 
-  ['first-name', 'middle-name', 'last-name', 'dob', 'national-id'].forEach(id => {
+  scanBtn.addEventListener('click', () => { runVerify(); });
+
+  ['first-name', 'middle-name', 'last-name', 'dob', 'national-id', 'street-address'].forEach(id => {
     const el = document.getElementById(id);
     if (!el) return;
-    el.addEventListener('input',  () => invalidateIfVerified(id));
-    el.addEventListener('change', () => invalidateIfVerified(id));
+    el.addEventListener('input',  () => {
+      if (ocrApi && ocrApi.markFieldEdited) ocrApi.markFieldEdited(id);
+      invalidateIfVerified(id);
+      updateProceedState();
+    });
+    el.addEventListener('change', () => {
+      if (ocrApi && ocrApi.markFieldEdited) ocrApi.markFieldEdited(id);
+      invalidateIfVerified(id);
+      updateProceedState();
+    });
   });
+
+  ['gender', 'civil-status'].forEach((id) => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.addEventListener('input', updateProceedState);
+    el.addEventListener('change', updateProceedState);
+  });
+
+  ['region', 'province', 'city', 'barangay'].forEach((id) => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.addEventListener('change', () => {
+      setTimeout(() => { invalidateIfVerified(id); updateProceedState(); }, 120);
+    });
+  });
+
+  if (confirmCheck) {
+    confirmCheck.addEventListener('change', updateProceedState);
+  }
+
+  if (summaryToggle && summaryCard) {
+    summaryToggle.addEventListener('click', () => {
+      const collapsed = summaryCard.classList.toggle('is-collapsed');
+      summaryToggle.setAttribute('aria-expanded', collapsed ? 'false' : 'true');
+    });
+  }
+
+  if (btnErrorReupload) {
+    btnErrorReupload.addEventListener('click', () => {
+      hideErrorCard();
+      fileInput.click();
+    });
+  }
+
+  if (btnManualEntry) {
+    btnManualEntry.addEventListener('click', () => {
+      hideErrorCard();
+      if (ocrApi) ocrApi.unlockOcrFields();
+      ['first-name', 'middle-name', 'last-name', 'dob', 'national-id', 'street-address'].forEach((id) => {
+        const el = document.getElementById(id);
+        if (!el) return;
+        el.readOnly = false;
+        el.removeAttribute('readonly');
+        el.classList.remove('ocr-gated');
+        el.dataset.ocrUnlocked = '1';
+        if (!el.value && el.type !== 'date') {
+          el.placeholder = 'Unable to extract. Please enter manually.';
+        }
+        if (ocrApi && ocrApi.setFieldBadge && !el.value) ocrApi.setFieldBadge(id, 'empty');
+      });
+      extractComplete = true;
+      showReviewNotice();
+      showStatus('You can complete the form manually. Please enter all details exactly as shown on your National ID.', 'scanning');
+      updateProceedState();
+      const first = document.getElementById('first-name');
+      if (first) first.focus();
+    });
+  }
 
   function invalidateIfVerified() {
     if (window.__ocrAutofillActive) return;
-    if (!ocrVerified && !scanRanOnce) return;
-    resetVerification(); scanRanOnce = false;
-    if (ocrVerified) showStatus('Details changed — please verify your ID again.', 'error');
+    if (!ocrVerified && !scanRanOnce) {
+      updateProceedState();
+      return;
+    }
+    const wasVerified = ocrVerified;
+    resetVerification({ keepExtract: true });
+    scanRanOnce = false;
+    if (wasVerified) showStatus('Details changed — please create your account again to re-verify.', 'error');
     else hideStatus();
     fetch((typeof window.APP_BASE !== 'undefined' ? window.APP_BASE : '') + '/app/controllers/patient/process_id_ocr.php?clear_session=1', { method: 'POST' }).catch(() => {});
+    updateProceedState();
   }
 
   function renderResult(data) {
@@ -1242,10 +1971,17 @@ step2Form.addEventListener('submit', async e => {
     if (state === 'verified') { badge.textContent = '✓ Verified'; badge.className = 'ocr-badge ocr-badge--pass'; }
     else { badge.textContent = '✗ Not Verified'; badge.className = 'ocr-badge ocr-badge--fail'; }
   }
-  function resetVerification() {
-    ocrVerified = false; ocrBagoConfirmed = false; scanRanOnce = false;
-    badge.hidden = true; badge.className = 'ocr-badge';
-    unlockAddress(); resetResultPanel(); disableProceed();
+  function resetVerification(opts) {
+    const keepExtract = opts && opts.keepExtract;
+    ocrVerified = false;
+    ocrBagoConfirmed = false;
+    if (!keepExtract) scanRanOnce = false;
+    badge.hidden = true;
+    badge.className = 'ocr-badge';
+    unlockAddress();
+    resetResultPanel();
+    if (!keepExtract) extractComplete = false;
+    updateProceedState();
   }
   function resetResultPanel() {
     resultBox.hidden = true; resultBox.style.display = 'none';
@@ -1264,9 +2000,17 @@ step2Form.addEventListener('submit', async e => {
   function showStatus(msg, type) { statusEl.textContent = msg; statusEl.className = `ocr-status ${type}`; statusEl.hidden = false; }
   function hideStatus() { statusEl.hidden = true; statusEl.textContent = ''; }
 
+  document.getElementById('btn-open-referral')?.addEventListener('click', () => {
+    if (window.BagoReferral) window.BagoReferral.show();
+  });
+
   window.__ocrIsVerified = () => ocrVerified;
   window.__ocrIsBago     = () => ocrBagoConfirmed;
+  window.__ocrIsBagoCity = () => isBagoCitySelected();
+  window.__ocrShowNonBagoReferral = showNonBagoReferral;
   window.__ocrInvalidate = () => invalidateIfVerified('address');
+  window.__ocrRunVerify = runVerify;
+  window.__ocrUpdateProceedState = updateProceedState;
 })();
 
 /* ===== REGISTER PAGE PASSWORD TOGGLES + STRENGTH ===== */
@@ -1316,7 +2060,7 @@ step2Form.addEventListener('submit', async e => {
     if (checklist)    checklist.hidden    = false;
 
     const rules = {
-      len:     v.length >= 8,
+      len:     v.length >= 12,
       upper:   /[A-Z]/.test(v),
       lower:   /[a-z]/.test(v),
       num:     /[0-9]/.test(v),
@@ -1390,7 +2134,7 @@ step2Form.addEventListener('submit', async e => {
     if (checklist) checklist.hidden = false;
 
     const rules = {
-      len: v.length >= 8,
+      len: v.length >= 12,
       upper: /[A-Z]/.test(v),
       lower: /[a-z]/.test(v),
       num: /[0-9]/.test(v),

@@ -1,0 +1,356 @@
+/**
+ * Landing page — floating theme toggle (scroll-reveal above quick-action FAB)
+ */
+
+.landing-theme-fab {
+  --ltf-fab-bottom: 30px;
+  --ltf-fab-size: 60px;
+  --ltf-stack-gap: 14px;
+
+  position: fixed;
+  right: 30px;
+  bottom: calc(var(--ltf-fab-bottom) + var(--ltf-fab-size) + var(--ltf-stack-gap));
+  z-index: 1205;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: var(--ltf-fab-size);
+  height: var(--ltf-fab-size);
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(20px);
+  pointer-events: none;
+  transition:
+    opacity 0.35s ease-out,
+    transform 0.35s ease-out,
+    visibility 0s linear 0.35s;
+}
+
+.landing-theme-fab.is-visible {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0);
+  pointer-events: auto;
+  transition:
+    opacity 0.35s ease-out,
+    transform 0.35s ease-out,
+    visibility 0s linear 0s;
+}
+
+body.signin-active .landing-theme-fab {
+  opacity: 0 !important;
+  visibility: hidden !important;
+  pointer-events: none !important;
+  transform: translateY(20px) !important;
+}
+
+.landing-theme-fab__btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--ltf-fab-size);
+  height: var(--ltf-fab-size);
+  padding: 0;
+  border: 2px solid rgba(6, 147, 150, 0.55);
+  border-radius: 50%;
+  background: linear-gradient(145deg, #0f172a 0%, #1e3a5f 100%);
+  color: #e2e8f0;
+  cursor: pointer;
+  box-shadow: 0 4px 18px rgba(1, 42, 74, 0.35);
+  box-sizing: border-box;
+  flex-shrink: 0;
+  transition:
+    background 0.35s ease,
+    border-color 0.35s ease,
+    box-shadow 0.35s ease,
+    transform 0.2s ease,
+    color 0.35s ease;
+}
+
+.landing-theme-fab__icon-slot {
+  display: grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  flex-shrink: 0;
+}
+
+.landing-theme-fab__icon {
+  grid-area: 1 / 1;
+  display: block;
+  width: 22px;
+  height: 22px;
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transition: opacity 0.2s ease, transform 0.2s ease;
+}
+
+.landing-theme-fab__icon--moon {
+  width: 21px;
+  height: 21px;
+  transform: translateX(-0.5px);
+}
+
+.landing-theme-fab__icon--sun {
+  width: 22px;
+  height: 22px;
+}
+
+html[data-theme-resolved='light'] .landing-theme-fab__icon--moon,
+html:not([data-theme-resolved]) .landing-theme-fab__icon--moon {
+  opacity: 1;
+  visibility: visible;
+}
+
+html[data-theme-resolved='dark'] .landing-theme-fab__icon--sun {
+  opacity: 1;
+  visibility: visible;
+}
+
+html[data-theme-resolved='light'] .landing-theme-fab__btn,
+html:not([data-theme-resolved]) .landing-theme-fab__btn {
+  background: linear-gradient(145deg, #0f172a 0%, #1e3a5f 100%);
+  color: #cbd5e1;
+}
+
+html[data-theme-resolved='dark'] .landing-theme-fab__btn {
+  background: linear-gradient(145deg, #e0f2fe 0%, #bae6fd 100%);
+  color: #0f172a;
+  border-color: rgba(14, 165, 233, 0.65);
+  box-shadow: 0 4px 18px rgba(14, 165, 233, 0.25);
+}
+
+.landing-theme-fab__btn:hover,
+.landing-theme-fab__btn:focus-visible {
+  border-color: rgba(94, 234, 212, 0.85);
+  box-shadow: 0 6px 22px rgba(6, 147, 150, 0.4);
+  transform: translateY(-1px);
+  outline: none;
+}
+
+.landing-theme-fab__btn:active {
+  transform: scale(0.96);
+}
+
+/* Sentinel — 75% mark inside hero for scroll threshold fallback */
+.hero-theme-sentinel {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 75%;
+  height: 1px;
+  width: 100%;
+  pointer-events: none;
+  visibility: hidden;
+}
+
+@media (max-width: 768px) {
+  .landing-theme-fab {
+    --ltf-fab-bottom: 20px;
+    --ltf-fab-size: 50px;
+    --ltf-stack-gap: 12px;
+    right: 20px;
+  }
+}
+
+@media (max-width: 480px) {
+  .landing-theme-fab {
+    --ltf-fab-bottom: 10px;
+    --ltf-fab-size: 45px;
+    --ltf-stack-gap: 10px;
+    right: 10px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .landing-theme-fab {
+    transition: opacity 0.15s ease, visibility 0s linear 0.15s;
+    transform: none;
+  }
+
+  .landing-theme-fab.is-visible {
+    transition: opacity 0.15s ease, visibility 0s linear 0s;
+    transform: none;
+  }
+}
+
+/* ── Landing page background theme (BSIS-style swap) ── */
+body.landing-page {
+  transition:
+    background-image 0.45s ease,
+    background-color 0.45s ease;
+}
+
+body.landing-page::after {
+  transition: background 0.45s ease;
+}
+
+html[data-theme-resolved='light'] body.landing-page,
+html:not([data-theme-resolved]) body.landing-page {
+  background-image:
+    radial-gradient(ellipse 70% 55% at 18% 88%, rgba(255, 255, 255, 0.82) 0%, transparent 52%),
+    radial-gradient(ellipse 55% 42% at 78% 78%, rgba(255, 255, 255, 0.7) 0%, transparent 48%),
+    radial-gradient(ellipse 90% 65% at 50% 0%, rgba(255, 255, 255, 0.55) 0%, transparent 58%),
+    linear-gradient(180deg, #2b8fd4 0%, #5eb3ea 28%, #8ecdf5 55%, #c5e7fa 78%, #e8f6fc 100%);
+  background-color: #8ecdf5;
+}
+
+html[data-theme-resolved='light'] body.landing-page::after,
+html:not([data-theme-resolved]) body.landing-page::after {
+  background: rgba(255, 255, 255, 0.06);
+}
+
+/* ── Landing dark mode (public page) ── */
+html[data-theme-resolved='dark'] body.landing-page {
+  background-image:
+    radial-gradient(ellipse 45% 38% at 82% 18%, rgba(148, 163, 184, 0.12) 0%, transparent 55%),
+    radial-gradient(ellipse 60% 50% at 20% 15%, rgba(30, 58, 95, 0.35) 0%, transparent 65%),
+    radial-gradient(ellipse 55% 45% at 15% 80%, rgba(15, 118, 110, 0.15) 0%, transparent 60%),
+    linear-gradient(160deg, #020617 0%, #0f172a 45%, #1e293b 100%);
+  background-color: #0f172a;
+}
+
+html[data-theme-resolved='dark'] body.landing-page::after {
+  background: rgba(2, 6, 23, 0.45);
+}
+
+/* Light mode — sky shows through sections (overrides landing-nav navy !important) */
+html[data-theme-resolved='light'] body.landing-page .services-section,
+html[data-theme-resolved='light'] body.landing-page .contact-section,
+html[data-theme-resolved='light'] body.landing-page .about-team-section,
+body.landing-page.landing-bg--light .services-section,
+body.landing-page.landing-bg--light .contact-section,
+body.landing-page.landing-bg--light .about-team-section {
+  background: transparent !important;
+}
+
+/* Light mode — readable text on sky background */
+html[data-theme-resolved='light'] .landing-page .services-title,
+html[data-theme-resolved='light'] .landing-page .landing-reveal-title,
+html[data-theme-resolved='light'] .landing-page .contact-col-title,
+html[data-theme-resolved='light'] .landing-page .contact-brand-name,
+body.landing-page.landing-bg--light .services-title,
+body.landing-page.landing-bg--light .landing-reveal-title,
+body.landing-page.landing-bg--light .contact-col-title,
+body.landing-page.landing-bg--light .contact-brand-name {
+  color: #0f172a !important;
+}
+
+html[data-theme-resolved='light'] .landing-page .services-desc,
+html[data-theme-resolved='light'] .landing-page .landing-reveal-desc,
+html[data-theme-resolved='light'] .landing-page .contact-brand-desc,
+html[data-theme-resolved='light'] .landing-page .contact-details li,
+html[data-theme-resolved='light'] .landing-page .contact-copy,
+body.landing-page.landing-bg--light .services-desc,
+body.landing-page.landing-bg--light .landing-reveal-desc,
+body.landing-page.landing-bg--light .contact-brand-desc,
+body.landing-page.landing-bg--light .contact-details li,
+body.landing-page.landing-bg--light .contact-copy {
+  color: #334155 !important;
+}
+
+html[data-theme-resolved='light'] .landing-page .services-desc strong,
+body.landing-page.landing-bg--light .services-desc strong {
+  color: #1e293b !important;
+}
+
+html[data-theme-resolved='light'] .landing-page .services-brand,
+html[data-theme-resolved='light'] .landing-page .contact-brand-accent,
+html[data-theme-resolved='light'] .landing-page .contact-details li svg,
+html[data-theme-resolved='light'] .landing-page .contact-links a:hover,
+body.landing-page.landing-bg--light .services-brand,
+body.landing-page.landing-bg--light .contact-brand-accent,
+body.landing-page.landing-bg--light .contact-details li svg,
+body.landing-page.landing-bg--light .contact-links a:hover {
+  color: #0f766e !important;
+}
+
+html[data-theme-resolved='light'] .landing-page .contact-links a,
+html[data-theme-resolved='light'] .landing-page .contact-social-link,
+body.landing-page.landing-bg--light .contact-links a,
+body.landing-page.landing-bg--light .contact-social-link {
+  color: #475569 !important;
+}
+
+html[data-theme-resolved='light'] .landing-page .contact-col-title,
+body.landing-page.landing-bg--light .contact-col-title {
+  border-bottom-color: rgba(15, 23, 42, 0.12) !important;
+}
+
+html[data-theme-resolved='light'] .landing-page .contact-social-link,
+body.landing-page.landing-bg--light .contact-social-link {
+  background: rgba(255, 255, 255, 0.72) !important;
+  border-color: rgba(15, 23, 42, 0.1) !important;
+}
+
+html[data-theme-resolved='light'] .landing-page .contact-social-link:hover,
+body.landing-page.landing-bg--light .contact-social-link:hover {
+  background: rgba(255, 255, 255, 0.92) !important;
+  border-color: rgba(15, 118, 110, 0.35) !important;
+}
+
+html[data-theme-resolved='light'] .landing-page .contact-bottom,
+body.landing-page.landing-bg--light .contact-bottom {
+  border-top-color: rgba(15, 23, 42, 0.1) !important;
+}
+
+html[data-theme-resolved='light'] .landing-page .contact-copy-note,
+body.landing-page.landing-bg--light .contact-copy-note {
+  color: #64748b !important;
+}
+
+html[data-theme-resolved='light'] .landing-page .about-team-section__kicker,
+body.landing-page.landing-bg--light .about-team-section__kicker {
+  color: #0f766e !important;
+}
+
+html[data-theme-resolved='light'] .landing-page .about-project-milestone__tagline,
+html[data-theme-resolved='light'] .landing-page .about-team-section__partners-label,
+html[data-theme-resolved='light'] .landing-page .about-team-section__partners-name,
+body.landing-page.landing-bg--light .about-project-milestone__tagline,
+body.landing-page.landing-bg--light .about-team-section__partners-label,
+body.landing-page.landing-bg--light .about-team-section__partners-name {
+  color: #334155 !important;
+}
+
+html[data-theme-resolved='light'] .landing-page .about-team-section__story,
+body.landing-page.landing-bg--light .about-team-section__story {
+  background: rgba(255, 255, 255, 0.82) !important;
+  border-color: rgba(15, 23, 42, 0.08) !important;
+  box-shadow: 0 12px 40px rgba(15, 23, 42, 0.08) !important;
+}
+
+/* Dark mode — keep institutional navy panels */
+html[data-theme-resolved='dark'] body.landing-page .services-section,
+html[data-theme-resolved='dark'] body.landing-page .contact-section,
+html[data-theme-resolved='dark'] body.landing-page .about-team-section,
+body.landing-page.landing-bg--dark .services-section,
+body.landing-page.landing-bg--dark .contact-section,
+body.landing-page.landing-bg--dark .about-team-section {
+  background: var(--navy) !important;
+}
+
+html[data-theme-resolved='dark'] .landing-page .services-section,
+html[data-theme-resolved='dark'] .landing-page .contact-section,
+html[data-theme-resolved='dark'] .landing-page .about-team-section {
+  background: #1e293b;
+  color: #e2e8f0;
+}
+
+html[data-theme-resolved='dark'] .landing-page .services-title,
+html[data-theme-resolved='dark'] .landing-page .contact-col-title {
+  color: #f8fafc;
+}
+
+html[data-theme-resolved='dark'] .landing-page .services-desc,
+html[data-theme-resolved='dark'] .landing-page .contact-brand-desc,
+html[data-theme-resolved='dark'] .landing-page .service-card-desc {
+  color: #cbd5e1;
+}
+
+html[data-theme-resolved='dark'] .landing-page .service-card {
+  background: #0f172a;
+  border-color: #334155;
+  color: #e2e8f0;
+}

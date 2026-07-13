@@ -10,6 +10,9 @@ final class BodyPartsDataset
     /** @var array<string, true>|null */
     private static ?array $termSet = null;
 
+    /** @var array<string, true>|null */
+    private static ?array $englishTermSet = null;
+
     public static function csvPath(): string
     {
         return BASE_PATH . '/data/nlp/body_parts.csv';
@@ -84,5 +87,29 @@ final class BodyPartsDataset
         }
 
         return isset(self::$termSet[$key]);
+    }
+
+    public static function isEnglishBodyPart(string $term): bool
+    {
+        $key = self::normalizeTerm($term);
+        if ($key === '') {
+            return false;
+        }
+        if (self::$englishTermSet === null) {
+            self::$englishTermSet = [];
+            foreach (self::rows() as $row) {
+                $english = self::normalizeTerm($row['english_term']);
+                if ($english !== '') {
+                    self::$englishTermSet[$english] = true;
+                }
+            }
+        }
+
+        return isset(self::$englishTermSet[$key]);
+    }
+
+    public static function isBodyPartOrEnglish(string $term): bool
+    {
+        return self::isBodyPart($term) || self::isEnglishBodyPart($term);
     }
 }

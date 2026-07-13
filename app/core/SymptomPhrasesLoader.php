@@ -18,6 +18,8 @@ final class SymptomPhrasesLoader
         '/data/nlp/hiligaynon_reproductive_expansion.csv',
         '/data/nlp/hiligaynon_combinatorial_phrases.csv',
         '/data/nlp/hiligaynon_conditions_combinatorial.csv',
+        '/data/nlp/hiligaynon_conditions.csv',
+        '/data/nlp/hiligaynon_symptoms.csv',
         '/data/nlp/step6_triage_exemplars.csv',
         '/data/nlp/symptom_phrases_seed.csv',
     ];

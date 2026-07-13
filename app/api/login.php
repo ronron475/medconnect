@@ -17,7 +17,6 @@ set_exception_handler(function ($e) {
 });
 
 require_once dirname(dirname(__DIR__)) . '/bootstrap.php';
-require_once dirname(dirname(__DIR__)) . '/config/db.php';
 require_once dirname(dirname(__DIR__)) . '/app/includes/provider_verification.php';
 require_once dirname(dirname(__DIR__)) . '/app/includes/profile_picture.php';
 require_once dirname(dirname(__DIR__)) . '/app/includes/provider_settings.php';
@@ -321,7 +320,13 @@ $remember = (string) ($_POST['remember_me'] ?? '');
 if ($remember === '1' || strtolower($remember) === 'true' || strtolower($remember) === 'on') {
     try {
         remember_me_issue_token($pdo, (int) $user['id']);
+        $_SESSION['remember_me_extended'] = true;
     } catch (Throwable $e) { /* non-fatal */ }
+} else {
+    try {
+        remember_me_revoke_current_cookie($pdo);
+    } catch (Throwable $e) { /* non-fatal */ }
+    unset($_SESSION['remember_me_extended']);
 }
 
 // ── Audit Log ───────────────────────────────────────────────

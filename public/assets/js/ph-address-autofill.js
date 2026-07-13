@@ -23,6 +23,14 @@
     return norm(s).replace(/\s+/g, '');
   }
 
+  function containsWord(haystack, word) {
+    if (!word) return false;
+    const w = String(word).trim();
+    if (w.length < 2) return false;
+    const escaped = w.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    return new RegExp('\\b' + escaped + '\\b', 'i').test(haystack);
+  }
+
   function levenshtein(a, b) {
     if (a === b) return 0;
     const m = a.length;
@@ -102,15 +110,113 @@
     return true;
   }
 
+  function normalizeOcrAddress(raw) {
+    let s = norm(raw);
+    s = s
+      .replace(/\bbgo\b/g, 'bago')
+      .replace(/\bgo\s*,\s*negros\b/g, 'bago negros')
+      .replace(/\bgo\s+negros\b/g, 'bago negros')
+      .replace(/\bcity\s+of\s+bgo\b/g, 'city of bago')
+      .replace(/\bil\s*jan\b/g, 'ilijan')
+      .replace(/\bil\s*jn\b/g, 'ilijan')
+      .replace(/\bil\s*jsn\b/g, 'ilijan')
+      .replace(/\bnegros\s+occ\b/g, 'negros occidental');
+    return s;
+  }
+
+  function findCityByNameInAddress(cities, addressNorm) {
+    let best = null;
+    let bestLen = 0;
+    for (const c of cities) {
+      const full = norm(c.city_name);
+      const short = full.replace(/\s+city$/, '').replace(/\s+municipality$/, '');
+      for (const token of [full, short]) {
+        if (token.length >= 4 && containsWord(addressNorm, token) && token.length > bestLen) {
+          best = c;
+          bestLen = token.length;
+        }
+      }
+    }
+    return best;
+  }
+
+  function isBagoCityRecord(city) {
+    if (!city) return false;
+    const n = norm(city.city_name);
+    return n === 'bago city' || n === 'city of bago' || /\bbago\s+city\b/.test(n);
+  }
+
+  function hasStrongBagoSignal(addressNorm) {
+    return (
+      (containsWord(addressNorm, 'bago') || containsWord(addressNorm, 'bgo'))
+      && containsWord(addressNorm, 'negros')
+    ) || containsWord(addressNorm, 'binubuhan');
+  }
+
+  function detectBagoCity(addressNorm, cities, barangays) {
+    if (hasStrongBagoSignal(addressNorm)) {
+      return findBagoCity(cities);
+    }
+    if (/\b(bago|bgo)\b/.test(addressNorm)) {
+      return findBagoCity(cities);
+    }
+    if (addressNorm.includes('negros') && /\bgo\b/.test(addressNorm)) {
+      return findBagoCity(cities);
+    }
+
+    const bago = findBagoCity(cities);
+    if (!bago || !barangays) return null;
+
+    const pool = barangays.filter((b) => b.city_code === bago.city_code);
+    const tokens = addressNorm.split(/[,\s]+/).filter((t) => t.length >= 4);
+
+    for (const b of pool) {
+      const bn = norm(b.brgy_name);
+      const bc = compact(b.brgy_name);
+      if (bn && addressNorm.includes(bn)) return bago;
+      for (const token of tokens) {
+        if (token === bc || levenshtein(token, bc) <= 2) return bago;
+      }
+    }
+    return null;
+  }
+
+  function findBagoCity(cities) {
+    return cities.find((c) => norm(c.city_name) === 'bago city')
+      || cities.find((c) => norm(c.city_name).includes('bago') && norm(c.city_name).includes('city'))
+      || null;
+  }
+
+  function findNegrosProvince(provinces, addressNorm) {
+    if (!addressNorm.includes('negros')) return null;
+    if (addressNorm.includes('oriental') && !addressNorm.includes('occidental')) {
+      return provinces.find((p) => norm(p.province_name) === 'negros oriental') || null;
+    }
+    return provinces.find((p) => norm(p.province_name) === 'negros occidental') || null;
+  }
+
+  function provinceFirstToken(pn) {
+    if (pn.startsWith('city of ')) return 'city of';
+    return pn.split(' ')[0] || '';
+  }
+
   function findProvince(provinces, addressNorm) {
+    const negros = findNegrosProvince(provinces, addressNorm);
+    if (negros) return negros;
+
     let best = null;
     let bestScore = Infinity;
     for (const p of provinces) {
       const pn = norm(p.province_name);
       if (!pn) continue;
       if (addressNorm.includes(pn)) return p;
+
+      const token = provinceFirstToken(pn);
+      // "BAGO CITY" must not fuzzy-match provinces like "City Of Manila".
+      if (token === 'city' || token === 'city of') continue;
+
       const dist = levenshtein(compact(pn), compact(addressNorm.slice(Math.max(0, addressNorm.length - pn.length - 5))));
-      if (addressNorm.includes(pn.split(' ')[0]) && dist < bestScore) {
+      if (addressNorm.includes(token) && dist < bestScore) {
         best = p;
         bestScore = dist;
       }
@@ -118,7 +224,10 @@
     return best;
   }
 
-  function findCity(cities, provinceCode, addressNorm) {
+  function findCity(cities, provinceCode, addressNorm, barangays) {
+    const bago = detectBagoCity(addressNorm, cities, barangays);
+    if (bago) return bago;
+
     const pool = provinceCode
       ? cities.filter((c) => c.province_code === provinceCode)
       : cities;
@@ -126,13 +235,11 @@
     for (const c of pool) {
       const full = norm(c.city_name);
       const short = full.replace(/\s+city$/, '').replace(/\s+municipality$/, '');
-      if (addressNorm.includes(full) || addressNorm.includes(short)) return c;
-      if (short.length >= 4 && addressNorm.includes('city of ' + short)) return c;
+      if (containsWord(addressNorm, full) || containsWord(addressNorm, short)) return c;
+      if (short.length >= 4 && containsWord(addressNorm, 'city of ' + short)) return c;
+      if (short === 'bago' && (containsWord(addressNorm, 'bago') || containsWord(addressNorm, 'bgo'))) return c;
     }
 
-    if (addressNorm.includes('bago')) {
-      return pool.find((c) => norm(c.city_name).includes('bago')) || null;
-    }
     return null;
   }
 
@@ -156,7 +263,7 @@
     for (const b of pool) {
       const bc = compact(b.brgy_name);
       for (const token of tokens) {
-        if (token === bc || levenshtein(token, bc) <= 1) return b;
+        if (token === bc || levenshtein(token, bc) <= 2) return b;
       }
     }
 
@@ -204,12 +311,31 @@
   }
 
   function parseAddress(addressRaw, datasets) {
-    const addressNorm = norm(addressRaw);
-    const addressCompact = compact(addressRaw);
+    const addressNorm = normalizeOcrAddress(addressRaw);
+    const addressCompact = compact(addressNorm);
     const { provinces, cities, regions, barangays } = datasets;
 
-    const province = findProvince(provinces, addressNorm);
-    const city = findCity(cities, province?.province_code, addressNorm);
+    let province = null;
+    let city = detectBagoCity(addressNorm, cities, barangays);
+
+    if (!city) {
+      city = findCityByNameInAddress(cities, addressNorm);
+    }
+
+    if (city && hasStrongBagoSignal(addressNorm) && !isBagoCityRecord(city)) {
+      city = findBagoCity(cities);
+    }
+
+    if (city) {
+      province = provinces.find((p) => p.province_code === city.province_code) || null;
+    }
+
+    if (!province) province = findProvince(provinces, addressNorm);
+    if (!city) city = findCity(cities, province?.province_code, addressNorm, barangays);
+    if (!province && city) {
+      province = provinces.find((p) => p.province_code === city.province_code) || null;
+    }
+
     const region = findRegion(regions, province);
     const barangay = city ? findBarangay(barangays, city.city_code, addressNorm, addressCompact) : null;
     const street = extractStreet(addressRaw, { region, province, city, barangay });
@@ -259,7 +385,7 @@
         if (await setSelect('region', 'region-text', parsed.region.region_code)) {
           matched.region = parsed.region.region_name;
           filled++;
-          await waitForOptions(document.getElementById('province'), 2);
+          await waitForOptions(document.getElementById('province'), 2, 15000);
         }
       }
 
@@ -267,7 +393,7 @@
         if (await setSelect('province', 'province-text', parsed.province.province_code)) {
           matched.province = parsed.province.province_name;
           filled++;
-          await waitForOptions(document.getElementById('city'), 2);
+          await waitForOptions(document.getElementById('city'), 2, 15000);
         }
       }
 
@@ -275,7 +401,7 @@
         if (await setSelect('city', 'city-text', parsed.city.city_code)) {
           matched.city = parsed.city.city_name;
           filled++;
-          await waitForOptions(document.getElementById('barangay'), 2);
+          await waitForOptions(document.getElementById('barangay'), 2, 15000);
         }
       }
 
@@ -301,7 +427,7 @@
       setTimeout(() => { global.__ocrAutofillActive = false; }, 300);
     }
 
-    return { filled, matched, parsed };
+    return { filled, matched, parsed, isBagoResident: isBagoCityRecord(parsed.city) };
   }
 
   global.PhAddressAutofill = {

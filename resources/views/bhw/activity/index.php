@@ -14,7 +14,7 @@ $activity_js_ver = (int) @filemtime(ASSETS_PATH . '/js/bhw-activity.js');
   <header class="bhw-reports-header">
     <div>
       <h2 class="text-h2">My Activity Log</h2>
-      <p class="bhw-reports-sub">A personal record of your actions in the BHW portal. You can only view your own activity — logs cannot be edited or deleted.</p>
+      <p class="bhw-reports-sub">A personal audit record of your actions in the BHW portal. Entries are read-only and cannot be modified.</p>
     </div>
     <div class="bhw-reports-export-btns no-print">
       <button type="button" class="bhw-btn-outline" data-export="csv" title="Download CSV">CSV</button>
@@ -23,13 +23,13 @@ $activity_js_ver = (int) @filemtime(ASSETS_PATH . '/js/bhw-activity.js');
     </div>
   </header>
 
-  <div class="bhw-card bhw-reports-filters">
-    <div class="bhw-reports-filter-grid bhw-activity-filters">
-      <div class="span-2">
+  <div class="bhw-card bhw-reports-filters no-print">
+    <div class="bhw-activity-filter-primary">
+      <div class="bhw-activity-filter-field bhw-activity-filter-field--search">
         <label class="form-label" for="act_search">Search</label>
         <input type="search" class="form-control" id="act_search" placeholder="Patient name, action, module…">
       </div>
-      <div>
+      <div class="bhw-activity-filter-field">
         <label class="form-label" for="act_period">Period</label>
         <select class="form-select" id="act_period">
           <option value="">All time</option>
@@ -38,26 +38,35 @@ $activity_js_ver = (int) @filemtime(ASSETS_PATH . '/js/bhw-activity.js');
           <option value="month">This month</option>
         </select>
       </div>
-      <div>
+      <div class="bhw-activity-filter-field">
         <label class="form-label" for="act_module">Module</label>
         <select class="form-select" id="act_module"><option value="">All modules</option></select>
       </div>
-      <div>
-        <label class="form-label" for="act_date_from">From</label>
-        <input type="date" class="form-control" id="act_date_from">
-      </div>
-      <div>
-        <label class="form-label" for="act_date_to">To</label>
-        <input type="date" class="form-control" id="act_date_to">
-      </div>
-      <div class="bhw-reports-filter-actions">
+      <div class="bhw-activity-filter-actions">
         <button type="button" class="bhw-btn-teal" id="act_apply">Apply</button>
         <button type="button" class="bhw-btn-outline" id="act_reset">Reset</button>
       </div>
     </div>
+    <details class="bhw-reports-filter-more bhw-activity-filter-more">
+      <summary>Date range</summary>
+      <div class="bhw-activity-filter-secondary">
+        <div class="bhw-activity-filter-field">
+          <label class="form-label" for="act_date_from">From</label>
+          <input type="date" class="form-control" id="act_date_from">
+        </div>
+        <div class="bhw-activity-filter-field">
+          <label class="form-label" for="act_date_to">To</label>
+          <input type="date" class="form-control" id="act_date_to">
+        </div>
+      </div>
+    </details>
   </div>
 
   <div class="bhw-card bhw-activity-table-card">
+    <div class="bhw-activity-table-head">
+      <h3 class="bhw-activity-table-title">Activity Records</h3>
+      <p class="bhw-activity-table-meta" id="actMeta" aria-live="polite">Loading activity…</p>
+    </div>
     <div class="bhw-activity-table-wrap">
       <table class="table bhw-table bhw-activity-table" id="actTable">
         <thead>
@@ -67,13 +76,13 @@ $activity_js_ver = (int) @filemtime(ASSETS_PATH . '/js/bhw-activity.js');
             <th>Action</th>
             <th>Patient</th>
             <th>Module</th>
-            <th>IP</th>
+            <th>IP Address</th>
             <th>Device</th>
             <th>Status</th>
           </tr>
         </thead>
         <tbody id="actBody">
-          <tr><td colspan="8" class="text-center text-muted py-4">Loading activity…</td></tr>
+          <tr><td colspan="8" class="bhw-activity-empty">Loading activity…</td></tr>
         </tbody>
       </table>
     </div>
@@ -86,7 +95,10 @@ $activity_js_ver = (int) @filemtime(ASSETS_PATH . '/js/bhw-activity.js');
   <div class="bhw-activity-modal-backdrop" data-close-modal></div>
   <div class="bhw-activity-modal-dialog">
     <button type="button" class="bhw-activity-modal-close" data-close-modal aria-label="Close">&times;</button>
-    <h3 id="actModalTitle">Activity Details</h3>
+    <div class="bhw-activity-modal-head">
+      <h3 id="actModalTitle">Activity Details</h3>
+      <p class="bhw-activity-modal-sub">Read-only audit entry</p>
+    </div>
     <dl class="bhw-activity-detail" id="actModalBody"></dl>
   </div>
 </div>

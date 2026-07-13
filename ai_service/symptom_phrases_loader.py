@@ -15,6 +15,8 @@ _SOURCES = (
     _NLP / "hiligaynon_reproductive_expansion.csv",
     _NLP / "hiligaynon_combinatorial_phrases.csv",
     _NLP / "hiligaynon_conditions_combinatorial.csv",
+    _NLP / "hiligaynon_conditions.csv",
+    _NLP / "hiligaynon_symptoms.csv",
     _NLP / "step6_triage_exemplars.csv",
     _NLP / "symptom_phrases_seed.csv",
 )

@@ -66,7 +66,6 @@ ob_start();
 
   var pregnancyWrap = document.getElementById('reg_pregnancy_wrap');
   var submitBtn = document.getElementById('reg_submit_btn');
-  var loader = document.getElementById('reg_loading_overlay');
 
   function dash(v) {
     return v && String(v).trim() ? String(v).trim() : '—';
@@ -306,7 +305,10 @@ ob_start();
       title: 'Patient Registered Successfully',
       message: html,
       html: true,
-      primary: { label: 'Go to Login', href: loginUrl },
+      primary: {
+        label: 'Continue to Chief Complaint',
+        href: r.redirect || ('../triage/submit.php?patient_id=' + (r.patient_id || '')),
+      },
       secondary: { label: 'Register Another', action: function () {
         document.querySelector('.bhw-register-sidebar .bhw-summary-card').classList.remove('is-success');
         sum.id.textContent = 'Auto-generated on submit';
@@ -373,14 +375,12 @@ ob_start();
       fd.append('consent_given', '1');
     }
     submitBtn.disabled = true;
-    submitBtn.innerHTML = '<span class="bhw-btn-spinner" aria-hidden="true"></span> Registering…';
-    if (loader) loader.hidden = false;
+    submitBtn.textContent = 'Registering…';
 
     BhwPortal.post('patients.php', fd).then(function (r) {
       submitting = false;
       submitBtn.disabled = false;
       submitBtn.textContent = 'Register Patient';
-      if (loader) loader.hidden = true;
 
       if (r.success) {
         form.reset();
@@ -410,7 +410,6 @@ ob_start();
       submitting = false;
       submitBtn.disabled = false;
       submitBtn.textContent = 'Register Patient';
-      if (loader) loader.hidden = true;
       BhwPortal.showFeedback({
         type: 'error',
         title: 'Network Error',
@@ -576,11 +575,13 @@ $bhw_inline_script = ob_get_clean();
             </div>
             <div class="bhw-field span-2">
               <label class="form-label" for="reg_conditions">Existing Conditions</label>
-              <textarea class="form-control" id="reg_conditions" name="existing_conditions" rows="3" placeholder="Hypertension, diabetes, asthma…"></textarea>
+              <textarea class="form-control" id="reg_conditions" name="existing_conditions" rows="3" placeholder="Hypertension, diabetes, asthma…" aria-describedby="reg_conditions_hint"></textarea>
+              <span class="bhw-field-hint" id="reg_conditions_hint">Optional — for BHW reference</span>
             </div>
             <div class="bhw-field span-2">
               <label class="form-label" for="reg_allergies">Allergies</label>
-              <textarea class="form-control" id="reg_allergies" name="allergies" rows="2" placeholder="Drug, food, or environmental allergies"></textarea>
+              <textarea class="form-control" id="reg_allergies" name="allergies" rows="2" placeholder="Drug, food, or environmental allergies" aria-describedby="reg_allergies_hint"></textarea>
+              <span class="bhw-field-hint" id="reg_allergies_hint">Optional — for BHW reference</span>
             </div>
             <div class="bhw-field span-2">
               <label class="form-label" for="reg_medications">Current Medications</label>
@@ -736,13 +737,6 @@ $bhw_inline_script = ob_get_clean();
       </div>
     </aside>
 
-  </div>
-
-  <div class="bhw-register-loading" id="reg_loading_overlay" hidden aria-live="polite" aria-busy="true">
-    <div class="bhw-register-loading-inner">
-      <span class="bhw-btn-spinner bhw-btn-spinner--lg" aria-hidden="true"></span>
-      <p>Registering patient…</p>
-    </div>
   </div>
 
 </div>

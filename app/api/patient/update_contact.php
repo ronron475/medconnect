@@ -10,13 +10,11 @@ require_once dirname(dirname(dirname(__DIR__))) . '/bootstrap.php';
 require_once dirname(dirname(dirname(__DIR__))) . '/config/db.php';
 
 // ── Guards ────────────────────────────────────────────────────────────────────
-if (empty($_SESSION['user_id']) || ($_SESSION['user_role'] ?? '') !== 'patient') {
-    header('Location: ' . BASE_URL . '/index.php');
-    exit;
-}
+require_once dirname(dirname(dirname(__DIR__))) . '/app/includes/patient_settings.php';
+$userId = patient_settings_require_patient_ready($pdo);
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-    header('Location: ' . BASE_URL . '/views/patient/dashboard.php#view-profile');
+    header('Location: ' . BASE_URL . '/views/patient/profile.php');
     exit;
 }
 
@@ -25,7 +23,7 @@ if (
     !hash_equals($_SESSION['csrf_token'] ?? '', $_POST['csrf_token'])
 ) {
     $_SESSION['identity_error'] = 'Invalid request token. Please refresh and try again.';
-    header('Location: ' . BASE_URL . '/views/patient/dashboard.php#view-profile');
+    header('Location: ' . BASE_URL . '/views/patient/profile.php');
     exit;
 }
 
@@ -63,7 +61,7 @@ if ($form_type === 'emergency') {
     if ($phone !== '' && !preg_match('/^(09|\+639)\d{9}$/', $phone)) {
         $_SESSION['emergency_errors']['emergency_contact_phone'] =
             'Enter a valid PH mobile number (e.g. 09171234567).';
-        header('Location: ' . BASE_URL . '/views/patient/dashboard.php#view-profile');
+        header('Location: ' . BASE_URL . '/views/patient/profile.php');
         exit;
     }
 
@@ -115,7 +113,7 @@ if ($form_type === 'emergency') {
 
     if (!empty($errors)) {
         $_SESSION['contact_errors'] = $errors;
-        header('Location: ' . BASE_URL . '/views/patient/dashboard.php#view-profile');
+        header('Location: ' . BASE_URL . '/views/patient/profile.php');
         exit;
     }
 
@@ -192,5 +190,5 @@ if ($form_type === 'emergency') {
     }
 }
 
-header('Location: ' . BASE_URL . '/views/patient/dashboard.php#view-profile');
+header('Location: ' . BASE_URL . '/views/patient/profile.php');
 exit;

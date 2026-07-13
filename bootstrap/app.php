@@ -48,6 +48,68 @@ if (!function_exists('medconnect_request_is_https')) {
     }
 }
 
+if (!function_exists('medconnect_is_local_dev_host')) {
+    /** True for localhost / private LAN hosts where HTTP dev is expected. */
+    function medconnect_is_local_dev_host(?string $host = null): bool
+    {
+        $host = strtolower(trim((string) ($host ?? ($_SERVER['HTTP_HOST'] ?? ''))));
+        if ($host === '') {
+            return false;
+        }
+        // Strip port
+        $host = preg_replace('/:\d+$/', '', $host) ?? $host;
+
+        if (in_array($host, ['localhost', '127.0.0.1', '[::1]'], true)) {
+            return true;
+        }
+
+        return (bool) preg_match(
+            '/^(192\.168\.|10\.|172\.(1[6-9]|2[0-9]|3[0-1])\.)/',
+            $host
+        );
+    }
+}
+
+if (!function_exists('medconnect_send_security_headers')) {
+    /** Security headers required for WebRTC (camera/mic) on deployed HTTPS sites. */
+    function medconnect_send_security_headers(): void
+    {
+        if (headers_sent() || PHP_SAPI === 'cli') {
+            return;
+        }
+
+        header('X-Content-Type-Options: nosniff');
+        header('Referrer-Policy: strict-origin-when-cross-origin');
+        header('Permissions-Policy: camera=(self), microphone=(self), display-capture=(self)');
+        header('X-Frame-Options: SAMEORIGIN');
+
+        // CSP: allow current inline-script heavy UI while blocking common injection vectors.
+        // Tighten further once inline scripts are migrated to external bundles.
+        $csp = implode('; ', [
+            "default-src 'self'",
+            "base-uri 'self'",
+            "object-src 'none'",
+            "frame-ancestors 'self'",
+            // Allow safe embedded maps used on landing page modals.
+            "frame-src 'self' https://maps.google.com https://www.google.com",
+            // Leaflet tiles (OSM/Esri) + CDN assets used in GIS dashboards.
+            "img-src 'self' data: blob: https://*.tile.openstreetmap.org https://server.arcgisonline.com https://unpkg.com",
+            "font-src 'self' data: https://fonts.gstatic.com",
+            "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://unpkg.com",
+            // Chart.js + Leaflet are loaded from CDN for dashboards.
+            "script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://unpkg.com",
+            "connect-src 'self'",
+            "media-src 'self' blob:",
+        ]);
+        header("Content-Security-Policy: {$csp}");
+        header('X-Content-Type-Options: nosniff');
+
+        if (medconnect_request_is_https() && !medconnect_is_local_dev_host()) {
+            header('Strict-Transport-Security: max-age=31536000; includeSubDomains');
+        }
+    }
+}
+
 // ── Secure session defaults (must be set before session_start) ────────────────
 if (session_status() === PHP_SESSION_NONE) {
     ini_set('session.use_only_cookies', '1');
@@ -78,6 +140,8 @@ if (session_status() === PHP_SESSION_NONE) {
 
     session_start();
 }
+
+medconnect_send_security_headers();
 
 // ── Filesystem paths (always project root, never public/) ─────────────────────
 if (!defined('BASE_PATH')) {
@@ -169,58 +233,18 @@ if (empty($_SESSION['csrf_token'])) {
     $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
 }
 
-// Core classes (lazy-load refactor deferred — keep compatibility)
-$coreClasses = [
-    'Api.php',
-    'NotificationManager.php',
-    'AiServiceClient.php',
-    'AiServiceLauncher.php',
-    'TranscriptAnalyzer.php',
-    'MedicalDictionary.php',
-    'HiligaynonNlpDataset.php',
-    'HiligaynonPainRecognition.php',
-    'BodyPartPainSymptoms.php',
-    'HiligaynonMedicalTraining.php',
-    'HiligaynonLanguageDetector.php',
-    'HiligaynonTextNormalizer.php',
-    'BodyPartsDataset.php',
-    'SymptomPhrasesLoader.php',
-    'MedicalMisspellingsLoader.php',
-    'EmergencyFlagsLoader.php',
-    'TriageRulesLoader.php',
-    'PhraseCombinatorialEngine.php',
-    'MedicalEntityExtractor.php',
-    'ClinicalTriageEngine.php',
-    'HiligaynonPhraseTranslator.php',
-    'MedicalConceptExtractor.php',
-    'MedicalTriageDetector.php',
-    'HiligaynonMedicalNlpPipeline.php',
-    'HiligaynonMedicalKnowledgeBase.php',
-    'HiligaynonPatientComplaints.php',
-    'SymptomLexicon.php',
-    'HiligaynonSymptomMatcher.php',
-    'MedicalTermFilter.php',
-    'NlpPreprocessor.php',
-    'MedicalTranslator.php',
-    'MedicalAiInterpreter.php',
-    'MedicalTranslationPipeline.php',
-    'NlpDictionaryFallback.php',
-    'NlpPipelineDiagnostics.php',
-    'MedicalFuzzyMatcher.php',
-    'MedicalDatasetValidator.php',
-    'MedicalInvalidEntryDetector.php',
-    'MedicalRecognitionHelper.php',
-    'MedicalValidationWorkflow.php',
-    'MedicalProfilePipelineSteps.php',
-    'MedicalTextAnalysisWorkflow.php',
-    'MedicalProfileAnalyzer.php',
-    'MedicalSeverityDetector.php',
-    'MedicalConfidenceScorer.php',
-    'MedicalConditionMatcher.php',
-    'MedicalRecommendationEngine.php',
-    'MedicalAssessmentEngine.php',
-];
-
-foreach ($coreClasses as $coreFile) {
-    require_once BASE_PATH . '/app/core/' . $coreFile;
+// Core classes — autoload on first use (avoids loading NLP stack on login/dashboard).
+if (!function_exists('medconnect_autoload_core')) {
+    function medconnect_autoload_core(string $class): void
+    {
+        static $coreDir = null;
+        if ($coreDir === null) {
+            $coreDir = BASE_PATH . '/app/core/';
+        }
+        $file = $coreDir . $class . '.php';
+        if (is_file($file)) {
+            require_once $file;
+        }
+    }
+    spl_autoload_register('medconnect_autoload_core');
 }

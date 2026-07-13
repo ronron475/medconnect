@@ -50,9 +50,250 @@
   border-color: var(--mc-border-thin);
 }
 
-/* Configuration table */
+/* Configuration table (legacy) */
 .sched-table-wrap {
   overflow-x: auto;
+}
+
+/* Multi-session day blocks */
+.sched-days-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.sched-day-block {
+  padding: 16px 0;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.sched-day-block:last-child {
+  border-bottom: none;
+  padding-bottom: 4px;
+}
+
+.sched-day-block--today {
+  background: linear-gradient(90deg, rgba(6, 147, 150, 0.06) 0%, transparent 100%);
+  margin: 0 -4px;
+  padding: 18px 14px 20px;
+  border-radius: 12px;
+  border: 1px solid rgba(6, 147, 150, 0.15);
+  border-bottom: 1px solid rgba(6, 147, 150, 0.15);
+}
+
+.sched-day-block--locked {
+  opacity: 0.92;
+}
+
+.sched-day-block__head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.sched-day-block__title {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 800;
+  color: var(--mc-navy-dark);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.sched-day-block__hint {
+  margin: 4px 0 0;
+  font-size: 11px;
+  color: var(--mc-slate-muted);
+}
+
+.sched-day-active-row {
+  margin-bottom: 14px;
+}
+
+.sched-day-active-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--mc-navy-dark);
+  cursor: pointer;
+}
+
+.sched-day-active-label input {
+  width: 16px;
+  height: 16px;
+  accent-color: #069396;
+}
+
+.sched-sessions-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.sched-session-card {
+  background: #fff;
+  border: 1px solid var(--mc-border-thin);
+  border-radius: 12px;
+  padding: 14px;
+  transition: border-color 0.18s, box-shadow 0.18s;
+}
+
+.sched-session-card.is-invalid {
+  border-color: #fca5a5;
+  box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.08);
+}
+
+.sched-session-card__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 12px;
+  padding-bottom: 10px;
+  border-bottom: 1px dashed #e2e8f0;
+}
+
+.sched-session-card__label {
+  font-size: 12px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: #069396;
+}
+
+.sched-session-remove {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 10px;
+  border-radius: 8px;
+  border: 1px solid #fecaca;
+  background: #fef2f2;
+  color: #dc2626;
+  font-size: 11px;
+  font-weight: 700;
+  font-family: inherit;
+  cursor: pointer;
+  transition: background 0.18s;
+}
+
+.sched-session-remove:hover {
+  background: #fee2e2;
+}
+
+.sched-session-card__grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.sched-session-field label {
+  display: block;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--mc-slate-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  margin-bottom: 5px;
+}
+
+.sched-add-session {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+  justify-content: center;
+  padding: 10px 14px;
+  margin-bottom: 14px;
+  border-radius: 10px;
+  border: 1.5px dashed rgba(6, 147, 150, 0.45);
+  background: rgba(6, 147, 150, 0.04);
+  color: #057a7c;
+  font-size: 13px;
+  font-weight: 700;
+  font-family: inherit;
+  cursor: pointer;
+  transition: background 0.18s, border-color 0.18s;
+}
+
+.sched-add-session:hover {
+  background: rgba(6, 147, 150, 0.1);
+  border-color: #069396;
+}
+
+.sched-validation {
+  margin-bottom: 12px;
+  padding: 12px 14px;
+  border-radius: 10px;
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  color: #991b1b;
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.sched-validation ul {
+  margin: 8px 0 0;
+  padding-left: 18px;
+}
+
+.sched-save-day-btn {
+  width: 100%;
+  padding: 10px 16px !important;
+  font-size: 13px !important;
+}
+
+.sched-readonly-sessions {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.sched-readonly-session {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 12px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  font-size: 12px;
+}
+
+.sched-readonly-session__num {
+  font-weight: 800;
+  color: #069396;
+  min-width: 72px;
+}
+
+.sched-readonly-session__time {
+  font-weight: 600;
+  color: var(--mc-navy-dark);
+}
+
+.sched-readonly-session__dur {
+  color: var(--mc-slate-muted);
+}
+
+.sched-readonly-empty {
+  font-size: 12px;
+  color: var(--mc-slate-muted);
+  margin: 0;
+  font-style: italic;
+}
+
+.sched-summary-chip--sessions {
+  background: rgba(6, 147, 150, 0.08);
+  color: #057a7c;
+  border-color: rgba(6, 147, 150, 0.18);
 }
 
 .sched-table {
@@ -410,6 +651,10 @@
 
 @media (max-width: 991px) {
   .sched-slot-stats {
+    grid-template-columns: 1fr;
+  }
+
+  .sched-session-card__grid {
     grid-template-columns: 1fr;
   }
 }

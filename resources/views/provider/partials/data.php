@@ -1,12 +1,15 @@
 <?php
 require_once dirname(__DIR__, 3) . '/bootstrap.php';
 require_once BASE_PATH . '/app/includes/consultation_expiry.php';
+require_once BASE_PATH . '/app/includes/triage_assessment_schema.php';
+require_once BASE_PATH . '/app/includes/provider_triage_cases.php';
 require_once BASE_PATH . '/app/includes/profile_picture.php';
 require_once BASE_PATH . '/app/includes/provider_patient_access.php';
 
 // Auth guard — provider only
 if (empty($_SESSION['user_id']) || $_SESSION['user_role'] !== 'provider') {
-    header('Location: ' . BASE_URL . '/index.php');
+    require_once BASE_PATH . '/app/includes/auth_guard.php';
+    header('Location: ' . auth_signin_required_url());
     exit;
 }
 
@@ -176,16 +179,18 @@ try {
     $s->execute([$providerId]);
     $stats['done_month'] = (int) $s->fetchColumn();
 
-    // Fetch active queue — consultations assigned to this provider OR unassigned,
-    // within the last 7 days so recently-booked entries always show up.
+    // Fetch active queue — consultations assigned to this provider only.
     $q_stmt = $pdo->prepare("
         SELECT c.id, c.patient_id, c.consult_type AS complaint, c.status,
                c.consult_date, c.consult_time,
+               s.slot_date, s.start_time AS slot_start,
                u.first_name, u.last_name,
                COALESCE(tr.urgency_label, 'Not triaged')         AS urgency_label,
                COALESCE(tr.chief_complaint, c.consult_type, '')  AS chief_complaint
         FROM consultations c
         JOIN users u ON c.patient_id = u.id
+        LEFT JOIN appointment_slots s
+            ON s.consultation_id = c.id AND s.status = 'booked'
         LEFT JOIN (
             SELECT patient_id, urgency_label, chief_complaint
             FROM triage_results
@@ -193,7 +198,7 @@ try {
                 SELECT MAX(id) FROM triage_results GROUP BY patient_id
             )
         ) tr ON tr.patient_id = c.patient_id
-        WHERE (c.provider_id = ? OR c.provider_id IS NULL OR c.provider_id = 0)
+        WHERE c.provider_id = ?
           AND c.status IN ('pending', 'scheduled', 'in_consultation')
           AND c.consult_date >= DATE_SUB(CURDATE(), INTERVAL 7 DAY)
         ORDER BY
@@ -215,66 +220,15 @@ try {
             'complaint'    => $row['chief_complaint'] ?: $row['complaint'],
             'urgency'      => $row['urgency_label'],
             'status'       => $row['status'] === 'in_consultation' ? 'In Consultation' : 'Waiting',
+            'raw_status'   => (string) $row['status'],
             'date'         => $row['consult_date'],
             'time'         => $row['consult_time'],
+            'slot_date'    => $row['slot_date'] ?? '',
+            'slot_start'   => $row['slot_start'] ?? '',
         ];
     }
 
-    // Fetch triage cases for patients this provider can act on (prevents cross-patient exposure)
-    $t_stmt = $pdo->prepare("
-        SELECT 
-            tr.id, tr.patient_id, tr.level as triage, tr.symptoms, tr.chief_complaint, tr.urgency_label, 
-            tr.status, tr.assessed_at, u.first_name, u.last_name
-        FROM triage_results tr
-        JOIN users u ON tr.patient_id = u.id
-        WHERE
-          EXISTS (
-            SELECT 1 FROM consultations c
-            WHERE c.patient_id = tr.patient_id AND c.provider_id = ?
-            ORDER BY c.id DESC LIMIT 1
-          )
-          OR EXISTS (
-            SELECT 1 FROM appointment_slots s
-            WHERE s.patient_id = tr.patient_id AND s.provider_id = ? AND s.status = 'booked'
-              AND s.slot_date >= DATE_SUB(CURDATE(), INTERVAL 30 DAY)
-            ORDER BY s.id DESC LIMIT 1
-          )
-        ORDER BY tr.assessed_at DESC
-    ");
-    $t_stmt->execute([$providerId, $providerId]);
-    $db_triage = $t_stmt->fetchAll();
-    
-    $triage_cases = [];
-    foreach ($db_triage as $t) {
-        $symptom_list = [];
-        $decoded_symptoms = json_decode((string) ($t['symptoms'] ?? ''), true);
-        if (is_array($decoded_symptoms)) {
-            foreach ($decoded_symptoms as $symptom) {
-                $symptom = trim((string) $symptom);
-                if ($symptom !== '') {
-                    $symptom_list[] = ucwords(str_replace('_', ' ', $symptom));
-                }
-            }
-        } elseif (!empty($t['symptoms'])) {
-            $symptom_list[] = (string) $t['symptoms'];
-        }
-
-        $triage_cases[] = [
-            'id'               => (int) $t['id'],
-            'patient_id'       => (int) $t['patient_id'],
-            'name'             => trim($t['first_name'] . ' ' . $t['last_name']),
-            'symptoms'         => $t['symptoms'],
-            'symptoms_list'    => $symptom_list,
-            'symptoms_display' => $symptom_list ? implode(', ', $symptom_list) : '—',
-            'complaint'        => trim((string) ($t['chief_complaint'] ?? '')),
-            'level'            => (string) ($t['triage'] ?? '3'),
-            'urgency'          => ((int) $t['triage'] <= 2) ? 'Urgent' : 'Non-Urgent',
-            'label'            => (string) ($t['urgency_label'] ?? ''),
-            'time'             => date('g:i A', strtotime($t['assessed_at'])),
-            'date'             => date('M j, Y', strtotime($t['assessed_at'])),
-            'reviewed'         => ($t['status'] !== 'pending'),
-        ];
-    }
+    $triage_cases = provider_triage_cases_load($pdo, $providerId);
 
 } catch (Exception $e) {
     error_log("Data.php Error: " . $e->getMessage());
@@ -335,26 +289,13 @@ try {
     $notifications = [];
 }
 
-// ── Live Activity (recent audit log actions for this provider) ───────────────
-$activity = [];
-try {
-    $act_stmt = $pdo->prepare("
-        SELECT description AS msg,
-               DATE_FORMAT(created_at, '%l:%i %p') AS time,
-               action_type AS icon
-        FROM patient_audit_logs
-        WHERE patient_id = ?
-        ORDER BY created_at DESC
-        LIMIT 8
-    ");
-    $act_stmt->execute([$_SESSION['user_id']]);
-    $activity = $act_stmt->fetchAll();
-} catch (Exception $e) {
-    $activity = [];
-}
+// ── Live Activity (account logs + consultation events for this provider) ─────
+require_once BASE_PATH . '/app/includes/provider_activity.php';
+$activity = provider_load_recent_activity($pdo, $providerId, 8);
 
-// ── Live Patient List (all patients this provider has consulted) ─────────────
+// ── Live Patient List (patients this provider has consulted or booked) ───────
 $patients = [];
+$providerId = (int) ($_SESSION['user_id'] ?? 0);
 try {
     $p_stmt = $pdo->prepare("
         SELECT DISTINCT
@@ -374,19 +315,25 @@ try {
             COALESCE(pr.existing_conditions, '')     AS history,
             COALESCE(pr.allergies, '')               AS allergies,
             COALESCE(pr.current_medications, '')     AS medications,
-            COALESCE(MAX(c.consult_date), '')        AS last_consult,
+            COALESCE(rel.last_consult, '')           AS last_consult,
             CASE WHEN u.is_active = 1 THEN 'Active' ELSE 'Inactive' END AS status
         FROM users u
-        LEFT JOIN patient_registrations pr ON pr.email = u.email
-        LEFT JOIN consultations c ON c.patient_id = u.id AND c.provider_id = ?
+        INNER JOIN (
+            SELECT patient_id, MAX(consult_date) AS last_consult
+            FROM consultations
+            WHERE provider_id = ?
+            GROUP BY patient_id
+            UNION
+            SELECT patient_id, MAX(slot_date) AS last_consult
+            FROM appointment_slots
+            WHERE provider_id = ? AND status = 'booked'
+            GROUP BY patient_id
+        ) rel ON rel.patient_id = u.id
+        LEFT JOIN patient_registrations pr ON pr.user_id = u.id OR pr.email = u.email
         WHERE u.role = 'patient'
-        GROUP BY u.id, u.first_name, u.last_name, pr.age, pr.gender,
-                 pr.contact_number, pr.barangay, pr.city_municipality,
-                 pr.blood_type, pr.existing_conditions, pr.allergies,
-                 pr.current_medications, u.is_active
-        ORDER BY last_consult DESC, u.last_name ASC
+        ORDER BY rel.last_consult DESC, u.last_name ASC
     ");
-    $p_stmt->execute([$_SESSION['user_id']]);
+    $p_stmt->execute([$providerId, $providerId]);
     $patients = $p_stmt->fetchAll();
 } catch (Exception $e) {
     error_log("Patients query error: " . $e->getMessage());

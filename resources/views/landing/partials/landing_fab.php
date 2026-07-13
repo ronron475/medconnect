@@ -62,6 +62,16 @@
       </button>
       <button
         type="button"
+        class="landing-fab__btn landing-fab__btn--about"
+        data-fab-modal="about"
+        aria-label="Open About"
+        title="About"
+      >
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>
+        <span class="landing-fab__tooltip">About</span>
+      </button>
+      <button
+        type="button"
         class="landing-fab__btn landing-fab__btn--contact"
         data-fab-modal="contact"
         aria-label="Open Contact"

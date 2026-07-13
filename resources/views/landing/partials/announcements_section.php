@@ -59,7 +59,7 @@ $annJson = static function (array $ann): string {
         <h2 id="ann-section-heading" class="ann-slideshow__title">Latest Announcements</h2>
       </header>
 
-      <div class="ann-slideshow__panel ann-feature-reveal mc-reveal">
+      <div class="ann-slideshow__panel ann-feature-reveal">
         <div class="ann-slideshow__content">
       <?php if (empty($items)): ?>
       <div class="ann-carousel ann-carousel--empty" id="ann-carousel">

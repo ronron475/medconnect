@@ -11,6 +11,7 @@
     password: assetBase + '/app/api/provider/settings/change_password.php',
     notifications: assetBase + '/app/api/provider/settings/save_notifications.php',
     system: assetBase + '/app/api/provider/settings/save_system.php',
+    logoutAll: assetBase + '/app/api/provider/settings/logout_all_devices.php',
   };
 
   const alerts = {
@@ -173,4 +174,25 @@
       }
     });
   }
+
+  document.getElementById('psLogoutAllBtn')?.addEventListener('click', async function () {
+    if (!window.confirm('Sign out all other devices and revoke remembered logins? This device stays signed in.')) {
+      return;
+    }
+    const btn = document.getElementById('psLogoutAllBtn');
+    const fd = new FormData();
+    fd.append('csrf_token', csrf);
+    try {
+      setLoading(btn, true, 'Working…');
+      const data = await postForm(api.logoutAll, fd);
+      showAlert(document.getElementById('psSessionsAlert'), data.message || 'Done.', 'success');
+      showToast(data.message || 'All other devices signed out.', 'success');
+      document.querySelectorAll('.ps-session-item:not(.is-current)').forEach((el) => el.remove());
+    } catch (err) {
+      showAlert(document.getElementById('psSessionsAlert'), err.message, 'error');
+      showToast(err.message, 'error');
+    } finally {
+      setLoading(btn, false, 'Logout All Devices');
+    }
+  });
 })();

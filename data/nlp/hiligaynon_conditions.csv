@@ -10,6 +10,9 @@ hiligaynon_term,english_term,medical_category,severity,triage_level,status
 3 ka adlaw na sakit dughan ko kag gahika ko,chest pain with cough,Cardiovascular,Critical,emergency,active
 5 ka adlaw may nana akon mata,eye infection,Infection,High,urgent,active
 5 ka adlaw may pilas ko sa kamot,hand wound,Wound,Medium,urgent,active
+alergiya,allergy,Allergy,Medium,urgent,active
+allergy,allergy,Allergy,Medium,urgent,active
+alta presyon,hypertension,Cardiovascular,High,urgent,active
 ano ang buhaton budlay magginhawa ko,difficulty breathing,Respiratory,Critical,emergency,active
 ano ang buhaton gasakit dughan ko,chest pain,Cardiovascular,High,emergency,active
 ano ang buhaton ginkagat sang ido ko,dog bite,Bite,Critical,emergency,active
@@ -22,6 +25,13 @@ ano ang buhaton nga ginkagat sang ido ko,dog bite,Bite,Critical,emergency,active
 ano ang buhaton nga may nana akon mata,eye infection,Infection,High,urgent,active
 ano ang buhaton nga nabali kamot ko,hand fracture,Fracture,High,emergency,active
 ano ang buhaton nga nagdugo ulo ko,head bleeding,Bleeding,Critical,emergency,active
+arthritis,arthritis,Musculoskeletal,Medium,urgent,active
+artraytis,arthritis,Musculoskeletal,Medium,urgent,active
+asido,hyperacidity,Digestive,Mild,non_urgent,active
+asthma,asthma,Respiratory,High,urgent,active
+asukal,diabetes mellitus,Endocrine,Medium,urgent,active
+atake sa utok,stroke,Neurological,Critical,emergency,active
+baba bp,hypotension,Cardiovascular,Medium,urgent,active
 bag-o lang gin kagat sang ido ko kag nagdugo gid,dog bite with bleeding,Bite,Critical,emergency,active
 bag-o lang gin kagat sang ido ko kag nagdugo gid ko,dog bite with bleeding,Bite,Critical,emergency,active
 bag-o lang gin kagat sang ido ko kag nagdugo ko gid,dog bite with bleeding,Bite,Critical,emergency,active
@@ -145,6 +155,7 @@ bag-o lang nautod tudlo ku sang makina ko gid,amputated finger,Trauma,Critical,e
 bag-o lang nautod tudlo ku sang makina man,amputated finger,Trauma,Critical,emergency,active
 bag-o lang nautod tudlo ku sang makina na gid,amputated finger,Trauma,Critical,emergency,active
 basin budlay magginhawa ko,difficulty breathing,Respiratory,Critical,emergency,active
+basin gadugo bilat ko,vaginal bleeding,gynecologic_symptom,High,urgent,active
 basin gasakit dughan ko,chest pain,Cardiovascular,High,emergency,active
 basin gin kagat sang ido ko kag nagdugo gid,dog bite with bleeding,Bite,Critical,emergency,active
 basin gin kagat sang ido ko kag nagdugo gid ko,dog bite with bleeding,Bite,Critical,emergency,active
@@ -183,6 +194,7 @@ basin may nana akon mata subong gid ko,eye infection,Infection,High,urgent,activ
 basin may nana akon mata subong ko gid,eye infection,Infection,High,urgent,active
 basin may nana akon mata subong man,eye infection,Infection,High,urgent,active
 basin may nana akon mata subong na gid,eye infection,Infection,High,urgent,active
+basin may nana sa bilat ko,vaginal infection,infection,High,urgent,active
 basin may pilas ko sa kamot kag nag dugo gid,bleeding hand wound,Wound,High,emergency,active
 basin may pilas ko sa kamot kag nag dugo gid ko,bleeding hand wound,Wound,High,emergency,active
 basin may pilas ko sa kamot kag nag dugo ko gid,bleeding hand wound,Wound,High,emergency,active
@@ -276,7 +288,22 @@ basin nga ginkagat sang ido ko,dog bite,Bite,Critical,emergency,active
 basin nga may nana akon mata,eye infection,Infection,High,urgent,active
 basin nga nabali kamot ko,hand fracture,Fracture,High,emergency,active
 basin nga nagdugo ulo ko,head bleeding,Bleeding,Critical,emergency,active
+beke,mumps,Infectious,Medium,urgent,active
+bulutong tubig,chickenpox,Infectious,Medium,urgent,active
+cardiac disease,heart disease,Cardiovascular,High,urgent,active
+chicken pox,chickenpox,Infectious,Medium,urgent,active
+chickenpox,chickenpox,Infectious,Medium,urgent,active
+ckd,chronic kidney disease,Urinary,High,urgent,active
+colds,common cold,Respiratory,Mild,non_urgent,active
+common cold,common cold,Respiratory,Mild,non_urgent,active
+corona,COVID-19,Infectious,High,urgent,active
+coronavirus,COVID-19,Infectious,High,urgent,active
+covid,COVID-19,Infectious,High,urgent,active
+covid 19,COVID-19,Infectious,High,urgent,active
+covid-19,COVID-19,Infectious,High,urgent,active
+cva,stroke,Neurological,Critical,emergency,active
 daw budlay magginhawa ko,difficulty breathing,Respiratory,Critical,emergency,active
+daw gadugo bilat ko,vaginal bleeding,gynecologic_symptom,High,urgent,active
 daw gasakit dughan ko,chest pain,Cardiovascular,High,emergency,active
 daw gin kagat sang ido ko kag nagdugo gid,dog bite with bleeding,Bite,Critical,emergency,active
 daw gin kagat sang ido ko kag nagdugo gid ko,dog bite with bleeding,Bite,Critical,emergency,active
@@ -344,6 +371,7 @@ daw may nana akon mata subong gid ko,eye infection,Infection,High,urgent,active
 daw may nana akon mata subong ko gid,eye infection,Infection,High,urgent,active
 daw may nana akon mata subong man,eye infection,Infection,High,urgent,active
 daw may nana akon mata subong na gid,eye infection,Infection,High,urgent,active
+daw may nana sa bilat ko,vaginal infection,infection,High,urgent,active
 daw may pilas ko sa kamot kag nag dugo gid,bleeding hand wound,Wound,High,emergency,active
 daw may pilas ko sa kamot kag nag dugo gid ko,bleeding hand wound,Wound,High,emergency,active
 daw may pilas ko sa kamot kag nag dugo ko gid,bleeding hand wound,Wound,High,emergency,active
@@ -437,8 +465,16 @@ daw nga ginkagat sang ido ko,dog bite,Bite,Critical,emergency,active
 daw nga may nana akon mata,eye infection,Infection,High,urgent,active
 daw nga nabali kamot ko,hand fracture,Fracture,High,emergency,active
 daw nga nagdugo ulo ko,head bleeding,Bleeding,Critical,emergency,active
+db,dengue fever,Infectious,Critical,emergency,active
+dengue,dengue fever,Infectious,Critical,emergency,active
+dengue fever,dengue fever,Infectious,Critical,emergency,active
+diabetes,diabetes mellitus,Endocrine,Medium,urgent,active
+diabetis,diabetes mellitus,Endocrine,Medium,urgent,active
+dm,diabetes mellitus,Endocrine,Medium,urgent,active
+doc gadugo bilat ko,vaginal bleeding,gynecologic_symptom,High,urgent,active
 doc ginkagat ido ko,dog bite,Bite,Critical,emergency,active
 doc may nana mata ko,eye infection,Infection,High,urgent,active
+doc may nana sa bilat ko,vaginal infection,infection,High,urgent,active
 doc nabali kamot ko,hand fracture,Fracture,High,emergency,active
 doc nagdugo pilas ko,bleeding wound,Wound,High,emergency,active
 doc nakuryente ko,electrical injury,Trauma,Critical,emergency,active
@@ -571,6 +607,7 @@ dugay na nautod tudlo ku sang makina man,amputated finger,Trauma,Critical,emerge
 dugay na nautod tudlo ku sang makina na gid,amputated finger,Trauma,Critical,emergency,active
 dugay na sakit dughan ko kag dula ginhawa ko,chest pain with shortness of breath,Cardiovascular,Critical,emergency,active
 dugay na sakit dughan ko kag gahika ko,chest pain with cough,Cardiovascular,Critical,emergency,active
+dugo bilat,vaginal bleeding,gynecologic_symptom,High,urgent,active
 dugo gid ang baba ko,oral bleeding,Bleeding,Medium,urgent,active
 dugo gid ang ilong ko,nosebleed,Bleeding,Medium,urgent,active
 dugo gid ang kamot ko,hand bleeding,Bleeding,Medium,urgent,active
@@ -580,7 +617,96 @@ dugo gid ang tiil ko,foot bleeding,Bleeding,Medium,urgent,active
 dugo gid ang tudlo ko,finger bleeding,Bleeding,Medium,urgent,active
 dugo gid ang ulo ko,head bleeding,Bleeding,High,emergency,active
 dugo gid ang ulo ku,head bleeding,Bleeding,High,emergency,active
+dugo gid indi mapunggan sa ari ko,severe penis bleeding,male_reproductive_symptom,Critical,emergency,active
+dugo gid indi mapunggan sa ari ko ko,severe penis bleeding,male_reproductive_symptom,Critical,emergency,active
+dugo gid indi mapunggan sa ary ko,severe penis bleeding,male_reproductive_symptom,Critical,emergency,active
+dugo gid indi mapunggan sa ary ko ko,severe penis bleeding,male_reproductive_symptom,Critical,emergency,active
+dugo gid indi mapunggan sa bilad ko,severe vagina bleeding,gynecologic_symptom,Critical,emergency,active
+dugo gid indi mapunggan sa bilad ko ko,severe vagina bleeding,gynecologic_symptom,Critical,emergency,active
+dugo gid indi mapunggan sa bilat ko,severe vagina bleeding,gynecologic_symptom,Critical,emergency,active
+dugo gid indi mapunggan sa bilat ko ko,severe vagina bleeding,gynecologic_symptom,Critical,emergency,active
+dugo gid indi mapunggan sa itlog ko,severe testicle bleeding,male_reproductive_symptom,Critical,emergency,active
+dugo gid indi mapunggan sa itlog ko ko,severe testicle bleeding,male_reproductive_symptom,Critical,emergency,active
+dugo gid indi mapunggan sa itlug ko,severe testicle bleeding,male_reproductive_symptom,Critical,emergency,active
+dugo gid indi mapunggan sa itlug ko ko,severe testicle bleeding,male_reproductive_symptom,Critical,emergency,active
+dugo gid sa ari ko,severe penis bleeding,male_reproductive_symptom,Critical,emergency,active
+dugo gid sa ari ko ko,severe penis bleeding,male_reproductive_symptom,Critical,emergency,active
+dugo gid sa ary ko,severe penis bleeding,male_reproductive_symptom,Critical,emergency,active
+dugo gid sa ary ko ko,severe penis bleeding,male_reproductive_symptom,Critical,emergency,active
+dugo gid sa bilad ko,severe vagina bleeding,gynecologic_symptom,Critical,emergency,active
+dugo gid sa bilad ko ko,severe vagina bleeding,gynecologic_symptom,Critical,emergency,active
+dugo gid sa bilat ko,severe vagina bleeding,gynecologic_symptom,Critical,emergency,active
+dugo gid sa bilat ko ko,severe vagina bleeding,gynecologic_symptom,Critical,emergency,active
+dugo gid sa itlog ko,severe testicle bleeding,male_reproductive_symptom,Critical,emergency,active
+dugo gid sa itlog ko ko,severe testicle bleeding,male_reproductive_symptom,Critical,emergency,active
+dugo gid sa itlug ko,severe testicle bleeding,male_reproductive_symptom,Critical,emergency,active
+dugo gid sa itlug ko ko,severe testicle bleeding,male_reproductive_symptom,Critical,emergency,active
 dula ginhawa ko pls,shortness of breath,Respiratory,Critical,emergency,active
+flu,influenza,Infectious,Medium,urgent,active
+gadugo akon bilad,vaginal bleeding,gynecologic_symptom,Severe,urgent,active
+gadugo akon bilad ko,vaginal bleeding,gynecologic_symptom,Severe,urgent,active
+gadugo akon bilat,vaginal bleeding,gynecologic_symptom,Severe,urgent,active
+gadugo akon bilat ko,vaginal bleeding,gynecologic_symptom,Severe,urgent,active
+gadugo bilad ako,vaginal bleeding,gynecologic_symptom,Severe,urgent,active
+gadugo bilad akon,vaginal bleeding,gynecologic_symptom,Severe,urgent,active
+gadugo bilad akon gid,vaginal bleeding,gynecologic_symptom,Severe,urgent,active
+gadugo bilad akon subong,vaginal bleeding,gynecologic_symptom,Severe,urgent,active
+gadugo bilad gid ko,vaginal bleeding,gynecologic_symptom,Severe,urgent,active
+gadugo bilad ko,vaginal bleeding,gynecologic_symptom,Severe,urgent,active
+gadugo bilad ko ako,vaginal bleeding,gynecologic_symptom,Severe,urgent,active
+gadugo bilad ko akon,vaginal bleeding,gynecologic_symptom,Severe,urgent,active
+gadugo bilad ko akon gid,vaginal bleeding,gynecologic_symptom,Severe,urgent,active
+gadugo bilad ko akon subong,vaginal bleeding,gynecologic_symptom,Severe,urgent,active
+gadugo bilad ko gid,vaginal bleeding,gynecologic_symptom,Severe,urgent,active
+gadugo bilad ko gid ko,vaginal bleeding,gynecologic_symptom,Severe,urgent,active
+gadugo bilad ko ko,vaginal bleeding,gynecologic_symptom,Severe,urgent,active
+gadugo bilad ko ko gid,vaginal bleeding,gynecologic_symptom,Severe,urgent,active
+gadugo bilat ako,vaginal bleeding,gynecologic_symptom,Severe,urgent,active
+gadugo bilat akon,vaginal bleeding,gynecologic_symptom,Severe,urgent,active
+gadugo bilat akon gid,vaginal bleeding,gynecologic_symptom,Severe,urgent,active
+gadugo bilat akon subong,vaginal bleeding,gynecologic_symptom,Severe,urgent,active
+gadugo bilat gid ko,vaginal bleeding,gynecologic_symptom,Severe,urgent,active
+gadugo bilat ko,vaginal bleeding,gynecologic_symptom,Severe,urgent,active
+gadugo bilat ko ako,vaginal bleeding,gynecologic_symptom,Severe,urgent,active
+gadugo bilat ko akon,vaginal bleeding,gynecologic_symptom,Severe,urgent,active
+gadugo bilat ko akon gid,vaginal bleeding,gynecologic_symptom,Severe,urgent,active
+gadugo bilat ko akon subong,vaginal bleeding,gynecologic_symptom,Severe,urgent,active
+gadugo bilat ko gid,vaginal bleeding,gynecologic_symptom,Severe,urgent,active
+gadugo bilat ko gid ko,vaginal bleeding,gynecologic_symptom,Severe,urgent,active
+gadugo bilat ko ko,vaginal bleeding,gynecologic_symptom,Severe,urgent,active
+gadugo bilat ko ko gid,vaginal bleeding,gynecologic_symptom,Severe,urgent,active
+gadugo gid akon bilad,vaginal bleeding,gynecologic_symptom,Severe,urgent,active
+gadugo gid akon bilad ko,vaginal bleeding,gynecologic_symptom,Severe,urgent,active
+gadugo gid akon bilat,vaginal bleeding,gynecologic_symptom,Severe,urgent,active
+gadugo gid akon bilat ko,vaginal bleeding,gynecologic_symptom,Severe,urgent,active
+gadugo gid bilad ako,vaginal bleeding,gynecologic_symptom,Severe,urgent,active
+gadugo gid bilad akon,vaginal bleeding,gynecologic_symptom,Severe,urgent,active
+gadugo gid bilad akon gid,vaginal bleeding,gynecologic_symptom,Severe,urgent,active
+gadugo gid bilad akon subong,vaginal bleeding,gynecologic_symptom,Severe,urgent,active
+gadugo gid bilad gid ko,vaginal bleeding,gynecologic_symptom,Severe,urgent,active
+gadugo gid bilad ko,vaginal bleeding,gynecologic_symptom,Severe,urgent,active
+gadugo gid bilad ko ako,vaginal bleeding,gynecologic_symptom,Severe,urgent,active
+gadugo gid bilad ko akon,vaginal bleeding,gynecologic_symptom,Severe,urgent,active
+gadugo gid bilad ko akon gid,vaginal bleeding,gynecologic_symptom,Severe,urgent,active
+gadugo gid bilad ko akon subong,vaginal bleeding,gynecologic_symptom,Severe,urgent,active
+gadugo gid bilad ko gid,vaginal bleeding,gynecologic_symptom,Severe,urgent,active
+gadugo gid bilad ko gid ko,vaginal bleeding,gynecologic_symptom,Severe,urgent,active
+gadugo gid bilad ko ko,vaginal bleeding,gynecologic_symptom,Severe,urgent,active
+gadugo gid bilad ko ko gid,vaginal bleeding,gynecologic_symptom,Severe,urgent,active
+gadugo gid bilat ako,vaginal bleeding,gynecologic_symptom,Severe,urgent,active
+gadugo gid bilat akon,vaginal bleeding,gynecologic_symptom,Severe,urgent,active
+gadugo gid bilat akon gid,vaginal bleeding,gynecologic_symptom,Severe,urgent,active
+gadugo gid bilat akon subong,vaginal bleeding,gynecologic_symptom,Severe,urgent,active
+gadugo gid bilat gid ko,vaginal bleeding,gynecologic_symptom,Severe,urgent,active
+gadugo gid bilat ko,vaginal bleeding,gynecologic_symptom,Severe,urgent,active
+gadugo gid bilat ko ako,vaginal bleeding,gynecologic_symptom,Severe,urgent,active
+gadugo gid bilat ko akon,vaginal bleeding,gynecologic_symptom,Severe,urgent,active
+gadugo gid bilat ko akon gid,vaginal bleeding,gynecologic_symptom,Severe,urgent,active
+gadugo gid bilat ko akon subong,vaginal bleeding,gynecologic_symptom,Severe,urgent,active
+gadugo gid bilat ko gid,vaginal bleeding,gynecologic_symptom,Severe,urgent,active
+gadugo gid bilat ko gid ko,vaginal bleeding,gynecologic_symptom,Severe,urgent,active
+gadugo gid bilat ko ko,vaginal bleeding,gynecologic_symptom,Severe,urgent,active
+gadugo gid bilat ko ko gid,vaginal bleeding,gynecologic_symptom,Severe,urgent,active
 gahapon may nana akon mata,eye infection,Infection,High,urgent,active
 gahapon may pilas ko sa kamot,hand wound,Wound,Medium,urgent,active
 gahubag kamot ko kag nagdugo kamot ko,hand swelling with bleeding,Trauma,High,emergency,active
@@ -589,6 +715,39 @@ gahubag lawas ko kag gakatol lawas ko,body swelling with itching,Allergy,High,em
 gahubag lawas ko upod sang gakatol lawas ko,body swelling with itching,Allergy,High,emergency,active
 gahubag tungod ko kag ginahilanat ko,throat swelling with fever,ENT,High,emergency,active
 gahubag tungod ko upod sang ginahilanat ko,throat swelling with fever,ENT,High,emergency,active
+gakadugo akon bilad,vaginal bleeding,gynecologic_symptom,Severe,urgent,active
+gakadugo akon bilad ko,vaginal bleeding,gynecologic_symptom,Severe,urgent,active
+gakadugo akon bilat,vaginal bleeding,gynecologic_symptom,Severe,urgent,active
+gakadugo akon bilat ko,vaginal bleeding,gynecologic_symptom,Severe,urgent,active
+gakadugo bilad ako,vaginal bleeding,gynecologic_symptom,Severe,urgent,active
+gakadugo bilad akon,vaginal bleeding,gynecologic_symptom,Severe,urgent,active
+gakadugo bilad akon gid,vaginal bleeding,gynecologic_symptom,Severe,urgent,active
+gakadugo bilad akon subong,vaginal bleeding,gynecologic_symptom,Severe,urgent,active
+gakadugo bilad gid ko,vaginal bleeding,gynecologic_symptom,Severe,urgent,active
+gakadugo bilad ko,vaginal bleeding,gynecologic_symptom,Severe,urgent,active
+gakadugo bilad ko ako,vaginal bleeding,gynecologic_symptom,Severe,urgent,active
+gakadugo bilad ko akon,vaginal bleeding,gynecologic_symptom,Severe,urgent,active
+gakadugo bilad ko akon gid,vaginal bleeding,gynecologic_symptom,Severe,urgent,active
+gakadugo bilad ko akon subong,vaginal bleeding,gynecologic_symptom,Severe,urgent,active
+gakadugo bilad ko gid,vaginal bleeding,gynecologic_symptom,Severe,urgent,active
+gakadugo bilad ko gid ko,vaginal bleeding,gynecologic_symptom,Severe,urgent,active
+gakadugo bilad ko ko,vaginal bleeding,gynecologic_symptom,Severe,urgent,active
+gakadugo bilad ko ko gid,vaginal bleeding,gynecologic_symptom,Severe,urgent,active
+gakadugo bilat ako,vaginal bleeding,gynecologic_symptom,Severe,urgent,active
+gakadugo bilat akon,vaginal bleeding,gynecologic_symptom,Severe,urgent,active
+gakadugo bilat akon gid,vaginal bleeding,gynecologic_symptom,Severe,urgent,active
+gakadugo bilat akon subong,vaginal bleeding,gynecologic_symptom,Severe,urgent,active
+gakadugo bilat gid ko,vaginal bleeding,gynecologic_symptom,Severe,urgent,active
+gakadugo bilat ko,vaginal bleeding,gynecologic_symptom,Severe,urgent,active
+gakadugo bilat ko ako,vaginal bleeding,gynecologic_symptom,Severe,urgent,active
+gakadugo bilat ko akon,vaginal bleeding,gynecologic_symptom,Severe,urgent,active
+gakadugo bilat ko akon gid,vaginal bleeding,gynecologic_symptom,Severe,urgent,active
+gakadugo bilat ko akon subong,vaginal bleeding,gynecologic_symptom,Severe,urgent,active
+gakadugo bilat ko gid,vaginal bleeding,gynecologic_symptom,Severe,urgent,active
+gakadugo bilat ko gid ko,vaginal bleeding,gynecologic_symptom,Severe,urgent,active
+gakadugo bilat ko ko,vaginal bleeding,gynecologic_symptom,Severe,urgent,active
+gakadugo bilat ko ko gid,vaginal bleeding,gynecologic_symptom,Severe,urgent,active
+gastric,hyperacidity,Digestive,Mild,non_urgent,active
 gin kagat ahas ako,snake bite,Bite,Critical,emergency,active
 gin kagat ako sang ahas,snake bite,Bite,Critical,emergency,active
 gin kagat ako sang ido,dog bite,Bite,Critical,emergency,active
@@ -752,6 +911,7 @@ ginkagat sang lamok ko,mosquito bite,Bite,Medium,urgent,active
 ginkagat sang manok ko,animal bite,Bite,Medium,urgent,active
 ginkagat sang sapat ko,animal bite,Bite,Medium,urgent,active
 ginkagat sapat ako,animal bite,Bite,Medium,urgent,active
+ginpangayo ko doctor gadugo bilat ko,vaginal bleeding,gynecologic_symptom,High,urgent,active
 ginpangayo ko doctor gin kagat sang ido ko kag nagdugo gid,dog bite with bleeding,Bite,Critical,emergency,active
 ginpangayo ko doctor gin kagat sang ido ko kag nagdugo gid ko,dog bite with bleeding,Bite,Critical,emergency,active
 ginpangayo ko doctor gin kagat sang ido ko kag nagdugo ko gid,dog bite with bleeding,Bite,Critical,emergency,active
@@ -777,6 +937,7 @@ ginpangayo ko doctor may nana akon mata subong gid ko,eye infection,Infection,Hi
 ginpangayo ko doctor may nana akon mata subong ko gid,eye infection,Infection,High,urgent,active
 ginpangayo ko doctor may nana akon mata subong man,eye infection,Infection,High,urgent,active
 ginpangayo ko doctor may nana akon mata subong na gid,eye infection,Infection,High,urgent,active
+ginpangayo ko doctor may nana sa bilat ko,vaginal infection,infection,High,urgent,active
 ginpangayo ko doctor may pilas ko sa kamot kag nag dugo gid,bleeding hand wound,Wound,High,emergency,active
 ginpangayo ko doctor may pilas ko sa kamot kag nag dugo gid ko,bleeding hand wound,Wound,High,emergency,active
 ginpangayo ko doctor may pilas ko sa kamot kag nag dugo ko gid,bleeding hand wound,Wound,High,emergency,active
@@ -876,11 +1037,66 @@ ginsumbag ako,physical assault,Trauma,High,urgent,active
 ginsumbag ko,physical assault,Trauma,High,urgent,active
 ginsumbag ko kag nabun-og ulo,physical assault with head bruise,Trauma,High,emergency,active
 ginsumbag ku kag nabun-og ulo,physical assault with head bruise,Trauma,High,emergency,active
+grabe gid nagadugo ari ko,severe penis bleeding,male_reproductive_symptom,Critical,emergency,active
+grabe gid nagadugo ari ko ko,severe penis bleeding,male_reproductive_symptom,Critical,emergency,active
+grabe gid nagadugo ary ko,severe penis bleeding,male_reproductive_symptom,Critical,emergency,active
+grabe gid nagadugo ary ko ko,severe penis bleeding,male_reproductive_symptom,Critical,emergency,active
+grabe gid nagadugo bilad ko,severe vagina bleeding,gynecologic_symptom,Critical,emergency,active
+grabe gid nagadugo bilad ko ko,severe vagina bleeding,gynecologic_symptom,Critical,emergency,active
+grabe gid nagadugo bilat ko,severe vaginal bleeding,gynecologic_symptom,Critical,emergency,active
+grabe gid nagadugo bilat ko,severe vagina bleeding,gynecologic_symptom,Critical,emergency,active
+grabe gid nagadugo bilat ko ko,severe vagina bleeding,gynecologic_symptom,Critical,emergency,active
+grabe gid nagadugo itlog ko,severe testicle bleeding,male_reproductive_symptom,Critical,emergency,active
+grabe gid nagadugo itlog ko ko,severe testicle bleeding,male_reproductive_symptom,Critical,emergency,active
+grabe gid nagadugo itlug ko,severe testicle bleeding,male_reproductive_symptom,Critical,emergency,active
+grabe gid nagadugo itlug ko ko,severe testicle bleeding,male_reproductive_symptom,Critical,emergency,active
+grabe gid nagdugo ari ko,severe penis bleeding,male_reproductive_symptom,Critical,emergency,active
+grabe gid nagdugo ari ko ko,severe penis bleeding,male_reproductive_symptom,Critical,emergency,active
+grabe gid nagdugo ary ko,severe penis bleeding,male_reproductive_symptom,Critical,emergency,active
+grabe gid nagdugo ary ko ko,severe penis bleeding,male_reproductive_symptom,Critical,emergency,active
+grabe gid nagdugo bilad ko,severe vagina bleeding,gynecologic_symptom,Critical,emergency,active
+grabe gid nagdugo bilad ko ko,severe vagina bleeding,gynecologic_symptom,Critical,emergency,active
+grabe gid nagdugo bilat ko,severe vagina bleeding,gynecologic_symptom,Critical,emergency,active
+grabe gid nagdugo bilat ko ko,severe vagina bleeding,gynecologic_symptom,Critical,emergency,active
+grabe gid nagdugo itlog ko,severe testicle bleeding,male_reproductive_symptom,Critical,emergency,active
+grabe gid nagdugo itlog ko ko,severe testicle bleeding,male_reproductive_symptom,Critical,emergency,active
+grabe gid nagdugo itlug ko,severe testicle bleeding,male_reproductive_symptom,Critical,emergency,active
+grabe gid nagdugo itlug ko ko,severe testicle bleeding,male_reproductive_symptom,Critical,emergency,active
+heart disease,heart disease,Cardiovascular,High,urgent,active
+help gadugo bilat ko,vaginal bleeding,gynecologic_symptom,High,urgent,active
+help may nana sa bilat ko,vaginal infection,infection,High,urgent,active
 help nautod tudlo ko,amputated finger,Trauma,Critical,emergency,active
+high blood,hypertension,Cardiovascular,High,urgent,active
+highblood,hypertension,Cardiovascular,High,urgent,active
+hika,asthma,Respiratory,High,urgent,active
+hika ko,asthma,Respiratory,High,urgent,active
+hilanat,fever,General,Medium,urgent,active
+hpn,hypertension,Cardiovascular,High,urgent,active
+hubak,asthma,Respiratory,High,urgent,active
+hyper acidity,hyperacidity,Digestive,Mild,non_urgent,active
+hyperacidity,hyperacidity,Digestive,Mild,non_urgent,active
+hypertension,hypertension,Cardiovascular,High,urgent,active
+hypotension,hypotension,Cardiovascular,Medium,urgent,active
+impeksyon sa ihi,urinary tract infection,Urinary,Medium,urgent,active
+impeksyon sa panit,skin infection,Infection,Medium,urgent,active
+indi mapunggan ang dugo sa ari ko,severe penis bleeding,male_reproductive_symptom,Critical,emergency,active
+indi mapunggan ang dugo sa ari ko ko,severe penis bleeding,male_reproductive_symptom,Critical,emergency,active
+indi mapunggan ang dugo sa ary ko,severe penis bleeding,male_reproductive_symptom,Critical,emergency,active
+indi mapunggan ang dugo sa ary ko ko,severe penis bleeding,male_reproductive_symptom,Critical,emergency,active
+indi mapunggan ang dugo sa bilad ko,severe vagina bleeding,gynecologic_symptom,Critical,emergency,active
+indi mapunggan ang dugo sa bilad ko ko,severe vagina bleeding,gynecologic_symptom,Critical,emergency,active
+indi mapunggan ang dugo sa bilat ko,severe vagina bleeding,gynecologic_symptom,Critical,emergency,active
+indi mapunggan ang dugo sa bilat ko ko,severe vagina bleeding,gynecologic_symptom,Critical,emergency,active
+indi mapunggan ang dugo sa itlog ko,severe testicle bleeding,male_reproductive_symptom,Critical,emergency,active
+indi mapunggan ang dugo sa itlog ko ko,severe testicle bleeding,male_reproductive_symptom,Critical,emergency,active
+indi mapunggan ang dugo sa itlug ko,severe testicle bleeding,male_reproductive_symptom,Critical,emergency,active
+indi mapunggan ang dugo sa itlug ko ko,severe testicle bleeding,male_reproductive_symptom,Critical,emergency,active
+influenza,influenza,Infectious,Medium,urgent,active
 kagapon may nana akon mata,eye infection,Infection,High,urgent,active
 kagapon may pilas ko sa kamot,hand wound,Wound,Medium,urgent,active
 kagat ido,dog bite,Bite,Critical,emergency,active
-kagat lamok,mosquito bite,Bite,Low,routine,active
+kagat lamok,mosquito bite,Bite,Low,non_urgent,active
+karon gadugo bilat ko,vaginal bleeding,gynecologic_symptom,High,urgent,active
 karon gin kagat sang ido ko kag nagdugo gid,dog bite with bleeding,Bite,Critical,emergency,active
 karon gin kagat sang ido ko kag nagdugo gid ko,dog bite with bleeding,Bite,Critical,emergency,active
 karon gin kagat sang ido ko kag nagdugo ko gid,dog bite with bleeding,Bite,Critical,emergency,active
@@ -916,6 +1132,7 @@ karon may nana akon mata subong gid ko,eye infection,Infection,High,urgent,activ
 karon may nana akon mata subong ko gid,eye infection,Infection,High,urgent,active
 karon may nana akon mata subong man,eye infection,Infection,High,urgent,active
 karon may nana akon mata subong na gid,eye infection,Infection,High,urgent,active
+karon may nana sa bilat ko,vaginal infection,infection,High,urgent,active
 karon may pilas ko sa kamot kag nag dugo gid,bleeding hand wound,Wound,High,emergency,active
 karon may pilas ko sa kamot kag nag dugo gid ko,bleeding hand wound,Wound,High,emergency,active
 karon may pilas ko sa kamot kag nag dugo ko gid,bleeding hand wound,Wound,High,emergency,active
@@ -1001,6 +1218,11 @@ karon nautod tudlo ku sang makina gid ko,amputated finger,Trauma,Critical,emerge
 karon nautod tudlo ku sang makina ko gid,amputated finger,Trauma,Critical,emergency,active
 karon nautod tudlo ku sang makina man,amputated finger,Trauma,Critical,emergency,active
 karon nautod tudlo ku sang makina na gid,amputated finger,Trauma,Critical,emergency,active
+kidney disease,kidney disease,Urinary,High,urgent,active
+lepto,leptospirosis,Infectious,Critical,emergency,active
+leptospirosis,leptospirosis,Infectious,Critical,emergency,active
+low blood,hypotension,Cardiovascular,Medium,urgent,active
+lowblood,hypotension,Cardiovascular,Medium,urgent,active
 mapait ang pilas ko,infected wound,Infection,Medium,urgent,active
 mapula nasunog balat ko,skin burn,Burn,Medium,urgent,active
 mapula nasunog batiis ko,leg burn,Burn,Medium,urgent,active
@@ -1010,6 +1232,11 @@ mapula nasunog lawas ko,body burn,Burn,High,urgent,active
 mapula nasunog mata ko,eye burn,Burn,High,emergency,active
 mapula nasunog tiil ko,foot burn,Burn,Medium,urgent,active
 mapula nasunog tiyan ko,abdominal burn,Burn,Medium,urgent,active
+masakit pag-ihi ko kag may nana sa bilat ko,urinary tract infection,infection,High,urgent,active
+may allergy,allergy,Allergy,Medium,urgent,active
+may beke,mumps,Infectious,Medium,urgent,active
+may dengue,dengue fever,Infectious,Critical,emergency,active
+may diabetes,diabetes mellitus,Endocrine,Medium,urgent,active
 may dugo sa baba ko,oral bleeding,Bleeding,Medium,urgent,active
 may dugo sa ilong ko,nosebleed,Bleeding,Medium,urgent,active
 may dugo sa kamot ko,hand bleeding,Bleeding,Medium,urgent,active
@@ -1019,6 +1246,7 @@ may dugo sa tiil ko,foot bleeding,Bleeding,Medium,urgent,active
 may dugo sa tudlo ko,finger bleeding,Bleeding,Medium,urgent,active
 may dugo sa ulo ko,head bleeding,Bleeding,High,emergency,active
 may dugo sa ulo ku,head bleeding,Bleeding,High,emergency,active
+may hilanat,fever,General,Medium,urgent,active
 may kagat sang ahas ko,snake bite,Bite,Critical,emergency,active
 may kagat sang ahas ku,snake bite,Bite,Critical,emergency,active
 may kagat sang ido ko,dog bite,Bite,Critical,emergency,active
@@ -1028,31 +1256,45 @@ may kagat sang kuring ko,cat bite,Bite,Medium,urgent,active
 may kagat sang lamok ko,mosquito bite,Bite,Medium,urgent,active
 may kagat sang manok ko,animal bite,Bite,Medium,urgent,active
 may kagat sang sapat ko,animal bite,Bite,Medium,urgent,active
+may leptospirosis,leptospirosis,Infectious,Critical,emergency,active
+may migraine,migraine,Neurological,Medium,urgent,active
 may nana,pus,Infection,Medium,urgent,active
-may nana abaga,shoulder infection,Infection,Medium,routine,active
-may nana abaga ko,shoulder infection,Infection,Medium,routine,active
+may nana abaga,shoulder infection,Infection,Medium,non_urgent,active
+may nana abaga ko,shoulder infection,Infection,Medium,non_urgent,active
 may nana ako,pus,Infection,Medium,urgent,active
-may nana akon abaga,shoulder infection,Infection,Medium,routine,active
-may nana akon atay,liver infection,Infection,Medium,routine,active
-may nana akon awang,jaw infection,Infection,Medium,routine,active
-may nana akon baba,oral infection,Infection,Medium,routine,active
-may nana akon balat,skin infection,Infection,Medium,routine,active
-may nana akon batiis,leg infection,Infection,Medium,routine,active
-may nana akon bato,kidney infection,Infection,Medium,routine,active
-may nana akon baywang,waist infection,Infection,Medium,routine,active
-may nana akon buhok,hair infection,Infection,Medium,routine,active
-may nana akon bukong,forehead infection,Infection,Medium,routine,active
-may nana akon buuk,arm infection,Infection,Medium,routine,active
-may nana akon dalunggan,infected ear,Infection,Medium,routine,active
-may nana akon dila,tongue infection,Infection,Medium,routine,active
-may nana akon dughan,chest infection,Infection,Medium,routine,active
-may nana akon ilong,infected nose,Infection,Medium,routine,active
-may nana akon kamot,skin infection,Infection,Medium,routine,active
-may nana akon kuko,nail infection,Infection,Medium,routine,active
-may nana akon lawas,body infection,Infection,Medium,routine,active
-may nana akon lawi,nape infection,Infection,Medium,routine,active
-may nana akon likod,back infection,Infection,Medium,routine,active
-may nana akon liog,neck infection,Infection,Medium,routine,active
+may nana akon abaga,shoulder infection,Infection,Medium,non_urgent,active
+may nana akon ari,penile infection,infection,Severe,urgent,active
+may nana akon ari ko,penile infection,infection,Severe,urgent,active
+may nana akon ary,penile infection,infection,Severe,urgent,active
+may nana akon ary ko,penile infection,infection,Severe,urgent,active
+may nana akon atay,liver infection,Infection,Medium,non_urgent,active
+may nana akon awang,jaw infection,Infection,Medium,non_urgent,active
+may nana akon baba,oral infection,Infection,Medium,non_urgent,active
+may nana akon balat,skin infection,Infection,Medium,non_urgent,active
+may nana akon batiis,leg infection,Infection,Medium,non_urgent,active
+may nana akon bato,kidney infection,Infection,Medium,non_urgent,active
+may nana akon baywang,waist infection,Infection,Medium,non_urgent,active
+may nana akon bilad,vaginal infection,infection,Severe,urgent,active
+may nana akon bilad ko,vaginal infection,infection,Severe,urgent,active
+may nana akon bilat,vaginal infection,infection,Severe,urgent,active
+may nana akon bilat ko,vaginal infection,infection,Severe,urgent,active
+may nana akon buhok,hair infection,Infection,Medium,non_urgent,active
+may nana akon bukong,forehead infection,Infection,Medium,non_urgent,active
+may nana akon buuk,arm infection,Infection,Medium,non_urgent,active
+may nana akon dalunggan,infected ear,Infection,Medium,non_urgent,active
+may nana akon dila,tongue infection,Infection,Medium,non_urgent,active
+may nana akon dughan,chest infection,Infection,Medium,non_urgent,active
+may nana akon ilong,infected nose,Infection,Medium,non_urgent,active
+may nana akon itlog,testicular infection,infection,Severe,urgent,active
+may nana akon itlog ko,testicular infection,infection,Severe,urgent,active
+may nana akon itlug,testicular infection,infection,Severe,urgent,active
+may nana akon itlug ko,testicular infection,infection,Severe,urgent,active
+may nana akon kamot,skin infection,Infection,Medium,non_urgent,active
+may nana akon kuko,nail infection,Infection,Medium,non_urgent,active
+may nana akon lawas,body infection,Infection,Medium,non_urgent,active
+may nana akon lawi,nape infection,Infection,Medium,non_urgent,active
+may nana akon likod,back infection,Infection,Medium,non_urgent,active
+may nana akon liog,neck infection,Infection,Medium,non_urgent,active
 may nana akon mata,eye infection,Infection,High,urgent,active
 may nana akon mata 3 ka adlaw,eye infection,Infection,High,urgent,active
 may nana akon mata 5 ka adlaw,eye infection,Infection,High,urgent,active
@@ -1063,218 +1305,345 @@ may nana akon mata kagapon,eye infection,Infection,High,urgent,active
 may nana akon mata semana na,eye infection,Infection,High,urgent,active
 may nana akon mata subong,eye infection,Infection,High,urgent,active
 may nana akon mata subong lang,eye infection,Infection,High,urgent,active
-may nana akon ngipon,tooth infection,Infection,Medium,routine,active
-may nana akon paa,infected foot,Infection,Medium,routine,active
-may nana akon pisngi,cheek infection,Infection,Medium,routine,active
-may nana akon siko,elbow infection,Infection,Medium,routine,active
-may nana akon tadlong,forearm infection,Infection,Medium,routine,active
-may nana akon tagipusuon,heart infection,Infection,Medium,routine,active
-may nana akon tai,buttocks infection,Infection,Medium,routine,active
-may nana akon tiil,infected foot,Infection,Medium,routine,active
-may nana akon tikod,heel infection,Infection,Medium,routine,active
-may nana akon titi,breast infection,Infection,Medium,routine,active
-may nana akon tiyan,abdomen infection,Infection,Medium,routine,active
-may nana akon tudlo,infected finger,Infection,High,routine,active
-may nana akon tuhod,knee infection,Infection,Medium,routine,active
-may nana akon tungod,throat infection,Infection,Medium,routine,active
-may nana akon tungtong,ankle infection,Infection,Medium,routine,active
-may nana akon ulo,head infection,Infection,Medium,routine,active
-may nana akon utok,brain infection,Infection,Medium,routine,active
-may nana atay,liver infection,Infection,Medium,routine,active
-may nana atay ko,liver infection,Infection,Medium,routine,active
-may nana awang,jaw infection,Infection,Medium,routine,active
-may nana awang ko,jaw infection,Infection,Medium,routine,active
-may nana baba,oral infection,Infection,Medium,routine,active
-may nana baba ko,oral infection,Infection,Medium,routine,active
-may nana balat,skin infection,Infection,Medium,routine,active
-may nana balat ko,skin infection,Infection,Medium,routine,active
-may nana batiis,leg infection,Infection,Medium,routine,active
-may nana batiis ko,leg infection,Infection,Medium,routine,active
-may nana bato,kidney infection,Infection,Medium,routine,active
-may nana bato ko,kidney infection,Infection,Medium,routine,active
-may nana baywang,waist infection,Infection,Medium,routine,active
-may nana baywang ko,waist infection,Infection,Medium,routine,active
-may nana buhok,hair infection,Infection,Medium,routine,active
-may nana buhok ko,hair infection,Infection,Medium,routine,active
-may nana bukong,forehead infection,Infection,Medium,routine,active
-may nana bukong ko,forehead infection,Infection,Medium,routine,active
-may nana buuk,arm infection,Infection,Medium,routine,active
-may nana buuk ko,arm infection,Infection,Medium,routine,active
-may nana dalunggan,infected ear,Infection,Medium,routine,active
-may nana dalunggan ko,infected ear,Infection,Medium,routine,active
-may nana dila,tongue infection,Infection,Medium,routine,active
-may nana dila ko,tongue infection,Infection,Medium,routine,active
-may nana dughan,chest infection,Infection,Medium,routine,active
-may nana dughan ko,chest infection,Infection,Medium,routine,active
-may nana ilong,infected nose,Infection,Medium,routine,active
-may nana ilong ko,infected nose,Infection,Medium,routine,active
-may nana kamot,skin infection,Infection,Medium,routine,active
-may nana kamot ko,skin infection,Infection,Medium,routine,active
+may nana akon ngipon,tooth infection,Infection,Medium,non_urgent,active
+may nana akon paa,infected foot,Infection,Medium,non_urgent,active
+may nana akon pisngi,cheek infection,Infection,Medium,non_urgent,active
+may nana akon siko,elbow infection,Infection,Medium,non_urgent,active
+may nana akon tadlong,forearm infection,Infection,Medium,non_urgent,active
+may nana akon tagipusuon,heart infection,Infection,Medium,non_urgent,active
+may nana akon tai,buttocks infection,Infection,Medium,non_urgent,active
+may nana akon tiil,infected foot,Infection,Medium,non_urgent,active
+may nana akon tikod,heel infection,Infection,Medium,non_urgent,active
+may nana akon titi,breast infection,Infection,Medium,non_urgent,active
+may nana akon tiyan,abdomen infection,Infection,Medium,non_urgent,active
+may nana akon tudlo,infected finger,Infection,High,non_urgent,active
+may nana akon tuhod,knee infection,Infection,Medium,non_urgent,active
+may nana akon tungod,throat infection,Infection,Medium,non_urgent,active
+may nana akon tungtong,ankle infection,Infection,Medium,non_urgent,active
+may nana akon ulo,head infection,Infection,Medium,non_urgent,active
+may nana akon utok,brain infection,Infection,Medium,non_urgent,active
+may nana ari akon,penile infection,infection,Severe,urgent,active
+may nana ari ko,penile infection,infection,Severe,urgent,active
+may nana ari ko akon,penile infection,infection,Severe,urgent,active
+may nana ari ko ko,penile infection,infection,Severe,urgent,active
+may nana ary akon,penile infection,infection,Severe,urgent,active
+may nana ary ko,penile infection,infection,Severe,urgent,active
+may nana ary ko akon,penile infection,infection,Severe,urgent,active
+may nana ary ko ko,penile infection,infection,Severe,urgent,active
+may nana atay,liver infection,Infection,Medium,non_urgent,active
+may nana atay ko,liver infection,Infection,Medium,non_urgent,active
+may nana awang,jaw infection,Infection,Medium,non_urgent,active
+may nana awang ko,jaw infection,Infection,Medium,non_urgent,active
+may nana baba,oral infection,Infection,Medium,non_urgent,active
+may nana baba ko,oral infection,Infection,Medium,non_urgent,active
+may nana balat,skin infection,Infection,Medium,non_urgent,active
+may nana balat ko,skin infection,Infection,Medium,non_urgent,active
+may nana batiis,leg infection,Infection,Medium,non_urgent,active
+may nana batiis ko,leg infection,Infection,Medium,non_urgent,active
+may nana bato,kidney infection,Infection,Medium,non_urgent,active
+may nana bato ko,kidney infection,Infection,Medium,non_urgent,active
+may nana baywang,waist infection,Infection,Medium,non_urgent,active
+may nana baywang ko,waist infection,Infection,Medium,non_urgent,active
+may nana bilad akon,vaginal infection,infection,Severe,urgent,active
+may nana bilad ko,vaginal infection,infection,Severe,urgent,active
+may nana bilad ko akon,vaginal infection,infection,Severe,urgent,active
+may nana bilad ko ko,vaginal infection,infection,Severe,urgent,active
+may nana bilat akon,vaginal infection,infection,Severe,urgent,active
+may nana bilat ko,vaginal infection,infection,Severe,urgent,active
+may nana bilat ko akon,vaginal infection,infection,Severe,urgent,active
+may nana bilat ko ko,vaginal infection,infection,Severe,urgent,active
+may nana buhok,hair infection,Infection,Medium,non_urgent,active
+may nana buhok ko,hair infection,Infection,Medium,non_urgent,active
+may nana bukong,forehead infection,Infection,Medium,non_urgent,active
+may nana bukong ko,forehead infection,Infection,Medium,non_urgent,active
+may nana buuk,arm infection,Infection,Medium,non_urgent,active
+may nana buuk ko,arm infection,Infection,Medium,non_urgent,active
+may nana dalunggan,infected ear,Infection,Medium,non_urgent,active
+may nana dalunggan ko,infected ear,Infection,Medium,non_urgent,active
+may nana dila,tongue infection,Infection,Medium,non_urgent,active
+may nana dila ko,tongue infection,Infection,Medium,non_urgent,active
+may nana dughan,chest infection,Infection,Medium,non_urgent,active
+may nana dughan ko,chest infection,Infection,Medium,non_urgent,active
+may nana ilong,infected nose,Infection,Medium,non_urgent,active
+may nana ilong ko,infected nose,Infection,Medium,non_urgent,active
+may nana itlog akon,testicular infection,infection,Severe,urgent,active
+may nana itlog ko,testicular infection,infection,Severe,urgent,active
+may nana itlog ko akon,testicular infection,infection,Severe,urgent,active
+may nana itlog ko ko,testicular infection,infection,Severe,urgent,active
+may nana itlug akon,testicular infection,infection,Severe,urgent,active
+may nana itlug ko,testicular infection,infection,Severe,urgent,active
+may nana itlug ko akon,testicular infection,infection,Severe,urgent,active
+may nana itlug ko ko,testicular infection,infection,Severe,urgent,active
+may nana kamot,skin infection,Infection,Medium,non_urgent,active
+may nana kamot ko,skin infection,Infection,Medium,non_urgent,active
 may nana ko,pus,Infection,Medium,urgent,active
-may nana ko sa abaga,shoulder infection,Infection,Medium,routine,active
-may nana ko sa atay,liver infection,Infection,Medium,routine,active
-may nana ko sa awang,jaw infection,Infection,Medium,routine,active
-may nana ko sa baba,oral infection,Infection,Medium,routine,active
-may nana ko sa balat,skin infection,Infection,Medium,routine,active
-may nana ko sa batiis,leg infection,Infection,Medium,routine,active
-may nana ko sa bato,kidney infection,Infection,Medium,routine,active
-may nana ko sa baywang,waist infection,Infection,Medium,routine,active
-may nana ko sa buhok,hair infection,Infection,Medium,routine,active
-may nana ko sa bukong,forehead infection,Infection,Medium,routine,active
-may nana ko sa buuk,arm infection,Infection,Medium,routine,active
-may nana ko sa dalunggan,infected ear,Infection,Medium,routine,active
-may nana ko sa dila,tongue infection,Infection,Medium,routine,active
-may nana ko sa dughan,chest infection,Infection,Medium,routine,active
-may nana ko sa ilong,infected nose,Infection,Medium,routine,active
-may nana ko sa kamot,skin infection,Infection,Medium,routine,active
-may nana ko sa kuko,nail infection,Infection,Medium,routine,active
-may nana ko sa lawas,body infection,Infection,Medium,routine,active
-may nana ko sa lawi,nape infection,Infection,Medium,routine,active
-may nana ko sa likod,back infection,Infection,Medium,routine,active
-may nana ko sa liog,neck infection,Infection,Medium,routine,active
+may nana ko sa abaga,shoulder infection,Infection,Medium,non_urgent,active
+may nana ko sa akon ari,penile infection,infection,Severe,urgent,active
+may nana ko sa akon ari ko,penile infection,infection,Severe,urgent,active
+may nana ko sa akon ary,penile infection,infection,Severe,urgent,active
+may nana ko sa akon ary ko,penile infection,infection,Severe,urgent,active
+may nana ko sa akon bilad,vaginal infection,infection,Severe,urgent,active
+may nana ko sa akon bilad ko,vaginal infection,infection,Severe,urgent,active
+may nana ko sa akon bilat,vaginal infection,infection,Severe,urgent,active
+may nana ko sa akon bilat ko,vaginal infection,infection,Severe,urgent,active
+may nana ko sa akon itlog,testicular infection,infection,Severe,urgent,active
+may nana ko sa akon itlog ko,testicular infection,infection,Severe,urgent,active
+may nana ko sa akon itlug,testicular infection,infection,Severe,urgent,active
+may nana ko sa akon itlug ko,testicular infection,infection,Severe,urgent,active
+may nana ko sa ari akon,penile infection,infection,Severe,urgent,active
+may nana ko sa ari ko,penile infection,infection,Severe,urgent,active
+may nana ko sa ari ko akon,penile infection,infection,Severe,urgent,active
+may nana ko sa ari ko ko,penile infection,infection,Severe,urgent,active
+may nana ko sa ary akon,penile infection,infection,Severe,urgent,active
+may nana ko sa ary ko,penile infection,infection,Severe,urgent,active
+may nana ko sa ary ko akon,penile infection,infection,Severe,urgent,active
+may nana ko sa ary ko ko,penile infection,infection,Severe,urgent,active
+may nana ko sa atay,liver infection,Infection,Medium,non_urgent,active
+may nana ko sa awang,jaw infection,Infection,Medium,non_urgent,active
+may nana ko sa baba,oral infection,Infection,Medium,non_urgent,active
+may nana ko sa balat,skin infection,Infection,Medium,non_urgent,active
+may nana ko sa batiis,leg infection,Infection,Medium,non_urgent,active
+may nana ko sa bato,kidney infection,Infection,Medium,non_urgent,active
+may nana ko sa baywang,waist infection,Infection,Medium,non_urgent,active
+may nana ko sa bilad akon,vaginal infection,infection,Severe,urgent,active
+may nana ko sa bilad ko,vaginal infection,infection,Severe,urgent,active
+may nana ko sa bilad ko akon,vaginal infection,infection,Severe,urgent,active
+may nana ko sa bilad ko ko,vaginal infection,infection,Severe,urgent,active
+may nana ko sa bilat akon,vaginal infection,infection,Severe,urgent,active
+may nana ko sa bilat ko,vaginal infection,infection,Severe,urgent,active
+may nana ko sa bilat ko akon,vaginal infection,infection,Severe,urgent,active
+may nana ko sa bilat ko ko,vaginal infection,infection,Severe,urgent,active
+may nana ko sa buhok,hair infection,Infection,Medium,non_urgent,active
+may nana ko sa bukong,forehead infection,Infection,Medium,non_urgent,active
+may nana ko sa buuk,arm infection,Infection,Medium,non_urgent,active
+may nana ko sa dalunggan,infected ear,Infection,Medium,non_urgent,active
+may nana ko sa dila,tongue infection,Infection,Medium,non_urgent,active
+may nana ko sa dughan,chest infection,Infection,Medium,non_urgent,active
+may nana ko sa ilong,infected nose,Infection,Medium,non_urgent,active
+may nana ko sa itlog akon,testicular infection,infection,Severe,urgent,active
+may nana ko sa itlog ko,testicular infection,infection,Severe,urgent,active
+may nana ko sa itlog ko akon,testicular infection,infection,Severe,urgent,active
+may nana ko sa itlog ko ko,testicular infection,infection,Severe,urgent,active
+may nana ko sa itlug akon,testicular infection,infection,Severe,urgent,active
+may nana ko sa itlug ko,testicular infection,infection,Severe,urgent,active
+may nana ko sa itlug ko akon,testicular infection,infection,Severe,urgent,active
+may nana ko sa itlug ko ko,testicular infection,infection,Severe,urgent,active
+may nana ko sa kamot,skin infection,Infection,Medium,non_urgent,active
+may nana ko sa kuko,nail infection,Infection,Medium,non_urgent,active
+may nana ko sa lawas,body infection,Infection,Medium,non_urgent,active
+may nana ko sa lawi,nape infection,Infection,Medium,non_urgent,active
+may nana ko sa likod,back infection,Infection,Medium,non_urgent,active
+may nana ko sa liog,neck infection,Infection,Medium,non_urgent,active
 may nana ko sa mata,eye infection,Infection,High,urgent,active
-may nana ko sa ngipon,tooth infection,Infection,Medium,routine,active
-may nana ko sa paa,infected foot,Infection,Medium,routine,active
-may nana ko sa pisngi,cheek infection,Infection,Medium,routine,active
-may nana ko sa siko,elbow infection,Infection,Medium,routine,active
-may nana ko sa tadlong,forearm infection,Infection,Medium,routine,active
-may nana ko sa tagipusuon,heart infection,Infection,Medium,routine,active
-may nana ko sa tai,buttocks infection,Infection,Medium,routine,active
-may nana ko sa tiil,infected foot,Infection,Medium,routine,active
-may nana ko sa tikod,heel infection,Infection,Medium,routine,active
-may nana ko sa titi,breast infection,Infection,Medium,routine,active
-may nana ko sa tiyan,abdomen infection,Infection,Medium,routine,active
-may nana ko sa tudlo,infected finger,Infection,High,routine,active
-may nana ko sa tuhod,knee infection,Infection,Medium,routine,active
-may nana ko sa tungod,throat infection,Infection,Medium,routine,active
-may nana ko sa tungtong,ankle infection,Infection,Medium,routine,active
-may nana ko sa ulo,head infection,Infection,Medium,routine,active
-may nana ko sa utok,brain infection,Infection,Medium,routine,active
-may nana kuko,nail infection,Infection,Medium,routine,active
-may nana kuko ko,nail infection,Infection,Medium,routine,active
-may nana lawas,body infection,Infection,Medium,routine,active
-may nana lawas ko,body infection,Infection,Medium,routine,active
-may nana lawi,nape infection,Infection,Medium,routine,active
-may nana lawi ko,nape infection,Infection,Medium,routine,active
-may nana likod,back infection,Infection,Medium,routine,active
-may nana likod ko,back infection,Infection,Medium,routine,active
-may nana liog,neck infection,Infection,Medium,routine,active
-may nana liog ko,neck infection,Infection,Medium,routine,active
+may nana ko sa ngipon,tooth infection,Infection,Medium,non_urgent,active
+may nana ko sa paa,infected foot,Infection,Medium,non_urgent,active
+may nana ko sa pisngi,cheek infection,Infection,Medium,non_urgent,active
+may nana ko sa siko,elbow infection,Infection,Medium,non_urgent,active
+may nana ko sa tadlong,forearm infection,Infection,Medium,non_urgent,active
+may nana ko sa tagipusuon,heart infection,Infection,Medium,non_urgent,active
+may nana ko sa tai,buttocks infection,Infection,Medium,non_urgent,active
+may nana ko sa tiil,infected foot,Infection,Medium,non_urgent,active
+may nana ko sa tikod,heel infection,Infection,Medium,non_urgent,active
+may nana ko sa titi,breast infection,Infection,Medium,non_urgent,active
+may nana ko sa tiyan,abdomen infection,Infection,Medium,non_urgent,active
+may nana ko sa tudlo,infected finger,Infection,High,non_urgent,active
+may nana ko sa tuhod,knee infection,Infection,Medium,non_urgent,active
+may nana ko sa tungod,throat infection,Infection,Medium,non_urgent,active
+may nana ko sa tungtong,ankle infection,Infection,Medium,non_urgent,active
+may nana ko sa ulo,head infection,Infection,Medium,non_urgent,active
+may nana ko sa utok,brain infection,Infection,Medium,non_urgent,active
+may nana kuko,nail infection,Infection,Medium,non_urgent,active
+may nana kuko ko,nail infection,Infection,Medium,non_urgent,active
+may nana lawas,body infection,Infection,Medium,non_urgent,active
+may nana lawas ko,body infection,Infection,Medium,non_urgent,active
+may nana lawi,nape infection,Infection,Medium,non_urgent,active
+may nana lawi ko,nape infection,Infection,Medium,non_urgent,active
+may nana likod,back infection,Infection,Medium,non_urgent,active
+may nana likod ko,back infection,Infection,Medium,non_urgent,active
+may nana liog,neck infection,Infection,Medium,non_urgent,active
+may nana liog ko,neck infection,Infection,Medium,non_urgent,active
 may nana mata,eye infection,Infection,High,urgent,active
 may nana mata ko,eye infection,Infection,High,urgent,active
-may nana ngipon,tooth infection,Infection,Medium,routine,active
-may nana ngipon ko,tooth infection,Infection,Medium,routine,active
-may nana paa,infected foot,Infection,Medium,routine,active
-may nana paa ko,infected foot,Infection,Medium,routine,active
-may nana pisngi,cheek infection,Infection,Medium,routine,active
-may nana pisngi ko,cheek infection,Infection,Medium,routine,active
-may nana sa abaga ko,shoulder infection,Infection,Medium,routine,active
-may nana sa akon abaga,shoulder infection,Infection,Medium,routine,active
-may nana sa akon atay,liver infection,Infection,Medium,routine,active
-may nana sa akon awang,jaw infection,Infection,Medium,routine,active
-may nana sa akon baba,oral infection,Infection,Medium,routine,active
-may nana sa akon balat,skin infection,Infection,Medium,routine,active
-may nana sa akon batiis,leg infection,Infection,Medium,routine,active
-may nana sa akon bato,kidney infection,Infection,Medium,routine,active
-may nana sa akon baywang,waist infection,Infection,Medium,routine,active
-may nana sa akon buhok,hair infection,Infection,Medium,routine,active
-may nana sa akon bukong,forehead infection,Infection,Medium,routine,active
-may nana sa akon buuk,arm infection,Infection,Medium,routine,active
-may nana sa akon dalunggan,infected ear,Infection,Medium,routine,active
-may nana sa akon dila,tongue infection,Infection,Medium,routine,active
-may nana sa akon dughan,chest infection,Infection,Medium,routine,active
-may nana sa akon ilong,infected nose,Infection,Medium,routine,active
-may nana sa akon kamot,skin infection,Infection,Medium,routine,active
-may nana sa akon kuko,nail infection,Infection,Medium,routine,active
-may nana sa akon lawas,body infection,Infection,Medium,routine,active
-may nana sa akon lawi,nape infection,Infection,Medium,routine,active
-may nana sa akon likod,back infection,Infection,Medium,routine,active
-may nana sa akon liog,neck infection,Infection,Medium,routine,active
+may nana ngipon,tooth infection,Infection,Medium,non_urgent,active
+may nana ngipon ko,tooth infection,Infection,Medium,non_urgent,active
+may nana paa,infected foot,Infection,Medium,non_urgent,active
+may nana paa ko,infected foot,Infection,Medium,non_urgent,active
+may nana pisngi,cheek infection,Infection,Medium,non_urgent,active
+may nana pisngi ko,cheek infection,Infection,Medium,non_urgent,active
+may nana sa abaga ko,shoulder infection,Infection,Medium,non_urgent,active
+may nana sa akon abaga,shoulder infection,Infection,Medium,non_urgent,active
+may nana sa akon akon ari,penile infection,infection,Severe,urgent,active
+may nana sa akon akon ari ko,penile infection,infection,Severe,urgent,active
+may nana sa akon akon ary,penile infection,infection,Severe,urgent,active
+may nana sa akon akon ary ko,penile infection,infection,Severe,urgent,active
+may nana sa akon akon bilad,vaginal infection,infection,Severe,urgent,active
+may nana sa akon akon bilad ko,vaginal infection,infection,Severe,urgent,active
+may nana sa akon akon bilat,vaginal infection,infection,Severe,urgent,active
+may nana sa akon akon bilat ko,vaginal infection,infection,Severe,urgent,active
+may nana sa akon akon itlog,testicular infection,infection,Severe,urgent,active
+may nana sa akon akon itlog ko,testicular infection,infection,Severe,urgent,active
+may nana sa akon akon itlug,testicular infection,infection,Severe,urgent,active
+may nana sa akon akon itlug ko,testicular infection,infection,Severe,urgent,active
+may nana sa akon ari,penile infection,infection,Severe,urgent,active
+may nana sa akon ari akon,penile infection,infection,Severe,urgent,active
+may nana sa akon ari ko,penile infection,infection,Severe,urgent,active
+may nana sa akon ari ko akon,penile infection,infection,Severe,urgent,active
+may nana sa akon ari ko ko,penile infection,infection,Severe,urgent,active
+may nana sa akon ary,penile infection,infection,Severe,urgent,active
+may nana sa akon ary akon,penile infection,infection,Severe,urgent,active
+may nana sa akon ary ko,penile infection,infection,Severe,urgent,active
+may nana sa akon ary ko akon,penile infection,infection,Severe,urgent,active
+may nana sa akon ary ko ko,penile infection,infection,Severe,urgent,active
+may nana sa akon atay,liver infection,Infection,Medium,non_urgent,active
+may nana sa akon awang,jaw infection,Infection,Medium,non_urgent,active
+may nana sa akon baba,oral infection,Infection,Medium,non_urgent,active
+may nana sa akon balat,skin infection,Infection,Medium,non_urgent,active
+may nana sa akon batiis,leg infection,Infection,Medium,non_urgent,active
+may nana sa akon bato,kidney infection,Infection,Medium,non_urgent,active
+may nana sa akon baywang,waist infection,Infection,Medium,non_urgent,active
+may nana sa akon bilad,vaginal infection,infection,Severe,urgent,active
+may nana sa akon bilad akon,vaginal infection,infection,Severe,urgent,active
+may nana sa akon bilad ko,vaginal infection,infection,Severe,urgent,active
+may nana sa akon bilad ko akon,vaginal infection,infection,Severe,urgent,active
+may nana sa akon bilad ko ko,vaginal infection,infection,Severe,urgent,active
+may nana sa akon bilat,vaginal infection,infection,Severe,urgent,active
+may nana sa akon bilat akon,vaginal infection,infection,Severe,urgent,active
+may nana sa akon bilat ko,vaginal infection,infection,Severe,urgent,active
+may nana sa akon bilat ko akon,vaginal infection,infection,Severe,urgent,active
+may nana sa akon bilat ko ko,vaginal infection,infection,Severe,urgent,active
+may nana sa akon buhok,hair infection,Infection,Medium,non_urgent,active
+may nana sa akon bukong,forehead infection,Infection,Medium,non_urgent,active
+may nana sa akon buuk,arm infection,Infection,Medium,non_urgent,active
+may nana sa akon dalunggan,infected ear,Infection,Medium,non_urgent,active
+may nana sa akon dila,tongue infection,Infection,Medium,non_urgent,active
+may nana sa akon dughan,chest infection,Infection,Medium,non_urgent,active
+may nana sa akon ilong,infected nose,Infection,Medium,non_urgent,active
+may nana sa akon itlog,testicular infection,infection,Severe,urgent,active
+may nana sa akon itlog akon,testicular infection,infection,Severe,urgent,active
+may nana sa akon itlog ko,testicular infection,infection,Severe,urgent,active
+may nana sa akon itlog ko akon,testicular infection,infection,Severe,urgent,active
+may nana sa akon itlog ko ko,testicular infection,infection,Severe,urgent,active
+may nana sa akon itlug,testicular infection,infection,Severe,urgent,active
+may nana sa akon itlug akon,testicular infection,infection,Severe,urgent,active
+may nana sa akon itlug ko,testicular infection,infection,Severe,urgent,active
+may nana sa akon itlug ko akon,testicular infection,infection,Severe,urgent,active
+may nana sa akon itlug ko ko,testicular infection,infection,Severe,urgent,active
+may nana sa akon kamot,skin infection,Infection,Medium,non_urgent,active
+may nana sa akon kuko,nail infection,Infection,Medium,non_urgent,active
+may nana sa akon lawas,body infection,Infection,Medium,non_urgent,active
+may nana sa akon lawi,nape infection,Infection,Medium,non_urgent,active
+may nana sa akon likod,back infection,Infection,Medium,non_urgent,active
+may nana sa akon liog,neck infection,Infection,Medium,non_urgent,active
 may nana sa akon mata,eye infection,Infection,High,urgent,active
-may nana sa akon ngipon,tooth infection,Infection,Medium,routine,active
-may nana sa akon paa,infected foot,Infection,Medium,routine,active
-may nana sa akon pisngi,cheek infection,Infection,Medium,routine,active
-may nana sa akon siko,elbow infection,Infection,Medium,routine,active
-may nana sa akon tadlong,forearm infection,Infection,Medium,routine,active
-may nana sa akon tagipusuon,heart infection,Infection,Medium,routine,active
-may nana sa akon tai,buttocks infection,Infection,Medium,routine,active
-may nana sa akon tiil,infected foot,Infection,Medium,routine,active
-may nana sa akon tikod,heel infection,Infection,Medium,routine,active
-may nana sa akon titi,breast infection,Infection,Medium,routine,active
-may nana sa akon tiyan,abdomen infection,Infection,Medium,routine,active
-may nana sa akon tudlo,infected finger,Infection,High,routine,active
-may nana sa akon tuhod,knee infection,Infection,Medium,routine,active
-may nana sa akon tungod,throat infection,Infection,Medium,routine,active
-may nana sa akon tungtong,ankle infection,Infection,Medium,routine,active
-may nana sa akon ulo,head infection,Infection,Medium,routine,active
-may nana sa akon utok,brain infection,Infection,Medium,routine,active
-may nana sa atay ko,liver infection,Infection,Medium,routine,active
-may nana sa awang ko,jaw infection,Infection,Medium,routine,active
-may nana sa baba ko,oral infection,Infection,Medium,routine,active
-may nana sa balat ko,skin infection,Infection,Medium,routine,active
-may nana sa batiis ko,leg infection,Infection,Medium,routine,active
-may nana sa bato ko,kidney infection,Infection,Medium,routine,active
-may nana sa baywang ko,waist infection,Infection,Medium,routine,active
-may nana sa buhok ko,hair infection,Infection,Medium,routine,active
-may nana sa bukong ko,forehead infection,Infection,Medium,routine,active
-may nana sa buuk ko,arm infection,Infection,Medium,routine,active
-may nana sa dalunggan ko,infected ear,Infection,Medium,routine,active
-may nana sa dila ko,tongue infection,Infection,Medium,routine,active
-may nana sa dughan ko,chest infection,Infection,Medium,routine,active
-may nana sa ilong ko,infected nose,Infection,Medium,routine,active
-may nana sa kamot ko,skin infection,Infection,Medium,routine,active
-may nana sa kuko ko,nail infection,Infection,Medium,routine,active
-may nana sa lawas ko,body infection,Infection,Medium,routine,active
-may nana sa lawi ko,nape infection,Infection,Medium,routine,active
-may nana sa likod ko,back infection,Infection,Medium,routine,active
-may nana sa liog ko,neck infection,Infection,Medium,routine,active
+may nana sa akon ngipon,tooth infection,Infection,Medium,non_urgent,active
+may nana sa akon paa,infected foot,Infection,Medium,non_urgent,active
+may nana sa akon pisngi,cheek infection,Infection,Medium,non_urgent,active
+may nana sa akon siko,elbow infection,Infection,Medium,non_urgent,active
+may nana sa akon tadlong,forearm infection,Infection,Medium,non_urgent,active
+may nana sa akon tagipusuon,heart infection,Infection,Medium,non_urgent,active
+may nana sa akon tai,buttocks infection,Infection,Medium,non_urgent,active
+may nana sa akon tiil,infected foot,Infection,Medium,non_urgent,active
+may nana sa akon tikod,heel infection,Infection,Medium,non_urgent,active
+may nana sa akon titi,breast infection,Infection,Medium,non_urgent,active
+may nana sa akon tiyan,abdomen infection,Infection,Medium,non_urgent,active
+may nana sa akon tudlo,infected finger,Infection,High,non_urgent,active
+may nana sa akon tuhod,knee infection,Infection,Medium,non_urgent,active
+may nana sa akon tungod,throat infection,Infection,Medium,non_urgent,active
+may nana sa akon tungtong,ankle infection,Infection,Medium,non_urgent,active
+may nana sa akon ulo,head infection,Infection,Medium,non_urgent,active
+may nana sa akon utok,brain infection,Infection,Medium,non_urgent,active
+may nana sa ari akon,penile infection,infection,Severe,urgent,active
+may nana sa ari ko,penile infection,infection,Severe,urgent,active
+may nana sa ari ko akon,penile infection,infection,Severe,urgent,active
+may nana sa ari ko ko,penile infection,infection,Severe,urgent,active
+may nana sa ary akon,penile infection,infection,Severe,urgent,active
+may nana sa ary ko,penile infection,infection,Severe,urgent,active
+may nana sa ary ko akon,penile infection,infection,Severe,urgent,active
+may nana sa ary ko ko,penile infection,infection,Severe,urgent,active
+may nana sa atay ko,liver infection,Infection,Medium,non_urgent,active
+may nana sa awang ko,jaw infection,Infection,Medium,non_urgent,active
+may nana sa baba ko,oral infection,Infection,Medium,non_urgent,active
+may nana sa balat ko,skin infection,Infection,Medium,non_urgent,active
+may nana sa batiis ko,leg infection,Infection,Medium,non_urgent,active
+may nana sa bato ko,kidney infection,Infection,Medium,non_urgent,active
+may nana sa baywang ko,waist infection,Infection,Medium,non_urgent,active
+may nana sa bilad akon,vaginal infection,infection,Severe,urgent,active
+may nana sa bilad ko,vaginal infection,infection,Severe,urgent,active
+may nana sa bilad ko akon,vaginal infection,infection,Severe,urgent,active
+may nana sa bilad ko ko,vaginal infection,infection,Severe,urgent,active
+may nana sa bilat akon,vaginal infection,infection,Severe,urgent,active
+may nana sa bilat ko,vaginal infection,infection,Severe,urgent,active
+may nana sa bilat ko akon,vaginal infection,infection,Severe,urgent,active
+may nana sa bilat ko ko,vaginal infection,infection,Severe,urgent,active
+may nana sa buhok ko,hair infection,Infection,Medium,non_urgent,active
+may nana sa bukong ko,forehead infection,Infection,Medium,non_urgent,active
+may nana sa buuk ko,arm infection,Infection,Medium,non_urgent,active
+may nana sa dalunggan ko,infected ear,Infection,Medium,non_urgent,active
+may nana sa dila ko,tongue infection,Infection,Medium,non_urgent,active
+may nana sa dughan ko,chest infection,Infection,Medium,non_urgent,active
+may nana sa ihi ko,urinary infection,infection,High,urgent,active
+may nana sa ilong ko,infected nose,Infection,Medium,non_urgent,active
+may nana sa itlog akon,testicular infection,infection,Severe,urgent,active
+may nana sa itlog ko,testicular infection,infection,Severe,urgent,active
+may nana sa itlog ko akon,testicular infection,infection,Severe,urgent,active
+may nana sa itlog ko ko,testicular infection,infection,Severe,urgent,active
+may nana sa itlug akon,testicular infection,infection,Severe,urgent,active
+may nana sa itlug ko,testicular infection,infection,Severe,urgent,active
+may nana sa itlug ko akon,testicular infection,infection,Severe,urgent,active
+may nana sa itlug ko ko,testicular infection,infection,Severe,urgent,active
+may nana sa kamot ko,skin infection,Infection,Medium,non_urgent,active
+may nana sa kuko ko,nail infection,Infection,Medium,non_urgent,active
+may nana sa lawas ko,body infection,Infection,Medium,non_urgent,active
+may nana sa lawi ko,nape infection,Infection,Medium,non_urgent,active
+may nana sa likod ko,back infection,Infection,Medium,non_urgent,active
+may nana sa liog ko,neck infection,Infection,Medium,non_urgent,active
 may nana sa mata ko,eye infection,Infection,High,urgent,active
-may nana sa ngipon ko,tooth infection,Infection,Medium,routine,active
-may nana sa paa ko,infected foot,Infection,Medium,routine,active
+may nana sa ngipon ko,tooth infection,Infection,Medium,non_urgent,active
+may nana sa paa ko,infected foot,Infection,Medium,non_urgent,active
 may nana sa pilas ko,infected wound,Infection,High,urgent,active
-may nana sa pisngi ko,cheek infection,Infection,Medium,routine,active
-may nana sa siko ko,elbow infection,Infection,Medium,routine,active
-may nana sa tadlong ko,forearm infection,Infection,Medium,routine,active
-may nana sa tagipusuon ko,heart infection,Infection,Medium,routine,active
-may nana sa tai ko,buttocks infection,Infection,Medium,routine,active
-may nana sa tiil ko,infected foot,Infection,Medium,routine,active
-may nana sa tikod ko,heel infection,Infection,Medium,routine,active
-may nana sa titi ko,breast infection,Infection,Medium,routine,active
-may nana sa tiyan ko,abdomen infection,Infection,Medium,routine,active
-may nana sa tudlo ko,infected finger,Infection,High,routine,active
-may nana sa tuhod ko,knee infection,Infection,Medium,routine,active
-may nana sa tungod ko,throat infection,Infection,Medium,routine,active
-may nana sa tungtong ko,ankle infection,Infection,Medium,routine,active
-may nana sa ulo ko,head infection,Infection,Medium,routine,active
-may nana sa utok ko,brain infection,Infection,Medium,routine,active
-may nana siko,elbow infection,Infection,Medium,routine,active
-may nana siko ko,elbow infection,Infection,Medium,routine,active
-may nana tadlong,forearm infection,Infection,Medium,routine,active
-may nana tadlong ko,forearm infection,Infection,Medium,routine,active
-may nana tagipusuon,heart infection,Infection,Medium,routine,active
-may nana tagipusuon ko,heart infection,Infection,Medium,routine,active
-may nana tai,buttocks infection,Infection,Medium,routine,active
-may nana tai ko,buttocks infection,Infection,Medium,routine,active
-may nana tiil,infected foot,Infection,Medium,routine,active
-may nana tiil ko,infected foot,Infection,Medium,routine,active
-may nana tikod,heel infection,Infection,Medium,routine,active
-may nana tikod ko,heel infection,Infection,Medium,routine,active
-may nana titi,breast infection,Infection,Medium,routine,active
-may nana titi ko,breast infection,Infection,Medium,routine,active
-may nana tiyan,abdomen infection,Infection,Medium,routine,active
-may nana tiyan ko,abdomen infection,Infection,Medium,routine,active
-may nana tudlo,infected finger,Infection,High,routine,active
-may nana tudlo ko,infected finger,Infection,High,routine,active
-may nana tuhod,knee infection,Infection,Medium,routine,active
-may nana tuhod ko,knee infection,Infection,Medium,routine,active
-may nana tungod,throat infection,Infection,Medium,routine,active
-may nana tungod ko,throat infection,Infection,Medium,routine,active
-may nana tungtong,ankle infection,Infection,Medium,routine,active
-may nana tungtong ko,ankle infection,Infection,Medium,routine,active
-may nana ulo,head infection,Infection,Medium,routine,active
-may nana ulo ko,head infection,Infection,Medium,routine,active
-may nana utok,brain infection,Infection,Medium,routine,active
-may nana utok ko,brain infection,Infection,Medium,routine,active
+may nana sa pisngi ko,cheek infection,Infection,Medium,non_urgent,active
+may nana sa siko ko,elbow infection,Infection,Medium,non_urgent,active
+may nana sa tadlong ko,forearm infection,Infection,Medium,non_urgent,active
+may nana sa tagipusuon ko,heart infection,Infection,Medium,non_urgent,active
+may nana sa tai ko,buttocks infection,Infection,Medium,non_urgent,active
+may nana sa tiil ko,infected foot,Infection,Medium,non_urgent,active
+may nana sa tikod ko,heel infection,Infection,Medium,non_urgent,active
+may nana sa titi ko,breast infection,Infection,Medium,non_urgent,active
+may nana sa tiyan ko,abdomen infection,Infection,Medium,non_urgent,active
+may nana sa tudlo ko,infected finger,Infection,High,non_urgent,active
+may nana sa tuhod ko,knee infection,Infection,Medium,non_urgent,active
+may nana sa tungod ko,throat infection,Infection,Medium,non_urgent,active
+may nana sa tungtong ko,ankle infection,Infection,Medium,non_urgent,active
+may nana sa ulo ko,head infection,Infection,Medium,non_urgent,active
+may nana sa utok ko,brain infection,Infection,Medium,non_urgent,active
+may nana siko,elbow infection,Infection,Medium,non_urgent,active
+may nana siko ko,elbow infection,Infection,Medium,non_urgent,active
+may nana tadlong,forearm infection,Infection,Medium,non_urgent,active
+may nana tadlong ko,forearm infection,Infection,Medium,non_urgent,active
+may nana tagipusuon,heart infection,Infection,Medium,non_urgent,active
+may nana tagipusuon ko,heart infection,Infection,Medium,non_urgent,active
+may nana tai,buttocks infection,Infection,Medium,non_urgent,active
+may nana tai ko,buttocks infection,Infection,Medium,non_urgent,active
+may nana tiil,infected foot,Infection,Medium,non_urgent,active
+may nana tiil ko,infected foot,Infection,Medium,non_urgent,active
+may nana tikod,heel infection,Infection,Medium,non_urgent,active
+may nana tikod ko,heel infection,Infection,Medium,non_urgent,active
+may nana titi,breast infection,Infection,Medium,non_urgent,active
+may nana titi ko,breast infection,Infection,Medium,non_urgent,active
+may nana tiyan,abdomen infection,Infection,Medium,non_urgent,active
+may nana tiyan ko,abdomen infection,Infection,Medium,non_urgent,active
+may nana tudlo,infected finger,Infection,High,non_urgent,active
+may nana tudlo ko,infected finger,Infection,High,non_urgent,active
+may nana tuhod,knee infection,Infection,Medium,non_urgent,active
+may nana tuhod ko,knee infection,Infection,Medium,non_urgent,active
+may nana tungod,throat infection,Infection,Medium,non_urgent,active
+may nana tungod ko,throat infection,Infection,Medium,non_urgent,active
+may nana tungtong,ankle infection,Infection,Medium,non_urgent,active
+may nana tungtong ko,ankle infection,Infection,Medium,non_urgent,active
+may nana ulo,head infection,Infection,Medium,non_urgent,active
+may nana ulo ko,head infection,Infection,Medium,non_urgent,active
+may nana utok,brain infection,Infection,Medium,non_urgent,active
+may nana utok ko,brain infection,Infection,Medium,non_urgent,active
 may pilas ako sa batiis,leg wound,Wound,Medium,urgent,active
 may pilas ako sa buuk,arm wound,Wound,Medium,urgent,active
 may pilas ako sa kamot,hand wound,Wound,Medium,urgent,active
@@ -1293,8 +1662,45 @@ may pilas akon tiil,foot wound,Wound,Medium,urgent,active
 may pilas akon tiyan,abdominal wound,Wound,Medium,urgent,active
 may pilas akon tudlo,finger wound,Wound,Medium,urgent,active
 may pilas akon ulo,head wound,Wound,Medium,urgent,active
+may pilas ko sa akon ari,penile wound,injury,Moderate,urgent,active
+may pilas ko sa akon ari ko,penile wound,injury,Moderate,urgent,active
+may pilas ko sa akon ary,penile wound,injury,Moderate,urgent,active
+may pilas ko sa akon ary ko,penile wound,injury,Moderate,urgent,active
+may pilas ko sa akon bilad,vaginal wound,injury,Moderate,urgent,active
+may pilas ko sa akon bilad ko,vaginal wound,injury,Moderate,urgent,active
+may pilas ko sa akon bilat,vaginal wound,injury,Moderate,urgent,active
+may pilas ko sa akon bilat ko,vaginal wound,injury,Moderate,urgent,active
+may pilas ko sa akon itlog,testicular wound,injury,Moderate,urgent,active
+may pilas ko sa akon itlog ko,testicular wound,injury,Moderate,urgent,active
+may pilas ko sa akon itlug,testicular wound,injury,Moderate,urgent,active
+may pilas ko sa akon itlug ko,testicular wound,injury,Moderate,urgent,active
+may pilas ko sa ari,penile wound,injury,Moderate,urgent,active
+may pilas ko sa ari akon,penile wound,injury,Moderate,urgent,active
+may pilas ko sa ari ko,penile wound,injury,Moderate,urgent,active
+may pilas ko sa ari ko akon,penile wound,injury,Moderate,urgent,active
+may pilas ko sa ari ko ko,penile wound,injury,Moderate,urgent,active
+may pilas ko sa ary akon,penile wound,injury,Moderate,urgent,active
+may pilas ko sa ary ko,penile wound,injury,Moderate,urgent,active
+may pilas ko sa ary ko akon,penile wound,injury,Moderate,urgent,active
+may pilas ko sa ary ko ko,penile wound,injury,Moderate,urgent,active
 may pilas ko sa batiis,leg wound,Wound,Medium,urgent,active
+may pilas ko sa bilad akon,vaginal wound,injury,Moderate,urgent,active
+may pilas ko sa bilad ko,vaginal wound,injury,Moderate,urgent,active
+may pilas ko sa bilad ko akon,vaginal wound,injury,Moderate,urgent,active
+may pilas ko sa bilad ko ko,vaginal wound,injury,Moderate,urgent,active
+may pilas ko sa bilat akon,vaginal wound,injury,Moderate,urgent,active
+may pilas ko sa bilat ko,vaginal wound,injury,Moderate,urgent,active
+may pilas ko sa bilat ko akon,vaginal wound,injury,Moderate,urgent,active
+may pilas ko sa bilat ko ko,vaginal wound,injury,Moderate,urgent,active
 may pilas ko sa buuk,arm wound,Wound,Medium,urgent,active
+may pilas ko sa itlog akon,testicular wound,injury,Moderate,urgent,active
+may pilas ko sa itlog ko,testicular wound,injury,Moderate,urgent,active
+may pilas ko sa itlog ko akon,testicular wound,injury,Moderate,urgent,active
+may pilas ko sa itlog ko ko,testicular wound,injury,Moderate,urgent,active
+may pilas ko sa itlug akon,testicular wound,injury,Moderate,urgent,active
+may pilas ko sa itlug ko,testicular wound,injury,Moderate,urgent,active
+may pilas ko sa itlug ko akon,testicular wound,injury,Moderate,urgent,active
+may pilas ko sa itlug ko ko,testicular wound,injury,Moderate,urgent,active
 may pilas ko sa kamot,hand wound,Wound,Medium,urgent,active
 may pilas ko sa kamot 3 ka adlaw,hand wound,Wound,Medium,urgent,active
 may pilas ko sa kamot 5 ka adlaw,hand wound,Wound,Medium,urgent,active
@@ -1321,8 +1727,74 @@ may pilas nasunog sa lawas ko,body burn,Burn,High,urgent,active
 may pilas nasunog sa mata ko,eye burn,Burn,High,emergency,active
 may pilas nasunog sa tiil ko,foot burn,Burn,Medium,urgent,active
 may pilas nasunog sa tiyan ko,abdominal burn,Burn,Medium,urgent,active
+may pilas sa akon akon ari,penile wound,injury,Moderate,urgent,active
+may pilas sa akon akon ari ko,penile wound,injury,Moderate,urgent,active
+may pilas sa akon akon ary,penile wound,injury,Moderate,urgent,active
+may pilas sa akon akon ary ko,penile wound,injury,Moderate,urgent,active
+may pilas sa akon akon bilad,vaginal wound,injury,Moderate,urgent,active
+may pilas sa akon akon bilad ko,vaginal wound,injury,Moderate,urgent,active
+may pilas sa akon akon bilat,vaginal wound,injury,Moderate,urgent,active
+may pilas sa akon akon bilat ko,vaginal wound,injury,Moderate,urgent,active
+may pilas sa akon akon itlog,testicular wound,injury,Moderate,urgent,active
+may pilas sa akon akon itlog ko,testicular wound,injury,Moderate,urgent,active
+may pilas sa akon akon itlug,testicular wound,injury,Moderate,urgent,active
+may pilas sa akon akon itlug ko,testicular wound,injury,Moderate,urgent,active
+may pilas sa akon ari,penile wound,injury,Moderate,urgent,active
+may pilas sa akon ari akon,penile wound,injury,Moderate,urgent,active
+may pilas sa akon ari ko,penile wound,injury,Moderate,urgent,active
+may pilas sa akon ari ko akon,penile wound,injury,Moderate,urgent,active
+may pilas sa akon ari ko ko,penile wound,injury,Moderate,urgent,active
+may pilas sa akon ary,penile wound,injury,Moderate,urgent,active
+may pilas sa akon ary akon,penile wound,injury,Moderate,urgent,active
+may pilas sa akon ary ko,penile wound,injury,Moderate,urgent,active
+may pilas sa akon ary ko akon,penile wound,injury,Moderate,urgent,active
+may pilas sa akon ary ko ko,penile wound,injury,Moderate,urgent,active
+may pilas sa akon bilad,vaginal wound,injury,Moderate,urgent,active
+may pilas sa akon bilad akon,vaginal wound,injury,Moderate,urgent,active
+may pilas sa akon bilad ko,vaginal wound,injury,Moderate,urgent,active
+may pilas sa akon bilad ko akon,vaginal wound,injury,Moderate,urgent,active
+may pilas sa akon bilad ko ko,vaginal wound,injury,Moderate,urgent,active
+may pilas sa akon bilat,vaginal wound,injury,Moderate,urgent,active
+may pilas sa akon bilat akon,vaginal wound,injury,Moderate,urgent,active
+may pilas sa akon bilat ko,vaginal wound,injury,Moderate,urgent,active
+may pilas sa akon bilat ko akon,vaginal wound,injury,Moderate,urgent,active
+may pilas sa akon bilat ko ko,vaginal wound,injury,Moderate,urgent,active
+may pilas sa akon itlog,testicular wound,injury,Moderate,urgent,active
+may pilas sa akon itlog akon,testicular wound,injury,Moderate,urgent,active
+may pilas sa akon itlog ko,testicular wound,injury,Moderate,urgent,active
+may pilas sa akon itlog ko akon,testicular wound,injury,Moderate,urgent,active
+may pilas sa akon itlog ko ko,testicular wound,injury,Moderate,urgent,active
+may pilas sa akon itlug,testicular wound,injury,Moderate,urgent,active
+may pilas sa akon itlug akon,testicular wound,injury,Moderate,urgent,active
+may pilas sa akon itlug ko,testicular wound,injury,Moderate,urgent,active
+may pilas sa akon itlug ko akon,testicular wound,injury,Moderate,urgent,active
+may pilas sa akon itlug ko ko,testicular wound,injury,Moderate,urgent,active
+may pilas sa ari akon,penile wound,injury,Moderate,urgent,active
+may pilas sa ari ko,penile wound,injury,Moderate,urgent,active
+may pilas sa ari ko akon,penile wound,injury,Moderate,urgent,active
+may pilas sa ari ko ko,penile wound,injury,Moderate,urgent,active
+may pilas sa ary akon,penile wound,injury,Moderate,urgent,active
+may pilas sa ary ko,penile wound,injury,Moderate,urgent,active
+may pilas sa ary ko akon,penile wound,injury,Moderate,urgent,active
+may pilas sa ary ko ko,penile wound,injury,Moderate,urgent,active
 may pilas sa batiis ko,leg wound,Wound,Medium,urgent,active
+may pilas sa bilad akon,vaginal wound,injury,Moderate,urgent,active
+may pilas sa bilad ko,vaginal wound,injury,Moderate,urgent,active
+may pilas sa bilad ko akon,vaginal wound,injury,Moderate,urgent,active
+may pilas sa bilad ko ko,vaginal wound,injury,Moderate,urgent,active
+may pilas sa bilat akon,vaginal wound,injury,Moderate,urgent,active
+may pilas sa bilat ko,vaginal wound,injury,Moderate,urgent,active
+may pilas sa bilat ko akon,vaginal wound,injury,Moderate,urgent,active
+may pilas sa bilat ko ko,vaginal wound,injury,Moderate,urgent,active
 may pilas sa buuk ko,arm wound,Wound,Medium,urgent,active
+may pilas sa itlog akon,testicular wound,injury,Moderate,urgent,active
+may pilas sa itlog ko,testicular wound,injury,Moderate,urgent,active
+may pilas sa itlog ko akon,testicular wound,injury,Moderate,urgent,active
+may pilas sa itlog ko ko,testicular wound,injury,Moderate,urgent,active
+may pilas sa itlug akon,testicular wound,injury,Moderate,urgent,active
+may pilas sa itlug ko,testicular wound,injury,Moderate,urgent,active
+may pilas sa itlug ko akon,testicular wound,injury,Moderate,urgent,active
+may pilas sa itlug ko ko,testicular wound,injury,Moderate,urgent,active
 may pilas sa kamot ko,hand wound,Wound,Medium,urgent,active
 may pilas sa likod ko,back wound,Wound,Medium,urgent,active
 may pilas sa paa ko,foot wound,Wound,Medium,urgent,active
@@ -1330,6 +1802,18 @@ may pilas sa tiil ko,foot wound,Wound,Medium,urgent,active
 may pilas sa tiyan ko,abdominal wound,Wound,Medium,urgent,active
 may pilas sa tudlo ko,finger wound,Wound,Medium,urgent,active
 may pilas sa ulo ko,head wound,Wound,Medium,urgent,active
+may pneumonia,pneumonia,Respiratory,Critical,emergency,active
+may sip-on,common cold,Respiratory,Mild,non_urgent,active
+may tb,tuberculosis,Infectious,High,urgent,active
+may tigdas,measles,Infectious,High,urgent,active
+may trangkaso,influenza,Infectious,Medium,urgent,active
+may ubo,cough,Respiratory,Mild,non_urgent,active
+may ulcer,peptic ulcer,Digestive,Medium,urgent,active
+may uti,urinary tract infection,Urinary,Medium,urgent,active
+measles,measles,Infectious,High,urgent,active
+migraine,migraine,Neurological,Medium,urgent,active
+migren,migraine,Neurological,Medium,urgent,active
+mumps,mumps,Infectious,Medium,urgent,active
 nabali acun batiis,leg fracture,Fracture,High,emergency,active
 nabali acun buuk,arm fracture,Fracture,High,emergency,active
 nabali acun kamot,hand fracture,Fracture,High,emergency,active
@@ -1396,26 +1880,26 @@ nabali tuhod ko,knee fracture,Fracture,High,emergency,active
 nabali tuhod ku,knee fracture,Fracture,High,emergency,active
 nabali ulo ko,skull fracture,Fracture,High,emergency,active
 nabali ulo ku,skull fracture,Fracture,High,emergency,active
-nabalian akon kamot,wrist sprain,Trauma,Medium,routine,active
-nabalian akon siko,elbow sprain,Trauma,Medium,routine,active
-nabalian akon tuhod,knee sprain,Trauma,Medium,routine,active
-nabalian akon tungtong,ankle sprain,Trauma,Medium,routine,active
-nabalian gid kamot ko,wrist sprain,Trauma,Medium,routine,active
-nabalian gid siko ko,elbow sprain,Trauma,Medium,routine,active
-nabalian gid tuhod ko,knee sprain,Trauma,Medium,routine,active
-nabalian gid tungtong ko,ankle sprain,Trauma,Medium,routine,active
-nabalian kamot ko,wrist sprain,Trauma,Medium,routine,active
-nabalian ko,sprain,Trauma,Medium,routine,active
-nabalian siko ko,elbow sprain,Trauma,Medium,routine,active
-nabalian tuhod ko,knee sprain,Trauma,Medium,routine,active
-nabalian tungtong ko,ankle sprain,Trauma,Medium,routine,active
+nabalian akon kamot,wrist sprain,Trauma,Medium,non_urgent,active
+nabalian akon siko,elbow sprain,Trauma,Medium,non_urgent,active
+nabalian akon tuhod,knee sprain,Trauma,Medium,non_urgent,active
+nabalian akon tungtong,ankle sprain,Trauma,Medium,non_urgent,active
+nabalian gid kamot ko,wrist sprain,Trauma,Medium,non_urgent,active
+nabalian gid siko ko,elbow sprain,Trauma,Medium,non_urgent,active
+nabalian gid tuhod ko,knee sprain,Trauma,Medium,non_urgent,active
+nabalian gid tungtong ko,ankle sprain,Trauma,Medium,non_urgent,active
+nabalian kamot ko,wrist sprain,Trauma,Medium,non_urgent,active
+nabalian ko,sprain,Trauma,Medium,non_urgent,active
+nabalian siko ko,elbow sprain,Trauma,Medium,non_urgent,active
+nabalian tuhod ko,knee sprain,Trauma,Medium,non_urgent,active
+nabalian tungtong ko,ankle sprain,Trauma,Medium,non_urgent,active
 nabangga ako sang salakyan,vehicle collision injury,Trauma,Critical,emergency,active
 nabangga ko sang motor,vehicle collision injury,Trauma,Critical,emergency,active
 nabangga ku sang motor,vehicle collision injury,Trauma,Critical,emergency,active
 nabuklan ko sa ulo,head hematoma,Trauma,High,emergency,active
 nabuklan ku sa ulo,head hematoma,Trauma,High,emergency,active
-nabun-og ako,bruise,Trauma,Low,routine,active
-nabun-og ko,bruise,Trauma,Low,routine,active
+nabun-og ako,bruise,Trauma,Low,non_urgent,active
+nabun-og ko,bruise,Trauma,Low,non_urgent,active
 nabun-og ulo ko,head bruise,Trauma,Medium,urgent,active
 nabunggo ako sa bato,head injury from rock,Trauma,High,emergency,active
 nabunggo ko,collision injury,Trauma,High,urgent,active
@@ -1442,9 +1926,45 @@ nag dugo gid ulo ko,head bleeding,Bleeding,High,emergency,active
 nag dugo pilas ko,bleeding wound,Wound,High,emergency,active
 nag dugo ulo ko,head bleeding,Trauma,Critical,emergency,active
 nag dugo ulo ko pagkatapos natumba,head bleeding after fall,Trauma,Critical,emergency,active
+nagadugo akon bilad,vaginal bleeding,gynecologic_symptom,Severe,urgent,active
+nagadugo akon bilad ko,vaginal bleeding,gynecologic_symptom,Severe,urgent,active
+nagadugo akon bilat,vaginal bleeding,gynecologic_symptom,Severe,urgent,active
+nagadugo akon bilat ko,vaginal bleeding,gynecologic_symptom,Severe,urgent,active
+nagadugo bilad ako,vaginal bleeding,gynecologic_symptom,Severe,urgent,active
+nagadugo bilad akon,vaginal bleeding,gynecologic_symptom,Severe,urgent,active
+nagadugo bilad akon gid,vaginal bleeding,gynecologic_symptom,Severe,urgent,active
+nagadugo bilad akon subong,vaginal bleeding,gynecologic_symptom,Severe,urgent,active
+nagadugo bilad gid ko,vaginal bleeding,gynecologic_symptom,Severe,urgent,active
+nagadugo bilad ko,vaginal bleeding,gynecologic_symptom,Severe,urgent,active
+nagadugo bilad ko ako,vaginal bleeding,gynecologic_symptom,Severe,urgent,active
+nagadugo bilad ko akon,vaginal bleeding,gynecologic_symptom,Severe,urgent,active
+nagadugo bilad ko akon gid,vaginal bleeding,gynecologic_symptom,Severe,urgent,active
+nagadugo bilad ko akon subong,vaginal bleeding,gynecologic_symptom,Severe,urgent,active
+nagadugo bilad ko gid,vaginal bleeding,gynecologic_symptom,Severe,urgent,active
+nagadugo bilad ko gid ko,vaginal bleeding,gynecologic_symptom,Severe,urgent,active
+nagadugo bilad ko ko,vaginal bleeding,gynecologic_symptom,Severe,urgent,active
+nagadugo bilad ko ko gid,vaginal bleeding,gynecologic_symptom,Severe,urgent,active
+nagadugo bilat ako,vaginal bleeding,gynecologic_symptom,Severe,urgent,active
+nagadugo bilat akon,vaginal bleeding,gynecologic_symptom,Severe,urgent,active
+nagadugo bilat akon gid,vaginal bleeding,gynecologic_symptom,Severe,urgent,active
+nagadugo bilat akon subong,vaginal bleeding,gynecologic_symptom,Severe,urgent,active
+nagadugo bilat gid ko,vaginal bleeding,gynecologic_symptom,Severe,urgent,active
+nagadugo bilat ko,vaginal bleeding,gynecologic_symptom,Severe,urgent,active
+nagadugo bilat ko ako,vaginal bleeding,gynecologic_symptom,Severe,urgent,active
+nagadugo bilat ko akon,vaginal bleeding,gynecologic_symptom,Severe,urgent,active
+nagadugo bilat ko akon gid,vaginal bleeding,gynecologic_symptom,Severe,urgent,active
+nagadugo bilat ko akon subong,vaginal bleeding,gynecologic_symptom,Severe,urgent,active
+nagadugo bilat ko gid,vaginal bleeding,gynecologic_symptom,Severe,urgent,active
+nagadugo bilat ko gid ko,vaginal bleeding,gynecologic_symptom,Severe,urgent,active
+nagadugo bilat ko ko,vaginal bleeding,gynecologic_symptom,Severe,urgent,active
+nagadugo bilat ko ko gid,vaginal bleeding,gynecologic_symptom,Severe,urgent,active
 nagdugo acun pilas,bleeding wound,Bleeding,High,emergency,active
 nagdugo acun ulo,head bleeding,Bleeding,High,emergency,active
 nagdugo akon baba,oral bleeding,Bleeding,Medium,urgent,active
+nagdugo akon bilad,vaginal bleeding,gynecologic_symptom,Severe,urgent,active
+nagdugo akon bilad ko,vaginal bleeding,gynecologic_symptom,Severe,urgent,active
+nagdugo akon bilat,vaginal bleeding,gynecologic_symptom,Severe,urgent,active
+nagdugo akon bilat ko,vaginal bleeding,gynecologic_symptom,Severe,urgent,active
 nagdugo akon ilong,nosebleed,Bleeding,Medium,urgent,active
 nagdugo akon kamot,hand bleeding,Bleeding,Medium,urgent,active
 nagdugo akon pilas,bleeding wound,Bleeding,High,emergency,active
@@ -1465,7 +1985,67 @@ nagdugo ang pilas sa ulo ko,head wound,Wound,Medium,urgent,active
 nagdugo ang ulo ko,head bleeding,Trauma,Critical,emergency,active
 nagdugo ang ulo ku,head bleeding,Trauma,Critical,emergency,active
 nagdugo baba ko,oral bleeding,Bleeding,Medium,urgent,active
+nagdugo bilad ako,vaginal bleeding,gynecologic_symptom,Severe,urgent,active
+nagdugo bilad akon,vaginal bleeding,gynecologic_symptom,Severe,urgent,active
+nagdugo bilad akon gid,vaginal bleeding,gynecologic_symptom,Severe,urgent,active
+nagdugo bilad akon subong,vaginal bleeding,gynecologic_symptom,Severe,urgent,active
+nagdugo bilad gid ko,vaginal bleeding,gynecologic_symptom,Severe,urgent,active
+nagdugo bilad ko,vaginal bleeding,gynecologic_symptom,Severe,urgent,active
+nagdugo bilad ko ako,vaginal bleeding,gynecologic_symptom,Severe,urgent,active
+nagdugo bilad ko akon,vaginal bleeding,gynecologic_symptom,Severe,urgent,active
+nagdugo bilad ko akon gid,vaginal bleeding,gynecologic_symptom,Severe,urgent,active
+nagdugo bilad ko akon subong,vaginal bleeding,gynecologic_symptom,Severe,urgent,active
+nagdugo bilad ko gid,vaginal bleeding,gynecologic_symptom,Severe,urgent,active
+nagdugo bilad ko gid ko,vaginal bleeding,gynecologic_symptom,Severe,urgent,active
+nagdugo bilad ko ko,vaginal bleeding,gynecologic_symptom,Severe,urgent,active
+nagdugo bilad ko ko gid,vaginal bleeding,gynecologic_symptom,Severe,urgent,active
+nagdugo bilat ako,vaginal bleeding,gynecologic_symptom,Severe,urgent,active
+nagdugo bilat akon,vaginal bleeding,gynecologic_symptom,Severe,urgent,active
+nagdugo bilat akon gid,vaginal bleeding,gynecologic_symptom,Severe,urgent,active
+nagdugo bilat akon subong,vaginal bleeding,gynecologic_symptom,Severe,urgent,active
+nagdugo bilat gid ko,vaginal bleeding,gynecologic_symptom,Severe,urgent,active
+nagdugo bilat ko,vaginal bleeding,gynecologic_symptom,Severe,urgent,active
+nagdugo bilat ko ako,vaginal bleeding,gynecologic_symptom,Severe,urgent,active
+nagdugo bilat ko akon,vaginal bleeding,gynecologic_symptom,Severe,urgent,active
+nagdugo bilat ko akon gid,vaginal bleeding,gynecologic_symptom,Severe,urgent,active
+nagdugo bilat ko akon subong,vaginal bleeding,gynecologic_symptom,Severe,urgent,active
+nagdugo bilat ko gid,vaginal bleeding,gynecologic_symptom,Severe,urgent,active
+nagdugo bilat ko gid ko,vaginal bleeding,gynecologic_symptom,Severe,urgent,active
+nagdugo bilat ko ko,vaginal bleeding,gynecologic_symptom,Severe,urgent,active
+nagdugo bilat ko ko gid,vaginal bleeding,gynecologic_symptom,Severe,urgent,active
+nagdugo gid akon bilad,vaginal bleeding,gynecologic_symptom,Severe,urgent,active
+nagdugo gid akon bilad ko,vaginal bleeding,gynecologic_symptom,Severe,urgent,active
+nagdugo gid akon bilat,vaginal bleeding,gynecologic_symptom,Severe,urgent,active
+nagdugo gid akon bilat ko,vaginal bleeding,gynecologic_symptom,Severe,urgent,active
 nagdugo gid baba ko,oral bleeding,Bleeding,Medium,urgent,active
+nagdugo gid bilad ako,vaginal bleeding,gynecologic_symptom,Severe,urgent,active
+nagdugo gid bilad akon,vaginal bleeding,gynecologic_symptom,Severe,urgent,active
+nagdugo gid bilad akon gid,vaginal bleeding,gynecologic_symptom,Severe,urgent,active
+nagdugo gid bilad akon subong,vaginal bleeding,gynecologic_symptom,Severe,urgent,active
+nagdugo gid bilad gid ko,vaginal bleeding,gynecologic_symptom,Severe,urgent,active
+nagdugo gid bilad ko,vaginal bleeding,gynecologic_symptom,Severe,urgent,active
+nagdugo gid bilad ko ako,vaginal bleeding,gynecologic_symptom,Severe,urgent,active
+nagdugo gid bilad ko akon,vaginal bleeding,gynecologic_symptom,Severe,urgent,active
+nagdugo gid bilad ko akon gid,vaginal bleeding,gynecologic_symptom,Severe,urgent,active
+nagdugo gid bilad ko akon subong,vaginal bleeding,gynecologic_symptom,Severe,urgent,active
+nagdugo gid bilad ko gid,vaginal bleeding,gynecologic_symptom,Severe,urgent,active
+nagdugo gid bilad ko gid ko,vaginal bleeding,gynecologic_symptom,Severe,urgent,active
+nagdugo gid bilad ko ko,vaginal bleeding,gynecologic_symptom,Severe,urgent,active
+nagdugo gid bilad ko ko gid,vaginal bleeding,gynecologic_symptom,Severe,urgent,active
+nagdugo gid bilat ako,vaginal bleeding,gynecologic_symptom,Severe,urgent,active
+nagdugo gid bilat akon,vaginal bleeding,gynecologic_symptom,Severe,urgent,active
+nagdugo gid bilat akon gid,vaginal bleeding,gynecologic_symptom,Severe,urgent,active
+nagdugo gid bilat akon subong,vaginal bleeding,gynecologic_symptom,Severe,urgent,active
+nagdugo gid bilat gid ko,vaginal bleeding,gynecologic_symptom,Severe,urgent,active
+nagdugo gid bilat ko,vaginal bleeding,gynecologic_symptom,Severe,urgent,active
+nagdugo gid bilat ko ako,vaginal bleeding,gynecologic_symptom,Severe,urgent,active
+nagdugo gid bilat ko akon,vaginal bleeding,gynecologic_symptom,Severe,urgent,active
+nagdugo gid bilat ko akon gid,vaginal bleeding,gynecologic_symptom,Severe,urgent,active
+nagdugo gid bilat ko akon subong,vaginal bleeding,gynecologic_symptom,Severe,urgent,active
+nagdugo gid bilat ko gid,vaginal bleeding,gynecologic_symptom,Severe,urgent,active
+nagdugo gid bilat ko gid ko,vaginal bleeding,gynecologic_symptom,Severe,urgent,active
+nagdugo gid bilat ko ko,vaginal bleeding,gynecologic_symptom,Severe,urgent,active
+nagdugo gid bilat ko ko gid,vaginal bleeding,gynecologic_symptom,Severe,urgent,active
 nagdugo gid ilong ko,nosebleed,Bleeding,Medium,urgent,active
 nagdugo gid kamot ko,hand bleeding,Bleeding,Medium,urgent,active
 nagdugo gid pilas ko,bleeding wound,Bleeding,High,emergency,active
@@ -1520,6 +2100,8 @@ nakuryente ko sang kuryente,electrical injury,Trauma,Critical,emergency,active
 nakuryente ku,electrical injury,Trauma,Critical,emergency,active
 nakuryente ku sang kuryente,electrical injury,Trauma,Critical,emergency,active
 nalumos ko,drowning,Emergency,Critical,emergency,active
+nana ari,penile infection,infection,High,urgent,active
+nana bilat,vaginal infection,infection,High,urgent,active
 nasunog akon balat,skin burn,Burn,Medium,urgent,active
 nasunog akon batiis,leg burn,Burn,Medium,urgent,active
 nasunog akon buuk,arm burn,Burn,Medium,urgent,active
@@ -1593,6 +2175,15 @@ nautod ang tiil ko,amputated foot,Trauma,Critical,emergency,active
 nautod ang tiil ku,amputated foot,Trauma,Critical,emergency,active
 nautod ang tudlo ko,amputated finger,Trauma,Critical,emergency,active
 nautod ang tudlo ku,amputated finger,Trauma,Critical,emergency,active
+nautod ari ko,penile amputation,trauma,Critical,emergency,active
+nautod ari ko,penis amputation,trauma,Critical,emergency,active
+nautod ari ko ko,penis amputation,trauma,Critical,emergency,active
+nautod ary ko,penis amputation,trauma,Critical,emergency,active
+nautod ary ko ko,penis amputation,trauma,Critical,emergency,active
+nautod bilad ko,vagina amputation,trauma,Critical,emergency,active
+nautod bilad ko ko,vagina amputation,trauma,Critical,emergency,active
+nautod bilat ko,vagina amputation,trauma,Critical,emergency,active
+nautod bilat ko ko,vagina amputation,trauma,Critical,emergency,active
 nautod buuk ko,amputated arm,Trauma,Critical,emergency,active
 nautod buuk ku,amputated arm,Trauma,Critical,emergency,active
 nautod gid acun buuk,amputated arm,Trauma,Critical,emergency,active
@@ -1619,6 +2210,10 @@ nautod gid tiil ko,amputated foot,Trauma,Critical,emergency,active
 nautod gid tiil ku,amputated foot,Trauma,Critical,emergency,active
 nautod gid tudlo ko,amputated finger,Trauma,Critical,emergency,active
 nautod gid tudlo ku,amputated finger,Trauma,Critical,emergency,active
+nautod itlog ko,testicle amputation,trauma,Critical,emergency,active
+nautod itlog ko ko,testicle amputation,trauma,Critical,emergency,active
+nautod itlug ko,testicle amputation,trauma,Critical,emergency,active
+nautod itlug ko ko,testicle amputation,trauma,Critical,emergency,active
 nautod kamot ko,amputated hand,Trauma,Critical,emergency,active
 nautod kamot ku,amputated hand,Trauma,Critical,emergency,active
 nautod ko ang acun buuk,amputated arm,Trauma,Critical,emergency,active
@@ -1710,6 +2305,7 @@ nautod tudlo ko,amputated finger,Trauma,Critical,emergency,active
 nautod tudlo ko sang makina,amputated finger,Trauma,Critical,emergency,active
 nautod tudlo ku,amputated finger,Trauma,Critical,emergency,active
 nautod tudlo ku sang makina,amputated finger,Trauma,Critical,emergency,active
+parotitis,mumps,Infectious,Medium,urgent,active
 perme budlay magginhawa ko,difficulty breathing,Respiratory,Critical,emergency,active
 perme gasakit dughan ko,chest pain,Cardiovascular,High,emergency,active
 perme ginkagat sang ido ko,dog bite,Bite,Critical,emergency,active
@@ -1722,6 +2318,7 @@ perme nga ginkagat sang ido ko,dog bite,Bite,Critical,emergency,active
 perme nga may nana akon mata,eye infection,Infection,High,urgent,active
 perme nga nabali kamot ko,hand fracture,Fracture,High,emergency,active
 perme nga nagdugo ulo ko,head bleeding,Bleeding,Critical,emergency,active
+pneumonia,pneumonia,Respiratory,Critical,emergency,active
 posible budlay magginhawa ko,difficulty breathing,Respiratory,Critical,emergency,active
 posible gasakit dughan ko,chest pain,Cardiovascular,High,emergency,active
 posible ginkagat sang ido ko,dog bite,Bite,Critical,emergency,active
@@ -1734,12 +2331,25 @@ posible nga ginkagat sang ido ko,dog bite,Bite,Critical,emergency,active
 posible nga may nana akon mata,eye infection,Infection,High,urgent,active
 posible nga nabali kamot ko,hand fracture,Fracture,High,emergency,active
 posible nga nagdugo ulo ko,head bleeding,Bleeding,Critical,emergency,active
+pulmonya,pneumonia,Respiratory,Critical,emergency,active
+rayuma,arthritis,Musculoskeletal,Medium,urgent,active
+rheumatism,arthritis,Musculoskeletal,Medium,urgent,active
+sakit bato,kidney disease,Urinary,High,urgent,active
 sakit dughan ko kag dula ginhawa ko,chest pain with shortness of breath,Cardiovascular,Critical,emergency,active
 sakit dughan ko kag gahika ko,chest pain with cough,Cardiovascular,Critical,emergency,active
 sakit dughan ko upod sang dula ginhawa ko,chest pain with shortness of breath,Cardiovascular,Critical,emergency,active
 sakit dughan ko upod sang gahika ko,chest pain with cough,Cardiovascular,Critical,emergency,active
+sakit puso,heart disease,Cardiovascular,High,urgent,active
+sakit sa kidney,kidney disease,Urinary,High,urgent,active
+sakit sa sikmura ulcer,peptic ulcer,Digestive,Medium,urgent,active
+sakit sa tagipusuon,heart disease,Cardiovascular,High,urgent,active
 semana na may nana akon mata,eye infection,Infection,High,urgent,active
 semana na may pilas ko sa kamot,hand wound,Wound,Medium,urgent,active
+sip-on,common cold,Respiratory,Mild,non_urgent,active
+sipon,common cold,Respiratory,Mild,non_urgent,active
+skin infection,skin infection,Infection,Medium,urgent,active
+stroke,stroke,Neurological,Critical,emergency,active
+subong gadugo bilat ko,vaginal bleeding,gynecologic_symptom,High,urgent,active
 subong gahubag kamot ko kag nagdugo kamot ko,hand swelling with bleeding,Trauma,High,emergency,active
 subong gahubag lawas ko kag gakatol lawas ko,body swelling with itching,Allergy,High,emergency,active
 subong gahubag tungod ko kag ginahilanat ko,throat swelling with fever,ENT,High,emergency,active
@@ -1780,6 +2390,7 @@ subong may nana akon mata subong gid ko,eye infection,Infection,High,urgent,acti
 subong may nana akon mata subong ko gid,eye infection,Infection,High,urgent,active
 subong may nana akon mata subong man,eye infection,Infection,High,urgent,active
 subong may nana akon mata subong na gid,eye infection,Infection,High,urgent,active
+subong may nana sa bilat ko,vaginal infection,infection,High,urgent,active
 subong may pilas ko sa kamot kag nag dugo gid,bleeding hand wound,Wound,High,emergency,active
 subong may pilas ko sa kamot kag nag dugo gid ko,bleeding hand wound,Wound,High,emergency,active
 subong may pilas ko sa kamot kag nag dugo ko gid,bleeding hand wound,Wound,High,emergency,active
@@ -1869,6 +2480,20 @@ subong nautod tudlo ku sang makina man,amputated finger,Trauma,Critical,emergenc
 subong nautod tudlo ku sang makina na gid,amputated finger,Trauma,Critical,emergency,active
 subong sakit dughan ko kag dula ginhawa ko,chest pain with shortness of breath,Cardiovascular,Critical,emergency,active
 subong sakit dughan ko kag gahika ko,chest pain with cough,Cardiovascular,Critical,emergency,active
+t.b.,tuberculosis,Infectious,High,urgent,active
+taas blood pressure,hypertension,Cardiovascular,High,urgent,active
+taas bp,hypertension,Cardiovascular,High,urgent,active
+tb,tuberculosis,Infectious,High,urgent,active
+tigdas,measles,Infectious,High,urgent,active
+tisis,tuberculosis,Infectious,High,urgent,active
+trangkaso,influenza,Infectious,Medium,urgent,active
+trangkaso ko,influenza,Infectious,Medium,urgent,active
+tuberculosis,tuberculosis,Infectious,High,urgent,active
+ubo,cough,Respiratory,Mild,non_urgent,active
+ulcer,peptic ulcer,Digestive,Medium,urgent,active
+ulser,peptic ulcer,Digestive,Medium,urgent,active
+uti,urinary tract infection,Urinary,Medium,urgent,active
+varicella,chickenpox,Infectious,Medium,urgent,active
 wala ko kasugtan gin kagat sang ido ko kag nagdugo gid,dog bite with bleeding,Bite,Critical,emergency,active
 wala ko kasugtan gin kagat sang ido ko kag nagdugo gid ko,dog bite with bleeding,Bite,Critical,emergency,active
 wala ko kasugtan gin kagat sang ido ko kag nagdugo ko gid,dog bite with bleeding,Bite,Critical,emergency,active
@@ -1990,529 +2615,3 @@ wala ku kasugtan nautod tudlo ko sang makina gid ko,amputated finger,Trauma,Crit
 wala ku kasugtan nautod tudlo ko sang makina ko gid,amputated finger,Trauma,Critical,emergency,active
 wala ku kasugtan nautod tudlo ko sang makina man,amputated finger,Trauma,Critical,emergency,active
 wala ku kasugtan nautod tudlo ko sang makina na gid,amputated finger,Trauma,Critical,emergency,active
-basin gadugo bilat ko,vaginal bleeding,gynecologic_symptom,High,urgent,active
-basin may nana sa bilat ko,vaginal infection,infection,High,urgent,active
-daw gadugo bilat ko,vaginal bleeding,gynecologic_symptom,High,urgent,active
-daw may nana sa bilat ko,vaginal infection,infection,High,urgent,active
-doc gadugo bilat ko,vaginal bleeding,gynecologic_symptom,High,urgent,active
-doc may nana sa bilat ko,vaginal infection,infection,High,urgent,active
-dugo bilat,vaginal bleeding,gynecologic_symptom,High,urgent,active
-dugo gid indi mapunggan sa ari ko,severe penis bleeding,male_reproductive_symptom,Critical,emergency,active
-dugo gid indi mapunggan sa ari ko ko,severe penis bleeding,male_reproductive_symptom,Critical,emergency,active
-dugo gid indi mapunggan sa ary ko,severe penis bleeding,male_reproductive_symptom,Critical,emergency,active
-dugo gid indi mapunggan sa ary ko ko,severe penis bleeding,male_reproductive_symptom,Critical,emergency,active
-dugo gid indi mapunggan sa bilad ko,severe vagina bleeding,gynecologic_symptom,Critical,emergency,active
-dugo gid indi mapunggan sa bilad ko ko,severe vagina bleeding,gynecologic_symptom,Critical,emergency,active
-dugo gid indi mapunggan sa bilat ko,severe vagina bleeding,gynecologic_symptom,Critical,emergency,active
-dugo gid indi mapunggan sa bilat ko ko,severe vagina bleeding,gynecologic_symptom,Critical,emergency,active
-dugo gid indi mapunggan sa itlog ko,severe testicle bleeding,male_reproductive_symptom,Critical,emergency,active
-dugo gid indi mapunggan sa itlog ko ko,severe testicle bleeding,male_reproductive_symptom,Critical,emergency,active
-dugo gid indi mapunggan sa itlug ko,severe testicle bleeding,male_reproductive_symptom,Critical,emergency,active
-dugo gid indi mapunggan sa itlug ko ko,severe testicle bleeding,male_reproductive_symptom,Critical,emergency,active
-dugo gid sa ari ko,severe penis bleeding,male_reproductive_symptom,Critical,emergency,active
-dugo gid sa ari ko ko,severe penis bleeding,male_reproductive_symptom,Critical,emergency,active
-dugo gid sa ary ko,severe penis bleeding,male_reproductive_symptom,Critical,emergency,active
-dugo gid sa ary ko ko,severe penis bleeding,male_reproductive_symptom,Critical,emergency,active
-dugo gid sa bilad ko,severe vagina bleeding,gynecologic_symptom,Critical,emergency,active
-dugo gid sa bilad ko ko,severe vagina bleeding,gynecologic_symptom,Critical,emergency,active
-dugo gid sa bilat ko,severe vagina bleeding,gynecologic_symptom,Critical,emergency,active
-dugo gid sa bilat ko ko,severe vagina bleeding,gynecologic_symptom,Critical,emergency,active
-dugo gid sa itlog ko,severe testicle bleeding,male_reproductive_symptom,Critical,emergency,active
-dugo gid sa itlog ko ko,severe testicle bleeding,male_reproductive_symptom,Critical,emergency,active
-dugo gid sa itlug ko,severe testicle bleeding,male_reproductive_symptom,Critical,emergency,active
-dugo gid sa itlug ko ko,severe testicle bleeding,male_reproductive_symptom,Critical,emergency,active
-gadugo akon bilad,vaginal bleeding,gynecologic_symptom,Severe,urgent,active
-gadugo akon bilad ko,vaginal bleeding,gynecologic_symptom,Severe,urgent,active
-gadugo akon bilat,vaginal bleeding,gynecologic_symptom,Severe,urgent,active
-gadugo akon bilat ko,vaginal bleeding,gynecologic_symptom,Severe,urgent,active
-gadugo bilad ako,vaginal bleeding,gynecologic_symptom,Severe,urgent,active
-gadugo bilad akon,vaginal bleeding,gynecologic_symptom,Severe,urgent,active
-gadugo bilad akon gid,vaginal bleeding,gynecologic_symptom,Severe,urgent,active
-gadugo bilad akon subong,vaginal bleeding,gynecologic_symptom,Severe,urgent,active
-gadugo bilad gid ko,vaginal bleeding,gynecologic_symptom,Severe,urgent,active
-gadugo bilad ko,vaginal bleeding,gynecologic_symptom,Severe,urgent,active
-gadugo bilad ko ako,vaginal bleeding,gynecologic_symptom,Severe,urgent,active
-gadugo bilad ko akon,vaginal bleeding,gynecologic_symptom,Severe,urgent,active
-gadugo bilad ko akon gid,vaginal bleeding,gynecologic_symptom,Severe,urgent,active
-gadugo bilad ko akon subong,vaginal bleeding,gynecologic_symptom,Severe,urgent,active
-gadugo bilad ko gid,vaginal bleeding,gynecologic_symptom,Severe,urgent,active
-gadugo bilad ko gid ko,vaginal bleeding,gynecologic_symptom,Severe,urgent,active
-gadugo bilad ko ko,vaginal bleeding,gynecologic_symptom,Severe,urgent,active
-gadugo bilad ko ko gid,vaginal bleeding,gynecologic_symptom,Severe,urgent,active
-gadugo bilat ako,vaginal bleeding,gynecologic_symptom,Severe,urgent,active
-gadugo bilat akon,vaginal bleeding,gynecologic_symptom,Severe,urgent,active
-gadugo bilat akon gid,vaginal bleeding,gynecologic_symptom,Severe,urgent,active
-gadugo bilat akon subong,vaginal bleeding,gynecologic_symptom,Severe,urgent,active
-gadugo bilat gid ko,vaginal bleeding,gynecologic_symptom,Severe,urgent,active
-gadugo bilat ko,vaginal bleeding,gynecologic_symptom,Severe,urgent,active
-gadugo bilat ko ako,vaginal bleeding,gynecologic_symptom,Severe,urgent,active
-gadugo bilat ko akon,vaginal bleeding,gynecologic_symptom,Severe,urgent,active
-gadugo bilat ko akon gid,vaginal bleeding,gynecologic_symptom,Severe,urgent,active
-gadugo bilat ko akon subong,vaginal bleeding,gynecologic_symptom,Severe,urgent,active
-gadugo bilat ko gid,vaginal bleeding,gynecologic_symptom,Severe,urgent,active
-gadugo bilat ko gid ko,vaginal bleeding,gynecologic_symptom,Severe,urgent,active
-gadugo bilat ko ko,vaginal bleeding,gynecologic_symptom,Severe,urgent,active
-gadugo bilat ko ko gid,vaginal bleeding,gynecologic_symptom,Severe,urgent,active
-gadugo gid akon bilad,vaginal bleeding,gynecologic_symptom,Severe,urgent,active
-gadugo gid akon bilad ko,vaginal bleeding,gynecologic_symptom,Severe,urgent,active
-gadugo gid akon bilat,vaginal bleeding,gynecologic_symptom,Severe,urgent,active
-gadugo gid akon bilat ko,vaginal bleeding,gynecologic_symptom,Severe,urgent,active
-gadugo gid bilad ako,vaginal bleeding,gynecologic_symptom,Severe,urgent,active
-gadugo gid bilad akon,vaginal bleeding,gynecologic_symptom,Severe,urgent,active
-gadugo gid bilad akon gid,vaginal bleeding,gynecologic_symptom,Severe,urgent,active
-gadugo gid bilad akon subong,vaginal bleeding,gynecologic_symptom,Severe,urgent,active
-gadugo gid bilad gid ko,vaginal bleeding,gynecologic_symptom,Severe,urgent,active
-gadugo gid bilad ko,vaginal bleeding,gynecologic_symptom,Severe,urgent,active
-gadugo gid bilad ko ako,vaginal bleeding,gynecologic_symptom,Severe,urgent,active
-gadugo gid bilad ko akon,vaginal bleeding,gynecologic_symptom,Severe,urgent,active
-gadugo gid bilad ko akon gid,vaginal bleeding,gynecologic_symptom,Severe,urgent,active
-gadugo gid bilad ko akon subong,vaginal bleeding,gynecologic_symptom,Severe,urgent,active
-gadugo gid bilad ko gid,vaginal bleeding,gynecologic_symptom,Severe,urgent,active
-gadugo gid bilad ko gid ko,vaginal bleeding,gynecologic_symptom,Severe,urgent,active
-gadugo gid bilad ko ko,vaginal bleeding,gynecologic_symptom,Severe,urgent,active
-gadugo gid bilad ko ko gid,vaginal bleeding,gynecologic_symptom,Severe,urgent,active
-gadugo gid bilat ako,vaginal bleeding,gynecologic_symptom,Severe,urgent,active
-gadugo gid bilat akon,vaginal bleeding,gynecologic_symptom,Severe,urgent,active
-gadugo gid bilat akon gid,vaginal bleeding,gynecologic_symptom,Severe,urgent,active
-gadugo gid bilat akon subong,vaginal bleeding,gynecologic_symptom,Severe,urgent,active
-gadugo gid bilat gid ko,vaginal bleeding,gynecologic_symptom,Severe,urgent,active
-gadugo gid bilat ko,vaginal bleeding,gynecologic_symptom,Severe,urgent,active
-gadugo gid bilat ko ako,vaginal bleeding,gynecologic_symptom,Severe,urgent,active
-gadugo gid bilat ko akon,vaginal bleeding,gynecologic_symptom,Severe,urgent,active
-gadugo gid bilat ko akon gid,vaginal bleeding,gynecologic_symptom,Severe,urgent,active
-gadugo gid bilat ko akon subong,vaginal bleeding,gynecologic_symptom,Severe,urgent,active
-gadugo gid bilat ko gid,vaginal bleeding,gynecologic_symptom,Severe,urgent,active
-gadugo gid bilat ko gid ko,vaginal bleeding,gynecologic_symptom,Severe,urgent,active
-gadugo gid bilat ko ko,vaginal bleeding,gynecologic_symptom,Severe,urgent,active
-gadugo gid bilat ko ko gid,vaginal bleeding,gynecologic_symptom,Severe,urgent,active
-gakadugo akon bilad,vaginal bleeding,gynecologic_symptom,Severe,urgent,active
-gakadugo akon bilad ko,vaginal bleeding,gynecologic_symptom,Severe,urgent,active
-gakadugo akon bilat,vaginal bleeding,gynecologic_symptom,Severe,urgent,active
-gakadugo akon bilat ko,vaginal bleeding,gynecologic_symptom,Severe,urgent,active
-gakadugo bilad ako,vaginal bleeding,gynecologic_symptom,Severe,urgent,active
-gakadugo bilad akon,vaginal bleeding,gynecologic_symptom,Severe,urgent,active
-gakadugo bilad akon gid,vaginal bleeding,gynecologic_symptom,Severe,urgent,active
-gakadugo bilad akon subong,vaginal bleeding,gynecologic_symptom,Severe,urgent,active
-gakadugo bilad gid ko,vaginal bleeding,gynecologic_symptom,Severe,urgent,active
-gakadugo bilad ko,vaginal bleeding,gynecologic_symptom,Severe,urgent,active
-gakadugo bilad ko ako,vaginal bleeding,gynecologic_symptom,Severe,urgent,active
-gakadugo bilad ko akon,vaginal bleeding,gynecologic_symptom,Severe,urgent,active
-gakadugo bilad ko akon gid,vaginal bleeding,gynecologic_symptom,Severe,urgent,active
-gakadugo bilad ko akon subong,vaginal bleeding,gynecologic_symptom,Severe,urgent,active
-gakadugo bilad ko gid,vaginal bleeding,gynecologic_symptom,Severe,urgent,active
-gakadugo bilad ko gid ko,vaginal bleeding,gynecologic_symptom,Severe,urgent,active
-gakadugo bilad ko ko,vaginal bleeding,gynecologic_symptom,Severe,urgent,active
-gakadugo bilad ko ko gid,vaginal bleeding,gynecologic_symptom,Severe,urgent,active
-gakadugo bilat ako,vaginal bleeding,gynecologic_symptom,Severe,urgent,active
-gakadugo bilat akon,vaginal bleeding,gynecologic_symptom,Severe,urgent,active
-gakadugo bilat akon gid,vaginal bleeding,gynecologic_symptom,Severe,urgent,active
-gakadugo bilat akon subong,vaginal bleeding,gynecologic_symptom,Severe,urgent,active
-gakadugo bilat gid ko,vaginal bleeding,gynecologic_symptom,Severe,urgent,active
-gakadugo bilat ko,vaginal bleeding,gynecologic_symptom,Severe,urgent,active
-gakadugo bilat ko ako,vaginal bleeding,gynecologic_symptom,Severe,urgent,active
-gakadugo bilat ko akon,vaginal bleeding,gynecologic_symptom,Severe,urgent,active
-gakadugo bilat ko akon gid,vaginal bleeding,gynecologic_symptom,Severe,urgent,active
-gakadugo bilat ko akon subong,vaginal bleeding,gynecologic_symptom,Severe,urgent,active
-gakadugo bilat ko gid,vaginal bleeding,gynecologic_symptom,Severe,urgent,active
-gakadugo bilat ko gid ko,vaginal bleeding,gynecologic_symptom,Severe,urgent,active
-gakadugo bilat ko ko,vaginal bleeding,gynecologic_symptom,Severe,urgent,active
-gakadugo bilat ko ko gid,vaginal bleeding,gynecologic_symptom,Severe,urgent,active
-ginpangayo ko doctor gadugo bilat ko,vaginal bleeding,gynecologic_symptom,High,urgent,active
-ginpangayo ko doctor may nana sa bilat ko,vaginal infection,infection,High,urgent,active
-grabe gid nagadugo ari ko,severe penis bleeding,male_reproductive_symptom,Critical,emergency,active
-grabe gid nagadugo ari ko ko,severe penis bleeding,male_reproductive_symptom,Critical,emergency,active
-grabe gid nagadugo ary ko,severe penis bleeding,male_reproductive_symptom,Critical,emergency,active
-grabe gid nagadugo ary ko ko,severe penis bleeding,male_reproductive_symptom,Critical,emergency,active
-grabe gid nagadugo bilad ko,severe vagina bleeding,gynecologic_symptom,Critical,emergency,active
-grabe gid nagadugo bilad ko ko,severe vagina bleeding,gynecologic_symptom,Critical,emergency,active
-grabe gid nagadugo bilat ko,severe vaginal bleeding,gynecologic_symptom,Critical,emergency,active
-grabe gid nagadugo bilat ko,severe vagina bleeding,gynecologic_symptom,Critical,emergency,active
-grabe gid nagadugo bilat ko ko,severe vagina bleeding,gynecologic_symptom,Critical,emergency,active
-grabe gid nagadugo itlog ko,severe testicle bleeding,male_reproductive_symptom,Critical,emergency,active
-grabe gid nagadugo itlog ko ko,severe testicle bleeding,male_reproductive_symptom,Critical,emergency,active
-grabe gid nagadugo itlug ko,severe testicle bleeding,male_reproductive_symptom,Critical,emergency,active
-grabe gid nagadugo itlug ko ko,severe testicle bleeding,male_reproductive_symptom,Critical,emergency,active
-grabe gid nagdugo ari ko,severe penis bleeding,male_reproductive_symptom,Critical,emergency,active
-grabe gid nagdugo ari ko ko,severe penis bleeding,male_reproductive_symptom,Critical,emergency,active
-grabe gid nagdugo ary ko,severe penis bleeding,male_reproductive_symptom,Critical,emergency,active
-grabe gid nagdugo ary ko ko,severe penis bleeding,male_reproductive_symptom,Critical,emergency,active
-grabe gid nagdugo bilad ko,severe vagina bleeding,gynecologic_symptom,Critical,emergency,active
-grabe gid nagdugo bilad ko ko,severe vagina bleeding,gynecologic_symptom,Critical,emergency,active
-grabe gid nagdugo bilat ko,severe vagina bleeding,gynecologic_symptom,Critical,emergency,active
-grabe gid nagdugo bilat ko ko,severe vagina bleeding,gynecologic_symptom,Critical,emergency,active
-grabe gid nagdugo itlog ko,severe testicle bleeding,male_reproductive_symptom,Critical,emergency,active
-grabe gid nagdugo itlog ko ko,severe testicle bleeding,male_reproductive_symptom,Critical,emergency,active
-grabe gid nagdugo itlug ko,severe testicle bleeding,male_reproductive_symptom,Critical,emergency,active
-grabe gid nagdugo itlug ko ko,severe testicle bleeding,male_reproductive_symptom,Critical,emergency,active
-help gadugo bilat ko,vaginal bleeding,gynecologic_symptom,High,urgent,active
-help may nana sa bilat ko,vaginal infection,infection,High,urgent,active
-indi mapunggan ang dugo sa ari ko,severe penis bleeding,male_reproductive_symptom,Critical,emergency,active
-indi mapunggan ang dugo sa ari ko ko,severe penis bleeding,male_reproductive_symptom,Critical,emergency,active
-indi mapunggan ang dugo sa ary ko,severe penis bleeding,male_reproductive_symptom,Critical,emergency,active
-indi mapunggan ang dugo sa ary ko ko,severe penis bleeding,male_reproductive_symptom,Critical,emergency,active
-indi mapunggan ang dugo sa bilad ko,severe vagina bleeding,gynecologic_symptom,Critical,emergency,active
-indi mapunggan ang dugo sa bilad ko ko,severe vagina bleeding,gynecologic_symptom,Critical,emergency,active
-indi mapunggan ang dugo sa bilat ko,severe vagina bleeding,gynecologic_symptom,Critical,emergency,active
-indi mapunggan ang dugo sa bilat ko ko,severe vagina bleeding,gynecologic_symptom,Critical,emergency,active
-indi mapunggan ang dugo sa itlog ko,severe testicle bleeding,male_reproductive_symptom,Critical,emergency,active
-indi mapunggan ang dugo sa itlog ko ko,severe testicle bleeding,male_reproductive_symptom,Critical,emergency,active
-indi mapunggan ang dugo sa itlug ko,severe testicle bleeding,male_reproductive_symptom,Critical,emergency,active
-indi mapunggan ang dugo sa itlug ko ko,severe testicle bleeding,male_reproductive_symptom,Critical,emergency,active
-karon gadugo bilat ko,vaginal bleeding,gynecologic_symptom,High,urgent,active
-karon may nana sa bilat ko,vaginal infection,infection,High,urgent,active
-masakit pag-ihi ko kag may nana sa bilat ko,urinary tract infection,infection,High,urgent,active
-may nana akon ari,penile infection,infection,Severe,urgent,active
-may nana akon ari ko,penile infection,infection,Severe,urgent,active
-may nana akon ary,penile infection,infection,Severe,urgent,active
-may nana akon ary ko,penile infection,infection,Severe,urgent,active
-may nana akon bilad,vaginal infection,infection,Severe,urgent,active
-may nana akon bilad ko,vaginal infection,infection,Severe,urgent,active
-may nana akon bilat,vaginal infection,infection,Severe,urgent,active
-may nana akon bilat ko,vaginal infection,infection,Severe,urgent,active
-may nana akon itlog,testicular infection,infection,Severe,urgent,active
-may nana akon itlog ko,testicular infection,infection,Severe,urgent,active
-may nana akon itlug,testicular infection,infection,Severe,urgent,active
-may nana akon itlug ko,testicular infection,infection,Severe,urgent,active
-may nana ari akon,penile infection,infection,Severe,urgent,active
-may nana ari ko,penile infection,infection,Severe,urgent,active
-may nana ari ko akon,penile infection,infection,Severe,urgent,active
-may nana ari ko ko,penile infection,infection,Severe,urgent,active
-may nana ary akon,penile infection,infection,Severe,urgent,active
-may nana ary ko,penile infection,infection,Severe,urgent,active
-may nana ary ko akon,penile infection,infection,Severe,urgent,active
-may nana ary ko ko,penile infection,infection,Severe,urgent,active
-may nana bilad akon,vaginal infection,infection,Severe,urgent,active
-may nana bilad ko,vaginal infection,infection,Severe,urgent,active
-may nana bilad ko akon,vaginal infection,infection,Severe,urgent,active
-may nana bilad ko ko,vaginal infection,infection,Severe,urgent,active
-may nana bilat akon,vaginal infection,infection,Severe,urgent,active
-may nana bilat ko,vaginal infection,infection,Severe,urgent,active
-may nana bilat ko akon,vaginal infection,infection,Severe,urgent,active
-may nana bilat ko ko,vaginal infection,infection,Severe,urgent,active
-may nana itlog akon,testicular infection,infection,Severe,urgent,active
-may nana itlog ko,testicular infection,infection,Severe,urgent,active
-may nana itlog ko akon,testicular infection,infection,Severe,urgent,active
-may nana itlog ko ko,testicular infection,infection,Severe,urgent,active
-may nana itlug akon,testicular infection,infection,Severe,urgent,active
-may nana itlug ko,testicular infection,infection,Severe,urgent,active
-may nana itlug ko akon,testicular infection,infection,Severe,urgent,active
-may nana itlug ko ko,testicular infection,infection,Severe,urgent,active
-may nana ko sa akon ari,penile infection,infection,Severe,urgent,active
-may nana ko sa akon ari ko,penile infection,infection,Severe,urgent,active
-may nana ko sa akon ary,penile infection,infection,Severe,urgent,active
-may nana ko sa akon ary ko,penile infection,infection,Severe,urgent,active
-may nana ko sa akon bilad,vaginal infection,infection,Severe,urgent,active
-may nana ko sa akon bilad ko,vaginal infection,infection,Severe,urgent,active
-may nana ko sa akon bilat,vaginal infection,infection,Severe,urgent,active
-may nana ko sa akon bilat ko,vaginal infection,infection,Severe,urgent,active
-may nana ko sa akon itlog,testicular infection,infection,Severe,urgent,active
-may nana ko sa akon itlog ko,testicular infection,infection,Severe,urgent,active
-may nana ko sa akon itlug,testicular infection,infection,Severe,urgent,active
-may nana ko sa akon itlug ko,testicular infection,infection,Severe,urgent,active
-may nana ko sa ari akon,penile infection,infection,Severe,urgent,active
-may nana ko sa ari ko,penile infection,infection,Severe,urgent,active
-may nana ko sa ari ko akon,penile infection,infection,Severe,urgent,active
-may nana ko sa ari ko ko,penile infection,infection,Severe,urgent,active
-may nana ko sa ary akon,penile infection,infection,Severe,urgent,active
-may nana ko sa ary ko,penile infection,infection,Severe,urgent,active
-may nana ko sa ary ko akon,penile infection,infection,Severe,urgent,active
-may nana ko sa ary ko ko,penile infection,infection,Severe,urgent,active
-may nana ko sa bilad akon,vaginal infection,infection,Severe,urgent,active
-may nana ko sa bilad ko,vaginal infection,infection,Severe,urgent,active
-may nana ko sa bilad ko akon,vaginal infection,infection,Severe,urgent,active
-may nana ko sa bilad ko ko,vaginal infection,infection,Severe,urgent,active
-may nana ko sa bilat akon,vaginal infection,infection,Severe,urgent,active
-may nana ko sa bilat ko,vaginal infection,infection,Severe,urgent,active
-may nana ko sa bilat ko akon,vaginal infection,infection,Severe,urgent,active
-may nana ko sa bilat ko ko,vaginal infection,infection,Severe,urgent,active
-may nana ko sa itlog akon,testicular infection,infection,Severe,urgent,active
-may nana ko sa itlog ko,testicular infection,infection,Severe,urgent,active
-may nana ko sa itlog ko akon,testicular infection,infection,Severe,urgent,active
-may nana ko sa itlog ko ko,testicular infection,infection,Severe,urgent,active
-may nana ko sa itlug akon,testicular infection,infection,Severe,urgent,active
-may nana ko sa itlug ko,testicular infection,infection,Severe,urgent,active
-may nana ko sa itlug ko akon,testicular infection,infection,Severe,urgent,active
-may nana ko sa itlug ko ko,testicular infection,infection,Severe,urgent,active
-may nana sa akon akon ari,penile infection,infection,Severe,urgent,active
-may nana sa akon akon ari ko,penile infection,infection,Severe,urgent,active
-may nana sa akon akon ary,penile infection,infection,Severe,urgent,active
-may nana sa akon akon ary ko,penile infection,infection,Severe,urgent,active
-may nana sa akon akon bilad,vaginal infection,infection,Severe,urgent,active
-may nana sa akon akon bilad ko,vaginal infection,infection,Severe,urgent,active
-may nana sa akon akon bilat,vaginal infection,infection,Severe,urgent,active
-may nana sa akon akon bilat ko,vaginal infection,infection,Severe,urgent,active
-may nana sa akon akon itlog,testicular infection,infection,Severe,urgent,active
-may nana sa akon akon itlog ko,testicular infection,infection,Severe,urgent,active
-may nana sa akon akon itlug,testicular infection,infection,Severe,urgent,active
-may nana sa akon akon itlug ko,testicular infection,infection,Severe,urgent,active
-may nana sa akon ari,penile infection,infection,Severe,urgent,active
-may nana sa akon ari akon,penile infection,infection,Severe,urgent,active
-may nana sa akon ari ko,penile infection,infection,Severe,urgent,active
-may nana sa akon ari ko akon,penile infection,infection,Severe,urgent,active
-may nana sa akon ari ko ko,penile infection,infection,Severe,urgent,active
-may nana sa akon ary,penile infection,infection,Severe,urgent,active
-may nana sa akon ary akon,penile infection,infection,Severe,urgent,active
-may nana sa akon ary ko,penile infection,infection,Severe,urgent,active
-may nana sa akon ary ko akon,penile infection,infection,Severe,urgent,active
-may nana sa akon ary ko ko,penile infection,infection,Severe,urgent,active
-may nana sa akon bilad,vaginal infection,infection,Severe,urgent,active
-may nana sa akon bilad akon,vaginal infection,infection,Severe,urgent,active
-may nana sa akon bilad ko,vaginal infection,infection,Severe,urgent,active
-may nana sa akon bilad ko akon,vaginal infection,infection,Severe,urgent,active
-may nana sa akon bilad ko ko,vaginal infection,infection,Severe,urgent,active
-may nana sa akon bilat,vaginal infection,infection,Severe,urgent,active
-may nana sa akon bilat akon,vaginal infection,infection,Severe,urgent,active
-may nana sa akon bilat ko,vaginal infection,infection,Severe,urgent,active
-may nana sa akon bilat ko akon,vaginal infection,infection,Severe,urgent,active
-may nana sa akon bilat ko ko,vaginal infection,infection,Severe,urgent,active
-may nana sa akon itlog,testicular infection,infection,Severe,urgent,active
-may nana sa akon itlog akon,testicular infection,infection,Severe,urgent,active
-may nana sa akon itlog ko,testicular infection,infection,Severe,urgent,active
-may nana sa akon itlog ko akon,testicular infection,infection,Severe,urgent,active
-may nana sa akon itlog ko ko,testicular infection,infection,Severe,urgent,active
-may nana sa akon itlug,testicular infection,infection,Severe,urgent,active
-may nana sa akon itlug akon,testicular infection,infection,Severe,urgent,active
-may nana sa akon itlug ko,testicular infection,infection,Severe,urgent,active
-may nana sa akon itlug ko akon,testicular infection,infection,Severe,urgent,active
-may nana sa akon itlug ko ko,testicular infection,infection,Severe,urgent,active
-may nana sa ari akon,penile infection,infection,Severe,urgent,active
-may nana sa ari ko,penile infection,infection,Severe,urgent,active
-may nana sa ari ko akon,penile infection,infection,Severe,urgent,active
-may nana sa ari ko ko,penile infection,infection,Severe,urgent,active
-may nana sa ary akon,penile infection,infection,Severe,urgent,active
-may nana sa ary ko,penile infection,infection,Severe,urgent,active
-may nana sa ary ko akon,penile infection,infection,Severe,urgent,active
-may nana sa ary ko ko,penile infection,infection,Severe,urgent,active
-may nana sa bilad akon,vaginal infection,infection,Severe,urgent,active
-may nana sa bilad ko,vaginal infection,infection,Severe,urgent,active
-may nana sa bilad ko akon,vaginal infection,infection,Severe,urgent,active
-may nana sa bilad ko ko,vaginal infection,infection,Severe,urgent,active
-may nana sa bilat akon,vaginal infection,infection,Severe,urgent,active
-may nana sa bilat ko,vaginal infection,infection,Severe,urgent,active
-may nana sa bilat ko akon,vaginal infection,infection,Severe,urgent,active
-may nana sa bilat ko ko,vaginal infection,infection,Severe,urgent,active
-may nana sa ihi ko,urinary infection,infection,High,urgent,active
-may nana sa itlog akon,testicular infection,infection,Severe,urgent,active
-may nana sa itlog ko,testicular infection,infection,Severe,urgent,active
-may nana sa itlog ko akon,testicular infection,infection,Severe,urgent,active
-may nana sa itlog ko ko,testicular infection,infection,Severe,urgent,active
-may nana sa itlug akon,testicular infection,infection,Severe,urgent,active
-may nana sa itlug ko,testicular infection,infection,Severe,urgent,active
-may nana sa itlug ko akon,testicular infection,infection,Severe,urgent,active
-may nana sa itlug ko ko,testicular infection,infection,Severe,urgent,active
-may pilas ko sa akon ari,penile wound,injury,Moderate,urgent,active
-may pilas ko sa akon ari ko,penile wound,injury,Moderate,urgent,active
-may pilas ko sa akon ary,penile wound,injury,Moderate,urgent,active
-may pilas ko sa akon ary ko,penile wound,injury,Moderate,urgent,active
-may pilas ko sa akon bilad,vaginal wound,injury,Moderate,urgent,active
-may pilas ko sa akon bilad ko,vaginal wound,injury,Moderate,urgent,active
-may pilas ko sa akon bilat,vaginal wound,injury,Moderate,urgent,active
-may pilas ko sa akon bilat ko,vaginal wound,injury,Moderate,urgent,active
-may pilas ko sa akon itlog,testicular wound,injury,Moderate,urgent,active
-may pilas ko sa akon itlog ko,testicular wound,injury,Moderate,urgent,active
-may pilas ko sa akon itlug,testicular wound,injury,Moderate,urgent,active
-may pilas ko sa akon itlug ko,testicular wound,injury,Moderate,urgent,active
-may pilas ko sa ari,penile wound,injury,Moderate,urgent,active
-may pilas ko sa ari akon,penile wound,injury,Moderate,urgent,active
-may pilas ko sa ari ko,penile wound,injury,Moderate,urgent,active
-may pilas ko sa ari ko akon,penile wound,injury,Moderate,urgent,active
-may pilas ko sa ari ko ko,penile wound,injury,Moderate,urgent,active
-may pilas ko sa ary akon,penile wound,injury,Moderate,urgent,active
-may pilas ko sa ary ko,penile wound,injury,Moderate,urgent,active
-may pilas ko sa ary ko akon,penile wound,injury,Moderate,urgent,active
-may pilas ko sa ary ko ko,penile wound,injury,Moderate,urgent,active
-may pilas ko sa bilad akon,vaginal wound,injury,Moderate,urgent,active
-may pilas ko sa bilad ko,vaginal wound,injury,Moderate,urgent,active
-may pilas ko sa bilad ko akon,vaginal wound,injury,Moderate,urgent,active
-may pilas ko sa bilad ko ko,vaginal wound,injury,Moderate,urgent,active
-may pilas ko sa bilat akon,vaginal wound,injury,Moderate,urgent,active
-may pilas ko sa bilat ko,vaginal wound,injury,Moderate,urgent,active
-may pilas ko sa bilat ko akon,vaginal wound,injury,Moderate,urgent,active
-may pilas ko sa bilat ko ko,vaginal wound,injury,Moderate,urgent,active
-may pilas ko sa itlog akon,testicular wound,injury,Moderate,urgent,active
-may pilas ko sa itlog ko,testicular wound,injury,Moderate,urgent,active
-may pilas ko sa itlog ko akon,testicular wound,injury,Moderate,urgent,active
-may pilas ko sa itlog ko ko,testicular wound,injury,Moderate,urgent,active
-may pilas ko sa itlug akon,testicular wound,injury,Moderate,urgent,active
-may pilas ko sa itlug ko,testicular wound,injury,Moderate,urgent,active
-may pilas ko sa itlug ko akon,testicular wound,injury,Moderate,urgent,active
-may pilas ko sa itlug ko ko,testicular wound,injury,Moderate,urgent,active
-may pilas sa akon akon ari,penile wound,injury,Moderate,urgent,active
-may pilas sa akon akon ari ko,penile wound,injury,Moderate,urgent,active
-may pilas sa akon akon ary,penile wound,injury,Moderate,urgent,active
-may pilas sa akon akon ary ko,penile wound,injury,Moderate,urgent,active
-may pilas sa akon akon bilad,vaginal wound,injury,Moderate,urgent,active
-may pilas sa akon akon bilad ko,vaginal wound,injury,Moderate,urgent,active
-may pilas sa akon akon bilat,vaginal wound,injury,Moderate,urgent,active
-may pilas sa akon akon bilat ko,vaginal wound,injury,Moderate,urgent,active
-may pilas sa akon akon itlog,testicular wound,injury,Moderate,urgent,active
-may pilas sa akon akon itlog ko,testicular wound,injury,Moderate,urgent,active
-may pilas sa akon akon itlug,testicular wound,injury,Moderate,urgent,active
-may pilas sa akon akon itlug ko,testicular wound,injury,Moderate,urgent,active
-may pilas sa akon ari,penile wound,injury,Moderate,urgent,active
-may pilas sa akon ari akon,penile wound,injury,Moderate,urgent,active
-may pilas sa akon ari ko,penile wound,injury,Moderate,urgent,active
-may pilas sa akon ari ko akon,penile wound,injury,Moderate,urgent,active
-may pilas sa akon ari ko ko,penile wound,injury,Moderate,urgent,active
-may pilas sa akon ary,penile wound,injury,Moderate,urgent,active
-may pilas sa akon ary akon,penile wound,injury,Moderate,urgent,active
-may pilas sa akon ary ko,penile wound,injury,Moderate,urgent,active
-may pilas sa akon ary ko akon,penile wound,injury,Moderate,urgent,active
-may pilas sa akon ary ko ko,penile wound,injury,Moderate,urgent,active
-may pilas sa akon bilad,vaginal wound,injury,Moderate,urgent,active
-may pilas sa akon bilad akon,vaginal wound,injury,Moderate,urgent,active
-may pilas sa akon bilad ko,vaginal wound,injury,Moderate,urgent,active
-may pilas sa akon bilad ko akon,vaginal wound,injury,Moderate,urgent,active
-may pilas sa akon bilad ko ko,vaginal wound,injury,Moderate,urgent,active
-may pilas sa akon bilat,vaginal wound,injury,Moderate,urgent,active
-may pilas sa akon bilat akon,vaginal wound,injury,Moderate,urgent,active
-may pilas sa akon bilat ko,vaginal wound,injury,Moderate,urgent,active
-may pilas sa akon bilat ko akon,vaginal wound,injury,Moderate,urgent,active
-may pilas sa akon bilat ko ko,vaginal wound,injury,Moderate,urgent,active
-may pilas sa akon itlog,testicular wound,injury,Moderate,urgent,active
-may pilas sa akon itlog akon,testicular wound,injury,Moderate,urgent,active
-may pilas sa akon itlog ko,testicular wound,injury,Moderate,urgent,active
-may pilas sa akon itlog ko akon,testicular wound,injury,Moderate,urgent,active
-may pilas sa akon itlog ko ko,testicular wound,injury,Moderate,urgent,active
-may pilas sa akon itlug,testicular wound,injury,Moderate,urgent,active
-may pilas sa akon itlug akon,testicular wound,injury,Moderate,urgent,active
-may pilas sa akon itlug ko,testicular wound,injury,Moderate,urgent,active
-may pilas sa akon itlug ko akon,testicular wound,injury,Moderate,urgent,active
-may pilas sa akon itlug ko ko,testicular wound,injury,Moderate,urgent,active
-may pilas sa ari akon,penile wound,injury,Moderate,urgent,active
-may pilas sa ari ko,penile wound,injury,Moderate,urgent,active
-may pilas sa ari ko akon,penile wound,injury,Moderate,urgent,active
-may pilas sa ari ko ko,penile wound,injury,Moderate,urgent,active
-may pilas sa ary akon,penile wound,injury,Moderate,urgent,active
-may pilas sa ary ko,penile wound,injury,Moderate,urgent,active
-may pilas sa ary ko akon,penile wound,injury,Moderate,urgent,active
-may pilas sa ary ko ko,penile wound,injury,Moderate,urgent,active
-may pilas sa bilad akon,vaginal wound,injury,Moderate,urgent,active
-may pilas sa bilad ko,vaginal wound,injury,Moderate,urgent,active
-may pilas sa bilad ko akon,vaginal wound,injury,Moderate,urgent,active
-may pilas sa bilad ko ko,vaginal wound,injury,Moderate,urgent,active
-may pilas sa bilat akon,vaginal wound,injury,Moderate,urgent,active
-may pilas sa bilat ko,vaginal wound,injury,Moderate,urgent,active
-may pilas sa bilat ko akon,vaginal wound,injury,Moderate,urgent,active
-may pilas sa bilat ko ko,vaginal wound,injury,Moderate,urgent,active
-may pilas sa itlog akon,testicular wound,injury,Moderate,urgent,active
-may pilas sa itlog ko,testicular wound,injury,Moderate,urgent,active
-may pilas sa itlog ko akon,testicular wound,injury,Moderate,urgent,active
-may pilas sa itlog ko ko,testicular wound,injury,Moderate,urgent,active
-may pilas sa itlug akon,testicular wound,injury,Moderate,urgent,active
-may pilas sa itlug ko,testicular wound,injury,Moderate,urgent,active
-may pilas sa itlug ko akon,testicular wound,injury,Moderate,urgent,active
-may pilas sa itlug ko ko,testicular wound,injury,Moderate,urgent,active
-nagadugo akon bilad,vaginal bleeding,gynecologic_symptom,Severe,urgent,active
-nagadugo akon bilad ko,vaginal bleeding,gynecologic_symptom,Severe,urgent,active
-nagadugo akon bilat,vaginal bleeding,gynecologic_symptom,Severe,urgent,active
-nagadugo akon bilat ko,vaginal bleeding,gynecologic_symptom,Severe,urgent,active
-nagadugo bilad ako,vaginal bleeding,gynecologic_symptom,Severe,urgent,active
-nagadugo bilad akon,vaginal bleeding,gynecologic_symptom,Severe,urgent,active
-nagadugo bilad akon gid,vaginal bleeding,gynecologic_symptom,Severe,urgent,active
-nagadugo bilad akon subong,vaginal bleeding,gynecologic_symptom,Severe,urgent,active
-nagadugo bilad gid ko,vaginal bleeding,gynecologic_symptom,Severe,urgent,active
-nagadugo bilad ko,vaginal bleeding,gynecologic_symptom,Severe,urgent,active
-nagadugo bilad ko ako,vaginal bleeding,gynecologic_symptom,Severe,urgent,active
-nagadugo bilad ko akon,vaginal bleeding,gynecologic_symptom,Severe,urgent,active
-nagadugo bilad ko akon gid,vaginal bleeding,gynecologic_symptom,Severe,urgent,active
-nagadugo bilad ko akon subong,vaginal bleeding,gynecologic_symptom,Severe,urgent,active
-nagadugo bilad ko gid,vaginal bleeding,gynecologic_symptom,Severe,urgent,active
-nagadugo bilad ko gid ko,vaginal bleeding,gynecologic_symptom,Severe,urgent,active
-nagadugo bilad ko ko,vaginal bleeding,gynecologic_symptom,Severe,urgent,active
-nagadugo bilad ko ko gid,vaginal bleeding,gynecologic_symptom,Severe,urgent,active
-nagadugo bilat ako,vaginal bleeding,gynecologic_symptom,Severe,urgent,active
-nagadugo bilat akon,vaginal bleeding,gynecologic_symptom,Severe,urgent,active
-nagadugo bilat akon gid,vaginal bleeding,gynecologic_symptom,Severe,urgent,active
-nagadugo bilat akon subong,vaginal bleeding,gynecologic_symptom,Severe,urgent,active
-nagadugo bilat gid ko,vaginal bleeding,gynecologic_symptom,Severe,urgent,active
-nagadugo bilat ko,vaginal bleeding,gynecologic_symptom,Severe,urgent,active
-nagadugo bilat ko ako,vaginal bleeding,gynecologic_symptom,Severe,urgent,active
-nagadugo bilat ko akon,vaginal bleeding,gynecologic_symptom,Severe,urgent,active
-nagadugo bilat ko akon gid,vaginal bleeding,gynecologic_symptom,Severe,urgent,active
-nagadugo bilat ko akon subong,vaginal bleeding,gynecologic_symptom,Severe,urgent,active
-nagadugo bilat ko gid,vaginal bleeding,gynecologic_symptom,Severe,urgent,active
-nagadugo bilat ko gid ko,vaginal bleeding,gynecologic_symptom,Severe,urgent,active
-nagadugo bilat ko ko,vaginal bleeding,gynecologic_symptom,Severe,urgent,active
-nagadugo bilat ko ko gid,vaginal bleeding,gynecologic_symptom,Severe,urgent,active
-nagdugo akon bilad,vaginal bleeding,gynecologic_symptom,Severe,urgent,active
-nagdugo akon bilad ko,vaginal bleeding,gynecologic_symptom,Severe,urgent,active
-nagdugo akon bilat,vaginal bleeding,gynecologic_symptom,Severe,urgent,active
-nagdugo akon bilat ko,vaginal bleeding,gynecologic_symptom,Severe,urgent,active
-nagdugo bilad ako,vaginal bleeding,gynecologic_symptom,Severe,urgent,active
-nagdugo bilad akon,vaginal bleeding,gynecologic_symptom,Severe,urgent,active
-nagdugo bilad akon gid,vaginal bleeding,gynecologic_symptom,Severe,urgent,active
-nagdugo bilad akon subong,vaginal bleeding,gynecologic_symptom,Severe,urgent,active
-nagdugo bilad gid ko,vaginal bleeding,gynecologic_symptom,Severe,urgent,active
-nagdugo bilad ko,vaginal bleeding,gynecologic_symptom,Severe,urgent,active
-nagdugo bilad ko ako,vaginal bleeding,gynecologic_symptom,Severe,urgent,active
-nagdugo bilad ko akon,vaginal bleeding,gynecologic_symptom,Severe,urgent,active
-nagdugo bilad ko akon gid,vaginal bleeding,gynecologic_symptom,Severe,urgent,active
-nagdugo bilad ko akon subong,vaginal bleeding,gynecologic_symptom,Severe,urgent,active
-nagdugo bilad ko gid,vaginal bleeding,gynecologic_symptom,Severe,urgent,active
-nagdugo bilad ko gid ko,vaginal bleeding,gynecologic_symptom,Severe,urgent,active
-nagdugo bilad ko ko,vaginal bleeding,gynecologic_symptom,Severe,urgent,active
-nagdugo bilad ko ko gid,vaginal bleeding,gynecologic_symptom,Severe,urgent,active
-nagdugo bilat ako,vaginal bleeding,gynecologic_symptom,Severe,urgent,active
-nagdugo bilat akon,vaginal bleeding,gynecologic_symptom,Severe,urgent,active
-nagdugo bilat akon gid,vaginal bleeding,gynecologic_symptom,Severe,urgent,active
-nagdugo bilat akon subong,vaginal bleeding,gynecologic_symptom,Severe,urgent,active
-nagdugo bilat gid ko,vaginal bleeding,gynecologic_symptom,Severe,urgent,active
-nagdugo bilat ko,vaginal bleeding,gynecologic_symptom,Severe,urgent,active
-nagdugo bilat ko ako,vaginal bleeding,gynecologic_symptom,Severe,urgent,active
-nagdugo bilat ko akon,vaginal bleeding,gynecologic_symptom,Severe,urgent,active
-nagdugo bilat ko akon gid,vaginal bleeding,gynecologic_symptom,Severe,urgent,active
-nagdugo bilat ko akon subong,vaginal bleeding,gynecologic_symptom,Severe,urgent,active
-nagdugo bilat ko gid,vaginal bleeding,gynecologic_symptom,Severe,urgent,active
-nagdugo bilat ko gid ko,vaginal bleeding,gynecologic_symptom,Severe,urgent,active
-nagdugo bilat ko ko,vaginal bleeding,gynecologic_symptom,Severe,urgent,active
-nagdugo bilat ko ko gid,vaginal bleeding,gynecologic_symptom,Severe,urgent,active
-nagdugo gid akon bilad,vaginal bleeding,gynecologic_symptom,Severe,urgent,active
-nagdugo gid akon bilad ko,vaginal bleeding,gynecologic_symptom,Severe,urgent,active
-nagdugo gid akon bilat,vaginal bleeding,gynecologic_symptom,Severe,urgent,active
-nagdugo gid akon bilat ko,vaginal bleeding,gynecologic_symptom,Severe,urgent,active
-nagdugo gid bilad ako,vaginal bleeding,gynecologic_symptom,Severe,urgent,active
-nagdugo gid bilad akon,vaginal bleeding,gynecologic_symptom,Severe,urgent,active
-nagdugo gid bilad akon gid,vaginal bleeding,gynecologic_symptom,Severe,urgent,active
-nagdugo gid bilad akon subong,vaginal bleeding,gynecologic_symptom,Severe,urgent,active
-nagdugo gid bilad gid ko,vaginal bleeding,gynecologic_symptom,Severe,urgent,active
-nagdugo gid bilad ko,vaginal bleeding,gynecologic_symptom,Severe,urgent,active
-nagdugo gid bilad ko ako,vaginal bleeding,gynecologic_symptom,Severe,urgent,active
-nagdugo gid bilad ko akon,vaginal bleeding,gynecologic_symptom,Severe,urgent,active
-nagdugo gid bilad ko akon gid,vaginal bleeding,gynecologic_symptom,Severe,urgent,active
-nagdugo gid bilad ko akon subong,vaginal bleeding,gynecologic_symptom,Severe,urgent,active
-nagdugo gid bilad ko gid,vaginal bleeding,gynecologic_symptom,Severe,urgent,active
-nagdugo gid bilad ko gid ko,vaginal bleeding,gynecologic_symptom,Severe,urgent,active
-nagdugo gid bilad ko ko,vaginal bleeding,gynecologic_symptom,Severe,urgent,active
-nagdugo gid bilad ko ko gid,vaginal bleeding,gynecologic_symptom,Severe,urgent,active
-nagdugo gid bilat ako,vaginal bleeding,gynecologic_symptom,Severe,urgent,active
-nagdugo gid bilat akon,vaginal bleeding,gynecologic_symptom,Severe,urgent,active
-nagdugo gid bilat akon gid,vaginal bleeding,gynecologic_symptom,Severe,urgent,active
-nagdugo gid bilat akon subong,vaginal bleeding,gynecologic_symptom,Severe,urgent,active
-nagdugo gid bilat gid ko,vaginal bleeding,gynecologic_symptom,Severe,urgent,active
-nagdugo gid bilat ko,vaginal bleeding,gynecologic_symptom,Severe,urgent,active
-nagdugo gid bilat ko ako,vaginal bleeding,gynecologic_symptom,Severe,urgent,active
-nagdugo gid bilat ko akon,vaginal bleeding,gynecologic_symptom,Severe,urgent,active
-nagdugo gid bilat ko akon gid,vaginal bleeding,gynecologic_symptom,Severe,urgent,active
-nagdugo gid bilat ko akon subong,vaginal bleeding,gynecologic_symptom,Severe,urgent,active
-nagdugo gid bilat ko gid,vaginal bleeding,gynecologic_symptom,Severe,urgent,active
-nagdugo gid bilat ko gid ko,vaginal bleeding,gynecologic_symptom,Severe,urgent,active
-nagdugo gid bilat ko ko,vaginal bleeding,gynecologic_symptom,Severe,urgent,active
-nagdugo gid bilat ko ko gid,vaginal bleeding,gynecologic_symptom,Severe,urgent,active
-nana ari,penile infection,infection,High,urgent,active
-nana bilat,vaginal infection,infection,High,urgent,active
-nautod ari ko,penile amputation,trauma,Critical,emergency,active
-nautod ari ko,penis amputation,trauma,Critical,emergency,active
-nautod ari ko ko,penis amputation,trauma,Critical,emergency,active
-nautod ary ko,penis amputation,trauma,Critical,emergency,active
-nautod ary ko ko,penis amputation,trauma,Critical,emergency,active
-nautod bilad ko,vagina amputation,trauma,Critical,emergency,active
-nautod bilad ko ko,vagina amputation,trauma,Critical,emergency,active
-nautod bilat ko,vagina amputation,trauma,Critical,emergency,active
-nautod bilat ko ko,vagina amputation,trauma,Critical,emergency,active
-nautod itlog ko,testicle amputation,trauma,Critical,emergency,active
-nautod itlog ko ko,testicle amputation,trauma,Critical,emergency,active
-nautod itlug ko,testicle amputation,trauma,Critical,emergency,active
-nautod itlug ko ko,testicle amputation,trauma,Critical,emergency,active
-subong gadugo bilat ko,vaginal bleeding,gynecologic_symptom,High,urgent,active
-subong may nana sa bilat ko,vaginal infection,infection,High,urgent,active

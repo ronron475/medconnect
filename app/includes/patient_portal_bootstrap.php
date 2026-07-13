@@ -4,7 +4,8 @@
  * Expects: $pdo (from mc_load), active session.
  */
 if (empty($_SESSION['user_id']) || ($_SESSION['user_role'] ?? '') !== 'patient') {
-    header('Location: ' . BASE_URL . '/index.php');
+    require_once BASE_PATH . '/app/includes/auth_guard.php';
+    header('Location: ' . auth_signin_required_url());
     exit;
 }
 

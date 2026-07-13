@@ -14,6 +14,15 @@ if (empty($_SESSION['user_id']) || $_SESSION['user_role'] !== 'provider') {
     exit;
 }
 
+if (($_SERVER['REQUEST_METHOD'] ?? '') !== 'POST') {
+    http_response_code(405);
+    echo json_encode(['success' => false, 'message' => 'Method not allowed.']);
+    exit;
+}
+
+require_once dirname(dirname(dirname(__DIR__))) . '/app/includes/auth_guard.php';
+auth_csrf_require();
+
 $provider_id = (int) $_SESSION['user_id'];
 $consultation_id = (int) ($_POST['consultation_id'] ?? 0);
 $extension_mins = max(5, min(60, (int) ($_POST['extension_mins'] ?? 15)));

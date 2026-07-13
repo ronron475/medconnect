@@ -35,7 +35,7 @@ try {
             }
             $id = (int) ($_POST['patient_id'] ?? 0);
             BhwWorkflows::updatePatient($pdo, $ctx, $id, $_POST);
-            Api::success([], 'Patient updated.');
+            Api::success([], 'Patient contact and medical information updated.');
             break;
         default:
             Api::error('Unknown action.', 400);

@@ -38,9 +38,18 @@ if (!empty($_SESSION['user_id']) && isset($pdo) && $pdo instanceof PDO) {
   <?php require_once VIEWS_PATH . '/partials/notification_assets.php'; ?>
   <?php $portalShellCssVer = (int) filemtime(ASSETS_PATH . '/css/portal_shell.css'); ?>
   <link rel="stylesheet" href="<?= ASSET_BASE ?>/assets/css/portal_shell.css?v=<?= $portalShellCssVer ?>"/>
-  <?php
-  $aiAssessmentCss = ASSETS_PATH . '/css/ai-assessment.css';
-  $aiAssessmentCssVer = file_exists($aiAssessmentCss) ? (int) filemtime($aiAssessmentCss) : time();
-  ?>
-  <link rel="stylesheet" href="<?= ASSET_BASE ?>/assets/css/ai-assessment.css?v=<?= $aiAssessmentCssVer ?>"/>
   <?php require_once VIEWS_PATH . '/partials/auth_transition_assets.php'; ?>
+  <?php $unreadSvcVer = (int) @filemtime(ASSETS_PATH . '/js/messages-unread-service.js'); ?>
+  <script src="<?= ASSET_BASE ?>/assets/js/messages-unread-service.js?v=<?= $unreadSvcVer ?>" defer></script>
+  <?php
+  if (!empty($patient_page_stylesheets) && is_array($patient_page_stylesheets)) {
+      foreach ($patient_page_stylesheets as $sheetHref) {
+          if (is_string($sheetHref) && $sheetHref !== '') {
+              echo '<link rel="stylesheet" href="' . htmlspecialchars($sheetHref) . '"/>' . "\n  ";
+          }
+      }
+  }
+  $patientUiCss = ASSETS_PATH . '/css/patient-ui-system.css';
+  $patientUiCssVer = file_exists($patientUiCss) ? (int) filemtime($patientUiCss) : time();
+  ?>
+  <link rel="stylesheet" href="<?= ASSET_BASE ?>/assets/css/patient-ui-system.css?v=<?= $patientUiCssVer ?>"/>

@@ -8,7 +8,7 @@ from typing import Any
 
 from ocr.ocr_space_client import friendly_error, ocr_response_failed, call_ocr_space
 from ocr.philsys_parser import extract_all
-from ocr.preprocessor import preprocess_image
+from ocr.preprocessor import preprocess_variants
 
 OCR_DEBUG = os.environ.get("OCR_DEBUG", "0").lower() in ("1", "true", "yes")
 
@@ -49,38 +49,66 @@ def build_extract_response(
     return response
 
 
+def _score_extraction(extraction: dict[str, Any]) -> float:
+    fields = extraction.get("fields") or {}
+    required = ("first_name", "last_name", "date_of_birth", "national_id")
+    filled = sum(1 for key in required if (fields.get(key) or {}).get("value"))
+    return float(extraction.get("overall_confidence") or 0.0) + (filled * 0.12)
+
+
 def extract_from_file(file_path: str, mime_type: str) -> dict[str, Any]:
     is_pdf = mime_type == "application/pdf"
-    temp_path: str | None = None
-    stage = "none"
+    temp_paths: list[str] = []
 
     try:
-        if not is_pdf:
-            processed_path, processed_mime, stage = preprocess_image(file_path, mime_type)
-            if processed_path != file_path:
-                temp_path = processed_path
-            ocr_path, ocr_mime = processed_path, processed_mime
+        if is_pdf:
+            variants = [(file_path, mime_type, "pdf")]
         else:
-            ocr_path, ocr_mime = file_path, mime_type
+            variants = preprocess_variants(file_path, mime_type)
+            for path, _, stage in variants:
+                if stage != "none" and path != file_path:
+                    temp_paths.append(path)
 
-        parsed_text = ""
-        ocr_note = ""
-        for engine in (1, 2):
-            ocr = call_ocr_space(ocr_path, ocr_mime, engine)
-            if ocr is None:
-                continue
-            if ocr_response_failed(ocr):
-                if engine == 2:
-                    return {"success": False, "message": friendly_error(ocr or {})}
-                continue
-            results = ocr.get("ParsedResults") or []
-            if results:
-                parsed_text = str(results[0].get("ParsedText") or "").strip()
-            if parsed_text:
-                ocr_note = f"engine_{engine}"
+        best_text = ""
+        best_stage = "none"
+        best_score = -1.0
+        best_extraction: dict[str, Any] | None = None
+        had_response = False
+
+        for ocr_path, ocr_mime, stage in variants:
+            for engine in (2, 1):
+                ocr = call_ocr_space(ocr_path, ocr_mime, engine)
+                if ocr is None:
+                    continue
+                had_response = True
+                if ocr_response_failed(ocr):
+                    continue
+                results = ocr.get("ParsedResults") or []
+                parsed_text = ""
+                if results:
+                    parsed_text = str(results[0].get("ParsedText") or "").strip()
+                if not parsed_text:
+                    continue
+
+                extraction = extract_all(parsed_text)
+                score = _score_extraction(extraction)
+                stage_note = f"{stage}+engine_{engine}" if stage != "none" else f"engine_{engine}"
+                if score > best_score:
+                    best_score = score
+                    best_text = parsed_text
+                    best_stage = stage_note
+                    best_extraction = extraction
+                if score >= 0.95 and not extraction.get("low_confidence"):
+                    break
+            if best_score >= 0.95 and best_extraction and not best_extraction.get("low_confidence"):
                 break
 
-        if not parsed_text:
+        if not best_text or best_extraction is None:
+            if not had_response:
+                return {
+                    "success": False,
+                    "message": "Could not reach the OCR service. Please check your connection and try again.",
+                }
             return {
                 "success": False,
                 "message": (
@@ -89,14 +117,10 @@ def extract_from_file(file_path: str, mime_type: str) -> dict[str, Any]:
                 ),
             }
 
-        preprocessing_used = stage if stage != "none" else ocr_note
-        if stage != "none" and ocr_note:
-            preprocessing_used = f"{stage}+{ocr_note}"
-
-        return build_extract_response(parsed_text, preprocessing_used)
+        return build_extract_response(best_text, best_stage)
     finally:
-        if temp_path and Path(temp_path).exists():
+        for path in temp_paths:
             try:
-                Path(temp_path).unlink()
+                Path(path).unlink(missing_ok=True)
             except OSError:
                 pass

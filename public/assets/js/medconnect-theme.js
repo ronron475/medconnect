@@ -53,10 +53,9 @@
       btn.setAttribute('aria-checked', val === pref ? 'true' : 'false');
     });
 
-    const icon = document.querySelector('.mc-theme-toggle__icon');
-    if (icon) {
+    document.querySelectorAll('.mc-theme-toggle__icon').forEach((icon) => {
       icon.textContent = resolved === 'dark' ? '🌙' : '☀';
-    }
+    });
   }
 
   async function saveTheme(preference) {

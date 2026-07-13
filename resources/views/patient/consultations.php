@@ -18,9 +18,11 @@ $all_consults = [];
 if ($pdo->query("SHOW TABLES LIKE 'consultations'")->rowCount()) {
     $s = $pdo->prepare("
         SELECT c.id, c.consult_date, c.consult_time, c.provider_name, c.consult_type, c.status, c.diagnosis, c.recommendation,
-               vs.room_token
+               vs.room_token,
+               s.slot_date, s.start_time AS slot_start
         FROM consultations c
         LEFT JOIN video_sessions vs ON c.id = vs.consultation_id AND vs.status = 'active'
+        LEFT JOIN appointment_slots s ON s.consultation_id = c.id AND s.status = 'booked'
         WHERE c.patient_id = ?
         ORDER BY c.consult_date DESC, c.consult_time DESC
     ");
@@ -29,6 +31,10 @@ if ($pdo->query("SHOW TABLES LIKE 'consultations'")->rowCount()) {
 }
 
 $page_title = 'My Sessions';
+$sessions_css_ver = (int) @filemtime(ASSETS_PATH . '/css/patient-sessions.css');
+$patient_page_stylesheets = [
+    ASSET_BASE . '/assets/css/patient-sessions.css?v=' . $sessions_css_ver,
+];
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -54,27 +60,6 @@ $page_title = 'My Sessions';
       window.filterSessions('upcoming');
     }
   });
-  (function () {
-    const tokensKey = () => (window.consultations || []).map((c) => c.room_token || '').join('|');
-    let lastTokens = tokensKey();
-    setInterval(async () => {
-      try {
-        const res = await fetch(window.location.href, { cache: 'no-store' });
-        const html = await res.text();
-        const m = html.match(/window\.consultations\s*=\s*(\[[\s\S]*?\]);/);
-        if (!m) return;
-        const fresh = JSON.parse(m[1]);
-        const freshKey = fresh.map((c) => c.room_token || '').join('|');
-        if (freshKey === lastTokens) return;
-        lastTokens = freshKey;
-        window.consultations.length = 0;
-        window.consultations.push(...fresh);
-        const tab = document.querySelector('.tab-btn.active');
-        const type = tab && tab.innerText.toLowerCase().includes('past') ? 'past' : 'upcoming';
-        if (typeof window.filterSessions === 'function') window.filterSessions(type);
-      } catch (_) {}
-    }, 15000);
-  })();
   </script>
 </body>
 </html>

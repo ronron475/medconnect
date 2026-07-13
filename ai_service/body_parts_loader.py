@@ -51,6 +51,16 @@ def term_set() -> frozenset[str]:
 
 
 @lru_cache(maxsize=1)
+def english_term_set() -> frozenset[str]:
+    terms: set[str] = set()
+    for row in load_rows():
+        english = normalize(row["english_term"])
+        if english:
+            terms.add(english)
+    return frozenset(terms)
+
+
+@lru_cache(maxsize=1)
 def term_index() -> dict[str, dict[str, Any]]:
     index: dict[str, dict[str, Any]] = {}
     for row in load_rows():
@@ -73,7 +83,14 @@ def is_body_part(term: str) -> bool:
         return False
     if key in term_set():
         return True
+    if key in english_term_set():
+        return True
     return any(key == normalize(row["hiligaynon_term"]) for row in load_rows())
+
+
+def is_english_body_part(term: str) -> bool:
+    key = normalize(term)
+    return bool(key) and key in english_term_set()
 
 
 def lookup(term: str) -> dict[str, Any] | None:
@@ -83,4 +100,5 @@ def lookup(term: str) -> dict[str, Any] | None:
 def clear_cache() -> None:
     load_rows.cache_clear()
     term_set.cache_clear()
+    english_term_set.cache_clear()
     term_index.cache_clear()

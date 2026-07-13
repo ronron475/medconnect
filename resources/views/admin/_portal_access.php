@@ -8,7 +8,7 @@ auth_require_role(['admin', 'superadmin']);
 
 if (portal_is_superadmin() && !defined('MC_PORTAL_SHELL')) {
     $qs = $_SERVER['QUERY_STRING'] ?? '';
-    $base = basename($_SERVER['PHP_SELF'] ?? '');
+    $base = portal_current_view_basename();
     $target = portal_superadmin_redirect_aliases()[$base] ?? $base;
     $url = ASSET_BASE . '/views/superadmin/' . $target;
     if ($qs !== '') {

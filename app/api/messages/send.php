@@ -6,18 +6,22 @@ require_once dirname(dirname(dirname(__DIR__))) . '/bootstrap.php';
 require_once dirname(dirname(dirname(__DIR__))) . '/config/db.php';
 require_once dirname(dirname(dirname(__DIR__))) . '/app/includes/auth_guard.php';
 require_once dirname(dirname(dirname(__DIR__))) . '/app/includes/message_deletion.php';
+require_once dirname(dirname(dirname(__DIR__))) . '/app/includes/rate_limiter.php';
 
-if (empty($_SESSION['user_id']) || !in_array($_SESSION['user_role'] ?? '', ['provider', 'patient'], true)) {
-    ob_end_clean();
-    http_response_code(403);
-    echo json_encode(['success' => false, 'message' => 'Unauthorized.']);
-    exit;
-}
+messages_api_require_auth($pdo);
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     ob_end_clean();
     http_response_code(405);
     echo json_encode(['success' => false, 'message' => 'Method not allowed.']);
+    exit;
+}
+
+$rl = mc_rate_limiter_allow('messages_send', 12, 30, (int) ($_SESSION['user_id'] ?? 0));
+if (!$rl['allowed']) {
+    ob_end_clean();
+    http_response_code(429);
+    echo json_encode(['success' => false, 'message' => 'Too many requests. Please wait a moment.']);
     exit;
 }
 
@@ -42,6 +46,13 @@ if (!$consultation_id || $message === '') {
 if (mb_strlen($message) > 2000) {
     ob_end_clean();
     echo json_encode(['success' => false, 'message' => 'Message is too long.']);
+    exit;
+}
+
+if (!mb_check_encoding($message, 'UTF-8')) {
+    ob_end_clean();
+    http_response_code(422);
+    echo json_encode(['success' => false, 'message' => 'Invalid message encoding.']);
     exit;
 }
 
@@ -94,10 +105,27 @@ try {
 
     $formatted = message_format_for_viewer($row, $sender_id);
 
+    require_once dirname(dirname(dirname(__DIR__))) . '/app/includes/notification_events.php';
+    $senderName = trim(($row['first_name'] ?? '') . ' ' . ($row['last_name'] ?? ''));
+
     if ($_SESSION['user_role'] === 'patient' && $receiver_id) {
-        require_once dirname(dirname(dirname(__DIR__))) . '/app/includes/notification_events.php';
-        $patientName = trim(($row['first_name'] ?? '') . ' ' . ($row['last_name'] ?? ''));
-        NotificationEvents::patientMessage($pdo, $receiver_id, $sender_id, $patientName ?: 'Patient', $sender_id);
+        NotificationEvents::patientMessage(
+            $pdo,
+            $receiver_id,
+            $sender_id,
+            $senderName ?: 'Patient',
+            $sender_id,
+            $consultation_id
+        );
+    } elseif ($_SESSION['user_role'] === 'provider' && $receiver_id) {
+        NotificationEvents::providerMessage(
+            $pdo,
+            $receiver_id,
+            $sender_id,
+            $senderName ?: 'Your healthcare provider',
+            $sender_id,
+            $consultation_id
+        );
     }
 
     ob_end_clean();

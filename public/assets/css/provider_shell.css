@@ -32,8 +32,14 @@ body.provider-body .main-content.provider-main {
     overflow-x: hidden;
 }
 
+@media (min-width: 768px) {
+    body.provider-body.mc-sidebar-mini {
+        --pd-sidebar-w: 78px;
+    }
+}
+
 body.provider-body .provider-page-body {
-    padding-top: calc(var(--mc-header-offset, var(--provider-header-h, 64px)) + 24px);
+    padding-top: calc(var(--mc-header-offset, var(--provider-header-h, 64px)) + 10px);
     box-sizing: border-box;
     max-width: 100%;
     overflow-x: hidden;
@@ -56,12 +62,25 @@ body.provider-body .provider-page-body {
     }
 }
 
+/* Tablet+ desktop mini sidebar should still offset header/content */
+@media (max-width: 1024px) and (min-width: 768px) {
+    body.provider-body.mc-sidebar-mini .pd-header {
+        left: var(--pd-sidebar-w, 78px) !important;
+        width: calc(100% - var(--pd-sidebar-w, 78px)) !important;
+    }
+
+    body.provider-body.mc-sidebar-mini .main-content.provider-main {
+        margin-left: var(--pd-sidebar-w, 78px) !important;
+        width: calc(100% - var(--pd-sidebar-w, 78px)) !important;
+    }
+}
+
 /* ── Mobile: single-row header (menu | title | actions) ── */
 @media (max-width: 768px) {
     body.provider-body .pd-header {
         display: grid !important;
-        grid-template-columns: 44px minmax(0, 1fr) auto;
-        grid-template-areas: "hamburger title actions";
+        grid-template-columns: 44px 44px minmax(0, 1fr) auto;
+        grid-template-areas: "hamburger brand title actions";
         gap: 6px 10px;
         align-items: center;
         flex-wrap: nowrap !important;
@@ -76,6 +95,13 @@ body.provider-body .provider-page-body {
         width: 44px;
         height: 44px;
         margin: 0;
+    }
+
+    body.provider-body .pd-brand {
+        grid-area: brand;
+        display: inline-flex;
+        width: 44px;
+        height: 44px;
     }
 
     body.provider-body .pd-header-title {
@@ -208,4 +234,103 @@ html[data-theme-resolved='dark'] body.provider-body .pd-header-right {
 
 html[data-theme-resolved='dark'] body.provider-body .pd-header-user {
     border-left-color: #334155;
+}
+
+/* ── Provider dashboard: compact layout (wins over patient-dashboard-mock.css) ── */
+body.provider-body .prov-dash-metrics--unified {
+    display: grid;
+    grid-template-columns: repeat(8, minmax(0, 1fr));
+    gap: 5px;
+}
+
+body.provider-body .prov-dash-metrics--unified > .prov-dash-stat,
+body.provider-body .prov-dash-metrics--unified > .mc-notif-widget,
+body.provider-body .prov-dash-stat {
+    min-height: 64px;
+    padding: 8px 10px;
+}
+
+body.provider-body .prov-dash-stat__icon {
+    top: 8px;
+    right: 8px;
+    width: 24px;
+    height: 24px;
+}
+
+body.provider-body .prov-dash-stat strong {
+    font-size: 1.2rem;
+    padding-right: 28px;
+}
+
+body.provider-body .prov-dash-metrics--unified > .mc-notif-widget {
+    padding: 8px 10px;
+    gap: 1px 6px;
+}
+
+body.provider-body .prov-dash-metrics--unified > .mc-notif-widget::before {
+    width: 24px;
+    height: 24px;
+}
+
+body.provider-body .prov-dash-metrics--unified > .mc-notif-widget-value {
+    font-size: 1.05rem;
+}
+
+body.provider-body .prov-dash-welcome--compact {
+    padding: 8px 12px;
+}
+
+body.provider-body .prov-dash-welcome--compact .prov-dash-welcome__eyebrow {
+    font-size: 12px;
+}
+
+body.provider-body .prov-chart {
+    height: 96px;
+    margin-bottom: 4px;
+}
+
+body.provider-body .prov-dash .mc-table-empty {
+    padding: 14px 10px;
+}
+
+body.provider-body .prov-dash-card {
+    padding: var(--pt-dash-card-pad, 11px);
+}
+
+body.provider-body .prov-dash-card__head {
+    margin-bottom: 6px;
+}
+
+body.provider-body .prov-dash-table .mc-table th {
+    padding: 8px 12px;
+}
+
+body.provider-body .prov-dash-table .mc-table td {
+    padding: 10px 12px;
+    font-size: 12px;
+}
+
+body.provider-body .prov-status-item {
+    padding: 6px 8px;
+}
+
+body.provider-body .mc-notif-recent-panel__head {
+    padding: 10px 12px;
+}
+
+body.provider-body .mc-notif-list--feed .mc-notif-item {
+    padding: 10px 12px;
+    gap: 10px;
+}
+
+@media (max-width: 1280px) {
+    body.provider-body .prov-dash-metrics--unified {
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+    }
+}
+
+@media (max-width: 900px) {
+    body.provider-body .prov-dash-metrics--unified {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
 }

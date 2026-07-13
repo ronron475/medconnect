@@ -1,0 +1,258 @@
+/**
+ * BHW Portal — shared layout, forms, and page shells
+ */
+
+/* Cards should not stretch to full viewport unless in an equal-height grid */
+body.bhw-body .portal-page-body > .bhw-card,
+body.bhw-body .bhw-referral-page .bhw-card,
+body.bhw-body .bhw-referral-status-page .bhw-card {
+  height: auto;
+}
+
+body.bhw-body .row > [class*='col-'] > .bhw-card,
+body.bhw-body .bhw-card.h-100 {
+  height: 100%;
+}
+
+/* ── Simple portal forms (referral, stubs) ── */
+body.bhw-body .bhw-portal-form .form-label {
+  display: block;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #64748b;
+  margin-bottom: 8px;
+}
+
+body.bhw-body .bhw-portal-form .form-control,
+body.bhw-body .bhw-portal-form .form-select {
+  display: block;
+  width: 100%;
+  max-width: 100%;
+  padding: 12px 14px;
+  border-radius: 10px;
+  border: 1px solid var(--mc-border-thin, #e2edf1);
+  font-size: 14px;
+  font-weight: 500;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+body.bhw-body .bhw-portal-form .form-control:focus,
+body.bhw-body .bhw-portal-form .form-select:focus {
+  border-color: #018a93;
+  box-shadow: 0 0 0 3px rgba(1, 138, 147, 0.12);
+  outline: none;
+}
+
+body.bhw-body .bhw-portal-form textarea.form-control {
+  min-height: 100px;
+  resize: vertical;
+}
+
+body.bhw-body .bhw-portal-form .bhw-field,
+body.bhw-body .bhw-portal-form .mb-3 {
+  margin-bottom: 18px;
+}
+
+body.bhw-body .bhw-portal-form-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  margin-top: 8px;
+  padding-top: 20px;
+  border-top: 1px solid var(--mc-border-thin, #e2edf1);
+}
+
+body.bhw-body .bhw-portal-form-actions .bhw-btn-teal,
+body.bhw-body .bhw-portal-form-actions .bhw-btn-outline {
+  min-height: 44px;
+  padding: 10px 22px;
+  font-size: 13px;
+  border-radius: 10px;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* ── Referral pages ── */
+.bhw-referral-page,
+.bhw-referral-status-page {
+  width: 100%;
+  max-width: 720px;
+  animation: bhwFadeIn 0.35s ease;
+}
+
+.bhw-referral-header {
+  margin-bottom: 24px;
+  padding-bottom: 18px;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.bhw-referral-header h2,
+.bhw-referral-header .text-h2 {
+  font-weight: 700;
+  color: #0f172a;
+  margin: 0 0 6px;
+  font-size: 1.35rem;
+  letter-spacing: -0.02em;
+}
+
+.bhw-referral-header p {
+  color: #64748b;
+  font-size: 13px;
+  margin: 0;
+  line-height: 1.55;
+  max-width: 56ch;
+}
+
+.bhw-referral-card {
+  padding: 24px 28px;
+}
+
+.bhw-referral-status-page {
+  max-width: none;
+}
+
+.bhw-referral-status-page .bhw-referral-header {
+  max-width: 720px;
+}
+
+.bhw-referral-table-card {
+  padding: 0;
+  overflow: hidden;
+  border-radius: 8px;
+}
+
+.bhw-referral-table-card .table-responsive {
+  margin: 0;
+}
+
+/* Profile header fix when missing text wrapper */
+body.bhw-body .bhw-profile-page > .bhw-update-header:not(:has(.bhw-update-header-text)) {
+  display: block;
+}
+
+body.bhw-body .bhw-profile-page > .bhw-update-header:not(:has(.bhw-update-header-text)) h2 {
+  margin-bottom: 6px;
+}
+
+body.bhw-body .bhw-profile-page > .bhw-update-header:not(:has(.bhw-update-header-text)) p {
+  color: #64748b;
+  font-size: 14px;
+  margin: 0;
+  max-width: 680px;
+  line-height: 1.55;
+}
+
+/* In-page tabs for merged BHW modules */
+.bhw-module-nav {
+  display: flex;
+  gap: 0;
+  margin: 16px 0 20px;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.bhw-module-nav__item {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  padding: 0 16px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #64748b;
+  text-decoration: none;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -1px;
+  transition: color 0.15s ease, border-color 0.15s ease;
+}
+
+.bhw-module-nav__item:hover {
+  color: var(--bhw-navy, #012a4a);
+}
+
+.bhw-module-nav__item.is-active {
+  color: #012a4a;
+  border-bottom-color: #012a4a;
+}
+
+@media (max-width: 767.98px) {
+  .bhw-module-nav {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .bhw-module-nav__item {
+    flex-shrink: 0;
+    white-space: nowrap;
+  }
+}
+
+/* ── Print / PDF export — hide portal chrome, show report content only ── */
+@media print {
+  body.bhw-body.bhw-print-mode .sidebar,
+  body.bhw-body.bhw-print-mode aside.sidebar,
+  body.bhw-body.bhw-print-mode .topbar,
+  body.bhw-body.bhw-print-mode header.topbar,
+  body.bhw-body.bhw-print-mode .mc-nav-toggle,
+  body.bhw-body.bhw-print-mode .topbar-right,
+  body.bhw-body.bhw-print-mode .topbar-left,
+  body.bhw-body.bhw-print-mode .topbar-brand,
+  body.bhw-body.bhw-print-mode .topbar-title-block,
+  body.bhw-body.bhw-print-mode .topbar-datetime,
+  body.bhw-body.bhw-print-mode .topbar-logout,
+  body.bhw-body.bhw-print-mode .mc-profmenu,
+  body.bhw-body.bhw-print-mode .mc-notif-wrap,
+  body.bhw-body.bhw-print-mode .mc-notif-panel,
+  body.bhw-body.bhw-print-mode .messages-fab,
+  body.bhw-body.bhw-print-mode .no-print,
+  body.bhw-body .sidebar,
+  body.bhw-body aside.sidebar,
+  body.bhw-body .topbar,
+  body.bhw-body header.topbar,
+  body.bhw-body .mc-nav-toggle,
+  body.bhw-body .topbar-right,
+  body.bhw-body .topbar-left,
+  body.bhw-body .topbar-brand,
+  body.bhw-body .topbar-title-block,
+  body.bhw-body .topbar-datetime,
+  body.bhw-body .topbar-logout,
+  body.bhw-body .mc-profmenu,
+  body.bhw-body .mc-notif-wrap,
+  body.bhw-body .mc-notif-panel,
+  body.bhw-body .messages-fab,
+  body.bhw-body .no-print {
+    display: none !important;
+    visibility: hidden !important;
+    height: 0 !important;
+    min-height: 0 !important;
+    max-height: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    border: none !important;
+    box-shadow: none !important;
+    overflow: hidden !important;
+    position: absolute !important;
+    left: -9999px !important;
+    top: -9999px !important;
+    clip: rect(0, 0, 0, 0) !important;
+    clip-path: inset(100%) !important;
+  }
+
+  body.bhw-body .portal-shell,
+  body.bhw-body .main.portal-main,
+  body.bhw-body .portal-page-body {
+    margin: 0 !important;
+    padding: 0 !important;
+    width: 100% !important;
+    max-width: none !important;
+    min-height: 0 !important;
+    overflow: visible !important;
+  }
+
+  body.bhw-body .portal-shell {
+    display: block !important;
+  }
+}

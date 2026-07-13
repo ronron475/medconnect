@@ -17,6 +17,9 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     exit;
 }
 
+require_once dirname(dirname(dirname(__DIR__))) . '/app/includes/auth_guard.php';
+auth_csrf_require();
+
 $id = (int)($_POST['followup_id'] ?? 0);
 $date = trim($_POST['followup_date'] ?? '');
 $status = trim($_POST['status'] ?? '');

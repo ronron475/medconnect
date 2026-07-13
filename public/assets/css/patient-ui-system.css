@@ -1,0 +1,706 @@
+/**
+ * medConnect — Patient UI System (Compact Healthcare Dashboard)
+ * 8px spacing scale · high information density · presentation only.
+ */
+
+body.patient-portal {
+  /* ── 8px spacing scale ── */
+  --pt-space-xs: 4px;   /* icon spacing */
+  --pt-space-sm: 8px;   /* label spacing */
+  --pt-space-md: 12px;  /* form spacing */
+  --pt-space-lg: 16px;  /* component spacing */
+  --pt-space-xl: 20px;  /* section spacing */
+  --pt-space-2xl: 24px; /* page section separation */
+
+  --pt-card-pad: 14px;
+  --pt-card-radius: 10px;
+  --pt-card-gap: 12px;
+  --pt-stat-gap: 16px;
+  --pt-section-gap: 16px;
+  --pt-page-gap: 12px;
+
+  --pt-form-gap: 12px;
+  --pt-label-gap: 8px;
+  --pt-btn-gap: 8px;
+  --pt-table-cell-pad: 8px 12px;
+
+  --pt-btn-height: 34px;
+  --pt-btn-pad-x: 12px;
+  --pt-btn-radius: 8px;
+  --pt-btn-font: 0.8125rem;
+
+  --pt-shadow-card: 0 1px 2px rgba(2, 128, 144, 0.06);
+  --pt-shadow-hover: 0 2px 8px rgba(2, 128, 144, 0.1);
+  --pt-border: #e2e8f0;
+  --pt-border-soft: #f1f5f9;
+
+  --pt-font-page: clamp(1.125rem, 1.8vw, 1.35rem);
+  --pt-font-section: 0.875rem;
+  --pt-font-card: 0.8125rem;
+  --pt-font-body: 0.8125rem;
+  --pt-font-helper: 0.75rem;
+  --pt-font-caption: 0.6875rem;
+  --pt-lh-body: 1.45;
+  --pt-lh-tight: 1.3;
+
+  --pt-color-text: #0f172a;
+  --pt-color-muted: #64748b;
+  --pt-color-primary: #028090;
+  --pt-color-surface: #ffffff;
+
+  --pt-transition: 0.15s ease;
+  --pt-content-max: 100%;
+  --pt-aside-width: minmax(220px, 28%);
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   Page shell — reduced margins (~45% tighter)
+   ═══════════════════════════════════════════════════════════════ */
+
+body.patient-portal .portal-page-body {
+  padding: calc(var(--mc-header-offset, var(--portal-header-h, 64px)) + var(--pt-space-md))
+           var(--pt-space-lg)
+           var(--pt-space-lg);
+}
+
+body.patient-portal .portal-page-body > .patient-page,
+body.patient-portal .portal-page-body > .view-container,
+body.patient-portal .pdash-page,
+body.patient-portal .psess-page,
+body.patient-portal .pmh-page,
+body.patient-portal .patient-settings-page,
+body.patient-portal .patient-health-summary-page,
+body.patient-portal .messages-page {
+  max-width: var(--pt-content-max);
+  width: 100%;
+}
+
+body.patient-portal .patient-page,
+body.patient-portal .pdash-page,
+body.patient-portal .psess-page,
+body.patient-portal .pmh-page,
+body.patient-portal .patient-settings-page,
+body.patient-portal .patient-health-summary-page {
+  display: flex;
+  flex-direction: column;
+  gap: var(--pt-page-gap);
+}
+
+/* Lead text — tight */
+body.patient-portal .pdash-lead,
+body.patient-portal .psess-lead,
+body.patient-portal .pmh-lead,
+body.patient-portal .pts-lead,
+body.patient-portal .phs-hero__sub {
+  margin: 0 0 var(--pt-space-md);
+  font-size: var(--pt-font-helper);
+  color: var(--pt-color-muted);
+  line-height: var(--pt-lh-body);
+  max-width: none;
+}
+
+body.patient-portal .pdash-lead a,
+body.patient-portal .psess-lead a,
+body.patient-portal .pmh-lead a {
+  color: var(--pt-color-primary);
+  font-weight: 600;
+  text-decoration: none;
+}
+
+body.patient-portal .pdash-lead a:hover,
+body.patient-portal .psess-lead a:hover,
+body.patient-portal .pmh-lead a:hover {
+  text-decoration: underline;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   Two-column layouts — 70% / 30%
+   ═══════════════════════════════════════════════════════════════ */
+
+body.patient-portal .pdash-grid,
+body.patient-portal .psess-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) var(--pt-aside-width);
+  gap: var(--pt-space-lg);
+  align-items: start;
+}
+
+body.patient-portal .pdash-main,
+body.patient-portal .pdash-side,
+body.patient-portal .psess-main,
+body.patient-portal .psess-side,
+body.patient-portal .pts-layout {
+  gap: var(--pt-card-gap);
+}
+
+body.patient-portal .pts-layout {
+  display: grid;
+  grid-template-columns: minmax(180px, 220px) minmax(0, 1fr);
+  gap: var(--pt-space-lg);
+  align-items: start;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   Cards — compact unified surface
+   ═══════════════════════════════════════════════════════════════ */
+
+body.patient-portal .pdash-card,
+body.patient-portal .pdash-metric,
+body.patient-portal .pdash-hero,
+body.patient-portal .pmh-metric,
+body.patient-portal .pmh-visit__body,
+body.patient-portal .pmh-file-card,
+body.patient-portal .pmh-empty,
+body.patient-portal .psess-metric,
+body.patient-portal .psess-card,
+body.patient-portal .psess-related,
+body.patient-portal .psess-empty,
+body.patient-portal .pts-stat,
+body.patient-portal .pts-card,
+body.patient-portal .pts-nav,
+body.patient-portal .mc-card,
+body.patient-portal .patient-health-event__card,
+body.patient-portal .prov-dash-card {
+  background: var(--pt-color-surface);
+  border: 1px solid var(--pt-border);
+  border-radius: var(--pt-card-radius);
+  box-shadow: var(--pt-shadow-card);
+  transition: border-color var(--pt-transition), box-shadow var(--pt-transition);
+}
+
+body.patient-portal .pdash-card,
+body.patient-portal .pmh-visit__body,
+body.patient-portal .pmh-file-card,
+body.patient-portal .psess-card,
+body.patient-portal .pts-card,
+body.patient-portal .mc-card {
+  padding: var(--pt-card-pad);
+}
+
+body.patient-portal .pdash-card__head,
+body.patient-portal .pts-card__head {
+  margin-bottom: var(--pt-space-md);
+  gap: var(--pt-space-sm);
+}
+
+body.patient-portal .pdash-card__title,
+body.patient-portal .pmh-visit__title,
+body.patient-portal .pts-card__title,
+body.patient-portal .psess-related__title {
+  margin: 0;
+  font-size: var(--pt-font-card);
+  font-weight: 700;
+  color: var(--pt-color-text);
+  line-height: var(--pt-lh-tight);
+}
+
+body.patient-portal .pdash-card__sub,
+body.patient-portal .pts-card__sub {
+  margin: 0 0 var(--pt-space-md);
+  font-size: var(--pt-font-helper);
+  color: var(--pt-color-muted);
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   Statistics cards — compact, equal height
+   ═══════════════════════════════════════════════════════════════ */
+
+body.patient-portal .pdash-metrics,
+body.patient-portal .pmh-metrics,
+body.patient-portal .psess-metrics {
+  display: grid;
+  gap: var(--pt-stat-gap);
+  margin-bottom: var(--pt-space-md);
+}
+
+body.patient-portal .pdash-metrics { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+body.patient-portal .pmh-metrics,
+body.patient-portal .psess-metrics { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+
+body.patient-portal .pdash-metric,
+body.patient-portal .pmh-metric,
+body.patient-portal .psess-metric {
+  padding: var(--pt-space-md) var(--pt-space-sm);
+  min-height: 68px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+}
+
+body.patient-portal .pdash-metric__value,
+body.patient-portal .pmh-metric__value,
+body.patient-portal .psess-metric__value {
+  font-size: 1.625rem;
+  font-weight: 800;
+  color: var(--pt-color-primary);
+  line-height: 1;
+}
+
+body.patient-portal .pdash-metric__label,
+body.patient-portal .pmh-metric__label,
+body.patient-portal .psess-metric__label {
+  margin-top: var(--pt-space-xs);
+  font-size: var(--pt-font-caption);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--pt-color-muted);
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   Hero — compact
+   ═══════════════════════════════════════════════════════════════ */
+
+body.patient-portal .pdash-hero {
+  padding: var(--pt-space-lg);
+  gap: var(--pt-space-md);
+}
+
+body.patient-portal .pdash-hero__title {
+  margin: 0 0 var(--pt-space-xs);
+  font-size: var(--pt-font-page);
+  font-weight: 800;
+  line-height: var(--pt-lh-tight);
+}
+
+body.patient-portal .pdash-hero__sub {
+  margin: 0 0 var(--pt-space-sm);
+  font-size: var(--pt-font-helper);
+}
+
+body.patient-portal .pdash-hero__badges {
+  gap: var(--pt-space-sm);
+}
+
+body.patient-portal .pdash-badge {
+  padding: 4px 10px;
+  font-size: var(--pt-font-caption);
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   Session / visit cards — dense
+   ═══════════════════════════════════════════════════════════════ */
+
+body.patient-portal .psess-list,
+body.patient-portal .pdash-sessions,
+body.patient-portal .pmh-timeline,
+body.patient-portal .pmh-files__list {
+  gap: var(--pt-card-gap);
+}
+
+body.patient-portal .psess-card,
+body.patient-portal .pdash-session {
+  padding: var(--pt-space-md) var(--pt-space-lg);
+  gap: var(--pt-space-md);
+}
+
+body.patient-portal .psess-card__avatar,
+body.patient-portal .pdash-session__avatar,
+body.patient-portal .pmh-visit__avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 8px;
+  font-size: 0.75rem;
+}
+
+body.patient-portal .psess-card__info h3,
+body.patient-portal .psess-card__info h4,
+body.patient-portal .pdash-session__info h4 {
+  margin: 0 0 2px;
+  font-size: var(--pt-font-card);
+  font-weight: 700;
+}
+
+body.patient-portal .psess-card__type,
+body.patient-portal .psess-card__meta,
+body.patient-portal .pdash-session__meta {
+  margin: 0;
+  font-size: var(--pt-font-helper);
+}
+
+body.patient-portal .psess-card__datetime,
+body.patient-portal .pdash-session__datetime {
+  margin: 2px 0 0;
+  font-size: var(--pt-font-body);
+}
+
+body.patient-portal .psess-card__aside {
+  gap: var(--pt-space-sm);
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   Right sidebar / quick actions — ~64px rows
+   ═══════════════════════════════════════════════════════════════ */
+
+body.patient-portal .psess-side,
+body.patient-portal .pdash-side {
+  gap: var(--pt-card-gap);
+}
+
+body.patient-portal .psess-related,
+body.patient-portal .pdash-quick {
+  padding: var(--pt-space-md);
+}
+
+body.patient-portal .psess-related__nav,
+body.patient-portal .pdash-quick {
+  gap: var(--pt-space-sm);
+}
+
+body.patient-portal .psess-related__link,
+body.patient-portal .pdash-quick__link {
+  min-height: 64px;
+  padding: var(--pt-space-sm) var(--pt-space-md);
+  gap: var(--pt-space-md);
+  border-radius: var(--pt-btn-radius);
+}
+
+body.patient-portal .psess-related__icon,
+body.patient-portal .pdash-quick__icon {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+}
+
+body.patient-portal .psess-related__link strong,
+body.patient-portal .pdash-quick__link {
+  font-size: var(--pt-font-body);
+}
+
+body.patient-portal .psess-related__link small {
+  font-size: var(--pt-font-caption);
+}
+
+body.patient-portal .psess-flow,
+body.patient-portal .pdash-flow,
+body.patient-portal .psess-compare,
+body.patient-portal .pdash-compare {
+  margin: 0;
+}
+
+body.patient-portal .psess-flow__summary,
+body.patient-portal .pdash-flow__summary {
+  padding: var(--pt-space-md);
+  font-size: var(--pt-font-body);
+}
+
+body.patient-portal .psess-flow__steps {
+  padding: 0 var(--pt-space-md) var(--pt-space-md);
+  gap: var(--pt-space-sm);
+}
+
+body.patient-portal .psess-compare,
+body.patient-portal .pdash-status-list .pdash-status-item {
+  padding: var(--pt-space-md);
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   Tabs — compact pills
+   ═══════════════════════════════════════════════════════════════ */
+
+body.patient-portal .pdash-tabs,
+body.patient-portal .pmh-tabs,
+body.patient-portal .psess-tabs {
+  gap: var(--pt-space-md);
+  margin-bottom: var(--pt-space-md);
+}
+
+body.patient-portal .pdash-tab,
+body.patient-portal .pmh-tab,
+body.patient-portal .psess-tab {
+  min-height: 32px;
+  padding: 0 var(--pt-space-md);
+  font-size: var(--pt-font-body);
+  gap: var(--pt-space-sm);
+  border-radius: 999px;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   Buttons
+   ═══════════════════════════════════════════════════════════════ */
+
+body.patient-portal .pdash-btn,
+body.patient-portal .psess-btn,
+body.patient-portal .pmh-btn,
+body.patient-portal .pts-btn,
+body.patient-portal .phs-btn,
+body.patient-portal .mc-btn {
+  min-height: var(--pt-btn-height);
+  padding: 0 var(--pt-btn-pad-x);
+  border-radius: var(--pt-btn-radius);
+  font-size: var(--pt-btn-font);
+  gap: var(--pt-space-sm);
+}
+
+body.patient-portal .pdash-btn--sm,
+body.patient-portal .psess-btn--sm {
+  min-height: 30px;
+  padding: 0 10px;
+  font-size: var(--pt-font-caption);
+}
+
+body.patient-portal .pdash-hero__actions,
+body.patient-portal .psess-empty__actions,
+body.patient-portal .pts-form__actions,
+body.patient-portal .psess-card__actions {
+  gap: var(--pt-btn-gap);
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   Forms
+   ═══════════════════════════════════════════════════════════════ */
+
+body.patient-portal .pts-form,
+body.patient-portal form.patient-form {
+  gap: var(--pt-form-gap);
+}
+
+body.patient-portal .pts-field,
+body.patient-portal .patient-form-group {
+  gap: var(--pt-label-gap);
+}
+
+body.patient-portal input[type="text"],
+body.patient-portal input[type="email"],
+body.patient-portal input[type="password"],
+body.patient-portal input[type="tel"],
+body.patient-portal input[type="number"],
+body.patient-portal input[type="date"],
+body.patient-portal input[type="search"],
+body.patient-portal select,
+body.patient-portal textarea,
+body.patient-portal .pts-input {
+  min-height: var(--pt-btn-height);
+  padding: 0 var(--pt-space-md);
+  font-size: var(--pt-font-body);
+  border-radius: var(--pt-btn-radius);
+}
+
+body.patient-portal textarea,
+body.patient-portal .pts-input--textarea {
+  min-height: 80px;
+  padding: var(--pt-space-sm);
+}
+
+body.patient-portal .pts-form__grid {
+  gap: var(--pt-form-gap);
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   Tables — dense rows
+   ═══════════════════════════════════════════════════════════════ */
+
+body.patient-portal .mc-table thead th,
+body.patient-portal .mc-table tbody td {
+  padding: var(--pt-table-cell-pad);
+  font-size: var(--pt-font-body);
+}
+
+body.patient-portal .mc-table thead th {
+  font-size: var(--pt-font-caption);
+}
+
+body.patient-portal .mc-table-empty {
+  padding: var(--pt-space-xl) var(--pt-space-md);
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   Badges
+   ═══════════════════════════════════════════════════════════════ */
+
+body.patient-portal .mc-badge,
+body.patient-portal .pdash-card__badge,
+body.patient-portal .pmh-status,
+body.patient-portal .psess-status {
+  padding: 3px 8px;
+  font-size: var(--pt-font-caption);
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   Badges
+   ═══════════════════════════════════════════════════════════════ */
+
+body.patient-portal .topbar {
+  padding-left: var(--pt-space-lg);
+  padding-right: var(--pt-space-lg);
+  min-height: 52px;
+}
+
+body.patient-portal .topbar-title {
+  font-size: var(--pt-font-section);
+  font-weight: 800;
+}
+
+body.patient-portal .topbar-eyebrow {
+  font-size: var(--pt-font-caption);
+}
+
+body.patient-portal .topbar-right {
+  gap: var(--pt-space-md);
+}
+
+body.patient-portal .topbar-icon-btn {
+  width: 34px;
+  height: 34px;
+}
+
+body.patient-portal .topbar-avatar {
+  width: 34px;
+  height: 34px;
+}
+
+/* Settings nav */
+body.patient-portal .pts-nav {
+  padding: var(--pt-space-xs);
+  gap: 2px;
+}
+
+body.patient-portal .pts-nav__item {
+  padding: var(--pt-space-sm) var(--pt-space-md);
+  gap: var(--pt-space-sm);
+}
+
+body.patient-portal .pts-nav__icon {
+  width: 32px;
+  height: 32px;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   Empty states — compact
+   ═══════════════════════════════════════════════════════════════ */
+
+body.patient-portal .pdash-empty,
+body.patient-portal .pmh-empty,
+body.patient-portal .psess-empty {
+  padding: var(--pt-space-xl) var(--pt-space-md);
+}
+
+body.patient-portal .psess-empty__icon,
+body.patient-portal .pdash-empty__icon,
+body.patient-portal .pmh-empty__icon {
+  width: 48px;
+  height: 48px;
+  margin-bottom: var(--pt-space-sm);
+}
+
+body.patient-portal .psess-empty__sub {
+  margin-bottom: var(--pt-space-md) !important;
+}
+
+/* Messages layout — patient-messages.css (loaded last on messages page) */
+body.patient-portal .messages-page {
+  max-width: 100%;
+  padding: 0;
+}
+
+/* Health summary — patient-health-summary.css (loaded last on page) */
+
+body.patient-portal .pdash-quick {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  margin-bottom: 0;
+}
+
+body.patient-portal .pdash-live,
+body.patient-portal .psess-live-banner {
+  padding: var(--pt-space-md);
+  margin-bottom: var(--pt-space-md);
+}
+
+body.patient-portal .pmh-visit {
+  gap: 0 var(--pt-space-md);
+}
+
+body.patient-portal .pmh-visit__body {
+  margin-bottom: var(--pt-card-gap);
+}
+
+body.patient-portal .patient-booking-card,
+body.patient-portal .patient-profile-card,
+body.patient-portal .booking-step-card {
+  padding: var(--pt-card-pad);
+  margin-bottom: var(--pt-card-gap);
+}
+
+/* Page entrance */
+body.patient-portal .portal-page-body > .patient-page,
+body.patient-portal .portal-page-body > .view-container.active {
+  animation: pt-page-in 0.22s ease;
+}
+
+@keyframes pt-page-in {
+  from { opacity: 0; transform: translateY(4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   Responsive
+   ═══════════════════════════════════════════════════════════════ */
+
+@media (max-width: 1024px) {
+  body.patient-portal .portal-page-body {
+    padding-left: var(--pt-space-md);
+    padding-right: var(--pt-space-md);
+  }
+
+  body.patient-portal .pdash-metrics {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  body.patient-portal .pdash-quick {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 768px) {
+  body.patient-portal .portal-page-body {
+    padding: calc(var(--mc-header-offset, 64px) + var(--pt-space-sm))
+             var(--pt-space-md)
+             var(--pt-space-md);
+  }
+
+  body.patient-portal .pdash-grid,
+  body.patient-portal .psess-layout,
+  body.patient-portal .pts-layout {
+    grid-template-columns: 1fr;
+  }
+
+  body.patient-portal .psess-side {
+    order: -1;
+  }
+
+  body.patient-portal .pdash-metrics,
+  body.patient-portal .pmh-metrics,
+  body.patient-portal .psess-metrics,
+  body.patient-portal .pdash-quick {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  body.patient-portal .psess-related__nav {
+    grid-template-columns: 1fr 1fr;
+    display: grid;
+  }
+}
+
+@media (max-width: 425px) {
+  body.patient-portal .portal-page-body {
+    padding-left: var(--pt-space-sm);
+    padding-right: var(--pt-space-sm);
+  }
+
+  body.patient-portal .pdash-metrics,
+  body.patient-portal .psess-metrics,
+  body.patient-portal .pdash-quick,
+  body.patient-portal .psess-related__nav {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 320px) {
+  body.patient-portal .portal-page-body {
+    padding-left: var(--pt-space-sm);
+    padding-right: var(--pt-space-sm);
+  }
+}

@@ -47,7 +47,10 @@ try {
             tr.urgency_label,
             tr.chief_complaint,
             tr.symptoms,
-            vs.room_token
+            vs.room_token,
+            s.slot_date,
+            s.start_time AS slot_start,
+            s.end_time AS slot_end
         FROM consultations c
         JOIN users u ON u.id = c.patient_id
         LEFT JOIN patient_registrations pr ON pr.email = u.email
@@ -61,7 +64,8 @@ try {
             ) t2 ON t2.patient_id = t1.patient_id AND t2.latest_at = t1.assessed_at
         ) tr ON tr.patient_id = c.patient_id
         LEFT JOIN video_sessions vs ON vs.consultation_id = c.id AND vs.status = 'active'
-        WHERE (c.provider_id = ? OR c.provider_id IS NULL OR c.provider_id = 0)
+        LEFT JOIN appointment_slots s ON s.consultation_id = c.id AND s.status = 'booked'
+        WHERE c.provider_id = ?
           AND c.consult_date >= DATE_SUB(CURDATE(), INTERVAL 7 DAY)
         ORDER BY
             CASE c.status
@@ -77,7 +81,7 @@ try {
     $stmt->execute([$provider_id]);
     $queue_items = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-    $stmt = $pdo->query("
+    $stmt = $pdo->prepare("
         SELECT
             tr.id,
             tr.patient_id,
@@ -91,6 +95,16 @@ try {
             u.last_name
         FROM triage_results tr
         JOIN users u ON u.id = tr.patient_id
+        WHERE
+          EXISTS (
+            SELECT 1 FROM consultations c
+            WHERE c.patient_id = tr.patient_id AND c.provider_id = ?
+          )
+          OR EXISTS (
+            SELECT 1 FROM appointment_slots s
+            WHERE s.patient_id = tr.patient_id AND s.provider_id = ? AND s.status = 'booked'
+              AND s.slot_date >= DATE_SUB(CURDATE(), INTERVAL 30 DAY)
+          )
         ORDER BY
             CASE
                 WHEN tr.level IN ('1', '2', 'Emergency', 'high') THEN 1
@@ -99,6 +113,7 @@ try {
             tr.assessed_at DESC
         LIMIT 8
     ");
+    $stmt->execute([$provider_id, $provider_id]);
     $triage_feed = $stmt->fetchAll(PDO::FETCH_ASSOC);
 } catch (Exception $e) {
     error_log('Queue page query failed: ' . $e->getMessage());
@@ -288,17 +303,21 @@ require_once __DIR__ . '/partials/layout_open.php';
                                 <td>
                                     <div class="queue-actions">
                                         <?php if ($session_access['allowed']): ?>
-                                            <a href="<?= $session_url ?>" class="queue-btn primary"><?= icon_sm('video') ?> Open Session</a>
+                                            <?php if (!empty($item['room_token']) || ($status === 'in_consultation')): ?>
+                                                <a href="<?= $session_url ?>" class="queue-btn primary"><?= icon_sm('video') ?> Enter Session</a>
+                                            <?php else: ?>
+                                                <a href="<?= $session_url ?>" class="queue-btn primary"><?= icon_sm('video') ?> Open &amp; Start</a>
+                                            <?php endif; ?>
                                         <?php else: ?>
                                             <button
                                                 type="button"
                                                 class="queue-btn primary is-disabled queue-open-session-blocked"
                                                 data-reason="<?= htmlspecialchars($session_access['reason'], ENT_QUOTES, 'UTF-8') ?>"
                                                 title="<?= htmlspecialchars($session_access['reason'], ENT_QUOTES, 'UTF-8') ?>"
-                                            ><?= icon_sm('video') ?> Open Session</button>
+                                            ><?= icon_sm('video') ?> Opens at Schedule</button>
                                         <?php endif; ?>
                                         <?php if (!empty($item['room_token']) && $session_access['allowed']): ?>
-                                            <a href="<?= ASSET_BASE ?>/views/consultation/video_room.php?token=<?= urlencode($item['room_token']) ?>" class="queue-btn"><?= icon_sm('monitor') ?> Room</a>
+                                            <a href="<?= ASSET_BASE ?>/views/consultation/video_room.php?token=<?= urlencode($item['room_token']) ?>" class="queue-btn"><?= icon_sm('monitor') ?> Live Room</a>
                                         <?php endif; ?>
                                     </div>
                                 </td>

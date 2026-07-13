@@ -3,6 +3,7 @@ $active_page = 'triage';
 $page_title  = 'Active Triage Review';
 $page_styles = ['provider_triage.css'];
 require __DIR__ . '/partials/icons.php';
+require_once BASE_PATH . '/app/includes/triage_assessment_schema.php';
 require __DIR__ . '/partials/data.php';
 require __DIR__ . '/partials/layout_open.php';
 
@@ -39,21 +40,21 @@ $pending_count    = count($display_cases) - $reviewed_count;
   <div class="triage-stat-card triage-stat-card--urgent">
     <div class="triage-stat-icon"><?= icon('activity') ?></div>
     <div>
-      <div class="triage-stat-value"><?= $urgent_count ?></div>
+      <div class="triage-stat-value" id="triageStatUrgent"><?= $urgent_count ?></div>
       <div class="triage-stat-label">Urgent Cases</div>
     </div>
   </div>
   <div class="triage-stat-card triage-stat-card--routine">
     <div class="triage-stat-icon"><?= icon('check') ?></div>
     <div>
-      <div class="triage-stat-value"><?= $non_urgent_count ?></div>
+      <div class="triage-stat-value" id="triageStatRoutine"><?= $non_urgent_count ?></div>
       <div class="triage-stat-label">Non-Urgent Cases</div>
     </div>
   </div>
   <div class="triage-stat-card triage-stat-card--reviewed">
     <div class="triage-stat-icon"><?= icon('eye') ?></div>
     <div>
-      <div class="triage-stat-value"><?= $reviewed_count ?></div>
+      <div class="triage-stat-value" id="triageStatReviewed"><?= $reviewed_count ?></div>
       <div class="triage-stat-label">Reviewed</div>
     </div>
   </div>
@@ -80,7 +81,8 @@ $pending_count    = count($display_cases) - $reviewed_count;
 <div class="mc-card" style="padding: 0; overflow: hidden;">
   <div class="mc-card-header" style="padding: 16px 20px; border-bottom: 1px solid var(--mc-border-thin);">
     <h3 class="text-h3" style="margin: 0;"><?= icon('activity') ?> AI Triage Case Review</h3>
-    <span class="text-xs text-muted"><?= count($display_cases) ?> total · <?= $pending_count ?> pending review</span>
+    <span class="text-xs text-muted" id="triageTableSummary"><?= count($display_cases) ?> total · <?= $pending_count ?> pending review</span>
+    <span class="text-xs text-muted" id="triageRefreshStatus" style="margin-left: 12px;">Auto-refresh on</span>
   </div>
 
   <div class="mc-table-wrap">
@@ -110,10 +112,11 @@ $pending_count    = count($display_cases) - $reviewed_count;
         $payload   = htmlspecialchars(json_encode($t, JSON_UNESCAPED_UNICODE), ENT_QUOTES, 'UTF-8');
       ?>
         <tr
-          class="<?= $is_urgent ? 'triage-row-urgent' : '' ?>"
+          class="<?= $is_urgent ? 'triage-row-urgent' : '' ?><?= !empty($t['expired']) ? ' triage-row-expired' : '' ?>"
           data-urgency="<?= $is_urgent ? 'urgent' : 'non-urgent' ?>"
           data-reviewed="<?= $t['reviewed'] ? 'true' : 'false' ?>"
           data-pending="<?= $t['reviewed'] ? 'false' : 'true' ?>"
+          data-expired="<?= !empty($t['expired']) ? 'true' : 'false' ?>"
         >
           <td data-label="Patient" style="font-weight: 700; color: var(--mc-navy-dark);">
             <?= htmlspecialchars($t['name']) ?>
@@ -150,6 +153,8 @@ $pending_count    = count($display_cases) - $reviewed_count;
           <td data-label="Workflow">
             <?php if ($t['reviewed']): ?>
             <span class="triage-badge triage-badge--reviewed">Reviewed</span>
+            <?php elseif (!empty($t['expired'])): ?>
+            <span class="triage-badge triage-badge--expired">Expired</span>
             <?php else: ?>
             <span class="triage-badge triage-badge--pending">Pending</span>
             <?php endif; ?>
@@ -157,8 +162,10 @@ $pending_count    = count($display_cases) - $reviewed_count;
           <td data-label="Actions">
             <div class="triage-actions">
               <button type="button" class="mc-btn mc-btn--outline triage-view-btn" style="padding: 6px 12px; font-size: 11px;" data-triage="<?= $payload ?>">View Details</button>
-              <?php if (!$t['reviewed']): ?>
+              <?php if (!empty($t['can_accept'])): ?>
               <button type="button" class="mc-btn mc-btn--primary triage-accept-btn" style="padding: 6px 12px; font-size: 11px;" data-id="<?= (int) $t['id'] ?>">Accept</button>
+              <?php elseif (!$t['reviewed'] && !empty($t['expired'])): ?>
+              <span class="triage-expired-note" title="Only same-day triage cases can be accepted.">Cannot accept</span>
               <?php endif; ?>
             </div>
           </td>
@@ -198,6 +205,40 @@ $pending_count    = count($display_cases) - $reviewed_count;
         <div id="modalComplaint" class="triage-modal-box triage-modal-box--complaint"></div>
       </div>
 
+      <div id="modalNlpAnalysis" class="triage-nlp-panel" hidden>
+        <span class="triage-field-label">AI NLP Analysis <span class="text-xs text-muted">(provider only)</span></span>
+        <div class="triage-nlp-grid">
+          <div>
+            <span class="triage-nlp-label">Translated Complaint</span>
+            <div id="modalEnglishComplaint" class="triage-modal-box"></div>
+          </div>
+          <div>
+            <span class="triage-nlp-label">Detected Symptoms</span>
+            <div id="modalDetectedSymptoms" class="triage-modal-box"></div>
+          </div>
+          <div>
+            <span class="triage-nlp-label">Possible Interpretation</span>
+            <div id="modalPossibleConditions" class="triage-modal-box"></div>
+          </div>
+          <div>
+            <span class="triage-nlp-label">Confidence</span>
+            <div id="modalConfidence" class="triage-modal-box"></div>
+          </div>
+          <div>
+            <span class="triage-nlp-label">Triage Level</span>
+            <div id="modalTriageLevel" class="triage-modal-box"></div>
+          </div>
+          <div>
+            <span class="triage-nlp-label">Assessed</span>
+            <div id="modalAssessedAt" class="triage-modal-box"></div>
+          </div>
+        </div>
+        <div style="margin-top: 12px;">
+          <span class="triage-nlp-label">AI Recommendations</span>
+          <div id="modalRecommendations" class="triage-modal-box"></div>
+        </div>
+      </div>
+
       <div class="triage-override-box">
         <span class="triage-field-label">Manual Override (Clinical Decision)</span>
         <div class="triage-override-row">
@@ -221,136 +262,15 @@ $pending_count    = count($display_cases) - $reviewed_count;
   </div>
 </div>
 
+<?php $triageLiveJsVer = (int) @filemtime(ASSETS_PATH . '/js/provider-triage-live.js'); ?>
 <script>
-const TRIAGE_API = <?= json_encode(ASSET_BASE . '/app/api/provider/update_triage.php') ?>;
-let currentTriageId = null;
-
-function parseTriagePayload(raw) {
-  try {
-    return JSON.parse(raw);
-  } catch {
-    return null;
-  }
-}
-
-function viewTriageDetails(t) {
-  currentTriageId = t.id;
-  document.getElementById('modalName').textContent = t.name || '—';
-
-  const symptoms = Array.isArray(t.symptoms_list) && t.symptoms_list.length
-    ? t.symptoms_list.join(', ')
-    : (t.symptoms_display || '—');
-  document.getElementById('modalSymptoms').textContent = symptoms;
-  document.getElementById('modalComplaint').textContent = t.complaint || 'No detailed complaint provided.';
-  document.getElementById('overrideLevel').value = t.level || '3';
-
-  const urgencyEl = document.getElementById('modalUrgency');
-  urgencyEl.innerHTML = t.urgency === 'Urgent'
-    ? '<span class="triage-badge triage-badge--urgent">Urgent</span>'
-    : '<span class="triage-badge triage-badge--routine">Non-Urgent</span>';
-
-  document.getElementById('modalAcceptBtn').style.display = t.reviewed ? 'none' : 'inline-flex';
-
-  const modal = document.getElementById('triageModal');
-  modal.classList.add('is-open');
-  modal.setAttribute('aria-hidden', 'false');
-}
-
-function closeTriageModal() {
-  const modal = document.getElementById('triageModal');
-  modal.classList.remove('is-open');
-  modal.setAttribute('aria-hidden', 'true');
-}
-
-async function acceptTriage(id) {
-  if (!confirm('Accept this patient and move them to the consultation queue?')) return;
-  try {
-    const res = await fetch(TRIAGE_API, {
-      method: 'POST',
-      credentials: 'same-origin',
-      body: new URLSearchParams({ id: String(id), action: 'accept' }),
-    });
-    const data = await res.json();
-    if (data.success) {
-      window.location.reload();
-    } else {
-      alert(data.message || 'Could not update triage status.');
-    }
-  } catch {
-    alert('Error updating triage status.');
-  }
-}
-
-async function applyOverride() {
-  const level = document.getElementById('overrideLevel').value;
-  if (!currentTriageId) return;
-  if (!confirm('Are you sure you want to manually override the AI priority level?')) return;
-  try {
-    const res = await fetch(TRIAGE_API, {
-      method: 'POST',
-      credentials: 'same-origin',
-      body: new URLSearchParams({
-        id: String(currentTriageId),
-        action: 'override',
-        level: level,
-      }),
-    });
-    const data = await res.json();
-    if (data.success) {
-      window.location.reload();
-    } else {
-      alert(data.message || 'Could not update priority.');
-    }
-  } catch {
-    alert('Error updating priority.');
-  }
-}
-
-function acceptTriageFromModal() {
-  if (currentTriageId) {
-    acceptTriage(currentTriageId);
-  }
-}
-
-document.querySelectorAll('.triage-view-btn').forEach((btn) => {
-  btn.addEventListener('click', () => {
-    const payload = parseTriagePayload(btn.dataset.triage || '');
-    if (payload) viewTriageDetails(payload);
-  });
-});
-
-document.querySelectorAll('.triage-accept-btn').forEach((btn) => {
-  btn.addEventListener('click', () => acceptTriage(Number(btn.dataset.id || 0)));
-});
-
-document.querySelectorAll('.triage-tab[data-filter]').forEach((tab) => {
-  tab.addEventListener('click', () => {
-    document.querySelectorAll('.triage-tab[data-filter]').forEach((t) => t.classList.remove('active'));
-    tab.classList.add('active');
-    const filter = tab.dataset.filter;
-    document.querySelectorAll('#triageTable tbody tr[data-urgency]').forEach((row) => {
-      if (filter === 'all') {
-        row.style.display = '';
-        return;
-      }
-      if (filter === 'reviewed') {
-        row.style.display = row.dataset.reviewed === 'true' ? '' : 'none';
-        return;
-      }
-      if (filter === 'pending') {
-        row.style.display = row.dataset.pending === 'true' ? '' : 'none';
-        return;
-      }
-      row.style.display = row.dataset.urgency === filter ? '' : 'none';
-    });
-  });
-});
-
-document.getElementById('triageModal')?.addEventListener('click', (event) => {
-  if (event.target.id === 'triageModal') {
-    closeTriageModal();
-  }
-});
+window.MedConnectTriage = {
+  listApi: <?= json_encode(ASSET_BASE . '/app/api/provider/get_triage.php') ?>,
+  updateApi: <?= json_encode(ASSET_BASE . '/app/api/provider/update_triage.php') ?>,
+  tab: <?= json_encode($module_tab) ?>,
+  refreshMs: 15000,
+};
 </script>
+<script src="<?= ASSET_BASE ?>/assets/js/provider-triage-live.js?v=<?= $triageLiveJsVer ?>"></script>
 
 <?php require __DIR__ . '/partials/layout_close.php'; ?>

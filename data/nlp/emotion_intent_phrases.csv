@@ -1,0 +1,269 @@
+emotion,phrase,language
+happy,I'm feeling better,en
+happy,I'm happy,en
+happy,Everything is okay,en
+happy,I'm doing great,en
+happy,feeling good,en
+happy,so happy,en
+happy,Masadya ko,hil
+happy,Okay na ko,hil
+happy,Nami pamatyag ko,hil
+happy,Lipay ko,hil
+happy,Maayo gid,hil
+happy,Masaya ako,fil
+happy,Okay na ako,fil
+happy,Mabuti ang pakiramdam ko,fil
+happy,Maganda ang araw ko,fil
+thankful,Thank you,en
+thankful,Thanks,en
+thankful,Thank you so much,en
+thankful,Thanks a lot,en
+thankful,Maraming salamat,fil
+thankful,Salamat po,fil
+thankful,Salamat,hil
+thankful,Madamo gid nga salamat,hil
+thankful,Thank you gid,hil
+thankful,Salamat guid,hil
+thankful,Salamat kaayo,hil
+relieved,What a relief,en
+relieved,I'm relieved,en
+relieved,Finally got it,en
+relieved,Good to know,en
+relieved,Okay na,fil
+relieved,Buti na lang,fil
+relieved,Ginhawa na ko,fil
+relieved,Okay na ko,hil
+relieved,Relief na gid,hil
+relieved,Maayo na,hil
+excited,I'm excited,en
+excited,Can't wait,en
+excited,Looking forward,en
+excited,Excited na ako,fil
+excited,Sabik na ako,fil
+excited,Excited gid ko,hil
+excited,Abir excited ko,hil
+curious,I'm curious,en
+curious,Just wondering,en
+curious,Can you tell me,en
+curious,Gusto ko malaman,fil
+curious,Ano kaya,fil
+curious,Curious lang ko,fil
+curious,Gusto ko mahibal-an,hil
+curious,Ano kaya ini,hil
+confused,I don't understand,en
+confused,I'm confused,en
+confused,How does this work,en
+confused,This is confusing,en
+confused,I'm lost,en
+confused,Hindi ko maintindihan,fil
+confused,Nalilito ako,fil
+confused,Paano ito gumagana,fil
+confused,Nalipat ko,hil
+confused,Wala ko kaintindi,hil
+confused,Budlay intindihon,hil
+confused,Indi ko masabtan,hil
+confused,Nalibog ako,hil
+confused,How does this work,en
+frustrated,This isn't working,en
+frustrated,I'm frustrated,en
+frustrated,Login won't work,en
+frustrated,So frustrating,en
+frustrated,This is annoying,en
+frustrated,Hindi gumagana,fil
+frustrated,Frustrated na ako,fil
+frustrated,Ayaw mag-login,fil
+frustrated,Kaakig ko,hil
+frustrated,Hindi gid mag-login,hil
+frustrated,Kapoy na ko sini,hil
+frustrated,Indi gid mag-work,hil
+frustrated,Frustrated gid ko,hil
+worried,I'm worried,en
+worried,I'm worried about my health,en
+worried,I'm concerned,en
+worried,I'm worried about my appointment,en
+worried,Nag-aalala ako,fil
+worried,Basi may sakit ako,fil
+worried,Nabalaka ko,fil
+worried,Nabalaka ko kay may hilanat ko,fil
+worried,Basi may sakit ko,hil
+worried,Nabalaka ko,hil
+worried,Kulba ko,hil
+worried,Kabalaka ko,hil
+anxious,I'm anxious,en
+anxious,I feel anxious,en
+anxious,Feeling anxious,en
+anxious,Ginakulbaan ko,fil
+anxious,Kinakabahan ako,fil
+anxious,Nahadlok ako,fil
+anxious,Ginakulbaan ko,hil
+anxious,Nahadlok ko,hil
+anxious,Daw indi ko mapanatag,hil
+nervous,I'm nervous,en
+nervous,I feel nervous,en
+nervous,So nervous,en
+nervous,Kinakabahan ako,fil
+nervous,Nerbiyoso ako,fil
+nervous,Kinakabahan gid ko,hil
+nervous,Nerbiyoso ko,hil
+sad,I'm sad,en
+sad,I'm depressed,en
+sad,Feeling down,en
+sad,So sad,en
+sad,Malungkot ako,fil
+sad,Depressed ako,fil
+sad,Subo ko,hil
+sad,Kasubo gid,hil
+sad,Daw gusto ko maghibi,hil
+sad,Naguiliran ko,hil
+lonely,I feel lonely,en
+lonely,I'm alone,en
+lonely,So lonely,en
+lonely,Malungkot mag-isa,fil
+lonely,Wala akong kasama,fil
+lonely,Wala ko sang upod,hil
+lonely,Daw ako lang isa,hil
+lonely,Alone lang ko,hil
+afraid,I'm scared,en
+afraid,I'm afraid,en
+afraid,So scared,en
+afraid,Natakot ako,fil
+afraid,Takot ako,fil
+afraid,Nahadlok ko,hil
+afraid,Kulba gid ko,hil
+afraid,Basi delikado ni,hil
+angry,I'm angry,en
+angry,This system is terrible,en
+angry,So angry,en
+angry,Galit ako,fil
+angry,Badtrip ako,fil
+angry,Kaakig ko,hil
+angry,Badtrip gid ko,hil
+angry,Akig gid ko,hil
+disappointed,I'm disappointed,en
+disappointed,So disappointed,en
+disappointed,Let down,en
+disappointed,Nadismaya ako,fil
+disappointed,Disappointed ako,fil
+disappointed,Nadismaya ko,hil
+disappointed,Disappointed gid ko,hil
+stressed,I'm stressed,en
+stressed,So stressed,en
+stressed,Overwhelmed,en
+stressed,Stressed na ako,fil
+stressed,Stress na stress,fil
+stressed,Kapoy na gid ko,hil
+stressed,Stress na stress ko,hil
+stressed,Daw indi ko na kaya,hil
+tired,I'm exhausted,en
+tired,I'm tired,en
+tired,So tired,en
+tired,No energy,en
+tired,Pagod na ako,fil
+tired,Wala na akong lakas,fil
+tired,Kapoy ko,hil
+tired,Kapoy na gid ko,hil
+tired,Wala na ko energy,hil
+hopeless,I feel hopeless,en
+hopeless,No hope,en
+hopeless,Hopeless na,fil
+hopeless,Wala na akong pag-asa,fil
+hopeless,Wala na paglaum,hil
+hopeless,Hopeless na ko,hil
+panic,I don't know what to do,en
+panic,I'm panicking,en
+panic,Need help now,en
+panic,Help me,en
+panic,Hindi ko alam gagawin,fil
+panic,Nag-ppanic ako,fil
+panic,Ginapanik ko,hil
+panic,Buligi ko,hil
+panic,Need help,hil
+panic,Indi ko bal-an ano himuon,hil
+emergency,I can't breathe,en
+emergency,Chest pain,en
+emergency,I'm bleeding,en
+emergency,Someone collapsed,en
+emergency,Heart attack,en
+emergency,Stroke,en
+emergency,Can't breathe,en
+emergency,Severe bleeding,en
+emergency,Hirap huminga,fil
+emergency,Masakit ang dibdib,fil
+emergency,Grabe ang pagdurugo,fil
+emergency,Nawalan ng malay,fil
+emergency,Nagaginhawa ko budlay,hil
+emergency,Ginabatyag ko sakit sa dughan,hil
+emergency,Grabe nga pagdugo,hil
+emergency,Wala siya sang panimuot,hil
+emergency,Nagakombulsyon,hil
+emergency,Indi makaginhawa,hil
+emergency,Indi makahinga,hil
+emergency,Someone passed out,en
+emergency,Nahihirapan huminga,fil
+emergency,Atake sa puso,fil
+emergency,Nagdurugo ng malala,fil
+emergency,Nahimo ko,hil
+emergency,Nagtumble ang lola ko,fil
+frustrated,This isn't working at all,en
+frustrated,I forgot my password and I'm frustrated,en
+frustrated,Ayaw talaga mag-login,fil
+frustrated,Budlay gid mag-login,hil
+frustrated,Kapoy na gid ko sini,hil
+frustrated,Hindi gid mag-login sa account ko,fil
+worried,I'm worried about my appointment,en
+worried,Nabalaka ko kay may hilanat ko,hil
+worried,Basi may sakit ang bata,fil
+worried,Kulba ko parte sa appointment,hil
+anxious,I'm anxious about my health,en
+anxious,Ginakulbaan ko parte sa konsultasyon,fil
+anxious,Daw indi ko mapanatag subong,hil
+confused,How does medconnect work,en
+confused,Paano gumagana ang medconnect,fil
+confused,Paano magamit ang medconnect,hil
+confused,Budlay intindihon ang sistema,hil
+thankful,Thank you so much for your help,en
+thankful,Maraming salamat sa tulong,fil
+thankful,Damo gid nga salamat sa bulig,hil
+panic,I don't know what to do anymore,en
+panic,Ano na ang gagawin ko,fil
+panic,Indi ko na bal-an ano himuon ko,hil
+lonely,Wala ako makakausap,fil
+lonely,Wala ko sang may maistoryahan,hil
+sad,Subo gid ang buhay ko,hil
+sad,Sobrang lungkot,fil
+angry,Ang panget ng system na to,fil
+angry,Grabe kaayo ni nga sistema,hil
+stressed,Stress na stress na ako,fil
+stressed,Grabeng stress ko subong,hil
+tired,Wala na akong lakas magpatuloy,fil
+tired,Wala na ko kusog,hil
+hopeless,Parang wala nang solusyon,fil
+hopeless,Wala na solusyon,hil
+hopeless,Gusto ko nang mamatay,fil
+hopeless,Gusto ko ng mamatay,fil
+hopeless,Gusto ko mamatay,fil
+hopeless,Buot ko magpakamatay,hil
+hopeless,Ayaw ko mabuhay,fil
+hopeless,Wala na koy paglaum,hil
+sick,May hilanat ko,fil
+sick,Sakit ulo ko,fil
+pain,Sakit dughan ko,fil
+pain,Gasuka ko,fil
+hopeless,Wala na akong gustong mabuhay,fil
+curious,Paano mag-book ng appointment,fil
+curious,Diin ko maka-book sang appointment,hil
+curious,Pwede ko mag-book sang appointment,hil
+curious,Need ko mag-reset sang password,hil
+curious,Hindi ako maka-login sa account ko,fil
+relieved,Salamat okay na ang login,fil
+relieved,Salamat guid okay na,hil
+excited,Excited na mag-book ng appointment,fil
+excited,Excited na ko mag konsulta,hil
+disappointed,Hindi nag-work ang appointment ko,fil
+disappointed,Indi nag-work ang appointment ko,hil
+nervous,Kinakabahan ako sa video consult,fil
+nervous,Kinakabahan ko sa video konsultasyon,hil
+afraid,Basi delikado ang sintomas ko,fil
+afraid,Basi delikado ang sintomas ko,hil
+happy,Maayo na ang tanan subong,hil
+happy,Okay na ang tanan,fil

@@ -15,7 +15,8 @@ if (!defined('BASE_PATH')) {
 require_once BASE_PATH . '/app/includes/patient_account_security.php';
 
 if (empty($_SESSION['user_id']) || ($_SESSION['user_role'] ?? '') !== 'patient') {
-    header('Location: ' . BASE_URL . '/index.php');
+    require_once BASE_PATH . '/app/includes/auth_guard.php';
+    header('Location: ' . auth_signin_required_url());
     exit;
 }
 

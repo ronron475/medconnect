@@ -1,0 +1,225 @@
+/* ===== About Us · Milestone (BSIS capstone section) ===== */
+
+.landing-page .about-team-section {
+  padding-bottom: clamp(64px, 8vw, 96px);
+}
+
+.landing-page .about-team-section__kicker {
+  margin: 0 0 8px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #5eead4;
+}
+
+.landing-page .about-team-section__intro {
+  max-width: 720px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.landing-page .about-team-section__layout {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 0;
+}
+
+/* Story panel — centered, full container width like BSIS milestone */
+.landing-page .about-team-section__story {
+  width: 100%;
+  max-width: 100%;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 20px;
+  padding: clamp(28px, 4vw, 40px);
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.12);
+}
+
+.landing-page .about-team-section__story-icon {
+  font-size: 1.75rem;
+  line-height: 1;
+  margin-bottom: 12px;
+}
+
+/* ── BSIS-style upward scrolling text (header fixed, text moves) ── */
+.landing-page .about-project-milestone__head {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+.landing-page .about-project-milestone__head .about-team-section__story-icon {
+  margin-bottom: 10px;
+}
+
+.landing-page .about-project-milestone__title-badge {
+  display: inline-block;
+  margin: 0 0 8px;
+  padding: 6px 14px;
+  font-size: 0.8125rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #fff;
+  background: linear-gradient(135deg, #0369a1 0%, #069396 100%);
+  border-radius: 6px;
+  line-height: 1.2;
+}
+
+.landing-page .about-project-milestone__tagline {
+  margin: 0;
+  max-width: 680px;
+  font-size: 0.8125rem;
+  line-height: 1.55;
+  color: rgba(255, 255, 255, 0.62);
+}
+
+.landing-page .about-project-milestone__scroll-box {
+  position: relative;
+  height: 240px;
+  overflow: hidden;
+  border-radius: 14px;
+  border: 1px solid rgba(59, 130, 246, 0.35);
+  background: rgba(1, 20, 40, 0.55);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.04);
+}
+
+.landing-page .about-project-milestone__scroll-box::before,
+.landing-page .about-project-milestone__scroll-box::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 28px;
+  z-index: 2;
+  pointer-events: none;
+}
+
+.landing-page .about-project-milestone__scroll-box::before {
+  top: 0;
+  background: linear-gradient(to bottom, rgba(1, 42, 74, 0.95), transparent);
+}
+
+.landing-page .about-project-milestone__scroll-box::after {
+  bottom: 0;
+  background: linear-gradient(to top, rgba(1, 42, 74, 0.95), transparent);
+}
+
+.landing-page .about-project-milestone__scroll-track {
+  --scroll-duration: 48s;
+  display: flex;
+  flex-direction: column;
+  will-change: transform;
+}
+
+.landing-page .about-project-milestone__scroll-box.is-scrolling .about-project-milestone__scroll-track {
+  animation: about-project-scroll-up var(--scroll-duration) linear infinite;
+}
+
+.landing-page .about-project-milestone__scroll-box.is-static {
+  height: auto;
+  max-height: 320px;
+  overflow-y: auto;
+}
+
+.landing-page .about-project-milestone__scroll-box.is-static .about-project-milestone__scroll-group[aria-hidden="true"] {
+  display: none;
+}
+
+@keyframes about-project-scroll-up {
+  from { transform: translateY(0); }
+  to { transform: translateY(-50%); }
+}
+
+.landing-page .about-project-milestone__scroll-group {
+  padding: 16px 18px;
+}
+
+.landing-page .about-project-milestone__entry {
+  margin-bottom: 18px;
+}
+
+.landing-page .about-project-milestone__entry:last-child {
+  margin-bottom: 0;
+}
+
+.landing-page .about-project-milestone__text {
+  margin: 0;
+  font-size: 0.9375rem;
+  line-height: 1.75;
+  color: rgba(255, 255, 255, 0.82);
+  text-align: left;
+}
+
+.landing-page .about-project-milestone__text strong {
+  color: rgba(255, 255, 255, 0.96);
+  font-weight: 700;
+}
+
+.landing-page .about-team-section__partners {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  margin-top: 22px;
+  padding-top: 18px;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  text-align: center;
+}
+
+.landing-page .about-team-section__bcc-logo {
+  width: 48px;
+  height: 48px;
+  object-fit: contain;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.95);
+  padding: 4px;
+}
+
+.landing-page .about-team-section__partners-label {
+  display: block;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: rgba(255, 255, 255, 0.52);
+  margin-bottom: 2px;
+}
+
+.landing-page .about-team-section__partners-name {
+  display: block;
+  font-size: 0.875rem;
+  font-weight: 700;
+  color: #5eead4;
+}
+
+@media (max-width: 580px) {
+  .landing-page .about-project-milestone__scroll-box {
+    height: 200px;
+  }
+
+  .landing-page .about-team-section__story-icon {
+    text-align: center;
+    width: 100%;
+  }
+
+  .landing-page .about-project-milestone__title-badge {
+    font-size: 0.75rem;
+    padding: 5px 12px;
+  }
+}
+
+@media (min-width: 768px) and (max-width: 991px) {
+  .landing-page .about-team-section__story {
+    padding: var(--landing-space-md, 32px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .landing-page .about-project-milestone__scroll-box.is-scrolling .about-project-milestone__scroll-track {
+    animation: none;
+  }
+}

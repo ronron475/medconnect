@@ -1,12 +1,18 @@
 <?php
-$page_title = 'Send Reminders';
+$page_title = 'Follow-Up Monitoring';
 $bhw_current_file = 'followup/reminders.php';
 require __DIR__ . '/../partials/bhw_bootstrap.php';
 require __DIR__ . '/../partials/layout_open.php';
+$bhw_subnav_items = [
+    ['file' => 'track.php', 'label' => 'Track follow-ups'],
+    ['file' => 'reminders.php', 'label' => 'Send reminders'],
+];
+$bhw_subnav_active = 'followup/reminders.php';
 ?>
 <div class="bhw-card">
-  <h2 class="text-h2">Send Follow-Up Reminders</h2>
+  <h2 class="text-h2">Follow-Up Monitoring</h2>
   <p class="text-muted">Sends in-app notification to patient and logs audit entry.</p>
+  <?php require __DIR__ . '/../partials/bhw_module_subnav.php'; ?>
   <div id="bhwRemList">Loading…</div>
 </div>
 <script>

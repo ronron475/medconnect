@@ -1,0 +1,696 @@
+/* ===== Hero Sign-In panel — inline slide + viewport-safe layout ===== */
+
+:root {
+  --hero-signin-nav-offset: 76px;
+  --hero-signin-gap: 12px;
+}
+
+/* Skip hero/panel motion during auth handoff (prevents flash on sign-in success). */
+html.signin-skip-motion .hero-copy-shift,
+html.signin-skip-motion .hero-signin-panel,
+html.signin-skip-motion #signin-modal.hero-signin-panel {
+  transition: none !important;
+}
+
+.landing-page .hero--cinematic {
+  overflow: visible;
+}
+
+.landing-page.signin-active .hero--cinematic {
+  overflow: visible;
+}
+
+.landing-page .hero--cinematic .hero-stage {
+  display: block;
+  width: 100%;
+  position: relative;
+  min-height: inherit;
+}
+
+.landing-page .hero--cinematic .hero-copy-shift {
+  position: relative;
+  z-index: 2;
+  max-width: 640px;
+  transition: transform 0.42s ease-in-out;
+  will-change: transform;
+  transform: translateX(0);
+}
+
+/* Panel — closed state (in hero flow for layout) */
+.landing-page .hero-signin-panel {
+  position: absolute;
+  top: 0;
+  right: 0;
+  z-index: 4;
+  width: min(400px, 42vw);
+  max-width: 400px;
+  display: flex;
+  align-items: flex-start;
+  justify-content: flex-end;
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transform: translateX(48px);
+  transition:
+    transform 0.42s ease-in-out,
+    opacity 0.42s ease-in-out,
+    visibility 0s linear 0.42s;
+}
+
+.landing-page .hero-signin-panel[hidden] {
+  display: none !important;
+}
+
+.landing-page .hero-signin-panel.is-open {
+  display: flex !important;
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
+  transform: translateX(0);
+  transition:
+    transform 0.42s ease-in-out,
+    opacity 0.42s ease-in-out,
+    visibility 0s linear 0s;
+}
+
+.landing-page .hero-signin-panel.is-closing {
+  display: flex !important;
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transform: translateX(48px);
+  transition:
+    transform 0.38s ease-in-out,
+    opacity 0.38s ease-in-out,
+    visibility 0s linear 0.38s;
+}
+
+/* When open: pin panel to viewport (never scroll with page) */
+body.landing-page.signin-active > #signin-modal.hero-signin-panel,
+body.landing-page.signin-active #signin-modal.hero-signin-panel.is-open,
+body.landing-page.signin-active #signin-modal.hero-signin-panel.is-closing,
+body.landing-page.signin-active #signin-modal.hero-signin-panel.is-viewport-pinned,
+#signin-modal.hero-signin-panel.is-open,
+#signin-modal.hero-signin-panel.is-viewport-pinned {
+  position: fixed !important;
+  top: calc(var(--hero-signin-nav-offset) + var(--hero-signin-gap)) !important;
+  right: max(20px, calc((100vw - 1320px) / 2 + 24px)) !important;
+  left: auto !important;
+  bottom: var(--hero-signin-gap) !important;
+  width: min(400px, calc(100vw - 40px)) !important;
+  max-width: 400px !important;
+  height: auto;
+  max-height: calc(100dvh - var(--hero-signin-nav-offset) - (var(--hero-signin-gap) * 2)) !important;
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: stretch;
+  overflow: hidden !important;
+  transform: translateX(0);
+  z-index: 1250 !important;
+}
+
+/* Lock page scroll while sign-in is open (all breakpoints) */
+html:has(body.landing-page.signin-active) {
+  overflow: hidden !important;
+  overscroll-behavior: none;
+}
+
+body.landing-page.signin-active {
+  overflow: hidden !important;
+  overscroll-behavior: none;
+}
+
+.landing-page.signin-active .hero--cinematic .hero-copy-shift,
+.landing-page .hero--cinematic.is-signin-open .hero-copy-shift {
+  transform: translateX(clamp(-140px, -10vw, -56px));
+}
+
+.landing-page .hero-signin-panel .signin-modal-wrap {
+  position: relative;
+  width: 100%;
+  max-width: 100%;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  min-width: 0;
+  max-height: 100%;
+  box-sizing: border-box;
+  overflow: visible;
+}
+
+body.landing-page.signin-active #signin-modal.hero-signin-panel .signin-modal-wrap,
+body.landing-page.signin-active .hero-signin-panel.is-open .signin-modal-wrap {
+  flex: 1 1 auto;
+  min-height: 0;
+  max-height: 100%;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+body.landing-page.signin-active #signin-modal.hero-signin-panel .signin-modal-inner,
+body.landing-page.signin-active .hero-signin-panel.is-open .signin-modal-inner {
+  flex: 1 1 auto;
+  min-height: 0;
+  max-height: 100%;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+}
+
+.landing-page .hero-signin-panel .signin-modal-inner {
+  position: relative;
+  width: 100%;
+  max-width: 100%;
+  flex: 1 1 auto;
+  min-height: 0;
+  min-width: 0;
+  max-height: min(72vh, 680px);
+  overflow-y: auto;
+  overflow-x: hidden;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(94, 234, 212, 0.45) transparent;
+  opacity: 1;
+  transform: none;
+  transition: none;
+  box-sizing: border-box;
+}
+
+.landing-page .hero-signin-panel .signin-modal-inner::-webkit-scrollbar {
+  width: 6px;
+}
+
+.landing-page .hero-signin-panel .signin-modal-inner::-webkit-scrollbar-thumb {
+  background: rgba(94, 234, 212, 0.4);
+  border-radius: 999px;
+}
+
+.landing-page .hero-signin-panel .signin-modal-inner::after {
+  content: '';
+  position: sticky;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  display: block;
+  height: 20px;
+  margin-top: -20px;
+  background: linear-gradient(to bottom, transparent, rgba(1, 42, 74, 0.35));
+  pointer-events: none;
+}
+
+.landing-page .hero-signin-panel .signin-modal-close {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  z-index: 20;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.14);
+  border: 1px solid rgba(255, 255, 255, 0.28);
+  color: rgba(255, 255, 255, 0.92);
+  font-size: 18px;
+  line-height: 1;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: background 0.2s, color 0.2s, transform 0.15s, border-color 0.2s;
+}
+
+.landing-page .hero-signin-panel .signin-modal-close:hover {
+  background: rgba(255, 255, 255, 0.24);
+  border-color: rgba(255, 255, 255, 0.42);
+  color: #fff;
+  transform: scale(1.06);
+}
+
+.landing-page .hero-signin-panel .signin-modal-close:focus-visible {
+  outline: 2px solid rgba(94, 234, 212, 0.9);
+  outline-offset: 2px;
+}
+
+body.landing-page.signin-active .bg-canvas,
+body.landing-page.signin-active .landing-navbar,
+body.landing-page.signin-active .hero,
+body.landing-page.signin-active .announcements-section,
+body.landing-page.signin-active .services-section,
+body.landing-page.signin-active .contact-section,
+body.landing-page.signin-active #landing-fab {
+  pointer-events: none;
+}
+
+body.landing-page.signin-active .landing-navbar {
+  opacity: 1;
+  visibility: visible;
+}
+
+body.landing-page.signin-active #signin-modal {
+  z-index: 1250;
+  pointer-events: auto;
+}
+
+/* ── Glass card — compact hero inline variant ── */
+.landing-page .hero-signin-panel .signin-card--hero-inline {
+  --signin-space-md: 14px;
+  --signin-space-lg: 18px;
+  --signin-input-height: 46px;
+
+  padding: 22px 22px 18px;
+  border-radius: 18px;
+  background:
+    linear-gradient(165deg, rgba(255, 255, 255, 0.2) 0%, rgba(255, 255, 255, 0.08) 100%),
+    rgba(1, 42, 74, 0.52);
+  backdrop-filter: blur(24px) saturate(1.35);
+  -webkit-backdrop-filter: blur(24px) saturate(1.35);
+  border: 1px solid rgba(255, 255, 255, 0.24);
+  box-shadow:
+    0 16px 48px rgba(1, 42, 74, 0.38),
+    0 4px 14px rgba(0, 0, 0, 0.18),
+    inset 0 1px 0 rgba(255, 255, 255, 0.28);
+}
+
+.landing-page .hero-signin-panel .signin-card__head {
+  gap: 14px;
+  margin-bottom: 16px;
+  padding-bottom: 14px;
+  padding-right: 44px;
+  border-bottom-color: rgba(255, 255, 255, 0.14);
+}
+
+.landing-page .hero-signin-panel .signin-card__head .signin-card__logo {
+  width: 44px;
+  height: 44px;
+}
+
+.landing-page .hero-signin-panel .signin-card__head .card-title {
+  font-size: 1.2rem;
+  color: #fff;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+}
+
+.landing-page .hero-signin-panel .signin-card__head .card-sub {
+  font-size: 0.8125rem;
+  color: rgba(255, 255, 255, 0.78);
+  max-width: none;
+}
+
+.landing-page .hero-signin-panel .signin-card__primary .form-group {
+  margin-bottom: 12px;
+}
+
+.landing-page .hero-signin-panel .signin-card__primary .form-footer-row {
+  margin-top: 4px;
+  margin-bottom: 14px;
+}
+
+.landing-page .hero-signin-panel .signin-card__primary .btn-signin {
+  height: 48px;
+  font-size: 0.9375rem;
+}
+
+.landing-page .hero-signin-panel .signin-card__primary .card-register {
+  margin: 14px 0 0;
+  font-size: 0.8125rem;
+  text-align: center;
+}
+
+.landing-page .hero-signin-panel .signin-card__extras {
+  margin-top: 14px;
+  padding-top: 14px;
+  border-top: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+.landing-page .hero-signin-panel .provider-note--compact,
+.landing-page .hero-signin-panel .emergency-note--compact {
+  padding: 10px 12px;
+  margin: 0 0 8px;
+  border-radius: 10px;
+  font-size: 0.75rem;
+  line-height: 1.5;
+  gap: 8px;
+}
+
+.landing-page .hero-signin-panel .provider-note--compact {
+  background: rgba(255, 255, 255, 0.07);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  color: rgba(255, 255, 255, 0.82);
+}
+
+.landing-page .hero-signin-panel .provider-note--compact svg {
+  width: 15px;
+  height: 15px;
+  color: #5eead4;
+  flex-shrink: 0;
+}
+
+.landing-page .hero-signin-panel .emergency-note--compact {
+  background: rgba(251, 191, 36, 0.1);
+  border: 1px solid rgba(251, 191, 36, 0.28);
+  color: rgba(255, 248, 230, 0.92);
+}
+
+.landing-page .hero-signin-panel .emergency-note--compact svg {
+  width: 15px;
+  height: 15px;
+  color: #fcd34d;
+}
+
+.landing-page .hero-signin-panel .card-badges--compact {
+  margin-top: 10px;
+  padding-top: 0;
+  border-top: none;
+  gap: 8px 10px;
+  justify-content: flex-start;
+}
+
+.landing-page .hero-signin-panel .card-badges--compact .trust-badge {
+  font-size: 0.625rem;
+  color: rgba(255, 255, 255, 0.82);
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.landing-page .hero-signin-panel .card-badges--compact .trust-badge svg {
+  width: 12px;
+  height: 12px;
+  flex-shrink: 0;
+  color: #5eead4;
+  stroke: currentColor;
+  opacity: 1;
+}
+
+/* Form fields — glass theme */
+.landing-page .hero-signin-panel .signin-modal-inner .signin-card .form-group label {
+  color: rgba(255, 255, 255, 0.94);
+  font-size: 0.8125rem;
+  margin-bottom: 6px;
+}
+
+.landing-page .hero-signin-panel .signin-modal-inner .signin-card .input-wrap input,
+.landing-page .hero-signin-panel .signin-modal-inner .signin-card .input-wrap select {
+  background: rgba(255, 255, 255, 0.92);
+  border-color: rgba(255, 255, 255, 0.35);
+  color: #012a4a;
+  caret-color: #012a4a;
+}
+
+.landing-page .hero-signin-panel .signin-modal-inner .signin-card .input-wrap input::placeholder {
+  color: #64748b;
+}
+
+.landing-page .hero-signin-panel .signin-modal-inner .signin-card .input-wrap input:focus,
+.landing-page .hero-signin-panel .signin-modal-inner .signin-card .input-wrap select:focus {
+  background: #fff;
+  border-color: rgba(6, 147, 150, 0.65);
+  box-shadow: 0 0 0 3px rgba(6, 147, 150, 0.22);
+}
+
+/* Exempt sign-in fields from global dark-theme input overrides */
+html[data-theme-resolved='dark'] .landing-page .hero-signin-panel .signin-modal-inner .signin-card .input-wrap input,
+html[data-theme-resolved='dark'] .landing-page .hero-signin-panel .signin-modal-inner .signin-card .input-wrap select {
+  background: rgba(255, 255, 255, 0.94) !important;
+  border-color: rgba(255, 255, 255, 0.38) !important;
+  color: #012a4a !important;
+  caret-color: #012a4a !important;
+}
+
+html[data-theme-resolved='dark'] .landing-page .hero-signin-panel .signin-modal-inner .signin-card .input-wrap input:focus,
+html[data-theme-resolved='dark'] .landing-page .hero-signin-panel .signin-modal-inner .signin-card .input-wrap select:focus {
+  background: #fff !important;
+  border-color: rgba(6, 147, 150, 0.65) !important;
+  box-shadow: 0 0 0 3px rgba(6, 147, 150, 0.22) !important;
+}
+
+.landing-page .hero-signin-panel .signin-modal-inner .signin-card .input-wrap input:-webkit-autofill,
+.landing-page .hero-signin-panel .signin-modal-inner .signin-card .input-wrap input:-webkit-autofill:hover,
+.landing-page .hero-signin-panel .signin-modal-inner .signin-card .input-wrap input:-webkit-autofill:focus {
+  -webkit-box-shadow: 0 0 0 1000px rgba(255, 255, 255, 0.96) inset !important;
+  -webkit-text-fill-color: #012a4a !important;
+  caret-color: #012a4a !important;
+  transition: background-color 9999s ease-out 0s;
+}
+
+.landing-page .hero-signin-panel .signin-modal-inner .signin-card .input-icon {
+  left: 14px;
+  z-index: 2;
+  color: #334155 !important;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  pointer-events: none;
+}
+
+.landing-page .hero-signin-panel .signin-modal-inner .signin-card .input-icon svg {
+  width: 17px;
+  height: 17px;
+  display: block;
+  flex-shrink: 0;
+  stroke: currentColor;
+}
+
+.landing-page .hero-signin-panel .signin-modal-inner .signin-card .toggle-pwd {
+  z-index: 2;
+  color: #334155 !important;
+  background: rgba(255, 255, 255, 0.55);
+}
+
+.landing-page .hero-signin-panel .signin-modal-inner .signin-card .toggle-pwd svg {
+  width: 17px;
+  height: 17px;
+  display: block;
+  stroke: currentColor;
+}
+
+.landing-page .hero-signin-panel .signin-modal-inner .signin-card .toggle-pwd:hover {
+  color: #069396 !important;
+  background: rgba(6, 147, 150, 0.12);
+}
+
+.landing-page .hero-signin-panel .signin-modal-inner .signin-card .forgot-link {
+  color: #5eead4;
+}
+
+.landing-page .hero-signin-panel .signin-modal-inner .signin-card .forgot-link:hover {
+  color: #99f6e4;
+}
+
+.landing-page .hero-signin-panel .signin-modal-inner .signin-card .remember-me-label {
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.landing-page .hero-signin-panel .signin-modal-inner .signin-card .remember-me-label span {
+  color: inherit;
+}
+
+.landing-page .hero-signin-panel .signin-modal-inner .signin-card .remember-me-label input {
+  width: 17px;
+  height: 17px;
+  accent-color: #5eead4;
+  flex-shrink: 0;
+}
+
+.landing-page .hero-signin-panel .signin-modal-inner .signin-card .card-register {
+  color: rgba(255, 255, 255, 0.78);
+}
+
+.landing-page .hero-signin-panel .signin-modal-inner .signin-card .card-register a {
+  color: #5eead4;
+}
+
+.landing-page .hero-signin-panel .signin-modal-inner .signin-card .field-error {
+  color: #fecaca;
+}
+
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .landing-page .hero-signin-panel .signin-card--hero-inline {
+    background: rgba(1, 42, 74, 0.92);
+  }
+}
+
+/* Tablet & mobile — viewport-anchored panel (avoids hero overflow clipping) */
+@media (max-width: 960px) {
+  html:has(body.landing-page.signin-active) {
+    overflow: hidden;
+  }
+
+  body.landing-page.signin-active {
+    overflow: hidden !important;
+    touch-action: none;
+  }
+
+  body.landing-page.signin-active::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    z-index: 1190;
+    background: rgba(1, 20, 40, 0.52);
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+    pointer-events: none;
+  }
+
+  .landing-page .hero--cinematic .hero-copy-shift {
+    max-width: 100%;
+  }
+
+  .landing-page .hero--cinematic.is-signin-open .hero-copy-shift,
+  .landing-page.signin-active .hero--cinematic .hero-copy-shift {
+    transform: translateX(0);
+  }
+
+  .landing-page .hero-signin-panel {
+    position: absolute;
+    top: auto;
+    right: auto;
+    bottom: auto;
+    left: auto;
+    width: 100%;
+    max-width: 100%;
+    margin: 0;
+    transform: translateX(40px);
+  }
+
+  .landing-page .hero-signin-panel.is-open {
+    transform: translateX(0);
+  }
+
+  .landing-page .hero-signin-panel.is-closing {
+    transform: translateX(40px);
+  }
+
+  body.landing-page.signin-active > #signin-modal.hero-signin-panel.is-open,
+  body.landing-page.signin-active #signin-modal.hero-signin-panel.is-open {
+    position: fixed !important;
+    top: calc(var(--hero-signin-nav-offset) + var(--hero-signin-gap)) !important;
+    right: max(12px, env(safe-area-inset-right, 12px)) !important;
+    left: max(12px, env(safe-area-inset-left, 12px)) !important;
+    bottom: max(12px, env(safe-area-inset-bottom, 12px)) !important;
+    width: auto !important;
+    max-width: none !important;
+    height: auto !important;
+    max-height: calc(100dvh - var(--hero-signin-nav-offset) - (var(--hero-signin-gap) * 2) - env(safe-area-inset-bottom, 0px)) !important;
+    margin: 0 !important;
+    transform: none !important;
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: stretch !important;
+    overflow: hidden !important;
+    z-index: 1200;
+  }
+
+  body.landing-page.signin-active > #signin-modal.hero-signin-panel.is-open .signin-modal-wrap,
+  body.landing-page.signin-active #signin-modal.hero-signin-panel.is-open .signin-modal-wrap {
+    flex: 1 1 auto;
+    min-height: 0;
+    max-height: 100%;
+    overflow: visible;
+    display: flex;
+    flex-direction: column;
+  }
+
+  body.landing-page.signin-active > #signin-modal.hero-signin-panel.is-open .signin-modal-inner,
+  body.landing-page.signin-active #signin-modal.hero-signin-panel.is-open .signin-modal-inner {
+    flex: 1 1 auto;
+    min-height: 0;
+    max-height: 100%;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch;
+  }
+}
+
+@media (max-width: 580px) {
+  body.landing-page.signin-active > #signin-modal.hero-signin-panel.is-open,
+  body.landing-page.signin-active #signin-modal.hero-signin-panel.is-open {
+    top: calc(var(--hero-signin-nav-offset) + 8px) !important;
+    right: max(10px, env(safe-area-inset-right, 10px)) !important;
+    left: max(10px, env(safe-area-inset-left, 10px)) !important;
+    bottom: max(10px, env(safe-area-inset-bottom, 10px)) !important;
+  }
+
+  .landing-page .hero-signin-panel .signin-card--hero-inline {
+    --signin-space-md: 10px;
+    --signin-space-lg: 14px;
+    --signin-input-height: 44px;
+
+    padding: 14px 14px 12px;
+    border-radius: 16px;
+  }
+
+  .landing-page .hero-signin-panel .signin-card__head {
+    gap: 10px;
+    margin-bottom: 12px;
+    padding-bottom: 10px;
+    padding-right: 48px;
+  }
+
+  .landing-page .hero-signin-panel .signin-modal-close {
+    top: 16px;
+    right: 16px;
+    width: 34px;
+    height: 34px;
+  }
+
+  .landing-page .hero-signin-panel .signin-card__head .signin-card__logo {
+    width: 38px;
+    height: 38px;
+  }
+
+  .landing-page .hero-signin-panel .signin-card__head .card-title {
+    font-size: 1.1rem;
+  }
+
+  .landing-page .hero-signin-panel .signin-card__primary .form-group {
+    margin-bottom: 10px;
+  }
+
+  .landing-page .hero-signin-panel .signin-card__primary .form-footer-row {
+    margin-bottom: 10px;
+  }
+
+  .landing-page .hero-signin-panel .signin-card__primary .btn-signin {
+    height: 44px;
+  }
+
+  .landing-page .hero-signin-panel .signin-card__primary .card-register {
+    margin-top: 10px;
+  }
+
+  .landing-page .hero-signin-panel .signin-card__extras {
+    margin-top: 10px;
+    padding-top: 10px;
+  }
+
+  .landing-page .hero-signin-panel .provider-note--compact,
+  .landing-page .hero-signin-panel .emergency-note--compact {
+    padding: 8px 10px;
+    margin-bottom: 6px;
+    font-size: 0.7rem;
+    line-height: 1.45;
+  }
+
+  .landing-page .hero-signin-panel .signin-modal-inner .signin-card .input-wrap,
+  .landing-page .hero-signin-panel .signin-modal-inner .signin-card .input-wrap input,
+  .landing-page .hero-signin-panel .signin-modal-inner .signin-card .input-wrap select,
+  .landing-page .hero-signin-panel .signin-modal-inner .signin-card .btn-signin,
+  .landing-page .hero-signin-panel .signin-modal-inner .signin-card .form-footer-row {
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    box-sizing: border-box;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .landing-page .hero--cinematic .hero-copy-shift,
+  .landing-page .hero-signin-panel {
+    transition-duration: 0.01ms !important;
+  }
+}

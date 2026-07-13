@@ -1,13 +1,19 @@
 <?php
-$page_title = 'Track Follow-Ups';
+$page_title = 'Follow-Up Monitoring';
 $bhw_current_file = 'followup/track.php';
 require __DIR__ . '/../partials/bhw_bootstrap.php';
 require __DIR__ . '/../partials/layout_open.php';
 $today = date('Y-m-d');
+$bhw_subnav_items = [
+    ['file' => 'track.php', 'label' => 'Track follow-ups'],
+    ['file' => 'reminders.php', 'label' => 'Send reminders'],
+];
+$bhw_subnav_active = 'followup/track.php';
 ?>
 <div class="bhw-card">
-  <h2 class="text-h2">Track Patient Follow-Ups</h2>
+  <h2 class="text-h2">Follow-Up Monitoring</h2>
   <p class="text-muted">Monitor scheduled follow-ups and log home visits after seeing the patient in person.</p>
+  <?php require __DIR__ . '/../partials/bhw_module_subnav.php'; ?>
   <select id="bhwFuFilter" class="form-select mb-3" style="max-width:220px;" aria-label="Filter follow-ups">
     <option value="">All</option>
     <option value="upcoming">Upcoming</option>

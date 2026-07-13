@@ -7,10 +7,7 @@ require_once dirname(dirname(dirname(__DIR__))) . '/config/db.php';
 require_once dirname(dirname(dirname(__DIR__))) . '/app/includes/appointment_slots.php';
 
 Api::startJson();
-
-if (empty($_SESSION['user_id'])) {
-    Api::error('Unauthorized.', 403);
-}
+Api::requirePatientReady($pdo);
 
 $provider_id = (int) ($_GET['provider_id'] ?? 0);
 $date        = trim((string) ($_GET['date'] ?? ''));

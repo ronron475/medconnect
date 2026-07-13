@@ -6,6 +6,8 @@
 require_once __DIR__ . '/provider_verification.php';
 require_once __DIR__ . '/profile_picture.php';
 require_once __DIR__ . '/system_preferences.php';
+require_once __DIR__ . '/remember_me.php';
+require_once __DIR__ . '/login_security.php';
 
 function provider_settings_ensure_schema(PDO $pdo): void
 {
@@ -145,6 +147,7 @@ function provider_settings_load(PDO $pdo, int $userId): array
             'sms_notifications' => (int) ($notifications['sms_notifications'] ?? 0),
         ],
         'system' => $system,
+        'sessions' => provider_settings_list_sessions($pdo, $userId),
     ];
 }
 
@@ -346,4 +349,68 @@ function provider_settings_save_system(PDO $pdo, int $userId, array $input): arr
         $input['auto_logout_duration'] = $input['auto_logout_minutes'];
     }
     return system_preferences_save($pdo, $userId, $input);
+}
+
+/**
+ * @return list<array<string, mixed>>
+ */
+function provider_settings_list_sessions(PDO $pdo, int $userId): array
+{
+    $currentSid = session_id();
+    $rows = [];
+    try {
+        remember_me_ensure_schema($pdo);
+        $stmt = $pdo->prepare("
+            SELECT id, session_id, ip_address, user_agent, browser, device, last_activity, created_at
+            FROM active_sessions
+            WHERE user_id = ? AND role = 'provider'
+              AND last_activity >= DATE_SUB(NOW(), INTERVAL 7 DAY)
+            ORDER BY last_activity DESC
+            LIMIT 20
+        ");
+        $stmt->execute([$userId]);
+        $rows = $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
+    } catch (PDOException $e) {
+        return [];
+    }
+
+    return array_map(static function (array $row) use ($currentSid): array {
+        return [
+            'id' => (int) $row['id'],
+            'is_current' => ($row['session_id'] ?? '') === $currentSid,
+            'browser' => (string) ($row['browser'] ?? 'Unknown'),
+            'device' => (string) ($row['device'] ?? 'desktop'),
+            'ip_address' => (string) ($row['ip_address'] ?? ''),
+            'last_activity_label' => !empty($row['last_activity'])
+                ? date('M j, Y g:i A', strtotime((string) $row['last_activity']))
+                : '—',
+        ];
+    }, $rows);
+}
+
+/**
+ * @return array{success: bool, message: string}
+ */
+function provider_settings_logout_all_devices(PDO $pdo, int $userId): array
+{
+    try {
+        $pdo->prepare("DELETE FROM active_sessions WHERE user_id = ? AND role = 'provider'")->execute([$userId]);
+    } catch (PDOException $e) { /* non-fatal */ }
+
+    try {
+        remember_me_revoke_for_user($pdo, $userId);
+    } catch (PDOException $e) { /* non-fatal */ }
+
+    remember_me_clear_cookie();
+    unset($_SESSION['remember_me_extended']);
+
+    require_once __DIR__ . '/audit_log.php';
+    audit_log($pdo, [
+        'patient_id'  => $userId,
+        'action_type' => 'logout_all_devices',
+        'description' => 'Provider signed out of all devices from Settings.',
+        'meta'        => ['role' => 'provider'],
+    ]);
+
+    return ['success' => true, 'message' => 'All other devices have been signed out.'];
 }

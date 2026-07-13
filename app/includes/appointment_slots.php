@@ -34,6 +34,7 @@ function appointment_slots_sync_provider(PDO $pdo, int $provider_id, int $daysAh
         $sql .= ' AND day_of_week = ?';
         $params[] = $onlyDay;
     }
+    $sql .= ' ORDER BY day_of_week, sort_order ASC, start_time ASC';
 
     $stmt = $pdo->prepare($sql);
     $stmt->execute($params);

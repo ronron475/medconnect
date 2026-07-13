@@ -14,11 +14,13 @@ $allergies = trim((string) ($_POST['allergies'] ?? ''));
 $existing_conditions = trim((string) (
     $_POST['existing_conditions']
     ?? $_POST['current_medications']
+    ?? $_POST['chief_complaint']
+    ?? $_POST['text']
     ?? ''
 ));
 
 if ($allergies === '' && $existing_conditions === '') {
-    Api::error('Enter existing medical conditions and/or known allergies.');
+    Api::error('Enter a chief complaint, medical conditions, and/or known allergies.');
 }
 
 $current_medications = $existing_conditions;

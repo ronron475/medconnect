@@ -122,11 +122,8 @@
     border-radius: 10px;
   }
 
-  /* ── Dashboard page shell ── */
-  body.bhw-body .portal-page-body:has(#bhwMetricsRow) {
-    display: flex;
-    flex-direction: column;
-    gap: var(--mob-dash-gap);
+  /* ── Formal dashboard page shell ── */
+  body.bhw-body .portal-page-body:has(.bhw-dash) {
     padding-left: var(--mob-dash-pad) !important;
     padding-right: var(--mob-dash-pad) !important;
     padding-top: calc(var(--mc-header-offset, 64px) + 10px) !important;
@@ -134,302 +131,49 @@
     overflow-x: hidden;
   }
 
-  /* Welcome → stats → widgets (matches patient/provider order) */
-  body.bhw-body .portal-page-body:has(#bhwMetricsRow) > .mb-4 {
-    order: 1;
-    margin-bottom: 0 !important;
+  body.bhw-body .bhw-dash {
+    gap: var(--mob-dash-gap);
   }
 
-  body.bhw-body .portal-page-body:has(#bhwMetricsRow) > #bhwMetricsRow {
-    order: 2;
-    margin-bottom: 0 !important;
+  body.bhw-body .bhw-dash-header {
+    padding: 14px 16px;
+    border-radius: 6px;
   }
 
-  body.bhw-body .portal-page-body:has(#bhwMetricsRow) > .mc-notif-widgets--dashboard {
-    order: 3;
-    margin-bottom: 0 !important;
+  body.bhw-body .bhw-dash-header__title {
+    font-size: clamp(1.05rem, 4.2vw, 1.15rem);
   }
 
-  body.bhw-body .portal-page-body:has(#bhwMetricsRow) > .row:not(#bhwMetricsRow) {
-    order: 4;
-    margin-bottom: 0 !important;
-  }
-
-  body.bhw-body .portal-page-body:has(#bhwMetricsRow) > .bhw-dashboard-recent {
-    order: 5;
-    margin-top: 0 !important;
-  }
-
-  /* ── Welcome section (prov-dash-welcome pattern) ── */
-  body.bhw-body .portal-page-body:has(#bhwMetricsRow) > .mb-4 {
-    display: flex;
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 10px;
-    padding: 12px var(--mob-dash-pad);
-    background: #fff;
-    border: 1px solid var(--mc-border-thin, #e2edf1);
-    border-radius: var(--mob-dash-radius);
-    box-shadow: var(--mob-dash-shadow);
-  }
-
-  body.bhw-body .portal-page-body:has(#bhwMetricsRow) > .mb-4 > div:first-child {
-    min-width: 0;
-    width: 100%;
-  }
-
-  body.bhw-body .portal-page-body:has(#bhwMetricsRow) > .mb-4 h2 {
-    font-size: clamp(1.05rem, 4.2vw, 1.2rem) !important;
-    font-weight: 800 !important;
-    line-height: 1.2 !important;
-    margin-bottom: 4px !important;
-    color: var(--bhw-navy, #012a4a) !important;
-  }
-
-  body.bhw-body .portal-page-body:has(#bhwMetricsRow) > .mb-4 p {
-    font-size: 12px !important;
-    font-weight: 600 !important;
-    line-height: 1.4 !important;
-    margin: 0 !important;
-    color: var(--mc-slate-muted, #64748b) !important;
-  }
-
-  body.bhw-body .portal-page-body:has(#bhwMetricsRow) > .mb-4 > .text-muted {
-    width: 100%;
-    font-size: 11px !important;
-    font-weight: 600 !important;
-    color: var(--mc-slate-muted, #64748b) !important;
-  }
-
-  /* ── Statistics cards (2×2 grid, prov-dash-stat pattern) ── */
-  body.bhw-body .portal-page-body:has(#bhwMetricsRow) #bhwMetricsRow {
-    --bs-gutter-x: 0;
-    --bs-gutter-y: 0;
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 10px;
-    align-items: stretch;
-  }
-
-  body.bhw-body .portal-page-body:has(#bhwMetricsRow) #bhwMetricsRow > .col-md-3 {
-    width: 100%;
-    max-width: 100%;
-    padding: 0;
-    flex: none;
-  }
-
-  body.bhw-body .portal-page-body:has(#bhwMetricsRow) .bhw-metric-card {
-    position: relative;
-    display: flex;
-    flex-direction: column;
-    align-items: flex-start;
-    justify-content: flex-start;
-    min-height: var(--mob-dash-stat-min-h);
-    height: 100%;
-    padding: 10px 12px;
-    border-radius: var(--mob-dash-radius);
-    border: 1px solid rgba(226, 237, 241, 0.95);
-    border-top: 3px solid var(--bhw-teal, #069396);
-    box-shadow: var(--mob-dash-shadow);
-    gap: 0;
-  }
-
-  body.bhw-body .portal-page-body:has(#bhwMetricsRow) .bhw-metric-icon {
-    position: absolute;
-    top: 10px;
-    right: 10px;
-    width: 30px;
-    height: 30px;
-    border-radius: 8px;
-    background: rgba(6, 147, 150, 0.1);
-    color: var(--bhw-teal, #069396);
-  }
-
-  body.bhw-body .portal-page-body:has(#bhwMetricsRow) .bhw-metric-icon svg {
-    width: 14px;
-    height: 14px;
-  }
-
-  body.bhw-body .portal-page-body:has(#bhwMetricsRow) .bhw-metric-info {
-    width: 100%;
-    min-width: 0;
-    flex: 1 1 auto;
-    display: flex;
-    flex-direction: column;
-    gap: 0;
-  }
-
-  body.bhw-body .portal-page-body:has(#bhwMetricsRow) .bhw-metric-val {
+  body.bhw-body .bhw-dash-stat__val {
     font-size: 1.5rem;
-    font-weight: 800;
-    line-height: 1;
-    padding-right: 34px;
-    color: var(--bhw-navy, #012a4a);
   }
 
-  body.bhw-body .portal-page-body:has(#bhwMetricsRow) .bhw-metric-label {
-    font-size: 9px;
-    line-height: 1.35;
-    letter-spacing: 0.03em;
-    padding-top: 6px;
-    margin-top: auto;
-    font-weight: 600;
-    text-transform: uppercase;
-    color: var(--mc-slate-muted, #608395);
-  }
-
-  /* ── Widget strip ── */
-  body.bhw-body .portal-page-body:has(#bhwMetricsRow) .mc-notif-widgets--dashboard {
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 10px;
-    align-items: stretch;
-  }
-
-  body.bhw-body .portal-page-body:has(#bhwMetricsRow) .mc-notif-widget {
-    min-height: 72px;
-    padding: var(--mob-dash-strip-pad);
-    border-radius: var(--mob-dash-radius);
-    box-shadow: var(--mob-dash-shadow);
-    grid-template-columns: 30px 1fr;
-    gap: 2px 8px;
-  }
-
-  body.bhw-body .portal-page-body:has(#bhwMetricsRow) .mc-notif-widget::before {
-    width: 30px;
-    height: 30px;
-    border-radius: 8px;
-  }
-
-  body.bhw-body .portal-page-body:has(#bhwMetricsRow) .mc-notif-widget-value {
+  body.bhw-body .bhw-dash .mc-notif-widget-value {
     font-size: 1.15rem;
   }
 
-  body.bhw-body .portal-page-body:has(#bhwMetricsRow) .mc-notif-widget-label {
+  body.bhw-body .bhw-dash .mc-notif-widget-label {
     font-size: 8px;
-    white-space: normal;
     line-height: 1.25;
-    overflow: visible;
-    text-overflow: unset;
   }
 
-  /* ── Triage queue card ── */
-  body.bhw-body .portal-page-body:has(#bhwMetricsRow) .bhw-card {
-    border-radius: var(--mob-dash-radius);
-    box-shadow: var(--mob-dash-shadow);
-    overflow: hidden;
+  body.bhw-body .bhw-dash-panel__head {
+    padding: 12px 16px;
   }
 
-  body.bhw-body .portal-page-body:has(#bhwMetricsRow) .bhw-card > div:first-child {
-    padding: var(--mob-dash-card-pad) !important;
+  body.bhw-body .bhw-dash-panel__toolbar {
+    padding: 12px 16px;
   }
 
-  body.bhw-body .portal-page-body:has(#bhwMetricsRow) .bhw-card h3 {
-    font-size: 0.9rem !important;
-    font-weight: 700 !important;
-    line-height: 1.3 !important;
-    margin: 0 !important;
+  body.bhw-body .bhw-dash-recent .adm-card-head {
+    padding: 12px 16px;
   }
 
-  body.bhw-body .portal-page-body:has(#bhwMetricsRow) .bhw-card .col-md-6.text-end {
-    text-align: left !important;
-    margin-top: 6px;
+  body.bhw-body .bhw-dash-recent .adm-card-head-title {
+    font-size: 11px;
   }
 
-  body.bhw-body .portal-page-body:has(#bhwMetricsRow) .bhw-card .col-md-6.text-end span {
-    font-size: 8px !important;
-    line-height: 1.35;
-    display: block;
-  }
-
-  body.bhw-body .portal-page-body:has(#bhwMetricsRow) .bhw-card .row.mt-3 {
-    margin-top: 10px !important;
-    --bs-gutter-x: 8px;
-    --bs-gutter-y: 8px;
-  }
-
-  body.bhw-body .portal-page-body:has(#bhwMetricsRow) .bhw-card .col-md-4,
-  body.bhw-body .portal-page-body:has(#bhwMetricsRow) .bhw-card .col-md-3 {
-    width: 100%;
-    max-width: 100%;
-  }
-
-  body.bhw-body .portal-page-body:has(#bhwMetricsRow) .bhw-card .col-md-3.ms-auto {
-    margin-left: 0 !important;
-  }
-
-  body.bhw-body .portal-page-body:has(#bhwMetricsRow) .bhw-card .form-control,
-  body.bhw-body .portal-page-body:has(#bhwMetricsRow) .bhw-card .form-select {
-    font-size: 13px !important;
-    padding: 10px 12px !important;
-    min-height: 44px;
-  }
-
-  body.bhw-body .portal-page-body:has(#bhwMetricsRow) .table-responsive {
-    overflow-x: auto;
-    -webkit-overflow-scrolling: touch;
-    max-width: 100%;
-  }
-
-  body.bhw-body .portal-page-body:has(#bhwMetricsRow) .bhw-table th {
-    padding: 10px 12px;
-    font-size: 9px;
-  }
-
-  body.bhw-body .portal-page-body:has(#bhwMetricsRow) .bhw-table td {
-    padding: 10px 12px;
-    font-size: 12px;
-    white-space: nowrap;
-  }
-
-  body.bhw-body .portal-page-body:has(#bhwMetricsRow) .bhw-table th[style*="padding-left"],
-  body.bhw-body .portal-page-body:has(#bhwMetricsRow) .bhw-table td[style*="padding-left"] {
-    padding-left: 12px !important;
-  }
-
-  body.bhw-body .portal-page-body:has(#bhwMetricsRow) .bhw-table th[style*="padding-right"],
-  body.bhw-body .portal-page-body:has(#bhwMetricsRow) .bhw-table td[style*="padding-right"] {
-    padding-right: 12px !important;
-  }
-
-  body.bhw-body .portal-page-body:has(#bhwMetricsRow) .bhw-badge {
-    font-size: 9px;
-    padding: 3px 8px;
-  }
-
-  body.bhw-body .portal-page-body:has(#bhwMetricsRow) .bhw-btn-teal {
-    min-height: 36px;
-    padding: 6px 12px;
-    font-size: 10px;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-  }
-
-  /* ── Recent notifications ── */
-  body.bhw-body .portal-page-body:has(#bhwMetricsRow) .bhw-dashboard-recent .adm-card,
-  body.bhw-body .portal-page-body:has(#bhwMetricsRow) .bhw-dashboard-recent .adm-notif-recent {
-    border-radius: var(--mob-dash-radius);
-    box-shadow: var(--mob-dash-shadow);
-    margin-bottom: 0;
-  }
-
-  body.bhw-body .portal-page-body:has(#bhwMetricsRow) .adm-card-head {
-    padding: var(--mob-dash-card-pad);
-    gap: 8px;
-  }
-
-  body.bhw-body .portal-page-body:has(#bhwMetricsRow) .adm-card-head-icon {
-    width: 32px;
-    height: 32px;
-    border-radius: 8px;
-  }
-
-  body.bhw-body .portal-page-body:has(#bhwMetricsRow) .adm-card-head-title {
-    font-size: 0.9rem;
-  }
-
-  body.bhw-body .portal-page-body:has(#bhwMetricsRow) .adm-card-head-sub {
+  body.bhw-body .bhw-dash-recent .adm-card-head-sub {
     font-size: 11px;
   }
 }
@@ -448,22 +192,9 @@
 @media (max-width: 480px) {
   body.bhw-body {
     --mob-dash-pad: 14px;
-    --mob-dash-stat-min-h: 72px;
   }
 
-  body.bhw-body .portal-page-body:has(#bhwMetricsRow) .bhw-metric-val {
+  body.bhw-body .bhw-dash-stat__val {
     font-size: 1.35rem;
-  }
-
-  body.bhw-body .portal-page-body:has(#bhwMetricsRow) .mc-notif-widgets--dashboard {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-}
-
-/* Extra-narrow — single column below 320px */
-@media (max-width: 319px) {
-  body.bhw-body .portal-page-body:has(#bhwMetricsRow) #bhwMetricsRow,
-  body.bhw-body .portal-page-body:has(#bhwMetricsRow) .mc-notif-widgets--dashboard {
-    grid-template-columns: 1fr;
   }
 }

@@ -32,67 +32,239 @@ if (!isLandingPage) {
   });
 }
 
-/* ===== SIGN-IN MODAL ===== */
+/* ===== SIGN-IN PANEL (inline hero / modal fallback) ===== */
 (function () {
   const overlay = document.getElementById('signin-modal');
+  if (!overlay) return;
+
+  const isInlineHero = overlay.classList.contains('hero-signin-panel');
+  const heroSection = document.getElementById('hero-section');
+  const openTriggers = ['open-signin-modal', 'open-signin-modal-drawer', 'open-book-cta']
+    .map((id) => document.getElementById(id))
+    .filter(Boolean);
+
   let savedScroll = 0;
-  let closeTimer  = null;
+  let closeTimer = null;
+  let lastFocus = null;
+  let scrollLocked = false;
+  let preventTouchMove = null;
+  let preventWheel = null;
+  let signinHomeParent = null;
+  const CLOSE_MS = isInlineHero ? 420 : 300;
+
+  function portalSigninToBody() {
+    if (!isInlineHero || overlay.parentElement === document.body) return;
+    signinHomeParent = overlay.parentElement;
+    document.body.appendChild(overlay);
+  }
+
+  function restoreSigninPlacement() {
+    if (!isInlineHero || !signinHomeParent) return;
+    if (overlay.parentElement === signinHomeParent) return;
+    signinHomeParent.appendChild(overlay);
+  }
+
+  function setTriggerExpanded(open) {
+    openTriggers.forEach((btn) => {
+      if (btn.tagName === 'BUTTON' || btn.getAttribute('role') === 'button') {
+        btn.setAttribute('aria-expanded', open ? 'true' : 'false');
+      }
+    });
+  }
+
+  function lockScroll() {
+    if (scrollLocked) return;
+
+    scrollLocked = true;
+    savedScroll = window.scrollY;
+    document.body.style.top = `-${savedScroll}px`;
+    document.body.style.position = 'fixed';
+    document.body.style.left = '0';
+    document.body.style.right = '0';
+    document.body.style.width = '100%';
+    document.body.style.overflow = 'hidden';
+    document.documentElement.style.overflow = 'hidden';
+
+    preventWheel = (e) => {
+      const scrollable = overlay.querySelector('.signin-modal-inner');
+      if (overlay.contains(e.target) && scrollable) {
+        const canScroll = scrollable.scrollHeight > scrollable.clientHeight + 1;
+        if (canScroll) {
+          const atTop = scrollable.scrollTop <= 0;
+          const atBottom = scrollable.scrollTop + scrollable.clientHeight >= scrollable.scrollHeight - 1;
+          if ((e.deltaY < 0 && !atTop) || (e.deltaY > 0 && !atBottom)) {
+            if (!scrollable.contains(e.target)) {
+              scrollable.scrollTop += e.deltaY;
+            }
+            return;
+          }
+        }
+      }
+      e.preventDefault();
+    };
+    document.addEventListener('wheel', preventWheel, { passive: false });
+
+    preventTouchMove = (e) => {
+      if (overlay.contains(e.target)) return;
+      e.preventDefault();
+    };
+    document.addEventListener('touchmove', preventTouchMove, { passive: false });
+  }
+
+  function unlockScroll() {
+    if (preventWheel) {
+      document.removeEventListener('wheel', preventWheel);
+      preventWheel = null;
+    }
+
+    if (preventTouchMove) {
+      document.removeEventListener('touchmove', preventTouchMove);
+      preventTouchMove = null;
+    }
+
+    if (!scrollLocked) return;
+
+    scrollLocked = false;
+    document.body.style.position = '';
+    document.body.style.top = '';
+    document.body.style.left = '';
+    document.body.style.right = '';
+    document.body.style.width = '';
+    document.body.style.overflow = '';
+    document.documentElement.style.overflow = '';
+    window.scrollTo({ top: savedScroll, behavior: 'instant' });
+  }
+
+  function trapFocus(e) {
+    if (!overlay.classList.contains('is-open') || e.key !== 'Tab') return;
+    const focusable = overlay.querySelectorAll(
+      'a[href], button:not([disabled]), textarea, input:not([disabled]), select:not([disabled]), [tabindex]:not([tabindex="-1"])'
+    );
+    if (!focusable.length) return;
+    const first = focusable[0];
+    const last = focusable[focusable.length - 1];
+    if (e.shiftKey && document.activeElement === first) {
+      e.preventDefault();
+      last.focus();
+    } else if (!e.shiftKey && document.activeElement === last) {
+      e.preventDefault();
+      first.focus();
+    }
+  }
 
   function openModal() {
-    if (!overlay) return;
-    // clear any in-progress close
     clearTimeout(closeTimer);
     overlay.classList.remove('is-closing');
+    lastFocus = document.activeElement;
 
-    savedScroll = window.scrollY;
+    if (isInlineHero) {
+      const navH = document.getElementById('navbar')?.offsetHeight || 84;
+      const maintBanner = document.querySelector('.landing-maintenance-banner');
+      const maintH = maintBanner ? maintBanner.offsetHeight : 0;
+      document.documentElement.style.setProperty('--hero-signin-nav-offset', `${navH + maintH}px`);
+    }
+
+    portalSigninToBody();
+    overlay.classList.add('is-viewport-pinned');
+    lockScroll();
     overlay.removeAttribute('hidden');
+    overlay.setAttribute('aria-hidden', 'false');
+    document.body.classList.add('signin-active');
+    if (heroSection && isInlineHero) heroSection.classList.add('is-signin-open');
+    setTriggerExpanded(true);
 
-    // double rAF so display:flex is painted before transition starts
+    // double rAF so display is painted before transition starts
     requestAnimationFrame(() => requestAnimationFrame(() => {
       overlay.classList.add('is-open');
     }));
 
-    // lock scroll without page jump
-    document.body.style.top      = `-${savedScroll}px`;
-    document.body.style.position = 'fixed';
-    document.body.style.width    = '100%';
-    document.body.style.overflow = 'hidden';
-    document.body.classList.add('signin-active');
     document.dispatchEvent(new CustomEvent('medconnect:signin', { detail: { open: true } }));
 
-    const first = overlay.querySelector('input');
-    if (first) setTimeout(() => first.focus(), 320);
+    const first = overlay.querySelector('input:not([disabled]), button:not([disabled])');
+    if (first) setTimeout(() => first.focus(), 360);
+
+    document.addEventListener('keydown', trapFocus);
   }
 
   function closeModal() {
-    if (!overlay) return;
-    // start exit animation
+    if (overlay.hasAttribute('hidden') && !overlay.classList.contains('is-open')) return;
+
     overlay.classList.remove('is-open');
     overlay.classList.add('is-closing');
-
-    // restore scroll immediately (body unfix before overlay hides)
-    document.body.style.position = '';
-    document.body.style.top      = '';
-    document.body.style.width    = '';
-    document.body.style.overflow = '';
+    if (heroSection && isInlineHero) heroSection.classList.remove('is-signin-open');
     document.body.classList.remove('signin-active');
+    setTriggerExpanded(false);
+    unlockScroll();
+    document.removeEventListener('keydown', trapFocus);
     document.dispatchEvent(new CustomEvent('medconnect:signin', { detail: { open: false } }));
-    window.scrollTo({ top: savedScroll, behavior: 'instant' });
 
-    // hide after longest exit transition (0.26s overlay fade)
     closeTimer = setTimeout(() => {
-      overlay.classList.remove('is-closing');
+      overlay.classList.remove('is-closing', 'is-viewport-pinned');
       overlay.setAttribute('hidden', '');
-    }, 300);
+      overlay.setAttribute('aria-hidden', 'true');
+      restoreSigninPlacement();
+      if (lastFocus && typeof lastFocus.focus === 'function') {
+        try { lastFocus.focus(); } catch (_) { /* ignore */ }
+      }
+    }, CLOSE_MS);
   }
 
-  ['open-signin-modal', 'open-book-cta'].forEach(id => {
-    const el = document.getElementById(id);
-    if (el) el.addEventListener('click', () => {
+  /** Instant close for post-login transition — no slide/fade animation or scroll jump. */
+  function closeModalInstant() {
+    clearTimeout(closeTimer);
+    closeTimer = null;
+
+    if (preventWheel) {
+      document.removeEventListener('wheel', preventWheel);
+      preventWheel = null;
+    }
+    if (preventTouchMove) {
+      document.removeEventListener('touchmove', preventTouchMove);
+      preventTouchMove = null;
+    }
+
+    document.documentElement.classList.add('signin-skip-motion');
+
+    overlay.classList.remove('is-open', 'is-closing', 'is-viewport-pinned');
+    overlay.setAttribute('hidden', '');
+    overlay.setAttribute('aria-hidden', 'true');
+
+    if (heroSection && isInlineHero) heroSection.classList.remove('is-signin-open');
+    document.body.classList.remove('signin-active');
+    setTriggerExpanded(false);
+    document.removeEventListener('keydown', trapFocus);
+
+    if (scrollLocked) {
+      scrollLocked = false;
+      const y = savedScroll;
+      document.body.style.position = '';
+      document.body.style.top = '';
+      document.body.style.left = '';
+      document.body.style.right = '';
+      document.body.style.width = '';
+      document.body.style.overflow = '';
+      document.documentElement.style.overflow = '';
+      requestAnimationFrame(() => window.scrollTo(0, y));
+    }
+
+    restoreSigninPlacement();
+
+    requestAnimationFrame(() => {
+      document.documentElement.classList.remove('signin-skip-motion');
+    });
+  }
+
+  openTriggers.forEach((el) => {
+    el.setAttribute('aria-expanded', 'false');
+    if (el.id === 'open-signin-modal' || el.id === 'open-signin-modal-drawer') {
+      el.setAttribute('aria-controls', 'signin-modal');
+      el.setAttribute('aria-haspopup', 'dialog');
+    }
+    el.addEventListener('click', () => {
       const nm = document.getElementById('nav-menu');
       const nt = document.getElementById('nav-toggle');
       if (nm) nm.classList.remove('open');
-      if (nt) nt.setAttribute('aria-expanded', false);
+      if (nt) nt.setAttribute('aria-expanded', 'false');
       openModal();
     });
   });
@@ -100,14 +272,14 @@ if (!isLandingPage) {
   const closeBtn = document.getElementById('close-signin-modal');
   if (closeBtn) closeBtn.addEventListener('click', closeModal);
 
-  if (overlay) {
-    overlay.addEventListener('click', e => {
+  if (!isInlineHero) {
+    overlay.addEventListener('click', (e) => {
       if (e.target === overlay) closeModal();
     });
   }
 
-  document.addEventListener('keydown', e => {
-    if (e.key !== 'Escape' || !overlay || overlay.hasAttribute('hidden')) return;
+  document.addEventListener('keydown', (e) => {
+    if (e.key !== 'Escape' || !overlay.classList.contains('is-open')) return;
     if (document.body.classList.contains('fab-modal-open')) return;
     if (document.body.classList.contains('signin-req-drawer-open')) return;
     const fab = document.getElementById('landing-fab');
@@ -116,10 +288,11 @@ if (!isLandingPage) {
   });
 
   window.closeSignInModal = closeModal;
+  window.closeSignInModalInstant = closeModalInstant;
   window.openSignInModal = openModal;
 
   const authQs = new URLSearchParams(window.location.search);
-  if (authQs.has('registered') || authQs.has('session_expired') || authQs.has('setup_complete')) {
+  if (authQs.has('registered') || authQs.has('session_expired') || authQs.has('setup_complete') || authQs.has('signin')) {
     openModal();
   }
 })();
@@ -376,6 +549,7 @@ const form          = document.getElementById('login-form');
 const emailInput    = document.getElementById('email');
 const emailError    = document.getElementById('email-error');
 const passwordError = document.getElementById('password-error');
+const rememberMe    = document.getElementById('remember-me');
 const alertBox      = document.getElementById('alert');
 const submitBtn     = document.getElementById('submit-btn');
 const btnText       = document.getElementById('btn-text');
@@ -389,9 +563,26 @@ const validateEmail = v => {
 };
 const validatePassword = v => {
   if (!v) return 'Password is required.';
-  if (v.length < 6) return 'Password must be at least 6 characters.';
   return '';
 };
+
+async function getRecaptchaToken(action) {
+  const key = window.RECAPTCHA_SITE_KEY;
+  const version = (window.RECAPTCHA_VERSION || 'v3').toLowerCase();
+  if (!key) return '';
+
+  if (version === 'v3') {
+    if (!window.grecaptcha || !window.grecaptcha.execute) return '';
+    try {
+      return await window.grecaptcha.execute(key, { action: action || 'login' });
+    } catch (_) {
+      return '';
+    }
+  }
+
+  return (document.querySelector('textarea[name="g-recaptcha-response"]')?.value || '').trim();
+}
+
 const showAlert  = (msg, type = 'error') => { alertBox.textContent = msg; alertBox.className = `alert ${type}`; };
 const clearAlert = () => { alertBox.className = 'alert'; alertBox.textContent = ''; };
 const setLoading = on => { submitBtn.disabled = on; btnText.hidden = on; btnSpinner.hidden = !on; };
@@ -420,16 +611,33 @@ form.addEventListener('submit', async e => {
 
   setLoading(true);
 
-  const body = new FormData();
-  body.append('email',    emailInput.value.trim());
-  body.append('password', pwdInput.value);
-
   try {
-    // APP_BASE is set by index.php — works on localhost subfolder and domain root
-    const base     = (typeof window.APP_BASE !== 'undefined') ? window.APP_BASE : '';
+    if (window.__MC_CAPTCHA_REQUIRED) {
+      const token = await getRecaptchaToken('login');
+      if (!token) {
+        showAlert('Please verify that you are not a robot.');
+        setLoading(false);
+        return;
+      }
+    }
+
+    const body = new FormData();
+    body.append('email', emailInput.value.trim());
+    body.append('password', pwdInput.value);
+    body.append('remember_me', rememberMe && rememberMe.checked ? '1' : '0');
+    if (window.__MC_CAPTCHA_REQUIRED) {
+      const token = await getRecaptchaToken('login');
+      if (token) body.append('recaptcha_token', token);
+    }
+
+    const base     = (typeof window.APP_BASE !== 'undefined') ? window.APP_BASE : ((typeof window.ASSET_BASE !== 'undefined') ? window.ASSET_BASE : '');
     const loginUrl = base + '/app/api/login.php';
 
-    const res  = await fetch(loginUrl, { method: 'POST', body });
+    const res  = await fetch(loginUrl, {
+      method: 'POST',
+      body,
+      headers: { 'X-MC-No-Loader': '1' },
+    });
 
     if (!res.ok) {
       let msg = `Server error (${res.status}).`;
@@ -447,21 +655,53 @@ form.addEventListener('submit', async e => {
     }
 
     if (data.success) {
+      let redirectUrl = data.redirect;
+      try {
+        const next = sessionStorage.getItem('medconnect_post_reg_next');
+        const preferEarliest = sessionStorage.getItem('medconnect_prefer_earliest_slot') === '1';
+        const urgency = String(sessionStorage.getItem('medconnect_post_reg_urgency') || '').toUpperCase();
+        const base = (typeof window.APP_BASE !== 'undefined') ? window.APP_BASE : '';
+        if (
+          redirectUrl &&
+          redirectUrl.indexOf('/views/patient/') !== -1 &&
+          redirectUrl.indexOf('account_setup') === -1 &&
+          (next === 'triage_earliest' || preferEarliest || urgency === 'URGENT')
+        ) {
+          if (urgency !== 'EMERGENCY') {
+            redirectUrl = base + '/views/patient/triage.php';
+          }
+          sessionStorage.removeItem('medconnect_post_reg_next');
+        }
+      } catch (_) { /* ignore */ }
+
       if (window.MedConnectLoginLoading && typeof window.MedConnectLoginLoading.show === 'function') {
-        window.MedConnectLoginLoading.show(data.redirect);
+        window.MedConnectLoginLoading.show(redirectUrl);
       } else {
-        window.location.replace(data.redirect);
+        window.location.replace(redirectUrl);
       }
     } else {
+      if (data && data.captcha_required) {
+        window.__MC_CAPTCHA_REQUIRED = true;
+        if (window.RECAPTCHA_VERSION && window.RECAPTCHA_VERSION.toLowerCase() === 'v2') {
+          const el = document.getElementById('mc-recaptcha-v2');
+          if (el) el.hidden = false;
+        }
+        showAlert(data.message || 'Please complete the verification to continue.');
+        setLoading(false);
+        return;
+      }
+      if (data && data.code === 'locked') {
+        showAlert(data.message || 'Account temporarily locked. Please try again later.');
+        setLoading(false);
+        return;
+      }
       showAlert(data.message || 'Invalid credentials. Please try again.');
       setLoading(false);
     }
   } catch (err) {
-    console.error('Login fetch failed â€” error name:', err.name);
-    console.error('Login fetch failed â€” error message:', err.message);
-    console.error('Login fetch failed â€” full error:', err);
+    console.error('Login fetch failed:', err);
     const msg = err.name === 'TypeError'
-      ? 'Connection blocked. Check browser console for details.'
+      ? 'Connection blocked. Check your network and try again.'
       : (!navigator.onLine ? 'You appear to be offline.' : 'Could not reach the server.');
     showAlert(msg);
     setLoading(false);

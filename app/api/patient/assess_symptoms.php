@@ -6,8 +6,9 @@
 require_once dirname(dirname(dirname(__DIR__))) . '/bootstrap.php';
 
 Api::startJson();
-Api::requireRole('patient');
+Api::requirePatientReady($pdo);
 Api::requirePost();
+Api::requireCsrf();
 
 $complaint = trim((string) ($_POST['chief_complaint'] ?? $_POST['complaint'] ?? ''));
 $symptoms = $_POST['symptoms'] ?? [];

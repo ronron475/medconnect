@@ -26,4 +26,8 @@ if ($viewsRoot === false || $resolved === false || !str_starts_with($resolved, $
     exit('Page not found.');
 }
 
+if (!defined('MC_VIEW_PATH')) {
+    define('MC_VIEW_PATH', $path);
+}
+
 require $resolved;

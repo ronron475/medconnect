@@ -1,18 +1,24 @@
 <?php
-session_start();
-require_once dirname(__DIR__, 3) . '/config/db.php';
+require_once dirname(__DIR__, 3) . '/bootstrap/app.php';
+require_once BASE_PATH . '/config/db.php';
+require_once BASE_PATH . '/app/includes/auth_guard.php';
+
+$patientProfileUrl = ASSET_BASE . '/views/patient/profile.php';
 
 if (empty($_SESSION['user_id']) || $_SESSION['user_role'] !== 'patient') {
-    header('Location: /index.php'); exit;
+    header('Location: ' . auth_signin_required_url());
+    exit;
 }
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-    header('Location: /views/patient/profile.php'); exit;
+    header('Location: ' . $patientProfileUrl);
+    exit;
 }
 
 // CSRF
 if (empty($_POST['csrf_token']) || $_POST['csrf_token'] !== ($_SESSION['csrf_token'] ?? '')) {
     $_SESSION['medical_errors']['general'] = 'Invalid request. Please try again.';
-    header('Location: /views/patient/profile.php'); exit;
+    header('Location: ' . $patientProfileUrl);
+    exit;
 }
 
 $user_id = (int)$_SESSION['user_id'];
@@ -45,7 +51,8 @@ if (strlen($current_medications) > 500) {
 
 if (!empty($errors)) {
     $_SESSION['medical_errors'] = $errors;
-    header('Location: /views/patient/profile.php'); exit;
+    header('Location: ' . $patientProfileUrl);
+    exit;
 }
 
 try {
@@ -89,4 +96,5 @@ try {
     $_SESSION['medical_errors']['general'] = 'Update failed. Please try again later.';
 }
 
-header('Location: /views/patient/profile.php'); exit;
+header('Location: ' . $patientProfileUrl);
+exit;

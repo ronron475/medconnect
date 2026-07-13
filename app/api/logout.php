@@ -29,18 +29,9 @@ if (!empty($_SESSION['user_id'])) {
 }
 
 // Revoke remember-me token (best-effort)
-$rawRemember = (string) ($_COOKIE[REMEMBER_ME_COOKIE] ?? '');
-if ($rawRemember !== '' && str_contains($rawRemember, ':')) {
-    [$selector] = explode(':', $rawRemember, 2);
-    if ($selector !== '') {
-        try {
-            require_once dirname(__DIR__, 2) . '/config/db.php';
-            remember_me_ensure_schema($pdo);
-            $pdo->prepare('DELETE FROM remember_tokens WHERE selector = ?')->execute([$selector]);
-        } catch (Throwable $e) { /* non-fatal */ }
-    }
-}
-remember_me_clear_cookie();
+try {
+    remember_me_revoke_current_cookie($pdo);
+} catch (Throwable $e) { /* non-fatal */ }
 
 $_SESSION = [];
 session_unset();

@@ -213,11 +213,19 @@
 
   document.getElementById('fp-signin')?.addEventListener('click', () => {
     modal.style.display = 'none';
+    if (typeof window.openSignInModal === 'function') {
+      window.openSignInModal();
+      return;
+    }
     const signin = document.getElementById('signin-modal');
     if (signin) {
       signin.removeAttribute('hidden');
       requestAnimationFrame(() => requestAnimationFrame(() => signin.classList.add('is-open')));
-      document.body.style.overflow = 'hidden';
+      document.body.classList.add('signin-active');
+      const hero = document.getElementById('hero-section');
+      if (hero && signin.classList.contains('hero-signin-panel')) {
+        hero.classList.add('is-signin-open');
+      }
     }
   });
 

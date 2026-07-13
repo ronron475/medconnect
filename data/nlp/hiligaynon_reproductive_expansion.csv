@@ -1,14 +1,14 @@
 hiligaynon_term,english_term,medical_category,severity,triage_level,status
 basin gadugo bilat ko,vaginal bleeding,gynecologic_symptom,High,urgent,active
 basin gahubag itlog ko,testicular swelling,male_reproductive_symptom,Moderate,urgent,active
-basin kakatol bilat ko,vaginal itching,female_reproductive_symptom,Low,routine,active
+basin kakatol bilat ko,vaginal itching,female_reproductive_symptom,Low,non_urgent,active
 basin masakit ari ko,penile pain,male_reproductive_symptom,Moderate,urgent,active
 basin may nana sa bilat ko,vaginal infection,infection,High,urgent,active
 budlay mag-ihi ko,difficulty urinating,urinary_symptom,High,urgent,active
-damsi mag-ihi ko,frequent urination,urinary_symptom,Low,routine,active
+damsi mag-ihi ko,frequent urination,urinary_symptom,Low,non_urgent,active
 daw gadugo bilat ko,vaginal bleeding,gynecologic_symptom,High,urgent,active
 daw gahubag itlog ko,testicular swelling,male_reproductive_symptom,Moderate,urgent,active
-daw kakatol bilat ko,vaginal itching,female_reproductive_symptom,Low,routine,active
+daw kakatol bilat ko,vaginal itching,female_reproductive_symptom,Low,non_urgent,active
 daw masakit ari ko,penile pain,male_reproductive_symptom,Moderate,urgent,active
 daw may bukol sa akon ari,penile lump,male_reproductive_symptom,Severe,urgent,active
 daw may bukol sa akon ari ko,penile lump,male_reproductive_symptom,Severe,urgent,active
@@ -52,7 +52,7 @@ daw may bukol sa singit ko,groin lump,musculoskeletal,Severe,urgent,active
 daw may nana sa bilat ko,vaginal infection,infection,High,urgent,active
 doc gadugo bilat ko,vaginal bleeding,gynecologic_symptom,High,urgent,active
 doc gahubag itlog ko,testicular swelling,male_reproductive_symptom,Moderate,urgent,active
-doc kakatol bilat ko,vaginal itching,female_reproductive_symptom,Low,routine,active
+doc kakatol bilat ko,vaginal itching,female_reproductive_symptom,Low,non_urgent,active
 doc masakit ari ko,penile pain,male_reproductive_symptom,Moderate,urgent,active
 doc may nana sa bilat ko,vaginal infection,infection,High,urgent,active
 dugo ari,penile bleeding,male_reproductive_symptom,High,urgent,active
@@ -858,214 +858,214 @@ gakadugo itlug ko ko,testicular bleeding,male_reproductive_symptom,Severe,urgent
 gakadugo itlug ko ko gid,testicular bleeding,male_reproductive_symptom,Severe,urgent,active
 gakadugo itlug ku,testicular bleeding,male_reproductive_symptom,Severe,urgent,active
 gakadugo itlug ku gid,testicular bleeding,male_reproductive_symptom,Severe,urgent,active
-gakatol akon ari,penile itching,male_reproductive_symptom,Mild,routine,active
-gakatol akon ari ko,penile itching,male_reproductive_symptom,Mild,routine,active
-gakatol akon ary,penile itching,male_reproductive_symptom,Mild,routine,active
-gakatol akon ary ko,penile itching,male_reproductive_symptom,Mild,routine,active
-gakatol akon bilad,vaginal itching,female_reproductive_symptom,Mild,routine,active
-gakatol akon bilad ko,vaginal itching,female_reproductive_symptom,Mild,routine,active
-gakatol akon bilat,vaginal itching,female_reproductive_symptom,Mild,routine,active
-gakatol akon bilat ko,vaginal itching,female_reproductive_symptom,Mild,routine,active
-gakatol akon itlog,testicular itching,male_reproductive_symptom,Mild,routine,active
-gakatol akon itlog ko,testicular itching,male_reproductive_symptom,Mild,routine,active
-gakatol akon itlug,testicular itching,male_reproductive_symptom,Mild,routine,active
-gakatol akon itlug ko,testicular itching,male_reproductive_symptom,Mild,routine,active
-gakatol akon kipay,vulvar itching,female_reproductive_symptom,Mild,routine,active
-gakatol ari ako,penile itching,male_reproductive_symptom,Mild,routine,active
-gakatol ari akon,penile itching,male_reproductive_symptom,Mild,routine,active
-gakatol ari akon gid,penile itching,male_reproductive_symptom,Mild,routine,active
-gakatol ari akon subong,penile itching,male_reproductive_symptom,Mild,routine,active
-gakatol ari gid ko,penile itching,male_reproductive_symptom,Mild,routine,active
-gakatol ari ko,penile itching,male_reproductive_symptom,Mild,routine,active
-gakatol ari ko ako,penile itching,male_reproductive_symptom,Mild,routine,active
-gakatol ari ko akon,penile itching,male_reproductive_symptom,Mild,routine,active
-gakatol ari ko akon gid,penile itching,male_reproductive_symptom,Mild,routine,active
-gakatol ari ko akon subong,penile itching,male_reproductive_symptom,Mild,routine,active
-gakatol ari ko gid,penile itching,male_reproductive_symptom,Mild,routine,active
-gakatol ari ko gid ko,penile itching,male_reproductive_symptom,Mild,routine,active
-gakatol ari ko ko,penile itching,male_reproductive_symptom,Mild,routine,active
-gakatol ari ko ko gid,penile itching,male_reproductive_symptom,Mild,routine,active
-gakatol ary ako,penile itching,male_reproductive_symptom,Mild,routine,active
-gakatol ary akon,penile itching,male_reproductive_symptom,Mild,routine,active
-gakatol ary akon gid,penile itching,male_reproductive_symptom,Mild,routine,active
-gakatol ary akon subong,penile itching,male_reproductive_symptom,Mild,routine,active
-gakatol ary gid ko,penile itching,male_reproductive_symptom,Mild,routine,active
-gakatol ary ko,penile itching,male_reproductive_symptom,Mild,routine,active
-gakatol ary ko ako,penile itching,male_reproductive_symptom,Mild,routine,active
-gakatol ary ko akon,penile itching,male_reproductive_symptom,Mild,routine,active
-gakatol ary ko akon gid,penile itching,male_reproductive_symptom,Mild,routine,active
-gakatol ary ko akon subong,penile itching,male_reproductive_symptom,Mild,routine,active
-gakatol ary ko gid,penile itching,male_reproductive_symptom,Mild,routine,active
-gakatol ary ko gid ko,penile itching,male_reproductive_symptom,Mild,routine,active
-gakatol ary ko ko,penile itching,male_reproductive_symptom,Mild,routine,active
-gakatol ary ko ko gid,penile itching,male_reproductive_symptom,Mild,routine,active
-gakatol bilad ako,vaginal itching,female_reproductive_symptom,Mild,routine,active
-gakatol bilad akon,vaginal itching,female_reproductive_symptom,Mild,routine,active
-gakatol bilad akon gid,vaginal itching,female_reproductive_symptom,Mild,routine,active
-gakatol bilad akon subong,vaginal itching,female_reproductive_symptom,Mild,routine,active
-gakatol bilad gid ko,vaginal itching,female_reproductive_symptom,Mild,routine,active
-gakatol bilad ko,vaginal itching,female_reproductive_symptom,Mild,routine,active
-gakatol bilad ko ako,vaginal itching,female_reproductive_symptom,Mild,routine,active
-gakatol bilad ko akon,vaginal itching,female_reproductive_symptom,Mild,routine,active
-gakatol bilad ko akon gid,vaginal itching,female_reproductive_symptom,Mild,routine,active
-gakatol bilad ko akon subong,vaginal itching,female_reproductive_symptom,Mild,routine,active
-gakatol bilad ko gid,vaginal itching,female_reproductive_symptom,Mild,routine,active
-gakatol bilad ko gid ko,vaginal itching,female_reproductive_symptom,Mild,routine,active
-gakatol bilad ko ko,vaginal itching,female_reproductive_symptom,Mild,routine,active
-gakatol bilad ko ko gid,vaginal itching,female_reproductive_symptom,Mild,routine,active
-gakatol bilat ako,vaginal itching,female_reproductive_symptom,Mild,routine,active
-gakatol bilat akon,vaginal itching,female_reproductive_symptom,Mild,routine,active
-gakatol bilat akon gid,vaginal itching,female_reproductive_symptom,Mild,routine,active
-gakatol bilat akon subong,vaginal itching,female_reproductive_symptom,Mild,routine,active
-gakatol bilat gid ko,vaginal itching,female_reproductive_symptom,Mild,routine,active
-gakatol bilat ko,vaginal itching,female_reproductive_symptom,Mild,routine,active
-gakatol bilat ko ako,vaginal itching,female_reproductive_symptom,Mild,routine,active
-gakatol bilat ko akon,vaginal itching,female_reproductive_symptom,Mild,routine,active
-gakatol bilat ko akon gid,vaginal itching,female_reproductive_symptom,Mild,routine,active
-gakatol bilat ko akon subong,vaginal itching,female_reproductive_symptom,Mild,routine,active
-gakatol bilat ko gid,vaginal itching,female_reproductive_symptom,Mild,routine,active
-gakatol bilat ko gid ko,vaginal itching,female_reproductive_symptom,Mild,routine,active
-gakatol bilat ko ko,vaginal itching,female_reproductive_symptom,Mild,routine,active
-gakatol bilat ko ko gid,vaginal itching,female_reproductive_symptom,Mild,routine,active
-gakatol gid akon ari,penile itching,male_reproductive_symptom,Mild,routine,active
-gakatol gid akon ari ko,penile itching,male_reproductive_symptom,Mild,routine,active
-gakatol gid akon ary,penile itching,male_reproductive_symptom,Mild,routine,active
-gakatol gid akon ary ko,penile itching,male_reproductive_symptom,Mild,routine,active
-gakatol gid akon bilad,vaginal itching,female_reproductive_symptom,Mild,routine,active
-gakatol gid akon bilad ko,vaginal itching,female_reproductive_symptom,Mild,routine,active
-gakatol gid akon bilat,vaginal itching,female_reproductive_symptom,Mild,routine,active
-gakatol gid akon bilat ko,vaginal itching,female_reproductive_symptom,Mild,routine,active
-gakatol gid akon itlog,testicular itching,male_reproductive_symptom,Mild,routine,active
-gakatol gid akon itlog ko,testicular itching,male_reproductive_symptom,Mild,routine,active
-gakatol gid akon itlug,testicular itching,male_reproductive_symptom,Mild,routine,active
-gakatol gid akon itlug ko,testicular itching,male_reproductive_symptom,Mild,routine,active
-gakatol gid akon kipay,vulvar itching,female_reproductive_symptom,Mild,routine,active
-gakatol gid ari ako,penile itching,male_reproductive_symptom,Mild,routine,active
-gakatol gid ari akon,penile itching,male_reproductive_symptom,Mild,routine,active
-gakatol gid ari akon gid,penile itching,male_reproductive_symptom,Mild,routine,active
-gakatol gid ari akon subong,penile itching,male_reproductive_symptom,Mild,routine,active
-gakatol gid ari gid ko,penile itching,male_reproductive_symptom,Mild,routine,active
-gakatol gid ari ko,penile itching,male_reproductive_symptom,Mild,routine,active
-gakatol gid ari ko ako,penile itching,male_reproductive_symptom,Mild,routine,active
-gakatol gid ari ko akon,penile itching,male_reproductive_symptom,Mild,routine,active
-gakatol gid ari ko akon gid,penile itching,male_reproductive_symptom,Mild,routine,active
-gakatol gid ari ko akon subong,penile itching,male_reproductive_symptom,Mild,routine,active
-gakatol gid ari ko gid,penile itching,male_reproductive_symptom,Mild,routine,active
-gakatol gid ari ko gid ko,penile itching,male_reproductive_symptom,Mild,routine,active
-gakatol gid ari ko ko,penile itching,male_reproductive_symptom,Mild,routine,active
-gakatol gid ari ko ko gid,penile itching,male_reproductive_symptom,Mild,routine,active
-gakatol gid ary ako,penile itching,male_reproductive_symptom,Mild,routine,active
-gakatol gid ary akon,penile itching,male_reproductive_symptom,Mild,routine,active
-gakatol gid ary akon gid,penile itching,male_reproductive_symptom,Mild,routine,active
-gakatol gid ary akon subong,penile itching,male_reproductive_symptom,Mild,routine,active
-gakatol gid ary gid ko,penile itching,male_reproductive_symptom,Mild,routine,active
-gakatol gid ary ko,penile itching,male_reproductive_symptom,Mild,routine,active
-gakatol gid ary ko ako,penile itching,male_reproductive_symptom,Mild,routine,active
-gakatol gid ary ko akon,penile itching,male_reproductive_symptom,Mild,routine,active
-gakatol gid ary ko akon gid,penile itching,male_reproductive_symptom,Mild,routine,active
-gakatol gid ary ko akon subong,penile itching,male_reproductive_symptom,Mild,routine,active
-gakatol gid ary ko gid,penile itching,male_reproductive_symptom,Mild,routine,active
-gakatol gid ary ko gid ko,penile itching,male_reproductive_symptom,Mild,routine,active
-gakatol gid ary ko ko,penile itching,male_reproductive_symptom,Mild,routine,active
-gakatol gid ary ko ko gid,penile itching,male_reproductive_symptom,Mild,routine,active
-gakatol gid bilad ako,vaginal itching,female_reproductive_symptom,Mild,routine,active
-gakatol gid bilad akon,vaginal itching,female_reproductive_symptom,Mild,routine,active
-gakatol gid bilad akon gid,vaginal itching,female_reproductive_symptom,Mild,routine,active
-gakatol gid bilad akon subong,vaginal itching,female_reproductive_symptom,Mild,routine,active
-gakatol gid bilad gid ko,vaginal itching,female_reproductive_symptom,Mild,routine,active
-gakatol gid bilad ko,vaginal itching,female_reproductive_symptom,Mild,routine,active
-gakatol gid bilad ko ako,vaginal itching,female_reproductive_symptom,Mild,routine,active
-gakatol gid bilad ko akon,vaginal itching,female_reproductive_symptom,Mild,routine,active
-gakatol gid bilad ko akon gid,vaginal itching,female_reproductive_symptom,Mild,routine,active
-gakatol gid bilad ko akon subong,vaginal itching,female_reproductive_symptom,Mild,routine,active
-gakatol gid bilad ko gid,vaginal itching,female_reproductive_symptom,Mild,routine,active
-gakatol gid bilad ko gid ko,vaginal itching,female_reproductive_symptom,Mild,routine,active
-gakatol gid bilad ko ko,vaginal itching,female_reproductive_symptom,Mild,routine,active
-gakatol gid bilad ko ko gid,vaginal itching,female_reproductive_symptom,Mild,routine,active
-gakatol gid bilat ako,vaginal itching,female_reproductive_symptom,Mild,routine,active
-gakatol gid bilat akon,vaginal itching,female_reproductive_symptom,Mild,routine,active
-gakatol gid bilat akon gid,vaginal itching,female_reproductive_symptom,Mild,routine,active
-gakatol gid bilat akon subong,vaginal itching,female_reproductive_symptom,Mild,routine,active
-gakatol gid bilat gid ko,vaginal itching,female_reproductive_symptom,Mild,routine,active
-gakatol gid bilat ko,vaginal itching,female_reproductive_symptom,Mild,routine,active
-gakatol gid bilat ko ako,vaginal itching,female_reproductive_symptom,Mild,routine,active
-gakatol gid bilat ko akon,vaginal itching,female_reproductive_symptom,Mild,routine,active
-gakatol gid bilat ko akon gid,vaginal itching,female_reproductive_symptom,Mild,routine,active
-gakatol gid bilat ko akon subong,vaginal itching,female_reproductive_symptom,Mild,routine,active
-gakatol gid bilat ko gid,vaginal itching,female_reproductive_symptom,Mild,routine,active
-gakatol gid bilat ko gid ko,vaginal itching,female_reproductive_symptom,Mild,routine,active
-gakatol gid bilat ko ko,vaginal itching,female_reproductive_symptom,Mild,routine,active
-gakatol gid bilat ko ko gid,vaginal itching,female_reproductive_symptom,Mild,routine,active
-gakatol gid itlog ako,testicular itching,male_reproductive_symptom,Mild,routine,active
-gakatol gid itlog akon,testicular itching,male_reproductive_symptom,Mild,routine,active
-gakatol gid itlog akon gid,testicular itching,male_reproductive_symptom,Mild,routine,active
-gakatol gid itlog akon subong,testicular itching,male_reproductive_symptom,Mild,routine,active
-gakatol gid itlog gid ko,testicular itching,male_reproductive_symptom,Mild,routine,active
-gakatol gid itlog ko,testicular itching,male_reproductive_symptom,Mild,routine,active
-gakatol gid itlog ko ako,testicular itching,male_reproductive_symptom,Mild,routine,active
-gakatol gid itlog ko akon,testicular itching,male_reproductive_symptom,Mild,routine,active
-gakatol gid itlog ko akon gid,testicular itching,male_reproductive_symptom,Mild,routine,active
-gakatol gid itlog ko akon subong,testicular itching,male_reproductive_symptom,Mild,routine,active
-gakatol gid itlog ko gid,testicular itching,male_reproductive_symptom,Mild,routine,active
-gakatol gid itlog ko gid ko,testicular itching,male_reproductive_symptom,Mild,routine,active
-gakatol gid itlog ko ko,testicular itching,male_reproductive_symptom,Mild,routine,active
-gakatol gid itlog ko ko gid,testicular itching,male_reproductive_symptom,Mild,routine,active
-gakatol gid itlug ako,testicular itching,male_reproductive_symptom,Mild,routine,active
-gakatol gid itlug akon,testicular itching,male_reproductive_symptom,Mild,routine,active
-gakatol gid itlug akon gid,testicular itching,male_reproductive_symptom,Mild,routine,active
-gakatol gid itlug akon subong,testicular itching,male_reproductive_symptom,Mild,routine,active
-gakatol gid itlug gid ko,testicular itching,male_reproductive_symptom,Mild,routine,active
-gakatol gid itlug ko,testicular itching,male_reproductive_symptom,Mild,routine,active
-gakatol gid itlug ko ako,testicular itching,male_reproductive_symptom,Mild,routine,active
-gakatol gid itlug ko akon,testicular itching,male_reproductive_symptom,Mild,routine,active
-gakatol gid itlug ko akon gid,testicular itching,male_reproductive_symptom,Mild,routine,active
-gakatol gid itlug ko akon subong,testicular itching,male_reproductive_symptom,Mild,routine,active
-gakatol gid itlug ko gid,testicular itching,male_reproductive_symptom,Mild,routine,active
-gakatol gid itlug ko gid ko,testicular itching,male_reproductive_symptom,Mild,routine,active
-gakatol gid itlug ko ko,testicular itching,male_reproductive_symptom,Mild,routine,active
-gakatol gid itlug ko ko gid,testicular itching,male_reproductive_symptom,Mild,routine,active
-gakatol gid kipay ako,vulvar itching,female_reproductive_symptom,Mild,routine,active
-gakatol gid kipay akon,vulvar itching,female_reproductive_symptom,Mild,routine,active
-gakatol gid kipay akon gid,vulvar itching,female_reproductive_symptom,Mild,routine,active
-gakatol gid kipay akon subong,vulvar itching,female_reproductive_symptom,Mild,routine,active
-gakatol gid kipay gid ko,vulvar itching,female_reproductive_symptom,Mild,routine,active
-gakatol gid kipay ko,vulvar itching,female_reproductive_symptom,Mild,routine,active
-gakatol gid kipay ko gid,vulvar itching,female_reproductive_symptom,Mild,routine,active
-gakatol itlog ako,testicular itching,male_reproductive_symptom,Mild,routine,active
-gakatol itlog akon,testicular itching,male_reproductive_symptom,Mild,routine,active
-gakatol itlog akon gid,testicular itching,male_reproductive_symptom,Mild,routine,active
-gakatol itlog akon subong,testicular itching,male_reproductive_symptom,Mild,routine,active
-gakatol itlog gid ko,testicular itching,male_reproductive_symptom,Mild,routine,active
-gakatol itlog ko,testicular itching,male_reproductive_symptom,Mild,routine,active
-gakatol itlog ko ako,testicular itching,male_reproductive_symptom,Mild,routine,active
-gakatol itlog ko akon,testicular itching,male_reproductive_symptom,Mild,routine,active
-gakatol itlog ko akon gid,testicular itching,male_reproductive_symptom,Mild,routine,active
-gakatol itlog ko akon subong,testicular itching,male_reproductive_symptom,Mild,routine,active
-gakatol itlog ko gid,testicular itching,male_reproductive_symptom,Mild,routine,active
-gakatol itlog ko gid ko,testicular itching,male_reproductive_symptom,Mild,routine,active
-gakatol itlog ko ko,testicular itching,male_reproductive_symptom,Mild,routine,active
-gakatol itlog ko ko gid,testicular itching,male_reproductive_symptom,Mild,routine,active
-gakatol itlug ako,testicular itching,male_reproductive_symptom,Mild,routine,active
-gakatol itlug akon,testicular itching,male_reproductive_symptom,Mild,routine,active
-gakatol itlug akon gid,testicular itching,male_reproductive_symptom,Mild,routine,active
-gakatol itlug akon subong,testicular itching,male_reproductive_symptom,Mild,routine,active
-gakatol itlug gid ko,testicular itching,male_reproductive_symptom,Mild,routine,active
-gakatol itlug ko,testicular itching,male_reproductive_symptom,Mild,routine,active
-gakatol itlug ko ako,testicular itching,male_reproductive_symptom,Mild,routine,active
-gakatol itlug ko akon,testicular itching,male_reproductive_symptom,Mild,routine,active
-gakatol itlug ko akon gid,testicular itching,male_reproductive_symptom,Mild,routine,active
-gakatol itlug ko akon subong,testicular itching,male_reproductive_symptom,Mild,routine,active
-gakatol itlug ko gid,testicular itching,male_reproductive_symptom,Mild,routine,active
-gakatol itlug ko gid ko,testicular itching,male_reproductive_symptom,Mild,routine,active
-gakatol itlug ko ko,testicular itching,male_reproductive_symptom,Mild,routine,active
-gakatol itlug ko ko gid,testicular itching,male_reproductive_symptom,Mild,routine,active
-gakatol kipay ako,vulvar itching,female_reproductive_symptom,Mild,routine,active
-gakatol kipay akon,vulvar itching,female_reproductive_symptom,Mild,routine,active
-gakatol kipay akon gid,vulvar itching,female_reproductive_symptom,Mild,routine,active
-gakatol kipay akon subong,vulvar itching,female_reproductive_symptom,Mild,routine,active
-gakatol kipay gid ko,vulvar itching,female_reproductive_symptom,Mild,routine,active
-gakatol kipay ko,vulvar itching,female_reproductive_symptom,Mild,routine,active
-gakatol kipay ko gid,vulvar itching,female_reproductive_symptom,Mild,routine,active
+gakatol akon ari,penile itching,male_reproductive_symptom,Mild,non_urgent,active
+gakatol akon ari ko,penile itching,male_reproductive_symptom,Mild,non_urgent,active
+gakatol akon ary,penile itching,male_reproductive_symptom,Mild,non_urgent,active
+gakatol akon ary ko,penile itching,male_reproductive_symptom,Mild,non_urgent,active
+gakatol akon bilad,vaginal itching,female_reproductive_symptom,Mild,non_urgent,active
+gakatol akon bilad ko,vaginal itching,female_reproductive_symptom,Mild,non_urgent,active
+gakatol akon bilat,vaginal itching,female_reproductive_symptom,Mild,non_urgent,active
+gakatol akon bilat ko,vaginal itching,female_reproductive_symptom,Mild,non_urgent,active
+gakatol akon itlog,testicular itching,male_reproductive_symptom,Mild,non_urgent,active
+gakatol akon itlog ko,testicular itching,male_reproductive_symptom,Mild,non_urgent,active
+gakatol akon itlug,testicular itching,male_reproductive_symptom,Mild,non_urgent,active
+gakatol akon itlug ko,testicular itching,male_reproductive_symptom,Mild,non_urgent,active
+gakatol akon kipay,vulvar itching,female_reproductive_symptom,Mild,non_urgent,active
+gakatol ari ako,penile itching,male_reproductive_symptom,Mild,non_urgent,active
+gakatol ari akon,penile itching,male_reproductive_symptom,Mild,non_urgent,active
+gakatol ari akon gid,penile itching,male_reproductive_symptom,Mild,non_urgent,active
+gakatol ari akon subong,penile itching,male_reproductive_symptom,Mild,non_urgent,active
+gakatol ari gid ko,penile itching,male_reproductive_symptom,Mild,non_urgent,active
+gakatol ari ko,penile itching,male_reproductive_symptom,Mild,non_urgent,active
+gakatol ari ko ako,penile itching,male_reproductive_symptom,Mild,non_urgent,active
+gakatol ari ko akon,penile itching,male_reproductive_symptom,Mild,non_urgent,active
+gakatol ari ko akon gid,penile itching,male_reproductive_symptom,Mild,non_urgent,active
+gakatol ari ko akon subong,penile itching,male_reproductive_symptom,Mild,non_urgent,active
+gakatol ari ko gid,penile itching,male_reproductive_symptom,Mild,non_urgent,active
+gakatol ari ko gid ko,penile itching,male_reproductive_symptom,Mild,non_urgent,active
+gakatol ari ko ko,penile itching,male_reproductive_symptom,Mild,non_urgent,active
+gakatol ari ko ko gid,penile itching,male_reproductive_symptom,Mild,non_urgent,active
+gakatol ary ako,penile itching,male_reproductive_symptom,Mild,non_urgent,active
+gakatol ary akon,penile itching,male_reproductive_symptom,Mild,non_urgent,active
+gakatol ary akon gid,penile itching,male_reproductive_symptom,Mild,non_urgent,active
+gakatol ary akon subong,penile itching,male_reproductive_symptom,Mild,non_urgent,active
+gakatol ary gid ko,penile itching,male_reproductive_symptom,Mild,non_urgent,active
+gakatol ary ko,penile itching,male_reproductive_symptom,Mild,non_urgent,active
+gakatol ary ko ako,penile itching,male_reproductive_symptom,Mild,non_urgent,active
+gakatol ary ko akon,penile itching,male_reproductive_symptom,Mild,non_urgent,active
+gakatol ary ko akon gid,penile itching,male_reproductive_symptom,Mild,non_urgent,active
+gakatol ary ko akon subong,penile itching,male_reproductive_symptom,Mild,non_urgent,active
+gakatol ary ko gid,penile itching,male_reproductive_symptom,Mild,non_urgent,active
+gakatol ary ko gid ko,penile itching,male_reproductive_symptom,Mild,non_urgent,active
+gakatol ary ko ko,penile itching,male_reproductive_symptom,Mild,non_urgent,active
+gakatol ary ko ko gid,penile itching,male_reproductive_symptom,Mild,non_urgent,active
+gakatol bilad ako,vaginal itching,female_reproductive_symptom,Mild,non_urgent,active
+gakatol bilad akon,vaginal itching,female_reproductive_symptom,Mild,non_urgent,active
+gakatol bilad akon gid,vaginal itching,female_reproductive_symptom,Mild,non_urgent,active
+gakatol bilad akon subong,vaginal itching,female_reproductive_symptom,Mild,non_urgent,active
+gakatol bilad gid ko,vaginal itching,female_reproductive_symptom,Mild,non_urgent,active
+gakatol bilad ko,vaginal itching,female_reproductive_symptom,Mild,non_urgent,active
+gakatol bilad ko ako,vaginal itching,female_reproductive_symptom,Mild,non_urgent,active
+gakatol bilad ko akon,vaginal itching,female_reproductive_symptom,Mild,non_urgent,active
+gakatol bilad ko akon gid,vaginal itching,female_reproductive_symptom,Mild,non_urgent,active
+gakatol bilad ko akon subong,vaginal itching,female_reproductive_symptom,Mild,non_urgent,active
+gakatol bilad ko gid,vaginal itching,female_reproductive_symptom,Mild,non_urgent,active
+gakatol bilad ko gid ko,vaginal itching,female_reproductive_symptom,Mild,non_urgent,active
+gakatol bilad ko ko,vaginal itching,female_reproductive_symptom,Mild,non_urgent,active
+gakatol bilad ko ko gid,vaginal itching,female_reproductive_symptom,Mild,non_urgent,active
+gakatol bilat ako,vaginal itching,female_reproductive_symptom,Mild,non_urgent,active
+gakatol bilat akon,vaginal itching,female_reproductive_symptom,Mild,non_urgent,active
+gakatol bilat akon gid,vaginal itching,female_reproductive_symptom,Mild,non_urgent,active
+gakatol bilat akon subong,vaginal itching,female_reproductive_symptom,Mild,non_urgent,active
+gakatol bilat gid ko,vaginal itching,female_reproductive_symptom,Mild,non_urgent,active
+gakatol bilat ko,vaginal itching,female_reproductive_symptom,Mild,non_urgent,active
+gakatol bilat ko ako,vaginal itching,female_reproductive_symptom,Mild,non_urgent,active
+gakatol bilat ko akon,vaginal itching,female_reproductive_symptom,Mild,non_urgent,active
+gakatol bilat ko akon gid,vaginal itching,female_reproductive_symptom,Mild,non_urgent,active
+gakatol bilat ko akon subong,vaginal itching,female_reproductive_symptom,Mild,non_urgent,active
+gakatol bilat ko gid,vaginal itching,female_reproductive_symptom,Mild,non_urgent,active
+gakatol bilat ko gid ko,vaginal itching,female_reproductive_symptom,Mild,non_urgent,active
+gakatol bilat ko ko,vaginal itching,female_reproductive_symptom,Mild,non_urgent,active
+gakatol bilat ko ko gid,vaginal itching,female_reproductive_symptom,Mild,non_urgent,active
+gakatol gid akon ari,penile itching,male_reproductive_symptom,Mild,non_urgent,active
+gakatol gid akon ari ko,penile itching,male_reproductive_symptom,Mild,non_urgent,active
+gakatol gid akon ary,penile itching,male_reproductive_symptom,Mild,non_urgent,active
+gakatol gid akon ary ko,penile itching,male_reproductive_symptom,Mild,non_urgent,active
+gakatol gid akon bilad,vaginal itching,female_reproductive_symptom,Mild,non_urgent,active
+gakatol gid akon bilad ko,vaginal itching,female_reproductive_symptom,Mild,non_urgent,active
+gakatol gid akon bilat,vaginal itching,female_reproductive_symptom,Mild,non_urgent,active
+gakatol gid akon bilat ko,vaginal itching,female_reproductive_symptom,Mild,non_urgent,active
+gakatol gid akon itlog,testicular itching,male_reproductive_symptom,Mild,non_urgent,active
+gakatol gid akon itlog ko,testicular itching,male_reproductive_symptom,Mild,non_urgent,active
+gakatol gid akon itlug,testicular itching,male_reproductive_symptom,Mild,non_urgent,active
+gakatol gid akon itlug ko,testicular itching,male_reproductive_symptom,Mild,non_urgent,active
+gakatol gid akon kipay,vulvar itching,female_reproductive_symptom,Mild,non_urgent,active
+gakatol gid ari ako,penile itching,male_reproductive_symptom,Mild,non_urgent,active
+gakatol gid ari akon,penile itching,male_reproductive_symptom,Mild,non_urgent,active
+gakatol gid ari akon gid,penile itching,male_reproductive_symptom,Mild,non_urgent,active
+gakatol gid ari akon subong,penile itching,male_reproductive_symptom,Mild,non_urgent,active
+gakatol gid ari gid ko,penile itching,male_reproductive_symptom,Mild,non_urgent,active
+gakatol gid ari ko,penile itching,male_reproductive_symptom,Mild,non_urgent,active
+gakatol gid ari ko ako,penile itching,male_reproductive_symptom,Mild,non_urgent,active
+gakatol gid ari ko akon,penile itching,male_reproductive_symptom,Mild,non_urgent,active
+gakatol gid ari ko akon gid,penile itching,male_reproductive_symptom,Mild,non_urgent,active
+gakatol gid ari ko akon subong,penile itching,male_reproductive_symptom,Mild,non_urgent,active
+gakatol gid ari ko gid,penile itching,male_reproductive_symptom,Mild,non_urgent,active
+gakatol gid ari ko gid ko,penile itching,male_reproductive_symptom,Mild,non_urgent,active
+gakatol gid ari ko ko,penile itching,male_reproductive_symptom,Mild,non_urgent,active
+gakatol gid ari ko ko gid,penile itching,male_reproductive_symptom,Mild,non_urgent,active
+gakatol gid ary ako,penile itching,male_reproductive_symptom,Mild,non_urgent,active
+gakatol gid ary akon,penile itching,male_reproductive_symptom,Mild,non_urgent,active
+gakatol gid ary akon gid,penile itching,male_reproductive_symptom,Mild,non_urgent,active
+gakatol gid ary akon subong,penile itching,male_reproductive_symptom,Mild,non_urgent,active
+gakatol gid ary gid ko,penile itching,male_reproductive_symptom,Mild,non_urgent,active
+gakatol gid ary ko,penile itching,male_reproductive_symptom,Mild,non_urgent,active
+gakatol gid ary ko ako,penile itching,male_reproductive_symptom,Mild,non_urgent,active
+gakatol gid ary ko akon,penile itching,male_reproductive_symptom,Mild,non_urgent,active
+gakatol gid ary ko akon gid,penile itching,male_reproductive_symptom,Mild,non_urgent,active
+gakatol gid ary ko akon subong,penile itching,male_reproductive_symptom,Mild,non_urgent,active
+gakatol gid ary ko gid,penile itching,male_reproductive_symptom,Mild,non_urgent,active
+gakatol gid ary ko gid ko,penile itching,male_reproductive_symptom,Mild,non_urgent,active
+gakatol gid ary ko ko,penile itching,male_reproductive_symptom,Mild,non_urgent,active
+gakatol gid ary ko ko gid,penile itching,male_reproductive_symptom,Mild,non_urgent,active
+gakatol gid bilad ako,vaginal itching,female_reproductive_symptom,Mild,non_urgent,active
+gakatol gid bilad akon,vaginal itching,female_reproductive_symptom,Mild,non_urgent,active
+gakatol gid bilad akon gid,vaginal itching,female_reproductive_symptom,Mild,non_urgent,active
+gakatol gid bilad akon subong,vaginal itching,female_reproductive_symptom,Mild,non_urgent,active
+gakatol gid bilad gid ko,vaginal itching,female_reproductive_symptom,Mild,non_urgent,active
+gakatol gid bilad ko,vaginal itching,female_reproductive_symptom,Mild,non_urgent,active
+gakatol gid bilad ko ako,vaginal itching,female_reproductive_symptom,Mild,non_urgent,active
+gakatol gid bilad ko akon,vaginal itching,female_reproductive_symptom,Mild,non_urgent,active
+gakatol gid bilad ko akon gid,vaginal itching,female_reproductive_symptom,Mild,non_urgent,active
+gakatol gid bilad ko akon subong,vaginal itching,female_reproductive_symptom,Mild,non_urgent,active
+gakatol gid bilad ko gid,vaginal itching,female_reproductive_symptom,Mild,non_urgent,active
+gakatol gid bilad ko gid ko,vaginal itching,female_reproductive_symptom,Mild,non_urgent,active
+gakatol gid bilad ko ko,vaginal itching,female_reproductive_symptom,Mild,non_urgent,active
+gakatol gid bilad ko ko gid,vaginal itching,female_reproductive_symptom,Mild,non_urgent,active
+gakatol gid bilat ako,vaginal itching,female_reproductive_symptom,Mild,non_urgent,active
+gakatol gid bilat akon,vaginal itching,female_reproductive_symptom,Mild,non_urgent,active
+gakatol gid bilat akon gid,vaginal itching,female_reproductive_symptom,Mild,non_urgent,active
+gakatol gid bilat akon subong,vaginal itching,female_reproductive_symptom,Mild,non_urgent,active
+gakatol gid bilat gid ko,vaginal itching,female_reproductive_symptom,Mild,non_urgent,active
+gakatol gid bilat ko,vaginal itching,female_reproductive_symptom,Mild,non_urgent,active
+gakatol gid bilat ko ako,vaginal itching,female_reproductive_symptom,Mild,non_urgent,active
+gakatol gid bilat ko akon,vaginal itching,female_reproductive_symptom,Mild,non_urgent,active
+gakatol gid bilat ko akon gid,vaginal itching,female_reproductive_symptom,Mild,non_urgent,active
+gakatol gid bilat ko akon subong,vaginal itching,female_reproductive_symptom,Mild,non_urgent,active
+gakatol gid bilat ko gid,vaginal itching,female_reproductive_symptom,Mild,non_urgent,active
+gakatol gid bilat ko gid ko,vaginal itching,female_reproductive_symptom,Mild,non_urgent,active
+gakatol gid bilat ko ko,vaginal itching,female_reproductive_symptom,Mild,non_urgent,active
+gakatol gid bilat ko ko gid,vaginal itching,female_reproductive_symptom,Mild,non_urgent,active
+gakatol gid itlog ako,testicular itching,male_reproductive_symptom,Mild,non_urgent,active
+gakatol gid itlog akon,testicular itching,male_reproductive_symptom,Mild,non_urgent,active
+gakatol gid itlog akon gid,testicular itching,male_reproductive_symptom,Mild,non_urgent,active
+gakatol gid itlog akon subong,testicular itching,male_reproductive_symptom,Mild,non_urgent,active
+gakatol gid itlog gid ko,testicular itching,male_reproductive_symptom,Mild,non_urgent,active
+gakatol gid itlog ko,testicular itching,male_reproductive_symptom,Mild,non_urgent,active
+gakatol gid itlog ko ako,testicular itching,male_reproductive_symptom,Mild,non_urgent,active
+gakatol gid itlog ko akon,testicular itching,male_reproductive_symptom,Mild,non_urgent,active
+gakatol gid itlog ko akon gid,testicular itching,male_reproductive_symptom,Mild,non_urgent,active
+gakatol gid itlog ko akon subong,testicular itching,male_reproductive_symptom,Mild,non_urgent,active
+gakatol gid itlog ko gid,testicular itching,male_reproductive_symptom,Mild,non_urgent,active
+gakatol gid itlog ko gid ko,testicular itching,male_reproductive_symptom,Mild,non_urgent,active
+gakatol gid itlog ko ko,testicular itching,male_reproductive_symptom,Mild,non_urgent,active
+gakatol gid itlog ko ko gid,testicular itching,male_reproductive_symptom,Mild,non_urgent,active
+gakatol gid itlug ako,testicular itching,male_reproductive_symptom,Mild,non_urgent,active
+gakatol gid itlug akon,testicular itching,male_reproductive_symptom,Mild,non_urgent,active
+gakatol gid itlug akon gid,testicular itching,male_reproductive_symptom,Mild,non_urgent,active
+gakatol gid itlug akon subong,testicular itching,male_reproductive_symptom,Mild,non_urgent,active
+gakatol gid itlug gid ko,testicular itching,male_reproductive_symptom,Mild,non_urgent,active
+gakatol gid itlug ko,testicular itching,male_reproductive_symptom,Mild,non_urgent,active
+gakatol gid itlug ko ako,testicular itching,male_reproductive_symptom,Mild,non_urgent,active
+gakatol gid itlug ko akon,testicular itching,male_reproductive_symptom,Mild,non_urgent,active
+gakatol gid itlug ko akon gid,testicular itching,male_reproductive_symptom,Mild,non_urgent,active
+gakatol gid itlug ko akon subong,testicular itching,male_reproductive_symptom,Mild,non_urgent,active
+gakatol gid itlug ko gid,testicular itching,male_reproductive_symptom,Mild,non_urgent,active
+gakatol gid itlug ko gid ko,testicular itching,male_reproductive_symptom,Mild,non_urgent,active
+gakatol gid itlug ko ko,testicular itching,male_reproductive_symptom,Mild,non_urgent,active
+gakatol gid itlug ko ko gid,testicular itching,male_reproductive_symptom,Mild,non_urgent,active
+gakatol gid kipay ako,vulvar itching,female_reproductive_symptom,Mild,non_urgent,active
+gakatol gid kipay akon,vulvar itching,female_reproductive_symptom,Mild,non_urgent,active
+gakatol gid kipay akon gid,vulvar itching,female_reproductive_symptom,Mild,non_urgent,active
+gakatol gid kipay akon subong,vulvar itching,female_reproductive_symptom,Mild,non_urgent,active
+gakatol gid kipay gid ko,vulvar itching,female_reproductive_symptom,Mild,non_urgent,active
+gakatol gid kipay ko,vulvar itching,female_reproductive_symptom,Mild,non_urgent,active
+gakatol gid kipay ko gid,vulvar itching,female_reproductive_symptom,Mild,non_urgent,active
+gakatol itlog ako,testicular itching,male_reproductive_symptom,Mild,non_urgent,active
+gakatol itlog akon,testicular itching,male_reproductive_symptom,Mild,non_urgent,active
+gakatol itlog akon gid,testicular itching,male_reproductive_symptom,Mild,non_urgent,active
+gakatol itlog akon subong,testicular itching,male_reproductive_symptom,Mild,non_urgent,active
+gakatol itlog gid ko,testicular itching,male_reproductive_symptom,Mild,non_urgent,active
+gakatol itlog ko,testicular itching,male_reproductive_symptom,Mild,non_urgent,active
+gakatol itlog ko ako,testicular itching,male_reproductive_symptom,Mild,non_urgent,active
+gakatol itlog ko akon,testicular itching,male_reproductive_symptom,Mild,non_urgent,active
+gakatol itlog ko akon gid,testicular itching,male_reproductive_symptom,Mild,non_urgent,active
+gakatol itlog ko akon subong,testicular itching,male_reproductive_symptom,Mild,non_urgent,active
+gakatol itlog ko gid,testicular itching,male_reproductive_symptom,Mild,non_urgent,active
+gakatol itlog ko gid ko,testicular itching,male_reproductive_symptom,Mild,non_urgent,active
+gakatol itlog ko ko,testicular itching,male_reproductive_symptom,Mild,non_urgent,active
+gakatol itlog ko ko gid,testicular itching,male_reproductive_symptom,Mild,non_urgent,active
+gakatol itlug ako,testicular itching,male_reproductive_symptom,Mild,non_urgent,active
+gakatol itlug akon,testicular itching,male_reproductive_symptom,Mild,non_urgent,active
+gakatol itlug akon gid,testicular itching,male_reproductive_symptom,Mild,non_urgent,active
+gakatol itlug akon subong,testicular itching,male_reproductive_symptom,Mild,non_urgent,active
+gakatol itlug gid ko,testicular itching,male_reproductive_symptom,Mild,non_urgent,active
+gakatol itlug ko,testicular itching,male_reproductive_symptom,Mild,non_urgent,active
+gakatol itlug ko ako,testicular itching,male_reproductive_symptom,Mild,non_urgent,active
+gakatol itlug ko akon,testicular itching,male_reproductive_symptom,Mild,non_urgent,active
+gakatol itlug ko akon gid,testicular itching,male_reproductive_symptom,Mild,non_urgent,active
+gakatol itlug ko akon subong,testicular itching,male_reproductive_symptom,Mild,non_urgent,active
+gakatol itlug ko gid,testicular itching,male_reproductive_symptom,Mild,non_urgent,active
+gakatol itlug ko gid ko,testicular itching,male_reproductive_symptom,Mild,non_urgent,active
+gakatol itlug ko ko,testicular itching,male_reproductive_symptom,Mild,non_urgent,active
+gakatol itlug ko ko gid,testicular itching,male_reproductive_symptom,Mild,non_urgent,active
+gakatol kipay ako,vulvar itching,female_reproductive_symptom,Mild,non_urgent,active
+gakatol kipay akon,vulvar itching,female_reproductive_symptom,Mild,non_urgent,active
+gakatol kipay akon gid,vulvar itching,female_reproductive_symptom,Mild,non_urgent,active
+gakatol kipay akon subong,vulvar itching,female_reproductive_symptom,Mild,non_urgent,active
+gakatol kipay gid ko,vulvar itching,female_reproductive_symptom,Mild,non_urgent,active
+gakatol kipay ko,vulvar itching,female_reproductive_symptom,Mild,non_urgent,active
+gakatol kipay ko gid,vulvar itching,female_reproductive_symptom,Mild,non_urgent,active
 gapula acun itlog,testicular redness,male_reproductive_symptom,Moderate,urgent,active
 gapula acun itlog ko,testicular redness,male_reproductive_symptom,Moderate,urgent,active
 gapula acun itlug,testicular redness,male_reproductive_symptom,Moderate,urgent,active
@@ -1666,110 +1666,110 @@ ginahubag singit akon subong,groin swelling,musculoskeletal,Moderate,urgent,acti
 ginahubag singit gid ko,groin swelling,musculoskeletal,Moderate,urgent,active
 ginahubag singit ko,groin swelling,musculoskeletal,Moderate,urgent,active
 ginahubag singit ko gid,groin swelling,musculoskeletal,Moderate,urgent,active
-ginakatol akon ari,penile itching,male_reproductive_symptom,Mild,routine,active
-ginakatol akon ari ko,penile itching,male_reproductive_symptom,Mild,routine,active
-ginakatol akon ary,penile itching,male_reproductive_symptom,Mild,routine,active
-ginakatol akon ary ko,penile itching,male_reproductive_symptom,Mild,routine,active
-ginakatol akon bilad,vaginal itching,female_reproductive_symptom,Mild,routine,active
-ginakatol akon bilad ko,vaginal itching,female_reproductive_symptom,Mild,routine,active
-ginakatol akon bilat,vaginal itching,female_reproductive_symptom,Mild,routine,active
-ginakatol akon bilat ko,vaginal itching,female_reproductive_symptom,Mild,routine,active
-ginakatol akon itlog,testicular itching,male_reproductive_symptom,Mild,routine,active
-ginakatol akon itlog ko,testicular itching,male_reproductive_symptom,Mild,routine,active
-ginakatol akon itlug,testicular itching,male_reproductive_symptom,Mild,routine,active
-ginakatol akon itlug ko,testicular itching,male_reproductive_symptom,Mild,routine,active
-ginakatol akon kipay,vulvar itching,female_reproductive_symptom,Mild,routine,active
-ginakatol ari ako,penile itching,male_reproductive_symptom,Mild,routine,active
-ginakatol ari akon,penile itching,male_reproductive_symptom,Mild,routine,active
-ginakatol ari akon gid,penile itching,male_reproductive_symptom,Mild,routine,active
-ginakatol ari akon subong,penile itching,male_reproductive_symptom,Mild,routine,active
-ginakatol ari gid ko,penile itching,male_reproductive_symptom,Mild,routine,active
-ginakatol ari ko,penile itching,male_reproductive_symptom,Mild,routine,active
-ginakatol ari ko ako,penile itching,male_reproductive_symptom,Mild,routine,active
-ginakatol ari ko akon,penile itching,male_reproductive_symptom,Mild,routine,active
-ginakatol ari ko akon gid,penile itching,male_reproductive_symptom,Mild,routine,active
-ginakatol ari ko akon subong,penile itching,male_reproductive_symptom,Mild,routine,active
-ginakatol ari ko gid,penile itching,male_reproductive_symptom,Mild,routine,active
-ginakatol ari ko gid ko,penile itching,male_reproductive_symptom,Mild,routine,active
-ginakatol ari ko ko,penile itching,male_reproductive_symptom,Mild,routine,active
-ginakatol ari ko ko gid,penile itching,male_reproductive_symptom,Mild,routine,active
-ginakatol ary ako,penile itching,male_reproductive_symptom,Mild,routine,active
-ginakatol ary akon,penile itching,male_reproductive_symptom,Mild,routine,active
-ginakatol ary akon gid,penile itching,male_reproductive_symptom,Mild,routine,active
-ginakatol ary akon subong,penile itching,male_reproductive_symptom,Mild,routine,active
-ginakatol ary gid ko,penile itching,male_reproductive_symptom,Mild,routine,active
-ginakatol ary ko,penile itching,male_reproductive_symptom,Mild,routine,active
-ginakatol ary ko ako,penile itching,male_reproductive_symptom,Mild,routine,active
-ginakatol ary ko akon,penile itching,male_reproductive_symptom,Mild,routine,active
-ginakatol ary ko akon gid,penile itching,male_reproductive_symptom,Mild,routine,active
-ginakatol ary ko akon subong,penile itching,male_reproductive_symptom,Mild,routine,active
-ginakatol ary ko gid,penile itching,male_reproductive_symptom,Mild,routine,active
-ginakatol ary ko gid ko,penile itching,male_reproductive_symptom,Mild,routine,active
-ginakatol ary ko ko,penile itching,male_reproductive_symptom,Mild,routine,active
-ginakatol ary ko ko gid,penile itching,male_reproductive_symptom,Mild,routine,active
-ginakatol bilad ako,vaginal itching,female_reproductive_symptom,Mild,routine,active
-ginakatol bilad akon,vaginal itching,female_reproductive_symptom,Mild,routine,active
-ginakatol bilad akon gid,vaginal itching,female_reproductive_symptom,Mild,routine,active
-ginakatol bilad akon subong,vaginal itching,female_reproductive_symptom,Mild,routine,active
-ginakatol bilad gid ko,vaginal itching,female_reproductive_symptom,Mild,routine,active
-ginakatol bilad ko,vaginal itching,female_reproductive_symptom,Mild,routine,active
-ginakatol bilad ko ako,vaginal itching,female_reproductive_symptom,Mild,routine,active
-ginakatol bilad ko akon,vaginal itching,female_reproductive_symptom,Mild,routine,active
-ginakatol bilad ko akon gid,vaginal itching,female_reproductive_symptom,Mild,routine,active
-ginakatol bilad ko akon subong,vaginal itching,female_reproductive_symptom,Mild,routine,active
-ginakatol bilad ko gid,vaginal itching,female_reproductive_symptom,Mild,routine,active
-ginakatol bilad ko gid ko,vaginal itching,female_reproductive_symptom,Mild,routine,active
-ginakatol bilad ko ko,vaginal itching,female_reproductive_symptom,Mild,routine,active
-ginakatol bilad ko ko gid,vaginal itching,female_reproductive_symptom,Mild,routine,active
-ginakatol bilat ako,vaginal itching,female_reproductive_symptom,Mild,routine,active
-ginakatol bilat akon,vaginal itching,female_reproductive_symptom,Mild,routine,active
-ginakatol bilat akon gid,vaginal itching,female_reproductive_symptom,Mild,routine,active
-ginakatol bilat akon subong,vaginal itching,female_reproductive_symptom,Mild,routine,active
-ginakatol bilat gid ko,vaginal itching,female_reproductive_symptom,Mild,routine,active
-ginakatol bilat ko,vaginal itching,female_reproductive_symptom,Mild,routine,active
-ginakatol bilat ko ako,vaginal itching,female_reproductive_symptom,Mild,routine,active
-ginakatol bilat ko akon,vaginal itching,female_reproductive_symptom,Mild,routine,active
-ginakatol bilat ko akon gid,vaginal itching,female_reproductive_symptom,Mild,routine,active
-ginakatol bilat ko akon subong,vaginal itching,female_reproductive_symptom,Mild,routine,active
-ginakatol bilat ko gid,vaginal itching,female_reproductive_symptom,Mild,routine,active
-ginakatol bilat ko gid ko,vaginal itching,female_reproductive_symptom,Mild,routine,active
-ginakatol bilat ko ko,vaginal itching,female_reproductive_symptom,Mild,routine,active
-ginakatol bilat ko ko gid,vaginal itching,female_reproductive_symptom,Mild,routine,active
-ginakatol itlog ako,testicular itching,male_reproductive_symptom,Mild,routine,active
-ginakatol itlog akon,testicular itching,male_reproductive_symptom,Mild,routine,active
-ginakatol itlog akon gid,testicular itching,male_reproductive_symptom,Mild,routine,active
-ginakatol itlog akon subong,testicular itching,male_reproductive_symptom,Mild,routine,active
-ginakatol itlog gid ko,testicular itching,male_reproductive_symptom,Mild,routine,active
-ginakatol itlog ko,testicular itching,male_reproductive_symptom,Mild,routine,active
-ginakatol itlog ko ako,testicular itching,male_reproductive_symptom,Mild,routine,active
-ginakatol itlog ko akon,testicular itching,male_reproductive_symptom,Mild,routine,active
-ginakatol itlog ko akon gid,testicular itching,male_reproductive_symptom,Mild,routine,active
-ginakatol itlog ko akon subong,testicular itching,male_reproductive_symptom,Mild,routine,active
-ginakatol itlog ko gid,testicular itching,male_reproductive_symptom,Mild,routine,active
-ginakatol itlog ko gid ko,testicular itching,male_reproductive_symptom,Mild,routine,active
-ginakatol itlog ko ko,testicular itching,male_reproductive_symptom,Mild,routine,active
-ginakatol itlog ko ko gid,testicular itching,male_reproductive_symptom,Mild,routine,active
-ginakatol itlug ako,testicular itching,male_reproductive_symptom,Mild,routine,active
-ginakatol itlug akon,testicular itching,male_reproductive_symptom,Mild,routine,active
-ginakatol itlug akon gid,testicular itching,male_reproductive_symptom,Mild,routine,active
-ginakatol itlug akon subong,testicular itching,male_reproductive_symptom,Mild,routine,active
-ginakatol itlug gid ko,testicular itching,male_reproductive_symptom,Mild,routine,active
-ginakatol itlug ko,testicular itching,male_reproductive_symptom,Mild,routine,active
-ginakatol itlug ko ako,testicular itching,male_reproductive_symptom,Mild,routine,active
-ginakatol itlug ko akon,testicular itching,male_reproductive_symptom,Mild,routine,active
-ginakatol itlug ko akon gid,testicular itching,male_reproductive_symptom,Mild,routine,active
-ginakatol itlug ko akon subong,testicular itching,male_reproductive_symptom,Mild,routine,active
-ginakatol itlug ko gid,testicular itching,male_reproductive_symptom,Mild,routine,active
-ginakatol itlug ko gid ko,testicular itching,male_reproductive_symptom,Mild,routine,active
-ginakatol itlug ko ko,testicular itching,male_reproductive_symptom,Mild,routine,active
-ginakatol itlug ko ko gid,testicular itching,male_reproductive_symptom,Mild,routine,active
-ginakatol kipay ako,vulvar itching,female_reproductive_symptom,Mild,routine,active
-ginakatol kipay akon,vulvar itching,female_reproductive_symptom,Mild,routine,active
-ginakatol kipay akon gid,vulvar itching,female_reproductive_symptom,Mild,routine,active
-ginakatol kipay akon subong,vulvar itching,female_reproductive_symptom,Mild,routine,active
-ginakatol kipay gid ko,vulvar itching,female_reproductive_symptom,Mild,routine,active
-ginakatol kipay ko,vulvar itching,female_reproductive_symptom,Mild,routine,active
-ginakatol kipay ko gid,vulvar itching,female_reproductive_symptom,Mild,routine,active
+ginakatol akon ari,penile itching,male_reproductive_symptom,Mild,non_urgent,active
+ginakatol akon ari ko,penile itching,male_reproductive_symptom,Mild,non_urgent,active
+ginakatol akon ary,penile itching,male_reproductive_symptom,Mild,non_urgent,active
+ginakatol akon ary ko,penile itching,male_reproductive_symptom,Mild,non_urgent,active
+ginakatol akon bilad,vaginal itching,female_reproductive_symptom,Mild,non_urgent,active
+ginakatol akon bilad ko,vaginal itching,female_reproductive_symptom,Mild,non_urgent,active
+ginakatol akon bilat,vaginal itching,female_reproductive_symptom,Mild,non_urgent,active
+ginakatol akon bilat ko,vaginal itching,female_reproductive_symptom,Mild,non_urgent,active
+ginakatol akon itlog,testicular itching,male_reproductive_symptom,Mild,non_urgent,active
+ginakatol akon itlog ko,testicular itching,male_reproductive_symptom,Mild,non_urgent,active
+ginakatol akon itlug,testicular itching,male_reproductive_symptom,Mild,non_urgent,active
+ginakatol akon itlug ko,testicular itching,male_reproductive_symptom,Mild,non_urgent,active
+ginakatol akon kipay,vulvar itching,female_reproductive_symptom,Mild,non_urgent,active
+ginakatol ari ako,penile itching,male_reproductive_symptom,Mild,non_urgent,active
+ginakatol ari akon,penile itching,male_reproductive_symptom,Mild,non_urgent,active
+ginakatol ari akon gid,penile itching,male_reproductive_symptom,Mild,non_urgent,active
+ginakatol ari akon subong,penile itching,male_reproductive_symptom,Mild,non_urgent,active
+ginakatol ari gid ko,penile itching,male_reproductive_symptom,Mild,non_urgent,active
+ginakatol ari ko,penile itching,male_reproductive_symptom,Mild,non_urgent,active
+ginakatol ari ko ako,penile itching,male_reproductive_symptom,Mild,non_urgent,active
+ginakatol ari ko akon,penile itching,male_reproductive_symptom,Mild,non_urgent,active
+ginakatol ari ko akon gid,penile itching,male_reproductive_symptom,Mild,non_urgent,active
+ginakatol ari ko akon subong,penile itching,male_reproductive_symptom,Mild,non_urgent,active
+ginakatol ari ko gid,penile itching,male_reproductive_symptom,Mild,non_urgent,active
+ginakatol ari ko gid ko,penile itching,male_reproductive_symptom,Mild,non_urgent,active
+ginakatol ari ko ko,penile itching,male_reproductive_symptom,Mild,non_urgent,active
+ginakatol ari ko ko gid,penile itching,male_reproductive_symptom,Mild,non_urgent,active
+ginakatol ary ako,penile itching,male_reproductive_symptom,Mild,non_urgent,active
+ginakatol ary akon,penile itching,male_reproductive_symptom,Mild,non_urgent,active
+ginakatol ary akon gid,penile itching,male_reproductive_symptom,Mild,non_urgent,active
+ginakatol ary akon subong,penile itching,male_reproductive_symptom,Mild,non_urgent,active
+ginakatol ary gid ko,penile itching,male_reproductive_symptom,Mild,non_urgent,active
+ginakatol ary ko,penile itching,male_reproductive_symptom,Mild,non_urgent,active
+ginakatol ary ko ako,penile itching,male_reproductive_symptom,Mild,non_urgent,active
+ginakatol ary ko akon,penile itching,male_reproductive_symptom,Mild,non_urgent,active
+ginakatol ary ko akon gid,penile itching,male_reproductive_symptom,Mild,non_urgent,active
+ginakatol ary ko akon subong,penile itching,male_reproductive_symptom,Mild,non_urgent,active
+ginakatol ary ko gid,penile itching,male_reproductive_symptom,Mild,non_urgent,active
+ginakatol ary ko gid ko,penile itching,male_reproductive_symptom,Mild,non_urgent,active
+ginakatol ary ko ko,penile itching,male_reproductive_symptom,Mild,non_urgent,active
+ginakatol ary ko ko gid,penile itching,male_reproductive_symptom,Mild,non_urgent,active
+ginakatol bilad ako,vaginal itching,female_reproductive_symptom,Mild,non_urgent,active
+ginakatol bilad akon,vaginal itching,female_reproductive_symptom,Mild,non_urgent,active
+ginakatol bilad akon gid,vaginal itching,female_reproductive_symptom,Mild,non_urgent,active
+ginakatol bilad akon subong,vaginal itching,female_reproductive_symptom,Mild,non_urgent,active
+ginakatol bilad gid ko,vaginal itching,female_reproductive_symptom,Mild,non_urgent,active
+ginakatol bilad ko,vaginal itching,female_reproductive_symptom,Mild,non_urgent,active
+ginakatol bilad ko ako,vaginal itching,female_reproductive_symptom,Mild,non_urgent,active
+ginakatol bilad ko akon,vaginal itching,female_reproductive_symptom,Mild,non_urgent,active
+ginakatol bilad ko akon gid,vaginal itching,female_reproductive_symptom,Mild,non_urgent,active
+ginakatol bilad ko akon subong,vaginal itching,female_reproductive_symptom,Mild,non_urgent,active
+ginakatol bilad ko gid,vaginal itching,female_reproductive_symptom,Mild,non_urgent,active
+ginakatol bilad ko gid ko,vaginal itching,female_reproductive_symptom,Mild,non_urgent,active
+ginakatol bilad ko ko,vaginal itching,female_reproductive_symptom,Mild,non_urgent,active
+ginakatol bilad ko ko gid,vaginal itching,female_reproductive_symptom,Mild,non_urgent,active
+ginakatol bilat ako,vaginal itching,female_reproductive_symptom,Mild,non_urgent,active
+ginakatol bilat akon,vaginal itching,female_reproductive_symptom,Mild,non_urgent,active
+ginakatol bilat akon gid,vaginal itching,female_reproductive_symptom,Mild,non_urgent,active
+ginakatol bilat akon subong,vaginal itching,female_reproductive_symptom,Mild,non_urgent,active
+ginakatol bilat gid ko,vaginal itching,female_reproductive_symptom,Mild,non_urgent,active
+ginakatol bilat ko,vaginal itching,female_reproductive_symptom,Mild,non_urgent,active
+ginakatol bilat ko ako,vaginal itching,female_reproductive_symptom,Mild,non_urgent,active
+ginakatol bilat ko akon,vaginal itching,female_reproductive_symptom,Mild,non_urgent,active
+ginakatol bilat ko akon gid,vaginal itching,female_reproductive_symptom,Mild,non_urgent,active
+ginakatol bilat ko akon subong,vaginal itching,female_reproductive_symptom,Mild,non_urgent,active
+ginakatol bilat ko gid,vaginal itching,female_reproductive_symptom,Mild,non_urgent,active
+ginakatol bilat ko gid ko,vaginal itching,female_reproductive_symptom,Mild,non_urgent,active
+ginakatol bilat ko ko,vaginal itching,female_reproductive_symptom,Mild,non_urgent,active
+ginakatol bilat ko ko gid,vaginal itching,female_reproductive_symptom,Mild,non_urgent,active
+ginakatol itlog ako,testicular itching,male_reproductive_symptom,Mild,non_urgent,active
+ginakatol itlog akon,testicular itching,male_reproductive_symptom,Mild,non_urgent,active
+ginakatol itlog akon gid,testicular itching,male_reproductive_symptom,Mild,non_urgent,active
+ginakatol itlog akon subong,testicular itching,male_reproductive_symptom,Mild,non_urgent,active
+ginakatol itlog gid ko,testicular itching,male_reproductive_symptom,Mild,non_urgent,active
+ginakatol itlog ko,testicular itching,male_reproductive_symptom,Mild,non_urgent,active
+ginakatol itlog ko ako,testicular itching,male_reproductive_symptom,Mild,non_urgent,active
+ginakatol itlog ko akon,testicular itching,male_reproductive_symptom,Mild,non_urgent,active
+ginakatol itlog ko akon gid,testicular itching,male_reproductive_symptom,Mild,non_urgent,active
+ginakatol itlog ko akon subong,testicular itching,male_reproductive_symptom,Mild,non_urgent,active
+ginakatol itlog ko gid,testicular itching,male_reproductive_symptom,Mild,non_urgent,active
+ginakatol itlog ko gid ko,testicular itching,male_reproductive_symptom,Mild,non_urgent,active
+ginakatol itlog ko ko,testicular itching,male_reproductive_symptom,Mild,non_urgent,active
+ginakatol itlog ko ko gid,testicular itching,male_reproductive_symptom,Mild,non_urgent,active
+ginakatol itlug ako,testicular itching,male_reproductive_symptom,Mild,non_urgent,active
+ginakatol itlug akon,testicular itching,male_reproductive_symptom,Mild,non_urgent,active
+ginakatol itlug akon gid,testicular itching,male_reproductive_symptom,Mild,non_urgent,active
+ginakatol itlug akon subong,testicular itching,male_reproductive_symptom,Mild,non_urgent,active
+ginakatol itlug gid ko,testicular itching,male_reproductive_symptom,Mild,non_urgent,active
+ginakatol itlug ko,testicular itching,male_reproductive_symptom,Mild,non_urgent,active
+ginakatol itlug ko ako,testicular itching,male_reproductive_symptom,Mild,non_urgent,active
+ginakatol itlug ko akon,testicular itching,male_reproductive_symptom,Mild,non_urgent,active
+ginakatol itlug ko akon gid,testicular itching,male_reproductive_symptom,Mild,non_urgent,active
+ginakatol itlug ko akon subong,testicular itching,male_reproductive_symptom,Mild,non_urgent,active
+ginakatol itlug ko gid,testicular itching,male_reproductive_symptom,Mild,non_urgent,active
+ginakatol itlug ko gid ko,testicular itching,male_reproductive_symptom,Mild,non_urgent,active
+ginakatol itlug ko ko,testicular itching,male_reproductive_symptom,Mild,non_urgent,active
+ginakatol itlug ko ko gid,testicular itching,male_reproductive_symptom,Mild,non_urgent,active
+ginakatol kipay ako,vulvar itching,female_reproductive_symptom,Mild,non_urgent,active
+ginakatol kipay akon,vulvar itching,female_reproductive_symptom,Mild,non_urgent,active
+ginakatol kipay akon gid,vulvar itching,female_reproductive_symptom,Mild,non_urgent,active
+ginakatol kipay akon subong,vulvar itching,female_reproductive_symptom,Mild,non_urgent,active
+ginakatol kipay gid ko,vulvar itching,female_reproductive_symptom,Mild,non_urgent,active
+ginakatol kipay ko,vulvar itching,female_reproductive_symptom,Mild,non_urgent,active
+ginakatol kipay ko gid,vulvar itching,female_reproductive_symptom,Mild,non_urgent,active
 ginapula acun itlog,testicular redness,male_reproductive_symptom,Moderate,urgent,active
 ginapula acun itlog ko,testicular redness,male_reproductive_symptom,Moderate,urgent,active
 ginapula acun itlug,testicular redness,male_reproductive_symptom,Moderate,urgent,active
@@ -1906,7 +1906,7 @@ ginapula itlug ku ko,testicular redness,male_reproductive_symptom,Moderate,urgen
 ginapula itlug ku ko gid,testicular redness,male_reproductive_symptom,Moderate,urgent,active
 ginpangayo ko doctor gadugo bilat ko,vaginal bleeding,gynecologic_symptom,High,urgent,active
 ginpangayo ko doctor gahubag itlog ko,testicular swelling,male_reproductive_symptom,Moderate,urgent,active
-ginpangayo ko doctor kakatol bilat ko,vaginal itching,female_reproductive_symptom,Low,routine,active
+ginpangayo ko doctor kakatol bilat ko,vaginal itching,female_reproductive_symptom,Low,non_urgent,active
 ginpangayo ko doctor masakit ari ko,penile pain,male_reproductive_symptom,Moderate,urgent,active
 ginpangayo ko doctor may nana sa bilat ko,vaginal infection,infection,High,urgent,active
 grabe gid nagadugo ari ko,severe penis bleeding,male_reproductive_symptom,Critical,emergency,active
@@ -2094,7 +2094,7 @@ hapdi singit ko,groin pain,musculoskeletal,Moderate,urgent,active
 hapdi singit ko gid,groin pain,musculoskeletal,Moderate,urgent,active
 help gadugo bilat ko,vaginal bleeding,gynecologic_symptom,High,urgent,active
 help gahubag itlog ko,testicular swelling,male_reproductive_symptom,Moderate,urgent,active
-help kakatol bilat ko,vaginal itching,female_reproductive_symptom,Low,routine,active
+help kakatol bilat ko,vaginal itching,female_reproductive_symptom,Low,non_urgent,active
 help masakit ari ko,penile pain,male_reproductive_symptom,Moderate,urgent,active
 help may nana sa bilat ko,vaginal infection,infection,High,urgent,active
 hubag acun itlog,testicular swelling,male_reproductive_symptom,Moderate,urgent,active
@@ -2412,220 +2412,220 @@ indi mapunggan ang dugo sa itlog ko,severe testicle bleeding,male_reproductive_s
 indi mapunggan ang dugo sa itlog ko ko,severe testicle bleeding,male_reproductive_symptom,Critical,emergency,active
 indi mapunggan ang dugo sa itlug ko,severe testicle bleeding,male_reproductive_symptom,Critical,emergency,active
 indi mapunggan ang dugo sa itlug ko ko,severe testicle bleeding,male_reproductive_symptom,Critical,emergency,active
-kakatol akon ari,penile itching,male_reproductive_symptom,Mild,routine,active
-kakatol akon ari ko,penile itching,male_reproductive_symptom,Mild,routine,active
-kakatol akon ary,penile itching,male_reproductive_symptom,Mild,routine,active
-kakatol akon ary ko,penile itching,male_reproductive_symptom,Mild,routine,active
-kakatol akon bilad,vaginal itching,female_reproductive_symptom,Mild,routine,active
-kakatol akon bilad ko,vaginal itching,female_reproductive_symptom,Mild,routine,active
-kakatol akon bilat,vaginal itching,female_reproductive_symptom,Mild,routine,active
-kakatol akon bilat ko,vaginal itching,female_reproductive_symptom,Mild,routine,active
-kakatol akon itlog,testicular itching,male_reproductive_symptom,Mild,routine,active
-kakatol akon itlog ko,testicular itching,male_reproductive_symptom,Mild,routine,active
-kakatol akon itlug,testicular itching,male_reproductive_symptom,Mild,routine,active
-kakatol akon itlug ko,testicular itching,male_reproductive_symptom,Mild,routine,active
-kakatol akon kipay,vulvar itching,female_reproductive_symptom,Mild,routine,active
-kakatol ari ako,penile itching,male_reproductive_symptom,Mild,routine,active
-kakatol ari akon,penile itching,male_reproductive_symptom,Mild,routine,active
-kakatol ari akon gid,penile itching,male_reproductive_symptom,Mild,routine,active
-kakatol ari akon subong,penile itching,male_reproductive_symptom,Mild,routine,active
-kakatol ari gid ko,penile itching,male_reproductive_symptom,Mild,routine,active
-kakatol ari ko,penile itching,male_reproductive_symptom,Mild,routine,active
-kakatol ari ko ako,penile itching,male_reproductive_symptom,Mild,routine,active
-kakatol ari ko akon,penile itching,male_reproductive_symptom,Mild,routine,active
-kakatol ari ko akon gid,penile itching,male_reproductive_symptom,Mild,routine,active
-kakatol ari ko akon subong,penile itching,male_reproductive_symptom,Mild,routine,active
-kakatol ari ko gid,penile itching,male_reproductive_symptom,Mild,routine,active
-kakatol ari ko gid ko,penile itching,male_reproductive_symptom,Mild,routine,active
-kakatol ari ko ko,penile itching,male_reproductive_symptom,Mild,routine,active
-kakatol ari ko ko gid,penile itching,male_reproductive_symptom,Mild,routine,active
-kakatol ary ako,penile itching,male_reproductive_symptom,Mild,routine,active
-kakatol ary akon,penile itching,male_reproductive_symptom,Mild,routine,active
-kakatol ary akon gid,penile itching,male_reproductive_symptom,Mild,routine,active
-kakatol ary akon subong,penile itching,male_reproductive_symptom,Mild,routine,active
-kakatol ary gid ko,penile itching,male_reproductive_symptom,Mild,routine,active
-kakatol ary ko,penile itching,male_reproductive_symptom,Mild,routine,active
-kakatol ary ko ako,penile itching,male_reproductive_symptom,Mild,routine,active
-kakatol ary ko akon,penile itching,male_reproductive_symptom,Mild,routine,active
-kakatol ary ko akon gid,penile itching,male_reproductive_symptom,Mild,routine,active
-kakatol ary ko akon subong,penile itching,male_reproductive_symptom,Mild,routine,active
-kakatol ary ko gid,penile itching,male_reproductive_symptom,Mild,routine,active
-kakatol ary ko gid ko,penile itching,male_reproductive_symptom,Mild,routine,active
-kakatol ary ko ko,penile itching,male_reproductive_symptom,Mild,routine,active
-kakatol ary ko ko gid,penile itching,male_reproductive_symptom,Mild,routine,active
-kakatol bilad ako,vaginal itching,female_reproductive_symptom,Mild,routine,active
-kakatol bilad akon,vaginal itching,female_reproductive_symptom,Mild,routine,active
-kakatol bilad akon gid,vaginal itching,female_reproductive_symptom,Mild,routine,active
-kakatol bilad akon subong,vaginal itching,female_reproductive_symptom,Mild,routine,active
-kakatol bilad gid ko,vaginal itching,female_reproductive_symptom,Mild,routine,active
-kakatol bilad ko,vaginal itching,female_reproductive_symptom,Mild,routine,active
-kakatol bilad ko ako,vaginal itching,female_reproductive_symptom,Mild,routine,active
-kakatol bilad ko akon,vaginal itching,female_reproductive_symptom,Mild,routine,active
-kakatol bilad ko akon gid,vaginal itching,female_reproductive_symptom,Mild,routine,active
-kakatol bilad ko akon subong,vaginal itching,female_reproductive_symptom,Mild,routine,active
-kakatol bilad ko gid,vaginal itching,female_reproductive_symptom,Mild,routine,active
-kakatol bilad ko gid ko,vaginal itching,female_reproductive_symptom,Mild,routine,active
-kakatol bilad ko ko,vaginal itching,female_reproductive_symptom,Mild,routine,active
-kakatol bilad ko ko gid,vaginal itching,female_reproductive_symptom,Mild,routine,active
-kakatol bilat ako,vaginal itching,female_reproductive_symptom,Mild,routine,active
-kakatol bilat akon,vaginal itching,female_reproductive_symptom,Mild,routine,active
-kakatol bilat akon gid,vaginal itching,female_reproductive_symptom,Mild,routine,active
-kakatol bilat akon subong,vaginal itching,female_reproductive_symptom,Mild,routine,active
-kakatol bilat gid ko,vaginal itching,female_reproductive_symptom,Mild,routine,active
-kakatol bilat ko,vaginal itching,female_reproductive_symptom,Mild,routine,active
-kakatol bilat ko ako,vaginal itching,female_reproductive_symptom,Mild,routine,active
-kakatol bilat ko akon,vaginal itching,female_reproductive_symptom,Mild,routine,active
-kakatol bilat ko akon gid,vaginal itching,female_reproductive_symptom,Mild,routine,active
-kakatol bilat ko akon subong,vaginal itching,female_reproductive_symptom,Mild,routine,active
-kakatol bilat ko gid,vaginal itching,female_reproductive_symptom,Mild,routine,active
-kakatol bilat ko gid ko,vaginal itching,female_reproductive_symptom,Mild,routine,active
-kakatol bilat ko ko,vaginal itching,female_reproductive_symptom,Mild,routine,active
-kakatol bilat ko ko gid,vaginal itching,female_reproductive_symptom,Mild,routine,active
-kakatol gid akon ari,penile itching,male_reproductive_symptom,Mild,routine,active
-kakatol gid akon ari ko,penile itching,male_reproductive_symptom,Mild,routine,active
-kakatol gid akon ary,penile itching,male_reproductive_symptom,Mild,routine,active
-kakatol gid akon ary ko,penile itching,male_reproductive_symptom,Mild,routine,active
-kakatol gid akon bilad,vaginal itching,female_reproductive_symptom,Mild,routine,active
-kakatol gid akon bilad ko,vaginal itching,female_reproductive_symptom,Mild,routine,active
-kakatol gid akon bilat,vaginal itching,female_reproductive_symptom,Mild,routine,active
-kakatol gid akon bilat ko,vaginal itching,female_reproductive_symptom,Mild,routine,active
-kakatol gid akon itlog,testicular itching,male_reproductive_symptom,Mild,routine,active
-kakatol gid akon itlog ko,testicular itching,male_reproductive_symptom,Mild,routine,active
-kakatol gid akon itlug,testicular itching,male_reproductive_symptom,Mild,routine,active
-kakatol gid akon itlug ko,testicular itching,male_reproductive_symptom,Mild,routine,active
-kakatol gid akon kipay,vulvar itching,female_reproductive_symptom,Mild,routine,active
-kakatol gid ari ako,penile itching,male_reproductive_symptom,Mild,routine,active
-kakatol gid ari akon,penile itching,male_reproductive_symptom,Mild,routine,active
-kakatol gid ari akon gid,penile itching,male_reproductive_symptom,Mild,routine,active
-kakatol gid ari akon subong,penile itching,male_reproductive_symptom,Mild,routine,active
-kakatol gid ari gid ko,penile itching,male_reproductive_symptom,Mild,routine,active
-kakatol gid ari ko,penile itching,male_reproductive_symptom,Mild,routine,active
-kakatol gid ari ko ako,penile itching,male_reproductive_symptom,Mild,routine,active
-kakatol gid ari ko akon,penile itching,male_reproductive_symptom,Mild,routine,active
-kakatol gid ari ko akon gid,penile itching,male_reproductive_symptom,Mild,routine,active
-kakatol gid ari ko akon subong,penile itching,male_reproductive_symptom,Mild,routine,active
-kakatol gid ari ko gid,penile itching,male_reproductive_symptom,Mild,routine,active
-kakatol gid ari ko gid ko,penile itching,male_reproductive_symptom,Mild,routine,active
-kakatol gid ari ko ko,penile itching,male_reproductive_symptom,Mild,routine,active
-kakatol gid ari ko ko gid,penile itching,male_reproductive_symptom,Mild,routine,active
-kakatol gid ary ako,penile itching,male_reproductive_symptom,Mild,routine,active
-kakatol gid ary akon,penile itching,male_reproductive_symptom,Mild,routine,active
-kakatol gid ary akon gid,penile itching,male_reproductive_symptom,Mild,routine,active
-kakatol gid ary akon subong,penile itching,male_reproductive_symptom,Mild,routine,active
-kakatol gid ary gid ko,penile itching,male_reproductive_symptom,Mild,routine,active
-kakatol gid ary ko,penile itching,male_reproductive_symptom,Mild,routine,active
-kakatol gid ary ko ako,penile itching,male_reproductive_symptom,Mild,routine,active
-kakatol gid ary ko akon,penile itching,male_reproductive_symptom,Mild,routine,active
-kakatol gid ary ko akon gid,penile itching,male_reproductive_symptom,Mild,routine,active
-kakatol gid ary ko akon subong,penile itching,male_reproductive_symptom,Mild,routine,active
-kakatol gid ary ko gid,penile itching,male_reproductive_symptom,Mild,routine,active
-kakatol gid ary ko gid ko,penile itching,male_reproductive_symptom,Mild,routine,active
-kakatol gid ary ko ko,penile itching,male_reproductive_symptom,Mild,routine,active
-kakatol gid ary ko ko gid,penile itching,male_reproductive_symptom,Mild,routine,active
-kakatol gid bilad ako,vaginal itching,female_reproductive_symptom,Mild,routine,active
-kakatol gid bilad akon,vaginal itching,female_reproductive_symptom,Mild,routine,active
-kakatol gid bilad akon gid,vaginal itching,female_reproductive_symptom,Mild,routine,active
-kakatol gid bilad akon subong,vaginal itching,female_reproductive_symptom,Mild,routine,active
-kakatol gid bilad gid ko,vaginal itching,female_reproductive_symptom,Mild,routine,active
-kakatol gid bilad ko,vaginal itching,female_reproductive_symptom,Mild,routine,active
-kakatol gid bilad ko ako,vaginal itching,female_reproductive_symptom,Mild,routine,active
-kakatol gid bilad ko akon,vaginal itching,female_reproductive_symptom,Mild,routine,active
-kakatol gid bilad ko akon gid,vaginal itching,female_reproductive_symptom,Mild,routine,active
-kakatol gid bilad ko akon subong,vaginal itching,female_reproductive_symptom,Mild,routine,active
-kakatol gid bilad ko gid,vaginal itching,female_reproductive_symptom,Mild,routine,active
-kakatol gid bilad ko gid ko,vaginal itching,female_reproductive_symptom,Mild,routine,active
-kakatol gid bilad ko ko,vaginal itching,female_reproductive_symptom,Mild,routine,active
-kakatol gid bilad ko ko gid,vaginal itching,female_reproductive_symptom,Mild,routine,active
-kakatol gid bilat ako,vaginal itching,female_reproductive_symptom,Mild,routine,active
-kakatol gid bilat akon,vaginal itching,female_reproductive_symptom,Mild,routine,active
-kakatol gid bilat akon gid,vaginal itching,female_reproductive_symptom,Mild,routine,active
-kakatol gid bilat akon subong,vaginal itching,female_reproductive_symptom,Mild,routine,active
-kakatol gid bilat gid ko,vaginal itching,female_reproductive_symptom,Mild,routine,active
-kakatol gid bilat ko,vaginal itching,female_reproductive_symptom,Mild,routine,active
-kakatol gid bilat ko ako,vaginal itching,female_reproductive_symptom,Mild,routine,active
-kakatol gid bilat ko akon,vaginal itching,female_reproductive_symptom,Mild,routine,active
-kakatol gid bilat ko akon gid,vaginal itching,female_reproductive_symptom,Mild,routine,active
-kakatol gid bilat ko akon subong,vaginal itching,female_reproductive_symptom,Mild,routine,active
-kakatol gid bilat ko gid,vaginal itching,female_reproductive_symptom,Mild,routine,active
-kakatol gid bilat ko gid ko,vaginal itching,female_reproductive_symptom,Mild,routine,active
-kakatol gid bilat ko ko,vaginal itching,female_reproductive_symptom,Mild,routine,active
-kakatol gid bilat ko ko gid,vaginal itching,female_reproductive_symptom,Mild,routine,active
-kakatol gid itlog ako,testicular itching,male_reproductive_symptom,Mild,routine,active
-kakatol gid itlog akon,testicular itching,male_reproductive_symptom,Mild,routine,active
-kakatol gid itlog akon gid,testicular itching,male_reproductive_symptom,Mild,routine,active
-kakatol gid itlog akon subong,testicular itching,male_reproductive_symptom,Mild,routine,active
-kakatol gid itlog gid ko,testicular itching,male_reproductive_symptom,Mild,routine,active
-kakatol gid itlog ko,testicular itching,male_reproductive_symptom,Mild,routine,active
-kakatol gid itlog ko ako,testicular itching,male_reproductive_symptom,Mild,routine,active
-kakatol gid itlog ko akon,testicular itching,male_reproductive_symptom,Mild,routine,active
-kakatol gid itlog ko akon gid,testicular itching,male_reproductive_symptom,Mild,routine,active
-kakatol gid itlog ko akon subong,testicular itching,male_reproductive_symptom,Mild,routine,active
-kakatol gid itlog ko gid,testicular itching,male_reproductive_symptom,Mild,routine,active
-kakatol gid itlog ko gid ko,testicular itching,male_reproductive_symptom,Mild,routine,active
-kakatol gid itlog ko ko,testicular itching,male_reproductive_symptom,Mild,routine,active
-kakatol gid itlog ko ko gid,testicular itching,male_reproductive_symptom,Mild,routine,active
-kakatol gid itlug ako,testicular itching,male_reproductive_symptom,Mild,routine,active
-kakatol gid itlug akon,testicular itching,male_reproductive_symptom,Mild,routine,active
-kakatol gid itlug akon gid,testicular itching,male_reproductive_symptom,Mild,routine,active
-kakatol gid itlug akon subong,testicular itching,male_reproductive_symptom,Mild,routine,active
-kakatol gid itlug gid ko,testicular itching,male_reproductive_symptom,Mild,routine,active
-kakatol gid itlug ko,testicular itching,male_reproductive_symptom,Mild,routine,active
-kakatol gid itlug ko ako,testicular itching,male_reproductive_symptom,Mild,routine,active
-kakatol gid itlug ko akon,testicular itching,male_reproductive_symptom,Mild,routine,active
-kakatol gid itlug ko akon gid,testicular itching,male_reproductive_symptom,Mild,routine,active
-kakatol gid itlug ko akon subong,testicular itching,male_reproductive_symptom,Mild,routine,active
-kakatol gid itlug ko gid,testicular itching,male_reproductive_symptom,Mild,routine,active
-kakatol gid itlug ko gid ko,testicular itching,male_reproductive_symptom,Mild,routine,active
-kakatol gid itlug ko ko,testicular itching,male_reproductive_symptom,Mild,routine,active
-kakatol gid itlug ko ko gid,testicular itching,male_reproductive_symptom,Mild,routine,active
-kakatol gid kipay ako,vulvar itching,female_reproductive_symptom,Mild,routine,active
-kakatol gid kipay akon,vulvar itching,female_reproductive_symptom,Mild,routine,active
-kakatol gid kipay akon gid,vulvar itching,female_reproductive_symptom,Mild,routine,active
-kakatol gid kipay akon subong,vulvar itching,female_reproductive_symptom,Mild,routine,active
-kakatol gid kipay gid ko,vulvar itching,female_reproductive_symptom,Mild,routine,active
-kakatol gid kipay ko,vulvar itching,female_reproductive_symptom,Mild,routine,active
-kakatol gid kipay ko gid,vulvar itching,female_reproductive_symptom,Mild,routine,active
-kakatol itlog ako,testicular itching,male_reproductive_symptom,Mild,routine,active
-kakatol itlog akon,testicular itching,male_reproductive_symptom,Mild,routine,active
-kakatol itlog akon gid,testicular itching,male_reproductive_symptom,Mild,routine,active
-kakatol itlog akon subong,testicular itching,male_reproductive_symptom,Mild,routine,active
-kakatol itlog gid ko,testicular itching,male_reproductive_symptom,Mild,routine,active
-kakatol itlog ko,testicular itching,male_reproductive_symptom,Mild,routine,active
-kakatol itlog ko ako,testicular itching,male_reproductive_symptom,Mild,routine,active
-kakatol itlog ko akon,testicular itching,male_reproductive_symptom,Mild,routine,active
-kakatol itlog ko akon gid,testicular itching,male_reproductive_symptom,Mild,routine,active
-kakatol itlog ko akon subong,testicular itching,male_reproductive_symptom,Mild,routine,active
-kakatol itlog ko gid,testicular itching,male_reproductive_symptom,Mild,routine,active
-kakatol itlog ko gid ko,testicular itching,male_reproductive_symptom,Mild,routine,active
-kakatol itlog ko ko,testicular itching,male_reproductive_symptom,Mild,routine,active
-kakatol itlog ko ko gid,testicular itching,male_reproductive_symptom,Mild,routine,active
-kakatol itlug ako,testicular itching,male_reproductive_symptom,Mild,routine,active
-kakatol itlug akon,testicular itching,male_reproductive_symptom,Mild,routine,active
-kakatol itlug akon gid,testicular itching,male_reproductive_symptom,Mild,routine,active
-kakatol itlug akon subong,testicular itching,male_reproductive_symptom,Mild,routine,active
-kakatol itlug gid ko,testicular itching,male_reproductive_symptom,Mild,routine,active
-kakatol itlug ko,testicular itching,male_reproductive_symptom,Mild,routine,active
-kakatol itlug ko ako,testicular itching,male_reproductive_symptom,Mild,routine,active
-kakatol itlug ko akon,testicular itching,male_reproductive_symptom,Mild,routine,active
-kakatol itlug ko akon gid,testicular itching,male_reproductive_symptom,Mild,routine,active
-kakatol itlug ko akon subong,testicular itching,male_reproductive_symptom,Mild,routine,active
-kakatol itlug ko gid,testicular itching,male_reproductive_symptom,Mild,routine,active
-kakatol itlug ko gid ko,testicular itching,male_reproductive_symptom,Mild,routine,active
-kakatol itlug ko ko,testicular itching,male_reproductive_symptom,Mild,routine,active
-kakatol itlug ko ko gid,testicular itching,male_reproductive_symptom,Mild,routine,active
-kakatol kipay ako,vulvar itching,female_reproductive_symptom,Mild,routine,active
-kakatol kipay akon,vulvar itching,female_reproductive_symptom,Mild,routine,active
-kakatol kipay akon gid,vulvar itching,female_reproductive_symptom,Mild,routine,active
-kakatol kipay akon subong,vulvar itching,female_reproductive_symptom,Mild,routine,active
-kakatol kipay gid ko,vulvar itching,female_reproductive_symptom,Mild,routine,active
-kakatol kipay ko,vulvar itching,female_reproductive_symptom,Mild,routine,active
-kakatol kipay ko gid,vulvar itching,female_reproductive_symptom,Mild,routine,active
+kakatol akon ari,penile itching,male_reproductive_symptom,Mild,non_urgent,active
+kakatol akon ari ko,penile itching,male_reproductive_symptom,Mild,non_urgent,active
+kakatol akon ary,penile itching,male_reproductive_symptom,Mild,non_urgent,active
+kakatol akon ary ko,penile itching,male_reproductive_symptom,Mild,non_urgent,active
+kakatol akon bilad,vaginal itching,female_reproductive_symptom,Mild,non_urgent,active
+kakatol akon bilad ko,vaginal itching,female_reproductive_symptom,Mild,non_urgent,active
+kakatol akon bilat,vaginal itching,female_reproductive_symptom,Mild,non_urgent,active
+kakatol akon bilat ko,vaginal itching,female_reproductive_symptom,Mild,non_urgent,active
+kakatol akon itlog,testicular itching,male_reproductive_symptom,Mild,non_urgent,active
+kakatol akon itlog ko,testicular itching,male_reproductive_symptom,Mild,non_urgent,active
+kakatol akon itlug,testicular itching,male_reproductive_symptom,Mild,non_urgent,active
+kakatol akon itlug ko,testicular itching,male_reproductive_symptom,Mild,non_urgent,active
+kakatol akon kipay,vulvar itching,female_reproductive_symptom,Mild,non_urgent,active
+kakatol ari ako,penile itching,male_reproductive_symptom,Mild,non_urgent,active
+kakatol ari akon,penile itching,male_reproductive_symptom,Mild,non_urgent,active
+kakatol ari akon gid,penile itching,male_reproductive_symptom,Mild,non_urgent,active
+kakatol ari akon subong,penile itching,male_reproductive_symptom,Mild,non_urgent,active
+kakatol ari gid ko,penile itching,male_reproductive_symptom,Mild,non_urgent,active
+kakatol ari ko,penile itching,male_reproductive_symptom,Mild,non_urgent,active
+kakatol ari ko ako,penile itching,male_reproductive_symptom,Mild,non_urgent,active
+kakatol ari ko akon,penile itching,male_reproductive_symptom,Mild,non_urgent,active
+kakatol ari ko akon gid,penile itching,male_reproductive_symptom,Mild,non_urgent,active
+kakatol ari ko akon subong,penile itching,male_reproductive_symptom,Mild,non_urgent,active
+kakatol ari ko gid,penile itching,male_reproductive_symptom,Mild,non_urgent,active
+kakatol ari ko gid ko,penile itching,male_reproductive_symptom,Mild,non_urgent,active
+kakatol ari ko ko,penile itching,male_reproductive_symptom,Mild,non_urgent,active
+kakatol ari ko ko gid,penile itching,male_reproductive_symptom,Mild,non_urgent,active
+kakatol ary ako,penile itching,male_reproductive_symptom,Mild,non_urgent,active
+kakatol ary akon,penile itching,male_reproductive_symptom,Mild,non_urgent,active
+kakatol ary akon gid,penile itching,male_reproductive_symptom,Mild,non_urgent,active
+kakatol ary akon subong,penile itching,male_reproductive_symptom,Mild,non_urgent,active
+kakatol ary gid ko,penile itching,male_reproductive_symptom,Mild,non_urgent,active
+kakatol ary ko,penile itching,male_reproductive_symptom,Mild,non_urgent,active
+kakatol ary ko ako,penile itching,male_reproductive_symptom,Mild,non_urgent,active
+kakatol ary ko akon,penile itching,male_reproductive_symptom,Mild,non_urgent,active
+kakatol ary ko akon gid,penile itching,male_reproductive_symptom,Mild,non_urgent,active
+kakatol ary ko akon subong,penile itching,male_reproductive_symptom,Mild,non_urgent,active
+kakatol ary ko gid,penile itching,male_reproductive_symptom,Mild,non_urgent,active
+kakatol ary ko gid ko,penile itching,male_reproductive_symptom,Mild,non_urgent,active
+kakatol ary ko ko,penile itching,male_reproductive_symptom,Mild,non_urgent,active
+kakatol ary ko ko gid,penile itching,male_reproductive_symptom,Mild,non_urgent,active
+kakatol bilad ako,vaginal itching,female_reproductive_symptom,Mild,non_urgent,active
+kakatol bilad akon,vaginal itching,female_reproductive_symptom,Mild,non_urgent,active
+kakatol bilad akon gid,vaginal itching,female_reproductive_symptom,Mild,non_urgent,active
+kakatol bilad akon subong,vaginal itching,female_reproductive_symptom,Mild,non_urgent,active
+kakatol bilad gid ko,vaginal itching,female_reproductive_symptom,Mild,non_urgent,active
+kakatol bilad ko,vaginal itching,female_reproductive_symptom,Mild,non_urgent,active
+kakatol bilad ko ako,vaginal itching,female_reproductive_symptom,Mild,non_urgent,active
+kakatol bilad ko akon,vaginal itching,female_reproductive_symptom,Mild,non_urgent,active
+kakatol bilad ko akon gid,vaginal itching,female_reproductive_symptom,Mild,non_urgent,active
+kakatol bilad ko akon subong,vaginal itching,female_reproductive_symptom,Mild,non_urgent,active
+kakatol bilad ko gid,vaginal itching,female_reproductive_symptom,Mild,non_urgent,active
+kakatol bilad ko gid ko,vaginal itching,female_reproductive_symptom,Mild,non_urgent,active
+kakatol bilad ko ko,vaginal itching,female_reproductive_symptom,Mild,non_urgent,active
+kakatol bilad ko ko gid,vaginal itching,female_reproductive_symptom,Mild,non_urgent,active
+kakatol bilat ako,vaginal itching,female_reproductive_symptom,Mild,non_urgent,active
+kakatol bilat akon,vaginal itching,female_reproductive_symptom,Mild,non_urgent,active
+kakatol bilat akon gid,vaginal itching,female_reproductive_symptom,Mild,non_urgent,active
+kakatol bilat akon subong,vaginal itching,female_reproductive_symptom,Mild,non_urgent,active
+kakatol bilat gid ko,vaginal itching,female_reproductive_symptom,Mild,non_urgent,active
+kakatol bilat ko,vaginal itching,female_reproductive_symptom,Mild,non_urgent,active
+kakatol bilat ko ako,vaginal itching,female_reproductive_symptom,Mild,non_urgent,active
+kakatol bilat ko akon,vaginal itching,female_reproductive_symptom,Mild,non_urgent,active
+kakatol bilat ko akon gid,vaginal itching,female_reproductive_symptom,Mild,non_urgent,active
+kakatol bilat ko akon subong,vaginal itching,female_reproductive_symptom,Mild,non_urgent,active
+kakatol bilat ko gid,vaginal itching,female_reproductive_symptom,Mild,non_urgent,active
+kakatol bilat ko gid ko,vaginal itching,female_reproductive_symptom,Mild,non_urgent,active
+kakatol bilat ko ko,vaginal itching,female_reproductive_symptom,Mild,non_urgent,active
+kakatol bilat ko ko gid,vaginal itching,female_reproductive_symptom,Mild,non_urgent,active
+kakatol gid akon ari,penile itching,male_reproductive_symptom,Mild,non_urgent,active
+kakatol gid akon ari ko,penile itching,male_reproductive_symptom,Mild,non_urgent,active
+kakatol gid akon ary,penile itching,male_reproductive_symptom,Mild,non_urgent,active
+kakatol gid akon ary ko,penile itching,male_reproductive_symptom,Mild,non_urgent,active
+kakatol gid akon bilad,vaginal itching,female_reproductive_symptom,Mild,non_urgent,active
+kakatol gid akon bilad ko,vaginal itching,female_reproductive_symptom,Mild,non_urgent,active
+kakatol gid akon bilat,vaginal itching,female_reproductive_symptom,Mild,non_urgent,active
+kakatol gid akon bilat ko,vaginal itching,female_reproductive_symptom,Mild,non_urgent,active
+kakatol gid akon itlog,testicular itching,male_reproductive_symptom,Mild,non_urgent,active
+kakatol gid akon itlog ko,testicular itching,male_reproductive_symptom,Mild,non_urgent,active
+kakatol gid akon itlug,testicular itching,male_reproductive_symptom,Mild,non_urgent,active
+kakatol gid akon itlug ko,testicular itching,male_reproductive_symptom,Mild,non_urgent,active
+kakatol gid akon kipay,vulvar itching,female_reproductive_symptom,Mild,non_urgent,active
+kakatol gid ari ako,penile itching,male_reproductive_symptom,Mild,non_urgent,active
+kakatol gid ari akon,penile itching,male_reproductive_symptom,Mild,non_urgent,active
+kakatol gid ari akon gid,penile itching,male_reproductive_symptom,Mild,non_urgent,active
+kakatol gid ari akon subong,penile itching,male_reproductive_symptom,Mild,non_urgent,active
+kakatol gid ari gid ko,penile itching,male_reproductive_symptom,Mild,non_urgent,active
+kakatol gid ari ko,penile itching,male_reproductive_symptom,Mild,non_urgent,active
+kakatol gid ari ko ako,penile itching,male_reproductive_symptom,Mild,non_urgent,active
+kakatol gid ari ko akon,penile itching,male_reproductive_symptom,Mild,non_urgent,active
+kakatol gid ari ko akon gid,penile itching,male_reproductive_symptom,Mild,non_urgent,active
+kakatol gid ari ko akon subong,penile itching,male_reproductive_symptom,Mild,non_urgent,active
+kakatol gid ari ko gid,penile itching,male_reproductive_symptom,Mild,non_urgent,active
+kakatol gid ari ko gid ko,penile itching,male_reproductive_symptom,Mild,non_urgent,active
+kakatol gid ari ko ko,penile itching,male_reproductive_symptom,Mild,non_urgent,active
+kakatol gid ari ko ko gid,penile itching,male_reproductive_symptom,Mild,non_urgent,active
+kakatol gid ary ako,penile itching,male_reproductive_symptom,Mild,non_urgent,active
+kakatol gid ary akon,penile itching,male_reproductive_symptom,Mild,non_urgent,active
+kakatol gid ary akon gid,penile itching,male_reproductive_symptom,Mild,non_urgent,active
+kakatol gid ary akon subong,penile itching,male_reproductive_symptom,Mild,non_urgent,active
+kakatol gid ary gid ko,penile itching,male_reproductive_symptom,Mild,non_urgent,active
+kakatol gid ary ko,penile itching,male_reproductive_symptom,Mild,non_urgent,active
+kakatol gid ary ko ako,penile itching,male_reproductive_symptom,Mild,non_urgent,active
+kakatol gid ary ko akon,penile itching,male_reproductive_symptom,Mild,non_urgent,active
+kakatol gid ary ko akon gid,penile itching,male_reproductive_symptom,Mild,non_urgent,active
+kakatol gid ary ko akon subong,penile itching,male_reproductive_symptom,Mild,non_urgent,active
+kakatol gid ary ko gid,penile itching,male_reproductive_symptom,Mild,non_urgent,active
+kakatol gid ary ko gid ko,penile itching,male_reproductive_symptom,Mild,non_urgent,active
+kakatol gid ary ko ko,penile itching,male_reproductive_symptom,Mild,non_urgent,active
+kakatol gid ary ko ko gid,penile itching,male_reproductive_symptom,Mild,non_urgent,active
+kakatol gid bilad ako,vaginal itching,female_reproductive_symptom,Mild,non_urgent,active
+kakatol gid bilad akon,vaginal itching,female_reproductive_symptom,Mild,non_urgent,active
+kakatol gid bilad akon gid,vaginal itching,female_reproductive_symptom,Mild,non_urgent,active
+kakatol gid bilad akon subong,vaginal itching,female_reproductive_symptom,Mild,non_urgent,active
+kakatol gid bilad gid ko,vaginal itching,female_reproductive_symptom,Mild,non_urgent,active
+kakatol gid bilad ko,vaginal itching,female_reproductive_symptom,Mild,non_urgent,active
+kakatol gid bilad ko ako,vaginal itching,female_reproductive_symptom,Mild,non_urgent,active
+kakatol gid bilad ko akon,vaginal itching,female_reproductive_symptom,Mild,non_urgent,active
+kakatol gid bilad ko akon gid,vaginal itching,female_reproductive_symptom,Mild,non_urgent,active
+kakatol gid bilad ko akon subong,vaginal itching,female_reproductive_symptom,Mild,non_urgent,active
+kakatol gid bilad ko gid,vaginal itching,female_reproductive_symptom,Mild,non_urgent,active
+kakatol gid bilad ko gid ko,vaginal itching,female_reproductive_symptom,Mild,non_urgent,active
+kakatol gid bilad ko ko,vaginal itching,female_reproductive_symptom,Mild,non_urgent,active
+kakatol gid bilad ko ko gid,vaginal itching,female_reproductive_symptom,Mild,non_urgent,active
+kakatol gid bilat ako,vaginal itching,female_reproductive_symptom,Mild,non_urgent,active
+kakatol gid bilat akon,vaginal itching,female_reproductive_symptom,Mild,non_urgent,active
+kakatol gid bilat akon gid,vaginal itching,female_reproductive_symptom,Mild,non_urgent,active
+kakatol gid bilat akon subong,vaginal itching,female_reproductive_symptom,Mild,non_urgent,active
+kakatol gid bilat gid ko,vaginal itching,female_reproductive_symptom,Mild,non_urgent,active
+kakatol gid bilat ko,vaginal itching,female_reproductive_symptom,Mild,non_urgent,active
+kakatol gid bilat ko ako,vaginal itching,female_reproductive_symptom,Mild,non_urgent,active
+kakatol gid bilat ko akon,vaginal itching,female_reproductive_symptom,Mild,non_urgent,active
+kakatol gid bilat ko akon gid,vaginal itching,female_reproductive_symptom,Mild,non_urgent,active
+kakatol gid bilat ko akon subong,vaginal itching,female_reproductive_symptom,Mild,non_urgent,active
+kakatol gid bilat ko gid,vaginal itching,female_reproductive_symptom,Mild,non_urgent,active
+kakatol gid bilat ko gid ko,vaginal itching,female_reproductive_symptom,Mild,non_urgent,active
+kakatol gid bilat ko ko,vaginal itching,female_reproductive_symptom,Mild,non_urgent,active
+kakatol gid bilat ko ko gid,vaginal itching,female_reproductive_symptom,Mild,non_urgent,active
+kakatol gid itlog ako,testicular itching,male_reproductive_symptom,Mild,non_urgent,active
+kakatol gid itlog akon,testicular itching,male_reproductive_symptom,Mild,non_urgent,active
+kakatol gid itlog akon gid,testicular itching,male_reproductive_symptom,Mild,non_urgent,active
+kakatol gid itlog akon subong,testicular itching,male_reproductive_symptom,Mild,non_urgent,active
+kakatol gid itlog gid ko,testicular itching,male_reproductive_symptom,Mild,non_urgent,active
+kakatol gid itlog ko,testicular itching,male_reproductive_symptom,Mild,non_urgent,active
+kakatol gid itlog ko ako,testicular itching,male_reproductive_symptom,Mild,non_urgent,active
+kakatol gid itlog ko akon,testicular itching,male_reproductive_symptom,Mild,non_urgent,active
+kakatol gid itlog ko akon gid,testicular itching,male_reproductive_symptom,Mild,non_urgent,active
+kakatol gid itlog ko akon subong,testicular itching,male_reproductive_symptom,Mild,non_urgent,active
+kakatol gid itlog ko gid,testicular itching,male_reproductive_symptom,Mild,non_urgent,active
+kakatol gid itlog ko gid ko,testicular itching,male_reproductive_symptom,Mild,non_urgent,active
+kakatol gid itlog ko ko,testicular itching,male_reproductive_symptom,Mild,non_urgent,active
+kakatol gid itlog ko ko gid,testicular itching,male_reproductive_symptom,Mild,non_urgent,active
+kakatol gid itlug ako,testicular itching,male_reproductive_symptom,Mild,non_urgent,active
+kakatol gid itlug akon,testicular itching,male_reproductive_symptom,Mild,non_urgent,active
+kakatol gid itlug akon gid,testicular itching,male_reproductive_symptom,Mild,non_urgent,active
+kakatol gid itlug akon subong,testicular itching,male_reproductive_symptom,Mild,non_urgent,active
+kakatol gid itlug gid ko,testicular itching,male_reproductive_symptom,Mild,non_urgent,active
+kakatol gid itlug ko,testicular itching,male_reproductive_symptom,Mild,non_urgent,active
+kakatol gid itlug ko ako,testicular itching,male_reproductive_symptom,Mild,non_urgent,active
+kakatol gid itlug ko akon,testicular itching,male_reproductive_symptom,Mild,non_urgent,active
+kakatol gid itlug ko akon gid,testicular itching,male_reproductive_symptom,Mild,non_urgent,active
+kakatol gid itlug ko akon subong,testicular itching,male_reproductive_symptom,Mild,non_urgent,active
+kakatol gid itlug ko gid,testicular itching,male_reproductive_symptom,Mild,non_urgent,active
+kakatol gid itlug ko gid ko,testicular itching,male_reproductive_symptom,Mild,non_urgent,active
+kakatol gid itlug ko ko,testicular itching,male_reproductive_symptom,Mild,non_urgent,active
+kakatol gid itlug ko ko gid,testicular itching,male_reproductive_symptom,Mild,non_urgent,active
+kakatol gid kipay ako,vulvar itching,female_reproductive_symptom,Mild,non_urgent,active
+kakatol gid kipay akon,vulvar itching,female_reproductive_symptom,Mild,non_urgent,active
+kakatol gid kipay akon gid,vulvar itching,female_reproductive_symptom,Mild,non_urgent,active
+kakatol gid kipay akon subong,vulvar itching,female_reproductive_symptom,Mild,non_urgent,active
+kakatol gid kipay gid ko,vulvar itching,female_reproductive_symptom,Mild,non_urgent,active
+kakatol gid kipay ko,vulvar itching,female_reproductive_symptom,Mild,non_urgent,active
+kakatol gid kipay ko gid,vulvar itching,female_reproductive_symptom,Mild,non_urgent,active
+kakatol itlog ako,testicular itching,male_reproductive_symptom,Mild,non_urgent,active
+kakatol itlog akon,testicular itching,male_reproductive_symptom,Mild,non_urgent,active
+kakatol itlog akon gid,testicular itching,male_reproductive_symptom,Mild,non_urgent,active
+kakatol itlog akon subong,testicular itching,male_reproductive_symptom,Mild,non_urgent,active
+kakatol itlog gid ko,testicular itching,male_reproductive_symptom,Mild,non_urgent,active
+kakatol itlog ko,testicular itching,male_reproductive_symptom,Mild,non_urgent,active
+kakatol itlog ko ako,testicular itching,male_reproductive_symptom,Mild,non_urgent,active
+kakatol itlog ko akon,testicular itching,male_reproductive_symptom,Mild,non_urgent,active
+kakatol itlog ko akon gid,testicular itching,male_reproductive_symptom,Mild,non_urgent,active
+kakatol itlog ko akon subong,testicular itching,male_reproductive_symptom,Mild,non_urgent,active
+kakatol itlog ko gid,testicular itching,male_reproductive_symptom,Mild,non_urgent,active
+kakatol itlog ko gid ko,testicular itching,male_reproductive_symptom,Mild,non_urgent,active
+kakatol itlog ko ko,testicular itching,male_reproductive_symptom,Mild,non_urgent,active
+kakatol itlog ko ko gid,testicular itching,male_reproductive_symptom,Mild,non_urgent,active
+kakatol itlug ako,testicular itching,male_reproductive_symptom,Mild,non_urgent,active
+kakatol itlug akon,testicular itching,male_reproductive_symptom,Mild,non_urgent,active
+kakatol itlug akon gid,testicular itching,male_reproductive_symptom,Mild,non_urgent,active
+kakatol itlug akon subong,testicular itching,male_reproductive_symptom,Mild,non_urgent,active
+kakatol itlug gid ko,testicular itching,male_reproductive_symptom,Mild,non_urgent,active
+kakatol itlug ko,testicular itching,male_reproductive_symptom,Mild,non_urgent,active
+kakatol itlug ko ako,testicular itching,male_reproductive_symptom,Mild,non_urgent,active
+kakatol itlug ko akon,testicular itching,male_reproductive_symptom,Mild,non_urgent,active
+kakatol itlug ko akon gid,testicular itching,male_reproductive_symptom,Mild,non_urgent,active
+kakatol itlug ko akon subong,testicular itching,male_reproductive_symptom,Mild,non_urgent,active
+kakatol itlug ko gid,testicular itching,male_reproductive_symptom,Mild,non_urgent,active
+kakatol itlug ko gid ko,testicular itching,male_reproductive_symptom,Mild,non_urgent,active
+kakatol itlug ko ko,testicular itching,male_reproductive_symptom,Mild,non_urgent,active
+kakatol itlug ko ko gid,testicular itching,male_reproductive_symptom,Mild,non_urgent,active
+kakatol kipay ako,vulvar itching,female_reproductive_symptom,Mild,non_urgent,active
+kakatol kipay akon,vulvar itching,female_reproductive_symptom,Mild,non_urgent,active
+kakatol kipay akon gid,vulvar itching,female_reproductive_symptom,Mild,non_urgent,active
+kakatol kipay akon subong,vulvar itching,female_reproductive_symptom,Mild,non_urgent,active
+kakatol kipay gid ko,vulvar itching,female_reproductive_symptom,Mild,non_urgent,active
+kakatol kipay ko,vulvar itching,female_reproductive_symptom,Mild,non_urgent,active
+kakatol kipay ko gid,vulvar itching,female_reproductive_symptom,Mild,non_urgent,active
 karon gadugo bilat ko,vaginal bleeding,gynecologic_symptom,High,urgent,active
 karon gahubag itlog ko,testicular swelling,male_reproductive_symptom,Moderate,urgent,active
-karon kakatol bilat ko,vaginal itching,female_reproductive_symptom,Low,routine,active
+karon kakatol bilat ko,vaginal itching,female_reproductive_symptom,Low,non_urgent,active
 karon masakit ari ko,penile pain,male_reproductive_symptom,Moderate,urgent,active
 karon may nana sa bilat ko,vaginal infection,infection,High,urgent,active
-mapait ihi ko,foul urine,urinary_symptom,Moderate,routine,active
+mapait ihi ko,foul urine,urinary_symptom,Moderate,non_urgent,active
 mapula acun itlog,testicular redness,male_reproductive_symptom,Moderate,urgent,active
 mapula acun itlog ko,testicular redness,male_reproductive_symptom,Moderate,urgent,active
 mapula acun itlug,testicular redness,male_reproductive_symptom,Moderate,urgent,active
@@ -3372,7 +3372,7 @@ may nana sa itlug akon,testicular infection,infection,Severe,urgent,active
 may nana sa itlug ko,testicular infection,infection,Severe,urgent,active
 may nana sa itlug ko akon,testicular infection,infection,Severe,urgent,active
 may nana sa itlug ko ko,testicular infection,infection,Severe,urgent,active
-may pantal sa singit ko,groin rash,dermatological,Low,routine,active
+may pantal sa singit ko,groin rash,dermatological,Low,non_urgent,active
 may pilas ko sa akon ari,penile wound,injury,Moderate,urgent,active
 may pilas ko sa akon ari ko,penile wound,injury,Moderate,urgent,active
 may pilas ko sa akon ary,penile wound,injury,Moderate,urgent,active
@@ -4150,7 +4150,7 @@ sakit singit ko,groin pain,musculoskeletal,Moderate,urgent,active
 sakit singit ko gid,groin pain,musculoskeletal,Moderate,urgent,active
 subong gadugo bilat ko,vaginal bleeding,gynecologic_symptom,High,urgent,active
 subong gahubag itlog ko,testicular swelling,male_reproductive_symptom,Moderate,urgent,active
-subong kakatol bilat ko,vaginal itching,female_reproductive_symptom,Low,routine,active
+subong kakatol bilat ko,vaginal itching,female_reproductive_symptom,Low,non_urgent,active
 subong masakit ari ko,penile pain,male_reproductive_symptom,Moderate,urgent,active
 subong may nana sa bilat ko,vaginal infection,infection,High,urgent,active
 UTI ko,urinary tract infection,urinary_symptom,Moderate,urgent,active

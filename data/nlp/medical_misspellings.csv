@@ -345,3 +345,55 @@ kilid mata,kilid maada,algorithmic,active
 mata,maada,algorithmic,active
 mataas,maadaas,algorithmic,active
 talukap mata,talukap maada,algorithmic,active
+hilanat,hilantan,symptom_root,active
+hilanat,hilant,symptom_root,active
+hilanat,hilantat,symptom_root,active
+hilanat,ginahilant,symptom_root,active
+ginatugnaw,ginatugnaww,symptom_root,active
+ginatugnaw,ginatugaw,symptom_root,active
+ginasip-on,ginasipon,symptom_root,active
+ginasip-on,ginasipn,symptom_root,active
+ginasip-on,sippon,symptom_root,active
+ubo,uboo,symptom_root,active
+ubo,uhbo,symptom_root,active
+budlay ginhawa,budlay ginhawaa,symptom_phrase,active
+budlay magginhawa,budlai magginhawa,symptom_phrase,active
+ginasakit ulo,ginasakit ulo ko,symptom_phrase,active
+ginasakit ulo,ginasakitulo,symptom_phrase,active
+ginasakit tutunlan,ginasakit tutunlan ko,symptom_phrase,active
+ginasakit tutunlan,ginasakit tutunaln,symptom_phrase,active
+ginasakit dughan,ginasakit dugan,symptom_phrase,active
+ginasakit tiyan,ginasakit tyan,symptom_phrase,active
+ginakalipong,ginakalipng,symptom_root,active
+ginakalipong,ginakalipon,symptom_root,active
+ginasuka,ginasuka ko,symptom_phrase,active
+ginapalanuka,ginapalanuka ko,symptom_phrase,active
+ginapalanuka,ginapalanukaa,symptom_root,active
+ginakalibanga,ginakalibanga ko,symptom_phrase,active
+ginakalibanga,ginakalibnga,symptom_root,active
+constipation,constipated,symptom_root,active
+ginakapoy,ginakapoyy,symptom_root,active
+ginapalanhubag,ginapalanhubg,symptom_root,active
+ginakurog,ginakurogg,symptom_root,active
+ginapanuhot,ginapanuot,symptom_root,active
+ginahapdos,ginahapdos mata,symptom_phrase,active
+ginakati,ginakati panit,symptom_phrase,active
+ginadugo ilong,ginadugo ilng,symptom_phrase,active
+trangkaso,trankaso,condition,active
+trangkaso,trangkasu,condition,active
+trangkaso,trangkazoo,condition,active
+pneumonia,neumonia,condition,active
+pneumonia,punemonia,condition,active
+pneumonia,pnumonia,condition,active
+tuberculosis,tubercolosis,condition,active
+tuberculosis,tiberculosis,condition,active
+leptospirosis,leptospirsis,condition,active
+leptospirosis,leptospiroses,condition,active
+diabetes,diebetes,condition,active
+diabetes,diabetez,condition,active
+hypertension,hight blood,condition,active
+hypertension,hig blood,condition,active
+measles,measeles,condition,active
+mumps,mumpss,condition,active
+chickenpox,chikenpox,condition,active
+chickenpox,chickenpoxx,condition,active

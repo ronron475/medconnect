@@ -53,7 +53,7 @@ if ($ocr_mode === 'extract' && $_SERVER['REQUEST_METHOD'] === 'POST') {
     // ── Try FastAPI OCR service first (port 8766) ──
     if (OcrFastApiClient::isEnabled()) {
         $fastapi = OcrFastApiClient::extract($file['tmp_name'], $mime, $file['name']);
-        if (is_array($fastapi) && !empty($fastapi['success'])) {
+        if (is_array($fastapi) && !empty($fastapi['success']) && !empty($fastapi['confidence_ok'])) {
             $response = $fastapi;
             $response['cached'] = false;
             if (!isset($_SESSION['ocr_extract_cache']) || !is_array($_SESSION['ocr_extract_cache'])) {
@@ -67,49 +67,25 @@ if ($ocr_mode === 'extract' && $_SERVER['REQUEST_METHOD'] === 'POST') {
             exit;
         }
         if (is_array($fastapi) && isset($fastapi['success']) && $fastapi['success'] === false && !empty($fastapi['message'])) {
-            ob_clean(); echo json_encode([
-                'success' => false,
-                'message' => $fastapi['message'],
-                'engine'  => 'fastapi',
-            ]);
-            exit;
+            // FastAPI failed — fall through to PHP OCR.Space multi-pass pipeline below.
         }
         // FastAPI unavailable — fall through to PHP OCR pipeline
     }
 
     $is_pdf = ($mime === 'application/pdf');
-    $processed = ['path' => $file['tmp_name'], 'mime' => $mime, 'stage' => 'none', 'temp' => false];
-    if (!$is_pdf) {
-        $processed = preprocessImageForOCR($file['tmp_name'], $mime);
-    }
+    $extract_result = runBestOcrExtract($file['tmp_name'], $mime, $is_pdf);
 
-    $ocr = callOCRSpace($processed['path'], $processed['mime'], 1);
-    $ocr_fail = ($ocr === null || ocrResponseFailed($ocr));
-    if ($ocr_fail || trim($ocr['ParsedResults'][0]['ParsedText'] ?? '') === '') {
-        $ocr = callOCRSpace($processed['path'], $processed['mime'], 2);
-        $ocr_fail = ($ocr === null || ocrResponseFailed($ocr));
-    }
-
-    if (!empty($processed['temp']) && !empty($processed['path']) && file_exists($processed['path'])) {
-        @unlink($processed['path']);
-    }
-
-    if ($ocr === null) {
+    if ($extract_result['error'] !== null) {
         ob_clean(); echo json_encode([
             'success' => false,
-            'message' => 'Could not reach the OCR service. Please check your connection and try again.',
-        ]);
-        exit;
-    }
-    if ($ocr_fail) {
-        ob_clean(); echo json_encode([
-            'success' => false,
-            'message' => ocrFriendlyError($ocr),
+            'message' => $extract_result['error'],
         ]);
         exit;
     }
 
-    $parsed_text = trim($ocr['ParsedResults'][0]['ParsedText'] ?? '');
+    $parsed_text = $extract_result['text'];
+    $processed   = ['stage' => $extract_result['stage'] ?? 'none'];
+
     if ($parsed_text === '') {
         ob_clean(); echo json_encode([
             'success' => false,
@@ -118,7 +94,7 @@ if ($ocr_mode === 'extract' && $_SERVER['REQUEST_METHOD'] === 'POST') {
         exit;
     }
 
-    $extraction = PhilSysOcrParser::extractAll($parsed_text);
+    $extraction = $extract_result['extraction'] ?? PhilSysOcrParser::extractAll($parsed_text);
     $low_confidence = $extraction['low_confidence'];
 
     $response = [
@@ -262,6 +238,252 @@ function ocrFriendlyError(array $ocr): string {
         return 'The image file is too large for the OCR service. Please use a JPG under 1 MB.';
     }
     return 'The OCR service could not read the uploaded ID. Please try again with a clearer photo.';
+}
+
+// ── EXIF orientation + multi-pass extract (handles rotated ID photos) ──
+
+function applyExifOrientationGd($img, string $src_path) {
+    if (!function_exists('exif_read_data') || !function_exists('imagerotate')) {
+        return $img;
+    }
+    $exif = @exif_read_data($src_path);
+    if (!is_array($exif)) {
+        return $img;
+    }
+    $orientation = (int)($exif['Orientation'] ?? 1);
+    switch ($orientation) {
+        case 3:
+            $rotated = imagerotate($img, 180, 0);
+            break;
+        case 6:
+            $rotated = imagerotate($img, -90, 0);
+            break;
+        case 8:
+            $rotated = imagerotate($img, 90, 0);
+            break;
+        default:
+            return $img;
+    }
+    if ($rotated) {
+        imagedestroy($img);
+        return $rotated;
+    }
+    return $img;
+}
+
+function loadGdImageFromFile(string $src_path, string $mime_type) {
+    $img = null;
+    if ($mime_type === 'image/jpeg') {
+        $img = @imagecreatefromjpeg($src_path);
+    } elseif ($mime_type === 'image/png') {
+        $img = @imagecreatefrompng($src_path);
+    }
+    if (!$img) {
+        return null;
+    }
+    if ($mime_type === 'image/jpeg') {
+        $img = applyExifOrientationGd($img, $src_path);
+    }
+    return $img;
+}
+
+function saveGdOcrJpeg($img, string $stage_label): ?array {
+    $orig_w = imagesx($img);
+    $orig_h = imagesy($img);
+    if ($orig_w < 1 || $orig_h < 1) {
+        return null;
+    }
+
+    $new_w = $orig_w;
+    $new_h = $orig_h;
+    $scale_stage = '';
+    if ($orig_w < 1000) {
+        $new_w = 1000;
+        $new_h = (int)round($orig_h * (1000 / $orig_w));
+        $scale_stage = 'upscaled';
+    } elseif ($orig_w > 1800) {
+        $new_w = 1800;
+        $new_h = (int)round($orig_h * (1800 / $orig_w));
+        $scale_stage = 'downscaled';
+    }
+
+    $base = imagecreatetruecolor($new_w, $new_h);
+    imagefill($base, 0, 0, imagecolorallocate($base, 255, 255, 255));
+    imagecopyresampled($base, $img, 0, 0, 0, 0, $new_w, $new_h, $orig_w, $orig_h);
+
+    $out = imagecreatetruecolor($new_w, $new_h);
+    imagecopy($out, $base, 0, 0, 0, 0, $new_w, $new_h);
+    imagedestroy($base);
+    imagefilter($out, IMG_FILTER_GRAYSCALE);
+    imagefilter($out, IMG_FILTER_CONTRAST, -30);
+    imagefilter($out, IMG_FILTER_BRIGHTNESS, 4);
+
+    $path = tempnam(sys_get_temp_dir(), 'ocr_') . '.jpg';
+    $saved = false;
+    foreach ([88, 75, 60] as $q) {
+        if (imagejpeg($out, $path, $q) && filesize($path) <= 900 * 1024) {
+            $saved = true;
+            break;
+        }
+    }
+    imagedestroy($out);
+
+    if (!$saved) {
+        @unlink($path);
+        return null;
+    }
+
+    $stage = implode('+', array_filter([$scale_stage, $stage_label, 'gray-contrast']));
+    return ['path' => $path, 'mime' => 'image/jpeg', 'stage' => $stage, 'temp' => true];
+}
+
+function buildOcrExtractVariants(string $src_path, string $mime_type): array {
+    $fallback = [['path' => $src_path, 'mime' => $mime_type, 'stage' => 'original', 'temp' => false]];
+    if (!extension_loaded('gd')) {
+        return $fallback;
+    }
+
+    $img = loadGdImageFromFile($src_path, $mime_type);
+    if (!$img) {
+        return $fallback;
+    }
+
+    $w = imagesx($img);
+    $h = imagesy($img);
+    $angles = [0];
+    // Portrait photos of a landscape ID card — try 90° / 270° rotations.
+    if ($h > (int)round($w * 1.05)) {
+        $angles[] = 90;
+        $angles[] = 270;
+    }
+
+    $variants = [];
+    foreach ($angles as $angle) {
+        $working = $img;
+        $rotated = false;
+        if ($angle !== 0) {
+            $rot = imagerotate($img, -$angle, 0);
+            if (!$rot) {
+                continue;
+            }
+            $working = $rot;
+            $rotated = true;
+        }
+
+        $variant = saveGdOcrJpeg($working, $angle === 0 ? 'exif' : ('rot' . $angle));
+        if ($variant) {
+            $variants[] = $variant;
+        }
+        if ($rotated) {
+            imagedestroy($working);
+        }
+    }
+    imagedestroy($img);
+
+    return !empty($variants) ? $variants : $fallback;
+}
+
+function scorePhilSysExtraction(array $extraction): float {
+    $fields = $extraction['fields'] ?? [];
+    $required = ['first_name', 'last_name', 'date_of_birth', 'national_id'];
+    $filled = 0;
+    foreach ($required as $key) {
+        if (($fields[$key]['value'] ?? '') !== '') {
+            $filled++;
+        }
+    }
+    $base = (float)($extraction['overall_confidence'] ?? 0.0);
+    return $base + ($filled * 0.12);
+}
+
+function runBestOcrExtract(string $src_path, string $mime, bool $is_pdf): array {
+    $result = [
+        'text'       => '',
+        'extraction' => null,
+        'stage'      => 'none',
+        'error'      => null,
+    ];
+
+    if ($is_pdf) {
+        foreach ([2, 1] as $engine) {
+            $ocr = callOCRSpace($src_path, $mime, $engine);
+            if ($ocr === null) {
+                $result['error'] = 'Could not reach the OCR service. Please check your connection and try again.';
+                return $result;
+            }
+            if (ocrResponseFailed($ocr)) {
+                if ($engine === 1) {
+                    $result['error'] = ocrFriendlyError($ocr);
+                }
+                continue;
+            }
+            $text = trim($ocr['ParsedResults'][0]['ParsedText'] ?? '');
+            if ($text !== '') {
+                $extraction = PhilSysOcrParser::extractAll($text);
+                $result['text'] = $text;
+                $result['extraction'] = $extraction;
+                $result['stage'] = 'pdf+e' . $engine;
+                return $result;
+            }
+        }
+        if ($result['error'] === null) {
+            $result['error'] = "We couldn't accurately read your National ID. Please upload a clearer photo taken in good lighting.";
+        }
+        return $result;
+    }
+
+    $variants = buildOcrExtractVariants($src_path, $mime);
+    $temp_files = [];
+    $best_score = -1.0;
+    $had_ocr_response = false;
+
+    foreach ($variants as $variant) {
+        if (!empty($variant['temp'])) {
+            $temp_files[] = $variant['path'];
+        }
+        foreach ([2, 1] as $engine) {
+            $ocr = callOCRSpace($variant['path'], $variant['mime'], $engine);
+            if ($ocr === null) {
+                continue;
+            }
+            $had_ocr_response = true;
+            if (ocrResponseFailed($ocr)) {
+                continue;
+            }
+            $text = trim($ocr['ParsedResults'][0]['ParsedText'] ?? '');
+            if ($text === '') {
+                continue;
+            }
+            $extraction = PhilSysOcrParser::extractAll($text);
+            $score = scorePhilSysExtraction($extraction);
+            if ($score > $best_score) {
+                $best_score = $score;
+                $result['text'] = $text;
+                $result['extraction'] = $extraction;
+                $result['stage'] = ($variant['stage'] ?? 'variant') . '+e' . $engine;
+            }
+            if ($score >= 0.95 && empty($extraction['low_confidence'])) {
+                break 2;
+            }
+        }
+    }
+
+    foreach ($temp_files as $path) {
+        if (is_string($path) && file_exists($path)) {
+            @unlink($path);
+        }
+    }
+
+    if ($result['text'] !== '') {
+        return $result;
+    }
+
+    if (!$had_ocr_response) {
+        $result['error'] = 'Could not reach the OCR service. Please check your connection and try again.';
+    } else {
+        $result['error'] = "We couldn't accurately read your National ID. Please upload a clearer photo taken in good lighting.";
+    }
+    return $result;
 }
 
 // ── GD image preprocessing ───────────────────────────────────
@@ -878,39 +1100,28 @@ if ($stored_ok) {
 }
 
 if (!$is_pdf) {
-    $processed    = preprocessImageForOCR($file['tmp_name'], $mime);
     $all_variants = preprocessImageVariants($file['tmp_name'], $mime);
 } else {
     $all_variants = [$processed];
 }
-$ocr_debug['preprocessing_used'] = $processed['stage'];
 
-// ── OCR pass — try Engine 1 first, fall back to Engine 2 ────
-// Engine 1 is more stable on the free tier for JPEG inputs.
-// Engine 2 is used as fallback if Engine 1 fails or returns empty text.
-$ocr      = callOCRSpace($processed['path'], $processed['mime'], 1);
-$ocr_fail = ($ocr === null || ocrResponseFailed($ocr));
-
-if ($ocr_fail || trim($ocr['ParsedResults'][0]['ParsedText'] ?? '') === '') {
-    // Fallback to Engine 2
-    $ocr      = callOCRSpace($processed['path'], $processed['mime'], 2);
-    $ocr_fail = ($ocr === null || ocrResponseFailed($ocr));
+$verify_extract = runBestOcrExtract($file['tmp_name'], $mime, $is_pdf);
+if ($verify_extract['error'] !== null) {
+  foreach ($all_variants as $v) {
+      cleanTemp($v);
+  }
+  ob_clean(); echo json_encode(['success' => false, 'message' => $verify_extract['error']]);
+  exit;
 }
 
-if ($ocr === null) {
-    cleanTemp($processed);
-    ob_clean(); echo json_encode(['success' => false, 'message' => 'Could not reach the OCR service. Please check your connection and try again.']);
-    exit;
-}
-if ($ocr_fail) {
-    cleanTemp($processed);
-    ob_clean(); echo json_encode(['success' => false, 'message' => ocrFriendlyError($ocr)]);
-    exit;
-}
+$parsed_text_e2 = $verify_extract['text'];
+$ocr_debug['preprocessing_used'] = $verify_extract['stage'] ?? 'none';
+$processed = ['path' => $file['tmp_name'], 'mime' => $mime, 'stage' => $verify_extract['stage'] ?? 'none', 'temp' => false];
 
-$parsed_text_e2 = trim($ocr['ParsedResults'][0]['ParsedText'] ?? '');
 if ($parsed_text_e2 === '') {
-    cleanTemp($processed);
+    foreach ($all_variants as $v) {
+        cleanTemp($v);
+    }
     ob_clean(); echo json_encode(['success' => false, 'message' => 'No text could be extracted from the uploaded ID. Please upload a clearer photo.']);
     exit;
 }

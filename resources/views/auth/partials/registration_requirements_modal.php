@@ -104,7 +104,7 @@
         <article class="reg-req-card reg-req-card--password">
           <p class="reg-req-card__intro">Your password must contain:</p>
           <ul class="reg-req-list reg-req-list--compact">
-            <li>At least <strong>8 characters</strong></li>
+            <li>At least <strong>12 characters</strong></li>
             <li>At least <strong>one uppercase letter</strong></li>
             <li>At least <strong>one lowercase letter</strong></li>
             <li>At least <strong>one number</strong></li>

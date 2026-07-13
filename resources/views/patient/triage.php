@@ -18,10 +18,14 @@ $booking_today_ymd   = date('Y-m-d');
 $booking_today_label = date('l, M j, Y');
 
 $triage_history = [];
+$default_complaint = '';
 if ($pdo->query("SHOW TABLES LIKE 'triage_results'")->rowCount()) {
-    $s = $pdo->prepare('SELECT level, symptoms, assessed_at, chief_complaint, urgency_label FROM triage_results WHERE patient_id=? ORDER BY assessed_at DESC');
+    $s = $pdo->prepare('SELECT level, symptoms, assessed_at, chief_complaint, urgency_label, triage_level FROM triage_results WHERE patient_id=? ORDER BY assessed_at DESC');
     $s->execute([$uid]);
     $triage_history = $s->fetchAll(PDO::FETCH_ASSOC);
+    if (!empty($triage_history[0]['chief_complaint'])) {
+        $default_complaint = (string) $triage_history[0]['chief_complaint'];
+    }
 }
 
 $booking_providers = [];
@@ -55,7 +59,7 @@ foreach ($all_consults as $c) {
     }
 }
 
-$page_title = 'Triage History';
+$page_title = 'Book Consultation';
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -73,11 +77,6 @@ $page_title = 'Triage History';
   <?php require_once VIEWS_PATH . '/patient/partials/layout_shell_close.php'; ?>
 
   <script>window.APP_BASE = <?= json_encode(ASSET_BASE) ?>;</script>
-  <?php
-  $aiAssessmentJs = ASSETS_PATH . '/js/ai-assessment.js';
-  $aiAssessmentJsVer = file_exists($aiAssessmentJs) ? (int) filemtime($aiAssessmentJs) : time();
-  ?>
-  <script src="<?= ASSET_BASE ?>/assets/js/ai-assessment.js?v=<?= $aiAssessmentJsVer ?>"></script>
   <script>window.BOOKING_BLOCKED_IN_CONSULTATION = <?= json_encode(($active_consultation['status'] ?? '') === 'in_consultation') ?>;</script>
   <script src="<?= ASSET_BASE ?>/assets/js/patient-portal.js?v=<?= $patient_portal_ver ?>"></script>
   <script>

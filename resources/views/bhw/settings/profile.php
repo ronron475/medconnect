@@ -13,8 +13,10 @@ $profile_role_label = 'Barangay Health Worker';
 <div class="bhw-profile-page bhw-update-page">
 
   <header class="bhw-update-header">
-    <h2 class="text-h2">BHW Profile</h2>
-    <p>Manage your account details for <strong>Brgy. <?= $barangay_label ?></strong>. Keep your name and contact number up to date so patients and providers can reach you.</p>
+    <div class="bhw-update-header-text">
+      <h2 class="text-h2">BHW Profile</h2>
+      <p>Manage your account details for <strong>Brgy. <?= $barangay_label ?></strong>. Keep your name and contact number up to date so patients and providers can reach you.</p>
+    </div>
   </header>
 
   <div class="row g-3 bhw-profile-metrics" id="bhwProfileMetrics" aria-label="Sector workload overview">

@@ -1,7 +1,7 @@
 /* Provider Settings — compact full-width layout */
 
 body.provider-body .provider-page-body:has(.ps-page) {
-  padding: calc(var(--provider-header-h, 64px) + 12px) 16px 16px;
+  padding: calc(var(--mc-header-offset, var(--provider-header-h, 64px)) + 8px) 16px 16px;
   max-width: none;
 }
 
@@ -45,10 +45,10 @@ body.provider-body .provider-page-body:has(.ps-page) {
   display: flex;
   flex-direction: column;
   gap: 4px;
-  padding: 6px;
+  padding: 10px;
   background: #fff;
   border: 1px solid var(--mc-border-thin, #e2e8f0);
-  border-radius: 10px;
+  border-radius: 12px;
   box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
   height: fit-content;
 }
@@ -56,22 +56,23 @@ body.provider-body .provider-page-body:has(.ps-page) {
 .ps-nav__item {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 12px;
   width: 100%;
-  padding: 9px 10px;
+  padding: 12px 12px;
   border: 1px solid transparent;
-  border-radius: 8px;
+  border-radius: 10px;
   background: transparent;
   color: #64748b;
   text-align: left;
   cursor: pointer;
   font: inherit;
-  transition: background 0.15s, border-color 0.15s, color 0.15s;
+  transition: background 0.18s, border-color 0.18s, color 0.18s, transform 0.18s, box-shadow 0.18s;
 }
 
 .ps-nav__item:hover {
   background: #f0fdfa;
   color: #0f766e;
+  transform: translateY(-1px);
 }
 
 .ps-nav__item.is-active,
@@ -85,16 +86,16 @@ body.provider-body .provider-page-body:has(.ps-page) {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 30px;
-  height: 30px;
+  width: 34px;
+  height: 34px;
   border-radius: 8px;
   background: #f8fafc;
   flex-shrink: 0;
 }
 
 .ps-nav__icon svg {
-  width: 15px;
-  height: 15px;
+  width: 17px;
+  height: 17px;
 }
 
 .ps-nav__item.is-active .ps-nav__icon,
@@ -157,6 +158,12 @@ body.provider-body .provider-page-body:has(.ps-page) {
   display: flex;
   align-items: center;
   gap: 7px;
+}
+
+.ps-card__title--security {
+  font-size: 1.15rem;
+  font-weight: 900;
+  letter-spacing: -0.02em;
 }
 
 .ps-card__title svg {
@@ -295,6 +302,103 @@ body.provider-body .provider-page-body:has(.ps-page) {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 12px 14px;
+}
+
+/* Security module readability */
+.ps-security-module {
+  max-width: 700px;
+  margin: 0 auto;
+}
+
+/* Validation container (strength + requirements) */
+.ps-validation {
+  margin-top: 10px;
+  padding: 12px 14px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+}
+
+.ps-validation__head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 10px;
+}
+
+.ps-validation__title {
+  font-size: 10px;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #64748b;
+}
+
+.ps-validation__label {
+  font-size: 12px;
+  font-weight: 900;
+  color: #64748b;
+}
+
+.ps-validation__bar {
+  height: 8px;
+  background: #e2e8f0;
+  border-radius: 999px;
+  overflow: hidden;
+  margin-bottom: 12px;
+}
+
+.ps-validation__fill {
+  display: block;
+  height: 100%;
+  width: 0%;
+  border-radius: 999px;
+  background: #ef4444;
+  transition: width 0.22s ease, background 0.22s ease;
+}
+
+.ps-validation__fill--weak { background: #ef4444; }
+.ps-validation__fill--fair { background: #f97316; }
+.ps-validation__fill--good { background: #eab308; }
+.ps-validation__fill--strong { background: #22c55e; }
+.ps-validation__fill--vstrong { background: #069396; }
+
+.ps-validation__grid {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px 14px;
+}
+
+.ps-validation__grid li {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  font-size: 12px;
+  font-weight: 700;
+  color: #64748b;
+  line-height: 1.35;
+}
+
+.ps-validation__grid li.is-met {
+  color: #059669;
+}
+
+.ps-req-dot {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: #cbd5e1;
+  flex-shrink: 0;
+  transition: background 0.15s;
+}
+
+.ps-validation__grid li.is-met .ps-req-dot {
+  background: #10b981;
 }
 
 .ps-form-grid .ps-span-2 {
@@ -584,6 +688,14 @@ body.provider-body .provider-page-body:has(.ps-page) {
   }
 
   .ps-form-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .ps-security-module {
+    max-width: 100%;
+  }
+
+  .ps-validation__grid {
     grid-template-columns: 1fr;
   }
 

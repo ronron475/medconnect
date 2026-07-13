@@ -24,10 +24,14 @@ $queueRaw = BhwWorkflows::getTriageQueue($pdo, [
 ]);
 
 $metrics = [
-    ['label' => 'Total Households', 'val' => (int) ($metricsRaw['total_households'] ?? 0), 'icon' => 'home', 'key' => 'total_households'],
-    ['label' => 'Pending Triage',   'val' => (int) ($metricsRaw['pending_triage'] ?? 0),   'icon' => 'clipboard', 'key' => 'pending_triage'],
-    ['label' => 'Scheduled Calls',  'val' => (int) ($metricsRaw['scheduled_calls'] ?? 0),  'icon' => 'video', 'key' => 'scheduled_calls'],
-    ['label' => 'High-Risk Flags',  'val' => (int) ($metricsRaw['high_risk_flags'] ?? 0),  'icon' => 'alert-circle', 'key' => 'high_risk_flags'],
+    ['label' => "Today's Patients", 'val' => (int) ($metricsRaw['todays_patients'] ?? 0), 'key' => 'todays_patients', 'tone' => ''],
+    ['label' => 'Awaiting Complaint', 'val' => (int) ($metricsRaw['pending_registrations'] ?? 0), 'key' => 'pending_registrations', 'tone' => 'warn'],
+    ['label' => 'Waiting AI Triage', 'val' => (int) ($metricsRaw['waiting_ai_triage'] ?? 0), 'key' => 'waiting_ai_triage', 'tone' => 'warn'],
+    ['label' => 'Emergency Cases', 'val' => (int) ($metricsRaw['emergency_cases'] ?? 0), 'key' => 'emergency_cases', 'tone' => 'alert'],
+    ['label' => 'Urgent Cases', 'val' => (int) ($metricsRaw['urgent_cases'] ?? 0), 'key' => 'urgent_cases', 'tone' => 'alert'],
+    ['label' => 'Non-Urgent', 'val' => (int) ($metricsRaw['non_urgent_cases'] ?? 0), 'key' => 'non_urgent_cases', 'tone' => ''],
+    ['label' => 'Upcoming Consults', 'val' => (int) ($metricsRaw['upcoming_consultations'] ?? 0), 'key' => 'upcoming_consultations', 'tone' => ''],
+    ['label' => 'Referrals', 'val' => (int) ($metricsRaw['referrals'] ?? 0), 'key' => 'referrals', 'tone' => ''],
 ];
 
 $puroks = [];
@@ -39,110 +43,131 @@ foreach ($queueRaw as $row) {
 }
 sort($puroks);
 
+$bhwDashCss = ASSETS_PATH . '/css/bhw-dashboard.css';
+$bhwDashCssVer = file_exists($bhwDashCss) ? (int) filemtime($bhwDashCss) : time();
+
 require __DIR__ . '/partials/layout_open.php';
-$notif_widget_mode = 'strip';
-require VIEWS_PATH . '/partials/notification_widgets.php';
 ?>
+<link rel="stylesheet" href="<?= ASSET_BASE ?>/assets/css/bhw-dashboard.css?v=<?= $bhwDashCssVer ?>">
 
-<div class="mb-4 d-flex justify-content-between align-items-start flex-wrap gap-3">
-  <div>
-    <h2 class="text-h2" style="color: var(--bhw-navy); font-weight: 800; margin-bottom: 6px;">
-      <?= htmlspecialchars($dashboard_nav['label']) ?> — Brgy. <?= htmlspecialchars($bhw_barangay_name) ?>
-    </h2>
-    <p style="color: var(--bhw-teal); font-size: 14px; font-weight: 600; margin: 0;">
-      <?= htmlspecialchars($dashboard_nav['description']) ?>
-    </p>
-  </div>
-  <div class="text-muted" style="font-size: 11px; font-weight: 600;">Last Sync: <span id="bhwLastSync"><?= date('h:i A') ?></span></div>
-</div>
+<div class="bhw-dash">
 
-<div class="row g-3 mb-4" id="bhwMetricsRow">
-  <?php foreach ($metrics as $m): ?>
-  <div class="col-md-3">
-    <div class="bhw-metric-card">
-      <div class="bhw-metric-info">
-        <div class="bhw-metric-label"><?= htmlspecialchars($m['label']) ?></div>
-        <div class="bhw-metric-val" data-metric="<?= htmlspecialchars($m['key']) ?>"><?= $m['val'] ?></div>
-      </div>
-      <div class="bhw-metric-icon">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <?php if ($m['icon'] === 'home'): ?><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/><?php endif; ?>
-          <?php if ($m['icon'] === 'clipboard'): ?><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><rect x="8" y="2" width="8" height="4" rx="1" ry="1"/><?php endif; ?>
-          <?php if ($m['icon'] === 'video'): ?><path d="M23 7l-7 5 7 5V7z"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/><?php endif; ?>
-          <?php if ($m['icon'] === 'alert-circle'): ?><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/><?php endif; ?>
-        </svg>
-      </div>
+  <header class="bhw-dash-header">
+    <div class="bhw-dash-header__main">
+      <p class="bhw-dash-header__eyebrow">Barangay Health Operations</p>
+      <h2 class="bhw-dash-header__title">Dashboard — Brgy. <?= htmlspecialchars($bhw_barangay_name) ?></h2>
+      <p class="bhw-dash-header__desc"><?= htmlspecialchars($dashboard_nav['description']) ?></p>
     </div>
-  </div>
-  <?php endforeach; ?>
-</div>
+    <div class="bhw-dash-header__meta">
+      <span class="bhw-dash-sync">Data refreshed: <time id="bhwLastSync"><?= date('h:i A') ?></time></span>
+    </div>
+  </header>
 
-<div class="row">
-  <div class="col-12">
-    <div class="bhw-card" style="padding: 0; overflow: hidden; background-color: var(--bhw-canvas);">
-      <div style="padding: 24px 24px 16px; border-bottom: 1px solid var(--mc-border-thin); background-color: #fff;">
-        <div class="row align-items-center">
-          <div class="col-md-6">
-            <h3 class="text-h3" style="margin:0; font-size: 1.1rem; color: var(--bhw-navy); font-weight: 800;">Barangay Triage and Scheduling Queue</h3>
-          </div>
-          <div class="col-md-6 text-end">
-            <span class="text-muted" style="font-size: 10px; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase;">LOGISTICAL VIEW ONLY (RA 10173 COMPLIANT)</span>
-          </div>
-        </div>
-        <div class="row mt-3 g-2">
-          <div class="col-md-4">
-            <div class="input-group shadow-sm" style="border-radius: 8px; overflow: hidden;">
-              <span class="input-group-text bg-white border-end-0" style="color: #94a3b8; padding-left: 16px;">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-              </span>
-              <input type="text" id="resident-search" class="form-control border-start-0" placeholder="Search resident…" style="font-size: 13px; padding: 10px 12px; font-weight: 500;">
-            </div>
-          </div>
-          <div class="col-md-3 ms-auto">
-            <select id="purok-filter" class="form-select shadow-sm" style="border-radius: 8px; font-size: 13px; font-weight: 600; padding: 10px 12px;">
-              <option value="">All Puroks</option>
-              <?php foreach ($puroks as $purok): ?>
-              <option><?= htmlspecialchars($purok) ?></option>
-              <?php endforeach; ?>
-            </select>
-          </div>
-        </div>
+  <section class="bhw-dash-panel" aria-labelledby="bhwDashIndicatorsTitle">
+    <div class="bhw-dash-panel__head">
+      <h3 id="bhwDashIndicatorsTitle">Sector Health Indicators</h3>
+      <span class="bhw-dash-panel__note">Assigned barangay only</span>
+    </div>
+    <div class="bhw-dash-stats" id="bhwMetricsRow">
+      <?php foreach ($metrics as $m):
+        $toneClass = $m['tone'] !== '' ? ' bhw-dash-stat--' . $m['tone'] : '';
+      ?>
+      <article class="bhw-dash-stat<?= $toneClass ?>">
+        <span class="bhw-dash-stat__label"><?= htmlspecialchars($m['label']) ?></span>
+        <strong class="bhw-dash-stat__val" data-metric="<?= htmlspecialchars($m['key']) ?>"><?= $m['val'] ?></strong>
+      </article>
+      <?php endforeach; ?>
+    </div>
+  </section>
+
+  <section class="bhw-dash-panel" aria-labelledby="bhwDashOpsTitle">
+    <div class="bhw-dash-panel__head">
+      <h3 id="bhwDashOpsTitle">Operations Summary</h3>
+      <span class="bhw-dash-panel__note">Live platform activity</span>
+    </div>
+    <div class="bhw-dash-ops">
+      <?php
+      $notif_widget_mode = 'strip';
+      $notif_widget_bare = true;
+      require VIEWS_PATH . '/partials/notification_widgets.php';
+      ?>
+    </div>
+  </section>
+
+  <section class="bhw-dash-panel bhw-dash-panel--queue" aria-labelledby="bhwDashQueueTitle">
+    <div class="bhw-dash-panel__head">
+      <h3 id="bhwDashQueueTitle">Triage &amp; Scheduling Queue</h3>
+      <span class="bhw-dash-compliance">Logistical view · RA 10173 compliant</span>
+    </div>
+    <div class="bhw-dash-panel__toolbar">
+      <div class="input-group bhw-dash-search">
+        <span class="input-group-text" aria-hidden="true">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        </span>
+        <input type="search" id="resident-search" class="form-control" placeholder="Search resident name…" aria-label="Search residents in queue">
       </div>
-      <div class="table-responsive" style="background-color: var(--bhw-canvas);">
-        <table class="table bhw-table" style="margin:0; border-collapse: separate; border-spacing: 0 8px;">
+      <select id="purok-filter" class="form-select bhw-dash-purok" aria-label="Filter by purok">
+        <option value="">All puroks</option>
+        <?php foreach ($puroks as $purok): ?>
+        <option><?= htmlspecialchars($purok) ?></option>
+        <?php endforeach; ?>
+      </select>
+    </div>
+    <div class="bhw-dash-panel__body bhw-dash-panel__body--flush">
+      <div class="table-responsive">
+        <table class="bhw-dash-queue-table">
           <thead>
-            <tr style="background-color: #fff;">
-              <th style="padding-left: 24px; border: none;">Resident & Purok</th>
-              <th style="border: none;">Urgency</th>
-              <th style="border: none;">Status</th>
-              <th class="text-end" style="padding-right: 24px; border: none;">Actions</th>
+            <tr>
+              <th scope="col">Resident</th>
+              <th scope="col">Urgency</th>
+              <th scope="col">Status</th>
+              <th scope="col" class="text-end">Action</th>
             </tr>
           </thead>
           <tbody id="queue-tbody">
             <?php if (empty($queueRaw)): ?>
-            <tr><td colspan="4" style="padding: 24px; text-align: center; color: #64748b;">No triage records in your barangay yet. <a href="patients/register.php">Register a patient</a> or <a href="triage/submit.php">submit triage</a>.</td></tr>
+            <tr>
+              <td colspan="4">
+                <div class="bhw-dash-queue-empty">
+                  No triage records in your barangay yet.
+                  <a href="patients/register.php">Register a patient</a> or
+                  <a href="triage/submit.php">submit triage</a>.
+                </div>
+              </td>
+            </tr>
             <?php endif; ?>
           </tbody>
         </table>
       </div>
     </div>
-  </div>
+  </section>
+
+  <section class="bhw-dash-panel bhw-dash-recent" aria-label="Recent notifications">
+    <?php
+    $notif_widget_mode = 'recent';
+    require VIEWS_PATH . '/partials/notification_widgets.php';
+    ?>
+  </section>
+
 </div>
 
-<div class="bhw-dashboard-recent">
 <?php
-$notif_widget_mode = 'recent';
-require VIEWS_PATH . '/partials/notification_widgets.php';
+ob_start();
 ?>
-</div>
-
-<script>
 (function () {
   var initialQueue = <?= json_encode($queueRaw, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_AMP | JSON_HEX_QUOT) ?>;
   var searchInput = document.getElementById('resident-search');
   var purokFilter = document.getElementById('purok-filter');
   var tableBody = document.getElementById('queue-tbody');
   var lastSync = document.getElementById('bhwLastSync');
+
+  function esc(v) {
+    return String(v == null ? '' : v)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;');
+  }
 
   function badgeClass(urgency) {
     var u = (urgency || '').toLowerCase();
@@ -160,22 +185,25 @@ require VIEWS_PATH . '/partials/notification_widgets.php';
 
   function renderQueue(rows) {
     if (!rows.length) {
-      tableBody.innerHTML = '<tr><td colspan="4" style="padding:24px;text-align:center;color:#64748b;">No triage records match your filters.</td></tr>';
+      tableBody.innerHTML = '<tr><td colspan="4"><div class="bhw-dash-queue-empty">No triage records match your filters.</div></td></tr>';
       return;
     }
     tableBody.innerHTML = rows.map(function (r) {
-      var name = (r.first_name || '') + ' ' + (r.last_name || '');
+      var name = ((r.first_name || '') + ' ' + (r.last_name || '')).trim();
       var purok = r.purok || '—';
       var urgency = (r.urgency_label || 'low');
       var status = r.status || 'pending';
       var pid = r.patient_id || '';
-      return '<tr class="' + rowClass(urgency) + '" style="background:#fff;" data-name="' + name.toLowerCase() + '" data-purok="' + purok + '">' +
-        '<td style="padding-left:24px;"><div style="font-weight:800;color:var(--bhw-navy);">' + name + '</div>' +
-        '<div class="text-muted" style="font-size:11px;font-weight:600;text-transform:uppercase;">' + purok + '</div></td>' +
-        '<td><span class="bhw-badge ' + badgeClass(urgency) + '">' + urgency.toUpperCase() + '</span></td>' +
-        '<td><span class="bhw-badge bhw-badge-scheduled">' + status + '</span></td>' +
-        '<td class="text-end" style="padding-right:24px;">' +
-        '<a class="bhw-btn-teal" href="triage/submit.php?patient_id=' + pid + '">Triage &amp; Book</a></td></tr>';
+      return '<tr class="' + rowClass(urgency) + '" data-name="' + esc(name.toLowerCase()) + '" data-purok="' + esc(purok) + '">' +
+        '<td data-label="Resident">' +
+          '<div class="bhw-dash-resident-name">' + esc(name) + '</div>' +
+          '<div class="bhw-dash-resident-meta">' + esc(purok) + '</div>' +
+        '</td>' +
+        '<td data-label="Urgency"><span class="bhw-badge ' + badgeClass(urgency) + '">' + esc(String(urgency).toUpperCase()) + '</span></td>' +
+        '<td data-label="Status"><span class="bhw-badge bhw-badge-scheduled">' + esc(status) + '</span></td>' +
+        '<td class="text-end" data-label="Action">' +
+          '<a class="bhw-btn-teal" href="triage/submit.php?patient_id=' + encodeURIComponent(pid) + '">Triage &amp; Book</a>' +
+        '</td></tr>';
     }).join('');
     filterRows();
   }
@@ -211,6 +239,7 @@ require VIEWS_PATH . '/partials/notification_widgets.php';
   if (initialQueue.length) renderQueue(initialQueue);
   setInterval(refreshDashboard, 30000);
 })();
-</script>
-
-<?php require __DIR__ . '/partials/layout_close.php'; ?>
+<?php
+$bhw_inline_script = ob_get_clean();
+require __DIR__ . '/partials/layout_close.php';
+?>
