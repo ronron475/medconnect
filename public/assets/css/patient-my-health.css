@@ -1,0 +1,572 @@
+/* ═══════════════════════════════════════════════════════════════
+   Patient My Health
+   ═══════════════════════════════════════════════════════════════ */
+
+.pmh-page {
+  max-width: 100%;
+  margin: 0;
+}
+
+.pmh-lead {
+  margin: -4px 0 16px;
+  font-size: 0.925rem;
+  color: #64748b;
+  line-height: 1.5;
+  max-width: 58ch;
+}
+
+.pmh-lead a {
+  color: #028090;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.pmh-lead a:hover {
+  text-decoration: underline;
+}
+
+/* Metrics */
+.pmh-metrics {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+  margin-bottom: 18px;
+}
+
+.pmh-metric {
+  padding: 14px 16px;
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  text-align: center;
+  box-shadow: 0 1px 2px rgba(2, 128, 144, 0.05);
+}
+
+.pmh-metric__value {
+  display: block;
+  font-size: 1.5rem;
+  font-weight: 800;
+  color: #028090;
+  line-height: 1.1;
+}
+
+.pmh-metric__label {
+  display: block;
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: #64748b;
+  font-weight: 600;
+  margin-top: 4px;
+}
+
+/* Tabs */
+.pmh-tabs {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 20px;
+}
+
+.pmh-tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 18px;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  background: #fff;
+  color: #64748b;
+  font-size: 0.875rem;
+  font-weight: 700;
+  text-decoration: none;
+  transition: background 0.15s, border-color 0.15s, color 0.15s, box-shadow 0.15s;
+}
+
+.pmh-tab:hover {
+  border-color: #99f6e4;
+  color: #028090;
+}
+
+.pmh-tab.is-active {
+  background: linear-gradient(135deg, #028090 0%, #056770 100%);
+  border-color: #028090;
+  color: #fff;
+  box-shadow: 0 2px 8px rgba(2, 128, 144, 0.25);
+}
+
+.pmh-tab.is-active svg {
+  stroke: #fff;
+}
+
+.pmh-tab__count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 6px;
+  border-radius: 999px;
+  background: rgba(255,255,255,0.25);
+  font-size: 0.7rem;
+  font-weight: 800;
+}
+
+.pmh-tab:not(.is-active) .pmh-tab__count {
+  background: #e0f2f1;
+  color: #028090;
+}
+
+.pmh-panel {
+  min-height: 100px;
+}
+
+/* Empty state */
+.pmh-empty {
+  text-align: center;
+  padding: 48px 24px;
+  background: #fff;
+  border: 1px dashed #cbd5e1;
+  border-radius: 16px;
+}
+
+.pmh-empty__icon {
+  width: 64px;
+  height: 64px;
+  margin: 0 auto 14px;
+  border-radius: 50%;
+  background: #f0fdfa;
+  color: #028090;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.pmh-empty h3 {
+  margin: 0 0 8px;
+  font-size: 1.1rem;
+  color: #0f172a;
+}
+
+.pmh-empty p {
+  margin: 0 0 18px;
+  font-size: 0.9rem;
+  color: #64748b;
+  max-width: 36ch;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+/* Buttons */
+.pmh-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 10px 20px;
+  border-radius: 10px;
+  font-size: 0.875rem;
+  font-weight: 700;
+  text-decoration: none;
+  border: none;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.pmh-btn--primary {
+  background: linear-gradient(135deg, #028090 0%, #056770 100%);
+  color: #fff;
+  box-shadow: 0 2px 8px rgba(2, 128, 144, 0.25);
+}
+
+.pmh-btn--outline {
+  background: #fff;
+  border: 1px solid #cbd5e1;
+  color: #028090;
+}
+
+/* Timeline */
+.pmh-timeline {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.pmh-visit {
+  display: grid;
+  grid-template-columns: 24px 1fr;
+  gap: 0 16px;
+  position: relative;
+}
+
+.pmh-visit:not(:last-child) .pmh-visit__rail::after {
+  content: '';
+  position: absolute;
+  left: 11px;
+  top: 28px;
+  bottom: -8px;
+  width: 2px;
+  background: linear-gradient(180deg, #99f6e4 0%, #e2e8f0 100%);
+}
+
+.pmh-visit__rail {
+  position: relative;
+  padding-top: 22px;
+}
+
+.pmh-visit__dot {
+  display: block;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: #028090;
+  border: 3px solid #ccfbf1;
+  box-shadow: 0 0 0 2px #028090;
+  margin-left: 4px;
+}
+
+.pmh-visit__body {
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 14px;
+  padding: 18px 20px;
+  margin-bottom: 16px;
+  box-shadow: 0 1px 3px rgba(2, 128, 144, 0.05);
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+.pmh-visit__body:hover {
+  border-color: #b2e4e8;
+  box-shadow: 0 4px 12px rgba(2, 128, 144, 0.08);
+}
+
+.pmh-visit__head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.pmh-visit__provider {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.pmh-visit__avatar {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #028090 0%, #056770 100%);
+  color: #fff;
+  font-size: 0.8rem;
+  font-weight: 800;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.pmh-visit__title {
+  margin: 0 0 2px;
+  font-size: 1rem;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.pmh-visit__meta {
+  margin: 0;
+  font-size: 0.8rem;
+  color: #64748b;
+}
+
+.pmh-status {
+  font-size: 0.68rem;
+  font-weight: 700;
+  padding: 5px 10px;
+  border-radius: 999px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  white-space: nowrap;
+}
+
+.pmh-status--completed { background: #d1fae5; color: #065f46; }
+.pmh-status--scheduled { background: #e0f2fe; color: #0369a1; }
+.pmh-status--live { background: #fef3c7; color: #b45309; }
+.pmh-status--cancelled { background: #fee2e2; color: #991b1b; }
+.pmh-status--default { background: #f1f5f9; color: #475569; }
+
+.pmh-visit__grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+}
+
+.pmh-visit__block {
+  padding: 12px 14px;
+  background: #f8fafc;
+  border-radius: 10px;
+  border: 1px solid #f1f5f9;
+}
+
+.pmh-visit__label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0 0 6px;
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: #64748b;
+  font-weight: 700;
+}
+
+.pmh-visit__label svg {
+  color: #028090;
+}
+
+.pmh-visit__block p {
+  margin: 0;
+  font-size: 0.875rem;
+  color: #334155;
+  line-height: 1.45;
+}
+
+.pmh-visit__rx,
+.pmh-visit__soap {
+  margin-top: 14px;
+  padding-top: 14px;
+  border-top: 1px solid #f1f5f9;
+}
+
+.pmh-soap-list {
+  margin: 8px 0 0;
+  display: grid;
+  gap: 8px;
+}
+
+.pmh-soap-list div {
+  padding: 8px 10px;
+  background: #f8fafc;
+  border-radius: 8px;
+  border: 1px solid #e2e8f0;
+}
+
+.pmh-soap-list dt {
+  font-size: 0.68rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: #64748b;
+  margin-bottom: 3px;
+}
+
+.pmh-soap-list dd {
+  margin: 0;
+  font-size: 0.84rem;
+  color: #334155;
+  line-height: 1.45;
+}
+
+.pmh-file-card__soap {
+  margin: 6px 0 0;
+  font-size: 0.8rem;
+  color: #475569;
+  line-height: 1.4;
+}
+
+.pmh-rx-list {
+  list-style: none;
+  margin: 8px 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.pmh-rx-list li {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 6px 10px;
+  padding: 8px 12px;
+  background: #f0fdfa;
+  border-radius: 8px;
+  border: 1px solid #ccfbf1;
+  font-size: 0.85rem;
+}
+
+.pmh-rx-list strong {
+  color: #0f766e;
+}
+
+.pmh-rx-list span {
+  color: #64748b;
+  font-size: 0.8rem;
+}
+
+/* Health files */
+.pmh-files__lead {
+  margin: 0 0 14px;
+  font-size: 0.875rem;
+  color: #64748b;
+}
+
+.pmh-files__filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 18px;
+}
+
+.pmh-files__filter {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 14px;
+  border: 1px solid #e2e8f0;
+  border-radius: 999px;
+  background: #fff;
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: #475569;
+  cursor: pointer;
+  font-family: inherit;
+  transition: background 0.15s, border-color 0.15s, color 0.15s;
+}
+
+.pmh-files__filter:hover {
+  border-color: #99f6e4;
+  color: #028090;
+}
+
+.pmh-files__filter[aria-pressed="true"] {
+  background: #f0fdfa;
+  border-color: #028090;
+  color: #028090;
+}
+
+.pmh-files__filter-count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 22px;
+  height: 22px;
+  padding: 0 6px;
+  border-radius: 999px;
+  background: #e2e8f0;
+  font-size: 0.72rem;
+  font-weight: 800;
+}
+
+.pmh-files__filter[aria-pressed="true"] .pmh-files__filter-count {
+  background: #028090;
+  color: #fff;
+}
+
+.pmh-files__list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 14px;
+}
+
+.pmh-file-card {
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 14px;
+  padding: 16px 18px;
+  border-left: 4px solid var(--pmh-accent, #028090);
+  box-shadow: 0 1px 3px rgba(2, 128, 144, 0.05);
+  transition: box-shadow 0.15s, transform 0.1s;
+}
+
+.pmh-file-card:hover {
+  box-shadow: 0 4px 12px rgba(2, 128, 144, 0.1);
+  transform: translateY(-1px);
+}
+
+.pmh-file-card[hidden] {
+  display: none !important;
+}
+
+.pmh-file-card__type {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.pmh-file-card__type time {
+  font-size: 0.75rem;
+  color: #64748b;
+  font-weight: 600;
+}
+
+.pmh-file-card__badge {
+  font-size: 0.68rem;
+  font-weight: 700;
+  padding: 4px 8px;
+  border-radius: 6px;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.pmh-file-card__badge--prescription { background: #dbeafe; color: #1d4ed8; }
+.pmh-file-card__badge--clinical-note { background: #dcfce7; color: #166534; }
+.pmh-file-card__badge--referral { background: #fef3c7; color: #92400e; }
+
+.pmh-file-card__title {
+  margin: 0 0 8px;
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #0f172a;
+  line-height: 1.35;
+}
+
+.pmh-file-card__provider {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0 0 6px;
+  font-size: 0.8rem;
+  color: #64748b;
+}
+
+.pmh-file-card__detail {
+  margin: 0;
+  font-size: 0.85rem;
+  color: #475569;
+  line-height: 1.4;
+}
+
+.pmh-file-card__meta {
+  margin: 6px 0 0;
+}
+
+/* Responsive */
+@media (max-width: 720px) {
+  .pmh-metrics {
+    grid-template-columns: 1fr;
+  }
+
+  .pmh-tabs {
+    flex-direction: column;
+  }
+
+  .pmh-tab {
+    justify-content: center;
+  }
+
+  .pmh-visit__grid {
+    grid-template-columns: 1fr;
+  }
+
+  .pmh-visit__head {
+    flex-direction: column;
+  }
+
+  .pmh-files__list {
+    grid-template-columns: 1fr;
+  }
+}

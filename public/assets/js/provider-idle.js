@@ -1,6 +1,10 @@
 (function () {
   'use strict';
 
+  if (document.body.getAttribute('data-remember-extended') === '1') {
+    return;
+  }
+
   const minutes = parseInt(document.body.getAttribute('data-auto-logout') || '0', 10);
   if (!minutes || minutes <= 0) return;
 
@@ -11,7 +15,13 @@
   const ms = minutes * 60 * 1000;
 
   const expireSession = async () => {
+    const base = (typeof window.ASSET_BASE !== 'undefined' && window.ASSET_BASE)
+      ? String(window.ASSET_BASE).replace(/\/$/, '')
+      : (document.body.getAttribute('data-asset-base') || '').replace(/\/$/, '');
+    const fallback = (base || '') + '/index.php?session_expired=1';
+
     try {
+      const csrf = document.body.getAttribute('data-csrf') || '';
       const res = await fetch(expireUrl, {
         method: 'POST',
         credentials: 'include',
@@ -19,13 +29,14 @@
         headers: {
           'Content-Type': 'application/x-www-form-urlencoded',
           'X-Requested-With': 'XMLHttpRequest',
+          'X-MC-No-Loader': '1',
         },
-        body: 'reason=inactivity',
+        body: 'reason=inactivity&csrf_token=' + encodeURIComponent(csrf),
       });
       const data = await res.json();
-      window.location.href = data.redirect || '/index.php?session_expired=1';
+      window.location.href = data.redirect || fallback;
     } catch (e) {
-      window.location.href = '/index.php?session_expired=1';
+      window.location.href = fallback;
     }
   };
 

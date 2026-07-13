@@ -19,7 +19,7 @@ svg {
 /* ── Mobile nav toggle (hidden on desktop) ── */
 .mc-nav-toggle,
 .pd-hamburger {
-  display: none;
+  display: inline-flex;
   align-items: center;
   justify-content: center;
   width: 44px;
@@ -33,6 +33,23 @@ svg {
   cursor: pointer;
   flex-shrink: 0;
   transition: background 0.15s ease, border-color 0.15s ease;
+}
+
+.mc-nav-toggle svg,
+.pd-hamburger svg {
+  transition: transform 0.18s ease;
+  transform-origin: center;
+}
+
+.mc-nav-toggle.mc-burger-animate svg,
+.pd-hamburger.mc-burger-animate svg {
+  animation: mcBurgerTap 0.26s ease;
+}
+
+@keyframes mcBurgerTap {
+  0%   { transform: rotate(0deg) scale(1); }
+  45%  { transform: rotate(10deg) scale(1.07); }
+  100% { transform: rotate(0deg) scale(1); }
 }
 
 .mc-nav-toggle:hover,
@@ -207,6 +224,23 @@ body.mc-nav-open {
     transform: translateX(0);
   }
 
+  /* ── Tablet mini sidebar (icon-only) ── */
+  body.mc-sidebar-mini .mc-nav-backdrop {
+    display: none !important;
+  }
+
+  body.mc-sidebar-mini {
+    overflow: auto;
+    touch-action: auto;
+  }
+
+  body.mc-sidebar-mini .sidebar,
+  body.mc-sidebar-mini .sb-aqua,
+  body.mc-sidebar-mini .adm-sidebar,
+  body.mc-sidebar-mini .bhw-sidebar {
+    transform: translateX(0) !important;
+  }
+
   .main,
   .main-content,
   .adm-main,
@@ -214,6 +248,15 @@ body.mc-nav-open {
   .root-wrapper .main-content {
     margin-left: 0 !important;
     width: 100% !important;
+  }
+
+  body.mc-sidebar-mini .main,
+  body.mc-sidebar-mini .main-content,
+  body.mc-sidebar-mini .adm-main,
+  body.mc-sidebar-mini .has-aqua-sidebar,
+  body.mc-sidebar-mini .root-wrapper .main-content {
+    margin-left: var(--portal-sidebar-w, 78px) !important;
+    width: calc(100% - var(--portal-sidebar-w, 78px)) !important;
   }
 
   .main-workspace {

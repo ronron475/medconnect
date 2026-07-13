@@ -19,9 +19,11 @@
   ?>
   <link rel="stylesheet" href="<?= $asset ?>/assets/css/login.css" />
   <link rel="stylesheet" href="<?= $asset ?>/assets/css/responsive.css" />
-  <link rel="stylesheet" href="<?= $asset ?>/assets/css/login-loading.css" />
+  <?php require_once dirname(__DIR__) . '/components/loader.php'; mc_loader_assets(); ?>
 </head>
 <body>
+
+<?php mc_render_loader_boot(['status' => 'Loading sign in…']); ?>
 
 <!-- NAV -->
 <nav class="nav">
@@ -155,7 +157,6 @@
     <script src="https://www.google.com/recaptcha/api.js?render=<?= htmlspecialchars((string) (defined('RECAPTCHA_SITE_KEY') ? RECAPTCHA_SITE_KEY : '')) ?>"></script>
   <?php endif; ?>
 <?php endif; ?>
-<script src="<?= $asset ?>/assets/js/login-loading.js"></script>
 <script src="<?= $asset ?>/assets/js/login.js"></script>
 </body>
 </html>

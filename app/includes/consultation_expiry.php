@@ -2,6 +2,7 @@
 /**
  * Auto-end consultations after their scheduled slot time has passed.
  */
+require_once __DIR__ . '/bhw_patient_workflow.php';
 
 /**
  * Mark overdue consultations ended and close any stale video sessions.
@@ -27,10 +28,10 @@ function consultations_auto_expire(PDO $pdo, ?int $patient_id = null, ?int $prov
             c.id,
             c.status,
             TIMESTAMP(
-                c.consult_date,
+                COALESCE(s.slot_date, c.consult_date),
                 COALESCE(
                     s.end_time,
-                    ADDTIME(COALESCE(c.consult_time, '00:00:00'), '00:30:00')
+                    ADDTIME(COALESCE(s.start_time, c.consult_time, '00:00:00'), '00:30:00')
                 )
             ) AS session_end_at
         FROM consultations c
@@ -39,7 +40,7 @@ function consultations_auto_expire(PDO $pdo, ?int $patient_id = null, ?int $prov
            AND s.status = 'booked'
         WHERE c.status IN ('pending', 'scheduled', 'in_consultation')
           {$scope}
-        HAVING session_end_at < NOW()
+        HAVING session_end_at < DATE_SUB(NOW(), INTERVAL 5 MINUTE)
     ");
     $stmt->execute($params);
     $expired = $stmt->fetchAll(PDO::FETCH_ASSOC);
@@ -76,6 +77,14 @@ function consultations_auto_expire(PDO $pdo, ?int $patient_id = null, ?int $prov
         if ($status === 'in_consultation') {
             $complete->execute([$id]);
             $updated += $complete->rowCount();
+            if ($complete->rowCount() > 0) {
+                $pidStmt = $pdo->prepare('SELECT patient_id FROM consultations WHERE id = ? LIMIT 1');
+                $pidStmt->execute([$id]);
+                $pid = (int) ($pidStmt->fetchColumn() ?: 0);
+                if ($pid > 0) {
+                    BhwPatientWorkflow::onConsultationCompleted($pdo, $pid, 'session_expired');
+                }
+            }
         } else {
             $cancel->execute([$id]);
             $updated += $cancel->rowCount();

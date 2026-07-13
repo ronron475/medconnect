@@ -3,25 +3,95 @@
   var activeTab = 'patients';
   var base = document.body.dataset.assetBase || '';
 
-  var SUMMARY_CARDS = [
-    ['total_patients', 'Total Registered Patients'],
-    ['new_patients_month', 'New Patients This Month'],
-    ['male_patients', 'Male Patients'],
-    ['female_patients', 'Female Patients'],
-    ['senior_citizens', 'Senior Citizens'],
-    ['children', 'Children'],
-    ['high_risk_patients', 'High-Risk Patients'],
-    ['ai_emergency_cases', 'AI Emergency Cases'],
-    ['pending_consultations', 'Pending Consultations'],
-    ['completed_consultations', 'Completed Consultations'],
-    ['cancelled_consultations', 'Cancelled Consultations'],
-    ['pending_referrals', 'Pending Referrals'],
-    ['completed_referrals', 'Completed Referrals'],
-    ['home_visits_completed', 'Home Visits Completed'],
-    ['overdue_followups', 'Overdue Follow-ups'],
+  var SUMMARY_GROUPS = [
+    {
+      title: 'Patients',
+      metrics: [
+        ['total_patients', 'Registered'],
+        ['new_patients_month', 'New this month'],
+        ['male_patients', 'Male'],
+        ['female_patients', 'Female'],
+      ],
+    },
+    {
+      title: 'At-risk groups',
+      metrics: [
+        ['senior_citizens', 'Seniors'],
+        ['children', 'Children'],
+        ['high_risk_patients', 'High risk'],
+        ['ai_emergency_cases', 'AI emergency'],
+      ],
+    },
+    {
+      title: 'Consultations',
+      metrics: [
+        ['pending_consultations', 'Pending'],
+        ['completed_consultations', 'Completed'],
+        ['cancelled_consultations', 'Cancelled'],
+      ],
+    },
+    {
+      title: 'Referrals & follow-up',
+      metrics: [
+        ['pending_referrals', 'Pending referrals'],
+        ['completed_referrals', 'Completed referrals'],
+        ['home_visits_completed', 'Home visits'],
+        ['overdue_followups', 'Overdue follow-ups'],
+      ],
+    },
   ];
 
-  var CHART_COLORS = ['#018a93', '#0369a1', '#0d9488', '#0284c7', '#14b8a6', '#0891b2', '#2dd4bf', '#38bdf8'];
+  var CHART_COLORS = ['#1d4ed8', '#3b82f6', '#60a5fa', '#2563eb', '#1e40af', '#93c5fd', '#64748b', '#475569'];
+
+  var CHART_FONT = {
+    family: "'Inter', 'Segoe UI', system-ui, sans-serif",
+    size: 11,
+    weight: '500',
+  };
+
+  function baseChartOptions(type) {
+    var isRing = type === 'pie' || type === 'doughnut';
+    return {
+      responsive: true,
+      maintainAspectRatio: false,
+      layout: { padding: { top: 4, bottom: 4, left: 4, right: 4 } },
+      plugins: {
+        legend: {
+          display: isRing,
+          position: 'bottom',
+          align: 'center',
+          labels: {
+            boxWidth: 10,
+            boxHeight: 10,
+            padding: 14,
+            color: '#64748b',
+            font: CHART_FONT,
+            usePointStyle: true,
+            pointStyle: 'rectRounded',
+          },
+        },
+        tooltip: {
+          backgroundColor: '#0f172a',
+          titleFont: { family: CHART_FONT.family, size: 12, weight: '600' },
+          bodyFont: { family: CHART_FONT.family, size: 11 },
+          padding: 10,
+          cornerRadius: 6,
+          displayColors: true,
+        },
+      },
+      scales: isRing ? {} : {
+        x: {
+          grid: { color: '#f1f5f9', drawBorder: false },
+          ticks: { color: '#64748b', font: CHART_FONT, maxRotation: 0 },
+        },
+        y: {
+          beginAtZero: true,
+          grid: { color: '#f1f5f9', drawBorder: false },
+          ticks: { color: '#64748b', font: CHART_FONT, precision: 0 },
+        },
+      },
+    };
+  }
 
   function ready(fn) {
     if (document.readyState === 'loading') {
@@ -56,7 +126,26 @@
       datasets: [{
         data: (rows || []).map(function (r) { return r.value; }),
         backgroundColor: CHART_COLORS,
-        borderWidth: 0,
+        borderColor: '#fff',
+        borderWidth: 2,
+        hoverOffset: 4,
+      }],
+    };
+  }
+
+  function lineBarData(type, rows) {
+    return {
+      labels: (rows || []).map(function (r) { return r.label; }),
+      datasets: [{
+        label: 'Count',
+        data: (rows || []).map(function (r) { return r.value; }),
+        borderColor: '#1d4ed8',
+        backgroundColor: type === 'line' ? 'rgba(29, 78, 216, 0.08)' : 'rgba(59, 130, 246, 0.75)',
+        borderWidth: type === 'line' ? 2 : 0,
+        fill: type === 'line',
+        tension: 0.3,
+        borderRadius: type === 'bar' ? 4 : 0,
+        maxBarThickness: 36,
       }],
     };
   }
@@ -66,25 +155,15 @@
     var el = document.getElementById(canvasId);
     if (!el) return;
     destroyChart(canvasId);
+    var isRing = type === 'pie' || type === 'doughnut';
+    var chartOptions = Object.assign({}, baseChartOptions(type), options || {});
+    if (type === 'doughnut' && chartOptions.cutout == null) {
+      chartOptions.cutout = '62%';
+    }
     charts[canvasId] = new Chart(el, {
       type: type,
-      data: type === 'line' || type === 'bar' ? {
-        labels: (rows || []).map(function (r) { return r.label; }),
-        datasets: [{
-          label: 'Count',
-          data: (rows || []).map(function (r) { return r.value; }),
-          borderColor: '#018a93',
-          backgroundColor: type === 'line' ? 'rgba(1,138,147,0.15)' : 'rgba(1,138,147,0.7)',
-          fill: type === 'line',
-          tension: 0.35,
-        }],
-      } : chartData(rows),
-      options: Object.assign({
-        responsive: true,
-        maintainAspectRatio: true,
-        plugins: { legend: { display: type === 'pie' || type === 'doughnut' } },
-        scales: type === 'pie' || type === 'doughnut' ? {} : { y: { beginAtZero: true, ticks: { precision: 0 } } },
-      }, options || {}),
+      data: isRing ? chartData(rows) : lineBarData(type, rows),
+      options: chartOptions,
     });
   }
 
@@ -92,16 +171,20 @@
     var row = document.getElementById('bhwSummaryRow');
     var skel = document.getElementById('bhwSummarySkeleton');
     if (!row) return;
-    row.innerHTML = SUMMARY_CARDS.map(function (pair) {
-      var key = pair[0];
-      var label = pair[1];
-      var val = summary[key] != null ? summary[key] : 0;
-      return '<div class="col-6 col-md-4 col-xl-3"><div class="bhw-report-metric">' +
-        '<div class="bhw-report-metric-label">' + label + '</div>' +
-        '<div class="bhw-report-metric-val">' + val + '</div></div></div>';
+    row.innerHTML = SUMMARY_GROUPS.map(function (group) {
+      var stats = group.metrics.map(function (pair) {
+        var key = pair[0];
+        var label = pair[1];
+        var val = summary[key] != null ? summary[key] : 0;
+        return '<li class="bhw-report-stat"><span class="bhw-report-stat-label">' + label + '</span>' +
+          '<span class="bhw-report-stat-val">' + val + '</span></li>';
+      }).join('');
+      return '<article class="bhw-report-group">' +
+        '<h3 class="bhw-report-group-title">' + group.title + '</h3>' +
+        '<ul class="bhw-report-group-stats">' + stats + '</ul></article>';
     }).join('');
     if (skel) skel.style.display = 'none';
-    row.style.display = 'flex';
+    row.hidden = false;
   }
 
   function fillPuroks(puroks) {

@@ -10,8 +10,24 @@
       "medical_term": "pruritus",
       "category": "skin",
       "hiligaynon": [
-        "kakatol", "kakatul", "katol", "makatol", "ga katol", "gina katol", "nagakakatol",
-        "nagakakatul", "kumakati", "kumati", "kinatulan", "kinatol"
+        "kakatol",
+        "kakatul",
+        "katol",
+        "makatol",
+        "ga katol",
+        "gina katol",
+        "nagakakatol",
+        "nagakakatul",
+        "kumakati",
+        "kumati",
+        "kinatulan",
+        "kinatol",
+        "ginakati ang panit",
+        "ginakati ang panit ko",
+        "ginakati",
+        "itchy skin",
+        "ga katol panit",
+        "kumakati panit"
       ]
     },
     "rash": {
@@ -19,22 +35,56 @@
       "medical_term": "rash",
       "category": "skin",
       "hiligaynon": [
-        "bugas", "butlig", "galis", "pamula", "rashes", "pantal", "pantal-pantal",
-        "nagapamula", "naga pula panit"
+        "bugas",
+        "butlig",
+        "galis",
+        "pamula",
+        "rashes",
+        "pantal",
+        "pantal-pantal",
+        "nagapamula",
+        "naga pula panit",
+        "may rashes",
+        "may rashes ko",
+        "rash",
+        "butlig-butlig",
+        "gapula lawas",
+        "skin rash",
+        "may pantal"
       ]
     },
     "urticaria": {
       "english": "hives",
       "medical_term": "urticaria",
       "category": "skin",
-      "hiligaynon": ["hubag", "hubag-hubag", "kalisngaw", "alipunga", "nagahubag"]
+      "hiligaynon": [
+        "hubag",
+        "hubag-hubag",
+        "kalisngaw",
+        "alipunga",
+        "nagahubag"
+      ]
     },
     "cough": {
       "english": "cough",
       "medical_term": "cough",
       "category": "respiratory",
       "hiligaynon": [
-        "ubo", "ginaubo", "ginauubo", "nagauubo", "nagaubo", "ubuhan", "kuhul", "ginakuhul"
+        "ubo",
+        "ginaubo",
+        "ginauubo",
+        "nagauubo",
+        "nagaubo",
+        "ubuhan",
+        "kuhul",
+        "ginakuhul",
+        "ginaubo ko",
+        "gahika",
+        "gahika ko",
+        "may ubo",
+        "dry cough",
+        "uga ubo",
+        "basa ubo"
       ]
     },
     "rhinorrhea": {
@@ -42,8 +92,19 @@
       "medical_term": "rhinorrhea",
       "category": "respiratory",
       "hiligaynon": [
-        "sip-on", "sip on", "sipon", "ginasip-on", "ginasipon", "nagasipon", "barado ilong",
-        "ginabarado ilong"
+        "sip-on",
+        "sip on",
+        "sipon",
+        "ginasip-on",
+        "ginasipon",
+        "nagasipon",
+        "barado ilong",
+        "ginabarado ilong",
+        "ginasip-on ko",
+        "nagaawas sipon",
+        "may sip-on",
+        "may sipon",
+        "colds"
       ]
     },
     "dyspnea": {
@@ -51,29 +112,67 @@
       "medical_term": "dyspnea",
       "category": "respiratory",
       "hiligaynon": [
-        "ginakapos ginhawa", "ginaginhawa budlay", "ginabudlayan ginhawa", "budlay ginhawa",
-        "lisod magginhawa", "ginaginhawa", "ginakapos", "shortness of breath"
+        "ginakapos ginhawa",
+        "ginaginhawa budlay",
+        "ginabudlayan ginhawa",
+        "budlay ginhawa",
+        "lisod magginhawa",
+        "ginaginhawa",
+        "ginakapos",
+        "shortness of breath",
+        "ginaginhawa ko budlay",
+        "budlay magginhawa",
+        "indi makaginhawa maayo",
+        "dula ginhawa"
       ]
     },
     "wheezing": {
       "english": "wheezing",
       "medical_term": "wheezing",
       "category": "respiratory",
-      "hiligaynon": ["hubak", "nagahubak", "ginahubak", "singaw"]
+      "hiligaynon": [
+        "hubak",
+        "nagahubak",
+        "ginahubak",
+        "singaw",
+        "wheezing",
+        "hika sound"
+      ]
     },
     "breathlessness": {
       "english": "shortness of breath",
       "medical_term": "dyspnea",
       "category": "respiratory",
-      "hiligaynon": ["bahing", "ginabahing", "ginahingal", "hingal"]
+      "hiligaynon": [
+        "bahing",
+        "ginabahing",
+        "ginahingal",
+        "hingal",
+        "ginakulbaan ko magginhawa",
+        "ginakulbaan magginhawa",
+        "kulbaan magginhawa",
+        "kapos ginhawa",
+        "sob",
+        "breathless"
+      ]
     },
     "abdominal_pain": {
       "english": "stomach pain",
       "medical_term": "abdominal pain",
       "category": "digestive",
       "hiligaynon": [
-        "sakit tiyan", "ginalain tiyan", "panakit tiyan", "masakit tiyan", "sakit sikmura",
-        "masakit sikmura", "ginasakit tiyan"
+        "sakit tiyan",
+        "ginalain tiyan",
+        "panakit tiyan",
+        "masakit tiyan",
+        "sakit sikmura",
+        "masakit sikmura",
+        "ginasakit tiyan",
+        "ginasakit tiyan ko",
+        "baldom tiyan",
+        "ginabaldom",
+        "stomach pain",
+        "sakit sa tiyan"
       ]
     },
     "diarrhea": {
@@ -81,50 +180,121 @@
       "medical_term": "diarrhea",
       "category": "digestive",
       "hiligaynon": [
-        "kalibanga", "gakalibanga", "ginakalibanga", "nagakalibanga", "ginatulo", "tulo-tulo",
-        "lbm", "ginatulo sing dugo"
+        "kalibanga",
+        "gakalibanga",
+        "ginakalibanga",
+        "nagakalibanga",
+        "ginatulo",
+        "tulo-tulo",
+        "lbm",
+        "ginatulo sing dugo",
+        "ginakalibanga ko",
+        "diarrhea"
       ]
     },
     "nausea": {
       "english": "nausea",
       "medical_term": "nausea",
       "category": "digestive",
-      "hiligaynon": ["kasukaon", "ginakasukaon", "nahihilo tiyan", "ginabalik tiyan"]
+      "hiligaynon": [
+        "kasukaon",
+        "ginakasukaon",
+        "nahihilo tiyan",
+        "ginabalik tiyan",
+        "ginapalanuka",
+        "ginapalanuka ko",
+        "nausea",
+        "daw magasuka",
+        "palanuka",
+        "gana magasuka"
+      ]
     },
     "vomiting": {
       "english": "vomiting",
       "medical_term": "vomiting",
       "category": "digestive",
-      "hiligaynon": ["suka", "nagsuka", "nagsusuka", "sumuka", "ginagsuka", "ginasuka"]
+      "hiligaynon": [
+        "suka",
+        "nagsuka",
+        "nagsusuka",
+        "sumuka",
+        "ginagsuka",
+        "ginasuka",
+        "ginasuka ko",
+        "nagasuka",
+        "vomiting"
+      ]
     },
     "bloating": {
       "english": "bloated stomach",
       "medical_term": "abdominal distension",
       "category": "digestive",
-      "hiligaynon": ["ginapanuhot", "panuhot", "ginapanuhot tiyan", "busog tiyan", "ginabusog tiyan"]
+      "hiligaynon": [
+        "ginapanuhot",
+        "panuhot",
+        "ginapanuhot tiyan",
+        "busog tiyan",
+        "ginabusog tiyan",
+        "ginapanuhot ko",
+        "bloating",
+        "gas tiyan"
+      ]
     },
     "anorexia": {
       "english": "loss of appetite",
       "medical_term": "anorexia",
       "category": "digestive",
       "hiligaynon": [
-        "wala gana kaon", "gakadula gana kaon", "wala gana", "dili gana kaon", "ginawala gana"
+        "wala gana magkaon",
+        "wala appetite",
+        "indi gusto magkaon",
+        "nawala gana",
+        "wala ko gana magkaon",
+        "wala gana kaon",
+        "wala gana",
+        "gakadula gana kaon",
+        "dili gana kaon",
+        "ginawala gana"
       ]
     },
     "constipation": {
       "english": "constipation",
       "medical_term": "constipation",
       "category": "digestive",
-      "hiligaynon": ["constipation", "buot", "dili makalibang", "ginabuot", "ginadula kalibanga"]
+      "hiligaynon": [
+        "indi makaibot",
+        "tig-a tae",
+        "budlay mag-ibot",
+        "gina-constipation",
+        "constipated ko",
+        "constipation",
+        "constipated",
+        "ginabuot",
+        "dili makalibang",
+        "ginadula kalibanga"
+      ]
     },
     "headache": {
       "english": "headache",
       "medical_term": "headache",
       "category": "neurological",
       "hiligaynon": [
-        "sakit ulo", "sakit sang ulo", "masakit ulo", "ulo masakit", "nagasakit ulo",
-        "labad ulo", "labad ang ulo", "ginasakit ulo", "sakit sa ulo",
-        "aking ulo", "ulo ko", "masakit ang ulo", "ginasakit ang ulo"
+        "sakit ulo",
+        "sakit sang ulo",
+        "masakit ulo",
+        "ulo masakit",
+        "nagasakit ulo",
+        "labad ulo",
+        "labad ang ulo",
+        "ginasakit ulo",
+        "sakit sa ulo",
+        "aking ulo",
+        "ulo ko",
+        "masakit ang ulo",
+        "ginasakit ang ulo",
+        "ginasakit ulo ko",
+        "migraine",
+        "migren"
       ]
     },
     "dizziness": {
@@ -132,34 +302,76 @@
       "medical_term": "dizziness",
       "category": "neurological",
       "hiligaynon": [
-        "kalipong", "nalipong", "nagalipong", "nahihilo", "nahilo", "ginakalipong", "lipong"
+        "kalipong",
+        "nalipong",
+        "nagalipong",
+        "nahihilo",
+        "nahilo",
+        "ginakalipong",
+        "lipong",
+        "ginakalipong ko",
+        "dizzy",
+        "ginahilo"
       ]
     },
     "paresthesia": {
       "english": "numbness",
       "medical_term": "paresthesia",
       "category": "neurological",
-      "hiligaynon": ["pamamanhid", "ginapamamanhid", "manhid", "ginamanhid", "nagamanhid"]
+      "hiligaynon": [
+        "pamamanhid",
+        "ginapamamanhid",
+        "manhid",
+        "ginamanhid",
+        "nagamanhid",
+        "ginapalanum",
+        "ginapalanum ko",
+        "numbness",
+        "palanum",
+        "daw wala batyag"
+      ]
     },
     "tremor": {
       "english": "tremor",
       "medical_term": "tremor",
       "category": "neurological",
-      "hiligaynon": ["nagakurog", "ginakurog", "kurog", "ginatay-og", "nagatay-og"]
+      "hiligaynon": [
+        "nagakurog",
+        "ginakurog",
+        "kurog",
+        "ginatay-og",
+        "nagatay-og",
+        "ginakurog ko",
+        "tremors",
+        "shaking"
+      ]
     },
     "seizure": {
       "english": "seizure",
       "medical_term": "seizure",
       "category": "neurological",
-      "hiligaynon": ["kombulsyon", "konvulsyon", "nagakonvulsyon", "atake", "ginakonvulsyon"]
+      "hiligaynon": [
+        "kombulsyon",
+        "konvulsyon",
+        "nagakonvulsyon",
+        "atake",
+        "ginakonvulsyon"
+      ]
     },
     "chest_pain": {
       "english": "chest pain",
       "medical_term": "chest pain",
       "category": "cardiovascular",
       "hiligaynon": [
-        "sakit dughan", "hapdi dughan", "masakit dughan", "masakit dibdib", "sakit dibdib",
-        "ginasakit dughan"
+        "sakit dughan",
+        "hapdi dughan",
+        "masakit dughan",
+        "masakit dibdib",
+        "sakit dibdib",
+        "ginasakit dughan",
+        "ginasakit dughan ko",
+        "pig-ot dughan",
+        "chest pain"
       ]
     },
     "palpitations": {
@@ -167,62 +379,102 @@
       "medical_term": "palpitations",
       "category": "cardiovascular",
       "hiligaynon": [
-        "naga palpitations", "palpitations", "kusog tibok sang tagipusuon", "kusog tibok",
-        "ginakusog tibok", "mabilis tibok"
+        "nagatibok dughan",
+        "madasig tibok",
+        "ginasakit dughan tibok",
+        "kurog dughan"
       ]
     },
     "anxiety": {
       "english": "anxiety",
       "medical_term": "anxiety",
       "category": "cardiovascular",
-      "hiligaynon": ["kulba", "ginakulba", "nagakulba", "kaba", "ginakaba"]
+      "hiligaynon": [
+        "kulba",
+        "ginakulba",
+        "nagakulba",
+        "kaba",
+        "ginakaba"
+      ]
     },
     "dysuria": {
       "english": "painful urination",
       "medical_term": "dysuria",
       "category": "urinary",
       "hiligaynon": [
-        "masakit mag ihi", "masakit mag-ihi", "masakit pag-ihi", "sakit pag-ihi",
-        "ginasakit mag ihi"
+        "masakit pag-ihi",
+        "hapdi mag-ihi",
+        "sakit ihi",
+        "ginasakit pag-ihi"
       ]
     },
     "polyuria": {
       "english": "frequent urination",
       "medical_term": "polyuria",
       "category": "urinary",
-      "hiligaynon": ["sige ihi", "ginasige ihi", "madamo ihi", "ginamadamo ihi"]
+      "hiligaynon": [
+        "masami mag-ihi",
+        "pirmi mag-ihi",
+        "madamo ihi",
+        "ginasulod ihi"
+      ]
     },
     "hematuria": {
       "english": "blood in urine",
       "medical_term": "hematuria",
       "category": "urinary",
-      "hiligaynon": ["may dugo sa ihi", "dugo sa ihi", "ginadugo ihi", "ginadugo sa ihi"]
+      "hiligaynon": [
+        "may dugo sa ihi",
+        "dugo sa ihi",
+        "ginadugo ihi",
+        "ginadugo sa ihi"
+      ]
     },
     "urinary_retention": {
       "english": "inability to urinate",
       "medical_term": "urinary retention",
       "category": "urinary",
-      "hiligaynon": ["indi maka ihi", "dili maka ihi", "indi makaihi", "dili makaihi"]
+      "hiligaynon": [
+        "indi maka ihi",
+        "dili maka ihi",
+        "indi makaihi",
+        "dili makaihi"
+      ]
     },
     "back_pain": {
       "english": "back pain",
       "medical_term": "back pain",
       "category": "musculoskeletal",
-      "hiligaynon": ["masakit likod", "sakit likod", "ginasakit likod", "panakit likod"]
+      "hiligaynon": [
+        "sakit likod",
+        "hapdi likod",
+        "ginasakit likod",
+        "masakit likod baba"
+      ]
     },
     "knee_pain": {
       "english": "knee pain",
       "medical_term": "knee pain",
       "category": "musculoskeletal",
-      "hiligaynon": ["masakit tuhod", "sakit tuhod", "ginasakit tuhod"]
+      "hiligaynon": [
+        "masakit tuhod",
+        "sakit tuhod",
+        "ginasakit tuhod"
+      ]
     },
     "body_itchiness": {
       "english": "itching",
       "medical_term": "pruritus",
       "category": "skin",
       "hiligaynon": [
-        "kakatul lawas", "kakatol lawas", "kumakati lawas", "ga katol lawas",
-        "katol sa lawas", "kakatol sa bilog lawas", "ga-katol-lawas", "kumakati-lawas"
+        "kakatul lawas",
+        "kakatol lawas",
+        "kumakati lawas",
+        "ga katol lawas",
+        "katol sa lawas",
+        "kakatol sa bilog lawas",
+        "ga-katol-lawas",
+        "kumakati-lawas"
       ]
     },
     "body_pain": {
@@ -230,99 +482,203 @@
       "medical_term": "myalgia",
       "category": "musculoskeletal",
       "hiligaynon": [
-        "masakit kalawasan", "sakit lawas", "masakit lawas", "sakit kalawasan",
-        "ginasakit lawas", "panakit lawas"
+        "masakit kalawasan",
+        "sakit lawas",
+        "masakit lawas",
+        "sakit kalawasan",
+        "ginasakit lawas",
+        "panakit lawas"
       ]
     },
     "body_aches": {
       "english": "body aches",
       "medical_term": "myalgia",
       "category": "musculoskeletal",
-      "hiligaynon": ["masakit lawas", "sakit lawas", "ginasakit lawas"]
+      "hiligaynon": [
+        "masakit lawas",
+        "sakit lawas",
+        "ginasakit lawas"
+      ]
     },
     "weakness_upper_limb": {
       "english": "arm weakness",
       "medical_term": "upper limb weakness",
       "category": "musculoskeletal",
-      "hiligaynon": ["luya kamot", "ginaluya kamot", "mahina kamot", "ginamahina kamot"]
+      "hiligaynon": [
+        "luya kamot",
+        "ginaluya kamot",
+        "mahina kamot",
+        "ginamahina kamot"
+      ]
     },
     "weakness_lower_limb": {
       "english": "leg weakness",
       "medical_term": "lower limb weakness",
       "category": "musculoskeletal",
-      "hiligaynon": ["luya tiil", "ginaluya tiil", "mahina tiil", "ginamahina tiil"]
+      "hiligaynon": [
+        "luya tiil",
+        "ginaluya tiil",
+        "mahina tiil",
+        "ginamahina tiil"
+      ]
     },
     "conjunctivitis": {
       "english": "red eyes",
       "medical_term": "conjunctivitis",
       "category": "eye_ear",
-      "hiligaynon": ["naga pula mata", "nagapula mata", "pamula mata", "ginapula mata", "mapula mata"]
+      "hiligaynon": [
+        "naga pula mata",
+        "nagapula mata",
+        "pamula mata",
+        "ginapula mata",
+        "mapula mata",
+        "ginapula mata ko",
+        "red eyes",
+        "pula mata"
+      ]
     },
     "blurred_vision": {
       "english": "blurred vision",
       "medical_term": "blurred vision",
       "category": "eye_ear",
-      "hiligaynon": ["malain panulok", "malabo panulok", "ginamalabo panulok", "dili klaro panulok"]
+      "hiligaynon": [
+        "malain panulok",
+        "malabo panulok",
+        "ginamalabo panulok",
+        "dili klaro panulok"
+      ]
     },
     "otalgia": {
       "english": "ear pain",
       "medical_term": "otalgia",
       "category": "eye_ear",
-      "hiligaynon": ["masakit dalunggan", "sakit dalunggan", "ginasakit dalunggan"]
+      "hiligaynon": [
+        "masakit dalunggan",
+        "sakit dalunggan",
+        "ginasakit dalunggan"
+      ]
     },
     "tinnitus": {
       "english": "ringing in ears",
       "medical_term": "tinnitus",
       "category": "eye_ear",
-      "hiligaynon": ["naga tingog dalunggan", "nagatingog dalunggan", "singog dalunggan"]
+      "hiligaynon": [
+        "nagatingting dulunggan",
+        "may tunog sa dalunggan",
+        "nagahuni dalunggan"
+      ]
     },
     "insomnia": {
-      "english": "insomnia",
+      "english": "cannot sleep",
       "medical_term": "insomnia",
       "category": "mental_health",
       "hiligaynon": [
-        "indi katulog", "dili makatulog", "dili katulog", "ginadula katulog", "dili makatulog"
+        "indi makatulog",
+        "wala tulog",
+        "budlay magtulog",
+        "ginainsomniak",
+        "ginakabudlayan ko tulog",
+        "ginakabudlayan tulog",
+        "dili makatulog",
+        "indi katulog",
+        "difficulty sleeping",
+        "insomnia",
+        "gina-insomnia"
       ]
     },
     "hypersomnia": {
       "english": "excessive sleepiness",
       "medical_term": "hypersomnia",
       "category": "mental_health",
-      "hiligaynon": ["sobra katulog", "ginakatulog sing damo", "ginakatulog gid"]
+      "hiligaynon": [
+        "sobra katulog",
+        "ginakatulog sing damo",
+        "ginakatulog gid"
+      ]
     },
     "depression": {
       "english": "sadness",
       "medical_term": "depression",
       "category": "mental_health",
-      "hiligaynon": ["nagabatyag kasubo", "ginakasubo", "kasubo", "ginabatyag kasubo", "malungkot"]
+      "hiligaynon": [
+        "nagabatyag kasubo",
+        "ginakasubo",
+        "kasubo",
+        "ginabatyag kasubo",
+        "malungkot"
+      ]
     },
     "stress": {
       "english": "stress",
       "medical_term": "stress",
       "category": "mental_health",
-      "hiligaynon": ["kabalaka", "ginakabalaka", "stress", "ginastress", "sobra kabalaka"]
+      "hiligaynon": [
+        "kabalaka",
+        "ginakabalaka",
+        "stress",
+        "ginastress",
+        "sobra kabalaka"
+      ]
     },
     "fever": {
       "english": "fever",
       "medical_term": "fever",
       "category": "general",
       "hiligaynon": [
-        "hilanat", "gilantan", "ginahilantan", "ginahilanat", "mainit lawas", "may lagnat",
-        "lagnat", "init lawas", "ginatugnaw", "ginahilanat sing taas"
+        "hilanat",
+        "gilantan",
+        "ginahilantan",
+        "ginahilanat",
+        "mainit lawas",
+        "may lagnat",
+        "lagnat",
+        "init lawas",
+        "ginatugnaw",
+        "ginahilanat sing taas",
+        "hilantan",
+        "ginahilanat ko",
+        "mainit lawas ko",
+        "init lawas ko",
+        "may hilanat",
+        "naghilanat",
+        "ga hilanat",
+        "ga-hilanat",
+        "high fever",
+        "taas hilanat"
       ]
     },
     "chills": {
       "english": "chills",
       "medical_term": "chills",
       "category": "general",
-      "hiligaynon": ["ginatugnaw", "tugnaw", "ginatugnaw lawas", "ginakaligtan"]
+      "hiligaynon": [
+        "ginatugnaw",
+        "tugnaw",
+        "ginatugnaw lawas",
+        "ginakaligtan",
+        "ginatugnaw ko",
+        "nagaligtan",
+        "ginapaginatugnaw",
+        "malamig lawas",
+        "ginakurig",
+        "nagakurig tungod tugnaw"
+      ]
     },
     "fatigue": {
       "english": "fatigue",
       "medical_term": "fatigue",
       "category": "general",
       "hiligaynon": [
-        "kapoy gid", "kapoy", "kakapoy", "ginakapoy", "ginakapoy gid", "mahina lawas", "luya"
+        "kapoy gid",
+        "kapoy",
+        "kakapoy",
+        "ginakapoy",
+        "ginakapoy gid",
+        "mahina lawas",
+        "luya",
+        "ginakapoy gid ko",
+        "fatigue",
+        "pagod gid"
       ]
     },
     "sore_throat": {
@@ -330,7 +686,436 @@
       "medical_term": "pharyngitis",
       "category": "general",
       "hiligaynon": [
-        "masakit tutunlan", "sakit tutunlan", "hapdi tutunlan", "ginasakit tutunlan"
+        "masakit tutunlan",
+        "sakit tutunlan",
+        "hapdi tutunlan",
+        "ginasakit tutunlan",
+        "hapdi tutunlan ko",
+        "sakit sa tutunlan",
+        "ginasakit tutunlan ko",
+        "sore throat"
+      ]
+    },
+    "hair_loss": {
+      "english": "hair loss",
+      "medical_term": "alopecia",
+      "category": "skin",
+      "hiligaynon": [
+        "galagas buhok",
+        "nagalagas buhok",
+        "lagas buhok",
+        "nagakawas buhok"
+      ]
+    },
+    "vaginal_itching": {
+      "english": "vaginal itching",
+      "medical_term": "vaginal pruritus",
+      "category": "reproductive",
+      "hiligaynon": [
+        "kakatol bilat",
+        "gakatol bilat",
+        "katol bilat",
+        "kakatol sa bilat"
+      ]
+    },
+    "penile_itching": {
+      "english": "penile itching",
+      "medical_term": "penile pruritus",
+      "category": "reproductive",
+      "hiligaynon": [
+        "kakatol ari",
+        "gakatol ari",
+        "katol ari"
+      ]
+    },
+    "testicular_pain": {
+      "english": "testicular pain",
+      "medical_term": "orchialgia",
+      "category": "reproductive",
+      "hiligaynon": [
+        "sakit itlog",
+        "masakit itlog",
+        "sakit bayag",
+        "kalit masakit itlog"
+      ]
+    },
+    "testicular_swelling": {
+      "english": "testicular swelling",
+      "medical_term": "scrotal swelling",
+      "category": "reproductive",
+      "hiligaynon": [
+        "gahabok itlog",
+        "gahubag itlog",
+        "habok itlog",
+        "hubag bayag"
+      ]
+    },
+    "flank_pain": {
+      "english": "flank pain",
+      "medical_term": "flank pain",
+      "category": "urinary",
+      "hiligaynon": [
+        "sakit kilid",
+        "masakit kilid",
+        "hapdi kilid",
+        "sakit sa kilid"
+      ]
+    },
+    "groin_pain": {
+      "english": "groin pain",
+      "medical_term": "groin pain",
+      "category": "musculoskeletal",
+      "hiligaynon": [
+        "sakit singit",
+        "masakit singit",
+        "hapdi singit"
+      ]
+    },
+    "hemoptysis": {
+      "english": "coughing blood",
+      "medical_term": "hemoptysis",
+      "category": "respiratory",
+      "hiligaynon": [
+        "ginaubo dugo",
+        "nagauba dugo",
+        "ubo may dugo",
+        "nagasinghot dugo"
+      ]
+    },
+    "bruising": {
+      "english": "bruise",
+      "medical_term": "contusion",
+      "category": "skin",
+      "hiligaynon": [
+        "nabun-og",
+        "nabunog",
+        "may pasa",
+        "pasa",
+        "nabun-og ulo"
+      ]
+    },
+    "edema": {
+      "english": "swelling",
+      "medical_term": "edema",
+      "category": "general",
+      "hiligaynon": [
+        "gahubag",
+        "gahabok",
+        "hubag",
+        "habok",
+        "namaga",
+        "ginapalanhubag",
+        "ginapalanhubag ko",
+        "nagahubag",
+        "swelling",
+        "palanhubag"
+      ]
+    },
+    "syncope": {
+      "english": "fainting",
+      "medical_term": "syncope",
+      "category": "neurological",
+      "hiligaynon": [
+        "nagpunaw",
+        "nagapanaw",
+        "nadulaan malay",
+        "wala malay",
+        "natumba"
+      ]
+    },
+    "speech_difficulty": {
+      "english": "speech difficulty",
+      "medical_term": "dysarthria",
+      "category": "neurological",
+      "hiligaynon": [
+        "daw indi makahambal",
+        "indi makahambal",
+        "nawala gahambal",
+        "lisod maghambal"
+      ]
+    },
+    "eye_discharge": {
+      "english": "eye discharge",
+      "medical_term": "ocular discharge",
+      "category": "eye_ear",
+      "hiligaynon": [
+        "may nana mata",
+        "nana sa mata",
+        "may nana akon mata"
+      ]
+    },
+    "rash_WV": {
+      "english": "rash",
+      "medical_term": "rash",
+      "category": "skin",
+      "hiligaynon": [
+        "butlig-butlig",
+        "pantal-pantal",
+        "gapula lawas",
+        "gina pula panit"
+      ]
+    },
+    "hypertension_complaint": {
+      "english": "hypertension",
+      "medical_term": "hypertension",
+      "category": "cardiovascular",
+      "hiligaynon": [
+        "alta presyon",
+        "taas blood pressure",
+        "taas BP",
+        "highblood"
+      ]
+    },
+    "hyperglycemia_complaint": {
+      "english": "high blood sugar",
+      "medical_term": "hyperglycemia",
+      "category": "endocrine",
+      "hiligaynon": [
+        "asukal taas",
+        "taas asukal",
+        "taas sugar",
+        "diabetes ga taas"
+      ]
+    },
+    "orthopnea": {
+      "english": "cannot breathe lying flat",
+      "medical_term": "orthopnea",
+      "category": "respiratory",
+      "hiligaynon": [
+        "indi makatulog tungod ginhawa",
+        "budlay maghigda",
+        "kinahanglan magpungko pagginhawa"
+      ]
+    },
+    "hemoptysis_wv": {
+      "english": "coughing blood",
+      "medical_term": "hemoptysis",
+      "category": "respiratory",
+      "hiligaynon": [
+        "ubo may dugo",
+        "nagauba dugo",
+        "ginaubo sing dugo",
+        "may dugo sa ubo"
+      ]
+    },
+    "melena": {
+      "english": "black stool",
+      "medical_term": "melena",
+      "category": "digestive",
+      "hiligaynon": [
+        "itim tae",
+        "nagaibot itim",
+        "itim ang tae",
+        "tae daw alkitran"
+      ]
+    },
+    "hematochezia": {
+      "english": "bloody stool",
+      "medical_term": "hematochezia",
+      "category": "digestive",
+      "hiligaynon": [
+        "tae may dugo",
+        "nagaibot dugo",
+        "dugo sa tae",
+        "pula ang tae"
+      ]
+    },
+    "hematemesis": {
+      "english": "vomiting blood",
+      "medical_term": "hematemesis",
+      "category": "digestive",
+      "hiligaynon": [
+        "nagsuka dugo",
+        "nagsuka sang dugo",
+        "may dugo sa suka"
+      ]
+    },
+    "nocturia": {
+      "english": "nighttime urination",
+      "medical_term": "nocturia",
+      "category": "urinary",
+      "hiligaynon": [
+        "mag-ihi sa gabi",
+        "ginaalsa sa gabi para mag-ihi",
+        "madamo ihi gab-i"
+      ]
+    },
+    "oliguria": {
+      "english": "low urine output",
+      "medical_term": "oliguria",
+      "category": "urinary",
+      "hiligaynon": [
+        "gamay lang ihi",
+        "wala ihi",
+        "indi madamo ihi",
+        "duha ka adlaw wala ihi"
+      ]
+    },
+    "vertigo": {
+      "english": "spinning dizziness",
+      "medical_term": "vertigo",
+      "category": "neurological",
+      "hiligaynon": [
+        "nagalibot ulo",
+        "ginalibot ginalibot",
+        "daw naga-ikot palibot",
+        "nalipong kag ginalibot"
+      ]
+    },
+    "photophobia": {
+      "english": "light sensitivity",
+      "medical_term": "photophobia",
+      "category": "eye_ear",
+      "hiligaynon": [
+        "indi makatamay sa suga",
+        "masakit mata sa suga",
+        "ginahadlok sa suga"
+      ]
+    },
+    "epistaxis": {
+      "english": "nosebleed",
+      "medical_term": "epistaxis",
+      "category": "general",
+      "hiligaynon": [
+        "nagaibus dugo sa ilong",
+        "nagdugo ilong",
+        "dugo sa ilong",
+        "ginadugo ilong",
+        "ginadugo ilong ko",
+        "nosebleed",
+        "epistaxis"
+      ]
+    },
+    "joint_pain": {
+      "english": "joint pain",
+      "medical_term": "arthralgia",
+      "category": "musculoskeletal",
+      "hiligaynon": [
+        "sakit lutahan",
+        "hapdi lutahan",
+        "ginasakit mga lutahan",
+        "masakit tuhod kag siko"
+      ]
+    },
+    "menorrhagia": {
+      "english": "heavy menstrual bleeding",
+      "medical_term": "menorrhagia",
+      "category": "reproductive",
+      "hiligaynon": [
+        "grabe dugo sa regla",
+        "sobra magdugo regla",
+        "madamo dugo regla",
+        "regla indi mapunggan"
+      ]
+    },
+    "dysmenorrhea": {
+      "english": "painful menstruation",
+      "medical_term": "dysmenorrhea",
+      "category": "reproductive",
+      "hiligaynon": [
+        "sakit sa regla",
+        "cramps sa regla",
+        "hapdi pagregla",
+        "ginasakit tiyan sa regla"
+      ]
+    },
+    "fever_with_chills": {
+      "english": "fever with chills",
+      "medical_term": "fever with chills",
+      "category": "general",
+      "hiligaynon": [
+        "ginakurog kag ginatugnaw",
+        "ginakurog kag ginatugnaw ko",
+        "hilanat kag tugnaw",
+        "ginahilanat kag ginatugnaw",
+        "mainit lawas kag ginatugnaw",
+        "fever with chills"
+      ]
+    },
+    "foot_edema": {
+      "english": "swollen feet",
+      "medical_term": "pedal edema",
+      "category": "general",
+      "hiligaynon": [
+        "ginahubag ang tiil",
+        "ginahubag ang tiil ko",
+        "gahubag tiil",
+        "hubag tiil",
+        "namaga tiil",
+        "swollen feet",
+        "gahabok tiil"
+      ]
+    },
+    "hand_edema": {
+      "english": "swollen hands",
+      "medical_term": "hand edema",
+      "category": "general",
+      "hiligaynon": [
+        "ginahubag ang kamot",
+        "ginahubag ang kamot ko",
+        "gahubag kamot",
+        "hubag kamot",
+        "namaga kamot",
+        "swollen hands",
+        "gahabok kamot"
+      ]
+    },
+    "difficulty_walking": {
+      "english": "difficulty walking",
+      "medical_term": "gait difficulty",
+      "category": "musculoskeletal",
+      "hiligaynon": [
+        "ginabudlayan ko lakat",
+        "ginabudlayan lakat",
+        "budlay maglakat",
+        "lisod maglakat",
+        "indi makalakat maayo",
+        "difficulty walking",
+        "ginapalangluya maglakat"
+      ]
+    },
+    "eye_irritation": {
+      "english": "eye irritation",
+      "medical_term": "eye irritation",
+      "category": "eye_ear",
+      "hiligaynon": [
+        "ginahapdos ang mata",
+        "ginahapdos ang mata ko",
+        "hapdos mata",
+        "ginasakit mata",
+        "eye irritation",
+        "makati mata",
+        "ginakati mata"
+      ]
+    },
+    "bleeding": {
+      "english": "bleeding",
+      "medical_term": "hemorrhage",
+      "category": "general",
+      "hiligaynon": [
+        "ginadugo",
+        "ginadugo ko",
+        "nagdugo",
+        "nagadugo",
+        "may dugo",
+        "bleeding",
+        "indi mapunggan dugo"
+      ]
+    },
+    "weakness": {
+      "english": "weakness",
+      "medical_term": "asthenia",
+      "category": "general",
+      "hiligaynon": [
+        "ginapalangluya",
+        "ginapalangluya ko",
+        "luya",
+        "mahina lawas",
+        "galuya lawas",
+        "ginakaluya",
+        "weakness",
+        "palangluya",
+        "ginamahina"
       ]
     }
   }

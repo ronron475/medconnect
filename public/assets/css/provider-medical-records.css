@@ -1,7 +1,7 @@
 /* Provider Medical Records */
 
 body.provider-body .provider-page-body:has(.mr-page) {
-  padding: calc(var(--provider-header-h, 64px) + 12px) 16px 16px;
+  padding: calc(var(--mc-header-offset, var(--provider-header-h, 64px)) + 8px) 16px 16px;
 }
 
 .mr-page {
@@ -410,6 +410,57 @@ body.provider-body .provider-page-body:has(.mr-page) {
   .mr-toolbar {
     flex-direction: column;
     align-items: stretch;
+  }
+}
+
+.mr-update-request {
+  margin-bottom: 16px;
+  padding: 16px;
+  border-radius: 12px;
+  background: #fffbeb;
+  border: 1px solid #fde68a;
+}
+
+.mr-profile-form {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+  margin-top: 12px;
+}
+
+.mr-profile-form label {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #475569;
+}
+
+.mr-profile-form label:nth-child(n+3) {
+  grid-column: 1 / -1;
+}
+
+.mr-profile-alert {
+  margin-top: 10px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  font-size: 0.85rem;
+}
+
+.mr-profile-alert--ok {
+  background: #ecfdf5;
+  color: #065f46;
+}
+
+.mr-profile-alert--err {
+  background: #fef2f2;
+  color: #991b1b;
+}
+
+@media (max-width: 640px) {
+  .mr-profile-form {
+    grid-template-columns: 1fr;
   }
 
   .mr-search {

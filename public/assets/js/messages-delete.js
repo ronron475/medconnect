@@ -21,6 +21,17 @@
   }
 
   function confirmDialog(title, body) {
+    if (window.McModal && typeof window.McModal.confirm === 'function') {
+      return window.McModal.confirm({
+        title: title,
+        message: body,
+        confirmLabel: 'Confirm',
+        cancelLabel: 'Cancel',
+        showLogo: false,
+        icon: 'confirm',
+      });
+    }
+
     return new Promise((resolve) => {
       closeDialog();
       const backdrop = document.createElement('div');
@@ -54,6 +65,30 @@
   }
 
   function openOptionsMenu(message, canDeleteForEveryone, canDeleteForMe) {
+    if (window.McModal && typeof window.McModal.open === 'function') {
+      return new Promise((resolve) => {
+        const actions = [];
+        if (canDeleteForMe) {
+          actions.push({ label: 'Delete for Me', variant: 'secondary', value: 'me' });
+        }
+        if (canDeleteForEveryone) {
+          actions.push({ label: 'Delete for Everyone', variant: 'danger', value: 'everyone' });
+        }
+        actions.push({ label: 'Cancel', variant: 'secondary', value: null, autoFocus: true });
+
+        window.McModal.open({
+          id: 'msg-options-modal',
+          title: 'Message options',
+          description: 'Choose how you want to remove this message from the conversation.',
+          showLogo: false,
+          size: 'sm',
+          footerClass: 'mc-modal__footer--stack',
+          actions: actions,
+          resolve: resolve,
+        });
+      });
+    }
+
     return new Promise((resolve) => {
       closeDialog();
       const backdrop = document.createElement('div');
@@ -114,11 +149,13 @@
     const postEndpoint = mode === 'everyone'
       ? `${assetBase}/app/api/messages/delete_for_everyone.php`
       : `${assetBase}/app/api/messages/delete_for_me.php`;
+    const token = csrfToken();
 
     let response = await fetch(restEndpoint, {
       method: 'DELETE',
       cache: 'no-store',
       credentials: 'same-origin',
+      headers: token ? { 'X-CSRF-Token': token } : undefined,
     });
 
     if (!response.ok && response.status === 404) {
@@ -127,7 +164,7 @@
         cache: 'no-store',
         credentials: 'same-origin',
         headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-        body: new URLSearchParams({ message_id: String(messageId) }),
+        body: new URLSearchParams({ message_id: String(messageId), csrf_token: token }),
       });
     }
 
@@ -286,6 +323,34 @@
     };
   }
 
+  function csrfToken() {
+    return document.body?.dataset?.csrf || '';
+  }
+
+  async function sendMessage(consultationId, message, options = {}) {
+    const assetBase = options.assetBase || document.body?.dataset?.assetBase || '';
+    const token = options.csrfToken || csrfToken();
+    const response = await fetch(`${assetBase}/app/api/messages/send.php`, {
+      method: 'POST',
+      credentials: 'same-origin',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: new URLSearchParams({
+        consultation_id: String(consultationId),
+        message,
+        csrf_token: token,
+      }),
+    });
+
+    let data;
+    try {
+      data = await response.json();
+    } catch (e) {
+      return { success: false, message: 'Unexpected server response.' };
+    }
+
+    return data;
+  }
+
   window.MedConnectMessages = {
     DELETED_TEXT,
     escapeHtml,
@@ -295,5 +360,7 @@
     createRealtimePoller,
     applyLocalDeletion,
     deleteMessage,
+    csrfToken,
+    sendMessage,
   };
 })(window);

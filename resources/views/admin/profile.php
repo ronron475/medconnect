@@ -1,5 +1,4 @@
 <?php
-session_start();
 if (!defined('BASE_PATH')) {
     $d = __DIR__;
     while ($d !== dirname($d)) {
@@ -19,6 +18,7 @@ if (!defined('MC_PORTAL_SHELL') || MC_PORTAL_SHELL !== 'superadmin') {
 }
 
 require_once BASE_PATH . '/app/includes/profile_picture.php';
+require_once BASE_PATH . '/app/includes/admin_settings.php';
 profile_picture_ensure_schema($pdo);
 
 $uid = (int) $_SESSION['user_id'];
@@ -52,6 +52,7 @@ $last_updated = !empty($admin_user['updated_at'])
     : '—';
 $is_active = !empty($admin_user['is_active']);
 $is_verified = !empty($admin_user['is_email_verified']);
+$admin_sessions = admin_settings_list_sessions($pdo, $uid, (string) ($admin_user['role'] ?? $_SESSION['user_role'] ?? 'admin'));
 
 require_once __DIR__ . '/partials/layout_open.php';
 ?>
@@ -186,11 +187,46 @@ require_once __DIR__ . '/partials/layout_open.php';
     </section>
 </div>
 
+<section class="portal-profile-card portal-profile-card--security" aria-labelledby="portalProfileSecurityTitle">
+    <div class="portal-profile-card__head">
+        <div class="portal-profile-card__icon portal-profile-card__icon--indigo" aria-hidden="true">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+        </div>
+        <div>
+            <h2 class="portal-profile-card__title" id="portalProfileSecurityTitle">Active Sessions</h2>
+            <p class="portal-profile-card__sub">Devices signed in to your administrator account in the last 7 days.</p>
+        </div>
+        <button type="button" class="portal-profile-btn portal-profile-btn--ghost" id="adminLogoutAllBtn">Logout All Devices</button>
+    </div>
+    <div class="portal-profile-card__body">
+        <div id="adminSessionsAlert" class="portal-profile-alert" role="status" hidden></div>
+        <?php if (empty($admin_sessions)): ?>
+            <p class="portal-profile-card__sub">No active sessions recorded in the last 7 days.</p>
+        <?php else: ?>
+            <ul class="portal-profile-session-list">
+                <?php foreach ($admin_sessions as $sess): ?>
+                <li class="portal-profile-session-item<?= !empty($sess['is_current']) ? ' is-current' : '' ?>">
+                    <div>
+                        <strong><?= htmlspecialchars((string) ($sess['browser'] ?? 'Unknown browser')) ?></strong>
+                        <span class="portal-profile-card__sub"><?= htmlspecialchars(ucfirst((string) ($sess['device'] ?? 'desktop'))) ?> · Last active <?= htmlspecialchars((string) ($sess['last_activity_label'] ?? '—')) ?></span>
+                    </div>
+                    <?php if (!empty($sess['is_current'])): ?>
+                        <span class="portal-profile-pill portal-profile-pill--active">This device</span>
+                    <?php endif; ?>
+                </li>
+                <?php endforeach; ?>
+            </ul>
+        <?php endif; ?>
+    </div>
+</section>
+
 <div class="staff-apps-note" role="note">
     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
     <span><strong>Profile photo only.</strong> You can update your photo here. For name, email, or role changes, contact the system owner or Super Administrator.</span>
 </div>
 
 </article>
+
+<script src="<?= ASSET_BASE ?>/assets/js/admin-portal-profile.js?v=<?= (int) @filemtime(ASSETS_PATH . '/js/admin-portal-profile.js') ?>"></script>
 
 <?php require_once __DIR__ . '/partials/layout_close.php'; ?>

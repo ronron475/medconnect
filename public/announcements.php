@@ -36,7 +36,7 @@ $emptyIcon = '<svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke
   <link rel="icon" type="image/png" href="<?= $asset ?>/assets/img/medcon_logo.png">
   <link rel="stylesheet" href="<?= $asset ?>/assets/css/style.css?v=20260701e">
   <link rel="stylesheet" href="<?= $asset ?>/assets/css/responsive.css">
-  <link rel="stylesheet" href="<?= $asset ?>/assets/css/landing-nav.css?v=2.10">
+  <link rel="stylesheet" href="<?= $asset ?>/assets/css/landing-nav.css?v=3.2">
   <link rel="stylesheet" href="<?= $asset ?>/assets/css/landing-announcements.css?v=20">
   <link rel="stylesheet" href="<?= $asset ?>/assets/css/announcements-list.css?v=4">
   <link rel="stylesheet" href="<?= $asset ?>/assets/css/announcement-modal.css">

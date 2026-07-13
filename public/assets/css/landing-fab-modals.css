@@ -38,12 +38,14 @@
     visibility 0s linear 0.28s;
 }
 
+/* ===== FAB POPUP MODALS — unified with mc-modal-system backdrop ===== */
+
 .fab-modal__overlay {
   position: absolute;
   inset: 0;
-  background: rgba(1, 42, 74, 0.62);
-  backdrop-filter: blur(4px);
-  -webkit-backdrop-filter: blur(4px);
+  background: var(--mc-modal-backdrop, rgba(0, 0, 0, 0.86));
+  backdrop-filter: blur(var(--mc-modal-backdrop-blur, 10px));
+  -webkit-backdrop-filter: blur(var(--mc-modal-backdrop-blur, 10px));
 }
 
 .fab-modal__dialog {

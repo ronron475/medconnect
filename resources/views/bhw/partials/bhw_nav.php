@@ -21,9 +21,9 @@ function bhw_nav_groups(): array
             'label' => 'Patient Management',
             'description' => 'Register and update patient information',
             'children' => [
-                ['file' => 'patients/register.php', 'label' => 'Register Patient', 'hint' => 'Add a new resident', 'icon' => 'user-plus'],
-                ['file' => 'patients/list.php', 'label' => 'View Patient List', 'hint' => 'Search barangay patients', 'icon' => 'list'],
-                ['file' => 'patients/update.php', 'label' => 'Update Patient Info', 'hint' => 'Edit contact & medical data', 'icon' => 'edit'],
+                ['file' => 'patients/register.php', 'label' => 'Register Patient', 'hint' => 'Add a new resident', 'icon' => 'user-plus', 'sidebar' => true],
+                ['file' => 'patients/list.php', 'label' => 'Patient List', 'hint' => 'Search barangay patients', 'icon' => 'list', 'sidebar' => true],
+                ['file' => 'patients/update.php', 'label' => 'Update Patient Info', 'hint' => 'Edit contact & medical data', 'icon' => 'edit', 'sidebar' => false],
             ],
         ],
         [
@@ -50,8 +50,8 @@ function bhw_nav_groups(): array
             'label' => 'Records',
             'description' => 'View and upload patient documents',
             'children' => [
-                ['file' => 'records/index.php', 'label' => 'View Patient Records', 'hint' => 'Documents & prescriptions', 'icon' => 'folder'],
-                ['file' => 'records/upload.php', 'label' => 'Upload Documents', 'hint' => 'PDF, JPG, or PNG files', 'icon' => 'upload'],
+                ['file' => 'records/index.php', 'label' => 'Records', 'hint' => 'Documents & prescriptions', 'icon' => 'folder', 'sidebar' => true],
+                ['file' => 'records/upload.php', 'label' => 'Upload Documents', 'hint' => 'PDF, JPG, or PNG files', 'icon' => 'upload', 'sidebar' => false],
             ],
         ],
         [
@@ -60,8 +60,8 @@ function bhw_nav_groups(): array
             'label' => 'Follow-Up Monitoring',
             'description' => 'Track patient recovery and reminders',
             'children' => [
-                ['file' => 'followup/track.php', 'label' => 'Track Patient Status', 'hint' => 'Monitor recovery progress', 'icon' => 'activity'],
-                ['file' => 'followup/reminders.php', 'label' => 'Send Reminders', 'hint' => 'Notify patients to follow up', 'icon' => 'bell'],
+                ['file' => 'followup/track.php', 'label' => 'Follow-Up Monitoring', 'hint' => 'Monitor recovery progress', 'icon' => 'activity', 'sidebar' => true],
+                ['file' => 'followup/reminders.php', 'label' => 'Send Reminders', 'hint' => 'Notify patients to follow up', 'icon' => 'bell', 'sidebar' => false],
             ],
         ],
         [
@@ -70,8 +70,8 @@ function bhw_nav_groups(): array
             'label' => 'Referral',
             'description' => 'Refer patients to hospitals',
             'children' => [
-                ['file' => 'referral/create.php', 'label' => 'Refer to Hospital', 'hint' => 'Send patient to a facility', 'icon' => 'share'],
-                ['file' => 'referral/status.php', 'label' => 'View Referral Status', 'hint' => 'Track outgoing referrals', 'icon' => 'list'],
+                ['file' => 'referral/status.php', 'label' => 'Referrals', 'hint' => 'Track outgoing referrals', 'icon' => 'share', 'sidebar' => true],
+                ['file' => 'referral/create.php', 'label' => 'Refer to Hospital', 'hint' => 'Send patient to a facility', 'icon' => 'share', 'sidebar' => false],
             ],
         ],
         [
@@ -80,8 +80,8 @@ function bhw_nav_groups(): array
             'label' => 'Reports',
             'description' => 'Healthcare statistics and exports for your barangay',
             'children' => [
-                ['file' => 'reports/index.php', 'label' => 'Healthcare Reports', 'hint' => 'Charts & CSV/Excel export', 'icon' => 'chart'],
-                ['file' => 'activity/index.php', 'label' => 'My Activity Log', 'hint' => 'Your actions & downloads', 'icon' => 'clock'],
+                ['file' => 'reports/index.php', 'label' => 'Healthcare Reports', 'hint' => 'Charts & CSV/Excel export', 'icon' => 'chart', 'sidebar' => true],
+                ['file' => 'activity/index.php', 'label' => 'My Activity Log', 'hint' => 'Your actions & downloads', 'icon' => 'clock', 'sidebar' => true],
             ],
         ],
         [
@@ -90,7 +90,7 @@ function bhw_nav_groups(): array
             'label' => 'Settings',
             'description' => 'Manage profile and logout',
             'children' => [
-                ['file' => 'settings/profile.php', 'label' => 'Profile', 'hint' => 'Name, photo & contact', 'icon' => 'user'],
+                ['file' => 'settings/profile.php', 'label' => 'Profile', 'hint' => 'Name, photo & contact', 'icon' => 'user', 'sidebar' => false],
                 ['type' => 'logout', 'label' => 'Logout'],
             ],
         ],
@@ -121,6 +121,10 @@ function bhw_nav_resolve_file(string $file): string
         'consultation/assist.php'    => 'consultations/index.php',
         'consultation/status.php'    => 'consultations/index.php',
         'triage/encode.php'          => 'triage/submit.php',
+        'patients/update.php'        => 'patients/list.php',
+        'records/upload.php'         => 'records/index.php',
+        'followup/reminders.php'     => 'followup/track.php',
+        'referral/create.php'        => 'referral/status.php',
     ];
     return $legacy[$file] ?? $file;
 }
@@ -131,10 +135,11 @@ function bhw_nav_all_modules(): array
     foreach (bhw_nav_groups() as $group) {
         $first = null;
         foreach ($group['children'] as $child) {
-            if (($child['type'] ?? '') !== 'logout') {
-                $first = $child['file'];
-                break;
+            if (($child['type'] ?? '') === 'logout' || ($child['sidebar'] ?? true) === false) {
+                continue;
             }
+            $first = $child['file'];
+            break;
         }
         $modules[] = [
             'label' => $group['label'],
@@ -178,4 +183,42 @@ function bhw_nav_render_subitem_icon(string $key): string
     $paths = $icons[$key] ?? '<circle cx="12" cy="12" r="2"/>';
     return '<svg class="bhw-sb-subitem-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor"'
         . ' stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' . $paths . '</svg>';
+}
+
+/**
+ * Flat sectioned navigation for the admin-style BHW sidebar.
+ * Format matches admin_nav.php: section label + items [file, label, icon_paths].
+ */
+function bhw_nav_sections(): array
+{
+    $icons = bhw_nav_subitem_icon_paths();
+    $dash = bhw_nav_dashboard();
+
+    $collectItems = static function (array $groupIds) use ($icons): array {
+        $items = [];
+        foreach (bhw_nav_groups() as $group) {
+            if (!in_array($group['id'] ?? '', $groupIds, true)) {
+                continue;
+            }
+            foreach ($group['children'] as $child) {
+                if (($child['type'] ?? '') === 'logout' || ($child['sidebar'] ?? true) === false) {
+                    continue;
+                }
+                $iconKey = $child['icon'] ?? '';
+                $iconPath = $icons[$iconKey] ?? ($group['icon'] ?? '<circle cx="12" cy="12" r="2"/>');
+                $items[] = [$child['file'], $child['label'], $iconPath];
+            }
+        }
+        return $items;
+    };
+
+    return [
+        ['section' => null, 'items' => [
+            [$dash['file'], $dash['label'], $dash['icon']],
+        ]],
+        ['section' => 'Barangay Operations', 'items' => $collectItems([
+            'patients', 'triage', 'consultations', 'records', 'followup', 'referral',
+        ])],
+        ['section' => 'Reports', 'items' => $collectItems(['reports'])],
+    ];
 }

@@ -21,15 +21,16 @@ final class AiServiceClient
         return self::extractData($response);
     }
 
-    public static function analyzeMedicalProfile(string $allergies, string $currentMedications): ?array
+    public static function analyzeMedicalProfile(string $allergies, string $currentMedications, ?int $timeoutSeconds = null): ?array
     {
+        $timeout = max(5, (int) ($timeoutSeconds ?? AI_SERVICE_TIMEOUT_ANALYZE));
         $response = self::postJson(
             AI_SERVICE_BASE_URL . '/analyze-medical-profile',
             [
                 'allergies'            => $allergies,
                 'current_medications'  => $currentMedications,
             ],
-            AI_SERVICE_TIMEOUT_ANALYZE
+            $timeout
         );
 
         return self::extractData($response);

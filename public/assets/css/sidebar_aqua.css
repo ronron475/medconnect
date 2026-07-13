@@ -93,6 +93,11 @@
   letter-spacing: 0.01em;
 }
 
+.sba-label {
+  display: inline;
+  min-width: 0;
+}
+
 .sba-icon {
   width: 17px; height: 17px;
   flex-shrink: 0;
@@ -224,6 +229,55 @@
   font-family: 'Inter', 'Segoe UI', system-ui, sans-serif;
   background: none;
   cursor: pointer;
+}
+
+/* ── Tablet+Desktop mini sidebar (icon-only) ── */
+@media (min-width: 768px) {
+  body.mc-sidebar-mini .sb-aqua {
+    width: var(--pd-sidebar-w, 78px) !important;
+    min-width: var(--pd-sidebar-w, 78px) !important;
+    max-width: var(--pd-sidebar-w, 78px) !important;
+  }
+
+  body.mc-sidebar-mini .sb-aqua .sba-logo {
+    justify-content: center;
+    padding: 18px 10px 14px;
+  }
+
+  body.mc-sidebar-mini .sb-aqua .sba-nav {
+    padding-left: 8px;
+    padding-right: 8px;
+  }
+
+  body.mc-sidebar-mini .sb-aqua .sba-group-label {
+    display: none;
+  }
+
+  body.mc-sidebar-mini .sb-aqua .sba-item,
+  body.mc-sidebar-mini .sb-aqua .sba-logout {
+    justify-content: center;
+    gap: 0;
+  }
+
+  body.mc-sidebar-mini .sb-aqua .sba-label {
+    display: none;
+  }
+
+  body.mc-sidebar-mini .sb-aqua .mc-nav-messages-badge {
+    position: absolute;
+    top: 6px;
+    right: 6px;
+    margin-left: 0;
+  }
+
+  body.mc-sidebar-mini .sb-aqua .sba-profile-info {
+    display: none;
+  }
+
+  body.mc-sidebar-mini .sb-aqua .sba-profile {
+    justify-content: center;
+    padding: 10px;
+  }
 }
 .sba-logout:hover {
   background: rgba(220,38,38,0.22);

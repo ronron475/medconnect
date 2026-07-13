@@ -4,6 +4,31 @@ declare(strict_types=1);
 /**
  * Portal-aware view paths for Admin vs Super Admin shells.
  */
+
+/** Basename of the active portal view (e.g. staff_management.php). */
+function portal_current_view_basename(): string
+{
+    if (defined('MC_VIEW_PATH') && MC_VIEW_PATH !== '') {
+        return basename(str_replace('\\', '/', (string) MC_VIEW_PATH));
+    }
+
+    $routePath = (string) ($_GET['path'] ?? '');
+    if ($routePath !== '') {
+        return basename(str_replace('\\', '/', $routePath));
+    }
+
+    $script = (string) ($_SERVER['SCRIPT_FILENAME'] ?? $_SERVER['SCRIPT_NAME'] ?? $_SERVER['PHP_SELF'] ?? '');
+    $base = basename(str_replace('\\', '/', $script));
+    if ($base === 'view.php') {
+        $uri = (string) ($_SERVER['REQUEST_URI'] ?? '');
+        if (preg_match('#/views/[^/]+/([^/?]+)#', $uri, $match)) {
+            return basename($match[1]);
+        }
+    }
+
+    return $base;
+}
+
 function portal_is_superadmin_shell(): bool
 {
     return defined('MC_PORTAL_SHELL') && MC_PORTAL_SHELL === 'superadmin';

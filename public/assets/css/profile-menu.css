@@ -1,0 +1,148 @@
+/**
+ * medConnect — Profile dropdown card (all roles)
+ */
+
+.mc-profmenu {
+  position: fixed;
+  z-index: 200200;
+  width: 296px;
+  max-width: calc(100vw - 24px);
+  border-radius: 16px;
+  overflow: hidden;
+  border: 1px solid rgba(15, 23, 42, 0.10);
+  box-shadow: 0 18px 48px rgba(15, 23, 42, 0.20);
+  background: #fff;
+}
+
+.mc-profmenu[hidden] { display: none !important; }
+
+.mc-profmenu::before {
+  content: '';
+  position: absolute;
+  top: -6px;
+  right: 18px;
+  width: 12px;
+  height: 12px;
+  background: #0b2f52;
+  transform: rotate(45deg);
+  border-left: 1px solid rgba(15, 23, 42, 0.08);
+  border-top: 1px solid rgba(15, 23, 42, 0.08);
+}
+
+.mc-profmenu__hero {
+  padding: 16px 16px 14px;
+  background: linear-gradient(180deg, #0b3b55 0%, #0b2f52 60%, #0a2847 100%);
+  color: #fff;
+  position: relative;
+}
+
+.mc-profmenu__hero::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, rgba(255,255,255,0.00) 0%, rgba(255,255,255,0.06) 100%);
+  pointer-events: none;
+}
+
+.mc-profmenu__seal {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.14);
+  border: 2px solid rgba(255,255,255,0.22);
+  display: grid;
+  place-items: center;
+  margin: 0 auto 8px;
+  overflow: hidden;
+}
+
+.mc-profmenu__seal img {
+  width: 46px;
+  height: 46px;
+  object-fit: contain;
+  display: block;
+  filter: drop-shadow(0 8px 18px rgba(0,0,0,0.25));
+}
+
+.mc-profmenu__name {
+  position: relative;
+  z-index: 1;
+  text-align: center;
+  font-weight: 900;
+  font-size: 17px;
+  line-height: 1.15;
+}
+
+.mc-profmenu__meta {
+  position: relative;
+  z-index: 1;
+  margin-top: 4px;
+  text-align: center;
+  font-size: 12px;
+  font-weight: 700;
+  color: rgba(255,255,255,0.85);
+}
+
+.mc-profmenu__actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  padding: 12px 14px 14px;
+  background: #0b2f52;
+}
+
+.mc-profmenu__btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 40px;
+  border-radius: 12px;
+  border: 1px solid rgba(255,255,255,0.18);
+  background: rgba(255,255,255,0.08);
+  color: #fff;
+  font-weight: 800;
+  font-size: 13px;
+  text-decoration: none;
+  cursor: pointer;
+  user-select: none;
+  transition: transform 0.15s ease, background 0.15s ease, border-color 0.15s ease;
+}
+
+/* Put Sign out on its own row */
+.mc-profmenu__btn--danger {
+  grid-column: 1 / -1;
+}
+
+.mc-profmenu__btn:hover {
+  transform: translateY(-1px);
+  background: rgba(255,255,255,0.12);
+  border-color: rgba(103, 232, 249, 0.32);
+}
+
+.mc-profmenu__btn--primary {
+  background: rgba(6, 147, 150, 0.25);
+  border-color: rgba(103, 232, 249, 0.30);
+}
+
+.mc-profmenu__btn--danger {
+  background: rgba(239, 68, 68, 0.14);
+  border-color: rgba(239, 68, 68, 0.28);
+}
+
+.mc-profmenu__btn--danger:hover {
+  background: rgba(239, 68, 68, 0.18);
+  border-color: rgba(239, 68, 68, 0.40);
+}
+
+.mc-profmenu__btn:focus-visible {
+  outline: 3px solid rgba(103, 232, 249, 0.30);
+  outline-offset: 2px;
+}
+
+@media (max-width: 420px) {
+  .mc-profmenu__actions {
+    grid-template-columns: 1fr;
+  }
+}
+

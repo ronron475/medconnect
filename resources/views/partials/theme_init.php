@@ -17,3 +17,8 @@ $theme_css_ver = file_exists($theme_css) ? (int) filemtime($theme_css) : time();
 })();
 </script>
 <link rel="stylesheet" href="<?= ASSET_BASE ?>/assets/css/medconnect-theme.css?v=<?= $theme_css_ver ?>">
+<?php
+$mc_modal_css = ASSETS_PATH . '/css/mc-modal-system.css';
+$mc_modal_css_ver = file_exists($mc_modal_css) ? (int) filemtime($mc_modal_css) : time();
+?>
+<link rel="stylesheet" href="<?= ASSET_BASE ?>/assets/css/mc-modal-system.css?v=<?= $mc_modal_css_ver ?>">

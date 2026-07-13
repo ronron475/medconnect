@@ -5,20 +5,24 @@ header('Content-Type: application/json; charset=utf-8');
 
 require_once dirname(dirname(dirname(__DIR__))) . '/bootstrap.php';
 require_once dirname(dirname(dirname(__DIR__))) . '/config/db.php';
+require_once dirname(dirname(dirname(__DIR__))) . '/app/includes/auth_guard.php';
 require_once dirname(dirname(dirname(__DIR__))) . '/app/includes/message_deletion.php';
 
-if (empty($_SESSION['user_id']) || !in_array($_SESSION['user_role'] ?? '', ['provider', 'patient'], true)) {
-    ob_end_clean();
-    http_response_code(403);
-    echo json_encode(['success' => false, 'message' => 'Unauthorized.']);
-    exit;
-}
+messages_api_require_auth($pdo);
 
 $method = strtoupper($_SERVER['REQUEST_METHOD'] ?? 'GET');
 if (!in_array($method, ['DELETE', 'POST'], true)) {
     ob_end_clean();
     http_response_code(405);
     echo json_encode(['success' => false, 'message' => 'Method not allowed.']);
+    exit;
+}
+
+$csrf = (string) ($_POST['csrf_token'] ?? $_SERVER['HTTP_X_CSRF_TOKEN'] ?? '');
+if ($csrf === '' || !auth_csrf_validate($csrf)) {
+    ob_end_clean();
+    http_response_code(403);
+    echo json_encode(['success' => false, 'message' => 'Invalid request token.']);
     exit;
 }
 

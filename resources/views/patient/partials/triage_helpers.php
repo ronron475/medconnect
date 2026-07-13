@@ -40,3 +40,34 @@ function mc_triage_level_label(string $level, ?string $urgency_label = null): st
     ];
     return htmlspecialchars($map[$level] ?? strtoupper($level));
 }
+
+/** Patient-facing visit status (no NLP / confidence exposure). */
+function mc_patient_visit_status_label(array $row): string
+{
+    $level = strtoupper((string) ($row['level'] ?? ''));
+    $label = strtolower((string) ($row['urgency_label'] ?? ''));
+    $triageLevel = strtolower((string) ($row['triage_level'] ?? ''));
+
+    if ($level === '1' || str_contains($label, 'emergency') || $triageLevel === 'emergency') {
+        return 'Priority — seek care promptly';
+    }
+    if ($level === '2' || str_contains($label, 'urgent') || $triageLevel === 'urgent') {
+        return 'Priority visit scheduled';
+    }
+    return 'Routine visit';
+}
+
+function mc_patient_visit_status_class(array $row): string
+{
+    $level = strtoupper((string) ($row['level'] ?? ''));
+    $label = strtolower((string) ($row['urgency_label'] ?? ''));
+    $triageLevel = strtolower((string) ($row['triage_level'] ?? ''));
+
+    if ($level === '1' || str_contains($label, 'emergency') || $triageLevel === 'emergency') {
+        return 'badge-risk--high';
+    }
+    if ($level === '2' || str_contains($label, 'urgent') || $triageLevel === 'urgent') {
+        return 'badge-risk--moderate';
+    }
+    return 'badge-risk--low';
+}

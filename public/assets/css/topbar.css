@@ -22,6 +22,25 @@
   flex: 1 1 auto;
 }
 
+.topbar-brand {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  background: transparent;
+  flex-shrink: 0;
+  text-decoration: none;
+}
+
+.topbar-brand__img {
+  width: 34px;
+  height: 34px;
+  object-fit: contain;
+  display: block;
+}
+
 .topbar-title-block {
   display: flex;
   flex-direction: column;
@@ -119,6 +138,13 @@
   justify-content: center;
   font-weight: 800;
   font-size: 11px;
+  border: none;
+  padding: 0;
+}
+
+.topbar-avatar:focus-visible {
+  outline: 3px solid rgba(6, 147, 150, 0.28);
+  outline-offset: 3px;
 }
 
 .topbar-logout {

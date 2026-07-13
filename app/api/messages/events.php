@@ -6,13 +6,9 @@ header('Content-Type: application/json; charset=utf-8');
 require_once dirname(dirname(dirname(__DIR__))) . '/bootstrap.php';
 require_once dirname(dirname(dirname(__DIR__))) . '/config/db.php';
 require_once dirname(dirname(dirname(__DIR__))) . '/app/includes/message_deletion.php';
+require_once dirname(dirname(dirname(__DIR__))) . '/app/includes/rate_limiter.php';
 
-if (empty($_SESSION['user_id']) || !in_array($_SESSION['user_role'] ?? '', ['provider', 'patient'], true)) {
-    ob_end_clean();
-    http_response_code(403);
-    echo json_encode(['success' => false, 'message' => 'Unauthorized.']);
-    exit;
-}
+messages_api_require_auth($pdo);
 
 $consultationId = (int)($_GET['consultation_id'] ?? 0);
 $userId = (int)$_SESSION['user_id'];
@@ -26,6 +22,14 @@ if (!$consultationId) {
 }
 
 try {
+    $rl = mc_rate_limiter_allow('messages_events', 90, 30, $userId);
+    if (!$rl['allowed']) {
+        ob_end_clean();
+        http_response_code(429);
+        echo json_encode(['success' => false, 'message' => 'Too many requests.']);
+        exit;
+    }
+
     consultation_messages_ensure_schema($pdo);
 
     $access = message_assert_participant($pdo, $consultationId, $userId);

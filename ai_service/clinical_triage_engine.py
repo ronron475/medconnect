@@ -100,6 +100,66 @@ def _apply_rule_score_bounds(score: int, tri: str) -> int:
     return score
 
 
+def _lookup_csv_condition_severity(
+    entities: list[dict[str, Any]],
+    conditions: list[str],
+    symptoms: list[str],
+) -> dict[str, Any] | None:
+    """Resolve highest CSV severity for detected conditions/symptoms (not LLM)."""
+    try:
+        from condition_severity_loader import lookup_condition_severity
+    except ImportError:
+        return None
+    terms: list[str] = []
+    for e in entities:
+        for key in ("english_term", "condition", "symptom", "hiligaynon_term"):
+            val = (e.get(key) or "").strip()
+            if val:
+                terms.append(val)
+        tri = (e.get("triage_level") or "").strip().lower().replace("-", "_")
+        # Phrase CSV triage_level also contributes as a virtual condition match.
+        if tri in {"emergency", "urgent", "non_urgent", "routine"}:
+            mapped = {
+                "emergency": "EMERGENCY",
+                "urgent": "URGENT",
+                "non_urgent": "NON_URGENT",
+                "routine": "NON_URGENT",
+            }[tri if tri != "routine" else "routine"]
+            terms.append(f"__phrase_{mapped}")
+    terms.extend(conditions)
+    terms.extend(symptoms)
+    # Resolve real terms first
+    real_terms = [t for t in terms if not t.startswith("__phrase_")]
+    hit = lookup_condition_severity(*real_terms) if real_terms else None
+    if hit:
+        return hit
+    # Fallback: max phrase triage_level from entities
+    rank = {"NON_URGENT": 0, "URGENT": 1, "EMERGENCY": 2}
+    best_level = ""
+    for e in entities:
+        tri = (e.get("triage_level") or "").strip().lower().replace("-", "_")
+        if tri in {"non_urgent", "routine", "low"}:
+            level = "NON_URGENT"
+        elif tri in {"urgent", "high"}:
+            level = "URGENT"
+        elif tri in {"emergency", "critical"}:
+            level = "EMERGENCY"
+        else:
+            continue
+        if not best_level or rank[level] > rank[best_level]:
+            best_level = level
+    if not best_level:
+        return None
+    return {
+        "medical_condition": "phrase_triage_level",
+        "severity_level": best_level,
+        "urgency_score": 20 if best_level == "NON_URGENT" else 55 if best_level == "URGENT" else 90,
+        "emergency_flag": best_level == "EMERGENCY",
+        "recommended_action": "",
+        "source": "entity.triage_level",
+    }
+
+
 def _collect_from_entities(entities: list[dict[str, Any]]) -> tuple[list[str], list[str], list[str]]:
     symptoms: list[str] = []
     conditions: list[str] = []
@@ -300,6 +360,13 @@ def assess(
 
     urgency_score, factors = _score_factors(original, english, entities, validated_terms)
 
+    # CSV condition/phrase severity classifications constrain the composite score.
+    csv_severity = _lookup_csv_condition_severity(entities, conditions, symptoms)
+    if csv_severity:
+        factors["csv_condition_severity"] = csv_severity
+        urgency_score = _apply_rule_score_bounds(urgency_score, csv_severity["severity_level"])
+        factors["matched_condition_severity"] = csv_severity.get("medical_condition") or ""
+
     if red_flags:
         display = "EMERGENCY"
         priority = "Critical"
@@ -312,22 +379,31 @@ def assess(
         priority = "Critical"
         triage_level = "EMERGENCY"
         classification = "EMERGENCY"
-        recommendation = "Seek emergency medical care immediately."
-        reason_short = "Composite urgency score indicates emergency-level concern."
+        recommendation = (
+            (csv_severity or {}).get("recommended_action")
+            or "Seek emergency medical care immediately."
+        )
+        reason_short = "Composite urgency score indicates emergency-level concern (CSV-backed)."
     elif urgency_score >= 38:
         display = "URGENT"
         priority = "Medium"
         triage_level = "HIGH"
         classification = "URGENT"
-        recommendation = "Consult a healthcare provider as soon as possible."
-        reason_short = "Moderate-to-severe symptom profile warrants prompt evaluation."
+        recommendation = (
+            (csv_severity or {}).get("recommended_action")
+            or "Consult a healthcare provider as soon as possible."
+        )
+        reason_short = "CSV severity / symptom profile warrants prompt evaluation."
     else:
         display = "NON-URGENT"
         priority = "Low"
         triage_level = "LOW"
         classification = "NON_URGENT"
-        recommendation = "Routine consultation."
-        reason_short = "No emergency warning signs identified."
+        recommendation = (
+            (csv_severity or {}).get("recommended_action")
+            or "Routine consultation."
+        )
+        reason_short = "CSV severity classifications indicate non-urgent presentation."
 
     conf = _confidence_level(confidence_score)
     clinical_reasoning = _build_reasoning(display, symptoms, conditions, body_parts, factors, red_flags)

@@ -35,6 +35,12 @@ final class AuditAction
     // Profile module
     const CONTACT_UPDATED          = 'contact_updated';
     const MEDICAL_PROFILE_UPDATED  = 'medical_profile_updated';
+    const MEDICAL_UPDATE_REQUESTED = 'medical_update_requested';
+    const MEDICAL_PROFILE_PROVIDER_UPDATED = 'medical_profile_provider_updated';
+    const PRIVACY_PREFERENCES_UPDATED = 'privacy_preferences_updated';
+    const NOTIFICATION_PREFERENCES_UPDATED = 'notification_preferences_updated';
+    const LOGOUT_ALL_DEVICES       = 'logout_all_devices';
+    const SESSION_TERMINATED         = 'session_terminated';
     const RESIDENCY_DOC_UPLOADED   = 'residency_doc_uploaded';
     const RESIDENCY_DOC_VERIFIED   = 'residency_doc_verified';
     const RESIDENCY_DOC_MISMATCH   = 'residency_doc_mismatch';

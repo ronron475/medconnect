@@ -92,3 +92,28 @@ function triage_assessment_backfill_triage_level(PDO $pdo): void
 
     $backfilled = true;
 }
+
+/**
+ * True when triage was submitted on a calendar day before today (no longer acceptable).
+ */
+function triage_case_is_expired(?string $assessedAt): bool
+{
+    if ($assessedAt === null || trim($assessedAt) === '') {
+        return true;
+    }
+
+    $tz = defined('APP_TIMEZONE') ? APP_TIMEZONE : 'Asia/Manila';
+    try {
+        $submitted = new DateTimeImmutable($assessedAt, new DateTimeZone($tz));
+        $today     = new DateTimeImmutable('today', new DateTimeZone($tz));
+
+        return $submitted < $today;
+    } catch (Exception $e) {
+        return true;
+    }
+}
+
+function triage_case_can_accept(?string $assessedAt, string $status = 'pending'): bool
+{
+    return $status === 'pending' && !triage_case_is_expired($assessedAt);
+}

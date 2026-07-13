@@ -45,6 +45,17 @@ final class ClinicalTriageEngine
         $redFlags = EmergencyFlagsLoader::scanEmergencyFlags($original, $english);
         [$urgencyScore, $factors] = self::scoreFactors($original, $english, $entities, $validatedTerms);
 
+        // CSV condition/phrase severity classifications constrain the composite score (not LLM).
+        $csvSeverity = self::lookupCsvConditionSeverity($entities, $conditions, $symptoms);
+        if ($csvSeverity !== null) {
+            $factors['csv_condition_severity'] = $csvSeverity;
+            $urgencyScore = self::applyRuleScoreBounds(
+                $urgencyScore,
+                (string) ($csvSeverity['severity_level'] ?? '')
+            );
+            $factors['matched_condition_severity'] = (string) ($csvSeverity['medical_condition'] ?? '');
+        }
+
         if ($redFlags !== []) {
             $display = 'EMERGENCY';
             $priority = 'Critical';
@@ -56,19 +67,22 @@ final class ClinicalTriageEngine
             $priority = 'Critical';
             $triageLevel = 'EMERGENCY';
             $classification = 'EMERGENCY';
-            $recommendation = 'Seek emergency medical care immediately.';
+            $recommendation = (string) (($csvSeverity['recommended_action'] ?? '')
+                ?: 'Seek emergency medical care immediately.');
         } elseif ($urgencyScore >= 38) {
             $display = 'URGENT';
             $priority = 'Medium';
             $triageLevel = 'HIGH';
             $classification = 'URGENT';
-            $recommendation = 'Consult a healthcare provider as soon as possible.';
+            $recommendation = (string) (($csvSeverity['recommended_action'] ?? '')
+                ?: 'Consult a healthcare provider as soon as possible.');
         } else {
             $display = 'NON-URGENT';
             $priority = 'Low';
             $triageLevel = 'LOW';
             $classification = 'NON_URGENT';
-            $recommendation = 'Routine consultation.';
+            $recommendation = (string) (($csvSeverity['recommended_action'] ?? '')
+                ?: 'Routine consultation.');
         }
 
         $conf = self::confidenceLevel($confidenceScore);
@@ -312,6 +326,65 @@ final class ClinicalTriageEngine
         }
 
         return $raw;
+    }
+
+    /**
+     * @param list<array<string, mixed>> $entities
+     * @param list<string> $conditions
+     * @param list<string> $symptoms
+     * @return array<string, mixed>|null
+     */
+    private static function lookupCsvConditionSeverity(array $entities, array $conditions, array $symptoms): ?array
+    {
+        if (!class_exists('ConditionSeverityLoader')) {
+            return null;
+        }
+
+        $terms = [];
+        foreach ($entities as $e) {
+            foreach (['english_term', 'condition', 'symptom', 'hiligaynon_term'] as $key) {
+                $val = trim((string) ($e[$key] ?? ''));
+                if ($val !== '') {
+                    $terms[] = $val;
+                }
+            }
+        }
+        foreach (array_merge($conditions, $symptoms) as $t) {
+            $terms[] = (string) $t;
+        }
+
+        $hit = ConditionSeverityLoader::lookup($terms);
+        if ($hit !== null) {
+            return $hit;
+        }
+
+        // Fallback: highest entity phrase triage_level from CSVs
+        $rank = ['NON_URGENT' => 0, 'URGENT' => 1, 'EMERGENCY' => 2];
+        $best = '';
+        foreach ($entities as $e) {
+            $tri = strtolower(str_replace('-', '_', trim((string) ($e['triage_level'] ?? ''))));
+            $level = match (true) {
+                in_array($tri, ['non_urgent', 'routine', 'low'], true) => 'NON_URGENT',
+                in_array($tri, ['urgent', 'high'], true) => 'URGENT',
+                in_array($tri, ['emergency', 'critical'], true) => 'EMERGENCY',
+                default => '',
+            };
+            if ($level !== '' && ($best === '' || $rank[$level] > $rank[$best])) {
+                $best = $level;
+            }
+        }
+        if ($best === '') {
+            return null;
+        }
+
+        return [
+            'medical_condition'  => 'phrase_triage_level',
+            'severity_level'      => $best,
+            'urgency_score'      => $best === 'EMERGENCY' ? 90 : ($best === 'URGENT' ? 55 : 20),
+            'emergency_flag'     => $best === 'EMERGENCY',
+            'recommended_action' => '',
+            'source'             => 'entity.triage_level',
+        ];
     }
 
     private static function applyRuleScoreBounds(int $score, string $tri): int

@@ -129,6 +129,11 @@ body.admin-body {
   transition: background 0.14s ease, color 0.14s ease, border-color 0.14s ease;
 }
 
+.adm-label {
+  display: inline;
+  min-width: 0;
+}
+
 .adm-nav-icon {
   width: 17px;
   height: 17px;
@@ -233,6 +238,64 @@ body.admin-body {
   font-family: inherit;
   width: calc(100% - 24px);
   text-align: left;
+}
+
+/* ── Tablet+Desktop mini sidebar (icon-only) ── */
+@media (min-width: 768px) {
+  body.mc-sidebar-mini {
+    --adm-sb-w: 78px;
+  }
+
+  body.mc-sidebar-mini .adm-sidebar {
+    width: var(--adm-sb-w);
+  }
+
+  body.mc-sidebar-mini .adm-logo {
+    justify-content: center;
+    gap: 0;
+    padding: 14px 10px;
+  }
+
+  body.mc-sidebar-mini .adm-logo img {
+    margin-right: 0 !important;
+    height: 34px !important;
+  }
+
+  body.mc-sidebar-mini .adm-logo-text {
+    display: none;
+  }
+
+  body.mc-sidebar-mini .adm-nav {
+    padding-left: 8px;
+    padding-right: 8px;
+  }
+
+  body.mc-sidebar-mini .adm-nav-section {
+    display: none;
+  }
+
+  body.mc-sidebar-mini .adm-nav-item,
+  body.mc-sidebar-mini .adm-logout {
+    justify-content: center;
+    gap: 0;
+  }
+
+  body.mc-sidebar-mini .adm-label {
+    display: none;
+  }
+
+  body.mc-sidebar-mini .adm-profile {
+    justify-content: center;
+    padding: 10px;
+  }
+
+  body.mc-sidebar-mini .adm-profile-info {
+    display: none;
+  }
+
+  body.mc-sidebar-mini .adm-main {
+    margin-left: var(--adm-sb-w);
+  }
 }
 
 .adm-logout:hover {

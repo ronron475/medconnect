@@ -188,6 +188,22 @@
     color: #475569;
 }
 
+.triage-badge--expired {
+    background: #fee2e2;
+    color: #991b1b;
+}
+
+.triage-expired-note {
+    font-size: 11px;
+    font-weight: 700;
+    color: #94a3b8;
+    white-space: nowrap;
+}
+
+.triage-row-expired {
+    opacity: 0.88;
+}
+
 .triage-actions {
     display: flex;
     flex-wrap: wrap;
@@ -307,6 +323,41 @@
 .triage-modal-box--complaint {
     border-left: 4px solid #3b82f6;
     background: rgba(59, 130, 246, 0.05);
+}
+
+.triage-nlp-panel {
+    margin-bottom: 18px;
+    padding: 14px;
+    border-radius: 12px;
+    border: 1px solid rgba(13, 148, 136, 0.25);
+    background: linear-gradient(165deg, #f0fdfa 0%, #ffffff 70%);
+}
+
+.triage-nlp-panel[hidden] {
+    display: none !important;
+}
+
+.triage-nlp-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+    margin-top: 10px;
+}
+
+.triage-nlp-label {
+    display: block;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: #0f766e;
+    margin-bottom: 6px;
+}
+
+@media (max-width: 720px) {
+    .triage-nlp-grid {
+        grid-template-columns: 1fr;
+    }
 }
 
 .triage-override-box {

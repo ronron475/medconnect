@@ -102,6 +102,14 @@ final class MedicalFuzzyMatcher
             }
         }
 
+        if (BodyPartsDataset::isBodyPartOrEnglish($english)) {
+            return array_merge(self::unmatchedRow($english), [
+                'validation_status'     => 'anatomy_only',
+                'validation_message'    => 'Anatomy-only body part — not validated as a symptom or condition.',
+                'dataset_category'      => 'body_part',
+            ]);
+        }
+
         $order = self::categorySearchOrder($hintCategory, $english);
         $bestMatch = null;
         $bestScore = 0;
@@ -493,11 +501,55 @@ final class MedicalFuzzyMatcher
             }
         }
 
-        if ($bestScore < self::ACCEPT_THRESHOLD) {
+        if ($bestScore < self::ACCEPT_THRESHOLD || self::rejectSpuriousShortMatch($term, $bestName, $bestScore)) {
             return self::unmatchedRow($term);
         }
 
         return self::acceptedMatchRow($term, $bestRecord, $bestScore);
+    }
+
+    private static function tokenizeName(string $text): array
+    {
+        $parts = preg_split('/[\s\-]+/u', mb_strtolower(trim($text))) ?: [];
+
+        return array_values(array_filter($parts, static fn (string $part): bool => $part !== ''));
+    }
+
+    private static function containsWholeToken(string $text, string $token): bool
+    {
+        $tokenKey = mb_strtolower(trim($token));
+        if ($tokenKey === '') {
+            return false;
+        }
+
+        return in_array($tokenKey, self::tokenizeName($text), true);
+    }
+
+    private static function rejectSpuriousShortMatch(string $term, ?string $matchedName, int $score): bool
+    {
+        if ($matchedName === null || $matchedName === '') {
+            return true;
+        }
+
+        $termKey = mb_strtolower(trim($term));
+        $nameKey = mb_strtolower(trim($matchedName));
+        if ($termKey === '' || $termKey === $nameKey) {
+            return false;
+        }
+
+        $termTokens = preg_split('/\s+/u', $termKey) ?: [];
+        $nameTokens = self::tokenizeName($matchedName);
+        if (count($termTokens) !== 1 || count($nameTokens) <= 1) {
+            return false;
+        }
+        if (!in_array($termKey, $nameTokens, true)) {
+            return false;
+        }
+        if ($score >= 98) {
+            return false;
+        }
+
+        return count($nameTokens) >= 2 && mb_strlen($termKey) <= 8;
     }
 
     /**
@@ -535,7 +587,7 @@ final class MedicalFuzzyMatcher
 
         foreach ($records as $record) {
             $nameLower = mb_strtolower($record['name']);
-            if (preg_match($pattern, $nameLower)) {
+            if (self::containsWholeToken($nameLower, $termKey)) {
                 $wordMatches[] = $record;
                 continue;
             }

@@ -1,822 +1,822 @@
 hiligaynon_pattern,english_pattern,triage_level,severity,medical_category,reason,body_system,status
+3 ka adlaw na daw indi ko makabaton sang kamot,arm weakness,emergency,severe,neurological,Combinatorial auto-rule,hand,active
+3 ka adlaw na gahubag kag gakatol lawas ko,body swelling,emergency,severe,allergy,Combinatorial auto-rule,body,active
+3 ka adlaw na gahubag lawas kag gakatol,body swelling,emergency,severe,allergy,Combinatorial auto-rule,body,active
+3 ka adlaw na gahubag lawas ko kag gakatol,body swelling,emergency,severe,allergy,Combinatorial auto-rule,body,active
+3 ka adlaw na indi ko makabaton sang kamot ko,hand arm weakness,emergency,severe,neurological,Combinatorial auto-rule,hand,active
+3 ka adlaw na lemah ang kamot ko,hand arm weakness,emergency,severe,neurological,Combinatorial auto-rule,hand,active
+5 ka adlaw na daw indi ko makabaton sang kamot,arm weakness,emergency,severe,neurological,Combinatorial auto-rule,hand,active
+5 ka adlaw na gahubag kag gakatol lawas ko,body swelling,emergency,severe,allergy,Combinatorial auto-rule,body,active
+5 ka adlaw na gahubag lawas kag gakatol,body swelling,emergency,severe,allergy,Combinatorial auto-rule,body,active
+5 ka adlaw na gahubag lawas ko kag gakatol,body swelling,emergency,severe,allergy,Combinatorial auto-rule,body,active
+5 ka adlaw na indi ko makabaton sang kamot ko,hand arm weakness,emergency,severe,neurological,Combinatorial auto-rule,hand,active
+5 ka adlaw na lemah ang kamot ko,hand arm weakness,emergency,severe,neurological,Combinatorial auto-rule,hand,active
+bag-o lang daw indi ko makabaton sang kamot,arm weakness,emergency,severe,neurological,Combinatorial auto-rule,hand,active
+bag-o lang gahubag kag gakatol lawas ko,body swelling,emergency,severe,allergy,Combinatorial auto-rule,body,active
+bag-o lang gahubag lawas kag gakatol,body swelling,emergency,severe,allergy,Combinatorial auto-rule,body,active
+bag-o lang gahubag lawas ko kag gakatol,body swelling,emergency,severe,allergy,Combinatorial auto-rule,body,active
+bag-o lang indi ko makabaton sang kamot ko,hand arm weakness,emergency,severe,neurological,Combinatorial auto-rule,hand,active
+bag-o lang lemah ang kamot ko,hand arm weakness,emergency,severe,neurological,Combinatorial auto-rule,hand,active
+budlay magginhawa,difficulty breathing,emergency,critical,respiratory,Pattern rule,general,active
 budlay magginhawa ko,difficulty breathing,emergency,critical,respiratory,Emergency — breathing difficulty,respiratory,active
-grabe gid nagadugo bilat ko,severe vaginal bleeding,emergency,critical,gynecologic_symptom,Emergency — severe bleeding,gynecologic_symptom,active
-indi mapunggan ang dugo sa ari,uncontrolled penile bleeding,emergency,critical,male_reproductive_symptom,Emergency — uncontrolled bleeding,male_reproductive_symptom,active
-masakit dughan ko,chest pain,emergency,severe,cardiovascular,Emergency — chest pain,cardiovascular,active
-nagdugo ulo ko,head bleeding,emergency,critical,trauma,Auto-rule: bleeding + head,neurological,active
-naguyam ko,seizure,emergency,critical,neurological,Seizure activity — emergency neurological assessment,neurological,active
-nautod ari ko,penis amputation,emergency,critical,trauma,Auto-rule: amputation + penis,male_reproductive,active
-wala ko maka-ihi,urinary retention,emergency,severe,urinary,Pattern rule,general,active
-gakatol bilat ko,vagina itching,non_urgent,mild,dermatological,Auto-rule: itching + vagina,female_reproductive,active
-galagas buhok ko,hair loss,non_urgent,mild,dermatological,Non-acute hair loss — routine consultation,dermatological,active
-kakatol bilat ko,vaginal itching,non_urgent,mild,female_reproductive_symptom,Routine reproductive symptom,female_reproductive_symptom,active
-sakit ulo ko,head pain,non_urgent,mild,neurological,Mild headache without neurological deficits,neurological,active
-ubo ko,cough,non_urgent,mild,respiratory,Pattern rule,general,active
-alta presyon ko,hypertension,urgent,moderate,cardiovascular,Elevated blood pressure symptoms — urgent monitoring,cardiovascular,active
-gadugo ari ko,penile bleeding,urgent,severe,male_reproductive_symptom,Genital bleeding — urgent care,male_reproductive_symptom,active
-gadugo bilat ko,vaginal bleeding,urgent,severe,gynecologic_symptom,Vaginal bleeding — urgent care,gynecologic_symptom,active
-gahabok itlog ko,testicle swelling,urgent,moderate,male_reproductive,Auto-rule: swelling + testicle,male_reproductive,active
-gahubag itlog ko,testicular swelling,urgent,moderate,male_reproductive_symptom,Testicular swelling — urgent evaluation,male_reproductive_symptom,active
-ginabaldom gid ko,severe abdominal pain,urgent,moderate,gastrointestinal,Significant abdominal pain — urgent surgical/medical evaluation,gastrointestinal,active
-ginahilanat gid ko,fever,urgent,moderate,general,Combinatorial auto-rule,general,active
-ginahilanat ko kag gahika ko,fever with cough,urgent,moderate,respiratory,Fever with respiratory symptoms — assess for systemic infection,respiratory,active
-ginkagat sang ido ko,dog bite,urgent,moderate,infection,Animal bite — wound care and rabies prophylaxis assessment,infection,active
-masakit pag-ihi ko,painful urination,urgent,moderate,urinary,Dysuria may indicate UTI — timely treatment needed,urinary,active
-may nana akon mata,eye infection,urgent,moderate,infection,Eye pain with purulent discharge suggests ocular infection,infection,active
-may nana sa ari ko,penile infection,urgent,severe,infection,Possible genital infection — urgent evaluation,infection,active
-may nana sa bilat ko,vaginal infection,urgent,severe,infection,Possible genital infection — urgent evaluation,infection,active
+daw indi ko makabaton,arm weakness,emergency,severe,neurological,Pattern rule,general,active
+daw indi ko makabaton sang kamot,arm weakness,emergency,severe,neurological,Combinatorial auto-rule,hand,active
+daw indi ko makahambal,speech difficulty,emergency,severe,neurological,Pattern rule,general,active
+dugay na daw indi ko makabaton sang kamot,arm weakness,emergency,severe,neurological,Combinatorial auto-rule,hand,active
+dugay na gahubag kag gakatol lawas ko,body swelling,emergency,severe,allergy,Combinatorial auto-rule,body,active
+dugay na gahubag lawas kag gakatol,body swelling,emergency,severe,allergy,Combinatorial auto-rule,body,active
+dugay na gahubag lawas ko kag gakatol,body swelling,emergency,severe,allergy,Combinatorial auto-rule,body,active
+dugay na indi ko makabaton sang kamot ko,hand arm weakness,emergency,severe,neurological,Combinatorial auto-rule,hand,active
+dugay na lemah ang kamot ko,hand arm weakness,emergency,severe,neurological,Combinatorial auto-rule,hand,active
+dula ginhawa,shortness of breath,emergency,critical,respiratory,Pattern rule,general,active
 gahabok dila ko,tongue swelling,emergency,severe,oral,Auto-rule: swelling + tongue,oral,active
+gahabok lawas ko,body swelling,emergency,severe,allergy,Auto-rule: swelling + body,general,active
 gahabok ngabil ko,lip swelling,emergency,severe,oral,Auto-rule: swelling + lip,oral,active
 gahabok tungod ko,throat swelling,emergency,severe,ent,Auto-rule: swelling + throat,ent,active
-gahabok mata ko,eye swelling,urgent,moderate,eye_condition,Auto-rule: swelling + eye,ophthalmologic,active
-gahabok talukap mata ko,eyelid swelling,urgent,moderate,eye_condition,Auto-rule: swelling + eyelid,ophthalmologic,active
-gahabok kamot ko,hand swelling,urgent,moderate,musculoskeletal_symptom,Auto-rule: swelling + hand,musculoskeletal,active
-gahabok tudlo ko,finger swelling,non_urgent,mild,musculoskeletal_symptom,Auto-rule: swelling + finger,musculoskeletal,active
-gahabok bilat ko,vagina swelling,urgent,moderate,female_reproductive,Auto-rule: swelling + vagina,female_reproductive,active
-gahabok ari ko,penis swelling,urgent,moderate,male_reproductive,Auto-rule: swelling + penis,male_reproductive,active
-may nana mata ko,eye infection,urgent,moderate,infection,Auto-rule: pus_infection + eye,ophthalmologic,active
-may nana bilat ko,vagina infection,urgent,moderate,infection,Auto-rule: pus_infection + vagina,female_reproductive,active
-may nana ari ko,penis infection,urgent,moderate,infection,Auto-rule: pus_infection + penis,male_reproductive,active
-nagdugo bilat ko,vagina bleeding,urgent,moderate,gynecologic,Auto-rule: bleeding + vagina,female_reproductive,active
-nagdugo ari ko,penis bleeding,urgent,moderate,male_reproductive,Auto-rule: bleeding + penis,male_reproductive,active
+gahubag kag gakatol lawas ko,body swelling,emergency,severe,allergy,Combinatorial auto-rule,body,active
+gahubag lawas kag gakatol,body swelling,emergency,severe,allergy,Combinatorial auto-rule,body,active
+gahubag lawas ko kag gakatol,body swelling,emergency,severe,allergy,Combinatorial auto-rule,body,active
 gasakit dughan ko,chest pain,emergency,severe,cardiovascular,Auto-rule: pain + chest,cardiovascular,active
-gasakit tiyan ko,abdomen pain,urgent,moderate,gastrointestinal,Auto-rule: pain + abdomen,gastrointestinal,active
-gasakit itlog ko,testicle pain,urgent,moderate,male_reproductive,Auto-rule: pain + testicle,male_reproductive,active
-gakatol mata ko,eye itching,non_urgent,mild,dermatological,Auto-rule: itching + eye,ophthalmologic,active
-nasunog kamot ko,hand burn,urgent,moderate,burn,Auto-rule: burn + hand,musculoskeletal,active
-nasunog lawas ko,body burn,emergency,severe,burn,Auto-rule: burn + body,general,active
-nabali tudlo ko,finger fracture,urgent,moderate,trauma,Auto-rule: fracture + finger,musculoskeletal,active
-nabali kamot ko,hand fracture,urgent,moderate,trauma,Auto-rule: fracture + hand,musculoskeletal,active
-nautod tudlo ko,finger amputation,emergency,critical,trauma,Auto-rule: amputation + finger,musculoskeletal,active
 grabe gid nagadugo,severe bleeding,emergency,critical,bleeding,Pattern rule,general,active
+grabe gid nagadugo bilat ko,severe vaginal bleeding,emergency,critical,gynecologic_symptom,Emergency — severe bleeding,gynecologic_symptom,active
 grabe gid nagdugo,severe bleeding,emergency,critical,bleeding,Pattern rule,general,active
-budlay magginhawa,difficulty breathing,emergency,critical,respiratory,Pattern rule,general,active
+gusto ko magpakamatay,suicidal ideation,emergency,critical,mental_health,Pattern rule,general,active
+indi ko makabaton sang kamot ko,hand arm weakness,emergency,severe,neurological,Combinatorial auto-rule,hand,active
 indi ko makaginhawa,cannot breathe,emergency,critical,respiratory,Pattern rule,general,active
+indi mapunggan ang dugo sa ari,uncontrolled penile bleeding,emergency,critical,male_reproductive_symptom,Emergency — uncontrolled bleeding,male_reproductive_symptom,active
+lemah ang kamot ko,hand arm weakness,emergency,severe,neurological,Combinatorial auto-rule,hand,active
+masakit dughan,chest pain,emergency,severe,cardiovascular,Pattern rule,general,active
+masakit dughan ko,chest pain,emergency,severe,cardiovascular,Emergency — chest pain,cardiovascular,active
+nabunggo ko sa salakyan,vehicle collision,emergency,critical,trauma,Pattern rule,general,active
+nagdugo ulo,head bleeding,emergency,critical,trauma,Pattern rule,general,active
+nagdugo ulo ko,head bleeding,emergency,critical,trauma,Auto-rule: bleeding + head,neurological,active
+naguyam,seizure,emergency,critical,neurological,Pattern rule,general,active
+naguyam ko,seizure,emergency,critical,neurological,Seizure activity — emergency neurological assessment,neurological,active
+nakuryente,electrical injury,emergency,critical,trauma,Pattern rule,general,active
+nasunog lawas ko,body burn,emergency,severe,burn,Auto-rule: burn + body,general,active
+nautod,amputation,emergency,critical,trauma,Pattern rule,general,active
+nautod ari ko,penis amputation,emergency,critical,trauma,Auto-rule: amputation + penis,male_reproductive,active
+nautod tudlo ko,finger amputation,emergency,critical,trauma,Auto-rule: amputation + finger,musculoskeletal,active
+wala ko maka-ihi,urinary retention,emergency,severe,urinary,Pattern rule,general,active
+gahabok bukongbukong ko,ankle swelling,non_urgent,mild,musculoskeletal,Auto-rule: swelling + ankle,musculoskeletal,active
+gahabok tiil ko,foot swelling,non_urgent,mild,musculoskeletal,Auto-rule: swelling + foot,musculoskeletal,active
+gahabok tudlo ko,finger swelling,non_urgent,mild,musculoskeletal_symptom,Auto-rule: swelling + finger,musculoskeletal,active
+gahabok tuhod ko,knee swelling,non_urgent,mild,musculoskeletal,Auto-rule: swelling + knee,musculoskeletal,active
+gakatol bilat ko,vagina itching,non_urgent,mild,dermatological,Auto-rule: itching + vagina,female_reproductive,active
+gakatol kamot ko,hand itching,non_urgent,mild,dermatological,Auto-rule: itching + hand,musculoskeletal,active
+gakatol lawas ko,body itching,non_urgent,mild,dermatological,Auto-rule: itching + body,general,active
+gakatol mata ko,eye itching,non_urgent,mild,dermatological,Auto-rule: itching + eye,ophthalmologic,active
+galagas buhok,hair loss,non_urgent,mild,dermatological,Pattern rule,general,active
+galagas buhok ko,hair loss,non_urgent,mild,dermatological,Non-acute hair loss — routine consultation,dermatological,active
+gapula kamot ko,hand redness,non_urgent,mild,dermatological,Auto-rule: redness + hand,musculoskeletal,active
+gapula mata,eye redness,non_urgent,mild,ophthalmologic,Pattern rule,general,active
+gapula mata ko,eye redness,non_urgent,mild,ophthalmologic,Auto-rule: redness + eye,ophthalmologic,active
+gasakit tudlo ko,finger pain,non_urgent,mild,musculoskeletal,Auto-rule: pain + finger,musculoskeletal,active
+gasakit tuhod ko,knee pain,non_urgent,mild,musculoskeletal,Auto-rule: pain + knee,musculoskeletal,active
 gasakit ulo ko,head pain,non_urgent,mild,neurological,Auto-rule: pain + head,neurological,active
-gasakit mata ko,eye pain,urgent,moderate,ophthalmologic,Auto-rule: pain + eye,ophthalmologic,active
+kakatol bilat,vaginal itching,non_urgent,mild,dermatological,Pattern rule,general,active
+kakatol bilat ko,vaginal itching,non_urgent,mild,female_reproductive_symptom,Routine reproductive symptom,female_reproductive_symptom,active
+sakit ulo,headache,non_urgent,mild,neurological,Pattern rule,general,active
+sakit ulo ko,head pain,non_urgent,mild,neurological,Mild headache without neurological deficits,neurological,active
+ubo ko,cough,non_urgent,mild,respiratory,Pattern rule,general,active
+3 ka adlaw na ginahilanat gid ko,fever,urgent,moderate,general,Combinatorial auto-rule,general,active
+5 ka adlaw na ginahilanat gid ko,fever,urgent,moderate,general,Combinatorial auto-rule,general,active
+abaga akon hilanat gid,shoulder high fever,urgent,moderate,general,Combinatorial auto-rule,shoulder,active
+abaga akon ko hilanat gid,shoulder high fever,urgent,moderate,general,Combinatorial auto-rule,shoulder,active
+abaga hilanat gid,shoulder high fever,urgent,moderate,general,Combinatorial auto-rule,shoulder,active
+abaga ko akon hilanat gid,shoulder high fever,urgent,moderate,general,Combinatorial auto-rule,shoulder,active
+abaga ko hilanat gid,shoulder high fever,urgent,moderate,general,Combinatorial auto-rule,shoulder,active
+akon abaga hilanat gid,shoulder high fever,urgent,moderate,general,Combinatorial auto-rule,shoulder,active
+akon bukongbukong hilanat gid,ankle high fever,urgent,moderate,general,Combinatorial auto-rule,ankle,active
+akon dalunggan hilanat gid,ear high fever,urgent,moderate,general,Combinatorial auto-rule,ear,active
+akon dughan hilanat gid,chest high fever,urgent,moderate,general,Combinatorial auto-rule,chest,active
+akon ilong hilanat gid,nose high fever,urgent,moderate,general,Combinatorial auto-rule,nose,active
+akon kilid mata hilanat gid,eyelid high fever,urgent,moderate,general,Combinatorial auto-rule,eyelid,active
+akon ko abaga hilanat gid,shoulder high fever,urgent,moderate,general,Combinatorial auto-rule,shoulder,active
+akon ko bukongbukong hilanat gid,ankle high fever,urgent,moderate,general,Combinatorial auto-rule,ankle,active
+akon ko dalunggan hilanat gid,ear high fever,urgent,moderate,general,Combinatorial auto-rule,ear,active
+akon ko dughan hilanat gid,chest high fever,urgent,moderate,general,Combinatorial auto-rule,chest,active
+akon ko ilong hilanat gid,nose high fever,urgent,moderate,general,Combinatorial auto-rule,nose,active
+akon ko kilid mata hilanat gid,eyelid high fever,urgent,moderate,general,Combinatorial auto-rule,eyelid,active
+akon ko ngabil hilanat gid,lip high fever,urgent,moderate,general,Combinatorial auto-rule,lip,active
+akon ko pisngi hilanat gid,cheek high fever,urgent,moderate,general,Combinatorial auto-rule,cheek,active
+akon ko singit hilanat gid,groin high fever,urgent,moderate,general,Combinatorial auto-rule,groin,active
+akon ko talukap mata hilanat gid,eyelid high fever,urgent,moderate,general,Combinatorial auto-rule,eyelid,active
+akon ko tiyan hilanat gid,abdomen high fever,urgent,moderate,general,Combinatorial auto-rule,abdomen,active
+akon ko tungod hilanat gid,throat high fever,urgent,moderate,general,Combinatorial auto-rule,throat,active
+akon ngabil hilanat gid,lip high fever,urgent,moderate,general,Combinatorial auto-rule,lip,active
+akon pisngi hilanat gid,cheek high fever,urgent,moderate,general,Combinatorial auto-rule,cheek,active
+akon singit hilanat gid,groin high fever,urgent,moderate,general,Combinatorial auto-rule,groin,active
+akon talukap mata hilanat gid,eyelid high fever,urgent,moderate,general,Combinatorial auto-rule,eyelid,active
+akon tiyan hilanat gid,abdomen high fever,urgent,moderate,general,Combinatorial auto-rule,abdomen,active
+akon tungod hilanat gid,throat high fever,urgent,moderate,general,Combinatorial auto-rule,throat,active
+alta presyon,hypertension,urgent,moderate,cardiovascular,Pattern rule,general,active
+alta presyon ko,hypertension,urgent,moderate,cardiovascular,Elevated blood pressure symptoms — urgent monitoring,cardiovascular,active
+bag-o lang ginahilanat gid ko,fever,urgent,moderate,general,Combinatorial auto-rule,general,active
+bukongbukong akon hilanat gid,ankle high fever,urgent,moderate,general,Combinatorial auto-rule,ankle,active
+bukongbukong akon ko hilanat gid,ankle high fever,urgent,moderate,general,Combinatorial auto-rule,ankle,active
+bukongbukong hilanat gid,ankle high fever,urgent,moderate,general,Combinatorial auto-rule,ankle,active
+bukongbukong ko akon hilanat gid,ankle high fever,urgent,moderate,general,Combinatorial auto-rule,ankle,active
+bukongbukong ko hilanat gid,ankle high fever,urgent,moderate,general,Combinatorial auto-rule,ankle,active
+dalunggan akon hilanat gid,ear high fever,urgent,moderate,general,Combinatorial auto-rule,ear,active
+dalunggan akon ko hilanat gid,ear high fever,urgent,moderate,general,Combinatorial auto-rule,ear,active
+dalunggan hilanat gid,ear high fever,urgent,moderate,general,Combinatorial auto-rule,ear,active
+dalunggan ko akon hilanat gid,ear high fever,urgent,moderate,general,Combinatorial auto-rule,ear,active
+dalunggan ko hilanat gid,ear high fever,urgent,moderate,general,Combinatorial auto-rule,ear,active
+dugay na ginahilanat gid ko,fever,urgent,moderate,general,Combinatorial auto-rule,general,active
+dughan akon hilanat gid,chest high fever,urgent,moderate,general,Combinatorial auto-rule,chest,active
+dughan akon ko hilanat gid,chest high fever,urgent,moderate,general,Combinatorial auto-rule,chest,active
+dughan hilanat gid,chest high fever,urgent,moderate,general,Combinatorial auto-rule,chest,active
+dughan ko akon hilanat gid,chest high fever,urgent,moderate,general,Combinatorial auto-rule,chest,active
+dughan ko hilanat gid,chest high fever,urgent,moderate,general,Combinatorial auto-rule,chest,active
+gadugo ari ko,penile bleeding,urgent,severe,male_reproductive_symptom,Genital bleeding — urgent care,male_reproductive_symptom,active
+gadugo bilat ko,vaginal bleeding,urgent,severe,gynecologic_symptom,Vaginal bleeding — urgent care,gynecologic_symptom,active
+gahabok ari ko,penis swelling,urgent,moderate,male_reproductive,Auto-rule: swelling + penis,male_reproductive,active
+gahabok bilat ko,vagina swelling,urgent,moderate,female_reproductive,Auto-rule: swelling + vagina,female_reproductive,active
+gahabok itlog ko,testicle swelling,urgent,moderate,male_reproductive,Auto-rule: swelling + testicle,male_reproductive,active
+gahabok kamot ko,hand swelling,urgent,moderate,musculoskeletal_symptom,Auto-rule: swelling + hand,musculoskeletal,active
+gahabok liog ko,neck swelling,urgent,moderate,ent,Auto-rule: swelling + neck,musculoskeletal,active
+gahabok mata ko,eye swelling,urgent,moderate,eye_condition,Auto-rule: swelling + eye,ophthalmologic,active
+gahabok pisngi ko,cheek swelling,urgent,moderate,head,Auto-rule: swelling + cheek,head,active
+gahabok talukap mata ko,eyelid swelling,urgent,moderate,eye_condition,Auto-rule: swelling + eyelid,ophthalmologic,active
+gahabok tiyan ko,abdomen swelling,urgent,moderate,gastrointestinal,Auto-rule: swelling + abdomen,gastrointestinal,active
+gahika dughan ko,chest cough,urgent,moderate,respiratory,Auto-rule: cough + chest,cardiovascular,active
+gahubag itlog ko,testicular swelling,urgent,moderate,male_reproductive_symptom,Testicular swelling — urgent evaluation,male_reproductive_symptom,active
 gasakit ari ko,penis pain,urgent,moderate,male_reproductive,Auto-rule: pain + penis,male_reproductive,active
 gasakit bilat ko,vagina pain,urgent,moderate,female_reproductive,Auto-rule: pain + vagina,female_reproductive,active
 gasakit dalunggan ko,ear pain,urgent,moderate,ent,Auto-rule: pain + ear,ent,active
-gasakit tungod ko,throat pain,urgent,moderate,ent,Auto-rule: pain + throat,ent,active
+gasakit itlog ko,testicle pain,urgent,moderate,male_reproductive,Auto-rule: pain + testicle,male_reproductive,active
 gasakit likod ko,back pain,urgent,moderate,musculoskeletal,Auto-rule: pain + back,musculoskeletal,active
-gasakit tuhod ko,knee pain,non_urgent,mild,musculoskeletal,Auto-rule: pain + knee,musculoskeletal,active
-gasakit tudlo ko,finger pain,non_urgent,mild,musculoskeletal,Auto-rule: pain + finger,musculoskeletal,active
-gahabok liog ko,neck swelling,urgent,moderate,ent,Auto-rule: swelling + neck,musculoskeletal,active
-gahabok tiyan ko,abdomen swelling,urgent,moderate,gastrointestinal,Auto-rule: swelling + abdomen,gastrointestinal,active
-gahabok bukongbukong ko,ankle swelling,non_urgent,mild,musculoskeletal,Auto-rule: swelling + ankle,musculoskeletal,active
-gahabok tiil ko,foot swelling,non_urgent,mild,musculoskeletal,Auto-rule: swelling + foot,musculoskeletal,active
-gahabok tuhod ko,knee swelling,non_urgent,mild,musculoskeletal,Auto-rule: swelling + knee,musculoskeletal,active
-gahabok pisngi ko,cheek swelling,urgent,moderate,head,Auto-rule: swelling + cheek,head,active
-gahabok lawas ko,body swelling,emergency,severe,allergy,Auto-rule: swelling + body,general,active
-gapula mata ko,eye redness,non_urgent,mild,ophthalmologic,Auto-rule: redness + eye,ophthalmologic,active
-gapula kamot ko,hand redness,non_urgent,mild,dermatological,Auto-rule: redness + hand,musculoskeletal,active
-nagdugo kamot ko,hand bleeding,urgent,moderate,wound,Auto-rule: bleeding + hand,musculoskeletal,active
-nagdugo tudlo ko,finger bleeding,urgent,moderate,wound,Auto-rule: bleeding + finger,musculoskeletal,active
-nasunog tudlo ko,finger burn,urgent,moderate,burn,Auto-rule: burn + finger,musculoskeletal,active
-nasunog tiil ko,foot burn,urgent,moderate,burn,Auto-rule: burn + foot,musculoskeletal,active
+gasakit mata ko,eye pain,urgent,moderate,ophthalmologic,Auto-rule: pain + eye,ophthalmologic,active
+gasakit tiyan ko,abdomen pain,urgent,moderate,gastrointestinal,Auto-rule: pain + abdomen,gastrointestinal,active
+gasakit tungod ko,throat pain,urgent,moderate,ent,Auto-rule: pain + throat,ent,active
+gid hilanat gid abaga akon,shoulder high fever,urgent,moderate,general,Combinatorial auto-rule,shoulder,active
+gid hilanat gid abaga akon ko,shoulder high fever,urgent,moderate,general,Combinatorial auto-rule,shoulder,active
+gid hilanat gid abaga ko,shoulder high fever,urgent,moderate,general,Combinatorial auto-rule,shoulder,active
+gid hilanat gid abaga ko akon,shoulder high fever,urgent,moderate,general,Combinatorial auto-rule,shoulder,active
+gid hilanat gid bukongbukong akon,ankle high fever,urgent,moderate,general,Combinatorial auto-rule,ankle,active
+gid hilanat gid bukongbukong akon ko,ankle high fever,urgent,moderate,general,Combinatorial auto-rule,ankle,active
+gid hilanat gid bukongbukong ko,ankle high fever,urgent,moderate,general,Combinatorial auto-rule,ankle,active
+gid hilanat gid bukongbukong ko akon,ankle high fever,urgent,moderate,general,Combinatorial auto-rule,ankle,active
+gid hilanat gid dalunggan akon,ear high fever,urgent,moderate,general,Combinatorial auto-rule,ear,active
+gid hilanat gid dalunggan akon ko,ear high fever,urgent,moderate,general,Combinatorial auto-rule,ear,active
+gid hilanat gid dalunggan ko,ear high fever,urgent,moderate,general,Combinatorial auto-rule,ear,active
+gid hilanat gid dalunggan ko akon,ear high fever,urgent,moderate,general,Combinatorial auto-rule,ear,active
+gid hilanat gid dughan akon,chest high fever,urgent,moderate,general,Combinatorial auto-rule,chest,active
+gid hilanat gid dughan akon ko,chest high fever,urgent,moderate,general,Combinatorial auto-rule,chest,active
+gid hilanat gid dughan ko,chest high fever,urgent,moderate,general,Combinatorial auto-rule,chest,active
+gid hilanat gid dughan ko akon,chest high fever,urgent,moderate,general,Combinatorial auto-rule,chest,active
+gid hilanat gid ilong akon,nose high fever,urgent,moderate,general,Combinatorial auto-rule,nose,active
+gid hilanat gid ilong akon ko,nose high fever,urgent,moderate,general,Combinatorial auto-rule,nose,active
+gid hilanat gid ilong ko,nose high fever,urgent,moderate,general,Combinatorial auto-rule,nose,active
+gid hilanat gid ilong ko akon,nose high fever,urgent,moderate,general,Combinatorial auto-rule,nose,active
+gid hilanat gid kilid mata akon,eyelid high fever,urgent,moderate,general,Combinatorial auto-rule,eyelid,active
+gid hilanat gid kilid mata akon ko,eyelid high fever,urgent,moderate,general,Combinatorial auto-rule,eyelid,active
+gid hilanat gid kilid mata ko,eyelid high fever,urgent,moderate,general,Combinatorial auto-rule,eyelid,active
+gid hilanat gid kilid mata ko akon,eyelid high fever,urgent,moderate,general,Combinatorial auto-rule,eyelid,active
+gid hilanat gid ngabil akon,lip high fever,urgent,moderate,general,Combinatorial auto-rule,lip,active
+gid hilanat gid ngabil akon ko,lip high fever,urgent,moderate,general,Combinatorial auto-rule,lip,active
+gid hilanat gid ngabil ko,lip high fever,urgent,moderate,general,Combinatorial auto-rule,lip,active
+gid hilanat gid ngabil ko akon,lip high fever,urgent,moderate,general,Combinatorial auto-rule,lip,active
+gid hilanat gid pisngi akon,cheek high fever,urgent,moderate,general,Combinatorial auto-rule,cheek,active
+gid hilanat gid pisngi akon ko,cheek high fever,urgent,moderate,general,Combinatorial auto-rule,cheek,active
+gid hilanat gid pisngi ko,cheek high fever,urgent,moderate,general,Combinatorial auto-rule,cheek,active
+gid hilanat gid pisngi ko akon,cheek high fever,urgent,moderate,general,Combinatorial auto-rule,cheek,active
+gid hilanat gid singit akon,groin high fever,urgent,moderate,general,Combinatorial auto-rule,groin,active
+gid hilanat gid singit akon ko,groin high fever,urgent,moderate,general,Combinatorial auto-rule,groin,active
+gid hilanat gid singit ko,groin high fever,urgent,moderate,general,Combinatorial auto-rule,groin,active
+gid hilanat gid singit ko akon,groin high fever,urgent,moderate,general,Combinatorial auto-rule,groin,active
+gid hilanat gid talukap mata akon,eyelid high fever,urgent,moderate,general,Combinatorial auto-rule,eyelid,active
+gid hilanat gid talukap mata akon ko,eyelid high fever,urgent,moderate,general,Combinatorial auto-rule,eyelid,active
+gid hilanat gid talukap mata ko,eyelid high fever,urgent,moderate,general,Combinatorial auto-rule,eyelid,active
+gid hilanat gid talukap mata ko akon,eyelid high fever,urgent,moderate,general,Combinatorial auto-rule,eyelid,active
+gid hilanat gid tiyan akon,abdomen high fever,urgent,moderate,general,Combinatorial auto-rule,abdomen,active
+gid hilanat gid tiyan akon ko,abdomen high fever,urgent,moderate,general,Combinatorial auto-rule,abdomen,active
+gid hilanat gid tiyan ko,abdomen high fever,urgent,moderate,general,Combinatorial auto-rule,abdomen,active
+gid hilanat gid tiyan ko akon,abdomen high fever,urgent,moderate,general,Combinatorial auto-rule,abdomen,active
+gid hilanat gid tungod akon,throat high fever,urgent,moderate,general,Combinatorial auto-rule,throat,active
+gid hilanat gid tungod akon ko,throat high fever,urgent,moderate,general,Combinatorial auto-rule,throat,active
+gid hilanat gid tungod ko,throat high fever,urgent,moderate,general,Combinatorial auto-rule,throat,active
+gid hilanat gid tungod ko akon,throat high fever,urgent,moderate,general,Combinatorial auto-rule,throat,active
+ginabaldom gid ko,severe abdominal pain,urgent,moderate,gastrointestinal,Significant abdominal pain — urgent surgical/medical evaluation,gastrointestinal,active
+ginahilanat gid,high fever,urgent,moderate,general,Pattern rule,general,active
+ginahilanat gid ko,fever,urgent,moderate,general,Combinatorial auto-rule,general,active
+ginahilanat ko kag gahika ko,fever with cough,urgent,moderate,respiratory,Fever with respiratory symptoms — assess for systemic infection,respiratory,active
 ginahilanat lawas ko,body fever,urgent,moderate,general,Auto-rule: fever + body,general,active
-gahika dughan ko,chest cough,urgent,moderate,respiratory,Auto-rule: cough + chest,cardiovascular,active
+ginkagat sang ido,dog bite,urgent,moderate,infection,Pattern rule,general,active
+ginkagat sang ido ko,dog bite,urgent,moderate,infection,Animal bite — wound care and rabies prophylaxis assessment,infection,active
+grabe gid hilanat gid abaga akon,shoulder high fever,urgent,moderate,general,Combinatorial auto-rule,shoulder,active
+grabe gid hilanat gid abaga akon ko,shoulder high fever,urgent,moderate,general,Combinatorial auto-rule,shoulder,active
+grabe gid hilanat gid abaga ko,shoulder high fever,urgent,moderate,general,Combinatorial auto-rule,shoulder,active
+grabe gid hilanat gid abaga ko akon,shoulder high fever,urgent,moderate,general,Combinatorial auto-rule,shoulder,active
+grabe gid hilanat gid bukongbukong akon,ankle high fever,urgent,moderate,general,Combinatorial auto-rule,ankle,active
+grabe gid hilanat gid bukongbukong akon ko,ankle high fever,urgent,moderate,general,Combinatorial auto-rule,ankle,active
+grabe gid hilanat gid bukongbukong ko,ankle high fever,urgent,moderate,general,Combinatorial auto-rule,ankle,active
+grabe gid hilanat gid bukongbukong ko akon,ankle high fever,urgent,moderate,general,Combinatorial auto-rule,ankle,active
+grabe gid hilanat gid dalunggan akon,ear high fever,urgent,moderate,general,Combinatorial auto-rule,ear,active
+grabe gid hilanat gid dalunggan akon ko,ear high fever,urgent,moderate,general,Combinatorial auto-rule,ear,active
+grabe gid hilanat gid dalunggan ko,ear high fever,urgent,moderate,general,Combinatorial auto-rule,ear,active
+grabe gid hilanat gid dalunggan ko akon,ear high fever,urgent,moderate,general,Combinatorial auto-rule,ear,active
+grabe gid hilanat gid dughan akon,chest high fever,urgent,moderate,general,Combinatorial auto-rule,chest,active
+grabe gid hilanat gid dughan akon ko,chest high fever,urgent,moderate,general,Combinatorial auto-rule,chest,active
+grabe gid hilanat gid dughan ko,chest high fever,urgent,moderate,general,Combinatorial auto-rule,chest,active
+grabe gid hilanat gid dughan ko akon,chest high fever,urgent,moderate,general,Combinatorial auto-rule,chest,active
+grabe gid hilanat gid ilong akon,nose high fever,urgent,moderate,general,Combinatorial auto-rule,nose,active
+grabe gid hilanat gid ilong akon ko,nose high fever,urgent,moderate,general,Combinatorial auto-rule,nose,active
+grabe gid hilanat gid ilong ko,nose high fever,urgent,moderate,general,Combinatorial auto-rule,nose,active
+grabe gid hilanat gid ilong ko akon,nose high fever,urgent,moderate,general,Combinatorial auto-rule,nose,active
+grabe gid hilanat gid kilid mata akon,eyelid high fever,urgent,moderate,general,Combinatorial auto-rule,eyelid,active
+grabe gid hilanat gid kilid mata akon ko,eyelid high fever,urgent,moderate,general,Combinatorial auto-rule,eyelid,active
+grabe gid hilanat gid kilid mata ko,eyelid high fever,urgent,moderate,general,Combinatorial auto-rule,eyelid,active
+grabe gid hilanat gid kilid mata ko akon,eyelid high fever,urgent,moderate,general,Combinatorial auto-rule,eyelid,active
+grabe gid hilanat gid ngabil akon,lip high fever,urgent,moderate,general,Combinatorial auto-rule,lip,active
+grabe gid hilanat gid ngabil akon ko,lip high fever,urgent,moderate,general,Combinatorial auto-rule,lip,active
+grabe gid hilanat gid ngabil ko,lip high fever,urgent,moderate,general,Combinatorial auto-rule,lip,active
+grabe gid hilanat gid ngabil ko akon,lip high fever,urgent,moderate,general,Combinatorial auto-rule,lip,active
+grabe gid hilanat gid pisngi akon,cheek high fever,urgent,moderate,general,Combinatorial auto-rule,cheek,active
+grabe gid hilanat gid pisngi akon ko,cheek high fever,urgent,moderate,general,Combinatorial auto-rule,cheek,active
+grabe gid hilanat gid pisngi ko,cheek high fever,urgent,moderate,general,Combinatorial auto-rule,cheek,active
+grabe gid hilanat gid pisngi ko akon,cheek high fever,urgent,moderate,general,Combinatorial auto-rule,cheek,active
+grabe gid hilanat gid singit akon,groin high fever,urgent,moderate,general,Combinatorial auto-rule,groin,active
+grabe gid hilanat gid singit akon ko,groin high fever,urgent,moderate,general,Combinatorial auto-rule,groin,active
+grabe gid hilanat gid singit ko,groin high fever,urgent,moderate,general,Combinatorial auto-rule,groin,active
+grabe gid hilanat gid singit ko akon,groin high fever,urgent,moderate,general,Combinatorial auto-rule,groin,active
+grabe gid hilanat gid talukap mata akon,eyelid high fever,urgent,moderate,general,Combinatorial auto-rule,eyelid,active
+grabe gid hilanat gid talukap mata akon ko,eyelid high fever,urgent,moderate,general,Combinatorial auto-rule,eyelid,active
+grabe gid hilanat gid talukap mata ko,eyelid high fever,urgent,moderate,general,Combinatorial auto-rule,eyelid,active
+grabe gid hilanat gid talukap mata ko akon,eyelid high fever,urgent,moderate,general,Combinatorial auto-rule,eyelid,active
+grabe gid hilanat gid tiyan akon,abdomen high fever,urgent,moderate,general,Combinatorial auto-rule,abdomen,active
+grabe gid hilanat gid tiyan akon ko,abdomen high fever,urgent,moderate,general,Combinatorial auto-rule,abdomen,active
+grabe gid hilanat gid tiyan ko,abdomen high fever,urgent,moderate,general,Combinatorial auto-rule,abdomen,active
+grabe gid hilanat gid tiyan ko akon,abdomen high fever,urgent,moderate,general,Combinatorial auto-rule,abdomen,active
+grabe gid hilanat gid tungod akon,throat high fever,urgent,moderate,general,Combinatorial auto-rule,throat,active
+grabe gid hilanat gid tungod akon ko,throat high fever,urgent,moderate,general,Combinatorial auto-rule,throat,active
+grabe gid hilanat gid tungod ko,throat high fever,urgent,moderate,general,Combinatorial auto-rule,throat,active
+grabe gid hilanat gid tungod ko akon,throat high fever,urgent,moderate,general,Combinatorial auto-rule,throat,active
+grabe hilanat gid abaga akon,shoulder high fever,urgent,moderate,general,Combinatorial auto-rule,shoulder,active
+grabe hilanat gid abaga akon ko,shoulder high fever,urgent,moderate,general,Combinatorial auto-rule,shoulder,active
+grabe hilanat gid abaga ko,shoulder high fever,urgent,moderate,general,Combinatorial auto-rule,shoulder,active
+grabe hilanat gid abaga ko akon,shoulder high fever,urgent,moderate,general,Combinatorial auto-rule,shoulder,active
+grabe hilanat gid bukongbukong akon,ankle high fever,urgent,moderate,general,Combinatorial auto-rule,ankle,active
+grabe hilanat gid bukongbukong akon ko,ankle high fever,urgent,moderate,general,Combinatorial auto-rule,ankle,active
+grabe hilanat gid bukongbukong ko,ankle high fever,urgent,moderate,general,Combinatorial auto-rule,ankle,active
+grabe hilanat gid bukongbukong ko akon,ankle high fever,urgent,moderate,general,Combinatorial auto-rule,ankle,active
+grabe hilanat gid dalunggan akon,ear high fever,urgent,moderate,general,Combinatorial auto-rule,ear,active
+grabe hilanat gid dalunggan akon ko,ear high fever,urgent,moderate,general,Combinatorial auto-rule,ear,active
+grabe hilanat gid dalunggan ko,ear high fever,urgent,moderate,general,Combinatorial auto-rule,ear,active
+grabe hilanat gid dalunggan ko akon,ear high fever,urgent,moderate,general,Combinatorial auto-rule,ear,active
+grabe hilanat gid dughan akon,chest high fever,urgent,moderate,general,Combinatorial auto-rule,chest,active
+grabe hilanat gid dughan akon ko,chest high fever,urgent,moderate,general,Combinatorial auto-rule,chest,active
+grabe hilanat gid dughan ko,chest high fever,urgent,moderate,general,Combinatorial auto-rule,chest,active
+grabe hilanat gid dughan ko akon,chest high fever,urgent,moderate,general,Combinatorial auto-rule,chest,active
+grabe hilanat gid ilong akon,nose high fever,urgent,moderate,general,Combinatorial auto-rule,nose,active
+grabe hilanat gid ilong akon ko,nose high fever,urgent,moderate,general,Combinatorial auto-rule,nose,active
+grabe hilanat gid ilong ko,nose high fever,urgent,moderate,general,Combinatorial auto-rule,nose,active
+grabe hilanat gid ilong ko akon,nose high fever,urgent,moderate,general,Combinatorial auto-rule,nose,active
+grabe hilanat gid kilid mata akon,eyelid high fever,urgent,moderate,general,Combinatorial auto-rule,eyelid,active
+grabe hilanat gid kilid mata akon ko,eyelid high fever,urgent,moderate,general,Combinatorial auto-rule,eyelid,active
+grabe hilanat gid kilid mata ko,eyelid high fever,urgent,moderate,general,Combinatorial auto-rule,eyelid,active
+grabe hilanat gid kilid mata ko akon,eyelid high fever,urgent,moderate,general,Combinatorial auto-rule,eyelid,active
+grabe hilanat gid ngabil akon,lip high fever,urgent,moderate,general,Combinatorial auto-rule,lip,active
+grabe hilanat gid ngabil akon ko,lip high fever,urgent,moderate,general,Combinatorial auto-rule,lip,active
+grabe hilanat gid ngabil ko,lip high fever,urgent,moderate,general,Combinatorial auto-rule,lip,active
+grabe hilanat gid ngabil ko akon,lip high fever,urgent,moderate,general,Combinatorial auto-rule,lip,active
+grabe hilanat gid pisngi akon,cheek high fever,urgent,moderate,general,Combinatorial auto-rule,cheek,active
+grabe hilanat gid pisngi akon ko,cheek high fever,urgent,moderate,general,Combinatorial auto-rule,cheek,active
+grabe hilanat gid pisngi ko,cheek high fever,urgent,moderate,general,Combinatorial auto-rule,cheek,active
+grabe hilanat gid pisngi ko akon,cheek high fever,urgent,moderate,general,Combinatorial auto-rule,cheek,active
+grabe hilanat gid singit akon,groin high fever,urgent,moderate,general,Combinatorial auto-rule,groin,active
+grabe hilanat gid singit akon ko,groin high fever,urgent,moderate,general,Combinatorial auto-rule,groin,active
+grabe hilanat gid singit ko,groin high fever,urgent,moderate,general,Combinatorial auto-rule,groin,active
+grabe hilanat gid singit ko akon,groin high fever,urgent,moderate,general,Combinatorial auto-rule,groin,active
+grabe hilanat gid talukap mata akon,eyelid high fever,urgent,moderate,general,Combinatorial auto-rule,eyelid,active
+grabe hilanat gid talukap mata akon ko,eyelid high fever,urgent,moderate,general,Combinatorial auto-rule,eyelid,active
+grabe hilanat gid talukap mata ko,eyelid high fever,urgent,moderate,general,Combinatorial auto-rule,eyelid,active
+grabe hilanat gid talukap mata ko akon,eyelid high fever,urgent,moderate,general,Combinatorial auto-rule,eyelid,active
+grabe hilanat gid tiyan akon,abdomen high fever,urgent,moderate,general,Combinatorial auto-rule,abdomen,active
+grabe hilanat gid tiyan akon ko,abdomen high fever,urgent,moderate,general,Combinatorial auto-rule,abdomen,active
+grabe hilanat gid tiyan ko,abdomen high fever,urgent,moderate,general,Combinatorial auto-rule,abdomen,active
+grabe hilanat gid tiyan ko akon,abdomen high fever,urgent,moderate,general,Combinatorial auto-rule,abdomen,active
+grabe hilanat gid tungod akon,throat high fever,urgent,moderate,general,Combinatorial auto-rule,throat,active
+grabe hilanat gid tungod akon ko,throat high fever,urgent,moderate,general,Combinatorial auto-rule,throat,active
+grabe hilanat gid tungod ko,throat high fever,urgent,moderate,general,Combinatorial auto-rule,throat,active
+grabe hilanat gid tungod ko akon,throat high fever,urgent,moderate,general,Combinatorial auto-rule,throat,active
+hilanat gid abaga,shoulder high fever,urgent,moderate,general,Combinatorial auto-rule,shoulder,active
+hilanat gid abaga akon,shoulder high fever,urgent,moderate,general,Combinatorial auto-rule,shoulder,active
+hilanat gid abaga akon ko,shoulder high fever,urgent,moderate,general,Combinatorial auto-rule,shoulder,active
+hilanat gid abaga ko,shoulder high fever,urgent,moderate,general,Combinatorial auto-rule,shoulder,active
+hilanat gid abaga ko akon,shoulder high fever,urgent,moderate,general,Combinatorial auto-rule,shoulder,active
+hilanat gid akon abaga,shoulder high fever,urgent,moderate,general,Combinatorial auto-rule,shoulder,active
+hilanat gid akon bukongbukong,ankle high fever,urgent,moderate,general,Combinatorial auto-rule,ankle,active
+hilanat gid akon dalunggan,ear high fever,urgent,moderate,general,Combinatorial auto-rule,ear,active
+hilanat gid akon dughan,chest high fever,urgent,moderate,general,Combinatorial auto-rule,chest,active
+hilanat gid akon ilong,nose high fever,urgent,moderate,general,Combinatorial auto-rule,nose,active
+hilanat gid akon kilid mata,eyelid high fever,urgent,moderate,general,Combinatorial auto-rule,eyelid,active
+hilanat gid akon ko abaga,shoulder high fever,urgent,moderate,general,Combinatorial auto-rule,shoulder,active
+hilanat gid akon ko bukongbukong,ankle high fever,urgent,moderate,general,Combinatorial auto-rule,ankle,active
+hilanat gid akon ko dalunggan,ear high fever,urgent,moderate,general,Combinatorial auto-rule,ear,active
+hilanat gid akon ko dughan,chest high fever,urgent,moderate,general,Combinatorial auto-rule,chest,active
+hilanat gid akon ko ilong,nose high fever,urgent,moderate,general,Combinatorial auto-rule,nose,active
+hilanat gid akon ko kilid mata,eyelid high fever,urgent,moderate,general,Combinatorial auto-rule,eyelid,active
+hilanat gid akon ko ngabil,lip high fever,urgent,moderate,general,Combinatorial auto-rule,lip,active
+hilanat gid akon ko pisngi,cheek high fever,urgent,moderate,general,Combinatorial auto-rule,cheek,active
+hilanat gid akon ko singit,groin high fever,urgent,moderate,general,Combinatorial auto-rule,groin,active
+hilanat gid akon ko talukap mata,eyelid high fever,urgent,moderate,general,Combinatorial auto-rule,eyelid,active
+hilanat gid akon ko tiyan,abdomen high fever,urgent,moderate,general,Combinatorial auto-rule,abdomen,active
+hilanat gid akon ko tungod,throat high fever,urgent,moderate,general,Combinatorial auto-rule,throat,active
+hilanat gid akon ngabil,lip high fever,urgent,moderate,general,Combinatorial auto-rule,lip,active
+hilanat gid akon pisngi,cheek high fever,urgent,moderate,general,Combinatorial auto-rule,cheek,active
+hilanat gid akon singit,groin high fever,urgent,moderate,general,Combinatorial auto-rule,groin,active
+hilanat gid akon talukap mata,eyelid high fever,urgent,moderate,general,Combinatorial auto-rule,eyelid,active
+hilanat gid akon tiyan,abdomen high fever,urgent,moderate,general,Combinatorial auto-rule,abdomen,active
+hilanat gid akon tungod,throat high fever,urgent,moderate,general,Combinatorial auto-rule,throat,active
+hilanat gid bukongbukong,ankle high fever,urgent,moderate,general,Combinatorial auto-rule,ankle,active
+hilanat gid bukongbukong akon,ankle high fever,urgent,moderate,general,Combinatorial auto-rule,ankle,active
+hilanat gid bukongbukong akon ko,ankle high fever,urgent,moderate,general,Combinatorial auto-rule,ankle,active
+hilanat gid bukongbukong ko,ankle high fever,urgent,moderate,general,Combinatorial auto-rule,ankle,active
+hilanat gid bukongbukong ko akon,ankle high fever,urgent,moderate,general,Combinatorial auto-rule,ankle,active
+hilanat gid dalunggan,ear high fever,urgent,moderate,general,Combinatorial auto-rule,ear,active
+hilanat gid dalunggan akon,ear high fever,urgent,moderate,general,Combinatorial auto-rule,ear,active
+hilanat gid dalunggan akon ko,ear high fever,urgent,moderate,general,Combinatorial auto-rule,ear,active
+hilanat gid dalunggan ko,ear high fever,urgent,moderate,general,Combinatorial auto-rule,ear,active
+hilanat gid dalunggan ko akon,ear high fever,urgent,moderate,general,Combinatorial auto-rule,ear,active
+hilanat gid dughan,chest high fever,urgent,moderate,general,Combinatorial auto-rule,chest,active
+hilanat gid dughan akon,chest high fever,urgent,moderate,general,Combinatorial auto-rule,chest,active
+hilanat gid dughan akon ko,chest high fever,urgent,moderate,general,Combinatorial auto-rule,chest,active
+hilanat gid dughan ko,chest high fever,urgent,moderate,general,Combinatorial auto-rule,chest,active
+hilanat gid dughan ko akon,chest high fever,urgent,moderate,general,Combinatorial auto-rule,chest,active
+hilanat gid gid abaga,shoulder high fever,urgent,moderate,general,Combinatorial auto-rule,shoulder,active
+hilanat gid gid abaga akon,shoulder high fever,urgent,moderate,general,Combinatorial auto-rule,shoulder,active
+hilanat gid gid abaga akon ko,shoulder high fever,urgent,moderate,general,Combinatorial auto-rule,shoulder,active
+hilanat gid gid abaga ko,shoulder high fever,urgent,moderate,general,Combinatorial auto-rule,shoulder,active
+hilanat gid gid abaga ko akon,shoulder high fever,urgent,moderate,general,Combinatorial auto-rule,shoulder,active
+hilanat gid gid akon abaga,shoulder high fever,urgent,moderate,general,Combinatorial auto-rule,shoulder,active
+hilanat gid gid akon bukongbukong,ankle high fever,urgent,moderate,general,Combinatorial auto-rule,ankle,active
+hilanat gid gid akon dalunggan,ear high fever,urgent,moderate,general,Combinatorial auto-rule,ear,active
+hilanat gid gid akon dughan,chest high fever,urgent,moderate,general,Combinatorial auto-rule,chest,active
+hilanat gid gid akon ilong,nose high fever,urgent,moderate,general,Combinatorial auto-rule,nose,active
+hilanat gid gid akon kilid mata,eyelid high fever,urgent,moderate,general,Combinatorial auto-rule,eyelid,active
+hilanat gid gid akon ko abaga,shoulder high fever,urgent,moderate,general,Combinatorial auto-rule,shoulder,active
+hilanat gid gid akon ko bukongbukong,ankle high fever,urgent,moderate,general,Combinatorial auto-rule,ankle,active
+hilanat gid gid akon ko dalunggan,ear high fever,urgent,moderate,general,Combinatorial auto-rule,ear,active
+hilanat gid gid akon ko dughan,chest high fever,urgent,moderate,general,Combinatorial auto-rule,chest,active
+hilanat gid gid akon ko ilong,nose high fever,urgent,moderate,general,Combinatorial auto-rule,nose,active
+hilanat gid gid akon ko kilid mata,eyelid high fever,urgent,moderate,general,Combinatorial auto-rule,eyelid,active
+hilanat gid gid akon ko ngabil,lip high fever,urgent,moderate,general,Combinatorial auto-rule,lip,active
+hilanat gid gid akon ko pisngi,cheek high fever,urgent,moderate,general,Combinatorial auto-rule,cheek,active
+hilanat gid gid akon ko singit,groin high fever,urgent,moderate,general,Combinatorial auto-rule,groin,active
+hilanat gid gid akon ko talukap mata,eyelid high fever,urgent,moderate,general,Combinatorial auto-rule,eyelid,active
+hilanat gid gid akon ko tiyan,abdomen high fever,urgent,moderate,general,Combinatorial auto-rule,abdomen,active
+hilanat gid gid akon ko tungod,throat high fever,urgent,moderate,general,Combinatorial auto-rule,throat,active
+hilanat gid gid akon ngabil,lip high fever,urgent,moderate,general,Combinatorial auto-rule,lip,active
+hilanat gid gid akon pisngi,cheek high fever,urgent,moderate,general,Combinatorial auto-rule,cheek,active
+hilanat gid gid akon singit,groin high fever,urgent,moderate,general,Combinatorial auto-rule,groin,active
+hilanat gid gid akon talukap mata,eyelid high fever,urgent,moderate,general,Combinatorial auto-rule,eyelid,active
+hilanat gid gid akon tiyan,abdomen high fever,urgent,moderate,general,Combinatorial auto-rule,abdomen,active
+hilanat gid gid akon tungod,throat high fever,urgent,moderate,general,Combinatorial auto-rule,throat,active
+hilanat gid gid bukongbukong,ankle high fever,urgent,moderate,general,Combinatorial auto-rule,ankle,active
+hilanat gid gid bukongbukong akon,ankle high fever,urgent,moderate,general,Combinatorial auto-rule,ankle,active
+hilanat gid gid bukongbukong akon ko,ankle high fever,urgent,moderate,general,Combinatorial auto-rule,ankle,active
+hilanat gid gid bukongbukong ko,ankle high fever,urgent,moderate,general,Combinatorial auto-rule,ankle,active
+hilanat gid gid bukongbukong ko akon,ankle high fever,urgent,moderate,general,Combinatorial auto-rule,ankle,active
+hilanat gid gid dalunggan,ear high fever,urgent,moderate,general,Combinatorial auto-rule,ear,active
+hilanat gid gid dalunggan akon,ear high fever,urgent,moderate,general,Combinatorial auto-rule,ear,active
+hilanat gid gid dalunggan akon ko,ear high fever,urgent,moderate,general,Combinatorial auto-rule,ear,active
+hilanat gid gid dalunggan ko,ear high fever,urgent,moderate,general,Combinatorial auto-rule,ear,active
+hilanat gid gid dalunggan ko akon,ear high fever,urgent,moderate,general,Combinatorial auto-rule,ear,active
+hilanat gid gid dughan,chest high fever,urgent,moderate,general,Combinatorial auto-rule,chest,active
+hilanat gid gid dughan akon,chest high fever,urgent,moderate,general,Combinatorial auto-rule,chest,active
+hilanat gid gid dughan akon ko,chest high fever,urgent,moderate,general,Combinatorial auto-rule,chest,active
+hilanat gid gid dughan ko,chest high fever,urgent,moderate,general,Combinatorial auto-rule,chest,active
+hilanat gid gid dughan ko akon,chest high fever,urgent,moderate,general,Combinatorial auto-rule,chest,active
+hilanat gid gid ilong,nose high fever,urgent,moderate,general,Combinatorial auto-rule,nose,active
+hilanat gid gid ilong akon,nose high fever,urgent,moderate,general,Combinatorial auto-rule,nose,active
+hilanat gid gid ilong akon ko,nose high fever,urgent,moderate,general,Combinatorial auto-rule,nose,active
+hilanat gid gid ilong ko,nose high fever,urgent,moderate,general,Combinatorial auto-rule,nose,active
+hilanat gid gid ilong ko akon,nose high fever,urgent,moderate,general,Combinatorial auto-rule,nose,active
+hilanat gid gid kilid mata,eyelid high fever,urgent,moderate,general,Combinatorial auto-rule,eyelid,active
+hilanat gid gid kilid mata akon,eyelid high fever,urgent,moderate,general,Combinatorial auto-rule,eyelid,active
+hilanat gid gid kilid mata akon ko,eyelid high fever,urgent,moderate,general,Combinatorial auto-rule,eyelid,active
+hilanat gid gid kilid mata ko,eyelid high fever,urgent,moderate,general,Combinatorial auto-rule,eyelid,active
+hilanat gid gid kilid mata ko akon,eyelid high fever,urgent,moderate,general,Combinatorial auto-rule,eyelid,active
+hilanat gid gid ko abaga,shoulder high fever,urgent,moderate,general,Combinatorial auto-rule,shoulder,active
+hilanat gid gid ko akon abaga,shoulder high fever,urgent,moderate,general,Combinatorial auto-rule,shoulder,active
+hilanat gid gid ko akon bukongbukong,ankle high fever,urgent,moderate,general,Combinatorial auto-rule,ankle,active
+hilanat gid gid ko akon dalunggan,ear high fever,urgent,moderate,general,Combinatorial auto-rule,ear,active
+hilanat gid gid ko akon dughan,chest high fever,urgent,moderate,general,Combinatorial auto-rule,chest,active
+hilanat gid gid ko akon ilong,nose high fever,urgent,moderate,general,Combinatorial auto-rule,nose,active
+hilanat gid gid ko akon kilid mata,eyelid high fever,urgent,moderate,general,Combinatorial auto-rule,eyelid,active
+hilanat gid gid ko akon ngabil,lip high fever,urgent,moderate,general,Combinatorial auto-rule,lip,active
+hilanat gid gid ko akon pisngi,cheek high fever,urgent,moderate,general,Combinatorial auto-rule,cheek,active
+hilanat gid gid ko akon singit,groin high fever,urgent,moderate,general,Combinatorial auto-rule,groin,active
+hilanat gid gid ko akon talukap mata,eyelid high fever,urgent,moderate,general,Combinatorial auto-rule,eyelid,active
+hilanat gid gid ko akon tiyan,abdomen high fever,urgent,moderate,general,Combinatorial auto-rule,abdomen,active
+hilanat gid gid ko akon tungod,throat high fever,urgent,moderate,general,Combinatorial auto-rule,throat,active
+hilanat gid gid ko bukongbukong,ankle high fever,urgent,moderate,general,Combinatorial auto-rule,ankle,active
+hilanat gid gid ko dalunggan,ear high fever,urgent,moderate,general,Combinatorial auto-rule,ear,active
+hilanat gid gid ko dughan,chest high fever,urgent,moderate,general,Combinatorial auto-rule,chest,active
+hilanat gid gid ko ilong,nose high fever,urgent,moderate,general,Combinatorial auto-rule,nose,active
+hilanat gid gid ko kilid mata,eyelid high fever,urgent,moderate,general,Combinatorial auto-rule,eyelid,active
+hilanat gid gid ko ngabil,lip high fever,urgent,moderate,general,Combinatorial auto-rule,lip,active
+hilanat gid gid ko pisngi,cheek high fever,urgent,moderate,general,Combinatorial auto-rule,cheek,active
+hilanat gid gid ko singit,groin high fever,urgent,moderate,general,Combinatorial auto-rule,groin,active
+hilanat gid gid ko talukap mata,eyelid high fever,urgent,moderate,general,Combinatorial auto-rule,eyelid,active
+hilanat gid gid ko tiyan,abdomen high fever,urgent,moderate,general,Combinatorial auto-rule,abdomen,active
+hilanat gid gid ko tungod,throat high fever,urgent,moderate,general,Combinatorial auto-rule,throat,active
+hilanat gid gid ngabil,lip high fever,urgent,moderate,general,Combinatorial auto-rule,lip,active
+hilanat gid gid ngabil akon,lip high fever,urgent,moderate,general,Combinatorial auto-rule,lip,active
+hilanat gid gid ngabil akon ko,lip high fever,urgent,moderate,general,Combinatorial auto-rule,lip,active
+hilanat gid gid ngabil ko,lip high fever,urgent,moderate,general,Combinatorial auto-rule,lip,active
+hilanat gid gid ngabil ko akon,lip high fever,urgent,moderate,general,Combinatorial auto-rule,lip,active
+hilanat gid gid pisngi,cheek high fever,urgent,moderate,general,Combinatorial auto-rule,cheek,active
+hilanat gid gid pisngi akon,cheek high fever,urgent,moderate,general,Combinatorial auto-rule,cheek,active
+hilanat gid gid pisngi akon ko,cheek high fever,urgent,moderate,general,Combinatorial auto-rule,cheek,active
+hilanat gid gid pisngi ko,cheek high fever,urgent,moderate,general,Combinatorial auto-rule,cheek,active
+hilanat gid gid pisngi ko akon,cheek high fever,urgent,moderate,general,Combinatorial auto-rule,cheek,active
+hilanat gid gid singit,groin high fever,urgent,moderate,general,Combinatorial auto-rule,groin,active
+hilanat gid gid singit akon,groin high fever,urgent,moderate,general,Combinatorial auto-rule,groin,active
+hilanat gid gid singit akon ko,groin high fever,urgent,moderate,general,Combinatorial auto-rule,groin,active
+hilanat gid gid singit ko,groin high fever,urgent,moderate,general,Combinatorial auto-rule,groin,active
+hilanat gid gid singit ko akon,groin high fever,urgent,moderate,general,Combinatorial auto-rule,groin,active
+hilanat gid gid talukap mata,eyelid high fever,urgent,moderate,general,Combinatorial auto-rule,eyelid,active
+hilanat gid gid talukap mata akon,eyelid high fever,urgent,moderate,general,Combinatorial auto-rule,eyelid,active
+hilanat gid gid talukap mata akon ko,eyelid high fever,urgent,moderate,general,Combinatorial auto-rule,eyelid,active
+hilanat gid gid talukap mata ko,eyelid high fever,urgent,moderate,general,Combinatorial auto-rule,eyelid,active
+hilanat gid gid talukap mata ko akon,eyelid high fever,urgent,moderate,general,Combinatorial auto-rule,eyelid,active
+hilanat gid gid tiyan,abdomen high fever,urgent,moderate,general,Combinatorial auto-rule,abdomen,active
+hilanat gid gid tiyan akon,abdomen high fever,urgent,moderate,general,Combinatorial auto-rule,abdomen,active
+hilanat gid gid tiyan akon ko,abdomen high fever,urgent,moderate,general,Combinatorial auto-rule,abdomen,active
+hilanat gid gid tiyan ko,abdomen high fever,urgent,moderate,general,Combinatorial auto-rule,abdomen,active
+hilanat gid gid tiyan ko akon,abdomen high fever,urgent,moderate,general,Combinatorial auto-rule,abdomen,active
+hilanat gid gid tungod,throat high fever,urgent,moderate,general,Combinatorial auto-rule,throat,active
+hilanat gid gid tungod akon,throat high fever,urgent,moderate,general,Combinatorial auto-rule,throat,active
+hilanat gid gid tungod akon ko,throat high fever,urgent,moderate,general,Combinatorial auto-rule,throat,active
+hilanat gid gid tungod ko,throat high fever,urgent,moderate,general,Combinatorial auto-rule,throat,active
+hilanat gid gid tungod ko akon,throat high fever,urgent,moderate,general,Combinatorial auto-rule,throat,active
+hilanat gid grabe abaga,shoulder high fever,urgent,moderate,general,Combinatorial auto-rule,shoulder,active
+hilanat gid grabe abaga akon,shoulder high fever,urgent,moderate,general,Combinatorial auto-rule,shoulder,active
+hilanat gid grabe abaga akon ko,shoulder high fever,urgent,moderate,general,Combinatorial auto-rule,shoulder,active
+hilanat gid grabe abaga ko,shoulder high fever,urgent,moderate,general,Combinatorial auto-rule,shoulder,active
+hilanat gid grabe abaga ko akon,shoulder high fever,urgent,moderate,general,Combinatorial auto-rule,shoulder,active
+hilanat gid grabe bukongbukong,ankle high fever,urgent,moderate,general,Combinatorial auto-rule,ankle,active
+hilanat gid grabe bukongbukong akon,ankle high fever,urgent,moderate,general,Combinatorial auto-rule,ankle,active
+hilanat gid grabe bukongbukong akon ko,ankle high fever,urgent,moderate,general,Combinatorial auto-rule,ankle,active
+hilanat gid grabe bukongbukong ko,ankle high fever,urgent,moderate,general,Combinatorial auto-rule,ankle,active
+hilanat gid grabe bukongbukong ko akon,ankle high fever,urgent,moderate,general,Combinatorial auto-rule,ankle,active
+hilanat gid grabe dalunggan,ear high fever,urgent,moderate,general,Combinatorial auto-rule,ear,active
+hilanat gid grabe dalunggan akon,ear high fever,urgent,moderate,general,Combinatorial auto-rule,ear,active
+hilanat gid grabe dalunggan akon ko,ear high fever,urgent,moderate,general,Combinatorial auto-rule,ear,active
+hilanat gid grabe dalunggan ko,ear high fever,urgent,moderate,general,Combinatorial auto-rule,ear,active
+hilanat gid grabe dalunggan ko akon,ear high fever,urgent,moderate,general,Combinatorial auto-rule,ear,active
+hilanat gid grabe dughan,chest high fever,urgent,moderate,general,Combinatorial auto-rule,chest,active
+hilanat gid grabe dughan akon,chest high fever,urgent,moderate,general,Combinatorial auto-rule,chest,active
+hilanat gid grabe dughan akon ko,chest high fever,urgent,moderate,general,Combinatorial auto-rule,chest,active
+hilanat gid grabe dughan ko,chest high fever,urgent,moderate,general,Combinatorial auto-rule,chest,active
+hilanat gid grabe dughan ko akon,chest high fever,urgent,moderate,general,Combinatorial auto-rule,chest,active
+hilanat gid grabe gid abaga,shoulder high fever,urgent,moderate,general,Combinatorial auto-rule,shoulder,active
+hilanat gid grabe gid abaga akon,shoulder high fever,urgent,moderate,general,Combinatorial auto-rule,shoulder,active
+hilanat gid grabe gid abaga akon ko,shoulder high fever,urgent,moderate,general,Combinatorial auto-rule,shoulder,active
+hilanat gid grabe gid abaga ko,shoulder high fever,urgent,moderate,general,Combinatorial auto-rule,shoulder,active
+hilanat gid grabe gid abaga ko akon,shoulder high fever,urgent,moderate,general,Combinatorial auto-rule,shoulder,active
+hilanat gid grabe gid bukongbukong,ankle high fever,urgent,moderate,general,Combinatorial auto-rule,ankle,active
+hilanat gid grabe gid bukongbukong akon,ankle high fever,urgent,moderate,general,Combinatorial auto-rule,ankle,active
+hilanat gid grabe gid bukongbukong akon ko,ankle high fever,urgent,moderate,general,Combinatorial auto-rule,ankle,active
+hilanat gid grabe gid bukongbukong ko,ankle high fever,urgent,moderate,general,Combinatorial auto-rule,ankle,active
+hilanat gid grabe gid bukongbukong ko akon,ankle high fever,urgent,moderate,general,Combinatorial auto-rule,ankle,active
+hilanat gid grabe gid dalunggan,ear high fever,urgent,moderate,general,Combinatorial auto-rule,ear,active
+hilanat gid grabe gid dalunggan akon,ear high fever,urgent,moderate,general,Combinatorial auto-rule,ear,active
+hilanat gid grabe gid dalunggan akon ko,ear high fever,urgent,moderate,general,Combinatorial auto-rule,ear,active
+hilanat gid grabe gid dalunggan ko,ear high fever,urgent,moderate,general,Combinatorial auto-rule,ear,active
+hilanat gid grabe gid dalunggan ko akon,ear high fever,urgent,moderate,general,Combinatorial auto-rule,ear,active
+hilanat gid grabe gid dughan,chest high fever,urgent,moderate,general,Combinatorial auto-rule,chest,active
+hilanat gid grabe gid dughan akon,chest high fever,urgent,moderate,general,Combinatorial auto-rule,chest,active
+hilanat gid grabe gid dughan akon ko,chest high fever,urgent,moderate,general,Combinatorial auto-rule,chest,active
+hilanat gid grabe gid dughan ko,chest high fever,urgent,moderate,general,Combinatorial auto-rule,chest,active
+hilanat gid grabe gid dughan ko akon,chest high fever,urgent,moderate,general,Combinatorial auto-rule,chest,active
+hilanat gid grabe gid ilong,nose high fever,urgent,moderate,general,Combinatorial auto-rule,nose,active
+hilanat gid grabe gid ilong akon,nose high fever,urgent,moderate,general,Combinatorial auto-rule,nose,active
+hilanat gid grabe gid ilong akon ko,nose high fever,urgent,moderate,general,Combinatorial auto-rule,nose,active
+hilanat gid grabe gid ilong ko,nose high fever,urgent,moderate,general,Combinatorial auto-rule,nose,active
+hilanat gid grabe gid ilong ko akon,nose high fever,urgent,moderate,general,Combinatorial auto-rule,nose,active
+hilanat gid grabe gid kilid mata,eyelid high fever,urgent,moderate,general,Combinatorial auto-rule,eyelid,active
+hilanat gid grabe gid kilid mata akon,eyelid high fever,urgent,moderate,general,Combinatorial auto-rule,eyelid,active
+hilanat gid grabe gid kilid mata akon ko,eyelid high fever,urgent,moderate,general,Combinatorial auto-rule,eyelid,active
+hilanat gid grabe gid kilid mata ko,eyelid high fever,urgent,moderate,general,Combinatorial auto-rule,eyelid,active
+hilanat gid grabe gid kilid mata ko akon,eyelid high fever,urgent,moderate,general,Combinatorial auto-rule,eyelid,active
+hilanat gid grabe gid ngabil,lip high fever,urgent,moderate,general,Combinatorial auto-rule,lip,active
+hilanat gid grabe gid ngabil akon,lip high fever,urgent,moderate,general,Combinatorial auto-rule,lip,active
+hilanat gid grabe gid ngabil akon ko,lip high fever,urgent,moderate,general,Combinatorial auto-rule,lip,active
+hilanat gid grabe gid ngabil ko,lip high fever,urgent,moderate,general,Combinatorial auto-rule,lip,active
+hilanat gid grabe gid ngabil ko akon,lip high fever,urgent,moderate,general,Combinatorial auto-rule,lip,active
+hilanat gid grabe gid pisngi,cheek high fever,urgent,moderate,general,Combinatorial auto-rule,cheek,active
+hilanat gid grabe gid pisngi akon,cheek high fever,urgent,moderate,general,Combinatorial auto-rule,cheek,active
+hilanat gid grabe gid pisngi akon ko,cheek high fever,urgent,moderate,general,Combinatorial auto-rule,cheek,active
+hilanat gid grabe gid pisngi ko,cheek high fever,urgent,moderate,general,Combinatorial auto-rule,cheek,active
+hilanat gid grabe gid pisngi ko akon,cheek high fever,urgent,moderate,general,Combinatorial auto-rule,cheek,active
+hilanat gid grabe gid singit,groin high fever,urgent,moderate,general,Combinatorial auto-rule,groin,active
+hilanat gid grabe gid singit akon,groin high fever,urgent,moderate,general,Combinatorial auto-rule,groin,active
+hilanat gid grabe gid singit akon ko,groin high fever,urgent,moderate,general,Combinatorial auto-rule,groin,active
+hilanat gid grabe gid singit ko,groin high fever,urgent,moderate,general,Combinatorial auto-rule,groin,active
+hilanat gid grabe gid singit ko akon,groin high fever,urgent,moderate,general,Combinatorial auto-rule,groin,active
+hilanat gid grabe gid talukap mata,eyelid high fever,urgent,moderate,general,Combinatorial auto-rule,eyelid,active
+hilanat gid grabe gid talukap mata akon,eyelid high fever,urgent,moderate,general,Combinatorial auto-rule,eyelid,active
+hilanat gid grabe gid talukap mata akon ko,eyelid high fever,urgent,moderate,general,Combinatorial auto-rule,eyelid,active
+hilanat gid grabe gid talukap mata ko,eyelid high fever,urgent,moderate,general,Combinatorial auto-rule,eyelid,active
+hilanat gid grabe gid talukap mata ko akon,eyelid high fever,urgent,moderate,general,Combinatorial auto-rule,eyelid,active
+hilanat gid grabe gid tiyan,abdomen high fever,urgent,moderate,general,Combinatorial auto-rule,abdomen,active
+hilanat gid grabe gid tiyan akon,abdomen high fever,urgent,moderate,general,Combinatorial auto-rule,abdomen,active
+hilanat gid grabe gid tiyan akon ko,abdomen high fever,urgent,moderate,general,Combinatorial auto-rule,abdomen,active
+hilanat gid grabe gid tiyan ko,abdomen high fever,urgent,moderate,general,Combinatorial auto-rule,abdomen,active
+hilanat gid grabe gid tiyan ko akon,abdomen high fever,urgent,moderate,general,Combinatorial auto-rule,abdomen,active
+hilanat gid grabe gid tungod,throat high fever,urgent,moderate,general,Combinatorial auto-rule,throat,active
+hilanat gid grabe gid tungod akon,throat high fever,urgent,moderate,general,Combinatorial auto-rule,throat,active
+hilanat gid grabe gid tungod akon ko,throat high fever,urgent,moderate,general,Combinatorial auto-rule,throat,active
+hilanat gid grabe gid tungod ko,throat high fever,urgent,moderate,general,Combinatorial auto-rule,throat,active
+hilanat gid grabe gid tungod ko akon,throat high fever,urgent,moderate,general,Combinatorial auto-rule,throat,active
+hilanat gid grabe ilong,nose high fever,urgent,moderate,general,Combinatorial auto-rule,nose,active
+hilanat gid grabe ilong akon,nose high fever,urgent,moderate,general,Combinatorial auto-rule,nose,active
+hilanat gid grabe ilong akon ko,nose high fever,urgent,moderate,general,Combinatorial auto-rule,nose,active
+hilanat gid grabe ilong ko,nose high fever,urgent,moderate,general,Combinatorial auto-rule,nose,active
+hilanat gid grabe ilong ko akon,nose high fever,urgent,moderate,general,Combinatorial auto-rule,nose,active
+hilanat gid grabe kilid mata,eyelid high fever,urgent,moderate,general,Combinatorial auto-rule,eyelid,active
+hilanat gid grabe kilid mata akon,eyelid high fever,urgent,moderate,general,Combinatorial auto-rule,eyelid,active
+hilanat gid grabe kilid mata akon ko,eyelid high fever,urgent,moderate,general,Combinatorial auto-rule,eyelid,active
+hilanat gid grabe kilid mata ko,eyelid high fever,urgent,moderate,general,Combinatorial auto-rule,eyelid,active
+hilanat gid grabe kilid mata ko akon,eyelid high fever,urgent,moderate,general,Combinatorial auto-rule,eyelid,active
+hilanat gid grabe ngabil,lip high fever,urgent,moderate,general,Combinatorial auto-rule,lip,active
+hilanat gid grabe ngabil akon,lip high fever,urgent,moderate,general,Combinatorial auto-rule,lip,active
+hilanat gid grabe ngabil akon ko,lip high fever,urgent,moderate,general,Combinatorial auto-rule,lip,active
+hilanat gid grabe ngabil ko,lip high fever,urgent,moderate,general,Combinatorial auto-rule,lip,active
+hilanat gid grabe ngabil ko akon,lip high fever,urgent,moderate,general,Combinatorial auto-rule,lip,active
+hilanat gid grabe pisngi,cheek high fever,urgent,moderate,general,Combinatorial auto-rule,cheek,active
+hilanat gid grabe pisngi akon,cheek high fever,urgent,moderate,general,Combinatorial auto-rule,cheek,active
+hilanat gid grabe pisngi akon ko,cheek high fever,urgent,moderate,general,Combinatorial auto-rule,cheek,active
+hilanat gid grabe pisngi ko,cheek high fever,urgent,moderate,general,Combinatorial auto-rule,cheek,active
+hilanat gid grabe pisngi ko akon,cheek high fever,urgent,moderate,general,Combinatorial auto-rule,cheek,active
+hilanat gid grabe singit,groin high fever,urgent,moderate,general,Combinatorial auto-rule,groin,active
+hilanat gid grabe singit akon,groin high fever,urgent,moderate,general,Combinatorial auto-rule,groin,active
+hilanat gid grabe singit akon ko,groin high fever,urgent,moderate,general,Combinatorial auto-rule,groin,active
+hilanat gid grabe singit ko,groin high fever,urgent,moderate,general,Combinatorial auto-rule,groin,active
+hilanat gid grabe singit ko akon,groin high fever,urgent,moderate,general,Combinatorial auto-rule,groin,active
+hilanat gid grabe talukap mata,eyelid high fever,urgent,moderate,general,Combinatorial auto-rule,eyelid,active
+hilanat gid grabe talukap mata akon,eyelid high fever,urgent,moderate,general,Combinatorial auto-rule,eyelid,active
+hilanat gid grabe talukap mata akon ko,eyelid high fever,urgent,moderate,general,Combinatorial auto-rule,eyelid,active
+hilanat gid grabe talukap mata ko,eyelid high fever,urgent,moderate,general,Combinatorial auto-rule,eyelid,active
+hilanat gid grabe talukap mata ko akon,eyelid high fever,urgent,moderate,general,Combinatorial auto-rule,eyelid,active
+hilanat gid grabe tiyan,abdomen high fever,urgent,moderate,general,Combinatorial auto-rule,abdomen,active
+hilanat gid grabe tiyan akon,abdomen high fever,urgent,moderate,general,Combinatorial auto-rule,abdomen,active
+hilanat gid grabe tiyan akon ko,abdomen high fever,urgent,moderate,general,Combinatorial auto-rule,abdomen,active
+hilanat gid grabe tiyan ko,abdomen high fever,urgent,moderate,general,Combinatorial auto-rule,abdomen,active
+hilanat gid grabe tiyan ko akon,abdomen high fever,urgent,moderate,general,Combinatorial auto-rule,abdomen,active
+hilanat gid grabe tungod,throat high fever,urgent,moderate,general,Combinatorial auto-rule,throat,active
+hilanat gid grabe tungod akon,throat high fever,urgent,moderate,general,Combinatorial auto-rule,throat,active
+hilanat gid grabe tungod akon ko,throat high fever,urgent,moderate,general,Combinatorial auto-rule,throat,active
+hilanat gid grabe tungod ko,throat high fever,urgent,moderate,general,Combinatorial auto-rule,throat,active
+hilanat gid grabe tungod ko akon,throat high fever,urgent,moderate,general,Combinatorial auto-rule,throat,active
+hilanat gid ilong,nose high fever,urgent,moderate,general,Combinatorial auto-rule,nose,active
+hilanat gid ilong akon,nose high fever,urgent,moderate,general,Combinatorial auto-rule,nose,active
+hilanat gid ilong akon ko,nose high fever,urgent,moderate,general,Combinatorial auto-rule,nose,active
+hilanat gid ilong ko,nose high fever,urgent,moderate,general,Combinatorial auto-rule,nose,active
+hilanat gid ilong ko akon,nose high fever,urgent,moderate,general,Combinatorial auto-rule,nose,active
+hilanat gid kilid mata,eyelid high fever,urgent,moderate,general,Combinatorial auto-rule,eyelid,active
+hilanat gid kilid mata akon,eyelid high fever,urgent,moderate,general,Combinatorial auto-rule,eyelid,active
+hilanat gid kilid mata akon ko,eyelid high fever,urgent,moderate,general,Combinatorial auto-rule,eyelid,active
+hilanat gid kilid mata ko,eyelid high fever,urgent,moderate,general,Combinatorial auto-rule,eyelid,active
+hilanat gid kilid mata ko akon,eyelid high fever,urgent,moderate,general,Combinatorial auto-rule,eyelid,active
+hilanat gid ko abaga,shoulder high fever,urgent,moderate,general,Combinatorial auto-rule,shoulder,active
+hilanat gid ko akon abaga,shoulder high fever,urgent,moderate,general,Combinatorial auto-rule,shoulder,active
+hilanat gid ko akon bukongbukong,ankle high fever,urgent,moderate,general,Combinatorial auto-rule,ankle,active
+hilanat gid ko akon dalunggan,ear high fever,urgent,moderate,general,Combinatorial auto-rule,ear,active
+hilanat gid ko akon dughan,chest high fever,urgent,moderate,general,Combinatorial auto-rule,chest,active
+hilanat gid ko akon ilong,nose high fever,urgent,moderate,general,Combinatorial auto-rule,nose,active
+hilanat gid ko akon kilid mata,eyelid high fever,urgent,moderate,general,Combinatorial auto-rule,eyelid,active
+hilanat gid ko akon ngabil,lip high fever,urgent,moderate,general,Combinatorial auto-rule,lip,active
+hilanat gid ko akon pisngi,cheek high fever,urgent,moderate,general,Combinatorial auto-rule,cheek,active
+hilanat gid ko akon singit,groin high fever,urgent,moderate,general,Combinatorial auto-rule,groin,active
+hilanat gid ko akon talukap mata,eyelid high fever,urgent,moderate,general,Combinatorial auto-rule,eyelid,active
+hilanat gid ko akon tiyan,abdomen high fever,urgent,moderate,general,Combinatorial auto-rule,abdomen,active
+hilanat gid ko akon tungod,throat high fever,urgent,moderate,general,Combinatorial auto-rule,throat,active
+hilanat gid ko bukongbukong,ankle high fever,urgent,moderate,general,Combinatorial auto-rule,ankle,active
+hilanat gid ko dalunggan,ear high fever,urgent,moderate,general,Combinatorial auto-rule,ear,active
+hilanat gid ko dughan,chest high fever,urgent,moderate,general,Combinatorial auto-rule,chest,active
+hilanat gid ko ilong,nose high fever,urgent,moderate,general,Combinatorial auto-rule,nose,active
+hilanat gid ko kilid mata,eyelid high fever,urgent,moderate,general,Combinatorial auto-rule,eyelid,active
+hilanat gid ko ngabil,lip high fever,urgent,moderate,general,Combinatorial auto-rule,lip,active
+hilanat gid ko pisngi,cheek high fever,urgent,moderate,general,Combinatorial auto-rule,cheek,active
+hilanat gid ko singit,groin high fever,urgent,moderate,general,Combinatorial auto-rule,groin,active
+hilanat gid ko talukap mata,eyelid high fever,urgent,moderate,general,Combinatorial auto-rule,eyelid,active
+hilanat gid ko tiyan,abdomen high fever,urgent,moderate,general,Combinatorial auto-rule,abdomen,active
+hilanat gid ko tungod,throat high fever,urgent,moderate,general,Combinatorial auto-rule,throat,active
+hilanat gid ngabil,lip high fever,urgent,moderate,general,Combinatorial auto-rule,lip,active
+hilanat gid ngabil akon,lip high fever,urgent,moderate,general,Combinatorial auto-rule,lip,active
+hilanat gid ngabil akon ko,lip high fever,urgent,moderate,general,Combinatorial auto-rule,lip,active
+hilanat gid ngabil ko,lip high fever,urgent,moderate,general,Combinatorial auto-rule,lip,active
+hilanat gid ngabil ko akon,lip high fever,urgent,moderate,general,Combinatorial auto-rule,lip,active
+hilanat gid pisngi,cheek high fever,urgent,moderate,general,Combinatorial auto-rule,cheek,active
+hilanat gid pisngi akon,cheek high fever,urgent,moderate,general,Combinatorial auto-rule,cheek,active
+hilanat gid pisngi akon ko,cheek high fever,urgent,moderate,general,Combinatorial auto-rule,cheek,active
+hilanat gid pisngi ko,cheek high fever,urgent,moderate,general,Combinatorial auto-rule,cheek,active
+hilanat gid pisngi ko akon,cheek high fever,urgent,moderate,general,Combinatorial auto-rule,cheek,active
+hilanat gid singit,groin high fever,urgent,moderate,general,Combinatorial auto-rule,groin,active
+hilanat gid singit akon,groin high fever,urgent,moderate,general,Combinatorial auto-rule,groin,active
+hilanat gid singit akon ko,groin high fever,urgent,moderate,general,Combinatorial auto-rule,groin,active
+hilanat gid singit ko,groin high fever,urgent,moderate,general,Combinatorial auto-rule,groin,active
+hilanat gid singit ko akon,groin high fever,urgent,moderate,general,Combinatorial auto-rule,groin,active
+hilanat gid talukap mata,eyelid high fever,urgent,moderate,general,Combinatorial auto-rule,eyelid,active
+hilanat gid talukap mata akon,eyelid high fever,urgent,moderate,general,Combinatorial auto-rule,eyelid,active
+hilanat gid talukap mata akon ko,eyelid high fever,urgent,moderate,general,Combinatorial auto-rule,eyelid,active
+hilanat gid talukap mata ko,eyelid high fever,urgent,moderate,general,Combinatorial auto-rule,eyelid,active
+hilanat gid talukap mata ko akon,eyelid high fever,urgent,moderate,general,Combinatorial auto-rule,eyelid,active
+hilanat gid tiyan,abdomen high fever,urgent,moderate,general,Combinatorial auto-rule,abdomen,active
+hilanat gid tiyan akon,abdomen high fever,urgent,moderate,general,Combinatorial auto-rule,abdomen,active
+hilanat gid tiyan akon ko,abdomen high fever,urgent,moderate,general,Combinatorial auto-rule,abdomen,active
+hilanat gid tiyan ko,abdomen high fever,urgent,moderate,general,Combinatorial auto-rule,abdomen,active
+hilanat gid tiyan ko akon,abdomen high fever,urgent,moderate,general,Combinatorial auto-rule,abdomen,active
+hilanat gid tungod,throat high fever,urgent,moderate,general,Combinatorial auto-rule,throat,active
+hilanat gid tungod akon,throat high fever,urgent,moderate,general,Combinatorial auto-rule,throat,active
+hilanat gid tungod akon ko,throat high fever,urgent,moderate,general,Combinatorial auto-rule,throat,active
+hilanat gid tungod ko,throat high fever,urgent,moderate,general,Combinatorial auto-rule,throat,active
+hilanat gid tungod ko akon,throat high fever,urgent,moderate,general,Combinatorial auto-rule,throat,active
+ilong akon hilanat gid,nose high fever,urgent,moderate,general,Combinatorial auto-rule,nose,active
+ilong akon ko hilanat gid,nose high fever,urgent,moderate,general,Combinatorial auto-rule,nose,active
+ilong hilanat gid,nose high fever,urgent,moderate,general,Combinatorial auto-rule,nose,active
+ilong ko akon hilanat gid,nose high fever,urgent,moderate,general,Combinatorial auto-rule,nose,active
+ilong ko hilanat gid,nose high fever,urgent,moderate,general,Combinatorial auto-rule,nose,active
+kilid mata akon hilanat gid,eyelid high fever,urgent,moderate,general,Combinatorial auto-rule,eyelid,active
+kilid mata akon ko hilanat gid,eyelid high fever,urgent,moderate,general,Combinatorial auto-rule,eyelid,active
+kilid mata hilanat gid,eyelid high fever,urgent,moderate,general,Combinatorial auto-rule,eyelid,active
+kilid mata ko akon hilanat gid,eyelid high fever,urgent,moderate,general,Combinatorial auto-rule,eyelid,active
+kilid mata ko hilanat gid,eyelid high fever,urgent,moderate,general,Combinatorial auto-rule,eyelid,active
+ko abaga hilanat gid,shoulder high fever,urgent,moderate,general,Combinatorial auto-rule,shoulder,active
+ko akon abaga hilanat gid,shoulder high fever,urgent,moderate,general,Combinatorial auto-rule,shoulder,active
+ko akon bukongbukong hilanat gid,ankle high fever,urgent,moderate,general,Combinatorial auto-rule,ankle,active
+ko akon dalunggan hilanat gid,ear high fever,urgent,moderate,general,Combinatorial auto-rule,ear,active
+ko akon dughan hilanat gid,chest high fever,urgent,moderate,general,Combinatorial auto-rule,chest,active
+ko akon ilong hilanat gid,nose high fever,urgent,moderate,general,Combinatorial auto-rule,nose,active
+ko akon kilid mata hilanat gid,eyelid high fever,urgent,moderate,general,Combinatorial auto-rule,eyelid,active
+ko akon ngabil hilanat gid,lip high fever,urgent,moderate,general,Combinatorial auto-rule,lip,active
+ko akon pisngi hilanat gid,cheek high fever,urgent,moderate,general,Combinatorial auto-rule,cheek,active
+ko akon singit hilanat gid,groin high fever,urgent,moderate,general,Combinatorial auto-rule,groin,active
+ko akon talukap mata hilanat gid,eyelid high fever,urgent,moderate,general,Combinatorial auto-rule,eyelid,active
+ko akon tiyan hilanat gid,abdomen high fever,urgent,moderate,general,Combinatorial auto-rule,abdomen,active
+ko akon tungod hilanat gid,throat high fever,urgent,moderate,general,Combinatorial auto-rule,throat,active
+ko bukongbukong hilanat gid,ankle high fever,urgent,moderate,general,Combinatorial auto-rule,ankle,active
+ko dalunggan hilanat gid,ear high fever,urgent,moderate,general,Combinatorial auto-rule,ear,active
+ko dughan hilanat gid,chest high fever,urgent,moderate,general,Combinatorial auto-rule,chest,active
+ko ilong hilanat gid,nose high fever,urgent,moderate,general,Combinatorial auto-rule,nose,active
+ko kilid mata hilanat gid,eyelid high fever,urgent,moderate,general,Combinatorial auto-rule,eyelid,active
+ko ngabil hilanat gid,lip high fever,urgent,moderate,general,Combinatorial auto-rule,lip,active
+ko pisngi hilanat gid,cheek high fever,urgent,moderate,general,Combinatorial auto-rule,cheek,active
+ko singit hilanat gid,groin high fever,urgent,moderate,general,Combinatorial auto-rule,groin,active
+ko talukap mata hilanat gid,eyelid high fever,urgent,moderate,general,Combinatorial auto-rule,eyelid,active
+ko tiyan hilanat gid,abdomen high fever,urgent,moderate,general,Combinatorial auto-rule,abdomen,active
+ko tungod hilanat gid,throat high fever,urgent,moderate,general,Combinatorial auto-rule,throat,active
+masakit pag-ihi ko,painful urination,urgent,moderate,urinary,Dysuria may indicate UTI — timely treatment needed,urinary,active
+may hilanat gid abaga akon,shoulder high fever,urgent,moderate,general,Combinatorial auto-rule,shoulder,active
+may hilanat gid abaga akon ko,shoulder high fever,urgent,moderate,general,Combinatorial auto-rule,shoulder,active
+may hilanat gid abaga ko,shoulder high fever,urgent,moderate,general,Combinatorial auto-rule,shoulder,active
+may hilanat gid abaga ko akon,shoulder high fever,urgent,moderate,general,Combinatorial auto-rule,shoulder,active
+may hilanat gid bukongbukong akon,ankle high fever,urgent,moderate,general,Combinatorial auto-rule,ankle,active
+may hilanat gid bukongbukong akon ko,ankle high fever,urgent,moderate,general,Combinatorial auto-rule,ankle,active
+may hilanat gid bukongbukong ko,ankle high fever,urgent,moderate,general,Combinatorial auto-rule,ankle,active
+may hilanat gid bukongbukong ko akon,ankle high fever,urgent,moderate,general,Combinatorial auto-rule,ankle,active
+may hilanat gid dalunggan akon,ear high fever,urgent,moderate,general,Combinatorial auto-rule,ear,active
+may hilanat gid dalunggan akon ko,ear high fever,urgent,moderate,general,Combinatorial auto-rule,ear,active
+may hilanat gid dalunggan ko,ear high fever,urgent,moderate,general,Combinatorial auto-rule,ear,active
+may hilanat gid dalunggan ko akon,ear high fever,urgent,moderate,general,Combinatorial auto-rule,ear,active
+may hilanat gid dughan akon,chest high fever,urgent,moderate,general,Combinatorial auto-rule,chest,active
+may hilanat gid dughan akon ko,chest high fever,urgent,moderate,general,Combinatorial auto-rule,chest,active
+may hilanat gid dughan ko,chest high fever,urgent,moderate,general,Combinatorial auto-rule,chest,active
+may hilanat gid dughan ko akon,chest high fever,urgent,moderate,general,Combinatorial auto-rule,chest,active
+may hilanat gid ilong akon,nose high fever,urgent,moderate,general,Combinatorial auto-rule,nose,active
+may hilanat gid ilong akon ko,nose high fever,urgent,moderate,general,Combinatorial auto-rule,nose,active
+may hilanat gid ilong ko,nose high fever,urgent,moderate,general,Combinatorial auto-rule,nose,active
+may hilanat gid ilong ko akon,nose high fever,urgent,moderate,general,Combinatorial auto-rule,nose,active
+may hilanat gid kilid mata akon,eyelid high fever,urgent,moderate,general,Combinatorial auto-rule,eyelid,active
+may hilanat gid kilid mata akon ko,eyelid high fever,urgent,moderate,general,Combinatorial auto-rule,eyelid,active
+may hilanat gid kilid mata ko,eyelid high fever,urgent,moderate,general,Combinatorial auto-rule,eyelid,active
+may hilanat gid kilid mata ko akon,eyelid high fever,urgent,moderate,general,Combinatorial auto-rule,eyelid,active
+may hilanat gid ngabil akon,lip high fever,urgent,moderate,general,Combinatorial auto-rule,lip,active
+may hilanat gid ngabil akon ko,lip high fever,urgent,moderate,general,Combinatorial auto-rule,lip,active
+may hilanat gid ngabil ko,lip high fever,urgent,moderate,general,Combinatorial auto-rule,lip,active
+may hilanat gid ngabil ko akon,lip high fever,urgent,moderate,general,Combinatorial auto-rule,lip,active
+may hilanat gid pisngi akon,cheek high fever,urgent,moderate,general,Combinatorial auto-rule,cheek,active
+may hilanat gid pisngi akon ko,cheek high fever,urgent,moderate,general,Combinatorial auto-rule,cheek,active
+may hilanat gid pisngi ko,cheek high fever,urgent,moderate,general,Combinatorial auto-rule,cheek,active
+may hilanat gid pisngi ko akon,cheek high fever,urgent,moderate,general,Combinatorial auto-rule,cheek,active
+may hilanat gid sa abaga akon,shoulder high fever,urgent,moderate,general,Combinatorial auto-rule,shoulder,active
+may hilanat gid sa abaga akon ko,shoulder high fever,urgent,moderate,general,Combinatorial auto-rule,shoulder,active
+may hilanat gid sa abaga ko,shoulder high fever,urgent,moderate,general,Combinatorial auto-rule,shoulder,active
+may hilanat gid sa abaga ko akon,shoulder high fever,urgent,moderate,general,Combinatorial auto-rule,shoulder,active
+may hilanat gid sa bukongbukong akon,ankle high fever,urgent,moderate,general,Combinatorial auto-rule,ankle,active
+may hilanat gid sa bukongbukong akon ko,ankle high fever,urgent,moderate,general,Combinatorial auto-rule,ankle,active
+may hilanat gid sa bukongbukong ko,ankle high fever,urgent,moderate,general,Combinatorial auto-rule,ankle,active
+may hilanat gid sa bukongbukong ko akon,ankle high fever,urgent,moderate,general,Combinatorial auto-rule,ankle,active
+may hilanat gid sa dalunggan akon,ear high fever,urgent,moderate,general,Combinatorial auto-rule,ear,active
+may hilanat gid sa dalunggan akon ko,ear high fever,urgent,moderate,general,Combinatorial auto-rule,ear,active
+may hilanat gid sa dalunggan ko,ear high fever,urgent,moderate,general,Combinatorial auto-rule,ear,active
+may hilanat gid sa dalunggan ko akon,ear high fever,urgent,moderate,general,Combinatorial auto-rule,ear,active
+may hilanat gid sa dughan akon,chest high fever,urgent,moderate,general,Combinatorial auto-rule,chest,active
+may hilanat gid sa dughan akon ko,chest high fever,urgent,moderate,general,Combinatorial auto-rule,chest,active
+may hilanat gid sa dughan ko,chest high fever,urgent,moderate,general,Combinatorial auto-rule,chest,active
+may hilanat gid sa dughan ko akon,chest high fever,urgent,moderate,general,Combinatorial auto-rule,chest,active
+may hilanat gid sa ilong akon,nose high fever,urgent,moderate,general,Combinatorial auto-rule,nose,active
+may hilanat gid sa ilong akon ko,nose high fever,urgent,moderate,general,Combinatorial auto-rule,nose,active
+may hilanat gid sa ilong ko,nose high fever,urgent,moderate,general,Combinatorial auto-rule,nose,active
+may hilanat gid sa ilong ko akon,nose high fever,urgent,moderate,general,Combinatorial auto-rule,nose,active
+may hilanat gid sa kilid mata akon,eyelid high fever,urgent,moderate,general,Combinatorial auto-rule,eyelid,active
+may hilanat gid sa kilid mata akon ko,eyelid high fever,urgent,moderate,general,Combinatorial auto-rule,eyelid,active
+may hilanat gid sa kilid mata ko,eyelid high fever,urgent,moderate,general,Combinatorial auto-rule,eyelid,active
+may hilanat gid sa kilid mata ko akon,eyelid high fever,urgent,moderate,general,Combinatorial auto-rule,eyelid,active
+may hilanat gid sa ngabil akon,lip high fever,urgent,moderate,general,Combinatorial auto-rule,lip,active
+may hilanat gid sa ngabil akon ko,lip high fever,urgent,moderate,general,Combinatorial auto-rule,lip,active
+may hilanat gid sa ngabil ko,lip high fever,urgent,moderate,general,Combinatorial auto-rule,lip,active
+may hilanat gid sa ngabil ko akon,lip high fever,urgent,moderate,general,Combinatorial auto-rule,lip,active
+may hilanat gid sa pisngi akon,cheek high fever,urgent,moderate,general,Combinatorial auto-rule,cheek,active
+may hilanat gid sa pisngi akon ko,cheek high fever,urgent,moderate,general,Combinatorial auto-rule,cheek,active
+may hilanat gid sa pisngi ko,cheek high fever,urgent,moderate,general,Combinatorial auto-rule,cheek,active
+may hilanat gid sa pisngi ko akon,cheek high fever,urgent,moderate,general,Combinatorial auto-rule,cheek,active
+may hilanat gid sa singit akon,groin high fever,urgent,moderate,general,Combinatorial auto-rule,groin,active
+may hilanat gid sa singit akon ko,groin high fever,urgent,moderate,general,Combinatorial auto-rule,groin,active
+may hilanat gid sa singit ko,groin high fever,urgent,moderate,general,Combinatorial auto-rule,groin,active
+may hilanat gid sa singit ko akon,groin high fever,urgent,moderate,general,Combinatorial auto-rule,groin,active
+may hilanat gid sa talukap mata akon,eyelid high fever,urgent,moderate,general,Combinatorial auto-rule,eyelid,active
+may hilanat gid sa talukap mata akon ko,eyelid high fever,urgent,moderate,general,Combinatorial auto-rule,eyelid,active
+may hilanat gid sa talukap mata ko,eyelid high fever,urgent,moderate,general,Combinatorial auto-rule,eyelid,active
+may hilanat gid sa talukap mata ko akon,eyelid high fever,urgent,moderate,general,Combinatorial auto-rule,eyelid,active
+may hilanat gid sa tiyan akon,abdomen high fever,urgent,moderate,general,Combinatorial auto-rule,abdomen,active
+may hilanat gid sa tiyan akon ko,abdomen high fever,urgent,moderate,general,Combinatorial auto-rule,abdomen,active
+may hilanat gid sa tiyan ko,abdomen high fever,urgent,moderate,general,Combinatorial auto-rule,abdomen,active
+may hilanat gid sa tiyan ko akon,abdomen high fever,urgent,moderate,general,Combinatorial auto-rule,abdomen,active
+may hilanat gid sa tungod akon,throat high fever,urgent,moderate,general,Combinatorial auto-rule,throat,active
+may hilanat gid sa tungod akon ko,throat high fever,urgent,moderate,general,Combinatorial auto-rule,throat,active
+may hilanat gid sa tungod ko,throat high fever,urgent,moderate,general,Combinatorial auto-rule,throat,active
+may hilanat gid sa tungod ko akon,throat high fever,urgent,moderate,general,Combinatorial auto-rule,throat,active
+may hilanat gid singit akon,groin high fever,urgent,moderate,general,Combinatorial auto-rule,groin,active
+may hilanat gid singit akon ko,groin high fever,urgent,moderate,general,Combinatorial auto-rule,groin,active
+may hilanat gid singit ko,groin high fever,urgent,moderate,general,Combinatorial auto-rule,groin,active
+may hilanat gid singit ko akon,groin high fever,urgent,moderate,general,Combinatorial auto-rule,groin,active
+may hilanat gid talukap mata akon,eyelid high fever,urgent,moderate,general,Combinatorial auto-rule,eyelid,active
+may hilanat gid talukap mata akon ko,eyelid high fever,urgent,moderate,general,Combinatorial auto-rule,eyelid,active
+may hilanat gid talukap mata ko,eyelid high fever,urgent,moderate,general,Combinatorial auto-rule,eyelid,active
+may hilanat gid talukap mata ko akon,eyelid high fever,urgent,moderate,general,Combinatorial auto-rule,eyelid,active
+may hilanat gid tiyan akon,abdomen high fever,urgent,moderate,general,Combinatorial auto-rule,abdomen,active
+may hilanat gid tiyan akon ko,abdomen high fever,urgent,moderate,general,Combinatorial auto-rule,abdomen,active
+may hilanat gid tiyan ko,abdomen high fever,urgent,moderate,general,Combinatorial auto-rule,abdomen,active
+may hilanat gid tiyan ko akon,abdomen high fever,urgent,moderate,general,Combinatorial auto-rule,abdomen,active
+may hilanat gid tungod akon,throat high fever,urgent,moderate,general,Combinatorial auto-rule,throat,active
+may hilanat gid tungod akon ko,throat high fever,urgent,moderate,general,Combinatorial auto-rule,throat,active
+may hilanat gid tungod ko,throat high fever,urgent,moderate,general,Combinatorial auto-rule,throat,active
+may hilanat gid tungod ko akon,throat high fever,urgent,moderate,general,Combinatorial auto-rule,throat,active
+may nana akon mata,eye infection,urgent,moderate,infection,Eye pain with purulent discharge suggests ocular infection,infection,active
+may nana ari ko,penis infection,urgent,moderate,infection,Auto-rule: pus_infection + penis,male_reproductive,active
+may nana bilat ko,vagina infection,urgent,moderate,infection,Auto-rule: pus_infection + vagina,female_reproductive,active
+may nana dalunggan ko,ear infection,urgent,moderate,infection,Auto-rule: pus_infection + ear,ent,active
+may nana mata ko,eye infection,urgent,moderate,infection,Auto-rule: pus_infection + eye,ophthalmologic,active
+may nana sa,infection with pus,urgent,moderate,infection,Pattern rule,general,active
+may nana sa ari ko,penile infection,urgent,severe,infection,Possible genital infection — urgent evaluation,infection,active
+may nana sa bilat ko,vaginal infection,urgent,severe,infection,Possible genital infection — urgent evaluation,infection,active
+may nana tudlo ko,finger infection,urgent,moderate,infection,Auto-rule: pus_infection + finger,musculoskeletal,active
 may pilas kamot ko,hand wound,urgent,moderate,wound,Auto-rule: wound + hand,musculoskeletal,active
 may pilas tiil ko,foot wound,urgent,moderate,wound,Auto-rule: wound + foot,musculoskeletal,active
 nabali bukongbukong ko,ankle fracture,urgent,moderate,trauma,Auto-rule: fracture + ankle,musculoskeletal,active
+nabali kamot ko,hand fracture,urgent,moderate,trauma,Auto-rule: fracture + hand,musculoskeletal,active
+nabali tudlo ko,finger fracture,urgent,moderate,trauma,Auto-rule: fracture + finger,musculoskeletal,active
 nabali tuhod ko,knee fracture,urgent,moderate,trauma,Auto-rule: fracture + knee,musculoskeletal,active
-may nana dalunggan ko,ear infection,urgent,moderate,infection,Auto-rule: pus_infection + ear,ent,active
-may nana tudlo ko,finger infection,urgent,moderate,infection,Auto-rule: pus_infection + finger,musculoskeletal,active
-gakatol lawas ko,body itching,non_urgent,mild,dermatological,Auto-rule: itching + body,general,active
-gakatol kamot ko,hand itching,non_urgent,mild,dermatological,Auto-rule: itching + hand,musculoskeletal,active
-dula ginhawa,shortness of breath,emergency,critical,respiratory,Pattern rule,general,active
-masakit dughan,chest pain,emergency,severe,cardiovascular,Pattern rule,general,active
-naguyam,seizure,emergency,critical,neurological,Pattern rule,general,active
-nabunggo ko sa salakyan,vehicle collision,emergency,critical,trauma,Pattern rule,general,active
-nakuryente,electrical injury,emergency,critical,trauma,Pattern rule,general,active
-gusto ko magpakamatay,suicidal ideation,emergency,critical,mental_health,Pattern rule,general,active
-gahubag lawas kag gakatol,body swelling,emergency,severe,allergy,Combinatorial auto-rule,body,active
-daw indi ko makahambal,speech difficulty,emergency,severe,neurological,Pattern rule,general,active
-daw indi ko makabaton,arm weakness,emergency,severe,neurological,Pattern rule,general,active
-nautod,amputation,emergency,critical,trauma,Pattern rule,general,active
-nagdugo ulo,head bleeding,emergency,critical,trauma,Pattern rule,general,active
-ginahilanat gid,high fever,urgent,moderate,general,Pattern rule,general,active
-alta presyon,hypertension,urgent,moderate,cardiovascular,Pattern rule,general,active
-may nana sa,infection with pus,urgent,moderate,infection,Pattern rule,general,active
-ginkagat sang ido,dog bite,urgent,moderate,infection,Pattern rule,general,active
-galagas buhok,hair loss,non_urgent,mild,dermatological,Pattern rule,general,active
-kakatol bilat,vaginal itching,non_urgent,mild,dermatological,Pattern rule,general,active
-gapula mata,eye redness,non_urgent,mild,ophthalmologic,Pattern rule,general,active
-sakit ulo,headache,non_urgent,mild,neurological,Pattern rule,general,active
-daw indi ko makabaton sang kamot,arm weakness,emergency,severe,neurological,Combinatorial auto-rule,hand,active
-3 ka adlaw na daw indi ko makabaton sang kamot,arm weakness,emergency,severe,neurological,Combinatorial auto-rule,hand,active
-5 ka adlaw na daw indi ko makabaton sang kamot,arm weakness,emergency,severe,neurological,Combinatorial auto-rule,hand,active
-dugay na daw indi ko makabaton sang kamot,arm weakness,emergency,severe,neurological,Combinatorial auto-rule,hand,active
-bag-o lang daw indi ko makabaton sang kamot,arm weakness,emergency,severe,neurological,Combinatorial auto-rule,hand,active
-indi ko makabaton sang kamot ko,hand arm weakness,emergency,severe,neurological,Combinatorial auto-rule,hand,active
-3 ka adlaw na indi ko makabaton sang kamot ko,hand arm weakness,emergency,severe,neurological,Combinatorial auto-rule,hand,active
-5 ka adlaw na indi ko makabaton sang kamot ko,hand arm weakness,emergency,severe,neurological,Combinatorial auto-rule,hand,active
-dugay na indi ko makabaton sang kamot ko,hand arm weakness,emergency,severe,neurological,Combinatorial auto-rule,hand,active
-bag-o lang indi ko makabaton sang kamot ko,hand arm weakness,emergency,severe,neurological,Combinatorial auto-rule,hand,active
-lemah ang kamot ko,hand arm weakness,emergency,severe,neurological,Combinatorial auto-rule,hand,active
-3 ka adlaw na lemah ang kamot ko,hand arm weakness,emergency,severe,neurological,Combinatorial auto-rule,hand,active
-5 ka adlaw na lemah ang kamot ko,hand arm weakness,emergency,severe,neurological,Combinatorial auto-rule,hand,active
-dugay na lemah ang kamot ko,hand arm weakness,emergency,severe,neurological,Combinatorial auto-rule,hand,active
-bag-o lang lemah ang kamot ko,hand arm weakness,emergency,severe,neurological,Combinatorial auto-rule,hand,active
-3 ka adlaw na gahubag lawas kag gakatol,body swelling,emergency,severe,allergy,Combinatorial auto-rule,body,active
-5 ka adlaw na gahubag lawas kag gakatol,body swelling,emergency,severe,allergy,Combinatorial auto-rule,body,active
-dugay na gahubag lawas kag gakatol,body swelling,emergency,severe,allergy,Combinatorial auto-rule,body,active
-bag-o lang gahubag lawas kag gakatol,body swelling,emergency,severe,allergy,Combinatorial auto-rule,body,active
-gahubag lawas ko kag gakatol,body swelling,emergency,severe,allergy,Combinatorial auto-rule,body,active
-3 ka adlaw na gahubag lawas ko kag gakatol,body swelling,emergency,severe,allergy,Combinatorial auto-rule,body,active
-5 ka adlaw na gahubag lawas ko kag gakatol,body swelling,emergency,severe,allergy,Combinatorial auto-rule,body,active
-dugay na gahubag lawas ko kag gakatol,body swelling,emergency,severe,allergy,Combinatorial auto-rule,body,active
-bag-o lang gahubag lawas ko kag gakatol,body swelling,emergency,severe,allergy,Combinatorial auto-rule,body,active
-gahubag kag gakatol lawas ko,body swelling,emergency,severe,allergy,Combinatorial auto-rule,body,active
-3 ka adlaw na gahubag kag gakatol lawas ko,body swelling,emergency,severe,allergy,Combinatorial auto-rule,body,active
-5 ka adlaw na gahubag kag gakatol lawas ko,body swelling,emergency,severe,allergy,Combinatorial auto-rule,body,active
-dugay na gahubag kag gakatol lawas ko,body swelling,emergency,severe,allergy,Combinatorial auto-rule,body,active
-bag-o lang gahubag kag gakatol lawas ko,body swelling,emergency,severe,allergy,Combinatorial auto-rule,body,active
-3 ka adlaw na ginahilanat gid ko,fever,urgent,moderate,general,Combinatorial auto-rule,general,active
-5 ka adlaw na ginahilanat gid ko,fever,urgent,moderate,general,Combinatorial auto-rule,general,active
-dugay na ginahilanat gid ko,fever,urgent,moderate,general,Combinatorial auto-rule,general,active
-bag-o lang ginahilanat gid ko,fever,urgent,moderate,general,Combinatorial auto-rule,general,active
-hilanat gid talukap mata ko,eyelid high fever,urgent,moderate,general,Combinatorial auto-rule,eyelid,active
-hilanat gid talukap mata akon,eyelid high fever,urgent,moderate,general,Combinatorial auto-rule,eyelid,active
-hilanat gid talukap mata ko akon,eyelid high fever,urgent,moderate,general,Combinatorial auto-rule,eyelid,active
-hilanat gid talukap mata akon ko,eyelid high fever,urgent,moderate,general,Combinatorial auto-rule,eyelid,active
-hilanat gid ko talukap mata,eyelid high fever,urgent,moderate,general,Combinatorial auto-rule,eyelid,active
-hilanat gid akon talukap mata,eyelid high fever,urgent,moderate,general,Combinatorial auto-rule,eyelid,active
-hilanat gid ko akon talukap mata,eyelid high fever,urgent,moderate,general,Combinatorial auto-rule,eyelid,active
-hilanat gid akon ko talukap mata,eyelid high fever,urgent,moderate,general,Combinatorial auto-rule,eyelid,active
-hilanat gid gid talukap mata ko,eyelid high fever,urgent,moderate,general,Combinatorial auto-rule,eyelid,active
-hilanat gid grabe talukap mata ko,eyelid high fever,urgent,moderate,general,Combinatorial auto-rule,eyelid,active
-hilanat gid grabe gid talukap mata ko,eyelid high fever,urgent,moderate,general,Combinatorial auto-rule,eyelid,active
-hilanat gid gid talukap mata akon,eyelid high fever,urgent,moderate,general,Combinatorial auto-rule,eyelid,active
-hilanat gid grabe talukap mata akon,eyelid high fever,urgent,moderate,general,Combinatorial auto-rule,eyelid,active
-hilanat gid grabe gid talukap mata akon,eyelid high fever,urgent,moderate,general,Combinatorial auto-rule,eyelid,active
-hilanat gid gid talukap mata ko akon,eyelid high fever,urgent,moderate,general,Combinatorial auto-rule,eyelid,active
-hilanat gid grabe talukap mata ko akon,eyelid high fever,urgent,moderate,general,Combinatorial auto-rule,eyelid,active
-hilanat gid grabe gid talukap mata ko akon,eyelid high fever,urgent,moderate,general,Combinatorial auto-rule,eyelid,active
-hilanat gid gid talukap mata akon ko,eyelid high fever,urgent,moderate,general,Combinatorial auto-rule,eyelid,active
-hilanat gid grabe talukap mata akon ko,eyelid high fever,urgent,moderate,general,Combinatorial auto-rule,eyelid,active
-hilanat gid grabe gid talukap mata akon ko,eyelid high fever,urgent,moderate,general,Combinatorial auto-rule,eyelid,active
-hilanat gid talukap mata,eyelid high fever,urgent,moderate,general,Combinatorial auto-rule,eyelid,active
-hilanat gid gid talukap mata,eyelid high fever,urgent,moderate,general,Combinatorial auto-rule,eyelid,active
-hilanat gid grabe talukap mata,eyelid high fever,urgent,moderate,general,Combinatorial auto-rule,eyelid,active
-hilanat gid grabe gid talukap mata,eyelid high fever,urgent,moderate,general,Combinatorial auto-rule,eyelid,active
-may hilanat gid sa talukap mata ko,eyelid high fever,urgent,moderate,general,Combinatorial auto-rule,eyelid,active
-may hilanat gid sa talukap mata akon,eyelid high fever,urgent,moderate,general,Combinatorial auto-rule,eyelid,active
-may hilanat gid sa talukap mata ko akon,eyelid high fever,urgent,moderate,general,Combinatorial auto-rule,eyelid,active
-may hilanat gid sa talukap mata akon ko,eyelid high fever,urgent,moderate,general,Combinatorial auto-rule,eyelid,active
-may hilanat gid talukap mata ko,eyelid high fever,urgent,moderate,general,Combinatorial auto-rule,eyelid,active
-may hilanat gid talukap mata akon,eyelid high fever,urgent,moderate,general,Combinatorial auto-rule,eyelid,active
-may hilanat gid talukap mata ko akon,eyelid high fever,urgent,moderate,general,Combinatorial auto-rule,eyelid,active
-may hilanat gid talukap mata akon ko,eyelid high fever,urgent,moderate,general,Combinatorial auto-rule,eyelid,active
-talukap mata ko hilanat gid,eyelid high fever,urgent,moderate,general,Combinatorial auto-rule,eyelid,active
-talukap mata akon hilanat gid,eyelid high fever,urgent,moderate,general,Combinatorial auto-rule,eyelid,active
-talukap mata ko akon hilanat gid,eyelid high fever,urgent,moderate,general,Combinatorial auto-rule,eyelid,active
-talukap mata akon ko hilanat gid,eyelid high fever,urgent,moderate,general,Combinatorial auto-rule,eyelid,active
-ko talukap mata hilanat gid,eyelid high fever,urgent,moderate,general,Combinatorial auto-rule,eyelid,active
-akon talukap mata hilanat gid,eyelid high fever,urgent,moderate,general,Combinatorial auto-rule,eyelid,active
-ko akon talukap mata hilanat gid,eyelid high fever,urgent,moderate,general,Combinatorial auto-rule,eyelid,active
-akon ko talukap mata hilanat gid,eyelid high fever,urgent,moderate,general,Combinatorial auto-rule,eyelid,active
-hilanat gid gid ko talukap mata,eyelid high fever,urgent,moderate,general,Combinatorial auto-rule,eyelid,active
-hilanat gid gid akon talukap mata,eyelid high fever,urgent,moderate,general,Combinatorial auto-rule,eyelid,active
-hilanat gid gid ko akon talukap mata,eyelid high fever,urgent,moderate,general,Combinatorial auto-rule,eyelid,active
-hilanat gid gid akon ko talukap mata,eyelid high fever,urgent,moderate,general,Combinatorial auto-rule,eyelid,active
-gid hilanat gid talukap mata ko,eyelid high fever,urgent,moderate,general,Combinatorial auto-rule,eyelid,active
-grabe hilanat gid talukap mata ko,eyelid high fever,urgent,moderate,general,Combinatorial auto-rule,eyelid,active
-grabe gid hilanat gid talukap mata ko,eyelid high fever,urgent,moderate,general,Combinatorial auto-rule,eyelid,active
-gid hilanat gid talukap mata akon,eyelid high fever,urgent,moderate,general,Combinatorial auto-rule,eyelid,active
-grabe hilanat gid talukap mata akon,eyelid high fever,urgent,moderate,general,Combinatorial auto-rule,eyelid,active
-grabe gid hilanat gid talukap mata akon,eyelid high fever,urgent,moderate,general,Combinatorial auto-rule,eyelid,active
-gid hilanat gid talukap mata ko akon,eyelid high fever,urgent,moderate,general,Combinatorial auto-rule,eyelid,active
-grabe hilanat gid talukap mata ko akon,eyelid high fever,urgent,moderate,general,Combinatorial auto-rule,eyelid,active
-grabe gid hilanat gid talukap mata ko akon,eyelid high fever,urgent,moderate,general,Combinatorial auto-rule,eyelid,active
-gid hilanat gid talukap mata akon ko,eyelid high fever,urgent,moderate,general,Combinatorial auto-rule,eyelid,active
-grabe hilanat gid talukap mata akon ko,eyelid high fever,urgent,moderate,general,Combinatorial auto-rule,eyelid,active
-grabe gid hilanat gid talukap mata akon ko,eyelid high fever,urgent,moderate,general,Combinatorial auto-rule,eyelid,active
-talukap mata hilanat gid,eyelid high fever,urgent,moderate,general,Combinatorial auto-rule,eyelid,active
-hilanat gid bukongbukong ko,ankle high fever,urgent,moderate,general,Combinatorial auto-rule,ankle,active
-hilanat gid bukongbukong akon,ankle high fever,urgent,moderate,general,Combinatorial auto-rule,ankle,active
-hilanat gid bukongbukong ko akon,ankle high fever,urgent,moderate,general,Combinatorial auto-rule,ankle,active
-hilanat gid bukongbukong akon ko,ankle high fever,urgent,moderate,general,Combinatorial auto-rule,ankle,active
-hilanat gid ko bukongbukong,ankle high fever,urgent,moderate,general,Combinatorial auto-rule,ankle,active
-hilanat gid akon bukongbukong,ankle high fever,urgent,moderate,general,Combinatorial auto-rule,ankle,active
-hilanat gid ko akon bukongbukong,ankle high fever,urgent,moderate,general,Combinatorial auto-rule,ankle,active
-hilanat gid akon ko bukongbukong,ankle high fever,urgent,moderate,general,Combinatorial auto-rule,ankle,active
-hilanat gid gid bukongbukong ko,ankle high fever,urgent,moderate,general,Combinatorial auto-rule,ankle,active
-hilanat gid grabe bukongbukong ko,ankle high fever,urgent,moderate,general,Combinatorial auto-rule,ankle,active
-hilanat gid grabe gid bukongbukong ko,ankle high fever,urgent,moderate,general,Combinatorial auto-rule,ankle,active
-hilanat gid gid bukongbukong akon,ankle high fever,urgent,moderate,general,Combinatorial auto-rule,ankle,active
-hilanat gid grabe bukongbukong akon,ankle high fever,urgent,moderate,general,Combinatorial auto-rule,ankle,active
-hilanat gid grabe gid bukongbukong akon,ankle high fever,urgent,moderate,general,Combinatorial auto-rule,ankle,active
-hilanat gid gid bukongbukong ko akon,ankle high fever,urgent,moderate,general,Combinatorial auto-rule,ankle,active
-hilanat gid grabe bukongbukong ko akon,ankle high fever,urgent,moderate,general,Combinatorial auto-rule,ankle,active
-hilanat gid grabe gid bukongbukong ko akon,ankle high fever,urgent,moderate,general,Combinatorial auto-rule,ankle,active
-hilanat gid gid bukongbukong akon ko,ankle high fever,urgent,moderate,general,Combinatorial auto-rule,ankle,active
-hilanat gid grabe bukongbukong akon ko,ankle high fever,urgent,moderate,general,Combinatorial auto-rule,ankle,active
-hilanat gid grabe gid bukongbukong akon ko,ankle high fever,urgent,moderate,general,Combinatorial auto-rule,ankle,active
-hilanat gid bukongbukong,ankle high fever,urgent,moderate,general,Combinatorial auto-rule,ankle,active
-hilanat gid gid bukongbukong,ankle high fever,urgent,moderate,general,Combinatorial auto-rule,ankle,active
-hilanat gid grabe bukongbukong,ankle high fever,urgent,moderate,general,Combinatorial auto-rule,ankle,active
-hilanat gid grabe gid bukongbukong,ankle high fever,urgent,moderate,general,Combinatorial auto-rule,ankle,active
-may hilanat gid sa bukongbukong ko,ankle high fever,urgent,moderate,general,Combinatorial auto-rule,ankle,active
-may hilanat gid sa bukongbukong akon,ankle high fever,urgent,moderate,general,Combinatorial auto-rule,ankle,active
-may hilanat gid sa bukongbukong ko akon,ankle high fever,urgent,moderate,general,Combinatorial auto-rule,ankle,active
-may hilanat gid sa bukongbukong akon ko,ankle high fever,urgent,moderate,general,Combinatorial auto-rule,ankle,active
-may hilanat gid bukongbukong ko,ankle high fever,urgent,moderate,general,Combinatorial auto-rule,ankle,active
-may hilanat gid bukongbukong akon,ankle high fever,urgent,moderate,general,Combinatorial auto-rule,ankle,active
-may hilanat gid bukongbukong ko akon,ankle high fever,urgent,moderate,general,Combinatorial auto-rule,ankle,active
-may hilanat gid bukongbukong akon ko,ankle high fever,urgent,moderate,general,Combinatorial auto-rule,ankle,active
-bukongbukong ko hilanat gid,ankle high fever,urgent,moderate,general,Combinatorial auto-rule,ankle,active
-bukongbukong akon hilanat gid,ankle high fever,urgent,moderate,general,Combinatorial auto-rule,ankle,active
-bukongbukong ko akon hilanat gid,ankle high fever,urgent,moderate,general,Combinatorial auto-rule,ankle,active
-bukongbukong akon ko hilanat gid,ankle high fever,urgent,moderate,general,Combinatorial auto-rule,ankle,active
-ko bukongbukong hilanat gid,ankle high fever,urgent,moderate,general,Combinatorial auto-rule,ankle,active
-akon bukongbukong hilanat gid,ankle high fever,urgent,moderate,general,Combinatorial auto-rule,ankle,active
-ko akon bukongbukong hilanat gid,ankle high fever,urgent,moderate,general,Combinatorial auto-rule,ankle,active
-akon ko bukongbukong hilanat gid,ankle high fever,urgent,moderate,general,Combinatorial auto-rule,ankle,active
-hilanat gid gid ko bukongbukong,ankle high fever,urgent,moderate,general,Combinatorial auto-rule,ankle,active
-hilanat gid gid akon bukongbukong,ankle high fever,urgent,moderate,general,Combinatorial auto-rule,ankle,active
-hilanat gid gid ko akon bukongbukong,ankle high fever,urgent,moderate,general,Combinatorial auto-rule,ankle,active
-hilanat gid gid akon ko bukongbukong,ankle high fever,urgent,moderate,general,Combinatorial auto-rule,ankle,active
-gid hilanat gid bukongbukong ko,ankle high fever,urgent,moderate,general,Combinatorial auto-rule,ankle,active
-grabe hilanat gid bukongbukong ko,ankle high fever,urgent,moderate,general,Combinatorial auto-rule,ankle,active
-grabe gid hilanat gid bukongbukong ko,ankle high fever,urgent,moderate,general,Combinatorial auto-rule,ankle,active
-gid hilanat gid bukongbukong akon,ankle high fever,urgent,moderate,general,Combinatorial auto-rule,ankle,active
-grabe hilanat gid bukongbukong akon,ankle high fever,urgent,moderate,general,Combinatorial auto-rule,ankle,active
-grabe gid hilanat gid bukongbukong akon,ankle high fever,urgent,moderate,general,Combinatorial auto-rule,ankle,active
-gid hilanat gid bukongbukong ko akon,ankle high fever,urgent,moderate,general,Combinatorial auto-rule,ankle,active
-grabe hilanat gid bukongbukong ko akon,ankle high fever,urgent,moderate,general,Combinatorial auto-rule,ankle,active
-grabe gid hilanat gid bukongbukong ko akon,ankle high fever,urgent,moderate,general,Combinatorial auto-rule,ankle,active
-gid hilanat gid bukongbukong akon ko,ankle high fever,urgent,moderate,general,Combinatorial auto-rule,ankle,active
-grabe hilanat gid bukongbukong akon ko,ankle high fever,urgent,moderate,general,Combinatorial auto-rule,ankle,active
-grabe gid hilanat gid bukongbukong akon ko,ankle high fever,urgent,moderate,general,Combinatorial auto-rule,ankle,active
-bukongbukong hilanat gid,ankle high fever,urgent,moderate,general,Combinatorial auto-rule,ankle,active
-hilanat gid kilid mata ko,eyelid high fever,urgent,moderate,general,Combinatorial auto-rule,eyelid,active
-hilanat gid kilid mata akon,eyelid high fever,urgent,moderate,general,Combinatorial auto-rule,eyelid,active
-hilanat gid kilid mata ko akon,eyelid high fever,urgent,moderate,general,Combinatorial auto-rule,eyelid,active
-hilanat gid kilid mata akon ko,eyelid high fever,urgent,moderate,general,Combinatorial auto-rule,eyelid,active
-hilanat gid ko kilid mata,eyelid high fever,urgent,moderate,general,Combinatorial auto-rule,eyelid,active
-hilanat gid akon kilid mata,eyelid high fever,urgent,moderate,general,Combinatorial auto-rule,eyelid,active
-hilanat gid ko akon kilid mata,eyelid high fever,urgent,moderate,general,Combinatorial auto-rule,eyelid,active
-hilanat gid akon ko kilid mata,eyelid high fever,urgent,moderate,general,Combinatorial auto-rule,eyelid,active
-hilanat gid gid kilid mata ko,eyelid high fever,urgent,moderate,general,Combinatorial auto-rule,eyelid,active
-hilanat gid grabe kilid mata ko,eyelid high fever,urgent,moderate,general,Combinatorial auto-rule,eyelid,active
-hilanat gid grabe gid kilid mata ko,eyelid high fever,urgent,moderate,general,Combinatorial auto-rule,eyelid,active
-hilanat gid gid kilid mata akon,eyelid high fever,urgent,moderate,general,Combinatorial auto-rule,eyelid,active
-hilanat gid grabe kilid mata akon,eyelid high fever,urgent,moderate,general,Combinatorial auto-rule,eyelid,active
-hilanat gid grabe gid kilid mata akon,eyelid high fever,urgent,moderate,general,Combinatorial auto-rule,eyelid,active
-hilanat gid gid kilid mata ko akon,eyelid high fever,urgent,moderate,general,Combinatorial auto-rule,eyelid,active
-hilanat gid grabe kilid mata ko akon,eyelid high fever,urgent,moderate,general,Combinatorial auto-rule,eyelid,active
-hilanat gid grabe gid kilid mata ko akon,eyelid high fever,urgent,moderate,general,Combinatorial auto-rule,eyelid,active
-hilanat gid gid kilid mata akon ko,eyelid high fever,urgent,moderate,general,Combinatorial auto-rule,eyelid,active
-hilanat gid grabe kilid mata akon ko,eyelid high fever,urgent,moderate,general,Combinatorial auto-rule,eyelid,active
-hilanat gid grabe gid kilid mata akon ko,eyelid high fever,urgent,moderate,general,Combinatorial auto-rule,eyelid,active
-hilanat gid kilid mata,eyelid high fever,urgent,moderate,general,Combinatorial auto-rule,eyelid,active
-hilanat gid gid kilid mata,eyelid high fever,urgent,moderate,general,Combinatorial auto-rule,eyelid,active
-hilanat gid grabe kilid mata,eyelid high fever,urgent,moderate,general,Combinatorial auto-rule,eyelid,active
-hilanat gid grabe gid kilid mata,eyelid high fever,urgent,moderate,general,Combinatorial auto-rule,eyelid,active
-may hilanat gid sa kilid mata ko,eyelid high fever,urgent,moderate,general,Combinatorial auto-rule,eyelid,active
-may hilanat gid sa kilid mata akon,eyelid high fever,urgent,moderate,general,Combinatorial auto-rule,eyelid,active
-may hilanat gid sa kilid mata ko akon,eyelid high fever,urgent,moderate,general,Combinatorial auto-rule,eyelid,active
-may hilanat gid sa kilid mata akon ko,eyelid high fever,urgent,moderate,general,Combinatorial auto-rule,eyelid,active
-may hilanat gid kilid mata ko,eyelid high fever,urgent,moderate,general,Combinatorial auto-rule,eyelid,active
-may hilanat gid kilid mata akon,eyelid high fever,urgent,moderate,general,Combinatorial auto-rule,eyelid,active
-may hilanat gid kilid mata ko akon,eyelid high fever,urgent,moderate,general,Combinatorial auto-rule,eyelid,active
-may hilanat gid kilid mata akon ko,eyelid high fever,urgent,moderate,general,Combinatorial auto-rule,eyelid,active
-kilid mata ko hilanat gid,eyelid high fever,urgent,moderate,general,Combinatorial auto-rule,eyelid,active
-kilid mata akon hilanat gid,eyelid high fever,urgent,moderate,general,Combinatorial auto-rule,eyelid,active
-kilid mata ko akon hilanat gid,eyelid high fever,urgent,moderate,general,Combinatorial auto-rule,eyelid,active
-kilid mata akon ko hilanat gid,eyelid high fever,urgent,moderate,general,Combinatorial auto-rule,eyelid,active
-ko kilid mata hilanat gid,eyelid high fever,urgent,moderate,general,Combinatorial auto-rule,eyelid,active
-akon kilid mata hilanat gid,eyelid high fever,urgent,moderate,general,Combinatorial auto-rule,eyelid,active
-ko akon kilid mata hilanat gid,eyelid high fever,urgent,moderate,general,Combinatorial auto-rule,eyelid,active
-akon ko kilid mata hilanat gid,eyelid high fever,urgent,moderate,general,Combinatorial auto-rule,eyelid,active
-hilanat gid gid ko kilid mata,eyelid high fever,urgent,moderate,general,Combinatorial auto-rule,eyelid,active
-hilanat gid gid akon kilid mata,eyelid high fever,urgent,moderate,general,Combinatorial auto-rule,eyelid,active
-hilanat gid gid ko akon kilid mata,eyelid high fever,urgent,moderate,general,Combinatorial auto-rule,eyelid,active
-hilanat gid gid akon ko kilid mata,eyelid high fever,urgent,moderate,general,Combinatorial auto-rule,eyelid,active
-gid hilanat gid kilid mata ko,eyelid high fever,urgent,moderate,general,Combinatorial auto-rule,eyelid,active
-grabe hilanat gid kilid mata ko,eyelid high fever,urgent,moderate,general,Combinatorial auto-rule,eyelid,active
-grabe gid hilanat gid kilid mata ko,eyelid high fever,urgent,moderate,general,Combinatorial auto-rule,eyelid,active
-gid hilanat gid kilid mata akon,eyelid high fever,urgent,moderate,general,Combinatorial auto-rule,eyelid,active
-grabe hilanat gid kilid mata akon,eyelid high fever,urgent,moderate,general,Combinatorial auto-rule,eyelid,active
-grabe gid hilanat gid kilid mata akon,eyelid high fever,urgent,moderate,general,Combinatorial auto-rule,eyelid,active
-gid hilanat gid kilid mata ko akon,eyelid high fever,urgent,moderate,general,Combinatorial auto-rule,eyelid,active
-grabe hilanat gid kilid mata ko akon,eyelid high fever,urgent,moderate,general,Combinatorial auto-rule,eyelid,active
-grabe gid hilanat gid kilid mata ko akon,eyelid high fever,urgent,moderate,general,Combinatorial auto-rule,eyelid,active
-gid hilanat gid kilid mata akon ko,eyelid high fever,urgent,moderate,general,Combinatorial auto-rule,eyelid,active
-grabe hilanat gid kilid mata akon ko,eyelid high fever,urgent,moderate,general,Combinatorial auto-rule,eyelid,active
-grabe gid hilanat gid kilid mata akon ko,eyelid high fever,urgent,moderate,general,Combinatorial auto-rule,eyelid,active
-kilid mata hilanat gid,eyelid high fever,urgent,moderate,general,Combinatorial auto-rule,eyelid,active
-hilanat gid dalunggan ko,ear high fever,urgent,moderate,general,Combinatorial auto-rule,ear,active
-hilanat gid dalunggan akon,ear high fever,urgent,moderate,general,Combinatorial auto-rule,ear,active
-hilanat gid dalunggan ko akon,ear high fever,urgent,moderate,general,Combinatorial auto-rule,ear,active
-hilanat gid dalunggan akon ko,ear high fever,urgent,moderate,general,Combinatorial auto-rule,ear,active
-hilanat gid ko dalunggan,ear high fever,urgent,moderate,general,Combinatorial auto-rule,ear,active
-hilanat gid akon dalunggan,ear high fever,urgent,moderate,general,Combinatorial auto-rule,ear,active
-hilanat gid ko akon dalunggan,ear high fever,urgent,moderate,general,Combinatorial auto-rule,ear,active
-hilanat gid akon ko dalunggan,ear high fever,urgent,moderate,general,Combinatorial auto-rule,ear,active
-hilanat gid gid dalunggan ko,ear high fever,urgent,moderate,general,Combinatorial auto-rule,ear,active
-hilanat gid grabe dalunggan ko,ear high fever,urgent,moderate,general,Combinatorial auto-rule,ear,active
-hilanat gid grabe gid dalunggan ko,ear high fever,urgent,moderate,general,Combinatorial auto-rule,ear,active
-hilanat gid gid dalunggan akon,ear high fever,urgent,moderate,general,Combinatorial auto-rule,ear,active
-hilanat gid grabe dalunggan akon,ear high fever,urgent,moderate,general,Combinatorial auto-rule,ear,active
-hilanat gid grabe gid dalunggan akon,ear high fever,urgent,moderate,general,Combinatorial auto-rule,ear,active
-hilanat gid gid dalunggan ko akon,ear high fever,urgent,moderate,general,Combinatorial auto-rule,ear,active
-hilanat gid grabe dalunggan ko akon,ear high fever,urgent,moderate,general,Combinatorial auto-rule,ear,active
-hilanat gid grabe gid dalunggan ko akon,ear high fever,urgent,moderate,general,Combinatorial auto-rule,ear,active
-hilanat gid gid dalunggan akon ko,ear high fever,urgent,moderate,general,Combinatorial auto-rule,ear,active
-hilanat gid grabe dalunggan akon ko,ear high fever,urgent,moderate,general,Combinatorial auto-rule,ear,active
-hilanat gid grabe gid dalunggan akon ko,ear high fever,urgent,moderate,general,Combinatorial auto-rule,ear,active
-hilanat gid dalunggan,ear high fever,urgent,moderate,general,Combinatorial auto-rule,ear,active
-hilanat gid gid dalunggan,ear high fever,urgent,moderate,general,Combinatorial auto-rule,ear,active
-hilanat gid grabe dalunggan,ear high fever,urgent,moderate,general,Combinatorial auto-rule,ear,active
-hilanat gid grabe gid dalunggan,ear high fever,urgent,moderate,general,Combinatorial auto-rule,ear,active
-may hilanat gid sa dalunggan ko,ear high fever,urgent,moderate,general,Combinatorial auto-rule,ear,active
-may hilanat gid sa dalunggan akon,ear high fever,urgent,moderate,general,Combinatorial auto-rule,ear,active
-may hilanat gid sa dalunggan ko akon,ear high fever,urgent,moderate,general,Combinatorial auto-rule,ear,active
-may hilanat gid sa dalunggan akon ko,ear high fever,urgent,moderate,general,Combinatorial auto-rule,ear,active
-may hilanat gid dalunggan ko,ear high fever,urgent,moderate,general,Combinatorial auto-rule,ear,active
-may hilanat gid dalunggan akon,ear high fever,urgent,moderate,general,Combinatorial auto-rule,ear,active
-may hilanat gid dalunggan ko akon,ear high fever,urgent,moderate,general,Combinatorial auto-rule,ear,active
-may hilanat gid dalunggan akon ko,ear high fever,urgent,moderate,general,Combinatorial auto-rule,ear,active
-dalunggan ko hilanat gid,ear high fever,urgent,moderate,general,Combinatorial auto-rule,ear,active
-dalunggan akon hilanat gid,ear high fever,urgent,moderate,general,Combinatorial auto-rule,ear,active
-dalunggan ko akon hilanat gid,ear high fever,urgent,moderate,general,Combinatorial auto-rule,ear,active
-dalunggan akon ko hilanat gid,ear high fever,urgent,moderate,general,Combinatorial auto-rule,ear,active
-ko dalunggan hilanat gid,ear high fever,urgent,moderate,general,Combinatorial auto-rule,ear,active
-akon dalunggan hilanat gid,ear high fever,urgent,moderate,general,Combinatorial auto-rule,ear,active
-ko akon dalunggan hilanat gid,ear high fever,urgent,moderate,general,Combinatorial auto-rule,ear,active
-akon ko dalunggan hilanat gid,ear high fever,urgent,moderate,general,Combinatorial auto-rule,ear,active
-hilanat gid gid ko dalunggan,ear high fever,urgent,moderate,general,Combinatorial auto-rule,ear,active
-hilanat gid gid akon dalunggan,ear high fever,urgent,moderate,general,Combinatorial auto-rule,ear,active
-hilanat gid gid ko akon dalunggan,ear high fever,urgent,moderate,general,Combinatorial auto-rule,ear,active
-hilanat gid gid akon ko dalunggan,ear high fever,urgent,moderate,general,Combinatorial auto-rule,ear,active
-gid hilanat gid dalunggan ko,ear high fever,urgent,moderate,general,Combinatorial auto-rule,ear,active
-grabe hilanat gid dalunggan ko,ear high fever,urgent,moderate,general,Combinatorial auto-rule,ear,active
-grabe gid hilanat gid dalunggan ko,ear high fever,urgent,moderate,general,Combinatorial auto-rule,ear,active
-gid hilanat gid dalunggan akon,ear high fever,urgent,moderate,general,Combinatorial auto-rule,ear,active
-grabe hilanat gid dalunggan akon,ear high fever,urgent,moderate,general,Combinatorial auto-rule,ear,active
-grabe gid hilanat gid dalunggan akon,ear high fever,urgent,moderate,general,Combinatorial auto-rule,ear,active
-gid hilanat gid dalunggan ko akon,ear high fever,urgent,moderate,general,Combinatorial auto-rule,ear,active
-grabe hilanat gid dalunggan ko akon,ear high fever,urgent,moderate,general,Combinatorial auto-rule,ear,active
-grabe gid hilanat gid dalunggan ko akon,ear high fever,urgent,moderate,general,Combinatorial auto-rule,ear,active
-gid hilanat gid dalunggan akon ko,ear high fever,urgent,moderate,general,Combinatorial auto-rule,ear,active
-grabe hilanat gid dalunggan akon ko,ear high fever,urgent,moderate,general,Combinatorial auto-rule,ear,active
-grabe gid hilanat gid dalunggan akon ko,ear high fever,urgent,moderate,general,Combinatorial auto-rule,ear,active
-dalunggan hilanat gid,ear high fever,urgent,moderate,general,Combinatorial auto-rule,ear,active
-hilanat gid ngabil ko,lip high fever,urgent,moderate,general,Combinatorial auto-rule,lip,active
-hilanat gid ngabil akon,lip high fever,urgent,moderate,general,Combinatorial auto-rule,lip,active
-hilanat gid ngabil ko akon,lip high fever,urgent,moderate,general,Combinatorial auto-rule,lip,active
-hilanat gid ngabil akon ko,lip high fever,urgent,moderate,general,Combinatorial auto-rule,lip,active
-hilanat gid ko ngabil,lip high fever,urgent,moderate,general,Combinatorial auto-rule,lip,active
-hilanat gid akon ngabil,lip high fever,urgent,moderate,general,Combinatorial auto-rule,lip,active
-hilanat gid ko akon ngabil,lip high fever,urgent,moderate,general,Combinatorial auto-rule,lip,active
-hilanat gid akon ko ngabil,lip high fever,urgent,moderate,general,Combinatorial auto-rule,lip,active
-hilanat gid gid ngabil ko,lip high fever,urgent,moderate,general,Combinatorial auto-rule,lip,active
-hilanat gid grabe ngabil ko,lip high fever,urgent,moderate,general,Combinatorial auto-rule,lip,active
-hilanat gid grabe gid ngabil ko,lip high fever,urgent,moderate,general,Combinatorial auto-rule,lip,active
-hilanat gid gid ngabil akon,lip high fever,urgent,moderate,general,Combinatorial auto-rule,lip,active
-hilanat gid grabe ngabil akon,lip high fever,urgent,moderate,general,Combinatorial auto-rule,lip,active
-hilanat gid grabe gid ngabil akon,lip high fever,urgent,moderate,general,Combinatorial auto-rule,lip,active
-hilanat gid gid ngabil ko akon,lip high fever,urgent,moderate,general,Combinatorial auto-rule,lip,active
-hilanat gid grabe ngabil ko akon,lip high fever,urgent,moderate,general,Combinatorial auto-rule,lip,active
-hilanat gid grabe gid ngabil ko akon,lip high fever,urgent,moderate,general,Combinatorial auto-rule,lip,active
-hilanat gid gid ngabil akon ko,lip high fever,urgent,moderate,general,Combinatorial auto-rule,lip,active
-hilanat gid grabe ngabil akon ko,lip high fever,urgent,moderate,general,Combinatorial auto-rule,lip,active
-hilanat gid grabe gid ngabil akon ko,lip high fever,urgent,moderate,general,Combinatorial auto-rule,lip,active
-hilanat gid ngabil,lip high fever,urgent,moderate,general,Combinatorial auto-rule,lip,active
-hilanat gid gid ngabil,lip high fever,urgent,moderate,general,Combinatorial auto-rule,lip,active
-hilanat gid grabe ngabil,lip high fever,urgent,moderate,general,Combinatorial auto-rule,lip,active
-hilanat gid grabe gid ngabil,lip high fever,urgent,moderate,general,Combinatorial auto-rule,lip,active
-may hilanat gid sa ngabil ko,lip high fever,urgent,moderate,general,Combinatorial auto-rule,lip,active
-may hilanat gid sa ngabil akon,lip high fever,urgent,moderate,general,Combinatorial auto-rule,lip,active
-may hilanat gid sa ngabil ko akon,lip high fever,urgent,moderate,general,Combinatorial auto-rule,lip,active
-may hilanat gid sa ngabil akon ko,lip high fever,urgent,moderate,general,Combinatorial auto-rule,lip,active
-may hilanat gid ngabil ko,lip high fever,urgent,moderate,general,Combinatorial auto-rule,lip,active
-may hilanat gid ngabil akon,lip high fever,urgent,moderate,general,Combinatorial auto-rule,lip,active
-may hilanat gid ngabil ko akon,lip high fever,urgent,moderate,general,Combinatorial auto-rule,lip,active
-may hilanat gid ngabil akon ko,lip high fever,urgent,moderate,general,Combinatorial auto-rule,lip,active
-ngabil ko hilanat gid,lip high fever,urgent,moderate,general,Combinatorial auto-rule,lip,active
+nagdugo ari ko,penis bleeding,urgent,moderate,male_reproductive,Auto-rule: bleeding + penis,male_reproductive,active
+nagdugo bilat ko,vagina bleeding,urgent,moderate,gynecologic,Auto-rule: bleeding + vagina,female_reproductive,active
+nagdugo kamot ko,hand bleeding,urgent,moderate,wound,Auto-rule: bleeding + hand,musculoskeletal,active
+nagdugo tudlo ko,finger bleeding,urgent,moderate,wound,Auto-rule: bleeding + finger,musculoskeletal,active
+nasunog kamot ko,hand burn,urgent,moderate,burn,Auto-rule: burn + hand,musculoskeletal,active
+nasunog tiil ko,foot burn,urgent,moderate,burn,Auto-rule: burn + foot,musculoskeletal,active
+nasunog tudlo ko,finger burn,urgent,moderate,burn,Auto-rule: burn + finger,musculoskeletal,active
 ngabil akon hilanat gid,lip high fever,urgent,moderate,general,Combinatorial auto-rule,lip,active
-ngabil ko akon hilanat gid,lip high fever,urgent,moderate,general,Combinatorial auto-rule,lip,active
 ngabil akon ko hilanat gid,lip high fever,urgent,moderate,general,Combinatorial auto-rule,lip,active
-ko ngabil hilanat gid,lip high fever,urgent,moderate,general,Combinatorial auto-rule,lip,active
-akon ngabil hilanat gid,lip high fever,urgent,moderate,general,Combinatorial auto-rule,lip,active
-ko akon ngabil hilanat gid,lip high fever,urgent,moderate,general,Combinatorial auto-rule,lip,active
-akon ko ngabil hilanat gid,lip high fever,urgent,moderate,general,Combinatorial auto-rule,lip,active
-hilanat gid gid ko ngabil,lip high fever,urgent,moderate,general,Combinatorial auto-rule,lip,active
-hilanat gid gid akon ngabil,lip high fever,urgent,moderate,general,Combinatorial auto-rule,lip,active
-hilanat gid gid ko akon ngabil,lip high fever,urgent,moderate,general,Combinatorial auto-rule,lip,active
-hilanat gid gid akon ko ngabil,lip high fever,urgent,moderate,general,Combinatorial auto-rule,lip,active
-gid hilanat gid ngabil ko,lip high fever,urgent,moderate,general,Combinatorial auto-rule,lip,active
-grabe hilanat gid ngabil ko,lip high fever,urgent,moderate,general,Combinatorial auto-rule,lip,active
-grabe gid hilanat gid ngabil ko,lip high fever,urgent,moderate,general,Combinatorial auto-rule,lip,active
-gid hilanat gid ngabil akon,lip high fever,urgent,moderate,general,Combinatorial auto-rule,lip,active
-grabe hilanat gid ngabil akon,lip high fever,urgent,moderate,general,Combinatorial auto-rule,lip,active
-grabe gid hilanat gid ngabil akon,lip high fever,urgent,moderate,general,Combinatorial auto-rule,lip,active
-gid hilanat gid ngabil ko akon,lip high fever,urgent,moderate,general,Combinatorial auto-rule,lip,active
-grabe hilanat gid ngabil ko akon,lip high fever,urgent,moderate,general,Combinatorial auto-rule,lip,active
-grabe gid hilanat gid ngabil ko akon,lip high fever,urgent,moderate,general,Combinatorial auto-rule,lip,active
-gid hilanat gid ngabil akon ko,lip high fever,urgent,moderate,general,Combinatorial auto-rule,lip,active
-grabe hilanat gid ngabil akon ko,lip high fever,urgent,moderate,general,Combinatorial auto-rule,lip,active
-grabe gid hilanat gid ngabil akon ko,lip high fever,urgent,moderate,general,Combinatorial auto-rule,lip,active
 ngabil hilanat gid,lip high fever,urgent,moderate,general,Combinatorial auto-rule,lip,active
-hilanat gid dughan ko,chest high fever,urgent,moderate,general,Combinatorial auto-rule,chest,active
-hilanat gid dughan akon,chest high fever,urgent,moderate,general,Combinatorial auto-rule,chest,active
-hilanat gid dughan ko akon,chest high fever,urgent,moderate,general,Combinatorial auto-rule,chest,active
-hilanat gid dughan akon ko,chest high fever,urgent,moderate,general,Combinatorial auto-rule,chest,active
-hilanat gid ko dughan,chest high fever,urgent,moderate,general,Combinatorial auto-rule,chest,active
-hilanat gid akon dughan,chest high fever,urgent,moderate,general,Combinatorial auto-rule,chest,active
-hilanat gid ko akon dughan,chest high fever,urgent,moderate,general,Combinatorial auto-rule,chest,active
-hilanat gid akon ko dughan,chest high fever,urgent,moderate,general,Combinatorial auto-rule,chest,active
-hilanat gid gid dughan ko,chest high fever,urgent,moderate,general,Combinatorial auto-rule,chest,active
-hilanat gid grabe dughan ko,chest high fever,urgent,moderate,general,Combinatorial auto-rule,chest,active
-hilanat gid grabe gid dughan ko,chest high fever,urgent,moderate,general,Combinatorial auto-rule,chest,active
-hilanat gid gid dughan akon,chest high fever,urgent,moderate,general,Combinatorial auto-rule,chest,active
-hilanat gid grabe dughan akon,chest high fever,urgent,moderate,general,Combinatorial auto-rule,chest,active
-hilanat gid grabe gid dughan akon,chest high fever,urgent,moderate,general,Combinatorial auto-rule,chest,active
-hilanat gid gid dughan ko akon,chest high fever,urgent,moderate,general,Combinatorial auto-rule,chest,active
-hilanat gid grabe dughan ko akon,chest high fever,urgent,moderate,general,Combinatorial auto-rule,chest,active
-hilanat gid grabe gid dughan ko akon,chest high fever,urgent,moderate,general,Combinatorial auto-rule,chest,active
-hilanat gid gid dughan akon ko,chest high fever,urgent,moderate,general,Combinatorial auto-rule,chest,active
-hilanat gid grabe dughan akon ko,chest high fever,urgent,moderate,general,Combinatorial auto-rule,chest,active
-hilanat gid grabe gid dughan akon ko,chest high fever,urgent,moderate,general,Combinatorial auto-rule,chest,active
-hilanat gid dughan,chest high fever,urgent,moderate,general,Combinatorial auto-rule,chest,active
-hilanat gid gid dughan,chest high fever,urgent,moderate,general,Combinatorial auto-rule,chest,active
-hilanat gid grabe dughan,chest high fever,urgent,moderate,general,Combinatorial auto-rule,chest,active
-hilanat gid grabe gid dughan,chest high fever,urgent,moderate,general,Combinatorial auto-rule,chest,active
-may hilanat gid sa dughan ko,chest high fever,urgent,moderate,general,Combinatorial auto-rule,chest,active
-may hilanat gid sa dughan akon,chest high fever,urgent,moderate,general,Combinatorial auto-rule,chest,active
-may hilanat gid sa dughan ko akon,chest high fever,urgent,moderate,general,Combinatorial auto-rule,chest,active
-may hilanat gid sa dughan akon ko,chest high fever,urgent,moderate,general,Combinatorial auto-rule,chest,active
-may hilanat gid dughan ko,chest high fever,urgent,moderate,general,Combinatorial auto-rule,chest,active
-may hilanat gid dughan akon,chest high fever,urgent,moderate,general,Combinatorial auto-rule,chest,active
-may hilanat gid dughan ko akon,chest high fever,urgent,moderate,general,Combinatorial auto-rule,chest,active
-may hilanat gid dughan akon ko,chest high fever,urgent,moderate,general,Combinatorial auto-rule,chest,active
-dughan ko hilanat gid,chest high fever,urgent,moderate,general,Combinatorial auto-rule,chest,active
-dughan akon hilanat gid,chest high fever,urgent,moderate,general,Combinatorial auto-rule,chest,active
-dughan ko akon hilanat gid,chest high fever,urgent,moderate,general,Combinatorial auto-rule,chest,active
-dughan akon ko hilanat gid,chest high fever,urgent,moderate,general,Combinatorial auto-rule,chest,active
-ko dughan hilanat gid,chest high fever,urgent,moderate,general,Combinatorial auto-rule,chest,active
-akon dughan hilanat gid,chest high fever,urgent,moderate,general,Combinatorial auto-rule,chest,active
-ko akon dughan hilanat gid,chest high fever,urgent,moderate,general,Combinatorial auto-rule,chest,active
-akon ko dughan hilanat gid,chest high fever,urgent,moderate,general,Combinatorial auto-rule,chest,active
-hilanat gid gid ko dughan,chest high fever,urgent,moderate,general,Combinatorial auto-rule,chest,active
-hilanat gid gid akon dughan,chest high fever,urgent,moderate,general,Combinatorial auto-rule,chest,active
-hilanat gid gid ko akon dughan,chest high fever,urgent,moderate,general,Combinatorial auto-rule,chest,active
-hilanat gid gid akon ko dughan,chest high fever,urgent,moderate,general,Combinatorial auto-rule,chest,active
-gid hilanat gid dughan ko,chest high fever,urgent,moderate,general,Combinatorial auto-rule,chest,active
-grabe hilanat gid dughan ko,chest high fever,urgent,moderate,general,Combinatorial auto-rule,chest,active
-grabe gid hilanat gid dughan ko,chest high fever,urgent,moderate,general,Combinatorial auto-rule,chest,active
-gid hilanat gid dughan akon,chest high fever,urgent,moderate,general,Combinatorial auto-rule,chest,active
-grabe hilanat gid dughan akon,chest high fever,urgent,moderate,general,Combinatorial auto-rule,chest,active
-grabe gid hilanat gid dughan akon,chest high fever,urgent,moderate,general,Combinatorial auto-rule,chest,active
-gid hilanat gid dughan ko akon,chest high fever,urgent,moderate,general,Combinatorial auto-rule,chest,active
-grabe hilanat gid dughan ko akon,chest high fever,urgent,moderate,general,Combinatorial auto-rule,chest,active
-grabe gid hilanat gid dughan ko akon,chest high fever,urgent,moderate,general,Combinatorial auto-rule,chest,active
-gid hilanat gid dughan akon ko,chest high fever,urgent,moderate,general,Combinatorial auto-rule,chest,active
-grabe hilanat gid dughan akon ko,chest high fever,urgent,moderate,general,Combinatorial auto-rule,chest,active
-grabe gid hilanat gid dughan akon ko,chest high fever,urgent,moderate,general,Combinatorial auto-rule,chest,active
-dughan hilanat gid,chest high fever,urgent,moderate,general,Combinatorial auto-rule,chest,active
-hilanat gid pisngi ko,cheek high fever,urgent,moderate,general,Combinatorial auto-rule,cheek,active
-hilanat gid pisngi akon,cheek high fever,urgent,moderate,general,Combinatorial auto-rule,cheek,active
-hilanat gid pisngi ko akon,cheek high fever,urgent,moderate,general,Combinatorial auto-rule,cheek,active
-hilanat gid pisngi akon ko,cheek high fever,urgent,moderate,general,Combinatorial auto-rule,cheek,active
-hilanat gid ko pisngi,cheek high fever,urgent,moderate,general,Combinatorial auto-rule,cheek,active
-hilanat gid akon pisngi,cheek high fever,urgent,moderate,general,Combinatorial auto-rule,cheek,active
-hilanat gid ko akon pisngi,cheek high fever,urgent,moderate,general,Combinatorial auto-rule,cheek,active
-hilanat gid akon ko pisngi,cheek high fever,urgent,moderate,general,Combinatorial auto-rule,cheek,active
-hilanat gid gid pisngi ko,cheek high fever,urgent,moderate,general,Combinatorial auto-rule,cheek,active
-hilanat gid grabe pisngi ko,cheek high fever,urgent,moderate,general,Combinatorial auto-rule,cheek,active
-hilanat gid grabe gid pisngi ko,cheek high fever,urgent,moderate,general,Combinatorial auto-rule,cheek,active
-hilanat gid gid pisngi akon,cheek high fever,urgent,moderate,general,Combinatorial auto-rule,cheek,active
-hilanat gid grabe pisngi akon,cheek high fever,urgent,moderate,general,Combinatorial auto-rule,cheek,active
-hilanat gid grabe gid pisngi akon,cheek high fever,urgent,moderate,general,Combinatorial auto-rule,cheek,active
-hilanat gid gid pisngi ko akon,cheek high fever,urgent,moderate,general,Combinatorial auto-rule,cheek,active
-hilanat gid grabe pisngi ko akon,cheek high fever,urgent,moderate,general,Combinatorial auto-rule,cheek,active
-hilanat gid grabe gid pisngi ko akon,cheek high fever,urgent,moderate,general,Combinatorial auto-rule,cheek,active
-hilanat gid gid pisngi akon ko,cheek high fever,urgent,moderate,general,Combinatorial auto-rule,cheek,active
-hilanat gid grabe pisngi akon ko,cheek high fever,urgent,moderate,general,Combinatorial auto-rule,cheek,active
-hilanat gid grabe gid pisngi akon ko,cheek high fever,urgent,moderate,general,Combinatorial auto-rule,cheek,active
-hilanat gid pisngi,cheek high fever,urgent,moderate,general,Combinatorial auto-rule,cheek,active
-hilanat gid gid pisngi,cheek high fever,urgent,moderate,general,Combinatorial auto-rule,cheek,active
-hilanat gid grabe pisngi,cheek high fever,urgent,moderate,general,Combinatorial auto-rule,cheek,active
-hilanat gid grabe gid pisngi,cheek high fever,urgent,moderate,general,Combinatorial auto-rule,cheek,active
-may hilanat gid sa pisngi ko,cheek high fever,urgent,moderate,general,Combinatorial auto-rule,cheek,active
-may hilanat gid sa pisngi akon,cheek high fever,urgent,moderate,general,Combinatorial auto-rule,cheek,active
-may hilanat gid sa pisngi ko akon,cheek high fever,urgent,moderate,general,Combinatorial auto-rule,cheek,active
-may hilanat gid sa pisngi akon ko,cheek high fever,urgent,moderate,general,Combinatorial auto-rule,cheek,active
-may hilanat gid pisngi ko,cheek high fever,urgent,moderate,general,Combinatorial auto-rule,cheek,active
-may hilanat gid pisngi akon,cheek high fever,urgent,moderate,general,Combinatorial auto-rule,cheek,active
-may hilanat gid pisngi ko akon,cheek high fever,urgent,moderate,general,Combinatorial auto-rule,cheek,active
-may hilanat gid pisngi akon ko,cheek high fever,urgent,moderate,general,Combinatorial auto-rule,cheek,active
-pisngi ko hilanat gid,cheek high fever,urgent,moderate,general,Combinatorial auto-rule,cheek,active
+ngabil ko akon hilanat gid,lip high fever,urgent,moderate,general,Combinatorial auto-rule,lip,active
+ngabil ko hilanat gid,lip high fever,urgent,moderate,general,Combinatorial auto-rule,lip,active
 pisngi akon hilanat gid,cheek high fever,urgent,moderate,general,Combinatorial auto-rule,cheek,active
-pisngi ko akon hilanat gid,cheek high fever,urgent,moderate,general,Combinatorial auto-rule,cheek,active
 pisngi akon ko hilanat gid,cheek high fever,urgent,moderate,general,Combinatorial auto-rule,cheek,active
-ko pisngi hilanat gid,cheek high fever,urgent,moderate,general,Combinatorial auto-rule,cheek,active
-akon pisngi hilanat gid,cheek high fever,urgent,moderate,general,Combinatorial auto-rule,cheek,active
-ko akon pisngi hilanat gid,cheek high fever,urgent,moderate,general,Combinatorial auto-rule,cheek,active
-akon ko pisngi hilanat gid,cheek high fever,urgent,moderate,general,Combinatorial auto-rule,cheek,active
-hilanat gid gid ko pisngi,cheek high fever,urgent,moderate,general,Combinatorial auto-rule,cheek,active
-hilanat gid gid akon pisngi,cheek high fever,urgent,moderate,general,Combinatorial auto-rule,cheek,active
-hilanat gid gid ko akon pisngi,cheek high fever,urgent,moderate,general,Combinatorial auto-rule,cheek,active
-hilanat gid gid akon ko pisngi,cheek high fever,urgent,moderate,general,Combinatorial auto-rule,cheek,active
-gid hilanat gid pisngi ko,cheek high fever,urgent,moderate,general,Combinatorial auto-rule,cheek,active
-grabe hilanat gid pisngi ko,cheek high fever,urgent,moderate,general,Combinatorial auto-rule,cheek,active
-grabe gid hilanat gid pisngi ko,cheek high fever,urgent,moderate,general,Combinatorial auto-rule,cheek,active
-gid hilanat gid pisngi akon,cheek high fever,urgent,moderate,general,Combinatorial auto-rule,cheek,active
-grabe hilanat gid pisngi akon,cheek high fever,urgent,moderate,general,Combinatorial auto-rule,cheek,active
-grabe gid hilanat gid pisngi akon,cheek high fever,urgent,moderate,general,Combinatorial auto-rule,cheek,active
-gid hilanat gid pisngi ko akon,cheek high fever,urgent,moderate,general,Combinatorial auto-rule,cheek,active
-grabe hilanat gid pisngi ko akon,cheek high fever,urgent,moderate,general,Combinatorial auto-rule,cheek,active
-grabe gid hilanat gid pisngi ko akon,cheek high fever,urgent,moderate,general,Combinatorial auto-rule,cheek,active
-gid hilanat gid pisngi akon ko,cheek high fever,urgent,moderate,general,Combinatorial auto-rule,cheek,active
-grabe hilanat gid pisngi akon ko,cheek high fever,urgent,moderate,general,Combinatorial auto-rule,cheek,active
-grabe gid hilanat gid pisngi akon ko,cheek high fever,urgent,moderate,general,Combinatorial auto-rule,cheek,active
 pisngi hilanat gid,cheek high fever,urgent,moderate,general,Combinatorial auto-rule,cheek,active
-hilanat gid tungod ko,throat high fever,urgent,moderate,general,Combinatorial auto-rule,throat,active
-hilanat gid tungod akon,throat high fever,urgent,moderate,general,Combinatorial auto-rule,throat,active
-hilanat gid tungod ko akon,throat high fever,urgent,moderate,general,Combinatorial auto-rule,throat,active
-hilanat gid tungod akon ko,throat high fever,urgent,moderate,general,Combinatorial auto-rule,throat,active
-hilanat gid ko tungod,throat high fever,urgent,moderate,general,Combinatorial auto-rule,throat,active
-hilanat gid akon tungod,throat high fever,urgent,moderate,general,Combinatorial auto-rule,throat,active
-hilanat gid ko akon tungod,throat high fever,urgent,moderate,general,Combinatorial auto-rule,throat,active
-hilanat gid akon ko tungod,throat high fever,urgent,moderate,general,Combinatorial auto-rule,throat,active
-hilanat gid gid tungod ko,throat high fever,urgent,moderate,general,Combinatorial auto-rule,throat,active
-hilanat gid grabe tungod ko,throat high fever,urgent,moderate,general,Combinatorial auto-rule,throat,active
-hilanat gid grabe gid tungod ko,throat high fever,urgent,moderate,general,Combinatorial auto-rule,throat,active
-hilanat gid gid tungod akon,throat high fever,urgent,moderate,general,Combinatorial auto-rule,throat,active
-hilanat gid grabe tungod akon,throat high fever,urgent,moderate,general,Combinatorial auto-rule,throat,active
-hilanat gid grabe gid tungod akon,throat high fever,urgent,moderate,general,Combinatorial auto-rule,throat,active
-hilanat gid gid tungod ko akon,throat high fever,urgent,moderate,general,Combinatorial auto-rule,throat,active
-hilanat gid grabe tungod ko akon,throat high fever,urgent,moderate,general,Combinatorial auto-rule,throat,active
-hilanat gid grabe gid tungod ko akon,throat high fever,urgent,moderate,general,Combinatorial auto-rule,throat,active
-hilanat gid gid tungod akon ko,throat high fever,urgent,moderate,general,Combinatorial auto-rule,throat,active
-hilanat gid grabe tungod akon ko,throat high fever,urgent,moderate,general,Combinatorial auto-rule,throat,active
-hilanat gid grabe gid tungod akon ko,throat high fever,urgent,moderate,general,Combinatorial auto-rule,throat,active
-hilanat gid tungod,throat high fever,urgent,moderate,general,Combinatorial auto-rule,throat,active
-hilanat gid gid tungod,throat high fever,urgent,moderate,general,Combinatorial auto-rule,throat,active
-hilanat gid grabe tungod,throat high fever,urgent,moderate,general,Combinatorial auto-rule,throat,active
-hilanat gid grabe gid tungod,throat high fever,urgent,moderate,general,Combinatorial auto-rule,throat,active
-may hilanat gid sa tungod ko,throat high fever,urgent,moderate,general,Combinatorial auto-rule,throat,active
-may hilanat gid sa tungod akon,throat high fever,urgent,moderate,general,Combinatorial auto-rule,throat,active
-may hilanat gid sa tungod ko akon,throat high fever,urgent,moderate,general,Combinatorial auto-rule,throat,active
-may hilanat gid sa tungod akon ko,throat high fever,urgent,moderate,general,Combinatorial auto-rule,throat,active
-may hilanat gid tungod ko,throat high fever,urgent,moderate,general,Combinatorial auto-rule,throat,active
-may hilanat gid tungod akon,throat high fever,urgent,moderate,general,Combinatorial auto-rule,throat,active
-may hilanat gid tungod ko akon,throat high fever,urgent,moderate,general,Combinatorial auto-rule,throat,active
-may hilanat gid tungod akon ko,throat high fever,urgent,moderate,general,Combinatorial auto-rule,throat,active
-tungod ko hilanat gid,throat high fever,urgent,moderate,general,Combinatorial auto-rule,throat,active
-tungod akon hilanat gid,throat high fever,urgent,moderate,general,Combinatorial auto-rule,throat,active
-tungod ko akon hilanat gid,throat high fever,urgent,moderate,general,Combinatorial auto-rule,throat,active
-tungod akon ko hilanat gid,throat high fever,urgent,moderate,general,Combinatorial auto-rule,throat,active
-ko tungod hilanat gid,throat high fever,urgent,moderate,general,Combinatorial auto-rule,throat,active
-akon tungod hilanat gid,throat high fever,urgent,moderate,general,Combinatorial auto-rule,throat,active
-ko akon tungod hilanat gid,throat high fever,urgent,moderate,general,Combinatorial auto-rule,throat,active
-akon ko tungod hilanat gid,throat high fever,urgent,moderate,general,Combinatorial auto-rule,throat,active
-hilanat gid gid ko tungod,throat high fever,urgent,moderate,general,Combinatorial auto-rule,throat,active
-hilanat gid gid akon tungod,throat high fever,urgent,moderate,general,Combinatorial auto-rule,throat,active
-hilanat gid gid ko akon tungod,throat high fever,urgent,moderate,general,Combinatorial auto-rule,throat,active
-hilanat gid gid akon ko tungod,throat high fever,urgent,moderate,general,Combinatorial auto-rule,throat,active
-gid hilanat gid tungod ko,throat high fever,urgent,moderate,general,Combinatorial auto-rule,throat,active
-grabe hilanat gid tungod ko,throat high fever,urgent,moderate,general,Combinatorial auto-rule,throat,active
-grabe gid hilanat gid tungod ko,throat high fever,urgent,moderate,general,Combinatorial auto-rule,throat,active
-gid hilanat gid tungod akon,throat high fever,urgent,moderate,general,Combinatorial auto-rule,throat,active
-grabe hilanat gid tungod akon,throat high fever,urgent,moderate,general,Combinatorial auto-rule,throat,active
-grabe gid hilanat gid tungod akon,throat high fever,urgent,moderate,general,Combinatorial auto-rule,throat,active
-gid hilanat gid tungod ko akon,throat high fever,urgent,moderate,general,Combinatorial auto-rule,throat,active
-grabe hilanat gid tungod ko akon,throat high fever,urgent,moderate,general,Combinatorial auto-rule,throat,active
-grabe gid hilanat gid tungod ko akon,throat high fever,urgent,moderate,general,Combinatorial auto-rule,throat,active
-gid hilanat gid tungod akon ko,throat high fever,urgent,moderate,general,Combinatorial auto-rule,throat,active
-grabe hilanat gid tungod akon ko,throat high fever,urgent,moderate,general,Combinatorial auto-rule,throat,active
-grabe gid hilanat gid tungod akon ko,throat high fever,urgent,moderate,general,Combinatorial auto-rule,throat,active
-tungod hilanat gid,throat high fever,urgent,moderate,general,Combinatorial auto-rule,throat,active
-hilanat gid singit ko,groin high fever,urgent,moderate,general,Combinatorial auto-rule,groin,active
-hilanat gid singit akon,groin high fever,urgent,moderate,general,Combinatorial auto-rule,groin,active
-hilanat gid singit ko akon,groin high fever,urgent,moderate,general,Combinatorial auto-rule,groin,active
-hilanat gid singit akon ko,groin high fever,urgent,moderate,general,Combinatorial auto-rule,groin,active
-hilanat gid ko singit,groin high fever,urgent,moderate,general,Combinatorial auto-rule,groin,active
-hilanat gid akon singit,groin high fever,urgent,moderate,general,Combinatorial auto-rule,groin,active
-hilanat gid ko akon singit,groin high fever,urgent,moderate,general,Combinatorial auto-rule,groin,active
-hilanat gid akon ko singit,groin high fever,urgent,moderate,general,Combinatorial auto-rule,groin,active
-hilanat gid gid singit ko,groin high fever,urgent,moderate,general,Combinatorial auto-rule,groin,active
-hilanat gid grabe singit ko,groin high fever,urgent,moderate,general,Combinatorial auto-rule,groin,active
-hilanat gid grabe gid singit ko,groin high fever,urgent,moderate,general,Combinatorial auto-rule,groin,active
-hilanat gid gid singit akon,groin high fever,urgent,moderate,general,Combinatorial auto-rule,groin,active
-hilanat gid grabe singit akon,groin high fever,urgent,moderate,general,Combinatorial auto-rule,groin,active
-hilanat gid grabe gid singit akon,groin high fever,urgent,moderate,general,Combinatorial auto-rule,groin,active
-hilanat gid gid singit ko akon,groin high fever,urgent,moderate,general,Combinatorial auto-rule,groin,active
-hilanat gid grabe singit ko akon,groin high fever,urgent,moderate,general,Combinatorial auto-rule,groin,active
-hilanat gid grabe gid singit ko akon,groin high fever,urgent,moderate,general,Combinatorial auto-rule,groin,active
-hilanat gid gid singit akon ko,groin high fever,urgent,moderate,general,Combinatorial auto-rule,groin,active
-hilanat gid grabe singit akon ko,groin high fever,urgent,moderate,general,Combinatorial auto-rule,groin,active
-hilanat gid grabe gid singit akon ko,groin high fever,urgent,moderate,general,Combinatorial auto-rule,groin,active
-hilanat gid singit,groin high fever,urgent,moderate,general,Combinatorial auto-rule,groin,active
-hilanat gid gid singit,groin high fever,urgent,moderate,general,Combinatorial auto-rule,groin,active
-hilanat gid grabe singit,groin high fever,urgent,moderate,general,Combinatorial auto-rule,groin,active
-hilanat gid grabe gid singit,groin high fever,urgent,moderate,general,Combinatorial auto-rule,groin,active
-may hilanat gid sa singit ko,groin high fever,urgent,moderate,general,Combinatorial auto-rule,groin,active
-may hilanat gid sa singit akon,groin high fever,urgent,moderate,general,Combinatorial auto-rule,groin,active
-may hilanat gid sa singit ko akon,groin high fever,urgent,moderate,general,Combinatorial auto-rule,groin,active
-may hilanat gid sa singit akon ko,groin high fever,urgent,moderate,general,Combinatorial auto-rule,groin,active
-may hilanat gid singit ko,groin high fever,urgent,moderate,general,Combinatorial auto-rule,groin,active
-may hilanat gid singit akon,groin high fever,urgent,moderate,general,Combinatorial auto-rule,groin,active
-may hilanat gid singit ko akon,groin high fever,urgent,moderate,general,Combinatorial auto-rule,groin,active
-may hilanat gid singit akon ko,groin high fever,urgent,moderate,general,Combinatorial auto-rule,groin,active
-singit ko hilanat gid,groin high fever,urgent,moderate,general,Combinatorial auto-rule,groin,active
+pisngi ko akon hilanat gid,cheek high fever,urgent,moderate,general,Combinatorial auto-rule,cheek,active
+pisngi ko hilanat gid,cheek high fever,urgent,moderate,general,Combinatorial auto-rule,cheek,active
 singit akon hilanat gid,groin high fever,urgent,moderate,general,Combinatorial auto-rule,groin,active
-singit ko akon hilanat gid,groin high fever,urgent,moderate,general,Combinatorial auto-rule,groin,active
 singit akon ko hilanat gid,groin high fever,urgent,moderate,general,Combinatorial auto-rule,groin,active
-ko singit hilanat gid,groin high fever,urgent,moderate,general,Combinatorial auto-rule,groin,active
-akon singit hilanat gid,groin high fever,urgent,moderate,general,Combinatorial auto-rule,groin,active
-ko akon singit hilanat gid,groin high fever,urgent,moderate,general,Combinatorial auto-rule,groin,active
-akon ko singit hilanat gid,groin high fever,urgent,moderate,general,Combinatorial auto-rule,groin,active
-hilanat gid gid ko singit,groin high fever,urgent,moderate,general,Combinatorial auto-rule,groin,active
-hilanat gid gid akon singit,groin high fever,urgent,moderate,general,Combinatorial auto-rule,groin,active
-hilanat gid gid ko akon singit,groin high fever,urgent,moderate,general,Combinatorial auto-rule,groin,active
-hilanat gid gid akon ko singit,groin high fever,urgent,moderate,general,Combinatorial auto-rule,groin,active
-gid hilanat gid singit ko,groin high fever,urgent,moderate,general,Combinatorial auto-rule,groin,active
-grabe hilanat gid singit ko,groin high fever,urgent,moderate,general,Combinatorial auto-rule,groin,active
-grabe gid hilanat gid singit ko,groin high fever,urgent,moderate,general,Combinatorial auto-rule,groin,active
-gid hilanat gid singit akon,groin high fever,urgent,moderate,general,Combinatorial auto-rule,groin,active
-grabe hilanat gid singit akon,groin high fever,urgent,moderate,general,Combinatorial auto-rule,groin,active
-grabe gid hilanat gid singit akon,groin high fever,urgent,moderate,general,Combinatorial auto-rule,groin,active
-gid hilanat gid singit ko akon,groin high fever,urgent,moderate,general,Combinatorial auto-rule,groin,active
-grabe hilanat gid singit ko akon,groin high fever,urgent,moderate,general,Combinatorial auto-rule,groin,active
-grabe gid hilanat gid singit ko akon,groin high fever,urgent,moderate,general,Combinatorial auto-rule,groin,active
-gid hilanat gid singit akon ko,groin high fever,urgent,moderate,general,Combinatorial auto-rule,groin,active
-grabe hilanat gid singit akon ko,groin high fever,urgent,moderate,general,Combinatorial auto-rule,groin,active
-grabe gid hilanat gid singit akon ko,groin high fever,urgent,moderate,general,Combinatorial auto-rule,groin,active
 singit hilanat gid,groin high fever,urgent,moderate,general,Combinatorial auto-rule,groin,active
-hilanat gid ilong ko,nose high fever,urgent,moderate,general,Combinatorial auto-rule,nose,active
-hilanat gid ilong akon,nose high fever,urgent,moderate,general,Combinatorial auto-rule,nose,active
-hilanat gid ilong ko akon,nose high fever,urgent,moderate,general,Combinatorial auto-rule,nose,active
-hilanat gid ilong akon ko,nose high fever,urgent,moderate,general,Combinatorial auto-rule,nose,active
-hilanat gid ko ilong,nose high fever,urgent,moderate,general,Combinatorial auto-rule,nose,active
-hilanat gid akon ilong,nose high fever,urgent,moderate,general,Combinatorial auto-rule,nose,active
-hilanat gid ko akon ilong,nose high fever,urgent,moderate,general,Combinatorial auto-rule,nose,active
-hilanat gid akon ko ilong,nose high fever,urgent,moderate,general,Combinatorial auto-rule,nose,active
-hilanat gid gid ilong ko,nose high fever,urgent,moderate,general,Combinatorial auto-rule,nose,active
-hilanat gid grabe ilong ko,nose high fever,urgent,moderate,general,Combinatorial auto-rule,nose,active
-hilanat gid grabe gid ilong ko,nose high fever,urgent,moderate,general,Combinatorial auto-rule,nose,active
-hilanat gid gid ilong akon,nose high fever,urgent,moderate,general,Combinatorial auto-rule,nose,active
-hilanat gid grabe ilong akon,nose high fever,urgent,moderate,general,Combinatorial auto-rule,nose,active
-hilanat gid grabe gid ilong akon,nose high fever,urgent,moderate,general,Combinatorial auto-rule,nose,active
-hilanat gid gid ilong ko akon,nose high fever,urgent,moderate,general,Combinatorial auto-rule,nose,active
-hilanat gid grabe ilong ko akon,nose high fever,urgent,moderate,general,Combinatorial auto-rule,nose,active
-hilanat gid grabe gid ilong ko akon,nose high fever,urgent,moderate,general,Combinatorial auto-rule,nose,active
-hilanat gid gid ilong akon ko,nose high fever,urgent,moderate,general,Combinatorial auto-rule,nose,active
-hilanat gid grabe ilong akon ko,nose high fever,urgent,moderate,general,Combinatorial auto-rule,nose,active
-hilanat gid grabe gid ilong akon ko,nose high fever,urgent,moderate,general,Combinatorial auto-rule,nose,active
-hilanat gid ilong,nose high fever,urgent,moderate,general,Combinatorial auto-rule,nose,active
-hilanat gid gid ilong,nose high fever,urgent,moderate,general,Combinatorial auto-rule,nose,active
-hilanat gid grabe ilong,nose high fever,urgent,moderate,general,Combinatorial auto-rule,nose,active
-hilanat gid grabe gid ilong,nose high fever,urgent,moderate,general,Combinatorial auto-rule,nose,active
-may hilanat gid sa ilong ko,nose high fever,urgent,moderate,general,Combinatorial auto-rule,nose,active
-may hilanat gid sa ilong akon,nose high fever,urgent,moderate,general,Combinatorial auto-rule,nose,active
-may hilanat gid sa ilong ko akon,nose high fever,urgent,moderate,general,Combinatorial auto-rule,nose,active
-may hilanat gid sa ilong akon ko,nose high fever,urgent,moderate,general,Combinatorial auto-rule,nose,active
-may hilanat gid ilong ko,nose high fever,urgent,moderate,general,Combinatorial auto-rule,nose,active
-may hilanat gid ilong akon,nose high fever,urgent,moderate,general,Combinatorial auto-rule,nose,active
-may hilanat gid ilong ko akon,nose high fever,urgent,moderate,general,Combinatorial auto-rule,nose,active
-may hilanat gid ilong akon ko,nose high fever,urgent,moderate,general,Combinatorial auto-rule,nose,active
-ilong ko hilanat gid,nose high fever,urgent,moderate,general,Combinatorial auto-rule,nose,active
-ilong akon hilanat gid,nose high fever,urgent,moderate,general,Combinatorial auto-rule,nose,active
-ilong ko akon hilanat gid,nose high fever,urgent,moderate,general,Combinatorial auto-rule,nose,active
-ilong akon ko hilanat gid,nose high fever,urgent,moderate,general,Combinatorial auto-rule,nose,active
-ko ilong hilanat gid,nose high fever,urgent,moderate,general,Combinatorial auto-rule,nose,active
-akon ilong hilanat gid,nose high fever,urgent,moderate,general,Combinatorial auto-rule,nose,active
-ko akon ilong hilanat gid,nose high fever,urgent,moderate,general,Combinatorial auto-rule,nose,active
-akon ko ilong hilanat gid,nose high fever,urgent,moderate,general,Combinatorial auto-rule,nose,active
-hilanat gid gid ko ilong,nose high fever,urgent,moderate,general,Combinatorial auto-rule,nose,active
-hilanat gid gid akon ilong,nose high fever,urgent,moderate,general,Combinatorial auto-rule,nose,active
-hilanat gid gid ko akon ilong,nose high fever,urgent,moderate,general,Combinatorial auto-rule,nose,active
-hilanat gid gid akon ko ilong,nose high fever,urgent,moderate,general,Combinatorial auto-rule,nose,active
-gid hilanat gid ilong ko,nose high fever,urgent,moderate,general,Combinatorial auto-rule,nose,active
-grabe hilanat gid ilong ko,nose high fever,urgent,moderate,general,Combinatorial auto-rule,nose,active
-grabe gid hilanat gid ilong ko,nose high fever,urgent,moderate,general,Combinatorial auto-rule,nose,active
-gid hilanat gid ilong akon,nose high fever,urgent,moderate,general,Combinatorial auto-rule,nose,active
-grabe hilanat gid ilong akon,nose high fever,urgent,moderate,general,Combinatorial auto-rule,nose,active
-grabe gid hilanat gid ilong akon,nose high fever,urgent,moderate,general,Combinatorial auto-rule,nose,active
-gid hilanat gid ilong ko akon,nose high fever,urgent,moderate,general,Combinatorial auto-rule,nose,active
-grabe hilanat gid ilong ko akon,nose high fever,urgent,moderate,general,Combinatorial auto-rule,nose,active
-grabe gid hilanat gid ilong ko akon,nose high fever,urgent,moderate,general,Combinatorial auto-rule,nose,active
-gid hilanat gid ilong akon ko,nose high fever,urgent,moderate,general,Combinatorial auto-rule,nose,active
-grabe hilanat gid ilong akon ko,nose high fever,urgent,moderate,general,Combinatorial auto-rule,nose,active
-grabe gid hilanat gid ilong akon ko,nose high fever,urgent,moderate,general,Combinatorial auto-rule,nose,active
-ilong hilanat gid,nose high fever,urgent,moderate,general,Combinatorial auto-rule,nose,active
-hilanat gid abaga ko,shoulder high fever,urgent,moderate,general,Combinatorial auto-rule,shoulder,active
-hilanat gid abaga akon,shoulder high fever,urgent,moderate,general,Combinatorial auto-rule,shoulder,active
-hilanat gid abaga ko akon,shoulder high fever,urgent,moderate,general,Combinatorial auto-rule,shoulder,active
-hilanat gid abaga akon ko,shoulder high fever,urgent,moderate,general,Combinatorial auto-rule,shoulder,active
-hilanat gid ko abaga,shoulder high fever,urgent,moderate,general,Combinatorial auto-rule,shoulder,active
-hilanat gid akon abaga,shoulder high fever,urgent,moderate,general,Combinatorial auto-rule,shoulder,active
-hilanat gid ko akon abaga,shoulder high fever,urgent,moderate,general,Combinatorial auto-rule,shoulder,active
-hilanat gid akon ko abaga,shoulder high fever,urgent,moderate,general,Combinatorial auto-rule,shoulder,active
-hilanat gid gid abaga ko,shoulder high fever,urgent,moderate,general,Combinatorial auto-rule,shoulder,active
-hilanat gid grabe abaga ko,shoulder high fever,urgent,moderate,general,Combinatorial auto-rule,shoulder,active
-hilanat gid grabe gid abaga ko,shoulder high fever,urgent,moderate,general,Combinatorial auto-rule,shoulder,active
-hilanat gid gid abaga akon,shoulder high fever,urgent,moderate,general,Combinatorial auto-rule,shoulder,active
-hilanat gid grabe abaga akon,shoulder high fever,urgent,moderate,general,Combinatorial auto-rule,shoulder,active
-hilanat gid grabe gid abaga akon,shoulder high fever,urgent,moderate,general,Combinatorial auto-rule,shoulder,active
-hilanat gid gid abaga ko akon,shoulder high fever,urgent,moderate,general,Combinatorial auto-rule,shoulder,active
-hilanat gid grabe abaga ko akon,shoulder high fever,urgent,moderate,general,Combinatorial auto-rule,shoulder,active
-hilanat gid grabe gid abaga ko akon,shoulder high fever,urgent,moderate,general,Combinatorial auto-rule,shoulder,active
-hilanat gid gid abaga akon ko,shoulder high fever,urgent,moderate,general,Combinatorial auto-rule,shoulder,active
-hilanat gid grabe abaga akon ko,shoulder high fever,urgent,moderate,general,Combinatorial auto-rule,shoulder,active
-hilanat gid grabe gid abaga akon ko,shoulder high fever,urgent,moderate,general,Combinatorial auto-rule,shoulder,active
-hilanat gid abaga,shoulder high fever,urgent,moderate,general,Combinatorial auto-rule,shoulder,active
-hilanat gid gid abaga,shoulder high fever,urgent,moderate,general,Combinatorial auto-rule,shoulder,active
-hilanat gid grabe abaga,shoulder high fever,urgent,moderate,general,Combinatorial auto-rule,shoulder,active
-hilanat gid grabe gid abaga,shoulder high fever,urgent,moderate,general,Combinatorial auto-rule,shoulder,active
-may hilanat gid sa abaga ko,shoulder high fever,urgent,moderate,general,Combinatorial auto-rule,shoulder,active
-may hilanat gid sa abaga akon,shoulder high fever,urgent,moderate,general,Combinatorial auto-rule,shoulder,active
-may hilanat gid sa abaga ko akon,shoulder high fever,urgent,moderate,general,Combinatorial auto-rule,shoulder,active
-may hilanat gid sa abaga akon ko,shoulder high fever,urgent,moderate,general,Combinatorial auto-rule,shoulder,active
-may hilanat gid abaga ko,shoulder high fever,urgent,moderate,general,Combinatorial auto-rule,shoulder,active
-may hilanat gid abaga akon,shoulder high fever,urgent,moderate,general,Combinatorial auto-rule,shoulder,active
-may hilanat gid abaga ko akon,shoulder high fever,urgent,moderate,general,Combinatorial auto-rule,shoulder,active
-may hilanat gid abaga akon ko,shoulder high fever,urgent,moderate,general,Combinatorial auto-rule,shoulder,active
-abaga ko hilanat gid,shoulder high fever,urgent,moderate,general,Combinatorial auto-rule,shoulder,active
-abaga akon hilanat gid,shoulder high fever,urgent,moderate,general,Combinatorial auto-rule,shoulder,active
-abaga ko akon hilanat gid,shoulder high fever,urgent,moderate,general,Combinatorial auto-rule,shoulder,active
-abaga akon ko hilanat gid,shoulder high fever,urgent,moderate,general,Combinatorial auto-rule,shoulder,active
-ko abaga hilanat gid,shoulder high fever,urgent,moderate,general,Combinatorial auto-rule,shoulder,active
-akon abaga hilanat gid,shoulder high fever,urgent,moderate,general,Combinatorial auto-rule,shoulder,active
-ko akon abaga hilanat gid,shoulder high fever,urgent,moderate,general,Combinatorial auto-rule,shoulder,active
-akon ko abaga hilanat gid,shoulder high fever,urgent,moderate,general,Combinatorial auto-rule,shoulder,active
-hilanat gid gid ko abaga,shoulder high fever,urgent,moderate,general,Combinatorial auto-rule,shoulder,active
-hilanat gid gid akon abaga,shoulder high fever,urgent,moderate,general,Combinatorial auto-rule,shoulder,active
-hilanat gid gid ko akon abaga,shoulder high fever,urgent,moderate,general,Combinatorial auto-rule,shoulder,active
-hilanat gid gid akon ko abaga,shoulder high fever,urgent,moderate,general,Combinatorial auto-rule,shoulder,active
-gid hilanat gid abaga ko,shoulder high fever,urgent,moderate,general,Combinatorial auto-rule,shoulder,active
-grabe hilanat gid abaga ko,shoulder high fever,urgent,moderate,general,Combinatorial auto-rule,shoulder,active
-grabe gid hilanat gid abaga ko,shoulder high fever,urgent,moderate,general,Combinatorial auto-rule,shoulder,active
-gid hilanat gid abaga akon,shoulder high fever,urgent,moderate,general,Combinatorial auto-rule,shoulder,active
-grabe hilanat gid abaga akon,shoulder high fever,urgent,moderate,general,Combinatorial auto-rule,shoulder,active
-grabe gid hilanat gid abaga akon,shoulder high fever,urgent,moderate,general,Combinatorial auto-rule,shoulder,active
-gid hilanat gid abaga ko akon,shoulder high fever,urgent,moderate,general,Combinatorial auto-rule,shoulder,active
-grabe hilanat gid abaga ko akon,shoulder high fever,urgent,moderate,general,Combinatorial auto-rule,shoulder,active
-grabe gid hilanat gid abaga ko akon,shoulder high fever,urgent,moderate,general,Combinatorial auto-rule,shoulder,active
-gid hilanat gid abaga akon ko,shoulder high fever,urgent,moderate,general,Combinatorial auto-rule,shoulder,active
-grabe hilanat gid abaga akon ko,shoulder high fever,urgent,moderate,general,Combinatorial auto-rule,shoulder,active
-grabe gid hilanat gid abaga akon ko,shoulder high fever,urgent,moderate,general,Combinatorial auto-rule,shoulder,active
-abaga hilanat gid,shoulder high fever,urgent,moderate,general,Combinatorial auto-rule,shoulder,active
-hilanat gid tiyan ko,abdomen high fever,urgent,moderate,general,Combinatorial auto-rule,abdomen,active
-hilanat gid tiyan akon,abdomen high fever,urgent,moderate,general,Combinatorial auto-rule,abdomen,active
-hilanat gid tiyan ko akon,abdomen high fever,urgent,moderate,general,Combinatorial auto-rule,abdomen,active
-hilanat gid tiyan akon ko,abdomen high fever,urgent,moderate,general,Combinatorial auto-rule,abdomen,active
-hilanat gid ko tiyan,abdomen high fever,urgent,moderate,general,Combinatorial auto-rule,abdomen,active
-hilanat gid akon tiyan,abdomen high fever,urgent,moderate,general,Combinatorial auto-rule,abdomen,active
-hilanat gid ko akon tiyan,abdomen high fever,urgent,moderate,general,Combinatorial auto-rule,abdomen,active
-hilanat gid akon ko tiyan,abdomen high fever,urgent,moderate,general,Combinatorial auto-rule,abdomen,active
-hilanat gid gid tiyan ko,abdomen high fever,urgent,moderate,general,Combinatorial auto-rule,abdomen,active
-hilanat gid grabe tiyan ko,abdomen high fever,urgent,moderate,general,Combinatorial auto-rule,abdomen,active
-hilanat gid grabe gid tiyan ko,abdomen high fever,urgent,moderate,general,Combinatorial auto-rule,abdomen,active
-hilanat gid gid tiyan akon,abdomen high fever,urgent,moderate,general,Combinatorial auto-rule,abdomen,active
-hilanat gid grabe tiyan akon,abdomen high fever,urgent,moderate,general,Combinatorial auto-rule,abdomen,active
-hilanat gid grabe gid tiyan akon,abdomen high fever,urgent,moderate,general,Combinatorial auto-rule,abdomen,active
-hilanat gid gid tiyan ko akon,abdomen high fever,urgent,moderate,general,Combinatorial auto-rule,abdomen,active
-hilanat gid grabe tiyan ko akon,abdomen high fever,urgent,moderate,general,Combinatorial auto-rule,abdomen,active
-hilanat gid grabe gid tiyan ko akon,abdomen high fever,urgent,moderate,general,Combinatorial auto-rule,abdomen,active
-hilanat gid gid tiyan akon ko,abdomen high fever,urgent,moderate,general,Combinatorial auto-rule,abdomen,active
-hilanat gid grabe tiyan akon ko,abdomen high fever,urgent,moderate,general,Combinatorial auto-rule,abdomen,active
-hilanat gid grabe gid tiyan akon ko,abdomen high fever,urgent,moderate,general,Combinatorial auto-rule,abdomen,active
-hilanat gid tiyan,abdomen high fever,urgent,moderate,general,Combinatorial auto-rule,abdomen,active
-hilanat gid gid tiyan,abdomen high fever,urgent,moderate,general,Combinatorial auto-rule,abdomen,active
-hilanat gid grabe tiyan,abdomen high fever,urgent,moderate,general,Combinatorial auto-rule,abdomen,active
-hilanat gid grabe gid tiyan,abdomen high fever,urgent,moderate,general,Combinatorial auto-rule,abdomen,active
-may hilanat gid sa tiyan ko,abdomen high fever,urgent,moderate,general,Combinatorial auto-rule,abdomen,active
-may hilanat gid sa tiyan akon,abdomen high fever,urgent,moderate,general,Combinatorial auto-rule,abdomen,active
-may hilanat gid sa tiyan ko akon,abdomen high fever,urgent,moderate,general,Combinatorial auto-rule,abdomen,active
-may hilanat gid sa tiyan akon ko,abdomen high fever,urgent,moderate,general,Combinatorial auto-rule,abdomen,active
-may hilanat gid tiyan ko,abdomen high fever,urgent,moderate,general,Combinatorial auto-rule,abdomen,active
-may hilanat gid tiyan akon,abdomen high fever,urgent,moderate,general,Combinatorial auto-rule,abdomen,active
-may hilanat gid tiyan ko akon,abdomen high fever,urgent,moderate,general,Combinatorial auto-rule,abdomen,active
-may hilanat gid tiyan akon ko,abdomen high fever,urgent,moderate,general,Combinatorial auto-rule,abdomen,active
-tiyan ko hilanat gid,abdomen high fever,urgent,moderate,general,Combinatorial auto-rule,abdomen,active
+singit ko akon hilanat gid,groin high fever,urgent,moderate,general,Combinatorial auto-rule,groin,active
+singit ko hilanat gid,groin high fever,urgent,moderate,general,Combinatorial auto-rule,groin,active
+talukap mata akon hilanat gid,eyelid high fever,urgent,moderate,general,Combinatorial auto-rule,eyelid,active
+talukap mata akon ko hilanat gid,eyelid high fever,urgent,moderate,general,Combinatorial auto-rule,eyelid,active
+talukap mata hilanat gid,eyelid high fever,urgent,moderate,general,Combinatorial auto-rule,eyelid,active
+talukap mata ko akon hilanat gid,eyelid high fever,urgent,moderate,general,Combinatorial auto-rule,eyelid,active
+talukap mata ko hilanat gid,eyelid high fever,urgent,moderate,general,Combinatorial auto-rule,eyelid,active
 tiyan akon hilanat gid,abdomen high fever,urgent,moderate,general,Combinatorial auto-rule,abdomen,active
-tiyan ko akon hilanat gid,abdomen high fever,urgent,moderate,general,Combinatorial auto-rule,abdomen,active
 tiyan akon ko hilanat gid,abdomen high fever,urgent,moderate,general,Combinatorial auto-rule,abdomen,active
-ko tiyan hilanat gid,abdomen high fever,urgent,moderate,general,Combinatorial auto-rule,abdomen,active
-akon tiyan hilanat gid,abdomen high fever,urgent,moderate,general,Combinatorial auto-rule,abdomen,active
-ko akon tiyan hilanat gid,abdomen high fever,urgent,moderate,general,Combinatorial auto-rule,abdomen,active
-akon ko tiyan hilanat gid,abdomen high fever,urgent,moderate,general,Combinatorial auto-rule,abdomen,active
-hilanat gid gid ko tiyan,abdomen high fever,urgent,moderate,general,Combinatorial auto-rule,abdomen,active
-hilanat gid gid akon tiyan,abdomen high fever,urgent,moderate,general,Combinatorial auto-rule,abdomen,active
-hilanat gid gid ko akon tiyan,abdomen high fever,urgent,moderate,general,Combinatorial auto-rule,abdomen,active
-hilanat gid gid akon ko tiyan,abdomen high fever,urgent,moderate,general,Combinatorial auto-rule,abdomen,active
-gid hilanat gid tiyan ko,abdomen high fever,urgent,moderate,general,Combinatorial auto-rule,abdomen,active
-grabe hilanat gid tiyan ko,abdomen high fever,urgent,moderate,general,Combinatorial auto-rule,abdomen,active
-grabe gid hilanat gid tiyan ko,abdomen high fever,urgent,moderate,general,Combinatorial auto-rule,abdomen,active
-gid hilanat gid tiyan akon,abdomen high fever,urgent,moderate,general,Combinatorial auto-rule,abdomen,active
-grabe hilanat gid tiyan akon,abdomen high fever,urgent,moderate,general,Combinatorial auto-rule,abdomen,active
-grabe gid hilanat gid tiyan akon,abdomen high fever,urgent,moderate,general,Combinatorial auto-rule,abdomen,active
-gid hilanat gid tiyan ko akon,abdomen high fever,urgent,moderate,general,Combinatorial auto-rule,abdomen,active
-grabe hilanat gid tiyan ko akon,abdomen high fever,urgent,moderate,general,Combinatorial auto-rule,abdomen,active
-grabe gid hilanat gid tiyan ko akon,abdomen high fever,urgent,moderate,general,Combinatorial auto-rule,abdomen,active
-gid hilanat gid tiyan akon ko,abdomen high fever,urgent,moderate,general,Combinatorial auto-rule,abdomen,active
-grabe hilanat gid tiyan akon ko,abdomen high fever,urgent,moderate,general,Combinatorial auto-rule,abdomen,active
-grabe gid hilanat gid tiyan akon ko,abdomen high fever,urgent,moderate,general,Combinatorial auto-rule,abdomen,active
 tiyan hilanat gid,abdomen high fever,urgent,moderate,general,Combinatorial auto-rule,abdomen,active
+tiyan ko akon hilanat gid,abdomen high fever,urgent,moderate,general,Combinatorial auto-rule,abdomen,active
+tiyan ko hilanat gid,abdomen high fever,urgent,moderate,general,Combinatorial auto-rule,abdomen,active
+tungod akon hilanat gid,throat high fever,urgent,moderate,general,Combinatorial auto-rule,throat,active
+tungod akon ko hilanat gid,throat high fever,urgent,moderate,general,Combinatorial auto-rule,throat,active
+tungod hilanat gid,throat high fever,urgent,moderate,general,Combinatorial auto-rule,throat,active
+tungod ko akon hilanat gid,throat high fever,urgent,moderate,general,Combinatorial auto-rule,throat,active
+tungod ko hilanat gid,throat high fever,urgent,moderate,general,Combinatorial auto-rule,throat,active

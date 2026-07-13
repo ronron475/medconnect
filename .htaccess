@@ -2,6 +2,23 @@ Options -Indexes
 
 RewriteEngine On
 
+# ── Force HTTPS on production (keep HTTP for localhost / LAN dev) ─────────────
+RewriteCond %{HTTP_HOST} !^localhost$ [NC]
+RewriteCond %{HTTP_HOST} !^127\.0\.0\.1$ [NC]
+RewriteCond %{HTTP_HOST} !^192\.168\. [NC]
+RewriteCond %{HTTP_HOST} !^10\. [NC]
+RewriteCond %{HTTP_HOST} !^172\.(1[6-9]|2[0-9]|3[0-1])\. [NC]
+RewriteCond %{HTTPS} off [NC]
+RewriteCond %{HTTP:X-Forwarded-Proto} !https [NC]
+RewriteRule ^ https://%{HTTP_HOST}%{REQUEST_URI} [R=301,L]
+
+# ── WebRTC security headers (camera/mic on HTTPS deployments) ───────────────
+<IfModule mod_headers.c>
+    Header always set X-Content-Type-Options "nosniff"
+    Header always set Referrer-Policy "strict-origin-when-cross-origin"
+    Header always set Permissions-Policy "camera=(self), microphone=(self), display-capture=(self)"
+</IfModule>
+
 
 
 # ── Legacy controllers URL (backward-compatible) ───────────────

@@ -80,4 +80,22 @@ final class Api
             self::error('Unauthorized.', 401);
         }
     }
+
+    public static function requireCsrf(): void
+    {
+        require_once dirname(__DIR__) . '/includes/auth_guard.php';
+        auth_csrf_require();
+    }
+
+    public static function requirePatientReady(PDO $pdo): void
+    {
+        self::requireRole('patient');
+        require_once dirname(__DIR__) . '/includes/patient_account_security.php';
+        if (patient_requires_account_setup($pdo, (int) $_SESSION['user_id'])) {
+            self::error('Please complete account setup before continuing.', 403, [
+                'code' => 'account_setup_required',
+                'redirect' => (defined('ASSET_BASE') ? ASSET_BASE : '') . '/views/patient/account_setup.php',
+            ]);
+        }
+    }
 }

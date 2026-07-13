@@ -9,6 +9,7 @@ $settings = provider_settings_load($pdo, (int) $_SESSION['user_id']);
 $profile = $settings['profile'] ?? [];
 $notifications = $settings['notifications'] ?? provider_settings_default_notifications();
 $system = $settings['system'] ?? provider_settings_default_system();
+$sessions = $settings['sessions'] ?? [];
 $lang = $_SESSION['provider_language'] ?? ($system['language'] ?? 'en');
 
 $page_styles = ['provider-settings.css', 'provider_session_alert.css', 'messages-delete.css'];
@@ -136,13 +137,14 @@ $tabs = [
         <div class="ps-card">
           <div class="ps-card__head">
             <div>
-              <h3 class="ps-card__title"><?= icon('lock') ?> Security &amp; Password</h3>
-              <p class="ps-card__sub">Use a strong password to protect patient data and your account.</p>
+              <h3 class="ps-card__title ps-card__title--security"><?= icon('lock') ?> Change Password</h3>
+              <p class="ps-card__sub">Protect patient data with a strong password. Requirements update as you type.</p>
             </div>
           </div>
           <div class="ps-card__body">
             <div id="psAlertSecurity" class="ps-alert" role="status"></div>
 
+            <div class="ps-security-module">
             <form id="providerPasswordForm" class="ps-form-grid" novalidate>
               <div class="ps-field ps-span-2">
                 <label for="currentPassword">Current Password</label>
@@ -154,18 +156,32 @@ $tabs = [
               <div class="ps-field">
                 <label for="newPassword">New Password</label>
                 <div class="ps-password-wrap">
-                  <input class="ps-input" type="password" id="newPassword" name="new_password" required autocomplete="new-password" minlength="8" maxlength="128" aria-describedby="passwordStrength newPasswordError">
+                  <input class="ps-input" type="password" id="newPassword" name="new_password" required autocomplete="new-password" minlength="12" maxlength="128" aria-describedby="psPwStrengthLabel newPasswordError">
                   <button type="button" class="ps-toggle-pw" data-toggle-password="newPassword" aria-label="Show password">Show</button>
                 </div>
-                <div class="ps-strength-track" aria-hidden="true"><div id="passwordStrengthBar" class="ps-strength-bar"></div></div>
-                <div id="passwordStrength" class="ps-strength"></div>
+                <div class="ps-validation" aria-label="Password strength and requirements">
+                  <div class="ps-validation__head">
+                    <div class="ps-validation__title">Password Strength</div>
+                    <div id="psPwStrengthLabel" class="ps-validation__label" aria-live="polite">Weak</div>
+                  </div>
+                  <div class="ps-validation__bar" aria-hidden="true">
+                    <span id="psPwStrengthFill" class="ps-validation__fill ps-validation__fill--weak"></span>
+                  </div>
+                  <ul class="ps-validation__grid" id="psPwReqList" aria-label="Password requirements">
+                    <li data-req="len"><span class="ps-req-dot"></span>At least 12 characters</li>
+                    <li data-req="upper"><span class="ps-req-dot"></span>One uppercase letter</li>
+                    <li data-req="lower"><span class="ps-req-dot"></span>One lowercase letter</li>
+                    <li data-req="digit"><span class="ps-req-dot"></span>One number</li>
+                    <li data-req="special"><span class="ps-req-dot"></span>One special character</li>
+                  </ul>
+                </div>
                 <p id="newPasswordError" class="ps-field-error" role="alert"></p>
-                <p class="ps-field-hint">At least 8 characters with uppercase, lowercase, number, and special character.</p>
+                <p class="ps-field-hint">Tip: Longer passphrases are easier to remember and harder to guess.</p>
               </div>
               <div class="ps-field">
                 <label for="confirmPassword">Confirm New Password</label>
                 <div class="ps-password-wrap">
-                  <input class="ps-input" type="password" id="confirmPassword" name="confirm_password" required autocomplete="new-password" minlength="8" maxlength="128" aria-describedby="confirmPasswordError">
+                  <input class="ps-input" type="password" id="confirmPassword" name="confirm_password" required autocomplete="new-password" minlength="12" maxlength="128" aria-describedby="confirmPasswordError">
                   <button type="button" class="ps-toggle-pw" data-toggle-password="confirmPassword" aria-label="Show password">Show</button>
                 </div>
                 <p id="confirmPasswordError" class="ps-field-error" role="alert"></p>
@@ -174,6 +190,37 @@ $tabs = [
                 <button type="submit" class="mc-btn mc-btn--primary ps-save-btn">Update Password</button>
               </div>
             </form>
+            </div>
+          </div>
+        </div>
+
+        <div class="ps-card" style="margin-top:16px;">
+          <div class="ps-card__head ps-card__head--row">
+            <div>
+              <h3 class="ps-card__title"><?= icon('monitor') ?> Active Sessions</h3>
+              <p class="ps-card__sub">Devices signed in to your provider account in the last 7 days.</p>
+            </div>
+            <button type="button" class="mc-btn mc-btn--ghost" id="psLogoutAllBtn">Logout All Devices</button>
+          </div>
+          <div class="ps-card__body">
+            <div id="psSessionsAlert" class="ps-alert" role="status"></div>
+            <?php if (empty($sessions)): ?>
+              <p class="ps-card__sub">No active sessions recorded in the last 7 days.</p>
+            <?php else: ?>
+              <ul class="ps-session-list">
+                <?php foreach ($sessions as $sess): ?>
+                <li class="ps-session-item<?= !empty($sess['is_current']) ? ' is-current' : '' ?>">
+                  <div>
+                    <strong><?= htmlspecialchars((string) ($sess['browser'] ?? 'Unknown browser')) ?></strong>
+                    <span class="ps-card__sub"><?= htmlspecialchars(ucfirst((string) ($sess['device'] ?? 'desktop'))) ?> · Last active <?= htmlspecialchars((string) ($sess['last_activity_label'] ?? '—')) ?></span>
+                  </div>
+                  <?php if (!empty($sess['is_current'])): ?>
+                    <span class="ps-badge">This device</span>
+                  <?php endif; ?>
+                </li>
+                <?php endforeach; ?>
+              </ul>
+            <?php endif; ?>
           </div>
         </div>
       </section>

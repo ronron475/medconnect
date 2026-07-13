@@ -170,6 +170,7 @@
     options = options || {};
     const panel = document.getElementById('aiAssessmentPanel');
     const btn = document.getElementById('btnRunAssessment');
+    const loader = global.MedConnectGlobalLoader || global.MedConnectLoader;
     if (!panel) return null;
 
     const inputs = getFormInputs();
@@ -189,24 +190,33 @@
       btn.textContent = 'Analyzing…';
     }
 
-    const stepPromise = options.skipAnimation ? Promise.resolve() : animateSteps(panel);
+    if (loader && typeof loader.showFormal === 'function') {
+      loader.showFormal({
+        preset: 'assessment',
+        status: 'Running AI assessment…',
+        substatus: 'Analyzing symptoms and classifying urgency…',
+      });
+    } else if (!options.skipAnimation) {
+      renderProcessing(panel, 0);
+    }
 
     const fd = new FormData();
     fd.set('chief_complaint', inputs.complaint);
+    const csrfToken = document.body?.dataset?.csrf || '';
+    if (csrfToken) {
+      fd.set('csrf_token', csrfToken);
+    }
     inputs.symptoms.forEach(function (symptom) {
       fd.append('symptoms[]', symptom);
     });
 
     try {
-      const [_, res] = await Promise.all([
-        stepPromise,
-        fetch(baseUrl() + '/app/api/patient/assess_symptoms.php', {
-          method: 'POST',
-          body: fd,
-          credentials: 'same-origin',
-          signal: analyzeController.signal,
-        }),
-      ]);
+      const res = await fetch(baseUrl() + '/app/api/patient/assess_symptoms.php', {
+        method: 'POST',
+        body: fd,
+        credentials: 'same-origin',
+        signal: analyzeController.signal,
+      });
 
       let data;
       try {
@@ -233,6 +243,9 @@
       return null;
     } finally {
       analyzeController = null;
+      if (loader && typeof loader.hideFormal === 'function') {
+        loader.hideFormal();
+      }
       if (btn) {
         btn.disabled = false;
         btn.textContent = btn.dataset.originalText || 'Run AI Assessment';

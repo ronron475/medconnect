@@ -32,6 +32,15 @@ foreach ($_POST as $key => $value) {
 
 system_settings_set_many($pdo, $pairs, (int) $_SESSION['user_id']);
 
+if (array_key_exists('MAINTENANCE_MODE', $pairs)) {
+    system_settings_set(
+        $pdo,
+        'LANDING_MAINTENANCE_BANNER',
+        $pairs['MAINTENANCE_MODE'] === '1' ? '1' : '0',
+        (int) $_SESSION['user_id']
+    );
+}
+
 $apiKeys = [];
 try {
     $apiKeys = $pdo->query('SELECT api_key FROM api_settings')->fetchAll(PDO::FETCH_COLUMN);

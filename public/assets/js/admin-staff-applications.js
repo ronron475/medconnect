@@ -134,12 +134,11 @@
   }
 
   function renderLoadingRow(colspan) {
-    return (
-      '<tr><td colspan="' + colspan + '">' +
-      '<div class="staff-apps-loading">' +
-      '<div class="staff-apps-loading__spinner" role="status" aria-label="Loading"></div>' +
-      'Loading applications…</div></td></tr>'
-    );
+    var L = window.MedConnectGlobalLoader || window.MedConnectLoader;
+    if (L && typeof L.inlineRow === 'function') {
+      return L.inlineRow(colspan, 'Loading applications…');
+    }
+    return '<tr><td colspan="' + colspan + '"><div class="mc-inline-loading staff-apps-loading" role="status"><span>Loading applications…</span></div></td></tr>';
   }
 
   function renderEmptyState(colspan, config) {

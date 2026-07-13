@@ -17,6 +17,10 @@ if (!defined('SESSION_TIMEOUT_DEFAULT_MINUTES')) {
 
 function session_timeout_minutes_for_current_user(): int
 {
+    if (!empty($_SESSION['remember_me_extended'])) {
+        return REMEMBER_ME_DAYS * 24 * 60;
+    }
+
     $role = (string) ($_SESSION['user_role'] ?? '');
 
     // Provider portal supports a user-configurable timeout preference.
@@ -29,10 +33,18 @@ function session_timeout_minutes_for_current_user(): int
 
 function session_timeout_force_logout(): void
 {
-    // If inactivity is reached, also drop remember-me so auto-login doesn't defeat the timeout.
-    try {
-        remember_me_clear_cookie();
-    } catch (Throwable $e) { /* non-fatal */ }
+    global $pdo;
+
+    if (!empty($_SESSION['remember_me_extended'])) {
+        if (isset($pdo) && $pdo instanceof PDO && !empty($_SESSION['user_id'])) {
+            try {
+                remember_me_revoke_for_user($pdo, (int) $_SESSION['user_id']);
+            } catch (Throwable $e) { /* non-fatal */ }
+        }
+        try {
+            remember_me_clear_cookie();
+        } catch (Throwable $e) { /* non-fatal */ }
+    }
 
     $_SESSION = [];
     if (session_status() === PHP_SESSION_ACTIVE) {

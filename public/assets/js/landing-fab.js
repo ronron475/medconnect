@@ -142,7 +142,22 @@
     if (activeModal) closeModal(activeModal);
   }
 
-  toggle.addEventListener('click', toggleFab);
+  // Draggable toggle (mouse + touch). Tap without drag opens/closes.
+  if (window.MedConnectDraggableFab && typeof window.MedConnectDraggableFab.init === 'function') {
+    window.MedConnectDraggableFab.init({
+      handle: toggle,
+      wrap: fab,
+      storageKey: 'mc_landing_fab_pos',
+      margin: 10,
+      threshold: 6,
+      clickSuppressMs: 320,
+      enabled: () => true,
+      onTap: () => toggleFab(),
+      dragBodyClass: 'landing-fab-dragging',
+    });
+  } else {
+    toggle.addEventListener('click', toggleFab);
+  }
 
   if (backdrop) {
     backdrop.addEventListener('click', () => closeFab());

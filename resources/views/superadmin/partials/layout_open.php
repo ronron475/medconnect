@@ -17,6 +17,7 @@
   ?>
   <link rel="stylesheet" href="<?= ASSET_BASE ?>/assets/css/design-system.css"/>
   <link rel="stylesheet" href="<?= ASSET_BASE ?>/assets/css/admin_dashboard.css"/>
+  <link rel="stylesheet" href="<?= ASSET_BASE ?>/assets/css/admin-dashboard-mobile.css"/>
   <link rel="stylesheet" href="<?= ASSET_BASE ?>/assets/css/admin-dashboard-charts.css"/>
   <link rel="stylesheet" href="<?= ASSET_BASE ?>/assets/css/superadmin_dashboard.css"/>
   <link rel="stylesheet" href="<?= ASSET_BASE ?>/assets/css/sidebar.css"/>
@@ -42,6 +43,8 @@
   data-asset-base="<?= htmlspecialchars(ASSET_BASE) ?>"
   data-portal="superadmin"
 >
+
+<?php require_once VIEWS_PATH . '/partials/auth_transition_boot.php'; ?>
 
   <div class="portal-shell portal-shell--superadmin">
     <?php require_once __DIR__ . '/sidebar.php'; ?>

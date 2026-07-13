@@ -91,12 +91,13 @@ CREATE TABLE IF NOT EXISTS `provider_schedules` (
     `id` INT(11) UNSIGNED NOT NULL AUTO_INCREMENT,
     `provider_id` INT(11) UNSIGNED NOT NULL,
     `day_of_week` ENUM('Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday') NOT NULL,
+    `sort_order` SMALLINT UNSIGNED NOT NULL DEFAULT 0,
     `start_time` TIME NOT NULL,
     `end_time` TIME NOT NULL,
     `slot_duration` INT(11) DEFAULT 30 COMMENT 'Duration in minutes',
     `is_active` TINYINT(1) DEFAULT 1,
     PRIMARY KEY (`id`),
-    UNIQUE KEY `uq_provider_day` (`provider_id`, `day_of_week`),
+    KEY `idx_provider_day_sort` (`provider_id`, `day_of_week`, `sort_order`),
     CONSTRAINT `fk_schedule_provider` FOREIGN KEY (`provider_id`) REFERENCES `users` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 

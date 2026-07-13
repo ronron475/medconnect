@@ -63,6 +63,11 @@
   transition: all 0.2s ease;
 }
 
+.sb-label {
+  display: inline;
+  min-width: 0;
+}
+
 .sb-item svg {
   width: 18px;
   height: 18px;
@@ -157,6 +162,64 @@
   cursor: pointer;
   text-align: left;
   flex-shrink: 0;
+}
+
+/* ── Desktop mini sidebar (icon-only) ── */
+@media (min-width: 1025px) {
+  body.mc-sidebar-mini .sidebar {
+    width: var(--portal-sidebar-w, 78px);
+    padding-left: 10px;
+    padding-right: 10px;
+  }
+
+  body.mc-sidebar-mini .sidebar .sb-logo {
+    margin-top: 14px;
+    margin-bottom: 14px;
+  }
+
+  body.mc-sidebar-mini .sidebar .sb-logo-img {
+    height: 34px;
+  }
+
+  body.mc-sidebar-mini .sidebar .sb-item,
+  body.mc-sidebar-mini .sidebar .sb-logout {
+    justify-content: center;
+    gap: 0;
+    padding-left: 10px;
+    padding-right: 10px;
+  }
+
+  body.mc-sidebar-mini .sidebar .sb-item svg,
+  body.mc-sidebar-mini .sidebar .sb-logout svg {
+    margin: 0;
+  }
+
+  body.mc-sidebar-mini .sidebar .sb-label {
+    display: none;
+  }
+
+  body.mc-sidebar-mini .sidebar .mc-nav-messages-badge {
+    position: absolute;
+    top: 6px;
+    right: 6px;
+    margin-left: 0;
+  }
+
+  body.mc-sidebar-mini .sidebar .sb-profile-info,
+  body.mc-sidebar-mini .sidebar .sb-patient-badges,
+  body.mc-sidebar-mini .sidebar .sb-role,
+  body.mc-sidebar-mini .sidebar .sb-name {
+    display: none;
+  }
+
+  body.mc-sidebar-mini .sidebar .sb-profile {
+    justify-content: center;
+    padding: 10px;
+  }
+
+  body.mc-sidebar-mini .sidebar .sb-profile-row {
+    justify-content: center;
+  }
 }
 
 .sb-logout svg {

@@ -13007,3 +13007,410 @@ dictionary_id,local_term,english_term,category
 13006,nabun-og,bruise,symptom
 13007,nabunog,bruise,symptom
 13008,may pasa,bruise,symptom
+13009,gapula mata,red eyes,symptom
+13010,gakatol bilat,vaginal itching,symptom
+13011,kakatol bilat,vaginal itching,symptom
+13012,gakatol ari,penile itching,symptom
+13013,galuya lawas,body weakness,symptom
+13014,ginabahing,shortness of breath,symptom
+13015,ginakapos ginhawa,difficulty breathing,symptom
+13016,ginahubak,wheezing,symptom
+13017,aking ulo,headache,symptom
+13018,ginakalipong,dizziness,symptom
+13019,ginamanhid,numbness,symptom
+13020,pamamanhid,numbness,symptom
+13021,ginakurog,tremor,symptom
+13022,nagakonvulsyon,seizure,symptom
+13023,atake bakukang,seizure,symptom
+13024,kusog tibok,palpitations,symptom
+13025,ginakulba,anxiety,symptom
+13026,barado ilong,runny nose,symptom
+13027,ginakalibanga,diarrhea,symptom
+13028,ginakasukaon,nausea,symptom
+13029,wala gana kaon,loss of appetite,symptom
+13030,ginabuot,constipation,symptom
+13031,sige ihi,frequent urination,symptom
+13032,may dugo sa ihi,blood in urine,symptom
+13033,indi maka ihi,urinary retention,symptom
+13034,mainit lawas,fever,symptom
+13035,malabo panulok,blurred vision,symptom
+13036,nagatingog dalunggan,tinnitus,symptom
+13037,indi katulog,insomnia,symptom
+13038,ginakasubo,sadness,symptom
+13039,ginakabalaka,stress,symptom
+13040,pus-on masakit,abdominal pain,symptom
+13041,kilid masakit,flank pain,symptom
+13042,singit masakit,groin pain,symptom
+13043,itlog masakit,testicular pain,symptom
+13044,gahabok itlog,testicular swelling,symptom
+13045,gahubag itlog,testicular swelling,symptom
+13046,may nana bilat,vaginal discharge,symptom
+13047,may nana ari,penile discharge,symptom
+13048,gadugo bilat,vaginal bleeding,symptom
+13049,gadugo ari,penile bleeding,symptom
+13050,namaga dila,tongue swelling,symptom
+13051,gahubag ngabil,lip swelling,symptom
+13052,nasunog sang mantika,burn,condition
+13053,daw indi makahambal,speech difficulty,symptom
+13054,daw indi makabaton kamot,arm weakness,symptom
+13055,nagdugo ulo,head bleeding,symptom
+13056,gusto magpakamatay,suicidal ideation,symptom
+13057,naka-inom lason,poisoning,condition
+13058,naipit bukog tutunlan,choking,condition
+13059,kalit nabulag,sudden vision loss,symptom
+13060,grabe sakit tiyan kag gahubag,severe abdominal pain,symptom
+13061,sobra nagsuka kag wala ihi,severe dehydration,symptom
+13062,ginaubo dugo,coughing blood,symptom
+13063,nagauba dugo,coughing blood,symptom
+13064,kapoy ko,fatigue,symptom
+13065,gakatol lawas ko,itching,symptom
+13066,gapula lawas ko,rash,symptom
+13067,butlig-butlig,rash,symptom
+13068,pantal-pantal,hives,symptom
+13069,sip-on ko,runny nose,symptom
+13070,barado ako ilong,nasal congestion,symptom
+13071,hapdi tutunlan ko,sore throat,symptom
+13072,sige ako ihi,frequent urination,symptom
+13073,kulba gid ko,anxiety,symptom
+13074,kabalaka gid,stress,symptom
+13075,indi ako katulog,insomnia,symptom
+13076,malungkot gid ko,sadness,symptom
+13077,luya tiil ko,leg weakness,symptom
+13078,luya kamot ko,arm weakness,symptom
+13079,manhid kamot ko,hand numbness,symptom
+13080,manhid tiil ko,leg numbness,symptom
+13081,kurog kamot ko,hand tremor,symptom
+13082,tibok mabilis,palpitations,symptom
+13083,asukal taas,high blood sugar,condition
+13084,hubak-hubak,wheezing,symptom
+13085,hingal-hingal,shortness of breath,symptom
+13086,daw may gahugot sa dughan,chest pain,symptom
+13087,sakit dughan nagakalat sa abaga,chest pain,symptom
+13088,sakit dughan kag nagasinghot,chest pain,symptom
+13089,ginahingal bisan magpahuway,shortness of breath,symptom
+13090,indi makatulog tungod budlay ginhawa,orthopnea,symptom
+13091,nagagamit tiyan pagginhawa,difficulty breathing,symptom
+13092,kalit indi makahambal maayo,speech difficulty,symptom
+13093,nabulol ang panulti,slurred speech,symptom
+13094,nagakagat dila,seizure,symptom
+13095,naguyam liwat-liwag,seizure,symptom
+13096,nagaibot dugo madamo,bloody stool,symptom
+13097,itim ang tae,black stool,symptom
+13098,tae daw alkitran,black stool,symptom
+13099,nagsuka sang dugo,vomiting blood,symptom
+13100,kalit gahubag ngabil,facial swelling,symptom
+13101,nakakaon shrimps kag budlay magginhawa,allergic reaction,symptom
+13102,ginkagat putakti,insect sting,condition
+13103,nainom bleach,poisoning,condition
+13104,nainom kerosene,poisoning,condition
+13105,buntis kag nagdugo madamo,pregnancy bleeding,condition
+13106,indi ko mabatyagan ang bata,reduced fetal movement,symptom
+13107,bata gahingal kag asul,pediatric cyanosis,symptom
+13108,asukal baba kag indi magmata,hypoglycemia,condition
+13109,diabetis kag nagsuka kag ginahingal,diabetic ketoacidosis,condition
+13110,sakit ihi kag ginahilanat,urinary tract infection,condition
+13111,suga sa liog magtig-a,neck stiffness,symptom
+13112,kalit nabuta ang isa ka mata,sudden vision loss,symptom
+13113,indi makaihi sang adlaw,urinary retention,symptom
+13114,kalit sakit itlog,testicular pain,symptom
+13115,nagatibok dughan madasig,palpitations,symptom
+13116,ginaasikaso maghikog,suicidal ideation,symptom
+13117,ginkagat aso,dog bite,condition
+13118,ginkagat sawa,snake bite,condition
+13119,nalumos sa dagat,near drowning,condition
+13120,ginainitan lawas,heat stroke,condition
+13121,hapdi mag-ihi,dysuria,symptom
+13122,masami mag-ihi,frequent urination,symptom
+13123,gamay lang ihi,low urine output,symptom
+13124,nagalibot ulo,vertigo,symptom
+13125,daw naga-ikot palibot,vertigo,symptom
+13126,nagatingting dulunggan,tinnitus,symptom
+13127,may tunog sa dalunggan,tinnitus,symptom
+13128,nagaibus dugo sa ilong,nosebleed,symptom
+13129,indi makatulog,insomnia,symptom
+13130,wala gana magkaon,loss of appetite,symptom
+13131,indi makaibot,constipation,symptom
+13132,tig-a tae,constipation,symptom
+13133,grabe dugo sa regla,heavy menstrual bleeding,symptom
+13134,cramps sa regla,menstrual pain,symptom
+13135,sakit sa regla,menstrual pain,symptom
+13136,pig-ot dughan ko,chest tightness,symptom
+13137,asul na ang ngabil ko,cyanosis,symptom
+13138,asul na daliri ko,cyanosis,symptom
+13139,nabalyo ang guya ko,facial droop,symptom
+13140,indi ko maalsa ang isa ka kamot,arm weakness,symptom
+13141,nagalumay ang panulti ko,slurred speech,symptom
+13142,kalit nadula panulok,vision loss,symptom
+13143,kalit sakit ulo nga grabe gid,severe headache,symptom
+13144,nagaibus bula sa baba,foaming at mouth,symptom
+13145,may plano ako magpakamatay,suicidal ideation,symptom
+13146,mas maayo kung wala na ako,suicidal ideation,symptom
+13147,ginahunahuna ko maghikog,suicidal ideation,symptom
+13148,naipit pagkaon sa tutunlan,choking,condition
+13149,nainom sang rat poison,poisoning,condition
+13150,nainom sang insecticide,poisoning,condition
+13151,nasinghot sang smoke,smoke inhalation,condition
+13152,nagaawas tubig samtang buntis,water breaking,condition
+13153,ginahilanat ang bata kag naguyam,febrile seizure,condition
+13154,asukal sobra taas,hyperglycemia,condition
+13155,asukal sobra baba,hypoglycemia,condition
+13156,mapula nagahapdi ang pilas,cellulitis,condition
+13157,gina-kagat sang man-og,snake bite,condition
+13158,sobra kainit lawas,heat emergency,condition
+13159,sobra katugnaw lawas,hypothermia,condition
+13160,nagahimo kaugalingon nga kalainan,self harm,symptom
+13161,masakit tiyan kag nagaibot itim,abdominal pain with melena,symptom
+13162,kalit sakit tiyan sa tuo nga baba,right lower abdominal pain,symptom
+13163,gahubag kag kalit hapdi itlog,testicular torsion,condition
+13164,alta 180,hypertensive crisis,condition
+13165,oxygen mubo,low oxygen,symptom
+13166,nagdugo liwat sing grabe,severe bleeding,symptom
+13167,sakit orbita,eye pain,symptom
+13168,sakit apapangig,jaw pain,symptom
+13169,sakit tonsila,throat pain,symptom
+13170,sakit kilikili,axilla pain,symptom
+13171,sakit lumbay,low back pain,symptom
+13172,sakit ilig,perineal pain,symptom
+13173,hapdi ari,penile pain,symptom
+13174,sakit tendo tikod,heel pain,symptom
+13175,hapdi plantar,foot pain,symptom
+13176,hapdi likod baba,low back pain,symptom
+13177,sakit tuo dughan,chest pain,symptom
+13178,sakit wala dughan,chest pain,symptom
+13179,hilantan,fever,symptom
+13180,ginahilantan,fever,symptom
+13181,gilantan,fever,symptom
+13182,naghilanat,fever,symptom
+13183,ga hilanat,fever,symptom
+13184,ga-hilanat,fever,symptom
+13185,high fever,fever,symptom
+13186,taas hilanat,fever,symptom
+13187,ginatugnaw ko,chills,symptom
+13188,tugnaw,chills,symptom
+13189,ginatugnaw lawas,chills,symptom
+13190,ginakaligtan,chills,symptom
+13191,nagaligtan,chills,symptom
+13192,ginapaginatugnaw,chills,symptom
+13193,malamig lawas,chills,symptom
+13194,ginakurig,chills,symptom
+13195,nagakurig tungod tugnaw,chills,symptom
+13196,ginakurog kag ginatugnaw,fever with chills,symptom
+13197,ginakurog kag ginatugnaw ko,fever with chills,symptom
+13198,hilanat kag tugnaw,fever with chills,symptom
+13199,ginahilanat kag ginatugnaw,fever with chills,symptom
+13200,mainit lawas kag ginatugnaw,fever with chills,symptom
+13201,fever with chills,fever with chills,symptom
+13202,ginasip-on ko,rhinorrhea,symptom
+13203,ginasipon,rhinorrhea,symptom
+13204,nagasipon,rhinorrhea,symptom
+13205,ginabarado ilong,rhinorrhea,symptom
+13206,nagaawas sipon,rhinorrhea,symptom
+13207,may sip-on,rhinorrhea,symptom
+13208,colds,rhinorrhea,symptom
+13209,ginaubo ko,cough,symptom
+13210,nagauubo,cough,symptom
+13211,nagaubo,cough,symptom
+13212,ginakuhul,cough,symptom
+13213,dry cough,cough,symptom
+13214,uga ubo,cough,symptom
+13215,basa ubo,cough,symptom
+13216,ginaginhawa ko budlay,dyspnea,symptom
+13217,indi makaginhawa maayo,dyspnea,symptom
+13218,ginakulbaan ko magginhawa,dyspnea,symptom
+13219,ginakulbaan magginhawa,dyspnea,symptom
+13220,kulbaan magginhawa,dyspnea,symptom
+13221,ginahingal,dyspnea,symptom
+13222,bahing,dyspnea,symptom
+13223,kapos ginhawa,dyspnea,symptom
+13224,breathless,dyspnea,symptom
+13225,ginasakit ulo,headache,symptom
+13226,sakit sang ulo,headache,symptom
+13227,ulo masakit,headache,symptom
+13228,nagasakit ulo,headache,symptom
+13229,migren,headache,symptom
+13230,ginasakit tutunlan,pharyngitis,symptom
+13231,ginasakit tutunlan ko,pharyngitis,symptom
+13232,hapdi tutunlan,pharyngitis,symptom
+13233,sakit sa tutunlan,pharyngitis,symptom
+13234,ginasakit dughan,chest pain,symptom
+13235,sakit dibdib,chest pain,symptom
+13236,masakit dibdib,chest pain,symptom
+13237,pig-ot dughan,chest pain,symptom
+13238,ginasakit tiyan,abdominal pain,symptom
+13239,masakit sikmura,abdominal pain,symptom
+13240,baldom tiyan,abdominal pain,symptom
+13241,sakit sa tiyan,abdominal pain,symptom
+13242,ginakalipong ko,dizziness,symptom
+13243,lipong,dizziness,symptom
+13244,dizzy,dizziness,symptom
+13245,ginahilo,dizziness,symptom
+13246,ginagsuka,vomiting,symptom
+13247,nagasuka,vomiting,symptom
+13248,ginapalanuka,nausea,symptom
+13249,ginapalanuka ko,nausea,symptom
+13250,kasukaon,nausea,symptom
+13251,nahihilo tiyan,nausea,symptom
+13252,ginabalik tiyan,nausea,symptom
+13253,daw magasuka,nausea,symptom
+13254,palanuka,nausea,symptom
+13255,gana magasuka,nausea,symptom
+13256,ginakalibanga ko,diarrhea,symptom
+13257,nagakalibanga,diarrhea,symptom
+13258,constipated ko,constipation,symptom
+13259,constipated,constipation,symptom
+13260,budlay mag-ibot,constipation,symptom
+13261,dili makalibang,constipation,symptom
+13262,ginadula kalibanga,constipation,symptom
+13263,gina-constipation,constipation,symptom
+13264,ginakapoy gid,fatigue,symptom
+13265,ginakapoy gid ko,fatigue,symptom
+13266,mahina lawas,fatigue,symptom
+13267,luya,fatigue,symptom
+13268,pagod gid,fatigue,symptom
+13269,wala ko gana magkaon,anorexia,symptom
+13270,wala gana,anorexia,symptom
+13271,dili gana kaon,anorexia,symptom
+13272,ginawala gana,anorexia,symptom
+13273,wala appetite,anorexia,symptom
+13274,indi gusto magkaon,anorexia,symptom
+13275,nawala gana,anorexia,symptom
+13276,ginapalanhubag,edema,symptom
+13277,ginapalanhubag ko,edema,symptom
+13278,nagahubag,edema,symptom
+13279,palanhubag,edema,symptom
+13280,ginahubag ang tiil,pedal edema,symptom
+13281,ginahubag ang tiil ko,pedal edema,symptom
+13282,gahubag tiil,pedal edema,symptom
+13283,hubag tiil,pedal edema,symptom
+13284,namaga tiil,pedal edema,symptom
+13285,swollen feet,pedal edema,symptom
+13286,gahabok tiil,pedal edema,symptom
+13287,ginahubag ang kamot,hand edema,symptom
+13288,ginahubag ang kamot ko,hand edema,symptom
+13289,gahubag kamot,hand edema,symptom
+13290,hubag kamot,hand edema,symptom
+13291,namaga kamot,hand edema,symptom
+13292,swollen hands,hand edema,symptom
+13293,gahabok kamot,hand edema,symptom
+13294,ginapalanum,paresthesia,symptom
+13295,ginapalanum ko,paresthesia,symptom
+13296,ginapamamanhid,paresthesia,symptom
+13297,manhid,paresthesia,symptom
+13298,nagamanhid,paresthesia,symptom
+13299,numbness,paresthesia,symptom
+13300,palanum,paresthesia,symptom
+13301,daw wala batyag,paresthesia,symptom
+13302,ginakurog ko,tremor,symptom
+13303,nagakurog,tremor,symptom
+13304,kurog,tremor,symptom
+13305,ginatay-og,tremor,symptom
+13306,nagatay-og,tremor,symptom
+13307,tremors,tremor,symptom
+13308,shaking,tremor,symptom
+13309,ginapanuhot ko,abdominal distension,symptom
+13310,ginapanuhot tiyan,abdominal distension,symptom
+13311,busog tiyan,abdominal distension,symptom
+13312,ginabusog tiyan,abdominal distension,symptom
+13313,bloating,abdominal distension,symptom
+13314,gas tiyan,abdominal distension,symptom
+13315,ginabudlayan ko lakat,gait difficulty,symptom
+13316,ginabudlayan lakat,gait difficulty,symptom
+13317,budlay maglakat,gait difficulty,symptom
+13318,lisod maglakat,gait difficulty,symptom
+13319,indi makalakat maayo,gait difficulty,symptom
+13320,difficulty walking,gait difficulty,symptom
+13321,ginapalangluya maglakat,gait difficulty,symptom
+13322,ginahapdos ang mata,eye irritation,symptom
+13323,ginahapdos ang mata ko,eye irritation,symptom
+13324,hapdos mata,eye irritation,symptom
+13325,ginasakit mata,eye irritation,symptom
+13326,eye irritation,eye irritation,symptom
+13327,makati mata,eye irritation,symptom
+13328,ginakati mata,eye irritation,symptom
+13329,ginapula mata,conjunctivitis,symptom
+13330,ginapula mata ko,conjunctivitis,symptom
+13331,naga pula mata,conjunctivitis,symptom
+13332,nagapula mata,conjunctivitis,symptom
+13333,pamula mata,conjunctivitis,symptom
+13334,mapula mata,conjunctivitis,symptom
+13335,red eyes,conjunctivitis,symptom
+13336,ginakati ang panit,pruritus,symptom
+13337,ginakati ang panit ko,pruritus,symptom
+13338,makatol,pruritus,symptom
+13339,itchy skin,pruritus,symptom
+13340,ga katol panit,pruritus,symptom
+13341,kumakati panit,pruritus,symptom
+13342,may rashes,rash,symptom
+13343,may rashes ko,rash,symptom
+13344,bugas,rash,symptom
+13345,gapula lawas,rash,symptom
+13346,skin rash,rash,symptom
+13347,may pantal,rash,symptom
+13348,ginadugo ilong,epistaxis,symptom
+13349,ginadugo ilong ko,epistaxis,symptom
+13350,nagdugo ilong,epistaxis,symptom
+13351,dugo sa ilong,epistaxis,symptom
+13352,nosebleed,epistaxis,symptom
+13353,epistaxis,epistaxis,symptom
+13354,ginadugo,hemorrhage,symptom
+13355,ginadugo ko,hemorrhage,symptom
+13356,may dugo,hemorrhage,symptom
+13357,bleeding,hemorrhage,symptom
+13358,indi mapunggan dugo,hemorrhage,symptom
+13359,ginapalangluya,asthenia,symptom
+13360,ginapalangluya ko,asthenia,symptom
+13361,ginakaluya,asthenia,symptom
+13362,palangluya,asthenia,symptom
+13363,ginamahina,asthenia,symptom
+13364,ginakabudlayan ko tulog,insomnia,symptom
+13365,ginakabudlayan tulog,insomnia,symptom
+13366,budlay magtulog,insomnia,symptom
+13367,wala tulog,insomnia,symptom
+13368,difficulty sleeping,insomnia,symptom
+13369,gina-insomnia,insomnia,symptom
+13370,hubak,wheezing,symptom
+13371,nagahubak,wheezing,symptom
+13372,wheezing,wheezing,symptom
+13373,hika sound,wheezing,symptom
+13374,trangkaso ko,influenza,condition
+13375,may trangkaso,influenza,condition
+13376,hika ko,asthma,condition
+13377,may pneumonia,pneumonia,condition
+13378,tisis,tuberculosis,condition
+13379,db,dengue fever,condition
+13380,leptospirosis,leptospirosis,condition
+13381,lepto,leptospirosis,condition
+13382,may leptospirosis,leptospirosis,condition
+13383,covid 19,COVID-19,condition
+13384,taas bp,hypertension,condition
+13385,taas blood pressure,hypertension,condition
+13386,hpn,hypertension,condition
+13387,lowblood,hypotension,condition
+13388,baba bp,hypotension,condition
+13389,hypotension,hypotension,condition
+13390,may diabetes,diabetes mellitus,condition
+13391,may uti,urinary tract infection,condition
+13392,impeksyon sa ihi,urinary tract infection,condition
+13393,hyperacidity,hyperacidity,condition
+13394,hyper acidity,hyperacidity,condition
+13395,asido,hyperacidity,condition
+13396,gastric,hyperacidity,condition
+13397,may ulcer,peptic ulcer,condition
+13398,sakit sa sikmura ulcer,peptic ulcer,condition
+13399,may migraine,migraine,condition
+13400,artraytis,arthritis,condition
+13401,rheumatism,arthritis,condition
+13402,sakit sa tagipusuon,heart disease,condition
+13403,cva,stroke,condition
+13404,sakit bato,kidney disease,condition
+13405,alergiya,allergy,condition
+13406,skin infection,skin infection,condition
+13407,impeksyon sa panit,skin infection,condition
+13408,chicken pox,chickenpox,condition
+13409,bulutong tubig,chickenpox,condition
+13410,varicella,chickenpox,condition
+13411,may tigdas,measles,condition
+13412,mumps,mumps,condition
+13413,beke,mumps,condition
+13414,may beke,mumps,condition
+13415,parotitis,mumps,condition

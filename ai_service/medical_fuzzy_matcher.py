@@ -14,6 +14,53 @@ _DATA_DIR = Path(__file__).resolve().parent.parent / "data" / "nlp"
 _ACCEPT_THRESHOLD = 85
 
 
+def _normalize_match_key(text: str) -> str:
+    return re.sub(r"\s+", " ", (text or "").lower().strip())
+
+
+def _tokenize_name(text: str) -> list[str]:
+    return [part for part in re.split(r"[\s\-]+", _normalize_match_key(text)) if part]
+
+
+def _contains_whole_token(text: str, token: str) -> bool:
+    token_key = _normalize_match_key(token)
+    if not token_key:
+        return False
+    return token_key in _tokenize_name(text)
+
+
+def _is_anatomy_only_term(term: str) -> bool:
+    try:
+        from body_parts_loader import is_body_part
+
+        return is_body_part(term)
+    except ImportError:
+        return False
+
+
+def _reject_spurious_short_match(term: str, matched_name: str | None, score: int) -> bool:
+    """Reject fuzzy hits where a short token only appears inside unrelated compound names."""
+    if not matched_name:
+        return True
+    term_key = _normalize_match_key(term)
+    name_key = _normalize_match_key(matched_name)
+    if not term_key or term_key == name_key:
+        return False
+
+    term_tokens = term_key.split()
+    name_tokens = _tokenize_name(matched_name)
+    if len(term_tokens) != 1:
+        return False
+    if len(name_tokens) <= 1:
+        return False
+    if term_key not in name_tokens:
+        return False
+    if score >= 98:
+        return False
+    # Single-word query embedded in a longer unrelated label (e.g. head → Small-head Sperm).
+    return len(name_tokens) >= 2 and len(term_key) <= 8
+
+
 @lru_cache(maxsize=1)
 def _condition_records() -> list[dict[str, Any]]:
     return _load_records(_DATA_DIR / "medical_conditions.csv", "condition_id", "condition_name", "condition")
@@ -80,7 +127,7 @@ def _match_term(term: str, records: list[dict[str, Any]]) -> dict[str, Any]:
             "threshold": _ACCEPT_THRESHOLD,
         }
 
-    term_key = term.lower()
+    term_key = _normalize_match_key(term)
     exact = {r["name"].lower(): r for r in records}
     if term_key in exact:
         record = exact[term_key]
@@ -96,8 +143,7 @@ def _match_term(term: str, records: list[dict[str, Any]]) -> dict[str, Any]:
             "threshold": _ACCEPT_THRESHOLD,
         }
 
-    word_pat = re.compile(r"\b" + re.escape(term_key) + r"\b", re.I)
-    candidates = [r for r in records if word_pat.search(r["name"])]
+    candidates = [r for r in records if _contains_whole_token(r["name"], term_key)]
     if not candidates:
         candidates = [r for r in records if term_key in r["name"].lower()]
     if not candidates:
@@ -118,6 +164,8 @@ def _match_term(term: str, records: list[dict[str, Any]]) -> dict[str, Any]:
         score = int(round(score))
 
     accepted = score >= _ACCEPT_THRESHOLD
+    if accepted and _reject_spurious_short_match(term, best_name, score):
+        accepted = False
     record = candidates[idx] if idx >= 0 else None
 
     return {
@@ -265,6 +313,14 @@ def match_term_best(term: str, hint_category: str | None = None) -> dict[str, An
                 }
     except ImportError:
         term = term.strip()
+
+    if _is_anatomy_only_term(term):
+        return {
+            **_match_term(term, []),
+            "validation_status": "anatomy_only",
+            "validation_message": "Anatomy-only body part — not validated as a symptom or condition.",
+            "dataset_category": "body_part",
+        }
 
     hint = _normalize_hint(hint_category)
     best_match: dict[str, Any] | None = None

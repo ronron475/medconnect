@@ -11,6 +11,8 @@ require_once dirname(dirname(__DIR__)) . '/bootstrap.php';
 require_once dirname(dirname(__DIR__)) . '/config/db.php';
 require_once dirname(dirname(__DIR__)) . '/app/includes/recaptcha.php';
 require_once dirname(dirname(__DIR__)) . '/app/includes/login_security.php';
+require_once dirname(dirname(__DIR__)) . '/app/includes/patient_account_security.php';
+require_once dirname(dirname(__DIR__)) . '/app/includes/remember_me.php';
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     http_response_code(405);
@@ -42,8 +44,9 @@ if (recaptcha_is_configured()) {
     }
 }
 
-if (strlen($password) < 6) {
-    echo json_encode(['success' => false, 'message' => 'Password must be at least 6 characters.']);
+$policyError = patient_validate_password_policy($password);
+if ($policyError !== null) {
+    echo json_encode(['success' => false, 'message' => $policyError]);
     exit;
 }
 
@@ -52,7 +55,7 @@ if ($password !== $confirm) {
     exit;
 }
 
-$hash = password_hash($password, PASSWORD_BCRYPT, ['cost' => 12]);
+$hash = patient_hash_password($password);
 $stmt = $pdo->prepare("UPDATE users SET password = ?, email_verification_code = NULL, email_verification_expiry = NULL WHERE email = ? AND role = 'patient'");
 $stmt->execute([$hash, $email]);
 
@@ -60,6 +63,14 @@ if ($stmt->rowCount() === 0) {
     echo json_encode(['success' => false, 'message' => 'Account not found.']);
     exit;
 }
+
+$userStmt = $pdo->prepare("SELECT id FROM users WHERE email = ? AND role = 'patient' LIMIT 1");
+$userStmt->execute([$email]);
+$resetUserId = (int) ($userStmt->fetchColumn() ?: 0);
+if ($resetUserId > 0) {
+    remember_me_revoke_for_user($pdo, $resetUserId);
+}
+remember_me_clear_cookie();
 
 unset(
     $_SESSION['reset_email'],

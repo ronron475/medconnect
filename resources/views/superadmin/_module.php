@@ -6,9 +6,10 @@
  * while keeping the Super Admin sidebar and auth bootstrap.
  */
 require_once __DIR__ . '/_bootstrap.php';
+require_once BASE_PATH . '/app/includes/portal_paths.php';
 define('MC_PORTAL_SHELL', 'superadmin');
 
-$entry = basename($_SERVER['SCRIPT_FILENAME'] ?? $_SERVER['SCRIPT_NAME'] ?? $_SERVER['PHP_SELF'] ?? '');
+$entry = portal_current_view_basename();
 
 $adminAliases = [
     'reports.php' => 'analytics.php',

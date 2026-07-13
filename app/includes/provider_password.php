@@ -5,6 +5,7 @@
 
 require_once __DIR__ . '/provider_settings.php';
 require_once __DIR__ . '/password_history.php';
+require_once __DIR__ . '/remember_me.php';
 
 const PROVIDER_PASSWORD_MAX_ATTEMPTS = 5;
 const PROVIDER_PASSWORD_LOCK_MINUTES = 15;
@@ -226,6 +227,9 @@ function provider_password_change(PDO $pdo, int $providerId, string $current, st
     $newHash = password_hash($newPassword, PASSWORD_DEFAULT);
     $pdo->prepare('UPDATE users SET password = ?, updated_at = NOW() WHERE id = ? AND role = ?')
         ->execute([$newHash, $providerId, 'provider']);
+
+    remember_me_revoke_for_user($pdo, $providerId);
+    remember_me_clear_cookie();
 
     // Store password hashes in history (best-effort).
     try { password_history_add($pdo, $providerId, (string) $hash); } catch (Throwable $e) { /* non-fatal */ }

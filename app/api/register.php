@@ -12,6 +12,7 @@ require_once dirname(dirname(__DIR__)) . '/config/db.php';
 require_once dirname(dirname(__DIR__)) . '/app/includes/recaptcha.php';
 require_once dirname(dirname(__DIR__)) . '/app/includes/login_security.php';
 require_once dirname(dirname(__DIR__)) . '/app/includes/security_throttle.php';
+require_once dirname(dirname(__DIR__)) . '/app/includes/patient_account_security.php';
 
 $protocol   = isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? 'https' : 'http';
 $host       = $_SERVER['HTTP_HOST'] ?? 'localhost';
@@ -133,16 +134,10 @@ if (empty($email)) {
 if (empty($reg_password)) {
     $errors[] = 'Password is required.';
 } else {
-    if (strlen($reg_password) < 8)
-        $errors[] = 'Password must be at least 8 characters.';
-    if (!preg_match('/[A-Z]/', $reg_password))
-        $errors[] = 'Password must contain at least one uppercase letter.';
-    if (!preg_match('/[a-z]/', $reg_password))
-        $errors[] = 'Password must contain at least one lowercase letter.';
-    if (!preg_match('/[0-9]/', $reg_password))
-        $errors[] = 'Password must contain at least one number.';
-    if (!preg_match('/[^A-Za-z0-9]/', $reg_password))
-        $errors[] = 'Password must contain at least one special character.';
+    $policyError = patient_validate_password_policy($reg_password);
+    if ($policyError !== null) {
+        $errors[] = $policyError;
+    }
 
     // Block common weak passwords
     $weak = ['password','12345678','qwerty123','admin123','iloveyou','welcome1','letmein1','abc12345'];
@@ -180,8 +175,8 @@ if (empty($national_id_raw)) {
 
 if (!$consent_given) $errors[] = 'You must agree to the data privacy consent to proceed.';
 
-if (!empty($city_municipality) && stripos($city_municipality, 'bago') === false) {
-    $errors[] = 'Only residents of Bago City may register.';
+if (!empty($city_municipality) && !preg_match('/\bbago\s*city\b/i', preg_replace('/\s+/', ' ', $city_municipality))) {
+    $errors[] = 'Only residents of Bago City may register. If you live outside Bago City, please use the hospital referral to find care in your area.';
 }
 
 if (!empty($errors)) {
@@ -202,7 +197,7 @@ if (empty($_SESSION['ocr_verified']) || $ocr_verified_id !== $submitted_id) {
 
 if (empty($_SESSION['ocr_bago_city'])) {
     logActivity($pdo, null, 'submit_attempt', 'blocked', 'Bago City residency not confirmed by OCR.', $national_id_hash, $ip, $user_agent);
-    echo json_encode(['success' => false, 'message' => 'Only verified Bago City residents may create an account.']);
+    echo json_encode(['success' => false, 'message' => 'Only verified Bago City residents may create an account. Please use the hospital referral to find care in your area.']);
     exit;
 }
 
@@ -270,13 +265,16 @@ try {
 
     $registration_id = (int) $pdo->lastInsertId();
 
-    $password_hash = password_hash($reg_password, PASSWORD_BCRYPT, ['cost' => 12]);
+    $password_hash = patient_hash_password($reg_password);
     $pdo->prepare("
         INSERT INTO users (first_name, last_name, email, password, role, is_active, is_email_verified, created_at)
         VALUES (?, ?, ?, ?, 'patient', 1, 1, NOW())
     ")->execute([$first_name, $last_name, $email, $password_hash]);
 
     $patient_user_id = (int) $pdo->lastInsertId();
+
+    $pdo->prepare('UPDATE patient_registrations SET user_id = ? WHERE id = ?')
+        ->execute([$patient_user_id, $registration_id]);
 
     require_once dirname(dirname(__DIR__)) . '/app/core/BagoBarangayCentroids.php';
     require_once dirname(dirname(__DIR__)) . '/app/core/GisDashboardService.php';
@@ -299,6 +297,9 @@ try {
 
     require_once dirname(dirname(__DIR__)) . '/app/includes/notification_events.php';
     NotificationEvents::patientRegistered($pdo, $patient_user_id, trim($first_name . ' ' . $last_name));
+
+    require_once dirname(dirname(__DIR__)) . '/app/includes/bhw_patient_workflow.php';
+    BhwPatientWorkflow::onSelfRegistration($pdo, $patient_user_id);
 
     unset(
         $_SESSION['ocr_verified'], $_SESSION['ocr_national_id'],

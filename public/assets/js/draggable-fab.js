@@ -37,6 +37,7 @@
    * @param {number} [options.clickSuppressMs=320] - Block ghost clicks after drag.
    * @param {() => boolean} [options.enabled] - Return false to ignore interaction.
    * @param {(ev: PointerEvent) => void} [options.onTap] - Called on tap/click without drag.
+   * @param {() => void} [options.onDragEnd] - Called after a completed drag (position saved).
    * @param {string} [options.dragBodyClass] - Body class while dragging (scroll lock).
    */
   function init(options) {
@@ -89,6 +90,7 @@
       wrap.style.bottom = 'auto';
       wrap.style.transform = 'none';
       wrap.dataset.customPos = 'true';
+      wrap.classList.add('is-positioned');
     }
 
     function flushPosition() {
@@ -212,11 +214,16 @@
         flushPosition();
       }
 
+      const wasDragging = isDragging;
+
       if (isDragging) {
         endDragVisuals();
         savePosition();
         suppressClickUntil = Date.now() + clickSuppressMs;
         e.preventDefault();
+        if (typeof options.onDragEnd === 'function') {
+          options.onDragEnd();
+        }
       } else {
         disableScrollLock();
         if (!didDrag && onTap) onTap(e);
@@ -224,6 +231,7 @@
 
       activePointerId = null;
       isDragging = false;
+      didDrag = wasDragging ? true : didDrag;
     }
 
     function onClick(e) {

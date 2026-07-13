@@ -18,8 +18,11 @@
  * TODO — Database persistence points are marked with [DB_HOOK].
  */
 
-session_start();
-require_once dirname(__DIR__, 3) . '/config/db.php';
+require_once dirname(__DIR__, 3) . '/bootstrap/app.php';
+require_once BASE_PATH . '/config/db.php';
+require_once BASE_PATH . '/app/includes/auth_guard.php';
+
+$patientProfileUrl = ASSET_BASE . '/views/patient/profile.php';
 
 // ── Constants ────────────────────────────────────────────────────────────────
 
@@ -44,13 +47,13 @@ define('RU_UPLOAD_DIR', dirname(__DIR__, 3) . '/storage/uploads/ids/');
 
 // Auth guard — patients only
 if (empty($_SESSION['user_id']) || ($_SESSION['user_role'] ?? '') !== 'patient') {
-    header('Location: /index.php');
+    header('Location: ' . auth_signin_required_url());
     exit;
 }
 
 // Method guard
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-    header('Location: /views/patient/profile.php');
+    header('Location: ' . $patientProfileUrl);
     exit;
 }
 
@@ -66,15 +69,17 @@ if (
 
 function _fail(string $message): never
 {
+    global $patientProfileUrl;
     $_SESSION['residency_error'] = $message;
-    header('Location: /views/patient/profile.php');
+    header('Location: ' . $patientProfileUrl);
     exit;
 }
 
 function _success(string $message): never
 {
+    global $patientProfileUrl;
     $_SESSION['residency_success'] = $message;
-    header('Location: /views/patient/profile.php');
+    header('Location: ' . $patientProfileUrl);
     exit;
 }
 

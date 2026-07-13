@@ -23205,3 +23205,246 @@ id,hiligaynon_term,alternative_spellings,english_translation,medical_term,medica
 23204,subong masakit ari ko,,penile pain,penile pain,male_reproductive_symptom,general,Moderate,penile;pain,penile;pain
 23205,subong may nana sa bilat ko,,vaginal infection,vaginal infection,infection,general,High,vaginal;infection,vaginal;infection
 23206,UTI ko,,urinary tract infection,urinary tract infection,urinary_symptom,general,Moderate,urinary;tract;infection,urinary;tract;infection
+23207,hilantan,,fever,fever,general,general,moderate,fever,hilantan
+23208,gilantan,,fever,fever,general,general,moderate,fever,gilantan
+23209,ginahilanat sing taas,,fever,fever,general,general,moderate,fever,ginahilanat sing taas
+23210,ga-hilanat,,fever,fever,general,general,moderate,fever,ga-hilanat
+23211,high fever,,fever,fever,general,general,moderate,fever,high fever
+23212,taas hilanat,,fever,fever,general,general,moderate,fever,taas hilanat
+23213,ginakaligtan,,chills,chills,general,general,moderate,chills,ginakaligtan
+23214,nagaligtan,,chills,chills,general,general,moderate,chills,nagaligtan
+23215,ginapaginatugnaw,,chills,chills,general,general,moderate,chills,ginapaginatugnaw
+23216,malamig lawas,,chills,chills,general,general,moderate,chills,malamig lawas
+23217,ginakurig,,chills,chills,general,general,moderate,chills,ginakurig
+23218,nagakurig tungod tugnaw,,chills,chills,general,general,moderate,chills,nagakurig tungod tugnaw
+23219,ginakurog kag ginatugnaw,,fever with chills,fever with chills,general,general,moderate,fever;with;chills,ginakurog kag ginatugnaw
+23220,ginakurog kag ginatugnaw ko,,fever with chills,fever with chills,general,general,moderate,fever;with;chills,ginakurog kag ginatugnaw ko
+23221,hilanat kag tugnaw,,fever with chills,fever with chills,general,general,moderate,fever;with;chills,hilanat kag tugnaw
+23222,ginahilanat kag ginatugnaw,,fever with chills,fever with chills,general,general,moderate,fever;with;chills,ginahilanat kag ginatugnaw
+23223,mainit lawas kag ginatugnaw,,fever with chills,fever with chills,general,general,moderate,fever;with;chills,mainit lawas kag ginatugnaw
+23224,fever with chills,,fever with chills,fever with chills,general,general,moderate,fever;with;chills,fever with chills
+23225,nagaawas sipon,,runny nose,rhinorrhea,respiratory,respiratory,moderate,runny;nose,nagaawas sipon
+23226,colds,,runny nose,rhinorrhea,respiratory,respiratory,moderate,runny;nose,colds
+23227,gahika,,cough,cough,respiratory,respiratory,moderate,cough,gahika
+23228,dry cough,,cough,cough,respiratory,respiratory,moderate,cough,dry cough
+23229,uga ubo,,cough,cough,respiratory,respiratory,moderate,cough,uga ubo
+23230,basa ubo,,cough,cough,respiratory,respiratory,moderate,cough,basa ubo
+23231,ginaginhawa ko budlay,,difficulty breathing,dyspnea,respiratory,respiratory,moderate,difficulty;breathing,ginaginhawa ko budlay
+23232,budlay magginhawa,,difficulty breathing,dyspnea,respiratory,respiratory,moderate,difficulty;breathing,budlay magginhawa
+23233,ginabudlayan ginhawa,,difficulty breathing,dyspnea,respiratory,respiratory,moderate,difficulty;breathing,ginabudlayan ginhawa
+23234,shortness of breath,,difficulty breathing,dyspnea,respiratory,respiratory,moderate,difficulty;breathing,shortness of breath
+23235,indi makaginhawa maayo,,difficulty breathing,dyspnea,respiratory,respiratory,moderate,difficulty;breathing,indi makaginhawa maayo
+23236,dula ginhawa,,difficulty breathing,dyspnea,respiratory,respiratory,moderate,difficulty;breathing,dula ginhawa
+23237,ginakulbaan ko magginhawa,,shortness of breath,dyspnea,respiratory,respiratory,moderate,shortness;of;breath,ginakulbaan ko magginhawa
+23238,ginakulbaan magginhawa,,shortness of breath,dyspnea,respiratory,respiratory,moderate,shortness;of;breath,ginakulbaan magginhawa
+23239,kulbaan magginhawa,,shortness of breath,dyspnea,respiratory,respiratory,moderate,shortness;of;breath,kulbaan magginhawa
+23240,kapos ginhawa,,shortness of breath,dyspnea,respiratory,respiratory,moderate,shortness;of;breath,kapos ginhawa
+23241,sob,,shortness of breath,dyspnea,respiratory,respiratory,moderate,shortness;of;breath,sob
+23242,breathless,,shortness of breath,dyspnea,respiratory,respiratory,moderate,shortness;of;breath,breathless
+23243,labad ulo,,headache,headache,neurological,neurological,moderate,headache,labad ulo
+23244,labad ang ulo,,headache,headache,neurological,neurological,moderate,headache,labad ang ulo
+23245,sakit sa ulo,,headache,headache,neurological,neurological,moderate,headache,sakit sa ulo
+23246,migraine,,headache,headache,neurological,neurological,moderate,headache,migraine
+23247,migren,,headache,headache,neurological,neurological,moderate,headache,migren
+23248,sakit sa tutunlan,,sore throat,pharyngitis,general,general,moderate,sore;throat,sakit sa tutunlan
+23249,sore throat,,sore throat,pharyngitis,general,general,moderate,sore;throat,sore throat
+23250,pig-ot dughan,,chest pain,chest pain,cardiovascular,cardiovascular,moderate,chest;pain,pig-ot dughan
+23251,baldom tiyan,,stomach pain,abdominal pain,digestive,digestive,moderate,stomach;pain,baldom tiyan
+23252,ginabaldom,,stomach pain,abdominal pain,digestive,digestive,moderate,stomach;pain,ginabaldom
+23253,stomach pain,,stomach pain,abdominal pain,digestive,digestive,moderate,stomach;pain,stomach pain
+23254,sakit sa tiyan,,stomach pain,abdominal pain,digestive,digestive,moderate,stomach;pain,sakit sa tiyan
+23255,nagalipong,,dizziness,dizziness,neurological,neurological,moderate,dizziness,nagalipong
+23256,nahilo,,dizziness,dizziness,neurological,neurological,moderate,dizziness,nahilo
+23257,nahihilo,,dizziness,dizziness,neurological,neurological,moderate,dizziness,nahihilo
+23258,dizzy,,dizziness,dizziness,neurological,neurological,moderate,dizziness,dizzy
+23259,ginahilo,,dizziness,dizziness,neurological,neurological,moderate,dizziness,ginahilo
+23260,nagasuka,,vomiting,vomiting,digestive,digestive,moderate,vomiting,nagasuka
+23261,vomiting,,vomiting,vomiting,digestive,digestive,moderate,vomiting,vomiting
+23262,ginapalanuka,,nausea,nausea,digestive,digestive,moderate,nausea,ginapalanuka
+23263,ginapalanuka ko,,nausea,nausea,digestive,digestive,moderate,nausea,ginapalanuka ko
+23264,ginabalik tiyan,,nausea,nausea,digestive,digestive,moderate,nausea,ginabalik tiyan
+23265,daw magasuka,,nausea,nausea,digestive,digestive,moderate,nausea,daw magasuka
+23266,palanuka,,nausea,nausea,digestive,digestive,moderate,nausea,palanuka
+23267,gana magasuka,,nausea,nausea,digestive,digestive,moderate,nausea,gana magasuka
+23268,diarrhea,,diarrhea,diarrhea,digestive,digestive,moderate,diarrhea,diarrhea
+23269,ginatulo sing dugo,,diarrhea,diarrhea,digestive,digestive,moderate,diarrhea,ginatulo sing dugo
+23270,constipated ko,,constipation,constipation,digestive,digestive,moderate,constipation,constipated ko
+23271,constipated,,constipation,constipation,digestive,digestive,moderate,constipation,constipated
+23272,indi makaibot,,constipation,constipation,digestive,digestive,moderate,constipation,indi makaibot
+23273,tig-a tae,,constipation,constipation,digestive,digestive,moderate,constipation,tig-a tae
+23274,budlay mag-ibot,,constipation,constipation,digestive,digestive,moderate,constipation,budlay mag-ibot
+23275,gina-constipation,,constipation,constipation,digestive,digestive,moderate,constipation,gina-constipation
+23276,luya,,fatigue,fatigue,general,general,moderate,fatigue,luya
+23277,wala gana magkaon,,loss of appetite,anorexia,digestive,digestive,moderate,loss;of;appetite,wala gana magkaon
+23278,wala appetite,,loss of appetite,anorexia,digestive,digestive,moderate,loss;of;appetite,wala appetite
+23279,indi gusto magkaon,,loss of appetite,anorexia,digestive,digestive,moderate,loss;of;appetite,indi gusto magkaon
+23280,nawala gana,,loss of appetite,anorexia,digestive,digestive,moderate,loss;of;appetite,nawala gana
+23281,ginapalanhubag,,swelling,edema,general,general,moderate,swelling,ginapalanhubag
+23282,ginapalanhubag ko,,swelling,edema,general,general,moderate,swelling,ginapalanhubag ko
+23283,gahubag,,swelling,edema,general,general,moderate,swelling,gahubag
+23284,gahabok,,swelling,edema,general,general,moderate,swelling,gahabok
+23285,habok,,swelling,edema,general,general,moderate,swelling,habok
+23286,namaga,,swelling,edema,general,general,moderate,swelling,namaga
+23287,swelling,,swelling,edema,general,general,moderate,swelling,swelling
+23288,palanhubag,,swelling,edema,general,general,moderate,swelling,palanhubag
+23289,ginahubag ang tiil,,swollen feet,pedal edema,general,general,moderate,swollen;feet,ginahubag ang tiil
+23290,ginahubag ang tiil ko,,swollen feet,pedal edema,general,general,moderate,swollen;feet,ginahubag ang tiil ko
+23291,gahubag tiil,,swollen feet,pedal edema,general,general,moderate,swollen;feet,gahubag tiil
+23292,hubag tiil,,swollen feet,pedal edema,general,general,moderate,swollen;feet,hubag tiil
+23293,namaga tiil,,swollen feet,pedal edema,general,general,moderate,swollen;feet,namaga tiil
+23294,swollen feet,,swollen feet,pedal edema,general,general,moderate,swollen;feet,swollen feet
+23295,gahabok tiil,,swollen feet,pedal edema,general,general,moderate,swollen;feet,gahabok tiil
+23296,ginahubag ang kamot,,swollen hands,hand edema,general,general,moderate,swollen;hands,ginahubag ang kamot
+23297,ginahubag ang kamot ko,,swollen hands,hand edema,general,general,moderate,swollen;hands,ginahubag ang kamot ko
+23298,gahubag kamot,,swollen hands,hand edema,general,general,moderate,swollen;hands,gahubag kamot
+23299,hubag kamot,,swollen hands,hand edema,general,general,moderate,swollen;hands,hubag kamot
+23300,namaga kamot,,swollen hands,hand edema,general,general,moderate,swollen;hands,namaga kamot
+23301,swollen hands,,swollen hands,hand edema,general,general,moderate,swollen;hands,swollen hands
+23302,gahabok kamot,,swollen hands,hand edema,general,general,moderate,swollen;hands,gahabok kamot
+23303,ginapalanum,,numbness,paresthesia,neurological,neurological,moderate,numbness,ginapalanum
+23304,ginapalanum ko,,numbness,paresthesia,neurological,neurological,moderate,numbness,ginapalanum ko
+23305,numbness,,numbness,paresthesia,neurological,neurological,moderate,numbness,numbness
+23306,palanum,,numbness,paresthesia,neurological,neurological,moderate,numbness,palanum
+23307,daw wala batyag,,numbness,paresthesia,neurological,neurological,moderate,numbness,daw wala batyag
+23308,tremors,,tremor,tremor,neurological,neurological,moderate,tremor,tremors
+23309,shaking,,tremor,tremor,neurological,neurological,moderate,tremor,shaking
+23310,ginabusog tiyan,,bloating,abdominal distension,digestive,digestive,moderate,bloating,ginabusog tiyan
+23311,bloating,,bloating,abdominal distension,digestive,digestive,moderate,bloating,bloating
+23312,gas tiyan,,bloating,abdominal distension,digestive,digestive,moderate,bloating,gas tiyan
+23313,ginabudlayan ko lakat,,difficulty walking,gait difficulty,musculoskeletal,musculoskeletal,moderate,difficulty;walking,ginabudlayan ko lakat
+23314,ginabudlayan lakat,,difficulty walking,gait difficulty,musculoskeletal,musculoskeletal,moderate,difficulty;walking,ginabudlayan lakat
+23315,budlay maglakat,,difficulty walking,gait difficulty,musculoskeletal,musculoskeletal,moderate,difficulty;walking,budlay maglakat
+23316,lisod maglakat,,difficulty walking,gait difficulty,musculoskeletal,musculoskeletal,moderate,difficulty;walking,lisod maglakat
+23317,indi makalakat maayo,,difficulty walking,gait difficulty,musculoskeletal,musculoskeletal,moderate,difficulty;walking,indi makalakat maayo
+23318,difficulty walking,,difficulty walking,gait difficulty,musculoskeletal,musculoskeletal,moderate,difficulty;walking,difficulty walking
+23319,ginapalangluya maglakat,,difficulty walking,gait difficulty,musculoskeletal,musculoskeletal,moderate,difficulty;walking,ginapalangluya maglakat
+23320,ginahapdos ang mata,,eye irritation,eye irritation,eye_ear,eye_ear,moderate,eye;irritation,ginahapdos ang mata
+23321,ginahapdos ang mata ko,,eye irritation,eye irritation,eye_ear,eye_ear,moderate,eye;irritation,ginahapdos ang mata ko
+23322,hapdos mata,,eye irritation,eye irritation,eye_ear,eye_ear,moderate,eye;irritation,hapdos mata
+23323,eye irritation,,eye irritation,eye irritation,eye_ear,eye_ear,moderate,eye;irritation,eye irritation
+23324,makati mata,,eye irritation,eye irritation,eye_ear,eye_ear,moderate,eye;irritation,makati mata
+23325,pamula mata,,red eyes,conjunctivitis,eye_ear,eye_ear,moderate,red;eyes,pamula mata
+23326,ginakati ang panit,,itchy skin,pruritus,skin,skin,moderate,itchy;skin,ginakati ang panit
+23327,ginakati ang panit ko,,itchy skin,pruritus,skin,skin,moderate,itchy;skin,ginakati ang panit ko
+23328,ginakati,,itchy skin,pruritus,skin,skin,moderate,itchy;skin,ginakati
+23329,makatol,,itchy skin,pruritus,skin,skin,moderate,itchy;skin,makatol
+23330,itchy skin,,itchy skin,pruritus,skin,skin,moderate,itchy;skin,itchy skin
+23331,ga katol panit,,itchy skin,pruritus,skin,skin,moderate,itchy;skin,ga katol panit
+23332,kumakati panit,,itchy skin,pruritus,skin,skin,moderate,itchy;skin,kumakati panit
+23333,may rashes,,skin rash,rash,skin,skin,moderate,skin;rash,may rashes
+23334,may rashes ko,,skin rash,rash,skin,skin,moderate,skin;rash,may rashes ko
+23335,rashes,,skin rash,rash,skin,skin,moderate,skin;rash,rashes
+23336,rash,,skin rash,rash,skin,skin,moderate,skin;rash,rash
+23337,butlig-butlig,,skin rash,rash,skin,skin,moderate,skin;rash,butlig-butlig
+23338,gapula lawas,,skin rash,rash,skin,skin,moderate,skin;rash,gapula lawas
+23339,skin rash,,skin rash,rash,skin,skin,moderate,skin;rash,skin rash
+23340,ginadugo ilong,,nosebleed,epistaxis,general,general,moderate,nosebleed,ginadugo ilong
+23341,ginadugo ilong ko,,nosebleed,epistaxis,general,general,moderate,nosebleed,ginadugo ilong ko
+23342,nagaibus dugo sa ilong,,nosebleed,epistaxis,general,general,moderate,nosebleed,nagaibus dugo sa ilong
+23343,nagdugo ilong,,nosebleed,epistaxis,general,general,moderate,nosebleed,nagdugo ilong
+23344,dugo sa ilong,,nosebleed,epistaxis,general,general,moderate,nosebleed,dugo sa ilong
+23345,nosebleed,,nosebleed,epistaxis,general,general,moderate,nosebleed,nosebleed
+23346,epistaxis,,nosebleed,epistaxis,general,general,moderate,nosebleed,epistaxis
+23347,ginadugo,,bleeding,hemorrhage,general,general,moderate,bleeding,ginadugo
+23348,ginadugo ko,,bleeding,hemorrhage,general,general,moderate,bleeding,ginadugo ko
+23349,nagadugo,,bleeding,hemorrhage,general,general,moderate,bleeding,nagadugo
+23350,indi mapunggan dugo,,bleeding,hemorrhage,general,general,moderate,bleeding,indi mapunggan dugo
+23351,ginapalangluya,,weakness,asthenia,general,general,moderate,weakness,ginapalangluya
+23352,ginapalangluya ko,,weakness,asthenia,general,general,moderate,weakness,ginapalangluya ko
+23353,galuya lawas,,weakness,asthenia,general,general,moderate,weakness,galuya lawas
+23354,ginakaluya,,weakness,asthenia,general,general,moderate,weakness,ginakaluya
+23355,weakness,,weakness,asthenia,general,general,moderate,weakness,weakness
+23356,palangluya,,weakness,asthenia,general,general,moderate,weakness,palangluya
+23357,ginamahina,,weakness,asthenia,general,general,moderate,weakness,ginamahina
+23358,ginakabudlayan ko tulog,,difficulty sleeping,insomnia,mental_health,mental_health,moderate,difficulty;sleeping,ginakabudlayan ko tulog
+23359,ginakabudlayan tulog,,difficulty sleeping,insomnia,mental_health,mental_health,moderate,difficulty;sleeping,ginakabudlayan tulog
+23360,indi makatulog,,difficulty sleeping,insomnia,mental_health,mental_health,moderate,difficulty;sleeping,indi makatulog
+23361,budlay magtulog,,difficulty sleeping,insomnia,mental_health,mental_health,moderate,difficulty;sleeping,budlay magtulog
+23362,wala tulog,,difficulty sleeping,insomnia,mental_health,mental_health,moderate,difficulty;sleeping,wala tulog
+23363,difficulty sleeping,,difficulty sleeping,insomnia,mental_health,mental_health,moderate,difficulty;sleeping,difficulty sleeping
+23364,gina-insomnia,,difficulty sleeping,insomnia,mental_health,mental_health,moderate,difficulty;sleeping,gina-insomnia
+23365,hika sound,,wheezing,wheezing,respiratory,respiratory,moderate,wheezing,hika sound
+23366,trangkaso,,influenza,influenza,infectious,infectious,moderate,influenza,trangkaso
+23367,trangkaso ko,,influenza,influenza,infectious,infectious,moderate,influenza,trangkaso ko
+23368,may trangkaso,,influenza,influenza,infectious,infectious,moderate,influenza,may trangkaso
+23369,flu,,influenza,influenza,infectious,infectious,moderate,influenza,flu
+23370,influenza,,influenza,influenza,infectious,infectious,moderate,influenza,influenza
+23371,common cold,,common cold,common cold,respiratory,respiratory,moderate,common;cold,common cold
+23372,pneumonia,,pneumonia,pneumonia,respiratory,respiratory,moderate,pneumonia,pneumonia
+23373,may pneumonia,,pneumonia,pneumonia,respiratory,respiratory,moderate,pneumonia,may pneumonia
+23374,pulmonya,,pneumonia,pneumonia,respiratory,respiratory,moderate,pneumonia,pulmonya
+23375,tuberculosis,,tuberculosis,tuberculosis,infectious,infectious,moderate,tuberculosis,tuberculosis
+23376,tb,,tuberculosis,tuberculosis,infectious,infectious,moderate,tuberculosis,tb
+23377,t.b.,,tuberculosis,tuberculosis,infectious,infectious,moderate,tuberculosis,t.b.
+23378,tisis,,tuberculosis,tuberculosis,infectious,infectious,moderate,tuberculosis,tisis
+23379,may tb,,tuberculosis,tuberculosis,infectious,infectious,moderate,tuberculosis,may tb
+23380,dengue,,dengue fever,dengue fever,infectious,infectious,moderate,dengue;fever,dengue
+23381,dengue fever,,dengue fever,dengue fever,infectious,infectious,moderate,dengue;fever,dengue fever
+23382,may dengue,,dengue fever,dengue fever,infectious,infectious,moderate,dengue;fever,may dengue
+23383,db,,dengue fever,dengue fever,infectious,infectious,moderate,dengue;fever,db
+23384,leptospirosis,,leptospirosis,leptospirosis,infectious,infectious,moderate,leptospirosis,leptospirosis
+23385,lepto,,leptospirosis,leptospirosis,infectious,infectious,moderate,leptospirosis,lepto
+23386,may leptospirosis,,leptospirosis,leptospirosis,infectious,infectious,moderate,leptospirosis,may leptospirosis
+23387,covid,,COVID-19,COVID-19,infectious,infectious,moderate,COVID-19,covid
+23388,covid-19,,COVID-19,COVID-19,infectious,infectious,moderate,COVID-19,covid-19
+23389,covid 19,,COVID-19,COVID-19,infectious,infectious,moderate,COVID-19,covid 19
+23390,corona,,COVID-19,COVID-19,infectious,infectious,moderate,COVID-19,corona
+23391,coronavirus,,COVID-19,COVID-19,infectious,infectious,moderate,COVID-19,coronavirus
+23392,high blood,,hypertension,hypertension,cardiovascular,cardiovascular,moderate,hypertension,high blood
+23393,highblood,,hypertension,hypertension,cardiovascular,cardiovascular,moderate,hypertension,highblood
+23394,alta presyon,,hypertension,hypertension,cardiovascular,cardiovascular,moderate,hypertension,alta presyon
+23395,taas bp,,hypertension,hypertension,cardiovascular,cardiovascular,moderate,hypertension,taas bp
+23396,taas blood pressure,,hypertension,hypertension,cardiovascular,cardiovascular,moderate,hypertension,taas blood pressure
+23397,hypertension,,hypertension,hypertension,cardiovascular,cardiovascular,moderate,hypertension,hypertension
+23398,hpn,,hypertension,hypertension,cardiovascular,cardiovascular,moderate,hypertension,hpn
+23399,low blood,,hypotension,hypotension,cardiovascular,cardiovascular,moderate,hypotension,low blood
+23400,lowblood,,hypotension,hypotension,cardiovascular,cardiovascular,moderate,hypotension,lowblood
+23401,baba bp,,hypotension,hypotension,cardiovascular,cardiovascular,moderate,hypotension,baba bp
+23402,hypotension,,hypotension,hypotension,cardiovascular,cardiovascular,moderate,hypotension,hypotension
+23403,diabetes,,diabetes mellitus,diabetes mellitus,endocrine,endocrine,moderate,diabetes;mellitus,diabetes
+23404,diabetis,,diabetes mellitus,diabetes mellitus,endocrine,endocrine,moderate,diabetes;mellitus,diabetis
+23405,may diabetes,,diabetes mellitus,diabetes mellitus,endocrine,endocrine,moderate,diabetes;mellitus,may diabetes
+23406,asukal,,diabetes mellitus,diabetes mellitus,endocrine,endocrine,moderate,diabetes;mellitus,asukal
+23407,dm,,diabetes mellitus,diabetes mellitus,endocrine,endocrine,moderate,diabetes;mellitus,dm
+23408,uti,,urinary tract infection,urinary tract infection,urinary,urinary,moderate,urinary;tract;infection,uti
+23409,may uti,,urinary tract infection,urinary tract infection,urinary,urinary,moderate,urinary;tract;infection,may uti
+23410,impeksyon sa ihi,,urinary tract infection,urinary tract infection,urinary,urinary,moderate,urinary;tract;infection,impeksyon sa ihi
+23411,hyperacidity,,hyperacidity,hyperacidity,digestive,digestive,moderate,hyperacidity,hyperacidity
+23412,hyper acidity,,hyperacidity,hyperacidity,digestive,digestive,moderate,hyperacidity,hyper acidity
+23413,asido,,hyperacidity,hyperacidity,digestive,digestive,moderate,hyperacidity,asido
+23414,gastric,,hyperacidity,hyperacidity,digestive,digestive,moderate,hyperacidity,gastric
+23415,ulcer,,peptic ulcer,peptic ulcer,digestive,digestive,moderate,peptic;ulcer,ulcer
+23416,ulser,,peptic ulcer,peptic ulcer,digestive,digestive,moderate,peptic;ulcer,ulser
+23417,may ulcer,,peptic ulcer,peptic ulcer,digestive,digestive,moderate,peptic;ulcer,may ulcer
+23418,sakit sa sikmura ulcer,,peptic ulcer,peptic ulcer,digestive,digestive,moderate,peptic;ulcer,sakit sa sikmura ulcer
+23419,may migraine,,migraine,migraine,neurological,neurological,moderate,migraine,may migraine
+23420,arthritis,,arthritis,arthritis,musculoskeletal,musculoskeletal,moderate,arthritis,arthritis
+23421,artraytis,,arthritis,arthritis,musculoskeletal,musculoskeletal,moderate,arthritis,artraytis
+23422,rheumatism,,arthritis,arthritis,musculoskeletal,musculoskeletal,moderate,arthritis,rheumatism
+23423,rayuma,,arthritis,arthritis,musculoskeletal,musculoskeletal,moderate,arthritis,rayuma
+23424,heart disease,,heart disease,heart disease,cardiovascular,cardiovascular,moderate,heart;disease,heart disease
+23425,sakit sa tagipusuon,,heart disease,heart disease,cardiovascular,cardiovascular,moderate,heart;disease,sakit sa tagipusuon
+23426,sakit puso,,heart disease,heart disease,cardiovascular,cardiovascular,moderate,heart;disease,sakit puso
+23427,cardiac disease,,heart disease,heart disease,cardiovascular,cardiovascular,moderate,heart;disease,cardiac disease
+23428,atake sa utok,,stroke,stroke,neurological,neurological,moderate,stroke,atake sa utok
+23429,cva,,stroke,stroke,neurological,neurological,moderate,stroke,cva
+23430,kidney disease,,kidney disease,kidney disease,urinary,urinary,moderate,kidney;disease,kidney disease
+23431,sakit sa kidney,,kidney disease,kidney disease,urinary,urinary,moderate,kidney;disease,sakit sa kidney
+23432,sakit bato,,kidney disease,kidney disease,urinary,urinary,moderate,kidney;disease,sakit bato
+23433,ckd,,chronic kidney disease,chronic kidney disease,urinary,urinary,moderate,chronic;kidney;disease,ckd
+23434,allergy,,allergy,allergy,allergy,allergy,moderate,allergy,allergy
+23435,alergiya,,allergy,allergy,allergy,allergy,moderate,allergy,alergiya
+23436,may allergy,,allergy,allergy,allergy,allergy,moderate,allergy,may allergy
+23437,skin infection,,skin infection,skin infection,infection,infection,moderate,skin;infection,skin infection
+23438,impeksyon sa panit,,skin infection,skin infection,infection,infection,moderate,skin;infection,impeksyon sa panit
+23439,chickenpox,,chickenpox,chickenpox,infectious,infectious,moderate,chickenpox,chickenpox
+23440,chicken pox,,chickenpox,chickenpox,infectious,infectious,moderate,chickenpox,chicken pox
+23441,bulutong tubig,,chickenpox,chickenpox,infectious,infectious,moderate,chickenpox,bulutong tubig
+23442,varicella,,chickenpox,chickenpox,infectious,infectious,moderate,chickenpox,varicella
+23443,measles,,measles,measles,infectious,infectious,moderate,measles,measles
+23444,tigdas,,measles,measles,infectious,infectious,moderate,measles,tigdas
+23445,may tigdas,,measles,measles,infectious,infectious,moderate,measles,may tigdas
+23446,mumps,,mumps,mumps,infectious,infectious,moderate,mumps,mumps
+23447,beke,,mumps,mumps,infectious,infectious,moderate,mumps,beke
+23448,may beke,,mumps,mumps,infectious,infectious,moderate,mumps,may beke
+23449,parotitis,,mumps,mumps,infectious,infectious,moderate,mumps,parotitis

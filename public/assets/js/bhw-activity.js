@@ -33,14 +33,31 @@
     return (st || 'success') === 'failed' ? 'is-failed' : 'is-success';
   }
 
+  function formatStatus(st) {
+    var val = String(st || 'success').toLowerCase();
+    return val.charAt(0).toUpperCase() + val.slice(1);
+  }
+
+  function renderMeta(total, currentPage) {
+    var meta = document.getElementById('actMeta');
+    if (!meta) return;
+    if (!total) {
+      meta.textContent = 'No records found';
+      return;
+    }
+    var start = ((currentPage - 1) * perPage) + 1;
+    var end = Math.min(currentPage * perPage, total);
+    meta.textContent = 'Showing ' + start + '–' + end + ' of ' + total + ' record' + (total === 1 ? '' : 's');
+  }
+
   function renderRows(rows) {
     var body = document.getElementById('actBody');
     var cards = document.getElementById('actCards');
     if (!body) return;
 
     if (!rows.length) {
-      body.innerHTML = '<tr><td colspan="8" class="text-center text-muted py-4">No activity recorded yet.</td></tr>';
-      if (cards) cards.innerHTML = '<p class="text-muted text-center py-3">No activity recorded yet.</p>';
+      body.innerHTML = '<tr><td colspan="8" class="bhw-activity-empty">No activity recorded yet.</td></tr>';
+      if (cards) cards.innerHTML = '<p class="bhw-activity-empty">No activity recorded yet.</p>';
       return;
     }
 
@@ -53,7 +70,7 @@
         '<td>' + esc(r.module) + '</td>' +
         '<td>' + esc(r.ip_address) + '</td>' +
         '<td>' + esc(r.device) + '</td>' +
-        '<td><span class="bhw-activity-status ' + statusClass(r.status) + '">' + esc(r.status) + '</span></td>' +
+        '<td><span class="bhw-activity-status ' + statusClass(r.status) + '">' + esc(formatStatus(r.status)) + '</span></td>' +
         '</tr>';
     }).join('');
 
@@ -63,7 +80,7 @@
           '<strong>' + esc(r.action) + '</strong>' +
           '<span>' + esc(r.date) + ' · ' + esc(r.time) + '</span>' +
           '<span>' + esc(r.module) + (r.patient_name !== '—' ? ' · ' + esc(r.patient_name) : '') + '</span>' +
-          '<span class="bhw-activity-status ' + statusClass(r.status) + '">' + esc(r.status) + '</span>' +
+          '<span class="bhw-activity-status ' + statusClass(r.status) + '">' + esc(formatStatus(r.status)) + '</span>' +
           '</div>';
       }).join('');
     }
@@ -118,7 +135,7 @@
         ['Operating System', a.os],
         ['Device', a.device],
         ['IP Address', a.ip_address],
-        ['Result', a.status],
+        ['Result', formatStatus(a.status)],
       ];
       body.innerHTML = pairs.map(function (p) {
         return '<div><dt>' + esc(p[0]) + '</dt><dd>' + esc(p[1]) + '</dd></div>';
@@ -141,6 +158,7 @@
     return BhwPortal.get('activity.php', params).then(function (r) {
       if (!r.success) return;
       renderRows(r.rows || []);
+      renderMeta(r.total || 0, r.page || 1);
       renderPagination(r.total || 0, r.page || 1);
     });
   }

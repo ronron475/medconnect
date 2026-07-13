@@ -18,11 +18,11 @@ body.provider-body {
   --mc-border-thin: #e2edf1;
   --mc-shadow-micro: 0 4px 20px rgba(1, 42, 74, 0.06);
 
-  --pt-dash-space: 24px;
-  --pt-dash-space-sm: 12px;
-  --pt-dash-card-pad: 22px;
-  --pt-dash-strip-pad: 16px;
-  --pt-dash-radius: 14px;
+  --pt-dash-space: 8px;
+  --pt-dash-space-sm: 5px;
+  --pt-dash-card-pad: 11px;
+  --pt-dash-strip-pad: 8px;
+  --pt-dash-radius: 8px;
 
   background: var(--landing-bg);
   color: var(--landing-navy);
@@ -65,6 +65,53 @@ body.provider-body .sba-logo-img {
 
 body.provider-body .sba-nav {
   padding: 10px 16px !important;
+}
+
+/* ── Desktop: collapsed (icon-only) sidebar ── */
+@media (min-width: 768px) {
+  body.provider-body.mc-sidebar-mini .sb-aqua {
+    width: var(--pd-sidebar-w, 78px) !important;
+    min-width: var(--pd-sidebar-w, 78px) !important;
+    max-width: var(--pd-sidebar-w, 78px) !important;
+  }
+
+  body.provider-body.mc-sidebar-mini .sba-logo {
+    padding: 12px 10px 12px !important;
+  }
+
+  body.provider-body.mc-sidebar-mini .sba-logo img,
+  body.provider-body.mc-sidebar-mini .sba-logo-img {
+    height: 34px !important;
+  }
+
+  body.provider-body.mc-sidebar-mini .sba-nav {
+    padding: 10px 8px !important;
+  }
+
+  body.provider-body.mc-sidebar-mini .sba-item {
+    justify-content: center;
+    gap: 0;
+    padding: 12px 10px;
+    border-radius: 14px;
+    width: 100%;
+  }
+
+  body.provider-body.mc-sidebar-mini .sba-item.is-active {
+    box-shadow: 0 6px 18px rgba(6, 147, 150, 0.22);
+  }
+
+  body.provider-body.mc-sidebar-mini .sba-profile {
+    margin: 10px 8px 8px !important;
+    padding: 10px !important;
+    justify-content: center;
+  }
+
+  body.provider-body.mc-sidebar-mini .sba-logout {
+    margin-left: 8px;
+    margin-right: 8px;
+    justify-content: center;
+    gap: 0;
+  }
 }
 
 body.provider-body .sba-group-label {
@@ -214,8 +261,7 @@ body.provider-body .pd-header-user-role {
 }
 
 body.provider-body .provider-page-body {
-  padding: var(--pt-dash-space) 36px calc(var(--pt-dash-space) * 1.75);
-  padding-top: calc(var(--mc-header-offset, var(--provider-header-h, 64px)) + var(--pt-dash-space));
+  padding: calc(var(--mc-header-offset, var(--provider-header-h, 64px)) + 8px) 16px 16px;
   box-sizing: border-box;
   max-width: 100%;
   overflow-x: hidden;
@@ -225,9 +271,200 @@ body.provider-body .prov-dash {
   display: flex;
   flex-direction: column;
   gap: var(--pt-dash-space);
-  max-width: 1360px;
+  max-width: 100%;
   width: 100%;
-  margin: 0 auto;
+  margin: 0;
+}
+
+/* ── Compact clinical dashboard ── */
+body.provider-body .prov-dash-welcome--compact {
+  padding: 8px 12px;
+  gap: 8px;
+}
+
+body.provider-body .prov-dash-welcome--compact .prov-dash-welcome__left {
+  gap: 10px;
+  min-width: 0;
+}
+
+body.provider-body .prov-dash-welcome--compact .prov-dash-welcome__text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+body.provider-body .prov-dash-welcome--compact .prov-dash-welcome__eyebrow {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 700;
+  text-transform: none;
+  letter-spacing: -0.01em;
+  color: var(--landing-navy);
+}
+
+body.provider-body .prov-dash-welcome--compact .prov-dash-staff-id {
+  font-size: 11px;
+}
+
+body.provider-body .prov-dash-welcome--compact .prov-dash-badge {
+  padding: 4px 10px;
+  font-size: 10px;
+  flex-shrink: 0;
+}
+
+body.provider-body .prov-dash-metrics--unified {
+  display: grid;
+  grid-template-columns: repeat(8, minmax(0, 1fr));
+  gap: var(--pt-dash-space-sm);
+}
+
+body.provider-body .prov-dash-metrics--unified > .prov-dash-stat,
+body.provider-body .prov-dash-metrics--unified > .mc-notif-widget {
+  min-height: 64px;
+}
+
+body.provider-body .prov-dash-stat {
+  min-height: 64px;
+  padding: 8px 10px;
+}
+
+body.provider-body .prov-dash-stat__icon {
+  top: 8px;
+  right: 8px;
+  width: 24px;
+  height: 24px;
+  border-radius: 6px;
+}
+
+body.provider-body .prov-dash-stat__icon svg {
+  width: 14px;
+  height: 14px;
+}
+
+body.provider-body .prov-dash-stat strong {
+  font-size: 1.2rem;
+  padding-right: 28px;
+}
+
+body.provider-body .prov-dash-stat span {
+  font-size: 9px;
+  padding-top: 4px;
+  line-height: 1.2;
+}
+
+body.provider-body .prov-dash-widget-strip .mc-notif-widget,
+body.provider-body .prov-dash-metrics--unified > .mc-notif-widget {
+  min-height: 64px;
+  padding: 8px 10px;
+  gap: 1px 6px;
+}
+
+body.provider-body .prov-dash-widget-strip .mc-notif-widget::before,
+body.provider-body .prov-dash-metrics--unified > .mc-notif-widget::before {
+  width: 24px;
+  height: 24px;
+  border-radius: 6px;
+}
+
+body.provider-body .prov-dash-widget-strip .mc-notif-widget-value,
+body.provider-body .prov-dash-metrics--unified > .mc-notif-widget-value {
+  font-size: 1.05rem;
+}
+
+body.provider-body .prov-dash-grid {
+  grid-template-columns: minmax(0, 1fr) 260px;
+  gap: var(--pt-dash-space);
+}
+
+body.provider-body .prov-dash-main,
+body.provider-body .prov-dash-side {
+  gap: var(--pt-dash-space);
+}
+
+body.provider-body .prov-dash-card__head {
+  margin-bottom: 6px;
+}
+
+body.provider-body .prov-dash-card .mc-table-empty {
+  padding: 14px 10px;
+}
+
+body.provider-body .prov-dash-card .mc-table-empty svg {
+  width: 28px;
+  height: 28px;
+  opacity: 0.45;
+}
+
+body.provider-body .prov-dash-card .mc-table-empty p {
+  margin: 8px 0 0;
+  font-size: 13px;
+}
+
+body.provider-body .prov-chart {
+  height: 96px;
+  margin-bottom: 4px;
+}
+
+body.provider-body .prov-status-item {
+  padding: 6px 8px;
+}
+
+body.provider-body .prov-dash-cta p {
+  margin-bottom: 6px;
+  font-size: 11px;
+}
+
+body.provider-body .prov-dash-cta .mc-btn {
+  padding: 8px 14px;
+}
+
+body.provider-body .mc-notif-recent-panel__head {
+  padding: 10px 12px;
+  gap: 10px;
+}
+
+body.provider-body .mc-notif-recent-panel__title {
+  font-size: 0.875rem;
+}
+
+body.provider-body .mc-notif-recent-panel__sub {
+  font-size: 11px;
+}
+
+body.provider-body .mc-notif-list--feed .mc-notif-item {
+  gap: 10px;
+  padding: 10px 12px;
+}
+
+body.provider-body .prov-dash-table .mc-table th {
+  padding: 8px 12px;
+}
+
+body.provider-body .prov-dash-table .mc-table td {
+  padding: 10px 12px;
+  font-size: 12px;
+}
+
+body.provider-body .mc-notif-recent-panel {
+  padding: 0;
+}
+
+body.provider-body .mc-notif-recent-panel__body {
+  max-height: 220px;
+  overflow-y: auto;
+}
+
+@media (max-width: 1280px) {
+  body.provider-body .prov-dash-metrics--unified {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 900px) {
+  body.provider-body .prov-dash-metrics--unified {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
 }
 
 /* ── Dark theme ── */

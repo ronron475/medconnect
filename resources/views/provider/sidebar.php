@@ -1,4 +1,7 @@
 <?php
 /** @deprecated Use views/provider/partials/sidebar.php */
-header('Location: ' . rtrim(dirname(dirname(dirname($_SERVER['SCRIPT_NAME']))), '/') . '/views/provider/dashboard.php', true, 301);
+if (!defined('ASSET_BASE')) {
+    require_once dirname(__DIR__, 2) . '/mc_load.php';
+}
+header('Location: ' . ASSET_BASE . '/views/provider/dashboard.php', true, 301);
 exit;

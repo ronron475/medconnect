@@ -12,8 +12,9 @@
   const currentPw = document.getElementById('currentPassword');
   const newPw = document.getElementById('newPassword');
   const confirmPw = document.getElementById('confirmPassword');
-  const strengthEl = document.getElementById('passwordStrength');
-  const strengthBar = document.getElementById('passwordStrengthBar');
+  const strengthLabel = document.getElementById('psPwStrengthLabel');
+  const strengthFill = document.getElementById('psPwStrengthFill');
+  const reqList = document.getElementById('psPwReqList');
   const confirmError = document.getElementById('confirmPasswordError');
   const newPasswordError = document.getElementById('newPasswordError');
   const alertEl = document.getElementById('psAlertSecurity');
@@ -52,40 +53,34 @@
     alertEl.textContent = '';
   }
 
-  function validatePasswordRules(password) {
-    if (password.length < 8) return { valid: false, level: 'weak', score: 0 };
-    let score = 0;
-    if (password.length >= 8) score++;
-    if (password.length >= 12) score++;
-    if (/[A-Z]/.test(password)) score++;
-    if (/[a-z]/.test(password)) score++;
-    if (/[0-9]/.test(password)) score++;
-    if (/[^A-Za-z0-9]/.test(password)) score++;
-
-    const hasUpper = /[A-Z]/.test(password);
-    const hasLower = /[a-z]/.test(password);
-    const hasNum = /[0-9]/.test(password);
-    const hasSpecial = /[^A-Za-z0-9]/.test(password);
-    const valid = password.length >= 8 && hasUpper && hasLower && hasNum && hasSpecial;
-
-    let level = 'weak';
-    if (valid && score >= 6) level = 'strong';
-    else if (valid && score >= 4) level = 'medium';
-    else if (!valid) level = 'weak';
-
-    return { valid, level, score };
+  function checkRequirements(pw) {
+    const p = String(pw || '');
+    const checks = {
+      len: p.length >= 12,
+      upper: /[A-Z]/.test(p),
+      lower: /[a-z]/.test(p),
+      digit: /\d/.test(p),
+      special: /[^A-Za-z0-9]/.test(p),
+    };
+    if (reqList) {
+      reqList.querySelectorAll('[data-req]').forEach((li) => {
+        li.classList.toggle('is-met', !!checks[li.dataset.req]);
+      });
+    }
+    let met = 0;
+    Object.values(checks).forEach((v) => { if (v) met++; });
+    const level = met >= 5 ? 4 : met >= 4 ? 3 : met >= 3 ? 2 : met >= 2 ? 1 : 0;
+    const labels = ['Weak', 'Fair', 'Good', 'Strong', 'Very Strong'];
+    return { checks, met, level, label: p ? labels[level] : 'Weak' };
   }
 
   function updateStrengthMeter() {
     const v = newPw ? newPw.value : '';
-    if (!strengthEl) return;
-
     if (!v) {
-      strengthEl.textContent = '';
-      strengthEl.className = 'ps-strength';
-      if (strengthBar) {
-        strengthBar.className = 'ps-strength-bar';
-        strengthBar.style.width = '0%';
+      if (strengthLabel) strengthLabel.textContent = 'Weak';
+      if (strengthFill) {
+        strengthFill.style.width = '0%';
+        strengthFill.className = 'ps-validation__fill ps-validation__fill--weak';
       }
       if (newPasswordError) {
         newPasswordError.textContent = '';
@@ -94,19 +89,22 @@
       return;
     }
 
-    const result = validatePasswordRules(v);
-    const label = result.level.charAt(0).toUpperCase() + result.level.slice(1);
-    strengthEl.textContent = 'Strength: ' + label;
-    strengthEl.className = 'ps-strength ' + result.level;
-
-    if (strengthBar) {
-      strengthBar.className = 'ps-strength-bar ' + result.level;
-      const width = result.level === 'strong' ? '100%' : result.level === 'medium' ? '66%' : '33%';
-      strengthBar.style.width = width;
+    const r = checkRequirements(v);
+    if (strengthLabel) strengthLabel.textContent = r.label;
+    if (strengthFill) {
+      const pct = Math.round((r.met / 5) * 100);
+      strengthFill.style.width = pct + '%';
+      const cls = r.level === 4 ? 'ps-validation__fill--vstrong'
+        : r.level === 3 ? 'ps-validation__fill--strong'
+        : r.level === 2 ? 'ps-validation__fill--good'
+        : r.level === 1 ? 'ps-validation__fill--fair'
+        : 'ps-validation__fill--weak';
+      strengthFill.className = 'ps-validation__fill ' + cls;
     }
 
     if (newPasswordError) {
-      if (!result.valid) {
+      const allMet = Object.values(r.checks).every(Boolean);
+      if (!allMet) {
         newPasswordError.textContent = 'Password does not meet security requirements.';
         newPasswordError.className = 'ps-field-error show';
         newPw.classList.add('is-invalid');
@@ -140,14 +138,14 @@
 
   function validateClientForm() {
     updateStrengthMeter();
-    const rules = validatePasswordRules(newPw.value);
+    const rules = checkRequirements(newPw.value);
     const confirmOk = updateConfirmMatch();
 
     if (!currentPw.value || !newPw.value || !confirmPw.value) {
       showAlert('All password fields are required.', 'error');
       return false;
     }
-    if (!rules.valid) {
+    if (!Object.values(rules.checks).every(Boolean)) {
       showAlert('Password does not meet security requirements.', 'error');
       return false;
     }

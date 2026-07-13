@@ -129,7 +129,12 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  color: #64748b;
   transition: color 0.2s ease, background-color 0.2s ease;
+}
+
+.signin-modal-inner .signin-card .toggle-pwd svg {
+  stroke-width: 2.25;
 }
 
 .signin-modal-inner .signin-card .toggle-pwd:hover {
@@ -145,8 +150,32 @@
 
 /* Forgot password */
 .signin-modal-inner .signin-card .form-footer-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
   margin-top: var(--signin-space-sm);
   margin-bottom: var(--signin-space-lg);
+}
+
+.signin-modal-inner .signin-card .remember-me-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: var(--text-body, #475569);
+  cursor: pointer;
+  user-select: none;
+}
+
+.signin-modal-inner .signin-card .remember-me-label input {
+  width: 16px;
+  height: 16px;
+  margin: 0;
+  accent-color: var(--teal);
 }
 
 .signin-modal-inner .signin-card .forgot-link {
@@ -302,7 +331,8 @@
 }
 
 /* Card entrance — subtle polish on open */
-.signin-modal-overlay.is-open .signin-modal-inner .signin-card {
+.signin-modal-overlay.is-open .signin-modal-inner .signin-card,
+.hero-signin-panel.is-open .signin-modal-inner .signin-card {
   animation: signinCardFadeIn 0.42s cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
@@ -373,7 +403,8 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .signin-modal-overlay.is-open .signin-modal-inner .signin-card {
+  .signin-modal-overlay.is-open .signin-modal-inner .signin-card,
+  .hero-signin-panel.is-open .signin-modal-inner .signin-card {
     animation: none;
   }
 

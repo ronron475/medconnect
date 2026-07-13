@@ -56,32 +56,152 @@ function bhw_clinical_ensure_schema(PDO $pdo): void
     $ready = true;
 }
 
-/** Levels 1–2 or urgent/emergency labels trigger hospital referral instead of teleconsult. */
+/**
+ * Reject placeholder / keyboard-smash chief complaints before NLP runs.
+ */
+function bhw_complaint_is_substantive(string $complaint): bool
+{
+    $text = trim($complaint);
+    if ($text === '') {
+        return false;
+    }
+
+    if (mb_strlen($text) < 4) {
+        return false;
+    }
+
+    if (!preg_match('/\p{L}/u', $text)) {
+        return false;
+    }
+
+    $compact = preg_replace('/\s+/u', '', $text) ?? '';
+    if ($compact !== '' && preg_match('/^(.)\1{2,}$/u', $compact)) {
+        return false;
+    }
+
+    if (preg_match('/^(asd|qwe|zxc|jkl|hjkl|asdf|qwerty|xxx|aaa|bbb|kkk|test|blah|nnn|mmm|hhh)+$/iu', $compact)) {
+        return false;
+    }
+
+    if (!preg_match('/[aeiouàáâäãåæèéêëìíîïòóôöùúûüýÿ]/iu', $text)) {
+        return false;
+    }
+
+    return true;
+}
+
+/** EMERGENCY only — urgent patients may book priority teleconsult. */
 function bhw_triage_is_emergency(array $assessment): bool
 {
+    require_once dirname(__DIR__) . '/core/TriageLevelService.php';
+    return bhw_triage_resolve_tier($assessment) === TriageLevelService::EMERGENCY;
+}
+
+function bhw_triage_is_urgent(array $assessment): bool
+{
+    return bhw_triage_resolve_tier($assessment) === TriageLevelService::URGENT;
+}
+
+/** Canonical triage tier for workflow routing (AI is sole authority). */
+function bhw_triage_resolve_tier(array $assessment): string
+{
+    require_once dirname(__DIR__) . '/core/TriageLevelService.php';
+
+    $classification = strtoupper(trim((string) ($assessment['triage']['triage_classification'] ?? '')));
+    if ($classification === 'EMERGENCY') {
+        return TriageLevelService::EMERGENCY;
+    }
+    if ($classification === 'URGENT' || $classification === 'HIGH') {
+        return TriageLevelService::URGENT;
+    }
+
+    $display = strtoupper(trim((string) ($assessment['triage']['triage_display'] ?? '')));
+    if ($display === 'EMERGENCY') {
+        return TriageLevelService::EMERGENCY;
+    }
+    if ($display === 'URGENT') {
+        return TriageLevelService::URGENT;
+    }
+
     $level = (string) ($assessment['db_level'] ?? '3');
-    if (in_array($level, ['1', '2'], true)) {
-        return true;
+    if ($level === '1') {
+        return TriageLevelService::EMERGENCY;
+    }
+    if ($level === '2') {
+        return TriageLevelService::URGENT;
     }
 
     $label = strtolower((string) ($assessment['urgency_label'] ?? ''));
-    foreach (['emergency', 'urgent', 'critical', 'immediate'] as $flag) {
-        if (str_contains($label, $flag)) {
-            return true;
-        }
+    if (str_contains($label, 'emergency') || str_contains($label, 'immediate')) {
+        return TriageLevelService::EMERGENCY;
+    }
+    if (str_contains($label, 'urgent') || str_contains($label, 'priority')) {
+        return TriageLevelService::URGENT;
     }
 
     $severity = strtolower((string) ($assessment['severity']['severity'] ?? ''));
-    if (in_array($severity, ['critical', 'emergency', 'severe'], true)) {
-        return true;
+    if (in_array($severity, ['critical', 'emergency'], true)) {
+        return TriageLevelService::EMERGENCY;
     }
 
-    $classification = strtolower((string) ($assessment['triage']['triage_classification'] ?? ''));
-    if (str_contains($classification, 'emergency') || str_contains($classification, 'urgent')) {
-        return true;
+    return TriageLevelService::fromAssessment($assessment);
+}
+
+/**
+ * @return array{mode:string, tier:string, label:string, allow_booking:bool, slot_mode:string, message:string}
+ */
+function bhw_triage_routing_meta(array $assessment): array
+{
+    $tier = bhw_triage_resolve_tier($assessment);
+    $label = TriageLevelService::displayLabel($tier);
+
+    if ($tier === TriageLevelService::EMERGENCY) {
+        return [
+            'mode'          => 'emergency_referral',
+            'tier'          => $tier,
+            'label'         => $label,
+            'allow_booking' => false,
+            'slot_mode'     => 'none',
+            'message'       => 'Emergency — online consultation is not available. Generate hospital referral immediately.',
+        ];
     }
 
-    return false;
+    if ($tier === TriageLevelService::URGENT) {
+        return [
+            'mode'          => 'priority_queue',
+            'tier'          => $tier,
+            'label'         => $label,
+            'allow_booking' => true,
+            'slot_mode'     => 'priority',
+            'message'       => 'Urgent — select the earliest available priority appointment slot.',
+        ];
+    }
+
+    return [
+        'mode'          => 'standard_booking',
+        'tier'          => $tier,
+        'label'         => $label,
+        'allow_booking' => true,
+        'slot_mode'     => 'standard',
+        'message'       => 'Non-urgent — choose any available appointment from the provider calendar.',
+    ];
+}
+
+/**
+ * Earliest open slots for urgent patients (limited window).
+ *
+ * @return array<int, array{id:int, slot_date:string, start_time:string, label:string, is_priority:bool}>
+ */
+function bhw_fetch_priority_slots(PDO $pdo, int $providerId, int $maxDays = 7, int $limit = 8): array
+{
+    $all = bhw_fetch_bookable_slots_range($pdo, $providerId, $maxDays);
+    $slice = array_slice($all, 0, max(1, $limit));
+    foreach ($slice as &$slot) {
+        $slot['is_priority'] = true;
+    }
+    unset($slot);
+
+    return $slice;
 }
 
 function bhw_triage_emergency_reason(array $assessment, string $complaint, array $symptoms): string
@@ -140,4 +260,126 @@ function bhw_format_slot_label(string $slotDate, string $startTime): string
         return date('g:i A', strtotime($startTime));
     }
     return date('M j, Y g:i A', $ts);
+}
+
+function bhw_provider_active_weekdays(PDO $pdo, int $providerId): array
+{
+    require_once __DIR__ . '/provider_schedule_sessions.php';
+    $order = provider_schedule_valid_days();
+    $stmt = $pdo->prepare("
+        SELECT DISTINCT day_of_week
+        FROM provider_schedules
+        WHERE provider_id = ? AND is_active = 1
+        ORDER BY day_of_week
+    ");
+    $stmt->execute([$providerId]);
+    $days = $stmt->fetchAll(PDO::FETCH_COLUMN);
+    $rank = array_flip($order);
+    usort($days, static function ($a, $b) use ($rank) {
+        return ($rank[$a] ?? 99) <=> ($rank[$b] ?? 99);
+    });
+
+    return array_values($days);
+}
+
+function bhw_provider_format_weekdays(array $days): string
+{
+    $abbr = [
+        'Monday'    => 'Mon',
+        'Tuesday'   => 'Tue',
+        'Wednesday' => 'Wed',
+        'Thursday'  => 'Thu',
+        'Friday'    => 'Fri',
+        'Saturday'  => 'Sat',
+        'Sunday'    => 'Sun',
+    ];
+    $labels = array_map(static function ($day) use ($abbr) {
+        return $abbr[$day] ?? $day;
+    }, $days);
+
+    return $labels !== [] ? implode(', ', $labels) : 'No schedule set';
+}
+
+/**
+ * @return array<int, array{id:int, slot_date:string, start_time:string, label:string}>
+ */
+function bhw_fetch_bookable_slots(PDO $pdo, int $providerId, string $dateYmd, int $maxDaysAhead = 28): array
+{
+    appointment_slots_sync_date($pdo, $providerId, $dateYmd);
+
+    $stmt = $pdo->prepare("
+        SELECT id, slot_date, start_time, end_time, status
+        FROM appointment_slots
+        WHERE provider_id = ? AND slot_date = ? AND status = 'available'
+        ORDER BY start_time ASC
+    ");
+    $stmt->execute([$providerId, $dateYmd]);
+    $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+    $slots = [];
+    foreach ($rows as $row) {
+        if (!appointment_slot_is_bookable_bhw(
+            (string) $row['slot_date'],
+            (string) $row['start_time'],
+            (string) $row['end_time'],
+            $maxDaysAhead
+        )) {
+            continue;
+        }
+        $slots[] = [
+            'id'         => (int) $row['id'],
+            'slot_date'  => (string) $row['slot_date'],
+            'start_time' => (string) $row['start_time'],
+            'label'      => bhw_format_slot_label((string) $row['slot_date'], (string) $row['start_time']),
+        ];
+    }
+
+    return $slots;
+}
+
+function bhw_provider_next_bookable_date(PDO $pdo, int $providerId, int $maxDaysAhead = 28): ?string
+{
+    $start = appointment_now()->setTime(0, 0, 0);
+    for ($i = 0; $i <= $maxDaysAhead; $i++) {
+        $date = $start->modify('+' . $i . ' days')->format('Y-m-d');
+        if (bhw_fetch_bookable_slots($pdo, $providerId, $date, $maxDaysAhead) !== []) {
+            return $date;
+        }
+    }
+
+    return null;
+}
+
+function bhw_provider_day_is_active(PDO $pdo, int $providerId, string $dateYmd): bool
+{
+    $target = DateTimeImmutable::createFromFormat('Y-m-d', $dateYmd, new DateTimeZone(APP_TIMEZONE));
+    if (!$target) {
+        return false;
+    }
+    $stmt = $pdo->prepare("
+        SELECT COUNT(*)
+        FROM provider_schedules
+        WHERE provider_id = ? AND day_of_week = ? AND is_active = 1
+    ");
+    $stmt->execute([$providerId, $target->format('l')]);
+
+    return (int) $stmt->fetchColumn() > 0;
+}
+
+/**
+ * @return array<int, array{id:int, slot_date:string, start_time:string, label:string}>
+ */
+function bhw_fetch_bookable_slots_range(PDO $pdo, int $providerId, int $maxDaysAhead = 28): array
+{
+    $start = appointment_now()->setTime(0, 0, 0);
+    $slots = [];
+
+    for ($i = 0; $i <= $maxDaysAhead; $i++) {
+        $date = $start->modify('+' . $i . ' days')->format('Y-m-d');
+        foreach (bhw_fetch_bookable_slots($pdo, $providerId, $date, $maxDaysAhead) as $slot) {
+            $slots[] = $slot;
+        }
+    }
+
+    return $slots;
 }

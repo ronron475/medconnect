@@ -5,6 +5,7 @@ $page_title  = 'Tele-Consultation Session';
 require __DIR__.'/partials/icons.php';
 require __DIR__.'/partials/data.php';
 require_once BASE_PATH . '/app/includes/message_deletion.php';
+require_once BASE_PATH . '/app/includes/patient_health_summary.php';
 require __DIR__ . '/partials/queue_helpers.php';
 
 $consultation_id = (int)($_GET['id'] ?? 0);
@@ -17,11 +18,16 @@ if (!$consultation_id) {
 // Fetch real data
 $stmt = $pdo->prepare("
     SELECT c.*, u.first_name, u.last_name,
-           p.date_of_birth, p.age, p.status as patient_status
+           p.date_of_birth, p.age, p.gender, p.blood_type,
+           p.allergies, p.existing_conditions, p.current_medications,
+           p.status as patient_status,
+           s.slot_date, s.start_time AS slot_start
     FROM consultations c
     JOIN users u ON c.patient_id = u.id
-    LEFT JOIN patient_registrations p ON u.email = p.email
+    LEFT JOIN patient_registrations p ON p.user_id = u.id OR p.email = u.email
+    LEFT JOIN appointment_slots s ON s.consultation_id = c.id AND s.status = 'booked'
     WHERE c.id = ? AND c.provider_id = ?
+    LIMIT 1
 ");
 $stmt->execute([$consultation_id, $_SESSION['user_id']]);
 $c = $stmt->fetch();
@@ -54,23 +60,36 @@ if (!$session_access['allowed']) {
 $page_styles = ['messages-delete.css'];
 require __DIR__.'/partials/layout_open.php';
 
+$profile = patient_registration_profile_fields($pdo, (int) $c['patient_id']);
+
 $patient = [
-    'name' => $c['first_name'] . ' ' . $c['last_name'],
+    'name' => trim(($c['first_name'] ?? '') . ' ' . ($c['last_name'] ?? '')),
     'initials' => strtoupper(substr($c['first_name'] ?? 'P', 0, 1) . substr($c['last_name'] ?? '', 0, 1)),
     'age' => $c['age'] ?? '—',
-    'sex' => '—', // Gender column not found in schema
-    'history' => '—', // Not in current tables
-    'allergies' => '—', // Not in current tables
+    'sex' => $profile['sex'],
+    'blood_type' => $profile['blood_type'],
+    'history' => $profile['history'],
+    'allergies' => $profile['allergies'],
+    'medications' => $profile['medications'],
     'triage_level' => 'N/A',
-    'complaint' => $c['consult_type'] // Using consult_type as complaint for now
+    'complaint' => $c['consult_type'] ?: 'General consultation',
 ];
 
-// Fetch triage level if exists
-$t_stmt = $pdo->prepare("SELECT level, urgency_label FROM triage_results WHERE patient_id = ? ORDER BY assessed_at DESC LIMIT 1");
+// Fetch triage for this patient (latest)
+$t_stmt = $pdo->prepare("
+    SELECT level, urgency_label, chief_complaint
+    FROM triage_results
+    WHERE patient_id = ?
+    ORDER BY assessed_at DESC
+    LIMIT 1
+");
 $t_stmt->execute([$c['patient_id']]);
 $triage = $t_stmt->fetch();
 if ($triage) {
-    $patient['triage_level'] = $triage['urgency_label'];
+    $patient['triage_level'] = $triage['urgency_label'] ?: ($triage['level'] ?? 'N/A');
+    if (!empty($triage['chief_complaint'])) {
+        $patient['complaint'] = $triage['chief_complaint'];
+    }
 }
 
 $session_messages = [];
@@ -104,6 +123,8 @@ $v_stmt = $pdo->prepare("SELECT room_token FROM video_sessions WHERE consultatio
 $v_stmt->execute([$consultation_id]);
 $v_session = $v_stmt->fetch();
 $room_token = $v_session ? $v_session['room_token'] : '';
+$show_video_demo_tip = function_exists('medconnect_is_local_dev_host') && medconnect_is_local_dev_host();
+$localhost_app_url = 'http://localhost' . (ASSET_BASE !== '' ? ASSET_BASE : '');
 ?>
 
 <style>
@@ -628,6 +649,61 @@ $room_token = $v_session ? $v_session['room_token'] : '';
         min-height: 44px;
     }
 }
+.video-demo-tip {
+    margin-top: 16px;
+    max-width: 420px;
+    text-align: left;
+    padding: 14px 16px;
+    border-radius: 12px;
+    background: rgba(1, 138, 147, 0.12);
+    border: 1px solid rgba(1, 138, 147, 0.28);
+    color: #cbd5e1;
+    font-size: 12px;
+    line-height: 1.55;
+}
+.video-demo-tip strong { color: #e2e8f0; }
+.video-demo-tip ol {
+    margin: 8px 0 0 18px;
+    padding: 0;
+}
+.video-demo-tip li { margin-bottom: 4px; }
+.video-demo-tip code {
+    background: rgba(15, 23, 42, 0.55);
+    padding: 1px 6px;
+    border-radius: 4px;
+    font-size: 11px;
+}
+.video-demo-link {
+    margin: 12px 16px 0;
+    display: none;
+    max-width: 100%;
+    text-align: left;
+}
+.video-shell:has(#activeCallUI[style*="block"]) .video-demo-link.is-visible,
+.video-demo-link.is-visible { display: block; }
+.video-demo-link label {
+    display: block;
+    font-size: 11px;
+    font-weight: 700;
+    color: #94a3b8;
+    margin-bottom: 6px;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+.video-demo-link-row {
+    display: flex;
+    gap: 8px;
+}
+.video-demo-link-row input {
+    flex: 1;
+    min-width: 0;
+    padding: 8px 10px;
+    border-radius: 8px;
+    border: 1px solid rgba(148, 163, 184, 0.35);
+    background: rgba(15, 23, 42, 0.65);
+    color: #e2e8f0;
+    font-size: 11px;
+}
 </style>
 
 <div class="session-page">
@@ -644,13 +720,40 @@ $room_token = $v_session ? $v_session['room_token'] : '';
             <div id="videoPlaceholder" class="video-placeholder">
                 <div class="video-placeholder-icon"><?= icon('video') ?></div>
                 <div class="video-placeholder-title">Secure Video Consultation</div>
-                <div class="video-placeholder-sub">Start the room when both patient and provider are ready. The same room opens from the patient's Join Call button.</div>
+                <div class="video-placeholder-sub">
+                  Step 1: open this session from the queue.<br>
+                  Step 2: click <strong>Start Video Consultation</strong> (creates the live room).<br>
+                  Step 3: patient sees <strong>Join Call</strong> automatically and enters the same room.
+                </div>
+                <?php if ($show_video_demo_tip): ?>
+                <div class="video-demo-tip" id="videoDemoTip">
+                    <strong>Local demo — 2 tabs on this laptop</strong>
+                    <ol>
+                        <li><strong>Tab 1 (here):</strong> Click <strong>Start Video Consultation</strong> (provider creates the live room).</li>
+                        <li><strong>Tab 2:</strong> Incognito → log in as <strong>patient</strong> → Dashboard / My Sessions.</li>
+                        <li>Patient button stays <strong>Waiting for Provider</strong> until you start, then becomes <strong>Join Call</strong>.</li>
+                        <li>Wait until both sides show <strong>Live Consultation — Connected</strong> before speaking.</li>
+                        <li>One webcam: provider uses camera; patient can use <strong>Join with audio only</strong>.</li>
+                    </ol>
+                </div>
+                <?php endif; ?>
                 <button onclick="startVideoCall()" class="session-btn primary"><?= icon_sm('video') ?> Start Video Consultation</button>
             </div>
             
+            <?php if ($show_video_demo_tip): ?>
+            <div class="video-demo-link" id="patientJoinLinkBox">
+                <label for="patientJoinLinkInput">Patient join link (paste in Incognito tab)</label>
+                <div class="video-demo-link-row">
+                    <input type="text" id="patientJoinLinkInput" readonly value="<?= $room_token ? htmlspecialchars(BASE_URL . '/views/consultation/video_room.php?token=' . $room_token) : '' ?>">
+                    <button type="button" class="session-btn" onclick="copyPatientJoinLink()">Copy</button>
+                </div>
+                <button type="button" class="session-btn" id="openProviderVideoTabBtn" style="margin-top:8px;display:none;" onclick="openProviderVideoTab()">Open provider video in full tab</button>
+            </div>
+            <?php endif; ?>
+            
             <!-- Active Call UI (hidden initially) -->
             <div id="activeCallUI" class="active-call">
-                <iframe id="videoFrame" src="" allow="camera; microphone; display-capture; autoplay"></iframe>
+                <iframe id="videoFrame" src="" allow="camera *; microphone *; display-capture *; autoplay *; fullscreen *" allowfullscreen></iframe>
             </div>
 
             <!-- Session Status Overlay -->
@@ -804,8 +907,10 @@ $room_token = $v_session ? $v_session['room_token'] : '';
                         <div class="patient-sub"><?= htmlspecialchars($patient['age']) ?>y &bull; <?= htmlspecialchars($patient['sex']) ?></div>
                     </div>
                 </div>
+                <div class="info-row"><span class="info-key">Blood type</span><span class="info-val"><?= htmlspecialchars($patient['blood_type']) ?></span></div>
                 <div class="info-row"><span class="info-key">Medical Hx</span><span class="info-val"><?= htmlspecialchars($patient['history']) ?></span></div>
                 <div class="info-row"><span class="info-key">Allergies</span><span class="info-val" style="color: #dc2626;"><?= htmlspecialchars($patient['allergies']) ?></span></div>
+                <div class="info-row"><span class="info-key">Medications</span><span class="info-val"><?= htmlspecialchars($patient['medications']) ?></span></div>
                 <div class="info-row"><span class="info-key">Triage</span><span class="info-val"><?= htmlspecialchars($patient['triage_level']) ?></span></div>
                 <div class="complaint-box">
                     <strong>Chief Complaint</strong>
@@ -840,7 +945,7 @@ $room_token = $v_session ? $v_session['room_token'] : '';
 
 </div>
 
-<script src="<?= ASSET_BASE ?>/assets/js/messages-delete.js?v=2"></script>
+<script src="<?= ASSET_BASE ?>/assets/js/messages-delete.js?v=3"></script>
 <script>
 // SESSION TIMER
 let seconds = 0;
@@ -849,7 +954,7 @@ const sessionMessages = <?= json_encode($session_messages, JSON_HEX_TAG | JSON_H
 const sessionConsultationId = <?= (int)$consultation_id ?>;
 const sessionPatientId = <?= (int)$c['patient_id'] ?>;
 const sessionCurrentUserId = <?= (int)$_SESSION['user_id'] ?>;
-const sessionCsrf = document.body.dataset.csrf || '';
+const sessionCsrf = <?= json_encode((string) ($_SESSION['csrf_token'] ?? '')) ?>;
 const sessionProviderInitials = <?= json_encode($provider['initials'] ?? 'DR') ?>;
 const sessionPatientInitials = <?= json_encode($patient['initials']) ?>;
 const sessionAssetBase = <?= json_encode(ASSET_BASE) ?>;
@@ -968,12 +1073,10 @@ async function sendSessionMessage() {
     button.disabled = true;
     button.textContent = 'Sending...';
     try {
-        const response = await fetch('<?= ASSET_BASE ?>/app/api/messages/send.php', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-            body: new URLSearchParams({ consultation_id: sessionConsultationId, message })
+        const data = await MedConnectMessages.sendMessage(sessionConsultationId, message, {
+            assetBase: sessionAssetBase,
+            csrfToken: sessionCsrf,
         });
-        const data = await response.json();
         if (!data.success) {
             showSessionChatAlert(data.message || 'Could not send message.', 'error');
             return;
@@ -1225,7 +1328,10 @@ async function startVideoCall() {
         const res = await fetch('<?= ASSET_BASE ?>/app/api/consultations/start_video.php', {
             method: 'POST',
             headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-            body: new URLSearchParams({ consultation_id: <?= $consultation_id ?> })
+            body: new URLSearchParams({
+                consultation_id: <?= $consultation_id ?>,
+                csrf_token: document.body.dataset.csrf || ''
+            })
         });
         
         if (!res.ok) {
@@ -1243,6 +1349,7 @@ async function startVideoCall() {
             document.getElementById('callStatusIndicator').textContent = '● LIVE';
             setVideoShellLive(true);
             timerActive = true;
+            showPatientJoinLink(data.url);
         } else {
             alert(data.message || 'Could not start video session.');
         }
@@ -1252,17 +1359,54 @@ async function startVideoCall() {
     }
 }
 
+function showPatientJoinLink(url) {
+    const box = document.getElementById('patientJoinLinkBox');
+    const input = document.getElementById('patientJoinLinkInput');
+    const openTabBtn = document.getElementById('openProviderVideoTabBtn');
+    if (!box || !input || !url) return;
+    input.value = /^https?:\/\//i.test(url) ? url : (window.location.origin + url);
+    box.classList.add('is-visible');
+    if (openTabBtn) {
+        openTabBtn.style.display = 'inline-flex';
+        openTabBtn.dataset.videoUrl = input.value;
+    }
+}
+
+function openProviderVideoTab() {
+    const btn = document.getElementById('openProviderVideoTabBtn');
+    const frame = document.getElementById('videoFrame');
+    const url = (btn && btn.dataset.videoUrl) || (frame && frame.src) || '';
+    if (url) {
+        window.open(url, '_blank', 'noopener');
+    }
+}
+
+async function copyPatientJoinLink() {
+    const input = document.getElementById('patientJoinLinkInput');
+    if (!input || !input.value) return;
+    try {
+        await navigator.clipboard.writeText(input.value);
+        alert('Patient join link copied. Paste it in an Incognito tab logged in as the patient.');
+    } catch (e) {
+        input.select();
+        document.execCommand('copy');
+        alert('Patient join link copied. Paste it in an Incognito tab logged in as the patient.');
+    }
+}
+
 // Check if there's already an active session on load
 window.addEventListener('load', () => {
     const existingToken = '<?= $room_token ?>';
     if (existingToken) {
         document.getElementById('videoPlaceholder').style.display = 'none';
         document.getElementById('activeCallUI').style.display = 'block';
-        document.getElementById('videoFrame').src = '<?= ASSET_BASE ?>/views/consultation/video_room.php?token=' + existingToken;
+        const joinUrl = '<?= ASSET_BASE ?>/views/consultation/video_room.php?token=' + existingToken;
+        document.getElementById('videoFrame').src = joinUrl;
         document.getElementById('callStatusIndicator').style.color = '#ef4444';
         document.getElementById('callStatusIndicator').textContent = '● LIVE';
         setVideoShellLive(true);
         timerActive = true;
+        showPatientJoinLink(joinUrl);
     }
 });
 
@@ -1283,7 +1427,8 @@ async function requestExtension() {
             headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
             body: new URLSearchParams({
                 consultation_id: <?= $consultation_id ?>,
-                extension_mins: 15
+                extension_mins: 15,
+                csrf_token: document.body.dataset.csrf || ''
             })
         });
         const data = await res.json();

@@ -22,6 +22,8 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     exit;
 }
 
+auth_csrf_require();
+
 $id     = (int)($_POST['id'] ?? 0);
 $action = $_POST['action'] ?? '';
 $level  = $_POST['level'] ?? '';
@@ -33,9 +35,15 @@ if (!$id) {
 
 try {
     // IDOR protection: triage must belong to a patient this provider is allowed to act on.
-    $t = $pdo->prepare('SELECT patient_id FROM triage_results WHERE id = ? LIMIT 1');
+    $t = $pdo->prepare('SELECT patient_id, assessed_at, status FROM triage_results WHERE id = ? LIMIT 1');
     $t->execute([$id]);
-    $patientId = (int) ($t->fetchColumn() ?: 0);
+    $triageRow = $t->fetch(PDO::FETCH_ASSOC);
+    if (!$triageRow) {
+        http_response_code(404);
+        echo json_encode(['success' => false, 'message' => 'Triage record not found.']);
+        exit;
+    }
+    $patientId = (int) ($triageRow['patient_id'] ?? 0);
     if ($patientId <= 0) {
         http_response_code(404);
         echo json_encode(['success' => false, 'message' => 'Triage record not found.']);
@@ -51,11 +59,19 @@ try {
     triage_assessment_ensure_schema($pdo);
 
     if ($action === 'accept') {
-        $stmt = $pdo->prepare("UPDATE triage_results SET status = 'accepted' WHERE id = ?");
+        if (!triage_case_can_accept((string) ($triageRow['assessed_at'] ?? ''), (string) ($triageRow['status'] ?? ''))) {
+            $msg = triage_case_is_expired((string) ($triageRow['assessed_at'] ?? ''))
+                ? 'This triage case has expired. Only same-day submissions can be accepted.'
+                : 'This triage case cannot be accepted.';
+            echo json_encode(['success' => false, 'message' => $msg]);
+            exit;
+        }
+
+        $stmt = $pdo->prepare("UPDATE triage_results SET status = 'accepted' WHERE id = ? AND status = 'pending'");
         $stmt->execute([$id]);
         
         audit_log($pdo, [
-            'patient_id'  => $_SESSION['user_id'],
+            'patient_id'  => $patientId,
             'action_type' => 'TRIAGE_ACCEPTED',
             'description' => "Provider accepted triage case ID: $id"
         ]);
@@ -81,7 +97,7 @@ try {
         $stmt->execute([$level, $label, $triageLevel, $id]);
 
         audit_log($pdo, [
-            'patient_id'  => $_SESSION['user_id'],
+            'patient_id'  => $patientId,
             'action_type' => 'TRIAGE_OVERRIDE',
             'description' => "Provider manually overrode triage ID: $id to Level $level ($label)"
         ]);

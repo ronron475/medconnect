@@ -1,0 +1,227 @@
+id,symptom,medical_condition,severity_level,relationship,language,status
+SCM00001,abdomen infection,abdomen infection,NON_URGENT,associated,en,active
+SCM00002,abdominal burn,abdominal burn,URGENT,associated,en,active
+SCM00003,abdominal wound,abdominal wound,URGENT,associated,en,active
+SCM00004,allergic airway obstruction,allergic airway obstruction,EMERGENCY,associated,en,active
+SCM00005,itchiness,allergy,URGENT,associated,en,active
+SCM00006,rash,allergy,URGENT,associated,en,active
+SCM00007,sneezing,allergy,URGENT,associated,en,active
+SCM00008,amputated arm,amputated arm,EMERGENCY,associated,en,active
+SCM00009,amputated finger,amputated finger,EMERGENCY,associated,en,active
+SCM00010,amputated foot,amputated foot,EMERGENCY,associated,en,active
+SCM00011,amputated hand,amputated hand,EMERGENCY,associated,en,active
+SCM00012,throat swelling,anaphylaxis,EMERGENCY,associated,en,active
+SCM00013,difficulty breathing,anaphylaxis,EMERGENCY,associated,en,active
+SCM00014,rash,anaphylaxis,EMERGENCY,associated,en,active
+SCM00015,animal bite,animal bite,URGENT,associated,en,active
+SCM00016,ankle infection,ankle infection,NON_URGENT,associated,en,active
+SCM00017,ankle sprain,ankle sprain,NON_URGENT,associated,en,active
+SCM00018,arm burn,arm burn,URGENT,associated,en,active
+SCM00019,arm fracture,arm fracture,EMERGENCY,associated,en,active
+SCM00020,arm infection,arm infection,NON_URGENT,associated,en,active
+SCM00021,arm wound,arm wound,URGENT,associated,en,active
+SCM00022,joint pain,arthritis,URGENT,associated,en,active
+SCM00023,swelling,arthritis,URGENT,associated,en,active
+SCM00024,wheezing,asthma,URGENT,associated,en,active
+SCM00025,shortness of breath,asthma,URGENT,associated,en,active
+SCM00026,back infection,back infection,NON_URGENT,associated,en,active
+SCM00027,back wound,back wound,URGENT,associated,en,active
+SCM00028,bleeding hand wound,bleeding hand wound,EMERGENCY,associated,en,active
+SCM00029,bleeding wound,bleeding wound,EMERGENCY,associated,en,active
+SCM00030,bleeding wound with fever,bleeding wound with fever,EMERGENCY,associated,en,active
+SCM00031,body burn,body burn,URGENT,associated,en,active
+SCM00032,body infection,body infection,NON_URGENT,associated,en,active
+SCM00033,body swelling with itching,body swelling with itching,EMERGENCY,associated,en,active
+SCM00034,brain infection,brain infection,NON_URGENT,associated,en,active
+SCM00035,breast infection,breast infection,NON_URGENT,associated,en,active
+SCM00036,bruise,bruise,NON_URGENT,associated,en,active
+SCM00037,buttocks infection,buttocks infection,NON_URGENT,associated,en,active
+SCM00038,cat bite,cat bite,URGENT,associated,en,active
+SCM00039,cheek infection,cheek infection,NON_URGENT,associated,en,active
+SCM00040,chest infection,chest infection,NON_URGENT,associated,en,active
+SCM00041,chest pain,chest pain,EMERGENCY,associated,en,active
+SCM00042,chest pain with cough,chest pain with cough,EMERGENCY,associated,en,active
+SCM00043,chest pain with shortness of breath,chest pain with shortness of breath,EMERGENCY,associated,en,active
+SCM00044,chest pain,chest pain — cardiac concern,EMERGENCY,associated,en,active
+SCM00045,diaphoresis,chest pain — cardiac concern,EMERGENCY,associated,en,active
+SCM00046,vesicular rash,chickenpox,URGENT,associated,en,active
+SCM00047,fever,chickenpox,URGENT,associated,en,active
+SCM00048,itchiness,chickenpox,URGENT,associated,en,active
+SCM00049,choking,choking,EMERGENCY,associated,en,active
+SCM00050,choking on food,choking on food,EMERGENCY,associated,en,active
+SCM00051,chronic kidney disease,chronic kidney disease,URGENT,associated,en,active
+SCM00052,cockroach bite,cockroach bite,URGENT,associated,en,active
+SCM00053,collision injury,collision injury,URGENT,associated,en,active
+SCM00054,runny nose,common cold,NON_URGENT,associated,en,active
+SCM00055,cough,common cold,NON_URGENT,associated,en,active
+SCM00056,cough,cough,NON_URGENT,associated,en,active
+SCM00057,fever,COVID-19,URGENT,associated,en,active
+SCM00058,cough,COVID-19,URGENT,associated,en,active
+SCM00059,shortness of breath,COVID-19,URGENT,associated,en,active
+SCM00060,crush injury,crush injury,URGENT,associated,en,active
+SCM00061,fever,dengue fever,EMERGENCY,associated,en,active
+SCM00062,body pain,dengue fever,EMERGENCY,associated,en,active
+SCM00063,bleeding,dengue fever,EMERGENCY,associated,en,active
+SCM00064,polyuria,diabetes mellitus,URGENT,associated,en,active
+SCM00065,fatigue,diabetes mellitus,URGENT,associated,en,active
+SCM00066,polydipsia,diabetes mellitus,URGENT,associated,en,active
+SCM00067,difficulty breathing,difficulty breathing,EMERGENCY,associated,en,active
+SCM00068,dog bite,dog bite,EMERGENCY,associated,en,active
+SCM00069,dog bite with bleeding,dog bite with bleeding,EMERGENCY,associated,en,active
+SCM00070,drowning,drowning,EMERGENCY,associated,en,active
+SCM00071,elbow infection,elbow infection,NON_URGENT,associated,en,active
+SCM00072,elbow sprain,elbow sprain,NON_URGENT,associated,en,active
+SCM00073,electrical injury,electrical injury,EMERGENCY,associated,en,active
+SCM00074,eye burn,eye burn,EMERGENCY,associated,en,active
+SCM00075,eye infection,eye infection,URGENT,associated,en,active
+SCM00076,fall injury,fall injury,URGENT,associated,en,active
+SCM00077,fever,fever,URGENT,associated,en,active
+SCM00078,fever,fever with chills,URGENT,associated,en,active
+SCM00079,chills,fever with chills,URGENT,associated,en,active
+SCM00080,finger bleeding,finger bleeding,URGENT,associated,en,active
+SCM00081,finger fracture,finger fracture,EMERGENCY,associated,en,active
+SCM00082,finger wound,finger wound,URGENT,associated,en,active
+SCM00083,foot bleeding,foot bleeding,URGENT,associated,en,active
+SCM00084,foot burn,foot burn,URGENT,associated,en,active
+SCM00085,foot fracture,foot fracture,EMERGENCY,associated,en,active
+SCM00086,foot wound,foot wound,URGENT,associated,en,active
+SCM00087,forearm infection,forearm infection,NON_URGENT,associated,en,active
+SCM00088,forehead infection,forehead infection,NON_URGENT,associated,en,active
+SCM00089,hair infection,hair infection,NON_URGENT,associated,en,active
+SCM00090,hand bleeding,hand bleeding,URGENT,associated,en,active
+SCM00091,hand burn,hand burn,URGENT,associated,en,active
+SCM00092,hand fracture,hand fracture,EMERGENCY,associated,en,active
+SCM00093,hand swelling with bleeding,hand swelling with bleeding,EMERGENCY,associated,en,active
+SCM00094,hand wound,hand wound,URGENT,associated,en,active
+SCM00095,head bleeding,head bleeding,EMERGENCY,associated,en,active
+SCM00096,head bleeding after fall,head bleeding after fall,EMERGENCY,associated,en,active
+SCM00097,head bleeding with dizziness,head bleeding with dizziness,EMERGENCY,associated,en,active
+SCM00098,head bruise,head bruise,URGENT,associated,en,active
+SCM00099,head hematoma,head hematoma,EMERGENCY,associated,en,active
+SCM00100,head infection,head infection,NON_URGENT,associated,en,active
+SCM00101,head injury from concrete,head injury from concrete,EMERGENCY,associated,en,active
+SCM00102,head injury from fall,head injury from fall,EMERGENCY,associated,en,active
+SCM00103,head injury from rock,head injury from rock,EMERGENCY,associated,en,active
+SCM00104,head injury with bleeding,head injury with bleeding,EMERGENCY,associated,en,active
+SCM00105,head wound,head wound,URGENT,associated,en,active
+SCM00106,chest pain,heart disease,URGENT,associated,en,active
+SCM00107,palpitations,heart disease,URGENT,associated,en,active
+SCM00108,heart infection,heart infection,NON_URGENT,associated,en,active
+SCM00109,heel infection,heel infection,NON_URGENT,associated,en,active
+SCM00110,epigastric pain,hyperacidity,NON_URGENT,associated,en,active
+SCM00111,heartburn,hyperacidity,NON_URGENT,associated,en,active
+SCM00112,headache,hypertension,URGENT,associated,en,active
+SCM00113,dizziness,hypertension,URGENT,associated,en,active
+SCM00114,dizziness,hypotension,URGENT,associated,en,active
+SCM00115,weakness,hypotension,URGENT,associated,en,active
+SCM00116,infected ear,infected ear,NON_URGENT,associated,en,active
+SCM00117,infected finger,infected finger,NON_URGENT,associated,en,active
+SCM00118,infected foot,infected foot,NON_URGENT,associated,en,active
+SCM00119,infected nose,infected nose,NON_URGENT,associated,en,active
+SCM00120,infected wound,infected wound,URGENT,associated,en,active
+SCM00121,fever,influenza,URGENT,associated,en,active
+SCM00122,cough,influenza,URGENT,associated,en,active
+SCM00123,body aches,influenza,URGENT,associated,en,active
+SCM00124,difficulty sleeping,insomnia,NON_URGENT,associated,en,active
+SCM00125,jaw infection,jaw infection,NON_URGENT,associated,en,active
+SCM00126,flank pain,kidney disease,URGENT,associated,en,active
+SCM00127,edema,kidney disease,URGENT,associated,en,active
+SCM00128,oliguria,kidney disease,URGENT,associated,en,active
+SCM00129,kidney infection,kidney infection,NON_URGENT,associated,en,active
+SCM00130,knee fracture,knee fracture,EMERGENCY,associated,en,active
+SCM00131,knee infection,knee infection,NON_URGENT,associated,en,active
+SCM00132,knee sprain,knee sprain,NON_URGENT,associated,en,active
+SCM00133,leg burn,leg burn,URGENT,associated,en,active
+SCM00134,leg fracture,leg fracture,EMERGENCY,associated,en,active
+SCM00135,leg infection,leg infection,NON_URGENT,associated,en,active
+SCM00136,leg wound,leg wound,URGENT,associated,en,active
+SCM00137,fever,leptospirosis,EMERGENCY,associated,en,active
+SCM00138,muscle pain,leptospirosis,EMERGENCY,associated,en,active
+SCM00139,jaundice,leptospirosis,EMERGENCY,associated,en,active
+SCM00140,liver infection,liver infection,NON_URGENT,associated,en,active
+SCM00141,fever,measles,URGENT,associated,en,active
+SCM00142,rash,measles,URGENT,associated,en,active
+SCM00143,cough,measles,URGENT,associated,en,active
+SCM00144,medication overdose,medication overdose,EMERGENCY,associated,en,active
+SCM00145,severe headache,migraine,URGENT,associated,en,active
+SCM00146,photophobia,migraine,URGENT,associated,en,active
+SCM00147,constipation,mild constipation,NON_URGENT,associated,en,active
+SCM00148,fatigue,mild fatigue,NON_URGENT,associated,en,active
+SCM00149,rash,mild skin rash,NON_URGENT,associated,en,active
+SCM00150,itchiness,mild skin rash,NON_URGENT,associated,en,active
+SCM00151,minor electrical shock,minor electrical shock,URGENT,associated,en,active
+SCM00152,mosquito bite,mosquito bite,URGENT,associated,en,active
+SCM00153,parotid swelling,mumps,URGENT,associated,en,active
+SCM00154,fever,mumps,URGENT,associated,en,active
+SCM00155,nail avulsion,nail avulsion,EMERGENCY,associated,en,active
+SCM00156,nail infection,nail infection,NON_URGENT,associated,en,active
+SCM00157,nape infection,nape infection,NON_URGENT,associated,en,active
+SCM00158,neck infection,neck infection,NON_URGENT,associated,en,active
+SCM00159,nosebleed,nosebleed,URGENT,associated,en,active
+SCM00160,oral bleeding,oral bleeding,URGENT,associated,en,active
+SCM00161,oral infection,oral infection,NON_URGENT,associated,en,active
+SCM00162,penile amputation,penile amputation,EMERGENCY,associated,en,active
+SCM00163,penile infection,penile infection,URGENT,associated,en,active
+SCM00164,penile wound,penile wound,URGENT,associated,en,active
+SCM00165,penis amputation,penis amputation,EMERGENCY,associated,en,active
+SCM00166,abdominal pain,peptic ulcer,URGENT,associated,en,active
+SCM00167,nausea,peptic ulcer,URGENT,associated,en,active
+SCM00168,physical assault,physical assault,URGENT,associated,en,active
+SCM00169,physical assault with head bruise,physical assault with head bruise,EMERGENCY,associated,en,active
+SCM00170,cough,pneumonia,EMERGENCY,associated,en,active
+SCM00171,fever,pneumonia,EMERGENCY,associated,en,active
+SCM00172,difficulty breathing,pneumonia,EMERGENCY,associated,en,active
+SCM00173,poisoning,poisoning,EMERGENCY,associated,en,active
+SCM00174,pus,pus,URGENT,associated,en,active
+SCM00175,difficulty breathing,respiratory distress,EMERGENCY,associated,en,active
+SCM00176,cyanosis,respiratory distress,EMERGENCY,associated,en,active
+SCM00177,convulsion,seizure,EMERGENCY,associated,en,active
+SCM00178,loss of consciousness,seizure,EMERGENCY,associated,en,active
+SCM00179,severe penis bleeding,severe penis bleeding,EMERGENCY,associated,en,active
+SCM00180,severe testicle bleeding,severe testicle bleeding,EMERGENCY,associated,en,active
+SCM00181,severe vagina bleeding,severe vagina bleeding,EMERGENCY,associated,en,active
+SCM00182,severe vaginal bleeding,severe vaginal bleeding,EMERGENCY,associated,en,active
+SCM00183,shortness of breath,shortness of breath,EMERGENCY,associated,en,active
+SCM00184,shoulder infection,shoulder infection,NON_URGENT,associated,en,active
+SCM00185,skin burn,skin burn,URGENT,associated,en,active
+SCM00186,redness,skin infection,URGENT,associated,en,active
+SCM00187,pain,skin infection,URGENT,associated,en,active
+SCM00188,pus,skin infection,URGENT,associated,en,active
+SCM00189,skull fracture,skull fracture,EMERGENCY,associated,en,active
+SCM00190,slip injury,slip injury,URGENT,associated,en,active
+SCM00191,snake bite,snake bite,EMERGENCY,associated,en,active
+SCM00192,sprain,sprain,NON_URGENT,associated,en,active
+SCM00193,facial droop,stroke,EMERGENCY,associated,en,active
+SCM00194,arm weakness,stroke,EMERGENCY,associated,en,active
+SCM00195,speech difficulty,stroke,EMERGENCY,associated,en,active
+SCM00196,suspected arm fracture,suspected arm fracture,EMERGENCY,associated,en,active
+SCM00197,suspected finger fracture,suspected finger fracture,EMERGENCY,associated,en,active
+SCM00198,suspected foot fracture,suspected foot fracture,EMERGENCY,associated,en,active
+SCM00199,suspected hand fracture,suspected hand fracture,EMERGENCY,associated,en,active
+SCM00200,suspected knee fracture,suspected knee fracture,EMERGENCY,associated,en,active
+SCM00201,suspected leg fracture,suspected leg fracture,EMERGENCY,associated,en,active
+SCM00202,suspected skull fracture,suspected skull fracture,EMERGENCY,associated,en,active
+SCM00203,headache,tension headache,NON_URGENT,associated,en,active
+SCM00204,testicle amputation,testicle amputation,EMERGENCY,associated,en,active
+SCM00205,testicular infection,testicular infection,URGENT,associated,en,active
+SCM00206,testicular wound,testicular wound,URGENT,associated,en,active
+SCM00207,throat infection,throat infection,NON_URGENT,associated,en,active
+SCM00208,throat swelling with fever,throat swelling with fever,EMERGENCY,associated,en,active
+SCM00209,tongue infection,tongue infection,NON_URGENT,associated,en,active
+SCM00210,tooth infection,tooth infection,NON_URGENT,associated,en,active
+SCM00211,chronic cough,tuberculosis,URGENT,associated,en,active
+SCM00212,hemoptysis,tuberculosis,URGENT,associated,en,active
+SCM00213,fever,tuberculosis,URGENT,associated,en,active
+SCM00214,bleeding,uncontrolled bleeding,EMERGENCY,associated,en,active
+SCM00215,urinary infection,urinary infection,URGENT,associated,en,active
+SCM00216,dysuria,urinary tract infection,URGENT,associated,en,active
+SCM00217,frequency,urinary tract infection,URGENT,associated,en,active
+SCM00218,vagina amputation,vagina amputation,EMERGENCY,associated,en,active
+SCM00219,vaginal bleeding,vaginal bleeding,URGENT,associated,en,active
+SCM00220,vaginal infection,vaginal infection,URGENT,associated,en,active
+SCM00221,vaginal wound,vaginal wound,URGENT,associated,en,active
+SCM00222,vehicle collision injury,vehicle collision injury,EMERGENCY,associated,en,active
+SCM00223,vehicle collision with head bleeding,vehicle collision with head bleeding,EMERGENCY,associated,en,active
+SCM00224,waist infection,waist infection,NON_URGENT,associated,en,active
+SCM00225,wall collision injury,wall collision injury,URGENT,associated,en,active
+SCM00226,wrist sprain,wrist sprain,NON_URGENT,associated,en,active

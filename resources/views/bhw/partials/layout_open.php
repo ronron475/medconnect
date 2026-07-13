@@ -22,6 +22,7 @@
   ?>
   <!-- Unified Aqua Clinical Design System -->
   <link rel="stylesheet" href="<?= ASSET_BASE ?>/assets/css/design-system.css"/>
+  <link rel="stylesheet" href="<?= ASSET_BASE ?>/assets/css/admin_dashboard.css"/>
   <link rel="stylesheet" href="<?= ASSET_BASE ?>/assets/css/sidebar.css"/>
   <link rel="stylesheet" href="<?= ASSET_BASE ?>/assets/css/topbar.css"/>
   <link rel="stylesheet" href="<?= ASSET_BASE ?>/assets/css/dashboard.css"/>
@@ -36,29 +37,44 @@
   <link rel="stylesheet" href="<?= ASSET_BASE ?>/assets/css/bhw-landing-theme.css?v=<?= $bhwLandingThemeVer ?>"/>
   <link rel="stylesheet" href="<?= ASSET_BASE ?>/assets/css/bhw-feedback.css"/>
   <link rel="stylesheet" href="<?= ASSET_BASE ?>/assets/css/bhw-forms.css"/>
+  <?php
+  $bhwPortalCss = ASSETS_PATH . '/css/bhw-portal.css';
+  $bhwPortalVer = file_exists($bhwPortalCss) ? (int) filemtime($bhwPortalCss) : time();
+  ?>
+  <link rel="stylesheet" href="<?= ASSET_BASE ?>/assets/css/bhw-portal.css?v=<?= $bhwPortalVer ?>"/>
+  <?php if (!empty($bhw_head_css)): ?>
+  <link rel="stylesheet" href="<?= htmlspecialchars((string) $bhw_head_css, ENT_QUOTES, 'UTF-8') ?>"/>
+  <?php endif; ?>
   <?php $profilePictureCssVer = (int) @filemtime(ASSETS_PATH . '/css/profile-picture.css'); ?>
   <link rel="stylesheet" href="<?= ASSET_BASE ?>/assets/css/profile-picture.css?v=<?= $profilePictureCssVer ?>"/>
 
   <style>
     :root {
-      --bhw-canvas: #f4f8fa;
-      --bhw-navy: #012A4A;
-      --bhw-teal: #069396;
-      --bhw-radius: 14px;
+      --bhw-canvas: #f8fafc;
+      --bhw-navy: #0f172a;
+      --bhw-accent: #1d4ed8;
+      --bhw-accent-soft: #eff6ff;
+      --bhw-teal: #1d4ed8;
+      --bhw-radius: 8px;
     }
     
     body.bhw-body {
       background-color: var(--bhw-canvas);
       color: var(--bhw-navy);
       font-family: 'Inter', sans-serif;
+      -webkit-font-smoothing: antialiased;
     }
     
     .bhw-card {
       background: #fff;
       border-radius: var(--bhw-radius);
-      border: 1px solid var(--mc-border-thin);
-      box-shadow: var(--mc-shadow-micro);
+      border: 1px solid #e2e8f0;
+      box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04);
       padding: 20px;
+    }
+
+    .row > [class*='col-'] > .bhw-card,
+    .bhw-card.h-100 {
       height: 100%;
     }
     
@@ -69,8 +85,8 @@
       align-items: center;
       background: #fff;
       border-radius: var(--bhw-radius);
-      border: 1px solid var(--mc-border-thin);
-      box-shadow: var(--mc-shadow-micro);
+      border: 1px solid #e2e8f0;
+      box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04);
     }
     
     .bhw-metric-info {
@@ -82,12 +98,12 @@
     .bhw-metric-icon {
       width: 40px;
       height: 40px;
-      border-radius: 10px;
+      border-radius: 8px;
       display: flex;
       align-items: center;
       justify-content: center;
-      background: var(--bhw-canvas);
-      color: #94a3b8; /* Desaturated gray utility icon */
+      background: var(--bhw-accent-soft);
+      color: #64748b;
     }
     
     /* State-Driven Row Accents */
@@ -108,41 +124,43 @@
 
     .bhw-btn-outline {
       background: transparent;
-      color: var(--bhw-teal);
-      border: 1px solid var(--bhw-teal);
-      padding: 6px 14px;
-      border-radius: 99px;
-      font-weight: 700;
-      font-size: 10px;
-      transition: all 0.2s;
+      color: var(--bhw-accent);
+      border: 1px solid #cbd5e1;
+      padding: 8px 16px;
+      border-radius: 6px;
+      font-weight: 600;
+      font-size: 12px;
+      letter-spacing: 0.01em;
+      transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
     }
 
     .bhw-btn-outline:hover {
-      background: var(--bhw-teal);
-      color: #fff;
+      background: var(--bhw-accent-soft);
+      border-color: #93c5fd;
+      color: #1e40af;
     }
     
     .bhw-metric-val {
       font-size: 24px;
-      font-weight: 800;
+      font-weight: 700;
       color: var(--bhw-navy);
       line-height: 1.2;
     }
     
     .bhw-btn-blue {
-      background: #e0f2fe;
-      color: #0369a1;
-      border: none;
-      padding: 6px 14px;
-      border-radius: 99px;
-      font-weight: 700;
-      font-size: 10px;
-      transition: all 0.2s;
+      background: var(--bhw-accent-soft);
+      color: #1e40af;
+      border: 1px solid #bfdbfe;
+      padding: 8px 16px;
+      border-radius: 6px;
+      font-weight: 600;
+      font-size: 12px;
+      transition: background 0.15s ease, border-color 0.15s ease;
     }
     
     .bhw-btn-blue:hover {
-      background: #bae6fd;
-      transform: translateY(-1px);
+      background: #dbeafe;
+      border-color: #93c5fd;
     }
     
     .bhw-metric-label {
@@ -154,35 +172,43 @@
     }
     
     .bhw-table th {
-      background: #f8fbff;
+      background: #f8fafc;
       font-size: 10px;
       font-weight: 700;
       text-transform: uppercase;
-      color: var(--bhw-teal);
-      padding: 12px;
-      border-bottom: 2px solid var(--bhw-canvas);
+      letter-spacing: 0.06em;
+      color: #64748b;
+      padding: 12px 14px;
+      border-bottom: 1px solid #e2e8f0;
     }
     
     .bhw-table td {
-      padding: 14px 12px;
+      padding: 14px;
       vertical-align: middle;
       font-size: 13px;
+      color: #334155;
+      border-bottom: 1px solid #f1f5f9;
     }
     
     .bhw-btn-teal {
-      background: var(--bhw-teal);
+      background: var(--bhw-accent);
       color: #fff;
-      border: none;
-      padding: 8px 16px;
-      border-radius: 99px;
-      font-weight: 700;
-      font-size: 11px;
-      transition: all 0.2s;
+      border: 1px solid #1e40af;
+      padding: 9px 18px;
+      border-radius: 6px;
+      font-weight: 600;
+      font-size: 12px;
+      letter-spacing: 0.01em;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      transition: background 0.15s ease, border-color 0.15s ease;
     }
     
     .bhw-btn-teal:hover {
-      background: var(--bhw-navy);
-      transform: translateY(-1px);
+      background: #1e40af;
+      border-color: #1e3a8a;
+      color: #fff;
     }
     
     .bhw-vitals-form label {
@@ -201,10 +227,11 @@
     
     .bhw-badge {
       padding: 4px 10px;
-      border-radius: 20px;
+      border-radius: 4px;
       font-size: 10px;
       font-weight: 700;
       text-transform: uppercase;
+      letter-spacing: 0.04em;
     }
     
     .urgency-high { background: #fee2e2; color: #dc2626; }
@@ -221,6 +248,8 @@
   data-csrf="<?= htmlspecialchars($_SESSION['csrf_token'] ?? '') ?>"
   data-asset-base="<?= htmlspecialchars(ASSET_BASE) ?>"
 >
+
+<?php require_once VIEWS_PATH . '/partials/auth_transition_boot.php'; ?>
 
 <div class="portal-shell">
   <?php require_once VIEWS_PATH . '/partials/sidebar.php'; ?>

@@ -32,11 +32,18 @@
   <link rel="stylesheet" href="<?= ASSET_BASE ?>/assets/css/patient-dashboard-mock.css?v=<?= $patientDashMockVer ?>"/>
   <?php require_once VIEWS_PATH . '/partials/responsive_assets.php'; ?>
   <?php require_once VIEWS_PATH . '/partials/notification_assets.php'; ?>
+  <?php $unreadSvcVer = (int) @filemtime(ASSETS_PATH . '/js/messages-unread-service.js'); ?>
+  <script src="<?= ASSET_BASE ?>/assets/js/messages-unread-service.js?v=<?= $unreadSvcVer ?>" defer></script>
   <?php $providerShellCssVer = (int) filemtime(ASSETS_PATH . '/css/provider_shell.css'); ?>
   <link rel="stylesheet" href="<?= ASSET_BASE ?>/assets/css/provider_shell.css?v=<?= $providerShellCssVer ?>"/>
   <?php $profilePictureCssVer = (int) filemtime(ASSETS_PATH . '/css/profile-picture.css'); ?>
   <link rel="stylesheet" href="<?= ASSET_BASE ?>/assets/css/profile-picture.css?v=<?= $profilePictureCssVer ?>"/>
   <?php require_once VIEWS_PATH . '/partials/auth_transition_assets.php'; ?>
+  <?php
+  $providerUiCss = ASSETS_PATH . '/css/provider-ui-system.css';
+  $providerUiVer = file_exists($providerUiCss) ? (int) filemtime($providerUiCss) : time();
+  ?>
+  <link rel="stylesheet" href="<?= ASSET_BASE ?>/assets/css/provider-ui-system.css?v=<?= $providerUiVer ?>"/>
 </head>
 <body
   class="provider-body"
@@ -46,9 +53,12 @@
   data-language="<?= htmlspecialchars($_SESSION['provider_language'] ?? 'en') ?>"
   data-time-format="<?= htmlspecialchars($_SESSION['provider_time_format'] ?? '12h') ?>"
   data-date-format="<?= htmlspecialchars($_SESSION['provider_date_format'] ?? 'M j, Y') ?>"
-  data-auto-logout="<?= (int) ($_SESSION['provider_auto_logout'] ?? 30) ?>"
+  data-auto-logout="<?= !empty($_SESSION['remember_me_extended']) ? '0' : (int) ($_SESSION['provider_auto_logout'] ?? 30) ?>"
+  data-remember-extended="<?= !empty($_SESSION['remember_me_extended']) ? '1' : '0' ?>"
   data-expire-url="<?= htmlspecialchars(ASSET_BASE . '/app/api/provider/session/expire.php') ?>"
 >
+
+<?php require_once VIEWS_PATH . '/partials/auth_transition_boot.php'; ?>
 
 <div class="root-wrapper provider-shell">
   <?php require_once __DIR__ . '/sidebar.php'; ?>

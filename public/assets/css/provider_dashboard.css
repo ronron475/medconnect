@@ -264,8 +264,7 @@ body.provider-body .main-content.provider-main {
 body.provider-body .provider-page-body {
     width: 100%;
     box-sizing: border-box;
-    padding: 24px 28px 32px;
-    padding-top: calc(var(--provider-header-h) + 24px);
+    padding: calc(var(--mc-header-offset, var(--provider-header-h, 64px)) + 8px) 16px 16px;
 }
 
 .pd-header {
@@ -280,6 +279,24 @@ body.provider-body .provider-page-body {
     box-shadow: 0 1px 4px rgba(0,0,0,0.04);
     flex-shrink: 0;
     overflow: visible;
+}
+
+.pd-brand {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 44px;
+    height: 44px;
+    border-radius: 12px;
+    text-decoration: none;
+    flex-shrink: 0;
+}
+
+.pd-brand__img {
+    width: 34px;
+    height: 34px;
+    object-fit: contain;
+    display: block;
 }
 .pd-hamburger {
     display: none;

@@ -142,7 +142,11 @@ form.addEventListener('submit', async (e) => {
     }
 
     const apiBase = window.ASSET_BASE || '';
-    const res  = await fetch(apiBase + '/app/api/login.php', { method: 'POST', body: fd });
+    const res  = await fetch(apiBase + '/app/api/login.php', {
+      method: 'POST',
+      body: fd,
+      headers: { 'X-MC-No-Loader': '1' },
+    });
 
     if (!res.ok) {
       let msg = `Server error (${res.status}).`;

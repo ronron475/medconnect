@@ -45,7 +45,7 @@ function mr_fetch_patient(PDO $pdo, int $id): ?array {
             CASE WHEN u.is_active=1 THEN 'Active' ELSE 'Inactive' END AS status,
             CONCAT('MC-',LPAD(u.id,6,'0')) AS patient_number
         FROM users u
-        LEFT JOIN patient_registrations pr ON pr.email=u.email
+        LEFT JOIN patient_registrations pr ON pr.user_id = u.id OR pr.email = u.email
         WHERE u.id=? AND u.role='patient' LIMIT 1
     ");
     $s->execute([$id]);
@@ -62,8 +62,18 @@ if ($requested_id > 0) {
     }
 }
 if (!$selected && !empty($patients) && $view === 'patients') {
-    $requested_id = (int)($patients[0]['id'] ?? 0);
-    $selected = $requested_id > 0 ? mr_fetch_patient($pdo, $requested_id) : null;
+    foreach ($patients as $pRow) {
+        $candidateId = (int) ($pRow['id'] ?? 0);
+        if ($candidateId <= 0) {
+            continue;
+        }
+        $access = provider_patient_assert_access($pdo, $provider_id, $candidateId, 0);
+        if ($access['allowed']) {
+            $requested_id = $candidateId;
+            $selected = mr_fetch_patient($pdo, $requested_id);
+            break;
+        }
+    }
 }
 
 $sel_records = [];
@@ -71,21 +81,44 @@ $attachments = [];
 
 if ($selected) {
     $pid = (int)$selected['id'];
+    $provId = (int) ($_SESSION['user_id'] ?? 0);
+
+    $pending_medical_request = null;
+    try {
+        require_once BASE_PATH . '/app/includes/patient_settings.php';
+        patient_settings_ensure_schema($pdo);
+        $pmr = $pdo->prepare("
+            SELECT id, patient_note, created_at
+            FROM patient_medical_update_requests
+            WHERE patient_id = ? AND status IN ('pending', 'in_review')
+            ORDER BY created_at DESC LIMIT 1
+        ");
+        $pmr->execute([$pid]);
+        $pending_medical_request = $pmr->fetch(PDO::FETCH_ASSOC) ?: null;
+    } catch (PDOException $e) {
+        $pending_medical_request = null;
+    }
+
     $queries = [
         "SELECT 'Consultation' AS rec_type, c.consult_type AS rec_name, DATE(c.consult_date) AS rec_date,
                 COALESCE(c.provider_name,'—') AS provider, COALESCE(c.status,'') AS detail, COALESCE(c.diagnosis,'') AS extra, c.id AS rec_id
-         FROM consultations c WHERE c.patient_id = ? ORDER BY c.consult_date DESC",
+         FROM consultations c WHERE c.patient_id = ? AND c.provider_id = ? ORDER BY c.consult_date DESC",
         "SELECT 'Prescription' AS rec_type, CONCAT(pr.medication_name,' ',pr.dosage) AS rec_name, DATE(pr.created_at) AS rec_date,
                 CONCAT(u.first_name,' ',u.last_name) AS provider, CONCAT(pr.frequency,', ',pr.duration) AS detail, COALESCE(pr.notes,'') AS extra, pr.id AS rec_id
-         FROM prescriptions pr JOIN users u ON u.id=pr.provider_id WHERE pr.patient_id = ? ORDER BY pr.created_at DESC",
+         FROM prescriptions pr JOIN users u ON u.id=pr.provider_id WHERE pr.patient_id = ? AND pr.provider_id = ? ORDER BY pr.created_at DESC",
         "SELECT 'Referral' AS rec_type, CONCAT(dr.referral_type,' Referral') AS rec_name, DATE(dr.created_at) AS rec_date,
                 CONCAT(u.first_name,' ',u.last_name) AS provider, dr.reason AS detail, COALESCE(dr.facility_name, dr.destination_facility, '') AS extra, dr.id AS rec_id
-         FROM digital_referrals dr JOIN users u ON u.id=dr.provider_id WHERE dr.patient_id = ? ORDER BY dr.created_at DESC",
+         FROM digital_referrals dr JOIN users u ON u.id=dr.provider_id WHERE dr.patient_id = ? AND dr.provider_id = ? ORDER BY dr.created_at DESC",
+        "SELECT 'Clinical Note' AS rec_type, COALESCE(NULLIF(cn.diagnosis,''),'SOAP Note') AS rec_name, DATE(cn.created_at) AS rec_date,
+                CONCAT(u.first_name,' ',u.last_name) AS provider,
+                CONCAT_WS(' · ', NULLIF(cn.assessment,''), NULLIF(cn.plan,'')) AS detail,
+                COALESCE(NULLIF(cn.treatment_plan,''), NULLIF(cn.subjective,'')) AS extra, cn.id AS rec_id
+         FROM clinical_notes cn JOIN users u ON u.id=cn.provider_id WHERE cn.patient_id = ? AND cn.provider_id = ? ORDER BY cn.created_at DESC",
     ];
     foreach ($queries as $sql) {
         try {
             $s = $pdo->prepare($sql);
-            $s->execute([$pid]);
+            $s->execute([$pid, $provId]);
             foreach ($s->fetchAll(PDO::FETCH_ASSOC) as $r) {
                 $sel_records[] = $r;
             }
@@ -101,7 +134,7 @@ if ($selected) {
 }
 
 $patient_count = count($patients ?? []);
-$tabs_list = ['overview' => 'Overview', 'consultations' => 'Consultations', 'prescriptions' => 'Prescriptions', 'referrals' => 'Referrals', 'attachments' => 'Attachments'];
+$tabs_list = ['overview' => 'Overview', 'consultations' => 'Consultations', 'clinical_notes' => 'Clinical Notes', 'prescriptions' => 'Prescriptions', 'referrals' => 'Referrals', 'attachments' => 'Attachments'];
 ?>
 
 <div class="mr-page">
@@ -229,6 +262,29 @@ $tabs_list = ['overview' => 'Overview', 'consultations' => 'Consultations', 'pre
 
       <div class="mr-detail-body">
         <?php if ($tab === 'overview'): ?>
+        <?php if (!empty($pending_medical_request)): ?>
+        <div class="mr-update-request" id="mrMedicalUpdateCard" data-csrf="<?= htmlspecialchars($_SESSION['csrf_token'] ?? '') ?>" data-patient-id="<?= (int) $selected['id'] ?>" data-request-id="<?= (int) $pending_medical_request['id'] ?>">
+          <strong>Patient requested a medical profile update</strong>
+          <?php if (!empty($pending_medical_request['patient_note'])): ?>
+          <p class="text-sm" style="margin:6px 0;"><?= htmlspecialchars($pending_medical_request['patient_note']) ?></p>
+          <?php endif; ?>
+          <p class="text-xs text-muted">Verify and save corrected permanent profile fields below. Changes are audit-logged.</p>
+          <form id="mrMedicalProfileForm" class="mr-profile-form">
+            <label>Blood type
+              <select name="blood_type" class="form-control">
+                <?php foreach (['A+','A-','B+','B-','AB+','AB-','O+','O-','Unknown'] as $bt): ?>
+                <option value="<?= $bt ?>" <?= ($selected['blood_type'] ?? '') === $bt ? 'selected' : '' ?>><?= $bt ?></option>
+                <?php endforeach; ?>
+              </select>
+            </label>
+            <label>Allergies<textarea name="allergies" class="form-control" rows="2"><?= htmlspecialchars($selected['allergies'] ?? '') ?></textarea></label>
+            <label>Conditions<textarea name="existing_conditions" class="form-control" rows="2"><?= htmlspecialchars($selected['history'] ?? '') ?></textarea></label>
+            <label>Medications<textarea name="current_medications" class="form-control" rows="2"><?= htmlspecialchars($selected['medications'] ?? '') ?></textarea></label>
+            <button type="submit" class="mc-btn mc-btn--primary">Verify &amp; Save Profile</button>
+          </form>
+          <div id="mrMedicalProfileAlert" class="mr-profile-alert" hidden role="alert"></div>
+        </div>
+        <?php endif; ?>
         <div class="mr-info-grid">
           <div class="mr-info-item">
             <label>Contact</label>
@@ -254,6 +310,7 @@ $tabs_list = ['overview' => 'Overview', 'consultations' => 'Consultations', 'pre
         <?php else:
           $filtered = array_filter($sel_records, function ($r) use ($tab) {
               if ($tab === 'consultations') return $r['rec_type'] === 'Consultation';
+              if ($tab === 'clinical_notes') return $r['rec_type'] === 'Clinical Note';
               if ($tab === 'prescriptions') return $r['rec_type'] === 'Prescription';
               if ($tab === 'referrals') return $r['rec_type'] === 'Referral';
               return false;
@@ -301,6 +358,40 @@ function mrFilterHistory(q) {
     el.style.display = !q || blob.includes(q) ? '' : 'none';
   });
 }
+
+(function () {
+  var card = document.getElementById('mrMedicalUpdateCard');
+  var form = document.getElementById('mrMedicalProfileForm');
+  if (!card || !form) return;
+  form.addEventListener('submit', async function (e) {
+    e.preventDefault();
+    var alertEl = document.getElementById('mrMedicalProfileAlert');
+    var fd = new FormData(form);
+    fd.append('csrf_token', card.dataset.csrf || '');
+    fd.append('patient_id', card.dataset.patientId || '');
+    fd.append('request_id', card.dataset.requestId || '');
+    try {
+      var base = <?= json_encode(ASSET_BASE) ?>;
+      var res = await fetch(base + '/app/api/provider/update_patient_medical_profile.php', {
+        method: 'POST', body: fd, credentials: 'same-origin'
+      });
+      var data = await res.json();
+      if (!data.success) throw new Error(data.message || 'Save failed');
+      if (alertEl) {
+        alertEl.textContent = data.message;
+        alertEl.hidden = false;
+        alertEl.className = 'mr-profile-alert mr-profile-alert--ok';
+      }
+      setTimeout(function () { window.location.reload(); }, 1200);
+    } catch (err) {
+      if (alertEl) {
+        alertEl.textContent = err.message || 'Could not save profile.';
+        alertEl.hidden = false;
+        alertEl.className = 'mr-profile-alert mr-profile-alert--err';
+      }
+    }
+  });
+})();
 </script>
 
 <?php require __DIR__.'/partials/layout_close.php'; ?>

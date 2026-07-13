@@ -3,7 +3,7 @@
 .queue-page {
     display: flex;
     flex-direction: column;
-    gap: 20px;
+    gap: 12px;
 }
 
 .queue-hero {
@@ -11,11 +11,11 @@
     border: 1px solid var(--mc-border-thin, #dce8ed);
     border-left: 5px solid var(--mc-aqua-medium, #018a93);
     border-radius: 12px;
-    padding: 20px 22px;
+    padding: 14px 16px;
     box-shadow: var(--mc-shadow-sm, 0 1px 3px rgba(15, 23, 42, 0.06));
     display: flex;
     justify-content: space-between;
-    gap: 16px;
+    gap: 12px;
     align-items: center;
 }
 
@@ -30,7 +30,7 @@
 
 .queue-title {
     color: var(--mc-navy-dark, #012a4a);
-    font-size: 24px;
+    font-size: 1.25rem;
     font-weight: 800;
     margin: 0;
 }
@@ -52,14 +52,14 @@
 .queue-metrics {
     display: grid;
     grid-template-columns: repeat(5, minmax(0, 1fr));
-    gap: 12px;
+    gap: 16px;
 }
 
 .queue-metric {
     background: #fff;
     border: 1px solid var(--mc-border-thin, #dce8ed);
     border-radius: 12px;
-    padding: 16px;
+    padding: 12px;
     box-shadow: var(--mc-shadow-sm, 0 1px 3px rgba(15, 23, 42, 0.06));
 }
 
@@ -74,7 +74,7 @@
 
 .queue-metric-value {
     color: var(--mc-navy-dark, #012a4a);
-    font-size: 26px;
+    font-size: 1.625rem;
     font-weight: 800;
     line-height: 1;
 }
@@ -87,15 +87,15 @@
 
 .queue-layout {
     display: grid;
-    grid-template-columns: minmax(0, 1fr) 320px;
-    gap: 20px;
+    grid-template-columns: minmax(0, 1fr) minmax(220px, 28%);
+    gap: 16px;
     align-items: start;
 }
 
 .queue-sidebar {
     display: flex;
     flex-direction: column;
-    gap: 16px;
+    gap: 12px;
     min-width: 0;
 }
 

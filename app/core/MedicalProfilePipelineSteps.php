@@ -205,7 +205,9 @@ final class MedicalProfilePipelineSteps
             'priority'              => $priority,
             'recommendation'        => $recommendation,
             'recommended_action'    => (string) ($rawTriage['recommended_action'] ?? $triageMeta['recommended_action'] ?? ''),
-            'detected_symptoms'     => $rawTriage['detected_symptoms'] ?? $detectedSymptoms,
+            'detected_symptoms'     => self::filterSymptomDisplayTerms(
+            array_values((array) ($rawTriage['detected_symptoms'] ?? $detectedSymptoms))
+        ),
             'detected_conditions'   => $rawTriage['detected_conditions'] ?? $detectedConditions,
             'detected_body_parts'   => $rawTriage['detected_body_parts'] ?? [],
             'severity_score'        => (int) ($rawTriage['severity_score'] ?? 0),
@@ -313,6 +315,23 @@ final class MedicalProfilePipelineSteps
         }
 
         return ['level' => 'rejected', 'label' => 'Rejected'];
+    }
+
+    /** @param list<mixed> $terms
+     * @return list<string>
+     */
+    private static function filterSymptomDisplayTerms(array $terms): array
+    {
+        $out = [];
+        foreach ($terms as $term) {
+            $label = trim((string) $term);
+            if ($label === '' || BodyPartsDataset::isBodyPartOrEnglish($label)) {
+                continue;
+            }
+            $out[] = $label;
+        }
+
+        return array_values(array_unique($out));
     }
 
     /** @return list<array<string, string>> */

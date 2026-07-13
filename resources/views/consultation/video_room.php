@@ -1,5 +1,7 @@
 <?php
-session_start();
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
 if (!defined('BASE_PATH')) {
     $d = __DIR__;
     while ($d !== dirname($d)) {
@@ -15,7 +17,9 @@ $role  = $_SESSION['user_role'] ?? '';
 $uid   = $_SESSION['user_id'] ?? 0;
 
 if (!$token || !$role || !$uid) {
-    header('Location: /index.php'); exit;
+    require_once BASE_PATH . '/app/includes/auth_guard.php';
+    header('Location: ' . auth_signin_required_url());
+    exit;
 }
 
 // Fetch session details
@@ -55,6 +59,19 @@ if (!$authorized) {
     die('You are not authorized to join this consultation.');
 }
 
+require_once dirname(__DIR__) . '/provider/partials/queue_helpers.php';
+$video_access = consultation_video_room_access([
+    'status'       => $session['consult_status'] ?? '',
+    'consult_date' => $session['consult_date'] ?? '',
+    'consult_time' => $session['consult_time'] ?? '',
+    'slot_date'    => $session['slot_date'] ?? '',
+    'slot_start'   => $session['slot_start'] ?? '',
+]);
+if (!$video_access['allowed']) {
+    http_response_code(403);
+    die(htmlspecialchars($video_access['reason']));
+}
+
 $other_name = ($role === 'provider') 
     ? ($session['patient_first'] . ' ' . $session['patient_last'])
     : ($session['doctor_first'] . ' ' . $session['doctor_last']);
@@ -89,8 +106,16 @@ $consultation_id = (int) ($session['consultation_id'] ?? 0);
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta http-equiv="Permissions-Policy" content="camera=(self), microphone=(self), display-capture=(self)"/>
   <title>Video Consultation — medConnect</title>
   <?php require_once __DIR__ . '/../../bootstrap.php'; ?>
+  <?php
+  require_once VIEWS_PATH . '/components/global-loader.php';
+  $glCssVer = mc_global_loader_asset_ver('css/global-loader.css');
+  $glJsVer  = mc_global_loader_asset_ver('js/global-loader.js');
+  ?>
+  <link rel="stylesheet" href="<?= ASSET_BASE ?>/assets/css/global-loader.css?v=<?= $glCssVer ?>"/>
+  <script src="<?= ASSET_BASE ?>/assets/js/global-loader.js?v=<?= $glJsVer ?>"></script>
   <link rel="stylesheet" href="<?= ASSET_BASE ?>/assets/css/responsive.css"/>
   <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
   <style>
@@ -154,15 +179,8 @@ $consultation_id = (int) ($session['consultation_id'] ?? 0);
     .end-actions .confirm { background: #dc2626; color: #fff; border-color: #dc2626; }
     .end-actions button:disabled { opacity: .6; cursor: not-allowed; }
     .saving-spinner {
-      width: 38px;
-      height: 38px;
-      border-radius: 50%;
-      border: 4px solid rgba(255,255,255,.18);
-      border-top-color: #5eead4;
-      animation: spin .8s linear infinite;
       margin: 0 auto 16px;
     }
-    @keyframes spin { to { transform: rotate(360deg); } }
     @keyframes pulse { 0% { opacity:1; } 50% { opacity:0.4; } 100% { opacity:1; } }
     .extend-toast {
       position: fixed;
@@ -381,6 +399,7 @@ $consultation_id = (int) ($session['consultation_id'] ?? 0);
   </style>
 </head>
 <body>
+<?php mc_render_global_loader_boot(); ?>
 
   <div id="mediaPermissionGate" class="media-permission-gate" role="dialog" aria-modal="true" aria-labelledby="mediaPermissionTitle">
     <div class="media-permission-dialog">
@@ -389,6 +408,9 @@ $consultation_id = (int) ($session['consultation_id'] ?? 0);
       </div>
       <h2 id="mediaPermissionTitle" class="media-permission-title">Allow camera &amp; microphone</h2>
       <p class="media-permission-copy">Tap the button below, then choose <strong>Allow</strong> when your browser asks. This is required to join the video consultation.</p>
+      <div id="localDemoHint" class="media-permission-warn" style="display:none;">
+        <strong>2-tab demo:</strong> If the provider is in another tab on this laptop, use <strong>Join with audio only</strong> here — one webcam cannot feed both tabs at once.
+      </div>
       <div id="secureContextWarning" class="media-permission-warn" style="display:none;"></div>
       <div id="mediaPermissionError" class="media-permission-error" role="alert"></div>
       <div id="mediaPermissionStatus" class="media-permission-status">Waiting for you to allow access…</div>
@@ -476,7 +498,14 @@ $consultation_id = (int) ($session['consultation_id'] ?? 0);
     const isPatient = <?= $is_patient ? 'true' : 'false' ?>;
     const consultationId = <?= $consultation_id ?>;
     const apiBase = '<?= ASSET_BASE ?>';
-    const peer = new Peer(userRole + '-' + roomToken);
+    const peer = new Peer(userRole + '-' + roomToken, {
+      config: {
+        iceServers: [
+          { urls: 'stun:stun.l.google.com:19302' },
+          { urls: 'stun:stun1.l.google.com:19302' }
+        ]
+      }
+    });
     
     let localStream;
     let currentCall;
@@ -503,14 +532,88 @@ $consultation_id = (int) ($session['consultation_id'] ?? 0);
     let aiChunkUploading = false;
     let aiServerTranscript = '';
     let peerReady = false;
+    let pendingIncomingCall = null;
+    let callInterval = null;
+
+    function remotePeerId() {
+      return (userRole === 'provider' ? 'patient-' : 'provider-') + roomToken;
+    }
+
+    function attachStreamToVideo(videoEl, stream, options = {}) {
+      if (!videoEl || !stream) return;
+      videoEl.srcObject = stream;
+      if (options.muted) {
+        videoEl.muted = true;
+      }
+      const playPromise = videoEl.play();
+      if (playPromise && typeof playPromise.catch === 'function') {
+        playPromise.catch((err) => console.warn('Video play blocked:', err));
+      }
+    }
+
+    function isCallConnected() {
+      return !!(currentCall && currentCall.open);
+    }
+
+    function flushPendingCall() {
+      if (!pendingIncomingCall || !localStream) return;
+      const call = pendingIncomingCall;
+      pendingIncomingCall = null;
+      console.log('Answering queued call from:', call.peer);
+      call.answer(localStream);
+      handleCall(call);
+    }
+
+    function registerIncomingCallHandler() {
+      peer.on('call', (call) => {
+        console.log('Incoming call from:', call.peer);
+        if (!localStream) {
+          pendingIncomingCall = call;
+          setPermissionStatus('Other participant is waiting — allow camera/microphone to connect.');
+          document.getElementById('callStatus').textContent = 'Participant ready — allow access to join';
+          return;
+        }
+        call.answer(localStream);
+        handleCall(call);
+      });
+    }
+
+    function startCall() {
+      if (!peerReady || !localStream || endingCall) return;
+      if (isCallConnected()) return;
+
+      const targetId = remotePeerId();
+      console.log('Attempting to call:', targetId);
+      const call = peer.call(targetId, localStream);
+      if (call) {
+        handleCall(call);
+      }
+    }
+
+    function beginConnectionRetries() {
+      flushPendingCall();
+      startCall();
+      if (callInterval) clearInterval(callInterval);
+      callInterval = setInterval(startCall, 3000);
+    }
 
     function isLocalDevHost() {
       const host = window.location.hostname;
       return host === 'localhost' || host === '127.0.0.1' || host === '[::1]';
     }
 
+    function isPrivateLanHost() {
+      const host = window.location.hostname;
+      return /^(192\.168\.|10\.|172\.(1[6-9]|2[0-9]|3[0-1])\.)/.test(host);
+    }
+
+    function mediaSecureContextReady() {
+      return window.isSecureContext || isLocalDevHost();
+    }
+
     function canUseMediaDevices() {
-      return !!(navigator.mediaDevices && typeof navigator.mediaDevices.getUserMedia === 'function');
+      return mediaSecureContextReady()
+        && !!(navigator.mediaDevices && typeof navigator.mediaDevices.getUserMedia === 'function');
     }
 
     function setPermissionStatus(message) {
@@ -538,16 +641,22 @@ $consultation_id = (int) ($session['consultation_id'] ?? 0);
       const warn = document.getElementById('secureContextWarning');
       if (!warn) return;
 
-      if (window.isSecureContext || isLocalDevHost()) {
+      if (mediaSecureContextReady()) {
         warn.style.display = 'none';
         return;
       }
 
       warn.style.display = 'block';
-      warn.innerHTML =
-        '<strong>HTTPS required on phones.</strong> You are on <code>' + window.location.protocol + '//' + window.location.host + '</code>. ' +
-        'Mobile browsers usually block camera/mic over plain HTTP. Use <strong>https://</strong> (e.g. mkcert on your PC) or test video on the same laptop with <code>localhost</code>. ' +
-        'Brave: turn <strong>Shields off</strong> for this site after switching to HTTPS.';
+      const origin = window.location.protocol + '//' + window.location.host;
+      if (isPrivateLanHost()) {
+        warn.innerHTML =
+          '<strong>HTTPS required for phone camera/mic.</strong> You are on <code>' + origin + '</code> over plain HTTP. ' +
+          'Mobile browsers block camera and microphone on LAN IP addresses. When you deploy online with <strong>HTTPS</strong>, video will work for patients. ' +
+          'For local phone testing now, use an <strong>https://</strong> tunnel (ngrok) or HTTPS on your PC (mkcert).';
+      } else {
+        warn.innerHTML =
+          '<strong>Secure connection required.</strong> Open this site with <strong>https://</strong> so the browser can use camera and microphone.';
+      }
     }
 
     async function refreshPermissionHints() {
@@ -579,8 +688,12 @@ $consultation_id = (int) ($session['consultation_id'] ?? 0);
       refreshPermissionHints();
 
       if (!canUseMediaDevices()) {
+        const insecure = !mediaSecureContextReady();
         showPermissionError(
-          '<strong>Media devices are not available.</strong> Your browser blocked access, often because this page is not secure (HTTP on a phone). Switch to HTTPS or open on this computer using <code>localhost</code>.'
+          insecure
+            ? '<strong>Camera and microphone need HTTPS.</strong> This page is not in a secure context (<code>' +
+              window.location.protocol + '//' + window.location.host + '</code>). Deploy with SSL or use an HTTPS URL — then tap Allow again.'
+            : '<strong>Media devices are not available.</strong> Your browser blocked access. Check site permissions and try another browser.'
         );
         document.getElementById('btnAllowBoth').disabled = true;
         document.getElementById('btnAllowAudio').disabled = true;
@@ -1114,7 +1227,8 @@ $consultation_id = (int) ($session['consultation_id'] ?? 0);
           headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
           body: new URLSearchParams({
             consultation_id: consultationId,
-            extension_mins: mins
+            extension_mins: mins,
+            csrf_token: document.body.dataset.csrf || ''
           })
         });
         const data = await res.json();
@@ -1172,25 +1286,12 @@ $consultation_id = (int) ($session['consultation_id'] ?? 0);
         .catch(() => {});
     }
 
-    let callInterval;
-    function startCall() {
-      // Only call if we have a stream and are not already in a connected call
-      if (userRole === 'provider' && localStream && (!currentCall || !currentCall.open)) {
-        const patientId = 'patient-' + roomToken;
-        console.log('Attempting to call patient:', patientId);
-        const call = peer.call(patientId, localStream);
-        if (call) {
-          handleCall(call);
-        }
-      }
-    }
-
     async function startCallWithStream() {
       try {
         if (!localStream) return;
 
         console.log('Local stream obtained.');
-        document.getElementById('localVideo').srcObject = localStream;
+        attachStreamToVideo(document.getElementById('localVideo'), localStream, { muted: true });
 
         const hasVideo = localStream.getVideoTracks().length > 0;
         const hasAudio = localStream.getAudioTracks().length > 0;
@@ -1201,20 +1302,15 @@ $consultation_id = (int) ($session['consultation_id'] ?? 0);
           document.getElementById('muteAudio').classList.add('off');
         }
 
-        if (userRole === 'patient') {
-          document.getElementById('callStatus').textContent = 'Online — Waiting for Doctor...';
-          peer.on('call', call => {
-            console.log('Incoming call from doctor, answering...');
-            call.answer(localStream);
-            handleCall(call);
-          });
-        } else {
-          document.getElementById('callStatus').textContent = 'Secure Room Active';
+        document.getElementById('callStatus').textContent = userRole === 'patient'
+          ? 'Online — connecting to doctor...'
+          : 'Secure room active — connecting to patient...';
+
+        if (userRole === 'provider') {
           startRecording();
-          startCall();
-          if (callInterval) clearInterval(callInterval);
-          callInterval = setInterval(startCall, 3000);
         }
+
+        beginConnectionRetries();
         startTimer();
       } catch (err) {
         console.error('Call setup error:', err);
@@ -1225,40 +1321,44 @@ $consultation_id = (int) ($session['consultation_id'] ?? 0);
     }
 
     function handleCall(call) {
-      // If we already have a connected call, don't re-handle
+      if (currentCall === call) return;
       if (currentCall && currentCall.open && currentCall.peer === call.peer) return;
-      
+      if (currentCall && !currentCall.open) {
+        try { currentCall.close(); } catch (e) {}
+      }
+
       currentCall = call;
-      console.log("Handling call from:", call.peer);
+      console.log('Handling call with:', call.peer);
 
       call.on('stream', remoteStream => {
-        console.log("Remote stream received!");
+        console.log('Remote stream received from:', call.peer);
         if (callInterval) {
           clearInterval(callInterval);
           callInterval = null;
         }
-        document.getElementById('remoteVideo').srcObject = remoteStream;
+        attachStreamToVideo(document.getElementById('remoteVideo'), remoteStream);
         document.getElementById('remoteName').textContent = '<?= htmlspecialchars($other_name) ?>';
-        document.getElementById('callStatus').textContent = 'Live Consultation';
+        document.getElementById('callStatus').textContent = 'Live Consultation — Connected';
         connectRemoteAudioToRecording();
-        
-        // Start recording once the doctor receives the patient's stream
+
         if (userRole === 'provider' && (!mediaRecorder || mediaRecorder.state === 'inactive')) {
-          // Add remote tracks to the recording stream if possible
           startRecording();
         }
       });
 
       call.on('close', () => {
-        console.log("Call closed.");
-        if (userRole === 'provider' && !callInterval) {
-           callInterval = setInterval(startCall, 3000);
+        console.log('Call closed with:', call.peer);
+        if (currentCall === call) {
+          currentCall = null;
         }
-        document.getElementById('callStatus').textContent = 'Participant disconnected.';
+        if (!endingCall && localStream && !callInterval) {
+          document.getElementById('callStatus').textContent = 'Participant disconnected — reconnecting...';
+          beginConnectionRetries();
+        }
       });
 
       call.on('error', err => {
-        console.error("Call Error:", err);
+        console.error('Call error:', err);
       });
     }
 
@@ -1288,9 +1388,9 @@ $consultation_id = (int) ($session['consultation_id'] ?? 0);
     }
 
     function showSavingModal(title, copy) {
-      const icon = document.getElementById('endModalIcon');
-      icon.className = '';
-      icon.innerHTML = '<div class="saving-spinner" aria-hidden="true"></div>';
+      if (window.MedConnectLoader) {
+        window.MedConnectLoader.show({ mode: 'saving', sr: title || 'Saving.' });
+      }
       document.getElementById('endModalTitle').textContent = title;
       document.getElementById('endModalCopy').textContent = copy;
       document.getElementById('endModalActions').style.display = 'none';
@@ -1325,7 +1425,7 @@ $consultation_id = (int) ($session['consultation_id'] ?? 0);
         return;
       }
 
-      window.location.href = '../patient/dashboard.php#view-consultations';
+      window.location.href = '../patient/consultations.php';
     }
 
     async function endCall(skipConfirm = false) {
@@ -1371,6 +1471,10 @@ $consultation_id = (int) ($session['consultation_id'] ?? 0);
 
         disconnectLocalCall();
 
+        if (window.MedConnectLoader && typeof window.MedConnectLoader.forceHide === 'function') {
+          window.MedConnectLoader.forceHide();
+        }
+
         if (window.parent && window.parent !== window) {
           window.parent.postMessage({ type: 'medconnect:call-ended', role: userRole, token: roomToken }, window.location.origin);
           return;
@@ -1406,7 +1510,12 @@ $consultation_id = (int) ($session['consultation_id'] ?? 0);
     syncTimerFromServer();
     bindMediaPermissionButtons();
     setupSessionNavigationUi();
+    registerIncomingCallHandler();
     document.getElementById('callStatus').textContent = 'Allow camera & microphone to join';
+    if (isLocalDevHost()) {
+      const demoHint = document.getElementById('localDemoHint');
+      if (demoHint) demoHint.style.display = 'block';
+    }
     showMediaPermissionGate();
 
     peer.on('open', id => {
@@ -1414,6 +1523,8 @@ $consultation_id = (int) ($session['consultation_id'] ?? 0);
       peerReady = true;
       if (!localStream) {
         setPermissionStatus('Connected — tap below to allow camera and microphone.');
+      } else {
+        beginConnectionRetries();
       }
     });
 

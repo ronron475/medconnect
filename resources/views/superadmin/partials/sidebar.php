@@ -1,5 +1,6 @@
 <?php
-$current = basename($_SERVER['PHP_SELF']);
+require_once BASE_PATH . '/app/includes/portal_paths.php';
+$current = portal_current_view_basename();
 $current_query = $_SERVER['QUERY_STRING'] ?? '';
 
 require_once BASE_PATH . '/app/includes/profile_picture.php';
@@ -50,7 +51,7 @@ function superadmin_nav_is_active(string $file, string $current, string $query, 
            stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
         <?= $icon_path ?>
       </svg>
-      <?= htmlspecialchars($label) ?>
+      <span class="adm-label"><?= htmlspecialchars($label) ?></span>
     </a>
     <?php endforeach; endforeach; ?>
   </nav>
@@ -72,7 +73,7 @@ function superadmin_nav_is_active(string $file, string $current, string $query, 
       <polyline points="16 17 21 12 16 7"/>
       <line x1="21" y1="12" x2="9" y2="12"/>
     </svg>
-    Sign Out
+    <span class="adm-label">Sign Out</span>
   </button>
 
 </aside>

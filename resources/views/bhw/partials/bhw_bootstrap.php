@@ -13,7 +13,8 @@ require_once BASE_PATH . '/app/includes/profile_picture.php';
 require_once __DIR__ . '/bhw_context.php';
 
 if (empty($_SESSION['user_id']) || ($_SESSION['user_role'] ?? '') !== 'bhw') {
-    header('Location: ' . ASSET_BASE . '/index.php');
+    require_once BASE_PATH . '/app/includes/auth_guard.php';
+    header('Location: ' . auth_signin_required_url());
     exit;
 }
 

@@ -27,12 +27,12 @@ $bhw_extra_js = [
     <div>
       <h2 class="bhw-cons-hero__title">Consultation Center — Brgy. <?= htmlspecialchars($bhw_barangay_name) ?></h2>
       <p class="bhw-cons-hero__sub">
-        Monitor today&apos;s teleconsultations for residents in your barangay, assist patients with video calls, and track consent status.
+        Monitor teleconsultations for residents in your barangay, assist with video calls, and track consent status.
       </p>
     </div>
-    <div class="d-flex flex-wrap align-items-center gap-2">
+    <div class="bhw-cons-hero__actions">
       <span class="bhw-cons-sync">Last sync: <span id="bhwConsLastSync">—</span></span>
-      <a href="../triage/submit.php" class="bhw-btn-teal">+ Triage &amp; Book</a>
+      <a href="../triage/submit.php" class="bhw-btn-teal">Triage &amp; Book</a>
     </div>
   </header>
 
@@ -42,7 +42,7 @@ $bhw_extra_js = [
       <div class="bhw-cons-metric__val" id="bhwConsMetricTotal">—</div>
     </div>
     <div class="bhw-cons-metric bhw-cons-metric--active">
-      <div class="bhw-cons-metric__label">Active (Scheduled + In Call)</div>
+      <div class="bhw-cons-metric__label">Active</div>
       <div class="bhw-cons-metric__val" id="bhwConsMetricActive">—</div>
     </div>
     <div class="bhw-cons-metric bhw-cons-metric--live">
@@ -56,6 +56,9 @@ $bhw_extra_js = [
   </div>
 
   <div class="bhw-cons-panel">
+    <div class="bhw-cons-panel-head">
+      <h3 class="bhw-cons-panel-title">Today&apos;s Consultations</h3>
+    </div>
     <div class="bhw-cons-toolbar">
       <input type="date" id="bhwConsDate" class="form-control" value="<?= htmlspecialchars($initialDate) ?>" style="width:auto;" aria-label="Consultation date">
       <select id="bhwConsStatus" class="form-select" style="width:auto;" aria-label="Status filter">
@@ -86,7 +89,7 @@ $bhw_extra_js = [
           </tr>
         </thead>
         <tbody id="bhwConsBody">
-          <tr><td colspan="6" class="bhw-cons-loading"><span class="bhw-cons-spin" aria-hidden="true"></span>Loading consultations…</td></tr>
+          <tr><td colspan="6" class="bhw-cons-loading">Loading consultations…</td></tr>
         </tbody>
       </table>
     </div>
@@ -95,18 +98,24 @@ $bhw_extra_js = [
   <section class="bhw-cons-help" aria-label="How consultation assist works">
     <article class="bhw-cons-help__card">
       <span class="bhw-cons-help__step">1</span>
-      <h3 class="bhw-cons-help__title">Book via Triage</h3>
-      <p class="bhw-cons-help__text">Register or select a patient, record symptoms, capture teleconsult consent, and book an available provider slot.</p>
+      <div class="bhw-cons-help__body">
+        <h3 class="bhw-cons-help__title">Book via Triage</h3>
+        <p class="bhw-cons-help__text">Select a patient, record symptoms, capture consent, and book a provider slot.</p>
+      </div>
     </article>
     <article class="bhw-cons-help__card">
       <span class="bhw-cons-help__step">2</span>
-      <h3 class="bhw-cons-help__title">Monitor status</h3>
-      <p class="bhw-cons-help__text">This table refreshes every 30 seconds. Filter by date or status to see scheduled, in-call, and completed visits.</p>
+      <div class="bhw-cons-help__body">
+        <h3 class="bhw-cons-help__title">Monitor status</h3>
+        <p class="bhw-cons-help__text">Table refreshes every 30 seconds. Filter by date or status to track visits.</p>
+      </div>
     </article>
     <article class="bhw-cons-help__card">
       <span class="bhw-cons-help__step">3</span>
-      <h3 class="bhw-cons-help__title">Assist video</h3>
-      <p class="bhw-cons-help__text">When a room is active, open <strong>Assist Video</strong> on the patient&apos;s device while they are signed in. You join as facilitator for your barangay.</p>
+      <div class="bhw-cons-help__body">
+        <h3 class="bhw-cons-help__title">Assist video</h3>
+        <p class="bhw-cons-help__text">When a room is active, open Assist Video on the patient&apos;s signed-in device.</p>
+      </div>
     </article>
   </section>
 

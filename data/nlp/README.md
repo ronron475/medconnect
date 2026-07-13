@@ -48,6 +48,27 @@ python scripts/data/build_medlineplus_symptoms.py
 
 Attribution: National Library of Medicine — [MedlinePlus.gov](https://medlineplus.gov/); CMS/NCHS ICD-10-CM; Human Phenotype Ontology
 
+## Emotion intent dataset (FAQ chatbot)
+
+| Purpose | Client-side emotion recognition for the landing-page FAQ chatbot (EN / Filipino / Hiligaynon) |
+| Fields | `emotion`, `phrase`, `language` |
+| Emotions | 20 labels: happy, thankful, relieved, excited, curious, confused, frustrated, worried, anxious, nervous, sad, lonely, afraid, angry, disappointed, stressed, tired, hopeless, panic, emergency |
+| Size | 10,000 phrases (seed + generated variants) |
+
+**Build:**
+
+```bash
+python scripts/data/build_emotion_intent_dataset.py
+```
+
+**Output:**
+
+- `data/nlp/emotion_intent_phrases.csv` — hand-curated seed phrases
+- `data/nlp/emotion_intent_phrases_full.csv` — full export
+- `public/assets/js/faq-chatbot/emotion_intent_dataset.js` — browser bundle
+
+See `data/nlp/EMOTION_INTENT_DATASET_README.md` for details.
+
 ## Allergies (clinical reference)
 
 | Categories | medication, food, environmental, insect, latex, chemical |
@@ -67,18 +88,38 @@ python scripts/data/build_allergies_official.py
 
 ## MySQL import
 
+**Note:** Runtime NLP (PHP + Python) primarily reads CSV files under `data/nlp/`.  
+MySQL tables are optional mirrors for autocomplete/reporting.
+
 1. Create tables:
+
+```bash
+php scripts/data/apply_nlp_schema.php
+```
+
+Or:
 
 ```bash
 mysql -u root -p medconnect < database/schema_nlp_reference.sql
 ```
 
-2. Build CSV files (see above).
+2. Build CSV files (see above), plus:
+
+```bash
+python scripts/dev/generate_clinical_triage_datasets.py
+python scripts/data/build_body_part_pain_symptoms.py
+```
 
 3. Import:
 
 ```bash
 php scripts/data/import_nlp_datasets.php --truncate
+```
+
+Import only expanded clinical helpers:
+
+```bash
+php scripts/data/import_nlp_datasets.php --flags-only --pain-only --dictionary-only --truncate
 ```
 
 Or Python (requires `mysql-connector-python`):

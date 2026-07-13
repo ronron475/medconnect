@@ -81,9 +81,27 @@ try {
         $data['diagnosis'], $data['treatment_plan'], $data['prescription'], $data['signature']
     ]);
 
-    // Update consultation status to completed
-    $stmt = $pdo->prepare("UPDATE consultations SET status = 'completed' WHERE id = ?");
-    $stmt->execute([$data['consultation_id']]);
+    // Update consultation status and sync summary fields for patient My Health timeline
+    $diag = trim((string) ($data['diagnosis'] ?? ''));
+    if ($diag === '') {
+        $diag = trim((string) ($data['assessment'] ?? ''));
+    }
+    $recommendation = trim((string) ($data['treatment_plan'] ?? ''));
+    if ($recommendation === '') {
+        $recommendation = trim((string) ($data['plan'] ?? ''));
+    }
+    $stmt = $pdo->prepare("
+        UPDATE consultations
+        SET status = 'completed',
+            diagnosis = CASE WHEN ? <> '' THEN ? ELSE diagnosis END,
+            recommendation = CASE WHEN ? <> '' THEN ? ELSE recommendation END
+        WHERE id = ? AND provider_id = ?
+    ");
+    $stmt->execute([
+        $diag, $diag,
+        $recommendation, $recommendation,
+        $data['consultation_id'], $data['provider_id'],
+    ]);
 
     require_once dirname(dirname(dirname(__DIR__))) . '/app/includes/notification_events.php';
     NotificationEvents::consultationCompleted(
@@ -94,6 +112,9 @@ try {
         (int) $data['provider_id']
     );
     NotificationEvents::medicalRecordUpdated($pdo, (int) $data['patient_id'], (int) $data['provider_id'], (int) $data['provider_id']);
+
+    require_once dirname(dirname(dirname(__DIR__))) . '/app/includes/bhw_patient_workflow.php';
+    BhwPatientWorkflow::onConsultationCompleted($pdo, (int) $data['patient_id'], 'provider_notes');
 
     echo json_encode(['success' => true, 'message' => 'Clinical notes saved and consultation finalized.']);
 } catch (Exception $e) {

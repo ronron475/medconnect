@@ -134,6 +134,10 @@ final class MedicalTermFilter
             return false;
         }
 
+        if (BodyPartsDataset::isBodyPartOrEnglish($term)) {
+            return false;
+        }
+
         if (isset(self::lexicon()[$key])) {
             return true;
         }

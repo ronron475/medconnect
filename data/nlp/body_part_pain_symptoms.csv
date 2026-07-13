@@ -24,32 +24,290 @@ id,english_alias,canonical_english,official_symptom,body_part,notes
 23,generalized pain,generalized pain,Myalgia,body,whole body
 24,body pain,body pain,Myalgia,body,whole body
 25,whole body pain,whole body pain,Myalgia,body,whole body
-26,mata pain,eye pain,Eye Pain,eye,Hiligaynon part alias: mata
-27,ulo pain,headache,Headache,head,Hiligaynon part alias: ulo
-28,utok pain,headache,Headache,head,Hiligaynon part alias: utok
-29,dalunggan pain,ear pain,Ear Pain,ear,Hiligaynon part alias: dalunggan
-30,dulunggan pain,ear pain,Ear Pain,ear,Hiligaynon part alias: dulunggan
-31,ngipon pain,toothache,Toothache,tooth,Hiligaynon part alias: ngipon
-32,ngipun pain,toothache,Toothache,tooth,Hiligaynon part alias: ngipun
-33,tutunlan pain,throat pain,Throat Pain,throat,Hiligaynon part alias: tutunlan
-34,dughan pain,chest pain,Chest Pain,chest,Hiligaynon part alias: dughan
-35,dibdib pain,chest pain,Chest Pain,chest,Hiligaynon part alias: dibdib
-36,liog pain,neck pain,Neck Pain,neck,Hiligaynon part alias: liog
-37,abaga pain,shoulder pain,Shoulder Pain,shoulder,Hiligaynon part alias: abaga
-38,kamot pain,arm pain,Upper Arm Pain,arm,Hiligaynon part alias: kamot
-39,bukton pain,arm pain,Upper Arm Pain,arm,Hiligaynon part alias: bukton
-40,palad pain,hand pain,Hand Pain,hand,Hiligaynon part alias: palad
-41,likod pain,back pain,Back Pain,back,Hiligaynon part alias: likod
-42,tiyan pain,abdominal pain,Abdominal Pain,abdomen,Hiligaynon part alias: tiyan
-43,tyan pain,abdominal pain,Abdominal Pain,abdomen,Hiligaynon part alias: tyan
-44,tian pain,abdominal pain,Abdominal Pain,abdomen,Hiligaynon part alias: tian
-45,pus-on pain,abdominal pain,Abdominal Pain,abdomen,Hiligaynon part alias: pus-on
-46,sikmura pain,abdominal pain,Abdominal Pain,abdomen,Hiligaynon part alias: sikmura
-47,hawak pain,hip pain,Hip Pain,hip,Hiligaynon part alias: hawak
-48,tiil pain,leg pain,Leg Pain,leg,Hiligaynon part alias: tiil
-49,tuhod pain,knee pain,Knee Pain,knee,Hiligaynon part alias: tuhod
-50,tuhud pain,knee pain,Knee Pain,knee,Hiligaynon part alias: tuhud
-51,talampakan pain,foot pain,Foot Pain,foot,Hiligaynon part alias: talampakan
-52,lutahan pain,joint pain,Joint Pain,joint,Hiligaynon part alias: lutahan
-53,kalawasan pain,muscle pain,Muscle Pain,muscle,Hiligaynon part alias: kalawasan
-54,lawas pain,muscle pain,Muscle Pain,muscle,Hiligaynon part alias: lawas
+26,facial pain,facial pain,Facial Pain,face,orofacial pain
+27,jaw pain,jaw pain,Jaw Pain,jaw,temporomandibular
+28,temple pain,temple pain,Headache,temple,temporal headache
+29,forehead pain,forehead pain,Headache,forehead,frontal headache
+30,eye socket pain,eye socket pain,Eye Pain,orbit,orbital pain
+31,sinus pain,sinus pain,Sinus Pain,sinus,sinusitis-related
+32,nose pain,nose pain,Nasal Pain,nose,nasal
+33,tongue pain,tongue pain,Tongue Pain,tongue,glossalgia
+34,gum pain,gum pain,Gum Pain,gum,gingival pain
+35,neck stiffness pain,neck stiffness pain,Neck Pain,neck,nuchal pain
+36,upper back pain,upper back pain,Upper Back Pain,upper back,thoracic
+37,lower back pain,lower back pain,Low Back Pain,lower back,lumbago
+38,waist pain,waist pain,Low Back Pain,waist,lumbar/flank-adjacent
+39,flank pain,flank pain,Flank Pain,flank,renal colic pattern
+40,rib pain,rib pain,Rib Pain,rib,chest wall
+41,breast pain,breast pain,Breast Pain,breast,mastalgia
+42,epigastric pain,epigastric pain,Epigastric Pain,epigastrium,upper abdominal
+43,right upper abdominal pain,right upper abdominal pain,Right Upper Quadrant Pain,abdomen,RUQ
+44,left upper abdominal pain,left upper abdominal pain,Left Upper Quadrant Pain,abdomen,LUQ
+45,right lower abdominal pain,right lower abdominal pain,Right Lower Quadrant Pain,abdomen,RLQ / appendicitis pattern
+46,left lower abdominal pain,left lower abdominal pain,Left Lower Quadrant Pain,abdomen,LLQ
+47,pelvic pain,pelvic pain,Pelvic Pain,pelvis,pelvic
+48,groin pain,groin pain,Groin Pain,groin,inguinal
+49,genital pain,genital pain,Genital Pain,genital,genitourinary
+50,testicular pain,testicular pain,Testicular Pain,testicle,orchialgia
+51,scrotal pain,scrotal pain,Scrotal Pain,scrotum,scrotal
+52,vaginal pain,vaginal pain,Vaginal Pain,vagina,vulvovaginal
+53,anal pain,anal pain,Anal Pain,anus,anorectal
+54,rectal pain,rectal pain,Rectal Pain,rectum,anorectal
+55,wrist pain,wrist pain,Wrist Pain,wrist,musculoskeletal
+56,elbow pain,elbow pain,Elbow Pain,elbow,musculoskeletal
+57,finger pain,finger pain,Finger Pain,finger,digit
+58,thumb pain,thumb pain,Thumb Pain,thumb,digit
+59,ankle pain,ankle pain,Ankle Pain,ankle,musculoskeletal
+60,heel pain,heel pain,Heel Pain,heel,plantar/calcaneal
+61,toe pain,toe pain,Toe Pain,toe,digit
+62,calf pain,calf pain,Calf Pain,calf,lower limb
+63,thigh pain,thigh pain,Thigh Pain,thigh,lower limb
+64,buttock pain,buttock pain,Buttock Pain,buttock,gluteal
+65,tailbone pain,tailbone pain,Coccyx Pain,coccyx,coccydynia
+66,scalp pain,scalp pain,Scalp Pain,scalp,cranial
+67,cheek pain,cheek pain,Facial Pain,cheek,orofacial
+68,chin pain,chin pain,Jaw Pain,chin,orofacial
+69,collarbone pain,collarbone pain,Clavicle Pain,clavicle,musculoskeletal
+70,sternum pain,sternum pain,Chest Wall Pain,sternum,chest wall
+71,shoulder blade pain,shoulder blade pain,Scapular Pain,scapula,musculoskeletal
+72,forearm pain,forearm pain,Forearm Pain,forearm,upper limb
+73,palm pain,palm pain,Hand Pain,palm,hand
+74,knuckle pain,knuckle pain,Finger Pain,knuckle,digit
+75,mid back pain,mid back pain,Upper Back Pain,mid back,thoracic
+76,sacrum pain,sacrum pain,Low Back Pain,sacrum,lumbosacral
+77,pubic pain,pubic pain,Pelvic Pain,pubis,pelvic
+78,umbilical pain,umbilical pain,Abdominal Pain,umbilicus,periumbilical
+79,side pain,side pain,Flank Pain,side,flank
+80,shin pain,shin pain,Leg Pain,shin,lower limb
+81,sole pain,sole pain,Foot Pain,sole,plantar
+82,arch pain,arch pain,Foot Pain,arch,plantar
+83,big toe pain,big toe pain,Toe Pain,big toe,digit
+84,menstrual pain,menstrual pain,Pelvic Pain,uterus,dysmenorrhea
+85,uterine pain,uterine pain,Pelvic Pain,uterus,gynecologic
+86,ovary pain,ovary pain,Pelvic Pain,ovary,gynecologic
+87,prostate pain,prostate pain,Pelvic Pain,prostate,urologic
+88,bladder pain,bladder pain,Pelvic Pain,bladder,urologic
+89,kidney pain,kidney pain,Flank Pain,kidney,renal
+90,orbit pain,orbit pain,Eye Pain,orbit,orbital
+91,maxilla pain,maxilla pain,Facial Pain,maxilla,orofacial
+92,mandible pain,mandible pain,Jaw Pain,mandible,TMJ/jaw
+93,mastoid pain,mastoid pain,Ear Pain,mastoid,otologic
+94,tonsillar pain,tonsillar pain,Throat Pain,tonsil,pharyngeal
+95,thyroid pain,thyroid pain,Neck Pain,thyroid,neck
+96,trapezius pain,trapezius pain,Shoulder Pain,trapezius,musculoskeletal
+97,axilla pain,axilla pain,Arm Pain,axilla,upper limb
+98,biceps pain,biceps pain,Upper Arm Pain,biceps,upper limb
+99,triceps pain,triceps pain,Upper Arm Pain,triceps,upper limb
+100,metacarpophalangeal pain,metacarpophalangeal pain,Finger Pain,MCP joint,digit
+101,costochondral pain,costochondral pain,Chest Wall Pain,costochondral,chest wall
+102,interscapular pain,interscapular pain,Scapular Pain,interscapular,thoracic
+103,lumbar pain,lumbar pain,Low Back Pain,lumbar,lumbago
+104,iliac pain,iliac pain,Hip Pain,iliac,pelvic/hip
+105,inguinal pain,inguinal pain,Groin Pain,inguinal,inguinal
+106,perineal pain,perineal pain,Pelvic Pain,perineum,perineal
+107,vulvar pain,vulvar pain,Vaginal Pain,vulva,vulvovaginal
+108,penile pain,penile pain,Genital Pain,penis,genitourinary
+109,hamstring pain,hamstring pain,Thigh Pain,hamstring,lower limb
+110,quadriceps pain,quadriceps pain,Thigh Pain,quadriceps,lower limb
+111,patellar pain,patellar pain,Knee Pain,patella,knee
+112,popliteal pain,popliteal pain,Knee Pain,popliteal,posterior knee
+113,achilles pain,achilles pain,Heel Pain,achilles,tendon
+114,metatarsal pain,metatarsal pain,Foot Pain,metatarsal,foot
+115,plantar fascia pain,plantar fascia pain,Foot Pain,plantar fascia,plantar fasciitis
+116,mata pain,eye pain,Eye Pain,eye,Hiligaynon part alias: mata
+117,ulo pain,headache,Headache,head,Hiligaynon part alias: ulo
+118,utok pain,headache,Headache,head,Hiligaynon part alias: utok
+119,dalunggan pain,ear pain,Ear Pain,ear,Hiligaynon part alias: dalunggan
+120,dulunggan pain,ear pain,Ear Pain,ear,Hiligaynon part alias: dulunggan
+121,ngipon pain,toothache,Toothache,tooth,Hiligaynon part alias: ngipon
+122,ngipun pain,toothache,Toothache,tooth,Hiligaynon part alias: ngipun
+123,tutunlan pain,throat pain,Throat Pain,throat,Hiligaynon part alias: tutunlan
+124,dughan pain,chest pain,Chest Pain,chest,Hiligaynon part alias: dughan
+125,dibdib pain,chest pain,Chest Pain,chest,Hiligaynon part alias: dibdib
+126,liog pain,neck pain,Neck Pain,neck,Hiligaynon part alias: liog
+127,abaga pain,shoulder pain,Shoulder Pain,shoulder,Hiligaynon part alias: abaga
+128,kamot pain,arm pain,Upper Arm Pain,arm,Hiligaynon part alias: kamot
+129,bukton pain,arm pain,Upper Arm Pain,arm,Hiligaynon part alias: bukton
+130,palad pain,hand pain,Hand Pain,hand,Hiligaynon part alias: palad
+131,likod pain,back pain,Back Pain,back,Hiligaynon part alias: likod
+132,tiyan pain,abdominal pain,Abdominal Pain,abdomen,Hiligaynon part alias: tiyan
+133,tyan pain,abdominal pain,Abdominal Pain,abdomen,Hiligaynon part alias: tyan
+134,tian pain,abdominal pain,Abdominal Pain,abdomen,Hiligaynon part alias: tian
+135,pus-on pain,abdominal pain,Abdominal Pain,abdomen,Hiligaynon part alias: pus-on
+136,sikmura pain,abdominal pain,Abdominal Pain,abdomen,Hiligaynon part alias: sikmura
+137,hawak pain,hip pain,Hip Pain,hip,Hiligaynon part alias: hawak
+138,tiil pain,leg pain,Leg Pain,leg,Hiligaynon part alias: tiil
+139,tuhod pain,knee pain,Knee Pain,knee,Hiligaynon part alias: tuhod
+140,tuhud pain,knee pain,Knee Pain,knee,Hiligaynon part alias: tuhud
+141,talampakan pain,foot pain,Foot Pain,foot,Hiligaynon part alias: talampakan
+142,lutahan pain,joint pain,Joint Pain,joint,Hiligaynon part alias: lutahan
+143,kalawasan pain,muscle pain,Muscle Pain,muscle,Hiligaynon part alias: kalawasan
+144,lawas pain,muscle pain,Muscle Pain,muscle,Hiligaynon part alias: lawas
+145,guya pain,facial pain,Facial Pain,face,Hiligaynon part alias: guya
+146,pangpang pain,jaw pain,Jaw Pain,jaw,Hiligaynon part alias: pangpang
+147,ilong pain,nose pain,Nasal Pain,nose,Hiligaynon part alias: ilong
+148,dila pain,tongue pain,Tongue Pain,tongue,Hiligaynon part alias: dila
+149,ngipon-ulo pain,toothache,Toothache,tooth,Hiligaynon part alias: ngipon-ulo
+150,ngisi pain,jaw pain,Jaw Pain,jaw,Hiligaynon part alias: ngisi
+151,tuhod-likod pain,knee pain,Knee Pain,knee,Hiligaynon part alias: tuhod-likod
+152,tako pain,waist pain,Low Back Pain,waist,Hiligaynon part alias: tako
+153,kilid pain,flank pain,Flank Pain,flank,Hiligaynon part alias: kilid
+154,gusok pain,rib pain,Rib Pain,rib,Hiligaynon part alias: gusok
+155,suso pain,breast pain,Breast Pain,breast,Hiligaynon part alias: suso
+156,dughan-babae pain,breast pain,Breast Pain,breast,Hiligaynon part alias: dughan-babae
+157,pusod pain,abdominal pain,Abdominal Pain,abdomen,Hiligaynon part alias: pusod
+158,utot-tiyan pain,abdominal pain,Abdominal Pain,abdomen,Hiligaynon part alias: utot-tiyan
+159,singit pain,groin pain,Groin Pain,groin,Hiligaynon part alias: singit
+160,bilat pain,vaginal pain,Vaginal Pain,vagina,Hiligaynon part alias: bilat
+161,ari pain,genital pain,Genital Pain,genital,Hiligaynon part alias: ari
+162,itlog pain,testicular pain,Testicular Pain,testicle,Hiligaynon part alias: itlog
+163,bayag pain,testicular pain,Testicular Pain,testicle,Hiligaynon part alias: bayag
+164,bulbol pain,genital pain,Genital Pain,genital,Hiligaynon part alias: bulbol
+165,lubot pain,anal pain,Anal Pain,anus,Hiligaynon part alias: lubot
+166,puwet pain,buttock pain,Buttock Pain,buttock,Hiligaynon part alias: puwet
+167,siko pain,elbow pain,Elbow Pain,elbow,Hiligaynon part alias: siko
+168,pulso pain,wrist pain,Wrist Pain,wrist,Hiligaynon part alias: pulso
+169,tudlo pain,finger pain,Finger Pain,finger,Hiligaynon part alias: tudlo
+170,buku-buku pain,ankle pain,Ankle Pain,ankle,Hiligaynon part alias: buku-buku
+171,bukong-bukong pain,ankle pain,Ankle Pain,ankle,Hiligaynon part alias: bukong-bukong
+172,tikod pain,heel pain,Heel Pain,heel,Hiligaynon part alias: tikod
+173,tuhud-tiil pain,toe pain,Toe Pain,toe,Hiligaynon part alias: tuhud-tiil
+174,batiis pain,calf pain,Calf Pain,calf,Hiligaynon part alias: batiis
+175,paa pain,thigh pain,Thigh Pain,thigh,Hiligaynon part alias: paa
+176,lupit pain,buttock pain,Buttock Pain,buttock,Hiligaynon part alias: lupit
+177,tuko pain,tailbone pain,Coccyx Pain,coccyx,Hiligaynon part alias: tuko
+178,kilkig pain,rib pain,Rib Pain,rib,Hiligaynon part alias: kilkig
+179,agtang pain,forehead pain,Headache,forehead,Hiligaynon part alias: agtang
+180,tinampo pain,temple pain,Headache,temple,Hiligaynon part alias: tinampo
+181,bumbunan pain,scalp pain,Scalp Pain,scalp,Hiligaynon part alias: bumbunan
+182,pisngi pain,cheek pain,Facial Pain,cheek,Hiligaynon part alias: pisngi
+183,suwang pain,chin pain,Jaw Pain,chin,Hiligaynon part alias: suwang
+184,tuklang pain,collarbone pain,Clavicle Pain,clavicle,Hiligaynon part alias: tuklang
+185,dughan-tunga pain,sternum pain,Chest Wall Pain,sternum,Hiligaynon part alias: dughan-tunga
+186,palad-likod pain,shoulder blade pain,Scapular Pain,scapula,Hiligaynon part alias: palad-likod
+187,bukton-baba pain,forearm pain,Forearm Pain,forearm,Hiligaynon part alias: bukton-baba
+188,likod-tunga pain,mid back pain,Upper Back Pain,mid back,Hiligaynon part alias: likod-tunga
+189,taytok pain,sacrum pain,Low Back Pain,sacrum,Hiligaynon part alias: taytok
+190,bilog-pusod pain,umbilical pain,Abdominal Pain,umbilicus,Hiligaynon part alias: bilog-pusod
+191,kilid-lawas pain,side pain,Flank Pain,side,Hiligaynon part alias: kilid-lawas
+192,tuhod-tiil pain,shin pain,Leg Pain,shin,Hiligaynon part alias: tuhod-tiil
+193,talampakan-baba pain,sole pain,Foot Pain,sole,Hiligaynon part alias: talampakan-baba
+194,halang pain,arch pain,Foot Pain,arch,Hiligaynon part alias: halang
+195,higante-tudlo pain,big toe pain,Toe Pain,big toe,Hiligaynon part alias: higante-tudlo
+196,regla-sakit pain,menstrual pain,Pelvic Pain,uterus,Hiligaynon part alias: regla-sakit
+197,matris pain,uterine pain,Pelvic Pain,uterus,Hiligaynon part alias: matris
+198,obaryo pain,ovary pain,Pelvic Pain,ovary,Hiligaynon part alias: obaryo
+199,pantog pain,bladder pain,Pelvic Pain,bladder,Hiligaynon part alias: pantog
+200,batyag-kidney pain,kidney pain,Flank Pain,kidney,Hiligaynon part alias: batyag-kidney
+201,orbita pain,orbit pain,Eye Pain,orbit,Hiligaynon part alias: orbita
+202,apapangig pain,mandible pain,Jaw Pain,mandible,Hiligaynon part alias: apapangig
+203,tonsila pain,tonsillar pain,Throat Pain,tonsil,Hiligaynon part alias: tonsila
+204,tiroides pain,thyroid pain,Neck Pain,thyroid,Hiligaynon part alias: tiroides
+205,kilikili pain,axilla pain,Arm Pain,axilla,Hiligaynon part alias: kilikili
+206,bukton-biceps pain,biceps pain,Upper Arm Pain,biceps,Hiligaynon part alias: bukton-biceps
+207,gusok-tunga pain,costochondral pain,Chest Wall Pain,costochondral,Hiligaynon part alias: gusok-tunga
+208,likod-abaga pain,interscapular pain,Scapular Pain,interscapular,Hiligaynon part alias: likod-abaga
+209,lumbay pain,lumbar pain,Low Back Pain,lumbar,Hiligaynon part alias: lumbay
+210,hawak-tuhod pain,iliac pain,Hip Pain,iliac,Hiligaynon part alias: hawak-tuhod
+211,singit-baba pain,inguinal pain,Groin Pain,inguinal,Hiligaynon part alias: singit-baba
+212,ilig pain,perineal pain,Pelvic Pain,perineum,Hiligaynon part alias: ilig
+213,bilat-luwas pain,vulvar pain,Vaginal Pain,vulva,Hiligaynon part alias: bilat-luwas
+214,ari-sakit pain,penile pain,Genital Pain,penis,Hiligaynon part alias: ari-sakit
+215,paa-likod pain,hamstring pain,Thigh Pain,hamstring,Hiligaynon part alias: paa-likod
+216,paa-atubangan pain,quadriceps pain,Thigh Pain,quadriceps,Hiligaynon part alias: paa-atubangan
+217,tuhod-ulo pain,patellar pain,Knee Pain,patella,Hiligaynon part alias: tuhod-ulo
+218,likod-tuhod pain,popliteal pain,Knee Pain,popliteal,Hiligaynon part alias: likod-tuhod
+219,tendo-tikod pain,achilles pain,Heel Pain,achilles,Hiligaynon part alias: tendo-tikod
+220,talampakan-tunga pain,metatarsal pain,Foot Pain,metatarsal,Hiligaynon part alias: talampakan-tunga
+221,plantar pain,plantar fascia pain,Foot Pain,plantar fascia,Hiligaynon part alias: plantar
+222,gasakit ulo,headache,Headache,head,WV slang headache
+223,sakit sang ulo,headache,Headache,head,WV slang headache
+224,labad-ulo,headache,Headache,head,WV slang migraine-like
+225,hapdi dughan,chest pain,Chest Pain,chest,WV slang chest pain
+226,sakit sa dughan,chest pain,Chest Pain,chest,WV slang chest pain
+227,budlay dughan,chest pain,Chest Pain,chest,WV pressure/discomfort
+228,sakit tiyan,abdominal pain,Abdominal Pain,abdomen,WV abdominal pain
+229,baldom tiyan,abdominal pain,Abdominal Pain,abdomen,WV colicky abdomen
+230,ginabaldom,abdominal pain,Abdominal Pain,abdomen,WV abdominal colic
+231,sakit likod,back pain,Back Pain,back,WV back pain
+232,hapdi likod,back pain,Back Pain,back,WV back pain
+233,sakit tuhod,knee pain,Knee Pain,knee,WV knee pain
+234,sakit tutunlan,throat pain,Throat Pain,throat,WV sore throat
+235,hapdi tutunlan,sore throat,Sore Throat,throat,WV pharyngalgia
+236,sakit mata,eye pain,Eye Pain,eye,WV eye pain
+237,hapdi mata,eye pain,Eye Pain,eye,WV eye pain
+238,sakit dalunggan,ear pain,Ear Pain,ear,WV ear pain
+239,sakit ngipon,toothache,Toothache,tooth,WV toothache
+240,sakit liog,neck pain,Neck Pain,neck,WV neck pain
+241,sakit abaga,shoulder pain,Shoulder Pain,shoulder,WV shoulder pain
+242,sakit kamot,arm pain,Upper Arm Pain,arm,WV arm/hand pain
+243,sakit tiil,leg pain,Leg Pain,leg,WV leg pain
+244,sakit itlog,testicular pain,Testicular Pain,testicle,WV testicular pain
+245,sakit bilat,vaginal pain,Vaginal Pain,vagina,WV vaginal pain
+246,sakit ari,genital pain,Genital Pain,genital,WV genital pain
+247,sakit singit,groin pain,Groin Pain,groin,WV groin pain
+248,sakit kilid,flank pain,Flank Pain,flank,WV flank pain
+249,sakit lawas,body pain,Myalgia,body,WV whole-body pain
+250,masakit kalawasan,body pain,Myalgia,body,WV myalgia
+251,labad ulo gid,headache,Headache,head,severe WV headache
+252,nagahapdi ulo,headache,Headache,head,WV headache
+253,ginasakit ulo ko,headache,Headache,head,WV headache
+254,pig-ot dughan,chest pain,Chest Pain,chest,WV chest tightness
+255,hapdi dibdib,chest pain,Chest Pain,chest,WV chest pain
+256,ginasakit dughan,chest pain,Chest Pain,chest,WV chest pain
+257,nagabaldom tiyan,abdominal pain,Abdominal Pain,abdomen,WV abdominal colic
+258,ginahapdi tiyan,abdominal pain,Abdominal Pain,abdomen,WV abdominal pain
+259,sakit sa sikmura,epigastric pain,Epigastric Pain,epigastrium,WV epigastric
+260,sakit tuo tiyan,right lower abdominal pain,Right Lower Quadrant Pain,abdomen,WV RLQ
+261,sakit wala tiyan,left lower abdominal pain,Left Lower Quadrant Pain,abdomen,WV LLQ
+262,sakit pusod,umbilical pain,Abdominal Pain,umbilicus,WV periumbilical
+263,sakit sa kilid,flank pain,Flank Pain,flank,WV flank/kidney
+264,sakit pantog,bladder pain,Pelvic Pain,bladder,WV bladder pain
+265,sakit sa regla,menstrual pain,Pelvic Pain,uterus,WV dysmenorrhea
+266,cramps sa regla,menstrual pain,Pelvic Pain,uterus,WV menstrual cramps
+267,sakit matris,uterine pain,Pelvic Pain,uterus,WV uterine pain
+268,sakit obaryo,ovary pain,Pelvic Pain,ovary,WV ovarian pain
+269,sakit bayag,testicular pain,Testicular Pain,testicle,WV testicular pain
+270,hapdi itlog gid,testicular pain,Testicular Pain,testicle,WV orchialgia
+271,sakit lubot,anal pain,Anal Pain,anus,WV anal pain
+272,hapdi lubot,anal pain,Anal Pain,anus,WV anorectal
+273,sakit puwet,buttock pain,Buttock Pain,buttock,WV gluteal
+274,sakit batiis,calf pain,Calf Pain,calf,WV calf pain
+275,sakit paa,thigh pain,Thigh Pain,thigh,WV thigh pain
+276,sakit buku-buku,ankle pain,Ankle Pain,ankle,WV ankle pain
+277,sakit tikod,heel pain,Heel Pain,heel,WV heel pain
+278,sakit siko,elbow pain,Elbow Pain,elbow,WV elbow
+279,sakit pulso,wrist pain,Wrist Pain,wrist,WV wrist
+280,sakit tudlo,finger pain,Finger Pain,finger,WV finger
+281,sakit talampakan,foot pain,Foot Pain,foot,WV foot
+282,sakit gusok,rib pain,Rib Pain,rib,WV rib
+283,sakit suso,breast pain,Breast Pain,breast,WV breast
+284,hapdi suso,breast pain,Breast Pain,breast,WV mastalgia
+285,sakit bumbunan,scalp pain,Scalp Pain,scalp,WV scalp
+286,sakit agtang,forehead pain,Headache,forehead,WV forehead
+287,sakit tinampo,temple pain,Headache,temple,WV temple
+288,sakit pisngi,cheek pain,Facial Pain,cheek,WV cheek
+289,sakit dila,tongue pain,Tongue Pain,tongue,WV tongue
+290,sakit ilong,nose pain,Nasal Pain,nose,WV nose
+291,sakit ngisi,jaw pain,Jaw Pain,jaw,WV jaw
+292,sakit orbita,orbit pain,Eye Pain,orbit,WV orbital
+293,sakit apapangig,mandible pain,Jaw Pain,mandible,WV mandible
+294,sakit tonsila,tonsillar pain,Throat Pain,tonsil,WV tonsillar
+295,sakit kilikili,axilla pain,Arm Pain,axilla,WV axillary
+296,sakit lumbay,lumbar pain,Low Back Pain,lumbar,WV lumbar
+297,sakit singit baba,inguinal pain,Groin Pain,inguinal,WV inguinal
+298,sakit ilig,perineal pain,Pelvic Pain,perineum,WV perineal
+299,hapdi ari,penile pain,Genital Pain,penis,WV penile
+300,sakit ari gid,penile pain,Genital Pain,penis,WV genital
+301,sakit paa likod,hamstring pain,Thigh Pain,hamstring,WV hamstring
+302,sakit tuhod-ulo,patellar pain,Knee Pain,patella,WV patellar
+303,sakit tendo tikod,achilles pain,Heel Pain,achilles,WV Achilles
+304,sakit talampakan tunga,metatarsal pain,Foot Pain,metatarsal,WV metatarsal
+305,hapdi plantar,plantar fascia pain,Foot Pain,plantar fascia,WV plantar fasciitis
+306,sakit guya gid,facial pain,Facial Pain,face,WV facial
+307,ginasakit abaga ko,shoulder pain,Shoulder Pain,shoulder,WV shoulder
+308,ginasakit liog ko,neck pain,Neck Pain,neck,WV neck
+309,hapdi likod baba,lower back pain,Low Back Pain,lower back,WV low back
+310,sakit hawak,hip pain,Hip Pain,hip,WV hip
+311,sakit tuo dughan,chest pain,Chest Pain,chest,WV right chest
+312,sakit wala dughan,chest pain,Chest Pain,chest,WV left chest

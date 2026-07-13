@@ -7,8 +7,11 @@ require __DIR__ . '/partials/queue_helpers.php';
 require_once BASE_PATH . '/app/includes/message_deletion.php';
 
 $page_styles = ['provider_session_alert.css', 'messages-delete.css'];
+$provider_messages_css_ver = (int) @filemtime(ASSETS_PATH . '/css/provider-messages.css');
 
 $provider_id = (int)($_SESSION['user_id'] ?? 0);
+$box = strtolower(trim((string) ($_GET['box'] ?? 'inbox'))); // inbox|archived|all
+if (!in_array($box, ['inbox', 'archived', 'all'], true)) $box = 'inbox';
 
 function provider_message_initials(string $name): string
 {
@@ -22,6 +25,7 @@ $conversations = [];
 
 try {
     consultation_messages_ensure_schema($pdo);
+    consultation_thread_state_ensure_schema($pdo);
 
     $stmt = $pdo->prepare("
         SELECT
@@ -32,6 +36,8 @@ try {
             c.consult_type,
             c.status,
             c.created_at,
+            s.slot_date,
+            s.start_time AS slot_start,
             u.first_name,
             u.last_name,
             u.email,
@@ -41,9 +47,13 @@ try {
             tr.chief_complaint,
             tr.symptoms,
             tr.urgency_label,
-            vs.room_token
+            vs.room_token,
+            COALESCE(ts.is_archived, 0) AS is_archived,
+            COALESCE(ts.is_deleted, 0) AS is_deleted,
+            COALESCE(unread.cnt, 0) AS unread
         FROM consultations c
         JOIN users u ON u.id = c.patient_id
+        LEFT JOIN consultation_thread_state ts ON ts.consultation_id = c.id AND ts.user_id = ?
         LEFT JOIN patient_registrations pr ON pr.email = u.email
         LEFT JOIN (
             SELECT t1.*
@@ -55,7 +65,15 @@ try {
             ) t2 ON t2.patient_id = t1.patient_id AND t2.latest_at = t1.assessed_at
         ) tr ON tr.patient_id = c.patient_id
         LEFT JOIN video_sessions vs ON vs.consultation_id = c.id AND vs.status = 'active'
+        LEFT JOIN appointment_slots s ON s.consultation_id = c.id AND s.status = 'booked'
+        LEFT JOIN (
+            SELECT consultation_id, COUNT(*) AS cnt
+            FROM consultation_messages
+            WHERE receiver_id = ? AND is_read = 0 AND is_deleted_for_everyone = 0
+            GROUP BY consultation_id
+        ) unread ON unread.consultation_id = c.id
         WHERE c.provider_id = ?
+          AND (ts.is_deleted IS NULL OR ts.is_deleted = 0)
         ORDER BY
             CASE c.status
                 WHEN 'in_consultation' THEN 1
@@ -66,7 +84,7 @@ try {
             c.consult_date DESC,
             c.consult_time DESC
     ");
-    $stmt->execute([$provider_id]);
+    $stmt->execute([$provider_id, $provider_id, $provider_id]);
     $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
     $consultation_ids = array_map(fn($row) => (int)$row['consultation_id'], $rows);
     $messages_by_consultation = [];
@@ -93,6 +111,10 @@ try {
     }
 
     foreach ($rows as $row) {
+        $archived = !empty($row['is_archived']);
+        if ($box === 'inbox' && $archived) continue;
+        if ($box === 'archived' && !$archived) continue;
+
         $name = trim(($row['first_name'] ?? '') . ' ' . ($row['last_name'] ?? ''));
         $complaint = $row['chief_complaint'] ?: $row['consult_type'] ?: 'General Consultation';
         $preview = $row['chief_complaint']
@@ -103,6 +125,8 @@ try {
             'status'       => $row['status'] ?? 'pending',
             'consult_date' => $row['consult_date'] ?? '',
             'consult_time' => $row['consult_time'] ?? '',
+            'slot_date'    => $row['slot_date'] ?? '',
+            'slot_start'   => $row['slot_start'] ?? '',
         ]);
 
         $conversations[] = [
@@ -125,6 +149,8 @@ try {
             'session_block_reason' => $session_access['reason'],
             'scheduled_label'      => $session_access['scheduled_label'],
             'room_token'           => $row['room_token'] ?: '',
+            'is_archived'          => (int) ($row['is_archived'] ?? 0),
+            'unread'               => (int) ($row['unread'] ?? 0),
             'messages'             => $messages_by_consultation[(int)$row['consultation_id']] ?? [],
         ];
     }
@@ -179,312 +205,137 @@ $active_msg = $conversations[0] ?? [
     'messages' => [],
 ];
 
+// Do NOT mark as read on page load. Read state is updated only when the user opens a conversation
+// (handled via POST /app/api/messages/mark_read.php with CSRF).
+
 require __DIR__ . '/partials/layout_open.php';
 ?>
 
-<style>
-  .messages-shell {
-    display: grid;
-    grid-template-columns: minmax(280px, 360px) minmax(0, 1fr);
-    gap: 20px;
-    height: calc(100vh - 150px);
-    min-height: 620px;
-  }
-  .msg-panel {
-    background: #fff;
-    border: 1px solid #e2e8f0;
-    border-radius: 12px;
-    box-shadow: 0 8px 24px rgba(15, 23, 42, 0.05);
-    overflow: hidden;
-  }
-  .msg-sidebar, .msg-thread { display: flex; flex-direction: column; min-height: 0; }
-  .msg-header {
-    min-height: 72px;
-    padding: 16px 18px;
-    border-bottom: 1px solid #e2e8f0;
-    background: #f8fafc;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 14px;
-  }
-  .msg-title {
-    display: flex;
-    align-items: center;
-    gap: 9px;
-    color: #0f172a;
-    font-size: 15px;
-    font-weight: 800;
-  }
-  .msg-search { padding: 12px 14px; border-bottom: 1px solid #e2e8f0; }
-  .msg-search input {
-    width: 100%;
-    height: 38px;
-    border: 1px solid #dbe4ea;
-    border-radius: 9px;
-    background: #fff;
-    color: #0f172a;
-    padding: 0 12px 0 36px;
-    font: inherit;
-    font-size: 13px;
-    outline: none;
-  }
-  .msg-search-wrap { position: relative; }
-  .msg-search-wrap span { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: #64748b; }
-  .msg-list { overflow-y: auto; flex: 1; }
-  .msg-item {
-    width: 100%;
-    border: 0;
-    border-bottom: 1px solid #edf2f7;
-    background: #fff;
-    padding: 14px 16px;
-    display: grid;
-    grid-template-columns: 42px minmax(0, 1fr);
-    gap: 12px;
-    text-align: left;
-    cursor: pointer;
-    transition: background 0.15s, box-shadow 0.15s;
-  }
-  .msg-item:hover, .msg-item.active { background: #f0fdfa; box-shadow: inset 3px 0 0 #0d9488; }
-  .msg-avatar {
-    width: 42px;
-    height: 42px;
-    border-radius: 50%;
-    background: linear-gradient(135deg, #0d9488, #1d4ed8);
-    color: #fff;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 12px;
-    font-weight: 800;
-    flex-shrink: 0;
-  }
-  .msg-name-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 3px; }
-  .msg-name { color: #0f172a; font-size: 13.5px; font-weight: 800; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  .msg-time { color: #64748b; font-size: 11px; white-space: nowrap; }
-  .msg-preview { color: #64748b; font-size: 12.5px; line-height: 1.35; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  .msg-status {
-    display: inline-flex;
-    width: fit-content;
-    margin-top: 8px;
-    padding: 3px 8px;
-    border-radius: 999px;
-    background: #e0f2fe;
-    color: #075985;
-    font-size: 10px;
-    font-weight: 800;
-    text-transform: uppercase;
-  }
-  .msg-actions { display: flex; flex-wrap: wrap; gap: 8px; justify-content: flex-end; }
-  .msg-action {
-    height: 38px;
-    border-radius: 9px;
-    border: 1px solid #dbe4ea;
-    background: #fff;
-    color: #0f172a;
-    padding: 0 13px;
-    font-size: 12.5px;
-    font-weight: 800;
-    display: inline-flex;
-    align-items: center;
-    gap: 7px;
-    text-decoration: none;
-    cursor: pointer;
-  }
-  .msg-action:hover { background: #f8fafc; }
-  .msg-action.primary { background: #0d9488; border-color: #0d9488; color: #fff; }
-  .msg-action.primary:hover { background: #0f766e; }
-  .msg-action:disabled {
-    opacity: 0.45;
-    cursor: not-allowed;
-    pointer-events: none;
-  }
-  .msg-action.is-schedule-blocked {
-    opacity: 0.55;
-    cursor: not-allowed;
-    background: #94a3b8;
-    border-color: #94a3b8;
-    color: #fff;
-  }
-  .msg-action.primary.is-schedule-blocked {
-    background: #94a3b8;
-    border-color: #94a3b8;
-  }
-  .msg-action.is-schedule-blocked:hover {
-    background: #94a3b8;
-    border-color: #94a3b8;
-    color: #fff;
-  }
-  .patient-strip {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    min-width: 0;
-  }
-  .patient-meta { color: #64748b; font-size: 12px; margin-top: 2px; }
-  .thread-body {
-    flex: 1;
-    overflow-y: auto;
-    overflow-x: hidden;
-    padding: 22px;
-    background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
-  }
-  .msg-thread .thread-body .bubble-wrap {
-    max-width: 100%;
-  }
-  .clinical-card {
-    border: 1px solid #e2e8f0;
-    border-radius: 12px;
-    background: #fff;
-    padding: 16px;
-    margin-bottom: 18px;
-    display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: 14px;
-  }
-  .clinical-label { color: #64748b; font-size: 11px; font-weight: 800; text-transform: uppercase; margin-bottom: 5px; }
-  .clinical-value { color: #0f172a; font-size: 13px; font-weight: 700; line-height: 1.4; }
-  .bubble-row { display: flex; gap: 10px; align-items: flex-end; margin-bottom: 14px; }
-  .bubble-row.provider { flex-direction: row-reverse; }
-  .bubble { max-width: 68%; border-radius: 14px; padding: 12px 14px; font-size: 13.5px; line-height: 1.55; }
-  .bubble.patient { background: #fff; border: 1px solid #e2e8f0; color: #334155; border-bottom-left-radius: 4px; }
-  .bubble.provider { background: #ccfbf1; border: 1px solid #99f6e4; color: #134e4a; border-bottom-right-radius: 4px; }
-  .bubble-time { color: #64748b; font-size: 11px; margin-top: 4px; }
-  .composer {
-    padding: 14px 16px;
-    border-top: 1px solid #e2e8f0;
-    background: #fff;
-    display: flex;
-    align-items: center;
-    gap: 10px;
-  }
-  .composer input {
-    flex: 1;
-    height: 42px;
-    border: 1px solid #dbe4ea;
-    border-radius: 10px;
-    padding: 0 14px;
-    font: inherit;
-    color: #0f172a;
-    outline: none;
-  }
-  .msg-alert {
-    display: none;
-    margin: 0 18px 14px;
-    padding: 10px 12px;
-    border-radius: 9px;
-    font-size: 12.5px;
-    font-weight: 700;
-  }
-  .msg-alert.show { display: block; }
-  .msg-alert.error { background: #fef2f2; color: #991b1b; border: 1px solid #fecaca; }
-  .msg-alert.info { background: #eff6ff; color: #1e40af; border: 1px solid #bfdbfe; }
-  .msg-alert.success { background: #ecfdf5; color: #047857; border: 1px solid #a7f3d0; }
-  @media (max-width: 980px) {
-    .messages-shell { grid-template-columns: 1fr; height: auto; }
-    .msg-sidebar { max-height: 420px; }
-    .clinical-card { grid-template-columns: 1fr; }
-    .bubble { max-width: 82%; }
-  }
-</style>
+<link rel="stylesheet" href="<?= ASSET_BASE ?>/assets/css/provider-messages.css?v=<?= $provider_messages_css_ver ?>"/>
 
-<div class="messages-shell">
-  <aside class="msg-panel msg-sidebar">
-    <div class="msg-header">
-      <div class="msg-title"><?= icon('message') ?> Patient Messages</div>
-      <span class="msg-status" id="refreshStatus">Auto-refresh on</span>
-    </div>
-    <div class="msg-search">
-      <div class="msg-search-wrap">
-        <span><?= icon_sm('search') ?></span>
-        <input type="search" id="messageSearch" placeholder="Search patients">
+<div class="messages-page">
+  <header class="messages-page-head">
+    <h1 class="messages-page-title">Messages</h1>
+    <span class="messages-refresh-badge" id="refreshStatus">Auto-refresh on</span>
+  </header>
+
+  <div class="mc-msg-filters" role="tablist" aria-label="Conversation filter">
+    <a class="mc-msg-filter <?= $box === 'inbox' ? 'is-active' : '' ?>" href="?box=inbox" role="tab" aria-selected="<?= $box === 'inbox' ? 'true' : 'false' ?>">Inbox</a>
+    <a class="mc-msg-filter <?= $box === 'archived' ? 'is-active' : '' ?>" href="?box=archived" role="tab" aria-selected="<?= $box === 'archived' ? 'true' : 'false' ?>">Archived</a>
+    <a class="mc-msg-filter <?= $box === 'all' ? 'is-active' : '' ?>" href="?box=all" role="tab" aria-selected="<?= $box === 'all' ? 'true' : 'false' ?>">All</a>
+  </div>
+
+  <div class="messages-shell" id="messagesShell">
+    <aside class="msg-panel msg-panel--list">
+      <div class="msg-sidebar-top">
+        <div class="msg-search-wrap">
+          <span class="msg-search-icon" aria-hidden="true"><?= icon_sm('search') ?></span>
+          <input type="search" id="messageSearch" placeholder="Search patients" aria-label="Search patients">
+        </div>
       </div>
-    </div>
-    <div class="msg-list" id="messageList">
-      <?php foreach ($conversations as $index => $conversation): ?>
-        <button
-          type="button"
-          class="msg-item <?= $index === 0 ? 'active' : '' ?>"
-          data-index="<?= $index ?>"
-          data-search="<?= htmlspecialchars(strtolower($conversation['name'] . ' ' . $conversation['preview'] . ' ' . $conversation['status'])) ?>"
-        >
-          <span class="msg-avatar"><?= htmlspecialchars($conversation['initials']) ?></span>
-          <span style="min-width:0">
-            <span class="msg-name-row">
-              <span class="msg-name"><?= htmlspecialchars($conversation['name']) ?></span>
-              <span class="msg-time" data-msg-time="<?= $index ?>"><?= htmlspecialchars($conversation['time']) ?></span>
+      <div class="msg-list" id="messageList">
+        <?php foreach ($conversations as $index => $conversation): ?>
+          <button
+            type="button"
+            class="msg-item <?= $index === 0 ? 'active' : '' ?><?= !empty($conversation['unread']) ? ' is-unread' : '' ?>"
+            data-index="<?= $index ?>"
+            data-search="<?= htmlspecialchars(strtolower($conversation['name'] . ' ' . $conversation['preview'] . ' ' . $conversation['status'])) ?>"
+            data-consultation-id="<?= (int) ($conversation['consultation_id'] ?? 0) ?>"
+            data-archived="<?= !empty($conversation['is_archived']) ? '1' : '0' ?>"
+          >
+            <span class="msg-avatar" aria-hidden="true"><?= htmlspecialchars($conversation['initials']) ?></span>
+            <span class="msg-item-body">
+              <span class="msg-name-row">
+                <span class="msg-name"><?= htmlspecialchars($conversation['name']) ?></span>
+                <span class="msg-time" data-msg-time="<?= $index ?>"><?= htmlspecialchars($conversation['time']) ?></span>
+              </span>
+              <span class="msg-preview" data-msg-preview="<?= $index ?>"><?= htmlspecialchars($conversation['preview']) ?></span>
             </span>
-            <span class="msg-preview" data-msg-preview="<?= $index ?>"><?= htmlspecialchars($conversation['preview']) ?></span>
-            <span class="msg-status"><?= htmlspecialchars(str_replace('_', ' ', $conversation['status'])) ?></span>
-          </span>
-        </button>
-      <?php endforeach; ?>
-    </div>
-  </aside>
+            <span class="msg-actions">
+              <?php if (!empty($conversation['unread'])): ?>
+              <span class="msg-unread-badge" aria-label="<?= (int) $conversation['unread'] ?> unread"><?= (int) $conversation['unread'] ?></span>
+              <?php endif; ?>
+              <span class="msg-kebab" role="button" tabindex="0" aria-label="Conversation actions" data-thread-menu="1">
+                <span class="msg-kebab__dots" aria-hidden="true"></span>
+              </span>
+            </span>
+          </button>
+        <?php endforeach; ?>
+      </div>
+    </aside>
 
-  <section class="msg-panel msg-thread">
-    <div class="msg-header">
-      <div class="patient-strip">
-        <div class="msg-avatar" id="activeInitials"><?= htmlspecialchars($active_msg['initials']) ?></div>
-        <div style="min-width:0">
-          <div class="msg-name" id="activeName"><?= htmlspecialchars($active_msg['name']) ?></div>
-          <div class="patient-meta" id="activeMeta">
-            <?= htmlspecialchars($active_msg['age']) ?> years old &bull; <?= htmlspecialchars($active_msg['status']) ?>
+    <section class="msg-panel msg-panel--thread">
+      <div class="msg-thread-header">
+        <div class="msg-thread-header-left">
+          <button type="button" class="msg-back" id="msgBackBtn" aria-label="Back to conversations" title="Back">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <polyline points="15 18 9 12 15 6"></polyline>
+            </svg>
+          </button>
+          <div class="msg-avatar" id="activeInitials" aria-hidden="true"><?= htmlspecialchars($active_msg['initials']) ?></div>
+          <div class="msg-thread-head-text">
+            <div class="msg-name" id="activeName"><?= htmlspecialchars($active_msg['name']) ?></div>
+            <div class="msg-presence" id="activePresence">
+              <span class="msg-presence-dot" aria-hidden="true"></span>
+              <span id="activeMeta"><?= htmlspecialchars(str_replace('_', ' ', $active_msg['status'])) ?></span>
+            </div>
+          </div>
+        </div>
+        <div class="msg-thread-actions">
+          <button type="button" class="msg-icon-btn primary" id="videoButton" title="Start video" aria-label="Start video">
+            <?= icon_sm('video') ?>
+          </button>
+          <button type="button" class="msg-icon-btn" id="sessionButton" title="Open consultation" aria-label="Open consultation">
+            <?= icon_sm('phone') ?>
+          </button>
+        </div>
+      </div>
+
+      <div id="messageAlert" class="msg-alert"></div>
+
+      <div class="thread-body" id="threadBody">
+        <div class="msg-clinical-strip">
+          <div>
+            <div class="clinical-label">Consultation</div>
+            <div class="clinical-value" id="activeComplaint"><?= htmlspecialchars($active_msg['complaint']) ?></div>
+          </div>
+          <div>
+            <div class="clinical-label">AI Triage</div>
+            <div class="clinical-value" id="activeTriage"><?= htmlspecialchars($active_msg['triage']) ?></div>
+          </div>
+          <div>
+            <div class="clinical-label">Address</div>
+            <div class="clinical-value" id="activeAddress"><?= htmlspecialchars($active_msg['address']) ?></div>
+          </div>
+        </div>
+
+        <div class="bubble-row seed-message">
+          <div class="msg-avatar" id="patientBubbleInitials" aria-hidden="true"><?= htmlspecialchars($active_msg['initials']) ?></div>
+          <div>
+            <div class="bubble patient" id="patientPreview"><?= htmlspecialchars($active_msg['preview']) ?></div>
+            <div class="bubble-time" id="patientPreviewTime"><?= htmlspecialchars($active_msg['time']) ?></div>
+          </div>
+        </div>
+
+        <div class="bubble-row provider seed-message">
+          <div class="pd-avatar" style="width:32px;height:32px;font-size:10px"><?= htmlspecialchars($provider['initials']) ?></div>
+          <div>
+            <div class="bubble provider">
+              I can review this from the consultation session. Use the phone icon to open the clinical workspace, or video to start the secure room.
+            </div>
+            <div class="bubble-time" style="text-align:right">Ready to connect</div>
           </div>
         </div>
       </div>
-      <div class="msg-actions">
-        <button type="button" class="msg-action" id="sessionButton">
-          <?= icon_sm('phone') ?> Call
-        </button>
-        <button type="button" class="msg-action primary" id="videoButton">
-          <?= icon_sm('video') ?> Video
-        </button>
-      </div>
-    </div>
 
-    <div id="messageAlert" class="msg-alert"></div>
-
-    <div class="thread-body" id="threadBody">
-      <div class="clinical-card">
-        <div>
-          <div class="clinical-label">Consultation</div>
-          <div class="clinical-value" id="activeComplaint"><?= htmlspecialchars($active_msg['complaint']) ?></div>
-        </div>
-        <div>
-          <div class="clinical-label">AI Triage</div>
-          <div class="clinical-value" id="activeTriage"><?= htmlspecialchars($active_msg['triage']) ?></div>
-        </div>
-        <div>
-          <div class="clinical-label">Address</div>
-          <div class="clinical-value" id="activeAddress"><?= htmlspecialchars($active_msg['address']) ?></div>
+      <div class="composer">
+        <div class="composer-inner">
+          <input type="text" id="messageInput" placeholder="Write a message" aria-label="Write a message">
+          <button type="button" class="msg-send-btn" id="sendMessageBtn"><?= icon_sm('send') ?> Send</button>
         </div>
       </div>
-
-      <div class="bubble-row seed-message">
-        <div class="msg-avatar" id="patientBubbleInitials"><?= htmlspecialchars($active_msg['initials']) ?></div>
-        <div>
-          <div class="bubble patient" id="patientPreview"><?= htmlspecialchars($active_msg['preview']) ?></div>
-          <div class="bubble-time" id="patientPreviewTime"><?= htmlspecialchars($active_msg['time']) ?></div>
-        </div>
-      </div>
-
-      <div class="bubble-row provider seed-message">
-        <div class="pd-avatar" style="width:36px;height:36px;font-size:12px"><?= htmlspecialchars($provider['initials']) ?></div>
-        <div>
-          <div class="bubble provider">
-            I can review this from the consultation session. Use Call to open the clinical workspace, or Video to start the secure room for this consultation.
-          </div>
-          <div class="bubble-time" style="text-align:right">Ready to connect</div>
-        </div>
-      </div>
-    </div>
-
-    <div class="composer">
-      <input type="text" id="messageInput" placeholder="Type a message note..." aria-label="Type a message note">
-      <button type="button" class="msg-action primary" id="sendMessageBtn"><?= icon_sm('send') ?> Send</button>
-    </div>
-  </section>
+    </section>
+  </div>
 </div>
 
 <script src="<?= ASSET_BASE ?>/assets/js/messages-delete.js?v=2"></script>
@@ -508,13 +359,51 @@ const threadBody = document.getElementById('threadBody');
 const messageInput = document.getElementById('messageInput');
 const sendMessageBtn = document.getElementById('sendMessageBtn');
 const refreshStatus = document.getElementById('refreshStatus');
+const messagesShell = document.getElementById('messagesShell');
+const msgBackBtn = document.getElementById('msgBackBtn');
+const activePresence = document.getElementById('activePresence');
 const providerInitials = <?= json_encode($provider['initials'] ?? 'DR') ?>;
 const currentUserId = <?= (int)$provider_id ?>;
 const assetBase = <?= json_encode(ASSET_BASE) ?>;
+const csrfToken = <?= json_encode((string) ($_SESSION['csrf_token'] ?? '')) ?>;
+window.MedConnectCsrfToken = csrfToken;
+window.MedConnectThreadActionUrl = <?= json_encode(ASSET_BASE . '/app/api/messages/thread_action.php') ?>;
+const markReadUrl = <?= json_encode(ASSET_BASE . '/app/api/messages/mark_read.php') ?>;
 let refreshTimer = null;
 let refreshInFlight = false;
 let lastEventId = 0;
 let realtimePoller = null;
+
+function presenceForStatus(status) {
+  const normalized = String(status || '').toLowerCase();
+  if (normalized === 'in_consultation') {
+    return { label: 'Online', online: true };
+  }
+  if (normalized === 'scheduled') {
+    return { label: 'Scheduled', online: false };
+  }
+  if (normalized === 'pending') {
+    return { label: 'Pending', online: false };
+  }
+  if (normalized === 'empty' || normalized === 'message only') {
+    return { label: 'Unavailable', online: false };
+  }
+  return { label: normalized.replace(/_/g, ' '), online: false };
+}
+
+function isMobileMessages() {
+  return window.matchMedia('(max-width: 767.98px)').matches;
+}
+
+function updatePresence(item) {
+  const presence = presenceForStatus(item?.status);
+  if (activeMeta) {
+    activeMeta.textContent = presence.label;
+  }
+  if (activePresence) {
+    activePresence.classList.toggle('is-online', presence.online);
+  }
+}
 
 function setAlert(message, type = 'info') {
   messageAlert.textContent = message;
@@ -548,7 +437,7 @@ function updateSessionActions(item) {
 
   sessionButton.classList.toggle('is-schedule-blocked', blocked);
   videoButton.classList.toggle('is-schedule-blocked', blocked);
-  videoButton.disabled = !item || !Number(item.consultation_id);
+  videoButton.disabled = blocked || !item || !Number(item.consultation_id);
   sessionButton.dataset.blockReason = access.reason || '';
   videoButton.dataset.blockReason = access.reason || '';
 }
@@ -612,6 +501,37 @@ function updateConversationPreview(index, messages) {
   if (time) time.textContent = latest.time || '';
 }
 
+function clearConversationUnread(index) {
+  const item = conversations[index];
+  if (item) item.unread = 0;
+
+  const row = document.querySelector(`.msg-item[data-index="${index}"]`);
+  if (!row) return;
+  row.classList.remove('is-unread');
+
+  const badge = row.querySelector('.msg-unread-badge');
+  if (badge) badge.remove();
+}
+
+function setSidebarUnread(count) {
+  const n = Math.max(0, parseInt(count, 10) || 0);
+  const text = n > 99 ? '99+' : String(n);
+  document.querySelectorAll('[data-nav-messages-badge]').forEach((badge) => {
+    badge.textContent = text;
+    badge.hidden = n <= 0;
+    badge.setAttribute('aria-hidden', n <= 0 ? 'true' : 'false');
+  });
+}
+
+// On messages.php we don't render the FAB component (which normally updates the sidebar badge),
+// so listen to the global unread event here as well.
+window.addEventListener('medconnect:messages-unread', (event) => {
+  const d = event && event.detail ? event.detail : null;
+  if (d && typeof d.unread_count !== 'undefined') {
+    setSidebarUnread(d.unread_count);
+  }
+});
+
 function setActiveConversation(index) {
   activeIndex = index;
   const item = conversations[index];
@@ -623,7 +543,7 @@ function setActiveConversation(index) {
 
   activeInitials.textContent = item.initials;
   activeName.textContent = item.name;
-  activeMeta.textContent = `${item.age} years old • ${item.status.replace('_', ' ')}`;
+  updatePresence(item);
   activeComplaint.textContent = item.complaint;
   activeTriage.textContent = item.triage;
   activeAddress.textContent = item.address;
@@ -632,8 +552,28 @@ function setActiveConversation(index) {
   patientPreviewTime.textContent = item.time;
   renderThread(item);
   startMessageRealtime();
+  if (Number(item.consultation_id)) {
+    fetch(markReadUrl, {
+      method: 'POST',
+      credentials: 'same-origin',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded', 'Accept': 'application/json' },
+      body: new URLSearchParams({ consultation_id: String(item.consultation_id), csrf_token: csrfToken }),
+    }).then(r => r.json()).then((j) => {
+      if (j && j.success && typeof j.unread_count !== 'undefined' && window.MedConnectUnreadService) {
+        window.MedConnectUnreadService.setUnread(j.unread_count, 'mark-read');
+      }
+      if (j && j.success) {
+        clearConversationUnread(index);
+        if (typeof j.unread_count !== 'undefined') setSidebarUnread(j.unread_count);
+      }
+    }).catch(() => {});
+  }
 
   updateSessionActions(item);
+
+  if (isMobileMessages() && messagesShell) {
+    messagesShell.classList.add('is-thread-open');
+  }
 
   if (!Number(item.consultation_id)) {
     setAlert('This message is not linked to a consultation yet, so calls cannot start from here.', 'error');
@@ -664,6 +604,13 @@ async function refreshActiveMessages(silent = true) {
     item.messages = data.messages || [];
     renderThread(item);
     updateConversationPreview(activeIndex, item.messages);
+    if (typeof data.unread_count !== 'undefined') {
+      if (window.MedConnectUnreadService) {
+        window.MedConnectUnreadService.setUnread(data.unread_count, 'messages-page');
+      } else {
+        window.dispatchEvent(new CustomEvent('medconnect:messages-unread', { detail: { unread_count: data.unread_count, source: 'messages-page' } }));
+      }
+    }
     if (refreshStatus) refreshStatus.textContent = 'Updated ' + new Date().toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
     if (!silent && item.messages.length > oldCount) {
       setAlert('New message loaded.', 'success');
@@ -710,8 +657,22 @@ function startMessageAutoRefresh() {
 }
 
 document.querySelectorAll('.msg-item').forEach((button) => {
-  button.addEventListener('click', () => setActiveConversation(Number(button.dataset.index)));
+  button.addEventListener('click', (e) => {
+    // Allow kebab/menu clicks without opening thread.
+    if (e && e.target && e.target.closest && e.target.closest('.msg-kebab')) return;
+    setActiveConversation(Number(button.dataset.index));
+  });
 });
+
+// Thread menu (popover)
+<?php $threadMenuVer = (int) @filemtime(ASSETS_PATH . '/js/messages-thread-menu.js'); ?>
+// loaded below
+
+if (msgBackBtn && messagesShell) {
+  msgBackBtn.addEventListener('click', () => {
+    messagesShell.classList.remove('is-thread-open');
+  });
+}
 
 document.getElementById('messageSearch').addEventListener('input', (event) => {
   const query = event.target.value.trim().toLowerCase();
@@ -739,10 +700,12 @@ async function sendMessage() {
   try {
     const response = await fetch('<?= ASSET_BASE ?>/app/api/messages/send.php', {
       method: 'POST',
+      credentials: 'same-origin',
       headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
       body: new URLSearchParams({
         consultation_id: item.consultation_id,
-        message
+        message,
+        csrf_token: csrfToken
       })
     });
     const data = await response.json();
@@ -810,7 +773,10 @@ videoButton.addEventListener('click', async () => {
     const response = await fetch('<?= ASSET_BASE ?>/app/api/consultations/start_video.php', {
       method: 'POST',
       headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-      body: new URLSearchParams({ consultation_id: item.consultation_id })
+      body: new URLSearchParams({
+        consultation_id: item.consultation_id,
+        csrf_token: document.body.dataset.csrf || ''
+      })
     });
     const data = await response.json();
 
@@ -839,4 +805,5 @@ startMessageAutoRefresh();
 <?php require __DIR__ . '/partials/session_schedule_modal.php'; ?>
 <script src="<?= ASSET_BASE ?>/assets/js/provider-session-alert.js"></script>
 
+<script src="<?= ASSET_BASE ?>/assets/js/messages-thread-menu.js?v=<?= $threadMenuVer ?>" defer></script>
 <?php require __DIR__ . '/partials/layout_close.php'; ?>

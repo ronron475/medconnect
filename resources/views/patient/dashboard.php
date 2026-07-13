@@ -86,9 +86,11 @@ $all_consults = [];
 if ($pdo->query("SHOW TABLES LIKE 'consultations'")->rowCount()) {
     $s = $pdo->prepare("
         SELECT c.id, c.consult_date, c.consult_time, c.provider_name, c.consult_type, c.status, c.diagnosis, c.recommendation,
-               vs.room_token
+               vs.room_token,
+               s.slot_date, s.start_time AS slot_start
         FROM consultations c
         LEFT JOIN video_sessions vs ON c.id = vs.consultation_id AND vs.status = 'active'
+        LEFT JOIN appointment_slots s ON s.consultation_id = c.id AND s.status = 'booked'
         WHERE c.patient_id=? 
         ORDER BY c.consult_date DESC, c.consult_time DESC
     ");
@@ -225,6 +227,7 @@ $page_title = 'Health Dashboard';
 require_once __DIR__ . '/partials/triage_helpers.php';
 
 $video_base = ASSET_BASE . '/views/consultation/video_room.php';
+require_once VIEWS_PATH . '/provider/partials/queue_helpers.php';
 
 $dash_today_appts = 0;
 $dash_in_consultation = 0;
@@ -250,6 +253,19 @@ foreach ($triage_history as $t) {
     if (in_array($risk, ['badge-risk--high', 'badge-risk--moderate'], true)) {
         $dash_urgent_triage++;
     }
+}
+
+$patient_followups = [];
+if ($pdo->query("SHOW TABLES LIKE 'followups'")->rowCount()) {
+    $fu = $pdo->prepare("
+        SELECT f.*, u.first_name AS provider_first, u.last_name AS provider_last
+        FROM followups f
+        JOIN users u ON f.provider_id = u.id
+        WHERE f.patient_id = ?
+        ORDER BY f.followup_date ASC
+    ");
+    $fu->execute([$uid]);
+    $patient_followups = $fu->fetchAll(PDO::FETCH_ASSOC);
 }
 
 $week_chart = [];
@@ -300,19 +316,15 @@ $pt_dash_triage_skin = static function (?string $level): string {
     }
     return '';
 };
+$patientDashCssVer = (int) @filemtime(ASSETS_PATH . '/css/patient-dashboard.css');
+$patient_page_stylesheets = [
+    ASSET_BASE . '/assets/css/patient-dashboard.css?v=' . $patientDashCssVer,
+];
 ?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
 <?php require_once VIEWS_PATH . '/patient/partials/layout_head.php'; ?>
-<?php
-$patientDashHomeCss = ASSETS_PATH . '/css/provider-dashboard-home.css';
-$patientDashHomeCssVer = file_exists($patientDashHomeCss) ? (int) filemtime($patientDashHomeCss) : time();
-$patientDashMockCss = ASSETS_PATH . '/css/patient-dashboard-mock.css';
-$patientDashMockCssVer = file_exists($patientDashMockCss) ? (int) filemtime($patientDashMockCss) : time();
-?>
-<link rel="stylesheet" href="<?= ASSET_BASE ?>/assets/css/provider-dashboard-home.css?v=<?= $patientDashHomeCssVer ?>"/>
-<link rel="stylesheet" href="<?= ASSET_BASE ?>/assets/css/patient-dashboard-mock.css?v=<?= $patientDashMockCssVer ?>"/>
 </head>
 <body class="patient-portal">
 
@@ -324,5 +336,59 @@ $patientDashMockCssVer = file_exists($patientDashMockCss) ? (int) filemtime($pat
 
   <script>window.APP_BASE = <?= json_encode(ASSET_BASE) ?>;</script>
   <script src="<?= ASSET_BASE ?>/assets/js/patient-portal.js?v=<?= $patient_portal_ver ?>"></script>
+  <script>
+  (function () {
+    const cells = document.querySelectorAll('[data-consult-action]');
+    if (!cells.length) return;
+    const base = window.APP_BASE || '';
+    const videoBase = <?= json_encode($video_base) ?>;
+
+    async function refreshDashJoinButtons() {
+      try {
+        const res = await fetch(base + '/app/api/consultations/consultation_status.php', {
+          credentials: 'same-origin',
+          cache: 'no-store',
+        });
+        const json = await res.json();
+        if (!json || !json.success || !Array.isArray(json.items)) return;
+        const byId = {};
+        json.items.forEach((item) => { byId[String(item.id)] = item; });
+
+        cells.forEach((cell) => {
+          const id = cell.getAttribute('data-consult-action');
+          const item = byId[id];
+          if (!item) return;
+          if (item.join_allowed && item.room_token) {
+            cell.innerHTML =
+              '<a href="' + videoBase + '?token=' + encodeURIComponent(item.room_token) +
+              '" class="pdash-btn pdash-btn--join pdash-btn--sm" style="text-decoration:none;">Join Call</a>';
+          } else if (item.join_mode === 'waiting') {
+            cell.innerHTML =
+              '<span class="pdash-btn pdash-btn--waiting pdash-btn--sm consult-waiting-pulse" style="cursor:default;">Waiting for Provider</span>';
+          }
+        });
+      } catch (_) {}
+    }
+
+    refreshDashJoinButtons();
+    setInterval(refreshDashJoinButtons, 5000);
+
+    if (window.location.hash === '#action-items') {
+      const el = document.getElementById('dashboardActionItems');
+      if (el) setTimeout(() => el.scrollIntoView({ behavior: 'smooth', block: 'start' }), 150);
+    }
+
+    function pdashStyleEmergencyWidget() {
+      const widget = document.getElementById('pdashEmergencyWidget');
+      if (!widget) return;
+      const val = widget.querySelector('.pdash-alert-widget__value');
+      if (val && parseInt(val.textContent, 10) > 0) {
+        widget.classList.add('is-active');
+      }
+    }
+    setTimeout(pdashStyleEmergencyWidget, 600);
+    setInterval(pdashStyleEmergencyWidget, 30000);
+  })();
+  </script>
 </body>
 </html>

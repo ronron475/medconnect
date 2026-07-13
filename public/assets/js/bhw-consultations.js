@@ -78,7 +78,7 @@
   function actionCell(c) {
     if (canAssist(c)) {
       var link = base + '/views/consultation/video_room.php?token=' + encodeURIComponent(c.room_token);
-      return '<a class="bhw-btn-teal" href="' + link + '" target="_blank" rel="noopener">Assist Video</a>';
+      return '<a class="bhw-cons-btn-action" href="' + link + '" target="_blank" rel="noopener">Assist Video</a>';
     }
     if (c.status === 'scheduled') {
       return '<span class="bhw-cons-action-muted">Waiting for provider</span>';
@@ -100,7 +100,10 @@
 
   function setLoading() {
     if (!tbody) return;
-    tbody.innerHTML = '<tr><td colspan="6" class="bhw-cons-loading"><span class="bhw-cons-spin" aria-hidden="true"></span>Loading consultations…</td></tr>';
+    var row = (window.BhwPortal && BhwPortal.loader && BhwPortal.loader.inlineRow)
+      ? BhwPortal.loader.inlineRow(6, 'Loading consultations…', 'bhw-cons-loading')
+      : '<tr><td colspan="6" class="bhw-cons-loading">Loading consultations…</td></tr>';
+    tbody.innerHTML = row;
   }
 
   function setError(message) {

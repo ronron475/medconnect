@@ -1,5 +1,5 @@
 <?php
-$page_title = 'Update Patient';
+$page_title = 'Update Patient Information';
 $bhw_current_file = 'patients/update.php';
 require __DIR__ . '/../partials/bhw_bootstrap.php';
 require __DIR__ . '/../partials/layout_open.php';
@@ -11,10 +11,11 @@ ob_start();
 (function () {
   var workspace = document.getElementById('bhwUpdateWorkspace');
   var emptyEl = document.getElementById('bhwUpdateEmpty');
+  var pageEl = document.querySelector('.bhw-update-page');
   var heroEl = document.getElementById('bhwUpdateHero');
   var formEl = document.getElementById('bhwUpdateForm');
   var dirtyBadge = document.getElementById('bhwDirtyBadge');
-  var pickerApi = null;
+  var pregnancyWrap = document.getElementById('f_pregnancy_wrap');
   var currentPatient = null;
   var formDirty = false;
 
@@ -63,9 +64,55 @@ ob_start();
     if (saveBtn) saveBtn.classList.toggle('bhw-btn-teal--pulse', dirty);
   }
 
+  function fieldValue(id) {
+    var el = document.getElementById(id);
+    return el ? String(el.value || '').trim() : '';
+  }
+
+  function patientMedicalSnapshot(p) {
+    return {
+      blood_type: String(p.blood_type || 'Unknown').trim(),
+      existing_conditions: String(p.existing_conditions || '').trim(),
+      allergies: String(p.allergies || '').trim(),
+      current_medications: String(p.current_medications || '').trim()
+    };
+  }
+
+  function formMedicalSnapshot() {
+    return {
+      blood_type: fieldValue('f_blood') || 'Unknown',
+      existing_conditions: fieldValue('f_conditions'),
+      allergies: fieldValue('f_allergies'),
+      current_medications: fieldValue('f_medications')
+    };
+  }
+
+  function syncPregnancyField(gender) {
+    if (!pregnancyWrap) return;
+    var show = String(gender || '').toLowerCase() === 'female';
+    pregnancyWrap.hidden = !show;
+    if (!show) {
+      var preg = document.getElementById('f_pregnancy');
+      if (preg) preg.value = '';
+    }
+  }
+
+  function isFormDirty() {
+    if (!currentPatient) return false;
+    var emailChanged = fieldValue('f_email') !== String(currentPatient.email || '').trim();
+    var contactChanged = fieldValue('f_contact') !== String(currentPatient.contact_number || '').trim();
+    var med = patientMedicalSnapshot(currentPatient);
+    var formMed = formMedicalSnapshot();
+    var medicalChanged = med.blood_type !== formMed.blood_type ||
+      med.existing_conditions !== formMed.existing_conditions ||
+      med.allergies !== formMed.allergies ||
+      med.current_medications !== formMed.current_medications;
+    return emailChanged || contactChanged || medicalChanged;
+  }
+
   function showWorkspace(show) {
     workspace.style.display = show ? 'block' : 'none';
-    emptyEl.style.display = show ? 'none' : 'block';
+    if (emptyEl) emptyEl.style.display = show ? 'none' : 'block';
     if (heroEl) heroEl.style.display = show ? 'block' : 'none';
   }
 
@@ -140,6 +187,11 @@ ob_start();
     document.getElementById('f_patient_id').value = p.id;
     document.getElementById('f_email').value = p.email || '';
     document.getElementById('f_contact').value = p.contact_number || '';
+    document.getElementById('f_blood').value = p.blood_type || 'Unknown';
+    document.getElementById('f_conditions').value = p.existing_conditions || '';
+    document.getElementById('f_allergies').value = p.allergies || '';
+    document.getElementById('f_medications').value = p.current_medications || '';
+    syncPregnancyField(p.gender);
     setDirty(false);
     clearFieldErrors();
   }
@@ -180,39 +232,46 @@ ob_start();
   function loadPatient(pid) {
     if (!pid) {
       currentPatient = null;
+      if (pageEl) pageEl.classList.remove('is-patient-loaded');
       showWorkspace(false);
       return;
     }
     BhwPortal.get('patients.php', { action: 'get', patient_id: pid }).then(function (r) {
       if (!r.success) {
         BhwPortal.toast(r.message, false);
+        if (pageEl) pageEl.classList.remove('is-patient-loaded');
         showWorkspace(false);
         return;
       }
       currentPatient = r.patient;
       fillForm(currentPatient);
       fillSummary(currentPatient);
+      if (pageEl) pageEl.classList.add('is-patient-loaded');
       showWorkspace(true);
       switchTab('personal');
     });
   }
 
-  ['f_email', 'f_contact'].forEach(function (id) {
+  ['f_email', 'f_contact', 'f_blood', 'f_conditions', 'f_allergies', 'f_medications'].forEach(function (id) {
     var el = document.getElementById(id);
     if (el) {
       el.addEventListener('input', function () {
         if (!currentPatient) return;
-        var changed = el.value !== (id === 'f_email' ? (currentPatient.email || '') : (currentPatient.contact_number || ''));
-        setDirty(changed || document.getElementById('f_email').value !== (currentPatient.email || '') ||
-          document.getElementById('f_contact').value !== (currentPatient.contact_number || ''));
+        setDirty(isFormDirty());
+      });
+      el.addEventListener('change', function () {
+        if (!currentPatient) return;
+        setDirty(isFormDirty());
       });
     }
   });
 
   pickerApi = BhwPortal.mountPatientPicker(document.getElementById('bhwPatientPickerMount'), {
     preselect: <?= (int) $pid ?>,
-    label: 'Search patient in your barangay',
-    hideSelectedBar: true,
+    label: 'Search',
+    placeholder: 'Search by name, email, or contact number…',
+    hideSelectedBar: false,
+    openOnLoad: false,
     onSelect: function (pid) { loadPatient(pid); },
     onClear: function () { loadPatient(0); }
   });
@@ -228,16 +287,21 @@ ob_start();
     fd.append('action', 'update');
     var saveBtn = document.getElementById('bhwSaveBtn');
     saveBtn.disabled = true;
-    saveBtn.innerHTML = '<span class="bhw-btn-spinner" aria-hidden="true"></span>Saving…';
+    saveBtn.textContent = 'Saving…';
     BhwPortal.post('patients.php', fd).then(function (r) {
       saveBtn.disabled = false;
       saveBtn.textContent = 'Save Changes';
-      BhwPortal.toast(r.message, r.success, { title: r.success ? 'Contact Updated' : 'Update Failed' });
+      BhwPortal.toast(r.message, r.success, { title: r.success ? 'Patient Updated' : 'Update Failed' });
       if (r.success && currentPatient) {
         var card = document.querySelector('.bhw-update-contact-card');
         if (card) {
           card.classList.add('is-saved');
           setTimeout(function () { card.classList.remove('is-saved'); }, 1200);
+        }
+        var medCard = document.querySelector('.bhw-update-medical-card');
+        if (medCard) {
+          medCard.classList.add('is-saved');
+          setTimeout(function () { medCard.classList.remove('is-saved'); }, 1200);
         }
         loadPatient(parseInt(document.getElementById('f_patient_id').value, 10));
       }
@@ -246,35 +310,34 @@ ob_start();
 })();
 <?php
 $bhw_inline_script = ob_get_clean();
+$update_css_ver = (int) @filemtime(ASSETS_PATH . '/css/bhw-update-patient.css');
 ?>
+<link rel="stylesheet" href="<?= ASSET_BASE ?>/assets/css/bhw-update-patient.css?v=<?= $update_css_ver ?>">
 <div class="bhw-update-page">
 
   <header class="bhw-update-header">
     <div class="bhw-update-header-text">
-      <h2 class="text-h2">Update Patient Info</h2>
-      <p>Search a patient from <strong>Brgy. <?= $barangay_label ?></strong>. You may update <strong>email and contact number</strong> only — all other details are read-only and managed by the patient or provider.</p>
+      <h2 class="text-h2">Update Patient Information</h2>
+      <p>Locate a registered resident in <strong>Brgy. <?= $barangay_label ?></strong> to update their <strong>contact details</strong> and <strong>medical information</strong>. Personal and demographic fields remain read-only.</p>
     </div>
-    <a href="list.php" class="bhw-btn-ghost bhw-update-back-link" aria-label="Back to patient list">← Back to Patient List</a>
+    <a href="list.php" class="bhw-btn-ghost bhw-update-back-link" aria-label="Back to patient list">Back to Patient List</a>
   </header>
 
-  <div class="bhw-card bhw-update-search-strip">
-    <div id="bhwPatientPickerMount" aria-label="Patient search"></div>
-  </div>
-
-  <div id="bhwUpdateEmpty" class="bhw-update-empty" role="status">
-    <div class="bhw-update-empty-visual" aria-hidden="true">
-      <svg width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.25">
-        <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
-        <path d="M8 11h6M11 8v6" stroke-linecap="round"/>
-      </svg>
+  <div class="bhw-card bhw-update-search-card">
+    <div class="bhw-update-search-section-head">
+      <h3 class="bhw-update-section__title" id="bhwUpdateLookupTitle">Patient Lookup</h3>
+      <p class="bhw-update-section__sub">Search by full name, email address, or contact number. Only patients registered in your barangay are listed.</p>
     </div>
-    <h3>Select a patient to begin</h3>
-    <p>Search by name, email, or contact number to load a patient profile from your barangay.</p>
-    <ul class="bhw-update-empty-tips">
-      <li>Only <strong>email</strong> and <strong>mobile number</strong> can be edited here.</li>
-      <li>Medical and personal details are updated by the patient or their provider.</li>
-      <li>Use quick actions after selecting a patient to triage, view records, or schedule care.</li>
-    </ul>
+    <div id="bhwPatientPickerMount" class="bhw-update-picker-mount" aria-labelledby="bhwUpdateLookupTitle"></div>
+
+    <div id="bhwUpdateEmpty" class="bhw-update-hint" role="status">
+      <p class="bhw-update-hint__title">No patient selected</p>
+      <p class="bhw-update-hint__text">Use the search field above to locate a patient record.</p>
+      <ul class="bhw-update-hint-list">
+        <li>Contact details and medical information can be edited on this page.</li>
+        <li>Personal and demographic fields are read-only for BHW users.</li>
+      </ul>
+    </div>
   </div>
 
   <div id="bhwUpdateHero" class="bhw-update-hero" style="display:none;" aria-live="polite">
@@ -307,7 +370,7 @@ $bhw_inline_script = ob_get_clean();
               <span class="bhw-card-icon" aria-hidden="true">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
               </span>
-              Editable Contact Information
+              Contact Information
             </h3>
             <p class="bhw-form-card-sub">Update how this patient can be reached for appointments and follow-ups.</p>
           </div>
@@ -317,23 +380,80 @@ $bhw_inline_script = ob_get_clean();
           <input type="hidden" name="patient_id" id="f_patient_id" value="">
           <div class="bhw-form-grid">
             <div class="bhw-field span-2">
-              <label class="form-label" for="f_email">Email address <span class="bhw-req" aria-hidden="true">*</span></label>
+              <label class="form-label" for="f_email">Email Address <span class="bhw-req" aria-hidden="true">*</span></label>
               <input type="email" class="form-control" name="email" id="f_email" required autocomplete="email" placeholder="patient@email.com" aria-required="true">
+              <span class="bhw-field-hint">Used for patient sign-in and password setup notifications.</span>
               <span class="bhw-field-error" role="alert"></span>
             </div>
             <div class="bhw-field span-2">
-              <label class="form-label" for="f_contact">Mobile number <span class="bhw-req" aria-hidden="true">*</span></label>
+              <label class="form-label" for="f_contact">Mobile Number <span class="bhw-req" aria-hidden="true">*</span></label>
               <input type="tel" class="form-control" name="contact_number" id="f_contact" required autocomplete="tel" placeholder="09XXXXXXXXX" inputmode="numeric" aria-required="true">
               <span class="bhw-field-hint">Philippine format: 09XXXXXXXXX</span>
               <span class="bhw-field-error" role="alert"></span>
             </div>
           </div>
-          <div class="bhw-form-actions">
-            <a href="list.php" class="bhw-btn-ghost">Cancel</a>
-            <button type="button" class="bhw-btn-outline" id="bhwResetBtn">Reset</button>
-            <button type="submit" class="bhw-btn-teal" id="bhwSaveBtn">Save Changes</button>
-          </div>
         </form>
+      </section>
+
+      <section class="bhw-card bhw-form-card bhw-update-medical-card" aria-labelledby="update_medical_title">
+        <h3 class="bhw-form-card-title" id="update_medical_title">
+          <span class="bhw-card-icon" aria-hidden="true">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
+          </span>
+          Medical Information
+        </h3>
+        <p class="bhw-form-card-sub">Baseline clinical data to support triage and care coordination.</p>
+        <div class="bhw-form-grid" form="bhwUpdateForm">
+          <div class="bhw-field">
+            <label class="form-label" for="f_blood">Blood Type</label>
+            <select class="form-select" id="f_blood" name="blood_type" form="bhwUpdateForm">
+              <option value="Unknown">Unknown</option>
+              <option value="A+">A+</option>
+              <option value="A-">A-</option>
+              <option value="B+">B+</option>
+              <option value="B-">B-</option>
+              <option value="AB+">AB+</option>
+              <option value="AB-">AB-</option>
+              <option value="O+">O+</option>
+              <option value="O-">O-</option>
+            </select>
+          </div>
+          <div class="bhw-field" id="f_pregnancy_wrap" hidden>
+            <label class="form-label" for="f_pregnancy">Pregnancy Status</label>
+            <select class="form-select" id="f_pregnancy" aria-describedby="f_pregnancy_hint">
+              <option value="">Not applicable / Unknown</option>
+              <option value="Not pregnant">Not pregnant</option>
+              <option value="Pregnant">Pregnant</option>
+              <option value="Postpartum">Postpartum</option>
+            </select>
+            <span class="bhw-field-hint" id="f_pregnancy_hint">Shown when gender is Female</span>
+          </div>
+          <div class="bhw-field span-2">
+            <label class="form-label" for="f_conditions">Existing Conditions</label>
+            <textarea class="form-control" id="f_conditions" name="existing_conditions" form="bhwUpdateForm" rows="3" placeholder="Hypertension, diabetes, asthma…" aria-describedby="f_conditions_hint"></textarea>
+            <span class="bhw-field-hint" id="f_conditions_hint">Optional — for BHW reference</span>
+          </div>
+          <div class="bhw-field span-2">
+            <label class="form-label" for="f_allergies">Allergies</label>
+            <textarea class="form-control" id="f_allergies" name="allergies" form="bhwUpdateForm" rows="2" placeholder="Drug, food, or environmental allergies" aria-describedby="f_allergies_hint"></textarea>
+            <span class="bhw-field-hint" id="f_allergies_hint">Optional — for BHW reference</span>
+          </div>
+          <div class="bhw-field span-2">
+            <label class="form-label" for="f_medications">Current Medications</label>
+            <textarea class="form-control" id="f_medications" name="medications" form="bhwUpdateForm" rows="2" placeholder="List ongoing prescriptions or supplements" aria-describedby="f_meds_hint"></textarea>
+            <span class="bhw-field-hint" id="f_meds_hint">Optional — for BHW reference</span>
+          </div>
+          <div class="bhw-field span-2">
+            <label class="form-label" for="f_disabilities">Disabilities</label>
+            <textarea class="form-control" id="f_disabilities" rows="2" placeholder="Mobility, sensory, or other considerations" aria-describedby="f_dis_hint"></textarea>
+            <span class="bhw-field-hint" id="f_dis_hint">Optional — for BHW reference</span>
+          </div>
+        </div>
+        <div class="bhw-form-actions bhw-update-form-actions">
+          <a href="list.php" class="bhw-btn-ghost">Cancel</a>
+          <button type="button" class="bhw-btn-outline" id="bhwResetBtn" form="bhwUpdateForm">Reset</button>
+          <button type="submit" class="bhw-btn-teal" id="bhwSaveBtn" form="bhwUpdateForm">Save Changes</button>
+        </div>
       </section>
 
       <section class="bhw-card bhw-update-tabs-card" aria-label="Read-only patient profile">
@@ -341,10 +461,6 @@ $bhw_inline_script = ob_get_clean();
           <button type="button" class="bhw-update-tab is-active" role="tab" data-tab="personal" aria-selected="true" aria-controls="tab_personal" id="tabbtn_personal">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
             Personal
-          </button>
-          <button type="button" class="bhw-update-tab" role="tab" data-tab="medical" aria-selected="false" aria-controls="tab_medical" id="tabbtn_medical">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
-            Medical
           </button>
           <button type="button" class="bhw-update-tab" role="tab" data-tab="account" aria-selected="false" aria-controls="tab_account" id="tabbtn_account">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
@@ -361,10 +477,6 @@ $bhw_inline_script = ob_get_clean();
               <div class="bhw-update-dl-row"><dt>Age</dt><dd id="info_age">—</dd></div>
               <div class="bhw-update-dl-row"><dt>Address</dt><dd id="info_address">—</dd></div>
               <div class="bhw-update-dl-row"><dt>Barangay</dt><dd id="info_barangay">—</dd></div>
-            </dl>
-          </div>
-          <div class="bhw-update-tab-panel" id="tab_medical" role="tabpanel" aria-labelledby="tabbtn_medical" hidden>
-            <dl class="bhw-update-dl">
               <div class="bhw-update-dl-row"><dt>Blood type</dt><dd id="info_blood">—</dd></div>
               <div class="bhw-update-dl-row"><dt>Conditions</dt><dd id="info_conditions">—</dd></div>
               <div class="bhw-update-dl-row"><dt>Allergies</dt><dd id="info_allergies">—</dd></div>
@@ -400,16 +512,16 @@ $bhw_inline_script = ob_get_clean();
       <div class="bhw-register-guidance bhw-update-guidance">
         <h4>Update Guidance</h4>
         <ul>
-          <li>Confirm changes with the patient before saving.</li>
+          <li>Confirm contact and medical changes with the patient before saving.</li>
           <li>Changing email affects their login credentials.</li>
-          <li>Use a mobile number the patient actively monitors.</li>
-          <li>For medical or demographic changes, direct the patient to their provider.</li>
+          <li>Medical fields match the registration form layout for consistency.</li>
+          <li>Personal and demographic fields cannot be edited here.</li>
         </ul>
       </div>
 
       <div class="bhw-update-lock-notice" role="note">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
-        <span>Personal and medical fields are <strong>read-only</strong> for BHW users.</span>
+        <span>Personal and demographic fields are <strong>read-only</strong>. Contact and medical information can be updated above.</span>
       </div>
     </aside>
 

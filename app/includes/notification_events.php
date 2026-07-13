@@ -238,7 +238,7 @@ final class NotificationEvents
             'type'          => NotificationManager::TYPE_APPOINTMENT,
             'title'         => 'Appointment Confirmed',
             'message'       => "Your appointment is scheduled for {$date}.",
-            'action_url'    => '/views/patient/dashboard.php#view-consultations',
+            'action_url'    => '/views/patient/consultations.php',
             'related_table' => 'consultations',
             'related_id'    => $consultationId,
             'email'         => true,
@@ -270,7 +270,7 @@ final class NotificationEvents
             'type'          => NotificationManager::TYPE_WARNING,
             'title'         => 'Appointment Cancelled',
             'message'       => 'Your appointment has been cancelled.',
-            'action_url'    => '/views/patient/dashboard.php#view-consultations',
+            'action_url'    => '/views/patient/consultations.php',
             'related_table' => 'consultations',
             'related_id'    => $consultationId,
         ]);
@@ -301,7 +301,7 @@ final class NotificationEvents
             'type'          => NotificationManager::TYPE_APPOINTMENT,
             'title'         => 'Appointment Rescheduled',
             'message'       => "Your appointment has been rescheduled to {$newDate}.",
-            'action_url'    => '/views/patient/dashboard.php#view-consultations',
+            'action_url'    => '/views/patient/consultations.php',
             'related_table' => 'consultations',
             'related_id'    => $consultationId,
             'email'         => true,
@@ -342,7 +342,7 @@ final class NotificationEvents
             'type'          => NotificationManager::TYPE_REFERRAL,
             'title'         => 'Referral Created',
             'message'       => 'A referral has been created for your care.',
-            'action_url'    => '/views/patient/followup.php',
+            'action_url'    => '/views/patient/dashboard.php#action-items',
             'related_table' => 'digital_referrals',
             'related_id'    => $referralId,
         ]);
@@ -381,7 +381,7 @@ final class NotificationEvents
             'type'          => NotificationManager::TYPE_REFERRAL,
             'title'         => $title,
             'message'       => "Your referral status is now: {$status}.",
-            'action_url'    => '/views/patient/followup.php',
+            'action_url'    => '/views/patient/dashboard.php#action-items',
             'related_table' => 'digital_referrals',
             'related_id'    => $referralId,
             'email'         => $status === 'accepted',
@@ -404,7 +404,7 @@ final class NotificationEvents
             'type'          => NotificationManager::TYPE_CONSULTATION,
             'title'         => 'Video Consultation Scheduled',
             'message'       => "Your video consultation is scheduled for {$when}.",
-            'action_url'    => '/views/patient/dashboard.php#view-consultations',
+            'action_url'    => '/views/patient/consultations.php',
             'related_table' => 'consultations',
             'related_id'    => $consultationId,
             'email'         => true,
@@ -436,7 +436,7 @@ final class NotificationEvents
             'type'          => NotificationManager::TYPE_SUCCESS,
             'title'         => 'Consultation Completed',
             'message'       => 'Your consultation has been completed. Review notes and prescriptions.',
-            'action_url'    => '/views/patient/records.php',
+            'action_url'    => '/views/patient/my_health.php?tab=files',
             'related_table' => 'consultations',
             'related_id'    => $consultationId,
         ]);
@@ -482,7 +482,7 @@ final class NotificationEvents
             'title'         => 'Video Consultation Starting',
             'message'       => 'Your video consultation is starting now. Please join the session.',
             'priority'      => 'high',
-            'action_url'    => '/views/consultation/video_room.php?id=' . $consultationId,
+            'action_url'    => '/views/patient/consultations.php',
             'related_table' => 'consultations',
             'related_id'    => $consultationId,
         ]);
@@ -544,7 +544,7 @@ final class NotificationEvents
             'type'          => NotificationManager::TYPE_MEDICAL,
             'title'         => 'Medical Record Updated',
             'message'       => 'Your medical record has been updated.',
-            'action_url'    => '/views/patient/records.php',
+            'action_url'    => '/views/patient/my_health.php?tab=files',
             'related_table' => 'patient_registrations',
             'related_id'    => $patientId,
         ]);
@@ -568,7 +568,7 @@ final class NotificationEvents
             'type'          => NotificationManager::TYPE_MEDICAL,
             'title'         => 'Prescription Available',
             'message'       => 'A new prescription is available for you.',
-            'action_url'    => '/views/patient/records.php',
+            'action_url'    => '/views/patient/my_health.php?tab=files',
         ]);
         NotificationManager::notifyProvider($pdo, $providerId, [
             'sender_id'  => $senderId,
@@ -633,7 +633,7 @@ final class NotificationEvents
                     'type'       => NotificationManager::TYPE_REMINDER,
                     'title'      => 'Complete Your Profile',
                     'message'    => 'Welcome back! Complete your medical profile for better care.',
-                    'action_url' => '/views/patient/dashboard.php#view-profile',
+                    'action_url' => '/views/patient/profile.php',
                 ]);
             }
         } catch (PDOException $e) { /* non-fatal */ }
@@ -687,14 +687,31 @@ final class NotificationEvents
         ]);
     }
 
-    public static function patientMessage(PDO $pdo, int $providerId, int $patientId, string $patientName, ?int $senderId = null): void
+    public static function patientMessage(PDO $pdo, int $providerId, int $patientId, string $patientName, ?int $senderId = null, ?int $consultationId = null): void
     {
         NotificationManager::notifyProvider($pdo, $providerId, [
-            'sender_id'  => $senderId ?? $patientId,
-            'type'       => NotificationManager::TYPE_INFORMATION,
-            'title'      => 'New Patient Message',
-            'message'    => "{$patientName} sent you a message.",
-            'action_url' => '/views/provider/messages.php',
+            'sender_id'     => $senderId ?? $patientId,
+            'type'          => NotificationManager::TYPE_INFORMATION,
+            'title'         => 'New Patient Message',
+            'message'       => "{$patientName} sent you a message.",
+            'action_url'    => '/views/provider/messages.php',
+            'related_table' => $consultationId ? 'consultations' : null,
+            'related_id'    => $consultationId,
+            'icon'          => 'message-circle',
+        ]);
+    }
+
+    public static function providerMessage(PDO $pdo, int $patientId, int $providerId, string $providerName, ?int $senderId = null, ?int $consultationId = null): void
+    {
+        NotificationManager::notifyPatient($pdo, $patientId, [
+            'sender_id'     => $senderId ?? $providerId,
+            'type'          => NotificationManager::TYPE_INFORMATION,
+            'title'         => 'New Message from Your Provider',
+            'message'       => "{$providerName} sent you a message.",
+            'action_url'    => '/views/patient/messages.php',
+            'related_table' => $consultationId ? 'consultations' : null,
+            'related_id'    => $consultationId,
+            'icon'          => 'message-circle',
         ]);
     }
 
@@ -718,7 +735,7 @@ final class NotificationEvents
             'type'       => NotificationManager::TYPE_REMINDER,
             'title'      => 'Follow-Up Scheduled',
             'message'    => "Your follow-up is scheduled for {$date}.",
-            'action_url' => '/views/patient/followup.php',
+            'action_url' => '/views/patient/dashboard.php#action-items',
             'email'      => true,
         ]);
         if ($providerId) {
@@ -778,6 +795,63 @@ final class NotificationEvents
                 : 'Your provider account verification was rejected. Contact admin.',
             'action_url' => '/views/provider/dashboard.php',
             'email'      => true,
+        ]);
+    }
+
+    /**
+     * Notify all active patients when a provider publishes today's bookable slots.
+     */
+    public static function providerScheduleAvailable(
+        PDO $pdo,
+        int $providerId,
+        string $providerName,
+        string $day,
+        string $startTime,
+        string $endTime,
+        int $slotsCreated
+    ): int {
+        if ($slotsCreated <= 0) {
+            return 0;
+        }
+
+        $providerName = trim($providerName) !== '' ? trim($providerName) : 'A healthcare provider';
+        $startLabel = date('g:i A', strtotime($startTime));
+        $endLabel   = date('g:i A', strtotime($endTime));
+        $todayLabel = date('M j, Y');
+        $slotWord   = $slotsCreated === 1 ? 'slot' : 'slots';
+
+        try {
+            $dedupe = $pdo->prepare("
+                SELECT 1 FROM notifications
+                WHERE sender_id = ?
+                  AND related_table = 'provider_schedules'
+                  AND related_id = ?
+                  AND type = ?
+                  AND created_at > DATE_SUB(NOW(), INTERVAL 15 MINUTE)
+                LIMIT 1
+            ");
+            $dedupe->execute([
+                $providerId,
+                $providerId,
+                NotificationManager::TYPE_APPOINTMENT,
+            ]);
+            if ($dedupe->fetchColumn()) {
+                return 0;
+            }
+        } catch (PDOException $e) {
+            error_log('providerScheduleAvailable dedupe: ' . $e->getMessage());
+        }
+
+        return NotificationManager::notifyRole($pdo, 'patient', [
+            'sender_id'     => $providerId,
+            'type'          => NotificationManager::TYPE_APPOINTMENT,
+            'title'         => 'New Appointment Slots Available',
+            'message'       => "{$providerName} opened {$slotsCreated} {$slotWord} for today ({$day}, {$todayLabel}) from {$startLabel} to {$endLabel}. Book your consultation now.",
+            'action_url'    => '/views/patient/triage.php',
+            'related_table' => 'provider_schedules',
+            'related_id'    => $providerId,
+            'priority'      => 'normal',
+            'icon'          => 'calendar',
         ]);
     }
 }

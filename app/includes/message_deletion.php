@@ -31,6 +31,9 @@ function consultation_messages_ensure_schema(PDO $pdo): void
     }
 
     $alters = [];
+    if (!isset($columns['read_at'])) {
+        $alters[] = 'ADD COLUMN read_at DATETIME NULL DEFAULT NULL AFTER is_read';
+    }
     if (!isset($columns['is_deleted_for_everyone'])) {
         $alters[] = 'ADD COLUMN is_deleted_for_everyone TINYINT(1) NOT NULL DEFAULT 0 AFTER is_read';
     }
@@ -65,6 +68,77 @@ function consultation_messages_ensure_schema(PDO $pdo): void
             KEY idx_message (message_id)
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
     ");
+}
+
+/**
+ * Per-user consultation thread state (archive / soft delete / last read).
+ */
+function consultation_thread_state_ensure_schema(PDO $pdo): void
+{
+    $pdo->exec("
+        CREATE TABLE IF NOT EXISTS consultation_thread_state (
+            id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+            consultation_id INT UNSIGNED NOT NULL,
+            user_id INT UNSIGNED NOT NULL,
+            is_archived TINYINT(1) NOT NULL DEFAULT 0,
+            is_deleted  TINYINT(1) NOT NULL DEFAULT 0,
+            last_read_message_id INT UNSIGNED NULL DEFAULT NULL,
+            last_read_at DATETIME NULL DEFAULT NULL,
+            updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+            created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+            PRIMARY KEY (id),
+            UNIQUE KEY uq_consult_user (consultation_id, user_id),
+            KEY idx_user_archived (user_id, is_archived),
+            KEY idx_user_deleted (user_id, is_deleted),
+            KEY idx_user_updated (user_id, updated_at)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+    ");
+}
+
+/**
+ * Upsert thread state for a user.
+ *
+ * @param array{is_archived?:int,is_deleted?:int,last_read_message_id?:int|null,last_read_at?:string|null} $patch
+ */
+function consultation_thread_state_upsert(PDO $pdo, int $consultationId, int $userId, array $patch): void
+{
+    consultation_thread_state_ensure_schema($pdo);
+
+    $fields = [
+        'is_archived' => array_key_exists('is_archived', $patch) ? (int) $patch['is_archived'] : null,
+        'is_deleted' => array_key_exists('is_deleted', $patch) ? (int) $patch['is_deleted'] : null,
+        'last_read_message_id' => array_key_exists('last_read_message_id', $patch) ? ($patch['last_read_message_id'] === null ? null : (int) $patch['last_read_message_id']) : null,
+        'last_read_at' => array_key_exists('last_read_at', $patch) ? ($patch['last_read_at'] === null ? null : (string) $patch['last_read_at']) : null,
+    ];
+
+    // Insert defaults if missing, then update selected columns.
+    $pdo->prepare("
+        INSERT INTO consultation_thread_state (consultation_id, user_id, is_archived, is_deleted, last_read_message_id, last_read_at)
+        VALUES (?, ?, 0, 0, NULL, NULL)
+        ON DUPLICATE KEY UPDATE consultation_id = consultation_id
+    ")->execute([$consultationId, $userId]);
+
+    $set = [];
+    $params = [];
+    foreach ($fields as $col => $val) {
+        if ($val === null) continue;
+        $set[] = "{$col} = ?";
+        $params[] = $val;
+    }
+    if (!$set) return;
+
+    $params[] = $consultationId;
+    $params[] = $userId;
+    $pdo->prepare("UPDATE consultation_thread_state SET " . implode(', ', $set) . " WHERE consultation_id = ? AND user_id = ?")
+        ->execute($params);
+}
+
+function consultation_thread_state_get(PDO $pdo, int $consultationId, int $userId): array
+{
+    consultation_thread_state_ensure_schema($pdo);
+    $stmt = $pdo->prepare("SELECT * FROM consultation_thread_state WHERE consultation_id = ? AND user_id = ? LIMIT 1");
+    $stmt->execute([$consultationId, $userId]);
+    return $stmt->fetch(PDO::FETCH_ASSOC) ?: [];
 }
 
 /**
@@ -151,6 +225,16 @@ function message_assert_participant(PDO $pdo, int $consultationId, int $userId):
     $stmt->execute([$consultationId, $userId, $userId]);
     $consultation = $stmt->fetch(PDO::FETCH_ASSOC);
     if (!$consultation) {
+        // Security log (no PHI): unauthorized conversation access attempt
+        $logPath = BASE_PATH . '/app/includes/security_log.php';
+        if (is_file($logPath)) {
+            require_once $logPath;
+            if (function_exists('security_log_event')) {
+                security_log_event('messages_access_denied', [
+                    'consultation_id' => $consultationId,
+                ]);
+            }
+        }
         return ['success' => false, 'message' => 'Access denied.'];
     }
     return ['success' => true, 'message' => 'ok', 'consultation' => $consultation];
@@ -355,4 +439,124 @@ function message_fetch_consultation_messages(PDO $pdo, int $consultationId, int 
     }
 
     return $messages;
+}
+
+/**
+ * Total unread messages for a user (excludes delete-for-me hidden rows).
+ */
+function message_unread_count(PDO $pdo, int $userId): int
+{
+    consultation_messages_ensure_schema($pdo);
+    consultation_thread_state_ensure_schema($pdo);
+
+    $stmt = $pdo->prepare('
+        SELECT cm.consultation_id, cm.is_deleted_for_everyone, cm.deleted_for_me_users
+        FROM consultation_messages cm
+        LEFT JOIN consultation_thread_state ts
+          ON ts.consultation_id = cm.consultation_id AND ts.user_id = ?
+        WHERE cm.receiver_id = ?
+          AND cm.is_read = 0
+          AND cm.is_deleted_for_everyone = 0
+          AND (ts.is_deleted IS NULL OR ts.is_deleted = 0)
+    ');
+    $stmt->execute([$userId, $userId]);
+
+    $count = 0;
+    foreach ($stmt->fetchAll(PDO::FETCH_ASSOC) as $row) {
+        if (!message_is_hidden_for_user($row, $userId)) {
+            $count++;
+        }
+    }
+
+    return $count;
+}
+
+/**
+ * Latest unread message timestamp for polling clients.
+ */
+function message_latest_unread_at(PDO $pdo, int $userId): ?string
+{
+    consultation_messages_ensure_schema($pdo);
+    consultation_thread_state_ensure_schema($pdo);
+
+    $stmt = $pdo->prepare('
+        SELECT cm.created_at, cm.is_deleted_for_everyone, cm.deleted_for_me_users
+        FROM consultation_messages cm
+        LEFT JOIN consultation_thread_state ts
+          ON ts.consultation_id = cm.consultation_id AND ts.user_id = ?
+        WHERE cm.receiver_id = ?
+          AND cm.is_read = 0
+          AND cm.is_deleted_for_everyone = 0
+          AND (ts.is_deleted IS NULL OR ts.is_deleted = 0)
+        ORDER BY cm.created_at DESC, cm.id DESC
+        LIMIT 80
+    ');
+    $stmt->execute([$userId, $userId]);
+
+    foreach ($stmt->fetchAll(PDO::FETCH_ASSOC) as $row) {
+        if (!message_is_hidden_for_user($row, $userId)) {
+            return (string) ($row['created_at'] ?? '');
+        }
+    }
+
+    return null;
+}
+
+/**
+ * Mark all unread messages in a consultation as read for the viewer.
+ */
+function message_mark_consultation_read(PDO $pdo, int $consultationId, int $viewerUserId): int
+{
+    consultation_messages_ensure_schema($pdo);
+    consultation_thread_state_ensure_schema($pdo);
+
+    $access = message_assert_participant($pdo, $consultationId, $viewerUserId);
+    if (!$access['success']) {
+        return 0;
+    }
+
+    $stmt = $pdo->prepare('
+        UPDATE consultation_messages
+        SET is_read = 1,
+            read_at = COALESCE(read_at, NOW())
+        WHERE consultation_id = ?
+          AND receiver_id = ?
+          AND is_read = 0
+          AND is_deleted_for_everyone = 0
+    ');
+    $stmt->execute([$consultationId, $viewerUserId]);
+
+    $changed = (int) $stmt->rowCount();
+
+    // Track last read position for "Read" receipts & ordering.
+    $maxStmt = $pdo->prepare('
+        SELECT MAX(id) AS max_id
+        FROM consultation_messages
+        WHERE consultation_id = ? AND receiver_id = ? AND is_read = 1
+    ');
+    $maxStmt->execute([$consultationId, $viewerUserId]);
+    $maxId = (int) ($maxStmt->fetchColumn() ?: 0);
+
+    consultation_thread_state_upsert($pdo, $consultationId, $viewerUserId, [
+        'last_read_message_id' => $maxId > 0 ? $maxId : null,
+        'last_read_at' => date('Y-m-d H:i:s'),
+    ]);
+
+    return $changed;
+}
+
+/**
+ * Require authenticated patient or provider; block patients who must complete account setup.
+ */
+function messages_api_require_auth(PDO $pdo): void
+{
+    if (empty($_SESSION['user_id']) || !in_array($_SESSION['user_role'] ?? '', ['provider', 'patient'], true)) {
+        http_response_code(403);
+        echo json_encode(['success' => false, 'message' => 'Unauthorized.']);
+        exit;
+    }
+    if (($_SESSION['user_role'] ?? '') === 'patient') {
+        require_once __DIR__ . '/patient_settings.php';
+        patient_settings_require_patient_ready($pdo);
+    }
 }

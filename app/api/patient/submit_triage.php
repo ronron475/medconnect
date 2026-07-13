@@ -11,8 +11,9 @@ require_once dirname(dirname(dirname(__DIR__))) . '/app/includes/triage_assessme
 require_once dirname(dirname(dirname(__DIR__))) . '/app/core/TriageLevelService.php';
 
 Api::startJson();
-Api::requireRole('patient');
+Api::requirePatientReady($pdo);
 Api::requirePost();
+Api::requireCsrf();
 
 $patient_id = (int) $_SESSION['user_id'];
 consultations_auto_expire($pdo, $patient_id);
@@ -40,9 +41,59 @@ $symptomList = array_values(array_filter(array_map(static function ($s) {
 
 $assessment = MedicalAssessmentEngine::assess($complaint, $symptomList);
 
+// Merge silent registration NLP (provider-facing detail; never shown to patient)
+$regNlp = null;
+$regNlpRaw = trim((string) ($_POST['registration_nlp_json'] ?? ''));
+if ($regNlpRaw !== '') {
+    $decoded = json_decode($regNlpRaw, true);
+    if (is_array($decoded)) {
+        $regNlp = $decoded;
+        if (!empty($regNlp['translated_english']) && empty($assessment['english_translation'])) {
+            $assessment['english_translation'] = (string) $regNlp['translated_english'];
+        }
+        if (!empty($regNlp['detected_symptoms']) && is_array($regNlp['detected_symptoms'])) {
+            $assessment['detected_symptoms'] = array_values(array_unique(array_merge(
+                $assessment['detected_symptoms'] ?? [],
+                $regNlp['detected_symptoms']
+            )));
+        }
+        if (!empty($regNlp['detected_conditions']) && is_array($regNlp['detected_conditions'])) {
+            $assessment['possible_conditions'] = array_values(array_unique(array_merge(
+                $assessment['possible_conditions'] ?? [],
+                $regNlp['detected_conditions']
+            )));
+        }
+        if (!empty($regNlp['confidence']) && empty($assessment['confidence']['score'])) {
+            $pct = (int) preg_replace('/\D+/', '', (string) $regNlp['confidence']);
+            if ($pct > 0) {
+                $assessment['confidence']['score'] = $pct;
+            }
+        }
+        $assessment['registration_nlp'] = $regNlp;
+    }
+}
+
 $level = (string) ($assessment['db_level'] ?? '3');
 $label = (string) ($assessment['urgency_label'] ?? 'Routine');
 $triageLevel = TriageLevelService::fromAssessment($assessment);
+
+// Prefer registration urgency classification when available
+if (is_array($regNlp) && !empty($regNlp['urgency'])) {
+    $u = strtoupper((string) $regNlp['urgency']);
+    if ($u === 'EMERGENCY') {
+        $level = '1';
+        $label = 'Emergency';
+        $triageLevel = 'emergency';
+        $assessment['severity']['severity'] = 'emergency';
+        $assessment['triage']['triage_classification'] = 'EMERGENCY';
+    } elseif ($u === 'URGENT') {
+        $level = '2';
+        $label = 'Urgent';
+        $triageLevel = 'urgent';
+        $assessment['severity']['severity'] = 'urgent';
+        $assessment['triage']['triage_classification'] = 'URGENT';
+    }
+}
 
 $consult_type = $complaint !== ''
     ? $complaint
@@ -200,6 +251,9 @@ try {
 
     $pdo->commit();
 
+    require_once dirname(dirname(dirname(__DIR__))) . '/app/includes/bhw_patient_workflow.php';
+    BhwPatientWorkflow::onPatientPortalBooking($pdo, $patient_id, $triageLevel);
+
     Api::success([
         'level'            => $level,
         'label'            => $label,
@@ -210,7 +264,7 @@ try {
         'provider_name'    => $provider_name,
         'booking_note'     => $booking_note,
         'assessment'       => $assessment,
-    ], 'Assessment saved successfully. ' . $booking_note);
+    ], 'Your appointment has been booked successfully. ' . $booking_note);
 } catch (RuntimeException $e) {
     if ($pdo->inTransaction()) {
         $pdo->rollBack();

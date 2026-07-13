@@ -1,0 +1,437 @@
+/**
+ * MedConnect landing — scroll-triggered animations
+ * GPU-accelerated transforms only; progressive enhancement friendly.
+ */
+
+:root {
+  --lsa-duration: 0.65s;
+  --lsa-duration-fast: 0.55s;
+  --lsa-ease: cubic-bezier(0.22, 1, 0.36, 1);
+  --lsa-stagger: 100ms;
+  --lsa-rise: 26px;
+  --lsa-rise-sm: 20px;
+}
+
+/* ── Progressive enhancement: visible without JS ── */
+@media (scripting: none) {
+  .landing-page .lsa,
+  .landing-page .lsa-hero-item,
+  .landing-page .mc-reveal {
+    opacity: 1 !important;
+    transform: none !important;
+    transition: none !important;
+    animation: none !important;
+  }
+}
+
+/* Hidden states apply only after JS marks the page ready */
+html.lsa-ready .landing-page .lsa:not(.lsa-visible):not(.lsa-hero-visible) {
+  opacity: 0;
+  pointer-events: auto;
+}
+
+html.lsa-ready .landing-page .lsa--fade-up:not(.lsa-visible):not(.lsa-hero-visible) {
+  transform: translate3d(0, var(--lsa-rise), 0);
+}
+
+html.lsa-ready .landing-page .lsa--fade-up-sm:not(.lsa-visible):not(.lsa-hero-visible) {
+  transform: translate3d(0, var(--lsa-rise-sm), 0);
+}
+
+html.lsa-ready .landing-page .lsa--fade-scale:not(.lsa-visible):not(.lsa-hero-visible) {
+  transform: translate3d(0, 30px, 0) scale(0.98);
+}
+
+html.lsa-ready .landing-page .lsa--slide-left:not(.lsa-visible):not(.lsa-hero-visible) {
+  transform: translate3d(-32px, 16px, 0);
+}
+
+html.lsa-ready .landing-page .lsa--slide-right:not(.lsa-visible):not(.lsa-hero-visible) {
+  transform: translate3d(32px, 16px, 0);
+}
+
+html.lsa-ready .landing-page .lsa--img:not(.lsa-visible):not(.lsa-hero-visible) {
+  transform: scale(0.97);
+}
+
+html.lsa-ready .landing-page .lsa--testimonial:not(.lsa-visible):not(.lsa-hero-visible) {
+  transform: translate3d(0, 24px, 0) scale(0.98);
+}
+
+/* ── Shared transition ── */
+.landing-page .lsa {
+  transition:
+    opacity var(--lsa-duration) var(--lsa-ease),
+    transform var(--lsa-duration) var(--lsa-ease);
+  will-change: opacity, transform;
+}
+
+.landing-page .lsa--fast {
+  transition-duration: var(--lsa-duration-fast);
+}
+
+.landing-page .lsa.lsa-visible,
+.landing-page .lsa.lsa-hero-visible {
+  opacity: 1;
+  transform: translate3d(0, 0, 0) scale(1);
+}
+
+/* Stagger delays via custom property (--lsa-delay set by JS) */
+.landing-page .lsa[data-lsa-delay] {
+  transition-delay: var(--lsa-delay, 0ms);
+}
+
+/* ── Hero on-load sequence ── */
+html.lsa-ready .landing-page.hero-anim-active .hero--cinematic .hero-left .hero-badge,
+html.lsa-ready .landing-page.hero-anim-active .hero--cinematic .hero-left .hero-title__line,
+html.lsa-ready .landing-page.hero-anim-active .hero--cinematic .hero-left .hero-desc,
+html.lsa-ready .landing-page.hero-anim-active .hero--cinematic .hero-left .hero-trust-chip,
+html.lsa-ready .landing-page.hero-anim-active .hero--cinematic .hero-left .hero-ctas .hero-cta {
+  opacity: 0;
+  transform: translate3d(0, 22px, 0);
+  transition:
+    opacity 0.6s var(--lsa-ease),
+    transform 0.6s var(--lsa-ease);
+  will-change: opacity, transform;
+}
+
+html.lsa-ready .landing-page.hero-anim-active .hero--cinematic .hero-left .hero-ctas .hero-cta {
+  transform: translate3d(0, 16px, 0) scale(0.98);
+}
+
+html.lsa-ready .landing-page.hero-anim-active .hero--cinematic .hero-left .lsa-hero-visible {
+  opacity: 1;
+  transform: translate3d(0, 0, 0) scale(1);
+}
+
+html.lsa-ready .landing-page.hero-anim-active .hero--cinematic .hero-left .hero-ctas .hero-cta.lsa-hero-visible {
+  opacity: 1;
+  transform: translate3d(0, 0, 0) scale(1);
+}
+
+html.lsa-ready .landing-page.hero-anim-active .hero--cinematic .hrc-wrap:not(.lsa-hero-visible),
+html.lsa-ready .landing-page.hero-anim-active .hero--cinematic .hero-illustration-wrap:not(.lsa-hero-visible) {
+  opacity: 0;
+  transform: scale(0.95);
+  transition:
+    opacity 0.65s var(--lsa-ease),
+    transform 0.65s var(--lsa-ease);
+}
+
+html.lsa-ready .landing-page.hero-anim-active .hero--cinematic .hrc-wrap.lsa-hero-visible,
+html.lsa-ready .landing-page.hero-anim-active .hero--cinematic .hero-illustration-wrap.lsa-hero-visible {
+  opacity: 1;
+  transform: scale(1);
+}
+
+html.lsa-ready .landing-page .lsa-hero-item:not(.lsa-hero-visible) {
+  opacity: 0;
+}
+
+html.lsa-ready .landing-page .lsa-hero-item--search:not(.lsa-hero-visible) {
+  transform: translate3d(0, 16px, 0);
+}
+
+html.lsa-ready .landing-page .lsa-hero-item--badge:not(.lsa-hero-visible) {
+  transform: translate3d(0, 18px, 0);
+}
+
+html.lsa-ready .landing-page .lsa-hero-item--title:not(.lsa-hero-visible) {
+  transform: translate3d(0, 24px, 0);
+}
+
+html.lsa-ready .landing-page .lsa-hero-item--title-line:not(.lsa-hero-visible) {
+  transform: translate3d(0, 22px, 0);
+}
+
+html.lsa-ready .landing-page .lsa-hero-item--chip:not(.lsa-hero-visible) {
+  transform: translate3d(0, 14px, 0) scale(0.98);
+}
+
+html.lsa-ready .landing-page .lsa-hero-item--desc:not(.lsa-hero-visible) {
+  transform: translate3d(0, 20px, 0);
+}
+
+html.lsa-ready .landing-page .lsa-hero-item--cta:not(.lsa-hero-visible) {
+  transform: translate3d(0, 16px, 0) scale(0.98);
+}
+
+html.lsa-ready .landing-page .lsa-hero-item--visual:not(.lsa-hero-visible) {
+  transform: scale(0.95);
+}
+
+.landing-page .lsa-hero-item {
+  transition:
+    opacity 0.6s var(--lsa-ease),
+    transform 0.6s var(--lsa-ease);
+  will-change: opacity, transform;
+}
+
+.landing-page .lsa-hero-item.lsa-hero-visible {
+  opacity: 1;
+  transform: translate3d(0, 0, 0) scale(1);
+}
+
+/* Disable legacy hero keyframes on cinematic landing hero */
+.landing-page.hero-anim-active .hero-left,
+.landing-page.hero-anim-active .hero-desc,
+.landing-page.hero-anim-active .hero-ctas,
+.landing-page.hero-anim-active .hero-eyebrow,
+.landing-page.hero-anim-active .hero-features,
+.landing-page.hero-anim-active .hrc-wrap {
+  animation: none !important;
+}
+
+.landing-page--no-hero-anim .lsa-hero-item,
+.landing-page--no-hero-anim .hero-trust-chip {
+  opacity: 1 !important;
+  transform: none !important;
+  transition: none !important;
+}
+
+/* ── Hero trust chips ── */
+.landing-page .hero--cinematic .hero-desc {
+  margin-bottom: 22px !important;
+}
+
+.landing-page .hero-trust-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin: 0 0 30px;
+  padding: 0;
+  list-style: none;
+  max-width: 560px;
+}
+
+.landing-page .hero-trust-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 8px 14px;
+  border-radius: 999px;
+  border: 1px solid rgba(94, 234, 212, 0.28);
+  background: rgba(6, 147, 150, 0.12);
+  color: rgba(255, 255, 255, 0.92);
+  font-size: 12.5px;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  box-shadow: 0 4px 18px rgba(1, 42, 74, 0.18);
+}
+
+.landing-page .hero-trust-chip svg {
+  flex-shrink: 0;
+  color: #5eead4;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .landing-page .hero-trust-chip {
+    transition:
+      transform 0.25s var(--lsa-ease),
+      border-color 0.25s ease,
+      background 0.25s ease,
+      box-shadow 0.25s ease;
+  }
+
+  .landing-page .hero-trust-chip:hover {
+    transform: translateY(-2px);
+    border-color: rgba(94, 234, 212, 0.5);
+    background: rgba(6, 147, 150, 0.2);
+    box-shadow: 0 8px 22px rgba(6, 147, 150, 0.2);
+  }
+}
+
+@media (max-width: 575px) {
+  .landing-page .hero-trust-chips {
+    gap: 8px;
+    margin-bottom: 26px;
+  }
+
+  .landing-page .hero-trust-chip {
+    font-size: 11.5px;
+    padding: 7px 12px;
+  }
+}
+
+/* ── Section titles (extends landing-reveal-title) ── */
+.landing-page .landing-reveal-title {
+  transform: translate3d(0, -26px, 0);
+}
+
+.landing-page .landing-reveal-desc {
+  transform: translate3d(0, 26px, 0);
+}
+
+/* ── Feature / service cards — scroll reveal ── */
+.landing-page .service-card.lsa-card-reveal {
+  transition:
+    opacity 0.6s var(--lsa-ease),
+    transform 0.6s var(--lsa-ease),
+    box-shadow 0.25s var(--lsa-ease),
+    border-color 0.25s ease,
+    background 0.25s ease;
+  transition-delay: var(--lsa-delay, 0ms);
+}
+
+.landing-page .service-card.lsa-card-reveal:not(.lsa-card-visible) {
+  opacity: 0;
+  transform: translate3d(0, 28px, 0) scale(0.98);
+}
+
+/* Horizontal alternation — infinite carousel only */
+.landing-page .landing-carousel .service-card.lsa-card-reveal.lsa-card--from-left:not(.lsa-card-visible) {
+  transform: translate3d(-36px, 12px, 0) scale(0.98);
+}
+
+.landing-page .landing-carousel .service-card.lsa-card-reveal.lsa-card--from-right:not(.lsa-card-visible) {
+  transform: translate3d(36px, 12px, 0) scale(0.98);
+}
+
+.landing-page .service-card.lsa-card-reveal.lsa-card-visible {
+  opacity: 1;
+  transform: translate3d(0, 0, 0) scale(1);
+}
+
+/* ── FAQ items (ready for future sections) ── */
+.landing-page .lsa-faq-item:not(.lsa-visible) {
+  opacity: 0;
+  transform: translate3d(0, 18px, 0);
+}
+
+/* ── Stat / counter cards ── */
+.landing-page .lsa-stat:not(.lsa-visible) {
+  opacity: 0;
+  transform: translate3d(0, 24px, 0);
+}
+
+.landing-page .lsa-stat.lsa-visible {
+  opacity: 1;
+  transform: translate3d(0, 0, 0);
+}
+
+.landing-page .lsa-stat__value {
+  font-variant-numeric: tabular-nums;
+}
+
+/* ── Image zoom + parallax layer ── */
+.landing-page .lsa-img-wrap {
+  overflow: hidden;
+}
+
+.landing-page .lsa-img-wrap .lsa-img-inner {
+  transition: transform 0.7s var(--lsa-ease);
+  will-change: transform;
+}
+
+html.lsa-ready .landing-page .lsa--img:not(.lsa-visible) .lsa-img-inner {
+  transform: scale(1.04);
+}
+
+.landing-page .lsa--img.lsa-visible .lsa-img-inner {
+  transform: scale(1);
+}
+
+.landing-page .lsa-parallax-target {
+  will-change: transform;
+  transition: transform 0.1s linear;
+}
+
+/* ── Hover polish ── */
+@media (hover: hover) and (pointer: fine) {
+  .landing-page .service-card {
+    transition:
+      transform 0.25s var(--lsa-ease),
+      box-shadow 0.25s var(--lsa-ease),
+      border-color 0.25s ease,
+      background 0.25s ease;
+  }
+
+  .landing-page .service-card:hover {
+    transform: translate3d(0, -6px, 0);
+    box-shadow: 0 20px 44px rgba(6, 147, 150, 0.14);
+  }
+
+  .landing-page .landing-carousel .service-card:hover {
+    transform: translate3d(0, -6px, 0) scale(1.01);
+  }
+
+  .landing-page .hero-cta,
+  .landing-page .cta-primary,
+  .landing-page .cta-secondary {
+    transition:
+      transform 0.25s var(--lsa-ease),
+      box-shadow 0.25s var(--lsa-ease),
+      background 0.25s ease,
+      border-color 0.25s ease,
+      color 0.25s ease;
+  }
+
+  .landing-page .hero-cta:hover,
+  .landing-page .cta-primary:hover {
+    transform: scale(1.03) translateY(-2px);
+    box-shadow: 0 14px 36px rgba(6, 147, 150, 0.5), 0 0 0 1px rgba(94, 234, 212, 0.2);
+  }
+
+  .landing-page .hero-cta--outline:hover,
+  .landing-page .cta-secondary:hover {
+    transform: scale(1.03) translateY(-2px);
+  }
+
+  .landing-page .ann-feature-card__shell:hover {
+    transform: scale(1.02);
+  }
+
+  .landing-page .contact-logo,
+  .landing-page .lsa-img-wrap img {
+    transition: transform 0.35s var(--lsa-ease);
+  }
+
+  .landing-page .contact-brand:hover .contact-logo,
+  .landing-page .lsa-img-wrap:hover img {
+    transform: scale(1.02);
+  }
+}
+
+/* ── Announcements panel ── */
+.landing-page .ann-slideshow__header .lsa {
+  --lsa-duration: 0.6s;
+}
+
+.landing-page .ann-slideshow__footer .ann-view-all-btn {
+  transition:
+    transform 0.25s var(--lsa-ease),
+    box-shadow 0.25s var(--lsa-ease),
+    background 0.25s ease;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .landing-page .ann-view-all-btn:hover {
+    transform: translateY(-2px) scale(1.02);
+  }
+}
+
+/* ── Reduced motion ── */
+@media (prefers-reduced-motion: reduce) {
+  .landing-page .lsa,
+  .landing-page .lsa-hero-item,
+  .landing-page .lsa-faq-item,
+  .landing-page .lsa-stat,
+  .landing-page .service-card.lsa-card-reveal,
+  .landing-page .lsa-parallax-target {
+    opacity: 1 !important;
+    transform: none !important;
+    transition: none !important;
+    animation: none !important;
+  }
+
+  .landing-page .lsa-img-wrap .lsa-img-inner {
+    transform: none !important;
+  }
+
+  html.lsa-ready .landing-page .lsa:not(.lsa-visible) {
+    opacity: 1;
+    transform: none;
+  }
+}
