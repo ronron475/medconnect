@@ -139,7 +139,15 @@
     const deleted = Boolean(message.is_deleted_for_everyone);
     const text = deleted ? DELETED_TEXT : (message.message || '');
     const deletedClass = deleted ? ' is-deleted' : '';
-    return `<div class="bubble-wrap"><div class="chat-bubble ${bubbleClass}${deletedClass}" data-message-id="${message.id}">${escapeHtml(text)}</div><button type="button" class="msg-options-btn" aria-label="Message options" data-message-id="${message.id}">⋯</button></div>`;
+    const muteTts = !deleted && message.message_kind === 'mute_tts';
+    const kindClass = muteTts ? ' is-mute-tts' : '';
+    const badge = muteTts
+      ? '<div class="chat-mute-tts-badge">Patient (Typed Voice)</div>'
+      : '';
+    const status = muteTts
+      ? '<div class="chat-mute-tts-status">Converted to Speech · Delivered</div>'
+      : '';
+    return `<div class="bubble-wrap">${badge}<div class="chat-bubble ${bubbleClass}${deletedClass}${kindClass}" data-message-id="${message.id}" data-message-kind="${escapeHtml(message.message_kind || 'chat')}">${escapeHtml(text)}</div>${status}<button type="button" class="msg-options-btn" aria-label="Message options" data-message-id="${message.id}">⋯</button></div>`;
   }
 
   async function deleteMessage(assetBase, messageId, mode) {
@@ -330,6 +338,7 @@
   async function sendMessage(consultationId, message, options = {}) {
     const assetBase = options.assetBase || document.body?.dataset?.assetBase || '';
     const token = options.csrfToken || csrfToken();
+    const kind = options.messageKind === 'mute_tts' ? 'mute_tts' : 'chat';
     const response = await fetch(`${assetBase}/app/api/messages/send.php`, {
       method: 'POST',
       credentials: 'same-origin',
@@ -337,6 +346,7 @@
       body: new URLSearchParams({
         consultation_id: String(consultationId),
         message,
+        message_kind: kind,
         csrf_token: token,
       }),
     });

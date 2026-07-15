@@ -95,6 +95,15 @@ $existing_conditions  = trim($_POST['existing_conditions']     ?? '');
 $allergies            = trim($_POST['allergies']               ?? '');
 $current_medications  = trim($_POST['current_medications']     ?? '');
 $consent_given        = isset($_POST['consent_given']) && $_POST['consent_given'] === '1' ? 1 : 0;
+$chief_complaint      = trim((string) ($_POST['chief_complaint'] ?? ''));
+$triage_urgency       = strtoupper(trim((string) ($_POST['triage_urgency'] ?? '')));
+$nlp_result_json      = trim((string) ($_POST['nlp_result_json'] ?? ''));
+if (!in_array($triage_urgency, ['EMERGENCY', 'URGENT', 'NON-URGENT', 'NON_URGENT'], true)) {
+    $triage_urgency = '';
+}
+if ($triage_urgency === 'NON_URGENT') {
+    $triage_urgency = 'NON-URGENT';
+}
 
 $full_name        = trim($first_name . ' ' . $middle_name . ' ' . $last_name);
 $address_parts    = array_filter([$street_address, $barangay, $city_municipality, $province, $region]);
@@ -245,7 +254,7 @@ try {
              ocr_result, ocr_bago_confirmed, id_document_path,
              consent_given, consent_timestamp, consent_version,
              status, created_at)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1, ?, ?, NOW(), '1.0', 'ocr_verified', NOW())
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1, ?, ?, NOW(), '1.0', 'verified', NOW())
     ");
     $stmt->execute([
         $first_name, $middle_name, $last_name, $full_name,
@@ -276,6 +285,45 @@ try {
     $pdo->prepare('UPDATE patient_registrations SET user_id = ? WHERE id = ?')
         ->execute([$patient_user_id, $registration_id]);
 
+    require_once dirname(dirname(__DIR__)) . '/app/includes/triage_assessment_schema.php';
+    patient_registration_save_complaint(
+        $pdo,
+        $registration_id,
+        $chief_complaint,
+        $triage_urgency,
+        $nlp_result_json !== '' ? $nlp_result_json : null
+    );
+
+    $emergencyMeta = null;
+    if ($triage_urgency === 'EMERGENCY' && $chief_complaint !== '') {
+        $assessment = [];
+        if ($nlp_result_json !== '') {
+            $decodedNlp = json_decode($nlp_result_json, true);
+            if (is_array($decodedNlp)) {
+                $assessment = [
+                    'english_translation' => (string) ($decodedNlp['translated_english'] ?? $decodedNlp['english_translation'] ?? ''),
+                    'detected_symptoms'   => is_array($decodedNlp['detected_symptoms'] ?? null) ? $decodedNlp['detected_symptoms'] : [],
+                    'possible_conditions' => is_array($decodedNlp['detected_conditions'] ?? null) ? $decodedNlp['detected_conditions'] : [],
+                    'confidence'          => ['score' => (int) preg_replace('/\D+/', '', (string) ($decodedNlp['confidence'] ?? 0))],
+                    'urgency_label'       => 'Emergency',
+                    'db_level'            => '1',
+                    'severity'            => ['severity' => 'emergency'],
+                    'triage'              => ['triage_classification' => 'EMERGENCY'],
+                    'recommendations'     => [],
+                    'registration_nlp'    => $decodedNlp,
+                    'engine'              => 'registration-nlp',
+                ];
+            }
+        }
+        $emergencyMeta = patient_create_emergency_triage_record(
+            $pdo,
+            $patient_user_id,
+            $chief_complaint,
+            $assessment,
+            []
+        );
+    }
+
     require_once dirname(dirname(__DIR__)) . '/app/core/BagoBarangayCentroids.php';
     require_once dirname(dirname(__DIR__)) . '/app/core/GisDashboardService.php';
     $gis = new GisDashboardService($pdo);
@@ -299,7 +347,27 @@ try {
     NotificationEvents::patientRegistered($pdo, $patient_user_id, trim($first_name . ' ' . $last_name));
 
     require_once dirname(dirname(__DIR__)) . '/app/includes/bhw_patient_workflow.php';
-    BhwPatientWorkflow::onSelfRegistration($pdo, $patient_user_id);
+    if (is_array($emergencyMeta) && (int) ($emergencyMeta['triage_id'] ?? 0) > 0) {
+        BhwPatientWorkflow::onPatientPortalEmergency($pdo, $patient_user_id, [
+            'triage_id'   => (int) $emergencyMeta['triage_id'],
+            'referral_id' => (int) ($emergencyMeta['referral_id'] ?? 0),
+            'source'      => 'self_registration',
+        ]);
+        $providerId = (int) ($emergencyMeta['provider_id'] ?? 0);
+        $referralId = (int) ($emergencyMeta['referral_id'] ?? 0);
+        NotificationEvents::highRiskPatient(
+            $pdo,
+            $patient_user_id,
+            trim($first_name . ' ' . $last_name),
+            'Emergency triage at registration',
+            $patient_user_id
+        );
+        if ($referralId > 0) {
+            NotificationEvents::referralCreated($pdo, $referralId, $patient_user_id, $providerId > 0 ? $providerId : null, $patient_user_id);
+        }
+    } else {
+        BhwPatientWorkflow::onSelfRegistration($pdo, $patient_user_id);
+    }
 
     unset(
         $_SESSION['ocr_verified'], $_SESSION['ocr_national_id'],
@@ -310,9 +378,11 @@ try {
     );
 
     echo json_encode([
-        'success'  => true,
-        'message'  => 'Account created successfully! You can now sign in.',
-        'redirect' => BASE_URL . '/index.php',
+        'success'   => true,
+        'message'   => 'Account created successfully! You can now sign in.',
+        'redirect'  => BASE_URL . '/index.php',
+        'emergency' => is_array($emergencyMeta),
+        'urgency'   => $triage_urgency !== '' ? $triage_urgency : null,
     ]);
 
 } catch (Exception $e) {

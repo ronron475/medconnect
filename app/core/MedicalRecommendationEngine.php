@@ -81,28 +81,55 @@ final class MedicalRecommendationEngine
 
     /**
      * @param array<string, mixed> $classification
-     * @param list<string> $possibleConditions
+     * @param list<string|array<string, mixed>> $possibleConditions
+     * @param list<string|array<string, mixed>> $detectedSymptoms
      * @return list<string>
      */
-    public static function buildRecommendations(array $classification, array $possibleConditions): array
-    {
-        $items = [
-            (string) ($classification['recommended_action'] ?? ''),
-        ];
-
-        if ($possibleConditions !== []) {
-            $items[] = 'Possible related conditions were identified for discussion with your provider — not a confirmed diagnosis.';
-        }
-
+    public static function buildRecommendations(
+        array $classification,
+        array $possibleConditions = [],
+        string $chiefComplaint = '',
+        string $englishText = '',
+        array $detectedSymptoms = []
+    ): array {
         $class = (string) ($classification['triage_classification'] ?? 'NON_URGENT');
+        $items = [];
+
         if ($class === 'NON_URGENT') {
-            $items[] = 'Rest, stay hydrated, and track symptom changes over the next 24–48 hours.';
+            require_once __DIR__ . '/SelfCareRemediesLoader.php';
+            $match = SelfCareRemediesLoader::match($chiefComplaint, $englishText, $detectedSymptoms);
+
+            if (!empty($match['display_name']) && ($match['symptom_key'] ?? '') !== 'default_non_urgent') {
+                $items[] = 'Self-care focus: ' . $match['display_name'] . '.';
+            }
+
+            foreach ($match['tips'] as $tip) {
+                $items[] = $tip;
+            }
+
+            if ($match['when_to_seek_care'] !== '') {
+                $items[] = $match['when_to_seek_care'];
+            }
+
+            if ($items === []) {
+                $items[] = (string) ($classification['recommended_action'] ?? '');
+                $items[] = 'Rest, stay hydrated, and track symptom changes over the next 24–48 hours.';
+                $items[] = 'Use over-the-counter comfort measures only as directed on the label, unless your clinician advised otherwise.';
+            }
+
+            $items[] = 'You may follow these tips on your own. If you would like to consult a licensed doctor, you may book an appointment anytime.';
         } elseif ($class === 'URGENT') {
+            $items[] = (string) ($classification['recommended_action'] ?? 'Consult a healthcare provider within 24 hours.');
             $items[] = 'Avoid self-medicating with prescription drugs without professional guidance.';
             $items[] = 'Prepare a brief symptom timeline before your consultation.';
         } else {
+            $items[] = (string) ($classification['recommended_action'] ?? 'Seek emergency medical care immediately.');
             $items[] = 'Call local emergency services or go to the nearest emergency facility without delay.';
             $items[] = 'Do not drive yourself if you feel faint, confused, or severely unwell.';
+        }
+
+        if ($possibleConditions !== [] && $class !== 'EMERGENCY') {
+            $items[] = 'Possible related conditions were identified for discussion with your provider — not a confirmed diagnosis.';
         }
 
         $items[] = self::DISCLAIMER;

@@ -25,7 +25,7 @@ $tab        = ($_GET['tab'] ?? 'active') === 'history' ? 'history' : 'active';
 try {
     $cases = provider_triage_cases_load($pdo, $providerId);
     if ($tab === 'active') {
-        $cases = array_values(array_filter($cases, fn($t) => empty($t['reviewed'])));
+        $cases = array_values(array_filter($cases, 'provider_triage_case_is_active'));
     }
 
     echo json_encode([

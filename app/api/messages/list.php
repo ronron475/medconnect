@@ -12,6 +12,7 @@ messages_api_require_auth($pdo);
 
 $consultation_id = (int)($_GET['consultation_id'] ?? 0);
 $user_id = (int)$_SESSION['user_id'];
+session_write_close();
 
 if (!$consultation_id) {
     ob_end_clean();

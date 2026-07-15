@@ -501,6 +501,10 @@
     if (/\/assets\//i.test(urlStr)) return false;
     if (/\/app\/api\/login\.php$/i.test(urlStr)) return false;
     if (/\/app\/api\/logout\.php$/i.test(urlStr)) return false;
+    if (/\/app\/api\/consultations\/session_timer\.php/i.test(urlStr)) return false;
+    if (/\/app\/api\/consultations\/session_keepalive\.php/i.test(urlStr)) return false;
+    if (/\/app\/api\/patient\/approved_recommendations\.php/i.test(urlStr)) return false;
+    if (/\/app\/api\/patient\/acknowledge_recommendation\.php/i.test(urlStr)) return false;
 
     return /\/app\/(api|controllers)\//i.test(urlStr);
   }

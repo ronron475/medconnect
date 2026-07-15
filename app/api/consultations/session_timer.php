@@ -10,8 +10,11 @@ require_once dirname(dirname(dirname(__DIR__))) . '/bootstrap.php';
 require_once dirname(dirname(dirname(__DIR__))) . '/config/db.php';
 
 $token = trim((string) ($_GET['token'] ?? ''));
+$userId = (int) ($_SESSION['user_id'] ?? 0);
+// Release lock so Chrome dual-tab video rooms can poll without blocking each other.
+session_write_close();
 
-if ($token === '' || empty($_SESSION['user_id'])) {
+if ($token === '' || $userId <= 0) {
     echo json_encode(['success' => false, 'message' => 'Unauthorized.']);
     exit;
 }
@@ -25,10 +28,10 @@ try {
         LEFT JOIN appointment_slots s ON s.consultation_id = c.id AND s.status = 'booked'
         WHERE vs.room_token = ?
           AND vs.status = 'active'
-          AND (vs.provider_id = ? OR vs.patient_id = ?)
+          AND (c.provider_id = ? OR c.patient_id = ?)
         LIMIT 1
     ");
-    $stmt->execute([$token, $_SESSION['user_id'], $_SESSION['user_id']]);
+    $stmt->execute([$token, $userId, $userId]);
     $row = $stmt->fetch(PDO::FETCH_ASSOC);
 
     if (!$row) {

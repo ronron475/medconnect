@@ -90,15 +90,15 @@ if (!function_exists('medconnect_send_security_headers')) {
             "base-uri 'self'",
             "object-src 'none'",
             "frame-ancestors 'self'",
-            // Allow safe embedded maps used on landing page modals.
-            "frame-src 'self' https://maps.google.com https://www.google.com",
+            // Maps + Google reCAPTCHA challenge iframes.
+            "frame-src 'self' https://maps.google.com https://www.google.com https://recaptcha.google.com",
             // Leaflet tiles (OSM/Esri) + CDN assets used in GIS dashboards.
-            "img-src 'self' data: blob: https://*.tile.openstreetmap.org https://server.arcgisonline.com https://unpkg.com",
+            "img-src 'self' data: blob: https://*.tile.openstreetmap.org https://server.arcgisonline.com https://unpkg.com https://www.gstatic.com",
             "font-src 'self' data: https://fonts.gstatic.com",
-            "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://unpkg.com",
-            // Chart.js + Leaflet are loaded from CDN for dashboards.
-            "script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://unpkg.com",
-            "connect-src 'self'",
+            "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://unpkg.com https://www.gstatic.com",
+            // Chart.js + Leaflet CDN + Google reCAPTCHA (forgot-password / login).
+            "script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://unpkg.com https://www.google.com https://www.gstatic.com",
+            "connect-src 'self' https://www.google.com https://www.gstatic.com",
             "media-src 'self' blob:",
         ]);
         header("Content-Security-Policy: {$csp}");
@@ -138,7 +138,14 @@ if (session_status() === PHP_SESSION_NONE) {
         'samesite' => $sameSite,
     ]);
 
-    session_start();
+    // read_and_close: used by video_room so Chrome can open provider+patient tabs without session lock deadlock.
+    if (defined('MEDCONNECT_SESSION_READ_AND_CLOSE') && MEDCONNECT_SESSION_READ_AND_CLOSE) {
+        session_start([
+            'read_and_close' => true,
+        ]);
+    } else {
+        session_start();
+    }
 }
 
 medconnect_send_security_headers();
@@ -230,7 +237,13 @@ require_once BASE_PATH . '/app/includes/session_timeout.php';
 session_timeout_check();
 
 if (empty($_SESSION['csrf_token'])) {
+    // With read_and_close sessions (video room), this only affects the current request arrays.
     $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
+}
+
+// Video room / dual-tab: if a writeable session was opened somehow, release it before serving HTML.
+if (defined('MEDCONNECT_SESSION_READ_AND_CLOSE') && MEDCONNECT_SESSION_READ_AND_CLOSE && session_status() === PHP_SESSION_ACTIVE) {
+    session_write_close();
 }
 
 // Core classes — autoload on first use (avoids loading NLP stack on login/dashboard).

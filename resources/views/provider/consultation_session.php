@@ -493,6 +493,35 @@ $localhost_app_url = 'http://localhost' . (ASSET_BASE !== '' ? ASSET_BASE : '');
     color: #134e4a;
     border-bottom-right-radius: 4px;
 }
+.chat-bubble.is-mute-tts {
+    background: #eff6ff;
+    border: 1px solid #bfdbfe;
+    color: #1e3a8a;
+}
+.chat-mute-tts-badge {
+    font-size: 10px;
+    font-weight: 800;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: #1d4ed8;
+    margin-bottom: 4px;
+}
+.chat-mute-tts-status {
+    font-size: 11px;
+    color: #047857;
+    margin-top: 4px;
+}
+.chat-mute-tts-play {
+    margin-top: 6px;
+    border: 1px solid #93c5fd;
+    background: #fff;
+    color: #1d4ed8;
+    border-radius: 8px;
+    font-size: 11px;
+    font-weight: 700;
+    padding: 4px 8px;
+    cursor: pointer;
+}
 .chat-time {
     color: #608395;
     font-size: 10.5px;
@@ -958,11 +987,33 @@ const sessionCsrf = <?= json_encode((string) ($_SESSION['csrf_token'] ?? '')) ?>
 const sessionProviderInitials = <?= json_encode($provider['initials'] ?? 'DR') ?>;
 const sessionPatientInitials = <?= json_encode($patient['initials']) ?>;
 const sessionAssetBase = <?= json_encode(ASSET_BASE) ?>;
+const sessionSpokenMuteIds = new Set();
+const sessionRecentMuteTexts = new Map();
 let sessionChatRefreshTimer = null;
 let sessionChatRefreshInFlight = false;
 let sessionLastEventId = 0;
 let sessionRealtimePoller = null;
 let latestAiSummary = '';
+
+function speakMuteTtsMessage(message, force) {
+    if (!message || message.message_kind !== 'mute_tts' || message.is_deleted_for_everyone) return;
+    const id = String(message.id || '');
+    const key = String(message.message || '').trim().toLowerCase();
+    if (!force) {
+        if (id && sessionSpokenMuteIds.has(id)) return;
+        const recentAt = sessionRecentMuteTexts.get(key);
+        if (recentAt && (Date.now() - recentAt) < 15000) return;
+    }
+    if (id) sessionSpokenMuteIds.add(id);
+    if (key) sessionRecentMuteTexts.set(key, Date.now());
+    if (!('speechSynthesis' in window)) return;
+    try {
+        window.speechSynthesis.cancel();
+        const utter = new SpeechSynthesisUtterance(String(message.message || ''));
+        utter.lang = 'en-PH';
+        window.speechSynthesis.speak(utter);
+    } catch (e) { /* ignore */ }
+}
 
 function escapeChatHtml(value) {
     return MedConnectMessages.escapeHtml(value);
@@ -991,16 +1042,27 @@ function renderSessionChat() {
         const mine = Number(message.sender_id) === sessionCurrentUserId;
         const row = document.createElement('div');
         row.className = 'chat-row' + (mine ? ' mine' : '');
+        const playBtn = (!mine && message.message_kind === 'mute_tts' && !message.is_deleted_for_everyone)
+            ? `<button type="button" class="chat-mute-tts-play" data-play-mute-tts="${Number(message.id)}">▶ Play Audio</button>`
+            : '';
         row.innerHTML = `
             <div class="chat-avatar">${escapeChatHtml(mine ? sessionProviderInitials : sessionPatientInitials)}</div>
             <div>
                 ${MedConnectMessages.buildChatBubbleHtml(message, mine ? 'mine' : 'patient')}
+                ${playBtn}
                 <div class="chat-time" style="${mine ? 'text-align:right' : ''}">${escapeChatHtml(message.time || '')}</div>
             </div>
         `;
         fragment.appendChild(row);
     });
     body.appendChild(fragment);
+    body.querySelectorAll('[data-play-mute-tts]').forEach((btn) => {
+        btn.addEventListener('click', () => {
+            const id = Number(btn.getAttribute('data-play-mute-tts'));
+            const msg = sessionMessages.find((m) => Number(m.id) === id);
+            if (msg) speakMuteTtsMessage(msg, true);
+        });
+    });
     MedConnectMessages.bindMessageInteractions(body, sessionMessages, {
         assetBase: sessionAssetBase,
         onDeleted(result, eventType) {
@@ -1050,8 +1112,14 @@ async function refreshSessionChat() {
         const response = await fetch(`<?= ASSET_BASE ?>/app/api/messages/list.php?consultation_id=${encodeURIComponent(sessionConsultationId)}&_=${Date.now()}`, { cache: 'no-store' });
         const data = await response.json();
         if (data.success) {
+            const incoming = data.messages || [];
+            incoming.forEach((msg) => {
+                if (msg.message_kind === 'mute_tts' && Number(msg.sender_id) !== sessionCurrentUserId) {
+                    speakMuteTtsMessage(msg, false);
+                }
+            });
             sessionMessages.length = 0;
-            sessionMessages.push(...(data.messages || []));
+            sessionMessages.push(...incoming);
             renderSessionChat();
         }
     } catch (e) {
@@ -1284,6 +1352,18 @@ window.addEventListener('message', (event) => {
         return;
     }
 
+    if (event.data.type === 'medconnect:mute-tts' && event.data.message) {
+        const msg = event.data.message;
+        speakMuteTtsMessage(msg, false);
+        if (msg.message && document.getElementById('aiTranscriptInput')) {
+            const input = document.getElementById('aiTranscriptInput');
+            const stamp = msg.time || new Date().toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+            input.value = (input.value ? input.value + '\n' : '') + `[Typed Voice ${stamp}] ${msg.message}`;
+        }
+        refreshSessionChat();
+        return;
+    }
+
     if (event.data.type === 'medconnect:call-ended') {
         timerActive = false;
         const frame = document.getElementById('videoFrame');
@@ -1457,29 +1537,40 @@ async function requestExtension() {
     }
 }
 
-// SAVE SOAP NOTES
-async function saveSOAP() {
+// SAVE SOAP NOTES (draft by default; finalize=true completes the visit)
+async function saveSOAP(finalize = false) {
     const fd = new FormData(document.getElementById('soapForm'));
+    fd.append('csrf_token', sessionCsrf || document.body.dataset.csrf || '');
+    if (finalize) {
+        fd.append('finalize', '1');
+    }
     try {
         const res = await fetch('<?= ASSET_BASE ?>/app/api/provider/save_clinical_notes.php', {
             method: 'POST',
-            body: fd
+            body: fd,
+            credentials: 'same-origin',
         });
         const data = await res.json();
-        alert(data.message);
+        alert(data.message || (data.success ? 'Saved.' : 'Could not save notes.'));
+        return data;
     } catch (e) {
         alert('Error saving notes.');
+        return { success: false };
     }
 }
 
 // FINALIZE CONSULTATION
-function finalizeConsultation() {
+async function finalizeConsultation() {
     const sign = document.querySelector('input[name="signature_data"]').value;
-    if(!sign) return alert('Please provide your digital signature to finalize.');
-    if(confirm('Finalize this consultation? This will close the session and save all records.')) {
-        saveSOAP().then(() => {
-            window.location.href = '<?= ASSET_BASE ?>/views/provider/dashboard.php';
-        });
+    if (!sign || !String(sign).trim()) {
+        return alert('Please provide your digital signature to finalize.');
+    }
+    if (!confirm('Finalize this consultation? This will close the session and save all records.')) {
+        return;
+    }
+    const data = await saveSOAP(true);
+    if (data && data.success) {
+        window.location.href = '<?= ASSET_BASE ?>/views/provider/dashboard.php';
     }
 }
 

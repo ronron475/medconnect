@@ -96,6 +96,25 @@ try {
         $stmt = $pdo->prepare("UPDATE triage_results SET level = ?, urgency_label = ?, triage_level = ?, assessed_at = NOW() WHERE id = ?");
         $stmt->execute([$level, $label, $triageLevel, $id]);
 
+        // Keep patient remedy gate in sync with clinical override.
+        $meta = $pdo->prepare('SELECT chief_complaint, recommendations, triage_classification FROM triage_results WHERE id = ? LIMIT 1');
+        $meta->execute([$id]);
+        $metaRow = $meta->fetch(PDO::FETCH_ASSOC) ?: [];
+        $recStatus = triage_recommendation_status_for_insert(
+            $triageLevel,
+            (string) ($metaRow['chief_complaint'] ?? ''),
+            (string) ($metaRow['recommendations'] ?? ''),
+            (string) ($metaRow['triage_classification'] ?? '')
+        );
+        $pdo->prepare("
+            UPDATE triage_results
+            SET recommendation_status = ?,
+                recommendation_approved_by = NULL,
+                recommendation_approved_at = NULL,
+                recommendation_patient_ack_at = NULL
+            WHERE id = ?
+        ")->execute([$recStatus, $id]);
+
         audit_log($pdo, [
             'patient_id'  => $patientId,
             'action_type' => 'TRIAGE_OVERRIDE',
@@ -103,6 +122,122 @@ try {
         ]);
 
         echo json_encode(['success' => true, 'message' => 'Priority level updated.']);
+    }
+    else if ($action === 'approve_recommendations' || $action === 'reject_recommendations') {
+        $meta = $pdo->prepare("
+            SELECT chief_complaint, recommendations, recommendation_status, triage_level, triage_classification
+            FROM triage_results WHERE id = ? LIMIT 1
+        ");
+        $meta->execute([$id]);
+        $metaRow = $meta->fetch(PDO::FETCH_ASSOC);
+        if (!$metaRow) {
+            http_response_code(404);
+            echo json_encode(['success' => false, 'message' => 'Triage record not found.']);
+            exit;
+        }
+
+        $complaint = trim((string) ($metaRow['chief_complaint'] ?? ''));
+        if ($complaint === '') {
+            echo json_encode([
+                'success' => false,
+                'message' => 'No chief complaint on this case. NLP recommendations cannot be released to the patient.',
+            ]);
+            exit;
+        }
+
+        $currentStatus = (string) ($metaRow['recommendation_status'] ?? 'hidden');
+        if (!in_array($currentStatus, ['pending_approval', 'approved', 'rejected'], true)
+            && triage_recommendation_status_for_insert(
+                (string) ($metaRow['triage_level'] ?? ''),
+                $complaint,
+                (string) ($metaRow['recommendations'] ?? ''),
+                (string) ($metaRow['triage_classification'] ?? '')
+            ) !== 'pending_approval'
+        ) {
+            echo json_encode([
+                'success' => false,
+                'message' => 'Only non-urgent cases with a chief complaint can release self-care recommendations to the patient.',
+            ]);
+            exit;
+        }
+
+        if ($action === 'reject_recommendations') {
+            $pdo->prepare("
+                UPDATE triage_results
+                SET recommendation_status = 'rejected',
+                    recommendation_approved_by = ?,
+                    recommendation_approved_at = NOW()
+                WHERE id = ?
+            ")->execute([(int) $_SESSION['user_id'], $id]);
+
+            audit_log($pdo, [
+                'patient_id'  => $patientId,
+                'action_type' => 'TRIAGE_RECOMMENDATIONS_REJECTED',
+                'description' => "Provider rejected patient-facing NLP remedies for triage ID: $id",
+            ]);
+
+            echo json_encode(['success' => true, 'message' => 'Recommendations were not released to the patient.']);
+            exit;
+        }
+
+        $edited = trim((string) ($_POST['recommendations'] ?? ''));
+        if ($edited === '') {
+            $edited = trim((string) ($metaRow['recommendations'] ?? ''));
+        }
+        // Prefer symptom-specific library tips when the posted text is still a legacy one-liner.
+        if (triage_recommendations_need_self_care_refresh($edited)) {
+            $symStmt = $pdo->prepare('SELECT english_complaint, detected_symptoms_json, possible_conditions_json FROM triage_results WHERE id = ? LIMIT 1');
+            $symStmt->execute([$id]);
+            $symRow = $symStmt->fetch(PDO::FETCH_ASSOC) ?: [];
+            $detected = [];
+            $decodedSym = json_decode((string) ($symRow['detected_symptoms_json'] ?? ''), true);
+            if (is_array($decodedSym)) {
+                $detected = $decodedSym;
+            }
+            $conditions = [];
+            $decodedCond = json_decode((string) ($symRow['possible_conditions_json'] ?? ''), true);
+            if (is_array($decodedCond)) {
+                $conditions = $decodedCond;
+            }
+            $edited = triage_build_self_care_recommendations_text(
+                $complaint,
+                trim((string) ($symRow['english_complaint'] ?? '')),
+                $detected,
+                $conditions
+            );
+        }
+        $list = triage_recommendations_to_list($edited);
+        if ($list === []) {
+            echo json_encode(['success' => false, 'message' => 'Add at least one self-care recommendation before approving.']);
+            exit;
+        }
+        $savedText = triage_recommendations_from_list($list);
+
+        $pdo->prepare("
+            UPDATE triage_results
+            SET recommendations = ?,
+                recommendation_status = 'approved',
+                recommendation_approved_by = ?,
+                recommendation_approved_at = NOW(),
+                recommendation_patient_ack_at = NULL
+            WHERE id = ?
+        ")->execute([$savedText, (int) $_SESSION['user_id'], $id]);
+
+        audit_log($pdo, [
+            'patient_id'  => $patientId,
+            'action_type' => 'TRIAGE_RECOMMENDATIONS_APPROVED',
+            'description' => "Provider approved patient-facing NLP remedies for triage ID: $id",
+        ]);
+
+        echo json_encode([
+            'success' => true,
+            'message' => 'Self-care recommendations approved. The patient can now view them.',
+            'data' => [
+                'recommendation_status' => 'approved',
+                'recommendations' => $savedText,
+                'recommendations_list' => $list,
+            ],
+        ]);
     }
     else {
         echo json_encode(['success' => false, 'message' => 'Invalid action.']);

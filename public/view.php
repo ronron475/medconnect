@@ -5,12 +5,18 @@
  */
 declare(strict_types=1);
 
-require_once dirname(__DIR__) . '/bootstrap/app.php';
-
 $path = (string) ($_GET['path'] ?? '');
 $path = str_replace(['\\', "\0"], '/', $path);
 $path = preg_replace('#/+#', '/', $path) ?? '';
 $path = ltrim($path, '/');
+
+// Chrome dual-tab video demo: never keep a writeable PHP session lock on this page.
+// Otherwise the second tab hangs on "Loading…" until the first tab releases the lock.
+if (preg_match('#^consultation/video_room\.php$#i', $path)) {
+    define('MEDCONNECT_SESSION_READ_AND_CLOSE', true);
+}
+
+require_once dirname(__DIR__) . '/bootstrap/app.php';
 
 if ($path === '' || str_contains($path, '..') || !preg_match('/\.php$/i', $path)) {
     http_response_code(404);

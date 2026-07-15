@@ -462,18 +462,31 @@ final class BhwWorkflows
             ]);
             $triageResultId = (int) $pdo->lastInsertId();
 
+            $recText = implode("\n", $assessment['recommendations'] ?? []);
+            $recStatus = triage_recommendation_status_for_insert(
+                (string) $triageTier,
+                $complaint,
+                $recText,
+                (string) ($assessment['triage']['triage_classification'] ?? '')
+            );
+            $pdo->prepare('UPDATE triage_results SET recommendation_status = ? WHERE id = ?')
+                ->execute([$recStatus, $triageResultId]);
+
             if ($triageTier === TriageLevelService::EMERGENCY) {
                 $pdo->prepare("UPDATE triage_results SET outcome = 'emergency_referral', status = 'completed' WHERE id = ?")
                     ->execute([$triageResultId]);
 
                 $reason = bhw_triage_emergency_reason($assessment, $complaint, $symptomList);
                 $providerId = self::resolveProviderForPatient($pdo, $patientId);
-                $destCol = self::referralDestColumn($pdo);
-                $pdo->prepare("
-                    INSERT INTO digital_referrals (patient_id, provider_id, referral_type, reason, {$destCol}, status, created_at)
-                    VALUES (?, ?, 'Hospital', ?, 'Nearest hospital / ER — emergency triage', 'pending', NOW())
-                ")->execute([$patientId, $providerId, $reason]);
-                $referralId = (int) $pdo->lastInsertId();
+                $referralId = 0;
+                if ($providerId > 0) {
+                    $destCol = self::referralDestColumn($pdo);
+                    $pdo->prepare("
+                        INSERT INTO digital_referrals (patient_id, provider_id, referral_type, reason, {$destCol}, status, created_at)
+                        VALUES (?, ?, 'Hospital', ?, 'Nearest hospital / ER — emergency triage', 'pending', NOW())
+                    ")->execute([$patientId, $providerId, $reason]);
+                    $referralId = (int) $pdo->lastInsertId();
+                }
 
                 $pdo->commit();
 
@@ -482,19 +495,31 @@ final class BhwWorkflows
                     'triage_id'   => $triageResultId,
                 ]);
 
-                bhw_audit($pdo, $patientId, 'bhw_emergency_referral', "Emergency triage — referral #{$referralId} created (no teleconsult).", [
+                bhw_audit($pdo, $patientId, 'bhw_emergency_referral', $referralId > 0
+                    ? "Emergency triage — referral #{$referralId} created (no teleconsult)."
+                    : 'Emergency triage recorded (no teleconsult); no active provider for digital referral.', [
                     'triage_id' => $triageResultId,
                     'level' => $level,
                     'label' => $label,
+                    'referral_id' => $referralId,
                 ]);
 
                 require_once __DIR__ . '/notification_events.php';
                 $pstmt = $pdo->prepare('SELECT CONCAT(first_name, " ", last_name) FROM users WHERE id = ? LIMIT 1');
                 $pstmt->execute([$patientId]);
                 $pName = (string) ($pstmt->fetchColumn() ?: 'Patient');
+                // highRiskPatient only — aiTriageCompleted would duplicate the emergency alert.
                 NotificationEvents::highRiskPatient($pdo, $patientId, $pName, $label, $bhwId);
-                NotificationEvents::referralCreated($pdo, $referralId, $patientId, $providerId > 0 ? $providerId : null, $bhwId);
-                NotificationEvents::aiTriageCompleted($pdo, $patientId, $label, $bhwId);
+                if ($referralId > 0) {
+                    NotificationEvents::referralCreated($pdo, $referralId, $patientId, $providerId, $bhwId);
+                }
+
+                $msg = 'Emergency triage detected. Teleconsult booking skipped — direct patient to the nearest hospital / ER.';
+                if ($referralId > 0) {
+                    $msg = 'Emergency triage detected. Patient referred to hospital — teleconsult booking skipped.';
+                } elseif ($providerId <= 0) {
+                    $msg .= ' No active provider was available to attach a digital referral.';
+                }
 
                 return [
                     'emergency'     => true,
@@ -504,7 +529,7 @@ final class BhwWorkflows
                     'triage_id'     => $triageResultId,
                     'level'         => $level,
                     'label'         => $label,
-                    'message'       => 'Emergency triage detected. Patient referred to hospital — teleconsult booking skipped.',
+                    'message'       => $msg,
                     'redirect'      => ASSET_BASE . '/views/bhw/referral/status.php',
                     'assessment'    => $assessment,
                 ];

@@ -85,9 +85,21 @@ if (!isLandingPage) {
     document.body.style.overflow = 'hidden';
     document.documentElement.style.overflow = 'hidden';
 
+    const findLockedScrollTarget = (target) => {
+      if (overlay.contains(target)) {
+        return overlay.querySelector('.signin-modal-inner');
+      }
+      const drawerPanel = document.getElementById('signin-req-drawer-panel');
+      const drawerBody = document.getElementById('signin-req-drawer-body');
+      if (drawerPanel && drawerBody && drawerPanel.contains(target)) {
+        return drawerBody;
+      }
+      return null;
+    };
+
     preventWheel = (e) => {
-      const scrollable = overlay.querySelector('.signin-modal-inner');
-      if (overlay.contains(e.target) && scrollable) {
+      const scrollable = findLockedScrollTarget(e.target);
+      if (scrollable) {
         const canScroll = scrollable.scrollHeight > scrollable.clientHeight + 1;
         if (canScroll) {
           const atTop = scrollable.scrollTop <= 0;
@@ -106,6 +118,8 @@ if (!isLandingPage) {
 
     preventTouchMove = (e) => {
       if (overlay.contains(e.target)) return;
+      const drawerPanel = document.getElementById('signin-req-drawer-panel');
+      if (drawerPanel && drawerPanel.contains(e.target)) return;
       e.preventDefault();
     };
     document.addEventListener('touchmove', preventTouchMove, { passive: false });

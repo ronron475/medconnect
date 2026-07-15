@@ -13,6 +13,7 @@
 
   let timer;
   const ms = minutes * 60 * 1000;
+  const channelName = 'medconnect-session-keepalive';
 
   const expireSession = async () => {
     const base = (typeof window.ASSET_BASE !== 'undefined' && window.ASSET_BASE)
@@ -48,6 +49,19 @@
   ['mousemove', 'mousedown', 'click', 'keydown', 'touchstart', 'scroll'].forEach((evt) => {
     document.addEventListener(evt, reset, { passive: true });
   });
+
+  // Video consultation tabs (same browser profile) ping this channel so an open
+  // provider dashboard tab does not idle-logout the shared PHP session mid-call.
+  try {
+    if (typeof BroadcastChannel !== 'undefined') {
+      const bus = new BroadcastChannel(channelName);
+      bus.onmessage = function (ev) {
+        const data = ev && ev.data ? ev.data : null;
+        if (!data || data.type !== 'activity') return;
+        reset();
+      };
+    }
+  } catch (e) { /* ignore */ }
 
   reset();
 })();

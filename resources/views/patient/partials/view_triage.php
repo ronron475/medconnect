@@ -17,9 +17,12 @@ $default_complaint = trim((string) ($default_complaint ?? ''));
 <div class="patient-triage-alert patient-triage-alert--warning is-visible" style="margin-bottom: 16px;">
   <?php if (($active_consultation['status'] ?? '') === 'in_consultation'): ?>
     You currently have a consultation in progress. A new slot cannot be booked until that visit is completed.
+  <?php elseif (!empty($booking_blocked_future)): ?>
+    You already have an appointment scheduled<?= $booking_future_label !== '' ? ' for ' . htmlspecialchars($booking_future_label) : '' ?>.
+    Cancel or complete that visit before booking another slot today.
   <?php else: ?>
     You already have an open appointment<?= !empty($active_consultation['consult_date']) ? ' on ' . htmlspecialchars(date('M j, Y', strtotime($active_consultation['consult_date']))) : '' ?>.
-    Submitting here will update it to your newly selected slot.
+    Submitting here will update it to your newly selected slot for today.
   <?php endif; ?>
 </div>
 <?php endif; ?>
@@ -34,6 +37,7 @@ $default_complaint = trim((string) ($default_complaint ?? ''));
   <h3 class="text-h3 mb-md">Schedule Your Visit</h3>
   <div id="triageFormAlert" class="patient-triage-alert" role="alert"></div>
   <form id="patientTriageForm" novalidate>
+    <input type="hidden" name="csrf_token" value="<?= htmlspecialchars((string) ($_SESSION['csrf_token'] ?? ''), ENT_QUOTES, 'UTF-8') ?>">
     <div class="form-group">
       <?php $has_complaint = $default_complaint !== ''; ?>
       <label class="form-label" for="chief_complaint">

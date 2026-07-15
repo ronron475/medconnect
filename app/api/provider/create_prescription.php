@@ -4,6 +4,9 @@ header('Content-Type: application/json; charset=utf-8');
 require_once dirname(dirname(dirname(__DIR__))) . '/config/db.php';
 require_once dirname(dirname(dirname(__DIR__))) . '/app/includes/auth_guard.php';
 require_once dirname(dirname(dirname(__DIR__))) . '/app/includes/provider_patient_access.php';
+require_once dirname(dirname(dirname(__DIR__))) . '/app/includes/clinical_tables.php';
+
+clinical_tables_ensure($pdo);
 
 if (empty($_SESSION['user_role']) || $_SESSION['user_role'] !== 'provider') {
     http_response_code(403);

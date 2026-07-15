@@ -342,8 +342,10 @@ body.signin-req-fab-dragging {
 
 /* Body */
 .signin-req-drawer__body {
-  flex: 1;
+  flex: 1 1 auto;
+  min-height: 0;
   overflow-y: auto;
+  overscroll-behavior: contain;
   padding: 18px 16px 28px;
   -webkit-overflow-scrolling: touch;
   scrollbar-width: thin;

@@ -38,11 +38,15 @@
         return;
       }
       if (activeFilter === 'reviewed') {
-        row.style.display = row.dataset.reviewed === 'true' ? '' : 'none';
+        row.style.display = (row.dataset.reviewed === 'true' && row.dataset.tipsPending !== 'true') ? '' : 'none';
         return;
       }
       if (activeFilter === 'pending') {
         row.style.display = row.dataset.pending === 'true' ? '' : 'none';
+        return;
+      }
+      if (activeFilter === 'tips') {
+        row.style.display = row.dataset.tipsPending === 'true' ? '' : 'none';
         return;
       }
       row.style.display = row.dataset.urgency === activeFilter ? '' : 'none';
@@ -59,13 +63,21 @@
   }
 
   function renderWorkflow(t) {
-    if (t.reviewed) {
-      return '<span class="triage-badge triage-badge--reviewed">Reviewed</span>';
+    var html = '';
+    var tipsPending = !!(t.needs_tips_approval || t.can_approve_recommendations);
+    if (tipsPending) {
+      html += '<span class="triage-badge triage-badge--urgent">Tips pending</span> ';
     }
-    if (t.expired) {
-      return '<span class="triage-badge triage-badge--expired">Expired</span>';
+    if (t.reviewed && !tipsPending) {
+      html += '<span class="triage-badge triage-badge--reviewed">Reviewed</span>';
+    } else if (t.reviewed && tipsPending) {
+      html += '<span class="triage-badge triage-badge--reviewed">Booked</span>';
+    } else if (t.expired) {
+      html += '<span class="triage-badge triage-badge--expired">Expired</span>';
+    } else if (!tipsPending) {
+      html += '<span class="triage-badge triage-badge--pending">Pending</span>';
     }
-    return '<span class="triage-badge triage-badge--pending">Pending</span>';
+    return html;
   }
 
   function renderActions(t) {
@@ -73,9 +85,9 @@
     var html = '<div class="triage-actions">';
     html += '<button type="button" class="mc-btn mc-btn--outline triage-view-btn" style="padding: 6px 12px; font-size: 11px;" data-triage="' + payload + '">View Details</button>';
     if (t.can_accept) {
-      html += '<button type="button" class="mc-btn mc-btn--primary triage-accept-btn" style="padding: 6px 12px; font-size: 11px;" data-id="' + esc(t.id) + '">Accept</button>';
+      html += '<button type="button" class="mc-btn mc-btn--primary triage-accept-btn" style="padding: 6px 12px; font-size: 11px;" data-id="' + esc(t.id) + '">Mark reviewed</button>';
     } else if (!t.reviewed && t.expired) {
-      html += '<span class="triage-expired-note" title="Only same-day triage cases can be accepted.">Cannot accept</span>';
+      html += '<span class="triage-expired-note" title="Only same-day triage cases can be marked reviewed.">Cannot mark reviewed</span>';
     }
     html += '</div>';
     return html;
@@ -83,7 +95,8 @@
 
   function renderRow(t) {
     var isUrgent = t.urgency === 'Urgent';
-    var rowClass = (isUrgent ? 'triage-row-urgent' : '') + (t.expired ? ' triage-row-expired' : '');
+    var tipsPending = !!(t.needs_tips_approval || t.can_approve_recommendations);
+    var rowClass = (isUrgent || tipsPending ? 'triage-row-urgent' : '') + (t.expired ? ' triage-row-expired' : '');
     var classification = isUrgent
       ? '<span class="triage-badge triage-badge--urgent">Urgent</span>'
       : '<span class="triage-badge triage-badge--routine">Non-Urgent</span>';
@@ -95,6 +108,7 @@
       + ' data-urgency="' + (isUrgent ? 'urgent' : 'non-urgent') + '"'
       + ' data-reviewed="' + (t.reviewed ? 'true' : 'false') + '"'
       + ' data-pending="' + (t.reviewed ? 'false' : 'true') + '"'
+      + ' data-tips-pending="' + (tipsPending ? 'true' : 'false') + '"'
       + ' data-expired="' + (t.expired ? 'true' : 'false') + '">'
       + '<td data-label="Patient" style="font-weight: 700; color: var(--mc-navy-dark);">' + esc(t.name) + '</td>'
       + '<td data-label="Symptoms">' + renderSymptomChips(t.symptoms_list) + '</td>'
@@ -123,9 +137,11 @@
     var urgentEl = document.getElementById('triageStatUrgent');
     var routineEl = document.getElementById('triageStatRoutine');
     var reviewedEl = document.getElementById('triageStatReviewed');
+    var tipsEl = document.getElementById('triageStatTips');
     if (urgentEl) urgentEl.textContent = stats.urgent;
     if (routineEl) routineEl.textContent = stats.non_urgent;
     if (reviewedEl) reviewedEl.textContent = stats.reviewed;
+    if (tipsEl) tipsEl.textContent = stats.tips_pending != null ? stats.tips_pending : 0;
 
     document.querySelectorAll('.triage-tab[data-filter]').forEach(function (tab) {
       var filter = tab.dataset.filter;
@@ -135,12 +151,15 @@
       else if (filter === 'urgent') countEl.textContent = stats.urgent;
       else if (filter === 'non-urgent') countEl.textContent = stats.non_urgent;
       else if (filter === 'pending') countEl.textContent = stats.pending;
+      else if (filter === 'tips') countEl.textContent = stats.tips_pending != null ? stats.tips_pending : 0;
       else if (filter === 'reviewed') countEl.textContent = stats.reviewed;
     });
 
     var summaryEl = document.getElementById('triageTableSummary');
     if (summaryEl) {
-      summaryEl.textContent = stats.total + ' total · ' + stats.pending + ' pending review';
+      var tips = stats.tips_pending != null ? Number(stats.tips_pending) : 0;
+      summaryEl.textContent = (stats.total || 0) + ' total · ' + (stats.pending || 0) + ' pending review'
+        + (tips ? ' · ' + tips + ' tips pending' : '');
     }
   }
 
@@ -218,6 +237,30 @@
         t.assessed_at || '—'
       );
       setText('modalRecommendations', t.recommendations || '', '—');
+      var recEdit = document.getElementById('modalRecommendationsEdit');
+      if (recEdit) {
+        recEdit.value = t.recommendations || '';
+      }
+      var gateHint = document.getElementById('modalRecommendationGateHint');
+      var recStatus = String(t.recommendation_status || 'hidden');
+      var canApproveRec = !!t.can_approve_recommendations;
+      if (gateHint) {
+        if (!t.complaint || !String(t.complaint).trim()) {
+          gateHint.textContent = 'No chief complaint — NLP recommendations will not be shown to the patient.';
+        } else if (recStatus === 'approved') {
+          gateHint.textContent = 'Approved self-care advice is available on the patient dashboard.';
+        } else if (recStatus === 'rejected') {
+          gateHint.textContent = 'Recommendations were withheld from the patient.';
+        } else if (canApproveRec) {
+          gateHint.textContent = 'Non-urgent case: review/edit self-care advice, then approve before the patient can see it.';
+        } else {
+          gateHint.textContent = 'Patient-facing NLP recommendations are only released for non-urgent cases after provider approval.';
+        }
+      }
+      var approveBtn = document.getElementById('modalApproveRecBtn');
+      var rejectBtn = document.getElementById('modalRejectRecBtn');
+      if (approveBtn) approveBtn.style.display = canApproveRec ? 'inline-flex' : 'none';
+      if (rejectBtn) rejectBtn.style.display = canApproveRec ? 'inline-flex' : 'none';
     }
 
     document.getElementById('modalAcceptBtn').style.display = (t.reviewed || t.expired || !t.can_accept) ? 'none' : 'inline-flex';
@@ -238,20 +281,73 @@
     return (document.body && document.body.dataset.csrf) || '';
   }
 
-  async function acceptTriage(id) {
-    if (!confirm('Accept this patient and move them to the consultation queue?')) return;
+  async function postTriageAction(body) {
+    var res = await fetch(cfg.updateApi, {
+      method: 'POST',
+      credentials: 'same-origin',
+      body: new URLSearchParams(body),
+    });
+    return res.json();
+  }
+
+  async function approveRecommendationsFromModal() {
+    if (!currentTriageId) return;
+    var recEdit = document.getElementById('modalRecommendationsEdit');
+    var text = recEdit ? String(recEdit.value || '').trim() : '';
+    if (!text) {
+      alert('Add at least one self-care recommendation before approving.');
+      return;
+    }
+    if (!confirm('Approve these self-care recommendations for the patient to view?')) return;
     try {
-      var res = await fetch(cfg.updateApi, {
-        method: 'POST',
-        credentials: 'same-origin',
-        body: new URLSearchParams({ id: String(id), action: 'accept', csrf_token: csrfToken() }),
+      var data = await postTriageAction({
+        id: String(currentTriageId),
+        action: 'approve_recommendations',
+        recommendations: text,
+        csrf_token: csrfToken(),
       });
-      var data = await res.json();
-      if (data.success) {
+      if (!data || !data.success) {
+        alert((data && data.message) || 'Could not approve recommendations.');
+        return;
+      }
+      alert(data.message || 'Recommendations approved for the patient.');
+      closeTriageModal();
+      refreshTriage(true);
+    } catch (e) {
+      alert('Could not approve recommendations.');
+    }
+  }
+
+  async function rejectRecommendationsFromModal() {
+    if (!currentTriageId) return;
+    if (!confirm('Do not release these NLP recommendations to the patient?')) return;
+    try {
+      var data = await postTriageAction({
+        id: String(currentTriageId),
+        action: 'reject_recommendations',
+        csrf_token: csrfToken(),
+      });
+      if (!data || !data.success) {
+        alert((data && data.message) || 'Could not update recommendations.');
+        return;
+      }
+      alert(data.message || 'Recommendations withheld.');
+      closeTriageModal();
+      refreshTriage(true);
+    } catch (e) {
+      alert('Could not update recommendations.');
+    }
+  }
+
+  async function acceptTriage(id) {
+    if (!confirm('Mark this triage case as reviewed? (Booked visits already appear in Live Queue.)')) return;
+    try {
+      var data = await postTriageAction({ id: String(id), action: 'accept', csrf_token: csrfToken() });
+      if (data && data.success) {
         closeTriageModal();
         refreshTriage(true);
       } else {
-        alert(data.message || 'Could not update triage status.');
+        alert((data && data.message) || 'Could not update triage status.');
       }
     } catch (e) {
       alert('Error updating triage status.');
@@ -353,6 +449,8 @@
   window.closeTriageModal = closeTriageModal;
   window.applyOverride = applyOverride;
   window.acceptTriageFromModal = acceptTriageFromModal;
+  window.approveRecommendationsFromModal = approveRecommendationsFromModal;
+  window.rejectRecommendationsFromModal = rejectRecommendationsFromModal;
 
   bindUi();
   refreshTriage(true);

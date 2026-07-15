@@ -145,6 +145,14 @@ final class BhwPatientWorkflow
         ]);
     }
 
+    /** Patient portal emergency triage — hospital referral, no teleconsult. */
+    public static function onPatientPortalEmergency(PDO $pdo, int $patientId, array $meta = []): void
+    {
+        self::setStatus($pdo, $patientId, self::REFERRAL_GENERATED, array_merge([
+            'source' => 'patient_portal',
+        ], $meta));
+    }
+
     /** Provider finalized consultation or session auto-completed. */
     public static function onConsultationCompleted(PDO $pdo, int $patientId, string $source = 'provider'): void
     {

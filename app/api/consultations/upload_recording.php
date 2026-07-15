@@ -12,6 +12,9 @@ if (empty($_SESSION['user_id']) || $_SESSION['user_role'] !== 'provider') {
 
 require_once dirname(dirname(dirname(__DIR__))) . '/bootstrap.php';
 require_once dirname(dirname(dirname(__DIR__))) . '/config/db.php';
+require_once dirname(dirname(dirname(__DIR__))) . '/app/includes/clinical_tables.php';
+
+clinical_tables_ensure($pdo);
 
 $token = $_POST['token'] ?? '';
 $video_file = $_FILES['video'] ?? null;

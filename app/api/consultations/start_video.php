@@ -11,7 +11,10 @@ session_start();
 
 require_once dirname(dirname(dirname(__DIR__))) . '/bootstrap.php';
 require_once dirname(dirname(dirname(__DIR__))) . '/config/db.php';
+require_once dirname(dirname(dirname(__DIR__))) . '/app/includes/clinical_tables.php';
 require_once dirname(dirname(dirname(__DIR__))) . '/resources/views/provider/partials/queue_helpers.php';
+
+clinical_tables_ensure($pdo);
 
 header('Content-Type: application/json; charset=utf-8');
 header('X-Content-Type-Options: nosniff');

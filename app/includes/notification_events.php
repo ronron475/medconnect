@@ -16,7 +16,7 @@ final class NotificationEvents
             'type'          => NotificationManager::TYPE_INFORMATION,
             'title'         => 'New Patient Registered',
             'message'       => "{$patientName} has registered on MedConnect.",
-            'action_url'    => '/views/admin/users.php',
+            'action_url'    => '/views/admin/user_management.php',
             'related_table' => 'users',
             'related_id'    => $patientId,
             'icon'          => 'user-plus',
@@ -25,7 +25,7 @@ final class NotificationEvents
             'sender_id'  => $senderId,
             'type'       => NotificationManager::TYPE_SUCCESS,
             'title'      => 'Welcome to MedConnect',
-            'message'    => 'Your account has been created. Complete your profile to get started.',
+            'message'    => 'Your account has been created. You can sign in and book a consultation.',
             'action_url' => '/views/patient/dashboard.php',
             'email'      => true,
         ]);
@@ -39,7 +39,7 @@ final class NotificationEvents
             'title'         => 'Provider Approval Required',
             'message'       => "Dr. {$providerName} registered and requires PRC verification.",
             'priority'      => 'high',
-            'action_url'    => '/views/admin/verify_doctors.php',
+            'action_url'    => '/views/admin/doctor_applications.php',
             'related_table' => 'users',
             'related_id'    => $providerId,
         ]);
@@ -52,7 +52,7 @@ final class NotificationEvents
             'type'          => NotificationManager::TYPE_INFORMATION,
             'title'         => 'New BHW Registered',
             'message'       => "{$bhwName} has been added as a Barangay Health Worker.",
-            'action_url'    => '/views/admin/users.php',
+            'action_url'    => '/views/admin/user_management.php',
             'related_table' => 'users',
             'related_id'    => $bhwId,
         ]);
@@ -229,7 +229,7 @@ final class NotificationEvents
             'type'          => NotificationManager::TYPE_APPOINTMENT,
             'title'         => 'New Appointment Created',
             'message'       => "Appointment scheduled for {$date}.",
-            'action_url'    => '/views/admin/monitoring.php',
+            'action_url'    => '/views/admin/queue_monitoring.php',
             'related_table' => 'consultations',
             'related_id'    => $consultationId,
         ]);
@@ -248,7 +248,7 @@ final class NotificationEvents
             'type'          => NotificationManager::TYPE_APPOINTMENT,
             'title'         => 'New Appointment Request',
             'message'       => "A new appointment is scheduled for {$date}.",
-            'action_url'    => '/views/provider/appointments.php',
+            'action_url'    => '/views/provider/queue.php',
             'related_table' => 'consultations',
             'related_id'    => $consultationId,
         ]);
@@ -261,7 +261,7 @@ final class NotificationEvents
             'type'          => NotificationManager::TYPE_APPOINTMENT,
             'title'         => 'Appointment Cancelled',
             'message'       => 'An appointment has been cancelled.',
-            'action_url'    => '/views/admin/monitoring.php',
+            'action_url'    => '/views/admin/queue_monitoring.php',
             'related_table' => 'consultations',
             'related_id'    => $consultationId,
         ]);
@@ -279,7 +279,7 @@ final class NotificationEvents
             'type'          => NotificationManager::TYPE_APPOINTMENT,
             'title'         => 'Appointment Cancelled',
             'message'       => 'A patient appointment has been cancelled.',
-            'action_url'    => '/views/provider/appointments.php',
+            'action_url'    => '/views/provider/queue.php',
             'related_table' => 'consultations',
             'related_id'    => $consultationId,
         ]);
@@ -311,7 +311,7 @@ final class NotificationEvents
             'type'          => NotificationManager::TYPE_APPOINTMENT,
             'title'         => 'Appointment Rescheduled',
             'message'       => "An appointment has been rescheduled to {$newDate}.",
-            'action_url'    => '/views/provider/appointments.php',
+            'action_url'    => '/views/provider/queue.php',
             'related_table' => 'consultations',
             'related_id'    => $consultationId,
         ]);
@@ -333,7 +333,7 @@ final class NotificationEvents
             'type'          => NotificationManager::TYPE_REFERRAL,
             'title'         => 'Referral Created',
             'message'       => 'A new patient referral has been submitted.',
-            'action_url'    => '/views/admin/monitoring.php',
+            'action_url'    => '/views/admin/queue_monitoring.php',
             'related_table' => 'digital_referrals',
             'related_id'    => $referralId,
         ]);
@@ -351,8 +351,8 @@ final class NotificationEvents
                 'sender_id'     => $senderId,
                 'type'          => NotificationManager::TYPE_REFERRAL,
                 'title'         => 'New Patient Referral',
-                'message'       => 'A new referral has been submitted for your review.',
-                'action_url'    => '/views/provider/referrals.php',
+                'message'       => 'A new referral has been submitted for your review. Check Active Triage for emergency cases.',
+                'action_url'    => '/views/provider/triage.php',
                 'related_table' => 'digital_referrals',
                 'related_id'    => $referralId,
             ]);
@@ -496,7 +496,7 @@ final class NotificationEvents
             'title'         => 'High-Risk Patient Detected',
             'message'       => "{$patientName}: {$reason}",
             'priority'      => 'emergency',
-            'action_url'    => '/views/admin/monitoring.php',
+            'action_url'    => '/views/admin/queue_monitoring.php',
             'related_table' => 'triage_results',
             'related_id'    => $patientId,
         ]);
@@ -519,7 +519,7 @@ final class NotificationEvents
             'type'          => NotificationManager::TYPE_MEDICAL,
             'title'         => 'AI Triage Completed',
             'message'       => "Triage assessment completed. Urgency: {$urgency}.",
-            'action_url'    => '/views/admin/monitoring.php',
+            'action_url'    => '/views/admin/queue_monitoring.php',
             'related_table' => 'triage_results',
             'related_id'    => $patientId,
         ]);
@@ -535,7 +535,7 @@ final class NotificationEvents
             'type'          => NotificationManager::TYPE_MEDICAL,
             'title'         => 'Medical Record Updated',
             'message'       => 'A patient medical record has been updated.',
-            'action_url'    => '/views/admin/monitoring.php',
+            'action_url'    => '/views/admin/queue_monitoring.php',
             'related_table' => 'patient_registrations',
             'related_id'    => $patientId,
         ]);
@@ -768,7 +768,7 @@ final class NotificationEvents
             'title'         => 'Emergency Consultation Requested',
             'message'       => 'An emergency consultation has been requested.',
             'priority'      => 'emergency',
-            'action_url'    => '/views/admin/monitoring.php',
+            'action_url'    => '/views/admin/queue_monitoring.php',
             'related_table' => 'consultations',
             'related_id'    => $consultationId,
         ]);
