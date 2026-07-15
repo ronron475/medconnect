@@ -213,17 +213,23 @@ function bhw_map_nlp_pipeline_to_assessment(array $pipeline, string $complaint):
     $symptoms = bhw_triage_filter_display_terms(array_values(array_filter((array) ($clinical['detected_symptoms'] ?? []))));
     $conditions = array_values(array_filter((array) ($clinical['detected_conditions'] ?? [])));
 
-    $recommendations = MedicalRecommendationEngine::buildRecommendations($triageMeta, $conditions);
-    $reasoning = trim((string) ($clinical['clinical_reasoning'] ?? $clinical['reason'] ?? ''));
-    if ($reasoning !== '' && !in_array($reasoning, $recommendations, true)) {
-        array_unshift($recommendations, $reasoning);
-    }
-
     $english = trim((string) (
         $translation['combined_english']
         ?? ($pipeline['english_medications'] ?? '')
         ?? ($translation['conditions']['english_text'] ?? '')
     ));
+
+    $recommendations = MedicalRecommendationEngine::buildRecommendations(
+        $triageMeta,
+        $conditions,
+        (string) ($clinical['chief_complaint'] ?? $clinical['original_complaint'] ?? $complaint ?? ''),
+        $english,
+        $symptoms
+    );
+    $reasoning = trim((string) ($clinical['clinical_reasoning'] ?? $clinical['reason'] ?? ''));
+    if ($reasoning !== '' && !in_array($reasoning, $recommendations, true)) {
+        array_unshift($recommendations, $reasoning);
+    }
 
     return [
         'engine_version'      => '2.0',

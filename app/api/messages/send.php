@@ -35,6 +35,10 @@ if (!auth_csrf_validate($csrf)) {
 
 $consultation_id = (int)($_POST['consultation_id'] ?? 0);
 $message = trim((string)($_POST['message'] ?? ''));
+$message_kind = strtolower(trim((string) ($_POST['message_kind'] ?? 'chat')));
+if ($message_kind !== 'mute_tts') {
+    $message_kind = 'chat';
+}
 $sender_id = (int)$_SESSION['user_id'];
 
 if (!$consultation_id || $message === '') {
@@ -43,7 +47,8 @@ if (!$consultation_id || $message === '') {
     exit;
 }
 
-if (mb_strlen($message) > 2000) {
+$maxLen = $message_kind === 'mute_tts' ? 500 : 2000;
+if (mb_strlen($message) > $maxLen) {
     ob_end_clean();
     echo json_encode(['success' => false, 'message' => 'Message is too long.']);
     exit;
@@ -86,14 +91,15 @@ try {
     }
 
     $stmt = $pdo->prepare("
-        INSERT INTO consultation_messages (consultation_id, sender_id, receiver_id, message)
-        VALUES (?, ?, ?, ?)
+        INSERT INTO consultation_messages (consultation_id, sender_id, receiver_id, message, message_kind)
+        VALUES (?, ?, ?, ?, ?)
     ");
-    $stmt->execute([$consultation_id, $sender_id, $receiver_id, $message]);
+    $stmt->execute([$consultation_id, $sender_id, $receiver_id, $message, $message_kind]);
 
     $id = (int)$pdo->lastInsertId();
     $stmt = $pdo->prepare("
-        SELECT cm.id, cm.consultation_id, cm.sender_id, cm.receiver_id, cm.message, cm.created_at,
+        SELECT cm.id, cm.consultation_id, cm.sender_id, cm.receiver_id, cm.message, cm.message_kind, cm.created_at,
+               cm.is_deleted_for_everyone, cm.deleted_at, cm.deleted_for_me_users,
                u.first_name, u.last_name, u.role
         FROM consultation_messages cm
         JOIN users u ON u.id = cm.sender_id
@@ -105,27 +111,30 @@ try {
 
     $formatted = message_format_for_viewer($row, $sender_id);
 
-    require_once dirname(dirname(dirname(__DIR__))) . '/app/includes/notification_events.php';
-    $senderName = trim(($row['first_name'] ?? '') . ' ' . ($row['last_name'] ?? ''));
+    // Mute-TTS is already delivered live in the video room; skip chat push spam.
+    if ($message_kind !== 'mute_tts') {
+        require_once dirname(dirname(dirname(__DIR__))) . '/app/includes/notification_events.php';
+        $senderName = trim(($row['first_name'] ?? '') . ' ' . ($row['last_name'] ?? ''));
 
-    if ($_SESSION['user_role'] === 'patient' && $receiver_id) {
-        NotificationEvents::patientMessage(
-            $pdo,
-            $receiver_id,
-            $sender_id,
-            $senderName ?: 'Patient',
-            $sender_id,
-            $consultation_id
-        );
-    } elseif ($_SESSION['user_role'] === 'provider' && $receiver_id) {
-        NotificationEvents::providerMessage(
-            $pdo,
-            $receiver_id,
-            $sender_id,
-            $senderName ?: 'Your healthcare provider',
-            $sender_id,
-            $consultation_id
-        );
+        if ($_SESSION['user_role'] === 'patient' && $receiver_id) {
+            NotificationEvents::patientMessage(
+                $pdo,
+                $receiver_id,
+                $sender_id,
+                $senderName ?: 'Patient',
+                $sender_id,
+                $consultation_id
+            );
+        } elseif ($_SESSION['user_role'] === 'provider' && $receiver_id) {
+            NotificationEvents::providerMessage(
+                $pdo,
+                $receiver_id,
+                $sender_id,
+                $senderName ?: 'Your healthcare provider',
+                $sender_id,
+                $consultation_id
+            );
+        }
     }
 
     ob_end_clean();

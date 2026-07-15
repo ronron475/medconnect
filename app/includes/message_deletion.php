@@ -49,6 +49,9 @@ function consultation_messages_ensure_schema(PDO $pdo): void
     if (!isset($columns['message_original'])) {
         $alters[] = 'ADD COLUMN message_original TEXT NULL DEFAULT NULL COMMENT \'Audit-only original body after delete-for-everyone\' AFTER deleted_for_me_users';
     }
+    if (!isset($columns['message_kind'])) {
+        $alters[] = "ADD COLUMN message_kind VARCHAR(32) NOT NULL DEFAULT 'chat' COMMENT 'chat|mute_tts' AFTER message";
+    }
 
     if ($alters) {
         $pdo->exec('ALTER TABLE consultation_messages ' . implode(', ', $alters));
@@ -194,6 +197,11 @@ function message_format_for_viewer(array $row, int $viewerUserId): ?array
     $deletedForEveryone = !empty($row['is_deleted_for_everyone']);
     $senderName = trim(($row['first_name'] ?? '') . ' ' . ($row['last_name'] ?? ''));
 
+    $kind = (string) ($row['message_kind'] ?? 'chat');
+    if ($kind !== 'mute_tts') {
+        $kind = 'chat';
+    }
+
     return [
         'id' => (int)$row['id'],
         'consultation_id' => (int)$row['consultation_id'],
@@ -202,6 +210,7 @@ function message_format_for_viewer(array $row, int $viewerUserId): ?array
         'sender_role' => $row['role'] ?? '',
         'sender_name' => $senderName,
         'message' => $deletedForEveryone ? MESSAGE_DELETED_FOR_EVERYONE_TEXT : (string)$row['message'],
+        'message_kind' => $kind,
         'is_deleted_for_everyone' => $deletedForEveryone,
         'deleted_at' => $row['deleted_at'] ?? null,
         'created_at' => $row['created_at'],

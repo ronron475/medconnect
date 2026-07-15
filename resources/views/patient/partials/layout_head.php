@@ -38,6 +38,8 @@ if (!empty($_SESSION['user_id']) && isset($pdo) && $pdo instanceof PDO) {
   <?php require_once VIEWS_PATH . '/partials/notification_assets.php'; ?>
   <?php $portalShellCssVer = (int) filemtime(ASSETS_PATH . '/css/portal_shell.css'); ?>
   <link rel="stylesheet" href="<?= ASSET_BASE ?>/assets/css/portal_shell.css?v=<?= $portalShellCssVer ?>"/>
+  <?php $patientRemedyCssVer = (int) @filemtime(ASSETS_PATH . '/css/patient-remedy-chatbot.css'); ?>
+  <link rel="stylesheet" href="<?= ASSET_BASE ?>/assets/css/patient-remedy-chatbot.css?v=<?= $patientRemedyCssVer ?>"/>
   <?php require_once VIEWS_PATH . '/partials/auth_transition_assets.php'; ?>
   <?php $unreadSvcVer = (int) @filemtime(ASSETS_PATH . '/js/messages-unread-service.js'); ?>
   <script src="<?= ASSET_BASE ?>/assets/js/messages-unread-service.js?v=<?= $unreadSvcVer ?>" defer></script>

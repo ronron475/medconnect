@@ -40,7 +40,9 @@ $asset = ASSET_BASE;
   <link rel="stylesheet" href="<?= $asset ?>/assets/css/landing-fab-modals.css?v=2" />
   <link rel="stylesheet" href="<?= $asset ?>/assets/css/signin-req-drawer.css?v=9" />
   <link rel="stylesheet" href="<?= $asset ?>/assets/css/signin-card-polish.css?v=2" />
-  <link rel="stylesheet" href="<?= $asset ?>/assets/css/hero-signin-panel.css?v=11" />
+  <link rel="stylesheet" href="<?= $asset ?>/assets/css/hero-signin-panel.css?v=12" />
+  <?php $forgotPwCssVer = (int) @filemtime(ASSETS_PATH . '/css/forgot-password.css'); ?>
+  <link rel="stylesheet" href="<?= $asset ?>/assets/css/forgot-password.css?v=<?= $forgotPwCssVer ?>" />
   <link rel="stylesheet" href="<?= $asset ?>/assets/css/landing-scroll-animations.css?v=4" />
   <link rel="stylesheet" href="<?= $asset ?>/assets/css/landing-hero-search.css?v=4" />
   <link rel="stylesheet" href="<?= $asset ?>/assets/css/landing-about-team.css?v=7" />
@@ -223,25 +225,25 @@ require __DIR__ . '/partials/landing_navbar.php';
             <div class="alert" id="alert" role="alert" aria-live="polite"></div>
 
             <?php if (!empty($_GET['registered'])): ?>
-            <div class="alert" style="display:block;background:#ecfdf5;border:1px solid #6ee7b7;color:#047857;margin-bottom:14px;" role="alert">
-              Patient account has been successfully created. Please sign in using your registered email and complete your account setup.
+            <div class="alert alert--success" style="display:block;" role="alert">
+              Patient account has been successfully created. Please sign in using your registered email to open your care portal.
             </div>
             <?php endif; ?>
 
             <?php if (!empty($_GET['setup_complete'])): ?>
-            <div class="alert" style="display:block;background:#ecfdf5;border:1px solid #6ee7b7;color:#047857;margin-bottom:14px;" role="alert">
+            <div class="alert alert--success" style="display:block;" role="alert">
               Your password has been set. Sign in with your email and new password to access your patient portal.
             </div>
             <?php endif; ?>
 
             <?php if (!empty($_GET['session_expired'])): ?>
-            <div class="alert" style="display:block;background:#fef3c7;border:1px solid #fcd34d;color:#92400e;margin-bottom:14px;" role="alert">
+            <div class="alert alert--warning" style="display:block;" role="alert">
               Your session expired due to inactivity.
             </div>
             <?php endif; ?>
 
             <?php if (!empty($_GET['signin'])): ?>
-            <div class="alert" style="display:block;background:#eff6ff;border:1px solid #93c5fd;color:#1e40af;margin-bottom:14px;" role="alert">
+            <div class="alert alert--info" style="display:block;" role="alert">
               Please sign in to access your portal.
             </div>
             <?php endif; ?>
@@ -817,172 +819,100 @@ require __DIR__ . '/partials/landing_navbar.php';
 
 
 <!-- Forgot Password Modal — 3-Step OTP Flow -->
+<div id="forgot-modal" role="dialog" aria-modal="true" aria-labelledby="fp-dialog-title" hidden>
+  <div class="fp-panel">
+    <button type="button" id="forgot-close" class="fp-close" aria-label="Close">&times;</button>
 
-<div id="forgot-modal" style="display:none;position:fixed;inset:0;z-index:1100;background:rgba(4,12,24,0.82);backdrop-filter:blur(7px);align-items:center;justify-content:center;padding:16px">
-
-  <div style="background:linear-gradient(160deg,#0b1f38,#071525);border:1px solid rgba(45,212,191,0.20);border-radius:18px;padding:32px 30px;width:100%;max-width:420px;box-shadow:0 24px 72px rgba(0,0,0,0.60);position:relative">
-
-    <button id="forgot-close" style="position:absolute;top:14px;right:16px;background:none;border:none;cursor:pointer;color:rgba(255,255,255,0.45);font-size:22px;line-height:1">&times;</button>
-
-
-
-    <!-- Step dots -->
-
-    <div style="display:flex;align-items:center;margin-bottom:24px">
-
-      <div style="display:flex;flex-direction:column;align-items:center;gap:4px;flex:1">
-
-        <div id="fd1" style="width:28px;height:28px;border-radius:50%;background:linear-gradient(135deg,#1a6db5,#3b82f6);color:#fff;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700">1</div>
-
-        <span id="fl1" style="font-size:10px;font-weight:600;color:#3b82f6">Email</span>
-
+    <div class="fp-steps" aria-hidden="true">
+      <div class="fp-step is-active" id="fp-step-1">
+        <div class="fp-dot" id="fd1">1</div>
+        <span class="fp-step-label" id="fl1">Email</span>
       </div>
-
-      <div id="fln1" style="flex:1;height:2px;background:rgba(255,255,255,0.10);margin-bottom:14px"></div>
-
-      <div style="display:flex;flex-direction:column;align-items:center;gap:4px;flex:1">
-
-        <div id="fd2" style="width:28px;height:28px;border-radius:50%;background:rgba(255,255,255,0.07);color:rgba(255,255,255,0.35);border:2px solid rgba(255,255,255,0.12);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700">2</div>
-
-        <span id="fl2" style="font-size:10px;font-weight:600;color:rgba(255,255,255,0.35)">OTP</span>
-
+      <div class="fp-line" id="fln1"></div>
+      <div class="fp-step" id="fp-step-2">
+        <div class="fp-dot" id="fd2">2</div>
+        <span class="fp-step-label" id="fl2">OTP</span>
       </div>
-
-      <div id="fln2" style="flex:1;height:2px;background:rgba(255,255,255,0.10);margin-bottom:14px"></div>
-
-      <div style="display:flex;flex-direction:column;align-items:center;gap:4px;flex:1">
-
-        <div id="fd3" style="width:28px;height:28px;border-radius:50%;background:rgba(255,255,255,0.07);color:rgba(255,255,255,0.35);border:2px solid rgba(255,255,255,0.12);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700">3</div>
-
-        <span id="fl3" style="font-size:10px;font-weight:600;color:rgba(255,255,255,0.35)">New Password</span>
-
+      <div class="fp-line" id="fln2"></div>
+      <div class="fp-step" id="fp-step-3">
+        <div class="fp-dot" id="fd3">3</div>
+        <span class="fp-step-label" id="fl3">New Password</span>
       </div>
-
     </div>
 
-
-
-    <div id="fp-alert" style="display:none;padding:11px 14px;border-radius:9px;font-size:13px;margin-bottom:16px"></div>
-
-
-
-    <!-- Step 1 -->
+    <div id="fp-alert" class="fp-alert" role="alert"></div>
 
     <div id="fp-s1">
-
-      <div style="font-size:16px;font-weight:800;color:#fff;margin-bottom:4px">Forgot Password?</div>
-
-      <div style="font-size:13px;color:rgba(255,255,255,0.55);margin-bottom:18px">Enter your email to receive a 6-digit OTP.</div>
-
-      <label style="display:block;font-size:12.5px;font-weight:600;color:rgba(255,255,255,0.80);margin-bottom:6px">Email Address</label>
-
-      <input type="email" id="fp-email" placeholder="your.email@example.com"
-
-        style="width:100%;height:46px;padding:0 14px;border:1.5px solid rgba(45,212,191,0.25);border-radius:10px;font-size:14px;font-family:inherit;color:#fff;background:rgba(255,255,255,0.07);outline:none;box-sizing:border-box;margin-bottom:14px"/>
-
-      <button id="fp-send" style="width:100%;height:48px;border:none;border-radius:11px;cursor:pointer;background:linear-gradient(135deg,#1a6db5,#3b82f6);color:#fff;font-size:14.5px;font-weight:700;font-family:inherit">
-
+      <h2 class="fp-title" id="fp-dialog-title">Forgot Password?</h2>
+      <p class="fp-sub">Enter your email to receive a 6-digit OTP.</p>
+      <div class="fp-field">
+        <label for="fp-email">Email Address</label>
+        <input type="email" id="fp-email" class="fp-input" placeholder="your.email@example.com" autocomplete="email" />
+      </div>
+      <?php if (!empty((string) (defined('RECAPTCHA_SITE_KEY') ? RECAPTCHA_SITE_KEY : '')) && strtolower((string) (defined('RECAPTCHA_VERSION') ? RECAPTCHA_VERSION : 'v3')) === 'v2'): ?>
+      <div id="mc-recaptcha-v2-fp" class="fp-field" style="display:flex;justify-content:center">
+        <div class="g-recaptcha" data-sitekey="<?= htmlspecialchars((string) RECAPTCHA_SITE_KEY) ?>"></div>
+      </div>
+      <?php endif; ?>
+      <button type="button" id="fp-send" class="fp-btn">
         <span id="fp-send-t">Send OTP</span>
-
-        <span id="fp-send-s" hidden style="display:inline-block;width:14px;height:14px;border:2.5px solid rgba(255,255,255,.35);border-top-color:#fff;border-radius:50%;animation:spin .7s linear infinite;vertical-align:middle"></span>
-
+        <span id="fp-send-s" class="fp-btn-spin" hidden aria-hidden="true"></span>
       </button>
-
+      <?php if (!empty((string) (defined('RECAPTCHA_SITE_KEY') ? RECAPTCHA_SITE_KEY : ''))): ?>
+      <p class="fp-recaptcha-note">Protected by reCAPTCHA · no extra checkbox needed</p>
+      <?php endif; ?>
     </div>
-
-
-
-    <!-- Step 2 -->
 
     <div id="fp-s2" hidden>
-
-      <div style="font-size:16px;font-weight:800;color:#fff;margin-bottom:4px">Enter OTP</div>
-
-      <div id="fp-otp-note" style="font-size:13px;color:rgba(255,255,255,0.55);margin-bottom:18px">OTP sent to your email.</div>
-
-      <label style="display:block;font-size:12.5px;font-weight:600;color:rgba(255,255,255,0.80);margin-bottom:6px">6-Digit OTP</label>
-
-      <input type="text" id="fp-otp" maxlength="6" inputmode="numeric" placeholder="000000"
-
-        style="width:100%;height:54px;padding:0 14px;border:1.5px solid rgba(45,212,191,0.25);border-radius:10px;font-size:26px;font-weight:700;letter-spacing:8px;text-align:center;font-family:inherit;color:#fff;background:rgba(255,255,255,0.07);outline:none;box-sizing:border-box;margin-bottom:14px"/>
-
-      <button id="fp-verify" style="width:100%;height:48px;border:none;border-radius:11px;cursor:pointer;background:linear-gradient(135deg,#1a6db5,#3b82f6);color:#fff;font-size:14.5px;font-weight:700;font-family:inherit">
-
+      <h2 class="fp-title">Enter OTP</h2>
+      <p class="fp-sub" id="fp-otp-note">OTP sent to your email.</p>
+      <div class="fp-field">
+        <label for="fp-otp">6-Digit OTP</label>
+        <input type="text" id="fp-otp" class="fp-input fp-input--otp" maxlength="6" inputmode="numeric" autocomplete="one-time-code" placeholder="000000" />
+      </div>
+      <button type="button" id="fp-verify" class="fp-btn">
         <span id="fp-verify-t">Verify OTP</span>
-
-        <span id="fp-verify-s" hidden style="display:inline-block;width:14px;height:14px;border:2.5px solid rgba(255,255,255,.35);border-top-color:#fff;border-radius:50%;animation:spin .7s linear infinite;vertical-align:middle"></span>
-
+        <span id="fp-verify-s" class="fp-btn-spin" hidden aria-hidden="true"></span>
       </button>
-
-      <p style="text-align:center;margin-top:12px;font-size:13px;color:rgba(255,255,255,0.50)">
-
-        Didn't receive it? <button id="fp-resend" style="background:none;border:none;color:#2dd4bf;cursor:pointer;font-size:13px;text-decoration:underline;padding:0;font-family:inherit">Resend</button>
-
-        <span id="fp-cd" style="color:rgba(255,255,255,0.35);font-size:13px"></span>
-
+      <p class="fp-resend-row">
+        Didn't receive it?
+        <button type="button" id="fp-resend" class="fp-resend">Resend</button>
+        <span id="fp-cd" class="fp-cd"></span>
       </p>
-
     </div>
-
-
-
-    <!-- Step 3 -->
 
     <div id="fp-s3" hidden>
-
-      <div style="font-size:16px;font-weight:800;color:#fff;margin-bottom:4px">New Password</div>
-
-      <div style="font-size:13px;color:rgba(255,255,255,0.55);margin-bottom:18px">OTP verified. Set your new password.</div>
-
-      <label style="display:block;font-size:12.5px;font-weight:600;color:rgba(255,255,255,0.80);margin-bottom:6px">New Password</label>
-
-      <input type="password" id="fp-pw" placeholder="At least 6 characters"
-
-        style="width:100%;height:46px;padding:0 14px;border:1.5px solid rgba(45,212,191,0.25);border-radius:10px;font-size:14px;font-family:inherit;color:#fff;background:rgba(255,255,255,0.07);outline:none;box-sizing:border-box;margin-bottom:12px"/>
-
-      <label style="display:block;font-size:12.5px;font-weight:600;color:rgba(255,255,255,0.80);margin-bottom:6px">Confirm Password</label>
-
-      <input type="password" id="fp-cpw" placeholder="Repeat your password"
-
-        style="width:100%;height:46px;padding:0 14px;border:1.5px solid rgba(45,212,191,0.25);border-radius:10px;font-size:14px;font-family:inherit;color:#fff;background:rgba(255,255,255,0.07);outline:none;box-sizing:border-box;margin-bottom:14px"/>
-
-      <button id="fp-reset" style="width:100%;height:48px;border:none;border-radius:11px;cursor:pointer;background:linear-gradient(135deg,#1a6db5,#3b82f6);color:#fff;font-size:14.5px;font-weight:700;font-family:inherit">
-
-        <span id="fp-reset-t">Reset Password</span>
-
-        <span id="fp-reset-s" hidden style="display:inline-block;width:14px;height:14px;border:2.5px solid rgba(255,255,255,.35);border-top-color:#fff;border-radius:50%;animation:spin .7s linear infinite;vertical-align:middle"></span>
-
-      </button>
-
-    </div>
-
-
-
-    <!-- Success -->
-
-    <div id="fp-done" hidden style="text-align:center;padding:10px 0">
-
-      <div style="width:60px;height:60px;border-radius:50%;background:linear-gradient(135deg,#16a34a,#22c55e);display:flex;align-items:center;justify-content:center;margin:0 auto 16px">
-
-        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
-
+      <h2 class="fp-title">New Password</h2>
+      <p class="fp-sub">OTP verified. Set your new password.</p>
+      <div class="fp-field">
+        <label for="fp-pw">New Password</label>
+        <input type="password" id="fp-pw" class="fp-input" placeholder="At least 6 characters" autocomplete="new-password" />
       </div>
-
-      <div style="font-size:17px;font-weight:800;color:#fff;margin-bottom:8px">Password Reset!</div>
-
-      <div style="font-size:13px;color:rgba(255,255,255,0.55);margin-bottom:20px">Your password has been updated. You can now sign in.</div>
-
-      <button id="fp-signin" style="width:100%;height:48px;border:none;border-radius:11px;cursor:pointer;background:linear-gradient(135deg,#1a6db5,#3b82f6);color:#fff;font-size:14.5px;font-weight:700;font-family:inherit">Sign In Now</button>
-
+      <div class="fp-field">
+        <label for="fp-cpw">Confirm Password</label>
+        <input type="password" id="fp-cpw" class="fp-input" placeholder="Repeat your password" autocomplete="new-password" />
+      </div>
+      <button type="button" id="fp-reset" class="fp-btn">
+        <span id="fp-reset-t">Reset Password</span>
+        <span id="fp-reset-s" class="fp-btn-spin" hidden aria-hidden="true"></span>
+      </button>
     </div>
 
+    <div id="fp-done" class="fp-done" hidden>
+      <div class="fp-done-icon" aria-hidden="true">
+        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+      </div>
+      <h2 class="fp-title">Password Reset!</h2>
+      <p class="fp-sub">Your password has been updated. You can now sign in.</p>
+      <button type="button" id="fp-signin" class="fp-btn">Sign In Now</button>
+    </div>
   </div>
-
 </div>
 
 
 
-<script src="<?= $asset ?>/assets/js/forgot-password.js"></script>
+<?php $forgotPwJsVer = (int) @filemtime(ASSETS_PATH . '/js/forgot-password.js'); ?>
+<script src="<?= $asset ?>/assets/js/forgot-password.js?v=<?= $forgotPwJsVer ?>"></script>
 
 
 

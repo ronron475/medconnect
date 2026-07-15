@@ -53,7 +53,13 @@ final class MedicalAssessmentEngine
             'ml_triage_level'  => (string) ($mlLayer['triage_level'] ?? ''),
         ]);
 
-        $recommendations = MedicalRecommendationEngine::buildRecommendations($triageMeta, $possibleConditions);
+        $recommendations = MedicalRecommendationEngine::buildRecommendations(
+            $triageMeta,
+            $possibleConditions,
+            trim($chiefComplaint),
+            (string) ($nlpResult['english_translation'] ?? ($nlpPipeline['translated_english'] ?? '')),
+            $detectedSymptoms
+        );
 
         $workflowSteps = [
             'language_detection',

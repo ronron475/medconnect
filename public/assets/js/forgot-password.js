@@ -13,58 +13,67 @@
   let email = '';
   let timer = null;
 
-  const activeDot = 'background:linear-gradient(135deg,#1a6db5,#3b82f6);color:#fff;border:none;box-shadow:0 4px 14px rgba(26,109,181,.3);';
-  const doneDot = 'background:linear-gradient(135deg,#16a34a,#22c55e);color:#fff;border:none;';
-  const idleDot = 'background:rgba(255,255,255,0.07);color:rgba(255,255,255,0.35);border:2px solid rgba(255,255,255,0.12);';
-  const dotBase = 'width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;';
+  function openModal() {
+    modal.hidden = false;
+    modal.classList.add('is-open');
+    modal.style.display = 'flex';
+  }
+
+  function closeModal() {
+    modal.classList.remove('is-open');
+    modal.hidden = true;
+    modal.style.display = 'none';
+  }
 
   function showAlert(msg, type = 'e') {
     alertEl.textContent = msg;
-    alertEl.style.display = 'block';
-    alertEl.style.background = type === 's' ? '#f0fdf4' : '#fef2f2';
-    alertEl.style.color = type === 's' ? '#16a34a' : '#dc2626';
-    alertEl.style.border = type === 's' ? '1px solid #86efac' : '1px solid #fca5a5';
+    alertEl.classList.add('is-visible');
+    alertEl.classList.toggle('is-success', type === 's');
+    alertEl.classList.toggle('is-error', type !== 's');
   }
 
   function clearAlert() {
-    alertEl.style.display = 'none';
+    alertEl.textContent = '';
+    alertEl.classList.remove('is-visible', 'is-success', 'is-error');
   }
 
-  function setLoading(btn, textEl, spinEl, on) {
+  function setLoading(btn, textEl, spinEl, on, idleLabel, busyLabel) {
     btn.disabled = on;
-    textEl.hidden = on;
-    spinEl.hidden = !on;
+    if (textEl) textEl.textContent = on ? busyLabel : idleLabel;
+    if (spinEl) spinEl.hidden = !on;
   }
 
   function goStep(n) {
     ['fp-s1', 'fp-s2', 'fp-s3', 'fp-done'].forEach((id, i) => {
-      document.getElementById(id).hidden = i + 1 !== n && !(n === 4 && i === 3);
+      const el = document.getElementById(id);
+      if (!el) return;
+      el.hidden = i + 1 !== n && !(n === 4 && i === 3);
     });
     clearAlert();
-    const dots = ['fd1', 'fd2', 'fd3'].map((id) => document.getElementById(id));
-    const labels = ['fl1', 'fl2', 'fl3'].map((id) => document.getElementById(id));
-    const lines = ['fln1', 'fln2'].map((id) => document.getElementById(id));
-    dots.forEach((d, i) => {
-      if (i + 1 < n) {
-        d.style.cssText = dotBase + doneDot;
-        labels[i].style.color = '#16a34a';
-        if (lines[i]) lines[i].style.background = '#86efac';
-      } else if (i + 1 === n) {
-        d.style.cssText = dotBase + activeDot;
-        labels[i].style.color = '#1a6db5';
-      } else {
-        d.style.cssText = dotBase + idleDot;
-        labels[i].style.color = '#94a3b8';
-      }
+
+    [1, 2, 3].forEach((i) => {
+      const step = document.getElementById('fp-step-' + i);
+      if (!step) return;
+      const done = n === 4 || i < n;
+      const active = n < 4 && i === n;
+      step.classList.toggle('is-done', done);
+      step.classList.toggle('is-active', active);
     });
+
+    const line1 = document.getElementById('fln1');
+    const line2 = document.getElementById('fln2');
+    if (line1) line1.classList.toggle('is-done', n > 1);
+    if (line2) line2.classList.toggle('is-done', n > 2);
   }
 
   function startCountdown(seconds) {
     const btn = document.getElementById('fp-resend');
     const cd = document.getElementById('fp-cd');
+    if (!btn || !cd) return;
     btn.disabled = true;
     let remaining = seconds;
     cd.textContent = ` (${remaining}s)`;
+    clearInterval(timer);
     timer = setInterval(() => {
       remaining -= 1;
       if (remaining <= 0) {
@@ -77,42 +86,79 @@
     }, 1000);
   }
 
-  async function sendOtp(addr) {
-    const fd = new FormData();
-    fd.append('email', addr);
-    const token = await getRecaptchaToken('forgot_password');
-    if (token) fd.append('recaptcha_token', token);
-    return (await fetch(api('request_password_reset.php'), { method: 'POST', body: fd })).json();
+  function waitForGrecaptcha(timeoutMs) {
+    const limit = typeof timeoutMs === 'number' ? timeoutMs : 6000;
+    return new Promise((resolve) => {
+      const started = Date.now();
+      const tick = () => {
+        if (window.grecaptcha && typeof window.grecaptcha.ready === 'function') {
+          window.grecaptcha.ready(() => resolve(true));
+          return;
+        }
+        if (Date.now() - started >= limit) {
+          resolve(false);
+          return;
+        }
+        setTimeout(tick, 50);
+      };
+      tick();
+    });
   }
 
   async function getRecaptchaToken(action) {
     const key = window.RECAPTCHA_SITE_KEY;
     const version = (window.RECAPTCHA_VERSION || 'v3').toLowerCase();
     if (!key) return '';
+
     if (version === 'v3') {
-      if (!window.grecaptcha || !window.grecaptcha.execute) return '';
+      const ready = await waitForGrecaptcha();
+      if (!ready || !window.grecaptcha || typeof window.grecaptcha.execute !== 'function') {
+        return '';
+      }
       try {
         return await window.grecaptcha.execute(key, { action: action || 'forgot_password' });
       } catch (_) {
         return '';
       }
     }
-    return (document.querySelector('textarea[name="g-recaptcha-response"]')?.value || '').trim();
+
+    // v2 checkbox token (forgot modal first, then sign-in widget)
+    const scoped = document.querySelector('#forgot-modal textarea[name="g-recaptcha-response"]');
+    const any = document.querySelector('textarea[name="g-recaptcha-response"]');
+    return ((scoped && scoped.value) || (any && any.value) || '').trim();
+  }
+
+  async function sendOtp(addr) {
+    const fd = new FormData();
+    fd.append('email', addr);
+    if (window.RECAPTCHA_SITE_KEY) {
+      const token = await getRecaptchaToken('forgot_password');
+      if (!token) {
+        return {
+          success: false,
+          message: 'Security check could not load. Refresh the page (or disable blockers) and try again.',
+        };
+      }
+      fd.append('recaptcha_token', token);
+    }
+    return (await fetch(api('request_password_reset.php'), { method: 'POST', body: fd })).json();
   }
 
   document.getElementById('forgot-link')?.addEventListener('click', (ev) => {
     ev.preventDefault();
-    modal.style.display = 'flex';
+    openModal();
     goStep(1);
     document.getElementById('fp-email')?.focus();
   });
 
-  document.getElementById('forgot-close')?.addEventListener('click', () => {
-    modal.style.display = 'none';
-  });
+  document.getElementById('forgot-close')?.addEventListener('click', closeModal);
 
   modal.addEventListener('click', (e) => {
-    if (e.target === modal) modal.style.display = 'none';
+    if (e.target === modal) closeModal();
+  });
+
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && modal.classList.contains('is-open')) closeModal();
   });
 
   document.getElementById('fp-send')?.addEventListener('click', async () => {
@@ -122,7 +168,7 @@
       return;
     }
     const btn = document.getElementById('fp-send');
-    setLoading(btn, document.getElementById('fp-send-t'), document.getElementById('fp-send-s'), true);
+    setLoading(btn, document.getElementById('fp-send-t'), document.getElementById('fp-send-s'), true, 'Send OTP', 'Sending…');
     try {
       const data = await sendOtp(addr);
       if (data.success) {
@@ -138,7 +184,7 @@
     } catch {
       showAlert('Could not send OTP. Please try again.');
     }
-    setLoading(btn, document.getElementById('fp-send-t'), document.getElementById('fp-send-s'), false);
+    setLoading(btn, document.getElementById('fp-send-t'), document.getElementById('fp-send-s'), false, 'Send OTP', 'Sending…');
   });
 
   document.getElementById('fp-resend')?.addEventListener('click', async () => {
@@ -164,7 +210,7 @@
       return;
     }
     const btn = document.getElementById('fp-verify');
-    setLoading(btn, document.getElementById('fp-verify-t'), document.getElementById('fp-verify-s'), true);
+    setLoading(btn, document.getElementById('fp-verify-t'), document.getElementById('fp-verify-s'), true, 'Verify OTP', 'Verifying…');
     try {
       const fd = new FormData();
       fd.append('email', email);
@@ -179,7 +225,7 @@
     } catch {
       showAlert('Could not verify OTP.');
     }
-    setLoading(btn, document.getElementById('fp-verify-t'), document.getElementById('fp-verify-s'), false);
+    setLoading(btn, document.getElementById('fp-verify-t'), document.getElementById('fp-verify-s'), false, 'Verify OTP', 'Verifying…');
   });
 
   document.getElementById('fp-reset')?.addEventListener('click', async () => {
@@ -194,25 +240,32 @@
       return;
     }
     const btn = document.getElementById('fp-reset');
-    setLoading(btn, document.getElementById('fp-reset-t'), document.getElementById('fp-reset-s'), true);
+    setLoading(btn, document.getElementById('fp-reset-t'), document.getElementById('fp-reset-s'), true, 'Reset Password', 'Saving…');
     try {
       const fd = new FormData();
       fd.append('email', email);
       fd.append('password', pw);
       fd.append('confirm_password', cpw);
-      const token = await getRecaptchaToken('reset_password');
-      if (token) fd.append('recaptcha_token', token);
+      if (window.RECAPTCHA_SITE_KEY) {
+        const token = await getRecaptchaToken('reset_password');
+        if (!token) {
+          showAlert('Security check could not load. Refresh the page (or disable blockers) and try again.');
+          setLoading(btn, document.getElementById('fp-reset-t'), document.getElementById('fp-reset-s'), false, 'Reset Password', 'Saving…');
+          return;
+        }
+        fd.append('recaptcha_token', token);
+      }
       const data = await (await fetch(api('reset_password_otp.php'), { method: 'POST', body: fd })).json();
       if (data.success) goStep(4);
       else showAlert(data.message);
     } catch {
       showAlert('Could not reset password.');
     }
-    setLoading(btn, document.getElementById('fp-reset-t'), document.getElementById('fp-reset-s'), false);
+    setLoading(btn, document.getElementById('fp-reset-t'), document.getElementById('fp-reset-s'), false, 'Reset Password', 'Saving…');
   });
 
   document.getElementById('fp-signin')?.addEventListener('click', () => {
-    modal.style.display = 'none';
+    closeModal();
     if (typeof window.openSignInModal === 'function') {
       window.openSignInModal();
       return;

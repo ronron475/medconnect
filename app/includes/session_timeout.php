@@ -78,6 +78,16 @@ function session_timeout_check(): void
         return;
     }
 
+    // Video room / dual-tab demo polls use read-only sessions so they do not
+    // persist last_activity. Do not treat those requests as idle expiry, or a
+    // live consultation would auto-logout the user mid-call.
+    if (defined('MEDCONNECT_SKIP_SESSION_TIMEOUT') && MEDCONNECT_SKIP_SESSION_TIMEOUT) {
+        return;
+    }
+    if (defined('MEDCONNECT_SESSION_READ_AND_CLOSE') && MEDCONNECT_SESSION_READ_AND_CLOSE) {
+        return;
+    }
+
     $timeoutMinutes = session_timeout_minutes_for_current_user();
     $now = time();
 
@@ -98,6 +108,36 @@ function session_timeout_check(): void
     $_SESSION['last_activity'] = $now;
     if (($_SESSION['user_role'] ?? '') === 'provider') {
         $_SESSION['provider_last_activity'] = $now;
+    }
+}
+
+/**
+ * Persist last_activity without holding the session lock longer than necessary.
+ * Safe for video-room keep-alive calls from multiple Chrome tabs.
+ */
+function session_timeout_touch(): void
+{
+    $openedHere = false;
+    if (session_status() !== PHP_SESSION_ACTIVE) {
+        @session_start();
+        $openedHere = true;
+    }
+
+    if (empty($_SESSION['user_id'])) {
+        if ($openedHere && session_status() === PHP_SESSION_ACTIVE) {
+            session_write_close();
+        }
+        return;
+    }
+
+    $now = time();
+    $_SESSION['last_activity'] = $now;
+    if (($_SESSION['user_role'] ?? '') === 'provider') {
+        $_SESSION['provider_last_activity'] = $now;
+    }
+
+    if ($openedHere && session_status() === PHP_SESSION_ACTIVE) {
+        session_write_close();
     }
 }
 

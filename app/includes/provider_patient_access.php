@@ -71,6 +71,24 @@ function provider_patient_assert_access(PDO $pdo, int $providerId, int $patientI
         // appointment_slots may not exist in all schemas
     }
 
+    // Allow emergency / hospital referral relationship (no consultation yet).
+    try {
+        $r = $pdo->prepare("
+            SELECT id
+            FROM digital_referrals
+            WHERE provider_id = ? AND patient_id = ?
+              AND created_at >= DATE_SUB(CURDATE(), INTERVAL 30 DAY)
+            ORDER BY id DESC
+            LIMIT 1
+        ");
+        $r->execute([$providerId, $patientId]);
+        if ($r->fetchColumn()) {
+            return ['allowed' => true, 'message' => 'ok', 'consultation_id' => 0];
+        }
+    } catch (PDOException $e) {
+        // digital_referrals may not exist in all schemas
+    }
+
     return ['allowed' => false, 'message' => 'Access denied.'];
 }
 

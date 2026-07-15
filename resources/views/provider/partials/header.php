@@ -50,7 +50,7 @@ $prov_role = (string) ($provider['role'] ?? 'Provider');
     <div class="mc-profmenu__meta"><?= htmlspecialchars($prov_role) ?></div>
   </div>
   <div class="mc-profmenu__actions">
-    <a class="mc-profmenu__btn mc-profmenu__btn--primary" href="<?= ASSET_BASE ?>/views/provider/profile.php">My Profile</a>
+    <a class="mc-profmenu__btn mc-profmenu__btn--primary" href="<?= ASSET_BASE ?>/views/provider/settings.php">My Profile</a>
     <a class="mc-profmenu__btn" href="<?= ASSET_BASE ?>/views/provider/settings.php">Settings</a>
     <button type="button" class="mc-profmenu__btn mc-profmenu__btn--danger" data-profmenu-logout>Sign out</button>
   </div>

@@ -2662,14 +2662,7 @@ body:not(.landing-page) .navbar.scrolled {
   }
 }
 
-/* 10. Forgot password modal (inline-styled) — override padding on mobile */
-@media (max-width: 480px) {
-  #forgot-modal > div {
-    padding: 24px 20px !important;
-    border-radius: 14px !important;
-    margin: 12px !important;
-  }
-}
+/* 10. Forgot password modal — mobile rules live in forgot-password.css */
 
 /* 11. Services grid — ensure no card overflows on any size */
 .service-card {

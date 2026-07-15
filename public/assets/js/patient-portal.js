@@ -6,6 +6,18 @@
 
   const APP_BASE = window.APP_BASE || '';
 
+  function getCsrfToken() {
+    const body = document.body;
+    if (body && body.dataset && body.dataset.csrf) {
+      return body.dataset.csrf;
+    }
+    const root = document.getElementById('medconnectThemeRoot');
+    if (root && root.dataset && root.dataset.csrf) {
+      return root.dataset.csrf;
+    }
+    return '';
+  }
+
   function closeMobileNav() {
     const sidebar = document.querySelector('.sidebar');
     const backdrop = document.querySelector('.mc-nav-backdrop');
@@ -430,6 +442,17 @@
       return;
     }
 
+    const futureBlocked = window.BOOKING_BLOCKED_FUTURE_APPOINTMENT === true;
+    if (futureBlocked) {
+      const when = window.BOOKING_FUTURE_APPOINTMENT_LABEL || 'a future date';
+      providerSelect.disabled = true;
+      clearSlots(
+        'You already have an appointment scheduled for ' + when +
+          '. Cancel or complete that visit before booking another slot.'
+      );
+      return;
+    }
+
     const renderSlots = (slots) => {
       slotInput.value = '';
       const bookableSlots = slots.filter((slot) => slot.bookable !== false && isSlotStartInFuture(slot));
@@ -704,17 +727,21 @@
         sessionStorage.removeItem('medconnect_pending_chief_complaint');
       }
 
-      const blockTele = sessionStorage.getItem('medconnect_block_telemedicine') === '1';
+      const blockTele = sessionStorage.getItem('medconnect_block_telemedicine') === '1'
+        || String(window.REGISTRATION_URGENCY || '').toUpperCase() === 'EMERGENCY';
       if (blockTele) {
-        sessionStorage.removeItem('medconnect_block_telemedicine');
         showTriageAlert(
           alertEl,
           'error',
-          'Emergency symptoms were flagged during registration. Please seek care at the nearest hospital or emergency department instead of booking an online consultation.'
+          'Emergency symptoms were flagged. Teleconsultation is not available — please go to the nearest hospital or ER. A hospital referral has been (or will be) recorded for your care team. You do not need to pick a time slot.'
         );
-        if (submitBtn) submitBtn.disabled = true;
         const providerSelect = document.getElementById('booking_provider');
         if (providerSelect) providerSelect.disabled = true;
+        // Keep submit available so a missing referral can still be recorded without a slot.
+        if (submitBtn) {
+          submitBtn.disabled = false;
+          submitBtn.textContent = 'Confirm Emergency Referral';
+        }
       }
 
       const preferEarliest = sessionStorage.getItem('medconnect_prefer_earliest_slot') === '1';
@@ -743,18 +770,10 @@
         return;
       }
 
-      if (!slotId) {
-        showTriageAlert(
-          alertEl,
-          'error',
-          'Please choose an available time slot for today.'
-        );
-        return;
-      }
-
       const fd = new FormData(form);
-      fd.set('slot_id', slotId);
-      const csrfToken = document.body?.dataset?.csrf || '';
+      // Slot optional for emergency (server creates hospital referral). Required for normal booking.
+      fd.set('slot_id', slotId || '0');
+      const csrfToken = getCsrfToken();
       if (csrfToken) {
         fd.set('csrf_token', csrfToken);
       }
@@ -792,22 +811,38 @@
 
         if (data.success) {
           const booked = data.booked !== false;
+          const emergency = data.emergency === true;
           try {
             sessionStorage.removeItem('medconnect_pending_nlp_result');
             sessionStorage.removeItem('medconnect_prefer_earliest_slot');
             sessionStorage.removeItem('medconnect_post_reg_urgency');
             sessionStorage.removeItem('medconnect_pending_chief_complaint');
+            if (emergency) {
+              sessionStorage.setItem('medconnect_block_telemedicine', '1');
+            }
           } catch (_) { /* ignore */ }
           showBookingOverlay(false);
-          showTriageAlert(
-            alertEl,
-            booked ? 'success' : 'error',
-            booked
-              ? (data.message || 'Your appointment has been booked successfully.')
-              : (data.message || 'Your visit was recorded, but the slot could not be booked.')
-          );
-          if (booked) {
-            setTimeout(() => window.location.reload(), 1600);
+          if (emergency) {
+            showTriageAlert(
+              alertEl,
+              'error',
+              data.message ||
+                'Emergency symptoms detected. Please seek care at the nearest hospital or emergency department instead of booking an online consultation.'
+            );
+            if (submitBtn) submitBtn.disabled = true;
+            const providerSelect = document.getElementById('booking_provider');
+            if (providerSelect) providerSelect.disabled = true;
+          } else {
+            showTriageAlert(
+              alertEl,
+              booked ? 'success' : 'error',
+              booked
+                ? (data.message || 'Your appointment has been booked successfully.')
+                : (data.message || 'Your visit was recorded, but the slot could not be booked.')
+            );
+            if (booked) {
+              setTimeout(() => window.location.reload(), 1600);
+            }
           }
         } else {
           showBookingOverlay(false);

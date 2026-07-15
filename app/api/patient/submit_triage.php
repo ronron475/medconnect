@@ -2,6 +2,9 @@
 /**
  * API: Submit patient triage and book a scheduled appointment slot.
  * Uses AI Assessment Engine for NLP-driven triage classification.
+ *
+ * Emergency: saves triage + hospital referral; never books teleconsult (aligned with BHW).
+ * Booking: same-day only; auto-accepts triage; will not overwrite a future (multi-day) appointment.
  */
 require_once dirname(dirname(dirname(__DIR__))) . '/bootstrap.php';
 require_once dirname(dirname(dirname(__DIR__))) . '/config/db.php';
@@ -9,6 +12,8 @@ require_once dirname(dirname(dirname(__DIR__))) . '/app/includes/appointment_slo
 require_once dirname(dirname(dirname(__DIR__))) . '/app/includes/consultation_expiry.php';
 require_once dirname(dirname(dirname(__DIR__))) . '/app/includes/triage_assessment_schema.php';
 require_once dirname(dirname(dirname(__DIR__))) . '/app/core/TriageLevelService.php';
+require_once dirname(dirname(dirname(__DIR__))) . '/app/includes/bhw_patient_workflow.php';
+require_once dirname(dirname(dirname(__DIR__))) . '/app/includes/notification_events.php';
 
 Api::startJson();
 Api::requirePatientReady($pdo);
@@ -18,6 +23,7 @@ Api::requireCsrf();
 $patient_id = (int) $_SESSION['user_id'];
 consultations_auto_expire($pdo, $patient_id);
 triage_assessment_ensure_schema($pdo);
+BhwPatientWorkflow::ensure_schema($pdo);
 
 $symptoms   = $_POST['symptoms'] ?? [];
 $complaint  = trim((string) ($_POST['chief_complaint'] ?? ''));
@@ -29,10 +35,6 @@ if (!is_array($symptoms)) {
 
 if (empty($symptoms) && $complaint === '') {
     Api::error('Please provide symptoms or a complaint.');
-}
-
-if ($slot_id <= 0) {
-    Api::error('Please select an available appointment slot.');
 }
 
 $symptomList = array_values(array_filter(array_map(static function ($s) {
@@ -83,21 +85,28 @@ if (is_array($regNlp) && !empty($regNlp['urgency'])) {
     if ($u === 'EMERGENCY') {
         $level = '1';
         $label = 'Emergency';
-        $triageLevel = 'emergency';
+        $triageLevel = TriageLevelService::EMERGENCY;
         $assessment['severity']['severity'] = 'emergency';
         $assessment['triage']['triage_classification'] = 'EMERGENCY';
     } elseif ($u === 'URGENT') {
         $level = '2';
         $label = 'Urgent';
-        $triageLevel = 'urgent';
+        $triageLevel = TriageLevelService::URGENT;
         $assessment['severity']['severity'] = 'urgent';
         $assessment['triage']['triage_classification'] = 'URGENT';
     }
 }
 
+$isEmergency = $triageLevel === TriageLevelService::EMERGENCY
+    || strtoupper((string) ($assessment['triage']['triage_classification'] ?? '')) === 'EMERGENCY';
+
 $consult_type = $complaint !== ''
     ? $complaint
     : ($symptomList !== [] ? implode(', ', $symptomList) : 'General Consultation');
+
+$nameStmt = $pdo->prepare('SELECT CONCAT(first_name, " ", last_name) FROM users WHERE id = ? LIMIT 1');
+$nameStmt->execute([$patient_id]);
+$patientName = trim((string) ($nameStmt->fetchColumn() ?: 'Patient'));
 
 try {
     $pdo->beginTransaction();
@@ -127,6 +136,67 @@ try {
         json_encode($assessment, JSON_UNESCAPED_UNICODE),
         (string) ($assessment['engine'] ?? MedicalAssessmentEngine::VERSION),
     ]);
+
+    $triageId = (int) $pdo->lastInsertId();
+    $recText = implode("\n", $assessment['recommendations'] ?? []);
+    $recStatus = triage_recommendation_status_for_insert(
+        $triageLevel,
+        $complaint,
+        $recText,
+        (string) ($assessment['triage']['triage_classification'] ?? '')
+    );
+    $pdo->prepare('UPDATE triage_results SET recommendation_status = ?, recommendation_patient_ack_at = NULL WHERE id = ?')
+        ->execute([$recStatus, $triageId]);
+
+    // ── Emergency: hospital referral only (no teleconsult booking) ─────────
+    if ($isEmergency) {
+        try {
+            $pdo->prepare("UPDATE triage_results SET outcome = 'emergency_referral', status = 'completed' WHERE id = ?")
+                ->execute([$triageId]);
+        } catch (PDOException $e) {
+            $pdo->prepare("UPDATE triage_results SET status = 'completed' WHERE id = ?")
+                ->execute([$triageId]);
+        }
+
+        $providerId = patient_resolve_provider_id($pdo, $patient_id);
+        $reason = patient_emergency_referral_reason($assessment, $complaint, $symptomList);
+        $referralId = 0;
+        if ($providerId > 0) {
+            $referralId = patient_create_emergency_hospital_referral($pdo, $patient_id, $providerId, $reason);
+        }
+
+        $pdo->commit();
+
+        BhwPatientWorkflow::onPatientPortalEmergency($pdo, $patient_id, [
+            'triage_id'   => $triageId,
+            'referral_id' => $referralId,
+        ]);
+
+        // highRiskPatient only (aiTriageCompleted would duplicate the emergency alert).
+        NotificationEvents::highRiskPatient($pdo, $patient_id, $patientName, $label, $patient_id);
+        if ($referralId > 0) {
+            NotificationEvents::referralCreated($pdo, $referralId, $patient_id, $providerId, $patient_id);
+        }
+
+        $msg = 'Emergency symptoms detected. Teleconsultation is not available — please go to the nearest hospital or emergency department.';
+        if ($referralId > 0) {
+            $msg .= ' A hospital referral has been recorded for your care team.';
+        }
+
+        Api::success([
+            'emergency'    => true,
+            'booked'       => false,
+            'triage_id'    => $triageId,
+            'referral_id'  => $referralId,
+            'level'        => $level,
+            'label'        => $label,
+            'assessment'   => $assessment,
+        ], $msg);
+    }
+
+    if ($slot_id <= 0) {
+        throw new RuntimeException('Please select an available appointment slot.');
+    }
 
     $slot_stmt = $pdo->prepare("
         SELECT s.id, s.provider_id, s.slot_date, s.start_time, s.end_time, s.status,
@@ -166,7 +236,7 @@ try {
         . '.';
 
     $existing_stmt = $pdo->prepare("
-        SELECT id, status
+        SELECT id, status, consult_date, consult_time
         FROM consultations
         WHERE patient_id = ?
           AND status IN ('pending', 'scheduled', 'in_consultation')
@@ -178,14 +248,27 @@ try {
     $existing_consult = $existing_stmt->fetch(PDO::FETCH_ASSOC);
 
     if ($existing_consult && $existing_consult['status'] === 'in_consultation') {
-        $pdo->commit();
-        Api::success([
-            'level'      => $level,
-            'label'      => $label,
-            'booked'     => false,
-            'assessment' => $assessment,
-        ], 'Assessment saved. You have a consultation in progress — finish it before booking a new appointment slot.');
+        // Do not leave an orphan pending triage when booking is blocked.
+        $pdo->rollBack();
+        Api::error('You have a consultation in progress — finish it before booking a new appointment slot.');
     }
+
+    // Protect BHW (or any) future-day appointments from same-day patient rebook overwrite.
+    if ($existing_consult && consultation_is_future_day($existing_consult['consult_date'] ?? null)) {
+        $futureLabel = date('M j, Y', strtotime((string) $existing_consult['consult_date']));
+        if (!empty($existing_consult['consult_time'])) {
+            $futureLabel .= ' at ' . date('g:i A', strtotime((string) $existing_consult['consult_time']));
+        }
+        throw new RuntimeException(
+            'You already have an appointment scheduled for ' . $futureLabel
+            . '. Cancel or complete that visit before booking a new slot today.'
+        );
+    }
+
+    $consultCols = $pdo->query('SHOW COLUMNS FROM consultations')->fetchAll(PDO::FETCH_COLUMN);
+    $hasTriageLink = in_array('triage_result_id', $consultCols, true);
+    $hasPriorityCol = in_array('consult_priority', $consultCols, true);
+    $consultPriority = $triageLevel === TriageLevelService::URGENT ? 'urgent' : 'standard';
 
     if ($existing_consult) {
         $consultation_id = (int) $existing_consult['id'];
@@ -198,40 +281,125 @@ try {
         ");
         $release->execute([$consultation_id]);
 
-        $upd = $pdo->prepare("
-            UPDATE consultations
-            SET provider_id = ?,
-                provider_name = ?,
-                consult_type = ?,
-                consult_date = ?,
-                consult_time = ?,
-                status = 'scheduled'
-            WHERE id = ?
-              AND patient_id = ?
-        ");
-        $upd->execute([
-            $provider_id,
-            $provider_name,
-            $consult_type,
-            $consult_date,
-            $consult_time,
-            $consultation_id,
-            $patient_id,
-        ]);
+        if ($hasTriageLink && $hasPriorityCol) {
+            $upd = $pdo->prepare("
+                UPDATE consultations
+                SET provider_id = ?,
+                    provider_name = ?,
+                    consult_type = ?,
+                    consult_date = ?,
+                    consult_time = ?,
+                    status = 'scheduled',
+                    consult_priority = ?,
+                    triage_result_id = ?
+                WHERE id = ?
+                  AND patient_id = ?
+            ");
+            $upd->execute([
+                $provider_id,
+                $provider_name,
+                $consult_type,
+                $consult_date,
+                $consult_time,
+                $consultPriority,
+                $triageId,
+                $consultation_id,
+                $patient_id,
+            ]);
+        } elseif ($hasTriageLink) {
+            $upd = $pdo->prepare("
+                UPDATE consultations
+                SET provider_id = ?,
+                    provider_name = ?,
+                    consult_type = ?,
+                    consult_date = ?,
+                    consult_time = ?,
+                    status = 'scheduled',
+                    triage_result_id = ?
+                WHERE id = ?
+                  AND patient_id = ?
+            ");
+            $upd->execute([
+                $provider_id,
+                $provider_name,
+                $consult_type,
+                $consult_date,
+                $consult_time,
+                $triageId,
+                $consultation_id,
+                $patient_id,
+            ]);
+        } else {
+            $upd = $pdo->prepare("
+                UPDATE consultations
+                SET provider_id = ?,
+                    provider_name = ?,
+                    consult_type = ?,
+                    consult_date = ?,
+                    consult_time = ?,
+                    status = 'scheduled'
+                WHERE id = ?
+                  AND patient_id = ?
+            ");
+            $upd->execute([
+                $provider_id,
+                $provider_name,
+                $consult_type,
+                $consult_date,
+                $consult_time,
+                $consultation_id,
+                $patient_id,
+            ]);
+        }
     } else {
-        $ins = $pdo->prepare("
-            INSERT INTO consultations
-                (patient_id, provider_id, provider_name, consult_type, consult_date, consult_time, status, created_at)
-            VALUES (?, ?, ?, ?, ?, ?, 'scheduled', NOW())
-        ");
-        $ins->execute([
-            $patient_id,
-            $provider_id,
-            $provider_name,
-            $consult_type,
-            $consult_date,
-            $consult_time,
-        ]);
+        if ($hasTriageLink && $hasPriorityCol) {
+            $ins = $pdo->prepare("
+                INSERT INTO consultations
+                    (patient_id, provider_id, provider_name, consult_type, consult_date, consult_time,
+                     status, consult_priority, triage_result_id, created_at)
+                VALUES (?, ?, ?, ?, ?, ?, 'scheduled', ?, ?, NOW())
+            ");
+            $ins->execute([
+                $patient_id,
+                $provider_id,
+                $provider_name,
+                $consult_type,
+                $consult_date,
+                $consult_time,
+                $consultPriority,
+                $triageId,
+            ]);
+        } elseif ($hasTriageLink) {
+            $ins = $pdo->prepare("
+                INSERT INTO consultations
+                    (patient_id, provider_id, provider_name, consult_type, consult_date, consult_time,
+                     status, triage_result_id, created_at)
+                VALUES (?, ?, ?, ?, ?, ?, 'scheduled', ?, NOW())
+            ");
+            $ins->execute([
+                $patient_id,
+                $provider_id,
+                $provider_name,
+                $consult_type,
+                $consult_date,
+                $consult_time,
+                $triageId,
+            ]);
+        } else {
+            $ins = $pdo->prepare("
+                INSERT INTO consultations
+                    (patient_id, provider_id, provider_name, consult_type, consult_date, consult_time, status, created_at)
+                VALUES (?, ?, ?, ?, ?, ?, 'scheduled', NOW())
+            ");
+            $ins->execute([
+                $patient_id,
+                $provider_id,
+                $provider_name,
+                $consult_type,
+                $consult_date,
+                $consult_time,
+            ]);
+        }
         $consultation_id = (int) $pdo->lastInsertId();
     }
 
@@ -249,15 +417,29 @@ try {
         throw new RuntimeException('Could not book the selected slot. It may have just been taken.');
     }
 
+    // Match BHW: triage is accepted when a consult is booked.
+    try {
+        $pdo->prepare("UPDATE triage_results SET outcome = 'consultation_booked', status = 'accepted' WHERE id = ?")
+            ->execute([$triageId]);
+    } catch (PDOException $e) {
+        $pdo->prepare("UPDATE triage_results SET status = 'accepted' WHERE id = ?")
+            ->execute([$triageId]);
+    }
+
     $pdo->commit();
 
-    require_once dirname(dirname(dirname(__DIR__))) . '/app/includes/bhw_patient_workflow.php';
     BhwPatientWorkflow::onPatientPortalBooking($pdo, $patient_id, $triageLevel);
+
+    $when = date('M j, Y', strtotime($consult_date)) . ' at ' . date('g:i A', strtotime($consult_time));
+    NotificationEvents::appointmentCreated($pdo, $consultation_id, $patient_id, $provider_id, $when, $patient_id);
+    NotificationEvents::aiTriageCompleted($pdo, $patient_id, $label, $patient_id);
 
     Api::success([
         'level'            => $level,
         'label'            => $label,
         'booked'           => true,
+        'emergency'        => false,
+        'triage_id'        => $triageId,
         'consultation_id'  => $consultation_id,
         'consult_date'     => $consult_date,
         'consult_time'     => $consult_time,
