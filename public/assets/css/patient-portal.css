@@ -922,9 +922,9 @@ body.patient-portal {
 }
 
 .booking-slot-btn {
-  border: 1px solid var(--mc-border-thin, #c8eef2);
-  background: #fff;
-  color: var(--mc-navy-dark, #0d1b3e);
+  border: 1px solid var(--mc-theme-border, var(--mc-border-thin, #c8eef2));
+  background: var(--mc-theme-surface, #fff);
+  color: var(--mc-theme-text, var(--mc-navy-dark, #0d1b3e));
   border-radius: 8px;
   padding: 10px 12px;
   font-size: 12px;
@@ -935,29 +935,63 @@ body.patient-portal {
 
 .booking-slot-btn:hover {
   border-color: var(--mc-aqua-medium, #069396);
-  background: rgba(6, 147, 150, 0.05);
+  background: rgba(6, 147, 150, 0.12);
+  color: var(--mc-theme-text, var(--mc-navy-dark, #0d1b3e));
 }
 
 .booking-slot-btn.is-selected {
   border-color: var(--mc-aqua-medium, #069396);
-  background: rgba(6, 147, 150, 0.12);
+  background: rgba(6, 147, 150, 0.22);
   color: var(--mc-aqua-medium, #069396);
 }
 
 .booking-slot-btn.is-past,
 .booking-slot-btn:disabled {
-  border-color: #e2e8f0;
-  background: #f8fafc;
-  color: #94a3b8;
+  border-color: var(--mc-theme-border, #e2e8f0);
+  background: var(--mc-theme-surface-2, #f8fafc);
+  color: var(--mc-theme-text-secondary, #94a3b8);
   cursor: not-allowed;
-  opacity: 0.85;
+  opacity: 0.75;
 }
 
 .booking-slot-btn.is-past:hover,
 .booking-slot-btn:disabled:hover {
-  border-color: #e2e8f0;
-  background: #f8fafc;
+  border-color: var(--mc-theme-border, #e2e8f0);
+  background: var(--mc-theme-surface-2, #f8fafc);
+  color: var(--mc-theme-text-secondary, #94a3b8);
+}
+
+html[data-theme-resolved='dark'] .booking-slot-btn {
+  background: #334155;
+  border-color: #475569;
+  color: #f8fafc;
+}
+
+html[data-theme-resolved='dark'] .booking-slot-btn:hover {
+  background: rgba(45, 212, 191, 0.18);
+  border-color: #2dd4bf;
+  color: #f8fafc;
+}
+
+html[data-theme-resolved='dark'] .booking-slot-btn.is-selected {
+  background: rgba(6, 147, 150, 0.45);
+  border-color: #2dd4bf;
+  color: #ffffff;
+}
+
+html[data-theme-resolved='dark'] .booking-slot-btn.is-past,
+html[data-theme-resolved='dark'] .booking-slot-btn:disabled,
+html[data-theme-resolved='dark'] .booking-slot-btn.is-past:hover,
+html[data-theme-resolved='dark'] .booking-slot-btn:disabled:hover {
+  background: #1e293b;
+  border-color: #334155;
   color: #94a3b8;
+}
+
+html[data-theme-resolved='dark'] .booking-today-date {
+  background: rgba(6, 147, 150, 0.14);
+  color: #f8fafc;
+  border-color: #334155;
 }
 
 /* Silent booking overlay (patient — no AI technical output) */

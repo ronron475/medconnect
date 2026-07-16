@@ -41,7 +41,12 @@ $symptomList = array_values(array_filter(array_map(static function ($s) {
     return is_string($s) ? trim($s) : '';
 }, $symptoms)));
 
-$assessment = MedicalAssessmentEngine::assess($complaint, $symptomList);
+try {
+    $assessment = MedicalAssessmentEngine::assess($complaint, $symptomList);
+} catch (Throwable $e) {
+    error_log('submit_triage assess: ' . $e->getMessage());
+    Api::error('Could not process your health concern. Please try again.', 500);
+}
 
 // Merge silent registration NLP (provider-facing detail; never shown to patient)
 $regNlp = null;
@@ -167,15 +172,23 @@ try {
 
         $pdo->commit();
 
-        BhwPatientWorkflow::onPatientPortalEmergency($pdo, $patient_id, [
-            'triage_id'   => $triageId,
-            'referral_id' => $referralId,
-        ]);
+        try {
+            BhwPatientWorkflow::onPatientPortalEmergency($pdo, $patient_id, [
+                'triage_id'   => $triageId,
+                'referral_id' => $referralId,
+            ]);
+        } catch (Throwable $e) {
+            error_log('submit_triage emergency workflow: ' . $e->getMessage());
+        }
 
         // highRiskPatient only (aiTriageCompleted would duplicate the emergency alert).
-        NotificationEvents::highRiskPatient($pdo, $patient_id, $patientName, $label, $patient_id);
-        if ($referralId > 0) {
-            NotificationEvents::referralCreated($pdo, $referralId, $patient_id, $providerId, $patient_id);
+        try {
+            NotificationEvents::highRiskPatient($pdo, $patient_id, $patientName, $label, $patient_id);
+            if ($referralId > 0) {
+                NotificationEvents::referralCreated($pdo, $referralId, $patient_id, $providerId, $patient_id);
+            }
+        } catch (Throwable $e) {
+            error_log('submit_triage emergency notify: ' . $e->getMessage());
         }
 
         $msg = 'Emergency symptoms detected. Teleconsultation is not available — please go to the nearest hospital or emergency department.';
@@ -190,7 +203,6 @@ try {
             'referral_id'  => $referralId,
             'level'        => $level,
             'label'        => $label,
-            'assessment'   => $assessment,
         ], $msg);
     }
 
@@ -428,11 +440,20 @@ try {
 
     $pdo->commit();
 
-    BhwPatientWorkflow::onPatientPortalBooking($pdo, $patient_id, $triageLevel);
+    try {
+        BhwPatientWorkflow::onPatientPortalBooking($pdo, $patient_id, $triageLevel);
+    } catch (Throwable $e) {
+        // Booking already committed — do not fail the patient response.
+        error_log('submit_triage workflow: ' . $e->getMessage());
+    }
 
     $when = date('M j, Y', strtotime($consult_date)) . ' at ' . date('g:i A', strtotime($consult_time));
-    NotificationEvents::appointmentCreated($pdo, $consultation_id, $patient_id, $provider_id, $when, $patient_id);
-    NotificationEvents::aiTriageCompleted($pdo, $patient_id, $label, $patient_id);
+    try {
+        NotificationEvents::appointmentCreated($pdo, $consultation_id, $patient_id, $provider_id, $when, $patient_id);
+        NotificationEvents::aiTriageCompleted($pdo, $patient_id, $label, $patient_id);
+    } catch (Throwable $e) {
+        error_log('submit_triage notify: ' . $e->getMessage());
+    }
 
     Api::success([
         'level'            => $level,
@@ -445,7 +466,6 @@ try {
         'consult_time'     => $consult_time,
         'provider_name'    => $provider_name,
         'booking_note'     => $booking_note,
-        'assessment'       => $assessment,
     ], 'Your appointment has been booked successfully. ' . $booking_note);
 } catch (RuntimeException $e) {
     if ($pdo->inTransaction()) {
@@ -462,5 +482,11 @@ try {
         Api::error('Assessment schema was updated. Please submit again.', 409);
     }
 
-    Api::error('Database error: ' . $e->getMessage(), 500);
+    Api::error('Database error while booking. Please try again.', 500);
+} catch (Throwable $e) {
+    if ($pdo->inTransaction()) {
+        $pdo->rollBack();
+    }
+    error_log('submit_triage: ' . $e->getMessage());
+    Api::error('Could not complete booking. Please try again.', 500);
 }

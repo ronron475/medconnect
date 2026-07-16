@@ -798,12 +798,29 @@
           method: 'POST',
           body: fd,
           credentials: 'same-origin',
+          headers: {
+            Accept: 'application/json',
+            'X-Requested-With': 'XMLHttpRequest',
+          },
         });
 
+        const raw = await res.text();
         let data;
         try {
-          data = await res.json();
+          data = raw ? JSON.parse(raw) : null;
         } catch {
+          showBookingOverlay(false);
+          showTriageAlert(
+            alertEl,
+            'error',
+            res.status >= 500
+              ? 'Server error while booking. Please refresh and try again.'
+              : 'Unexpected server response. Please refresh the page and try again.'
+          );
+          return;
+        }
+
+        if (!data || typeof data !== 'object') {
           showBookingOverlay(false);
           showTriageAlert(alertEl, 'error', 'Unexpected server response. Please try again.');
           return;
