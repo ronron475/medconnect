@@ -15,7 +15,8 @@
   const API_MARK_READ = '/app/api/messages/mark_read.php';
   const API_THREAD_ACTION = '/app/api/messages/thread_action.php';
 
-  const POLL_CONV_MS = 5000;
+  const POLL_CONV_MS = 3000;
+  const POLL_THREAD_MS = 2000;
 
   function getAssetBase() {
     const body = document.body;
@@ -188,6 +189,10 @@
 
     let isOpen = false;
     let pollTimer = null;
+    let threadPollTimer = null;
+    let threadFetchInFlight = false;
+    let lastThreadKey = '';
+    let lastConvKey = '';
     let activeCid = 0;
     let conversations = [];
     let activeBox = 'inbox';
@@ -338,10 +343,11 @@
       }
     }
 
-    async function loadConversations() {
+    async function loadConversations(showLoading) {
       if (!listEl) return;
-      if (loadingEl) loadingEl.hidden = false;
-      if (emptyEl) emptyEl.hidden = true;
+      const firstPaint = showLoading === true || lastConvKey === '';
+      if (firstPaint && loadingEl) loadingEl.hidden = false;
+      if (firstPaint && emptyEl) emptyEl.hidden = true;
       try {
         const res = await fetch(assetBase + API_CONV + '?limit=15&box=' + encodeURIComponent(activeBox) + '&_=' + Date.now(), {
           credentials: 'same-origin',
@@ -355,10 +361,19 @@
         const totalUnread = syncGlobalUnread(data.unread_count || 0);
         setUnreadHeader(totalUnread);
 
+        // Skip DOM re-render when nothing changed (prevents kebab-menu/scroll flicker while polling).
+        const convKey = activeBox + '|' + conversations
+          .map((c) => [c.consultation_id, c.unread, c.last_at, c.preview, c.is_archived].join(':'))
+          .join('||');
+        if (convKey === lastConvKey) return;
+        lastConvKey = convKey;
+        closeCardMenu();
+
         if (!conversations.length) {
           listEl.innerHTML = '';
           if (emptyEl) emptyEl.hidden = false;
         } else {
+          if (emptyEl) emptyEl.hidden = true;
           // Move unread / latest to top (server already sorts by last_at, but keep stable)
           listEl.innerHTML = conversations.map(renderConversationCard).join('');
         }
@@ -379,11 +394,15 @@
       if (isOpen) return;
       isOpen = true;
       activeCid = 0;
+      lastConvKey = '';
       setThreadView(false);
       setOpen(panel, overlay, true);
       syncPanelToFab();
-      loadConversations();
-      pollTimer = window.setInterval(loadConversations, POLL_CONV_MS);
+      loadConversations(true);
+      pollTimer = window.setInterval(() => {
+        if (document.hidden) return;
+        loadConversations();
+      }, POLL_CONV_MS);
     }
 
     function close() {
@@ -393,6 +412,7 @@
       setOpen(panel, overlay, false);
       if (pollTimer) window.clearInterval(pollTimer);
       pollTimer = null;
+      stopThreadPoll();
       activeCid = 0;
       setThreadView(false);
     }
@@ -406,43 +426,82 @@
       isOpen() { return isOpen; },
     };
 
-    async function openThread(cid) {
-      activeCid = Number(cid) || 0;
-      const item = conversations.find((c) => Number(c.consultation_id) === activeCid);
-      if (peerNameEl) peerNameEl.textContent = item ? item.name : 'Conversation';
-      if (messagesEl) messagesEl.innerHTML = '';
-
-      setThreadView(true);
-
+    async function refreshThread(cid, isFirstLoad) {
+      const id = Number(cid) || 0;
+      if (!id || threadFetchInFlight) return;
+      threadFetchInFlight = true;
       try {
-        const [listRes] = await Promise.all([
-          fetch(assetBase + API_LIST + '?consultation_id=' + encodeURIComponent(activeCid) + '&_=' + Date.now(), {
-            credentials: 'same-origin',
-            cache: 'no-store',
-            headers: { Accept: 'application/json' },
-          }),
-          markThreadRead(activeCid),
-        ]);
-        const data = await listRes.json();
+        const res = await fetch(assetBase + API_LIST + '?consultation_id=' + encodeURIComponent(id) + '&_=' + Date.now(), {
+          credentials: 'same-origin',
+          cache: 'no-store',
+          headers: { Accept: 'application/json' },
+        });
+        const data = await res.json();
         if (!data || !data.success) return;
+        // User may have navigated away while the request was in flight.
+        if (Number(activeCid) !== id) return;
 
         const msgs = Array.isArray(data.messages) ? data.messages : [];
-        if (messagesEl) {
+        const threadKey = msgs
+          .map((m) => [m.id, m.message, m.time, m.is_deleted_for_everyone ? 1 : 0].join(':'))
+          .join('||');
+
+        if (threadKey !== lastThreadKey && messagesEl) {
+          const nearBottom = isFirstLoad
+            || (messagesEl.scrollHeight - messagesEl.scrollTop - messagesEl.clientHeight < 80);
+          lastThreadKey = threadKey;
           messagesEl.innerHTML = msgs.map((m) => renderMessageBubble(m, currentUserId)).join('');
-          messagesEl.scrollTop = messagesEl.scrollHeight;
+          if (nearBottom) messagesEl.scrollTop = messagesEl.scrollHeight;
+          // New incoming messages arrived while the thread is on screen — mark them read.
+          if (!isFirstLoad) markThreadRead(id);
         }
 
         if (typeof data.unread_count !== 'undefined') {
           const n = syncGlobalUnread(data.unread_count);
           setUnreadHeader(n);
         }
+      } catch (_) {
+        /* quiet polling failure */
+      } finally {
+        threadFetchInFlight = false;
+      }
+    }
 
-        window.setTimeout(loadConversations, 300);
-      } catch (_) {}
+    function stopThreadPoll() {
+      if (threadPollTimer) window.clearInterval(threadPollTimer);
+      threadPollTimer = null;
+      lastThreadKey = '';
+    }
+
+    function startThreadPoll(cid) {
+      stopThreadPoll();
+      threadPollTimer = window.setInterval(() => {
+        if (!isOpen || !activeCid || document.hidden) return;
+        refreshThread(activeCid, false);
+      }, POLL_THREAD_MS);
+    }
+
+    async function openThread(cid) {
+      activeCid = Number(cid) || 0;
+      const item = conversations.find((c) => Number(c.consultation_id) === activeCid);
+      if (peerNameEl) peerNameEl.textContent = item ? item.name : 'Conversation';
+      if (messagesEl) messagesEl.innerHTML = '';
+      lastThreadKey = '';
+
+      setThreadView(true);
+
+      await Promise.all([
+        refreshThread(activeCid, true),
+        markThreadRead(activeCid),
+      ]);
+      startThreadPoll(activeCid);
+
+      window.setTimeout(loadConversations, 300);
     }
 
     function showListView() {
       activeCid = 0;
+      stopThreadPoll();
       setThreadView(false);
       loadConversations();
     }
@@ -508,7 +567,8 @@
           b.classList.toggle('is-active', isActive);
           b.setAttribute('aria-selected', isActive ? 'true' : 'false');
         });
-        loadConversations();
+        lastConvKey = '';
+        loadConversations(true);
       });
     });
 
@@ -586,6 +646,13 @@
     }
 
     initSwipeToClose(panel, close);
+
+    // Catch up immediately when returning to the tab (polling pauses while hidden).
+    document.addEventListener('visibilitychange', () => {
+      if (document.hidden || !isOpen) return;
+      loadConversations();
+      if (activeCid) refreshThread(activeCid, false);
+    });
 
     // Keep header unread in sync with global unread polling
     window.addEventListener('medconnect:messages-unread', (event) => {
