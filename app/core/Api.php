@@ -39,7 +39,18 @@ final class Api
             ob_end_clean();
         }
         http_response_code($status);
-        echo json_encode($payload, JSON_UNESCAPED_UNICODE);
+        $flags = JSON_UNESCAPED_UNICODE;
+        if (defined('JSON_INVALID_UTF8_SUBSTITUTE')) {
+            $flags |= JSON_INVALID_UTF8_SUBSTITUTE;
+        }
+        $encoded = json_encode($payload, $flags);
+        if ($encoded === false) {
+            $encoded = json_encode([
+                'success' => false,
+                'message' => 'Could not encode server response. Please try again.',
+            ], JSON_UNESCAPED_UNICODE);
+        }
+        echo $encoded !== false ? $encoded : '{"success":false,"message":"Server encoding error."}';
         exit;
     }
 
