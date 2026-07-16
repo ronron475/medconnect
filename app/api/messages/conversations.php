@@ -13,6 +13,7 @@ Api::startJson();
 messages_api_require_auth($pdo);
 
 $userId = (int) $_SESSION['user_id'];
+$role = (string) ($_SESSION['user_role'] ?? '');
 $limit = max(1, min(25, (int) ($_GET['limit'] ?? 15)));
 $box = strtolower(trim((string) ($_GET['box'] ?? 'inbox'))); // inbox|archived|all
 if (!in_array($box, ['inbox', 'archived', 'all'], true)) {
@@ -45,12 +46,14 @@ try {
                     SELECT MAX(cm2.id)
                     FROM consultation_messages cm2
                     WHERE cm2.consultation_id = cm1.consultation_id
+                      AND cm2.is_deleted_for_everyone = 0
                 )
             ) last_msg ON last_msg.consultation_id = c.id
             LEFT JOIN (
                 SELECT consultation_id, COUNT(*) AS cnt
                 FROM consultation_messages
                 WHERE receiver_id = ? AND is_read = 0
+                  AND is_deleted_for_everyone = 0
                 GROUP BY consultation_id
             ) unread ON unread.consultation_id = c.id
             WHERE c.provider_id = ?
@@ -82,12 +85,14 @@ try {
                     SELECT MAX(cm2.id)
                     FROM consultation_messages cm2
                     WHERE cm2.consultation_id = cm1.consultation_id
+                      AND cm2.is_deleted_for_everyone = 0
                 )
             ) last_msg ON last_msg.consultation_id = c.id
             LEFT JOIN (
                 SELECT consultation_id, COUNT(*) AS cnt
                 FROM consultation_messages
                 WHERE receiver_id = ? AND is_read = 0
+                  AND is_deleted_for_everyone = 0
                 GROUP BY consultation_id
             ) unread ON unread.consultation_id = c.id
             WHERE c.patient_id = ?
@@ -102,15 +107,21 @@ try {
     $items = [];
     foreach ($rows as $row) {
         $archived = (int) ($row['is_archived'] ?? 0);
-        if ($box === 'inbox' && $archived) continue;
-        if ($box === 'archived' && !$archived) continue;
+        $unread = (int) ($row['unread'] ?? 0);
+        // Inbox: hide archived threads unless they still have unread (badge vs empty-list mismatch).
+        if ($box === 'inbox' && $archived && $unread <= 0) {
+            continue;
+        }
+        if ($box === 'archived' && !$archived) {
+            continue;
+        }
         $items[] = [
             'consultation_id' => (int) ($row['consultation_id'] ?? 0),
             'name' => (string) ($row['name'] ?? ''),
             'initials' => (string) ($row['initials'] ?? 'MC'),
             'preview' => (string) ($row['preview'] ?? ''),
             'last_at' => (string) ($row['last_at'] ?? ''),
-            'unread' => (int) ($row['unread'] ?? 0),
+            'unread' => $unread,
             'is_archived' => $archived,
         ];
     }
