@@ -96,6 +96,11 @@ $options = [
 try {
     $pdo = new PDO($dsn, DB_USER, DB_PASS, $options);
 
+    // Hostinger default is often utf8mb4_general_ci; app schema uses utf8mb4_unicode_ci.
+    // Without this, string/ENUM comparisons (e.g. day_of_week, DAYNAME) throw error 1267.
+    $pdo->exec("SET NAMES utf8mb4 COLLATE utf8mb4_unicode_ci");
+    $pdo->exec("SET collation_connection = 'utf8mb4_unicode_ci'");
+
     if (defined('APP_TIMEZONE')) {
         $tz = new DateTimeZone(APP_TIMEZONE);
         $offset = $tz->getOffset(new DateTimeImmutable('now', $tz));
