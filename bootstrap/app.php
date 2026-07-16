@@ -110,6 +110,23 @@ if (!function_exists('medconnect_send_security_headers')) {
     }
 }
 
+// ── Vercel / serverless: writable session + storage under /tmp ───────────────
+$medconnectOnVercel = getenv('VERCEL') !== false
+    || getenv('VERCEL_ENV') !== false
+    || !empty($_ENV['VERCEL'])
+    || !empty($_ENV['VERCEL_ENV']);
+if ($medconnectOnVercel) {
+    $mcTmp = rtrim(sys_get_temp_dir(), '/\\') . '/medconnect';
+    foreach ([$mcTmp, $mcTmp . '/sessions', $mcTmp . '/storage'] as $dir) {
+        if (!is_dir($dir)) {
+            @mkdir($dir, 0700, true);
+        }
+    }
+    if (is_dir($mcTmp . '/sessions')) {
+        ini_set('session.save_path', $mcTmp . '/sessions');
+    }
+}
+
 // ── Secure session defaults (must be set before session_start) ────────────────
 if (session_status() === PHP_SESSION_NONE) {
     ini_set('session.use_only_cookies', '1');
@@ -170,7 +187,15 @@ if (!defined('CONTROLLERS_PATH')) {
     define('CONTROLLERS_PATH', BASE_PATH . '/app/controllers');
 }
 if (!defined('STORAGE_PATH')) {
-    define('STORAGE_PATH', BASE_PATH . '/storage');
+    if (!empty($medconnectOnVercel)) {
+        $mcStorage = rtrim(sys_get_temp_dir(), '/\\') . '/medconnect/storage';
+        if (!is_dir($mcStorage)) {
+            @mkdir($mcStorage, 0700, true);
+        }
+        define('STORAGE_PATH', is_dir($mcStorage) ? $mcStorage : (BASE_PATH . '/storage'));
+    } else {
+        define('STORAGE_PATH', BASE_PATH . '/storage');
+    }
 }
 if (!defined('APP_API_PATH')) {
     define('APP_API_PATH', BASE_PATH . '/app/api');
@@ -196,30 +221,39 @@ if (!defined('BASE_URL') || !defined('ASSET_BASE')) {
         }
     }
 
-    $protocol = medconnect_request_is_https() ? 'https' : 'http';
-    $trustProxy = medconnect_env_bool('MEDCONNECT_TRUST_PROXY', true);
-    $host = ($trustProxy && !empty($_SERVER['HTTP_X_FORWARDED_HOST']))
-        ? trim((string) $_SERVER['HTTP_X_FORWARDED_HOST'])
-        : ($_SERVER['HTTP_HOST'] ?? 'localhost');
-    $host = preg_replace('/\s+/', '', (string) $host);
-    $docRoot  = str_replace('\\', '/', (string) realpath($_SERVER['DOCUMENT_ROOT'] ?? '') ?: '');
-    $publicFs = str_replace('\\', '/', (string) realpath(PUBLIC_PATH) ?: PUBLIC_PATH);
-    $baseFs   = str_replace('\\', '/', (string) realpath(BASE_PATH) ?: BASE_PATH);
+    if (!defined('BASE_URL')) {
+        $protocol = medconnect_request_is_https() ? 'https' : 'http';
+        $trustProxy = medconnect_env_bool('MEDCONNECT_TRUST_PROXY', true);
+        $host = ($trustProxy && !empty($_SERVER['HTTP_X_FORWARDED_HOST']))
+            ? trim((string) $_SERVER['HTTP_X_FORWARDED_HOST'])
+            : ($_SERVER['HTTP_HOST'] ?? 'localhost');
+        $host = preg_replace('/\s+/', '', (string) $host);
 
-    $publicIsDocRoot = $docRoot !== '' && strcasecmp(rtrim($docRoot, '/'), rtrim($publicFs, '/')) === 0;
+        // Vercel serverless: treat site as domain root (assets at /assets/...).
+        if (!empty($medconnectOnVercel) || str_contains(strtolower($host), 'vercel.app')) {
+            define('BASE_URL', rtrim($protocol . '://' . $host, '/'));
+            define('ASSET_BASE', '');
+        } else {
+            $docRoot  = str_replace('\\', '/', (string) realpath($_SERVER['DOCUMENT_ROOT'] ?? '') ?: '');
+            $publicFs = str_replace('\\', '/', (string) realpath(PUBLIC_PATH) ?: PUBLIC_PATH);
+            $baseFs   = str_replace('\\', '/', (string) realpath(BASE_PATH) ?: BASE_PATH);
 
-    if ($publicIsDocRoot) {
-        define('BASE_URL', rtrim($protocol . '://' . $host, '/'));
-        define('ASSET_BASE', '');
-    } else {
-        $relativeFolder = '';
-        if ($docRoot !== '' && stripos($baseFs, $docRoot) === 0) {
-            $relativeFolder = substr($baseFs, strlen($docRoot));
+            $publicIsDocRoot = $docRoot !== '' && strcasecmp(rtrim($docRoot, '/'), rtrim($publicFs, '/')) === 0;
+
+            if ($publicIsDocRoot) {
+                define('BASE_URL', rtrim($protocol . '://' . $host, '/'));
+                define('ASSET_BASE', '');
+            } else {
+                $relativeFolder = '';
+                if ($docRoot !== '' && stripos($baseFs, $docRoot) === 0) {
+                    $relativeFolder = substr($baseFs, strlen($docRoot));
+                }
+                $relativeFolder = '/' . ltrim(str_replace('\\', '/', $relativeFolder), '/');
+                $baseUrl = rtrim($protocol . '://' . $host . $relativeFolder, '/');
+                define('BASE_URL', $baseUrl);
+                define('ASSET_BASE', rtrim($relativeFolder, '/'));
+            }
         }
-        $relativeFolder = '/' . ltrim(str_replace('\\', '/', $relativeFolder), '/');
-        $baseUrl = rtrim($protocol . '://' . $host . $relativeFolder, '/');
-        define('BASE_URL', $baseUrl);
-        define('ASSET_BASE', rtrim($relativeFolder, '/'));
     }
 }
 
