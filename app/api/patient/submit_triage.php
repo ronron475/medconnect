@@ -37,6 +37,92 @@ if (empty($symptoms) && $complaint === '') {
     Api::error('Please provide symptoms or a complaint.');
 }
 
+if (!function_exists('patient_portal_basic_assessment')) {
+    /**
+     * Keep booking available even if the full NLP/AI assessment stack is down.
+     *
+     * @param list<string> $symptomList
+     * @return array<string, mixed>
+     */
+    function patient_portal_basic_assessment(string $complaint, array $symptomList): array
+    {
+        $text = strtolower(trim($complaint . ' ' . implode(' ', $symptomList)));
+        $classification = 'NON_URGENT';
+        $severity = 'mild';
+
+        $emergencyMarkers = [
+            'chest pain',
+            'shortness of breath',
+            'difficulty breathing',
+            "can't breathe",
+            'cannot breathe',
+            'seizure',
+            'unconscious',
+            'stroke',
+            'severe bleeding',
+            'indi makaginhawa',
+            'indi ko makaginhawa',
+        ];
+        foreach ($emergencyMarkers as $marker) {
+            if ($marker !== '' && str_contains($text, $marker)) {
+                $classification = 'EMERGENCY';
+                $severity = 'severe';
+                break;
+            }
+        }
+
+        if ($classification !== 'EMERGENCY') {
+            $urgentMarkers = ['high fever', 'persistent fever', 'grabe', 'severe', 'blood', 'dizziness'];
+            foreach ($urgentMarkers as $marker) {
+                if ($marker !== '' && str_contains($text, $marker)) {
+                    $classification = 'URGENT';
+                    $severity = 'moderate';
+                    break;
+                }
+            }
+        }
+
+        $triage = MedicalRecommendationEngine::classify([
+            'nlp_triage_level' => $classification === 'EMERGENCY'
+                ? 'EMERGENCY'
+                : ($classification === 'URGENT' ? 'HIGH' : 'LOW'),
+            'severity' => $severity,
+        ]);
+        $detectedSymptoms = $symptomList !== [] ? $symptomList : ($complaint !== '' ? [$complaint] : []);
+
+        return [
+            'engine_version'      => MedicalAssessmentEngine::VERSION,
+            'engine'              => 'basic-triage-fallback',
+            'chief_complaint'     => $complaint,
+            'detected_symptoms'   => $detectedSymptoms,
+            'possible_conditions' => [],
+            'confidence'          => [
+                'score' => 35,
+                'score_display' => '35%',
+                'level' => 'fallback',
+                'level_label' => 'Basic Review',
+            ],
+            'severity'            => [
+                'severity' => $severity,
+                'severity_label' => ucfirst($severity),
+                'source' => 'fallback_rules',
+            ],
+            'triage'              => $triage,
+            'recommendations'     => MedicalRecommendationEngine::buildRecommendations(
+                $triage,
+                [],
+                $complaint,
+                $complaint,
+                $detectedSymptoms
+            ),
+            'db_level'            => (string) ($triage['db_level'] ?? '3'),
+            'urgency_label'       => (string) ($triage['urgency_label'] ?? 'Routine'),
+            'assessment_warning'  => 'Full assessment unavailable; basic triage fallback used.',
+            'assessed_at'         => date('c'),
+        ];
+    }
+}
+
 $symptomList = array_values(array_filter(array_map(static function ($s) {
     return is_string($s) ? trim($s) : '';
 }, $symptoms)));
@@ -45,7 +131,7 @@ try {
     $assessment = MedicalAssessmentEngine::assess($complaint, $symptomList);
 } catch (Throwable $e) {
     error_log('submit_triage assess: ' . $e->getMessage());
-    Api::error('Could not process your health concern. Please try again.', 500);
+    $assessment = patient_portal_basic_assessment($complaint, $symptomList);
 }
 
 // Merge silent registration NLP (provider-facing detail; never shown to patient)

@@ -20,6 +20,53 @@ if (is_readable($envLoader)) {
     require_once $envLoader;
 }
 
+// XAMPP/local PHP builds may miss mbstring. The medical text pipeline only needs
+// basic case/position helpers, so provide ASCII-safe fallbacks instead of failing
+// patient booking requests with "Call to undefined function mb_*".
+if (!function_exists('mb_strtolower')) {
+    function mb_strtolower(string $string, ?string $encoding = null): string
+    {
+        return strtolower($string);
+    }
+}
+if (!function_exists('mb_strtoupper')) {
+    function mb_strtoupper(string $string, ?string $encoding = null): string
+    {
+        return strtoupper($string);
+    }
+}
+if (!function_exists('mb_strlen')) {
+    function mb_strlen(string $string, ?string $encoding = null): int
+    {
+        return strlen($string);
+    }
+}
+if (!function_exists('mb_strpos')) {
+    function mb_strpos(string $haystack, string $needle, int $offset = 0, ?string $encoding = null): int|false
+    {
+        return strpos($haystack, $needle, $offset);
+    }
+}
+if (!defined('MB_CASE_UPPER')) {
+    define('MB_CASE_UPPER', 0);
+}
+if (!defined('MB_CASE_LOWER')) {
+    define('MB_CASE_LOWER', 1);
+}
+if (!defined('MB_CASE_TITLE')) {
+    define('MB_CASE_TITLE', 2);
+}
+if (!function_exists('mb_convert_case')) {
+    function mb_convert_case(string $string, int $mode, ?string $encoding = null): string
+    {
+        return match ($mode) {
+            MB_CASE_UPPER => strtoupper($string),
+            MB_CASE_LOWER => strtolower($string),
+            default => ucwords(strtolower($string)),
+        };
+    }
+}
+
 if (!function_exists('medconnect_env_bool')) {
     function medconnect_env_bool(string $key, bool $default = false): bool
     {
