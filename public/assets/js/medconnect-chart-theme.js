@@ -217,7 +217,10 @@
         is_today: !!p.is_today,
       };
     });
-    return new Chart(canvas, {
+    if (canvas._mcChart && typeof canvas._mcChart.destroy === 'function') {
+      canvas._mcChart.destroy();
+    }
+    var chart = new Chart(canvas, {
       type: 'bar',
       data: {
         labels: labelsFromSeries(normalized),
@@ -225,6 +228,27 @@
       },
       options: cartesianOptions(),
     });
+    canvas._mcChart = chart;
+    return chart;
+  }
+
+  function updateWeeklyBarChart(canvas, series) {
+    if (!canvas || typeof Chart === 'undefined') return null;
+    var normalized = (series || []).map(function (p) {
+      return {
+        label: p.label,
+        count: p.count != null ? p.count : 0,
+        is_today: !!p.is_today,
+      };
+    });
+    var chart = canvas._mcChart;
+    if (!chart) {
+      return mountWeeklyBarChart(canvas, normalized);
+    }
+    chart.data.labels = labelsFromSeries(normalized);
+    chart.data.datasets = [barDataset(normalized, COLORS.blue, COLORS.teal)];
+    chart.update('none');
+    return chart;
   }
 
   function mountWeeklyBarChartsFromDom() {
@@ -257,6 +281,7 @@
     barDataset: barDataset,
     labelsFromSeries: labelsFromSeries,
     mountWeeklyBarChart: mountWeeklyBarChart,
+    updateWeeklyBarChart: updateWeeklyBarChart,
     mountWeeklyBarChartsFromDom: mountWeeklyBarChartsFromDom,
   };
 })(typeof window !== 'undefined' ? window : this);
