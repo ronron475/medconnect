@@ -684,3 +684,273 @@ html[data-theme-resolved='dark'] body.provider-body .form-control {
 html[data-theme-resolved='dark'] body.provider-body input::placeholder {
   color: var(--text-muted, #888888);
 }
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   STRICT DARK ENFORCEMENT — WorkflowAI reference
+   Every surface stays dark (#0a0a0a / #1c1c1c). Only text is white or gray.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+html[data-theme-resolved='dark'] body.provider-body {
+  --pv-msg-canvas: #0a0a0a;
+  --pv-msg-active: #1c1c1c;
+  --pv-msg-incoming: #1c1c1c;
+  --pv-msg-outgoing: #222222;
+  --pv-msg-border: #2a2a2a;
+  --pv-msg-text: #ffffff;
+  --pv-msg-muted: #a1a1aa;
+  --pv-border: #2a2a2a;
+  --pt-dash-surface: #1c1c1c;
+  --pt-dash-surface-muted: #0f0f0f;
+  --pt-dash-border: #2a2a2a;
+  --pt-dash-text: #ffffff;
+  --pt-dash-muted: #a1a1aa;
+}
+
+/* Canvas — nothing white behind content */
+html[data-theme-resolved='dark'] body.provider-body,
+html[data-theme-resolved='dark'] body.provider-body .root-wrapper,
+html[data-theme-resolved='dark'] body.provider-body .provider-shell,
+html[data-theme-resolved='dark'] body.provider-body .main-content,
+html[data-theme-resolved='dark'] body.provider-body .provider-main,
+html[data-theme-resolved='dark'] body.provider-body .provider-page-body,
+html[data-theme-resolved='dark'] body.provider-body .prov-dash,
+html[data-theme-resolved='dark'] body.provider-body .queue-page,
+html[data-theme-resolved='dark'] body.provider-body .triage-page,
+html[data-theme-resolved='dark'] body.provider-body .mr-page,
+html[data-theme-resolved='dark'] body.provider-body .ps-page,
+html[data-theme-resolved='dark'] body.provider-body .schedule-page,
+html[data-theme-resolved='dark'] body.provider-body .messages-page,
+html[data-theme-resolved='dark'] body.provider-body .pd-content {
+  background-color: var(--bg-primary, #0a0a0a) !important;
+  color: var(--text-secondary, #a1a1aa);
+}
+
+/* Override patient-dashboard-mock legacy navy surfaces for provider */
+html[data-theme-resolved='dark'] body.provider-body .prov-dash-welcome,
+html[data-theme-resolved='dark'] body.provider-body .prov-dash-stat,
+html[data-theme-resolved='dark'] body.provider-body .prov-dash-card,
+html[data-theme-resolved='dark'] body.provider-body .prov-how-it-works,
+html[data-theme-resolved='dark'] body.provider-body .prov-dash-widget-strip .mc-notif-widget,
+html[data-theme-resolved='dark'] body.provider-body .prov-dash-cta,
+html[data-theme-resolved='dark'] body.provider-body .prov-status-item,
+html[data-theme-resolved='dark'] body.provider-body .prov-recording-item,
+html[data-theme-resolved='dark'] body.provider-body .prov-activity-item,
+html[data-theme-resolved='dark'] body.provider-body .prov-dash-action-btn {
+  background: var(--card-bg, #1c1c1c) !important;
+  border-color: var(--border-color, #2a2a2a) !important;
+  color: var(--text-secondary, #a1a1aa) !important;
+  box-shadow: var(--shadow-card) !important;
+}
+
+/* Queue / Triage / Schedule / EMR / Settings page surfaces */
+html[data-theme-resolved='dark'] body.provider-body .queue-hero,
+html[data-theme-resolved='dark'] body.provider-body .queue-metric,
+html[data-theme-resolved='dark'] body.provider-body .queue-panel,
+html[data-theme-resolved='dark'] body.provider-body .queue-row,
+html[data-theme-resolved='dark'] body.provider-body .queue-patient-card,
+html[data-theme-resolved='dark'] body.provider-body .queue-sidebar,
+html[data-theme-resolved='dark'] body.provider-body .triage-patient-card,
+html[data-theme-resolved='dark'] body.provider-body .triage-detail-panel,
+html[data-theme-resolved='dark'] body.provider-body .triage-queue-row,
+html[data-theme-resolved='dark'] body.provider-body .triage-sidebar,
+html[data-theme-resolved='dark'] body.provider-body .mr-record-card,
+html[data-theme-resolved='dark'] body.provider-body .mr-section,
+html[data-theme-resolved='dark'] body.provider-body .mr-timeline-item,
+html[data-theme-resolved='dark'] body.provider-body .mr-toolbar,
+html[data-theme-resolved='dark'] body.provider-body .schedule-day-block,
+html[data-theme-resolved='dark'] body.provider-body .schedule-day-header,
+html[data-theme-resolved='dark'] body.provider-body .schedule-slot,
+html[data-theme-resolved='dark'] body.provider-body .provider-settings-layout,
+html[data-theme-resolved='dark'] body.provider-body .ps-field,
+html[data-theme-resolved='dark'] body.provider-body .session-alert-modal__card {
+  background: var(--card-bg, #1c1c1c) !important;
+  border-color: var(--border-color, #2a2a2a) !important;
+  color: var(--text-secondary, #a1a1aa) !important;
+}
+
+/* Messages — full dark canvas */
+html[data-theme-resolved='dark'] body.provider-body .messages-page-head,
+html[data-theme-resolved='dark'] body.provider-body .mc-msg-inbox,
+html[data-theme-resolved='dark'] body.provider-body .mc-msg-thread,
+html[data-theme-resolved='dark'] body.provider-body .mc-msg-thread-header,
+html[data-theme-resolved='dark'] body.provider-body .mc-msg-composer,
+html[data-theme-resolved='dark'] body.provider-body .mc-msg-list,
+html[data-theme-resolved='dark'] body.provider-body .mc-msg-list-item,
+html[data-theme-resolved='dark'] body.provider-body .mc-msg-bubble,
+html[data-theme-resolved='dark'] body.provider-body .mc-threadmenu,
+html[data-theme-resolved='dark'] body.provider-body .mc-confirm {
+  background: var(--card-bg, #1c1c1c) !important;
+  border-color: var(--border-color, #2a2a2a) !important;
+  color: var(--text-secondary, #a1a1aa) !important;
+}
+
+html[data-theme-resolved='dark'] body.provider-body .mc-msg-bubble--outgoing,
+html[data-theme-resolved='dark'] body.provider-body .msg-bubble--sent {
+  background: var(--card-bg-elevated, #222222) !important;
+  color: var(--text-primary, #ffffff) !important;
+}
+
+/* Panel headers / table headers — darker strip, muted text */
+html[data-theme-resolved='dark'] body.provider-body .pd-panel-header,
+html[data-theme-resolved='dark'] body.provider-body .queue-panel-header,
+html[data-theme-resolved='dark'] body.provider-body .mc-notif-recent-panel__head,
+html[data-theme-resolved='dark'] body.provider-body .prov-dash-card__head,
+html[data-theme-resolved='dark'] body.provider-body .mr-toolbar,
+html[data-theme-resolved='dark'] body.provider-body th,
+html[data-theme-resolved='dark'] body.provider-body .mc-table th,
+html[data-theme-resolved='dark'] body.provider-body .prov-dash-table .mc-table th {
+  background: var(--bg-secondary, #0f0f0f) !important;
+  border-color: var(--border-color, #2a2a2a) !important;
+  color: var(--text-muted, #888888) !important;
+}
+
+html[data-theme-resolved='dark'] body.provider-body td,
+html[data-theme-resolved='dark'] body.provider-body .mc-table td,
+html[data-theme-resolved='dark'] body.provider-body .prov-dash-table .mc-table td {
+  background: transparent !important;
+  border-color: var(--border-color, #2a2a2a) !important;
+  color: var(--text-secondary, #a1a1aa) !important;
+}
+
+html[data-theme-resolved='dark'] body.provider-body tr:hover td,
+html[data-theme-resolved='dark'] body.provider-body .mc-table tbody tr:hover td {
+  background: var(--hover-overlay, rgba(255, 255, 255, 0.04)) !important;
+}
+
+/* ── TEXT ONLY white or gray (never dark text on dark bg) ── */
+html[data-theme-resolved='dark'] body.provider-body h1,
+html[data-theme-resolved='dark'] body.provider-body h2,
+html[data-theme-resolved='dark'] body.provider-body h3,
+html[data-theme-resolved='dark'] body.provider-body h4,
+html[data-theme-resolved='dark'] body.provider-body h5,
+html[data-theme-resolved='dark'] body.provider-body .prov-dash-welcome__title,
+html[data-theme-resolved='dark'] body.provider-body .prov-dash-welcome--compact .prov-dash-welcome__eyebrow,
+html[data-theme-resolved='dark'] body.provider-body .prov-dash-card__title,
+html[data-theme-resolved='dark'] body.provider-body .queue-title,
+html[data-theme-resolved='dark'] body.provider-body .mr-toolbar__title,
+html[data-theme-resolved='dark'] body.provider-body .ps-page-title,
+html[data-theme-resolved='dark'] body.provider-body .pd-header-page,
+html[data-theme-resolved='dark'] body.provider-body .pd-header-user-name,
+html[data-theme-resolved='dark'] body.provider-body .prov-dash-stat strong,
+html[data-theme-resolved='dark'] body.provider-body .mc-notif-widget-value,
+html[data-theme-resolved='dark'] body.provider-body .mc-notif-recent-panel__title,
+html[data-theme-resolved='dark'] body.provider-body .mc-notif-list--feed .mc-notif-title,
+html[data-theme-resolved='dark'] body.provider-body .prov-activity-item__msg,
+html[data-theme-resolved='dark'] body.provider-body .prov-status-item strong,
+html[data-theme-resolved='dark'] body.provider-body .prov-recording-item__name,
+html[data-theme-resolved='dark'] body.provider-body .prov-dash-provider,
+html[data-theme-resolved='dark'] body.provider-body .prov-chart-val,
+html[data-theme-resolved='dark'] body.provider-body .mc-msg-bubble,
+html[data-theme-resolved='dark'] body.provider-body label,
+html[data-theme-resolved='dark'] body.provider-body .form-label,
+html[data-theme-resolved='dark'] body.provider-body strong,
+html[data-theme-resolved='dark'] body.provider-body b {
+  color: var(--text-primary, #ffffff) !important;
+}
+
+html[data-theme-resolved='dark'] body.provider-body p,
+html[data-theme-resolved='dark'] body.provider-body span,
+html[data-theme-resolved='dark'] body.provider-body li,
+html[data-theme-resolved='dark'] body.provider-body .prov-dash-card__sub,
+html[data-theme-resolved='dark'] body.provider-body .prov-dash-stat span,
+html[data-theme-resolved='dark'] body.provider-body .mc-notif-widget-label,
+html[data-theme-resolved='dark'] body.provider-body .mc-notif-recent-panel__sub,
+html[data-theme-resolved='dark'] body.provider-body .mc-notif-list--feed .mc-notif-message,
+html[data-theme-resolved='dark'] body.provider-body .prov-activity-item__time,
+html[data-theme-resolved='dark'] body.provider-body .prov-recording-item__date,
+html[data-theme-resolved='dark'] body.provider-body .pd-header-clock,
+html[data-theme-resolved='dark'] body.provider-body .pd-header-user-role,
+html[data-theme-resolved='dark'] body.provider-body .pd-header-date,
+html[data-theme-resolved='dark'] body.provider-body .prov-chart-label,
+html[data-theme-resolved='dark'] body.provider-body .prov-chart-legend,
+html[data-theme-resolved='dark'] body.provider-body .prov-dash-staff-id,
+html[data-theme-resolved='dark'] body.provider-body .prov-status-item__label,
+html[data-theme-resolved='dark'] body.provider-body .mc-notif-meta,
+html[data-theme-resolved='dark'] body.provider-body .sba-item,
+html[data-theme-resolved='dark'] body.provider-body .sba-role,
+html[data-theme-resolved='dark'] body.provider-body .text-muted,
+html[data-theme-resolved='dark'] body.provider-body small {
+  color: var(--text-secondary, #a1a1aa) !important;
+}
+
+html[data-theme-resolved='dark'] body.provider-body .prov-dash-staff-id strong,
+html[data-theme-resolved='dark'] body.provider-body .sba-name {
+  color: var(--text-primary, #ffffff) !important;
+}
+
+html[data-theme-resolved='dark'] body.provider-body .sba-item.is-active {
+  color: var(--text-primary, #ffffff) !important;
+}
+
+/* Kill light hover backgrounds from page CSS */
+html[data-theme-resolved='dark'] body.provider-body .queue-btn:hover,
+html[data-theme-resolved='dark'] body.provider-body .mc-threadmenu__item:hover,
+html[data-theme-resolved='dark'] body.provider-body .mc-confirm__btn:hover,
+html[data-theme-resolved='dark'] body.provider-body .prov-dash-action-btn:hover,
+html[data-theme-resolved='dark'] body.provider-body .mc-msg-list-item:hover,
+html[data-theme-resolved='dark'] body.provider-body .mc-msg-list-item.is-active,
+html[data-theme-resolved='dark'] body.provider-body .mc-msg-filter.is-active {
+  background: var(--hover-overlay, rgba(255, 255, 255, 0.04)) !important;
+  color: var(--text-primary, #ffffff) !important;
+  border-color: var(--border-color, #2a2a2a) !important;
+}
+
+/* Badges — dark bg, colored text only */
+html[data-theme-resolved='dark'] body.provider-body .mc-badge,
+html[data-theme-resolved='dark'] body.provider-body .queue-badge,
+html[data-theme-resolved='dark'] body.provider-body .pd-badge,
+html[data-theme-resolved='dark'] body.provider-body .prov-dash-badge {
+  background: var(--bg-secondary, #0f0f0f) !important;
+  border: 1px solid var(--border-color, #2a2a2a) !important;
+  color: var(--text-secondary, #a1a1aa) !important;
+}
+
+html[data-theme-resolved='dark'] body.provider-body .queue-badge.muted,
+html[data-theme-resolved='dark'] body.provider-body .pd-badge-done {
+  background: var(--bg-secondary, #0f0f0f) !important;
+  color: var(--text-muted, #888888) !important;
+}
+
+/* Links — light gray, purple/cyan on hover */
+html[data-theme-resolved='dark'] body.provider-body a:not(.mc-btn):not(.btn):not(.sba-item) {
+  color: var(--text-secondary, #a1a1aa);
+}
+
+html[data-theme-resolved='dark'] body.provider-body a:not(.mc-btn):not(.btn):not(.sba-item):hover {
+  color: var(--text-primary, #ffffff);
+}
+
+/* Select dropdowns */
+html[data-theme-resolved='dark'] body.provider-body select,
+html[data-theme-resolved='dark'] body.provider-body textarea,
+html[data-theme-resolved='dark'] body.provider-body .ps-select {
+  background: var(--bg-secondary, #0f0f0f) !important;
+  border-color: var(--border-color, #2a2a2a) !important;
+  color: var(--text-primary, #ffffff) !important;
+}
+
+/* Modals / dropdowns */
+html[data-theme-resolved='dark'] body.provider-body .mc-modal__dialog,
+html[data-theme-resolved='dark'] body.provider-body .mc-modal__header,
+html[data-theme-resolved='dark'] body.provider-body .mc-modal__body,
+html[data-theme-resolved='dark'] body.provider-body .mc-notif-panel,
+html[data-theme-resolved='dark'] body.provider-body .pd-profile-menu,
+html[data-theme-resolved='dark'] body.provider-body .profile-menu-dropdown,
+html[data-theme-resolved='dark'] body.provider-body .mc-theme-toggle__menu {
+  background: var(--card-bg, #1c1c1c) !important;
+  border-color: var(--border-color, #2a2a2a) !important;
+  color: var(--text-secondary, #a1a1aa) !important;
+}
+
+html[data-theme-resolved='dark'] body.provider-body .mc-modal__title {
+  color: var(--text-primary, #ffffff) !important;
+}
+
+/* Icons stay muted unless active */
+html[data-theme-resolved='dark'] body.provider-body .sba-icon {
+  stroke: var(--text-muted, #888888);
+}
+
+html[data-theme-resolved='dark'] body.provider-body .sba-item.is-active .sba-icon {
+  stroke: var(--text-primary, #ffffff) !important;
+}
