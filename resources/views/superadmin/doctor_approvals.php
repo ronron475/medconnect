@@ -105,9 +105,7 @@ require_once __DIR__ . '/partials/layout_open.php';
                     <th>Actions</th>
                 </tr>
             </thead>
-            <tbody id="doctorApprovalBody">
-                <tr><td colspan="10"><div class="staff-apps-loading"><div class="staff-apps-loading__spinner" role="status"></div>Loading queue…</div></td></tr>
-            </tbody>
+            <tbody id="doctorApprovalBody"></tbody>
         </table>
     </div>
 </div>

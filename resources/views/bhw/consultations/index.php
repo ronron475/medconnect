@@ -88,9 +88,7 @@ $bhw_extra_js = [
             <th>Action</th>
           </tr>
         </thead>
-        <tbody id="bhwConsBody">
-          <tr><td colspan="6" class="bhw-cons-loading">Loading consultations…</td></tr>
-        </tbody>
+        <tbody id="bhwConsBody"></tbody>
       </table>
     </div>
   </div>

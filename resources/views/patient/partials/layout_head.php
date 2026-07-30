@@ -55,3 +55,8 @@ if (!empty($_SESSION['user_id']) && isset($pdo) && $pdo instanceof PDO) {
   $patientUiCssVer = file_exists($patientUiCss) ? (int) filemtime($patientUiCss) : time();
   ?>
   <link rel="stylesheet" href="<?= ASSET_BASE ?>/assets/css/patient-ui-system.css?v=<?= $patientUiCssVer ?>"/>
+  <?php
+  $patientDarkCss = ASSETS_PATH . '/css/patient-dark-mode.css';
+  $patientDarkCssVer = file_exists($patientDarkCss) ? (int) filemtime($patientDarkCss) : time();
+  ?>
+  <link rel="stylesheet" href="<?= ASSET_BASE ?>/assets/css/patient-dark-mode.css?v=<?= $patientDarkCssVer ?>"/>

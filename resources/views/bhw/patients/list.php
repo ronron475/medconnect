@@ -439,9 +439,6 @@ ob_start();
   }
 
   function loadPatients() {
-    els.tbody.innerHTML = (window.BhwPortal && BhwPortal.loader && BhwPortal.loader.inlineRow)
-      ? BhwPortal.loader.inlineRow(12, 'Loading patients…')
-      : '<tr><td colspan="12" class="text-muted">Loading…</td></tr>';
     BhwPortal.get('patients.php', { action: 'list', q: '' }).then(function (r) {
       if (!r.success) {
         els.tbody.innerHTML = '<tr><td colspan="12">' + esc(r.message || 'Failed to load') + '</td></tr>';
@@ -642,7 +639,7 @@ $bhw_inline_script = ob_get_clean();
             <th scope="col" class="bhw-pl-col-actions">Actions</th>
           </tr>
         </thead>
-        <tbody><tr><td colspan="10" class="text-muted">Loading patients…</td></tr></tbody>
+        <tbody></tbody>
       </table>
     </div>
     <div class="bhw-pl-cards" id="bhwPlCards" aria-label="Patient cards"></div>

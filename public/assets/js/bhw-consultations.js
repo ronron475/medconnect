@@ -98,14 +98,6 @@
     });
   }
 
-  function setLoading() {
-    if (!tbody) return;
-    var row = (window.BhwPortal && BhwPortal.loader && BhwPortal.loader.inlineRow)
-      ? BhwPortal.loader.inlineRow(6, 'Loading consultations…', 'bhw-cons-loading')
-      : '<tr><td colspan="6" class="bhw-cons-loading">Loading consultations…</td></tr>';
-    tbody.innerHTML = row;
-  }
-
   function setError(message) {
     if (!tbody) return;
     tbody.innerHTML = '<tr><td colspan="6" class="bhw-cons-error"><strong>Could not load consultations</strong>' + esc(message || 'Please try again.') + '</td></tr>';
@@ -147,7 +139,6 @@
 
   function loadConsultations() {
     if (!dateEl || !statusEl) return;
-    setLoading();
     if (refreshBtn) refreshBtn.disabled = true;
 
     var params = {

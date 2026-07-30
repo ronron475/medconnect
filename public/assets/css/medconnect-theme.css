@@ -86,12 +86,12 @@ body.provider-body,
 body.admin-body,
 body.bhw-body,
 body.superadmin-body {
-  transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
+  transition: none;
 }
 
 html[data-theme-resolved='dark'] body.patient-portal {
-  background-color: var(--mc-theme-bg);
-  color: var(--mc-theme-text);
+  background-color: #0a0a0a;
+  color: #ffffff;
 }
 
 html[data-theme-resolved='dark'] body.admin-body,
@@ -220,13 +220,17 @@ html[data-theme-resolved='dark'] .pd-hamburger {
 
 /* ── Sidebars ── */
 html[data-theme-resolved='dark'] .sb-aqua {
-  --sba-bg: #0f766e;
-  --sba-bg-dark: #0d6b64;
-  --sba-border-r: rgba(255, 255, 255, 0.12);
+  --sba-bg: #141414;
+  --sba-bg-dark: #0a0a0a;
+  --sba-border-r: #2a2a2a;
+  background: #141414 !important;
+  background-image: none !important;
 }
 
-html[data-theme-resolved='dark'] .sidebar:not(.sb-aqua) {
-  background: #0f766e !important;
+html[data-theme-resolved='dark'] .sidebar:not(.sb-aqua),
+html[data-theme-resolved='dark'] .adm-sidebar {
+  background: #141414 !important;
+  background-image: none !important;
 }
 
 /* ── Cards & panels ── */

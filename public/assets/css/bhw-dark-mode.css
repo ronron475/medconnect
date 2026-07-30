@@ -491,6 +491,8 @@ html[data-theme-resolved='dark'] body.bhw-body .bhw-cons-row--live td {
 
 html[data-theme-resolved='dark'] body.bhw-body .bhw-cons-empty,
 html[data-theme-resolved='dark'] body.bhw-body .bhw-cons-loading,
+html[data-theme-resolved='dark'] body.bhw-body .bhw-fu-loading,
+html[data-theme-resolved='dark'] body.bhw-body .bhw-activity-empty,
 html[data-theme-resolved='dark'] body.bhw-body .bhw-pl-empty {
   color: #a1a1aa !important;
 }
@@ -516,4 +518,408 @@ html[data-theme-resolved='dark'] body.bhw-body .input-group-text {
   background: #141414 !important;
   border-color: #2a2a2a !important;
   color: #a1a1aa !important;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   WorkflowAI strict pass — kill white / light-gray strips
+═══════════════════════════════════════════════════════════ */
+
+html[data-theme-resolved='dark'],
+html[data-theme-resolved='dark'] body.bhw-body {
+  background: #0a0a0a !important;
+}
+
+html[data-theme-resolved='dark'] body.bhw-body .portal-shell,
+html[data-theme-resolved='dark'] body.bhw-body .portal-main,
+html[data-theme-resolved='dark'] body.bhw-body .portal-page-body {
+  background: #0a0a0a !important;
+}
+
+/* Triage & Book */
+html[data-theme-resolved='dark'] body.bhw-body .bhw-triage-main,
+html[data-theme-resolved='dark'] body.bhw-body .bhw-triage-form,
+html[data-theme-resolved='dark'] body.bhw-body .bhw-triage-section,
+html[data-theme-resolved='dark'] body.bhw-body .bhw-triage-actions,
+html[data-theme-resolved='dark'] body.bhw-body .bhw-triage-aside,
+html[data-theme-resolved='dark'] body.bhw-body .bhw-triage-assessment,
+html[data-theme-resolved='dark'] body.bhw-body .bhw-triage-booking,
+html[data-theme-resolved='dark'] body.bhw-body .bhw-triage-slots,
+html[data-theme-resolved='dark'] body.bhw-body .bhw-triage-slot {
+  background: #1c1c1c !important;
+  border-color: #2a2a2a !important;
+}
+
+html[data-theme-resolved='dark'] body.bhw-body .bhw-triage-facilitator-notice {
+  background: rgba(245, 158, 11, 0.12) !important;
+  border-color: rgba(245, 158, 11, 0.35) !important;
+  color: #fcd34d !important;
+}
+
+html[data-theme-resolved='dark'] body.bhw-body .bhw-triage-facilitator-notice strong {
+  color: #fbbf24 !important;
+}
+
+html[data-theme-resolved='dark'] body.bhw-body .bhw-triage-page-header h2,
+html[data-theme-resolved='dark'] body.bhw-body .bhw-triage-section__title {
+  color: #ffffff !important;
+  border-bottom-color: #2a2a2a !important;
+}
+
+html[data-theme-resolved='dark'] body.bhw-body .bhw-triage-page-header p,
+html[data-theme-resolved='dark'] body.bhw-body .bhw-triage-hint,
+html[data-theme-resolved='dark'] body.bhw-body .bhw-triage-optional,
+html[data-theme-resolved='dark'] body.bhw-body .bhw-triage-field label {
+  color: #a1a1aa !important;
+}
+
+html[data-theme-resolved='dark'] body.bhw-body .bhw-triage-field .form-control,
+html[data-theme-resolved='dark'] body.bhw-body .bhw-triage-field .form-select,
+html[data-theme-resolved='dark'] body.bhw-body .bhw-triage-field textarea.form-control {
+  background: #141414 !important;
+  border-color: #2a2a2a !important;
+  color: #ffffff !important;
+}
+
+html[data-theme-resolved='dark'] body.bhw-body .bhw-triage-link-btn {
+  background: #1c1c1c !important;
+  border-color: #2a2a2a !important;
+  color: #a1a1aa !important;
+}
+
+html[data-theme-resolved='dark'] body.bhw-body .bhw-triage-btn--primary {
+  background: #7c3aed !important;
+  border-color: #7c3aed !important;
+  color: #ffffff !important;
+}
+
+html[data-theme-resolved='dark'] body.bhw-body .bhw-triage-aside__head {
+  background: #141414 !important;
+  border-bottom-color: #2a2a2a !important;
+}
+
+/* Consultation Center */
+html[data-theme-resolved='dark'] body.bhw-body .bhw-cons-metric,
+html[data-theme-resolved='dark'] body.bhw-body .bhw-cons-panel,
+html[data-theme-resolved='dark'] body.bhw-body .bhw-cons-toolbar,
+html[data-theme-resolved='dark'] body.bhw-body .bhw-cons-panel-head,
+html[data-theme-resolved='dark'] body.bhw-body .bhw-cons-help__card {
+  background: #1c1c1c !important;
+  border-color: #2a2a2a !important;
+}
+
+html[data-theme-resolved='dark'] body.bhw-body .bhw-cons-hero {
+  border-bottom-color: #2a2a2a !important;
+}
+
+html[data-theme-resolved='dark'] body.bhw-body .bhw-cons-hero__title,
+html[data-theme-resolved='dark'] body.bhw-body .bhw-cons-metric__val {
+  color: #ffffff !important;
+}
+
+html[data-theme-resolved='dark'] body.bhw-body .bhw-cons-hero__sub,
+html[data-theme-resolved='dark'] body.bhw-body .bhw-cons-metric__label,
+html[data-theme-resolved='dark'] body.bhw-body .bhw-cons-panel-title,
+html[data-theme-resolved='dark'] body.bhw-body .bhw-cons-sync {
+  color: #a1a1aa !important;
+}
+
+html[data-theme-resolved='dark'] body.bhw-body .bhw-cons-toolbar .bhw-btn-outline {
+  background: #141414 !important;
+  border-color: #2a2a2a !important;
+  color: #a1a1aa !important;
+}
+
+/* Patient list */
+html[data-theme-resolved='dark'] body.bhw-body .bhw-pl-toolbar,
+html[data-theme-resolved='dark'] body.bhw-body .bhw-pl-footer,
+html[data-theme-resolved='dark'] body.bhw-body .bhw-pl-table-wrap,
+html[data-theme-resolved='dark'] body.bhw-body .bhw-pl-header {
+  background: #1c1c1c !important;
+  border-color: #2a2a2a !important;
+}
+
+html[data-theme-resolved='dark'] body.bhw-body .bhw-pl-footer,
+html[data-theme-resolved='dark'] body.bhw-body .bhw-pl-pagination button {
+  background: #141414 !important;
+  border-color: #2a2a2a !important;
+  color: #a1a1aa !important;
+}
+
+html[data-theme-resolved='dark'] body.bhw-body .bhw-pl-pagination button.is-active {
+  background: #7c3aed !important;
+  border-color: #7c3aed !important;
+  color: #ffffff !important;
+}
+
+html[data-theme-resolved='dark'] body.bhw-body .bhw-pl-table tbody tr:nth-child(even) td {
+  background: #181818 !important;
+}
+
+/* Activity log & reports */
+html[data-theme-resolved='dark'] body.bhw-body .bhw-reports-header,
+html[data-theme-resolved='dark'] body.bhw-body .bhw-reports-filters,
+html[data-theme-resolved='dark'] body.bhw-body .bhw-activity-table-card,
+html[data-theme-resolved='dark'] body.bhw-body .bhw-activity-table-head,
+html[data-theme-resolved='dark'] body.bhw-body .bhw-reports-metric-groups,
+html[data-theme-resolved='dark'] body.bhw-body .bhw-report-group,
+html[data-theme-resolved='dark'] body.bhw-body .bhw-reports-tab.is-active,
+html[data-theme-resolved='dark'] body.bhw-body .bhw-reports-panel {
+  background: #1c1c1c !important;
+  border-color: #2a2a2a !important;
+}
+
+html[data-theme-resolved='dark'] body.bhw-body .bhw-activity-table-title,
+html[data-theme-resolved='dark'] body.bhw-body .bhw-reports-header h2 {
+  color: #ffffff !important;
+}
+
+html[data-theme-resolved='dark'] body.bhw-body .bhw-activity-table-meta,
+html[data-theme-resolved='dark'] body.bhw-body .bhw-reports-sub {
+  color: #a1a1aa !important;
+}
+
+html[data-theme-resolved='dark'] body.bhw-body .bhw-activity-table thead th {
+  background: #141414 !important;
+  border-color: #2a2a2a !important;
+  color: #a1a1aa !important;
+}
+
+html[data-theme-resolved='dark'] body.bhw-body .bhw-activity-table tbody tr:nth-child(even),
+html[data-theme-resolved='dark'] body.bhw-body .bhw-activity-table tbody tr:hover {
+  background: rgba(255, 255, 255, 0.04) !important;
+}
+
+html[data-theme-resolved='dark'] body.bhw-body .bhw-activity-table td {
+  background: #1c1c1c !important;
+  color: #d4d4d8 !important;
+  border-color: #2a2a2a !important;
+}
+
+html[data-theme-resolved='dark'] body.bhw-body .bhw-activity-pagination,
+html[data-theme-resolved='dark'] body.bhw-body .bhw-activity-pagination button {
+  background: #141414 !important;
+  border-color: #2a2a2a !important;
+  color: #a1a1aa !important;
+}
+
+/* Catch remaining light surfaces inside BHW pages */
+html[data-theme-resolved='dark'] body.bhw-body [class^='bhw-'][class*='toolbar'],
+html[data-theme-resolved='dark'] body.bhw-body [class^='bhw-'][class*='footer'],
+html[data-theme-resolved='dark'] body.bhw-body [class^='bhw-'][class*='-head']:not(.bhw-triage-aside__head) {
+  background: #141414 !important;
+  border-color: #2a2a2a !important;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   BLANKET — match patient portal (black bg, white text, flat nav)
+═══════════════════════════════════════════════════════════ */
+
+html[data-theme-resolved='dark'] body.bhw-body,
+html[data-theme-resolved='dark'] body.bhw-body .root-wrapper,
+html[data-theme-resolved='dark'] body.bhw-body .portal-shell,
+html[data-theme-resolved='dark'] body.bhw-body .portal-main,
+html[data-theme-resolved='dark'] body.bhw-body .portal-page-body,
+html[data-theme-resolved='dark'] body.bhw-body .main-content,
+html[data-theme-resolved='dark'] body.bhw-body [class*='-page'] {
+  background: #0a0a0a !important;
+  background-image: none !important;
+  color: #ffffff !important;
+  transition: none !important;
+}
+
+html[data-theme-resolved='dark'] body.bhw-body .adm-sidebar,
+html[data-theme-resolved='dark'] body.bhw-body .adm-logo,
+html[data-theme-resolved='dark'] body.bhw-body .adm-nav,
+html[data-theme-resolved='dark'] body.bhw-body .adm-footer {
+  background: #141414 !important;
+  background-image: none !important;
+  border-color: #2a2a2a !important;
+  transition: none !important;
+}
+
+html[data-theme-resolved='dark'] body.bhw-body .adm-nav-item,
+html[data-theme-resolved='dark'] body.bhw-body .adm-nav-item:hover,
+html[data-theme-resolved='dark'] body.bhw-body .adm-nav-item:focus,
+html[data-theme-resolved='dark'] body.bhw-body .adm-nav-item:active,
+html[data-theme-resolved='dark'] body.bhw-body .adm-nav-item.is-active {
+  background: transparent !important;
+  background-image: none !important;
+  border: none !important;
+  box-shadow: none !important;
+  outline: none !important;
+  color: #ffffff !important;
+  transition: none !important;
+  -webkit-tap-highlight-color: transparent;
+}
+
+html[data-theme-resolved='dark'] body.bhw-body .adm-nav-item.is-active::before {
+  display: none !important;
+}
+
+html[data-theme-resolved='dark'] body.bhw-body .topbar,
+html[data-theme-resolved='dark'] body.bhw-body .topbar--bhw-formal {
+  background: #1c1c1c !important;
+  border-color: #2a2a2a !important;
+  color: #ffffff !important;
+  box-shadow: none !important;
+  transition: none !important;
+}
+
+html[data-theme-resolved='dark'] body.bhw-body [class*='card'],
+html[data-theme-resolved='dark'] body.bhw-body [class*='panel'],
+html[data-theme-resolved='dark'] body.bhw-body [class*='widget'],
+html[data-theme-resolved='dark'] body.bhw-body [class*='metric'],
+html[data-theme-resolved='dark'] body.bhw-body [class*='stat'],
+html[data-theme-resolved='dark'] body.bhw-body [class*='hero'],
+html[data-theme-resolved='dark'] body.bhw-body [class*='modal'],
+html[data-theme-resolved='dark'] body.bhw-body [class*='dialog'],
+html[data-theme-resolved='dark'] body.bhw-body [class*='toolbar'],
+html[data-theme-resolved='dark'] body.bhw-body [class*='form'],
+html[data-theme-resolved='dark'] body.bhw-body [class*='table'],
+html[data-theme-resolved='dark'] body.bhw-body [class*='referral'],
+html[data-theme-resolved='dark'] body.bhw-body [class*='cons'],
+html[data-theme-resolved='dark'] body.bhw-body article,
+html[data-theme-resolved='dark'] body.bhw-body section,
+html[data-theme-resolved='dark'] body.bhw-body table,
+html[data-theme-resolved='dark'] body.bhw-body th,
+html[data-theme-resolved='dark'] body.bhw-body td {
+  background-color: #1c1c1c !important;
+  background-image: none !important;
+  border-color: #2a2a2a !important;
+  color: #ffffff !important;
+  box-shadow: none !important;
+}
+
+html[data-theme-resolved='dark'] body.bhw-body h1,
+html[data-theme-resolved='dark'] body.bhw-body h2,
+html[data-theme-resolved='dark'] body.bhw-body h3,
+html[data-theme-resolved='dark'] body.bhw-body h4,
+html[data-theme-resolved='dark'] body.bhw-body p,
+html[data-theme-resolved='dark'] body.bhw-body span,
+html[data-theme-resolved='dark'] body.bhw-body label,
+html[data-theme-resolved='dark'] body.bhw-body a,
+html[data-theme-resolved='dark'] body.bhw-body strong {
+  color: #ffffff !important;
+}
+
+html[data-theme-resolved='dark'] body.bhw-body [class*='muted'],
+html[data-theme-resolved='dark'] body.bhw-body [class*='sub'],
+html[data-theme-resolved='dark'] body.bhw-body [class*='meta'],
+html[data-theme-resolved='dark'] body.bhw-body .text-muted {
+  color: #a1a1aa !important;
+}
+
+html[data-theme-resolved='dark'] body.bhw-body input,
+html[data-theme-resolved='dark'] body.bhw-body select,
+html[data-theme-resolved='dark'] body.bhw-body textarea {
+  background: #141414 !important;
+  border-color: #2a2a2a !important;
+  color: #ffffff !important;
+  color-scheme: dark;
+}
+
+html[data-theme-resolved='dark'] body.bhw-body canvas,
+html[data-theme-resolved='dark'] body.bhw-body [class*='chart-wrap'],
+html[data-theme-resolved='dark'] body.bhw-body [class*='canvas-wrap'] {
+  background: transparent !important;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   BHW Records + patient picker — kill forced white panels
+═══════════════════════════════════════════════════════════ */
+
+html[data-theme-resolved='dark'] body.bhw-body .bhw-records-main,
+html[data-theme-resolved='dark'] body.bhw-body .bhw-records-aside,
+html[data-theme-resolved='dark'] body.bhw-body .bhw-records-empty,
+html[data-theme-resolved='dark'] body.bhw-body .bhw-records-card,
+html[data-theme-resolved='dark'] body.bhw-body .bhw-records-section,
+html[data-theme-resolved='dark'] body.bhw-body .bhw-records-form-actions,
+html[data-theme-resolved='dark'] body.bhw-body .bhw-records-file-zone,
+html[data-theme-resolved='dark'] body.bhw-body .bhw-records-patient-summary,
+html[data-theme-resolved='dark'] body.bhw-body .bhw-records-table-wrap,
+html[data-theme-resolved='dark'] body.bhw-body .bhw-selected-patient,
+html[data-theme-resolved='dark'] body.bhw-body .bhw-patient-picker,
+html[data-theme-resolved='dark'] body.bhw-body .bhw-patient-picker-list,
+html[data-theme-resolved='dark'] body.bhw-body .bhw-patient-picker-item,
+html[data-theme-resolved='dark'] body.bhw-body .bhw-records-picker-mount .bhw-selected-patient {
+  background: #1c1c1c !important;
+  background-color: #1c1c1c !important;
+  background-image: none !important;
+  border-color: #2a2a2a !important;
+  color: #ffffff !important;
+  box-shadow: none !important;
+}
+
+html[data-theme-resolved='dark'] body.bhw-body .bhw-patient-picker-search,
+html[data-theme-resolved='dark'] body.bhw-body .bhw-records-picker-mount .bhw-patient-picker-search,
+html[data-theme-resolved='dark'] body.bhw-body .bhw-records-link-btn,
+html[data-theme-resolved='dark'] body.bhw-body .bhw-records-file-btn,
+html[data-theme-resolved='dark'] body.bhw-body .bhw-records-view-btn,
+html[data-theme-resolved='dark'] body.bhw-body .bhw-selected-patient-clear {
+  background: #141414 !important;
+  background-image: none !important;
+  border-color: #2a2a2a !important;
+  color: #ffffff !important;
+}
+
+html[data-theme-resolved='dark'] body.bhw-body .bhw-records-header h2,
+html[data-theme-resolved='dark'] body.bhw-body .bhw-records-section__title,
+html[data-theme-resolved='dark'] body.bhw-body .bhw-patient-picker-name,
+html[data-theme-resolved='dark'] body.bhw-body .bhw-selected-patient-info strong,
+html[data-theme-resolved='dark'] body.bhw-body .bhw-records-empty strong,
+html[data-theme-resolved='dark'] body.bhw-body .bhw-records-doc-name,
+html[data-theme-resolved='dark'] body.bhw-body .bhw-records-nav__item.is-active {
+  color: #ffffff !important;
+}
+
+html[data-theme-resolved='dark'] body.bhw-body .bhw-records-sub,
+html[data-theme-resolved='dark'] body.bhw-body .bhw-records-section__sub,
+html[data-theme-resolved='dark'] body.bhw-body .bhw-patient-picker-meta,
+html[data-theme-resolved='dark'] body.bhw-body .bhw-selected-patient-info span,
+html[data-theme-resolved='dark'] body.bhw-body .bhw-records-empty span,
+html[data-theme-resolved='dark'] body.bhw-body .bhw-records-nav__item,
+html[data-theme-resolved='dark'] body.bhw-body .bhw-patient-picker-empty,
+html[data-theme-resolved='dark'] body.bhw-body .bhw-patient-picker-loading {
+  color: #a1a1aa !important;
+}
+
+html[data-theme-resolved='dark'] body.bhw-body .bhw-patient-picker-item:hover,
+html[data-theme-resolved='dark'] body.bhw-body .bhw-patient-picker-item.is-highlighted,
+html[data-theme-resolved='dark'] body.bhw-body .bhw-patient-picker-item.is-selected {
+  background: rgba(124, 58, 237, 0.14) !important;
+}
+
+html[data-theme-resolved='dark'] body.bhw-body .bhw-records-table th {
+  background: #141414 !important;
+  color: #a1a1aa !important;
+  border-color: #2a2a2a !important;
+}
+
+html[data-theme-resolved='dark'] body.bhw-body .bhw-records-table td,
+html[data-theme-resolved='dark'] body.bhw-body .bhw-records-table tbody tr:nth-child(even) {
+  background: #1c1c1c !important;
+  color: #ffffff !important;
+  border-color: #2a2a2a !important;
+}
+
+html[data-theme-resolved='dark'] body.bhw-body .bhw-records-status--pending {
+  background: rgba(245, 158, 11, 0.15) !important;
+  color: #fcd34d !important;
+}
+
+html[data-theme-resolved='dark'] body.bhw-body .bhw-records-status--approved,
+html[data-theme-resolved='dark'] body.bhw-body .bhw-records-status--verified {
+  background: rgba(34, 197, 94, 0.15) !important;
+  color: #86efac !important;
+}
+
+html[data-theme-resolved='dark'] body.bhw-body .bhw-records-status--rejected {
+  background: rgba(220, 38, 38, 0.15) !important;
+  color: #fca5a5 !important;
+}
+
+html[data-theme-resolved='dark'] body.bhw-body .mc-theme-toggle__btn {
+  background: #1c1c1c !important;
+  border-color: #2a2a2a !important;
+  color: #ffffff !important;
 }

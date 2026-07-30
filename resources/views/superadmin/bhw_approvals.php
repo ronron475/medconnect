@@ -103,9 +103,7 @@ require_once __DIR__ . '/partials/layout_open.php';
                     <th>Actions</th>
                 </tr>
             </thead>
-            <tbody id="bhwApprovalBody">
-                <tr><td colspan="8"><div class="staff-apps-loading"><div class="staff-apps-loading__spinner" role="status"></div>Loading queue…</div></td></tr>
-            </tbody>
+            <tbody id="bhwApprovalBody"></tbody>
         </table>
     </div>
 </div>

@@ -200,7 +200,7 @@ require_once __DIR__ . '/partials/layout_open.php';
                 <td><span class="text-sm"><?= htmlspecialchars($u['email']) ?></span></td>
                 <td><span class="mc-badge"><?= htmlspecialchars(user_account_role_label((string) $u['role'])) ?></span></td>
                 <td>
-                    <span class="mc-badge" style="background: <?= $badge['bg'] ?>; color: <?= $badge['color'] ?>;">
+                    <span class="mc-badge <?= htmlspecialchars($badge['class'] ?? '', ENT_QUOTES, 'UTF-8') ?>">
                         <?= htmlspecialchars($badge['label']) ?>
                     </span>
                 </td>

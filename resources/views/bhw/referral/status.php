@@ -33,16 +33,15 @@ $bhw_subnav_active = 'referral/status.php';
             <th>Status</th>
           </tr>
         </thead>
-        <tbody id="bhwRefBody">
-          <tr><td colspan="5" class="text-center text-muted py-4">Loading referrals…</td></tr>
-        </tbody>
+        <tbody id="bhwRefBody"></tbody>
       </table>
     </div>
   </div>
 </div>
 <script>
-BhwPortal.get('referrals.php', { action: 'list' }).then(function (r) {
+(function () {
   var tb = document.getElementById('bhwRefBody');
+  BhwPortal.get('referrals.php', { action: 'list' }).then(function (r) {
   var rows = r.referrals || [];
   if (!rows.length) {
     tb.innerHTML = '<tr><td colspan="5" class="text-center text-muted py-4">No referrals yet. <a href="create.php">Create one</a>.</td></tr>';
@@ -62,5 +61,6 @@ BhwPortal.get('referrals.php', { action: 'list' }).then(function (r) {
 }).catch(function () {
   document.getElementById('bhwRefBody').innerHTML = '<tr><td colspan="5" class="text-center text-danger py-4">Could not load referrals.</td></tr>';
 });
+})();
 </script>
 <?php require __DIR__ . '/../partials/layout_close.php'; ?>

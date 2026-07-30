@@ -100,7 +100,7 @@ body.patient-portal .sb-nav {
   }
 
   body.patient-portal.mc-sidebar-mini .sb-item.active {
-    box-shadow: 0 6px 18px rgba(6, 147, 150, 0.22);
+    box-shadow: none;
   }
 
   body.patient-portal.mc-sidebar-mini .sb-footer {
@@ -128,7 +128,8 @@ body.patient-portal .sb-item {
   font-size: 13.5px;
   font-weight: 600;
   border: 1px solid transparent;
-  transition: background 0.14s ease, color 0.14s ease, box-shadow 0.14s ease;
+  transition: none;
+  -webkit-tap-highlight-color: transparent;
 }
 
 body.patient-portal .sb-item svg {
@@ -139,25 +140,22 @@ body.patient-portal .sb-item svg {
   flex-shrink: 0;
 }
 
-body.patient-portal .sb-item:hover {
-  background: rgba(6, 147, 150, 0.06);
-  color: var(--landing-navy);
-}
-
-body.patient-portal .sb-item.active {
-  background: var(--landing-teal, #069396);
-  color: #fff;
-  border-color: transparent;
-  box-shadow: 0 4px 14px rgba(6, 147, 150, 0.28);
-}
-
+body.patient-portal .sb-item:hover,
+body.patient-portal .sb-item:focus,
+body.patient-portal .sb-item:focus-visible,
+body.patient-portal .sb-item:active,
+body.patient-portal .sb-item.active,
 body.patient-portal .sb-item.active:hover {
-  background: var(--landing-teal-mid, #057a7c);
-  color: #fff;
+  background: transparent;
+  color: inherit;
+  border-color: transparent;
+  box-shadow: none;
+  outline: none;
+  -webkit-tap-highlight-color: transparent;
 }
 
 body.patient-portal .sb-item.active svg {
-  stroke: #fff;
+  stroke: currentColor;
 }
 
 body.patient-portal .sb-footer {
@@ -707,129 +705,23 @@ body.patient-portal .bubble.mine {
   color: var(--landing-navy);
 }
 
-/* ── Notification bell ── */
+/* ── Dark mode tokens (full styling in patient-dark-mode.css) ── */
 html[data-theme-resolved='dark'] body.patient-portal {
-  --mc-aqua-medium: var(--landing-teal);
-  --mc-navy-dark: #f8fafc;
-  --mc-ice-blue: #0f172a;
-  --mc-white: #1e293b;
-  --mc-border-thin: #334155;
-  background: #0b1628;
-}
-
-html[data-theme-resolved='dark'] body.patient-portal .sidebar {
-  background: #1e293b !important;
-  border-right-color: #334155 !important;
-}
-
-html[data-theme-resolved='dark'] body.patient-portal .topbar {
-  background: #1e293b !important;
-  border-bottom-color: #334155 !important;
-}
-
-html[data-theme-resolved='dark'] body.patient-portal .sb-name,
-html[data-theme-resolved='dark'] body.patient-portal .topbar-date {
-  color: #f8fafc !important;
-}
-
-html[data-theme-resolved='dark'] body.patient-portal .sb-item {
-  color: #cbd5e1;
-}
-
-html[data-theme-resolved='dark'] body.patient-portal .sb-item.active {
-  background: rgba(6, 147, 150, 0.22);
-  color: #5eead4;
-  box-shadow: none;
-}
-
-html[data-theme-resolved='dark'] body.patient-portal .sb-item.active svg {
-  stroke: #5eead4;
-}
-
-html[data-theme-resolved='dark'] body.patient-portal .topbar-title {
-  color: #f8fafc !important;
-}
-
-html[data-theme-resolved='dark'] body.patient-portal .topbar-eyebrow {
-  color: #5eead4 !important;
-}
-
-html[data-theme-resolved='dark'] body.patient-portal .topbar-time,
-html[data-theme-resolved='dark'] body.patient-portal .mc-theme-toggle__btn {
-  color: #cbd5e1;
-}
-
-html[data-theme-resolved='dark'] body.patient-portal .mc-theme-toggle__btn {
-  background: #1e293b;
-  border-color: #334155;
-}
-
-html[data-theme-resolved='dark'] body.patient-portal .topbar-icon-btn,
-html[data-theme-resolved='dark'] body.patient-portal .mc-nav-toggle {
-  background: #1e293b;
-  border-color: #334155;
-  color: #5eead4;
-}
-
-html[data-theme-resolved='dark'] body.patient-portal .adm-banner.patient-dash-banner {
-  background: #1e293b;
-  border-color: #334155;
-  box-shadow: none;
-}
-
-html[data-theme-resolved='dark'] body.patient-portal .adm-banner-title {
-  color: #f8fafc;
-}
-
-html[data-theme-resolved='dark'] body.patient-portal .adm-banner-sub {
-  color: #94a3b8;
-}
-
-html[data-theme-resolved='dark'] body.patient-portal .adm-banner-eyebrow {
-  color: #5eead4;
-}
-
-html[data-theme-resolved='dark'] body.patient-portal .patient-dash-pill--id {
-  background: #243449;
-  color: #e2e8f0;
-  border-color: #334155;
-}
-
-html[data-theme-resolved='dark'] body.patient-portal .greeting-banner.patient-greeting {
-  background:
-    linear-gradient(
-      135deg,
-      rgba(1, 42, 74, 0.98) 0%,
-      rgba(1, 42, 74, 0.92) 55%,
-      rgba(6, 147, 150, 0.28) 100%
-    );
-  border-color: rgba(255, 255, 255, 0.08);
+  --landing-bg: #0a0a0a;
+  --landing-surface: #1c1c1c;
+  --mc-aqua-medium: #7c3aed;
+  --mc-navy-dark: #ffffff;
+  --mc-ice-blue: #0a0a0a;
+  --mc-white: #1c1c1c;
+  --mc-border-thin: #2a2a2a;
+  background: #0a0a0a;
+  color: #ffffff;
 }
 
 /* ── Dashboard home polish ── */
 body.patient-portal .pt-dash-action:focus-visible {
   outline: 2px solid var(--landing-teal);
   outline-offset: 2px;
-}
-
-html[data-theme-resolved='dark'] body.patient-portal .pt-dash-action,
-html[data-theme-resolved='dark'] body.patient-portal .pt-dash-stat,
-html[data-theme-resolved='dark'] body.patient-portal .pt-dash-card {
-  background: var(--mc-white);
-  border-color: var(--mc-border-thin);
-}
-
-html[data-theme-resolved='dark'] body.patient-portal .pt-dash-action__label,
-html[data-theme-resolved='dark'] body.patient-portal .pt-dash-card__title,
-html[data-theme-resolved='dark'] body.patient-portal .pt-dash-stat strong,
-html[data-theme-resolved='dark'] body.patient-portal .pt-dash-consult__name,
-html[data-theme-resolved='dark'] body.patient-portal .pt-dash-identity__value,
-html[data-theme-resolved='dark'] body.patient-portal .pt-dash-triage__level {
-  color: var(--mc-navy-dark);
-}
-
-html[data-theme-resolved='dark'] body.patient-portal .pt-dash-consult {
-  background: linear-gradient(135deg, rgba(6, 147, 150, 0.06) 0%, var(--mc-white) 100%);
 }
 
 /* ── Patient dashboard — clean clinical polish ── */

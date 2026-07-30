@@ -145,12 +145,21 @@ if (!$user || !password_verify($password, $user['password'])) {
                 if ($r && (int) ($r['failed_attempts'] ?? 0) >= 5 && !empty($r['lockout_until'])) {
                     require_once dirname(dirname(__DIR__)) . '/app/includes/notification_events.php';
                     NotificationManager::notifyAdmins($pdo, [
-                        'type'       => NotificationManager::TYPE_SECURITY,
+                        'type'       => NotificationManager::TYPE_CRITICAL,
                         'title'      => 'Account Lockout Triggered',
                         'message'    => "Account lockout triggered for {$email}.",
                         'priority'   => 'critical',
                         'action_url' => '/views/admin/audit_logs.php',
                         'email'      => false,
+                    ]);
+                    NotificationManager::create($pdo, (int) $user['id'], [
+                        'receiver_role' => (string) ($user['role'] ?? 'patient'),
+                        'type'          => NotificationManager::TYPE_CRITICAL,
+                        'title'         => 'Account Temporarily Locked',
+                        'message'       => 'Your account was locked after multiple failed login attempts. Try again in 15 minutes or reset your password if you did not attempt to sign in.',
+                        'priority'      => 'critical',
+                        'icon'          => 'alert-octagon',
+                        'action_url'    => '/public/forgot_password.php',
                     ]);
                     audit_log($pdo, [
                         'patient_id'  => (int) $user['id'],
