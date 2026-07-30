@@ -66,7 +66,10 @@ $role_labels = [
 ];
 
 require_once __DIR__ . '/partials/layout_open.php';
+$admLiveJsVer = (int) @filemtime(ASSETS_PATH . '/js/admin-dashboard-live.js');
 ?>
+
+<div data-live-dashboard="admin">
 
 <!-- Welcome -->
 <section class="adm-banner" aria-label="Welcome">
@@ -75,6 +78,7 @@ require_once __DIR__ . '/partials/layout_open.php';
         <h1 class="adm-banner-title">Welcome back, <?= htmlspecialchars($admin_row['first_name'] ?? 'Administrator') ?></h1>
         <p class="adm-banner-sub">Monitor platform activity, manage healthcare operations, and submit account applications for Super Administrator approval.</p>
     </div>
+    <span class="text-xs text-muted" data-live-sync aria-live="polite">Live</span>
 </section>
 
 <!-- Live operations (notification-driven) -->
@@ -90,9 +94,11 @@ require_once __DIR__ . '/partials/layout_open.php';
 
 <!-- Platform snapshot -->
 <section aria-label="Platform metrics">
-    <div class="adm-section-head">
-        <h2 class="adm-section-title">Platform Snapshot</h2>
-        <p class="adm-section-sub">Registered users and clinical workload at a glance</p>
+    <div class="adm-section-head" style="display:flex;justify-content:space-between;align-items:flex-end;gap:8px;flex-wrap:wrap;">
+        <div>
+            <h2 class="adm-section-title">Platform Snapshot</h2>
+            <p class="adm-section-sub">Registered users and clinical workload · auto-refreshes</p>
+        </div>
     </div>
     <div class="adm-metrics">
         <div class="adm-metric">
@@ -100,9 +106,9 @@ require_once __DIR__ . '/partials/layout_open.php';
                 <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
             </div>
             <div class="adm-metric-body">
-                <div class="adm-metric-value"><?= $total_patients ?></div>
+                <div class="adm-metric-value" data-live-metric="patients"><?= $total_patients ?></div>
                 <div class="adm-metric-label">Patients</div>
-                <div class="adm-metric-sub"><?= $total_users ?> total users</div>
+                <div class="adm-metric-sub" data-live-metric="total_users"><?= $total_users ?> total users</div>
             </div>
         </div>
         <div class="adm-metric">
@@ -110,9 +116,9 @@ require_once __DIR__ . '/partials/layout_open.php';
                 <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="19" y1="8" x2="19" y2="14"/><line x1="16" y1="11" x2="22" y2="11"/></svg>
             </div>
             <div class="adm-metric-body">
-                <div class="adm-metric-value"><?= $total_providers ?></div>
+                <div class="adm-metric-value" data-live-metric="providers"><?= $total_providers ?></div>
                 <div class="adm-metric-label">Doctors</div>
-                <div class="adm-metric-sub"><?= $total_bhw ?> BHW active</div>
+                <div class="adm-metric-sub" data-live-metric="bhw"><?= $total_bhw ?> BHW active</div>
             </div>
         </div>
         <div class="adm-metric">
@@ -120,9 +126,9 @@ require_once __DIR__ . '/partials/layout_open.php';
                 <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
             </div>
             <div class="adm-metric-body">
-                <div class="adm-metric-value"><?= $consults_today ?></div>
+                <div class="adm-metric-value" data-live-metric="consults_today"><?= $consults_today ?></div>
                 <div class="adm-metric-label">Consultations Today</div>
-                <div class="adm-metric-sub"><?= $active_sessions ?> in session now</div>
+                <div class="adm-metric-sub" data-live-metric="active_sessions"><?= $active_sessions ?> in session now</div>
             </div>
         </div>
         <div class="adm-metric adm-metric--urgent">
@@ -130,7 +136,7 @@ require_once __DIR__ . '/partials/layout_open.php';
                 <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
             </div>
             <div class="adm-metric-body">
-                <div class="adm-metric-value" style="color:#dc2626;"><?= $urgent_triage ?></div>
+                <div class="adm-metric-value" style="color:#dc2626;" data-live-metric="urgent_triage"><?= $urgent_triage ?></div>
                 <div class="adm-metric-label">Urgent Triage</div>
                 <div class="adm-metric-sub">Requires attention</div>
             </div>
@@ -162,7 +168,7 @@ require_once __DIR__ . '/partials/layout_open.php';
                             <th>Joined</th>
                         </tr>
                     </thead>
-                    <tbody>
+                    <tbody data-live-recent-users>
                     <?php if (empty($recent_users)): ?>
                         <tr><td colspan="4" style="text-align:center;padding:32px;color:#94a3b8;">No registrations yet.</td></tr>
                     <?php else: foreach ($recent_users as $u):
@@ -204,8 +210,7 @@ require_once __DIR__ . '/partials/layout_open.php';
     <aside class="adm-grid-side">
         <?php $notif_widget_mode = 'recent'; require VIEWS_PATH . '/partials/notification_widgets.php'; ?>
 
-        <?php if ($pending_approvals > 0 || $my_draft_doctor > 0 || $my_draft_bhw > 0): ?>
-        <div class="adm-card">
+        <div class="adm-card" data-live-maker-card<?= ($pending_approvals > 0 || $my_draft_doctor > 0 || $my_draft_bhw > 0) ? '' : ' hidden' ?>>
             <div class="adm-card-head">
                 <div class="adm-card-head-icon adm-card-head-icon--blue">
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
@@ -215,7 +220,7 @@ require_once __DIR__ . '/partials/layout_open.php';
                     <div class="adm-card-head-sub">Applications awaiting action</div>
                 </div>
             </div>
-            <div class="adm-actions-body">
+            <div class="adm-actions-body" data-live-maker-queue>
                 <?php if ($my_draft_doctor > 0): ?>
                 <a href="<?= ASSET_BASE ?>/views/admin/doctor_applications.php" class="adm-pending-item">
                     <span><?= $my_draft_doctor ?> Doctor application<?= $my_draft_doctor === 1 ? '' : 's' ?> in progress</span>
@@ -240,7 +245,6 @@ require_once __DIR__ . '/partials/layout_open.php';
                 <?php endif; ?>
             </div>
         </div>
-        <?php endif; ?>
 
         <div class="adm-card">
             <div class="adm-card-head">
@@ -274,4 +278,7 @@ require_once __DIR__ . '/partials/layout_open.php';
     </aside>
 </div>
 
+</div><!-- /data-live-dashboard -->
+
+<script src="<?= ASSET_BASE ?>/assets/js/admin-dashboard-live.js?v=<?= $admLiveJsVer ?>"></script>
 <?php require_once __DIR__ . '/partials/layout_close.php'; ?>
