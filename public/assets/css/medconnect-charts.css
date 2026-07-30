@@ -183,3 +183,60 @@
 .adm-charts-filters .mc-chart-filters__status {
   margin-left: 8px;
 }
+
+/* ── Dark mode (patient, admin, superadmin, BHW, provider) ── */
+html[data-theme-resolved='dark'] .mc-chart-card,
+html[data-theme-resolved='dark'] .adm-chart-card,
+html[data-theme-resolved='dark'] .bhw-chart-card.mc-chart-card,
+html[data-theme-resolved='dark'] .bhw-chart-card:has(.mc-chart-canvas-wrap) {
+  background: var(--mc-theme-surface, #1e293b);
+  border-color: var(--mc-theme-border, #334155);
+  box-shadow: var(--mc-theme-shadow, 0 1px 3px rgba(0, 0, 0, 0.35));
+}
+
+html[data-theme-resolved='dark'] .mc-chart-card__title,
+html[data-theme-resolved='dark'] .adm-chart-card__title,
+html[data-theme-resolved='dark'] .mc-chart-kpi strong,
+html[data-theme-resolved='dark'] .adm-chart-kpi strong {
+  color: var(--mc-theme-text, #f8fafc);
+}
+
+html[data-theme-resolved='dark'] .mc-chart-card__sub,
+html[data-theme-resolved='dark'] .adm-chart-card__sub,
+html[data-theme-resolved='dark'] .mc-chart-kpi span,
+html[data-theme-resolved='dark'] .adm-chart-kpi span {
+  color: var(--mc-theme-text-secondary, #cbd5e1);
+}
+
+html[data-theme-resolved='dark'] .mc-chart-canvas-wrap,
+html[data-theme-resolved='dark'] .adm-chart-canvas-wrap,
+html[data-theme-resolved='dark'] .bhw-chart-wrap.mc-chart-canvas-wrap {
+  background: transparent;
+}
+
+html[data-theme-resolved='dark'] .mc-chart-canvas-wrap canvas,
+html[data-theme-resolved='dark'] .adm-chart-canvas-wrap canvas,
+html[data-theme-resolved='dark'] .bhw-chart-wrap.mc-chart-canvas-wrap canvas {
+  background: transparent;
+}
+
+html[data-theme-resolved='dark'] .mc-chart-filters {
+  background: var(--mc-theme-surface-2, #1f2937);
+  border-color: var(--mc-theme-border, #334155);
+}
+
+html[data-theme-resolved='dark'] .mc-chart-filters__label,
+html[data-theme-resolved='dark'] .mc-chart-filters__status {
+  color: var(--mc-theme-text-secondary, #cbd5e1);
+}
+
+html[data-theme-resolved='dark'] .mc-chart-filters__control {
+  background: var(--mc-theme-input-bg, #1f2937);
+  border-color: var(--mc-theme-input-border, #334155);
+  color: var(--mc-theme-text, #f8fafc);
+}
+
+html[data-theme-resolved='dark'] .pdash-chart-legend strong,
+html[data-theme-resolved='dark'] .prov-chart-legend strong {
+  color: #a78bfa;
+}

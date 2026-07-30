@@ -4,6 +4,7 @@
   var REFRESH_MS = (window.McChartTheme && McChartTheme.REFRESH_MS) ? McChartTheme.REFRESH_MS : 15000;
   var charts = {};
   var pollTimer = null;
+  var lastPayload = null;
   var T = function () { return window.McChartTheme; };
 
   function ready(fn) {
@@ -54,14 +55,25 @@
     var el = document.getElementById(canvasId);
     if (!el) return;
     destroy(canvasId);
+    T().syncColors();
+    T().applyDefaults();
+    var normalized = (series || []).map(function (p) {
+      return {
+        label: p.label,
+        count: p.count != null ? p.count : 0,
+        is_today: !!p.is_today,
+      };
+    });
+    var today = todayColor || (T().isDarkMode() ? T().colors.purple : T().colors.teal);
     charts[canvasId] = new Chart(el, {
       type: 'bar',
       data: {
-        labels: T().labelsFromSeries(series),
-        datasets: [T().barDataset(series, color, todayColor)],
+        labels: T().labelsFromSeries(normalized),
+        datasets: [T().barDataset(normalized, color, today)],
       },
-      options: T().cartesianOptions(),
+      options: T().cartesianOptions(null, T().suggestedMaxForSeries(normalized)),
     });
+    charts[canvasId].$mcWeekSeries = normalized;
   }
 
   function makeLineChart(canvasId, series, color) {
@@ -69,6 +81,8 @@
     var el = document.getElementById(canvasId);
     if (!el) return;
     destroy(canvasId);
+    T().syncColors();
+    T().applyDefaults();
     charts[canvasId] = new Chart(el, {
       type: 'line',
       data: {
@@ -84,6 +98,8 @@
     var el = document.getElementById(canvasId);
     if (!el) return;
     destroy(canvasId);
+    T().syncColors();
+    T().applyDefaults();
     charts[canvasId] = new Chart(el, {
       type: 'bar',
       data: {
@@ -104,12 +120,12 @@
             beginAtZero: true,
             grid: { color: T().colors.grid, drawBorder: false },
             border: { display: false },
-            ticks: { precision: 0, font: { size: 10 } },
+            ticks: { precision: 0, font: { size: 10 }, color: T().colors.text },
           },
           y: {
             grid: { display: false },
             border: { display: false },
-            ticks: { font: { size: 11, weight: '500' } },
+            ticks: { font: { size: 11, weight: '500' }, color: T().colors.text },
           },
         },
       }),
@@ -121,6 +137,8 @@
     var el = document.getElementById(canvasId);
     if (!el) return;
     destroy(canvasId);
+    T().syncColors();
+    T().applyDefaults();
     charts[canvasId] = new Chart(el, {
       type: 'doughnut',
       data: {
@@ -130,7 +148,7 @@
           backgroundColor: (rows || []).map(function (r, i) {
             return r.color || T().palette[i % T().palette.length];
           }),
-          borderColor: '#fff',
+          borderColor: T().segmentBorderColor(),
           borderWidth: 2,
           hoverOffset: 6,
         }],
@@ -141,6 +159,7 @@
 
   function render(data) {
     if (!data || !T()) return;
+    lastPayload = data;
 
     var consult = data.consultations || {};
     var reg = data.registrations || {};
@@ -213,6 +232,11 @@
   function boot() {
     if (window.McChartTheme) {
       McChartTheme.applyDefaults();
+      if (typeof McChartTheme.registerThemeRefresh === 'function') {
+        McChartTheme.registerThemeRefresh(function () {
+          if (lastPayload) render(lastPayload);
+        });
+      }
     }
     return fetchAndRender().then(startPolling);
   }

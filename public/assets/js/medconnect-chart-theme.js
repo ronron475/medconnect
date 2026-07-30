@@ -382,7 +382,30 @@
   }
 
   function refreshAllCharts() {
+    syncColors();
+    applyDefaults();
     mountWeeklyBarChartsFromDom();
+    themeRefreshCallbacks.forEach(function (fn) {
+      try {
+        fn();
+      } catch (e) {
+        /* ignore listener errors */
+      }
+    });
+  }
+
+  var themeRefreshCallbacks = [];
+
+  function registerThemeRefresh(fn) {
+    if (typeof fn !== 'function') return;
+    if (themeRefreshCallbacks.indexOf(fn) === -1) {
+      themeRefreshCallbacks.push(fn);
+    }
+  }
+
+  function segmentBorderColor() {
+    syncColors();
+    return COLORS.pointBorder;
   }
 
   function bindThemeListener() {
@@ -399,6 +422,7 @@
       attributes: true,
       attributeFilter: ['data-theme-resolved'],
     });
+    window.addEventListener('medconnect-theme-changed', refreshAllCharts);
   }
 
   function mountWeeklyBarChartsFromDom() {
@@ -433,9 +457,12 @@
     lineDataset: lineDataset,
     barDataset: barDataset,
     labelsFromSeries: labelsFromSeries,
+    suggestedMaxForSeries: suggestedMaxForSeries,
+    segmentBorderColor: segmentBorderColor,
     mountWeeklyBarChart: mountWeeklyBarChart,
     updateWeeklyBarChart: updateWeeklyBarChart,
     mountWeeklyBarChartsFromDom: mountWeeklyBarChartsFromDom,
     refreshAllCharts: refreshAllCharts,
+    registerThemeRefresh: registerThemeRefresh,
   };
 })(typeof window !== 'undefined' ? window : this);
