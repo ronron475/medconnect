@@ -276,3 +276,244 @@ html[data-theme-resolved='dark'] body.bhw-body .bhw-module-nav__item:hover {
   background: rgba(255, 255, 255, 0.06) !important;
   color: #ffffff !important;
 }
+
+/* ═══════════════════════════════════════════════════════════
+   ALL BHW PAGES — patient list, consultations, reports, triage,
+   update patient, records, feedback, module nav
+═══════════════════════════════════════════════════════════ */
+
+html[data-theme-resolved='dark'] body.bhw-body [class^='bhw-pl-'],
+html[data-theme-resolved='dark'] body.bhw-body [class^='bhw-cons-'],
+html[data-theme-resolved='dark'] body.bhw-body [class^='bhw-report-'],
+html[data-theme-resolved='dark'] body.bhw-body [class^='bhw-update-'],
+html[data-theme-resolved='dark'] body.bhw-body [class^='bhw-form-'],
+html[data-theme-resolved='dark'] body.bhw-body [class^='bhw-feedback-'],
+html[data-theme-resolved='dark'] body.bhw-body [class^='bhw-records-'],
+html[data-theme-resolved='dark'] body.bhw-body [class^='bhw-triage-'],
+html[data-theme-resolved='dark'] body.bhw-body .bhw-page-compact,
+html[data-theme-resolved='dark'] body.bhw-body .bhw-referral-page,
+html[data-theme-resolved='dark'] body.bhw-body .bhw-referral-status-page,
+html[data-theme-resolved='dark'] body.bhw-body .bhw-module-nav {
+  color: inherit;
+}
+
+html[data-theme-resolved='dark'] body.bhw-body .bhw-pl-header,
+html[data-theme-resolved='dark'] body.bhw-body .bhw-pl-table-wrap,
+html[data-theme-resolved='dark'] body.bhw-body .bhw-pl-card,
+html[data-theme-resolved='dark'] body.bhw-body .bhw-pl-drawer,
+html[data-theme-resolved='dark'] body.bhw-body .bhw-pl-toolbar,
+html[data-theme-resolved='dark'] body.bhw-body .bhw-cons-hero,
+html[data-theme-resolved='dark'] body.bhw-body .bhw-cons-panel,
+html[data-theme-resolved='dark'] body.bhw-body .bhw-cons-metric,
+html[data-theme-resolved='dark'] body.bhw-body .bhw-cons-help__card,
+html[data-theme-resolved='dark'] body.bhw-body .bhw-report-group,
+html[data-theme-resolved='dark'] body.bhw-body .bhw-report-stat,
+html[data-theme-resolved='dark'] body.bhw-body .bhw-update-hero,
+html[data-theme-resolved='dark'] body.bhw-body .bhw-update-hero-inner,
+html[data-theme-resolved='dark'] body.bhw-body .bhw-update-tabs-card,
+html[data-theme-resolved='dark'] body.bhw-body .bhw-update-contact-card,
+html[data-theme-resolved='dark'] body.bhw-body .bhw-update-side-card,
+html[data-theme-resolved='dark'] body.bhw-body .bhw-update-empty,
+html[data-theme-resolved='dark'] body.bhw-body .bhw-update-search-strip,
+html[data-theme-resolved='dark'] body.bhw-body .bhw-records-hero,
+html[data-theme-resolved='dark'] body.bhw-body .bhw-records-card,
+html[data-theme-resolved='dark'] body.bhw-body .bhw-triage-hero,
+html[data-theme-resolved='dark'] body.bhw-body .bhw-triage-panel,
+html[data-theme-resolved='dark'] body.bhw-body .bhw-triage-card,
+html[data-theme-resolved='dark'] body.bhw-body .bhw-feedback-dialog {
+  background: #1c1c1c !important;
+  border-color: #2a2a2a !important;
+  color: #ffffff;
+}
+
+html[data-theme-resolved='dark'] body.bhw-body .bhw-pl-table thead th,
+html[data-theme-resolved='dark'] body.bhw-body .bhw-cons-table thead th,
+html[data-theme-resolved='dark'] body.bhw-body .bhw-pl-drawer-head {
+  background: #141414 !important;
+  border-color: #2a2a2a !important;
+  color: #a1a1aa !important;
+}
+
+html[data-theme-resolved='dark'] body.bhw-body .bhw-pl-table tbody td,
+html[data-theme-resolved='dark'] body.bhw-body .bhw-cons-table tbody td {
+  background: #1c1c1c !important;
+  border-color: #2a2a2a !important;
+  color: #d4d4d8 !important;
+}
+
+html[data-theme-resolved='dark'] body.bhw-body .bhw-pl-table tbody tr:nth-child(even) td,
+html[data-theme-resolved='dark'] body.bhw-body .bhw-cons-table tbody tr:nth-child(even) td {
+  background: #181818 !important;
+}
+
+html[data-theme-resolved='dark'] body.bhw-body .bhw-pl-table tbody tr:hover td,
+html[data-theme-resolved='dark'] body.bhw-body .bhw-cons-table tbody tr:hover td,
+html[data-theme-resolved='dark'] body.bhw-body .bhw-pl-card:hover,
+html[data-theme-resolved='dark'] body.bhw-body .bhw-cons-panel-head {
+  background: rgba(255, 255, 255, 0.04) !important;
+}
+
+html[data-theme-resolved='dark'] body.bhw-body .bhw-pl-name,
+html[data-theme-resolved='dark'] body.bhw-body .bhw-cons-hero__title,
+html[data-theme-resolved='dark'] body.bhw-body .bhw-cons-panel-title,
+html[data-theme-resolved='dark'] body.bhw-body .bhw-report-group-title,
+html[data-theme-resolved='dark'] body.bhw-body .bhw-update-hero-name,
+html[data-theme-resolved='dark'] body.bhw-body .bhw-form-card-title,
+html[data-theme-resolved='dark'] body.bhw-body .bhw-feedback-title,
+html[data-theme-resolved='dark'] body.bhw-body .bhw-pl-header h2,
+html[data-theme-resolved='dark'] body.bhw-body .bhw-cons-metric__val {
+  color: #ffffff !important;
+}
+
+html[data-theme-resolved='dark'] body.bhw-body .bhw-pl-email,
+html[data-theme-resolved='dark'] body.bhw-body .bhw-pl-footer,
+html[data-theme-resolved='dark'] body.bhw-body .bhw-cons-hero__sub,
+html[data-theme-resolved='dark'] body.bhw-body .bhw-cons-metric__label,
+html[data-theme-resolved='dark'] body.bhw-body .bhw-report-stat-label,
+html[data-theme-resolved='dark'] body.bhw-body .bhw-update-hero-id,
+html[data-theme-resolved='dark'] body.bhw-body .bhw-form-card-sub,
+html[data-theme-resolved='dark'] body.bhw-body .bhw-feedback-message,
+html[data-theme-resolved='dark'] body.bhw-body .bhw-pl-card-meta dt {
+  color: #a1a1aa !important;
+}
+
+html[data-theme-resolved='dark'] body.bhw-body .bhw-pl-btn--primary,
+html[data-theme-resolved='dark'] body.bhw-body .bhw-btn-blue {
+  background: #7c3aed !important;
+  border-color: #7c3aed !important;
+  color: #ffffff !important;
+}
+
+html[data-theme-resolved='dark'] body.bhw-body .bhw-pl-btn--outline,
+html[data-theme-resolved='dark'] body.bhw-body .bhw-pl-btn--ghost,
+html[data-theme-resolved='dark'] body.bhw-body .bhw-btn-ghost {
+  background: transparent !important;
+  border-color: #2a2a2a !important;
+  color: #a1a1aa !important;
+}
+
+html[data-theme-resolved='dark'] body.bhw-body .bhw-pl-btn--ghost:hover,
+html[data-theme-resolved='dark'] body.bhw-body .bhw-pl-btn--outline:hover,
+html[data-theme-resolved='dark'] body.bhw-body .bhw-btn-ghost:hover {
+  background: rgba(255, 255, 255, 0.04) !important;
+  color: #ffffff !important;
+}
+
+html[data-theme-resolved='dark'] body.bhw-body .bhw-update-tab {
+  background: transparent !important;
+  color: #a1a1aa !important;
+  border-color: #2a2a2a !important;
+}
+
+html[data-theme-resolved='dark'] body.bhw-body .bhw-update-tab.is-active {
+  background: rgba(124, 58, 237, 0.15) !important;
+  color: #ffffff !important;
+  border-color: #7c3aed !important;
+}
+
+html[data-theme-resolved='dark'] body.bhw-body .bhw-module-nav {
+  background: #1c1c1c !important;
+  border-color: #2a2a2a !important;
+}
+
+html[data-theme-resolved='dark'] body.bhw-body .bhw-module-nav__item {
+  color: #a1a1aa !important;
+}
+
+html[data-theme-resolved='dark'] body.bhw-body .bhw-module-nav__item.is-active {
+  background: rgba(124, 58, 237, 0.15) !important;
+  color: #ffffff !important;
+}
+
+html[data-theme-resolved='dark'] body.bhw-body .bhw-pl-badge--active,
+html[data-theme-resolved='dark'] body.bhw-body .bhw-pl-badge--low {
+  background: rgba(34, 197, 94, 0.15) !important;
+  color: #86efac !important;
+  border-color: transparent !important;
+}
+
+html[data-theme-resolved='dark'] body.bhw-body .bhw-pl-badge--inactive,
+html[data-theme-resolved='dark'] body.bhw-body .bhw-pl-badge--high {
+  background: rgba(220, 38, 38, 0.15) !important;
+  color: #fca5a5 !important;
+  border-color: transparent !important;
+}
+
+html[data-theme-resolved='dark'] body.bhw-body .bhw-pl-badge--moderate {
+  background: rgba(245, 158, 11, 0.15) !important;
+  color: #fcd34d !important;
+  border-color: transparent !important;
+}
+
+html[data-theme-resolved='dark'] body.bhw-body .bhw-pl-badge--none {
+  background: rgba(255, 255, 255, 0.06) !important;
+  color: #a1a1aa !important;
+  border-color: transparent !important;
+}
+
+html[data-theme-resolved='dark'] body.bhw-body .bhw-feedback-overlay {
+  background: rgba(0, 0, 0, 0.72) !important;
+}
+
+html[data-theme-resolved='dark'] body.bhw-body .bhw-feedback-btn--primary {
+  background: #7c3aed !important;
+  color: #ffffff !important;
+}
+
+html[data-theme-resolved='dark'] body.bhw-body .bhw-feedback-btn--secondary {
+  background: #2a2a2a !important;
+  color: #ffffff !important;
+}
+
+html[data-theme-resolved='dark'] body.bhw-body .dropdown-menu,
+html[data-theme-resolved='dark'] body.bhw-body .modal-content,
+html[data-theme-resolved='dark'] body.bhw-body .list-group-item {
+  background: #1c1c1c !important;
+  border-color: #2a2a2a !important;
+  color: #ffffff !important;
+}
+
+html[data-theme-resolved='dark'] body.bhw-body .bhw-pl-menu-panel,
+html[data-theme-resolved='dark'] body.bhw-body .bhw-pl-drawer-overlay {
+  background: #1c1c1c !important;
+  border-color: #2a2a2a !important;
+}
+
+html[data-theme-resolved='dark'] body.bhw-body .bhw-pl-menu-panel a:hover,
+html[data-theme-resolved='dark'] body.bhw-body .bhw-pl-menu-panel .bhw-pl-menu-print:hover {
+  background: rgba(255, 255, 255, 0.06) !important;
+  color: #ffffff !important;
+}
+
+html[data-theme-resolved='dark'] body.bhw-body .bhw-cons-row--live td {
+  background: rgba(59, 130, 246, 0.1) !important;
+}
+
+html[data-theme-resolved='dark'] body.bhw-body .bhw-cons-empty,
+html[data-theme-resolved='dark'] body.bhw-body .bhw-cons-loading,
+html[data-theme-resolved='dark'] body.bhw-body .bhw-pl-empty {
+  color: #a1a1aa !important;
+}
+
+html[data-theme-resolved='dark'] body.bhw-body .bhw-table th {
+  background: #141414 !important;
+  color: #a1a1aa !important;
+  border-color: #2a2a2a !important;
+}
+
+html[data-theme-resolved='dark'] body.bhw-body .bhw-table td {
+  background: #1c1c1c !important;
+  color: #d4d4d8 !important;
+  border-color: #2a2a2a !important;
+}
+
+html[data-theme-resolved='dark'] body.bhw-body .bhw-metric-icon {
+  background: rgba(124, 58, 237, 0.12) !important;
+  color: #a78bfa !important;
+}
+
+html[data-theme-resolved='dark'] body.bhw-body .input-group-text {
+  background: #141414 !important;
+  border-color: #2a2a2a !important;
+  color: #a1a1aa !important;
+}

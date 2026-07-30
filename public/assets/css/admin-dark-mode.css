@@ -1,0 +1,391 @@
+/**
+ * medConnect — Admin & Super Admin Portal Dark Mode
+ * WorkflowAI-style: near-black canvas, flat #1c1c1c cards, #2a2a2a borders, purple accents.
+ */
+
+html[data-theme-resolved='dark'] body.admin-body,
+html[data-theme-resolved='dark'] body.superadmin-body {
+  --adm-canvas: #0a0a0a;
+  --adm-white: #1c1c1c;
+  --adm-border: #2a2a2a;
+  --adm-text: #ffffff;
+  --adm-muted: #a1a1aa;
+  --adm-faint: #71717a;
+  --card-bg: #1c1c1c;
+  --border-color: #2a2a2a;
+  --text-primary: #ffffff;
+  --text-secondary: #a1a1aa;
+  --text-muted: #71717a;
+  --bg-primary: #0a0a0a;
+  --bg-secondary: #141414;
+  background: #0a0a0a !important;
+  color: #ffffff;
+}
+
+html[data-theme-resolved='dark'] body.admin-body .portal-main,
+html[data-theme-resolved='dark'] body.admin-body .portal-page-body,
+html[data-theme-resolved='dark'] body.superadmin-body .portal-main,
+html[data-theme-resolved='dark'] body.superadmin-body .portal-page-body,
+html[data-theme-resolved='dark'] body.admin-body .adm-main,
+html[data-theme-resolved='dark'] body.admin-body .adm-content,
+html[data-theme-resolved='dark'] body.superadmin-body .adm-main,
+html[data-theme-resolved='dark'] body.superadmin-body .adm-content {
+  background: #0a0a0a !important;
+}
+
+/* ── Topbar ── */
+html[data-theme-resolved='dark'] body.admin-body .topbar,
+html[data-theme-resolved='dark'] body.superadmin-body .topbar,
+html[data-theme-resolved='dark'] body.admin-body .adm-topbar,
+html[data-theme-resolved='dark'] body.superadmin-body .adm-topbar {
+  background: #1c1c1c !important;
+  border-bottom-color: #2a2a2a !important;
+  box-shadow: none !important;
+}
+
+html[data-theme-resolved='dark'] body.admin-body .topbar-title,
+html[data-theme-resolved='dark'] body.superadmin-body .topbar-title,
+html[data-theme-resolved='dark'] body.admin-body .topbar-date,
+html[data-theme-resolved='dark'] body.superadmin-body .topbar-date,
+html[data-theme-resolved='dark'] body.admin-body .topbar-time,
+html[data-theme-resolved='dark'] body.superadmin-body .topbar-time,
+html[data-theme-resolved='dark'] body.admin-body .topbar-user-name,
+html[data-theme-resolved='dark'] body.superadmin-body .topbar-user-name,
+html[data-theme-resolved='dark'] body.admin-body .adm-topbar-title,
+html[data-theme-resolved='dark'] body.superadmin-body .adm-topbar-title {
+  color: #ffffff !important;
+}
+
+html[data-theme-resolved='dark'] body.admin-body .topbar-eyebrow,
+html[data-theme-resolved='dark'] body.superadmin-body .topbar-eyebrow,
+html[data-theme-resolved='dark'] body.admin-body .adm-topbar-eyebrow,
+html[data-theme-resolved='dark'] body.superadmin-body .adm-topbar-eyebrow {
+  color: #a78bfa !important;
+}
+
+html[data-theme-resolved='dark'] body.admin-body .topbar-icon-btn,
+html[data-theme-resolved='dark'] body.superadmin-body .topbar-icon-btn,
+html[data-theme-resolved='dark'] body.admin-body .mc-notif-btn,
+html[data-theme-resolved='dark'] body.superadmin-body .mc-notif-btn,
+html[data-theme-resolved='dark'] body.admin-body .mc-theme-toggle__btn,
+html[data-theme-resolved='dark'] body.superadmin-body .mc-theme-toggle__btn,
+html[data-theme-resolved='dark'] body.admin-body .topbar-logout,
+html[data-theme-resolved='dark'] body.superadmin-body .topbar-logout,
+html[data-theme-resolved='dark'] body.admin-body .adm-topbar-btn,
+html[data-theme-resolved='dark'] body.superadmin-body .adm-topbar-btn {
+  background: #1c1c1c !important;
+  border: 1px solid #2a2a2a !important;
+  color: #a1a1aa !important;
+}
+
+/* ── Core adm cards & metrics ── */
+html[data-theme-resolved='dark'] body.admin-body .adm-card,
+html[data-theme-resolved='dark'] body.superadmin-body .adm-card,
+html[data-theme-resolved='dark'] body.admin-body .adm-metric,
+html[data-theme-resolved='dark'] body.superadmin-body .adm-metric,
+html[data-theme-resolved='dark'] body.admin-body .adm-banner,
+html[data-theme-resolved='dark'] body.superadmin-body .adm-banner,
+html[data-theme-resolved='dark'] body.admin-body .adm-pending-item,
+html[data-theme-resolved='dark'] body.superadmin-body .adm-pending-item,
+html[data-theme-resolved='dark'] body.admin-body .adm-action-btn--outline,
+html[data-theme-resolved='dark'] body.superadmin-body .adm-action-btn--outline,
+html[data-theme-resolved='dark'] body.admin-body .adm-notif-recent,
+html[data-theme-resolved='dark'] body.superadmin-body .adm-notif-recent,
+html[data-theme-resolved='dark'] body.admin-body .mc-card,
+html[data-theme-resolved='dark'] body.superadmin-body .mc-card,
+html[data-theme-resolved='dark'] body.admin-body .admin-stat-card,
+html[data-theme-resolved='dark'] body.superadmin-body .admin-stat-card,
+html[data-theme-resolved='dark'] body.admin-body .clinical-card,
+html[data-theme-resolved='dark'] body.superadmin-body .clinical-card {
+  background: #1c1c1c !important;
+  border-color: #2a2a2a !important;
+  color: #ffffff;
+  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.04), 0 4px 20px rgba(0, 0, 0, 0.5);
+}
+
+html[data-theme-resolved='dark'] body.admin-body .adm-card-head,
+html[data-theme-resolved='dark'] body.superadmin-body .adm-card-head,
+html[data-theme-resolved='dark'] body.admin-body .adm-metric:hover,
+html[data-theme-resolved='dark'] body.superadmin-body .adm-metric:hover {
+  border-color: #2a2a2a !important;
+}
+
+html[data-theme-resolved='dark'] body.admin-body .adm-card-head,
+html[data-theme-resolved='dark'] body.superadmin-body .adm-card-head {
+  background: #141414 !important;
+  border-bottom-color: #2a2a2a !important;
+}
+
+/* ── Page modules (staff apps, audit, announcements, GIS, media, cases) ── */
+html[data-theme-resolved='dark'] body.admin-body [class*='-card'],
+html[data-theme-resolved='dark'] body.superadmin-body [class*='-card'],
+html[data-theme-resolved='dark'] body.admin-body [class*='-panel'],
+html[data-theme-resolved='dark'] body.superadmin-body [class*='-panel'],
+html[data-theme-resolved='dark'] body.admin-body [class*='-hero'],
+html[data-theme-resolved='dark'] body.superadmin-body [class*='-hero'],
+html[data-theme-resolved='dark'] body.admin-body [class*='-banner'],
+html[data-theme-resolved='dark'] body.superadmin-body [class*='-banner'],
+html[data-theme-resolved='dark'] body.admin-body [class*='-stat']:not([class*='status']),
+html[data-theme-resolved='dark'] body.superadmin-body [class*='-stat']:not([class*='status']),
+html[data-theme-resolved='dark'] body.admin-body [class*='-toolbar'],
+html[data-theme-resolved='dark'] body.superadmin-body [class*='-toolbar'],
+html[data-theme-resolved='dark'] body.admin-body [class*='-table-wrap'],
+html[data-theme-resolved='dark'] body.superadmin-body [class*='-table-wrap'],
+html[data-theme-resolved='dark'] body.admin-body [class*='-drawer'],
+html[data-theme-resolved='dark'] body.superadmin-body [class*='-drawer'],
+html[data-theme-resolved='dark'] body.admin-body [class*='-modal-dialog'],
+html[data-theme-resolved='dark'] body.superadmin-body [class*='-modal-dialog'],
+html[data-theme-resolved='dark'] body.admin-body .staff-apps-page,
+html[data-theme-resolved='dark'] body.superadmin-body .staff-apps-page,
+html[data-theme-resolved='dark'] body.admin-body .audit-logs-page,
+html[data-theme-resolved='dark'] body.superadmin-body .audit-logs-page {
+  background: #1c1c1c !important;
+  border-color: #2a2a2a !important;
+}
+
+/* ── Super Admin ── */
+html[data-theme-resolved='dark'] body.superadmin-body .superadmin-approval-card {
+  background: rgba(245, 158, 11, 0.1) !important;
+  border-color: rgba(245, 158, 11, 0.35) !important;
+  color: #fcd34d !important;
+}
+
+html[data-theme-resolved='dark'] body.superadmin-body .superadmin-approval-card strong {
+  color: #fbbf24 !important;
+}
+
+html[data-theme-resolved='dark'] body.superadmin-body .superadmin-stat-card,
+html[data-theme-resolved='dark'] body.superadmin-body .superadmin-metric-group {
+  background: transparent !important;
+}
+
+html[data-theme-resolved='dark'] body.superadmin-body .superadmin-health-pill--healthy {
+  background: rgba(34, 197, 94, 0.15) !important;
+  color: #86efac !important;
+}
+
+html[data-theme-resolved='dark'] body.superadmin-body .superadmin-health-pill--warning {
+  background: rgba(245, 158, 11, 0.15) !important;
+  color: #fcd34d !important;
+}
+
+html[data-theme-resolved='dark'] body.superadmin-body .superadmin-health-pill--critical {
+  background: rgba(220, 38, 38, 0.15) !important;
+  color: #fca5a5 !important;
+}
+
+html[data-theme-resolved='dark'] body.superadmin-body .superadmin-urgent-pill {
+  background: rgba(245, 158, 11, 0.15) !important;
+  color: #fcd34d !important;
+}
+
+/* ── Modals ── */
+html[data-theme-resolved='dark'] body.admin-body .admin-modal-overlay,
+html[data-theme-resolved='dark'] body.superadmin-body .admin-modal-overlay,
+html[data-theme-resolved='dark'] body.admin-body .mc-modal__dialog,
+html[data-theme-resolved='dark'] body.superadmin-body .mc-modal__dialog {
+  background: transparent !important;
+}
+
+html[data-theme-resolved='dark'] body.admin-body .admin-modal-dialog,
+html[data-theme-resolved='dark'] body.superadmin-body .admin-modal-dialog,
+html[data-theme-resolved='dark'] body.admin-body .admin-modal-dialog .mc-card,
+html[data-theme-resolved='dark'] body.superadmin-body .admin-modal-dialog .mc-card {
+  background: #1c1c1c !important;
+  border-color: #2a2a2a !important;
+  color: #ffffff !important;
+}
+
+html[data-theme-resolved='dark'] body.admin-body .admin-modal-header,
+html[data-theme-resolved='dark'] body.superadmin-body .admin-modal-header {
+  border-bottom-color: #2a2a2a !important;
+}
+
+html[data-theme-resolved='dark'] body.admin-body .admin-modal-close,
+html[data-theme-resolved='dark'] body.superadmin-body .admin-modal-close {
+  color: #a1a1aa !important;
+}
+
+/* ── Tables ── */
+html[data-theme-resolved='dark'] body.admin-body th,
+html[data-theme-resolved='dark'] body.superadmin-body th,
+html[data-theme-resolved='dark'] body.admin-body .mc-table th,
+html[data-theme-resolved='dark'] body.superadmin-body .mc-table th,
+html[data-theme-resolved='dark'] body.admin-body [class*='-table'] th,
+html[data-theme-resolved='dark'] body.superadmin-body [class*='-table'] th {
+  background: #141414 !important;
+  border-color: #2a2a2a !important;
+  color: #a1a1aa !important;
+}
+
+html[data-theme-resolved='dark'] body.admin-body td,
+html[data-theme-resolved='dark'] body.superadmin-body td,
+html[data-theme-resolved='dark'] body.admin-body .mc-table td,
+html[data-theme-resolved='dark'] body.superadmin-body .mc-table td,
+html[data-theme-resolved='dark'] body.admin-body [class*='-table'] td,
+html[data-theme-resolved='dark'] body.superadmin-body [class*='-table'] td {
+  background: #1c1c1c !important;
+  border-color: #2a2a2a !important;
+  color: #d4d4d8 !important;
+}
+
+html[data-theme-resolved='dark'] body.admin-body tr:hover td,
+html[data-theme-resolved='dark'] body.superadmin-body tr:hover td,
+html[data-theme-resolved='dark'] body.admin-body [class*='-table'] tbody tr:hover td,
+html[data-theme-resolved='dark'] body.superadmin-body [class*='-table'] tbody tr:hover td {
+  background: rgba(255, 255, 255, 0.04) !important;
+}
+
+/* ── Forms ── */
+html[data-theme-resolved='dark'] body.admin-body .form-control,
+html[data-theme-resolved='dark'] body.superadmin-body .form-control,
+html[data-theme-resolved='dark'] body.admin-body .form-select,
+html[data-theme-resolved='dark'] body.superadmin-body .form-select,
+html[data-theme-resolved='dark'] body.admin-body textarea,
+html[data-theme-resolved='dark'] body.superadmin-body textarea,
+html[data-theme-resolved='dark'] body.admin-body .admin-form-input,
+html[data-theme-resolved='dark'] body.superadmin-body .admin-form-input,
+html[data-theme-resolved='dark'] body.admin-body [class*='-search__input'],
+html[data-theme-resolved='dark'] body.superadmin-body [class*='-search__input'],
+html[data-theme-resolved='dark'] body.admin-body [class*='-filter'],
+html[data-theme-resolved='dark'] body.superadmin-body [class*='-filter'] {
+  background: #141414 !important;
+  border-color: #2a2a2a !important;
+  color: #ffffff !important;
+}
+
+html[data-theme-resolved='dark'] body.admin-body .form-label,
+html[data-theme-resolved='dark'] body.superadmin-body .form-label,
+html[data-theme-resolved='dark'] body.admin-body .admin-form-label,
+html[data-theme-resolved='dark'] body.superadmin-body .admin-form-label,
+html[data-theme-resolved='dark'] body.admin-body label,
+html[data-theme-resolved='dark'] body.superadmin-body label {
+  color: #a1a1aa !important;
+}
+
+/* ── Buttons ── */
+html[data-theme-resolved='dark'] body.admin-body .mc-btn--primary,
+html[data-theme-resolved='dark'] body.superadmin-body .mc-btn--primary,
+html[data-theme-resolved='dark'] body.admin-body .adm-action-btn:not(.adm-action-btn--outline),
+html[data-theme-resolved='dark'] body.superadmin-body .adm-action-btn:not(.adm-action-btn--outline) {
+  background: #7c3aed !important;
+  border-color: #7c3aed !important;
+  color: #ffffff !important;
+}
+
+html[data-theme-resolved='dark'] body.admin-body .mc-btn--secondary,
+html[data-theme-resolved='dark'] body.superadmin-body .mc-btn--secondary,
+html[data-theme-resolved='dark'] body.admin-body .adm-action-btn--outline,
+html[data-theme-resolved='dark'] body.superadmin-body .adm-action-btn--outline {
+  background: transparent !important;
+  border-color: #2a2a2a !important;
+  color: #a1a1aa !important;
+}
+
+/* ── Bootstrap ── */
+html[data-theme-resolved='dark'] body.admin-body .dropdown-menu,
+html[data-theme-resolved='dark'] body.superadmin-body .dropdown-menu,
+html[data-theme-resolved='dark'] body.admin-body .modal-content,
+html[data-theme-resolved='dark'] body.superadmin-body .modal-content,
+html[data-theme-resolved='dark'] body.admin-body .list-group-item,
+html[data-theme-resolved='dark'] body.superadmin-body .list-group-item {
+  background: #1c1c1c !important;
+  border-color: #2a2a2a !important;
+  color: #ffffff !important;
+}
+
+html[data-theme-resolved='dark'] body.admin-body .dropdown-item:hover,
+html[data-theme-resolved='dark'] body.superadmin-body .dropdown-item:hover {
+  background: rgba(255, 255, 255, 0.06) !important;
+  color: #ffffff !important;
+}
+
+/* ── Metric icon tints ── */
+html[data-theme-resolved='dark'] body.admin-body .adm-metric-icon--blue,
+html[data-theme-resolved='dark'] body.superadmin-body .adm-metric-icon--blue {
+  background: rgba(59, 130, 246, 0.15) !important;
+  color: #93c5fd !important;
+}
+
+html[data-theme-resolved='dark'] body.admin-body .adm-metric-icon--indigo,
+html[data-theme-resolved='dark'] body.superadmin-body .adm-metric-icon--indigo {
+  background: rgba(99, 102, 241, 0.15) !important;
+  color: #a5b4fc !important;
+}
+
+html[data-theme-resolved='dark'] body.admin-body .adm-metric-icon--teal,
+html[data-theme-resolved='dark'] body.superadmin-body .adm-metric-icon--teal {
+  background: rgba(20, 184, 166, 0.15) !important;
+  color: #5eead4 !important;
+}
+
+html[data-theme-resolved='dark'] body.admin-body .adm-metric-icon--red,
+html[data-theme-resolved='dark'] body.superadmin-body .adm-metric-icon--red {
+  background: rgba(220, 38, 38, 0.15) !important;
+  color: #fca5a5 !important;
+}
+
+/* ── Typography ── */
+html[data-theme-resolved='dark'] body.admin-body h1,
+html[data-theme-resolved='dark'] body.admin-body h2,
+html[data-theme-resolved='dark'] body.admin-body h3,
+html[data-theme-resolved='dark'] body.admin-body h4,
+html[data-theme-resolved='dark'] body.superadmin-body h1,
+html[data-theme-resolved='dark'] body.superadmin-body h2,
+html[data-theme-resolved='dark'] body.superadmin-body h3,
+html[data-theme-resolved='dark'] body.superadmin-body h4,
+html[data-theme-resolved='dark'] body.admin-body .adm-banner-title,
+html[data-theme-resolved='dark'] body.superadmin-body .adm-banner-title,
+html[data-theme-resolved='dark'] body.admin-body .adm-card-head-title,
+html[data-theme-resolved='dark'] body.superadmin-body .adm-card-head-title,
+html[data-theme-resolved='dark'] body.admin-body .adm-metric-value,
+html[data-theme-resolved='dark'] body.superadmin-body .adm-metric-value,
+html[data-theme-resolved='dark'] body.admin-body .text-h1,
+html[data-theme-resolved='dark'] body.superadmin-body .text-h1,
+html[data-theme-resolved='dark'] body.admin-body .text-h2,
+html[data-theme-resolved='dark'] body.superadmin-body .text-h2,
+html[data-theme-resolved='dark'] body.admin-body strong,
+html[data-theme-resolved='dark'] body.superadmin-body strong,
+html[data-theme-resolved='dark'] body.admin-body b,
+html[data-theme-resolved='dark'] body.superadmin-body b {
+  color: #ffffff !important;
+}
+
+html[data-theme-resolved='dark'] body.admin-body p,
+html[data-theme-resolved='dark'] body.superadmin-body p,
+html[data-theme-resolved='dark'] body.admin-body .adm-banner-sub,
+html[data-theme-resolved='dark'] body.superadmin-body .adm-banner-sub,
+html[data-theme-resolved='dark'] body.admin-body .adm-metric-label,
+html[data-theme-resolved='dark'] body.superadmin-body .adm-metric-label,
+html[data-theme-resolved='dark'] body.admin-body .adm-metric-sub,
+html[data-theme-resolved='dark'] body.superadmin-body .adm-metric-sub,
+html[data-theme-resolved='dark'] body.admin-body .text-muted,
+html[data-theme-resolved='dark'] body.superadmin-body .text-muted,
+html[data-theme-resolved='dark'] body.admin-body .admin-form-hint,
+html[data-theme-resolved='dark'] body.superadmin-body .admin-form-hint,
+html[data-theme-resolved='dark'] body.admin-body small,
+html[data-theme-resolved='dark'] body.superadmin-body small {
+  color: #a1a1aa !important;
+}
+
+/* ── Chart cards ── */
+html[data-theme-resolved='dark'] body.admin-body .mc-chart-card,
+html[data-theme-resolved='dark'] body.superadmin-body .mc-chart-card,
+html[data-theme-resolved='dark'] body.admin-body .adm-chart-card,
+html[data-theme-resolved='dark'] body.superadmin-body .adm-chart-card {
+  background: #1c1c1c !important;
+  border-color: #2a2a2a !important;
+}
+
+html[data-theme-resolved='dark'] body.admin-body .mc-chart-canvas-wrap canvas,
+html[data-theme-resolved='dark'] body.superadmin-body .mc-chart-canvas-wrap canvas {
+  background: transparent !important;
+}
+
+/* ── Kill light row / hover leaks ── */
+html[data-theme-resolved='dark'] body.admin-body .adm-pending-item:hover,
+html[data-theme-resolved='dark'] body.superadmin-body .adm-pending-item:hover,
+html[data-theme-resolved='dark'] body.admin-body .staff-apps-stat:hover,
+html[data-theme-resolved='dark'] body.superadmin-body .staff-apps-stat:hover {
+  background: #222222 !important;
+}

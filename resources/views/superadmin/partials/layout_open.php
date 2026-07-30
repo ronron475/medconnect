@@ -36,6 +36,12 @@
   ?>
   <link rel="stylesheet" href="<?= ASSET_BASE ?>/assets/css/profile-picture.css?v=<?= $profilePictureCssVer ?>"/>
   <?php require_once VIEWS_PATH . '/partials/auth_transition_assets.php'; ?>
+  <?php
+  $portal_dark_mode_css = 'admin-dark-mode.css';
+  $adminDarkCss = ASSETS_PATH . '/css/admin-dark-mode.css';
+  $adminDarkVer = file_exists($adminDarkCss) ? (int) filemtime($adminDarkCss) : time();
+  ?>
+  <link rel="stylesheet" href="<?= ASSET_BASE ?>/assets/css/admin-dark-mode.css?v=<?= $adminDarkVer ?>"/>
 </head>
 <body
   class="admin-body superadmin-body"
