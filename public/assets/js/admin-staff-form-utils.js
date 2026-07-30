@@ -139,7 +139,19 @@
   }
 
   function validatePhone(value) {
-    return /^(09|\+639)\d{9}$/.test(String(value || '').trim());
+    var digits = String(value || '').replace(/\D/g, '');
+    if (!digits) return false;
+    if (digits.length !== 11) return false;
+    return /^09\d{9}$/.test(digits);
+  }
+
+  function phoneErrorMessage(value) {
+    var digits = String(value || '').replace(/\D/g, '');
+    if (!digits) return 'Contact number is required.';
+    if (!/^\d+$/.test(digits)) return 'Phone number must contain digits only.';
+    if (digits.length !== 11) return 'Phone number must be exactly 11 digits (e.g. 09171234567).';
+    if (!/^09\d{9}$/.test(digits)) return 'Enter a valid Philippine mobile number starting with 09.';
+    return '';
   }
 
   function setFormLoading(form, loading, submitBtn, loadingText) {

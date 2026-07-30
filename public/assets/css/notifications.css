@@ -181,7 +181,8 @@
 
 .mc-notif-icon--emergency,
 .mc-notif-icon--critical { background: #fee2e2; color: #dc2626; }
-.mc-notif-icon--warning { background: #fef3c7; color: #d97706; }
+.mc-notif-icon--warning { background: #fef3c7; color: #f59e0b; }
+.mc-notif-icon--information { background: #dbeafe; color: #2563eb; }
 .mc-notif-icon--success { background: #dcfce7; color: #16a34a; }
 
 .mc-notif-body { flex: 1; min-width: 0; }
@@ -224,7 +225,8 @@
 
 .mc-notif-priority--emergency,
 .mc-notif-priority--critical { background: #fee2e2; color: #dc2626; }
-.mc-notif-priority--high { background: #fef3c7; color: #d97706; }
+.mc-notif-priority--high { background: #fef3c7; color: #f59e0b; }
+.mc-notif-priority--information { background: #dbeafe; color: #2563eb; }
 .mc-notif-priority--normal { background: #e2e8f0; color: #475569; }
 
 .mc-notif-empty {
@@ -557,4 +559,55 @@
     padding: 10px;
     font-size: 16px;
   }
+}
+
+/* ── Dark mode notification panel ── */
+html[data-theme-resolved='dark'] .mc-notif-panel {
+  background: #1f2937 !important;
+  border-color: #334155 !important;
+  color: #f8fafc;
+}
+
+html[data-theme-resolved='dark'] .mc-notif-title {
+  color: #f8fafc !important;
+}
+
+html[data-theme-resolved='dark'] .mc-notif-message,
+html[data-theme-resolved='dark'] .mc-notif-meta {
+  color: #cbd5e1 !important;
+}
+
+html[data-theme-resolved='dark'] .mc-notif-item:hover,
+html[data-theme-resolved='dark'] .mc-notif-item.is-unread {
+  background: rgba(51, 65, 85, 0.45) !important;
+}
+
+html[data-theme-resolved='dark'] .mc-notif-icon--critical {
+  background: rgba(220, 38, 38, 0.2);
+  color: #f87171;
+}
+
+html[data-theme-resolved='dark'] .mc-notif-icon--warning {
+  background: rgba(245, 158, 11, 0.2);
+  color: #fbbf24;
+}
+
+html[data-theme-resolved='dark'] .mc-notif-icon--information {
+  background: rgba(37, 99, 235, 0.2);
+  color: #60a5fa;
+}
+
+html[data-theme-resolved='dark'] .mc-notif-priority--critical {
+  background: rgba(220, 38, 38, 0.2);
+  color: #f87171;
+}
+
+html[data-theme-resolved='dark'] .mc-notif-priority--high {
+  background: rgba(245, 158, 11, 0.2);
+  color: #fbbf24;
+}
+
+html[data-theme-resolved='dark'] .mc-notif-priority--information {
+  background: rgba(37, 99, 235, 0.2);
+  color: #60a5fa;
 }

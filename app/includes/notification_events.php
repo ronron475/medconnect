@@ -610,10 +610,11 @@ final class NotificationEvents
         ]);
         NotificationManager::create($pdo, $userId, [
             'receiver_role' => $role,
-            'type'          => NotificationManager::TYPE_SECURITY,
-            'title'         => 'Security Alert',
-            'message'       => 'A failed login attempt was detected on your account.',
+            'type'          => NotificationManager::TYPE_CRITICAL,
+            'title'         => 'Failed Login Attempt',
+            'message'       => 'A failed login attempt was detected on your account. If this was not you, change your password immediately.',
             'priority'      => 'critical',
+            'icon'          => 'alert-octagon',
             'action_url'    => NotificationManager::dashboardPathForRole($role),
         ]);
     }

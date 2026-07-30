@@ -208,10 +208,20 @@
     }
   })() || getMetaPreference() || 'system';
 
-  applyTheme(initial, false);
-  try {
-    localStorage.setItem(STORAGE_KEY, initial);
-  } catch (e) { /* ignore */ }
+  const currentPref = root.getAttribute('data-theme-preference');
+  const currentResolved = root.getAttribute('data-theme-resolved');
+  const resolvedInitial = resolveTheme(initial);
+
+  if (currentPref === initial && currentResolved === resolvedInitial) {
+    try {
+      localStorage.setItem(STORAGE_KEY, initial);
+    } catch (e) { /* ignore */ }
+  } else {
+    applyTheme(initial, false);
+    try {
+      localStorage.setItem(STORAGE_KEY, initial);
+    } catch (e) { /* ignore */ }
+  }
 
   bindToggle();
   bindPatientAppearanceForm();

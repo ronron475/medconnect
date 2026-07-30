@@ -50,7 +50,9 @@ ob_start();
   }
 
   function isValidPhMobile(v) {
-    return /^09\d{9}$/.test(normalizePhone(v));
+    var n = normalizePhone(v);
+    if (n.length !== 11) return false;
+    return /^09\d{9}$/.test(n);
   }
 
   function isValidEmail(v) {

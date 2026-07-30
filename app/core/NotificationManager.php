@@ -477,10 +477,10 @@ final class NotificationManager
     private static function mapPriorityFromType(string $type): string
     {
         return match ($type) {
-            self::TYPE_EMERGENCY, self::TYPE_CRITICAL => 'emergency',
+            self::TYPE_EMERGENCY, self::TYPE_CRITICAL => 'critical',
             self::TYPE_WARNING => 'high',
-            self::TYPE_SECURITY => 'critical',
-            self::TYPE_REMINDER => 'normal',
+            self::TYPE_INFORMATION, self::TYPE_SUCCESS, self::TYPE_REMINDER => 'normal',
+            self::TYPE_SECURITY => 'high',
             default => 'normal',
         };
     }
@@ -489,6 +489,7 @@ final class NotificationManager
     {
         return match ($type) {
             self::TYPE_SUCCESS      => 'check-circle',
+            self::TYPE_INFORMATION  => 'shield',
             self::TYPE_WARNING      => 'alert-triangle',
             self::TYPE_CRITICAL,
             self::TYPE_EMERGENCY    => 'alert-octagon',

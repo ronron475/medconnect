@@ -243,6 +243,27 @@ function patient_is_valid_ph_mobile(string $phone): bool
 }
 
 /**
+ * Human-readable validation error for PH mobile (exactly 11 digits, 09XXXXXXXXX).
+ */
+function patient_phone_validation_error(string $phone): ?string
+{
+    $digits = patient_normalize_phone($phone);
+    if ($digits === '') {
+        return 'Contact number is required.';
+    }
+    if (!preg_match('/^\d+$/', $digits)) {
+        return 'Phone number must contain digits only.';
+    }
+    if (strlen($digits) !== 11) {
+        return 'Phone number must be exactly 11 digits (e.g. 09171234567).';
+    }
+    if (!preg_match('/^09\d{9}$/', patient_canonical_ph_mobile($phone))) {
+        return 'Enter a valid Philippine mobile number starting with 09.';
+    }
+    return null;
+}
+
+/**
  * Whether the patient must complete first-login account setup.
  */
 function patient_requires_account_setup(PDO $pdo, int $userId): bool

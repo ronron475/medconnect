@@ -429,8 +429,14 @@ const step2Rules = {
     return '';
   },
   'reg-confirm-password': v => !v ? 'Confirm password is required.' : v !== document.getElementById('reg-password').value ? 'Passwords do not match.' : '',
-  'contact-number':    v => !v.trim() ? 'Contact number is required.'
-                          : !/^(09|\+639)\d{9}$/.test(v.trim().replace(/\s/g,'')) ? 'Enter a valid PH mobile number (e.g. 09171234567).' : '',
+  'contact-number':    v => {
+    if (window.MCPhoneValidation) return window.MCPhoneValidation.validatePhone(v);
+    const digits = (v || '').replace(/\D/g, '');
+    if (!digits) return 'Contact number is required.';
+    if (digits.length !== 11) return 'Phone number must be exactly 11 digits (e.g. 09171234567).';
+    if (!/^09\d{9}$/.test(digits)) return 'Enter a valid Philippine mobile number starting with 09.';
+    return '';
+  },
   'blood-type':        v => !v ? 'Please select a blood type.' : '',
   'chief-complaint':   v => {
     const t = (v || '').trim();

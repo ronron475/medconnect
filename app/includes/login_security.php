@@ -131,12 +131,25 @@ function login_security_record_success(PDO $pdo, int $userId, string $role): voi
     if ($isNewDevice) {
         try {
             NotificationManager::create($pdo, $userId, [
-                'type'       => NotificationManager::TYPE_SECURITY,
+                'type'       => NotificationManager::TYPE_WARNING,
                 'title'      => 'New Device Login',
-                'message'    => 'Your account was accessed from a new device.',
-                'priority'   => 'critical',
+                'message'    => 'Your account was accessed from a new or unrecognized device. If this was not you, secure your account immediately.',
+                'priority'   => 'high',
+                'icon'       => 'alert-triangle',
                 'action_url' => '/views/security/devices.php',
                 'email'      => true,
+            ]);
+        } catch (Throwable $e) { /* non-fatal */ }
+    } else {
+        try {
+            NotificationManager::create($pdo, $userId, [
+                'type'       => NotificationManager::TYPE_INFORMATION,
+                'title'      => 'Login Successful',
+                'message'    => 'You signed in from a recognized device.',
+                'priority'   => 'normal',
+                'icon'       => 'shield',
+                'action_url' => NotificationManager::dashboardPathForRole($role),
+                'email'      => false,
             ]);
         } catch (Throwable $e) { /* non-fatal */ }
     }
