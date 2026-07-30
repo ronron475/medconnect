@@ -243,6 +243,7 @@
   </style>
   <?php require_once VIEWS_PATH . '/partials/auth_transition_assets.php'; ?>
   <?php
+  $portal_dark_mode_css = 'bhw-dark-mode.css';
   $bhwDarkCss = ASSETS_PATH . '/css/bhw-dark-mode.css';
   $bhwDarkVer = file_exists($bhwDarkCss) ? (int) filemtime($bhwDarkCss) : time();
   ?>

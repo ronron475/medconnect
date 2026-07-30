@@ -89,12 +89,16 @@ body.superadmin-body {
   transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
 }
 
-html[data-theme-resolved='dark'] body.patient-portal,
+html[data-theme-resolved='dark'] body.patient-portal {
+  background-color: var(--mc-theme-bg);
+  color: var(--mc-theme-text);
+}
+
 html[data-theme-resolved='dark'] body.admin-body,
 html[data-theme-resolved='dark'] body.bhw-body,
 html[data-theme-resolved='dark'] body.superadmin-body {
-  background-color: var(--mc-theme-bg);
-  color: var(--mc-theme-text);
+  background-color: #0a0a0a;
+  color: #ffffff;
 }
 
 html[data-theme-resolved='dark'] body.provider-body {
