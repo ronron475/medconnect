@@ -518,6 +518,7 @@
     if (/\/app\/api\/patient\/acknowledge_recommendation\.php/i.test(urlStr)) return false;
     if (/\/app\/api\/patient\/submit_symptoms_review\.php/i.test(urlStr)) return false;
     if (/\/app\/api\/patient\/request_alternate_booking_provider\.php/i.test(urlStr)) return false;
+    if (/\/app\/api\/provider\/save_schedule\.php/i.test(urlStr)) return false;
 
     return /\/app\/(api|controllers)\//i.test(urlStr);
   }

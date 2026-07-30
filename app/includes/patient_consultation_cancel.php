@@ -11,9 +11,15 @@ require_once __DIR__ . '/triage_assessment_schema.php';
 
 /**
  * Free any booked slot linked to a consultation so another patient can take it.
+ * Prefer consultation_id; fall back to patient + date/time when the link is missing.
  */
-function consultation_release_booked_slots(PDO $pdo, int $consultationId): int
-{
+function consultation_release_booked_slots(
+    PDO $pdo,
+    int $consultationId,
+    ?int $patientId = null,
+    ?string $consultDate = null,
+    ?string $consultTime = null
+): int {
     if ($consultationId <= 0) {
         return 0;
     }
@@ -27,12 +33,36 @@ function consultation_release_booked_slots(PDO $pdo, int $consultationId): int
           AND status = 'booked'
     ");
     $stmt->execute([$consultationId]);
+    $freed = (int) $stmt->rowCount();
 
-    return (int) $stmt->rowCount();
+    // Legacy / edge cases: booked by patient+time without consultation_id link.
+    if ($freed === 0 && $patientId !== null && $patientId > 0 && $consultDate && $consultTime) {
+        $date = substr($consultDate, 0, 10);
+        $time = substr($consultTime, 0, 8);
+        if (strlen($time) === 5) {
+            $time .= ':00';
+        }
+        $fallback = $pdo->prepare("
+            UPDATE appointment_slots
+            SET status = 'available',
+                patient_id = NULL,
+                consultation_id = NULL
+            WHERE patient_id = ?
+              AND slot_date = ?
+              AND start_time = ?
+              AND status = 'booked'
+              AND (consultation_id IS NULL OR consultation_id = 0 OR consultation_id = ?)
+        ");
+        $fallback->execute([$patientId, $date, $time, $consultationId]);
+        $freed = (int) $fallback->rowCount();
+    }
+
+    return $freed;
 }
 
 /**
- * Patient cancels a pending/scheduled visit and immediately frees the slot.
+ * Patient cancels a pending/scheduled visit and immediately frees the slot
+ * so it returns to the provider’s open schedule for other patients.
  *
  * @return array{ok:bool,message:string,slots_freed?:int,consultation_id?:int}
  */
@@ -40,15 +70,6 @@ function patient_cancel_consultation(PDO $pdo, int $patientId, int $consultation
 {
     if ($patientId <= 0 || $consultationId <= 0) {
         return ['ok' => false, 'message' => 'Invalid consultation.'];
-    }
-
-    // Only allow cancel after doctor-approved care tips (same rule as UI).
-    $tipsPrompt = patient_tips_ready_cancel_prompt($pdo, $patientId);
-    if ($tipsPrompt === null) {
-        return [
-            'ok' => false,
-            'message' => 'You can cancel a video visit only after your doctor has approved your care tips.',
-        ];
     }
 
     try {
@@ -92,7 +113,13 @@ function patient_cancel_consultation(PDO $pdo, int $patientId, int $consultation
             return ['ok' => false, 'message' => 'Could not cancel this appointment. Please refresh and try again.'];
         }
 
-        $slotsFreed = consultation_release_booked_slots($pdo, $consultationId);
+        $slotsFreed = consultation_release_booked_slots(
+            $pdo,
+            $consultationId,
+            $patientId,
+            (string) ($row['consult_date'] ?? ''),
+            (string) ($row['consult_time'] ?? '')
+        );
 
         try {
             $pdo->prepare("

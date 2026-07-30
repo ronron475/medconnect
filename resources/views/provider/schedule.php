@@ -59,12 +59,11 @@ $session_count_today = count($today_sessions);
 
 <div class="sched-page-header">
   <div>
-    <h2 class="text-h2">Weekly Availability</h2>
+    <h2 class="text-h2">Daily Availability</h2>
     <p>
-      Set recurring clinic sessions for <strong>any weekday</strong>.
-      Patients can book <strong>today&apos;s</strong> open slots
+      Set your <strong>video consultation</strong> hours for <strong>today only</strong>
       (<?= htmlspecialchars($today_name) ?>, <?= date('M j, Y') ?>).
-      Expand a day, add morning/afternoon sessions, then save.
+      At <strong>12:00 AM</strong> today&apos;s schedule locks — create a new one tomorrow.
     </p>
   </div>
   <div class="sched-summary">
@@ -80,11 +79,17 @@ $session_count_today = count($today_sessions);
   </div>
 </div>
 
+<div class="sched-policy-banner" role="note">
+  <strong>Daily schedule policy:</strong>
+  Doctors create and edit availability for the current day only.
+  After midnight the day is locked and cannot be edited.
+</div>
+
 <div class="row g-4">
   <div class="col-lg-8">
     <div class="mc-card">
       <div class="mc-card-header">
-        <h3 class="text-h3"><?= icon('calendar') ?> Day Configuration</h3>
+        <h3 class="text-h3"><?= icon('calendar') ?> Today&apos;s Schedule</h3>
       </div>
       <div class="mc-card-body mt-2 sched-days-stack">
         <?php foreach ($days_order as $day):
@@ -156,11 +161,25 @@ $session_count_today = count($today_sessions);
     <div class="mc-card mt-4 sched-note-card">
       <h4 class="text-h3" style="color:#069396;margin-bottom:8px;">How it works</h4>
       <p>
-        Edit <strong>any weekday</strong> to set recurring clinic hours (e.g. Mon morning + afternoon).
-        Use <strong>+ Add Session</strong> for split hours. Saving updates that day&apos;s template and regenerates
-        upcoming <strong>available</strong> slots; <strong>booked</strong> appointments are never removed.
-        Patients can book <strong>today&apos;s</strong> open slots only.
+        Build <strong>today&apos;s</strong> clinic sessions (e.g. morning and afternoon), choose slot length, then save.
+        Patients book open slots for <strong>today</strong> only.
+        At <strong>12:00 AM</strong> this day locks — tomorrow you create a new schedule.
+        Other weekdays are view-only until that calendar day arrives.
       </p>
+    </div>
+  </div>
+</div>
+
+<div id="schedConfirmModal" class="sched-confirm" hidden aria-hidden="true">
+  <div class="sched-confirm__backdrop" data-sched-confirm-cancel></div>
+  <div class="sched-confirm__dialog" role="dialog" aria-modal="true" aria-labelledby="schedConfirmTitle">
+    <h3 id="schedConfirmTitle" class="sched-confirm__title">Save schedule?</h3>
+    <p id="schedConfirmMessage" class="sched-confirm__message">
+      Are you sure you want to save today&apos;s availability?
+    </p>
+    <div class="sched-confirm__actions">
+      <button type="button" class="mc-btn mc-btn--outline" data-sched-confirm-cancel>No</button>
+      <button type="button" class="mc-btn mc-btn--primary" data-sched-confirm-yes>Yes</button>
     </div>
   </div>
 </div>

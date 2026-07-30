@@ -1,6 +1,7 @@
 /**
- * Provider Schedule & Availability — multi-session weekly editor
- * All weekdays are editable (recurring templates).
+ * Provider Schedule & Availability — daily video-consult editor
+ * Only today is editable; other weekdays are locked (view only) after midnight.
+ * No full-page loader on save — confirm modal only.
  */
 (function () {
   'use strict';
@@ -139,45 +140,101 @@
     });
   }
 
-  function bindDayBlock(dayBlock) {
-    const sessionsList = dayBlock.querySelector('[data-sessions-list]');
-    const validationBox = dayBlock.querySelector('[data-sched-validation]');
-    const addBtn = dayBlock.querySelector('[data-add-session]');
-    const saveBtn = dayBlock.querySelector('.schedule-save-btn');
+  function confirmSave(dayName) {
+    const modal = document.getElementById('schedConfirmModal');
+    if (!modal) {
+      return Promise.resolve(window.confirm(
+        'Are you sure you want to save today\'s availability?'
+      ));
+    }
+
+    const msg = modal.querySelector('#schedConfirmMessage');
+    if (msg) {
+      msg.textContent = 'Are you sure you want to save ' + (dayName || 'today')
+        + '\'s availability? This will update open appointment slots.';
+    }
+
+    modal.hidden = false;
+    modal.setAttribute('aria-hidden', 'false');
+
+    return new Promise((resolve) => {
+      const finish = (ok) => {
+        modal.hidden = true;
+        modal.setAttribute('aria-hidden', 'true');
+        modal.removeEventListener('click', onClick);
+        document.removeEventListener('keydown', onKey);
+        resolve(ok);
+      };
+      const onClick = (e) => {
+        if (e.target.closest('[data-sched-confirm-yes]')) {
+          finish(true);
+          return;
+        }
+        if (e.target.closest('[data-sched-confirm-cancel]')) {
+          finish(false);
+        }
+      };
+      const onKey = (e) => {
+        if (e.key === 'Escape') finish(false);
+      };
+      modal.addEventListener('click', onClick);
+      document.addEventListener('keydown', onKey);
+      modal.querySelector('[data-sched-confirm-yes]')?.focus();
+    });
+  }
+
+  function notify(message, isError) {
+    if (window.mcToast) {
+      window.mcToast(message);
+      return;
+    }
+    if (isError) {
+      window.alert(message);
+    }
+  }
+
+  function bindToggle(dayBlock) {
     const toggleBtn = dayBlock.querySelector('[data-toggle-day]');
     const body = dayBlock.querySelector('[data-day-body]');
     const isToday = dayBlock.dataset.isToday === '1';
+    if (!toggleBtn || !body) return;
 
     function setOpen(open) {
-      if (!body || !toggleBtn) return;
       body.hidden = !open;
       toggleBtn.setAttribute('aria-expanded', open ? 'true' : 'false');
       const label = toggleBtn.querySelector('[data-toggle-label]');
-      if (label) label.textContent = open ? 'Collapse' : 'Expand';
+      if (label) {
+        if (isToday) label.textContent = open ? 'Collapse' : 'Expand';
+        else label.textContent = open ? 'Hide' : 'View';
+      }
       dayBlock.classList.toggle('is-collapsed', !open);
     }
 
-    // Non-today days start collapsed (markup already has hidden body).
-    if (!isToday) {
-      setOpen(false);
-    } else {
+    if (!isToday) setOpen(false);
+    else {
       dayBlock.classList.remove('is-collapsed');
+      setOpen(true);
     }
 
-    if (toggleBtn) {
-      toggleBtn.addEventListener('click', (e) => {
-        e.preventDefault();
-        setOpen(!!body?.hidden);
-      });
-    }
+    toggleBtn.addEventListener('click', (e) => {
+      e.preventDefault();
+      setOpen(!!body.hidden);
+    });
 
     const head = dayBlock.querySelector('.sched-day__head');
-    if (head && body) {
+    if (head) {
       head.addEventListener('click', (e) => {
         if (e.target.closest('[data-toggle-day], a, input, button, label')) return;
         setOpen(!!body.hidden);
       });
     }
+  }
+
+  function bindEditableDay(dayBlock) {
+    const sessionsList = dayBlock.querySelector('[data-sessions-list]');
+    const validationBox = dayBlock.querySelector('[data-sched-validation]');
+    const addBtn = dayBlock.querySelector('[data-add-session]');
+    const saveBtn = dayBlock.querySelector('.schedule-save-btn');
 
     if (addBtn && sessionsList) {
       addBtn.addEventListener('click', () => {
@@ -194,7 +251,7 @@
         const card = btn.closest('[data-session-card]');
         const cards = sessionsList.querySelectorAll('[data-session-card]');
         if (cards.length <= 1) {
-          showValidation(validationBox, ['Keep at least one session, or turn off bookings for this day.']);
+          showValidation(validationBox, ['Keep at least one session, or turn off bookings for today.']);
           return;
         }
         card?.remove();
@@ -211,8 +268,8 @@
 
     saveBtn.addEventListener('click', async () => {
       const day = dayBlock.dataset.day || '';
-      if (!day) {
-        alert('Missing day.');
+      if (dayBlock.dataset.editable !== '1' || day !== SCHEDULE_TODAY) {
+        notify('Schedules lock at midnight. You can only edit today\'s availability (' + SCHEDULE_TODAY + ').', true);
         return;
       }
 
@@ -222,11 +279,13 @@
 
       if (errors.length) {
         showValidation(validationBox, errors);
-        setOpen(true);
         return;
       }
 
       showValidation(validationBox, []);
+
+      const ok = await confirmSave(day);
+      if (!ok) return;
 
       const originalText = saveBtn.textContent;
       saveBtn.disabled = true;
@@ -246,7 +305,10 @@
           body: fd,
           credentials: 'include',
           cache: 'no-store',
-          headers: { 'X-Requested-With': 'XMLHttpRequest' },
+          headers: {
+            'X-Requested-With': 'XMLHttpRequest',
+            'X-MC-No-Loader': '1',
+          },
         });
 
         const raw = await res.text();
@@ -261,26 +323,25 @@
           saveBtn.classList.remove('is-saving');
           saveBtn.classList.add('is-success');
           saveBtn.textContent = 'Saved';
-          if (window.mcToast) {
-            window.mcToast(data.message || 'Schedule saved.');
-          } else {
-            alert(data.message || 'Schedule saved.');
-          }
-          setTimeout(() => window.location.reload(), 700);
+          notify(data.message || 'Schedule saved.');
+          // Quiet refresh — no login/logout loader splash.
+          setTimeout(() => {
+            window.location.replace(window.location.pathname + window.location.search);
+          }, 450);
           return;
         }
 
         if (data.errors?.length) {
           showValidation(validationBox, data.errors);
         } else if (data.message === 'Unauthorized.') {
-          alert('Your session expired. Please log in again.');
+          notify('Your session expired. Please log in again.', true);
           window.location.href = LOGIN_URL;
           return;
         } else {
-          alert(data.message || 'Could not save schedule.');
+          notify(data.message || 'Could not save schedule.', true);
         }
       } catch (err) {
-        alert(err.message || 'Error saving schedule.');
+        notify(err.message || 'Error saving schedule.', true);
       }
 
       saveBtn.disabled = false;
@@ -289,5 +350,10 @@
     });
   }
 
-  document.querySelectorAll('.sched-day[data-editable="1"], .sched-day-block[data-editable="1"]').forEach(bindDayBlock);
+  document.querySelectorAll('.sched-day').forEach((dayBlock) => {
+    bindToggle(dayBlock);
+    if (dayBlock.dataset.editable === '1') {
+      bindEditableDay(dayBlock);
+    }
+  });
 })();
