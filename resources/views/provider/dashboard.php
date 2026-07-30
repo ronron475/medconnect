@@ -59,7 +59,7 @@ $display_name = $provider['display_name'] ?? trim(($provider['first_name'] ?? ''
 $last_name = $provider['last_name'] ?? 'Provider';
 ?>
 
-<div class="prov-dash">
+<div class="prov-dash" data-live-dashboard>
 
   <!-- Welcome -->
   <section class="prov-dash-welcome prov-dash-welcome--compact">
@@ -72,7 +72,10 @@ $last_name = $provider['last_name'] ?? 'Provider';
         <span class="prov-dash-staff-id">Staff ID: <strong>MC-<?= str_pad((string) $provider_id, 5, '0', STR_PAD_LEFT) ?></strong></span>
       </div>
     </div>
-    <span class="prov-dash-badge">Active Duty</span>
+    <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+      <span class="text-xs text-muted" data-live-sync aria-live="polite">Live</span>
+      <span class="prov-dash-badge">Active Duty</span>
+    </div>
   </section>
 
   <section class="prov-dash-metrics prov-dash-metrics--unified" data-notif-widgets aria-label="Operations summary">
@@ -80,28 +83,28 @@ $last_name = $provider['last_name'] ?? 'Provider';
       <span class="prov-dash-stat__icon" aria-hidden="true">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/></svg>
       </span>
-      <strong><?= (int) ($stats['appointments'] ?? 0) ?></strong>
+      <strong data-live-stat="appointments"><?= (int) ($stats['appointments'] ?? 0) ?></strong>
       <span>Today's Appointments</span>
     </div>
     <div class="prov-dash-stat prov-dash-stat--warn">
       <span class="prov-dash-stat__icon" aria-hidden="true">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
       </span>
-      <strong><?= (int) ($stats['pending'] ?? 0) ?></strong>
+      <strong data-live-stat="pending"><?= (int) ($stats['pending'] ?? 0) ?></strong>
       <span>Waiting in Queue</span>
     </div>
     <div class="prov-dash-stat">
       <span class="prov-dash-stat__icon" aria-hidden="true">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
       </span>
-      <strong><?= (int) ($stats['ongoing'] ?? 0) ?></strong>
+      <strong data-live-stat="ongoing"><?= (int) ($stats['ongoing'] ?? 0) ?></strong>
       <span>In Consultation</span>
     </div>
     <div class="prov-dash-stat">
       <span class="prov-dash-stat__icon" aria-hidden="true">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
       </span>
-      <strong><?= (int) ($stats['completed'] ?? 0) ?></strong>
+      <strong data-live-stat="completed"><?= (int) ($stats['completed'] ?? 0) ?></strong>
       <span>Completed (Month)</span>
     </div>
     <?php
@@ -121,16 +124,16 @@ $last_name = $provider['last_name'] ?? 'Provider';
       <section class="prov-dash-card">
         <div class="prov-dash-card__head">
           <h3 class="prov-dash-card__title"><?= icon('activity') ?> Consultation Activity</h3>
-          <span class="mc-badge"><?= $week_total ?> this week</span>
+          <span class="mc-badge" data-live-week-total><?= $week_total ?> this week</span>
         </div>
-        <p class="prov-dash-card__sub">Daily consultations over the last 7 days</p>
+        <p class="prov-dash-card__sub">Daily consultations over the last 7 days · auto-refreshes</p>
         <div class="mc-chart-canvas-wrap" style="min-height:220px;height:220px;">
           <canvas data-mc-weekly-bar="provWeekChartData" aria-label="Weekly consultation bar chart"></canvas>
         </div>
         <script type="application/json" id="provWeekChartData"><?= json_encode($week_chart, JSON_UNESCAPED_UNICODE) ?></script>
         <div class="prov-chart-legend">
           <span>Hover bars for daily counts</span>
-          <strong><?= htmlspecialchars(end($week_chart)['date'] ?? 'Today') ?> = today</strong>
+          <strong data-live-week-today><?= htmlspecialchars(end($week_chart)['date'] ?? 'Today') ?> = today</strong>
         </div>
       </section>
 
@@ -138,8 +141,9 @@ $last_name = $provider['last_name'] ?? 'Provider';
       <section class="prov-dash-card prov-dash-table">
         <div class="prov-dash-card__head">
           <h3 class="prov-dash-card__title"><?= icon('users') ?> Upcoming Consultations</h3>
-          <span class="mc-badge"><?= count($queue) ?> pending</span>
+          <span class="mc-badge" data-live-queue-count><?= count($queue) ?> pending</span>
         </div>
+        <div data-live-queue>
         <?php if (!empty($queue)): ?>
         <div class="table-responsive">
           <table class="mc-table">
@@ -205,6 +209,7 @@ $last_name = $provider['last_name'] ?? 'Provider';
           <a href="<?= ASSET_BASE ?>/views/provider/queue.php" class="mc-btn mc-btn--outline prov-dash-empty-cta">Open Live Queue</a>
         </div>
         <?php endif; ?>
+        </div>
       </section>
 
       <!-- Recent notifications -->
@@ -236,31 +241,29 @@ $last_name = $provider['last_name'] ?? 'Provider';
               <span class="prov-status-dot" style="background:#fbbf24;"></span>
               Waiting
             </span>
-            <strong><?= (int) ($stats['pending'] ?? 0) ?></strong>
+            <strong data-live-status="waiting"><?= (int) ($stats['pending'] ?? 0) ?></strong>
           </div>
           <div class="prov-status-item">
             <span class="prov-status-item__label">
               <span class="prov-status-dot" style="background:#3b82f6;"></span>
               In Consultation
             </span>
-            <strong><?= (int) ($stats['ongoing'] ?? 0) ?></strong>
+            <strong data-live-status="ongoing"><?= (int) ($stats['ongoing'] ?? 0) ?></strong>
           </div>
           <div class="prov-status-item">
             <span class="prov-status-item__label">
               <span class="prov-status-dot" style="background:#22c55e;"></span>
               Completed (month)
             </span>
-            <strong><?= (int) ($stats['completed'] ?? 0) ?></strong>
+            <strong data-live-status="completed"><?= (int) ($stats['completed'] ?? 0) ?></strong>
           </div>
-          <?php if (!empty($stats['urgent'])): ?>
-          <div class="prov-status-item" style="border-color:#fecaca;background:#fef2f2;">
+          <div class="prov-status-item" data-live-urgent-wrap style="border-color:#fecaca;background:#fef2f2;"<?= empty($stats['urgent']) ? ' hidden' : '' ?>>
             <span class="prov-status-item__label">
               <span class="prov-status-dot" style="background:#ef4444;"></span>
               Urgent Triage
             </span>
-            <strong style="color:#dc2626;"><?= (int) $stats['urgent'] ?></strong>
+            <strong style="color:#dc2626;" data-live-status="urgent"><?= (int) ($stats['urgent'] ?? 0) ?></strong>
           </div>
-          <?php endif; ?>
         </div>
       </section>
 
@@ -268,6 +271,7 @@ $last_name = $provider['last_name'] ?? 'Provider';
         <div class="prov-dash-card__head">
           <h3 class="prov-dash-card__title"><?= icon('activity') ?> Recent Activity</h3>
         </div>
+        <div data-live-activity>
         <?php if (empty($activity)): ?>
         <p class="text-xs text-muted" style="text-align:center;padding:12px 0;margin:0;">No recent activity yet.</p>
         <?php else: ?>
@@ -283,6 +287,7 @@ $last_name = $provider['last_name'] ?? 'Provider';
           <?php endforeach; ?>
         </div>
         <?php endif; ?>
+        </div>
       </section>
 
       <section class="prov-dash-card">
@@ -318,9 +323,11 @@ $last_name = $provider['last_name'] ?? 'Provider';
 $mc_chart_css_ver = (int) @filemtime(ASSETS_PATH . '/css/medconnect-charts.css');
 $mc_chart_theme_ver = (int) @filemtime(ASSETS_PATH . '/js/medconnect-chart-theme.js');
 $mc_portal_charts_ver = (int) @filemtime(ASSETS_PATH . '/js/medconnect-portal-charts.js');
+$mc_dash_live_ver = (int) @filemtime(ASSETS_PATH . '/js/provider-dashboard-live.js');
 ?>
 <link rel="stylesheet" href="<?= ASSET_BASE ?>/assets/css/medconnect-charts.css?v=<?= $mc_chart_css_ver ?>">
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="<?= ASSET_BASE ?>/assets/js/medconnect-chart-theme.js?v=<?= $mc_chart_theme_ver ?>"></script>
 <script src="<?= ASSET_BASE ?>/assets/js/medconnect-portal-charts.js?v=<?= $mc_portal_charts_ver ?>"></script>
+<script src="<?= ASSET_BASE ?>/assets/js/provider-dashboard-live.js?v=<?= $mc_dash_live_ver ?>"></script>
 <?php require __DIR__.'/partials/layout_close.php'; ?>
