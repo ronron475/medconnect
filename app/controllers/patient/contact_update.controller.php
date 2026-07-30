@@ -35,8 +35,14 @@ $city_municipality= trim($_POST['city_municipality']?? '');
 
 if ($contact_number === '') {
     $errors['contact_number'] = 'Contact number is required.';
-} elseif (!preg_match('/^(09|\+639)\d{9}$/', $contact_number)) {
-    $errors['contact_number'] = 'Enter a valid PH mobile number (e.g. 09171234567).';
+} else {
+    require_once BASE_PATH . '/app/includes/patient_account_security.php';
+    $phoneErr = patient_phone_validation_error($contact_number);
+    if ($phoneErr !== null) {
+        $errors['contact_number'] = $phoneErr;
+    } else {
+        $contact_number = patient_canonical_ph_mobile($contact_number);
+    }
 }
 
 if ($email === '') {

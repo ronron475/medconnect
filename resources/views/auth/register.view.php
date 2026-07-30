@@ -3,6 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <?php require_once dirname(__DIR__) . '/partials/theme_init.php'; ?>
   <title>medConnect — Create Patient Account</title>
   <?php
     if (!defined('BASE_PATH')) {
@@ -598,7 +599,7 @@
                 <label for="contact-number">Contact Number <span class="req">*</span></label>
                 <div class="input-wrap">
                   <span class="input-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 12 19.79 19.79 0 0 1 1.61 3.4 2 2 0 0 1 3.6 1.22h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L7.91 8.8a16 16 0 0 0 6.29 6.29l.96-.96a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg></span>
-                  <input type="tel" id="contact-number" name="contact_number" placeholder="e.g. 09171234567" autocomplete="tel" />
+                  <input type="tel" id="contact-number" name="contact_number" placeholder="e.g. 09171234567" autocomplete="tel" maxlength="11" inputmode="numeric" data-phone-input />
                 </div>
                 <span class="field-error" id="contact-number-error" role="alert"></span>
               </div>
@@ -774,6 +775,7 @@
   window.CSRF_TOKEN = <?= json_encode((string) ($_SESSION['csrf_token'] ?? '')) ?>;
 </script>
 <script src="<?= $b ?>/assets/js/ph-address-autofill.js?v=20260703h"></script>
+<script src="<?= $b ?>/assets/js/phone-validation.js?v=<?= (int) @filemtime(ASSETS_PATH . '/js/phone-validation.js') ?>"></script>
 <script src="<?= $b ?>/assets/js/ocr-national-id.js?v=20260729ocr4"></script>
 <script src="<?= $b ?>/assets/js/register-nlp-analysis.js?v=20260708nlp2"></script>
 <script src="<?= $b ?>/assets/js/register.js?v=20260708nlp2"></script>

@@ -58,11 +58,15 @@ if ($form_type === 'emergency') {
     $relation = trim($_POST['emergency_contact_relation'] ?? '');
 
     // Validate phone if provided
-    if ($phone !== '' && !preg_match('/^(09|\+639)\d{9}$/', $phone)) {
-        $_SESSION['emergency_errors']['emergency_contact_phone'] =
-            'Enter a valid PH mobile number (e.g. 09171234567).';
-        header('Location: ' . BASE_URL . '/views/patient/profile.php');
-        exit;
+    if ($phone !== '') {
+        require_once BASE_PATH . '/app/includes/patient_account_security.php';
+        $phoneErr = patient_phone_validation_error($phone);
+        if ($phoneErr !== null) {
+            $_SESSION['emergency_errors']['emergency_contact_phone'] = $phoneErr;
+            header('Location: ' . BASE_URL . '/views/patient/profile.php');
+            exit;
+        }
+        $phone = patient_canonical_ph_mobile($phone);
     }
 
     try {
@@ -101,8 +105,14 @@ if ($form_type === 'emergency') {
 
     if ($contact_number === '') {
         $errors['contact_number'] = 'Contact number is required.';
-    } elseif (!preg_match('/^(09|\+639)\d{9}$/', $contact_number)) {
-        $errors['contact_number'] = 'Enter a valid PH mobile number (e.g. 09171234567).';
+    } else {
+        require_once BASE_PATH . '/app/includes/patient_account_security.php';
+        $phoneErr = patient_phone_validation_error($contact_number);
+        if ($phoneErr !== null) {
+            $errors['contact_number'] = $phoneErr;
+        } else {
+            $contact_number = patient_canonical_ph_mobile($contact_number);
+        }
     }
 
     if ($barangay === '') {

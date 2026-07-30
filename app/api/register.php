@@ -158,8 +158,11 @@ if (empty($barangay))          $errors[] = 'Barangay is required.';
 
 if (empty($contact_number)) {
     $errors[] = 'Contact number is required.';
-} elseif (!patient_is_valid_ph_mobile($contact_number)) {
-    $errors[] = 'Enter a valid PH mobile number.';
+} else {
+    $phoneErr = patient_phone_validation_error($contact_number);
+    if ($phoneErr !== null) {
+        $errors[] = $phoneErr;
+    }
 }
 $contact_number = patient_canonical_ph_mobile($contact_number);
 

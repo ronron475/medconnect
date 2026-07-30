@@ -71,24 +71,28 @@
     return '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + paths + '</svg>';
   }
 
-  function priorityClass(priority) {
-    if (priority === 'emergency' || priority === 'critical') return 'mc-notif-icon--emergency';
-    if (priority === 'high') return 'mc-notif-icon--warning';
-    if (priority === 'low') return '';
+  function priorityClass(priority, type) {
+    if (priority === 'emergency' || priority === 'critical' || type === 'critical') {
+      return 'mc-notif-icon--critical';
+    }
+    if (priority === 'high' || type === 'warning') return 'mc-notif-icon--warning';
+    if (type === 'information' || type === 'success') return 'mc-notif-icon--information';
     return '';
   }
 
   function renderItemBody(n) {
     const priClass = n.priority && n.priority !== 'normal' && n.priority !== 'low'
       ? ' mc-notif-priority mc-notif-priority--' + n.priority : '';
+    const typeClass = n.type === 'information' ? ' mc-notif-priority mc-notif-priority--information' : '';
     return (
-      '<div class="mc-notif-icon ' + priorityClass(n.priority) + '">' + iconSvg(n.icon || 'bell') + '</div>' +
+      '<div class="mc-notif-icon ' + priorityClass(n.priority, n.type) + '">' + iconSvg(n.icon || 'bell') + '</div>' +
       '<div class="mc-notif-body">' +
         '<p class="mc-notif-title">' + escapeHtml(n.title) + '</p>' +
         '<p class="mc-notif-message">' + escapeHtml(n.message) + '</p>' +
         '<div class="mc-notif-meta">' +
           '<span>' + escapeHtml(n.time_ago || n.date_label || '') + '</span>' +
           (priClass ? '<span class="' + priClass.trim() + '">' + escapeHtml(n.priority) + '</span>' : '') +
+          (typeClass && !priClass ? '<span class="' + typeClass.trim() + '">info</span>' : '') +
           (!n.is_read ? '<span>Unread</span>' : '') +
         '</div>' +
       '</div>'

@@ -99,6 +99,7 @@ ob_start();
 
   function isValidPhMobile(v) {
     var n = normalizePhone(v);
+    if (n.length !== 11) return false;
     return /^09\d{9}$/.test(n);
   }
 
@@ -157,7 +158,7 @@ ob_start();
       if (!val) { ok = false; msg = 'Please select gender.'; }
     } else if (input === fields.contact_number) {
       if (!val) { ok = false; msg = 'Mobile number is required.'; }
-      else if (!isValidPhMobile(val)) { ok = false; msg = 'Use Philippine format: 09XXXXXXXXX (11 digits).'; }
+      else if (!isValidPhMobile(val)) { ok = false; msg = 'Phone number must be exactly 11 digits starting with 09 (e.g. 09171234567).'; }
       else if (patientIndex.contacts[normalizePhone(val)]) { ok = false; msg = 'This contact number is already registered.'; }
     } else if (input === fields.email) {
       if (!val) { ok = false; msg = 'Email is required.'; }
@@ -612,7 +613,7 @@ $bhw_inline_script = ob_get_clean();
             </div>
             <div class="bhw-field">
               <label class="form-label" for="reg_ec_phone">Contact Number</label>
-              <input type="tel" class="form-control" id="reg_ec_phone" name="emergency_contact_phone" placeholder="09XXXXXXXXX" inputmode="numeric">
+              <input type="tel" class="form-control" id="reg_ec_phone" name="emergency_contact_phone" placeholder="09171234567" inputmode="numeric" maxlength="11" data-phone-input>
             </div>
             <div class="bhw-field">
               <label class="form-label" for="reg_ec_relation">Relationship</label>

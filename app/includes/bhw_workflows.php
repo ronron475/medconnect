@@ -95,7 +95,8 @@ final class BhwWorkflows
             throw new InvalidArgumentException('Invalid email address.');
         }
         if (!patient_is_valid_ph_mobile($contact)) {
-            throw new InvalidArgumentException('Contact number must be a valid Philippine mobile (09XXXXXXXXX).');
+            $err = patient_phone_validation_error($contact);
+            throw new InvalidArgumentException($err ?? 'Contact number must be a valid Philippine mobile (09XXXXXXXXX).');
         }
 
         $dup = $pdo->prepare('SELECT id FROM users WHERE email = ? LIMIT 1');

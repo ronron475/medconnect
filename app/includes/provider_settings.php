@@ -174,15 +174,12 @@ function provider_settings_apply_system_to_session(array $system): void
 
 function provider_settings_validate_phone(string $phone): ?string
 {
+    require_once __DIR__ . '/patient_account_security.php';
     $phone = trim($phone);
     if ($phone === '') {
         return null;
     }
-    $digits = preg_replace('/\D+/', '', $phone);
-    if (strlen($digits) < 10 || strlen($digits) > 15) {
-        return 'Phone number must be 10–15 digits.';
-    }
-    return null;
+    return patient_phone_validation_error($phone);
 }
 
 function provider_settings_password_strength(string $password): ?string
