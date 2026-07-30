@@ -1,7 +1,8 @@
 <?php
 /**
- * Provider schedule — multi-session day editor (partial).
- * All weekdays are editable (weekly template). Slots for today regenerate when today is saved.
+ * Provider schedule — daily availability editor.
+ * Only the current calendar day is editable. Other weekdays are locked (view only).
+ * At midnight, yesterday locks and the doctor sets a new schedule for the new day.
  *
  * @var string $day
  * @var bool $is_today
@@ -13,7 +14,7 @@ $session_count = count($day_sessions);
 
 $summaryParts = [];
 if ($session_count === 0) {
-    $summaryParts[] = 'No sessions yet';
+    $summaryParts[] = $is_today ? 'No sessions yet — create today’s schedule' : 'No schedule saved';
 } else {
     $summaryParts[] = $session_count . ' session' . ($session_count === 1 ? '' : 's');
     foreach (array_slice($day_sessions, 0, 2) as $preview) {
@@ -27,9 +28,9 @@ if ($session_count === 0) {
 }
 $summaryText = implode(' · ', $summaryParts);
 ?>
-<article class="sched-day <?= $is_today ? 'sched-day--today' : '' ?> <?= $day_active ? 'sched-day--active' : '' ?>"
+<article class="sched-day <?= $is_today ? 'sched-day--today' : 'sched-day--locked' ?> <?= $day_active ? 'sched-day--active' : '' ?>"
      data-day="<?= htmlspecialchars($day) ?>"
-     data-editable="1"
+     data-editable="<?= $is_today ? '1' : '0' ?>"
      data-is-today="<?= $is_today ? '1' : '0' ?>">
 
   <header class="sched-day__head">
@@ -37,37 +38,44 @@ $summaryText = implode(' · ', $summaryParts);
       <div class="sched-day__title-row">
         <h4 class="sched-day__name"><?= htmlspecialchars($day) ?></h4>
         <?php if ($is_today): ?>
-        <span class="sched-day__badge sched-day__badge--today">Today</span>
+        <span class="sched-day__badge sched-day__badge--today">Today · Editable</span>
+        <?php else: ?>
+        <span class="sched-day__badge sched-day__badge--locked">Locked</span>
         <?php endif; ?>
         <?php if ($day_active): ?>
         <span class="sched-day__badge sched-day__badge--on">Active</span>
         <?php elseif ($session_count > 0): ?>
         <span class="sched-day__badge sched-day__badge--off">Inactive</span>
-        <?php else: ?>
+        <?php elseif (!$is_today): ?>
         <span class="sched-day__badge sched-day__badge--empty">Unset</span>
         <?php endif; ?>
       </div>
       <p class="sched-day__summary" data-day-summary><?= htmlspecialchars($summaryText) ?></p>
     </div>
-    <button type="button" class="sched-day__toggle" data-toggle-day aria-expanded="<?= $is_today ? 'true' : 'false' ?>">
-      <span data-toggle-label><?= $is_today ? 'Collapse' : 'Expand' ?></span>
+    <?php if ($is_today): ?>
+    <button type="button" class="sched-day__toggle" data-toggle-day aria-expanded="true">
+      <span data-toggle-label>Collapse</span>
       <svg class="sched-day__chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><polyline points="6 9 12 15 18 9"/></svg>
     </button>
+    <?php else: ?>
+    <button type="button" class="sched-day__toggle" data-toggle-day aria-expanded="false">
+      <span data-toggle-label>View</span>
+      <svg class="sched-day__chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><polyline points="6 9 12 15 18 9"/></svg>
+    </button>
+    <?php endif; ?>
   </header>
 
-  <div class="sched-day__body" data-day-body<?= $is_today ? '' : ' hidden' ?>>
-    <div class="sched-day__hint">
-      <?php if ($is_today): ?>
-      Editing today&apos;s hours opens slots patients can book now.
-      <?php else: ?>
-      Recurring hours for every <?= htmlspecialchars($day) ?>. Applies when that day arrives.
-      <?php endif; ?>
+  <?php if ($is_today): ?>
+  <div class="sched-day__body" data-day-body>
+    <div class="sched-day__hint sched-day__hint--policy">
+      Create or edit <strong>today&apos;s</strong> video-consult availability.
+      At <strong>12:00 AM</strong> this day locks automatically — set a new schedule tomorrow.
     </div>
 
     <div class="sched-day-active-row">
       <label class="sched-day-active-label">
         <input type="checkbox" class="schedule-day-active" <?= $day_active ? 'checked' : '' ?>>
-        <span><?= $is_today ? 'Accept patient bookings today' : 'Accept bookings on ' . htmlspecialchars($day) . 's' ?></span>
+        <span>Accept patient bookings today</span>
       </label>
     </div>
 
@@ -124,7 +132,36 @@ $summaryText = implode(' · ', $summaryParts);
     <div class="sched-validation" data-sched-validation hidden role="alert"></div>
 
     <button type="button" class="mc-btn mc-btn--primary sched-save-day-btn schedule-save-btn">
-      Save <?= htmlspecialchars($day) ?> Schedule
+      Save Today&apos;s Schedule
     </button>
   </div>
+
+  <?php else: ?>
+  <div class="sched-day__body" data-day-body hidden>
+    <div class="sched-day__hint sched-day__hint--locked">
+      Locked after midnight. Editable only when <?= htmlspecialchars($day) ?> is the current day.
+      Create a fresh schedule each morning for video consultations.
+    </div>
+    <div class="sched-readonly-sessions">
+      <?php if ($day_sessions === []): ?>
+      <p class="sched-readonly-empty">No schedule was saved for this weekday.</p>
+      <?php else: ?>
+      <?php foreach ($day_sessions as $si => $session): ?>
+      <div class="sched-readonly-session">
+        <span class="sched-readonly-session__num">Session <?= $si + 1 ?></span>
+        <span class="sched-readonly-session__time">
+          <?= schedule_format_time((string) $session['start_time']) ?>
+          &ndash;
+          <?= schedule_format_time((string) $session['end_time']) ?>
+        </span>
+        <span class="sched-readonly-session__dur"><?= schedule_duration_label((int) ($session['slot_duration'] ?? 30)) ?> slots</span>
+        <span class="sched-status-pill <?= (int) ($session['is_active'] ?? 0) === 1 ? 'sched-status-pill--active' : 'sched-status-pill--inactive' ?>">
+          <?= (int) ($session['is_active'] ?? 0) === 1 ? 'Active' : 'Inactive' ?>
+        </span>
+      </div>
+      <?php endforeach; ?>
+      <?php endif; ?>
+    </div>
+  </div>
+  <?php endif; ?>
 </article>

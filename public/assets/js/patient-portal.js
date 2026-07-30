@@ -255,9 +255,7 @@
 
       let actionBtn = '';
       if (type === 'upcoming') {
-        const tipsApproved = window.CAN_CANCEL_AFTER_TIPS_APPROVED === true;
         const canCancel =
-          tipsApproved &&
           ['pending', 'scheduled'].includes(String(c.status || '').toLowerCase());
         let primary = '';
         if (joinAccess.allowed) {

@@ -3,8 +3,12 @@
  * API: Save Provider Schedule Sessions and Generate Appointment Slots
  * URL: /app/api/provider/save_schedule.php
  *
+ * Daily video-consult policy:
+ *   Doctors may create/edit availability for the current calendar day only.
+ *   At midnight the day locks; the next day requires a new schedule.
+ *
  * POST:
- *   day         — weekday name (any day of week)
+ *   day         — weekday name (must be today)
  *   is_active   — 1|0 day-level booking toggle
  *   sessions    — JSON array [{id?, start_time, end_time, duration}]
  */
@@ -45,7 +49,14 @@ if (!in_array($day, provider_schedule_valid_days(), true)) {
 }
 
 $today_name = date('l');
-$is_today = ($day === $today_name);
+if ($day !== $today_name) {
+    echo json_encode([
+        'success' => false,
+        'message' => 'Schedules lock at midnight. You can only create or edit today\'s availability (' . $today_name . ').',
+        'code'    => 'day_locked',
+    ]);
+    exit;
+}
 
 $sessionsInput = is_array($sessionsRaw) ? $sessionsRaw : json_decode((string) $sessionsRaw, true);
 if (!is_array($sessionsInput)) {
@@ -79,19 +90,18 @@ try {
 
     provider_schedule_save_day($pdo, $provider_id, $day, $sessions, $day_active);
 
-    // Clear unbooked future slots for this weekday, then regenerate from the template.
     appointment_slots_clear_day($pdo, $provider_id, $day);
 
     $slots_created = 0;
     if ($day_active && $sessions !== []) {
-        // Horizon keeps upcoming occurrences ready; patients still book today-only.
-        $slots_created = appointment_slots_sync_provider($pdo, $provider_id, 28, $day);
+        // Patients book today-only; regenerate today's open slots.
+        $slots_created = appointment_slots_sync_today($pdo, $provider_id);
     }
 
     $pdo->commit();
 
     $patients_notified = 0;
-    if ($is_today && $day_active && $slots_created > 0) {
+    if ($day_active && $slots_created > 0) {
         try {
             require_once dirname(dirname(dirname(__DIR__))) . '/app/includes/notification_events.php';
             $nameStmt = $pdo->prepare("
@@ -115,24 +125,16 @@ try {
         }
     }
 
-    if ($is_today) {
-        $message = $day_active
-            ? 'Today\'s schedule saved. ' . $slots_created . ' appointment slot(s) are available for patients.'
-            : 'Today\'s schedule saved. Bookings are off — no new slots were opened.';
-    } else {
-        $message = $day_active
-            ? $day . ' schedule saved. Recurring hours and upcoming slots were updated.'
-            : $day . ' schedule saved and marked inactive for that weekday.';
-    }
-
     echo json_encode([
         'success'           => true,
-        'message'           => $message,
+        'message'           => $day_active
+            ? 'Today\'s schedule saved. ' . $slots_created . ' appointment slot(s) are available for patients.'
+            : 'Today\'s schedule saved. Bookings are off — no new slots were opened.',
         'slots_created'     => $slots_created,
         'sessions_saved'    => count($sessions),
         'patients_notified' => $patients_notified,
         'day'               => $day,
-        'is_today'          => $is_today,
+        'is_today'          => true,
         'today'             => date('Y-m-d'),
     ]);
 } catch (Throwable $e) {
