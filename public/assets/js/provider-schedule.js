@@ -1,5 +1,6 @@
 /**
- * Provider Schedule & Availability — multi-session editor
+ * Provider Schedule & Availability — multi-session weekly editor
+ * All weekdays are editable (recurring templates).
  */
 (function () {
   'use strict';
@@ -28,10 +29,7 @@
     if (requireAtLeastOne && !cards.length) {
       return ['Add at least one availability session.'];
     }
-
-    if (!cards.length) {
-      return [];
-    }
+    if (!cards.length) return [];
 
     cards.forEach((card, idx) => {
       const label = 'Session ' + (idx + 1);
@@ -141,56 +139,82 @@
     });
   }
 
-  const todayBlock = document.querySelector('.sched-day-block--today');
-  if (!todayBlock) return;
+  function bindDayBlock(dayBlock) {
+    const sessionsList = dayBlock.querySelector('[data-sessions-list]');
+    const validationBox = dayBlock.querySelector('[data-sched-validation]');
+    const addBtn = dayBlock.querySelector('[data-add-session]');
+    const saveBtn = dayBlock.querySelector('.schedule-save-btn');
+    const toggleBtn = dayBlock.querySelector('[data-toggle-day]');
+    const body = dayBlock.querySelector('[data-day-body]');
+    const isToday = dayBlock.dataset.isToday === '1';
 
-  const sessionsList = todayBlock.querySelector('[data-sessions-list]');
-  const validationBox = todayBlock.querySelector('[data-sched-validation]');
-  const addBtn = todayBlock.querySelector('[data-add-session]');
-  const saveBtn = todayBlock.querySelector('.schedule-save-btn');
+    // Collapse non-today days by default to reduce clutter.
+    if (!isToday && body && toggleBtn) {
+      body.hidden = true;
+      toggleBtn.setAttribute('aria-expanded', 'false');
+      const label = toggleBtn.querySelector('[data-toggle-label]');
+      if (label) label.textContent = 'Expand';
+      dayBlock.classList.add('is-collapsed');
+    }
 
-  if (addBtn && sessionsList) {
-    addBtn.addEventListener('click', () => {
-      const card = buildSessionCard();
-      sessionsList.appendChild(card);
-      renumberSessions(sessionsList);
-      showValidation(validationBox, []);
-      card.querySelector('.schedule-start')?.focus();
-    });
+    if (toggleBtn && body) {
+      toggleBtn.addEventListener('click', () => {
+        const open = body.hidden;
+        body.hidden = !open;
+        toggleBtn.setAttribute('aria-expanded', open ? 'true' : 'false');
+        const label = toggleBtn.querySelector('[data-toggle-label]');
+        if (label) label.textContent = open ? 'Collapse' : 'Expand';
+        dayBlock.classList.toggle('is-collapsed', !open);
+      });
+    }
 
-    sessionsList.addEventListener('click', (e) => {
-      const btn = e.target.closest('[data-remove-session]');
-      if (!btn) return;
-      const card = btn.closest('[data-session-card]');
-      const cards = sessionsList.querySelectorAll('[data-session-card]');
-      if (cards.length <= 1) {
-        showValidation(validationBox, ['You must keep at least one session, or turn off bookings for today.']);
-        return;
-      }
-      card?.remove();
-      renumberSessions(sessionsList);
-      showValidation(validationBox, validateSessions(sessionsList.querySelectorAll('[data-session-card]'), true));
-    });
+    if (addBtn && sessionsList) {
+      addBtn.addEventListener('click', () => {
+        const card = buildSessionCard();
+        sessionsList.appendChild(card);
+        renumberSessions(sessionsList);
+        showValidation(validationBox, []);
+        card.querySelector('.schedule-start')?.focus();
+      });
 
-    sessionsList.addEventListener('change', () => {
-      showValidation(validationBox, validateSessions(sessionsList.querySelectorAll('[data-session-card]'), true));
-    });
-  }
+      sessionsList.addEventListener('click', (e) => {
+        const btn = e.target.closest('[data-remove-session]');
+        if (!btn) return;
+        const card = btn.closest('[data-session-card]');
+        const cards = sessionsList.querySelectorAll('[data-session-card]');
+        if (cards.length <= 1) {
+          showValidation(validationBox, ['Keep at least one session, or turn off bookings for this day.']);
+          return;
+        }
+        card?.remove();
+        renumberSessions(sessionsList);
+        showValidation(validationBox, validateSessions(sessionsList.querySelectorAll('[data-session-card]'), true));
+      });
 
-  if (saveBtn) {
+      sessionsList.addEventListener('change', () => {
+        showValidation(validationBox, validateSessions(sessionsList.querySelectorAll('[data-session-card]'), true));
+      });
+    }
+
+    if (!saveBtn) return;
+
     saveBtn.addEventListener('click', async () => {
-      const day = todayBlock.dataset.day || SCHEDULE_TODAY;
-      if (todayBlock.dataset.editable !== '1' || day !== SCHEDULE_TODAY) {
-        alert('You can only update today\'s schedule (' + SCHEDULE_TODAY + ').');
+      const day = dayBlock.dataset.day || '';
+      if (!day) {
+        alert('Missing day.');
         return;
       }
 
       const cards = sessionsList?.querySelectorAll('[data-session-card]') || [];
-      const dayActive = todayBlock.querySelector('.schedule-day-active')?.checked ?? false;
+      const dayActive = dayBlock.querySelector('.schedule-day-active')?.checked ?? false;
       const errors = validateSessions(cards, dayActive);
 
       if (errors.length) {
         showValidation(validationBox, errors);
+        if (body && body.hidden) {
+          body.hidden = false;
+          dayBlock.classList.remove('is-collapsed');
+        }
         return;
       }
 
@@ -204,7 +228,7 @@
       const fd = new FormData();
       fd.append('day', day);
       if (dayActive) fd.append('is_active', '1');
-      fd.append('sessions', JSON.stringify(collectSessions(todayBlock)));
+      fd.append('sessions', JSON.stringify(collectSessions(dayBlock)));
       const csrf = (document.body && document.body.dataset.csrf) || '';
       if (csrf) fd.append('csrf_token', csrf);
 
@@ -231,7 +255,10 @@
           saveBtn.textContent = 'Saved';
           if (window.mcToast) {
             window.mcToast(data.message || 'Schedule saved.');
+          } else {
+            alert(data.message || 'Schedule saved.');
           }
+          // Reload so today's slot preview stays accurate.
           setTimeout(() => window.location.reload(), 700);
           return;
         }
@@ -254,4 +281,6 @@
       saveBtn.textContent = originalText;
     });
   }
+
+  document.querySelectorAll('.sched-day-block[data-editable="1"]').forEach(bindDayBlock);
 })();
