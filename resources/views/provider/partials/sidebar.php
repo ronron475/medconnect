@@ -15,10 +15,21 @@ $user_role = (string) ($_SESSION['user_role'] ?? '');
 $nav_groups = require BASE_PATH . '/app/includes/nav/provider_nav.php';
 
 $sidebar_messages_unread = 0;
+$sidebar_queue_count = 0;
+$sidebar_triage_count = 0;
 if ($user_role === 'provider' && !empty($_SESSION['user_id']) && isset($pdo) && $pdo instanceof PDO) {
     require_once BASE_PATH . '/app/includes/message_deletion.php';
+    require_once BASE_PATH . '/app/includes/provider_nav_counts.php';
     consultation_messages_ensure_schema($pdo);
     $sidebar_messages_unread = message_unread_count($pdo, (int) $_SESSION['user_id']);
+    try {
+        $navCounts = provider_nav_counts($pdo, (int) $_SESSION['user_id']);
+        $sidebar_queue_count = (int) ($navCounts['queue'] ?? 0);
+        $sidebar_triage_count = (int) ($navCounts['triage'] ?? 0);
+    } catch (Throwable $e) {
+        $sidebar_queue_count = 0;
+        $sidebar_triage_count = 0;
+    }
 }
 
 function provider_nav_is_active(string $file, string $current_page, string $current_path, string $request_path, string $active_page): bool
@@ -68,14 +79,28 @@ function provider_nav_is_active(string $file, string $current_page, string $curr
       $is_active = provider_nav_is_active($file, $current_page, $current_path, $request_path, $active_page);
       $item_class = 'sba-item' . ($is_active ? ' is-active' : '') . ($group_secondary ? ' sba-item--secondary' : '');
     ?>
+    <?php
+      $navAttr = '';
+      if ($file === 'messages.php') {
+          $navAttr = ' data-nav-messages';
+      } elseif ($file === 'queue.php') {
+          $navAttr = ' data-nav-queue';
+      } elseif ($file === 'triage.php') {
+          $navAttr = ' data-nav-triage';
+      }
+    ?>
     <a href="<?= htmlspecialchars($provider_base, ENT_QUOTES) ?>/<?= htmlspecialchars($file) ?>"
-       class="<?= $item_class ?>"<?= $is_active ? ' aria-current="page"' : '' ?><?= $file === 'messages.php' ? ' data-nav-messages' : '' ?>>
+       class="<?= $item_class ?>"<?= $is_active ? ' aria-current="page"' : '' ?><?= $navAttr ?>>
       <svg class="sba-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor"
            stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
         <?= $icon_path ?>
       </svg>
       <span class="sba-label"><?= htmlspecialchars($label) ?></span>
-      <?php if ($file === 'messages.php'): ?>
+      <?php if ($file === 'queue.php'): ?>
+      <span class="mc-nav-count-badge" data-nav-queue-badge<?= $sidebar_queue_count <= 0 ? ' hidden' : '' ?>><?= $sidebar_queue_count > 99 ? '99+' : (int) $sidebar_queue_count ?></span>
+      <?php elseif ($file === 'triage.php'): ?>
+      <span class="mc-nav-count-badge" data-nav-triage-badge<?= $sidebar_triage_count <= 0 ? ' hidden' : '' ?>><?= $sidebar_triage_count > 99 ? '99+' : (int) $sidebar_triage_count ?></span>
+      <?php elseif ($file === 'messages.php'): ?>
       <span class="mc-nav-messages-badge" data-nav-messages-badge<?= $sidebar_messages_unread <= 0 ? ' hidden' : '' ?>><?= $sidebar_messages_unread > 99 ? '99+' : (int) $sidebar_messages_unread ?></span>
       <?php endif; ?>
     </a>

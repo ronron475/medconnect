@@ -141,7 +141,8 @@ body.mc-messages-fab-dragging {
   position: relative;
 }
 
-.mc-nav-messages-badge {
+.mc-nav-messages-badge,
+.mc-nav-count-badge {
   margin-left: auto;
   min-width: 18px;
   height: 18px;
@@ -156,9 +157,16 @@ body.mc-messages-fab-dragging {
   flex-shrink: 0;
 }
 
-.sba-item .mc-nav-messages-badge {
+.sba-item .mc-nav-messages-badge,
+.sba-item .mc-nav-count-badge {
   background: #fecaca;
   color: #991b1b;
+}
+
+.sba-item.is-active .mc-nav-messages-badge,
+.sba-item.is-active .mc-nav-count-badge {
+  background: rgba(255, 255, 255, 0.28);
+  color: #fff;
 }
 
 /* Tablet */

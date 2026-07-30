@@ -161,6 +161,19 @@
       summaryEl.textContent = (stats.total || 0) + ' total · ' + (stats.pending || 0) + ' pending review'
         + (tips ? ' · ' + tips + ' tips pending' : '');
     }
+
+    // Push live totals to the sidebar badges.
+    try {
+      window.dispatchEvent(new CustomEvent('medconnect:triage-live', {
+        detail: {
+          triage: Number(stats.total || 0),
+          total: Number(stats.total || 0),
+          urgent: Number(stats.urgent || 0),
+          pending: Number(stats.pending || 0),
+          tips_pending: Number(stats.tips_pending || 0),
+        },
+      }));
+    } catch (e) { /* ignore */ }
   }
 
   function setRefreshStatus(text) {
