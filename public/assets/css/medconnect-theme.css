@@ -96,7 +96,7 @@ html[data-theme-resolved='dark'] body.bhw-body {
 }
 
 html[data-theme-resolved='dark'] body.provider-body {
-  background-color: #141414;
+  background-color: #0a0a0a;
   color: #ffffff;
 }
 
@@ -409,7 +409,7 @@ html[data-theme-resolved='dark'] .ps-toast.error {
 /* ── Provider dashboard widgets ── */
 html[data-theme-resolved='dark'] body.provider-body,
 html[data-theme-resolved='dark'] body.provider-body .provider-main {
-  background-color: #141414 !important;
+  background-color: #0a0a0a !important;
   color: #ffffff;
 }
 
@@ -421,10 +421,10 @@ html[data-theme-resolved='dark'] body.provider-body .pd-notif-item,
 html[data-theme-resolved='dark'] body.provider-body .pd-activity-item,
 html[data-theme-resolved='dark'] body.provider-body .triage-card,
 html[data-theme-resolved='dark'] body.provider-body .queue-card {
-  background: #2c2c2c !important;
-  border-color: rgba(255, 255, 255, 0.06) !important;
+  background: #1c1c1c !important;
+  border-color: #2a2a2a !important;
   color: #ffffff;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.04);
+  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.04), 0 4px 20px rgba(0, 0, 0, 0.5);
 }
 
 html[data-theme-resolved='dark'] .provider-settings-layout .ps-input,
