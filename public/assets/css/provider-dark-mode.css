@@ -454,7 +454,15 @@ html[data-theme-resolved='dark'] body.provider-body .prov-chart-col.is-today .pr
 }
 
 html[data-theme-resolved='dark'] body.provider-body .prov-chart-legend strong {
-  color: var(--accent-green, #22c55e);
+  color: var(--accent-purple, #a78bfa) !important;
+}
+
+html[data-theme-resolved='dark'] body.provider-body .mc-chart-canvas-wrap {
+  background: transparent !important;
+}
+
+html[data-theme-resolved='dark'] body.provider-body .mc-chart-canvas-wrap canvas {
+  background: transparent !important;
 }
 
 /* ── Stat accents ── */
