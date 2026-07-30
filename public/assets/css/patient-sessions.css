@@ -535,6 +535,23 @@
   cursor: not-allowed;
 }
 
+.psess-btn--danger {
+  background: #fff;
+  border-color: #fca5a5;
+  color: #b91c1c;
+}
+
+.psess-btn--danger:hover {
+  background: #fef2f2;
+}
+
+.psess-card__actions {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  align-items: stretch;
+}
+
 .psess-btn--waiting {
   background: #fffbeb;
   border-color: #fde68a;

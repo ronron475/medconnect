@@ -1,0 +1,303 @@
+<?php
+/**
+ * Main PHP-only chatbot pipeline: emotion → intent → emergency → FAQ → response → logging.
+ */
+final class FaqChatbotOrchestrator
+{
+    private FaqChatbotFaqRepository $faqRepo;
+    private FaqChatbotConversationRepository $convRepo;
+
+    public function __construct(private PDO $pdo)
+    {
+        $this->faqRepo = new FaqChatbotFaqRepository($pdo);
+        $this->convRepo = new FaqChatbotConversationRepository($pdo);
+    }
+
+    /**
+     * @param array<string, mixed> $options mode: full|log_only, client_html, flow_key, confidence
+     * @return array<string, mixed>
+     */
+    public function handle(string $sessionId, string $text, string $lang = 'en', array $options = []): array
+    {
+        $text = trim($text);
+        $lang = FaqEmotionEngine::normalizeLang($lang);
+        $mode = (string) ($options['mode'] ?? 'full');
+        $userId = isset($_SESSION['user_id']) ? (int) $_SESSION['user_id'] : null;
+
+        if ($sessionId === '' || !preg_match('/^[a-zA-Z0-9_-]{16,64}$/', $sessionId)) {
+            throw new InvalidArgumentException('Invalid session id.');
+        }
+        if ($text === '') {
+            throw new InvalidArgumentException('Message is required.');
+        }
+        if (mb_strlen($text) > 2000) {
+            throw new InvalidArgumentException('Message is too long.');
+        }
+
+        $conversationId = $this->convRepo->ensureConversation($sessionId, $lang, $userId);
+
+        $nlp = FaqChatbotNlpPipeline::process($this->pdo, $text, $lang);
+        $nlpText = $nlp['expanded_english'] ?: $nlp['english_text'];
+        $replyLang = $nlp['reply_lang'];
+        $detectedLang = $nlp['detected_lang'];
+        $bridge = [
+            'reply_lang'     => $replyLang,
+            'nlp_text'       => $nlpText,
+            'english_gloss'  => $nlp['english_text'],
+            'input_lang'     => $detectedLang,
+            'is_hiligaynon'  => $nlp['is_hiligaynon'],
+        ];
+
+        if ($mode === 'log_bot') {
+            $botHtml = (string) ($options['client_html'] ?? '');
+            $botConf = isset($options['confidence']) ? (float) $options['confidence'] : null;
+            $botFlow = (string) ($options['flow_key'] ?? 'client');
+            $botIntent = (string) ($options['intent'] ?? $_SESSION['faq_chatbot_last_intent'] ?? FaqChatbotIntentRecognizer::GENERAL);
+            $botId = $this->convRepo->insertMessage(
+                $conversationId,
+                'bot',
+                strip_tags($botHtml) ?: $botHtml,
+                $botIntent,
+                $botFlow,
+                $botConf,
+                null
+            );
+            return [
+                'session_id'          => $sessionId,
+                'conversation_id'     => $conversationId,
+                'bot_message_id'      => $botId,
+                'use_server_response' => false,
+                'mode'                => $mode,
+            ];
+        }
+
+        // Context from DB + session tail
+        $history = $this->convRepo->recentMessages($conversationId, 8);
+        $contextText = $this->mergeContextText($history, $nlpText);
+
+        $emergency = FaqChatbotEmergencyDetector::detect($contextText . ' ' . $text);
+        $intentPack = FaqChatbotIntentRecognizer::recognize($nlpText);
+        $intent = $intentPack['intent'];
+        $flowKey = $intentPack['flow_key'];
+
+        $prev = $_SESSION['faq_emotion_context'] ?? null;
+        $emotionResult = FaqEmotionEngine::analyze($nlpText, $replyLang, $intent, is_array($prev) ? $prev : null);
+        $canonical = FaqChatbotStandardEmotion::canonicalize($emotionResult['emotion'] ?? null);
+
+        if (!empty($emotionResult['emotion'])) {
+            $_SESSION['faq_emotion_context'] = [
+                'emotion' => $emotionResult['emotion'],
+                'tone'    => $emotionResult['tone'] ?? 'neutral',
+                'at'      => time(),
+            ];
+        }
+
+        $_SESSION['faq_chatbot_last_intent'] = $intent;
+
+        $userMsgId = $this->convRepo->insertMessage($conversationId, 'user', $text, $intent, $flowKey, null, null);
+        $this->convRepo->insertEmotion(
+            $userMsgId,
+            $emotionResult['emotion'] ?? null,
+            $canonical,
+            (float) ($emotionResult['score'] ?? 0),
+            (float) ($emotionResult['confidence'] ?? 0),
+            is_array($emotionResult['scores'] ?? null) ? $emotionResult['scores'] : []
+        );
+
+        $empathy = FaqChatbotResponseGenerator::empathyLine($canonical, $replyLang);
+        if ($bridge['is_hiligaynon'] && $canonical !== FaqChatbotStandardEmotion::NEUTRAL) {
+            $empathyWrap = FaqChatbotLanguageBridge::bilingualEmpathyLead($canonical, $empathy);
+        } else {
+            $empathyWrap = null;
+        }
+        $responseHtml = '';
+        $faqId = null;
+        $confidence = (float) ($intentPack['confidence'] ?? 0.35);
+        $suggestions = [];
+
+        if ($emergency['is_emergency']) {
+            $flowKey = $emergency['flow'] ?? 'emergency';
+            $responseHtml = FaqChatbotResponseGenerator::emergencyHtml($replyLang, $flowKey);
+            $confidence = 0.99;
+        } else {
+            $faqHits = $this->faqRepo->search($contextText, 5);
+            $best = $faqHits[0] ?? null;
+            $faqThreshold = 1.85;
+
+            if ($best && ($best['score'] ?? 0) >= $faqThreshold) {
+                $faqId = (int) $best['id'];
+                $body = FaqChatbotResponseGenerator::faqAnswerHtml((string) $best['answer']);
+                $body .= FaqChatbotResponseGenerator::medicalDisclaimer($replyLang);
+                $lead = $empathyWrap ?? FaqChatbotResponseGenerator::wrapAnswer($empathy, '');
+                $responseHtml = $lead . $body;
+                $confidence = min(0.98, 0.55 + ((float) $best['score'] / 4));
+                $flowKey = 'faq_' . ($best['category'] ?? 'general');
+                $suggestions = $this->formatSuggestions(
+                    $this->faqRepo->suggestionsForCategory((string) ($best['category'] ?? ''), 3)
+                );
+            } else {
+                $fallback = FaqChatbotResponseGenerator::conversationalFallback($replyLang, $intent);
+                $lead = $empathyWrap ?? FaqChatbotResponseGenerator::wrapAnswer($empathy, '');
+                $responseHtml = $lead . $fallback;
+                $confidence = max(0.42, (float) ($emotionResult['confidence'] ?? 0.4));
+                $flowKey = $flowKey ?? 'conversational';
+                $suggestions = $this->formatSuggestions($this->faqRepo->suggestionsForCategory(null, 3));
+            }
+        }
+
+        $useServer = $mode === 'full'
+            || ($mode === 'assist' && ($emergency['is_emergency'] || $faqId !== null));
+
+        if ($mode === 'assist' && !$useServer) {
+            if ($suggestions === []) {
+                $suggestions = $this->formatSuggestions($this->faqRepo->suggestionsForCategory(null, 3));
+            }
+            return $this->payload(
+                $sessionId,
+                $conversationId,
+                $userMsgId,
+                0,
+                $canonical,
+                $emotionResult,
+                $intent,
+                $flowKey,
+                $emergency,
+                '',
+                $suggestions,
+                $confidence,
+                false,
+                $mode,
+                0,
+                $replyLang,
+                $nlp
+            );
+        }
+
+        $botMsgId = $this->convRepo->insertMessage(
+            $conversationId,
+            'bot',
+            strip_tags($responseHtml),
+            $intent,
+            $flowKey,
+            $confidence,
+            $faqId
+        );
+
+        $typingMs = (int) min(2200, max(650, 400 + mb_strlen($responseHtml) * 2));
+
+        $this->convRepo->logConversationHistory(
+            $sessionId,
+            $conversationId,
+            $text,
+            $nlp['english_text'],
+            $detectedLang,
+            $canonical,
+            $intent,
+            strip_tags($responseHtml),
+            $confidence
+        );
+
+        return $this->payload(
+            $sessionId,
+            $conversationId,
+            $userMsgId,
+            $botMsgId,
+            $canonical,
+            $emotionResult,
+            $intent,
+            $flowKey,
+            $emergency,
+            $responseHtml,
+            $suggestions,
+            $confidence,
+            $useServer,
+            $mode,
+            $typingMs,
+            $replyLang,
+            $nlp
+        );
+    }
+
+    /**
+     * @param list<array{role: string, content: string}> $history
+     */
+    private function mergeContextText(array $history, string $current): string
+    {
+        $parts = [];
+        foreach ($history as $row) {
+            if (($row['role'] ?? '') === 'user') {
+                $parts[] = (string) ($row['content'] ?? '');
+            }
+        }
+        $parts[] = $current;
+        $tail = array_slice($parts, -3);
+        return trim(implode(' ', $tail));
+    }
+
+    /**
+     * @param list<array{id: int, question: string, category: string}> $rows
+     * @return list<array{id: int, label: string, category: string}>
+     */
+    private function formatSuggestions(array $rows): array
+    {
+        $out = [];
+        foreach ($rows as $row) {
+            $out[] = [
+                'id'       => (int) ($row['id'] ?? 0),
+                'label'    => (string) ($row['question'] ?? ''),
+                'category' => (string) ($row['category'] ?? ''),
+            ];
+        }
+        return $out;
+    }
+
+    /**
+     * @param array<string, mixed> $emotionResult
+     * @param array{is_emergency: bool, flow: ?string} $emergency
+     * @param list<array{id: int, label: string, category: string}> $suggestions
+     * @return array<string, mixed>
+     */
+    private function payload(
+        string $sessionId,
+        int $conversationId,
+        int $userMessageId,
+        int $botMessageId,
+        string $canonical,
+        array $emotionResult,
+        string $intent,
+        ?string $flowKey,
+        array $emergency,
+        string $responseHtml,
+        array $suggestions,
+        float $confidence,
+        bool $useServer,
+        string $mode,
+        int $typingMs = 900,
+        string $lang = 'en',
+        ?array $nlp = null
+    ): array {
+        return [
+            'session_id'         => $sessionId,
+            'conversation_id'    => $conversationId,
+            'user_message_id'    => $userMessageId,
+            'bot_message_id'     => $botMessageId,
+            'emotion'            => $canonical,
+            'emotion_label'      => FaqChatbotStandardEmotion::label($canonical, $lang),
+            'emotion_detail'     => $emotionResult['emotion'] ?? null,
+            'intent'             => $intent,
+            'flow_key'           => $flowKey,
+            'confidence'         => round($confidence, 3),
+            'emergency'          => (bool) $emergency['is_emergency'],
+            'emergency_flow'     => $emergency['flow'] ?? null,
+            'response_html'      => $responseHtml,
+            'empathy_html'       => $emotionResult['empathy_html'] ?? '',
+            'suggestions'        => $suggestions,
+            'typing_ms'          => $typingMs,
+            'use_server_response'=> $useServer && ($mode === 'full' || $mode === 'assist'),
+            'mode'               => $mode,
+            'detected_lang'      => $nlp['detected_lang'] ?? $lang,
+            'english_gloss'      => $nlp['english_text'] ?? '',
+            'nlp_pipeline'       => $nlp['pipeline_steps'] ?? [],
+        ];
+    }
+}

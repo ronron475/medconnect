@@ -71,3 +71,56 @@ function mc_patient_visit_status_class(array $row): string
     }
     return 'badge-risk--low';
 }
+
+/**
+ * Patient-facing self-care / Care tips row (triage_results).
+ *
+ * @return array{label: string, class: string, show_tips: bool, active?: bool, kind: string}
+ */
+function mc_patient_care_tip_meta(array $row): array
+{
+    $status = (string) ($row['recommendation_status'] ?? '');
+    $acked = !empty($row['recommendation_patient_ack_at']);
+
+    if ($status === 'pending_approval') {
+        return [
+            'label' => 'In review',
+            'class' => 'pmh-care-card__status--pending',
+            'show_tips' => false,
+            'active' => true,
+            'kind' => 'pending',
+        ];
+    }
+    if ($status === 'rejected') {
+        return [
+            'label' => 'Not approved',
+            'class' => 'pmh-care-card__status--rejected',
+            'show_tips' => false,
+            'kind' => 'rejected',
+        ];
+    }
+    if ($status === 'approved' && $acked) {
+        return [
+            'label' => 'Completed',
+            'class' => 'pmh-care-card__status--acked',
+            'show_tips' => true,
+            'kind' => 'acked',
+        ];
+    }
+    if ($status === 'approved') {
+        return [
+            'label' => 'Tips ready',
+            'class' => 'pmh-care-card__status--ready',
+            'show_tips' => true,
+            'active' => true,
+            'kind' => 'ready',
+        ];
+    }
+
+    return [
+        'label' => 'Recorded',
+        'class' => 'pmh-care-card__status--default',
+        'show_tips' => false,
+        'kind' => 'default',
+    ];
+}

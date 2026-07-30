@@ -1,9 +1,11 @@
 /**
  * Patient Care tips chatbot (provider-approved self-care only).
- * Shows a waiting state while tips are pending approval.
+ * Non-urgent: waiting until provider approves; then tips + optional read-aloud.
  */
 (function () {
   'use strict';
+
+  var STORAGE_TTS = 'mc_pt_remedy_tts';
 
   function csrf() {
     var root = document.getElementById('medconnectThemeRoot');
@@ -39,6 +41,348 @@
   var typingTimer = null;
   var pollTimer = null;
   var mode = ''; // approved | waiting | ''
+  var upcomingConsult = null;
+  var ttsEnabled = true;
+  var voiceBtn = null;
+  var speechQueue = [];
+  var speechBusy = false;
+  var voicesReady = false;
+  var ttsUserPrimed = false;
+  var suppressAutoOpen = false;
+  var loadGeneration = 0;
+  var tipsReadyPromptShownFor = 0;
+
+  function tipsReadyPromptKey(tipId) {
+    return 'mc_tips_ready_cancel_prompt_' + String(tipId || 0);
+  }
+
+  function wasTipsReadyPromptShown(tipId) {
+    try {
+      return sessionStorage.getItem(tipsReadyPromptKey(tipId)) === '1';
+    } catch (e) {
+      return tipsReadyPromptShownFor === Number(tipId || 0);
+    }
+  }
+
+  function markTipsReadyPromptShown(tipId) {
+    tipsReadyPromptShownFor = Number(tipId || 0);
+    try {
+      sessionStorage.setItem(tipsReadyPromptKey(tipId), '1');
+    } catch (e) { /* ignore */ }
+  }
+
+  function closeTipsReadyCancelModal() {
+    var modal = el('mcTipsReadyCancelModal');
+    if (!modal) return;
+    modal.hidden = true;
+    document.body.classList.remove('mc-tips-ready-modal-open');
+  }
+
+  function openTipsReadyCancelModal(item) {
+    var upcoming = item && item.upcoming_consultation ? item.upcoming_consultation : null;
+    var tipId = Number((item && (item.tip_id || item.id)) || 0);
+    if (!upcoming || !upcoming.id || !tipId) return;
+    if (wasTipsReadyPromptShown(tipId)) return;
+
+    var modal = el('mcTipsReadyCancelModal');
+    if (!modal) return;
+
+    markTipsReadyPromptShown(tipId);
+    upcomingConsult = upcoming;
+    currentId = tipId;
+
+    var msg = el('mcTipsReadyCancelMessage');
+    var visit = el('mcTipsReadyCancelVisit');
+    if (msg) {
+      msg.textContent =
+        'Your doctor approved your care tips' +
+        (item.chief_complaint ? (' for “' + item.chief_complaint + '”') : '') +
+        '. You already have a video visit booked. If you only need the written tips, cancel the visit so the doctor’s slot opens for other patients.';
+    }
+    if (visit) {
+      visit.hidden = false;
+      visit.textContent =
+        'Booked: ' +
+        (upcoming.provider_name || 'Your doctor') +
+        ' · ' +
+        (upcoming.label || 'scheduled time');
+    }
+
+    modal.hidden = false;
+    document.body.classList.add('mc-tips-ready-modal-open');
+  }
+
+  function maybeShowTipsCancelPrompt(prompt) {
+    if (!prompt || !prompt.upcoming_consultation || !prompt.upcoming_consultation.id) return;
+    window.CAN_CANCEL_AFTER_TIPS_APPROVED = true;
+    openTipsReadyCancelModal({
+      tip_id: prompt.tip_id || prompt.id || 0,
+      id: prompt.tip_id || prompt.id || 0,
+      chief_complaint: prompt.chief_complaint || '',
+      upcoming_consultation: prompt.upcoming_consultation,
+    });
+    if (typeof window.filterSessions === 'function' && Array.isArray(window.consultations)) {
+      window.filterSessions('upcoming');
+    }
+  }
+
+  function waitingDismissKey(id) {
+    return 'ptRemedyWaitDismiss_' + String(id || 0);
+  }
+
+  function isWaitingDismissed(id) {
+    try {
+      if (sessionStorage.getItem('ptRemedyWaitDismiss_active') === '1') return true;
+      return sessionStorage.getItem(waitingDismissKey(id)) === '1';
+    } catch (e) {
+      return false;
+    }
+  }
+
+  function setWaitingDismissed(id) {
+    try {
+      sessionStorage.setItem('ptRemedyWaitDismiss_active', '1');
+      if (id) sessionStorage.setItem(waitingDismissKey(id), '1');
+    } catch (e) { /* ignore */ }
+  }
+
+  function clearWaitingDismissed() {
+    suppressAutoOpen = false;
+    try {
+      sessionStorage.removeItem('ptRemedyWaitDismiss_active');
+    } catch (e) { /* ignore */ }
+  }
+
+  function ttsSupported() {
+    return typeof window.speechSynthesis !== 'undefined';
+  }
+
+  function loadTtsPref() {
+    try {
+      var saved = sessionStorage.getItem(STORAGE_TTS);
+      ttsEnabled = saved !== '0';
+    } catch (e) {
+      ttsEnabled = true;
+    }
+  }
+
+  function saveTtsPref() {
+    try {
+      sessionStorage.setItem(STORAGE_TTS, ttsEnabled ? '1' : '0');
+    } catch (e) { /* ignore */ }
+  }
+
+  function primeVoices() {
+    if (!ttsSupported()) return;
+    var synth = window.speechSynthesis;
+    var list = synth.getVoices();
+    if (list && list.length) {
+      voicesReady = true;
+      return;
+    }
+    synth.addEventListener('voiceschanged', function onVoices() {
+      voicesReady = synth.getVoices().length > 0;
+      synth.removeEventListener('voiceschanged', onVoices);
+    });
+  }
+
+  function pickVoice() {
+    if (!ttsSupported()) return null;
+    var voices = window.speechSynthesis.getVoices();
+    if (!voices || !voices.length) return null;
+    var prefer = ['en-PH', 'fil-PH', 'en-US', 'en-GB'];
+    for (var p = 0; p < prefer.length; p++) {
+      for (var i = 0; i < voices.length; i++) {
+        if (voices[i].lang && voices[i].lang.indexOf(prefer[p].split('-')[0]) === 0) {
+          return voices[i];
+        }
+      }
+    }
+    return voices[0];
+  }
+
+  function syncVoiceUi() {
+    if (!voiceBtn) return;
+    voiceBtn.hidden = !ttsSupported();
+    voiceBtn.setAttribute('aria-pressed', ttsEnabled ? 'true' : 'false');
+    voiceBtn.classList.toggle('is-on', ttsEnabled);
+    voiceBtn.title = ttsEnabled
+      ? 'Tap to read messages aloud'
+      : 'Read aloud off — tap to hear messages';
+    voiceBtn.setAttribute(
+      'aria-label',
+      'Read messages aloud'
+    );
+  }
+
+  function markTtsPrimed() {
+    ttsUserPrimed = true;
+    primeSpeechFromUserGesture();
+  }
+
+  function resetSpeechQueue() {
+    speechQueue = [];
+    speechBusy = false;
+  }
+
+  function cancelSpeech() {
+    resetSpeechQueue();
+    onSpeechQueueIdle();
+    if (ttsSupported()) {
+      window.speechSynthesis.cancel();
+    }
+  }
+
+  function processSpeechQueue() {
+    if (!ttsEnabled || !ttsSupported() || speechBusy || !speechQueue.length) return;
+    speechBusy = true;
+    var text = speechQueue.shift();
+    var u = new SpeechSynthesisUtterance(text);
+    u.lang = 'en-PH';
+    u.rate = 1;
+    u.pitch = 1;
+    var voice = pickVoice();
+    if (voice) u.voice = voice;
+    u.onend = function () {
+      speechBusy = false;
+      if (!speechQueue.length) onSpeechQueueIdle();
+      window.setTimeout(processSpeechQueue, 80);
+    };
+    u.onerror = function () {
+      speechBusy = false;
+      if (!speechQueue.length) onSpeechQueueIdle();
+      window.setTimeout(processSpeechQueue, 80);
+    };
+    try {
+      window.speechSynthesis.speak(u);
+      if (window.speechSynthesis.paused) {
+        window.speechSynthesis.resume();
+      }
+    } catch (e) {
+      speechBusy = false;
+      onSpeechQueueIdle();
+    }
+  }
+
+  function queueSpeech(text) {
+    if (!ttsEnabled || !ttsSupported() || !text || !ttsUserPrimed) return;
+    primeVoices();
+    var t = String(text).replace(/\s+/g, ' ').trim();
+    if (!t) return;
+    speechQueue.push(t);
+    if (!speechBusy) {
+      processSpeechQueue();
+    }
+  }
+
+  function speakText(text) {
+    queueSpeech(text);
+  }
+
+  function speakAllBotBubblesInThread() {
+    var thread = el('ptRemedyThread');
+    if (!thread) return;
+    cancelSpeech();
+    var nodes = thread.querySelectorAll(
+      '.pt-remedy__row--bot .pt-remedy__bubble:not(.pt-remedy__bubble--typing)'
+    );
+    for (var i = 0; i < nodes.length; i++) {
+      var t = (nodes[i].textContent || '').trim();
+      if (t) speechQueue.push(t);
+    }
+    if (speechQueue.length) {
+      processSpeechQueue();
+    }
+  }
+
+  function readAloudNow() {
+    if (!ttsSupported()) return;
+    markTtsPrimed();
+    ttsEnabled = true;
+    saveTtsPref();
+    syncVoiceUi();
+    if (voiceBtn) voiceBtn.classList.add('is-speaking');
+    window.setTimeout(function () {
+      speakAllBotBubblesInThread();
+    }, 40);
+  }
+
+  function primeSpeechFromUserGesture() {
+    if (!ttsSupported()) return;
+    primeVoices();
+    try {
+      window.speechSynthesis.cancel();
+    } catch (e) { /* ignore */ }
+  }
+
+  function onSpeechQueueIdle() {
+    if (voiceBtn) voiceBtn.classList.remove('is-speaking');
+  }
+
+  function syncMessagesFabSuppressed(suppress) {
+    var nodes = document.querySelectorAll('.mc-messages-fab, [data-messages-fab]');
+    for (var i = 0; i < nodes.length; i++) {
+      var fab = nodes[i];
+      if (suppress) {
+        fab.setAttribute('data-suppressed-for', 'pt-remedy');
+        fab.style.setProperty('display', 'none', 'important');
+      } else {
+        fab.removeAttribute('data-suppressed-for');
+        fab.style.removeProperty('display');
+      }
+    }
+  }
+
+  function setPanelOpenState(open) {
+    document.body.classList.toggle('pt-remedy-panel-open', open);
+    var root = el('ptRemedyChat');
+    if (root) root.setAttribute('data-open', open ? 'true' : 'false');
+    syncMessagesFabSuppressed(open);
+  }
+
+  function dismissWaitingPanel() {
+    suppressAutoOpen = true;
+    if (currentId) setWaitingDismissed(currentId);
+    else setWaitingDismissed(0);
+    closePanel(true);
+  }
+
+  function closeRemedyPanel(e) {
+    if (e && e.preventDefault) e.preventDefault();
+    if (e && e.stopPropagation) e.stopPropagation();
+    dismissWaitingPanel();
+    return false;
+  }
+
+  function openCareAssistant() {
+    suppressAutoOpen = false;
+    try {
+      sessionStorage.removeItem('ptRemedyWaitDismiss_active');
+      if (currentId) {
+        sessionStorage.removeItem(waitingDismissKey(currentId));
+      }
+    } catch (err) { /* ignore */ }
+    showFab(true);
+    markTtsPrimed();
+    load({ silent: false }).then(function () {
+      var panel = el('ptRemedyPanel');
+      if (panel && panel.hidden) {
+        openPanel();
+      }
+    });
+  }
+
+  window.MedConnectPtRemedy = {
+    close: closeRemedyPanel,
+    open: openCareAssistant,
+  };
+
+  function hideAllChoices() {
+    var w = el('ptRemedyChoicesWaiting');
+    var a = el('ptRemedyChoicesApproved');
+    if (w) w.hidden = true;
+    if (a) a.hidden = true;
+  }
 
   function showFab(on) {
     var root = el('ptRemedyChat');
@@ -53,35 +397,38 @@
     var fab = el('ptRemedyFab');
     if (!root || !panel) return;
     root.hidden = false;
-    root.setAttribute('data-open', 'true');
     panel.hidden = false;
+    panel.removeAttribute('hidden');
+    setPanelOpenState(true);
     panel.setAttribute('aria-hidden', 'false');
     if (fab) {
-      fab.hidden = false;
       fab.setAttribute('aria-expanded', 'true');
     }
+    syncVoiceUi();
   }
 
   function closePanel(keepFab) {
     var root = el('ptRemedyChat');
     var panel = el('ptRemedyPanel');
     var fab = el('ptRemedyFab');
+    cancelSpeech();
     if (panel) {
       panel.hidden = true;
+      panel.setAttribute('hidden', '');
       panel.setAttribute('aria-hidden', 'true');
     }
-    if (root) root.setAttribute('data-open', 'false');
+    setPanelOpenState(false);
     if (fab) {
       fab.setAttribute('aria-expanded', 'false');
       fab.hidden = !keepFab;
     }
+    if (!keepFab && root) root.hidden = true;
   }
 
   function clearThread() {
     var thread = el('ptRemedyThread');
     if (thread) thread.innerHTML = '';
-    var choices = el('ptRemedyChoices');
-    if (choices) choices.hidden = true;
+    hideAllChoices();
   }
 
   function appendBubble(text, kind) {
@@ -95,6 +442,9 @@
     row.appendChild(bubble);
     thread.appendChild(row);
     thread.scrollTop = thread.scrollHeight;
+    if (kind === 'bot' || !kind) {
+      speakText(text);
+    }
   }
 
   function appendTyping() {
@@ -115,18 +465,30 @@
   }
 
   function playConversation(item) {
+    clearWaitingDismissed();
     mode = 'approved';
+    hideAllChoices();
+    upcomingConsult = item && item.upcoming_consultation ? item.upcoming_consultation : null;
     var tips = Array.isArray(item.recommendations) ? item.recommendations.slice() : [];
-    var choices = el('ptRemedyChoices');
+    var choices = el('ptRemedyChoicesApproved');
     var bookBtn = el('ptRemedyBook');
-    if (choices) choices.hidden = true;
-    if (bookBtn && item.book_url) bookBtn.setAttribute('href', item.book_url);
+    var cancelBtn = el('ptRemedyCancelVisit');
+    if (bookBtn) {
+      bookBtn.setAttribute('href', item.book_url || (base + '/views/patient/triage.php'));
+      bookBtn.textContent = item.book_cta_label || 'Proceed to Book Consultation';
+    }
+    if (cancelBtn) {
+      cancelBtn.hidden = !(upcomingConsult && upcomingConsult.id);
+    }
 
     var messages = [];
+    if (item.reviewed_by_label) {
+      messages.push(item.reviewed_by_label + '.');
+    }
     messages.push('Hi — your provider reviewed your concern' +
       (item.chief_complaint ? (' (“' + item.chief_complaint + '”)') : '') +
-      ' and marked it as non-urgent.');
-    messages.push('Here are basic self-care tips you can try at home:');
+      ' and approved self-care guidance for a non-urgent case.');
+    messages.push('Here are the tips you can try at home:');
     tips.forEach(function (tip) {
       messages.push(tip);
     });
@@ -151,6 +513,41 @@
     next();
   }
 
+  async function cancelUpcomingVisit(reason) {
+    if (!upcomingConsult || !upcomingConsult.id) {
+      return { ok: false, message: 'No upcoming visit to cancel.' };
+    }
+    try {
+      var res = await fetch(base + '/app/api/patient/cancel_consultation.php', {
+        method: 'POST',
+        credentials: 'same-origin',
+        headers: { 'X-MC-No-Loader': '1' },
+        body: new URLSearchParams({
+          consultation_id: String(upcomingConsult.id),
+          reason: reason || 'Patient chose self-care tips instead of video visit',
+          csrf_token: csrf(),
+        }),
+        mcNoLoader: true,
+      });
+      var data = await res.json().catch(function () { return null; });
+      if (!data || !data.success) {
+        return { ok: false, message: (data && data.message) || 'Could not cancel appointment.' };
+      }
+      var cancelledId = Number(upcomingConsult.id || 0);
+      upcomingConsult = null;
+      var cancelBtn = el('ptRemedyCancelVisit');
+      if (cancelBtn) cancelBtn.hidden = true;
+      return {
+        ok: true,
+        message: data.message || 'Appointment cancelled. Slot freed.',
+        consultation_id: cancelledId,
+        slots_freed: Number(data.slots_freed || (data.data && data.data.slots_freed) || 0),
+      };
+    } catch (e) {
+      return { ok: false, message: 'Network error while cancelling.' };
+    }
+  }
+
   function playWaiting(info) {
     mode = 'waiting';
     clearThread();
@@ -162,20 +559,17 @@
     );
     appendBubble(
       info.message ||
-      'Your self-care tips are ready for provider review. They will appear here after your healthcare provider approves them.',
+      'Your case is currently being reviewed by a healthcare provider. Please wait while your guidance is being prepared.',
       'bot'
     );
-    appendBubble('You can keep this chat closed and come back anytime — or book a consultation if you prefer to talk with a doctor now.', 'bot');
-    var choices = el('ptRemedyChoices');
-    var bookBtn = el('ptRemedyBook');
+    appendBubble('You can close this chat and come back later — we will notify you here when tips are ready.', 'bot');
+
+    var choices = el('ptRemedyChoicesWaiting');
+    var bookBtn = el('ptRemedyBookWaiting');
     if (bookBtn) {
       bookBtn.setAttribute('href', base + '/views/patient/triage.php');
     }
-    if (choices) {
-      var selfCare = el('ptRemedySelfCare');
-      if (selfCare) selfCare.hidden = true;
-      choices.hidden = false;
-    }
+    if (choices) choices.hidden = false;
   }
 
   async function acknowledge(id) {
@@ -196,6 +590,7 @@
 
   async function load(opts) {
     var silent = opts && opts.silent;
+    var gen = ++loadGeneration;
     try {
       var res = await fetch(base + '/app/api/patient/approved_recommendations.php', {
         credentials: 'same-origin',
@@ -203,33 +598,65 @@
         headers: { 'X-MC-No-Loader': '1' },
         mcNoLoader: true,
       });
+      if (gen !== loadGeneration) return;
       var data = await res.json();
       if (!data || !data.success) return;
+      if (gen !== loadGeneration) return;
 
-      if (data.item) {
-        if (mode === 'approved' && currentId === Number(data.item.id || 0) && silent) {
+      // Api::success merges payload at top level (item / awaiting_provider).
+      var item = data.item || (data.data && data.data.item) || null;
+      var awaiting = data.awaiting_provider || (data.data && data.data.awaiting_provider) || null;
+      var cancelPrompt = data.tips_cancel_prompt || (data.data && data.data.tips_cancel_prompt) || null;
+
+      if (item) {
+        if (mode === 'approved' && currentId === Number(item.id || 0) && silent) {
+          maybeShowTipsCancelPrompt(cancelPrompt || {
+            tip_id: item.id,
+            chief_complaint: item.chief_complaint,
+            upcoming_consultation: item.upcoming_consultation,
+          });
           return;
         }
         var wasWaiting = mode === 'waiting';
-        currentId = Number(data.item.id || 0);
+        currentId = Number(item.id || 0);
         showFab(true);
         clearThread();
-        var selfCare = el('ptRemedySelfCare');
-        if (selfCare) selfCare.hidden = false;
         if (!silent || wasWaiting) openPanel();
-        playConversation(data.item);
+        playConversation(item);
+        maybeShowTipsCancelPrompt(cancelPrompt || {
+          tip_id: item.id,
+          chief_complaint: item.chief_complaint,
+          upcoming_consultation: item.upcoming_consultation,
+        });
         return;
       }
 
-      if (data.awaiting_provider) {
-        currentId = Number(data.awaiting_provider.id || 0);
+      if (awaiting) {
+        var waitId = Number(awaiting.id || 0);
+        currentId = waitId;
         showFab(true);
+        var dismissed = suppressAutoOpen || isWaitingDismissed(waitId);
+        if (dismissed) {
+          mode = 'waiting';
+          if (!silent) {
+            playWaiting(awaiting);
+          }
+          closePanel(true);
+          return;
+        }
         if (mode !== 'waiting' || !silent) {
-          if (!silent) openPanel();
-          playWaiting(data.awaiting_provider);
+          playWaiting(awaiting);
+          if (!silent) {
+            openPanel();
+          }
+        }
+        if (ttsUserPrimed) {
+          window.setTimeout(readAloudNow, 180);
         }
         return;
       }
+
+      maybeShowTipsCancelPrompt(cancelPrompt);
 
       if (!silent) {
         showFab(false);
@@ -242,8 +669,9 @@
   function startPoll() {
     if (pollTimer) return;
     pollTimer = window.setInterval(function () {
-      if (mode === 'waiting') load({ silent: true });
-    }, 20000);
+      // Keep checking so cancel popup can appear when the doctor approves tips.
+      load({ silent: true });
+    }, 12000);
   }
 
   function bind() {
@@ -251,29 +679,176 @@
     var closeBtn = el('ptRemedyClose');
     var selfCareBtn = el('ptRemedySelfCare');
     var bookBtn = el('ptRemedyBook');
+    var bookWaiting = el('ptRemedyBookWaiting');
+    var waitClose = el('ptRemedyWaitClose');
+    voiceBtn = el('ptRemedyVoice');
+
+    document.addEventListener('click', function (e) {
+      var target = e.target;
+      if (!target || !target.closest) return;
+      if (target.closest('#ptRemedyClose') || target.closest('#ptRemedyWaitClose')) {
+        closeRemedyPanel(e);
+      }
+    }, true);
+
+    document.addEventListener('pointerup', function (e) {
+      var target = e.target;
+      if (!target || !target.closest) return;
+      if (target.closest('#ptRemedyClose') || target.closest('#ptRemedyWaitClose')) {
+        closeRemedyPanel(e);
+      }
+    }, true);
+
+    loadTtsPref();
+    syncVoiceUi();
+
+    if (voiceBtn) {
+      voiceBtn.addEventListener('click', function () {
+        readAloudNow();
+      });
+    }
 
     if (fab) {
       fab.addEventListener('click', function () {
         var panel = el('ptRemedyPanel');
         if (panel && panel.hidden) {
+          suppressAutoOpen = false;
+          markTtsPrimed();
           openPanel();
-          if (mode === '') load();
+          if (mode === '') {
+            load();
+          } else {
+            readAloudNow();
+          }
         } else {
-          closePanel(true);
+          closeRemedyPanel();
         }
       });
     }
     if (closeBtn) {
-      closeBtn.addEventListener('click', function () {
-        closePanel(true);
+      closeBtn.addEventListener('click', closeRemedyPanel);
+    }
+    if (waitClose) {
+      waitClose.addEventListener('click', closeRemedyPanel);
+    }
+    document.addEventListener('keydown', function (e) {
+      if (!e || e.key !== 'Escape') return;
+      var panel = el('ptRemedyPanel');
+      if (!panel || panel.hidden) return;
+      closeRemedyPanel(e);
+    });
+    var cancelVisitBtn = el('ptRemedyCancelVisit');
+    var tipsReadyCancelBtn = el('mcTipsReadyCancelBtn');
+    var tipsReadyKeepBtn = el('mcTipsReadyKeepBtn');
+
+    document.addEventListener('click', function (e) {
+      var t = e.target;
+      if (!t || !t.closest) return;
+      if (t.closest('[data-mc-tips-ready-dismiss]')) {
+        closeTipsReadyCancelModal();
+      }
+    });
+
+    if (tipsReadyCancelBtn) {
+      tipsReadyCancelBtn.addEventListener('click', async function () {
+        if (!upcomingConsult || !upcomingConsult.id) {
+          closeTipsReadyCancelModal();
+          return;
+        }
+        tipsReadyCancelBtn.disabled = true;
+        tipsReadyCancelBtn.textContent = 'Cancelling…';
+        var result = await cancelUpcomingVisit('Cancelled after tips approved (popup)');
+        tipsReadyCancelBtn.disabled = false;
+        tipsReadyCancelBtn.textContent = 'Cancel video visit';
+        if (!result.ok) {
+          window.alert(result.message || 'Could not cancel. Try My Sessions.');
+          return;
+        }
+        closeTipsReadyCancelModal();
+        appendBubble('Cancel my video visit.', 'user');
+        appendBubble(
+          result.message ||
+            'Visit cancelled. The doctor’s slot is free again. Your care tips stay available.',
+          'bot'
+        );
+        if (currentId) acknowledge(currentId);
+        var cancelBtn = el('ptRemedyCancelVisit');
+        if (cancelBtn) cancelBtn.hidden = true;
+        var bookBtnEl = el('ptRemedyBook');
+        if (bookBtnEl) {
+          bookBtnEl.textContent = 'Book again later';
+          bookBtnEl.setAttribute('href', base + '/views/patient/triage.php');
+        }
+        if (Array.isArray(window.consultations)) {
+          var cancelledId = Number(result.consultation_id || 0);
+          window.consultations = window.consultations.map(function (c) {
+            return Number(c.id) === cancelledId
+              ? Object.assign({}, c, { status: 'cancelled' })
+              : c;
+          });
+          if (typeof window.filterSessions === 'function') {
+            window.filterSessions('upcoming');
+          }
+        }
+        window.alert(result.message || 'Video visit cancelled. Slot is free again.');
       });
     }
+    if (tipsReadyKeepBtn) {
+      tipsReadyKeepBtn.addEventListener('click', function () {
+        closeTipsReadyCancelModal();
+      });
+    }
+
     if (selfCareBtn) {
-      selfCareBtn.addEventListener('click', function () {
+      selfCareBtn.addEventListener('click', async function () {
         if (mode !== 'approved') return;
         appendBubble('I’ll follow the self-care tips.', 'user');
+
+        if (upcomingConsult && upcomingConsult.id) {
+          var shouldCancel = window.confirm(
+            'You have a video visit booked for ' + (upcomingConsult.label || 'soon') +
+            '.\n\nCancel it so the doctor’s slot becomes free again?\n\nOK = cancel visit\nCancel = keep my video visit'
+          );
+          if (!shouldCancel) {
+            appendBubble('I’ll keep my video visit for now.', 'user');
+            appendBubble(
+              'Okay — your appointment stays booked. See you at your scheduled time. You can still use these tips meanwhile.',
+              'bot'
+            );
+            acknowledge(currentId);
+            window.setTimeout(function () {
+              closePanel(false);
+              showFab(false);
+              mode = '';
+              upcomingConsult = null;
+            }, 1800);
+            return;
+          }
+
+          appendBubble('Please cancel my video visit and free the slot.', 'user');
+          var cancelResult = await cancelUpcomingVisit('Chose self-care tips after approval');
+          if (!cancelResult.ok) {
+            appendBubble(cancelResult.message || 'Could not cancel the visit. You can cancel from My Sessions.', 'bot');
+            return;
+          }
+          appendBubble(
+            'Done — your video visit is cancelled and that time slot is open again for other patients. Take care with the self-care tips.',
+            'bot'
+          );
+          acknowledge(currentId);
+          window.setTimeout(function () {
+            closePanel(false);
+            showFab(false);
+            mode = '';
+          }, 2000);
+          return;
+        }
+
         window.setTimeout(function () {
-          appendBubble('Sounds good. Take care — you can book a consultation later if symptoms change or you want to talk with a licensed doctor.', 'bot');
+          appendBubble(
+            'Sounds good. Take care — you can book a consultation later if symptoms change or you want to talk with a licensed doctor.',
+            'bot'
+          );
           acknowledge(currentId);
           window.setTimeout(function () {
             closePanel(false);
@@ -283,20 +858,51 @@
         }, 350);
       });
     }
+    if (cancelVisitBtn) {
+      cancelVisitBtn.addEventListener('click', async function () {
+        if (mode !== 'approved' || !upcomingConsult || !upcomingConsult.id) return;
+        if (!window.confirm(
+          'Cancel your video visit for ' + (upcomingConsult.label || 'the scheduled time') +
+          '?\n\nThe doctor’s slot will become available immediately.'
+        )) {
+          return;
+        }
+        appendBubble('Cancel my video visit.', 'user');
+        var result = await cancelUpcomingVisit('Cancelled from care tips chat');
+        if (!result.ok) {
+          appendBubble(result.message || 'Could not cancel. Try My Sessions.', 'bot');
+          return;
+        }
+        appendBubble(result.message || 'Visit cancelled. Slot freed for other patients.', 'bot');
+        acknowledge(currentId);
+        var bookBtnEl = el('ptRemedyBook');
+        if (bookBtnEl) {
+          bookBtnEl.textContent = 'Book a consultation later';
+          bookBtnEl.setAttribute('href', base + '/views/patient/triage.php');
+        }
+      });
+    }
     if (bookBtn) {
       bookBtn.addEventListener('click', function () {
         if (mode === 'approved') acknowledge(currentId);
+      });
+    }
+    if (bookWaiting) {
+      bookWaiting.addEventListener('click', function () {
+        if (currentId) setWaitingDismissed(currentId);
       });
     }
   }
 
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', function () {
+      primeVoices();
       bind();
       load();
       startPoll();
     });
   } else {
+    primeVoices();
     bind();
     load();
     startPoll();

@@ -472,6 +472,15 @@ final class BhwWorkflows
             $pdo->prepare('UPDATE triage_results SET recommendation_status = ? WHERE id = ?')
                 ->execute([$recStatus, $triageResultId]);
 
+            if ($recStatus === 'pending_approval' && $triageTier === TriageLevelService::NON_URGENT) {
+                require_once __DIR__ . '/triage_provider_assignment.php';
+                require_once __DIR__ . '/notification_events.php';
+                $assignedId = triage_assign_review_provider($pdo, $patientId);
+                if ($assignedId > 0) {
+                    triage_bind_assigned_provider($pdo, $triageResultId, $assignedId);
+                }
+            }
+
             if ($triageTier === TriageLevelService::EMERGENCY) {
                 $pdo->prepare("UPDATE triage_results SET outcome = 'emergency_referral', status = 'completed' WHERE id = ?")
                     ->execute([$triageResultId]);
@@ -560,6 +569,11 @@ final class BhwWorkflows
             }
 
             $provider_id = (int) $slot['provider_id'];
+            if ($recStatus === 'pending_approval' && $triageTier === TriageLevelService::NON_URGENT) {
+                triage_assert_patient_may_book_provider($pdo, $patientId, $provider_id);
+                triage_bind_assigned_provider($pdo, $triageResultId, $provider_id);
+            }
+
             $consult_date = (string) $slot['slot_date'];
             $consult_time = (string) $slot['start_time'];
             $provider_name = (string) $slot['provider_name'];
@@ -628,6 +642,19 @@ final class BhwWorkflows
             $when = bhw_format_slot_label($consult_date, $consult_time);
             NotificationEvents::appointmentCreated($pdo, $consultation_id, $patientId, $provider_id, $when, $bhwId);
             NotificationEvents::aiTriageCompleted($pdo, $patientId, $label, $bhwId);
+            if ($recStatus === 'pending_approval' && $triageTier === TriageLevelService::NON_URGENT) {
+                $pstmt = $pdo->prepare('SELECT CONCAT(first_name, " ", last_name) FROM users WHERE id = ? LIMIT 1');
+                $pstmt->execute([$patientId]);
+                $pName = (string) ($pstmt->fetchColumn() ?: 'Patient');
+                NotificationEvents::aiSelfCareReviewRequired(
+                    $pdo,
+                    $provider_id,
+                    $patientId,
+                    $pName,
+                    $triageResultId,
+                    $bhwId
+                );
+            }
 
             return [
                 'emergency'        => false,
@@ -858,10 +885,41 @@ final class BhwWorkflows
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
-    public static function getDashboardMetrics(PDO $pdo, array $ctx): array
+    public static function parseDashboardFilters(array $input): array
+    {
+        $days = (int) ($input['days'] ?? 7);
+        $allowed = [7, 14, 30, 90];
+        if (!in_array($days, $allowed, true)) {
+            $days = 7;
+        }
+
+        return [
+            'days'  => $days,
+            'purok' => trim((string) ($input['purok'] ?? '')),
+        ];
+    }
+
+    /**
+     * Barangay sector (+ optional purok) SQL clause for dashboard aggregates.
+     *
+     * @return array{0: string, 1: list<mixed>}
+     */
+    private static function patientScopeWhere(PDO $pdo, array $ctx, array $filters, string $prAlias = 'pr'): array
+    {
+        $f = self::parseDashboardFilters($filters);
+        [$clause, $params] = bhw_patient_scope_clause($pdo, $ctx, [], $prAlias);
+        if ($f['purok'] !== '' && in_array('purok', bhw_pr_columns($pdo), true)) {
+            $clause .= ' AND LOWER(TRIM(' . $prAlias . '.purok)) = LOWER(?)';
+            $params[] = $f['purok'];
+        }
+
+        return [$clause, $params];
+    }
+
+    public static function getDashboardMetrics(PDO $pdo, array $ctx, array $filters = []): array
     {
         BhwPatientWorkflow::ensure_schema($pdo);
-        [$clause, $params] = bhw_patient_sector_clause($pdo, $ctx, 'pr');
+        [$clause, $params] = self::patientScopeWhere($pdo, $ctx, $filters);
 
         $metrics = [
             'todays_patients'        => 0,
@@ -1011,9 +1069,104 @@ final class BhwWorkflows
         return $metrics;
     }
 
-    public static function getTriageQueue(PDO $pdo, array $ctx, int $limit = 15): array
+    /**
+     * Chart series for BHW dashboard (barangay-scoped).
+     *
+     * @return array{
+     *   consultations_week: list<array{label:string,count:int,is_today:bool}>,
+     *   registrations_week: list<array{label:string,count:int,is_today:bool}>,
+     *   triage_mix: list<array{label:string,value:int}>,
+     *   workflow_pipeline: list<array{label:string,value:int}>
+     * }
+     */
+    public static function getDashboardCharts(PDO $pdo, array $ctx, array $filters = []): array
     {
-        [$clause, $params] = bhw_patient_sector_clause($pdo, $ctx, 'pr');
+        BhwPatientWorkflow::ensure_schema($pdo);
+        [$clause, $params] = self::patientScopeWhere($pdo, $ctx, $filters);
+        $f = self::parseDashboardFilters($filters);
+        $days = $f['days'];
+
+        $consultWeek = [];
+        $regWeek = [];
+        for ($i = $days - 1; $i >= 0; $i--) {
+            $date = date('Y-m-d', strtotime("-{$i} days"));
+            $isToday = ($i === 0);
+
+            $cStmt = $pdo->prepare("
+                SELECT COUNT(*) FROM consultations c
+                JOIN users u ON u.id = c.patient_id
+                JOIN patient_registrations pr ON pr.email = u.email
+                WHERE {$clause} AND c.consult_date = ?
+            ");
+            $cStmt->execute(array_merge($params, [$date]));
+            $consultWeek[] = [
+                'label'    => $days > 14 ? date('M j', strtotime($date)) : date('D', strtotime($date)),
+                'count'    => (int) $cStmt->fetchColumn(),
+                'is_today' => $isToday,
+            ];
+
+            $rStmt = $pdo->prepare("
+                SELECT COUNT(*) FROM patient_registrations pr
+                WHERE {$clause} AND DATE(pr.created_at) = ?
+            ");
+            $rStmt->execute(array_merge($params, [$date]));
+            $regWeek[] = [
+                'label'    => $days > 14 ? date('M j', strtotime($date)) : date('D', strtotime($date)),
+                'count'    => (int) $rStmt->fetchColumn(),
+                'is_today' => $isToday,
+            ];
+        }
+
+        $metrics = self::getDashboardMetrics($pdo, $ctx, $filters);
+        $triageMix = [
+            ['label' => 'Emergency', 'value' => (int) ($metrics['emergency_cases'] ?? 0)],
+            ['label' => 'Urgent', 'value' => (int) ($metrics['urgent_cases'] ?? 0)],
+            ['label' => 'Non-urgent', 'value' => (int) ($metrics['non_urgent_cases'] ?? 0)],
+            ['label' => 'Awaiting triage', 'value' => (int) ($metrics['waiting_ai_triage'] ?? 0)],
+        ];
+
+        $workflowLabels = [
+            BhwPatientWorkflow::REGISTERED          => 'Registered',
+            BhwPatientWorkflow::AWAITING_COMPLAINT => 'Awaiting complaint',
+            BhwPatientWorkflow::AI_PROCESSING       => 'AI processing',
+            BhwPatientWorkflow::EMERGENCY           => 'Emergency',
+            BhwPatientWorkflow::URGENT              => 'Urgent',
+            BhwPatientWorkflow::NON_URGENT          => 'Non-urgent',
+        ];
+
+        $wf = $pdo->prepare("
+            SELECT pr.workflow_status, COUNT(*) AS cnt
+            FROM patient_registrations pr
+            WHERE {$clause}
+            GROUP BY pr.workflow_status
+        ");
+        $wf->execute($params);
+        $workflowPipeline = [];
+        foreach ($wf->fetchAll(PDO::FETCH_ASSOC) as $row) {
+            $status = (string) ($row['workflow_status'] ?? '');
+            $cnt = (int) ($row['cnt'] ?? 0);
+            if ($cnt <= 0) {
+                continue;
+            }
+            $workflowPipeline[] = [
+                'label' => $workflowLabels[$status] ?? ucwords(str_replace('_', ' ', $status)),
+                'value' => $cnt,
+            ];
+        }
+        usort($workflowPipeline, static fn ($a, $b) => $b['value'] <=> $a['value']);
+
+        return [
+            'days'               => $days,
+            'consultations_week' => $consultWeek,
+            'registrations_week' => $regWeek,
+            'triage_mix'         => $triageMix,
+            'workflow_pipeline'  => $workflowPipeline,
+        ];
+    }
+
+    public static function getTriageQueue(PDO $pdo, array $ctx, int $limit = 15, array $filters = []): array
+    {
+        [$clause, $params] = self::patientScopeWhere($pdo, $ctx, $filters);
         $sql = "
             SELECT p.id AS patient_id, p.first_name, p.last_name, pr.purok,
                    tr.urgency_label, tr.status, tr.id AS triage_id

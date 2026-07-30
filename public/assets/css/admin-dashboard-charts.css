@@ -1,83 +1,4 @@
-/* Admin & Super Admin dashboard charts */
-
-.adm-charts-section {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-}
-
-.adm-charts-grid {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 16px;
-}
-
-.adm-chart-card {
-  background: #fff;
-  border: 1px solid var(--adm-border, #e2e8f0);
-  border-radius: var(--adm-radius, 12px);
-  box-shadow: var(--adm-shadow-sm, 0 1px 3px rgba(0, 0, 0, 0.06));
-  padding: 18px 20px 16px;
-  display: flex;
-  flex-direction: column;
-  min-height: 260px;
-}
-
-.adm-chart-card__head {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 12px;
-  margin-bottom: 14px;
-}
-
-.adm-chart-card__title {
-  margin: 0;
-  font-size: 14px;
-  font-weight: 800;
-  color: var(--adm-text, #0f172a);
-}
-
-.adm-chart-card__sub {
-  margin: 2px 0 0;
-  font-size: 11px;
-  color: var(--adm-muted, #64748b);
-}
-
-.adm-chart-kpi {
-  text-align: right;
-  flex-shrink: 0;
-}
-
-.adm-chart-kpi strong {
-  display: block;
-  font-size: 1.35rem;
-  font-weight: 800;
-  line-height: 1;
-  color: var(--adm-text, #0f172a);
-}
-
-.adm-chart-kpi span {
-  display: block;
-  margin-top: 3px;
-  font-size: 10px;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-  color: var(--adm-muted, #64748b);
-}
-
-.adm-chart-canvas-wrap {
-  position: relative;
-  flex: 1;
-  min-height: 200px;
-  height: 220px;
-}
-
-.adm-chart-canvas-wrap canvas {
-  width: 100% !important;
-  height: 100% !important;
-}
+/* Admin & Super Admin dashboard charts — pair with medconnect-charts.css */
 
 /* Legacy static chart markup (kept for fallback) */
 .adm-bar-chart {
@@ -292,12 +213,6 @@
 
 .adm-chart-legend strong {
   color: var(--adm-text, #0f172a);
-}
-
-@media (max-width: 1100px) {
-  .adm-charts-grid {
-    grid-template-columns: 1fr;
-  }
 }
 
 @media (max-width: 640px) {

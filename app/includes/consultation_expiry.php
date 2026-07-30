@@ -88,6 +88,10 @@ function consultations_auto_expire(PDO $pdo, ?int $patient_id = null, ?int $prov
         } else {
             $cancel->execute([$id]);
             $updated += $cancel->rowCount();
+            if ($cancel->rowCount() > 0) {
+                require_once __DIR__ . '/patient_consultation_cancel.php';
+                consultation_release_booked_slots($pdo, $id);
+            }
         }
 
         $end_video->execute([$id]);

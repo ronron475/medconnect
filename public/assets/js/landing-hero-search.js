@@ -35,6 +35,56 @@
   const searchWrap = document.getElementById('nav-search-wrap');
   const searchToggle = document.getElementById('nav-search-toggle');
   const searchPanel = document.getElementById('nav-search-panel');
+  const navBackdrop = document.getElementById('landing-nav-backdrop');
+  const MOBILE_SEARCH_MQ = window.matchMedia('(max-width: 992px)');
+
+  function isMobileSearchLayout() {
+    return MOBILE_SEARCH_MQ.matches;
+  }
+
+  function closeMobileNavIfOpen() {
+    const navMenu = document.getElementById('nav-menu');
+    const navToggle = document.getElementById('nav-toggle');
+    if (!navMenu?.classList.contains('open')) return;
+
+    navMenu.classList.remove('open');
+    navToggle?.setAttribute('aria-expanded', 'false');
+    document.body.classList.remove('landing-nav-open');
+    navToggle?.querySelectorAll('span').forEach((span) => {
+      span.style.transform = '';
+      span.style.opacity = '';
+    });
+  }
+
+  function setSearchBackdrop(show) {
+    if (!navBackdrop || !isMobileSearchLayout()) return;
+    if (show) {
+      navBackdrop.dataset.searchBackdrop = '1';
+      navBackdrop.hidden = false;
+      navBackdrop.classList.add('is-visible');
+      navBackdrop.setAttribute('aria-hidden', 'false');
+      return;
+    }
+    if (navBackdrop.dataset.searchBackdrop === '1') {
+      delete navBackdrop.dataset.searchBackdrop;
+      if (!document.getElementById('nav-menu')?.classList.contains('open')) {
+        navBackdrop.hidden = true;
+        navBackdrop.classList.remove('is-visible');
+        navBackdrop.setAttribute('aria-hidden', 'true');
+      }
+    }
+  }
+
+  function setSearchOpenState(open) {
+    document.body.classList.toggle('nav-search-open', open);
+    document.getElementById('navbar')?.classList.toggle('nav-search-active', open);
+    if (open && isMobileSearchLayout()) {
+      closeMobileNavIfOpen();
+      setSearchBackdrop(true);
+    } else if (!open) {
+      setSearchBackdrop(false);
+    }
+  }
 
   if (!form || !input || !dropdown || !indexEl) return;
 
@@ -233,6 +283,7 @@
     searchPanel.hidden = false;
     searchToggle.setAttribute('aria-expanded', 'true');
     searchToggle.setAttribute('aria-label', 'Close search');
+    setSearchOpenState(true);
     requestAnimationFrame(() => input.focus());
   }
 
@@ -244,6 +295,7 @@
     searchPanel.hidden = true;
     searchToggle.setAttribute('aria-expanded', 'false');
     searchToggle.setAttribute('aria-label', 'Open search');
+    setSearchOpenState(false);
     closeDropdown();
     input.value = '';
   }
@@ -382,6 +434,23 @@
     if (!e.target.closest('.nav-search-wrap')) {
       closeDropdown();
       collapseSearch(false);
+    }
+  });
+
+  navBackdrop?.addEventListener('click', () => {
+    if (isSearchExpanded()) {
+      collapseSearch(true);
+    }
+  });
+
+  MOBILE_SEARCH_MQ.addEventListener('change', () => {
+    if (!isSearchExpanded()) return;
+    setSearchOpenState(true);
+  });
+
+  document.addEventListener('medconnect:mobile-nav', (e) => {
+    if (e.detail?.open && isSearchExpanded()) {
+      collapseSearch(true);
     }
   });
 })();

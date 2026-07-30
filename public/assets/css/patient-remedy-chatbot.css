@@ -8,6 +8,21 @@
   font-family: inherit;
 }
 
+.pt-remedy[data-open="true"] {
+  z-index: 200300;
+}
+
+.pt-remedy[data-open="true"] .pt-remedy__fab {
+  display: none;
+}
+
+.pt-remedy[data-open="true"] .pt-remedy__panel {
+  position: fixed;
+  right: 18px;
+  bottom: calc(18px + env(safe-area-inset-bottom, 0px));
+  z-index: 200301;
+}
+
 .pt-remedy__fab {
   display: inline-flex;
   align-items: center;
@@ -54,6 +69,16 @@
   box-shadow: 0 22px 48px rgba(2, 6, 23, 0.28);
 }
 
+/* display:flex above overrides native [hidden]; must force hide when closed */
+.pt-remedy[hidden],
+.pt-remedy__fab[hidden],
+.pt-remedy__panel[hidden],
+#ptRemedyChat[hidden],
+#ptRemedyPanel[hidden],
+#ptRemedyFab[hidden] {
+  display: none !important;
+}
+
 .pt-remedy__header {
   display: flex;
   align-items: flex-start;
@@ -62,6 +87,51 @@
   padding: 14px 14px 12px;
   border-bottom: 1px solid rgba(148, 163, 184, 0.22);
   background: linear-gradient(180deg, #f0fdfa 0%, #ffffff 100%);
+  position: relative;
+  z-index: 2;
+  flex-shrink: 0;
+}
+
+.pt-remedy__header-actions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+.pt-remedy__voice {
+  border: none;
+  background: transparent;
+  color: #64748b;
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  padding: 0;
+}
+
+.pt-remedy__voice:hover {
+  background: rgba(15, 118, 110, 0.08);
+  color: #0f766e;
+}
+
+.pt-remedy__voice.is-on {
+  color: #0d9488;
+  background: rgba(13, 148, 136, 0.12);
+}
+
+.pt-remedy__voice.is-speaking {
+  color: #0d9488;
+  background: rgba(13, 148, 136, 0.2);
+  animation: pt-remedy-voice-pulse 1.2s ease-in-out infinite;
+}
+
+@keyframes pt-remedy-voice-pulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(13, 148, 136, 0.35); }
+  50% { box-shadow: 0 0 0 6px rgba(13, 148, 136, 0); }
 }
 
 .pt-remedy__eyebrow {
@@ -87,7 +157,18 @@
   font-size: 22px;
   line-height: 1;
   cursor: pointer;
-  padding: 0 4px;
+  padding: 0;
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  flex-shrink: 0;
+  position: relative;
+  z-index: 3;
+}
+
+.pt-remedy__close:hover {
+  background: rgba(100, 116, 139, 0.12);
+  color: #334155;
 }
 
 .pt-remedy__thread {
@@ -156,11 +237,15 @@
 
 .pt-remedy__choices {
   padding: 12px;
+  padding-bottom: calc(12px + env(safe-area-inset-bottom, 0px));
   border-top: 1px solid rgba(148, 163, 184, 0.22);
   background: #ffffff;
   display: flex;
   flex-direction: column;
   gap: 8px;
+  position: relative;
+  z-index: 2;
+  flex-shrink: 0;
 }
 
 .pt-remedy__choice-label {
@@ -182,6 +267,11 @@
   border: 1px solid transparent;
 }
 
+.pt-remedy__choice[hidden],
+.pt-remedy__choices[hidden] {
+  display: none !important;
+}
+
 .pt-remedy__choice--primary {
   background: #0d9488;
   color: #fff;
@@ -192,6 +282,16 @@
   background: #fff;
   color: #0f766e;
   border-color: rgba(13, 148, 136, 0.4);
+}
+
+.pt-remedy__choice--danger {
+  background: #fff;
+  color: #b91c1c;
+  border: 1px solid #fca5a5;
+}
+
+.pt-remedy__choice--danger:hover {
+  background: #fef2f2;
 }
 
 html[data-theme-resolved='dark'] .pt-remedy__panel {
@@ -229,19 +329,30 @@ html[data-theme-resolved='dark'] .pt-remedy__choice--outline {
   .pt-remedy {
     right: 12px;
     bottom: 12px;
-    left: 12px;
+    left: auto;
   }
 
   .pt-remedy__panel {
     right: 0;
-    left: 0;
-    width: auto;
-    bottom: 54px;
+    left: auto;
+    width: min(380px, calc(100vw - 24px));
+    bottom: 12px;
     max-height: min(78vh, 620px);
   }
 
-  .pt-remedy__fab {
-    width: 100%;
-    justify-content: center;
+  .pt-remedy[data-open="true"] .pt-remedy__panel {
+    right: 12px;
+    bottom: calc(12px + env(safe-area-inset-bottom, 0px));
+    width: min(380px, calc(100vw - 24px));
   }
+
+  .pt-remedy__fab {
+    max-width: calc(100vw - 24px);
+  }
+}
+
+/* Keep messages FAB from covering Care tips panel / actions */
+body.pt-remedy-panel-open .mc-messages-fab,
+.mc-messages-fab[data-suppressed-for="pt-remedy"] {
+  display: none !important;
 }

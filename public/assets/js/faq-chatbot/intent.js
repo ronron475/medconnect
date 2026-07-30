@@ -123,6 +123,23 @@
       return { intent: INTENT.MEDICAL_INFO, urgency: URGENCY.LOW, isQuestion };
     }
 
+    if (Emotions) {
+      const emo = Emotions.analyze(raw);
+      const key = Emotions.normalizeEmotionKey(emo.primary);
+      const distressKeys = [
+        'worried', 'anxious', 'stressed', 'overwhelmed', 'sad', 'lonely', 'afraid',
+        'frustrated', 'angry', 'disappointed', 'nervous', 'crying', 'tired',
+      ];
+      const venting = /\b(i\s*'?m|i\s+am|ako\s+ay|na|feel|feeling|nararamdaman|nabatyagan|ko)\b/i.test(raw)
+        && /\b(stress|worri|anxious|sad|lonely|afraid|frustrat|overwhelm|tired|pagod|kapoy|kabalaka|nabalaka|kasubo|nahadlok|nalibog|akig)\b/i.test(raw);
+      if (key && distressKeys.includes(key) && ((emo.score || 0) >= 1.2 || venting)) {
+        const faqCue = /\b(how\s+do\s+i|how\s+to|paano|register|sign\s*in|log\s*in|appointment|book|schedule)\b/i.test(raw);
+        if (!faqCue || venting) {
+          return { intent: INTENT.EMOTIONAL_SUPPORT, urgency: URGENCY.LOW, isQuestion };
+        }
+      }
+    }
+
     return { intent: INTENT.GENERAL_QUESTION, urgency: URGENCY.NONE, isQuestion };
   }
 

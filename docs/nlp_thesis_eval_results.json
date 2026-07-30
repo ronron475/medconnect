@@ -1,0 +1,354 @@
+{
+  "generated_at": "2026-07-28T19:12:23.308264+00:00",
+  "model_loaded": true,
+  "classifier_holdout_accuracy_percent": 100.0,
+  "classifier_holdout_pipeline_rendered_percent": 100.0,
+  "classifier_training_rows": 820,
+  "classifier_final_fit": "all_labeled_data",
+  "classifier_pipeline_aligned": true,
+  "disease_count": 41,
+  "symptom_feature_count": 131,
+  "cohorts": {
+    "thesis_primary_archive_test_pc": {
+      "description": "Primary thesis cohort: archive template cases (PC-*), held-out test split.",
+      "filters": {
+        "split": "test",
+        "case_id_prefix": "PC-",
+        "source": "archive_source/dataset.csv"
+      },
+      "diseases_covered": 41,
+      "disease_labels_covered": [
+        "(vertigo) Paroymsal  Positional Vertigo",
+        "AIDS",
+        "Acne",
+        "Alcoholic hepatitis",
+        "Allergy",
+        "Arthritis",
+        "Bronchial Asthma",
+        "Cervical spondylosis",
+        "Chicken pox",
+        "Chronic cholestasis",
+        "Common Cold",
+        "Dengue",
+        "Diabetes",
+        "Dimorphic hemmorhoids(piles)",
+        "Drug Reaction",
+        "Fungal infection",
+        "GERD",
+        "Gastroenteritis",
+        "Heart attack",
+        "Hepatitis B",
+        "Hepatitis C",
+        "Hepatitis D",
+        "Hepatitis E",
+        "Hypertension",
+        "Hyperthyroidism",
+        "Hypoglycemia",
+        "Hypothyroidism",
+        "Impetigo",
+        "Jaundice",
+        "Malaria",
+        "Migraine",
+        "Osteoarthristis",
+        "Paralysis (brain hemorrhage)",
+        "Peptic ulcer diseae",
+        "Pneumonia",
+        "Psoriasis",
+        "Tuberculosis",
+        "Typhoid",
+        "Urinary tract infection",
+        "Varicose veins",
+        "hepatitis A"
+      ],
+      "ml_fast_path": {
+        "n": 772,
+        "top1_correct": 772,
+        "top1_percent": 100.0,
+        "top3_correct": 772,
+        "top3_percent": 100.0,
+        "miss_count": 0,
+        "misses_sample": []
+      },
+      "production_path": {
+        "n": 772,
+        "top1_correct": 772,
+        "top1_percent": 100.0,
+        "top3_correct": 772,
+        "top3_percent": 100.0,
+        "miss_count": 0,
+        "misses_sample": []
+      }
+    },
+    "thesis_hiligaynon_archive_test_pc": {
+      "description": "Hiligaynon subset of primary cohort.",
+      "filters": {
+        "split": "test",
+        "language": "hiligaynon",
+        "case_id_prefix": "PC-",
+        "source": "archive_source/dataset.csv"
+      },
+      "diseases_covered": 41,
+      "disease_labels_covered": [
+        "(vertigo) Paroymsal  Positional Vertigo",
+        "AIDS",
+        "Acne",
+        "Alcoholic hepatitis",
+        "Allergy",
+        "Arthritis",
+        "Bronchial Asthma",
+        "Cervical spondylosis",
+        "Chicken pox",
+        "Chronic cholestasis",
+        "Common Cold",
+        "Dengue",
+        "Diabetes",
+        "Dimorphic hemmorhoids(piles)",
+        "Drug Reaction",
+        "Fungal infection",
+        "GERD",
+        "Gastroenteritis",
+        "Heart attack",
+        "Hepatitis B",
+        "Hepatitis C",
+        "Hepatitis D",
+        "Hepatitis E",
+        "Hypertension",
+        "Hyperthyroidism",
+        "Hypoglycemia",
+        "Hypothyroidism",
+        "Impetigo",
+        "Jaundice",
+        "Malaria",
+        "Migraine",
+        "Osteoarthristis",
+        "Paralysis (brain hemorrhage)",
+        "Peptic ulcer diseae",
+        "Pneumonia",
+        "Psoriasis",
+        "Tuberculosis",
+        "Typhoid",
+        "Urinary tract infection",
+        "Varicose veins",
+        "hepatitis A"
+      ],
+      "ml_fast_path": {
+        "n": 456,
+        "top1_correct": 456,
+        "top1_percent": 100.0,
+        "top3_correct": 456,
+        "top3_percent": 100.0,
+        "miss_count": 0,
+        "misses_sample": []
+      },
+      "production_path": {
+        "n": 456,
+        "top1_correct": 456,
+        "top1_percent": 100.0,
+        "top3_correct": 456,
+        "top3_percent": 100.0,
+        "miss_count": 0,
+        "misses_sample": []
+      }
+    },
+    "extended_realistic_test_rt": {
+      "description": "Extended: realistic patient typing (not primary clinical claim).",
+      "filters": {
+        "split": "test",
+        "case_id_prefix": "RT-",
+        "source": "realistic_patient_typing"
+      },
+      "diseases_covered": 41,
+      "disease_labels_covered": [
+        "(vertigo) Paroymsal  Positional Vertigo",
+        "AIDS",
+        "Acne",
+        "Alcoholic hepatitis",
+        "Allergy",
+        "Arthritis",
+        "Bronchial Asthma",
+        "Cervical spondylosis",
+        "Chicken pox",
+        "Chronic cholestasis",
+        "Common Cold",
+        "Dengue",
+        "Diabetes",
+        "Dimorphic hemmorhoids(piles)",
+        "Drug Reaction",
+        "Fungal infection",
+        "GERD",
+        "Gastroenteritis",
+        "Heart attack",
+        "Hepatitis B",
+        "Hepatitis C",
+        "Hepatitis D",
+        "Hepatitis E",
+        "Hypertension",
+        "Hyperthyroidism",
+        "Hypoglycemia",
+        "Hypothyroidism",
+        "Impetigo",
+        "Jaundice",
+        "Malaria",
+        "Migraine",
+        "Osteoarthristis",
+        "Paralysis (brain hemorrhage)",
+        "Peptic ulcer diseae",
+        "Pneumonia",
+        "Psoriasis",
+        "Tuberculosis",
+        "Typhoid",
+        "Urinary tract infection",
+        "Varicose veins",
+        "hepatitis A"
+      ],
+      "ml_fast_path": {
+        "n": 2921,
+        "top1_correct": 2921,
+        "top1_percent": 100.0,
+        "top3_correct": 2921,
+        "top3_percent": 100.0,
+        "miss_count": 0,
+        "misses_sample": []
+      },
+      "production_path": null
+    },
+    "extended_chief_complaint_test_cc": {
+      "description": "Extended: chief-complaint form text (not primary clinical claim).",
+      "filters": {
+        "split": "test",
+        "case_id_prefix": "CC-",
+        "source": "chief_complaint_form"
+      },
+      "diseases_covered": 41,
+      "disease_labels_covered": [
+        "(vertigo) Paroymsal  Positional Vertigo",
+        "AIDS",
+        "Acne",
+        "Alcoholic hepatitis",
+        "Allergy",
+        "Arthritis",
+        "Bronchial Asthma",
+        "Cervical spondylosis",
+        "Chicken pox",
+        "Chronic cholestasis",
+        "Common Cold",
+        "Dengue",
+        "Diabetes",
+        "Dimorphic hemmorhoids(piles)",
+        "Drug Reaction",
+        "Fungal infection",
+        "GERD",
+        "Gastroenteritis",
+        "Heart attack",
+        "Hepatitis B",
+        "Hepatitis C",
+        "Hepatitis D",
+        "Hepatitis E",
+        "Hypertension",
+        "Hyperthyroidism",
+        "Hypoglycemia",
+        "Hypothyroidism",
+        "Impetigo",
+        "Jaundice",
+        "Malaria",
+        "Migraine",
+        "Osteoarthristis",
+        "Paralysis (brain hemorrhage)",
+        "Peptic ulcer diseae",
+        "Pneumonia",
+        "Psoriasis",
+        "Tuberculosis",
+        "Typhoid",
+        "Urinary tract infection",
+        "Varicose veins",
+        "hepatitis A"
+      ],
+      "ml_fast_path": {
+        "n": 5336,
+        "top1_correct": 4769,
+        "top1_percent": 89.37,
+        "top3_correct": 4935,
+        "top3_percent": 92.49,
+        "miss_count": 567,
+        "misses_sample": [
+          {
+            "case_id": "CC-003676",
+            "expected": "Peptic ulcer diseae",
+            "predicted": "Chronic cholestasis"
+          },
+          {
+            "case_id": "CC-003680",
+            "expected": "Peptic ulcer diseae",
+            "predicted": "Chronic cholestasis"
+          },
+          {
+            "case_id": "CC-003683",
+            "expected": "Peptic ulcer diseae",
+            "predicted": "Chronic cholestasis"
+          },
+          {
+            "case_id": "CC-003696",
+            "expected": "Peptic ulcer diseae",
+            "predicted": "Chronic cholestasis"
+          },
+          {
+            "case_id": "CC-003700",
+            "expected": "Peptic ulcer diseae",
+            "predicted": "Chronic cholestasis"
+          },
+          {
+            "case_id": "CC-003703",
+            "expected": "Peptic ulcer diseae",
+            "predicted": "Chronic cholestasis"
+          },
+          {
+            "case_id": "CC-003716",
+            "expected": "Peptic ulcer diseae",
+            "predicted": "Chronic cholestasis"
+          },
+          {
+            "case_id": "CC-003720",
+            "expected": "Peptic ulcer diseae",
+            "predicted": "Chronic cholestasis"
+          },
+          {
+            "case_id": "CC-003723",
+            "expected": "Peptic ulcer diseae",
+            "predicted": "Chronic cholestasis"
+          },
+          {
+            "case_id": "CC-003736",
+            "expected": "Peptic ulcer diseae",
+            "predicted": "Chronic cholestasis"
+          },
+          {
+            "case_id": "CC-003740",
+            "expected": "Peptic ulcer diseae",
+            "predicted": "Chronic cholestasis"
+          },
+          {
+            "case_id": "CC-003743",
+            "expected": "Peptic ulcer diseae",
+            "predicted": "Chronic cholestasis"
+          },
+          {
+            "case_id": "CC-004958",
+            "expected": "AIDS",
+            "predicted": "Urinary tract infection"
+          },
+          {
+            "case_id": "CC-004965",
+            "expected": "AIDS",
+            "predicted": "Urinary tract infection"
+          },
+          {
+            "case_id": "CC-004970",
+            "expected": "AIDS",
+            "predicted": "Urinary tract infection"
+          }
+        ]
+      },
+      "production_path": null
+    }
+  }
+}

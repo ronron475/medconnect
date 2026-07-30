@@ -167,7 +167,6 @@ function superadmin_ensure_schema(PDO $pdo): void
         'PASSWORD_MIN_LENGTH' => '8',
         'PASSWORD_REQUIRE_UPPERCASE' => '1',
         'PASSWORD_REQUIRE_NUMBER' => '1',
-        'RECAPTCHA_ENABLED' => '1',
         'EMAIL_FROM_NAME' => 'medConnect',
         'EMAIL_FROM_ADDRESS' => 'noreply@medconnect.local',
     ];

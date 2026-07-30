@@ -124,20 +124,10 @@ $last_name = $provider['last_name'] ?? 'Provider';
           <span class="mc-badge"><?= $week_total ?> this week</span>
         </div>
         <p class="prov-dash-card__sub">Daily consultations over the last 7 days</p>
-        <div class="prov-chart" role="img" aria-label="Weekly consultation bar chart">
-          <?php foreach ($week_chart as $bar):
-            $pct = ($bar['count'] / $chart_max) * 100;
-            $height = max(6, round($pct));
-          ?>
-          <div class="prov-chart-col <?= $bar['is_today'] ? 'is-today' : '' ?>">
-            <div class="prov-chart-bar-wrap">
-              <div class="prov-chart-bar" style="height: <?= $height ?>%;" title="<?= (int) $bar['count'] ?> on <?= htmlspecialchars($bar['date']) ?>"></div>
-            </div>
-            <span class="prov-chart-label"><?= htmlspecialchars($bar['label']) ?></span>
-            <span class="prov-chart-val"><?= (int) $bar['count'] ?></span>
-          </div>
-          <?php endforeach; ?>
+        <div class="mc-chart-canvas-wrap" style="min-height:220px;height:220px;">
+          <canvas data-mc-weekly-bar="provWeekChartData" aria-label="Weekly consultation bar chart"></canvas>
         </div>
+        <script type="application/json" id="provWeekChartData"><?= json_encode($week_chart, JSON_UNESCAPED_UNICODE) ?></script>
         <div class="prov-chart-legend">
           <span>Hover bars for daily counts</span>
           <strong><?= htmlspecialchars(end($week_chart)['date'] ?? 'Today') ?> = today</strong>
@@ -324,4 +314,13 @@ $last_name = $provider['last_name'] ?? 'Provider';
 
 <?php require __DIR__ . '/partials/session_schedule_modal.php'; ?>
 <script src="<?= ASSET_BASE ?>/assets/js/provider-session-alert.js"></script>
+<?php
+$mc_chart_css_ver = (int) @filemtime(ASSETS_PATH . '/css/medconnect-charts.css');
+$mc_chart_theme_ver = (int) @filemtime(ASSETS_PATH . '/js/medconnect-chart-theme.js');
+$mc_portal_charts_ver = (int) @filemtime(ASSETS_PATH . '/js/medconnect-portal-charts.js');
+?>
+<link rel="stylesheet" href="<?= ASSET_BASE ?>/assets/css/medconnect-charts.css?v=<?= $mc_chart_css_ver ?>">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<script src="<?= ASSET_BASE ?>/assets/js/medconnect-chart-theme.js?v=<?= $mc_chart_theme_ver ?>"></script>
+<script src="<?= ASSET_BASE ?>/assets/js/medconnect-portal-charts.js?v=<?= $mc_portal_charts_ver ?>"></script>
 <?php require __DIR__.'/partials/layout_close.php'; ?>

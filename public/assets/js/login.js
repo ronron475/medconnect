@@ -18,9 +18,6 @@ const form = document.getElementById('login-form');
 const emailInput = document.getElementById('email');
 const emailError = document.getElementById('email-error');
 const passwordError = document.getElementById('password-error');
-const captchaWrap = document.getElementById('captcha-wrap');
-const captchaInput = document.getElementById('captcha_answer');
-const captchaError = document.getElementById('captcha-error');
 const rememberMe = document.getElementById('remember-me');
 const alert = document.getElementById('alert');
 const submitBtn = document.getElementById('submit-btn');
@@ -37,21 +34,6 @@ function clearAlert() {
   alert.textContent = '';
 }
 
-function showCaptcha(question) {
-  if (!captchaWrap || !captchaInput) return;
-  captchaWrap.hidden = false;
-  captchaInput.placeholder = question || 'Answer the challenge';
-  captchaError.textContent = '';
-}
-
-function hideCaptcha() {
-  if (!captchaWrap || !captchaInput) return;
-  captchaWrap.hidden = true;
-  captchaInput.value = '';
-  captchaInput.placeholder = '';
-  captchaError.textContent = '';
-}
-
 function validateEmail(value) {
   if (!value) return 'Email is required.';
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) return 'Enter a valid email address.';
@@ -61,25 +43,6 @@ function validateEmail(value) {
 function validatePassword(value) {
   if (!value) return 'Password is required.';
   return '';
-}
-
-async function getRecaptchaToken(action) {
-  const key = window.RECAPTCHA_SITE_KEY;
-  const version = (window.RECAPTCHA_VERSION || 'v3').toLowerCase();
-  if (!key) return '';
-
-  if (version === 'v3') {
-    if (!window.grecaptcha || !window.grecaptcha.execute) return '';
-    try {
-      return await window.grecaptcha.execute(key, { action: action || 'login' });
-    } catch (_) {
-      return '';
-    }
-  }
-
-  // v2 checkbox: token is in g-recaptcha-response (widget renders UI)
-  const v2Token = (document.querySelector('textarea[name="g-recaptcha-response"]')?.value || '').trim();
-  return v2Token;
 }
 
 // Inline validation on blur
@@ -104,7 +67,6 @@ function setLoading(loading) {
 form.addEventListener('submit', async (e) => {
   e.preventDefault();
   clearAlert();
-  if (captchaError) captchaError.textContent = '';
 
   const emailVal = emailInput.value.trim();
   const pwdVal = pwdInput.value;
@@ -122,24 +84,10 @@ form.addEventListener('submit', async (e) => {
   setLoading(true);
 
   try {
-    // If CAPTCHA is required, obtain token first (v3 invisible; v2 reads widget token).
-    if (window.__MC_CAPTCHA_REQUIRED) {
-      const token = await getRecaptchaToken('login');
-      if (!token) {
-        showAlert('Please verify that you are not a robot.');
-        setLoading(false);
-        return;
-      }
-    }
-
     const fd = new FormData();
     fd.append('email', emailVal);
     fd.append('password', pwdVal);
     fd.append('remember_me', rememberMe && rememberMe.checked ? '1' : '0');
-    if (window.__MC_CAPTCHA_REQUIRED) {
-      const token = await getRecaptchaToken('login');
-      if (token) fd.append('recaptcha_token', token);
-    }
 
     const apiBase = window.ASSET_BASE || '';
     const res  = await fetch(apiBase + '/app/api/login.php', {
@@ -164,16 +112,6 @@ form.addEventListener('submit', async (e) => {
         window.location.replace(data.redirect);
       }
     } else {
-      if (data && data.captcha_required) {
-        window.__MC_CAPTCHA_REQUIRED = true;
-        if (window.RECAPTCHA_VERSION && window.RECAPTCHA_VERSION.toLowerCase() === 'v2') {
-          const el = document.getElementById('mc-recaptcha-v2');
-          if (el) el.hidden = false;
-        }
-        showAlert(data.message || 'Please complete the verification to continue.');
-        setLoading(false);
-        return;
-      }
       if (data && data.code === 'locked') {
         showAlert(data.message || 'Account temporarily locked.');
         setLoading(false);

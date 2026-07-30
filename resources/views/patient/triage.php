@@ -14,6 +14,7 @@ if (!defined('BASE_PATH')) {
 }
 require_once BASE_PATH . '/app/includes/patient_portal_bootstrap.php';
 require_once BASE_PATH . '/app/includes/triage_assessment_schema.php';
+require_once BASE_PATH . '/app/includes/triage_provider_assignment.php';
 
 $booking_today_ymd   = date('Y-m-d');
 $booking_today_label = date('l, M j, Y');
@@ -43,6 +44,37 @@ if ($pdo->query("SHOW TABLES LIKE 'users'")->rowCount()) {
     ");
     $booking_providers = $bp ? $bp->fetchAll(PDO::FETCH_ASSOC) : [];
 }
+
+$review_booking_ctx = triage_patient_review_booking_context($pdo, (int) $uid);
+$review_booking_slots = triage_patient_booking_slot_status($pdo, (int) $uid);
+$locked_provider_id = (int) ($review_booking_ctx['provider_id'] ?? 0);
+$locked_provider_name = trim((string) ($review_booking_ctx['provider_name'] ?? ''));
+$locked_assigned_has_slots = !empty($review_booking_slots['assigned_has_slots_today']);
+$locked_alternate_available = !empty($review_booking_slots['alternate_available']);
+if ($locked_provider_id > 0 && $locked_provider_name === '') {
+    $locked_provider_name = triage_provider_display_name($pdo, $locked_provider_id);
+}
+if (!empty($review_booking_ctx['locked']) && $locked_provider_id > 0) {
+    $booking_providers = array_values(array_filter(
+        $booking_providers,
+        static fn(array $p): bool => (int) ($p['id'] ?? 0) === $locked_provider_id
+    ));
+    if ($booking_providers === [] && $locked_provider_id > 0) {
+        $display = $locked_provider_name !== ''
+            ? $locked_provider_name
+            : triage_provider_display_name($pdo, $locked_provider_id);
+        $booking_providers[] = ['id' => $locked_provider_id, 'name' => $display];
+    }
+}
+
+// Normalize provider labels in dropdown (skip generic placeholder names).
+foreach ($booking_providers as &$bpRow) {
+    $pid = (int) ($bpRow['id'] ?? 0);
+    if ($pid > 0) {
+        $bpRow['name'] = triage_provider_display_name($pdo, $pid);
+    }
+}
+unset($bpRow);
 
 $all_consults = [];
 if ($pdo->query("SHOW TABLES LIKE 'consultations'")->rowCount()) {
@@ -98,6 +130,11 @@ $page_title = 'Book Consultation';
   <script>window.BOOKING_BLOCKED_FUTURE_APPOINTMENT = <?= json_encode($booking_blocked_future) ?>;</script>
   <script>window.BOOKING_FUTURE_APPOINTMENT_LABEL = <?= json_encode($booking_future_label) ?>;</script>
   <script>window.REGISTRATION_URGENCY = <?= json_encode($pending_reg['urgency'] ?? '') ?>;</script>
+  <script>window.BOOKING_LOCKED_PROVIDER_ID = <?= json_encode($locked_provider_id > 0 ? $locked_provider_id : null) ?>;</script>
+  <script>window.BOOKING_LOCKED_PROVIDER_NAME = <?= json_encode($locked_provider_name) ?>;</script>
+  <script>window.BOOKING_ASSIGNED_HAS_SLOTS = <?= json_encode($locked_assigned_has_slots) ?>;</script>
+  <script>window.BOOKING_ALTERNATE_AVAILABLE = <?= json_encode($locked_alternate_available) ?>;</script>
+  <script>window.TRIAGE_REVIEW_FIRST_ALLOWED = <?= json_encode(true) ?>;</script>
   <?php if (($pending_reg['nlp_json'] ?? '') !== ''): ?>
   <script>
   try {

@@ -16,6 +16,10 @@ $faqChatbotUnderstandingVer = (int) @filemtime(ASSETS_PATH . '/js/faq-chatbot/un
 $faqChatbotModerationVer = (int) @filemtime(ASSETS_PATH . '/js/faq-chatbot/moderation.js');
 $faqChatbotEngineVer = (int) @filemtime(ASSETS_PATH . '/js/faq-chatbot/engine.js');
 $faqChatbotUiVer = (int) @filemtime(ASSETS_PATH . '/js/faq-chatbot/ui.js');
+$faqChatbotVoiceVer = (int) @filemtime(ASSETS_PATH . '/js/faq-chatbot/voice.js');
+$faqChatbotEmotionApiVer = (int) @filemtime(ASSETS_PATH . '/js/faq-chatbot/emotion-api.js');
+$faqChatbotChatApiVer = (int) @filemtime(ASSETS_PATH . '/js/faq-chatbot/chat-api.js');
+$faqChatbotHilBridgeVer = (int) @filemtime(ASSETS_PATH . '/js/faq-chatbot/hil-bridge.js');
 $faqChatbotAppVer = (int) @filemtime(ASSETS_PATH . '/js/faq-chatbot/app.js');
 ?>
 <link rel="stylesheet" href="<?= $fcbBase ?>/assets/css/faq-chatbot.css?v=<?= $faqChatbotCssVer ?>" />
@@ -27,6 +31,7 @@ $faqChatbotAppVer = (int) @filemtime(ASSETS_PATH . '/js/faq-chatbot/app.js');
   data-open="false"
   data-theme="light"
   data-asset="<?= $fcbBase ?>"
+  data-php-chat="assist"
   aria-live="polite"
 >
 <script src="<?= $fcbBase ?>/assets/js/faq-chatbot/theme.js?v=<?= $faqChatbotThemeVer ?>"></script>
@@ -54,7 +59,7 @@ $faqChatbotAppVer = (int) @filemtime(ASSETS_PATH . '/js/faq-chatbot/app.js');
     >
       <span class="fcb-fab__pulse" aria-hidden="true"></span>
       <span class="fcb-fab__glow" aria-hidden="true"></span>
-      <svg class="fcb-fab__icon" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+      <svg class="fcb-fab__icon" width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
         <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
       </svg>
       <span class="fcb-fab__badge" id="fcb-fab-badge" hidden aria-label="New message">1</span>
@@ -77,29 +82,42 @@ $faqChatbotAppVer = (int) @filemtime(ASSETS_PATH . '/js/faq-chatbot/app.js');
   >
     <!-- Header -->
     <header class="fcb-header" id="fcb-header">
-      <div class="fcb-header__brand">
-        <div class="fcb-header__logo-wrap">
-          <img
-            src="<?= $fcbBase ?>/assets/img/medcon_logo.png"
-            alt=""
-            class="fcb-header__logo"
-            width="40"
-            height="40"
-            loading="lazy"
-            decoding="async"
-          />
-          <span class="fcb-header__online" title="Online" aria-label="Assistant is online"></span>
+      <div class="fcb-header__row fcb-header__row--main">
+        <div class="fcb-header__brand">
+          <div class="fcb-header__logo-wrap">
+            <img
+              src="<?= $fcbBase ?>/assets/img/medcon_logo.png"
+              alt=""
+              class="fcb-header__logo"
+              width="40"
+              height="40"
+              loading="lazy"
+              decoding="async"
+            />
+            <span class="fcb-header__online" title="Online" aria-label="Assistant is online"></span>
+          </div>
+          <div class="fcb-header__meta">
+            <h2 class="fcb-header__title" id="fcb-header-title">medConnect Assistant</h2>
+            <p class="fcb-header__sub" id="fcb-header-sub">
+              <span class="fcb-header__sub-label">Official AI Assistant</span>
+              <span class="fcb-header__sub-dot" aria-hidden="true">•</span>
+              <span class="fcb-header__sub-status">City Health Office · Online</span>
+              <span class="fcb-header__sub-dot" aria-hidden="true">•</span>
+              <span class="fcb-emotion-aware-chip" id="fcb-emotion-aware-chip" hidden title="Emotion-aware support">Support</span>
+            </p>
+          </div>
         </div>
-        <div class="fcb-header__meta">
-          <h2 class="fcb-header__title" id="fcb-header-title">medConnect Assistant</h2>
-          <p class="fcb-header__sub" id="fcb-header-sub">
-            <span class="fcb-header__sub-label">Official AI Assistant</span>
-            <span class="fcb-header__sub-dot" aria-hidden="true">•</span>
-            <span class="fcb-header__sub-status">City Health Office · Online</span>
-          </p>
+        <div class="fcb-header__actions fcb-header__actions--window" role="toolbar" aria-label="Window controls">
+          <button type="button" class="fcb-icon-btn" id="fcb-minimize" aria-label="Minimize chat" title="Minimize">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true"><path d="M5 12h14"/></svg>
+          </button>
+          <button type="button" class="fcb-icon-btn" id="fcb-close" aria-label="Close chat" title="Close">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+          </button>
         </div>
       </div>
-      <div class="fcb-header__actions" role="toolbar" aria-label="Chat controls">
+      <div class="fcb-header__row fcb-header__row--tools">
+        <div class="fcb-header__actions fcb-header__actions--tools" role="toolbar" aria-label="Chat controls">
         <button
           type="button"
           class="fcb-theme-toggle"
@@ -115,15 +133,13 @@ $faqChatbotAppVer = (int) @filemtime(ASSETS_PATH . '/js/faq-chatbot/app.js');
           </span>
           <span class="fcb-theme-toggle__knob" aria-hidden="true"></span>
         </button>
+        <button type="button" class="fcb-icon-btn fcb-tts-btn" id="fcb-voice-tts" aria-label="Toggle read replies aloud" aria-pressed="true" title="Read replies aloud">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/></svg>
+        </button>
         <button type="button" class="fcb-icon-btn" id="fcb-new-chat" aria-label="Start new chat" title="New chat">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14"/><path d="M5 12h14"/></svg>
         </button>
-        <button type="button" class="fcb-icon-btn" id="fcb-minimize" aria-label="Minimize chat" title="Minimize">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true"><path d="M5 12h14"/></svg>
-        </button>
-        <button type="button" class="fcb-icon-btn" id="fcb-close" aria-label="Close chat" title="Close">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
-        </button>
+        </div>
       </div>
     </header>
 
@@ -206,6 +222,14 @@ $faqChatbotAppVer = (int) @filemtime(ASSETS_PATH . '/js/faq-chatbot/app.js');
         </span>
       </div>
       <div class="fcb-input-wrap">
+        <button type="button" class="fcb-voice-btn" id="fcb-voice-mic" aria-label="Speak your question" aria-pressed="false" title="Speak your question">
+          <svg class="fcb-voice-btn__icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"/>
+            <path d="M19 10v2a7 7 0 0 1-14 0v-2"/>
+            <line x1="12" x2="12" y1="19" y2="22"/>
+          </svg>
+          <span class="fcb-voice-btn__pulse" aria-hidden="true"></span>
+        </button>
         <label class="visually-hidden" for="fcb-input">Ask medConnect Assistant</label>
         <textarea
           class="fcb-input"
@@ -222,6 +246,7 @@ $faqChatbotAppVer = (int) @filemtime(ASSETS_PATH . '/js/faq-chatbot/app.js');
           </svg>
         </button>
       </div>
+      <p class="fcb-voice-status" id="fcb-voice-status" hidden aria-live="polite"></p>
       <div class="fcb-footer__meta">
         <span class="fcb-char-count" id="fcb-char-count" aria-live="polite">0 / 500</span>
       </div>
@@ -242,4 +267,8 @@ $faqChatbotAppVer = (int) @filemtime(ASSETS_PATH . '/js/faq-chatbot/app.js');
 <script src="<?= $fcbBase ?>/assets/js/faq-chatbot/moderation.js?v=<?= $faqChatbotModerationVer ?>" defer></script>
 <script src="<?= $fcbBase ?>/assets/js/faq-chatbot/engine.js?v=<?= $faqChatbotEngineVer ?>" defer></script>
 <script src="<?= $fcbBase ?>/assets/js/faq-chatbot/ui.js?v=<?= $faqChatbotUiVer ?>" defer></script>
+<script src="<?= $fcbBase ?>/assets/js/faq-chatbot/voice.js?v=<?= $faqChatbotVoiceVer ?>" defer></script>
+<script src="<?= $fcbBase ?>/assets/js/faq-chatbot/emotion-api.js?v=<?= $faqChatbotEmotionApiVer ?>" defer></script>
+<script src="<?= $fcbBase ?>/assets/js/faq-chatbot/chat-api.js?v=<?= $faqChatbotChatApiVer ?>" defer></script>
+<script src="<?= $fcbBase ?>/assets/js/faq-chatbot/hil-bridge.js?v=<?= $faqChatbotHilBridgeVer ?>" defer></script>
 <script src="<?= $fcbBase ?>/assets/js/faq-chatbot/app.js?v=<?= $faqChatbotAppVer ?>" defer></script>

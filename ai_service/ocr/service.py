@@ -74,6 +74,7 @@ def extract_from_file(file_path: str, mime_type: str) -> dict[str, Any]:
         best_score = -1.0
         best_extraction: dict[str, Any] | None = None
         had_response = False
+        all_texts: list[str] = []
 
         for ocr_path, ocr_mime, stage in variants:
             for engine in (2, 1):
@@ -90,6 +91,7 @@ def extract_from_file(file_path: str, mime_type: str) -> dict[str, Any]:
                 if not parsed_text:
                     continue
 
+                all_texts.append(parsed_text)
                 extraction = extract_all(parsed_text)
                 score = _score_extraction(extraction)
                 stage_note = f"{stage}+engine_{engine}" if stage != "none" else f"engine_{engine}"
@@ -102,6 +104,15 @@ def extract_from_file(file_path: str, mime_type: str) -> dict[str, Any]:
                     break
             if best_score >= 0.95 and best_extraction and not best_extraction.get("low_confidence"):
                 break
+
+        if len(all_texts) > 1:
+            from ocr.philsys_parser import extract_all_from_passes, merge_raw_ocr_texts
+
+            merged_extraction = extract_all_from_passes(all_texts)
+            if _score_extraction(merged_extraction) >= best_score:
+                best_extraction = merged_extraction
+                best_text = merge_raw_ocr_texts(all_texts)
+                best_stage = f"{best_stage}+consensus"
 
         if not best_text or best_extraction is None:
             if not had_response:

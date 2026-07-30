@@ -39,10 +39,14 @@
   const TYPING_MS = 780;
   const MODERATION_TYPING_MS = 420;
   const STORAGE_KEY = 'mc_fcb_opened';
+  const BADGE_DISMISSED_KEY = 'mc_fcb_badge_dismissed';
+  const HISTORY_KEY = 'mc_fcb_thread_html';
   const PULSE_INTERVAL = 8000;
 
   const assetBase = root.dataset.asset || window.ASSET_BASE || '';
   const registerUrl = assetBase + '/app/controllers/auth/register.controller.php';
+  const phpChatEnabled = window.McFaqChatApi && window.McFaqChatApi.isEnabled && window.McFaqChatApi.isEnabled();
+  let lastPhpAssist = null;
 
   let isOpen = false;
   let typingTimer = null;
@@ -119,6 +123,78 @@
     });
   }
 
+  function hasActiveThread() {
+    if (!messagesEl) return false;
+    return Boolean(
+      messagesEl.querySelector('.fcb-msg, .fcb-welcome, .fcb-actions')
+    );
+  }
+
+  function hasUserMessages() {
+    return Boolean(messagesEl && messagesEl.querySelector('.fcb-msg--user'));
+  }
+
+  function persistThread() {
+    if (!messagesEl) return;
+    try {
+      if (!hasActiveThread()) {
+        sessionStorage.removeItem(HISTORY_KEY);
+        return;
+      }
+      sessionStorage.setItem(HISTORY_KEY, messagesEl.innerHTML);
+    } catch (_) { /* ignore */ }
+  }
+
+  function restoreThreadFromStorage() {
+    if (!messagesEl) return false;
+    try {
+      const html = sessionStorage.getItem(HISTORY_KEY);
+      if (!html || !html.trim()) return false;
+      messagesEl.innerHTML = html;
+      inConversation = true;
+      UI.scrollToBottom(messagesEl);
+      return true;
+    } catch (_) {
+      return false;
+    }
+  }
+
+  function handleMessagesClick(e) {
+    const card = e.target.closest('button.fcb-action-card');
+    if (card) {
+      if (card.dataset.fcbFlow) {
+        UI.ripple(e, card);
+        handleFlowSelect(card.dataset.fcbFlow, card.dataset.fcbLabel || '');
+        return;
+      }
+      if (card.dataset.fcbAction) {
+        UI.ripple(e, card);
+        try { handleAction(JSON.parse(card.dataset.fcbAction)); } catch (_) { /* ignore */ }
+        return;
+      }
+    }
+    const follow = e.target.closest('button.fcb-followup');
+    if (follow && follow.dataset.fcbAction) {
+      UI.ripple(e, follow);
+      try { handleAction(JSON.parse(follow.dataset.fcbAction)); } catch (_) { /* ignore */ }
+      return;
+    }
+    const fbBtn = e.target.closest('button[data-fcb-feedback]');
+    if (fbBtn && window.McFaqChatApi) {
+      const wrap = fbBtn.closest('.fcb-feedback');
+      const mid = wrap && wrap.dataset.messageId;
+      const rating = fbBtn.getAttribute('data-fcb-feedback');
+      if (mid && rating) {
+        fbBtn.disabled = true;
+        window.McFaqChatApi.sendFeedback(Number(mid), rating).then((ok) => {
+          if (wrap) {
+            wrap.classList.add(ok ? 'fcb-feedback--saved' : 'fcb-feedback--error');
+          }
+        });
+      }
+    }
+  }
+
   // ── Panel state ──
   function setOpen(open) {
     isOpen = open;
@@ -135,27 +211,39 @@
       setBodyScrollLock(true);
       try { sessionStorage.setItem(STORAGE_KEY, '1'); } catch (_) { /* ignore */ }
 
-      if (!inConversation) startNewChat(false);
+      if (!hasActiveThread()) {
+        startNewChat(false);
+      } else {
+        inConversation = true;
+        applyChromeStrings(currentLang());
+      }
       if (!Moderation.isOnCooldown()) {
         window.setTimeout(() => inputEl?.focus(), 320);
       }
     } else {
       panel.setAttribute('aria-hidden', 'true');
       setBodyScrollLock(false);
+      if (window.McFaqVoice && window.McFaqVoice.onPanelClose) {
+        window.McFaqVoice.onPanelClose();
+      }
       window.setTimeout(() => {
         if (!isOpen) {
           panel.hidden = true;
           if (backdropEl) backdropEl.hidden = true;
         }
       }, 320);
+      persistThread();
     }
   }
 
   function showBadge() {
-    if (badgeEl && !isOpen) {
-      badgeEl.hidden = false;
-      root.classList.add('fcb--has-badge');
-    }
+    if (!badgeEl || isOpen) return;
+    try {
+      if (sessionStorage.getItem(BADGE_DISMISSED_KEY) === '1') return;
+    } catch (_) { /* ignore */ }
+    badgeEl.textContent = '1';
+    badgeEl.hidden = false;
+    root.classList.add('fcb--has-badge');
   }
 
   function hideBadge() {
@@ -163,6 +251,17 @@
       badgeEl.hidden = true;
       root.classList.remove('fcb--has-badge');
     }
+    try {
+      sessionStorage.setItem(BADGE_DISMISSED_KEY, '1');
+    } catch (_) { /* ignore */ }
+  }
+
+  /** New activity while chat is closed (e.g. bot reply finished after minimize). */
+  function markChatUnread() {
+    try {
+      sessionStorage.removeItem(BADGE_DISMISSED_KEY);
+    } catch (_) { /* ignore */ }
+    showBadge();
   }
 
   function startPulse() {
@@ -181,9 +280,11 @@
     Understanding.resetSession();
     messagesEl.innerHTML = '';
     messagesEl.classList.remove('fcb-messages--scrolled');
+    try { sessionStorage.removeItem(HISTORY_KEY); } catch (_) { /* ignore */ }
     applyChromeStrings(Language.DEFAULT_LANG);
     messagesEl.appendChild(UI.renderWelcomeCard(handleFlowSelect, currentLang()));
     UI.scrollToBottom(messagesEl);
+    persistThread();
     if (clearInput && inputEl) {
       inputEl.value = '';
       resizeInput();
@@ -196,6 +297,7 @@
     const lang = currentLang();
     messagesEl.appendChild(UI.renderUserMessage(text, { emotion: emotionKey || null, lang }));
     UI.scrollToBottom(messagesEl);
+    persistThread();
     return emotionKey;
   }
 
@@ -212,6 +314,9 @@
 
   function deliverBot(flowKey, options = {}) {
     const lang = options.lang || currentLang();
+    if (!options.suggestions && lastPhpAssist && lastPhpAssist.suggestions && lastPhpAssist.suggestions.length) {
+      options.suggestions = lastPhpAssist.suggestions;
+    }
     let html = options.html;
     let followUp = options.followUp;
     let actions = options.actions;
@@ -272,7 +377,7 @@
     const INFO_CARD_FLOWS = ['partial_clarify', 'not_understood', 'unknown'];
     if (INFO_CARD_FLOWS.includes(flowKey)) {
       const variant = flowKey === 'partial_clarify' ? 'partial' : 'not_understood';
-      html = UI.renderInfoCard(html, lang, variant);
+      html = UI.renderInfoCard(html, lang, variant, { suppressTitle: true });
     }
 
     const useActionCards = options.actionCards
@@ -299,9 +404,59 @@
       actionCards: useActionCards,
       emergencyActions,
       onAction: handleAction,
+      feedbackMessageId: options.feedbackMessageId || null,
+      suggestions: options.suggestions || null,
     });
     messagesEl.appendChild(msg);
     UI.scrollToBottom(messagesEl);
+    persistThread();
+    if (!isOpen) markChatUnread();
+
+    if (phpChatEnabled && window.McFaqChatApi && !options.feedbackMessageId) {
+      const plain = msg.querySelector('.fcb-msg__bubble');
+      const logHtml = plain ? plain.innerHTML : html;
+      window.McFaqChatApi.logBot(logHtml, {
+        flowKey,
+        intent: lastPhpAssist && lastPhpAssist.intent,
+        confidence: options.confidence,
+      }).then((logged) => {
+        const mid = logged && logged.bot_message_id;
+        if (mid && !options.feedbackMessageId) {
+          const fb = msg.querySelector('.fcb-feedback');
+          if (!fb) {
+            const fbRow = document.createElement('div');
+            fbRow.className = 'fcb-feedback';
+            fbRow.dataset.messageId = String(mid);
+            fbRow.innerHTML = `
+              <span class="fcb-feedback__label">Was this helpful?</span>
+              <button type="button" class="fcb-feedback__btn" data-fcb-feedback="helpful" aria-label="Helpful">👍</button>
+              <button type="button" class="fcb-feedback__btn" data-fcb-feedback="not_helpful" aria-label="Not helpful">👎</button>
+            `;
+            msg.appendChild(fbRow);
+          } else {
+            fb.dataset.messageId = String(mid);
+          }
+        }
+      }).catch(() => {});
+    }
+    if (window.McFaqVoice && window.McFaqVoice.speakLastBot) {
+      window.setTimeout(() => window.McFaqVoice.speakLastBot(messagesEl), 120);
+    }
+  }
+
+  function deliverFromPhp(meta, lang) {
+    const flow = meta.emergency_flow === 'crisis' ? 'crisis' : (meta.emergency ? 'emergency' : 'faq_php');
+    deliverBot(flow, {
+      html: meta.response_html,
+      lang,
+      typingMs: meta.typing_ms || TYPING_MS,
+      feedbackMessageId: meta.bot_message_id,
+      suggestions: meta.suggestions || [],
+      empathy: true,
+      emotion: meta.emotion_detail || meta.emotion,
+      confidence: meta.confidence,
+      instant: false,
+    });
   }
 
   function runFlow(flowKey, userLabel, options = {}) {
@@ -334,6 +489,10 @@
   function handleAction(action) {
     if (Moderation.isOnCooldown()) return;
     const lang = currentLang();
+    if (action.action === 'suggest') {
+      processUserText(action.payload || action.label || '');
+      return;
+    }
     if (action.label) {
       Language.resolve(action.label);
       appendUser(action.label);
@@ -394,16 +553,53 @@
       case 'callEmergency':
         window.location.href = 'tel:911';
         break;
+      case 'suggest':
+        processUserText(action.payload || action.label || '');
+        break;
       default:
         runFlow('unknown', false, { lang });
     }
   }
 
+  function empathyHtmlFor(emoKey, flowKey, contextPrefix, phpOverride, bridge) {
+    if (phpOverride) return (contextPrefix || '') + phpOverride;
+    const L = currentLang();
+    if (bridge && bridge.isHiligaynon && window.McFaqHilBridge) {
+      const enLine = I18n.getEmpathyPrefix('en', emoKey, flowKey);
+      return (contextPrefix || '') + window.McFaqHilBridge.bilingualEmpathyHtml(emoKey || 'worried', enLine);
+    }
+    if (!emoKey) return contextPrefix || '';
+    return (contextPrefix || '') + I18n.getEmpathyPrefix(L, emoKey, flowKey);
+  }
+
+  const DISTRESS_EMOTIONS = new Set([
+    'worried', 'anxious', 'stressed', 'overwhelmed', 'sad', 'lonely', 'afraid',
+    'frustrated', 'angry', 'disappointed', 'nervous', 'crying', 'tired', 'hopeless', 'panic',
+  ]);
+
+  function shouldTreatAsEmotionalSupport(emoKey, emotion, phpSuggestedFlow, text, classification, bridge) {
+    if (phpSuggestedFlow === 'distress_support') return true;
+    if (classification && classification.intent === Intent.INTENT.EMOTIONAL_SUPPORT) return true;
+    if (bridge && bridge.isHiligaynon && /\b(worried|sad|scared|afraid|tired|angry|confused|stressed|pain|sick|help)\b/i.test(text)) {
+      return true;
+    }
+    if (!emoKey || !DISTRESS_EMOTIONS.has(emoKey)) return false;
+    const score = Number(emotion && emotion.score) || 0;
+    const minScore = bridge && bridge.isHiligaynon ? 1.0 : 1.2;
+    if (score < minScore) return false;
+    const raw = String(text || '');
+    const faqCue = /\b(how\s+do\s+i|how\s+to|paano\s+(mag|i)|register|sign\s*in|log\s*in|appointment|book|schedule)\b/i.test(raw);
+    if (faqCue && !/\b(stress|worri|sad|anxious|feel|feeling|overwhelm|lonely|afraid)\b/i.test(raw)) {
+      return false;
+    }
+    return true;
+  }
+
   /**
    * Pipeline:
-   * Language → Moderation → Intent → Emotion → Understanding → Response
+   * Language → Moderation → Intent → Emotion (PHP + client) → Understanding → Response
    */
-  function processUserText(text) {
+  async function processUserText(text) {
     const trimmed = text.trim();
     if (!trimmed) return;
 
@@ -417,7 +613,15 @@
     }
 
     const lang = Language.resolve(workingText);
-    applyChromeStrings(lang);
+    const bridge = window.McFaqHilBridge
+      ? window.McFaqHilBridge.prepare(workingText, lang)
+      : { replyLang: lang, nlpText: workingText, englishGloss: '', isHiligaynon: false };
+    const replyLang = bridge.replyLang || lang;
+    const nlpText = bridge.nlpText || workingText;
+    if (bridge.isHiligaynon) {
+      Language.setSessionLang('hil');
+    }
+    applyChromeStrings(replyLang);
 
     const validation = Moderation.validateMessage(trimmed);
 
@@ -458,32 +662,107 @@
       return;
     }
 
-    const classification = Intent.classify(workingText);
+    if (Emotions.isSelfHarmCrisis(workingText) || Emotions.isSelfHarmCrisis(nlpText)) {
+      appendUser(trimmed, 'hopeless');
+      Understanding.incrementMessageCount();
+      runFlow('crisis', false, { lang: replyLang });
+      return;
+    }
+
+    if (Emotions.isMedicalEmergency(workingText) || Emotions.isMedicalEmergency(nlpText)) {
+      appendUser(trimmed, 'emergency');
+      Understanding.incrementMessageCount();
+      runFlow('emergency', false, { lang: replyLang });
+      return;
+    }
+
+    lastPhpAssist = null;
+    if (phpChatEnabled && window.McFaqChatApi) {
+      await window.McFaqChatApi.ensureSession();
+      lastPhpAssist = await window.McFaqChatApi.assist(workingText, replyLang);
+      if (lastPhpAssist && lastPhpAssist.emergency) {
+        appendUser(trimmed);
+        Understanding.incrementMessageCount();
+        if (lastPhpAssist.use_server_response) {
+          showTyping(lastPhpAssist.typing_ms || TYPING_MS);
+          window.setTimeout(() => {
+            removeTyping();
+            deliverFromPhp(lastPhpAssist, replyLang);
+          }, lastPhpAssist.typing_ms || TYPING_MS);
+        } else if (lastPhpAssist.emergency_flow === 'crisis') {
+          runFlow('crisis', false, { lang: replyLang });
+        } else {
+          runFlow('emergency', false, { lang: replyLang });
+        }
+        return;
+      }
+      if (lastPhpAssist && lastPhpAssist.use_server_response && lastPhpAssist.response_html) {
+        appendUser(trimmed);
+        Understanding.incrementMessageCount();
+        showTyping(lastPhpAssist.typing_ms || TYPING_MS);
+        window.setTimeout(() => {
+          removeTyping();
+          deliverFromPhp(lastPhpAssist, replyLang);
+        }, lastPhpAssist.typing_ms || TYPING_MS);
+        return;
+      }
+    }
+
+    const classification = Intent.classify(nlpText);
     const INTENT = Intent.INTENT;
     const LEVEL = Understanding.LEVEL;
 
     if (classification.intent === INTENT.CRISIS) {
       appendUser(trimmed, 'hopeless');
       Understanding.incrementMessageCount();
-      runFlow('crisis', false, { lang });
+      runFlow('crisis', false, { lang: replyLang });
       return;
     }
 
     if (classification.intent === INTENT.MEDICAL_EMERGENCY) {
       appendUser(trimmed, 'emergency');
       Understanding.incrementMessageCount();
-      runFlow('emergency', false, { lang });
+      runFlow('emergency', false, { lang: replyLang });
       return;
     }
 
-    const emotion = Emotions.analyze(workingText, { intent: classification.intent });
+    const clientEmotion = Emotions.analyze(nlpText, { intent: classification.intent });
+    let emotion = clientEmotion;
+    let phpEmpathyHtml = '';
+    let phpSuggestedFlow = null;
+
+    if (window.McFaqEmotionApi) {
+      const php = await window.McFaqEmotionApi.analyze(workingText, replyLang, classification.intent);
+      const merged = window.McFaqEmotionApi.merge(clientEmotion, php);
+      emotion = merged.emotion;
+      phpEmpathyHtml = emotion.phpEmpathyHtml || '';
+      phpSuggestedFlow = php && php.suggested_flow;
+      window.McFaqEmotionApi.setEmotionAwareUi(!!emotion.emotionalSupport);
+    }
+
     const emoKey = Emotions.normalizeEmotionKey(emotion.primary);
     const displayEmo = Intent.getDisplayEmotion(emoKey, classification);
 
-    const understanding = Understanding.analyze(workingText, {
+    if (phpSuggestedFlow === 'crisis'
+      && classification.intent !== INTENT.CRISIS
+      && classification.intent !== INTENT.MEDICAL_EMERGENCY) {
+      appendUser(trimmed, displayEmo || 'hopeless');
+      Understanding.incrementMessageCount();
+      runFlow('crisis', false, {
+        lang: replyLang,
+        emotion: emoKey || 'hopeless',
+        empathyHtml: empathyHtmlFor(emoKey, 'crisis', '', phpEmpathyHtml, bridge),
+        empathy: true,
+      });
+      return;
+    }
+
+    const understanding = Understanding.analyze(nlpText, {
       classification,
       emotion,
       fromClarification,
+      isHiligaynon: bridge.isHiligaynon,
+      englishGloss: bridge.englishGloss,
     });
 
     if (understanding.flowKey && !classification.flowKey) {
@@ -492,13 +771,27 @@
 
     const skipUnderstandingGate = [
       INTENT.REASSURANCE,
+      INTENT.EMOTIONAL_SUPPORT,
     ].includes(classification.intent)
       || emotion.standalone
-      || (Conversation && Conversation.isPainOrSick(workingText))
-      || Emotions.isSelfHarmCrisis(workingText)
-      || Engine.isMedicalAdviceRequest(workingText);
+      || (Conversation && Conversation.isPainOrSick(nlpText))
+      || Emotions.isSelfHarmCrisis(nlpText)
+      || Engine.isMedicalAdviceRequest(nlpText)
+      || bridge.isHiligaynon
+      || shouldTreatAsEmotionalSupport(emoKey, emotion, phpSuggestedFlow, nlpText, classification, bridge);
 
     appendUser(trimmed, displayEmo);
+
+    if (shouldTreatAsEmotionalSupport(emoKey, emotion, phpSuggestedFlow, nlpText, classification, bridge)) {
+      Understanding.incrementMessageCount();
+      runFlow('distress_support', false, {
+        lang: replyLang,
+        emotion: emoKey,
+        empathyHtml: empathyHtmlFor(emoKey, '_default', '', phpEmpathyHtml, bridge),
+        empathy: true,
+      });
+      return;
+    }
 
     if (!skipUnderstandingGate) {
       const hasFlow = Boolean(classification.flowKey || understanding.flowKey);
@@ -510,7 +803,7 @@
           flowKey: understanding.flowKey,
         });
         Understanding.incrementMessageCount();
-        runFlow('not_understood', false, { lang, closingSeed: trimmed });
+        runFlow('not_understood', false, { lang: replyLang, closingSeed: trimmed });
         return;
       }
 
@@ -521,79 +814,78 @@
           flowKey: null,
         });
         Understanding.incrementMessageCount();
-        runFlow('partial_clarify', false, { lang, closingSeed: trimmed });
+        runFlow('partial_clarify', false, { lang: replyLang, closingSeed: trimmed });
         return;
       }
     }
 
     const contextPrefix = (fromClarification && understanding.level === LEVEL.FULL)
-      ? Understanding.getContextContinueHtml(lang)
+      ? Understanding.getContextContinueHtml(replyLang)
       : '';
 
     if (classification.intent === INTENT.REASSURANCE) {
       Understanding.incrementMessageCount();
-      runFlow('reassurance', false, { lang, emotion: displayEmo || 'curious' });
+      runFlow('reassurance', false, { lang: replyLang, emotion: displayEmo || 'curious' });
       return;
     }
 
-    if (classification.intent === INTENT.GREETING || Conversation.isGreeting(workingText)) {
+    if (classification.intent === INTENT.GREETING || Conversation.isGreeting(nlpText)) {
       Understanding.incrementMessageCount();
       if (Understanding.shouldAllowFullGreeting() || Understanding.isExplicitRestart(trimmed)) {
-        runFlow('greeting', false, { lang });
+        runFlow('greeting', false, { lang: replyLang });
       } else {
-        runFlow('greeting_return', false, { lang });
+        runFlow('greeting_return', false, { lang: replyLang });
       }
       return;
     }
 
-    if (Conversation.isPainOrSick(workingText)) {
-      const empathyHtml = I18n.getEmpathyPrefix(lang, emoKey || 'sick', 'pain_sick');
+    if (Conversation.isPainOrSick(nlpText)) {
+      const empathyHtml = empathyHtmlFor(emoKey || 'sick', 'pain_sick', '', phpEmpathyHtml, bridge);
       Understanding.incrementMessageCount();
-      runFlow('pain_sick', false, { lang, emotion: emoKey || 'sick', empathyHtml });
+      runFlow('pain_sick', false, { lang: replyLang, emotion: emoKey || 'sick', empathyHtml });
       return;
     }
 
     if (emotion.standalone === Emotions.EMOTION.THANKFUL || emotion.standalone === Emotions.EMOTION.GRATITUDE) {
       Understanding.incrementMessageCount();
-      runFlow('gratitude', false, { lang });
+      runFlow('gratitude', false, { lang: replyLang });
       return;
     }
 
     if (emotion.standalone === Emotions.EMOTION.HAPPY) {
       Understanding.incrementMessageCount();
-      runFlow('happy', false, { lang });
+      runFlow('happy', false, { lang: replyLang });
       return;
     }
 
     if (emotion.standalone === Emotions.EMOTION.RELIEVED) {
       Understanding.incrementMessageCount();
-      runFlow('relieved', false, { lang });
+      runFlow('relieved', false, { lang: replyLang });
       return;
     }
 
     if (emotion.standalone === Emotions.EMOTION.CONFUSED || emotion.standalone === Emotions.EMOTION.CONFUSION) {
-      const welcome = Engine.getFlow('welcome', lang);
+      const welcome = Engine.getFlow('welcome', replyLang);
       Understanding.incrementMessageCount();
       runFlow('clarify', false, {
-        lang,
+        lang: replyLang,
         emotion: 'confused',
         empathy: true,
-        html: contextPrefix + I18n.getEmpathyPrefix(lang, 'confusion', 'clarify') + `<p>${I18n.t(lang, 'confusionPrompt')}</p>`,
-        followUp: I18n.t(lang, 'chooseTopic'),
+        html: contextPrefix + I18n.getEmpathyPrefix(replyLang, 'confusion', 'clarify') + `<p>${I18n.t(replyLang, 'confusionPrompt')}</p>`,
+        followUp: I18n.t(replyLang, 'chooseTopic'),
         actions: welcome.actions,
       });
       return;
     }
 
-    if (Engine.isMedicalAdviceRequest(workingText)) {
-      const empathyHtml = (contextPrefix || '')
-        + (emoKey ? I18n.getEmpathyPrefix(lang, emoKey, 'policy') : '');
+    if (Engine.isMedicalAdviceRequest(nlpText)) {
+      const empathyHtml = empathyHtmlFor(emoKey, 'policy', contextPrefix, phpEmpathyHtml, bridge);
       Understanding.incrementMessageCount();
-      runFlow('policy', false, { lang, emotion: emoKey, empathyHtml });
+      runFlow('policy', false, { lang: replyLang, emotion: emoKey, empathyHtml });
       return;
     }
 
-    const intent = classification.flowKey || Engine.matchIntent(understanding.effectiveText || workingText);
+    const intent = classification.flowKey || Engine.matchIntent(understanding.effectiveText || nlpText);
     let flowKey = Emotions.resolveFlow(intent, emotion);
 
     if (flowKey === 'unknown' && understanding.level === LEVEL.PARTIAL && !displayEmo) {
@@ -614,37 +906,44 @@
     if (flowKey === 'unknown' && understanding.level !== LEVEL.FULL) {
       Understanding.setPending({ originalText: workingText, keywords: understanding.keywords });
       Understanding.incrementMessageCount();
-      runFlow(understanding.level === LEVEL.PARTIAL ? 'partial_clarify' : 'not_understood', false, { lang, closingSeed: trimmed });
+      runFlow(understanding.level === LEVEL.PARTIAL ? 'partial_clarify' : 'not_understood', false, { lang: replyLang, closingSeed: trimmed });
       return;
     }
 
     if (flowKey === 'pain_sick') {
-      const empathyHtml = I18n.getEmpathyPrefix(lang, emoKey || 'sick', 'pain_sick');
       Understanding.incrementMessageCount();
-      runFlow('pain_sick', false, { lang, emotion: emoKey || 'sick', empathyHtml });
+      runFlow('pain_sick', false, {
+        lang: replyLang,
+        emotion: emoKey || 'sick',
+        empathyHtml: empathyHtmlFor(emoKey || 'sick', 'pain_sick', '', phpEmpathyHtml, bridge),
+      });
       return;
     }
 
     if (flowKey === 'happy' || flowKey === 'relieved' || flowKey === 'gratitude') {
       Understanding.incrementMessageCount();
-      runFlow(flowKey === 'gratitude' ? 'gratitude' : flowKey, false, { lang });
+      runFlow(flowKey === 'gratitude' ? 'gratitude' : flowKey, false, { lang: replyLang });
       return;
     }
 
     if (flowKey === 'distress_support') {
-      const empathyHtml = emoKey ? I18n.getEmpathyPrefix(lang, emoKey, '_default') : '';
       Understanding.incrementMessageCount();
-      runFlow('distress_support', false, { lang, emotion: emoKey, empathyHtml });
+      runFlow('distress_support', false, {
+        lang: replyLang,
+        emotion: emoKey,
+        empathyHtml: empathyHtmlFor(emoKey, '_default', '', phpEmpathyHtml, bridge),
+        empathy: true,
+      });
       return;
     }
 
-    let empathyHtml = contextPrefix;
-    if (emoKey && flowKey !== 'crisis' && flowKey !== 'emergency') {
-      empathyHtml += I18n.getEmpathyPrefix(lang, emoKey, flowKey);
+    let empathyHtml = empathyHtmlFor(emoKey, flowKey, contextPrefix, phpEmpathyHtml, bridge);
+    if (!phpEmpathyHtml && emoKey && flowKey !== 'crisis' && flowKey !== 'emergency' && !empathyHtml) {
+      empathyHtml = contextPrefix + I18n.getEmpathyPrefix(replyLang, emoKey, flowKey);
     }
 
     Understanding.incrementMessageCount();
-    runFlow(flowKey, false, { lang, emotion: emoKey, empathyHtml, closingSeed: trimmed });
+    runFlow(flowKey, false, { lang: replyLang, emotion: emoKey, empathyHtml, closingSeed: trimmed });
   }
 
   // ── Integrations ──
@@ -695,14 +994,14 @@
     }
   }
 
-  function handleSend() {
+  async function handleSend() {
     if (!inputEl || Moderation.isOnCooldown()) return;
     const text = inputEl.value.trim();
     if (!text) return;
     inputEl.value = '';
     resizeInput();
     updateCharCount();
-    processUserText(text);
+    await processUserText(text);
   }
 
   function onInputChange() {
@@ -745,6 +1044,7 @@
     }
   });
 
+  messagesEl.addEventListener('click', handleMessagesClick);
   messagesEl.addEventListener('scroll', onMessagesScroll, { passive: true });
 
   document.addEventListener('keydown', (e) => {
@@ -756,10 +1056,16 @@
   });
 
   try {
-    if (!sessionStorage.getItem(STORAGE_KEY)) {
+    if (sessionStorage.getItem(STORAGE_KEY) === '1') {
+      hideBadge();
+    }
+    const restored = restoreThreadFromStorage();
+    if (restored && hasUserMessages()) {
+      showBadge();
+    } else if (!sessionStorage.getItem(STORAGE_KEY)) {
       window.setTimeout(() => {
-        if (!isOpen) showBadge();
-      }, 6000);
+        if (!isOpen && !hasActiveThread()) showBadge();
+      }, 3500);
     }
   } catch (_) { /* ignore */ }
 
@@ -770,4 +1076,21 @@
   setRestrictedState(onCooldown, onCooldown ? Moderation.cooldownRemainingSec() : 0);
 
   if (window.McFaqTheme) window.McFaqTheme.init();
+
+  if (window.McFaqVoice) {
+    window.McFaqVoice.init({
+      root,
+      inputEl,
+      getLang: currentLang,
+      isRestricted: () => Moderation.isOnCooldown(),
+      ripple: UI.ripple,
+      onInputChange: () => {
+        resizeInput();
+        updateCharCount();
+      },
+      onFinalTranscript: async (text) => {
+        await processUserText(text);
+      },
+    });
+  }
 })();

@@ -309,15 +309,17 @@ if (navbar) {
     }
   });
 
-  btnChange.addEventListener('click', () => {
-    codePanel.hidden  = true;
-    emailPanel.hidden = false;
-    otpInput.value    = '';
-    clearAlert('otp-alert');
-    clearInterval(resendTimer);
-    countdown.textContent = '';
-    refreshEmailValidation();
-  });
+  if (btnChange) {
+    btnChange.addEventListener('click', () => {
+      codePanel.hidden  = true;
+      emailPanel.hidden = false;
+      otpInput.value    = '';
+      clearAlert('otp-alert');
+      clearInterval(resendTimer);
+      countdown.textContent = '';
+      refreshEmailValidation();
+    });
+  }
 
   btnVerify.addEventListener('click', async () => {
     const otp   = otpInput.value.trim();
@@ -427,12 +429,8 @@ const step2Rules = {
     return '';
   },
   'reg-confirm-password': v => !v ? 'Confirm password is required.' : v !== document.getElementById('reg-password').value ? 'Passwords do not match.' : '',
-  'employment-status': v => '',
-  'income-bracket':    v => '',
-  'philhealth-status': v => '',
   'contact-number':    v => !v.trim() ? 'Contact number is required.'
                           : !/^(09|\+639)\d{9}$/.test(v.trim().replace(/\s/g,'')) ? 'Enter a valid PH mobile number (e.g. 09171234567).' : '',
-  'philhealth-status': v => !v ? 'Please select a PhilHealth status.' : '',
   'blood-type':        v => !v ? 'Please select a blood type.' : '',
   'chief-complaint':   v => {
     const t = (v || '').trim();
@@ -503,6 +501,45 @@ function showAlert(boxId, msg, type = 'error') {
 function clearAlert(boxId) {
   const box = document.getElementById(boxId);
   if (box) { box.className = 'alert'; box.textContent = ''; }
+}
+
+/** Run step2Rules + consent; return { valid, firstError, firstInvalidEl } */
+function validateStep2Form() {
+  syncMedicalYesNoFields();
+  let valid = true;
+  let firstError = '';
+  let firstInvalidEl = null;
+
+  Object.keys(step2Rules).forEach(id => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    const errEl = document.getElementById(id + '-error');
+    const err = step2Rules[id](el.value);
+    if (errEl) errEl.textContent = err;
+    el.classList.toggle('invalid', !!err);
+    if (err) {
+      valid = false;
+      if (!firstError) {
+        firstError = err;
+        firstInvalidEl = el;
+      }
+    }
+  });
+
+  const consentEl = document.getElementById('consent-checkbox');
+  if (!consentEl || !consentEl.checked) {
+    const errEl = document.getElementById('consent-error');
+    const consentMsg = 'You must agree to the data privacy consent to proceed.';
+    if (errEl) errEl.textContent = consentMsg;
+    consentEl?.closest('.consent-label')?.classList.add('invalid');
+    valid = false;
+    if (!firstError) {
+      firstError = consentMsg;
+      firstInvalidEl = consentEl;
+    }
+  }
+
+  return { valid, firstError, firstInvalidEl };
 }
 
 /* ===== STEP NAVIGATION ===== */
@@ -616,49 +653,20 @@ const submitBtnEl = document.getElementById('reg-submit');
 const submitHintEl = document.getElementById('step2-submit-hint');
 const allergyYes = document.getElementById('allergy-yes');
 const allergyNo = document.getElementById('allergy-no');
-const allergyDetails = document.getElementById('allergy-details');
 const allergiesInput = document.getElementById('allergies');
 const medsYes = document.getElementById('meds-yes');
 const medsNo = document.getElementById('meds-no');
-const medsDetails = document.getElementById('meds-details');
 const medsInput = document.getElementById('current-medications');
 const conditionsYes = document.getElementById('conditions-yes');
 const conditionsNo = document.getElementById('conditions-no');
-const conditionsDetails = document.getElementById('conditions-details');
 const conditionsInput = document.getElementById('existing-conditions');
 const chiefComplaintInput = document.getElementById('chief-complaint');
 const chiefComplaintCount = document.getElementById('chief-complaint-count');
-const NO_KNOWN_ALLERGIES = 'No Known Allergies';
-const NO_MAINTENANCE_MEDS = 'None';
-const NO_MEDICAL_CONDITIONS = 'None';
 
-function syncConditionalDetails(yesEl, noEl, detailsEl, inputEl, noValue) {
-  if (!detailsEl || !inputEl) return;
-  const show = !!(yesEl && yesEl.checked);
-  if (show) {
-    detailsEl.hidden = false;
-    requestAnimationFrame(() => detailsEl.classList.add('is-open'));
-    if (inputEl.value.trim() === noValue) inputEl.value = '';
-  } else {
-    detailsEl.classList.remove('is-open');
-    window.setTimeout(() => {
-      if (noEl && noEl.checked) detailsEl.hidden = true;
-    }, 260);
-    inputEl.value = noValue;
-    const errEl = document.getElementById(inputEl.id + '-error');
-    if (errEl) errEl.textContent = '';
-    inputEl.classList.remove('invalid');
-  }
-}
-
-function syncAllergyUi() {
-  syncConditionalDetails(allergyYes, allergyNo, allergyDetails, allergiesInput, NO_KNOWN_ALLERGIES);
-}
-function syncMedsUi() {
-  syncConditionalDetails(medsYes, medsNo, medsDetails, medsInput, NO_MAINTENANCE_MEDS);
-}
-function syncConditionsUi() {
-  syncConditionalDetails(conditionsYes, conditionsNo, conditionsDetails, conditionsInput, NO_MEDICAL_CONDITIONS);
+function syncMedicalYesNoFields() {
+  if (allergiesInput) allergiesInput.value = allergyYes && allergyYes.checked ? 'Yes' : 'No';
+  if (medsInput) medsInput.value = medsYes && medsYes.checked ? 'Yes' : 'No';
+  if (conditionsInput) conditionsInput.value = conditionsYes && conditionsYes.checked ? 'Yes' : 'No';
 }
 
 function updateChiefComplaintCount() {
@@ -692,31 +700,17 @@ function updateSubmitEnabled() {
   }
 }
 
-function requireDetailsIfYes(yesEl, inputEl, label) {
-  if (yesEl && yesEl.checked && inputEl && !inputEl.value.trim()) {
-    const errEl = document.getElementById(inputEl.id + '-error');
-    if (errEl) errEl.textContent = `Please specify your ${label}, or select No.`;
-    inputEl.classList.add('invalid');
-    showAlert('step2-alert', `Please specify your ${label}.`);
-    inputEl.focus();
-    return false;
-  }
-  return true;
-}
-
-if (allergyYes) allergyYes.addEventListener('change', syncAllergyUi);
-if (allergyNo) allergyNo.addEventListener('change', syncAllergyUi);
-if (medsYes) medsYes.addEventListener('change', syncMedsUi);
-if (medsNo) medsNo.addEventListener('change', syncMedsUi);
-if (conditionsYes) conditionsYes.addEventListener('change', syncConditionsUi);
-if (conditionsNo) conditionsNo.addEventListener('change', syncConditionsUi);
+if (allergyYes) allergyYes.addEventListener('change', syncMedicalYesNoFields);
+if (allergyNo) allergyNo.addEventListener('change', syncMedicalYesNoFields);
+if (medsYes) medsYes.addEventListener('change', syncMedicalYesNoFields);
+if (medsNo) medsNo.addEventListener('change', syncMedicalYesNoFields);
+if (conditionsYes) conditionsYes.addEventListener('change', syncMedicalYesNoFields);
+if (conditionsNo) conditionsNo.addEventListener('change', syncMedicalYesNoFields);
 if (chiefComplaintInput) {
   chiefComplaintInput.addEventListener('input', updateChiefComplaintCount);
   updateChiefComplaintCount();
 }
-syncAllergyUi();
-syncMedsUi();
-syncConditionsUi();
+syncMedicalYesNoFields();
 
 if (consentCheckbox) {
   consentCheckbox.addEventListener('change', () => {
@@ -859,36 +853,18 @@ step2Form.addEventListener('submit', async e => {
   e.preventDefault();
   clearAlert('step2-alert');
 
-  // Sync conditional medical values before validation/submit
-  if (allergyNo && allergyNo.checked && allergiesInput) allergiesInput.value = NO_KNOWN_ALLERGIES;
-  if (medsNo && medsNo.checked && medsInput) medsInput.value = NO_MAINTENANCE_MEDS;
-  if (conditionsNo && conditionsNo.checked && conditionsInput) conditionsInput.value = NO_MEDICAL_CONDITIONS;
-
-  if (!requireDetailsIfYes(allergyYes, allergiesInput, 'allergies')) return;
-  if (!requireDetailsIfYes(medsYes, medsInput, 'maintenance medications')) return;
-  if (!requireDetailsIfYes(conditionsYes, conditionsInput, 'medical conditions')) return;
-
-  let valid = true;
-  Object.keys(step2Rules).forEach(id => {
-    const el = document.getElementById(id);
-    if (!el) return;
-    const errEl = document.getElementById(id + '-error');
-    const err = step2Rules[id](el.value);
-    if (errEl) errEl.textContent = err;
-    el.classList.toggle('invalid', !!err);
-    if (err) valid = false;
-  });
-
-  // Consent
-  if (!consentCheckbox || !consentCheckbox.checked) {
-    const errEl = document.getElementById('consent-error');
-    if (errEl) errEl.textContent = 'You must agree to the data privacy consent to proceed.';
-    if (consentCheckbox) consentCheckbox.closest('.consent-label').classList.add('invalid');
-    valid = false;
-  }
-
-  if (!valid) {
-    showAlert('step2-alert', 'Please fill in all required fields correctly.');
+  const validation = validateStep2Form();
+  if (!validation.valid) {
+    const summary = validation.firstError
+      || 'Please fill in all required fields correctly.';
+    showAlert('step2-alert', summary);
+    const target = validation.firstInvalidEl;
+    if (target && typeof target.scrollIntoView === 'function') {
+      target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      if (typeof target.focus === 'function') {
+        try { target.focus({ preventScroll: true }); } catch (_) { target.focus(); }
+      }
+    }
     return;
   }
 
@@ -946,17 +922,6 @@ step2Form.addEventListener('submit', async e => {
 
   try {
     const fd = new FormData(step2Form);
-    try {
-      const key = window.RECAPTCHA_SITE_KEY;
-      const version = (window.RECAPTCHA_VERSION || 'v3').toLowerCase();
-      if (key && version === 'v3' && window.grecaptcha?.execute) {
-        const token = await window.grecaptcha.execute(key, { action: 'register' });
-        if (token) fd.append('recaptcha_token', token);
-      } else if (key && version === 'v2') {
-        const token = (document.querySelector('textarea[name="g-recaptcha-response"]')?.value || '').trim();
-        if (token) fd.append('recaptcha_token', token);
-      }
-    } catch (_) { /* non-fatal */ }
 
     // Attach urgency for server logging / future hooks (registration API ignores unknown fields)
     fd.append('triage_urgency', urgency);

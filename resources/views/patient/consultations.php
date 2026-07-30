@@ -13,6 +13,7 @@ if (!defined('BASE_PATH')) {
     }
 }
 require_once BASE_PATH . '/app/includes/patient_portal_bootstrap.php';
+require_once BASE_PATH . '/app/includes/patient_consultation_cancel.php';
 
 $all_consults = [];
 if ($pdo->query("SHOW TABLES LIKE 'consultations'")->rowCount()) {
@@ -29,6 +30,9 @@ if ($pdo->query("SHOW TABLES LIKE 'consultations'")->rowCount()) {
     $s->execute([$uid]);
     $all_consults = $s->fetchAll(PDO::FETCH_ASSOC);
 }
+
+// Cancel visit is only offered after the doctor approved care tips.
+$can_cancel_after_tips = patient_tips_ready_cancel_prompt($pdo, (int) $uid) !== null;
 
 $page_title = 'My Sessions';
 $sessions_css_ver = (int) @filemtime(ASSETS_PATH . '/css/patient-sessions.css');
@@ -52,6 +56,7 @@ $patient_page_stylesheets = [
   <?php require_once VIEWS_PATH . '/patient/partials/layout_shell_close.php'; ?>
 
   <script>window.APP_BASE = <?= json_encode(ASSET_BASE) ?>;</script>
+  <script>window.CAN_CANCEL_AFTER_TIPS_APPROVED = <?= json_encode($can_cancel_after_tips) ?>;</script>
   <script>window.consultations = <?= json_encode($all_consults, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_AMP | JSON_HEX_QUOT) ?>;</script>
   <script src="<?= ASSET_BASE ?>/assets/js/patient-portal.js?v=<?= $patient_portal_ver ?>"></script>
   <script>

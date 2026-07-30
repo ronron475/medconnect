@@ -4,6 +4,7 @@
  */
 require_once __DIR__ . '/bhw_scope.php';
 require_once __DIR__ . '/bhw_clinical.php';
+require_once __DIR__ . '/bago_barangay_puroks.php';
 
 final class BhwReports
 {
@@ -32,7 +33,7 @@ final class BhwReports
 
     private static function patientWhere(PDO $pdo, array $ctx, array $f, array &$params, string $pr = 'pr'): string
     {
-        [$clause, $p] = bhw_patient_sector_clause($pdo, $ctx, $pr);
+        [$clause, $p] = bhw_patient_scope_clause($pdo, $ctx, [], $pr);
         $params = array_merge($params, $p);
         $sql = " {$clause} ";
 
@@ -599,19 +600,125 @@ final class BhwReports
         ];
     }
 
-    public static function listPuroks(PDO $pdo, array $ctx): array
+    public static function listPuroks(PDO $pdo, array $ctx, array $filters = []): array
     {
         if (!in_array('purok', bhw_pr_columns($pdo), true)) {
             return [];
         }
+        BagoBarangayPuroks::ensureSchema($pdo);
+
         $params = [];
-        $pw = self::patientWhere($pdo, $ctx, self::parseFilters([]), $params);
-        return self::rows($pdo, "
+        $f = self::parseFilters($filters);
+        $pw = self::patientWhere($pdo, $ctx, $f, $params);
+
+        $rows = self::rows($pdo, "
             SELECT DISTINCT TRIM(pr.purok) AS purok FROM patient_registrations pr
-            JOIN users u ON u.email = pr.email AND u.role = 'patient'
             WHERE {$pw} AND pr.purok IS NOT NULL AND TRIM(pr.purok) != ''
             ORDER BY purok ASC
         ", $params);
+
+        $labels = [];
+        $barangayId = (int) ($ctx['barangay_id'] ?? 0);
+        $barangayName = trim((string) ($ctx['barangay_name'] ?? ''));
+        if ($barangayId > 0 || $barangayName !== '') {
+            if ($barangayId <= 0 && $barangayName !== '') {
+                $stmt = $pdo->prepare('SELECT id FROM barangays WHERE LOWER(TRIM(name)) = LOWER(?) LIMIT 1');
+                $stmt->execute([$barangayName]);
+                $barangayId = (int) ($stmt->fetchColumn() ?: 0);
+            }
+            foreach (BagoBarangayPuroks::labelsForBarangay($pdo, $barangayId, $barangayName) as $ref) {
+                $labels[$ref] = true;
+            }
+            foreach (self::patientPuroksByBarangayName($pdo, $barangayId, $barangayName) as $ref) {
+                $labels[$ref] = true;
+            }
+        }
+
+        foreach ($rows as $row) {
+            $p = trim((string) ($row['purok'] ?? ''));
+            if ($p === '') {
+                continue;
+            }
+            $labels[$p] = true;
+            if ($barangayId > 0) {
+                BagoBarangayPuroks::upsertPatientPurok($pdo, $barangayId, $p);
+            }
+        }
+
+        $sorted = array_keys($labels);
+        usort($sorted, static function (string $a, string $b): int {
+            return strnatcasecmp($a, $b);
+        });
+
+        return self::formatPurokRows($sorted);
+    }
+
+    /**
+     * Distinct puroks recorded for a barangay (registration data), city-wide scope.
+     *
+     * @return list<string>
+     */
+    private static function patientPuroksByBarangayName(PDO $pdo, int $barangayId, string $barangayName): array
+    {
+        $cols = bhw_pr_columns($pdo);
+        if (!in_array('purok', $cols, true)) {
+            return [];
+        }
+        $name = trim($barangayName);
+        if ($name === '') {
+            return [];
+        }
+        $params = [$name];
+        $sql = "
+            SELECT DISTINCT TRIM(pr.purok) AS purok
+            FROM patient_registrations pr
+            WHERE pr.purok IS NOT NULL AND TRIM(pr.purok) != ''
+              AND LOWER(TRIM(pr.barangay)) = LOWER(?)
+        ";
+        if (in_array('barangay_id', $cols, true) && $barangayId > 0) {
+            $sql = "
+                SELECT DISTINCT TRIM(pr.purok) AS purok
+                FROM patient_registrations pr
+                WHERE pr.purok IS NOT NULL AND TRIM(pr.purok) != ''
+                  AND (pr.barangay_id = ? OR LOWER(TRIM(pr.barangay)) = LOWER(?))
+            ";
+            $params = [$barangayId, $name];
+        }
+        $stmt = $pdo->prepare($sql);
+        $stmt->execute($params);
+        $out = [];
+        foreach ($stmt->fetchAll(PDO::FETCH_COLUMN) as $p) {
+            $p = trim((string) $p);
+            if ($p !== '') {
+                $out[] = $p;
+            }
+        }
+
+        return $out;
+    }
+
+    /**
+     * @param list<string> $labels
+     * @return list<array{purok: string}>
+     */
+    private static function formatPurokRows(array $labels): array
+    {
+        $out = [];
+        foreach ($labels as $label) {
+            $p = trim((string) $label);
+            if ($p === '') {
+                continue;
+            }
+            $out[] = ['purok' => $p];
+        }
+
+        return $out;
+    }
+
+    /** @return list<array{id: int, name: string}> */
+    public static function listBarangays(PDO $pdo): array
+    {
+        return bhw_list_barangay_options($pdo);
     }
 
     public static function logExport(PDO $pdo, array $ctx, string $type, string $format, array $filters): void

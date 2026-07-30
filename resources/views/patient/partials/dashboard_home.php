@@ -70,6 +70,8 @@ foreach ($upcoming_list as $c) {
   </div>
   <?php endif; ?>
 
+  <?php require __DIR__ . '/dashboard_symptoms_review.php'; ?>
+
   <div class="pdash-metrics" aria-label="Health summary">
     <div class="pdash-metric <?= $dash_today_appts > 0 ? 'pdash-metric--accent' : '' ?>">
       <span class="pdash-metric__value"><?= (int) $dash_today_appts ?></span>
@@ -102,6 +104,12 @@ foreach ($upcoming_list as $c) {
       </span>
       My Health
     </a>
+    <a href="<?= ASSET_BASE ?>/views/patient/my_health.php?tab=care-tips" class="pdash-quick__link">
+      <span class="pdash-quick__icon" aria-hidden="true">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+      </span>
+      Care tips
+    </a>
     <a href="<?= ASSET_BASE ?>/views/patient/messages.php" class="pdash-quick__link">
       <span class="pdash-quick__icon" aria-hidden="true">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
@@ -119,6 +127,8 @@ foreach ($upcoming_list as $c) {
   <div class="pdash-grid">
     <div class="pdash-main">
 
+      <?php require __DIR__ . '/dashboard_action_items.php'; ?>
+
       <section class="pdash-card">
         <div class="pdash-card__head">
           <h2 class="pdash-card__title">
@@ -128,20 +138,10 @@ foreach ($upcoming_list as $c) {
           <span class="pdash-card__badge"><?= (int) $week_total ?> this week</span>
         </div>
         <p class="pdash-card__sub">Your consultations over the last 7 days</p>
-        <div class="pdash-chart" role="img" aria-label="Weekly consultation bar chart">
-          <?php foreach ($week_chart as $bar):
-            $pct = ($bar['count'] / $chart_max) * 100;
-            $height = max(6, round($pct));
-          ?>
-          <div class="pdash-chart-col <?= $bar['is_today'] ? 'is-today' : '' ?>">
-            <div class="pdash-chart-bar-wrap">
-              <div class="pdash-chart-bar" style="height: <?= $height ?>%;" title="<?= (int) $bar['count'] ?> on <?= htmlspecialchars($bar['date']) ?>"></div>
-            </div>
-            <span class="pdash-chart-label"><?= htmlspecialchars($bar['label']) ?></span>
-            <span class="pdash-chart-val"><?= (int) $bar['count'] ?></span>
-          </div>
-          <?php endforeach; ?>
+        <div class="mc-chart-canvas-wrap" style="min-height:220px;height:220px;">
+          <canvas data-mc-weekly-bar="pdashWeekChartData" aria-label="Weekly consultation bar chart"></canvas>
         </div>
+        <script type="application/json" id="pdashWeekChartData"><?= json_encode($week_chart, JSON_UNESCAPED_UNICODE) ?></script>
         <div class="pdash-chart-legend">
           <span>Daily visit counts</span>
           <strong><?= htmlspecialchars(end($week_chart)['date'] ?? 'Today') ?> = today</strong>
@@ -209,7 +209,6 @@ foreach ($upcoming_list as $c) {
         <?php endif; ?>
       </section>
 
-      <?php require __DIR__ . '/dashboard_action_items.php'; ?>
     </div>
 
     <aside class="pdash-side">
@@ -223,8 +222,9 @@ foreach ($upcoming_list as $c) {
         </summary>
         <ol class="pdash-flow__steps">
           <li><span class="pdash-flow__num">1</span><span><strong>Register</strong> — verify your identity and share your health concern.</span></li>
-          <li><span class="pdash-flow__num">2</span><span><strong>Book</strong> — choose a provider and an available time slot.</span></li>
-          <li><span class="pdash-flow__num">3</span><span><strong>Join</strong> — enter the secure video room when your session opens.</span></li>
+          <li><span class="pdash-flow__num">2</span><span><strong>Review</strong> — for non-urgent cases, request doctor-approved self-care tips (optional).</span></li>
+          <li><span class="pdash-flow__num">3</span><span><strong>Book</strong> — choose your assigned doctor and a time slot when you need a video visit.</span></li>
+          <li><span class="pdash-flow__num">4</span><span><strong>Join</strong> — enter the secure video room when your session opens.</span></li>
         </ol>
       </details>
 

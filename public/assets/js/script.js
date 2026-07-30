@@ -580,23 +580,6 @@ const validatePassword = v => {
   return '';
 };
 
-async function getRecaptchaToken(action) {
-  const key = window.RECAPTCHA_SITE_KEY;
-  const version = (window.RECAPTCHA_VERSION || 'v3').toLowerCase();
-  if (!key) return '';
-
-  if (version === 'v3') {
-    if (!window.grecaptcha || !window.grecaptcha.execute) return '';
-    try {
-      return await window.grecaptcha.execute(key, { action: action || 'login' });
-    } catch (_) {
-      return '';
-    }
-  }
-
-  return (document.querySelector('textarea[name="g-recaptcha-response"]')?.value || '').trim();
-}
-
 const showAlert  = (msg, type = 'error') => { alertBox.textContent = msg; alertBox.className = `alert ${type}`; };
 const clearAlert = () => { alertBox.className = 'alert'; alertBox.textContent = ''; };
 const setLoading = on => { submitBtn.disabled = on; btnText.hidden = on; btnSpinner.hidden = !on; };
@@ -626,23 +609,10 @@ form.addEventListener('submit', async e => {
   setLoading(true);
 
   try {
-    if (window.__MC_CAPTCHA_REQUIRED) {
-      const token = await getRecaptchaToken('login');
-      if (!token) {
-        showAlert('Please verify that you are not a robot.');
-        setLoading(false);
-        return;
-      }
-    }
-
     const body = new FormData();
     body.append('email', emailInput.value.trim());
     body.append('password', pwdInput.value);
     body.append('remember_me', rememberMe && rememberMe.checked ? '1' : '0');
-    if (window.__MC_CAPTCHA_REQUIRED) {
-      const token = await getRecaptchaToken('login');
-      if (token) body.append('recaptcha_token', token);
-    }
 
     const base     = (typeof window.APP_BASE !== 'undefined') ? window.APP_BASE : ((typeof window.ASSET_BASE !== 'undefined') ? window.ASSET_BASE : '');
     const loginUrl = base + '/app/api/login.php';
@@ -694,16 +664,6 @@ form.addEventListener('submit', async e => {
         window.location.replace(redirectUrl);
       }
     } else {
-      if (data && data.captcha_required) {
-        window.__MC_CAPTCHA_REQUIRED = true;
-        if (window.RECAPTCHA_VERSION && window.RECAPTCHA_VERSION.toLowerCase() === 'v2') {
-          const el = document.getElementById('mc-recaptcha-v2');
-          if (el) el.hidden = false;
-        }
-        showAlert(data.message || 'Please complete the verification to continue.');
-        setLoading(false);
-        return;
-      }
       if (data && data.code === 'locked') {
         showAlert(data.message || 'Account temporarily locked. Please try again later.');
         setLoading(false);

@@ -5,7 +5,7 @@
 (function (global) {
   'use strict';
 
-  const MIN_CHARS = 5;
+  const MIN_CHARS = 10;
   const ANALYZE_TIMEOUT_MS = 120000;
   const LOADING_STEPS = [
     'Processing your symptoms…',
@@ -43,8 +43,6 @@
       submitBtn: document.getElementById('reg-submit'),
       submitHint: document.getElementById('step2-submit-hint'),
       consent: document.getElementById('consent-checkbox'),
-      allergies: document.getElementById('allergies'),
-      allergyNo: document.getElementById('allergy-no'),
       err: document.getElementById('chief-complaint-error'),
     };
   }
@@ -58,9 +56,8 @@
   }
 
   function getAllergiesText() {
-    const { allergies, allergyNo } = els();
-    if (allergyNo && allergyNo.checked) return 'No Known Allergies';
-    return allergies && allergies.value.trim() ? allergies.value.trim() : 'No Known Allergies';
+    const allergyYes = document.getElementById('allergy-yes');
+    return allergyYes && allergyYes.checked ? 'Yes' : 'No';
   }
 
   function setAnalysisState(partial) {
@@ -292,8 +289,8 @@
     const trimmed = normalizeComplaint(text);
     let message = '';
 
-    if (!trimmed || meaningfulLength(trimmed) < MIN_CHARS) {
-      message = 'Please describe your current symptoms before submitting.';
+    if (!trimmed || trimmed.length < MIN_CHARS) {
+      message = 'Please provide a bit more detail (at least 10 characters).';
     }
 
     if (showErrorMsg && err) {
@@ -374,8 +371,8 @@
 
       const body = new FormData();
       body.append('chief_complaint', text);
-      body.append('existing_conditions', text);
-      body.append('current_medications', text);
+      body.append('existing_conditions', document.getElementById('conditions-yes')?.checked ? 'Yes' : 'No');
+      body.append('current_medications', document.getElementById('meds-yes')?.checked ? 'Yes' : 'No');
       body.append('allergies', getAllergiesText());
 
       const timer = setTimeout(function () {

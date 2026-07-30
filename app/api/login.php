@@ -22,7 +22,6 @@ require_once dirname(dirname(__DIR__)) . '/app/includes/profile_picture.php';
 require_once dirname(dirname(__DIR__)) . '/app/includes/provider_settings.php';
 require_once dirname(dirname(__DIR__)) . '/app/includes/patient_account_security.php';
 require_once dirname(dirname(__DIR__)) . '/app/includes/remember_me.php';
-require_once dirname(dirname(__DIR__)) . '/app/includes/recaptcha.php';
 require_once dirname(dirname(__DIR__)) . '/app/includes/login_security.php';
 require_once dirname(dirname(__DIR__)) . '/app/includes/security_throttle.php';
 
@@ -35,7 +34,6 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 
 $email    = trim($_POST['email']    ?? '');
 $password = $_POST['password']      ?? '';
-$recaptchaToken = (string) ($_POST['recaptcha_token'] ?? ($_POST['g-recaptcha-response'] ?? ''));
 
 if (empty($email) || empty($password)) {
     ob_clean();
@@ -121,46 +119,6 @@ if ($user && !empty($user['lockout_until'])) {
             'retry_after_minutes' => $mins,
         ]);
         exit;
-    }
-}
-
-// Google reCAPTCHA after repeated failures (server-verified)
-if ($user && isset($user['failed_attempts']) && (int) $user['failed_attempts'] >= 3) {
-    $captchaConfigured = recaptcha_is_configured();
-    if ($captchaConfigured) {
-        $ip = login_security_ip();
-        $verify = recaptcha_verify_token($recaptchaToken, 'login', $ip);
-        if (empty($verify['ok'])) {
-            try {
-                require_once BASE_PATH . '/app/includes/audit_log.php';
-                audit_log($pdo, [
-                    'patient_id'  => (int) $user['id'],
-                    'action_type' => 'captcha_failed',
-                    'description' => 'reCAPTCHA verification failed during login.',
-                    'meta'        => [
-                        'version' => $verify['version'] ?? null,
-                        'errors'  => $verify['error_codes'] ?? [],
-                    ],
-                ]);
-            } catch (Throwable $e) { /* non-fatal */ }
-
-            ob_clean();
-            echo json_encode([
-                'success' => false,
-                'message' => 'Please verify that you are not a robot.',
-                'code' => 'captcha_failed',
-                'captcha_required' => true,
-                'captcha' => [
-                    'required' => true,
-                    'version' => recaptcha_version(),
-                    'site_key' => recaptcha_client_key(),
-                ],
-            ]);
-            exit;
-        }
-    } else {
-        // If reCAPTCHA isn't configured, preserve existing behavior by allowing login (no bypass in production once keys are set).
-        // Intentionally no client-trust: server can't verify without keys.
     }
 }
 

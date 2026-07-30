@@ -124,3 +124,57 @@ function sendPatientWelcomeEmail(string $to, string $fullName, string $patientCo
         return ['success' => false, 'message' => 'Failed to send welcome email.'];
     }
 }
+
+/**
+ * Follow-up reminder email after video consultation.
+ *
+ * @return array{success: bool, message: string}
+ */
+function sendFollowUpReminderEmail(
+    string $to,
+    string $fullName,
+    string $followupDate,
+    string $providerNote = '',
+    string $contactNumber = ''
+): array {
+    $mail = initMailer();
+    if (!$mail) {
+        return ['success' => false, 'message' => 'Failed to initialize Gmail mailer.'];
+    }
+
+    $prettyDate = date('F j, Y', strtotime($followupDate)) ?: $followupDate;
+    $safeName = htmlspecialchars($fullName, ENT_QUOTES, 'UTF-8');
+    $safeDate = htmlspecialchars($prettyDate, ENT_QUOTES, 'UTF-8');
+    $safeNote = htmlspecialchars(trim($providerNote), ENT_QUOTES, 'UTF-8');
+    $safeContact = htmlspecialchars(trim($contactNumber), ENT_QUOTES, 'UTF-8');
+    $portalUrl = rtrim((string) BASE_URL, '/') . '/views/patient/dashboard.php#action-items';
+
+    try {
+        $mail->addAddress($to, $fullName);
+        $mail->Subject = 'MedConnect Follow-Up Reminder — ' . $prettyDate;
+        $mail->Body = "
+            <div style=\"font-family:Arial,sans-serif;max-width:560px;margin:0 auto;color:#1e293b;\">
+                <h2 style=\"color:#0d9488;margin-bottom:8px;\">Follow-Up Reminder</h2>
+                <p>Dear {$safeName},</p>
+                <p>Your healthcare provider has scheduled a follow-up for you.</p>
+                <table style=\"margin:20px 0;border-collapse:collapse;width:100%;background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;\">
+                    <tr><td style=\"padding:12px;color:#64748b;\">Follow-up date</td><td style=\"padding:12px;font-weight:700;\">{$safeDate}</td></tr>
+                    " . ($safeContact !== '' ? "<tr><td style=\"padding:12px;color:#64748b;\">Registered mobile</td><td style=\"padding:12px;\">{$safeContact}</td></tr>" : '') . "
+                </table>
+                " . ($safeNote !== '' ? "<p><strong>Provider note:</strong><br>{$safeNote}</p>" : '') . "
+                <p style=\"margin:28px 0;\">
+                    <a href=\"{$portalUrl}\" style=\"background:#0d9488;color:#fff;padding:12px 24px;border-radius:8px;text-decoration:none;font-weight:600;display:inline-block;\">Open Patient Portal</a>
+                </p>
+                <p style=\"font-size:12px;color:#94a3b8;\">This is an automated reminder from MedConnect Bago City.</p>
+            </div>
+        ";
+        $mail->AltBody = "Follow-Up Reminder\n\nDear {$fullName},\nYour follow-up is scheduled for {$prettyDate}.\n"
+            . ($providerNote !== '' ? "Provider note: {$providerNote}\n" : '')
+            . "Portal: {$portalUrl}";
+        $mail->send();
+        return ['success' => true, 'message' => 'Follow-up email sent via Gmail.'];
+    } catch (Exception $e) {
+        error_log('Follow-up email failed: ' . $e->getMessage());
+        return ['success' => false, 'message' => 'Failed to send follow-up email.'];
+    }
+}

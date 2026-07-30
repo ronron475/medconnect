@@ -85,6 +85,10 @@
     navToggle.setAttribute('aria-expanded', open ? 'true' : 'false');
     document.body.classList.toggle('landing-nav-open', open);
 
+    if (open) {
+      document.dispatchEvent(new CustomEvent('medconnect:mobile-nav', { detail: { open: true } }));
+    }
+
     if (navBackdrop) {
       navBackdrop.hidden = !open;
       navBackdrop.classList.toggle('is-visible', open);

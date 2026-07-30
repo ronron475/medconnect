@@ -2,8 +2,6 @@
 session_start();
 require_once __DIR__ . '/../bootstrap.php';
 require_once __DIR__ . '/../config/db.php';
-require_once __DIR__ . '/../app/includes/recaptcha.php';
-require_once __DIR__ . '/../app/includes/login_security.php';
 
 $token   = trim($_GET['token'] ?? '');
 $error   = '';
@@ -24,17 +22,9 @@ if (empty($token)) {
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && $valid) {
     $password = $_POST['password'] ?? '';
     $confirm  = $_POST['confirm_password'] ?? '';
-    $recaptchaToken = (string) ($_POST['recaptcha_token'] ?? ($_POST['g-recaptcha-response'] ?? ''));
-    if (recaptcha_is_configured()) {
-        $ip = login_security_ip();
-        $verify = recaptcha_verify_token($recaptchaToken, 'reset_password', $ip);
-        if (empty($verify['ok'])) {
-            $error = 'Please verify that you are not a robot.';
-        }
-    }
-    if (!$error && strlen($password) < 6) {
+    if (strlen($password) < 6) {
         $error = 'Password must be at least 6 characters.';
-    } elseif (!$error && $password !== $confirm) {
+    } elseif ($password !== $confirm) {
         $error = 'Passwords do not match.';
     } else {
         $hash = password_hash($password, PASSWORD_BCRYPT, ['cost' => 12]);
@@ -233,7 +223,6 @@ $asset = ASSET_BASE;
         <?php endif; ?>
         <form method="POST" id="reset-form">
           <input type="hidden" name="token" value="<?= htmlspecialchars($token) ?>"/>
-          <input type="hidden" name="recaptcha_token" id="recaptcha_token" value=""/>
           <div class="reset-form-group">
             <label>New Password <span style="color:#dc2626">*</span></label>
             <div class="reset-input-wrap">
@@ -265,34 +254,6 @@ $asset = ASSET_BASE;
 </div>
 
 <script src="<?= $asset ?>/assets/js/register.js"></script>
-<script>
-  window.RECAPTCHA_SITE_KEY = <?= json_encode((string) (defined('RECAPTCHA_SITE_KEY') ? RECAPTCHA_SITE_KEY : '')) ?>;
-  window.RECAPTCHA_VERSION = <?= json_encode((string) (defined('RECAPTCHA_VERSION') ? RECAPTCHA_VERSION : 'v3')) ?>;
-</script>
-<?php if (!empty((string) (defined('RECAPTCHA_SITE_KEY') ? RECAPTCHA_SITE_KEY : '')) && !empty((string) (defined('RECAPTCHA_SECRET_KEY') ? RECAPTCHA_SECRET_KEY : ''))): ?>
-  <?php if (strtolower((string) (defined('RECAPTCHA_VERSION') ? RECAPTCHA_VERSION : 'v3')) === 'v2'): ?>
-    <script src="https://www.google.com/recaptcha/api.js" async defer></script>
-  <?php else: ?>
-    <script src="https://www.google.com/recaptcha/api.js?render=<?= htmlspecialchars((string) (defined('RECAPTCHA_SITE_KEY') ? RECAPTCHA_SITE_KEY : '')) ?>"></script>
-    <script>
-      (function () {
-        const form = document.getElementById('reset-form');
-        const key = window.RECAPTCHA_SITE_KEY;
-        if (!form || !key || !window.grecaptcha?.execute) return;
-        form.addEventListener('submit', async (e) => {
-          const tokenEl = document.getElementById('recaptcha_token');
-          if (tokenEl && tokenEl.value) return;
-          e.preventDefault();
-          try {
-            const token = await window.grecaptcha.execute(key, { action: 'reset_password' });
-            if (tokenEl) tokenEl.value = token || '';
-          } catch (_) {}
-          form.submit();
-        });
-      })();
-    </script>
-  <?php endif; ?>
-<?php endif; ?>
 </body>
 </html>
 

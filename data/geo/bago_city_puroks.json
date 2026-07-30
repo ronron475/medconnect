@@ -1,0 +1,132 @@
+{
+    "_meta": {
+        "city": "Bago City",
+        "province": "Negros Occidental",
+        "sources": [
+            "https://bagocity.gov.ph/barangays/",
+            "Patient registrations in medConnect (sync script)",
+            "Verified news/LGU references in named entries"
+        ],
+        "note": "The City of Bago website does not publish a full purok master list (Fast Facts show placeholders). Named entries come from barangay profile narratives and verified references. Run sync_bago_puroks_from_patients.php to merge registration data.",
+        "updated_at": "2026-07-29T09:27:57+02:00"
+    },
+    "barangays": {
+        "Abuanan": {
+            "named": [],
+            "source_url": "https://bagocity.gov.ph/barangays/barangay-abuanan/"
+        },
+        "Alianza": {
+            "named": [],
+            "source_url": "https://bagocity.gov.ph/barangays/barangay-alianza/"
+        },
+        "Atipuluan": {
+            "named": [],
+            "source_url": "https://bagocity.gov.ph/barangays/barangay-atipuluan/"
+        },
+        "Bacong-Montilla": {
+            "named": [],
+            "source_url": "https://bagocity.gov.ph/barangays/barangay-bacong/"
+        },
+        "Bagroy": {
+            "named": [],
+            "source_url": "https://bagocity.gov.ph/barangays/barangay-bagroy/"
+        },
+        "Balingasag": {
+            "named": [],
+            "source_url": "https://bagocity.gov.ph/barangays/barangay-balingasag/"
+        },
+        "Binubuhan": {
+            "named": [
+                "Purok Sunflower"
+            ],
+            "source_url": "https://bagocity.gov.ph/barangays/barangay-binubuhan/"
+        },
+        "Busay": {
+            "named": [],
+            "source_url": "https://bagocity.gov.ph/barangays/barangay-busay/"
+        },
+        "Calumangan": {
+            "named": [],
+            "source_url": "https://bagocity.gov.ph/barangays/barangay-calumangan/"
+        },
+        "Caridad": {
+            "named": [],
+            "source_url": "https://bagocity.gov.ph/barangays/barangay-caridad/"
+        },
+        "Don Jorge L. Araneta": {
+            "named": [],
+            "source_url": "https://bagocity.gov.ph/barangays/barangay-don-jorge-araneta/"
+        },
+        "Dulao": {
+            "named": [],
+            "source_url": "https://bagocity.gov.ph/barangays/barangay-dulao/"
+        },
+        "Ilijan": {
+            "named": [],
+            "source_url": "https://bagocity.gov.ph/barangays/barangay-ilijan/"
+        },
+        "Lag-Asan": {
+            "named": [],
+            "source_url": "https://bagocity.gov.ph/barangays/barangay-lag-asan/"
+        },
+        "Ma-ao": {
+            "named": [],
+            "source_url": "https://bagocity.gov.ph/barangays/barangay-ma-ao/"
+        },
+        "Mailum": {
+            "named": [],
+            "source_url": "https://bagocity.gov.ph/barangays/barangay-mailum/"
+        },
+        "Malingin": {
+            "named": [
+                "Sitio Malingin Daku",
+                "Sitio Malingin Diutay"
+            ],
+            "source_url": "https://bagocity.gov.ph/barangays/barangay-malingin/"
+        },
+        "Napoles": {
+            "named": [],
+            "source_url": "https://bagocity.gov.ph/barangays/barangay-napoles/"
+        },
+        "Pacol": {
+            "named": [],
+            "source_url": "https://bagocity.gov.ph/barangays/barangay-pacol/"
+        },
+        "Poblacion": {
+            "named": [],
+            "source_url": "https://bagocity.gov.ph/barangays/barangay-poblacion/"
+        },
+        "Sagasa": {
+            "named": [],
+            "source_url": "https://bagocity.gov.ph/barangays/barangay-sagasa/"
+        },
+        "Sampinit": {
+            "named": [
+                "Sitio Pinanuy-an"
+            ],
+            "source_url": "https://bagocity.gov.ph/barangays/barangay-sampinit/"
+        },
+        "Taba-ao": {
+            "named": [],
+            "source_url": "https://bagocity.gov.ph/barangays/barangay-taba-ao/"
+        },
+        "Tabunan": {
+            "named": [],
+            "source_url": "https://bagocity.gov.ph/barangays/barangay-tabunan/"
+        },
+        "Taloc": {
+            "named": [],
+            "source_url": "https://bagocity.gov.ph/barangays/barangay-taloc/"
+        }
+    },
+    "aliases": {
+        "Bacong Montilla": "Bacong-Montilla",
+        "Don Jorge Araneta": "Don Jorge L. Araneta",
+        "Lag-asan": "Lag-Asan",
+        "Maao": "Ma-ao",
+        "Tabaao": "Taba-ao",
+        "Bacong": "Bacong-Montilla",
+        "Ma-ao Barrio": "Ma-ao",
+        "Jorge L. Araneta": "Don Jorge L. Araneta"
+    }
+}

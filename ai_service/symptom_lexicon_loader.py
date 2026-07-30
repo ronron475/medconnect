@@ -19,6 +19,8 @@ def clear_cache() -> None:
     load_lexicon.cache_clear()
     variant_index.cache_clear()
     variants_by_length.cache_clear()
+    lexicon_variant_index.cache_clear()
+    lexicon_variants_by_length.cache_clear()
 
 
 @lru_cache(maxsize=1)
@@ -143,6 +145,36 @@ def variant_index() -> dict[str, dict[str, Any]]:
         pass
 
     return index
+
+
+@lru_cache(maxsize=1)
+def lexicon_variant_index() -> dict[str, dict[str, Any]]:
+    """JSON lexicon only (fast path — no 60k+ CSV expansion rows)."""
+    index: dict[str, dict[str, Any]] = {}
+    symptoms = load_lexicon().get("symptoms") or {}
+    for key, entry in symptoms.items():
+        if not isinstance(entry, dict):
+            continue
+        meta = {
+            "symptom_key": key,
+            "english": (entry.get("english") or "").strip(),
+            "medical_term": (entry.get("medical_term") or key).strip(),
+            "category": (entry.get("category") or "general").strip(),
+        }
+        variants = list(entry.get("hiligaynon") or [])
+        alt = entry.get("alternate_spellings") or []
+        if isinstance(alt, list):
+            variants.extend(alt)
+        for variant in variants:
+            norm = _normalize_variant(str(variant))
+            if norm and norm not in index:
+                index[norm] = {**meta, "canonical_variant": norm}
+    return index
+
+
+@lru_cache(maxsize=1)
+def lexicon_variants_by_length() -> list[str]:
+    return sorted(lexicon_variant_index().keys(), key=len, reverse=True)
 
 
 @lru_cache(maxsize=1)

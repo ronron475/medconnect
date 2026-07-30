@@ -126,11 +126,15 @@
   };
 
   const SELF_HARM_PATTERNS = [
+    /\b(going|gonna)\s+to\s+die\b/i,
+    /\b(i'?m|im)\s+(going|gonna)\s+to\s+die\b/i,
+    /\b(i'?m|im)\s+dying\b/i,
+    /\babout\s+to\s+die\b/i,
+    /\bwish\s+i\s+(was|were)\s+dead\b/i,
     /\bsuicid/i,
     /\bkill\s+myself\b/i,
     /\bend\s+my\s+life\b/i,
     /\bwant\s+to\s+die\b/i,
-    /\bwish\s+i\s+(was|were)\s+dead\b/i,
     /\bself[\s-]?harm\b/i,
     /\bhurt\s+myself\b/i,
     /\bcut\s+myself\b/i,
@@ -213,7 +217,7 @@
     { emotion: EMOTION.STRESSED, re: /\b(stress|stressed|overwhelm|grabeng\s+stress)\b/i, w: 2 },
     { emotion: EMOTION.LONELY, re: /\b(lonely|nag-iisa|isa\s+lang|wala\s+(ako|ko)\s+(makakausap|maistoryahan))\b/i, w: 2 },
     { emotion: EMOTION.THANKFUL, re: /\b(salamat|thank\s*you|thanks|maraming\s+salamat)\b/i, w: 2.5 },
-    { emotion: EMOTION.HOPELESS, re: /\b(hopeless|walang\s+pag-asa|wala\s+paglaum|wala\s+na\s+solusyon)\b/i, w: 2 },
+    { emotion: EMOTION.HOPELESS, re: /\b(hopeless|going\s+to\s+die|gonna\s+die|want\s+to\s+die|walang\s+pag-asa|wala\s+paglaum|wala\s+na\s+solusyon)\b/i, w: 2 },
     { emotion: EMOTION.DISAPPOINTED, re: /\b(disappoint|nadismaya|dismaya)\b/i, w: 2 },
     { emotion: EMOTION.NERVOUS, re: /\b(nervous|kinakabahan|kabado|kulba)\b/i, w: 2 },
     { emotion: EMOTION.PAIN, re: /\b(sakit\s+ulo|headache|masakit)\b/i, w: 2.5 },

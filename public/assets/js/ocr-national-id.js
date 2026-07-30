@@ -4,8 +4,10 @@
 (function (global) {
   'use strict';
 
-  const CACHE_PREFIX = 'medconnect_ocr_extract_';
+  const CACHE_PREFIX = 'medconnect_ocr_philsys_v4_';
   const OCR_FIELD_IDS = ['first-name', 'middle-name', 'last-name', 'dob', 'national-id', 'street-address'];
+  /** Identity fields filled from OCR cannot be edited; re-upload the ID to change them. */
+  const OCR_IMMUTABLE_AFTER_FILL = ['first-name', 'middle-name', 'last-name', 'dob', 'national-id'];
   const FILL_ORDER = [
     { id: 'first-name', key: 'first_name' },
     { id: 'middle-name', key: 'middle_name' },
@@ -22,6 +24,19 @@
   ];
   const WAITING_PLACEHOLDER = 'Waiting for OCR extraction...';
   const MANUAL_PLACEHOLDER = 'Unable to extract. Please enter manually.';
+
+  const RESERVED_OCR_NAME_LABELS = new Set([
+    'given names', 'given name', 'first name', 'last name', 'middle name',
+    'middle initial', 'surname', 'family name', 'apelyido', 'pangalan',
+    'gitnang pangalan', 'name',
+  ]);
+
+  function isReservedOcrName(value) {
+    const norm = String(value || '').trim().toLowerCase().replace(/\s+/g, ' ');
+    if (!norm) return true;
+    if (RESERVED_OCR_NAME_LABELS.has(norm)) return true;
+    return /^(given|last|middle|first)\s+names?$/.test(norm);
+  }
 
   let processing = false;
   let progressTimer = null;
@@ -181,6 +196,7 @@
     );
     delete el.dataset.ocrSourceValue;
     delete el.dataset.ocrConfidence;
+    delete el.dataset.ocrFilled;
     const wrap = el.closest('[data-ocr-field]') || el.closest('.form-group');
     if (wrap) {
       wrap.classList.remove('ocr-field--verified', 'ocr-field--low-conf', 'ocr-field--edited', 'ocr-field--empty');
@@ -241,12 +257,22 @@
     }
   }
 
+  function lockFieldFromOcr(el) {
+    if (!el) return;
+    el.readOnly = true;
+    el.setAttribute('readonly', 'readonly');
+    el.classList.add('ocr-gated');
+    el.dataset.ocrFilled = '1';
+    delete el.dataset.ocrUnlocked;
+  }
+
   function lockOcrFields() {
     OCR_FIELD_IDS.forEach((id) => {
       const el = document.getElementById(id);
       if (!el) return;
       el.value = '';
       delete el.dataset.ocrUnlocked;
+      delete el.dataset.ocrFilled;
       el.readOnly = true;
       el.setAttribute('readonly', 'readonly');
       el.classList.add('ocr-gated');
@@ -262,6 +288,7 @@
     OCR_FIELD_IDS.forEach((id) => {
       const el = document.getElementById(id);
       if (!el) return;
+      delete el.dataset.ocrFilled;
       el.readOnly = false;
       el.removeAttribute('readonly');
       el.classList.remove('ocr-gated');
@@ -278,6 +305,7 @@
     OCR_FIELD_IDS.forEach((id) => {
       const el = document.getElementById(id);
       if (!el) return;
+      if (el.dataset.ocrFilled === '1') return;
       if (!el.dataset.ocrUnlocked) {
         if (el.value) el.value = '';
         el.readOnly = true;
@@ -311,7 +339,11 @@
     el.removeAttribute('readonly');
     el.classList.remove('ocr-gated');
     el.dataset.ocrUnlocked = '1';
-    if (el.type !== 'date') el.placeholder = MANUAL_PLACEHOLDER;
+    if (el.type !== 'date') {
+      el.placeholder = id === 'middle-name'
+        ? 'Optional — enter if shown on your ID'
+        : MANUAL_PLACEHOLDER;
+    }
     setFieldBadge(id, 'empty');
   }
 
@@ -331,6 +363,9 @@
     }
     el.value = trimmed;
     if (el.type !== 'date') el.placeholder = '';
+    if (OCR_IMMUTABLE_AFTER_FILL.includes(id)) {
+      lockFieldFromOcr(el);
+    }
     el.dispatchEvent(new Event('input', { bubbles: true }));
     el.dispatchEvent(new Event('change', { bubbles: true }));
     highlightField(el);
@@ -363,6 +398,12 @@
       const field = ex[item.key];
       const value = field && field.value != null ? String(field.value).trim() : '';
       const conf = fieldConfidence(field);
+      const isNameField = ['first_name', 'middle_name', 'last_name'].includes(item.key);
+      if (value && isNameField && isReservedOcrName(value)) {
+        markManualEntryNeeded(item.id);
+        if (item.id !== 'middle-name') missingCount++;
+        continue;
+      }
       if (value) {
         const ok = await setFieldValue(item.id, value, conf, true);
         if (ok) {

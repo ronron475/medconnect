@@ -35,7 +35,7 @@ $asset = ASSET_BASE;
   <link rel="stylesheet" href="<?= $asset ?>/assets/css/announcement-modal.css" />
   <link rel="stylesheet" href="<?= $asset ?>/assets/css/location-modal.css?v=1" />
   <link rel="stylesheet" href="<?= $asset ?>/assets/css/landing-announcements.css?v=23" />
-  <link rel="stylesheet" href="<?= $asset ?>/assets/css/landing-nav.css?v=3.2" />
+  <link rel="stylesheet" href="<?= $asset ?>/assets/css/landing-nav.css?v=3.4" />
   <link rel="stylesheet" href="<?= $asset ?>/assets/css/landing-fab.css?v=12" />
   <link rel="stylesheet" href="<?= $asset ?>/assets/css/landing-fab-modals.css?v=2" />
   <link rel="stylesheet" href="<?= $asset ?>/assets/css/signin-req-drawer.css?v=9" />
@@ -43,18 +43,16 @@ $asset = ASSET_BASE;
   <link rel="stylesheet" href="<?= $asset ?>/assets/css/hero-signin-panel.css?v=12" />
   <?php $forgotPwCssVer = (int) @filemtime(ASSETS_PATH . '/css/forgot-password.css'); ?>
   <link rel="stylesheet" href="<?= $asset ?>/assets/css/forgot-password.css?v=<?= $forgotPwCssVer ?>" />
-  <link rel="stylesheet" href="<?= $asset ?>/assets/css/landing-scroll-animations.css?v=4" />
-  <link rel="stylesheet" href="<?= $asset ?>/assets/css/landing-hero-search.css?v=4" />
+  <link rel="stylesheet" href="<?= $asset ?>/assets/css/landing-scroll-animations.css?v=5" />
+  <link rel="stylesheet" href="<?= $asset ?>/assets/css/landing-hero-search.css?v=6" />
   <link rel="stylesheet" href="<?= $asset ?>/assets/css/landing-about-team.css?v=7" />
-  <link rel="stylesheet" href="<?= $asset ?>/assets/css/landing-responsive.css?v=3" />
+  <link rel="stylesheet" href="<?= $asset ?>/assets/css/landing-responsive.css?v=4" />
   <?php $landingThemeFabCssVer = (int) @filemtime(ASSETS_PATH . '/css/landing-theme-fab.css'); ?>
   <link rel="stylesheet" href="<?= $asset ?>/assets/css/landing-theme-fab.css?v=<?= $landingThemeFabCssVer ?>" />
 
   <script>
 
     window.ASSET_BASE = "<?= ASSET_BASE ?>";
-    window.RECAPTCHA_SITE_KEY = <?= json_encode((string) (defined('RECAPTCHA_SITE_KEY') ? RECAPTCHA_SITE_KEY : '')) ?>;
-    window.RECAPTCHA_VERSION = <?= json_encode((string) (defined('RECAPTCHA_VERSION') ? RECAPTCHA_VERSION : 'v3')) ?>;
 
   </script>
 
@@ -308,10 +306,6 @@ require __DIR__ . '/partials/landing_navbar.php';
                   <span>Remember me</span>
                 </label>
                 <a href="#" class="forgot-link" id="forgot-link">Forgot password?</a>
-              </div>
-
-              <div id="mc-recaptcha-v2" hidden style="margin:12px 0 2px">
-                <div class="g-recaptcha" data-sitekey="<?= htmlspecialchars((string) (defined('RECAPTCHA_SITE_KEY') ? RECAPTCHA_SITE_KEY : '')) ?>"></div>
               </div>
 
               <button type="submit" class="btn-signin" id="submit-btn">
@@ -789,18 +783,10 @@ require __DIR__ . '/partials/landing_navbar.php';
 
 
 
-<?php if (!empty((string) (defined('RECAPTCHA_SITE_KEY') ? RECAPTCHA_SITE_KEY : '')) && !empty((string) (defined('RECAPTCHA_SECRET_KEY') ? RECAPTCHA_SECRET_KEY : ''))): ?>
-  <?php if (strtolower((string) (defined('RECAPTCHA_VERSION') ? RECAPTCHA_VERSION : 'v3')) === 'v2'): ?>
-    <script src="https://www.google.com/recaptcha/api.js" async defer></script>
-  <?php else: ?>
-    <script src="https://www.google.com/recaptcha/api.js?render=<?= htmlspecialchars((string) (defined('RECAPTCHA_SITE_KEY') ? RECAPTCHA_SITE_KEY : '')) ?>"></script>
-  <?php endif; ?>
-<?php endif; ?>
-
 <script src="<?= $asset ?>/assets/js/landing-about-project-milestone.js?v=2" defer></script>
   <script src="<?= $asset ?>/assets/js/landing-scroll-animations.js?v=9" defer></script>
-<script src="<?= $asset ?>/assets/js/landing-interactions.js?v=7" defer></script>
-<script src="<?= $asset ?>/assets/js/landing-hero-search.js?v=4" defer></script>
+<script src="<?= $asset ?>/assets/js/landing-interactions.js?v=10" defer></script>
+<script src="<?= $asset ?>/assets/js/landing-hero-search.js?v=6" defer></script>
 <script src="<?= $asset ?>/assets/js/landing-fab.js" defer></script>
 <script src="<?= $asset ?>/assets/js/draggable-fab.js?v=1" defer></script>
 <script src="<?= $asset ?>/assets/js/signin-req-drawer.js?v=4" defer></script>
@@ -849,18 +835,10 @@ require __DIR__ . '/partials/landing_navbar.php';
         <label for="fp-email">Email Address</label>
         <input type="email" id="fp-email" class="fp-input" placeholder="your.email@example.com" autocomplete="email" />
       </div>
-      <?php if (!empty((string) (defined('RECAPTCHA_SITE_KEY') ? RECAPTCHA_SITE_KEY : '')) && strtolower((string) (defined('RECAPTCHA_VERSION') ? RECAPTCHA_VERSION : 'v3')) === 'v2'): ?>
-      <div id="mc-recaptcha-v2-fp" class="fp-field" style="display:flex;justify-content:center">
-        <div class="g-recaptcha" data-sitekey="<?= htmlspecialchars((string) RECAPTCHA_SITE_KEY) ?>"></div>
-      </div>
-      <?php endif; ?>
       <button type="button" id="fp-send" class="fp-btn">
         <span id="fp-send-t">Send OTP</span>
         <span id="fp-send-s" class="fp-btn-spin" hidden aria-hidden="true"></span>
       </button>
-      <?php if (!empty((string) (defined('RECAPTCHA_SITE_KEY') ? RECAPTCHA_SITE_KEY : ''))): ?>
-      <p class="fp-recaptcha-note">Protected by reCAPTCHA · no extra checkbox needed</p>
-      <?php endif; ?>
     </div>
 
     <div id="fp-s2" hidden>
@@ -886,11 +864,27 @@ require __DIR__ . '/partials/landing_navbar.php';
       <p class="fp-sub">OTP verified. Set your new password.</p>
       <div class="fp-field">
         <label for="fp-pw">New Password</label>
-        <input type="password" id="fp-pw" class="fp-input" placeholder="At least 6 characters" autocomplete="new-password" />
+        <div class="fp-input-wrap">
+          <input type="password" id="fp-pw" class="fp-input fp-input--pw" placeholder="At least 12 characters" autocomplete="new-password" />
+          <button type="button" class="fp-toggle-pwd" data-target="fp-pw" aria-label="Show password" aria-pressed="false">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/>
+              <circle cx="12" cy="12" r="3"/>
+            </svg>
+          </button>
+        </div>
       </div>
       <div class="fp-field">
         <label for="fp-cpw">Confirm Password</label>
-        <input type="password" id="fp-cpw" class="fp-input" placeholder="Repeat your password" autocomplete="new-password" />
+        <div class="fp-input-wrap">
+          <input type="password" id="fp-cpw" class="fp-input fp-input--pw" placeholder="Must match new password" autocomplete="new-password" />
+          <button type="button" class="fp-toggle-pwd" data-target="fp-cpw" aria-label="Show password" aria-pressed="false">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/>
+              <circle cx="12" cy="12" r="3"/>
+            </svg>
+          </button>
+        </div>
       </div>
       <button type="button" id="fp-reset" class="fp-btn">
         <span id="fp-reset-t">Reset Password</span>

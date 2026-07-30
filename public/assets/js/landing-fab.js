@@ -22,6 +22,19 @@
   let activeModal = null;
   let closeTimer = null;
 
+  function syncThemeFabLift() {
+    const themeFab = document.getElementById('landing-theme-fab');
+    if (!themeFab) return;
+    if (!isOpen) {
+      themeFab.style.removeProperty('--ltf-menu-lift');
+      return;
+    }
+    const stackStyle = window.getComputedStyle(stack);
+    const marginBottom = parseFloat(stackStyle.marginBottom) || 0;
+    const lift = stack.offsetHeight + marginBottom + 8;
+    themeFab.style.setProperty('--ltf-menu-lift', `${lift}px`);
+  }
+
   function setFabOpen(open) {
     isOpen = open;
     fab.dataset.open = open ? 'true' : 'false';
@@ -33,6 +46,13 @@
 
     if (backdrop) {
       backdrop.setAttribute('aria-hidden', open ? 'false' : 'true');
+    }
+
+    syncThemeFabLift();
+    if (open) {
+      window.requestAnimationFrame(() => {
+        window.requestAnimationFrame(syncThemeFabLift);
+      });
     }
   }
 
@@ -208,4 +228,6 @@
   });
 
   document.addEventListener('medconnect:signin', onSignInStateChange);
+
+  window.addEventListener('resize', syncThemeFabLift, { passive: true });
 })();

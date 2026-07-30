@@ -4,7 +4,6 @@ header('Content-Type: application/json');
 require_once __DIR__ . '/../bootstrap.php';
 require_once __DIR__ . '/../config/db.php';
 require_once dirname(__DIR__, 2) . '/app/includes/mailer.php';
-require_once __DIR__ . '/../app/includes/recaptcha.php';
 require_once __DIR__ . '/../app/includes/login_security.php';
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
@@ -14,20 +13,10 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 }
 
 $email = strtolower(trim($_POST['email'] ?? ''));
-$recaptchaToken = (string) ($_POST['recaptcha_token'] ?? ($_POST['g-recaptcha-response'] ?? ''));
 
 if (empty($email) || !filter_var($email, FILTER_VALIDATE_EMAIL)) {
     echo json_encode(['success' => false, 'message' => 'Please enter a valid email address.']);
     exit;
-}
-
-if (recaptcha_is_configured()) {
-    $ip = login_security_ip();
-    $verify = recaptcha_verify_token($recaptchaToken, 'forgot_password', $ip);
-    if (empty($verify['ok'])) {
-        echo json_encode(['success' => false, 'message' => 'Please verify that you are not a robot.']);
-        exit;
-    }
 }
 
 // Always return success to prevent email enumeration

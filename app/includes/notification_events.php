@@ -728,7 +728,7 @@ final class NotificationEvents
         ]);
     }
 
-    public static function followUpScheduled(PDO $pdo, int $patientId, string $date, ?int $providerId = null, ?int $senderId = null): void
+    public static function followUpScheduled(PDO $pdo, int $patientId, string $date, ?int $providerId = null, ?int $senderId = null, bool $email = true): void
     {
         NotificationManager::notifyPatient($pdo, $patientId, [
             'sender_id'  => $senderId,
@@ -736,7 +736,7 @@ final class NotificationEvents
             'title'      => 'Follow-Up Scheduled',
             'message'    => "Your follow-up is scheduled for {$date}.",
             'action_url' => '/views/patient/dashboard.php#action-items',
-            'email'      => true,
+            'email'      => $email,
         ]);
         if ($providerId) {
             NotificationManager::notifyProvider($pdo, $providerId, [
@@ -852,6 +852,69 @@ final class NotificationEvents
             'related_id'    => $providerId,
             'priority'      => 'normal',
             'icon'          => 'calendar',
+        ]);
+    }
+
+    public static function aiSelfCareReviewRequired(
+        PDO $pdo,
+        int $providerId,
+        int $patientId,
+        string $patientName,
+        int $triageId,
+        ?int $senderId = null
+    ): void {
+        NotificationManager::notifyProvider($pdo, $providerId, [
+            'sender_id'     => $senderId ?? $patientId,
+            'type'          => NotificationManager::TYPE_MEDICAL,
+            'title'         => 'AI Self-Care Review Required',
+            'message'       => "{$patientName} has a non-urgent case with AI-generated guidance awaiting your review.",
+            'action_url'    => '/views/provider/triage.php',
+            'related_table' => 'triage_results',
+            'related_id'    => $triageId,
+            'priority'      => 'high',
+            'icon'          => 'clipboard',
+        ]);
+    }
+
+    public static function careTipsApprovedForPatient(
+        PDO $pdo,
+        int $patientId,
+        int $providerId,
+        string $providerName,
+        int $triageId,
+        ?int $senderId = null
+    ): void {
+        NotificationManager::notifyPatient($pdo, $patientId, [
+            'sender_id'     => $senderId ?? $providerId,
+            'type'          => NotificationManager::TYPE_SUCCESS,
+            'title'         => 'Self-Care Guidance Ready',
+            'message'       => "{$providerName} reviewed your case. Open Care tips to view doctor-approved guidance.",
+            'action_url'    => '/views/patient/dashboard.php',
+            'related_table' => 'triage_results',
+            'related_id'    => $triageId,
+            'icon'          => 'heart',
+        ]);
+    }
+
+    public static function careTipsReviewUpdatedForPatient(
+        PDO $pdo,
+        int $patientId,
+        int $providerId,
+        bool $approved,
+        int $triageId,
+        ?int $senderId = null
+    ): void {
+        if ($approved) {
+            return;
+        }
+        NotificationManager::notifyPatient($pdo, $patientId, [
+            'sender_id'     => $senderId ?? $providerId,
+            'type'          => NotificationManager::TYPE_INFORMATION,
+            'title'         => 'Care Tips Update',
+            'message'       => 'Your provider reviewed your case. AI self-care tips were not released — please book a consultation if you need further help.',
+            'action_url'    => '/views/patient/triage.php',
+            'related_table' => 'triage_results',
+            'related_id'    => $triageId,
         ]);
     }
 }

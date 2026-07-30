@@ -126,6 +126,8 @@
       btn.type = 'button';
       btn.className = 'fcb-action-card';
       btn.setAttribute('role', 'listitem');
+      btn.dataset.fcbFlow = item.flow;
+      btn.dataset.fcbLabel = item.title || '';
       btn.style.animationDelay = `${i * 50}ms`;
       btn.innerHTML = `
         <span class="fcb-action-card__icon" aria-hidden="true">${esc(item.icon)}</span>
@@ -135,10 +137,6 @@
         </span>
         <span class="fcb-action-card__chev" aria-hidden="true">›</span>
       `;
-      btn.addEventListener('click', (e) => {
-        ripple(e, btn);
-        onAction(item.flow, item.title);
-      });
       bindRipple(btn);
       grid.appendChild(btn);
     });
@@ -154,11 +152,8 @@
       btn.type = 'button';
       btn.className = 'fcb-followup' + (act.primary ? ' fcb-followup--primary' : '');
       btn.textContent = act.label;
+      try { btn.dataset.fcbAction = JSON.stringify(act); } catch (_) { /* ignore */ }
       btn.style.animationDelay = `${i * 40}ms`;
-      btn.addEventListener('click', (e) => {
-        ripple(e, btn);
-        onAction(act);
-      });
       bindRipple(btn);
       wrap.appendChild(btn);
     });
@@ -189,27 +184,25 @@
         </span>
         <span class="fcb-action-card__chev" aria-hidden="true">›</span>
       `;
-      btn.addEventListener('click', (e) => {
-        ripple(e, btn);
-        onAction(act);
-      });
+      try { btn.dataset.fcbAction = JSON.stringify(act); } catch (_) { /* ignore */ }
       bindRipple(btn);
       wrap.appendChild(btn);
     });
     return wrap;
   }
 
-  function renderInfoCard(innerHtml, lang, variant) {
+  function renderInfoCard(innerHtml, lang, variant, options = {}) {
     const copy = I18n && I18n.getInfoCardCopy
       ? I18n.getInfoCardCopy(lang, variant)
       : { icon: '🤔', title: "I couldn't fully understand your message.", topicsLabel: 'Please try asking about:' };
     const topics = I18n && I18n.getInfoCardTopics
       ? I18n.getInfoCardTopics(lang)
       : ['Appointments', 'Registration', 'Login', 'Medical Records', 'Video Consultation'];
+    const suppressTitle = !!options.suppressTitle;
     return `
       <div class="fcb-info-card" role="status">
         <div class="fcb-info-card__icon" aria-hidden="true">${copy.icon}</div>
-        <h4 class="fcb-info-card__title">${esc(copy.title)}</h4>
+        ${suppressTitle ? '' : `<h4 class="fcb-info-card__title">${esc(copy.title)}</h4>`}
         ${innerHtml ? `<div class="fcb-info-card__body">${innerHtml}</div>` : ''}
         <p class="fcb-info-card__topics-label">${esc(copy.topicsLabel)}</p>
         <ul class="fcb-info-card__topics">
@@ -264,7 +257,7 @@
   function renderBotMessage(html, options = {}) {
     const {
       followUp, actions, onAction, emergency, crisis, moderation, restricted, lang,
-      emotion, empathy, actionCards, emergencyActions,
+      emotion, empathy, actionCards, emergencyActions, feedbackMessageId, suggestions,
     } = options;
     const row = document.createElement('div');
     row.className = 'fcb-msg fcb-msg--bot fcb-animate-in'
@@ -319,6 +312,36 @@
         if (emergencyActions) actEl.classList.add('fcb-actions--emergency');
         row.appendChild(actEl);
       }
+    }
+
+    if (suggestions && suggestions.length && onAction) {
+      const sugActions = suggestions.map((s) => ({
+        label: s.label || s.question || s,
+        flow: 'suggest',
+        action: 'suggest',
+        payload: s.label || s.question || s,
+      }));
+      const sugEl = renderFollowUpActions(sugActions, onAction);
+      if (sugEl) {
+        sugEl.classList.add('fcb-actions--suggestions');
+        const label = document.createElement('p');
+        label.className = 'fcb-suggestions-label';
+        label.textContent = lang === 'fil' ? 'Maaari mo ring itanong:' : (lang === 'hil' ? 'Mahimo mo man amiton:' : 'You can also ask:');
+        sugEl.insertBefore(label, sugEl.firstChild);
+        row.appendChild(sugEl);
+      }
+    }
+
+    if (feedbackMessageId && global.McFaqChatApi) {
+      const fb = document.createElement('div');
+      fb.className = 'fcb-feedback';
+      fb.dataset.messageId = String(feedbackMessageId);
+      fb.innerHTML = `
+        <span class="fcb-feedback__label">${lang === 'fil' ? 'Nakatulong ba ito?' : (lang === 'hil' ? 'Nakatbulig bala ini?' : 'Was this helpful?')}</span>
+        <button type="button" class="fcb-feedback__btn" data-fcb-feedback="helpful" aria-label="Helpful">👍</button>
+        <button type="button" class="fcb-feedback__btn" data-fcb-feedback="not_helpful" aria-label="Not helpful">👎</button>
+      `;
+      row.appendChild(fb);
     }
 
     return row;

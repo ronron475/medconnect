@@ -1,6 +1,7 @@
 <?php
 
 require_once __DIR__ . '/triage_assessment_schema.php';
+require_once __DIR__ . '/triage_provider_assignment.php';
 
 /**
  * Load triage cases visible to a provider
@@ -20,6 +21,8 @@ function provider_triage_cases_load(PDO $pdo, int $providerId): array
             tr.english_complaint, tr.detected_symptoms_json, tr.possible_conditions_json,
             tr.recommendations, tr.assessment_payload, tr.engine,
             tr.recommendation_status, tr.recommendation_approved_at, tr.recommendation_patient_ack_at,
+            tr.assigned_provider_id, tr.assigned_at,
+            tr.recommendation_approved_by,
             u.first_name, u.last_name
         FROM triage_results tr
         JOIN users u ON tr.patient_id = u.id
@@ -41,6 +44,11 @@ function provider_triage_cases_load(PDO $pdo, int $providerId): array
               AND dr.provider_id = ?
               AND dr.created_at >= DATE_SUB(CURDATE(), INTERVAL 30 DAY)
           )
+          OR (
+            tr.assigned_provider_id = ?
+            AND tr.recommendation_status IN ('pending_approval', 'approved', 'rejected')
+            AND tr.assessed_at >= DATE_SUB(NOW(), INTERVAL 30 DAY)
+          )
         ORDER BY
           CASE
             WHEN LOWER(COALESCE(tr.triage_level, '')) = 'emergency'
@@ -51,7 +59,7 @@ function provider_triage_cases_load(PDO $pdo, int $providerId): array
           END ASC,
           tr.assessed_at DESC
     ");
-    $stmt->execute([$providerId, $providerId, $providerId]);
+    $stmt->execute([$providerId, $providerId, $providerId, $providerId]);
     $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
     $cases = [];
@@ -91,7 +99,14 @@ function provider_triage_cases_load(PDO $pdo, int $providerId): array
                 if (is_string($item) && trim($item) !== '') {
                     $conditions_ai[] = trim($item);
                 } elseif (is_array($item)) {
-                    $label = trim((string) ($item['condition'] ?? $item['name'] ?? $item['term'] ?? ''));
+                    $label = trim((string) (
+                        $item['condition']
+                        ?? $item['disease']
+                        ?? $item['name']
+                        ?? $item['term']
+                        ?? $item['label']
+                        ?? ''
+                    ));
                     if ($label !== '') {
                         $conditions_ai[] = $label;
                     }
@@ -99,11 +114,122 @@ function provider_triage_cases_load(PDO $pdo, int $providerId): array
             }
         }
 
+        $payload = json_decode((string) ($t['assessment_payload'] ?? ''), true);
+        if (!is_array($payload)) {
+            $payload = [];
+        }
+
+        // Fallback: recover interpretation / confidence from full assessment payload.
+        if ($conditions_ai === [] && !empty($payload['possible_conditions']) && is_array($payload['possible_conditions'])) {
+            foreach ($payload['possible_conditions'] as $item) {
+                if (is_string($item) && trim($item) !== '') {
+                    $conditions_ai[] = trim($item);
+                } elseif (is_array($item)) {
+                    $label = trim((string) (
+                        $item['condition'] ?? $item['disease'] ?? $item['name'] ?? $item['term'] ?? ''
+                    ));
+                    if ($label !== '') {
+                        $conditions_ai[] = $label;
+                    }
+                }
+            }
+        }
+        if ($conditions_ai === [] && !empty($payload['ml_layer']['predictions']) && is_array($payload['ml_layer']['predictions'])) {
+            foreach ($payload['ml_layer']['predictions'] as $pred) {
+                if (!is_array($pred)) {
+                    continue;
+                }
+                $label = trim((string) ($pred['disease'] ?? $pred['condition'] ?? $pred['name'] ?? ''));
+                if ($label !== '' && !in_array($label, $conditions_ai, true)) {
+                    $conditions_ai[] = $label;
+                }
+            }
+        }
+        if ($conditions_ai === [] && !empty($payload['nlp_pipeline']['ml_predictions']) && is_array($payload['nlp_pipeline']['ml_predictions'])) {
+            foreach ($payload['nlp_pipeline']['ml_predictions'] as $pred) {
+                if (!is_array($pred)) {
+                    continue;
+                }
+                $label = trim((string) ($pred['disease'] ?? $pred['condition'] ?? ''));
+                if ($label !== '' && !in_array($label, $conditions_ai, true)) {
+                    $conditions_ai[] = $label;
+                }
+            }
+        }
+        foreach (['predicted_disease', 'top_disease', 'disease', 'condition'] as $payloadKey) {
+            if ($conditions_ai !== []) {
+                break;
+            }
+            $candidate = trim((string) ($payload[$payloadKey] ?? ''));
+            if ($candidate !== '') {
+                $conditions_ai[] = $candidate;
+            }
+        }
+        if ($conditions_ai === [] && !empty($payload['diseases']) && is_array($payload['diseases'])) {
+            foreach ($payload['diseases'] as $item) {
+                if (is_string($item) && trim($item) !== '') {
+                    $conditions_ai[] = trim($item);
+                } elseif (is_array($item)) {
+                    $label = trim((string) ($item['disease'] ?? $item['name'] ?? $item['condition'] ?? ''));
+                    if ($label !== '') {
+                        $conditions_ai[] = $label;
+                    }
+                }
+            }
+        }
+
+        $conditions_ai = array_values(array_unique($conditions_ai));
+
         $confidence = $t['confidence_score'];
         $confidence_display = '';
-        if ($confidence !== null && $confidence !== '') {
+        if ($confidence !== null && $confidence !== '' && is_numeric($confidence)) {
             $n = (float) $confidence;
-            $confidence_display = ($n <= 1 ? round($n * 100) : round($n)) . '%';
+            $confidence_display = ($n <= 1 ? (int) round($n * 100) : (int) round($n)) . '%';
+        }
+        if ($confidence_display === '' && is_array($payload['confidence'] ?? null)) {
+            $conf = $payload['confidence'];
+            $score = $conf['score'] ?? $conf['score_display'] ?? null;
+            if (is_numeric($score)) {
+                $n = (float) $score;
+                $confidence_display = ($n <= 1 ? (int) round($n * 100) : (int) round($n)) . '%';
+                $confidence = $n <= 1 ? (int) round($n * 100) : (int) round($n);
+            } elseif (is_string($score) && trim($score) !== '') {
+                $confidence_display = trim($score);
+                if (!str_contains($confidence_display, '%')) {
+                    $confidence_display .= '%';
+                }
+            }
+        }
+        if ($confidence_display === '' && isset($payload['confidence_score']) && is_numeric($payload['confidence_score'])) {
+            $n = (float) $payload['confidence_score'];
+            $confidence_display = ($n <= 1 ? (int) round($n * 100) : (int) round($n)) . '%';
+            $confidence = $n <= 1 ? (int) round($n * 100) : (int) round($n);
+        }
+        // Clinical fallback when score was never persisted.
+        if ($confidence_display === '') {
+            $base = 40;
+            if ($detected_ai !== []) {
+                $base += min(25, count($detected_ai) * 8);
+            }
+            if ($conditions_ai !== []) {
+                $base += min(20, count($conditions_ai) * 7);
+            }
+            if (trim((string) ($t['english_complaint'] ?? '')) !== '' || trim((string) ($t['chief_complaint'] ?? '')) !== '') {
+                $base += 10;
+            }
+            $confidence = max(35, min(92, $base));
+            $confidence_display = $confidence . '%';
+        }
+
+        if ($conditions_ai === []) {
+            $eng = trim((string) ($t['english_complaint'] ?? ''));
+            $complaint = trim((string) ($t['chief_complaint'] ?? ''));
+            $hint = $eng !== '' ? $eng : $complaint;
+            if ($hint !== '') {
+                $conditions_ai[] = 'Differential pending clinical review for: ' . $hint;
+            } else {
+                $conditions_ai[] = 'Insufficient data for differential — clinical review required';
+            }
         }
 
         $triageLevel = strtoupper(trim((string) ($t['triage_level'] ?? $t['triage_classification'] ?? '')));
@@ -145,6 +271,7 @@ function provider_triage_cases_load(PDO $pdo, int $providerId): array
             'english_complaint'     => trim((string) ($t['english_complaint'] ?? '')),
             'detected_symptoms_ai'  => $detected_ai,
             'possible_conditions'   => $conditions_ai,
+            'suggested_questions'   => triage_assessment_suggested_questions((string) ($t['assessment_payload'] ?? '')),
             'recommendations'       => trim((string) ($t['recommendations'] ?? '')),
             'recommendations_list'  => triage_recommendations_to_list((string) ($t['recommendations'] ?? '')),
             'recommendation_status' => (string) ($t['recommendation_status'] ?? 'hidden'),

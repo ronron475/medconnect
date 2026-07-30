@@ -17,11 +17,11 @@
 
   const STATUS_LABELS = {
     connecting: 'Connecting…',
-    waiting_provider: 'Waiting for Provider…',
+    waiting_provider: 'Waiting for Healthcare Provider…',
     waiting_patient: 'Waiting for Patient…',
     connected: 'Connected',
     reconnecting: 'Reconnecting…',
-    ended: 'Call Ended',
+    ended: 'Consultation Ended',
     permission: 'Allow camera & microphone…',
   };
 
@@ -210,8 +210,8 @@
 
     if (micEl) {
       if (mic === 'on') micEl.textContent = '🎤 Microphone On';
-      else if (mic === 'off') micEl.textContent = '🔇 Microphone Off';
-      else if (mic === 'denied') micEl.textContent = '⚠ Microphone Permission Denied';
+      else if (mic === 'off') micEl.textContent = '🔇 Microphone Muted';
+      else if (mic === 'denied') micEl.textContent = '⚠ Mic Permission Denied';
       else micEl.textContent = '⚠ Microphone Unavailable';
       micEl.dataset.state = mic;
       micEl.classList.toggle('is-off', mic === 'off' || mic === 'denied' || mic === 'unavailable');
@@ -219,7 +219,7 @@
 
     if (camEl) {
       if (cam === 'on') camEl.textContent = '📷 Camera On';
-      else if (cam === 'off') camEl.textContent = '📷 Camera Off';
+      else if (cam === 'off') camEl.textContent = '📷 Camera Disabled';
       else camEl.textContent = '📷 Camera Unavailable';
       camEl.dataset.state = cam;
       camEl.classList.toggle('is-off', cam !== 'on');
@@ -237,11 +237,11 @@
 
   function connectionLabelFor(role, statusKey) {
     if (statusKey === STATUS.CONNECTED) return '● Good Connection';
-    if (statusKey === STATUS.RECONNECTING) return '◌ Poor Network / Reconnecting';
-    if (statusKey === STATUS.WAITING_PROVIDER) return '◌ Waiting for Provider';
+    if (statusKey === STATUS.RECONNECTING) return '◌ Reconnecting…';
+    if (statusKey === STATUS.WAITING_PROVIDER) return '◌ Waiting for Healthcare Provider';
     if (statusKey === STATUS.WAITING_PATIENT) return '◌ Waiting for Patient';
-    if (statusKey === STATUS.ENDED) return '○ Call Ended';
-    return '◌ Connecting';
+    if (statusKey === STATUS.ENDED) return '○ Consultation Ended';
+    return '◌ Connecting…';
   }
 
   function setCallPhase(role, statusKey, overrides = {}) {

@@ -255,22 +255,33 @@
 
       let actionBtn = '';
       if (type === 'upcoming') {
+        const tipsApproved = window.CAN_CANCEL_AFTER_TIPS_APPROVED === true;
+        const canCancel =
+          tipsApproved &&
+          ['pending', 'scheduled'].includes(String(c.status || '').toLowerCase());
+        let primary = '';
         if (joinAccess.allowed) {
-          actionBtn =
+          primary =
             '<a href="' + APP_BASE + '/views/consultation/video_room.php?token=' +
             encodeURIComponent(c.room_token) +
             '" class="psess-btn psess-btn--primary">Join Video Call</a>';
         } else if (joinAccess.mode === 'scheduled_wait') {
-          actionBtn =
+          primary =
             '<button type="button" class="psess-btn psess-btn--outline" disabled>Opens ' +
             (joinAccess.opensAt || 'at scheduled time') + '</button>';
         } else if (joinAccess.mode === 'waiting') {
-          actionBtn =
+          primary =
             '<button type="button" class="psess-btn psess-btn--outline psess-waiting-pulse" disabled>Waiting for Provider</button>';
         } else {
-          actionBtn =
+          primary =
             '<button type="button" class="psess-btn psess-btn--outline" disabled>Not Available Yet</button>';
         }
+        const cancelBtn = canCancel
+          ? '<button type="button" class="psess-btn psess-btn--danger" data-cancel-consult="' +
+            escapeHtml(String(c.id || '')) +
+            '">Cancel visit</button>'
+          : '';
+        actionBtn = '<div class="psess-card__actions">' + primary + cancelBtn + '</div>';
       } else {
         actionBtn =
           '<div class="psess-card__actions">' +
@@ -324,6 +335,56 @@
 
     updateJoinHint(type === 'upcoming' ? filtered : []);
   };
+
+  async function cancelPatientConsultation(consultationId) {
+    const id = parseInt(String(consultationId || '0'), 10);
+    if (!id) return;
+    if (!window.confirm(
+      'Cancel this video visit?\n\nThe doctor’s time slot will become available immediately for other patients.\nYour care tips (if any) will stay available.'
+    )) {
+      return;
+    }
+
+    const csrf = getCsrfToken();
+    if (!csrf) {
+      window.alert('Security token missing. Please refresh the page and try again.');
+      return;
+    }
+
+    try {
+      const fd = new FormData();
+      fd.set('consultation_id', String(id));
+      fd.set('csrf_token', csrf);
+      fd.set('reason', 'Cancelled from My Sessions');
+      const res = await fetch(APP_BASE + '/app/api/patient/cancel_consultation.php', {
+        method: 'POST',
+        body: fd,
+        credentials: 'same-origin',
+        headers: { 'X-MC-No-Loader': '1' },
+      });
+      const data = await res.json().catch(() => null);
+      if (!data || !data.success) {
+        window.alert((data && data.message) || 'Could not cancel appointment.');
+        return;
+      }
+      if (Array.isArray(window.consultations)) {
+        window.consultations = window.consultations.map((c) =>
+          Number(c.id) === id ? Object.assign({}, c, { status: 'cancelled' }) : c
+        );
+      }
+      window.alert(data.message || 'Appointment cancelled. Slot freed.');
+      window.filterSessions('upcoming');
+    } catch (_) {
+      window.alert('Network error. Please try again.');
+    }
+  }
+
+  document.addEventListener('click', (e) => {
+    const btn = e.target && e.target.closest ? e.target.closest('[data-cancel-consult]') : null;
+    if (!btn) return;
+    e.preventDefault();
+    cancelPatientConsultation(btn.getAttribute('data-cancel-consult'));
+  });
 
   function updateJoinHint(list) {
     const hint = document.getElementById('consult-join-hint');
@@ -707,11 +768,68 @@
     }
   }
 
+  function initAlternateBookingProvider() {
+    const btn = document.getElementById('btnRequestAlternateProvider');
+    if (!btn) return;
+
+    btn.addEventListener('click', async () => {
+      const statusEl = document.getElementById('bookingAlternateStatus');
+      const csrf = getCsrfToken();
+      if (!csrf) {
+        if (statusEl) {
+          statusEl.hidden = false;
+          statusEl.textContent = 'Session expired. Refresh the page and try again.';
+        }
+        return;
+      }
+
+      btn.disabled = true;
+      const prevLabel = btn.textContent;
+      btn.textContent = 'Finding next available doctor…';
+      if (statusEl) {
+        statusEl.hidden = true;
+        statusEl.textContent = '';
+      }
+
+      try {
+        const fd = new FormData();
+        fd.set('csrf_token', csrf);
+        const res = await fetch(
+          APP_BASE + '/app/api/patient/request_alternate_booking_provider.php',
+          {
+            method: 'POST',
+            body: fd,
+            credentials: 'same-origin',
+            headers: { 'X-MC-No-Loader': '1' },
+          }
+        );
+        const data = await res.json().catch(() => null);
+        if (data && data.success) {
+          window.location.reload();
+          return;
+        }
+        if (statusEl) {
+          statusEl.hidden = false;
+          statusEl.textContent = (data && data.message) || 'Could not switch doctors. Please try again.';
+        }
+      } catch (_) {
+        if (statusEl) {
+          statusEl.hidden = false;
+          statusEl.textContent = 'Network error. Please try again.';
+        }
+      } finally {
+        btn.disabled = false;
+        btn.textContent = prevLabel;
+      }
+    });
+  }
+
   function initTriageForm() {
     const form = document.getElementById('patientTriageForm');
     if (!form) return;
 
     initBookingPicker();
+    initAlternateBookingProvider();
 
     const alertEl = document.getElementById('triageFormAlert');
     const submitBtn = form.querySelector('button[type="submit"]');
@@ -764,9 +882,17 @@
 
       const complaint = (form.querySelector('#chief_complaint')?.value || '').trim();
       const slotId = document.getElementById('booking_slot_id')?.value || '';
+      const blockTele = sessionStorage.getItem('medconnect_block_telemedicine') === '1'
+        || String(window.REGISTRATION_URGENCY || '').toUpperCase() === 'EMERGENCY';
+      const reviewFirstAllowed = window.TRIAGE_REVIEW_FIRST_ALLOWED === true;
 
       if (!complaint) {
         showTriageAlert(alertEl, 'error', 'Your health concern from registration is missing. Please contact support or update your profile.');
+        return;
+      }
+
+      if (!slotId && !blockTele && !reviewFirstAllowed) {
+        showTriageAlert(alertEl, 'error', 'Please select an available appointment slot.');
         return;
       }
 
@@ -810,8 +936,9 @@
         }
 
         if (data.success) {
-          const booked = data.booked !== false;
+          const booked = data.booked !== false && !data.awaiting_provider_review;
           const emergency = data.emergency === true;
+          const awaitingReview = data.awaiting_provider_review === true;
           try {
             sessionStorage.removeItem('medconnect_pending_nlp_result');
             sessionStorage.removeItem('medconnect_prefer_earliest_slot');
@@ -823,15 +950,24 @@
           } catch (_) { /* ignore */ }
           showBookingOverlay(false);
           if (emergency) {
-            showTriageAlert(
-              alertEl,
-              'error',
+            const emMsg =
               data.message ||
-                'Emergency symptoms detected. Please seek care at the nearest hospital or emergency department instead of booking an online consultation.'
-            );
+              'Emergency symptoms detected. Please seek care at the nearest hospital or emergency department instead of booking an online consultation.';
+            showTriageAlert(alertEl, 'error', emMsg);
+            if (window.mcPatientUrgencyModal && typeof window.mcPatientUrgencyModal.showEmergency === 'function') {
+              window.mcPatientUrgencyModal.showEmergency(emMsg);
+            }
             if (submitBtn) submitBtn.disabled = true;
             const providerSelect = document.getElementById('booking_provider');
             if (providerSelect) providerSelect.disabled = true;
+          } else if (awaitingReview) {
+            showTriageAlert(
+              alertEl,
+              'success',
+              data.message ||
+                'Your case is currently being reviewed by a healthcare provider. Please wait while your guidance is being prepared.'
+            );
+            if (submitBtn) submitBtn.disabled = false;
           } else {
             showTriageAlert(
               alertEl,

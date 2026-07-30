@@ -1,0 +1,629 @@
+symptom_key,local_term,english_term,source
+abdominal_pain,sakit sang tiyan,abdominal pain,expand_hiligaynon_nlp_coverage
+abdominal_pain,ginasakit ang tiyan,abdominal pain,expand_hiligaynon_nlp_coverage
+abdominal_pain,sakit tiyan,abdominal pain,expand_hiligaynon_nlp_coverage
+abdominal_pain,masakit ang tiyan ko,abdominal pain,expand_hiligaynon_nlp_coverage
+abdominal_pain,ginabaldom ang tiyan,abdominal pain,expand_hiligaynon_nlp_coverage
+abdominal_pain,sakit tiyan gid,abdominal pain,expand_hiligaynon_nlp_coverage
+abdominal_pain,may sakit sa busong,abdominal pain,expand_hiligaynon_nlp_coverage
+abdominal_pain,nagabalati sang sakit tiyan,abdominal pain,expand_hiligaynon_nlp_coverage
+abnormal_menstruation,indi normal ang pamulanon,abnormal menstruation,expand_hiligaynon_nlp_coverage
+abnormal_menstruation,indi regular ang binulan,abnormal menstruation,expand_hiligaynon_nlp_coverage
+abnormal_menstruation,may problema sa regla,abnormal menstruation,expand_hiligaynon_nlp_coverage
+abnormal_menstruation,indi regular ang pamulanon,abnormal menstruation,expand_hiligaynon_nlp_coverage
+abnormal_menstruation,nagabag-o ang regla,abnormal menstruation,expand_hiligaynon_nlp_coverage
+abnormal_menstruation,may problema sa binulan,abnormal menstruation,expand_hiligaynon_nlp_coverage
+abnormal_menstruation,late ang pamulanon,abnormal menstruation,expand_hiligaynon_nlp_coverage
+abnormal_menstruation,sobra kadugo ang regla,abnormal menstruation,expand_hiligaynon_nlp_coverage
+acidity,ginakabog ang tiyan,acidity,expand_hiligaynon_nlp_coverage
+acidity,may asido sa tiyan,acidity,expand_hiligaynon_nlp_coverage
+acidity,nagakabog ang dughan,acidity,expand_hiligaynon_nlp_coverage
+acidity,may asido ako,acidity,expand_hiligaynon_nlp_coverage
+acidity,nagakabog ang tiyan ko,acidity,expand_hiligaynon_nlp_coverage
+acidity,maaslom ang tiyan,acidity,expand_hiligaynon_nlp_coverage
+acidity,gasido ang dughan,acidity,expand_hiligaynon_nlp_coverage
+acute_liver_failure,grabe nga problema sa atay,acute liver failure,expand_hiligaynon_nlp_coverage
+acute_liver_failure,nag-untat na ang atay sa pag-obra,acute liver failure,expand_hiligaynon_nlp_coverage
+acute_liver_failure,grabe na ang atay,acute liver failure,expand_hiligaynon_nlp_coverage
+acute_liver_failure,indi na maayo ang atay,acute liver failure,expand_hiligaynon_nlp_coverage
+acute_liver_failure,naguba ang atay,acute liver failure,expand_hiligaynon_nlp_coverage
+altered_sensorium,daw indi maathag ang panghuna-huna,altered sensorium,expand_hiligaynon_nlp_coverage
+altered_sensorium,daw wala sa sarili nga panghuna-huna,altered sensorium,expand_hiligaynon_nlp_coverage
+altered_sensorium,daw nalipong ang panumduman,altered sensorium,expand_hiligaynon_nlp_coverage
+altered_sensorium,indi klaro ang huna-huna,altered sensorium,expand_hiligaynon_nlp_coverage
+altered_sensorium,daw wala sa husto ang panumduman,altered sensorium,expand_hiligaynon_nlp_coverage
+altered_sensorium,confused ang pamatyagan,altered sensorium,expand_hiligaynon_nlp_coverage
+anxiety,ginakulbaan ako,anxiety,expand_hiligaynon_nlp_coverage
+anxiety,permi nagakulba ang buot,anxiety,expand_hiligaynon_nlp_coverage
+anxiety,ginabalak-an gid,anxiety,expand_hiligaynon_nlp_coverage
+anxiety,ginakulbaan gid ako,anxiety,expand_hiligaynon_nlp_coverage
+anxiety,permi balisa,anxiety,expand_hiligaynon_nlp_coverage
+anxiety,may anxiety ako,anxiety,expand_hiligaynon_nlp_coverage
+anxiety,ginakabalaka ako,anxiety,expand_hiligaynon_nlp_coverage
+anxiety,wala ako kahilwayan,anxiety,expand_hiligaynon_nlp_coverage
+back_pain,sakit sang likod,back pain,expand_hiligaynon_nlp_coverage
+back_pain,ginasakit ang likod,back pain,expand_hiligaynon_nlp_coverage
+back_pain,masakit ang likod ko,back pain,expand_hiligaynon_nlp_coverage
+back_pain,sakit likod gid,back pain,expand_hiligaynon_nlp_coverage
+back_pain,ginasakit ang baywang,back pain,expand_hiligaynon_nlp_coverage
+back_pain,may sakit sa likod,back pain,expand_hiligaynon_nlp_coverage
+belly_pain,sakit sa tiyan,belly pain,expand_hiligaynon_nlp_coverage
+belly_pain,ginasakit ang busong,belly pain,expand_hiligaynon_nlp_coverage
+belly_pain,sakit ang busong ko,belly pain,expand_hiligaynon_nlp_coverage
+belly_pain,may sakit sa tiyan,belly pain,expand_hiligaynon_nlp_coverage
+blackheads,itom nga tuldok sa guya,blackheads,expand_hiligaynon_nlp_coverage
+blackheads,may itom nga tuldok sa panit,blackheads,expand_hiligaynon_nlp_coverage
+blackheads,may blackheads sa guya,blackheads,expand_hiligaynon_nlp_coverage
+blackheads,itom nga tuldok sa nawong,blackheads,expand_hiligaynon_nlp_coverage
+blackheads,may itom nga heads sa panit,blackheads,expand_hiligaynon_nlp_coverage
+bladder_discomfort,indi komportable ang pantog,bladder discomfort,expand_hiligaynon_nlp_coverage
+bladder_discomfort,may kabudlayan sa pantog,bladder discomfort,expand_hiligaynon_nlp_coverage
+bladder_discomfort,sakit ang pantog,bladder discomfort,expand_hiligaynon_nlp_coverage
+bladder_discomfort,indi komportable kon mag-ihi,bladder discomfort,expand_hiligaynon_nlp_coverage
+bladder_discomfort,may discomfort sa pantog,bladder discomfort,expand_hiligaynon_nlp_coverage
+blister,may paltos sa panit,blister,expand_hiligaynon_nlp_coverage
+blister,nagapaltos ang panit,blister,expand_hiligaynon_nlp_coverage
+blister,may lintog sa panit,blister,expand_hiligaynon_nlp_coverage
+blister,may paltos ako,blister,expand_hiligaynon_nlp_coverage
+blister,nagapaltos,blister,expand_hiligaynon_nlp_coverage
+blister,may lintog,blister,expand_hiligaynon_nlp_coverage
+blister,may blister sa panit,blister,expand_hiligaynon_nlp_coverage
+blood_in_sputum,may dugo ang plema,blood in sputum,expand_hiligaynon_nlp_coverage
+blood_in_sputum,nagadugo ang akon plema,blood in sputum,expand_hiligaynon_nlp_coverage
+blood_in_sputum,may dugo sa plema,blood in sputum,expand_hiligaynon_nlp_coverage
+blood_in_sputum,nagadugo kon magubo,blood in sputum,expand_hiligaynon_nlp_coverage
+blood_in_sputum,pula ang plema,blood in sputum,expand_hiligaynon_nlp_coverage
+bloody_stool,may dugo ang tai,bloody stool,expand_hiligaynon_nlp_coverage
+bloody_stool,nagadugo kon magalibang,bloody stool,expand_hiligaynon_nlp_coverage
+bloody_stool,may dugo sa tai,bloody stool,expand_hiligaynon_nlp_coverage
+bloody_stool,nagadugo ang tai,bloody stool,expand_hiligaynon_nlp_coverage
+bloody_stool,pula ang tai,bloody stool,expand_hiligaynon_nlp_coverage
+blurred_and_distorted_vision,malubog ang panulok,blurred and distorted vision,expand_hiligaynon_nlp_coverage
+blurred_and_distorted_vision,indi maathag ang pagtan-aw,blurred and distorted vision,expand_hiligaynon_nlp_coverage
+blurred_and_distorted_vision,malubog ang mata,blurred and distorted vision,expand_hiligaynon_nlp_coverage
+blurred_and_distorted_vision,indi maathag magtan-aw,blurred and distorted vision,expand_hiligaynon_nlp_coverage
+blurred_and_distorted_vision,daw double vision,blurred and distorted vision,expand_hiligaynon_nlp_coverage
+blurred_and_distorted_vision,blurred ang panulok,blurred and distorted vision,expand_hiligaynon_nlp_coverage
+breathlessness,budlay maginhawa,breathlessness,expand_hiligaynon_nlp_coverage
+breathlessness,ginabudlayan ako maginhawa,breathlessness,expand_hiligaynon_nlp_coverage
+breathlessness,kapos ang ginhawa,breathlessness,expand_hiligaynon_nlp_coverage
+breathlessness,kapos ginhawa,breathlessness,expand_hiligaynon_nlp_coverage
+breathlessness,budlay ginhawa,breathlessness,expand_hiligaynon_nlp_coverage
+breathlessness,ginahapo ako,breathlessness,expand_hiligaynon_nlp_coverage
+breathlessness,short of breath,breathlessness,expand_hiligaynon_nlp_coverage
+breathlessness,indi makaginhawa maayo,breathlessness,expand_hiligaynon_nlp_coverage
+brittle_nails,mahapos mabali ang kuko,brittle nails,expand_hiligaynon_nlp_coverage
+brittle_nails,manipis kag mabali ang kuko,brittle nails,expand_hiligaynon_nlp_coverage
+brittle_nails,madali mabali ang kuko,brittle nails,expand_hiligaynon_nlp_coverage
+brittle_nails,mahuyang ang kuko,brittle nails,expand_hiligaynon_nlp_coverage
+brittle_nails,naga-break ang kuko,brittle nails,expand_hiligaynon_nlp_coverage
+bruising,may pasa sa lawas,bruising,expand_hiligaynon_nlp_coverage
+bruising,madali magpasa ang panit,bruising,expand_hiligaynon_nlp_coverage
+bruising,madali magpasa,bruising,expand_hiligaynon_nlp_coverage
+bruising,may pasa,bruising,expand_hiligaynon_nlp_coverage
+bruising,naga-bruise ang panit,bruising,expand_hiligaynon_nlp_coverage
+bruising,asul ang panit,bruising,expand_hiligaynon_nlp_coverage
+burning_micturition,hapdi kon mag-ihi,burning micturition,expand_hiligaynon_nlp_coverage
+burning_micturition,nagahapdi kon mag-ihi,burning micturition,expand_hiligaynon_nlp_coverage
+burning_micturition,hapdi mag-ihi,burning micturition,expand_hiligaynon_nlp_coverage
+burning_micturition,nagahapdi ang ihi,burning micturition,expand_hiligaynon_nlp_coverage
+burning_micturition,sakit kon mag-ihi,burning micturition,expand_hiligaynon_nlp_coverage
+burning_micturition,burning urination,burning micturition,expand_hiligaynon_nlp_coverage
+chest_pain,sakit sang dughan,chest pain,expand_hiligaynon_nlp_coverage
+chest_pain,hapdi ang dughan,chest pain,expand_hiligaynon_nlp_coverage
+chest_pain,ginasakit ang dughan,chest pain,expand_hiligaynon_nlp_coverage
+chest_pain,ginasakit ang dughan ko,chest pain,expand_hiligaynon_nlp_coverage
+chest_pain,may sakit sa dughan,chest pain,expand_hiligaynon_nlp_coverage
+chills,ginapanas-an ako,chills,expand_hiligaynon_nlp_coverage
+chills,nagapalamig ang lawas,chills,expand_hiligaynon_nlp_coverage
+chills,ginapanas-an,chills,expand_hiligaynon_nlp_coverage
+chills,nagapalamig,chills,expand_hiligaynon_nlp_coverage
+chills,may chills,chills,expand_hiligaynon_nlp_coverage
+cold_hands_and_feets,malamig ang kamot kag tiil,cold hands and feets,expand_hiligaynon_nlp_coverage
+cold_hands_and_feets,ginalamigan ang kamot kag tiil,cold hands and feets,expand_hiligaynon_nlp_coverage
+cold_hands_and_feets,malamig kamot kag tiil,cold hands and feets,expand_hiligaynon_nlp_coverage
+cold_hands_and_feets,ginalamigan ang kamot,cold hands and feets,expand_hiligaynon_nlp_coverage
+cold_hands_and_feets,malamig ang tiil,cold hands and feets,expand_hiligaynon_nlp_coverage
+cold_hands_and_feets,cold hands and feet,cold hands and feets,expand_hiligaynon_nlp_coverage
+coma,wala na sang kalibutan,coma,expand_hiligaynon_nlp_coverage
+coma,nadulaan sang kalibutan,coma,expand_hiligaynon_nlp_coverage
+coma,wala sang kalibutan,coma,expand_hiligaynon_nlp_coverage
+coma,indi magmata,coma,expand_hiligaynon_nlp_coverage
+coma,nadulaan kalibutan,coma,expand_hiligaynon_nlp_coverage
+coma,unconscious,coma,expand_hiligaynon_nlp_coverage
+congestion,barado ang ilong,congestion,expand_hiligaynon_nlp_coverage
+congestion,napun-an ang ilong,congestion,expand_hiligaynon_nlp_coverage
+congestion,barado ilong,congestion,expand_hiligaynon_nlp_coverage
+congestion,napun-an ilong,congestion,expand_hiligaynon_nlp_coverage
+congestion,barado ang ilong ko,congestion,expand_hiligaynon_nlp_coverage
+congestion,nasal congestion,congestion,expand_hiligaynon_nlp_coverage
+congestion,indi makaginhawa sa ilong,congestion,expand_hiligaynon_nlp_coverage
+constipation,indi makalibang,constipation,expand_hiligaynon_nlp_coverage
+constipation,matig-a ang tai,constipation,expand_hiligaynon_nlp_coverage
+constipation,matig-a tai,constipation,expand_hiligaynon_nlp_coverage
+constipation,budlay maglibang,constipation,expand_hiligaynon_nlp_coverage
+continuous_feel_of_urine,daw permi gusto mag-ihi,continuous feel of urine,expand_hiligaynon_nlp_coverage
+continuous_feel_of_urine,wala untat ang gana mag-ihi,continuous feel of urine,expand_hiligaynon_nlp_coverage
+continuous_feel_of_urine,permi gusto mag-ihi,continuous feel of urine,expand_hiligaynon_nlp_coverage
+continuous_feel_of_urine,daw may ihi permi,continuous feel of urine,expand_hiligaynon_nlp_coverage
+continuous_feel_of_urine,frequent urge to urinate,continuous feel of urine,expand_hiligaynon_nlp_coverage
+continuous_sneezing,permi nagabahin,continuous sneezing,expand_hiligaynon_nlp_coverage
+continuous_sneezing,wala untat nga pagbahin,continuous sneezing,expand_hiligaynon_nlp_coverage
+continuous_sneezing,wala untat bahin,continuous sneezing,expand_hiligaynon_nlp_coverage
+continuous_sneezing,madamo nga bahin,continuous sneezing,expand_hiligaynon_nlp_coverage
+cough,nagaubo ako,cough,expand_hiligaynon_nlp_coverage
+cough,permi nagaubo,cough,expand_hiligaynon_nlp_coverage
+cough,ubo ako,cough,expand_hiligaynon_nlp_coverage
+cramps,ginapulikat ako,cramps,expand_hiligaynon_nlp_coverage
+cramps,may pulikat sa lawas,cramps,expand_hiligaynon_nlp_coverage
+cramps,ginapulikat,cramps,expand_hiligaynon_nlp_coverage
+cramps,may pulikat,cramps,expand_hiligaynon_nlp_coverage
+cramps,naga-cramp,cramps,expand_hiligaynon_nlp_coverage
+cramps,pulikat sa tiyan,cramps,expand_hiligaynon_nlp_coverage
+dark_urine,madulom ang ihi,dark urine,expand_hiligaynon_nlp_coverage
+dark_urine,dulom ihi,dark urine,expand_hiligaynon_nlp_coverage
+dehydration,kulang sa tubig ang lawas,dehydration,expand_hiligaynon_nlp_coverage
+dehydration,permi ginauhaw,dehydration,expand_hiligaynon_nlp_coverage
+dehydration,kulang tubig,dehydration,expand_hiligaynon_nlp_coverage
+dehydration,dehydrated,dehydration,expand_hiligaynon_nlp_coverage
+dehydration,uga ang baba,dehydration,expand_hiligaynon_nlp_coverage
+depression,permi ginakasubo,depression,expand_hiligaynon_nlp_coverage
+depression,wala na gana sa kabuhi,depression,expand_hiligaynon_nlp_coverage
+depression,permi masubo,depression,expand_hiligaynon_nlp_coverage
+depression,wala gana sa kabuhi,depression,expand_hiligaynon_nlp_coverage
+depression,depressed,depression,expand_hiligaynon_nlp_coverage
+depression,ginakasubo,depression,expand_hiligaynon_nlp_coverage
+diarrhoea,nagakalibanga ako,diarrhoea,expand_hiligaynon_nlp_coverage
+diarrhoea,permi nagalibang nga malapsi,diarrhoea,expand_hiligaynon_nlp_coverage
+diarrhoea,nagakalibanga,diarrhoea,expand_hiligaynon_nlp_coverage
+diarrhoea,kalibanga,diarrhoea,expand_hiligaynon_nlp_coverage
+diarrhoea,malapsi ang tai,diarrhoea,expand_hiligaynon_nlp_coverage
+diarrhoea,diarrhea,diarrhoea,expand_hiligaynon_nlp_coverage
+diarrhoea,permi nagalibang,diarrhoea,expand_hiligaynon_nlp_coverage
+dischromic_patches,may lain nga kolor sa panit,dischromic patches,expand_hiligaynon_nlp_coverage
+dischromic_patches,may tapal nga nagbag-o ang kolor,dischromic patches,expand_hiligaynon_nlp_coverage
+dischromic_patches,may tapal sa panit,dischromic patches,expand_hiligaynon_nlp_coverage
+dischromic_patches,nagbag-o ang kolor sang panit,dischromic patches,expand_hiligaynon_nlp_coverage
+dischromic_patches,may puti ukon itom nga tapal,dischromic patches,expand_hiligaynon_nlp_coverage
+distention_of_abdomen,nagabusdik ang tiyan,distention of abdomen,expand_hiligaynon_nlp_coverage
+distention_of_abdomen,nagdako ang tiyan,distention of abdomen,expand_hiligaynon_nlp_coverage
+distention_of_abdomen,nagabusdik tiyan,distention of abdomen,expand_hiligaynon_nlp_coverage
+distention_of_abdomen,nagdako tiyan,distention of abdomen,expand_hiligaynon_nlp_coverage
+distention_of_abdomen,busdik ang tiyan,distention of abdomen,expand_hiligaynon_nlp_coverage
+distention_of_abdomen,bloated belly,distention of abdomen,expand_hiligaynon_nlp_coverage
+dizziness,nagalipong ako,dizziness,expand_hiligaynon_nlp_coverage
+dizziness,ginalipong ang ulo,dizziness,expand_hiligaynon_nlp_coverage
+dizziness,ginalipong,dizziness,expand_hiligaynon_nlp_coverage
+dizziness,lipong ulo,dizziness,expand_hiligaynon_nlp_coverage
+dizziness,daw magkalipong,dizziness,expand_hiligaynon_nlp_coverage
+drying_and_tingling_lips,nagamala kag nagatingling ang bibig,drying and tingling lips,expand_hiligaynon_nlp_coverage
+drying_and_tingling_lips,mala kag tingling ang bibig,drying and tingling lips,expand_hiligaynon_nlp_coverage
+drying_and_tingling_lips,mala ang bibig,drying and tingling lips,expand_hiligaynon_nlp_coverage
+drying_and_tingling_lips,nagamala ang ngabil,drying and tingling lips,expand_hiligaynon_nlp_coverage
+drying_and_tingling_lips,tingling ang bibig,drying and tingling lips,expand_hiligaynon_nlp_coverage
+drying_and_tingling_lips,uga kag tingling ang lips,drying and tingling lips,expand_hiligaynon_nlp_coverage
+enlarged_thyroid,nagdako ang bosyo,enlarged thyroid,expand_hiligaynon_nlp_coverage
+enlarged_thyroid,may bosyo sa liog,enlarged thyroid,expand_hiligaynon_nlp_coverage
+enlarged_thyroid,may bosyo,enlarged thyroid,expand_hiligaynon_nlp_coverage
+enlarged_thyroid,hubag ang thyroid,enlarged thyroid,expand_hiligaynon_nlp_coverage
+enlarged_thyroid,goiter,enlarged thyroid,expand_hiligaynon_nlp_coverage
+excessive_hunger,permi ginagutom,excessive hunger,expand_hiligaynon_nlp_coverage
+excessive_hunger,sobra ang gutom bisan bag-o lang magkaon,excessive hunger,expand_hiligaynon_nlp_coverage
+excessive_hunger,sobra gutom,excessive hunger,expand_hiligaynon_nlp_coverage
+excessive_hunger,wala kabusog,excessive hunger,expand_hiligaynon_nlp_coverage
+extra_marital_contacts,may relasyon sa iban nga tawo,extra marital contacts,expand_hiligaynon_nlp_coverage
+extra_marital_contacts,indi lang isa ang kapareha,extra marital contacts,expand_hiligaynon_nlp_coverage
+extra_marital_contacts,may iban nga kapareha,extra marital contacts,expand_hiligaynon_nlp_coverage
+extra_marital_contacts,may relasyon sa gwa,extra marital contacts,expand_hiligaynon_nlp_coverage
+extra_marital_contacts,extra marital,extra marital contacts,expand_hiligaynon_nlp_coverage
+family_history,may kaso sa pamilya,family history,expand_hiligaynon_nlp_coverage
+family_history,namana sa pamilya,family history,expand_hiligaynon_nlp_coverage
+family_history,may ara sa parentes,family history,expand_hiligaynon_nlp_coverage
+fast_heart_rate,kusog ang pitik sang tagipusuon,fast heart rate,expand_hiligaynon_nlp_coverage
+fast_heart_rate,madasig ang pitik sang tagipusuon,fast heart rate,expand_hiligaynon_nlp_coverage
+fast_heart_rate,kusog pitik sang tagipusuon,fast heart rate,expand_hiligaynon_nlp_coverage
+fast_heart_rate,madasig ang heart beat,fast heart rate,expand_hiligaynon_nlp_coverage
+fast_heart_rate,nagakubakuba ang puso,fast heart rate,expand_hiligaynon_nlp_coverage
+fast_heart_rate,tachycardia,fast heart rate,expand_hiligaynon_nlp_coverage
+fatigue,kapoy gid ang lawas,fatigue,expand_hiligaynon_nlp_coverage
+fatigue,ginakapoy ako,fatigue,expand_hiligaynon_nlp_coverage
+fatigue,kapoy lawas,fatigue,expand_hiligaynon_nlp_coverage
+fatigue,pagod,fatigue,expand_hiligaynon_nlp_coverage
+fluid_overload,sobra ang tubig sa lawas,fluid overload,expand_hiligaynon_nlp_coverage
+fluid_overload,nagahubag tungod sa sobra nga tubig,fluid overload,expand_hiligaynon_nlp_coverage
+fluid_overload,sobra tubig sa lawas,fluid overload,expand_hiligaynon_nlp_coverage
+fluid_overload,nagahubag tungod tubig,fluid overload,expand_hiligaynon_nlp_coverage
+foul_smell_of_urine,mabaho ang ihi,foul smell of urine,expand_hiligaynon_nlp_coverage
+foul_smell_of_urine,may mabaho nga ihi,foul smell of urine,expand_hiligaynon_nlp_coverage
+foul_smell_of_urine,mabaho ihi,foul smell of urine,expand_hiligaynon_nlp_coverage
+foul_smell_of_urine,may baho ang ihi,foul smell of urine,expand_hiligaynon_nlp_coverage
+foul_smell_of_urine,foul smelling urine,foul smell of urine,expand_hiligaynon_nlp_coverage
+headache,ginasakit ang ulo,headache,expand_hiligaynon_nlp_coverage
+headache,may sakit ulo,headache,expand_hiligaynon_nlp_coverage
+high_fever,grabe nga hilanat,high fever,expand_hiligaynon_nlp_coverage
+high_fever,mataas hilanat,high fever,expand_hiligaynon_nlp_coverage
+high_fever,grabe hilanat,high fever,expand_hiligaynon_nlp_coverage
+high_fever,taas nga hilanat,high fever,expand_hiligaynon_nlp_coverage
+high_fever,mainit gid ang lawas,high fever,expand_hiligaynon_nlp_coverage
+hip_joint_pain,sakit sa lutahan sang balikawang,hip joint pain,expand_hiligaynon_nlp_coverage
+hip_joint_pain,ginasakit ang balikawang,hip joint pain,expand_hiligaynon_nlp_coverage
+hip_joint_pain,sakit balikawang,hip joint pain,expand_hiligaynon_nlp_coverage
+hip_joint_pain,sakit sa hip,hip joint pain,expand_hiligaynon_nlp_coverage
+hip_joint_pain,ginasakit ang hip joint,hip joint pain,expand_hiligaynon_nlp_coverage
+history_of_alcohol_consumption,nagainom sang alak,history of alcohol consumption,expand_hiligaynon_nlp_coverage
+history_of_alcohol_consumption,hilig mag-inom sang alak,history of alcohol consumption,expand_hiligaynon_nlp_coverage
+history_of_alcohol_consumption,nagainom alak,history of alcohol consumption,expand_hiligaynon_nlp_coverage
+history_of_alcohol_consumption,hilig mag-inom,history of alcohol consumption,expand_hiligaynon_nlp_coverage
+history_of_alcohol_consumption,drinker,history of alcohol consumption,expand_hiligaynon_nlp_coverage
+history_of_alcohol_consumption,may history sa inom,history of alcohol consumption,expand_hiligaynon_nlp_coverage
+increased_appetite,nagdugang ang gana magkaon,increased appetite,expand_hiligaynon_nlp_coverage
+increased_appetite,mas madamo na ang ginakaon,increased appetite,expand_hiligaynon_nlp_coverage
+increased_appetite,nagdugang gana magkaon,increased appetite,expand_hiligaynon_nlp_coverage
+increased_appetite,mas gutom kaysa sang una,increased appetite,expand_hiligaynon_nlp_coverage
+indigestion,indi matunaw ang ginkaon,indigestion,expand_hiligaynon_nlp_coverage
+indigestion,nagabalda ang tiyan pagkatapos magkaon,indigestion,expand_hiligaynon_nlp_coverage
+indigestion,indi matunaw,indigestion,expand_hiligaynon_nlp_coverage
+indigestion,nagabalda tiyan,indigestion,expand_hiligaynon_nlp_coverage
+indigestion,mabug-at ang tiyan,indigestion,expand_hiligaynon_nlp_coverage
+inflammatory_nails,nagahubag ang palibot sang kuko,inflammatory nails,expand_hiligaynon_nlp_coverage
+inflammatory_nails,hubag kag pula ang kuko,inflammatory nails,expand_hiligaynon_nlp_coverage
+inflammatory_nails,hubag ang kuko,inflammatory nails,expand_hiligaynon_nlp_coverage
+inflammatory_nails,pula ang palibot sang kuko,inflammatory nails,expand_hiligaynon_nlp_coverage
+inflammatory_nails,infected nails,inflammatory nails,expand_hiligaynon_nlp_coverage
+internal_itching,ginakatol sa sulod,internal itching,expand_hiligaynon_nlp_coverage
+internal_itching,katol sa sulod sang tiyan,internal itching,expand_hiligaynon_nlp_coverage
+internal_itching,katol sa sulod,internal itching,expand_hiligaynon_nlp_coverage
+irregular_sugar_level,indi stable ang asukar sa dugo,irregular sugar level,expand_hiligaynon_nlp_coverage
+irregular_sugar_level,nagataas kag naganaba ang asukar,irregular sugar level,expand_hiligaynon_nlp_coverage
+irregular_sugar_level,indi stable ang asukar,irregular sugar level,expand_hiligaynon_nlp_coverage
+irregular_sugar_level,nagataas ang blood sugar,irregular sugar level,expand_hiligaynon_nlp_coverage
+irregular_sugar_level,irregular sugar,irregular sugar level,expand_hiligaynon_nlp_coverage
+irregular_sugar_level,high sugar,irregular sugar level,expand_hiligaynon_nlp_coverage
+irritability,madali ako maakig,irritability,expand_hiligaynon_nlp_coverage
+irritability,mainiton ang ulo,irritability,expand_hiligaynon_nlp_coverage
+irritability,madali maakig,irritability,expand_hiligaynon_nlp_coverage
+irritability,mainiton ulo,irritability,expand_hiligaynon_nlp_coverage
+irritability,irritable,irritability,expand_hiligaynon_nlp_coverage
+irritability,permi naakig,irritability,expand_hiligaynon_nlp_coverage
+irritation_in_anus,ginakatol ang lubot,irritation in anus,expand_hiligaynon_nlp_coverage
+irritation_in_anus,may irritation sa lubot,irritation in anus,expand_hiligaynon_nlp_coverage
+irritation_in_anus,katol sa lubot,irritation in anus,expand_hiligaynon_nlp_coverage
+irritation_in_anus,may irritation sa anus,irritation in anus,expand_hiligaynon_nlp_coverage
+itching,ginakatol ang panit,itching,expand_hiligaynon_nlp_coverage
+itching,makatol ang panit,itching,expand_hiligaynon_nlp_coverage
+itching,makatol,itching,expand_hiligaynon_nlp_coverage
+itching,katol panit,itching,expand_hiligaynon_nlp_coverage
+itching,permi ginakatol,itching,expand_hiligaynon_nlp_coverage
+joint_pain,sakit sa lutahan,joint pain,expand_hiligaynon_nlp_coverage
+joint_pain,ginasakit ang lutahan,joint pain,expand_hiligaynon_nlp_coverage
+joint_pain,sakit lutahan,joint pain,expand_hiligaynon_nlp_coverage
+joint_pain,sakit sa joints,joint pain,expand_hiligaynon_nlp_coverage
+knee_pain,sakit sang tuhod,knee pain,expand_hiligaynon_nlp_coverage
+knee_pain,ginasakit ang tuhod,knee pain,expand_hiligaynon_nlp_coverage
+knee_pain,sakit tuhod,knee pain,expand_hiligaynon_nlp_coverage
+lack_of_concentration,indi makapokus ang huna-huna,lack of concentration,expand_hiligaynon_nlp_coverage
+lack_of_concentration,wala ako konsentrasyon,lack of concentration,expand_hiligaynon_nlp_coverage
+lack_of_concentration,indi makapokus,lack of concentration,expand_hiligaynon_nlp_coverage
+lack_of_concentration,wala konsentrasyon,lack of concentration,expand_hiligaynon_nlp_coverage
+lack_of_concentration,cannot concentrate,lack of concentration,expand_hiligaynon_nlp_coverage
+lack_of_concentration,daw nagalayag ang huna-huna,lack of concentration,expand_hiligaynon_nlp_coverage
+lethargy,luya gid ang lawas,lethargy,expand_hiligaynon_nlp_coverage
+lethargy,wala gana maghulag,lethargy,expand_hiligaynon_nlp_coverage
+lethargy,luya lawas,lethargy,expand_hiligaynon_nlp_coverage
+lethargy,mahuya maglihok,lethargy,expand_hiligaynon_nlp_coverage
+loss_of_appetite,nadula ang gana magkaon,loss of appetite,expand_hiligaynon_nlp_coverage
+loss_of_appetite,indi gusto magkaon,loss of appetite,expand_hiligaynon_nlp_coverage
+loss_of_balance,indi makabalanse,loss of balance,expand_hiligaynon_nlp_coverage
+loss_of_balance,wala balanse ang lawas,loss of balance,expand_hiligaynon_nlp_coverage
+loss_of_balance,wala balanse,loss of balance,expand_hiligaynon_nlp_coverage
+loss_of_balance,daw matumba,loss of balance,expand_hiligaynon_nlp_coverage
+loss_of_smell,indi makapanimaho,loss of smell,expand_hiligaynon_nlp_coverage
+loss_of_smell,wala na ako makapanimaho,loss of smell,expand_hiligaynon_nlp_coverage
+loss_of_smell,indi makasimhot,loss of smell,expand_hiligaynon_nlp_coverage
+malaise,indi maayo ang pamatyagan,malaise,expand_hiligaynon_nlp_coverage
+malaise,daw masakiton ang lawas,malaise,expand_hiligaynon_nlp_coverage
+malaise,indi maayo lawas,malaise,expand_hiligaynon_nlp_coverage
+malaise,hindi maayo lawas,malaise,expand_hiligaynon_nlp_coverage
+malaise,daw masakiton,malaise,expand_hiligaynon_nlp_coverage
+malaise,indi maayo pamatyagan,malaise,expand_hiligaynon_nlp_coverage
+mild_fever,gamay nga hilanat,mild fever,expand_hiligaynon_nlp_coverage
+mild_fever,diutay nga hilanat,mild fever,expand_hiligaynon_nlp_coverage
+mild_fever,gamay hilanat,mild fever,expand_hiligaynon_nlp_coverage
+mild_fever,diutay hilanat,mild fever,expand_hiligaynon_nlp_coverage
+mild_fever,may gamay nga init,mild fever,expand_hiligaynon_nlp_coverage
+mood_swings,nagabag-o ang buot,mood swings,expand_hiligaynon_nlp_coverage
+mood_swings,kis-a malipayon kis-a masubo,mood swings,expand_hiligaynon_nlp_coverage
+mood_swings,kis-a malipay kis-a masubo,mood swings,expand_hiligaynon_nlp_coverage
+movement_stiffness,matig-a ang paghulag,movement stiffness,expand_hiligaynon_nlp_coverage
+movement_stiffness,budlay maghulag ang lawas,movement stiffness,expand_hiligaynon_nlp_coverage
+movement_stiffness,matig-a maghulag,movement stiffness,expand_hiligaynon_nlp_coverage
+movement_stiffness,stiff movements,movement stiffness,expand_hiligaynon_nlp_coverage
+movement_stiffness,budlay maglihok,movement stiffness,expand_hiligaynon_nlp_coverage
+mucoid_sputum,makapal nga plema,mucoid sputum,expand_hiligaynon_nlp_coverage
+mucoid_sputum,malagkit nga plema,mucoid sputum,expand_hiligaynon_nlp_coverage
+mucoid_sputum,makapal plema,mucoid sputum,expand_hiligaynon_nlp_coverage
+mucoid_sputum,malagkit plema,mucoid sputum,expand_hiligaynon_nlp_coverage
+mucoid_sputum,thick phlegm,mucoid sputum,expand_hiligaynon_nlp_coverage
+muscle_pain,sakit sa kalanm,muscle pain,expand_hiligaynon_nlp_coverage
+muscle_pain,sakit ang muscle,muscle pain,expand_hiligaynon_nlp_coverage
+muscle_wasting,naganiwang ang kalamnan,muscle wasting,expand_hiligaynon_nlp_coverage
+muscle_wasting,nagagamay ang mga muscle,muscle wasting,expand_hiligaynon_nlp_coverage
+muscle_wasting,naganiwang ang muscle,muscle wasting,expand_hiligaynon_nlp_coverage
+muscle_wasting,nagagamay ang kalamnan,muscle wasting,expand_hiligaynon_nlp_coverage
+muscle_weakness,maluya ang mga muscle,muscle weakness,expand_hiligaynon_nlp_coverage
+muscle_weakness,wala kusog ang mga muscle,muscle weakness,expand_hiligaynon_nlp_coverage
+muscle_weakness,maluya muscle,muscle weakness,expand_hiligaynon_nlp_coverage
+muscle_weakness,wala kusog ang muscle,muscle weakness,expand_hiligaynon_nlp_coverage
+muscle_weakness,mahuyang ang kalamnan,muscle weakness,expand_hiligaynon_nlp_coverage
+nausea,daw masuka ako,nausea,expand_hiligaynon_nlp_coverage
+nausea,ginasuka-suka ang pamatyagan,nausea,expand_hiligaynon_nlp_coverage
+nausea,daw masuka,nausea,expand_hiligaynon_nlp_coverage
+nausea,nahilo,nausea,expand_hiligaynon_nlp_coverage
+nausea,nauseous,nausea,expand_hiligaynon_nlp_coverage
+nausea,ginasuka-suka,nausea,expand_hiligaynon_nlp_coverage
+nausea,daw magkasuka,nausea,expand_hiligaynon_nlp_coverage
+neck_pain,sakit sang liog,neck pain,expand_hiligaynon_nlp_coverage
+neck_pain,ginasakit ang liog,neck pain,expand_hiligaynon_nlp_coverage
+neck_pain,sakit liog,neck pain,expand_hiligaynon_nlp_coverage
+neck_pain,sakti liog,neck pain,expand_hiligaynon_nlp_coverage
+nodal_skin_eruptions,may mga bukol nga nagagwa sa panit,nodal skin eruptions,expand_hiligaynon_nlp_coverage
+nodal_skin_eruptions,nagabuswang nga bukol sa panit,nodal skin eruptions,expand_hiligaynon_nlp_coverage
+nodal_skin_eruptions,may bukol sa panit,nodal skin eruptions,expand_hiligaynon_nlp_coverage
+nodal_skin_eruptions,nagabuswang nga bukol,nodal skin eruptions,expand_hiligaynon_nlp_coverage
+nodal_skin_eruptions,skin nodules,nodal skin eruptions,expand_hiligaynon_nlp_coverage
+obesity,sobra ang timbang,obesity,expand_hiligaynon_nlp_coverage
+obesity,matambok gid ang lawas,obesity,expand_hiligaynon_nlp_coverage
+obesity,sobra timbang,obesity,expand_hiligaynon_nlp_coverage
+obesity,matambok,obesity,expand_hiligaynon_nlp_coverage
+obesity,obese,obesity,expand_hiligaynon_nlp_coverage
+obesity,sobra ka tambok,obesity,expand_hiligaynon_nlp_coverage
+pain_behind_the_eyes,sakit sa likod sang mata,pain behind the eyes,expand_hiligaynon_nlp_coverage
+pain_behind_the_eyes,ginasakit sa likod sang mata,pain behind the eyes,expand_hiligaynon_nlp_coverage
+pain_behind_the_eyes,ginasakit ang likod mata,pain behind the eyes,expand_hiligaynon_nlp_coverage
+pain_during_bowel_movements,sakit kon magalibang,pain during bowel movements,expand_hiligaynon_nlp_coverage
+pain_during_bowel_movements,ginasakit kon magalibang,pain during bowel movements,expand_hiligaynon_nlp_coverage
+pain_during_bowel_movements,pain during bowel movement,pain during bowel movements,expand_hiligaynon_nlp_coverage
+pain_during_bowel_movements,hapdi maglibang,pain during bowel movements,expand_hiligaynon_nlp_coverage
+pain_in_anal_region,sakit sa lubot,pain in anal region,expand_hiligaynon_nlp_coverage
+pain_in_anal_region,ginasakit ang lubot,pain in anal region,expand_hiligaynon_nlp_coverage
+pain_in_anal_region,pain in anus,pain in anal region,expand_hiligaynon_nlp_coverage
+pain_in_anal_region,hapdi ang lubot,pain in anal region,expand_hiligaynon_nlp_coverage
+painful_walking,sakit kon magalakat,painful walking,expand_hiligaynon_nlp_coverage
+painful_walking,ginasakit kon magalakat,painful walking,expand_hiligaynon_nlp_coverage
+painful_walking,budlay maglakat tungod sakit,painful walking,expand_hiligaynon_nlp_coverage
+palpitations,nagakubakuba ang dughan,palpitations,expand_hiligaynon_nlp_coverage
+palpitations,daw nagalukso ang tagipusuon,palpitations,expand_hiligaynon_nlp_coverage
+palpitations,nagakubakuba,palpitations,expand_hiligaynon_nlp_coverage
+palpitations,daw nagalukso ang puso,palpitations,expand_hiligaynon_nlp_coverage
+palpitations,kubakuba dughan,palpitations,expand_hiligaynon_nlp_coverage
+passage_of_gases,permi nagapanuhot,passage of gases,expand_hiligaynon_nlp_coverage
+passage_of_gases,nagapanuhot ako,passage of gases,expand_hiligaynon_nlp_coverage
+passage_of_gases,nagapanuhot,passage of gases,expand_hiligaynon_nlp_coverage
+passage_of_gases,permi panuhot,passage of gases,expand_hiligaynon_nlp_coverage
+passage_of_gases,gas,passage of gases,expand_hiligaynon_nlp_coverage
+passage_of_gases,ginapanuhot,passage of gases,expand_hiligaynon_nlp_coverage
+patches_in_throat,may puti nga patse sa tutunlan,patches in throat,expand_hiligaynon_nlp_coverage
+patches_in_throat,may puti nga tapal sa tutunlan,patches in throat,expand_hiligaynon_nlp_coverage
+patches_in_throat,may puti sa tutunlan,patches in throat,expand_hiligaynon_nlp_coverage
+patches_in_throat,may tapal sa throat,patches in throat,expand_hiligaynon_nlp_coverage
+phlegm,may plema ako,phlegm,expand_hiligaynon_nlp_coverage
+phlegm,madamo nga plema,phlegm,expand_hiligaynon_nlp_coverage
+phlegm,may plema,phlegm,expand_hiligaynon_nlp_coverage
+phlegm,madamo plema,phlegm,expand_hiligaynon_nlp_coverage
+phlegm,may uhog,phlegm,expand_hiligaynon_nlp_coverage
+polyuria,permi nagaihi,polyuria,expand_hiligaynon_nlp_coverage
+polyuria,madamo ang ihi ko,polyuria,expand_hiligaynon_nlp_coverage
+polyuria,madamo ihi,polyuria,expand_hiligaynon_nlp_coverage
+polyuria,frequent urination,polyuria,expand_hiligaynon_nlp_coverage
+polyuria,permi mag-ihi,polyuria,expand_hiligaynon_nlp_coverage
+prominent_veins_on_calf,nagabukol ang ugat sa batiis,prominent veins on calf,expand_hiligaynon_nlp_coverage
+prominent_veins_on_calf,makita gid ang ugat sa batiis,prominent veins on calf,expand_hiligaynon_nlp_coverage
+prominent_veins_on_calf,makita ang ugat sa batiis,prominent veins on calf,expand_hiligaynon_nlp_coverage
+prominent_veins_on_calf,nagabukol ugat sa paa,prominent veins on calf,expand_hiligaynon_nlp_coverage
+prominent_veins_on_calf,varicose sa batiis,prominent veins on calf,expand_hiligaynon_nlp_coverage
+puffy_face_and_eyes,nagahubag ang guya kag mata,puffy face and eyes,expand_hiligaynon_nlp_coverage
+puffy_face_and_eyes,hubag ang guya kag mata,puffy face and eyes,expand_hiligaynon_nlp_coverage
+puffy_face_and_eyes,hubag guya kag mata,puffy face and eyes,expand_hiligaynon_nlp_coverage
+puffy_face_and_eyes,puffy face,puffy face and eyes,expand_hiligaynon_nlp_coverage
+puffy_face_and_eyes,nagahubag ang nawong,puffy face and eyes,expand_hiligaynon_nlp_coverage
+pus_filled_pimples,tagulhod nga may nana,pus filled pimples,expand_hiligaynon_nlp_coverage
+pus_filled_pimples,may nana nga tagulhod,pus filled pimples,expand_hiligaynon_nlp_coverage
+pus_filled_pimples,tagulhod may nana,pus filled pimples,expand_hiligaynon_nlp_coverage
+pus_filled_pimples,pimples with pus,pus filled pimples,expand_hiligaynon_nlp_coverage
+pus_filled_pimples,may acne nga may nana,pus filled pimples,expand_hiligaynon_nlp_coverage
+receiving_blood_transfusion,nakabaton sang dugo,receiving blood transfusion,expand_hiligaynon_nlp_coverage
+receiving_blood_transfusion,gin-transfusion sang dugo,receiving blood transfusion,expand_hiligaynon_nlp_coverage
+receiving_blood_transfusion,nakabaton dugo,receiving blood transfusion,expand_hiligaynon_nlp_coverage
+receiving_blood_transfusion,blood transfusion,receiving blood transfusion,expand_hiligaynon_nlp_coverage
+receiving_blood_transfusion,gintapnaan sang dugo,receiving blood transfusion,expand_hiligaynon_nlp_coverage
+receiving_unsterile_injections,ginturukan sang indi limpyo nga syringe,receiving unsterile injections,expand_hiligaynon_nlp_coverage
+receiving_unsterile_injections,indi sterile nga iniksyon,receiving unsterile injections,expand_hiligaynon_nlp_coverage
+receiving_unsterile_injections,unsterile injection,receiving unsterile injections,expand_hiligaynon_nlp_coverage
+receiving_unsterile_injections,ginturukan sang indi limpyo,receiving unsterile injections,expand_hiligaynon_nlp_coverage
+red_sore_around_nose,pula nga sugat sa palibot sang ilong,red sore around nose,expand_hiligaynon_nlp_coverage
+red_sore_around_nose,pula kag sugat sa palibot sang ilong,red sore around nose,expand_hiligaynon_nlp_coverage
+red_sore_around_nose,pula sugat sa ilong,red sore around nose,expand_hiligaynon_nlp_coverage
+red_sore_around_nose,sore around nose,red sore around nose,expand_hiligaynon_nlp_coverage
+red_sore_around_nose,pula sa palibot ilong,red sore around nose,expand_hiligaynon_nlp_coverage
+red_spots_over_body,pula nga tuldok sa bug-os nga lawas,red spots over body,expand_hiligaynon_nlp_coverage
+red_spots_over_body,may pula nga tuldok sa lawas,red spots over body,expand_hiligaynon_nlp_coverage
+red_spots_over_body,pula tuldok sa lawas,red spots over body,expand_hiligaynon_nlp_coverage
+red_spots_over_body,red spots,red spots over body,expand_hiligaynon_nlp_coverage
+red_spots_over_body,may pula nga spots,red spots over body,expand_hiligaynon_nlp_coverage
+red_spots_over_body,pula nga tulod sa lawas,red spots over body,expand_hiligaynon_nlp_coverage
+redness_of_eyes,pula ang mata,redness of eyes,expand_hiligaynon_nlp_coverage
+redness_of_eyes,nagapula ang mata,redness of eyes,expand_hiligaynon_nlp_coverage
+redness_of_eyes,pula mata,redness of eyes,expand_hiligaynon_nlp_coverage
+redness_of_eyes,nagapula mata,redness of eyes,expand_hiligaynon_nlp_coverage
+redness_of_eyes,red eyes,redness of eyes,expand_hiligaynon_nlp_coverage
+redness_of_eyes,gapula mata,redness of eyes,expand_hiligaynon_nlp_coverage
+restlessness,indi ako mapahamtang,restlessness,expand_hiligaynon_nlp_coverage
+restlessness,balisa kag wala kapahuway,restlessness,expand_hiligaynon_nlp_coverage
+restlessness,indi mapahamtang,restlessness,expand_hiligaynon_nlp_coverage
+restlessness,restless,restlessness,expand_hiligaynon_nlp_coverage
+restlessness,balisa,restlessness,expand_hiligaynon_nlp_coverage
+restlessness,wala kapahuway,restlessness,expand_hiligaynon_nlp_coverage
+runny_nose,nagatulo ang sip-on,runny nose,expand_hiligaynon_nlp_coverage
+runny_nose,may sip-on ako,runny nose,expand_hiligaynon_nlp_coverage
+runny_nose,may sip-on,runny nose,expand_hiligaynon_nlp_coverage
+runny_nose,nagatulo sip-on,runny nose,expand_hiligaynon_nlp_coverage
+rusty_sputum,kolor kalawang ang plema,rusty sputum,expand_hiligaynon_nlp_coverage
+rusty_sputum,daw kalawang nga plema,rusty sputum,expand_hiligaynon_nlp_coverage
+rusty_sputum,kolor kalawang plema,rusty sputum,expand_hiligaynon_nlp_coverage
+rusty_sputum,daw kaal nga plema,rusty sputum,expand_hiligaynon_nlp_coverage
+rusty_sputum,brownish plema,rusty sputum,expand_hiligaynon_nlp_coverage
+scurring,may peklat nga tapal sa panit,scurring,expand_hiligaynon_nlp_coverage
+scurring,nagakalas nga peklat sa panit,scurring,expand_hiligaynon_nlp_coverage
+scurring,may peklat,scurring,expand_hiligaynon_nlp_coverage
+scurring,scarring,scurring,expand_hiligaynon_nlp_coverage
+scurring,nagakalas peklat,scurring,expand_hiligaynon_nlp_coverage
+shivering,nagakurog ako,shivering,expand_hiligaynon_nlp_coverage
+shivering,ginakurog ang lawas,shivering,expand_hiligaynon_nlp_coverage
+shivering,nagakurog,shivering,expand_hiligaynon_nlp_coverage
+shivering,ginakurog,shivering,expand_hiligaynon_nlp_coverage
+shivering,naga-tremble,shivering,expand_hiligaynon_nlp_coverage
+silver_like_dusting,may pilak nga daw abo sa panit,silver like dusting,expand_hiligaynon_nlp_coverage
+silver_like_dusting,puti nga daw pulbos sa panit,silver like dusting,expand_hiligaynon_nlp_coverage
+silver_like_dusting,pilak nga abo sa panit,silver like dusting,expand_hiligaynon_nlp_coverage
+silver_like_dusting,puti nga pulbos sa panit,silver like dusting,expand_hiligaynon_nlp_coverage
+sinus_pressure,bug-at ang pamatyagan sa guya kag ilong,sinus pressure,expand_hiligaynon_nlp_coverage
+sinus_pressure,may pressure sa sinus,sinus pressure,expand_hiligaynon_nlp_coverage
+sinus_pressure,pressure sa sinus,sinus pressure,expand_hiligaynon_nlp_coverage
+sinus_pressure,bug-at ang guya,sinus pressure,expand_hiligaynon_nlp_coverage
+sinus_pressure,sakit sa sinus,sinus pressure,expand_hiligaynon_nlp_coverage
+skin_peeling,nagakalas ang panit,skin peeling,expand_hiligaynon_nlp_coverage
+skin_peeling,nagapanit ang balat,skin peeling,expand_hiligaynon_nlp_coverage
+skin_peeling,nagakalas panit,skin peeling,expand_hiligaynon_nlp_coverage
+skin_peeling,nagapanit,skin peeling,expand_hiligaynon_nlp_coverage
+skin_rash,may rashes sa panit,skin rash,expand_hiligaynon_nlp_coverage
+skin_rash,nagagwa nga rashes sa panit,skin rash,expand_hiligaynon_nlp_coverage
+skin_rash,may rashes,skin rash,expand_hiligaynon_nlp_coverage
+skin_rash,nagagwa rashes,skin rash,expand_hiligaynon_nlp_coverage
+skin_rash,may allergy sa panit,skin rash,expand_hiligaynon_nlp_coverage
+slurred_speech,indi klaro maghambal,slurred speech,expand_hiligaynon_nlp_coverage
+slurred_speech,nagakulinggat ang dila kon maghambal,slurred speech,expand_hiligaynon_nlp_coverage
+slurred_speech,nagakulinggat,slurred speech,expand_hiligaynon_nlp_coverage
+small_dents_in_nails,may gagmay nga lugum sa kuko,small dents in nails,expand_hiligaynon_nlp_coverage
+small_dents_in_nails,gagmay nga buho sa kuko,small dents in nails,expand_hiligaynon_nlp_coverage
+small_dents_in_nails,may lugum sa kuko,small dents in nails,expand_hiligaynon_nlp_coverage
+small_dents_in_nails,dents in nails,small dents in nails,expand_hiligaynon_nlp_coverage
+small_dents_in_nails,gagmay buho sa kuko,small dents in nails,expand_hiligaynon_nlp_coverage
+spinning_movements,daw nagatuyok ang palibot,spinning movements,expand_hiligaynon_nlp_coverage
+spinning_movements,nagatuyok ang kalibutan sa panulok,spinning movements,expand_hiligaynon_nlp_coverage
+spinning_movements,daw nagatuyok,spinning movements,expand_hiligaynon_nlp_coverage
+spinning_movements,spinning,spinning movements,expand_hiligaynon_nlp_coverage
+spinning_movements,tuyok ang palibot,spinning movements,expand_hiligaynon_nlp_coverage
+spinning_movements,vertigo,spinning movements,expand_hiligaynon_nlp_coverage
+spotting_urination,may dugo sa ihi,spotting urination,expand_hiligaynon_nlp_coverage
+spotting_urination,may tulo nga dugo kon mag-ihi,spotting urination,expand_hiligaynon_nlp_coverage
+spotting_urination,spotting urine,spotting urination,expand_hiligaynon_nlp_coverage
+spotting_urination,may tulo dugo kon mag-ihi,spotting urination,expand_hiligaynon_nlp_coverage
+stiff_neck,matig-a ang liog,stiff neck,expand_hiligaynon_nlp_coverage
+stiff_neck,sakit kag matig-a ang liog,stiff neck,expand_hiligaynon_nlp_coverage
+stiff_neck,matig-a liog,stiff neck,expand_hiligaynon_nlp_coverage
+stiff_neck,sakit kag matig-a liog,stiff neck,expand_hiligaynon_nlp_coverage
+stomach_bleeding,nagadugo ang tiyan,stomach bleeding,expand_hiligaynon_nlp_coverage
+stomach_bleeding,may pagdugo sa tiyan,stomach bleeding,expand_hiligaynon_nlp_coverage
+stomach_bleeding,nagadugo tiyan,stomach bleeding,expand_hiligaynon_nlp_coverage
+stomach_bleeding,nagdugo tiyan,stomach bleeding,expand_hiligaynon_nlp_coverage
+stomach_pain,ginasakit gid ang tiyan,stomach pain,expand_hiligaynon_nlp_coverage
+stomach_pain,masakit ang tiyan,stomach pain,expand_hiligaynon_nlp_coverage
+stomach_pain,ginasakit tiyan,stomach pain,expand_hiligaynon_nlp_coverage
+sunken_eyes,nagtulon ang mata,sunken eyes,expand_hiligaynon_nlp_coverage
+sunken_eyes,nagalubog kag nagtulon ang mata,sunken eyes,expand_hiligaynon_nlp_coverage
+sunken_eyes,nagtulon mata,sunken eyes,expand_hiligaynon_nlp_coverage
+sunken_eyes,nagalubog ang mata,sunken eyes,expand_hiligaynon_nlp_coverage
+sweating,nagabalhas ako,sweating,expand_hiligaynon_nlp_coverage
+sweating,madamo ang balhas,sweating,expand_hiligaynon_nlp_coverage
+sweating,nagabalhas,sweating,expand_hiligaynon_nlp_coverage
+sweating,madamo balhas,sweating,expand_hiligaynon_nlp_coverage
+sweating,permi ginabalhas,sweating,expand_hiligaynon_nlp_coverage
+swelled_lymph_nodes,nagahubag ang kulani,swelled lymph nodes,expand_hiligaynon_nlp_coverage
+swelled_lymph_nodes,may bukol nga kulani sa liog,swelled lymph nodes,expand_hiligaynon_nlp_coverage
+swelled_lymph_nodes,hubag kulani,swelled lymph nodes,expand_hiligaynon_nlp_coverage
+swelled_lymph_nodes,may bukol sa liog,swelled lymph nodes,expand_hiligaynon_nlp_coverage
+swelling_joints,nagahubag ang lutahan,swelling joints,expand_hiligaynon_nlp_coverage
+swelling_joints,hubag ang mga lutahan,swelling joints,expand_hiligaynon_nlp_coverage
+swelling_joints,hubag lutahan,swelling joints,expand_hiligaynon_nlp_coverage
+swelling_joints,nagahubag ang joints,swelling joints,expand_hiligaynon_nlp_coverage
+swelling_of_stomach,nagahubag ang tiyan,swelling of stomach,expand_hiligaynon_nlp_coverage
+swelling_of_stomach,hubag kag nagdako ang tiyan,swelling of stomach,expand_hiligaynon_nlp_coverage
+swelling_of_stomach,hubag tiyan,swelling of stomach,expand_hiligaynon_nlp_coverage
+swollen_blood_vessels,nagahubag ang mga ugat,swollen blood vessels,expand_hiligaynon_nlp_coverage
+swollen_blood_vessels,hubag nga mga ugat,swollen blood vessels,expand_hiligaynon_nlp_coverage
+swollen_blood_vessels,hubag ugat,swollen blood vessels,expand_hiligaynon_nlp_coverage
+swollen_blood_vessels,swollen veins,swollen blood vessels,expand_hiligaynon_nlp_coverage
+swollen_blood_vessels,nagahubag ang ugat,swollen blood vessels,expand_hiligaynon_nlp_coverage
+swollen_extremeties,nagahubag ang kamot kag tiil,swollen extremeties,expand_hiligaynon_nlp_coverage
+swollen_extremeties,hubag ang mga kamot kag tiil,swollen extremeties,expand_hiligaynon_nlp_coverage
+swollen_extremeties,hubag kamot kag tiil,swollen extremeties,expand_hiligaynon_nlp_coverage
+swollen_extremeties,swollen hands and feet,swollen extremeties,expand_hiligaynon_nlp_coverage
+swollen_extremeties,nagahubag extremities,swollen extremeties,expand_hiligaynon_nlp_coverage
+swollen_legs,nagahubag ang tiil,swollen legs,expand_hiligaynon_nlp_coverage
+swollen_legs,hubag ang paa,swollen legs,expand_hiligaynon_nlp_coverage
+swollen_legs,hubag tiil,swollen legs,expand_hiligaynon_nlp_coverage
+swollen_legs,nagahubag ang paa,swollen legs,expand_hiligaynon_nlp_coverage
+throat_irritation,ginakatol ang tutunlan,throat irritation,expand_hiligaynon_nlp_coverage
+throat_irritation,sakit kag katol ang tutunlan,throat irritation,expand_hiligaynon_nlp_coverage
+throat_irritation,katol tutunlan,throat irritation,expand_hiligaynon_nlp_coverage
+throat_irritation,sakit tutunlan,throat irritation,expand_hiligaynon_nlp_coverage
+throat_irritation,hapdi ang throat,throat irritation,expand_hiligaynon_nlp_coverage
+toxic_look_(typhos),daw grabe ka masakiton ang hitsura,toxic look,expand_hiligaynon_nlp_coverage
+toxic_look_(typhos),luya kag masakiton ang hitsura,toxic look,expand_hiligaynon_nlp_coverage
+toxic_look_(typhos),masakiton ang hitsura,toxic look,expand_hiligaynon_nlp_coverage
+toxic_look_(typhos),daw grabe ka luya hitsura,toxic look,expand_hiligaynon_nlp_coverage
+ulcers_on_tongue,may singaw sa dila,ulcers on tongue,expand_hiligaynon_nlp_coverage
+ulcers_on_tongue,may singaw sa bibig,ulcers on tongue,expand_hiligaynon_nlp_coverage
+ulcers_on_tongue,may singaw,ulcers on tongue,expand_hiligaynon_nlp_coverage
+unsteadiness,indi steady ang paglakat,unsteadiness,expand_hiligaynon_nlp_coverage
+unsteadiness,nagakiday-kiday kon magalakat,unsteadiness,expand_hiligaynon_nlp_coverage
+unsteadiness,indi steady maglakat,unsteadiness,expand_hiligaynon_nlp_coverage
+unsteadiness,unsteady,unsteadiness,expand_hiligaynon_nlp_coverage
+unsteadiness,nagakiday-kiday,unsteadiness,expand_hiligaynon_nlp_coverage
+visual_disturbances,may problema sa panulok,visual disturbances,expand_hiligaynon_nlp_coverage
+visual_disturbances,indi maayo ang pagtan-aw,visual disturbances,expand_hiligaynon_nlp_coverage
+visual_disturbances,problema sa panulok,visual disturbances,expand_hiligaynon_nlp_coverage
+visual_disturbances,visual disturbance,visual disturbances,expand_hiligaynon_nlp_coverage
+visual_disturbances,indi maayo magtan-aw,visual disturbances,expand_hiligaynon_nlp_coverage
+vomiting,nagasuka ako,vomiting,expand_hiligaynon_nlp_coverage
+vomiting,permi nagasuka,vomiting,expand_hiligaynon_nlp_coverage
+vomiting,ginsuka,vomiting,expand_hiligaynon_nlp_coverage
+watering_from_eyes,nagatubig ang mata,watering from eyes,expand_hiligaynon_nlp_coverage
+watering_from_eyes,permi nagatubig ang mata,watering from eyes,expand_hiligaynon_nlp_coverage
+watering_from_eyes,nagatubig mata,watering from eyes,expand_hiligaynon_nlp_coverage
+watering_from_eyes,watery eyes,watering from eyes,expand_hiligaynon_nlp_coverage
+watering_from_eyes,permi nagaluha,watering from eyes,expand_hiligaynon_nlp_coverage
+weakness_in_limbs,maluya ang bukton kag tiil,weakness in limbs,expand_hiligaynon_nlp_coverage
+weakness_in_limbs,wala kusog ang bukton kag tiil,weakness in limbs,expand_hiligaynon_nlp_coverage
+weakness_in_limbs,maluya bukton kag tiil,weakness in limbs,expand_hiligaynon_nlp_coverage
+weakness_in_limbs,wala kusog ang tiil,weakness in limbs,expand_hiligaynon_nlp_coverage
+weakness_of_one_body_side,maluya ang isa ka bahin sang lawas,weakness of one body side,expand_hiligaynon_nlp_coverage
+weakness_of_one_body_side,wala kusog ang isa ka bahin sang lawas,weakness of one body side,expand_hiligaynon_nlp_coverage
+weakness_of_one_body_side,maluya isa ka bahin,weakness of one body side,expand_hiligaynon_nlp_coverage
+weakness_of_one_body_side,weakness one side,weakness of one body side,expand_hiligaynon_nlp_coverage
+weakness_of_one_body_side,wala kusog ang isa ka side,weakness of one body side,expand_hiligaynon_nlp_coverage
+weakness_of_one_body_side,hemiparesis,weakness of one body side,expand_hiligaynon_nlp_coverage
+weight_gain,nagdugang ang timbang ko,weight gain,expand_hiligaynon_nlp_coverage
+weight_gain,nagtambok ako,weight gain,expand_hiligaynon_nlp_coverage
+weight_gain,nagdugang timbang,weight gain,expand_hiligaynon_nlp_coverage
+weight_gain,nagtambok,weight gain,expand_hiligaynon_nlp_coverage
+weight_loss,nagakunhod ang timbang ko,weight loss,expand_hiligaynon_nlp_coverage
+weight_loss,nagniwang ako,weight loss,expand_hiligaynon_nlp_coverage
+weight_loss,nagakunhod timbang,weight loss,expand_hiligaynon_nlp_coverage
+weight_loss,nagniwang,weight loss,expand_hiligaynon_nlp_coverage
+weight_loss,wie loss,weight loss,expand_hiligaynon_nlp_coverage
+yellow_crust_ooze,may dilaw nga nana nga nagagwa,yellow crust ooze,expand_hiligaynon_nlp_coverage
+yellow_crust_ooze,nagagwa ang dilaw nga likido sa sugat,yellow crust ooze,expand_hiligaynon_nlp_coverage
+yellow_crust_ooze,dilaw nana,yellow crust ooze,expand_hiligaynon_nlp_coverage
+yellow_crust_ooze,yellow crust,yellow crust ooze,expand_hiligaynon_nlp_coverage
+yellow_crust_ooze,nagagwa dilaw likido,yellow crust ooze,expand_hiligaynon_nlp_coverage
+yellow_urine,dilaw ang ihi,yellow urine,expand_hiligaynon_nlp_coverage
+yellow_urine,nagadilaw ang ihi,yellow urine,expand_hiligaynon_nlp_coverage
+yellow_urine,nagadilaw ihi,yellow urine,expand_hiligaynon_nlp_coverage
+yellowing_of_eyes,nagadilaw ang mata,yellowing of eyes,expand_hiligaynon_nlp_coverage
+yellowing_of_eyes,dilaw ang mata,yellowing of eyes,expand_hiligaynon_nlp_coverage
+yellowing_of_eyes,gapula mata kag dilaw,yellowing of eyes,expand_hiligaynon_nlp_coverage
+yellowish_skin,nagadilaw ang panit,yellowish skin,expand_hiligaynon_nlp_coverage
+yellowish_skin,dilaw ang panit,yellowish skin,expand_hiligaynon_nlp_coverage
+yellowish_skin,nagadilaw panit,yellowish skin,expand_hiligaynon_nlp_coverage
+yellowish_skin,dial panit,yellowish skin,expand_hiligaynon_nlp_coverage

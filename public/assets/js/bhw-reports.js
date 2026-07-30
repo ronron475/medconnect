@@ -3,6 +3,10 @@
   var activeTab = 'patients';
   var base = document.body.dataset.assetBase || '';
 
+  function theme() {
+    return window.McChartTheme;
+  }
+
   var SUMMARY_GROUPS = [
     {
       title: 'Patients',
@@ -41,58 +45,6 @@
     },
   ];
 
-  var CHART_COLORS = ['#1d4ed8', '#3b82f6', '#60a5fa', '#2563eb', '#1e40af', '#93c5fd', '#64748b', '#475569'];
-
-  var CHART_FONT = {
-    family: "'Inter', 'Segoe UI', system-ui, sans-serif",
-    size: 11,
-    weight: '500',
-  };
-
-  function baseChartOptions(type) {
-    var isRing = type === 'pie' || type === 'doughnut';
-    return {
-      responsive: true,
-      maintainAspectRatio: false,
-      layout: { padding: { top: 4, bottom: 4, left: 4, right: 4 } },
-      plugins: {
-        legend: {
-          display: isRing,
-          position: 'bottom',
-          align: 'center',
-          labels: {
-            boxWidth: 10,
-            boxHeight: 10,
-            padding: 14,
-            color: '#64748b',
-            font: CHART_FONT,
-            usePointStyle: true,
-            pointStyle: 'rectRounded',
-          },
-        },
-        tooltip: {
-          backgroundColor: '#0f172a',
-          titleFont: { family: CHART_FONT.family, size: 12, weight: '600' },
-          bodyFont: { family: CHART_FONT.family, size: 11 },
-          padding: 10,
-          cornerRadius: 6,
-          displayColors: true,
-        },
-      },
-      scales: isRing ? {} : {
-        x: {
-          grid: { color: '#f1f5f9', drawBorder: false },
-          ticks: { color: '#64748b', font: CHART_FONT, maxRotation: 0 },
-        },
-        y: {
-          beginAtZero: true,
-          grid: { color: '#f1f5f9', drawBorder: false },
-          ticks: { color: '#64748b', font: CHART_FONT, precision: 0 },
-        },
-      },
-    };
-  }
-
   function ready(fn) {
     if (document.readyState === 'loading') {
       document.addEventListener('DOMContentLoaded', fn);
@@ -107,7 +59,6 @@
       date_to: document.getElementById('rf_date_to')?.value || '',
       month: document.getElementById('rf_month')?.value || '',
       year: document.getElementById('rf_year')?.value || '',
-      purok: document.getElementById('rf_purok')?.value || '',
       gender: document.getElementById('rf_gender')?.value || '',
       age_group: document.getElementById('rf_age')?.value || '',
     };
@@ -120,49 +71,92 @@
     }
   }
 
-  function chartData(rows) {
+  function ringData(rows) {
+    var T = theme();
+    var n = (rows || []).length;
     return {
       labels: (rows || []).map(function (r) { return r.label || '—'; }),
       datasets: [{
         data: (rows || []).map(function (r) { return r.value; }),
-        backgroundColor: CHART_COLORS,
+        backgroundColor: T ? T.colorsForCount(n) : [],
         borderColor: '#fff',
         borderWidth: 2,
-        hoverOffset: 4,
+        hoverOffset: 6,
       }],
     };
   }
 
-  function lineBarData(type, rows) {
+  function cartesianData(type, rows) {
+    var T = theme();
+    var labels = (rows || []).map(function (r) { return r.label; });
+    if (type === 'line' && T) {
+      var series = (rows || []).map(function (r) {
+        return { label: r.label, count: r.value };
+      });
+      return {
+        labels: labels,
+        datasets: [T.lineDataset(series, T.colors.blue)],
+      };
+    }
+    var colors = T ? T.colorsForCount((rows || []).length) : [];
     return {
-      labels: (rows || []).map(function (r) { return r.label; }),
+      labels: labels,
       datasets: [{
         label: 'Count',
         data: (rows || []).map(function (r) { return r.value; }),
-        borderColor: '#1d4ed8',
-        backgroundColor: type === 'line' ? 'rgba(29, 78, 216, 0.08)' : 'rgba(59, 130, 246, 0.75)',
-        borderWidth: type === 'line' ? 2 : 0,
-        fill: type === 'line',
-        tension: 0.3,
-        borderRadius: type === 'bar' ? 4 : 0,
+        backgroundColor: colors,
+        borderRadius: 4,
         maxBarThickness: 36,
+        borderSkipped: false,
       }],
     };
   }
 
   function makeChart(canvasId, type, rows, options) {
-    if (typeof Chart === 'undefined') return;
+    if (typeof Chart === 'undefined' || !theme()) return;
     var el = document.getElementById(canvasId);
     if (!el) return;
     destroyChart(canvasId);
+    var T = theme();
     var isRing = type === 'pie' || type === 'doughnut';
-    var chartOptions = Object.assign({}, baseChartOptions(type), options || {});
-    if (type === 'doughnut' && chartOptions.cutout == null) {
-      chartOptions.cutout = '62%';
+    var chartType = type === 'pie' ? 'doughnut' : type;
+    var chartOptions;
+    if (isRing) {
+      chartOptions = T.ringOptions();
+      if (type === 'pie') {
+        chartOptions.cutout = '0%';
+      }
+    } else {
+      chartOptions = T.cartesianOptions({
+        interaction: { mode: 'index', intersect: false },
+      });
+      if (options && options.indexAxis === 'y') {
+        chartOptions.indexAxis = 'y';
+        chartOptions.scales = {
+          x: {
+            beginAtZero: true,
+            grid: { color: T.colors.grid, drawBorder: false },
+            border: { display: false },
+            ticks: { precision: 0, font: { size: 10 } },
+          },
+          y: {
+            grid: { display: false },
+            border: { display: false },
+            ticks: { font: { size: 11, weight: '500' } },
+          },
+        };
+      }
+    }
+    if (options) {
+      Object.keys(options).forEach(function (k) {
+        if (k !== 'indexAxis' || !isRing) {
+          chartOptions[k] = options[k];
+        }
+      });
     }
     charts[canvasId] = new Chart(el, {
-      type: type,
-      data: isRing ? chartData(rows) : lineBarData(type, rows),
+      type: chartType,
+      data: isRing ? ringData(rows) : cartesianData(type, rows),
       options: chartOptions,
     });
   }
@@ -187,26 +181,10 @@
     row.hidden = false;
   }
 
-  function fillPuroks(puroks) {
-    var sel = document.getElementById('rf_purok');
-    if (!sel) return;
-    var cur = sel.value;
-    sel.innerHTML = '<option value="">All puroks</option>';
-    (puroks || []).forEach(function (p) {
-      var v = p.purok || p;
-      var o = document.createElement('option');
-      o.value = v;
-      o.textContent = v;
-      sel.appendChild(o);
-    });
-    if (cur) sel.value = cur;
-  }
-
   function loadSummary() {
     return BhwPortal.get('reports.php', Object.assign({ action: 'summary' }, filters())).then(function (r) {
       if (!r.success) return;
       renderSummary(r.summary || {});
-      fillPuroks(r.puroks || []);
     });
   }
 
@@ -301,6 +279,26 @@
     disease: loadDisease,
   };
 
+  var reportsPollTimer = null;
+  var REFRESH_MS = (theme() && theme().REFRESH_MS) ? theme().REFRESH_MS : 15000;
+
+  function touchReportsSync() {
+    var el = document.getElementById('bhwReportsLastSync');
+    if (!el) return;
+    el.textContent = 'Updated ' + new Date().toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+  }
+
+  function refreshReportsLive() {
+    loadSummary().then(function () {
+      return loadTab(activeTab);
+    }).then(touchReportsSync);
+  }
+
+  function startReportsPolling() {
+    if (reportsPollTimer) clearInterval(reportsPollTimer);
+    reportsPollTimer = setInterval(refreshReportsLive, REFRESH_MS);
+  }
+
   function loadTab(tab) {
     if (loaders[tab]) loaders[tab]();
   }
@@ -314,7 +312,16 @@
     var root = document.getElementById('bhwReportsRoot');
     if (!root) return;
 
-    loadSummary().then(function () { return loadTab('patients'); });
+    if (theme()) {
+      theme().applyDefaults();
+    }
+
+    loadSummary().then(function () { return loadTab('patients'); }).then(touchReportsSync);
+    startReportsPolling();
+
+    document.addEventListener('visibilitychange', function () {
+      if (!document.hidden) refreshReportsLive();
+    });
 
     document.querySelectorAll('.bhw-reports-tab').forEach(function (btn) {
       btn.addEventListener('click', function () {
@@ -328,15 +335,15 @@
     });
 
     document.getElementById('rf_apply')?.addEventListener('click', function () {
-      loadSummary().then(function () { return loadTab(activeTab); });
+      loadSummary().then(function () { return loadTab(activeTab); }).then(touchReportsSync);
     });
 
     document.getElementById('rf_reset')?.addEventListener('click', function () {
-      ['rf_date_from', 'rf_date_to', 'rf_month', 'rf_year', 'rf_purok', 'rf_gender', 'rf_age'].forEach(function (id) {
+      ['rf_date_from', 'rf_date_to', 'rf_month', 'rf_year', 'rf_gender', 'rf_age'].forEach(function (id) {
         var el = document.getElementById(id);
         if (el) el.value = '';
       });
-      loadSummary().then(function () { return loadTab(activeTab); });
+      loadSummary().then(function () { return loadTab(activeTab); }).then(touchReportsSync);
     });
 
     document.querySelectorAll('[data-export]').forEach(function (btn) {

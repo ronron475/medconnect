@@ -1,0 +1,185 @@
+/**
+ * medConnect — shared analytics / chart card layout (APM-style).
+ * Use with .mc-chart-card + .mc-chart-canvas-wrap on any portal.
+ */
+
+.mc-charts-grid,
+.adm-charts-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.mc-chart-card,
+.adm-chart-card,
+.bhw-chart-card.mc-chart-card,
+.bhw-chart-card:has(.mc-chart-canvas-wrap) {
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 4px;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+  padding: 16px 18px 14px;
+  display: flex;
+  flex-direction: column;
+  min-height: 260px;
+}
+
+.mc-chart-card__head,
+.adm-chart-card__head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+  flex-shrink: 0;
+}
+
+.mc-chart-card__title,
+.adm-chart-card__title {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 700;
+  color: #0f172a;
+  letter-spacing: -0.01em;
+}
+
+.mc-chart-card__sub,
+.adm-chart-card__sub {
+  margin: 4px 0 0;
+  font-size: 11px;
+  color: #64748b;
+  line-height: 1.4;
+}
+
+.mc-chart-kpi,
+.adm-chart-kpi {
+  text-align: right;
+  flex-shrink: 0;
+}
+
+.mc-chart-kpi strong,
+.adm-chart-kpi strong {
+  display: block;
+  font-size: 1.25rem;
+  font-weight: 800;
+  line-height: 1.1;
+  color: #0f172a;
+}
+
+.mc-chart-kpi span,
+.adm-chart-kpi span {
+  display: block;
+  margin-top: 2px;
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #94a3b8;
+}
+
+.mc-chart-canvas-wrap,
+.adm-chart-canvas-wrap,
+.bhw-chart-wrap.mc-chart-canvas-wrap {
+  position: relative;
+  flex: 1 1 auto;
+  min-height: 200px;
+  height: 220px;
+  width: 100%;
+}
+
+.mc-chart-canvas-wrap canvas,
+.adm-chart-canvas-wrap canvas,
+.bhw-chart-wrap.mc-chart-canvas-wrap canvas {
+  width: 100% !important;
+  height: 100% !important;
+  max-height: 100%;
+}
+
+.mc-chart-canvas-wrap--tall {
+  min-height: 260px;
+  height: 280px;
+}
+
+.mc-chart-canvas-wrap--ring {
+  min-height: 220px;
+  height: 240px;
+}
+
+.mc-charts-section,
+.adm-charts-section {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+@media (max-width: 1100px) {
+  .mc-charts-grid,
+  .adm-charts-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Shared chart filter bar (BHW dashboard, BHW reports, admin analytics) */
+.mc-chart-filters {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 12px 16px;
+  padding: 12px 16px;
+  margin-bottom: 4px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 4px;
+}
+
+.mc-chart-filters--inline {
+  padding: 0;
+  margin: 0;
+  background: transparent;
+  border: none;
+  align-items: center;
+}
+
+.mc-chart-filters__field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 140px;
+}
+
+.mc-chart-filters__label {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: #64748b;
+}
+
+.mc-chart-filters__control {
+  min-height: 38px;
+  font-size: 13px;
+  border-radius: 4px;
+  border-color: #cbd5e1;
+}
+
+.mc-chart-filters__actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.mc-chart-filters__status {
+  font-size: 11px;
+  font-weight: 600;
+  color: #64748b;
+  white-space: nowrap;
+}
+
+.bhw-dash-chart-filters {
+  margin: 0 20px 12px;
+}
+
+.adm-charts-filters .mc-chart-filters__status {
+  margin-left: 8px;
+}

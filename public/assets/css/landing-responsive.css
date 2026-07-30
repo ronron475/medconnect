@@ -171,6 +171,13 @@ body.landing-page.landing-nav-open {
   font-size: var(--landing-text-hero);
   overflow-wrap: anywhere;
   word-break: break-word;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+.landing-page .hero--cinematic .hero-title {
+  overflow: visible;
+  padding-inline: 2px;
 }
 
 .landing-page .services-title {
@@ -597,7 +604,7 @@ body.landing-page.landing-nav-open {
     --ltf-fab-bottom: var(--landing-fab-edge-y);
     --ltf-fab-size: var(--landing-fab-size-m);
     --ltf-stack-gap: var(--landing-fab-stack-gap-m);
-    bottom: calc(var(--ltf-fab-bottom) + var(--ltf-fab-size) + var(--ltf-stack-gap));
+    bottom: calc(var(--ltf-fab-bottom) + var(--ltf-fab-size) + var(--ltf-stack-gap) + var(--ltf-menu-lift, 0px));
   }
 }
 
