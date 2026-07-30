@@ -32,7 +32,10 @@ $healthClass = match ($stats['system_health']) {
 };
 
 require_once __DIR__ . '/partials/layout_open.php';
+$admLiveJsVer = (int) @filemtime(ASSETS_PATH . '/js/admin-dashboard-live.js');
 ?>
+
+<div data-live-dashboard="superadmin">
 
 <section class="adm-banner superadmin-banner" aria-label="Welcome">
     <div class="adm-banner-inner">
@@ -42,17 +45,15 @@ require_once __DIR__ . '/partials/layout_open.php';
     </div>
     <div class="superadmin-banner-actions">
         <span class="mc-badge mc-badge--super">Super Administrator</span>
-        <span class="superadmin-health-pill superadmin-health-pill--<?= htmlspecialchars($healthClass) ?>">System <?= htmlspecialchars(strtoupper($stats['system_health'])) ?></span>
-        <?php if ($pending_checker_total > 0): ?>
-        <a href="<?= ASSET_BASE ?>/views/superadmin/doctor_approvals.php" class="adm-card-head-action superadmin-urgent-pill">
+        <span class="superadmin-health-pill superadmin-health-pill--<?= htmlspecialchars($healthClass) ?>" data-live-system-health>System <?= htmlspecialchars(strtoupper($stats['system_health'])) ?></span>
+        <a href="<?= ASSET_BASE ?>/views/superadmin/doctor_approvals.php" class="adm-card-head-action superadmin-urgent-pill" data-live-pending-pill<?= $pending_checker_total > 0 ? '' : ' hidden' ?>>
             <?= $pending_checker_total ?> approval<?= $pending_checker_total === 1 ? '' : 's' ?> pending
         </a>
-        <?php endif; ?>
+        <span class="text-xs text-muted" data-live-sync aria-live="polite">Live</span>
     </div>
 </section>
 
-<?php if ($pending_checker_total > 0): ?>
-<section class="superadmin-approval-strip" aria-label="Pending approvals">
+<section class="superadmin-approval-strip" data-live-approval-strip aria-label="Pending approvals"<?= $pending_checker_total > 0 ? '' : ' hidden' ?>>
     <?php if ($pending_doctor_approvals > 0): ?>
     <a href="<?= ASSET_BASE ?>/views/superadmin/doctor_approvals.php" class="superadmin-approval-card">
         <strong><?= $pending_doctor_approvals ?></strong>
@@ -66,7 +67,6 @@ require_once __DIR__ . '/partials/layout_open.php';
     </a>
     <?php endif; ?>
 </section>
-<?php endif; ?>
 
 <section aria-label="Live operations">
     <div class="adm-section-head">
@@ -81,17 +81,17 @@ require_once __DIR__ . '/partials/layout_open.php';
 <section aria-label="Platform metrics">
     <div class="adm-section-head">
         <h2 class="adm-section-title">Platform Metrics</h2>
-        <p class="adm-section-sub">Key totals at a glance</p>
+        <p class="adm-section-sub">Key totals at a glance · auto-refreshes</p>
     </div>
     <div class="superadmin-stat-grid superadmin-stat-grid--compact">
-        <div class="mc-card superadmin-stat-card"><div class="text-h1"><?= (int) $stats['total_patients'] ?></div><div class="text-xs text-muted">Patients</div></div>
-        <div class="mc-card superadmin-stat-card"><div class="text-h1"><?= (int) $stats['total_providers'] ?></div><div class="text-xs text-muted">Doctors</div></div>
-        <div class="mc-card superadmin-stat-card"><div class="text-h1"><?= (int) $stats['total_consultations'] ?></div><div class="text-xs text-muted">Consultations</div></div>
-        <div class="mc-card superadmin-stat-card"><div class="text-h1" style="color:<?= (int) $stats['emergency_cases'] > 0 ? '#ef233c' : 'inherit' ?>;"><?= (int) $stats['emergency_cases'] ?></div><div class="text-xs text-muted">Emergency Cases</div></div>
-        <div class="mc-card superadmin-stat-card"><div class="text-h1"><?= (int) $stats['total_barangays'] ?></div><div class="text-xs text-muted">Barangays</div></div>
-        <div class="mc-card superadmin-stat-card"><div class="text-h1"><?= (int) $stats['total_facilities'] ?></div><div class="text-xs text-muted">Facilities</div></div>
-        <div class="mc-card superadmin-stat-card"><div class="text-h1"><?= (int) $security['failed24h'] ?></div><div class="text-xs text-muted">Failed Logins (24h)</div></div>
-        <div class="mc-card superadmin-stat-card"><div class="text-h1"><?= (int) $security['activeSessions'] ?></div><div class="text-xs text-muted">Active Sessions</div></div>
+        <div class="mc-card superadmin-stat-card"><div class="text-h1" data-live-metric="patients"><?= (int) $stats['total_patients'] ?></div><div class="text-xs text-muted">Patients</div></div>
+        <div class="mc-card superadmin-stat-card"><div class="text-h1" data-live-metric="providers"><?= (int) $stats['total_providers'] ?></div><div class="text-xs text-muted">Doctors</div></div>
+        <div class="mc-card superadmin-stat-card"><div class="text-h1" data-live-metric="consultations"><?= (int) $stats['total_consultations'] ?></div><div class="text-xs text-muted">Consultations</div></div>
+        <div class="mc-card superadmin-stat-card"><div class="text-h1" data-live-metric="emergency_cases" style="color:<?= (int) $stats['emergency_cases'] > 0 ? '#ef233c' : 'inherit' ?>;"><?= (int) $stats['emergency_cases'] ?></div><div class="text-xs text-muted">Emergency Cases</div></div>
+        <div class="mc-card superadmin-stat-card"><div class="text-h1" data-live-metric="barangays"><?= (int) $stats['total_barangays'] ?></div><div class="text-xs text-muted">Barangays</div></div>
+        <div class="mc-card superadmin-stat-card"><div class="text-h1" data-live-metric="facilities"><?= (int) $stats['total_facilities'] ?></div><div class="text-xs text-muted">Facilities</div></div>
+        <div class="mc-card superadmin-stat-card"><div class="text-h1" data-live-metric="failed24h"><?= (int) $security['failed24h'] ?></div><div class="text-xs text-muted">Failed Logins (24h)</div></div>
+        <div class="mc-card superadmin-stat-card"><div class="text-h1" data-live-metric="active_sessions"><?= (int) $security['activeSessions'] ?></div><div class="text-xs text-muted">Active Sessions</div></div>
     </div>
 </section>
 
@@ -108,7 +108,7 @@ require_once __DIR__ . '/partials/layout_open.php';
             <div class="adm-card-body adm-table-wrap">
                 <table class="adm-table">
                     <thead><tr><th>User</th><th>Action</th><th>Module</th><th>Time</th></tr></thead>
-                    <tbody>
+                    <tbody data-live-activities>
                     <?php if (empty($recentActivities)): ?>
                         <tr><td colspan="4" style="text-align:center;padding:28px;color:#94a3b8;">No recent activities.</td></tr>
                     <?php else: foreach ($recentActivities as $a): ?>
@@ -135,7 +135,7 @@ require_once __DIR__ . '/partials/layout_open.php';
             <div class="adm-card-body adm-table-wrap">
                 <table class="adm-table">
                     <thead><tr><th>User</th><th>Role</th><th>IP</th><th>Time</th></tr></thead>
-                    <tbody>
+                    <tbody data-live-logins>
                     <?php if (empty($recentLogins)): ?>
                         <tr><td colspan="4" style="text-align:center;padding:28px;color:#94a3b8;">No login events recorded.</td></tr>
                     <?php else: foreach ($recentLogins as $l): ?>
@@ -162,7 +162,7 @@ require_once __DIR__ . '/partials/layout_open.php';
                     <div class="adm-card-head-sub">Core platform services</div>
                 </div>
             </div>
-            <div class="adm-actions-body" style="padding-top:0;">
+            <div class="adm-actions-body" style="padding-top:0;" data-live-health>
                 <?php foreach ($health as $key => $svc):
                     if ($key === 'storage') continue;
                     $st = $svc['status'] ?? 'unknown';
@@ -186,11 +186,11 @@ require_once __DIR__ . '/partials/layout_open.php';
             <div class="adm-actions-body">
                 <a href="<?= ASSET_BASE ?>/views/superadmin/doctor_approvals.php" class="adm-action-btn adm-action-btn--primary">
                     Doctor Approval Queue
-                    <?php if ($pending_doctor_approvals > 0): ?><span class="adm-pending-badge"><?= $pending_doctor_approvals ?></span><?php endif; ?>
+                    <span class="adm-pending-badge" data-live-badge-doctor-wrap<?= $pending_doctor_approvals > 0 ? '' : ' hidden' ?>><span data-live-badge-doctor><?= $pending_doctor_approvals ?></span></span>
                 </a>
                 <a href="<?= ASSET_BASE ?>/views/superadmin/bhw_approvals.php" class="adm-action-btn adm-action-btn--outline">
                     BHW Approval Queue
-                    <?php if ($pending_bhw_approvals > 0): ?><span class="adm-pending-badge"><?= $pending_bhw_approvals ?></span><?php endif; ?>
+                    <span class="adm-pending-badge" data-live-badge-bhw-wrap<?= $pending_bhw_approvals > 0 ? '' : ' hidden' ?>><span data-live-badge-bhw><?= $pending_bhw_approvals ?></span></span>
                 </a>
                 <a href="<?= ASSET_BASE ?>/views/superadmin/administrators.php" class="adm-action-btn adm-action-btn--outline">Manage Administrators</a>
                 <a href="<?= ASSET_BASE ?>/views/superadmin/security_dashboard.php" class="adm-action-btn adm-action-btn--outline">Security Center</a>
@@ -201,4 +201,7 @@ require_once __DIR__ . '/partials/layout_open.php';
     </aside>
 </div>
 
+</div><!-- /data-live-dashboard -->
+
+<script src="<?= ASSET_BASE ?>/assets/js/admin-dashboard-live.js?v=<?= $admLiveJsVer ?>"></script>
 <?php require_once __DIR__ . '/partials/layout_close.php'; ?>
