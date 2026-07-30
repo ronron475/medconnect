@@ -148,23 +148,34 @@
     const body = dayBlock.querySelector('[data-day-body]');
     const isToday = dayBlock.dataset.isToday === '1';
 
-    // Collapse non-today days by default to reduce clutter.
-    if (!isToday && body && toggleBtn) {
-      body.hidden = true;
-      toggleBtn.setAttribute('aria-expanded', 'false');
+    function setOpen(open) {
+      if (!body || !toggleBtn) return;
+      body.hidden = !open;
+      toggleBtn.setAttribute('aria-expanded', open ? 'true' : 'false');
       const label = toggleBtn.querySelector('[data-toggle-label]');
-      if (label) label.textContent = 'Expand';
-      dayBlock.classList.add('is-collapsed');
+      if (label) label.textContent = open ? 'Collapse' : 'Expand';
+      dayBlock.classList.toggle('is-collapsed', !open);
     }
 
-    if (toggleBtn && body) {
-      toggleBtn.addEventListener('click', () => {
-        const open = body.hidden;
-        body.hidden = !open;
-        toggleBtn.setAttribute('aria-expanded', open ? 'true' : 'false');
-        const label = toggleBtn.querySelector('[data-toggle-label]');
-        if (label) label.textContent = open ? 'Collapse' : 'Expand';
-        dayBlock.classList.toggle('is-collapsed', !open);
+    // Non-today days start collapsed (markup already has hidden body).
+    if (!isToday) {
+      setOpen(false);
+    } else {
+      dayBlock.classList.remove('is-collapsed');
+    }
+
+    if (toggleBtn) {
+      toggleBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        setOpen(!!body?.hidden);
+      });
+    }
+
+    const head = dayBlock.querySelector('.sched-day__head');
+    if (head && body) {
+      head.addEventListener('click', (e) => {
+        if (e.target.closest('[data-toggle-day], a, input, button, label')) return;
+        setOpen(!!body.hidden);
       });
     }
 
@@ -211,10 +222,7 @@
 
       if (errors.length) {
         showValidation(validationBox, errors);
-        if (body && body.hidden) {
-          body.hidden = false;
-          dayBlock.classList.remove('is-collapsed');
-        }
+        setOpen(true);
         return;
       }
 
@@ -258,7 +266,6 @@
           } else {
             alert(data.message || 'Schedule saved.');
           }
-          // Reload so today's slot preview stays accurate.
           setTimeout(() => window.location.reload(), 700);
           return;
         }
@@ -282,5 +289,5 @@
     });
   }
 
-  document.querySelectorAll('.sched-day-block[data-editable="1"]').forEach(bindDayBlock);
+  document.querySelectorAll('.sched-day[data-editable="1"], .sched-day-block[data-editable="1"]').forEach(bindDayBlock);
 })();

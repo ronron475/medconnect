@@ -10,39 +10,60 @@
  */
 $duration_options = [15 => '15 min', 30 => '30 min', 45 => '45 min', 60 => '1 hour'];
 $session_count = count($day_sessions);
+
+$summaryParts = [];
+if ($session_count === 0) {
+    $summaryParts[] = 'No sessions yet';
+} else {
+    $summaryParts[] = $session_count . ' session' . ($session_count === 1 ? '' : 's');
+    foreach (array_slice($day_sessions, 0, 2) as $preview) {
+        $summaryParts[] = schedule_format_time((string) ($preview['start_time'] ?? ''))
+            . '–'
+            . schedule_format_time((string) ($preview['end_time'] ?? ''));
+    }
+    if ($session_count > 2) {
+        $summaryParts[] = '+' . ($session_count - 2) . ' more';
+    }
+}
+$summaryText = implode(' · ', $summaryParts);
 ?>
-<div class="sched-day-block <?= $is_today ? 'sched-day-block--today' : '' ?>"
+<article class="sched-day <?= $is_today ? 'sched-day--today' : '' ?> <?= $day_active ? 'sched-day--active' : '' ?>"
      data-day="<?= htmlspecialchars($day) ?>"
      data-editable="1"
      data-is-today="<?= $is_today ? '1' : '0' ?>">
 
-  <div class="sched-day-block__head">
-    <div>
-      <h4 class="sched-day-block__title">
-        <?= htmlspecialchars($day) ?>
+  <header class="sched-day__head">
+    <div class="sched-day__identity">
+      <div class="sched-day__title-row">
+        <h4 class="sched-day__name"><?= htmlspecialchars($day) ?></h4>
         <?php if ($is_today): ?>
-        <span class="sched-today-badge">Today</span>
+        <span class="sched-day__badge sched-day__badge--today">Today</span>
         <?php endif; ?>
         <?php if ($day_active): ?>
-        <span class="sched-status-pill sched-status-pill--active">Active</span>
+        <span class="sched-day__badge sched-day__badge--on">Active</span>
         <?php elseif ($session_count > 0): ?>
-        <span class="sched-status-pill sched-status-pill--inactive">Inactive</span>
-        <?php endif; ?>
-      </h4>
-      <p class="sched-day-block__hint">
-        <?php if ($is_today): ?>
-        Editing today&apos;s hours opens slots patients can book now.
+        <span class="sched-day__badge sched-day__badge--off">Inactive</span>
         <?php else: ?>
-        Set recurring hours for every <?= htmlspecialchars($day) ?>. Applies when that day arrives.
+        <span class="sched-day__badge sched-day__badge--empty">Unset</span>
         <?php endif; ?>
-      </p>
+      </div>
+      <p class="sched-day__summary" data-day-summary><?= htmlspecialchars($summaryText) ?></p>
     </div>
-    <button type="button" class="sched-day-toggle" data-toggle-day aria-expanded="true">
-      <span data-toggle-label>Collapse</span>
+    <button type="button" class="sched-day__toggle" data-toggle-day aria-expanded="<?= $is_today ? 'true' : 'false' ?>">
+      <span data-toggle-label><?= $is_today ? 'Collapse' : 'Expand' ?></span>
+      <svg class="sched-day__chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><polyline points="6 9 12 15 18 9"/></svg>
     </button>
-  </div>
+  </header>
 
-  <div class="sched-day-block__body" data-day-body>
+  <div class="sched-day__body" data-day-body<?= $is_today ? '' : ' hidden' ?>>
+    <div class="sched-day__hint">
+      <?php if ($is_today): ?>
+      Editing today&apos;s hours opens slots patients can book now.
+      <?php else: ?>
+      Recurring hours for every <?= htmlspecialchars($day) ?>. Applies when that day arrives.
+      <?php endif; ?>
+    </div>
+
     <div class="sched-day-active-row">
       <label class="sched-day-active-label">
         <input type="checkbox" class="schedule-day-active" <?= $day_active ? 'checked' : '' ?>>
@@ -106,4 +127,4 @@ $session_count = count($day_sessions);
       Save <?= htmlspecialchars($day) ?> Schedule
     </button>
   </div>
-</div>
+</article>
