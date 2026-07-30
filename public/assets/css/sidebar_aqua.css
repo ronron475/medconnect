@@ -126,6 +126,28 @@
   opacity: 1;
 }
 
+.sba-item .mc-nav-messages-badge,
+.sba-item .mc-nav-count-badge {
+  margin-left: auto;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  border-radius: 999px;
+  background: #fecaca;
+  color: #991b1b;
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 18px;
+  text-align: center;
+  flex-shrink: 0;
+}
+
+.sba-item.is-active .mc-nav-messages-badge,
+.sba-item.is-active .mc-nav-count-badge {
+  background: rgba(255, 255, 255, 0.28);
+  color: #fff;
+}
+
 /* Active left accent bar */
 .sba-item.is-active::before {
   content: '';
@@ -263,7 +285,8 @@
     display: none;
   }
 
-  body.mc-sidebar-mini .sb-aqua .mc-nav-messages-badge {
+  body.mc-sidebar-mini .sb-aqua .mc-nav-messages-badge,
+  body.mc-sidebar-mini .sb-aqua .mc-nav-count-badge {
     position: absolute;
     top: 6px;
     right: 6px;
