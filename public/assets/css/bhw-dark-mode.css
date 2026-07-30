@@ -1,0 +1,278 @@
+/**
+ * medConnect — BHW Portal Dark Mode
+ * Matches Provider WorkflowAI-style: near-black canvas, flat #1c1c1c cards, #2a2a2a borders.
+ */
+
+/* ── Canvas ── */
+html[data-theme-resolved='dark'] body.bhw-body {
+  --bhw-canvas: #0a0a0a;
+  --bhw-navy: #ffffff;
+  --bhw-accent-soft: rgba(124, 58, 237, 0.12);
+  background: #0a0a0a !important;
+  color: #ffffff;
+}
+
+html[data-theme-resolved='dark'] body.bhw-body .portal-main,
+html[data-theme-resolved='dark'] body.bhw-body .portal-page-body {
+  background: #0a0a0a;
+}
+
+/* ── Topbar ── */
+html[data-theme-resolved='dark'] body.bhw-body .topbar,
+html[data-theme-resolved='dark'] body.bhw-body .topbar--bhw-formal {
+  background: #1c1c1c !important;
+  border-bottom-color: #2a2a2a !important;
+  box-shadow: none !important;
+}
+
+html[data-theme-resolved='dark'] body.bhw-body .topbar-title,
+html[data-theme-resolved='dark'] body.bhw-body .topbar-date,
+html[data-theme-resolved='dark'] body.bhw-body .topbar-time,
+html[data-theme-resolved='dark'] body.bhw-body .topbar-user-name {
+  color: #ffffff !important;
+}
+
+html[data-theme-resolved='dark'] body.bhw-body .topbar-eyebrow {
+  color: #a78bfa !important;
+}
+
+html[data-theme-resolved='dark'] body.bhw-body .topbar-icon-btn,
+html[data-theme-resolved='dark'] body.bhw-body .mc-notif-btn,
+html[data-theme-resolved='dark'] body.bhw-body .mc-theme-toggle__btn,
+html[data-theme-resolved='dark'] body.bhw-body .topbar-logout {
+  background: #1c1c1c !important;
+  border: 1px solid #2a2a2a !important;
+  color: #a1a1aa !important;
+}
+
+/* ── Shared cards (layout inline + portal pages) ── */
+html[data-theme-resolved='dark'] body.bhw-body .bhw-card,
+html[data-theme-resolved='dark'] body.bhw-body .bhw-metric-card,
+html[data-theme-resolved='dark'] body.bhw-body .bhw-form-card,
+html[data-theme-resolved='dark'] body.bhw-body .bhw-referral-card,
+html[data-theme-resolved='dark'] body.bhw-body .bhw-referral-table-card,
+html[data-theme-resolved='dark'] body.bhw-body .bhw-cons-panel,
+html[data-theme-resolved='dark'] body.bhw-body .bhw-pl-table-wrap,
+html[data-theme-resolved='dark'] body.bhw-body .bhw-pl-card,
+html[data-theme-resolved='dark'] body.bhw-body .adm-notif-recent,
+html[data-theme-resolved='dark'] body.bhw-body .mc-card {
+  background: #1c1c1c !important;
+  border-color: #2a2a2a !important;
+  color: #ffffff;
+  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.04), 0 4px 20px rgba(0, 0, 0, 0.5);
+}
+
+/* ── Dashboard shell ── */
+html[data-theme-resolved='dark'] body.bhw-body .bhw-dash-header,
+html[data-theme-resolved='dark'] body.bhw-body .bhw-dash-panel,
+html[data-theme-resolved='dark'] body.bhw-body .bhw-dash-stat,
+html[data-theme-resolved='dark'] body.bhw-body .bhw-dash .mc-notif-widget {
+  background: #1c1c1c !important;
+  border-color: #2a2a2a !important;
+  box-shadow: none;
+}
+
+html[data-theme-resolved='dark'] body.bhw-body .bhw-dash-header {
+  border-left-color: #7c3aed !important;
+}
+
+html[data-theme-resolved='dark'] body.bhw-body .bhw-dash-panel__head,
+html[data-theme-resolved='dark'] body.bhw-body .bhw-dash-recent .adm-card-head,
+html[data-theme-resolved='dark'] body.bhw-body .bhw-dash-panel__toolbar {
+  background: #141414 !important;
+  border-bottom-color: #2a2a2a !important;
+}
+
+html[data-theme-resolved='dark'] body.bhw-body .bhw-dash-stats,
+html[data-theme-resolved='dark'] body.bhw-body .bhw-dash-ops {
+  background: #2a2a2a !important;
+}
+
+/* ── Sector analytics charts (fix white chart boxes) ── */
+html[data-theme-resolved='dark'] body.bhw-body .bhw-dash-charts .bhw-chart-card,
+html[data-theme-resolved='dark'] body.bhw-body .bhw-chart-card.mc-chart-card,
+html[data-theme-resolved='dark'] body.bhw-body .bhw-dash-charts-grid .bhw-chart-card {
+  background: #1c1c1c !important;
+  border: 1px solid #2a2a2a !important;
+  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.04), 0 4px 20px rgba(0, 0, 0, 0.5);
+}
+
+html[data-theme-resolved='dark'] body.bhw-body .bhw-dash-charts .bhw-chart-card h4,
+html[data-theme-resolved='dark'] body.bhw-body .bhw-chart-card h4 {
+  color: #ffffff !important;
+}
+
+html[data-theme-resolved='dark'] body.bhw-body .bhw-dash-charts .bhw-chart-wrap,
+html[data-theme-resolved='dark'] body.bhw-body .bhw-chart-wrap {
+  background: transparent !important;
+}
+
+html[data-theme-resolved='dark'] body.bhw-body .bhw-dash-charts .bhw-chart-wrap canvas,
+html[data-theme-resolved='dark'] body.bhw-body .bhw-chart-wrap canvas {
+  background: transparent !important;
+}
+
+html[data-theme-resolved='dark'] body.bhw-body .bhw-dash-chart-filters,
+html[data-theme-resolved='dark'] body.bhw-body .bhw-dash-charts .mc-chart-filters {
+  background: #141414 !important;
+  border-color: #2a2a2a !important;
+}
+
+html[data-theme-resolved='dark'] body.bhw-body .bhw-dash-station-name {
+  color: #a78bfa !important;
+}
+
+/* ── Typography: white / gray only ── */
+html[data-theme-resolved='dark'] body.bhw-body h1,
+html[data-theme-resolved='dark'] body.bhw-body h2,
+html[data-theme-resolved='dark'] body.bhw-body h3,
+html[data-theme-resolved='dark'] body.bhw-body h4,
+html[data-theme-resolved='dark'] body.bhw-body .bhw-dash-header__title,
+html[data-theme-resolved='dark'] body.bhw-body .bhw-dash-panel__head h3,
+html[data-theme-resolved='dark'] body.bhw-body .bhw-dash-stat__val,
+html[data-theme-resolved='dark'] body.bhw-body .bhw-dash .mc-notif-widget-value,
+html[data-theme-resolved='dark'] body.bhw-body .bhw-metric-val,
+html[data-theme-resolved='dark'] body.bhw-body .bhw-dash-resident-name,
+html[data-theme-resolved='dark'] body.bhw-body .adm-card-head-title,
+html[data-theme-resolved='dark'] body.bhw-body strong,
+html[data-theme-resolved='dark'] body.bhw-body b {
+  color: #ffffff !important;
+}
+
+html[data-theme-resolved='dark'] body.bhw-body p,
+html[data-theme-resolved='dark'] body.bhw-body span,
+html[data-theme-resolved='dark'] body.bhw-body li,
+html[data-theme-resolved='dark'] body.bhw-body .bhw-dash-header__eyebrow,
+html[data-theme-resolved='dark'] body.bhw-body .bhw-dash-header__desc,
+html[data-theme-resolved='dark'] body.bhw-body .bhw-dash-sync,
+html[data-theme-resolved='dark'] body.bhw-body .bhw-dash-panel__note,
+html[data-theme-resolved='dark'] body.bhw-body .bhw-dash-stat__label,
+html[data-theme-resolved='dark'] body.bhw-body .bhw-dash .mc-notif-widget-label,
+html[data-theme-resolved='dark'] body.bhw-body .bhw-metric-label,
+html[data-theme-resolved='dark'] body.bhw-body .adm-card-head-sub,
+html[data-theme-resolved='dark'] body.bhw-body .text-muted,
+html[data-theme-resolved='dark'] body.bhw-body small {
+  color: #a1a1aa !important;
+}
+
+html[data-theme-resolved='dark'] body.bhw-body .bhw-dash-sync {
+  background: #141414 !important;
+  border-color: #2a2a2a !important;
+}
+
+/* ── Stat accents ── */
+html[data-theme-resolved='dark'] body.bhw-body .bhw-dash-stat--alert .bhw-dash-stat__val,
+html[data-theme-resolved='dark'] body.bhw-body .bhw-dash .mc-notif-widget--alert .mc-notif-widget-value {
+  color: #f87171 !important;
+}
+
+html[data-theme-resolved='dark'] body.bhw-body .bhw-dash-stat--warn .bhw-dash-stat__val {
+  color: #fbbf24 !important;
+}
+
+/* ── Forms & filters ── */
+html[data-theme-resolved='dark'] body.bhw-body .form-control,
+html[data-theme-resolved='dark'] body.bhw-body .form-select,
+html[data-theme-resolved='dark'] body.bhw-body .mc-chart-filters__control,
+html[data-theme-resolved='dark'] body.bhw-body .bhw-dash-panel__toolbar .form-control,
+html[data-theme-resolved='dark'] body.bhw-body .bhw-dash-panel__toolbar .form-select {
+  background: #141414 !important;
+  border-color: #2a2a2a !important;
+  color: #ffffff !important;
+}
+
+html[data-theme-resolved='dark'] body.bhw-body .form-label,
+html[data-theme-resolved='dark'] body.bhw-body .mc-chart-filters__label {
+  color: #a1a1aa !important;
+}
+
+html[data-theme-resolved='dark'] body.bhw-body .bhw-btn-teal {
+  background: #7c3aed !important;
+  border-color: #7c3aed !important;
+  color: #ffffff !important;
+}
+
+html[data-theme-resolved='dark'] body.bhw-body .bhw-btn-teal:hover {
+  background: #6d28d9 !important;
+  border-color: #6d28d9 !important;
+}
+
+html[data-theme-resolved='dark'] body.bhw-body .bhw-btn-outline {
+  background: transparent !important;
+  border-color: #2a2a2a !important;
+  color: #a1a1aa !important;
+}
+
+html[data-theme-resolved='dark'] body.bhw-body .bhw-btn-outline:hover {
+  background: rgba(255, 255, 255, 0.04) !important;
+  border-color: #3f3f46 !important;
+  color: #ffffff !important;
+}
+
+/* ── Tables ── */
+html[data-theme-resolved='dark'] body.bhw-body .bhw-dash-queue-table thead th {
+  background: #141414 !important;
+  border-color: #2a2a2a !important;
+  color: #a1a1aa !important;
+}
+
+html[data-theme-resolved='dark'] body.bhw-body .bhw-dash-queue-table tbody td {
+  background: #1c1c1c !important;
+  border-color: #2a2a2a !important;
+  color: #d4d4d8 !important;
+}
+
+html[data-theme-resolved='dark'] body.bhw-body .bhw-dash-queue-table tbody tr.bhw-row-high td {
+  background: rgba(220, 38, 38, 0.12) !important;
+}
+
+html[data-theme-resolved='dark'] body.bhw-body .bhw-dash-queue-table tbody tr.bhw-row-moderate td {
+  background: rgba(245, 158, 11, 0.1) !important;
+}
+
+html[data-theme-resolved='dark'] body.bhw-body .bhw-dash-queue-empty {
+  background: #1c1c1c !important;
+  color: #a1a1aa !important;
+}
+
+html[data-theme-resolved='dark'] body.bhw-body .bhw-dash-queue-empty a {
+  color: #a78bfa !important;
+}
+
+/* ── Badges (dark surfaces, colored text) ── */
+html[data-theme-resolved='dark'] body.bhw-body .bhw-badge-high,
+html[data-theme-resolved='dark'] body.bhw-body .urgency-high {
+  background: rgba(220, 38, 38, 0.15) !important;
+  color: #fca5a5 !important;
+}
+
+html[data-theme-resolved='dark'] body.bhw-body .bhw-badge-moderate,
+html[data-theme-resolved='dark'] body.bhw-body .urgency-mod {
+  background: rgba(245, 158, 11, 0.15) !important;
+  color: #fcd34d !important;
+}
+
+html[data-theme-resolved='dark'] body.bhw-body .bhw-badge-low,
+html[data-theme-resolved='dark'] body.bhw-body .urgency-low {
+  background: rgba(34, 197, 94, 0.15) !important;
+  color: #86efac !important;
+}
+
+html[data-theme-resolved='dark'] body.bhw-body .bhw-badge-ready,
+html[data-theme-resolved='dark'] body.bhw-body .status-ready {
+  background: rgba(59, 130, 246, 0.15) !important;
+  color: #93c5fd !important;
+}
+
+html[data-theme-resolved='dark'] body.bhw-body .bhw-badge-scheduled,
+html[data-theme-resolved='dark'] body.bhw-body .status-sched {
+  background: rgba(255, 255, 255, 0.06) !important;
+  color: #a1a1aa !important;
+}
+
+/* ── Kill light hovers ── */
+html[data-theme-resolved='dark'] body.bhw-body .adm-nav-item:hover,
+html[data-theme-resolved='dark'] body.bhw-body .bhw-module-nav__item:hover {
+  background: rgba(255, 255, 255, 0.06) !important;
+  color: #ffffff !important;
+}

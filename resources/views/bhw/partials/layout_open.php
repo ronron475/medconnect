@@ -242,6 +242,11 @@
     .status-sched { background: #f3f4f6; color: #4b5563; }
   </style>
   <?php require_once VIEWS_PATH . '/partials/auth_transition_assets.php'; ?>
+  <?php
+  $bhwDarkCss = ASSETS_PATH . '/css/bhw-dark-mode.css';
+  $bhwDarkVer = file_exists($bhwDarkCss) ? (int) filemtime($bhwDarkCss) : time();
+  ?>
+  <link rel="stylesheet" href="<?= ASSET_BASE ?>/assets/css/bhw-dark-mode.css?v=<?= $bhwDarkVer ?>"/>
 </head>
 <body
   class="bhw-body"

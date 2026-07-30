@@ -567,7 +567,17 @@ html[data-theme-resolved='dark'] body.bhw-body .bhw-dash-resident-name {
 }
 
 html[data-theme-resolved='dark'] body.bhw-body .bhw-dash-queue-table tbody td {
-  background: #1e293b;
-  border-color: #334155;
-  color: #cbd5e1;
+  background: #1c1c1c;
+  border-color: #2a2a2a;
+  color: #d4d4d8;
+}
+
+/* Chart cards — covered in bhw-dark-mode.css (loaded last) */
+html[data-theme-resolved='dark'] body.bhw-body .bhw-dash-charts .bhw-chart-card {
+  background: #1c1c1c;
+  border-color: #2a2a2a;
+}
+
+html[data-theme-resolved='dark'] body.bhw-body .bhw-dash-charts .bhw-chart-card h4 {
+  color: #ffffff;
 }
