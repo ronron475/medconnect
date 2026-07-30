@@ -56,6 +56,15 @@
     document.querySelectorAll('.mc-theme-toggle__icon').forEach((icon) => {
       icon.textContent = resolved === 'dark' ? '🌙' : '☀';
     });
+
+    if (typeof window.dispatchEvent === 'function') {
+      window.dispatchEvent(new CustomEvent('medconnect-theme-changed', {
+        detail: { preference: pref, resolved: resolved },
+      }));
+    }
+    if (window.McChartTheme && typeof window.McChartTheme.refreshAllCharts === 'function') {
+      window.McChartTheme.refreshAllCharts();
+    }
   }
 
   async function saveTheme(preference) {

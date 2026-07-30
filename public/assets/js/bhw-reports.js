@@ -73,13 +73,14 @@
 
   function ringData(rows) {
     var T = theme();
+    if (T) T.syncColors();
     var n = (rows || []).length;
     return {
       labels: (rows || []).map(function (r) { return r.label || '—'; }),
       datasets: [{
         data: (rows || []).map(function (r) { return r.value; }),
         backgroundColor: T ? T.colorsForCount(n) : [],
-        borderColor: '#fff',
+        borderColor: T ? T.segmentBorderColor() : '#fff',
         borderWidth: 2,
         hoverOffset: 6,
       }],
@@ -118,6 +119,8 @@
     if (!el) return;
     destroyChart(canvasId);
     var T = theme();
+    T.syncColors();
+    T.applyDefaults();
     var isRing = type === 'pie' || type === 'doughnut';
     var chartType = type === 'pie' ? 'doughnut' : type;
     var chartOptions;
@@ -137,12 +140,12 @@
             beginAtZero: true,
             grid: { color: T.colors.grid, drawBorder: false },
             border: { display: false },
-            ticks: { precision: 0, font: { size: 10 } },
+            ticks: { precision: 0, font: { size: 10 }, color: T.colors.text },
           },
           y: {
             grid: { display: false },
             border: { display: false },
-            ticks: { font: { size: 11, weight: '500' } },
+            ticks: { font: { size: 11, weight: '500' }, color: T.colors.text },
           },
         };
       }

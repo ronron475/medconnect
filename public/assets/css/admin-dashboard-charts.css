@@ -225,3 +225,35 @@
     text-align: left;
   }
 }
+
+html[data-theme-resolved='dark'] .adm-bar-label,
+html[data-theme-resolved='dark'] .adm-line-labels span,
+html[data-theme-resolved='dark'] .adm-hbar-row__name,
+html[data-theme-resolved='dark'] .adm-status-bar__label,
+html[data-theme-resolved='dark'] .adm-chart-legend {
+  color: var(--mc-theme-text-secondary, #cbd5e1);
+}
+
+html[data-theme-resolved='dark'] .adm-bar-val,
+html[data-theme-resolved='dark'] .adm-hbar-row__count,
+html[data-theme-resolved='dark'] .adm-status-bar__val,
+html[data-theme-resolved='dark'] .adm-chart-legend strong {
+  color: var(--mc-theme-text, #f8fafc);
+}
+
+html[data-theme-resolved='dark'] .adm-hbar-track,
+html[data-theme-resolved='dark'] .adm-status-bar__track {
+  background: #334155;
+}
+
+html[data-theme-resolved='dark'] .adm-chart-legend {
+  border-top-color: var(--mc-theme-border, #334155);
+}
+
+html[data-theme-resolved='dark'] .adm-line-chart__grid line {
+  stroke: #334155;
+}
+
+html[data-theme-resolved='dark'] .adm-line-chart__dot {
+  stroke: #1e293b;
+}
