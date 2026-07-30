@@ -81,3 +81,4 @@ public/delete_user.php
 
 # Windows junction (API mirror under public/)
 public/app/
+.vercel

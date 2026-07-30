@@ -87,14 +87,24 @@ function appointment_slots_sync_provider(PDO $pdo, int $provider_id, int $daysAh
  */
 function appointment_slots_clear_day(PDO $pdo, int $provider_id, string $day): void
 {
+    // Use WEEKDAY (0=Mon … 6=Sun) instead of DAYNAME() to avoid collation mismatches on Hostinger.
+    $weekdayMap = [
+        'Monday' => 0, 'Tuesday' => 1, 'Wednesday' => 2, 'Thursday' => 3,
+        'Friday' => 4, 'Saturday' => 5, 'Sunday' => 6,
+    ];
+    $weekday = $weekdayMap[$day] ?? null;
+    if ($weekday === null) {
+        return;
+    }
+
     $stmt = $pdo->prepare("
         DELETE FROM appointment_slots
         WHERE provider_id = ?
-          AND DAYNAME(slot_date) = ?
+          AND WEEKDAY(slot_date) = ?
           AND slot_date >= CURDATE()
           AND status = 'available'
     ");
-    $stmt->execute([$provider_id, $day]);
+    $stmt->execute([$provider_id, $weekday]);
 }
 
 /**
