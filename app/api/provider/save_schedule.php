@@ -4,7 +4,7 @@
  * URL: /app/api/provider/save_schedule.php
  *
  * POST:
- *   day         — weekday name (today only)
+ *   day         — weekday name (any day of week)
  *   is_active   — 1|0 day-level booking toggle
  *   sessions    — JSON array [{id?, start_time, end_time, duration}]
  */
@@ -45,10 +45,7 @@ if (!in_array($day, provider_schedule_valid_days(), true)) {
 }
 
 $today_name = date('l');
-if ($day !== $today_name) {
-    echo json_encode(['success' => false, 'message' => 'You can only update today\'s schedule (' . $today_name . ').']);
-    exit;
-}
+$is_today = ($day === $today_name);
 
 $sessionsInput = is_array($sessionsRaw) ? $sessionsRaw : json_decode((string) $sessionsRaw, true);
 if (!is_array($sessionsInput)) {
@@ -82,17 +79,19 @@ try {
 
     provider_schedule_save_day($pdo, $provider_id, $day, $sessions, $day_active);
 
+    // Clear unbooked future slots for this weekday, then regenerate from the template.
     appointment_slots_clear_day($pdo, $provider_id, $day);
 
     $slots_created = 0;
     if ($day_active && $sessions !== []) {
-        $slots_created = appointment_slots_sync_today($pdo, $provider_id);
+        // Horizon keeps upcoming occurrences ready; patients still book today-only.
+        $slots_created = appointment_slots_sync_provider($pdo, $provider_id, 28, $day);
     }
 
     $pdo->commit();
 
     $patients_notified = 0;
-    if ($day_active && $slots_created > 0) {
+    if ($is_today && $day_active && $slots_created > 0) {
         try {
             require_once dirname(dirname(dirname(__DIR__))) . '/app/includes/notification_events.php';
             $nameStmt = $pdo->prepare("
@@ -116,14 +115,24 @@ try {
         }
     }
 
+    if ($is_today) {
+        $message = $day_active
+            ? 'Today\'s schedule saved. ' . $slots_created . ' appointment slot(s) are available for patients.'
+            : 'Today\'s schedule saved. Bookings are off — no new slots were opened.';
+    } else {
+        $message = $day_active
+            ? $day . ' schedule saved. Recurring hours and upcoming slots were updated.'
+            : $day . ' schedule saved and marked inactive for that weekday.';
+    }
+
     echo json_encode([
         'success'           => true,
-        'message'           => $day_active
-            ? 'Schedule saved. ' . $slots_created . ' appointment slot(s) are now available for patients.'
-            : 'Schedule saved. Today is marked inactive — no new slots were opened.',
+        'message'           => $message,
         'slots_created'     => $slots_created,
         'sessions_saved'    => count($sessions),
         'patients_notified' => $patients_notified,
+        'day'               => $day,
+        'is_today'          => $is_today,
         'today'             => date('Y-m-d'),
     ]);
 } catch (Throwable $e) {

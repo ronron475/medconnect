@@ -61,9 +61,10 @@ $session_count_today = count($today_sessions);
   <div>
     <h2 class="text-h2">Weekly Availability</h2>
     <p>
-      Define <strong>multiple clinic sessions</strong> for <strong><?= htmlspecialchars($today_name) ?></strong>
-      (<?= date('M j, Y') ?>). Morning, afternoon, and evening hours are supported.
-      Other weekdays are read-only until their calendar day.
+      Set recurring clinic sessions for <strong>any weekday</strong>.
+      Patients can book <strong>today&apos;s</strong> open slots
+      (<?= htmlspecialchars($today_name) ?>, <?= date('M j, Y') ?>).
+      Expand a day, add morning/afternoon sessions, then save.
     </p>
   </div>
   <div class="sched-summary">
@@ -155,9 +156,10 @@ $session_count_today = count($today_sessions);
     <div class="mc-card mt-4 sched-note-card">
       <h4 class="text-h3" style="color:#069396;margin-bottom:8px;">How it works</h4>
       <p>
-        Use <strong>+ Add Session</strong> for split clinic hours (e.g. 5:00–8:00 AM, 1:00–3:00 PM).
-        Each session can have its own slot length. Saving regenerates today&apos;s <strong>available</strong> slots;
-        <strong>booked</strong> appointments are never removed.
+        Edit <strong>any weekday</strong> to set recurring clinic hours (e.g. Mon morning + afternoon).
+        Use <strong>+ Add Session</strong> for split hours. Saving updates that day&apos;s template and regenerates
+        upcoming <strong>available</strong> slots; <strong>booked</strong> appointments are never removed.
+        Patients can book <strong>today&apos;s</strong> open slots only.
       </p>
     </div>
   </div>
@@ -170,6 +172,7 @@ $session_count_today = count($today_sessions);
       'loginUrl' => ASSET_BASE . '/index.php',
   ], JSON_THROW_ON_ERROR) ?>;
 </script>
-<script src="<?= ASSET_BASE ?>/assets/js/provider-schedule.js?v=20260703j"></script>
+<?php $schedJsVer = (int) @filemtime(ASSETS_PATH . '/js/provider-schedule.js'); ?>
+<script src="<?= ASSET_BASE ?>/assets/js/provider-schedule.js?v=<?= $schedJsVer ?>"></script>
 
 <?php require __DIR__.'/partials/layout_close.php'; ?>
