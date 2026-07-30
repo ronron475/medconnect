@@ -357,10 +357,10 @@
 
 /* Dashboard feed — provider / clinical portals */
 .mc-notif-recent-panel {
-  background: #fff;
-  border: 1px solid var(--mc-border-thin, #e2e8f0);
+  background: var(--card-bg, var(--mc-surface, #fff));
+  border: 1px solid var(--border-color, var(--mc-border-thin, #e2e8f0));
   border-radius: 12px;
-  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.05);
+  box-shadow: var(--shadow-card, 0 1px 3px rgba(15, 23, 42, 0.05));
   overflow: hidden;
 }
 
@@ -370,8 +370,8 @@
   justify-content: space-between;
   gap: 16px;
   padding: 16px 18px;
-  border-bottom: 1px solid #f1f5f9;
-  background: #fafbfc;
+  border-bottom: 1px solid var(--border-color, #f1f5f9);
+  background: var(--bg-secondary, #fafbfc);
 }
 
 .mc-notif-recent-panel__titles {
@@ -424,11 +424,11 @@
   align-items: flex-start;
   gap: 14px;
   padding: 14px 18px;
-  border-bottom: 1px solid #f1f5f9;
-  background: #fff;
+  border-bottom: 1px solid var(--border-color, #f1f5f9);
+  background: var(--card-bg, #fff);
   text-decoration: none;
   color: inherit;
-  transition: background 0.12s ease;
+  transition: background 0.2s ease;
   position: relative;
 }
 
@@ -437,7 +437,7 @@
 }
 
 .mc-notif-list--feed .mc-notif-item:hover {
-  background: #f8fafc;
+  background: var(--hover-overlay, #f8fafc);
 }
 
 .mc-notif-list--feed .mc-notif-item.is-unread {

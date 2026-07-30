@@ -31,7 +31,7 @@ body.provider-body {
 
 /* --- Panel Styles --- */
 .pd-panel {
-    background: #fff;
+    background: var(--card-bg);
     border-radius: var(--mc-radius-lg);
     border: 1px solid var(--mc-border);
     box-shadow: var(--mc-shadow-sm);
@@ -118,7 +118,7 @@ body.provider-body {
 /* --- Sidebar Adjustment --- */
 .pd-sidebar {
     width: var(--pd-sidebar-w);
-    background: #fff;
+    background: var(--card-bg);
     border-right: 1px solid var(--mc-border);
 }
 
@@ -127,7 +127,7 @@ body.provider-body {
 ══════════════════════════════════════════════ */
 .pd-sidebar {
     width: var(--pd-sidebar-w);
-    background: #ffffff;
+    background: var(--card-bg);
     border-right: 1px solid #e2e8f0;
     box-shadow: 2px 0 12px rgba(0,0,0,0.04);
     display: flex;
@@ -268,7 +268,7 @@ body.provider-body .provider-page-body {
 }
 
 .pd-header {
-    background: #ffffff;
+    background: var(--card-bg);
     height: var(--provider-header-h);
     padding: 0 28px;
     display: flex;

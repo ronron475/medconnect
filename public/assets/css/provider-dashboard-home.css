@@ -19,8 +19,8 @@
   gap: 12px;
   flex-wrap: wrap;
   padding: 12px 16px;
-  background: #fff;
-  border: 1px solid var(--mc-border-thin, #e2e8f0);
+  background: var(--card-bg);
+  border: 1px solid var(--border-color, var(--mc-border-thin, #e2e8f0));
   border-left: 4px solid #069396;
   border-radius: 12px;
   box-shadow: var(--mc-shadow-micro, 0 1px 3px rgba(15, 23, 42, 0.06));
@@ -85,8 +85,8 @@
 }
 
 .prov-dash-stat {
-  background: #fff;
-  border: 1px solid var(--mc-border-thin, #e2e8f0);
+  background: var(--card-bg);
+  border: 1px solid var(--border-color, var(--mc-border-thin, #e2e8f0));
   border-radius: 12px;
   padding: 12px 14px;
   box-shadow: var(--mc-shadow-micro, 0 1px 3px rgba(15, 23, 42, 0.04));
@@ -145,8 +145,8 @@
 }
 
 .prov-dash-card {
-  background: #fff;
-  border: 1px solid var(--mc-border-thin, #e2e8f0);
+  background: var(--card-bg);
+  border: 1px solid var(--border-color, var(--mc-border-thin, #e2e8f0));
   border-radius: 12px;
   padding: 14px 16px;
   box-shadow: var(--mc-shadow-micro, 0 1px 3px rgba(15, 23, 42, 0.04));
@@ -295,9 +295,10 @@
   align-items: center;
   justify-content: space-between;
   padding: 11px 12px;
-  background: #f8fafc;
-  border: 1px solid #e8eef2;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
   border-radius: 10px;
+  transition: background 0.2s ease;
 }
 
 .prov-status-item__label {
@@ -328,9 +329,10 @@
   justify-content: space-between;
   gap: 10px;
   padding: 10px 12px;
-  background: #f8fafc;
-  border: 1px solid #e8eef2;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
   border-radius: 10px;
+  transition: background 0.2s ease;
 }
 
 .prov-recording-item__name {
@@ -362,9 +364,14 @@
   align-items: flex-start;
   gap: 10px;
   padding: 8px 10px;
-  border: 1px solid var(--mc-border-thin, #e2e8f0);
+  border: 1px solid var(--border-color, var(--mc-border-thin, #e2e8f0));
   border-radius: 10px;
-  background: #f8fafc;
+  background: var(--bg-secondary);
+  transition: background 0.2s ease;
+}
+
+.prov-activity-item:hover {
+  background: var(--hover-overlay, rgba(0, 0, 0, 0.03));
 }
 
 .prov-activity-item__icon {
