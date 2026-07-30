@@ -237,6 +237,7 @@ html[data-theme-resolved='dark'] .mc-chart-filters__control {
 }
 
 html[data-theme-resolved='dark'] .pdash-chart-legend strong,
-html[data-theme-resolved='dark'] .prov-chart-legend strong {
+html[data-theme-resolved='dark'] .prov-chart-legend strong,
+html[data-theme-resolved='dark'] body.bhw-body .bhw-dash-charts .bhw-chart-card h4 {
   color: #a78bfa;
 }

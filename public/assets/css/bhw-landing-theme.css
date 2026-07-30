@@ -339,11 +339,14 @@ body.bhw-body .adm-card-head-icon--blue {
   color: var(--landing-teal);
 }
 
-/* ── Dark theme ── */
+/* ── Dark theme (base; bhw-dark-mode.css loads last for full portal polish) ── */
 html[data-theme-resolved='dark'] body.bhw-body {
-  --mc-border-thin: #334155;
-  background: #0b1628;
-  color: #f1f5f9;
+  --mc-border-thin: #2a2a2a;
+  --landing-bg: #0a0a0a;
+  --landing-surface: #1c1c1c;
+  --bhw-canvas: #0a0a0a;
+  background: #0a0a0a;
+  color: #ffffff;
 }
 
 html[data-theme-resolved='dark'] body.bhw-body .adm-sidebar {
