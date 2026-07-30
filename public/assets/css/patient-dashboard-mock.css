@@ -79,8 +79,8 @@ body.patient-portal .prov-dash-stat, body.provider-body .prov-dash-stat{
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-  background: #fff;
-  border: 1px solid rgba(226, 237, 241, 0.95);
+  background: var(--card-bg, #fff);
+  border: 1px solid var(--border-color, rgba(226, 237, 241, 0.95));
   border-top: 3px solid var(--landing-teal, #069396);
   box-shadow: 0 2px 10px rgba(1, 42, 74, 0.035);
 }
@@ -139,8 +139,8 @@ body.patient-portal .prov-dash-widget-strip > .mc-notif-widget, body.provider-bo
 }
 
 body.patient-portal .prov-how-it-works, body.provider-body .prov-how-it-works{
-  background: #fff;
-  border: 1px solid var(--mc-border-thin, #e2edf1);
+  background: var(--card-bg, #fff);
+  border: 1px solid var(--border-color, var(--mc-border-thin, #e2edf1));
   border-radius: var(--pt-dash-radius);
   padding: var(--pt-dash-strip-pad);
   box-shadow: 0 2px 10px rgba(1, 42, 74, 0.035);
@@ -306,8 +306,8 @@ body.patient-portal .prov-dash-side, body.provider-body .prov-dash-side{
 body.patient-portal .prov-dash-card, body.provider-body .prov-dash-card{
   padding: var(--pt-dash-card-pad);
   border-radius: var(--pt-dash-radius);
-  border: 1px solid rgba(226, 237, 241, 0.95);
-  background: #fff;
+  border: 1px solid var(--border-color, rgba(226, 237, 241, 0.95));
+  background: var(--card-bg, #fff);
   box-shadow: 0 2px 10px rgba(1, 42, 74, 0.035);
 }
 
@@ -405,9 +405,9 @@ body.patient-portal .prov-dash-action-btn, body.provider-body .prov-dash-action-
   justify-content: center;
   padding: 6px 12px;
   border-radius: 99px;
-  border: 1px solid #d1e3e8;
-  background: #fff;
-  color: var(--landing-navy, #012a4a);
+  border: 1px solid var(--border-color, #d1e3e8);
+  background: var(--card-bg, #fff);
+  color: var(--text-primary, var(--landing-navy, #012a4a));
   font-size: 11px;
   font-weight: 700;
   font-family: inherit;
