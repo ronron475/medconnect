@@ -1,62 +1,78 @@
-# Push MedConnect to GitLab
+# Push MedConnect to GitLab + auto-deploy online
 
-## 1. Create a GitLab project
+Production site: **https://medconnect.bccbsis.com**
 
-Create an empty project on GitLab (no README) and copy the remote URL.
-
-## 2. First push from your PC
+## 1. Push from your PC
 
 ```powershell
 cd c:\xampp\htdocs\medconnect
-
-git remote add origin https://gitlab.com/YOUR_GROUP/medconnect.git
-# or: git@gitlab.com:YOUR_GROUP/medconnect.git
-
-git push -u origin master
+git push origin main
 ```
 
-If `origin` already exists, update it:
+`origin` should be:
 
-```powershell
-git remote set-url origin https://gitlab.com/YOUR_GROUP/medconnect.git
-git push -u origin master
-```
+`https://gitlab.bagocitycollege.com/bsis-capstone-2026/medconnect.git`
 
-## 3. Secrets (never commit)
+## 2. One-time: enable automatic online deploy
 
-Copy `.env.example` to `.env` locally. In GitLab go to **Settings → CI/CD → Variables** and add:
+GitLab CI validates every push. On **`main`**, it also **auto-deploys** to the live site when FTP variables are set.
+
+### Add CI/CD variables
+
+In GitLab: **Settings → CI/CD → Variables → Add variable**
+
+| Variable | Example / notes | Flags |
+|----------|-----------------|--------|
+| `DEPLOY_FTP_HOST` | FTP host from hPanel / cPanel (e.g. `ftp.bccbsis.com` or server IP) | Protected |
+| `DEPLOY_FTP_USER` | FTP username | Protected + Masked |
+| `DEPLOY_FTP_PASS` | FTP password | Protected + Masked |
+| `DEPLOY_FTP_PORT` | `21` (or your host’s FTP port) | Optional |
+| `DEPLOY_FTP_REMOTE_DIR` | Path to the site root on the server (often `public_html` or `domains/medconnect.bccbsis.com/public_html`) | Protected |
+| `DEPLOY_FTP_SSL` | `true` (FTPS) or `false` if host only allows plain FTP | Optional |
+
+Also keep app secrets as needed:
 
 | Variable | Notes |
 |----------|--------|
 | `GROQ_API_KEY` | Masked |
 | `OCR_SPACE_API_KEY` | Masked |
-| `DB_HOST`, `DB_NAME`, `DB_USER`, `DB_PASS` | For deploy |
-| `MEDCONNECT_AI_SERVICE_URL` | FastAPI public URL after deploy |
+| `DB_HOST`, `DB_NAME`, `DB_USER`, `DB_PASS` | DB (server `.env` is source of truth; do not overwrite via FTP) |
+| `MEDCONNECT_AI_SERVICE_URL` | FastAPI public URL if used |
 
-## 4. What GitLab CI does
+**Important:** Mark deploy variables as **Protected** and only protect the `main` branch (Settings → Repository → Protected branches), so deploys only run from `main`.
 
-On each push, `.gitlab-ci.yml` runs:
+### Where to find FTP details
 
-- PHP syntax check
-- FastAPI import smoke test
+- **Hostinger:** hPanel → **Files** → **FTP Accounts**
+- **cPanel:** **FTP Accounts**
+- Remote directory must be the folder that serves `https://medconnect.bccbsis.com` (contains `index.php`)
 
-Deploy is **not** automatic — host PHP and FastAPI on Railway, Render, or a VPS after push.
+## 3. What happens on each push to `main`
 
-## 5. Production deploy (summary)
+1. Pipeline runs **PHP syntax** (+ optional FastAPI smoke test)
+2. **`deploy:production`** uploads changed project files via FTPS
+3. Server `.env`, uploads, and logs are **not** deleted/overwritten by exclude rules
 
-| Service | Suggested host |
-|---------|----------------|
-| PHP app | Railway / Render / VPS |
-| FastAPI (`ai_service/`) | Railway / Render |
-| MySQL | Railway MySQL / managed DB |
+Check status: GitLab → **Build → Pipelines**
 
-PHP `.env` on the server:
+## 4. Alternative: Hostinger Git auto-deploy (webhook)
+
+If the host uses **Advanced → Git**:
+
+1. Connect repo `git@gitlab.bagocitycollege.com:bsis-capstone-2026/medconnect.git` (or HTTPS) branch `main`
+2. Enable **Auto Deployment** and copy the webhook URL
+3. In GitLab: **Settings → Webhooks** → paste URL → Push events → Add webhook
+
+Then every push to `main` triggers a pull on the server (you can use this *or* the FTP CI job; both is redundant).
+
+## 5. Production `.env` on the server (do not commit)
 
 ```env
 MEDCONNECT_AI_SERVICE_ENABLED=true
 MEDCONNECT_AI_SERVICE_URL=https://your-fastapi.example.com
 MEDCONNECT_AI_AUTO_START=false
 MEDCONNECT_AI_REQUIRE_PYTHON=false
+MEDCONNECT_APP_URL=https://medconnect.bccbsis.com
 ```
 
-Import `database/schema.sql` and migrations on the production database.
+Import `database/schema.sql` and migrations on the production database when schema changes.
