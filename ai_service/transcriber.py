@@ -43,9 +43,14 @@ def get_whisper_model() -> Any:
 def get_spacy_nlp() -> Any:
     global SPACY_NLP
     if SPACY_NLP is None:
-        import spacy
+        try:
+            import spacy
 
-        SPACY_NLP = spacy.load("en_core_web_sm")
+            SPACY_NLP = spacy.load("en_core_web_sm")
+        except Exception:
+            SPACY_NLP = False
+    if SPACY_NLP is False:
+        raise RuntimeError("spaCy model not available")
     return SPACY_NLP
 
 

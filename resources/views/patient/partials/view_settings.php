@@ -23,6 +23,7 @@ function pts_icon(string $name): string {
         'mail' => '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>',
         'clock' => '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>',
         'key' => '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0 3 3L22 7l-3-3m-3.5 3.5L19 4"/></svg>',
+        'check' => '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg>',
     ];
     return $icons[$name] ?? '';
 }
@@ -33,10 +34,29 @@ $nav_tabs = [
     'notifications' => ['icon' => 'bell', 'label' => 'Notifications', 'desc' => 'Alerts & email'],
     'sessions' => ['icon' => 'monitor', 'label' => 'Sessions', 'desc' => 'Devices & access'],
 ];
+
+$session_count = is_array($sessions) ? count($sessions) : 0;
 ?>
 <div class="pts-page" data-initial-tab="<?= htmlspecialchars($initial_tab) ?>">
 
-  <p class="pts-lead">Manage your account security, privacy preferences, notifications, and active sessions.</p>
+  <header class="pts-hero">
+    <div class="pts-hero__intro">
+      <p class="pts-hero__eyebrow">Account</p>
+      <h2 class="pts-hero__title">Security &amp; preferences</h2>
+      <p class="pts-hero__text">
+        Update your password, privacy choices, alerts, and signed-in devices in one place.
+      </p>
+    </div>
+    <div class="pts-hero__chips" aria-label="Settings overview">
+      <span class="pts-chip pts-chip--teal">
+        <span class="pts-chip__dot" aria-hidden="true"></span>
+        Secure account
+      </span>
+      <span class="pts-chip">
+        <?= (int) $session_count ?> active session<?= $session_count === 1 ? '' : 's' ?>
+      </span>
+    </div>
+  </header>
 
   <div class="pts-layout">
     <aside class="pts-nav" role="tablist" aria-label="Settings sections">
@@ -51,6 +71,9 @@ $nav_tabs = [
         <span class="pts-nav__text">
           <span class="pts-nav__label"><?= htmlspecialchars($tab['label']) ?></span>
           <span class="pts-nav__desc"><?= htmlspecialchars($tab['desc']) ?></span>
+        </span>
+        <span class="pts-nav__chevron" aria-hidden="true">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
         </span>
       </button>
       <?php endforeach; ?>
@@ -89,18 +112,17 @@ $nav_tabs = [
           </article>
         </div>
 
-        <div class="pts-card">
+        <div class="pts-card pts-card--security">
           <div class="pts-card__head">
             <div class="pts-card__head-icon pts-card__head-icon--lock"><?= pts_icon('lock') ?></div>
-            <div>
+            <div class="pts-card__head-copy">
               <h3 class="pts-card__title">Change Password</h3>
-              <p class="pts-card__sub">Minimum 12 characters with uppercase, lowercase, number, and special character.</p>
+              <p class="pts-card__sub">Use at least 12 characters with uppercase, lowercase, a number, and a special character.</p>
             </div>
           </div>
 
           <div id="ptsPasswordAlert" class="pts-alert" role="alert" hidden></div>
 
-          <div class="pts-security-module">
           <form id="ptsPasswordForm" class="pts-form-grid" novalidate>
             <div class="pts-field pts-field--full">
               <label for="ptsCurrentPassword">Current password</label>
@@ -141,18 +163,18 @@ $nav_tabs = [
 
             <div class="pts-validation pts-field--full" aria-label="Password strength and requirements">
               <div class="pts-validation__head">
-                <div class="pts-validation__title">Password Strength</div>
+                <div class="pts-validation__title">Password strength</div>
                 <div id="ptsStrengthLabel" class="pts-validation__label" aria-live="polite">Weak</div>
               </div>
               <div class="pts-validation__bar" aria-hidden="true">
                 <span id="ptsStrengthFill" class="pts-validation__fill"></span>
               </div>
               <ul class="pts-validation__grid" id="ptsReqList" aria-label="Password requirements">
-                <li data-req="len"><span class="pts-req-dot"></span>At least 12 characters</li>
-                <li data-req="upper"><span class="pts-req-dot"></span>One uppercase letter</li>
-                <li data-req="lower"><span class="pts-req-dot"></span>One lowercase letter</li>
-                <li data-req="digit"><span class="pts-req-dot"></span>One number</li>
-                <li data-req="special"><span class="pts-req-dot"></span>One special character</li>
+                <li data-req="len"><span class="pts-req-dot" aria-hidden="true"></span>At least 12 characters</li>
+                <li data-req="upper"><span class="pts-req-dot" aria-hidden="true"></span>One uppercase letter</li>
+                <li data-req="lower"><span class="pts-req-dot" aria-hidden="true"></span>One lowercase letter</li>
+                <li data-req="digit"><span class="pts-req-dot" aria-hidden="true"></span>One number</li>
+                <li data-req="special"><span class="pts-req-dot" aria-hidden="true"></span>One special character</li>
               </ul>
             </div>
 
@@ -163,7 +185,6 @@ $nav_tabs = [
               </button>
             </div>
           </form>
-          </div>
         </div>
       </section>
 
@@ -177,7 +198,7 @@ $nav_tabs = [
         <div class="pts-card">
           <div class="pts-card__head">
             <div class="pts-card__head-icon pts-card__head-icon--shield"><?= pts_icon('shield') ?></div>
-            <div>
+            <div class="pts-card__head-copy">
               <h3 class="pts-card__title">Privacy Preferences</h3>
               <p class="pts-card__sub">Control how your medical data is shared within the medConnect care network.</p>
             </div>
@@ -228,7 +249,7 @@ $nav_tabs = [
         <div class="pts-card">
           <div class="pts-card__head">
             <div class="pts-card__head-icon pts-card__head-icon--bell"><?= pts_icon('bell') ?></div>
-            <div>
+            <div class="pts-card__head-copy">
               <h3 class="pts-card__title">Notification Settings</h3>
               <p class="pts-card__sub">Choose which alerts you receive in-app and by email.</p>
             </div>
@@ -297,7 +318,7 @@ $nav_tabs = [
           <div class="pts-card__head pts-card__head--row">
             <div class="pts-card__head-main">
               <div class="pts-card__head-icon pts-card__head-icon--monitor"><?= pts_icon('monitor') ?></div>
-              <div>
+              <div class="pts-card__head-copy">
                 <h3 class="pts-card__title">Active Sessions</h3>
                 <p class="pts-card__sub">Devices signed in to your account in the last 7 days.</p>
               </div>
@@ -346,7 +367,13 @@ $nav_tabs = [
 
         <?php if (!empty($devices)): ?>
         <div class="pts-card">
-          <h3 class="pts-card__title" style="margin-bottom:12px;">Known Devices</h3>
+          <div class="pts-card__head">
+            <div class="pts-card__head-icon pts-card__head-icon--monitor"><?= pts_icon('monitor') ?></div>
+            <div class="pts-card__head-copy">
+              <h3 class="pts-card__title">Known Devices</h3>
+              <p class="pts-card__sub">Browsers and devices previously used with this account.</p>
+            </div>
+          </div>
           <ul class="pts-device-list">
             <?php foreach ($devices as $dev): ?>
             <li class="pts-device-item">

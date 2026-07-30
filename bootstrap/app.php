@@ -90,15 +90,15 @@ if (!function_exists('medconnect_send_security_headers')) {
             "base-uri 'self'",
             "object-src 'none'",
             "frame-ancestors 'self'",
-            // Maps + Google reCAPTCHA challenge iframes.
-            "frame-src 'self' https://maps.google.com https://www.google.com https://recaptcha.google.com",
+            // Maps embeds.
+            "frame-src 'self' https://maps.google.com https://www.google.com",
             // Leaflet tiles (OSM/Esri) + CDN assets used in GIS dashboards.
-            "img-src 'self' data: blob: https://*.tile.openstreetmap.org https://server.arcgisonline.com https://unpkg.com https://www.gstatic.com",
+            "img-src 'self' data: blob: https://*.tile.openstreetmap.org https://server.arcgisonline.com https://unpkg.com",
             "font-src 'self' data: https://fonts.gstatic.com",
-            "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://unpkg.com https://www.gstatic.com",
-            // Chart.js + Leaflet CDN + Google reCAPTCHA (forgot-password / login).
-            "script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://unpkg.com https://www.google.com https://www.gstatic.com",
-            "connect-src 'self' https://www.google.com https://www.gstatic.com",
+            "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://unpkg.com",
+            // Chart.js + Leaflet CDN.
+            "script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://unpkg.com",
+            "connect-src 'self'",
             "media-src 'self' blob:",
         ]);
         header("Content-Security-Policy: {$csp}");
@@ -226,6 +226,7 @@ if (!defined('BASE_URL') || !defined('ASSET_BASE')) {
 // Application config
 require_once CONFIG_PATH . '/app.php';
 require_once CONFIG_PATH . '/ai_interpreter.php';
+require_once CONFIG_PATH . '/twilio.php';
 date_default_timezone_set(APP_TIMEZONE);
 
 require_once CONFIG_PATH . '/db.php';

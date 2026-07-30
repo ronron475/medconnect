@@ -203,9 +203,43 @@ function patient_normalize_phone(string $phone): string
     return preg_replace('/\D+/', '', $phone) ?? '';
 }
 
+/**
+ * Canonical PH mobile for storage and duplicate checks (09XXXXXXXXX).
+ */
+function patient_canonical_ph_mobile(string $phone): string
+{
+    $digits = patient_normalize_phone($phone);
+    if (preg_match('/^639\d{9}$/', $digits)) {
+        return '0' . substr($digits, 2);
+    }
+    if (preg_match('/^9\d{9}$/', $digits)) {
+        return '0' . $digits;
+    }
+    return $digits;
+}
+
+/**
+ * True if another patient registration already uses this mobile (last 10 digits).
+ */
+function patient_registration_contact_exists(PDO $pdo, string $phone): bool
+{
+    $canonical = patient_canonical_ph_mobile($phone);
+    if (!preg_match('/^09\d{9}$/', $canonical)) {
+        return false;
+    }
+    $last10 = substr($canonical, -10);
+    $stmt = $pdo->prepare(
+        'SELECT id FROM patient_registrations
+         WHERE REPLACE(REPLACE(REPLACE(contact_number, " ", ""), "-", ""), "+", "") LIKE ?
+         LIMIT 1'
+    );
+    $stmt->execute(['%' . $last10]);
+    return (bool) $stmt->fetch();
+}
+
 function patient_is_valid_ph_mobile(string $phone): bool
 {
-    return (bool) preg_match('/^09\d{9}$/', patient_normalize_phone($phone));
+    return (bool) preg_match('/^09\d{9}$/', patient_canonical_ph_mobile($phone));
 }
 
 /**

@@ -14,6 +14,8 @@ require_once dirname(dirname(dirname(__DIR__))) . '/app/includes/triage_assessme
 require_once dirname(dirname(dirname(__DIR__))) . '/app/core/TriageLevelService.php';
 require_once dirname(dirname(dirname(__DIR__))) . '/app/includes/bhw_patient_workflow.php';
 require_once dirname(dirname(dirname(__DIR__))) . '/app/includes/notification_events.php';
+require_once dirname(dirname(dirname(__DIR__))) . '/app/includes/triage_provider_assignment.php';
+require_once dirname(dirname(dirname(__DIR__))) . '/app/includes/patient_symptoms_review_submit.php';
 
 Api::startJson();
 Api::requirePatientReady($pdo);
@@ -111,42 +113,123 @@ $patientName = trim((string) ($nameStmt->fetchColumn() ?: 'Patient'));
 try {
     $pdo->beginTransaction();
 
-    $stmt = $pdo->prepare("
-        INSERT INTO triage_results
-            (patient_id, symptoms, chief_complaint, level, urgency_label, status, assessed_at,
-             confidence_score, severity, triage_level, triage_classification, english_complaint,
-             detected_symptoms_json, possible_conditions_json, recommendations,
-             assessment_payload, engine)
-        VALUES (?, ?, ?, ?, ?, 'pending', NOW(), ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-    ");
-    $stmt->execute([
-        $patient_id,
-        json_encode($symptomList),
-        $complaint,
-        $level,
-        $label,
-        (int) ($assessment['confidence']['score'] ?? 0),
-        (string) ($assessment['severity']['severity'] ?? ''),
-        $triageLevel,
-        (string) ($assessment['triage']['triage_classification'] ?? ''),
-        (string) ($assessment['english_translation'] ?? ''),
-        json_encode($assessment['detected_symptoms'] ?? [], JSON_UNESCAPED_UNICODE),
-        json_encode($assessment['possible_conditions'] ?? [], JSON_UNESCAPED_UNICODE),
-        implode("\n", $assessment['recommendations'] ?? []),
-        json_encode($assessment, JSON_UNESCAPED_UNICODE),
-        (string) ($assessment['engine'] ?? MedicalAssessmentEngine::VERSION),
-    ]);
+    $reusedCareTipsTriage = false;
+    $openCareTipsRow = null;
+    $reviewerBeforeBooking = 0;
+    $reuseTriageId = (int) ($_POST['triage_id'] ?? 0);
 
-    $triageId = (int) $pdo->lastInsertId();
-    $recText = implode("\n", $assessment['recommendations'] ?? []);
-    $recStatus = triage_recommendation_status_for_insert(
-        $triageLevel,
-        $complaint,
-        $recText,
-        (string) ($assessment['triage']['triage_classification'] ?? '')
-    );
-    $pdo->prepare('UPDATE triage_results SET recommendation_status = ?, recommendation_patient_ack_at = NULL WHERE id = ?')
-        ->execute([$recStatus, $triageId]);
+    if (!$isEmergency) {
+        $openCareTipsRow = patient_find_open_care_tips_triage($pdo, $patient_id, true);
+    }
+
+    // Reuse today's urgent triage when booking from the urgent earliest-slot modal.
+    if ($openCareTipsRow === null && $reuseTriageId > 0 && $slot_id > 0 && !$isEmergency) {
+        $urg = $pdo->prepare("
+            SELECT id, patient_id, symptoms, chief_complaint, level, urgency_label, status,
+                   triage_level, triage_classification, recommendation_status,
+                   assigned_provider_id, recommendations, english_complaint,
+                   detected_symptoms_json, possible_conditions_json, assessment_payload, engine
+            FROM triage_results
+            WHERE id = ?
+              AND patient_id = ?
+              AND triage_level = 'urgent'
+              AND assessed_at >= CURDATE()
+            LIMIT 1
+            FOR UPDATE
+        ");
+        $urg->execute([$reuseTriageId, $patient_id]);
+        $urgRow = $urg->fetch(PDO::FETCH_ASSOC);
+        if ($urgRow) {
+            $openCareTipsRow = $urgRow;
+        }
+    }
+
+    if ($openCareTipsRow !== null && $slot_id <= 0) {
+        $existingRec = (string) ($openCareTipsRow['recommendation_status'] ?? '');
+        if ($existingRec === 'pending_approval') {
+            $pdo->commit();
+
+            $existingTriageId = (int) ($openCareTipsRow['id'] ?? 0);
+            $assignedId = (int) ($openCareTipsRow['assigned_provider_id'] ?? 0);
+
+            Api::success([
+                'booked'                   => false,
+                'awaiting_provider_review' => true,
+                'emergency'                => false,
+                'triage_id'                => $existingTriageId,
+                'assigned_provider_id'     => $assignedId,
+                'reused_existing_triage'   => true,
+                'level'                    => (string) ($openCareTipsRow['level'] ?? $level),
+                'label'                    => (string) ($openCareTipsRow['urgency_label'] ?? $label),
+            ], 'You already have a care tips case in review. Book a video consultation with your assigned doctor, or wait for approved tips in Care tips.');
+        }
+        // Urgent reuse without a slot should fall through to normal validation (slot required).
+        $openCareTipsRow = null;
+    }
+
+    if ($openCareTipsRow !== null && $slot_id > 0) {
+        $reusedCareTipsTriage = true;
+        $triageId = (int) ($openCareTipsRow['id'] ?? 0);
+        $reviewerBeforeBooking = (int) ($openCareTipsRow['assigned_provider_id'] ?? 0);
+
+        $complaint = trim((string) ($openCareTipsRow['chief_complaint'] ?? $complaint));
+        $level = (string) ($openCareTipsRow['level'] ?? $level);
+        $label = (string) ($openCareTipsRow['urgency_label'] ?? $label);
+        $triageLevel = (string) ($openCareTipsRow['triage_level'] ?? TriageLevelService::NON_URGENT);
+        if (!TriageLevelService::isValid($triageLevel)) {
+            $triageLevel = TriageLevelService::NON_URGENT;
+        }
+
+        $recStatus = (string) ($openCareTipsRow['recommendation_status'] ?? 'hidden');
+        if ($recStatus === '') {
+            $recStatus = 'hidden';
+        }
+        $decodedPayload = json_decode((string) ($openCareTipsRow['assessment_payload'] ?? ''), true);
+        if (is_array($decodedPayload)) {
+            $assessment = $decodedPayload;
+        }
+
+        $consult_type = $complaint !== ''
+            ? $complaint
+            : ($symptomList !== [] ? implode(', ', $symptomList) : 'General Consultation');
+    } else {
+        $stmt = $pdo->prepare("
+            INSERT INTO triage_results
+                (patient_id, symptoms, chief_complaint, level, urgency_label, status, assessed_at,
+                 confidence_score, severity, triage_level, triage_classification, english_complaint,
+                 detected_symptoms_json, possible_conditions_json, recommendations,
+                 assessment_payload, engine)
+            VALUES (?, ?, ?, ?, ?, 'pending', NOW(), ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        ");
+        $stmt->execute([
+            $patient_id,
+            json_encode($symptomList),
+            $complaint,
+            $level,
+            $label,
+            (int) ($assessment['confidence']['score'] ?? 0),
+            (string) ($assessment['severity']['severity'] ?? ''),
+            $triageLevel,
+            (string) ($assessment['triage']['triage_classification'] ?? ''),
+            (string) ($assessment['english_translation'] ?? ''),
+            json_encode($assessment['detected_symptoms'] ?? [], JSON_UNESCAPED_UNICODE),
+            json_encode($assessment['possible_conditions'] ?? [], JSON_UNESCAPED_UNICODE),
+            implode("\n", $assessment['recommendations'] ?? []),
+            json_encode($assessment, JSON_UNESCAPED_UNICODE),
+            (string) ($assessment['engine'] ?? MedicalAssessmentEngine::VERSION),
+        ]);
+
+        $triageId = (int) $pdo->lastInsertId();
+        $recText = implode("\n", $assessment['recommendations'] ?? []);
+        $recStatus = triage_recommendation_status_for_insert(
+            $triageLevel,
+            $complaint,
+            $recText,
+            (string) ($assessment['triage']['triage_classification'] ?? '')
+        );
+        $pdo->prepare('UPDATE triage_results SET recommendation_status = ?, recommendation_patient_ack_at = NULL WHERE id = ?')
+            ->execute([$recStatus, $triageId]);
+    }
 
     // ── Emergency: hospital referral only (no teleconsult booking) ─────────
     if ($isEmergency) {
@@ -194,6 +277,44 @@ try {
         ], $msg);
     }
 
+    $awaitingProviderReview = $recStatus === 'pending_approval'
+        && $triageLevel === TriageLevelService::NON_URGENT;
+
+    if ($awaitingProviderReview && $slot_id <= 0) {
+        $assignedId = triage_assign_review_provider($pdo, $patient_id);
+        if ($assignedId <= 0) {
+            throw new RuntimeException('No healthcare provider is available to review your case. Please try again later or contact the health office.');
+        }
+        triage_bind_assigned_provider($pdo, $triageId, $assignedId);
+        try {
+            $pdo->prepare("UPDATE triage_results SET outcome = 'awaiting_provider_review' WHERE id = ?")
+                ->execute([$triageId]);
+        } catch (PDOException $e) {
+            // outcome column optional on legacy schemas
+        }
+
+        $pdo->commit();
+
+        NotificationEvents::aiSelfCareReviewRequired(
+            $pdo,
+            $assignedId,
+            $patient_id,
+            $patientName,
+            $triageId,
+            $patient_id
+        );
+
+        Api::success([
+            'booked'                   => false,
+            'awaiting_provider_review' => true,
+            'emergency'                => false,
+            'triage_id'                => $triageId,
+            'assigned_provider_id'     => $assignedId,
+            'level'                    => $level,
+            'label'                    => $label,
+        ], 'Your symptoms were submitted. A healthcare provider will review your case and prepare self-care guidance.');
+    }
+
     if ($slot_id <= 0) {
         throw new RuntimeException('Please select an available appointment slot.');
     }
@@ -224,6 +345,12 @@ try {
     }
 
     $provider_id   = (int) $slot['provider_id'];
+    triage_assert_patient_may_book_provider($pdo, $patient_id, $provider_id);
+
+    if ($awaitingProviderReview) {
+        triage_bind_assigned_provider($pdo, $triageId, $provider_id);
+    }
+
     $consult_date  = (string) $slot['slot_date'];
     $consult_time  = (string) $slot['start_time'];
     $provider_name = (string) $slot['provider_name'];
@@ -433,6 +560,19 @@ try {
     $when = date('M j, Y', strtotime($consult_date)) . ' at ' . date('g:i A', strtotime($consult_time));
     NotificationEvents::appointmentCreated($pdo, $consultation_id, $patient_id, $provider_id, $when, $patient_id);
     NotificationEvents::aiTriageCompleted($pdo, $patient_id, $label, $patient_id);
+    if ($awaitingProviderReview) {
+        $notifyReviewer = !$reusedCareTipsTriage || $reviewerBeforeBooking !== $provider_id;
+        if ($notifyReviewer) {
+            NotificationEvents::aiSelfCareReviewRequired(
+                $pdo,
+                $provider_id,
+                $patient_id,
+                $patientName,
+                $triageId,
+                $patient_id
+            );
+        }
+    }
 
     Api::success([
         'level'            => $level,
@@ -440,6 +580,7 @@ try {
         'booked'           => true,
         'emergency'        => false,
         'triage_id'        => $triageId,
+        'reused_existing_triage' => $reusedCareTipsTriage,
         'consultation_id'  => $consultation_id,
         'consult_date'     => $consult_date,
         'consult_time'     => $consult_time,

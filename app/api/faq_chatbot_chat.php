@@ -1,0 +1,77 @@
+<?php
+/**
+ * FAQ chatbot — main PHP pipeline (emotion, intent, FAQ, emergency, logging).
+ *
+ * POST JSON:
+ * {
+ *   "text": "user message",
+ *   "lang": "en|fil|hil",
+ *   "session_id": "optional — uses PHP session if omitted",
+ *   "mode": "full|assist|log_only",
+ *   "client_html": "for log_only",
+ *   "flow_key": "optional",
+ *   "confidence": 0.0-1.0
+ * }
+ */
+require_once dirname(dirname(__DIR__)) . '/bootstrap.php';
+
+Api::startJson();
+
+if (($_SERVER['REQUEST_METHOD'] ?? '') !== 'POST') {
+    Api::error('Method not allowed. Use POST.', 405);
+}
+
+require_once BASE_PATH . '/app/includes/faq_chatbot_schema.php';
+require_once BASE_PATH . '/app/includes/rate_limiter.php';
+faq_chatbot_ensure_schema($pdo);
+
+$rl = mc_rate_limiter_allow('faq_chatbot_chat', 40, 60, (int) ($_SESSION['user_id'] ?? 0));
+if (!$rl['allowed']) {
+    Api::error('Too many messages. Please wait a moment.', 429);
+}
+
+$rawBody = file_get_contents('php://input') ?: '';
+$payload = json_decode($rawBody, true);
+if (!is_array($payload)) {
+    $payload = $_POST;
+}
+
+$text = trim((string) ($payload['text'] ?? ''));
+$lang = trim((string) ($payload['lang'] ?? 'en'));
+$mode = strtolower(trim((string) ($payload['mode'] ?? 'assist')));
+if (!in_array($mode, ['full', 'assist', 'log_bot', 'log_only'], true)) {
+    $mode = 'assist';
+}
+
+$sessionId = trim((string) ($payload['session_id'] ?? ''));
+if ($sessionId === '') {
+    $sessionId = (string) ($_SESSION['faq_chatbot_session_id'] ?? '');
+}
+if ($sessionId === '' || !preg_match('/^[a-zA-Z0-9_-]{16,64}$/', $sessionId)) {
+    $sessionId = bin2hex(random_bytes(24));
+    $_SESSION['faq_chatbot_session_id'] = $sessionId;
+}
+
+$_SESSION['faq_chatbot_lang'] = FaqEmotionEngine::normalizeLang($lang);
+
+if ($text === '' && !in_array($mode, ['log_bot', 'log_only'], true)) {
+    Api::error('Text is required.');
+}
+
+try {
+    $orchestrator = new FaqChatbotOrchestrator($pdo);
+    $result = $orchestrator->handle($sessionId, $text, $lang, [
+        'mode'          => $mode,
+        'client_html'   => (string) ($payload['client_html'] ?? ''),
+        'flow_key'      => (string) ($payload['flow_key'] ?? ''),
+        'intent'        => (string) ($payload['intent'] ?? ''),
+        'confidence'    => isset($payload['confidence']) ? (float) $payload['confidence'] : null,
+    ]);
+
+    Api::success(['data' => $result], 'OK');
+} catch (InvalidArgumentException $e) {
+    Api::error($e->getMessage(), 422);
+} catch (Throwable $e) {
+    error_log('faq_chatbot_chat: ' . $e->getMessage());
+    Api::error('Unable to process your message right now. Please try again.', 500);
+}

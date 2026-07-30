@@ -410,29 +410,34 @@
       if (authHandoff) sessionStorage.removeItem('mc_auth_handoff');
     } catch (_) { /* ignore */ }
 
+    // Full-screen boot splash only after sign-in or sign-out — not normal portal navigation/reload.
+    if (authHandoff !== 'login' && authHandoff !== 'logout') {
+      boot.setAttribute('hidden', '');
+      boot.setAttribute('aria-hidden', 'true');
+      boot.setAttribute('aria-busy', 'false');
+      boot.classList.remove('mc-global-loader--visible', 'mc-loader--visible');
+      booting = false;
+      setBodyActive(false);
+      return;
+    }
+
+    const statusEl = boot.querySelector('.mc-loader__status');
+    const hintEl = boot.querySelector('.mc-loader__hint');
     if (authHandoff === 'login') {
-      const statusEl = boot.querySelector('.mc-loader__status');
-      const hintEl = boot.querySelector('.mc-loader__hint');
       if (statusEl) statusEl.textContent = 'Loading your dashboard…';
       if (hintEl) hintEl.textContent = 'Almost there…';
     } else if (authHandoff === 'logout') {
-      const statusEl = boot.querySelector('.mc-loader__status');
       if (statusEl) statusEl.textContent = 'Signed out';
+      if (hintEl) hintEl.textContent = 'Returning to home…';
     }
 
     booting = true;
-    const bootAlreadyVisible = boot.classList.contains('mc-global-loader--visible')
-      && !boot.hasAttribute('hidden');
-
-    if (bootAlreadyVisible) {
-      isVisible = true;
-      boot.removeAttribute('hidden');
-      boot.setAttribute('aria-busy', 'true');
-      boot.setAttribute('aria-hidden', 'false');
-      setBodyActive(true);
-    } else {
-      syncOverlay();
-    }
+    boot.removeAttribute('hidden');
+    boot.setAttribute('aria-busy', 'true');
+    boot.setAttribute('aria-hidden', 'false');
+    boot.classList.add('mc-global-loader--visible', 'mc-loader--visible');
+    setBodyActive(true);
+    isVisible = true;
 
     let ended = false;
     function endBoot() {
@@ -463,6 +468,12 @@
       if (!href || href.charAt(0) === '#' || /^javascript:/i.test(href)) return;
       if (link.origin && link.origin !== global.location.origin) return;
       if (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+
+      // In-portal navigation: no full-screen loader (login/logout use showTransition only).
+      if (document.body && document.body.classList.contains('patient-portal')) return;
+      if (document.body && document.body.classList.contains('provider-portal')) return;
+      if (document.body && document.body.classList.contains('admin-portal')) return;
+      if (document.body && document.body.classList.contains('bhw-portal')) return;
 
       show({ mode: 'navigation', sr: 'Loading page.' });
     }, false);
@@ -505,6 +516,8 @@
     if (/\/app\/api\/consultations\/session_keepalive\.php/i.test(urlStr)) return false;
     if (/\/app\/api\/patient\/approved_recommendations\.php/i.test(urlStr)) return false;
     if (/\/app\/api\/patient\/acknowledge_recommendation\.php/i.test(urlStr)) return false;
+    if (/\/app\/api\/patient\/submit_symptoms_review\.php/i.test(urlStr)) return false;
+    if (/\/app\/api\/patient\/request_alternate_booking_provider\.php/i.test(urlStr)) return false;
 
     return /\/app\/(api|controllers)\//i.test(urlStr);
   }

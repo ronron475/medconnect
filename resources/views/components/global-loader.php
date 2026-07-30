@@ -46,7 +46,7 @@ if (!function_exists('mc_render_global_loader_boot')) {
         $status = (string) ($opts['status'] ?? 'Loading…');
         $hint = (string) ($opts['hint'] ?? 'Please wait while we prepare the page.');
         ?>
-<div id="mc-loader-boot" class="mc-global-loader mc-loader mc-global-loader--boot mc-global-loader--visible" data-mc-loader-boot aria-busy="true" aria-live="polite" aria-hidden="false">
+<div id="mc-loader-boot" class="mc-global-loader mc-loader mc-global-loader--boot" data-mc-loader-boot hidden aria-busy="false" aria-live="polite" aria-hidden="true">
   <div class="mc-loader__panel">
     <div class="mc-global-loader__stage" aria-hidden="true">
       <div class="mc-global-loader__ring"></div>
@@ -61,23 +61,6 @@ if (!function_exists('mc_render_global_loader_boot')) {
     <span class="mc-global-loader__sr-only"><?= htmlspecialchars($status) ?></span>
   </div>
 </div>
-<script>
-  (function () {
-    var body = document.body;
-    if (!body) return;
-    body.classList.add('mc-global-loader-active', 'mc-loader-active', 'mc-global-loader--boot-active');
-    // Safety net: never trap users on the boot screen if loader JS fails to load.
-    setTimeout(function () {
-      var boot = document.getElementById('mc-loader-boot');
-      if (!boot || boot.hasAttribute('hidden')) return;
-      boot.classList.remove('mc-global-loader--visible', 'mc-loader--visible');
-      boot.setAttribute('hidden', '');
-      boot.setAttribute('aria-hidden', 'true');
-      boot.setAttribute('aria-busy', 'false');
-      body.classList.remove('mc-global-loader-active', 'mc-loader-active', 'mc-global-loader--boot-active');
-    }, 7000);
-  })();
-</script>
         <?php
     }
 }

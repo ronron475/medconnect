@@ -80,6 +80,17 @@ body.landing-page .bg-canvas {
 
 .landing-page .nav-bar__center {
   justify-self: center;
+  min-width: 0;
+  transition: opacity 0.22s ease, visibility 0.22s ease;
+}
+
+/* Expanded search grows left — tuck nav aside on desktop only */
+@media (min-width: 993px) {
+  .landing-page .landing-navbar.nav-search-active .nav-bar__center {
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+  }
 }
 
 .landing-page .nav-bar__right {

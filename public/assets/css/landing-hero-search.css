@@ -73,7 +73,8 @@
 }
 
 .landing-page .nav-search-wrap.is-expanded .nav-search-panel {
-  width: min(380px, 52vw);
+  width: min(340px, calc(100vw - 420px));
+  max-width: 380px;
   opacity: 1;
   pointer-events: auto;
 }
@@ -290,8 +291,70 @@
 }
 
 @media (max-width: 992px) {
+  .landing-page .nav-search-wrap.is-expanded {
+    position: fixed;
+    top: var(--landing-nav-height);
+    left: 0;
+    right: 0;
+    z-index: 205;
+    display: block;
+    width: 100%;
+    max-width: 100%;
+    padding:
+      10px
+      max(12px, env(safe-area-inset-right, 0px))
+      12px
+      max(12px, env(safe-area-inset-left, 0px));
+    background: rgba(1, 32, 58, 0.98);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.22);
+  }
+
+  .landing-page .landing-navbar.nav-on-light .nav-search-wrap.is-expanded {
+    background: rgba(248, 252, 252, 0.98);
+    border-bottom-color: rgba(1, 42, 74, 0.08);
+  }
+
+  .landing-page .nav-search-wrap.is-expanded .nav-search-toggle {
+    display: none;
+  }
+
+  .landing-page .nav-search-panel {
+    position: relative;
+    top: auto;
+    right: auto;
+    transform: none;
+  }
+
   .landing-page .nav-search-wrap.is-expanded .nav-search-panel {
-    width: min(300px, calc(100vw - 120px));
+    width: 100% !important;
+    max-width: none;
+    opacity: 1;
+    pointer-events: auto;
+  }
+
+  .landing-page .nav-search-panel .hero-search__field {
+    min-height: 48px;
+  }
+
+  .landing-page .nav-search-panel .hero-search__input {
+    font-size: 16px; /* prevents iOS zoom on focus */
+  }
+
+  .landing-page .nav-search-panel .hero-search__dropdown {
+    max-height: min(52vh, 420px);
+    -webkit-overflow-scrolling: touch;
+  }
+
+  body.landing-page.nav-search-open {
+    overflow: hidden;
+    touch-action: none;
+  }
+
+  body.landing-page.nav-search-open .nav-bar__right .nav-toggle {
+    z-index: 206;
   }
 }
 
@@ -300,16 +363,8 @@
     padding: 8px 12px;
   }
 
-  .landing-page .nav-search-wrap.is-expanded .nav-search-panel {
-    width: min(260px, calc(100vw - 100px));
-  }
-
-  .landing-page .nav-search-panel .hero-search__input {
-    font-size: 0.875rem;
-  }
-
   .landing-page .nav-search-panel .hero-search__input::placeholder {
-    font-size: 0.75rem;
+    font-size: 0.8125rem;
   }
 }
 

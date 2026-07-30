@@ -113,9 +113,8 @@
             </div>
             <span class="field-error" id="otp-input-error" role="alert"></span>
           </div>
-          <div style="display:flex;gap:10px;margin-top:8px">
-            <button type="button" class="btn-back-step" id="btn-change-email" style="flex:0 0 auto">Change Email</button>
-            <button type="button" class="btn-submit" id="btn-verify-otp" style="flex:1">
+          <div style="margin-top:8px">
+            <button type="button" class="btn-submit" id="btn-verify-otp" style="width:100%">
               <span id="verify-otp-btn-text">Verify OTP</span>
               <span id="verify-otp-spinner" class="btn-spinner" hidden></span>
             </button>
@@ -159,7 +158,7 @@
                 <span>Upload National ID <span class="req">*</span></span>
                 <span class="ocr-badge" id="ocr-badge" hidden></span>
               </div>
-              <p class="ocr-desc">Upload a clear photo of the <strong>front</strong> of your Philippine National ID. We will securely read your details and auto-fill the form. You can edit any field before continuing.</p>
+              <p class="ocr-desc">Upload a clear photo of the <strong>front</strong> of your Philippine National ID. We will securely read your details and auto-fill the form. Your name, date of birth, and National ID number cannot be changed after extraction—upload a new ID image if anything is wrong.</p>
 
               <input type="file" id="national-id-image" name="national_id_image" accept=".jpg,.jpeg,.png,.pdf" style="display:none" aria-label="Upload National ID image" />
 
@@ -296,7 +295,7 @@
               <div class="ocr-review-notice__body">
                 <strong>Review Your Information</strong>
                 <p>The information below was automatically extracted from your uploaded National ID using OCR technology.</p>
-                <p>Please carefully review every field before continuing. If any information was extracted incorrectly, you may edit it manually.</p>
+                <p>Please carefully review every field before continuing. If your name, birth date, or National ID number is wrong, upload your ID again. You may still correct address and other details that were not read from the ID.</p>
                 <p>Only continue once all information matches your government-issued ID.</p>
               </div>
             </div>
@@ -675,16 +674,8 @@
                       <span>No</span>
                     </label>
                   </div>
-                  <div class="allergy-details conditional-details" id="allergy-details" hidden>
-                    <div class="form-group form-group-full">
-                      <label for="allergies">Please specify your allergies</label>
-                      <div class="input-wrap">
-                        <textarea id="allergies" name="allergies" placeholder="Example: Penicillin, Peanuts, Shellfish, Latex" rows="3" class="textarea-field"></textarea>
-                      </div>
-                      <span class="field-error" id="allergies-error" role="alert"></span>
-                    </div>
-                  </div>
                 </fieldset>
+                <input type="hidden" id="allergies" name="allergies" value="No" />
               </div>
 
               <div class="intake-subblock">
@@ -700,16 +691,8 @@
                       <span>No</span>
                     </label>
                   </div>
-                  <div class="allergy-details conditional-details" id="meds-details" hidden>
-                    <div class="form-group form-group-full">
-                      <label for="current-medications">Please list your maintenance medication(s)</label>
-                      <div class="input-wrap">
-                        <textarea id="current-medications" name="current_medications" placeholder="Example: Metformin 500 mg twice daily, Losartan 50 mg once daily" rows="3" class="textarea-field"></textarea>
-                      </div>
-                      <span class="field-error" id="current-medications-error" role="alert"></span>
-                    </div>
-                  </div>
                 </fieldset>
+                <input type="hidden" id="current-medications" name="current_medications" value="No" />
               </div>
 
               <div class="intake-subblock">
@@ -725,16 +708,8 @@
                       <span>No</span>
                     </label>
                   </div>
-                  <div class="allergy-details conditional-details" id="conditions-details" hidden>
-                    <div class="form-group form-group-full">
-                      <label for="existing-conditions">Please specify your medical condition(s)</label>
-                      <div class="input-wrap">
-                        <textarea id="existing-conditions" name="existing_conditions" placeholder="Example: Hypertension, Diabetes, Asthma, Heart Disease" rows="3" class="textarea-field"></textarea>
-                      </div>
-                      <span class="field-error" id="existing-conditions-error" role="alert"></span>
-                    </div>
-                  </div>
                 </fieldset>
+                <input type="hidden" id="existing-conditions" name="existing_conditions" value="No" />
               </div>
             </div>
           </section>
@@ -797,18 +772,9 @@
 <script>
   window.APP_BASE = <?= json_encode($b) ?>;
   window.CSRF_TOKEN = <?= json_encode((string) ($_SESSION['csrf_token'] ?? '')) ?>;
-  window.RECAPTCHA_SITE_KEY = <?= json_encode((string) (defined('RECAPTCHA_SITE_KEY') ? RECAPTCHA_SITE_KEY : '')) ?>;
-  window.RECAPTCHA_VERSION = <?= json_encode((string) (defined('RECAPTCHA_VERSION') ? RECAPTCHA_VERSION : 'v3')) ?>;
 </script>
-<?php if (!empty((string) (defined('RECAPTCHA_SITE_KEY') ? RECAPTCHA_SITE_KEY : '')) && !empty((string) (defined('RECAPTCHA_SECRET_KEY') ? RECAPTCHA_SECRET_KEY : ''))): ?>
-  <?php if (strtolower((string) (defined('RECAPTCHA_VERSION') ? RECAPTCHA_VERSION : 'v3')) === 'v2'): ?>
-    <script src="https://www.google.com/recaptcha/api.js" async defer></script>
-  <?php else: ?>
-    <script src="https://www.google.com/recaptcha/api.js?render=<?= htmlspecialchars((string) (defined('RECAPTCHA_SITE_KEY') ? RECAPTCHA_SITE_KEY : '')) ?>"></script>
-  <?php endif; ?>
-<?php endif; ?>
 <script src="<?= $b ?>/assets/js/ph-address-autofill.js?v=20260703h"></script>
-<script src="<?= $b ?>/assets/js/ocr-national-id.js?v=20260708kyc"></script>
+<script src="<?= $b ?>/assets/js/ocr-national-id.js?v=20260729ocr4"></script>
 <script src="<?= $b ?>/assets/js/register-nlp-analysis.js?v=20260708nlp2"></script>
 <script src="<?= $b ?>/assets/js/register.js?v=20260708nlp2"></script>
 

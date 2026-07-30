@@ -7,11 +7,24 @@
 require_once __DIR__ . '/triage_helpers.php';
 
 $default_complaint = trim((string) ($default_complaint ?? ''));
+$review_booking_ctx = $review_booking_ctx ?? ['locked' => false, 'provider_id' => 0, 'provider_name' => ''];
+$locked_provider_id = (int) ($locked_provider_id ?? 0);
+$locked_provider_name = trim((string) ($locked_provider_name ?? ''));
+$locked_assigned_has_slots = !empty($locked_assigned_has_slots);
+$locked_alternate_available = !empty($locked_alternate_available);
 ?>
 <h2 class="text-h2 mb-md">Book Consultation</h2>
+<?php if (!empty($review_booking_ctx['locked']) && $locked_provider_name !== ''): ?>
 <p class="text-sm text-muted" style="margin-top:-8px;margin-bottom:16px;">
-  Your health concern was already reviewed when you registered. Choose a provider and time slot below to complete your booking.
+  Your care tips were assigned to <strong><?= htmlspecialchars($locked_provider_name) ?></strong>.
+  Book your video visit with this doctor and choose an available time below.
 </p>
+<?php else: ?>
+<p class="text-sm text-muted" style="margin-top:-8px;margin-bottom:16px;">
+  Choose a doctor and an open time slot for your online consultation.
+  (If you already submitted symptoms for <strong>Care tips</strong>, the system will lock booking to the same doctor who reviews your case.)
+</p>
+<?php endif; ?>
 
 <?php if (!empty($active_consultation)): ?>
 <div class="patient-triage-alert patient-triage-alert--warning is-visible" style="margin-bottom: 16px;">
@@ -24,6 +37,13 @@ $default_complaint = trim((string) ($default_complaint ?? ''));
     You already have an open appointment<?= !empty($active_consultation['consult_date']) ? ' on ' . htmlspecialchars(date('M j, Y', strtotime($active_consultation['consult_date']))) : '' ?>.
     Submitting here will update it to your newly selected slot for today.
   <?php endif; ?>
+</div>
+<?php endif; ?>
+
+<?php if (!empty($review_booking_ctx['locked']) && $locked_provider_name !== ''): ?>
+<div class="patient-triage-alert patient-triage-alert--warning is-visible" style="margin-bottom: 16px;">
+  Your self-care guidance was reviewed by <strong><?= htmlspecialchars($locked_provider_name) ?></strong>.
+  Please book your online consultation with the same doctor unless an administrator changes your assignment.
 </div>
 <?php endif; ?>
 
@@ -57,15 +77,43 @@ $default_complaint = trim((string) ($default_complaint ?? ''));
       <?php endif; ?>
     </div>
 
-    <div class="form-group" style="margin-top: 20px;">
-      <label class="form-label" for="booking_provider">Choose provider</label>
-      <select id="booking_provider" name="provider_id" class="form-control" required>
+    <div class="form-group">
+      <label class="form-label" for="booking_provider"><?= !empty($review_booking_ctx['locked']) ? 'Your assigned doctor' : 'Choose provider' ?></label>
+      <select id="booking_provider" name="provider_id" class="form-control" <?= !empty($review_booking_ctx['locked']) ? 'disabled aria-readonly="true"' : 'required' ?>>
         <option value="">Select a provider…</option>
         <?php foreach ($booking_providers as $provider): ?>
-        <option value="<?= (int) $provider['id'] ?>"><?= htmlspecialchars($provider['name']) ?></option>
+        <option value="<?= (int) $provider['id'] ?>"<?= !empty($review_booking_ctx['locked']) && (int) $provider['id'] === $locked_provider_id ? ' selected' : '' ?>><?= htmlspecialchars($provider['name']) ?></option>
         <?php endforeach; ?>
       </select>
+      <?php if (!empty($review_booking_ctx['locked']) && $locked_provider_id > 0): ?>
+      <input type="hidden" name="provider_id" value="<?= (int) $locked_provider_id ?>" />
+      <?php endif; ?>
+      <?php if (!empty($review_booking_ctx['locked'])): ?>
+      <p class="text-xs text-muted" style="margin-top:6px;">Same doctor as your care tips review<?= $locked_assigned_has_slots ? ' — open slots today below.' : '.' ?></p>
+      <?php endif; ?>
     </div>
+
+    <?php if (!empty($review_booking_ctx['locked']) && $locked_provider_name !== '' && $locked_assigned_has_slots): ?>
+    <div class="patient-triage-alert patient-triage-alert--success is-visible" style="margin-bottom:14px;" role="status">
+      <strong><?= htmlspecialchars($locked_provider_name) ?></strong> has open clinic times today. Pick a slot below to book your video visit.
+    </div>
+    <?php endif; ?>
+
+    <?php if (!empty($review_booking_ctx['locked']) && !$locked_assigned_has_slots && $locked_alternate_available): ?>
+    <div id="bookingAlternatePanel" class="patient-triage-alert patient-triage-alert--warning is-visible" style="margin-bottom:14px;" role="status">
+      <p style="margin:0 0 8px;"><strong><?= htmlspecialchars($locked_provider_name) ?></strong> has no open slots left today.</p>
+      <p class="text-sm text-muted" style="margin:0 0 12px;">You can request the <strong>next available doctor</strong> who has clinic hours today. Your care tips review will move to that doctor too.</p>
+      <button type="button" class="mc-btn mc-btn--outline" id="btnRequestAlternateProvider" style="width:100%;max-width:360px;">
+        Request next available doctor
+      </button>
+      <p id="bookingAlternateStatus" class="text-xs text-muted" style="margin:10px 0 0;" hidden role="alert"></p>
+    </div>
+    <?php elseif (!empty($review_booking_ctx['locked']) && !$locked_assigned_has_slots && !$locked_alternate_available): ?>
+    <div class="patient-triage-alert patient-triage-alert--warning is-visible" style="margin-bottom:14px;" role="status">
+      <strong><?= htmlspecialchars($locked_provider_name) ?></strong> has no open slots today, and no other doctor has clinic hours right now.
+      Please contact the City Health Office or try again on the next clinic day.
+    </div>
+    <?php endif; ?>
 
     <div class="form-group">
       <label class="form-label" for="booking_date_display">Appointment date (today only)</label>
@@ -93,7 +141,15 @@ $default_complaint = trim((string) ($default_complaint ?? ''));
       <input type="hidden" id="booking_slot_id" name="slot_id" value="">
     </div>
 
-    <button type="submit" class="mc-btn mc-btn--primary" id="patientTriageSubmit" style="width:100%;max-width:320px;">Book Appointment</button>
+    <button type="submit" class="mc-btn mc-btn--primary" id="patientTriageSubmit" style="width:100%;max-width:320px;">
+      <?= !empty($review_booking_ctx['locked']) ? 'Book Appointment' : 'Submit / Book Appointment' ?>
+    </button>
+    <?php if (empty($review_booking_ctx['locked'])): ?>
+    <p class="text-xs text-muted" style="margin-top:10px;max-width:520px;">
+      For non-urgent cases, you may submit without choosing a time slot to request provider-reviewed self-care guidance first.
+      Select a slot only when you are ready to book a consultation.
+    </p>
+    <?php endif; ?>
   </form>
 </div>
 
@@ -112,6 +168,10 @@ mc_render_loader_panel([
 ?>
 
 <h3 class="text-h3 mb-md">Visit History</h3>
+<p class="text-muted" style="margin: -8px 0 14px; font-size: 0.9rem;">
+  Approved self-care tips are saved under
+  <a href="<?= ASSET_BASE ?>/views/patient/my_health.php?tab=care-tips">My Health → Care tips</a>.
+</p>
 <div class="mc-card" style="padding: 0; overflow: hidden;">
   <div class="mc-table-wrap">
     <table class="mc-table">

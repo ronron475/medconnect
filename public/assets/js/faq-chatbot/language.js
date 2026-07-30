@@ -28,6 +28,8 @@
     { re: /\bforgot\s+ko\b/i, w: 2.0 },
     { re: /\bnakalimtan\s+ko\b/i, w: 2.5 },
     { re: /\bdiin\s+ko\b/i, w: 2.5 },
+    { re: /\b(nabalaka|nahadlok|kasubo|kapoy|nalibog|masadya|akig|ginakulbaan)\b/i, w: 2.5 },
+    { re: /\b(buligi|bulig)\s+ko\b/i, w: 2.2 },
   ];
 
   /** @type {Array<{ re: RegExp, w: number }>} */

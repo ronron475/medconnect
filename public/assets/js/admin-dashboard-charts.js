@@ -1,14 +1,10 @@
 (function () {
   'use strict';
 
-  var REFRESH_MS = 45000;
+  var REFRESH_MS = (window.McChartTheme && McChartTheme.REFRESH_MS) ? McChartTheme.REFRESH_MS : 15000;
   var charts = {};
   var pollTimer = null;
-
-  var TEAL = '#0d9488';
-  var BLUE = '#2563eb';
-  var PURPLE = '#7c3aed';
-  var RED = '#dc2626';
+  var T = function () { return window.McChartTheme; };
 
   function ready(fn) {
     if (document.readyState === 'loading') {
@@ -53,93 +49,38 @@
     }
   }
 
-  function seriesLabels(series) {
-    return (series || []).map(function (p) { return p.label || ''; });
-  }
-
-  function seriesValues(series) {
-    return (series || []).map(function (p) { return p.count || 0; });
-  }
-
-  function barColors(series, defaultColor, todayColor) {
-    return (series || []).map(function (p) {
-      return p.is_today ? (todayColor || TEAL) : (defaultColor || BLUE);
-    });
-  }
-
   function makeBarChart(canvasId, series, color, todayColor) {
-    if (typeof Chart === 'undefined') return;
+    if (typeof Chart === 'undefined' || !T()) return;
     var el = document.getElementById(canvasId);
     if (!el) return;
     destroy(canvasId);
     charts[canvasId] = new Chart(el, {
       type: 'bar',
       data: {
-        labels: seriesLabels(series),
-        datasets: [{
-          label: 'Count',
-          data: seriesValues(series),
-          backgroundColor: barColors(series, color, todayColor),
-          borderRadius: 6,
-          maxBarThickness: 36,
-        }],
+        labels: T().labelsFromSeries(series),
+        datasets: [T().barDataset(series, color, todayColor)],
       },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        plugins: { legend: { display: false } },
-        scales: {
-          x: { grid: { display: false }, ticks: { font: { size: 10 }, maxRotation: 0 } },
-          y: { beginAtZero: true, ticks: { precision: 0, font: { size: 10 } }, grid: { color: '#f1f5f9' } },
-        },
-      },
+      options: T().cartesianOptions(),
     });
   }
 
   function makeLineChart(canvasId, series, color) {
-    if (typeof Chart === 'undefined') return;
+    if (typeof Chart === 'undefined' || !T()) return;
     var el = document.getElementById(canvasId);
     if (!el) return;
     destroy(canvasId);
-    var fill = color.charAt(0) === '#' ? hexToRgba(color, 0.12) : color;
     charts[canvasId] = new Chart(el, {
       type: 'line',
       data: {
-        labels: seriesLabels(series),
-        datasets: [{
-          label: 'Count',
-          data: seriesValues(series),
-          borderColor: color,
-          backgroundColor: fill,
-          pointBackgroundColor: color,
-          pointBorderColor: '#fff',
-          pointBorderWidth: 2,
-          pointRadius: 4,
-          fill: true,
-          tension: 0.35,
-        }],
+        labels: T().labelsFromSeries(series),
+        datasets: [T().lineDataset(series, color)],
       },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        plugins: { legend: { display: false } },
-        scales: {
-          x: { grid: { display: false }, ticks: { font: { size: 10 } } },
-          y: { beginAtZero: true, ticks: { precision: 0, font: { size: 10 } }, grid: { color: '#f1f5f9' } },
-        },
-      },
+      options: T().cartesianOptions(),
     });
   }
 
-  function hexToRgba(hex, alpha) {
-    var h = hex.replace('#', '');
-    if (h.length === 3) h = h.split('').map(function (c) { return c + c; }).join('');
-    var n = parseInt(h, 16);
-    return 'rgba(' + [(n >> 16) & 255, (n >> 8) & 255, n & 255].join(',') + ',' + alpha + ')';
-  }
-
   function makeHBarChart(canvasId, rows) {
-    if (typeof Chart === 'undefined') return;
+    if (typeof Chart === 'undefined' || !T()) return;
     var el = document.getElementById(canvasId);
     if (!el) return;
     destroy(canvasId);
@@ -149,25 +90,34 @@
         labels: (rows || []).map(function (r) { return r.label; }),
         datasets: [{
           data: (rows || []).map(function (r) { return r.count; }),
-          backgroundColor: (rows || []).map(function (r) { return r.color || BLUE; }),
-          borderRadius: 6,
+          backgroundColor: (rows || []).map(function (r, i) {
+            return r.color || T().palette[i % T().palette.length];
+          }),
+          borderRadius: 4,
+          maxBarThickness: 28,
         }],
       },
-      options: {
+      options: T().cartesianOptions({
         indexAxis: 'y',
-        responsive: true,
-        maintainAspectRatio: false,
-        plugins: { legend: { display: false } },
         scales: {
-          x: { beginAtZero: true, ticks: { precision: 0, font: { size: 10 } }, grid: { color: '#f1f5f9' } },
-          y: { grid: { display: false }, ticks: { font: { size: 11 } } },
+          x: {
+            beginAtZero: true,
+            grid: { color: T().colors.grid, drawBorder: false },
+            border: { display: false },
+            ticks: { precision: 0, font: { size: 10 } },
+          },
+          y: {
+            grid: { display: false },
+            border: { display: false },
+            ticks: { font: { size: 11, weight: '500' } },
+          },
         },
-      },
+      }),
     });
   }
 
   function makeDoughnutChart(canvasId, rows) {
-    if (typeof Chart === 'undefined') return;
+    if (typeof Chart === 'undefined' || !T()) return;
     var el = document.getElementById(canvasId);
     if (!el) return;
     destroy(canvasId);
@@ -177,23 +127,20 @@
         labels: (rows || []).map(function (r) { return r.label; }),
         datasets: [{
           data: (rows || []).map(function (r) { return r.count; }),
-          backgroundColor: (rows || []).map(function (r) { return r.color || BLUE; }),
-          borderWidth: 0,
+          backgroundColor: (rows || []).map(function (r, i) {
+            return r.color || T().palette[i % T().palette.length];
+          }),
+          borderColor: '#fff',
+          borderWidth: 2,
+          hoverOffset: 6,
         }],
       },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        cutout: '62%',
-        plugins: {
-          legend: { position: 'bottom', labels: { boxWidth: 10, font: { size: 11 } } },
-        },
-      },
+      options: T().ringOptions(),
     });
   }
 
   function render(data) {
-    if (!data) return;
+    if (!data || !T()) return;
 
     var consult = data.consultations || {};
     var reg = data.registrations || {};
@@ -230,12 +177,12 @@
       if (fourthKpiLabel) fourthKpiLabel.textContent = 'Period total';
       if (statusCanvas) statusCanvas.style.display = 'none';
       if (triageCanvas) triageCanvas.style.display = 'block';
-      makeLineChart('admChartTriage', triage.series || [], RED);
+      makeLineChart('admChartTriage', triage.series || [], T().colors.red);
       destroy('admChartStatus');
     }
 
-    makeBarChart('admChartConsult', consult.series || [], BLUE, TEAL);
-    makeLineChart('admChartReg', reg.series || [], PURPLE);
+    makeBarChart('admChartConsult', consult.series || [], T().colors.blue, T().colors.teal);
+    makeLineChart('admChartReg', reg.series || [], T().colors.purple);
     makeHBarChart('admChartRoles', roles);
 
     setUpdated(data.generated_at);
@@ -263,23 +210,36 @@
     pollTimer = setInterval(fetchAndRender, REFRESH_MS);
   }
 
+  function boot() {
+    if (window.McChartTheme) {
+      McChartTheme.applyDefaults();
+    }
+    return fetchAndRender().then(startPolling);
+  }
+
   ready(function () {
     if (!root()) return;
 
-    fetchAndRender().then(function () {
-      if (typeof Chart !== 'undefined') startPolling();
-      else {
-        var s = document.createElement('script');
-        s.src = 'https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js';
-        s.onload = function () {
-          fetchAndRender().then(startPolling);
-        };
-        document.head.appendChild(s);
-      }
-    });
+    var daysSel = document.getElementById('admChartsDays');
+    if (daysSel) {
+      daysSel.addEventListener('change', function () {
+        var el = root();
+        if (el) el.setAttribute('data-days', daysSel.value);
+        fetchAndRender();
+      });
+    }
 
-    document.addEventListener('visibilitychange', function () {
-      if (!document.hidden) fetchAndRender();
-    });
+    if (typeof Chart !== 'undefined') {
+      boot();
+      return;
+    }
+    var s = document.createElement('script');
+    s.src = 'https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js';
+    s.onload = boot;
+    document.head.appendChild(s);
+  });
+
+  document.addEventListener('visibilitychange', function () {
+    if (!document.hidden && root()) fetchAndRender();
   });
 })();

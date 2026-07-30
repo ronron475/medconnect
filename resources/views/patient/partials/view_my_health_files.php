@@ -11,9 +11,7 @@ $filter_types = [
 ];
 ?>
 <div class="pmh-files">
-  <p class="pmh-files__lead">Prescriptions, clinical notes, and referrals issued during your consultations.</p>
-
-  <nav class="pmh-files__filters" aria-label="Filter health files">
+  <nav class="pmh-files__filters pmh-toolbar" aria-label="Filter health files">
     <?php foreach ($filter_types as $key => $meta):
       $cnt = $key === 'all' ? ($counts['all'] ?? 0) : ($counts[$key] ?? 0);
     ?>
@@ -37,7 +35,7 @@ $filter_types = [
     <p>Prescriptions and clinical notes will appear here after your provider documents a consultation.</p>
   </div>
   <?php else: ?>
-  <div class="pmh-files__list" id="pmh-files-list">
+  <div class="pmh-files__list pmh-feed pmh-feed--files" id="pmh-files-list">
     <?php foreach ($all_records as $r):
       $type = (string) ($r['record_type'] ?? '');
       $accent = $filter_types[$type]['accent'] ?? '#64748b';

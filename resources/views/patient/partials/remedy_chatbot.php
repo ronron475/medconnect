@@ -24,15 +24,54 @@
         <p class="pt-remedy__eyebrow">medConnect Care Assistant</p>
         <h2 id="ptRemedyTitle" class="pt-remedy__title">Self-care guidance</h2>
       </div>
-      <button type="button" class="pt-remedy__close" id="ptRemedyClose" aria-label="Close care chat">×</button>
+      <div class="pt-remedy__header-actions">
+        <button
+          type="button"
+          class="pt-remedy__voice"
+          id="ptRemedyVoice"
+          aria-label="Read messages aloud"
+          title="Read messages aloud"
+          aria-pressed="false"
+          hidden
+        >
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+            <path d="M11 5L6 9H3v6h3l5 4V5z"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/>
+          </svg>
+        </button>
+        <button
+          type="button"
+          class="pt-remedy__close"
+          id="ptRemedyClose"
+          aria-label="Close care chat"
+          onclick="if(window.MedConnectPtRemedy){window.MedConnectPtRemedy.close(event);}"
+        >×</button>
+      </div>
     </header>
 
     <div class="pt-remedy__thread" id="ptRemedyThread" aria-live="polite"></div>
 
-    <div class="pt-remedy__choices" id="ptRemedyChoices" hidden>
+    <div class="pt-remedy__choices" id="ptRemedyChoicesWaiting" hidden>
+      <p class="pt-remedy__choice-label">Your provider reviews non-urgent concerns before tips are shared.</p>
+      <a href="<?= ASSET_BASE ?>/views/patient/triage.php" class="pt-remedy__choice pt-remedy__choice--primary" id="ptRemedyBookWaiting">
+        Book a consultation instead
+      </a>
+      <button
+        type="button"
+        class="pt-remedy__choice pt-remedy__choice--outline"
+        id="ptRemedyWaitClose"
+        onclick="if(window.MedConnectPtRemedy){window.MedConnectPtRemedy.close(event);}"
+      >
+        Close for now
+      </button>
+    </div>
+
+    <div class="pt-remedy__choices" id="ptRemedyChoicesApproved" hidden>
       <p class="pt-remedy__choice-label">What would you like to do?</p>
       <button type="button" class="pt-remedy__choice pt-remedy__choice--primary" id="ptRemedySelfCare">
         I’ll follow the self-care tips
+      </button>
+      <button type="button" class="pt-remedy__choice pt-remedy__choice--danger" id="ptRemedyCancelVisit" hidden>
+        Cancel my video visit
       </button>
       <a href="<?= ASSET_BASE ?>/views/patient/triage.php" class="pt-remedy__choice pt-remedy__choice--outline" id="ptRemedyBook">
         Book a consultation instead

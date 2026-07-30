@@ -12,16 +12,16 @@ $dashboard_nav = bhw_nav_dashboard();
 $page_title = $dashboard_nav['label'];
 $page_description = $dashboard_nav['description'];
 
-$metricsRaw = BhwWorkflows::getDashboardMetrics($pdo, [
+$bhwCtx = [
     'barangay_id' => $bhw_barangay_id,
     'barangay_name' => $bhw_barangay_name,
     'allowed' => true,
-]);
-$queueRaw = BhwWorkflows::getTriageQueue($pdo, [
-    'barangay_id' => $bhw_barangay_id,
-    'barangay_name' => $bhw_barangay_name,
-    'allowed' => true,
-]);
+];
+$stationBarangayName = $bhw_barangay_name;
+$dashFilters = ['days' => 7];
+$metricsRaw = BhwWorkflows::getDashboardMetrics($pdo, $bhwCtx, $dashFilters);
+$dashboardCharts = BhwWorkflows::getDashboardCharts($pdo, $bhwCtx, $dashFilters);
+$queueRaw = BhwWorkflows::getTriageQueue($pdo, $bhwCtx, 15, $dashFilters);
 
 $metrics = [
     ['label' => "Today's Patients", 'val' => (int) ($metricsRaw['todays_patients'] ?? 0), 'key' => 'todays_patients', 'tone' => ''],
@@ -34,21 +34,18 @@ $metrics = [
     ['label' => 'Referrals', 'val' => (int) ($metricsRaw['referrals'] ?? 0), 'key' => 'referrals', 'tone' => ''],
 ];
 
-$puroks = [];
-foreach ($queueRaw as $row) {
-    $p = trim((string) ($row['purok'] ?? ''));
-    if ($p !== '' && !in_array($p, $puroks, true)) {
-        $puroks[] = $p;
-    }
-}
-sort($puroks);
-
 $bhwDashCss = ASSETS_PATH . '/css/bhw-dashboard.css';
 $bhwDashCssVer = file_exists($bhwDashCss) ? (int) filemtime($bhwDashCss) : time();
+$chartThemeJsVer = (int) @filemtime(ASSETS_PATH . '/js/medconnect-chart-theme.js');
+$bhwDashChartsJsVer = (int) @filemtime(ASSETS_PATH . '/js/bhw-dashboard-charts.js');
 
 require __DIR__ . '/partials/layout_open.php';
 ?>
 <link rel="stylesheet" href="<?= ASSET_BASE ?>/assets/css/bhw-dashboard.css?v=<?= $bhwDashCssVer ?>">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js" defer></script>
+<script src="<?= ASSET_BASE ?>/assets/js/medconnect-chart-theme.js?v=<?= $chartThemeJsVer ?>" defer></script>
+<script src="<?= ASSET_BASE ?>/assets/js/bhw-dashboard-charts.js?v=<?= $bhwDashChartsJsVer ?>" defer></script>
+<script type="application/json" id="bhwDashChartsData"><?= json_encode($dashboardCharts, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_AMP | JSON_HEX_QUOT | JSON_UNESCAPED_UNICODE) ?></script>
 
 <div class="bhw-dash">
 
@@ -59,7 +56,7 @@ require __DIR__ . '/partials/layout_open.php';
       <p class="bhw-dash-header__desc"><?= htmlspecialchars($dashboard_nav['description']) ?></p>
     </div>
     <div class="bhw-dash-header__meta">
-      <span class="bhw-dash-sync">Data refreshed: <time id="bhwLastSync"><?= date('h:i A') ?></time></span>
+      <span class="bhw-dash-sync">Data refreshed: <time id="bhwLastSync"><?= date('h:i A') ?></time> · Auto-refresh 15s</span>
     </div>
   </header>
 
@@ -77,6 +74,50 @@ require __DIR__ . '/partials/layout_open.php';
         <strong class="bhw-dash-stat__val" data-metric="<?= htmlspecialchars($m['key']) ?>"><?= $m['val'] ?></strong>
       </article>
       <?php endforeach; ?>
+    </div>
+  </section>
+
+  <section class="bhw-dash-panel bhw-dash-charts" aria-labelledby="bhwDashChartsTitle">
+    <div class="bhw-dash-panel__head">
+      <h3 id="bhwDashChartsTitle">Sector analytics</h3>
+      <span class="bhw-dash-panel__note" id="bhwDashChartsNote">Last 7 days · Brgy. <?= htmlspecialchars($bhw_barangay_name) ?></span>
+    </div>
+    <div class="mc-chart-filters bhw-dash-chart-filters no-print">
+      <div class="mc-chart-filters__field mc-chart-filters__field--station">
+        <span class="mc-chart-filters__label">Your station</span>
+        <p class="bhw-dash-station-name" id="bhwDashStationName">Brgy. <?= htmlspecialchars($bhw_barangay_name) ?></p>
+      </div>
+      <div class="mc-chart-filters__field">
+        <label class="mc-chart-filters__label" for="bhw_dash_days">Period</label>
+        <select class="form-select mc-chart-filters__control" id="bhw_dash_days" aria-label="Chart period in days">
+          <option value="7" selected>Last 7 days</option>
+          <option value="14">Last 14 days</option>
+          <option value="30">Last 30 days</option>
+          <option value="90">Last 90 days</option>
+        </select>
+      </div>
+      <div class="mc-chart-filters__actions">
+        <button type="button" class="bhw-btn-teal" id="bhw_dash_apply">Apply</button>
+        <button type="button" class="bhw-btn-outline" id="bhw_dash_reset">Reset</button>
+      </div>
+    </div>
+    <div class="bhw-dash-charts-grid">
+      <article class="bhw-chart-card">
+        <h4 id="bhw_dash_title_consult">Consultations</h4>
+        <div class="bhw-chart-wrap bhw-chart-wrap--line"><canvas id="bhw_dash_consult_week" aria-label="Weekly consultations chart"></canvas></div>
+      </article>
+      <article class="bhw-chart-card">
+        <h4 id="bhw_dash_title_reg">New registrations</h4>
+        <div class="bhw-chart-wrap bhw-chart-wrap--line"><canvas id="bhw_dash_reg_week" aria-label="Weekly registrations chart"></canvas></div>
+      </article>
+      <article class="bhw-chart-card">
+        <h4>Triage &amp; workflow risk</h4>
+        <div class="bhw-chart-wrap bhw-chart-wrap--ring"><canvas id="bhw_dash_triage_mix" aria-label="Triage mix chart"></canvas></div>
+      </article>
+      <article class="bhw-chart-card">
+        <h4>Patient workflow pipeline</h4>
+        <div class="bhw-chart-wrap bhw-chart-wrap--bar-tall"><canvas id="bhw_dash_workflow" aria-label="Workflow pipeline chart"></canvas></div>
+      </article>
     </div>
   </section>
 
@@ -106,12 +147,6 @@ require __DIR__ . '/partials/layout_open.php';
         </span>
         <input type="search" id="resident-search" class="form-control" placeholder="Search resident name…" aria-label="Search residents in queue">
       </div>
-      <select id="purok-filter" class="form-select bhw-dash-purok" aria-label="Filter by purok">
-        <option value="">All puroks</option>
-        <?php foreach ($puroks as $purok): ?>
-        <option><?= htmlspecialchars($purok) ?></option>
-        <?php endforeach; ?>
-      </select>
     </div>
     <div class="bhw-dash-panel__body bhw-dash-panel__body--flush">
       <div class="table-responsive">
@@ -157,9 +192,27 @@ ob_start();
 (function () {
   var initialQueue = <?= json_encode($queueRaw, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_AMP | JSON_HEX_QUOT) ?>;
   var searchInput = document.getElementById('resident-search');
-  var purokFilter = document.getElementById('purok-filter');
+  var dashDays = document.getElementById('bhw_dash_days');
+  var stationBarangay = <?= json_encode('Brgy. ' . $stationBarangayName, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_AMP | JSON_HEX_QUOT) ?>;
   var tableBody = document.getElementById('queue-tbody');
   var lastSync = document.getElementById('bhwLastSync');
+  var REFRESH_MS = (window.McChartTheme && McChartTheme.REFRESH_MS) ? McChartTheme.REFRESH_MS : 15000;
+
+  function dashFilters() {
+    return { days: dashDays ? dashDays.value : '7' };
+  }
+
+  function updateChartNote(payload) {
+    var note = document.getElementById('bhwDashChartsNote');
+    var days = (payload && payload.days) || (dashDays ? dashDays.value : 7);
+    if (note) {
+      note.textContent = 'Last ' + days + ' days · ' + stationBarangay;
+    }
+    var tc = document.getElementById('bhw_dash_title_consult');
+    var tr = document.getElementById('bhw_dash_title_reg');
+    if (tc) tc.textContent = 'Consultations — last ' + days + ' days';
+    if (tr) tr.textContent = 'New registrations — last ' + days + ' days';
+  }
 
   function esc(v) {
     return String(v == null ? '' : v)
@@ -194,7 +247,7 @@ ob_start();
       var urgency = (r.urgency_label || 'low');
       var status = r.status || 'pending';
       var pid = r.patient_id || '';
-      return '<tr class="' + rowClass(urgency) + '" data-name="' + esc(name.toLowerCase()) + '" data-purok="' + esc(purok) + '">' +
+      return '<tr class="' + rowClass(urgency) + '" data-name="' + esc(name.toLowerCase()) + '">' +
         '<td data-label="Resident">' +
           '<div class="bhw-dash-resident-name">' + esc(name) + '</div>' +
           '<div class="bhw-dash-resident-meta">' + esc(purok) + '</div>' +
@@ -210,17 +263,15 @@ ob_start();
 
   function filterRows() {
     var query = (searchInput.value || '').toLowerCase().trim();
-    var purok = purokFilter.value;
     Array.from(tableBody.rows).forEach(function (row) {
       if (row.cells.length < 2) return;
       var name = row.dataset.name || '';
-      var rowPurok = row.dataset.purok || '';
-      row.style.display = (!query || name.indexOf(query) >= 0) && (!purok || rowPurok === purok) ? '' : 'none';
+      row.style.display = !query || name.indexOf(query) >= 0 ? '' : 'none';
     });
   }
 
   function refreshDashboard() {
-    BhwPortal.get('dashboard.php').then(function (res) {
+    BhwPortal.get('dashboard.php', dashFilters()).then(function (res) {
       if (!res.success) return;
       var m = res.metrics || {};
       document.querySelectorAll('[data-metric]').forEach(function (el) {
@@ -228,16 +279,27 @@ ob_start();
         if (m[k] !== undefined) el.textContent = m[k];
       });
       renderQueue(res.queue || []);
+      if (res.charts && window.BhwDashboardCharts) {
+        BhwDashboardCharts.update(res.charts);
+        updateChartNote(res.charts);
+      }
       if (lastSync) {
         lastSync.textContent = new Date().toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true });
       }
     });
   }
 
+  document.getElementById('bhw_dash_apply')?.addEventListener('click', refreshDashboard);
+  document.getElementById('bhw_dash_reset')?.addEventListener('click', function () {
+    if (dashDays) dashDays.value = '7';
+    refreshDashboard();
+  });
+  dashDays?.addEventListener('change', refreshDashboard);
+
   searchInput.addEventListener('input', filterRows);
-  purokFilter.addEventListener('change', filterRows);
   if (initialQueue.length) renderQueue(initialQueue);
-  setInterval(refreshDashboard, 30000);
+  updateChartNote(<?= json_encode($dashboardCharts) ?>);
+  setInterval(refreshDashboard, REFRESH_MS);
 })();
 <?php
 $bhw_inline_script = ob_get_clean();

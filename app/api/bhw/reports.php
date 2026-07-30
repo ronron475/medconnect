@@ -14,7 +14,9 @@ try {
             bhw_activity_log($pdo, 'bhw_report_viewed', 'BHW viewed healthcare reports dashboard.');
             Api::success([
                 'summary' => BhwReports::getSummary($pdo, $ctx, $_GET),
-                'puroks'  => BhwReports::listPuroks($pdo, $ctx),
+                'puroks'  => BhwReports::listPuroks($pdo, $ctx, $_GET),
+                'barangay' => $ctx['barangay_name'] ?? '',
+                'assigned_barangay_id' => (int) ($ctx['barangay_id'] ?? 0),
             ]);
             break;
         case 'patients':
@@ -36,7 +38,7 @@ try {
             Api::success(['report' => BhwReports::getDiseaseStats($pdo, $ctx, $_GET)]);
             break;
         case 'puroks':
-            Api::success(['puroks' => BhwReports::listPuroks($pdo, $ctx)]);
+            Api::success(['puroks' => BhwReports::listPuroks($pdo, $ctx, $_GET)]);
             break;
         default:
             Api::error('Unknown report action.', 400);

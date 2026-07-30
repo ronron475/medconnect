@@ -1,4 +1,7 @@
-"""Philippine National ID (PhilSys) OCR field extraction."""
+"""Philippine National ID (PhilSys) OCR field extraction.
+
+Single source of truth for all National ID paths: FastAPI /ocr/extract and PHP PhilSysOcrParser mirror.
+"""
 
 from __future__ import annotations
 
@@ -6,7 +9,8 @@ import re
 from datetime import datetime
 from typing import Any
 
-CONFIDENCE_THRESHOLD = 0.62
+CONFIDENCE_THRESHOLD = 0.78
+FIELD_MIN_CONFIDENCE = 0.82
 
 MONTH_MAP = {
     "january": "01", "february": "02", "march": "03", "april": "04",
@@ -19,9 +23,24 @@ MONTH_MAP = {
 
 LABEL_MAP = {
     "last": ["LAST NAME", "SURNAME", "FAMILY NAME", "APELYIDO"],
-    "first": ["GIVEN NAMES", "GIVEN NAME", "FIRST NAME", "PANGALAN", "GIVEN NAMES / FIRST NAME"],
+    "first": [
+        "GIVEN NAMES / FIRST NAME", "GIVEN NAMES", "GIVEN NAME", "FIRST NAME", "PANGALAN",
+    ],
     "middle": ["MIDDLE NAME", "MIDDLE INITIAL", "GITNANG PANGALAN"],
 }
+
+RESERVED_NAME_LABELS = {
+    "GIVEN NAMES", "GIVEN NAME", "FIRST NAME", "LAST NAME", "MIDDLE NAME",
+    "MIDDLE INITIAL", "SURNAME", "FAMILY NAME", "APELYIDO", "PANGALAN",
+    "GITNANG PANGALAN", "GIVEN NAMES FIRST NAME", "NAME",
+    "DATE OF BIRTH", "BIRTH DATE", "SEX", "ADDRESS", "TIRAHAN",
+    "PHILIPPINE IDENTIFICATION CARD", "DIGITAL ID NUMBER",
+}
+
+NAME_NOISE = (
+    "REPUBLIKA", "PILIPINAS", "PHILIPPINE", "IDENTIFICATION", "CARD", "PHILSYS",
+    "REPUBLIC", "GOVERNMENT", "DIGITAL", "NUMBER", "PERSONAL", "NATIONAL",
+)
 
 
 def _field(value: str, confidence: float, source: str) -> dict[str, Any]:
@@ -77,27 +96,262 @@ def _is_address_label(line_up: str) -> bool:
     ])
 
 
-def _value_after_label(lines: list[str], line_index: int, label: str, label_map: dict) -> str:
-    line_up = lines[line_index].upper().strip()
-    label_up = label.upper()
-    pos = line_up.find(label_up)
-    if pos >= 0:
-        after = line_up[pos + len(label_up):].strip().lstrip(":- ")
-        if after and not _is_label_line(after, label_map):
-            return after
-    for j in range(line_index + 1, min(line_index + 4, len(lines))):
-        nxt = lines[j].strip()
-        if not nxt:
-            continue
-        nxt_up = nxt.upper()
-        if _is_label_line(nxt_up, label_map):
-            continue
-        return nxt_up
-    return ""
+def _normalize_label_text(value: str) -> str:
+    norm = re.sub(r"\s+", " ", value.upper().strip())
+    norm = norm.replace("/", " ").replace("-", " ")
+    return re.sub(r"\s+", " ", norm).strip()
+
+
+def _is_reserved_name_label(value: str) -> bool:
+    norm = _normalize_label_text(value)
+    if norm in RESERVED_NAME_LABELS:
+        return True
+    if re.match(r"^(GIVEN|LAST|MIDDLE|FIRST)\s+NAME(S)?$", norm):
+        return True
+    return False
+
+
+def _line_contains_name_label(line_up: str, label: str) -> bool:
+    label = label.upper().strip()
+    if line_up == label:
+        return True
+    if line_up.startswith(label):
+        return True
+    return label in line_up
 
 
 def _looks_like_name_token(value: str) -> bool:
     return bool(re.match(r"^[A-Za-z][A-Za-z\s\-']{1,}$", value)) and 2 <= len(value) <= 40
+
+
+def _next_name_value_after(
+    lines: list[str],
+    start: int,
+    label_map: dict,
+    stop_before: list[str] | None = None,
+) -> str:
+    stop_before = stop_before or []
+    for j in range(start, min(start + 8, len(lines))):
+        nxt = lines[j].strip()
+        if not nxt:
+            continue
+        nxt_up = nxt.upper()
+        for stop in stop_before:
+            if stop.upper() in nxt_up:
+                return ""
+        if _is_label_line(nxt_up, label_map) or _is_reserved_name_label(nxt):
+            continue
+        name = format_person_name(nxt)
+        if name and _looks_like_name_token(name):
+            return name
+    return ""
+
+
+def _extract_philsys_name_block(lines: list[str], label_map: dict) -> dict[str, str]:
+    out = {"last": "", "first": "", "middle": ""}
+    stops = {
+        "last": ["GIVEN NAMES", "GIVEN NAME", "FIRST NAME", "PANGALAN"],
+        "first": ["MIDDLE NAME", "MIDDLE INITIAL", "GITNANG PANGALAN", "DATE OF BIRTH"],
+        "middle": ["DATE OF BIRTH", "BIRTH DATE", "SEX", "ADDRESS", "TIRAHAN"],
+    }
+    for field, labels in label_map.items():
+        idx = _find_name_label_line_index(lines, labels)
+        if idx is None:
+            continue
+        val = _next_name_value_after(lines, idx + 1, label_map, stops.get(field, []))
+        if val:
+            out[field] = val
+    return out
+
+
+def _find_name_label_line_index(lines: list[str], labels: list[str]) -> int | None:
+    sorted_labels = sorted(labels, key=len, reverse=True)
+    for i, line in enumerate(lines):
+        line_up = line.upper().strip()
+        for label in sorted_labels:
+            if _line_contains_name_label(line_up, label):
+                return i
+    return None
+
+
+def _extract_name_sequence_after_last(lines: list[str], label_map: dict) -> dict[str, str]:
+    out = {"last": "", "first": "", "middle": ""}
+    idx = _find_name_label_line_index(lines, label_map["last"])
+    if idx is None:
+        return out
+    values: list[str] = []
+    for j in range(idx + 1, min(idx + 12, len(lines))):
+        if len(values) >= 3:
+            break
+        nxt = lines[j].strip()
+        if not nxt:
+            continue
+        nxt_up = nxt.upper()
+        if _is_label_line(nxt_up, label_map) or _is_reserved_name_label(nxt):
+            continue
+        if re.search(r"\b(date of birth|birthdate|sex|address|tirahan|petsa)\b", nxt, re.I):
+            break
+        name = format_person_name(nxt)
+        if name and _looks_like_name_token(name):
+            values.append(name)
+    if len(values) >= 1:
+        out["last"] = values[0]
+    if len(values) >= 2:
+        out["first"] = values[1]
+    if len(values) >= 3:
+        out["middle"] = values[2]
+    return out
+
+
+def _extract_uppercase_name_candidates(lines: list[str], label_map: dict) -> list[str]:
+    candidates: list[str] = []
+    for line in lines:
+        trim = line.strip()
+        if not trim or re.search(r"\d", trim):
+            continue
+        letters_only = re.sub(r"[^A-Z]", "", trim.upper())
+        if any(noise in letters_only for noise in NAME_NOISE):
+            continue
+        if _is_reserved_name_label(trim) or _is_label_line(trim.upper(), label_map):
+            continue
+        clean = re.sub(r"[^A-Za-z\s\-']", "", trim)
+        if not re.match(r"^[A-Z][A-Z\s\-']{0,38}$", clean.upper()):
+            continue
+        name = format_person_name(trim)
+        if name and _looks_like_name_token(name):
+            candidates.append(name)
+    deduped: list[str] = []
+    for c in candidates:
+        if c not in deduped:
+            deduped.append(c)
+    return deduped
+
+
+def _value_after_label(
+    lines: list[str],
+    line_index: int,
+    label: str,
+    label_map: dict,
+    stop_before: list[str] | None = None,
+) -> str:
+    stop_before = stop_before or []
+    line_up = lines[line_index].upper().strip()
+    label_up = label.upper()
+    pos = line_up.find(label_up)
+    if pos >= 0:
+        after = line_up[pos + len(label_up):].strip().lstrip(":- /")
+        if after and not _is_reserved_name_label(after) and not _is_label_line(after, label_map):
+            name = format_person_name(after)
+            if name and _looks_like_name_token(name):
+                return after
+    for j in range(line_index + 1, min(line_index + 6, len(lines))):
+        nxt = lines[j].strip()
+        if not nxt:
+            continue
+        nxt_up = nxt.upper()
+        for stop in stop_before:
+            if stop.upper() in nxt_up:
+                return ""
+        if _is_label_line(nxt_up, label_map) or _is_reserved_name_label(nxt):
+            continue
+        name = format_person_name(nxt)
+        if name and _looks_like_name_token(name):
+            return nxt_up
+    return ""
+
+
+def extract_name_fields(raw_text: str) -> dict[str, Any]:
+    result = {
+        "first": "", "middle": "", "last": "",
+        "first_confidence": 0.0, "middle_confidence": 0.0, "last_confidence": 0.0,
+        "first_source": "none", "middle_source": "none", "last_source": "none",
+    }
+    lines = re.split(r"\r?\n", raw_text)
+
+    block = _extract_philsys_name_block(lines, LABEL_MAP)
+    for field in ("last", "first", "middle"):
+        if block.get(field):
+            result[field] = block[field]
+            result[f"{field}_confidence"] = 0.94
+            result[f"{field}_source"] = "philsys_block"
+
+    stops = {
+        "last": ["GIVEN NAMES", "GIVEN NAME", "FIRST NAME", "PANGALAN"],
+        "first": ["MIDDLE NAME", "MIDDLE INITIAL", "GITNANG PANGALAN", "DATE OF BIRTH"],
+        "middle": ["DATE OF BIRTH", "BIRTH DATE", "SEX", "ADDRESS", "TIRAHAN"],
+    }
+    for i, line in enumerate(lines):
+        line_up = line.upper().strip()
+        for field, labels in LABEL_MAP.items():
+            if result[field]:
+                continue
+            for label in sorted(labels, key=len, reverse=True):
+                if not _line_contains_name_label(line_up, label):
+                    continue
+                extracted = _value_after_label(lines, i, label, LABEL_MAP, stops.get(field, []))
+                if extracted:
+                    name = format_person_name(extracted)
+                    if name and _looks_like_name_token(name) and not _is_reserved_name_label(name):
+                        result[field] = name
+                        result[f"{field}_confidence"] = 0.92
+                        result[f"{field}_source"] = "label"
+                break
+
+    block_gap = _extract_philsys_name_block(lines, LABEL_MAP)
+    for field in ("last", "first", "middle"):
+        if not result[field] and block_gap.get(field):
+            result[field] = block_gap[field]
+            result[f"{field}_confidence"] = 0.88
+            result[f"{field}_source"] = "philsys_block_gap"
+
+    if not result["last"] and not result["first"]:
+        name_lines = _extract_uppercase_name_candidates(lines, LABEL_MAP)
+        if len(name_lines) >= 2:
+            result["last"], result["first"] = name_lines[0], name_lines[1]
+            result["last_confidence"] = result["first_confidence"] = 0.55
+            result["last_source"] = result["first_source"] = "sequence"
+            if len(name_lines) >= 3 and not result["middle"]:
+                result["middle"] = name_lines[2]
+                result["middle_confidence"] = 0.5
+                result["middle_source"] = "sequence"
+
+    if (
+        not result["middle"]
+        and result["last"]
+        and result["first"]
+    ):
+        seq = _extract_name_sequence_after_last(lines, LABEL_MAP)
+        candidate = (seq.get("middle") or "").strip()
+        if (
+            candidate
+            and candidate.lower() != result["first"].lower()
+            and candidate.lower() != result["last"].lower()
+            and not _is_reserved_name_label(candidate)
+        ):
+            result["middle"] = candidate
+            result["middle_confidence"] = 0.78
+            result["middle_source"] = "sequence_after_last"
+
+    if not result["middle"] and result["first"]:
+        parts = result["first"].split()
+        if len(parts) >= 2:
+            first_only = format_person_name(parts[0])
+            rest = format_person_name(" ".join(parts[1:]))
+            if first_only and rest and _looks_like_name_token(rest):
+                result["first"] = first_only
+                result["middle"] = rest
+                result["middle_confidence"] = max(result["middle_confidence"], 0.76)
+                result["middle_source"] = "first_name_split"
+                if result["first_confidence"] < 0.9:
+                    result["first_confidence"] = 0.9
+
+    for field in ("last", "first", "middle"):
+        if result[field] and _is_reserved_name_label(result[field]):
+            result[field] = ""
+            result[f"{field}_confidence"] = 0.0
+            result[f"{field}_source"] = "none"
+
+    return result
 
 
 def parse_date_string(raw: str) -> str | None:
@@ -123,45 +377,6 @@ def parse_date_string(raw: str) -> str | None:
         except ValueError:
             continue
     return None
-
-
-def extract_name_fields(raw_text: str) -> dict[str, Any]:
-    result = {
-        "first": "", "middle": "", "last": "",
-        "first_confidence": 0.0, "middle_confidence": 0.0, "last_confidence": 0.0,
-        "first_source": "none", "middle_source": "none", "last_source": "none",
-    }
-    lines = re.split(r"\r?\n", raw_text)
-    for i, line in enumerate(lines):
-        line_up = line.upper().strip()
-        for field, labels in LABEL_MAP.items():
-            if result[field]:
-                continue
-            for label in labels:
-                if label not in line_up:
-                    continue
-                extracted = _value_after_label(lines, i, label, LABEL_MAP)
-                if extracted:
-                    result[field] = format_person_name(extracted)
-                    result[f"{field}_confidence"] = 0.92
-                    result[f"{field}_source"] = "label"
-                break
-    if not result["last"] and not result["first"]:
-        name_lines = []
-        for line in lines:
-            clean = format_person_name(line)
-            if clean and _looks_like_name_token(clean):
-                name_lines.append(clean)
-        name_lines = list(dict.fromkeys(name_lines))
-        if len(name_lines) >= 2:
-            result["last"], result["first"] = name_lines[0], name_lines[1]
-            result["last_confidence"] = result["first_confidence"] = 0.55
-            result["last_source"] = result["first_source"] = "sequence"
-            if len(name_lines) >= 3:
-                result["middle"] = name_lines[2]
-                result["middle_confidence"] = 0.5
-                result["middle_source"] = "sequence"
-    return result
 
 
 def extract_date_of_birth(raw_text: str) -> dict[str, Any]:
@@ -209,7 +424,7 @@ def extract_field_by_label(raw_text: str, labels: list[str]) -> str:
         for label in labels:
             if label.lower() not in ll:
                 continue
-            val = _value_after_label(lines, i, label, {})
+            val = _value_after_label(lines, i, label, LABEL_MAP)
             if val:
                 return val
     return ""
@@ -297,9 +512,199 @@ def extract_all(raw_text: str) -> dict[str, Any]:
         or not fields["date_of_birth"]["value"]
         or not fields["national_id"]["value"]
     )
-    return {
+    result = {
         "fields": fields,
         "overall_confidence": round(overall, 3),
         "low_confidence": low,
         "raw_text": raw_text,
     }
+    return finalize_extraction(result)
+
+
+def finalize_extraction(result: dict[str, Any]) -> dict[str, Any]:
+    fields = result.get("fields") or {}
+    for key in ("first_name", "middle_name", "last_name"):
+        v = str((fields.get(key) or {}).get("value") or "").strip()
+        if not v or _is_reserved_name_label(v):
+            fields[key] = _field("", 0.0, "none")
+            continue
+        name = format_person_name(v)
+        if not name or not _looks_like_name_token(name):
+            fields[key] = _field("", 0.0, "none")
+            continue
+        fields[key]["value"] = name
+
+    fn = (fields.get("first_name") or {}).get("value", "").lower()
+    ln = (fields.get("last_name") or {}).get("value", "").lower()
+    mn = (fields.get("middle_name") or {}).get("value", "").lower()
+    if fn and (fn == ln or fn == mn):
+        fields["first_name"] = _field("", 0.0, "none")
+    if mn and mn == ln:
+        fields["middle_name"] = _field("", 0.0, "none")
+
+    nid = re.sub(r"[^0-9]", "", str((fields.get("national_id") or {}).get("value") or ""))
+    if len(nid) != 16:
+        fields["national_id"] = _field("", 0.0, "none")
+    else:
+        fields["national_id"]["value"] = format_national_id(nid)
+
+    dob = str((fields.get("date_of_birth") or {}).get("value") or "").strip()
+    parsed = parse_date_string(dob) or (dob if re.match(r"^\d{4}-\d{2}-\d{2}$", dob) else None)
+    if not parsed:
+        fields["date_of_birth"] = _field("", 0.0, "none")
+    else:
+        fields["date_of_birth"]["value"] = parsed
+
+    required = ["first_name", "last_name", "date_of_birth", "national_id"]
+    scores: list[float] = []
+    low_field = False
+    for key in required:
+        val = str((fields.get(key) or {}).get("value") or "").strip()
+        conf = float((fields.get(key) or {}).get("confidence") or 0.0)
+        if not val:
+            low_field = True
+            continue
+        if conf < FIELD_MIN_CONFIDENCE:
+            fields[key] = _field("", 0.0, "invalidated")
+            low_field = True
+            continue
+        scores.append(conf)
+
+    overall = sum(scores) / len(scores) if scores else 0.0
+    low = (
+        low_field
+        or overall < CONFIDENCE_THRESHOLD
+        or not (fields.get("first_name") or {}).get("value")
+        or not (fields.get("last_name") or {}).get("value")
+        or not (fields.get("date_of_birth") or {}).get("value")
+        or not (fields.get("national_id") or {}).get("value")
+    )
+    result["fields"] = fields
+    result["overall_confidence"] = round(overall, 3)
+    result["low_confidence"] = low
+    return result
+
+
+def merge_raw_ocr_texts(texts: list[str]) -> str:
+    seen: dict[str, int] = {}
+    ordered: list[str] = []
+    for raw in texts:
+        for line in re.split(r"\r?\n", raw):
+            line = line.strip()
+            if not line:
+                continue
+            key = re.sub(r"\s+", " ", line.lower())
+            if key in seen:
+                seen[key] += 1
+                continue
+            seen[key] = 1
+            ordered.append(line)
+    return "\n".join(ordered)
+
+
+def _normalize_field_value_for_vote(key: str, value: str) -> str:
+    value = value.strip()
+    if not value:
+        return ""
+    if key in ("first_name", "middle_name", "last_name"):
+        name = format_person_name(value)
+        if not name or _is_reserved_name_label(name) or not _looks_like_name_token(name):
+            return ""
+        return name.lower()
+    if key == "national_id":
+        digits = re.sub(r"[^0-9]", "", value)
+        return digits if len(digits) == 16 else ""
+    if key == "date_of_birth":
+        return parse_date_string(value) or ""
+    return re.sub(r"\s+", " ", value.lower()).strip()
+
+
+def _format_consensus_field_value(key: str, value: str) -> str:
+    value = value.strip()
+    if not value:
+        return ""
+    if key in ("first_name", "middle_name", "last_name"):
+        return format_person_name(value)
+    if key == "national_id":
+        digits = re.sub(r"[^0-9]", "", value)
+        return format_national_id(digits) if len(digits) == 16 else ""
+    if key == "date_of_birth":
+        return parse_date_string(value) or value
+    return value
+
+
+def _extraction_quality_score(extraction: dict[str, Any]) -> float:
+    fields = extraction.get("fields") or {}
+    required = ["first_name", "last_name", "date_of_birth", "national_id"]
+    score = 0.0
+    for key in required:
+        val = str((fields.get(key) or {}).get("value") or "").strip()
+        if not val:
+            continue
+        score += float((fields.get(key) or {}).get("confidence") or 0.0)
+    if extraction.get("low_confidence"):
+        score *= 0.45
+    return score
+
+
+def consensus_from_extractions(extractions: list[dict[str, Any]]) -> dict[str, Any]:
+    field_keys = ["first_name", "middle_name", "last_name", "date_of_birth", "national_id", "address"]
+    fields: dict[str, Any] = {}
+    for key in field_keys:
+        votes: dict[str, dict[str, Any]] = {}
+        for ext in extractions:
+            f = (ext.get("fields") or {}).get(key)
+            if not isinstance(f, dict):
+                continue
+            val = str(f.get("value") or "").strip()
+            if not val:
+                continue
+            norm = _normalize_field_value_for_vote(key, val)
+            if not norm:
+                continue
+            if norm not in votes:
+                votes[norm] = {
+                    "value": val,
+                    "count": 0,
+                    "conf": 0.0,
+                    "source": str(f.get("source") or "consensus"),
+                }
+            votes[norm]["count"] += 1
+            votes[norm]["conf"] += float(f.get("confidence") or 0.0)
+        if not votes:
+            fields[key] = _field("", 0.0, "none")
+            continue
+        winner = max(
+            votes.values(),
+            key=lambda v: (v["count"], v["conf"]),
+        )
+        avg_conf = winner["conf"] / max(1, winner["count"])
+        boost = min(0.06, (winner["count"] - 1) * 0.03)
+        display = _format_consensus_field_value(key, winner["value"])
+        fields[key] = _field(display, min(0.99, avg_conf + boost), "consensus")
+
+    raw = merge_raw_ocr_texts([str(e.get("raw_text") or "") for e in extractions])
+    draft = {
+        "fields": fields,
+        "overall_confidence": 0.0,
+        "low_confidence": True,
+        "raw_text": raw,
+    }
+    return finalize_extraction(draft)
+
+
+def _pick_better_extraction(a: dict[str, Any], b: dict[str, Any]) -> dict[str, Any]:
+    return a if _extraction_quality_score(a) >= _extraction_quality_score(b) else b
+
+
+def extract_all_from_passes(raw_texts: list[str]) -> dict[str, Any]:
+    texts = [t.strip() for t in raw_texts if t and t.strip()]
+    if not texts:
+        return extract_all("")
+    extractions = [extract_all(t) for t in texts]
+    if len(extractions) == 1:
+        return extractions[0]
+    consensus = consensus_from_extractions(extractions)
+    merged = merge_raw_ocr_texts(texts)
+    from_merged = extract_all(merged)
+    return _pick_better_extraction(consensus, from_merged)

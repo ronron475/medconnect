@@ -7,7 +7,13 @@ from typing import Any
 
 from preprocess import FILLER_WORDS, remove_fillers
 from rapidfuzz import fuzz, process
-from symptom_lexicon_loader import fuzzy_threshold, variant_index, variants_by_length
+from symptom_lexicon_loader import (
+    fuzzy_threshold,
+    lexicon_variant_index,
+    lexicon_variants_by_length,
+    variant_index,
+    variants_by_length,
+)
 
 
 def collapse_repeated_characters(text: str, max_repeat: int = 2) -> str:
@@ -35,8 +41,12 @@ def _phrase_spans(text: str, phrase: str) -> list[tuple[int, int]]:
     return [(m.start(), m.end()) for m in pattern.finditer(text)]
 
 
-def _fuzzy_match_variant(candidate: str, threshold: int) -> tuple[dict[str, Any] | None, int]:
-    index = variant_index()
+def _fuzzy_match_variant(
+    candidate: str,
+    threshold: int,
+    index: dict[str, dict[str, Any]] | None = None,
+) -> tuple[dict[str, Any] | None, int]:
+    index = index if index is not None else lexicon_variant_index()
     if not candidate or not index:
         return None, 0
     key = candidate.lower().strip()
@@ -70,6 +80,7 @@ def recognize_symptoms(
     *,
     threshold: int | None = None,
     include_fuzzy: bool = True,
+    lexicon_only: bool = False,
 ) -> dict[str, Any]:
     """
     Detect Hiligaynon symptoms in free text or short phrases.
@@ -81,6 +92,13 @@ def recognize_symptoms(
     cleaned = remove_fillers(normalized)
     working = cleaned or normalized
     thresh = threshold if threshold is not None else fuzzy_threshold()
+
+    if lexicon_only:
+        variant_list = lexicon_variants_by_length()
+        index_get = lexicon_variant_index()
+    else:
+        variant_list = variants_by_length()
+        index_get = variant_index()
 
     detections: list[dict[str, Any]] = []
     occupied = [False] * max(len(working), 1)
@@ -113,11 +131,13 @@ def recognize_symptoms(
         )
 
     # 1) Exact phrase match (longest first)
-    for variant in variants_by_length():
+    for variant in variant_list:
+        if variant not in working:
+            continue
         for start, end in _phrase_spans(working, variant):
             if any(occupied[start:end]):
                 continue
-            meta = variant_index().get(variant)
+            meta = index_get.get(variant)
             if not meta:
                 continue
             for i in range(start, min(end, len(occupied))):
@@ -125,22 +145,25 @@ def recognize_symptoms(
             snippet = working[start:end]
             add_detection(snippet, variant, meta, 100, "exact_phrase", (start, end))
 
+    # Fuzzy against JSON lexicon only (62k+ CSV variants make RapidFuzz unusably slow).
+    fuzzy_index = lexicon_variant_index()
+
     # 2) Fuzzy phrase/token match on remaining text
-    if include_fuzzy:
+    if include_fuzzy and not lexicon_only:
         fuzzy_candidates = _candidate_phrases(working)
         for candidate in fuzzy_candidates:
             if any(occupied[i] for i in range(len(working)) if working[max(0, i - 1) : i + len(candidate)]):
                 pass
-            meta, score = _fuzzy_match_variant(candidate, thresh)
+            meta, score = _fuzzy_match_variant(candidate, thresh, fuzzy_index)
             if meta and meta["symptom_key"] not in seen_keys:
                 add_detection(candidate, meta.get("canonical_variant") or candidate, meta, score, "fuzzy")
 
     # 3) Single-token fuzzy for short typos (katol, kakatul)
-    if include_fuzzy:
+    if include_fuzzy and not lexicon_only:
         for token in re.findall(r"[a-z0-9\-]+", working):
             if token in FILLER_WORDS or len(token) < 3:
                 continue
-            meta, score = _fuzzy_match_variant(token, thresh)
+            meta, score = _fuzzy_match_variant(token, thresh, fuzzy_index)
             if meta and meta["symptom_key"] not in seen_keys and score >= thresh:
                 add_detection(token, meta.get("canonical_variant") or token, meta, score, "fuzzy_token")
 
@@ -161,7 +184,10 @@ def recognize_symptoms(
         "detections": detections,
         "detection_count": len(detections),
         "english_symptoms": english_symptoms,
-        "lexicon": __import__("symptom_lexicon_loader").lexicon_stats(),
+        "lexicon": __import__("symptom_lexicon_loader").lexicon_stats() if not lexicon_only else {
+            "lexicon_only": True,
+            "variant_count": len(index_get),
+        },
     }
 
 

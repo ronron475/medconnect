@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 // Avoid holding a write-lock on the PHP session for this long-lived page
 // (provider + patient can open video rooms without session lock deadlocks).
 if (!defined('MEDCONNECT_SESSION_READ_AND_CLOSE')) {
@@ -51,11 +51,13 @@ $stmt = $pdo->prepare("
     SELECT vs.*, c.patient_id, c.provider_id, c.consult_date, c.consult_time, c.status AS consult_status,
            p.first_name as patient_first, p.last_name as patient_last,
            d.first_name as doctor_first, d.last_name as doctor_last,
+           pp.specialty as provider_specialty,
            s.slot_date, s.start_time AS slot_start, s.end_time AS slot_end
     FROM video_sessions vs
     JOIN consultations c ON vs.consultation_id = c.id
     LEFT JOIN users p ON c.patient_id = p.id
     LEFT JOIN users d ON c.provider_id = d.id
+    LEFT JOIN provider_profiles pp ON pp.user_id = c.provider_id
     LEFT JOIN appointment_slots s ON s.consultation_id = c.id AND s.status = 'booked'
     WHERE vs.room_token = ? AND vs.status = 'active' LIMIT 1
 ");
@@ -96,9 +98,15 @@ if (!$video_access['allowed']) {
     die(htmlspecialchars($video_access['reason']));
 }
 
-$other_name = ($role === 'provider') 
-    ? ($session['patient_first'] . ' ' . $session['patient_last'])
-    : ($session['doctor_first'] . ' ' . $session['doctor_last']);
+$patient_name = trim(($session['patient_first'] ?? '') . ' ' . ($session['patient_last'] ?? ''));
+$provider_name = trim(($session['doctor_first'] ?? '') . ' ' . ($session['doctor_last'] ?? ''));
+$provider_specialty = trim((string) ($session['provider_specialty'] ?? ''));
+if ($provider_specialty === '') {
+    $provider_specialty = 'General Medicine';
+}
+$patient_initials = strtoupper(substr($session['patient_first'] ?? 'P', 0, 1) . substr($session['patient_last'] ?? 'T', 0, 1));
+$provider_initials = strtoupper(substr($session['doctor_first'] ?? 'H', 0, 1) . substr($session['doctor_last'] ?? 'P', 0, 1));
+$other_name = ($role === 'provider') ? $patient_name : $provider_name;
 
 $slot_minutes = 30;
 $seconds_remaining = $slot_minutes * 60;
@@ -126,7 +134,7 @@ $is_patient = ($role === 'patient');
 $consultation_id = (int) ($session['consultation_id'] ?? 0);
 
 // Persist a real CSRF token so mute-TTS / messages APIs work in production.
-// Never invent a page-only token — it would fail auth_csrf_validate on send.php.
+// Never invent a page-only token â€” it would fail auth_csrf_validate on send.php.
 if ($pageCsrfToken === '' && !empty($_SESSION['csrf_token'])) {
     $pageCsrfToken = (string) $_SESSION['csrf_token'];
 }
@@ -162,7 +170,7 @@ if (session_status() === PHP_SESSION_ACTIVE) {
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <meta http-equiv="Permissions-Policy" content="camera=(self), microphone=(self), display-capture=(self)"/>
-  <title>Video Consultation — medConnect</title>
+  <title>Video Consultation â€” medConnect</title>
   <?php require_once __DIR__ . '/../../bootstrap.php'; ?>
   <?php
   require_once VIEWS_PATH . '/components/global-loader.php';
@@ -177,84 +185,17 @@ if (session_status() === PHP_SESSION_ACTIVE) {
   $muteTtsCssVer = (int) @filemtime(ASSETS_PATH . '/css/video-mute-tts.css');
   $muteTtsJsVer = (int) @filemtime(ASSETS_PATH . '/js/video-mute-tts.js');
   $videoCoreJsVer = (int) @filemtime(ASSETS_PATH . '/js/video-call-core.js');
+  $videoUiCssVer = (int) @filemtime(ASSETS_PATH . '/css/video-consultation-ui.css');
+  $videoUiJsVer = (int) @filemtime(ASSETS_PATH . '/js/video-consultation-ui.js');
   ?>
   <link rel="stylesheet" href="<?= ASSET_BASE ?>/assets/css/video-mute-tts.css?v=<?= $muteTtsCssVer ?>"/>
+  <link rel="stylesheet" href="<?= ASSET_BASE ?>/assets/css/video-consultation-ui.css?v=<?= $videoUiCssVer ?>"/>
   <script src="<?= ASSET_BASE ?>/assets/js/video-call-core.js?v=<?= $videoCoreJsVer ?>"></script>
+  <script src="<?= ASSET_BASE ?>/assets/js/video-consultation-ui.js?v=<?= $videoUiJsVer ?>"></script>
   <script src="<?= ASSET_BASE ?>/assets/js/video-mute-tts.js?v=<?= $muteTtsJsVer ?>"></script>
   <style>
-    body { margin:0; font-family:system-ui; background:#0f172a; color:#fff; height:100vh; overflow:hidden; }
-    .video-container { display:grid; grid-template-columns:1fr 1fr; gap:20px; padding:20px; height:calc(100vh - 100px); }
-    video { width:100%; height:100%; object-fit:cover; border-radius:16px; background:#1e293b; border:2px solid rgba(255,255,255,0.1); }
-    .controls { position:fixed; bottom:20px; left:50%; transform:translateX(-50%); background:rgba(30,41,59,0.8); backdrop-filter:blur(8px); padding:16px 32px; border-radius:40px; display:flex; gap:20px; border:1px solid rgba(255,255,255,0.1); }
-    .btn { width:48px; height:48px; border-radius:50%; border:none; cursor:pointer; display:flex; align-items:center; justify-content:center; transition:0.2s; }
-    .btn-mute { background:#334155; color:#fff; }
-    .btn-mute.off { background:#ef4444; }
-    .enable-sound-btn {
-      position: absolute;
-      left: 50%;
-      top: 50%;
-      transform: translate(-50%, -50%);
-      z-index: 5;
-      border: none;
-      border-radius: 12px;
-      padding: 14px 20px;
-      font-weight: 800;
-      font-size: 15px;
-      cursor: pointer;
-      background: #f59e0b;
-      color: #111827;
-      box-shadow: 0 10px 24px rgba(2,6,23,.45);
-    }
-    .enable-sound-btn[hidden] { display: none !important; }
-    .demo-connect-tip {
-      position: fixed;
-      top: 64px;
-      left: 50%;
-      transform: translateX(-50%);
-      z-index: 1200;
-      max-width: min(560px, calc(100vw - 24px));
-      background: rgba(15,23,42,.95);
-      border: 1px solid rgba(148,163,184,.35);
-      color: #e2e8f0;
-      border-radius: 12px;
-      padding: 10px 14px;
-      font-size: 12px;
-      font-weight: 600;
-      line-height: 1.45;
-    }
-    .btn-end { background:#ef4444; width:120px; border-radius:12px; color:#fff; font-weight:700; }
-    .btn-end:disabled { opacity:.65; cursor:not-allowed; }
-    .status-bar { position:fixed; top:20px; left:20px; display:flex; align-items:center; gap:10px; font-size:14px; background:rgba(0,0,0,0.4); padding:8px 16px; border-radius:20px; flex-wrap:wrap; max-width:calc(100vw - 40px); }
-    .media-status {
-      display: flex;
-      gap: 8px;
-      flex-wrap: wrap;
-      margin-left: 6px;
-    }
-    .media-status span {
-      font-size: 11px;
-      font-weight: 700;
-      padding: 3px 8px;
-      border-radius: 999px;
-      background: rgba(30,41,59,.85);
-      border: 1px solid rgba(148,163,184,.28);
-      color: #e2e8f0;
-    }
-    .media-status span.is-off {
-      background: rgba(127,29,29,.55);
-      border-color: rgba(252,165,165,.35);
-      color: #fecaca;
-    }
-    .tts-typing-badge {
-      font-size: 11px;
-      font-weight: 800;
-      color: #fde68a;
-      background: rgba(180,83,9,.35);
-      border: 1px solid rgba(251,191,36,.4);
-      padding: 3px 8px;
-      border-radius: 999px;
-    }
-    .live-dot { width:8px; height:8px; background:#ef4444; border-radius:50%; animation:pulse 2s infinite; }
+    body { margin:0; background:#0b1220; color:#fff; height:100vh; overflow:hidden; }
+    body:not(.media-ready) .mc-vc-controls { display: none; }
     .end-modal {
       position: fixed;
       inset: 0;
@@ -303,10 +244,6 @@ if (session_status() === PHP_SESSION_ACTIVE) {
     .end-actions .keep { background: #1e293b; color: #fff; }
     .end-actions .confirm { background: #dc2626; color: #fff; border-color: #dc2626; }
     .end-actions button:disabled { opacity: .6; cursor: not-allowed; }
-    .saving-spinner {
-      margin: 0 auto 16px;
-    }
-    @keyframes pulse { 0% { opacity:1; } 50% { opacity:0.4; } 100% { opacity:1; } }
     .extend-toast {
       position: fixed;
       top: 80px;
@@ -316,7 +253,7 @@ if (session_status() === PHP_SESSION_ACTIVE) {
       border-radius: 10px;
       font-size: 13px;
       font-weight: 700;
-      z-index: 2100;
+      z-index: 100030;
       display: none;
       max-width: min(520px, calc(100% - 32px));
       text-align: center;
@@ -325,74 +262,21 @@ if (session_status() === PHP_SESSION_ACTIVE) {
     .extend-toast.show { display: block; }
     .extend-toast.success { background: #166534; color: #dcfce7; border: 1px solid #22c55e; }
     .extend-toast.error { background: #7f1d1d; color: #fee2e2; border: 1px solid #ef4444; }
-    .extend-btn {
-      margin-left: 10px;
-      background: #fbbf24;
-      color: #000;
-      border: none;
-      padding: 4px 12px;
-      border-radius: 999px;
-      font-size: 11px;
-      font-weight: 800;
-      cursor: pointer;
-    }
-    .extend-btn:disabled { opacity: .6; cursor: not-allowed; }
-    .top-actions {
+    .demo-connect-tip {
       position: fixed;
-      top: 20px;
-      right: 20px;
-      z-index: 2200;
-      display: flex;
-      gap: 8px;
-      flex-wrap: wrap;
-      justify-content: flex-end;
-      max-width: calc(100% - 40px);
-    }
-    .top-actions a,
-    .top-actions button {
-      height: 34px;
-      padding: 0 14px;
-      border-radius: 999px;
-      border: 1px solid rgba(255, 255, 255, 0.18);
-      background: rgba(5, 7, 11, 0.78);
-      color: #fff;
-      font-size: 11px;
-      font-weight: 800;
-      cursor: pointer;
-      text-decoration: none;
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-    }
-    .top-actions a:hover,
-    .top-actions button:hover {
-      background: rgba(1, 138, 147, 0.35);
-    }
-    body.compact-mode {
-      overflow: auto;
-      height: auto;
-      min-height: 100vh;
-    }
-    body.compact-mode .video-container {
-      height: auto;
-      min-height: 38vh;
-      max-height: 42vh;
-      grid-template-columns: 1fr 1fr;
-      padding: 12px;
-    }
-    body.compact-mode .status-bar {
-      position: sticky;
-      top: 0;
-      z-index: 2100;
-      margin: 12px;
-      width: fit-content;
-    }
-    body.compact-mode .controls {
-      position: sticky;
-      bottom: 12px;
-    }
-    body.compact-mode .compact-hint {
-      display: block;
+      top: 64px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 1200;
+      max-width: min(560px, calc(100vw - 24px));
+      background: rgba(15,23,42,.95);
+      border: 1px solid rgba(148,163,184,.35);
+      color: #e2e8f0;
+      border-radius: 12px;
+      padding: 10px 14px;
+      font-size: 12px;
+      font-weight: 600;
+      line-height: 1.45;
     }
     .compact-hint {
       display: none;
@@ -405,34 +289,11 @@ if (session_status() === PHP_SESSION_ACTIVE) {
       font-size: 13px;
       line-height: 1.5;
     }
-    @media (max-width: 720px) {
-      .video-container {
-        grid-template-columns: 1fr;
-        height: calc(100vh - 120px);
-      }
-      body.compact-mode .video-container {
-        max-height: none;
-        min-height: 280px;
-      }
-      .status-bar {
-        left: 12px;
-        right: 12px;
-        top: 12px;
-        flex-wrap: wrap;
-        max-width: calc(100% - 24px);
-      }
-      .top-actions {
-        top: auto;
-        bottom: 92px;
-        right: 12px;
-        left: 12px;
-        justify-content: center;
-      }
-    }
+    body.compact-mode .compact-hint { display: block; }
     .media-permission-gate {
       position: fixed;
       inset: 0;
-      z-index: 100050; /* above global boot loader so Chrome demos can click Allow */
+      z-index: 100050;
       display: flex;
       align-items: center;
       justify-content: center;
@@ -517,9 +378,31 @@ if (session_status() === PHP_SESSION_ACTIVE) {
       border: 1px solid rgba(148, 163, 184, 0.25);
     }
     .media-permission-actions button:disabled { opacity: .65; cursor: not-allowed; }
-    body:not(.media-ready) .controls { display: none; }
-    @media (max-width: 720px) {
-      .video-container { grid-template-columns: 1fr; height: calc(100vh - 120px); }
+    #extensionPrompt {
+      display: none;
+      position: fixed;
+      top: 80px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: #fbbf24;
+      color: #000;
+      padding: 10px 20px;
+      border-radius: 8px;
+      font-size: 13px;
+      font-weight: 700;
+      box-shadow: 0 10px 15px -3px rgba(0,0,0,0.2);
+      z-index: 100025;
+      align-items: center;
+      gap: 12px;
+    }
+    .tts-typing-badge {
+      font-size: 11px;
+      font-weight: 800;
+      color: #fde68a;
+      background: rgba(180,83,9,.35);
+      border: 1px solid rgba(251,191,36,.4);
+      padding: 3px 8px;
+      border-radius: 999px;
     }
   </style>
 </head>
@@ -528,7 +411,7 @@ if (session_status() === PHP_SESSION_ACTIVE) {
   data-csrf="<?= htmlspecialchars($pageCsrfToken, ENT_QUOTES, 'UTF-8') ?>"
   data-asset-base="<?= htmlspecialchars(ASSET_BASE, ENT_QUOTES, 'UTF-8') ?>"
 >
-<?php /* No boot loader overlay — dual Chrome tabs must be interactive immediately. */ ?>
+<?php /* No boot loader overlay â€” dual Chrome tabs must be interactive immediately. */ ?>
 
   <div id="mediaPermissionGate" class="media-permission-gate" role="dialog" aria-modal="true" aria-labelledby="mediaPermissionTitle">
     <div class="media-permission-dialog">
@@ -539,7 +422,7 @@ if (session_status() === PHP_SESSION_ACTIVE) {
       <p class="media-permission-copy">Tap the button below, then choose <strong>Allow</strong> when your browser asks. This is required to join the video consultation.</p>
       <div id="secureContextWarning" class="media-permission-warn" style="display:none;"></div>
       <div id="mediaPermissionError" class="media-permission-error" role="alert"></div>
-      <div id="mediaPermissionStatus" class="media-permission-status">Waiting for you to allow access…</div>
+      <div id="mediaPermissionStatus" class="media-permission-status">Waiting for you to allow accessâ€¦</div>
       <div class="media-permission-actions">
         <button type="button" class="primary" id="btnAllowBoth">Allow camera &amp; microphone</button>
         <button type="button" class="secondary" id="btnAllowAudio">Join with audio only</button>
@@ -549,76 +432,123 @@ if (session_status() === PHP_SESSION_ACTIVE) {
   </div>
 
   <?php if (!$is_patient): ?>
-  <div class="top-actions" id="topActions">
+  <div class="mc-vc-top-actions" id="topActions">
     <a href="<?= htmlspecialchars(ASSET_BASE . '/views/provider/consultation_session.php?id=' . $consultation_id) ?>" id="sessionAiLink">Session &amp; AI</a>
     <button type="button" id="minimizeVideoBtn" style="display:none;">Minimize video</button>
     <button type="button" id="compactModeBtn">Compact view</button>
   </div>
   <?php endif; ?>
 
-  <div class="status-bar">
-    <div class="live-dot"></div>
-    <span id="callStatus">Connecting to secure server...</span>
-    <span id="timerDisplay" style="margin-left:8px; font-family:monospace; font-weight:700; color:#fbbf24"><?= sprintf('%02d:%02d', (int) floor($seconds_remaining / 60), $seconds_remaining % 60) ?></span>
-    <div class="media-status" aria-live="polite">
-      <span id="mediaStatusMic">🎤 Microphone…</span>
-      <span id="mediaStatusCam">📷 Camera…</span>
-      <span id="mediaStatusConn">◌ Connecting</span>
-      <span id="ttsTypingBadge" class="tts-typing-badge" hidden>Typing via Text-to-Speech…</span>
-    </div>
-    <?php if (!$is_patient): ?>
-    <button type="button" class="extend-btn" id="extendBtn" onclick="requestExtension(15)">+15 min</button>
-    <?php endif; ?>
-  </div>
-
   <div id="extendToast" class="extend-toast" role="status" aria-live="polite"></div>
 
-  <div class="video-container">
-    <div style="position:relative">
-      <video id="localVideo" autoplay muted playsinline></video>
-      <div style="position:absolute; bottom:12px; left:12px; background:rgba(0,0,0,0.5); padding:4px 8px; border-radius:4px; font-size:12px">You (<?= ucfirst($role) ?>)</div>
+  <div id="mcVideoConsultRoot" class="mc-vc-root mc-vc-drag-handle" aria-label="Video consultation">
+    <header class="mc-vc-header" id="mcVcHeader">
+      <div class="mc-vc-participant" id="mcVcRemoteParticipant">
+        <div class="mc-vc-avatar" aria-hidden="true"><?= $is_patient ? htmlspecialchars($provider_initials) : htmlspecialchars($patient_initials) ?></div>
+        <div class="mc-vc-participant-text">
+          <div class="mc-vc-participant-name"><?= htmlspecialchars($is_patient ? $provider_name : $patient_name) ?></div>
+          <div class="mc-vc-participant-sub"><?= $is_patient ? htmlspecialchars($provider_specialty) : 'Patient' ?></div>
+        </div>
+      </div>
+      <div class="mc-vc-header-meta">
+        <span class="mc-vc-pill mc-vc-pill--secure mc-vc-secure-label" title="WebRTC encrypted peer connection">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+          Secure
+        </span>
+        <span class="mc-vc-pill mc-vc-pill--duration" id="consultDuration" title="Consultation duration">00:00</span>
+        <span class="mc-vc-pill mc-vc-pill--timer mc-vc-slot-timer" id="timerDisplay" title="Time remaining in slot"><?= sprintf('%02d:%02d', (int) floor($seconds_remaining / 60), $seconds_remaining % 60) ?></span>
+        <?php if (!$is_patient): ?>
+        <button type="button" class="mc-vc-pill extend-btn" id="extendBtn" onclick="requestExtension(15)">+15 min</button>
+        <?php endif; ?>
+      </div>
+    </header>
+
+    <div class="mc-vc-status-bar" aria-live="polite">
+      <div class="mc-vc-live-dot live-dot" id="mcVcLiveDot"></div>
+      <span class="mc-vc-call-status" id="callStatus">Connecting to secure serverâ€¦</span>
+      <div class="mc-vc-media-status media-status">
+        <span id="mediaStatusMic">ðŸŽ¤ Microphoneâ€¦</span>
+        <span id="mediaStatusCam">ðŸ“· Cameraâ€¦</span>
+        <span id="mediaStatusConn" class="mc-vc-pill--network">â—Œ Connectingâ€¦</span>
+        <span id="ttsTypingBadge" class="tts-typing-badge" hidden>Typing via Text-to-Speechâ€¦</span>
+      </div>
     </div>
-    <div style="position:relative">
-      <video id="remoteVideo" autoplay playsinline></video>
-      <div style="position:absolute; bottom:12px; left:12px; background:rgba(0,0,0,0.5); padding:4px 8px; border-radius:4px; font-size:12px" id="remoteName">Waiting for <?= htmlspecialchars($other_name) ?>...</div>
-      <button type="button" id="enableSoundBtn" class="enable-sound-btn" hidden>🔊 Click to enable sound</button>
+
+    <div class="mc-vc-stage" id="mcVcStage">
+      <div class="mc-vc-main" id="mcVcMain">
+        <div id="mcVcMainSlot"></div>
+        <span class="mc-vc-main-label" id="mcVcMainLabel"></span>
+      </div>
+      <div class="mc-vc-pip" id="mcVcPip" data-corner="bottom-right">
+        <div id="mcVcPipSlot"></div>
+        <span class="mc-vc-pip-label" id="mcVcPipLabel"></span>
+        <button type="button" class="mc-vc-pip-swap" id="mcVcSwapBtn" title="Switch main view" aria-label="Switch main view">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 3h5v5M4 20 21 3M21 16v5h-5M15 15l6 6M4 4l5 5"/></svg>
+        </button>
+      </div>
+      <div class="mc-vc-overlay" id="mcVcOverlay" aria-hidden="true">
+        <div class="mc-vc-overlay-card">
+          <div class="mc-vc-overlay-title" id="mcVcOverlayTitle"></div>
+          <div class="mc-vc-overlay-sub" id="mcVcOverlaySub"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Hidden video elements (mounted into main/PiP slots by UI module) -->
+    <video id="localVideo" autoplay muted playsinline style="display:none"></video>
+    <video id="remoteVideo" autoplay playsinline style="display:none"></video>
+    <button type="button" id="enableSoundBtn" class="mc-vc-enable-sound enable-sound-btn" hidden>ðŸ”Š Tap to enable sound</button>
+    <span id="remoteName" hidden><?= htmlspecialchars($other_name) ?></span>
+
+    <div class="mc-vc-controls" id="mcVcControls">
+      <div class="mc-vc-controls-inner controls">
+        <button class="mc-vc-btn btn-mute" id="muteAudio" onclick="toggleAudio()" title="Mute / unmute microphone" aria-pressed="false" aria-label="Mute microphone">
+          <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v1a7 7 0 0 1-14 0v-1M12 18v4M8 22h8"/></svg>
+        </button>
+        <button class="mc-vc-btn btn-mute" id="toggleVideo" onclick="toggleVideo()" title="Turn camera on / off" aria-label="Toggle camera">
+          <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><path d="m23 7-7 5 7 5V7z"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/></svg>
+        </button>
+        <button type="button" class="mc-vc-btn mc-vc-btn--mobile-only" id="mcVcFlipBtn" title="Switch camera" aria-label="Switch front/back camera">
+          <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 2l4 4-4 4"/><path d="M3 11V9a4 4 0 0 1 4-4h14M7 22l-4-4 4-4"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg>
+        </button>
+        <button type="button" class="mc-vc-btn mc-vc-btn--mobile-only" id="mcVcSpeakerBtn" title="Speaker on / off" aria-label="Toggle speaker">
+          <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 5L6 9H2v6h4l5 4V5z"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"/></svg>
+        </button>
+        <button type="button" class="mc-vc-btn" id="mcVcFullscreenBtn" title="Fullscreen" aria-label="Fullscreen">
+          <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/></svg>
+        </button>
+        <button type="button" class="mc-vc-btn" id="mcVcMinimizeBtn" title="Minimize call" aria-label="Minimize call">
+          <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9V5a1 1 0 0 1 1-1h4M18 9V5a1 1 0 0 0-1-1h-4M6 15v4a1 1 0 0 0 1 1h4M18 15v4a1 1 0 0 1-1 1h-4"/></svg>
+        </button>
+        <button class="mc-vc-btn mc-vc-btn--end btn-end" id="endCallBtn" onclick="endCall()"><?= $is_patient ? 'Leave' : 'End' ?></button>
+      </div>
     </div>
   </div>
 
   <?php if (!$is_patient): ?>
   <div class="compact-hint" id="compactHint">
-    Use <strong>Session &amp; AI</strong> to open the consultation page with live transcript, disease suggestions, and SOAP notes.
-    If the call is embedded above the AI panel, tap <strong>Minimize video</strong> or <strong>Compact view</strong>.
+    Use <strong>Session &amp; AI</strong> for the Clinical Support Panel (finalize chief complaint, re-assess risk/conditions/questions/actions) and SOAP notes.
+    If the call is embedded above the panel, tap <strong>Minimize video</strong> or <strong>Compact view</strong>.
   </div>
   <?php endif; ?>
 
-  <div id="extensionPrompt" style="display:none; position:fixed; top:80px; left:50%; transform:translateX(-50%); background:#fbbf24; color:#000; padding:10px 20px; border-radius:8px; font-size:13px; font-weight:700; box-shadow:0 10px 15px -3px rgba(0,0,0,0.2); z-index:2000; align-items:center; gap:12px">
+  <div id="extensionPrompt">
     <span>5 minutes remaining. Would you like to extend?</span>
     <?php if($role === 'provider'): ?>
     <button onclick="requestExtension(15)" style="background:#000; color:#fff; border:none; padding:4px 10px; border-radius:4px; font-size:11px; cursor:pointer">Extend 15m</button>
     <?php endif; ?>
   </div>
 
-  <div class="controls">
-    <button class="btn btn-mute" id="muteAudio" onclick="toggleAudio()" title="Mute / unmute microphone" aria-pressed="false">
-      <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v1a7 7 0 0 1-14 0v-1M12 18v4M8 22h8"/></svg>
-    </button>
-    <button class="btn btn-mute" id="toggleVideo" onclick="toggleVideo()">
-      <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><path d="m23 7-7 5 7 5V7z"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/></svg>
-    </button>
-    <button class="btn btn-end" id="endCallBtn" onclick="endCall()"><?= $is_patient ? 'Leave Call' : 'End Consultation' ?></button>
-  </div>
-
   <div id="muteTtsBanner" class="mute-tts-banner" aria-hidden="true" role="status">
     <?php if ($is_patient): ?>
-      Your microphone is muted. Type below — the provider will hear it as speech and see the text.
+      Your microphone is muted. Type below â€” the provider will hear it as speech and see the text.
     <?php else: ?>
-      Your microphone is muted. Type below — the patient will hear it as speech and see the text.
+      Your microphone is muted. Type below â€” the patient will hear it as speech and see the text.
     <?php endif; ?>
   </div>
   <div id="remoteMuteBanner" class="remote-mute-banner" aria-hidden="true" role="status">
     <?php if ($is_patient): ?>
-      Provider microphone is muted. Wait for typed voice messages — they will play as speech here.
+      Provider microphone is muted. Wait for typed voice messages â€” they will play as speech here.
     <?php else: ?>
       Patient microphone is muted. Their typed messages will appear here and play as speech.
     <?php endif; ?>
@@ -706,15 +636,6 @@ if (session_status() === PHP_SESSION_ACTIVE) {
     let recordingAudioContext;
     let recordingAudioDestination;
     let remoteAudioConnected = false;
-    let speechRecognition;
-    let speechRecognitionActive = false;
-    let liveTranscriptBuffer = '';
-    let speechRestartTimer;
-    let aiChunkRecorder;
-    let aiChunkTimer;
-    let aiChunkActive = false;
-    let aiChunkUploading = false;
-    let aiServerTranscript = '';
     let pendingIncomingCall = null;
     let callInterval = null;
     let dataConn = null;
@@ -789,7 +710,7 @@ if (session_status() === PHP_SESSION_ACTIVE) {
           remoteDiscoveredId = msg.peerId;
           if (changed) {
             console.log('Demo discovered remote peer:', remoteDiscoveredId, 'as', msg.role);
-            document.getElementById('callStatus').textContent = 'Found other tab — connecting…';
+            document.getElementById('callStatus').textContent = 'Found other tab â€” connectingâ€¦';
           }
           // Answer their hello so both sides know each other even if one started later.
           announceDemoPeer();
@@ -824,14 +745,15 @@ if (session_status() === PHP_SESSION_ACTIVE) {
       attachRemoteCallStream(remoteStream).then((ok) => {
         if (!ok) {
           showEnableSoundButton(true);
-          document.getElementById('callStatus').textContent = 'Connected — click Enable Sound';
+          document.getElementById('callStatus').textContent = 'Connected â€” tap to enable sound';
         }
       });
+      if (consultUi && typeof consultUi.mountVideos === 'function') consultUi.mountVideos();
       document.getElementById('remoteName').textContent = '<?= htmlspecialchars($other_name) ?>';
       setCallPhase(window.McVideoCallCore ? window.McVideoCallCore.STATUS.CONNECTED : 'connected', {
         callStatusText: 'Connected',
       });
-      syncMediaStatus({ connectionLabel: '● Good Connection', connectionState: 'connected' });
+      syncMediaStatus({ connectionLabel: 'â— Good Connection', connectionState: 'connected' });
       const tip = document.getElementById('demoConnectTip');
       if (tip) tip.style.display = 'none';
       connectRemoteAudioToRecording();
@@ -945,7 +867,7 @@ if (session_status() === PHP_SESSION_ACTIVE) {
       announceDemoPeer();
       openDataChannel();
       if (!localStream) {
-        setPermissionStatus('Connected — tap below to allow camera and microphone.');
+        setPermissionStatus('Connected â€” tap below to allow camera and microphone.');
         setCallPhase(window.McVideoCallCore ? window.McVideoCallCore.STATUS.PERMISSION : 'permission', {
           callStatusText: 'Allow camera & microphone to join',
         });
@@ -992,15 +914,15 @@ if (session_status() === PHP_SESSION_ACTIVE) {
       // Production: stable role-token ids so patient/provider can find each other without a bus.
       peer = demoMode ? new Peer(peerOptions) : new Peer(peerId, peerOptions);
 
-      // Register immediately — Chrome dual-tab races if the other side dials first.
+      // Register immediately â€” Chrome dual-tab races if the other side dials first.
       peer.on('open', onPeerOpen);
       peer.on('connection', (conn) => wireDataConnection(conn));
       peer.on('call', (call) => {
         console.log('Incoming call from:', call.peer);
         if (!localStream) {
           pendingIncomingCall = call;
-          setPermissionStatus('Other participant is waiting — allow camera/microphone to connect.');
-          document.getElementById('callStatus').textContent = 'Participant ready — allow access to join';
+          setPermissionStatus('Other participant is waiting â€” allow camera/microphone to connect.');
+          document.getElementById('callStatus').textContent = 'Participant ready â€” allow access to join';
           return;
         }
         // Glare: if we already have a live call with audio/video, ignore extras.
@@ -1022,7 +944,7 @@ if (session_status() === PHP_SESSION_ACTIVE) {
         handleCall(call);
       });
       peer.on('disconnected', () => {
-        console.warn('Peer disconnected — reconnecting signaling…');
+        console.warn('Peer disconnected â€” reconnecting signalingâ€¦');
         setCallPhase(window.McVideoCallCore ? window.McVideoCallCore.STATUS.RECONNECTING : 'reconnecting');
         try {
           if (peer && !peer.destroyed) peer.reconnect();
@@ -1034,21 +956,21 @@ if (session_status() === PHP_SESSION_ACTIVE) {
         console.error('Peer error:', err);
         const type = err && err.type ? err.type : '';
         if (type === 'unavailable-id') {
-          document.getElementById('callStatus').textContent = 'Signaling ID busy — retrying…';
+          document.getElementById('callStatus').textContent = 'Signaling ID busy â€” retryingâ€¦';
           recreatePeer('unavailable-id');
           return;
         }
         if (type === 'network' || type === 'server-error' || type === 'socket-error' || type === 'socket-closed') {
-          document.getElementById('callStatus').textContent = 'Signaling reconnecting…';
+          document.getElementById('callStatus').textContent = 'Signaling reconnectingâ€¦';
           recreatePeer(type);
           return;
         }
         if (type === 'peer-unavailable') {
           if (demoMode) {
-            // Other tab PeerJS id not registered yet — keep discovering via BroadcastChannel.
+            // Other tab PeerJS id not registered yet â€” keep discovering via BroadcastChannel.
             announceDemoPeer();
             remoteDiscoveredId = null;
-            document.getElementById('callStatus').textContent = 'Looking for other tab…';
+            document.getElementById('callStatus').textContent = 'Looking for other tabâ€¦';
             return;
           }
           setCallPhase(
@@ -1185,7 +1107,7 @@ if (session_status() === PHP_SESSION_ACTIVE) {
 
       if (userRole === 'patient' && !patientMayDial) {
         setCallPhase(window.McVideoCallCore ? window.McVideoCallCore.STATUS.WAITING_PROVIDER : 'waiting_provider', {
-          callStatusText: 'Online — waiting for doctor to connect...',
+          callStatusText: 'Online â€” waiting for doctor to connect...',
         });
         return;
       }
@@ -1197,8 +1119,8 @@ if (session_status() === PHP_SESSION_ACTIVE) {
             : (window.McVideoCallCore ? window.McVideoCallCore.STATUS.WAITING_PROVIDER : 'waiting_provider'),
           {
             callStatusText: userRole === 'provider'
-              ? 'Secure room active — connecting to patient...'
-              : 'Online — connecting to doctor...',
+              ? 'Waiting for Patientâ€¦'
+              : 'Waiting for Healthcare Providerâ€¦',
           }
         );
       }
@@ -1245,11 +1167,11 @@ if (session_status() === PHP_SESSION_ACTIVE) {
       // Chrome dual-tab demo: local WebRTC over HTTP signaling relay.
       if (demoMode) {
         if (!window.McDemoLocalWebrtc) {
-          document.getElementById('callStatus').textContent = 'Demo script missing — hard refresh (Ctrl+F5)';
+          document.getElementById('callStatus').textContent = 'Demo script missing â€” hard refresh (Ctrl+F5)';
           return;
         }
         if (!demoKey) {
-          document.getElementById('callStatus').textContent = 'Missing demo key — reopen from demo launcher';
+          document.getElementById('callStatus').textContent = 'Missing demo key â€” reopen from demo launcher';
           return;
         }
         const demo = ensureLocalDemoCall();
@@ -1259,8 +1181,8 @@ if (session_status() === PHP_SESSION_ACTIVE) {
           console.log('[medConnect demo] starting local WebRTC as', userRole, 'token', roomToken.slice(0, 8), 'apiBase', apiBase);
           demo.start();
           document.getElementById('callStatus').textContent = userRole === 'provider'
-            ? 'Waiting for Patient tab…'
-            : 'Waiting for Provider tab…';
+            ? 'Waiting for Patient tabâ€¦'
+            : 'Waiting for Provider tabâ€¦';
           if (callInterval) clearInterval(callInterval);
           callInterval = setInterval(() => {
             if (callHasRemoteStream) {
@@ -1356,7 +1278,7 @@ if (session_status() === PHP_SESSION_ACTIVE) {
         const states = await Promise.all(
           names.map((name) => navigator.permissions.query({ name }).then((r) => name + ': ' + r.state).catch(() => name + ': unknown'))
         );
-        setPermissionStatus('Browser permission state — ' + states.join(' · '));
+        setPermissionStatus('Browser permission state â€” ' + states.join(' Â· '));
       } catch (e) {
         setPermissionStatus('Tap a button below, then allow access in the browser prompt.');
       }
@@ -1382,7 +1304,7 @@ if (session_status() === PHP_SESSION_ACTIVE) {
         showPermissionError(
           insecure
             ? '<strong>Camera and microphone need HTTPS.</strong> This page is not in a secure context (<code>' +
-              window.location.protocol + '//' + window.location.host + '</code>). Deploy with SSL or use an HTTPS URL — then tap Allow again.'
+              window.location.protocol + '//' + window.location.host + '</code>). Deploy with SSL or use an HTTPS URL â€” then tap Allow again.'
             : '<strong>Media devices are not available.</strong> Your browser blocked access. Check site permissions and try another browser.'
         );
         document.getElementById('btnAllowBoth').disabled = true;
@@ -1395,15 +1317,15 @@ if (session_status() === PHP_SESSION_ACTIVE) {
       let tips = '<ul style="margin:8px 0 0 18px;padding:0;">';
       if (name === 'NotAllowedError' || name === 'PermissionDeniedError') {
         tips += '<li>Tap <strong>Allow</strong> in the browser prompt.</li>';
-        tips += '<li>Brave: Shields off → Site settings → Camera &amp; Microphone → Allow.</li>';
-        tips += '<li>Phone settings → Apps → Browser → Permissions.</li>';
+        tips += '<li>Brave: Shields off â†’ Site settings â†’ Camera &amp; Microphone â†’ Allow.</li>';
+        tips += '<li>Phone settings â†’ Apps â†’ Browser â†’ Permissions.</li>';
       } else if (name === 'NotFoundError' || name === 'DevicesNotFoundError') {
         tips += '<li>No camera/mic found on this device.</li>';
         tips += '<li>Try <strong>Audio only</strong> or another device.</li>';
       } else if (name === 'NotReadableError' || name === 'TrackStartError') {
         tips += '<li>Another app may be using the camera (Zoom, Messenger, etc.). Close it and retry.</li>';
       } else if (name === 'SecurityError' || name === 'NotSupportedError') {
-        tips += '<li>Use <strong>HTTPS</strong> or <code>localhost</code> — HTTP on a phone IP often cannot use camera.</li>';
+        tips += '<li>Use <strong>HTTPS</strong> or <code>localhost</code> â€” HTTP on a phone IP often cannot use camera.</li>';
       } else {
         tips += '<li>Check browser permissions and close other camera apps.</li>';
       }
@@ -1418,7 +1340,7 @@ if (session_status() === PHP_SESSION_ACTIVE) {
       }
 
       clearPermissionError();
-      setPermissionStatus(videoEnabled ? 'Requesting camera and microphone…' : 'Requesting microphone…');
+      setPermissionStatus(videoEnabled ? 'Requesting camera and microphoneâ€¦' : 'Requesting microphoneâ€¦');
       document.getElementById('btnAllowBoth').disabled = true;
       document.getElementById('btnAllowAudio').disabled = true;
 
@@ -1436,12 +1358,12 @@ if (session_status() === PHP_SESSION_ACTIVE) {
         if (videoEnabled) {
           try {
             localStream = await navigator.mediaDevices.getUserMedia({ video: false, audio: audioConstraints });
-            setPermissionStatus('Camera blocked — joined with audio only.');
+            setPermissionStatus('Camera blocked â€” joined with audio only.');
           } catch (audioErr) {
             // Chrome dual-tab: camera/mic may be locked by the other tab. Join with silent track so PeerJS can still connect.
             try {
               localStream = await createSilentMediaStream();
-              setPermissionStatus('Mic busy in the other tab — joined with silent audio so the call can connect. Use mute TTS to type.');
+              setPermissionStatus('Mic busy in the other tab â€” joined with silent audio so the call can connect. Use mute TTS to type.');
               document.getElementById('muteAudio').classList.add('off');
               document.getElementById('toggleVideo').classList.add('off');
             } catch (silentErr) {
@@ -1460,7 +1382,7 @@ if (session_status() === PHP_SESSION_ACTIVE) {
         } else {
           try {
             localStream = await createSilentMediaStream();
-            setPermissionStatus('Microphone unavailable — joined with silent audio. Mute TTS still works for typed voice.');
+            setPermissionStatus('Microphone unavailable â€” joined with silent audio. Mute TTS still works for typed voice.');
             document.getElementById('muteAudio').classList.add('off');
             document.getElementById('toggleVideo').classList.add('off');
           } catch (silentErr) {
@@ -1495,6 +1417,14 @@ if (session_status() === PHP_SESSION_ACTIVE) {
     }
 
     const embeddedInSession = window.parent && window.parent !== window;
+    const consultMeta = {
+      providerName: <?= json_encode($provider_name) ?>,
+      providerSpecialty: <?= json_encode($provider_specialty) ?>,
+      providerInitials: <?= json_encode($provider_initials) ?>,
+      patientName: <?= json_encode($patient_name) ?>,
+      patientInitials: <?= json_encode($patient_initials) ?>,
+    };
+    let consultUi = null;
 
     function notifyParent(payload) {
       if (embeddedInSession) {
@@ -1517,6 +1447,9 @@ if (session_status() === PHP_SESSION_ACTIVE) {
       if (minimizeBtn) {
         minimizeBtn.addEventListener('click', () => {
           notifyParent({ type: 'medconnect:minimize-video', token: roomToken });
+          if (consultUi && typeof consultUi.toggleFloating === 'function') {
+            consultUi.toggleFloating();
+          }
         });
       }
 
@@ -1531,197 +1464,6 @@ if (session_status() === PHP_SESSION_ACTIVE) {
       }
     }
 
-    function postTranscriptStatus(status, message) {
-      notifyParent({
-        type: 'medconnect:transcript-status',
-        role: userRole,
-        token: roomToken,
-        status,
-        message
-      });
-    }
-
-    function postTranscriptUpdate() {
-      notifyParent({
-        type: 'medconnect:transcript-update',
-        role: userRole,
-        token: roomToken,
-        transcript: liveTranscriptBuffer.trim()
-      });
-    }
-
-    function startLiveTranscriptCapture() {
-      if (userRole !== 'provider' || speechRecognitionActive) return;
-
-      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-      if (!SpeechRecognition) {
-        postTranscriptStatus('unsupported', 'Live browser transcript is not supported here. You can still paste notes manually.');
-        return;
-      }
-
-      speechRecognition = new SpeechRecognition();
-      speechRecognition.continuous = true;
-      speechRecognition.interimResults = true;
-      speechRecognition.lang = 'en-PH';
-      speechRecognitionActive = true;
-
-      speechRecognition.onstart = () => {
-        postTranscriptStatus('listening', 'Listening to the consultation audio.');
-      };
-
-      speechRecognition.onresult = (event) => {
-        let finalText = '';
-        let interimText = '';
-
-        for (let i = event.resultIndex; i < event.results.length; i++) {
-          const text = event.results[i][0].transcript.trim();
-          if (event.results[i].isFinal) {
-            finalText += text + ' ';
-          } else {
-            interimText += text + ' ';
-          }
-        }
-
-        if (finalText) {
-          liveTranscriptBuffer = (liveTranscriptBuffer + ' ' + finalText).replace(/\s+/g, ' ').trim();
-        }
-
-        notifyParent({
-          type: 'medconnect:transcript-update',
-          role: userRole,
-          token: roomToken,
-          transcript: liveTranscriptBuffer.trim(),
-          interim: interimText.trim()
-        });
-      };
-
-      speechRecognition.onerror = (event) => {
-        postTranscriptStatus('error', 'Live transcript paused: ' + (event.error || 'speech recognition error') + '.');
-      };
-
-      speechRecognition.onend = () => {
-        if (!speechRecognitionActive || endingCall) return;
-        clearTimeout(speechRestartTimer);
-        speechRestartTimer = setTimeout(() => {
-          try { speechRecognition.start(); } catch (e) {}
-        }, 800);
-      };
-
-      try {
-        speechRecognition.start();
-      } catch (e) {
-        speechRecognitionActive = false;
-        postTranscriptStatus('error', 'Could not start live transcript capture.');
-      }
-    }
-
-    function stopLiveTranscriptCapture() {
-      speechRecognitionActive = false;
-      clearTimeout(speechRestartTimer);
-      if (speechRecognition) {
-        try { speechRecognition.stop(); } catch (e) {}
-      }
-      postTranscriptUpdate();
-      postTranscriptStatus('stopped', 'Live transcript capture stopped.');
-    }
-
-    function mergeLiveTranscript(text) {
-      const chunk = String(text || '').trim();
-      if (!chunk) return;
-      aiServerTranscript = (aiServerTranscript + ' ' + chunk).replace(/\s+/g, ' ').trim();
-      liveTranscriptBuffer = aiServerTranscript;
-      postTranscriptUpdate();
-    }
-
-    function postAiAnalysis(data) {
-      notifyParent({
-        type: 'medconnect:ai-analysis',
-        role: userRole,
-        token: roomToken,
-        data
-      });
-    }
-
-    function startAiLiveChunking() {
-      if (userRole !== 'provider' || aiChunkActive) return;
-      if (!recordingAudioDestination || !recordingAudioDestination.stream.getAudioTracks().length) return;
-      if (!window.MediaRecorder) {
-        postTranscriptStatus('unsupported', 'Live AI audio chunking is not supported in this browser.');
-        return;
-      }
-
-      aiChunkActive = true;
-      postTranscriptStatus('listening', 'Live AI is listening and sending audio chunks to Faster-Whisper.');
-
-      const mimeType = MediaRecorder.isTypeSupported('audio/webm;codecs=opus')
-        ? 'audio/webm;codecs=opus'
-        : (MediaRecorder.isTypeSupported('audio/webm') ? 'audio/webm' : '');
-
-      const captureChunk = () => {
-        if (!aiChunkActive || endingCall || aiChunkUploading) return;
-
-        const chunks = [];
-        try {
-          aiChunkRecorder = new MediaRecorder(
-            recordingAudioDestination.stream,
-            mimeType ? { mimeType } : undefined
-          );
-        } catch (e) {
-          postTranscriptStatus('error', 'Could not start live AI audio chunk.');
-          return;
-        }
-
-        aiChunkRecorder.ondataavailable = (event) => {
-          if (event.data && event.data.size > 0) chunks.push(event.data);
-        };
-
-        aiChunkRecorder.onstop = async () => {
-          if (!chunks.length || !aiChunkActive) return;
-          aiChunkUploading = true;
-          const blob = new Blob(chunks, { type: mimeType || 'audio/webm' });
-          const formData = new FormData();
-          formData.append('token', roomToken);
-          formData.append('audio', blob, 'live_audio.webm');
-
-          try {
-            const response = await fetch('<?= ASSET_BASE ?>/app/api/ai/transcribe_chunk.php', {
-              method: 'POST',
-              body: formData
-            });
-            const result = await response.json();
-            if (result.success && result.data) {
-              mergeLiveTranscript(result.data.hiligaynon_transcript || '');
-              postAiAnalysis(result.data);
-              postTranscriptStatus('listening', 'Live AI is analyzing the consultation.');
-            } else if (result.message) {
-              postTranscriptStatus('error', result.message);
-            }
-          } catch (e) {
-            postTranscriptStatus('error', 'Live AI could not reach the transcription service.');
-          } finally {
-            aiChunkUploading = false;
-          }
-        };
-
-        aiChunkRecorder.start();
-        setTimeout(() => {
-          if (aiChunkRecorder && aiChunkRecorder.state === 'recording') {
-            try { aiChunkRecorder.stop(); } catch (e) {}
-          }
-        }, 12000);
-      };
-
-      captureChunk();
-      aiChunkTimer = setInterval(captureChunk, 14000);
-    }
-
-    function stopAiLiveChunking() {
-      aiChunkActive = false;
-      clearInterval(aiChunkTimer);
-      if (aiChunkRecorder && aiChunkRecorder.state === 'recording') {
-        try { aiChunkRecorder.stop(); } catch (e) {}
-      }
-    }
 
     function startRecording() {
       if (userRole !== 'provider') return;
@@ -1798,7 +1540,6 @@ if (session_status() === PHP_SESSION_ACTIVE) {
       }
       
       connectRemoteAudioToRecording();
-      startAiLiveChunking();
 
       // 5. Combine Canvas Video + Mixed Audio
       const combinedStream = new MediaStream([
@@ -2033,6 +1774,7 @@ if (session_status() === PHP_SESSION_ACTIVE) {
 
         console.log('Local stream obtained.');
         attachStreamToVideo(document.getElementById('localVideo'), localStream, { muted: true });
+        if (consultUi && typeof consultUi.mountVideos === 'function') consultUi.mountVideos();
 
         const hasVideo = localStream.getVideoTracks().length > 0;
         const hasAudio = localStream.getAudioTracks().length > 0;
@@ -2046,8 +1788,8 @@ if (session_status() === PHP_SESSION_ACTIVE) {
         syncMediaStatus();
         setCallPhase(window.McVideoCallCore ? window.McVideoCallCore.STATUS.CONNECTING : 'connecting', {
           callStatusText: userRole === 'patient'
-            ? 'Connecting…'
-            : 'Connecting…',
+            ? 'Connectingâ€¦'
+            : 'Connectingâ€¦',
         });
 
         if (userRole === 'provider') {
@@ -2072,6 +1814,7 @@ if (session_status() === PHP_SESSION_ACTIVE) {
       }
 
       currentCall = call;
+      window.__mcCurrentCall = call;
       outboundCallInFlight = false;
       callHasRemoteStream = false;
       console.log('Handling call with:', call.peer);
@@ -2095,20 +1838,24 @@ if (session_status() === PHP_SESSION_ACTIVE) {
         })));
 
         if (!audioTracks.length) {
-          document.getElementById('callStatus').textContent = 'Connected — remote mic missing. Ask other tab to rejoin with audio.';
+          document.getElementById('callStatus').textContent = 'Connected â€” remote mic missing. Ask other tab to rejoin with audio.';
         }
 
         attachRemoteCallStream(remoteStream).then((ok) => {
           if (!ok) {
             showEnableSoundButton(true);
-            document.getElementById('callStatus').textContent = 'Connected — click Enable Sound';
+            document.getElementById('callStatus').textContent = 'Connected â€” tap to enable sound';
           }
         });
+        if (consultUi && typeof consultUi.mountVideos === 'function') consultUi.mountVideos();
         document.getElementById('remoteName').textContent = '<?= htmlspecialchars($other_name) ?>';
         setCallPhase(window.McVideoCallCore ? window.McVideoCallCore.STATUS.CONNECTED : 'connected', {
           callStatusText: 'Connected',
         });
-        syncMediaStatus({ connectionLabel: '● Good Connection', connectionState: 'connected' });
+        if (consultUi && typeof consultUi.startDurationTimer === 'function') {
+          consultUi.startDurationTimer();
+        }
+        syncMediaStatus({ connectionLabel: 'â— Good Connection', connectionState: 'connected' });
         const tip = document.getElementById('demoConnectTip');
         if (tip) tip.style.display = 'none';
         connectRemoteAudioToRecording();
@@ -2130,6 +1877,7 @@ if (session_status() === PHP_SESSION_ACTIVE) {
         console.log('Call closed with:', call.peer);
         if (currentCall === call) {
           currentCall = null;
+          window.__mcCurrentCall = null;
         }
         outboundCallInFlight = false;
         callHasRemoteStream = false;
@@ -2137,7 +1885,7 @@ if (session_status() === PHP_SESSION_ACTIVE) {
         showEnableSoundButton(false);
         if (!endingCall && localStream && !callInterval) {
           setCallPhase(window.McVideoCallCore ? window.McVideoCallCore.STATUS.RECONNECTING : 'reconnecting', {
-            callStatusText: 'Reconnecting…',
+            callStatusText: 'Reconnectingâ€¦',
           });
           beginConnectionRetries();
         }
@@ -2199,8 +1947,6 @@ if (session_status() === PHP_SESSION_ACTIVE) {
     }
 
     function disconnectLocalCall() {
-      stopAiLiveChunking();
-      stopLiveTranscriptCapture();
       if (localDemoCall) {
         try { localDemoCall.stop(); } catch (e) {}
         localDemoCall = null;
@@ -2235,7 +1981,7 @@ if (session_status() === PHP_SESSION_ACTIVE) {
       }
       clearInterval(timerInterval);
       setCallPhase(window.McVideoCallCore ? window.McVideoCallCore.STATUS.ENDED : 'ended', {
-        callStatusText: 'Call Ended',
+        callStatusText: 'Consultation Ended',
       });
     }
 
@@ -2271,7 +2017,6 @@ if (session_status() === PHP_SESSION_ACTIVE) {
       document.getElementById('confirmEndBtn').disabled = true;
 
       const isRecording = mediaRecorder && mediaRecorder.state === 'recording';
-      stopAiLiveChunking();
       showSavingModal(
         isRecording ? 'Saving consultation recording' : 'Closing consultation room',
         isRecording
@@ -2307,6 +2052,11 @@ if (session_status() === PHP_SESSION_ACTIVE) {
           return;
         }
 
+        if (userRole === 'provider' && consultationId) {
+          window.location.href = '../provider/consultation_session.php?id=' + encodeURIComponent(consultationId) + '&followup=1';
+          return;
+        }
+
         window.location.href = '../provider/dashboard.php';
     }
 
@@ -2333,12 +2083,42 @@ if (session_status() === PHP_SESSION_ACTIVE) {
       }
     });
 
+    window.__mcReplaceVideoTrack = async function (newTrack) {
+      if (!currentCall || !currentCall.peerConnection || !newTrack) return;
+      try {
+        const senders = currentCall.peerConnection.getSenders();
+        const videoSender = senders.find((s) => s.track && s.track.kind === 'video');
+        if (videoSender) {
+          await videoSender.replaceTrack(newTrack);
+        }
+      } catch (e) {
+        console.warn('replaceTrack failed:', e);
+      }
+    };
+
+    function initConsultationUi() {
+      if (!window.McVideoConsultationUi) return;
+      consultUi = window.McVideoConsultationUi.createController({
+        isPatient: isPatient,
+        embedded: embeddedInSession,
+        providerName: consultMeta.providerName,
+        providerSpecialty: consultMeta.providerSpecialty,
+        providerInitials: consultMeta.providerInitials,
+        patientName: consultMeta.patientName,
+        patientInitials: consultMeta.patientInitials,
+        onMinimize: () => notifyParent({ type: 'medconnect:minimize-video', token: roomToken }),
+        onMaximize: () => notifyParent({ type: 'medconnect:maximize-video', token: roomToken }),
+      });
+      consultUi.init();
+    }
+
     setInterval(syncTimerFromServer, 20000);
     syncTimerFromServer();
     setInterval(pingSessionKeepAlive, 45000);
     pingSessionKeepAlive();
     bindMediaPermissionButtons();
     setupSessionNavigationUi();
+    initConsultationUi();
     dismissBootLoader();
     setupDemoBus();
     if (!demoMode) {
@@ -2359,7 +2139,7 @@ if (session_status() === PHP_SESSION_ACTIVE) {
         if (ok) {
           remoteMediaUnlocked = true;
           setCallPhase(window.McVideoCallCore ? window.McVideoCallCore.STATUS.CONNECTED : 'connected', {
-            callStatusText: 'Connected — sound on',
+            callStatusText: 'Connected â€” sound on',
           });
         }
       });
@@ -2374,7 +2154,7 @@ if (session_status() === PHP_SESSION_ACTIVE) {
         try { currentCall.close(); } catch (e) {}
         currentCall = null;
       }
-      document.getElementById('callStatus').textContent = 'Retrying connection…';
+      document.getElementById('callStatus').textContent = 'Retrying connectionâ€¦';
       if (demoMode) {
         const demo = ensureLocalDemoCall();
         if (demo) demo.retry();

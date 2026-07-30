@@ -49,6 +49,8 @@
     'ko', 'mo', 'ako', 'ang', 'ng', 'sa', 'ba', 'po', 'na', 'pa', 'lang', 'gid', 'sang', 'kag',
     'paano', 'ano', 'saan', 'hindi', 'wala', 'pwede', 'puwede', 'kailangan', 'gusto',
     'diin', 'indi', 'wala', 'subong', 'guid', 'bala', 'kon', 'nga', 'ini', 'sini',
+    'nabalaka', 'nahadlok', 'kasubo', 'kapoy', 'nalibog', 'masadya', 'akig', 'buligi', 'bulig',
+    'halin', 'amo', 'gid', 'man', 'lawas', 'dughan', 'hilanat', 'masakit', 'sakit', 'rehistro',
     'sure', 'this', 'that', 'system', 'with', 'for', 'about', 'have', 'has', 'not',
   ]);
 
@@ -58,6 +60,8 @@
     'notification', 'contact', 'hours', 'service', 'medconnect', 'triage', 'patient',
     'mag-login', 'mag-login', 'rehistro', 'nakalimtan', 'nakalimutan', 'konsultasyon', 'konsulta',
     'paano', 'ano', 'diin', 'tawag', 'buligi', 'oras', 'bukas',
+    'nabalaka', 'nahadlok', 'kasubo', 'kapoy', 'nalibog', 'masadya', 'rehistro', 'password',
+    'worried', 'sad', 'scared', 'help', 'register', 'login',
   ];
 
   const RESTART_PATTERNS = [
@@ -186,9 +190,17 @@
     return false;
   }
 
-  function isGibberish(raw, normalized) {
+  function isGibberish(raw, normalized, ctx = {}) {
     const text = String(raw || '').trim();
     if (text.length < 2) return true;
+
+    if (ctx.isHiligaynon || (global.McFaqHilBridge && global.McFaqHilBridge.looksHiligaynon(text))) {
+      return false;
+    }
+
+    if (ctx.englishGloss && String(ctx.englishGloss).trim().length > 2) {
+      return false;
+    }
 
     const alpha = (text.match(/[a-zA-Z\u00C0-\u024F]/g) || []).length;
     if (text.length > 3 && alpha / text.length < 0.4) return true;
@@ -216,7 +228,10 @@
   function computeConfidence(ctx) {
     const {
       classification, keywords, normalized, emotion, flowKey, gibberish, fromClarification,
+      isHiligaynon,
     } = ctx;
+
+    if (classification?.intent === 'emotional_support') return 88;
 
     if (classification?.urgency === 'critical') return 98;
     if (classification?.intent === 'crisis' || classification?.intent === 'medical_emergency') return 98;
@@ -236,6 +251,7 @@
       if (wordCount >= 3) score += 6;
       if (wordCount >= 6 && keywords.length >= 1) score += 8;
       if (emotion?.primary && (emotion.score || 0) >= 2) score += 8;
+      if (isHiligaynon && emotion?.primary) score += 14;
       if (fromClarification) score += 18;
       if (!flowKey || flowKey === 'unknown') {
         if (keywords.length === 0) score -= 25;
@@ -270,7 +286,7 @@
     const normalized = normalizeText(raw);
     const corrected = applyTypoCorrections(normalized);
     const keywords = extractKeywords(corrected);
-    const gibberish = isGibberish(raw, corrected);
+    const gibberish = isGibberish(raw, corrected, ctx);
 
     const Engine = global.McFaqEngine;
     const flowKey = ctx.classification?.flowKey
@@ -285,6 +301,7 @@
       flowKey,
       gibberish,
       fromClarification: ctx.fromClarification,
+      isHiligaynon: ctx.isHiligaynon,
     });
 
     const level = classifyLevel(confidence, gibberish, keywords);

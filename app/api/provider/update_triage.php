@@ -9,6 +9,7 @@ require_once dirname(dirname(dirname(__DIR__))) . '/app/includes/auth_guard.php'
 require_once dirname(dirname(dirname(__DIR__))) . '/app/includes/provider_patient_access.php';
 require_once dirname(dirname(dirname(__DIR__))) . '/app/includes/triage_assessment_schema.php';
 require_once BASE_PATH . '/app/core/TriageLevelService.php';
+require_once BASE_PATH . '/app/includes/notification_events.php';
 
 if (empty($_SESSION['user_id']) || ($_SESSION['user_role'] ?? '') !== 'provider') {
     http_response_code(403);
@@ -125,7 +126,8 @@ try {
     }
     else if ($action === 'approve_recommendations' || $action === 'reject_recommendations') {
         $meta = $pdo->prepare("
-            SELECT chief_complaint, recommendations, recommendation_status, triage_level, triage_classification
+            SELECT chief_complaint, recommendations, recommendation_status, triage_level, triage_classification,
+                   assigned_provider_id
             FROM triage_results WHERE id = ? LIMIT 1
         ");
         $meta->execute([$id]);
@@ -133,6 +135,17 @@ try {
         if (!$metaRow) {
             http_response_code(404);
             echo json_encode(['success' => false, 'message' => 'Triage record not found.']);
+            exit;
+        }
+
+        $assignedReviewer = (int) ($metaRow['assigned_provider_id'] ?? 0);
+        $actingProvider = (int) $_SESSION['user_id'];
+        if ($assignedReviewer > 0 && $assignedReviewer !== $actingProvider) {
+            http_response_code(403);
+            echo json_encode([
+                'success' => false,
+                'message' => 'This AI review case is assigned to another provider. Contact an administrator to reassign.',
+            ]);
             exit;
         }
 
@@ -175,6 +188,14 @@ try {
                 'action_type' => 'TRIAGE_RECOMMENDATIONS_REJECTED',
                 'description' => "Provider rejected patient-facing NLP remedies for triage ID: $id",
             ]);
+
+            NotificationEvents::careTipsReviewUpdatedForPatient(
+                $pdo,
+                $patientId,
+                (int) $_SESSION['user_id'],
+                false,
+                $id
+            );
 
             echo json_encode(['success' => true, 'message' => 'Recommendations were not released to the patient.']);
             exit;
@@ -219,15 +240,29 @@ try {
                 recommendation_status = 'approved',
                 recommendation_approved_by = ?,
                 recommendation_approved_at = NOW(),
-                recommendation_patient_ack_at = NULL
+                recommendation_patient_ack_at = NULL,
+                assigned_provider_id = COALESCE(assigned_provider_id, ?),
+                assigned_at = COALESCE(assigned_at, NOW())
             WHERE id = ?
-        ")->execute([$savedText, (int) $_SESSION['user_id'], $id]);
+        ")->execute([$savedText, (int) $_SESSION['user_id'], (int) $_SESSION['user_id'], $id]);
 
         audit_log($pdo, [
             'patient_id'  => $patientId,
             'action_type' => 'TRIAGE_RECOMMENDATIONS_APPROVED',
             'description' => "Provider approved patient-facing NLP remedies for triage ID: $id",
         ]);
+
+        $reviewerStmt = $pdo->prepare('SELECT CONCAT(first_name, " ", last_name) FROM users WHERE id = ? LIMIT 1');
+        $reviewerStmt->execute([(int) $_SESSION['user_id']]);
+        $reviewerName = trim((string) ($reviewerStmt->fetchColumn() ?: 'Your healthcare provider'));
+
+        NotificationEvents::careTipsApprovedForPatient(
+            $pdo,
+            $patientId,
+            (int) $_SESSION['user_id'],
+            $reviewerName,
+            $id
+        );
 
         echo json_encode([
             'success' => true,

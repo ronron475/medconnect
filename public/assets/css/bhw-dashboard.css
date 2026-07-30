@@ -1,6 +1,7 @@
 /**
  * BHW Dashboard — formal institutional layout (CHO / barangay operations)
  */
+@import url('medconnect-charts.css');
 
 .bhw-dash {
   display: flex;
@@ -157,6 +158,81 @@
   letter-spacing: 0.06em;
   text-transform: uppercase;
   color: #94a3b8;
+}
+
+/* ── Dashboard charts ── */
+.bhw-dash-chart-filters .bhw-dash-station-name {
+  margin: 0;
+  font-weight: 600;
+  font-size: 0.95rem;
+  color: var(--bhw-teal, #0d6e6e);
+}
+
+.bhw-dash-charts .bhw-dash-panel__head {
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.bhw-dash-charts-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+  padding: 16px 20px 20px;
+}
+
+.bhw-dash-charts .bhw-chart-card {
+  margin: 0;
+  padding: 16px 18px 14px;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  min-height: 260px;
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 4px;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+}
+
+.bhw-dash-charts .bhw-chart-card h4 {
+  margin: 0 0 12px;
+  font-size: 13px;
+  font-weight: 700;
+  color: #0f172a;
+  letter-spacing: -0.01em;
+}
+
+.bhw-dash-charts .bhw-chart-wrap {
+  position: relative;
+  width: 100%;
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+.bhw-dash-charts .bhw-chart-wrap--ring {
+  height: 220px;
+  max-height: 220px;
+}
+
+.bhw-dash-charts .bhw-chart-wrap--line,
+.bhw-dash-charts .bhw-chart-wrap--bar {
+  height: 220px;
+  max-height: 220px;
+}
+
+.bhw-dash-charts .bhw-chart-wrap--bar-tall {
+  height: 260px;
+  max-height: 260px;
+}
+
+.bhw-dash-charts .bhw-chart-wrap canvas {
+  width: 100% !important;
+  height: 100% !important;
+  max-height: 100%;
+}
+
+@media (max-width: 900px) {
+  .bhw-dash-charts-grid {
+    grid-template-columns: 1fr;
+  }
 }
 
 /* ── Sector health stats (4-up grid) ── */

@@ -36,7 +36,7 @@ function pmh_note_text(?string $value, string $fallback = ''): string {
     <a href="<?= ASSET_BASE ?>/views/patient/triage.php" class="pmh-btn pmh-btn--primary">Book Consultation</a>
   </div>
 <?php else: ?>
-  <div class="pmh-timeline">
+  <div class="pmh-feed pmh-feed--timeline">
     <?php foreach ($history as $h):
       $cid = (int) ($h['id'] ?? 0);
       $p_list = $rx_by_consult[$cid] ?? [];
@@ -91,8 +91,8 @@ function pmh_note_text(?string $value, string $fallback = ''): string {
         </div>
 
         <?php if ($note): ?>
-        <section class="pmh-visit__soap">
-          <h4 class="pmh-visit__label">Clinical note (SOAP)</h4>
+        <details class="pmh-visit__soap-details">
+          <summary class="pmh-visit__soap-summary">Clinical note (SOAP)</summary>
           <dl class="pmh-soap-list">
             <?php if (pmh_note_text($note['subjective'] ?? '')): ?>
             <div><dt>Subjective</dt><dd><?= htmlspecialchars($note['subjective']) ?></dd></div>
@@ -107,7 +107,7 @@ function pmh_note_text(?string $value, string $fallback = ''): string {
             <div><dt>Plan</dt><dd><?= htmlspecialchars($note['plan']) ?></dd></div>
             <?php endif; ?>
           </dl>
-        </section>
+        </details>
         <?php endif; ?>
 
         <?php if (!empty($p_list)): ?>

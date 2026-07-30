@@ -13,9 +13,11 @@ if (!defined('BASE_PATH')) {
     }
 }
 require_once BASE_PATH . '/app/includes/patient_portal_bootstrap.php';
+require_once BASE_PATH . '/app/includes/triage_assessment_schema.php';
 
 $uid = (int) $uid;
-$active_tab = ($_GET['tab'] ?? 'timeline') === 'files' ? 'files' : 'timeline';
+$tab = (string) ($_GET['tab'] ?? 'timeline');
+$active_tab = in_array($tab, ['files', 'care-tips'], true) ? $tab : 'timeline';
 
 $stmt = $pdo->prepare("
     SELECT u.first_name, u.last_name, CONCAT('MC-', LPAD(u.id, 6, '0')) AS patient_number
@@ -128,6 +130,45 @@ $counts = [
 
 $completed_visits = count(array_filter($history, fn($h) => ($h['status'] ?? '') === 'completed'));
 
+triage_assessment_ensure_schema($pdo);
+$care_tips_history = [];
+$care_tips_active_count = 0;
+if ($pdo->query("SHOW TABLES LIKE 'triage_results'")->rowCount()) {
+    $ct = $pdo->prepare("
+        SELECT id, chief_complaint, recommendations, recommendation_status,
+               recommendation_approved_at, recommendation_patient_ack_at, assessed_at
+        FROM triage_results
+        WHERE patient_id = ?
+          AND TRIM(COALESCE(chief_complaint, '')) <> ''
+          AND TRIM(COALESCE(recommendations, '')) <> ''
+          AND recommendation_status IN ('pending_approval', 'approved', 'rejected')
+        ORDER BY COALESCE(recommendation_approved_at, assessed_at) DESC, id DESC
+    ");
+    $ct->execute([$uid]);
+    $care_tips_history = $ct->fetchAll(PDO::FETCH_ASSOC);
+    require_once VIEWS_PATH . '/patient/partials/triage_helpers.php';
+    foreach ($care_tips_history as $ctRow) {
+        $meta = mc_patient_care_tip_meta($ctRow);
+        if (!empty($meta['active'])) {
+            $care_tips_active_count++;
+        }
+    }
+}
+
+$care_tips_pending_count = 0;
+$care_tips_ready_count = 0;
+$care_tips_completed_count = 0;
+foreach ($care_tips_history as $ctRow) {
+    $k = mc_patient_care_tip_meta($ctRow)['kind'] ?? '';
+    if ($k === 'pending') {
+        $care_tips_pending_count++;
+    } elseif ($k === 'ready') {
+        $care_tips_ready_count++;
+    } elseif ($k === 'acked' || $k === 'rejected') {
+        $care_tips_completed_count++;
+    }
+}
+
 $page_title = 'My Health';
 $pmh_css_ver = (int) @filemtime(ASSETS_PATH . '/css/patient-my-health.css');
 $patient_page_stylesheets = [
@@ -142,29 +183,11 @@ $patient_page_stylesheets = [
 <body class="patient-portal">
 <?php require_once VIEWS_PATH . '/patient/partials/layout_shell_open.php'; ?>
 
-<div class="patient-page pmh-page">
-  <p class="pmh-lead">
-    Your consultation history and provider-issued records.
-    For your permanent medical profile (blood type, allergies, medications), see
-    <a href="<?= ASSET_BASE ?>/views/patient/health_summary.php">Health Summary</a>.
-  </p>
+<div class="patient-page pmh-page pmh-page--<?= htmlspecialchars($active_tab) ?>">
 
-  <div class="pmh-metrics" aria-label="Health overview">
-    <div class="pmh-metric">
-      <span class="pmh-metric__value"><?= count($history) ?></span>
-      <span class="pmh-metric__label">Total visits</span>
-    </div>
-    <div class="pmh-metric">
-      <span class="pmh-metric__value"><?= $completed_visits ?></span>
-      <span class="pmh-metric__label">Completed</span>
-    </div>
-    <div class="pmh-metric">
-      <span class="pmh-metric__value"><?= (int) $counts['all'] ?></span>
-      <span class="pmh-metric__label">Health files</span>
-    </div>
-  </div>
+  <?php require VIEWS_PATH . '/patient/partials/view_my_health_header.php'; ?>
 
-  <nav class="pmh-tabs" role="tablist" aria-label="My Health sections">
+  <nav class="pmh-tabs pmh-tabs--segment" role="tablist" aria-label="My Health sections">
     <a href="<?= ASSET_BASE ?>/views/patient/my_health.php?tab=timeline"
        class="pmh-tab <?= $active_tab === 'timeline' ? 'is-active' : '' ?>"
        role="tab" aria-selected="<?= $active_tab === 'timeline' ? 'true' : 'false' ?>">
@@ -180,13 +203,51 @@ $patient_page_stylesheets = [
       <span class="pmh-tab__count"><?= (int) $counts['all'] ?></span>
       <?php endif; ?>
     </a>
+    <a href="<?= ASSET_BASE ?>/views/patient/my_health.php?tab=care-tips"
+       class="pmh-tab <?= $active_tab === 'care-tips' ? 'is-active' : '' ?>"
+       role="tab" aria-selected="<?= $active_tab === 'care-tips' ? 'true' : 'false' ?>">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+      Care tips
+      <?php if ($care_tips_active_count > 0): ?>
+      <span class="pmh-tab__count"><?= (int) $care_tips_active_count ?></span>
+      <?php endif; ?>
+    </a>
   </nav>
 
-  <div class="pmh-panel" role="tabpanel">
-    <?php if ($active_tab === 'files'): ?>
+  <div class="pmh-surface" role="tabpanel">
+    <?php if ($active_tab === 'timeline'): ?>
+      <div class="pmh-surface__head">
+        <div>
+          <h3 class="pmh-surface__title">Care timeline</h3>
+          <p class="pmh-surface__desc">Consultation visits with diagnosis, plans, and prescriptions from your doctors.</p>
+        </div>
+      </div>
+      <?php require VIEWS_PATH . '/patient/partials/view_my_health_timeline.php'; ?>
+    <?php elseif ($active_tab === 'files'): ?>
+      <div class="pmh-surface__head">
+        <div>
+          <h3 class="pmh-surface__title">Health files</h3>
+          <p class="pmh-surface__desc">Prescriptions, clinical notes, and referrals from your consultations.</p>
+        </div>
+      </div>
       <?php require VIEWS_PATH . '/patient/partials/view_my_health_files.php'; ?>
     <?php else: ?>
-      <?php require VIEWS_PATH . '/patient/partials/view_my_health_timeline.php'; ?>
+      <div class="pmh-surface__head pmh-surface__head--split">
+        <div>
+          <h3 class="pmh-surface__title">Self-care guidance</h3>
+          <p class="pmh-surface__desc">Provider-approved home care tips from your symptom checks.</p>
+        </div>
+        <?php if ($care_tips_active_count > 0): ?>
+        <button
+          type="button"
+          class="pmh-btn pmh-btn--primary"
+          onclick="if(window.MedConnectPtRemedy&amp;&amp;window.MedConnectPtRemedy.open){window.MedConnectPtRemedy.open();}"
+        >
+          Open Care Assistant
+        </button>
+        <?php endif; ?>
+      </div>
+      <?php require VIEWS_PATH . '/patient/partials/view_my_health_care_tips.php'; ?>
     <?php endif; ?>
   </div>
 </div>

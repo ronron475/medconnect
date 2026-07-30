@@ -216,16 +216,41 @@
         Array.isArray(t.detected_symptoms_ai) && t.detected_symptoms_ai.length
           ? t.detected_symptoms_ai.join(', ')
           : '',
-        '—'
+        'No symptoms extracted — confirm from patient submission'
       );
-      setText(
-        'modalPossibleConditions',
-        Array.isArray(t.possible_conditions) && t.possible_conditions.length
-          ? t.possible_conditions.join(', ')
-          : '',
-        '—'
-      );
-      setText('modalConfidence', t.confidence_display || '', '—');
+
+      var condEl = document.getElementById('modalPossibleConditions');
+      if (condEl) {
+        condEl.className = 'triage-modal-box';
+        var conditions =
+          Array.isArray(t.possible_conditions) && t.possible_conditions.length
+            ? t.possible_conditions
+            : ['Differential pending clinical review'];
+        condEl.innerHTML = conditions
+          .map(function (c) {
+            return '<span class="triage-interp-chip">' + esc(String(c)) + '</span>';
+          })
+          .join('');
+      }
+
+      var confEl = document.getElementById('modalConfidence');
+      if (confEl) {
+        confEl.className = 'triage-modal-box triage-modal-box--metric';
+        var confText = String(t.confidence_display || '').trim();
+        var confVal = confText.replace(/[^\d.]/g, '');
+        var confNum = parseFloat(confVal);
+        if (!confText || isNaN(confNum)) {
+          confText = 'Not scored';
+          confNum = 0;
+        } else if (confText.indexOf('%') < 0) {
+          confText = String(Math.round(confNum)) + '%';
+        }
+        confEl.innerHTML =
+          '<span class="triage-metric-value">' + esc(confText) + '</span>' +
+          '<span class="triage-metric-bar" aria-hidden="true"><span style="width:' +
+          Math.max(0, Math.min(100, confNum)) + '%"></span></span>';
+      }
+
       setText(
         'modalTriageLevel',
         [t.triage_level || t.triage_classification, t.label].filter(Boolean).join(' · '),
@@ -235,6 +260,12 @@
         'modalAssessedAt',
         [t.date, t.time].filter(Boolean).join(' at '),
         t.assessed_at || '—'
+      );
+      var suggested = Array.isArray(t.suggested_questions) ? t.suggested_questions : [];
+      setText(
+        'modalSuggestedQuestions',
+        suggested.length ? suggested.map(function (q, i) { return (i + 1) + '. ' + q; }).join('\n') : '',
+        suggested.length ? '' : '—'
       );
       setText('modalRecommendations', t.recommendations || '', '—');
       var recEdit = document.getElementById('modalRecommendationsEdit');

@@ -72,8 +72,18 @@ if ($pdo->query("SHOW TABLES LIKE 'consultations'")->rowCount()) {
 $totalTriage = array_sum(array_column($triageStats, 'cnt'));
 $totalDiagnosis = array_sum(array_column($diagnosisStats, 'cnt'));
 
+$chart_theme_css_ver = (int) @filemtime(ASSETS_PATH . '/css/medconnect-charts.css');
+$chart_theme_js_ver = (int) @filemtime(ASSETS_PATH . '/js/medconnect-chart-theme.js');
+$disease_charts_js_ver = (int) @filemtime(ASSETS_PATH . '/js/disease-statistics-charts.js');
+$statsPayload = json_encode([
+    'triage' => $triageStats,
+    'diagnosis' => $diagnosisStats,
+    'complaints' => $complaintStats,
+], JSON_UNESCAPED_UNICODE);
+
 require_once __DIR__ . '/partials/layout_open.php';
 ?>
+<link rel="stylesheet" href="<?= ASSET_BASE ?>/assets/css/medconnect-charts.css?v=<?= $chart_theme_css_ver ?>">
 <div class="header-row" style="margin-bottom:24px;">
   <h2 class="text-h2">Disease & Triage Statistics</h2>
   <p class="text-muted">Live aggregates from triage assessments and recorded clinical diagnoses.</p>
@@ -84,6 +94,59 @@ require_once __DIR__ . '/partials/layout_open.php';
   <div class="mc-card"><div class="text-h1"><?= number_format($totalDiagnosis) ?></div><div class="text-xs text-muted">Recorded diagnoses</div></div>
   <div class="mc-card"><div class="text-h1"><?= count($diagnosisStats) ?></div><div class="text-xs text-muted">Unique diagnoses</div></div>
 </div>
+
+<section class="mc-charts-section" id="diseaseStatsCharts" aria-label="Disease and triage charts" style="margin-bottom:24px;">
+  <div class="mc-charts-grid">
+    <article class="mc-chart-card">
+      <div class="mc-chart-card__head">
+        <div>
+          <h3 class="mc-chart-card__title">Triage urgency distribution</h3>
+          <p class="mc-chart-card__sub">Share of assessments by urgency label</p>
+        </div>
+        <div class="mc-chart-kpi">
+          <strong><?= number_format($totalTriage) ?></strong>
+          <span>Assessments</span>
+        </div>
+      </div>
+      <div class="mc-chart-canvas-wrap mc-chart-canvas-wrap--ring">
+        <canvas id="chart_disease_triage" aria-label="Triage urgency doughnut chart"></canvas>
+      </div>
+    </article>
+    <article class="mc-chart-card">
+      <div class="mc-chart-card__head">
+        <div>
+          <h3 class="mc-chart-card__title">Top recorded diagnoses</h3>
+          <p class="mc-chart-card__sub">Clinical notes and consultations combined</p>
+        </div>
+        <div class="mc-chart-kpi">
+          <strong><?= number_format($totalDiagnosis) ?></strong>
+          <span>Cases</span>
+        </div>
+      </div>
+      <div class="mc-chart-canvas-wrap mc-chart-canvas-wrap--tall">
+        <canvas id="chart_disease_dx" aria-label="Top diagnoses bar chart"></canvas>
+      </div>
+    </article>
+    <?php if ($complaintStats): ?>
+    <article class="mc-chart-card" style="grid-column:1/-1;">
+      <div class="mc-chart-card__head">
+        <div>
+          <h3 class="mc-chart-card__title">Common chief complaints</h3>
+          <p class="mc-chart-card__sub">From triage chief complaint field</p>
+        </div>
+      </div>
+      <div class="mc-chart-canvas-wrap mc-chart-canvas-wrap--tall">
+        <canvas id="chart_disease_complaints" aria-label="Chief complaints bar chart"></canvas>
+      </div>
+    </article>
+    <?php endif; ?>
+  </div>
+</section>
+
+<script type="application/json" id="diseaseStatsPayload"><?= $statsPayload ?></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<script src="<?= ASSET_BASE ?>/assets/js/medconnect-chart-theme.js?v=<?= $chart_theme_js_ver ?>"></script>
+<script src="<?= ASSET_BASE ?>/assets/js/disease-statistics-charts.js?v=<?= $disease_charts_js_ver ?>"></script>
 
 <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:16px;">
   <div class="mc-card" style="padding:0;overflow:hidden;">

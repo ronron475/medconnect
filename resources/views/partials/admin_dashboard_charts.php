@@ -13,15 +13,29 @@ $chart_days = (int) ($chart_days ?? 30);
 $chart_days = max(7, min(90, $chart_days));
 $chart_api = ASSET_BASE . '/app/api/admin/dashboard_charts.php?days=' . $chart_days;
 $chart_js_ver = (int) @filemtime(ASSETS_PATH . '/js/admin-dashboard-charts.js');
+$chart_theme_js_ver = (int) @filemtime(ASSETS_PATH . '/js/medconnect-chart-theme.js');
+$chart_theme_css_ver = (int) @filemtime(ASSETS_PATH . '/css/medconnect-charts.css');
 ?>
+
+<link rel="stylesheet" href="<?= ASSET_BASE ?>/assets/css/medconnect-charts.css?v=<?= $chart_theme_css_ver ?>">
 
 <section class="adm-charts-section" id="admChartsRoot" data-days="<?= $chart_days ?>" aria-label="Analytics and trends">
   <div class="adm-section-head" style="display:flex;justify-content:space-between;align-items:flex-end;flex-wrap:wrap;gap:8px;">
     <div>
       <h2 class="adm-section-title">Analytics &amp; Trends</h2>
-      <p class="adm-section-sub">Live data from database — auto-refreshes every 45 seconds</p>
+      <p class="adm-section-sub">Live data — auto-refreshes every 15 seconds</p>
     </div>
-    <span id="admChartsUpdated" class="text-xs text-muted">Loading…</span>
+    <div class="mc-chart-filters mc-chart-filters--inline adm-charts-filters">
+      <label class="mc-chart-filters__label" for="admChartsDays">Period</label>
+      <select id="admChartsDays" class="form-select mc-chart-filters__control" aria-label="Chart date range">
+        <option value="7"<?= $chart_days === 7 ? ' selected' : '' ?>>7 days</option>
+        <option value="14"<?= $chart_days === 14 ? ' selected' : '' ?>>14 days</option>
+        <option value="30"<?= $chart_days === 30 ? ' selected' : '' ?>>30 days</option>
+        <option value="60"<?= $chart_days === 60 ? ' selected' : '' ?>>60 days</option>
+        <option value="90"<?= $chart_days === 90 ? ' selected' : '' ?>>90 days</option>
+      </select>
+      <span id="admChartsUpdated" class="text-xs text-muted mc-chart-filters__status">Loading…</span>
+    </div>
   </div>
 
   <div class="adm-charts-grid">
@@ -93,4 +107,5 @@ $chart_js_ver = (int) @filemtime(ASSETS_PATH . '/js/admin-dashboard-charts.js');
 </section>
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<script src="<?= ASSET_BASE ?>/assets/js/medconnect-chart-theme.js?v=<?= $chart_theme_js_ver ?>"></script>
 <script src="<?= ASSET_BASE ?>/assets/js/admin-dashboard-charts.js?v=<?= $chart_js_ver ?>"></script>

@@ -1,6 +1,7 @@
 /**
  * Forgot-password OTP flow (landing page modal).
  * Requires window.APP_BASE (set in landing layout).
+ * Security: IP throttle + email OTP.
  */
 (function () {
   const modal = document.getElementById('forgot-modal');
@@ -12,6 +13,52 @@
 
   let email = '';
   let timer = null;
+
+  function validateNewPassword(pw) {
+    if (!pw) return 'Password is required.';
+    if (pw.length < 12) return 'Password must be at least 12 characters.';
+    if (!/[A-Z]/.test(pw)) return 'Password must contain at least one uppercase letter.';
+    if (!/[a-z]/.test(pw)) return 'Password must contain at least one lowercase letter.';
+    if (!/[0-9]/.test(pw)) return 'Password must contain at least one number.';
+    if (!/[^A-Za-z0-9]/.test(pw)) return 'Password must contain at least one special character (!@#$%^&*).';
+    return '';
+  }
+
+  async function postForm(path, fd) {
+    const res = await fetch(api(path), { method: 'POST', body: fd, credentials: 'same-origin' });
+    const text = await res.text();
+    try {
+      return text ? JSON.parse(text) : { success: false, message: 'Empty server response.' };
+    } catch (_) {
+      console.error('Password reset API non-JSON:', text.slice(0, 400));
+      return { success: false, message: 'Server error. Please try again.' };
+    }
+  }
+
+  const FP_EYE_OPEN =
+    '<path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/>';
+  const FP_EYE_CLOSED =
+    '<path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-10-7-10-7a18.45 18.45 0 0 1 5.06-5.94"/>' +
+    '<path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 10 7 10 7a18.5 18.5 0 0 1-2.16 3.19"/>' +
+    '<line x1="2" y1="2" x2="22" y2="22"/>';
+
+  function initFpPasswordToggles() {
+    modal.querySelectorAll('.fp-toggle-pwd').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const id = btn.getAttribute('data-target');
+        const input = id ? document.getElementById(id) : null;
+        const svg = btn.querySelector('svg');
+        if (!input || !svg) return;
+        const reveal = input.type === 'password';
+        input.type = reveal ? 'text' : 'password';
+        svg.innerHTML = reveal ? FP_EYE_CLOSED : FP_EYE_OPEN;
+        btn.setAttribute('aria-label', reveal ? 'Hide password' : 'Show password');
+        btn.setAttribute('aria-pressed', reveal ? 'true' : 'false');
+      });
+    });
+  }
+
+  initFpPasswordToggles();
 
   function openModal() {
     modal.hidden = false;
@@ -86,62 +133,10 @@
     }, 1000);
   }
 
-  function waitForGrecaptcha(timeoutMs) {
-    const limit = typeof timeoutMs === 'number' ? timeoutMs : 6000;
-    return new Promise((resolve) => {
-      const started = Date.now();
-      const tick = () => {
-        if (window.grecaptcha && typeof window.grecaptcha.ready === 'function') {
-          window.grecaptcha.ready(() => resolve(true));
-          return;
-        }
-        if (Date.now() - started >= limit) {
-          resolve(false);
-          return;
-        }
-        setTimeout(tick, 50);
-      };
-      tick();
-    });
-  }
-
-  async function getRecaptchaToken(action) {
-    const key = window.RECAPTCHA_SITE_KEY;
-    const version = (window.RECAPTCHA_VERSION || 'v3').toLowerCase();
-    if (!key) return '';
-
-    if (version === 'v3') {
-      const ready = await waitForGrecaptcha();
-      if (!ready || !window.grecaptcha || typeof window.grecaptcha.execute !== 'function') {
-        return '';
-      }
-      try {
-        return await window.grecaptcha.execute(key, { action: action || 'forgot_password' });
-      } catch (_) {
-        return '';
-      }
-    }
-
-    // v2 checkbox token (forgot modal first, then sign-in widget)
-    const scoped = document.querySelector('#forgot-modal textarea[name="g-recaptcha-response"]');
-    const any = document.querySelector('textarea[name="g-recaptcha-response"]');
-    return ((scoped && scoped.value) || (any && any.value) || '').trim();
-  }
-
   async function sendOtp(addr) {
     const fd = new FormData();
     fd.append('email', addr);
-    if (window.RECAPTCHA_SITE_KEY) {
-      const token = await getRecaptchaToken('forgot_password');
-      if (!token) {
-        return {
-          success: false,
-          message: 'Security check could not load. Refresh the page (or disable blockers) and try again.',
-        };
-      }
-      fd.append('recaptcha_token', token);
-    }
-    return (await fetch(api('request_password_reset.php'), { method: 'POST', body: fd })).json();
+    return postForm('request_password_reset.php', fd);
   }
 
   document.getElementById('forgot-link')?.addEventListener('click', (ev) => {
@@ -172,7 +167,7 @@
     try {
       const data = await sendOtp(addr);
       if (data.success) {
-        email = addr;
+        email = addr.toLowerCase();
         document.getElementById('fp-otp-note').textContent = `OTP sent to ${addr}`;
         document.getElementById('fp-otp').value = '';
         goStep(2);
@@ -215,7 +210,7 @@
       const fd = new FormData();
       fd.append('email', email);
       fd.append('otp', otp);
-      const data = await (await fetch(api('verify_reset_otp.php'), { method: 'POST', body: fd })).json();
+      const data = await postForm('verify_reset_otp.php', fd);
       if (data.success) {
         goStep(3);
         document.getElementById('fp-pw').focus();
@@ -231,8 +226,9 @@
   document.getElementById('fp-reset')?.addEventListener('click', async () => {
     const pw = document.getElementById('fp-pw').value;
     const cpw = document.getElementById('fp-cpw').value;
-    if (pw.length < 6) {
-      showAlert('Password must be at least 6 characters.');
+    const pwErr = validateNewPassword(pw);
+    if (pwErr) {
+      showAlert(pwErr);
       return;
     }
     if (pw !== cpw) {
@@ -246,20 +242,11 @@
       fd.append('email', email);
       fd.append('password', pw);
       fd.append('confirm_password', cpw);
-      if (window.RECAPTCHA_SITE_KEY) {
-        const token = await getRecaptchaToken('reset_password');
-        if (!token) {
-          showAlert('Security check could not load. Refresh the page (or disable blockers) and try again.');
-          setLoading(btn, document.getElementById('fp-reset-t'), document.getElementById('fp-reset-s'), false, 'Reset Password', 'Saving…');
-          return;
-        }
-        fd.append('recaptcha_token', token);
-      }
-      const data = await (await fetch(api('reset_password_otp.php'), { method: 'POST', body: fd })).json();
+      const data = await postForm('reset_password_otp.php', fd);
       if (data.success) goStep(4);
-      else showAlert(data.message);
+      else showAlert(data.message || 'Could not reset password.');
     } catch {
-      showAlert('Could not reset password.');
+      showAlert('Could not reset password. Check your connection and try again.');
     }
     setLoading(btn, document.getElementById('fp-reset-t'), document.getElementById('fp-reset-s'), false, 'Reset Password', 'Saving…');
   });

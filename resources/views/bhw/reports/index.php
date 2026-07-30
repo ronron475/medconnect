@@ -6,9 +6,11 @@ require __DIR__ . '/../partials/layout_open.php';
 $barangay_label = htmlspecialchars($bhw_barangay_name);
 $reports_css_ver = (int) @filemtime(ASSETS_PATH . '/css/bhw-reports.css');
 $reports_js_ver = (int) @filemtime(ASSETS_PATH . '/js/bhw-reports.js');
+$chart_theme_js_ver = (int) @filemtime(ASSETS_PATH . '/js/medconnect-chart-theme.js');
 ?>
 <link rel="stylesheet" href="<?= ASSET_BASE ?>/assets/css/bhw-reports.css?v=<?= $reports_css_ver ?>">
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js" defer></script>
+<script src="<?= ASSET_BASE ?>/assets/js/medconnect-chart-theme.js?v=<?= $chart_theme_js_ver ?>" defer></script>
 <script src="<?= ASSET_BASE ?>/assets/js/bhw-reports.js?v=<?= $reports_js_ver ?>" defer></script>
 
 <div class="bhw-reports-page" id="bhwReportsRoot" data-barangay="<?= $barangay_label ?>">
@@ -16,7 +18,7 @@ $reports_js_ver = (int) @filemtime(ASSETS_PATH . '/js/bhw-reports.js');
   <header class="bhw-reports-header">
     <div>
       <h2 class="text-h2">Healthcare Reports</h2>
-      <p class="bhw-reports-sub">Barangay-scoped statistics for <strong>Brgy. <?= $barangay_label ?></strong>. Data is limited to patients in your assigned sector.</p>
+      <p class="bhw-reports-sub">Barangay-scoped statistics for <strong>Brgy. <?= $barangay_label ?></strong>. Charts auto-refresh every 15 seconds. Use filters to narrow results.</p>
     </div>
     <div class="bhw-reports-export-btns no-print">
       <button type="button" class="bhw-btn-outline" data-export="csv" title="Download CSV">CSV</button>
@@ -42,6 +44,7 @@ $reports_js_ver = (int) @filemtime(ASSETS_PATH . '/js/bhw-reports.js');
       <div class="bhw-reports-filter-actions">
         <button type="button" class="bhw-btn-teal" id="rf_apply">Apply</button>
         <button type="button" class="bhw-btn-outline" id="rf_reset">Reset</button>
+        <span class="mc-chart-filters__status" id="bhwReportsLastSync" aria-live="polite"></span>
       </div>
     </div>
     <details class="bhw-reports-filter-more">
@@ -52,8 +55,8 @@ $reports_js_ver = (int) @filemtime(ASSETS_PATH . '/js/bhw-reports.js');
           <input type="month" class="form-control" id="rf_month">
         </div>
         <div>
-          <label class="form-label" for="rf_purok">Purok</label>
-          <select class="form-select" id="rf_purok"><option value="">All puroks</option></select>
+          <span class="form-label d-block">Your station</span>
+          <p class="bhw-reports-station-name mb-0">Brgy. <?= $barangay_label ?></p>
         </div>
         <div>
           <label class="form-label" for="rf_gender">Gender</label>

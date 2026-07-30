@@ -5,6 +5,8 @@
 
 declare(strict_types=1);
 
+require_once __DIR__ . '/triage_assessment_schema.php';
+
 /**
  * Assert that the provider is allowed to act on a patient/consultation.
  *
@@ -87,6 +89,27 @@ function provider_patient_assert_access(PDO $pdo, int $providerId, int $patientI
         }
     } catch (PDOException $e) {
         // digital_referrals may not exist in all schemas
+    }
+
+    // Assigned reviewer for non-urgent AI self-care workflow (no consultation required yet).
+    try {
+        triage_assessment_ensure_schema($pdo);
+        $assign = $pdo->prepare("
+            SELECT id
+            FROM triage_results
+            WHERE patient_id = ?
+              AND assigned_provider_id = ?
+              AND recommendation_status IN ('pending_approval', 'approved', 'rejected')
+              AND assessed_at >= DATE_SUB(NOW(), INTERVAL 30 DAY)
+            ORDER BY assessed_at DESC
+            LIMIT 1
+        ");
+        $assign->execute([$patientId, $providerId]);
+        if ($assign->fetchColumn()) {
+            return ['allowed' => true, 'message' => 'ok', 'consultation_id' => 0];
+        }
+    } catch (PDOException $e) {
+        // assigned_provider_id may not exist until schema migration runs
     }
 
     return ['allowed' => false, 'message' => 'Access denied.'];

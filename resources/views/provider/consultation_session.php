@@ -6,6 +6,7 @@ require __DIR__.'/partials/icons.php';
 require __DIR__.'/partials/data.php';
 require_once BASE_PATH . '/app/includes/message_deletion.php';
 require_once BASE_PATH . '/app/includes/patient_health_summary.php';
+require_once BASE_PATH . '/app/includes/provider_clinical_support.php';
 require __DIR__ . '/partials/queue_helpers.php';
 
 $consultation_id = (int)($_GET['id'] ?? 0);
@@ -61,6 +62,7 @@ $page_styles = ['messages-delete.css'];
 require __DIR__.'/partials/layout_open.php';
 
 $profile = patient_registration_profile_fields($pdo, (int) $c['patient_id']);
+$health_summary = patient_health_summary_load($pdo, (int) $c['patient_id']);
 
 $patient = [
     'name' => trim(($c['first_name'] ?? '') . ' ' . ($c['last_name'] ?? '')),
@@ -71,25 +73,45 @@ $patient = [
     'history' => $profile['history'],
     'allergies' => $profile['allergies'],
     'medications' => $profile['medications'],
+    'contact' => trim((string) ($profile['contact'] ?? '')),
+    'address' => trim((string) ($profile['address'] ?? '')),
+    'patient_number' => (string) ($health_summary['patient_number'] ?? ('MC-' . str_pad((string) $c['patient_id'], 6, '0', STR_PAD_LEFT))),
     'triage_level' => 'N/A',
     'complaint' => $c['consult_type'] ?: 'General consultation',
 ];
+$patient_contact = (string) ($patient['contact'] ?? '');
+$patient_email = '';
+try {
+    $em = $pdo->prepare('SELECT email FROM users WHERE id = ? LIMIT 1');
+    $em->execute([(int) $c['patient_id']]);
+    $patient_email = trim((string) ($em->fetchColumn() ?: ''));
+} catch (Throwable $e) {
+    $patient_email = '';
+}
+$gmail_ready = defined('MAIL_USERNAME') && MAIL_USERNAME !== '' && defined('MAIL_PASSWORD') && MAIL_PASSWORD !== '';
+if (!$gmail_ready) {
+    require_once BASE_PATH . '/app/includes/mailer.php';
+    $gmail_ready = defined('MAIL_USERNAME') && MAIL_USERNAME !== '' && defined('MAIL_PASSWORD') && MAIL_PASSWORD !== '';
+}
 
-// Fetch triage for this patient (latest)
-$t_stmt = $pdo->prepare("
-    SELECT level, urgency_label, chief_complaint
-    FROM triage_results
-    WHERE patient_id = ?
-    ORDER BY assessed_at DESC
-    LIMIT 1
-");
-$t_stmt->execute([$c['patient_id']]);
-$triage = $t_stmt->fetch();
-if ($triage) {
-    $patient['triage_level'] = $triage['urgency_label'] ?: ($triage['level'] ?? 'N/A');
-    if (!empty($triage['chief_complaint'])) {
-        $patient['complaint'] = $triage['chief_complaint'];
+$clinical_support = provider_consultation_clinical_support(
+    $pdo,
+    $consultation_id,
+    (int) $c['patient_id']
+);
+$clinical_support_audit = provider_clinical_support_audit_trail($pdo, $consultation_id);
+if ($clinical_support['available']) {
+    $patient['triage_level'] = $clinical_support['risk_level'] !== ''
+        ? $clinical_support['risk_level']
+        : 'N/A';
+    if ($clinical_support['chief_complaint'] !== '') {
+        $patient['complaint'] = $clinical_support['chief_complaint'];
     }
+}
+$csp_original_complaint = (string) ($clinical_support['patient_original_complaint'] ?? '');
+$csp_original_english = (string) ($clinical_support['patient_original_english'] ?? '');
+if ($csp_original_complaint === '') {
+    $csp_original_complaint = (string) ($patient['complaint'] ?? '');
 }
 
 $session_messages = [];
@@ -187,6 +209,26 @@ $localhost_app_url = 'http://localhost' . (ASSET_BASE !== '' ? ASSET_BASE : '');
     min-height: 0;
     aspect-ratio: auto;
     height: 220px;
+}
+.video-shell.is-floating {
+    position: fixed;
+    width: min(380px, calc(100vw - 24px));
+    height: 240px;
+    min-height: 0;
+    aspect-ratio: auto;
+    z-index: 2000;
+    border-radius: 14px;
+    box-shadow: 0 22px 50px rgba(0, 0, 0, 0.45), 0 0 0 1px rgba(148, 163, 184, 0.2);
+    touch-action: none;
+}
+.video-shell.is-floating .video-placeholder {
+    display: none !important;
+}
+.video-shell.is-floating .session-status {
+    top: 8px;
+    left: 8px;
+    font-size: 11px;
+    padding: 6px 10px;
 }
 .video-shell-tools {
     position: absolute;
@@ -646,6 +688,446 @@ $localhost_app_url = 'http://localhost' . (ASSET_BASE !== '' ? ASSET_BASE : '');
     0%, 100% { opacity: 1; }
     50% { opacity: .35; }
 }
+
+/* Clinical Support Panel (video consultation) */
+.csp-card .session-card-header {
+    background: #f1f5f9;
+}
+.csp-eyebrow {
+    margin: 0 0 4px;
+    font-size: 0.65rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: #475569;
+}
+.csp-disclaimer {
+    margin: 0 0 14px;
+    padding: 10px 12px;
+    border: 1px solid #cbd5e1;
+    border-left: 3px solid #334155;
+    border-radius: 6px;
+    background: #f8fafc;
+    color: #334155;
+    font-size: 12px;
+    line-height: 1.45;
+}
+.csp-risk {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    margin-bottom: 14px;
+    padding: 10px 12px;
+    border-radius: 8px;
+    border: 1px solid #e2e8f0;
+    background: #fff;
+}
+.csp-risk__label {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: #64748b;
+}
+.csp-risk__value {
+    font-size: 13px;
+    font-weight: 800;
+    color: #0f172a;
+}
+.csp-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 5px 10px;
+    border-radius: 4px;
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+    border: 1px solid transparent;
+}
+.csp-badge--unknown { background: #f1f5f9; color: #64748b; border-color: #e2e8f0; }
+.csp-badge--routine,
+.csp-badge--non_urgent { background: #ecfdf5; color: #047857; border-color: #a7f3d0; }
+.csp-badge--urgent { background: #ffedd5; color: #c2410c; border-color: #fdba74; }
+.csp-badge--emergency { background: #fee2e2; color: #b91c1c; border-color: #fca5a5; }
+.csp-section {
+    margin-bottom: 14px;
+}
+.csp-section:last-child { margin-bottom: 0; }
+.csp-section__title {
+    margin: 0 0 6px;
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    color: #475569;
+}
+.csp-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+.csp-chip {
+    display: inline-block;
+    padding: 4px 9px;
+    border-radius: 4px;
+    border: 1px solid #cbd5e1;
+    background: #fff;
+    color: #1e293b;
+    font-size: 12px;
+    font-weight: 600;
+}
+.csp-chip--warn {
+    border-color: #fca5a5;
+    background: #fef2f2;
+    color: #991b1b;
+}
+.csp-list {
+    margin: 0;
+    padding-left: 18px;
+    color: #334155;
+    font-size: 13px;
+    line-height: 1.5;
+}
+.csp-list li { margin-bottom: 4px; }
+.csp-empty {
+    margin: 0;
+    color: #94a3b8;
+    font-size: 12px;
+    font-style: italic;
+}
+.csp-meta {
+    margin-top: 12px;
+    padding-top: 10px;
+    border-top: 1px solid #e2e8f0;
+    font-size: 11px;
+    color: #64748b;
+}
+.csp-warn-block {
+    margin-bottom: 14px;
+    padding: 10px 12px;
+    border-radius: 8px;
+    border: 1px solid #fecaca;
+    background: #fef2f2;
+}
+.csp-warn-block .csp-section__title {
+    color: #991b1b;
+}
+.csp-override {
+    margin-bottom: 14px;
+    padding-bottom: 14px;
+    border-bottom: 1px solid #e2e8f0;
+}
+.csp-complaint-input {
+    width: 100%;
+    min-height: 72px;
+    margin-top: 4px;
+    resize: vertical;
+}
+.csp-override__actions {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-top: 10px;
+    flex-wrap: wrap;
+}
+.csp-status {
+    font-size: 12px;
+    color: #64748b;
+}
+.csp-status.is-error { color: #b91c1c; }
+.csp-status.is-ok { color: #047857; }
+.csp-final-urgency {
+    font-size: 1.05rem;
+    font-weight: 800;
+    color: #0f172a;
+    letter-spacing: -0.01em;
+}
+.csp-compare {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-bottom: 14px;
+}
+.csp-compare__card {
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    background: #fff;
+    padding: 10px 12px;
+}
+.csp-compare__card--doctor {
+    border-color: #94a3b8;
+    background: #f8fafc;
+}
+.csp-compare__label {
+    display: block;
+    margin-bottom: 6px;
+    font-size: 10px;
+    font-weight: 800;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    color: #64748b;
+}
+.csp-compare__text {
+    margin: 0;
+    font-size: 13px;
+    color: #0f172a;
+    line-height: 1.45;
+    white-space: pre-wrap;
+    word-break: break-word;
+}
+.csp-compare__eng {
+    margin: 6px 0 0;
+    font-size: 12px;
+    color: #64748b;
+}
+.csp-manual {
+    margin: 12px 0 14px;
+    padding: 12px;
+    border: 1px solid #cbd5e1;
+    border-radius: 8px;
+    background: #fff;
+}
+.csp-manual__row {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    align-items: center;
+    margin-top: 8px;
+}
+.csp-manual select,
+.csp-manual textarea {
+    width: 100%;
+}
+.csp-tools {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin: 12px 0 4px;
+}
+.csp-audit {
+    margin-top: 14px;
+    padding-top: 12px;
+    border-top: 1px solid #e2e8f0;
+}
+.csp-audit__list {
+    list-style: none;
+    margin: 8px 0 0;
+    padding: 0;
+    display: grid;
+    gap: 8px;
+    max-height: 220px;
+    overflow-y: auto;
+}
+.csp-audit__item {
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    background: #fff;
+    padding: 8px 10px;
+}
+.csp-audit__head {
+    display: flex;
+    justify-content: space-between;
+    gap: 8px;
+    font-size: 12px;
+    font-weight: 700;
+    color: #0f172a;
+}
+.csp-audit__meta {
+    margin-top: 4px;
+    font-size: 11px;
+    color: #64748b;
+    line-height: 1.4;
+}
+@media (max-width: 760px) {
+    .csp-compare {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* Post-call follow-up modal */
+.fu-modal {
+    position: fixed;
+    inset: 0;
+    z-index: 3200;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    padding: 16px;
+    background: rgba(15, 23, 42, 0.55);
+}
+.fu-modal.is-open { display: flex; }
+.fu-modal__dialog {
+    width: min(480px, 100%);
+    background: #fff;
+    border-radius: 12px;
+    border: 1px solid #dce8ed;
+    box-shadow: 0 24px 60px rgba(1, 42, 74, 0.28);
+    overflow: hidden;
+}
+.fu-modal__header {
+    padding: 16px 18px;
+    border-bottom: 1px solid #e2edf1;
+    background: #f8fafc;
+}
+.fu-modal__eyebrow {
+    margin: 0 0 4px;
+    font-size: 0.68rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: #475569;
+}
+.fu-modal__title {
+    margin: 0;
+    font-size: 1.1rem;
+    font-weight: 800;
+    color: #012a4a;
+}
+.fu-modal__body { padding: 18px; }
+.fu-modal__footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+    flex-wrap: wrap;
+    padding: 14px 18px;
+    border-top: 1px solid #e2edf1;
+    background: #f8fafc;
+}
+.fu-field { margin-bottom: 12px; }
+.fu-field label {
+    display: block;
+    margin-bottom: 6px;
+    font-size: 12px;
+    font-weight: 700;
+    color: #475569;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+.fu-contact {
+    padding: 10px 12px;
+    border-radius: 8px;
+    border: 1px solid #cbd5e1;
+    background: #f1f5f9;
+    font-weight: 700;
+    color: #0f172a;
+}
+.fu-hint {
+    margin: 6px 0 0;
+    font-size: 12px;
+    color: #64748b;
+    line-height: 1.4;
+}
+.fu-check {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    font-size: 13px;
+    color: #334155;
+}
+.fu-check input { margin-top: 2px; }
+.fu-status {
+    margin-top: 10px;
+    font-size: 12px;
+    color: #64748b;
+}
+.fu-status.is-ok { color: #047857; }
+.fu-status.is-error { color: #b91c1c; }
+
+/* Provider Health Summary card */
+.hs-card .session-card-header { background: #f1f5f9; }
+.hs-pending {
+    margin: 0 0 12px;
+    padding: 8px 10px;
+    border-radius: 8px;
+    border: 1px solid #fcd34d;
+    background: #fffbeb;
+    color: #92400e;
+    font-size: 12px;
+    font-weight: 600;
+}
+.hs-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-bottom: 12px;
+}
+.hs-block {
+    padding: 10px 12px;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    background: #f8fafc;
+}
+.hs-label {
+    display: block;
+    margin-bottom: 6px;
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: #64748b;
+}
+.hs-value {
+    font-size: 14px;
+    font-weight: 800;
+    color: #0f172a;
+}
+.hs-section { margin-bottom: 12px; }
+.hs-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+.hs-chip {
+    display: inline-block;
+    padding: 4px 9px;
+    border-radius: 4px;
+    border: 1px solid #cbd5e1;
+    background: #fff;
+    font-size: 12px;
+    font-weight: 600;
+    color: #1e293b;
+}
+.hs-chip--alert {
+    border-color: #fca5a5;
+    background: #fef2f2;
+    color: #991b1b;
+}
+.hs-chip--med {
+    border-color: #a7f3d0;
+    background: #ecfdf5;
+    color: #047857;
+}
+.hs-empty {
+    font-size: 12px;
+    color: #94a3b8;
+    font-style: italic;
+}
+.hs-meta {
+    margin: 12px 0 0;
+    padding-top: 10px;
+    border-top: 1px solid #e2e8f0;
+    font-size: 11px;
+    color: #64748b;
+    line-height: 1.4;
+}
+@media (max-width: 760px) {
+    .hs-grid { grid-template-columns: 1fr; }
+    .video-shell {
+        min-height: 52vh;
+        aspect-ratio: auto;
+    }
+    .video-shell.is-floating {
+        width: min(100vw - 16px, 360px);
+        height: 200px;
+        left: 8px !important;
+        right: 8px;
+    }
+    .session-page {
+        gap: 14px;
+    }
+}
 @media (max-width: 1180px) {
     .session-page {
         grid-template-columns: 1fr;
@@ -653,6 +1135,9 @@ $localhost_app_url = 'http://localhost' . (ASSET_BASE !== '' ? ASSET_BASE : '');
     .session-side {
         display: grid;
         grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+    .csp-card {
+        grid-column: 1 / -1;
     }
 }
 @media (max-width: 1100px) {
@@ -744,7 +1229,7 @@ $localhost_app_url = 'http://localhost' . (ASSET_BASE !== '' ? ASSET_BASE : '');
         <div class="video-shell" id="videoInterface">
             <div class="video-shell-tools">
                 <button type="button" class="video-size-btn" id="toggleVideoSizeBtn" onclick="toggleVideoShellSize()">Minimize video</button>
-                <button type="button" class="video-size-btn" id="scrollToAiBtn" onclick="scrollToAiPanel()">View AI below</button>
+                <button type="button" class="video-size-btn" id="scrollToAiBtn" onclick="scrollToClinicalSupport()">Clinical Support</button>
             </div>
             <div id="videoPlaceholder" class="video-placeholder">
                 <div class="video-placeholder-icon"><?= icon('video') ?></div>
@@ -791,49 +1276,9 @@ $localhost_app_url = 'http://localhost' . (ASSET_BASE !== '' ? ASSET_BASE : '');
             </div>
         </div>
 
-        <!-- AI NLP ASSISTANT -->
-        <div class="session-card" id="aiAssistantCard">
-            <div class="session-card-header">
-                <div class="session-card-title"><?= icon('scan') ?> AI Transcript Assistant</div>
-                <button type="button" class="session-btn primary" id="analyzeTranscriptBtn">Analyze Transcript</button>
-            </div>
-            <div class="session-card-body">
-                <div class="ai-panel-grid">
-                    <div>
-                        <label class="pd-label">Hiligaynon / Mixed Transcript</label>
-                        <textarea id="aiTranscriptInput" class="pd-textarea" style="min-height:180px" placeholder="Paste live transcript or consultation notes here. Example: May hilanat kag ubo, nag inom sang paracetamol."></textarea>
-                        <div id="aiLiveStatus" class="ai-live-status">
-                            <span class="ai-live-dot"></span>
-                            <span id="aiLiveStatusText">Start the video call to capture live transcript when supported.</span>
-                        </div>
-                        <div id="aiInterimTranscript" class="text-xs text-muted" style="margin-top:6px; min-height:16px;"></div>
-                    </div>
-                    <div class="ai-results">
-                        <div class="pd-label">Extracted Symptoms</div>
-                        <div id="aiSymptoms" class="ai-chip-list"><span class="text-xs text-muted">No analysis yet.</span></div>
-                        <div class="pd-label" style="margin-top:14px">Mentioned Medicines</div>
-                        <div id="aiMedicines" class="ai-chip-list"><span class="text-xs text-muted">No medicines detected.</span></div>
-                        <div class="pd-label" style="margin-top:14px">Urgent Cues</div>
-                        <div id="aiUrgent" class="ai-chip-list"><span class="text-xs text-muted">None detected.</span></div>
-                        <div class="pd-label" style="margin-top:14px">Triage Level</div>
-                        <div id="aiTriage" class="ai-triage-pill ai-triage--unknown">Not assessed</div>
-                        <div class="pd-label" style="margin-top:14px">Possible Conditions (ML)</div>
-                        <div id="aiDiseases" class="ai-disease-list"><span class="text-xs text-muted">Run analysis to see suggestions.</span></div>
-                    </div>
-                </div>
-                <div style="margin-top:14px">
-                    <label class="pd-label">English Transcript</label>
-                    <div id="aiEnglishTranscript" class="complaint-box" style="margin-top:0">Waiting for analysis.</div>
-                </div>
-                <div style="margin-top:14px">
-                    <label class="pd-label">Suggested Clinical Summary</label>
-                    <div id="aiSummary" class="ai-summary">AI suggestions will appear here. Doctor must verify before using in the medical record.</div>
-                    <button type="button" class="session-btn" id="copyAiToSoapBtn" style="margin-top:12px">Copy Summary to Assessment</button>
-                </div>
-    </div>
-</div>
+        </div>
 
-<button type="button" class="scroll-ai-btn" id="floatingScrollAiBtn" onclick="scrollToAiPanel()">View AI Assistant</button>
+<button type="button" class="scroll-ai-btn" id="floatingScrollAiBtn" onclick="scrollToClinicalSupport()">Clinical Support</button>
 
         <!-- SOAP ENCODING FORM -->
         <div class="session-card">
@@ -897,6 +1342,231 @@ $localhost_app_url = 'http://localhost' . (ASSET_BASE !== '' ? ASSET_BASE : '');
     <!-- RIGHT: Patient Profile & Workflow -->
     <div class="session-side">
 
+        <!-- CLINICAL SUPPORT PANEL -->
+        <div class="session-card csp-card">
+            <div class="session-card-header">
+                <div>
+                    <p class="csp-eyebrow">Decision support</p>
+                    <div class="session-card-title"><?= icon('scan') ?> Clinical Support Panel</div>
+                </div>
+            </div>
+            <div class="session-card-body">
+                <p class="csp-disclaimer">
+                    Enter or override the final chief complaint, then re-assess. AI updates risk, conditions, questions, and actions.
+                    The final diagnosis and treatment are always made by the doctor.
+                </p>
+
+                <div class="csp-compare" id="cspCompare">
+                    <div class="csp-compare__card">
+                        <span class="csp-compare__label">Patient original complaint</span>
+                        <p class="csp-compare__text" id="cspOriginalComplaint"><?= htmlspecialchars($csp_original_complaint !== '' ? $csp_original_complaint : '—') ?></p>
+                        <p class="csp-compare__eng" id="cspOriginalEnglish" <?= $csp_original_english === '' || strcasecmp($csp_original_english, $csp_original_complaint) === 0 ? 'hidden' : '' ?>>
+                            English: <span id="cspOriginalEnglishText"><?= htmlspecialchars($csp_original_english) ?></span>
+                        </p>
+                    </div>
+                    <div class="csp-compare__card csp-compare__card--doctor">
+                        <span class="csp-compare__label">Doctor-finalized complaint</span>
+                        <p class="csp-compare__text" id="cspFinalizedComplaint"><?= htmlspecialchars(
+                            ($clinical_support['chief_complaint'] !== '' ? $clinical_support['chief_complaint'] : ($patient['complaint'] ?? '')) ?: '—'
+                        ) ?></p>
+                    </div>
+                </div>
+
+                <div class="csp-override">
+                    <label class="csp-section__title" for="cspChiefComplaint">Final chief complaint (doctor override)</label>
+                    <textarea
+                        id="cspChiefComplaint"
+                        class="pd-textarea csp-complaint-input"
+                        rows="3"
+                        placeholder="Type the finalized chief complaint from this consultation…"
+                    ><?= htmlspecialchars($clinical_support['chief_complaint'] !== '' ? $clinical_support['chief_complaint'] : $patient['complaint']) ?></textarea>
+                    <div class="csp-override__actions">
+                        <button type="button" class="session-btn primary" id="cspReassessBtn">Re-assess with AI</button>
+                        <span id="cspReassessStatus" class="csp-status" aria-live="polite"></span>
+                    </div>
+                </div>
+
+                <div id="cspResults">
+                <?php if (!$clinical_support['available']): ?>
+                    <p class="csp-empty" id="cspEmptyState">No assessment yet. Enter the final chief complaint and click Re-assess with AI.</p>
+                    <div id="cspFilledState" hidden>
+                <?php else: ?>
+                    <p class="csp-empty" id="cspEmptyState" hidden>No assessment yet. Enter the final chief complaint and click Re-assess with AI.</p>
+                    <div id="cspFilledState">
+                <?php endif; ?>
+                    <?php
+                    $riskBucket = preg_replace('/[^a-z_]/', '', strtolower((string) ($clinical_support['risk_bucket'] ?? 'unknown'))) ?: 'unknown';
+                    $finalUrgency = (string) ($clinical_support['final_urgency'] ?? '');
+                    if ($finalUrgency === '') {
+                        $finalUrgency = match ($riskBucket) {
+                            'emergency' => 'Emergency',
+                            'urgent' => 'Urgent',
+                            'non_urgent', 'routine' => 'Non-Urgent',
+                            default => (string) ($clinical_support['risk_level'] ?? 'Not assessed'),
+                        };
+                    }
+                    $aiUrgency = (string) ($clinical_support['ai_urgency'] ?? $finalUrgency);
+                    ?>
+                    <div class="csp-risk">
+                        <div>
+                            <div class="csp-risk__label">AI-assessed risk level</div>
+                            <div class="csp-risk__value" id="cspRiskLevel"><?= htmlspecialchars($aiUrgency ?: 'Not assessed') ?></div>
+                        </div>
+                        <span class="csp-badge csp-badge--<?= htmlspecialchars($riskBucket) ?>" id="cspRiskBadge">
+                            <?= htmlspecialchars($finalUrgency) ?>
+                        </span>
+                    </div>
+
+                    <div class="csp-section">
+                        <h4 class="csp-section__title">Final urgency prediction</h4>
+                        <div class="csp-final-urgency" id="cspFinalUrgency"><?= htmlspecialchars($finalUrgency) ?></div>
+                        <p class="csp-meta" style="margin-top:6px;border:0;padding:0;" id="cspOverrideNote">
+                            <?php if (!empty($clinical_support['manual_urgency'])): ?>
+                                Doctor manual override<?= $clinical_support['manual_override_note'] !== '' ? ': ' . htmlspecialchars($clinical_support['manual_override_note']) : '' ?>
+                            <?php elseif (!empty($clinical_support['doctor_override'])): ?>
+                                Based on doctor-finalized chief complaint
+                            <?php else: ?>
+                                Based on pre-consult triage (override above to update)
+                            <?php endif; ?>
+                        </p>
+                    </div>
+
+                    <div class="csp-manual">
+                        <h4 class="csp-section__title">Manual urgency override</h4>
+                        <p class="csp-empty" style="font-style:normal;margin-bottom:8px;">Disagree with AI? Set the clinical urgency and record a reason.</p>
+                        <label class="csp-section__title" for="cspManualUrgency">Doctor urgency</label>
+                        <select id="cspManualUrgency" class="pd-input">
+                            <option value="emergency" <?= $riskBucket === 'emergency' ? 'selected' : '' ?>>Emergency</option>
+                            <option value="urgent" <?= $riskBucket === 'urgent' ? 'selected' : '' ?>>Urgent</option>
+                            <option value="non_urgent" <?= in_array($riskBucket, ['non_urgent', 'routine'], true) ? 'selected' : '' ?>>Non-Urgent</option>
+                        </select>
+                        <label class="csp-section__title" for="cspManualNote" style="margin-top:8px;display:block;">Clinical reason (required)</label>
+                        <textarea id="cspManualNote" class="pd-textarea" rows="2" placeholder="Why are you overriding the AI urgency?"><?= htmlspecialchars((string) ($clinical_support['manual_override_note'] ?? '')) ?></textarea>
+                        <div class="csp-manual__row">
+                            <button type="button" class="session-btn" id="cspOverrideUrgencyBtn">Save urgency override</button>
+                            <span id="cspOverrideStatus" class="csp-status" aria-live="polite"></span>
+                        </div>
+                    </div>
+
+                    <div class="csp-warn-block" id="cspWarnBlock" <?= empty($clinical_support['emergency_warning_signs']) ? 'hidden' : '' ?>>
+                        <h4 class="csp-section__title">Emergency warning signs</h4>
+                        <ul class="csp-list" id="cspWarnings">
+                            <?php foreach ($clinical_support['emergency_warning_signs'] as $sign): ?>
+                                <li><?= htmlspecialchars($sign) ?></li>
+                            <?php endforeach; ?>
+                        </ul>
+                    </div>
+
+                    <div class="csp-section">
+                        <h4 class="csp-section__title">Patient symptoms</h4>
+                        <div class="csp-chips" id="cspSymptoms">
+                            <?php if (!empty($clinical_support['symptoms'])): ?>
+                                <?php foreach ($clinical_support['symptoms'] as $symptom): ?>
+                                    <span class="csp-chip"><?= htmlspecialchars($symptom) ?></span>
+                                <?php endforeach; ?>
+                            <?php else: ?>
+                                <p class="csp-empty">No structured symptoms recorded yet.</p>
+                            <?php endif; ?>
+                        </div>
+                        <p id="cspComplaintLine" style="margin: 8px 0 0; font-size: 13px; color: #334155; line-height: 1.45;" <?= $clinical_support['chief_complaint'] === '' ? 'hidden' : '' ?>>
+                            <strong>Complaint:</strong> <span id="cspComplaintText"><?= htmlspecialchars($clinical_support['chief_complaint']) ?></span>
+                            <span id="cspEnglishWrap" <?= ($clinical_support['english_complaint'] === '' || strcasecmp($clinical_support['english_complaint'], $clinical_support['chief_complaint']) === 0) ? 'hidden' : '' ?>>
+                                <br><span style="color:#64748b;">English: <span id="cspEnglishText"><?= htmlspecialchars($clinical_support['english_complaint']) ?></span></span>
+                            </span>
+                        </p>
+                    </div>
+
+                    <div class="csp-section">
+                        <h4 class="csp-section__title">Possible conditions</h4>
+                        <div class="csp-chips" id="cspConditions">
+                            <?php if (!empty($clinical_support['possible_conditions'])): ?>
+                                <?php foreach ($clinical_support['possible_conditions'] as $condition): ?>
+                                    <span class="csp-chip"><?= htmlspecialchars($condition) ?></span>
+                                <?php endforeach; ?>
+                            <?php else: ?>
+                                <p class="csp-empty">No differential suggested — clinical assessment required.</p>
+                            <?php endif; ?>
+                        </div>
+                    </div>
+
+                    <div class="csp-section">
+                        <h4 class="csp-section__title">Suggested questions</h4>
+                        <ul class="csp-list" id="cspQuestions">
+                            <?php if (!empty($clinical_support['suggested_questions'])): ?>
+                                <?php foreach ($clinical_support['suggested_questions'] as $question): ?>
+                                    <li><?= htmlspecialchars($question) ?></li>
+                                <?php endforeach; ?>
+                            <?php else: ?>
+                                <li class="csp-empty" style="list-style:none;margin-left:-18px;">No clarifying prompts available.</li>
+                            <?php endif; ?>
+                        </ul>
+                    </div>
+
+                    <div class="csp-section">
+                        <h4 class="csp-section__title">Recommended actions</h4>
+                        <ul class="csp-list" id="cspActions">
+                            <?php if (!empty($clinical_support['recommended_actions'])): ?>
+                                <?php foreach ($clinical_support['recommended_actions'] as $action): ?>
+                                    <li><?= htmlspecialchars($action) ?></li>
+                                <?php endforeach; ?>
+                            <?php else: ?>
+                                <li class="csp-empty" style="list-style:none;margin-left:-18px;">No AI care actions listed for this assessment.</li>
+                            <?php endif; ?>
+                        </ul>
+                    </div>
+
+                    <div class="csp-tools">
+                        <button type="button" class="session-btn primary" id="cspCopyAssessmentBtn">Copy to Assessment</button>
+                        <button type="button" class="session-btn" id="cspCopyPlanBtn">Copy actions to Plan</button>
+                        <button type="button" class="session-btn" id="cspCopySubjectiveBtn">Copy complaint to Subjective</button>
+                    </div>
+                    <p id="cspCopyStatus" class="csp-status" aria-live="polite"></p>
+
+                    <div class="csp-meta" id="cspMeta">
+                        <?php if (($clinical_support['confidence_display'] ?? '') !== ''): ?>
+                            Model confidence: <span id="cspConfidence"><?= htmlspecialchars($clinical_support['confidence_display']) ?></span>
+                            ·
+                        <?php else: ?>
+                            <span id="cspConfidenceWrap" hidden>Model confidence: <span id="cspConfidence"></span> · </span>
+                        <?php endif; ?>
+                        <span id="cspAssessedLabel"><?= htmlspecialchars($clinical_support['assessed_label'] !== '' ? ('Assessed ' . $clinical_support['assessed_label']) : 'Awaiting doctor re-assessment') ?></span>
+                    </div>
+                    </div>
+                </div>
+
+                <div class="csp-audit">
+                    <h4 class="csp-section__title">Audit trail</h4>
+                    <ul class="csp-audit__list" id="cspAuditList">
+                        <?php if ($clinical_support_audit === []): ?>
+                            <li class="csp-empty" id="cspAuditEmpty">No re-assessments or overrides recorded yet.</li>
+                        <?php else: ?>
+                            <?php foreach ($clinical_support_audit as $entry): ?>
+                                <li class="csp-audit__item">
+                                    <div class="csp-audit__head">
+                                        <span><?= htmlspecialchars($entry['event_label']) ?></span>
+                                        <span><?= htmlspecialchars($entry['created_label']) ?></span>
+                                    </div>
+                                    <div class="csp-audit__meta">
+                                        <?= htmlspecialchars($entry['provider_name']) ?>
+                                        · Urgency: <?= htmlspecialchars($entry['urgency_label'] !== '' ? $entry['urgency_label'] : '—') ?>
+                                        <?php if ($entry['event_type'] === 'urgency_override' && $entry['ai_urgency'] !== ''): ?>
+                                            (AI was <?= htmlspecialchars($entry['ai_urgency']) ?>)
+                                        <?php endif; ?>
+                                        <?php if ($entry['audit_note'] !== ''): ?>
+                                            <br><?= htmlspecialchars($entry['audit_note']) ?>
+                                        <?php endif; ?>
+                                        <?php if ($entry['chief_complaint'] !== ''): ?>
+                                            <br>Complaint: <?= htmlspecialchars(strlen($entry['chief_complaint']) > 120 ? substr($entry['chief_complaint'], 0, 117) . '…' : $entry['chief_complaint']) ?>
+                                        <?php endif; ?>
+                                    </div>
+                                </li>
+                            <?php endforeach; ?>
+                        <?php endif; ?>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
         <!-- SESSION MESSAGES -->
         <div class="session-card">
             <div class="session-card-header">
@@ -925,26 +1595,118 @@ $localhost_app_url = 'http://localhost' . (ASSET_BASE !== '' ? ASSET_BASE : '');
             </div>
         </div>
 
-        <!-- PATIENT SNAPSHOT -->
-        <div class="session-card">
-            <div class="session-card-header"><div class="session-card-title"><?= icon('user') ?> Patient Snapshot</div></div>
+        <!-- PATIENT HEALTH SUMMARY (doctor view) -->
+        <div class="session-card hs-card">
+            <div class="session-card-header">
+                <div>
+                    <p class="csp-eyebrow" style="margin:0 0 2px;">Permanent medical profile</p>
+                    <div class="session-card-title"><?= icon('user') ?> Patient Health Summary</div>
+                </div>
+            </div>
             <div class="session-card-body">
                 <div class="patient-head">
                     <div class="patient-avatar"><?= htmlspecialchars($patient['initials']) ?></div>
                     <div>
                         <div class="patient-name"><?= htmlspecialchars($patient['name']) ?></div>
-                        <div class="patient-sub"><?= htmlspecialchars($patient['age']) ?>y &bull; <?= htmlspecialchars($patient['sex']) ?></div>
+                        <div class="patient-sub">
+                            <?= htmlspecialchars((string) $patient['patient_number']) ?>
+                            · <?= htmlspecialchars((string) $patient['age']) ?>y
+                            · <?= htmlspecialchars((string) $patient['sex']) ?>
+                        </div>
                     </div>
                 </div>
-                <div class="info-row"><span class="info-key">Blood type</span><span class="info-val"><?= htmlspecialchars($patient['blood_type']) ?></span></div>
-                <div class="info-row"><span class="info-key">Medical Hx</span><span class="info-val"><?= htmlspecialchars($patient['history']) ?></span></div>
-                <div class="info-row"><span class="info-key">Allergies</span><span class="info-val" style="color: #dc2626;"><?= htmlspecialchars($patient['allergies']) ?></span></div>
-                <div class="info-row"><span class="info-key">Medications</span><span class="info-val"><?= htmlspecialchars($patient['medications']) ?></span></div>
-                <div class="info-row"><span class="info-key">Triage</span><span class="info-val"><?= htmlspecialchars($patient['triage_level']) ?></span></div>
+
+                <?php if (!empty($health_summary['pending_request'])): ?>
+                    <p class="hs-pending">Patient has a pending medical profile update request.</p>
+                <?php endif; ?>
+
+                <div class="hs-grid">
+                    <div class="hs-block">
+                        <span class="hs-label">Blood type</span>
+                        <div class="hs-value"><?= htmlspecialchars((string) ($health_summary['blood_type'] ?? $patient['blood_type'] ?: 'Not recorded')) ?></div>
+                    </div>
+                    <div class="hs-block">
+                        <span class="hs-label">Triage (this visit)</span>
+                        <div class="hs-value"><?= htmlspecialchars($patient['triage_level']) ?></div>
+                    </div>
+                </div>
+
+                <div class="hs-section">
+                    <span class="hs-label">Allergies</span>
+                    <div class="hs-chips">
+                        <?php
+                        $allergyChips = $health_summary['allergies'] ?? [];
+                        if ($allergyChips === [] && trim((string) $patient['allergies']) !== '' && !preg_match('/^none/i', (string) $patient['allergies'])) {
+                            $allergyChips = preg_split('/[,;]+/', (string) $patient['allergies']) ?: [];
+                        }
+                        ?>
+                        <?php if ($allergyChips === []): ?>
+                            <span class="hs-empty">None known</span>
+                        <?php else: ?>
+                            <?php foreach ($allergyChips as $chip): ?>
+                                <?php $chip = trim((string) $chip); if ($chip === '') continue; ?>
+                                <span class="hs-chip hs-chip--alert"><?= htmlspecialchars($chip) ?></span>
+                            <?php endforeach; ?>
+                        <?php endif; ?>
+                    </div>
+                </div>
+
+                <div class="hs-section">
+                    <span class="hs-label">Existing conditions</span>
+                    <div class="hs-chips">
+                        <?php
+                        $conditionChips = $health_summary['conditions'] ?? [];
+                        if ($conditionChips === [] && trim((string) $patient['history']) !== '' && !preg_match('/^none/i', (string) $patient['history'])) {
+                            $conditionChips = preg_split('/[,;]+/', (string) $patient['history']) ?: [];
+                        }
+                        ?>
+                        <?php if ($conditionChips === []): ?>
+                            <span class="hs-empty">None recorded</span>
+                        <?php else: ?>
+                            <?php foreach ($conditionChips as $chip): ?>
+                                <?php $chip = trim((string) $chip); if ($chip === '') continue; ?>
+                                <span class="hs-chip"><?= htmlspecialchars($chip) ?></span>
+                            <?php endforeach; ?>
+                        <?php endif; ?>
+                    </div>
+                </div>
+
+                <div class="hs-section">
+                    <span class="hs-label">Current medications</span>
+                    <div class="hs-chips">
+                        <?php
+                        $medChips = $health_summary['medications'] ?? [];
+                        if ($medChips === [] && trim((string) $patient['medications']) !== '' && !preg_match('/^none/i', (string) $patient['medications'])) {
+                            $medChips = preg_split('/[,;]+/', (string) $patient['medications']) ?: [];
+                        }
+                        ?>
+                        <?php if ($medChips === []): ?>
+                            <span class="hs-empty">None recorded</span>
+                        <?php else: ?>
+                            <?php foreach ($medChips as $chip): ?>
+                                <?php $chip = trim((string) $chip); if ($chip === '') continue; ?>
+                                <span class="hs-chip hs-chip--med"><?= htmlspecialchars($chip) ?></span>
+                            <?php endforeach; ?>
+                        <?php endif; ?>
+                    </div>
+                </div>
+
+                <div class="info-row"><span class="info-key">Contact</span><span class="info-val"><?= htmlspecialchars($patient_contact !== '' ? $patient_contact : '—') ?></span></div>
+                <div class="info-row"><span class="info-key">Email</span><span class="info-val"><?= htmlspecialchars($patient_email !== '' ? $patient_email : '—') ?></span></div>
+                <?php if (!empty($patient['address'])): ?>
+                <div class="info-row"><span class="info-key">Address</span><span class="info-val"><?= htmlspecialchars($patient['address']) ?></span></div>
+                <?php endif; ?>
+
                 <div class="complaint-box">
-                    <strong>Chief Complaint</strong>
+                    <strong>Chief Complaint (this visit)</strong>
                     <?= htmlspecialchars($patient['complaint']) ?>
                 </div>
+
+                <p class="hs-meta">
+                    Last updated:
+                    <?= htmlspecialchars((string) ($health_summary['metadata']['last_updated_at_label'] ?? 'Not available')) ?>
+                    · <?= htmlspecialchars((string) ($health_summary['metadata']['last_updated_by'] ?? 'Registration')) ?>
+                </p>
             </div>
         </div>
 
@@ -966,12 +1728,68 @@ $localhost_app_url = 'http://localhost' . (ASSET_BASE !== '' ? ASSET_BASE : '');
                     
                     <label class="pd-label">Schedule Follow-up</label>
                     <input type="date" id="followUpDate" class="pd-input" style="width: 100%;">
-                    <button class="session-btn" style="width: 100%;" onclick="scheduleFollowUp()">Book Follow-up</button>
+                    <p class="text-xs text-muted" style="margin:6px 0 0;">Registered mobile: <strong><?= htmlspecialchars($patient_contact !== '' ? $patient_contact : 'Not on file') ?></strong></p>
+                    <button class="session-btn" style="width: 100%; margin-top:8px;" onclick="scheduleFollowUp()">Book Follow-up</button>
+                    <button type="button" class="session-btn primary" style="width: 100%; margin-top:8px;" onclick="openFollowUpModal()">Open follow-up form</button>
                 </div>
             </div>
         </div>
     </div>
 
+</div>
+
+<!-- Post-call follow-up modal -->
+<div id="followUpModal" class="fu-modal" aria-hidden="true">
+  <div class="fu-modal__dialog" role="dialog" aria-modal="true" aria-labelledby="followUpModalTitle">
+    <div class="fu-modal__header">
+      <p class="fu-modal__eyebrow">After video consultation</p>
+      <h2 id="followUpModalTitle" class="fu-modal__title">Schedule patient follow-up</h2>
+    </div>
+    <div class="fu-modal__body">
+      <p class="fu-hint" style="margin-top:0;margin-bottom:14px;">
+        The video call has ended. Schedule a follow-up and send a Gmail reminder to the patient.
+      </p>
+      <div class="fu-field">
+        <label>Patient</label>
+        <div class="fu-contact"><?= htmlspecialchars($patient['name']) ?></div>
+      </div>
+      <div class="fu-field">
+        <label>Registered email (Gmail reminder)</label>
+        <div class="fu-contact" id="fuEmailDisplay"><?= htmlspecialchars($patient_email !== '' ? $patient_email : 'Not on file') ?></div>
+        <p class="fu-hint">Pulled from the patient account. Reminder is sent via MedConnect Gmail SMTP.</p>
+      </div>
+      <div class="fu-field">
+        <label>Registered mobile (reference)</label>
+        <div class="fu-contact" id="fuContactDisplay"><?= htmlspecialchars($patient_contact !== '' ? $patient_contact : 'Not on file') ?></div>
+      </div>
+      <div class="fu-field">
+        <label for="fuFollowUpDate">Follow-up date</label>
+        <input type="date" id="fuFollowUpDate" class="pd-input" style="width:100%;">
+      </div>
+      <div class="fu-field">
+        <label for="fuFollowUpMessage">Message / notes</label>
+        <textarea id="fuFollowUpMessage" class="pd-textarea" rows="3" placeholder="Follow-up instructions for the patient…"></textarea>
+      </div>
+      <label class="fu-check">
+        <input type="checkbox" id="fuSendEmail" <?= $patient_email !== '' ? 'checked' : 'disabled' ?>>
+        <span>
+          Send Gmail follow-up reminder
+          <?php if ($patient_email === ''): ?>
+            <span class="fu-hint" style="display:block;">No patient email on file — in-app reminder only.</span>
+          <?php elseif ($gmail_ready): ?>
+            <span class="fu-hint" style="display:block;">Gmail SMTP is ready.</span>
+          <?php else: ?>
+            <span class="fu-hint" style="display:block;">Mailer not ready — check Gmail SMTP settings.</span>
+          <?php endif; ?>
+        </span>
+      </label>
+      <p id="fuModalStatus" class="fu-status" aria-live="polite"></p>
+    </div>
+    <div class="fu-modal__footer">
+      <button type="button" class="session-btn" id="fuSkipBtn">Skip for now</button>
+      <button type="button" class="session-btn primary" id="fuSaveBtn">Schedule follow-up</button>
+    </div>
+  </div>
 </div>
 
 <script src="<?= ASSET_BASE ?>/assets/js/messages-delete.js?v=3"></script>
@@ -987,13 +1805,16 @@ const sessionCsrf = <?= json_encode((string) ($_SESSION['csrf_token'] ?? '')) ?>
 const sessionProviderInitials = <?= json_encode($provider['initials'] ?? 'DR') ?>;
 const sessionPatientInitials = <?= json_encode($patient['initials']) ?>;
 const sessionAssetBase = <?= json_encode(ASSET_BASE) ?>;
+const sessionPatientContact = <?= json_encode($patient_contact) ?>;
+const sessionPatientEmail = <?= json_encode($patient_email) ?>;
+const sessionPatientName = <?= json_encode($patient['name']) ?>;
+const sessionGmailReady = <?= $gmail_ready ? 'true' : 'false' ?>;
 const sessionSpokenMuteIds = new Set();
 const sessionRecentMuteTexts = new Map();
 let sessionChatRefreshTimer = null;
 let sessionChatRefreshInFlight = false;
 let sessionLastEventId = 0;
 let sessionRealtimePoller = null;
-let latestAiSummary = '';
 
 function speakMuteTtsMessage(message, force) {
     if (!message || message.message_kind !== 'mute_tts' || message.is_deleted_for_everyone) return;
@@ -1173,54 +1994,399 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
     sessionChatRefreshTimer = setInterval(refreshSessionChat, 2000);
-    document.getElementById('analyzeTranscriptBtn').addEventListener('click', analyzeTranscript);
-    document.getElementById('copyAiToSoapBtn').addEventListener('click', copyAiSummaryToSoap);
+    const reassessBtn = document.getElementById('cspReassessBtn');
+    if (reassessBtn) {
+        reassessBtn.addEventListener('click', reassessClinicalSupport);
+    }
+    const overrideBtn = document.getElementById('cspOverrideUrgencyBtn');
+    if (overrideBtn) {
+        overrideBtn.addEventListener('click', overrideClinicalUrgency);
+    }
+    const copyAssessmentBtn = document.getElementById('cspCopyAssessmentBtn');
+    if (copyAssessmentBtn) {
+        copyAssessmentBtn.addEventListener('click', function () { copyClinicalSupportToSoap('assessment'); });
+    }
+    const copyPlanBtn = document.getElementById('cspCopyPlanBtn');
+    if (copyPlanBtn) {
+        copyPlanBtn.addEventListener('click', function () { copyClinicalSupportToSoap('plan'); });
+    }
+    const copySubjectiveBtn = document.getElementById('cspCopySubjectiveBtn');
+    if (copySubjectiveBtn) {
+        copySubjectiveBtn.addEventListener('click', function () { copyClinicalSupportToSoap('subjective'); });
+    }
+    const skipBtn = document.getElementById('fuSkipBtn');
+    const saveBtn = document.getElementById('fuSaveBtn');
+    const modal = document.getElementById('followUpModal');
+    if (skipBtn) skipBtn.addEventListener('click', closeFollowUpModal);
+    if (saveBtn) saveBtn.addEventListener('click', saveFollowUpFromModal);
+    if (modal) {
+        modal.addEventListener('click', (e) => {
+            if (e.target === modal) closeFollowUpModal();
+        });
+    }
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('followup') === '1') {
+        openFollowUpModal({ fromCallEnd: true });
+        params.delete('followup');
+        const next = window.location.pathname + (params.toString() ? '?' + params.toString() : '') + window.location.hash;
+        window.history.replaceState({}, '', next);
+    }
 });
 
-function renderAiTriage(triage) {
-    const el = document.getElementById('aiTriage');
-    if (!el) return;
-    if (!triage || !triage.level || triage.level === 'unknown') {
-        el.className = 'ai-triage-pill ai-triage--unknown';
-        el.textContent = 'Not assessed';
-        return;
-    }
-    el.className = 'ai-triage-pill ai-triage--' + triage.level;
-    el.textContent = (triage.label || triage.level) + (triage.score ? ' · score ' + triage.score : '');
+let currentClinicalSupport = <?= json_encode($clinical_support, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_AMP | JSON_HEX_QUOT) ?>;
+
+function escapeHtml(value) {
+    const d = document.createElement('div');
+    d.textContent = value == null ? '' : String(value);
+    return d.innerHTML;
 }
 
-function renderAiDiseases(predictions) {
-    const el = document.getElementById('aiDiseases');
+function renderCspChips(el, values, emptyText) {
     if (!el) return;
     el.innerHTML = '';
-    if (!predictions || !predictions.length) {
-        el.innerHTML = '<span class="text-xs text-muted">No condition suggestions (add more symptoms).</span>';
+    if (!values || !values.length) {
+        el.innerHTML = '<p class="csp-empty">' + escapeHtml(emptyText || 'None') + '</p>';
         return;
     }
-    predictions.forEach((item) => {
-        const card = document.createElement('div');
-        card.className = 'ai-disease-card';
-        card.innerHTML = '<strong>' + item.disease + '</strong> <span>' + item.confidence + '%</span>';
-        if (item.precautions && item.precautions.length) {
-            const note = document.createElement('div');
-            note.className = 'text-xs text-muted';
-            note.style.marginTop = '4px';
-            note.textContent = 'Precautions: ' + item.precautions.slice(0, 2).join('; ');
-            card.appendChild(note);
-        }
-        el.appendChild(card);
+    values.forEach((value) => {
+        const chip = document.createElement('span');
+        chip.className = 'csp-chip';
+        chip.textContent = value;
+        el.appendChild(chip);
     });
 }
 
-function applyAiAnalysis(data) {
-    latestAiSummary = data.summary || '';
-    renderAiChips('aiSymptoms', data.symptoms || []);
-    renderAiChips('aiMedicines', data.medicines || [], 'med');
-    renderAiChips('aiUrgent', data.urgent_flags || [], 'urgent');
-    renderAiTriage(data.triage || null);
-    renderAiDiseases(data.disease_predictions || []);
-    document.getElementById('aiEnglishTranscript').textContent = data.english_transcript || 'No translation available.';
-    document.getElementById('aiSummary').textContent = latestAiSummary || 'No suggestions generated.';
+function renderCspList(el, values, emptyText) {
+    if (!el) return;
+    el.innerHTML = '';
+    if (!values || !values.length) {
+        el.innerHTML = '<li class="csp-empty" style="list-style:none;margin-left:-18px;">' + escapeHtml(emptyText || 'None') + '</li>';
+        return;
+    }
+    values.forEach((value) => {
+        const li = document.createElement('li');
+        li.textContent = value;
+        el.appendChild(li);
+    });
+}
+
+function renderClinicalAudit(audit) {
+    const list = document.getElementById('cspAuditList');
+    if (!list) return;
+    list.innerHTML = '';
+    if (!audit || !audit.length) {
+        list.innerHTML = '<li class="csp-empty" id="cspAuditEmpty">No re-assessments or overrides recorded yet.</li>';
+        return;
+    }
+    audit.forEach((entry) => {
+        const li = document.createElement('li');
+        li.className = 'csp-audit__item';
+        let meta = escapeHtml(entry.provider_name || 'Provider')
+            + ' · Urgency: ' + escapeHtml(entry.urgency_label || '—');
+        if (entry.event_type === 'urgency_override' && entry.ai_urgency) {
+            meta += ' (AI was ' + escapeHtml(entry.ai_urgency) + ')';
+        }
+        if (entry.audit_note) {
+            meta += '<br>' + escapeHtml(entry.audit_note);
+        }
+        if (entry.chief_complaint) {
+            const short = String(entry.chief_complaint).length > 120
+                ? String(entry.chief_complaint).slice(0, 117) + '…'
+                : entry.chief_complaint;
+            meta += '<br>Complaint: ' + escapeHtml(short);
+        }
+        li.innerHTML =
+            '<div class="csp-audit__head"><span>' + escapeHtml(entry.event_label || entry.event_type) +
+            '</span><span>' + escapeHtml(entry.created_label || '') + '</span></div>' +
+            '<div class="csp-audit__meta">' + meta + '</div>';
+        list.appendChild(li);
+    });
+}
+
+function applyClinicalSupport(support) {
+    if (!support) return;
+    currentClinicalSupport = support;
+    const emptyState = document.getElementById('cspEmptyState');
+    const filledState = document.getElementById('cspFilledState');
+    if (emptyState) emptyState.hidden = true;
+    if (filledState) filledState.hidden = false;
+
+    const riskLevel = document.getElementById('cspRiskLevel');
+    const riskBadge = document.getElementById('cspRiskBadge');
+    const finalUrgencyEl = document.getElementById('cspFinalUrgency');
+    const overrideNote = document.getElementById('cspOverrideNote');
+    const bucket = String(support.risk_bucket || 'unknown').replace(/[^a-z_]/g, '') || 'unknown';
+    const finalUrgency = support.final_urgency || support.risk_level || 'Not assessed';
+    const aiUrgency = support.ai_urgency || finalUrgency;
+
+    if (riskLevel) riskLevel.textContent = aiUrgency || 'Not assessed';
+    if (riskBadge) {
+        riskBadge.className = 'csp-badge csp-badge--' + bucket;
+        riskBadge.textContent = finalUrgency;
+    }
+    if (finalUrgencyEl) finalUrgencyEl.textContent = finalUrgency;
+    if (overrideNote) {
+        if (support.manual_urgency) {
+            overrideNote.textContent = 'Doctor manual override' + (support.manual_override_note ? ': ' + support.manual_override_note : '');
+        } else if (support.doctor_override) {
+            overrideNote.textContent = 'Based on doctor-finalized chief complaint';
+        } else {
+            overrideNote.textContent = 'Based on pre-consult triage (override above to update)';
+        }
+    }
+
+    const finalizedEl = document.getElementById('cspFinalizedComplaint');
+    if (finalizedEl) {
+        finalizedEl.textContent = support.chief_complaint || '—';
+    }
+    const originalEl = document.getElementById('cspOriginalComplaint');
+    if (originalEl && support.patient_original_complaint) {
+        originalEl.textContent = support.patient_original_complaint;
+    }
+    const originalEngWrap = document.getElementById('cspOriginalEnglish');
+    const originalEngText = document.getElementById('cspOriginalEnglishText');
+    if (originalEngWrap && originalEngText) {
+        const eng = support.patient_original_english || '';
+        const orig = support.patient_original_complaint || '';
+        const show = eng && eng.toLowerCase() !== String(orig).toLowerCase();
+        originalEngWrap.hidden = !show;
+        originalEngText.textContent = eng;
+    }
+
+    const manualSelect = document.getElementById('cspManualUrgency');
+    if (manualSelect && ['emergency', 'urgent', 'non_urgent'].indexOf(bucket) >= 0) {
+        manualSelect.value = bucket === 'routine' ? 'non_urgent' : bucket;
+    }
+
+    const warnBlock = document.getElementById('cspWarnBlock');
+    const warnings = support.emergency_warning_signs || [];
+    if (warnBlock) {
+        warnBlock.hidden = warnings.length === 0;
+        renderCspList(document.getElementById('cspWarnings'), warnings, '');
+    }
+
+    renderCspChips(document.getElementById('cspSymptoms'), support.symptoms || [], 'No structured symptoms recorded yet.');
+    renderCspChips(document.getElementById('cspConditions'), support.possible_conditions || [], 'No differential suggested — clinical assessment required.');
+    renderCspList(document.getElementById('cspQuestions'), support.suggested_questions || [], 'No clarifying prompts available.');
+    renderCspList(document.getElementById('cspActions'), support.recommended_actions || [], 'No AI care actions listed for this assessment.');
+
+    const complaintLine = document.getElementById('cspComplaintLine');
+    const complaintText = document.getElementById('cspComplaintText');
+    const englishWrap = document.getElementById('cspEnglishWrap');
+    const englishText = document.getElementById('cspEnglishText');
+    if (complaintLine && complaintText) {
+        const complaint = support.chief_complaint || '';
+        complaintLine.hidden = !complaint;
+        complaintText.textContent = complaint;
+        if (englishWrap && englishText) {
+            const eng = support.english_complaint || '';
+            const showEng = eng && eng.toLowerCase() !== complaint.toLowerCase();
+            englishWrap.hidden = !showEng;
+            englishText.textContent = eng;
+        }
+    }
+
+    const confidence = document.getElementById('cspConfidence');
+    const confidenceWrap = document.getElementById('cspConfidenceWrap');
+    if (confidence) confidence.textContent = support.confidence_display || '';
+    if (confidenceWrap) confidenceWrap.hidden = !(support.confidence_display || '');
+
+    const assessedLabel = document.getElementById('cspAssessedLabel');
+    if (assessedLabel) {
+        assessedLabel.textContent = support.assessed_label
+            ? ('Assessed ' + support.assessed_label)
+            : 'Just re-assessed';
+    }
+}
+
+function appendSoapField(name, block) {
+    const field = document.querySelector('#soapForm textarea[name="' + name + '"]');
+    if (!field) return false;
+    const current = field.value.trim();
+    field.value = current ? (current + '\n\n' + block) : block;
+    field.focus();
+    return true;
+}
+
+function copyClinicalSupportToSoap(target) {
+    const support = currentClinicalSupport || {};
+    const status = document.getElementById('cspCopyStatus');
+    if (!support.available) {
+        if (status) {
+            status.className = 'csp-status is-error';
+            status.textContent = 'Run AI re-assessment first.';
+        }
+        return;
+    }
+
+    const symptoms = (support.symptoms || []).join(', ') || '—';
+    const conditions = (support.possible_conditions || []).join('; ') || '—';
+    const actions = (support.recommended_actions || []);
+    const urgency = support.final_urgency || support.risk_level || 'Not assessed';
+    const complaint = support.chief_complaint || '';
+    let ok = false;
+    let label = '';
+
+    if (target === 'subjective') {
+        const block = [
+            'Chief complaint (doctor-finalized): ' + (complaint || '—'),
+            support.english_complaint ? ('English: ' + support.english_complaint) : '',
+            'Symptoms: ' + symptoms
+        ].filter(Boolean).join('\n');
+        ok = appendSoapField('subjective', block);
+        label = 'Subjective';
+    } else if (target === 'plan') {
+        const block = [
+            'Recommended actions (AI decision support — verify clinically):',
+            ...(actions.length ? actions.map((a, i) => (i + 1) + '. ' + a) : ['—']),
+            'Urgency: ' + urgency
+        ].join('\n');
+        ok = appendSoapField('plan', block);
+        label = 'Plan';
+    } else {
+        const block = [
+            'Clinical support summary (AI — verify before finalizing):',
+            'Urgency: ' + urgency,
+            'Symptoms: ' + symptoms,
+            'Possible conditions: ' + conditions,
+            support.manual_urgency && support.manual_override_note
+                ? ('Doctor urgency override note: ' + support.manual_override_note)
+                : ''
+        ].filter(Boolean).join('\n');
+        ok = appendSoapField('assessment', block);
+        label = 'Assessment';
+    }
+
+    if (status) {
+        status.className = ok ? 'csp-status is-ok' : 'csp-status is-error';
+        status.textContent = ok ? ('Copied to SOAP ' + label + '.') : 'Could not find SOAP field.';
+    }
+    if (ok) {
+        const soap = document.getElementById('soapForm');
+        if (soap) soap.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+}
+
+async function reassessClinicalSupport() {
+    const input = document.getElementById('cspChiefComplaint');
+    const button = document.getElementById('cspReassessBtn');
+    const status = document.getElementById('cspReassessStatus');
+    const complaint = input ? input.value.trim() : '';
+    if (!complaint) {
+        if (status) {
+            status.className = 'csp-status is-error';
+            status.textContent = 'Enter the final chief complaint first.';
+        }
+        return;
+    }
+
+    if (button) {
+        button.disabled = true;
+        button.textContent = 'Re-assessing…';
+    }
+    if (status) {
+        status.className = 'csp-status';
+        status.textContent = 'Running AI assessment…';
+    }
+
+    try {
+        const response = await fetch(sessionAssetBase + '/app/api/provider/clinical_support_reassess.php', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+            body: new URLSearchParams({
+                consultation_id: String(sessionConsultationId),
+                chief_complaint: complaint,
+                csrf_token: sessionCsrf
+            })
+        });
+        const result = await response.json();
+        if (!result.success) {
+            if (status) {
+                status.className = 'csp-status is-error';
+                status.textContent = result.message || 'Re-assessment failed.';
+            }
+            return;
+        }
+        applyClinicalSupport(result.support || {});
+        if (result.audit) renderClinicalAudit(result.audit);
+        if (status) {
+            status.className = 'csp-status is-ok';
+            status.textContent = 'Updated — ' + ((result.support && result.support.final_urgency) || 'assessment ready');
+        }
+    } catch (e) {
+        if (status) {
+            status.className = 'csp-status is-error';
+            status.textContent = 'Could not reach clinical support service.';
+        }
+    } finally {
+        if (button) {
+            button.disabled = false;
+            button.textContent = 'Re-assess with AI';
+        }
+    }
+}
+
+async function overrideClinicalUrgency() {
+    const select = document.getElementById('cspManualUrgency');
+    const noteEl = document.getElementById('cspManualNote');
+    const button = document.getElementById('cspOverrideUrgencyBtn');
+    const status = document.getElementById('cspOverrideStatus');
+    const urgency = select ? select.value : '';
+    const note = noteEl ? noteEl.value.trim() : '';
+
+    if (!note) {
+        if (status) {
+            status.className = 'csp-status is-error';
+            status.textContent = 'Enter a clinical reason for the override.';
+        }
+        return;
+    }
+
+    if (button) {
+        button.disabled = true;
+        button.textContent = 'Saving…';
+    }
+    if (status) {
+        status.className = 'csp-status';
+        status.textContent = 'Saving override…';
+    }
+
+    try {
+        const response = await fetch(sessionAssetBase + '/app/api/provider/clinical_support_override.php', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+            body: new URLSearchParams({
+                consultation_id: String(sessionConsultationId),
+                urgency_bucket: urgency,
+                audit_note: note,
+                csrf_token: sessionCsrf
+            })
+        });
+        const result = await response.json();
+        if (!result.success) {
+            if (status) {
+                status.className = 'csp-status is-error';
+                status.textContent = result.message || 'Override failed.';
+            }
+            return;
+        }
+        applyClinicalSupport(result.support || {});
+        if (result.audit) renderClinicalAudit(result.audit);
+        if (status) {
+            status.className = 'csp-status is-ok';
+            status.textContent = 'Override saved — ' + ((result.support && result.support.final_urgency) || urgency);
+        }
+    } catch (e) {
+        if (status) {
+            status.className = 'csp-status is-error';
+            status.textContent = 'Could not save urgency override.';
+        }
+    } finally {
+        if (button) {
+            button.disabled = false;
+            button.textContent = 'Save urgency override';
+        }
+    }
 }
 
 function setVideoShellLive(isLive) {
@@ -1237,78 +2403,91 @@ function toggleVideoShellSize() {
     const shell = document.getElementById('videoInterface');
     const btn = document.getElementById('toggleVideoSizeBtn');
     if (!shell || !btn) return;
-    const minimized = shell.classList.toggle('is-minimized');
-    btn.textContent = minimized ? 'Expand video' : 'Minimize video';
-    if (minimized) {
-        scrollToAiPanel();
+
+    const willFloat = !shell.classList.contains('is-floating');
+    shell.classList.remove('is-minimized');
+    shell.classList.toggle('is-floating', willFloat);
+    btn.textContent = willFloat ? 'Expand video' : 'Minimize video';
+
+    if (willFloat) {
+        initFloatingVideoShell(shell);
+        scrollToClinicalSupport();
+    } else {
+        shell.style.top = '';
+        shell.style.left = '';
+        shell.style.right = '';
+        shell.style.bottom = '';
     }
 }
 
-function scrollToAiPanel() {
-    const card = document.getElementById('aiAssistantCard');
+function initFloatingVideoShell(shell) {
+    if (!shell || shell.dataset.floatInit) return;
+    shell.dataset.floatInit = '1';
+
+    const defaultTop = 16 + (window.visualViewport ? window.visualViewport.offsetTop : 0);
+    shell.style.top = defaultTop + 'px';
+    shell.style.left = '16px';
+
+    let dragging = false;
+    let sx = 0;
+    let sy = 0;
+    let ox = 0;
+    let oy = 0;
+
+    function pointerDown(e) {
+        if (!shell.classList.contains('is-floating')) return;
+        if (e.target.closest('button') || e.target.closest('a') || e.target.closest('iframe')) return;
+        dragging = true;
+        const rect = shell.getBoundingClientRect();
+        ox = rect.left;
+        oy = rect.top;
+        sx = e.clientX;
+        sy = e.clientY;
+        try { shell.setPointerCapture(e.pointerId); } catch (err) {}
+        e.preventDefault();
+    }
+
+    function pointerMove(e) {
+        if (!dragging) return;
+        const x = ox + (e.clientX - sx);
+        const y = oy + (e.clientY - sy);
+        const maxX = window.innerWidth - shell.offsetWidth - 8;
+        const maxY = window.innerHeight - shell.offsetHeight - 8;
+        shell.style.left = Math.max(8, Math.min(maxX, x)) + 'px';
+        shell.style.top = Math.max(8, Math.min(maxY, y)) + 'px';
+        shell.style.right = 'auto';
+        shell.style.bottom = 'auto';
+    }
+
+    function pointerUp(e) {
+        if (!dragging) return;
+        dragging = false;
+        try { shell.releasePointerCapture(e.pointerId); } catch (err) {}
+    }
+
+    shell.addEventListener('pointerdown', pointerDown);
+    shell.addEventListener('pointermove', pointerMove);
+    shell.addEventListener('pointerup', pointerUp);
+    shell.addEventListener('pointercancel', pointerUp);
+}
+
+function maximizeVideoShell() {
+    const shell = document.getElementById('videoInterface');
+    const btn = document.getElementById('toggleVideoSizeBtn');
+    if (!shell) return;
+    shell.classList.remove('is-floating', 'is-minimized');
+    shell.style.top = '';
+    shell.style.left = '';
+    shell.style.right = '';
+    shell.style.bottom = '';
+    if (btn) btn.textContent = 'Minimize video';
+}
+
+function scrollToClinicalSupport() {
+    const card = document.querySelector('.csp-card');
     if (card) {
         card.scrollIntoView({ behavior: 'smooth', block: 'start' });
     }
-}
-
-function renderAiChips(targetId, values, type = '') {
-    const target = document.getElementById(targetId);
-    target.innerHTML = '';
-    if (!values || !values.length) {
-        const empty = document.createElement('span');
-        empty.className = 'text-xs text-muted';
-        empty.textContent = type === 'med' ? 'No medicines detected.' : (type === 'urgent' ? 'None detected.' : 'No symptoms detected.');
-        target.appendChild(empty);
-        return;
-    }
-    values.forEach((value) => {
-        const chip = document.createElement('span');
-        chip.className = 'ai-chip ' + type;
-        chip.textContent = value;
-        target.appendChild(chip);
-    });
-}
-
-async function analyzeTranscript() {
-    const input = document.getElementById('aiTranscriptInput');
-    const button = document.getElementById('analyzeTranscriptBtn');
-    const transcript = input.value.trim();
-    if (!transcript) {
-        alert('Paste or type transcript text first.');
-        return;
-    }
-
-    button.disabled = true;
-    button.textContent = 'Analyzing...';
-    try {
-        const response = await fetch('<?= ASSET_BASE ?>/app/api/ai/analyze_transcript.php', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-            body: new URLSearchParams({ consultation_id: <?= (int)$consultation_id ?>, transcript })
-        });
-        const result = await response.json();
-        if (!result.success) {
-            alert(result.message || 'Could not analyze transcript.');
-            return;
-        }
-        applyAiAnalysis(result.data);
-    } catch (error) {
-        alert('Could not reach AI analysis service.');
-    } finally {
-        button.disabled = false;
-        button.textContent = 'Analyze Transcript';
-    }
-}
-
-function copyAiSummaryToSoap() {
-    if (!latestAiSummary) {
-        alert('Analyze a transcript first.');
-        return;
-    }
-    const assessment = document.querySelector('textarea[name="assessment"]');
-    const current = assessment.value.trim();
-    assessment.value = current ? current + "\n\n" + latestAiSummary : latestAiSummary;
-    assessment.focus();
 }
 
 setInterval(() => {
@@ -1326,40 +2505,9 @@ window.addEventListener('message', (event) => {
         return;
     }
 
-    if (event.data.type === 'medconnect:transcript-status') {
-        const status = document.getElementById('aiLiveStatus');
-        const statusText = document.getElementById('aiLiveStatusText');
-        status.className = 'ai-live-status ' + (event.data.status || '');
-        statusText.textContent = event.data.message || 'Live transcript status updated.';
-        return;
-    }
-
-    if (event.data.type === 'medconnect:transcript-update') {
-        const input = document.getElementById('aiTranscriptInput');
-        const interim = document.getElementById('aiInterimTranscript');
-        if (event.data.transcript) {
-            input.value = event.data.transcript;
-        }
-        interim.textContent = event.data.interim ? 'Listening: ' + event.data.interim : '';
-        return;
-    }
-
-    if (event.data.type === 'medconnect:ai-analysis' && event.data.data) {
-        applyAiAnalysis(event.data.data);
-        if (!event.data.data.summary) {
-            document.getElementById('aiSummary').textContent = latestAiSummary || 'Live AI is listening.';
-        }
-        return;
-    }
-
     if (event.data.type === 'medconnect:mute-tts' && event.data.message) {
         const msg = event.data.message;
         speakMuteTtsMessage(msg, false);
-        if (msg.message && document.getElementById('aiTranscriptInput')) {
-            const input = document.getElementById('aiTranscriptInput');
-            const stamp = msg.time || new Date().toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
-            input.value = (input.value ? input.value + '\n' : '') + `[Typed Voice ${stamp}] ${msg.message}`;
-        }
         refreshSessionChat();
         return;
     }
@@ -1374,17 +2522,25 @@ window.addEventListener('message', (event) => {
         document.getElementById('callStatusIndicator').style.color = '#64748b';
         document.getElementById('callStatusIndicator').textContent = '● ENDED';
         setVideoShellLive(false);
+        openFollowUpModal({ fromCallEnd: true });
         return;
     }
 
     if (event.data.type === 'medconnect:minimize-video') {
         const shell = document.getElementById('videoInterface');
         const btn = document.getElementById('toggleVideoSizeBtn');
-        if (shell && !shell.classList.contains('is-minimized')) {
-            shell.classList.add('is-minimized');
+        if (shell && !shell.classList.contains('is-floating')) {
+            shell.classList.remove('is-minimized');
+            shell.classList.add('is-floating');
+            initFloatingVideoShell(shell);
             if (btn) btn.textContent = 'Expand video';
         }
-        scrollToAiPanel();
+        scrollToClinicalSupport();
+        return;
+    }
+
+    if (event.data.type === 'medconnect:maximize-video') {
+        maximizeVideoShell();
         return;
     }
 
@@ -1604,13 +2760,116 @@ async function scheduleFollowUp() {
         fd.append('followup_date', date);
         fd.append('message', 'Follow-up scheduled from consultation session.');
         fd.append('csrf_token', sessionCsrf);
-        const res = await fetch('<?= ASSET_BASE ?>/app/api/provider/schedule_followup.php', { method: 'POST', body: fd, credentials: 'same-origin' });
+        const res = await fetch(sessionAssetBase + '/app/api/provider/schedule_followup.php', { method: 'POST', body: fd, credentials: 'same-origin' });
         const data = await res.json();
         showSessionChatAlert(data.message || (data.success ? 'Follow-up scheduled.' : 'Could not schedule follow-up.'), data.success ? 'success' : 'error');
     } catch (e) {
         showSessionChatAlert('Network error scheduling follow-up.', 'error');
     }
 }
+
+function defaultFollowUpDate() {
+    const d = new Date();
+    d.setDate(d.getDate() + 7);
+    return d.toISOString().slice(0, 10);
+}
+
+function openFollowUpModal(opts) {
+    const modal = document.getElementById('followUpModal');
+    if (!modal) return;
+    const dateEl = document.getElementById('fuFollowUpDate');
+    const msgEl = document.getElementById('fuFollowUpMessage');
+    const status = document.getElementById('fuModalStatus');
+    const sideDate = document.getElementById('followUpDate');
+    if (dateEl && !dateEl.value) {
+        dateEl.value = (sideDate && sideDate.value) ? sideDate.value : defaultFollowUpDate();
+    }
+    if (msgEl && !msgEl.value) {
+        msgEl.value = 'Please return for follow-up as advised by your provider.';
+    }
+    if (status) {
+        status.className = 'fu-status';
+        status.textContent = opts && opts.fromCallEnd
+            ? 'Video consultation ended. Please schedule a follow-up if needed.'
+            : '';
+    }
+    modal.classList.add('is-open');
+    modal.setAttribute('aria-hidden', 'false');
+}
+
+function closeFollowUpModal() {
+    const modal = document.getElementById('followUpModal');
+    if (!modal) return;
+    modal.classList.remove('is-open');
+    modal.setAttribute('aria-hidden', 'true');
+}
+
+async function saveFollowUpFromModal() {
+    const dateEl = document.getElementById('fuFollowUpDate');
+    const msgEl = document.getElementById('fuFollowUpMessage');
+    const emailEl = document.getElementById('fuSendEmail');
+    const status = document.getElementById('fuModalStatus');
+    const saveBtn = document.getElementById('fuSaveBtn');
+    const date = dateEl ? dateEl.value : '';
+    if (!date) {
+        if (status) {
+            status.className = 'fu-status is-error';
+            status.textContent = 'Select a follow-up date.';
+        }
+        return;
+    }
+
+    if (saveBtn) {
+        saveBtn.disabled = true;
+        saveBtn.textContent = 'Scheduling…';
+    }
+    if (status) {
+        status.className = 'fu-status';
+        status.textContent = 'Saving follow-up…';
+    }
+
+    try {
+        const fd = new FormData();
+        fd.append('patient_id', sessionPatientId);
+        fd.append('consultation_id', sessionConsultationId);
+        fd.append('followup_date', date);
+        fd.append('message', (msgEl && msgEl.value.trim()) ? msgEl.value.trim() : 'Follow-up scheduled after video consultation.');
+        fd.append('csrf_token', sessionCsrf);
+        fd.append('send_email', (emailEl && emailEl.checked) ? '1' : '0');
+        const res = await fetch(sessionAssetBase + '/app/api/provider/schedule_followup.php', {
+            method: 'POST',
+            body: fd,
+            credentials: 'same-origin'
+        });
+        const data = await res.json();
+        if (!data.success) {
+            if (status) {
+                status.className = 'fu-status is-error';
+                status.textContent = data.message || 'Could not schedule follow-up.';
+            }
+            return;
+        }
+        const sideDate = document.getElementById('followUpDate');
+        if (sideDate) sideDate.value = date;
+        if (status) {
+            status.className = 'fu-status is-ok';
+            status.textContent = data.message || 'Follow-up scheduled.';
+        }
+        showSessionChatAlert(data.message || 'Follow-up scheduled.', 'success');
+        setTimeout(closeFollowUpModal, 900);
+    } catch (e) {
+        if (status) {
+            status.className = 'fu-status is-error';
+            status.textContent = 'Network error scheduling follow-up.';
+        }
+    } finally {
+        if (saveBtn) {
+            saveBtn.disabled = false;
+            saveBtn.textContent = 'Schedule follow-up';
+        }
+    }
+}
+
 </script>
 
 <?php require __DIR__.'/partials/layout_close.php'; ?>

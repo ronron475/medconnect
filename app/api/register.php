@@ -9,7 +9,6 @@ header('Content-Type: application/json');
 
 require_once dirname(dirname(__DIR__)) . '/bootstrap.php';
 require_once dirname(dirname(__DIR__)) . '/config/db.php';
-require_once dirname(dirname(__DIR__)) . '/app/includes/recaptcha.php';
 require_once dirname(dirname(__DIR__)) . '/app/includes/login_security.php';
 require_once dirname(dirname(__DIR__)) . '/app/includes/security_throttle.php';
 require_once dirname(dirname(__DIR__)) . '/app/includes/patient_account_security.php';
@@ -22,17 +21,6 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     http_response_code(405);
     echo json_encode(['success' => false, 'message' => 'Method not allowed.']);
     exit;
-}
-
-// reCAPTCHA (protect against automated registrations)
-$recaptchaToken = (string) ($_POST['recaptcha_token'] ?? ($_POST['g-recaptcha-response'] ?? ''));
-if (recaptcha_is_configured()) {
-    $ip = login_security_ip();
-    $verify = recaptcha_verify_token($recaptchaToken, 'register', $ip);
-    if (empty($verify['ok'])) {
-        echo json_encode(['success' => false, 'message' => 'Please verify that you are not a robot.']);
-        exit;
-    }
 }
 
 // IP throttle for registration submissions (best-effort; avoids spam account creation)
@@ -170,9 +158,10 @@ if (empty($barangay))          $errors[] = 'Barangay is required.';
 
 if (empty($contact_number)) {
     $errors[] = 'Contact number is required.';
-} elseif (!preg_match('/^(09|\+639)\d{9}$/', preg_replace('/\s+/', '', $contact_number))) {
+} elseif (!patient_is_valid_ph_mobile($contact_number)) {
     $errors[] = 'Enter a valid PH mobile number.';
 }
+$contact_number = patient_canonical_ph_mobile($contact_number);
 
 if (empty($blood_type))        $errors[] = 'Blood type is required.';
 
@@ -227,11 +216,12 @@ if ($stmt->fetch()) {
     exit;
 }
 
-$stmt = $pdo->prepare("SELECT id FROM patient_registrations WHERE contact_number = ? LIMIT 1");
-$stmt->execute([$contact_number]);
-if ($stmt->fetch()) {
+if (patient_registration_contact_exists($pdo, $contact_number)) {
     logActivity($pdo, null, 'submit_attempt', 'blocked', 'Duplicate contact number.', $national_id_hash, $ip, $user_agent);
-    echo json_encode(['success' => false, 'message' => 'An account with this contact number already exists.']);
+    echo json_encode([
+        'success' => false,
+        'message' => 'An account with this contact number already exists. Sign in with your existing account, or use a different mobile number if this is a new registration.',
+    ]);
     exit;
 }
 

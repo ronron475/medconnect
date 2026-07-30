@@ -1,11 +1,11 @@
 <?php
 /**
  * API: Verify password-reset OTP
- * Moved from controllers/auth/verify_reset_otp.php
  * URL: /app/api/verify_reset_otp.php
  */
-session_start();
-header('Content-Type: application/json');
+require_once dirname(dirname(__DIR__)) . '/bootstrap.php';
+
+header('Content-Type: application/json; charset=utf-8');
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     http_response_code(405);
@@ -14,9 +14,9 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 }
 
 $email = strtolower(trim($_POST['email'] ?? ''));
-$otp   = trim($_POST['otp']             ?? '');
+$otp   = trim($_POST['otp'] ?? '');
 
-if (empty($email) || empty($otp)) {
+if ($email === '' || $otp === '') {
     echo json_encode(['success' => false, 'message' => 'Email and OTP are required.']);
     exit;
 }
@@ -31,13 +31,13 @@ if ($_SESSION['reset_email'] !== $email) {
     exit;
 }
 
-if (time() > $_SESSION['reset_expiry']) {
+if (time() > (int) $_SESSION['reset_expiry']) {
     unset($_SESSION['reset_otp'], $_SESSION['reset_expiry']);
     echo json_encode(['success' => false, 'message' => 'OTP has expired. Please request a new one.']);
     exit;
 }
 
-if (!password_verify($otp, $_SESSION['reset_otp'])) {
+if (!password_verify($otp, (string) $_SESSION['reset_otp'])) {
     echo json_encode(['success' => false, 'message' => 'Incorrect OTP. Please try again.']);
     exit;
 }

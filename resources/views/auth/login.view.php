@@ -109,14 +109,6 @@
           </label>
         </div>
 
-        <div class="form-group" id="mc-recaptcha-v2" hidden>
-          <label>Verification</label>
-          <div class="input-wrap" style="display:block;padding:10px 0">
-            <div class="g-recaptcha" data-sitekey="<?= htmlspecialchars((string) (defined('RECAPTCHA_SITE_KEY') ? RECAPTCHA_SITE_KEY : '')) ?>"></div>
-          </div>
-          <span class="field-error" id="captcha-error"></span>
-        </div>
-
         <button type="submit" class="btn-signin" id="submit-btn">
           <span id="btn-text">Sign In &amp; Consult Now</span>
           <span id="btn-spinner" class="spinner" hidden></span>
@@ -147,16 +139,7 @@
 <script>
   window.ASSET_BASE = <?= json_encode(ASSET_BASE) ?>;
   window.APP_BASE = window.ASSET_BASE;
-  window.RECAPTCHA_SITE_KEY = <?= json_encode((string) (defined('RECAPTCHA_SITE_KEY') ? RECAPTCHA_SITE_KEY : '')) ?>;
-  window.RECAPTCHA_VERSION = <?= json_encode((string) (defined('RECAPTCHA_VERSION') ? RECAPTCHA_VERSION : 'v3')) ?>;
 </script>
-<?php if (!empty((string) (defined('RECAPTCHA_SITE_KEY') ? RECAPTCHA_SITE_KEY : '')) && !empty((string) (defined('RECAPTCHA_SECRET_KEY') ? RECAPTCHA_SECRET_KEY : ''))): ?>
-  <?php if (strtolower((string) (defined('RECAPTCHA_VERSION') ? RECAPTCHA_VERSION : 'v3')) === 'v2'): ?>
-    <script src="https://www.google.com/recaptcha/api.js" async defer></script>
-  <?php else: ?>
-    <script src="https://www.google.com/recaptcha/api.js?render=<?= htmlspecialchars((string) (defined('RECAPTCHA_SITE_KEY') ? RECAPTCHA_SITE_KEY : '')) ?>"></script>
-  <?php endif; ?>
-<?php endif; ?>
 <script src="<?= $asset ?>/assets/js/login.js"></script>
 </body>
 </html>

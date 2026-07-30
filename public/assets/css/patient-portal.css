@@ -316,6 +316,426 @@ body.patient-portal {
   color: #92400e;
 }
 
+/* ── Urgency modal (emergency / urgent) ── */
+body.mc-urgency-modal-open {
+  overflow: hidden;
+}
+
+.mc-urgency-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 12000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+
+.mc-urgency-modal[hidden] {
+  display: none !important;
+}
+
+.mc-urgency-modal__backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.62);
+  backdrop-filter: blur(4px);
+}
+
+.mc-urgency-modal__card {
+  position: relative;
+  z-index: 1;
+  width: min(100%, 440px);
+  padding: 28px 24px 22px;
+  border-radius: 18px;
+  background: #fff;
+  box-shadow: 0 24px 64px rgba(15, 23, 42, 0.35);
+  text-align: center;
+  animation: mcUrgencyIn 0.28s ease-out;
+  max-height: min(92vh, 720px);
+  overflow-y: auto;
+}
+
+.mc-urgency-modal__card--wide {
+  width: min(100%, 520px);
+}
+
+@keyframes mcUrgencyIn {
+  from {
+    opacity: 0;
+    transform: translateY(12px) scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.mc-urgency-modal__icon {
+  width: 64px;
+  height: 64px;
+  margin: 0 auto 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  color: #fff;
+}
+
+.mc-urgency-modal.is-emergency .mc-urgency-modal__icon {
+  background: linear-gradient(145deg, #ef4444, #b91c1c);
+  box-shadow: 0 8px 24px rgba(185, 28, 28, 0.35);
+}
+
+.mc-urgency-modal.is-urgent .mc-urgency-modal__icon {
+  background: linear-gradient(145deg, #f59e0b, #c2410c);
+  box-shadow: 0 8px 24px rgba(194, 65, 12, 0.3);
+}
+
+.mc-urgency-modal__eyebrow {
+  margin: 0 0 6px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #64748b;
+}
+
+.mc-urgency-modal.is-emergency .mc-urgency-modal__eyebrow {
+  color: #b91c1c;
+}
+
+.mc-urgency-modal.is-urgent .mc-urgency-modal__eyebrow {
+  color: #c2410c;
+}
+
+.mc-urgency-modal__title {
+  margin: 0 0 10px;
+  font-size: 1.35rem;
+  font-weight: 700;
+  color: #0f172a;
+  line-height: 1.25;
+}
+
+.mc-urgency-modal__message {
+  margin: 0 0 14px;
+  font-size: 0.9375rem;
+  line-height: 1.55;
+  color: #475569;
+  text-align: left;
+}
+
+.mc-urgency-modal__steps {
+  margin: 0 0 20px;
+  padding: 12px 12px 12px 32px;
+  text-align: left;
+  font-size: 0.8125rem;
+  line-height: 1.5;
+  color: #334155;
+  background: #f8fafc;
+  border-radius: 12px;
+  border: 1px solid #e2e8f0;
+}
+
+.mc-urgency-modal__steps[hidden] {
+  display: none !important;
+}
+
+.mc-urgency-modal__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  justify-content: center;
+}
+
+.mc-urgency-modal__btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+  padding: 0 18px;
+  border-radius: 999px;
+  font-size: 0.875rem;
+  font-weight: 600;
+  text-decoration: none;
+  border: 1px solid transparent;
+  cursor: pointer;
+  flex: 1 1 auto;
+  min-width: 140px;
+}
+
+.mc-urgency-modal__btn--ghost {
+  background: #fff;
+  border-color: #cbd5e1;
+  color: #334155;
+}
+
+.mc-urgency-modal__btn--ghost:hover {
+  background: #f1f5f9;
+}
+
+.mc-urgency-modal__btn--primary {
+  background: linear-gradient(135deg, #0d9488, #0f766e);
+  color: #fff;
+}
+
+.mc-urgency-modal.is-urgent .mc-urgency-modal__btn--primary {
+  background: linear-gradient(135deg, #ea580c, #c2410c);
+}
+
+.mc-urgency-modal__btn--primary:hover {
+  filter: brightness(1.05);
+  color: #fff;
+}
+
+.mc-urgency-modal__btn[hidden] {
+  display: none !important;
+}
+
+.mc-urgency-slots {
+  margin: 0 0 18px;
+  text-align: left;
+}
+
+.mc-urgency-slots__heading {
+  margin: 0 0 10px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: #64748b;
+}
+
+.mc-urgency-slots__list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  max-height: 280px;
+  overflow-y: auto;
+}
+
+.mc-urgency-slot-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 14px;
+  border-radius: 12px;
+  border: 1px solid #fed7aa;
+  background: #fff7ed;
+}
+
+.mc-urgency-slot-card__meta {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.mc-urgency-slot-card__name {
+  font-size: 0.95rem;
+  color: #0f172a;
+}
+
+.mc-urgency-slot-card__time {
+  font-size: 0.875rem;
+  font-weight: 700;
+  color: #c2410c;
+}
+
+.mc-urgency-slot-card__sub {
+  font-size: 0.75rem;
+  color: #78716c;
+}
+
+.mc-urgency-slot-card__btn {
+  flex-shrink: 0;
+  border: none;
+  border-radius: 999px;
+  padding: 8px 14px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #fff;
+  background: linear-gradient(135deg, #ea580c, #c2410c);
+  cursor: pointer;
+}
+
+.mc-urgency-slot-card__btn:hover:not(:disabled) {
+  filter: brightness(1.05);
+}
+
+.mc-urgency-slot-card__btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.mc-urgency-slots__status {
+  margin: 10px 0 0;
+  font-size: 0.8125rem;
+  color: #475569;
+  line-height: 1.45;
+}
+
+.mc-urgency-slots__status.is-error {
+  color: #b91c1c;
+}
+
+.mc-urgency-slots__status[hidden] {
+  display: none !important;
+}
+
+@media (max-width: 520px) {
+  .mc-urgency-slot-card {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .mc-urgency-slot-card__btn {
+    width: 100%;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mc-urgency-modal__card {
+    animation: none;
+  }
+}
+
+/* ── Tips ready + cancel booked visit ── */
+body.mc-tips-ready-modal-open {
+  overflow: hidden;
+}
+
+.mc-tips-ready-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 12100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+
+.mc-tips-ready-modal[hidden] {
+  display: none !important;
+}
+
+.mc-tips-ready-modal__backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.55);
+  backdrop-filter: blur(3px);
+}
+
+.mc-tips-ready-modal__card {
+  position: relative;
+  z-index: 1;
+  width: min(100%, 440px);
+  padding: 26px 22px 20px;
+  border-radius: 18px;
+  background: #fff;
+  box-shadow: 0 24px 64px rgba(15, 23, 42, 0.3);
+  text-align: center;
+}
+
+.mc-tips-ready-modal__icon {
+  width: 56px;
+  height: 56px;
+  margin: 0 auto 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: linear-gradient(145deg, #14b8a6, #0f766e);
+  color: #fff;
+}
+
+.mc-tips-ready-modal__eyebrow {
+  margin: 0 0 6px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #0f766e;
+}
+
+.mc-tips-ready-modal__title {
+  margin: 0 0 10px;
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.mc-tips-ready-modal__message {
+  margin: 0 0 12px;
+  font-size: 0.9rem;
+  line-height: 1.55;
+  color: #475569;
+  text-align: left;
+}
+
+.mc-tips-ready-modal__visit {
+  margin: 0 0 16px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: #f0fdfa;
+  border: 1px solid #99f6e4;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #115e59;
+  text-align: left;
+}
+
+.mc-tips-ready-modal__visit[hidden] {
+  display: none !important;
+}
+
+.mc-tips-ready-modal__actions {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.mc-tips-ready-modal__btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+  padding: 0 16px;
+  border-radius: 999px;
+  font-size: 0.875rem;
+  font-weight: 600;
+  border: 1px solid transparent;
+  cursor: pointer;
+}
+
+.mc-tips-ready-modal__btn--danger {
+  background: #fff;
+  border-color: #fca5a5;
+  color: #b91c1c;
+}
+
+.mc-tips-ready-modal__btn--danger:hover {
+  background: #fef2f2;
+}
+
+.mc-tips-ready-modal__btn--primary {
+  background: linear-gradient(135deg, #0d9488, #0f766e);
+  color: #fff;
+}
+
+.mc-tips-ready-modal__link {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: #0f766e;
+  text-decoration: none;
+  padding: 6px 0;
+}
+
+.mc-tips-ready-modal__link:hover {
+  text-decoration: underline;
+}
+
 /* ── Health identity rows ── */
 .patient-kv-row {
   display: flex;

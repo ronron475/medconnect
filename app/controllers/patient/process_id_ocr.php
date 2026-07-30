@@ -374,6 +374,15 @@ function buildOcrExtractVariants(string $src_path, string $mime_type): array {
         if ($variant) {
             $variants[] = $variant;
         }
+        if ($angle === 0 && !empty($variant['path'])) {
+            $sharpList = preprocessImageVariants($variant['path'], 'image/jpeg');
+            foreach ($sharpList as $sharp) {
+                $stage = (string) ($sharp['stage'] ?? '');
+                if ($stage !== '' && stripos($stage, 'sharpen') !== false) {
+                    $variants[] = $sharp;
+                }
+            }
+        }
         if ($rotated) {
             imagedestroy($working);
         }
@@ -405,6 +414,7 @@ function runBestOcrExtract(string $src_path, string $mime, bool $is_pdf): array 
     ];
 
     if ($is_pdf) {
+        $all_texts = [];
         foreach ([2, 1] as $engine) {
             $ocr = callOCRSpace($src_path, $mime, $engine);
             if ($ocr === null) {
@@ -419,12 +429,19 @@ function runBestOcrExtract(string $src_path, string $mime, bool $is_pdf): array 
             }
             $text = trim($ocr['ParsedResults'][0]['ParsedText'] ?? '');
             if ($text !== '') {
-                $extraction = PhilSysOcrParser::extractAll($text);
-                $result['text'] = $text;
-                $result['extraction'] = $extraction;
-                $result['stage'] = 'pdf+e' . $engine;
-                return $result;
+                $all_texts[] = $text;
             }
+        }
+        if ($all_texts !== []) {
+            $extraction = count($all_texts) > 1
+                ? PhilSysOcrParser::extractAllFromPasses($all_texts)
+                : PhilSysOcrParser::extractAll($all_texts[0]);
+            $result['text'] = count($all_texts) > 1
+                ? PhilSysOcrParser::mergeRawOcrTexts($all_texts)
+                : $all_texts[0];
+            $result['extraction'] = $extraction;
+            $result['stage'] = 'pdf+consensus';
+            return $result;
         }
         if ($result['error'] === null) {
             $result['error'] = "We couldn't accurately read your National ID. Please upload a clearer photo taken in good lighting.";
@@ -436,6 +453,7 @@ function runBestOcrExtract(string $src_path, string $mime, bool $is_pdf): array 
     $temp_files = [];
     $best_score = -1.0;
     $had_ocr_response = false;
+    $all_texts = [];
 
     foreach ($variants as $variant) {
         if (!empty($variant['temp'])) {
@@ -454,6 +472,7 @@ function runBestOcrExtract(string $src_path, string $mime, bool $is_pdf): array 
             if ($text === '') {
                 continue;
             }
+            $all_texts[] = $text;
             $extraction = PhilSysOcrParser::extractAll($text);
             $score = scorePhilSysExtraction($extraction);
             if ($score > $best_score) {
@@ -465,6 +484,15 @@ function runBestOcrExtract(string $src_path, string $mime, bool $is_pdf): array 
             if ($score >= 0.95 && empty($extraction['low_confidence'])) {
                 break 2;
             }
+        }
+    }
+
+    if (count($all_texts) > 1) {
+        $merged = PhilSysOcrParser::extractAllFromPasses($all_texts);
+        if (scorePhilSysExtraction($merged) >= $best_score) {
+            $result['extraction'] = $merged;
+            $result['text'] = PhilSysOcrParser::mergeRawOcrTexts($all_texts);
+            $result['stage'] = ($result['stage'] ?? 'variant') . '+consensus';
         }
     }
 
@@ -729,6 +757,12 @@ function applyConfusionPairCorrection(string $ocr_cand, string $entered): array 
 function extractIdCandidates(string $text, string $entered_digits): array {
     $candidates = [];
 
+    $parsedId = PhilSysOcrParser::extractNationalId($text);
+    $nid = preg_replace('/[^0-9]/', '', (string) ($parsedId['value'] ?? ''));
+    if (strlen($nid) === 16) {
+        $candidates[$nid] = 'philsys_parser';
+    }
+
     // Pre-compute sanitized version of the text
     $sanitized = sanitizeOcrId($text);
 
@@ -914,76 +948,23 @@ function verifyExactTextMatch(string $userInput, string $ocrText): bool {
     return true;
 }
 
-// ── Extract name fields from PhilSys card OCR output ─────────
-// PhilSys card layout (top to bottom):
-//   Line: "LAST NAME" or "Surname"  → next non-empty line = last name value
-//   Line: "GIVEN NAMES" or "First Name" → next non-empty line = first name value
-//   Line: "MIDDLE NAME" → next non-empty line = middle name value
-// Also handles inline format: "Last Name: YUMA"
-function extractNameFields(string $raw_text): array {
-    $fields = ['first' => '', 'last' => '', 'middle' => ''];
+// ── PhilSys National ID parsing (single source for auto-fill + verify) ──
+function philSysFieldsFromOcrText(string $raw_text): array {
+    return PhilSysOcrParser::extractAll($raw_text)['fields'] ?? [];
+}
 
-    $normalize = function(string $s): string {
-        if (function_exists('iconv')) {
-            $s = iconv('UTF-8', 'ASCII//TRANSLIT//IGNORE', $s) ?: $s;
-        }
-        $s = preg_replace('/[^A-Za-z\s]/', ' ', $s);
-        return strtoupper(trim(preg_replace('/\s+/', ' ', $s)));
-    };
-
-    $lines = preg_split('/\r?\n/', $raw_text);
-    $total = count($lines);
-
-    // Label patterns for each field
-    $labelMap = [
-        'last'   => ['LAST NAME', 'SURNAME', 'FAMILY NAME', 'APELLIDO'],
-        'first'  => ['GIVEN NAMES', 'GIVEN NAME', 'FIRST NAME', 'PANGALAN'],
-        'middle' => ['MIDDLE NAME', 'MIDDLE INITIAL', 'GITNANG PANGALAN'],
+function philSysNameFieldsFromOcrText(string $raw_text): array {
+    $names = PhilSysOcrParser::extractNameFields($raw_text);
+    return [
+        'first'  => (string) ($names['first'] ?? ''),
+        'middle' => (string) ($names['middle'] ?? ''),
+        'last'   => (string) ($names['last'] ?? ''),
     ];
+}
 
-    for ($i = 0; $i < $total; $i++) {
-        $lineUp = strtoupper(trim($lines[$i]));
-
-        foreach ($labelMap as $field => $labels) {
-            if ($fields[$field] !== '') continue; // already found
-
-            foreach ($labels as $label) {
-                if (strpos($lineUp, $label) === false) continue;
-
-                // Check for inline value: "LAST NAME: YUMA"
-                $after = trim(substr($lineUp, strpos($lineUp, $label) + strlen($label)));
-                $after = ltrim($after, ':- ');
-                if ($after !== '') {
-                    $fields[$field] = $normalize($after);
-                    break;
-                }
-
-                // Value is on the next non-empty line
-                for ($j = $i + 1; $j <= $i + 3 && $j < $total; $j++) {
-                    $next = trim($lines[$j]);
-                    if ($next === '') continue;
-                    $nextUp = strtoupper($next);
-                    // Skip if next line is another label
-                    $isLabel = false;
-                    foreach ($labelMap as $otherLabels) {
-                        foreach ($otherLabels as $ol) {
-                            if (strpos($nextUp, $ol) !== false) {
-                                $isLabel = true; break;
-                            }
-                        }
-                        if ($isLabel) break;
-                    }
-                    if (!$isLabel) {
-                        $fields[$field] = $normalize($next);
-                        break;
-                    }
-                }
-                break;
-            }
-        }
-    }
-
-    return $fields;
+// Legacy name — delegates to PhilSysOcrParser (all National ID flows).
+function extractNameFields(string $raw_text): array {
+    return philSysNameFieldsFromOcrText($raw_text);
 }
 
 // ── Apply verifyExactTextMatch to all name fields ─────────────
@@ -1028,22 +1009,8 @@ function middleNameMatches(string $entered, string $candidate): bool {
 }
 
 function extractFieldByLabel(string $raw_text, array $labels): string {
-    $lines = preg_split('/\r?\n/', $raw_text);
-    foreach ($lines as $i => $line) {
-        $ll = strtolower(trim($line));
-        foreach ($labels as $label) {
-            if (strpos($ll, strtolower($label)) !== false) {
-                $pos   = stripos($line, $label);
-                $after = ltrim(trim(substr($line, $pos + strlen($label)), "\r\n\t "), ':- ');
-                if ($after !== '') return normalizeName($after);
-                for ($j = $i + 1; $j <= $i + 2 && $j < count($lines); $j++) {
-                    $next = trim($lines[$j], "\r\n\t ");
-                    if ($next !== '') return normalizeName($next);
-                }
-            }
-        }
-    }
-    return '';
+    $value = PhilSysOcrParser::extractFieldByLabel($raw_text, $labels);
+    return $value !== '' ? normalizeName($value) : '';
 }
 
 // ── Step 1: Strip to digits only ─────────────────────────────
@@ -1129,11 +1096,7 @@ if ($parsed_text_e2 === '') {
 $ocr_lower_e2 = normalizeOCR($parsed_text_e2);
 $ocr_clean_e2 = preg_replace('/[^a-z0-9]/', '', $ocr_lower_e2);
 
-$middle_labels = [
-    'Middle Name', 'MIDDLE NAME', 'Middle name',
-    'Middle Initial', 'MIDDLE INITIAL', 'MN:', 'M.N.',
-];
-$candidate_middle_e2 = extractFieldByLabel($parsed_text_e2, $middle_labels);
+$candidate_middle_e2 = philSysFieldsFromOcrText($parsed_text_e2)['middle_name']['value'] ?? '';
 
 // ── Middle name check — Engine 2 ─────────────────────────────
 $entered_middle_norm = normalizeName($entered_middle);
@@ -1165,7 +1128,7 @@ if ($entered_middle !== '' && !$middle_found) {
             $ocr_debug['retry_triggered'] = true;
             $ocr_lower_e1 = normalizeOCR($parsed_text_e1);
             $ocr_clean_e1 = preg_replace('/[^a-z0-9]/', '', $ocr_lower_e1);
-            $candidate_middle_e1 = extractFieldByLabel($parsed_text_e1, $middle_labels);
+            $candidate_middle_e1 = philSysFieldsFromOcrText($parsed_text_e1)['middle_name']['value'] ?? '';
 
             $middle_found_e1 = false;
             if ($candidate_middle_e1 !== '') {
@@ -1191,8 +1154,9 @@ if ($entered_middle !== '' && !$middle_found) {
                 $candidate_middle = $candidate_middle_e1;
                 $middle_found     = true;
             } else {
-                // Merge both texts so other fields (DOB, ID, residency) benefit from both passes
-                $parsed_text = $parsed_text_e2 . "\n" . $parsed_text_e1;
+                // Merge both texts — unified PhilSys parser across engines
+                $mergedTexts = array_values(array_filter([$parsed_text_e2, $parsed_text_e1]));
+                $parsed_text = PhilSysOcrParser::mergeRawOcrTexts($mergedTexts);
                 $ocr_lower   = normalizeOCR($parsed_text);
                 $ocr_clean   = preg_replace('/[^a-z0-9]/', '', $ocr_lower);
             }
@@ -1449,13 +1413,10 @@ function parseDateString(string $raw): ?string {
 $errors             = [];
 $middle_name_status = 'skipped';
 
-// Extract structured name fields from PhilSys card OCR output
-// This compares against the SPECIFIC field value, not the whole blob
-$nameFields = extractNameFields($parsed_text);
-
-// Also try Engine 2 text if fields not found
-if ($nameFields['first'] === '' && $nameFields['last'] === '') {
-    $nameFields = extractNameFields($parsed_text_e2);
+// Extract structured name fields (PhilSys parser — same as registration auto-fill)
+$nameFields = philSysNameFieldsFromOcrText($parsed_text);
+if ($nameFields['first'] === '' && $nameFields['last'] === '' && $parsed_text_e2 !== $parsed_text) {
+    $nameFields = philSysNameFieldsFromOcrText($parsed_text_e2);
 }
 
 $ocr_first  = $nameFields['first'];
@@ -1506,6 +1467,13 @@ if ($entered_middle !== '') {
 // 4. Date of birth — 4-strategy matching (variant → stripped → token-parse → year+day fuzzy)
 $dob_match_method = '';
 $dob_matched = dobMatchesOCR($entered_dob, $parsed_text, $dob_match_method);
+if (!$dob_matched) {
+    $parserDob = philSysFieldsFromOcrText($parsed_text)['date_of_birth']['value'] ?? '';
+    if ($parserDob !== '' && $parserDob === $entered_dob) {
+        $dob_matched = true;
+        $dob_match_method = 'philsys_parser';
+    }
+}
 if (!$dob_matched) {
     $errors[] = 'Date of birth does not match the National ID.';
 }
@@ -1664,7 +1632,7 @@ if (!$id_matched && !$is_pdf) {
 
     // Also merge all variant texts and try extraction on the combined blob
     if (!$id_matched && !empty($variant_texts)) {
-        $merged_text = $parsed_text . "\n" . implode("\n", $variant_texts);
+        $merged_text = PhilSysOcrParser::mergeRawOcrTexts(array_merge([$parsed_text], $variant_texts));
         $merged_candidates = extractIdCandidates($merged_text, $entered_id_digits);
         foreach ($merged_candidates as $item) {
             if ($id_matched) break;

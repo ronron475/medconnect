@@ -52,17 +52,3 @@ if (!defined('AI_SERVICE_TIMEOUT_TRANSCRIBE')) {
     define('AI_SERVICE_TIMEOUT_TRANSCRIBE', 180);
 }
 
-// ── Google reCAPTCHA (public forms) ───────────────────────────────────────────
-if (!defined('RECAPTCHA_SITE_KEY')) {
-    define('RECAPTCHA_SITE_KEY', (string) (getenv('MEDCONNECT_RECAPTCHA_SITE_KEY') ?: ''));
-}
-if (!defined('RECAPTCHA_SECRET_KEY')) {
-    define('RECAPTCHA_SECRET_KEY', (string) (getenv('MEDCONNECT_RECAPTCHA_SECRET_KEY') ?: ''));
-}
-if (!defined('RECAPTCHA_VERSION')) {
-    // Prefer v3; allow "v2" fallback.
-    define('RECAPTCHA_VERSION', (string) (getenv('MEDCONNECT_RECAPTCHA_VERSION') ?: 'v3'));
-}
-if (!defined('RECAPTCHA_MIN_SCORE')) {
-    define('RECAPTCHA_MIN_SCORE', (float) (getenv('MEDCONNECT_RECAPTCHA_MIN_SCORE') ?: 0.5));
-}

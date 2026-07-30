@@ -28,6 +28,8 @@ function triage_assessment_ensure_schema(PDO $pdo): void
         'recommendation_approved_by' => 'INT UNSIGNED NULL',
         'recommendation_approved_at' => 'DATETIME NULL',
         'recommendation_patient_ack_at' => 'DATETIME NULL',
+        'assigned_provider_id'    => 'INT UNSIGNED NULL',
+        'assigned_at'             => 'DATETIME NULL',
         'assessment_payload'      => 'JSON NULL',
         'engine'                  => 'VARCHAR(50) NULL',
         'outcome'                 => "VARCHAR(40) NULL COMMENT 'emergency_referral|consultation_booked|…'",

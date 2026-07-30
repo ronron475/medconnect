@@ -62,6 +62,26 @@ function bhw_patient_sector_clause(PDO $pdo, array $ctx, string $prAlias = 'pr')
     return ["LOWER(TRIM({$prAlias}.barangay)) = LOWER(?)", [$ctx['barangay_name']]];
 }
 
+/**
+ * BHW data scope — always the assigned barangay station (no city-wide filter).
+ *
+ * @return array{0: string, 1: list<mixed>}
+ */
+function bhw_patient_scope_clause(PDO $pdo, array $ctx, array $filters, string $prAlias = 'pr'): array
+{
+    unset($filters);
+
+    return bhw_patient_sector_clause($pdo, $ctx, $prAlias);
+}
+
+function bhw_list_barangay_options(PDO $pdo): array
+{
+    require_once __DIR__ . '/barangays_bago.php';
+    barangays_ensure_bago_city($pdo);
+
+    return barangays_list_bago_city($pdo);
+}
+
 function bhw_assert_patient_in_sector(PDO $pdo, array $ctx, int $patientId): bool
 {
     if ($patientId <= 0) {

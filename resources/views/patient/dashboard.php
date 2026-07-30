@@ -15,6 +15,8 @@ if (!defined('BASE_PATH')) {
 require_once BASE_PATH . '/app/includes/consultation_expiry.php';
 require_once BASE_PATH . '/app/includes/profile_picture.php';
 require_once BASE_PATH . '/app/includes/patient_portal_bootstrap.php';
+require_once BASE_PATH . '/app/includes/triage_assessment_schema.php';
+require_once BASE_PATH . '/app/includes/patient_symptoms_review_submit.php';
 
 $booking_today_ymd   = date('Y-m-d');
 $booking_today_label = date('l, M j, Y');
@@ -255,6 +257,11 @@ foreach ($triage_history as $t) {
     }
 }
 
+$symptoms_review_pending = patient_symptoms_review_pending_state($pdo, (int) $uid);
+$symptoms_review_booking = triage_patient_booking_slot_status($pdo, (int) $uid);
+$pending_reg_complaint = patient_registration_load_pending_complaint($pdo, (int) $uid);
+$symptoms_review_default_complaint = trim((string) ($pending_reg_complaint['complaint'] ?? ''));
+
 $patient_followups = [];
 if ($pdo->query("SHOW TABLES LIKE 'followups'")->rowCount()) {
     $fu = $pdo->prepare("
@@ -262,7 +269,15 @@ if ($pdo->query("SHOW TABLES LIKE 'followups'")->rowCount()) {
         FROM followups f
         JOIN users u ON f.provider_id = u.id
         WHERE f.patient_id = ?
-        ORDER BY f.followup_date ASC
+        ORDER BY
+          CASE LOWER(COALESCE(f.status, 'scheduled'))
+            WHEN 'scheduled' THEN 0
+            WHEN 'completed' THEN 1
+            WHEN 'missed' THEN 2
+            ELSE 3
+          END,
+          f.followup_date ASC,
+          f.id DESC
     ");
     $fu->execute([$uid]);
     $patient_followups = $fu->fetchAll(PDO::FETCH_ASSOC);
@@ -319,6 +334,7 @@ $pt_dash_triage_skin = static function (?string $level): string {
 $patientDashCssVer = (int) @filemtime(ASSETS_PATH . '/css/patient-dashboard.css');
 $patient_page_stylesheets = [
     ASSET_BASE . '/assets/css/patient-dashboard.css?v=' . $patientDashCssVer,
+    ASSET_BASE . '/assets/css/medconnect-charts.css?v=' . (int) @filemtime(ASSETS_PATH . '/css/medconnect-charts.css'),
 ];
 ?>
 <!DOCTYPE html>
@@ -335,7 +351,11 @@ $patient_page_stylesheets = [
   <?php require_once VIEWS_PATH . '/patient/partials/layout_shell_close.php'; ?>
 
   <script>window.APP_BASE = <?= json_encode(ASSET_BASE) ?>;</script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+  <script src="<?= ASSET_BASE ?>/assets/js/medconnect-chart-theme.js?v=<?= (int) @filemtime(ASSETS_PATH . '/js/medconnect-chart-theme.js') ?>"></script>
+  <script src="<?= ASSET_BASE ?>/assets/js/medconnect-portal-charts.js?v=<?= (int) @filemtime(ASSETS_PATH . '/js/medconnect-portal-charts.js') ?>"></script>
   <script src="<?= ASSET_BASE ?>/assets/js/patient-portal.js?v=<?= $patient_portal_ver ?>"></script>
+  <script src="<?= ASSET_BASE ?>/assets/js/patient-symptoms-review.js?v=<?= (int) @filemtime(ASSETS_PATH . '/js/patient-symptoms-review.js') ?>"></script>
   <script>
   (function () {
     const cells = document.querySelectorAll('[data-consult-action]');

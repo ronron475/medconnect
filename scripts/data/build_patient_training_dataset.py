@@ -23,6 +23,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[2]
 ARCHIVE = ROOT / "data" / "nlp" / "archive_source"
 DICTIONARY = ROOT / "data" / "nlp" / "medical_dictionary.csv"
+SYMPTOM_PHRASE_FILE = ROOT / "data" / "nlp" / "hiligaynon_symptom_phrases.json"
 OUT_DIR = ROOT / "data" / "nlp" / "training"
 OUT_CSV = OUT_DIR / "patient_cases.csv"
 OUT_JSONL = OUT_DIR / "patient_cases.jsonl"
@@ -50,9 +51,41 @@ HILIGAYNON_SYMPTOM_PHRASES: dict[str, list[str]] = {
     "runny_nose": ["sip-on", "sip on"],
     "throat_irritation": ["sakit tutunlan"],
     "chills": ["ginapanas-an", "mabinugnaw"],
-    "continuous_sneezing": ["sip-on", "ubo"],
-    "watering_from_eyes": ["nagaluha ang mata"],
-    "shivering": ["nagakurog"],
+    "phlegm": ["plema", "may plema", "madamo plema"],
+    "mucoid_sputum": ["plema", "malagkit plema"],
+    "rusty_sputum": ["plema may dugo", "rusty sputum"],
+    "congestion": ["barado ilong", "sipaon"],
+    "burning_micturition": ["hapdi mag-ihi", "hapdi mag ihi", "hapdi pag-ihi"],
+    "bladder_discomfort": ["sakit sa bladder", "hapdi sa sulod pag-ihi"],
+    "continuous_feel_of_urine": ["daw may ihi permi", "may ihi permi"],
+    "foul_smell_of_urine": ["mait nga ihi", "foul smell urine"],
+    "polyuria": ["dugay mag-ihi", "dugay mag ihi"],
+    "spotting_urination": ["spotting urination", "may dugo sa ihi"],
+    "stiff_neck": ["stiff neck", "rigido liog", "sakit liog"],
+    "shivering": ["nagakurog", "ginakurog"],
+    "palpitations": ["mabilis tagipusuon", "palpitations"],
+    "swelling_joints": ["hubag lutahan", "hubag sa lutahan"],
+    "swollen_legs": ["hubag tiil", "hubag paa"],
+    "weakness_in_limbs": ["luya tiil", "mahina tiil"],
+    "toxic_look_(typhos)": ["toxic look", "typhoid"],
+    "blood_in_sputum": ["plema may dugo", "blood in sputum"],
+    "loss_of_appetite": ["wala gana magkaon", "wala gana kaon", "wala gana", "gakadula gana kaon"],
+    "yellowing_of_eyes": ["dulom mata", "dulom sang mata", "gapula mata kag dilaw", "dilaw mata"],
+    "yellowish_skin": ["dilaw panit", "dilaw nga panit", "dilaw lawas", "yellowish skin"],
+    "jaundice": ["dilaw panit kag dulom mata", "jaundice"],
+    "acidity": ["kabog", "ginakabog", "asido", "heartburn", "hyperacidity"],
+    "indigestion": ["indi ma digest", "ginabalda tiyan"],
+    "ulcers_on_tongue": ["singaw", "singaw sa bibig", "singaw sa dila"],
+    "passage_of_gases": ["gas tiyan", "ginapanuhot", "panuhot", "ginahutok tiyan"],
+    "internal_itching": ["ginakati sulod", "kati sulod tiyan"],
+    "dehydration": ["ginauhaw", "kulang tubig", "wala ko maka-inom tubig"],
+    "sunken_eyes": ["natulon mata", "natulon ang mata"],
+    "dark_urine": ["itom ihi", "itom ang ihi", "dulom ihi"],
+    "yellow_urine": ["dilaw ihi", "dilaw ang ihi"],
+    "weight_loss": ["nagapanipis lawas", "nagakunhod timbang"],
+    "lethargy": ["luya gid", "ginatulog tulog"],
+    "malaise": ["ginabalatian", "hindi maayo lawas"],
+    "muscle_pain": ["sakit kalamnan", "sakit sa kalamnan"],
 }
 
 EN_TEMPLATES = [
@@ -70,6 +103,11 @@ HIL_TEMPLATES = [
     "Nagabalati ako sang {symptoms}.",
     "Subong may {symptoms} ang pasyente.",
     "Kag {symptoms} ko sa sulod sang isa ka semana.",
+    "Nagareklamo ang pasyente sang {symptoms}.",
+    "Ginabatyag ko ang {symptoms} sa pila na ka adlaw.",
+    "Ang akon reklamo subong amo ang {symptoms}.",
+    "Halin kagabi may {symptoms} na ako.",
+    "Indi na mabatas ang {symptoms} ko.",
 ]
 
 
@@ -100,16 +138,43 @@ def load_dictionary_hiligaynon() -> dict[str, list[str]]:
     return mapping
 
 
+def load_curated_symptom_phrases() -> dict[str, list[str]]:
+    """Shared Hiligaynon phrasing (see data/nlp/hiligaynon_symptom_phrases.json)."""
+    if not SYMPTOM_PHRASE_FILE.is_file():
+        return {}
+    payload = json.loads(SYMPTOM_PHRASE_FILE.read_text(encoding="utf-8"))
+    return {
+        key: list(phrases)
+        for key, phrases in (payload.get("phrases") or {}).items()
+        if phrases
+    }
+
+
+CURATED_SYMPTOM_PHRASES = load_curated_symptom_phrases()
+
+
 def hiligaynon_phrase_for_symptom(key: str, dictionary: dict[str, list[str]]) -> str:
+    if key in CURATED_SYMPTOM_PHRASES:
+        return random.choice(CURATED_SYMPTOM_PHRASES[key])
     if key in HILIGAYNON_SYMPTOM_PHRASES:
         return random.choice(HILIGAYNON_SYMPTOM_PHRASES[key])
     english = symptom_to_english_phrase(key)
     if english in dictionary:
         return random.choice(dictionary[english])
-    for term, locals in dictionary.items():
-        if term in english or english in term:
-            return random.choice(locals)
+    # A substring search used to land here and return body-part-only terms
+    # ("dalunggan" for fast_heart_rate, "glaucoma" for coma). Patients mixing in the
+    # English term is realistic; naming the wrong organ is not.
     return english
+
+
+def tidy_transcript(text: str) -> str:
+    """Smooth seams where a template and a phrase repeat the same particle.
+
+    "May {symptoms} ako." + "may rashes sa panit" reads as "May may rashes...".
+    """
+    cleaned = re.sub(r"(?i)\b(may|ang|sang|nga)\s+\1\b", r"\1", text or "")
+    cleaned = re.sub(r"\s+", " ", cleaned)
+    return re.sub(r"\s+([,.?!])", r"\1", cleaned).strip()
 
 
 def join_phrases(phrases: list[str], language: str) -> str:
@@ -150,14 +215,24 @@ def load_disease_symptom_rows() -> list[tuple[str, tuple[str, ...]]]:
     return list(unique.keys())
 
 
-def assign_split(disease: str, seed: int = 42) -> str:
-    rng = random.Random(f"{seed}:{disease}")
-    roll = rng.random()
-    if roll < 0.7:
-        return "train"
-    if roll < 0.85:
-        return "val"
-    return "test"
+_SPLIT_COUNTERS: dict[tuple[str, str], int] = {}
+
+
+def assign_split(disease: str, seed: int = 42, group: str = "archive") -> str:
+    """Stratified per-case split: 70/15/15 within every disease.
+
+    Keying the draw on the disease name alone put every case of a disease in the same
+    split, so train/val/test held disjoint disease sets and the test split covered
+    only 4 of 41 conditions. Rotating a per-disease counter keeps the ratio exact and
+    guarantees each disease appears in all three splits.
+    """
+    counter_key = (group, disease)
+    index = _SPLIT_COUNTERS.get(counter_key, 0)
+    _SPLIT_COUNTERS[counter_key] = index + 1
+    # Shuffle the 20-slot pattern per disease so splits aren't tied to template order.
+    pattern = ["train"] * 14 + ["val"] * 3 + ["test"] * 3
+    random.Random(f"{seed}:{group}:{disease}").shuffle(pattern)
+    return pattern[index % len(pattern)]
 
 
 def build_cases() -> list[dict[str, str | int]]:
