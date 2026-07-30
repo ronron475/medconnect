@@ -19,7 +19,7 @@
     '#64748b', // slate
   ];
 
-  var COLORS = {
+  var COLORS_LIGHT = {
     blue: '#3b82f6',
     teal: '#14b8a6',
     amber: '#f59e0b',
@@ -29,7 +29,36 @@
     grid: '#f1f5f9',
     text: '#64748b',
     title: '#0f172a',
+    tooltipBg: '#ffffff',
+    tooltipBody: '#475569',
+    pointBorder: '#ffffff',
   };
+
+  var COLORS_DARK = {
+    blue: '#3b82f6',
+    teal: '#06b6d4',
+    amber: '#f59e0b',
+    red: '#ef4444',
+    purple: '#8b5cf6',
+    cyan: '#22d3ee',
+    grid: '#2a2a2a',
+    text: '#a1a1aa',
+    title: '#ffffff',
+    tooltipBg: '#1c1c1c',
+    tooltipBody: '#a1a1aa',
+    pointBorder: '#1c1c1c',
+  };
+
+  var COLORS = COLORS_LIGHT;
+
+  function isDarkMode() {
+    if (typeof document === 'undefined') return false;
+    return document.documentElement.getAttribute('data-theme-resolved') === 'dark';
+  }
+
+  function syncColors() {
+    COLORS = isDarkMode() ? COLORS_DARK : COLORS_LIGHT;
+  }
 
   function hexToRgba(hex, alpha) {
     var h = String(hex || '#3b82f6').replace('#', '');
@@ -55,6 +84,7 @@
   }
 
   function basePlugins() {
+    syncColors();
     return {
       legend: {
         display: false,
@@ -70,9 +100,9 @@
       },
       tooltip: {
         enabled: true,
-        backgroundColor: '#ffffff',
+        backgroundColor: COLORS.tooltipBg,
         titleColor: COLORS.title,
-        bodyColor: '#475569',
+        bodyColor: COLORS.tooltipBody,
         borderColor: tooltipBorderColor,
         borderWidth: 2,
         padding: 12,
@@ -87,7 +117,21 @@
     };
   }
 
-  function cartesianScales() {
+  function cartesianScales(suggestedMax) {
+    var yScale = {
+      beginAtZero: true,
+      grid: { color: COLORS.grid, drawBorder: false },
+      border: { display: false },
+      ticks: {
+        color: COLORS.text,
+        font: { family: FONT_FAMILY, size: 10, weight: '500' },
+        precision: 0,
+        padding: 6,
+      },
+    };
+    if (suggestedMax != null) {
+      yScale.suggestedMax = suggestedMax;
+    }
     return {
       x: {
         grid: { display: false, drawBorder: false },
@@ -99,28 +143,18 @@
           autoSkipPadding: 12,
         },
       },
-      y: {
-        beginAtZero: true,
-        grid: { color: COLORS.grid, drawBorder: false },
-        border: { display: false },
-        ticks: {
-          color: COLORS.text,
-          font: { family: FONT_FAMILY, size: 10, weight: '500' },
-          precision: 0,
-          padding: 6,
-        },
-      },
+      y: yScale,
     };
   }
 
-  function cartesianOptions(extra) {
+  function cartesianOptions(extra, suggestedMax) {
     var opts = {
       responsive: true,
       maintainAspectRatio: false,
       interaction: { mode: 'index', intersect: false },
       layout: { padding: { top: 8, right: 8, bottom: 4, left: 4 } },
       plugins: basePlugins(),
-      scales: cartesianScales(),
+      scales: cartesianScales(suggestedMax),
     };
     if (extra) {
       Object.keys(extra).forEach(function (k) {
@@ -150,6 +184,7 @@
 
   function applyDefaults() {
     if (typeof Chart === 'undefined') return;
+    syncColors();
     Chart.defaults.font.family = FONT_FAMILY;
     Chart.defaults.font.size = 11;
     Chart.defaults.color = COLORS.text;
@@ -159,6 +194,19 @@
       Chart.defaults.plugins.tooltip,
       basePlugins().tooltip
     );
+  }
+
+  function maxCountFromSeries(series) {
+    return (series || []).reduce(function (max, p) {
+      var n = p.count != null ? p.count : (p.value != null ? p.value : 0);
+      return Math.max(max, Number(n) || 0);
+    }, 0);
+  }
+
+  function suggestedMaxForSeries(series) {
+    var max = maxCountFromSeries(series);
+    if (max <= 0) return 5;
+    return Math.max(max + 1, 5);
   }
 
   function colorsForCount(n, baseColor) {
@@ -178,7 +226,7 @@
       borderColor: c,
       backgroundColor: hexToRgba(c, 0.18),
       pointBackgroundColor: c,
-      pointBorderColor: '#fff',
+      pointBorderColor: COLORS.pointBorder,
       pointBorderWidth: 2,
       pointRadius: 3,
       pointHoverRadius: 5,
@@ -190,15 +238,18 @@
 
   function barDataset(series, color, todayColor) {
     var def = color || COLORS.blue;
-    var today = todayColor || COLORS.teal;
+    var today = todayColor || (isDarkMode() ? COLORS.purple : COLORS.teal);
+    var muted = isDarkMode() ? 'rgba(59, 130, 246, 0.35)' : hexToRgba(def, 0.85);
     return {
       label: 'Count',
       data: (series || []).map(function (p) { return p.count != null ? p.count : p.value; }),
       backgroundColor: (series || []).map(function (p) {
-        return p.is_today ? today : def;
+        if (p.is_today) return today;
+        return isDarkMode() ? def : muted;
       }),
-      borderRadius: 4,
-      maxBarThickness: 40,
+      borderRadius: 6,
+      maxBarThickness: 44,
+      minBarLength: 4,
       borderSkipped: false,
     };
   }
@@ -207,8 +258,64 @@
     return (series || []).map(function (p) { return p.label || ''; });
   }
 
+  function fillRoundRect(ctx, x, y, w, h, r) {
+    var radius = Math.min(r, h / 2, w / 2);
+    ctx.beginPath();
+    ctx.moveTo(x + radius, y);
+    ctx.lineTo(x + w - radius, y);
+    ctx.quadraticCurveTo(x + w, y, x + w, y + radius);
+    ctx.lineTo(x + w, y + h - radius);
+    ctx.quadraticCurveTo(x + w, y + h, x + w - radius, y + h);
+    ctx.lineTo(x + radius, y + h);
+    ctx.quadraticCurveTo(x, y + h, x, y + h - radius);
+    ctx.lineTo(x, y + radius);
+    ctx.quadraticCurveTo(x, y, x + radius, y);
+    ctx.closePath();
+    ctx.fill();
+  }
+
+  function registerZeroWeekPlugin() {
+    if (typeof Chart === 'undefined' || registerZeroWeekPlugin._done) return;
+    registerZeroWeekPlugin._done = true;
+    Chart.register({
+      id: 'mcZeroWeekPlaceholder',
+      afterDatasetsDraw: function (chart) {
+        var series = chart.$mcWeekSeries;
+        if (!series || !series.length) return;
+        if (maxCountFromSeries(series) > 0) return;
+
+        var meta = chart.getDatasetMeta(0);
+        if (!meta || !meta.data || !meta.data.length) return;
+
+        var ctx = chart.ctx;
+        var dark = isDarkMode();
+        var barHeight = 8;
+        ctx.save();
+        meta.data.forEach(function (bar, index) {
+          if (!bar || typeof bar.getProps !== 'function') return;
+          var props = bar.getProps(['x', 'width', 'base'], true);
+          var isToday = !!(series[index] && series[index].is_today);
+          ctx.fillStyle = isToday
+            ? (dark ? 'rgba(139, 92, 246, 0.5)' : 'rgba(20, 184, 166, 0.4)')
+            : (dark ? 'rgba(59, 130, 246, 0.28)' : 'rgba(59, 130, 246, 0.2)');
+          fillRoundRect(
+            ctx,
+            props.x - props.width / 2,
+            props.base - barHeight,
+            props.width,
+            barHeight,
+            4
+          );
+        });
+        ctx.restore();
+      },
+    });
+  }
+
   function mountWeeklyBarChart(canvas, series) {
     if (!canvas || typeof Chart === 'undefined') return null;
+    registerZeroWeekPlugin();
+    syncColors();
     applyDefaults();
     var normalized = (series || []).map(function (p) {
       return {
@@ -220,20 +327,40 @@
     if (canvas._mcChart && typeof canvas._mcChart.destroy === 'function') {
       canvas._mcChart.destroy();
     }
+    var yMax = suggestedMaxForSeries(normalized);
     var chart = new Chart(canvas, {
       type: 'bar',
       data: {
         labels: labelsFromSeries(normalized),
-        datasets: [barDataset(normalized, COLORS.blue, COLORS.teal)],
+        datasets: [barDataset(normalized, COLORS.blue, isDarkMode() ? COLORS.purple : COLORS.teal)],
       },
-      options: cartesianOptions(),
+      options: cartesianOptions(null, yMax),
     });
     canvas._mcChart = chart;
+    chart.$mcWeekSeries = normalized;
     return chart;
+  }
+
+  function applyChartTheme(chart, yMax) {
+    if (!chart || !chart.options) return;
+    if (chart.options.scales && chart.options.scales.y) {
+      chart.options.scales.y.suggestedMax = yMax;
+      chart.options.scales.y.grid.color = COLORS.grid;
+      chart.options.scales.y.ticks.color = COLORS.text;
+    }
+    if (chart.options.scales && chart.options.scales.x && chart.options.scales.x.ticks) {
+      chart.options.scales.x.ticks.color = COLORS.text;
+    }
+    if (chart.options.plugins && chart.options.plugins.tooltip) {
+      chart.options.plugins.tooltip.backgroundColor = COLORS.tooltipBg;
+      chart.options.plugins.tooltip.titleColor = COLORS.title;
+      chart.options.plugins.tooltip.bodyColor = COLORS.tooltipBody;
+    }
   }
 
   function updateWeeklyBarChart(canvas, series) {
     if (!canvas || typeof Chart === 'undefined') return null;
+    syncColors();
     var normalized = (series || []).map(function (p) {
       return {
         label: p.label,
@@ -245,14 +372,38 @@
     if (!chart) {
       return mountWeeklyBarChart(canvas, normalized);
     }
+    var yMax = suggestedMaxForSeries(normalized);
     chart.data.labels = labelsFromSeries(normalized);
-    chart.data.datasets = [barDataset(normalized, COLORS.blue, COLORS.teal)];
+    chart.data.datasets = [barDataset(normalized, COLORS.blue, isDarkMode() ? COLORS.purple : COLORS.teal)];
+    chart.$mcWeekSeries = normalized;
+    applyChartTheme(chart, yMax);
     chart.update('none');
     return chart;
   }
 
+  function refreshAllCharts() {
+    mountWeeklyBarChartsFromDom();
+  }
+
+  function bindThemeListener() {
+    if (typeof document === 'undefined' || bindThemeListener._bound) return;
+    bindThemeListener._bound = true;
+    var observer = new MutationObserver(function (mutations) {
+      mutations.forEach(function (m) {
+        if (m.attributeName === 'data-theme-resolved') {
+          refreshAllCharts();
+        }
+      });
+    });
+    observer.observe(document.documentElement, {
+      attributes: true,
+      attributeFilter: ['data-theme-resolved'],
+    });
+  }
+
   function mountWeeklyBarChartsFromDom() {
     if (typeof document === 'undefined') return;
+    bindThemeListener();
     document.querySelectorAll('canvas[data-mc-weekly-bar]').forEach(function (canvas) {
       var dataId = canvas.getAttribute('data-mc-weekly-bar');
       if (!dataId) return;
@@ -270,6 +421,8 @@
     REFRESH_MS: REFRESH_MS,
     palette: PALETTE,
     colors: COLORS,
+    isDarkMode: isDarkMode,
+    syncColors: syncColors,
     fontFamily: FONT_FAMILY,
     applyDefaults: applyDefaults,
     hexToRgba: hexToRgba,
@@ -283,5 +436,6 @@
     mountWeeklyBarChart: mountWeeklyBarChart,
     updateWeeklyBarChart: updateWeeklyBarChart,
     mountWeeklyBarChartsFromDom: mountWeeklyBarChartsFromDom,
+    refreshAllCharts: refreshAllCharts,
   };
 })(typeof window !== 'undefined' ? window : this);
