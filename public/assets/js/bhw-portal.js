@@ -558,7 +558,6 @@
       }
 
       function fetchPatients(q) {
-        listEl.innerHTML = inlineLoadingHtml('Loading patients…', { className: 'bhw-patient-picker-loading' });
         openList();
         return BhwPortal.get('patients.php', { action: 'list', q: q || '' }).then(function (res) {
           if (res.success) renderList(res.patients || []);

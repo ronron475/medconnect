@@ -94,8 +94,8 @@ require_once __DIR__ . '/partials/layout_open.php';
     tbody.innerHTML = rows.map(function (row) {
       var status = row.recommendation_status || '';
       var badge = status === 'pending_approval'
-        ? '<span class="mc-badge" style="background:#fef3c7;color:#92400e;">Pending</span>'
-        : '<span class="mc-badge" style="background:#dcfce7;color:#166534;">Approved</span>';
+        ? '<span class="mc-badge mc-badge--pending">Pending</span>'
+        : '<span class="mc-badge mc-badge--approved">Approved</span>';
       var assignId = row.assigned_provider_id || '';
       return '<tr data-triage-id="' + esc(row.id) + '">' +
         '<td>' + esc(row.patient_name) + '</td>' +

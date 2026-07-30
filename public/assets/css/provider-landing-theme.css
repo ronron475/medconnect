@@ -115,7 +115,7 @@ body.provider-body .sba-nav {
   }
 
   body.provider-body.mc-sidebar-mini .sba-item.is-active {
-    box-shadow: 0 6px 18px rgba(6, 147, 150, 0.22);
+    box-shadow: none;
   }
 
   body.provider-body.mc-sidebar-mini .sba-profile {
@@ -152,16 +152,18 @@ body.provider-body .sba-item .sba-icon {
   opacity: 1;
 }
 
-body.provider-body .sba-item:hover {
-  background: rgba(6, 147, 150, 0.06);
-  color: var(--landing-navy);
-}
-
-body.provider-body .sba-item.is-active {
-  background: var(--landing-teal);
-  color: #fff;
+body.provider-body .sba-item:hover,
+body.provider-body .sba-item:focus,
+body.provider-body .sba-item:active,
+body.provider-body .sba-item.is-active,
+body.provider-body .sba-item.is-active:hover {
+  background: transparent;
+  color: inherit;
   border-color: transparent;
-  box-shadow: 0 4px 14px rgba(6, 147, 150, 0.28);
+  box-shadow: none;
+  outline: none;
+  transition: none;
+  -webkit-tap-highlight-color: transparent;
 }
 
 body.provider-body .sba-item.is-active::before {
@@ -169,7 +171,7 @@ body.provider-body .sba-item.is-active::before {
 }
 
 body.provider-body .sba-item.is-active .sba-icon {
-  stroke: #fff;
+  stroke: currentColor;
   opacity: 1;
 }
 
@@ -560,25 +562,25 @@ html[data-theme-resolved='dark'] body.provider-body .sba-group-label--secondary 
 }
 
 html[data-theme-resolved='dark'] body.provider-body .sba-item {
-  color: var(--text-muted);
+  color: #ffffff;
   border-radius: 8px;
-  transition: background 0.15s ease, color 0.15s ease;
+  transition: none;
+  -webkit-tap-highlight-color: transparent;
 }
 
-html[data-theme-resolved='dark'] body.provider-body .sba-item:hover {
-  background: var(--hover-overlay);
-  color: var(--text-secondary);
-}
-
+html[data-theme-resolved='dark'] body.provider-body .sba-item:hover,
+html[data-theme-resolved='dark'] body.provider-body .sba-item:focus,
+html[data-theme-resolved='dark'] body.provider-body .sba-item:active,
 html[data-theme-resolved='dark'] body.provider-body .sba-item.is-active {
-  background: var(--card-bg);
-  color: var(--text-primary);
-  box-shadow: none;
-  border-color: transparent;
+  background: transparent !important;
+  color: #ffffff !important;
+  box-shadow: none !important;
+  border-color: transparent !important;
+  outline: none !important;
 }
 
 html[data-theme-resolved='dark'] body.provider-body .sba-item.is-active .sba-icon {
-  stroke: var(--text-primary);
+  stroke: #ffffff !important;
 }
 
 html[data-theme-resolved='dark'] body.provider-body .sba-profile {

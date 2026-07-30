@@ -133,12 +133,8 @@
     );
   }
 
-  function renderLoadingRow(colspan) {
-    var L = window.MedConnectGlobalLoader || window.MedConnectLoader;
-    if (L && typeof L.inlineRow === 'function') {
-      return L.inlineRow(colspan, 'Loading applications…');
-    }
-    return '<tr><td colspan="' + colspan + '"><div class="mc-inline-loading staff-apps-loading" role="status"><span>Loading applications…</span></div></td></tr>';
+  function renderLoadingRow() {
+    return '';
   }
 
   function renderEmptyState(colspan, config) {

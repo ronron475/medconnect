@@ -8,6 +8,12 @@
 <?php $responsive_scripts_only = true; require VIEWS_PATH . '/partials/responsive_assets.php'; ?>
 <?php $notification_scripts_only = true; require VIEWS_PATH . '/partials/notification_assets.php'; ?>
 <?php
+if (empty($portal_dark_mode_css)) {
+    $portal_dark_mode_css = 'provider-dark-mode.css';
+}
+require_once VIEWS_PATH . '/partials/portal_dark_mode_close.php';
+?>
+<?php
 $prefsJsVer = (int) @filemtime(ASSETS_PATH . '/js/provider-preferences.js');
 $idleJsVer = (int) @filemtime(ASSETS_PATH . '/js/provider-idle.js');
 ?>

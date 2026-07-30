@@ -95,7 +95,36 @@ final class NotificationManager
             $pdo->exec('ALTER TABLE notifications MODIFY link VARCHAR(512) NULL');
         } catch (PDOException $e) { /* non-fatal */ }
 
+        self::repairLoginActivityNotifications($pdo);
+
         self::$schemaReady = true;
+    }
+
+    /** Fix legacy misclassified login-activity notifications (idempotent). */
+    private static function repairLoginActivityNotifications(PDO $pdo): void
+    {
+        static $done = false;
+        if ($done) {
+            return;
+        }
+        $done = true;
+
+        try {
+            $pdo->exec("
+                UPDATE notifications
+                SET type = 'warning', priority = 'high', icon = 'alert-triangle'
+                WHERE title = 'New Device Login'
+                  AND (priority IN ('critical', 'emergency') OR type IN ('critical', 'emergency'))
+            ");
+            $pdo->exec("
+                UPDATE notifications
+                SET type = 'information', priority = 'normal', icon = 'shield'
+                WHERE title = 'Login Successful'
+                  AND (priority IN ('critical', 'emergency', 'high') OR type IN ('critical', 'emergency', 'warning'))
+            ");
+        } catch (PDOException $e) {
+            error_log('Notification login repair: ' . $e->getMessage());
+        }
     }
 
     /**
@@ -448,23 +477,31 @@ final class NotificationManager
 
     public static function formatRow(array $row): array
     {
+        $row = self::normalizeLoginActivityRow($row);
+        $type = (string) ($row['type'] ?? self::TYPE_INFORMATION);
+        $priority = (string) ($row['priority'] ?? 'normal');
+        $title = (string) ($row['title'] ?? '');
+        $category = self::resolveDisplayCategory($type, $priority, $title);
+
         return [
             'notification_id' => (int) $row['id'],
             'id'              => (int) $row['id'],
             'sender_id'       => isset($row['sender_id']) ? (int) $row['sender_id'] : null,
             'receiver_id'     => (int) $row['user_id'],
             'receiver_role'   => $row['receiver_role'] ?? null,
-            'type'            => $row['type'],
-            'title'           => $row['title'],
+            'type'            => $type,
+            'title'           => $title,
             'message'         => $row['message'],
-            'priority'        => $row['priority'] ?? 'normal',
+            'priority'        => $priority,
+            'category'        => $category,
+            'category_label'  => self::displayCategoryLabel($category),
             'related_table'   => $row['related_table'] ?? null,
             'related_id'      => isset($row['related_id']) ? (int) $row['related_id'] : null,
             'status'          => $row['status'] ?? 'active',
             'is_read'         => (bool) ($row['is_read'] ?? false),
             'action_url'      => self::normalizeUrl($row['link'] ?? null),
             'link'            => self::normalizeUrl($row['link'] ?? null),
-            'icon'            => $row['icon'] ?? self::iconForType($row['type'] ?? 'information'),
+            'icon'            => $row['icon'] ?? self::iconForType($type),
             'created_at'      => $row['created_at'],
             'updated_at'      => $row['updated_at'] ?? $row['created_at'],
             'expires_at'      => $row['expires_at'] ?? null,
@@ -472,6 +509,59 @@ final class NotificationManager
             'date_label'      => date('M j, Y', strtotime($row['created_at'])),
             'time_label'      => date('g:i A', strtotime($row['created_at'])),
         ];
+    }
+
+    /** @return array<string, mixed> */
+    private static function normalizeLoginActivityRow(array $row): array
+    {
+        $title = trim((string) ($row['title'] ?? ''));
+
+        if ($title === 'New Device Login') {
+            $row['type'] = self::TYPE_WARNING;
+            $row['priority'] = 'high';
+            $row['icon'] = 'alert-triangle';
+        } elseif ($title === 'Login Successful') {
+            $row['type'] = self::TYPE_INFORMATION;
+            $row['priority'] = 'normal';
+            $row['icon'] = 'shield';
+        } elseif (in_array($title, ['Failed Login Attempt', 'Account Temporarily Locked', 'Account Lockout Triggered', 'Suspicious Login Attempt'], true)) {
+            $row['type'] = self::TYPE_CRITICAL;
+            $row['priority'] = 'critical';
+            $row['icon'] = 'alert-octagon';
+        }
+
+        return $row;
+    }
+
+    public static function resolveDisplayCategory(string $type, string $priority, string $title = ''): string
+    {
+        if ($title === 'Login Successful') {
+            return 'information';
+        }
+        if ($title === 'New Device Login') {
+            return 'warning';
+        }
+        if (in_array($title, ['Failed Login Attempt', 'Account Temporarily Locked', 'Account Lockout Triggered', 'Suspicious Login Attempt'], true)) {
+            return 'critical';
+        }
+
+        if (in_array($priority, ['critical', 'emergency'], true) || in_array($type, [self::TYPE_CRITICAL, self::TYPE_EMERGENCY], true)) {
+            return 'critical';
+        }
+        if ($priority === 'high' || $type === self::TYPE_WARNING) {
+            return 'warning';
+        }
+
+        return 'information';
+    }
+
+    public static function displayCategoryLabel(string $category): string
+    {
+        return match ($category) {
+            'critical' => 'Critical',
+            'warning' => 'Warning',
+            default => 'Information',
+        };
     }
 
     private static function mapPriorityFromType(string $type): string

@@ -55,17 +55,17 @@ final class AccountStatus
         return in_array($status, self::all(), true) ? $status : self::DEACTIVATED;
     }
 
-    /** @return array{bg: string, color: string, label: string} */
+    /** @return array{bg: string, color: string, label: string, class: string} */
     public static function badge(string $status): array
     {
         return match (self::normalize($status)) {
-            self::ACTIVE           => ['bg' => '#dcfce7', 'color' => '#16a34a', 'label' => 'Active'],
-            self::PENDING_APPROVAL => ['bg' => '#fef3c7', 'color' => '#b45309', 'label' => 'Pending Approval'],
-            self::SUSPENDED        => ['bg' => '#ffedd5', 'color' => '#c2410c', 'label' => 'Suspended'],
-            self::DEACTIVATED      => ['bg' => '#fee2e2', 'color' => '#991b1b', 'label' => 'Deactivated'],
-            self::REJECTED         => ['bg' => '#fee2e2', 'color' => '#b91c1c', 'label' => 'Rejected'],
-            self::ARCHIVED         => ['bg' => '#f1f5f9', 'color' => '#475569', 'label' => 'Archived'],
-            default                => ['bg' => '#f1f5f9', 'color' => '#64748b', 'label' => self::label($status)],
+            self::ACTIVE           => ['bg' => '#dcfce7', 'color' => '#16a34a', 'label' => 'Active', 'class' => 'mc-badge--active'],
+            self::PENDING_APPROVAL => ['bg' => '#fef3c7', 'color' => '#b45309', 'label' => 'Pending Approval', 'class' => 'mc-badge--pending'],
+            self::SUSPENDED        => ['bg' => '#ffedd5', 'color' => '#c2410c', 'label' => 'Suspended', 'class' => 'mc-badge--suspended'],
+            self::DEACTIVATED      => ['bg' => '#fee2e2', 'color' => '#991b1b', 'label' => 'Deactivated', 'class' => 'mc-badge--danger'],
+            self::REJECTED         => ['bg' => '#fee2e2', 'color' => '#b91c1c', 'label' => 'Rejected', 'class' => 'mc-badge--danger'],
+            self::ARCHIVED         => ['bg' => '#f1f5f9', 'color' => '#475569', 'label' => 'Archived', 'class' => 'mc-badge--muted'],
+            default                => ['bg' => '#f1f5f9', 'color' => '#64748b', 'label' => self::label($status), 'class' => 'mc-badge--muted'],
         };
     }
 

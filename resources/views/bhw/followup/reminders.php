@@ -13,10 +13,12 @@ $bhw_subnav_active = 'followup/reminders.php';
   <h2 class="text-h2">Follow-Up Monitoring</h2>
   <p class="text-muted">Sends in-app notification to patient and logs audit entry.</p>
   <?php require __DIR__ . '/../partials/bhw_module_subnav.php'; ?>
-  <div id="bhwRemList">Loading…</div>
+  <div id="bhwRemList"></div>
 </div>
 <script>
-BhwPortal.get('followups.php', { action: 'list', status: 'upcoming' }).then(function (r) {
+(function () {
+  var el = document.getElementById('bhwRemList');
+  BhwPortal.get('followups.php', { action: 'list', status: 'upcoming' }).then(function (r) {
   var el = document.getElementById('bhwRemList');
   var rows = r.followups || [];
   if (!rows.length) { el.innerHTML = '<p>No upcoming follow-ups.</p>'; return; }
@@ -31,6 +33,6 @@ BhwPortal.get('followups.php', { action: 'list', status: 'upcoming' }).then(func
       });
     });
   });
-});
+})();
 </script>
 <?php require __DIR__ . '/../partials/layout_close.php'; ?>

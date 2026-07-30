@@ -71,28 +71,59 @@
     return '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + paths + '</svg>';
   }
 
-  function priorityClass(priority, type) {
-    if (priority === 'emergency' || priority === 'critical' || type === 'critical') {
-      return 'mc-notif-icon--critical';
+  function displayCategory(n) {
+    if (n.category) return n.category;
+    if (n.title === 'Login Successful') return 'information';
+    if (n.title === 'New Device Login') return 'warning';
+    if (n.title === 'Failed Login Attempt' || n.title === 'Account Temporarily Locked' || n.title === 'Account Lockout Triggered' || n.title === 'Suspicious Login Attempt') {
+      return 'critical';
     }
-    if (priority === 'high' || type === 'warning') return 'mc-notif-icon--warning';
-    if (type === 'information' || type === 'success') return 'mc-notif-icon--information';
+    if (n.priority === 'emergency' || n.priority === 'critical' || n.type === 'critical' || n.type === 'emergency') {
+      return 'critical';
+    }
+    if (n.priority === 'high' || n.type === 'warning') return 'warning';
+    if (n.type === 'information' || n.type === 'success') return 'information';
     return '';
   }
 
+  function categoryLabel(n) {
+    if (n.category_label) return n.category_label;
+    const cat = displayCategory(n);
+    if (cat === 'critical') return 'Critical';
+    if (cat === 'warning') return 'Warning';
+    if (cat === 'information') return 'Information';
+    return '';
+  }
+
+  function iconClassForNotification(n) {
+    const cat = displayCategory(n);
+    if (cat === 'critical') return 'mc-notif-icon--critical';
+    if (cat === 'warning') return 'mc-notif-icon--warning';
+    if (cat === 'information') return 'mc-notif-icon--information';
+    return '';
+  }
+
+  function shouldShowCategoryBadge(n) {
+    const loginTitles = ['Login Successful', 'New Device Login', 'Failed Login Attempt', 'Account Temporarily Locked', 'Account Lockout Triggered', 'Suspicious Login Attempt'];
+    if (loginTitles.indexOf(n.title) >= 0) return true;
+    const cat = displayCategory(n);
+    return cat === 'critical' || cat === 'warning';
+  }
+
   function renderItemBody(n) {
-    const priClass = n.priority && n.priority !== 'normal' && n.priority !== 'low'
-      ? ' mc-notif-priority mc-notif-priority--' + n.priority : '';
-    const typeClass = n.type === 'information' ? ' mc-notif-priority mc-notif-priority--information' : '';
+    const cat = displayCategory(n);
+    const label = categoryLabel(n);
+    const badge = shouldShowCategoryBadge(n) && label
+      ? '<span class="mc-notif-priority mc-notif-priority--' + cat + '">' + escapeHtml(label) + '</span>'
+      : '';
     return (
-      '<div class="mc-notif-icon ' + priorityClass(n.priority, n.type) + '">' + iconSvg(n.icon || 'bell') + '</div>' +
+      '<div class="mc-notif-icon ' + iconClassForNotification(n) + '">' + iconSvg(n.icon || 'bell') + '</div>' +
       '<div class="mc-notif-body">' +
         '<p class="mc-notif-title">' + escapeHtml(n.title) + '</p>' +
         '<p class="mc-notif-message">' + escapeHtml(n.message) + '</p>' +
         '<div class="mc-notif-meta">' +
           '<span>' + escapeHtml(n.time_ago || n.date_label || '') + '</span>' +
-          (priClass ? '<span class="' + priClass.trim() + '">' + escapeHtml(n.priority) + '</span>' : '') +
-          (typeClass && !priClass ? '<span class="' + typeClass.trim() + '">info</span>' : '') +
+          badge +
           (!n.is_read ? '<span>Unread</span>' : '') +
         '</div>' +
       '</div>'

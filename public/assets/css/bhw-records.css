@@ -824,52 +824,68 @@
   color: #012a4a;
 }
 
-/* Force readable form panel in dark theme */
+/* Dark theme — WorkflowAI black surfaces (not forced white) */
 html[data-theme-resolved='dark'] body.bhw-body .bhw-records-upload-page .bhw-records-main,
-html[data-theme-resolved='dark'] body.bhw-body .bhw-records-upload-page .bhw-records-aside {
-  background: #ffffff !important;
-  border-color: #e2e8f0 !important;
-  color: #1e293b !important;
+html[data-theme-resolved='dark'] body.bhw-body .bhw-records-upload-page .bhw-records-aside,
+html[data-theme-resolved='dark'] body.bhw-body .bhw-records-main,
+html[data-theme-resolved='dark'] body.bhw-body .bhw-records-aside {
+  background: #1c1c1c !important;
+  border-color: #2a2a2a !important;
+  color: #ffffff !important;
 }
 
-html[data-theme-resolved='dark'] body.bhw-body .bhw-records-upload-page .bhw-records-section__title {
-  color: #012a4a !important;
+html[data-theme-resolved='dark'] body.bhw-body .bhw-records-upload-page .bhw-records-section__title,
+html[data-theme-resolved='dark'] body.bhw-body .bhw-records-section__title,
+html[data-theme-resolved='dark'] body.bhw-body .bhw-records-header h2 {
+  color: #ffffff !important;
 }
 
 html[data-theme-resolved='dark'] body.bhw-body .bhw-records-upload-page .bhw-records-section__sub,
 html[data-theme-resolved='dark'] body.bhw-body .bhw-records-upload-page .form-label,
 html[data-theme-resolved='dark'] body.bhw-body .bhw-records-upload-page .bhw-records-aside__notes dd,
-html[data-theme-resolved='dark'] body.bhw-body .bhw-records-upload-page .bhw-records-upload-notes li {
-  color: #64748b !important;
+html[data-theme-resolved='dark'] body.bhw-body .bhw-records-upload-page .bhw-records-upload-notes li,
+html[data-theme-resolved='dark'] body.bhw-body .bhw-records-section__sub,
+html[data-theme-resolved='dark'] body.bhw-body .bhw-records-sub {
+  color: #a1a1aa !important;
 }
 
 html[data-theme-resolved='dark'] body.bhw-body .bhw-records-upload-page .form-control,
 html[data-theme-resolved='dark'] body.bhw-body .bhw-records-upload-page .form-select,
-html[data-theme-resolved='dark'] body.bhw-body .bhw-records-upload-page .bhw-patient-picker-search {
-  background: #ffffff !important;
-  color: #1e293b !important;
-  border-color: #cbd5e1 !important;
+html[data-theme-resolved='dark'] body.bhw-body .bhw-records-upload-page .bhw-patient-picker-search,
+html[data-theme-resolved='dark'] body.bhw-body .bhw-records-picker-mount .bhw-patient-picker-search {
+  background: #141414 !important;
+  color: #ffffff !important;
+  border-color: #2a2a2a !important;
 }
 
-html[data-theme-resolved='dark'] body.bhw-body .bhw-records-upload-page .bhw-patient-picker-name {
-  color: #012a4a !important;
+html[data-theme-resolved='dark'] body.bhw-body .bhw-records-upload-page .bhw-patient-picker-name,
+html[data-theme-resolved='dark'] body.bhw-body .bhw-patient-picker-name,
+html[data-theme-resolved='dark'] body.bhw-body .bhw-selected-patient-info strong {
+  color: #ffffff !important;
 }
 
 html[data-theme-resolved='dark'] body.bhw-body .bhw-records-upload-page .bhw-patient-picker-meta,
 html[data-theme-resolved='dark'] body.bhw-body .bhw-records-upload-page .bhw-records-file-zone__sub,
-html[data-theme-resolved='dark'] body.bhw-body .bhw-records-upload-page .bhw-records-patient-summary__body span {
-  color: #64748b !important;
+html[data-theme-resolved='dark'] body.bhw-body .bhw-records-upload-page .bhw-records-patient-summary__body span,
+html[data-theme-resolved='dark'] body.bhw-body .bhw-patient-picker-meta {
+  color: #a1a1aa !important;
 }
 
 html[data-theme-resolved='dark'] body.bhw-body .bhw-records-upload-page .bhw-records-patient-summary,
-html[data-theme-resolved='dark'] body.bhw-body .bhw-records-upload-page .bhw-records-file-zone {
-  background: #f8fafc !important;
-  color: #1e293b !important;
+html[data-theme-resolved='dark'] body.bhw-body .bhw-records-upload-page .bhw-records-file-zone,
+html[data-theme-resolved='dark'] body.bhw-body .bhw-records-empty,
+html[data-theme-resolved='dark'] body.bhw-body .bhw-selected-patient,
+html[data-theme-resolved='dark'] body.bhw-body .bhw-patient-picker-list,
+html[data-theme-resolved='dark'] body.bhw-body .bhw-patient-picker-item {
+  background: #141414 !important;
+  border-color: #2a2a2a !important;
+  color: #ffffff !important;
 }
 
 html[data-theme-resolved='dark'] body.bhw-body .bhw-records-upload-page .bhw-records-patient-summary__body strong,
-html[data-theme-resolved='dark'] body.bhw-body .bhw-records-upload-page .bhw-records-file-zone__lead {
-  color: #012a4a !important;
+html[data-theme-resolved='dark'] body.bhw-body .bhw-records-upload-page .bhw-records-file-zone__lead,
+html[data-theme-resolved='dark'] body.bhw-body .bhw-records-empty strong {
+  color: #ffffff !important;
 }
 
 html[data-theme-resolved='dark'] body.bhw-body .bhw-records-upload-page .bhw-records-aside__head h3 {

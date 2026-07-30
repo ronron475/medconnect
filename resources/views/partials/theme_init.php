@@ -48,6 +48,82 @@ $theme_css_ver = file_exists($theme_css) ? (int) filemtime($theme_css) : time();
   }
 })();
 </script>
+<style id="mc-theme-anti-fouc">
+/* Shared anti-FOUC — all portals: black canvas, flat nav, no teal flash */
+html[data-theme-resolved='dark'] body.patient-portal,
+html[data-theme-resolved='dark'] body.provider-body,
+html[data-theme-resolved='dark'] body.bhw-body,
+html[data-theme-resolved='dark'] body.admin-body,
+html[data-theme-resolved='dark'] body.superadmin-body {
+  background: #0a0a0a !important;
+  color: #ffffff !important;
+  transition: none !important;
+}
+html[data-theme-resolved='dark'] body.patient-portal .sidebar,
+html[data-theme-resolved='dark'] body.patient-portal .root-wrapper,
+html[data-theme-resolved='dark'] body.patient-portal .portal-main,
+html[data-theme-resolved='dark'] body.patient-portal .main-content,
+html[data-theme-resolved='dark'] body.provider-body .sidebar,
+html[data-theme-resolved='dark'] body.provider-body .sb-aqua,
+html[data-theme-resolved='dark'] body.provider-body .provider-main,
+html[data-theme-resolved='dark'] body.provider-body .provider-page-body,
+html[data-theme-resolved='dark'] body.bhw-body .adm-sidebar,
+html[data-theme-resolved='dark'] body.bhw-body .portal-main,
+html[data-theme-resolved='dark'] body.bhw-body .portal-page-body,
+html[data-theme-resolved='dark'] body.admin-body .adm-sidebar,
+html[data-theme-resolved='dark'] body.admin-body .portal-main,
+html[data-theme-resolved='dark'] body.admin-body .portal-page-body,
+html[data-theme-resolved='dark'] body.superadmin-body .adm-sidebar,
+html[data-theme-resolved='dark'] body.superadmin-body .portal-main,
+html[data-theme-resolved='dark'] body.superadmin-body .portal-page-body {
+  background: #0a0a0a !important;
+  color: #ffffff !important;
+  transition: none !important;
+}
+html[data-theme-resolved='dark'] body.patient-portal .sidebar,
+html[data-theme-resolved='dark'] body.provider-body .sidebar,
+html[data-theme-resolved='dark'] body.provider-body .sb-aqua,
+html[data-theme-resolved='dark'] body.bhw-body .adm-sidebar,
+html[data-theme-resolved='dark'] body.admin-body .adm-sidebar,
+html[data-theme-resolved='dark'] body.superadmin-body .adm-sidebar {
+  background: #141414 !important;
+  background-image: none !important;
+}
+html[data-theme-resolved='dark'] body.patient-portal .sb-item,
+html[data-theme-resolved='dark'] body.patient-portal .sb-item:hover,
+html[data-theme-resolved='dark'] body.patient-portal .sb-item:focus,
+html[data-theme-resolved='dark'] body.patient-portal .sb-item:active,
+html[data-theme-resolved='dark'] body.patient-portal .sb-item.active,
+html[data-theme-resolved='dark'] body.provider-body .sba-item,
+html[data-theme-resolved='dark'] body.provider-body .sba-item:hover,
+html[data-theme-resolved='dark'] body.provider-body .sba-item:focus,
+html[data-theme-resolved='dark'] body.provider-body .sba-item:active,
+html[data-theme-resolved='dark'] body.provider-body .sba-item.is-active,
+html[data-theme-resolved='dark'] body.bhw-body .adm-nav-item,
+html[data-theme-resolved='dark'] body.bhw-body .adm-nav-item:hover,
+html[data-theme-resolved='dark'] body.bhw-body .adm-nav-item:focus,
+html[data-theme-resolved='dark'] body.bhw-body .adm-nav-item:active,
+html[data-theme-resolved='dark'] body.bhw-body .adm-nav-item.is-active,
+html[data-theme-resolved='dark'] body.admin-body .adm-nav-item,
+html[data-theme-resolved='dark'] body.admin-body .adm-nav-item:hover,
+html[data-theme-resolved='dark'] body.admin-body .adm-nav-item:focus,
+html[data-theme-resolved='dark'] body.admin-body .adm-nav-item:active,
+html[data-theme-resolved='dark'] body.admin-body .adm-nav-item.is-active,
+html[data-theme-resolved='dark'] body.superadmin-body .adm-nav-item,
+html[data-theme-resolved='dark'] body.superadmin-body .adm-nav-item:hover,
+html[data-theme-resolved='dark'] body.superadmin-body .adm-nav-item:focus,
+html[data-theme-resolved='dark'] body.superadmin-body .adm-nav-item:active,
+html[data-theme-resolved='dark'] body.superadmin-body .adm-nav-item.is-active {
+  background: transparent !important;
+  background-image: none !important;
+  box-shadow: none !important;
+  outline: none !important;
+  border-color: transparent !important;
+  color: #ffffff !important;
+  transition: none !important;
+  -webkit-tap-highlight-color: transparent;
+}
+</style>
 <link rel="stylesheet" href="<?= ASSET_BASE ?>/assets/css/medconnect-theme.css?v=<?= $theme_css_ver ?>">
 <?php
 $mc_modal_css = ASSETS_PATH . '/css/mc-modal-system.css';

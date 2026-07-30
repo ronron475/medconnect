@@ -83,14 +83,6 @@
       return;
     }
 
-    var loadingHtml = (window.BhwPortal && BhwPortal.loader && BhwPortal.loader.inlineHtml)
-      ? BhwPortal.loader.inlineHtml('Loading documents…', { className: 'bhw-records-loading' })
-      : '<div class="bhw-records-loading">Loading documents…</div>';
-    var loadingRxHtml = (window.BhwPortal && BhwPortal.loader && BhwPortal.loader.inlineHtml)
-      ? BhwPortal.loader.inlineHtml('Loading prescriptions…', { className: 'bhw-records-loading' })
-      : '<div class="bhw-records-loading">Loading prescriptions…</div>';
-    outDocs.innerHTML = loadingHtml;
-    outRx.innerHTML = loadingRxHtml;
     if (uploadLink) {
       uploadLink.href = 'upload.php?patient_id=' + patientId;
       uploadLink.style.display = '';

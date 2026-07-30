@@ -99,7 +99,7 @@ require_once __DIR__ . '/partials/layout_open.php';
             <option value="rejected">Rejected</option>
             <option value="active">Active</option>
         </select>
-        <span class="staff-apps-card__count" id="doctorAppCount">Loading…</span>
+        <span class="staff-apps-card__count" id="doctorAppCount"></span>
     </div>
     <div class="staff-apps-table-wrap">
         <table class="staff-apps-table" id="doctorAppsTable">
@@ -115,9 +115,7 @@ require_once __DIR__ . '/partials/layout_open.php';
                     <th>Actions</th>
                 </tr>
             </thead>
-            <tbody id="doctorAppsBody">
-                <tr><td colspan="8"><div class="staff-apps-loading"><div class="staff-apps-loading__spinner" role="status"></div>Loading applications…</div></td></tr>
-            </tbody>
+            <tbody id="doctorAppsBody"></tbody>
         </table>
     </div>
 </div>

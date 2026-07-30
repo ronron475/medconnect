@@ -65,7 +65,7 @@ $activity_js_ver = (int) @filemtime(ASSETS_PATH . '/js/bhw-activity.js');
   <div class="bhw-card bhw-activity-table-card">
     <div class="bhw-activity-table-head">
       <h3 class="bhw-activity-table-title">Activity Records</h3>
-      <p class="bhw-activity-table-meta" id="actMeta" aria-live="polite">Loading activity…</p>
+      <p class="bhw-activity-table-meta" id="actMeta" aria-live="polite"></p>
     </div>
     <div class="bhw-activity-table-wrap">
       <table class="table bhw-table bhw-activity-table" id="actTable">
@@ -81,9 +81,7 @@ $activity_js_ver = (int) @filemtime(ASSETS_PATH . '/js/bhw-activity.js');
             <th>Status</th>
           </tr>
         </thead>
-        <tbody id="actBody">
-          <tr><td colspan="8" class="bhw-activity-empty">Loading activity…</td></tr>
-        </tbody>
+        <tbody id="actBody"></tbody>
       </table>
     </div>
     <div class="bhw-activity-cards" id="actCards" aria-label="Activity on mobile"></div>

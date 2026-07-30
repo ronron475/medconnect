@@ -389,3 +389,570 @@ html[data-theme-resolved='dark'] body.admin-body .staff-apps-stat:hover,
 html[data-theme-resolved='dark'] body.superadmin-body .staff-apps-stat:hover {
   background: #222222 !important;
 }
+
+/* ═══════════════════════════════════════════════════════════
+   BLANKET — match patient portal (black bg, white text, flat nav)
+   Covers Admin + Super Admin
+═══════════════════════════════════════════════════════════ */
+
+html[data-theme-resolved='dark'] body.admin-body,
+html[data-theme-resolved='dark'] body.superadmin-body,
+html[data-theme-resolved='dark'] body.admin-body .root-wrapper,
+html[data-theme-resolved='dark'] body.superadmin-body .root-wrapper,
+html[data-theme-resolved='dark'] body.admin-body .portal-shell,
+html[data-theme-resolved='dark'] body.superadmin-body .portal-shell,
+html[data-theme-resolved='dark'] body.admin-body .portal-main,
+html[data-theme-resolved='dark'] body.superadmin-body .portal-main,
+html[data-theme-resolved='dark'] body.admin-body .portal-page-body,
+html[data-theme-resolved='dark'] body.superadmin-body .portal-page-body,
+html[data-theme-resolved='dark'] body.admin-body .adm-main,
+html[data-theme-resolved='dark'] body.superadmin-body .adm-main,
+html[data-theme-resolved='dark'] body.admin-body .adm-content,
+html[data-theme-resolved='dark'] body.superadmin-body .adm-content,
+html[data-theme-resolved='dark'] body.admin-body .main-content,
+html[data-theme-resolved='dark'] body.superadmin-body .main-content {
+  background: #0a0a0a !important;
+  background-image: none !important;
+  color: #ffffff !important;
+  transition: none !important;
+}
+
+html[data-theme-resolved='dark'] body.admin-body .adm-sidebar,
+html[data-theme-resolved='dark'] body.superadmin-body .adm-sidebar,
+html[data-theme-resolved='dark'] body.admin-body .adm-logo,
+html[data-theme-resolved='dark'] body.superadmin-body .adm-logo,
+html[data-theme-resolved='dark'] body.admin-body .adm-nav,
+html[data-theme-resolved='dark'] body.superadmin-body .adm-nav,
+html[data-theme-resolved='dark'] body.admin-body .adm-footer,
+html[data-theme-resolved='dark'] body.superadmin-body .adm-footer {
+  background: #141414 !important;
+  background-image: none !important;
+  border-color: #2a2a2a !important;
+  transition: none !important;
+}
+
+html[data-theme-resolved='dark'] body.admin-body .adm-nav-item,
+html[data-theme-resolved='dark'] body.superadmin-body .adm-nav-item,
+html[data-theme-resolved='dark'] body.admin-body .adm-nav-item:hover,
+html[data-theme-resolved='dark'] body.superadmin-body .adm-nav-item:hover,
+html[data-theme-resolved='dark'] body.admin-body .adm-nav-item:focus,
+html[data-theme-resolved='dark'] body.superadmin-body .adm-nav-item:focus,
+html[data-theme-resolved='dark'] body.admin-body .adm-nav-item:active,
+html[data-theme-resolved='dark'] body.superadmin-body .adm-nav-item:active,
+html[data-theme-resolved='dark'] body.admin-body .adm-nav-item.is-active,
+html[data-theme-resolved='dark'] body.superadmin-body .adm-nav-item.is-active {
+  background: transparent !important;
+  background-image: none !important;
+  border: none !important;
+  box-shadow: none !important;
+  outline: none !important;
+  color: #ffffff !important;
+  transition: none !important;
+  -webkit-tap-highlight-color: transparent;
+}
+
+html[data-theme-resolved='dark'] body.admin-body .adm-nav-item.is-active::before,
+html[data-theme-resolved='dark'] body.superadmin-body .adm-nav-item.is-active::before {
+  display: none !important;
+}
+
+html[data-theme-resolved='dark'] body.admin-body .topbar,
+html[data-theme-resolved='dark'] body.superadmin-body .topbar,
+html[data-theme-resolved='dark'] body.admin-body .adm-topbar,
+html[data-theme-resolved='dark'] body.superadmin-body .adm-topbar {
+  background: #1c1c1c !important;
+  border-color: #2a2a2a !important;
+  color: #ffffff !important;
+  box-shadow: none !important;
+  transition: none !important;
+}
+
+html[data-theme-resolved='dark'] body.admin-body [class*='card'],
+html[data-theme-resolved='dark'] body.superadmin-body [class*='card'],
+html[data-theme-resolved='dark'] body.admin-body [class*='panel'],
+html[data-theme-resolved='dark'] body.superadmin-body [class*='panel'],
+html[data-theme-resolved='dark'] body.admin-body [class*='widget'],
+html[data-theme-resolved='dark'] body.superadmin-body [class*='widget'],
+html[data-theme-resolved='dark'] body.admin-body [class*='metric'],
+html[data-theme-resolved='dark'] body.superadmin-body [class*='metric'],
+html[data-theme-resolved='dark'] body.admin-body [class*='stat'],
+html[data-theme-resolved='dark'] body.superadmin-body [class*='stat'],
+html[data-theme-resolved='dark'] body.admin-body [class*='hero'],
+html[data-theme-resolved='dark'] body.superadmin-body [class*='hero'],
+html[data-theme-resolved='dark'] body.admin-body [class*='banner'],
+html[data-theme-resolved='dark'] body.superadmin-body [class*='banner'],
+html[data-theme-resolved='dark'] body.admin-body [class*='modal'],
+html[data-theme-resolved='dark'] body.superadmin-body [class*='modal'],
+html[data-theme-resolved='dark'] body.admin-body [class*='dialog'],
+html[data-theme-resolved='dark'] body.superadmin-body [class*='dialog'],
+html[data-theme-resolved='dark'] body.admin-body [class*='toolbar'],
+html[data-theme-resolved='dark'] body.superadmin-body [class*='toolbar'],
+html[data-theme-resolved='dark'] body.admin-body [class*='table'],
+html[data-theme-resolved='dark'] body.superadmin-body [class*='table'],
+html[data-theme-resolved='dark'] body.admin-body [class*='drawer'],
+html[data-theme-resolved='dark'] body.superadmin-body [class*='drawer'],
+html[data-theme-resolved='dark'] body.admin-body article,
+html[data-theme-resolved='dark'] body.superadmin-body article,
+html[data-theme-resolved='dark'] body.admin-body section,
+html[data-theme-resolved='dark'] body.superadmin-body section,
+html[data-theme-resolved='dark'] body.admin-body table,
+html[data-theme-resolved='dark'] body.superadmin-body table,
+html[data-theme-resolved='dark'] body.admin-body th,
+html[data-theme-resolved='dark'] body.superadmin-body th,
+html[data-theme-resolved='dark'] body.admin-body td,
+html[data-theme-resolved='dark'] body.superadmin-body td {
+  background-color: #1c1c1c !important;
+  background-image: none !important;
+  border-color: #2a2a2a !important;
+  color: #ffffff !important;
+  box-shadow: none !important;
+}
+
+html[data-theme-resolved='dark'] body.admin-body h1,
+html[data-theme-resolved='dark'] body.admin-body h2,
+html[data-theme-resolved='dark'] body.admin-body h3,
+html[data-theme-resolved='dark'] body.admin-body h4,
+html[data-theme-resolved='dark'] body.superadmin-body h1,
+html[data-theme-resolved='dark'] body.superadmin-body h2,
+html[data-theme-resolved='dark'] body.superadmin-body h3,
+html[data-theme-resolved='dark'] body.superadmin-body h4,
+html[data-theme-resolved='dark'] body.admin-body p,
+html[data-theme-resolved='dark'] body.superadmin-body p,
+html[data-theme-resolved='dark'] body.admin-body span,
+html[data-theme-resolved='dark'] body.superadmin-body span,
+html[data-theme-resolved='dark'] body.admin-body label,
+html[data-theme-resolved='dark'] body.superadmin-body label,
+html[data-theme-resolved='dark'] body.admin-body a,
+html[data-theme-resolved='dark'] body.superadmin-body a,
+html[data-theme-resolved='dark'] body.admin-body strong,
+html[data-theme-resolved='dark'] body.superadmin-body strong {
+  color: #ffffff !important;
+}
+
+html[data-theme-resolved='dark'] body.admin-body [class*='muted'],
+html[data-theme-resolved='dark'] body.superadmin-body [class*='muted'],
+html[data-theme-resolved='dark'] body.admin-body [class*='sub'],
+html[data-theme-resolved='dark'] body.superadmin-body [class*='sub'],
+html[data-theme-resolved='dark'] body.admin-body [class*='meta'],
+html[data-theme-resolved='dark'] body.superadmin-body [class*='meta'],
+html[data-theme-resolved='dark'] body.admin-body .text-muted,
+html[data-theme-resolved='dark'] body.superadmin-body .text-muted {
+  color: #a1a1aa !important;
+}
+
+html[data-theme-resolved='dark'] body.admin-body input,
+html[data-theme-resolved='dark'] body.superadmin-body input,
+html[data-theme-resolved='dark'] body.admin-body select,
+html[data-theme-resolved='dark'] body.superadmin-body select,
+html[data-theme-resolved='dark'] body.admin-body textarea,
+html[data-theme-resolved='dark'] body.superadmin-body textarea {
+  background: #141414 !important;
+  border-color: #2a2a2a !important;
+  color: #ffffff !important;
+  color-scheme: dark;
+}
+
+html[data-theme-resolved='dark'] body.admin-body canvas,
+html[data-theme-resolved='dark'] body.superadmin-body canvas,
+html[data-theme-resolved='dark'] body.admin-body [class*='chart-wrap'],
+html[data-theme-resolved='dark'] body.superadmin-body [class*='chart-wrap'],
+html[data-theme-resolved='dark'] body.admin-body [class*='canvas-wrap'],
+html[data-theme-resolved='dark'] body.superadmin-body [class*='canvas-wrap'] {
+  background: transparent !important;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   Superadmin / Admin — kill remaining white leaks
+═══════════════════════════════════════════════════════════ */
+
+/* Theme toggle */
+html[data-theme-resolved='dark'] body.admin-body .mc-theme-toggle__btn,
+html[data-theme-resolved='dark'] body.superadmin-body .mc-theme-toggle__btn {
+  background: #1c1c1c !important;
+  border-color: #2a2a2a !important;
+  color: #ffffff !important;
+}
+
+html[data-theme-resolved='dark'] body.admin-body .mc-theme-toggle__menu,
+html[data-theme-resolved='dark'] body.superadmin-body .mc-theme-toggle__menu {
+  background: #1c1c1c !important;
+  border-color: #2a2a2a !important;
+  color: #ffffff !important;
+}
+
+/* Flash / alert banners (cream → dark) */
+html[data-theme-resolved='dark'] body.admin-body .staff-apps-flash,
+html[data-theme-resolved='dark'] body.superadmin-body .staff-apps-flash,
+html[data-theme-resolved='dark'] body.admin-body .staff-apps-flash--warn,
+html[data-theme-resolved='dark'] body.superadmin-body .staff-apps-flash--warn,
+html[data-theme-resolved='dark'] body.admin-body .staff-apps-flash--success,
+html[data-theme-resolved='dark'] body.superadmin-body .staff-apps-flash--success,
+html[data-theme-resolved='dark'] body.admin-body .staff-apps-note,
+html[data-theme-resolved='dark'] body.superadmin-body .staff-apps-note {
+  background: rgba(245, 158, 11, 0.1) !important;
+  border-color: rgba(245, 158, 11, 0.35) !important;
+  color: #fcd34d !important;
+}
+
+html[data-theme-resolved='dark'] body.admin-body .staff-apps-flash--warn {
+  border-left-color: #f59e0b !important;
+  background: rgba(245, 158, 11, 0.1) !important;
+}
+
+html[data-theme-resolved='dark'] body.admin-body .staff-apps-flash--success,
+html[data-theme-resolved='dark'] body.superadmin-body .staff-apps-flash--success {
+  border-left-color: #22c55e !important;
+  background: rgba(34, 197, 94, 0.1) !important;
+}
+
+html[data-theme-resolved='dark'] body.admin-body .staff-apps-flash__icon,
+html[data-theme-resolved='dark'] body.superadmin-body .staff-apps-flash__icon,
+html[data-theme-resolved='dark'] body.admin-body .staff-apps-flash--warn .staff-apps-flash__icon,
+html[data-theme-resolved='dark'] body.superadmin-body .staff-apps-flash--warn .staff-apps-flash__icon {
+  background: #141414 !important;
+  color: #fbbf24 !important;
+}
+
+html[data-theme-resolved='dark'] body.admin-body .staff-apps-flash__title,
+html[data-theme-resolved='dark'] body.superadmin-body .staff-apps-flash__title,
+html[data-theme-resolved='dark'] body.admin-body .staff-apps-flash--warn .staff-apps-flash__title,
+html[data-theme-resolved='dark'] body.superadmin-body .staff-apps-flash--warn .staff-apps-flash__title,
+html[data-theme-resolved='dark'] body.admin-body .staff-apps-flash__text,
+html[data-theme-resolved='dark'] body.superadmin-body .staff-apps-flash__text,
+html[data-theme-resolved='dark'] body.admin-body .staff-apps-flash span,
+html[data-theme-resolved='dark'] body.superadmin-body .staff-apps-flash span,
+html[data-theme-resolved='dark'] body.admin-body .staff-apps-flash p,
+html[data-theme-resolved='dark'] body.superadmin-body .staff-apps-flash p,
+html[data-theme-resolved='dark'] body.admin-body .staff-apps-note,
+html[data-theme-resolved='dark'] body.superadmin-body .staff-apps-note,
+html[data-theme-resolved='dark'] body.admin-body .staff-apps-note span,
+html[data-theme-resolved='dark'] body.superadmin-body .staff-apps-note span,
+html[data-theme-resolved='dark'] body.admin-body .staff-apps-note strong,
+html[data-theme-resolved='dark'] body.superadmin-body .staff-apps-note strong {
+  color: #fcd34d !important;
+}
+
+html[data-theme-resolved='dark'] body.admin-body .staff-apps-note svg,
+html[data-theme-resolved='dark'] body.superadmin-body .staff-apps-note svg {
+  color: #fbbf24 !important;
+  stroke: #fbbf24 !important;
+}
+
+html[data-theme-resolved='dark'] body.admin-body .staff-apps-stat,
+html[data-theme-resolved='dark'] body.superadmin-body .staff-apps-stat,
+html[data-theme-resolved='dark'] body.admin-body .staff-apps-card,
+html[data-theme-resolved='dark'] body.superadmin-body .staff-apps-card,
+html[data-theme-resolved='dark'] body.admin-body .staff-apps-hero,
+html[data-theme-resolved='dark'] body.superadmin-body .staff-apps-hero,
+html[data-theme-resolved='dark'] body.admin-body .staff-apps-search__input,
+html[data-theme-resolved='dark'] body.superadmin-body .staff-apps-search__input,
+html[data-theme-resolved='dark'] body.admin-body .staff-apps-filter,
+html[data-theme-resolved='dark'] body.superadmin-body .staff-apps-filter,
+html[data-theme-resolved='dark'] body.admin-body .staff-apps-table-wrap,
+html[data-theme-resolved='dark'] body.superadmin-body .staff-apps-table-wrap {
+  background: #1c1c1c !important;
+  background-image: none !important;
+  border-color: #2a2a2a !important;
+  color: #ffffff !important;
+}
+
+html[data-theme-resolved='dark'] body.admin-body .staff-apps-hero__title,
+html[data-theme-resolved='dark'] body.superadmin-body .staff-apps-hero__title,
+html[data-theme-resolved='dark'] body.admin-body .staff-apps-stat__value,
+html[data-theme-resolved='dark'] body.superadmin-body .staff-apps-stat__value {
+  color: #ffffff !important;
+}
+
+html[data-theme-resolved='dark'] body.admin-body .staff-apps-hero__desc,
+html[data-theme-resolved='dark'] body.superadmin-body .staff-apps-hero__desc,
+html[data-theme-resolved='dark'] body.admin-body .staff-apps-stat__label,
+html[data-theme-resolved='dark'] body.superadmin-body .staff-apps-stat__label,
+html[data-theme-resolved='dark'] body.admin-body .staff-apps-hero__eyebrow,
+html[data-theme-resolved='dark'] body.superadmin-body .staff-apps-hero__eyebrow {
+  color: #a1a1aa !important;
+}
+
+html[data-theme-resolved='dark'] body.admin-body .staff-apps-hero__badge,
+html[data-theme-resolved='dark'] body.superadmin-body .staff-apps-hero__badge {
+  background: rgba(245, 158, 11, 0.15) !important;
+  border-color: rgba(245, 158, 11, 0.35) !important;
+  color: #fcd34d !important;
+}
+
+/* Empty states (white box → dark) */
+html[data-theme-resolved='dark'] body.admin-body .staff-apps-empty,
+html[data-theme-resolved='dark'] body.superadmin-body .staff-apps-empty,
+html[data-theme-resolved='dark'] body.admin-body .staff-apps-empty__icon,
+html[data-theme-resolved='dark'] body.superadmin-body .staff-apps-empty__icon {
+  background: #1c1c1c !important;
+  border-color: #2a2a2a !important;
+  color: #a1a1aa !important;
+}
+
+html[data-theme-resolved='dark'] body.admin-body .staff-apps-empty__title,
+html[data-theme-resolved='dark'] body.superadmin-body .staff-apps-empty__title {
+  color: #ffffff !important;
+}
+
+html[data-theme-resolved='dark'] body.admin-body .staff-apps-empty__text,
+html[data-theme-resolved='dark'] body.superadmin-body .staff-apps-empty__text {
+  color: #a1a1aa !important;
+}
+
+/* Status / role badges — dark tints, readable text */
+html[data-theme-resolved='dark'] body.admin-body .staff-app-status,
+html[data-theme-resolved='dark'] body.superadmin-body .staff-app-status,
+html[data-theme-resolved='dark'] body.admin-body .adm-status-badge,
+html[data-theme-resolved='dark'] body.superadmin-body .adm-status-badge,
+html[data-theme-resolved='dark'] body.admin-body .adm-role-badge,
+html[data-theme-resolved='dark'] body.superadmin-body .adm-role-badge,
+html[data-theme-resolved='dark'] body.admin-body .mc-badge,
+html[data-theme-resolved='dark'] body.superadmin-body .mc-badge,
+html[data-theme-resolved='dark'] body.admin-body .bhw-status--draft,
+html[data-theme-resolved='dark'] body.superadmin-body .bhw-status--draft,
+html[data-theme-resolved='dark'] body.admin-body .bhw-status--pending,
+html[data-theme-resolved='dark'] body.superadmin-body .bhw-status--pending,
+html[data-theme-resolved='dark'] body.admin-body .bhw-pending-badge,
+html[data-theme-resolved='dark'] body.superadmin-body .bhw-pending-badge {
+  background: #141414 !important;
+  border: 1px solid #2a2a2a !important;
+  color: #d4d4d8 !important;
+}
+
+html[data-theme-resolved='dark'] body.admin-body .staff-app-status--pending,
+html[data-theme-resolved='dark'] body.superadmin-body .staff-app-status--pending,
+html[data-theme-resolved='dark'] body.admin-body .bhw-status--pending,
+html[data-theme-resolved='dark'] body.superadmin-body .bhw-status--pending,
+html[data-theme-resolved='dark'] body.admin-body .mc-badge--pending,
+html[data-theme-resolved='dark'] body.superadmin-body .mc-badge--pending {
+  background: rgba(245, 158, 11, 0.15) !important;
+  border-color: rgba(245, 158, 11, 0.35) !important;
+  color: #fcd34d !important;
+}
+
+html[data-theme-resolved='dark'] body.admin-body .staff-app-status--active,
+html[data-theme-resolved='dark'] body.superadmin-body .staff-app-status--active,
+html[data-theme-resolved='dark'] body.admin-body .adm-status-badge--active,
+html[data-theme-resolved='dark'] body.superadmin-body .adm-status-badge--active,
+html[data-theme-resolved='dark'] body.admin-body .mc-badge--active,
+html[data-theme-resolved='dark'] body.superadmin-body .mc-badge--active,
+html[data-theme-resolved='dark'] body.admin-body .mc-badge--approved,
+html[data-theme-resolved='dark'] body.superadmin-body .mc-badge--approved {
+  background: rgba(34, 197, 94, 0.15) !important;
+  border-color: rgba(34, 197, 94, 0.35) !important;
+  color: #86efac !important;
+}
+
+html[data-theme-resolved='dark'] body.admin-body .staff-app-status--rejected,
+html[data-theme-resolved='dark'] body.superadmin-body .staff-app-status--rejected,
+html[data-theme-resolved='dark'] body.admin-body .adm-status-badge--inactive,
+html[data-theme-resolved='dark'] body.superadmin-body .adm-status-badge--inactive,
+html[data-theme-resolved='dark'] body.admin-body .bhw-status--rejected,
+html[data-theme-resolved='dark'] body.superadmin-body .bhw-status--rejected {
+  background: rgba(220, 38, 38, 0.15) !important;
+  border-color: rgba(220, 38, 38, 0.35) !important;
+  color: #fca5a5 !important;
+}
+
+html[data-theme-resolved='dark'] body.admin-body .adm-role-badge--patient,
+html[data-theme-resolved='dark'] body.superadmin-body .adm-role-badge--patient {
+  background: rgba(20, 184, 166, 0.15) !important;
+  color: #5eead4 !important;
+}
+
+html[data-theme-resolved='dark'] body.admin-body .adm-role-badge--provider,
+html[data-theme-resolved='dark'] body.superadmin-body .adm-role-badge--provider {
+  background: rgba(59, 130, 246, 0.15) !important;
+  color: #93c5fd !important;
+}
+
+/* Override light inline badge styles only when no semantic class is set */
+html[data-theme-resolved='dark'] body.admin-body .mc-badge[style]:not([class*='mc-badge--']),
+html[data-theme-resolved='dark'] body.superadmin-body .mc-badge[style]:not([class*='mc-badge--']) {
+  background: rgba(245, 158, 11, 0.15) !important;
+  color: #fcd34d !important;
+  border: 1px solid rgba(245, 158, 11, 0.35) !important;
+}
+
+html[data-theme-resolved='dark'] body.admin-body .mc-badge--active,
+html[data-theme-resolved='dark'] body.superadmin-body .mc-badge--active,
+html[data-theme-resolved='dark'] body.admin-body .mc-badge--approved,
+html[data-theme-resolved='dark'] body.superadmin-body .mc-badge--approved {
+  background: rgba(34, 197, 94, 0.15) !important;
+  border-color: rgba(34, 197, 94, 0.35) !important;
+  color: #86efac !important;
+}
+
+html[data-theme-resolved='dark'] body.admin-body .mc-badge--pending,
+html[data-theme-resolved='dark'] body.superadmin-body .mc-badge--pending,
+html[data-theme-resolved='dark'] body.admin-body .mc-badge--suspended,
+html[data-theme-resolved='dark'] body.superadmin-body .mc-badge--suspended {
+  background: rgba(245, 158, 11, 0.15) !important;
+  border-color: rgba(245, 158, 11, 0.35) !important;
+  color: #fcd34d !important;
+}
+
+html[data-theme-resolved='dark'] body.admin-body .mc-badge--danger,
+html[data-theme-resolved='dark'] body.superadmin-body .mc-badge--danger {
+  background: rgba(220, 38, 38, 0.15) !important;
+  border-color: rgba(220, 38, 38, 0.35) !important;
+  color: #fca5a5 !important;
+}
+
+html[data-theme-resolved='dark'] body.admin-body .mc-badge--muted,
+html[data-theme-resolved='dark'] body.superadmin-body .mc-badge--muted {
+  background: #141414 !important;
+  border-color: #2a2a2a !important;
+  color: #a1a1aa !important;
+}
+
+/* Light-mode badge classes (user mgmt / AI review) */
+.mc-badge--active,
+.mc-badge--approved { background: #dcfce7; color: #15803d; }
+.mc-badge--pending,
+.mc-badge--suspended { background: #fef3c7; color: #b45309; }
+.mc-badge--danger { background: #fee2e2; color: #b91c1c; }
+.mc-badge--muted { background: #f1f5f9; color: #475569; }
+
+/* Patient Case Viewer */
+html[data-theme-resolved='dark'] body.admin-body .case-viewer-list-card,
+html[data-theme-resolved='dark'] body.superadmin-body .case-viewer-list-card,
+html[data-theme-resolved='dark'] body.admin-body .case-viewer-list-card__head,
+html[data-theme-resolved='dark'] body.superadmin-body .case-viewer-list-card__head,
+html[data-theme-resolved='dark'] body.admin-body .case-viewer-empty,
+html[data-theme-resolved='dark'] body.superadmin-body .case-viewer-empty,
+html[data-theme-resolved='dark'] body.admin-body .case-viewer-profile,
+html[data-theme-resolved='dark'] body.superadmin-body .case-viewer-profile,
+html[data-theme-resolved='dark'] body.admin-body .case-viewer-section,
+html[data-theme-resolved='dark'] body.superadmin-body .case-viewer-section,
+html[data-theme-resolved='dark'] body.admin-body .case-viewer-detail,
+html[data-theme-resolved='dark'] body.superadmin-body .case-viewer-detail {
+  background: #1c1c1c !important;
+  background-image: none !important;
+  border-color: #2a2a2a !important;
+  color: #ffffff !important;
+  box-shadow: none !important;
+}
+
+html[data-theme-resolved='dark'] body.admin-body .case-viewer-empty__icon,
+html[data-theme-resolved='dark'] body.superadmin-body .case-viewer-empty__icon,
+html[data-theme-resolved='dark'] body.admin-body .case-viewer-patient__avatar,
+html[data-theme-resolved='dark'] body.superadmin-body .case-viewer-patient__avatar,
+html[data-theme-resolved='dark'] body.admin-body .case-viewer-profile__avatar,
+html[data-theme-resolved='dark'] body.superadmin-body .case-viewer-profile__avatar,
+html[data-theme-resolved='dark'] body.admin-body .case-viewer-section__count,
+html[data-theme-resolved='dark'] body.superadmin-body .case-viewer-section__count,
+html[data-theme-resolved='dark'] body.admin-body .case-viewer-section__head,
+html[data-theme-resolved='dark'] body.superadmin-body .case-viewer-section__head {
+  background: #141414 !important;
+  background-image: none !important;
+  color: #a1a1aa !important;
+  border-color: #2a2a2a !important;
+}
+
+html[data-theme-resolved='dark'] body.admin-body .case-viewer-patient,
+html[data-theme-resolved='dark'] body.superadmin-body .case-viewer-patient {
+  background: transparent !important;
+  border-color: #2a2a2a !important;
+}
+
+html[data-theme-resolved='dark'] body.admin-body .case-viewer-patient:hover,
+html[data-theme-resolved='dark'] body.superadmin-body .case-viewer-patient:hover,
+html[data-theme-resolved='dark'] body.admin-body .case-viewer-patient.is-active,
+html[data-theme-resolved='dark'] body.superadmin-body .case-viewer-patient.is-active {
+  background: rgba(255, 255, 255, 0.06) !important;
+  background-image: none !important;
+}
+
+html[data-theme-resolved='dark'] body.admin-body .case-viewer-patient__name,
+html[data-theme-resolved='dark'] body.superadmin-body .case-viewer-patient__name,
+html[data-theme-resolved='dark'] body.admin-body .case-viewer-empty__title,
+html[data-theme-resolved='dark'] body.superadmin-body .case-viewer-empty__title,
+html[data-theme-resolved='dark'] body.admin-body .case-viewer-profile__name,
+html[data-theme-resolved='dark'] body.superadmin-body .case-viewer-profile__name,
+html[data-theme-resolved='dark'] body.admin-body .case-viewer-section__title,
+html[data-theme-resolved='dark'] body.superadmin-body .case-viewer-section__title,
+html[data-theme-resolved='dark'] body.admin-body .case-viewer-record__title,
+html[data-theme-resolved='dark'] body.superadmin-body .case-viewer-record__title,
+html[data-theme-resolved='dark'] body.admin-body .case-viewer-list-card__title,
+html[data-theme-resolved='dark'] body.superadmin-body .case-viewer-list-card__title,
+html[data-theme-resolved='dark'] body.admin-body .case-viewer-profile__field dd,
+html[data-theme-resolved='dark'] body.superadmin-body .case-viewer-profile__field dd {
+  color: #ffffff !important;
+}
+
+html[data-theme-resolved='dark'] body.admin-body .case-viewer-patient__email,
+html[data-theme-resolved='dark'] body.superadmin-body .case-viewer-patient__email,
+html[data-theme-resolved='dark'] body.admin-body .case-viewer-empty__text,
+html[data-theme-resolved='dark'] body.superadmin-body .case-viewer-empty__text,
+html[data-theme-resolved='dark'] body.admin-body .case-viewer-profile__meta,
+html[data-theme-resolved='dark'] body.superadmin-body .case-viewer-profile__meta,
+html[data-theme-resolved='dark'] body.admin-body .case-viewer-record__meta,
+html[data-theme-resolved='dark'] body.superadmin-body .case-viewer-record__meta,
+html[data-theme-resolved='dark'] body.admin-body .case-viewer-profile__field dt,
+html[data-theme-resolved='dark'] body.superadmin-body .case-viewer-profile__field dt,
+html[data-theme-resolved='dark'] body.admin-body .case-viewer-section__empty,
+html[data-theme-resolved='dark'] body.superadmin-body .case-viewer-section__empty {
+  color: #a1a1aa !important;
+}
+
+html[data-theme-resolved='dark'] body.admin-body .case-viewer-patient__badge,
+html[data-theme-resolved='dark'] body.superadmin-body .case-viewer-patient__badge,
+html[data-theme-resolved='dark'] body.admin-body .case-viewer-profile__status,
+html[data-theme-resolved='dark'] body.superadmin-body .case-viewer-profile__status {
+  background: rgba(34, 197, 94, 0.15) !important;
+  color: #86efac !important;
+}
+
+html[data-theme-resolved='dark'] body.admin-body .case-viewer-patient__badge--inactive,
+html[data-theme-resolved='dark'] body.superadmin-body .case-viewer-patient__badge--inactive,
+html[data-theme-resolved='dark'] body.admin-body .case-viewer-profile__status--inactive,
+html[data-theme-resolved='dark'] body.superadmin-body .case-viewer-profile__status--inactive {
+  background: rgba(220, 38, 38, 0.15) !important;
+  color: #fca5a5 !important;
+}
+
+html[data-theme-resolved='dark'] body.admin-body .case-viewer-readonly,
+html[data-theme-resolved='dark'] body.superadmin-body .case-viewer-readonly {
+  background: rgba(245, 158, 11, 0.1) !important;
+  border-color: rgba(245, 158, 11, 0.35) !important;
+  color: #fcd34d !important;
+}
+
+html[data-theme-resolved='dark'] body.admin-body .case-viewer-list-card__search input,
+html[data-theme-resolved='dark'] body.superadmin-body .case-viewer-list-card__search input {
+  background: #141414 !important;
+  border-color: #2a2a2a !important;
+  color: #ffffff !important;
+}
+
+/* Messages FAB */
+html[data-theme-resolved='dark'] body.admin-body .mc-messages-fab,
+html[data-theme-resolved='dark'] body.superadmin-body .mc-messages-fab {
+  background: #7c3aed !important;
+  color: #ffffff !important;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45) !important;
+}
+
+/* Scrollbars */
+html[data-theme-resolved='dark'] body.admin-body,
+html[data-theme-resolved='dark'] body.superadmin-body {
+  scrollbar-color: #3f3f46 #0a0a0a;
+}
+
+html[data-theme-resolved='dark'] body.admin-body ::-webkit-scrollbar,
+html[data-theme-resolved='dark'] body.superadmin-body ::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+html[data-theme-resolved='dark'] body.admin-body ::-webkit-scrollbar-track,
+html[data-theme-resolved='dark'] body.superadmin-body ::-webkit-scrollbar-track {
+  background: #0a0a0a;
+}
+
+html[data-theme-resolved='dark'] body.admin-body ::-webkit-scrollbar-thumb,
+html[data-theme-resolved='dark'] body.superadmin-body ::-webkit-scrollbar-thumb {
+  background: #3f3f46;
+  border-radius: 4px;
+}

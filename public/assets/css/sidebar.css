@@ -60,7 +60,8 @@
   text-decoration: none;
   font-size: 0.875rem;
   font-weight: 600;
-  transition: all 0.2s ease;
+  transition: none;
+  -webkit-tap-highlight-color: transparent;
 }
 
 .sb-label {
@@ -76,14 +77,23 @@
 }
 
 .sb-item.active {
-  background: rgba(255, 255, 255, 0.15);
-  color: #ffffff;
-  box-shadow: inset 4px 0 0 #ffffff; /* soft highlight wrapper/indicator */
+  background: transparent;
+  color: inherit;
+  box-shadow: none;
 }
 
 .sb-item:hover {
-  background: rgba(255, 255, 255, 0.08);
-  color: #ffffff;
+  background: transparent;
+  color: inherit;
+}
+
+.sb-item:focus,
+.sb-item:focus-visible,
+.sb-item:active {
+  outline: none;
+  box-shadow: none;
+  background: transparent;
+  -webkit-tap-highlight-color: transparent;
 }
 
 .sb-item.active svg {

@@ -1,0 +1,1057 @@
+/**
+ * medConnect — Patient Portal Dark Mode
+ * WorkflowAI-style: near-black #0a0a0a canvas, flat #1c1c1c cards, #2a2a2a borders, purple accents.
+ */
+
+/* ── Design tokens ── */
+html[data-theme-resolved='dark'] body.patient-portal {
+  --pt-color-surface: #1c1c1c;
+  --pt-color-text: #ffffff;
+  --pt-color-muted: #a1a1aa;
+  --pt-color-primary: #a78bfa;
+  --pt-border: #2a2a2a;
+  --pt-border-soft: #2a2a2a;
+  --pt-shadow-card: 0 1px 0 rgba(255, 255, 255, 0.04), 0 4px 20px rgba(0, 0, 0, 0.5);
+  --mc-theme-bg: #0a0a0a;
+  --mc-theme-surface: #1c1c1c;
+  --mc-theme-surface-2: #141414;
+  --mc-theme-text: #ffffff;
+  --mc-theme-text-secondary: #a1a1aa;
+  --mc-theme-border: #2a2a2a;
+  --mc-theme-input-bg: #141414;
+  --mc-theme-input-border: #2a2a2a;
+  --mc-theme-header: #1c1c1c;
+  --mc-navy-dark: #ffffff;
+  --mc-white: #1c1c1c;
+  --mc-border-thin: #2a2a2a;
+  --mc-ice-blue: #0a0a0a;
+  --mc-surface: #1c1c1c;
+  --mc-bg: #0a0a0a;
+  --landing-bg: #0a0a0a;
+  --landing-surface: #1c1c1c;
+  --pt-color-text: #ffffff;
+  --pt-color-muted: #a1a1aa;
+  --pt-color-surface: #1c1c1c;
+  --pt-border: #2a2a2a;
+  --pt-border-soft: #2a2a2a;
+  background: #0a0a0a !important;
+  color: #ffffff;
+}
+
+html[data-theme-resolved='dark'] body.patient-portal .main-content,
+html[data-theme-resolved='dark'] body.patient-portal .portal-main,
+html[data-theme-resolved='dark'] body.patient-portal .portal-page-body,
+html[data-theme-resolved='dark'] body.patient-portal .view-container {
+  background: #0a0a0a !important;
+  color: #ffffff;
+}
+
+/* ── Sidebar ── */
+html[data-theme-resolved='dark'] body.patient-portal .sidebar {
+  background: #141414 !important;
+  border-right-color: #2a2a2a !important;
+  box-shadow: none !important;
+}
+
+html[data-theme-resolved='dark'] body.patient-portal .sb-name,
+html[data-theme-resolved='dark'] body.patient-portal .sb-role,
+html[data-theme-resolved='dark'] body.patient-portal .sb-patient-id {
+  color: #ffffff !important;
+}
+
+html[data-theme-resolved='dark'] body.patient-portal .sb-item,
+html[data-theme-resolved='dark'] body.patient-portal .sb-item:hover,
+html[data-theme-resolved='dark'] body.patient-portal .sb-item:focus,
+html[data-theme-resolved='dark'] body.patient-portal .sb-item:focus-visible,
+html[data-theme-resolved='dark'] body.patient-portal .sb-item:active,
+html[data-theme-resolved='dark'] body.patient-portal .sb-item.active,
+html[data-theme-resolved='dark'] body.patient-portal .sb-item.active:hover,
+html[data-theme-resolved='dark'] body.patient-portal .sb-item.active:focus,
+html[data-theme-resolved='dark'] body.patient-portal .sb-item.active:active {
+  background: transparent !important;
+  background-color: transparent !important;
+  background-image: none !important;
+  border: none !important;
+  border-color: transparent !important;
+  box-shadow: none !important;
+  outline: none !important;
+  -webkit-tap-highlight-color: transparent;
+  color: #ffffff !important;
+}
+
+html[data-theme-resolved='dark'] body.patient-portal .sb-item svg,
+html[data-theme-resolved='dark'] body.patient-portal .sb-item.active svg {
+  stroke: #ffffff !important;
+  opacity: 1 !important;
+}
+
+html[data-theme-resolved='dark'] body.patient-portal .sb-footer,
+html[data-theme-resolved='dark'] body.patient-portal .sb-profile {
+  border-color: #2a2a2a !important;
+}
+
+html[data-theme-resolved='dark'] body.patient-portal .sb-logout {
+  background: #1c1c1c !important;
+  border-color: #2a2a2a !important;
+  color: #a1a1aa !important;
+}
+
+/* ── Topbar ── */
+html[data-theme-resolved='dark'] body.patient-portal .topbar,
+html[data-theme-resolved='dark'] body.patient-portal .topbar--clinical {
+  background: #1c1c1c !important;
+  border-bottom-color: #2a2a2a !important;
+  box-shadow: none !important;
+}
+
+html[data-theme-resolved='dark'] body.patient-portal .topbar-title,
+html[data-theme-resolved='dark'] body.patient-portal .topbar-date,
+html[data-theme-resolved='dark'] body.patient-portal .topbar-time,
+html[data-theme-resolved='dark'] body.patient-portal .topbar-user-name {
+  color: #ffffff !important;
+}
+
+html[data-theme-resolved='dark'] body.patient-portal .topbar-eyebrow {
+  color: #a78bfa !important;
+}
+
+html[data-theme-resolved='dark'] body.patient-portal .topbar-icon-btn,
+html[data-theme-resolved='dark'] body.patient-portal .mc-nav-toggle,
+html[data-theme-resolved='dark'] body.patient-portal .mc-notif-btn,
+html[data-theme-resolved='dark'] body.patient-portal .mc-theme-toggle__btn,
+html[data-theme-resolved='dark'] body.patient-portal .topbar-logout {
+  background: #1c1c1c !important;
+  border: 1px solid #2a2a2a !important;
+  color: #a1a1aa !important;
+}
+
+html[data-theme-resolved='dark'] body.patient-portal .mc-theme-toggle__option.is-active {
+  background: rgba(124, 58, 237, 0.2) !important;
+  color: #c4b5fd !important;
+}
+
+/* ── Cards & panels (patient UI system) ── */
+html[data-theme-resolved='dark'] body.patient-portal .pdash-card,
+html[data-theme-resolved='dark'] body.patient-portal .pdash-metric,
+html[data-theme-resolved='dark'] body.patient-portal .pdash-hero,
+html[data-theme-resolved='dark'] body.patient-portal .pmh-metric,
+html[data-theme-resolved='dark'] body.patient-portal .pmh-visit__body,
+html[data-theme-resolved='dark'] body.patient-portal .pmh-file-card,
+html[data-theme-resolved='dark'] body.patient-portal .pmh-empty,
+html[data-theme-resolved='dark'] body.patient-portal .psess-metric,
+html[data-theme-resolved='dark'] body.patient-portal .psess-card,
+html[data-theme-resolved='dark'] body.patient-portal .psess-related,
+html[data-theme-resolved='dark'] body.patient-portal .psess-empty,
+html[data-theme-resolved='dark'] body.patient-portal .pts-stat,
+html[data-theme-resolved='dark'] body.patient-portal .pts-card,
+html[data-theme-resolved='dark'] body.patient-portal .pts-nav,
+html[data-theme-resolved='dark'] body.patient-portal .mc-card,
+html[data-theme-resolved='dark'] body.patient-portal .patient-health-event__card,
+html[data-theme-resolved='dark'] body.patient-portal .prov-dash-card,
+html[data-theme-resolved='dark'] body.patient-portal .prov-dash-stat,
+html[data-theme-resolved='dark'] body.patient-portal .prov-dash-welcome,
+html[data-theme-resolved='dark'] body.patient-portal .prov-how-it-works,
+html[data-theme-resolved='dark'] body.patient-portal .mc-notif-widget,
+html[data-theme-resolved='dark'] body.patient-portal .pt-dash-card,
+html[data-theme-resolved='dark'] body.patient-portal .pt-dash-stat,
+html[data-theme-resolved='dark'] body.patient-portal .pt-dash-action,
+html[data-theme-resolved='dark'] body.patient-portal .folder-card,
+html[data-theme-resolved='dark'] body.patient-portal .patient-consult-row,
+html[data-theme-resolved='dark'] body.patient-portal .adm-banner.patient-dash-banner {
+  background: #1c1c1c !important;
+  border-color: #2a2a2a !important;
+  color: #ffffff;
+  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.04), 0 4px 20px rgba(0, 0, 0, 0.5);
+}
+
+html[data-theme-resolved='dark'] body.patient-portal .pdash-card__head,
+html[data-theme-resolved='dark'] body.patient-portal .pts-card__head,
+html[data-theme-resolved='dark'] body.patient-portal .prov-dash-card__head {
+  background: #141414 !important;
+  border-bottom-color: #2a2a2a !important;
+}
+
+html[data-theme-resolved='dark'] body.patient-portal .pdash-card__title,
+html[data-theme-resolved='dark'] body.patient-portal .pdash-hero__title,
+html[data-theme-resolved='dark'] body.patient-portal .pmh-visit__title,
+html[data-theme-resolved='dark'] body.patient-portal .pts-card__title,
+html[data-theme-resolved='dark'] body.patient-portal .psess-related__title,
+html[data-theme-resolved='dark'] body.patient-portal .prov-dash-card__title,
+html[data-theme-resolved='dark'] body.patient-portal .prov-dash-welcome__title,
+html[data-theme-resolved='dark'] body.patient-portal .pt-dash-card__title,
+html[data-theme-resolved='dark'] body.patient-portal .adm-banner-title {
+  color: #ffffff !important;
+}
+
+html[data-theme-resolved='dark'] body.patient-portal .pdash-card__sub,
+html[data-theme-resolved='dark'] body.patient-portal .pdash-lead,
+html[data-theme-resolved='dark'] body.patient-portal .psess-lead,
+html[data-theme-resolved='dark'] body.patient-portal .pmh-lead,
+html[data-theme-resolved='dark'] body.patient-portal .pts-lead,
+html[data-theme-resolved='dark'] body.patient-portal .phs-hero__sub,
+html[data-theme-resolved='dark'] body.patient-portal .pdash-metric__label,
+html[data-theme-resolved='dark'] body.patient-portal .adm-banner-sub {
+  color: #a1a1aa !important;
+}
+
+html[data-theme-resolved='dark'] body.patient-portal .pdash-metric__value,
+html[data-theme-resolved='dark'] body.patient-portal .pmh-metric__value,
+html[data-theme-resolved='dark'] body.patient-portal .psess-metric__value,
+html[data-theme-resolved='dark'] body.patient-portal .prov-dash-stat strong,
+html[data-theme-resolved='dark'] body.patient-portal .pt-dash-stat strong {
+  color: #ffffff !important;
+}
+
+html[data-theme-resolved='dark'] body.patient-portal .greeting-banner.patient-greeting {
+  background: linear-gradient(135deg, #141414 0%, #1c1c1c 55%, rgba(124, 58, 237, 0.22) 100%) !important;
+  border-color: #2a2a2a !important;
+}
+
+/* ── Tabs & filters ── */
+html[data-theme-resolved='dark'] body.patient-portal .pdash-tab,
+html[data-theme-resolved='dark'] body.patient-portal .pmh-tab,
+html[data-theme-resolved='dark'] body.patient-portal .psess-tab,
+html[data-theme-resolved='dark'] body.patient-portal .tab-btn,
+html[data-theme-resolved='dark'] body.patient-portal .patient-portal .tab-filters {
+  background: #141414 !important;
+  border-color: #2a2a2a !important;
+  color: #a1a1aa !important;
+}
+
+html[data-theme-resolved='dark'] body.patient-portal .pdash-tab.is-active,
+html[data-theme-resolved='dark'] body.patient-portal .pmh-tab.is-active,
+html[data-theme-resolved='dark'] body.patient-portal .psess-tab.is-active,
+html[data-theme-resolved='dark'] body.patient-portal .tab-btn.active {
+  background: rgba(124, 58, 237, 0.2) !important;
+  border-color: #7c3aed !important;
+  color: #c4b5fd !important;
+}
+
+/* ── Forms & inputs ── */
+html[data-theme-resolved='dark'] body.patient-portal input[type='text'],
+html[data-theme-resolved='dark'] body.patient-portal input[type='email'],
+html[data-theme-resolved='dark'] body.patient-portal input[type='password'],
+html[data-theme-resolved='dark'] body.patient-portal input[type='tel'],
+html[data-theme-resolved='dark'] body.patient-portal input[type='number'],
+html[data-theme-resolved='dark'] body.patient-portal input[type='date'],
+html[data-theme-resolved='dark'] body.patient-portal input[type='search'],
+html[data-theme-resolved='dark'] body.patient-portal select,
+html[data-theme-resolved='dark'] body.patient-portal textarea,
+html[data-theme-resolved='dark'] body.patient-portal .pts-input,
+html[data-theme-resolved='dark'] body.patient-portal .form-control {
+  background: #141414 !important;
+  border-color: #2a2a2a !important;
+  color: #ffffff !important;
+}
+
+html[data-theme-resolved='dark'] body.patient-portal input::placeholder,
+html[data-theme-resolved='dark'] body.patient-portal textarea::placeholder {
+  color: #71717a !important;
+}
+
+html[data-theme-resolved='dark'] body.patient-portal .form-label,
+html[data-theme-resolved='dark'] body.patient-portal .pts-field label {
+  color: #a1a1aa !important;
+}
+
+/* ── Triage & symptom chips ── */
+html[data-theme-resolved='dark'] body.patient-portal .patient-triage-form .symptom-chip,
+html[data-theme-resolved='dark'] body.patient-portal .patient-consult-row__icon {
+  background: #141414 !important;
+  border-color: #2a2a2a !important;
+  color: #d4d4d8 !important;
+}
+
+html[data-theme-resolved='dark'] body.patient-portal .patient-triage-alert--warning {
+  background: rgba(245, 158, 11, 0.12) !important;
+  border-color: rgba(245, 158, 11, 0.35) !important;
+  color: #fcd34d !important;
+}
+
+/* ── Tables ── */
+html[data-theme-resolved='dark'] body.patient-portal .mc-table,
+html[data-theme-resolved='dark'] body.patient-portal table {
+  background: #1c1c1c !important;
+  border-color: #2a2a2a !important;
+}
+
+html[data-theme-resolved='dark'] body.patient-portal .mc-table thead th,
+html[data-theme-resolved='dark'] body.patient-portal table th {
+  background: #141414 !important;
+  color: #a1a1aa !important;
+  border-color: #2a2a2a !important;
+}
+
+html[data-theme-resolved='dark'] body.patient-portal .mc-table tbody td,
+html[data-theme-resolved='dark'] body.patient-portal table td {
+  background: #1c1c1c !important;
+  color: #d4d4d8 !important;
+  border-color: #2a2a2a !important;
+}
+
+html[data-theme-resolved='dark'] body.patient-portal .mc-table-empty {
+  color: #a1a1aa !important;
+}
+
+/* ── Buttons ── */
+html[data-theme-resolved='dark'] body.patient-portal .mc-btn--primary,
+html[data-theme-resolved='dark'] body.patient-portal .pdash-btn--primary,
+html[data-theme-resolved='dark'] body.patient-portal .psess-btn--primary,
+html[data-theme-resolved='dark'] body.patient-portal .pts-btn--primary {
+  background: #7c3aed !important;
+  border-color: #7c3aed !important;
+  color: #ffffff !important;
+}
+
+html[data-theme-resolved='dark'] body.patient-portal .mc-btn--outline,
+html[data-theme-resolved='dark'] body.patient-portal .pdash-btn--outline,
+html[data-theme-resolved='dark'] body.patient-portal .psess-btn--outline {
+  background: transparent !important;
+  border-color: #2a2a2a !important;
+  color: #d4d4d8 !important;
+}
+
+/* ── Messages ── */
+html[data-theme-resolved='dark'] body.patient-portal .messages-page,
+html[data-theme-resolved='dark'] body.patient-portal .msg-sidebar,
+html[data-theme-resolved='dark'] body.patient-portal .msg-panel,
+html[data-theme-resolved='dark'] body.patient-portal .msg-composer,
+html[data-theme-resolved='dark'] body.patient-portal .composer {
+  background: #1c1c1c !important;
+  border-color: #2a2a2a !important;
+}
+
+html[data-theme-resolved='dark'] body.patient-portal .thread-body {
+  background: #0a0a0a !important;
+}
+
+html[data-theme-resolved='dark'] body.patient-portal .msg-item:hover,
+html[data-theme-resolved='dark'] body.patient-portal .msg-item.active {
+  background: rgba(255, 255, 255, 0.06) !important;
+}
+
+/* ── Modals ── */
+html[data-theme-resolved='dark'] body.patient-portal .mc-urgency-modal__card,
+html[data-theme-resolved='dark'] body.patient-portal .mc-urgency-slot-card,
+html[data-theme-resolved='dark'] body.patient-portal .modal-content,
+html[data-theme-resolved='dark'] body.patient-portal .dropdown-menu {
+  background: #1c1c1c !important;
+  border-color: #2a2a2a !important;
+  color: #ffffff !important;
+}
+
+html[data-theme-resolved='dark'] body.patient-portal .mc-urgency-modal__btn--ghost {
+  background: #141414 !important;
+  border-color: #2a2a2a !important;
+  color: #d4d4d8 !important;
+}
+
+/* ── Charts ── */
+html[data-theme-resolved='dark'] body.patient-portal .prov-chart,
+html[data-theme-resolved='dark'] body.patient-portal .prov-chart-wrap,
+html[data-theme-resolved='dark'] body.patient-portal canvas {
+  background: transparent !important;
+}
+
+/* ── Quick links / side panels ── */
+html[data-theme-resolved='dark'] body.patient-portal .psess-related__link,
+html[data-theme-resolved='dark'] body.patient-portal .pdash-quick__link,
+html[data-theme-resolved='dark'] body.patient-portal .pts-nav__item {
+  background: #141414 !important;
+  border-color: #2a2a2a !important;
+  color: #d4d4d8 !important;
+}
+
+html[data-theme-resolved='dark'] body.patient-portal .psess-related__link:hover,
+html[data-theme-resolved='dark'] body.patient-portal .pdash-quick__link:hover,
+html[data-theme-resolved='dark'] body.patient-portal .pts-nav__item.is-active {
+  background: rgba(124, 58, 237, 0.14) !important;
+  border-color: #7c3aed !important;
+  color: #c4b5fd !important;
+}
+
+/* ── Strict pass — remove white / light-gray strips ── */
+html[data-theme-resolved='dark'] body.patient-portal .table-responsive,
+html[data-theme-resolved='dark'] body.patient-portal .pdash-session,
+html[data-theme-resolved='dark'] body.patient-portal .psess-flow__summary,
+html[data-theme-resolved='dark'] body.patient-portal .pdash-flow__summary,
+html[data-theme-resolved='dark'] body.patient-portal .patient-dash-pill,
+html[data-theme-resolved='dark'] body.patient-portal .patient-dash-pill--id {
+  background: #1c1c1c !important;
+  border-color: #2a2a2a !important;
+  color: #d4d4d8 !important;
+}
+
+html[data-theme-resolved='dark'] body.patient-portal .pt-dash-consult {
+  background: linear-gradient(135deg, rgba(124, 58, 237, 0.08) 0%, #1c1c1c 100%) !important;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   WorkflowAI strict pass — black canvas, white text, no white strips
+═══════════════════════════════════════════════════════════ */
+
+html[data-theme-resolved='dark'],
+html[data-theme-resolved='dark'] body.patient-portal {
+  background: #0a0a0a !important;
+  color: #ffffff !important;
+}
+
+html[data-theme-resolved='dark'] body.patient-portal .root-wrapper,
+html[data-theme-resolved='dark'] body.patient-portal .portal-shell,
+html[data-theme-resolved='dark'] body.patient-portal .main-content,
+html[data-theme-resolved='dark'] body.patient-portal .portal-main,
+html[data-theme-resolved='dark'] body.patient-portal .portal-page-body,
+html[data-theme-resolved='dark'] body.patient-portal .view-container,
+html[data-theme-resolved='dark'] body.patient-portal .patient-page,
+html[data-theme-resolved='dark'] body.patient-portal .pdash-page,
+html[data-theme-resolved='dark'] body.patient-portal .psess-page,
+html[data-theme-resolved='dark'] body.patient-portal .pmh-page,
+html[data-theme-resolved='dark'] body.patient-portal .pts-page,
+html[data-theme-resolved='dark'] body.patient-portal .phs-page {
+  background: #0a0a0a !important;
+  color: #ffffff !important;
+}
+
+/* Kill patient-landing-theme slate canvas */
+html[data-theme-resolved='dark'] body.patient-portal .sidebar {
+  background: #141414 !important;
+}
+
+html[data-theme-resolved='dark'] body.patient-portal .topbar,
+html[data-theme-resolved='dark'] body.patient-portal .topbar--clinical {
+  background: #1c1c1c !important;
+  border-bottom-color: #2a2a2a !important;
+  box-shadow: none !important;
+}
+
+/* Dashboard / sessions / health / settings surfaces */
+html[data-theme-resolved='dark'] body.patient-portal .pdash-hero,
+html[data-theme-resolved='dark'] body.patient-portal .pdash-live,
+html[data-theme-resolved='dark'] body.patient-portal .pdash-metric,
+html[data-theme-resolved='dark'] body.patient-portal .pdash-metric--accent,
+html[data-theme-resolved='dark'] body.patient-portal .pdash-metric--warn,
+html[data-theme-resolved='dark'] body.patient-portal .pdash-card,
+html[data-theme-resolved='dark'] body.patient-portal .pdash-card--followups,
+html[data-theme-resolved='dark'] body.patient-portal .pdash-session,
+html[data-theme-resolved='dark'] body.patient-portal .pdash-session--ready,
+html[data-theme-resolved='dark'] body.patient-portal .pdash-empty,
+html[data-theme-resolved='dark'] body.patient-portal .pdash-action,
+html[data-theme-resolved='dark'] body.patient-portal .pdash-quick,
+html[data-theme-resolved='dark'] body.patient-portal .pdash-quick__link,
+html[data-theme-resolved='dark'] body.patient-portal .pdash-chart,
+html[data-theme-resolved='dark'] body.patient-portal .pdash-flow__summary,
+html[data-theme-resolved='dark'] body.patient-portal .pdash-status-item,
+html[data-theme-resolved='dark'] body.patient-portal .psess-card,
+html[data-theme-resolved='dark'] body.patient-portal .psess-related,
+html[data-theme-resolved='dark'] body.patient-portal .psess-empty,
+html[data-theme-resolved='dark'] body.patient-portal .psess-flow__summary,
+html[data-theme-resolved='dark'] body.patient-portal .pmh-visit,
+html[data-theme-resolved='dark'] body.patient-portal .pmh-file-card,
+html[data-theme-resolved='dark'] body.patient-portal .pmh-empty,
+html[data-theme-resolved='dark'] body.patient-portal .pts-card,
+html[data-theme-resolved='dark'] body.patient-portal .pts-nav,
+html[data-theme-resolved='dark'] body.patient-portal .pts-stat,
+html[data-theme-resolved='dark'] body.patient-portal .phs-card,
+html[data-theme-resolved='dark'] body.patient-portal .phs-hero,
+html[data-theme-resolved='dark'] body.patient-portal .phs-metric,
+html[data-theme-resolved='dark'] body.patient-portal .pt-dash-card,
+html[data-theme-resolved='dark'] body.patient-portal .pt-dash-stat,
+html[data-theme-resolved='dark'] body.patient-portal .pt-dash-action,
+html[data-theme-resolved='dark'] body.patient-portal .symptoms-review-card,
+html[data-theme-resolved='dark'] body.patient-portal .symptoms-review-panel,
+html[data-theme-resolved='dark'] body.patient-portal .data-card,
+html[data-theme-resolved='dark'] body.patient-portal .stat-card,
+html[data-theme-resolved='dark'] body.patient-portal .placeholder-section {
+  background: #1c1c1c !important;
+  background-image: none !important;
+  border-color: #2a2a2a !important;
+  color: #ffffff !important;
+  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.04), 0 4px 20px rgba(0, 0, 0, 0.5) !important;
+}
+
+html[data-theme-resolved='dark'] body.patient-portal .pdash-card__head,
+html[data-theme-resolved='dark'] body.patient-portal .pdash-card__foot,
+html[data-theme-resolved='dark'] body.patient-portal .psess-related__link,
+html[data-theme-resolved='dark'] body.patient-portal .pdash-session__avatar {
+  background: #141414 !important;
+  border-color: #2a2a2a !important;
+}
+
+/* Text — white headings, muted secondary */
+html[data-theme-resolved='dark'] body.patient-portal .portal-page-body h1,
+html[data-theme-resolved='dark'] body.patient-portal .portal-page-body h2,
+html[data-theme-resolved='dark'] body.patient-portal .portal-page-body h3,
+html[data-theme-resolved='dark'] body.patient-portal .portal-page-body h4,
+html[data-theme-resolved='dark'] body.patient-portal .pdash-hero__title,
+html[data-theme-resolved='dark'] body.patient-portal .pdash-hero__eyebrow,
+html[data-theme-resolved='dark'] body.patient-portal .pdash-metric__value,
+html[data-theme-resolved='dark'] body.patient-portal .pdash-session__info h4,
+html[data-theme-resolved='dark'] body.patient-portal .pdash-live__text strong,
+html[data-theme-resolved='dark'] body.patient-portal .pt-dash-card__title,
+html[data-theme-resolved='dark'] body.patient-portal .text-h2,
+html[data-theme-resolved='dark'] body.patient-portal .text-h3 {
+  color: #ffffff !important;
+}
+
+html[data-theme-resolved='dark'] body.patient-portal .pdash-hero__sub,
+html[data-theme-resolved='dark'] body.patient-portal .pdash-metric__label,
+html[data-theme-resolved='dark'] body.patient-portal .pdash-session__meta,
+html[data-theme-resolved='dark'] body.patient-portal .pdash-session__datetime,
+html[data-theme-resolved='dark'] body.patient-portal .pdash-live__text span,
+html[data-theme-resolved='dark'] body.patient-portal .pdash-empty p,
+html[data-theme-resolved='dark'] body.patient-portal .text-muted,
+html[data-theme-resolved='dark'] body.patient-portal .pdash-card__sub,
+html[data-theme-resolved='dark'] body.patient-portal .pdash-followups__lead {
+  color: #a1a1aa !important;
+}
+
+html[data-theme-resolved='dark'] body.patient-portal .main,
+html[data-theme-resolved='dark'] body.patient-portal .content,
+html[data-theme-resolved='dark'] body.patient-portal .profile-content {
+  background: #0a0a0a !important;
+}
+
+html[data-theme-resolved='dark'] body.patient-portal .pdash-badge--id {
+  background: #141414 !important;
+  border-color: #2a2a2a !important;
+  color: #d4d4d8 !important;
+}
+
+html[data-theme-resolved='dark'] body.patient-portal .pdash-badge--id strong {
+  color: #c4b5fd !important;
+}
+
+html[data-theme-resolved='dark'] body.patient-portal .pdash-btn--outline,
+html[data-theme-resolved='dark'] body.patient-portal .pdash-btn--ghost {
+  background: #141414 !important;
+  border-color: #2a2a2a !important;
+  color: #ffffff !important;
+}
+
+html[data-theme-resolved='dark'] body.patient-portal .pdash-btn--primary,
+html[data-theme-resolved='dark'] body.patient-portal .pdash-btn--join {
+  background: #7c3aed !important;
+  border-color: #7c3aed !important;
+  color: #ffffff !important;
+}
+
+/* Messages */
+html[data-theme-resolved='dark'] body.patient-portal .messages-layout,
+html[data-theme-resolved='dark'] body.patient-portal .msg-thread,
+html[data-theme-resolved='dark'] body.patient-portal .msg-thread-header,
+html[data-theme-resolved='dark'] body.patient-portal .msg-composer-wrap,
+html[data-theme-resolved='dark'] body.patient-portal .mc-confirm,
+html[data-theme-resolved='dark'] body.patient-portal .mc-threadmenu {
+  background: #1c1c1c !important;
+  border-color: #2a2a2a !important;
+  color: #ffffff !important;
+}
+
+html[data-theme-resolved='dark'] body.patient-portal .msg-list-item,
+html[data-theme-resolved='dark'] body.patient-portal .msg-search-wrap {
+  background: #141414 !important;
+  border-color: #2a2a2a !important;
+}
+
+/* Settings */
+html[data-theme-resolved='dark'] body.patient-portal .patient-settings-page,
+html[data-theme-resolved='dark'] body.patient-portal .pts-layout,
+html[data-theme-resolved='dark'] body.patient-portal .pts-panel,
+html[data-theme-resolved='dark'] body.patient-portal .pts-section,
+html[data-theme-resolved='dark'] body.patient-portal .pts-device-row {
+  background: #0a0a0a !important;
+  color: #ffffff !important;
+}
+
+/* Triage / booking */
+html[data-theme-resolved='dark'] body.patient-portal .patient-triage-form,
+html[data-theme-resolved='dark'] body.patient-portal .booking-panel,
+html[data-theme-resolved='dark'] body.patient-portal .booking-slot-grid,
+html[data-theme-resolved='dark'] body.patient-portal .booking-provider-card {
+  background: #1c1c1c !important;
+  border-color: #2a2a2a !important;
+}
+
+/* Remedy chatbot */
+html[data-theme-resolved='dark'] body.patient-portal .remedy-chatbot__panel,
+html[data-theme-resolved='dark'] body.patient-portal .remedy-chatbot__header,
+html[data-theme-resolved='dark'] body.patient-portal .remedy-chatbot__body,
+html[data-theme-resolved='dark'] body.patient-portal .remedy-chatbot__composer {
+  background: #1c1c1c !important;
+  border-color: #2a2a2a !important;
+  color: #ffffff !important;
+}
+
+html[data-theme-resolved='dark'] body.patient-portal .remedy-chatbot__bubble--bot {
+  background: #141414 !important;
+  color: #ffffff !important;
+}
+
+/* Charts & empty states */
+html[data-theme-resolved='dark'] body.patient-portal .pdash-chart-bar {
+  background: #7c3aed !important;
+}
+
+html[data-theme-resolved='dark'] body.patient-portal .pdash-chart-label,
+html[data-theme-resolved='dark'] body.patient-portal .pdash-chart-val,
+html[data-theme-resolved='dark'] body.patient-portal .pdash-chart-legend {
+  color: #a1a1aa !important;
+}
+
+html[data-theme-resolved='dark'] body.patient-portal .mc-table-empty,
+html[data-theme-resolved='dark'] body.patient-portal .pdash-empty__icon {
+  color: #71717a !important;
+}
+
+/* Notification page */
+html[data-theme-resolved='dark'] body.patient-portal .mc-notif-page,
+html[data-theme-resolved='dark'] body.patient-portal .mc-notif-item {
+  background: transparent !important;
+  color: #ffffff !important;
+}
+
+html[data-theme-resolved='dark'] body.patient-portal .mc-notif-page-header .text-muted {
+  color: #a1a1aa !important;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   Final pass — kill remaining white / light-gray surfaces
+═══════════════════════════════════════════════════════════ */
+
+html[data-theme-resolved='dark'] body.patient-portal,
+html[data-theme-resolved='dark'] body.patient-portal .root-wrapper,
+html[data-theme-resolved='dark'] body.patient-portal .portal-shell,
+html[data-theme-resolved='dark'] body.patient-portal .main-content,
+html[data-theme-resolved='dark'] body.patient-portal .portal-main {
+  background: #0a0a0a !important;
+  background-color: #0a0a0a !important;
+  color: #ffffff !important;
+}
+
+html[data-theme-resolved='dark'] body.patient-portal .sidebar,
+html[data-theme-resolved='dark'] body.patient-portal .sb-logo,
+html[data-theme-resolved='dark'] body.patient-portal .sb-profile,
+html[data-theme-resolved='dark'] body.patient-portal .sb-footer {
+  background: #141414 !important;
+  background-color: #141414 !important;
+  border-color: #2a2a2a !important;
+}
+
+html[data-theme-resolved='dark'] body.patient-portal .sb-item,
+html[data-theme-resolved='dark'] body.patient-portal .sb-role,
+html[data-theme-resolved='dark'] body.patient-portal .sb-patient-id {
+  color: #a1a1aa !important;
+}
+
+html[data-theme-resolved='dark'] body.patient-portal .portal-page-body,
+html[data-theme-resolved='dark'] body.patient-portal .portal-page-body p,
+html[data-theme-resolved='dark'] body.patient-portal .portal-page-body li,
+html[data-theme-resolved='dark'] body.patient-portal .portal-page-body dt,
+html[data-theme-resolved='dark'] body.patient-portal .portal-page-body dd {
+  color: #ffffff;
+}
+
+html[data-theme-resolved='dark'] body.patient-portal .pdash-flow,
+html[data-theme-resolved='dark'] body.patient-portal .pdash-flow__summary,
+html[data-theme-resolved='dark'] body.patient-portal .pdash-alert-widget,
+html[data-theme-resolved='dark'] body.patient-portal .pdash-action,
+html[data-theme-resolved='dark'] body.patient-portal .pdash-card--review,
+html[data-theme-resolved='dark'] body.patient-portal .pdash-care,
+html[data-theme-resolved='dark'] body.patient-portal .pdash-review-wait,
+html[data-theme-resolved='dark'] body.patient-portal .pdash-sessions,
+html[data-theme-resolved='dark'] body.patient-portal .pdash-card__foot,
+html[data-theme-resolved='dark'] body.patient-portal .mc-chart-card,
+html[data-theme-resolved='dark'] body.patient-portal .mc-chart-canvas-wrap,
+html[data-theme-resolved='dark'] body.patient-portal .pt-dash-card,
+html[data-theme-resolved='dark'] body.patient-portal .pt-dash-stat,
+html[data-theme-resolved='dark'] body.patient-portal .pt-dash-action,
+html[data-theme-resolved='dark'] body.patient-portal .pt-dash-consult {
+  background: #1c1c1c !important;
+  background-image: none !important;
+  border-color: #2a2a2a !important;
+  color: #ffffff !important;
+  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.04), 0 4px 20px rgba(0, 0, 0, 0.5) !important;
+}
+
+html[data-theme-resolved='dark'] body.patient-portal .pdash-hero__eyebrow {
+  color: #a78bfa !important;
+}
+
+html[data-theme-resolved='dark'] body.patient-portal .pdash-hero__title,
+html[data-theme-resolved='dark'] body.patient-portal .pdash-card__title,
+html[data-theme-resolved='dark'] body.patient-portal .pdash-flow__summary,
+html[data-theme-resolved='dark'] body.patient-portal .pdash-flow__steps strong,
+html[data-theme-resolved='dark'] body.patient-portal .pdash-flow__steps li,
+html[data-theme-resolved='dark'] body.patient-portal .pdash-alert-widget__label,
+html[data-theme-resolved='dark'] body.patient-portal .pdash-status-item__label,
+html[data-theme-resolved='dark'] body.patient-portal .pdash-status-item strong,
+html[data-theme-resolved='dark'] body.patient-portal .pdash-action__provider,
+html[data-theme-resolved='dark'] body.patient-portal .pdash-action__msg,
+html[data-theme-resolved='dark'] body.patient-portal .pdash-action__date,
+html[data-theme-resolved='dark'] body.patient-portal .pdash-quick__link,
+html[data-theme-resolved='dark'] body.patient-portal .pdash-care__title,
+html[data-theme-resolved='dark'] body.patient-portal .pdash-session__info h4,
+html[data-theme-resolved='dark'] body.patient-portal .mc-chart-card__title,
+html[data-theme-resolved='dark'] body.patient-portal .pt-dash-card__title,
+html[data-theme-resolved='dark'] body.patient-portal .pt-dash-action__label,
+html[data-theme-resolved='dark'] body.patient-portal .pt-dash-consult__name,
+html[data-theme-resolved='dark'] body.patient-portal .pt-dash-identity__value,
+html[data-theme-resolved='dark'] body.patient-portal .pt-dash-triage__level,
+html[data-theme-resolved='dark'] body.patient-portal .pt-dash-stat strong {
+  color: #ffffff !important;
+}
+
+html[data-theme-resolved='dark'] body.patient-portal .pdash-metric__value,
+html[data-theme-resolved='dark'] body.patient-portal .pdash-alert-widget__value,
+html[data-theme-resolved='dark'] body.patient-portal .pdash-card__badge {
+  color: #c4b5fd !important;
+}
+
+html[data-theme-resolved='dark'] body.patient-portal .pdash-quick__icon {
+  background: #141414 !important;
+  color: #c4b5fd !important;
+  border: 1px solid #2a2a2a !important;
+}
+
+html[data-theme-resolved='dark'] body.patient-portal .pdash-metric--accent,
+html[data-theme-resolved='dark'] body.patient-portal .pdash-metric--warn {
+  background: #1c1c1c !important;
+  background-image: none !important;
+}
+
+html[data-theme-resolved='dark'] body.patient-portal .pdash-alert-widget--emergency.is-active {
+  background: rgba(220, 38, 38, 0.15) !important;
+  border-color: rgba(248, 113, 113, 0.45) !important;
+}
+
+html[data-theme-resolved='dark'] body.patient-portal .mc-chart-card__sub,
+html[data-theme-resolved='dark'] body.patient-portal .pdash-care__lead,
+html[data-theme-resolved='dark'] body.patient-portal .pdash-action__meta,
+html[data-theme-resolved='dark'] body.patient-portal .pdash-card__foot a {
+  color: #a1a1aa !important;
+}
+
+html[data-theme-resolved='dark'] body.patient-portal .pdash-card__foot a:hover {
+  color: #c4b5fd !important;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   BLANKET — all patient portal pages (black bg, white text)
+═══════════════════════════════════════════════════════════ */
+
+html[data-theme-resolved='dark'] body.patient-portal,
+html[data-theme-resolved='dark'] body.patient-portal .root-wrapper,
+html[data-theme-resolved='dark'] body.patient-portal .portal-shell,
+html[data-theme-resolved='dark'] body.patient-portal .main,
+html[data-theme-resolved='dark'] body.patient-portal .main-content,
+html[data-theme-resolved='dark'] body.patient-portal .portal-main,
+html[data-theme-resolved='dark'] body.patient-portal .portal-page-body,
+html[data-theme-resolved='dark'] body.patient-portal .content,
+html[data-theme-resolved='dark'] body.patient-portal .profile-content,
+html[data-theme-resolved='dark'] body.patient-portal .view-container,
+html[data-theme-resolved='dark'] body.patient-portal .patient-page,
+html[data-theme-resolved='dark'] body.patient-portal [class*='-page'],
+html[data-theme-resolved='dark'] body.patient-portal [class*='-layout'],
+html[data-theme-resolved='dark'] body.patient-portal [class*='-shell'] {
+  background: #0a0a0a !important;
+  background-color: #0a0a0a !important;
+  background-image: none !important;
+  color: #ffffff !important;
+}
+
+/* All cards / panels / sections / widgets / rows / lists
+   (exclude sidebar nav links — no card / glow pop on click) */
+html[data-theme-resolved='dark'] body.patient-portal [class*='card'],
+html[data-theme-resolved='dark'] body.patient-portal [class*='panel'],
+html[data-theme-resolved='dark'] body.patient-portal [class*='modal'],
+html[data-theme-resolved='dark'] body.patient-portal [class*='dialog'],
+html[data-theme-resolved='dark'] body.patient-portal [class*='widget'],
+html[data-theme-resolved='dark'] body.patient-portal [class*='metric'],
+html[data-theme-resolved='dark'] body.patient-portal [class*='stat'],
+html[data-theme-resolved='dark'] body.patient-portal [class*='hero'],
+html[data-theme-resolved='dark'] body.patient-portal [class*='banner'],
+html[data-theme-resolved='dark'] body.patient-portal [class*='section'],
+html[data-theme-resolved='dark'] body.patient-portal [class*='box'],
+html[data-theme-resolved='dark'] body.patient-portal [class*='tile'],
+html[data-theme-resolved='dark'] body.patient-portal [class*='row']:not(.sb-item),
+html[data-theme-resolved='dark'] body.patient-portal [class*='item']:not(.sb-item):not(.sb-item *),
+html[data-theme-resolved='dark'] body.patient-portal [class*='block'],
+html[data-theme-resolved='dark'] body.patient-portal [class*='wrap'],
+html[data-theme-resolved='dark'] body.patient-portal [class*='container'],
+html[data-theme-resolved='dark'] body.patient-portal [class*='content'],
+html[data-theme-resolved='dark'] body.patient-portal [class*='sidebar']:not(.sidebar),
+html[data-theme-resolved='dark'] body.patient-portal [class*='aside'],
+html[data-theme-resolved='dark'] body.patient-portal [class*='nav']:not(.sb-nav):not(.sb-item),
+html[data-theme-resolved='dark'] body.patient-portal [class*='tab'],
+html[data-theme-resolved='dark'] body.patient-portal [class*='filter'],
+html[data-theme-resolved='dark'] body.patient-portal [class*='toolbar'],
+html[data-theme-resolved='dark'] body.patient-portal [class*='header'],
+html[data-theme-resolved='dark'] body.patient-portal [class*='footer']:not(.sb-footer),
+html[data-theme-resolved='dark'] body.patient-portal [class*='head'],
+html[data-theme-resolved='dark'] body.patient-portal [class*='body']:not(.portal-page-body),
+html[data-theme-resolved='dark'] body.patient-portal [class*='empty'],
+html[data-theme-resolved='dark'] body.patient-portal [class*='alert'],
+html[data-theme-resolved='dark'] body.patient-portal [class*='toast'],
+html[data-theme-resolved='dark'] body.patient-portal [class*='dropdown'],
+html[data-theme-resolved='dark'] body.patient-portal [class*='menu'],
+html[data-theme-resolved='dark'] body.patient-portal [class*='popover'],
+html[data-theme-resolved='dark'] body.patient-portal [class*='composer'],
+html[data-theme-resolved='dark'] body.patient-portal [class*='thread'],
+html[data-theme-resolved='dark'] body.patient-portal [class*='bubble'],
+html[data-theme-resolved='dark'] body.patient-portal [class*='message'],
+html[data-theme-resolved='dark'] body.patient-portal [class*='msg'],
+html[data-theme-resolved='dark'] body.patient-portal [class*='chat'],
+html[data-theme-resolved='dark'] body.patient-portal [class*='session'],
+html[data-theme-resolved='dark'] body.patient-portal [class*='visit'],
+html[data-theme-resolved='dark'] body.patient-portal [class*='file'],
+html[data-theme-resolved='dark'] body.patient-portal [class*='folder'],
+html[data-theme-resolved='dark'] body.patient-portal [class*='form'],
+html[data-theme-resolved='dark'] body.patient-portal [class*='field'],
+html[data-theme-resolved='dark'] body.patient-portal [class*='input'],
+html[data-theme-resolved='dark'] body.patient-portal [class*='select'],
+html[data-theme-resolved='dark'] body.patient-portal [class*='textarea'],
+html[data-theme-resolved='dark'] body.patient-portal [class*='table'],
+html[data-theme-resolved='dark'] body.patient-portal [class*='list'],
+html[data-theme-resolved='dark'] body.patient-portal [class*='chip'],
+html[data-theme-resolved='dark'] body.patient-portal [class*='pill'],
+html[data-theme-resolved='dark'] body.patient-portal [class*='badge'],
+html[data-theme-resolved='dark'] body.patient-portal [class*='action'],
+html[data-theme-resolved='dark'] body.patient-portal [class*='quick'],
+html[data-theme-resolved='dark'] body.patient-portal [class*='flow'],
+html[data-theme-resolved='dark'] body.patient-portal [class*='status'],
+html[data-theme-resolved='dark'] body.patient-portal [class*='review'],
+html[data-theme-resolved='dark'] body.patient-portal [class*='care'],
+html[data-theme-resolved='dark'] body.patient-portal [class*='booking'],
+html[data-theme-resolved='dark'] body.patient-portal [class*='triage'],
+html[data-theme-resolved='dark'] body.patient-portal [class*='consult'],
+html[data-theme-resolved='dark'] body.patient-portal [class*='remedy'],
+html[data-theme-resolved='dark'] body.patient-portal [class*='notif'],
+html[data-theme-resolved='dark'] body.patient-portal [class*='chart'],
+html[data-theme-resolved='dark'] body.patient-portal [class*='summary'],
+html[data-theme-resolved='dark'] body.patient-portal [class*='profile']:not(.sb-profile),
+html[data-theme-resolved='dark'] body.patient-portal [class*='settings'],
+html[data-theme-resolved='dark'] body.patient-portal [class*='device'],
+html[data-theme-resolved='dark'] body.patient-portal [class*='session-item'],
+html[data-theme-resolved='dark'] body.patient-portal article,
+html[data-theme-resolved='dark'] body.patient-portal section,
+html[data-theme-resolved='dark'] body.patient-portal aside,
+html[data-theme-resolved='dark'] body.patient-portal details,
+html[data-theme-resolved='dark'] body.patient-portal summary,
+html[data-theme-resolved='dark'] body.patient-portal fieldset,
+html[data-theme-resolved='dark'] body.patient-portal table,
+html[data-theme-resolved='dark'] body.patient-portal thead,
+html[data-theme-resolved='dark'] body.patient-portal tbody,
+html[data-theme-resolved='dark'] body.patient-portal tr,
+html[data-theme-resolved='dark'] body.patient-portal th,
+html[data-theme-resolved='dark'] body.patient-portal td,
+html[data-theme-resolved='dark'] body.patient-portal ul:not(.sb-nav),
+html[data-theme-resolved='dark'] body.patient-portal ol,
+html[data-theme-resolved='dark'] body.patient-portal li:not(.sb-item),
+html[data-theme-resolved='dark'] body.patient-portal dl,
+html[data-theme-resolved='dark'] body.patient-portal dt,
+html[data-theme-resolved='dark'] body.patient-portal dd {
+  background-color: #1c1c1c !important;
+  background-image: none !important;
+  border-color: #2a2a2a !important;
+  color: #ffffff !important;
+  box-shadow: none !important;
+}
+
+/* Canvas / nested page shells stay pure black */
+html[data-theme-resolved='dark'] body.patient-portal .portal-page-body,
+html[data-theme-resolved='dark'] body.patient-portal .portal-page-body > *,
+html[data-theme-resolved='dark'] body.patient-portal .patient-page,
+html[data-theme-resolved='dark'] body.patient-portal .pdash-page,
+html[data-theme-resolved='dark'] body.patient-portal .psess-page,
+html[data-theme-resolved='dark'] body.patient-portal .pmh-page,
+html[data-theme-resolved='dark'] body.patient-portal .pts-page,
+html[data-theme-resolved='dark'] body.patient-portal .phs-page,
+html[data-theme-resolved='dark'] body.patient-portal .messages-page,
+html[data-theme-resolved='dark'] body.patient-portal .patient-settings-page,
+html[data-theme-resolved='dark'] body.patient-portal .patient-health-summary-page,
+html[data-theme-resolved='dark'] body.patient-portal .view-container,
+html[data-theme-resolved='dark'] body.patient-portal .pdash-grid,
+html[data-theme-resolved='dark'] body.patient-portal .pdash-main,
+html[data-theme-resolved='dark'] body.patient-portal .pdash-side,
+html[data-theme-resolved='dark'] body.patient-portal .pdash-metrics,
+html[data-theme-resolved='dark'] body.patient-portal .pdash-quick,
+html[data-theme-resolved='dark'] body.patient-portal .pdash-sessions,
+html[data-theme-resolved='dark'] body.patient-portal .pdash-alerts,
+html[data-theme-resolved='dark'] body.patient-portal .pdash-status-list,
+html[data-theme-resolved='dark'] body.patient-portal .pdash-actions,
+html[data-theme-resolved='dark'] body.patient-portal .pts-layout,
+html[data-theme-resolved='dark'] body.patient-portal .psess-layout,
+html[data-theme-resolved='dark'] body.patient-portal .psess-main,
+html[data-theme-resolved='dark'] body.patient-portal .psess-side,
+html[data-theme-resolved='dark'] body.patient-portal .messages-layout,
+html[data-theme-resolved='dark'] body.patient-portal .thread-body {
+  background: #0a0a0a !important;
+  background-color: #0a0a0a !important;
+  background-image: none !important;
+}
+
+/* Sidebar + topbar */
+html[data-theme-resolved='dark'] body.patient-portal .sidebar,
+html[data-theme-resolved='dark'] body.patient-portal .sb-logo,
+html[data-theme-resolved='dark'] body.patient-portal .sb-profile,
+html[data-theme-resolved='dark'] body.patient-portal .sb-footer,
+html[data-theme-resolved='dark'] body.patient-portal .sb-nav {
+  background: #141414 !important;
+  background-color: #141414 !important;
+  border-color: #2a2a2a !important;
+}
+
+html[data-theme-resolved='dark'] body.patient-portal .topbar,
+html[data-theme-resolved='dark'] body.patient-portal .topbar--clinical,
+html[data-theme-resolved='dark'] body.patient-portal .topbar-left,
+html[data-theme-resolved='dark'] body.patient-portal .topbar-right {
+  background: #1c1c1c !important;
+  background-color: #1c1c1c !important;
+  border-color: #2a2a2a !important;
+  color: #ffffff !important;
+}
+
+/* Typography — everything white */
+html[data-theme-resolved='dark'] body.patient-portal,
+html[data-theme-resolved='dark'] body.patient-portal h1,
+html[data-theme-resolved='dark'] body.patient-portal h2,
+html[data-theme-resolved='dark'] body.patient-portal h3,
+html[data-theme-resolved='dark'] body.patient-portal h4,
+html[data-theme-resolved='dark'] body.patient-portal h5,
+html[data-theme-resolved='dark'] body.patient-portal h6,
+html[data-theme-resolved='dark'] body.patient-portal p,
+html[data-theme-resolved='dark'] body.patient-portal span,
+html[data-theme-resolved='dark'] body.patient-portal label,
+html[data-theme-resolved='dark'] body.patient-portal strong,
+html[data-theme-resolved='dark'] body.patient-portal b,
+html[data-theme-resolved='dark'] body.patient-portal em,
+html[data-theme-resolved='dark'] body.patient-portal small,
+html[data-theme-resolved='dark'] body.patient-portal li,
+html[data-theme-resolved='dark'] body.patient-portal td,
+html[data-theme-resolved='dark'] body.patient-portal th,
+html[data-theme-resolved='dark'] body.patient-portal a,
+html[data-theme-resolved='dark'] body.patient-portal button,
+html[data-theme-resolved='dark'] body.patient-portal summary,
+html[data-theme-resolved='dark'] body.patient-portal legend,
+html[data-theme-resolved='dark'] body.patient-portal figcaption,
+html[data-theme-resolved='dark'] body.patient-portal [class*='title'],
+html[data-theme-resolved='dark'] body.patient-portal [class*='name'],
+html[data-theme-resolved='dark'] body.patient-portal [class*='label'],
+html[data-theme-resolved='dark'] body.patient-portal [class*='text'],
+html[data-theme-resolved='dark'] body.patient-portal [class*='value'],
+html[data-theme-resolved='dark'] body.patient-portal [class*='heading'] {
+  color: #ffffff !important;
+}
+
+html[data-theme-resolved='dark'] body.patient-portal [class*='muted'],
+html[data-theme-resolved='dark'] body.patient-portal [class*='sub'],
+html[data-theme-resolved='dark'] body.patient-portal [class*='meta'],
+html[data-theme-resolved='dark'] body.patient-portal [class*='hint'],
+html[data-theme-resolved='dark'] body.patient-portal [class*='helper'],
+html[data-theme-resolved='dark'] body.patient-portal [class*='caption'],
+html[data-theme-resolved='dark'] body.patient-portal [class*='lead'],
+html[data-theme-resolved='dark'] body.patient-portal [class*='desc'],
+html[data-theme-resolved='dark'] body.patient-portal .text-muted {
+  color: #a1a1aa !important;
+}
+
+/* Forms */
+html[data-theme-resolved='dark'] body.patient-portal input,
+html[data-theme-resolved='dark'] body.patient-portal select,
+html[data-theme-resolved='dark'] body.patient-portal textarea,
+html[data-theme-resolved='dark'] body.patient-portal option {
+  background: #141414 !important;
+  background-color: #141414 !important;
+  border-color: #2a2a2a !important;
+  color: #ffffff !important;
+  color-scheme: dark;
+}
+
+html[data-theme-resolved='dark'] body.patient-portal input::placeholder,
+html[data-theme-resolved='dark'] body.patient-portal textarea::placeholder {
+  color: #71717a !important;
+}
+
+/* Buttons — outline / ghost stay dark; primary keep purple */
+html[data-theme-resolved='dark'] body.patient-portal button,
+html[data-theme-resolved='dark'] body.patient-portal [class*='btn'],
+html[data-theme-resolved='dark'] body.patient-portal [role='button'] {
+  background-color: #141414 !important;
+  border-color: #2a2a2a !important;
+  color: #ffffff !important;
+}
+
+html[data-theme-resolved='dark'] body.patient-portal [class*='btn'][class*='primary'],
+html[data-theme-resolved='dark'] body.patient-portal [class*='btn'][class*='join'],
+html[data-theme-resolved='dark'] body.patient-portal .mc-btn--primary,
+html[data-theme-resolved='dark'] body.patient-portal .pdash-btn--primary,
+html[data-theme-resolved='dark'] body.patient-portal .pdash-btn--join,
+html[data-theme-resolved='dark'] body.patient-portal .psess-btn--primary,
+html[data-theme-resolved='dark'] body.patient-portal .pts-btn--primary {
+  background: #7c3aed !important;
+  background-color: #7c3aed !important;
+  border-color: #7c3aed !important;
+  color: #ffffff !important;
+}
+
+/* Icons / SVGs readable */
+html[data-theme-resolved='dark'] body.patient-portal svg,
+html[data-theme-resolved='dark'] body.patient-portal svg stroke {
+  stroke: currentColor;
+}
+
+html[data-theme-resolved='dark'] body.patient-portal .sidebar .sb-item,
+html[data-theme-resolved='dark'] body.patient-portal .sidebar .sb-item:hover,
+html[data-theme-resolved='dark'] body.patient-portal .sidebar .sb-item:focus,
+html[data-theme-resolved='dark'] body.patient-portal .sidebar .sb-item:focus-visible,
+html[data-theme-resolved='dark'] body.patient-portal .sidebar .sb-item:active,
+html[data-theme-resolved='dark'] body.patient-portal .sidebar .sb-item.active,
+html[data-theme-resolved='dark'] body.patient-portal .sidebar .sb-item.active:hover,
+html[data-theme-resolved='dark'] body.patient-portal .sidebar .sb-item.active:focus,
+html[data-theme-resolved='dark'] body.patient-portal .sidebar .sb-item.active:active {
+  background: transparent !important;
+  background-color: transparent !important;
+  background-image: none !important;
+  border: none !important;
+  box-shadow: none !important;
+  outline: none !important;
+  -webkit-tap-highlight-color: transparent;
+  color: #ffffff !important;
+  transition: none !important;
+}
+
+html[data-theme-resolved='dark'] body.patient-portal .sidebar,
+html[data-theme-resolved='dark'] body.patient-portal .sb-nav,
+html[data-theme-resolved='dark'] body.patient-portal .topbar {
+  transition: none !important;
+}
+
+html[data-theme-resolved='dark'] body.patient-portal .sidebar .sb-item svg {
+  stroke: #ffffff !important;
+}
+
+html[data-theme-resolved='dark'] body.patient-portal [class*='tab'].is-active,
+html[data-theme-resolved='dark'] body.patient-portal [class*='tab'].active,
+html[data-theme-resolved='dark'] body.patient-portal .pts-nav__item.is-active {
+  background: rgba(124, 58, 237, 0.2) !important;
+  color: #c4b5fd !important;
+  border-color: #7c3aed !important;
+}
+
+/* Transparent overlays stay transparent */
+html[data-theme-resolved='dark'] body.patient-portal .modal-backdrop,
+html[data-theme-resolved='dark'] body.patient-portal [class*='overlay'],
+html[data-theme-resolved='dark'] body.patient-portal [class*='backdrop'],
+html[data-theme-resolved='dark'] body.patient-portal [class*='scrim'] {
+  background: rgba(0, 0, 0, 0.72) !important;
+  background-image: none !important;
+}
+
+/* Charts / canvas transparent inside dark cards */
+html[data-theme-resolved='dark'] body.patient-portal canvas,
+html[data-theme-resolved='dark'] body.patient-portal [class*='chart-wrap'],
+html[data-theme-resolved='dark'] body.patient-portal [class*='canvas-wrap'] {
+  background: transparent !important;
+  background-color: transparent !important;
+  box-shadow: none !important;
+}

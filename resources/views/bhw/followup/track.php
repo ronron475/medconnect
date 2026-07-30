@@ -31,7 +31,7 @@ $bhw_subnav_active = 'followup/track.php';
           <th>Actions</th>
         </tr>
       </thead>
-      <tbody id="bhwFuBody"><tr><td colspan="5">Loading…</td></tr></tbody>
+      <tbody id="bhwFuBody"></tbody>
     </table>
   </div>
 </div>

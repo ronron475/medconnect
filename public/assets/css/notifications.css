@@ -225,7 +225,8 @@
 
 .mc-notif-priority--emergency,
 .mc-notif-priority--critical { background: #fee2e2; color: #dc2626; }
-.mc-notif-priority--high { background: #fef3c7; color: #f59e0b; }
+.mc-notif-priority--high,
+.mc-notif-priority--warning { background: #fef3c7; color: #f59e0b; }
 .mc-notif-priority--information { background: #dbeafe; color: #2563eb; }
 .mc-notif-priority--normal { background: #e2e8f0; color: #475569; }
 
@@ -602,7 +603,8 @@ html[data-theme-resolved='dark'] .mc-notif-priority--critical {
   color: #f87171;
 }
 
-html[data-theme-resolved='dark'] .mc-notif-priority--high {
+html[data-theme-resolved='dark'] .mc-notif-priority--high,
+html[data-theme-resolved='dark'] .mc-notif-priority--warning {
   background: rgba(245, 158, 11, 0.2);
   color: #fbbf24;
 }

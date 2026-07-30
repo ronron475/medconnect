@@ -176,13 +176,13 @@ require_once __DIR__ . '/partials/layout_open.php';
                             <?php
                               $v = $s['verification_status'];
                               $vStyles = match ($v) {
-                                  'verified' => ['#dcfce7', '#15803d', 'Verified'],
-                                  'rejected' => ['#fee2e2', '#b91c1c', 'Rejected'],
-                                  default => ['#fef3c7', '#b45309', 'Pending'],
+                                  'verified' => ['mc-badge--approved', 'Verified'],
+                                  'rejected' => ['mc-badge--danger', 'Rejected'],
+                                  default => ['mc-badge--pending', 'Pending'],
                               };
                             ?>
-                            <span class="mc-badge" style="background: <?= $vStyles[0] ?>; color: <?= $vStyles[1] ?>;" title="<?= htmlspecialchars($s['rejection_note'] ?? '') ?>">
-                                <?= $vStyles[2] ?>
+                            <span class="mc-badge <?= $vStyles[0] ?>" title="<?= htmlspecialchars($s['rejection_note'] ?? '') ?>">
+                                <?= $vStyles[1] ?>
                             </span>
                             <?php if ($v === 'rejected' && !empty($s['rejection_note'])): ?>
                             <div class="text-muted" style="font-size: 11px; margin-top: 4px; max-width: 180px;"><?= htmlspecialchars($s['rejection_note']) ?></div>
@@ -196,7 +196,7 @@ require_once __DIR__ . '/partials/layout_open.php';
                           $effective = user_account_status_effective($s);
                           $acctBadge = AccountStatus::badge($effective);
                         ?>
-                        <span class="mc-badge" style="background: <?= $acctBadge['bg'] ?>; color: <?= $acctBadge['color'] ?>;">
+                        <span class="mc-badge <?= htmlspecialchars($acctBadge['class'] ?? '', ENT_QUOTES, 'UTF-8') ?>">
                             <?= htmlspecialchars($acctBadge['label']) ?>
                         </span>
                     </td>

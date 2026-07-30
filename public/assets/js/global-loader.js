@@ -469,11 +469,17 @@
       if (link.origin && link.origin !== global.location.origin) return;
       if (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
 
-      // In-portal navigation: no full-screen loader (login/logout use showTransition only).
-      if (document.body && document.body.classList.contains('patient-portal')) return;
-      if (document.body && document.body.classList.contains('provider-portal')) return;
-      if (document.body && document.body.classList.contains('admin-portal')) return;
-      if (document.body && document.body.classList.contains('bhw-portal')) return;
+      const body = document.body;
+      if (!body) return;
+      if (
+        body.classList.contains('patient-portal')
+        || body.classList.contains('provider-body')
+        || body.classList.contains('admin-body')
+        || body.classList.contains('superadmin-body')
+        || body.classList.contains('bhw-body')
+      ) {
+        return;
+      }
 
       show({ mode: 'navigation', sr: 'Loading page.' });
     }, false);
@@ -571,6 +577,7 @@
 
   function init() {
     removeDuplicateLoaders();
+    try { sessionStorage.removeItem('mc_nav_handoff'); } catch (_) { /* ignore */ }
     initPageBoot();
     bindNavigationLoader();
     patchFetch();

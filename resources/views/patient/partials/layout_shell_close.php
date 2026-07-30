@@ -9,6 +9,12 @@
 <?php require_once VIEWS_PATH . '/partials/logout_modal.php'; ?>
 <?php $responsive_scripts_only = true; require VIEWS_PATH . '/partials/responsive_assets.php'; ?>
 <?php $notification_scripts_only = true; require VIEWS_PATH . '/partials/notification_assets.php'; ?>
+<?php
+if (empty($portal_dark_mode_css)) {
+    $portal_dark_mode_css = 'patient-dark-mode.css';
+}
+require_once VIEWS_PATH . '/partials/portal_dark_mode_close.php';
+?>
 <?php require_once VIEWS_PATH . '/partials/theme_scripts.php'; ?>
 <script>window.APP_BASE = window.APP_BASE || <?= json_encode(ASSET_BASE) ?>;</script>
 <?php $ptUrgencyJsVer = (int) @filemtime(ASSETS_PATH . '/js/patient-urgency-modal.js'); ?>
