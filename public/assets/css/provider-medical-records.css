@@ -70,7 +70,7 @@ body.provider-body .provider-page-body:has(.mr-page) {
 }
 
 .mr-tabs a.is-active {
-  background: #fff;
+  background: var(--card-bg);
   color: #069396;
   border-color: rgba(6, 147, 150, 0.2);
   box-shadow: 0 1px 2px rgba(15, 23, 42, 0.06);
@@ -90,7 +90,7 @@ body.provider-body .provider-page-body:has(.mr-page) {
   border: 1px solid var(--mc-border-thin, #e2e8f0);
   border-radius: 8px;
   font-size: 13px;
-  background: #fff;
+  background: var(--card-bg);
   color: var(--mc-navy-dark, #0f172a);
   box-sizing: border-box;
 }
@@ -123,7 +123,7 @@ body.provider-body .provider-page-body:has(.mr-page) {
 }
 
 .mr-panel {
-  background: #fff;
+  background: var(--card-bg);
   border: 1px solid var(--mc-border-thin, #e2e8f0);
   border-radius: 10px;
   box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
@@ -363,7 +363,7 @@ body.provider-body .provider-page-body:has(.mr-page) {
 
 /* History view */
 .mr-history-panel {
-  background: #fff;
+  background: var(--card-bg);
   border: 1px solid var(--mc-border-thin, #e2e8f0);
   border-radius: 10px;
   overflow: hidden;

@@ -46,6 +46,11 @@
   $providerUiVer = file_exists($providerUiCss) ? (int) filemtime($providerUiCss) : time();
   ?>
   <link rel="stylesheet" href="<?= ASSET_BASE ?>/assets/css/provider-ui-system.css?v=<?= $providerUiVer ?>"/>
+  <?php
+  $providerDarkCss = ASSETS_PATH . '/css/provider-dark-mode.css';
+  $providerDarkVer = file_exists($providerDarkCss) ? (int) filemtime($providerDarkCss) : time();
+  ?>
+  <link rel="stylesheet" href="<?= ASSET_BASE ?>/assets/css/provider-dark-mode.css?v=<?= $providerDarkVer ?>"/>
 </head>
 <body
   class="provider-body"

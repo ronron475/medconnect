@@ -7,7 +7,7 @@
 }
 
 .queue-hero {
-    background: #fff;
+    background: var(--card-bg);
     border: 1px solid var(--mc-border-thin, #dce8ed);
     border-left: 5px solid var(--mc-aqua-medium, #018a93);
     border-radius: 12px;
@@ -56,7 +56,7 @@
 }
 
 .queue-metric {
-    background: #fff;
+    background: var(--card-bg);
     border: 1px solid var(--mc-border-thin, #dce8ed);
     border-radius: 12px;
     padding: 12px;
@@ -100,7 +100,7 @@
 }
 
 .queue-panel {
-    background: #fff;
+    background: var(--card-bg);
     border: 1px solid var(--mc-border-thin, #dce8ed);
     border-radius: 12px;
     box-shadow: var(--mc-shadow-sm, 0 1px 3px rgba(15, 23, 42, 0.06));
@@ -278,7 +278,7 @@
     min-height: 32px;
     border-radius: 8px;
     border: 1px solid #cfdde4;
-    background: #fff;
+    background: var(--card-bg);
     color: var(--mc-navy-dark, #012a4a);
     padding: 0 10px;
     font: inherit;
@@ -328,7 +328,7 @@
     border: 1px solid #e2e8f0;
     border-radius: 10px;
     padding: 12px;
-    background: #fff;
+    background: var(--card-bg);
 }
 
 .queue-feed-card.urgent { border-left: 4px solid #dc2626; }
