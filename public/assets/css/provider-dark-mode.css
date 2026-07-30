@@ -1,17 +1,17 @@
 /**
  * medConnect — Provider Portal Dark Mode
- * Cofeed-inspired elevated dark UI: near-black canvas, soft card elevation, minimal borders.
+ * WorkflowAI-style: near-black canvas, flat #1c1c1c cards, subtle #2a2a2a borders.
  */
 
 /* ── Base canvas ── */
 html[data-theme-resolved='dark'] body.provider-body {
-  background: var(--bg-primary, #141414);
+  background: var(--bg-primary, #0a0a0a);
   color: var(--text-primary, #ffffff);
 }
 
 html[data-theme-resolved='dark'] body.provider-body .provider-page-body,
 html[data-theme-resolved='dark'] body.provider-body .provider-main {
-  background: var(--bg-primary, #141414);
+  background: var(--bg-primary, #0a0a0a);
 }
 
 /* ── Scrollbars ── */
@@ -40,7 +40,7 @@ html[data-theme-resolved='dark'] body.provider-body ::-webkit-scrollbar-thumb:ho
   background: var(--scrollbar-thumb-hover, #60a5fa);
 }
 
-/* ── Elevated card mixin (all surfaces) ── */
+/* ── Flat card surfaces (WorkflowAI style) ── */
 html[data-theme-resolved='dark'] body.provider-body .prov-dash-welcome,
 html[data-theme-resolved='dark'] body.provider-body .prov-dash-stat,
 html[data-theme-resolved='dark'] body.provider-body .prov-dash-card,
@@ -69,12 +69,12 @@ html[data-theme-resolved='dark'] body.provider-body .provider-settings-nav,
 html[data-theme-resolved='dark'] body.provider-body .provider-settings-layout .ps-card,
 html[data-theme-resolved='dark'] body.provider-body .mc-notif-widget,
 html[data-theme-resolved='dark'] body.provider-body .mc-notif-recent-panel {
-  background: linear-gradient(145deg, var(--card-bg, #2c2c2c) 0%, #282828 100%) !important;
-  border: 1px solid var(--border-color, rgba(255, 255, 255, 0.06)) !important;
-  border-radius: var(--radius-card, 14px) !important;
+  background: var(--card-bg, #1c1c1c) !important;
+  border: 1px solid var(--border-color, #2a2a2a) !important;
+  border-radius: var(--radius-card, 12px) !important;
   color: var(--text-primary, #ffffff);
-  box-shadow: var(--shadow-card, 0 8px 32px rgba(0, 0, 0, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.04));
-  transition: background 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
+  box-shadow: var(--shadow-card, 0 1px 0 rgba(255, 255, 255, 0.04), 0 4px 20px rgba(0, 0, 0, 0.5));
+  transition: background 0.15s ease, border-color 0.15s ease;
 }
 
 html[data-theme-resolved='dark'] body.provider-body .prov-dash-welcome:hover,
@@ -84,8 +84,8 @@ html[data-theme-resolved='dark'] body.provider-body .queue-panel:hover,
 html[data-theme-resolved='dark'] body.provider-body .mr-card:hover,
 html[data-theme-resolved='dark'] body.provider-body .ps-card:hover,
 html[data-theme-resolved='dark'] body.provider-body .mc-notif-widget:hover {
-  background: linear-gradient(145deg, var(--card-bg-elevated, #353535) 0%, var(--card-bg, #2c2c2c) 100%) !important;
-  box-shadow: var(--shadow-elevated, 0 12px 40px rgba(0, 0, 0, 0.55));
+  background: var(--card-bg-elevated, #222222) !important;
+  border-color: #333333 !important;
 }
 
 /* ── Text contrast ── */
@@ -131,30 +131,31 @@ html[data-theme-resolved='dark'] body.provider-body .prov-chart-val {
   color: var(--text-muted) !important;
 }
 
-/* ── Notification panel (Latest Platform Activity) ── */
+/* ── Notification panel ── */
 html[data-theme-resolved='dark'] body.provider-body .mc-notif-recent-panel {
-  background: linear-gradient(145deg, var(--card-bg, #2c2c2c) 0%, #282828 100%) !important;
-  border: 1px solid var(--border-color) !important;
-  border-radius: var(--radius-card, 14px) !important;
+  background: var(--card-bg, #1c1c1c) !important;
+  border: 1px solid var(--border-color, #2a2a2a) !important;
+  border-radius: var(--radius-card, 12px) !important;
   box-shadow: var(--shadow-card);
   overflow: hidden;
 }
 
 html[data-theme-resolved='dark'] body.provider-body .mc-notif-recent-panel__head {
-  background: var(--bg-secondary, #1e1e1e) !important;
-  border-bottom: 1px solid var(--border-color) !important;
+  background: var(--card-bg, #1c1c1c) !important;
+  border-bottom: 1px solid var(--border-color, #2a2a2a) !important;
 }
 
 html[data-theme-resolved='dark'] body.provider-body .mc-notif-recent-panel__link {
-  color: var(--accent-cyan, #22d3ee);
-  border-color: rgba(34, 211, 238, 0.25);
-  background: rgba(34, 211, 238, 0.08);
-  border-radius: 10px;
+  color: var(--text-primary);
+  border-color: var(--border-color);
+  background: var(--bg-secondary, #0f0f0f);
+  border-radius: 8px;
+  font-size: 12px;
 }
 
 html[data-theme-resolved='dark'] body.provider-body .mc-notif-recent-panel__link:hover {
-  background: rgba(34, 211, 238, 0.15);
-  border-color: rgba(34, 211, 238, 0.4);
+  background: var(--card-bg-elevated, #222222);
+  border-color: #333333;
 }
 
 html[data-theme-resolved='dark'] body.provider-body .mc-notif-recent-panel__body,
@@ -179,9 +180,7 @@ html[data-theme-resolved='dark'] body.provider-body .mc-notif-list--feed .mc-not
 }
 
 html[data-theme-resolved='dark'] body.provider-body .mc-notif-list--feed .mc-notif-item.is-unread::before {
-  background: var(--accent-cyan, #22d3ee);
-  width: 3px;
-  border-radius: 0 3px 3px 0;
+  background: var(--accent-purple, #8b5cf6);
 }
 
 html[data-theme-resolved='dark'] body.provider-body .mc-notif-widget {
@@ -191,22 +190,23 @@ html[data-theme-resolved='dark'] body.provider-body .mc-notif-widget {
 
 /* ── Recent Activity ── */
 html[data-theme-resolved='dark'] body.provider-body .prov-activity-item {
-  background: var(--bg-secondary, #1e1e1e) !important;
-  border: 1px solid var(--border-color) !important;
-  border-radius: 12px;
-  transition: background 0.2s ease, box-shadow 0.2s ease;
-  box-shadow: var(--shadow-inset, inset 0 1px 0 rgba(255, 255, 255, 0.04));
+  background: var(--bg-secondary, #0f0f0f) !important;
+  border: 1px solid var(--border-color, #2a2a2a) !important;
+  border-radius: 10px;
+  transition: background 0.15s ease;
+  box-shadow: none;
 }
 
 html[data-theme-resolved='dark'] body.provider-body .prov-activity-item:hover {
-  background: var(--card-bg-elevated, #353535) !important;
-  box-shadow: var(--shadow-card);
+  background: var(--card-bg, #1c1c1c) !important;
+  border-color: #333333 !important;
 }
 
 html[data-theme-resolved='dark'] body.provider-body .prov-activity-item__icon {
-  background: rgba(34, 211, 238, 0.12);
-  color: var(--accent-cyan, #22d3ee);
-  border-radius: 10px;
+  background: var(--card-bg, #1c1c1c);
+  color: var(--text-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
 }
 
 html[data-theme-resolved='dark'] body.provider-body .prov-status-item,
@@ -434,33 +434,32 @@ html[data-theme-resolved='dark'] body.provider-body .ps-toast.error {
   color: #fecaca !important;
 }
 
-/* ── Chart bars (cyan + blue highlights like reference) ── */
+/* ── Chart bars ── */
 html[data-theme-resolved='dark'] body.provider-body .prov-chart {
-  border-bottom-color: var(--border-color);
+  border-bottom-color: var(--border-color, #2a2a2a);
 }
 
 html[data-theme-resolved='dark'] body.provider-body .prov-chart-bar {
-  background: linear-gradient(180deg, #3a3a3a 0%, #2a2a2a 100%) !important;
-  opacity: 0.7;
+  background: #2a2a2a !important;
+  opacity: 1;
 }
 
 html[data-theme-resolved='dark'] body.provider-body .prov-chart-col.is-today .prov-chart-bar {
-  background: linear-gradient(180deg, var(--accent-cyan, #22d3ee) 0%, var(--accent-blue, #3b82f6) 100%) !important;
-  opacity: 1;
-  box-shadow: 0 4px 16px rgba(34, 211, 238, 0.35);
+  background: var(--accent-purple, #8b5cf6) !important;
+  box-shadow: 0 2px 12px rgba(139, 92, 246, 0.4);
 }
 
 html[data-theme-resolved='dark'] body.provider-body .prov-chart-col.is-today .prov-chart-label {
-  color: var(--accent-cyan, #22d3ee);
+  color: var(--text-primary);
 }
 
 html[data-theme-resolved='dark'] body.provider-body .prov-chart-legend strong {
   color: var(--accent-green, #22c55e);
 }
 
-/* ── Stat value accents ── */
+/* ── Stat accents ── */
 html[data-theme-resolved='dark'] body.provider-body .prov-dash-stat--ok strong {
-  color: var(--accent-cyan, #22d3ee);
+  color: var(--text-primary);
 }
 
 html[data-theme-resolved='dark'] body.provider-body .prov-dash-stat--warn strong {
@@ -471,15 +470,19 @@ html[data-theme-resolved='dark'] body.provider-body .prov-dash-stat--danger stro
   color: var(--accent-red, #ef4444);
 }
 
-/* ── Welcome strip accent ── */
+/* ── Welcome strip ── */
 html[data-theme-resolved='dark'] body.provider-body .prov-dash-welcome {
-  border-left-color: var(--accent-cyan, #22d3ee) !important;
+  border-left-color: var(--accent-purple, #8b5cf6) !important;
+}
+
+html[data-theme-resolved='dark'] body.provider-body .prov-dash-welcome__eyebrow {
+  color: var(--text-muted) !important;
 }
 
 html[data-theme-resolved='dark'] body.provider-body .prov-dash-badge {
-  background: rgba(139, 92, 246, 0.15) !important;
+  background: rgba(139, 92, 246, 0.12) !important;
   color: var(--accent-purple, #a78bfa) !important;
-  border: 1px solid rgba(139, 92, 246, 0.25);
+  border: 1px solid rgba(139, 92, 246, 0.2);
 }
 
 /* ── Header controls ── */
@@ -487,20 +490,37 @@ html[data-theme-resolved='dark'] body.provider-body .pd-hamburger,
 html[data-theme-resolved='dark'] body.provider-body .pd-notif-btn,
 html[data-theme-resolved='dark'] body.provider-body .mc-notif-btn,
 html[data-theme-resolved='dark'] body.provider-body .mc-theme-toggle__btn {
-  background: var(--card-bg, #2c2c2c) !important;
-  border: 1px solid var(--border-color) !important;
-  color: var(--text-primary) !important;
-  border-radius: 12px;
-  box-shadow: var(--shadow-inset);
+  background: var(--card-bg, #1c1c1c) !important;
+  border: 1px solid var(--border-color, #2a2a2a) !important;
+  color: var(--text-secondary) !important;
+  border-radius: 8px;
+  box-shadow: none;
 }
 
 html[data-theme-resolved='dark'] body.provider-body .pd-hamburger:hover,
 html[data-theme-resolved='dark'] body.provider-body .pd-notif-btn:hover,
 html[data-theme-resolved='dark'] body.provider-body .mc-notif-btn:hover,
 html[data-theme-resolved='dark'] body.provider-body .mc-theme-toggle__btn:hover {
-  background: var(--card-bg-elevated, #353535) !important;
-  border-color: rgba(34, 211, 238, 0.3) !important;
-  color: var(--accent-cyan, #22d3ee) !important;
+  background: var(--card-bg-elevated, #222222) !important;
+  border-color: #333333 !important;
+  color: var(--text-primary) !important;
+}
+
+/* ── Primary buttons (purple CTA like reference) ── */
+html[data-theme-resolved='dark'] body.provider-body .mc-btn--primary,
+html[data-theme-resolved='dark'] body.provider-body .btn-primary,
+html[data-theme-resolved='dark'] body.provider-body .ps-btn-primary {
+  background: var(--accent-primary, #7c3aed) !important;
+  border-color: var(--accent-primary, #7c3aed) !important;
+  color: #ffffff !important;
+  border-radius: 8px;
+  box-shadow: 0 2px 12px rgba(124, 58, 237, 0.35);
+}
+
+html[data-theme-resolved='dark'] body.provider-body .mc-btn--primary:hover,
+html[data-theme-resolved='dark'] body.provider-body .btn-primary:hover {
+  background: #6d28d9 !important;
+  border-color: #6d28d9 !important;
 }
 
 /* ── Empty states ── */
@@ -553,36 +573,27 @@ html[data-theme-resolved='dark'] body.provider-body .referral-panel {
   color: var(--text-primary);
 }
 
-/* ── Metric strip stats (patient-dashboard-mock overrides) ── */
+/* ── Metric strip stats ── */
 html[data-theme-resolved='dark'] body.provider-body .prov-dash-stat {
-  background: linear-gradient(145deg, var(--card-bg, #2c2c2c) 0%, #282828 100%) !important;
-  border: 1px solid var(--border-color) !important;
-  border-top: 3px solid var(--accent-cyan, #22d3ee) !important;
+  background: var(--card-bg, #1c1c1c) !important;
+  border: 1px solid var(--border-color, #2a2a2a) !important;
+  border-top: 3px solid var(--accent-purple, #8b5cf6) !important;
   box-shadow: var(--shadow-card) !important;
-  border-radius: var(--radius-card, 14px) !important;
+  border-radius: var(--radius-card, 12px) !important;
 }
 
 html[data-theme-resolved='dark'] body.provider-body .prov-dash-stat__icon {
-  background: rgba(34, 211, 238, 0.12) !important;
-  color: var(--accent-cyan, #22d3ee) !important;
+  background: var(--bg-secondary, #0f0f0f) !important;
+  color: var(--text-secondary) !important;
+  border: 1px solid var(--border-color);
 }
 
 html[data-theme-resolved='dark'] body.provider-body .prov-dash-stat--warn {
   border-top-color: var(--accent-orange, #f59e0b) !important;
 }
 
-html[data-theme-resolved='dark'] body.provider-body .prov-dash-stat--warn .prov-dash-stat__icon {
-  background: rgba(245, 158, 11, 0.12) !important;
-  color: var(--accent-orange, #f59e0b) !important;
-}
-
 html[data-theme-resolved='dark'] body.provider-body .prov-dash-stat--danger {
   border-top-color: var(--accent-red, #ef4444) !important;
-}
-
-html[data-theme-resolved='dark'] body.provider-body .prov-dash-stat--danger .prov-dash-stat__icon {
-  background: rgba(239, 68, 68, 0.12) !important;
-  color: var(--accent-red, #ef4444) !important;
 }
 
 html[data-theme-resolved='dark'] body.provider-body .prov-dash-stat strong {
@@ -590,21 +601,28 @@ html[data-theme-resolved='dark'] body.provider-body .prov-dash-stat strong {
 }
 
 html[data-theme-resolved='dark'] body.provider-body .prov-dash-stat span {
-  color: var(--text-secondary, #a0a0a0) !important;
+  color: var(--text-muted, #888888) !important;
 }
 
-/* ── CTA card keeps teal gradient ── */
+/* ── CTA card ── */
 html[data-theme-resolved='dark'] body.provider-body .prov-dash-cta {
-  background: linear-gradient(135deg, #069396 0%, #057a7c 100%) !important;
-  border: none !important;
-  box-shadow: 0 8px 32px rgba(6, 147, 150, 0.35) !important;
+  background: var(--card-bg, #1c1c1c) !important;
+  border: 1px solid var(--border-color, #2a2a2a) !important;
+  box-shadow: var(--shadow-card) !important;
+}
+
+html[data-theme-resolved='dark'] body.provider-body .prov-dash-cta .prov-dash-card__title,
+html[data-theme-resolved='dark'] body.provider-body .prov-dash-cta p {
+  color: var(--text-primary) !important;
 }
 
 html[data-theme-resolved='dark'] body.provider-body .prov-dash-cta .mc-btn {
-  background: rgba(255, 255, 255, 0.95) !important;
-  color: #057a7c !important;
-  border-radius: 12px;
-  font-weight: 700;
+  background: var(--accent-primary, #7c3aed) !important;
+  color: #ffffff !important;
+  border-radius: 8px;
+  font-weight: 600;
+  border: none;
+  box-shadow: 0 2px 12px rgba(124, 58, 237, 0.35);
 }
 
 /* ── Dropdown / profile menu ── */
@@ -620,4 +638,49 @@ html[data-theme-resolved='dark'] body.provider-body .mc-notif-panel {
 
 html[data-theme-resolved='dark'] body.provider-body .mc-notif-panel .mc-notif-item:hover {
   background: var(--hover-overlay) !important;
+}
+
+/* ── Greeting hero (WorkflowAI "Hello Alexander" style) ── */
+html[data-theme-resolved='dark'] body.provider-body .prov-dash-welcome__title,
+html[data-theme-resolved='dark'] body.provider-body .prov-dash-welcome--compact .prov-dash-welcome__eyebrow {
+  color: var(--text-primary, #ffffff) !important;
+  font-weight: 700;
+}
+
+html[data-theme-resolved='dark'] body.provider-body .prov-dash-welcome__meta,
+html[data-theme-resolved='dark'] body.provider-body .prov-dash-staff-id {
+  color: var(--text-muted, #888888) !important;
+}
+
+html[data-theme-resolved='dark'] body.provider-body .prov-dash-staff-id strong {
+  color: var(--text-secondary, #a1a1aa) !important;
+}
+
+/* ── Secondary buttons ── */
+html[data-theme-resolved='dark'] body.provider-body .mc-btn--secondary,
+html[data-theme-resolved='dark'] body.provider-body .btn-secondary {
+  background: var(--card-bg, #1c1c1c) !important;
+  border: 1px solid var(--border-color, #2a2a2a) !important;
+  color: var(--text-primary) !important;
+  border-radius: 8px;
+}
+
+html[data-theme-resolved='dark'] body.provider-body .mc-btn--secondary:hover,
+html[data-theme-resolved='dark'] body.provider-body .btn-secondary:hover {
+  background: var(--card-bg-elevated, #222222) !important;
+  border-color: #333333 !important;
+}
+
+/* ── Inputs (search-bar style like reference sidebar) ── */
+html[data-theme-resolved='dark'] body.provider-body input[type='search'],
+html[data-theme-resolved='dark'] body.provider-body .ps-input,
+html[data-theme-resolved='dark'] body.provider-body .form-control {
+  background: var(--bg-secondary, #0f0f0f) !important;
+  border: 1px solid var(--border-color, #2a2a2a) !important;
+  color: var(--text-primary) !important;
+  border-radius: 8px;
+}
+
+html[data-theme-resolved='dark'] body.provider-body input::placeholder {
+  color: var(--text-muted, #888888);
 }

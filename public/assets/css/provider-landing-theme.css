@@ -485,33 +485,34 @@ body.provider-body .mc-notif-recent-panel__body {
   }
 }
 
-/* ── Dark theme (Cofeed-inspired elevated dark UI) ── */
+/* ── Dark theme (WorkflowAI-style flat dark UI) ── */
 html[data-theme-resolved='dark'] body.provider-body {
-  --bg-primary: #141414;
-  --bg-secondary: #1e1e1e;
-  --card-bg: #2c2c2c;
-  --card-bg-elevated: #353535;
+  --bg-primary: #0a0a0a;
+  --bg-secondary: #0f0f0f;
+  --card-bg: #1c1c1c;
+  --card-bg-elevated: #222222;
   --text-primary: #ffffff;
-  --text-secondary: #a0a0a0;
-  --text-muted: #707070;
-  --border-color: rgba(255, 255, 255, 0.06);
-  --border-subtle: rgba(255, 255, 255, 0.04);
-  --shadow-card: 0 8px 32px rgba(0, 0, 0, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.04);
-  --shadow-elevated: 0 12px 40px rgba(0, 0, 0, 0.55);
-  --shadow-inset: inset 0 1px 0 rgba(255, 255, 255, 0.05);
-  --hover-overlay: rgba(255, 255, 255, 0.05);
-  --active-overlay: rgba(255, 255, 255, 0.08);
-  --radius-card: 14px;
-  --accent-primary: #069396;
-  --accent-cyan: #22d3ee;
+  --text-secondary: #a1a1aa;
+  --text-muted: #888888;
+  --border-color: #2a2a2a;
+  --border-subtle: #1f1f1f;
+  --shadow-card: 0 1px 0 rgba(255, 255, 255, 0.04), 0 4px 20px rgba(0, 0, 0, 0.5);
+  --shadow-elevated: 0 1px 0 rgba(255, 255, 255, 0.06), 0 8px 28px rgba(0, 0, 0, 0.55);
+  --shadow-inset: none;
+  --hover-overlay: rgba(255, 255, 255, 0.04);
+  --active-overlay: rgba(255, 255, 255, 0.07);
+  --radius-card: 12px;
+  --accent-primary: #7c3aed;
+  --accent-cyan: #06b6d4;
   --accent-blue: #3b82f6;
   --accent-purple: #8b5cf6;
   --accent-green: #22c55e;
   --accent-orange: #f59e0b;
   --accent-red: #ef4444;
-  --scrollbar-track: #1a1a1a;
-  --scrollbar-thumb: #3b82f6;
-  --scrollbar-thumb-hover: #60a5fa;
+  --accent-teal: #069396;
+  --scrollbar-track: #0a0a0a;
+  --scrollbar-thumb: #3f3f46;
+  --scrollbar-thumb-hover: #52525b;
 
   --mc-border-thin: var(--border-color);
   --pt-dash-surface: var(--card-bg);
@@ -545,7 +546,7 @@ html[data-theme-resolved='dark'] body.provider-body .provider-page-body {
 html[data-theme-resolved='dark'] body.provider-body .sb-aqua {
   background: var(--bg-secondary) !important;
   border-right: 1px solid var(--border-color) !important;
-  box-shadow: 4px 0 24px rgba(0, 0, 0, 0.3);
+  box-shadow: none;
 }
 
 html[data-theme-resolved='dark'] body.provider-body .sba-logo {
@@ -559,31 +560,31 @@ html[data-theme-resolved='dark'] body.provider-body .sba-group-label--secondary 
 }
 
 html[data-theme-resolved='dark'] body.provider-body .sba-item {
-  color: var(--text-secondary);
-  border-radius: 12px;
-  transition: background 0.2s ease, color 0.2s ease;
+  color: var(--text-muted);
+  border-radius: 8px;
+  transition: background 0.15s ease, color 0.15s ease;
 }
 
 html[data-theme-resolved='dark'] body.provider-body .sba-item:hover {
   background: var(--hover-overlay);
-  color: var(--text-primary);
+  color: var(--text-secondary);
 }
 
 html[data-theme-resolved='dark'] body.provider-body .sba-item.is-active {
-  background: var(--active-overlay);
+  background: var(--card-bg);
   color: var(--text-primary);
-  box-shadow: var(--shadow-inset);
+  box-shadow: none;
   border-color: transparent;
 }
 
 html[data-theme-resolved='dark'] body.provider-body .sba-item.is-active .sba-icon {
-  stroke: var(--accent-cyan);
+  stroke: var(--text-primary);
 }
 
 html[data-theme-resolved='dark'] body.provider-body .sba-profile {
   background: var(--card-bg) !important;
   border: 1px solid var(--border-color) !important;
-  box-shadow: var(--shadow-card);
+  box-shadow: none;
 }
 
 html[data-theme-resolved='dark'] body.provider-body .sba-name {
@@ -607,13 +608,13 @@ html[data-theme-resolved='dark'] body.provider-body .sba-logout:hover {
 }
 
 html[data-theme-resolved='dark'] body.provider-body .pd-header {
-  background: var(--bg-secondary) !important;
+  background: var(--bg-primary) !important;
   border-bottom: 1px solid var(--border-color) !important;
-  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.25);
+  box-shadow: none;
 }
 
 html[data-theme-resolved='dark'] body.provider-body .pd-header-date {
-  color: var(--accent-cyan) !important;
+  color: var(--text-muted) !important;
 }
 
 html[data-theme-resolved='dark'] body.provider-body .pd-header-page,
