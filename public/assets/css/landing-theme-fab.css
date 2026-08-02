@@ -46,6 +46,25 @@ body.signin-active .landing-theme-fab {
   transform: translateY(20px) !important;
 }
 
+/* Hide floating theme FAB on mobile — theme lives in hamburger drawer */
+@media (max-width: 992px) {
+  .landing-theme-fab {
+    display: none !important;
+  }
+}
+
+/* Hide bottom FABs while mobile nav or search is open */
+body.landing-page.landing-nav-open .landing-theme-fab,
+body.landing-page.landing-nav-open .landing-fab,
+body.landing-page.nav-search-open .landing-theme-fab,
+body.landing-page.nav-search-open .landing-fab,
+body.landing-page.landing-nav-open #landing-fab,
+body.landing-page.nav-search-open #landing-fab {
+  opacity: 0 !important;
+  visibility: hidden !important;
+  pointer-events: none !important;
+}
+
 .landing-theme-fab__btn {
   display: inline-flex;
   align-items: center;

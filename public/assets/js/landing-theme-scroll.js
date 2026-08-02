@@ -8,13 +8,20 @@
 
   const wrap = document.getElementById('landing-theme-fab');
   const btn = document.getElementById('landing-theme-toggle');
-  if (!wrap || !btn) return;
+  const drawerBtn = document.getElementById('landing-theme-toggle-drawer');
+  const drawerLabel = drawerBtn ? drawerBtn.querySelector('.nav-drawer-theme-btn__label') : null;
+  const MOBILE_NAV_MQ = window.matchMedia('(max-width: 992px)');
+  if (!btn && !drawerBtn) return;
 
   const services = document.getElementById('services-section');
   const sentinel = document.getElementById('hero-theme-sentinel');
   const target = services || sentinel;
 
   let visible = false;
+
+  function isMobileNavLayout() {
+    return MOBILE_NAV_MQ.matches;
+  }
 
   function getResolved() {
     return document.documentElement.getAttribute('data-theme-resolved') || 'light';
@@ -24,9 +31,25 @@
     const dark = getResolved() === 'dark';
     document.body.classList.toggle('landing-bg--dark', dark);
     document.body.classList.toggle('landing-bg--light', !dark);
-    btn.setAttribute('aria-pressed', dark ? 'true' : 'false');
-    btn.setAttribute('aria-label', dark ? 'Switch to light mode' : 'Switch to dark mode');
-    btn.setAttribute('title', dark ? 'Switch to light mode' : 'Switch to dark mode');
+
+    const label = dark ? 'Switch to light mode' : 'Switch to dark mode';
+    const drawerText = dark ? 'Light mode' : 'Dark mode';
+
+    if (btn) {
+      btn.setAttribute('aria-pressed', dark ? 'true' : 'false');
+      btn.setAttribute('aria-label', label);
+      btn.setAttribute('title', label);
+    }
+
+    if (drawerBtn) {
+      drawerBtn.setAttribute('aria-pressed', dark ? 'true' : 'false');
+      drawerBtn.setAttribute('aria-label', label);
+      drawerBtn.setAttribute('title', label);
+    }
+
+    if (drawerLabel) {
+      drawerLabel.textContent = drawerText;
+    }
   }
 
   function applyLandingTheme(preference) {
@@ -46,11 +69,21 @@
   }
 
   function setVisible(next) {
+    if (!wrap) return;
+    if (isMobileNavLayout()) {
+      if (visible) {
+        visible = false;
+        wrap.classList.remove('is-visible');
+        wrap.setAttribute('aria-hidden', 'true');
+        if (btn) btn.blur();
+      }
+      return;
+    }
     if (next === visible) return;
     visible = next;
     wrap.classList.toggle('is-visible', visible);
     wrap.setAttribute('aria-hidden', visible ? 'false' : 'true');
-    if (!visible) btn.blur();
+    if (!visible && btn) btn.blur();
   }
 
   function onToggle(e) {
@@ -65,9 +98,20 @@
     syncLandingBgClass();
   }
 
-  btn.addEventListener('click', onToggle);
+  btn && btn.addEventListener('click', onToggle);
+  drawerBtn && drawerBtn.addEventListener('click', onToggle);
 
   syncLandingBgClass();
+
+  MOBILE_NAV_MQ.addEventListener('change', () => {
+    if (isMobileNavLayout()) {
+      setVisible(false);
+    } else if (target) {
+      setVisible(visible);
+    } else {
+      setVisible(true);
+    }
+  });
 
   const themeObserver = new MutationObserver(syncLandingBgClass);
   themeObserver.observe(document.documentElement, {
