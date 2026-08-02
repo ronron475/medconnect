@@ -1,15 +1,15 @@
 /**
- * medConnect — Premium logo-only global loader (float + pulse, no spin)
+ * medConnect — Auth-only loading screen (login / logout).
+ * Full-screen loader is intentionally NOT used for navigation, fetch, or other UI actions.
  */
 (function (global) {
   'use strict';
 
   const FADE_MS = 280;
-  const EXIT_MS = 120;
   const MIN_DISPLAY_MS = 400;
   const BOOT_MAX_MS = 6000;
 
-  let activeRequests = 0;
+  let authActive = false;
   let booting = false;
   let isVisible = false;
   let hideTimer = null;
@@ -36,12 +36,7 @@
     );
   }
 
-  function buildMarkup(srText, modalOpts) {
-    const modal = modalOpts || {};
-    const textBlock = modal.enabled ? (
-      '<p class="mc-loader__status">' + (modal.status || 'Loading medConnect...') + '</p>' +
-      buildLoaderExtras()
-    ) : '';
+  function buildMarkup(srText, statusText) {
     return (
       '<div class="mc-global-loader__stage" aria-hidden="true">' +
         '<div class="mc-global-loader__glow"></div>' +
@@ -49,12 +44,12 @@
           '<img class="mc-global-loader__logo" src="' + logoSrc() + '" alt="" width="200" height="200" decoding="async" />' +
         '</div>' +
       '</div>' +
-      textBlock +
+      '<p class="mc-loader__status">' + (statusText || 'Loading medConnect...') + '</p>' +
+      buildLoaderExtras() +
       '<span class="mc-global-loader__sr-only">' + (srText || 'Loading. Please wait.') + '</span>'
     );
   }
 
-  /** Single overlay element — always reuse #mc-loader-boot when present. */
   function getOverlay() {
     let el = document.getElementById('mc-loader-boot')
       || document.getElementById('mc-global-loader');
@@ -89,23 +84,14 @@
     document.body.classList.toggle('mc-loader-active', on);
     document.body.classList.toggle('mc-login-loading-active', on);
     document.body.classList.toggle('mc-global-loader--boot-active', on && booting);
+    document.body.classList.toggle('mc-global-loader--modal-active', on);
   }
 
-  function setModalMode(el, on, options) {
-    options = options || {};
-    el.classList.toggle('mc-global-loader--modal', on);
-    document.body.classList.toggle('mc-global-loader--modal-active', on);
-    if (on) {
-      const panel = el.querySelector('.mc-loader__panel');
-      if (panel) {
-        panel.innerHTML = buildMarkup(options.sr || 'Loading. Please wait.', {
-          enabled: true,
-          brand: options.brand,
-          status: options.status,
-          substatus: options.substatus,
-          hint: options.hint,
-        });
-      }
+  function setAuthModal(el, status, sr) {
+    el.classList.add('mc-global-loader--modal');
+    const panel = el.querySelector('.mc-loader__panel');
+    if (panel) {
+      panel.innerHTML = buildMarkup(sr || status || 'Loading. Please wait.', status || 'Loading medConnect...');
     }
   }
 
@@ -138,174 +124,52 @@
     el.classList.remove('mc-global-loader--visible', 'mc-loader--visible', 'mc-loader-panel--visible');
 
     if (animate === false) {
-      el.classList.remove('mc-global-loader--exit', 'mc-loader--exit');
+      el.classList.remove('mc-global-loader--exit', 'mc-loader--exit', 'mc-global-loader--modal');
       el.setAttribute('aria-hidden', 'true');
       el.setAttribute('hidden', '');
       setBodyActive(false);
-      setModalMode(el, false);
       return;
     }
 
     el.classList.add('mc-global-loader--exit', 'mc-loader--exit');
     hideTimer = setTimeout(function () {
-      el.classList.remove('mc-global-loader--exit', 'mc-loader--exit');
+      el.classList.remove('mc-global-loader--exit', 'mc-loader--exit', 'mc-global-loader--modal');
       el.setAttribute('aria-hidden', 'true');
       el.setAttribute('hidden', '');
       setBodyActive(false);
-      setModalMode(el, false);
       hideTimer = null;
     }, FADE_MS);
   }
 
-  function syncOverlay() {
-    const wantVisible = booting || activeRequests > 0;
-    if (wantVisible === isVisible) return;
-    applyVisible(wantVisible, true);
-  }
-
-  const FORMAL_PRESETS = {
-    default: {
-      brand: 'medConnect',
-      status: 'Loading medConnect...',
-      sr: 'Loading medConnect.',
-    },
-    navigation: {
-      brand: 'medConnect',
-      status: 'Loading medConnect...',
-      sr: 'Loading page.',
-    },
-    login: {
-      status: 'Signing In...',
-      sr: 'Signing in.',
-    },
-    logout: {
-      status: 'Signing Out...',
-      sr: 'Signing out.',
-    },
-    ai: {
-      status: 'Verifying with AI…',
-      substatus: 'Running medical NLP pipeline…',
-      hint: 'Please wait…',
-      sr: 'Analyzing health information.',
-    },
-    booking: {
-      status: 'Booking your appointment…',
-      substatus: 'Confirming provider availability…',
-      hint: 'Please wait…',
-      sr: 'Booking appointment.',
-    },
-    submit: {
-      status: 'Submitting…',
-      substatus: 'Saving your information…',
-      hint: 'Please wait…',
-      sr: 'Submitting form.',
-    },
-    assessment: {
-      status: 'Running AI assessment…',
-      substatus: 'Analyzing symptoms and classifying urgency…',
-      hint: 'Please wait…',
-      sr: 'Running medical assessment.',
-    },
-  };
-
-  function resolveFormalOptions(options) {
+  function showAuth(options) {
     options = options || {};
-    const presetKey = options.preset || options.mode || 'default';
-    const preset = FORMAL_PRESETS[presetKey] || FORMAL_PRESETS.default;
-    return {
-      modal: true,
-      keepModal: true,
-      instant: options.instant === true,
-      brand: options.brand || preset.brand || FORMAL_PRESETS.default.brand,
-      status: options.status || preset.status || FORMAL_PRESETS.default.status,
-      substatus: options.substatus || options.message || preset.substatus || FORMAL_PRESETS.default.substatus,
-      hint: options.hint || preset.hint || FORMAL_PRESETS.default.hint,
-      sr: options.sr || options.status || preset.sr || FORMAL_PRESETS.default.sr,
-    };
-  }
+    const mode = options.mode === 'logout' ? 'logout' : 'login';
+    const status = options.status
+      || (mode === 'logout' ? 'Signing Out...' : 'Signing In...');
+    const sr = options.sr
+      || (mode === 'logout' ? 'Signing out.' : 'Signing in.');
 
-  function showFormal(options) {
-    return show(resolveFormalOptions(options));
-  }
+    authActive = true;
+    booting = false;
 
-  function hideFormal() {
-    hide();
-  }
-
-  function show(options) {
-    options = options || {};
     const el = getOverlay();
-    const useModal = options.modal === true
-      || options.mode === 'login'
-      || options.mode === 'logout'
-      || options.mode === 'navigation'
-      || !!options.preset;
-    if (useModal) {
-      const presetKey = options.preset || options.mode || 'default';
-      const preset = FORMAL_PRESETS[presetKey] || FORMAL_PRESETS.default;
-      setModalMode(el, true, {
-        sr: options.sr || preset.sr,
-        brand: options.brand || preset.brand || 'medConnect',
-        status: options.status || preset.status || 'Loading medConnect...',
-      });
-    } else if (!options.keepModal) {
-      const modalActive = el.classList.contains('mc-global-loader--modal')
-        || document.body.classList.contains('mc-global-loader--modal-active');
-      if (!(modalActive && activeRequests > 0)) {
-        setModalMode(el, false);
-      }
-    }
-    if (options.sr && !useModal) {
-      const sr = el.querySelector('.mc-global-loader__sr-only');
-      if (sr) sr.textContent = options.sr;
-    }
-    activeRequests += 1;
-    const instant = options.instant === true;
-    if (instant) {
-      isVisible = true;
-      el.removeAttribute('hidden');
-      el.setAttribute('aria-busy', 'true');
-      el.setAttribute('aria-hidden', 'false');
-      el.classList.remove('mc-global-loader--exit', 'mc-loader--exit');
-      el.classList.add('mc-global-loader--visible', 'mc-loader--visible');
-      setBodyActive(true);
-    } else {
-      syncOverlay();
-    }
+    setAuthModal(el, status, sr);
+
+    // Instant cover so UI dismiss (sign-in panel / logout modal) never flashes through.
+    isVisible = true;
+    el.removeAttribute('hidden');
+    el.setAttribute('aria-busy', 'true');
+    el.setAttribute('aria-hidden', 'false');
+    el.classList.remove('mc-global-loader--exit', 'mc-loader--exit');
+    el.classList.add('mc-global-loader--visible', 'mc-loader--visible');
+    setBodyActive(true);
     return el;
   }
 
-  function hide() {
-    activeRequests = Math.max(0, activeRequests - 1);
-    syncOverlay();
-  }
-
-  function forceHide() {
-    activeRequests = 0;
+  function hideAuth(animate) {
+    authActive = false;
     booting = false;
-    syncOverlay();
-  }
-
-  function showPersistent(id, options) {
-    options = options || {};
-    if (!options.preset && !options.mode) {
-      if (id && id.indexOf('nlp') !== -1) options.preset = 'ai';
-      else if (id && id.indexOf('booking') !== -1) options.preset = 'booking';
-    }
-    return showFormal(options);
-  }
-
-  function hidePersistent() {
-    document.body.classList.remove('reg-nlp-overlay-open', 'patient-booking-overlay-open');
-    hideFormal();
-  }
-
-  function showPanel(options) {
-    return show(options);
-  }
-
-  function hidePanel() {
-    hide();
+    applyVisible(false, animate !== false);
   }
 
   function dismissSignInUi() {
@@ -337,19 +201,18 @@
     }
   }
 
+  /**
+   * Primary auth transition: show loader immediately, complete auth work, then redirect.
+   */
   function showTransition(redirectUrl, options) {
     options = options || {};
     if (!redirectUrl || typeof redirectUrl !== 'string') return;
 
     const mode = options.mode === 'logout' ? 'logout' : 'login';
 
-    booting = false;
-    activeRequests = 0;
-
-    // Cover the page immediately so sign-in panel close never flashes through.
-    showFormal({
-      preset: mode,
-      instant: true,
+    showAuth({
+      mode: mode,
+      status: mode === 'logout' ? 'Signing Out...' : 'Signing In...',
       sr: mode === 'logout' ? 'Signing out.' : 'Signing in.',
     });
 
@@ -410,6 +273,7 @@
     });
   }
 
+  /** Continue loader only after login/logout redirect handoff. */
   function initPageBoot() {
     const boot = document.getElementById('mc-loader-boot');
     if (!boot) return;
@@ -420,12 +284,12 @@
       if (authHandoff) sessionStorage.removeItem('mc_auth_handoff');
     } catch (_) { /* ignore */ }
 
-    // Full-screen boot splash only after sign-in or sign-out — not normal portal navigation/reload.
     if (authHandoff !== 'login' && authHandoff !== 'logout') {
       boot.setAttribute('hidden', '');
       boot.setAttribute('aria-hidden', 'true');
       boot.setAttribute('aria-busy', 'false');
-      boot.classList.remove('mc-global-loader--visible', 'mc-loader--visible');
+      boot.classList.remove('mc-global-loader--visible', 'mc-loader--visible', 'mc-global-loader--modal');
+      authActive = false;
       booting = false;
       setBodyActive(false);
       return;
@@ -433,13 +297,13 @@
 
     const statusEl = boot.querySelector('.mc-loader__status');
     if (authHandoff === 'login') {
-      if (statusEl) statusEl.textContent = 'Loading medConnect...';
+      if (statusEl) statusEl.textContent = 'Signing In...';
     } else if (authHandoff === 'logout') {
       if (statusEl) statusEl.textContent = 'Signing Out...';
     }
 
     boot.classList.add('mc-global-loader--modal');
-
+    authActive = true;
     booting = true;
     boot.removeAttribute('hidden');
     boot.setAttribute('aria-busy', 'true');
@@ -453,157 +317,49 @@
       if (ended) return;
       ended = true;
       booting = false;
-      syncOverlay();
+      authActive = false;
+      applyVisible(false, true);
     }
 
     if (document.readyState === 'complete') {
-      setTimeout(endBoot, 120);
+      setTimeout(endBoot, 160);
     } else {
       global.addEventListener('load', function () {
-        setTimeout(endBoot, 120);
+        setTimeout(endBoot, 160);
       }, { once: true });
     }
     setTimeout(endBoot, BOOT_MAX_MS);
-  }
-
-  function bindNavigationLoader() {
-    document.addEventListener('click', function (e) {
-      const link = e.target && e.target.closest ? e.target.closest('a[href]') : null;
-      if (!link || e.defaultPrevented) return;
-      if (link.target === '_blank' || link.hasAttribute('download')) return;
-      if (link.dataset.mcNoLoader === '1' || link.classList.contains('mc-no-loader')) return;
-
-      const href = link.getAttribute('href');
-      if (!href || href.charAt(0) === '#' || /^javascript:/i.test(href)) return;
-      if (link.origin && link.origin !== global.location.origin) return;
-      if (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
-
-      const body = document.body;
-      if (!body) return;
-      if (
-        body.classList.contains('patient-portal')
-        || body.classList.contains('provider-body')
-        || body.classList.contains('admin-body')
-        || body.classList.contains('superadmin-body')
-        || body.classList.contains('bhw-body')
-      ) {
-        return;
-      }
-
-      showFormal({ preset: 'navigation', instant: true });
-    }, false);
-  }
-
-  function hasNoLoaderHeader(opts) {
-    const h = opts && opts.headers;
-    if (!h) return false;
-    if (typeof Headers !== 'undefined' && h instanceof Headers) {
-      return h.get('X-MC-No-Loader') === '1';
-    }
-    return h['X-MC-No-Loader'] === '1' || h['x-mc-no-loader'] === '1';
-  }
-
-  function shouldAutoLoad(url, options) {
-    const opts = options || {};
-    if (hasNoLoaderHeader(opts)) return false;
-    if (opts.mcNoLoader === true) return false;
-
-    const method = String(opts.method || 'GET').toUpperCase();
-    if (method === 'GET' || method === 'HEAD') return false;
-
-    let urlStr = typeof url === 'string' ? url : (url && url.url ? url.url : '');
-    if (!urlStr) return false;
-    if (/^data:|^blob:/i.test(urlStr)) return false;
-
-    try {
-      const parsed = new URL(urlStr, global.location.href);
-      if (parsed.origin !== global.location.origin) return false;
-      urlStr = parsed.pathname + parsed.search;
-    } catch (err) {
-      return false;
-    }
-
-    if (/\.(css|js|png|jpe?g|gif|svg|webp|woff2?|ttf|ico|map)(\?|$)/i.test(urlStr)) return false;
-    if (/\/assets\//i.test(urlStr)) return false;
-    if (/\/app\/api\/login\.php$/i.test(urlStr)) return false;
-    if (/\/app\/api\/logout\.php$/i.test(urlStr)) return false;
-    if (/\/app\/api\/consultations\/session_timer\.php/i.test(urlStr)) return false;
-    if (/\/app\/api\/consultations\/session_keepalive\.php/i.test(urlStr)) return false;
-    if (/\/app\/api\/patient\/approved_recommendations\.php/i.test(urlStr)) return false;
-    if (/\/app\/api\/patient\/acknowledge_recommendation\.php/i.test(urlStr)) return false;
-    if (/\/app\/api\/patient\/submit_symptoms_review\.php/i.test(urlStr)) return false;
-    if (/\/app\/api\/patient\/request_alternate_booking_provider\.php/i.test(urlStr)) return false;
-    if (/\/app\/api\/provider\/save_schedule\.php/i.test(urlStr)) return false;
-
-    return /\/app\/(api|controllers)\//i.test(urlStr);
-  }
-
-  function patchFetch() {
-    if (!global.fetch || global.fetch.__mcGlobalLoaderPatched) return;
-    const nativeFetch = global.fetch.bind(global);
-
-    global.fetch = function (input, init) {
-      const opts = init || {};
-      if (!shouldAutoLoad(input, opts)) {
-        return nativeFetch(input, init);
-      }
-      show({ preset: 'default', sr: 'Loading data.' });
-      return nativeFetch(input, init).finally(function () {
-        hide();
-      });
-    };
-    global.fetch.__mcGlobalLoaderPatched = true;
-  }
-
-  function patchXHR() {
-    if (!global.XMLHttpRequest || global.XMLHttpRequest.__mcGlobalLoaderPatched) return;
-    const XHR = global.XMLHttpRequest;
-    const open = XHR.prototype.open;
-    const send = XHR.prototype.send;
-
-    XHR.prototype.open = function (method, url) {
-      this.__mcLoaderMethod = method;
-      this.__mcLoaderUrl = url;
-      return open.apply(this, arguments);
-    };
-
-    XHR.prototype.send = function () {
-      const self = this;
-      const opts = { method: self.__mcLoaderMethod, headers: {} };
-      if (self.__mcLoaderUrl && shouldAutoLoad(self.__mcLoaderUrl, opts)) {
-        show({ preset: 'default', sr: 'Loading data.' });
-        const done = function () {
-          self.removeEventListener('loadend', done);
-          hide();
-        };
-        self.addEventListener('loadend', done);
-      }
-      return send.apply(this, arguments);
-    };
-
-    global.XMLHttpRequest.__mcGlobalLoaderPatched = true;
   }
 
   function init() {
     removeDuplicateLoaders();
     try { sessionStorage.removeItem('mc_nav_handoff'); } catch (_) { /* ignore */ }
     initPageBoot();
-    bindNavigationLoader();
-    patchFetch();
-    patchXHR();
   }
 
-  function showModal(options) {
-    options = options || {};
-    return show(Object.assign({ modal: true }, options));
+  // ── Compatibility no-ops (non-auth callers must not show the loader) ──
+  // Return false so callers can fall back to local/inline loading UI.
+  function noopIgnored() {
+    return false;
   }
 
-  function hideModal() {
-    const el = getOverlay();
-    setModalMode(el, false);
-    activeRequests = 0;
+  function forceHide() {
+    authActive = false;
     booting = false;
     applyVisible(false, false);
+  }
+
+  function maybeShowAuth(options) {
+    options = options || {};
+    if (options.mode === 'login' || options.mode === 'logout'
+      || options.preset === 'login' || options.preset === 'logout') {
+      return showAuth({
+        mode: options.mode || options.preset,
+        status: options.status,
+        sr: options.sr,
+      });
+    }
+    return false;
   }
 
   function inlineLoadingHtml(message, options) {
@@ -630,20 +386,29 @@
   }
 
   const api = {
-    show: show,
-    hide: hide,
-    forceHide: forceHide,
-    showFormal: showFormal,
-    hideFormal: hideFormal,
-    update: function () {},
-    showPanel: showPanel,
-    hidePanel: hidePanel,
-    showPersistent: showPersistent,
-    hidePersistent: hidePersistent,
+    // Auth-only entry points
     showTransition: showTransition,
-    showModal: showModal,
-    hideModal: hideModal,
     performLogout: performLogout,
+    showAuth: showAuth,
+    hideAuth: hideAuth,
+
+    // Kept for API compatibility — non-auth calls return false (ignored)
+    show: maybeShowAuth,
+    hide: function () {
+      if (authActive || booting || isVisible) hideAuth(true);
+    },
+    forceHide: forceHide,
+    showFormal: maybeShowAuth,
+    hideFormal: function () {
+      if (authActive || booting || isVisible) hideAuth(true);
+    },
+    update: function () {},
+    showPanel: noopIgnored,
+    hidePanel: function () {},
+    showPersistent: noopIgnored,
+    hidePersistent: function () {},
+    showModal: maybeShowAuth,
+    hideModal: forceHide,
     inlineHtml: inlineLoadingHtml,
     inlineRow: inlineLoadingRow,
     paintSteps: function () {},

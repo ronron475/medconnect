@@ -170,7 +170,6 @@
     options = options || {};
     const panel = document.getElementById('aiAssessmentPanel');
     const btn = document.getElementById('btnRunAssessment');
-    const loader = global.MedConnectGlobalLoader || global.MedConnectLoader;
     if (!panel) return null;
 
     const inputs = getFormInputs();
@@ -190,13 +189,8 @@
       btn.textContent = 'Analyzing…';
     }
 
-    if (loader && typeof loader.showFormal === 'function') {
-      loader.showFormal({
-        preset: 'assessment',
-        status: 'Running AI assessment…',
-        substatus: 'Analyzing symptoms and classifying urgency…',
-      });
-    } else if (!options.skipAnimation) {
+    // Global full-screen loader is auth-only; keep assessment UI in-panel.
+    if (!options.skipAnimation) {
       renderProcessing(panel, 0);
     }
 
@@ -243,9 +237,6 @@
       return null;
     } finally {
       analyzeController = null;
-      if (loader && typeof loader.hideFormal === 'function') {
-        loader.hideFormal();
-      }
       if (btn) {
         btn.disabled = false;
         btn.textContent = btn.dataset.originalText || 'Run AI Assessment';

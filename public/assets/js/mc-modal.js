@@ -372,11 +372,7 @@
       hint: 'Please wait...',
     }, opts || {});
 
-    if (global.MedConnectGlobalLoader && typeof global.MedConnectGlobalLoader.showModal === 'function') {
-      global.MedConnectGlobalLoader.showModal(options);
-      return;
-    }
-
+    // Do not use the global auth loader here — that overlay is login/logout only.
     if (loadingOverlay) hideLoading();
 
     loadingOverlay = document.createElement('div');
@@ -403,9 +399,6 @@
   }
 
   function hideLoading() {
-    if (global.MedConnectGlobalLoader && typeof global.MedConnectGlobalLoader.hideModal === 'function') {
-      global.MedConnectGlobalLoader.hideModal();
-    }
     if (!loadingOverlay) return;
     loadingOverlay.classList.remove('is-open');
     loadingOverlay.classList.add('is-closing');
