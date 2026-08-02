@@ -259,21 +259,43 @@ body {
 .btn-signin {
   width: 100%;
   padding: 12px;
-  background: linear-gradient(135deg, var(--teal), #0ea5e9);
+  background: linear-gradient(
+    90deg,
+    #027a88 0%,
+    #069396 18%,
+    #0891b2 38%,
+    #0ea5e9 52%,
+    #38bdf8 68%,
+    #0ea5e9 82%,
+    #069396 100%
+  );
+  background-size: 300% 100%;
+  animation: mc-signin-gradient-flow 4.5s ease-in-out infinite;
   color: #fff;
   border: none;
   border-radius: 8px;
   font-size: 15px;
   font-weight: 700;
   cursor: pointer;
-  transition: opacity 0.15s;
+  transition: transform 0.15s, box-shadow 0.15s;
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 8px;
+  box-shadow: 0 6px 20px rgba(6, 147, 150, 0.28);
 }
-.btn-signin:hover { opacity: 0.9; }
-.btn-signin:disabled { opacity: 0.65; cursor: not-allowed; }
+.btn-signin:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 8px 24px rgba(6, 147, 150, 0.36);
+  animation-duration: 3.2s;
+}
+.btn-signin:disabled { opacity: 0.65; cursor: not-allowed; animation-play-state: paused; }
+
+@keyframes mc-signin-gradient-flow {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
 
 /* Spinner */
 .spinner {
