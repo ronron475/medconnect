@@ -140,15 +140,17 @@
       });
     });
 
-    // Close only when clicking/tapping outside the toggle.
+    // Close only when clicking/tapping outside the toggle and mobile nav.
     const CLOSE_EVENT = IS_TOUCH ? 'pointerdown' : 'click';
     document.addEventListener(
       CLOSE_EVENT,
       (e) => {
         const target = e.target;
-        if (target && target.closest && target.closest('.mc-theme-toggle')) {
-          return;
-        }
+        if (!target || !target.closest) return;
+        if (target.closest('.mc-theme-toggle')) return;
+        if (target.closest('#mcNavToggle, #pdHamburger, [data-sidebar-toggle]')) return;
+        if (target.closest('.sidebar, .sb-aqua, .adm-sidebar, #bhw-sidebar')) return;
+        if (target.closest('.mc-nav-backdrop')) return;
         document.querySelectorAll('.mc-theme-toggle.is-open').forEach((wrap) => {
           wrap.classList.remove('is-open');
           const btn = wrap.querySelector('.mc-theme-toggle__btn');

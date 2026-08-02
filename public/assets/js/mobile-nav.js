@@ -12,12 +12,14 @@
   const TOGGLE_DEBOUNCE_MS = 400;
   const BURGER_ANIM_MS = 260;
   const GHOST_CLICK_GUARD_MS = 400;
+  const OPEN_GUARD_MS = 450;
 
   const IS_TOUCH =
     ('ontouchstart' in window) || (navigator.maxTouchPoints && navigator.maxTouchPoints > 0);
   const TAP_EVENT = IS_TOUCH ? 'pointerup' : 'click';
 
   let closeGuardTimer = null;
+  let openGuardTimer = null;
   let lastToggleAt = 0;
 
   function getSidebar() {
@@ -67,11 +69,14 @@
 
     if (!sidebar) return;
 
+    const wasOpen = sidebar.classList.contains('is-open');
+
     if (open) {
       closeThemeMenus();
     } else {
       window.clearTimeout(closeGuardTimer);
-      document.body.classList.remove('mc-nav-closing');
+      window.clearTimeout(openGuardTimer);
+      document.body.classList.remove('mc-nav-closing', 'mc-nav-opening');
     }
 
     sidebar.classList.toggle('is-open', open);
@@ -79,6 +84,41 @@
     backdrop.setAttribute('aria-hidden', open ? 'false' : 'true');
     document.body.classList.toggle('mc-nav-open', open);
     syncToggleAria(open);
+
+    if (open && !wasOpen && isMobileDrawer()) {
+      armOpenGuard();
+    }
+  }
+
+  /**
+   * Dark mode removes sidebar transform transitions, so the drawer appears instantly
+   * under the hamburger. The synthetic click then hits the dashboard logo link.
+   */
+  function armOpenGuard() {
+    if (!IS_TOUCH) return;
+
+    document.body.classList.add('mc-nav-opening');
+    window.clearTimeout(openGuardTimer);
+    openGuardTimer = window.setTimeout(() => {
+      document.body.classList.remove('mc-nav-opening');
+    }, OPEN_GUARD_MS);
+
+    window.setTimeout(() => {
+      document.addEventListener('click', blockOpeningGhostClick, { capture: true, once: true });
+    }, 0);
+  }
+
+  function blockOpeningGhostClick(e) {
+    if (!document.body.classList.contains('mc-nav-opening')) return;
+
+    const sidebar = getSidebar();
+    if (!sidebar || !sidebar.contains(e.target)) return;
+
+    const link = e.target.closest ? e.target.closest('a[href]') : null;
+    if (!link) return;
+
+    e.preventDefault();
+    e.stopImmediatePropagation();
   }
 
   function setMini(mini) {
@@ -90,7 +130,7 @@
       backdrop.classList.remove('is-visible');
       backdrop.setAttribute('aria-hidden', 'true');
     }
-    document.body.classList.remove('mc-nav-open', 'mc-nav-closing');
+    document.body.classList.remove('mc-nav-open', 'mc-nav-closing', 'mc-nav-opening');
 
     document.body.classList.toggle('mc-sidebar-mini', !!mini);
     try {
