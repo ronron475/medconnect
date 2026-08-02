@@ -15,7 +15,8 @@ $dashFloatVer = ($dashFloatCss && file_exists($dashFloatCss)) ? (int) filemtime(
 ?>
 <link rel="stylesheet" href="<?= htmlspecialchars($assetBase, ENT_QUOTES) ?>/assets/css/dashboard-card-float.css?v=<?= $dashFloatVer ?>"/>
 <?php else: ?>
-<script src="<?= htmlspecialchars($assetBase, ENT_QUOTES) ?>/assets/js/mobile-nav.js" defer></script>
+<?php $mobileNavJsVer = (int) @filemtime(defined('ASSETS_PATH') ? ASSETS_PATH . '/js/mobile-nav.js' : ''); ?>
+<script src="<?= htmlspecialchars($assetBase, ENT_QUOTES) ?>/assets/js/mobile-nav.js?v=<?= $mobileNavJsVer ?: time() ?>" defer></script>
 <script src="<?= htmlspecialchars($assetBase, ENT_QUOTES) ?>/assets/js/header-offset.js" defer></script>
 <script src="<?= htmlspecialchars($assetBase, ENT_QUOTES) ?>/assets/js/draggable-fab.js" defer></script>
 <script src="<?= htmlspecialchars($assetBase, ENT_QUOTES) ?>/assets/js/profile-menu.js" defer></script>

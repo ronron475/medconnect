@@ -1,24 +1,35 @@
 /**
- * Mobile sidebar drawer — works across patient, provider, admin, and BHW layouts.
+ * Mobile sidebar drawer — unified across patient, provider, admin, superadmin, and BHW.
  */
 (function () {
   'use strict';
 
   const SIDEBAR_SELECTORS = '.sidebar, .sb-aqua, .adm-sidebar, #bhw-sidebar';
   const TOGGLE_SELECTORS = '#mcNavToggle, #pdHamburger, [data-sidebar-toggle]';
+  const NAV_LINK_SELECTORS =
+    'a.sb-item, a.sba-item, a.adm-nav-item, a.adm-profile, a.adm-logo, a.sb-logo, a.sba-logo, .sb-nav a, .sba-nav a, .adm-nav a';
   const MINI_KEY = 'mc_sidebar_mini';
-  const TOGGLE_EVENTS = ['click', 'pointerup'];
-  const TOGGLE_DEBOUNCE_MS = 450;
+  const TOGGLE_DEBOUNCE_MS = 400;
   const BURGER_ANIM_MS = 260;
+  const GHOST_CLICK_GUARD_MS = 400;
+
+  const IS_TOUCH =
+    ('ontouchstart' in window) || (navigator.maxTouchPoints && navigator.maxTouchPoints > 0);
+  const TAP_EVENT = IS_TOUCH ? 'pointerup' : 'click';
+
+  let closeGuardTimer = null;
+  let lastToggleAt = 0;
 
   function getSidebar() {
     return document.querySelector(SIDEBAR_SELECTORS);
   }
 
   function prefersMiniMode() {
-    // Match the reference behavior: collapse-to-icons for tablet+desktop,
-    // and keep drawer only on small phones.
     return window.matchMedia('(min-width: 768px)').matches;
+  }
+
+  function isMobileDrawer() {
+    return window.matchMedia('(max-width: 1024px)').matches;
   }
 
   function getBackdrop() {
@@ -32,10 +43,6 @@
     return el;
   }
 
-  function isMobileDrawer() {
-    return window.matchMedia('(max-width: 1024px)').matches;
-  }
-
   function closeThemeMenus() {
     document.querySelectorAll('.mc-theme-toggle.is-open').forEach((wrap) => {
       wrap.classList.remove('is-open');
@@ -44,41 +51,52 @@
     });
   }
 
+  function syncToggleAria(open) {
+    document.querySelectorAll(TOGGLE_SELECTORS).forEach((btn) => {
+      btn.setAttribute('aria-expanded', open ? 'true' : 'false');
+      btn.setAttribute(
+        'aria-label',
+        open ? 'Close navigation menu' : 'Open navigation menu'
+      );
+    });
+  }
+
   function setOpen(open) {
     const sidebar = getSidebar();
     const backdrop = getBackdrop();
-    const toggles = document.querySelectorAll(TOGGLE_SELECTORS);
 
     if (!sidebar) return;
 
     if (open) {
       closeThemeMenus();
+    } else {
+      window.clearTimeout(closeGuardTimer);
+      document.body.classList.remove('mc-nav-closing');
     }
 
     sidebar.classList.toggle('is-open', open);
     backdrop.classList.toggle('is-visible', open);
+    backdrop.setAttribute('aria-hidden', open ? 'false' : 'true');
     document.body.classList.toggle('mc-nav-open', open);
-
-    toggles.forEach((btn) => {
-      btn.setAttribute('aria-expanded', open ? 'true' : 'false');
-    });
+    syncToggleAria(open);
   }
 
   function setMini(mini) {
     const sidebar = getSidebar();
     const backdrop = document.querySelector('.mc-nav-backdrop');
 
-    // Ensure drawer state is cleared when switching to mini.
     if (sidebar) sidebar.classList.remove('is-open');
-    if (backdrop) backdrop.classList.remove('is-visible');
-    document.body.classList.remove('mc-nav-open');
+    if (backdrop) {
+      backdrop.classList.remove('is-visible');
+      backdrop.setAttribute('aria-hidden', 'true');
+    }
+    document.body.classList.remove('mc-nav-open', 'mc-nav-closing');
 
     document.body.classList.toggle('mc-sidebar-mini', !!mini);
     try {
       localStorage.setItem(MINI_KEY, mini ? '1' : '0');
     } catch (_) { /* ignore */ }
 
-    // Keep aria state meaningful on desktop: expanded=false means "collapsed".
     document.querySelectorAll(TOGGLE_SELECTORS).forEach((btn) => {
       btn.setAttribute('aria-expanded', mini ? 'false' : 'true');
     });
@@ -96,6 +114,11 @@
     setOpen(false);
   }
 
+  function open() {
+    if (!isMobileDrawer()) return;
+    setOpen(true);
+  }
+
   function toggle() {
     const sidebar = getSidebar();
     if (!sidebar) return;
@@ -106,6 +129,82 @@
     setOpen(!sidebar.classList.contains('is-open'));
   }
 
+  function isOpen() {
+    const sidebar = getSidebar();
+    return !!(sidebar && sidebar.classList.contains('is-open'));
+  }
+
+  /** Close drawer after nav tap without replaying ghost clicks on the page behind. */
+  function closeAfterNav() {
+    if (!isMobileDrawer()) return;
+    document.body.classList.add('mc-nav-closing');
+    window.clearTimeout(closeGuardTimer);
+    close();
+    closeGuardTimer = window.setTimeout(() => {
+      document.body.classList.remove('mc-nav-closing');
+    }, GHOST_CLICK_GUARD_MS);
+  }
+
+  function suppressGhostClick(el) {
+    if (!IS_TOUCH || !el) return;
+    el.addEventListener(
+      'click',
+      (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+      },
+      { capture: true, once: true }
+    );
+  }
+
+  function bindTap(el, handler) {
+    el.addEventListener(TAP_EVENT, (e) => {
+      handler(e);
+    });
+    suppressGhostClick(el);
+  }
+
+  function bindNavLink(link) {
+    link.addEventListener('click', () => {
+      if (!isMobileDrawer()) return;
+
+      const href = link.getAttribute('href');
+      if (!href || href.charAt(0) === '#') {
+        close();
+        return;
+      }
+
+      closeAfterNav();
+    });
+  }
+
+  function bindToggle(btn) {
+    bindTap(btn, (e) => {
+      const now = Date.now();
+      if (now - lastToggleAt < TOGGLE_DEBOUNCE_MS) return;
+      lastToggleAt = now;
+      e.preventDefault();
+      e.stopPropagation();
+      toggle();
+
+      btn.classList.remove('mc-burger-animate');
+      void btn.offsetWidth;
+      btn.classList.add('mc-burger-animate');
+      window.setTimeout(() => {
+        btn.classList.remove('mc-burger-animate');
+      }, BURGER_ANIM_MS);
+    });
+  }
+
+  function bindBackdrop(backdrop) {
+    bindTap(backdrop, (e) => {
+      if (e.target !== backdrop) return;
+      e.preventDefault();
+      e.stopPropagation();
+      close();
+    });
+  }
+
   function init() {
     const sidebar = getSidebar();
     if (!sidebar) return;
@@ -114,67 +213,37 @@
       sidebar.id = 'app-sidebar';
     }
 
-    let lastToggleAt = 0;
-    function bindToggle(btn) {
-      // Use both click + pointerup for maximum compatibility:
-      // some Windows touch-capable devices expose ontouchstart,
-      // but users still click with mouse (no pointerup fired).
-      TOGGLE_EVENTS.forEach((evt) => {
-        btn.addEventListener(evt, (e) => {
-          const now = Date.now();
-          if (now - lastToggleAt < TOGGLE_DEBOUNCE_MS) return;
-          lastToggleAt = now;
-          e.preventDefault();
-          toggle();
-
-          // Micro animation on every toggle (all roles)
-          btn.classList.remove('mc-burger-animate');
-          // Force reflow so animation restarts reliably
-          void btn.offsetWidth;
-          btn.classList.add('mc-burger-animate');
-          window.setTimeout(() => {
-            btn.classList.remove('mc-burger-animate');
-          }, BURGER_ANIM_MS);
-        });
-      });
-    }
+    close();
 
     document.querySelectorAll(TOGGLE_SELECTORS).forEach((btn) => {
       if (!btn.hasAttribute('aria-controls')) {
         btn.setAttribute('aria-controls', sidebar.id);
       }
-      // Use pointer events on mobile so taps always register.
       btn.style.pointerEvents = 'auto';
       bindToggle(btn);
     });
 
-    getBackdrop().addEventListener('click', close);
+    const backdrop = getBackdrop();
+    bindBackdrop(backdrop);
 
-    sidebar.querySelectorAll(
-      'a.sb-item, a.sba-item, a.adm-nav-item, a.adm-profile, a.adm-logo, a.sb-logo, a.sba-logo, .sb-nav a, .sba-nav a, .adm-nav a'
-    ).forEach((link) => {
-      link.addEventListener('click', (e) => {
-        if (!isMobileDrawer()) return;
+    sidebar.querySelectorAll(NAV_LINK_SELECTORS).forEach(bindNavLink);
 
-        const href = link.getAttribute('href');
-        if (!href || href.charAt(0) === '#') {
-          close();
-          return;
-        }
-
-        // Do not close synchronously on navigation taps — closing the drawer during
-        // the touch sequence cancels the link and replays a ghost click on the page
-        // behind (often a dashboard/home link), especially in dark mode on mobile.
+    sidebar.querySelectorAll('[data-logout-trigger]').forEach((btn) => {
+      bindTap(btn, () => {
+        if (isMobileDrawer()) closeAfterNav();
       });
     });
 
     document.addEventListener('keydown', (e) => {
-      if (e.key === 'Escape') close();
+      if (e.key === 'Escape' && isOpen()) close();
     });
 
     window.addEventListener('resize', () => {
-      // If we crossed into mini-capable sizes, ensure drawer is closed.
       if (prefersMiniMode()) close();
+    });
+
+    window.addEventListener('pageshow', (e) => {
+      if (e.persisted) close();
     });
 
     restoreMini();
@@ -239,7 +308,6 @@
 
     const finalizeScroll = () => {
       if (restoreScroll()) {
-        // Keep the user's last scroll position — do not jump to top after navigation.
         if (active && !isActiveNavItemVisible(nav, active)) {
           active.scrollIntoView({ block: 'nearest', inline: 'nearest' });
           persistScroll();
@@ -270,6 +338,14 @@
 
     window.addEventListener('pagehide', persistScroll);
   }
+
+  window.MedConnectMobileNav = {
+    open,
+    close,
+    toggle,
+    isOpen,
+    closeAfterNav,
+  };
 
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', init);

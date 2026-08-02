@@ -65,7 +65,7 @@ svg {
 
 /* Sidebar drawer backdrop */
 .mc-nav-backdrop {
-  display: none;
+  display: block;
   position: fixed;
   inset: 0;
   /* Must sit ABOVE page content but BELOW the fixed topbar + toggle button. */
@@ -73,10 +73,17 @@ svg {
   background: rgba(1, 42, 74, 0.45);
   backdrop-filter: blur(2px);
   -webkit-backdrop-filter: blur(2px);
+  pointer-events: none;
+  visibility: hidden;
+  opacity: 0;
+  transition: opacity 0.2s ease, visibility 0s linear 0.2s;
 }
 
 .mc-nav-backdrop.is-visible {
-  display: block;
+  pointer-events: auto;
+  visibility: visible;
+  opacity: 1;
+  transition: opacity 0.2s ease, visibility 0s linear 0s;
 }
 
 body.mc-nav-open {
@@ -84,6 +91,16 @@ body.mc-nav-open {
   overscroll-behavior: none;
   /* manipulation — not none; none blocks sidebar link taps on mobile (ghost clicks). */
   touch-action: manipulation;
+}
+
+/* Brief guard after nav tap — absorbs ghost clicks while drawer closes. */
+body.mc-nav-closing .portal-main,
+body.mc-nav-closing .main.portal-main,
+body.mc-nav-closing .main-content,
+body.mc-nav-closing .provider-main,
+body.mc-nav-closing .has-aqua-sidebar,
+body.mc-nav-closing .root-wrapper > .main-content {
+  pointer-events: none !important;
 }
 
 /* ── Tables: horizontal scroll on small screens ── */
@@ -249,6 +266,21 @@ body.mc-nav-open {
 
   body.mc-nav-open .mc-theme-toggle.is-open .mc-theme-toggle__menu {
     display: none !important;
+  }
+
+  /* Keep hamburger tappable above the open drawer (all portal headers). */
+  body.mc-nav-open .topbar,
+  body.mc-nav-open .pd-header {
+    z-index: 530;
+    pointer-events: auto;
+  }
+
+  body.mc-nav-open .mc-nav-toggle,
+  body.mc-nav-open .pd-hamburger {
+    position: relative;
+    z-index: 531;
+    pointer-events: auto;
+    touch-action: manipulation;
   }
 
   /* ── Tablet mini sidebar (icon-only) ── */

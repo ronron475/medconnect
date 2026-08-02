@@ -19,11 +19,15 @@
   }
 
   function closeMobileNav() {
+    if (window.MedConnectMobileNav && typeof window.MedConnectMobileNav.close === 'function') {
+      window.MedConnectMobileNav.close();
+      return;
+    }
     const sidebar = document.querySelector('.sidebar');
     const backdrop = document.querySelector('.mc-nav-backdrop');
     if (sidebar) sidebar.classList.remove('is-open');
     if (backdrop) backdrop.classList.remove('is-visible');
-    document.body.classList.remove('mc-nav-open');
+    document.body.classList.remove('mc-nav-open', 'mc-nav-closing');
     document.querySelectorAll('#mcNavToggle, #pdHamburger').forEach((btn) => {
       btn.setAttribute('aria-expanded', 'false');
     });
