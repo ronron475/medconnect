@@ -25,7 +25,7 @@
   function syncThemeFabLift() {
     const themeFab = document.getElementById('landing-theme-fab');
     if (!themeFab) return;
-    if (!isOpen) {
+    if (!isOpen || window.matchMedia('(max-width: 768px)').matches) {
       themeFab.style.removeProperty('--ltf-menu-lift');
       return;
     }
@@ -38,6 +38,7 @@
   function setFabOpen(open) {
     isOpen = open;
     fab.dataset.open = open ? 'true' : 'false';
+    document.body.classList.toggle('landing-fab-open', open);
     stack.classList.toggle('landing-fab__stack--hidden', !open);
     toggle.classList.toggle('is-active', open);
     toggle.setAttribute('aria-expanded', open ? 'true' : 'false');
