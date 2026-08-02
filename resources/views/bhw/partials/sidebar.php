@@ -2,7 +2,7 @@
 /**
  * BHW Panel — admin-style flat sidebar navigation.
  */
-require_once __DIR__ . '/bhw_nav.php';
+require_once BASE_PATH . '/app/includes/nav/bhw_nav.php';
 require_once BASE_PATH . '/app/includes/profile_picture.php';
 
 $current_page = basename($_SERVER['PHP_SELF'] ?? '');
@@ -63,7 +63,7 @@ function bhw_nav_is_active(string $file, string $current_page, string $current_p
     <div class="adm-logo-text">med<span>Connect</span><em>Operations</em></div>
   </a>
 
-  <nav class="adm-nav" aria-label="BHW panel navigation">
+  <nav class="adm-nav" data-portal-nav="bhw" aria-label="BHW panel navigation">
     <?php foreach ($nav_sections as $section):
       if (!empty($section['section'])): ?>
     <div class="adm-nav-section" style="padding: 14px 16px 6px; font-size: 9.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; color: rgba(255,255,255,0.38);">
@@ -87,7 +87,7 @@ function bhw_nav_is_active(string $file, string $current_page, string $current_p
     <?php endforeach; endforeach; ?>
   </nav>
 
-  <a href="<?= $bhw_base ?>/settings/profile.php" class="adm-profile" title="BHW profile settings">
+  <a href="<?= $bhw_base ?>/settings/profile.php" class="adm-profile <?= bhw_nav_is_active('settings/profile.php', $current_page, $current_path, $current_route) ? 'is-active' : '' ?>" title="BHW profile settings">
     <div class="adm-profile-avatar" data-profile-avatar-wrap>
       <?= profile_picture_render($initials, $sidebar_picture_url, '', 'sm') ?>
     </div>

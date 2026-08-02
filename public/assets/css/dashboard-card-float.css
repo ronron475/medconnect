@@ -1,0 +1,279 @@
+/**
+ * medConnect — Dashboard card float animation
+ * Smooth, lightweight hover-paused float for all portal dashboards.
+ */
+
+/* Sidebar nav/profile must never float or lift */
+.adm-sidebar :is(.adm-nav, .adm-nav-item, .adm-profile, .adm-logout),
+.bhw-sidebar :is(.adm-nav, .adm-nav-item, .adm-profile, .adm-logout),
+.adm-sidebar--bhw :is(.adm-nav, .adm-nav-item, .adm-profile, .adm-logout) {
+  animation: none !important;
+  transform: none !important;
+  will-change: auto;
+}
+
+@keyframes mc-dash-card-float {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0);
+  }
+
+  50% {
+    transform: translate3d(0, -4px, 0);
+  }
+}
+
+/* Dashboard scopes only — banners/headers excluded */
+[data-live-dashboard] :is(
+    .adm-metric,
+    .adm-card,
+    .adm-notif-recent,
+    .adm-chart-card,
+    .mc-notif-widget,
+    .mc-notif-recent-panel,
+    .superadmin-stat-card,
+    .superadmin-approval-card,
+    .prov-dash-stat,
+    .prov-dash-card,
+    .bhw-dash-stat,
+    .bhw-dash-panel,
+    .bhw-chart-card,
+    .pdash-metric,
+    .pdash-card,
+    .pdash-quick__link
+  ),
+.bhw-dash :is(
+    .bhw-dash-stat,
+    .bhw-dash-panel,
+    .bhw-chart-card,
+    .adm-notif-recent,
+    .mc-chart-card
+  ),
+.pdash-page :is(
+    .pdash-metric,
+    .pdash-card,
+    .pdash-quick__link
+  ) {
+  --mc-dash-float-duration: 5.5s;
+  animation: mc-dash-card-float var(--mc-dash-float-duration) ease-in-out infinite;
+  will-change: transform;
+  transition:
+    transform 0.4s cubic-bezier(0.4, 0, 0.2, 1),
+    box-shadow 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Staggered delays — cards in the same row drift out of sync */
+[data-live-dashboard] :is(
+    .adm-metric,
+    .adm-card,
+    .adm-notif-recent,
+    .adm-chart-card,
+    .mc-notif-widget,
+    .mc-notif-recent-panel,
+    .superadmin-stat-card,
+    .superadmin-approval-card,
+    .prov-dash-stat,
+    .prov-dash-card
+  ):nth-child(8n + 1),
+.bhw-dash :is(.bhw-dash-stat, .bhw-dash-panel, .bhw-chart-card, .adm-notif-recent, .mc-chart-card):nth-child(8n + 1),
+.pdash-page :is(.pdash-metric, .pdash-card, .pdash-quick__link):nth-child(8n + 1) {
+  animation-delay: 0s;
+}
+
+[data-live-dashboard] :is(
+    .adm-metric,
+    .adm-card,
+    .adm-notif-recent,
+    .adm-chart-card,
+    .mc-notif-widget,
+    .mc-notif-recent-panel,
+    .superadmin-stat-card,
+    .superadmin-approval-card,
+    .prov-dash-stat,
+    .prov-dash-card
+  ):nth-child(8n + 2),
+.bhw-dash :is(.bhw-dash-stat, .bhw-dash-panel, .bhw-chart-card, .adm-notif-recent, .mc-chart-card):nth-child(8n + 2),
+.pdash-page :is(.pdash-metric, .pdash-card, .pdash-quick__link):nth-child(8n + 2) {
+  animation-delay: 0.45s;
+}
+
+[data-live-dashboard] :is(
+    .adm-metric,
+    .adm-card,
+    .adm-notif-recent,
+    .adm-chart-card,
+    .mc-notif-widget,
+    .mc-notif-recent-panel,
+    .superadmin-stat-card,
+    .superadmin-approval-card,
+    .prov-dash-stat,
+    .prov-dash-card
+  ):nth-child(8n + 3),
+.bhw-dash :is(.bhw-dash-stat, .bhw-dash-panel, .bhw-chart-card, .adm-notif-recent, .mc-chart-card):nth-child(8n + 3),
+.pdash-page :is(.pdash-metric, .pdash-card, .pdash-quick__link):nth-child(8n + 3) {
+  animation-delay: 0.9s;
+}
+
+[data-live-dashboard] :is(
+    .adm-metric,
+    .adm-card,
+    .adm-notif-recent,
+    .adm-chart-card,
+    .mc-notif-widget,
+    .mc-notif-recent-panel,
+    .superadmin-stat-card,
+    .superadmin-approval-card,
+    .prov-dash-stat,
+    .prov-dash-card
+  ):nth-child(8n + 4),
+.bhw-dash :is(.bhw-dash-stat, .bhw-dash-panel, .bhw-chart-card, .adm-notif-recent, .mc-chart-card):nth-child(8n + 4),
+.pdash-page :is(.pdash-metric, .pdash-card, .pdash-quick__link):nth-child(8n + 4) {
+  animation-delay: 1.35s;
+}
+
+[data-live-dashboard] :is(
+    .adm-metric,
+    .adm-card,
+    .adm-notif-recent,
+    .adm-chart-card,
+    .mc-notif-widget,
+    .mc-notif-recent-panel,
+    .superadmin-stat-card,
+    .superadmin-approval-card,
+    .prov-dash-stat,
+    .prov-dash-card
+  ):nth-child(8n + 5),
+.bhw-dash :is(.bhw-dash-stat, .bhw-dash-panel, .bhw-chart-card, .adm-notif-recent, .mc-chart-card):nth-child(8n + 5),
+.pdash-page :is(.pdash-metric, .pdash-card, .pdash-quick__link):nth-child(8n + 5) {
+  animation-delay: 1.8s;
+}
+
+[data-live-dashboard] :is(
+    .adm-metric,
+    .adm-card,
+    .adm-notif-recent,
+    .adm-chart-card,
+    .mc-notif-widget,
+    .mc-notif-recent-panel,
+    .superadmin-stat-card,
+    .superadmin-approval-card,
+    .prov-dash-stat,
+    .prov-dash-card
+  ):nth-child(8n + 6),
+.bhw-dash :is(.bhw-dash-stat, .bhw-dash-panel, .bhw-chart-card, .adm-notif-recent, .mc-chart-card):nth-child(8n + 6),
+.pdash-page :is(.pdash-metric, .pdash-card, .pdash-quick__link):nth-child(8n + 6) {
+  animation-delay: 2.25s;
+}
+
+[data-live-dashboard] :is(
+    .adm-metric,
+    .adm-card,
+    .adm-notif-recent,
+    .adm-chart-card,
+    .mc-notif-widget,
+    .mc-notif-recent-panel,
+    .superadmin-stat-card,
+    .superadmin-approval-card,
+    .prov-dash-stat,
+    .prov-dash-card
+  ):nth-child(8n + 7),
+.bhw-dash :is(.bhw-dash-stat, .bhw-dash-panel, .bhw-chart-card, .adm-notif-recent, .mc-chart-card):nth-child(8n + 7),
+.pdash-page :is(.pdash-metric, .pdash-card, .pdash-quick__link):nth-child(8n + 7) {
+  animation-delay: 2.7s;
+}
+
+[data-live-dashboard] :is(
+    .adm-metric,
+    .adm-card,
+    .adm-notif-recent,
+    .adm-chart-card,
+    .mc-notif-widget,
+    .mc-notif-recent-panel,
+    .superadmin-stat-card,
+    .superadmin-approval-card,
+    .prov-dash-stat,
+    .prov-dash-card
+  ):nth-child(8n + 8),
+.bhw-dash :is(.bhw-dash-stat, .bhw-dash-panel, .bhw-chart-card, .adm-notif-recent, .mc-chart-card):nth-child(8n + 8),
+.pdash-page :is(.pdash-metric, .pdash-card, .pdash-quick__link):nth-child(8n + 8) {
+  animation-delay: 3.15s;
+}
+
+/* Hover — pause float, lift slightly, soft shadow */
+[data-live-dashboard] :is(
+    .adm-metric,
+    .adm-card,
+    .adm-notif-recent,
+    .adm-chart-card,
+    .mc-notif-widget,
+    .mc-notif-recent-panel,
+    .superadmin-stat-card,
+    .superadmin-approval-card,
+    .prov-dash-stat,
+    .prov-dash-card,
+    .bhw-dash-stat,
+    .bhw-dash-panel,
+    .bhw-chart-card,
+    .pdash-metric,
+    .pdash-card,
+    .pdash-quick__link
+  ):hover,
+.bhw-dash :is(.bhw-dash-stat, .bhw-dash-panel, .bhw-chart-card, .adm-notif-recent, .mc-chart-card):hover,
+.pdash-page :is(.pdash-metric, .pdash-card, .pdash-quick__link):hover {
+  animation-play-state: paused;
+  transform: translate3d(0, -6px, 0);
+  box-shadow:
+    0 14px 32px rgba(15, 23, 42, 0.1),
+    0 4px 12px rgba(15, 23, 42, 0.06);
+}
+
+html[data-theme-resolved='dark'] [data-live-dashboard] :is(
+    .adm-metric,
+    .adm-card,
+    .adm-notif-recent,
+    .adm-chart-card,
+    .mc-notif-widget,
+    .mc-notif-recent-panel,
+    .superadmin-stat-card,
+    .superadmin-approval-card,
+    .prov-dash-stat,
+    .prov-dash-card,
+    .bhw-dash-stat,
+    .bhw-dash-panel,
+    .bhw-chart-card,
+    .pdash-metric,
+    .pdash-card,
+    .pdash-quick__link
+  ):hover,
+html[data-theme-resolved='dark'] .bhw-dash :is(.bhw-dash-stat, .bhw-dash-panel, .bhw-chart-card, .adm-notif-recent, .mc-chart-card):hover,
+html[data-theme-resolved='dark'] .pdash-page :is(.pdash-metric, .pdash-card, .pdash-quick__link):hover {
+  box-shadow:
+    0 14px 32px rgba(0, 0, 0, 0.42),
+    0 4px 12px rgba(0, 0, 0, 0.28);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  [data-live-dashboard] :is(
+      .adm-metric,
+      .adm-card,
+      .adm-notif-recent,
+      .adm-chart-card,
+      .mc-notif-widget,
+      .mc-notif-recent-panel,
+      .superadmin-stat-card,
+      .superadmin-approval-card,
+      .prov-dash-stat,
+      .prov-dash-card,
+      .bhw-dash-stat,
+      .bhw-dash-panel,
+      .bhw-chart-card,
+      .pdash-metric,
+      .pdash-card,
+      .pdash-quick__link
+    ),
+  .bhw-dash :is(.bhw-dash-stat, .bhw-dash-panel, .bhw-chart-card, .adm-notif-recent, .mc-chart-card),
+  .pdash-page :is(.pdash-metric, .pdash-card, .pdash-quick__link) {
+    animation: none !important;
+    will-change: auto;
+  }
+}

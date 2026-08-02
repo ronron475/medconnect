@@ -109,7 +109,7 @@ function provider_nav_is_active(string $file, string $current_page, string $curr
   </nav>
 
   <?php if (!empty($_SESSION['user_id'])): ?>
-  <a href="<?= htmlspecialchars($provider_base, ENT_QUOTES) ?>/settings.php" class="sba-profile" title="Profile Settings" style="text-decoration:none;color:inherit;display:block;">
+  <a href="<?= htmlspecialchars($provider_base, ENT_QUOTES) ?>/settings.php" class="sba-profile <?= provider_nav_is_active('settings.php', $current_page, $current_path, $request_path, $active_page) ? 'is-active' : '' ?>" title="Profile Settings" style="text-decoration:none;color:inherit;display:block;">
     <div style="display:flex;align-items:center;gap:12px;">
       <div class="sba-avatar" data-profile-avatar-wrap><?= profile_picture_render($initials, $sidebar_picture_url, '', 'sm') ?></div>
       <div class="sba-profile-info">

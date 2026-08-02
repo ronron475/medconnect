@@ -253,12 +253,13 @@
   class="bhw-body"
   data-csrf="<?= htmlspecialchars($_SESSION['csrf_token'] ?? '') ?>"
   data-asset-base="<?= htmlspecialchars(ASSET_BASE) ?>"
+  data-portal="bhw"
 >
 
 <?php require_once VIEWS_PATH . '/partials/auth_transition_boot.php'; ?>
 
 <div class="portal-shell">
-  <?php require_once VIEWS_PATH . '/partials/sidebar.php'; ?>
+  <?php require_once VIEWS_PATH . '/bhw/partials/sidebar.php'; ?>
   <?php require_once VIEWS_PATH . '/partials/header.php'; ?>
 
   <div class="main portal-main">

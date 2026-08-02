@@ -51,7 +51,7 @@
   class="admin-body<?= (defined('MC_PORTAL_SHELL') && MC_PORTAL_SHELL === 'superadmin') ? ' superadmin-body' : '' ?>"
   data-csrf="<?= htmlspecialchars($_SESSION['csrf_token'] ?? '') ?>"
   data-asset-base="<?= htmlspecialchars(ASSET_BASE) ?>"
-  <?= (defined('MC_PORTAL_SHELL') && MC_PORTAL_SHELL === 'superadmin') ? 'data-portal="superadmin"' : '' ?>
+  data-portal="<?= (defined('MC_PORTAL_SHELL') && MC_PORTAL_SHELL === 'superadmin') ? 'superadmin' : 'admin' ?>"
 >
 
 <?php require_once VIEWS_PATH . '/partials/auth_transition_boot.php'; ?>

@@ -13,38 +13,14 @@ if (!defined('BASE_PATH')) {
     }
 }
 require_once BASE_PATH . '/app/includes/auth_guard.php';
+require_once BASE_PATH . '/app/includes/portal_layout.php';
 
 auth_require_login();
 
 $page_title = 'Notifications';
-$role = $_SESSION['user_role'] ?? 'patient';
+$role = portal_layout_role();
 
-// Load role-appropriate layout
-switch ($role) {
-    case 'admin':
-        require_once __DIR__ . '/../admin/partials/layout_open.php';
-        break;
-    case 'provider':
-        require_once __DIR__ . '/../provider/partials/icons.php';
-        require_once __DIR__ . '/../provider/partials/data.php';
-        require_once __DIR__ . '/../provider/partials/layout_open.php';
-        break;
-    case 'bhw':
-        require_once __DIR__ . '/../bhw/partials/layout_open.php';
-        break;
-    default:
-        ?>
-<!DOCTYPE html>
-<html lang="en">
-<head>
-<?php require_once __DIR__ . '/../patient/partials/layout_head.php'; ?>
-<?php require_once VIEWS_PATH . '/partials/notification_assets.php'; ?>
-</head>
-<body class="patient-portal">
-        <?php
-        require_once __DIR__ . '/../patient/partials/layout_shell_open.php';
-        break;
-}
+portal_layout_open($role);
 ?>
 
 <div class="mc-notif-page" data-notif-page>
@@ -87,18 +63,4 @@ switch ($role) {
   <div class="mc-notif-pagination" data-notif-pagination aria-label="Pagination"></div>
 </div>
 
-<?php
-switch ($role) {
-    case 'admin':
-        require_once __DIR__ . '/../admin/partials/layout_close.php';
-        break;
-    case 'provider':
-        require_once __DIR__ . '/../provider/partials/layout_close.php';
-        break;
-    case 'bhw':
-        require_once __DIR__ . '/../bhw/partials/layout_close.php';
-        break;
-    default:
-        require_once __DIR__ . '/../patient/partials/layout_shell_close.php';
-        break;
-}
+<?php portal_layout_close($role); ?>

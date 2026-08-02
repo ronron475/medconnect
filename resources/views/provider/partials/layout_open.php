@@ -63,6 +63,7 @@
   data-auto-logout="<?= !empty($_SESSION['remember_me_extended']) ? '0' : (int) ($_SESSION['provider_auto_logout'] ?? 30) ?>"
   data-remember-extended="<?= !empty($_SESSION['remember_me_extended']) ? '1' : '0' ?>"
   data-expire-url="<?= htmlspecialchars(ASSET_BASE . '/app/api/provider/session/expire.php') ?>"
+  data-portal="provider"
 >
 
 <?php require_once VIEWS_PATH . '/partials/auth_transition_boot.php'; ?>

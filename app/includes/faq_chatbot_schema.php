@@ -148,8 +148,12 @@ function faq_chatbot_seed_if_empty(PDO $pdo): void
         return;
     }
 
-    // Run only INSERT seed block if present
-    if (preg_match('/INSERT INTO `faq`[\s\S]+?WHERE NOT EXISTS/s', $sql, $m)) {
+    // Extract idempotent FAQ seed block (full INSERT … WHERE NOT EXISTS subquery).
+    if (preg_match(
+        '/INSERT INTO `faq`[\s\S]+WHERE NOT EXISTS \(SELECT 1 FROM `faq` LIMIT 1\);/s',
+        $sql,
+        $m
+    )) {
         $pdo->exec($m[0]);
     }
 }

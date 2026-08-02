@@ -6,7 +6,7 @@ $page_title = 'Dashboard';
 $bhw_current_file = 'dashboard.php';
 require __DIR__ . '/partials/bhw_bootstrap.php';
 require_once BASE_PATH . '/app/includes/bhw_workflows.php';
-require __DIR__ . '/partials/bhw_nav.php';
+require_once BASE_PATH . '/app/includes/nav/bhw_nav.php';
 
 $dashboard_nav = bhw_nav_dashboard();
 $page_title = $dashboard_nav['label'];
