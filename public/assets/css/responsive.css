@@ -81,7 +81,9 @@ svg {
 
 body.mc-nav-open {
   overflow: hidden;
-  touch-action: none;
+  overscroll-behavior: none;
+  /* manipulation — not none; none blocks sidebar link taps on mobile (ghost clicks). */
+  touch-action: manipulation;
 }
 
 /* ── Tables: horizontal scroll on small screens ── */
@@ -222,6 +224,31 @@ body.mc-nav-open {
   .adm-sidebar.is-open,
   .adm-sidebar--bhw.is-open {
     transform: translateX(0);
+    pointer-events: auto;
+    touch-action: manipulation;
+  }
+
+  /* Block taps on page content behind the drawer (prevents ghost clicks → dashboard). */
+  body.mc-nav-open .portal-main,
+  body.mc-nav-open .main.portal-main,
+  body.mc-nav-open .main-content,
+  body.mc-nav-open .provider-main,
+  body.mc-nav-open .has-aqua-sidebar,
+  body.mc-nav-open .root-wrapper > .main-content {
+    pointer-events: none;
+  }
+
+  body.mc-nav-open .sidebar,
+  body.mc-nav-open .sb-aqua,
+  body.mc-nav-open .adm-sidebar,
+  body.mc-nav-open .adm-sidebar--bhw {
+    pointer-events: auto;
+    touch-action: manipulation;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  body.mc-nav-open .mc-theme-toggle.is-open .mc-theme-toggle__menu {
+    display: none !important;
   }
 
   /* ── Tablet mini sidebar (icon-only) ── */
