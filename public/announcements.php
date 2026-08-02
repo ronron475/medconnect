@@ -38,7 +38,8 @@ $emptyIcon = '<svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke
   <link rel="stylesheet" href="<?= $asset ?>/assets/css/responsive.css">
   <link rel="stylesheet" href="<?= $asset ?>/assets/css/landing-nav.css?v=3.2">
   <link rel="stylesheet" href="<?= $asset ?>/assets/css/landing-announcements.css?v=20">
-  <link rel="stylesheet" href="<?= $asset ?>/assets/css/announcements-list.css?v=4">
+  <link rel="stylesheet" href="<?= $asset ?>/assets/css/announcements-list.css?v=5">
+  <link rel="stylesheet" href="<?= $asset ?>/assets/css/landing-responsive.css?v=5">
   <link rel="stylesheet" href="<?= $asset ?>/assets/css/announcement-modal.css">
 </head>
 <body class="landing-page ann-list-page-body">

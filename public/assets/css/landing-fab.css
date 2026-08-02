@@ -200,6 +200,14 @@ body.signin-active #fab-modal-root {
   opacity: 1;
 }
 
+/* Hide quick-action FAB while mobile nav drawer is open */
+body.landing-page.landing-nav-open .landing-fab,
+body.landing-page.nav-search-open .landing-fab {
+  opacity: 0 !important;
+  visibility: hidden !important;
+  pointer-events: none !important;
+}
+
 @media (max-width: 768px) {
   .landing-fab {
     bottom: 20px;

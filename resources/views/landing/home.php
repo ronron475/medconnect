@@ -35,7 +35,7 @@ $asset = ASSET_BASE;
   <link rel="stylesheet" href="<?= $asset ?>/assets/css/announcement-modal.css" />
   <link rel="stylesheet" href="<?= $asset ?>/assets/css/location-modal.css?v=1" />
   <link rel="stylesheet" href="<?= $asset ?>/assets/css/landing-announcements.css?v=23" />
-  <link rel="stylesheet" href="<?= $asset ?>/assets/css/landing-nav.css?v=3.4" />
+  <link rel="stylesheet" href="<?= $asset ?>/assets/css/landing-nav.css?v=3.5" />
   <link rel="stylesheet" href="<?= $asset ?>/assets/css/landing-fab.css?v=12" />
   <link rel="stylesheet" href="<?= $asset ?>/assets/css/landing-fab-modals.css?v=2" />
   <link rel="stylesheet" href="<?= $asset ?>/assets/css/signin-req-drawer.css?v=9" />
@@ -46,7 +46,7 @@ $asset = ASSET_BASE;
   <link rel="stylesheet" href="<?= $asset ?>/assets/css/landing-scroll-animations.css?v=5" />
   <link rel="stylesheet" href="<?= $asset ?>/assets/css/landing-hero-search.css?v=6" />
   <link rel="stylesheet" href="<?= $asset ?>/assets/css/landing-about-team.css?v=7" />
-  <link rel="stylesheet" href="<?= $asset ?>/assets/css/landing-responsive.css?v=4" />
+  <link rel="stylesheet" href="<?= $asset ?>/assets/css/landing-responsive.css?v=5" />
   <?php $landingThemeFabCssVer = (int) @filemtime(ASSETS_PATH . '/css/landing-theme-fab.css'); ?>
   <link rel="stylesheet" href="<?= $asset ?>/assets/css/landing-theme-fab.css?v=<?= $landingThemeFabCssVer ?>" />
 

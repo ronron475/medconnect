@@ -375,12 +375,47 @@ body.ann-list-page-body::before {
     margin-left: 0;
   }
 
+  .ann-list-page {
+    padding-top: max(88px, calc(var(--landing-nav-height, 76px) + 16px));
+    padding-inline: max(14px, env(safe-area-inset-left, 14px)) max(14px, env(safe-area-inset-right, 14px));
+  }
+
+  .ann-list-page__title {
+    font-size: clamp(1.5rem, 6vw, 2rem);
+    overflow-wrap: anywhere;
+  }
+
+  .ann-list-page-body .nav-container.nav-container--premium {
+    padding-inline: max(14px, env(safe-area-inset-left, 14px)) max(14px, env(safe-area-inset-right, 14px));
+  }
+
   .ann-list-page-body .ann-list-back-btn span {
     display: none;
   }
 
   .ann-list-page-body .ann-list-back-btn {
     padding: 11px 14px;
+    min-width: 44px;
+    min-height: 44px;
+  }
+
+  .ann-list-card {
+    padding: 16px;
+  }
+
+  .ann-list-card__title {
+    font-size: 1.05rem;
+    overflow-wrap: anywhere;
+  }
+}
+
+@media (max-width: 480px) {
+  .ann-list-page__count {
+    font-size: 0.875rem;
+  }
+
+  .ann-list-card__excerpt {
+    font-size: 0.875rem;
   }
 }
 
