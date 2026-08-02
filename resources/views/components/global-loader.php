@@ -1,6 +1,6 @@
 <?php
 /**
- * medConnect — Global transparent logo loader component.
+ * medConnect — Premium logo-only global loader component.
  *
  * Usage:
  *   <?php require_once VIEWS_PATH . '/components/global-loader.php'; mc_global_loader_assets(); ?>
@@ -43,21 +43,22 @@ if (!function_exists('mc_render_global_loader_boot')) {
         $base = defined('ASSET_BASE') ? ASSET_BASE : '';
         $logo = $base . '/assets/img/medcon_logo.png';
         $brand = (string) ($opts['brand'] ?? 'medConnect');
-        $status = (string) ($opts['status'] ?? 'Loading…');
-        $hint = (string) ($opts['hint'] ?? 'Please wait while we prepare the page.');
+        $status = (string) ($opts['status'] ?? 'Loading medConnect...');
         ?>
-<div id="mc-loader-boot" class="mc-global-loader mc-loader mc-global-loader--boot" data-mc-loader-boot hidden aria-busy="false" aria-live="polite" aria-hidden="true">
+<div id="mc-loader-boot" class="mc-global-loader mc-loader mc-global-loader--boot mc-global-loader--modal" data-mc-loader-boot hidden aria-busy="false" aria-live="polite" aria-hidden="true">
   <div class="mc-loader__panel">
     <div class="mc-global-loader__stage" aria-hidden="true">
-      <div class="mc-global-loader__ring"></div>
       <div class="mc-global-loader__glow"></div>
       <div class="mc-global-loader__logo-wrap">
-        <img class="mc-global-loader__logo" src="<?= htmlspecialchars($logo) ?>" alt="" width="64" height="64" decoding="async"/>
+        <img class="mc-global-loader__logo" src="<?= htmlspecialchars($logo) ?>" alt="" width="200" height="200" decoding="async"/>
       </div>
     </div>
-    <p class="mc-loader__title"><?= htmlspecialchars($brand) ?></p>
     <p class="mc-loader__status"><?= htmlspecialchars($status) ?></p>
-    <p class="mc-loader__hint"><?= htmlspecialchars($hint) ?></p>
+    <div class="mc-loader__dots" aria-hidden="true">
+      <span class="mc-loader__dot"></span>
+      <span class="mc-loader__dot"></span>
+      <span class="mc-loader__dot"></span>
+    </div>
     <span class="mc-global-loader__sr-only"><?= htmlspecialchars($status) ?></span>
   </div>
 </div>
