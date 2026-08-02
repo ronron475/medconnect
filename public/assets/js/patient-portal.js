@@ -723,29 +723,7 @@
   }
 
   function showBookingOverlay(visible, options) {
-    const L = window.MedConnectGlobalLoader || window.MedConnectLoader;
-    if (L && typeof L.showFormal === 'function') {
-      if (visible) {
-        L.showFormal(Object.assign({
-          preset: 'booking',
-          status: 'Booking your appointment…',
-          substatus: 'Reserving your time slot…',
-        }, options || {}));
-      } else {
-        L.hideFormal();
-      }
-      return;
-    }
-
-    if (L && typeof L.showPersistent === 'function') {
-      if (visible) {
-        L.showPersistent('patient-booking-overlay', { preset: 'booking' });
-      } else {
-        L.hidePersistent('patient-booking-overlay');
-      }
-      return;
-    }
-
+    // Global full-screen loader is auth-only; use the local booking overlay.
     const overlay = document.getElementById('patient-booking-overlay');
     if (!overlay) return;
     if (visible) {

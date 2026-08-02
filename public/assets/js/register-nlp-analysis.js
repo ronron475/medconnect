@@ -140,29 +140,7 @@
   }
 
   function showOverlay(visible) {
-    const L = global.MedConnectGlobalLoader || global.MedConnectLoader;
-    if (L && typeof L.showFormal === 'function') {
-      if (visible) {
-        L.showFormal({
-          preset: 'ai',
-          status: 'Processing your symptoms…',
-          substatus: 'Running medical NLP pipeline…',
-        });
-      } else {
-        L.hideFormal();
-      }
-      return;
-    }
-
-    if (L && typeof L.showPersistent === 'function') {
-      if (visible) {
-        L.showPersistent('reg-nlp-overlay', { preset: 'ai' });
-      } else {
-        L.hidePersistent('reg-nlp-overlay');
-      }
-      return;
-    }
-
+    // Global full-screen loader is auth-only; use the local NLP overlay.
     const { overlay } = els();
     if (!overlay) return;
     if (visible) {

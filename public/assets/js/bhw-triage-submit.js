@@ -86,26 +86,12 @@
     return window.MedConnectGlobalLoader || window.MedConnectLoader || null;
   }
 
-  function showFormalLoader(opts) {
-    var L = formalLoader();
-    if (L && typeof L.showFormal === 'function') {
-      L.showFormal(opts || { preset: 'ai' });
-      return;
-    }
-    if (BhwPortal && BhwPortal.loader && BhwPortal.loader.showFormal) {
-      BhwPortal.loader.showFormal(opts || { preset: 'ai' });
-    }
+  function showFormalLoader() {
+    // Global full-screen loader is auth-only; triage uses button disabled state instead.
   }
 
   function hideFormalLoader() {
-    var L = formalLoader();
-    if (L && typeof L.hideFormal === 'function') {
-      L.hideFormal();
-      return;
-    }
-    if (BhwPortal && BhwPortal.loader && BhwPortal.loader.hideFormal) {
-      BhwPortal.loader.hideFormal();
-    }
+    // no-op (auth-only global loader)
   }
 
   function forceHideLoader() {
@@ -115,8 +101,6 @@
     }
     if (BhwPortal && typeof BhwPortal.releaseUiBlockers === 'function') {
       BhwPortal.releaseUiBlockers();
-    } else {
-      hideFormalLoader();
     }
   }
 
