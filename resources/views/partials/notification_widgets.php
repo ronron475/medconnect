@@ -53,8 +53,10 @@ $notif_widget_render_item = static function (string $widget_key, string $widget_
     <a href="<?= ASSET_BASE ?>/views/notifications/index.php" class="mc-notif-recent-panel__link">View all</a>
   </header>
   <div class="mc-notif-recent-panel__body" data-widget="recent">
-    <div class="mc-notif-list mc-notif-list--feed" data-notif-list>
-      <div class="mc-notif-empty">Loading notifications…</div>
+    <div class="mc-notif-escalator" aria-hidden="false">
+      <div class="mc-notif-list mc-notif-list--feed mc-notif-list--escalator" data-notif-list>
+        <div class="mc-notif-empty">Loading notifications…</div>
+      </div>
     </div>
   </div>
 </section>
@@ -71,8 +73,10 @@ $notif_widget_render_item = static function (string $widget_key, string $widget_
     <a href="<?= ASSET_BASE ?>/views/notifications/index.php" class="adm-card-head-action">View all</a>
   </div>
   <div class="adm-card-body" data-widget="recent">
-    <div class="mc-notif-list adm-notif-list-compact" data-notif-list>
-      <div class="mc-notif-empty">Loading notifications…</div>
+    <div class="mc-notif-escalator" aria-hidden="false">
+      <div class="mc-notif-list adm-notif-list-compact mc-notif-list--escalator" data-notif-list>
+        <div class="mc-notif-empty">Loading notifications…</div>
+      </div>
     </div>
   </div>
 </div>
