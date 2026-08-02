@@ -779,10 +779,27 @@ body.landing-page:has(.landing-maintenance-banner) .hero--cinematic {
   text-decoration: underline;
 }
 
+@keyframes mc-signin-gradient-flow {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
 .btn-signin {
   width: 100%;
   height: 50px;
-  background: var(--teal);
+  background: linear-gradient(
+    90deg,
+    #027a88 0%,
+    #069396 18%,
+    #0891b2 38%,
+    #0ea5e9 52%,
+    #38bdf8 68%,
+    #0ea5e9 82%,
+    #069396 100%
+  );
+  background-size: 300% 100%;
+  animation: mc-signin-gradient-flow 4.5s ease-in-out infinite;
   color: var(--white);
   border: none;
   border-radius: 10px;
@@ -793,13 +810,13 @@ body.landing-page:has(.landing-maintenance-banner) .hero--cinematic {
   align-items: center;
   justify-content: center;
   gap: 10px;
-  transition: all 0.2s;
+  transition: transform 0.2s, box-shadow 0.2s;
   box-shadow: 0 4px 12px rgba(6, 147, 150, 0.2);
 }
 .btn-signin:hover {
-  background: var(--teal-mid);
   transform: translateY(-1px);
   box-shadow: 0 6px 20px rgba(6, 147, 150, 0.3);
+  animation-duration: 3.2s;
 }
 
 .card-register {
@@ -998,12 +1015,23 @@ body.landing-page:has(.landing-maintenance-banner) .hero--cinematic {
 }
 .forgot-link:hover { opacity: 1; text-decoration: underline; }
 
-/* ── Sign In button — full width, same border-radius as inputs ── */
+/* ── Sign In button — animated teal-to-blue gradient ── */
 .btn-signin {
   width: 100%;
   height: 46px;
   padding: 0 16px;
-  background: linear-gradient(135deg, var(--teal) 0%, #0ea5e9 100%);
+  background: linear-gradient(
+    90deg,
+    #027a88 0%,
+    #069396 18%,
+    #0891b2 38%,
+    #0ea5e9 52%,
+    #38bdf8 68%,
+    #0ea5e9 82%,
+    #069396 100%
+  );
+  background-size: 300% 100%;
+  animation: mc-signin-gradient-flow 4.5s ease-in-out infinite;
   color: #fff;
   border: none;
   border-radius: 10px;   /* matches input border-radius */
@@ -1015,13 +1043,13 @@ body.landing-page:has(.landing-maintenance-banner) .hero--cinematic {
   justify-content: center;
   gap: 8px;
   box-shadow: 0 6px 20px rgba(13,148,136,0.30);
-  transition: opacity 0.2s, transform 0.2s, box-shadow 0.2s;
+  transition: transform 0.2s, box-shadow 0.2s;
   font-family: inherit;
   letter-spacing: 0.1px;
 }
-.btn-signin:hover  { opacity: 0.9; transform: translateY(-1px); box-shadow: 0 10px 28px rgba(13,148,136,0.40); }
+.btn-signin:hover  { transform: translateY(-1px); box-shadow: 0 10px 28px rgba(13,148,136,0.40); animation-duration: 3.2s; }
 .btn-signin:active { transform: translateY(0); }
-.btn-signin:disabled { opacity: 0.6; cursor: not-allowed; transform: none; box-shadow: none; }
+.btn-signin:disabled { opacity: 0.6; cursor: not-allowed; transform: none; box-shadow: none; animation-play-state: paused; }
 
 /* ── Spinner ── */
 .spinner {
