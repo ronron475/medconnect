@@ -67,24 +67,78 @@ final class FaqChatbotResponseGenerator
 
     /**
      * Conversational fallback when FAQ match is weak (not “I don't know”).
+     *
+     * @param array{raw?: string, nlp?: string, emotion?: ?string, session_id?: string} $ctx
      */
-    public static function conversationalFallback(string $lang, string $intent): string
+    public static function conversationalFallback(string $lang, string $intent, array $ctx = []): string
     {
         $L = FaqEmotionEngine::normalizeLang($lang);
-        $pool = [
+        $raw = (string) ($ctx['raw'] ?? '');
+        $nlp = (string) ($ctx['nlp'] ?? $raw);
+
+        $kb = FaqChatbotKnowledgeBase::match($raw, $nlp, $L, [
+            'intent'         => $intent,
+            'emotion'        => $ctx['emotion'] ?? null,
+            'session_id'     => (string) ($ctx['session_id'] ?? ''),
+            'context_boost'  => (string) ($ctx['context_boost'] ?? ''),
+        ]);
+        if ($kb !== null) {
+            return $kb['html'];
+        }
+
+        $intentKey = FaqChatbotKnowledgeBase::keyForIntent($intent);
+        if ($intentKey !== null) {
+            return FaqChatbotKnowledgeBase::pickResponse(
+                $intentKey,
+                $L,
+                (string) ($ctx['session_id'] ?? '')
+            );
+        }
+
+        $variants = [
             'en' => [
                 FaqChatbotResponseTemplates::html('no_exact_faq', 'en'),
+                '<p>I want to help. Could you share a bit more — is this about booking, login, how you feel, or City Health services? I\'m here with you.</p>',
+                '<p>Thanks for writing. I may not have an exact FAQ match, but I can still guide you to appointments, registration, or supportive next steps. What feels most important right now?</p>',
             ],
             'fil' => [
                 FaqChatbotResponseTemplates::html('no_exact_faq', 'fil'),
+                '<p>Gusto kitang tulungan. Magbahagi pa ng kaunti — tungkol ba ito sa booking, login, nararamdaman, o City Health? Nandito ako.</p>',
             ],
             'hil' => [
                 FaqChatbotResponseTemplates::html('no_exact_faq', 'hil'),
+                '<p>Gusto ko magbulig. Pwede ka magpaambit pa — parte sa booking, login, pamatyag, ukon City Health? Diri ako.</p>',
+                '<p>Salamat sa paghambal. Wala eksaktong FAQ match, pero matabangan ko ikaw sa appointments, rehistro, ukon supportive nga sunod nga hakbang. Ano ang pinaka importante subong?</p>',
             ],
         ];
-        $lines = $pool[$L] ?? $pool['en'];
-        $idx = crc32($intent . '|' . $L) % count($lines);
-        return $lines[$idx];
+        $lines = $variants[$L] ?? $variants['en'];
+        $usedKey = 'faq_fallback_used_' . $L;
+        $used = $_SESSION[$usedKey] ?? [];
+        if (!is_array($used)) {
+            $used = [];
+        }
+        $available = [];
+        foreach ($lines as $i => $_) {
+            if (!in_array($i, $used, true)) {
+                $available[] = $i;
+            }
+        }
+        if ($available === []) {
+            $used = [];
+            $available = array_keys($lines);
+        }
+        $pick = $available[random_int(0, count($available) - 1)];
+        $used[] = $pick;
+        $_SESSION[$usedKey] = array_slice($used, -count($lines));
+        return $lines[$pick];
+    }
+
+    /**
+     * Whether a knowledge-base match is strong enough for assist-mode server reply.
+     */
+    public static function kbMatchForAssist(string $raw, string $nlp, string $lang, array $ctx = []): ?array
+    {
+        return FaqChatbotKnowledgeBase::match($raw, $nlp, $lang, $ctx);
     }
 
     public static function wrapAnswer(string $empathy, string $bodyHtml): string
