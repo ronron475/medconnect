@@ -8,7 +8,8 @@
 
   const wrap = document.getElementById('landing-theme-fab');
   const btn = document.getElementById('landing-theme-toggle');
-  if (!wrap || !btn) return;
+  const signinBtn = document.getElementById('signin-theme-toggle');
+  if (!btn && !signinBtn) return;
 
   const services = document.getElementById('services-section');
   const sentinel = document.getElementById('hero-theme-sentinel');
@@ -24,9 +25,17 @@
     const dark = getResolved() === 'dark';
     document.body.classList.toggle('landing-bg--dark', dark);
     document.body.classList.toggle('landing-bg--light', !dark);
-    btn.setAttribute('aria-pressed', dark ? 'true' : 'false');
-    btn.setAttribute('aria-label', dark ? 'Switch to light mode' : 'Switch to dark mode');
-    btn.setAttribute('title', dark ? 'Switch to light mode' : 'Switch to dark mode');
+    const label = dark ? 'Switch to light mode' : 'Switch to dark mode';
+    if (btn) {
+      btn.setAttribute('aria-pressed', dark ? 'true' : 'false');
+      btn.setAttribute('aria-label', label);
+      btn.setAttribute('title', label);
+    }
+    if (signinBtn) {
+      signinBtn.setAttribute('aria-pressed', dark ? 'true' : 'false');
+      signinBtn.setAttribute('aria-label', label);
+      signinBtn.setAttribute('title', label);
+    }
   }
 
   function applyLandingTheme(preference) {
@@ -46,6 +55,7 @@
   }
 
   function setVisible(next) {
+    if (!wrap || !btn) return;
     if (next === visible) return;
     visible = next;
     wrap.classList.toggle('is-visible', visible);
@@ -65,7 +75,8 @@
     syncLandingBgClass();
   }
 
-  btn.addEventListener('click', onToggle);
+  if (btn) btn.addEventListener('click', onToggle);
+  if (signinBtn) signinBtn.addEventListener('click', onToggle);
 
   syncLandingBgClass();
 
@@ -75,7 +86,7 @@
     attributeFilter: ['data-theme-resolved'],
   });
 
-  if (target) {
+  if (wrap && target) {
     const scrollObserver = new IntersectionObserver(
       (entries) => {
         entries.forEach((entry) => {
@@ -97,7 +108,7 @@
         scrollObserver.observe(target);
       }
     });
-  } else {
+  } else if (wrap) {
     setVisible(true);
   }
 })();
