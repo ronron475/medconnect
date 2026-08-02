@@ -78,13 +78,13 @@
 
 .sb-item.active {
   background: transparent;
-  color: inherit;
+  color: #ffffff;
   box-shadow: none;
 }
 
 .sb-item:hover {
   background: transparent;
-  color: inherit;
+  color: #ffffff;
 }
 
 .sb-item:focus,

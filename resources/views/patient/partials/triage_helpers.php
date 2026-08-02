@@ -81,6 +81,9 @@ function mc_patient_care_tip_meta(array $row): array
 {
     $status = (string) ($row['recommendation_status'] ?? '');
     $acked = !empty($row['recommendation_patient_ack_at']);
+    $approvedAt = (string) ($row['recommendation_approved_at'] ?? '');
+    $approvedTs = $approvedAt !== '' ? strtotime($approvedAt) : false;
+    $isExpired = $approvedTs !== false && time() >= ($approvedTs + (24 * 3600));
 
     if ($status === 'pending_approval') {
         return [
@@ -99,11 +102,20 @@ function mc_patient_care_tip_meta(array $row): array
             'kind' => 'rejected',
         ];
     }
+    if ($status === 'approved' && $isExpired) {
+        return [
+            'label' => 'Expired',
+            'class' => 'pmh-care-card__status--acked',
+            'show_tips' => true,
+            'kind' => 'expired',
+        ];
+    }
     if ($status === 'approved' && $acked) {
         return [
             'label' => 'Completed',
             'class' => 'pmh-care-card__status--acked',
             'show_tips' => true,
+            'active' => true,
             'kind' => 'acked',
         ];
     }

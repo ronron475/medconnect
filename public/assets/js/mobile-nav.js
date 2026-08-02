@@ -1,5 +1,6 @@
 /**
  * Mobile sidebar drawer — unified across patient, provider, admin, superadmin, and BHW.
+ * Drawer open state persists across in-portal page navigations (sessionStorage).
  */
 (function () {
   'use strict';
@@ -9,15 +10,14 @@
   const NAV_LINK_SELECTORS =
     'a.sb-item, a.sba-item, a.adm-nav-item, a.adm-profile, a.adm-logo, a.sb-logo, a.sba-logo, .sb-nav a, .sba-nav a, .adm-nav a';
   const MINI_KEY = 'mc_sidebar_mini';
+  const DRAWER_OPEN_KEY = 'mc_sidebar_drawer_open';
   const TOGGLE_DEBOUNCE_MS = 400;
   const BURGER_ANIM_MS = 260;
-  const GHOST_CLICK_GUARD_MS = 400;
   const OPEN_GUARD_MS = 500;
 
   const IS_TOUCH =
     ('ontouchstart' in window) || (navigator.maxTouchPoints && navigator.maxTouchPoints > 0);
 
-  let closeGuardTimer = null;
   let openGuardTimer = null;
   let openingClickBlocker = null;
   let lastToggleAt = 0;
@@ -36,6 +36,24 @@
 
   function isOpeningGuarded() {
     return document.body.classList.contains('mc-nav-opening');
+  }
+
+  function persistDrawerOpen(open) {
+    try {
+      if (open && isMobileDrawer()) {
+        sessionStorage.setItem(DRAWER_OPEN_KEY, '1');
+      } else {
+        sessionStorage.removeItem(DRAWER_OPEN_KEY);
+      }
+    } catch (_) { /* ignore */ }
+  }
+
+  function shouldRestoreDrawerOpen() {
+    try {
+      return sessionStorage.getItem(DRAWER_OPEN_KEY) === '1';
+    } catch (_) {
+      return false;
+    }
   }
 
   function getBackdrop() {
@@ -101,9 +119,11 @@
     openGuardTimer = window.setTimeout(disarmOpenGuard, OPEN_GUARD_MS);
   }
 
-  function setOpen(open) {
+  function setOpen(open, opts) {
     const sidebar = getSidebar();
     const backdrop = getBackdrop();
+    const persist = !opts || opts.persist !== false;
+    const skipGuard = !!(opts && opts.skipGuard);
 
     if (!sidebar) return;
 
@@ -112,7 +132,6 @@
     if (open) {
       closeThemeMenus();
     } else {
-      window.clearTimeout(closeGuardTimer);
       disarmOpenGuard();
       document.body.classList.remove('mc-nav-closing');
     }
@@ -123,7 +142,12 @@
     document.body.classList.toggle('mc-nav-open', open);
     syncToggleAria(open);
 
-    if (open && !wasOpen) {
+    if (persist) {
+      persistDrawerOpen(open);
+    }
+
+    // Ghost-click guard only for user-opened drawers (not restored after navigation).
+    if (open && !wasOpen && !skipGuard) {
       armOpenGuard();
     }
   }
@@ -139,6 +163,7 @@
     }
     document.body.classList.remove('mc-nav-open', 'mc-nav-closing');
     disarmOpenGuard();
+    persistDrawerOpen(false);
 
     document.body.classList.toggle('mc-sidebar-mini', !!mini);
     try {
@@ -182,14 +207,13 @@
     return !!(sidebar && sidebar.classList.contains('is-open'));
   }
 
+  /**
+   * Kept for API compatibility. Navigation no longer closes the drawer —
+   * open state is persisted so the sidebar stays visible after page loads.
+   */
   function closeAfterNav() {
     if (!isMobileDrawer()) return;
-    document.body.classList.add('mc-nav-closing');
-    window.clearTimeout(closeGuardTimer);
-    close();
-    closeGuardTimer = window.setTimeout(() => {
-      document.body.classList.remove('mc-nav-closing');
-    }, GHOST_CLICK_GUARD_MS);
+    persistDrawerOpen(true);
   }
 
   function onToggleClick(e) {
@@ -234,14 +258,21 @@
         return;
       }
 
-      const href = link.getAttribute('href');
-      if (!href || href.charAt(0) === '#') {
-        close();
-        return;
-      }
-
-      closeAfterNav();
+      // Keep drawer open across full-page navigations.
+      persistDrawerOpen(true);
     });
+  }
+
+  function restoreDrawerState() {
+    if (!isMobileDrawer()) {
+      setOpen(false, { persist: false });
+      return;
+    }
+    if (shouldRestoreDrawerOpen()) {
+      setOpen(true, { persist: true, skipGuard: true });
+    } else {
+      setOpen(false, { persist: false });
+    }
   }
 
   function init() {
@@ -251,8 +282,6 @@
     if (!sidebar.id) {
       sidebar.id = 'app-sidebar';
     }
-
-    close();
 
     document.querySelectorAll(TOGGLE_SELECTORS).forEach((btn) => {
       if (!btn.hasAttribute('aria-controls')) {
@@ -268,10 +297,12 @@
 
     sidebar.querySelectorAll(NAV_LINK_SELECTORS).forEach(bindNavLink);
 
+    // Logout still closes the drawer and clears persisted open state.
     sidebar.querySelectorAll('[data-logout-trigger]').forEach((btn) => {
       btn.addEventListener('click', () => {
+        persistDrawerOpen(false);
         if (!isMobileDrawer() || isOpeningGuarded()) return;
-        closeAfterNav();
+        setOpen(false, { persist: false });
       });
     });
 
@@ -280,14 +311,20 @@
     });
 
     window.addEventListener('resize', () => {
-      if (prefersMiniMode()) close();
+      if (prefersMiniMode()) {
+        // Desktop/tablet mini mode — drawer off-canvas state does not apply.
+        setOpen(false, { persist: false });
+      } else {
+        restoreDrawerState();
+      }
     });
 
-    window.addEventListener('pageshow', (e) => {
-      if (e.persisted) close();
+    window.addEventListener('pageshow', () => {
+      restoreDrawerState();
     });
 
     restoreMini();
+    restoreDrawerState();
     initSidebarNavScroll(sidebar);
   }
 
