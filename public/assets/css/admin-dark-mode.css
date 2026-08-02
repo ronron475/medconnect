@@ -395,6 +395,11 @@ html[data-theme-resolved='dark'] body.superadmin-body .staff-apps-stat:hover {
    Covers Admin + Super Admin
 ═══════════════════════════════════════════════════════════ */
 
+html[data-theme-resolved='dark']:has(body.admin-body),
+html[data-theme-resolved='dark']:has(body.superadmin-body) {
+  background: #0a0a0a !important;
+}
+
 html[data-theme-resolved='dark'] body.admin-body,
 html[data-theme-resolved='dark'] body.superadmin-body,
 html[data-theme-resolved='dark'] body.admin-body .root-wrapper,
@@ -429,6 +434,57 @@ html[data-theme-resolved='dark'] body.superadmin-body .adm-footer {
   background-image: none !important;
   border-color: #2a2a2a !important;
   transition: none !important;
+}
+
+html[data-theme-resolved='dark'] body.admin-body .adm-sidebar,
+html[data-theme-resolved='dark'] body.superadmin-body .adm-sidebar {
+  min-height: 100vh;
+  min-height: 100dvh;
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+  box-sizing: border-box;
+}
+
+html[data-theme-resolved='dark'] body.admin-body .adm-logo,
+html[data-theme-resolved='dark'] body.superadmin-body .adm-logo {
+  border-bottom-color: #2a2a2a !important;
+}
+
+html[data-theme-resolved='dark'] body.admin-body .adm-profile,
+html[data-theme-resolved='dark'] body.superadmin-body .adm-profile {
+  background: #1c1c1c !important;
+  border-color: #2a2a2a !important;
+}
+
+html[data-theme-resolved='dark'] body.admin-body .adm-profile:hover,
+html[data-theme-resolved='dark'] body.superadmin-body .adm-profile:hover {
+  background: #242424 !important;
+  border-color: #333333 !important;
+}
+
+html[data-theme-resolved='dark'] body.admin-body .adm-profile-name,
+html[data-theme-resolved='dark'] body.superadmin-body .adm-profile-name {
+  color: #ffffff !important;
+}
+
+html[data-theme-resolved='dark'] body.admin-body .adm-profile-role,
+html[data-theme-resolved='dark'] body.superadmin-body .adm-profile-role {
+  color: #71717a !important;
+}
+
+html[data-theme-resolved='dark'] body.admin-body .adm-logout,
+html[data-theme-resolved='dark'] body.superadmin-body .adm-logout {
+  background: #1c1c1c !important;
+  border-color: #2a2a2a !important;
+  color: #a1a1aa !important;
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+html[data-theme-resolved='dark'] body.admin-body .adm-logout:hover,
+html[data-theme-resolved='dark'] body.superadmin-body .adm-logout:hover {
+  background: rgba(220, 38, 38, 0.15) !important;
+  border-color: rgba(220, 38, 38, 0.35) !important;
+  color: #fca5a5 !important;
 }
 
 html[data-theme-resolved='dark'] body.admin-body .adm-nav-item,
