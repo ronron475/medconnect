@@ -1,5 +1,5 @@
 /**
- * medConnect — Global transparent logo loader
+ * medConnect — Premium logo-only global loader (float + pulse, no spin)
  */
 (function (global) {
   'use strict';
@@ -26,20 +26,27 @@
     return assetBase() + '/assets/img/medcon_logo.png';
   }
 
+  function buildLoaderExtras() {
+    return (
+      '<div class="mc-loader__dots" aria-hidden="true">' +
+        '<span class="mc-loader__dot"></span>' +
+        '<span class="mc-loader__dot"></span>' +
+        '<span class="mc-loader__dot"></span>' +
+      '</div>'
+    );
+  }
+
   function buildMarkup(srText, modalOpts) {
     const modal = modalOpts || {};
     const textBlock = modal.enabled ? (
-      '<p class="mc-loader__title">' + (modal.brand || 'medConnect') + '</p>' +
-      '<p class="mc-loader__status">' + (modal.status || 'Connecting...') + '</p>' +
-      '<p class="mc-loader__hint">' + (modal.substatus || 'Securing your session...') + '</p>' +
-      '<p class="mc-loader__hint">' + (modal.hint || 'Please wait...') + '</p>'
+      '<p class="mc-loader__status">' + (modal.status || 'Loading medConnect...') + '</p>' +
+      buildLoaderExtras()
     ) : '';
     return (
       '<div class="mc-global-loader__stage" aria-hidden="true">' +
-        '<div class="mc-global-loader__ring"></div>' +
         '<div class="mc-global-loader__glow"></div>' +
         '<div class="mc-global-loader__logo-wrap">' +
-          '<img class="mc-global-loader__logo" src="' + logoSrc() + '" alt="" width="64" height="64" decoding="async" />' +
+          '<img class="mc-global-loader__logo" src="' + logoSrc() + '" alt="" width="200" height="200" decoding="async" />' +
         '</div>' +
       '</div>' +
       textBlock +
@@ -159,21 +166,20 @@
   const FORMAL_PRESETS = {
     default: {
       brand: 'medConnect',
-      status: 'Loading…',
-      substatus: 'Securing your session…',
-      hint: 'Please wait…',
-      sr: 'Loading. Please wait.',
+      status: 'Loading medConnect...',
+      sr: 'Loading medConnect.',
+    },
+    navigation: {
+      brand: 'medConnect',
+      status: 'Loading medConnect...',
+      sr: 'Loading page.',
     },
     login: {
-      status: 'Connecting…',
-      substatus: 'Securing your session…',
-      hint: 'Please wait…',
+      status: 'Signing In...',
       sr: 'Signing in.',
     },
     logout: {
-      status: 'Signing out…',
-      substatus: 'Securing your session…',
-      hint: 'Please wait…',
+      status: 'Signing Out...',
       sr: 'Signing out.',
     },
     ai: {
@@ -229,14 +235,18 @@
   function show(options) {
     options = options || {};
     const el = getOverlay();
-    const useModal = options.modal === true || options.mode === 'login' || options.mode === 'logout' || !!options.preset;
+    const useModal = options.modal === true
+      || options.mode === 'login'
+      || options.mode === 'logout'
+      || options.mode === 'navigation'
+      || !!options.preset;
     if (useModal) {
+      const presetKey = options.preset || options.mode || 'default';
+      const preset = FORMAL_PRESETS[presetKey] || FORMAL_PRESETS.default;
       setModalMode(el, true, {
-        sr: options.sr,
-        brand: options.brand || 'medConnect',
-        status: options.status || (options.mode === 'logout' ? 'Signing out...' : 'Connecting...'),
-        substatus: options.substatus || 'Securing your session...',
-        hint: options.hint || 'Please wait...',
+        sr: options.sr || preset.sr,
+        brand: options.brand || preset.brand || 'medConnect',
+        status: options.status || preset.status || 'Loading medConnect...',
       });
     } else if (!options.keepModal) {
       const modalActive = el.classList.contains('mc-global-loader--modal')
@@ -422,14 +432,13 @@
     }
 
     const statusEl = boot.querySelector('.mc-loader__status');
-    const hintEl = boot.querySelector('.mc-loader__hint');
     if (authHandoff === 'login') {
-      if (statusEl) statusEl.textContent = 'Loading your dashboard…';
-      if (hintEl) hintEl.textContent = 'Almost there…';
+      if (statusEl) statusEl.textContent = 'Loading medConnect...';
     } else if (authHandoff === 'logout') {
-      if (statusEl) statusEl.textContent = 'Signed out';
-      if (hintEl) hintEl.textContent = 'Returning to home…';
+      if (statusEl) statusEl.textContent = 'Signing Out...';
     }
+
+    boot.classList.add('mc-global-loader--modal');
 
     booting = true;
     boot.removeAttribute('hidden');
@@ -481,7 +490,7 @@
         return;
       }
 
-      show({ mode: 'navigation', sr: 'Loading page.' });
+      showFormal({ preset: 'navigation', instant: true });
     }, false);
   }
 
@@ -538,7 +547,7 @@
       if (!shouldAutoLoad(input, opts)) {
         return nativeFetch(input, init);
       }
-      show({ mode: 'fetch', sr: 'Loading data.' });
+      show({ preset: 'default', sr: 'Loading data.' });
       return nativeFetch(input, init).finally(function () {
         hide();
       });
@@ -562,7 +571,7 @@
       const self = this;
       const opts = { method: self.__mcLoaderMethod, headers: {} };
       if (self.__mcLoaderUrl && shouldAutoLoad(self.__mcLoaderUrl, opts)) {
-        show({ mode: 'xhr', sr: 'Loading data.' });
+        show({ preset: 'default', sr: 'Loading data.' });
         const done = function () {
           self.removeEventListener('loadend', done);
           hide();
@@ -605,7 +614,6 @@
     return (
       '<' + tag + ' class="mc-inline-loading staff-apps-loading' + extraClass + '" role="status">' +
         '<div class="mc-global-loader__stage" aria-hidden="true">' +
-          '<div class="mc-global-loader__ring"></div>' +
           '<div class="mc-global-loader__glow"></div>' +
           '<div class="mc-global-loader__logo-wrap">' +
             '<img class="mc-global-loader__logo" src="' + logo + '" alt="" width="36" height="36" decoding="async" />' +
