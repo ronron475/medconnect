@@ -71,17 +71,24 @@ final class FaqChatbotOrchestrator
             ];
         }
 
-        // Context from DB + session tail
+        // Context from DB + session memory
+        FaqChatbotConversationMemory::rememberLanguage($replyLang);
         $history = $this->convRepo->recentMessages($conversationId, 8);
-        $contextText = $this->mergeContextText($history, $nlpText);
+        $memoryBoost = FaqChatbotConversationMemory::contextBoostText();
+        $contextText = trim($this->mergeContextText($history, $nlpText) . ' ' . $memoryBoost);
+
+        $matchText = $nlpText;
+        if (FaqChatbotConversationMemory::isFollowUpUtterance($text) && $memoryBoost !== '') {
+            $matchText = trim($nlpText . ' ' . $memoryBoost);
+        }
 
         $emergency = FaqChatbotEmergencyDetector::detect($contextText . ' ' . $text);
-        $intentPack = FaqChatbotIntentRecognizer::recognize($nlpText);
+        $intentPack = FaqChatbotIntentRecognizer::recognize($matchText);
         $intent = $intentPack['intent'];
         $flowKey = $intentPack['flow_key'];
 
         $prev = $_SESSION['faq_emotion_context'] ?? null;
-        $emotionResult = FaqEmotionEngine::analyze($nlpText, $replyLang, $intent, is_array($prev) ? $prev : null);
+        $emotionResult = FaqEmotionEngine::analyze($matchText, $replyLang, $intent, is_array($prev) ? $prev : null);
         $canonical = FaqChatbotStandardEmotion::canonicalize($emotionResult['emotion'] ?? null);
 
         if (!empty($emotionResult['emotion'])) {
@@ -112,6 +119,7 @@ final class FaqChatbotOrchestrator
         }
         $responseHtml = '';
         $faqId = null;
+        $kbHit = null;
         $confidence = (float) ($intentPack['confidence'] ?? 0.35);
         $suggestions = [];
 
@@ -136,17 +144,62 @@ final class FaqChatbotOrchestrator
                     $this->faqRepo->suggestionsForCategory((string) ($best['category'] ?? ''), 3)
                 );
             } else {
-                $fallback = FaqChatbotResponseGenerator::conversationalFallback($replyLang, $intent);
-                $lead = $empathyWrap ?? FaqChatbotResponseGenerator::wrapAnswer($empathy, '');
-                $responseHtml = $lead . $fallback;
-                $confidence = max(0.42, (float) ($emotionResult['confidence'] ?? 0.4));
-                $flowKey = $flowKey ?? 'conversational';
+                $kbHit = FaqChatbotResponseGenerator::kbMatchForAssist($text, $matchText, $replyLang, [
+                    'intent'         => $intent,
+                    'emotion'        => $emotionResult['emotion'] ?? null,
+                    'session_id'     => $sessionId,
+                    'context_boost'  => $memoryBoost,
+                ]);
+
+                $followBridge = '';
+                if (FaqChatbotConversationMemory::isFollowUpUtterance($text)
+                    && !empty(FaqChatbotConversationMemory::get()['current_topic'])) {
+                    $followBridge = FaqChatbotConversationMemory::followUpBridge($replyLang);
+                }
+
+                if ($kbHit !== null) {
+                    $lead = $empathyWrap ?? FaqChatbotResponseGenerator::wrapAnswer($empathy, '');
+                    // Crisis / emergency KB cards already carry strong framing — light empathy only
+                    if (in_array($kbHit['key'], ['crisis_hopeless', 'emergency_redirect'], true)) {
+                        $responseHtml = $kbHit['html'];
+                    } else {
+                        $responseHtml = $followBridge . $lead . $kbHit['html'];
+                    }
+                    $confidence = min(0.96, 0.55 + ((float) $kbHit['score'] / 6));
+                    $flowKey = $kbHit['flow_key'] ?? $flowKey ?? 'conversational';
+                } else {
+                    $fallback = FaqChatbotResponseGenerator::conversationalFallback($replyLang, $intent, [
+                        'raw'           => $text,
+                        'nlp'           => $matchText,
+                        'emotion'       => $emotionResult['emotion'] ?? null,
+                        'session_id'    => $sessionId,
+                        'context_boost' => $memoryBoost,
+                    ]);
+                    $lead = $empathyWrap ?? FaqChatbotResponseGenerator::wrapAnswer($empathy, '');
+                    $responseHtml = $followBridge . $lead . $fallback;
+                    $confidence = max(0.42, (float) ($emotionResult['confidence'] ?? 0.4));
+                    $flowKey = $flowKey ?? 'conversational';
+                }
                 $suggestions = $this->formatSuggestions($this->faqRepo->suggestionsForCategory(null, 3));
             }
         }
 
+        // Persist conversational memory for natural follow-ups
+        FaqChatbotConversationMemory::update([
+            'lang'           => $replyLang,
+            'intent'         => $intent,
+            'topic'          => $kbHit['category'] ?? ($flowKey ?: $intent),
+            'emotion'        => $canonical,
+            'emotion_detail' => $emotionResult['emotion'] ?? null,
+            'kb_key'         => $kbHit['key'] ?? null,
+            'user_text'      => $text,
+            'bot_snippet'    => $responseHtml !== '' ? $responseHtml : null,
+        ]);
+
+        // Assist mode: serve PHP replies for emergency, FAQ hits, and strong KB (emotion/intent) matches
+        $kbStrong = $kbHit !== null && (($kbHit['score'] ?? 0) >= 2.2);
         $useServer = $mode === 'full'
-            || ($mode === 'assist' && ($emergency['is_emergency'] || $faqId !== null));
+            || ($mode === 'assist' && ($emergency['is_emergency'] || $faqId !== null || $kbStrong));
 
         if ($mode === 'assist' && !$useServer) {
             if ($suggestions === []) {
