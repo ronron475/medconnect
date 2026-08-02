@@ -198,14 +198,14 @@ html.lsa-ready .landing-page .lsa-hero-item--visual:not(.lsa-hero-visible) {
 
 /* ── Hero trust chips ── */
 .landing-page .hero--cinematic .hero-desc {
-  margin-bottom: 22px !important;
+  margin-bottom: var(--landing-space-4, 32px) !important;
 }
 
 .landing-page .hero-trust-chips {
   display: flex;
   flex-wrap: wrap;
-  gap: 10px;
-  margin: 0 0 30px;
+  gap: var(--landing-space-2, 16px);
+  margin: 0 0 var(--landing-space-4, 32px);
   padding: 0;
   list-style: none;
   max-width: 560px;
@@ -214,8 +214,8 @@ html.lsa-ready .landing-page .lsa-hero-item--visual:not(.lsa-hero-visible) {
 .landing-page .hero-trust-chip {
   display: inline-flex;
   align-items: center;
-  gap: 7px;
-  padding: 8px 14px;
+  gap: var(--landing-space-1, 8px);
+  padding: var(--landing-space-1, 8px) var(--landing-space-2, 16px);
   border-radius: 999px;
   border: 1px solid rgba(94, 234, 212, 0.28);
   background: rgba(6, 147, 150, 0.12);

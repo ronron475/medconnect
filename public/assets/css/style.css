@@ -238,7 +238,7 @@ body::before {
   gap: 8px;
   width: fit-content;
   padding: 8px 16px;
-  margin-bottom: 28px;
+  margin-bottom: 32px;
   border: 1px solid rgba(6, 147, 150, 0.45);
   border-radius: 999px;
   background: rgba(6, 147, 150, 0.14);
@@ -339,8 +339,8 @@ body.landing-page:has(.landing-maintenance-banner) .hero--cinematic {
 .hero--cinematic .hero-title {
   align-items: flex-start !important;
   text-align: left !important;
-  gap: 4px !important;
-  margin-bottom: 24px !important;
+  gap: 8px !important;
+  margin-bottom: 32px !important;
   margin-top: 0 !important;
 }
 
@@ -348,7 +348,7 @@ body.landing-page:has(.landing-maintenance-banner) .hero--cinematic {
   display: block;
   font-size: clamp(32px, 4.2vw, 52px);
   font-weight: 800;
-  line-height: 1.12;
+  line-height: 1.18;
   letter-spacing: -0.6px;
 }
 
@@ -365,18 +365,18 @@ body.landing-page:has(.landing-maintenance-banner) .hero--cinematic {
 .hero--cinematic .hero-desc {
   color: rgba(255, 255, 255, 0.82) !important;
   font-size: 17px !important;
-  line-height: 1.7 !important;
+  line-height: 1.75 !important;
   text-align: left !important;
   margin-left: 0 !important;
   margin-right: 0 !important;
-  margin-bottom: 36px !important;
+  margin-bottom: 32px !important;
   max-width: 520px !important;
 }
 
 .hero--cinematic .hero-ctas {
   align-items: stretch !important;
   justify-content: flex-start !important;
-  gap: 14px !important;
+  gap: 16px !important;
 }
 
 .hero--cinematic .hero-cta {
