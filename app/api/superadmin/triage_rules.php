@@ -8,7 +8,7 @@ require_once dirname(dirname(dirname(__DIR__))) . '/bootstrap.php';
 require_once dirname(dirname(dirname(__DIR__))) . '/config/db.php';
 require_once dirname(dirname(dirname(__DIR__))) . '/app/includes/portal_auth.php';
 
-portal_api_require_admin_portal();
+portal_api_require_superadmin();
 require_once BASE_PATH . '/app/includes/superadmin/security.php';
 require_once BASE_PATH . '/app/includes/audit_log.php';
 

@@ -209,7 +209,7 @@ body.mc-nav-open {
   .sidebar,
   .sb-aqua,
   .adm-sidebar,
-  .bhw-sidebar {
+  .adm-sidebar--bhw {
     /* Keep the drawer above the backdrop overlay */
     z-index: 520;
     transform: translateX(-100%);
@@ -220,7 +220,7 @@ body.mc-nav-open {
   .sidebar.is-open,
   .sb-aqua.is-open,
   .adm-sidebar.is-open,
-  .bhw-sidebar.is-open {
+  .adm-sidebar--bhw.is-open {
     transform: translateX(0);
   }
 
@@ -237,7 +237,7 @@ body.mc-nav-open {
   body.mc-sidebar-mini .sidebar,
   body.mc-sidebar-mini .sb-aqua,
   body.mc-sidebar-mini .adm-sidebar,
-  body.mc-sidebar-mini .bhw-sidebar {
+  body.mc-sidebar-mini .adm-sidebar--bhw {
     transform: translateX(0) !important;
   }
 
@@ -502,7 +502,7 @@ body.mc-nav-open {
   .sidebar,
   .sb-aqua,
   .adm-sidebar,
-  .bhw-sidebar,
+  .adm-sidebar--bhw,
   .mc-nav-backdrop {
     transition: none !important;
   }

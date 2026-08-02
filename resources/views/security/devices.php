@@ -17,6 +17,7 @@ if (!defined('BASE_PATH')) {
 
 require_once BASE_PATH . '/app/includes/auth_guard.php';
 require_once BASE_PATH . '/app/includes/login_security.php';
+require_once BASE_PATH . '/app/includes/portal_layout.php';
 require_once CONFIG_PATH . '/db.php';
 
 auth_require_login();
@@ -24,7 +25,7 @@ auth_require_login();
 login_security_ensure_schema($pdo);
 
 $page_title = 'Security — Devices';
-$role = $_SESSION['user_role'] ?? 'patient';
+$role = portal_layout_role();
 $userId = (int) ($_SESSION['user_id'] ?? 0);
 
 try {
@@ -55,34 +56,7 @@ try {
     $events = [];
 }
 
-switch ($role) {
-    case 'admin':
-        require_once VIEWS_PATH . '/admin/partials/layout_open.php';
-        break;
-    case 'superadmin':
-        require_once VIEWS_PATH . '/superadmin/partials/layout_open.php';
-        break;
-    case 'provider':
-        require_once VIEWS_PATH . '/provider/partials/icons.php';
-        require_once VIEWS_PATH . '/provider/partials/data.php';
-        require_once VIEWS_PATH . '/provider/partials/layout_open.php';
-        break;
-    case 'bhw':
-        require_once VIEWS_PATH . '/bhw/partials/layout_open.php';
-        break;
-    default:
-        ?>
-<!DOCTYPE html>
-<html lang="en">
-<head>
-<?php require_once VIEWS_PATH . '/patient/partials/layout_head.php'; ?>
-<?php require_once VIEWS_PATH . '/partials/notification_assets.php'; ?>
-</head>
-<body class="patient-portal">
-<?php require_once VIEWS_PATH . '/patient/partials/layout_shell_open.php'; ?>
-        <?php
-        break;
-}
+portal_layout_open($role);
 ?>
 
 <div class="mc-card" style="margin-bottom:16px;">
@@ -173,22 +147,4 @@ switch ($role) {
   </div>
 </div>
 
-<?php
-switch ($role) {
-    case 'admin':
-        require_once VIEWS_PATH . '/admin/partials/layout_close.php';
-        break;
-    case 'superadmin':
-        require_once VIEWS_PATH . '/superadmin/partials/layout_close.php';
-        break;
-    case 'provider':
-        require_once VIEWS_PATH . '/provider/partials/layout_close.php';
-        break;
-    case 'bhw':
-        require_once VIEWS_PATH . '/bhw/partials/layout_close.php';
-        break;
-    default:
-        require_once VIEWS_PATH . '/patient/partials/layout_shell_close.php';
-        break;
-}
-
+<?php portal_layout_close($role); ?>

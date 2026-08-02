@@ -4,7 +4,7 @@
 (function () {
   'use strict';
 
-  const SIDEBAR_SELECTORS = '.sidebar, .sb-aqua, .adm-sidebar, .bhw-sidebar';
+  const SIDEBAR_SELECTORS = '.sidebar, .sb-aqua, .adm-sidebar, #bhw-sidebar';
   const TOGGLE_SELECTORS = '#mcNavToggle, #pdHamburger, [data-sidebar-toggle]';
   const MINI_KEY = 'mc_sidebar_mini';
   const TOGGLE_EVENTS = ['click', 'pointerup'];
@@ -134,7 +134,7 @@
 
     getBackdrop().addEventListener('click', close);
 
-    sidebar.querySelectorAll('a.sb-item, a.sba-item, a.adm-nav-item, a.bhw-sb-item, a.bhw-sb-subitem, .sb-nav a').forEach((link) => {
+    sidebar.querySelectorAll('a.sb-item, a.sba-item, a.adm-nav-item, .sb-nav a, .sba-nav a').forEach((link) => {
       link.addEventListener('click', () => {
         if (window.matchMedia('(max-width: 1024px)').matches) {
           close();
@@ -152,6 +152,97 @@
     });
 
     restoreMini();
+    initSidebarNavScroll(sidebar);
+  }
+
+  function getNavContainer(sidebar) {
+    return sidebar.querySelector('.adm-nav, .sb-nav, .sba-nav');
+  }
+
+  function navScrollStorageKey(sidebar) {
+    const nav = getNavContainer(sidebar);
+    const portalNav = nav?.dataset?.portalNav;
+    if (portalNav) {
+      return 'mc_nav_scroll_' + portalNav;
+    }
+    const bodyPortal = document.body.dataset.portal;
+    if (bodyPortal) {
+      return 'mc_nav_scroll_' + bodyPortal;
+    }
+    if (sidebar.classList.contains('adm-sidebar--bhw')) {
+      return 'mc_nav_scroll_bhw';
+    }
+    if (sidebar.classList.contains('sb-aqua')) {
+      return 'mc_nav_scroll_provider';
+    }
+    return 'mc_nav_scroll_patient';
+  }
+
+  function isActiveNavItemVisible(nav, active) {
+    const navRect = nav.getBoundingClientRect();
+    const activeRect = active.getBoundingClientRect();
+    return activeRect.top >= navRect.top - 2 && activeRect.bottom <= navRect.bottom + 2;
+  }
+
+  function initSidebarNavScroll(sidebar) {
+    const nav = getNavContainer(sidebar);
+    if (!nav) return;
+
+    const storageKey = navScrollStorageKey(sidebar);
+
+    const persistScroll = () => {
+      try {
+        sessionStorage.setItem(storageKey, String(nav.scrollTop));
+      } catch (_) { /* ignore */ }
+    };
+
+    const restoreScroll = () => {
+      try {
+        const saved = sessionStorage.getItem(storageKey);
+        if (saved !== null) {
+          nav.scrollTop = parseInt(saved, 10) || 0;
+          return true;
+        }
+      } catch (_) { /* ignore */ }
+      return false;
+    };
+
+    restoreScroll();
+
+    const active = nav.querySelector('.adm-nav-item.is-active, .sba-item.is-active, .sb-item.active');
+
+    const finalizeScroll = () => {
+      if (restoreScroll()) {
+        // Keep the user's last scroll position — do not jump to top after navigation.
+        if (active && !isActiveNavItemVisible(nav, active)) {
+          active.scrollIntoView({ block: 'nearest', inline: 'nearest' });
+          persistScroll();
+        }
+        return;
+      }
+
+      if (active) {
+        active.scrollIntoView({ block: 'nearest', inline: 'nearest' });
+        persistScroll();
+      }
+    };
+
+    requestAnimationFrame(() => {
+      requestAnimationFrame(finalizeScroll);
+    });
+
+    let scrollPersistTimer;
+    nav.addEventListener('scroll', () => {
+      clearTimeout(scrollPersistTimer);
+      scrollPersistTimer = window.setTimeout(persistScroll, 80);
+    }, { passive: true });
+
+    nav.querySelectorAll('a').forEach((link) => {
+      link.addEventListener('pointerdown', persistScroll, { passive: true });
+      link.addEventListener('click', persistScroll);
+    });
+
+    window.addEventListener('pagehide', persistScroll);
   }
 
   if (document.readyState === 'loading') {

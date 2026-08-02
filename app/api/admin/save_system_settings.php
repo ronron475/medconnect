@@ -5,7 +5,9 @@ require_once dirname(dirname(dirname(__DIR__))) . '/bootstrap.php';
 require_once dirname(dirname(dirname(__DIR__))) . '/config/db.php';
 require_once dirname(dirname(dirname(__DIR__))) . '/app/includes/system_settings.php';
 require_once BASE_PATH . '/app/includes/audit_log.php';
-require_once dirname(dirname(dirname(__DIR__))) . '/app/api/admin/_auth.php';
+require_once dirname(dirname(dirname(__DIR__))) . '/app/includes/portal_auth.php';
+
+portal_api_require_superadmin();
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     http_response_code(405);

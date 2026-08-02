@@ -114,6 +114,7 @@ body.admin-body {
   flex-direction: column;
   gap: 2px;
   overflow-y: auto;
+  overflow-anchor: none;
   scrollbar-width: none;
 }
 .adm-nav::-webkit-scrollbar { display: none; }
@@ -179,13 +180,18 @@ body.admin-body {
   flex-shrink: 0;
   text-decoration: none;
   color: inherit;
-  transition: background 0.2s ease, border-color 0.2s ease, transform 0.2s ease;
+  transition: background 0.2s ease, border-color 0.2s ease;
 }
 
-.adm-profile:hover {
+.adm-profile:hover,
+.adm-profile:focus-visible {
   background: rgba(255,255,255,0.12);
   border-color: rgba(255,255,255,0.18);
-  transform: translateY(-1px);
+}
+
+.adm-profile.is-active {
+  background: rgba(255,255,255,0.13);
+  border-color: rgba(255,255,255,0.18);
 }
 
 .adm-profile-avatar {

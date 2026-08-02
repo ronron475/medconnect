@@ -11,12 +11,18 @@ if (!defined('BASE_PATH')) {
 }
 require_once BASE_PATH . '/app/includes/auth_guard.php';
 require_once BASE_PATH . '/app/includes/system_settings.php';
+require_once BASE_PATH . '/app/includes/portal_auth.php';
+require_once BASE_PATH . '/app/includes/nlp_inventory.php';
 require_once __DIR__ . '/_portal_access.php';
+
+if (!portal_is_superadmin()) {
+    header('Location: ' . ASSET_BASE . '/views/admin/dashboard.php');
+    exit;
+}
 
 $page_title = 'System Settings & AI Configuration';
 $rules = $pdo->query("SELECT * FROM triage_rules ORDER BY base_level ASC, symptom_name ASC")->fetchAll();
 $stored = system_settings_get_all($pdo);
-$isSuperadmin = ($_SESSION['user_role'] ?? '') === 'superadmin';
 $triageApi = ASSET_BASE . '/app/api/superadmin/triage_rules.php';
 $settingsApi = ASSET_BASE . '/app/api/admin/save_system_settings.php';
 
@@ -26,8 +32,17 @@ $system_vars = [
     ['key' => 'SESSION_TIMEOUT_MINUTES', 'value' => $stored['SESSION_TIMEOUT_MINUTES'] ?? '60', 'desc' => 'Automatic logout duration.'],
 ];
 
+$nlpCatalog = nlp_inventory_catalog();
+$nlpSummary = nlp_inventory_summary($nlpCatalog);
+$nlpMysql = nlp_inventory_mysql_stats($pdo);
+$nlpCategories = array_keys($nlpSummary['categories']);
+sort($nlpCategories);
+$dictApi = ASSET_BASE . '/app/api/admin/faq_chatbot_dictionary.php';
+
 require_once __DIR__ . '/partials/layout_open.php';
 ?>
+
+<link rel="stylesheet" href="<?= ASSET_BASE ?>/assets/css/admin-ai-config.css?v=1.0">
 
 <div class="header-row" style="display:flex;justify-content:space-between;align-items:center;margin-bottom:32px;flex-wrap:wrap;gap:12px;">
   <div>
@@ -80,6 +95,111 @@ require_once __DIR__ . '/partials/layout_open.php';
     </form>
   </div>
 </div>
+
+<section class="ai-config-section" aria-labelledby="nlpCatalogTitle">
+  <h2 class="ai-config-section__title" id="nlpCatalogTitle">NLP Knowledge Base</h2>
+  <p class="ai-config-section__desc">All medConnect NLP datasets from <code>data/nlp/</code> used by triage, registration, Hiligaynon translation, and the FAQ chatbot.</p>
+
+  <div class="nlp-catalog-summary">
+    <div class="nlp-catalog-stat">
+      <div class="nlp-catalog-stat__value"><?= number_format($nlpSummary['total_rows']) ?></div>
+      <div class="nlp-catalog-stat__label">Total NLP rows (CSV/JSON)</div>
+    </div>
+    <div class="nlp-catalog-stat">
+      <div class="nlp-catalog-stat__value"><?= (int) $nlpSummary['loaded'] ?> / <?= (int) $nlpSummary['total_datasets'] ?></div>
+      <div class="nlp-catalog-stat__label">Datasets loaded</div>
+    </div>
+    <div class="nlp-catalog-stat">
+      <div class="nlp-catalog-stat__value"><?= number_format((int) $nlpMysql['csv_triage_rules']) ?></div>
+      <div class="nlp-catalog-stat__label">CSV triage rules (pipeline)</div>
+    </div>
+    <div class="nlp-catalog-stat">
+      <div class="nlp-catalog-stat__value"><?= number_format((int) $nlpMysql['translation_dictionary']) ?></div>
+      <div class="nlp-catalog-stat__label">FAQ dictionary (MySQL)</div>
+    </div>
+    <div class="nlp-catalog-stat">
+      <div class="nlp-catalog-stat__value"><?= number_format((int) $nlpMysql['medical_terms']) ?></div>
+      <div class="nlp-catalog-stat__label">Medical terms (MySQL)</div>
+    </div>
+  </div>
+
+  <div class="mc-card" style="padding:0;overflow:hidden;margin-bottom:24px;">
+    <div style="padding:16px 20px 0;">
+      <div class="nlp-catalog-toolbar">
+        <input type="search" class="nlp-catalog-search" id="nlpCatalogSearch" placeholder="Search datasets…" aria-label="Search NLP datasets">
+        <select class="nlp-catalog-filter" id="nlpCatalogCategory" aria-label="Filter by category">
+          <option value="">All categories</option>
+          <?php foreach ($nlpCategories as $cat): ?>
+          <option value="<?= htmlspecialchars($cat) ?>"><?= htmlspecialchars($cat) ?></option>
+          <?php endforeach; ?>
+        </select>
+      </div>
+    </div>
+    <div class="nlp-catalog-table-wrap">
+      <table class="mc-table nlp-catalog-table" id="nlpCatalogTable">
+        <thead>
+          <tr>
+            <th>Dataset</th>
+            <th>Category</th>
+            <th>Rows</th>
+            <th>Status</th>
+            <th>Path</th>
+          </tr>
+        </thead>
+        <tbody>
+          <?php foreach ($nlpCatalog as $ds): ?>
+          <tr data-category="<?= htmlspecialchars($ds['category']) ?>" data-label="<?= htmlspecialchars(strtolower($ds['label'] . ' ' . $ds['description'])) ?>">
+            <td>
+              <strong><?= htmlspecialchars($ds['label']) ?></strong>
+              <div class="text-xs text-muted" style="margin-top:2px;"><?= htmlspecialchars($ds['description']) ?></div>
+            </td>
+            <td><?= htmlspecialchars($ds['category']) ?></td>
+            <td><?= number_format((int) $ds['rows']) ?></td>
+            <td><span class="nlp-status nlp-status--<?= htmlspecialchars($ds['status']) ?>"><?= htmlspecialchars($ds['status']) ?></span></td>
+            <td><code class="nlp-catalog-path"><?= htmlspecialchars($ds['path']) ?></code></td>
+          </tr>
+          <?php endforeach; ?>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<section class="ai-config-section" aria-labelledby="nlpDictTitle">
+  <h2 class="ai-config-section__title" id="nlpDictTitle">FAQ Chatbot Dictionary (MySQL)</h2>
+  <p class="ai-config-section__desc">Import Hiligaynon NLP translation data into MySQL for the landing-page FAQ chatbot pipeline.</p>
+
+  <div class="mc-card">
+    <div class="nlp-dict-panel">
+      <div class="nlp-catalog-stat">
+        <div class="nlp-catalog-stat__value"><?= number_format((int) $nlpMysql['translation_dictionary']) ?></div>
+        <div class="nlp-catalog-stat__label">Translation rows</div>
+      </div>
+      <div class="nlp-catalog-stat">
+        <div class="nlp-catalog-stat__value"><?= number_format((int) $nlpMysql['medical_terms']) ?></div>
+        <div class="nlp-catalog-stat__label">Medical terms</div>
+      </div>
+      <div class="nlp-catalog-stat">
+        <div class="nlp-catalog-stat__value"><?= number_format((int) $nlpMysql['conversation_history']) ?></div>
+        <div class="nlp-catalog-stat__label">Conversation history</div>
+      </div>
+    </div>
+    <div class="nlp-dict-actions">
+      <button type="button" class="mc-btn mc-btn--primary" id="btnNlpReimport">Re-import from seed + JSON</button>
+      <button type="button" class="mc-btn mc-btn--outline" id="btnNlpForceReimport">Force rebuild (truncate)</button>
+    </div>
+    <p class="text-xs text-muted" id="nlpImportStatus" style="margin:0 0 16px;">
+      CLI: <code>php scripts/data/build_faq_chatbot_dictionary.php</code> ·
+      <code>php scripts/data/import_faq_chatbot_dictionary.php --force</code>
+    </p>
+    <div class="nlp-test-area">
+      <label class="text-xs" style="font-weight:800;text-transform:uppercase;display:block;margin-bottom:8px;">Translation pipeline test</label>
+      <textarea id="nlpTestText" placeholder="Nalipong gid ko kag gasakit akon dughan."></textarea>
+      <button type="button" class="mc-btn mc-btn--outline" id="btnNlpTest" style="margin-top:10px;">Run NLP pipeline</button>
+      <pre class="nlp-test-output" id="nlpTestOut" hidden></pre>
+    </div>
+  </div>
+</section>
 
 <template id="ruleRowTemplate">
   <tr data-id="0">
@@ -150,6 +270,53 @@ require_once __DIR__ . '/partials/layout_open.php';
       .then(function (r) { return r.json(); })
       .then(function (j) { alert(j.message || 'Done'); if (j.success) location.reload(); });
   });
+
+  var dictApi = <?= json_encode($dictApi) ?>;
+  function nlpDictPost(action, extra) {
+    return fetch(dictApi, {
+      method: 'POST',
+      credentials: 'same-origin',
+      headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+      body: JSON.stringify(Object.assign({ action: action }, extra || {})),
+    }).then(function (r) { return r.json(); });
+  }
+  document.getElementById('btnNlpReimport').addEventListener('click', function () {
+    nlpDictPost('reimport', {}).then(function (j) {
+      document.getElementById('nlpImportStatus').textContent = j.success
+        ? 'Inserted ' + j.inserted + ', total ' + j.total
+        : (j.message || 'Failed');
+      if (j.success) location.reload();
+    });
+  });
+  document.getElementById('btnNlpForceReimport').addEventListener('click', function () {
+    if (!confirm('Truncate translation_dictionary and re-import?')) return;
+    nlpDictPost('reimport', { force: true }).then(function (j) {
+      document.getElementById('nlpImportStatus').textContent = j.success
+        ? 'Rebuilt. Total ' + j.total
+        : (j.message || 'Failed');
+      if (j.success) location.reload();
+    });
+  });
+  document.getElementById('btnNlpTest').addEventListener('click', function () {
+    var out = document.getElementById('nlpTestOut');
+    out.hidden = false;
+    out.textContent = 'Running…';
+    nlpDictPost('translate_test', { text: document.getElementById('nlpTestText').value }).then(function (j) {
+      out.textContent = JSON.stringify(j.data || j, null, 2);
+    });
+  });
+
+  function filterNlpCatalog() {
+    var q = (document.getElementById('nlpCatalogSearch').value || '').toLowerCase().trim();
+    var cat = document.getElementById('nlpCatalogCategory').value;
+    document.querySelectorAll('#nlpCatalogTable tbody tr').forEach(function (row) {
+      var matchCat = !cat || row.getAttribute('data-category') === cat;
+      var matchQ = !q || (row.getAttribute('data-label') || '').indexOf(q) !== -1;
+      row.style.display = matchCat && matchQ ? '' : 'none';
+    });
+  }
+  document.getElementById('nlpCatalogSearch').addEventListener('input', filterNlpCatalog);
+  document.getElementById('nlpCatalogCategory').addEventListener('change', filterNlpCatalog);
 })();
 </script>
 
