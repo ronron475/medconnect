@@ -32,12 +32,28 @@
     return el;
   }
 
+  function isMobileDrawer() {
+    return window.matchMedia('(max-width: 1024px)').matches;
+  }
+
+  function closeThemeMenus() {
+    document.querySelectorAll('.mc-theme-toggle.is-open').forEach((wrap) => {
+      wrap.classList.remove('is-open');
+      const btn = wrap.querySelector('.mc-theme-toggle__btn');
+      if (btn) btn.setAttribute('aria-expanded', 'false');
+    });
+  }
+
   function setOpen(open) {
     const sidebar = getSidebar();
     const backdrop = getBackdrop();
     const toggles = document.querySelectorAll(TOGGLE_SELECTORS);
 
     if (!sidebar) return;
+
+    if (open) {
+      closeThemeMenus();
+    }
 
     sidebar.classList.toggle('is-open', open);
     backdrop.classList.toggle('is-visible', open);
@@ -134,11 +150,21 @@
 
     getBackdrop().addEventListener('click', close);
 
-    sidebar.querySelectorAll('a.sb-item, a.sba-item, a.adm-nav-item, .sb-nav a, .sba-nav a').forEach((link) => {
-      link.addEventListener('click', () => {
-        if (window.matchMedia('(max-width: 1024px)').matches) {
+    sidebar.querySelectorAll(
+      'a.sb-item, a.sba-item, a.adm-nav-item, a.adm-profile, a.adm-logo, a.sb-logo, a.sba-logo, .sb-nav a, .sba-nav a, .adm-nav a'
+    ).forEach((link) => {
+      link.addEventListener('click', (e) => {
+        if (!isMobileDrawer()) return;
+
+        const href = link.getAttribute('href');
+        if (!href || href.charAt(0) === '#') {
           close();
+          return;
         }
+
+        // Do not close synchronously on navigation taps — closing the drawer during
+        // the touch sequence cancels the link and replays a ghost click on the page
+        // behind (often a dashboard/home link), especially in dark mode on mobile.
       });
     });
 
