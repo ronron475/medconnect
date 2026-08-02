@@ -61,10 +61,14 @@ body.admin-body {
   background: linear-gradient(180deg, var(--adm-navy-900) 0%, var(--adm-navy-800) 55%, var(--adm-navy-700) 100%);
   position: fixed;
   top: 0; left: 0; bottom: 0;
+  min-height: 100vh;
+  min-height: 100dvh;
   display: flex;
   flex-direction: column;
   z-index: 100;
   box-shadow: 4px 0 24px rgba(0,0,0,0.18);
+  box-sizing: border-box;
+  padding-bottom: env(safe-area-inset-bottom, 0px);
 }
 
 /* Logo */
@@ -232,8 +236,9 @@ body.admin-body {
   border: 1px solid rgba(255,255,255,0.08);
   transition: background 0.14s ease, color 0.14s ease, border-color 0.14s ease;
   flex-shrink: 0;
-  /* Reset native <button> styles so text stays visible on dark sidebar */
-  background: none;
+  -webkit-appearance: none;
+  appearance: none;
+  background: transparent;
   cursor: pointer;
   font-family: inherit;
   width: calc(100% - 24px);
