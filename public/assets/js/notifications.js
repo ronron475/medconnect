@@ -182,6 +182,13 @@
     });
   }
 
+  function initEscalatorStack(list) {
+    if (!list || !list.classList.contains('mc-notif-list--escalator')) return;
+    list.querySelectorAll('.mc-notif-item').forEach(function (item, index) {
+      item.style.setProperty('--escalator-index', String(index));
+    });
+  }
+
   function renderList(items, withActions) {
     document.querySelectorAll('[data-notif-list]').forEach(function (list) {
       if (!items || !items.length) {
@@ -191,6 +198,7 @@
       const showActions = withActions !== undefined ? withActions : list.closest('[data-notif-panel]') !== null;
       list.innerHTML = items.map(function (n) { return renderItem(n, showActions); }).join('');
       bindListActions(list);
+      initEscalatorStack(list);
     });
   }
 
