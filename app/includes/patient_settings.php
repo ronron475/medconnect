@@ -43,6 +43,10 @@ function patient_settings_ensure_schema(PDO $pdo): void
             patient_id INT UNSIGNED NOT NULL,
             status ENUM('pending', 'in_review', 'approved', 'rejected', 'cancelled') NOT NULL DEFAULT 'pending',
             patient_note TEXT NULL,
+            proposed_blood_type VARCHAR(20) NULL,
+            proposed_allergies TEXT NULL,
+            proposed_conditions TEXT NULL,
+            proposed_medications TEXT NULL,
             provider_id INT UNSIGNED NULL DEFAULT NULL,
             provider_note TEXT NULL,
             reviewed_at DATETIME NULL DEFAULT NULL,
@@ -53,6 +57,31 @@ function patient_settings_ensure_schema(PDO $pdo): void
             KEY idx_provider (provider_id)
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
     ");
+
+    $pmurCols = [];
+    try {
+        $colStmt = $pdo->query('SHOW COLUMNS FROM patient_medical_update_requests');
+        if ($colStmt) {
+            while ($c = $colStmt->fetch(PDO::FETCH_ASSOC)) {
+                $pmurCols[(string) $c['Field']] = true;
+            }
+        }
+    } catch (PDOException $e) { /* table may not exist yet */ }
+
+    $pmurAdds = [
+        'proposed_blood_type'  => 'VARCHAR(20) NULL',
+        'proposed_allergies'   => 'TEXT NULL',
+        'proposed_conditions'  => 'TEXT NULL',
+        'proposed_medications' => 'TEXT NULL',
+    ];
+    foreach ($pmurAdds as $col => $def) {
+        if (isset($pmurCols[$col])) {
+            continue;
+        }
+        try {
+            $pdo->exec("ALTER TABLE patient_medical_update_requests ADD COLUMN `{$col}` {$def}");
+        } catch (PDOException $e) { /* ignore */ }
+    }
 
     $pdo->exec("
         CREATE TABLE IF NOT EXISTS patient_notification_preferences (
@@ -494,10 +523,13 @@ function patient_settings_terminate_session(PDO $pdo, int $userId, int $sessionR
 
 /**
  * Create a medical profile update request from the patient.
+ *
+ * @param array<string, string> $proposed
  */
-function patient_settings_request_medical_update(PDO $pdo, int $userId, string $note = ''): array
+function patient_settings_request_medical_update(PDO $pdo, int $userId, string $note = '', array $proposed = []): array
 {
     patient_settings_ensure_schema($pdo);
+    require_once __DIR__ . '/patient_health_summary.php';
 
     $pending = $pdo->prepare("
         SELECT id FROM patient_medical_update_requests
@@ -506,22 +538,68 @@ function patient_settings_request_medical_update(PDO $pdo, int $userId, string $
     ");
     $pending->execute([$userId]);
     if ($pending->fetch()) {
-        return ['success' => false, 'message' => 'You already have a pending update request. A provider will review it soon.'];
+        return ['success' => false, 'message' => 'You already have a pending update request. Please wait for your doctor to review it.'];
+    }
+
+    $summary = patient_health_summary_load($pdo, $userId);
+    $blood = trim((string) ($proposed['blood_type'] ?? ''));
+    $allergies = trim((string) ($proposed['allergies'] ?? ''));
+    $conditions = trim((string) ($proposed['existing_conditions'] ?? ''));
+    $medications = trim((string) ($proposed['current_medications'] ?? ''));
+
+    $allowedBlood = ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-', 'Unknown', ''];
+    if ($blood !== '' && !in_array($blood, $allowedBlood, true)) {
+        return ['success' => false, 'message' => 'Invalid blood type selected.'];
+    }
+
+    $currentBlood = trim((string) ($summary['blood_type'] ?? ''));
+    $currentAllergies = implode(', ', $summary['allergies'] ?? []);
+    $currentConditions = implode(', ', $summary['conditions'] ?? []);
+    $currentMeds = implode(', ', $summary['medications'] ?? []);
+
+    $hasChange = ($blood !== '' && $blood !== $currentBlood)
+        || ($allergies !== '' && strcasecmp($allergies, $currentAllergies) !== 0)
+        || ($conditions !== '' && strcasecmp($conditions, $currentConditions) !== 0)
+        || ($medications !== '' && strcasecmp($medications, $currentMeds) !== 0);
+
+    if (!$hasChange && $note === '') {
+        return ['success' => false, 'message' => 'Update at least one health field or add a note describing the correction.'];
+    }
+
+    $assignedProviderId = patient_medical_resolve_assigned_provider($pdo, $userId);
+    if ($assignedProviderId <= 0) {
+        return ['success' => false, 'message' => 'No healthcare provider is available to review your request. Please try again later or book a consultation.'];
     }
 
     $pdo->prepare("
-        INSERT INTO patient_medical_update_requests (patient_id, status, patient_note, created_at)
-        VALUES (?, 'pending', ?, NOW())
-    ")->execute([$userId, $note !== '' ? $note : null]);
+        INSERT INTO patient_medical_update_requests (
+            patient_id, status, patient_note,
+            proposed_blood_type, proposed_allergies, proposed_conditions, proposed_medications,
+            provider_id, created_at
+        ) VALUES (?, 'pending', ?, ?, ?, ?, ?, ?, NOW())
+    ")->execute([
+        $userId,
+        $note !== '' ? $note : null,
+        $blood !== '' ? $blood : null,
+        $allergies !== '' ? $allergies : null,
+        $conditions !== '' ? $conditions : null,
+        $medications !== '' ? $medications : null,
+        $assignedProviderId,
+    ]);
 
     $requestId = (int) $pdo->lastInsertId();
+    $assignedLabel = patient_medical_provider_label($pdo, $assignedProviderId);
 
     require_once __DIR__ . '/audit_log.php';
     audit_log($pdo, [
         'patient_id'  => $userId,
         'action_type' => 'medical_update_requested',
         'description' => 'Patient requested a verified update to permanent medical profile.',
-        'meta'        => ['request_id' => $requestId, 'note' => $note],
+        'meta'        => [
+            'request_id' => $requestId,
+            'note' => $note,
+            'assigned_provider_id' => $assignedProviderId,
+        ],
     ]);
 
     try {
@@ -531,22 +609,31 @@ function patient_settings_request_medical_update(PDO $pdo, int $userId, string $
         $name = $nameStmt->fetch(PDO::FETCH_ASSOC);
         $patientLabel = trim(($name['first_name'] ?? '') . ' ' . ($name['last_name'] ?? ''));
 
-        $providers = $pdo->query("SELECT id FROM users WHERE role = 'provider' AND is_active = 1 LIMIT 50");
-        while ($prov = $providers->fetch(PDO::FETCH_ASSOC)) {
-            NotificationManager::create($pdo, (int) $prov['id'], [
-                'type'       => 'clinical',
-                'title'      => 'Medical Profile Update Request',
-                'message'    => $patientLabel . ' requested a verified update to their permanent medical profile.',
-                'priority'   => 'normal',
-                'action_url' => '/views/provider/medical_records.php?patient_id=' . $userId,
-            ]);
-        }
+        NotificationManager::create($pdo, $assignedProviderId, [
+            'type'       => 'clinical',
+            'title'      => 'Health Summary Update Request',
+            'message'    => $patientLabel . ' requested a verified update to their permanent Health Summary.',
+            'priority'   => 'normal',
+            'action_url' => '/views/provider/medical_records.php?patient_id=' . $userId,
+        ]);
+
+        NotificationManager::create($pdo, $userId, [
+            'type'       => 'clinical',
+            'title'      => 'Health Summary Update Pending',
+            'message'    => 'Your update request was sent to ' . $assignedLabel . ' for review. Your official Health Summary will not change until approved.',
+            'priority'   => 'normal',
+            'action_url' => '/views/patient/health_summary.php',
+        ]);
     } catch (Throwable $e) { /* non-fatal */ }
 
     return [
         'success' => true,
-        'message' => 'Your update request was sent. A healthcare provider will review and verify changes during or after your next consultation.',
+        'message' => 'Your update request was sent to ' . $assignedLabel . ' for review. You will be notified when it is approved or rejected.',
         'request_id' => $requestId,
+        'assigned_provider' => [
+            'id' => $assignedProviderId,
+            'label' => $assignedLabel,
+        ],
     ];
 }
 

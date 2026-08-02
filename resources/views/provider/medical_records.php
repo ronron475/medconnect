@@ -4,6 +4,7 @@ $page_title  = 'Medical Records';
 $page_styles = ['provider-medical-records.css'];
 require __DIR__.'/partials/icons.php';
 require __DIR__.'/partials/data.php';
+require_once BASE_PATH . '/app/includes/patient_health_summary.php';
 require __DIR__.'/partials/layout_open.php';
 
 $requested_id = isset($_GET['patient_id']) ? (int)$_GET['patient_id'] : 0;
@@ -83,21 +84,7 @@ if ($selected) {
     $pid = (int)$selected['id'];
     $provId = (int) ($_SESSION['user_id'] ?? 0);
 
-    $pending_medical_request = null;
-    try {
-        require_once BASE_PATH . '/app/includes/patient_settings.php';
-        patient_settings_ensure_schema($pdo);
-        $pmr = $pdo->prepare("
-            SELECT id, patient_note, created_at
-            FROM patient_medical_update_requests
-            WHERE patient_id = ? AND status IN ('pending', 'in_review')
-            ORDER BY created_at DESC LIMIT 1
-        ");
-        $pmr->execute([$pid]);
-        $pending_medical_request = $pmr->fetch(PDO::FETCH_ASSOC) ?: null;
-    } catch (PDOException $e) {
-        $pending_medical_request = null;
-    }
+    $pending_medical_request = patient_medical_pending_request_for_patient($pdo, $pid);
 
     $queries = [
         "SELECT 'Consultation' AS rec_type, c.consult_type AS rec_name, DATE(c.consult_date) AS rec_date,
@@ -134,6 +121,55 @@ if ($selected) {
 }
 
 $patient_count = count($patients ?? []);
+$pending_requests_by_patient = [];
+$provider_assigned_pending = [];
+if (!empty($patients)) {
+    $pending_requests_by_patient = patient_medical_pending_requests_map(
+        $pdo,
+        array_map(static fn ($p) => (int) ($p['id'] ?? 0), $patients)
+    );
+}
+try {
+    patient_settings_ensure_schema($pdo);
+    $apStmt = $pdo->prepare("
+        SELECT u.id, u.first_name, u.last_name,
+               CONCAT(u.first_name, ' ', u.last_name) AS name,
+               CONCAT(UPPER(LEFT(u.first_name,1)), UPPER(LEFT(u.last_name,1))) AS initials,
+               COALESCE(pr.contact_number, '') AS contact,
+               r.id AS request_id, r.created_at AS request_created_at
+        FROM patient_medical_update_requests r
+        JOIN users u ON u.id = r.patient_id
+        LEFT JOIN patient_registrations pr ON pr.user_id = u.id OR pr.email = u.email
+        WHERE r.provider_id = ? AND r.status IN ('pending', 'in_review')
+        ORDER BY r.created_at DESC
+    ");
+    $apStmt->execute([$provider_id]);
+    $provider_assigned_pending = $apStmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
+    foreach ($provider_assigned_pending as $apRow) {
+        $apId = (int) ($apRow['id'] ?? 0);
+        if ($apId <= 0) continue;
+        $exists = false;
+        foreach ($patients as $pRow) {
+            if ((int) ($pRow['id'] ?? 0) === $apId) {
+                $exists = true;
+                break;
+            }
+        }
+        if (!$exists) {
+            $patients[] = [
+                'id' => $apId,
+                'name' => (string) ($apRow['name'] ?? ''),
+                'initials' => (string) ($apRow['initials'] ?? '?'),
+                'contact' => (string) ($apRow['contact'] ?? ''),
+                'last_consult' => '',
+            ];
+        }
+        $pending_requests_by_patient[$apId] = ['id' => (int) ($apRow['request_id'] ?? 0)];
+    }
+    $patient_count = count($patients);
+} catch (PDOException $e) {
+    $provider_assigned_pending = [];
+}
 $tabs_list = ['overview' => 'Overview', 'consultations' => 'Consultations', 'clinical_notes' => 'Clinical Notes', 'prescriptions' => 'Prescriptions', 'referrals' => 'Referrals', 'attachments' => 'Attachments'];
 ?>
 
@@ -209,6 +245,24 @@ $tabs_list = ['overview' => 'Overview', 'consultations' => 'Consultations', 'cli
 
   <?php else: ?>
 
+  <?php if (!empty($provider_assigned_pending)): ?>
+  <div class="mr-assigned-pending" role="status">
+    <strong>Health Summary update requests assigned to you</strong>
+    <ul class="mr-assigned-pending__list">
+      <?php foreach ($provider_assigned_pending as $apRow): ?>
+      <li>
+        <a href="?view=patients&amp;patient_id=<?= (int) $apRow['id'] ?>&amp;tab=overview">
+          <?= htmlspecialchars((string) ($apRow['name'] ?? 'Patient')) ?>
+        </a>
+        <?php if (!empty($apRow['request_created_at'])): ?>
+        <span class="text-xs text-muted"> · <?= date('M j, Y g:i A', strtotime((string) $apRow['request_created_at'])) ?></span>
+        <?php endif; ?>
+      </li>
+      <?php endforeach; ?>
+    </ul>
+  </div>
+  <?php endif; ?>
+
   <div class="mr-split">
     <div class="mr-panel">
       <div class="mr-panel__head">Patient directory</div>
@@ -218,13 +272,19 @@ $tabs_list = ['overview' => 'Overview', 'consultations' => 'Consultations', 'cli
         <?php else: foreach ($patients as $p):
           $pid = (int)($p['id'] ?? 0);
           $is_active = $selected && (int)$selected['id'] === $pid;
+          $has_pending_update = isset($pending_requests_by_patient[$pid]);
         ?>
         <a href="?view=patients&amp;patient_id=<?= $pid ?>"
-           class="mr-patient-row <?= $is_active ? 'is-active' : '' ?>"
+           class="mr-patient-row <?= $is_active ? 'is-active' : '' ?><?= $has_pending_update ? ' mr-patient-row--pending' : '' ?>"
            data-name="<?= htmlspecialchars(strtolower(($p['name'] ?? '') . ' ' . ($p['contact'] ?? ''))) ?>">
           <span class="mr-patient-row__avatar"><?= htmlspecialchars($p['initials'] ?? '?') ?></span>
           <span class="mr-patient-row__info">
-            <span class="mr-patient-row__name"><?= htmlspecialchars($p['name'] ?? '') ?></span>
+            <span class="mr-patient-row__name">
+              <?= htmlspecialchars($p['name'] ?? '') ?>
+              <?php if ($has_pending_update): ?>
+              <span class="mr-patient-row__badge">Update pending</span>
+              <?php endif; ?>
+            </span>
             <span class="mr-patient-row__meta"><?= htmlspecialchars($p['contact'] ?: 'No contact') ?> · <?= htmlspecialchars($p['last_consult'] ? date('M j, Y', strtotime($p['last_consult'])) : 'No visits') ?></span>
           </span>
         </a>
@@ -263,24 +323,34 @@ $tabs_list = ['overview' => 'Overview', 'consultations' => 'Consultations', 'cli
       <div class="mr-detail-body">
         <?php if ($tab === 'overview'): ?>
         <?php if (!empty($pending_medical_request)): ?>
-        <div class="mr-update-request" id="mrMedicalUpdateCard" data-csrf="<?= htmlspecialchars($_SESSION['csrf_token'] ?? '') ?>" data-patient-id="<?= (int) $selected['id'] ?>" data-request-id="<?= (int) $pending_medical_request['id'] ?>">
-          <strong>Patient requested a medical profile update</strong>
+        <?php
+        $proposed = $pending_medical_request['proposed'] ?? [];
+        $formBlood = trim((string) ($proposed['blood_type'] ?? '')) ?: trim((string) ($selected['blood_type'] ?? ''));
+        $formAllergies = trim((string) ($proposed['allergies'] ?? '')) ?: trim((string) ($selected['allergies'] ?? ''));
+        $formConditions = trim((string) ($proposed['existing_conditions'] ?? '')) ?: trim((string) ($selected['history'] ?? ''));
+        $formMeds = trim((string) ($proposed['current_medications'] ?? '')) ?: trim((string) ($selected['medications'] ?? ''));
+        ?>
+        <div class="mr-update-request" id="mrMedicalUpdateCard" data-csrf="<?= htmlspecialchars($_SESSION['csrf_token'] ?? '') ?>" data-patient-id="<?= (int) $selected['id'] ?>" data-request-id="<?= (int) ($pending_medical_request['id'] ?? 0) ?>">
+          <strong>Patient requested a Health Summary update</strong>
           <?php if (!empty($pending_medical_request['patient_note'])): ?>
           <p class="text-sm" style="margin:6px 0;"><?= htmlspecialchars($pending_medical_request['patient_note']) ?></p>
           <?php endif; ?>
-          <p class="text-xs text-muted">Verify and save corrected permanent profile fields below. Changes are audit-logged.</p>
+          <p class="text-xs text-muted">Review the patient’s requested values below. Edit if needed, then approve or reject. Official Health Summary updates only after approval.</p>
           <form id="mrMedicalProfileForm" class="mr-profile-form">
             <label>Blood type
               <select name="blood_type" class="form-control">
                 <?php foreach (['A+','A-','B+','B-','AB+','AB-','O+','O-','Unknown'] as $bt): ?>
-                <option value="<?= $bt ?>" <?= ($selected['blood_type'] ?? '') === $bt ? 'selected' : '' ?>><?= $bt ?></option>
+                <option value="<?= $bt ?>" <?= $formBlood === $bt ? 'selected' : '' ?>><?= $bt ?></option>
                 <?php endforeach; ?>
               </select>
             </label>
-            <label>Allergies<textarea name="allergies" class="form-control" rows="2"><?= htmlspecialchars($selected['allergies'] ?? '') ?></textarea></label>
-            <label>Conditions<textarea name="existing_conditions" class="form-control" rows="2"><?= htmlspecialchars($selected['history'] ?? '') ?></textarea></label>
-            <label>Medications<textarea name="current_medications" class="form-control" rows="2"><?= htmlspecialchars($selected['medications'] ?? '') ?></textarea></label>
-            <button type="submit" class="mc-btn mc-btn--primary">Verify &amp; Save Profile</button>
+            <label>Allergies<textarea name="allergies" class="form-control" rows="2"><?= htmlspecialchars($formAllergies) ?></textarea></label>
+            <label>Conditions<textarea name="existing_conditions" class="form-control" rows="2"><?= htmlspecialchars($formConditions) ?></textarea></label>
+            <label>Medications<textarea name="current_medications" class="form-control" rows="2"><?= htmlspecialchars($formMeds) ?></textarea></label>
+            <div class="mr-profile-form__actions">
+              <button type="submit" class="mc-btn mc-btn--primary">Approve &amp; Update Health Summary</button>
+              <button type="button" class="mc-btn mc-btn--outline" id="mrMedicalRejectBtn">Reject Request</button>
+            </div>
           </form>
           <div id="mrMedicalProfileAlert" class="mr-profile-alert" hidden role="alert"></div>
         </div>
@@ -391,6 +461,43 @@ function mrFilterHistory(q) {
       }
     }
   });
+
+  var rejectBtn = document.getElementById('mrMedicalRejectBtn');
+  if (rejectBtn) {
+    rejectBtn.addEventListener('click', async function () {
+      var note = window.prompt('Optional note to the patient about why this request was rejected:', '');
+      if (note === null) return;
+      var alertEl = document.getElementById('mrMedicalProfileAlert');
+      rejectBtn.disabled = true;
+      try {
+        var base = <?= json_encode(ASSET_BASE) ?>;
+        var fd = new FormData();
+        fd.append('csrf_token', card.dataset.csrf || '');
+        fd.append('patient_id', card.dataset.patientId || '');
+        fd.append('request_id', card.dataset.requestId || '');
+        fd.append('provider_note', note);
+        var res = await fetch(base + '/app/api/provider/reject_medical_update_request.php', {
+          method: 'POST', body: fd, credentials: 'same-origin'
+        });
+        var data = await res.json();
+        if (!data.success) throw new Error(data.message || 'Reject failed');
+        if (alertEl) {
+          alertEl.textContent = data.message;
+          alertEl.hidden = false;
+          alertEl.className = 'mr-profile-alert mr-profile-alert--ok';
+        }
+        setTimeout(function () { window.location.reload(); }, 1200);
+      } catch (err) {
+        if (alertEl) {
+          alertEl.textContent = err.message || 'Could not reject request.';
+          alertEl.hidden = false;
+          alertEl.className = 'mr-profile-alert mr-profile-alert--err';
+        }
+      } finally {
+        rejectBtn.disabled = false;
+      }
+    });
+  }
 })();
 </script>
 

@@ -13,7 +13,7 @@
   </div>
   <div class="phs-hero__actions">
     <button type="button" class="phs-btn phs-btn--outline" id="phsRequestUpdateBtn" hidden>
-      Request Update
+      Request Health Information Update
     </button>
   </div>
 </section>
@@ -26,7 +26,15 @@
   </span>
   <div class="phs-pending-banner__text">
     <strong>Update request pending</strong>
-    <p>A provider will review your request during or after your next consultation.</p>
+    <p id="phsPendingMessage">Your request is awaiting doctor review. Your official Health Summary will not change until approved.</p>
+  </div>
+</div>
+
+<div id="phsRejectedBanner" class="phs-rejected-banner" hidden role="status">
+  <span class="phs-rejected-banner__icon" aria-hidden="true">!</span>
+  <div class="phs-rejected-banner__text">
+    <strong>Last update request was not approved</strong>
+    <p id="phsRejectedMessage">You may submit a new request with corrected information.</p>
   </div>
 </div>
 
@@ -119,16 +127,53 @@
       </div>
     </div>
     <p class="phs-meta-strip__note">
-      Profile changes require provider verification. Use <strong>Request Update</strong> if information needs correction.
+      Verified health information cannot be edited directly. Use <strong>Request Health Information Update</strong> if information needs correction.
     </p>
   </footer>
 </div>
 
 <div id="phsRequestModal" class="phs-modal" hidden role="dialog" aria-modal="true" aria-labelledby="phsRequestModalTitle">
   <div class="phs-modal__backdrop" data-phs-close-modal></div>
-  <div class="phs-modal__card">
-    <h3 id="phsRequestModalTitle" class="phs-modal__title">Request Medical Profile Update</h3>
-    <p class="phs-modal__lead">You cannot edit blood type, allergies, conditions, or medications directly. Your request will be sent to a healthcare provider for verification.</p>
+  <div class="phs-modal__card phs-modal__card--wide">
+    <h3 id="phsRequestModalTitle" class="phs-modal__title">Request Health Information Update</h3>
+    <p class="phs-modal__lead">You cannot edit verified health information directly. Submit your requested corrections below. Your assigned doctor will review and approve changes before your official Health Summary is updated.</p>
+
+    <div class="phs-request-grid">
+      <div class="phs-request-col">
+        <h4 class="phs-request-col__title">Current (verified)</h4>
+        <p class="phs-request-readonly"><span class="phs-request-readonly__label">Blood type</span> <span id="phsCurrentBlood">—</span></p>
+        <p class="phs-request-readonly"><span class="phs-request-readonly__label">Allergies</span> <span id="phsCurrentAllergies">—</span></p>
+        <p class="phs-request-readonly"><span class="phs-request-readonly__label">Conditions</span> <span id="phsCurrentConditions">—</span></p>
+        <p class="phs-request-readonly"><span class="phs-request-readonly__label">Medications</span> <span id="phsCurrentMeds">—</span></p>
+      </div>
+      <div class="phs-request-col">
+        <h4 class="phs-request-col__title">Requested changes</h4>
+        <label class="phs-field" for="phsProposedBlood">
+          <span class="phs-field__label">Blood type</span>
+          <select id="phsProposedBlood" class="phs-field__input">
+            <option value="">— No change —</option>
+            <option value="A+">A+</option><option value="A-">A-</option>
+            <option value="B+">B+</option><option value="B-">B-</option>
+            <option value="AB+">AB+</option><option value="AB-">AB-</option>
+            <option value="O+">O+</option><option value="O-">O-</option>
+            <option value="Unknown">Unknown</option>
+          </select>
+        </label>
+        <label class="phs-field" for="phsProposedAllergies">
+          <span class="phs-field__label">Allergies</span>
+          <textarea id="phsProposedAllergies" class="phs-field__input" rows="2" maxlength="500" placeholder="Leave blank if no change"></textarea>
+        </label>
+        <label class="phs-field" for="phsProposedConditions">
+          <span class="phs-field__label">Medical conditions</span>
+          <textarea id="phsProposedConditions" class="phs-field__input" rows="2" maxlength="500" placeholder="Leave blank if no change"></textarea>
+        </label>
+        <label class="phs-field" for="phsProposedMeds">
+          <span class="phs-field__label">Maintenance medications</span>
+          <textarea id="phsProposedMeds" class="phs-field__input" rows="2" maxlength="500" placeholder="Leave blank if no change"></textarea>
+        </label>
+      </div>
+    </div>
+
     <label class="phs-field" for="phsRequestNote">
       <span class="phs-field__label">Additional note (optional)</span>
       <textarea id="phsRequestNote" class="phs-field__input" rows="3" maxlength="500" placeholder="Describe what needs to be updated…"></textarea>
