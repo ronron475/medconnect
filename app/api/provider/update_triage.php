@@ -234,6 +234,7 @@ try {
         }
         $savedText = triage_recommendations_from_list($list);
 
+        // New approval resets Care Assistant lifecycle so it auto-opens once again.
         $pdo->prepare("
             UPDATE triage_results
             SET recommendations = ?,
@@ -241,6 +242,9 @@ try {
                 recommendation_approved_by = ?,
                 recommendation_approved_at = NOW(),
                 recommendation_patient_ack_at = NULL,
+                recommendation_assistant_first_opened_at = NULL,
+                recommendation_assistant_dismissed_at = NULL,
+                recommendation_last_viewed_at = NULL,
                 assigned_provider_id = COALESCE(assigned_provider_id, ?),
                 assigned_at = COALESCE(assigned_at, NOW())
             WHERE id = ?

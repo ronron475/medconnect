@@ -18,21 +18,6 @@
     return '';
   }
 
-  function closeMobileNav() {
-    if (window.MedConnectMobileNav && typeof window.MedConnectMobileNav.close === 'function') {
-      window.MedConnectMobileNav.close();
-      return;
-    }
-    const sidebar = document.querySelector('.sidebar');
-    const backdrop = document.querySelector('.mc-nav-backdrop');
-    if (sidebar) sidebar.classList.remove('is-open');
-    if (backdrop) backdrop.classList.remove('is-visible');
-    document.body.classList.remove('mc-nav-open', 'mc-nav-closing', 'mc-nav-opening');
-    document.querySelectorAll('#mcNavToggle, #pdHamburger').forEach((btn) => {
-      btn.setAttribute('aria-expanded', 'false');
-    });
-  }
-
   window.switchView = function switchView(viewId) {
     document.querySelectorAll('.view-container').forEach((v) => v.classList.remove('active'));
     const activeView = document.getElementById('view-' + viewId);
@@ -59,8 +44,6 @@
     if (viewId === 'triage' && typeof window.refreshBookingPicker === 'function') {
       window.refreshBookingPicker();
     }
-
-    closeMobileNav();
   };
 
   function parseConsultDate(dateStr) {
