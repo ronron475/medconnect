@@ -12,14 +12,14 @@
   const TOGGLE_DEBOUNCE_MS = 400;
   const BURGER_ANIM_MS = 260;
   const GHOST_CLICK_GUARD_MS = 400;
-  const OPEN_GUARD_MS = 450;
+  const OPEN_GUARD_MS = 500;
 
   const IS_TOUCH =
     ('ontouchstart' in window) || (navigator.maxTouchPoints && navigator.maxTouchPoints > 0);
-  const TAP_EVENT = IS_TOUCH ? 'pointerup' : 'click';
 
   let closeGuardTimer = null;
   let openGuardTimer = null;
+  let openingClickBlocker = null;
   let lastToggleAt = 0;
 
   function getSidebar() {
@@ -32,6 +32,10 @@
 
   function isMobileDrawer() {
     return window.matchMedia('(max-width: 1024px)').matches;
+  }
+
+  function isOpeningGuarded() {
+    return document.body.classList.contains('mc-nav-opening');
   }
 
   function getBackdrop() {
@@ -63,6 +67,40 @@
     });
   }
 
+  function disarmOpenGuard() {
+    window.clearTimeout(openGuardTimer);
+    document.body.classList.remove('mc-nav-opening');
+    if (openingClickBlocker) {
+      document.removeEventListener('click', openingClickBlocker, true);
+      openingClickBlocker = null;
+    }
+  }
+
+  /**
+   * Dark mode CSS removes sidebar transform transitions, so the drawer can appear
+   * instantly under the hamburger. The synthetic click then activates the dashboard logo.
+   */
+  function armOpenGuard() {
+    if (!IS_TOUCH || !isMobileDrawer()) return;
+
+    disarmOpenGuard();
+    document.body.classList.add('mc-nav-opening');
+
+    openingClickBlocker = function blockOpeningGhostClick(e) {
+      if (!isOpeningGuarded()) return;
+
+      const link = e.target && e.target.closest ? e.target.closest('a[href]') : null;
+      if (!link) return;
+
+      e.preventDefault();
+      e.stopImmediatePropagation();
+    };
+
+    document.addEventListener('click', openingClickBlocker, true);
+
+    openGuardTimer = window.setTimeout(disarmOpenGuard, OPEN_GUARD_MS);
+  }
+
   function setOpen(open) {
     const sidebar = getSidebar();
     const backdrop = getBackdrop();
@@ -75,8 +113,8 @@
       closeThemeMenus();
     } else {
       window.clearTimeout(closeGuardTimer);
-      window.clearTimeout(openGuardTimer);
-      document.body.classList.remove('mc-nav-closing', 'mc-nav-opening');
+      disarmOpenGuard();
+      document.body.classList.remove('mc-nav-closing');
     }
 
     sidebar.classList.toggle('is-open', open);
@@ -85,40 +123,9 @@
     document.body.classList.toggle('mc-nav-open', open);
     syncToggleAria(open);
 
-    if (open && !wasOpen && isMobileDrawer()) {
+    if (open && !wasOpen) {
       armOpenGuard();
     }
-  }
-
-  /**
-   * Dark mode removes sidebar transform transitions, so the drawer appears instantly
-   * under the hamburger. The synthetic click then hits the dashboard logo link.
-   */
-  function armOpenGuard() {
-    if (!IS_TOUCH) return;
-
-    document.body.classList.add('mc-nav-opening');
-    window.clearTimeout(openGuardTimer);
-    openGuardTimer = window.setTimeout(() => {
-      document.body.classList.remove('mc-nav-opening');
-    }, OPEN_GUARD_MS);
-
-    window.setTimeout(() => {
-      document.addEventListener('click', blockOpeningGhostClick, { capture: true, once: true });
-    }, 0);
-  }
-
-  function blockOpeningGhostClick(e) {
-    if (!document.body.classList.contains('mc-nav-opening')) return;
-
-    const sidebar = getSidebar();
-    if (!sidebar || !sidebar.contains(e.target)) return;
-
-    const link = e.target.closest ? e.target.closest('a[href]') : null;
-    if (!link) return;
-
-    e.preventDefault();
-    e.stopImmediatePropagation();
   }
 
   function setMini(mini) {
@@ -130,7 +137,8 @@
       backdrop.classList.remove('is-visible');
       backdrop.setAttribute('aria-hidden', 'true');
     }
-    document.body.classList.remove('mc-nav-open', 'mc-nav-closing', 'mc-nav-opening');
+    document.body.classList.remove('mc-nav-open', 'mc-nav-closing');
+    disarmOpenGuard();
 
     document.body.classList.toggle('mc-sidebar-mini', !!mini);
     try {
@@ -174,7 +182,6 @@
     return !!(sidebar && sidebar.classList.contains('is-open'));
   }
 
-  /** Close drawer after nav tap without replaying ghost clicks on the page behind. */
   function closeAfterNav() {
     if (!isMobileDrawer()) return;
     document.body.classList.add('mc-nav-closing');
@@ -185,28 +192,47 @@
     }, GHOST_CLICK_GUARD_MS);
   }
 
-  function suppressGhostClick(el) {
-    if (!IS_TOUCH || !el) return;
-    el.addEventListener(
-      'click',
-      (e) => {
-        e.preventDefault();
-        e.stopPropagation();
-      },
-      { capture: true, once: true }
-    );
+  function onToggleClick(e) {
+    const now = Date.now();
+    if (now - lastToggleAt < TOGGLE_DEBOUNCE_MS) {
+      e.preventDefault();
+      e.stopPropagation();
+      return;
+    }
+    lastToggleAt = now;
+    e.preventDefault();
+    e.stopPropagation();
+    toggle();
+
+    const btn = e.currentTarget;
+    btn.classList.remove('mc-burger-animate');
+    void btn.offsetWidth;
+    btn.classList.add('mc-burger-animate');
+    window.setTimeout(() => {
+      btn.classList.remove('mc-burger-animate');
+    }, BURGER_ANIM_MS);
   }
 
-  function bindTap(el, handler) {
-    el.addEventListener(TAP_EVENT, (e) => {
-      handler(e);
-    });
-    suppressGhostClick(el);
+  function onBackdropClick(e) {
+    if (e.target !== e.currentTarget) return;
+    if (isOpeningGuarded()) {
+      e.preventDefault();
+      e.stopPropagation();
+      return;
+    }
+    e.preventDefault();
+    e.stopPropagation();
+    close();
   }
 
   function bindNavLink(link) {
-    link.addEventListener('click', () => {
+    link.addEventListener('click', (e) => {
       if (!isMobileDrawer()) return;
+      if (isOpeningGuarded()) {
+        e.preventDefault();
+        e.stopPropagation();
+        return;
+      }
 
       const href = link.getAttribute('href');
       if (!href || href.charAt(0) === '#') {
@@ -215,33 +241,6 @@
       }
 
       closeAfterNav();
-    });
-  }
-
-  function bindToggle(btn) {
-    bindTap(btn, (e) => {
-      const now = Date.now();
-      if (now - lastToggleAt < TOGGLE_DEBOUNCE_MS) return;
-      lastToggleAt = now;
-      e.preventDefault();
-      e.stopPropagation();
-      toggle();
-
-      btn.classList.remove('mc-burger-animate');
-      void btn.offsetWidth;
-      btn.classList.add('mc-burger-animate');
-      window.setTimeout(() => {
-        btn.classList.remove('mc-burger-animate');
-      }, BURGER_ANIM_MS);
-    });
-  }
-
-  function bindBackdrop(backdrop) {
-    bindTap(backdrop, (e) => {
-      if (e.target !== backdrop) return;
-      e.preventDefault();
-      e.stopPropagation();
-      close();
     });
   }
 
@@ -260,17 +259,19 @@
         btn.setAttribute('aria-controls', sidebar.id);
       }
       btn.style.pointerEvents = 'auto';
-      bindToggle(btn);
+      btn.style.touchAction = 'manipulation';
+      btn.addEventListener('click', onToggleClick);
     });
 
     const backdrop = getBackdrop();
-    bindBackdrop(backdrop);
+    backdrop.addEventListener('click', onBackdropClick);
 
     sidebar.querySelectorAll(NAV_LINK_SELECTORS).forEach(bindNavLink);
 
     sidebar.querySelectorAll('[data-logout-trigger]').forEach((btn) => {
-      bindTap(btn, () => {
-        if (isMobileDrawer()) closeAfterNav();
+      btn.addEventListener('click', () => {
+        if (!isMobileDrawer() || isOpeningGuarded()) return;
+        closeAfterNav();
       });
     });
 

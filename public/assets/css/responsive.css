@@ -32,6 +32,8 @@ svg {
   color: var(--mc-aqua-medium, #018a93);
   cursor: pointer;
   flex-shrink: 0;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
   transition: background 0.15s ease, border-color 0.15s ease;
 }
 
@@ -106,7 +108,14 @@ body.mc-nav-closing .root-wrapper > .main-content {
 /* Brief guard after hamburger open — blocks ghost click on dashboard logo (dark mode). */
 body.mc-nav-opening .adm-logo,
 body.mc-nav-opening .sb-logo,
-body.mc-nav-opening .sba-logo {
+body.mc-nav-opening .sba-logo,
+body.mc-nav-opening .topbar-brand {
+  pointer-events: none !important;
+}
+
+body.mc-nav-opening .sidebar a,
+body.mc-nav-opening .sb-aqua a,
+body.mc-nav-opening .adm-sidebar a {
   pointer-events: none !important;
 }
 
