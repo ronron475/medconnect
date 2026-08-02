@@ -103,6 +103,13 @@ body.mc-nav-closing .root-wrapper > .main-content {
   pointer-events: none !important;
 }
 
+/* Brief guard after hamburger open — blocks ghost click on dashboard logo (dark mode). */
+body.mc-nav-opening .adm-logo,
+body.mc-nav-opening .sb-logo,
+body.mc-nav-opening .sba-logo {
+  pointer-events: none !important;
+}
+
 /* ── Tables: horizontal scroll on small screens ── */
 .mc-table-wrap,
 .table-responsive,
@@ -281,6 +288,14 @@ body.mc-nav-closing .root-wrapper > .main-content {
     z-index: 531;
     pointer-events: auto;
     touch-action: manipulation;
+  }
+
+  /* Dark mode removes sidebar transitions — restore drawer slide (match light mode). */
+  html[data-theme-resolved='dark'] .sidebar,
+  html[data-theme-resolved='dark'] .sb-aqua,
+  html[data-theme-resolved='dark'] .adm-sidebar,
+  html[data-theme-resolved='dark'] .adm-sidebar--bhw {
+    transition: transform 0.25s ease !important;
   }
 
   /* ── Tablet mini sidebar (icon-only) ── */
