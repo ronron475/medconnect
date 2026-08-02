@@ -1,5 +1,4 @@
 <?php
-session_start();
 header('Content-Type: application/json; charset=utf-8');
 header('X-Content-Type-Options: nosniff');
 header('Cache-Control: no-store');
@@ -24,7 +23,14 @@ if (strlen($note) > 500) {
     exit;
 }
 
-$result = patient_settings_request_medical_update($pdo, $userId, $note);
+$proposed = [
+    'blood_type'           => trim((string) ($_POST['blood_type'] ?? '')),
+    'allergies'            => trim((string) ($_POST['allergies'] ?? '')),
+    'existing_conditions'  => trim((string) ($_POST['existing_conditions'] ?? '')),
+    'current_medications'  => trim((string) ($_POST['current_medications'] ?? '')),
+];
+
+$result = patient_settings_request_medical_update($pdo, $userId, $note, $proposed);
 if (!$result['success']) {
     http_response_code(400);
 }

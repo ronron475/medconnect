@@ -1047,6 +1047,61 @@ $localhost_app_url = 'http://localhost' . (ASSET_BASE !== '' ? ASSET_BASE : '');
     font-size: 12px;
     font-weight: 600;
 }
+.hs-pending--action {
+    padding: 12px 14px;
+}
+.hs-pending__note {
+    margin: 8px 0 0;
+    font-weight: 500;
+    color: #78350f;
+    line-height: 1.45;
+}
+.hs-pending__hint {
+    margin: 8px 0 0;
+    font-size: 11px;
+    font-weight: 500;
+    color: #a16207;
+}
+.hs-profile-form {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-top: 12px;
+}
+.hs-profile-form label {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    font-size: 11px;
+    font-weight: 700;
+    color: #475569;
+}
+.hs-profile-form label:nth-child(n+3) {
+    grid-column: 1 / -1;
+}
+.hs-profile-form__actions {
+    grid-column: 1 / -1;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 4px;
+}
+.hs-profile-alert {
+    margin-top: 10px;
+    padding: 8px 10px;
+    border-radius: 8px;
+    font-size: 12px;
+}
+.hs-profile-alert--ok {
+    background: #ecfdf5;
+    color: #047857;
+    border: 1px solid #a7f3d0;
+}
+.hs-profile-alert--err {
+    background: #fef2f2;
+    color: #b91c1c;
+    border: 1px solid #fecaca;
+}
 .hs-grid {
     display: grid;
     grid-template-columns: 1fr 1fr;
@@ -1616,8 +1671,44 @@ $localhost_app_url = 'http://localhost' . (ASSET_BASE !== '' ? ASSET_BASE : '');
                     </div>
                 </div>
 
-                <?php if (!empty($health_summary['pending_request'])): ?>
-                    <p class="hs-pending">Patient has a pending medical profile update request.</p>
+                <?php
+                $pending_hs = $health_summary['pending_request'] ?? null;
+                if (!empty($pending_hs)):
+                    $pending_note = trim((string) ($pending_hs['patient_note'] ?? ''));
+                    $proposed = $pending_hs['proposed'] ?? [];
+                    $hs_blood = trim((string) ($proposed['blood_type'] ?? '')) ?: trim((string) ($health_summary['blood_type'] ?? $c['blood_type'] ?? ''));
+                    $hs_allergies = trim((string) ($proposed['allergies'] ?? '')) ?: trim((string) ($c['allergies'] ?? ''));
+                    $hs_conditions = trim((string) ($proposed['existing_conditions'] ?? '')) ?: trim((string) ($c['existing_conditions'] ?? ''));
+                    $hs_medications = trim((string) ($proposed['current_medications'] ?? '')) ?: trim((string) ($c['current_medications'] ?? ''));
+                ?>
+                <div class="hs-pending hs-pending--action" id="sessionMedicalUpdateCard"
+                     data-csrf="<?= htmlspecialchars($_SESSION['csrf_token'] ?? '') ?>"
+                     data-patient-id="<?= (int) $c['patient_id'] ?>"
+                     data-request-id="<?= (int) ($pending_hs['id'] ?? 0) ?>">
+                    <strong>Patient requested a Health Summary update</strong>
+                    <?php if ($pending_note !== ''): ?>
+                    <p class="hs-pending__note"><?= htmlspecialchars($pending_note) ?></p>
+                    <?php endif; ?>
+                    <p class="hs-pending__hint">Review requested values, edit if needed, then approve or reject. Official Health Summary updates only after approval.</p>
+                    <form id="sessionMedicalProfileForm" class="hs-profile-form">
+                        <label>Blood type
+                            <select name="blood_type" class="pd-input">
+                                <?php foreach (['A+','A-','B+','B-','AB+','AB-','O+','O-','Unknown'] as $bt): ?>
+                                <option value="<?= $bt ?>" <?= $hs_blood === $bt ? 'selected' : '' ?>><?= $bt ?></option>
+                                <?php endforeach; ?>
+                            </select>
+                        </label>
+                        <label>Allergies<textarea name="allergies" class="pd-input" rows="2"><?= htmlspecialchars($hs_allergies) ?></textarea></label>
+                        <label>Conditions<textarea name="existing_conditions" class="pd-input" rows="2"><?= htmlspecialchars($hs_conditions) ?></textarea></label>
+                        <label>Medications<textarea name="current_medications" class="pd-input" rows="2"><?= htmlspecialchars($hs_medications) ?></textarea></label>
+                        <div class="hs-profile-form__actions">
+                            <button type="submit" class="session-btn primary">Approve &amp; Update</button>
+                            <button type="button" class="session-btn" id="sessionMedicalRejectBtn">Reject</button>
+                            <a href="<?= ASSET_BASE ?>/views/provider/medical_records.php?patient_id=<?= (int) $c['patient_id'] ?>" class="session-btn">Medical Records</a>
+                        </div>
+                    </form>
+                    <div id="sessionMedicalProfileAlert" class="hs-profile-alert" hidden role="alert"></div>
+                </div>
                 <?php endif; ?>
 
                 <div class="hs-grid">
@@ -2869,6 +2960,82 @@ async function saveFollowUpFromModal() {
         }
     }
 }
+
+(function () {
+    var card = document.getElementById('sessionMedicalUpdateCard');
+    var form = document.getElementById('sessionMedicalProfileForm');
+    if (!card || !form) return;
+    form.addEventListener('submit', async function (e) {
+        e.preventDefault();
+        var alertEl = document.getElementById('sessionMedicalProfileAlert');
+        var fd = new FormData(form);
+        fd.append('csrf_token', card.dataset.csrf || '');
+        fd.append('patient_id', card.dataset.patientId || '');
+        fd.append('request_id', card.dataset.requestId || '');
+        try {
+            var res = await fetch(sessionAssetBase + '/app/api/provider/update_patient_medical_profile.php', {
+                method: 'POST',
+                body: fd,
+                credentials: 'same-origin'
+            });
+            var data = await res.json();
+            if (!data.success) throw new Error(data.message || 'Save failed');
+            if (alertEl) {
+                alertEl.textContent = data.message;
+                alertEl.hidden = false;
+                alertEl.className = 'hs-profile-alert hs-profile-alert--ok';
+            }
+            if (typeof showSessionChatAlert === 'function') {
+                showSessionChatAlert(data.message || 'Health Summary updated.', 'success');
+            }
+            setTimeout(function () { window.location.reload(); }, 1200);
+        } catch (err) {
+            if (alertEl) {
+                alertEl.textContent = err.message || 'Could not save profile.';
+                alertEl.hidden = false;
+                alertEl.className = 'hs-profile-alert hs-profile-alert--err';
+            }
+        }
+    });
+
+    var rejectBtn = document.getElementById('sessionMedicalRejectBtn');
+    if (rejectBtn) {
+        rejectBtn.addEventListener('click', async function () {
+            var note = window.prompt('Optional note to the patient about why this request was rejected:', '');
+            if (note === null) return;
+            var alertEl = document.getElementById('sessionMedicalProfileAlert');
+            rejectBtn.disabled = true;
+            try {
+                var fd = new FormData();
+                fd.append('csrf_token', card.dataset.csrf || '');
+                fd.append('patient_id', card.dataset.patientId || '');
+                fd.append('request_id', card.dataset.requestId || '');
+                fd.append('provider_note', note);
+                var res = await fetch(sessionAssetBase + '/app/api/provider/reject_medical_update_request.php', {
+                    method: 'POST',
+                    body: fd,
+                    credentials: 'same-origin'
+                });
+                var data = await res.json();
+                if (!data.success) throw new Error(data.message || 'Reject failed');
+                if (alertEl) {
+                    alertEl.textContent = data.message;
+                    alertEl.hidden = false;
+                    alertEl.className = 'hs-profile-alert hs-profile-alert--ok';
+                }
+                setTimeout(function () { window.location.reload(); }, 1200);
+            } catch (err) {
+                if (alertEl) {
+                    alertEl.textContent = err.message || 'Could not reject request.';
+                    alertEl.hidden = false;
+                    alertEl.className = 'hs-profile-alert hs-profile-alert--err';
+                }
+            } finally {
+                rejectBtn.disabled = false;
+            }
+        });
+    }
+})();
 
 </script>
 

@@ -19,6 +19,14 @@ $providerId = provider_settings_require_provider();
 provider_settings_verify_csrf();
 
 $patientId = (int) ($_POST['patient_id'] ?? 0);
+$requestId = !empty($_POST['request_id']) ? (int) $_POST['request_id'] : null;
+$providerNote = trim((string) ($_POST['provider_note'] ?? ''));
+if (strlen($providerNote) > 500) {
+    http_response_code(400);
+    echo json_encode(['success' => false, 'message' => 'Note must be 500 characters or fewer.']);
+    exit;
+}
+
 if ($patientId <= 0) {
     http_response_code(400);
     echo json_encode(['success' => false, 'message' => 'Patient is required.']);
@@ -32,35 +40,14 @@ if (!$access['allowed']) {
     exit;
 }
 
-$requestId = !empty($_POST['request_id']) ? (int) $_POST['request_id'] : null;
-
-if ($requestId) {
-    $reqCheck = $pdo->prepare("
-        SELECT id, provider_id, status
-        FROM patient_medical_update_requests
-        WHERE id = ? AND patient_id = ? AND status IN ('pending', 'in_review')
-        LIMIT 1
-    ");
-    $reqCheck->execute([$requestId, $patientId]);
-    $reqRow = $reqCheck->fetch(PDO::FETCH_ASSOC);
-    if (!$reqRow || !patient_medical_provider_can_review_request($pdo, $providerId, $reqRow, $patientId)) {
-        http_response_code(403);
-        echo json_encode(['success' => false, 'message' => 'You are not assigned to review this request.']);
-        exit;
-    }
-}
-
-$ok = patient_health_summary_provider_update($pdo, $patientId, $providerId, [
-    'blood_type'           => $_POST['blood_type'] ?? '',
-    'allergies'            => $_POST['allergies'] ?? '',
-    'existing_conditions'  => $_POST['existing_conditions'] ?? '',
-    'current_medications'  => $_POST['current_medications'] ?? '',
-], $requestId);
-
+$ok = patient_health_summary_provider_reject($pdo, $patientId, $providerId, $requestId, $providerNote);
 if (!$ok) {
     http_response_code(400);
-    echo json_encode(['success' => false, 'message' => 'Could not update medical profile. Check blood type and try again.']);
+    echo json_encode(['success' => false, 'message' => 'Could not reject this request. It may already be reviewed.']);
     exit;
 }
 
-echo json_encode(['success' => true, 'message' => 'Patient Health Summary updated and logged for audit.']);
+echo json_encode([
+    'success' => true,
+    'message' => 'Health Summary update request rejected. The patient has been notified.',
+], JSON_UNESCAPED_UNICODE);

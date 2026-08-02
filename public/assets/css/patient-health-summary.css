@@ -122,6 +122,7 @@ body.patient-portal .phs-alert--error {
 
 body.patient-portal #phsAlert[hidden],
 body.patient-portal #phsPendingBanner[hidden],
+body.patient-portal #phsRejectedBanner[hidden],
 body.patient-portal #phsSkeleton[hidden],
 body.patient-portal #phsContent[hidden],
 body.patient-portal .phs-skeleton-grid[hidden] {
@@ -505,6 +506,89 @@ body.patient-portal .phs-modal__actions {
 @media (max-width: 480px) {
   body.patient-portal .phs-grid,
   body.patient-portal .phs-skeleton-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+body.patient-portal .phs-rejected-banner {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+}
+
+body.patient-portal .phs-rejected-banner__icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  background: #fee2e2;
+  color: #b91c1c;
+  font-weight: 800;
+  flex-shrink: 0;
+}
+
+body.patient-portal .phs-rejected-banner__text strong {
+  display: block;
+  font-size: 13px;
+  color: #991b1b;
+  margin-bottom: 2px;
+}
+
+body.patient-portal .phs-rejected-banner__text p {
+  margin: 0;
+  font-size: 12px;
+  color: #b91c1c;
+  line-height: 1.4;
+}
+
+body.patient-portal .phs-modal__card--wide {
+  max-width: 720px;
+}
+
+body.patient-portal .phs-request-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+  margin: 12px 0;
+}
+
+body.patient-portal .phs-request-col__title {
+  margin: 0 0 8px;
+  font-size: 12px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: #64748b;
+}
+
+body.patient-portal .phs-request-readonly {
+  margin: 0 0 8px;
+  font-size: 12px;
+  line-height: 1.45;
+  color: #334155;
+}
+
+body.patient-portal .phs-request-readonly__label {
+  display: block;
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: #94a3b8;
+  margin-bottom: 2px;
+}
+
+body.patient-portal select.phs-field__input {
+  min-height: 40px;
+}
+
+@media (max-width: 640px) {
+  body.patient-portal .phs-request-grid {
     grid-template-columns: 1fr;
   }
 }

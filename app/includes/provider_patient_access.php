@@ -112,6 +112,27 @@ function provider_patient_assert_access(PDO $pdo, int $providerId, int $patientI
         // assigned_provider_id may not exist until schema migration runs
     }
 
+    // Assigned reviewer for pending Health Summary update requests.
+    try {
+        require_once __DIR__ . '/patient_settings.php';
+        patient_settings_ensure_schema($pdo);
+        $hs = $pdo->prepare("
+            SELECT id
+            FROM patient_medical_update_requests
+            WHERE patient_id = ?
+              AND provider_id = ?
+              AND status IN ('pending', 'in_review')
+            ORDER BY created_at DESC
+            LIMIT 1
+        ");
+        $hs->execute([$patientId, $providerId]);
+        if ($hs->fetchColumn()) {
+            return ['allowed' => true, 'message' => 'ok', 'consultation_id' => 0];
+        }
+    } catch (PDOException $e) {
+        // patient_medical_update_requests may not exist until migration runs
+    }
+
     return ['allowed' => false, 'message' => 'Access denied.'];
 }
 

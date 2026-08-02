@@ -192,12 +192,33 @@ body.provider-body .provider-page-body:has(.mr-page) {
 }
 
 .mr-patient-row__name {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
   font-size: 13px;
   font-weight: 700;
   color: var(--mc-navy-dark, #0f172a);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+}
+
+.mr-patient-row__badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  color: #92400e;
+  background: #fffbeb;
+  border: 1px solid #fcd34d;
+  flex-shrink: 0;
+}
+
+.mr-patient-row--pending {
+  border-color: #fde68a;
+  background: #fffef8;
 }
 
 .mr-patient-row__meta {
@@ -456,6 +477,37 @@ body.provider-body .provider-page-body:has(.mr-page) {
 .mr-profile-alert--err {
   background: #fef2f2;
   color: #991b1b;
+}
+
+.mr-profile-form__actions {
+  grid-column: 1 / -1;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.mr-assigned-pending {
+  margin-bottom: 14px;
+  padding: 12px 14px;
+  border-radius: 12px;
+  background: #fffbeb;
+  border: 1px solid #fde68a;
+}
+
+.mr-assigned-pending__list {
+  margin: 8px 0 0;
+  padding-left: 18px;
+}
+
+.mr-assigned-pending__list a {
+  font-weight: 700;
+  color: #0f766e;
+  text-decoration: none;
+}
+
+.mr-assigned-pending__list a:hover {
+  text-decoration: underline;
 }
 
 @media (max-width: 640px) {
