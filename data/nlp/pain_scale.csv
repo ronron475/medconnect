@@ -1,0 +1,43 @@
+pattern,pain_score,band,severity_points,language,status
+pain 0,0,mild,0,english,active
+0/10,0,mild,0,english,active
+pain scale 0,0,mild,0,english,active
+pain 1,1,mild,0,english,active
+1/10,1,mild,0,english,active
+pain scale 1,1,mild,0,english,active
+pain 2,2,mild,0,english,active
+2/10,2,mild,0,english,active
+pain scale 2,2,mild,0,english,active
+pain 3,3,mild,0,english,active
+3/10,3,mild,0,english,active
+pain scale 3,3,mild,0,english,active
+pain 4,4,moderate,2,english,active
+4/10,4,moderate,2,english,active
+pain scale 4,4,moderate,2,english,active
+pain 5,5,moderate,2,english,active
+5/10,5,moderate,2,english,active
+pain scale 5,5,moderate,2,english,active
+pain 6,6,moderate,2,english,active
+6/10,6,moderate,2,english,active
+pain scale 6,6,moderate,2,english,active
+pain 7,7,severe,4,english,active
+7/10,7,severe,4,english,active
+pain scale 7,7,severe,4,english,active
+pain 8,8,severe,4,english,active
+8/10,8,severe,4,english,active
+pain scale 8,8,severe,4,english,active
+pain 9,9,severe,4,english,active
+9/10,9,severe,4,english,active
+pain scale 9,9,severe,4,english,active
+pain 10,10,severe,4,english,active
+10/10,10,severe,4,english,active
+pain scale 10,10,severe,4,english,active
+mild pain,2,mild,0,mixed,active
+gamay nga sakit,2,mild,0,mixed,active
+medyo sakit,5,moderate,2,mixed,active
+moderate pain,5,moderate,2,mixed,active
+grabe nga sakit,8,severe,4,mixed,active
+severe pain,8,severe,4,mixed,active
+sakit gid,8,severe,4,mixed,active
+unbearable pain,10,severe,4,mixed,active
+matinding sakit,9,severe,4,mixed,active

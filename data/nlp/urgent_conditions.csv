@@ -1,0 +1,501 @@
+rule_id,name,pattern_english,pattern_hiligaynon,classification,rationale,status
+U0001,Fever 5 Days,fever 5 days,,URGENT,Urgent evaluation for fever 5 days,active
+U0002,Fever 5 Days,fever 5 days,,URGENT,Urgent evaluation for fever 5 days,active
+U0003,Fever 5 Days,fever 5 days,,URGENT,Urgent evaluation for fever 5 days,active
+U0004,Fever 5 Days,fever 5 days,,URGENT,Urgent evaluation for fever 5 days,active
+U0005,Fever 5 Days,fever 5 days,,URGENT,Urgent evaluation for fever 5 days,active
+U0006,Fever 5 Days,fever 5 days,,URGENT,Urgent evaluation for fever 5 days,active
+U0007,Fever 5 Days,fever 5 days,,URGENT,Urgent evaluation for fever 5 days,active
+U0008,Fever 5 Days,fever 5 days,,URGENT,Urgent evaluation for fever 5 days,active
+U0009,Fever 5 Days,fever 5 days,,URGENT,Urgent evaluation for fever 5 days,active
+U0010,Fever 5 Days,fever 5 days,,URGENT,Urgent evaluation for fever 5 days,active
+U0011,Fever 5 Days,fever 5 days,,URGENT,Urgent evaluation for fever 5 days,active
+U0012,Fever 5 Days,fever 5 days,,URGENT,Urgent evaluation for fever 5 days,active
+U0013,Fever 5 Days,fever 5 days,,URGENT,Urgent evaluation for fever 5 days,active
+U0014,Fever 5 Days,fever 5 days,,URGENT,Urgent evaluation for fever 5 days,active
+U0015,Fever 5 Days,fever 5 days,,URGENT,Urgent evaluation for fever 5 days,active
+U0016,Fever 5 Days,fever 5 days,,URGENT,Urgent evaluation for fever 5 days,active
+U0017,Fever 5 Days,fever 5 days,,URGENT,Urgent evaluation for fever 5 days,active
+U0018,Fever 5 Days,fever 5 days,,URGENT,Urgent evaluation for fever 5 days,active
+U0019,Fever 5 Days,fever 5 days,,URGENT,Urgent evaluation for fever 5 days,active
+U0020,Fever 5 Days,fever 5 days,,URGENT,Urgent evaluation for fever 5 days,active
+U0021,Fever 5 Days,fever 5 days,,URGENT,Urgent evaluation for fever 5 days,active
+U0022,Fever 5 Days,fever 5 days,,URGENT,Urgent evaluation for fever 5 days,active
+U0023,Fever 5 Days,fever 5 days,,URGENT,Urgent evaluation for fever 5 days,active
+U0024,Fever 5 Days,fever 5 days,,URGENT,Urgent evaluation for fever 5 days,active
+U0025,Fever 5 Days,fever 5 days,,URGENT,Urgent evaluation for fever 5 days,active
+U0026,Fever 5 Days,fever 5 days,,URGENT,Urgent evaluation for fever 5 days,active
+U0027,Fever 5 Days,fever 5 days,,URGENT,Urgent evaluation for fever 5 days,active
+U0028,Fever 5 Days,fever 5 days,,URGENT,Urgent evaluation for fever 5 days,active
+U0029,Fever 5 Days,fever 5 days,,URGENT,Urgent evaluation for fever 5 days,active
+U0030,Fever 5 Days,fever 5 days,,URGENT,Urgent evaluation for fever 5 days,active
+U0031,Fever 5 Days,fever 5 days,,URGENT,Urgent evaluation for fever 5 days,active
+U0032,Fever 5 Days,fever 5 days,,URGENT,Urgent evaluation for fever 5 days,active
+U0033,Fever 5 Days,fever 5 days,,URGENT,Urgent evaluation for fever 5 days,active
+U0034,Fever 5 Days,fever 5 days,,URGENT,Urgent evaluation for fever 5 days,active
+U0035,Fever 5 Days,fever 5 days,,URGENT,Urgent evaluation for fever 5 days,active
+U0036,Fever 5 Days,fever 5 days,,URGENT,Urgent evaluation for fever 5 days,active
+U0037,Fever 5 Days,fever 5 days,,URGENT,Urgent evaluation for fever 5 days,active
+U0038,Fever 5 Days,fever 5 days,,URGENT,Urgent evaluation for fever 5 days,active
+U0039,Fever 5 Days,fever 5 days,,URGENT,Urgent evaluation for fever 5 days,active
+U0040,Fever 5 Days,fever 5 days,,URGENT,Urgent evaluation for fever 5 days,active
+U0041,Fever 5 Days,fever 5 days,,URGENT,Urgent evaluation for fever 5 days,active
+U0042,Fever 5 Days,fever 5 days,,URGENT,Urgent evaluation for fever 5 days,active
+U0043,Fever 5 Days,fever 5 days,,URGENT,Urgent evaluation for fever 5 days,active
+U0044,Fever 5 Days,fever 5 days,,URGENT,Urgent evaluation for fever 5 days,active
+U0045,Fever 5 Days,fever 5 days,,URGENT,Urgent evaluation for fever 5 days,active
+U0046,Fever 5 Days,fever 5 days,,URGENT,Urgent evaluation for fever 5 days,active
+U0047,Fever 5 Days,fever 5 days,,URGENT,Urgent evaluation for fever 5 days,active
+U0048,Fever 5 Days,fever 5 days,,URGENT,Urgent evaluation for fever 5 days,active
+U0049,Fever 5 Days,fever 5 days,,URGENT,Urgent evaluation for fever 5 days,active
+U0050,Fever 5 Days,fever 5 days,,URGENT,Urgent evaluation for fever 5 days,active
+U0051,Persistent Vomiting,persistent vomiting,,URGENT,Urgent evaluation for persistent vomiting,active
+U0052,Persistent Vomiting,persistent vomiting,,URGENT,Urgent evaluation for persistent vomiting,active
+U0053,Persistent Vomiting,persistent vomiting,,URGENT,Urgent evaluation for persistent vomiting,active
+U0054,Persistent Vomiting,persistent vomiting,,URGENT,Urgent evaluation for persistent vomiting,active
+U0055,Persistent Vomiting,persistent vomiting,,URGENT,Urgent evaluation for persistent vomiting,active
+U0056,Persistent Vomiting,persistent vomiting,,URGENT,Urgent evaluation for persistent vomiting,active
+U0057,Persistent Vomiting,persistent vomiting,,URGENT,Urgent evaluation for persistent vomiting,active
+U0058,Persistent Vomiting,persistent vomiting,,URGENT,Urgent evaluation for persistent vomiting,active
+U0059,Persistent Vomiting,persistent vomiting,,URGENT,Urgent evaluation for persistent vomiting,active
+U0060,Persistent Vomiting,persistent vomiting,,URGENT,Urgent evaluation for persistent vomiting,active
+U0061,Persistent Vomiting,persistent vomiting,,URGENT,Urgent evaluation for persistent vomiting,active
+U0062,Persistent Vomiting,persistent vomiting,,URGENT,Urgent evaluation for persistent vomiting,active
+U0063,Persistent Vomiting,persistent vomiting,,URGENT,Urgent evaluation for persistent vomiting,active
+U0064,Persistent Vomiting,persistent vomiting,,URGENT,Urgent evaluation for persistent vomiting,active
+U0065,Persistent Vomiting,persistent vomiting,,URGENT,Urgent evaluation for persistent vomiting,active
+U0066,Persistent Vomiting,persistent vomiting,,URGENT,Urgent evaluation for persistent vomiting,active
+U0067,Persistent Vomiting,persistent vomiting,,URGENT,Urgent evaluation for persistent vomiting,active
+U0068,Persistent Vomiting,persistent vomiting,,URGENT,Urgent evaluation for persistent vomiting,active
+U0069,Persistent Vomiting,persistent vomiting,,URGENT,Urgent evaluation for persistent vomiting,active
+U0070,Persistent Vomiting,persistent vomiting,,URGENT,Urgent evaluation for persistent vomiting,active
+U0071,Persistent Vomiting,persistent vomiting,,URGENT,Urgent evaluation for persistent vomiting,active
+U0072,Persistent Vomiting,persistent vomiting,,URGENT,Urgent evaluation for persistent vomiting,active
+U0073,Persistent Vomiting,persistent vomiting,,URGENT,Urgent evaluation for persistent vomiting,active
+U0074,Persistent Vomiting,persistent vomiting,,URGENT,Urgent evaluation for persistent vomiting,active
+U0075,Persistent Vomiting,persistent vomiting,,URGENT,Urgent evaluation for persistent vomiting,active
+U0076,Persistent Vomiting,persistent vomiting,,URGENT,Urgent evaluation for persistent vomiting,active
+U0077,Persistent Vomiting,persistent vomiting,,URGENT,Urgent evaluation for persistent vomiting,active
+U0078,Persistent Vomiting,persistent vomiting,,URGENT,Urgent evaluation for persistent vomiting,active
+U0079,Persistent Vomiting,persistent vomiting,,URGENT,Urgent evaluation for persistent vomiting,active
+U0080,Persistent Vomiting,persistent vomiting,,URGENT,Urgent evaluation for persistent vomiting,active
+U0081,Persistent Vomiting,persistent vomiting,,URGENT,Urgent evaluation for persistent vomiting,active
+U0082,Persistent Vomiting,persistent vomiting,,URGENT,Urgent evaluation for persistent vomiting,active
+U0083,Persistent Vomiting,persistent vomiting,,URGENT,Urgent evaluation for persistent vomiting,active
+U0084,Persistent Vomiting,persistent vomiting,,URGENT,Urgent evaluation for persistent vomiting,active
+U0085,Persistent Vomiting,persistent vomiting,,URGENT,Urgent evaluation for persistent vomiting,active
+U0086,Persistent Vomiting,persistent vomiting,,URGENT,Urgent evaluation for persistent vomiting,active
+U0087,Persistent Vomiting,persistent vomiting,,URGENT,Urgent evaluation for persistent vomiting,active
+U0088,Persistent Vomiting,persistent vomiting,,URGENT,Urgent evaluation for persistent vomiting,active
+U0089,Persistent Vomiting,persistent vomiting,,URGENT,Urgent evaluation for persistent vomiting,active
+U0090,Persistent Vomiting,persistent vomiting,,URGENT,Urgent evaluation for persistent vomiting,active
+U0091,Persistent Vomiting,persistent vomiting,,URGENT,Urgent evaluation for persistent vomiting,active
+U0092,Persistent Vomiting,persistent vomiting,,URGENT,Urgent evaluation for persistent vomiting,active
+U0093,Persistent Vomiting,persistent vomiting,,URGENT,Urgent evaluation for persistent vomiting,active
+U0094,Persistent Vomiting,persistent vomiting,,URGENT,Urgent evaluation for persistent vomiting,active
+U0095,Persistent Vomiting,persistent vomiting,,URGENT,Urgent evaluation for persistent vomiting,active
+U0096,Persistent Vomiting,persistent vomiting,,URGENT,Urgent evaluation for persistent vomiting,active
+U0097,Persistent Vomiting,persistent vomiting,,URGENT,Urgent evaluation for persistent vomiting,active
+U0098,Persistent Vomiting,persistent vomiting,,URGENT,Urgent evaluation for persistent vomiting,active
+U0099,Persistent Vomiting,persistent vomiting,,URGENT,Urgent evaluation for persistent vomiting,active
+U0100,Persistent Vomiting,persistent vomiting,,URGENT,Urgent evaluation for persistent vomiting,active
+U0101,Moderate Abdominal Pain,moderate abdominal pain,,URGENT,Urgent evaluation for moderate abdominal pain,active
+U0102,Moderate Abdominal Pain,moderate abdominal pain,,URGENT,Urgent evaluation for moderate abdominal pain,active
+U0103,Moderate Abdominal Pain,moderate abdominal pain,,URGENT,Urgent evaluation for moderate abdominal pain,active
+U0104,Moderate Abdominal Pain,moderate abdominal pain,,URGENT,Urgent evaluation for moderate abdominal pain,active
+U0105,Moderate Abdominal Pain,moderate abdominal pain,,URGENT,Urgent evaluation for moderate abdominal pain,active
+U0106,Moderate Abdominal Pain,moderate abdominal pain,,URGENT,Urgent evaluation for moderate abdominal pain,active
+U0107,Moderate Abdominal Pain,moderate abdominal pain,,URGENT,Urgent evaluation for moderate abdominal pain,active
+U0108,Moderate Abdominal Pain,moderate abdominal pain,,URGENT,Urgent evaluation for moderate abdominal pain,active
+U0109,Moderate Abdominal Pain,moderate abdominal pain,,URGENT,Urgent evaluation for moderate abdominal pain,active
+U0110,Moderate Abdominal Pain,moderate abdominal pain,,URGENT,Urgent evaluation for moderate abdominal pain,active
+U0111,Moderate Abdominal Pain,moderate abdominal pain,,URGENT,Urgent evaluation for moderate abdominal pain,active
+U0112,Moderate Abdominal Pain,moderate abdominal pain,,URGENT,Urgent evaluation for moderate abdominal pain,active
+U0113,Moderate Abdominal Pain,moderate abdominal pain,,URGENT,Urgent evaluation for moderate abdominal pain,active
+U0114,Moderate Abdominal Pain,moderate abdominal pain,,URGENT,Urgent evaluation for moderate abdominal pain,active
+U0115,Moderate Abdominal Pain,moderate abdominal pain,,URGENT,Urgent evaluation for moderate abdominal pain,active
+U0116,Moderate Abdominal Pain,moderate abdominal pain,,URGENT,Urgent evaluation for moderate abdominal pain,active
+U0117,Moderate Abdominal Pain,moderate abdominal pain,,URGENT,Urgent evaluation for moderate abdominal pain,active
+U0118,Moderate Abdominal Pain,moderate abdominal pain,,URGENT,Urgent evaluation for moderate abdominal pain,active
+U0119,Moderate Abdominal Pain,moderate abdominal pain,,URGENT,Urgent evaluation for moderate abdominal pain,active
+U0120,Moderate Abdominal Pain,moderate abdominal pain,,URGENT,Urgent evaluation for moderate abdominal pain,active
+U0121,Moderate Abdominal Pain,moderate abdominal pain,,URGENT,Urgent evaluation for moderate abdominal pain,active
+U0122,Moderate Abdominal Pain,moderate abdominal pain,,URGENT,Urgent evaluation for moderate abdominal pain,active
+U0123,Moderate Abdominal Pain,moderate abdominal pain,,URGENT,Urgent evaluation for moderate abdominal pain,active
+U0124,Moderate Abdominal Pain,moderate abdominal pain,,URGENT,Urgent evaluation for moderate abdominal pain,active
+U0125,Moderate Abdominal Pain,moderate abdominal pain,,URGENT,Urgent evaluation for moderate abdominal pain,active
+U0126,Moderate Abdominal Pain,moderate abdominal pain,,URGENT,Urgent evaluation for moderate abdominal pain,active
+U0127,Moderate Abdominal Pain,moderate abdominal pain,,URGENT,Urgent evaluation for moderate abdominal pain,active
+U0128,Moderate Abdominal Pain,moderate abdominal pain,,URGENT,Urgent evaluation for moderate abdominal pain,active
+U0129,Moderate Abdominal Pain,moderate abdominal pain,,URGENT,Urgent evaluation for moderate abdominal pain,active
+U0130,Moderate Abdominal Pain,moderate abdominal pain,,URGENT,Urgent evaluation for moderate abdominal pain,active
+U0131,Moderate Abdominal Pain,moderate abdominal pain,,URGENT,Urgent evaluation for moderate abdominal pain,active
+U0132,Moderate Abdominal Pain,moderate abdominal pain,,URGENT,Urgent evaluation for moderate abdominal pain,active
+U0133,Moderate Abdominal Pain,moderate abdominal pain,,URGENT,Urgent evaluation for moderate abdominal pain,active
+U0134,Moderate Abdominal Pain,moderate abdominal pain,,URGENT,Urgent evaluation for moderate abdominal pain,active
+U0135,Moderate Abdominal Pain,moderate abdominal pain,,URGENT,Urgent evaluation for moderate abdominal pain,active
+U0136,Moderate Abdominal Pain,moderate abdominal pain,,URGENT,Urgent evaluation for moderate abdominal pain,active
+U0137,Moderate Abdominal Pain,moderate abdominal pain,,URGENT,Urgent evaluation for moderate abdominal pain,active
+U0138,Moderate Abdominal Pain,moderate abdominal pain,,URGENT,Urgent evaluation for moderate abdominal pain,active
+U0139,Moderate Abdominal Pain,moderate abdominal pain,,URGENT,Urgent evaluation for moderate abdominal pain,active
+U0140,Moderate Abdominal Pain,moderate abdominal pain,,URGENT,Urgent evaluation for moderate abdominal pain,active
+U0141,Moderate Abdominal Pain,moderate abdominal pain,,URGENT,Urgent evaluation for moderate abdominal pain,active
+U0142,Moderate Abdominal Pain,moderate abdominal pain,,URGENT,Urgent evaluation for moderate abdominal pain,active
+U0143,Moderate Abdominal Pain,moderate abdominal pain,,URGENT,Urgent evaluation for moderate abdominal pain,active
+U0144,Moderate Abdominal Pain,moderate abdominal pain,,URGENT,Urgent evaluation for moderate abdominal pain,active
+U0145,Moderate Abdominal Pain,moderate abdominal pain,,URGENT,Urgent evaluation for moderate abdominal pain,active
+U0146,Moderate Abdominal Pain,moderate abdominal pain,,URGENT,Urgent evaluation for moderate abdominal pain,active
+U0147,Moderate Abdominal Pain,moderate abdominal pain,,URGENT,Urgent evaluation for moderate abdominal pain,active
+U0148,Moderate Abdominal Pain,moderate abdominal pain,,URGENT,Urgent evaluation for moderate abdominal pain,active
+U0149,Moderate Abdominal Pain,moderate abdominal pain,,URGENT,Urgent evaluation for moderate abdominal pain,active
+U0150,Moderate Abdominal Pain,moderate abdominal pain,,URGENT,Urgent evaluation for moderate abdominal pain,active
+U0151,Asthma Flare,asthma flare,,URGENT,Urgent evaluation for asthma flare,active
+U0152,Asthma Flare,asthma flare,,URGENT,Urgent evaluation for asthma flare,active
+U0153,Asthma Flare,asthma flare,,URGENT,Urgent evaluation for asthma flare,active
+U0154,Asthma Flare,asthma flare,,URGENT,Urgent evaluation for asthma flare,active
+U0155,Asthma Flare,asthma flare,,URGENT,Urgent evaluation for asthma flare,active
+U0156,Asthma Flare,asthma flare,,URGENT,Urgent evaluation for asthma flare,active
+U0157,Asthma Flare,asthma flare,,URGENT,Urgent evaluation for asthma flare,active
+U0158,Asthma Flare,asthma flare,,URGENT,Urgent evaluation for asthma flare,active
+U0159,Asthma Flare,asthma flare,,URGENT,Urgent evaluation for asthma flare,active
+U0160,Asthma Flare,asthma flare,,URGENT,Urgent evaluation for asthma flare,active
+U0161,Asthma Flare,asthma flare,,URGENT,Urgent evaluation for asthma flare,active
+U0162,Asthma Flare,asthma flare,,URGENT,Urgent evaluation for asthma flare,active
+U0163,Asthma Flare,asthma flare,,URGENT,Urgent evaluation for asthma flare,active
+U0164,Asthma Flare,asthma flare,,URGENT,Urgent evaluation for asthma flare,active
+U0165,Asthma Flare,asthma flare,,URGENT,Urgent evaluation for asthma flare,active
+U0166,Asthma Flare,asthma flare,,URGENT,Urgent evaluation for asthma flare,active
+U0167,Asthma Flare,asthma flare,,URGENT,Urgent evaluation for asthma flare,active
+U0168,Asthma Flare,asthma flare,,URGENT,Urgent evaluation for asthma flare,active
+U0169,Asthma Flare,asthma flare,,URGENT,Urgent evaluation for asthma flare,active
+U0170,Asthma Flare,asthma flare,,URGENT,Urgent evaluation for asthma flare,active
+U0171,Asthma Flare,asthma flare,,URGENT,Urgent evaluation for asthma flare,active
+U0172,Asthma Flare,asthma flare,,URGENT,Urgent evaluation for asthma flare,active
+U0173,Asthma Flare,asthma flare,,URGENT,Urgent evaluation for asthma flare,active
+U0174,Asthma Flare,asthma flare,,URGENT,Urgent evaluation for asthma flare,active
+U0175,Asthma Flare,asthma flare,,URGENT,Urgent evaluation for asthma flare,active
+U0176,Asthma Flare,asthma flare,,URGENT,Urgent evaluation for asthma flare,active
+U0177,Asthma Flare,asthma flare,,URGENT,Urgent evaluation for asthma flare,active
+U0178,Asthma Flare,asthma flare,,URGENT,Urgent evaluation for asthma flare,active
+U0179,Asthma Flare,asthma flare,,URGENT,Urgent evaluation for asthma flare,active
+U0180,Asthma Flare,asthma flare,,URGENT,Urgent evaluation for asthma flare,active
+U0181,Asthma Flare,asthma flare,,URGENT,Urgent evaluation for asthma flare,active
+U0182,Asthma Flare,asthma flare,,URGENT,Urgent evaluation for asthma flare,active
+U0183,Asthma Flare,asthma flare,,URGENT,Urgent evaluation for asthma flare,active
+U0184,Asthma Flare,asthma flare,,URGENT,Urgent evaluation for asthma flare,active
+U0185,Asthma Flare,asthma flare,,URGENT,Urgent evaluation for asthma flare,active
+U0186,Asthma Flare,asthma flare,,URGENT,Urgent evaluation for asthma flare,active
+U0187,Asthma Flare,asthma flare,,URGENT,Urgent evaluation for asthma flare,active
+U0188,Asthma Flare,asthma flare,,URGENT,Urgent evaluation for asthma flare,active
+U0189,Asthma Flare,asthma flare,,URGENT,Urgent evaluation for asthma flare,active
+U0190,Asthma Flare,asthma flare,,URGENT,Urgent evaluation for asthma flare,active
+U0191,Asthma Flare,asthma flare,,URGENT,Urgent evaluation for asthma flare,active
+U0192,Asthma Flare,asthma flare,,URGENT,Urgent evaluation for asthma flare,active
+U0193,Asthma Flare,asthma flare,,URGENT,Urgent evaluation for asthma flare,active
+U0194,Asthma Flare,asthma flare,,URGENT,Urgent evaluation for asthma flare,active
+U0195,Asthma Flare,asthma flare,,URGENT,Urgent evaluation for asthma flare,active
+U0196,Asthma Flare,asthma flare,,URGENT,Urgent evaluation for asthma flare,active
+U0197,Asthma Flare,asthma flare,,URGENT,Urgent evaluation for asthma flare,active
+U0198,Asthma Flare,asthma flare,,URGENT,Urgent evaluation for asthma flare,active
+U0199,Asthma Flare,asthma flare,,URGENT,Urgent evaluation for asthma flare,active
+U0200,Asthma Flare,asthma flare,,URGENT,Urgent evaluation for asthma flare,active
+U0201,High Blood,high blood,,URGENT,Urgent evaluation for high blood,active
+U0202,High Blood,high blood,,URGENT,Urgent evaluation for high blood,active
+U0203,High Blood,high blood,,URGENT,Urgent evaluation for high blood,active
+U0204,High Blood,high blood,,URGENT,Urgent evaluation for high blood,active
+U0205,High Blood,high blood,,URGENT,Urgent evaluation for high blood,active
+U0206,High Blood,high blood,,URGENT,Urgent evaluation for high blood,active
+U0207,High Blood,high blood,,URGENT,Urgent evaluation for high blood,active
+U0208,High Blood,high blood,,URGENT,Urgent evaluation for high blood,active
+U0209,High Blood,high blood,,URGENT,Urgent evaluation for high blood,active
+U0210,High Blood,high blood,,URGENT,Urgent evaluation for high blood,active
+U0211,High Blood,high blood,,URGENT,Urgent evaluation for high blood,active
+U0212,High Blood,high blood,,URGENT,Urgent evaluation for high blood,active
+U0213,High Blood,high blood,,URGENT,Urgent evaluation for high blood,active
+U0214,High Blood,high blood,,URGENT,Urgent evaluation for high blood,active
+U0215,High Blood,high blood,,URGENT,Urgent evaluation for high blood,active
+U0216,High Blood,high blood,,URGENT,Urgent evaluation for high blood,active
+U0217,High Blood,high blood,,URGENT,Urgent evaluation for high blood,active
+U0218,High Blood,high blood,,URGENT,Urgent evaluation for high blood,active
+U0219,High Blood,high blood,,URGENT,Urgent evaluation for high blood,active
+U0220,High Blood,high blood,,URGENT,Urgent evaluation for high blood,active
+U0221,High Blood,high blood,,URGENT,Urgent evaluation for high blood,active
+U0222,High Blood,high blood,,URGENT,Urgent evaluation for high blood,active
+U0223,High Blood,high blood,,URGENT,Urgent evaluation for high blood,active
+U0224,High Blood,high blood,,URGENT,Urgent evaluation for high blood,active
+U0225,High Blood,high blood,,URGENT,Urgent evaluation for high blood,active
+U0226,High Blood,high blood,,URGENT,Urgent evaluation for high blood,active
+U0227,High Blood,high blood,,URGENT,Urgent evaluation for high blood,active
+U0228,High Blood,high blood,,URGENT,Urgent evaluation for high blood,active
+U0229,High Blood,high blood,,URGENT,Urgent evaluation for high blood,active
+U0230,High Blood,high blood,,URGENT,Urgent evaluation for high blood,active
+U0231,High Blood,high blood,,URGENT,Urgent evaluation for high blood,active
+U0232,High Blood,high blood,,URGENT,Urgent evaluation for high blood,active
+U0233,High Blood,high blood,,URGENT,Urgent evaluation for high blood,active
+U0234,High Blood,high blood,,URGENT,Urgent evaluation for high blood,active
+U0235,High Blood,high blood,,URGENT,Urgent evaluation for high blood,active
+U0236,High Blood,high blood,,URGENT,Urgent evaluation for high blood,active
+U0237,High Blood,high blood,,URGENT,Urgent evaluation for high blood,active
+U0238,High Blood,high blood,,URGENT,Urgent evaluation for high blood,active
+U0239,High Blood,high blood,,URGENT,Urgent evaluation for high blood,active
+U0240,High Blood,high blood,,URGENT,Urgent evaluation for high blood,active
+U0241,High Blood,high blood,,URGENT,Urgent evaluation for high blood,active
+U0242,High Blood,high blood,,URGENT,Urgent evaluation for high blood,active
+U0243,High Blood,high blood,,URGENT,Urgent evaluation for high blood,active
+U0244,High Blood,high blood,,URGENT,Urgent evaluation for high blood,active
+U0245,High Blood,high blood,,URGENT,Urgent evaluation for high blood,active
+U0246,High Blood,high blood,,URGENT,Urgent evaluation for high blood,active
+U0247,High Blood,high blood,,URGENT,Urgent evaluation for high blood,active
+U0248,High Blood,high blood,,URGENT,Urgent evaluation for high blood,active
+U0249,High Blood,high blood,,URGENT,Urgent evaluation for high blood,active
+U0250,High Blood,high blood,,URGENT,Urgent evaluation for high blood,active
+U0251,Infected Wound,infected wound,,URGENT,Urgent evaluation for infected wound,active
+U0252,Infected Wound,infected wound,,URGENT,Urgent evaluation for infected wound,active
+U0253,Infected Wound,infected wound,,URGENT,Urgent evaluation for infected wound,active
+U0254,Infected Wound,infected wound,,URGENT,Urgent evaluation for infected wound,active
+U0255,Infected Wound,infected wound,,URGENT,Urgent evaluation for infected wound,active
+U0256,Infected Wound,infected wound,,URGENT,Urgent evaluation for infected wound,active
+U0257,Infected Wound,infected wound,,URGENT,Urgent evaluation for infected wound,active
+U0258,Infected Wound,infected wound,,URGENT,Urgent evaluation for infected wound,active
+U0259,Infected Wound,infected wound,,URGENT,Urgent evaluation for infected wound,active
+U0260,Infected Wound,infected wound,,URGENT,Urgent evaluation for infected wound,active
+U0261,Infected Wound,infected wound,,URGENT,Urgent evaluation for infected wound,active
+U0262,Infected Wound,infected wound,,URGENT,Urgent evaluation for infected wound,active
+U0263,Infected Wound,infected wound,,URGENT,Urgent evaluation for infected wound,active
+U0264,Infected Wound,infected wound,,URGENT,Urgent evaluation for infected wound,active
+U0265,Infected Wound,infected wound,,URGENT,Urgent evaluation for infected wound,active
+U0266,Infected Wound,infected wound,,URGENT,Urgent evaluation for infected wound,active
+U0267,Infected Wound,infected wound,,URGENT,Urgent evaluation for infected wound,active
+U0268,Infected Wound,infected wound,,URGENT,Urgent evaluation for infected wound,active
+U0269,Infected Wound,infected wound,,URGENT,Urgent evaluation for infected wound,active
+U0270,Infected Wound,infected wound,,URGENT,Urgent evaluation for infected wound,active
+U0271,Infected Wound,infected wound,,URGENT,Urgent evaluation for infected wound,active
+U0272,Infected Wound,infected wound,,URGENT,Urgent evaluation for infected wound,active
+U0273,Infected Wound,infected wound,,URGENT,Urgent evaluation for infected wound,active
+U0274,Infected Wound,infected wound,,URGENT,Urgent evaluation for infected wound,active
+U0275,Infected Wound,infected wound,,URGENT,Urgent evaluation for infected wound,active
+U0276,Infected Wound,infected wound,,URGENT,Urgent evaluation for infected wound,active
+U0277,Infected Wound,infected wound,,URGENT,Urgent evaluation for infected wound,active
+U0278,Infected Wound,infected wound,,URGENT,Urgent evaluation for infected wound,active
+U0279,Infected Wound,infected wound,,URGENT,Urgent evaluation for infected wound,active
+U0280,Infected Wound,infected wound,,URGENT,Urgent evaluation for infected wound,active
+U0281,Infected Wound,infected wound,,URGENT,Urgent evaluation for infected wound,active
+U0282,Infected Wound,infected wound,,URGENT,Urgent evaluation for infected wound,active
+U0283,Infected Wound,infected wound,,URGENT,Urgent evaluation for infected wound,active
+U0284,Infected Wound,infected wound,,URGENT,Urgent evaluation for infected wound,active
+U0285,Infected Wound,infected wound,,URGENT,Urgent evaluation for infected wound,active
+U0286,Infected Wound,infected wound,,URGENT,Urgent evaluation for infected wound,active
+U0287,Infected Wound,infected wound,,URGENT,Urgent evaluation for infected wound,active
+U0288,Infected Wound,infected wound,,URGENT,Urgent evaluation for infected wound,active
+U0289,Infected Wound,infected wound,,URGENT,Urgent evaluation for infected wound,active
+U0290,Infected Wound,infected wound,,URGENT,Urgent evaluation for infected wound,active
+U0291,Infected Wound,infected wound,,URGENT,Urgent evaluation for infected wound,active
+U0292,Infected Wound,infected wound,,URGENT,Urgent evaluation for infected wound,active
+U0293,Infected Wound,infected wound,,URGENT,Urgent evaluation for infected wound,active
+U0294,Infected Wound,infected wound,,URGENT,Urgent evaluation for infected wound,active
+U0295,Infected Wound,infected wound,,URGENT,Urgent evaluation for infected wound,active
+U0296,Infected Wound,infected wound,,URGENT,Urgent evaluation for infected wound,active
+U0297,Infected Wound,infected wound,,URGENT,Urgent evaluation for infected wound,active
+U0298,Infected Wound,infected wound,,URGENT,Urgent evaluation for infected wound,active
+U0299,Infected Wound,infected wound,,URGENT,Urgent evaluation for infected wound,active
+U0300,Infected Wound,infected wound,,URGENT,Urgent evaluation for infected wound,active
+U0301,Ear Pain With Fever,ear pain with fever,,URGENT,Urgent evaluation for ear pain with fever,active
+U0302,Ear Pain With Fever,ear pain with fever,,URGENT,Urgent evaluation for ear pain with fever,active
+U0303,Ear Pain With Fever,ear pain with fever,,URGENT,Urgent evaluation for ear pain with fever,active
+U0304,Ear Pain With Fever,ear pain with fever,,URGENT,Urgent evaluation for ear pain with fever,active
+U0305,Ear Pain With Fever,ear pain with fever,,URGENT,Urgent evaluation for ear pain with fever,active
+U0306,Ear Pain With Fever,ear pain with fever,,URGENT,Urgent evaluation for ear pain with fever,active
+U0307,Ear Pain With Fever,ear pain with fever,,URGENT,Urgent evaluation for ear pain with fever,active
+U0308,Ear Pain With Fever,ear pain with fever,,URGENT,Urgent evaluation for ear pain with fever,active
+U0309,Ear Pain With Fever,ear pain with fever,,URGENT,Urgent evaluation for ear pain with fever,active
+U0310,Ear Pain With Fever,ear pain with fever,,URGENT,Urgent evaluation for ear pain with fever,active
+U0311,Ear Pain With Fever,ear pain with fever,,URGENT,Urgent evaluation for ear pain with fever,active
+U0312,Ear Pain With Fever,ear pain with fever,,URGENT,Urgent evaluation for ear pain with fever,active
+U0313,Ear Pain With Fever,ear pain with fever,,URGENT,Urgent evaluation for ear pain with fever,active
+U0314,Ear Pain With Fever,ear pain with fever,,URGENT,Urgent evaluation for ear pain with fever,active
+U0315,Ear Pain With Fever,ear pain with fever,,URGENT,Urgent evaluation for ear pain with fever,active
+U0316,Ear Pain With Fever,ear pain with fever,,URGENT,Urgent evaluation for ear pain with fever,active
+U0317,Ear Pain With Fever,ear pain with fever,,URGENT,Urgent evaluation for ear pain with fever,active
+U0318,Ear Pain With Fever,ear pain with fever,,URGENT,Urgent evaluation for ear pain with fever,active
+U0319,Ear Pain With Fever,ear pain with fever,,URGENT,Urgent evaluation for ear pain with fever,active
+U0320,Ear Pain With Fever,ear pain with fever,,URGENT,Urgent evaluation for ear pain with fever,active
+U0321,Ear Pain With Fever,ear pain with fever,,URGENT,Urgent evaluation for ear pain with fever,active
+U0322,Ear Pain With Fever,ear pain with fever,,URGENT,Urgent evaluation for ear pain with fever,active
+U0323,Ear Pain With Fever,ear pain with fever,,URGENT,Urgent evaluation for ear pain with fever,active
+U0324,Ear Pain With Fever,ear pain with fever,,URGENT,Urgent evaluation for ear pain with fever,active
+U0325,Ear Pain With Fever,ear pain with fever,,URGENT,Urgent evaluation for ear pain with fever,active
+U0326,Ear Pain With Fever,ear pain with fever,,URGENT,Urgent evaluation for ear pain with fever,active
+U0327,Ear Pain With Fever,ear pain with fever,,URGENT,Urgent evaluation for ear pain with fever,active
+U0328,Ear Pain With Fever,ear pain with fever,,URGENT,Urgent evaluation for ear pain with fever,active
+U0329,Ear Pain With Fever,ear pain with fever,,URGENT,Urgent evaluation for ear pain with fever,active
+U0330,Ear Pain With Fever,ear pain with fever,,URGENT,Urgent evaluation for ear pain with fever,active
+U0331,Ear Pain With Fever,ear pain with fever,,URGENT,Urgent evaluation for ear pain with fever,active
+U0332,Ear Pain With Fever,ear pain with fever,,URGENT,Urgent evaluation for ear pain with fever,active
+U0333,Ear Pain With Fever,ear pain with fever,,URGENT,Urgent evaluation for ear pain with fever,active
+U0334,Ear Pain With Fever,ear pain with fever,,URGENT,Urgent evaluation for ear pain with fever,active
+U0335,Ear Pain With Fever,ear pain with fever,,URGENT,Urgent evaluation for ear pain with fever,active
+U0336,Ear Pain With Fever,ear pain with fever,,URGENT,Urgent evaluation for ear pain with fever,active
+U0337,Ear Pain With Fever,ear pain with fever,,URGENT,Urgent evaluation for ear pain with fever,active
+U0338,Ear Pain With Fever,ear pain with fever,,URGENT,Urgent evaluation for ear pain with fever,active
+U0339,Ear Pain With Fever,ear pain with fever,,URGENT,Urgent evaluation for ear pain with fever,active
+U0340,Ear Pain With Fever,ear pain with fever,,URGENT,Urgent evaluation for ear pain with fever,active
+U0341,Ear Pain With Fever,ear pain with fever,,URGENT,Urgent evaluation for ear pain with fever,active
+U0342,Ear Pain With Fever,ear pain with fever,,URGENT,Urgent evaluation for ear pain with fever,active
+U0343,Ear Pain With Fever,ear pain with fever,,URGENT,Urgent evaluation for ear pain with fever,active
+U0344,Ear Pain With Fever,ear pain with fever,,URGENT,Urgent evaluation for ear pain with fever,active
+U0345,Ear Pain With Fever,ear pain with fever,,URGENT,Urgent evaluation for ear pain with fever,active
+U0346,Ear Pain With Fever,ear pain with fever,,URGENT,Urgent evaluation for ear pain with fever,active
+U0347,Ear Pain With Fever,ear pain with fever,,URGENT,Urgent evaluation for ear pain with fever,active
+U0348,Ear Pain With Fever,ear pain with fever,,URGENT,Urgent evaluation for ear pain with fever,active
+U0349,Ear Pain With Fever,ear pain with fever,,URGENT,Urgent evaluation for ear pain with fever,active
+U0350,Ear Pain With Fever,ear pain with fever,,URGENT,Urgent evaluation for ear pain with fever,active
+U0351,Dehydration Risk,dehydration risk,,URGENT,Urgent evaluation for dehydration risk,active
+U0352,Dehydration Risk,dehydration risk,,URGENT,Urgent evaluation for dehydration risk,active
+U0353,Dehydration Risk,dehydration risk,,URGENT,Urgent evaluation for dehydration risk,active
+U0354,Dehydration Risk,dehydration risk,,URGENT,Urgent evaluation for dehydration risk,active
+U0355,Dehydration Risk,dehydration risk,,URGENT,Urgent evaluation for dehydration risk,active
+U0356,Dehydration Risk,dehydration risk,,URGENT,Urgent evaluation for dehydration risk,active
+U0357,Dehydration Risk,dehydration risk,,URGENT,Urgent evaluation for dehydration risk,active
+U0358,Dehydration Risk,dehydration risk,,URGENT,Urgent evaluation for dehydration risk,active
+U0359,Dehydration Risk,dehydration risk,,URGENT,Urgent evaluation for dehydration risk,active
+U0360,Dehydration Risk,dehydration risk,,URGENT,Urgent evaluation for dehydration risk,active
+U0361,Dehydration Risk,dehydration risk,,URGENT,Urgent evaluation for dehydration risk,active
+U0362,Dehydration Risk,dehydration risk,,URGENT,Urgent evaluation for dehydration risk,active
+U0363,Dehydration Risk,dehydration risk,,URGENT,Urgent evaluation for dehydration risk,active
+U0364,Dehydration Risk,dehydration risk,,URGENT,Urgent evaluation for dehydration risk,active
+U0365,Dehydration Risk,dehydration risk,,URGENT,Urgent evaluation for dehydration risk,active
+U0366,Dehydration Risk,dehydration risk,,URGENT,Urgent evaluation for dehydration risk,active
+U0367,Dehydration Risk,dehydration risk,,URGENT,Urgent evaluation for dehydration risk,active
+U0368,Dehydration Risk,dehydration risk,,URGENT,Urgent evaluation for dehydration risk,active
+U0369,Dehydration Risk,dehydration risk,,URGENT,Urgent evaluation for dehydration risk,active
+U0370,Dehydration Risk,dehydration risk,,URGENT,Urgent evaluation for dehydration risk,active
+U0371,Dehydration Risk,dehydration risk,,URGENT,Urgent evaluation for dehydration risk,active
+U0372,Dehydration Risk,dehydration risk,,URGENT,Urgent evaluation for dehydration risk,active
+U0373,Dehydration Risk,dehydration risk,,URGENT,Urgent evaluation for dehydration risk,active
+U0374,Dehydration Risk,dehydration risk,,URGENT,Urgent evaluation for dehydration risk,active
+U0375,Dehydration Risk,dehydration risk,,URGENT,Urgent evaluation for dehydration risk,active
+U0376,Dehydration Risk,dehydration risk,,URGENT,Urgent evaluation for dehydration risk,active
+U0377,Dehydration Risk,dehydration risk,,URGENT,Urgent evaluation for dehydration risk,active
+U0378,Dehydration Risk,dehydration risk,,URGENT,Urgent evaluation for dehydration risk,active
+U0379,Dehydration Risk,dehydration risk,,URGENT,Urgent evaluation for dehydration risk,active
+U0380,Dehydration Risk,dehydration risk,,URGENT,Urgent evaluation for dehydration risk,active
+U0381,Dehydration Risk,dehydration risk,,URGENT,Urgent evaluation for dehydration risk,active
+U0382,Dehydration Risk,dehydration risk,,URGENT,Urgent evaluation for dehydration risk,active
+U0383,Dehydration Risk,dehydration risk,,URGENT,Urgent evaluation for dehydration risk,active
+U0384,Dehydration Risk,dehydration risk,,URGENT,Urgent evaluation for dehydration risk,active
+U0385,Dehydration Risk,dehydration risk,,URGENT,Urgent evaluation for dehydration risk,active
+U0386,Dehydration Risk,dehydration risk,,URGENT,Urgent evaluation for dehydration risk,active
+U0387,Dehydration Risk,dehydration risk,,URGENT,Urgent evaluation for dehydration risk,active
+U0388,Dehydration Risk,dehydration risk,,URGENT,Urgent evaluation for dehydration risk,active
+U0389,Dehydration Risk,dehydration risk,,URGENT,Urgent evaluation for dehydration risk,active
+U0390,Dehydration Risk,dehydration risk,,URGENT,Urgent evaluation for dehydration risk,active
+U0391,Dehydration Risk,dehydration risk,,URGENT,Urgent evaluation for dehydration risk,active
+U0392,Dehydration Risk,dehydration risk,,URGENT,Urgent evaluation for dehydration risk,active
+U0393,Dehydration Risk,dehydration risk,,URGENT,Urgent evaluation for dehydration risk,active
+U0394,Dehydration Risk,dehydration risk,,URGENT,Urgent evaluation for dehydration risk,active
+U0395,Dehydration Risk,dehydration risk,,URGENT,Urgent evaluation for dehydration risk,active
+U0396,Dehydration Risk,dehydration risk,,URGENT,Urgent evaluation for dehydration risk,active
+U0397,Dehydration Risk,dehydration risk,,URGENT,Urgent evaluation for dehydration risk,active
+U0398,Dehydration Risk,dehydration risk,,URGENT,Urgent evaluation for dehydration risk,active
+U0399,Dehydration Risk,dehydration risk,,URGENT,Urgent evaluation for dehydration risk,active
+U0400,Dehydration Risk,dehydration risk,,URGENT,Urgent evaluation for dehydration risk,active
+U0401,Pain 7/10,pain 7/10,,URGENT,Urgent evaluation for pain 7/10,active
+U0402,Pain 7/10,pain 7/10,,URGENT,Urgent evaluation for pain 7/10,active
+U0403,Pain 7/10,pain 7/10,,URGENT,Urgent evaluation for pain 7/10,active
+U0404,Pain 7/10,pain 7/10,,URGENT,Urgent evaluation for pain 7/10,active
+U0405,Pain 7/10,pain 7/10,,URGENT,Urgent evaluation for pain 7/10,active
+U0406,Pain 7/10,pain 7/10,,URGENT,Urgent evaluation for pain 7/10,active
+U0407,Pain 7/10,pain 7/10,,URGENT,Urgent evaluation for pain 7/10,active
+U0408,Pain 7/10,pain 7/10,,URGENT,Urgent evaluation for pain 7/10,active
+U0409,Pain 7/10,pain 7/10,,URGENT,Urgent evaluation for pain 7/10,active
+U0410,Pain 7/10,pain 7/10,,URGENT,Urgent evaluation for pain 7/10,active
+U0411,Pain 7/10,pain 7/10,,URGENT,Urgent evaluation for pain 7/10,active
+U0412,Pain 7/10,pain 7/10,,URGENT,Urgent evaluation for pain 7/10,active
+U0413,Pain 7/10,pain 7/10,,URGENT,Urgent evaluation for pain 7/10,active
+U0414,Pain 7/10,pain 7/10,,URGENT,Urgent evaluation for pain 7/10,active
+U0415,Pain 7/10,pain 7/10,,URGENT,Urgent evaluation for pain 7/10,active
+U0416,Pain 7/10,pain 7/10,,URGENT,Urgent evaluation for pain 7/10,active
+U0417,Pain 7/10,pain 7/10,,URGENT,Urgent evaluation for pain 7/10,active
+U0418,Pain 7/10,pain 7/10,,URGENT,Urgent evaluation for pain 7/10,active
+U0419,Pain 7/10,pain 7/10,,URGENT,Urgent evaluation for pain 7/10,active
+U0420,Pain 7/10,pain 7/10,,URGENT,Urgent evaluation for pain 7/10,active
+U0421,Pain 7/10,pain 7/10,,URGENT,Urgent evaluation for pain 7/10,active
+U0422,Pain 7/10,pain 7/10,,URGENT,Urgent evaluation for pain 7/10,active
+U0423,Pain 7/10,pain 7/10,,URGENT,Urgent evaluation for pain 7/10,active
+U0424,Pain 7/10,pain 7/10,,URGENT,Urgent evaluation for pain 7/10,active
+U0425,Pain 7/10,pain 7/10,,URGENT,Urgent evaluation for pain 7/10,active
+U0426,Pain 7/10,pain 7/10,,URGENT,Urgent evaluation for pain 7/10,active
+U0427,Pain 7/10,pain 7/10,,URGENT,Urgent evaluation for pain 7/10,active
+U0428,Pain 7/10,pain 7/10,,URGENT,Urgent evaluation for pain 7/10,active
+U0429,Pain 7/10,pain 7/10,,URGENT,Urgent evaluation for pain 7/10,active
+U0430,Pain 7/10,pain 7/10,,URGENT,Urgent evaluation for pain 7/10,active
+U0431,Pain 7/10,pain 7/10,,URGENT,Urgent evaluation for pain 7/10,active
+U0432,Pain 7/10,pain 7/10,,URGENT,Urgent evaluation for pain 7/10,active
+U0433,Pain 7/10,pain 7/10,,URGENT,Urgent evaluation for pain 7/10,active
+U0434,Pain 7/10,pain 7/10,,URGENT,Urgent evaluation for pain 7/10,active
+U0435,Pain 7/10,pain 7/10,,URGENT,Urgent evaluation for pain 7/10,active
+U0436,Pain 7/10,pain 7/10,,URGENT,Urgent evaluation for pain 7/10,active
+U0437,Pain 7/10,pain 7/10,,URGENT,Urgent evaluation for pain 7/10,active
+U0438,Pain 7/10,pain 7/10,,URGENT,Urgent evaluation for pain 7/10,active
+U0439,Pain 7/10,pain 7/10,,URGENT,Urgent evaluation for pain 7/10,active
+U0440,Pain 7/10,pain 7/10,,URGENT,Urgent evaluation for pain 7/10,active
+U0441,Pain 7/10,pain 7/10,,URGENT,Urgent evaluation for pain 7/10,active
+U0442,Pain 7/10,pain 7/10,,URGENT,Urgent evaluation for pain 7/10,active
+U0443,Pain 7/10,pain 7/10,,URGENT,Urgent evaluation for pain 7/10,active
+U0444,Pain 7/10,pain 7/10,,URGENT,Urgent evaluation for pain 7/10,active
+U0445,Pain 7/10,pain 7/10,,URGENT,Urgent evaluation for pain 7/10,active
+U0446,Pain 7/10,pain 7/10,,URGENT,Urgent evaluation for pain 7/10,active
+U0447,Pain 7/10,pain 7/10,,URGENT,Urgent evaluation for pain 7/10,active
+U0448,Pain 7/10,pain 7/10,,URGENT,Urgent evaluation for pain 7/10,active
+U0449,Pain 7/10,pain 7/10,,URGENT,Urgent evaluation for pain 7/10,active
+U0450,Pain 7/10,pain 7/10,,URGENT,Urgent evaluation for pain 7/10,active
+U0451,Child With Fever,child with fever,,URGENT,Urgent evaluation for child with fever,active
+U0452,Child With Fever,child with fever,,URGENT,Urgent evaluation for child with fever,active
+U0453,Child With Fever,child with fever,,URGENT,Urgent evaluation for child with fever,active
+U0454,Child With Fever,child with fever,,URGENT,Urgent evaluation for child with fever,active
+U0455,Child With Fever,child with fever,,URGENT,Urgent evaluation for child with fever,active
+U0456,Child With Fever,child with fever,,URGENT,Urgent evaluation for child with fever,active
+U0457,Child With Fever,child with fever,,URGENT,Urgent evaluation for child with fever,active
+U0458,Child With Fever,child with fever,,URGENT,Urgent evaluation for child with fever,active
+U0459,Child With Fever,child with fever,,URGENT,Urgent evaluation for child with fever,active
+U0460,Child With Fever,child with fever,,URGENT,Urgent evaluation for child with fever,active
+U0461,Child With Fever,child with fever,,URGENT,Urgent evaluation for child with fever,active
+U0462,Child With Fever,child with fever,,URGENT,Urgent evaluation for child with fever,active
+U0463,Child With Fever,child with fever,,URGENT,Urgent evaluation for child with fever,active
+U0464,Child With Fever,child with fever,,URGENT,Urgent evaluation for child with fever,active
+U0465,Child With Fever,child with fever,,URGENT,Urgent evaluation for child with fever,active
+U0466,Child With Fever,child with fever,,URGENT,Urgent evaluation for child with fever,active
+U0467,Child With Fever,child with fever,,URGENT,Urgent evaluation for child with fever,active
+U0468,Child With Fever,child with fever,,URGENT,Urgent evaluation for child with fever,active
+U0469,Child With Fever,child with fever,,URGENT,Urgent evaluation for child with fever,active
+U0470,Child With Fever,child with fever,,URGENT,Urgent evaluation for child with fever,active
+U0471,Child With Fever,child with fever,,URGENT,Urgent evaluation for child with fever,active
+U0472,Child With Fever,child with fever,,URGENT,Urgent evaluation for child with fever,active
+U0473,Child With Fever,child with fever,,URGENT,Urgent evaluation for child with fever,active
+U0474,Child With Fever,child with fever,,URGENT,Urgent evaluation for child with fever,active
+U0475,Child With Fever,child with fever,,URGENT,Urgent evaluation for child with fever,active
+U0476,Child With Fever,child with fever,,URGENT,Urgent evaluation for child with fever,active
+U0477,Child With Fever,child with fever,,URGENT,Urgent evaluation for child with fever,active
+U0478,Child With Fever,child with fever,,URGENT,Urgent evaluation for child with fever,active
+U0479,Child With Fever,child with fever,,URGENT,Urgent evaluation for child with fever,active
+U0480,Child With Fever,child with fever,,URGENT,Urgent evaluation for child with fever,active
+U0481,Child With Fever,child with fever,,URGENT,Urgent evaluation for child with fever,active
+U0482,Child With Fever,child with fever,,URGENT,Urgent evaluation for child with fever,active
+U0483,Child With Fever,child with fever,,URGENT,Urgent evaluation for child with fever,active
+U0484,Child With Fever,child with fever,,URGENT,Urgent evaluation for child with fever,active
+U0485,Child With Fever,child with fever,,URGENT,Urgent evaluation for child with fever,active
+U0486,Child With Fever,child with fever,,URGENT,Urgent evaluation for child with fever,active
+U0487,Child With Fever,child with fever,,URGENT,Urgent evaluation for child with fever,active
+U0488,Child With Fever,child with fever,,URGENT,Urgent evaluation for child with fever,active
+U0489,Child With Fever,child with fever,,URGENT,Urgent evaluation for child with fever,active
+U0490,Child With Fever,child with fever,,URGENT,Urgent evaluation for child with fever,active
+U0491,Child With Fever,child with fever,,URGENT,Urgent evaluation for child with fever,active
+U0492,Child With Fever,child with fever,,URGENT,Urgent evaluation for child with fever,active
+U0493,Child With Fever,child with fever,,URGENT,Urgent evaluation for child with fever,active
+U0494,Child With Fever,child with fever,,URGENT,Urgent evaluation for child with fever,active
+U0495,Child With Fever,child with fever,,URGENT,Urgent evaluation for child with fever,active
+U0496,Child With Fever,child with fever,,URGENT,Urgent evaluation for child with fever,active
+U0497,Child With Fever,child with fever,,URGENT,Urgent evaluation for child with fever,active
+U0498,Child With Fever,child with fever,,URGENT,Urgent evaluation for child with fever,active
+U0499,Child With Fever,child with fever,,URGENT,Urgent evaluation for child with fever,active
+U0500,Child With Fever,child with fever,,URGENT,Urgent evaluation for child with fever,active

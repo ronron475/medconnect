@@ -1,0 +1,837 @@
+hiligaynon_pattern,english_pattern,triage_level,severity,status
+3 ka adlaw na daw indi ko makabaton sang kamot,arm weakness,emergency,severe,active
+3 ka adlaw na gahubag kag gakatol lawas ko,body swelling,emergency,severe,active
+3 ka adlaw na gahubag lawas kag gakatol,body swelling,emergency,severe,active
+3 ka adlaw na gahubag lawas ko kag gakatol,body swelling,emergency,severe,active
+3 ka adlaw na indi ko makabaton sang kamot ko,hand arm weakness,emergency,severe,active
+3 ka adlaw na lemah ang kamot ko,hand arm weakness,emergency,severe,active
+5 ka adlaw na daw indi ko makabaton sang kamot,arm weakness,emergency,severe,active
+5 ka adlaw na gahubag kag gakatol lawas ko,body swelling,emergency,severe,active
+5 ka adlaw na gahubag lawas kag gakatol,body swelling,emergency,severe,active
+5 ka adlaw na gahubag lawas ko kag gakatol,body swelling,emergency,severe,active
+5 ka adlaw na indi ko makabaton sang kamot ko,hand arm weakness,emergency,severe,active
+5 ka adlaw na lemah ang kamot ko,hand arm weakness,emergency,severe,active
+bag-o lang daw indi ko makabaton sang kamot,arm weakness,emergency,severe,active
+bag-o lang gahubag kag gakatol lawas ko,body swelling,emergency,severe,active
+bag-o lang gahubag lawas kag gakatol,body swelling,emergency,severe,active
+bag-o lang gahubag lawas ko kag gakatol,body swelling,emergency,severe,active
+bag-o lang indi ko makabaton sang kamot ko,hand arm weakness,emergency,severe,active
+bag-o lang lemah ang kamot ko,hand arm weakness,emergency,severe,active
+budlay magginhawa,difficulty breathing,emergency,critical,active
+budlay magginhawa ko,difficulty breathing,emergency,critical,active
+daw indi ko makabaton,arm weakness,emergency,severe,active
+daw indi ko makabaton sang kamot,arm weakness,emergency,severe,active
+daw indi ko makahambal,speech difficulty,emergency,severe,active
+dugay na daw indi ko makabaton sang kamot,arm weakness,emergency,severe,active
+dugay na gahubag kag gakatol lawas ko,body swelling,emergency,severe,active
+dugay na gahubag lawas kag gakatol,body swelling,emergency,severe,active
+dugay na gahubag lawas ko kag gakatol,body swelling,emergency,severe,active
+dugay na indi ko makabaton sang kamot ko,hand arm weakness,emergency,severe,active
+dugay na lemah ang kamot ko,hand arm weakness,emergency,severe,active
+dula ginhawa,shortness of breath,emergency,critical,active
+gahabok dila ko,tongue swelling,emergency,severe,active
+gahabok lawas ko,body swelling,emergency,severe,active
+gahabok ngabil ko,lip swelling,emergency,severe,active
+gahabok tungod ko,throat swelling,emergency,severe,active
+gahubag kag gakatol lawas ko,body swelling,emergency,severe,active
+gahubag lawas kag gakatol,body swelling,emergency,severe,active
+gahubag lawas ko kag gakatol,body swelling,emergency,severe,active
+gasakit dughan ko,chest pain,emergency,severe,active
+grabe gid nagadugo,severe bleeding,emergency,critical,active
+grabe gid nagadugo bilat ko,severe vaginal bleeding,emergency,critical,active
+grabe gid nagdugo,severe bleeding,emergency,critical,active
+gusto ko magpakamatay,suicidal ideation,emergency,critical,active
+indi ko makabaton sang kamot ko,hand arm weakness,emergency,severe,active
+indi ko makaginhawa,cannot breathe,emergency,critical,active
+indi mapunggan ang dugo sa ari,uncontrolled penile bleeding,emergency,critical,active
+lemah ang kamot ko,hand arm weakness,emergency,severe,active
+masakit dughan,chest pain,emergency,severe,active
+masakit dughan ko,chest pain,emergency,severe,active
+nabunggo ko sa salakyan,vehicle collision,emergency,critical,active
+nagdugo ulo,head bleeding,emergency,critical,active
+nagdugo ulo ko,head bleeding,emergency,critical,active
+naguyam,seizure,emergency,critical,active
+naguyam ko,seizure,emergency,critical,active
+nakuryente,electrical injury,emergency,critical,active
+nasunog lawas ko,body burn,emergency,severe,active
+nautod,amputation,emergency,critical,active
+nautod ari ko,penis amputation,emergency,critical,active
+nautod tudlo ko,finger amputation,emergency,critical,active
+wala ko maka-ihi,urinary retention,emergency,severe,active
+gahabok bukongbukong ko,ankle swelling,non_urgent,mild,active
+gahabok tiil ko,foot swelling,non_urgent,mild,active
+gahabok tudlo ko,finger swelling,non_urgent,mild,active
+gahabok tuhod ko,knee swelling,non_urgent,mild,active
+gakatol bilat ko,vagina itching,non_urgent,mild,active
+gakatol kamot ko,hand itching,non_urgent,mild,active
+gakatol lawas ko,body itching,non_urgent,mild,active
+gakatol mata ko,eye itching,non_urgent,mild,active
+galagas buhok,hair loss,non_urgent,mild,active
+galagas buhok ko,hair loss,non_urgent,mild,active
+gapula kamot ko,hand redness,non_urgent,mild,active
+gapula mata,eye redness,non_urgent,mild,active
+gapula mata ko,eye redness,non_urgent,mild,active
+gasakit tudlo ko,finger pain,non_urgent,mild,active
+gasakit tuhod ko,knee pain,non_urgent,mild,active
+gasakit ulo ko,head pain,non_urgent,mild,active
+kakatol bilat,vaginal itching,non_urgent,mild,active
+kakatol bilat ko,vaginal itching,non_urgent,mild,active
+sakit ulo,headache,non_urgent,mild,active
+sakit ulo ko,head pain,non_urgent,mild,active
+ubo ko,cough,non_urgent,mild,active
+3 ka adlaw na ginahilanat gid ko,fever,urgent,moderate,active
+5 ka adlaw na ginahilanat gid ko,fever,urgent,moderate,active
+abaga akon hilanat gid,shoulder high fever,urgent,moderate,active
+abaga akon ko hilanat gid,shoulder high fever,urgent,moderate,active
+abaga hilanat gid,shoulder high fever,urgent,moderate,active
+abaga ko akon hilanat gid,shoulder high fever,urgent,moderate,active
+abaga ko hilanat gid,shoulder high fever,urgent,moderate,active
+akon abaga hilanat gid,shoulder high fever,urgent,moderate,active
+akon bukongbukong hilanat gid,ankle high fever,urgent,moderate,active
+akon dalunggan hilanat gid,ear high fever,urgent,moderate,active
+akon dughan hilanat gid,chest high fever,urgent,moderate,active
+akon ilong hilanat gid,nose high fever,urgent,moderate,active
+akon kilid mata hilanat gid,eyelid high fever,urgent,moderate,active
+akon ko abaga hilanat gid,shoulder high fever,urgent,moderate,active
+akon ko bukongbukong hilanat gid,ankle high fever,urgent,moderate,active
+akon ko dalunggan hilanat gid,ear high fever,urgent,moderate,active
+akon ko dughan hilanat gid,chest high fever,urgent,moderate,active
+akon ko ilong hilanat gid,nose high fever,urgent,moderate,active
+akon ko kilid mata hilanat gid,eyelid high fever,urgent,moderate,active
+akon ko ngabil hilanat gid,lip high fever,urgent,moderate,active
+akon ko pisngi hilanat gid,cheek high fever,urgent,moderate,active
+akon ko singit hilanat gid,groin high fever,urgent,moderate,active
+akon ko talukap mata hilanat gid,eyelid high fever,urgent,moderate,active
+akon ko tiyan hilanat gid,abdomen high fever,urgent,moderate,active
+akon ko tungod hilanat gid,throat high fever,urgent,moderate,active
+akon ngabil hilanat gid,lip high fever,urgent,moderate,active
+akon pisngi hilanat gid,cheek high fever,urgent,moderate,active
+akon singit hilanat gid,groin high fever,urgent,moderate,active
+akon talukap mata hilanat gid,eyelid high fever,urgent,moderate,active
+akon tiyan hilanat gid,abdomen high fever,urgent,moderate,active
+akon tungod hilanat gid,throat high fever,urgent,moderate,active
+alta presyon,hypertension,urgent,moderate,active
+alta presyon ko,hypertension,urgent,moderate,active
+bag-o lang ginahilanat gid ko,fever,urgent,moderate,active
+bukongbukong akon hilanat gid,ankle high fever,urgent,moderate,active
+bukongbukong akon ko hilanat gid,ankle high fever,urgent,moderate,active
+bukongbukong hilanat gid,ankle high fever,urgent,moderate,active
+bukongbukong ko akon hilanat gid,ankle high fever,urgent,moderate,active
+bukongbukong ko hilanat gid,ankle high fever,urgent,moderate,active
+dalunggan akon hilanat gid,ear high fever,urgent,moderate,active
+dalunggan akon ko hilanat gid,ear high fever,urgent,moderate,active
+dalunggan hilanat gid,ear high fever,urgent,moderate,active
+dalunggan ko akon hilanat gid,ear high fever,urgent,moderate,active
+dalunggan ko hilanat gid,ear high fever,urgent,moderate,active
+dugay na ginahilanat gid ko,fever,urgent,moderate,active
+dughan akon hilanat gid,chest high fever,urgent,moderate,active
+dughan akon ko hilanat gid,chest high fever,urgent,moderate,active
+dughan hilanat gid,chest high fever,urgent,moderate,active
+dughan ko akon hilanat gid,chest high fever,urgent,moderate,active
+dughan ko hilanat gid,chest high fever,urgent,moderate,active
+gadugo ari ko,penile bleeding,urgent,severe,active
+gadugo bilat ko,vaginal bleeding,urgent,severe,active
+gahabok ari ko,penis swelling,urgent,moderate,active
+gahabok bilat ko,vagina swelling,urgent,moderate,active
+gahabok itlog ko,testicle swelling,urgent,moderate,active
+gahabok kamot ko,hand swelling,urgent,moderate,active
+gahabok liog ko,neck swelling,urgent,moderate,active
+gahabok mata ko,eye swelling,urgent,moderate,active
+gahabok pisngi ko,cheek swelling,urgent,moderate,active
+gahabok talukap mata ko,eyelid swelling,urgent,moderate,active
+gahabok tiyan ko,abdomen swelling,urgent,moderate,active
+gahika dughan ko,chest cough,urgent,moderate,active
+gahubag itlog ko,testicular swelling,urgent,moderate,active
+gasakit ari ko,penis pain,urgent,moderate,active
+gasakit bilat ko,vagina pain,urgent,moderate,active
+gasakit dalunggan ko,ear pain,urgent,moderate,active
+gasakit itlog ko,testicle pain,urgent,moderate,active
+gasakit likod ko,back pain,urgent,moderate,active
+gasakit mata ko,eye pain,urgent,moderate,active
+gasakit tiyan ko,abdomen pain,urgent,moderate,active
+gasakit tungod ko,throat pain,urgent,moderate,active
+gid hilanat gid abaga akon,shoulder high fever,urgent,moderate,active
+gid hilanat gid abaga akon ko,shoulder high fever,urgent,moderate,active
+gid hilanat gid abaga ko,shoulder high fever,urgent,moderate,active
+gid hilanat gid abaga ko akon,shoulder high fever,urgent,moderate,active
+gid hilanat gid bukongbukong akon,ankle high fever,urgent,moderate,active
+gid hilanat gid bukongbukong akon ko,ankle high fever,urgent,moderate,active
+gid hilanat gid bukongbukong ko,ankle high fever,urgent,moderate,active
+gid hilanat gid bukongbukong ko akon,ankle high fever,urgent,moderate,active
+gid hilanat gid dalunggan akon,ear high fever,urgent,moderate,active
+gid hilanat gid dalunggan akon ko,ear high fever,urgent,moderate,active
+gid hilanat gid dalunggan ko,ear high fever,urgent,moderate,active
+gid hilanat gid dalunggan ko akon,ear high fever,urgent,moderate,active
+gid hilanat gid dughan akon,chest high fever,urgent,moderate,active
+gid hilanat gid dughan akon ko,chest high fever,urgent,moderate,active
+gid hilanat gid dughan ko,chest high fever,urgent,moderate,active
+gid hilanat gid dughan ko akon,chest high fever,urgent,moderate,active
+gid hilanat gid ilong akon,nose high fever,urgent,moderate,active
+gid hilanat gid ilong akon ko,nose high fever,urgent,moderate,active
+gid hilanat gid ilong ko,nose high fever,urgent,moderate,active
+gid hilanat gid ilong ko akon,nose high fever,urgent,moderate,active
+gid hilanat gid kilid mata akon,eyelid high fever,urgent,moderate,active
+gid hilanat gid kilid mata akon ko,eyelid high fever,urgent,moderate,active
+gid hilanat gid kilid mata ko,eyelid high fever,urgent,moderate,active
+gid hilanat gid kilid mata ko akon,eyelid high fever,urgent,moderate,active
+gid hilanat gid ngabil akon,lip high fever,urgent,moderate,active
+gid hilanat gid ngabil akon ko,lip high fever,urgent,moderate,active
+gid hilanat gid ngabil ko,lip high fever,urgent,moderate,active
+gid hilanat gid ngabil ko akon,lip high fever,urgent,moderate,active
+gid hilanat gid pisngi akon,cheek high fever,urgent,moderate,active
+gid hilanat gid pisngi akon ko,cheek high fever,urgent,moderate,active
+gid hilanat gid pisngi ko,cheek high fever,urgent,moderate,active
+gid hilanat gid pisngi ko akon,cheek high fever,urgent,moderate,active
+gid hilanat gid singit akon,groin high fever,urgent,moderate,active
+gid hilanat gid singit akon ko,groin high fever,urgent,moderate,active
+gid hilanat gid singit ko,groin high fever,urgent,moderate,active
+gid hilanat gid singit ko akon,groin high fever,urgent,moderate,active
+gid hilanat gid talukap mata akon,eyelid high fever,urgent,moderate,active
+gid hilanat gid talukap mata akon ko,eyelid high fever,urgent,moderate,active
+gid hilanat gid talukap mata ko,eyelid high fever,urgent,moderate,active
+gid hilanat gid talukap mata ko akon,eyelid high fever,urgent,moderate,active
+gid hilanat gid tiyan akon,abdomen high fever,urgent,moderate,active
+gid hilanat gid tiyan akon ko,abdomen high fever,urgent,moderate,active
+gid hilanat gid tiyan ko,abdomen high fever,urgent,moderate,active
+gid hilanat gid tiyan ko akon,abdomen high fever,urgent,moderate,active
+gid hilanat gid tungod akon,throat high fever,urgent,moderate,active
+gid hilanat gid tungod akon ko,throat high fever,urgent,moderate,active
+gid hilanat gid tungod ko,throat high fever,urgent,moderate,active
+gid hilanat gid tungod ko akon,throat high fever,urgent,moderate,active
+ginabaldom gid ko,severe abdominal pain,urgent,moderate,active
+ginahilanat gid,high fever,urgent,moderate,active
+ginahilanat gid ko,fever,urgent,moderate,active
+ginahilanat ko kag gahika ko,fever with cough,urgent,moderate,active
+ginahilanat lawas ko,body fever,urgent,moderate,active
+ginkagat sang ido,dog bite,urgent,moderate,active
+ginkagat sang ido ko,dog bite,urgent,moderate,active
+grabe gid hilanat gid abaga akon,shoulder high fever,urgent,moderate,active
+grabe gid hilanat gid abaga akon ko,shoulder high fever,urgent,moderate,active
+grabe gid hilanat gid abaga ko,shoulder high fever,urgent,moderate,active
+grabe gid hilanat gid abaga ko akon,shoulder high fever,urgent,moderate,active
+grabe gid hilanat gid bukongbukong akon,ankle high fever,urgent,moderate,active
+grabe gid hilanat gid bukongbukong akon ko,ankle high fever,urgent,moderate,active
+grabe gid hilanat gid bukongbukong ko,ankle high fever,urgent,moderate,active
+grabe gid hilanat gid bukongbukong ko akon,ankle high fever,urgent,moderate,active
+grabe gid hilanat gid dalunggan akon,ear high fever,urgent,moderate,active
+grabe gid hilanat gid dalunggan akon ko,ear high fever,urgent,moderate,active
+grabe gid hilanat gid dalunggan ko,ear high fever,urgent,moderate,active
+grabe gid hilanat gid dalunggan ko akon,ear high fever,urgent,moderate,active
+grabe gid hilanat gid dughan akon,chest high fever,urgent,moderate,active
+grabe gid hilanat gid dughan akon ko,chest high fever,urgent,moderate,active
+grabe gid hilanat gid dughan ko,chest high fever,urgent,moderate,active
+grabe gid hilanat gid dughan ko akon,chest high fever,urgent,moderate,active
+grabe gid hilanat gid ilong akon,nose high fever,urgent,moderate,active
+grabe gid hilanat gid ilong akon ko,nose high fever,urgent,moderate,active
+grabe gid hilanat gid ilong ko,nose high fever,urgent,moderate,active
+grabe gid hilanat gid ilong ko akon,nose high fever,urgent,moderate,active
+grabe gid hilanat gid kilid mata akon,eyelid high fever,urgent,moderate,active
+grabe gid hilanat gid kilid mata akon ko,eyelid high fever,urgent,moderate,active
+grabe gid hilanat gid kilid mata ko,eyelid high fever,urgent,moderate,active
+grabe gid hilanat gid kilid mata ko akon,eyelid high fever,urgent,moderate,active
+grabe gid hilanat gid ngabil akon,lip high fever,urgent,moderate,active
+grabe gid hilanat gid ngabil akon ko,lip high fever,urgent,moderate,active
+grabe gid hilanat gid ngabil ko,lip high fever,urgent,moderate,active
+grabe gid hilanat gid ngabil ko akon,lip high fever,urgent,moderate,active
+grabe gid hilanat gid pisngi akon,cheek high fever,urgent,moderate,active
+grabe gid hilanat gid pisngi akon ko,cheek high fever,urgent,moderate,active
+grabe gid hilanat gid pisngi ko,cheek high fever,urgent,moderate,active
+grabe gid hilanat gid pisngi ko akon,cheek high fever,urgent,moderate,active
+grabe gid hilanat gid singit akon,groin high fever,urgent,moderate,active
+grabe gid hilanat gid singit akon ko,groin high fever,urgent,moderate,active
+grabe gid hilanat gid singit ko,groin high fever,urgent,moderate,active
+grabe gid hilanat gid singit ko akon,groin high fever,urgent,moderate,active
+grabe gid hilanat gid talukap mata akon,eyelid high fever,urgent,moderate,active
+grabe gid hilanat gid talukap mata akon ko,eyelid high fever,urgent,moderate,active
+grabe gid hilanat gid talukap mata ko,eyelid high fever,urgent,moderate,active
+grabe gid hilanat gid talukap mata ko akon,eyelid high fever,urgent,moderate,active
+grabe gid hilanat gid tiyan akon,abdomen high fever,urgent,moderate,active
+grabe gid hilanat gid tiyan akon ko,abdomen high fever,urgent,moderate,active
+grabe gid hilanat gid tiyan ko,abdomen high fever,urgent,moderate,active
+grabe gid hilanat gid tiyan ko akon,abdomen high fever,urgent,moderate,active
+grabe gid hilanat gid tungod akon,throat high fever,urgent,moderate,active
+grabe gid hilanat gid tungod akon ko,throat high fever,urgent,moderate,active
+grabe gid hilanat gid tungod ko,throat high fever,urgent,moderate,active
+grabe gid hilanat gid tungod ko akon,throat high fever,urgent,moderate,active
+grabe hilanat gid abaga akon,shoulder high fever,urgent,moderate,active
+grabe hilanat gid abaga akon ko,shoulder high fever,urgent,moderate,active
+grabe hilanat gid abaga ko,shoulder high fever,urgent,moderate,active
+grabe hilanat gid abaga ko akon,shoulder high fever,urgent,moderate,active
+grabe hilanat gid bukongbukong akon,ankle high fever,urgent,moderate,active
+grabe hilanat gid bukongbukong akon ko,ankle high fever,urgent,moderate,active
+grabe hilanat gid bukongbukong ko,ankle high fever,urgent,moderate,active
+grabe hilanat gid bukongbukong ko akon,ankle high fever,urgent,moderate,active
+grabe hilanat gid dalunggan akon,ear high fever,urgent,moderate,active
+grabe hilanat gid dalunggan akon ko,ear high fever,urgent,moderate,active
+grabe hilanat gid dalunggan ko,ear high fever,urgent,moderate,active
+grabe hilanat gid dalunggan ko akon,ear high fever,urgent,moderate,active
+grabe hilanat gid dughan akon,chest high fever,urgent,moderate,active
+grabe hilanat gid dughan akon ko,chest high fever,urgent,moderate,active
+grabe hilanat gid dughan ko,chest high fever,urgent,moderate,active
+grabe hilanat gid dughan ko akon,chest high fever,urgent,moderate,active
+grabe hilanat gid ilong akon,nose high fever,urgent,moderate,active
+grabe hilanat gid ilong akon ko,nose high fever,urgent,moderate,active
+grabe hilanat gid ilong ko,nose high fever,urgent,moderate,active
+grabe hilanat gid ilong ko akon,nose high fever,urgent,moderate,active
+grabe hilanat gid kilid mata akon,eyelid high fever,urgent,moderate,active
+grabe hilanat gid kilid mata akon ko,eyelid high fever,urgent,moderate,active
+grabe hilanat gid kilid mata ko,eyelid high fever,urgent,moderate,active
+grabe hilanat gid kilid mata ko akon,eyelid high fever,urgent,moderate,active
+grabe hilanat gid ngabil akon,lip high fever,urgent,moderate,active
+grabe hilanat gid ngabil akon ko,lip high fever,urgent,moderate,active
+grabe hilanat gid ngabil ko,lip high fever,urgent,moderate,active
+grabe hilanat gid ngabil ko akon,lip high fever,urgent,moderate,active
+grabe hilanat gid pisngi akon,cheek high fever,urgent,moderate,active
+grabe hilanat gid pisngi akon ko,cheek high fever,urgent,moderate,active
+grabe hilanat gid pisngi ko,cheek high fever,urgent,moderate,active
+grabe hilanat gid pisngi ko akon,cheek high fever,urgent,moderate,active
+grabe hilanat gid singit akon,groin high fever,urgent,moderate,active
+grabe hilanat gid singit akon ko,groin high fever,urgent,moderate,active
+grabe hilanat gid singit ko,groin high fever,urgent,moderate,active
+grabe hilanat gid singit ko akon,groin high fever,urgent,moderate,active
+grabe hilanat gid talukap mata akon,eyelid high fever,urgent,moderate,active
+grabe hilanat gid talukap mata akon ko,eyelid high fever,urgent,moderate,active
+grabe hilanat gid talukap mata ko,eyelid high fever,urgent,moderate,active
+grabe hilanat gid talukap mata ko akon,eyelid high fever,urgent,moderate,active
+grabe hilanat gid tiyan akon,abdomen high fever,urgent,moderate,active
+grabe hilanat gid tiyan akon ko,abdomen high fever,urgent,moderate,active
+grabe hilanat gid tiyan ko,abdomen high fever,urgent,moderate,active
+grabe hilanat gid tiyan ko akon,abdomen high fever,urgent,moderate,active
+grabe hilanat gid tungod akon,throat high fever,urgent,moderate,active
+grabe hilanat gid tungod akon ko,throat high fever,urgent,moderate,active
+grabe hilanat gid tungod ko,throat high fever,urgent,moderate,active
+grabe hilanat gid tungod ko akon,throat high fever,urgent,moderate,active
+hilanat gid abaga,shoulder high fever,urgent,moderate,active
+hilanat gid abaga akon,shoulder high fever,urgent,moderate,active
+hilanat gid abaga akon ko,shoulder high fever,urgent,moderate,active
+hilanat gid abaga ko,shoulder high fever,urgent,moderate,active
+hilanat gid abaga ko akon,shoulder high fever,urgent,moderate,active
+hilanat gid akon abaga,shoulder high fever,urgent,moderate,active
+hilanat gid akon bukongbukong,ankle high fever,urgent,moderate,active
+hilanat gid akon dalunggan,ear high fever,urgent,moderate,active
+hilanat gid akon dughan,chest high fever,urgent,moderate,active
+hilanat gid akon ilong,nose high fever,urgent,moderate,active
+hilanat gid akon kilid mata,eyelid high fever,urgent,moderate,active
+hilanat gid akon ko abaga,shoulder high fever,urgent,moderate,active
+hilanat gid akon ko bukongbukong,ankle high fever,urgent,moderate,active
+hilanat gid akon ko dalunggan,ear high fever,urgent,moderate,active
+hilanat gid akon ko dughan,chest high fever,urgent,moderate,active
+hilanat gid akon ko ilong,nose high fever,urgent,moderate,active
+hilanat gid akon ko kilid mata,eyelid high fever,urgent,moderate,active
+hilanat gid akon ko ngabil,lip high fever,urgent,moderate,active
+hilanat gid akon ko pisngi,cheek high fever,urgent,moderate,active
+hilanat gid akon ko singit,groin high fever,urgent,moderate,active
+hilanat gid akon ko talukap mata,eyelid high fever,urgent,moderate,active
+hilanat gid akon ko tiyan,abdomen high fever,urgent,moderate,active
+hilanat gid akon ko tungod,throat high fever,urgent,moderate,active
+hilanat gid akon ngabil,lip high fever,urgent,moderate,active
+hilanat gid akon pisngi,cheek high fever,urgent,moderate,active
+hilanat gid akon singit,groin high fever,urgent,moderate,active
+hilanat gid akon talukap mata,eyelid high fever,urgent,moderate,active
+hilanat gid akon tiyan,abdomen high fever,urgent,moderate,active
+hilanat gid akon tungod,throat high fever,urgent,moderate,active
+hilanat gid bukongbukong,ankle high fever,urgent,moderate,active
+hilanat gid bukongbukong akon,ankle high fever,urgent,moderate,active
+hilanat gid bukongbukong akon ko,ankle high fever,urgent,moderate,active
+hilanat gid bukongbukong ko,ankle high fever,urgent,moderate,active
+hilanat gid bukongbukong ko akon,ankle high fever,urgent,moderate,active
+hilanat gid dalunggan,ear high fever,urgent,moderate,active
+hilanat gid dalunggan akon,ear high fever,urgent,moderate,active
+hilanat gid dalunggan akon ko,ear high fever,urgent,moderate,active
+hilanat gid dalunggan ko,ear high fever,urgent,moderate,active
+hilanat gid dalunggan ko akon,ear high fever,urgent,moderate,active
+hilanat gid dughan,chest high fever,urgent,moderate,active
+hilanat gid dughan akon,chest high fever,urgent,moderate,active
+hilanat gid dughan akon ko,chest high fever,urgent,moderate,active
+hilanat gid dughan ko,chest high fever,urgent,moderate,active
+hilanat gid dughan ko akon,chest high fever,urgent,moderate,active
+hilanat gid gid abaga,shoulder high fever,urgent,moderate,active
+hilanat gid gid abaga akon,shoulder high fever,urgent,moderate,active
+hilanat gid gid abaga akon ko,shoulder high fever,urgent,moderate,active
+hilanat gid gid abaga ko,shoulder high fever,urgent,moderate,active
+hilanat gid gid abaga ko akon,shoulder high fever,urgent,moderate,active
+hilanat gid gid akon abaga,shoulder high fever,urgent,moderate,active
+hilanat gid gid akon bukongbukong,ankle high fever,urgent,moderate,active
+hilanat gid gid akon dalunggan,ear high fever,urgent,moderate,active
+hilanat gid gid akon dughan,chest high fever,urgent,moderate,active
+hilanat gid gid akon ilong,nose high fever,urgent,moderate,active
+hilanat gid gid akon kilid mata,eyelid high fever,urgent,moderate,active
+hilanat gid gid akon ko abaga,shoulder high fever,urgent,moderate,active
+hilanat gid gid akon ko bukongbukong,ankle high fever,urgent,moderate,active
+hilanat gid gid akon ko dalunggan,ear high fever,urgent,moderate,active
+hilanat gid gid akon ko dughan,chest high fever,urgent,moderate,active
+hilanat gid gid akon ko ilong,nose high fever,urgent,moderate,active
+hilanat gid gid akon ko kilid mata,eyelid high fever,urgent,moderate,active
+hilanat gid gid akon ko ngabil,lip high fever,urgent,moderate,active
+hilanat gid gid akon ko pisngi,cheek high fever,urgent,moderate,active
+hilanat gid gid akon ko singit,groin high fever,urgent,moderate,active
+hilanat gid gid akon ko talukap mata,eyelid high fever,urgent,moderate,active
+hilanat gid gid akon ko tiyan,abdomen high fever,urgent,moderate,active
+hilanat gid gid akon ko tungod,throat high fever,urgent,moderate,active
+hilanat gid gid akon ngabil,lip high fever,urgent,moderate,active
+hilanat gid gid akon pisngi,cheek high fever,urgent,moderate,active
+hilanat gid gid akon singit,groin high fever,urgent,moderate,active
+hilanat gid gid akon talukap mata,eyelid high fever,urgent,moderate,active
+hilanat gid gid akon tiyan,abdomen high fever,urgent,moderate,active
+hilanat gid gid akon tungod,throat high fever,urgent,moderate,active
+hilanat gid gid bukongbukong,ankle high fever,urgent,moderate,active
+hilanat gid gid bukongbukong akon,ankle high fever,urgent,moderate,active
+hilanat gid gid bukongbukong akon ko,ankle high fever,urgent,moderate,active
+hilanat gid gid bukongbukong ko,ankle high fever,urgent,moderate,active
+hilanat gid gid bukongbukong ko akon,ankle high fever,urgent,moderate,active
+hilanat gid gid dalunggan,ear high fever,urgent,moderate,active
+hilanat gid gid dalunggan akon,ear high fever,urgent,moderate,active
+hilanat gid gid dalunggan akon ko,ear high fever,urgent,moderate,active
+hilanat gid gid dalunggan ko,ear high fever,urgent,moderate,active
+hilanat gid gid dalunggan ko akon,ear high fever,urgent,moderate,active
+hilanat gid gid dughan,chest high fever,urgent,moderate,active
+hilanat gid gid dughan akon,chest high fever,urgent,moderate,active
+hilanat gid gid dughan akon ko,chest high fever,urgent,moderate,active
+hilanat gid gid dughan ko,chest high fever,urgent,moderate,active
+hilanat gid gid dughan ko akon,chest high fever,urgent,moderate,active
+hilanat gid gid ilong,nose high fever,urgent,moderate,active
+hilanat gid gid ilong akon,nose high fever,urgent,moderate,active
+hilanat gid gid ilong akon ko,nose high fever,urgent,moderate,active
+hilanat gid gid ilong ko,nose high fever,urgent,moderate,active
+hilanat gid gid ilong ko akon,nose high fever,urgent,moderate,active
+hilanat gid gid kilid mata,eyelid high fever,urgent,moderate,active
+hilanat gid gid kilid mata akon,eyelid high fever,urgent,moderate,active
+hilanat gid gid kilid mata akon ko,eyelid high fever,urgent,moderate,active
+hilanat gid gid kilid mata ko,eyelid high fever,urgent,moderate,active
+hilanat gid gid kilid mata ko akon,eyelid high fever,urgent,moderate,active
+hilanat gid gid ko abaga,shoulder high fever,urgent,moderate,active
+hilanat gid gid ko akon abaga,shoulder high fever,urgent,moderate,active
+hilanat gid gid ko akon bukongbukong,ankle high fever,urgent,moderate,active
+hilanat gid gid ko akon dalunggan,ear high fever,urgent,moderate,active
+hilanat gid gid ko akon dughan,chest high fever,urgent,moderate,active
+hilanat gid gid ko akon ilong,nose high fever,urgent,moderate,active
+hilanat gid gid ko akon kilid mata,eyelid high fever,urgent,moderate,active
+hilanat gid gid ko akon ngabil,lip high fever,urgent,moderate,active
+hilanat gid gid ko akon pisngi,cheek high fever,urgent,moderate,active
+hilanat gid gid ko akon singit,groin high fever,urgent,moderate,active
+hilanat gid gid ko akon talukap mata,eyelid high fever,urgent,moderate,active
+hilanat gid gid ko akon tiyan,abdomen high fever,urgent,moderate,active
+hilanat gid gid ko akon tungod,throat high fever,urgent,moderate,active
+hilanat gid gid ko bukongbukong,ankle high fever,urgent,moderate,active
+hilanat gid gid ko dalunggan,ear high fever,urgent,moderate,active
+hilanat gid gid ko dughan,chest high fever,urgent,moderate,active
+hilanat gid gid ko ilong,nose high fever,urgent,moderate,active
+hilanat gid gid ko kilid mata,eyelid high fever,urgent,moderate,active
+hilanat gid gid ko ngabil,lip high fever,urgent,moderate,active
+hilanat gid gid ko pisngi,cheek high fever,urgent,moderate,active
+hilanat gid gid ko singit,groin high fever,urgent,moderate,active
+hilanat gid gid ko talukap mata,eyelid high fever,urgent,moderate,active
+hilanat gid gid ko tiyan,abdomen high fever,urgent,moderate,active
+hilanat gid gid ko tungod,throat high fever,urgent,moderate,active
+hilanat gid gid ngabil,lip high fever,urgent,moderate,active
+hilanat gid gid ngabil akon,lip high fever,urgent,moderate,active
+hilanat gid gid ngabil akon ko,lip high fever,urgent,moderate,active
+hilanat gid gid ngabil ko,lip high fever,urgent,moderate,active
+hilanat gid gid ngabil ko akon,lip high fever,urgent,moderate,active
+hilanat gid gid pisngi,cheek high fever,urgent,moderate,active
+hilanat gid gid pisngi akon,cheek high fever,urgent,moderate,active
+hilanat gid gid pisngi akon ko,cheek high fever,urgent,moderate,active
+hilanat gid gid pisngi ko,cheek high fever,urgent,moderate,active
+hilanat gid gid pisngi ko akon,cheek high fever,urgent,moderate,active
+hilanat gid gid singit,groin high fever,urgent,moderate,active
+hilanat gid gid singit akon,groin high fever,urgent,moderate,active
+hilanat gid gid singit akon ko,groin high fever,urgent,moderate,active
+hilanat gid gid singit ko,groin high fever,urgent,moderate,active
+hilanat gid gid singit ko akon,groin high fever,urgent,moderate,active
+hilanat gid gid talukap mata,eyelid high fever,urgent,moderate,active
+hilanat gid gid talukap mata akon,eyelid high fever,urgent,moderate,active
+hilanat gid gid talukap mata akon ko,eyelid high fever,urgent,moderate,active
+hilanat gid gid talukap mata ko,eyelid high fever,urgent,moderate,active
+hilanat gid gid talukap mata ko akon,eyelid high fever,urgent,moderate,active
+hilanat gid gid tiyan,abdomen high fever,urgent,moderate,active
+hilanat gid gid tiyan akon,abdomen high fever,urgent,moderate,active
+hilanat gid gid tiyan akon ko,abdomen high fever,urgent,moderate,active
+hilanat gid gid tiyan ko,abdomen high fever,urgent,moderate,active
+hilanat gid gid tiyan ko akon,abdomen high fever,urgent,moderate,active
+hilanat gid gid tungod,throat high fever,urgent,moderate,active
+hilanat gid gid tungod akon,throat high fever,urgent,moderate,active
+hilanat gid gid tungod akon ko,throat high fever,urgent,moderate,active
+hilanat gid gid tungod ko,throat high fever,urgent,moderate,active
+hilanat gid gid tungod ko akon,throat high fever,urgent,moderate,active
+hilanat gid grabe abaga,shoulder high fever,urgent,moderate,active
+hilanat gid grabe abaga akon,shoulder high fever,urgent,moderate,active
+hilanat gid grabe abaga akon ko,shoulder high fever,urgent,moderate,active
+hilanat gid grabe abaga ko,shoulder high fever,urgent,moderate,active
+hilanat gid grabe abaga ko akon,shoulder high fever,urgent,moderate,active
+hilanat gid grabe bukongbukong,ankle high fever,urgent,moderate,active
+hilanat gid grabe bukongbukong akon,ankle high fever,urgent,moderate,active
+hilanat gid grabe bukongbukong akon ko,ankle high fever,urgent,moderate,active
+hilanat gid grabe bukongbukong ko,ankle high fever,urgent,moderate,active
+hilanat gid grabe bukongbukong ko akon,ankle high fever,urgent,moderate,active
+hilanat gid grabe dalunggan,ear high fever,urgent,moderate,active
+hilanat gid grabe dalunggan akon,ear high fever,urgent,moderate,active
+hilanat gid grabe dalunggan akon ko,ear high fever,urgent,moderate,active
+hilanat gid grabe dalunggan ko,ear high fever,urgent,moderate,active
+hilanat gid grabe dalunggan ko akon,ear high fever,urgent,moderate,active
+hilanat gid grabe dughan,chest high fever,urgent,moderate,active
+hilanat gid grabe dughan akon,chest high fever,urgent,moderate,active
+hilanat gid grabe dughan akon ko,chest high fever,urgent,moderate,active
+hilanat gid grabe dughan ko,chest high fever,urgent,moderate,active
+hilanat gid grabe dughan ko akon,chest high fever,urgent,moderate,active
+hilanat gid grabe gid abaga,shoulder high fever,urgent,moderate,active
+hilanat gid grabe gid abaga akon,shoulder high fever,urgent,moderate,active
+hilanat gid grabe gid abaga akon ko,shoulder high fever,urgent,moderate,active
+hilanat gid grabe gid abaga ko,shoulder high fever,urgent,moderate,active
+hilanat gid grabe gid abaga ko akon,shoulder high fever,urgent,moderate,active
+hilanat gid grabe gid bukongbukong,ankle high fever,urgent,moderate,active
+hilanat gid grabe gid bukongbukong akon,ankle high fever,urgent,moderate,active
+hilanat gid grabe gid bukongbukong akon ko,ankle high fever,urgent,moderate,active
+hilanat gid grabe gid bukongbukong ko,ankle high fever,urgent,moderate,active
+hilanat gid grabe gid bukongbukong ko akon,ankle high fever,urgent,moderate,active
+hilanat gid grabe gid dalunggan,ear high fever,urgent,moderate,active
+hilanat gid grabe gid dalunggan akon,ear high fever,urgent,moderate,active
+hilanat gid grabe gid dalunggan akon ko,ear high fever,urgent,moderate,active
+hilanat gid grabe gid dalunggan ko,ear high fever,urgent,moderate,active
+hilanat gid grabe gid dalunggan ko akon,ear high fever,urgent,moderate,active
+hilanat gid grabe gid dughan,chest high fever,urgent,moderate,active
+hilanat gid grabe gid dughan akon,chest high fever,urgent,moderate,active
+hilanat gid grabe gid dughan akon ko,chest high fever,urgent,moderate,active
+hilanat gid grabe gid dughan ko,chest high fever,urgent,moderate,active
+hilanat gid grabe gid dughan ko akon,chest high fever,urgent,moderate,active
+hilanat gid grabe gid ilong,nose high fever,urgent,moderate,active
+hilanat gid grabe gid ilong akon,nose high fever,urgent,moderate,active
+hilanat gid grabe gid ilong akon ko,nose high fever,urgent,moderate,active
+hilanat gid grabe gid ilong ko,nose high fever,urgent,moderate,active
+hilanat gid grabe gid ilong ko akon,nose high fever,urgent,moderate,active
+hilanat gid grabe gid kilid mata,eyelid high fever,urgent,moderate,active
+hilanat gid grabe gid kilid mata akon,eyelid high fever,urgent,moderate,active
+hilanat gid grabe gid kilid mata akon ko,eyelid high fever,urgent,moderate,active
+hilanat gid grabe gid kilid mata ko,eyelid high fever,urgent,moderate,active
+hilanat gid grabe gid kilid mata ko akon,eyelid high fever,urgent,moderate,active
+hilanat gid grabe gid ngabil,lip high fever,urgent,moderate,active
+hilanat gid grabe gid ngabil akon,lip high fever,urgent,moderate,active
+hilanat gid grabe gid ngabil akon ko,lip high fever,urgent,moderate,active
+hilanat gid grabe gid ngabil ko,lip high fever,urgent,moderate,active
+hilanat gid grabe gid ngabil ko akon,lip high fever,urgent,moderate,active
+hilanat gid grabe gid pisngi,cheek high fever,urgent,moderate,active
+hilanat gid grabe gid pisngi akon,cheek high fever,urgent,moderate,active
+hilanat gid grabe gid pisngi akon ko,cheek high fever,urgent,moderate,active
+hilanat gid grabe gid pisngi ko,cheek high fever,urgent,moderate,active
+hilanat gid grabe gid pisngi ko akon,cheek high fever,urgent,moderate,active
+hilanat gid grabe gid singit,groin high fever,urgent,moderate,active
+hilanat gid grabe gid singit akon,groin high fever,urgent,moderate,active
+hilanat gid grabe gid singit akon ko,groin high fever,urgent,moderate,active
+hilanat gid grabe gid singit ko,groin high fever,urgent,moderate,active
+hilanat gid grabe gid singit ko akon,groin high fever,urgent,moderate,active
+hilanat gid grabe gid talukap mata,eyelid high fever,urgent,moderate,active
+hilanat gid grabe gid talukap mata akon,eyelid high fever,urgent,moderate,active
+hilanat gid grabe gid talukap mata akon ko,eyelid high fever,urgent,moderate,active
+hilanat gid grabe gid talukap mata ko,eyelid high fever,urgent,moderate,active
+hilanat gid grabe gid talukap mata ko akon,eyelid high fever,urgent,moderate,active
+hilanat gid grabe gid tiyan,abdomen high fever,urgent,moderate,active
+hilanat gid grabe gid tiyan akon,abdomen high fever,urgent,moderate,active
+hilanat gid grabe gid tiyan akon ko,abdomen high fever,urgent,moderate,active
+hilanat gid grabe gid tiyan ko,abdomen high fever,urgent,moderate,active
+hilanat gid grabe gid tiyan ko akon,abdomen high fever,urgent,moderate,active
+hilanat gid grabe gid tungod,throat high fever,urgent,moderate,active
+hilanat gid grabe gid tungod akon,throat high fever,urgent,moderate,active
+hilanat gid grabe gid tungod akon ko,throat high fever,urgent,moderate,active
+hilanat gid grabe gid tungod ko,throat high fever,urgent,moderate,active
+hilanat gid grabe gid tungod ko akon,throat high fever,urgent,moderate,active
+hilanat gid grabe ilong,nose high fever,urgent,moderate,active
+hilanat gid grabe ilong akon,nose high fever,urgent,moderate,active
+hilanat gid grabe ilong akon ko,nose high fever,urgent,moderate,active
+hilanat gid grabe ilong ko,nose high fever,urgent,moderate,active
+hilanat gid grabe ilong ko akon,nose high fever,urgent,moderate,active
+hilanat gid grabe kilid mata,eyelid high fever,urgent,moderate,active
+hilanat gid grabe kilid mata akon,eyelid high fever,urgent,moderate,active
+hilanat gid grabe kilid mata akon ko,eyelid high fever,urgent,moderate,active
+hilanat gid grabe kilid mata ko,eyelid high fever,urgent,moderate,active
+hilanat gid grabe kilid mata ko akon,eyelid high fever,urgent,moderate,active
+hilanat gid grabe ngabil,lip high fever,urgent,moderate,active
+hilanat gid grabe ngabil akon,lip high fever,urgent,moderate,active
+hilanat gid grabe ngabil akon ko,lip high fever,urgent,moderate,active
+hilanat gid grabe ngabil ko,lip high fever,urgent,moderate,active
+hilanat gid grabe ngabil ko akon,lip high fever,urgent,moderate,active
+hilanat gid grabe pisngi,cheek high fever,urgent,moderate,active
+hilanat gid grabe pisngi akon,cheek high fever,urgent,moderate,active
+hilanat gid grabe pisngi akon ko,cheek high fever,urgent,moderate,active
+hilanat gid grabe pisngi ko,cheek high fever,urgent,moderate,active
+hilanat gid grabe pisngi ko akon,cheek high fever,urgent,moderate,active
+hilanat gid grabe singit,groin high fever,urgent,moderate,active
+hilanat gid grabe singit akon,groin high fever,urgent,moderate,active
+hilanat gid grabe singit akon ko,groin high fever,urgent,moderate,active
+hilanat gid grabe singit ko,groin high fever,urgent,moderate,active
+hilanat gid grabe singit ko akon,groin high fever,urgent,moderate,active
+hilanat gid grabe talukap mata,eyelid high fever,urgent,moderate,active
+hilanat gid grabe talukap mata akon,eyelid high fever,urgent,moderate,active
+hilanat gid grabe talukap mata akon ko,eyelid high fever,urgent,moderate,active
+hilanat gid grabe talukap mata ko,eyelid high fever,urgent,moderate,active
+hilanat gid grabe talukap mata ko akon,eyelid high fever,urgent,moderate,active
+hilanat gid grabe tiyan,abdomen high fever,urgent,moderate,active
+hilanat gid grabe tiyan akon,abdomen high fever,urgent,moderate,active
+hilanat gid grabe tiyan akon ko,abdomen high fever,urgent,moderate,active
+hilanat gid grabe tiyan ko,abdomen high fever,urgent,moderate,active
+hilanat gid grabe tiyan ko akon,abdomen high fever,urgent,moderate,active
+hilanat gid grabe tungod,throat high fever,urgent,moderate,active
+hilanat gid grabe tungod akon,throat high fever,urgent,moderate,active
+hilanat gid grabe tungod akon ko,throat high fever,urgent,moderate,active
+hilanat gid grabe tungod ko,throat high fever,urgent,moderate,active
+hilanat gid grabe tungod ko akon,throat high fever,urgent,moderate,active
+hilanat gid ilong,nose high fever,urgent,moderate,active
+hilanat gid ilong akon,nose high fever,urgent,moderate,active
+hilanat gid ilong akon ko,nose high fever,urgent,moderate,active
+hilanat gid ilong ko,nose high fever,urgent,moderate,active
+hilanat gid ilong ko akon,nose high fever,urgent,moderate,active
+hilanat gid kilid mata,eyelid high fever,urgent,moderate,active
+hilanat gid kilid mata akon,eyelid high fever,urgent,moderate,active
+hilanat gid kilid mata akon ko,eyelid high fever,urgent,moderate,active
+hilanat gid kilid mata ko,eyelid high fever,urgent,moderate,active
+hilanat gid kilid mata ko akon,eyelid high fever,urgent,moderate,active
+hilanat gid ko abaga,shoulder high fever,urgent,moderate,active
+hilanat gid ko akon abaga,shoulder high fever,urgent,moderate,active
+hilanat gid ko akon bukongbukong,ankle high fever,urgent,moderate,active
+hilanat gid ko akon dalunggan,ear high fever,urgent,moderate,active
+hilanat gid ko akon dughan,chest high fever,urgent,moderate,active
+hilanat gid ko akon ilong,nose high fever,urgent,moderate,active
+hilanat gid ko akon kilid mata,eyelid high fever,urgent,moderate,active
+hilanat gid ko akon ngabil,lip high fever,urgent,moderate,active
+hilanat gid ko akon pisngi,cheek high fever,urgent,moderate,active
+hilanat gid ko akon singit,groin high fever,urgent,moderate,active
+hilanat gid ko akon talukap mata,eyelid high fever,urgent,moderate,active
+hilanat gid ko akon tiyan,abdomen high fever,urgent,moderate,active
+hilanat gid ko akon tungod,throat high fever,urgent,moderate,active
+hilanat gid ko bukongbukong,ankle high fever,urgent,moderate,active
+hilanat gid ko dalunggan,ear high fever,urgent,moderate,active
+hilanat gid ko dughan,chest high fever,urgent,moderate,active
+hilanat gid ko ilong,nose high fever,urgent,moderate,active
+hilanat gid ko kilid mata,eyelid high fever,urgent,moderate,active
+hilanat gid ko ngabil,lip high fever,urgent,moderate,active
+hilanat gid ko pisngi,cheek high fever,urgent,moderate,active
+hilanat gid ko singit,groin high fever,urgent,moderate,active
+hilanat gid ko talukap mata,eyelid high fever,urgent,moderate,active
+hilanat gid ko tiyan,abdomen high fever,urgent,moderate,active
+hilanat gid ko tungod,throat high fever,urgent,moderate,active
+hilanat gid ngabil,lip high fever,urgent,moderate,active
+hilanat gid ngabil akon,lip high fever,urgent,moderate,active
+hilanat gid ngabil akon ko,lip high fever,urgent,moderate,active
+hilanat gid ngabil ko,lip high fever,urgent,moderate,active
+hilanat gid ngabil ko akon,lip high fever,urgent,moderate,active
+hilanat gid pisngi,cheek high fever,urgent,moderate,active
+hilanat gid pisngi akon,cheek high fever,urgent,moderate,active
+hilanat gid pisngi akon ko,cheek high fever,urgent,moderate,active
+hilanat gid pisngi ko,cheek high fever,urgent,moderate,active
+hilanat gid pisngi ko akon,cheek high fever,urgent,moderate,active
+hilanat gid singit,groin high fever,urgent,moderate,active
+hilanat gid singit akon,groin high fever,urgent,moderate,active
+hilanat gid singit akon ko,groin high fever,urgent,moderate,active
+hilanat gid singit ko,groin high fever,urgent,moderate,active
+hilanat gid singit ko akon,groin high fever,urgent,moderate,active
+hilanat gid talukap mata,eyelid high fever,urgent,moderate,active
+hilanat gid talukap mata akon,eyelid high fever,urgent,moderate,active
+hilanat gid talukap mata akon ko,eyelid high fever,urgent,moderate,active
+hilanat gid talukap mata ko,eyelid high fever,urgent,moderate,active
+hilanat gid talukap mata ko akon,eyelid high fever,urgent,moderate,active
+hilanat gid tiyan,abdomen high fever,urgent,moderate,active
+hilanat gid tiyan akon,abdomen high fever,urgent,moderate,active
+hilanat gid tiyan akon ko,abdomen high fever,urgent,moderate,active
+hilanat gid tiyan ko,abdomen high fever,urgent,moderate,active
+hilanat gid tiyan ko akon,abdomen high fever,urgent,moderate,active
+hilanat gid tungod,throat high fever,urgent,moderate,active
+hilanat gid tungod akon,throat high fever,urgent,moderate,active
+hilanat gid tungod akon ko,throat high fever,urgent,moderate,active
+hilanat gid tungod ko,throat high fever,urgent,moderate,active
+hilanat gid tungod ko akon,throat high fever,urgent,moderate,active
+ilong akon hilanat gid,nose high fever,urgent,moderate,active
+ilong akon ko hilanat gid,nose high fever,urgent,moderate,active
+ilong hilanat gid,nose high fever,urgent,moderate,active
+ilong ko akon hilanat gid,nose high fever,urgent,moderate,active
+ilong ko hilanat gid,nose high fever,urgent,moderate,active
+kilid mata akon hilanat gid,eyelid high fever,urgent,moderate,active
+kilid mata akon ko hilanat gid,eyelid high fever,urgent,moderate,active
+kilid mata hilanat gid,eyelid high fever,urgent,moderate,active
+kilid mata ko akon hilanat gid,eyelid high fever,urgent,moderate,active
+kilid mata ko hilanat gid,eyelid high fever,urgent,moderate,active
+ko abaga hilanat gid,shoulder high fever,urgent,moderate,active
+ko akon abaga hilanat gid,shoulder high fever,urgent,moderate,active
+ko akon bukongbukong hilanat gid,ankle high fever,urgent,moderate,active
+ko akon dalunggan hilanat gid,ear high fever,urgent,moderate,active
+ko akon dughan hilanat gid,chest high fever,urgent,moderate,active
+ko akon ilong hilanat gid,nose high fever,urgent,moderate,active
+ko akon kilid mata hilanat gid,eyelid high fever,urgent,moderate,active
+ko akon ngabil hilanat gid,lip high fever,urgent,moderate,active
+ko akon pisngi hilanat gid,cheek high fever,urgent,moderate,active
+ko akon singit hilanat gid,groin high fever,urgent,moderate,active
+ko akon talukap mata hilanat gid,eyelid high fever,urgent,moderate,active
+ko akon tiyan hilanat gid,abdomen high fever,urgent,moderate,active
+ko akon tungod hilanat gid,throat high fever,urgent,moderate,active
+ko bukongbukong hilanat gid,ankle high fever,urgent,moderate,active
+ko dalunggan hilanat gid,ear high fever,urgent,moderate,active
+ko dughan hilanat gid,chest high fever,urgent,moderate,active
+ko ilong hilanat gid,nose high fever,urgent,moderate,active
+ko kilid mata hilanat gid,eyelid high fever,urgent,moderate,active
+ko ngabil hilanat gid,lip high fever,urgent,moderate,active
+ko pisngi hilanat gid,cheek high fever,urgent,moderate,active
+ko singit hilanat gid,groin high fever,urgent,moderate,active
+ko talukap mata hilanat gid,eyelid high fever,urgent,moderate,active
+ko tiyan hilanat gid,abdomen high fever,urgent,moderate,active
+ko tungod hilanat gid,throat high fever,urgent,moderate,active
+masakit pag-ihi ko,painful urination,urgent,moderate,active
+may hilanat gid abaga akon,shoulder high fever,urgent,moderate,active
+may hilanat gid abaga akon ko,shoulder high fever,urgent,moderate,active
+may hilanat gid abaga ko,shoulder high fever,urgent,moderate,active
+may hilanat gid abaga ko akon,shoulder high fever,urgent,moderate,active
+may hilanat gid bukongbukong akon,ankle high fever,urgent,moderate,active
+may hilanat gid bukongbukong akon ko,ankle high fever,urgent,moderate,active
+may hilanat gid bukongbukong ko,ankle high fever,urgent,moderate,active
+may hilanat gid bukongbukong ko akon,ankle high fever,urgent,moderate,active
+may hilanat gid dalunggan akon,ear high fever,urgent,moderate,active
+may hilanat gid dalunggan akon ko,ear high fever,urgent,moderate,active
+may hilanat gid dalunggan ko,ear high fever,urgent,moderate,active
+may hilanat gid dalunggan ko akon,ear high fever,urgent,moderate,active
+may hilanat gid dughan akon,chest high fever,urgent,moderate,active
+may hilanat gid dughan akon ko,chest high fever,urgent,moderate,active
+may hilanat gid dughan ko,chest high fever,urgent,moderate,active
+may hilanat gid dughan ko akon,chest high fever,urgent,moderate,active
+may hilanat gid ilong akon,nose high fever,urgent,moderate,active
+may hilanat gid ilong akon ko,nose high fever,urgent,moderate,active
+may hilanat gid ilong ko,nose high fever,urgent,moderate,active
+may hilanat gid ilong ko akon,nose high fever,urgent,moderate,active
+may hilanat gid kilid mata akon,eyelid high fever,urgent,moderate,active
+may hilanat gid kilid mata akon ko,eyelid high fever,urgent,moderate,active
+may hilanat gid kilid mata ko,eyelid high fever,urgent,moderate,active
+may hilanat gid kilid mata ko akon,eyelid high fever,urgent,moderate,active
+may hilanat gid ngabil akon,lip high fever,urgent,moderate,active
+may hilanat gid ngabil akon ko,lip high fever,urgent,moderate,active
+may hilanat gid ngabil ko,lip high fever,urgent,moderate,active
+may hilanat gid ngabil ko akon,lip high fever,urgent,moderate,active
+may hilanat gid pisngi akon,cheek high fever,urgent,moderate,active
+may hilanat gid pisngi akon ko,cheek high fever,urgent,moderate,active
+may hilanat gid pisngi ko,cheek high fever,urgent,moderate,active
+may hilanat gid pisngi ko akon,cheek high fever,urgent,moderate,active
+may hilanat gid sa abaga akon,shoulder high fever,urgent,moderate,active
+may hilanat gid sa abaga akon ko,shoulder high fever,urgent,moderate,active
+may hilanat gid sa abaga ko,shoulder high fever,urgent,moderate,active
+may hilanat gid sa abaga ko akon,shoulder high fever,urgent,moderate,active
+may hilanat gid sa bukongbukong akon,ankle high fever,urgent,moderate,active
+may hilanat gid sa bukongbukong akon ko,ankle high fever,urgent,moderate,active
+may hilanat gid sa bukongbukong ko,ankle high fever,urgent,moderate,active
+may hilanat gid sa bukongbukong ko akon,ankle high fever,urgent,moderate,active
+may hilanat gid sa dalunggan akon,ear high fever,urgent,moderate,active
+may hilanat gid sa dalunggan akon ko,ear high fever,urgent,moderate,active
+may hilanat gid sa dalunggan ko,ear high fever,urgent,moderate,active
+may hilanat gid sa dalunggan ko akon,ear high fever,urgent,moderate,active
+may hilanat gid sa dughan akon,chest high fever,urgent,moderate,active
+may hilanat gid sa dughan akon ko,chest high fever,urgent,moderate,active
+may hilanat gid sa dughan ko,chest high fever,urgent,moderate,active
+may hilanat gid sa dughan ko akon,chest high fever,urgent,moderate,active
+may hilanat gid sa ilong akon,nose high fever,urgent,moderate,active
+may hilanat gid sa ilong akon ko,nose high fever,urgent,moderate,active
+may hilanat gid sa ilong ko,nose high fever,urgent,moderate,active
+may hilanat gid sa ilong ko akon,nose high fever,urgent,moderate,active
+may hilanat gid sa kilid mata akon,eyelid high fever,urgent,moderate,active
+may hilanat gid sa kilid mata akon ko,eyelid high fever,urgent,moderate,active
+may hilanat gid sa kilid mata ko,eyelid high fever,urgent,moderate,active
+may hilanat gid sa kilid mata ko akon,eyelid high fever,urgent,moderate,active
+may hilanat gid sa ngabil akon,lip high fever,urgent,moderate,active
+may hilanat gid sa ngabil akon ko,lip high fever,urgent,moderate,active
+may hilanat gid sa ngabil ko,lip high fever,urgent,moderate,active
+may hilanat gid sa ngabil ko akon,lip high fever,urgent,moderate,active
+may hilanat gid sa pisngi akon,cheek high fever,urgent,moderate,active
+may hilanat gid sa pisngi akon ko,cheek high fever,urgent,moderate,active
+may hilanat gid sa pisngi ko,cheek high fever,urgent,moderate,active
+may hilanat gid sa pisngi ko akon,cheek high fever,urgent,moderate,active
+may hilanat gid sa singit akon,groin high fever,urgent,moderate,active
+may hilanat gid sa singit akon ko,groin high fever,urgent,moderate,active
+may hilanat gid sa singit ko,groin high fever,urgent,moderate,active
+may hilanat gid sa singit ko akon,groin high fever,urgent,moderate,active
+may hilanat gid sa talukap mata akon,eyelid high fever,urgent,moderate,active
+may hilanat gid sa talukap mata akon ko,eyelid high fever,urgent,moderate,active
+may hilanat gid sa talukap mata ko,eyelid high fever,urgent,moderate,active
+may hilanat gid sa talukap mata ko akon,eyelid high fever,urgent,moderate,active
+may hilanat gid sa tiyan akon,abdomen high fever,urgent,moderate,active
+may hilanat gid sa tiyan akon ko,abdomen high fever,urgent,moderate,active
+may hilanat gid sa tiyan ko,abdomen high fever,urgent,moderate,active
+may hilanat gid sa tiyan ko akon,abdomen high fever,urgent,moderate,active
+may hilanat gid sa tungod akon,throat high fever,urgent,moderate,active
+may hilanat gid sa tungod akon ko,throat high fever,urgent,moderate,active
+may hilanat gid sa tungod ko,throat high fever,urgent,moderate,active
+may hilanat gid sa tungod ko akon,throat high fever,urgent,moderate,active
+may hilanat gid singit akon,groin high fever,urgent,moderate,active
+may hilanat gid singit akon ko,groin high fever,urgent,moderate,active
+may hilanat gid singit ko,groin high fever,urgent,moderate,active
+may hilanat gid singit ko akon,groin high fever,urgent,moderate,active
+may hilanat gid talukap mata akon,eyelid high fever,urgent,moderate,active
+may hilanat gid talukap mata akon ko,eyelid high fever,urgent,moderate,active
+may hilanat gid talukap mata ko,eyelid high fever,urgent,moderate,active
+may hilanat gid talukap mata ko akon,eyelid high fever,urgent,moderate,active
+may hilanat gid tiyan akon,abdomen high fever,urgent,moderate,active
+may hilanat gid tiyan akon ko,abdomen high fever,urgent,moderate,active
+may hilanat gid tiyan ko,abdomen high fever,urgent,moderate,active
+may hilanat gid tiyan ko akon,abdomen high fever,urgent,moderate,active
+may hilanat gid tungod akon,throat high fever,urgent,moderate,active
+may hilanat gid tungod akon ko,throat high fever,urgent,moderate,active
+may hilanat gid tungod ko,throat high fever,urgent,moderate,active
+may hilanat gid tungod ko akon,throat high fever,urgent,moderate,active
+may nana akon mata,eye infection,urgent,moderate,active
+may nana ari ko,penis infection,urgent,moderate,active
+may nana bilat ko,vagina infection,urgent,moderate,active
+may nana dalunggan ko,ear infection,urgent,moderate,active
+may nana mata ko,eye infection,urgent,moderate,active
+may nana sa,infection with pus,urgent,moderate,active
+may nana sa ari ko,penile infection,urgent,severe,active
+may nana sa bilat ko,vaginal infection,urgent,severe,active
+may nana tudlo ko,finger infection,urgent,moderate,active
+may pilas kamot ko,hand wound,urgent,moderate,active
+may pilas tiil ko,foot wound,urgent,moderate,active
+nabali bukongbukong ko,ankle fracture,urgent,moderate,active
+nabali kamot ko,hand fracture,urgent,moderate,active
+nabali tudlo ko,finger fracture,urgent,moderate,active
+nabali tuhod ko,knee fracture,urgent,moderate,active
+nagdugo ari ko,penis bleeding,urgent,moderate,active
+nagdugo bilat ko,vagina bleeding,urgent,moderate,active
+nagdugo kamot ko,hand bleeding,urgent,moderate,active
+nagdugo tudlo ko,finger bleeding,urgent,moderate,active
+nasunog kamot ko,hand burn,urgent,moderate,active
+nasunog tiil ko,foot burn,urgent,moderate,active
+nasunog tudlo ko,finger burn,urgent,moderate,active
+ngabil akon hilanat gid,lip high fever,urgent,moderate,active
+ngabil akon ko hilanat gid,lip high fever,urgent,moderate,active
+ngabil hilanat gid,lip high fever,urgent,moderate,active
+ngabil ko akon hilanat gid,lip high fever,urgent,moderate,active
+ngabil ko hilanat gid,lip high fever,urgent,moderate,active
+pisngi akon hilanat gid,cheek high fever,urgent,moderate,active
+pisngi akon ko hilanat gid,cheek high fever,urgent,moderate,active
+pisngi hilanat gid,cheek high fever,urgent,moderate,active
+pisngi ko akon hilanat gid,cheek high fever,urgent,moderate,active
+pisngi ko hilanat gid,cheek high fever,urgent,moderate,active
+singit akon hilanat gid,groin high fever,urgent,moderate,active
+singit akon ko hilanat gid,groin high fever,urgent,moderate,active
+singit hilanat gid,groin high fever,urgent,moderate,active
+singit ko akon hilanat gid,groin high fever,urgent,moderate,active
+singit ko hilanat gid,groin high fever,urgent,moderate,active
+talukap mata akon hilanat gid,eyelid high fever,urgent,moderate,active
+talukap mata akon ko hilanat gid,eyelid high fever,urgent,moderate,active
+talukap mata hilanat gid,eyelid high fever,urgent,moderate,active
+talukap mata ko akon hilanat gid,eyelid high fever,urgent,moderate,active
+talukap mata ko hilanat gid,eyelid high fever,urgent,moderate,active
+tiyan akon hilanat gid,abdomen high fever,urgent,moderate,active
+tiyan akon ko hilanat gid,abdomen high fever,urgent,moderate,active
+tiyan hilanat gid,abdomen high fever,urgent,moderate,active
+tiyan ko akon hilanat gid,abdomen high fever,urgent,moderate,active
+tiyan ko hilanat gid,abdomen high fever,urgent,moderate,active
+tungod akon hilanat gid,throat high fever,urgent,moderate,active
+tungod akon ko hilanat gid,throat high fever,urgent,moderate,active
+tungod hilanat gid,throat high fever,urgent,moderate,active
+tungod ko akon hilanat gid,throat high fever,urgent,moderate,active
+tungod ko hilanat gid,throat high fever,urgent,moderate,active
+masakit dughan kag budlay ginhawa,chest pain with difficulty breathing,EMERGENCY,critical,active
+budlay gid magginhawa,severe shortness of breath,EMERGENCY,critical,active
+wala malay,unconscious,EMERGENCY,critical,active
+naguyam,seizure,EMERGENCY,critical,active
+indi makahambal,stroke symptoms,EMERGENCY,critical,active
+bigla nga paralisis,sudden paralysis,EMERGENCY,critical,active
+bigla nabuta,sudden vision loss,EMERGENCY,critical,active
+may dugo sa suka,vomiting blood,EMERGENCY,critical,active
+nagauba dugo,coughing blood,EMERGENCY,critical,active
+indi mapunggan ang dugo,severe bleeding,EMERGENCY,critical,active
+asul bibig,blue lips,EMERGENCY,critical,active
+nakainom lason,poisoning,EMERGENCY,critical,active
+nasunog lawas,severe burns,EMERGENCY,critical,active
+gahubag tutunlan,anaphylaxis,EMERGENCY,critical,active
+nagakalibog kag grabe lagnat,confusion with high fever,EMERGENCY,critical,active

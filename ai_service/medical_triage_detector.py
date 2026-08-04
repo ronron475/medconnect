@@ -1,4 +1,4 @@
-"""Step 6: Standards-based clinical urgency detection."""
+"""Step: Standards-based clinical urgency detection (CDS)."""
 
 from __future__ import annotations
 
@@ -51,6 +51,6 @@ def detect(
         "severity": result.get("severity", "mild"),
         "reason": result.get("reason", ""),
         "clinical_reasoning": result.get("clinical_reasoning", ""),
-        "source": result.get("source", "clinical_triage_engine_v2"),
+        "source": result.get("source", "clinical_triage_engine_v3"),
         **result,
     }

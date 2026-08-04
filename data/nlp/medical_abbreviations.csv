@@ -1,0 +1,21 @@
+abbreviation,expansion,status
+bp,blood pressure,active
+htn,hypertension,active
+dm,diabetes,active
+sob,shortness of breath,active
+cp,chest pain,active
+ha,headache,active
+n/v,nausea and vomiting,active
+loc,loss of consciousness,active
+uti,urinary tract infection,active
+uri,upper respiratory infection,active
+dob,difficulty of breathing,active
+o2,oxygen,active
+hr,heart rate,active
+rr,respiratory rate,active
+temp,temperature,active
+fx,fracture,active
+hx,history,active
+sx,symptoms,active
+dx,diagnosis,active
+rx,prescription,active

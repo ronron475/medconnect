@@ -1,22 +1,43 @@
 <?php
 /**
- * Hiligaynon Medical NLP Pipeline v2 — 10-step telemedicine consultation understanding.
+ * Hiligaynon Medical NLP Pipeline v3 — evidence-based clinical triage CDS.
  *
- * 1. Language identification
- * 2. Text normalization
- * 3. Phrase-level understanding
- * 4. Hiligaynon → English translation
- * 5. Medical concept extraction
- * 6. Dataset matching (English only)
- * 7. Fuzzy matching
- * 8. Medical classification
- * 9. Triage detection
- * 10. Structured response
+ * Pipeline: normalize → spell-correct → detect language → translate → tokenize →
+ * extract symptoms/duration/pain/temperature/risks/age → red flags → severity →
+ * priority → explanation → recommendation.
+ *
+ * Does not diagnose disease or prescribe medication.
  */
 
 final class HiligaynonMedicalNlpPipeline
 {
-    public const VERSION = '2.0';
+    public const VERSION = '3.0';
+
+    public const PIPELINE_STEPS = [
+        'detect_language',
+        'normalize_text',
+        'correct_misspellings',
+        'translate_hiligaynon_to_english',
+        'tokenize',
+        'remove_unnecessary_words',
+        'medical_entity_recognition',
+        'body_part_recognition',
+        'extract_symptoms',
+        'negation_detection',
+        'extract_duration',
+        'extract_temperature',
+        'extract_pain_scale',
+        'extract_age_group',
+        'pregnancy_detection',
+        'extract_risk_factors',
+        'detect_emergency_red_flags',
+        'symptom_combination_analysis',
+        'calculate_severity_score',
+        'clinical_reasoning',
+        'confidence_calculation',
+        'priority_classification',
+        'return_recommendation',
+    ];
 
     /**
      * @return array<string, mixed>
@@ -68,10 +89,19 @@ final class HiligaynonMedicalNlpPipeline
         $termResults = MedicalTextAnalysisWorkflow::buildTermResultsPublic($translation, $fuzzyMatching, $datasetValidation);
 
         $englishTranslation = (string) ($translation['english_text'] ?? ($phraseTranslation['english'] ?? ''));
-        $triage = MedicalTriageDetector::detect($text, $englishTranslation, $phraseTranslation ?? [], $concepts);
-        $classification = MedicalConceptExtractor::classify($concepts, $phraseTranslation ?? []);
         $matchedDatasetTerms = self::collectMatchedTerms($termResults);
         $confidence = self::computeConfidence($termResults, $phraseTranslation);
+        $confidencePct = (int) round($confidence * 100);
+
+        $triage = MedicalTriageDetector::detect(
+            $text,
+            $englishTranslation,
+            $phraseTranslation ?? [],
+            $concepts,
+            $matchedDatasetTerms,
+            $confidencePct
+        );
+        $classification = MedicalConceptExtractor::classify($concepts, $phraseTranslation ?? []);
 
         $bodyParts = [];
         foreach ($concepts as $c) {
@@ -90,12 +120,27 @@ final class HiligaynonMedicalNlpPipeline
             'medical_concepts'       => $concepts,
             'body_parts'             => $bodyParts,
             'category'               => $classification['category'],
-            'severity'               => $triage['severity'],
-            'triage_level'           => $triage['triage_level'],
-            'triage_reason'          => $triage['reason'],
+            'severity'               => $triage['severity'] ?? 'mild',
+            'triage_level'           => $triage['triage_level'] ?? 'LOW',
+            'triage_display'         => $triage['triage_display'] ?? 'NON-URGENT',
+            'triage_reason'          => $triage['reason'] ?? '',
             'matched_dataset_terms'  => $matchedDatasetTerms,
             'confidence_score'       => $confidence,
             'phrase_source'          => $phraseTranslation['source'] ?? null,
+            'detected_symptoms'      => $triage['detected_symptoms'] ?? [],
+            'duration'               => $triage['duration'] ?? '',
+            'pain_scale'             => $triage['pain_scale'] ?? [],
+            'temperature'            => $triage['temperature'] ?? [],
+            'risk_factors'           => $triage['risk_factors'] ?? [],
+            'age_group'              => $triage['age_group'] ?? 'Unknown',
+            'red_flags'              => $triage['red_flags'] ?? [],
+            'severity_score'         => $triage['severity_score'] ?? 0,
+            'classification'         => $triage['triage_display'] ?? 'NON-URGENT',
+            'priority'               => $triage['priority'] ?? 'Normal',
+            'confidence'              => $triage['confidence_score'] ?? $confidencePct,
+            'reason'                 => $triage['reason'] ?? '',
+            'recommendation'         => $triage['recommendation'] ?? '',
+            'needs_provider_review'  => (bool) ($triage['needs_provider_review'] ?? false),
         ];
 
         $highlight = MedicalTextAnalysisWorkflow::buildHighlightPublic($englishTranslation, $termResults);
@@ -105,44 +150,38 @@ final class HiligaynonMedicalNlpPipeline
 
         return [
             'workflow' => [
-                'version' => self::VERSION,
-                'steps'   => [
-                    'language_identification',
-                    'text_normalization',
-                    'phrase_level_understanding',
-                    'hiligaynon_to_english_translation',
-                    'medical_concept_extraction',
-                    'dataset_matching',
-                    'fuzzy_matching',
-                    'medical_classification',
-                    'triage_detection',
-                    'structured_response',
-                ],
-                'policy'  => 'Phrase-first Hiligaynon medical interpretation. '
-                    . 'Full patient message is normalized and translated before any dataset search. '
-                    . 'English medical concepts only for official dataset matching.',
+                'version'  => self::VERSION,
+                'steps'    => self::PIPELINE_STEPS,
+                'purpose'  => 'clinical_triage_decision_support',
+                'does_not' => ['diagnose_disease', 'prescribe_medication'],
+                'policy'   => 'Evidence-based rule triage CDS. '
+                    . 'Phrase-first Hiligaynon/Filipino/English interpretation with KB-driven severity scoring. '
+                    . 'Never diagnoses disease and never prescribes medication.',
             ],
-            'nlp_result'             => $structured,
-            'original_input'       => $text,
-            'normalized_input'     => $normalized,
-            'detected_language'    => $language['primary'],
-            'language_detection'   => $language,
-            'preprocessing'        => $preprocessing,
-            'translation'          => $translation,
-            'translated_english'   => $englishTranslation,
-            'highlighted_english'  => $highlight['html'],
-            'highlight_segments'   => $highlight['segments'],
-            'fuzzy_matching'       => $fuzzyMatching,
-            'dataset_validation'   => $datasetValidation,
-            'matched_records'      => $datasetValidation['matched_records'] ?? [],
-            'term_results'         => $termResults,
-            'valid_count'          => $validCount,
-            'invalid_count'        => $invalidCount,
-            'total_count'          => $totalCount,
-            'validation_status'    => MedicalTextAnalysisWorkflow::validationStatusPublic($validCount, $invalidCount, $totalCount),
+            'nlp_result'              => $structured,
+            'clinical_recommendation'=> $triage['recommendation_payload'] ?? [],
+            'triage'                  => $triage,
+            'original_input'          => $text,
+            'normalized_input'        => $normalized,
+            'detected_language'       => $language['primary'],
+            'language_detection'      => $language,
+            'preprocessing'           => $preprocessing,
+            'translation'             => $translation,
+            'translated_english'      => $englishTranslation,
+            'highlighted_english'     => $highlight['html'],
+            'highlight_segments'      => $highlight['segments'],
+            'fuzzy_matching'          => $fuzzyMatching,
+            'dataset_validation'      => $datasetValidation,
+            'matched_records'         => $datasetValidation['matched_records'] ?? [],
+            'term_results'            => $termResults,
+            'valid_count'             => $validCount,
+            'invalid_count'           => $invalidCount,
+            'total_count'             => $totalCount,
+            'validation_status'       => MedicalTextAnalysisWorkflow::validationStatusPublic($validCount, $invalidCount, $totalCount),
             'validation_status_label' => MedicalTextAnalysisWorkflow::validationStatusLabelPublic($validCount, $invalidCount, $totalCount),
-            'summary'              => self::buildSummary($structured, $validCount, $totalCount),
-            'dictionary'           => MedicalDictionary::stats(),
+            'summary'                 => self::buildSummary($structured, $validCount, $totalCount),
+            'dictionary'              => MedicalDictionary::stats(),
+            'engine'                  => 'php-hiligaynon-nlp-v3',
         ];
     }
 
@@ -217,16 +256,13 @@ final class HiligaynonMedicalNlpPipeline
      */
     private static function buildSummary(array $structured, int $validCount, int $totalCount): string
     {
-        $en = (string) ($structured['english_translation'] ?? '');
-        $triage = (string) ($structured['triage_level'] ?? 'LOW');
-        if ($en === '') {
+        $display = (string) ($structured['triage_display'] ?? $structured['triage_level'] ?? 'NON-URGENT');
+        $score = (int) ($structured['severity_score'] ?? 0);
+        $conf = (int) ($structured['confidence'] ?? 0);
+        if ($display === '') {
             return 'Could not interpret the patient message.';
         }
 
-        $matchPart = $validCount > 0
-            ? " {$validCount}/{$totalCount} term(s) matched official datasets."
-            : ' No official dataset match yet.';
-
-        return "Translated: \"{$en}\". Triage: {$triage}.{$matchPart}";
+        return "Triage: {$display} (score={$score}, confidence={$conf}%).";
     }
 }

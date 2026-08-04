@@ -1,0 +1,6 @@
+rule_id,when,reason_template,status
+CR001,red_flag_present,Emergency warning sign(s) detected ({flags}). Immediate emergency evaluation is recommended.,active
+CR002,score_emergency,Severity score {score} meets emergency triage criteria.,active
+CR003,score_urgent,Severity score {score} with symptoms ({symptoms}) warrants prompt clinician review.,active
+CR004,score_non_urgent,Mild symptoms ({symptoms}) with no emergency warning signs. Score {score}.,active
+CR005,low_confidence,Insufficient information for confident triage. Needs healthcare provider review.,active

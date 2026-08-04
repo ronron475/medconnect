@@ -1,0 +1,336 @@
+<?php
+/**
+ * Data-driven symptom knowledge base + red-flag library for clinical triage CDS.
+ */
+
+final class SymptomKnowledgeBase
+{
+    /** @var array<string, mixed>|null */
+    private static ?array $kb = null;
+
+    /** @var array<string, mixed>|null */
+    private static ?array $redFlags = null;
+
+    /** @var list<array<string, mixed>>|null */
+    private static ?array $symptomIndex = null;
+
+    /** @var array<string, list<string>>|null */
+    private static ?array $csvBoosts = null;
+
+    /** @return array<string, mixed> */
+    public static function load(): array
+    {
+        if (self::$kb !== null) {
+            return self::$kb;
+        }
+        $path = BASE_PATH . '/data/nlp/symptom_knowledge_base.json';
+        if (!is_readable($path)) {
+            self::$kb = ['symptoms' => [], 'scoring' => []];
+
+            return self::$kb;
+        }
+        $raw = json_decode((string) file_get_contents($path), true);
+        self::$kb = is_array($raw) ? $raw : ['symptoms' => [], 'scoring' => []];
+
+        return self::$kb;
+    }
+
+    /** @return array<string, mixed> */
+    public static function loadRedFlags(): array
+    {
+        if (self::$redFlags !== null) {
+            return self::$redFlags;
+        }
+        $path = BASE_PATH . '/data/nlp/red_flags_library.json';
+        if (!is_readable($path)) {
+            self::$redFlags = ['red_flags' => [], 'policy' => []];
+
+            return self::$redFlags;
+        }
+        $raw = json_decode((string) file_get_contents($path), true);
+        self::$redFlags = is_array($raw) ? $raw : ['red_flags' => [], 'policy' => []];
+
+        return self::$redFlags;
+    }
+
+    /** @return array<string, mixed> */
+    public static function scoringConfig(): array
+    {
+        $kb = self::load();
+
+        return is_array($kb['scoring'] ?? null) ? $kb['scoring'] : [];
+    }
+
+    /** @return list<array<string, mixed>> */
+    private static function symptomIndex(): array
+    {
+        if (self::$symptomIndex !== null) {
+            return self::$symptomIndex;
+        }
+        $index = [];
+        foreach ((self::load()['symptoms'] ?? []) as $symptom) {
+            if (!is_array($symptom)) {
+                continue;
+            }
+            $terms = [];
+            foreach (['keywords', 'synonyms', 'hiligaynon_terms', 'filipino_terms'] as $key) {
+                foreach (($symptom[$key] ?? []) as $term) {
+                    $t = strtolower(trim((string) $term));
+                    if ($t !== '') {
+                        $terms[] = $t;
+                    }
+                }
+            }
+            $name = strtolower(trim((string) ($symptom['symptom_name'] ?? '')));
+            if ($name !== '') {
+                $terms[] = $name;
+            }
+            $terms = array_values(array_unique($terms));
+            usort($terms, static fn (string $a, string $b): int => strlen($b) <=> strlen($a));
+            if ($terms === []) {
+                continue;
+            }
+            $symptom['_match_terms'] = $terms;
+            $index[] = $symptom;
+        }
+
+        // Expand match terms from CSV synonym / Hiligaynon / Filipino term banks (no code change needed to add rows)
+        $csvBoost = self::loadCsvTermBoosts();
+        foreach ($index as &$symptom) {
+            $eng = strtolower((string) ($symptom['symptom_name'] ?? ''));
+            $sid = strtolower((string) ($symptom['id'] ?? ''));
+            $extra = array_merge($csvBoost[$eng] ?? [], $csvBoost[$sid] ?? []);
+            if ($extra !== []) {
+                $merged = array_values(array_unique(array_merge($symptom['_match_terms'], $extra)));
+                usort($merged, static fn (string $a, string $b): int => strlen($b) <=> strlen($a));
+                $symptom['_match_terms'] = $merged;
+            }
+        }
+        unset($symptom);
+
+        self::$symptomIndex = $index;
+
+        return self::$symptomIndex;
+    }
+
+    /**
+     * Map english/concept → local terms from expandable CSVs.
+     *
+     * @return array<string, list<string>>
+     */
+    private static function loadCsvTermBoosts(): array
+    {
+        if (self::$csvBoosts !== null) {
+            return self::$csvBoosts;
+        }
+
+        $boost = [];
+        // Prefer compact language banks first (full corpora remain available for training/admin)
+        $files = [
+            BASE_PATH . '/data/nlp/hiligaynon_medical_terms.csv',
+            BASE_PATH . '/data/nlp/filipino_medical_terms.csv',
+            BASE_PATH . '/data/nlp/medical_phrases.csv',
+        ];
+        foreach ($files as $path) {
+            if (!is_readable($path)) {
+                continue;
+            }
+            $handle = fopen($path, 'r');
+            if ($handle === false) {
+                continue;
+            }
+            $header = fgetcsv($handle);
+            $count = 0;
+            while (($row = fgetcsv($handle)) !== false) {
+                $data = array_combine(
+                    array_map(static fn ($h) => strtolower(trim((string) $h)), $header ?: []),
+                    array_map(static fn ($v) => trim((string) $v), $row)
+                ) ?: [];
+                $local = strtolower((string) (($data['term'] ?? '') ?: ($data['local_term'] ?? '') ?: ($data['phrase'] ?? '')));
+                $eng = strtolower((string) (($data['english'] ?? '') ?: ($data['english_term'] ?? '')));
+                $concept = strtolower((string) ($data['concept'] ?? ''));
+                if ($local === '' || strlen($local) > 60 || ($eng === '' && $concept === '')) {
+                    continue;
+                }
+                foreach (array_filter([$eng, $concept, str_replace('_', ' ', $concept)]) as $key) {
+                    if ($key === '') {
+                        continue;
+                    }
+                    $boost[$key][] = $local;
+                }
+                $count++;
+                if ($count >= 4000) {
+                    break;
+                }
+            }
+            fclose($handle);
+        }
+        foreach ($boost as $k => $list) {
+            $boost[$k] = array_values(array_unique($list));
+        }
+        self::$csvBoosts = $boost;
+
+        return self::$csvBoosts;
+    }
+
+    /**
+     * @param list<string> $extraTerms
+     * @return list<array<string, mixed>>
+     */
+    public static function matchSymptoms(string $text, string $englishText = '', array $extraTerms = []): array
+    {
+        $hay = strtolower(trim(implode(' | ', array_filter([
+            $text,
+            $englishText,
+            implode(' ', $extraTerms),
+        ]))));
+        if ($hay === '') {
+            return [];
+        }
+
+        $matched = [];
+        $seen = [];
+        foreach (self::symptomIndex() as $symptom) {
+            $sid = (string) ($symptom['id'] ?? $symptom['symptom_name'] ?? '');
+            if ($sid === '' || isset($seen[$sid])) {
+                continue;
+            }
+            foreach ($symptom['_match_terms'] as $term) {
+                if ($term === '') {
+                    continue;
+                }
+                $hit = self::flexiblePhraseHit($hay, $term);
+                if (!$hit) {
+                    continue;
+                }
+                $matched[] = [
+                    'id'                  => $symptom['id'] ?? '',
+                    'symptom_name'        => $symptom['symptom_name'] ?? '',
+                    'medical_category'    => $symptom['medical_category'] ?? '',
+                    'severity_weight'      => (int) ($symptom['severity_weight'] ?? 0),
+                    'emergency_weight'    => (int) ($symptom['emergency_weight'] ?? 0),
+                    'urgent_weight'       => (int) ($symptom['urgent_weight'] ?? 0),
+                    'danger_sign'         => (bool) ($symptom['danger_sign'] ?? false),
+                    'recommended_action'  => (string) ($symptom['recommended_action'] ?? ''),
+                    'matched_term'        => $term,
+                    'common_causes'       => $symptom['common_causes'] ?? [],
+                    'danger_signs'        => $symptom['danger_signs'] ?? [],
+                ];
+                $seen[$sid] = true;
+                break;
+            }
+        }
+        usort($matched, static fn (array $a, array $b): int => ($b['severity_weight'] <=> $a['severity_weight']));
+
+        return $matched;
+    }
+
+    /** @return list<array<string, mixed>> */
+    public static function scanRedFlagsLibrary(string $original, string $english = ''): array
+    {
+        $lib = self::loadRedFlags();
+        $allowMild = (bool) (($lib['policy']['allow_mild_override'] ?? true));
+        $hay = strtolower(trim($original . ' ' . $english));
+        if ($hay === '') {
+            return [];
+        }
+
+        $matched = [];
+        $seen = [];
+        foreach (($lib['red_flags'] ?? []) as $flag) {
+            if (!is_array($flag)) {
+                continue;
+            }
+            $fid = (string) ($flag['id'] ?? $flag['name'] ?? '');
+            if ($fid === '' || isset($seen[$fid])) {
+                continue;
+            }
+            $patterns = [];
+            foreach (['english', 'hiligaynon', 'filipino'] as $lang) {
+                foreach (($flag['patterns'][$lang] ?? []) as $pat) {
+                    $p = strtolower(trim((string) $pat));
+                    if ($p !== '') {
+                        $patterns[] = [$lang, $p];
+                    }
+                }
+            }
+            usort($patterns, static fn (array $a, array $b): int => strlen($b[1]) <=> strlen($a[1]));
+
+            $hitLang = '';
+            $hitPat = '';
+            foreach ($patterns as [$lang, $pat]) {
+                if (str_contains($hay, $pat)) {
+                    $hitLang = $lang;
+                    $hitPat = $pat;
+                    break;
+                }
+            }
+            if ($hitPat === '') {
+                continue;
+            }
+
+            if ($allowMild) {
+                $mildHit = false;
+                foreach (($flag['mild_exclusions'] ?? []) as $excl) {
+                    if (str_contains($hay, strtolower(trim((string) $excl)))) {
+                        $mildHit = true;
+                        break;
+                    }
+                }
+                if ($mildHit) {
+                    $hard = str_contains($hay, 'cannot breathe')
+                        || str_contains($hay, 'indi makaginhawa')
+                        || str_contains($hay, 'unconscious')
+                        || str_contains($hay, 'vomiting blood')
+                        || str_contains($hay, 'suicidal');
+                    if (!$hard) {
+                        continue;
+                    }
+                }
+            }
+
+            $matched[] = [
+                'flag_id'            => $fid,
+                'flag_name'          => (string) ($flag['name'] ?? $fid),
+                'category'           => (string) ($flag['category'] ?? ''),
+                'auto_triage'        => strtoupper((string) ($flag['auto_triage'] ?? 'EMERGENCY')),
+                'severity_points'     => (int) ($flag['severity_points'] ?? 12),
+                'clinical_rationale' => (string) ($flag['rationale'] ?? ''),
+                'matched_on'         => $hitLang,
+                'matched_pattern'    => $hitPat,
+                'english_pattern'    => $hitPat,
+                'source'             => 'red_flags_library.json',
+            ];
+            $seen[$fid] = true;
+        }
+
+        return $matched;
+    }
+
+    private static function flexiblePhraseHit(string $hay, string $term): bool
+    {
+        if ($term === '') {
+            return false;
+        }
+        if (str_contains($hay, $term)) {
+            return true;
+        }
+        $parts = preg_split('/\s+/u', $term) ?: [];
+        $parts = array_values(array_filter($parts, static fn (string $p): bool => $p !== ''));
+        if (count($parts) < 2) {
+            return (bool) preg_match('/(?<!\w)' . preg_quote($term, '/') . '(?!\w)/u', $hay);
+        }
+        $escaped = array_map(static fn (string $p): string => preg_quote($p, '/'), $parts);
+        $pattern = '/(?<!\w)' . implode('(?:\W+\w+){0,2}\W+', $escaped) . '(?!\w)/u';
+
+        return (bool) preg_match($pattern, $hay);
+    }
+
+    public static function clearCache(): void
+    {
+        self::$kb = null;
+        self::$redFlags = null;
+        self::$symptomIndex = null;
+        self::$csvBoosts = null;
+    }
+}

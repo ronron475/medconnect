@@ -1,0 +1,501 @@
+rule_id,pattern,negated_concept,language,status
+NEGB0001,no fever,fever,english,active
+NEGB0002,no cough,cough,english,active
+NEGB0003,no chest pain,chest pain,english,active
+NEGB0004,no vomiting,vomiting,english,active
+NEGB0005,not dizzy,dizziness,english,active
+NEGB0006,denies fever,fever,english,active
+NEGB0007,without fever,fever,english,active
+NEGB0008,wala akong lagnat,fever,filipino,active
+NEGB0009,wala akong ubo,cough,filipino,active
+NEGB0010,wala ko ginaubo,cough,hiligaynon,active
+NEGB0011,wala ko lagnat,fever,hiligaynon,active
+NEGB0012,indi budlay ginhawa,difficulty breathing,hiligaynon,active
+NEGB0013,indi masakit dughan,chest pain,hiligaynon,active
+NEGB0014,indi gasuka,vomiting,hiligaynon,active
+NEGB0015,wala lipong,dizziness,hiligaynon,active
+NEGB0016,hindi ako nilalagnat,fever,filipino,active
+NEGB0017,hindi ako umuubo,cough,filipino,active
+NEGB0018,walang sakit sa dibdib,chest pain,filipino,active
+NEGB0019,no shortness of breath,difficulty breathing,english,active
+NEGB0020,not short of breath,difficulty breathing,english,active
+NEGB0021,no fever,fever,mixed,active
+NEGB0022,no cough,cough,mixed,active
+NEGB0023,no headache,headache,mixed,active
+NEGB0024,no vomiting,vomiting,mixed,active
+NEGB0025,no nausea,nausea,mixed,active
+NEGB0026,no diarrhea,diarrhea,mixed,active
+NEGB0027,no chest pain,chest pain,mixed,active
+NEGB0028,no dizziness,dizziness,mixed,active
+NEGB0029,no rash,rash,mixed,active
+NEGB0030,no bleeding,bleeding,mixed,active
+NEGB0031,not fever,fever,mixed,active
+NEGB0032,not cough,cough,mixed,active
+NEGB0033,not headache,headache,mixed,active
+NEGB0034,not vomiting,vomiting,mixed,active
+NEGB0035,not nausea,nausea,mixed,active
+NEGB0036,not diarrhea,diarrhea,mixed,active
+NEGB0037,not chest pain,chest pain,mixed,active
+NEGB0038,not dizziness,dizziness,mixed,active
+NEGB0039,not rash,rash,mixed,active
+NEGB0040,not bleeding,bleeding,mixed,active
+NEGB0041,denies fever,fever,mixed,active
+NEGB0042,denies cough,cough,mixed,active
+NEGB0043,denies headache,headache,mixed,active
+NEGB0044,denies vomiting,vomiting,mixed,active
+NEGB0045,denies nausea,nausea,mixed,active
+NEGB0046,denies diarrhea,diarrhea,mixed,active
+NEGB0047,denies chest pain,chest pain,mixed,active
+NEGB0048,denies dizziness,dizziness,mixed,active
+NEGB0049,denies rash,rash,mixed,active
+NEGB0050,denies bleeding,bleeding,mixed,active
+NEGB0051,without fever,fever,mixed,active
+NEGB0052,without cough,cough,mixed,active
+NEGB0053,without headache,headache,mixed,active
+NEGB0054,without vomiting,vomiting,mixed,active
+NEGB0055,without nausea,nausea,mixed,active
+NEGB0056,without diarrhea,diarrhea,mixed,active
+NEGB0057,without chest pain,chest pain,mixed,active
+NEGB0058,without dizziness,dizziness,mixed,active
+NEGB0059,without rash,rash,mixed,active
+NEGB0060,without bleeding,bleeding,mixed,active
+NEGB0061,wala fever,fever,mixed,active
+NEGB0062,wala cough,cough,mixed,active
+NEGB0063,wala headache,headache,mixed,active
+NEGB0064,wala vomiting,vomiting,mixed,active
+NEGB0065,wala nausea,nausea,mixed,active
+NEGB0066,wala diarrhea,diarrhea,mixed,active
+NEGB0067,wala chest pain,chest pain,mixed,active
+NEGB0068,wala dizziness,dizziness,mixed,active
+NEGB0069,wala rash,rash,mixed,active
+NEGB0070,wala bleeding,bleeding,mixed,active
+NEGB0071,wala akong fever,fever,mixed,active
+NEGB0072,wala akong cough,cough,mixed,active
+NEGB0073,wala akong headache,headache,mixed,active
+NEGB0074,wala akong vomiting,vomiting,mixed,active
+NEGB0075,wala akong nausea,nausea,mixed,active
+NEGB0076,wala akong diarrhea,diarrhea,mixed,active
+NEGB0077,wala akong chest pain,chest pain,mixed,active
+NEGB0078,wala akong dizziness,dizziness,mixed,active
+NEGB0079,wala akong rash,rash,mixed,active
+NEGB0080,wala akong bleeding,bleeding,mixed,active
+NEGB0081,wala ko fever,fever,mixed,active
+NEGB0082,wala ko cough,cough,mixed,active
+NEGB0083,wala ko headache,headache,mixed,active
+NEGB0084,wala ko vomiting,vomiting,mixed,active
+NEGB0085,wala ko nausea,nausea,mixed,active
+NEGB0086,wala ko diarrhea,diarrhea,mixed,active
+NEGB0087,wala ko chest pain,chest pain,mixed,active
+NEGB0088,wala ko dizziness,dizziness,mixed,active
+NEGB0089,wala ko rash,rash,mixed,active
+NEGB0090,wala ko bleeding,bleeding,mixed,active
+NEGB0091,indi fever,fever,mixed,active
+NEGB0092,indi cough,cough,mixed,active
+NEGB0093,indi headache,headache,mixed,active
+NEGB0094,indi vomiting,vomiting,mixed,active
+NEGB0095,indi nausea,nausea,mixed,active
+NEGB0096,indi diarrhea,diarrhea,mixed,active
+NEGB0097,indi chest pain,chest pain,mixed,active
+NEGB0098,indi dizziness,dizziness,mixed,active
+NEGB0099,indi rash,rash,mixed,active
+NEGB0100,indi bleeding,bleeding,mixed,active
+NEGB0101,hindi fever,fever,mixed,active
+NEGB0102,hindi cough,cough,mixed,active
+NEGB0103,hindi headache,headache,mixed,active
+NEGB0104,hindi vomiting,vomiting,mixed,active
+NEGB0105,hindi nausea,nausea,mixed,active
+NEGB0106,hindi diarrhea,diarrhea,mixed,active
+NEGB0107,hindi chest pain,chest pain,mixed,active
+NEGB0108,hindi dizziness,dizziness,mixed,active
+NEGB0109,hindi rash,rash,mixed,active
+NEGB0110,hindi bleeding,bleeding,mixed,active
+NEGB0111,hindi ako fever,fever,mixed,active
+NEGB0112,hindi ako cough,cough,mixed,active
+NEGB0113,hindi ako headache,headache,mixed,active
+NEGB0114,hindi ako vomiting,vomiting,mixed,active
+NEGB0115,hindi ako nausea,nausea,mixed,active
+NEGB0116,hindi ako diarrhea,diarrhea,mixed,active
+NEGB0117,hindi ako chest pain,chest pain,mixed,active
+NEGB0118,hindi ako dizziness,dizziness,mixed,active
+NEGB0119,hindi ako rash,rash,mixed,active
+NEGB0120,hindi ako bleeding,bleeding,mixed,active
+NEG0001,no report of diarrhea,diarrhea,mixed,active
+NEG0002,no signs of chest pain,chest pain,mixed,active
+NEG0003,no signs of chest pain,chest pain,mixed,active
+NEG0004,no report of dizziness,dizziness,mixed,active
+NEG0005,indi may diarrhea,diarrhea,mixed,active
+NEG0006,indi may bleeding,bleeding,mixed,active
+NEG0007,absent chest pain,chest pain,mixed,active
+NEG0008,indi may cough,cough,mixed,active
+NEG0009,wala sang fever,fever,mixed,active
+NEG0010,hindi may headache,headache,mixed,active
+NEG0011,no report of diarrhea,diarrhea,mixed,active
+NEG0012,no report of chest pain,chest pain,mixed,active
+NEG0013,indi may vomiting,vomiting,mixed,active
+NEG0014,indi may bleeding,bleeding,mixed,active
+NEG0015,no report of rash,rash,mixed,active
+NEG0016,absent chest pain,chest pain,mixed,active
+NEG0017,negative for diarrhea,diarrhea,mixed,active
+NEG0018,patient denies diarrhea,diarrhea,mixed,active
+NEG0019,no report of cough,cough,mixed,active
+NEG0020,negative for rash,rash,mixed,active
+NEG0021,wala sang diarrhea,diarrhea,mixed,active
+NEG0022,negative for headache,headache,mixed,active
+NEG0023,patient denies cough,cough,mixed,active
+NEG0024,negative for nausea,nausea,mixed,active
+NEG0025,patient denies headache,headache,mixed,active
+NEG0026,patient denies cough,cough,mixed,active
+NEG0027,hindi may dizziness,dizziness,mixed,active
+NEG0028,hindi may bleeding,bleeding,mixed,active
+NEG0029,wala sang bleeding,bleeding,mixed,active
+NEG0030,patient denies diarrhea,diarrhea,mixed,active
+NEG0031,no report of dizziness,dizziness,mixed,active
+NEG0032,hindi may dizziness,dizziness,mixed,active
+NEG0033,absent nausea,nausea,mixed,active
+NEG0034,no signs of bleeding,bleeding,mixed,active
+NEG0035,no report of diarrhea,diarrhea,mixed,active
+NEG0036,hindi may nausea,nausea,mixed,active
+NEG0037,no signs of dizziness,dizziness,mixed,active
+NEG0038,wala sang fever,fever,mixed,active
+NEG0039,no report of nausea,nausea,mixed,active
+NEG0040,indi may cough,cough,mixed,active
+NEG0041,no signs of dizziness,dizziness,mixed,active
+NEG0042,negative for dizziness,dizziness,mixed,active
+NEG0043,hindi may diarrhea,diarrhea,mixed,active
+NEG0044,patient denies rash,rash,mixed,active
+NEG0045,hindi may fever,fever,mixed,active
+NEG0046,wala sang cough,cough,mixed,active
+NEG0047,patient denies cough,cough,mixed,active
+NEG0048,negative for fever,fever,mixed,active
+NEG0049,hindi may dizziness,dizziness,mixed,active
+NEG0050,patient denies rash,rash,mixed,active
+NEG0051,wala sang diarrhea,diarrhea,mixed,active
+NEG0052,indi may nausea,nausea,mixed,active
+NEG0053,wala sang chest pain,chest pain,mixed,active
+NEG0054,no signs of bleeding,bleeding,mixed,active
+NEG0055,no report of diarrhea,diarrhea,mixed,active
+NEG0056,no report of diarrhea,diarrhea,mixed,active
+NEG0057,indi may rash,rash,mixed,active
+NEG0058,absent nausea,nausea,mixed,active
+NEG0059,patient denies bleeding,bleeding,mixed,active
+NEG0060,no report of diarrhea,diarrhea,mixed,active
+NEG0061,patient denies bleeding,bleeding,mixed,active
+NEG0062,absent diarrhea,diarrhea,mixed,active
+NEG0063,patient denies chest pain,chest pain,mixed,active
+NEG0064,no report of bleeding,bleeding,mixed,active
+NEG0065,indi may nausea,nausea,mixed,active
+NEG0066,patient denies diarrhea,diarrhea,mixed,active
+NEG0067,no report of rash,rash,mixed,active
+NEG0068,wala sang chest pain,chest pain,mixed,active
+NEG0069,wala sang fever,fever,mixed,active
+NEG0070,patient denies nausea,nausea,mixed,active
+NEG0071,wala sang vomiting,vomiting,mixed,active
+NEG0072,negative for dizziness,dizziness,mixed,active
+NEG0073,patient denies vomiting,vomiting,mixed,active
+NEG0074,no report of headache,headache,mixed,active
+NEG0075,no report of nausea,nausea,mixed,active
+NEG0076,no signs of rash,rash,mixed,active
+NEG0077,patient denies diarrhea,diarrhea,mixed,active
+NEG0078,indi may bleeding,bleeding,mixed,active
+NEG0079,patient denies headache,headache,mixed,active
+NEG0080,patient denies headache,headache,mixed,active
+NEG0081,no signs of dizziness,dizziness,mixed,active
+NEG0082,wala sang chest pain,chest pain,mixed,active
+NEG0083,hindi may vomiting,vomiting,mixed,active
+NEG0084,absent bleeding,bleeding,mixed,active
+NEG0085,negative for dizziness,dizziness,mixed,active
+NEG0086,negative for rash,rash,mixed,active
+NEG0087,hindi may nausea,nausea,mixed,active
+NEG0088,wala sang vomiting,vomiting,mixed,active
+NEG0089,hindi may bleeding,bleeding,mixed,active
+NEG0090,absent dizziness,dizziness,mixed,active
+NEG0091,indi may chest pain,chest pain,mixed,active
+NEG0092,negative for headache,headache,mixed,active
+NEG0093,patient denies bleeding,bleeding,mixed,active
+NEG0094,no signs of nausea,nausea,mixed,active
+NEG0095,wala sang dizziness,dizziness,mixed,active
+NEG0096,no report of rash,rash,mixed,active
+NEG0097,no report of rash,rash,mixed,active
+NEG0098,no report of nausea,nausea,mixed,active
+NEG0099,absent headache,headache,mixed,active
+NEG0100,patient denies dizziness,dizziness,mixed,active
+NEG0101,no report of chest pain,chest pain,mixed,active
+NEG0102,hindi may vomiting,vomiting,mixed,active
+NEG0103,no signs of diarrhea,diarrhea,mixed,active
+NEG0104,no signs of chest pain,chest pain,mixed,active
+NEG0105,wala sang chest pain,chest pain,mixed,active
+NEG0106,indi may vomiting,vomiting,mixed,active
+NEG0107,wala sang cough,cough,mixed,active
+NEG0108,no signs of vomiting,vomiting,mixed,active
+NEG0109,no report of diarrhea,diarrhea,mixed,active
+NEG0110,patient denies diarrhea,diarrhea,mixed,active
+NEG0111,no signs of headache,headache,mixed,active
+NEG0112,hindi may nausea,nausea,mixed,active
+NEG0113,hindi may headache,headache,mixed,active
+NEG0114,no signs of dizziness,dizziness,mixed,active
+NEG0115,no signs of cough,cough,mixed,active
+NEG0116,negative for nausea,nausea,mixed,active
+NEG0117,indi may headache,headache,mixed,active
+NEG0118,absent cough,cough,mixed,active
+NEG0119,absent vomiting,vomiting,mixed,active
+NEG0120,no signs of cough,cough,mixed,active
+NEG0121,indi may vomiting,vomiting,mixed,active
+NEG0122,hindi may bleeding,bleeding,mixed,active
+NEG0123,no report of cough,cough,mixed,active
+NEG0124,no signs of dizziness,dizziness,mixed,active
+NEG0125,negative for rash,rash,mixed,active
+NEG0126,absent headache,headache,mixed,active
+NEG0127,no signs of chest pain,chest pain,mixed,active
+NEG0128,wala sang bleeding,bleeding,mixed,active
+NEG0129,indi may vomiting,vomiting,mixed,active
+NEG0130,no report of headache,headache,mixed,active
+NEG0131,wala sang rash,rash,mixed,active
+NEG0132,no signs of cough,cough,mixed,active
+NEG0133,hindi may chest pain,chest pain,mixed,active
+NEG0134,indi may fever,fever,mixed,active
+NEG0135,absent diarrhea,diarrhea,mixed,active
+NEG0136,wala sang fever,fever,mixed,active
+NEG0137,wala sang cough,cough,mixed,active
+NEG0138,no report of vomiting,vomiting,mixed,active
+NEG0139,wala sang bleeding,bleeding,mixed,active
+NEG0140,no signs of headache,headache,mixed,active
+NEG0141,wala sang diarrhea,diarrhea,mixed,active
+NEG0142,hindi may headache,headache,mixed,active
+NEG0143,patient denies dizziness,dizziness,mixed,active
+NEG0144,no report of headache,headache,mixed,active
+NEG0145,no signs of dizziness,dizziness,mixed,active
+NEG0146,negative for nausea,nausea,mixed,active
+NEG0147,negative for fever,fever,mixed,active
+NEG0148,wala sang fever,fever,mixed,active
+NEG0149,indi may nausea,nausea,mixed,active
+NEG0150,hindi may rash,rash,mixed,active
+NEG0151,no signs of nausea,nausea,mixed,active
+NEG0152,absent vomiting,vomiting,mixed,active
+NEG0153,no signs of diarrhea,diarrhea,mixed,active
+NEG0154,absent diarrhea,diarrhea,mixed,active
+NEG0155,wala sang cough,cough,mixed,active
+NEG0156,indi may chest pain,chest pain,mixed,active
+NEG0157,indi may dizziness,dizziness,mixed,active
+NEG0158,patient denies diarrhea,diarrhea,mixed,active
+NEG0159,hindi may dizziness,dizziness,mixed,active
+NEG0160,absent diarrhea,diarrhea,mixed,active
+NEG0161,indi may cough,cough,mixed,active
+NEG0162,indi may cough,cough,mixed,active
+NEG0163,patient denies bleeding,bleeding,mixed,active
+NEG0164,absent rash,rash,mixed,active
+NEG0165,no report of diarrhea,diarrhea,mixed,active
+NEG0166,wala sang cough,cough,mixed,active
+NEG0167,absent nausea,nausea,mixed,active
+NEG0168,indi may dizziness,dizziness,mixed,active
+NEG0169,hindi may headache,headache,mixed,active
+NEG0170,hindi may diarrhea,diarrhea,mixed,active
+NEG0171,wala sang fever,fever,mixed,active
+NEG0172,indi may bleeding,bleeding,mixed,active
+NEG0173,no signs of nausea,nausea,mixed,active
+NEG0174,indi may cough,cough,mixed,active
+NEG0175,patient denies diarrhea,diarrhea,mixed,active
+NEG0176,patient denies fever,fever,mixed,active
+NEG0177,hindi may bleeding,bleeding,mixed,active
+NEG0178,patient denies fever,fever,mixed,active
+NEG0179,negative for cough,cough,mixed,active
+NEG0180,wala sang diarrhea,diarrhea,mixed,active
+NEG0181,no signs of chest pain,chest pain,mixed,active
+NEG0182,patient denies bleeding,bleeding,mixed,active
+NEG0183,wala sang dizziness,dizziness,mixed,active
+NEG0184,hindi may diarrhea,diarrhea,mixed,active
+NEG0185,patient denies cough,cough,mixed,active
+NEG0186,wala sang rash,rash,mixed,active
+NEG0187,wala sang chest pain,chest pain,mixed,active
+NEG0188,negative for nausea,nausea,mixed,active
+NEG0189,no signs of cough,cough,mixed,active
+NEG0190,hindi may headache,headache,mixed,active
+NEG0191,indi may rash,rash,mixed,active
+NEG0192,no report of rash,rash,mixed,active
+NEG0193,absent nausea,nausea,mixed,active
+NEG0194,negative for dizziness,dizziness,mixed,active
+NEG0195,absent bleeding,bleeding,mixed,active
+NEG0196,negative for dizziness,dizziness,mixed,active
+NEG0197,patient denies cough,cough,mixed,active
+NEG0198,hindi may cough,cough,mixed,active
+NEG0199,hindi may headache,headache,mixed,active
+NEG0200,wala sang cough,cough,mixed,active
+NEG0201,no report of diarrhea,diarrhea,mixed,active
+NEG0202,absent rash,rash,mixed,active
+NEG0203,patient denies nausea,nausea,mixed,active
+NEG0204,wala sang headache,headache,mixed,active
+NEG0205,negative for rash,rash,mixed,active
+NEG0206,negative for cough,cough,mixed,active
+NEG0207,negative for headache,headache,mixed,active
+NEG0208,no signs of dizziness,dizziness,mixed,active
+NEG0209,wala sang diarrhea,diarrhea,mixed,active
+NEG0210,patient denies dizziness,dizziness,mixed,active
+NEG0211,no report of bleeding,bleeding,mixed,active
+NEG0212,absent cough,cough,mixed,active
+NEG0213,hindi may chest pain,chest pain,mixed,active
+NEG0214,indi may rash,rash,mixed,active
+NEG0215,no report of chest pain,chest pain,mixed,active
+NEG0216,wala sang headache,headache,mixed,active
+NEG0217,hindi may cough,cough,mixed,active
+NEG0218,wala sang dizziness,dizziness,mixed,active
+NEG0219,patient denies headache,headache,mixed,active
+NEG0220,indi may headache,headache,mixed,active
+NEG0221,no signs of rash,rash,mixed,active
+NEG0222,patient denies cough,cough,mixed,active
+NEG0223,patient denies nausea,nausea,mixed,active
+NEG0224,wala sang headache,headache,mixed,active
+NEG0225,wala sang vomiting,vomiting,mixed,active
+NEG0226,absent rash,rash,mixed,active
+NEG0227,absent cough,cough,mixed,active
+NEG0228,absent vomiting,vomiting,mixed,active
+NEG0229,absent headache,headache,mixed,active
+NEG0230,no report of bleeding,bleeding,mixed,active
+NEG0231,patient denies rash,rash,mixed,active
+NEG0232,patient denies bleeding,bleeding,mixed,active
+NEG0233,wala sang headache,headache,mixed,active
+NEG0234,no signs of bleeding,bleeding,mixed,active
+NEG0235,no report of fever,fever,mixed,active
+NEG0236,absent fever,fever,mixed,active
+NEG0237,indi may vomiting,vomiting,mixed,active
+NEG0238,no signs of bleeding,bleeding,mixed,active
+NEG0239,absent dizziness,dizziness,mixed,active
+NEG0240,hindi may nausea,nausea,mixed,active
+NEG0241,indi may vomiting,vomiting,mixed,active
+NEG0242,hindi may nausea,nausea,mixed,active
+NEG0243,no signs of cough,cough,mixed,active
+NEG0244,hindi may headache,headache,mixed,active
+NEG0245,hindi may chest pain,chest pain,mixed,active
+NEG0246,negative for dizziness,dizziness,mixed,active
+NEG0247,patient denies diarrhea,diarrhea,mixed,active
+NEG0248,wala sang diarrhea,diarrhea,mixed,active
+NEG0249,indi may diarrhea,diarrhea,mixed,active
+NEG0250,wala sang headache,headache,mixed,active
+NEG0251,no report of rash,rash,mixed,active
+NEG0252,negative for diarrhea,diarrhea,mixed,active
+NEG0253,no report of dizziness,dizziness,mixed,active
+NEG0254,hindi may nausea,nausea,mixed,active
+NEG0255,patient denies vomiting,vomiting,mixed,active
+NEG0256,no signs of cough,cough,mixed,active
+NEG0257,indi may nausea,nausea,mixed,active
+NEG0258,indi may bleeding,bleeding,mixed,active
+NEG0259,patient denies vomiting,vomiting,mixed,active
+NEG0260,wala sang diarrhea,diarrhea,mixed,active
+NEG0261,patient denies vomiting,vomiting,mixed,active
+NEG0262,hindi may dizziness,dizziness,mixed,active
+NEG0263,absent dizziness,dizziness,mixed,active
+NEG0264,no signs of dizziness,dizziness,mixed,active
+NEG0265,indi may cough,cough,mixed,active
+NEG0266,hindi may rash,rash,mixed,active
+NEG0267,negative for vomiting,vomiting,mixed,active
+NEG0268,wala sang bleeding,bleeding,mixed,active
+NEG0269,no signs of fever,fever,mixed,active
+NEG0270,hindi may nausea,nausea,mixed,active
+NEG0271,hindi may bleeding,bleeding,mixed,active
+NEG0272,no signs of nausea,nausea,mixed,active
+NEG0273,indi may cough,cough,mixed,active
+NEG0274,absent headache,headache,mixed,active
+NEG0275,indi may diarrhea,diarrhea,mixed,active
+NEG0276,no signs of diarrhea,diarrhea,mixed,active
+NEG0277,no signs of chest pain,chest pain,mixed,active
+NEG0278,negative for bleeding,bleeding,mixed,active
+NEG0279,absent diarrhea,diarrhea,mixed,active
+NEG0280,indi may cough,cough,mixed,active
+NEG0281,hindi may rash,rash,mixed,active
+NEG0282,absent rash,rash,mixed,active
+NEG0283,no report of bleeding,bleeding,mixed,active
+NEG0284,no report of headache,headache,mixed,active
+NEG0285,wala sang chest pain,chest pain,mixed,active
+NEG0286,wala sang diarrhea,diarrhea,mixed,active
+NEG0287,negative for headache,headache,mixed,active
+NEG0288,indi may bleeding,bleeding,mixed,active
+NEG0289,no signs of rash,rash,mixed,active
+NEG0290,no signs of fever,fever,mixed,active
+NEG0291,wala sang headache,headache,mixed,active
+NEG0292,hindi may dizziness,dizziness,mixed,active
+NEG0293,patient denies headache,headache,mixed,active
+NEG0294,wala sang diarrhea,diarrhea,mixed,active
+NEG0295,indi may headache,headache,mixed,active
+NEG0296,absent bleeding,bleeding,mixed,active
+NEG0297,wala sang bleeding,bleeding,mixed,active
+NEG0298,hindi may rash,rash,mixed,active
+NEG0299,absent bleeding,bleeding,mixed,active
+NEG0300,no signs of dizziness,dizziness,mixed,active
+NEG0301,wala sang diarrhea,diarrhea,mixed,active
+NEG0302,indi may cough,cough,mixed,active
+NEG0303,absent bleeding,bleeding,mixed,active
+NEG0304,hindi may fever,fever,mixed,active
+NEG0305,negative for nausea,nausea,mixed,active
+NEG0306,hindi may fever,fever,mixed,active
+NEG0307,indi may headache,headache,mixed,active
+NEG0308,negative for headache,headache,mixed,active
+NEG0309,no report of fever,fever,mixed,active
+NEG0310,no signs of vomiting,vomiting,mixed,active
+NEG0311,wala sang dizziness,dizziness,mixed,active
+NEG0312,patient denies chest pain,chest pain,mixed,active
+NEG0313,negative for chest pain,chest pain,mixed,active
+NEG0314,hindi may chest pain,chest pain,mixed,active
+NEG0315,patient denies fever,fever,mixed,active
+NEG0316,negative for rash,rash,mixed,active
+NEG0317,wala sang rash,rash,mixed,active
+NEG0318,indi may dizziness,dizziness,mixed,active
+NEG0319,patient denies diarrhea,diarrhea,mixed,active
+NEG0320,wala sang dizziness,dizziness,mixed,active
+NEG0321,wala sang rash,rash,mixed,active
+NEG0322,hindi may nausea,nausea,mixed,active
+NEG0323,negative for vomiting,vomiting,mixed,active
+NEG0324,absent nausea,nausea,mixed,active
+NEG0325,absent vomiting,vomiting,mixed,active
+NEG0326,negative for nausea,nausea,mixed,active
+NEG0327,wala sang dizziness,dizziness,mixed,active
+NEG0328,wala sang dizziness,dizziness,mixed,active
+NEG0329,absent rash,rash,mixed,active
+NEG0330,no report of nausea,nausea,mixed,active
+NEG0331,indi may bleeding,bleeding,mixed,active
+NEG0332,wala sang chest pain,chest pain,mixed,active
+NEG0333,absent headache,headache,mixed,active
+NEG0334,absent fever,fever,mixed,active
+NEG0335,wala sang cough,cough,mixed,active
+NEG0336,absent dizziness,dizziness,mixed,active
+NEG0337,negative for dizziness,dizziness,mixed,active
+NEG0338,absent vomiting,vomiting,mixed,active
+NEG0339,absent rash,rash,mixed,active
+NEG0340,no report of headache,headache,mixed,active
+NEG0341,negative for bleeding,bleeding,mixed,active
+NEG0342,no signs of vomiting,vomiting,mixed,active
+NEG0343,negative for rash,rash,mixed,active
+NEG0344,no signs of vomiting,vomiting,mixed,active
+NEG0345,indi may cough,cough,mixed,active
+NEG0346,hindi may diarrhea,diarrhea,mixed,active
+NEG0347,patient denies cough,cough,mixed,active
+NEG0348,patient denies fever,fever,mixed,active
+NEG0349,hindi may chest pain,chest pain,mixed,active
+NEG0350,negative for dizziness,dizziness,mixed,active
+NEG0351,wala sang nausea,nausea,mixed,active
+NEG0352,no signs of nausea,nausea,mixed,active
+NEG0353,negative for cough,cough,mixed,active
+NEG0354,no signs of rash,rash,mixed,active
+NEG0355,indi may headache,headache,mixed,active
+NEG0356,no signs of headache,headache,mixed,active
+NEG0357,hindi may chest pain,chest pain,mixed,active
+NEG0358,absent headache,headache,mixed,active
+NEG0359,no signs of fever,fever,mixed,active
+NEG0360,no report of nausea,nausea,mixed,active
+NEG0361,absent diarrhea,diarrhea,mixed,active
+NEG0362,hindi may dizziness,dizziness,mixed,active
+NEG0363,hindi may headache,headache,mixed,active
+NEG0364,negative for nausea,nausea,mixed,active
+NEG0365,wala sang cough,cough,mixed,active
+NEG0366,hindi may headache,headache,mixed,active
+NEG0367,patient denies nausea,nausea,mixed,active
+NEG0368,wala sang fever,fever,mixed,active
+NEG0369,negative for nausea,nausea,mixed,active
+NEG0370,indi may headache,headache,mixed,active
+NEG0371,wala sang chest pain,chest pain,mixed,active
+NEG0372,indi may cough,cough,mixed,active
+NEG0373,patient denies cough,cough,mixed,active
+NEG0374,hindi may headache,headache,mixed,active
+NEG0375,negative for diarrhea,diarrhea,mixed,active
+NEG0376,absent fever,fever,mixed,active
+NEG0377,negative for chest pain,chest pain,mixed,active
+NEG0378,absent dizziness,dizziness,mixed,active
+NEG0379,absent diarrhea,diarrhea,mixed,active
+NEG0380,no signs of bleeding,bleeding,mixed,active
