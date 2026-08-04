@@ -1,6 +1,14 @@
-# Push MedConnect to GitLab + auto-deploy online
+# MedConnect deployment (GitLab + Hostinger + Railway)
 
-Production site: **https://medconnect.bccbsis.com**
+Official production site: **https://medconnect.bccbsis.com**
+
+| Component | Platform | How it deploys |
+|-----------|----------|----------------|
+| PHP app | Hostinger | GitLab CI → FTPS on push to `main` |
+| Python AI | Railway | GitHub mirror or `railway up` from local clone |
+| Source control | GitLab | `gitlab.bagocitycollege.com/bsis-capstone-2026/medconnect` |
+
+Do **not** use InfinityFree or other free PHP hosts for production — OTP email, AI status checks, and reliability are limited there.
 
 ## 1. Push from your PC
 
@@ -65,14 +73,62 @@ If the host uses **Advanced → Git**:
 
 Then every push to `main` triggers a pull on the server (you can use this *or* the FTP CI job; both is redundant).
 
-## 5. Production `.env` on the server (do not commit)
+## 5. Production AI URL (Hostinger `.env` optional)
+
+`config/app.php` auto-uses the Railway AI URL on `medconnect.bccbsis.com` when
+`MEDCONNECT_AI_SERVICE_URL` is unset (so school Hostinger login is not required).
+
+Optional Hostinger `.env` override (FTP deploy does **not** overwrite `.env`):
 
 ```env
-MEDCONNECT_AI_SERVICE_ENABLED=true
-MEDCONNECT_AI_SERVICE_URL=https://your-fastapi.example.com
-MEDCONNECT_AI_AUTO_START=false
-MEDCONNECT_AI_REQUIRE_PYTHON=false
 MEDCONNECT_APP_URL=https://medconnect.bccbsis.com
+MEDCONNECT_AI_SERVICE_ENABLED=true
+MEDCONNECT_AI_SERVICE_URL=https://medconnect-production-a654.up.railway.app
+MEDCONNECT_AI_AUTO_START=false
+MEDCONNECT_AI_REQUIRE_PYTHON=true
+GROQ_API_KEY=your_groq_key
+MEDCONNECT_GROQ_MODEL=llama-3.1-8b-instant
 ```
 
 Import `database/schema.sql` and migrations on the production database when schema changes.
+
+## 6. Python AI on Railway
+
+PHP on Hostinger cannot run Python. Deploy `ai_service/` separately on [Railway](https://railway.app).
+
+### Railway variables (Python service only)
+
+| Variable | Value |
+|----------|--------|
+| `GROQ_API_KEY` | From Groq console |
+| `MEDCONNECT_GROQ_MODEL` | `llama-3.1-8b-instant` |
+| `MEDCONNECT_AI_INTERPRETER` | `1` |
+| `MEDCONNECT_AI_PROVIDER_ORDER` | `groq,openai,local` |
+| `MEDCONNECT_AI_HOST` | `0.0.0.0` |
+
+Do **not** set `MEDCONNECT_AI_SERVICE_URL` on Railway — that belongs on Hostinger `.env` only.
+
+### Deploy from GitLab clone (no GitHub required)
+
+```powershell
+cd c:\xampp\htdocs\medconnect
+npm install -g @railway/cli
+railway login
+railway link
+railway up
+```
+
+Or connect a GitHub mirror of this repo; Railway builds `ai_service/Dockerfile` (see `railway.toml`).
+
+### Verify
+
+1. `https://your-service.up.railway.app/health` → `"status": "ok"`
+2. `https://medconnect.bccbsis.com/app/api/ai/groq_health.php` → `"groq": true`
+
+## 7. Push code changes
+
+```powershell
+git push origin main
+```
+
+GitLab CI redeploys PHP to Hostinger. Re-run `railway up` (or push to GitHub) when `ai_service/` changes.

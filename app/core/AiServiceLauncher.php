@@ -257,6 +257,9 @@ final class AiServiceLauncher
             return '';
         }
         if ($python === null) {
+            if (!function_exists('exec') && !self::isLocalServiceUrl(AI_SERVICE_BASE_URL)) {
+                return 'Cannot reach remote Python service at ' . AI_SERVICE_BASE_URL;
+            }
             return 'No working Python executable found';
         }
         if (is_file(BASE_PATH . '/ai_service/.venv/Scripts/python.exe') && !$venvValid) {
@@ -275,6 +278,11 @@ final class AiServiceLauncher
             return self::$resolvedPython;
         }
         self::$pythonResolved = true;
+
+        if (!function_exists('exec')) {
+            self::$resolvedPython = null;
+            return null;
+        }
 
         $candidates = [
             BASE_PATH . '/ai_service/.venv/Scripts/python.exe',
@@ -316,6 +324,10 @@ final class AiServiceLauncher
 
     private static function pythonExecutableWorks(string $path): bool
     {
+        if (!function_exists('exec')) {
+            return false;
+        }
+
         $path = trim(str_replace('/', '\\', $path));
         if ($path === '' || !is_file($path)) {
             return false;
@@ -329,7 +341,7 @@ final class AiServiceLauncher
 
     private static function venvHasRapidfuzz(?string $python): bool
     {
-        if ($python === null) {
+        if ($python === null || !function_exists('exec')) {
             return false;
         }
         if (self::$venvRapidfuzz !== null) {
@@ -341,6 +353,12 @@ final class AiServiceLauncher
 
         self::$venvRapidfuzz = ($code === 0);
         return self::$venvRapidfuzz;
+    }
+
+    private static function isLocalServiceUrl(string $url): bool
+    {
+        $host = strtolower((string) (parse_url($url, PHP_URL_HOST) ?: ''));
+        return in_array($host, ['127.0.0.1', 'localhost', '::1'], true);
     }
 
     private static function startBackgroundProcess(string $python): bool
