@@ -1,0 +1,502 @@
+rule_id,name,pattern_hiligaynon,pattern_english,classification,rationale,status
+EF001,Chest Pain,masakit dughan ko,chest pain,EMERGENCY,Acute chest pain may indicate myocardial ischemia or pulmonary embolism,active
+EF002,Chest Pain,sakit dughan,chest pain,EMERGENCY,Chest pain requires immediate emergency evaluation,active
+EF003,Respiratory Distress,budlay magginhawa ko,difficulty breathing,EMERGENCY,Airway or respiratory compromise,active
+EF004,Respiratory Distress,indi ko makaginhawa,cannot breathe,EMERGENCY,Severe respiratory distress,active
+EF005,Respiratory Distress,dula ginhawa ko,shortness of breath,EMERGENCY,Hypoxia risk — emergency assessment required,active
+EF006,Severe Bleeding,grabe gid nagadugo,severe bleeding,EMERGENCY,Uncontrolled hemorrhage,active
+EF007,Severe Bleeding,indi mapunggan ang dugo,uncontrolled bleeding,EMERGENCY,Hemorrhage not controlled,active
+EF008,Severe Bleeding,nagdugo ulo ko,head bleeding,EMERGENCY,Head trauma with bleeding,active
+EF009,Loss of Consciousness,nadulaan ko malay,loss of consciousness,EMERGENCY,Altered consciousness — ABCs priority,active
+EF010,Loss of Consciousness,nagpunaw ko,loss of consciousness,EMERGENCY,Syncope or collapse,active
+EF011,Stroke Symptoms,daw indi ko makahambal,speech difficulty,EMERGENCY,Possible acute stroke — FAST criteria,active
+EF012,Stroke Symptoms,daw indi ko makabaton sang kamot ko,arm weakness,EMERGENCY,Focal neurological deficit,active
+EF013,Seizure,naguyam ko,seizure,EMERGENCY,Active or recent seizure activity,active
+EF014,Severe Allergic Reaction,gahubag lawas ko kag budlay magginhawa,anaphylaxis,EMERGENCY,Anaphylaxis with airway involvement,active
+EF015,Suicidal Ideation,gusto ko magpakamatay,suicidal ideation,EMERGENCY,Suicide risk — immediate safety assessment,active
+EF016,Major Trauma,nabunggo ko sa salakyan,vehicle collision injury,EMERGENCY,High-energy trauma mechanism,active
+EF017,Amputation,nautod ari ko,penile amputation,EMERGENCY,Major tissue loss — surgical emergency,active
+EF018,Amputation,nautod tudlo ko,amputated finger,EMERGENCY,Traumatic amputation,active
+EF019,Electrical Injury,nakuryente ko kag nadulaan ko malay,electrical injury with altered consciousness,EMERGENCY,Electrical injury with neurological compromise,active
+EF020,Electrical Injury,nakuryente gid ko,electrical injury,EMERGENCY,Electrical injury — cardiac arrhythmia risk,active
+EF021,Severe Burns,nasunog lawas ko,body burn,EMERGENCY,Major burn — fluid resuscitation may be required,active
+EF022,Urinary Retention,wala ko maka-ihi,urinary retention,EMERGENCY,Acute urinary retention,active
+EF023,Severe Head Injury,nagdugo ulo ko pagkatapos natumba,head bleeding after fall,EMERGENCY,Head injury with bleeding post fall,active
+EF024,Choking,wala ko maka-ginhawa tungod sa pagkaon,choking,EMERGENCY,Airway obstruction,active
+EF025,Poisoning,naka-inom ko sang lason,poisoning,EMERGENCY,Toxic ingestion,active
+EF026,Chest Pain,hapdi dughan ko,chest pain,EMERGENCY,Chest discomfort — rule out ACS,active
+EF027,Chest Pain,masakit dibdib ko kag dula ginhawa,chest pain with shortness of breath,EMERGENCY,Chest pain with dyspnea,active
+EF028,Chest Pain,naga pitik dughan ko kag masakit,chest pain with palpitations,EMERGENCY,Chest pain with arrhythmia symptoms,active
+EF029,Respiratory Distress,lisod gid magginhawa,severe difficulty breathing,EMERGENCY,Severe dyspnea,active
+EF030,Respiratory Distress,ginakapos gid ginhawa ko,air hunger,EMERGENCY,Air hunger — hypoxia risk,active
+EF031,Respiratory Distress,nagahubak kag budlay magginhawa,wheezing with dyspnea,EMERGENCY,Severe bronchospasm,active
+EF032,Respiratory Distress,nagasinghot blood,coughing blood,EMERGENCY,Hemoptysis,active
+EF033,Respiratory Distress,nagauba dugo,coughing blood,EMERGENCY,Hemoptysis,active
+EF034,Severe Bleeding,grabe nagadugo kamot ko,severe hand bleeding,EMERGENCY,Uncontrolled extremity hemorrhage,active
+EF035,Severe Bleeding,indi mapunggan dugo sa pilas,uncontrolled wound bleeding,EMERGENCY,Wound hemorrhage not controlled,active
+EF036,Severe Bleeding,grabe gid nagadugo bilat,severe vaginal bleeding,EMERGENCY,Massive vaginal hemorrhage,active
+EF037,Severe Bleeding,grabe gid nagadugo ari,severe penile bleeding,EMERGENCY,Severe genital hemorrhage,active
+EF038,Loss of Consciousness,nalipong ko kag natumba,syncope with fall,EMERGENCY,Syncope with collapse,active
+EF039,Loss of Consciousness,wala ko malay,unresponsive,EMERGENCY,Unresponsive patient,active
+EF040,Loss of Consciousness,nahilo gid kag nagapunaw,severe dizziness with fainting,EMERGENCY,Presyncope progressing to syncope,active
+EF041,Stroke Symptoms,nawala gahambal ko,sudden speech loss,EMERGENCY,Sudden aphasia — stroke alert,active
+EF042,Stroke Symptoms,naparalysis ang atubang ko,facial paralysis,EMERGENCY,Facial droop — FAST stroke criteria,active
+EF043,Stroke Symptoms,kalit naluya ang kamot kag tiil,sudden limb weakness,EMERGENCY,Sudden unilateral weakness,active
+EF044,Stroke Symptoms,kalit nabulag isa ka mata,sudden vision loss one eye,EMERGENCY,Sudden monocular vision loss,active
+EF045,Seizure,nagakombulsyon ko,convulsions,EMERGENCY,Active convulsions,active
+EF046,Seizure,atake sang bakukang,seizure attack,EMERGENCY,Seizure activity (local slang),active
+EF047,Severe Allergic Reaction,namaga dila ko kag budlay magginhawa,tongue swelling with dyspnea,EMERGENCY,Angioedema with airway threat,active
+EF048,Severe Allergic Reaction,gahubag ngabil kag indi magginhawa,lip swelling with breathing difficulty,EMERGENCY,Anaphylaxis airway involvement,active
+EF049,Severe Allergic Reaction,kalit gakatol tanan lawas kag naluya,sudden whole-body itching with weakness,EMERGENCY,Systemic allergic reaction,active
+EF050,Suicidal Ideation,wala na ko sang paglaum kag gusto matapos,hopelessness with suicidal intent,EMERGENCY,Active suicidal ideation,active
+EF051,Suicidal Ideation,plano ko maghikog,suicide plan,EMERGENCY,Suicide plan disclosed,active
+EF052,Major Trauma,natumba sa taas nga lugar,fall from height,EMERGENCY,High-energy fall mechanism,active
+EF053,Major Trauma,ginbunalan kag nawala malay,assault with loss of consciousness,EMERGENCY,Trauma with altered consciousness,active
+EF054,Major Trauma,nabangga sang motorsiklo,motorcycle collision,EMERGENCY,High-energy traffic injury,active
+EF055,Amputation,nabungtol ang tudlo ko,finger avulsion,EMERGENCY,Traumatic digit loss,active
+EF056,Amputation,nautod ang kamot ko,hand amputation,EMERGENCY,Major traumatic amputation,active
+EF057,Electrical Injury,nakuryente ko kag nagkulba dughan,electrical injury with chest discomfort,EMERGENCY,Electrical injury — cardiac risk,active
+EF058,Severe Burns,nasunog dughan kag likod ko,chest and back burns,EMERGENCY,Extensive burns of trunk,active
+EF059,Severe Burns,nasunog sang asido,chemical burn,EMERGENCY,Chemical burn injury,active
+EF060,Urinary Retention,indi ko gid makaihi,complete inability to urinate,EMERGENCY,Complete urinary retention,active
+EF061,Severe Head Injury,nabun-og ulo pagkatapos nabangga,head bruise after collision,EMERGENCY,Head trauma after impact,active
+EF062,Severe Head Injury,nagsuka pagkatapos napukol ulo,vomiting after head blow,EMERGENCY,Post-traumatic vomiting,active
+EF063,Choking,naipit sang bukog sa tutunlan,bone stuck in throat,EMERGENCY,Foreign body airway obstruction,active
+EF064,Poisoning,naka-inom ko sang kerosene,kerosene ingestion,EMERGENCY,Hydrocarbon ingestion,active
+EF065,Poisoning,naka-inom sang scrub / chlorine,chlorine or cleaning agent ingestion,EMERGENCY,Caustic/toxic ingestion,active
+EF066,Pregnancy Emergency,grabe sakit tiyan kag may dugo samtang buntis,abdominal pain with bleeding in pregnancy,EMERGENCY,Possible ectopic pregnancy or miscarriage complication,active
+EF067,Pregnancy Emergency,gadugo gid samtang buntis ko,heavy bleeding while pregnant,EMERGENCY,Obstetric hemorrhage,active
+EF068,Pediatric Emergency,indi magpukaw ang bata,unresponsive child,EMERGENCY,Unresponsive pediatric patient,active
+EF069,Pediatric Emergency,indi magginhawa ang bata,child not breathing,EMERGENCY,Pediatric respiratory arrest risk,active
+EF070,Severe Dehydration,wala ko mag-ihi kag sobra nagsuka,no urine output with severe vomiting,EMERGENCY,Severe dehydration with oliguria,active
+EF071,Severe Abdominal Pain,grabe sakit tiyan kag gahubag,severe abdominal pain with swelling,EMERGENCY,Acute abdomen,active
+EF072,Severe Abdominal Pain,masakit tiyan kag nagapalamiit,abdominal pain with rigidity,EMERGENCY,Peritoneal signs — emergency surgery risk,active
+EF073,Testicular Emergency,kalit masakit gid itlog ko,sudden severe testicular pain,EMERGENCY,Possible testicular torsion,active
+EF074,Eye Emergency,kalit nabulag mata ko,sudden blindness,EMERGENCY,Sudden vision loss,active
+EF075,Eye Emergency,nagsulod sang asido sa mata,chemical in eye,EMERGENCY,Ocular chemical burn,active
+EF076,Chest Pain,pig-ot dughan ko,chest tightness,EMERGENCY,Chest tightness may indicate ischemia,active
+EF077,Chest Pain,ginahapdi dughan kag naluya,chest pain with weakness,EMERGENCY,Chest pain with systemic weakness,active
+EF078,Chest Pain,masakit dughan paglakat,exertional chest pain,EMERGENCY,Exertional angina pattern,active
+EF079,Respiratory Distress,ginahingal gid ako,severe breathlessness,EMERGENCY,Severe air hunger,active
+EF080,Respiratory Distress,indi ko matapos ang ginhawa,cannot complete a breath,EMERGENCY,Critical dyspnea,active
+EF081,Respiratory Distress,nagabughat kag budlay magginhawa,stridor with dyspnea,EMERGENCY,Upper airway obstruction risk,active
+EF082,Respiratory Distress,asul na ang ngabil ko,blue lips,EMERGENCY,Cyanosis,active
+EF083,Respiratory Distress,asul na daliri ko,blue fingers,EMERGENCY,Peripheral cyanosis,active
+EF084,Severe Bleeding,nagaibus dugo sa ilong,severe nosebleed,EMERGENCY,Uncontrolled epistaxis,active
+EF085,Severe Bleeding,nagdugo sa baba kag indi mapunggan,uncontrolled mouth bleeding,EMERGENCY,Oropharyngeal hemorrhage,active
+EF086,Severe Bleeding,nagdugo sa lubot sing grabe,severe rectal bleeding,EMERGENCY,Lower GI hemorrhage,active
+EF087,Severe Bleeding,nagsuka sang dugo,vomiting blood,EMERGENCY,Hematemesis,active
+EF088,Severe Bleeding,itim ang tae kag naluya,black stool with weakness,EMERGENCY,Melena with hypovolemia signs,active
+EF089,Loss of Consciousness,kalit natumba ako,sudden collapse,EMERGENCY,Sudden collapse,active
+EF090,Loss of Consciousness,nagalipong kag indi makatindog,dizziness and cannot stand,EMERGENCY,Severe presyncope,active
+EF091,Stroke Symptoms,nabalyo ang guya ko,facial asymmetry,EMERGENCY,Facial droop,active
+EF092,Stroke Symptoms,indi ko maalsa ang isa ka kamot,cannot raise one arm,EMERGENCY,Arm drift — FAST,active
+EF093,Stroke Symptoms,nagalumay ang panulti ko,slurred speech,EMERGENCY,Dysarthria / stroke alert,active
+EF094,Stroke Symptoms,kalit nadula panulok,sudden vision loss,EMERGENCY,Acute visual loss,active
+EF095,Stroke Symptoms,kalit sakit ulo nga grabe gid,sudden worst headache,EMERGENCY,Thunderclap headache pattern,active
+EF096,Seizure,nagaluyu kag nagakurog,stiffening and shaking,EMERGENCY,Tonic-clonic activity,active
+EF097,Seizure,nagaibus bula sa baba sa atake,foaming at mouth during attack,EMERGENCY,Seizure with autonomic signs,active
+EF098,Severe Allergic Reaction,kalit gahubag ang lawas kag naga pula,sudden whole-body swelling and redness,EMERGENCY,Systemic allergic reaction,active
+EF099,Severe Allergic Reaction,ginakaluyahan kag gakatol tanan,weakness with generalized itching,EMERGENCY,Anaphylaxis prodrome,active
+EF100,Severe Allergic Reaction,nagsipa sang medicine kag budlay magginhawa,medicine reaction with dyspnea,EMERGENCY,Drug-induced anaphylaxis,active
+EF101,Suicidal Ideation,ginahunahuna ko maghikog,thinking of suicide,EMERGENCY,Suicidal ideation,active
+EF102,Suicidal Ideation,may plano ako magpakamatay,has suicide plan,EMERGENCY,Suicide plan,active
+EF103,Suicidal Ideation,mas maayo kung wala na ako,wish to be dead,EMERGENCY,Passive death wish — urgent safety assess,active
+EF104,Major Trauma,nabangga sang trak,hit by truck,EMERGENCY,High-energy impact,active
+EF105,Major Trauma,natumba gikan sa bubong,fell from roof,EMERGENCY,Fall from height,active
+EF106,Major Trauma,ginpusila / nabaekan,gunshot or stab wound,EMERGENCY,Penetrating trauma,active
+EF107,Major Trauma,nabali liog ko,broken neck,EMERGENCY,Possible cervical spine injury,active
+EF108,Amputation,natanggal ang tudlo ko,finger severed,EMERGENCY,Traumatic amputation,active
+EF109,Amputation,natabunan sang makina ang kamot,hand crushed by machine,EMERGENCY,Crush amputation risk,active
+EF110,Electrical Injury,nakuryente kag nagsuka,electrical injury with vomiting,EMERGENCY,Electrical injury systemic effects,active
+EF111,Severe Burns,nasunog ang guya,face burn,EMERGENCY,Facial burn — airway risk,active
+EF112,Severe Burns,nasunog madamo sang lawas,extensive body burns,EMERGENCY,Large TBSA burn,active
+EF113,Severe Burns,nasunog sang init nga tubig ang bata,scald burn in child,EMERGENCY,Pediatric scald,active
+EF114,Urinary Retention,busog pantog kag indi makaihi,full bladder cannot void,EMERGENCY,Acute retention,active
+EF115,Severe Head Injury,nagdugo ilong kag dulunggan pagkatapos natumba,ear and nose bleeding after fall,EMERGENCY,Possible basilar skull fracture,active
+EF116,Severe Head Injury,nagahubag ulo kag nagsuka-suka,head swelling with vomiting,EMERGENCY,Raised ICP concern,active
+EF117,Choking,naipit pagkaon sa tutunlan,food stuck in throat,EMERGENCY,Airway foreign body,active
+EF118,Choking,indi makahambal tungod may naipit,cannot speak due to choking,EMERGENCY,Severe airway obstruction,active
+EF119,Poisoning,nainom sang rat poison,rat poison ingestion,EMERGENCY,Rodenticide poisoning,active
+EF120,Poisoning,nainom sang insecticide,insecticide ingestion,EMERGENCY,Pesticide poisoning,active
+EF121,Poisoning,nasinghot sang smoke kag nalipong,smoke inhalation with syncope,EMERGENCY,Smoke inhalation,active
+EF122,Pregnancy Emergency,nagdugo kag grabe sakit tiyan buntis,bleeding with severe abdominal pain pregnant,EMERGENCY,Ectopic / obstetric emergency,active
+EF123,Pregnancy Emergency,indi ko mabatyagan ang bata maghulag,no fetal movement,EMERGENCY,Reduced fetal movement,active
+EF124,Pregnancy Emergency,nagaawas tubig samtang buntis,water breaking,EMERGENCY,PROM / labor emergency assessment,active
+EF125,Pediatric Emergency,ginahilanat ang bata kag naguyam,febrile child with seizure,EMERGENCY,Febrile seizure,active
+EF126,Pediatric Emergency,indi maginom ang bata kag sobra hinog,child not drinking and very lethargic,EMERGENCY,Severe pediatric dehydration,active
+EF127,Pediatric Emergency,asul ang bata pagkatapos magubo,child cyanosed after coughing,EMERGENCY,Pediatric respiratory emergency,active
+EF128,Severe Dehydration,makauga bibig kag indi makapatingug,very dry mouth cannot speak well,EMERGENCY,Severe dehydration,active
+EF129,Severe Dehydration,naluya gid kag wala na ihi sang adlaw,extreme weakness no urine all day,EMERGENCY,Anuria with shock risk,active
+EF130,Severe Abdominal Pain,masakit tiyan kag nagaibot itim,abdominal pain with black stool,EMERGENCY,GI bleed with pain,active
+EF131,Severe Abdominal Pain,kalit sakit tiyan sa tuo nga baba,sudden right lower abdominal pain,EMERGENCY,Appendicitis pattern,active
+EF132,Testicular Emergency,gahubag kag kalit hapdi itlog,sudden swelling and testicular pain,EMERGENCY,Torsion suspicion,active
+EF133,Eye Emergency,nagsulod sinelas / asero sa mata,metal or foreign body in eye,EMERGENCY,Ocular foreign body,active
+EF134,Eye Emergency,nabusisi ang mata kag indi makita,eye ruptured cannot see,EMERGENCY,Globe injury,active
+EF135,Cardiac Arrest Concern,indi makabayaw dughan / wala tibok,no pulse / not breathing,EMERGENCY,Possible cardiac arrest — start BLS,active
+EF136,Severe Hypertension Crisis,grabe sakit ulo kag alta 180,severe headache with BP 180,EMERGENCY,Hypertensive emergency pattern,active
+EF137,Diabetic Emergency,asukal sobra taas kag nalipong,very high sugar with dizziness,EMERGENCY,Hyperglycemic emergency,active
+EF138,Diabetic Emergency,asukal sobra baba kag nagakurog,very low sugar with shaking,EMERGENCY,Hypoglycemia,active
+EF139,Severe Infection,ginahilanat 40 kag naluya gid,fever 40 with severe weakness,EMERGENCY,Possible sepsis,active
+EF140,Severe Infection,mapula nagahapdi ang pilas kag may bilog na linya,red painful wound with streaking,EMERGENCY,Spreading cellulitis / lymphangitis,active
+EF141,Snake Bite,gina-kagat sang man-og,snake bite,EMERGENCY,Venomous bite risk,active
+EF142,Drowning,nalumos / nakainom madamo tubig,near drowning,EMERGENCY,Submersion injury,active
+EF143,Heat Emergency,sobra kainit lawas kag nalipong sa init,overheating with syncope,EMERGENCY,Heat stroke risk,active
+EF144,Hypothermia,ginaginhawa budlay kag sobra katugnaw lawas,cold body with weak breathing,EMERGENCY,Severe hypothermia,active
+EF145,Violent Agitation / Psych Emergency,nagahimo kaugalingon nga kalainan kag delikado,dangerous self-harm behavior,EMERGENCY,Immediate safety risk,active
+EF146,Neonatal Emergency,indi maghuni / indi magginhawa ang bag-ong bata,newborn not crying or breathing,EMERGENCY,Neonatal resuscitation need,active
+EF147,Severe Allergic Reaction,pagkaon allergy kag gahubag tutunlan,food allergy with throat swelling,EMERGENCY,Food anaphylaxis,active
+EF148,Stroke Symptoms,kalit nalipong kag isa ka bahin sang lawas manhid,sudden dizziness with one-sided numbness,EMERGENCY,Cerebrovascular syndrome,active
+EF149,Respiratory Distress,COVID / pneumonia kag oxygen mubo,pneumonia with low oxygen,EMERGENCY,Hypoxemic respiratory failure risk,active
+EF150,Severe Bleeding,pag-opera nagdugo liwat sing grabe,post-op severe bleeding,EMERGENCY,Postoperative hemorrhage,active
+EF151,Chest Pain,daw may gahugot sa dughan,squeezing chest sensation,EMERGENCY,Classic ischemic squeeze pattern,active
+EF152,Chest Pain,sakit dughan nagakalat sa abaga,chest pain radiating to shoulder,EMERGENCY,Radiating chest pain,active
+EF153,Chest Pain,sakit dughan kag nagasinghot sing bug-at,chest pain with heavy sweating,EMERGENCY,Diaphoresis with chest pain,active
+EF154,Respiratory Distress,ginahingal bisan magpahuway,breathless at rest,EMERGENCY,Rest dyspnea,active
+EF155,Respiratory Distress,nagagamit tiyan pagginhawa,using abdominal muscles to breathe,EMERGENCY,Accessory muscle use,active
+EF156,Respiratory Distress,indi makatulog tungod budlay ginhawa,cannot sleep due to dyspnea,EMERGENCY,Orthopnea / nocturnal dyspnea,active
+EF157,Stroke Symptoms,kalit indi makahambal maayo,sudden inability to speak well,EMERGENCY,Aphasia / dysarthria onset,active
+EF158,Stroke Symptoms,nabag-o panan-aw kag nalipong,sudden vision change with dizziness,EMERGENCY,Posterior circulation warning,active
+EF159,Stroke Symptoms,nabulol ang panulti kag naluya isa ka kamot,garbled speech with one weak arm,EMERGENCY,FAST positive pattern,active
+EF160,Seizure,nagakagat dila kag nagaulo,biting tongue during attack,EMERGENCY,Seizure with oral trauma,active
+EF161,Seizure,naguyam liwat-liwag wala pa manohod,repeated seizures without recovery,EMERGENCY,Status epilepticus risk,active
+EF162,Severe Bleeding,nagaawas dugo sa tudlo kag indi mapunggan,uncontrolled finger bleeding,EMERGENCY,Arterial or uncontrolled bleed,active
+EF163,Severe Bleeding,nagdugo sa ngipon kag bug-os panit asa,oral bleeding with pale skin,EMERGENCY,Bleeding with hypovolemia signs,active
+EF164,Severe Bleeding,nagaibot dugo madamo,passing large amount of blood in stool,EMERGENCY,Hematochezia — massive GI bleed,active
+EF165,Loss of Consciousness,nadulaan malay pagkatapos sakit ulo,lost consciousness after headache,EMERGENCY,Secondary syncope / ICH concern,active
+EF166,Loss of Consciousness,nagpunaw sa init sang adlaw,fainted in heat,EMERGENCY,Heat-related syncope — assess severity,active
+EF167,Severe Allergic Reaction,kalit gahubag ngabil kag mata,sudden lip and eye swelling,EMERGENCY,Angioedema,active
+EF168,Severe Allergic Reaction,nakakaon shrimps kag budlay magginhawa,shrimp allergy with dyspnea,EMERGENCY,Food anaphylaxis,active
+EF169,Severe Allergic Reaction,ginkagat putakti kag ginahubag lawas,wasp sting with body swelling,EMERGENCY,Insect venom anaphylaxis,active
+EF170,Major Trauma,nabangga motorsiklo kag indi makahulag,motorcycle crash cannot move,EMERGENCY,High-energy MVC with paralysis concern,active
+EF171,Major Trauma,natumba sa kahoy kag sakit grabe sa likod,fell from tree severe back pain,EMERGENCY,Fall from height spinal injury,active
+EF172,Major Trauma,nabunggo ulo kag nagsuka,head impact then vomiting,EMERGENCY,Concussion / intracranial injury risk,active
+EF173,Poisoning,nainom bleach / chlorine,bleach ingestion,EMERGENCY,Caustic ingestion,active
+EF174,Poisoning,nainom kerosene / gasolina,kerosene ingestion,EMERGENCY,Hydrocarbon aspiration risk,active
+EF175,Poisoning,ginpa-inom lason sang iba,forced poisoned by someone,EMERGENCY,Intentional poisoning / assault,active
+EF176,Pregnancy Emergency,buntis kag kalit grabe sakit tuo tiyan,pregnant sudden right abdominal pain,EMERGENCY,Ectopic pregnancy pattern,active
+EF177,Pregnancy Emergency,buntis kag nagdugo madamo,pregnant heavy bleeding,EMERGENCY,Antepartum hemorrhage,active
+EF178,Pregnancy Emergency,nagakontraksyon mga bulan pa,early strong contractions,EMERGENCY,Preterm labor risk,active
+EF179,Pediatric Emergency,bata gahingal kag asul,child breathless and blue,EMERGENCY,Pediatric cyanosis,active
+EF180,Pediatric Emergency,bata indi magmata / sobra hinog,child unresponsive lethargy,EMERGENCY,Altered LOC in child,active
+EF181,Pediatric Emergency,bata may tae dugo kag nagsuka,child bloody stool and vomiting,EMERGENCY,Pediatric GI emergency,active
+EF182,Diabetic Emergency,diabetis kag nagsuka kag ginahingal,diabetic vomiting and dyspnea,EMERGENCY,Possible DKA,active
+EF183,Diabetic Emergency,asukal baba kag indi magmata,low sugar unresponsive,EMERGENCY,Severe hypoglycemia,active
+EF184,Severe Infection,may pilas kag may nana nga itim / baho gid,wound with black foul discharge,EMERGENCY,Necrotizing infection concern,active
+EF185,Severe Infection,ginahilanat kag suga sa liog magtig-a,fever with stiff neck,EMERGENCY,Meningitis pattern,active
+EF186,Severe Infection,sakit ihi kag ginahilanat gid kag naluya,dysuria fever severe weakness,EMERGENCY,Possible urosepsis,active
+EF187,Eye Emergency,kalit nabuta ang isa ka mata,sudden blindness one eye,EMERGENCY,Acute vision loss,active
+EF188,Eye Emergency,nagsulod chemical / paint sa mata,chemical or paint in eye,EMERGENCY,Chemical eye injury,active
+EF189,Urinary Retention,indi makaihi sang adlaw kag sakit pantog,cannot void all day bladder pain,EMERGENCY,Acute urinary retention,active
+EF190,Testicular Emergency,kalit sakit itlog kag nagaubos,sudden testicular pain elevation,EMERGENCY,Torsion — time critical,active
+EF191,Cardiac Concern,nagatibok dughan madasig kag nalipong,racing heartbeat with syncope,EMERGENCY,Arrhythmia with syncope,active
+EF192,Cardiac Concern,naghunong tibok / CPR ang kabataan,pulse stopped CPR started,EMERGENCY,Cardiac arrest in progress,active
+EF193,Violent Threat,may armas kag buot makapatay,armed and intent to kill,EMERGENCY,Immediate safety / police emergency,active
+EF194,Violent Threat,ginaasikaso nga may plano maghikog karong adlaw,active suicide plan today,EMERGENCY,Imminent suicide risk,active
+EF195,Bite / Envenomation,ginkagat aso / iro kag nagdugo,dog bite bleeding,EMERGENCY,Animal bite — rabies / wound care,active
+EF196,Bite / Envenomation,ginkagat sawa kag nagahubag,snake bite with swelling,EMERGENCY,Venomous snakebite,active
+EF197,Drowning,nalumos sa dagat kag nagaubo tubig,near-drowned coughing water,EMERGENCY,Submersion — delayed pulmonary edema risk,active
+EF198,Environmental,ginainitan lawas 40+ kag wala singhot,body heat 40+ no sweat,EMERGENCY,Heat stroke,active
+EF199,Environmental,nahuyog sa bugnaw tubig kag ginahingal,fell in cold water dyspneic,EMERGENCY,Cold water immersion,active
+EF200,Abdominal Emergency,kalit sakit tiyan kag nagsakit gid sa tuo baba,sudden RLQ abdominal pain,EMERGENCY,Acute abdomen / appendicitis,active
+,Chest pain with breathing difficulty,masakit dughan kag budlay ginhawa,chest pain with difficulty breathing,EMERGENCY,Emergency warning: Chest pain with breathing difficulty,active
+,Chest pain with breathing difficulty,,chest pain with difficulty breathing,EMERGENCY,Emergency warning: Chest pain with breathing difficulty,active
+,Severe shortness of breath,budlay gid magginhawa,severe shortness of breath,EMERGENCY,Emergency warning: Severe shortness of breath,active
+,Severe shortness of breath,,severe shortness of breath,EMERGENCY,Emergency warning: Severe shortness of breath,active
+,Unconsciousness,wala malay,unconscious,EMERGENCY,Emergency warning: Unconsciousness,active
+,Unconsciousness,,unconscious,EMERGENCY,Emergency warning: Unconsciousness,active
+,Seizure,naguyam,seizure,EMERGENCY,Emergency warning: Seizure,active
+,Seizure,,seizure,EMERGENCY,Emergency warning: Seizure,active
+,Stroke symptoms,indi makahambal,stroke symptoms,EMERGENCY,Emergency warning: Stroke symptoms,active
+,Stroke symptoms,,stroke symptoms,EMERGENCY,Emergency warning: Stroke symptoms,active
+,Sudden paralysis,bigla nga paralisis,sudden paralysis,EMERGENCY,Emergency warning: Sudden paralysis,active
+,Sudden paralysis,,sudden paralysis,EMERGENCY,Emergency warning: Sudden paralysis,active
+,Loss of vision,bigla nabuta,sudden vision loss,EMERGENCY,Emergency warning: Loss of vision,active
+,Loss of vision,,sudden vision loss,EMERGENCY,Emergency warning: Loss of vision,active
+,Vomiting blood,may dugo sa suka,vomiting blood,EMERGENCY,Emergency warning: Vomiting blood,active
+,Vomiting blood,,vomiting blood,EMERGENCY,Emergency warning: Vomiting blood,active
+,Coughing blood,nagauba dugo,coughing blood,EMERGENCY,Emergency warning: Coughing blood,active
+,Coughing blood,,coughing blood,EMERGENCY,Emergency warning: Coughing blood,active
+,Severe bleeding,indi mapunggan ang dugo,severe bleeding,EMERGENCY,Emergency warning: Severe bleeding,active
+,Severe bleeding,,severe bleeding,EMERGENCY,Emergency warning: Severe bleeding,active
+,Blue lips,asul bibig,blue lips,EMERGENCY,Emergency warning: Blue lips,active
+,Blue lips,,blue lips,EMERGENCY,Emergency warning: Blue lips,active
+,Poisoning,nakainom lason,poisoning,EMERGENCY,Emergency warning: Poisoning,active
+,Poisoning,,poisoning,EMERGENCY,Emergency warning: Poisoning,active
+,Severe burns,nasunog lawas,severe burns,EMERGENCY,Emergency warning: Severe burns,active
+,Severe burns,,severe burns,EMERGENCY,Emergency warning: Severe burns,active
+,Anaphylaxis,gahubag tutunlan,anaphylaxis,EMERGENCY,Emergency warning: Anaphylaxis,active
+,Anaphylaxis,,anaphylaxis,EMERGENCY,Emergency warning: Anaphylaxis,active
+,Confusion with high fever,nagakalibog kag grabe lagnat,confusion with high fever,EMERGENCY,Emergency warning: Confusion with high fever,active
+,Confusion with high fever,,confusion with high fever,EMERGENCY,Emergency warning: Confusion with high fever,active
+ERF0001,Unconsciousness,wala malay case1,unconscious case1,EMERGENCY,Emergency warning: Unconsciousness,active
+ERF0002,Stroke symptoms,indi makahambal case2,stroke symptoms case2,EMERGENCY,Emergency warning: Stroke symptoms,active
+ERF0003,Chest pain with breathing difficulty,masakit dughan kag budlay ginhawa case3,chest pain with difficulty breathing case3,EMERGENCY,Emergency warning: Chest pain with breathing difficulty,active
+ERF0004,Unconsciousness,wala malay case4,unconscious case4,EMERGENCY,Emergency warning: Unconsciousness,active
+ERF0005,Poisoning,nakainom lason case5,poisoning case5,EMERGENCY,Emergency warning: Poisoning,active
+ERF0006,Loss of vision,bigla nabuta case6,sudden vision loss case6,EMERGENCY,Emergency warning: Loss of vision,active
+ERF0007,Coughing blood,nagauba dugo case7,coughing blood case7,EMERGENCY,Emergency warning: Coughing blood,active
+ERF0008,Severe shortness of breath,budlay gid magginhawa case8,severe shortness of breath case8,EMERGENCY,Emergency warning: Severe shortness of breath,active
+ERF0009,Poisoning,nakainom lason case9,poisoning case9,EMERGENCY,Emergency warning: Poisoning,active
+ERF0010,Severe shortness of breath,budlay gid magginhawa case10,severe shortness of breath case10,EMERGENCY,Emergency warning: Severe shortness of breath,active
+ERF0011,Vomiting blood,may dugo sa suka case11,vomiting blood case11,EMERGENCY,Emergency warning: Vomiting blood,active
+ERF0012,Vomiting blood,may dugo sa suka case12,vomiting blood case12,EMERGENCY,Emergency warning: Vomiting blood,active
+ERF0013,Severe burns,nasunog lawas case13,severe burns case13,EMERGENCY,Emergency warning: Severe burns,active
+ERF0014,Sudden paralysis,bigla nga paralisis case14,sudden paralysis case14,EMERGENCY,Emergency warning: Sudden paralysis,active
+ERF0015,Coughing blood,nagauba dugo case15,coughing blood case15,EMERGENCY,Emergency warning: Coughing blood,active
+ERF0016,Severe bleeding,indi mapunggan ang dugo case16,severe bleeding case16,EMERGENCY,Emergency warning: Severe bleeding,active
+ERF0017,Severe shortness of breath,budlay gid magginhawa case17,severe shortness of breath case17,EMERGENCY,Emergency warning: Severe shortness of breath,active
+ERF0018,Vomiting blood,may dugo sa suka case18,vomiting blood case18,EMERGENCY,Emergency warning: Vomiting blood,active
+ERF0019,Coughing blood,nagauba dugo case19,coughing blood case19,EMERGENCY,Emergency warning: Coughing blood,active
+ERF0020,Seizure,naguyam case20,seizure case20,EMERGENCY,Emergency warning: Seizure,active
+ERF0021,Severe bleeding,indi mapunggan ang dugo case21,severe bleeding case21,EMERGENCY,Emergency warning: Severe bleeding,active
+ERF0022,Chest pain with breathing difficulty,masakit dughan kag budlay ginhawa case22,chest pain with difficulty breathing case22,EMERGENCY,Emergency warning: Chest pain with breathing difficulty,active
+ERF0023,Poisoning,nakainom lason case23,poisoning case23,EMERGENCY,Emergency warning: Poisoning,active
+ERF0024,Severe burns,nasunog lawas case24,severe burns case24,EMERGENCY,Emergency warning: Severe burns,active
+ERF0025,Confusion with high fever,nagakalibog kag grabe lagnat case25,confusion with high fever case25,EMERGENCY,Emergency warning: Confusion with high fever,active
+ERF0026,Anaphylaxis,gahubag tutunlan case26,anaphylaxis case26,EMERGENCY,Emergency warning: Anaphylaxis,active
+ERF0027,Blue lips,asul bibig case27,blue lips case27,EMERGENCY,Emergency warning: Blue lips,active
+ERF0028,Coughing blood,nagauba dugo case28,coughing blood case28,EMERGENCY,Emergency warning: Coughing blood,active
+ERF0029,Stroke symptoms,indi makahambal case29,stroke symptoms case29,EMERGENCY,Emergency warning: Stroke symptoms,active
+ERF0030,Vomiting blood,may dugo sa suka case30,vomiting blood case30,EMERGENCY,Emergency warning: Vomiting blood,active
+ERF0031,Blue lips,asul bibig case31,blue lips case31,EMERGENCY,Emergency warning: Blue lips,active
+ERF0032,Chest pain with breathing difficulty,masakit dughan kag budlay ginhawa case32,chest pain with difficulty breathing case32,EMERGENCY,Emergency warning: Chest pain with breathing difficulty,active
+ERF0033,Chest pain with breathing difficulty,masakit dughan kag budlay ginhawa case33,chest pain with difficulty breathing case33,EMERGENCY,Emergency warning: Chest pain with breathing difficulty,active
+ERF0034,Vomiting blood,may dugo sa suka case34,vomiting blood case34,EMERGENCY,Emergency warning: Vomiting blood,active
+ERF0035,Anaphylaxis,gahubag tutunlan case35,anaphylaxis case35,EMERGENCY,Emergency warning: Anaphylaxis,active
+ERF0036,Loss of vision,bigla nabuta case36,sudden vision loss case36,EMERGENCY,Emergency warning: Loss of vision,active
+ERF0037,Loss of vision,bigla nabuta case37,sudden vision loss case37,EMERGENCY,Emergency warning: Loss of vision,active
+ERF0038,Blue lips,asul bibig case38,blue lips case38,EMERGENCY,Emergency warning: Blue lips,active
+ERF0039,Severe shortness of breath,budlay gid magginhawa case39,severe shortness of breath case39,EMERGENCY,Emergency warning: Severe shortness of breath,active
+ERF0040,Vomiting blood,may dugo sa suka case40,vomiting blood case40,EMERGENCY,Emergency warning: Vomiting blood,active
+ERF0041,Poisoning,nakainom lason case41,poisoning case41,EMERGENCY,Emergency warning: Poisoning,active
+ERF0042,Confusion with high fever,nagakalibog kag grabe lagnat case42,confusion with high fever case42,EMERGENCY,Emergency warning: Confusion with high fever,active
+ERF0043,Vomiting blood,may dugo sa suka case43,vomiting blood case43,EMERGENCY,Emergency warning: Vomiting blood,active
+ERF0044,Severe shortness of breath,budlay gid magginhawa case44,severe shortness of breath case44,EMERGENCY,Emergency warning: Severe shortness of breath,active
+ERF0045,Confusion with high fever,nagakalibog kag grabe lagnat case45,confusion with high fever case45,EMERGENCY,Emergency warning: Confusion with high fever,active
+ERF0046,Severe shortness of breath,budlay gid magginhawa case46,severe shortness of breath case46,EMERGENCY,Emergency warning: Severe shortness of breath,active
+ERF0047,Sudden paralysis,bigla nga paralisis case47,sudden paralysis case47,EMERGENCY,Emergency warning: Sudden paralysis,active
+ERF0048,Severe bleeding,indi mapunggan ang dugo case48,severe bleeding case48,EMERGENCY,Emergency warning: Severe bleeding,active
+ERF0049,Unconsciousness,wala malay case49,unconscious case49,EMERGENCY,Emergency warning: Unconsciousness,active
+ERF0050,Severe shortness of breath,budlay gid magginhawa case50,severe shortness of breath case50,EMERGENCY,Emergency warning: Severe shortness of breath,active
+ERF0051,Unconsciousness,wala malay case51,unconscious case51,EMERGENCY,Emergency warning: Unconsciousness,active
+ERF0052,Stroke symptoms,indi makahambal case52,stroke symptoms case52,EMERGENCY,Emergency warning: Stroke symptoms,active
+ERF0053,Severe bleeding,indi mapunggan ang dugo case53,severe bleeding case53,EMERGENCY,Emergency warning: Severe bleeding,active
+ERF0054,Blue lips,asul bibig case54,blue lips case54,EMERGENCY,Emergency warning: Blue lips,active
+ERF0055,Severe bleeding,indi mapunggan ang dugo case55,severe bleeding case55,EMERGENCY,Emergency warning: Severe bleeding,active
+ERF0056,Coughing blood,nagauba dugo case56,coughing blood case56,EMERGENCY,Emergency warning: Coughing blood,active
+ERF0057,Poisoning,nakainom lason case57,poisoning case57,EMERGENCY,Emergency warning: Poisoning,active
+ERF0058,Sudden paralysis,bigla nga paralisis case58,sudden paralysis case58,EMERGENCY,Emergency warning: Sudden paralysis,active
+ERF0059,Loss of vision,bigla nabuta case59,sudden vision loss case59,EMERGENCY,Emergency warning: Loss of vision,active
+ERF0060,Severe bleeding,indi mapunggan ang dugo case60,severe bleeding case60,EMERGENCY,Emergency warning: Severe bleeding,active
+ERF0061,Coughing blood,nagauba dugo case61,coughing blood case61,EMERGENCY,Emergency warning: Coughing blood,active
+ERF0062,Stroke symptoms,indi makahambal case62,stroke symptoms case62,EMERGENCY,Emergency warning: Stroke symptoms,active
+ERF0063,Vomiting blood,may dugo sa suka case63,vomiting blood case63,EMERGENCY,Emergency warning: Vomiting blood,active
+ERF0064,Coughing blood,nagauba dugo case64,coughing blood case64,EMERGENCY,Emergency warning: Coughing blood,active
+ERF0065,Severe bleeding,indi mapunggan ang dugo case65,severe bleeding case65,EMERGENCY,Emergency warning: Severe bleeding,active
+ERF0066,Loss of vision,bigla nabuta case66,sudden vision loss case66,EMERGENCY,Emergency warning: Loss of vision,active
+ERF0067,Severe shortness of breath,budlay gid magginhawa case67,severe shortness of breath case67,EMERGENCY,Emergency warning: Severe shortness of breath,active
+ERF0068,Severe burns,nasunog lawas case68,severe burns case68,EMERGENCY,Emergency warning: Severe burns,active
+ERF0069,Poisoning,nakainom lason case69,poisoning case69,EMERGENCY,Emergency warning: Poisoning,active
+ERF0070,Severe shortness of breath,budlay gid magginhawa case70,severe shortness of breath case70,EMERGENCY,Emergency warning: Severe shortness of breath,active
+ERF0071,Anaphylaxis,gahubag tutunlan case71,anaphylaxis case71,EMERGENCY,Emergency warning: Anaphylaxis,active
+ERF0072,Blue lips,asul bibig case72,blue lips case72,EMERGENCY,Emergency warning: Blue lips,active
+ERF0073,Blue lips,asul bibig case73,blue lips case73,EMERGENCY,Emergency warning: Blue lips,active
+ERF0074,Confusion with high fever,nagakalibog kag grabe lagnat case74,confusion with high fever case74,EMERGENCY,Emergency warning: Confusion with high fever,active
+ERF0075,Severe burns,nasunog lawas case75,severe burns case75,EMERGENCY,Emergency warning: Severe burns,active
+ERF0076,Coughing blood,nagauba dugo case76,coughing blood case76,EMERGENCY,Emergency warning: Coughing blood,active
+ERF0077,Poisoning,nakainom lason case77,poisoning case77,EMERGENCY,Emergency warning: Poisoning,active
+ERF0078,Anaphylaxis,gahubag tutunlan case78,anaphylaxis case78,EMERGENCY,Emergency warning: Anaphylaxis,active
+ERF0079,Seizure,naguyam case79,seizure case79,EMERGENCY,Emergency warning: Seizure,active
+ERF0080,Loss of vision,bigla nabuta case80,sudden vision loss case80,EMERGENCY,Emergency warning: Loss of vision,active
+ERF0081,Vomiting blood,may dugo sa suka case81,vomiting blood case81,EMERGENCY,Emergency warning: Vomiting blood,active
+ERF0082,Confusion with high fever,nagakalibog kag grabe lagnat case82,confusion with high fever case82,EMERGENCY,Emergency warning: Confusion with high fever,active
+ERF0083,Seizure,naguyam case83,seizure case83,EMERGENCY,Emergency warning: Seizure,active
+ERF0084,Loss of vision,bigla nabuta case84,sudden vision loss case84,EMERGENCY,Emergency warning: Loss of vision,active
+ERF0085,Sudden paralysis,bigla nga paralisis case85,sudden paralysis case85,EMERGENCY,Emergency warning: Sudden paralysis,active
+ERF0086,Anaphylaxis,gahubag tutunlan case86,anaphylaxis case86,EMERGENCY,Emergency warning: Anaphylaxis,active
+ERF0087,Vomiting blood,may dugo sa suka case87,vomiting blood case87,EMERGENCY,Emergency warning: Vomiting blood,active
+ERF0088,Loss of vision,bigla nabuta case88,sudden vision loss case88,EMERGENCY,Emergency warning: Loss of vision,active
+ERF0089,Loss of vision,bigla nabuta case89,sudden vision loss case89,EMERGENCY,Emergency warning: Loss of vision,active
+ERF0090,Poisoning,nakainom lason case90,poisoning case90,EMERGENCY,Emergency warning: Poisoning,active
+ERF0091,Severe shortness of breath,budlay gid magginhawa case91,severe shortness of breath case91,EMERGENCY,Emergency warning: Severe shortness of breath,active
+ERF0092,Sudden paralysis,bigla nga paralisis case92,sudden paralysis case92,EMERGENCY,Emergency warning: Sudden paralysis,active
+ERF0093,Loss of vision,bigla nabuta case93,sudden vision loss case93,EMERGENCY,Emergency warning: Loss of vision,active
+ERF0094,Sudden paralysis,bigla nga paralisis case94,sudden paralysis case94,EMERGENCY,Emergency warning: Sudden paralysis,active
+ERF0095,Blue lips,asul bibig case95,blue lips case95,EMERGENCY,Emergency warning: Blue lips,active
+ERF0096,Stroke symptoms,indi makahambal case96,stroke symptoms case96,EMERGENCY,Emergency warning: Stroke symptoms,active
+ERF0097,Sudden paralysis,bigla nga paralisis case97,sudden paralysis case97,EMERGENCY,Emergency warning: Sudden paralysis,active
+ERF0098,Unconsciousness,wala malay case98,unconscious case98,EMERGENCY,Emergency warning: Unconsciousness,active
+ERF0099,Blue lips,asul bibig case99,blue lips case99,EMERGENCY,Emergency warning: Blue lips,active
+ERF0100,Confusion with high fever,nagakalibog kag grabe lagnat case100,confusion with high fever case100,EMERGENCY,Emergency warning: Confusion with high fever,active
+ERF0101,Vomiting blood,may dugo sa suka case101,vomiting blood case101,EMERGENCY,Emergency warning: Vomiting blood,active
+ERF0102,Severe shortness of breath,budlay gid magginhawa case102,severe shortness of breath case102,EMERGENCY,Emergency warning: Severe shortness of breath,active
+ERF0103,Severe shortness of breath,budlay gid magginhawa case103,severe shortness of breath case103,EMERGENCY,Emergency warning: Severe shortness of breath,active
+ERF0104,Anaphylaxis,gahubag tutunlan case104,anaphylaxis case104,EMERGENCY,Emergency warning: Anaphylaxis,active
+ERF0105,Severe shortness of breath,budlay gid magginhawa case105,severe shortness of breath case105,EMERGENCY,Emergency warning: Severe shortness of breath,active
+ERF0106,Severe shortness of breath,budlay gid magginhawa case106,severe shortness of breath case106,EMERGENCY,Emergency warning: Severe shortness of breath,active
+ERF0107,Loss of vision,bigla nabuta case107,sudden vision loss case107,EMERGENCY,Emergency warning: Loss of vision,active
+ERF0108,Severe shortness of breath,budlay gid magginhawa case108,severe shortness of breath case108,EMERGENCY,Emergency warning: Severe shortness of breath,active
+ERF0109,Poisoning,nakainom lason case109,poisoning case109,EMERGENCY,Emergency warning: Poisoning,active
+ERF0110,Poisoning,nakainom lason case110,poisoning case110,EMERGENCY,Emergency warning: Poisoning,active
+ERF0111,Sudden paralysis,bigla nga paralisis case111,sudden paralysis case111,EMERGENCY,Emergency warning: Sudden paralysis,active
+ERF0112,Severe burns,nasunog lawas case112,severe burns case112,EMERGENCY,Emergency warning: Severe burns,active
+ERF0113,Unconsciousness,wala malay case113,unconscious case113,EMERGENCY,Emergency warning: Unconsciousness,active
+ERF0114,Coughing blood,nagauba dugo case114,coughing blood case114,EMERGENCY,Emergency warning: Coughing blood,active
+ERF0115,Chest pain with breathing difficulty,masakit dughan kag budlay ginhawa case115,chest pain with difficulty breathing case115,EMERGENCY,Emergency warning: Chest pain with breathing difficulty,active
+ERF0116,Severe bleeding,indi mapunggan ang dugo case116,severe bleeding case116,EMERGENCY,Emergency warning: Severe bleeding,active
+ERF0117,Coughing blood,nagauba dugo case117,coughing blood case117,EMERGENCY,Emergency warning: Coughing blood,active
+ERF0118,Coughing blood,nagauba dugo case118,coughing blood case118,EMERGENCY,Emergency warning: Coughing blood,active
+ERF0119,Sudden paralysis,bigla nga paralisis case119,sudden paralysis case119,EMERGENCY,Emergency warning: Sudden paralysis,active
+ERF0120,Blue lips,asul bibig case120,blue lips case120,EMERGENCY,Emergency warning: Blue lips,active
+ERF0121,Severe shortness of breath,budlay gid magginhawa case121,severe shortness of breath case121,EMERGENCY,Emergency warning: Severe shortness of breath,active
+ERF0122,Loss of vision,bigla nabuta case122,sudden vision loss case122,EMERGENCY,Emergency warning: Loss of vision,active
+ERF0123,Sudden paralysis,bigla nga paralisis case123,sudden paralysis case123,EMERGENCY,Emergency warning: Sudden paralysis,active
+ERF0124,Anaphylaxis,gahubag tutunlan case124,anaphylaxis case124,EMERGENCY,Emergency warning: Anaphylaxis,active
+ERF0125,Blue lips,asul bibig case125,blue lips case125,EMERGENCY,Emergency warning: Blue lips,active
+ERF0126,Severe burns,nasunog lawas case126,severe burns case126,EMERGENCY,Emergency warning: Severe burns,active
+ERF0127,Loss of vision,bigla nabuta case127,sudden vision loss case127,EMERGENCY,Emergency warning: Loss of vision,active
+ERF0128,Anaphylaxis,gahubag tutunlan case128,anaphylaxis case128,EMERGENCY,Emergency warning: Anaphylaxis,active
+ERF0129,Confusion with high fever,nagakalibog kag grabe lagnat case129,confusion with high fever case129,EMERGENCY,Emergency warning: Confusion with high fever,active
+ERF0130,Poisoning,nakainom lason case130,poisoning case130,EMERGENCY,Emergency warning: Poisoning,active
+ERF0131,Chest pain with breathing difficulty,masakit dughan kag budlay ginhawa case131,chest pain with difficulty breathing case131,EMERGENCY,Emergency warning: Chest pain with breathing difficulty,active
+ERF0132,Stroke symptoms,indi makahambal case132,stroke symptoms case132,EMERGENCY,Emergency warning: Stroke symptoms,active
+ERF0133,Severe bleeding,indi mapunggan ang dugo case133,severe bleeding case133,EMERGENCY,Emergency warning: Severe bleeding,active
+ERF0134,Stroke symptoms,indi makahambal case134,stroke symptoms case134,EMERGENCY,Emergency warning: Stroke symptoms,active
+ERF0135,Sudden paralysis,bigla nga paralisis case135,sudden paralysis case135,EMERGENCY,Emergency warning: Sudden paralysis,active
+ERF0136,Severe shortness of breath,budlay gid magginhawa case136,severe shortness of breath case136,EMERGENCY,Emergency warning: Severe shortness of breath,active
+ERF0137,Severe bleeding,indi mapunggan ang dugo case137,severe bleeding case137,EMERGENCY,Emergency warning: Severe bleeding,active
+ERF0138,Coughing blood,nagauba dugo case138,coughing blood case138,EMERGENCY,Emergency warning: Coughing blood,active
+ERF0139,Seizure,naguyam case139,seizure case139,EMERGENCY,Emergency warning: Seizure,active
+ERF0140,Unconsciousness,wala malay case140,unconscious case140,EMERGENCY,Emergency warning: Unconsciousness,active
+ERF0141,Blue lips,asul bibig case141,blue lips case141,EMERGENCY,Emergency warning: Blue lips,active
+ERF0142,Vomiting blood,may dugo sa suka case142,vomiting blood case142,EMERGENCY,Emergency warning: Vomiting blood,active
+ERF0143,Seizure,naguyam case143,seizure case143,EMERGENCY,Emergency warning: Seizure,active
+ERF0144,Anaphylaxis,gahubag tutunlan case144,anaphylaxis case144,EMERGENCY,Emergency warning: Anaphylaxis,active
+ERF0145,Severe shortness of breath,budlay gid magginhawa case145,severe shortness of breath case145,EMERGENCY,Emergency warning: Severe shortness of breath,active
+ERF0146,Sudden paralysis,bigla nga paralisis case146,sudden paralysis case146,EMERGENCY,Emergency warning: Sudden paralysis,active
+ERF0147,Anaphylaxis,gahubag tutunlan case147,anaphylaxis case147,EMERGENCY,Emergency warning: Anaphylaxis,active
+ERF0148,Coughing blood,nagauba dugo case148,coughing blood case148,EMERGENCY,Emergency warning: Coughing blood,active
+ERF0149,Sudden paralysis,bigla nga paralisis case149,sudden paralysis case149,EMERGENCY,Emergency warning: Sudden paralysis,active
+ERF0150,Severe shortness of breath,budlay gid magginhawa case150,severe shortness of breath case150,EMERGENCY,Emergency warning: Severe shortness of breath,active
+ERF0151,Severe burns,nasunog lawas case151,severe burns case151,EMERGENCY,Emergency warning: Severe burns,active
+ERF0152,Stroke symptoms,indi makahambal case152,stroke symptoms case152,EMERGENCY,Emergency warning: Stroke symptoms,active
+ERF0153,Severe bleeding,indi mapunggan ang dugo case153,severe bleeding case153,EMERGENCY,Emergency warning: Severe bleeding,active
+ERF0154,Seizure,naguyam case154,seizure case154,EMERGENCY,Emergency warning: Seizure,active
+ERF0155,Severe burns,nasunog lawas case155,severe burns case155,EMERGENCY,Emergency warning: Severe burns,active
+ERF0156,Loss of vision,bigla nabuta case156,sudden vision loss case156,EMERGENCY,Emergency warning: Loss of vision,active
+ERF0157,Anaphylaxis,gahubag tutunlan case157,anaphylaxis case157,EMERGENCY,Emergency warning: Anaphylaxis,active
+ERF0158,Coughing blood,nagauba dugo case158,coughing blood case158,EMERGENCY,Emergency warning: Coughing blood,active
+ERF0159,Severe burns,nasunog lawas case159,severe burns case159,EMERGENCY,Emergency warning: Severe burns,active
+ERF0160,Anaphylaxis,gahubag tutunlan case160,anaphylaxis case160,EMERGENCY,Emergency warning: Anaphylaxis,active
+ERF0161,Severe bleeding,indi mapunggan ang dugo case161,severe bleeding case161,EMERGENCY,Emergency warning: Severe bleeding,active
+ERF0162,Severe bleeding,indi mapunggan ang dugo case162,severe bleeding case162,EMERGENCY,Emergency warning: Severe bleeding,active
+ERF0163,Blue lips,asul bibig case163,blue lips case163,EMERGENCY,Emergency warning: Blue lips,active
+ERF0164,Blue lips,asul bibig case164,blue lips case164,EMERGENCY,Emergency warning: Blue lips,active
+ERF0165,Coughing blood,nagauba dugo case165,coughing blood case165,EMERGENCY,Emergency warning: Coughing blood,active
+ERF0166,Chest pain with breathing difficulty,masakit dughan kag budlay ginhawa case166,chest pain with difficulty breathing case166,EMERGENCY,Emergency warning: Chest pain with breathing difficulty,active
+ERF0167,Severe bleeding,indi mapunggan ang dugo case167,severe bleeding case167,EMERGENCY,Emergency warning: Severe bleeding,active
+ERF0168,Confusion with high fever,nagakalibog kag grabe lagnat case168,confusion with high fever case168,EMERGENCY,Emergency warning: Confusion with high fever,active
+ERF0169,Blue lips,asul bibig case169,blue lips case169,EMERGENCY,Emergency warning: Blue lips,active
+ERF0170,Anaphylaxis,gahubag tutunlan case170,anaphylaxis case170,EMERGENCY,Emergency warning: Anaphylaxis,active
+ERF0171,Poisoning,nakainom lason case171,poisoning case171,EMERGENCY,Emergency warning: Poisoning,active
+ERF0172,Stroke symptoms,indi makahambal case172,stroke symptoms case172,EMERGENCY,Emergency warning: Stroke symptoms,active
+ERF0173,Chest pain with breathing difficulty,masakit dughan kag budlay ginhawa case173,chest pain with difficulty breathing case173,EMERGENCY,Emergency warning: Chest pain with breathing difficulty,active
+ERF0174,Unconsciousness,wala malay case174,unconscious case174,EMERGENCY,Emergency warning: Unconsciousness,active
+ERF0175,Stroke symptoms,indi makahambal case175,stroke symptoms case175,EMERGENCY,Emergency warning: Stroke symptoms,active
+ERF0176,Poisoning,nakainom lason case176,poisoning case176,EMERGENCY,Emergency warning: Poisoning,active
+ERF0177,Severe burns,nasunog lawas case177,severe burns case177,EMERGENCY,Emergency warning: Severe burns,active
+ERF0178,Stroke symptoms,indi makahambal case178,stroke symptoms case178,EMERGENCY,Emergency warning: Stroke symptoms,active
+ERF0179,Confusion with high fever,nagakalibog kag grabe lagnat case179,confusion with high fever case179,EMERGENCY,Emergency warning: Confusion with high fever,active
+ERF0180,Sudden paralysis,bigla nga paralisis case180,sudden paralysis case180,EMERGENCY,Emergency warning: Sudden paralysis,active
+ERF0181,Sudden paralysis,bigla nga paralisis case181,sudden paralysis case181,EMERGENCY,Emergency warning: Sudden paralysis,active
+ERF0182,Chest pain with breathing difficulty,masakit dughan kag budlay ginhawa case182,chest pain with difficulty breathing case182,EMERGENCY,Emergency warning: Chest pain with breathing difficulty,active
+ERF0183,Unconsciousness,wala malay case183,unconscious case183,EMERGENCY,Emergency warning: Unconsciousness,active
+ERF0184,Anaphylaxis,gahubag tutunlan case184,anaphylaxis case184,EMERGENCY,Emergency warning: Anaphylaxis,active
+ERF0185,Unconsciousness,wala malay case185,unconscious case185,EMERGENCY,Emergency warning: Unconsciousness,active
+ERF0186,Severe bleeding,indi mapunggan ang dugo case186,severe bleeding case186,EMERGENCY,Emergency warning: Severe bleeding,active
+ERF0187,Blue lips,asul bibig case187,blue lips case187,EMERGENCY,Emergency warning: Blue lips,active
+ERF0188,Loss of vision,bigla nabuta case188,sudden vision loss case188,EMERGENCY,Emergency warning: Loss of vision,active
+ERF0189,Severe shortness of breath,budlay gid magginhawa case189,severe shortness of breath case189,EMERGENCY,Emergency warning: Severe shortness of breath,active
+ERF0190,Unconsciousness,wala malay case190,unconscious case190,EMERGENCY,Emergency warning: Unconsciousness,active
+ERF0191,Poisoning,nakainom lason case191,poisoning case191,EMERGENCY,Emergency warning: Poisoning,active
+ERF0192,Blue lips,asul bibig case192,blue lips case192,EMERGENCY,Emergency warning: Blue lips,active
+ERF0193,Chest pain with breathing difficulty,masakit dughan kag budlay ginhawa case193,chest pain with difficulty breathing case193,EMERGENCY,Emergency warning: Chest pain with breathing difficulty,active
+ERF0194,Severe shortness of breath,budlay gid magginhawa case194,severe shortness of breath case194,EMERGENCY,Emergency warning: Severe shortness of breath,active
+ERF0195,Poisoning,nakainom lason case195,poisoning case195,EMERGENCY,Emergency warning: Poisoning,active
+ERF0196,Coughing blood,nagauba dugo case196,coughing blood case196,EMERGENCY,Emergency warning: Coughing blood,active
+ERF0197,Seizure,naguyam case197,seizure case197,EMERGENCY,Emergency warning: Seizure,active
+ERF0198,Loss of vision,bigla nabuta case198,sudden vision loss case198,EMERGENCY,Emergency warning: Loss of vision,active
+ERF0199,Loss of vision,bigla nabuta case199,sudden vision loss case199,EMERGENCY,Emergency warning: Loss of vision,active
+ERF0200,Vomiting blood,may dugo sa suka case200,vomiting blood case200,EMERGENCY,Emergency warning: Vomiting blood,active
+ERF0201,Sudden paralysis,bigla nga paralisis case201,sudden paralysis case201,EMERGENCY,Emergency warning: Sudden paralysis,active
+ERF0202,Unconsciousness,wala malay case202,unconscious case202,EMERGENCY,Emergency warning: Unconsciousness,active
+ERF0203,Sudden paralysis,bigla nga paralisis case203,sudden paralysis case203,EMERGENCY,Emergency warning: Sudden paralysis,active
+ERF0204,Stroke symptoms,indi makahambal case204,stroke symptoms case204,EMERGENCY,Emergency warning: Stroke symptoms,active
+ERF0205,Poisoning,nakainom lason case205,poisoning case205,EMERGENCY,Emergency warning: Poisoning,active
+ERF0206,Sudden paralysis,bigla nga paralisis case206,sudden paralysis case206,EMERGENCY,Emergency warning: Sudden paralysis,active
+ERF0207,Severe burns,nasunog lawas case207,severe burns case207,EMERGENCY,Emergency warning: Severe burns,active
+ERF0208,Severe bleeding,indi mapunggan ang dugo case208,severe bleeding case208,EMERGENCY,Emergency warning: Severe bleeding,active
+ERF0209,Severe bleeding,indi mapunggan ang dugo case209,severe bleeding case209,EMERGENCY,Emergency warning: Severe bleeding,active
+ERF0210,Severe shortness of breath,budlay gid magginhawa case210,severe shortness of breath case210,EMERGENCY,Emergency warning: Severe shortness of breath,active
+ERF0211,Confusion with high fever,nagakalibog kag grabe lagnat case211,confusion with high fever case211,EMERGENCY,Emergency warning: Confusion with high fever,active
+ERF0212,Chest pain with breathing difficulty,masakit dughan kag budlay ginhawa case212,chest pain with difficulty breathing case212,EMERGENCY,Emergency warning: Chest pain with breathing difficulty,active
+ERF0213,Unconsciousness,wala malay case213,unconscious case213,EMERGENCY,Emergency warning: Unconsciousness,active
+ERF0214,Unconsciousness,wala malay case214,unconscious case214,EMERGENCY,Emergency warning: Unconsciousness,active
+ERF0215,Severe burns,nasunog lawas case215,severe burns case215,EMERGENCY,Emergency warning: Severe burns,active
+ERF0216,Severe bleeding,indi mapunggan ang dugo case216,severe bleeding case216,EMERGENCY,Emergency warning: Severe bleeding,active
+ERF0217,Chest pain with breathing difficulty,masakit dughan kag budlay ginhawa case217,chest pain with difficulty breathing case217,EMERGENCY,Emergency warning: Chest pain with breathing difficulty,active
+ERF0218,Blue lips,asul bibig case218,blue lips case218,EMERGENCY,Emergency warning: Blue lips,active
+ERF0219,Severe shortness of breath,budlay gid magginhawa case219,severe shortness of breath case219,EMERGENCY,Emergency warning: Severe shortness of breath,active
+ERF0220,Stroke symptoms,indi makahambal case220,stroke symptoms case220,EMERGENCY,Emergency warning: Stroke symptoms,active
+ERF0221,Vomiting blood,may dugo sa suka case221,vomiting blood case221,EMERGENCY,Emergency warning: Vomiting blood,active
+ERF0222,Blue lips,asul bibig case222,blue lips case222,EMERGENCY,Emergency warning: Blue lips,active
+ERF0223,Loss of vision,bigla nabuta case223,sudden vision loss case223,EMERGENCY,Emergency warning: Loss of vision,active
+ERF0224,Vomiting blood,may dugo sa suka case224,vomiting blood case224,EMERGENCY,Emergency warning: Vomiting blood,active
+ERF0225,Severe bleeding,indi mapunggan ang dugo case225,severe bleeding case225,EMERGENCY,Emergency warning: Severe bleeding,active
+ERF0226,Vomiting blood,may dugo sa suka case226,vomiting blood case226,EMERGENCY,Emergency warning: Vomiting blood,active
+ERF0227,Loss of vision,bigla nabuta case227,sudden vision loss case227,EMERGENCY,Emergency warning: Loss of vision,active
+ERF0228,Stroke symptoms,indi makahambal case228,stroke symptoms case228,EMERGENCY,Emergency warning: Stroke symptoms,active
+ERF0229,Seizure,naguyam case229,seizure case229,EMERGENCY,Emergency warning: Seizure,active
+ERF0230,Severe burns,nasunog lawas case230,severe burns case230,EMERGENCY,Emergency warning: Severe burns,active
+ERF0231,Coughing blood,nagauba dugo case231,coughing blood case231,EMERGENCY,Emergency warning: Coughing blood,active
+ERF0232,Severe shortness of breath,budlay gid magginhawa case232,severe shortness of breath case232,EMERGENCY,Emergency warning: Severe shortness of breath,active
+ERF0233,Sudden paralysis,bigla nga paralisis case233,sudden paralysis case233,EMERGENCY,Emergency warning: Sudden paralysis,active
+ERF0234,Loss of vision,bigla nabuta case234,sudden vision loss case234,EMERGENCY,Emergency warning: Loss of vision,active
+ERF0235,Severe shortness of breath,budlay gid magginhawa case235,severe shortness of breath case235,EMERGENCY,Emergency warning: Severe shortness of breath,active
+ERF0236,Stroke symptoms,indi makahambal case236,stroke symptoms case236,EMERGENCY,Emergency warning: Stroke symptoms,active
+ERF0237,Blue lips,asul bibig case237,blue lips case237,EMERGENCY,Emergency warning: Blue lips,active
+ERF0238,Blue lips,asul bibig case238,blue lips case238,EMERGENCY,Emergency warning: Blue lips,active
+ERF0239,Severe bleeding,indi mapunggan ang dugo case239,severe bleeding case239,EMERGENCY,Emergency warning: Severe bleeding,active
+ERF0240,Vomiting blood,may dugo sa suka case240,vomiting blood case240,EMERGENCY,Emergency warning: Vomiting blood,active
+ERF0241,Coughing blood,nagauba dugo case241,coughing blood case241,EMERGENCY,Emergency warning: Coughing blood,active
+ERF0242,Blue lips,asul bibig case242,blue lips case242,EMERGENCY,Emergency warning: Blue lips,active
+ERF0243,Stroke symptoms,indi makahambal case243,stroke symptoms case243,EMERGENCY,Emergency warning: Stroke symptoms,active
+ERF0244,Chest pain with breathing difficulty,masakit dughan kag budlay ginhawa case244,chest pain with difficulty breathing case244,EMERGENCY,Emergency warning: Chest pain with breathing difficulty,active
+ERF0245,Seizure,naguyam case245,seizure case245,EMERGENCY,Emergency warning: Seizure,active
+ERF0246,Loss of vision,bigla nabuta case246,sudden vision loss case246,EMERGENCY,Emergency warning: Loss of vision,active
+ERF0247,Severe bleeding,indi mapunggan ang dugo case247,severe bleeding case247,EMERGENCY,Emergency warning: Severe bleeding,active
+ERF0248,Chest pain with breathing difficulty,masakit dughan kag budlay ginhawa case248,chest pain with difficulty breathing case248,EMERGENCY,Emergency warning: Chest pain with breathing difficulty,active
+ERF0249,Chest pain with breathing difficulty,masakit dughan kag budlay ginhawa case249,chest pain with difficulty breathing case249,EMERGENCY,Emergency warning: Chest pain with breathing difficulty,active
+ERF0250,Seizure,naguyam case250,seizure case250,EMERGENCY,Emergency warning: Seizure,active
+ERF0251,Stroke symptoms,indi makahambal case251,stroke symptoms case251,EMERGENCY,Emergency warning: Stroke symptoms,active
+ERF0252,Seizure,naguyam case252,seizure case252,EMERGENCY,Emergency warning: Seizure,active
+ERF0253,Severe burns,nasunog lawas case253,severe burns case253,EMERGENCY,Emergency warning: Severe burns,active
+ERF0254,Unconsciousness,wala malay case254,unconscious case254,EMERGENCY,Emergency warning: Unconsciousness,active
+ERF0255,Severe burns,nasunog lawas case255,severe burns case255,EMERGENCY,Emergency warning: Severe burns,active
+ERF0256,Stroke symptoms,indi makahambal case256,stroke symptoms case256,EMERGENCY,Emergency warning: Stroke symptoms,active
+ERF0257,Stroke symptoms,indi makahambal case257,stroke symptoms case257,EMERGENCY,Emergency warning: Stroke symptoms,active
+ERF0258,Sudden paralysis,bigla nga paralisis case258,sudden paralysis case258,EMERGENCY,Emergency warning: Sudden paralysis,active
+ERF0259,Severe shortness of breath,budlay gid magginhawa case259,severe shortness of breath case259,EMERGENCY,Emergency warning: Severe shortness of breath,active
+ERF0260,Chest pain with breathing difficulty,masakit dughan kag budlay ginhawa case260,chest pain with difficulty breathing case260,EMERGENCY,Emergency warning: Chest pain with breathing difficulty,active
+ERF0261,Vomiting blood,may dugo sa suka case261,vomiting blood case261,EMERGENCY,Emergency warning: Vomiting blood,active
+ERF0262,Poisoning,nakainom lason case262,poisoning case262,EMERGENCY,Emergency warning: Poisoning,active
+ERF0263,Loss of vision,bigla nabuta case263,sudden vision loss case263,EMERGENCY,Emergency warning: Loss of vision,active
+ERF0264,Unconsciousness,wala malay case264,unconscious case264,EMERGENCY,Emergency warning: Unconsciousness,active
+ERF0265,Unconsciousness,wala malay case265,unconscious case265,EMERGENCY,Emergency warning: Unconsciousness,active
+ERF0266,Loss of vision,bigla nabuta case266,sudden vision loss case266,EMERGENCY,Emergency warning: Loss of vision,active
+ERF0267,Coughing blood,nagauba dugo case267,coughing blood case267,EMERGENCY,Emergency warning: Coughing blood,active
+ERF0268,Poisoning,nakainom lason case268,poisoning case268,EMERGENCY,Emergency warning: Poisoning,active
+ERF0269,Seizure,naguyam case269,seizure case269,EMERGENCY,Emergency warning: Seizure,active
+ERF0270,Coughing blood,nagauba dugo case270,coughing blood case270,EMERGENCY,Emergency warning: Coughing blood,active
+ERF0271,Coughing blood,nagauba dugo case271,coughing blood case271,EMERGENCY,Emergency warning: Coughing blood,active

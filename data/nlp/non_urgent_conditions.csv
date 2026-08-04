@@ -1,0 +1,501 @@
+rule_id,name,pattern_english,pattern_hiligaynon,classification,rationale,status
+N0001,Runny Nose,runny nose,,NON-URGENT,Routine consultation for runny nose,active
+N0002,Runny Nose,runny nose,,NON-URGENT,Routine consultation for runny nose,active
+N0003,Runny Nose,runny nose,,NON-URGENT,Routine consultation for runny nose,active
+N0004,Runny Nose,runny nose,,NON-URGENT,Routine consultation for runny nose,active
+N0005,Runny Nose,runny nose,,NON-URGENT,Routine consultation for runny nose,active
+N0006,Runny Nose,runny nose,,NON-URGENT,Routine consultation for runny nose,active
+N0007,Runny Nose,runny nose,,NON-URGENT,Routine consultation for runny nose,active
+N0008,Runny Nose,runny nose,,NON-URGENT,Routine consultation for runny nose,active
+N0009,Runny Nose,runny nose,,NON-URGENT,Routine consultation for runny nose,active
+N0010,Runny Nose,runny nose,,NON-URGENT,Routine consultation for runny nose,active
+N0011,Runny Nose,runny nose,,NON-URGENT,Routine consultation for runny nose,active
+N0012,Runny Nose,runny nose,,NON-URGENT,Routine consultation for runny nose,active
+N0013,Runny Nose,runny nose,,NON-URGENT,Routine consultation for runny nose,active
+N0014,Runny Nose,runny nose,,NON-URGENT,Routine consultation for runny nose,active
+N0015,Runny Nose,runny nose,,NON-URGENT,Routine consultation for runny nose,active
+N0016,Runny Nose,runny nose,,NON-URGENT,Routine consultation for runny nose,active
+N0017,Runny Nose,runny nose,,NON-URGENT,Routine consultation for runny nose,active
+N0018,Runny Nose,runny nose,,NON-URGENT,Routine consultation for runny nose,active
+N0019,Runny Nose,runny nose,,NON-URGENT,Routine consultation for runny nose,active
+N0020,Runny Nose,runny nose,,NON-URGENT,Routine consultation for runny nose,active
+N0021,Runny Nose,runny nose,,NON-URGENT,Routine consultation for runny nose,active
+N0022,Runny Nose,runny nose,,NON-URGENT,Routine consultation for runny nose,active
+N0023,Runny Nose,runny nose,,NON-URGENT,Routine consultation for runny nose,active
+N0024,Runny Nose,runny nose,,NON-URGENT,Routine consultation for runny nose,active
+N0025,Runny Nose,runny nose,,NON-URGENT,Routine consultation for runny nose,active
+N0026,Runny Nose,runny nose,,NON-URGENT,Routine consultation for runny nose,active
+N0027,Runny Nose,runny nose,,NON-URGENT,Routine consultation for runny nose,active
+N0028,Runny Nose,runny nose,,NON-URGENT,Routine consultation for runny nose,active
+N0029,Runny Nose,runny nose,,NON-URGENT,Routine consultation for runny nose,active
+N0030,Runny Nose,runny nose,,NON-URGENT,Routine consultation for runny nose,active
+N0031,Runny Nose,runny nose,,NON-URGENT,Routine consultation for runny nose,active
+N0032,Runny Nose,runny nose,,NON-URGENT,Routine consultation for runny nose,active
+N0033,Runny Nose,runny nose,,NON-URGENT,Routine consultation for runny nose,active
+N0034,Runny Nose,runny nose,,NON-URGENT,Routine consultation for runny nose,active
+N0035,Runny Nose,runny nose,,NON-URGENT,Routine consultation for runny nose,active
+N0036,Runny Nose,runny nose,,NON-URGENT,Routine consultation for runny nose,active
+N0037,Runny Nose,runny nose,,NON-URGENT,Routine consultation for runny nose,active
+N0038,Runny Nose,runny nose,,NON-URGENT,Routine consultation for runny nose,active
+N0039,Runny Nose,runny nose,,NON-URGENT,Routine consultation for runny nose,active
+N0040,Runny Nose,runny nose,,NON-URGENT,Routine consultation for runny nose,active
+N0041,Runny Nose,runny nose,,NON-URGENT,Routine consultation for runny nose,active
+N0042,Runny Nose,runny nose,,NON-URGENT,Routine consultation for runny nose,active
+N0043,Runny Nose,runny nose,,NON-URGENT,Routine consultation for runny nose,active
+N0044,Runny Nose,runny nose,,NON-URGENT,Routine consultation for runny nose,active
+N0045,Runny Nose,runny nose,,NON-URGENT,Routine consultation for runny nose,active
+N0046,Runny Nose,runny nose,,NON-URGENT,Routine consultation for runny nose,active
+N0047,Runny Nose,runny nose,,NON-URGENT,Routine consultation for runny nose,active
+N0048,Runny Nose,runny nose,,NON-URGENT,Routine consultation for runny nose,active
+N0049,Runny Nose,runny nose,,NON-URGENT,Routine consultation for runny nose,active
+N0050,Runny Nose,runny nose,,NON-URGENT,Routine consultation for runny nose,active
+N0051,Mild Cough,mild cough,,NON-URGENT,Routine consultation for mild cough,active
+N0052,Mild Cough,mild cough,,NON-URGENT,Routine consultation for mild cough,active
+N0053,Mild Cough,mild cough,,NON-URGENT,Routine consultation for mild cough,active
+N0054,Mild Cough,mild cough,,NON-URGENT,Routine consultation for mild cough,active
+N0055,Mild Cough,mild cough,,NON-URGENT,Routine consultation for mild cough,active
+N0056,Mild Cough,mild cough,,NON-URGENT,Routine consultation for mild cough,active
+N0057,Mild Cough,mild cough,,NON-URGENT,Routine consultation for mild cough,active
+N0058,Mild Cough,mild cough,,NON-URGENT,Routine consultation for mild cough,active
+N0059,Mild Cough,mild cough,,NON-URGENT,Routine consultation for mild cough,active
+N0060,Mild Cough,mild cough,,NON-URGENT,Routine consultation for mild cough,active
+N0061,Mild Cough,mild cough,,NON-URGENT,Routine consultation for mild cough,active
+N0062,Mild Cough,mild cough,,NON-URGENT,Routine consultation for mild cough,active
+N0063,Mild Cough,mild cough,,NON-URGENT,Routine consultation for mild cough,active
+N0064,Mild Cough,mild cough,,NON-URGENT,Routine consultation for mild cough,active
+N0065,Mild Cough,mild cough,,NON-URGENT,Routine consultation for mild cough,active
+N0066,Mild Cough,mild cough,,NON-URGENT,Routine consultation for mild cough,active
+N0067,Mild Cough,mild cough,,NON-URGENT,Routine consultation for mild cough,active
+N0068,Mild Cough,mild cough,,NON-URGENT,Routine consultation for mild cough,active
+N0069,Mild Cough,mild cough,,NON-URGENT,Routine consultation for mild cough,active
+N0070,Mild Cough,mild cough,,NON-URGENT,Routine consultation for mild cough,active
+N0071,Mild Cough,mild cough,,NON-URGENT,Routine consultation for mild cough,active
+N0072,Mild Cough,mild cough,,NON-URGENT,Routine consultation for mild cough,active
+N0073,Mild Cough,mild cough,,NON-URGENT,Routine consultation for mild cough,active
+N0074,Mild Cough,mild cough,,NON-URGENT,Routine consultation for mild cough,active
+N0075,Mild Cough,mild cough,,NON-URGENT,Routine consultation for mild cough,active
+N0076,Mild Cough,mild cough,,NON-URGENT,Routine consultation for mild cough,active
+N0077,Mild Cough,mild cough,,NON-URGENT,Routine consultation for mild cough,active
+N0078,Mild Cough,mild cough,,NON-URGENT,Routine consultation for mild cough,active
+N0079,Mild Cough,mild cough,,NON-URGENT,Routine consultation for mild cough,active
+N0080,Mild Cough,mild cough,,NON-URGENT,Routine consultation for mild cough,active
+N0081,Mild Cough,mild cough,,NON-URGENT,Routine consultation for mild cough,active
+N0082,Mild Cough,mild cough,,NON-URGENT,Routine consultation for mild cough,active
+N0083,Mild Cough,mild cough,,NON-URGENT,Routine consultation for mild cough,active
+N0084,Mild Cough,mild cough,,NON-URGENT,Routine consultation for mild cough,active
+N0085,Mild Cough,mild cough,,NON-URGENT,Routine consultation for mild cough,active
+N0086,Mild Cough,mild cough,,NON-URGENT,Routine consultation for mild cough,active
+N0087,Mild Cough,mild cough,,NON-URGENT,Routine consultation for mild cough,active
+N0088,Mild Cough,mild cough,,NON-URGENT,Routine consultation for mild cough,active
+N0089,Mild Cough,mild cough,,NON-URGENT,Routine consultation for mild cough,active
+N0090,Mild Cough,mild cough,,NON-URGENT,Routine consultation for mild cough,active
+N0091,Mild Cough,mild cough,,NON-URGENT,Routine consultation for mild cough,active
+N0092,Mild Cough,mild cough,,NON-URGENT,Routine consultation for mild cough,active
+N0093,Mild Cough,mild cough,,NON-URGENT,Routine consultation for mild cough,active
+N0094,Mild Cough,mild cough,,NON-URGENT,Routine consultation for mild cough,active
+N0095,Mild Cough,mild cough,,NON-URGENT,Routine consultation for mild cough,active
+N0096,Mild Cough,mild cough,,NON-URGENT,Routine consultation for mild cough,active
+N0097,Mild Cough,mild cough,,NON-URGENT,Routine consultation for mild cough,active
+N0098,Mild Cough,mild cough,,NON-URGENT,Routine consultation for mild cough,active
+N0099,Mild Cough,mild cough,,NON-URGENT,Routine consultation for mild cough,active
+N0100,Mild Cough,mild cough,,NON-URGENT,Routine consultation for mild cough,active
+N0101,Mild Headache,mild headache,,NON-URGENT,Routine consultation for mild headache,active
+N0102,Mild Headache,mild headache,,NON-URGENT,Routine consultation for mild headache,active
+N0103,Mild Headache,mild headache,,NON-URGENT,Routine consultation for mild headache,active
+N0104,Mild Headache,mild headache,,NON-URGENT,Routine consultation for mild headache,active
+N0105,Mild Headache,mild headache,,NON-URGENT,Routine consultation for mild headache,active
+N0106,Mild Headache,mild headache,,NON-URGENT,Routine consultation for mild headache,active
+N0107,Mild Headache,mild headache,,NON-URGENT,Routine consultation for mild headache,active
+N0108,Mild Headache,mild headache,,NON-URGENT,Routine consultation for mild headache,active
+N0109,Mild Headache,mild headache,,NON-URGENT,Routine consultation for mild headache,active
+N0110,Mild Headache,mild headache,,NON-URGENT,Routine consultation for mild headache,active
+N0111,Mild Headache,mild headache,,NON-URGENT,Routine consultation for mild headache,active
+N0112,Mild Headache,mild headache,,NON-URGENT,Routine consultation for mild headache,active
+N0113,Mild Headache,mild headache,,NON-URGENT,Routine consultation for mild headache,active
+N0114,Mild Headache,mild headache,,NON-URGENT,Routine consultation for mild headache,active
+N0115,Mild Headache,mild headache,,NON-URGENT,Routine consultation for mild headache,active
+N0116,Mild Headache,mild headache,,NON-URGENT,Routine consultation for mild headache,active
+N0117,Mild Headache,mild headache,,NON-URGENT,Routine consultation for mild headache,active
+N0118,Mild Headache,mild headache,,NON-URGENT,Routine consultation for mild headache,active
+N0119,Mild Headache,mild headache,,NON-URGENT,Routine consultation for mild headache,active
+N0120,Mild Headache,mild headache,,NON-URGENT,Routine consultation for mild headache,active
+N0121,Mild Headache,mild headache,,NON-URGENT,Routine consultation for mild headache,active
+N0122,Mild Headache,mild headache,,NON-URGENT,Routine consultation for mild headache,active
+N0123,Mild Headache,mild headache,,NON-URGENT,Routine consultation for mild headache,active
+N0124,Mild Headache,mild headache,,NON-URGENT,Routine consultation for mild headache,active
+N0125,Mild Headache,mild headache,,NON-URGENT,Routine consultation for mild headache,active
+N0126,Mild Headache,mild headache,,NON-URGENT,Routine consultation for mild headache,active
+N0127,Mild Headache,mild headache,,NON-URGENT,Routine consultation for mild headache,active
+N0128,Mild Headache,mild headache,,NON-URGENT,Routine consultation for mild headache,active
+N0129,Mild Headache,mild headache,,NON-URGENT,Routine consultation for mild headache,active
+N0130,Mild Headache,mild headache,,NON-URGENT,Routine consultation for mild headache,active
+N0131,Mild Headache,mild headache,,NON-URGENT,Routine consultation for mild headache,active
+N0132,Mild Headache,mild headache,,NON-URGENT,Routine consultation for mild headache,active
+N0133,Mild Headache,mild headache,,NON-URGENT,Routine consultation for mild headache,active
+N0134,Mild Headache,mild headache,,NON-URGENT,Routine consultation for mild headache,active
+N0135,Mild Headache,mild headache,,NON-URGENT,Routine consultation for mild headache,active
+N0136,Mild Headache,mild headache,,NON-URGENT,Routine consultation for mild headache,active
+N0137,Mild Headache,mild headache,,NON-URGENT,Routine consultation for mild headache,active
+N0138,Mild Headache,mild headache,,NON-URGENT,Routine consultation for mild headache,active
+N0139,Mild Headache,mild headache,,NON-URGENT,Routine consultation for mild headache,active
+N0140,Mild Headache,mild headache,,NON-URGENT,Routine consultation for mild headache,active
+N0141,Mild Headache,mild headache,,NON-URGENT,Routine consultation for mild headache,active
+N0142,Mild Headache,mild headache,,NON-URGENT,Routine consultation for mild headache,active
+N0143,Mild Headache,mild headache,,NON-URGENT,Routine consultation for mild headache,active
+N0144,Mild Headache,mild headache,,NON-URGENT,Routine consultation for mild headache,active
+N0145,Mild Headache,mild headache,,NON-URGENT,Routine consultation for mild headache,active
+N0146,Mild Headache,mild headache,,NON-URGENT,Routine consultation for mild headache,active
+N0147,Mild Headache,mild headache,,NON-URGENT,Routine consultation for mild headache,active
+N0148,Mild Headache,mild headache,,NON-URGENT,Routine consultation for mild headache,active
+N0149,Mild Headache,mild headache,,NON-URGENT,Routine consultation for mild headache,active
+N0150,Mild Headache,mild headache,,NON-URGENT,Routine consultation for mild headache,active
+N0151,Medicine Refill,medicine refill,,NON-URGENT,Routine consultation for medicine refill,active
+N0152,Medicine Refill,medicine refill,,NON-URGENT,Routine consultation for medicine refill,active
+N0153,Medicine Refill,medicine refill,,NON-URGENT,Routine consultation for medicine refill,active
+N0154,Medicine Refill,medicine refill,,NON-URGENT,Routine consultation for medicine refill,active
+N0155,Medicine Refill,medicine refill,,NON-URGENT,Routine consultation for medicine refill,active
+N0156,Medicine Refill,medicine refill,,NON-URGENT,Routine consultation for medicine refill,active
+N0157,Medicine Refill,medicine refill,,NON-URGENT,Routine consultation for medicine refill,active
+N0158,Medicine Refill,medicine refill,,NON-URGENT,Routine consultation for medicine refill,active
+N0159,Medicine Refill,medicine refill,,NON-URGENT,Routine consultation for medicine refill,active
+N0160,Medicine Refill,medicine refill,,NON-URGENT,Routine consultation for medicine refill,active
+N0161,Medicine Refill,medicine refill,,NON-URGENT,Routine consultation for medicine refill,active
+N0162,Medicine Refill,medicine refill,,NON-URGENT,Routine consultation for medicine refill,active
+N0163,Medicine Refill,medicine refill,,NON-URGENT,Routine consultation for medicine refill,active
+N0164,Medicine Refill,medicine refill,,NON-URGENT,Routine consultation for medicine refill,active
+N0165,Medicine Refill,medicine refill,,NON-URGENT,Routine consultation for medicine refill,active
+N0166,Medicine Refill,medicine refill,,NON-URGENT,Routine consultation for medicine refill,active
+N0167,Medicine Refill,medicine refill,,NON-URGENT,Routine consultation for medicine refill,active
+N0168,Medicine Refill,medicine refill,,NON-URGENT,Routine consultation for medicine refill,active
+N0169,Medicine Refill,medicine refill,,NON-URGENT,Routine consultation for medicine refill,active
+N0170,Medicine Refill,medicine refill,,NON-URGENT,Routine consultation for medicine refill,active
+N0171,Medicine Refill,medicine refill,,NON-URGENT,Routine consultation for medicine refill,active
+N0172,Medicine Refill,medicine refill,,NON-URGENT,Routine consultation for medicine refill,active
+N0173,Medicine Refill,medicine refill,,NON-URGENT,Routine consultation for medicine refill,active
+N0174,Medicine Refill,medicine refill,,NON-URGENT,Routine consultation for medicine refill,active
+N0175,Medicine Refill,medicine refill,,NON-URGENT,Routine consultation for medicine refill,active
+N0176,Medicine Refill,medicine refill,,NON-URGENT,Routine consultation for medicine refill,active
+N0177,Medicine Refill,medicine refill,,NON-URGENT,Routine consultation for medicine refill,active
+N0178,Medicine Refill,medicine refill,,NON-URGENT,Routine consultation for medicine refill,active
+N0179,Medicine Refill,medicine refill,,NON-URGENT,Routine consultation for medicine refill,active
+N0180,Medicine Refill,medicine refill,,NON-URGENT,Routine consultation for medicine refill,active
+N0181,Medicine Refill,medicine refill,,NON-URGENT,Routine consultation for medicine refill,active
+N0182,Medicine Refill,medicine refill,,NON-URGENT,Routine consultation for medicine refill,active
+N0183,Medicine Refill,medicine refill,,NON-URGENT,Routine consultation for medicine refill,active
+N0184,Medicine Refill,medicine refill,,NON-URGENT,Routine consultation for medicine refill,active
+N0185,Medicine Refill,medicine refill,,NON-URGENT,Routine consultation for medicine refill,active
+N0186,Medicine Refill,medicine refill,,NON-URGENT,Routine consultation for medicine refill,active
+N0187,Medicine Refill,medicine refill,,NON-URGENT,Routine consultation for medicine refill,active
+N0188,Medicine Refill,medicine refill,,NON-URGENT,Routine consultation for medicine refill,active
+N0189,Medicine Refill,medicine refill,,NON-URGENT,Routine consultation for medicine refill,active
+N0190,Medicine Refill,medicine refill,,NON-URGENT,Routine consultation for medicine refill,active
+N0191,Medicine Refill,medicine refill,,NON-URGENT,Routine consultation for medicine refill,active
+N0192,Medicine Refill,medicine refill,,NON-URGENT,Routine consultation for medicine refill,active
+N0193,Medicine Refill,medicine refill,,NON-URGENT,Routine consultation for medicine refill,active
+N0194,Medicine Refill,medicine refill,,NON-URGENT,Routine consultation for medicine refill,active
+N0195,Medicine Refill,medicine refill,,NON-URGENT,Routine consultation for medicine refill,active
+N0196,Medicine Refill,medicine refill,,NON-URGENT,Routine consultation for medicine refill,active
+N0197,Medicine Refill,medicine refill,,NON-URGENT,Routine consultation for medicine refill,active
+N0198,Medicine Refill,medicine refill,,NON-URGENT,Routine consultation for medicine refill,active
+N0199,Medicine Refill,medicine refill,,NON-URGENT,Routine consultation for medicine refill,active
+N0200,Medicine Refill,medicine refill,,NON-URGENT,Routine consultation for medicine refill,active
+N0201,Follow-Up,follow-up,,NON-URGENT,Routine consultation for follow-up,active
+N0202,Follow-Up,follow-up,,NON-URGENT,Routine consultation for follow-up,active
+N0203,Follow-Up,follow-up,,NON-URGENT,Routine consultation for follow-up,active
+N0204,Follow-Up,follow-up,,NON-URGENT,Routine consultation for follow-up,active
+N0205,Follow-Up,follow-up,,NON-URGENT,Routine consultation for follow-up,active
+N0206,Follow-Up,follow-up,,NON-URGENT,Routine consultation for follow-up,active
+N0207,Follow-Up,follow-up,,NON-URGENT,Routine consultation for follow-up,active
+N0208,Follow-Up,follow-up,,NON-URGENT,Routine consultation for follow-up,active
+N0209,Follow-Up,follow-up,,NON-URGENT,Routine consultation for follow-up,active
+N0210,Follow-Up,follow-up,,NON-URGENT,Routine consultation for follow-up,active
+N0211,Follow-Up,follow-up,,NON-URGENT,Routine consultation for follow-up,active
+N0212,Follow-Up,follow-up,,NON-URGENT,Routine consultation for follow-up,active
+N0213,Follow-Up,follow-up,,NON-URGENT,Routine consultation for follow-up,active
+N0214,Follow-Up,follow-up,,NON-URGENT,Routine consultation for follow-up,active
+N0215,Follow-Up,follow-up,,NON-URGENT,Routine consultation for follow-up,active
+N0216,Follow-Up,follow-up,,NON-URGENT,Routine consultation for follow-up,active
+N0217,Follow-Up,follow-up,,NON-URGENT,Routine consultation for follow-up,active
+N0218,Follow-Up,follow-up,,NON-URGENT,Routine consultation for follow-up,active
+N0219,Follow-Up,follow-up,,NON-URGENT,Routine consultation for follow-up,active
+N0220,Follow-Up,follow-up,,NON-URGENT,Routine consultation for follow-up,active
+N0221,Follow-Up,follow-up,,NON-URGENT,Routine consultation for follow-up,active
+N0222,Follow-Up,follow-up,,NON-URGENT,Routine consultation for follow-up,active
+N0223,Follow-Up,follow-up,,NON-URGENT,Routine consultation for follow-up,active
+N0224,Follow-Up,follow-up,,NON-URGENT,Routine consultation for follow-up,active
+N0225,Follow-Up,follow-up,,NON-URGENT,Routine consultation for follow-up,active
+N0226,Follow-Up,follow-up,,NON-URGENT,Routine consultation for follow-up,active
+N0227,Follow-Up,follow-up,,NON-URGENT,Routine consultation for follow-up,active
+N0228,Follow-Up,follow-up,,NON-URGENT,Routine consultation for follow-up,active
+N0229,Follow-Up,follow-up,,NON-URGENT,Routine consultation for follow-up,active
+N0230,Follow-Up,follow-up,,NON-URGENT,Routine consultation for follow-up,active
+N0231,Follow-Up,follow-up,,NON-URGENT,Routine consultation for follow-up,active
+N0232,Follow-Up,follow-up,,NON-URGENT,Routine consultation for follow-up,active
+N0233,Follow-Up,follow-up,,NON-URGENT,Routine consultation for follow-up,active
+N0234,Follow-Up,follow-up,,NON-URGENT,Routine consultation for follow-up,active
+N0235,Follow-Up,follow-up,,NON-URGENT,Routine consultation for follow-up,active
+N0236,Follow-Up,follow-up,,NON-URGENT,Routine consultation for follow-up,active
+N0237,Follow-Up,follow-up,,NON-URGENT,Routine consultation for follow-up,active
+N0238,Follow-Up,follow-up,,NON-URGENT,Routine consultation for follow-up,active
+N0239,Follow-Up,follow-up,,NON-URGENT,Routine consultation for follow-up,active
+N0240,Follow-Up,follow-up,,NON-URGENT,Routine consultation for follow-up,active
+N0241,Follow-Up,follow-up,,NON-URGENT,Routine consultation for follow-up,active
+N0242,Follow-Up,follow-up,,NON-URGENT,Routine consultation for follow-up,active
+N0243,Follow-Up,follow-up,,NON-URGENT,Routine consultation for follow-up,active
+N0244,Follow-Up,follow-up,,NON-URGENT,Routine consultation for follow-up,active
+N0245,Follow-Up,follow-up,,NON-URGENT,Routine consultation for follow-up,active
+N0246,Follow-Up,follow-up,,NON-URGENT,Routine consultation for follow-up,active
+N0247,Follow-Up,follow-up,,NON-URGENT,Routine consultation for follow-up,active
+N0248,Follow-Up,follow-up,,NON-URGENT,Routine consultation for follow-up,active
+N0249,Follow-Up,follow-up,,NON-URGENT,Routine consultation for follow-up,active
+N0250,Follow-Up,follow-up,,NON-URGENT,Routine consultation for follow-up,active
+N0251,Mild Sore Throat,mild sore throat,,NON-URGENT,Routine consultation for mild sore throat,active
+N0252,Mild Sore Throat,mild sore throat,,NON-URGENT,Routine consultation for mild sore throat,active
+N0253,Mild Sore Throat,mild sore throat,,NON-URGENT,Routine consultation for mild sore throat,active
+N0254,Mild Sore Throat,mild sore throat,,NON-URGENT,Routine consultation for mild sore throat,active
+N0255,Mild Sore Throat,mild sore throat,,NON-URGENT,Routine consultation for mild sore throat,active
+N0256,Mild Sore Throat,mild sore throat,,NON-URGENT,Routine consultation for mild sore throat,active
+N0257,Mild Sore Throat,mild sore throat,,NON-URGENT,Routine consultation for mild sore throat,active
+N0258,Mild Sore Throat,mild sore throat,,NON-URGENT,Routine consultation for mild sore throat,active
+N0259,Mild Sore Throat,mild sore throat,,NON-URGENT,Routine consultation for mild sore throat,active
+N0260,Mild Sore Throat,mild sore throat,,NON-URGENT,Routine consultation for mild sore throat,active
+N0261,Mild Sore Throat,mild sore throat,,NON-URGENT,Routine consultation for mild sore throat,active
+N0262,Mild Sore Throat,mild sore throat,,NON-URGENT,Routine consultation for mild sore throat,active
+N0263,Mild Sore Throat,mild sore throat,,NON-URGENT,Routine consultation for mild sore throat,active
+N0264,Mild Sore Throat,mild sore throat,,NON-URGENT,Routine consultation for mild sore throat,active
+N0265,Mild Sore Throat,mild sore throat,,NON-URGENT,Routine consultation for mild sore throat,active
+N0266,Mild Sore Throat,mild sore throat,,NON-URGENT,Routine consultation for mild sore throat,active
+N0267,Mild Sore Throat,mild sore throat,,NON-URGENT,Routine consultation for mild sore throat,active
+N0268,Mild Sore Throat,mild sore throat,,NON-URGENT,Routine consultation for mild sore throat,active
+N0269,Mild Sore Throat,mild sore throat,,NON-URGENT,Routine consultation for mild sore throat,active
+N0270,Mild Sore Throat,mild sore throat,,NON-URGENT,Routine consultation for mild sore throat,active
+N0271,Mild Sore Throat,mild sore throat,,NON-URGENT,Routine consultation for mild sore throat,active
+N0272,Mild Sore Throat,mild sore throat,,NON-URGENT,Routine consultation for mild sore throat,active
+N0273,Mild Sore Throat,mild sore throat,,NON-URGENT,Routine consultation for mild sore throat,active
+N0274,Mild Sore Throat,mild sore throat,,NON-URGENT,Routine consultation for mild sore throat,active
+N0275,Mild Sore Throat,mild sore throat,,NON-URGENT,Routine consultation for mild sore throat,active
+N0276,Mild Sore Throat,mild sore throat,,NON-URGENT,Routine consultation for mild sore throat,active
+N0277,Mild Sore Throat,mild sore throat,,NON-URGENT,Routine consultation for mild sore throat,active
+N0278,Mild Sore Throat,mild sore throat,,NON-URGENT,Routine consultation for mild sore throat,active
+N0279,Mild Sore Throat,mild sore throat,,NON-URGENT,Routine consultation for mild sore throat,active
+N0280,Mild Sore Throat,mild sore throat,,NON-URGENT,Routine consultation for mild sore throat,active
+N0281,Mild Sore Throat,mild sore throat,,NON-URGENT,Routine consultation for mild sore throat,active
+N0282,Mild Sore Throat,mild sore throat,,NON-URGENT,Routine consultation for mild sore throat,active
+N0283,Mild Sore Throat,mild sore throat,,NON-URGENT,Routine consultation for mild sore throat,active
+N0284,Mild Sore Throat,mild sore throat,,NON-URGENT,Routine consultation for mild sore throat,active
+N0285,Mild Sore Throat,mild sore throat,,NON-URGENT,Routine consultation for mild sore throat,active
+N0286,Mild Sore Throat,mild sore throat,,NON-URGENT,Routine consultation for mild sore throat,active
+N0287,Mild Sore Throat,mild sore throat,,NON-URGENT,Routine consultation for mild sore throat,active
+N0288,Mild Sore Throat,mild sore throat,,NON-URGENT,Routine consultation for mild sore throat,active
+N0289,Mild Sore Throat,mild sore throat,,NON-URGENT,Routine consultation for mild sore throat,active
+N0290,Mild Sore Throat,mild sore throat,,NON-URGENT,Routine consultation for mild sore throat,active
+N0291,Mild Sore Throat,mild sore throat,,NON-URGENT,Routine consultation for mild sore throat,active
+N0292,Mild Sore Throat,mild sore throat,,NON-URGENT,Routine consultation for mild sore throat,active
+N0293,Mild Sore Throat,mild sore throat,,NON-URGENT,Routine consultation for mild sore throat,active
+N0294,Mild Sore Throat,mild sore throat,,NON-URGENT,Routine consultation for mild sore throat,active
+N0295,Mild Sore Throat,mild sore throat,,NON-URGENT,Routine consultation for mild sore throat,active
+N0296,Mild Sore Throat,mild sore throat,,NON-URGENT,Routine consultation for mild sore throat,active
+N0297,Mild Sore Throat,mild sore throat,,NON-URGENT,Routine consultation for mild sore throat,active
+N0298,Mild Sore Throat,mild sore throat,,NON-URGENT,Routine consultation for mild sore throat,active
+N0299,Mild Sore Throat,mild sore throat,,NON-URGENT,Routine consultation for mild sore throat,active
+N0300,Mild Sore Throat,mild sore throat,,NON-URGENT,Routine consultation for mild sore throat,active
+N0301,Fatigue,fatigue,,NON-URGENT,Routine consultation for fatigue,active
+N0302,Fatigue,fatigue,,NON-URGENT,Routine consultation for fatigue,active
+N0303,Fatigue,fatigue,,NON-URGENT,Routine consultation for fatigue,active
+N0304,Fatigue,fatigue,,NON-URGENT,Routine consultation for fatigue,active
+N0305,Fatigue,fatigue,,NON-URGENT,Routine consultation for fatigue,active
+N0306,Fatigue,fatigue,,NON-URGENT,Routine consultation for fatigue,active
+N0307,Fatigue,fatigue,,NON-URGENT,Routine consultation for fatigue,active
+N0308,Fatigue,fatigue,,NON-URGENT,Routine consultation for fatigue,active
+N0309,Fatigue,fatigue,,NON-URGENT,Routine consultation for fatigue,active
+N0310,Fatigue,fatigue,,NON-URGENT,Routine consultation for fatigue,active
+N0311,Fatigue,fatigue,,NON-URGENT,Routine consultation for fatigue,active
+N0312,Fatigue,fatigue,,NON-URGENT,Routine consultation for fatigue,active
+N0313,Fatigue,fatigue,,NON-URGENT,Routine consultation for fatigue,active
+N0314,Fatigue,fatigue,,NON-URGENT,Routine consultation for fatigue,active
+N0315,Fatigue,fatigue,,NON-URGENT,Routine consultation for fatigue,active
+N0316,Fatigue,fatigue,,NON-URGENT,Routine consultation for fatigue,active
+N0317,Fatigue,fatigue,,NON-URGENT,Routine consultation for fatigue,active
+N0318,Fatigue,fatigue,,NON-URGENT,Routine consultation for fatigue,active
+N0319,Fatigue,fatigue,,NON-URGENT,Routine consultation for fatigue,active
+N0320,Fatigue,fatigue,,NON-URGENT,Routine consultation for fatigue,active
+N0321,Fatigue,fatigue,,NON-URGENT,Routine consultation for fatigue,active
+N0322,Fatigue,fatigue,,NON-URGENT,Routine consultation for fatigue,active
+N0323,Fatigue,fatigue,,NON-URGENT,Routine consultation for fatigue,active
+N0324,Fatigue,fatigue,,NON-URGENT,Routine consultation for fatigue,active
+N0325,Fatigue,fatigue,,NON-URGENT,Routine consultation for fatigue,active
+N0326,Fatigue,fatigue,,NON-URGENT,Routine consultation for fatigue,active
+N0327,Fatigue,fatigue,,NON-URGENT,Routine consultation for fatigue,active
+N0328,Fatigue,fatigue,,NON-URGENT,Routine consultation for fatigue,active
+N0329,Fatigue,fatigue,,NON-URGENT,Routine consultation for fatigue,active
+N0330,Fatigue,fatigue,,NON-URGENT,Routine consultation for fatigue,active
+N0331,Fatigue,fatigue,,NON-URGENT,Routine consultation for fatigue,active
+N0332,Fatigue,fatigue,,NON-URGENT,Routine consultation for fatigue,active
+N0333,Fatigue,fatigue,,NON-URGENT,Routine consultation for fatigue,active
+N0334,Fatigue,fatigue,,NON-URGENT,Routine consultation for fatigue,active
+N0335,Fatigue,fatigue,,NON-URGENT,Routine consultation for fatigue,active
+N0336,Fatigue,fatigue,,NON-URGENT,Routine consultation for fatigue,active
+N0337,Fatigue,fatigue,,NON-URGENT,Routine consultation for fatigue,active
+N0338,Fatigue,fatigue,,NON-URGENT,Routine consultation for fatigue,active
+N0339,Fatigue,fatigue,,NON-URGENT,Routine consultation for fatigue,active
+N0340,Fatigue,fatigue,,NON-URGENT,Routine consultation for fatigue,active
+N0341,Fatigue,fatigue,,NON-URGENT,Routine consultation for fatigue,active
+N0342,Fatigue,fatigue,,NON-URGENT,Routine consultation for fatigue,active
+N0343,Fatigue,fatigue,,NON-URGENT,Routine consultation for fatigue,active
+N0344,Fatigue,fatigue,,NON-URGENT,Routine consultation for fatigue,active
+N0345,Fatigue,fatigue,,NON-URGENT,Routine consultation for fatigue,active
+N0346,Fatigue,fatigue,,NON-URGENT,Routine consultation for fatigue,active
+N0347,Fatigue,fatigue,,NON-URGENT,Routine consultation for fatigue,active
+N0348,Fatigue,fatigue,,NON-URGENT,Routine consultation for fatigue,active
+N0349,Fatigue,fatigue,,NON-URGENT,Routine consultation for fatigue,active
+N0350,Fatigue,fatigue,,NON-URGENT,Routine consultation for fatigue,active
+N0351,Mild Body Ache,mild body ache,,NON-URGENT,Routine consultation for mild body ache,active
+N0352,Mild Body Ache,mild body ache,,NON-URGENT,Routine consultation for mild body ache,active
+N0353,Mild Body Ache,mild body ache,,NON-URGENT,Routine consultation for mild body ache,active
+N0354,Mild Body Ache,mild body ache,,NON-URGENT,Routine consultation for mild body ache,active
+N0355,Mild Body Ache,mild body ache,,NON-URGENT,Routine consultation for mild body ache,active
+N0356,Mild Body Ache,mild body ache,,NON-URGENT,Routine consultation for mild body ache,active
+N0357,Mild Body Ache,mild body ache,,NON-URGENT,Routine consultation for mild body ache,active
+N0358,Mild Body Ache,mild body ache,,NON-URGENT,Routine consultation for mild body ache,active
+N0359,Mild Body Ache,mild body ache,,NON-URGENT,Routine consultation for mild body ache,active
+N0360,Mild Body Ache,mild body ache,,NON-URGENT,Routine consultation for mild body ache,active
+N0361,Mild Body Ache,mild body ache,,NON-URGENT,Routine consultation for mild body ache,active
+N0362,Mild Body Ache,mild body ache,,NON-URGENT,Routine consultation for mild body ache,active
+N0363,Mild Body Ache,mild body ache,,NON-URGENT,Routine consultation for mild body ache,active
+N0364,Mild Body Ache,mild body ache,,NON-URGENT,Routine consultation for mild body ache,active
+N0365,Mild Body Ache,mild body ache,,NON-URGENT,Routine consultation for mild body ache,active
+N0366,Mild Body Ache,mild body ache,,NON-URGENT,Routine consultation for mild body ache,active
+N0367,Mild Body Ache,mild body ache,,NON-URGENT,Routine consultation for mild body ache,active
+N0368,Mild Body Ache,mild body ache,,NON-URGENT,Routine consultation for mild body ache,active
+N0369,Mild Body Ache,mild body ache,,NON-URGENT,Routine consultation for mild body ache,active
+N0370,Mild Body Ache,mild body ache,,NON-URGENT,Routine consultation for mild body ache,active
+N0371,Mild Body Ache,mild body ache,,NON-URGENT,Routine consultation for mild body ache,active
+N0372,Mild Body Ache,mild body ache,,NON-URGENT,Routine consultation for mild body ache,active
+N0373,Mild Body Ache,mild body ache,,NON-URGENT,Routine consultation for mild body ache,active
+N0374,Mild Body Ache,mild body ache,,NON-URGENT,Routine consultation for mild body ache,active
+N0375,Mild Body Ache,mild body ache,,NON-URGENT,Routine consultation for mild body ache,active
+N0376,Mild Body Ache,mild body ache,,NON-URGENT,Routine consultation for mild body ache,active
+N0377,Mild Body Ache,mild body ache,,NON-URGENT,Routine consultation for mild body ache,active
+N0378,Mild Body Ache,mild body ache,,NON-URGENT,Routine consultation for mild body ache,active
+N0379,Mild Body Ache,mild body ache,,NON-URGENT,Routine consultation for mild body ache,active
+N0380,Mild Body Ache,mild body ache,,NON-URGENT,Routine consultation for mild body ache,active
+N0381,Mild Body Ache,mild body ache,,NON-URGENT,Routine consultation for mild body ache,active
+N0382,Mild Body Ache,mild body ache,,NON-URGENT,Routine consultation for mild body ache,active
+N0383,Mild Body Ache,mild body ache,,NON-URGENT,Routine consultation for mild body ache,active
+N0384,Mild Body Ache,mild body ache,,NON-URGENT,Routine consultation for mild body ache,active
+N0385,Mild Body Ache,mild body ache,,NON-URGENT,Routine consultation for mild body ache,active
+N0386,Mild Body Ache,mild body ache,,NON-URGENT,Routine consultation for mild body ache,active
+N0387,Mild Body Ache,mild body ache,,NON-URGENT,Routine consultation for mild body ache,active
+N0388,Mild Body Ache,mild body ache,,NON-URGENT,Routine consultation for mild body ache,active
+N0389,Mild Body Ache,mild body ache,,NON-URGENT,Routine consultation for mild body ache,active
+N0390,Mild Body Ache,mild body ache,,NON-URGENT,Routine consultation for mild body ache,active
+N0391,Mild Body Ache,mild body ache,,NON-URGENT,Routine consultation for mild body ache,active
+N0392,Mild Body Ache,mild body ache,,NON-URGENT,Routine consultation for mild body ache,active
+N0393,Mild Body Ache,mild body ache,,NON-URGENT,Routine consultation for mild body ache,active
+N0394,Mild Body Ache,mild body ache,,NON-URGENT,Routine consultation for mild body ache,active
+N0395,Mild Body Ache,mild body ache,,NON-URGENT,Routine consultation for mild body ache,active
+N0396,Mild Body Ache,mild body ache,,NON-URGENT,Routine consultation for mild body ache,active
+N0397,Mild Body Ache,mild body ache,,NON-URGENT,Routine consultation for mild body ache,active
+N0398,Mild Body Ache,mild body ache,,NON-URGENT,Routine consultation for mild body ache,active
+N0399,Mild Body Ache,mild body ache,,NON-URGENT,Routine consultation for mild body ache,active
+N0400,Mild Body Ache,mild body ache,,NON-URGENT,Routine consultation for mild body ache,active
+N0401,Check-Up,check-up,,NON-URGENT,Routine consultation for check-up,active
+N0402,Check-Up,check-up,,NON-URGENT,Routine consultation for check-up,active
+N0403,Check-Up,check-up,,NON-URGENT,Routine consultation for check-up,active
+N0404,Check-Up,check-up,,NON-URGENT,Routine consultation for check-up,active
+N0405,Check-Up,check-up,,NON-URGENT,Routine consultation for check-up,active
+N0406,Check-Up,check-up,,NON-URGENT,Routine consultation for check-up,active
+N0407,Check-Up,check-up,,NON-URGENT,Routine consultation for check-up,active
+N0408,Check-Up,check-up,,NON-URGENT,Routine consultation for check-up,active
+N0409,Check-Up,check-up,,NON-URGENT,Routine consultation for check-up,active
+N0410,Check-Up,check-up,,NON-URGENT,Routine consultation for check-up,active
+N0411,Check-Up,check-up,,NON-URGENT,Routine consultation for check-up,active
+N0412,Check-Up,check-up,,NON-URGENT,Routine consultation for check-up,active
+N0413,Check-Up,check-up,,NON-URGENT,Routine consultation for check-up,active
+N0414,Check-Up,check-up,,NON-URGENT,Routine consultation for check-up,active
+N0415,Check-Up,check-up,,NON-URGENT,Routine consultation for check-up,active
+N0416,Check-Up,check-up,,NON-URGENT,Routine consultation for check-up,active
+N0417,Check-Up,check-up,,NON-URGENT,Routine consultation for check-up,active
+N0418,Check-Up,check-up,,NON-URGENT,Routine consultation for check-up,active
+N0419,Check-Up,check-up,,NON-URGENT,Routine consultation for check-up,active
+N0420,Check-Up,check-up,,NON-URGENT,Routine consultation for check-up,active
+N0421,Check-Up,check-up,,NON-URGENT,Routine consultation for check-up,active
+N0422,Check-Up,check-up,,NON-URGENT,Routine consultation for check-up,active
+N0423,Check-Up,check-up,,NON-URGENT,Routine consultation for check-up,active
+N0424,Check-Up,check-up,,NON-URGENT,Routine consultation for check-up,active
+N0425,Check-Up,check-up,,NON-URGENT,Routine consultation for check-up,active
+N0426,Check-Up,check-up,,NON-URGENT,Routine consultation for check-up,active
+N0427,Check-Up,check-up,,NON-URGENT,Routine consultation for check-up,active
+N0428,Check-Up,check-up,,NON-URGENT,Routine consultation for check-up,active
+N0429,Check-Up,check-up,,NON-URGENT,Routine consultation for check-up,active
+N0430,Check-Up,check-up,,NON-URGENT,Routine consultation for check-up,active
+N0431,Check-Up,check-up,,NON-URGENT,Routine consultation for check-up,active
+N0432,Check-Up,check-up,,NON-URGENT,Routine consultation for check-up,active
+N0433,Check-Up,check-up,,NON-URGENT,Routine consultation for check-up,active
+N0434,Check-Up,check-up,,NON-URGENT,Routine consultation for check-up,active
+N0435,Check-Up,check-up,,NON-URGENT,Routine consultation for check-up,active
+N0436,Check-Up,check-up,,NON-URGENT,Routine consultation for check-up,active
+N0437,Check-Up,check-up,,NON-URGENT,Routine consultation for check-up,active
+N0438,Check-Up,check-up,,NON-URGENT,Routine consultation for check-up,active
+N0439,Check-Up,check-up,,NON-URGENT,Routine consultation for check-up,active
+N0440,Check-Up,check-up,,NON-URGENT,Routine consultation for check-up,active
+N0441,Check-Up,check-up,,NON-URGENT,Routine consultation for check-up,active
+N0442,Check-Up,check-up,,NON-URGENT,Routine consultation for check-up,active
+N0443,Check-Up,check-up,,NON-URGENT,Routine consultation for check-up,active
+N0444,Check-Up,check-up,,NON-URGENT,Routine consultation for check-up,active
+N0445,Check-Up,check-up,,NON-URGENT,Routine consultation for check-up,active
+N0446,Check-Up,check-up,,NON-URGENT,Routine consultation for check-up,active
+N0447,Check-Up,check-up,,NON-URGENT,Routine consultation for check-up,active
+N0448,Check-Up,check-up,,NON-URGENT,Routine consultation for check-up,active
+N0449,Check-Up,check-up,,NON-URGENT,Routine consultation for check-up,active
+N0450,Check-Up,check-up,,NON-URGENT,Routine consultation for check-up,active
+N0451,Lab Result Inquiry,lab result inquiry,,NON-URGENT,Routine consultation for lab result inquiry,active
+N0452,Lab Result Inquiry,lab result inquiry,,NON-URGENT,Routine consultation for lab result inquiry,active
+N0453,Lab Result Inquiry,lab result inquiry,,NON-URGENT,Routine consultation for lab result inquiry,active
+N0454,Lab Result Inquiry,lab result inquiry,,NON-URGENT,Routine consultation for lab result inquiry,active
+N0455,Lab Result Inquiry,lab result inquiry,,NON-URGENT,Routine consultation for lab result inquiry,active
+N0456,Lab Result Inquiry,lab result inquiry,,NON-URGENT,Routine consultation for lab result inquiry,active
+N0457,Lab Result Inquiry,lab result inquiry,,NON-URGENT,Routine consultation for lab result inquiry,active
+N0458,Lab Result Inquiry,lab result inquiry,,NON-URGENT,Routine consultation for lab result inquiry,active
+N0459,Lab Result Inquiry,lab result inquiry,,NON-URGENT,Routine consultation for lab result inquiry,active
+N0460,Lab Result Inquiry,lab result inquiry,,NON-URGENT,Routine consultation for lab result inquiry,active
+N0461,Lab Result Inquiry,lab result inquiry,,NON-URGENT,Routine consultation for lab result inquiry,active
+N0462,Lab Result Inquiry,lab result inquiry,,NON-URGENT,Routine consultation for lab result inquiry,active
+N0463,Lab Result Inquiry,lab result inquiry,,NON-URGENT,Routine consultation for lab result inquiry,active
+N0464,Lab Result Inquiry,lab result inquiry,,NON-URGENT,Routine consultation for lab result inquiry,active
+N0465,Lab Result Inquiry,lab result inquiry,,NON-URGENT,Routine consultation for lab result inquiry,active
+N0466,Lab Result Inquiry,lab result inquiry,,NON-URGENT,Routine consultation for lab result inquiry,active
+N0467,Lab Result Inquiry,lab result inquiry,,NON-URGENT,Routine consultation for lab result inquiry,active
+N0468,Lab Result Inquiry,lab result inquiry,,NON-URGENT,Routine consultation for lab result inquiry,active
+N0469,Lab Result Inquiry,lab result inquiry,,NON-URGENT,Routine consultation for lab result inquiry,active
+N0470,Lab Result Inquiry,lab result inquiry,,NON-URGENT,Routine consultation for lab result inquiry,active
+N0471,Lab Result Inquiry,lab result inquiry,,NON-URGENT,Routine consultation for lab result inquiry,active
+N0472,Lab Result Inquiry,lab result inquiry,,NON-URGENT,Routine consultation for lab result inquiry,active
+N0473,Lab Result Inquiry,lab result inquiry,,NON-URGENT,Routine consultation for lab result inquiry,active
+N0474,Lab Result Inquiry,lab result inquiry,,NON-URGENT,Routine consultation for lab result inquiry,active
+N0475,Lab Result Inquiry,lab result inquiry,,NON-URGENT,Routine consultation for lab result inquiry,active
+N0476,Lab Result Inquiry,lab result inquiry,,NON-URGENT,Routine consultation for lab result inquiry,active
+N0477,Lab Result Inquiry,lab result inquiry,,NON-URGENT,Routine consultation for lab result inquiry,active
+N0478,Lab Result Inquiry,lab result inquiry,,NON-URGENT,Routine consultation for lab result inquiry,active
+N0479,Lab Result Inquiry,lab result inquiry,,NON-URGENT,Routine consultation for lab result inquiry,active
+N0480,Lab Result Inquiry,lab result inquiry,,NON-URGENT,Routine consultation for lab result inquiry,active
+N0481,Lab Result Inquiry,lab result inquiry,,NON-URGENT,Routine consultation for lab result inquiry,active
+N0482,Lab Result Inquiry,lab result inquiry,,NON-URGENT,Routine consultation for lab result inquiry,active
+N0483,Lab Result Inquiry,lab result inquiry,,NON-URGENT,Routine consultation for lab result inquiry,active
+N0484,Lab Result Inquiry,lab result inquiry,,NON-URGENT,Routine consultation for lab result inquiry,active
+N0485,Lab Result Inquiry,lab result inquiry,,NON-URGENT,Routine consultation for lab result inquiry,active
+N0486,Lab Result Inquiry,lab result inquiry,,NON-URGENT,Routine consultation for lab result inquiry,active
+N0487,Lab Result Inquiry,lab result inquiry,,NON-URGENT,Routine consultation for lab result inquiry,active
+N0488,Lab Result Inquiry,lab result inquiry,,NON-URGENT,Routine consultation for lab result inquiry,active
+N0489,Lab Result Inquiry,lab result inquiry,,NON-URGENT,Routine consultation for lab result inquiry,active
+N0490,Lab Result Inquiry,lab result inquiry,,NON-URGENT,Routine consultation for lab result inquiry,active
+N0491,Lab Result Inquiry,lab result inquiry,,NON-URGENT,Routine consultation for lab result inquiry,active
+N0492,Lab Result Inquiry,lab result inquiry,,NON-URGENT,Routine consultation for lab result inquiry,active
+N0493,Lab Result Inquiry,lab result inquiry,,NON-URGENT,Routine consultation for lab result inquiry,active
+N0494,Lab Result Inquiry,lab result inquiry,,NON-URGENT,Routine consultation for lab result inquiry,active
+N0495,Lab Result Inquiry,lab result inquiry,,NON-URGENT,Routine consultation for lab result inquiry,active
+N0496,Lab Result Inquiry,lab result inquiry,,NON-URGENT,Routine consultation for lab result inquiry,active
+N0497,Lab Result Inquiry,lab result inquiry,,NON-URGENT,Routine consultation for lab result inquiry,active
+N0498,Lab Result Inquiry,lab result inquiry,,NON-URGENT,Routine consultation for lab result inquiry,active
+N0499,Lab Result Inquiry,lab result inquiry,,NON-URGENT,Routine consultation for lab result inquiry,active
+N0500,Lab Result Inquiry,lab result inquiry,,NON-URGENT,Routine consultation for lab result inquiry,active

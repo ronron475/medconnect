@@ -1,0 +1,301 @@
+pattern_id,pattern,celsius,band,severity_points,language,status
+TMPB0001,36.0c,36.0,normal,0,english,active
+TMPB0002,36.0 degrees,36.0,normal,0,english,active
+TMPB0003,36.1c,36.1,normal,0,english,active
+TMPB0004,36.1 degrees,36.1,normal,0,english,active
+TMPB0005,36.2c,36.2,normal,0,english,active
+TMPB0006,36.2 degrees,36.2,normal,0,english,active
+TMPB0007,36.3c,36.3,normal,0,english,active
+TMPB0008,36.3 degrees,36.3,normal,0,english,active
+TMPB0009,36.4c,36.4,normal,0,english,active
+TMPB0010,36.4 degrees,36.4,normal,0,english,active
+TMPB0011,36.5c,36.5,normal,0,english,active
+TMPB0012,36.5 degrees,36.5,normal,0,english,active
+TMPB0013,36.6c,36.6,normal,0,english,active
+TMPB0014,36.6 degrees,36.6,normal,0,english,active
+TMPB0015,36.7c,36.7,normal,0,english,active
+TMPB0016,36.7 degrees,36.7,normal,0,english,active
+TMPB0017,36.8c,36.8,normal,0,english,active
+TMPB0018,36.8 degrees,36.8,normal,0,english,active
+TMPB0019,36.9c,36.9,normal,0,english,active
+TMPB0020,36.9 degrees,36.9,normal,0,english,active
+TMPB0021,37.0c,37.0,normal,0,english,active
+TMPB0022,37.0 degrees,37.0,normal,0,english,active
+TMPB0023,37.1c,37.1,normal,0,english,active
+TMPB0024,37.1 degrees,37.1,normal,0,english,active
+TMPB0025,37.2c,37.2,normal,0,english,active
+TMPB0026,37.2 degrees,37.2,normal,0,english,active
+TMPB0027,37.3c,37.3,normal,0,english,active
+TMPB0028,37.3 degrees,37.3,normal,0,english,active
+TMPB0029,37.4c,37.4,normal,0,english,active
+TMPB0030,37.4 degrees,37.4,normal,0,english,active
+TMPB0031,37.5c,37.5,low_grade,1,english,active
+TMPB0032,37.5 degrees,37.5,low_grade,1,english,active
+TMPB0033,37.6c,37.6,low_grade,1,english,active
+TMPB0034,37.6 degrees,37.6,low_grade,1,english,active
+TMPB0035,37.7c,37.7,low_grade,1,english,active
+TMPB0036,37.7 degrees,37.7,low_grade,1,english,active
+TMPB0037,37.8c,37.8,low_grade,1,english,active
+TMPB0038,37.8 degrees,37.8,low_grade,1,english,active
+TMPB0039,37.9c,37.9,low_grade,1,english,active
+TMPB0040,37.9 degrees,37.9,low_grade,1,english,active
+TMPB0041,38.0c,38.0,fever,2,english,active
+TMPB0042,38.0 degrees,38.0,fever,2,english,active
+TMPB0043,38.1c,38.1,fever,2,english,active
+TMPB0044,38.1 degrees,38.1,fever,2,english,active
+TMPB0045,38.2c,38.2,fever,2,english,active
+TMPB0046,38.2 degrees,38.2,fever,2,english,active
+TMPB0047,38.3c,38.3,fever,2,english,active
+TMPB0048,38.3 degrees,38.3,fever,2,english,active
+TMPB0049,38.4c,38.4,fever,2,english,active
+TMPB0050,38.4 degrees,38.4,fever,2,english,active
+TMPB0051,38.5c,38.5,fever,2,english,active
+TMPB0052,38.5 degrees,38.5,fever,2,english,active
+TMPB0053,38.6c,38.6,fever,2,english,active
+TMPB0054,38.6 degrees,38.6,fever,2,english,active
+TMPB0055,38.7c,38.7,fever,2,english,active
+TMPB0056,38.7 degrees,38.7,fever,2,english,active
+TMPB0057,38.8c,38.8,fever,2,english,active
+TMPB0058,38.8 degrees,38.8,fever,2,english,active
+TMPB0059,38.9c,38.9,fever,2,english,active
+TMPB0060,38.9 degrees,38.9,fever,2,english,active
+TMPB0061,39.0c,39.0,high_fever,4,english,active
+TMPB0062,39.0 degrees,39.0,high_fever,4,english,active
+TMPB0063,39.1c,39.1,high_fever,4,english,active
+TMPB0064,39.1 degrees,39.1,high_fever,4,english,active
+TMPB0065,39.2c,39.2,high_fever,4,english,active
+TMPB0066,39.2 degrees,39.2,high_fever,4,english,active
+TMPB0067,39.3c,39.3,high_fever,4,english,active
+TMPB0068,39.3 degrees,39.3,high_fever,4,english,active
+TMPB0069,39.4c,39.4,high_fever,4,english,active
+TMPB0070,39.4 degrees,39.4,high_fever,4,english,active
+TMPB0071,39.5c,39.5,high_fever,4,english,active
+TMPB0072,39.5 degrees,39.5,high_fever,4,english,active
+TMPB0073,39.6c,39.6,high_fever,4,english,active
+TMPB0074,39.6 degrees,39.6,high_fever,4,english,active
+TMPB0075,39.7c,39.7,high_fever,4,english,active
+TMPB0076,39.7 degrees,39.7,high_fever,4,english,active
+TMPB0077,39.8c,39.8,high_fever,4,english,active
+TMPB0078,39.8 degrees,39.8,high_fever,4,english,active
+TMPB0079,39.9c,39.9,high_fever,4,english,active
+TMPB0080,39.9 degrees,39.9,high_fever,4,english,active
+TMPB0081,40.0c,40.0,high_fever,4,english,active
+TMPB0082,40.0 degrees,40.0,high_fever,4,english,active
+TMPB0083,40.1c,40.1,high_fever,4,english,active
+TMPB0084,40.1 degrees,40.1,high_fever,4,english,active
+TMPB0085,40.2c,40.2,high_fever,4,english,active
+TMPB0086,40.2 degrees,40.2,high_fever,4,english,active
+TMPB0087,40.3c,40.3,high_fever,4,english,active
+TMPB0088,40.3 degrees,40.3,high_fever,4,english,active
+TMPB0089,40.4c,40.4,high_fever,4,english,active
+TMPB0090,40.4 degrees,40.4,high_fever,4,english,active
+TMPB0091,40.5c,40.5,high_fever,4,english,active
+TMPB0092,40.5 degrees,40.5,high_fever,4,english,active
+TMPB0093,40.6c,40.6,high_fever,4,english,active
+TMPB0094,40.6 degrees,40.6,high_fever,4,english,active
+TMPB0095,40.7c,40.7,high_fever,4,english,active
+TMPB0096,40.7 degrees,40.7,high_fever,4,english,active
+TMPB0097,40.8c,40.8,high_fever,4,english,active
+TMPB0098,40.8 degrees,40.8,high_fever,4,english,active
+TMPB0099,40.9c,40.9,high_fever,4,english,active
+TMPB0100,40.9 degrees,40.9,high_fever,4,english,active
+TMPB0101,41.0c,41.0,high_fever,4,english,active
+TMPB0102,41.0 degrees,41.0,high_fever,4,english,active
+TMPB0103,41.1c,41.1,high_fever,4,english,active
+TMPB0104,41.1 degrees,41.1,high_fever,4,english,active
+TMPB0105,41.2c,41.2,high_fever,4,english,active
+TMPB0106,41.2 degrees,41.2,high_fever,4,english,active
+TMPB0107,41.3c,41.3,high_fever,4,english,active
+TMPB0108,41.3 degrees,41.3,high_fever,4,english,active
+TMPB0109,41.4c,41.4,high_fever,4,english,active
+TMPB0110,41.4 degrees,41.4,high_fever,4,english,active
+TMPB0111,41.5c,41.5,high_fever,4,english,active
+TMPB0112,41.5 degrees,41.5,high_fever,4,english,active
+TMPB0113,41.6c,41.6,high_fever,4,english,active
+TMPB0114,41.6 degrees,41.6,high_fever,4,english,active
+TMPB0115,41.7c,41.7,high_fever,4,english,active
+TMPB0116,41.7 degrees,41.7,high_fever,4,english,active
+TMPB0117,41.8c,41.8,high_fever,4,english,active
+TMPB0118,41.8 degrees,41.8,high_fever,4,english,active
+TMPB0119,41.9c,41.9,high_fever,4,english,active
+TMPB0120,41.9 degrees,41.9,high_fever,4,english,active
+TMPB0121,42.0c,42.0,high_fever,4,english,active
+TMPB0122,42.0 degrees,42.0,high_fever,4,english,active
+TMPB0123,fever,,fever,2,mixed,active
+TMPB0124,high fever,,high_fever,4,mixed,active
+TMPB0125,lagnat,,fever,2,mixed,active
+TMPB0126,hilanat,,fever,2,mixed,active
+TMPB0127,mataas na lagnat,,high_fever,4,mixed,active
+TMPB0128,grabe nga lagnat,,high_fever,4,mixed,active
+TMPB0129,low grade fever,,low_grade,1,mixed,active
+TMPB0130,may init lawas,,fever,2,mixed,active
+TMP0001,hilanat 39.4,39.4,fever,2,mixed,active
+TMP0002,hilanat 40.9,40.9,fever,2,mixed,active
+TMP0003,lagnat 38.1,38.1,fever,2,mixed,active
+TMP0004,temp 37.9,37.9,low_grade,1,mixed,active
+TMP0005,lagnat 40.4,40.4,fever,2,mixed,active
+TMP0006,hilanat 38.4,38.4,fever,2,mixed,active
+TMP0007,hilanat 37.8,37.8,low_grade,1,mixed,active
+TMP0008,body temp 40.2,40.2,fever,2,mixed,active
+TMP0009,temp 36.7,36.7,low_grade,1,mixed,active
+TMP0010,lagnat 37.9,37.9,low_grade,1,mixed,active
+TMP0011,hilanat 37.0,37.0,low_grade,1,mixed,active
+TMP0012,temp 40.4,40.4,fever,2,mixed,active
+TMP0013,body temp 39.5,39.5,fever,2,mixed,active
+TMP0014,temp 38.6,38.6,fever,2,mixed,active
+TMP0015,lagnat 37.3,37.3,low_grade,1,mixed,active
+TMP0016,hilanat 39.3,39.3,fever,2,mixed,active
+TMP0017,temp 39.3,39.3,fever,2,mixed,active
+TMP0018,body temp 37.4,37.4,low_grade,1,mixed,active
+TMP0019,lagnat 37.1,37.1,low_grade,1,mixed,active
+TMP0020,hilanat 38.5,38.5,fever,2,mixed,active
+TMP0021,body temp 37.0,37.0,low_grade,1,mixed,active
+TMP0022,temperature 40.1,40.1,fever,2,mixed,active
+TMP0023,temp 37.9,37.9,low_grade,1,mixed,active
+TMP0024,temp 39.0,39.0,fever,2,mixed,active
+TMP0025,temp 37.5,37.5,low_grade,1,mixed,active
+TMP0026,temp 38.6,38.6,fever,2,mixed,active
+TMP0027,temperature 39.4,39.4,fever,2,mixed,active
+TMP0028,lagnat 38.7,38.7,fever,2,mixed,active
+TMP0029,lagnat 38.8,38.8,fever,2,mixed,active
+TMP0030,hilanat 38.4,38.4,fever,2,mixed,active
+TMP0031,temperature 40.9,40.9,fever,2,mixed,active
+TMP0032,temperature 38.6,38.6,fever,2,mixed,active
+TMP0033,body temp 38.2,38.2,fever,2,mixed,active
+TMP0034,temperature 38.8,38.8,fever,2,mixed,active
+TMP0035,lagnat 40.4,40.4,fever,2,mixed,active
+TMP0036,hilanat 40.0,40.0,fever,2,mixed,active
+TMP0037,body temp 38.0,38.0,fever,2,mixed,active
+TMP0038,temp 37.7,37.7,low_grade,1,mixed,active
+TMP0039,lagnat 37.8,37.8,low_grade,1,mixed,active
+TMP0040,body temp 40.3,40.3,fever,2,mixed,active
+TMP0041,hilanat 41.0,41.0,fever,2,mixed,active
+TMP0042,hilanat 40.4,40.4,fever,2,mixed,active
+TMP0043,lagnat 38.9,38.9,fever,2,mixed,active
+TMP0044,body temp 38.0,38.0,fever,2,mixed,active
+TMP0045,lagnat 38.2,38.2,fever,2,mixed,active
+TMP0046,temperature 40.4,40.4,fever,2,mixed,active
+TMP0047,temperature 39.1,39.1,fever,2,mixed,active
+TMP0048,hilanat 40.4,40.4,fever,2,mixed,active
+TMP0049,hilanat 36.7,36.7,low_grade,1,mixed,active
+TMP0050,hilanat 39.7,39.7,fever,2,mixed,active
+TMP0051,temperature 38.2,38.2,fever,2,mixed,active
+TMP0052,temp 38.7,38.7,fever,2,mixed,active
+TMP0053,body temp 37.1,37.1,low_grade,1,mixed,active
+TMP0054,temp 38.0,38.0,fever,2,mixed,active
+TMP0055,hilanat 40.4,40.4,fever,2,mixed,active
+TMP0056,hilanat 36.9,36.9,low_grade,1,mixed,active
+TMP0057,temperature 36.6,36.6,low_grade,1,mixed,active
+TMP0058,temperature 38.3,38.3,fever,2,mixed,active
+TMP0059,lagnat 36.8,36.8,low_grade,1,mixed,active
+TMP0060,hilanat 38.0,38.0,fever,2,mixed,active
+TMP0061,lagnat 39.4,39.4,fever,2,mixed,active
+TMP0062,body temp 40.3,40.3,fever,2,mixed,active
+TMP0063,lagnat 38.2,38.2,fever,2,mixed,active
+TMP0064,hilanat 39.3,39.3,fever,2,mixed,active
+TMP0065,temp 40.4,40.4,fever,2,mixed,active
+TMP0066,temperature 39.3,39.3,fever,2,mixed,active
+TMP0067,lagnat 39.3,39.3,fever,2,mixed,active
+TMP0068,temp 41.0,41.0,fever,2,mixed,active
+TMP0069,temp 38.5,38.5,fever,2,mixed,active
+TMP0070,temp 39.9,39.9,fever,2,mixed,active
+TMP0071,lagnat 38.5,38.5,fever,2,mixed,active
+TMP0072,temp 40.6,40.6,fever,2,mixed,active
+TMP0073,temp 38.0,38.0,fever,2,mixed,active
+TMP0074,lagnat 37.8,37.8,low_grade,1,mixed,active
+TMP0075,temperature 38.4,38.4,fever,2,mixed,active
+TMP0076,body temp 38.9,38.9,fever,2,mixed,active
+TMP0077,temperature 39.6,39.6,fever,2,mixed,active
+TMP0078,temp 37.3,37.3,low_grade,1,mixed,active
+TMP0079,hilanat 39.2,39.2,fever,2,mixed,active
+TMP0080,temperature 39.3,39.3,fever,2,mixed,active
+TMP0081,body temp 38.7,38.7,fever,2,mixed,active
+TMP0082,hilanat 37.1,37.1,low_grade,1,mixed,active
+TMP0083,hilanat 39.4,39.4,fever,2,mixed,active
+TMP0084,temp 37.6,37.6,low_grade,1,mixed,active
+TMP0085,hilanat 40.5,40.5,fever,2,mixed,active
+TMP0086,body temp 40.6,40.6,fever,2,mixed,active
+TMP0087,hilanat 37.2,37.2,low_grade,1,mixed,active
+TMP0088,body temp 40.8,40.8,fever,2,mixed,active
+TMP0089,hilanat 37.8,37.8,low_grade,1,mixed,active
+TMP0090,hilanat 39.6,39.6,fever,2,mixed,active
+TMP0091,temperature 40.3,40.3,fever,2,mixed,active
+TMP0092,hilanat 41.0,41.0,fever,2,mixed,active
+TMP0093,hilanat 37.0,37.0,low_grade,1,mixed,active
+TMP0094,body temp 39.1,39.1,fever,2,mixed,active
+TMP0095,lagnat 37.8,37.8,low_grade,1,mixed,active
+TMP0096,hilanat 36.6,36.6,low_grade,1,mixed,active
+TMP0097,body temp 37.7,37.7,low_grade,1,mixed,active
+TMP0098,temp 40.4,40.4,fever,2,mixed,active
+TMP0099,hilanat 40.6,40.6,fever,2,mixed,active
+TMP0100,lagnat 40.2,40.2,fever,2,mixed,active
+TMP0101,temperature 40.0,40.0,fever,2,mixed,active
+TMP0102,lagnat 39.2,39.2,fever,2,mixed,active
+TMP0103,temperature 37.5,37.5,low_grade,1,mixed,active
+TMP0104,temperature 39.3,39.3,fever,2,mixed,active
+TMP0105,temp 39.3,39.3,fever,2,mixed,active
+TMP0106,hilanat 37.9,37.9,low_grade,1,mixed,active
+TMP0107,lagnat 36.7,36.7,low_grade,1,mixed,active
+TMP0108,temp 39.8,39.8,fever,2,mixed,active
+TMP0109,lagnat 40.6,40.6,fever,2,mixed,active
+TMP0110,temperature 39.9,39.9,fever,2,mixed,active
+TMP0111,body temp 37.4,37.4,low_grade,1,mixed,active
+TMP0112,lagnat 40.4,40.4,fever,2,mixed,active
+TMP0113,lagnat 38.9,38.9,fever,2,mixed,active
+TMP0114,lagnat 40.2,40.2,fever,2,mixed,active
+TMP0115,hilanat 40.6,40.6,fever,2,mixed,active
+TMP0116,lagnat 40.9,40.9,fever,2,mixed,active
+TMP0117,lagnat 39.9,39.9,fever,2,mixed,active
+TMP0118,hilanat 40.1,40.1,fever,2,mixed,active
+TMP0119,temperature 40.8,40.8,fever,2,mixed,active
+TMP0120,temperature 39.9,39.9,fever,2,mixed,active
+TMP0121,hilanat 40.4,40.4,fever,2,mixed,active
+TMP0122,body temp 40.9,40.9,fever,2,mixed,active
+TMP0123,hilanat 38.1,38.1,fever,2,mixed,active
+TMP0124,body temp 36.6,36.6,low_grade,1,mixed,active
+TMP0125,lagnat 37.1,37.1,low_grade,1,mixed,active
+TMP0126,lagnat 39.5,39.5,fever,2,mixed,active
+TMP0127,lagnat 39.1,39.1,fever,2,mixed,active
+TMP0128,temperature 37.0,37.0,low_grade,1,mixed,active
+TMP0129,body temp 38.6,38.6,fever,2,mixed,active
+TMP0130,body temp 40.5,40.5,fever,2,mixed,active
+TMP0131,body temp 38.0,38.0,fever,2,mixed,active
+TMP0132,temp 37.5,37.5,low_grade,1,mixed,active
+TMP0133,hilanat 39.4,39.4,fever,2,mixed,active
+TMP0134,lagnat 40.6,40.6,fever,2,mixed,active
+TMP0135,temp 39.4,39.4,fever,2,mixed,active
+TMP0136,temp 37.1,37.1,low_grade,1,mixed,active
+TMP0137,hilanat 37.9,37.9,low_grade,1,mixed,active
+TMP0138,temperature 37.0,37.0,low_grade,1,mixed,active
+TMP0139,temperature 40.5,40.5,fever,2,mixed,active
+TMP0140,lagnat 38.2,38.2,fever,2,mixed,active
+TMP0141,body temp 39.5,39.5,fever,2,mixed,active
+TMP0142,temperature 38.4,38.4,fever,2,mixed,active
+TMP0143,temp 40.5,40.5,fever,2,mixed,active
+TMP0144,body temp 40.3,40.3,fever,2,mixed,active
+TMP0145,lagnat 38.3,38.3,fever,2,mixed,active
+TMP0146,lagnat 36.6,36.6,low_grade,1,mixed,active
+TMP0147,hilanat 37.5,37.5,low_grade,1,mixed,active
+TMP0148,lagnat 40.8,40.8,fever,2,mixed,active
+TMP0149,lagnat 36.9,36.9,low_grade,1,mixed,active
+TMP0150,lagnat 39.0,39.0,fever,2,mixed,active
+TMP0151,lagnat 36.8,36.8,low_grade,1,mixed,active
+TMP0152,temp 37.4,37.4,low_grade,1,mixed,active
+TMP0153,hilanat 40.8,40.8,fever,2,mixed,active
+TMP0154,temperature 36.9,36.9,low_grade,1,mixed,active
+TMP0155,body temp 39.4,39.4,fever,2,mixed,active
+TMP0156,temp 40.9,40.9,fever,2,mixed,active
+TMP0157,temperature 40.0,40.0,fever,2,mixed,active
+TMP0158,body temp 40.9,40.9,fever,2,mixed,active
+TMP0159,body temp 37.4,37.4,low_grade,1,mixed,active
+TMP0160,temperature 37.4,37.4,low_grade,1,mixed,active
+TMP0161,temperature 40.2,40.2,fever,2,mixed,active
+TMP0162,temperature 38.0,38.0,fever,2,mixed,active
+TMP0163,body temp 40.0,40.0,fever,2,mixed,active
+TMP0164,temperature 36.5,36.5,low_grade,1,mixed,active
+TMP0165,body temp 40.9,40.9,fever,2,mixed,active
+TMP0166,temperature 37.6,37.6,low_grade,1,mixed,active
+TMP0167,temp 37.0,37.0,low_grade,1,mixed,active
+TMP0168,lagnat 37.1,37.1,low_grade,1,mixed,active
+TMP0169,temperature 40.1,40.1,fever,2,mixed,active
+TMP0170,temp 39.1,39.1,fever,2,mixed,active

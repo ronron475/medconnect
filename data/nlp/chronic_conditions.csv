@@ -1,0 +1,20 @@
+condition_id,label,category,pattern,severity_bonus,status
+,Diabetes,chronic,diabetes,2,active
+,Diabetes,chronic,diabetic,2,active
+,Diabetes,chronic,asukal,2,active
+,Hypertension,chronic,hypertension,2,active
+,Hypertension,chronic,high blood,2,active
+,Hypertension,chronic,taas blood,2,active
+,Asthma,chronic,asthma,2,active
+,Asthma,chronic,hika,2,active
+,Cancer,chronic,cancer,2,active
+,Cancer,chronic,chemotherapy,2,active
+,Heart Disease,chronic,heart disease,2,active
+,Heart Disease,chronic,heart failure,2,active
+,Heart Disease,chronic,cardiac,2,active
+,Kidney Disease,chronic,kidney,2,active
+,Kidney Disease,chronic,dialysis,2,active
+,Kidney Disease,chronic,ckd,2,active
+,Immunocompromised,chronic,immunocompromised,2,active
+,Immunocompromised,chronic,hiv,2,active
+,Immunocompromised,chronic,transplant,2,active

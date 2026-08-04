@@ -1,0 +1,501 @@
+pattern_id,pattern,bucket,days,language,status
+DURB0001,1 day,1_to_2_days,1,english,active
+DURB0002,1 days,1_to_2_days,1,english,active
+DURB0003,1 ka adlaw,1_to_2_days,1,hiligaynon,active
+DURB0004,1 araw,1_to_2_days,1,filipino,active
+DURB0005,2 day,1_to_2_days,2,english,active
+DURB0006,2 days,1_to_2_days,2,english,active
+DURB0007,2 ka adlaw,1_to_2_days,2,hiligaynon,active
+DURB0008,2 araw,1_to_2_days,2,filipino,active
+DURB0009,3 day,3_to_4_days,3,english,active
+DURB0010,3 days,3_to_4_days,3,english,active
+DURB0011,3 ka adlaw,3_to_4_days,3,hiligaynon,active
+DURB0012,3 araw,3_to_4_days,3,filipino,active
+DURB0013,4 day,3_to_4_days,4,english,active
+DURB0014,4 days,3_to_4_days,4,english,active
+DURB0015,4 ka adlaw,3_to_4_days,4,hiligaynon,active
+DURB0016,4 araw,3_to_4_days,4,filipino,active
+DURB0017,5 day,5_plus_days,5,english,active
+DURB0018,5 days,5_plus_days,5,english,active
+DURB0019,5 ka adlaw,5_plus_days,5,hiligaynon,active
+DURB0020,5 araw,5_plus_days,5,filipino,active
+DURB0021,6 day,5_plus_days,6,english,active
+DURB0022,6 days,5_plus_days,6,english,active
+DURB0023,6 ka adlaw,5_plus_days,6,hiligaynon,active
+DURB0024,6 araw,5_plus_days,6,filipino,active
+DURB0025,7 day,5_plus_days,7,english,active
+DURB0026,7 days,5_plus_days,7,english,active
+DURB0027,7 ka adlaw,5_plus_days,7,hiligaynon,active
+DURB0028,7 araw,5_plus_days,7,filipino,active
+DURB0029,8 day,5_plus_days,8,english,active
+DURB0030,8 days,5_plus_days,8,english,active
+DURB0031,8 ka adlaw,5_plus_days,8,hiligaynon,active
+DURB0032,8 araw,5_plus_days,8,filipino,active
+DURB0033,9 day,5_plus_days,9,english,active
+DURB0034,9 days,5_plus_days,9,english,active
+DURB0035,9 ka adlaw,5_plus_days,9,hiligaynon,active
+DURB0036,9 araw,5_plus_days,9,filipino,active
+DURB0037,10 day,5_plus_days,10,english,active
+DURB0038,10 days,5_plus_days,10,english,active
+DURB0039,10 ka adlaw,5_plus_days,10,hiligaynon,active
+DURB0040,10 araw,5_plus_days,10,filipino,active
+DURB0041,11 day,5_plus_days,11,english,active
+DURB0042,11 days,5_plus_days,11,english,active
+DURB0043,11 ka adlaw,5_plus_days,11,hiligaynon,active
+DURB0044,11 araw,5_plus_days,11,filipino,active
+DURB0045,12 day,5_plus_days,12,english,active
+DURB0046,12 days,5_plus_days,12,english,active
+DURB0047,12 ka adlaw,5_plus_days,12,hiligaynon,active
+DURB0048,12 araw,5_plus_days,12,filipino,active
+DURB0049,13 day,5_plus_days,13,english,active
+DURB0050,13 days,5_plus_days,13,english,active
+DURB0051,13 ka adlaw,5_plus_days,13,hiligaynon,active
+DURB0052,13 araw,5_plus_days,13,filipino,active
+DURB0053,14 day,5_plus_days,14,english,active
+DURB0054,14 days,5_plus_days,14,english,active
+DURB0055,14 ka adlaw,5_plus_days,14,hiligaynon,active
+DURB0056,14 araw,5_plus_days,14,filipino,active
+DURB0057,15 day,5_plus_days,15,english,active
+DURB0058,15 days,5_plus_days,15,english,active
+DURB0059,15 ka adlaw,5_plus_days,15,hiligaynon,active
+DURB0060,15 araw,5_plus_days,15,filipino,active
+DURB0061,16 day,5_plus_days,16,english,active
+DURB0062,16 days,5_plus_days,16,english,active
+DURB0063,16 ka adlaw,5_plus_days,16,hiligaynon,active
+DURB0064,16 araw,5_plus_days,16,filipino,active
+DURB0065,17 day,5_plus_days,17,english,active
+DURB0066,17 days,5_plus_days,17,english,active
+DURB0067,17 ka adlaw,5_plus_days,17,hiligaynon,active
+DURB0068,17 araw,5_plus_days,17,filipino,active
+DURB0069,18 day,5_plus_days,18,english,active
+DURB0070,18 days,5_plus_days,18,english,active
+DURB0071,18 ka adlaw,5_plus_days,18,hiligaynon,active
+DURB0072,18 araw,5_plus_days,18,filipino,active
+DURB0073,19 day,5_plus_days,19,english,active
+DURB0074,19 days,5_plus_days,19,english,active
+DURB0075,19 ka adlaw,5_plus_days,19,hiligaynon,active
+DURB0076,19 araw,5_plus_days,19,filipino,active
+DURB0077,20 day,5_plus_days,20,english,active
+DURB0078,20 days,5_plus_days,20,english,active
+DURB0079,20 ka adlaw,5_plus_days,20,hiligaynon,active
+DURB0080,20 araw,5_plus_days,20,filipino,active
+DURB0081,21 day,5_plus_days,21,english,active
+DURB0082,21 days,5_plus_days,21,english,active
+DURB0083,21 ka adlaw,5_plus_days,21,hiligaynon,active
+DURB0084,21 araw,5_plus_days,21,filipino,active
+DURB0085,22 day,5_plus_days,22,english,active
+DURB0086,22 days,5_plus_days,22,english,active
+DURB0087,22 ka adlaw,5_plus_days,22,hiligaynon,active
+DURB0088,22 araw,5_plus_days,22,filipino,active
+DURB0089,23 day,5_plus_days,23,english,active
+DURB0090,23 days,5_plus_days,23,english,active
+DURB0091,23 ka adlaw,5_plus_days,23,hiligaynon,active
+DURB0092,23 araw,5_plus_days,23,filipino,active
+DURB0093,24 day,5_plus_days,24,english,active
+DURB0094,24 days,5_plus_days,24,english,active
+DURB0095,24 ka adlaw,5_plus_days,24,hiligaynon,active
+DURB0096,24 araw,5_plus_days,24,filipino,active
+DURB0097,25 day,5_plus_days,25,english,active
+DURB0098,25 days,5_plus_days,25,english,active
+DURB0099,25 ka adlaw,5_plus_days,25,hiligaynon,active
+DURB0100,25 araw,5_plus_days,25,filipino,active
+DURB0101,26 day,5_plus_days,26,english,active
+DURB0102,26 days,5_plus_days,26,english,active
+DURB0103,26 ka adlaw,5_plus_days,26,hiligaynon,active
+DURB0104,26 araw,5_plus_days,26,filipino,active
+DURB0105,27 day,5_plus_days,27,english,active
+DURB0106,27 days,5_plus_days,27,english,active
+DURB0107,27 ka adlaw,5_plus_days,27,hiligaynon,active
+DURB0108,27 araw,5_plus_days,27,filipino,active
+DURB0109,28 day,5_plus_days,28,english,active
+DURB0110,28 days,5_plus_days,28,english,active
+DURB0111,28 ka adlaw,5_plus_days,28,hiligaynon,active
+DURB0112,28 araw,5_plus_days,28,filipino,active
+DURB0113,29 day,5_plus_days,29,english,active
+DURB0114,29 days,5_plus_days,29,english,active
+DURB0115,29 ka adlaw,5_plus_days,29,hiligaynon,active
+DURB0116,29 araw,5_plus_days,29,filipino,active
+DURB0117,30 day,5_plus_days,30,english,active
+DURB0118,30 days,5_plus_days,30,english,active
+DURB0119,30 ka adlaw,5_plus_days,30,hiligaynon,active
+DURB0120,30 araw,5_plus_days,30,filipino,active
+DURB0121,today,same_day,0,mixed,active
+DURB0122,subong,same_day,0,mixed,active
+DURB0123,ngayon,same_day,0,mixed,active
+DURB0124,yesterday,1_to_2_days,1,mixed,active
+DURB0125,gahapon,1_to_2_days,1,mixed,active
+DURB0126,kahapon,1_to_2_days,1,mixed,active
+DURB0127,since yesterday,1_to_2_days,1,mixed,active
+DURB0128,one week,chronic_weeks,7,mixed,active
+DURB0129,isa ka semana,chronic_weeks,7,mixed,active
+DURB0130,isang linggo,chronic_weeks,7,mixed,active
+DURB0131,dugay na,chronic_weeks,14,mixed,active
+DURB0132,matagal na,chronic_weeks,14,mixed,active
+DURB0133,bag-o lang,acute_hours,0,mixed,active
+DURB0134,this morning,acute_hours,0,mixed,active
+DURB0135,kanina,acute_hours,0,mixed,active
+DURB0136,for hours,acute_hours,0,mixed,active
+DURB0137,3 hours,acute_hours,0,mixed,active
+DURB0138,few hours,acute_hours,0,mixed,active
+DUR0001,for 11 days,5_plus_days,11,mixed,active
+DUR0002,since 12 araw,5_plus_days,12,mixed,active
+DUR0003,almost 4 adlaw,1_to_2_days,4,mixed,active
+DUR0004,for 2 oras,1_to_2_days,2,mixed,active
+DUR0005,for 10 hours,5_plus_days,10,mixed,active
+DUR0006,since 1 days,1_to_2_days,1,mixed,active
+DUR0007,nearly 4 oras,1_to_2_days,4,mixed,active
+DUR0008,since 1 oras,1_to_2_days,1,mixed,active
+DUR0009,around 12 oras,5_plus_days,12,mixed,active
+DUR0010,nearly 4 hours,1_to_2_days,4,mixed,active
+DUR0011,since 5 days,5_plus_days,5,mixed,active
+DUR0012,about 12 hours,5_plus_days,12,mixed,active
+DUR0013,since 5 adlaw,5_plus_days,5,mixed,active
+DUR0014,for 13 araw,5_plus_days,13,mixed,active
+DUR0015,for 2 hours,1_to_2_days,2,mixed,active
+DUR0016,nearly 6 araw,5_plus_days,6,mixed,active
+DUR0017,almost 5 days,5_plus_days,5,mixed,active
+DUR0018,for 8 oras,5_plus_days,8,mixed,active
+DUR0019,nearly 7 days,5_plus_days,7,mixed,active
+DUR0020,about 5 oras,5_plus_days,5,mixed,active
+DUR0021,almost 10 adlaw,5_plus_days,10,mixed,active
+DUR0022,almost 2 days,1_to_2_days,2,mixed,active
+DUR0023,for 4 araw,1_to_2_days,4,mixed,active
+DUR0024,for 14 adlaw,5_plus_days,14,mixed,active
+DUR0025,around 7 araw,5_plus_days,7,mixed,active
+DUR0026,since 11 araw,5_plus_days,11,mixed,active
+DUR0027,since 6 araw,5_plus_days,6,mixed,active
+DUR0028,almost 11 araw,5_plus_days,11,mixed,active
+DUR0029,nearly 11 days,5_plus_days,11,mixed,active
+DUR0030,nearly 11 adlaw,5_plus_days,11,mixed,active
+DUR0031,since 12 adlaw,5_plus_days,12,mixed,active
+DUR0032,about 8 hours,5_plus_days,8,mixed,active
+DUR0033,since 11 oras,5_plus_days,11,mixed,active
+DUR0034,for 11 araw,5_plus_days,11,mixed,active
+DUR0035,about 4 days,1_to_2_days,4,mixed,active
+DUR0036,for 7 araw,5_plus_days,7,mixed,active
+DUR0037,almost 4 oras,1_to_2_days,4,mixed,active
+DUR0038,almost 6 adlaw,5_plus_days,6,mixed,active
+DUR0039,almost 8 hours,5_plus_days,8,mixed,active
+DUR0040,about 8 adlaw,5_plus_days,8,mixed,active
+DUR0041,almost 3 adlaw,1_to_2_days,3,mixed,active
+DUR0042,about 9 oras,5_plus_days,9,mixed,active
+DUR0043,around 12 oras,5_plus_days,12,mixed,active
+DUR0044,about 10 hours,5_plus_days,10,mixed,active
+DUR0045,nearly 4 adlaw,1_to_2_days,4,mixed,active
+DUR0046,for 8 days,5_plus_days,8,mixed,active
+DUR0047,since 14 days,5_plus_days,14,mixed,active
+DUR0048,almost 11 adlaw,5_plus_days,11,mixed,active
+DUR0049,for 7 oras,5_plus_days,7,mixed,active
+DUR0050,nearly 7 hours,5_plus_days,7,mixed,active
+DUR0051,about 8 oras,5_plus_days,8,mixed,active
+DUR0052,almost 9 days,5_plus_days,9,mixed,active
+DUR0053,almost 12 days,5_plus_days,12,mixed,active
+DUR0054,almost 9 araw,5_plus_days,9,mixed,active
+DUR0055,about 6 days,5_plus_days,6,mixed,active
+DUR0056,around 7 adlaw,5_plus_days,7,mixed,active
+DUR0057,nearly 1 araw,1_to_2_days,1,mixed,active
+DUR0058,nearly 13 adlaw,5_plus_days,13,mixed,active
+DUR0059,almost 2 araw,1_to_2_days,2,mixed,active
+DUR0060,since 9 oras,5_plus_days,9,mixed,active
+DUR0061,since 3 araw,1_to_2_days,3,mixed,active
+DUR0062,for 9 oras,5_plus_days,9,mixed,active
+DUR0063,around 10 araw,5_plus_days,10,mixed,active
+DUR0064,about 1 days,1_to_2_days,1,mixed,active
+DUR0065,since 14 araw,5_plus_days,14,mixed,active
+DUR0066,nearly 1 adlaw,1_to_2_days,1,mixed,active
+DUR0067,almost 2 days,1_to_2_days,2,mixed,active
+DUR0068,nearly 8 days,5_plus_days,8,mixed,active
+DUR0069,since 13 adlaw,5_plus_days,13,mixed,active
+DUR0070,nearly 11 hours,5_plus_days,11,mixed,active
+DUR0071,nearly 3 araw,1_to_2_days,3,mixed,active
+DUR0072,around 14 oras,5_plus_days,14,mixed,active
+DUR0073,almost 4 oras,1_to_2_days,4,mixed,active
+DUR0074,almost 12 adlaw,5_plus_days,12,mixed,active
+DUR0075,almost 5 hours,5_plus_days,5,mixed,active
+DUR0076,around 11 araw,5_plus_days,11,mixed,active
+DUR0077,for 9 hours,5_plus_days,9,mixed,active
+DUR0078,for 4 adlaw,1_to_2_days,4,mixed,active
+DUR0079,nearly 6 days,5_plus_days,6,mixed,active
+DUR0080,nearly 9 adlaw,5_plus_days,9,mixed,active
+DUR0081,for 4 days,1_to_2_days,4,mixed,active
+DUR0082,since 12 days,5_plus_days,12,mixed,active
+DUR0083,about 2 days,1_to_2_days,2,mixed,active
+DUR0084,since 2 oras,1_to_2_days,2,mixed,active
+DUR0085,since 5 hours,5_plus_days,5,mixed,active
+DUR0086,almost 9 adlaw,5_plus_days,9,mixed,active
+DUR0087,around 10 oras,5_plus_days,10,mixed,active
+DUR0088,around 4 hours,1_to_2_days,4,mixed,active
+DUR0089,for 4 days,1_to_2_days,4,mixed,active
+DUR0090,about 11 hours,5_plus_days,11,mixed,active
+DUR0091,around 7 hours,5_plus_days,7,mixed,active
+DUR0092,almost 14 days,5_plus_days,14,mixed,active
+DUR0093,for 11 days,5_plus_days,11,mixed,active
+DUR0094,for 7 araw,5_plus_days,7,mixed,active
+DUR0095,since 4 adlaw,1_to_2_days,4,mixed,active
+DUR0096,since 9 hours,5_plus_days,9,mixed,active
+DUR0097,about 7 adlaw,5_plus_days,7,mixed,active
+DUR0098,for 8 adlaw,5_plus_days,8,mixed,active
+DUR0099,for 8 oras,5_plus_days,8,mixed,active
+DUR0100,for 1 oras,1_to_2_days,1,mixed,active
+DUR0101,since 2 adlaw,1_to_2_days,2,mixed,active
+DUR0102,around 7 hours,5_plus_days,7,mixed,active
+DUR0103,for 4 hours,1_to_2_days,4,mixed,active
+DUR0104,for 3 hours,1_to_2_days,3,mixed,active
+DUR0105,around 7 araw,5_plus_days,7,mixed,active
+DUR0106,almost 5 hours,5_plus_days,5,mixed,active
+DUR0107,almost 12 oras,5_plus_days,12,mixed,active
+DUR0108,since 12 hours,5_plus_days,12,mixed,active
+DUR0109,since 4 araw,1_to_2_days,4,mixed,active
+DUR0110,almost 1 oras,1_to_2_days,1,mixed,active
+DUR0111,almost 9 days,5_plus_days,9,mixed,active
+DUR0112,for 6 days,5_plus_days,6,mixed,active
+DUR0113,nearly 10 hours,5_plus_days,10,mixed,active
+DUR0114,since 14 oras,5_plus_days,14,mixed,active
+DUR0115,for 1 oras,1_to_2_days,1,mixed,active
+DUR0116,for 14 adlaw,5_plus_days,14,mixed,active
+DUR0117,almost 10 days,5_plus_days,10,mixed,active
+DUR0118,around 14 adlaw,5_plus_days,14,mixed,active
+DUR0119,since 2 oras,1_to_2_days,2,mixed,active
+DUR0120,for 10 oras,5_plus_days,10,mixed,active
+DUR0121,around 10 days,5_plus_days,10,mixed,active
+DUR0122,nearly 11 oras,5_plus_days,11,mixed,active
+DUR0123,about 9 araw,5_plus_days,9,mixed,active
+DUR0124,since 4 araw,1_to_2_days,4,mixed,active
+DUR0125,since 5 hours,5_plus_days,5,mixed,active
+DUR0126,around 11 araw,5_plus_days,11,mixed,active
+DUR0127,for 6 days,5_plus_days,6,mixed,active
+DUR0128,nearly 8 oras,5_plus_days,8,mixed,active
+DUR0129,nearly 2 days,1_to_2_days,2,mixed,active
+DUR0130,about 4 oras,1_to_2_days,4,mixed,active
+DUR0131,for 3 araw,1_to_2_days,3,mixed,active
+DUR0132,about 4 araw,1_to_2_days,4,mixed,active
+DUR0133,nearly 3 hours,1_to_2_days,3,mixed,active
+DUR0134,nearly 12 araw,5_plus_days,12,mixed,active
+DUR0135,for 13 oras,5_plus_days,13,mixed,active
+DUR0136,about 11 oras,5_plus_days,11,mixed,active
+DUR0137,since 11 days,5_plus_days,11,mixed,active
+DUR0138,for 5 days,5_plus_days,5,mixed,active
+DUR0139,since 12 oras,5_plus_days,12,mixed,active
+DUR0140,nearly 5 araw,5_plus_days,5,mixed,active
+DUR0141,since 4 araw,1_to_2_days,4,mixed,active
+DUR0142,nearly 11 araw,5_plus_days,11,mixed,active
+DUR0143,for 8 araw,5_plus_days,8,mixed,active
+DUR0144,about 2 hours,1_to_2_days,2,mixed,active
+DUR0145,about 1 days,1_to_2_days,1,mixed,active
+DUR0146,almost 13 adlaw,5_plus_days,13,mixed,active
+DUR0147,almost 5 adlaw,5_plus_days,5,mixed,active
+DUR0148,almost 8 oras,5_plus_days,8,mixed,active
+DUR0149,for 7 oras,5_plus_days,7,mixed,active
+DUR0150,almost 2 days,1_to_2_days,2,mixed,active
+DUR0151,for 3 oras,1_to_2_days,3,mixed,active
+DUR0152,nearly 14 araw,5_plus_days,14,mixed,active
+DUR0153,around 9 adlaw,5_plus_days,9,mixed,active
+DUR0154,about 3 days,1_to_2_days,3,mixed,active
+DUR0155,about 6 days,5_plus_days,6,mixed,active
+DUR0156,almost 4 adlaw,1_to_2_days,4,mixed,active
+DUR0157,nearly 2 araw,1_to_2_days,2,mixed,active
+DUR0158,nearly 14 hours,5_plus_days,14,mixed,active
+DUR0159,since 12 adlaw,5_plus_days,12,mixed,active
+DUR0160,since 14 adlaw,5_plus_days,14,mixed,active
+DUR0161,since 7 days,5_plus_days,7,mixed,active
+DUR0162,around 12 araw,5_plus_days,12,mixed,active
+DUR0163,about 13 adlaw,5_plus_days,13,mixed,active
+DUR0164,around 3 days,1_to_2_days,3,mixed,active
+DUR0165,around 14 days,5_plus_days,14,mixed,active
+DUR0166,around 4 adlaw,1_to_2_days,4,mixed,active
+DUR0167,since 6 araw,5_plus_days,6,mixed,active
+DUR0168,almost 4 days,1_to_2_days,4,mixed,active
+DUR0169,about 4 hours,1_to_2_days,4,mixed,active
+DUR0170,about 5 days,5_plus_days,5,mixed,active
+DUR0171,around 6 oras,5_plus_days,6,mixed,active
+DUR0172,about 11 oras,5_plus_days,11,mixed,active
+DUR0173,about 1 days,1_to_2_days,1,mixed,active
+DUR0174,about 3 oras,1_to_2_days,3,mixed,active
+DUR0175,nearly 1 days,1_to_2_days,1,mixed,active
+DUR0176,almost 7 araw,5_plus_days,7,mixed,active
+DUR0177,around 13 araw,5_plus_days,13,mixed,active
+DUR0178,for 10 oras,5_plus_days,10,mixed,active
+DUR0179,since 7 oras,5_plus_days,7,mixed,active
+DUR0180,almost 5 days,5_plus_days,5,mixed,active
+DUR0181,nearly 7 days,5_plus_days,7,mixed,active
+DUR0182,almost 13 oras,5_plus_days,13,mixed,active
+DUR0183,about 12 adlaw,5_plus_days,12,mixed,active
+DUR0184,almost 7 days,5_plus_days,7,mixed,active
+DUR0185,about 6 oras,5_plus_days,6,mixed,active
+DUR0186,almost 11 days,5_plus_days,11,mixed,active
+DUR0187,about 5 oras,5_plus_days,5,mixed,active
+DUR0188,about 11 hours,5_plus_days,11,mixed,active
+DUR0189,nearly 7 araw,5_plus_days,7,mixed,active
+DUR0190,around 3 adlaw,1_to_2_days,3,mixed,active
+DUR0191,almost 11 hours,5_plus_days,11,mixed,active
+DUR0192,nearly 12 adlaw,5_plus_days,12,mixed,active
+DUR0193,around 10 araw,5_plus_days,10,mixed,active
+DUR0194,about 9 days,5_plus_days,9,mixed,active
+DUR0195,around 5 adlaw,5_plus_days,5,mixed,active
+DUR0196,nearly 13 oras,5_plus_days,13,mixed,active
+DUR0197,around 11 araw,5_plus_days,11,mixed,active
+DUR0198,almost 8 hours,5_plus_days,8,mixed,active
+DUR0199,around 4 oras,1_to_2_days,4,mixed,active
+DUR0200,almost 13 adlaw,5_plus_days,13,mixed,active
+DUR0201,nearly 2 araw,1_to_2_days,2,mixed,active
+DUR0202,about 11 oras,5_plus_days,11,mixed,active
+DUR0203,almost 2 adlaw,1_to_2_days,2,mixed,active
+DUR0204,since 5 adlaw,5_plus_days,5,mixed,active
+DUR0205,for 3 days,1_to_2_days,3,mixed,active
+DUR0206,nearly 4 hours,1_to_2_days,4,mixed,active
+DUR0207,around 14 days,5_plus_days,14,mixed,active
+DUR0208,since 7 oras,5_plus_days,7,mixed,active
+DUR0209,around 12 hours,5_plus_days,12,mixed,active
+DUR0210,since 7 adlaw,5_plus_days,7,mixed,active
+DUR0211,for 11 days,5_plus_days,11,mixed,active
+DUR0212,since 13 hours,5_plus_days,13,mixed,active
+DUR0213,around 3 oras,1_to_2_days,3,mixed,active
+DUR0214,since 1 oras,1_to_2_days,1,mixed,active
+DUR0215,around 14 days,5_plus_days,14,mixed,active
+DUR0216,almost 3 hours,1_to_2_days,3,mixed,active
+DUR0217,nearly 9 oras,5_plus_days,9,mixed,active
+DUR0218,nearly 6 hours,5_plus_days,6,mixed,active
+DUR0219,around 14 oras,5_plus_days,14,mixed,active
+DUR0220,around 14 oras,5_plus_days,14,mixed,active
+DUR0221,around 3 hours,1_to_2_days,3,mixed,active
+DUR0222,almost 5 adlaw,5_plus_days,5,mixed,active
+DUR0223,around 5 oras,5_plus_days,5,mixed,active
+DUR0224,about 11 adlaw,5_plus_days,11,mixed,active
+DUR0225,almost 8 days,5_plus_days,8,mixed,active
+DUR0226,about 5 adlaw,5_plus_days,5,mixed,active
+DUR0227,nearly 6 araw,5_plus_days,6,mixed,active
+DUR0228,since 2 adlaw,1_to_2_days,2,mixed,active
+DUR0229,almost 4 hours,1_to_2_days,4,mixed,active
+DUR0230,for 3 adlaw,1_to_2_days,3,mixed,active
+DUR0231,about 7 hours,5_plus_days,7,mixed,active
+DUR0232,around 9 hours,5_plus_days,9,mixed,active
+DUR0233,around 1 adlaw,1_to_2_days,1,mixed,active
+DUR0234,almost 7 oras,5_plus_days,7,mixed,active
+DUR0235,around 1 oras,1_to_2_days,1,mixed,active
+DUR0236,about 8 days,5_plus_days,8,mixed,active
+DUR0237,around 5 hours,5_plus_days,5,mixed,active
+DUR0238,nearly 9 oras,5_plus_days,9,mixed,active
+DUR0239,since 4 hours,1_to_2_days,4,mixed,active
+DUR0240,around 5 hours,5_plus_days,5,mixed,active
+DUR0241,about 1 hours,1_to_2_days,1,mixed,active
+DUR0242,almost 11 hours,5_plus_days,11,mixed,active
+DUR0243,since 3 hours,1_to_2_days,3,mixed,active
+DUR0244,for 10 oras,5_plus_days,10,mixed,active
+DUR0245,nearly 7 oras,5_plus_days,7,mixed,active
+DUR0246,for 11 days,5_plus_days,11,mixed,active
+DUR0247,since 11 hours,5_plus_days,11,mixed,active
+DUR0248,since 14 hours,5_plus_days,14,mixed,active
+DUR0249,around 1 araw,1_to_2_days,1,mixed,active
+DUR0250,around 6 adlaw,5_plus_days,6,mixed,active
+DUR0251,around 6 araw,5_plus_days,6,mixed,active
+DUR0252,about 5 hours,5_plus_days,5,mixed,active
+DUR0253,around 14 days,5_plus_days,14,mixed,active
+DUR0254,for 1 oras,1_to_2_days,1,mixed,active
+DUR0255,almost 6 adlaw,5_plus_days,6,mixed,active
+DUR0256,for 2 days,1_to_2_days,2,mixed,active
+DUR0257,for 4 adlaw,1_to_2_days,4,mixed,active
+DUR0258,since 10 adlaw,5_plus_days,10,mixed,active
+DUR0259,almost 3 hours,1_to_2_days,3,mixed,active
+DUR0260,since 2 oras,1_to_2_days,2,mixed,active
+DUR0261,about 8 araw,5_plus_days,8,mixed,active
+DUR0262,nearly 3 oras,1_to_2_days,3,mixed,active
+DUR0263,since 12 days,5_plus_days,12,mixed,active
+DUR0264,nearly 5 days,5_plus_days,5,mixed,active
+DUR0265,nearly 1 araw,1_to_2_days,1,mixed,active
+DUR0266,around 11 hours,5_plus_days,11,mixed,active
+DUR0267,for 12 adlaw,5_plus_days,12,mixed,active
+DUR0268,for 10 adlaw,5_plus_days,10,mixed,active
+DUR0269,almost 12 araw,5_plus_days,12,mixed,active
+DUR0270,nearly 10 days,5_plus_days,10,mixed,active
+DUR0271,about 13 days,5_plus_days,13,mixed,active
+DUR0272,almost 9 hours,5_plus_days,9,mixed,active
+DUR0273,nearly 6 days,5_plus_days,6,mixed,active
+DUR0274,for 11 araw,5_plus_days,11,mixed,active
+DUR0275,around 14 hours,5_plus_days,14,mixed,active
+DUR0276,about 2 hours,1_to_2_days,2,mixed,active
+DUR0277,almost 11 hours,5_plus_days,11,mixed,active
+DUR0278,since 3 hours,1_to_2_days,3,mixed,active
+DUR0279,almost 12 oras,5_plus_days,12,mixed,active
+DUR0280,nearly 5 oras,5_plus_days,5,mixed,active
+DUR0281,around 13 hours,5_plus_days,13,mixed,active
+DUR0282,about 7 oras,5_plus_days,7,mixed,active
+DUR0283,for 6 adlaw,5_plus_days,6,mixed,active
+DUR0284,since 5 hours,5_plus_days,5,mixed,active
+DUR0285,nearly 13 hours,5_plus_days,13,mixed,active
+DUR0286,about 10 hours,5_plus_days,10,mixed,active
+DUR0287,about 1 hours,1_to_2_days,1,mixed,active
+DUR0288,since 3 hours,1_to_2_days,3,mixed,active
+DUR0289,about 6 araw,5_plus_days,6,mixed,active
+DUR0290,almost 5 oras,5_plus_days,5,mixed,active
+DUR0291,for 5 oras,5_plus_days,5,mixed,active
+DUR0292,for 9 adlaw,5_plus_days,9,mixed,active
+DUR0293,around 4 hours,1_to_2_days,4,mixed,active
+DUR0294,almost 9 adlaw,5_plus_days,9,mixed,active
+DUR0295,around 8 hours,5_plus_days,8,mixed,active
+DUR0296,for 13 days,5_plus_days,13,mixed,active
+DUR0297,around 5 adlaw,5_plus_days,5,mixed,active
+DUR0298,about 12 adlaw,5_plus_days,12,mixed,active
+DUR0299,about 11 oras,5_plus_days,11,mixed,active
+DUR0300,nearly 8 oras,5_plus_days,8,mixed,active
+DUR0301,almost 6 hours,5_plus_days,6,mixed,active
+DUR0302,about 9 araw,5_plus_days,9,mixed,active
+DUR0303,about 12 hours,5_plus_days,12,mixed,active
+DUR0304,since 5 araw,5_plus_days,5,mixed,active
+DUR0305,about 2 adlaw,1_to_2_days,2,mixed,active
+DUR0306,almost 2 oras,1_to_2_days,2,mixed,active
+DUR0307,since 3 adlaw,1_to_2_days,3,mixed,active
+DUR0308,about 12 hours,5_plus_days,12,mixed,active
+DUR0309,nearly 12 oras,5_plus_days,12,mixed,active
+DUR0310,for 10 araw,5_plus_days,10,mixed,active
+DUR0311,about 14 adlaw,5_plus_days,14,mixed,active
+DUR0312,since 4 araw,1_to_2_days,4,mixed,active
+DUR0313,almost 5 days,5_plus_days,5,mixed,active
+DUR0314,about 9 adlaw,5_plus_days,9,mixed,active
+DUR0315,nearly 1 days,1_to_2_days,1,mixed,active
+DUR0316,almost 5 adlaw,5_plus_days,5,mixed,active
+DUR0317,for 14 hours,5_plus_days,14,mixed,active
+DUR0318,nearly 14 days,5_plus_days,14,mixed,active
+DUR0319,around 5 hours,5_plus_days,5,mixed,active
+DUR0320,since 8 araw,5_plus_days,8,mixed,active
+DUR0321,around 1 araw,1_to_2_days,1,mixed,active
+DUR0322,around 2 days,1_to_2_days,2,mixed,active
+DUR0323,nearly 8 days,5_plus_days,8,mixed,active
+DUR0324,since 11 days,5_plus_days,11,mixed,active
+DUR0325,about 3 oras,1_to_2_days,3,mixed,active
+DUR0326,for 2 adlaw,1_to_2_days,2,mixed,active
+DUR0327,nearly 9 hours,5_plus_days,9,mixed,active
+DUR0328,since 10 oras,5_plus_days,10,mixed,active
+DUR0329,around 13 oras,5_plus_days,13,mixed,active
+DUR0330,about 8 hours,5_plus_days,8,mixed,active
+DUR0331,around 14 oras,5_plus_days,14,mixed,active
+DUR0332,nearly 5 oras,5_plus_days,5,mixed,active
+DUR0333,almost 1 oras,1_to_2_days,1,mixed,active
+DUR0334,almost 2 adlaw,1_to_2_days,2,mixed,active
+DUR0335,almost 4 araw,1_to_2_days,4,mixed,active
+DUR0336,since 2 adlaw,1_to_2_days,2,mixed,active
+DUR0337,for 3 oras,1_to_2_days,3,mixed,active
+DUR0338,around 3 days,1_to_2_days,3,mixed,active
+DUR0339,around 8 oras,5_plus_days,8,mixed,active
+DUR0340,since 5 days,5_plus_days,5,mixed,active
+DUR0341,almost 5 araw,5_plus_days,5,mixed,active
+DUR0342,for 14 hours,5_plus_days,14,mixed,active
+DUR0343,about 11 adlaw,5_plus_days,11,mixed,active
+DUR0344,almost 13 oras,5_plus_days,13,mixed,active
+DUR0345,around 13 adlaw,5_plus_days,13,mixed,active
+DUR0346,since 2 oras,1_to_2_days,2,mixed,active
+DUR0347,about 11 adlaw,5_plus_days,11,mixed,active
+DUR0348,for 14 adlaw,5_plus_days,14,mixed,active
+DUR0349,about 1 adlaw,1_to_2_days,1,mixed,active
+DUR0350,about 10 oras,5_plus_days,10,mixed,active
+DUR0351,around 8 days,5_plus_days,8,mixed,active
+DUR0352,almost 12 araw,5_plus_days,12,mixed,active
+DUR0353,nearly 7 araw,5_plus_days,7,mixed,active
+DUR0354,around 9 hours,5_plus_days,9,mixed,active
+DUR0355,for 2 oras,1_to_2_days,2,mixed,active
+DUR0356,nearly 7 araw,5_plus_days,7,mixed,active
+DUR0357,for 5 days,5_plus_days,5,mixed,active
+DUR0358,nearly 4 oras,1_to_2_days,4,mixed,active
+DUR0359,nearly 1 araw,1_to_2_days,1,mixed,active
+DUR0360,around 1 adlaw,1_to_2_days,1,mixed,active
+DUR0361,about 9 hours,5_plus_days,9,mixed,active
+DUR0362,around 3 oras,1_to_2_days,3,mixed,active

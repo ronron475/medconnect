@@ -5,7 +5,9 @@
 
 final class MedicalRecommendationEngine
 {
-    public const DISCLAIMER = 'This assessment is AI-generated for informational purposes only and is not a medical diagnosis. Please consult a licensed healthcare professional for proper evaluation and treatment.';
+    public const DISCLAIMER = 'This assessment is an AI-assisted triage recommendation for decision support only. It is not a medical diagnosis and does not prescribe medication. Please consult a licensed healthcare professional for proper evaluation and treatment.';
+
+    public const REVIEW_ACTION = 'Needs Healthcare Provider Review';
 
     /**
      * @param array<string, mixed> $triageInput
@@ -94,6 +96,16 @@ final class MedicalRecommendationEngine
     ): array {
         $class = (string) ($classification['triage_classification'] ?? 'NON_URGENT');
         $items = [];
+
+        if (!empty($classification['needs_provider_review'])
+            || (string) ($classification['recommended_action'] ?? '') === self::REVIEW_ACTION
+        ) {
+            $items[] = self::REVIEW_ACTION;
+            $items[] = 'The complaint could not be triaged with sufficient confidence. A licensed healthcare provider should review the case.';
+            $items[] = self::DISCLAIMER;
+
+            return array_values(array_filter(array_unique($items)));
+        }
 
         if ($class === 'NON_URGENT') {
             require_once __DIR__ . '/SelfCareRemediesLoader.php';

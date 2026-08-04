@@ -1,0 +1,6 @@
+rule_id,condition,confidence_effect,notes,status
+CF01,vague_complaint,cap_42,Vague text without clear symptoms,active
+CF02,red_flag_matched,min_85,Red flag increases confidence,active
+CF03,kb_symptom_matched,plus_5,Structured symptom match,active
+CF04,below_60,provider_review,Needs Healthcare Provider Review,active
+CF05,negation_only,cap_50,Only negated symptoms found,active

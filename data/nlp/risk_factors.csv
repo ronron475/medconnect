@@ -1,0 +1,33 @@
+risk_id,label,category,pattern,severity_bonus,status
+pregnant,Pregnant,pregnancy,pregnant,2,active
+pregnant,Pregnant,pregnancy,untis,2,active
+pregnant,Pregnant,pregnancy,nagabusong,2,active
+infant,Infant,age,infant,2,active
+infant,Infant,age,aby,2,active
+infant,Infant,age,sanggol,2,active
+child,Child,age,child,2,active
+child,Child,age,anak,2,active
+child,Child,age,ata,2,active
+senior,Senior Citizen,age,senior,2,active
+senior,Senior Citizen,age,elderly,2,active
+senior,Senior Citizen,age,tigulang,2,active
+senior,Senior Citizen,age,matanda,2,active
+diabetes,Diabetes,chronic,diabetes,2,active
+diabetes,Diabetes,chronic,diabetic,2,active
+diabetes,Diabetes,chronic,asukal,2,active
+hypertension,Hypertension,chronic,hypertension,2,active
+hypertension,Hypertension,chronic,high blood,2,active
+hypertension,Hypertension,chronic,taas blood,2,active
+asthma,Asthma,chronic,asthma,2,active
+asthma,Asthma,chronic,hika,2,active
+cancer,Cancer,chronic,cancer,2,active
+cancer,Cancer,chronic,chemotherapy,2,active
+heart_disease,Heart Disease,chronic,heart disease,2,active
+heart_disease,Heart Disease,chronic,heart failure,2,active
+heart_disease,Heart Disease,chronic,cardiac,2,active
+kidney_disease,Kidney Disease,chronic,kidney,2,active
+kidney_disease,Kidney Disease,chronic,dialysis,2,active
+kidney_disease,Kidney Disease,chronic,ckd,2,active
+immunocompromised,Immunocompromised,chronic,immunocompromised,2,active
+immunocompromised,Immunocompromised,chronic,hiv,2,active
+immunocompromised,Immunocompromised,chronic,transplant,2,active

@@ -1,0 +1,26 @@
+case_id,chief_complaint,expected_classification,language,scenario_type,status
+GOLD0001,I have fever.,NON-URGENT,english,non_urgent,active
+GOLD0002,I have fever for 5 days.,URGENT,english,urgent,active
+GOLD0003,I have chest pain and difficulty breathing.,EMERGENCY,english,emergency,active
+GOLD0004,My left arm suddenly became weak and I cannot speak properly.,EMERGENCY,english,emergency,active
+GOLD0005,I need a refill of my maintenance medicine.,NON-URGENT,english,non_urgent,active
+GOLD0006,I need a follow-up.,NON-URGENT,english,non_urgent,active
+GOLD0007,I have cough.,NON-URGENT,english,non_urgent,active
+GOLD0008,I cannot breathe.,EMERGENCY,english,emergency,active
+GOLD0009,I fainted.,EMERGENCY,english,emergency,active
+GOLD0010,I am pregnant and bleeding.,EMERGENCY,english,emergency,active
+GOLD0011,My child has a high fever.,URGENT,english,urgent,active
+GOLD0012,Pain 8/10 in my abdomen for 2 days.,URGENT,english,urgent,active
+GOLD0013,May lagnat ako.,NON-URGENT,hiligaynon,non_urgent,active
+GOLD0014,Budlay gid ang ginhawa ko.,EMERGENCY,hiligaynon,emergency,active
+GOLD0015,Masakit akon dughan.,EMERGENCY,hiligaynon,emergency,active
+GOLD0016,Gapalanakit ulo ko.,NON-URGENT,hiligaynon,non_urgent,active
+GOLD0017,May dugo sa akon suka.,EMERGENCY,hiligaynon,emergency,active
+GOLD0018,Wala akong lagnat.,NON-URGENT,hiligaynon,non_urgent,active
+GOLD0019,Nilalagnat ako nang 5 araw.,URGENT,filipino,urgent,active
+GOLD0020,Hirap akong huminga.,EMERGENCY,filipino,emergency,active
+GOLD0021,Masakit ang dibdib ko.,EMERGENCY,filipino,emergency,active
+GOLD0022,Kailangan ko ng refill ng gamot.,NON-URGENT,filipino,non_urgent,active
+GOLD0023,May sipon at ubo ako.,NON-URGENT,filipino,non_urgent,active
+GOLD0024,I have fevr for 5 days.,URGENT,english,misspelled,active
+GOLD0025,Budlay ginhwa ko.,EMERGENCY,hiligaynon,misspelled,active

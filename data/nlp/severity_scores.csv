@@ -1,0 +1,4 @@
+min_score,max_score,classification,priority,status
+0,5,NON-URGENT,Normal,active
+6,11,URGENT,High,active
+12,999,EMERGENCY,Critical,active

@@ -1,0 +1,31 @@
+concept,symptom_name,severity_weight,status
+fever,Fever,2,active
+cough,Cough,2,active
+runny_nose,Runny Nose,2,active
+difficulty_breathing,Difficulty Breathing,10,active
+chest_pain,Chest Pain,10,active
+abdominal_pain,Abdominal Pain,2,active
+headache,Headache,2,active
+vomiting,Vomiting,2,active
+nausea,Nausea,2,active
+dizziness,Dizziness,2,active
+weakness,Weakness,2,active
+swelling,Swelling,2,active
+chills,Chills,2,active
+vomiting_blood,Vomiting Blood,10,active
+blood_in_urine,Blood in Urine,2,active
+blood_in_stool,Blood in Stool,2,active
+insomnia,Insomnia,2,active
+difficulty_walking,Difficulty Walking,2,active
+diarrhea,Diarrhea,2,active
+sore_throat,Sore Throat,2,active
+body_pain,Body Pain,2,active
+rash,Rash,2,active
+ear_pain,Ear Pain,2,active
+eye_pain,Eye Pain,2,active
+back_pain,Back Pain,2,active
+dysuria,Painful Urination,2,active
+palpitations,Palpitations,2,active
+seizure,Seizure,10,active
+loss_of_consciousness,Loss of Consciousness,10,active
+bleeding,Bleeding,2,active

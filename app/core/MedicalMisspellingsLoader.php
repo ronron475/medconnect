@@ -16,9 +16,40 @@ final class MedicalMisspellingsLoader
         }
 
         self::$map = [];
-        $path = BASE_PATH . '/data/nlp/medical_misspellings.csv';
-        if (is_readable($path)) {
+        foreach ([
+            BASE_PATH . '/data/nlp/medical_misspellings.csv',
+            BASE_PATH . '/data/nlp/misspellings.csv',
+        ] as $path) {
+            if (!is_readable($path)) {
+                continue;
+            }
             $handle = fopen($path, 'r');
+            if ($handle === false) {
+                continue;
+            }
+            $header = fgetcsv($handle);
+            while (($row = fgetcsv($handle)) !== false) {
+                $data = array_combine(
+                    array_map(static fn ($h) => strtolower(trim((string) $h)), $header ?: []),
+                    array_map(static fn ($v) => trim((string) $v), $row)
+                ) ?: [];
+                $correct = strtolower((string) ($data['correct_term'] ?? ''));
+                $wrong = strtolower((string) ($data['misspelling'] ?? ''));
+                // Skip padded generator artifacts
+                if ($wrong !== '' && preg_match('/\d{3,}$/', $wrong)) {
+                    continue;
+                }
+                if ($correct !== '' && $wrong !== '' && !isset(self::$map[$wrong])) {
+                    self::$map[$wrong] = $correct;
+                }
+            }
+            fclose($handle);
+        }
+
+        // Medical abbreviations expansion (CSV-driven)
+        $abbrPath = BASE_PATH . '/data/nlp/medical_abbreviations.csv';
+        if (is_readable($abbrPath)) {
+            $handle = fopen($abbrPath, 'r');
             if ($handle !== false) {
                 $header = fgetcsv($handle);
                 while (($row = fgetcsv($handle)) !== false) {
@@ -26,10 +57,10 @@ final class MedicalMisspellingsLoader
                         array_map(static fn ($h) => strtolower(trim((string) $h)), $header ?: []),
                         array_map(static fn ($v) => trim((string) $v), $row)
                     ) ?: [];
-                    $correct = strtolower((string) ($data['correct_term'] ?? ''));
-                    $wrong = strtolower((string) ($data['misspelling'] ?? ''));
-                    if ($correct !== '' && $wrong !== '' && !isset(self::$map[$wrong])) {
-                        self::$map[$wrong] = $correct;
+                    $abbr = strtolower((string) ($data['abbreviation'] ?? ''));
+                    $exp = strtolower((string) ($data['expansion'] ?? ''));
+                    if ($abbr !== '' && $exp !== '' && !isset(self::$map[$abbr])) {
+                        self::$map[$abbr] = $exp;
                     }
                 }
                 fclose($handle);
