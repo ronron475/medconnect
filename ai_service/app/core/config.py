@@ -19,9 +19,10 @@ class Settings:
     app_name: str = "medConnect AI API"
     app_version: str = "2.0.0"
     host: str = os.environ.get("MEDCONNECT_AI_HOST", "127.0.0.1")
-    # Railway and other PaaS hosts set PORT; local dev uses MEDCONNECT_AI_PORT.
+    # Prefer platform PORT (Railway) so the public proxy matches the listener.
+    # Local/dev can still set MEDCONNECT_AI_PORT when PORT is unset.
     port: int = int(
-        os.environ.get("MEDCONNECT_AI_PORT") or os.environ.get("PORT") or "8765"
+        os.environ.get("PORT") or os.environ.get("MEDCONNECT_AI_PORT") or "8765"
     )
     debug: bool = os.environ.get("MEDCONNECT_AI_DEBUG", "0").lower() in ("1", "true", "yes")
 
