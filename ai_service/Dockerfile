@@ -16,9 +16,11 @@ COPY config /app/config
 
 ENV MEDCONNECT_AI_HOST=0.0.0.0
 ENV MEDCONNECT_AI_PORT=8765
+ENV PORT=8765
 ENV PYTHONPATH=/app/ai_service
 
 WORKDIR /app/ai_service
 EXPOSE 8765
 
-CMD ["python", "-m", "uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8765"]
+# Use $PORT when Railway (or other PaaS) assigns a dynamic port.
+CMD ["sh", "-c", "python -m uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-8765}"]

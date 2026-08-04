@@ -19,7 +19,10 @@ class Settings:
     app_name: str = "medConnect AI API"
     app_version: str = "2.0.0"
     host: str = os.environ.get("MEDCONNECT_AI_HOST", "127.0.0.1")
-    port: int = int(os.environ.get("MEDCONNECT_AI_PORT", "8765"))
+    # Railway and other PaaS hosts set PORT; local dev uses MEDCONNECT_AI_PORT.
+    port: int = int(
+        os.environ.get("MEDCONNECT_AI_PORT") or os.environ.get("PORT") or "8765"
+    )
     debug: bool = os.environ.get("MEDCONNECT_AI_DEBUG", "0").lower() in ("1", "true", "yes")
 
     cors_origins: list[str] = [

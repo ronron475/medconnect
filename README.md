@@ -52,12 +52,20 @@ ln -s ../../app/api public/app/api
 
 ## Production deployment
 
+Production: **https://medconnect.bccbsis.com** (GitLab CI → Hostinger PHP).
+
+See **[docs/GITLAB.md](docs/GITLAB.md)** for the full workflow:
+
+- Push to GitLab `main` → auto-deploy PHP via FTPS
+- Python AI on Railway (separate from PHP)
+- Server `.env` on Hostinger with `MEDCONNECT_AI_SERVICE_URL` pointing to Railway
+
 1. Set Apache/Nginx **document root** to `public/`.
 2. Ensure `storage/` and `bootstrap/` are **outside** the web root.
 3. Run `composer install --no-dev --optimize-autoloader`.
 4. Set file permissions: `storage/` writable by the web server.
-5. Configure `.env` with production database and `MEDCONNECT_AI_SERVICE_URL`.
-6. Start the AI service separately (`ai_service/server.py`) or disable auto-start in `.env`.
+5. Configure Hostinger `.env` with database credentials and `MEDCONNECT_AI_SERVICE_URL`.
+6. Set `MEDCONNECT_AI_AUTO_START=false` on the server; run Python on Railway instead.
 
 ### Apache example
 
