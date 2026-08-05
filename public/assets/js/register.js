@@ -837,13 +837,24 @@ function wireOutcomeActions(redirectUrl) {
   }
 }
 
+function normalizeTriageUrgency(urgency) {
+  const raw = String(urgency || 'NON-URGENT').trim().toUpperCase().replace(/_/g, '-');
+  if (raw === 'EMERGENCY' || raw.indexOf('EMERGENCY') !== -1) return 'EMERGENCY';
+  if (raw === 'URGENT' || (raw.indexOf('URGENT') !== -1 && raw.indexOf('NON') === -1)) return 'URGENT';
+  return 'NON-URGENT';
+}
+
 function presentPostRegistrationOutcome(urgency, redirectUrl) {
   const nlp = window.MedConnectRegisterNlp;
   if (nlp && typeof nlp.hideOverlay === 'function') nlp.hideOverlay();
   setLoading(false);
   wireOutcomeActions(redirectUrl);
 
-  const u = String(urgency || 'NON-URGENT').toUpperCase();
+  const u = normalizeTriageUrgency(urgency);
+  try {
+    sessionStorage.setItem('medconnect_post_reg_urgency', u);
+  } catch (_) { /* ignore */ }
+
   if (u === 'EMERGENCY') {
     showOutcomeModal('reg-outcome-emergency');
     return;
@@ -899,7 +910,7 @@ step2Form.addEventListener('submit', async e => {
         keepOverlay: true,
       });
       if (analysis && analysis.ok) {
-        urgency = analysis.urgency || 'NON-URGENT';
+        urgency = normalizeTriageUrgency(analysis.urgency || 'NON-URGENT');
         nlpResult = analysis.result || nlp.getLastResult?.() || null;
       } else if (analysis && analysis.error === 'aborted') {
         if (nlp.hideOverlay) nlp.hideOverlay();
@@ -920,6 +931,7 @@ step2Form.addEventListener('submit', async e => {
     }
   }
 
+  urgency = normalizeTriageUrgency(urgency);
   persistPostRegIntent(urgency, nlpResult);
 
   // Build path to register API using APP_BASE for subfolder compatibility
@@ -971,7 +983,16 @@ step2Form.addEventListener('submit', async e => {
     }
 
     if (data.success) {
-      presentPostRegistrationOutcome(urgency, data.redirect);
+      // Prefer server triage when present; always show Non-Urgent / Urgent / Emergency modal
+      let finalUrgency = urgency;
+      if (data.emergency === true) {
+        finalUrgency = 'EMERGENCY';
+      } else if (data.urgency) {
+        finalUrgency = data.urgency;
+      }
+      finalUrgency = normalizeTriageUrgency(finalUrgency);
+      persistPostRegIntent(finalUrgency, nlpResult);
+      presentPostRegistrationOutcome(finalUrgency, data.redirect);
     } else {
       // Show the exact backend message (e.g. "Email already exists", "OCR not verified")
       if (nlp && nlp.hideOverlay) nlp.hideOverlay();
