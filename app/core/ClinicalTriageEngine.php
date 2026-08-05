@@ -110,12 +110,31 @@ final class ClinicalTriageEngine
         )));
 
         $redFlags = NegationDetector::filterRedFlags(self::mergeRedFlags($original, $english), $original, $english);
+        $redFlags = ClinicalContextReasoningEngine::filterContextGatedRedFlags($redFlags, $original, $english, $kbSymptoms);
         [$severityScore, $factors] = self::scoreFromKb($kbSymptoms, $features, $redFlags);
         [$severityScore, $factors] = self::applySymptomCombinations($kbSymptoms, $features, $severityScore, $factors, $redFlags);
-        $display = self::classify($severityScore, $redFlags, $kbSymptoms);
+        $preliminaryDisplay = self::classify($severityScore, $redFlags, $kbSymptoms, true);
+
+        $context = ClinicalContextReasoningEngine::apply(
+            $original,
+            $english,
+            $kbSymptoms,
+            $features,
+            $redFlags,
+            $severityScore,
+            $preliminaryDisplay
+        );
+        $display = (string) ($context['display'] ?? $preliminaryDisplay);
+        $severityScore = (int) ($context['score'] ?? $severityScore);
+        $factors = array_merge($factors, is_array($context['factors'] ?? null) ? $context['factors'] : []);
         [$triageLevel, $classification] = self::displayToLevel($display);
 
         $confidence = self::computeConfidence($confidenceScore, $kbSymptoms, $features, $redFlags, $validatedTerms);
+        if (!empty($context['needs_provider_review'])) {
+            $confidence = min($confidence, self::CONFIDENCE_THRESHOLD - 1);
+        } elseif (!empty($context['sufficient_context']) && ($context['rule_id'] ?? '') !== 'CTX_NONE') {
+            $confidence = min(100, max($confidence, self::CONFIDENCE_THRESHOLD));
+        }
         $conf = self::confidenceLevel($confidence);
 
         $durationLabel = (string) (($features['duration']['label'] ?? '') ?: '');
@@ -124,15 +143,20 @@ final class ClinicalTriageEngine
             $features['risk_factors'] ?? []
         )));
 
-        $reason = self::buildReason(
-            $display,
-            $detectedNames,
-            $durationLabel,
-            $redFlags,
-            $riskLabels,
-            $severityScore,
-            (bool) ($features['vague_complaint'] ?? false)
-        );
+        $reason = trim((string) ($context['reason'] ?? ''));
+        if ($reason === '') {
+            $reason = self::buildReason(
+                $display,
+                $detectedNames,
+                $durationLabel,
+                $redFlags,
+                $riskLabels,
+                $severityScore,
+                (bool) ($features['vague_complaint'] ?? false)
+            );
+        } elseif (($context['evaluated_context'] ?? []) !== []) {
+            $reason .= ' Evaluated: ' . implode('; ', array_slice((array) $context['evaluated_context'], 0, 6)) . '.';
+        }
 
         $recommendation = self::RECOMMENDATION_MAP[$display];
         foreach ($kbSymptoms as $sym) {
@@ -145,11 +169,17 @@ final class ClinicalTriageEngine
             $recommendation = 'Refer for immediate emergency care now.';
         }
 
-        $needsReview = $confidence < self::CONFIDENCE_THRESHOLD;
+        $needsReview = $confidence < self::CONFIDENCE_THRESHOLD
+            || !empty($context['needs_provider_review']);
         if ($needsReview) {
             $recommendation = self::REVIEW_RECOMMENDATION;
             if ($redFlags === [] && $display !== 'EMERGENCY') {
-                $reason = "Confidence is {$confidence}% (below " . self::CONFIDENCE_THRESHOLD . '%). ' . $reason;
+                if (!empty($context['needs_provider_review'])) {
+                    $reviewReason = (string) ($context['reason'] ?? 'Insufficient clinical information to determine urgency safely.');
+                    $reason = $reviewReason;
+                } else {
+                    $reason = "Confidence is {$confidence}% (below " . self::CONFIDENCE_THRESHOLD . '%). ' . $reason;
+                }
             }
         }
 
@@ -215,8 +245,14 @@ final class ClinicalTriageEngine
             'detected_language'      => $detectedLanguage,
             'normalized_text'        => $original,
             'negated_concepts'       => $negatedConcepts,
+            'clinical_context'       => [
+                'rule_id'            => (string) ($context['rule_id'] ?? ''),
+                'rule_name'          => (string) ($context['rule_name'] ?? ''),
+                'evaluated_context'  => (array) ($context['evaluated_context'] ?? []),
+                'sufficient_context' => (bool) ($context['sufficient_context'] ?? true),
+            ],
             'source'                 => 'clinical_triage_engine_v3',
-            'engine_version'         => '3.1',
+            'engine_version'         => '3.2',
         ];
 
         // Internal self-validation + consistency / conflict resolution
@@ -667,14 +703,20 @@ final class ClinicalTriageEngine
      * @param list<array<string, mixed>> $redFlags
      * @param list<array<string, mixed>> $kbSymptoms
      */
-    private static function classify(int $score, array $redFlags, array $kbSymptoms = []): string
-    {
+    private static function classify(
+        int $score,
+        array $redFlags,
+        array $kbSymptoms = [],
+        bool $deferDangerSign = false
+    ): string {
         if ($redFlags !== []) {
             return 'EMERGENCY';
         }
-        foreach ($kbSymptoms as $sym) {
-            if (!empty($sym['danger_sign']) || (int) ($sym['emergency_weight'] ?? 0) >= 8) {
-                return 'EMERGENCY';
+        if (!$deferDangerSign) {
+            foreach ($kbSymptoms as $sym) {
+                if (!empty($sym['danger_sign']) || (int) ($sym['emergency_weight'] ?? 0) >= 8) {
+                    return 'EMERGENCY';
+                }
             }
         }
         if ($score >= 12) {

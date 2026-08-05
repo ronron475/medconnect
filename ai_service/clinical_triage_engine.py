@@ -8,7 +8,10 @@ Never diagnoses disease and never prescribes medication.
 
 from __future__ import annotations
 
+from pathlib import Path
 from typing import Any
+
+_BASE = Path(__file__).resolve().parent.parent
 
 from clinical_feature_extractors import extract_all_features
 from negation_detector import detect_negated_concepts, filter_red_flags, filter_symptoms
@@ -216,17 +219,94 @@ def _classify(
     score: int,
     red_flags: list[dict[str, Any]],
     kb_symptoms: list[dict[str, Any]] | None = None,
+    defer_danger_sign: bool = False,
 ) -> str:
     if red_flags:
         return "EMERGENCY"
-    for sym in kb_symptoms or []:
-        if sym.get("danger_sign") or int(sym.get("emergency_weight") or 0) >= 8:
-            return "EMERGENCY"
+    if not defer_danger_sign:
+        for sym in kb_symptoms or []:
+            if sym.get("danger_sign") or int(sym.get("emergency_weight") or 0) >= 8:
+                return "EMERGENCY"
     if score >= 12:
         return "EMERGENCY"
     if score >= 6:
         return "URGENT"
     return "NON-URGENT"
+
+
+def _apply_symptom_combinations(
+    kb_symptoms: list[dict[str, Any]],
+    features: dict[str, Any],
+    score: int,
+    factors: dict[str, Any],
+    red_flags: list[dict[str, Any]],
+) -> tuple[int, dict[str, Any]]:
+    ids: list[str] = []
+    for sym in kb_symptoms:
+        ids.append(str(sym.get("id") or "").lower())
+        ids.append(str(sym.get("symptom_name") or "").lower().replace(" ", "_"))
+    for risk in features.get("risk_factors") or []:
+        label = (risk.get("label") or risk.get("id") or "") if isinstance(risk, dict) else str(risk)
+        if label:
+            ids.append(str(label).lower().replace(" ", "_"))
+    bucket = (features.get("duration") or {}).get("bucket") or ""
+    if bucket:
+        ids.append(bucket)
+        if bucket == "5_plus_days":
+            ids.append("duration_5_plus")
+    ids = list(dict.fromkeys([i for i in ids if i]))
+
+    path = _BASE / "data" / "nlp" / "symptom_combinations.csv"
+    if not path.is_file() or not ids:
+        return score, factors
+
+    import csv
+
+    best_pts = 0
+    best_class = ""
+    emergency_ids = {
+        "chest_pain", "difficulty_breathing", "stroke_symptoms", "vomiting_blood", "coughing_blood",
+        "severe_bleeding", "loss_of_consciousness", "seizure", "poisoning", "pregnancy_bleeding",
+        "head_injury", "major_trauma", "angina", "cardiac_arrest_symptoms", "anaphylaxis",
+    }
+    seen_pair: set[str] = set()
+    try:
+        with path.open(encoding="utf-8", newline="") as handle:
+            reader = csv.DictReader(handle)
+            for row in reader:
+                a = (row.get("symptom_a") or "").strip().lower()
+                b = (row.get("symptom_b") or "").strip().lower()
+                if not a or not b:
+                    continue
+                pair_key = f"{a}|{b}"
+                if pair_key in seen_pair:
+                    continue
+                if a not in ids or b not in ids:
+                    continue
+                seen_pair.add(pair_key)
+                pts = int(row.get("severity_points") or 0)
+                cls = (row.get("classification") or "").upper()
+                if cls == "EMERGENCY" and a not in emergency_ids and b not in emergency_ids and not red_flags:
+                    cls = "URGENT"
+                    pts = min(pts, 8)
+                priority = {"EMERGENCY": 3, "URGENT": 2, "NON-URGENT": 1}.get(cls, 0)
+                best_priority = {"EMERGENCY": 3, "URGENT": 2, "NON-URGENT": 1}.get(best_class, 0)
+                if priority > best_priority or (priority == best_priority and pts > best_pts):
+                    best_pts = pts
+                    best_class = cls
+                if cls == "EMERGENCY" and not red_flags:
+                    factors["symptom_combination"] = f"{a} + {b}"
+    except OSError:
+        return score, factors
+
+    if best_pts > 0 and best_class:
+        score = min(999, max(score, best_pts))
+        contributions = list(factors.get("score_contributions") or [])
+        contributions.append({"factor": "Symptom combination", "points": best_pts, "type": "combination"})
+        factors["score_contributions"] = contributions
+        factors["combination_classification"] = best_class
+
+    return score, factors
 
 
 def _display_to_level(display: str) -> tuple[str, str]:
@@ -385,26 +465,48 @@ def assess(
     detected_names = [s["symptom_name"] for s in kb_symptoms if s.get("symptom_name")]
 
     red_flags = filter_red_flags(_merge_csv_red_flags(original, english), original, english)
+    from clinical_context_reasoning import filter_context_gated_red_flags
+
+    red_flags = filter_context_gated_red_flags(red_flags, original, english, kb_symptoms)
     severity_score, factors = _score_from_kb(kb_symptoms, features, red_flags)
-    display = _classify(severity_score, red_flags, kb_symptoms)
+    severity_score, factors = _apply_symptom_combinations(kb_symptoms, features, severity_score, factors, red_flags)
+    preliminary_display = _classify(severity_score, red_flags, kb_symptoms, defer_danger_sign=True)
+
+    from clinical_context_reasoning import apply_context_reasoning
+
+    context = apply_context_reasoning(
+        original, english, kb_symptoms, features, red_flags, severity_score, preliminary_display
+    )
+    display = str(context.get("display") or preliminary_display)
+    severity_score = int(context.get("score") or severity_score)
+    factors = {**factors, **(context.get("factors") or {})}
     triage_level, classification = _display_to_level(display)
 
     confidence = _compute_confidence(
         confidence_score, kb_symptoms, features, red_flags, validated_terms
     )
+    if context.get("needs_provider_review"):
+        confidence = min(confidence, CONFIDENCE_THRESHOLD - 1)
+    elif context.get("sufficient_context") and context.get("rule_id") != "CTX_NONE":
+        confidence = min(100, max(confidence, CONFIDENCE_THRESHOLD))
     conf = _confidence_level(confidence)
 
     duration_label = (features.get("duration") or {}).get("label") or ""
     risk_labels = [r.get("label") for r in (features.get("risk_factors") or []) if r.get("label")]
-    reason = _build_reason(
-        display,
-        detected_names,
-        duration_label,
-        red_flags,
-        risk_labels,
-        severity_score,
-        bool(features.get("vague_complaint")),
-    )
+    reason = str(context.get("reason") or "").strip()
+    if not reason:
+        reason = _build_reason(
+            display,
+            detected_names,
+            duration_label,
+            red_flags,
+            risk_labels,
+            severity_score,
+            bool(features.get("vague_complaint")),
+        )
+    elif context.get("evaluated_context"):
+        evaluated = list(context.get("evaluated_context") or [])[:6]
+        reason += " Evaluated: " + "; ".join(evaluated) + "."
 
     recommendation = RECOMMENDATION_MAP[display]
     # Prefer KB action from highest-acuity matched symptom when emergency/danger
@@ -415,15 +517,17 @@ def assess(
     if red_flags:
         recommendation = "Refer for immediate emergency care now."
 
-    needs_review = confidence < CONFIDENCE_THRESHOLD
+    needs_review = confidence < CONFIDENCE_THRESHOLD or bool(context.get("needs_provider_review"))
     if needs_review:
         recommendation = REVIEW_RECOMMENDATION
-        # Keep classification for safety if red flags exist; otherwise soft-hold
         if not red_flags and display != "EMERGENCY":
-            reason = (
-                f"Confidence is {confidence}% (below {CONFIDENCE_THRESHOLD}%). "
-                + reason
-            )
+            if context.get("needs_provider_review"):
+                reason = str(context.get("reason") or "Insufficient clinical information to determine urgency safely.")
+            else:
+                reason = (
+                    f"Confidence is {confidence}% (below {CONFIDENCE_THRESHOLD}%). "
+                    + reason
+                )
 
     emergency_flag_names = list(
         dict.fromkeys(f.get("flag_name") or f.get("english_pattern", "") for f in red_flags)
@@ -482,6 +586,12 @@ def assess(
         "red_flags": emergency_flag_names,
         "red_flags_triggered": red_flags,
         "assessment_factors": factors,
+        "clinical_context": {
+            "rule_id": context.get("rule_id") or "",
+            "rule_name": context.get("rule_name") or "",
+            "evaluated_context": context.get("evaluated_context") or [],
+            "sufficient_context": bool(context.get("sufficient_context")),
+        },
         "clinical_reasoning": clinical_reasoning,
         "reason": reason,
         "recommendation": recommendation,
@@ -491,7 +601,7 @@ def assess(
         "normalized_text": original,
         "negated_concepts": features.get("negated_concepts") or [],
         "source": "clinical_triage_engine_v3",
-        "engine_version": "3.1",
+        "engine_version": "3.2",
     }
 
     try:

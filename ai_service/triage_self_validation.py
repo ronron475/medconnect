@@ -18,6 +18,7 @@ RULE_PRIORITY = [
     "trauma",
     "high_risk_patient",
     "symptom_combination",
+    "clinical_context",
     "duration",
     "temperature",
     "pain_scale",
@@ -32,10 +33,12 @@ _EMERGENCY_RULES = {
 }
 
 _LIFE = re.compile(
-    r"\b(chest pain|difficulty breathing|cannot breathe|shortness of breath|unconscious|seizure|stroke|"
+    r"\b((chest pain|masakit dughan|masakit dibdib).{0,80}(breath|breathing|sweat|dizzy|radiat|collapse|severe|grabe|8/10|9/10|10/10))\b|"
+    r"\b(difficulty breathing|cannot breathe|shortness of breath|unconscious|seizure|stroke|"
     r"vomiting blood|coughing blood|severe bleeding|anaphylaxis|poisoning|overdose|head injury|"
-    r"gunshot|stab wound|motor vehicle|car crash|masakit dughan|budlay ginhawa|"
-    r"indi makaginhawa|may dugo sa suka|naguyam|nadulaan malay|hirap huminga|masakit ang dibdib)\b",
+    r"gunshot|stab wound|motor vehicle|car crash|budlay ginhawa|"
+    r"indi makaginhawa|may dugo sa suka|naguyam|nadulaan malay|hirap huminga|"
+    r"swollen tongue|throat swelling|lip swelling|cannot swallow|airway)\b",
     re.I,
 )
 _MILD = re.compile(
@@ -78,8 +81,14 @@ def select_winning_rule(
         return "airway"
     if re.search(r"\b(difficulty breathing|shortness of breath|budlay ginhawa|hirap huminga)\b", hay, re.I):
         return "breathing"
-    if re.search(r"\b(chest pain|masakit dughan|masakit dibdib|severe bleeding|shock)\b", hay, re.I):
+    if re.search(
+        r"\b((chest pain|masakit dughan|masakit dibdib).{0,80}(breath|sweat|dizzy|radiat|collapse|severe|grabe))\b",
+        hay,
+        re.I,
+    ):
         return "severe_bleeding" if re.search(r"\b(bleed|dugo|hemorrh)", hay, re.I) else "circulation"
+    if re.search(r"\b(severe bleeding|shock|may dugo)\b", hay, re.I):
+        return "severe_bleeding"
     if re.search(r"\b(stroke|seizure|unconscious|paralysis|speech|naguyam|nadulaan malay)\b", hay, re.I):
         return "neurological"
     if re.search(r"\b(pregnant|buntis).{0,40}(bleed|dugo)", hay, re.I):
@@ -99,6 +108,8 @@ def select_winning_rule(
         return "high_risk_patient"
     if factors.get("symptom_combination") or factors.get("combination_classification"):
         return "symptom_combination"
+    if factors.get("clinical_context_rule") and factors.get("clinical_context_rule") != "CTX_NONE":
+        return "clinical_context"
     if duration and re.search(r"\b(5|6|7|8|9|10|week|semana|linggo)\b", duration.lower()):
         return "duration"
     if temp and re.search(r"high fever|39|40", temp.lower()):
@@ -118,6 +129,8 @@ def classification_from_winning_rule(rule: str, current: str, red_flags: list[st
         return "EMERGENCY"
     if rule == "administrative_request":
         return "NON-URGENT"
+    if rule == "clinical_context":
+        return current
     if rule in {"duration", "temperature", "pain_scale", "high_risk_patient", "symptom_combination"}:
         return "EMERGENCY" if current == "EMERGENCY" else "URGENT"
     if _mild_only(hay) and not red_flags:
