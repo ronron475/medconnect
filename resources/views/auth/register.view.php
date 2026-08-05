@@ -22,7 +22,7 @@
   <link rel="shortcut icon" type="image/png" href="<?= $b ?>/assets/img/medcon_logo.png" />
   <link rel="apple-touch-icon" href="<?= $b ?>/assets/img/medcon_logo.png" />
   <link rel="stylesheet" href="<?= $b ?>/assets/css/style.css?v=20260702a" />
-  <link rel="stylesheet" href="<?= $b ?>/assets/css/register.css?v=20260708nlp2" />
+  <link rel="stylesheet" href="<?= $b ?>/assets/css/register.css?v=20260805triage" />
   <link rel="stylesheet" href="<?= $b ?>/assets/css/responsive.css" />
   <?php require_once dirname(__DIR__) . '/components/loader.php'; mc_loader_assets(); ?>
 </head>
@@ -778,7 +778,7 @@
 <script src="<?= $b ?>/assets/js/phone-validation.js?v=<?= (int) @filemtime(ASSETS_PATH . '/js/phone-validation.js') ?>"></script>
 <script src="<?= $b ?>/assets/js/ocr-national-id.js?v=20260729ocr4"></script>
 <script src="<?= $b ?>/assets/js/register-nlp-analysis.js?v=20260708nlp2"></script>
-<script src="<?= $b ?>/assets/js/register.js?v=20260708nlp2"></script>
+<script src="<?= $b ?>/assets/js/register.js?v=20260805triage"></script>
 
 <!-- Silent NLP loading overlay (patient-facing; no technical AI output) -->
 <?php
@@ -791,13 +791,14 @@ mc_render_loader_panel([
 ]);
 ?>
 
-<!-- Post-registration: Non-urgent success -->
+<!-- Post-registration: Non-urgent -->
 <div id="reg-outcome-success" class="reg-outcome-modal" hidden aria-hidden="true" role="dialog" aria-modal="true" aria-labelledby="reg-outcome-success-title">
   <div class="reg-outcome-modal__card reg-outcome-modal__card--success">
     <div class="reg-outcome-modal__icon" aria-hidden="true">✓</div>
+    <span class="reg-outcome-badge reg-outcome-badge--non-urgent" id="reg-outcome-success-badge">NON-URGENT</span>
     <h2 id="reg-outcome-success-title" class="reg-outcome-modal__title">Registration Successful</h2>
     <p class="reg-outcome-modal__msg">Your account has been created successfully.</p>
-    <p class="reg-outcome-modal__msg">You may now schedule a consultation at your preferred available date and time.</p>
+    <p class="reg-outcome-modal__msg">Triage result: <strong>Non-Urgent</strong>. You may schedule a consultation at your preferred available date and time.</p>
     <div class="reg-outcome-modal__actions">
       <button type="button" class="reg-outcome-btn reg-outcome-btn--primary" id="reg-outcome-success-go">Continue to Sign In</button>
     </div>
@@ -808,9 +809,10 @@ mc_render_loader_panel([
 <div id="reg-outcome-urgent" class="reg-outcome-modal" hidden aria-hidden="true" role="dialog" aria-modal="true" aria-labelledby="reg-outcome-urgent-title">
   <div class="reg-outcome-modal__card reg-outcome-modal__card--urgent">
     <div class="reg-outcome-modal__icon reg-outcome-modal__icon--urgent" aria-hidden="true">!</div>
+    <span class="reg-outcome-badge reg-outcome-badge--urgent" id="reg-outcome-urgent-badge">URGENT</span>
     <h2 id="reg-outcome-urgent-title" class="reg-outcome-modal__title">Urgent Medical Attention Recommended</h2>
     <p class="reg-outcome-modal__msg">Based on the symptoms you provided, your condition may require prompt medical attention.</p>
-    <p class="reg-outcome-modal__msg">The earliest available consultation time will be automatically selected for you. After signing in, confirm the suggested slot or choose another available time.</p>
+    <p class="reg-outcome-modal__msg">Triage result: <strong>Urgent</strong>. The earliest available consultation time will be suggested after you sign in.</p>
     <div class="reg-outcome-modal__actions">
       <button type="button" class="reg-outcome-btn reg-outcome-btn--primary" id="reg-outcome-urgent-view">View Earliest Appointment</button>
       <button type="button" class="reg-outcome-btn reg-outcome-btn--ghost" id="reg-outcome-urgent-continue">Continue</button>
@@ -822,6 +824,7 @@ mc_render_loader_panel([
 <div id="reg-outcome-emergency" class="reg-outcome-modal reg-outcome-modal--blocking" hidden aria-hidden="true" role="dialog" aria-modal="true" aria-labelledby="reg-outcome-emergency-title">
   <div class="reg-outcome-modal__card reg-outcome-modal__card--emergency">
     <div class="reg-outcome-modal__icon reg-outcome-modal__icon--emergency" aria-hidden="true">⚠</div>
+    <span class="reg-outcome-badge reg-outcome-badge--emergency" id="reg-outcome-emergency-badge">EMERGENCY</span>
     <h2 id="reg-outcome-emergency-title" class="reg-outcome-modal__title">Emergency Symptoms Detected</h2>
     <p class="reg-outcome-modal__msg">Based on the symptoms you entered, your condition may be a medical emergency.</p>
     <p class="reg-outcome-modal__msg">Please seek immediate medical attention at the nearest hospital or emergency department.</p>
