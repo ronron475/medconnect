@@ -442,6 +442,11 @@ final class ClinicalTriageEngine
         $header = fgetcsv($handle);
         $bestPts = 0;
         $bestClass = '';
+        $emergencyIds = [
+            'chest_pain', 'difficulty_breathing', 'stroke_symptoms', 'vomiting_blood', 'coughing_blood',
+            'severe_bleeding', 'loss_of_consciousness', 'seizure', 'poisoning', 'pregnancy_bleeding',
+            'head_injury', 'major_trauma', 'angina', 'cardiac_arrest_symptoms', 'anaphylaxis',
+        ];
         $seenPair = [];
         while (($row = fgetcsv($handle)) !== false) {
             $data = array_combine(
@@ -463,19 +468,37 @@ final class ClinicalTriageEngine
             $seenPair[$pairKey] = true;
             $pts = (int) ($data['severity_points'] ?? 0);
             $cls = strtoupper((string) ($data['classification'] ?? ''));
-            if ($pts > $bestPts) {
+            if ($cls === 'EMERGENCY'
+                && !in_array($a, $emergencyIds, true)
+                && !in_array($b, $emergencyIds, true)
+                && $redFlags === []) {
+                $cls = 'URGENT';
+                $pts = min($pts, 8);
+            }
+            $priority = match ($cls) {
+                'EMERGENCY' => 3,
+                'URGENT' => 2,
+                'NON-URGENT' => 1,
+                default => 0,
+            };
+            $bestPriority = match ($bestClass) {
+                'EMERGENCY' => 3,
+                'URGENT' => 2,
+                'NON-URGENT' => 1,
+                default => 0,
+            };
+            if ($priority > $bestPriority || ($priority === $bestPriority && $pts > $bestPts)) {
                 $bestPts = $pts;
                 $bestClass = $cls;
             }
             if ($cls === 'EMERGENCY' && $redFlags === []) {
-                // Combination itself acts as clinical escalation signal
                 $factors['symptom_combination'] = $a . ' + ' . $b;
             }
         }
         fclose($handle);
 
-        if ($bestPts > $score) {
-            $score = $bestPts;
+        if ($bestPts > 0 && $bestClass !== '') {
+            $score = min(999, max($score, $bestPts));
             $factors['score_contributions'][] = [
                 'factor' => 'Symptom combination',
                 'points' => $bestPts,

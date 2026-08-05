@@ -4,3 +4,23 @@ CR002,score_emergency,Severity score {score} meets emergency triage criteria.,ac
 CR003,score_urgent,Severity score {score} with symptoms ({symptoms}) warrants prompt clinician review.,active
 CR004,score_non_urgent,Mild symptoms ({symptoms}) with no emergency warning signs. Score {score}.,active
 CR005,low_confidence,Insufficient information for confident triage. Needs healthcare provider review.,active
+CR006,symptom_combination,Symptom combination ({combo}) indicates {classification} priority based on clinical interaction.,active
+CR007,duration_escalation,Symptom duration ({duration}) increases urgency for {symptoms}.,active
+CR008,temperature_escalation,Temperature pattern ({temperature}) with {symptoms} increases triage priority.,active
+CR009,pain_escalation,Pain severity ({pain_scale}) with {symptoms} warrants prompt evaluation.,active
+CR010,risk_factor_escalation,Risk factor(s) ({risk_factors}) increase urgency when combined with {symptoms}.,active
+CR011,pediatric_escalation,Pediatric presentation ({symptoms}) requires heightened urgency.,active
+CR012,pregnancy_escalation,Pregnancy-related symptom ({symptoms}) requires obstetric evaluation.,active
+CR013,geriatric_escalation,Geriatric patient with {symptoms} — lower physiologic reserve increases urgency.,active
+CR014,mental_health_crisis,Mental health crisis indicators ({symptoms}) require immediate safety assessment.,active
+CR015,trauma_escalation,Trauma mechanism ({symptoms}) requires emergency evaluation.,active
+CR016,poisoning,Suspected poisoning/toxic exposure requires immediate emergency care.,active
+CR017,burn_escalation,Burn injury pattern ({symptoms}) requires urgent/emergency burn assessment.,active
+CR018,negation_applied,Denied symptoms removed from assessment: {negated}.,active
+CR019,administrative,Administrative request only — no acute symptoms detected.,active
+CR020,mild_only,Mild isolated symptoms ({symptoms}) without red flags — non-urgent.,active
+CR021,airway_priority,Airway compromise suspected — highest priority emergency.,active
+CR022,breathing_priority,Breathing difficulty — emergency respiratory priority.,active
+CR023,circulation_priority,Circulation concern (chest pain/bleeding) — emergency priority.,active
+CR024,neurological_priority,Neurological deficit — emergency stroke/seizure pathway.,active
+CR025,consistency_correction,Classification adjusted for clinical consistency via {winning_rule}.,active
