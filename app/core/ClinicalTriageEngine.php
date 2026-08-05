@@ -189,12 +189,36 @@ final class ClinicalTriageEngine
         )));
         $icons = ['NON-URGENT' => '🟢', 'URGENT' => '🟡', 'EMERGENCY' => '🔴'];
 
+        $structured = self::buildStructuredOutput(
+            $rawInput,
+            $original,
+            $english,
+            $detectedLanguage,
+            $detectedNames,
+            $bodyParts,
+            $features,
+            $riskLabels,
+            $redFlags,
+            $factors,
+            $context,
+            $severityScore,
+            $display,
+            $confidence,
+            $reason
+        );
+
         $recommendationPayload = [
             'chief_complaint'      => $rawInput,
+            'normalized_complaint' => $original,
+            'detected_language'    => $detectedLanguage,
             'detected_symptoms'    => $detectedNames,
+            'associated_symptoms'  => $structured['associated_symptoms'],
+            'detected_body_parts'  => $bodyParts,
             'duration'             => $durationLabel !== '' ? $durationLabel : null,
             'pain_scale'           => ($features['pain_scale']['label'] ?? '') ?: null,
             'temperature'          => ($features['temperature']['label'] ?? '') ?: null,
+            'pregnancy_status'     => $structured['pregnancy_status'],
+            'chronic_diseases'     => $structured['chronic_diseases'],
             'red_flags'            => $emergencyFlagNames,
             'risk_factors'         => $riskLabels,
             'age_group'            => (string) ($features['age_group'] ?? 'Unknown'),
@@ -202,6 +226,9 @@ final class ClinicalTriageEngine
             'classification'       => $display,
             'priority'             => self::PRIORITY_MAP[$display],
             'confidence'           => $confidence,
+            'clinical_reasoning'   => $reason,
+            'evidence_used'        => $structured['evidence_used'],
+            'matched_rules'        => $structured['matched_rules'],
             'reason'               => $reason,
             'recommendation'       => $recommendation,
             'needs_provider_review'=> $needsReview,
@@ -251,6 +278,15 @@ final class ClinicalTriageEngine
                 'evaluated_context'  => (array) ($context['evaluated_context'] ?? []),
                 'sufficient_context' => (bool) ($context['sufficient_context'] ?? true),
             ],
+            'structured_output'      => $structured,
+            'associated_symptoms'    => $structured['associated_symptoms'],
+            'evidence_used'          => $structured['evidence_used'],
+            'matched_rules'          => $structured['matched_rules'],
+            'pregnancy_status'       => $structured['pregnancy_status'],
+            'chronic_diseases'       => $structured['chronic_diseases'],
+            'administrative_request' => $structured['administrative_request'],
+            'normalized_complaint'   => $original,
+            'english_translation'    => $english,
             'source'                 => 'clinical_triage_engine_v3',
             'engine_version'         => '3.2',
         ];
@@ -846,5 +882,108 @@ final class ClinicalTriageEngine
         $dur = $durationLabel !== '' ? ' Duration is ' . strtolower($durationLabel) . '.' : '';
 
         return 'The complaint contains ' . strtolower($sym) . ' with no emergency warning signs' . ($dur !== '' ? ',' : '.') . $dur . " Severity score is {$score} (non-urgent range).";
+    }
+
+    /**
+     * Build canonical structured CDS output fields for APIs and QA.
+     *
+     * @param list<string> $detectedNames
+     * @param list<string> $bodyParts
+     * @param array<string, mixed> $features
+     * @param list<string> $riskLabels
+     * @param list<array<string, mixed>> $redFlags
+     * @param array<string, mixed> $factors
+     * @param array<string, mixed> $context
+     * @return array<string, mixed>
+     */
+    private static function buildStructuredOutput(
+        string $rawInput,
+        string $normalized,
+        string $english,
+        string $language,
+        array $detectedNames,
+        array $bodyParts,
+        array $features,
+        array $riskLabels,
+        array $redFlags,
+        array $factors,
+        array $context,
+        int $severityScore,
+        string $display,
+        int $confidence,
+        string $reason
+    ): array {
+        $primary = (string) ($factors['primary_symptom'] ?? ($detectedNames[0] ?? ''));
+        $associated = array_values(array_filter(
+            $detectedNames,
+            static fn (string $s): bool => $primary === '' || strcasecmp($s, $primary) !== 0
+        ));
+
+        $chronicIds = ['diabetes', 'hypertension', 'heart_disease', 'kidney_disease', 'cancer', 'asthma'];
+        $chronic = [];
+        $pregnancy = 'Not reported';
+        foreach ($features['risk_factors'] ?? [] as $risk) {
+            if (!is_array($risk)) {
+                continue;
+            }
+            $id = (string) ($risk['id'] ?? '');
+            $label = (string) ($risk['label'] ?? '');
+            if ($id === 'pregnant') {
+                $pregnancy = 'Pregnant';
+            }
+            if (in_array($id, $chronicIds, true) && $label !== '') {
+                $chronic[] = $label;
+            }
+        }
+
+        $contributions = is_array($factors['score_contributions'] ?? null) ? $factors['score_contributions'] : [];
+        $evidence = [];
+        foreach (array_slice($contributions, 0, 8) as $c) {
+            if (!is_array($c)) {
+                continue;
+            }
+            $evidence[] = ((string) ($c['factor'] ?? '')) . ' (' . ((int) ($c['points'] ?? 0)) . ' pts)';
+        }
+
+        $matchedRules = array_values(array_filter([
+            (string) ($context['rule_id'] ?? ''),
+            !empty($factors['symptom_combination']) ? 'combination:' . $factors['symptom_combination'] : '',
+            !empty($factors['combination_classification']) ? 'combo_class:' . $factors['combination_classification'] : '',
+        ]));
+
+        $hay = strtolower($rawInput . ' ' . $normalized);
+        $admin = (bool) preg_match(
+            '/\b(follow[- ]?up|check[- ]?up|medicine refill|refill|maintenance medicine|medical certificate|lab result)\b/u',
+            $hay
+        );
+
+        return [
+            'chief_complaint'        => $rawInput,
+            'normalized_complaint'   => $normalized,
+            'detected_language'      => $language,
+            'english_translation'    => $english,
+            'primary_symptom'        => $primary,
+            'detected_symptoms'      => $detectedNames,
+            'associated_symptoms'    => $associated,
+            'body_parts'             => $bodyParts,
+            'pain_scale'             => ($features['pain_scale']['label'] ?? '') ?: null,
+            'duration'               => ($features['duration']['label'] ?? '') ?: null,
+            'temperature'            => ($features['temperature']['label'] ?? '') ?: null,
+            'risk_factors'           => $riskLabels,
+            'pregnancy_status'       => $pregnancy,
+            'chronic_diseases'       => $chronic,
+            'emergency_red_flags'    => array_values(array_unique(array_map(
+                static fn (array $f): string => (string) (($f['flag_name'] ?? '') ?: ($f['english_pattern'] ?? '')),
+                $redFlags
+            ))),
+            'severity_score'         => $severityScore,
+            'classification'         => $display,
+            'confidence_score'       => $confidence,
+            'clinical_reasoning'     => $reason,
+            'evidence_used'          => $evidence,
+            'matched_rules'          => $matchedRules,
+            'clinical_context_rule'  => (string) ($context['rule_id'] ?? ''),
+            'administrative_request' => $admin,
+        ];
     }
 }

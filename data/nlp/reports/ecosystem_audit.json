@@ -1,0 +1,1080 @@
+{
+  "generated_at": "2026-08-05T14:35:21.864804+00:00",
+  "mission": "Audit + optimize NLP ecosystem preserving PHP rule-based architecture",
+  "summary": {
+    "total_data_files": 131,
+    "total_csv_json_rows_estimate": 903310,
+    "wiring_status_counts": {
+      "reference": 86,
+      "loaded": 41,
+      "orphaned": 4
+    },
+    "json_symptoms": 305,
+    "json_red_flags": 75,
+    "context_rules": 6,
+    "combination_rows": 7388,
+    "validation_sets": 10,
+    "php_engines_present": 10,
+    "python_mirrors_present": 5
+  },
+  "knowledge_base": {
+    "json_symptoms": 305,
+    "json_red_flags": 75,
+    "context_rules": 6,
+    "context_primary_symptoms": 12,
+    "duplicate_symptom_ids": [],
+    "missing_hiligaynon_count": 0,
+    "missing_filipino_count": 0,
+    "missing_hiligaynon_sample": [],
+    "missing_filipino_sample": [],
+    "high_weight_symptoms_without_context_rule": [
+      "persistent_vomiting",
+      "difficulty_breathing",
+      "vomiting_blood",
+      "coughing_blood",
+      "severe_bleeding",
+      "loss_of_consciousness",
+      "seizure",
+      "stroke_symptoms",
+      "severe_allergic_reaction",
+      "confusion",
+      "severe_dehydration",
+      "poisoning",
+      "burns",
+      "suicidal_thoughts",
+      "asthma_exacerbation",
+      "stridor",
+      "pneumonia_symptoms",
+      "hemoptysis",
+      "throat_swelling",
+      "aspiration",
+      "croup",
+      "severe_epistaxis",
+      "cyanosis",
+      "syncope",
+      "hypotension",
+      "hypertension_severe",
+      "leg_swelling_unilateral",
+      "arrhythmia",
+      "heart_failure_symptoms",
+      "cardiac_arrest_symptoms"
+    ],
+    "kb_ids_not_in_context_rules": [
+      "abscess",
+      "acute_abdomen",
+      "addisonian_crisis",
+      "adrenal_crisis",
+      "aggression",
+      "agitation",
+      "air_hunger",
+      "alcohol_intoxication",
+      "allergic_reaction_mild",
+      "amputation",
+      "anemia_symptoms",
+      "animal_bite",
+      "ankle_pain",
+      "anorexia",
+      "anticoagulant_bleeding",
+      "anxiety_attack",
+      "appendicitis_pain",
+      "arrhythmia",
+      "aspiration",
+      "assault_injury",
+      "asthma_exacerbation",
+      "back_pain",
+      "bedsore_infection",
+      "behavioral_change",
+      "bleeding",
+      "bloating",
+      "blue_lips",
+      "body_pain",
+      "bph_symptoms",
+      "breast_abscess",
+      "breast_lump",
+      "breast_pain",
+      "bronchitis",
+      "bulging_fontanelle",
+      "burn_mild",
+      "burn_severe",
+      "burns",
+      "cancer_treatment_complication",
+      "cannot_speak_full_sentences",
+      "carbon_monoxide"
+    ]
+  },
+  "csv_term_banks": {
+    "english_medical_terms.csv": {
+      "rows": 10012,
+      "missing": false
+    },
+    "filipino_medical_terms.csv": {
+      "rows": 7686,
+      "missing": false
+    },
+    "hiligaynon_medical_terms.csv": {
+      "rows": 14386,
+      "missing": false
+    },
+    "medical_synonyms.csv": {
+      "rows": 128,
+      "missing": false
+    },
+    "symptom_synonyms.csv": {
+      "rows": 20000,
+      "missing": false
+    },
+    "translation_dictionary.csv": {
+      "rows": 14315,
+      "missing": false
+    },
+    "chief_complaint_examples.csv": {
+      "rows": 10522,
+      "missing": false
+    },
+    "medical_entities.csv": {
+      "rows": 5023,
+      "missing": false
+    },
+    "duplicate_concepts_across_banks": [
+      "fever: ['filipino_medical_terms.csv', 'filipino_medical_terms.csv', 'filipino_medical_terms.csv', 'filipino_medical_terms.csv', 'filipino_medical_terms.csv', 'filipino_medical_terms.csv', 'filipino_medical_terms.csv', 'filipino_medical_terms.csv', 'filipino_medical_terms.csv', 'filipino_medical_terms.csv', 'filipino_medical_terms.csv', 'filipino_medical_terms.csv', 'filipino_medical_terms.csv', 'filipino_medical_terms.csv', 'filipino_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv']",
+      "cough: ['filipino_medical_terms.csv', 'filipino_medical_terms.csv', 'filipino_medical_terms.csv', 'filipino_medical_terms.csv', 'filipino_medical_terms.csv', 'filipino_medical_terms.csv', 'filipino_medical_terms.csv', 'filipino_medical_terms.csv', 'filipino_medical_terms.csv', 'filipino_medical_terms.csv', 'filipino_medical_terms.csv', 'filipino_medical_terms.csv', 'filipino_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv']",
+      "runny nose: ['filipino_medical_terms.csv', 'filipino_medical_terms.csv', 'filipino_medical_terms.csv', 'filipino_medical_terms.csv', 'filipino_medical_terms.csv', 'filipino_medical_terms.csv', 'filipino_medical_terms.csv', 'filipino_medical_terms.csv', 'filipino_medical_terms.csv', 'filipino_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv']",
+      "difficulty breathing: ['filipino_medical_terms.csv', 'filipino_medical_terms.csv', 'filipino_medical_terms.csv', 'filipino_medical_terms.csv', 'filipino_medical_terms.csv', 'filipino_medical_terms.csv', 'filipino_medical_terms.csv', 'filipino_medical_terms.csv', 'filipino_medical_terms.csv', 'filipino_medical_terms.csv', 'filipino_medical_terms.csv', 'filipino_medical_terms.csv', 'filipino_medical_terms.csv', 'filipino_medical_terms.csv', 'filipino_medical_terms.csv', 'filipino_medical_terms.csv', 'filipino_medical_terms.csv', 'filipino_medical_terms.csv', 'filipino_medical_terms.csv', 'filipino_medical_terms.csv', 'filipino_medical_terms.csv', 'filipino_medical_terms.csv', 'filipino_medical_terms.csv', 'filipino_medical_terms.csv', 'filipino_medical_terms.csv', 'filipino_medical_terms.csv', 'filipino_medical_terms.csv', 'filipino_medical_terms.csv', 'filipino_medical_terms.csv', 'filipino_medical_terms.csv', 'filipino_medical_terms.csv', 'filipino_medical_terms.csv', 'filipino_medical_terms.csv', 'filipino_medical_terms.csv', 'filipino_medical_terms.csv', 'filipino_medical_terms.csv', 'filipino_medical_terms.csv', 'filipino_medical_terms.csv', 'filipino_medical_terms.csv', 'filipino_medical_terms.csv', 'filipino_medical_terms.csv', 'filipino_medical_terms.csv', 'filipino_medical_terms.csv', 'filipino_medical_terms.csv', 'filipino_medical_terms.csv', 'filipino_medical_terms.csv', 'filipino_medical_terms.csv', 'filipino_medical_terms.csv', 'filipino_medical_terms.csv', 'filipino_medical_terms.csv', 'filipino_medical_terms.csv', 'filipino_medical_terms.csv', 'filipino_medical_terms.csv', 'filipino_medical_terms.csv', 'filipino_medical_terms.csv', 'filipino_medical_terms.csv', 'filipino_medical_terms.csv', 'filipino_medical_terms.csv', 'filipino_medical_terms.csv', 'filipino_medical_terms.csv', 'filipino_medical_terms.csv', 'filipino_medical_terms.csv', 'filipino_medical_terms.csv', 'filipino_medical_terms.csv', 'filipino_medical_terms.csv', 'filipino_medical_terms.csv', 'filipino_medical_terms.csv', 'filipino_medical_terms.csv', 'filipino_medical_terms.csv', 'filipino_medical_terms.csv', 'filipino_medical_terms.csv', 'filipino_medical_terms.csv', 'filipino_medical_terms.csv', 'filipino_medical_terms.csv', 'filipino_medical_terms.csv', 'filipino_medical_terms.csv', 'filipino_medical_terms.csv', 'filipino_medical_terms.csv', 'filipino_medical_terms.csv', 'filipino_medical_terms.csv', 'filipino_medical_terms.csv', 'filipino_medical_terms.csv', 'filipino_medical_terms.csv', 'filipino_medical_terms.csv', 'filipino_medical_terms.csv', 'filipino_medical_terms.csv', 'filipino_medical_terms.csv', 'filipino_medical_terms.csv', 'filipino_medical_terms.csv', 'filipino_medical_terms.csv', 'filipino_medical_terms.csv', 'filipino_medical_terms.csv', 'filipino_medical_terms.csv', 'filipino_medical_terms.csv', 'filipino_medical_terms.csv', 'filipino_medical_terms.csv', 'filipino_medical_terms.csv', 'filipino_medical_terms.csv', 'filipino_medical_terms.csv', 'filipino_medical_terms.csv', 'filipino_medical_terms.csv', 'filipino_medical_terms.csv', 'filipino_medical_terms.csv', 'filipino_medical_terms.csv', 'filipino_medical_terms.csv', 'filipino_medical_terms.csv', 'filipino_medical_terms.csv', 'filipino_medical_terms.csv', 'filipino_medical_terms.csv', 'filipino_medical_terms.csv', 'filipino_medical_terms.csv', 'filipino_medical_terms.csv', 'filipino_medical_terms.csv', 'filipino_medical_terms.csv', 'filipino_medical_terms.csv', 'filipino_medical_terms.csv', 'filipino_medical_terms.csv', 'filipino_medical_terms.csv', 'filipino_medical_terms.csv', 'filipino_medical_terms.csv', 'filipino_medical_terms.csv', 'filipino_medical_terms.csv', 'filipino_medical_terms.csv', 'filipino_medical_terms.csv', 'filipino_medical_terms.csv', 'filipino_medical_terms.csv', 'filipino_medical_terms.csv', 'filipino_medical_terms.csv', 'filipino_medical_terms.csv', 'filipino_medical_terms.csv', 'filipino_medical_terms.csv', 'filipino_medical_terms.csv', 'filipino_medical_terms.csv', 'filipino_medical_terms.csv', 'filipino_medical_terms.csv', 'filipino_medical_terms.csv', 'filipino_medical_terms.csv', 'filipino_medical_terms.csv', 'filipino_medical_terms.csv', 'filipino_medical_terms.csv', 'filipino_medical_terms.csv', 'filipino_medical_terms.csv', 'filipino_medical_terms.csv', 'filipino_medical_terms.csv', 'filipino_medical_terms.csv', 'filipino_medical_terms.csv', 'filipino_medical_terms.csv', 'filipino_medical_terms.csv', 'filipino_medical_terms.csv', 'filipino_medical_terms.csv', 'filipino_medical_terms.csv', 'filipino_medical_terms.csv', 'filipino_medical_terms.csv', 'filipino_medical_terms.csv', 'filipino_medical_terms.csv', 'filipino_medical_terms.csv', 'filipino_medical_terms.csv', 'filipino_medical_terms.csv', 'filipino_medical_terms.csv', 'filipino_medical_terms.csv', 'filipino_medical_terms.csv', 'filipino_medical_terms.csv', 'filipino_medical_terms.csv', 'filipino_medical_terms.csv', 'filipino_medical_terms.csv', 'filipino_medical_terms.csv', 'filipino_medical_terms.csv', 'filipino_medical_terms.csv', 'filipino_medical_terms.csv', 'filipino_medical_terms.csv', 'filipino_medical_terms.csv', 'filipino_medical_terms.csv', 'filipino_medical_terms.csv', 'filipino_medical_terms.csv', 'filipino_medical_terms.csv', 'filipino_medical_terms.csv', 'filipino_medical_terms.csv', 'filipino_medical_terms.csv', 'filipino_medical_terms.csv', 'filipino_medical_terms.csv', 'filipino_medical_terms.csv', 'filipino_medical_terms.csv', 'filipino_medical_terms.csv', 'filipino_medical_terms.csv', 'filipino_medical_terms.csv', 'filipino_medical_terms.csv', 'filipino_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv']",
+      "chest pain: ['filipino_medical_terms.csv', 'filipino_medical_terms.csv', 'filipino_medical_terms.csv', 'filipino_medical_terms.csv', 'filipino_medical_terms.csv', 'filipino_medical_terms.csv', 'filipino_medical_terms.csv', 'filipino_medical_terms.csv', 'filipino_medical_terms.csv', 'filipino_medical_terms.csv', 'filipino_medical_terms.csv', 'filipino_medical_terms.csv', 'filipino_medical_terms.csv', 'filipino_medical_terms.csv', 'filipino_medical_terms.csv', 'filipino_medical_terms.csv', 'filipino_medical_terms.csv', 'filipino_medical_terms.csv', 'filipino_medical_terms.csv', 'filipino_medical_terms.csv', 'filipino_medical_terms.csv', 'filipino_medical_terms.csv', 'filipino_medical_terms.csv', 'filipino_medical_terms.csv', 'filipino_medical_terms.csv', 'filipino_medical_terms.csv', 'filipino_medical_terms.csv', 'filipino_medical_terms.csv', 'filipino_medical_terms.csv', 'filipino_medical_terms.csv', 'filipino_medical_terms.csv', 'filipino_medical_terms.csv', 'filipino_medical_terms.csv', 'filipino_medical_terms.csv', 'filipino_medical_terms.csv', 'filipino_medical_terms.csv', 'filipino_medical_terms.csv', 'filipino_medical_terms.csv', 'filipino_medical_terms.csv', 'filipino_medical_terms.csv', 'filipino_medical_terms.csv', 'filipino_medical_terms.csv', 'filipino_medical_terms.csv', 'filipino_medical_terms.csv', 'filipino_medical_terms.csv', 'filipino_medical_terms.csv', 'filipino_medical_terms.csv', 'filipino_medical_terms.csv', 'filipino_medical_terms.csv', 'filipino_medical_terms.csv', 'filipino_medical_terms.csv', 'filipino_medical_terms.csv', 'filipino_medical_terms.csv', 'filipino_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv']",
+      "abdominal pain: ['filipino_medical_terms.csv', 'filipino_medical_terms.csv', 'filipino_medical_terms.csv', 'filipino_medical_terms.csv', 'filipino_medical_terms.csv', 'filipino_medical_terms.csv', 'filipino_medical_terms.csv', 'filipino_medical_terms.csv', 'filipino_medical_terms.csv', 'filipino_medical_terms.csv', 'filipino_medical_terms.csv', 'filipino_medical_terms.csv', 'filipino_medical_terms.csv', 'filipino_medical_terms.csv', 'filipino_medical_terms.csv', 'filipino_medical_terms.csv', 'filipino_medical_terms.csv', 'filipino_medical_terms.csv', 'filipino_medical_terms.csv', 'filipino_medical_terms.csv', 'filipino_medical_terms.csv', 'filipino_medical_terms.csv', 'filipino_medical_terms.csv', 'filipino_medical_terms.csv', 'filipino_medical_terms.csv', 'filipino_medical_terms.csv', 'filipino_medical_terms.csv', 'filipino_medical_terms.csv', 'filipino_medical_terms.csv', 'filipino_medical_terms.csv', 'filipino_medical_terms.csv', 'filipino_medical_terms.csv', 'filipino_medical_terms.csv', 'filipino_medical_terms.csv', 'filipino_medical_terms.csv', 'filipino_medical_terms.csv', 'filipino_medical_terms.csv', 'filipino_medical_terms.csv', 'filipino_medical_terms.csv', 'filipino_medical_terms.csv', 'filipino_medical_terms.csv', 'filipino_medical_terms.csv', 'filipino_medical_terms.csv', 'filipino_medical_terms.csv', 'filipino_medical_terms.csv', 'filipino_medical_terms.csv', 'filipino_medical_terms.csv', 'filipino_medical_terms.csv', 'filipino_medical_terms.csv', 'filipino_medical_terms.csv', 'filipino_medical_terms.csv', 'filipino_medical_terms.csv', 'filipino_medical_terms.csv', 'filipino_medical_terms.csv', 'filipino_medical_terms.csv', 'filipino_medical_terms.csv', 'filipino_medical_terms.csv', 'filipino_medical_terms.csv', 'filipino_medical_terms.csv', 'filipino_medical_terms.csv', 'filipino_medical_terms.csv', 'filipino_medical_terms.csv', 'filipino_medical_terms.csv', 'filipino_medical_terms.csv', 'filipino_medical_terms.csv', 'filipino_medical_terms.csv', 'filipino_medical_terms.csv', 'filipino_medical_terms.csv', 'filipino_medical_terms.csv', 'filipino_medical_terms.csv', 'filipino_medical_terms.csv', 'filipino_medical_terms.csv', 'filipino_medical_terms.csv', 'filipino_medical_terms.csv', 'filipino_medical_terms.csv', 'filipino_medical_terms.csv', 'filipino_medical_terms.csv', 'filipino_medical_terms.csv', 'filipino_medical_terms.csv', 'filipino_medical_terms.csv', 'filipino_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv']",
+      "headache: ['filipino_medical_terms.csv', 'filipino_medical_terms.csv', 'filipino_medical_terms.csv', 'filipino_medical_terms.csv', 'filipino_medical_terms.csv', 'filipino_medical_terms.csv', 'filipino_medical_terms.csv', 'filipino_medical_terms.csv', 'filipino_medical_terms.csv', 'filipino_medical_terms.csv', 'filipino_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv']",
+      "vomiting: ['filipino_medical_terms.csv', 'filipino_medical_terms.csv', 'filipino_medical_terms.csv', 'filipino_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv']",
+      "nausea: ['filipino_medical_terms.csv', 'filipino_medical_terms.csv', 'filipino_medical_terms.csv', 'filipino_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv']",
+      "dizziness: ['filipino_medical_terms.csv', 'filipino_medical_terms.csv', 'filipino_medical_terms.csv', 'filipino_medical_terms.csv', 'filipino_medical_terms.csv', 'filipino_medical_terms.csv', 'filipino_medical_terms.csv', 'filipino_medical_terms.csv', 'filipino_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv']",
+      "weakness: ['filipino_medical_terms.csv', 'filipino_medical_terms.csv', 'filipino_medical_terms.csv', 'filipino_medical_terms.csv', 'filipino_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv']",
+      "diarrhea: ['filipino_medical_terms.csv', 'filipino_medical_terms.csv', 'filipino_medical_terms.csv', 'filipino_medical_terms.csv', 'filipino_medical_terms.csv', 'filipino_medical_terms.csv', 'filipino_medical_terms.csv', 'filipino_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv']",
+      "sore throat: ['filipino_medical_terms.csv', 'filipino_medical_terms.csv', 'filipino_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv']",
+      "body pain: ['filipino_medical_terms.csv', 'filipino_medical_terms.csv', 'filipino_medical_terms.csv', 'filipino_medical_terms.csv', 'filipino_medical_terms.csv', 'filipino_medical_terms.csv', 'filipino_medical_terms.csv', 'filipino_medical_terms.csv', 'filipino_medical_terms.csv', 'filipino_medical_terms.csv', 'filipino_medical_terms.csv', 'filipino_medical_terms.csv', 'filipino_medical_terms.csv', 'filipino_medical_terms.csv', 'filipino_medical_terms.csv', 'filipino_medical_terms.csv', 'filipino_medical_terms.csv', 'filipino_medical_terms.csv', 'filipino_medical_terms.csv', 'filipino_medical_terms.csv', 'filipino_medical_terms.csv', 'filipino_medical_terms.csv', 'filipino_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv']",
+      "vomiting blood: ['filipino_medical_terms.csv', 'filipino_medical_terms.csv', 'filipino_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv']",
+      "coughing blood: ['filipino_medical_terms.csv', 'filipino_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv']",
+      "fainting: ['filipino_medical_terms.csv', 'filipino_medical_terms.csv', 'translation_dictionary.csv', 'translation_dictionary.csv']",
+      "bleeding: ['filipino_medical_terms.csv', 'filipino_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv']",
+      "pregnancy bleeding: ['filipino_medical_terms.csv', 'filipino_medical_terms.csv', 'filipino_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'hiligaynon_medical_terms.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv', 'translation_dictionary.csv']",
+      "pain ulo: ['filipino_medical_terms.csv', 'filipino_medical_terms.csv', 'filipino_medical_terms.csv', 'filipino_medical_terms.csv', 'filipino_medical_terms.csv']"
+    ]
+  },
+  "symptom_combinations": {
+    "rows": 7388,
+    "unique_pairs": 7388,
+    "classification_conflicts": []
+  },
+  "validation_datasets": {
+    "emergency_scenarios_validation.csv": {
+      "rows": 3000,
+      "classes": {
+        "emergency": 3000
+      }
+    },
+    "english_chief_complaints_validation.csv": {
+      "rows": 10000,
+      "classes": {
+        "non-urgent": 4000,
+        "urgent": 3000,
+        "emergency": 3000
+      }
+    },
+    "filipino_chief_complaints_validation.csv": {
+      "rows": 10000,
+      "classes": {
+        "urgent": 3000,
+        "emergency": 3000,
+        "non-urgent": 4000
+      }
+    },
+    "hiligaynon_chief_complaints_validation.csv": {
+      "rows": 10000,
+      "classes": {
+        "non-urgent": 4000,
+        "emergency": 3000,
+        "urgent": 3000
+      }
+    },
+    "misspelled_complaints_validation.csv": {
+      "rows": 5000,
+      "classes": {
+        "non-urgent": 3341,
+        "emergency": 4,
+        "urgent": 1655
+      }
+    },
+    "mixed_language_complaints_validation.csv": {
+      "rows": 5000,
+      "classes": {
+        "non-urgent": 2984,
+        "emergency": 2015,
+        "urgent": 1
+      }
+    },
+    "non_urgent_scenarios_validation.csv": {
+      "rows": 4000,
+      "classes": {
+        "non-urgent": 4000
+      }
+    },
+    "triage_validation_gold.csv": {
+      "rows": 25,
+      "classes": {
+        "non-urgent": 9,
+        "urgent": 7,
+        "emergency": 9
+      }
+    },
+    "triage_validation_master.csv": {
+      "rows": 40000,
+      "classes": {
+        "non-urgent": 18325,
+        "urgent": 10656,
+        "emergency": 11019
+      }
+    },
+    "urgent_scenarios_validation.csv": {
+      "rows": 3000,
+      "classes": {
+        "urgent": 3000
+      }
+    }
+  },
+  "engines": {
+    "php_engines": {
+      "ClinicalTriageEngine.php": true,
+      "ClinicalContextReasoningEngine.php": true,
+      "TriageSelfValidationEngine.php": true,
+      "SymptomKnowledgeBase.php": true,
+      "ClinicalFeatureExtractors.php": true,
+      "NegationDetector.php": true,
+      "MedicalEntityExtractor.php": true,
+      "MedicalAssessmentEngine.php": true,
+      "HiligaynonMedicalNlpPipeline.php": true,
+      "MedicalTextAnalysisWorkflow.php": true
+    },
+    "python_mirrors": {
+      "clinical_triage_engine.py": true,
+      "clinical_context_reasoning.py": true,
+      "triage_self_validation.py": true,
+      "symptom_knowledge_base.py": true,
+      "negation_detector.py": true
+    }
+  },
+  "dataset_catalog": [
+    {
+      "path": "allergies/allergies_part_01.csv",
+      "rows": 776,
+      "size_kb": 56.8,
+      "wiring": {
+        "wired_to": [],
+        "status": "reference"
+      }
+    },
+    {
+      "path": "allergies.csv",
+      "rows": 776,
+      "size_kb": 56.8,
+      "wiring": {
+        "wired_to": [],
+        "status": "reference"
+      }
+    },
+    {
+      "path": "archive_source/dataset.csv",
+      "rows": 4920,
+      "size_kb": 617.4,
+      "wiring": {
+        "wired_to": [],
+        "status": "reference"
+      }
+    },
+    {
+      "path": "archive_source/Symptom-severity.csv",
+      "rows": 133,
+      "size_kb": 2.3,
+      "wiring": {
+        "wired_to": [],
+        "status": "reference"
+      }
+    },
+    {
+      "path": "archive_source/symptom_Description.csv",
+      "rows": 41,
+      "size_kb": 10.8,
+      "wiring": {
+        "wired_to": [],
+        "status": "reference"
+      }
+    },
+    {
+      "path": "archive_source/symptom_precaution.csv",
+      "rows": 41,
+      "size_kb": 3.4,
+      "wiring": {
+        "wired_to": [],
+        "status": "reference"
+      }
+    },
+    {
+      "path": "body_part_pain_symptoms.csv",
+      "rows": 312,
+      "size_kb": 20.8,
+      "wiring": {
+        "wired_to": [],
+        "status": "reference"
+      }
+    },
+    {
+      "path": "body_parts.csv",
+      "rows": 204,
+      "size_kb": 10.2,
+      "wiring": {
+        "wired_to": [],
+        "status": "reference"
+      }
+    },
+    {
+      "path": "body_parts_cds.csv",
+      "rows": 204,
+      "size_kb": 10.2,
+      "wiring": {
+        "wired_to": [],
+        "status": "reference"
+      }
+    },
+    {
+      "path": "chief_complaint_examples.csv",
+      "rows": 10522,
+      "size_kb": 630.1,
+      "wiring": {
+        "wired_to": [
+          "QA / validation reference"
+        ],
+        "status": "loaded"
+      }
+    },
+    {
+      "path": "chronic_conditions.csv",
+      "rows": 19,
+      "size_kb": 0.8,
+      "wiring": {
+        "wired_to": [
+          "ClinicalFeatureExtractors.php"
+        ],
+        "status": "loaded"
+      }
+    },
+    {
+      "path": "clinical_context_rules.json",
+      "rows": 6,
+      "size_kb": 11.3,
+      "wiring": {
+        "wired_to": [
+          "ClinicalContextReasoningEngine.php",
+          "clinical_context_reasoning.py"
+        ],
+        "status": "loaded"
+      }
+    },
+    {
+      "path": "clinical_reasoning_rules.csv",
+      "rows": 25,
+      "size_kb": 2.6,
+      "wiring": {
+        "wired_to": [
+          "ClinicalReasoningRulesLoader.php (reason templates)"
+        ],
+        "status": "loaded"
+      }
+    },
+    {
+      "path": "common_patient_sentences.csv",
+      "rows": 10522,
+      "size_kb": 630.1,
+      "wiring": {
+        "wired_to": [],
+        "status": "reference"
+      }
+    },
+    {
+      "path": "condition_triage_severity.csv",
+      "rows": 182,
+      "size_kb": 119.5,
+      "wiring": {
+        "wired_to": [],
+        "status": "orphaned"
+      }
+    },
+    {
+      "path": "confidence_rules.csv",
+      "rows": 5,
+      "size_kb": 0.4,
+      "wiring": {
+        "wired_to": [
+          "ClinicalTriageEngine.php (logic mirrored, CSV is documentation)"
+        ],
+        "status": "loaded"
+      }
+    },
+    {
+      "path": "duration_patterns.csv",
+      "rows": 500,
+      "size_kb": 24.4,
+      "wiring": {
+        "wired_to": [
+          "ClinicalFeatureExtractors.php (inline + CSV expand)"
+        ],
+        "status": "loaded"
+      }
+    },
+    {
+      "path": "emergency_flags.csv",
+      "rows": 200,
+      "size_kb": 29.5,
+      "wiring": {
+        "wired_to": [
+          "EmergencyFlagsLoader.php"
+        ],
+        "status": "loaded"
+      }
+    },
+    {
+      "path": "emergency_red_flags.csv",
+      "rows": 633,
+      "size_kb": 69.5,
+      "wiring": {
+        "wired_to": [
+          "ClinicalTriageEngine.php"
+        ],
+        "status": "loaded"
+      }
+    },
+    {
+      "path": "emotion_intent_phrases.csv",
+      "rows": 268,
+      "size_kb": 7.7,
+      "wiring": {
+        "wired_to": [],
+        "status": "reference"
+      }
+    },
+    {
+      "path": "emotion_intent_phrases_full.csv",
+      "rows": 10000,
+      "size_kb": 349.2,
+      "wiring": {
+        "wired_to": [],
+        "status": "reference"
+      }
+    },
+    {
+      "path": "english_medical_terms.csv",
+      "rows": 10012,
+      "size_kb": 1081.9,
+      "wiring": {
+        "wired_to": [],
+        "status": "reference"
+      }
+    },
+    {
+      "path": "faq_chatbot_translation_dictionary.json",
+      "rows": 18641,
+      "size_kb": 3156.7,
+      "wiring": {
+        "wired_to": [],
+        "status": "reference"
+      }
+    },
+    {
+      "path": "filipino_medical_terms.csv",
+      "rows": 7686,
+      "size_kb": 555.2,
+      "wiring": {
+        "wired_to": [
+          "SymptomKnowledgeBase.php"
+        ],
+        "status": "loaded"
+      }
+    },
+    {
+      "path": "hiligaynon_combinatorial_phrases.csv",
+      "rows": 12000,
+      "size_kb": 1307.6,
+      "wiring": {
+        "wired_to": [],
+        "status": "reference"
+      }
+    },
+    {
+      "path": "hiligaynon_conditions.csv",
+      "rows": 2616,
+      "size_kb": 219.2,
+      "wiring": {
+        "wired_to": [],
+        "status": "reference"
+      }
+    },
+    {
+      "path": "hiligaynon_conditions_combinatorial.csv",
+      "rows": 2759,
+      "size_kb": 207.3,
+      "wiring": {
+        "wired_to": [],
+        "status": "reference"
+      }
+    },
+    {
+      "path": "hiligaynon_medical_knowledge_base.csv",
+      "rows": 25018,
+      "size_kb": 5348.7,
+      "wiring": {
+        "wired_to": [],
+        "status": "reference"
+      }
+    },
+    {
+      "path": "hiligaynon_medical_nlp_dataset.csv",
+      "rows": 23449,
+      "size_kb": 12947.0,
+      "wiring": {
+        "wired_to": [],
+        "status": "reference"
+      }
+    },
+    {
+      "path": "hiligaynon_medical_symptoms.csv",
+      "rows": 850,
+      "size_kb": 120.7,
+      "wiring": {
+        "wired_to": [
+          "SymptomKnowledgeBase CSV boosts / expansion"
+        ],
+        "status": "loaded"
+      }
+    },
+    {
+      "path": "hiligaynon_medical_terms.csv",
+      "rows": 14386,
+      "size_kb": 1033.9,
+      "wiring": {
+        "wired_to": [
+          "SymptomKnowledgeBase.php"
+        ],
+        "status": "loaded"
+      }
+    },
+    {
+      "path": "hiligaynon_medical_training_batch_01.csv",
+      "rows": 10000,
+      "size_kb": 767.9,
+      "wiring": {
+        "wired_to": [],
+        "status": "reference"
+      }
+    },
+    {
+      "path": "hiligaynon_nlp_expansion_2026.csv",
+      "rows": 628,
+      "size_kb": 50.6,
+      "wiring": {
+        "wired_to": [],
+        "status": "reference"
+      }
+    },
+    {
+      "path": "hiligaynon_pain_recognition.csv",
+      "rows": 2737,
+      "size_kb": 516.6,
+      "wiring": {
+        "wired_to": [],
+        "status": "reference"
+      }
+    },
+    {
+      "path": "hiligaynon_patient_complaints.csv",
+      "rows": 12539,
+      "size_kb": 2742.0,
+      "wiring": {
+        "wired_to": [],
+        "status": "reference"
+      }
+    },
+    {
+      "path": "hiligaynon_reproductive_expansion.csv",
+      "rows": 4156,
+      "size_kb": 355.8,
+      "wiring": {
+        "wired_to": [],
+        "status": "reference"
+      }
+    },
+    {
+      "path": "hiligaynon_symptom_lexicon.json",
+      "rows": 0,
+      "size_kb": 253.8,
+      "wiring": {
+        "wired_to": [],
+        "status": "reference"
+      }
+    },
+    {
+      "path": "hiligaynon_symptom_phrases.json",
+      "rows": 10,
+      "size_kb": 75.2,
+      "wiring": {
+        "wired_to": [],
+        "status": "reference"
+      }
+    },
+    {
+      "path": "hiligaynon_symptom_variants.json",
+      "rows": 5,
+      "size_kb": 92.9,
+      "wiring": {
+        "wired_to": [],
+        "status": "reference"
+      }
+    },
+    {
+      "path": "hiligaynon_symptoms.csv",
+      "rows": 11929,
+      "size_kb": 904.7,
+      "wiring": {
+        "wired_to": [],
+        "status": "reference"
+      }
+    },
+    {
+      "path": "hiligaynon_symptoms_combinatorial.csv",
+      "rows": 128,
+      "size_kb": 8.0,
+      "wiring": {
+        "wired_to": [],
+        "status": "orphaned"
+      }
+    },
+    {
+      "path": "hiligaynon_wv_expansion.csv",
+      "rows": 7707,
+      "size_kb": 550.4,
+      "wiring": {
+        "wired_to": [],
+        "status": "reference"
+      }
+    },
+    {
+      "path": "icd10/medical_conditions_part_01.csv",
+      "rows": 10000,
+      "size_kb": 2312.4,
+      "wiring": {
+        "wired_to": [],
+        "status": "reference"
+      }
+    },
+    {
+      "path": "icd10/medical_conditions_part_02.csv",
+      "rows": 10000,
+      "size_kb": 2437.6,
+      "wiring": {
+        "wired_to": [],
+        "status": "reference"
+      }
+    },
+    {
+      "path": "icd10/medical_conditions_part_03.csv",
+      "rows": 10000,
+      "size_kb": 2751.4,
+      "wiring": {
+        "wired_to": [],
+        "status": "reference"
+      }
+    },
+    {
+      "path": "icd10/medical_conditions_part_04.csv",
+      "rows": 10000,
+      "size_kb": 3047.3,
+      "wiring": {
+        "wired_to": [],
+        "status": "reference"
+      }
+    },
+    {
+      "path": "icd10/medical_conditions_part_05.csv",
+      "rows": 10000,
+      "size_kb": 3116.7,
+      "wiring": {
+        "wired_to": [],
+        "status": "reference"
+      }
+    },
+    {
+      "path": "icd10/medical_conditions_part_06.csv",
+      "rows": 10000,
+      "size_kb": 2943.3,
+      "wiring": {
+        "wired_to": [],
+        "status": "reference"
+      }
+    },
+    {
+      "path": "icd10/medical_conditions_part_07.csv",
+      "rows": 10000,
+      "size_kb": 2968.3,
+      "wiring": {
+        "wired_to": [],
+        "status": "reference"
+      }
+    },
+    {
+      "path": "icd10/medical_conditions_part_08.csv",
+      "rows": 4260,
+      "size_kb": 1105.3,
+      "wiring": {
+        "wired_to": [],
+        "status": "reference"
+      }
+    },
+    {
+      "path": "medical_abbreviations.csv",
+      "rows": 20,
+      "size_kb": 0.5,
+      "wiring": {
+        "wired_to": [
+          "MedicalMisspellingsLoader.php"
+        ],
+        "status": "loaded"
+      }
+    },
+    {
+      "path": "medical_conditions.csv",
+      "rows": 74260,
+      "size_kb": 13814.5,
+      "wiring": {
+        "wired_to": [],
+        "status": "reference"
+      }
+    },
+    {
+      "path": "medical_conditions_triage_overlay.csv",
+      "rows": 74260,
+      "size_kb": 13108.2,
+      "wiring": {
+        "wired_to": [],
+        "status": "reference"
+      }
+    },
+    {
+      "path": "medical_dictionary.csv",
+      "rows": 14152,
+      "size_kb": 754.3,
+      "wiring": {
+        "wired_to": [],
+        "status": "reference"
+      }
+    },
+    {
+      "path": "medical_entities.csv",
+      "rows": 5023,
+      "size_kb": 433.6,
+      "wiring": {
+        "wired_to": [
+          "MedicalEntityExtractor.php"
+        ],
+        "status": "loaded"
+      }
+    },
+    {
+      "path": "medical_misspellings.csv",
+      "rows": 10927,
+      "size_kb": 743.4,
+      "wiring": {
+        "wired_to": [
+          "MedicalMisspellingsLoader.php",
+          "MedicalMisspellingsLoader.php"
+        ],
+        "status": "loaded"
+      }
+    },
+    {
+      "path": "medical_phrases.csv",
+      "rows": 3181,
+      "size_kb": 373.3,
+      "wiring": {
+        "wired_to": [
+          "SymptomKnowledgeBase.php"
+        ],
+        "status": "loaded"
+      }
+    },
+    {
+      "path": "medical_stopwords.csv",
+      "rows": 31,
+      "size_kb": 0.6,
+      "wiring": {
+        "wired_to": [
+          "MedicalTextAnalysisWorkflow / preprocessing"
+        ],
+        "status": "loaded"
+      }
+    },
+    {
+      "path": "medical_symptoms.csv",
+      "rows": 8128,
+      "size_kb": 774.2,
+      "wiring": {
+        "wired_to": [
+          "SymptomKnowledgeBase CSV boosts / expansion"
+        ],
+        "status": "loaded"
+      }
+    },
+    {
+      "path": "medical_synonyms.csv",
+      "rows": 128,
+      "size_kb": 5.5,
+      "wiring": {
+        "wired_to": [],
+        "status": "reference"
+      }
+    },
+    {
+      "path": "misspellings.csv",
+      "rows": 10927,
+      "size_kb": 743.4,
+      "wiring": {
+        "wired_to": [
+          "MedicalMisspellingsLoader.php"
+        ],
+        "status": "loaded"
+      }
+    },
+    {
+      "path": "negation_words.csv",
+      "rows": 500,
+      "size_kb": 23.8,
+      "wiring": {
+        "wired_to": [
+          "NegationDetector.php",
+          "negation_detector.py"
+        ],
+        "status": "loaded"
+      }
+    },
+    {
+      "path": "non_urgent_conditions.csv",
+      "rows": 500,
+      "size_kb": 44.0,
+      "wiring": {
+        "wired_to": [
+          "Reference — contextual engine + combinations",
+          "Reference — contextual engine + combinations"
+        ],
+        "status": "loaded"
+      }
+    },
+    {
+      "path": "pain_scale.csv",
+      "rows": 42,
+      "size_kb": 1.5,
+      "wiring": {
+        "wired_to": [
+          "ClinicalFeatureExtractors.php"
+        ],
+        "status": "loaded"
+      }
+    },
+    {
+      "path": "patient_typing_dictionary_2026.csv",
+      "rows": 0,
+      "size_kb": 0.0,
+      "wiring": {
+        "wired_to": [],
+        "status": "reference"
+      }
+    },
+    {
+      "path": "phrase_engine/body_parts.json",
+      "rows": 34,
+      "size_kb": 3.4,
+      "wiring": {
+        "wired_to": [],
+        "status": "reference"
+      }
+    },
+    {
+      "path": "phrase_engine/classification_rules.json",
+      "rows": 84,
+      "size_kb": 11.8,
+      "wiring": {
+        "wired_to": [],
+        "status": "reference"
+      }
+    },
+    {
+      "path": "phrase_engine/misspelling_rules.json",
+      "rows": 11,
+      "size_kb": 1.5,
+      "wiring": {
+        "wired_to": [],
+        "status": "reference"
+      }
+    },
+    {
+      "path": "phrase_engine/symptom_roots.json",
+      "rows": 37,
+      "size_kb": 11.1,
+      "wiring": {
+        "wired_to": [],
+        "status": "reference"
+      }
+    },
+    {
+      "path": "phrase_engine/templates.json",
+      "rows": 57,
+      "size_kb": 1.4,
+      "wiring": {
+        "wired_to": [],
+        "status": "reference"
+      }
+    },
+    {
+      "path": "red_flags_library.json",
+      "rows": 75,
+      "size_kb": 49.0,
+      "wiring": {
+        "wired_to": [
+          "SymptomKnowledgeBase.php",
+          "symptom_knowledge_base.py"
+        ],
+        "status": "loaded"
+      }
+    },
+    {
+      "path": "reports/kb_audit_report.json",
+      "rows": 6,
+      "size_kb": 1.7,
+      "wiring": {
+        "wired_to": [],
+        "status": "reference"
+      }
+    },
+    {
+      "path": "risk_factors.csv",
+      "rows": 32,
+      "size_kb": 1.5,
+      "wiring": {
+        "wired_to": [
+          "ClinicalFeatureExtractors.php"
+        ],
+        "status": "loaded"
+      }
+    },
+    {
+      "path": "self_care_remedies.csv",
+      "rows": 68,
+      "size_kb": 34.0,
+      "wiring": {
+        "wired_to": [],
+        "status": "reference"
+      }
+    },
+    {
+      "path": "severity_scores.csv",
+      "rows": 3,
+      "size_kb": 0.1,
+      "wiring": {
+        "wired_to": [
+          "Merged into symptom_knowledge_base.json scoring"
+        ],
+        "status": "loaded"
+      }
+    },
+    {
+      "path": "source/icd10cm_order_2025.txt",
+      "rows": 0,
+      "size_kb": 14261.8,
+      "wiring": {
+        "wired_to": [],
+        "status": "reference"
+      }
+    },
+    {
+      "path": "step6_triage_exemplars.csv",
+      "rows": 344,
+      "size_kb": 32.2,
+      "wiring": {
+        "wired_to": [],
+        "status": "orphaned"
+      }
+    },
+    {
+      "path": "symptom_combinations.csv",
+      "rows": 7388,
+      "size_kb": 826.8,
+      "wiring": {
+        "wired_to": [
+          "ClinicalTriageEngine.php",
+          "clinical_triage_engine.py"
+        ],
+        "status": "loaded"
+      }
+    },
+    {
+      "path": "symptom_condition_map.csv",
+      "rows": 226,
+      "size_kb": 15.4,
+      "wiring": {
+        "wired_to": [],
+        "status": "reference"
+      }
+    },
+    {
+      "path": "symptom_knowledge_base.json",
+      "rows": 310,
+      "size_kb": 405.2,
+      "wiring": {
+        "wired_to": [
+          "SymptomKnowledgeBase.php",
+          "symptom_knowledge_base.py"
+        ],
+        "status": "loaded"
+      }
+    }
+  ],
+  "orphaned_legacy_datasets": [
+    "triage_rules.csv",
+    "triage_rules_cds.csv",
+    "hiligaynon_symptoms_combinatorial.csv",
+    "condition_triage_severity.csv",
+    "step6_triage_exemplars.csv"
+  ],
+  "decision_priority_order": [
+    "emergency_red_flags",
+    "airway",
+    "breathing",
+    "circulation",
+    "neurological",
+    "severe_bleeding",
+    "pregnancy_emergency",
+    "poisoning",
+    "burns",
+    "trauma",
+    "high_risk_patient",
+    "symptom_combination",
+    "clinical_context",
+    "duration",
+    "temperature",
+    "pain_scale",
+    "risk_factors",
+    "individual_symptoms",
+    "administrative_request",
+    "confidence_score"
+  ],
+  "recommendations": [
+    "Add clinical_context_rules.json entries for high-weight symptoms lacking contextual reasoning",
+    "Review 4 orphaned legacy datasets — bridge or document as reference-only",
+    "Keep contextual reasoning as primary classifier — never single-keyword triage",
+    "Run evaluate_triage_validation.php --gold after every KB change",
+    "Use chief_complaint_examples.csv + validation sets for continuous QA"
+  ]
+}
