@@ -173,22 +173,22 @@ def match_symptoms(text: str, english_text: str = "", extra_terms: list[str] | N
             if not _term_matches_with_context(hay, term, symptom):
                 continue
             matched.append(
-                    {
-                        "id": symptom.get("id"),
-                        "symptom_name": symptom.get("symptom_name"),
-                        "medical_category": symptom.get("medical_category"),
-                        "severity_weight": int(symptom.get("severity_weight") or 0),
-                        "emergency_weight": int(symptom.get("emergency_weight") or 0),
-                        "urgent_weight": int(symptom.get("urgent_weight") or 0),
-                        "danger_sign": bool(symptom.get("danger_sign")),
-                        "recommended_action": symptom.get("recommended_action") or "",
-                        "matched_term": term,
-                        "common_causes": symptom.get("common_causes") or [],
-                        "danger_signs": symptom.get("danger_signs") or [],
-                    }
-                )
-                seen.add(sid)
-                break
+                {
+                    "id": symptom.get("id"),
+                    "symptom_name": symptom.get("symptom_name"),
+                    "medical_category": symptom.get("medical_category"),
+                    "severity_weight": int(symptom.get("severity_weight") or 0),
+                    "emergency_weight": int(symptom.get("emergency_weight") or 0),
+                    "urgent_weight": int(symptom.get("urgent_weight") or 0),
+                    "danger_sign": bool(symptom.get("danger_sign")),
+                    "recommended_action": symptom.get("recommended_action") or "",
+                    "matched_term": term,
+                    "common_causes": symptom.get("common_causes") or [],
+                    "danger_signs": symptom.get("danger_signs") or [],
+                }
+            )
+            seen.add(sid)
+            break
     # Highest severity first
     matched.sort(key=lambda s: int(s.get("severity_weight") or 0), reverse=True)
     return matched[:8]
