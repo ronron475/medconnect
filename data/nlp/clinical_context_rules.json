@@ -1,0 +1,358 @@
+{
+  "version": "1.0",
+  "description": "Contextual clinical reasoning — never classify from a single keyword alone.",
+  "global": {
+    "insufficient_review_reason": "Insufficient clinical information to determine urgency safely.",
+    "review_recommendation": "Needs Healthcare Provider Review"
+  },
+  "rules": [
+    {
+      "id": "CTX001",
+      "name": "Facial swelling",
+      "primary_symptoms": ["facial_swelling", "swelling_face", "face_swelling"],
+      "evaluate_for": [
+        "Difficulty breathing",
+        "Swelling of lips, tongue, or throat",
+        "Difficulty swallowing or speaking",
+        "Severe allergic reaction",
+        "Severe facial trauma or uncontrolled bleeding",
+        "High fever",
+        "Dental infection",
+        "Severe pain",
+        "Rapidly increasing swelling",
+        "Eye involvement",
+        "Recent injury",
+        "Pregnancy",
+        "Chronic illness",
+        "Age",
+        "Duration"
+      ],
+      "emergency": {
+        "patterns": [
+          "difficulty breathing",
+          "cannot breathe",
+          "shortness of breath",
+          "swollen tongue",
+          "tongue swelling",
+          "throat swelling",
+          "swollen throat",
+          "swollen lips",
+          "lip swelling",
+          "cannot swallow",
+          "difficulty swallowing",
+          "cannot speak",
+          "difficulty speaking",
+          "severe allergic",
+          "anaphylaxis",
+          "airway",
+          "uncontrolled bleeding",
+          "severe facial trauma",
+          "budlay ginhawa",
+          "hirap huminga",
+          "indi makatulon",
+          "hubag tutunlan",
+          "hubag tutunlan",
+          "gahubag ang tutunlan",
+          "gahubag ang ngabil"
+        ],
+        "symptom_ids": [
+          "difficulty_breathing",
+          "shortness_of_breath",
+          "throat_swelling",
+          "anaphylaxis",
+          "severe_bleeding",
+          "airway_obstruction"
+        ]
+      },
+      "urgent": {
+        "patterns": [
+          "fever",
+          "lagnat",
+          "high fever",
+          "dental",
+          "tooth",
+          "ngipon",
+          "recent injury",
+          "facial injury",
+          "worsening",
+          "getting worse",
+          "rapidly",
+          "eye",
+          "severe pain",
+          "grabe",
+          "8/10",
+          "9/10",
+          "10/10"
+        ],
+        "symptom_ids": ["fever", "dental_infection", "toothache", "head_injury", "eye_pain"],
+        "feature_keys": ["has_fever", "pain_moderate_or_severe", "duration_3_plus_days"]
+      },
+      "isolated_classification": "NON-URGENT",
+      "isolated_reason": "Facial swelling without emergency warning signs, severe pain, fever, or breathing problems — routine evaluation.",
+      "emergency_reason": "Facial swelling with airway or anaphylaxis warning signs — immediate emergency care.",
+      "urgent_reason": "Facial swelling with fever, dental infection, injury, worsening swelling, or moderate/severe pain — prompt evaluation needed."
+    },
+    {
+      "id": "CTX002",
+      "name": "Headache",
+      "primary_symptoms": ["headache"],
+      "evaluate_for": [
+        "Fever",
+        "Neck stiffness",
+        "Confusion",
+        "Weakness",
+        "Slurred speech",
+        "Vision changes",
+        "Head injury",
+        "Vomiting",
+        "Seizure",
+        "Sudden worst headache",
+        "Pregnancy"
+      ],
+      "emergency": {
+        "patterns": [
+          "sudden worst",
+          "worst headache",
+          "thunderclap",
+          "neck stiff",
+          "stiff neck",
+          "confusion",
+          "confused",
+          "slurred speech",
+          "cannot speak",
+          "weakness",
+          "one sided",
+          "vision loss",
+          "double vision",
+          "seizure",
+          "unconscious",
+          "head injury",
+          "after fall",
+          "vomiting blood",
+          "naguyam",
+          "nadulaan malay"
+        ],
+        "symptom_ids": [
+          "neck_stiffness",
+          "confusion",
+          "slurred_speech",
+          "weakness",
+          "vision_changes",
+          "seizure",
+          "loss_of_consciousness",
+          "head_injury",
+          "stroke_symptoms"
+        ]
+      },
+      "urgent": {
+        "patterns": ["fever", "lagnat", "severe", "grabe", "8/10", "9/10", "10/10", "persistent", "5 days", "one week"],
+        "symptom_ids": ["fever", "vomiting", "pregnancy_headache_severe"],
+        "feature_keys": ["has_fever", "pain_moderate_or_severe", "duration_3_plus_days"]
+      },
+      "isolated_classification": "NON-URGENT",
+      "isolated_reason": "Headache without neurological red flags, fever, or severe modifiers — non-urgent monitoring.",
+      "emergency_reason": "Headache with neurological warning signs or sudden severe presentation — emergency evaluation.",
+      "urgent_reason": "Headache with fever, severe pain, or prolonged duration — prompt clinical review."
+    },
+    {
+      "id": "CTX003",
+      "name": "Chest pain",
+      "primary_symptoms": ["chest_pain", "pleuritic_chest_pain", "angina"],
+      "evaluate_for": [
+        "Difficulty breathing",
+        "Sweating",
+        "Pain radiating to jaw or arm",
+        "Dizziness",
+        "Collapse",
+        "Duration",
+        "Pain severity"
+      ],
+      "emergency": {
+        "patterns": [
+          "difficulty breathing",
+          "shortness of breath",
+          "cannot breathe",
+          "sweating",
+          "cold sweat",
+          "radiating",
+          "radiates",
+          "jaw pain",
+          "arm pain",
+          "left arm",
+          "dizzy",
+          "dizziness",
+          "faint",
+          "fainted",
+          "collapse",
+          "crushing",
+          "severe",
+          "grabe",
+          "8/10",
+          "9/10",
+          "10/10",
+          "budlay ginhawa",
+          "hirap huminga"
+        ],
+        "symptom_ids": [
+          "difficulty_breathing",
+          "shortness_of_breath",
+          "palpitations",
+          "loss_of_consciousness",
+          "sweating"
+        ]
+      },
+      "urgent": {
+        "patterns": ["moderate", "5/10", "6/10", "7/10", "hours", "since yesterday", "2 days"],
+        "symptom_ids": [],
+        "feature_keys": ["pain_moderate_or_severe", "duration_1_to_2_days"]
+      },
+      "isolated_classification": "URGENT",
+      "isolated_reason": "Chest pain requires full clinical context; isolated presentation warrants prompt evaluation within hours.",
+      "emergency_reason": "Chest pain with breathing difficulty, radiation, sweating, dizziness, or collapse — emergency cardiac evaluation.",
+      "urgent_reason": "Chest pain with moderate severity or duration — urgent clinical assessment needed.",
+      "insufficient_when_isolated": false
+    },
+    {
+      "id": "CTX004",
+      "name": "Abdominal pain",
+      "primary_symptoms": ["abdominal_pain", "stomach_pain", "belly_pain"],
+      "evaluate_for": [
+        "Fever",
+        "Vomiting",
+        "Blood in stool",
+        "Pregnancy",
+        "Severe tenderness",
+        "Persistent pain",
+        "Injury"
+      ],
+      "emergency": {
+        "patterns": [
+          "blood in stool",
+          "bloody stool",
+          "vomiting blood",
+          "rigid abdomen",
+          "faint",
+          "collapse",
+          "severe trauma",
+          "pregnant and pain",
+          "buntis",
+          "may dugo"
+        ],
+        "symptom_ids": [
+          "vomiting_blood",
+          "blood_in_stool",
+          "severe_bleeding",
+          "pregnancy_bleeding",
+          "major_trauma"
+        ]
+      },
+      "urgent": {
+        "patterns": ["fever", "lagnat", "severe", "grabe", "8/10", "9/10", "10/10", "2 days", "3 days", "persistent", "pregnant", "buntis"],
+        "symptom_ids": ["fever", "vomiting", "diarrhea"],
+        "feature_keys": ["has_fever", "pain_moderate_or_severe", "duration_1_to_2_days"]
+      },
+      "isolated_classification": "NON-URGENT",
+      "isolated_reason": "Mild abdominal discomfort without fever, bleeding, pregnancy concern, or severe pain — routine evaluation.",
+      "emergency_reason": "Abdominal pain with bleeding, pregnancy concern, or trauma — emergency evaluation.",
+      "urgent_reason": "Abdominal pain with fever, vomiting, severe pain, or persistence — prompt evaluation."
+    },
+    {
+      "id": "CTX005",
+      "name": "Fever",
+      "primary_symptoms": ["fever"],
+      "evaluate_for": [
+        "Temperature",
+        "Duration",
+        "Seizure",
+        "Confusion",
+        "Rash",
+        "Difficulty breathing",
+        "Age",
+        "Chronic disease"
+      ],
+      "emergency": {
+        "patterns": [
+          "seizure",
+          "confusion",
+          "cannot breathe",
+          "difficulty breathing",
+          "stiff neck",
+          "rash and fever",
+          "unconscious",
+          "naguyam"
+        ],
+        "symptom_ids": [
+          "seizure",
+          "confusion",
+          "difficulty_breathing",
+          "neck_stiffness",
+          "rash"
+        ]
+      },
+      "urgent": {
+        "patterns": ["5 days", "one week", "high fever", "39", "40", "child", "bata", "infant", "baby", "diabetes", "heart"],
+        "symptom_ids": ["cough", "rash"],
+        "feature_keys": ["has_high_fever", "duration_3_plus_days", "has_pediatric_risk", "has_chronic_risk"]
+      },
+      "isolated_classification": "NON-URGENT",
+      "isolated_reason": "Fever without danger signs, prolonged duration, or high-risk context — routine monitoring.",
+      "emergency_reason": "Fever with seizure, confusion, breathing difficulty, or meningitis signs — emergency care.",
+      "urgent_reason": "Fever lasting several days, high temperature, or high-risk patient — prompt evaluation."
+    },
+    {
+      "id": "CTX006",
+      "name": "Cough",
+      "primary_symptoms": ["cough"],
+      "evaluate_for": [
+        "Difficulty breathing",
+        "Chest pain",
+        "Blood in sputum",
+        "Fever",
+        "Duration",
+        "Wheezing"
+      ],
+      "emergency": {
+        "patterns": [
+          "cannot breathe",
+          "difficulty breathing",
+          "blood in sputum",
+          "coughing blood",
+          "chest pain and",
+          "budlay ginhawa",
+          "hirap huminga",
+          "may dugo sa ubo"
+        ],
+        "symptom_ids": [
+          "difficulty_breathing",
+          "coughing_blood",
+          "chest_pain",
+          "wheezing"
+        ]
+      },
+      "urgent": {
+        "patterns": ["fever", "lagnat", "5 days", "one week", "wheezing", "chest pain", "high fever"],
+        "symptom_ids": ["fever", "wheezing"],
+        "feature_keys": ["has_fever", "duration_3_plus_days"]
+      },
+      "isolated_classification": "NON-URGENT",
+      "isolated_reason": "Cough without breathing difficulty, hemoptysis, fever, or prolonged duration — non-urgent.",
+      "emergency_reason": "Cough with breathing difficulty or blood — emergency evaluation.",
+      "urgent_reason": "Cough with fever, wheezing, or prolonged duration — prompt evaluation."
+    }
+  ],
+  "fallback": {
+    "requires_context_symptoms": [
+      "facial_swelling",
+      "swelling_face",
+      "headache",
+      "chest_pain",
+      "abdominal_pain",
+      "stomach_pain",
+      "fever",
+      "cough"
+    ],
+    "danger_sign_requires_context": true,
+    "single_symptom_review": true,
+    "single_symptom_review_reason": "Only one symptom detected without duration, severity, temperature, or risk context — clinical review recommended before assigning urgency."
+  }
+}

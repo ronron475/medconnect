@@ -20,6 +20,7 @@ final class TriageSelfValidationEngine
         'trauma',
         'high_risk_patient',
         'symptom_combination',
+        'clinical_context',
         'duration',
         'temperature',
         'pain_scale',
@@ -44,10 +45,12 @@ final class TriageSelfValidationEngine
     ];
 
     private const LIFE_THREAT_PATTERNS = [
-        '/\b(chest pain|difficulty breathing|cannot breathe|shortness of breath|unconscious|seizure|stroke|vomiting blood|coughing blood|severe bleeding|anaphylaxis|poisoning)\b/u',
+        '/\b((chest pain|masakit dughan|masakit dibdib).{0,80}(breath|breathing|sweat|dizzy|radiat|collapse|severe|grabe|8\/10|9\/10|10\/10))\b/u',
+        '/\b(difficulty breathing|cannot breathe|shortness of breath|unconscious|seizure|stroke|vomiting blood|coughing blood|severe bleeding|anaphylaxis|poisoning)\b/u',
         '/\b(arm (suddenly )?(became )?weak|cannot speak|slurred speech|one[- ]sided weakness|facial droop)\b/u',
-        '/\b(masakit dughan|budlay ginhawa|indi makaginhawa|may dugo sa suka|naguyam|nadulaan malay)\b/u',
-        '/\b(hirap huminga|hirap akong huminga|masakit ang dibdib|nagsusuka ng dugo|nawalan ng malay)\b/u',
+        '/\b(budlay ginhawa|indi makaginhawa|may dugo sa suka|naguyam|nadulaan malay)\b/u',
+        '/\b(hirap huminga|hirap akong huminga|nagsusuka ng dugo|nawalan ng malay)\b/u',
+        '/\b(swollen tongue|throat swelling|lip swelling|cannot swallow|airway)\b/u',
     ];
 
     /**
@@ -96,6 +99,7 @@ final class TriageSelfValidationEngine
             'filipino_translated'         => !self::looksFilipino($hay) || $english !== '' || $symptoms !== [],
             'negated_symptoms_removed'    => self::negationOk($symptoms, $negated, $hay),
             'symptom_combinations_evaluated' => isset($factors['symptom_combination']) || isset($factors['combination_classification']) || count($symptoms) < 2,
+            'clinical_context_evaluated'     => !empty($factors['clinical_context_resolved']) || !empty($factors['clinical_context_rule']),
             'duration_rules_applied'      => $duration !== '' || !self::mentionsDuration($hay),
             'temperature_rules_applied'   => $temp !== '' || !self::mentionsTemperature($hay),
             'pain_scale_rules_applied'    => $pain !== '' || !self::mentionsPainScale($hay),
@@ -219,8 +223,11 @@ final class TriageSelfValidationEngine
         if (preg_match('/\b(difficulty breathing|shortness of breath|budlay ginhawa|hirap huminga)\b/u', $hay)) {
             return 'breathing';
         }
-        if (preg_match('/\b(chest pain|masakit dughan|masakit dibdib|severe bleeding|shock)\b/u', $hay)) {
+        if (preg_match('/\b((chest pain|masakit dughan|masakit dibdib).{0,80}(breath|sweat|dizzy|radiat|collapse|severe|grabe))\b/u', $hay)) {
             return preg_match('/\b(bleed|dugo|hemorrh)/u', $hay) ? 'severe_bleeding' : 'circulation';
+        }
+        if (preg_match('/\b(severe bleeding|shock|may dugo)\b/u', $hay)) {
+            return 'severe_bleeding';
         }
         if (preg_match('/\b(stroke|seizure|unconscious|paralysis|speech|naguyam|nadulaan malay)\b/u', $hay)) {
             return 'neurological';
@@ -243,6 +250,9 @@ final class TriageSelfValidationEngine
         }
         if (!empty($factors['symptom_combination']) || !empty($factors['combination_classification'])) {
             return 'symptom_combination';
+        }
+        if (!empty($factors['clinical_context_rule']) && ($factors['clinical_context_rule'] ?? '') !== 'CTX_NONE') {
+            return 'clinical_context';
         }
         if ($duration !== '' && preg_match('/\b(5|6|7|8|9|10|week|semana|linggo)\b/u', strtolower($duration))) {
             return 'duration';
@@ -275,7 +285,10 @@ final class TriageSelfValidationEngine
         if ($rule === 'administrative_request') {
             return 'NON-URGENT';
         }
-        if (in_array($rule, ['duration', 'temperature', 'pain_scale', 'high_risk_patient', 'symptom_combination'], true)) {
+        if ($rule === 'clinical_context') {
+            return $current;
+        }
+        if (in_array($rule, ['duration', 'temperature', 'pain_scale', 'high_risk_patient', 'symptom_combination', 'clinical_context'], true)) {
             return $current === 'EMERGENCY' ? 'EMERGENCY' : 'URGENT';
         }
         if (self::isMildOnly($hay) && $redFlags === []) {

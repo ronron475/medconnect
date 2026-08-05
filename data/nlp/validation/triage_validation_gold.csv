@@ -13,13 +13,13 @@ GOLD0011,My child has a high fever.,URGENT,english,urgent,active
 GOLD0012,Pain 8/10 in my abdomen for 2 days.,URGENT,english,urgent,active
 GOLD0013,May lagnat ako.,NON-URGENT,hiligaynon,non_urgent,active
 GOLD0014,Budlay gid ang ginhawa ko.,EMERGENCY,hiligaynon,emergency,active
-GOLD0015,Masakit akon dughan.,EMERGENCY,hiligaynon,emergency,active
+GOLD0015,Masakit akon dughan.,URGENT,hiligaynon,urgent,active
 GOLD0016,Gapalanakit ulo ko.,NON-URGENT,hiligaynon,non_urgent,active
 GOLD0017,May dugo sa akon suka.,EMERGENCY,hiligaynon,emergency,active
 GOLD0018,Wala akong lagnat.,NON-URGENT,hiligaynon,non_urgent,active
 GOLD0019,Nilalagnat ako nang 5 araw.,URGENT,filipino,urgent,active
 GOLD0020,Hirap akong huminga.,EMERGENCY,filipino,emergency,active
-GOLD0021,Masakit ang dibdib ko.,EMERGENCY,filipino,emergency,active
+GOLD0021,Masakit ang dibdib ko.,URGENT,filipino,urgent,active
 GOLD0022,Kailangan ko ng refill ng gamot.,NON-URGENT,filipino,non_urgent,active
 GOLD0023,May sipon at ubo ako.,NON-URGENT,filipino,non_urgent,active
 GOLD0024,I have fevr for 5 days.,URGENT,english,misspelled,active
