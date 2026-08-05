@@ -1,5 +1,5 @@
 {
-  "version": "1.0",
+  "version": "2.0",
   "schema": "medconnect_clinical_cds_red_flags",
   "policy": {
     "default_classification": "EMERGENCY",
@@ -14,7 +14,12 @@
       "auto_triage": "EMERGENCY",
       "severity_points": 10,
       "patterns": {
-        "english": ["chest pain", "chest pressure", "chest tightness", "pain in chest"],
+        "english": [
+          "chest pain",
+          "chest pressure",
+          "chest tightness",
+          "pain in chest"
+        ],
         "hiligaynon": [
           "masakit dughan",
           "masakit akon dughan",
@@ -26,9 +31,16 @@
           "masakit dibdib",
           "masakit akon dibdib"
         ],
-        "filipino": ["sakit sa dibdib", "masakit ang dibdib", "masakit dibdib ko"]
+        "filipino": [
+          "sakit sa dibdib",
+          "masakit ang dibdib",
+          "masakit dibdib ko"
+        ]
       },
-      "mild_exclusions": ["mild muscle ache after exercise", "mild chest muscle sore after workout"],
+      "mild_exclusions": [
+        "mild muscle ache after exercise",
+        "mild chest muscle sore after workout"
+      ],
       "rationale": "Chest pain may indicate acute coronary or other life-threatening syndromes."
     },
     {
@@ -38,11 +50,32 @@
       "auto_triage": "EMERGENCY",
       "severity_points": 10,
       "patterns": {
-        "english": ["difficulty breathing", "cannot breathe", "shortness of breath", "severe dyspnea", "choking"],
-        "hiligaynon": ["budlay ginhawa", "budlay magginhawa", "budlay gid ang ginhawa", "indi makaginhawa", "dula ginhawa", "lisod magginhawa"],
-        "filipino": ["hirap huminga", "hirap akong huminga", "nahihirapang huminga", "hindi makahinga", "kapos ang paghinga"]
+        "english": [
+          "difficulty breathing",
+          "cannot breathe",
+          "shortness of breath",
+          "severe dyspnea",
+          "choking"
+        ],
+        "hiligaynon": [
+          "budlay ginhawa",
+          "budlay magginhawa",
+          "budlay gid ang ginhawa",
+          "indi makaginhawa",
+          "dula ginhawa",
+          "lisod magginhawa"
+        ],
+        "filipino": [
+          "hirap huminga",
+          "hirap akong huminga",
+          "nahihirapang huminga",
+          "hindi makahinga",
+          "kapos ang paghinga"
+        ]
       },
-      "mild_exclusions": ["mild nasal congestion only"],
+      "mild_exclusions": [
+        "mild nasal congestion only"
+      ],
       "rationale": "Respiratory compromise can rapidly threaten oxygenation."
     },
     {
@@ -52,9 +85,20 @@
       "auto_triage": "EMERGENCY",
       "severity_points": 15,
       "patterns": {
-        "english": ["seizure", "convulsion", "fit"],
-        "hiligaynon": ["naguyam", "ginsuyam", "nagauyam"],
-        "filipino": ["kumbulsyon", "nanginginig nang malakas"]
+        "english": [
+          "seizure",
+          "convulsion",
+          "fit"
+        ],
+        "hiligaynon": [
+          "naguyam",
+          "ginsuyam",
+          "nagauyam"
+        ],
+        "filipino": [
+          "kumbulsyon",
+          "nanginginig nang malakas"
+        ]
       },
       "mild_exclusions": [],
       "rationale": "Seizure activity requires immediate airway and safety assessment."
@@ -66,11 +110,27 @@
       "auto_triage": "EMERGENCY",
       "severity_points": 20,
       "patterns": {
-        "english": ["loss of consciousness", "unconscious", "unresponsive", "passed out", "fainted and did not wake"],
-        "hiligaynon": ["nadulaan malay", "nagpunaw", "wala malay"],
-        "filipino": ["nawalan ng malay", "walang malay", "himatay"]
+        "english": [
+          "loss of consciousness",
+          "unconscious",
+          "unresponsive",
+          "passed out",
+          "fainted and did not wake"
+        ],
+        "hiligaynon": [
+          "nadulaan malay",
+          "nagpunaw",
+          "wala malay"
+        ],
+        "filipino": [
+          "nawalan ng malay",
+          "walang malay",
+          "himatay"
+        ]
       },
-      "mild_exclusions": ["brief lightheaded only"],
+      "mild_exclusions": [
+        "brief lightheaded only"
+      ],
       "rationale": "Altered consciousness is an ABC emergency priority."
     },
     {
@@ -91,8 +151,17 @@
           "cannot speak properly",
           "cannot speak"
         ],
-        "hiligaynon": ["indi makahambal", "indi makabaton sang kamot", "luya isa ka bahin"],
-        "filipino": ["hirap magsalita", "mahina ang isang braso", "nakasimangot ang mukha", "hirap akong huminga"]
+        "hiligaynon": [
+          "indi makahambal",
+          "indi makabaton sang kamot",
+          "luya isa ka bahin"
+        ],
+        "filipino": [
+          "hirap magsalita",
+          "mahina ang isang braso",
+          "nakasimangot ang mukha",
+          "hirap akong huminga"
+        ]
       },
       "mild_exclusions": [],
       "rationale": "Acute stroke symptoms are time-critical."
@@ -104,11 +173,24 @@
       "auto_triage": "EMERGENCY",
       "severity_points": 15,
       "patterns": {
-        "english": ["anaphylaxis", "severe allergic reaction", "throat swelling", "allergic shock"],
-        "hiligaynon": ["gahubag lawas kag budlay magginhawa", "hubag tutunlan"],
-        "filipino": ["matinding allergy", "namamaga ang lalamunan"]
+        "english": [
+          "anaphylaxis",
+          "severe allergic reaction",
+          "throat swelling",
+          "allergic shock"
+        ],
+        "hiligaynon": [
+          "gahubag lawas kag budlay magginhawa",
+          "hubag tutunlan"
+        ],
+        "filipino": [
+          "matinding allergy",
+          "namamaga ang lalamunan"
+        ]
       },
-      "mild_exclusions": ["mild itchy rash only"],
+      "mild_exclusions": [
+        "mild itchy rash only"
+      ],
       "rationale": "Anaphylaxis can progress to airway obstruction."
     },
     {
@@ -118,9 +200,21 @@
       "auto_triage": "EMERGENCY",
       "severity_points": 12,
       "patterns": {
-        "english": ["vomiting blood", "hematemesis", "blood in vomit", "vomited blood"],
-        "hiligaynon": ["may dugo sa suka", "nagsuka dugo", "dugo sa akon suka"],
-        "filipino": ["nagsusuka ng dugo", "may dugo sa suka"]
+        "english": [
+          "vomiting blood",
+          "hematemesis",
+          "blood in vomit",
+          "vomited blood"
+        ],
+        "hiligaynon": [
+          "may dugo sa suka",
+          "nagsuka dugo",
+          "dugo sa akon suka"
+        ],
+        "filipino": [
+          "nagsusuka ng dugo",
+          "may dugo sa suka"
+        ]
       },
       "mild_exclusions": [],
       "rationale": "Hematemesis suggests potentially life-threatening bleeding."
@@ -132,9 +226,20 @@
       "auto_triage": "EMERGENCY",
       "severity_points": 12,
       "patterns": {
-        "english": ["coughing blood", "hemoptysis", "blood in sputum"],
-        "hiligaynon": ["nagauba dugo", "nagasinghot blood", "dugo sa ubo"],
-        "filipino": ["umuubo ng dugo", "may dugo sa plema"]
+        "english": [
+          "coughing blood",
+          "hemoptysis",
+          "blood in sputum"
+        ],
+        "hiligaynon": [
+          "nagauba dugo",
+          "nagasinghot blood",
+          "dugo sa ubo"
+        ],
+        "filipino": [
+          "umuubo ng dugo",
+          "may dugo sa plema"
+        ]
       },
       "mild_exclusions": [],
       "rationale": "Hemoptysis requires urgent emergency evaluation."
@@ -146,11 +251,25 @@
       "auto_triage": "EMERGENCY",
       "severity_points": 12,
       "patterns": {
-        "english": ["severe bleeding", "uncontrolled bleeding", "massive bleeding", "bleeding that will not stop"],
-        "hiligaynon": ["grabe nagadugo", "indi mapunggan ang dugo", "grabe gid nagadugo"],
-        "filipino": ["matinding pagdurugo", "hindi mapigil ang pagdurugo"]
+        "english": [
+          "severe bleeding",
+          "uncontrolled bleeding",
+          "massive bleeding",
+          "bleeding that will not stop"
+        ],
+        "hiligaynon": [
+          "grabe nagadugo",
+          "indi mapunggan ang dugo",
+          "grabe gid nagadugo"
+        ],
+        "filipino": [
+          "matinding pagdurugo",
+          "hindi mapigil ang pagdurugo"
+        ]
       },
-      "mild_exclusions": ["small cut already stopped bleeding"],
+      "mild_exclusions": [
+        "small cut already stopped bleeding"
+      ],
       "rationale": "Uncontrolled hemorrhage can cause shock."
     },
     {
@@ -160,11 +279,25 @@
       "auto_triage": "EMERGENCY",
       "severity_points": 10,
       "patterns": {
-        "english": ["confusion", "disoriented", "altered mental status", "delirium", "not making sense"],
-        "hiligaynon": ["nagakalibog", "indi makahibalo"],
-        "filipino": ["nalilito", "magulo ang isip"]
+        "english": [
+          "confusion",
+          "disoriented",
+          "altered mental status",
+          "delirium",
+          "not making sense"
+        ],
+        "hiligaynon": [
+          "nagakalibog",
+          "indi makahibalo"
+        ],
+        "filipino": [
+          "nalilito",
+          "magulo ang isip"
+        ]
       },
-      "mild_exclusions": ["mild forgetfulness only"],
+      "mild_exclusions": [
+        "mild forgetfulness only"
+      ],
       "rationale": "Acute confusion may signal serious systemic or neurologic illness."
     },
     {
@@ -174,11 +307,24 @@
       "auto_triage": "EMERGENCY",
       "severity_points": 10,
       "patterns": {
-        "english": ["severe dehydration", "no urine", "cannot keep fluids down", "sunken eyes"],
-        "hiligaynon": ["grabe ka-uga", "wala ihi"],
-        "filipino": ["matinding dehydration", "walang ihi"]
+        "english": [
+          "severe dehydration",
+          "no urine",
+          "cannot keep fluids down",
+          "sunken eyes"
+        ],
+        "hiligaynon": [
+          "grabe ka-uga",
+          "wala ihi"
+        ],
+        "filipino": [
+          "matinding dehydration",
+          "walang ihi"
+        ]
       },
-      "mild_exclusions": ["mild thirst only"],
+      "mild_exclusions": [
+        "mild thirst only"
+      ],
       "rationale": "Severe dehydration can lead to shock and organ injury."
     },
     {
@@ -188,9 +334,22 @@
       "auto_triage": "EMERGENCY",
       "severity_points": 15,
       "patterns": {
-        "english": ["poisoning", "poison", "overdose", "ingested toxin", "drank poison"],
-        "hiligaynon": ["naka-inom lason", "nakainom sang lason"],
-        "filipino": ["nakainom ng lason", "pagkalason", "overdose"]
+        "english": [
+          "poisoning",
+          "poison",
+          "overdose",
+          "ingested toxin",
+          "drank poison"
+        ],
+        "hiligaynon": [
+          "naka-inom lason",
+          "nakainom sang lason"
+        ],
+        "filipino": [
+          "nakainom ng lason",
+          "pagkalason",
+          "overdose"
+        ]
       },
       "mild_exclusions": [],
       "rationale": "Toxic exposure requires immediate emergency management."
@@ -202,11 +361,26 @@
       "auto_triage": "EMERGENCY",
       "severity_points": 8,
       "patterns": {
-        "english": ["severe burn", "body burn", "large burn", "burned face", "airway burn"],
-        "hiligaynon": ["nasunog lawas", "nasunog"],
-        "filipino": ["malaking paso", "nasunog ang katawan"]
+        "english": [
+          "severe burn",
+          "body burn",
+          "large burn",
+          "burned face",
+          "airway burn"
+        ],
+        "hiligaynon": [
+          "nasunog lawas",
+          "nasunog"
+        ],
+        "filipino": [
+          "malaking paso",
+          "nasunog ang katawan"
+        ]
       },
-      "mild_exclusions": ["small minor finger burn", "tiny kitchen burn"],
+      "mild_exclusions": [
+        "small minor finger burn",
+        "tiny kitchen burn"
+      ],
       "rationale": "Major burns may require fluid resuscitation and airway protection."
     },
     {
@@ -216,12 +390,1531 @@
       "auto_triage": "EMERGENCY",
       "severity_points": 20,
       "patterns": {
-        "english": ["suicidal", "suicide", "want to die", "kill myself", "end my life"],
-        "hiligaynon": ["gusto magpakamatay", "gusto ko magpakamatay"],
-        "filipino": ["gusto magpakamatay", "nais magpakamatay"]
+        "english": [
+          "suicidal",
+          "suicide",
+          "want to die",
+          "kill myself",
+          "end my life"
+        ],
+        "hiligaynon": [
+          "gusto magpakamatay",
+          "gusto ko magpakamatay"
+        ],
+        "filipino": [
+          "gusto magpakamatay",
+          "nais magpakamatay"
+        ]
       },
       "mild_exclusions": [],
       "rationale": "Active suicidal ideation requires immediate safety intervention."
+    },
+    {
+      "id": "RF015",
+      "name": "Airway Obstruction",
+      "category": "airway",
+      "auto_triage": "EMERGENCY",
+      "severity_points": 15,
+      "patterns": {
+        "english": [
+          "choking",
+          "cannot swallow",
+          "airway blocked",
+          "foreign body in throat",
+          "obstructed airway"
+        ],
+        "hiligaynon": [
+          "nasamaran",
+          "indi makatulon",
+          "natapunan tutunlan",
+          "nabarado tutunlan"
+        ],
+        "filipino": [
+          "nasamid",
+          "hindi maklunok",
+          "barado ang lalamunan",
+          "may bumara sa lalamunan"
+        ]
+      },
+      "mild_exclusions": [
+        "mild sore throat only"
+      ],
+      "rationale": "Airway obstruction is an immediate life threat."
+    },
+    {
+      "id": "RF016",
+      "name": "Cardiac Arrest",
+      "category": "cardiovascular",
+      "auto_triage": "EMERGENCY",
+      "severity_points": 20,
+      "patterns": {
+        "english": [
+          "not breathing",
+          "no pulse",
+          "cardiac arrest",
+          "not responding",
+          "CPR needed"
+        ],
+        "hiligaynon": [
+          "wala ginhawa",
+          "wala pulso",
+          "indi nagabaton"
+        ],
+        "filipino": [
+          "hindi humihinga",
+          "walang pulso",
+          "hindi tumutugon"
+        ]
+      },
+      "mild_exclusions": [],
+      "rationale": "Cardiac arrest requires immediate resuscitation."
+    },
+    {
+      "id": "RF017",
+      "name": "Pregnancy Hemorrhage",
+      "category": "pregnancy",
+      "auto_triage": "EMERGENCY",
+      "severity_points": 18,
+      "patterns": {
+        "english": [
+          "pregnant and bleeding",
+          "pregnancy bleeding heavily",
+          "heavy bleeding while pregnant",
+          "miscarriage with heavy bleeding"
+        ],
+        "hiligaynon": [
+          "buntis kag may dugo",
+          "buntis nagdugo",
+          "grabe dugo buntis"
+        ],
+        "filipino": [
+          "buntis at dumudugo",
+          "buntis na dumugo nang malakas",
+          "malakas na pagdurugo habang buntis"
+        ]
+      },
+      "mild_exclusions": [
+        "spotting only"
+      ],
+      "rationale": "Pregnancy hemorrhage can be life-threatening."
+    },
+    {
+      "id": "RF018",
+      "name": "Ectopic Pregnancy",
+      "category": "pregnancy",
+      "auto_triage": "EMERGENCY",
+      "severity_points": 18,
+      "patterns": {
+        "english": [
+          "ectopic pregnancy",
+          "pregnant with severe abdominal pain",
+          "pregnant shoulder pain"
+        ],
+        "hiligaynon": [
+          "buntis grabe sakit tiyan",
+          "buntis ectopic"
+        ],
+        "filipino": [
+          "ectopic pregnancy",
+          "buntis na masakit ang tiyan",
+          "buntis at masakit balikat"
+        ]
+      },
+      "mild_exclusions": [],
+      "rationale": "Ruptured ectopic pregnancy is a surgical emergency."
+    },
+    {
+      "id": "RF019",
+      "name": "Head Trauma",
+      "category": "trauma",
+      "auto_triage": "EMERGENCY",
+      "severity_points": 12,
+      "patterns": {
+        "english": [
+          "head injury",
+          "hit my head",
+          "head trauma",
+          "fall hit head",
+          "loss of consciousness after head injury"
+        ],
+        "hiligaynon": [
+          "nasamdan ulo",
+          "naigo ulo",
+          "nadula malay pagkahulog"
+        ],
+        "filipino": [
+          "nasaktan ang ulo",
+          "natamaan ang ulo",
+          "nahulog at nasaktan ulo",
+          "nawalan ng malay matapos mahulog"
+        ]
+      },
+      "mild_exclusions": [
+        "small bump no symptoms"
+      ],
+      "rationale": "Significant head trauma may cause intracranial injury."
+    },
+    {
+      "id": "RF020",
+      "name": "Spinal Injury",
+      "category": "trauma",
+      "auto_triage": "EMERGENCY",
+      "severity_points": 12,
+      "patterns": {
+        "english": [
+          "spinal injury",
+          "cannot move legs",
+          "numbness after fall",
+          "neck injury after accident"
+        ],
+        "hiligaynon": [
+          "indi makabaton tiil",
+          "napilasan likod",
+          "nasamdan liog"
+        ],
+        "filipino": [
+          "spinal injury",
+          "hindi makagalaw ng binti",
+          "manhid pagkahulog",
+          "nasaktan ang leeg"
+        ]
+      },
+      "mild_exclusions": [],
+      "rationale": "Spinal cord injury requires immobilization and urgent care."
+    },
+    {
+      "id": "RF021",
+      "name": "Major Trauma",
+      "category": "trauma",
+      "auto_triage": "EMERGENCY",
+      "severity_points": 15,
+      "patterns": {
+        "english": [
+          "major trauma",
+          "motor vehicle accident",
+          "MVA",
+          "car crash",
+          "motorcycle accident",
+          "pedestrian hit"
+        ],
+        "hiligaynon": [
+          "naaksidente",
+          "nadakpan sang sakyan",
+          "nabangga"
+        ],
+        "filipino": [
+          "naaksidente",
+          "car crash",
+          "motor accident",
+          "nabangga ng kotse"
+        ]
+      },
+      "mild_exclusions": [
+        "minor fender bender no injury"
+      ],
+      "rationale": "High-energy trauma requires emergency evaluation."
+    },
+    {
+      "id": "RF022",
+      "name": "Penetrating Trauma",
+      "category": "trauma",
+      "auto_triage": "EMERGENCY",
+      "severity_points": 15,
+      "patterns": {
+        "english": [
+          "gunshot wound",
+          "stab wound",
+          "penetrating injury",
+          "knifed",
+          "shot"
+        ],
+        "hiligaynon": [
+          "nasaksak",
+          "naigo bala",
+          "nasunog sang saksak"
+        ],
+        "filipino": [
+          "nasaksak",
+          "tinarak",
+          "baril",
+          "gunshot",
+          "stab wound"
+        ]
+      },
+      "mild_exclusions": [],
+      "rationale": "Penetrating trauma may cause internal bleeding."
+    },
+    {
+      "id": "RF023",
+      "name": "Amputation",
+      "category": "trauma",
+      "auto_triage": "EMERGENCY",
+      "severity_points": 15,
+      "patterns": {
+        "english": [
+          "amputation",
+          "finger cut off",
+          "severed limb",
+          "partial amputation"
+        ],
+        "hiligaynon": [
+          "naputol tudlo",
+          "naputol kamot",
+          "amputation"
+        ],
+        "filipino": [
+          "putol ang daliri",
+          "putol ang kamay",
+          "amputation"
+        ]
+      },
+      "mild_exclusions": [],
+      "rationale": "Amputation requires emergency hemorrhage control and replant evaluation."
+    },
+    {
+      "id": "RF024",
+      "name": "Crush Injury",
+      "category": "trauma",
+      "auto_triage": "EMERGENCY",
+      "severity_points": 12,
+      "patterns": {
+        "english": [
+          "crush injury",
+          "trapped under",
+          "crushed by",
+          "heavy object on"
+        ],
+        "hiligaynon": [
+          "nadakpan",
+          "napiit",
+          "crush injury"
+        ],
+        "filipino": [
+          "crush injury",
+          "natrap",
+          "nadaganan",
+          "naipit"
+        ]
+      },
+      "mild_exclusions": [],
+      "rationale": "Crush injury may cause compartment syndrome and rhabdomyolysis."
+    },
+    {
+      "id": "RF025",
+      "name": "Drowning",
+      "category": "environmental",
+      "auto_triage": "EMERGENCY",
+      "severity_points": 15,
+      "patterns": {
+        "english": [
+          "drowning",
+          "near drowning",
+          "submerged",
+          "pulled from water"
+        ],
+        "hiligaynon": [
+          "nadanunan",
+          "nalumos",
+          "drowning"
+        ],
+        "filipino": [
+          "nalunod",
+          "near drowning",
+          "lumubog sa tubig"
+        ]
+      },
+      "mild_exclusions": [],
+      "rationale": "Drowning causes hypoxia and requires emergency care."
+    },
+    {
+      "id": "RF026",
+      "name": "Electrocution",
+      "category": "environmental",
+      "auto_triage": "EMERGENCY",
+      "severity_points": 12,
+      "patterns": {
+        "english": [
+          "electrocution",
+          "electric shock",
+          "shocked by electricity"
+        ],
+        "hiligaynon": [
+          "nasamok",
+          "electric shock",
+          "naigo kuryente"
+        ],
+        "filipino": [
+          "na-electrocute",
+          "electric shock",
+          "nakuryente"
+        ]
+      },
+      "mild_exclusions": [
+        "minor static shock"
+      ],
+      "rationale": "Electrical injury may cause arrhythmia and burns."
+    },
+    {
+      "id": "RF027",
+      "name": "Heat Stroke",
+      "category": "environmental",
+      "auto_triage": "EMERGENCY",
+      "severity_points": 12,
+      "patterns": {
+        "english": [
+          "heat stroke",
+          "very hot and confused",
+          "high fever from heat",
+          "collapsed in heat"
+        ],
+        "hiligaynon": [
+          "init gid kag nagakalibog",
+          "heat stroke",
+          "nadula malay sa init"
+        ],
+        "filipino": [
+          "heat stroke",
+          "sobrang init at nalilito",
+          "nawalan ng malay sa init"
+        ]
+      },
+      "mild_exclusions": [
+        "mild heat discomfort"
+      ],
+      "rationale": "Heat stroke is a medical emergency."
+    },
+    {
+      "id": "RF028",
+      "name": "Hypothermia",
+      "category": "environmental",
+      "auto_triage": "EMERGENCY",
+      "severity_points": 10,
+      "patterns": {
+        "english": [
+          "hypothermia",
+          "very cold and confused",
+          "shivering stopped",
+          "exposure cold"
+        ],
+        "hiligaynon": [
+          "grabe tugnaw",
+          "hypothermia"
+        ],
+        "filipino": [
+          "hypothermia",
+          "sobrang lamig at nalilito",
+          "napasma sa lamig"
+        ]
+      },
+      "mild_exclusions": [
+        "feeling cold only"
+      ],
+      "rationale": "Severe hypothermia can cause arrhythmia and death."
+    },
+    {
+      "id": "RF029",
+      "name": "Carbon Monoxide",
+      "category": "toxicology",
+      "auto_triage": "EMERGENCY",
+      "severity_points": 12,
+      "patterns": {
+        "english": [
+          "carbon monoxide",
+          "CO poisoning",
+          "headache everyone in house",
+          "generator fumes"
+        ],
+        "hiligaynon": [
+          "carbon monoxide",
+          "CO poisoning"
+        ],
+        "filipino": [
+          "carbon monoxide",
+          "nalason sa usok",
+          "CO poisoning"
+        ]
+      },
+      "mild_exclusions": [],
+      "rationale": "Carbon monoxide poisoning is silent and lethal."
+    },
+    {
+      "id": "RF030",
+      "name": "Drug Overdose",
+      "category": "toxicology",
+      "auto_triage": "EMERGENCY",
+      "severity_points": 15,
+      "patterns": {
+        "english": [
+          "overdose",
+          "took too many pills",
+          "drug overdose",
+          "ingested medication overdose"
+        ],
+        "hiligaynon": [
+          "sobra nga tambal",
+          "overdose"
+        ],
+        "filipino": [
+          "overdose",
+          "sobrang daming gamot",
+          "drug overdose"
+        ]
+      },
+      "mild_exclusions": [],
+      "rationale": "Overdose may cause respiratory depression and death."
+    },
+    {
+      "id": "RF031",
+      "name": "Meningitis Signs",
+      "category": "infectious",
+      "auto_triage": "EMERGENCY",
+      "severity_points": 12,
+      "patterns": {
+        "english": [
+          "stiff neck with fever",
+          "meningitis",
+          "fever headache stiff neck",
+          "rash with fever stiff neck"
+        ],
+        "hiligaynon": [
+          "gahi liog kag lagnat",
+          "meningitis"
+        ],
+        "filipino": [
+          "matigas ang leeg at lagnat",
+          "meningitis",
+          "lagnat sakit ulo matigas leeg"
+        ]
+      },
+      "mild_exclusions": [
+        "mild neck stiffness only"
+      ],
+      "rationale": "Meningitis can progress rapidly."
+    },
+    {
+      "id": "RF032",
+      "name": "Sepsis",
+      "category": "infectious",
+      "auto_triage": "EMERGENCY",
+      "severity_points": 12,
+      "patterns": {
+        "english": [
+          "sepsis",
+          "fever with confusion",
+          "infection with low blood pressure",
+          "very sick with fever"
+        ],
+        "hiligaynon": [
+          "sepsis",
+          "lagnat kag nagakalibog"
+        ],
+        "filipino": [
+          "sepsis",
+          "lagnat at nalilito",
+          "napakasakit na may lagnat"
+        ]
+      },
+      "mild_exclusions": [],
+      "rationale": "Sepsis requires immediate treatment."
+    },
+    {
+      "id": "RF033",
+      "name": "Testicular Torsion",
+      "category": "urology",
+      "auto_triage": "EMERGENCY",
+      "severity_points": 12,
+      "patterns": {
+        "english": [
+          "testicular pain sudden",
+          "testicular torsion",
+          "sudden scrotal pain"
+        ],
+        "hiligaynon": [
+          "bigla sakit bayag",
+          "testicular torsion"
+        ],
+        "filipino": [
+          "biglang sakit ng bayag",
+          "testicular torsion",
+          "matinding sakit ng testicle"
+        ]
+      },
+      "mild_exclusions": [],
+      "rationale": "Testicular torsion is time-critical."
+    },
+    {
+      "id": "RF034",
+      "name": "Acute Abdomen",
+      "category": "gastrointestinal",
+      "auto_triage": "EMERGENCY",
+      "severity_points": 12,
+      "patterns": {
+        "english": [
+          "rigid abdomen",
+          "acute abdomen",
+          "sudden severe abdominal pain",
+          "board-like abdomen"
+        ],
+        "hiligaynon": [
+          "gahi tiyan",
+          "grabe gid sakit tiyan"
+        ],
+        "filipino": [
+          "matigas ang tiyan",
+          "biglang matinding sakit ng tiyan",
+          "acute abdomen"
+        ]
+      },
+      "mild_exclusions": [
+        "mild cramp"
+      ],
+      "rationale": "Acute abdomen may indicate surgical emergency."
+    },
+    {
+      "id": "RF035",
+      "name": "Pediatric Respiratory Distress",
+      "category": "pediatric",
+      "auto_triage": "EMERGENCY",
+      "severity_points": 12,
+      "patterns": {
+        "english": [
+          "baby cannot breathe",
+          "child blue lips",
+          "infant breathing fast",
+          "child severe wheezing"
+        ],
+        "hiligaynon": [
+          "indi makaginhawa ang bata",
+          "asul bibig sang bata"
+        ],
+        "filipino": [
+          "hindi makahinga ang bata",
+          "asul ang labi ng bata",
+          "mabilis humihinga ang sanggol"
+        ]
+      },
+      "mild_exclusions": [
+        "mild infant congestion"
+      ],
+      "rationale": "Pediatric respiratory failure progresses quickly."
+    },
+    {
+      "id": "RF036",
+      "name": "Neonatal Distress",
+      "category": "pediatric",
+      "auto_triage": "EMERGENCY",
+      "severity_points": 12,
+      "patterns": {
+        "english": [
+          "newborn not feeding",
+          "newborn lethargic",
+          "newborn fever",
+          "bulging fontanelle"
+        ],
+        "hiligaynon": [
+          "bag-o nga bata indi magkaon",
+          "bag-o nga bata luya"
+        ],
+        "filipino": [
+          "sanggol hindi kumakain",
+          "sanggol matamlay",
+          "sanggol may lagnat"
+        ]
+      },
+      "mild_exclusions": [],
+      "rationale": "Neonatal illness requires urgent evaluation."
+    },
+    {
+      "id": "RF037",
+      "name": "Self Harm Active",
+      "category": "mental_health",
+      "auto_triage": "EMERGENCY",
+      "severity_points": 20,
+      "patterns": {
+        "english": [
+          "self harm",
+          "cut myself",
+          "hurt myself",
+          "attempted suicide",
+          "overdose to die"
+        ],
+        "hiligaynon": [
+          "ginpilasan ko lawas",
+          "gusto magpakamatay"
+        ],
+        "filipino": [
+          "sinugatan ko sarili",
+          "sinubukan magpakamatay",
+          "self harm"
+        ]
+      },
+      "mild_exclusions": [],
+      "rationale": "Active self-harm requires immediate safety intervention."
+    },
+    {
+      "id": "RF038",
+      "name": "Psychosis Acute",
+      "category": "mental_health",
+      "auto_triage": "EMERGENCY",
+      "severity_points": 10,
+      "patterns": {
+        "english": [
+          "hallucinations",
+          "hearing voices",
+          "psychosis",
+          "paranoid and aggressive"
+        ],
+        "hiligaynon": [
+          "nakabati tingog",
+          "hallucinations"
+        ],
+        "filipino": [
+          "nakakarinig ng boses",
+          "psychosis",
+          "may hallucinations"
+        ]
+      },
+      "mild_exclusions": [],
+      "rationale": "Acute psychosis may pose safety risk."
+    },
+    {
+      "id": "RF039",
+      "name": "Smoke Inhalation",
+      "category": "respiratory",
+      "auto_triage": "EMERGENCY",
+      "severity_points": 12,
+      "patterns": {
+        "english": [
+          "smoke inhalation",
+          "house fire",
+          "inhaled smoke",
+          "burning building"
+        ],
+        "hiligaynon": [
+          "nasunog balay",
+          "smoke inhalation"
+        ],
+        "filipino": [
+          "nasunog ang bahay",
+          "smoke inhalation",
+          "nalason sa usok"
+        ]
+      },
+      "mild_exclusions": [
+        "brief smoke smell only"
+      ],
+      "rationale": "Smoke inhalation causes airway injury and hypoxia."
+    },
+    {
+      "id": "RF040",
+      "name": "Hypoglycemia Severe",
+      "category": "endocrine",
+      "auto_triage": "EMERGENCY",
+      "severity_points": 10,
+      "patterns": {
+        "english": [
+          "very low blood sugar",
+          "diabetic unconscious",
+          "hypoglycemia confused",
+          "sugar too low"
+        ],
+        "hiligaynon": [
+          "mababa gid asukal",
+          "hypoglycemia"
+        ],
+        "filipino": [
+          "sobrang baba ng asukal",
+          "hypoglycemia",
+          "mababa ang blood sugar"
+        ]
+      },
+      "mild_exclusions": [
+        "mild hunger only"
+      ],
+      "rationale": "Severe hypoglycemia can cause seizures and coma."
+    },
+    {
+      "id": "RF041",
+      "name": "Hypertensive Emergency",
+      "category": "cardiovascular",
+      "auto_triage": "EMERGENCY",
+      "severity_points": 10,
+      "patterns": {
+        "english": [
+          "blood pressure very high with headache",
+          "hypertensive emergency",
+          "severe headache high BP"
+        ],
+        "hiligaynon": [
+          "taas blood pressure kag sakit ulo",
+          "hypertensive crisis"
+        ],
+        "filipino": [
+          "napakataas ng blood pressure at sakit ulo",
+          "hypertensive emergency"
+        ]
+      },
+      "mild_exclusions": [
+        "mild elevated BP only"
+      ],
+      "rationale": "Hypertensive emergency risks stroke and organ damage."
+    },
+    {
+      "id": "RF042",
+      "name": "Pulmonary Embolism",
+      "category": "cardiovascular",
+      "auto_triage": "EMERGENCY",
+      "severity_points": 12,
+      "patterns": {
+        "english": [
+          "sudden shortness of breath",
+          "chest pain with breathing",
+          "PE",
+          "pulmonary embolism"
+        ],
+        "hiligaynon": [
+          "bigla budlay ginhawa",
+          "pulmonary embolism"
+        ],
+        "filipino": [
+          "biglang hirap huminga",
+          "pulmonary embolism",
+          "PE"
+        ]
+      },
+      "mild_exclusions": [],
+      "rationale": "PE is potentially fatal."
+    },
+    {
+      "id": "RF043",
+      "name": "Aortic Dissection",
+      "category": "cardiovascular",
+      "auto_triage": "EMERGENCY",
+      "severity_points": 15,
+      "patterns": {
+        "english": [
+          "tearing chest pain",
+          "aortic dissection",
+          "sudden severe chest pain to back"
+        ],
+        "hiligaynon": [
+          "grabe sakit dughan pakadto likod",
+          "aortic dissection"
+        ],
+        "filipino": [
+          "parang napupunit na sakit ng dibdib",
+          "aortic dissection"
+        ]
+      },
+      "mild_exclusions": [],
+      "rationale": "Aortic dissection is a surgical emergency."
+    },
+    {
+      "id": "RF044",
+      "name": "Retinal Detachment",
+      "category": "ophthalmology",
+      "auto_triage": "EMERGENCY",
+      "severity_points": 8,
+      "patterns": {
+        "english": [
+          "curtain over vision",
+          "sudden floaters many",
+          "retinal detachment",
+          "flashes and curtain vision"
+        ],
+        "hiligaynon": [
+          "retinal detachment",
+          "bigla nadula panan-aw"
+        ],
+        "filipino": [
+          "retinal detachment",
+          "biglang nawala ang paningin",
+          "parang may kurtina sa mata"
+        ]
+      },
+      "mild_exclusions": [
+        "occasional floater"
+      ],
+      "rationale": "Retinal detachment is time-sensitive."
+    },
+    {
+      "id": "RF045",
+      "name": "Chemical Eye Burn",
+      "category": "ophthalmology",
+      "auto_triage": "EMERGENCY",
+      "severity_points": 10,
+      "patterns": {
+        "english": [
+          "chemical in eye",
+          "eye burned by chemical",
+          "splash in eye"
+        ],
+        "hiligaynon": [
+          "kemikal sa mata",
+          "chemical eye burn"
+        ],
+        "filipino": [
+          "kimikal sa mata",
+          "napaso ang mata ng kemikal"
+        ]
+      },
+      "mild_exclusions": [],
+      "rationale": "Chemical eye injury requires immediate irrigation."
+    },
+    {
+      "id": "RF046",
+      "name": "Ingested Battery",
+      "category": "toxicology",
+      "auto_triage": "EMERGENCY",
+      "severity_points": 12,
+      "patterns": {
+        "english": [
+          "swallowed battery",
+          "ingested battery",
+          "button battery swallowed"
+        ],
+        "hiligaynon": [
+          "naka-inom baterya",
+          "swallowed battery"
+        ],
+        "filipino": [
+          "lumunok ng baterya",
+          "button battery",
+          "nainom ang baterya"
+        ]
+      },
+      "mild_exclusions": [],
+      "rationale": "Button battery ingestion causes tissue necrosis."
+    },
+    {
+      "id": "RF047",
+      "name": "Domestic Violence Acute",
+      "category": "trauma",
+      "auto_triage": "EMERGENCY",
+      "severity_points": 10,
+      "patterns": {
+        "english": [
+          "domestic violence",
+          "partner hit me",
+          "abused by spouse",
+          "assaulted at home"
+        ],
+        "hiligaynon": [
+          "ginpang-anay sa balay",
+          "domestic violence"
+        ],
+        "filipino": [
+          "domestic violence",
+          "sinaktan ng asawa",
+          "abused sa bahay"
+        ]
+      },
+      "mild_exclusions": [],
+      "rationale": "Acute interpersonal violence requires safety assessment."
+    },
+    {
+      "id": "RF048",
+      "name": "Sexual Assault",
+      "category": "trauma",
+      "auto_triage": "EMERGENCY",
+      "severity_points": 10,
+      "patterns": {
+        "english": [
+          "sexual assault",
+          "raped",
+          "sexual abuse"
+        ],
+        "hiligaynon": [
+          "gin-abuso",
+          "sexual assault"
+        ],
+        "filipino": [
+          "sexual assault",
+          "ginahasa",
+          "na-abuso"
+        ]
+      },
+      "mild_exclusions": [],
+      "rationale": "Sexual assault requires forensic and medical emergency care."
+    },
+    {
+      "id": "RF049",
+      "name": "Postpartum Hemorrhage",
+      "category": "pregnancy",
+      "auto_triage": "EMERGENCY",
+      "severity_points": 15,
+      "patterns": {
+        "english": [
+          "postpartum hemorrhage",
+          "heavy bleeding after delivery",
+          "bleeding after giving birth"
+        ],
+        "hiligaynon": [
+          "grabe dugo after manganak",
+          "postpartum hemorrhage"
+        ],
+        "filipino": [
+          "malakas na pagdurugo pagkatapos manganak",
+          "postpartum hemorrhage"
+        ]
+      },
+      "mild_exclusions": [
+        "normal lochia only"
+      ],
+      "rationale": "Postpartum hemorrhage can be rapidly fatal."
+    },
+    {
+      "id": "RF050",
+      "name": "Reduced Fetal Movement",
+      "category": "pregnancy",
+      "auto_triage": "EMERGENCY",
+      "severity_points": 10,
+      "patterns": {
+        "english": [
+          "baby not moving",
+          "reduced fetal movement",
+          "no fetal movement"
+        ],
+        "hiligaynon": [
+          "wala galaw sang bata sa tiyan",
+          "reduced fetal movement"
+        ],
+        "filipino": [
+          "hindi gumagalaw ang baby",
+          "bawas galaw ng baby",
+          "no fetal movement"
+        ]
+      },
+      "mild_exclusions": [],
+      "rationale": "Reduced fetal movement may indicate fetal compromise."
+    },
+    {
+      "id": "RF051",
+      "name": "Snake Bite",
+      "category": "environmental",
+      "auto_triage": "EMERGENCY",
+      "severity_points": 10,
+      "patterns": {
+        "english": [
+          "snake bite",
+          "snakebite",
+          "nakagat ng ahas"
+        ],
+        "hiligaynon": [
+          "nakagat sang sawa"
+        ],
+        "filipino": [
+          "nakagat ng ahas"
+        ]
+      },
+      "mild_exclusions": [],
+      "rationale": "Emergency warning sign: Snake Bite."
+    },
+    {
+      "id": "RF052",
+      "name": "Anaphylaxis Progression",
+      "category": "allergy",
+      "auto_triage": "EMERGENCY",
+      "severity_points": 10,
+      "patterns": {
+        "english": [
+          "anaphylaxis worsening",
+          "allergy with breathing difficulty"
+        ],
+        "hiligaynon": [
+          "allergy kag budlay ginhawa"
+        ],
+        "filipino": [
+          "allergy at hirap huminga"
+        ]
+      },
+      "mild_exclusions": [],
+      "rationale": "Emergency warning sign: Anaphylaxis Progression."
+    },
+    {
+      "id": "RF053",
+      "name": "Active Labor Complication",
+      "category": "pregnancy",
+      "auto_triage": "EMERGENCY",
+      "severity_points": 10,
+      "patterns": {
+        "english": [
+          "labor with bleeding",
+          "contractions with bleeding"
+        ],
+        "hiligaynon": [
+          "buntis nagbati kag may dugo"
+        ],
+        "filipino": [
+          "nanganganak at dumudugo"
+        ]
+      },
+      "mild_exclusions": [],
+      "rationale": "Emergency warning sign: Active Labor Complication."
+    },
+    {
+      "id": "RF054",
+      "name": "Dialysis Emergency",
+      "category": "nephrology",
+      "auto_triage": "EMERGENCY",
+      "severity_points": 10,
+      "patterns": {
+        "english": [
+          "dialysis chest pain",
+          "missed dialysis very sick"
+        ],
+        "hiligaynon": [
+          "dialysis emergency"
+        ],
+        "filipino": [
+          "dialysis emergency"
+        ]
+      },
+      "mild_exclusions": [],
+      "rationale": "Emergency warning sign: Dialysis Emergency."
+    },
+    {
+      "id": "RF055",
+      "name": "Transplant Rejection",
+      "category": "general",
+      "auto_triage": "EMERGENCY",
+      "severity_points": 10,
+      "patterns": {
+        "english": [
+          "transplant rejection",
+          "new organ not working"
+        ],
+        "hiligaynon": [
+          "transplant rejection"
+        ],
+        "filipino": [
+          "transplant rejection"
+        ]
+      },
+      "mild_exclusions": [],
+      "rationale": "Emergency warning sign: Transplant Rejection."
+    },
+    {
+      "id": "RF056",
+      "name": "Immunocompromised Sepsis",
+      "category": "infectious",
+      "auto_triage": "EMERGENCY",
+      "severity_points": 10,
+      "patterns": {
+        "english": [
+          "chemotherapy fever",
+          "cancer patient fever",
+          "immunocompromised fever"
+        ],
+        "hiligaynon": [
+          "lagnat kag chemotherapy"
+        ],
+        "filipino": [
+          "lagnat at chemotherapy"
+        ]
+      },
+      "mild_exclusions": [],
+      "rationale": "Emergency warning sign: Immunocompromised Sepsis."
+    },
+    {
+      "id": "RF057",
+      "name": "Warfarin Bleeding",
+      "category": "hematology",
+      "auto_triage": "EMERGENCY",
+      "severity_points": 10,
+      "patterns": {
+        "english": [
+          "warfarin bleeding",
+          "blood thinner bleeding"
+        ],
+        "hiligaynon": [
+          "warfarin bleeding"
+        ],
+        "filipino": [
+          "warfarin bleeding"
+        ]
+      },
+      "mild_exclusions": [],
+      "rationale": "Emergency warning sign: Warfarin Bleeding."
+    },
+    {
+      "id": "RF058",
+      "name": "Insulin Error",
+      "category": "endocrine",
+      "auto_triage": "EMERGENCY",
+      "severity_points": 10,
+      "patterns": {
+        "english": [
+          "insulin overdose",
+          "too much insulin"
+        ],
+        "hiligaynon": [
+          "sobra insulin"
+        ],
+        "filipino": [
+          "sobra insulin"
+        ]
+      },
+      "mild_exclusions": [],
+      "rationale": "Emergency warning sign: Insulin Error."
+    },
+    {
+      "id": "RF059",
+      "name": "Adrenal Crisis",
+      "category": "endocrine",
+      "auto_triage": "EMERGENCY",
+      "severity_points": 10,
+      "patterns": {
+        "english": [
+          "adrenal crisis",
+          "addisonian crisis"
+        ],
+        "hiligaynon": [
+          "adrenal crisis"
+        ],
+        "filipino": [
+          "adrenal crisis"
+        ]
+      },
+      "mild_exclusions": [],
+      "rationale": "Emergency warning sign: Adrenal Crisis."
+    },
+    {
+      "id": "RF060",
+      "name": "Ovarian Torsion",
+      "category": "gynecology",
+      "auto_triage": "EMERGENCY",
+      "severity_points": 10,
+      "patterns": {
+        "english": [
+          "ovarian torsion",
+          "sudden pelvic pain"
+        ],
+        "hiligaynon": [
+          "ovarian torsion"
+        ],
+        "filipino": [
+          "ovarian torsion"
+        ]
+      },
+      "mild_exclusions": [],
+      "rationale": "Emergency warning sign: Ovarian Torsion."
+    },
+    {
+      "id": "RF061",
+      "name": "Ruptured Ovarian Cyst",
+      "category": "gynecology",
+      "auto_triage": "EMERGENCY",
+      "severity_points": 10,
+      "patterns": {
+        "english": [
+          "ruptured ovarian cyst",
+          "sudden pelvic pain fainting"
+        ],
+        "hiligaynon": [
+          "ruptured ovarian cyst"
+        ],
+        "filipino": [
+          "ruptured ovarian cyst"
+        ]
+      },
+      "mild_exclusions": [],
+      "rationale": "Emergency warning sign: Ruptured Ovarian Cyst."
+    },
+    {
+      "id": "RF062",
+      "name": "Foreign Body Aspiration",
+      "category": "respiratory",
+      "auto_triage": "EMERGENCY",
+      "severity_points": 10,
+      "patterns": {
+        "english": [
+          "aspirated food",
+          "choked on food child"
+        ],
+        "hiligaynon": [
+          "na-aspirate"
+        ],
+        "filipino": [
+          "na-aspirate"
+        ]
+      },
+      "mild_exclusions": [],
+      "rationale": "Emergency warning sign: Foreign Body Aspiration."
+    },
+    {
+      "id": "RF063",
+      "name": "Epiglottitis",
+      "category": "respiratory",
+      "auto_triage": "EMERGENCY",
+      "severity_points": 10,
+      "patterns": {
+        "english": [
+          "drooling cannot swallow fever",
+          "epiglottitis"
+        ],
+        "hiligaynon": [
+          "epiglottitis"
+        ],
+        "filipino": [
+          "epiglottitis"
+        ]
+      },
+      "mild_exclusions": [],
+      "rationale": "Emergency warning sign: Epiglottitis."
+    },
+    {
+      "id": "RF064",
+      "name": "Tension Pneumothorax",
+      "category": "respiratory",
+      "auto_triage": "EMERGENCY",
+      "severity_points": 10,
+      "patterns": {
+        "english": [
+          "tension pneumothorax",
+          "sudden chest pain breathless"
+        ],
+        "hiligaynon": [
+          "tension pneumothorax"
+        ],
+        "filipino": [
+          "tension pneumothorax"
+        ]
+      },
+      "mild_exclusions": [],
+      "rationale": "Emergency warning sign: Tension Pneumothorax."
+    },
+    {
+      "id": "RF065",
+      "name": "GI Perforation",
+      "category": "gastrointestinal",
+      "auto_triage": "EMERGENCY",
+      "severity_points": 10,
+      "patterns": {
+        "english": [
+          "perforated ulcer",
+          "sudden severe abdominal pain rigid"
+        ],
+        "hiligaynon": [
+          "GI perforation"
+        ],
+        "filipino": [
+          "GI perforation"
+        ]
+      },
+      "mild_exclusions": [],
+      "rationale": "Emergency warning sign: GI Perforation."
+    },
+    {
+      "id": "RF066",
+      "name": "Upper GI Bleed",
+      "category": "gastrointestinal",
+      "auto_triage": "EMERGENCY",
+      "severity_points": 10,
+      "patterns": {
+        "english": [
+          "black stool with dizziness",
+          "melena with syncope"
+        ],
+        "hiligaynon": [
+          "itom tae kag lipong"
+        ],
+        "filipino": [
+          "itim na dumi at nahihilo"
+        ]
+      },
+      "mild_exclusions": [],
+      "rationale": "Emergency warning sign: Upper GI Bleed."
+    },
+    {
+      "id": "RF067",
+      "name": "Lower GI Bleed Massive",
+      "category": "gastrointestinal",
+      "auto_triage": "EMERGENCY",
+      "severity_points": 10,
+      "patterns": {
+        "english": [
+          "massive rectal bleeding",
+          "blood pouring from rectum"
+        ],
+        "hiligaynon": [
+          "grabe dugo sa tae"
+        ],
+        "filipino": [
+          "grabe dugo sa puwit"
+        ]
+      },
+      "mild_exclusions": [],
+      "rationale": "Emergency warning sign: Lower GI Bleed Massive."
+    },
+    {
+      "id": "RF068",
+      "name": "Acute Urinary Retention",
+      "category": "urology",
+      "auto_triage": "EMERGENCY",
+      "severity_points": 10,
+      "patterns": {
+        "english": [
+          "cannot urinate severe pain",
+          "acute retention"
+        ],
+        "hiligaynon": [
+          "indi makaihi"
+        ],
+        "filipino": [
+          "hindi makaihi"
+        ]
+      },
+      "mild_exclusions": [],
+      "rationale": "Emergency warning sign: Acute Urinary Retention."
+    },
+    {
+      "id": "RF069",
+      "name": "Priapism",
+      "category": "urology",
+      "auto_triage": "EMERGENCY",
+      "severity_points": 10,
+      "patterns": {
+        "english": [
+          "priapism",
+          "prolonged painful erection"
+        ],
+        "hiligaynon": [
+          "priapism"
+        ],
+        "filipino": [
+          "priapism"
+        ]
+      },
+      "mild_exclusions": [],
+      "rationale": "Emergency warning sign: Priapism."
+    },
+    {
+      "id": "RF070",
+      "name": "Compartment Syndrome",
+      "category": "trauma",
+      "auto_triage": "EMERGENCY",
+      "severity_points": 10,
+      "patterns": {
+        "english": [
+          "compartment syndrome",
+          "severe limb pain after injury"
+        ],
+        "hiligaynon": [
+          "compartment syndrome"
+        ],
+        "filipino": [
+          "compartment syndrome"
+        ]
+      },
+      "mild_exclusions": [],
+      "rationale": "Emergency warning sign: Compartment Syndrome."
+    },
+    {
+      "id": "RF071",
+      "name": "Burn Airway",
+      "category": "trauma",
+      "auto_triage": "EMERGENCY",
+      "severity_points": 10,
+      "patterns": {
+        "english": [
+          "facial burn",
+          "burn with soot in nose"
+        ],
+        "hiligaynon": [
+          "nasunog nawong"
+        ],
+        "filipino": [
+          "nasunog ang mukha"
+        ]
+      },
+      "mild_exclusions": [],
+      "rationale": "Emergency warning sign: Burn Airway."
+    },
+    {
+      "id": "RF072",
+      "name": "High Voltage Burn",
+      "category": "trauma",
+      "auto_triage": "EMERGENCY",
+      "severity_points": 10,
+      "patterns": {
+        "english": [
+          "high voltage burn",
+          "electrical burn large"
+        ],
+        "hiligaynon": [
+          "high voltage burn"
+        ],
+        "filipino": [
+          "high voltage burn"
+        ]
+      },
+      "mild_exclusions": [],
+      "rationale": "Emergency warning sign: High Voltage Burn."
+    },
+    {
+      "id": "RF073",
+      "name": "Organophosphate",
+      "category": "toxicology",
+      "auto_triage": "EMERGENCY",
+      "severity_points": 10,
+      "patterns": {
+        "english": [
+          "organophosphate",
+          "pesticide poisoning"
+        ],
+        "hiligaynon": [
+          "organophosphate"
+        ],
+        "filipino": [
+          "pesticide poisoning"
+        ]
+      },
+      "mild_exclusions": [],
+      "rationale": "Emergency warning sign: Organophosphate."
+    },
+    {
+      "id": "RF074",
+      "name": "Alcohol Withdrawal Seizure",
+      "category": "toxicology",
+      "auto_triage": "EMERGENCY",
+      "severity_points": 10,
+      "patterns": {
+        "english": [
+          "withdrawal seizure",
+          "alcohol withdrawal seizure"
+        ],
+        "hiligaynon": [
+          "withdrawal seizure"
+        ],
+        "filipino": [
+          "withdrawal seizure"
+        ]
+      },
+      "mild_exclusions": [],
+      "rationale": "Emergency warning sign: Alcohol Withdrawal Seizure."
+    },
+    {
+      "id": "RF075",
+      "name": "Blue Lips",
+      "category": "respiratory",
+      "auto_triage": "EMERGENCY",
+      "severity_points": 10,
+      "patterns": {
+        "english": [
+          "blue lips",
+          "cyanosis lips",
+          "asul ang labi"
+        ],
+        "hiligaynon": [
+          "asul bibig"
+        ],
+        "filipino": [
+          "asul ang labi"
+        ]
+      },
+      "mild_exclusions": [],
+      "rationale": "Emergency warning sign: Blue Lips."
     }
   ]
 }

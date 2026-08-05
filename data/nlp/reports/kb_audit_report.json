@@ -1,0 +1,51 @@
+{
+  "generated_at": "2026-08-05T13:26:46.216479+00:00",
+  "summary": {
+    "json_symptoms": 305,
+    "json_red_flags": 75,
+    "combination_rows": 7388,
+    "combination_unique_pairs": 7388,
+    "emergency_csv_rows": 633,
+    "emergency_csv_real_patterns": 754,
+    "padding_rows_emergency_csv": 0,
+    "targets_met": true
+  },
+  "duplicates": {
+    "json_symptom_ids": [],
+    "json_symptom_names": [
+      "loss of appetite",
+      "facial swelling"
+    ],
+    "csv_emergency_patterns_over_repeated": [
+      "chest pain",
+      "coughing blood"
+    ]
+  },
+  "conflicts": {
+    "weight_inconsistencies": [],
+    "combination_classification_conflicts": [],
+    "invalid_emergency_csv_classes": []
+  },
+  "coverage": {
+    "json_red_flag_patterns": 493,
+    "csv_emergency_patterns": 754,
+    "pattern_overlap_count": 377,
+    "json_only_patterns": 116,
+    "csv_only_patterns": 377,
+    "symptoms_missing_hiligaynon": [],
+    "symptoms_missing_filipino": [],
+    "translation_by_language": {
+      "hiligaynon": 14140,
+      "mixed": 175
+    }
+  },
+  "gaps_vs_targets": [],
+  "recommendations": [
+    "Expand symptom_knowledge_base.json to 250+ weighted symptoms (runtime scoring source).",
+    "Expand red_flags_library.json to 50+ structured red flags with mild_exclusions.",
+    "Replace generator padding (caseN) in emergency_red_flags.csv with real multilingual phrases.",
+    "Add clinically distinct symptom combination pairs aligned to JSON symptom ids.",
+    "Ensure every JSON symptom has Hiligaynon and Filipino terms for equal multilingual coverage.",
+    "Resolve combination pairs with conflicting classifications before deployment."
+  ]
+}

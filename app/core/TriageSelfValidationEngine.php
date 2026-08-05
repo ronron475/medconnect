@@ -15,6 +15,9 @@ final class TriageSelfValidationEngine
         'neurological',
         'severe_bleeding',
         'pregnancy_emergency',
+        'poisoning',
+        'burns',
+        'trauma',
         'high_risk_patient',
         'symptom_combination',
         'duration',
@@ -97,6 +100,9 @@ final class TriageSelfValidationEngine
             'temperature_rules_applied'   => $temp !== '' || !self::mentionsTemperature($hay),
             'pain_scale_rules_applied'    => $pain !== '' || !self::mentionsPainScale($hay),
             'risk_factors_considered'     => $risks !== [] || !self::mentionsRisk($hay),
+            'chronic_disease_detected'    => self::mentionsChronic($hay) === ($risks !== [] || !self::mentionsChronic($hay)),
+            'pregnancy_detected'          => !preg_match('/\b(pregnant|buntis|buntis ako)\b/u', $hay)
+                || preg_match('/\bpregnan|buntis|pregnancy\b/ui', implode(' ', $risks) . ' ' . implode(' ', $symptoms)),
             'emergency_red_flags_checked' => true, // always scanned in engine
             'highest_priority_selected'   => true,
             'explanation_matches'         => self::explanationMatches($display, $reason, $redFlags, $symptoms),
@@ -222,6 +228,16 @@ final class TriageSelfValidationEngine
         if (preg_match('/\b(pregnant|buntis).{0,40}(bleed|dugo)/u', $hay)) {
             return 'pregnancy_emergency';
         }
+        if (preg_match('/\b(poison|poisoning|overdose|lason|pagkalason|toxin|pesticide|organophosphate)\b/u', $hay)) {
+            return 'poisoning';
+        }
+        if (preg_match('/\b(severe burn|large burn|facial burn|airway burn|nasunog lawas|malaking paso|smoke inhalation)\b/u', $hay)) {
+            return 'burns';
+        }
+        if (preg_match('/\b(head injury|trauma|accident|naaksidente|gunshot|stab wound|amputation|crush injury|'
+            . 'motor vehicle|car crash|spinal injury|major trauma|nasaksak|naigo ulo)\b/u', $hay)) {
+            return 'trauma';
+        }
         if ($risks !== [] && preg_match('/\b(chest pain|difficulty breathing|dughan|ginhawa)\b/u', $hay)) {
             return 'high_risk_patient';
         }
@@ -250,7 +266,10 @@ final class TriageSelfValidationEngine
     /** @param list<string> $redFlags */
     private static function classificationFromWinningRule(string $rule, string $current, array $redFlags, string $hay): string
     {
-        if (in_array($rule, ['emergency_red_flags', 'airway', 'breathing', 'circulation', 'neurological', 'severe_bleeding', 'pregnancy_emergency'], true)) {
+        if (in_array($rule, [
+            'emergency_red_flags', 'airway', 'breathing', 'circulation', 'neurological',
+            'severe_bleeding', 'pregnancy_emergency', 'poisoning', 'burns', 'trauma',
+        ], true)) {
             return 'EMERGENCY';
         }
         if ($rule === 'administrative_request') {
@@ -495,6 +514,11 @@ final class TriageSelfValidationEngine
     private static function mentionsRisk(string $hay): bool
     {
         return (bool) preg_match('/\b(pregnant|buntis|diabetes|asthma|hypertension|heart disease|senior|infant|child|anak)\b/u', $hay);
+    }
+
+    private static function mentionsChronic(string $hay): bool
+    {
+        return (bool) preg_match('/\b(diabetes|asthma|hypertension|heart disease|kidney disease|cancer|copd|immunocompromised|maintenance medicine)\b/u', $hay);
     }
 
     /** @param list<string> $symptoms @param list<string> $negated */

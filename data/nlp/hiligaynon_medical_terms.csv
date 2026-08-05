@@ -14351,3 +14351,37 @@ term_id,term,english,concept,language,status
 ,budlay ulo,ulo,ulo,hiligaynon,active
 ,budlay dughan,dughan,dughan,hiligaynon,active
 ,budlay ginhawa,ginhawa,ginhawa,hiligaynon,active
+HILX14353,may init,Fever,fever,hiligaynon,active
+HILX14354,init kaayo,Fever,fever,hiligaynon,active
+HILX14355,ginapaso,Fever,fever,hiligaynon,active
+HILX14356,paso lawas,Fever,fever,hiligaynon,active
+HILX14357,lagnat gid,Fever,fever,hiligaynon,active
+HILX14358,ubo gid,Cough,cough,hiligaynon,active
+HILX14359,ga ubo,Cough,cough,hiligaynon,active
+HILX14360,ubo man,Cough,cough,hiligaynon,active
+HILX14361,wala ginhawa,Difficulty Breathing,difficulty_breathing,hiligaynon,active
+HILX14362,ginahapo gid,Difficulty Breathing,difficulty_breathing,hiligaynon,active
+HILX14363,hapo kaayo,Difficulty Breathing,difficulty_breathing,hiligaynon,active
+HILX14364,lisod ginhawa,Difficulty Breathing,difficulty_breathing,hiligaynon,active
+HILX14365,sakit dughan gid,Chest Pain,chest_pain,hiligaynon,active
+HILX14366,sakit sa dughan,Chest Pain,chest_pain,hiligaynon,active
+HILX14367,gapasakit tiyan,Abdominal Pain,abdominal_pain,hiligaynon,active
+HILX14368,sakit ulo gid,Headache,headache,hiligaynon,active
+HILX14369,masakit ulo ko,Headache,headache,hiligaynon,active
+HILX14370,gapasakit ulo,Headache,headache,hiligaynon,active
+HILX14371,naga suka gid,Vomiting,vomiting,hiligaynon,active
+HILX14372,suka man,Vomiting,vomiting,hiligaynon,active
+HILX14373,nagsuka ko,Vomiting,vomiting,hiligaynon,active
+HILX14374,lipong gid,Dizziness,dizziness,hiligaynon,active
+HILX14375,nagkalipong,Dizziness,dizziness,hiligaynon,active
+HILX14376,luya gid,Weakness,weakness,hiligaynon,active
+HILX14377,naluya gid,Weakness,weakness,hiligaynon,active
+HILX14378,naga tae gid,Diarrhea,diarrhea,hiligaynon,active
+HILX14379,tae man,Diarrhea,diarrhea,hiligaynon,active
+HILX14380,dugo gid,Bleeding,bleeding,hiligaynon,active
+HILX14381,grabe dugo,Bleeding,bleeding,hiligaynon,active
+HILX14382,may fever ako,Fever,fever,mixed,active
+HILX14383,may ubo gid,Cough,cough,mixed,active
+HILX14384,budlay mag breathe,Difficulty Breathing,difficulty_breathing,mixed,active
+HILX14385,need ko medicine refill,Medicine Refill,administrative,mixed,active
+HILX14386,follow up lang,Follow-up,administrative,mixed,active

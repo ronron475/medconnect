@@ -71,6 +71,83 @@ def _flexible_phrase_hit(hay: str, term: str) -> bool:
     return bool(re.search(pattern, hay))
 
 
+def _term_matches_with_context(hay: str, term: str, symptom: dict[str, Any]) -> bool:
+    if " " in term or "-" in term:
+        hit = _flexible_phrase_hit(hay, term)
+    else:
+        hit = bool(re.search(rf"(?<!\w){re.escape(term)}(?!\w)", hay))
+    if not hit:
+        return False
+
+    name = str(symptom.get("symptom_name") or "").strip().lower()
+    if name and name in hay:
+        return True
+
+    if name == "acute abdomen":
+        return bool(re.search(r"\b(acute|rigid|peritonitis|sudden severe)\b", hay))
+
+    explicit: list[str] = []
+    for key in ("keywords", "synonyms", "hiligaynon_terms", "filipino_terms"):
+        for t in symptom.get(key) or []:
+            t = str(t).strip().lower()
+            if t:
+                explicit.append(t)
+    explicit = list(dict.fromkeys(explicit))
+
+    generic = {"fever", "pain", "cough", "ache", "bleeding", "weakness", "fatigue", "rash", "swelling"}
+    if term in explicit and term not in generic and len(term) >= 6:
+        return True
+    if " " in term and term in explicit:
+        return True
+
+    high_acuity = {"appendicitis pain", "pancreatitis pain", "testicular torsion", "sepsis symptoms", "meningitis symptoms"}
+    if name in high_acuity and not re.search(r"\b(severe|acute|sudden|worst|rigid|unbearable|grabe)\b", hay):
+        return False
+
+    if re.match(r"^(child|infant|pediatric)\s+", name):
+        specific = name.split(" ", 1)[1] if " " in name else ""
+        if specific and specific not in hay:
+            return False
+
+    if name.endswith(" pain"):
+        location = name.replace(" pain", "")
+        body_map = {
+            "abdominal": r"\b(abdomen|abdominal|stomach|belly|tiyan)\b",
+            "back": r"\b(back|likod)\b",
+            "chest": r"\b(chest|dughan|dibdib)\b",
+            "head": r"\b(head|ulo)\b",
+            "neck": r"\b(neck|liog|leeg)\b",
+        }
+        if location in body_map:
+            return bool(re.search(body_map[location], hay))
+        if location != "chronic" and location not in hay:
+            return False
+
+    name_words = name.split()
+    term_words = term.split()
+    qual_generic = {"fever", "pain", "cough", "bleeding", "ache", "symptoms", "symptom", "severe", "acute", "chronic", "mild", "high", "low", "with"}
+
+    if len(name_words) <= len(term_words):
+        return True
+
+    qualifiers = [w for w in set(name_words) - set(term_words) if len(w) >= 4 and w not in qual_generic]
+    if not qualifiers:
+        return True
+
+    for q in qualifiers:
+        if q in hay:
+            return True
+
+    if set(qualifiers) & {"infant", "neonatal", "newborn"}:
+        if re.search(r"\b(infant|baby|newborn|sanggol)\b", hay):
+            return True
+    if set(qualifiers) & {"child", "pediatric"}:
+        if re.search(r"\b(child|anak|bata)\b", hay):
+            return True
+
+    return False
+
+
 def match_symptoms(text: str, english_text: str = "", extra_terms: list[str] | None = None) -> list[dict[str, Any]]:
     """Match standardized symptoms from free text using KB synonyms/local terms."""
     haystacks = [
@@ -89,14 +166,13 @@ def match_symptoms(text: str, english_text: str = "", extra_terms: list[str] | N
         if sid in seen:
             continue
         for term in symptom.get("_match_terms") or []:
-            if not term:
+            if not term or (len(term) < 5 and " " not in term):
+                allow_short = {"ubo", "sipon", "lagnat", "hilo", "tae", "dugo", "hapdi", "kapoy", "luya", "ulon", "mata", "dughan"}
+                if term not in allow_short:
+                    continue
+            if not _term_matches_with_context(hay, term, symptom):
                 continue
-            if " " in term or "-" in term:
-                hit = _flexible_phrase_hit(hay, term)
-            else:
-                hit = bool(re.search(rf"(?<!\w){re.escape(term)}(?!\w)", hay))
-            if hit:
-                matched.append(
+            matched.append(
                     {
                         "id": symptom.get("id"),
                         "symptom_name": symptom.get("symptom_name"),
@@ -115,7 +191,7 @@ def match_symptoms(text: str, english_text: str = "", extra_terms: list[str] | N
                 break
     # Highest severity first
     matched.sort(key=lambda s: int(s.get("severity_weight") or 0), reverse=True)
-    return matched
+    return matched[:8]
 
 
 def scan_red_flags_library(original: str, english: str = "") -> list[dict[str, Any]]:

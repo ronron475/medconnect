@@ -196,11 +196,13 @@ final class SymptomKnowledgeBase
                 continue;
             }
             foreach ($symptom['_match_terms'] as $term) {
-                if ($term === '') {
-                    continue;
+                if ($term === '' || (strlen($term) < 5 && !str_contains($term, ' '))) {
+                    $allowShort = ['ubo', 'sipon', 'lagnat', 'hilo', 'tae', 'dugo', 'hapdi', 'kapoy', 'luya', 'ulon', 'mata', 'dughan'];
+                    if (!in_array($term, $allowShort, true)) {
+                        continue;
+                    }
                 }
-                $hit = self::flexiblePhraseHit($hay, $term);
-                if (!$hit) {
+                if (!self::termMatchesWithContext($hay, $term, $symptom)) {
                     continue;
                 }
                 $matched[] = [
@@ -222,7 +224,114 @@ final class SymptomKnowledgeBase
         }
         usort($matched, static fn (array $a, array $b): int => ($b['severity_weight'] <=> $a['severity_weight']));
 
-        return $matched;
+        // Cap overly broad multi-symptom extraction (prevents score inflation)
+        return array_slice($matched, 0, 8);
+    }
+
+    /**
+     * Require qualifier words when a generic term (fever, pain) would otherwise over-match.
+     *
+     * @param array<string, mixed> $symptom
+     */
+    private static function termMatchesWithContext(string $hay, string $term, array $symptom): bool
+    {
+        if (!self::flexiblePhraseHit($hay, $term)) {
+            return false;
+        }
+
+        $name = strtolower(trim((string) ($symptom['symptom_name'] ?? '')));
+        if ($name !== '' && str_contains($hay, $name)) {
+            return true;
+        }
+
+        if ($name === 'acute abdomen') {
+            return (bool) preg_match('/\b(acute|rigid|peritonitis|sudden severe)\b/u', $hay);
+        }
+
+        $explicit = [];
+        foreach (['keywords', 'synonyms', 'hiligaynon_terms', 'filipino_terms'] as $key) {
+            foreach (($symptom[$key] ?? []) as $t) {
+                $t = strtolower(trim((string) $t));
+                if ($t !== '') {
+                    $explicit[] = $t;
+                }
+            }
+        }
+        $explicit = array_values(array_unique($explicit));
+
+        $generic = ['fever', 'pain', 'cough', 'ache', 'bleeding', 'weakness', 'fatigue', 'rash', 'swelling'];
+        if (in_array($term, $explicit, true) && !in_array($term, $generic, true) && strlen($term) >= 6) {
+            return true;
+        }
+        if (str_contains($term, ' ') && in_array($term, $explicit, true)) {
+            return true;
+        }
+
+        $highAcuity = ['appendicitis pain', 'pancreatitis pain', 'testicular torsion', 'sepsis symptoms', 'meningitis symptoms'];
+        if (in_array($name, $highAcuity, true)
+            && !preg_match('/\b(severe|acute|sudden|worst|rigid|unbearable|grabe)\b/u', $hay)) {
+            return false;
+        }
+
+        if (preg_match('/^(child|infant|pediatric)\s+/u', $name, $prefix)) {
+            $specific = trim(substr($name, strlen($prefix[0])));
+            if ($specific !== '' && !str_contains($hay, $specific)) {
+                return false;
+            }
+        }
+
+        if (str_ends_with($name, ' pain')) {
+            $location = str_replace(' pain', '', $name);
+            $bodyMap = [
+                'abdominal' => '/\b(abdomen|abdominal|stomach|belly|tiyan)\b/u',
+                'back' => '/\b(back|likod)\b/u',
+                'chest' => '/\b(chest|dughan|dibdib)\b/u',
+                'head' => '/\b(head|ulo)\b/u',
+                'neck' => '/\b(neck|liog|leeg)\b/u',
+            ];
+            if (isset($bodyMap[$location])) {
+                return (bool) preg_match($bodyMap[$location], $hay);
+            }
+            if ($location !== 'chronic' && !str_contains($hay, $location)) {
+                return false;
+            }
+        }
+
+        $nameWords = preg_split('/\s+/u', $name) ?: [];
+        $termWords = preg_split('/\s+/u', $term) ?: [];
+        $qualGeneric = ['fever', 'pain', 'cough', 'bleeding', 'ache', 'symptoms', 'symptom', 'severe', 'acute', 'chronic', 'mild', 'high', 'low', 'with'];
+
+        if (count($nameWords) <= count($termWords)) {
+            return true;
+        }
+
+        $qualifiers = array_values(array_filter(
+            array_diff($nameWords, $termWords),
+            static fn (string $w): bool => strlen($w) >= 4 && !in_array($w, $qualGeneric, true)
+        ));
+
+        if ($qualifiers === []) {
+            return true;
+        }
+
+        foreach ($qualifiers as $q) {
+            if (str_contains($hay, $q)) {
+                return true;
+            }
+        }
+
+        if (array_intersect($qualifiers, ['infant', 'neonatal', 'newborn'])) {
+            if (preg_match('/\b(infant|baby|newborn|sanggol)\b/u', $hay)) {
+                return true;
+            }
+        }
+        if (array_intersect($qualifiers, ['child', 'pediatric'])) {
+            if (preg_match('/\b(child|anak|bata)\b/u', $hay)) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /** @return list<array<string, mixed>> */
