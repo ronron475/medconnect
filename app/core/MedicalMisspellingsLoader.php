@@ -111,16 +111,34 @@ final class MedicalMisspellingsLoader
 
     public static function applyCorrections(string $text): string
     {
+        return self::applyCorrectionsWithLog($text)['text'];
+    }
+
+    /**
+     * @return array{text:string, corrections:list<array{from:string,to:string}>}
+     */
+    public static function applyCorrectionsWithLog(string $text): array
+    {
         $working = strtolower(trim($text));
         if ($working === '') {
-            return '';
-        }
-        $map = self::map();
-        uksort($map, static fn (string $a, string $b): int => strlen($b) <=> strlen($a));
-        foreach ($map as $wrong => $correct) {
-            $working = preg_replace('/(?<!\w)' . preg_quote($wrong, '/') . '(?!\w)/u', $correct, $working) ?? $working;
+            return ['text' => '', 'corrections' => []];
         }
 
-        return trim(preg_replace('/\s+/', ' ', $working) ?? $working);
+        $map = self::map();
+        uksort($map, static fn (string $a, string $b): int => strlen($b) <=> strlen($a));
+        $corrections = [];
+        foreach ($map as $wrong => $correct) {
+            $pattern = '/(?<!\w)' . preg_quote($wrong, '/') . '(?!\w)/u';
+            if (!preg_match($pattern, $working)) {
+                continue;
+            }
+            $corrections[] = ['from' => $wrong, 'to' => $correct];
+            $working = preg_replace($pattern, $correct, $working) ?? $working;
+        }
+
+        return [
+            'text'        => trim(preg_replace('/\s+/', ' ', $working) ?? $working),
+            'corrections' => $corrections,
+        ];
     }
 }

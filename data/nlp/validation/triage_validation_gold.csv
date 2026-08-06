@@ -28,3 +28,15 @@ GOLD0026,sakit kag d nko kaginhawa,EMERGENCY,hiligaynon,chat_shorthand,active
 GOLD0027,I can't breathe,EMERGENCY,english,emergency,active
 GOLD0028,medicine refill,NON-URGENT,english,admin,active
 GOLD0029,chest pain with difficulty breathing,EMERGENCY,english,emergency,active
+GOLD0030,ginakalagnat ko,NON-URGENT,hiligaynon,fever,active
+GOLD0031,masakit dughan,URGENT,hiligaynon,chest_pain,active
+GOLD0032,budlay gid ginhawa,EMERGENCY,hiligaynon,breathing,active
+GOLD0033,d ko kaginhawa,EMERGENCY,hiligaynon,breathing_shorthand,active
+GOLD0034,Fever for five days,URGENT,english,duration,active
+GOLD0035,Vomiting blood,EMERGENCY,english,emergency,active
+GOLD0036,Seizure,EMERGENCY,english,emergency,active
+GOLD0037,Stroke symptoms,EMERGENCY,english,emergency,active
+GOLD0038,Persistent vomiting,URGENT,english,urgent,active
+GOLD0039,Severe abdominal pain,URGENT,english,urgent,active
+GOLD0040,Mild fever today,NON-URGENT,english,non_urgent,active
+GOLD0041,Follow-up consultation,NON-URGENT,english,admin,active

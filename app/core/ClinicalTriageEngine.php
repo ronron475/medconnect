@@ -45,8 +45,11 @@ final class ClinicalTriageEngine
 
         // Normalize slang/chat shorthand, then spelling / abbreviation corrections
         $normalizedBase = HiligaynonTextNormalizer::normalize($rawInput);
-        $correctedOriginal = MedicalMisspellingsLoader::applyCorrections($normalizedBase !== '' ? $normalizedBase : $rawInput);
-        $correctedEnglish = MedicalMisspellingsLoader::applyCorrections($english !== '' ? $english : $correctedOriginal);
+        $correctionLog = MedicalMisspellingsLoader::applyCorrectionsWithLog($normalizedBase !== '' ? $normalizedBase : $rawInput);
+        $correctedOriginal = (string) ($correctionLog['text'] ?? '');
+        $correctedWords = is_array($correctionLog['corrections'] ?? null) ? $correctionLog['corrections'] : [];
+        $englishCorrection = MedicalMisspellingsLoader::applyCorrectionsWithLog($english !== '' ? $english : $correctedOriginal);
+        $correctedEnglish = (string) ($englishCorrection['text'] ?? $correctedOriginal);
         if ($correctedOriginal !== '') {
             $original = $correctedOriginal;
         }
@@ -57,6 +60,7 @@ final class ClinicalTriageEngine
         NlpPipelineDebug::step('normalization', [
             'normalized_base' => $normalizedBase,
             'corrected_text'  => $original,
+            'corrected_words' => $correctedWords,
             'english'         => $english,
         ]);
         $detectedLanguage = class_exists('HiligaynonLanguageDetector')
@@ -84,6 +88,7 @@ final class ClinicalTriageEngine
         );
         // Negation: never keep denied/negated symptoms
         $kbSymptoms = NegationDetector::filterSymptoms($kbSymptoms, $original, $english);
+        $kbSymptoms = self::filterContextualSymptomMatches($kbSymptoms, $original, $english, $features);
 
         $detectedNames = array_values(array_filter(array_map(
             static fn (array $s): string => (string) ($s['symptom_name'] ?? ''),
@@ -119,7 +124,11 @@ final class ClinicalTriageEngine
             $kbSymptoms
         )));
 
-        $redFlags = NegationDetector::filterRedFlags(self::mergeRedFlags($original, $english), $original, $english);
+        $redFlags = NegationDetector::filterRedFlags(
+            self::mergeRedFlags($rawInput, $english, $normalizedBase),
+            $original,
+            $english
+        );
         $redFlags = array_merge($redFlags, self::scanBreathingEmergencyPatterns($original, $english));
         $redFlags = ClinicalContextReasoningEngine::filterContextGatedRedFlags($redFlags, $original, $english, $kbSymptoms);
 
@@ -129,7 +138,7 @@ final class ClinicalTriageEngine
             'red_flags'  => array_map(static fn (array $f): string => (string) ($f['flag_name'] ?? ''), $redFlags),
             'features'   => $features,
         ]);
-        [$severityScore, $factors] = self::scoreFromKb($kbSymptoms, $features, $redFlags);
+        [$severityScore, $factors] = self::scoreFromKb($kbSymptoms, $features, $redFlags, $original, $english);
         [$severityScore, $factors] = self::applySymptomCombinations($kbSymptoms, $features, $severityScore, $factors, $redFlags);
         $preliminaryDisplay = self::classify($severityScore, $redFlags, $kbSymptoms, true);
 
@@ -222,12 +231,14 @@ final class ClinicalTriageEngine
             $severityScore,
             $display,
             $confidence,
-            $reason
+            $reason,
+            $correctedWords
         );
 
         $recommendationPayload = [
             'chief_complaint'      => $rawInput,
             'normalized_complaint' => $original,
+            'corrected_words'      => $correctedWords,
             'detected_language'    => $detectedLanguage,
             'detected_symptoms'    => $detectedNames,
             'associated_symptoms'  => $structured['associated_symptoms'],
@@ -289,6 +300,7 @@ final class ClinicalTriageEngine
             'kb_matched_symptoms'    => $kbSymptoms,
             'detected_language'      => $detectedLanguage,
             'normalized_text'        => $original,
+            'corrected_words'        => $correctedWords,
             'negated_concepts'       => $negatedConcepts,
             'clinical_context'       => [
                 'rule_id'            => (string) ($context['rule_id'] ?? ''),
@@ -396,12 +408,13 @@ final class ClinicalTriageEngine
     }
 
     /** @return list<array<string, mixed>> */
-    private static function mergeRedFlags(string $original, string $english): array
+    private static function mergeRedFlags(string $original, string $english, string $preCorrection = ''): array
     {
-        $flags = SymptomKnowledgeBase::scanRedFlagsLibrary($original, $english);
+        $haystack = trim(implode(' ', array_filter([$preCorrection, $original, $english])));
+        $flags = SymptomKnowledgeBase::scanRedFlagsLibrary($haystack, $english);
         // Also scan expandable emergency_red_flags.csv
-        $flags = array_merge($flags, self::scanEmergencyRedFlagsCsv($original, $english));
-        $csvFlags = EmergencyFlagsLoader::scanEmergencyFlags($original, $english);
+        $flags = array_merge($flags, self::scanEmergencyRedFlagsCsv($haystack, $english));
+        $csvFlags = EmergencyFlagsLoader::scanEmergencyFlags($haystack, $english);
         $seen = [];
         foreach ($flags as $f) {
             $seen[strtolower((string) ($f['flag_name'] ?? ''))] = true;
@@ -427,6 +440,73 @@ final class ClinicalTriageEngine
         }
 
         return $flags;
+    }
+
+    private static function patternMatchesHaystack(string $hay, string $pattern): bool
+    {
+        if ($pattern === '') {
+            return false;
+        }
+        if (strlen($pattern) <= 3) {
+            return (bool) preg_match('/(?<!\w)' . preg_quote($pattern, '/') . '(?!\w)/iu', $hay);
+        }
+
+        return str_contains($hay, $pattern);
+    }
+
+    /**
+     * Remove high-acuity compound symptoms when required clinical qualifiers are absent.
+     *
+     * @param list<array<string, mixed>> $kbSymptoms
+     * @param array<string, mixed> $features
+     * @return list<array<string, mixed>>
+     */
+    private static function filterContextualSymptomMatches(
+        array $kbSymptoms,
+        string $original,
+        string $english,
+        array $features
+    ): array {
+        $hay = strtolower(trim($original . ' ' . $english));
+        if ($hay === '' || $kbSymptoms === []) {
+            return $kbSymptoms;
+        }
+
+        $hasFever = (bool) preg_match('/\b(fever|lagnat|hilanat|pyrexia|hyperthermia|nilalagnat|ginakalagnat)\b/u', $hay);
+        $hasSwelling = (bool) preg_match('/\b(swelling|swollen|hubag|gahabok|edema|pamamaga)\b/u', $hay);
+        $hasPregnancy = (bool) preg_match('/\b(pregnan|buntis|gravid)\b/u', $hay)
+            || in_array('pregnant', array_column($features['risk_factors'] ?? [], 'id'), true);
+        $hasSevere = (bool) preg_match('/\b(severe|gravely|worst|unbearable|grabe gid|8\/10|9\/10|10\/10)\b/u', $hay);
+        $hasMild = (bool) preg_match('/\b(mild|slight|slightly|minor|a little|mildly)\b/u', $hay);
+
+        return array_values(array_filter($kbSymptoms, static function (array $sym) use (
+            $hay,
+            $hasFever,
+            $hasSwelling,
+            $hasPregnancy,
+            $hasSevere,
+            $hasMild
+        ): bool {
+            $name = strtolower((string) ($sym['symptom_name'] ?? ''));
+
+            if (str_contains($name, ' with fever') && !$hasFever) {
+                return false;
+            }
+            if (str_contains($name, 'pregnancy') && !$hasPregnancy) {
+                return false;
+            }
+            if (str_contains($name, 'swelling') && !$hasSwelling) {
+                return false;
+            }
+            if (str_contains($name, 'severe') && !$hasSevere && $hasMild) {
+                return false;
+            }
+            if ($name === 'throat swelling' && str_contains($hay, 'sore throat') && !$hasSwelling) {
+                return false;
+            }
+
+            return true;
+        }));
     }
 
     /** @return list<array<string, mixed>> */
@@ -513,9 +593,9 @@ final class ClinicalTriageEngine
             $hil = trim($hil);
             $eng = trim($eng);
             $hit = '';
-            if ($hil !== '' && str_contains($hay, $hil)) {
+            if ($hil !== '' && self::patternMatchesHaystack($hay, $hil)) {
                 $hit = $hil;
-            } elseif ($eng !== '' && str_contains($hay, $eng)) {
+            } elseif ($eng !== '' && self::patternMatchesHaystack($hay, $eng)) {
                 $hit = $eng;
             }
             if ($hit === '') {
@@ -671,8 +751,13 @@ final class ClinicalTriageEngine
      * @param list<array<string, mixed>> $redFlags
      * @return array{0:int,1:array<string,mixed>}
      */
-    private static function scoreFromKb(array $kbSymptoms, array $features, array $redFlags): array
-    {
+    private static function scoreFromKb(
+        array $kbSymptoms,
+        array $features,
+        array $redFlags,
+        string $original = '',
+        string $english = ''
+    ): array {
         $cfg = SymptomKnowledgeBase::scoringConfig();
         $durationMods = is_array($cfg['duration_modifiers'] ?? null) ? $cfg['duration_modifiers'] : [];
         $painMods = is_array($cfg['pain_scale_modifiers'] ?? null) ? $cfg['pain_scale_modifiers'] : [];
@@ -795,6 +880,17 @@ final class ClinicalTriageEngine
                 'factor' => 'Risk factors (' . $labels . ')',
                 'points' => $pts,
                 'type'   => 'risk',
+            ];
+        }
+
+        $hay = strtolower(trim($original . ' ' . $english));
+        if ($hay !== '' && preg_match('/\b(mild|slight|slightly|minor|a little|mildly)\b/u', $hay)) {
+            $reduction = min(4, max(2, (int) floor($score * 0.25)));
+            $score = max(0, $score - $reduction);
+            $contributions[] = [
+                'factor' => 'Mild severity qualifier',
+                'points' => -$reduction,
+                'type'   => 'modifier',
             ];
         }
 
@@ -999,7 +1095,8 @@ final class ClinicalTriageEngine
         int $severityScore,
         string $display,
         int $confidence,
-        string $reason
+        string $reason,
+        array $correctedWords = []
     ): array {
         $primary = (string) ($factors['primary_symptom'] ?? ($detectedNames[0] ?? ''));
         $associated = array_values(array_filter(
@@ -1050,6 +1147,7 @@ final class ClinicalTriageEngine
             'normalized_complaint'   => $normalized,
             'detected_language'      => $language,
             'english_translation'    => $english,
+            'corrected_words'        => $correctedWords,
             'primary_symptom'        => $primary,
             'detected_symptoms'      => $detectedNames,
             'associated_symptoms'    => $associated,

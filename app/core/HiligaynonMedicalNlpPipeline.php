@@ -54,8 +54,16 @@ final class HiligaynonMedicalNlpPipeline
         NlpPipelineDebug::step('detect_language', ['input' => $text]);
         $language = HiligaynonLanguageDetector::detect($text);
         $normalized = HiligaynonTextNormalizer::normalize($text);
-        $phraseVariants = HiligaynonTextNormalizer::phraseVariants($text);
-        NlpPipelineDebug::step('normalize_text', ['normalized' => $normalized, 'variants' => $phraseVariants]);
+        $correctionLog = MedicalMisspellingsLoader::applyCorrectionsWithLog($normalized);
+        $correctedText = (string) ($correctionLog['text'] ?? $normalized);
+        $correctedWords = is_array($correctionLog['corrections'] ?? null) ? $correctionLog['corrections'] : [];
+        $phraseVariants = HiligaynonTextNormalizer::phraseVariants($correctedText !== '' ? $correctedText : $text);
+        NlpPipelineDebug::step('normalize_text', [
+            'normalized'      => $normalized,
+            'corrected'       => $correctedText,
+            'corrected_words' => $correctedWords,
+            'variants'        => $phraseVariants,
+        ]);
 
         $phraseTranslation = null;
         foreach ($phraseVariants as $variant) {
@@ -120,6 +128,8 @@ final class HiligaynonMedicalNlpPipeline
             'detected_language'      => $language['primary'],
             'language_tags'          => $language['tags'],
             'normalized_text'        => $normalized,
+            'corrected_text'         => $correctedText,
+            'corrected_words'        => $correctedWords,
             'english_translation'    => $englishTranslation,
             'medical_concepts'       => $concepts,
             'body_parts'             => $bodyParts,
@@ -167,6 +177,8 @@ final class HiligaynonMedicalNlpPipeline
             'triage'                  => $triage,
             'original_input'          => $text,
             'normalized_input'        => $normalized,
+            'corrected_input'         => $correctedText,
+            'corrected_words'         => $correctedWords,
             'detected_language'       => $language['primary'],
             'language_detection'      => $language,
             'preprocessing'           => $preprocessing,

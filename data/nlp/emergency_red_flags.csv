@@ -261,6 +261,8 @@ RF003,Seizure,nagauyam,,EMERGENCY,Seizure activity requires immediate airway and
 RF004,Loss of Consciousness,,loss of consciousness,EMERGENCY,Altered consciousness is an ABC emergency priority.,active
 RF004,Loss of Consciousness,,unresponsive,EMERGENCY,Altered consciousness is an ABC emergency priority.,active
 RF004,Loss of Consciousness,,passed out,EMERGENCY,Altered consciousness is an ABC emergency priority.,active
+RF004,Loss of Consciousness,,fainted,EMERGENCY,Altered consciousness is an ABC emergency priority.,active
+RF004,Loss of Consciousness,,i fainted,EMERGENCY,Altered consciousness is an ABC emergency priority.,active
 RF004,Loss of Consciousness,,fainted and did not wake,EMERGENCY,Altered consciousness is an ABC emergency priority.,active
 RF004,Loss of Consciousness,nadulaan malay,,EMERGENCY,Altered consciousness is an ABC emergency priority.,active
 RF004,Loss of Consciousness,nagpunaw,,EMERGENCY,Altered consciousness is an ABC emergency priority.,active
