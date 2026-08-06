@@ -1843,6 +1843,18 @@ if (session_status() === PHP_SESSION_ACTIVE) {
             document.getElementById('callStatus').textContent = 'Your doctor extended the session.';
             showExtendToast('Session extended. New end: ' + (data.end_label || 'updated') + '.', 'success');
           }
+
+          if (data.slot_expired || timeLeft <= 0) {
+            if (!isPatient && !endingCall) {
+              document.getElementById('callStatus').textContent = 'Consultation time has expired. Closing the room...';
+              endCall(true);
+              return;
+            }
+            if (isPatient && data.consultation_status === 'completed' && !endingCall) {
+              document.getElementById('callStatus').textContent = 'This consultation has ended.';
+              leaveCallFast();
+            }
+          }
         })
         .catch(() => {});
     }

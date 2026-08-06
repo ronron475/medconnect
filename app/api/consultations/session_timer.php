@@ -8,6 +8,7 @@ header('Content-Type: application/json');
 
 require_once dirname(dirname(dirname(__DIR__))) . '/bootstrap.php';
 require_once dirname(dirname(dirname(__DIR__))) . '/config/db.php';
+require_once dirname(dirname(dirname(__DIR__))) . '/app/includes/consultation_expiry.php';
 
 $token = trim((string) ($_GET['token'] ?? ''));
 $userId = (int) ($_SESSION['user_id'] ?? 0);
@@ -21,7 +22,8 @@ if ($token === '' || $userId <= 0) {
 
 try {
     $stmt = $pdo->prepare("
-        SELECT vs.consultation_id, c.consult_date, c.consult_time,
+        SELECT vs.consultation_id, c.patient_id, c.provider_id, c.status AS consult_status,
+               c.consult_date, c.consult_time,
                s.slot_date, s.end_time AS slot_end
         FROM video_sessions vs
         JOIN consultations c ON c.id = vs.consultation_id
@@ -50,11 +52,22 @@ try {
     }
 
     $seconds_remaining = max(0, $end_ts - time());
+    $slot_expired = $seconds_remaining <= 0;
+    $liveStatus = (string) ($row['consult_status'] ?? '');
+
+    if ($slot_expired) {
+        consultations_auto_expire($pdo, (int) $row['patient_id'], (int) $row['provider_id']);
+        $statusStmt = $pdo->prepare('SELECT status FROM consultations WHERE id = ? LIMIT 1');
+        $statusStmt->execute([(int) $row['consultation_id']]);
+        $liveStatus = (string) ($statusStmt->fetchColumn() ?: $liveStatus);
+    }
 
     echo json_encode([
         'success' => true,
         'seconds_remaining' => $seconds_remaining,
         'end_label' => date('g:i A', $end_ts),
+        'slot_expired' => $slot_expired,
+        'consultation_status' => $liveStatus,
     ]);
 } catch (Exception $e) {
     echo json_encode(['success' => false, 'message' => 'Error: ' . $e->getMessage()]);

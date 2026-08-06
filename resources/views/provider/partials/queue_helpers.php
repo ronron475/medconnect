@@ -89,7 +89,7 @@ function queue_scheduled_end_timestamp(?string $consult_date, ?string $consult_t
 }
 
 /**
- * @return array{status:string,slot_date:string,consult_date:string,effective_date:string,consult_time:string,scheduled_label:string,scheduled_start:int|null,opens_at_label:string}
+ * @return array{status:string,slot_date:string,consult_date:string,effective_date:string,consult_time:string,scheduled_label:string,scheduled_start:int|null,scheduled_end:int|null,opens_at_label:string}
  */
 function queue_session_context(array $item): array
 {
@@ -98,6 +98,7 @@ function queue_session_context(array $item): array
     $consult_date   = queue_normalize_date($item['consult_date'] ?? null);
     $effective_date = $slot_date !== '' ? $slot_date : $consult_date;
     $consult_time   = (string) ($item['slot_start'] ?? $item['consult_time'] ?? '');
+    $slot_end       = (string) ($item['slot_end'] ?? '');
     $scheduled      = queue_scheduled_label(
         $effective_date !== '' ? $effective_date : $consult_date,
         $consult_time
@@ -105,6 +106,11 @@ function queue_session_context(array $item): array
     $scheduled_start = queue_scheduled_timestamp(
         $effective_date !== '' ? $effective_date : $consult_date,
         $consult_time
+    );
+    $scheduled_end = queue_scheduled_end_timestamp(
+        $effective_date !== '' ? $effective_date : $consult_date,
+        $consult_time,
+        $slot_end !== '' ? $slot_end : null
     );
 
     return [
@@ -115,6 +121,7 @@ function queue_session_context(array $item): array
         'consult_time'    => $consult_time,
         'scheduled_label' => $scheduled,
         'scheduled_start' => $scheduled_start,
+        'scheduled_end'   => $scheduled_end,
         'opens_at_label'  => $scheduled_start ? date('g:i A', $scheduled_start) : '',
     ];
 }

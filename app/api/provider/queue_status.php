@@ -8,6 +8,7 @@ Api::startJson();
 Api::requireRole('provider');
 
 require_once dirname(dirname(dirname(__DIR__))) . '/resources/views/provider/partials/queue_helpers.php';
+require_once dirname(dirname(dirname(__DIR__))) . '/app/includes/consultation_expiry.php';
 
 $providerId = (int) ($_SESSION['user_id'] ?? 0);
 if ($providerId <= 0) {
@@ -17,6 +18,8 @@ if ($providerId <= 0) {
 header('Cache-Control: no-store');
 
 try {
+    consultations_auto_expire($pdo, null, $providerId);
+
     $stmt = $pdo->prepare("
         SELECT
             c.id,
@@ -75,6 +78,7 @@ try {
             'session_reason'   => (string) ($access['reason'] ?? ''),
             'scheduled_label'  => (string) ($access['scheduled_label'] ?? ''),
             'scheduled_start'  => $ctx['scheduled_start'] ? (int) $ctx['scheduled_start'] : null,
+            'scheduled_end'    => $ctx['scheduled_end'] ? (int) $ctx['scheduled_end'] : null,
             'opens_at_label'   => (string) ($ctx['opens_at_label'] ?? ''),
             'room_token'       => (string) ($row['room_token'] ?? ''),
             'session_url'      => ASSET_BASE . '/views/provider/consultation_session.php?id=' . (int) ($row['id'] ?? 0),
