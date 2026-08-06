@@ -134,7 +134,7 @@ $page_title = 'Book Consultation';
   <script>window.BOOKING_LOCKED_PROVIDER_NAME = <?= json_encode($locked_provider_name) ?>;</script>
   <script>window.BOOKING_ASSIGNED_HAS_SLOTS = <?= json_encode($locked_assigned_has_slots) ?>;</script>
   <script>window.BOOKING_ALTERNATE_AVAILABLE = <?= json_encode($locked_alternate_available) ?>;</script>
-  <script>window.TRIAGE_REVIEW_FIRST_ALLOWED = <?= json_encode(true) ?>;</script>
+  <script>window.TRIAGE_REVIEW_FIRST_ALLOWED = <?= json_encode(empty($review_booking_ctx['locked'])) ?>;</script>
   <?php if (($pending_reg['nlp_json'] ?? '') !== ''): ?>
   <script>
   try {

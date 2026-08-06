@@ -509,9 +509,72 @@
       return;
     }
 
+    const parseSlotTimeParts = (raw) => {
+      const value = String(raw || '00:00:00').trim();
+      const timeOnly = value.includes(' ') ? value.split(' ').pop() : value;
+      const parts = timeOnly.split(':').map(Number);
+      return parts.length >= 2 && !Number.isNaN(parts[0]) && !Number.isNaN(parts[1]) ? parts : null;
+    };
+
+    const isSlotStartInFuture = (slot) => {
+      const parts = String(slot.slot_date || '').split('-').map(Number);
+      const timeParts = parseSlotTimeParts(slot.start_time);
+      if (parts.length !== 3 || !timeParts) {
+        return false;
+      }
+      const slotStart = new Date(parts[0], parts[1] - 1, parts[2], timeParts[0], timeParts[1], timeParts[2] || 0);
+      return slotStart.getTime() > Date.now();
+    };
+
+    const isSlotBookable = (slot) => {
+      if (slot.bookable === true) {
+        return true;
+      }
+      if (slot.bookable === false) {
+        return false;
+      }
+      return isSlotStartInFuture(slot);
+    };
+
+    const resolveProviderId = () => {
+      const lockedId = window.BOOKING_LOCKED_PROVIDER_ID;
+      if (lockedId) {
+        return String(lockedId);
+      }
+      if (providerSelect.disabled) {
+        const hiddenProvider = document.querySelector('#patientTriageForm input[type="hidden"][name="provider_id"]');
+        if (hiddenProvider && hiddenProvider.value) {
+          return String(hiddenProvider.value);
+        }
+      }
+      if (providerSelect.value) {
+        return String(providerSelect.value);
+      }
+      if (providerSelect.options.length === 2 && providerSelect.options[1]) {
+        return String(providerSelect.options[1].value || '');
+      }
+      return '';
+    };
+
+    slotsWrap.addEventListener('click', (e) => {
+      const btn = e.target.closest('.booking-slot-btn');
+      if (!btn || !slotsWrap.contains(btn)) return;
+      if (btn.disabled || btn.classList.contains('is-past') || btn.getAttribute('aria-disabled') === 'true') {
+        return;
+      }
+
+      slotsWrap.querySelectorAll('.booking-slot-btn.is-selected').forEach((el) => {
+        el.classList.remove('is-selected');
+        el.setAttribute('aria-pressed', 'false');
+      });
+      btn.classList.add('is-selected');
+      btn.setAttribute('aria-pressed', 'true');
+      slotInput.value = btn.dataset.slotId || '';
+    });
+
     const renderSlots = (slots) => {
       slotInput.value = '';
-      const bookableSlots = slots.filter((slot) => slot.bookable !== false && isSlotStartInFuture(slot));
+      const bookableSlots = slots.filter((slot) => isSlotBookable(slot));
 
       if (!slots.length) {
         clearSlots('No appointment slots were generated for today. Ask the provider to enable today in their schedule.');
@@ -534,21 +597,14 @@
       slots.forEach((slot) => {
         const btn = document.createElement('button');
         btn.type = 'button';
-        const isBookable = slot.bookable !== false && isSlotStartInFuture(slot);
+        const isBookable = isSlotBookable(slot);
         btn.className = 'booking-slot-btn' + (isBookable ? '' : ' is-past');
         const baseLabel = String(slot.label || '').replace(/\s*\(passed\)\s*$/i, '');
         btn.textContent = isBookable ? baseLabel : baseLabel + ' (passed)';
         btn.dataset.slotId = String(slot.id);
         btn.disabled = !isBookable;
         btn.setAttribute('aria-disabled', isBookable ? 'false' : 'true');
-
-        if (isBookable) {
-          btn.addEventListener('click', () => {
-            slotsWrap.querySelectorAll('.booking-slot-btn').forEach((el) => el.classList.remove('is-selected'));
-            btn.classList.add('is-selected');
-            slotInput.value = String(slot.id);
-          });
-        }
+        btn.setAttribute('aria-pressed', 'false');
 
         grid.appendChild(btn);
       });
@@ -574,16 +630,6 @@
       const m = String(now.getMonth() + 1).padStart(2, '0');
       const d = String(now.getDate()).padStart(2, '0');
       return `${y}-${m}-${d}`;
-    };
-
-    const isSlotStartInFuture = (slot) => {
-      const parts = String(slot.slot_date || '').split('-').map(Number);
-      const timeParts = String(slot.start_time || '00:00:00').split(':').map(Number);
-      if (parts.length !== 3 || timeParts.length < 2) {
-        return false;
-      }
-      const slotStart = new Date(parts[0], parts[1] - 1, parts[2], timeParts[0], timeParts[1], timeParts[2] || 0);
-      return slotStart.getTime() > Date.now();
     };
 
     const formatSlotDateLabel = (slotDate) => {
@@ -657,7 +703,7 @@
     };
 
     providerSelect.addEventListener('change', () => {
-      const providerId = providerSelect.value;
+      const providerId = resolveProviderId();
       if (!providerId) {
         clearSlots('Select a provider to load today\'s available slots.');
         return;
@@ -665,21 +711,34 @@
       loadTodayBooking(providerId);
     });
 
-    if (providerSelect.options.length === 2) {
+    const initialProviderId = resolveProviderId();
+    if (initialProviderId) {
+      loadTodayBooking(initialProviderId);
+    } else if (providerSelect.options.length === 2) {
       providerSelect.selectedIndex = 1;
-      providerSelect.dispatchEvent(new Event('change'));
+      const fallbackId = resolveProviderId();
+      if (fallbackId) {
+        loadTodayBooking(fallbackId);
+      }
     }
   }
 
   window.refreshBookingPicker = function refreshBookingPicker() {
     const providerSelect = document.getElementById('booking_provider');
-    if (!providerSelect || !providerSelect.value) {
-      if (providerSelect && providerSelect.options.length === 2) {
-        providerSelect.selectedIndex = 1;
-        providerSelect.dispatchEvent(new Event('change'));
-      }
+    if (!providerSelect || !bookingPickerReady) {
       return;
     }
+
+    const lockedId = window.BOOKING_LOCKED_PROVIDER_ID;
+    let providerId = lockedId ? String(lockedId) : providerSelect.value;
+    if (!providerId && providerSelect.options.length === 2) {
+      providerSelect.selectedIndex = 1;
+      providerId = lockedId ? String(lockedId) : (providerSelect.options[1]?.value || '');
+    }
+    if (!providerId) {
+      return;
+    }
+
     providerSelect.dispatchEvent(new Event('change'));
   };
 

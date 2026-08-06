@@ -567,7 +567,7 @@ html[data-theme-resolved='dark'] body.patient-portal .pts-device-row {
 /* Triage / booking */
 html[data-theme-resolved='dark'] body.patient-portal .patient-triage-form,
 html[data-theme-resolved='dark'] body.patient-portal .booking-panel,
-html[data-theme-resolved='dark'] body.patient-portal .booking-slot-grid,
+html[data-theme-resolved='dark'] body.patient-portal .booking-slots-grid,
 html[data-theme-resolved='dark'] body.patient-portal .booking-provider-card {
   background: #1c1c1c !important;
   border-color: #2a2a2a !important;
@@ -997,6 +997,45 @@ html[data-theme-resolved='dark'] body.patient-portal [role='button'] {
   background-color: #141414 !important;
   border-color: #2a2a2a !important;
   color: #ffffff !important;
+}
+
+/* Booking slot picker — keep interactive; blanket button rule hides selected state */
+html[data-theme-resolved='dark'] body.patient-portal .booking-slots-wrap,
+html[data-theme-resolved='dark'] body.patient-portal .booking-slots-grid {
+  background: transparent !important;
+  background-color: transparent !important;
+  border-color: transparent !important;
+  box-shadow: none !important;
+}
+
+html[data-theme-resolved='dark'] body.patient-portal .booking-slot-btn:not(.is-past):not(:disabled) {
+  background-color: #334155 !important;
+  border-color: #475569 !important;
+  color: #f8fafc !important;
+  cursor: pointer !important;
+  pointer-events: auto !important;
+}
+
+html[data-theme-resolved='dark'] body.patient-portal .booking-slot-btn:not(.is-past):not(:disabled):hover {
+  background-color: rgba(45, 212, 191, 0.18) !important;
+  border-color: #2dd4bf !important;
+  color: #f8fafc !important;
+}
+
+html[data-theme-resolved='dark'] body.patient-portal .booking-slot-btn.is-selected {
+  background-color: rgba(6, 147, 150, 0.45) !important;
+  border-color: #2dd4bf !important;
+  color: #ffffff !important;
+  box-shadow: 0 0 0 2px rgba(45, 212, 191, 0.35) !important;
+}
+
+html[data-theme-resolved='dark'] body.patient-portal .booking-slot-btn.is-past,
+html[data-theme-resolved='dark'] body.patient-portal .booking-slot-btn:disabled {
+  background-color: #1e293b !important;
+  border-color: #334155 !important;
+  color: #94a3b8 !important;
+  cursor: not-allowed !important;
+  opacity: 0.75;
 }
 
 html[data-theme-resolved='dark'] body.patient-portal [class*='btn'][class*='primary'],

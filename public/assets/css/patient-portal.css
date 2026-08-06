@@ -1363,6 +1363,7 @@ body.mc-tips-ready-modal-open {
   border-color: var(--mc-aqua-medium, #069396);
   background: rgba(6, 147, 150, 0.22);
   color: var(--mc-aqua-medium, #069396);
+  box-shadow: 0 0 0 2px rgba(6, 147, 150, 0.28);
 }
 
 .booking-slot-btn.is-past,
