@@ -17,34 +17,44 @@ final class MedicalTriageDetector
         array $phraseTranslation,
         array $concepts,
         array $validatedTerms = [],
-        int $confidenceScore = 0
+        int $confidenceScore = 0,
+        string $clinicalEnglish = ''
     ): array {
         $entities = MedicalEntityExtractor::extractEntities($original);
         if ($entities === [] && $concepts !== []) {
             foreach ($concepts as $c) {
                 $entities[] = [
-                    'english_term' => (string) ($c['english'] ?? $c['medical_keyword'] ?? ''),
-                    'symptom'      => (string) ($c['symptom'] ?? ''),
-                    'condition'    => (string) ($c['condition'] ?? ''),
+                    'english_term' => (string) ($c['canonical_name'] ?? $c['medical_keyword'] ?? ''),
+                    'symptom'      => (string) ($c['canonical_name'] ?? ''),
+                    'condition'    => '',
                     'body_part'    => (string) ($c['body_part'] ?? ''),
-                    'severity'     => (string) ($c['severity'] ?? ''),
+                    'severity'     => '',
                     'category'     => (string) ($c['category'] ?? 'symptom'),
-                    'type'         => (string) ($c['classification'] ?? 'symptom'),
+                    'type'         => 'symptom',
                 ];
             }
         }
 
         $englishFull = trim($english);
         if ($englishFull === '' && $phraseTranslation !== []) {
-            $englishFull = (string) ($phraseTranslation['english'] ?? '');
+            $englishFull = (string) ($phraseTranslation['literal_english'] ?? ($phraseTranslation['english'] ?? ''));
+        }
+        if ($clinicalEnglish !== '') {
+            $englishFull = trim($englishFull . ' ' . $clinicalEnglish);
         }
 
-        return ClinicalTriageEngine::assess(
+        $result = ClinicalTriageEngine::assess(
             $original,
             $englishFull,
             $entities,
             $validatedTerms,
             $confidenceScore
         );
+
+        $symptoms = is_array($result['detected_symptoms'] ?? null) ? $result['detected_symptoms'] : [];
+        $result['associated_symptoms'] = count($symptoms) > 1 ? array_values(array_slice($symptoms, 1)) : [];
+        $result['entities'] = $entities;
+
+        return $result;
     }
 }

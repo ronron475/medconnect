@@ -168,9 +168,20 @@ final class MedicalAssessmentEngine
             'workflow_steps'        => $workflowSteps,
             'original_input'        => $combinedText,
             'chief_complaint'       => trim($chiefComplaint),
+            'original_chief_complaint' => trim($chiefComplaint),
             'checkbox_symptoms'     => $checkboxSymptoms,
             'detected_language'     => (string) ($nlpResult['detected_language'] ?? ($nlpPipeline['detected_language'] ?? 'unknown')),
+            'normalized_text'       => (string) ($nlpResult['normalized_text'] ?? ($nlpPipeline['normalized_input'] ?? '')),
+            'corrected_text'        => (string) ($nlpResult['corrected_text'] ?? ($nlpPipeline['corrected_input'] ?? '')),
+            'corrected_words'       => is_array($nlpResult['corrected_words'] ?? null)
+                ? $nlpResult['corrected_words']
+                : (is_array($nlpPipeline['corrected_words'] ?? null) ? $nlpPipeline['corrected_words'] : []),
             'english_translation'   => (string) ($nlpResult['english_translation'] ?? ($nlpPipeline['translated_english'] ?? '')),
+            'standardized_medical_concepts' => is_array($nlpResult['standardized_medical_concepts'] ?? null)
+                ? $nlpResult['standardized_medical_concepts']
+                : (is_array($nlpResult['medical_concepts'] ?? null) ? $nlpResult['medical_concepts'] : []),
+            'associated_symptoms'   => is_array($nlpResult['associated_symptoms'] ?? null) ? $nlpResult['associated_symptoms'] : [],
+            'pipeline_stages'       => is_array($nlpResult['pipeline_stages'] ?? null) ? $nlpResult['pipeline_stages'] : [],
             'detected_symptoms'     => $detectedSymptoms,
             // Provider-only reference context — not a diagnosis
             'possible_conditions'   => $possibleConditions,

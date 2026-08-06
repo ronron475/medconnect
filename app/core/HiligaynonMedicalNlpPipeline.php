@@ -65,6 +65,9 @@ final class HiligaynonMedicalNlpPipeline
             'variants'        => $phraseVariants,
         ]);
 
+        $literalTranslation = ChiefComplaintLiteralTranslator::translate($text, $correctedText, $language);
+        NlpPipelineDebug::step('literal_translation', $literalTranslation);
+
         $phraseTranslation = null;
         foreach ($phraseVariants as $variant) {
             $phraseTranslation = HiligaynonPhraseTranslator::translateFullPhrase($variant);
@@ -77,9 +80,7 @@ final class HiligaynonMedicalNlpPipeline
             $phraseTranslation = HiligaynonPhraseTranslator::translateFullPhrase($normalized);
         }
 
-        $concepts = $phraseTranslation !== null
-            ? MedicalConceptExtractor::enrichFromTranslation($phraseTranslation)
-            : [];
+        $concepts = [];
 
         $preprocessing = NlpPreprocessor::preprocessField($text, 'medical_text');
         $preprocessing['normalized'] = $normalized;
@@ -100,8 +101,29 @@ final class HiligaynonMedicalNlpPipeline
         $datasetValidation = MedicalDatasetValidator::validateTextAnalysis($fuzzyMatching);
         $termResults = MedicalTextAnalysisWorkflow::buildTermResultsPublic($translation, $fuzzyMatching, $datasetValidation);
 
-        $englishTranslation = (string) ($translation['english_text'] ?? ($phraseTranslation['english'] ?? ''));
+        $englishTranslation = trim((string) ($literalTranslation['english'] ?? ''));
+        if ($englishTranslation === '') {
+            $englishTranslation = (string) ($translation['english_text'] ?? ($phraseTranslation['english'] ?? ''));
+        }
+        $clinicalEnglish = StandardizedConceptMapper::clinicalHaystack(
+            [],
+            $phraseTranslation,
+            self::collectMatchedTerms($termResults)
+        );
+        if ($clinicalEnglish === '') {
+            $clinicalEnglish = (string) ($phraseTranslation['medical_keyword'] ?? ($phraseTranslation['english'] ?? ''));
+        }
+
         $matchedDatasetTerms = self::collectMatchedTerms($termResults);
+        $concepts = StandardizedConceptMapper::map(
+            $correctedText !== '' ? $correctedText : $normalized,
+            $literalTranslation,
+            $phraseTranslation,
+            $termResults,
+            $matchedDatasetTerms
+        );
+        NlpPipelineDebug::step('standardized_concepts', ['concepts' => $concepts]);
+
         $confidence = self::computeConfidence($termResults, $phraseTranslation);
         $confidencePct = (int) round($confidence * 100);
 
@@ -111,7 +133,8 @@ final class HiligaynonMedicalNlpPipeline
             $phraseTranslation ?? [],
             $concepts,
             $matchedDatasetTerms,
-            $confidencePct
+            $confidencePct,
+            $clinicalEnglish
         );
         $classification = MedicalConceptExtractor::classify($concepts, $phraseTranslation ?? []);
 
@@ -124,14 +147,19 @@ final class HiligaynonMedicalNlpPipeline
         $bodyParts = array_values(array_unique($bodyParts));
 
         $structured = [
-            'original_text'          => $text,
-            'detected_language'      => $language['primary'],
-            'language_tags'          => $language['tags'],
-            'normalized_text'        => $normalized,
-            'corrected_text'         => $correctedText,
-            'corrected_words'        => $correctedWords,
-            'english_translation'    => $englishTranslation,
-            'medical_concepts'       => $concepts,
+            'original_text'                  => $text,
+            'original_chief_complaint'       => $text,
+            'detected_language'              => $language['primary'],
+            'language_tags'                  => $language['tags'],
+            'normalized_text'                => $normalized,
+            'corrected_text'                 => $correctedText,
+            'corrected_words'                => $correctedWords,
+            'english_translation'            => $englishTranslation,
+            'literal_translation'            => $literalTranslation,
+            'clinical_english'               => $clinicalEnglish,
+            'standardized_medical_concepts'  => $concepts,
+            'medical_concepts'               => $concepts,
+            'associated_symptoms'            => $triage['associated_symptoms'] ?? [],
             'body_parts'             => $bodyParts,
             'category'               => $classification['category'],
             'severity'               => $triage['severity'] ?? 'mild',
@@ -154,6 +182,18 @@ final class HiligaynonMedicalNlpPipeline
             'confidence'              => $triage['confidence_score'] ?? $confidencePct,
             'reason'                 => $triage['reason'] ?? '',
             'recommendation'         => $triage['recommendation'] ?? '',
+            'pipeline_stages'                => [
+                'original'              => $text,
+                'language'              => $language,
+                'normalized'            => $normalized,
+                'corrected'             => $correctedText,
+                'corrected_words'       => $correctedWords,
+                'literal_translation'   => $literalTranslation,
+                'standardized_concepts' => $concepts,
+                'entities'              => $triage['entities'] ?? [],
+                'clinical_reasoning'    => (string) ($triage['clinical_reasoning'] ?? ($triage['reason'] ?? '')),
+                'classification'        => (string) ($triage['triage_display'] ?? 'NON-URGENT'),
+            ],
             'needs_provider_review'  => (bool) ($triage['needs_provider_review'] ?? false),
         ];
 
