@@ -43,3 +43,4 @@ GOLD0041,Follow-up consultation,NON-URGENT,english,admin,active
 GOLD0042,putol ang kamot ko,EMERGENCY,hiligaynon,trauma_amputation,active
 GOLD0043,may pilas kamot ko,URGENT,hiligaynon,trauma_wound,active
 GOLD0044,gamay nga pilas sa kamot,NON-URGENT,hiligaynon,trauma_minor,active
+GOLD0045,sakit mata ko,NON-URGENT,hiligaynon,eye_pain,active

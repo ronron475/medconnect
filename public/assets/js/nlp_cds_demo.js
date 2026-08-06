@@ -174,6 +174,49 @@
     }
   }
 
+  function renderEvidenceMap(evidence) {
+    if (!evidence || typeof evidence !== 'object' || Object.keys(evidence).length === 0) {
+      return '<p class="cds-card__value">No symptom evidence map</p>';
+    }
+    return (
+      '<ul class="cds-list">' +
+      Object.keys(evidence)
+        .map(function (sym) {
+          return '<li><strong>' + escapeHtml(sym) + '</strong> — ' + escapeHtml(String(evidence[sym])) + '</li>';
+        })
+        .join('') +
+      '</ul>'
+    );
+  }
+
+  function renderDebugPanel(summary, assessment, triage) {
+    const stages = summary.pipeline_stages || assessment.pipeline_stages || {};
+    const evidence = summary.symptom_evidence || assessment.symptom_evidence || stages.symptom_evidence || {};
+    const rules = summary.triggered_rules || stages.triggered_rules || triage.matched_rules || [];
+    return (
+      '<details class="cds-json-toggle" open><summary>Developer debug panel</summary>' +
+      '<div class="cds-grid">' +
+      '<div class="cds-card"><p class="cds-card__label">Original input</p><p class="cds-card__value">' +
+      escapeHtml(summary.original_chief_complaint || stages.original || assessment.chief_complaint || '—') +
+      '</p></div>' +
+      '<div class="cds-card"><p class="cds-card__label">Normalized input</p><p class="cds-card__value">' +
+      escapeHtml(summary.corrected_text || stages.corrected || stages.normalized || assessment.corrected_text || '—') +
+      '</p></div>' +
+      '<div class="cds-card"><p class="cds-card__label">English translation</p><p class="cds-card__value">' +
+      escapeHtml(summary.english_translation || stages.literal_translation?.english || assessment.english_translation || '—') +
+      '</p></div>' +
+      '<div class="cds-card"><p class="cds-card__label">Final classification</p><p class="cds-card__value">' +
+      escapeHtml(summary.classification || triage.triage_display || '—') +
+      '</p></div>' +
+      '</div>' +
+      '<h3 class="cds-section-title">Extracted symptoms (evidence-backed)</h3>' +
+      renderEvidenceMap(evidence) +
+      '<h3 class="cds-section-title">Triggered rules</h3>' +
+      renderList(Array.isArray(rules) ? rules : [], 'None') +
+      '</details>'
+    );
+  }
+
   function renderConcepts(concepts) {
     if (!Array.isArray(concepts) || concepts.length === 0) {
       return '<p class="cds-card__value">None mapped</p>';
@@ -281,7 +324,7 @@
       '</div>' +
       '<h3 class="cds-section-title">Risk factors</h3>' +
       renderList(riskFactors, 'None detected') +
-      '<h3 class="cds-section-title">Clinical context evaluated</h3>' +
+      '<h3 class="cds-section-title">Clinical context checklist (not detected symptoms)</h3>' +
       (evaluatedContext.length
         ? renderList(evaluatedContext, 'None listed')
         : '<p class="cds-card__value">' + escapeHtml(contextRule || 'Combined symptom assessment') + '</p>') +
@@ -306,6 +349,7 @@
       (associated.length
         ? '<h3 class="cds-section-title">Associated symptoms</h3><div class="cds-tags">' + renderTags(associated, false) + '</div>'
         : '') +
+      renderDebugPanel(summary, assessment, triage) +
       '<details class="cds-json-toggle"><summary>Pipeline debug trace</summary><pre class="cds-json">' +
       escapeHtml(JSON.stringify(payload.pipeline_debug || assessment.pipeline_debug || null, null, 2)) +
       '</pre></details>' +
@@ -322,7 +366,10 @@
     }
 
     hideFeedback();
-    if (resultsEl) resultsEl.hidden = true;
+    if (resultsEl) {
+      resultsEl.hidden = true;
+      resultsEl.innerHTML = '';
+    }
     if (analyzeBtn) {
       analyzeBtn.disabled = true;
       analyzeBtn.textContent = 'Analyzing…';

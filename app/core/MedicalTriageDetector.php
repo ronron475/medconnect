@@ -39,9 +39,6 @@ final class MedicalTriageDetector
         if ($englishFull === '' && $phraseTranslation !== []) {
             $englishFull = (string) ($phraseTranslation['literal_english'] ?? ($phraseTranslation['english'] ?? ''));
         }
-        if ($clinicalEnglish !== '') {
-            $englishFull = trim($englishFull . ' ' . $clinicalEnglish);
-        }
 
         $result = ClinicalTriageEngine::assess(
             $original,
@@ -54,6 +51,14 @@ final class MedicalTriageDetector
         $symptoms = is_array($result['detected_symptoms'] ?? null) ? $result['detected_symptoms'] : [];
         $result['associated_symptoms'] = count($symptoms) > 1 ? array_values(array_slice($symptoms, 1)) : [];
         $result['entities'] = $entities;
+        $result['symptom_evidence'] = is_array($result['symptom_evidence'] ?? null)
+            ? $result['symptom_evidence']
+            : SymptomEvidenceGate::evidenceMap(
+                is_array($result['kb_matched_symptoms'] ?? null) ? $result['kb_matched_symptoms'] : [],
+                $original,
+                (string) ($result['normalized_text'] ?? $original),
+                $englishFull
+            );
 
         return $result;
     }
