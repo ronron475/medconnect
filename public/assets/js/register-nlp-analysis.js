@@ -1,6 +1,6 @@
 /**
  * Registration — silent Chief Complaint NLP (patient never sees technical results).
- * Uses the canonical PHP CDS engine (same as nlp_cds_demo.php / assess_chief_complaint.php).
+ * Uses the canonical PHP CDS engine (assess_chief_complaint.php).
  */
 (function (global) {
   'use strict';
