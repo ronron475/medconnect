@@ -135,7 +135,7 @@ if (preg_match('#^/views/(.+)$#i', $path, $m)) {
 }
 
 // Public PHP pages
-if (preg_match('#^/(forgot_password|reset_password|setup_password|verify|verification-success|announcements|nlp_step3_demo|nlp_cds_demo)\.php$#i', $path, $m)) {
+if (preg_match('#^/(forgot_password|reset_password|setup_password|verify|verification-success|announcements|nlp_step3_demo)\.php$#i', $path, $m)) {
     $page = medconnect_vercel_safe_file($root . '/public', $m[1] . '.php');
     if ($page !== null) {
         require $page;
