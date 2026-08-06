@@ -168,7 +168,7 @@ if (session_status() === PHP_SESSION_ACTIVE) {
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"/>
   <?php require_once VIEWS_PATH . '/partials/theme_init.php'; ?>
   <meta http-equiv="Permissions-Policy" content="camera=(self), microphone=(self), display-capture=(self)"/>
   <title>Video Consultation â€” medConnect</title>
@@ -188,12 +188,25 @@ if (session_status() === PHP_SESSION_ACTIVE) {
   $videoCoreJsVer = (int) @filemtime(ASSETS_PATH . '/js/video-call-core.js');
   $videoUiCssVer = (int) @filemtime(ASSETS_PATH . '/css/video-consultation-ui.css');
   $videoUiJsVer = (int) @filemtime(ASSETS_PATH . '/js/video-consultation-ui.js');
+  $videoEnhCssVer = (int) @filemtime(ASSETS_PATH . '/css/video-room-enhancements.css');
+  $videoEnhJsVer = (int) @filemtime(ASSETS_PATH . '/js/video-room-enhancements.js');
   ?>
   <link rel="stylesheet" href="<?= ASSET_BASE ?>/assets/css/video-mute-tts.css?v=<?= $muteTtsCssVer ?>"/>
   <link rel="stylesheet" href="<?= ASSET_BASE ?>/assets/css/video-consultation-ui.css?v=<?= $videoUiCssVer ?>"/>
+  <link rel="stylesheet" href="<?= ASSET_BASE ?>/assets/css/video-room-enhancements.css?v=<?= $videoEnhCssVer ?>"/>
   <script src="<?= ASSET_BASE ?>/assets/js/video-call-core.js?v=<?= $videoCoreJsVer ?>"></script>
   <script src="<?= ASSET_BASE ?>/assets/js/video-consultation-ui.js?v=<?= $videoUiJsVer ?>"></script>
   <script src="<?= ASSET_BASE ?>/assets/js/video-mute-tts.js?v=<?= $muteTtsJsVer ?>"></script>
+  <script>
+    window.__mcVideoRoomMeta = {
+      apiBase: <?= json_encode((string) ASSET_BASE) ?>,
+      roomToken: <?= json_encode($token) ?>,
+      consultationId: <?= (int) $consultation_id ?>,
+      isPatient: <?= $is_patient ? 'true' : 'false' ?>,
+      csrf: <?= json_encode($pageCsrfToken) ?>,
+    };
+  </script>
+  <script src="<?= ASSET_BASE ?>/assets/js/video-room-enhancements.js?v=<?= $videoEnhJsVer ?>"></script>
   <style>
     body { margin:0; background:#0b1220; color:#fff; height:100vh; overflow:hidden; }
     body:not(.media-ready) .mc-vc-controls { display: none; }
@@ -245,6 +258,52 @@ if (session_status() === PHP_SESSION_ACTIVE) {
     .end-actions .keep { background: #1e293b; color: #fff; }
     .end-actions .confirm { background: #dc2626; color: #fff; border-color: #dc2626; }
     .end-actions button:disabled { opacity: .6; cursor: not-allowed; }
+    @media (max-width: 720px) {
+      .media-permission-gate {
+        padding: calc(16px + env(safe-area-inset-top, 0px)) calc(16px + env(safe-area-inset-right, 0px)) calc(16px + env(safe-area-inset-bottom, 0px)) calc(16px + env(safe-area-inset-left, 0px));
+        align-items: flex-end;
+      }
+      .media-permission-dialog {
+        width: 100%;
+        max-height: 90dvh;
+        overflow: auto;
+        border-radius: 16px 16px 0 0;
+        -webkit-overflow-scrolling: touch;
+      }
+      .media-permission-actions button {
+        min-height: 48px;
+        font-size: 16px;
+        width: 100%;
+      }
+      .media-permission-actions {
+        flex-direction: column;
+        gap: 10px;
+      }
+      .end-modal {
+        padding: calc(12px + env(safe-area-inset-top, 0px)) calc(12px + env(safe-area-inset-right, 0px)) calc(12px + env(safe-area-inset-bottom, 0px)) calc(12px + env(safe-area-inset-left, 0px));
+        align-items: flex-end;
+      }
+      .end-dialog {
+        border-radius: 16px 16px 0 0;
+        padding: 20px 16px calc(20px + env(safe-area-inset-bottom, 0px));
+      }
+      .end-actions {
+        flex-direction: column;
+        width: 100%;
+      }
+      .end-actions button {
+        width: 100%;
+        min-height: 48px;
+        font-size: 16px;
+      }
+      .extend-toast {
+        top: calc(64px + env(safe-area-inset-top, 0px));
+        left: calc(12px + env(safe-area-inset-left, 0px));
+        right: calc(12px + env(safe-area-inset-right, 0px));
+        transform: none;
+        max-width: none;
+      }
+    }
     .extend-toast {
       position: fixed;
       top: 80px;
@@ -491,6 +550,7 @@ if (session_status() === PHP_SESSION_ACTIVE) {
         <div class="mc-vc-overlay-card">
           <div class="mc-vc-overlay-title" id="mcVcOverlayTitle"></div>
           <div class="mc-vc-overlay-sub" id="mcVcOverlaySub"></div>
+          <button type="button" class="mc-vc-overlay-retry" id="retryConnectBtn" hidden>Retry connection</button>
         </div>
       </div>
     </div>
@@ -525,6 +585,8 @@ if (session_status() === PHP_SESSION_ACTIVE) {
       </div>
     </div>
   </div>
+
+  <?php require __DIR__ . '/partials/video_room_panels.php'; ?>
 
   <?php if (!$is_patient): ?>
   <div class="compact-hint" id="compactHint">
@@ -831,6 +893,11 @@ if (session_status() === PHP_SESSION_ACTIVE) {
       dataConn = conn;
       conn.on('open', () => {
         console.log('Peer data channel open:', conn.peer);
+        // Remote peer is online — patient may dial if provider call has not arrived yet.
+        if (userRole === 'patient' && !callHasRemoteStream && !endingCall) {
+          patientMayDial = true;
+          startCall();
+        }
         // Re-announce mute once the live data channel is ready (production + demo).
         if (muteTts && typeof muteTts.syncMuteStateToPeer === 'function') {
           muteTts.syncMuteStateToPeer();
@@ -1199,6 +1266,14 @@ if (session_status() === PHP_SESSION_ACTIVE) {
 
       if (userRole === 'provider') {
         patientMayDial = true;
+      } else if (userRole === 'patient') {
+        // If the doctor is slow to dial, let the patient initiate after a short grace period.
+        setTimeout(() => {
+          if (!callHasRemoteStream && !endingCall) {
+            patientMayDial = true;
+            startCall();
+          }
+        }, 6000);
       }
       flushPendingCall();
       openDataChannel();
@@ -1853,6 +1928,9 @@ if (session_status() === PHP_SESSION_ACTIVE) {
         setCallPhase(window.McVideoCallCore ? window.McVideoCallCore.STATUS.CONNECTED : 'connected', {
           callStatusText: 'Connected',
         });
+        if (consultUi && typeof consultUi.setOverlay === 'function') {
+          consultUi.setOverlay('', '', false);
+        }
         if (consultUi && typeof consultUi.startDurationTimer === 'function') {
           consultUi.startDurationTimer();
         }
@@ -1993,6 +2071,10 @@ if (session_status() === PHP_SESSION_ACTIVE) {
       document.getElementById('confirmEndBtn').disabled = true;
       disconnectLocalCall();
 
+      if (window.McVideoRoomEnhancements && typeof window.McVideoRoomEnhancements.showPostCall === 'function') {
+        window.McVideoRoomEnhancements.showPostCall();
+      }
+
       if (window.parent && window.parent !== window) {
         window.parent.postMessage({ type: 'medconnect:call-left', role: userRole, token: roomToken }, window.location.origin);
         return;
@@ -2046,6 +2128,10 @@ if (session_status() === PHP_SESSION_ACTIVE) {
 
         if (window.MedConnectLoader && typeof window.MedConnectLoader.forceHide === 'function') {
           window.MedConnectLoader.forceHide();
+        }
+
+        if (window.McVideoRoomEnhancements && typeof window.McVideoRoomEnhancements.showPostCall === 'function') {
+          window.McVideoRoomEnhancements.showPostCall();
         }
 
         if (window.parent && window.parent !== window) {
@@ -2120,6 +2206,9 @@ if (session_status() === PHP_SESSION_ACTIVE) {
     bindMediaPermissionButtons();
     setupSessionNavigationUi();
     initConsultationUi();
+    window.toggleAudio = toggleAudio;
+    window.toggleVideo = toggleVideo;
+    window.endCall = endCall;
     dismissBootLoader();
     setupDemoBus();
     if (!demoMode) {
@@ -2165,6 +2254,9 @@ if (session_status() === PHP_SESSION_ACTIVE) {
       patientMayDial = true;
       mediaJoinAt = Date.now() - 5000;
       announceDemoPeer();
+      if (consultUi && typeof consultUi.setOverlay === 'function') {
+        consultUi.setOverlay('Retrying connection…', 'Please wait while we reconnect to your doctor.', true);
+      }
       if (!peerReady) {
         recreatePeer('manual-retry');
       } else {

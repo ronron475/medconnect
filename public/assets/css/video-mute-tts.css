@@ -389,6 +389,58 @@ body.role-provider .provider-mute-tts-log:empty {
   display: none;
 }
 
+/* Patient VC — keep mute/TTS panels above controls, not over the main video */
+body.role-patient .mute-tts-panel {
+  bottom: calc(var(--mc-tts-controls-clearance) + 8px);
+  max-height: min(42vh, 360px);
+  overflow: auto;
+}
+
+body.role-patient .mute-tts-banner {
+  bottom: calc(var(--mc-tts-controls-clearance) + min(42vh, 360px) + 12px);
+  width: min(480px, calc(100vw - 24px));
+}
+
+body.role-patient .mute-tts-receive-panel {
+  bottom: calc(var(--mc-tts-controls-clearance) + 8px);
+  max-height: min(36vh, 300px);
+}
+
+body.role-patient .remote-mute-banner {
+  top: calc(88px + env(safe-area-inset-top, 0px));
+}
+
+@media (max-width: 720px) {
+  body.role-patient .mc-vc-status-bar {
+    top: calc(var(--mc-vc-header-height) + var(--mc-vc-safe-top));
+  }
+
+  body.role-patient .mc-vc-stage {
+    padding-top: calc(72px + var(--mc-vc-safe-top));
+  }
+
+  body.role-patient .mc-vc-pip[data-corner="bottom-left"],
+  body.role-patient .mc-vc-pip[data-corner="bottom-right"],
+  body.role-patient .mc-vc-pip[data-corner="top-left"],
+  body.role-patient .mc-vc-pip[data-corner="top-right"] {
+    top: calc(var(--mc-vc-header-height) + 56px + var(--mc-vc-safe-top));
+    bottom: auto;
+  }
+
+  body.role-patient .mute-tts-panel,
+  body.role-patient .mute-tts-banner {
+    left: 10px;
+    right: 10px;
+    width: auto;
+  }
+
+  body.role-patient .mute-tts-receive-panel {
+    left: 10px;
+    right: 10px;
+    width: auto;
+  }
+}
+
 /* Tablet / phone */
 @media (max-width: 720px) {
   :root {

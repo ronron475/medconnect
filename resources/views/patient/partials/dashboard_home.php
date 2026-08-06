@@ -65,7 +65,10 @@ foreach ($upcoming_list as $c) {
       <?php endif; ?>
     </div>
     <?php if ($dash_live_join['allowed'] && !empty($dash_live_session['room_token'])): ?>
-    <a href="<?= htmlspecialchars($video_base) ?>?token=<?= urlencode($dash_live_session['room_token']) ?>" class="pdash-btn pdash-btn--join pdash-btn--sm">Join Call</a>
+    <button type="button" class="pdash-btn pdash-btn--join pdash-btn--sm" data-mc-video-join
+      data-token="<?= htmlspecialchars($dash_live_session['room_token'], ENT_QUOTES, 'UTF-8') ?>"
+      data-consultation-id="<?= (int) ($dash_live_session['id'] ?? 0) ?>"
+      data-label="Consultation with Dr. <?= htmlspecialchars($dash_live_session['provider_name'] ?? 'your provider', ENT_QUOTES, 'UTF-8') ?>">Join Call</button>
     <?php endif; ?>
   </div>
   <?php endif; ?>
@@ -177,7 +180,10 @@ foreach ($upcoming_list as $c) {
             </div>
             <div class="pdash-session__action" data-consult-action="<?= (int) ($c['id'] ?? 0) ?>">
               <?php if ($join_access['allowed']): ?>
-              <a href="<?= htmlspecialchars($video_base) ?>?token=<?= urlencode($c['room_token']) ?>" class="pdash-btn pdash-btn--join pdash-btn--sm">Join Call</a>
+              <button type="button" class="pdash-btn pdash-btn--join pdash-btn--sm" data-mc-video-join
+                data-token="<?= htmlspecialchars($c['room_token'], ENT_QUOTES, 'UTF-8') ?>"
+                data-consultation-id="<?= (int) ($c['id'] ?? 0) ?>"
+                data-label="Consultation with Dr. <?= htmlspecialchars($provider_name, ENT_QUOTES, 'UTF-8') ?>">Join Call</button>
               <?php elseif ($join_access['mode'] === 'scheduled_wait'): ?>
               <span class="pdash-btn pdash-btn--waiting pdash-btn--sm" title="<?= htmlspecialchars($join_access['reason'], ENT_QUOTES, 'UTF-8') ?>">
                 Opens at <?= htmlspecialchars(queue_session_context($c)['opens_at_label'] ?: 'scheduled time') ?>

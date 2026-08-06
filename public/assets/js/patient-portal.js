@@ -247,9 +247,11 @@
         let primary = '';
         if (joinAccess.allowed) {
           primary =
-            '<a href="' + APP_BASE + '/views/consultation/video_room.php?token=' +
-            encodeURIComponent(c.room_token) +
-            '" class="psess-btn psess-btn--primary">Join Video Call</a>';
+            '<button type="button" class="psess-btn psess-btn--primary" data-mc-video-join data-token="' +
+            escapeHtml(c.room_token) +
+            '" data-consultation-id="' + escapeHtml(String(c.id || '')) +
+            '" data-label="Consultation with ' + escapeHtml(c.provider_name || 'provider') +
+            '">Join Video Call</button>';
         } else if (joinAccess.mode === 'scheduled_wait') {
           primary =
             '<button type="button" class="psess-btn psess-btn--outline" disabled>Opens ' +

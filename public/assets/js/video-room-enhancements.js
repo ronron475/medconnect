@@ -1,0 +1,401 @@
+/**
+ * medConnect — Video room UI enhancements (panels, chat, waiting, post-call).
+ * WebRTC remains in video_room.php inline script.
+ */
+(function (global) {
+  'use strict';
+
+  const META = global.__mcVideoRoomMeta || {};
+  const API = String(META.apiBase || global.APP_BASE || '').replace(/\/$/, '');
+  const TOKEN = META.roomToken || '';
+  const CONSULTATION_ID = META.consultationId || 0;
+  const IS_PATIENT = !!META.isPatient;
+  const CSRF = META.csrf || '';
+
+  let contextData = null;
+  let chatPollTimer = null;
+  let soapSaveTimer = null;
+
+  function q(id) {
+    return document.getElementById(id);
+  }
+
+  function escapeHtml(s) {
+    return String(s ?? '')
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;');
+  }
+
+  function fetchContext() {
+    if (!TOKEN) return Promise.resolve(null);
+    return fetch(API + '/app/api/consultations/session_context.php?token=' + encodeURIComponent(TOKEN), {
+      credentials: 'same-origin',
+      headers: { Accept: 'application/json', 'X-MC-No-Loader': '1' },
+    })
+      .then((r) => r.json())
+      .then((data) => (data && data.success ? data : null))
+      .catch(() => null);
+  }
+
+  function renderWaiting(ctx) {
+    const card = q('mcVcWaitingCard');
+    const title = q('mcVcWaitingTitle');
+    const meta = q('mcVcWaitingMeta');
+    const status = q('mcVcWaitingStatus');
+    if (!card || !ctx || !ctx.waiting) return;
+
+    const w = ctx.waiting;
+    if (title) {
+      title.textContent = 'Waiting for ' + (w.doctor_name || 'your healthcare provider');
+    }
+    if (meta) {
+      meta.innerHTML =
+        '<div><dt>Appointment</dt><dd>' + escapeHtml(w.appointment_label || '—') + '</dd></div>' +
+        '<div><dt>Estimated wait</dt><dd>' + escapeHtml(w.estimated_wait || '—') + '</dd></div>' +
+        '<div><dt>Doctor status</dt><dd>' + escapeHtml(w.doctor_status || '—') + '</dd></div>' +
+        (w.queue_position ? '<div><dt>Queue</dt><dd>#' + escapeHtml(w.queue_position) + '</dd></div>' : '') +
+        '<div><dt>Connection</dt><dd>' + escapeHtml(w.connection_status || 'Secure') + '</dd></div>';
+    }
+    if (status) status.textContent = 'Your visit will begin automatically when your doctor joins.';
+  }
+
+  function renderInfo(ctx) {
+    const pane = q('mcVcInfoPane');
+    if (!pane || !ctx) return;
+
+    if (IS_PATIENT && ctx.patient_panel) {
+      const p = ctx.patient_panel;
+      pane.innerHTML =
+        '<div class="mc-vc-info-card">' +
+        '<h3 class="mc-vc-info-card__title">' + escapeHtml(p.doctor_name) + '</h3>' +
+        '<p class="mc-vc-info-card__sub">' + escapeHtml(p.specialization) + '</p>' +
+        '<dl class="mc-vc-info-dl">' +
+        '<div><dt>Appointment</dt><dd>' + escapeHtml(p.appointment_label || '—') + '</dd></div>' +
+        '<div><dt>Chief complaint</dt><dd>' + escapeHtml(p.chief_complaint || '—') + '</dd></div>' +
+        '<div><dt>AI triage</dt><dd><span class="mc-vc-triage mc-vc-triage--' + escapeHtml(p.triage_bucket || 'unknown') + '">' + escapeHtml(p.triage_level || 'Not assessed') + '</span></dd></div>' +
+        '</dl></div>';
+      return;
+    }
+
+    if (!IS_PATIENT && ctx.provider_panel) {
+      const p = ctx.provider_panel;
+      const list = (arr) => (Array.isArray(arr) && arr.length ? arr.map(escapeHtml).join(', ') : 'None recorded');
+      pane.innerHTML =
+        '<div class="mc-vc-info-card">' +
+        '<h3 class="mc-vc-info-card__title">' + escapeHtml(p.patient_name) + '</h3>' +
+        '<p class="mc-vc-info-card__sub">' + escapeHtml(p.age ? p.age + ' yrs' : '—') + ' · ' + escapeHtml(p.sex || '—') + ' · Blood type: ' + escapeHtml(p.blood_type || '—') + '</p>' +
+        '<dl class="mc-vc-info-dl">' +
+        '<div><dt>Chief complaint</dt><dd>' + escapeHtml(p.chief_complaint || '—') + '</dd></div>' +
+        '<div><dt>AI classification</dt><dd>' + escapeHtml(p.ai_classification || '—') + (p.confidence ? ' <span class="mc-vc-muted">(' + escapeHtml(p.confidence) + ')</span>' : '') + '</dd></div>' +
+        '<div><dt>Allergies</dt><dd>' + list(p.allergies) + '</dd></div>' +
+        '<div><dt>Conditions</dt><dd>' + list(p.conditions) + '</dd></div>' +
+        '<div><dt>Medications</dt><dd>' + list(p.medications) + '</dd></div>' +
+        '</dl></div>';
+    }
+  }
+
+  function showWaitingCard(visible) {
+    const card = q('mcVcWaitingCard');
+    if (card) card.hidden = !visible;
+  }
+
+  function watchCallStatusForWaiting() {
+    const statusEl = q('callStatus');
+    if (!statusEl) return;
+    const observer = new MutationObserver(() => {
+      const t = String(statusEl.textContent || '').toLowerCase();
+      const waiting = t.indexOf('waiting') >= 0 || t.indexOf('connecting') >= 0;
+      const connected = t.indexOf('connected') >= 0 && t.indexOf('reconnecting') < 0;
+      showWaitingCard(waiting && !connected);
+      if (connected) showWaitingCard(false);
+    });
+    observer.observe(statusEl, { childList: true, characterData: true, subtree: true });
+  }
+
+  function mapConnectionLabel(level) {
+    if (level === 'excellent') return '● Excellent Connection';
+    if (level === 'good') return '● Good Connection';
+    if (level === 'fair') return '◌ Fair Connection';
+    if (level === 'poor') return '◌ Poor Connection';
+    if (level === 'reconnecting') return '◌ Reconnecting…';
+    return '◌ Connecting…';
+  }
+
+  function enhanceNetworkMonitor() {
+    const netEl = q('mediaStatusConn');
+    if (!netEl) return;
+    setInterval(() => {
+      const level = netEl.dataset.level || netEl.dataset.state || '';
+      if (level === 'good') netEl.textContent = mapConnectionLabel('good');
+      else if (level === 'fair') netEl.textContent = mapConnectionLabel('fair');
+      else if (level === 'poor') netEl.textContent = mapConnectionLabel('poor');
+      else if (level === 'connected' || /good/i.test(netEl.textContent)) {
+        netEl.textContent = mapConnectionLabel('excellent');
+      }
+    }, 2000);
+  }
+
+  function renderChat(messages) {
+    const log = q('mcVcChatLog');
+    if (!log) return;
+    if (!messages || !messages.length) {
+      log.innerHTML = '<p class="mc-vc-chat-empty">No messages yet. Send a secure message during your visit.</p>';
+      return;
+    }
+    log.innerHTML = messages.map((m) => {
+      const mine = String(m.sender_role || '') === (IS_PATIENT ? 'patient' : 'provider');
+      return (
+        '<div class="mc-vc-chat-msg' + (mine ? ' is-mine' : '') + '">' +
+        '<div class="mc-vc-chat-msg__meta">' + escapeHtml(m.sender_name || 'Participant') + ' · ' + escapeHtml(m.time_label || '') + '</div>' +
+        '<div class="mc-vc-chat-msg__body">' + escapeHtml(m.message || m.body || '') + '</div>' +
+        '</div>'
+      );
+    }).join('');
+    log.scrollTop = log.scrollHeight;
+  }
+
+  function loadChat() {
+    if (!CONSULTATION_ID) return Promise.resolve();
+    return fetch(API + '/app/api/messages/list.php?consultation_id=' + CONSULTATION_ID + '&_=' + Date.now(), {
+      credentials: 'same-origin',
+      headers: { Accept: 'application/json', 'X-MC-No-Loader': '1' },
+    })
+      .then((r) => r.json())
+      .then((data) => {
+        const msgs = (data && data.messages) || (data && data.data && data.data.messages) || [];
+        const filtered = msgs.filter((m) => String(m.message_kind || 'chat') === 'chat');
+        renderChat(filtered.map((m) => ({
+          sender_role: m.sender_role,
+          sender_name: m.sender_name,
+          message: m.message,
+          time_label: m.created_at ? new Date(m.created_at).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' }) : '',
+        })));
+      })
+      .catch(() => {});
+  }
+
+  function sendChat(message) {
+    const fd = new FormData();
+    fd.set('consultation_id', String(CONSULTATION_ID));
+    fd.set('message', message);
+    fd.set('message_kind', 'chat');
+    fd.set('csrf_token', CSRF);
+    return fetch(API + '/app/api/messages/send.php', {
+      method: 'POST',
+      body: fd,
+      credentials: 'same-origin',
+      headers: { 'X-MC-No-Loader': '1' },
+    }).then((r) => r.json());
+  }
+
+  function bindChat() {
+    const form = q('mcVcChatForm');
+    const input = q('mcVcChatInput');
+    const attach = q('mcVcChatAttach');
+    const fileInput = q('mcVcChatFile');
+    if (!form || !input) return;
+
+    form.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const text = input.value.trim();
+      if (!text) return;
+      input.value = '';
+      sendChat(text).then(() => loadChat());
+    });
+
+    if (attach && fileInput) {
+      attach.addEventListener('click', () => fileInput.click());
+      fileInput.addEventListener('change', () => {
+        const file = fileInput.files && fileInput.files[0];
+        if (!file) return;
+        const label = '[Attachment: ' + file.name + '] — file sharing is recorded in your consultation record.';
+        sendChat(label).then(() => loadChat());
+        fileInput.value = '';
+      });
+    }
+
+    chatPollTimer = setInterval(loadChat, 4000);
+    loadChat();
+  }
+
+  function isMobilePanel() {
+    return global.matchMedia('(max-width: 768px)').matches;
+  }
+
+  function setPanelOpen(open) {
+    const panel = q('mcVcSidePanel');
+    const toggle = q('mcVcPanelToggle');
+    const backdrop = q('mcVcPanelBackdrop');
+    if (!panel) return;
+    panel.hidden = !open;
+    panel.classList.toggle('is-open', open);
+    if (toggle) toggle.classList.toggle('is-hidden', open);
+    if (backdrop) {
+      backdrop.hidden = !open || !isMobilePanel();
+      backdrop.setAttribute('aria-hidden', open && isMobilePanel() ? 'false' : 'true');
+    }
+    document.body.classList.toggle('mc-vc-panel-open', open && isMobilePanel());
+  }
+
+  function bindPanelTabs() {
+    const panel = q('mcVcSidePanel');
+    const toggle = q('mcVcPanelToggle');
+    const closeBtn = q('mcVcPanelClose');
+    const backdrop = q('mcVcPanelBackdrop');
+
+    if (toggle && panel) {
+      toggle.addEventListener('click', () => {
+        setPanelOpen(panel.hidden);
+      });
+    }
+    if (closeBtn) {
+      closeBtn.addEventListener('click', () => setPanelOpen(false));
+    }
+    if (backdrop) {
+      backdrop.addEventListener('click', () => setPanelOpen(false));
+    }
+    document.querySelectorAll('[data-panel-tab]').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const tab = btn.getAttribute('data-panel-tab');
+        document.querySelectorAll('[data-panel-tab]').forEach((b) => b.classList.toggle('is-active', b === btn));
+        document.querySelectorAll('[data-panel-pane]').forEach((pane) => {
+          pane.classList.toggle('is-active', pane.getAttribute('data-panel-pane') === tab);
+        });
+      });
+    });
+    global.addEventListener('resize', () => {
+      if (!panel || panel.hidden) return;
+      const backdropEl = q('mcVcPanelBackdrop');
+      if (backdropEl) backdropEl.hidden = !isMobilePanel();
+      document.body.classList.toggle('mc-vc-panel-open', isMobilePanel());
+    });
+  }
+
+  function bindSoapAutosave() {
+    const form = q('mcVcSoapForm');
+    const status = q('mcVcSoapStatus');
+    if (!form || IS_PATIENT) return;
+
+    function save() {
+      const fd = new FormData(form);
+      fd.set('consultation_id', String(CONSULTATION_ID));
+      fd.set('csrf_token', CSRF);
+      fd.set('autosave', '1');
+      fetch(API + '/app/api/provider/save_clinical_notes.php', {
+        method: 'POST',
+        body: fd,
+        credentials: 'same-origin',
+        headers: { 'X-MC-No-Loader': '1' },
+      })
+        .then((r) => r.json())
+        .then((data) => {
+          if (!status) return;
+          status.hidden = false;
+          status.textContent = data && data.success ? 'Notes saved' : 'Could not save notes';
+          status.className = 'mc-vc-soap-status ' + (data && data.success ? 'is-ok' : 'is-error');
+        })
+        .catch(() => {});
+    }
+
+    form.querySelectorAll('textarea').forEach((ta) => {
+      ta.addEventListener('input', () => {
+        clearTimeout(soapSaveTimer);
+        soapSaveTimer = setTimeout(save, 1200);
+      });
+    });
+  }
+
+  function bindPostCall() {
+    const modal = q('mcVcPostCallModal');
+    const dismiss = q('mcVcPostCallDismiss');
+    const followup = q('mcVcPostCallFollowup');
+    if (dismiss && modal) {
+      dismiss.addEventListener('click', () => {
+        modal.hidden = true;
+        try {
+          if (window.parent && window.parent !== window) {
+            window.parent.postMessage({ type: 'medconnect:call-dismissed', token: TOKEN }, location.origin);
+          }
+        } catch (_) {}
+      });
+    }
+    if (followup) {
+      followup.addEventListener('click', () => {
+        try {
+          if (typeof global.openFollowUpModal === 'function') global.openFollowUpModal({ fromCallEnd: true });
+        } catch (_) {}
+        if (modal) modal.hidden = true;
+      });
+    }
+    global.addEventListener('medconnect:video-shell-ended', () => showPostCall());
+    window.addEventListener('message', (e) => {
+      if (e.origin !== location.origin || !e.data) return;
+      if (e.data.type === 'medconnect:call-ended') showPostCall();
+    });
+  }
+
+  function showPostCall() {
+    const modal = q('mcVcPostCallModal');
+    if (modal) modal.hidden = false;
+  }
+
+  function bindShellBridge() {
+    window.addEventListener('message', (e) => {
+      if (e.origin !== location.origin || !e.data) return;
+      const type = e.data.type;
+      if (type === 'medconnect:shell-toggle-audio' && typeof global.toggleAudio === 'function') global.toggleAudio();
+      if (type === 'medconnect:shell-toggle-video' && typeof global.toggleVideo === 'function') global.toggleVideo();
+      if (type === 'medconnect:shell-end-call' && typeof global.endCall === 'function') global.endCall();
+    });
+
+    const embedded = window.parent && window.parent !== window;
+    if (embedded) {
+      const minBtn = q('mcVcMinimizeBtn');
+      if (minBtn) {
+        minBtn.addEventListener('click', () => {
+          try {
+            window.parent.postMessage({ type: 'medconnect:minimize-video', token: TOKEN }, location.origin);
+          } catch (_) {}
+        });
+      }
+    } else if (global.McSessionVideoShell && !IS_PATIENT) {
+      // Standalone provider: offer browse portal via shell if active elsewhere
+    }
+  }
+
+  function bindWaitingRetry() {
+    const btn = q('mcVcWaitingRetry');
+    if (!btn) return;
+    btn.addEventListener('click', () => {
+      const retry = q('retryConnectBtn');
+      if (retry) retry.click();
+    });
+  }
+
+  function init() {
+    bindPanelTabs();
+    bindChat();
+    bindSoapAutosave();
+    bindPostCall();
+    bindShellBridge();
+    bindWaitingRetry();
+    watchCallStatusForWaiting();
+    enhanceNetworkMonitor();
+
+    fetchContext().then((ctx) => {
+      contextData = ctx;
+      renderWaiting(ctx);
+      renderInfo(ctx);
+    });
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', init);
+  } else {
+    init();
+  }
+
+  global.McVideoRoomEnhancements = { refreshContext: fetchContext, showPostCall: showPostCall };
+})(window);
