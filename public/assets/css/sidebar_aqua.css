@@ -95,7 +95,9 @@
 
 .sba-label {
   display: inline;
+  flex: 1;
   min-width: 0;
+  line-height: 1.35;
 }
 
 .sba-icon {
@@ -129,23 +131,28 @@
 .sba-item .mc-nav-messages-badge,
 .sba-item .mc-nav-count-badge {
   margin-left: auto;
-  min-width: 18px;
-  height: 18px;
-  padding: 0 5px;
+  align-self: center;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 6px;
   border-radius: 999px;
-  background: #fecaca;
-  color: #991b1b;
+  background: var(--sba-nav-badge-bg, #ef4444);
+  color: var(--sba-nav-badge-text, #ffffff);
+  border: 1px solid var(--sba-nav-badge-border, transparent);
   font-size: 10px;
-  font-weight: 700;
-  line-height: 18px;
+  font-weight: 800;
+  line-height: 20px;
   text-align: center;
   flex-shrink: 0;
+  box-shadow: var(--sba-nav-badge-shadow, 0 1px 2px rgba(0, 0, 0, 0.18));
 }
 
 .sba-item.is-active .mc-nav-messages-badge,
 .sba-item.is-active .mc-nav-count-badge {
-  background: rgba(255, 255, 255, 0.28);
-  color: #fff;
+  background: var(--sba-nav-badge-active-bg, #dc2626);
+  color: var(--sba-nav-badge-active-text, #ffffff);
+  border-color: var(--sba-nav-badge-active-border, transparent);
+  box-shadow: var(--sba-nav-badge-active-shadow, 0 0 0 1px rgba(255, 255, 255, 0.12));
 }
 
 /* Active left accent bar */

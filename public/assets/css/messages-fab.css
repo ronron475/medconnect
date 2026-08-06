@@ -159,14 +159,17 @@ body.mc-messages-fab-dragging {
 
 .sba-item .mc-nav-messages-badge,
 .sba-item .mc-nav-count-badge {
-  background: #fecaca;
-  color: #991b1b;
+  background: var(--sba-nav-badge-bg, #ef4444);
+  color: var(--sba-nav-badge-text, #ffffff);
+  border: 1px solid var(--sba-nav-badge-border, transparent);
+  box-shadow: var(--sba-nav-badge-shadow, none);
 }
 
 .sba-item.is-active .mc-nav-messages-badge,
 .sba-item.is-active .mc-nav-count-badge {
-  background: rgba(255, 255, 255, 0.28);
-  color: #fff;
+  background: var(--sba-nav-badge-active-bg, #dc2626);
+  color: var(--sba-nav-badge-active-text, #ffffff);
+  border-color: var(--sba-nav-badge-active-border, transparent);
 }
 
 /* Tablet */

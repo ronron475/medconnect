@@ -1453,3 +1453,22 @@ html[data-theme-resolved='dark'] body.provider-body .mc-messages-fab {
   background: #7c3aed !important;
   color: #ffffff !important;
 }
+
+/* Sidebar nav badges — final override (wins over blanket span/link rules) */
+html[data-theme-resolved='dark'] body.provider-body .sba-item .mc-nav-count-badge,
+html[data-theme-resolved='dark'] body.provider-body .sba-item .mc-nav-messages-badge,
+html[data-theme-resolved='dark'] body.provider-body .sba-item.is-active .mc-nav-count-badge,
+html[data-theme-resolved='dark'] body.provider-body .sba-item.is-active .mc-nav-messages-badge {
+  background: var(--sba-nav-badge-bg, #3a1c1c) !important;
+  background-image: none !important;
+  color: var(--sba-nav-badge-text, #f0a8a8) !important;
+  border: 1px solid var(--sba-nav-badge-border, #5a2828) !important;
+  box-shadow: none !important;
+}
+
+html[data-theme-resolved='dark'] body.provider-body .sba-item.is-active .mc-nav-count-badge,
+html[data-theme-resolved='dark'] body.provider-body .sba-item.is-active .mc-nav-messages-badge {
+  background: var(--sba-nav-badge-active-bg, #4a2424) !important;
+  color: var(--sba-nav-badge-active-text, #fecaca) !important;
+  border-color: var(--sba-nav-badge-active-border, #6b3030) !important;
+}
