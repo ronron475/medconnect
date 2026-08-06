@@ -1166,12 +1166,43 @@
 
 .pdash-care-form__label {
   font-weight: 600;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.pdash-care-form__lock-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  color: #0f766e;
+  background: rgba(13, 148, 136, 0.12);
+  border: 1px solid rgba(13, 148, 136, 0.22);
 }
 
 .pdash-care-form__input {
   min-height: 96px;
   border-radius: 10px;
   border-color: #cbd5e1;
+}
+
+.pdash-care-form__input--locked {
+  background: #f8fafc;
+  color: #334155;
+  cursor: not-allowed;
+  resize: none;
+}
+
+.pdash-care-form__input--locked:focus {
+  border-color: #cbd5e1;
+  box-shadow: none;
 }
 
 .pdash-care-form__input:focus {

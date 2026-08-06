@@ -3,6 +3,7 @@
  * Dashboard card: submit symptoms for provider-reviewed self-care (non-urgent).
  *
  * Expects: $symptoms_review_pending, $symptoms_review_default_complaint, $symptoms_review_booking (optional)
+ *          $symptoms_review_registration_nlp (optional)
  */
 $symptoms_review_pending = $symptoms_review_pending ?? [
     'has_pending' => false,
@@ -12,6 +13,8 @@ $symptoms_review_pending = $symptoms_review_pending ?? [
     'provider_name' => '',
 ];
 $symptoms_review_default_complaint = trim((string) ($symptoms_review_default_complaint ?? ''));
+$symptoms_review_registration_nlp = trim((string) ($symptoms_review_registration_nlp ?? ''));
+$symptoms_complaint_locked = $symptoms_review_default_complaint !== '';
 $has_pending = !empty($symptoms_review_pending['has_pending']);
 $review_provider_name = trim((string) ($symptoms_review_pending['provider_name'] ?? ''));
 $symptoms_review_booking = $symptoms_review_booking ?? [
@@ -148,18 +151,37 @@ if ($review_provider_name !== '' && !empty($symptoms_review_booking['assigned_ha
     </li>
   </ol>
 
-  <form id="pdashSymptomsReviewForm" class="pdash-review-form" novalidate>
-    <label class="form-label pdash-care-form__label" for="pdashSymptomsComplaint">Describe your symptoms or concern</label>
+  <form
+    id="pdashSymptomsReviewForm"
+    class="pdash-review-form"
+    novalidate
+    <?= $symptoms_complaint_locked ? 'data-complaint-locked="1"' : '' ?>
+  >
+    <?php if ($symptoms_review_registration_nlp !== ''): ?>
+    <input type="hidden" id="pdashSymptomsRegistrationNlp" value="<?= htmlspecialchars($symptoms_review_registration_nlp, ENT_QUOTES, 'UTF-8') ?>">
+    <?php endif; ?>
+    <label class="form-label pdash-care-form__label" for="pdashSymptomsComplaint">
+      Chief complaint
+      <?php if ($symptoms_complaint_locked): ?>
+      <span class="pdash-care-form__lock-badge">From registration</span>
+      <?php endif; ?>
+    </label>
     <textarea
       id="pdashSymptomsComplaint"
       name="chief_complaint"
-      class="form-control pdash-care-form__input"
+      class="form-control pdash-care-form__input<?= $symptoms_complaint_locked ? ' pdash-care-form__input--locked' : '' ?>"
       rows="3"
       maxlength="500"
       placeholder="e.g. mild sore throat and runny nose for two days…"
-      required
+      <?= $symptoms_complaint_locked ? 'readonly aria-readonly="true"' : 'required' ?>
     ><?= htmlspecialchars($symptoms_review_default_complaint) ?></textarea>
-    <p class="pdash-care-form__hint">At least a short sentence helps the doctor review your case faster.</p>
+    <p class="pdash-care-form__hint">
+      <?php if ($symptoms_complaint_locked): ?>
+      This is the chief complaint you entered during registration. Submit it for your doctor to review.
+      <?php else: ?>
+      At least a short sentence helps the doctor review your case faster.
+      <?php endif; ?>
+    </p>
     <div id="pdashSymptomsReviewAlert" class="patient-triage-alert" role="alert" hidden></div>
     <button type="submit" class="pdash-btn pdash-btn--primary pdash-care-form__submit" id="pdashSymptomsReviewSubmit">
       Submit for doctor review
