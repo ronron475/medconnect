@@ -2,9 +2,11 @@
 
 .lp-mgmt {
   --lp-teal: #069396;
-  --lp-navy: #012a4a;
-  --lp-border: #e2edf1;
-  --lp-muted: #608395;
+  --lp-navy: var(--text-primary, #012a4a);
+  --lp-border: var(--border-color, #e2edf1);
+  --lp-muted: var(--text-muted, #608395);
+  --lp-surface: var(--card-bg, #ffffff);
+  --lp-surface-muted: var(--bg-secondary, #f8fcfc);
 }
 
 .lp-mgmt__hero-banner {
@@ -40,7 +42,7 @@
 }
 
 .lp-mgmt__stat-value--muted {
-  color: var(--lp-navy);
+  color: var(--lp-muted);
 }
 
 .lp-mgmt__stat-label {
@@ -164,7 +166,7 @@
 .lp-mgmt__preview-head {
   padding: 16px 18px;
   border-bottom: 1px solid var(--lp-border);
-  background: #f8fcfc;
+  background: var(--lp-surface-muted);
 }
 
 .lp-mgmt__preview-head h3 {
@@ -234,6 +236,7 @@
 .lp-mgmt__preview-ann {
   padding: 14px 18px;
   border-top: 1px solid var(--lp-border);
+  background: var(--lp-surface);
 }
 
 .lp-mgmt__preview-ann h4 {

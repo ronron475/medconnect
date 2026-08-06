@@ -28,7 +28,7 @@ $stats = LandingPageConfig::dashboardStats($pdo);
 require_once __DIR__ . '/partials/layout_open.php';
 ?>
 
-<link rel="stylesheet" href="<?= ASSET_BASE ?>/assets/css/admin-landing-page.css?v=2">
+<link rel="stylesheet" href="<?= ASSET_BASE ?>/assets/css/admin-landing-page.css?v=3">
 
 <div class="lp-mgmt" id="lpMgmt">
 
@@ -186,7 +186,7 @@ require_once __DIR__ . '/partials/layout_open.php';
       </div>
 
       <div class="mc-card lp-mgmt__activity" style="padding:0;overflow:hidden;margin-top:20px;">
-        <div style="padding:18px 20px;border-bottom:1px solid #e2edf1;">
+        <div style="padding:18px 20px;border-bottom:1px solid var(--border-color, #e2edf1);">
           <h3 class="text-h2" style="margin:0;font-size:17px;">Recent Activity</h3>
           <p class="text-muted" style="margin:4px 0 0;font-size:13px;">Recently modified announcements</p>
         </div>
