@@ -15,6 +15,26 @@
   let contextData = null;
   let chatPollTimer = null;
   let soapSaveTimer = null;
+  let callEnded = false;
+
+  function hidePostCall() {
+    const modal = q('mcVcPostCallModal');
+    if (modal) modal.hidden = true;
+    document.body.classList.remove('mc-vc-call-ended');
+    callEnded = false;
+  }
+
+  function markCallEnded() {
+    callEnded = true;
+    window.__mcCallEnded = true;
+  }
+
+  function resetCallUi() {
+    hidePostCall();
+    const endModal = q('endCallModal');
+    if (endModal) endModal.classList.remove('show');
+    setPanelOpen(false);
+  }
 
   function q(id) {
     return document.getElementById(id);
@@ -125,7 +145,8 @@
 
   function enhanceNetworkMonitor() {
     const netEl = q('mediaStatusConn');
-    if (!netEl) return;
+    if (!netEl || netEl.dataset.mcNetEnhanced) return;
+    netEl.dataset.mcNetEnhanced = '1';
     setInterval(() => {
       const level = netEl.dataset.level || netEl.dataset.state || '';
       if (level === 'good') netEl.textContent = mapConnectionLabel('good');
@@ -134,7 +155,7 @@
       else if (level === 'connected' || /good/i.test(netEl.textContent)) {
         netEl.textContent = mapConnectionLabel('excellent');
       }
-    }, 2000);
+    }, 5000);
   }
 
   function renderChat(messages) {
@@ -190,6 +211,19 @@
     }).then((r) => r.json());
   }
 
+  function startChatPoll() {
+    if (chatPollTimer) return;
+    loadChat();
+    chatPollTimer = setInterval(loadChat, 8000);
+  }
+
+  function stopChatPoll() {
+    if (chatPollTimer) {
+      clearInterval(chatPollTimer);
+      chatPollTimer = null;
+    }
+  }
+
   function bindChat() {
     const form = q('mcVcChatForm');
     const input = q('mcVcChatInput');
@@ -215,9 +249,6 @@
         fileInput.value = '';
       });
     }
-
-    chatPollTimer = setInterval(loadChat, 4000);
-    loadChat();
   }
 
   function isMobilePanel() {
@@ -263,6 +294,7 @@
         document.querySelectorAll('[data-panel-pane]').forEach((pane) => {
           pane.classList.toggle('is-active', pane.getAttribute('data-panel-pane') === tab);
         });
+        if (tab === 'chat') startChatPoll();
       });
     });
     global.addEventListener('resize', () => {
@@ -313,7 +345,7 @@
     const followup = q('mcVcPostCallFollowup');
     if (dismiss && modal) {
       dismiss.addEventListener('click', () => {
-        modal.hidden = true;
+        hidePostCall();
         try {
           if (window.parent && window.parent !== window) {
             window.parent.postMessage({ type: 'medconnect:call-dismissed', token: TOKEN }, location.origin);
@@ -326,19 +358,29 @@
         try {
           if (typeof global.openFollowUpModal === 'function') global.openFollowUpModal({ fromCallEnd: true });
         } catch (_) {}
-        if (modal) modal.hidden = true;
+        hidePostCall();
       });
     }
-    global.addEventListener('medconnect:video-shell-ended', () => showPostCall());
     window.addEventListener('message', (e) => {
       if (e.origin !== location.origin || !e.data) return;
-      if (e.data.type === 'medconnect:call-ended') showPostCall();
+      if (e.data.type === 'medconnect:reset-call-ui') {
+        resetCallUi();
+      }
     });
   }
 
   function showPostCall() {
+    if (!callEnded && !window.__mcCallEnded) return;
     const modal = q('mcVcPostCallModal');
-    if (modal) modal.hidden = false;
+    if (!modal) return;
+    modal.hidden = false;
+    document.body.classList.add('mc-vc-call-ended');
+    const controls = q('mcVcControls');
+    if (controls) controls.style.display = 'none';
+    const panelToggle = q('mcVcPanelToggle');
+    if (panelToggle) panelToggle.hidden = true;
+    setPanelOpen(false);
+    stopChatPoll();
   }
 
   function bindShellBridge() {
@@ -375,6 +417,7 @@
   }
 
   function init() {
+    hidePostCall();
     bindPanelTabs();
     bindChat();
     bindSoapAutosave();
@@ -397,5 +440,11 @@
     init();
   }
 
-  global.McVideoRoomEnhancements = { refreshContext: fetchContext, showPostCall: showPostCall };
+  global.McVideoRoomEnhancements = {
+    refreshContext: fetchContext,
+    showPostCall: showPostCall,
+    hidePostCall: hidePostCall,
+    markCallEnded: markCallEnded,
+    resetCallUi: resetCallUi,
+  };
 })(window);

@@ -467,7 +467,7 @@ if (session_status() === PHP_SESSION_ACTIVE) {
   </style>
 </head>
 <body
-  class="<?= $is_patient ? 'role-patient' : 'role-provider' ?>"
+  class="<?= $is_patient ? 'role-patient' : 'role-provider' ?><?= !empty($_GET['embedded']) ? ' embedded-shell' : '' ?>"
   data-csrf="<?= htmlspecialchars($pageCsrfToken, ENT_QUOTES, 'UTF-8') ?>"
   data-asset-base="<?= htmlspecialchars(ASSET_BASE, ENT_QUOTES, 'UTF-8') ?>"
 >
@@ -663,6 +663,7 @@ if (session_status() === PHP_SESSION_ACTIVE) {
     const userRole  = '<?= $role ?>';
     const isPatient = <?= $is_patient ? 'true' : 'false' ?>;
     const consultationId = <?= $consultation_id ?>;
+    window.__mcCallEnded = false;
     const apiBase = (function () {
       const fromPhp = String(<?= json_encode((string) ASSET_BASE) ?> || '').replace(/\/$/, '');
       if (fromPhp) return fromPhp;
@@ -2071,10 +2072,6 @@ if (session_status() === PHP_SESSION_ACTIVE) {
       document.getElementById('confirmEndBtn').disabled = true;
       disconnectLocalCall();
 
-      if (window.McVideoRoomEnhancements && typeof window.McVideoRoomEnhancements.showPostCall === 'function') {
-        window.McVideoRoomEnhancements.showPostCall();
-      }
-
       if (window.parent && window.parent !== window) {
         window.parent.postMessage({ type: 'medconnect:call-left', role: userRole, token: roomToken }, window.location.origin);
         return;
@@ -2130,8 +2127,13 @@ if (session_status() === PHP_SESSION_ACTIVE) {
           window.MedConnectLoader.forceHide();
         }
 
-        if (window.McVideoRoomEnhancements && typeof window.McVideoRoomEnhancements.showPostCall === 'function') {
-          window.McVideoRoomEnhancements.showPostCall();
+        if (window.McVideoRoomEnhancements) {
+          if (typeof window.McVideoRoomEnhancements.markCallEnded === 'function') {
+            window.McVideoRoomEnhancements.markCallEnded();
+          }
+          if (typeof window.McVideoRoomEnhancements.showPostCall === 'function') {
+            window.McVideoRoomEnhancements.showPostCall();
+          }
         }
 
         if (window.parent && window.parent !== window) {

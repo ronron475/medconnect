@@ -339,6 +339,19 @@
     background: #94a3b8;
 }
 
+.queue-btn--live-ready {
+    animation: queue-btn-ready-pulse 1.8s ease-in-out 2;
+}
+
+@keyframes queue-btn-ready-pulse {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(2, 119, 127, 0.45); }
+    50% { box-shadow: 0 0 0 8px rgba(2, 119, 127, 0); }
+}
+
+.queue-action--just-opened .queue-btn--live-ready {
+    animation: queue-btn-ready-pulse 1.2s ease-in-out 3;
+}
+
 .queue-feed {
     padding: 12px;
     display: flex;

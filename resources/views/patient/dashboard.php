@@ -363,10 +363,23 @@ $patient_page_stylesheets = [
     if (!cells.length) return;
     const base = window.APP_BASE || '';
     const videoBase = <?= json_encode($video_base) ?>;
+    const unlockTimers = new Map();
+
+    function schedulePatientUnlock(item) {
+      if (!item || !item.id || !item.scheduled_start || item.join_allowed) return;
+      if (unlockTimers.has(item.id)) return;
+      const delay = (item.scheduled_start * 1000) - Date.now() + 800;
+      if (delay <= 0) return;
+      const timer = window.setTimeout(() => {
+        unlockTimers.delete(item.id);
+        refreshDashJoinButtons();
+      }, Math.min(delay, 24 * 60 * 60 * 1000));
+      unlockTimers.set(item.id, timer);
+    }
 
     async function refreshDashJoinButtons() {
       try {
-        const res = await fetch(base + '/app/api/consultations/consultation_status.php', {
+        const res = await fetch(base + '/app/api/consultations/consultation_status.php?_=' + Date.now(), {
           credentials: 'same-origin',
           cache: 'no-store',
         });
@@ -385,16 +398,26 @@ $patient_page_stylesheets = [
               '<button type="button" class="pdash-btn pdash-btn--join pdash-btn--sm" data-mc-video-join data-token="' +
               safeToken + '" data-consultation-id="' + String(item.id || '') +
               '">Join Call</button>';
+          } else if (item.join_mode === 'scheduled_wait') {
+            const opens = item.opens_at_label ? ('Opens at ' + item.opens_at_label) : 'Opens at scheduled time';
+            cell.innerHTML =
+              '<span class="pdash-btn pdash-btn--waiting pdash-btn--sm" style="cursor:default;">' + opens + '</span>';
           } else if (item.join_mode === 'waiting') {
             cell.innerHTML =
               '<span class="pdash-btn pdash-btn--waiting pdash-btn--sm consult-waiting-pulse" style="cursor:default;">Waiting for Provider</span>';
           }
         });
+
+        json.items.forEach(schedulePatientUnlock);
       } catch (_) {}
     }
 
     refreshDashJoinButtons();
     setInterval(refreshDashJoinButtons, 5000);
+
+    document.addEventListener('visibilitychange', () => {
+      if (!document.hidden) refreshDashJoinButtons();
+    });
 
     if (window.location.hash === '#action-items') {
       const el = document.getElementById('dashboardActionItems');
