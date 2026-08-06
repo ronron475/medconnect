@@ -114,7 +114,7 @@
 .form-group { margin-bottom: 16px; }
 .bhw-doc-upload-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  grid-template-columns: 1fr;
   gap: 16px;
   margin-bottom: 12px;
 }

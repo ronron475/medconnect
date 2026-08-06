@@ -202,7 +202,7 @@ $prc_portal_url = 'https://verification.prc.gov.ph/';
     </div>
 </div>
 
-<link rel="stylesheet" href="<?= ASSET_BASE ?>/assets/css/admin-staff-forms.css?v=1.0">
+<link rel="stylesheet" href="<?= ASSET_BASE ?>/assets/css/admin-staff-forms.css?v=1.1">
 <script src="<?= ASSET_BASE ?>/assets/js/admin-staff-form-utils.js?v=1.0"></script>
 
 <script>
@@ -674,8 +674,8 @@ $prc_portal_url = 'https://verification.prc.gov.ph/';
 }
 .bhw-doc-upload-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-    gap: 12px;
+    grid-template-columns: 1fr;
+    gap: 16px;
     margin-bottom: 12px;
 }
 .bhw-doc-list {
