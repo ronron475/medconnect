@@ -736,6 +736,23 @@ html[data-theme-resolved='dark'] body.patient-portal .pdash-card__foot a:hover {
   color: #c4b5fd !important;
 }
 
+html[data-theme-resolved='dark'] body.patient-portal .pdash-care-form__lock-badge {
+  color: #5eead4 !important;
+  background: rgba(94, 234, 212, 0.12) !important;
+  border-color: rgba(94, 234, 212, 0.28) !important;
+}
+
+html[data-theme-resolved='dark'] body.patient-portal .pdash-care-form__input--locked {
+  background: #141414 !important;
+  border-color: #3f3f46 !important;
+  color: #d4d4d8 !important;
+}
+
+html[data-theme-resolved='dark'] body.patient-portal .pdash-care-form__input--locked:focus {
+  border-color: #3f3f46 !important;
+  box-shadow: none !important;
+}
+
 /* ═══════════════════════════════════════════════════════════
    BLANKET — all patient portal pages (black bg, white text)
 ═══════════════════════════════════════════════════════════ */
