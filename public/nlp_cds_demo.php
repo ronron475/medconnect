@@ -5,6 +5,12 @@
  */
 require_once dirname(__DIR__) . '/bootstrap.php';
 $assetBase = ASSET_BASE;
+$phpNlpPrimary = filter_var(getenv('MEDCONNECT_PHP_NLP_ONLY') ?: '1', FILTER_VALIDATE_BOOLEAN);
+$scriptDir = str_replace('\\', '/', dirname((string) ($_SERVER['SCRIPT_NAME'] ?? '')));
+$apiBase = $assetBase;
+if (str_ends_with(rtrim($scriptDir, '/'), '/public')) {
+    $apiBase = preg_replace('#/public$#', '', rtrim($scriptDir, '/')) ?: $assetBase;
+}
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -23,7 +29,10 @@ $assetBase = ASSET_BASE;
       <p class="cds-demo-sub">Rule-based clinical decision support — English, Filipino, Hiligaynon, mixed &amp; misspelled chief complaints</p>
     </header>
 
-    <section class="cds-demo-status" id="cds-service-status" role="status" hidden></section>
+    <section class="cds-demo-status cds-demo-status--ok" id="cds-service-status" role="status">
+      <div class="cds-status-line"><strong>PHP rule-based CDS engine active</strong> — primary triage path (not a fallback).</div>
+      <div class="cds-status-line cds-status-line--muted">Loading optional Python AI service status…</div>
+    </section>
 
     <form id="cds-demo-form" class="cds-demo-form" novalidate>
       <label class="cds-label" for="chief-complaint">Chief complaint</label>
@@ -94,7 +103,13 @@ $assetBase = ASSET_BASE;
     <div class="cds-results" id="cds-results" hidden aria-live="polite"></div>
   </main>
 
-  <script>window.APP_BASE = <?= json_encode($assetBase) ?>;</script>
-  <script src="<?= htmlspecialchars($assetBase) ?>/assets/js/nlp_cds_demo.js?v=1.0"></script>
+  <script>
+    window.APP_BASE = <?= json_encode($assetBase) ?>;
+    window.CDS_DEMO = {
+      apiBase: <?= json_encode($apiBase) ?>,
+      phpNlpPrimary: <?= $phpNlpPrimary ? 'true' : 'false' ?>
+    };
+  </script>
+  <script src="<?= htmlspecialchars($assetBase) ?>/assets/js/nlp_cds_demo.js?v=1.1"></script>
 </body>
 </html>
