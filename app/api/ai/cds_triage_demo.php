@@ -63,6 +63,12 @@ Api::success([
         'validation_passed' => (bool) ($validation['passed'] ?? true),
         'winning_rule' => (string) ($validation['winning_rule'] ?? ($assessment['clinical_recommendation']['winning_rule'] ?? '')),
         'pipeline_stages' => is_array($assessment['pipeline_stages'] ?? null) ? $assessment['pipeline_stages'] : [],
+        'symptom_evidence' => is_array($assessment['symptom_evidence'] ?? null) ? $assessment['symptom_evidence'] : [],
+        'triggered_rules' => is_array($assessment['triage']['matched_rules'] ?? null)
+            ? $assessment['triage']['matched_rules']
+            : (is_array($assessment['triage']['assessment_factors']['matched_rules'] ?? null)
+                ? $assessment['triage']['assessment_factors']['matched_rules']
+                : []),
     ],
     'pipeline_debug' => NlpPipelineDebug::isEnabled() ? NlpPipelineDebug::trace() : null,
     'service' => AiServiceClient::connectionStatus(),

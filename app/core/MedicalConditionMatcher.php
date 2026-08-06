@@ -60,7 +60,7 @@ final class MedicalConditionMatcher
 
         $concepts = is_array($nlpResult['medical_concepts'] ?? null) ? $nlpResult['medical_concepts'] : [];
         foreach ($concepts as $concept) {
-            $term = trim((string) ($concept['english'] ?? ''));
+            $term = trim((string) ($concept['canonical_name'] ?? $concept['english'] ?? $concept['medical_keyword'] ?? ''));
             if ($term !== '') {
                 $symptoms[] = self::titleCase($term);
                 $methods[] = 'concept_extraction';
@@ -98,6 +98,7 @@ final class MedicalConditionMatcher
         }
 
         $symptoms = self::uniqueTerms($symptoms);
+        $symptoms = SymptomEvidenceGate::filterSymptomNames($symptoms, $original, $original, $english);
         $conditions = self::inferConditions($symptoms, $nlpPipeline, $haystack);
 
         return [

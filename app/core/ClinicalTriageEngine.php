@@ -90,6 +90,7 @@ final class ClinicalTriageEngine
         $kbSymptoms = NegationDetector::filterSymptoms($kbSymptoms, $original, $english);
         $kbSymptoms = self::filterContextualSymptomMatches($kbSymptoms, $original, $english, $features);
         $kbSymptoms = self::enrichTraumaSymptoms($kbSymptoms, $original, $english);
+        $kbSymptoms = SymptomEvidenceGate::filterKbSymptoms($kbSymptoms, $rawInput, $original, $english);
 
         $detectedNames = array_values(array_filter(array_map(
             static fn (array $s): string => (string) ($s['symptom_name'] ?? ''),
@@ -120,6 +121,7 @@ final class ClinicalTriageEngine
             }
         }
         $kbSymptoms = NegationDetector::filterSymptoms($kbSymptoms, $original, $english);
+        $kbSymptoms = SymptomEvidenceGate::filterKbSymptoms($kbSymptoms, $rawInput, $original, $english);
         $detectedNames = array_values(array_filter(array_map(
             static fn (array $s): string => (string) ($s['symptom_name'] ?? ''),
             $kbSymptoms
@@ -318,6 +320,7 @@ final class ClinicalTriageEngine
             'associated_symptoms'    => $structured['associated_symptoms'],
             'evidence_used'          => $structured['evidence_used'],
             'matched_rules'          => $structured['matched_rules'],
+            'symptom_evidence'       => SymptomEvidenceGate::evidenceMap($kbSymptoms, $rawInput, $original, $english),
             'pregnancy_status'       => $structured['pregnancy_status'],
             'chronic_diseases'       => $structured['chronic_diseases'],
             'administrative_request' => $structured['administrative_request'],

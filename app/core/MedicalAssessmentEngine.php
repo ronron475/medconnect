@@ -17,6 +17,7 @@ final class MedicalAssessmentEngine
      */
     public static function assess(string $chiefComplaint, array $checkboxSymptoms = []): array
     {
+        SymptomEvidenceGate::resetPipelineState();
         $checkboxSymptoms = array_values(array_filter(array_map('trim', $checkboxSymptoms)));
         $combinedText = self::buildCombinedText($chiefComplaint, $checkboxSymptoms);
 
@@ -32,12 +33,22 @@ final class MedicalAssessmentEngine
         $rawTriage = is_array($nlpPipeline['triage'] ?? null) ? $nlpPipeline['triage'] : [];
 
         $conditionMatch = MedicalConditionMatcher::match($nlpPipeline, $checkboxSymptoms);
-        $detectedSymptoms = $clinicalRec['detected_symptoms']
+        $detectedSymptoms = $rawTriage['detected_symptoms']
+            ?? $clinicalRec['detected_symptoms']
             ?? $nlpResult['detected_symptoms']
-            ?? $conditionMatch['detected_symptoms'];
+            ?? [];
         if (!is_array($detectedSymptoms)) {
-            $detectedSymptoms = $conditionMatch['detected_symptoms'];
+            $detectedSymptoms = [];
         }
+        $detectedSymptoms = SymptomEvidenceGate::filterSymptomNames(
+            $detectedSymptoms,
+            trim($chiefComplaint),
+            (string) ($nlpResult['corrected_text'] ?? ($nlpPipeline['corrected_input'] ?? '')),
+            (string) ($nlpResult['english_translation'] ?? ($nlpPipeline['translated_english'] ?? ''))
+        );
+        $symptomEvidence = is_array($rawTriage['symptom_evidence'] ?? null)
+            ? $rawTriage['symptom_evidence']
+            : (is_array($nlpResult['symptom_evidence'] ?? null) ? $nlpResult['symptom_evidence'] : []);
         // Keep condition matcher output for provider context only — not as diagnosis.
         $possibleConditions = $conditionMatch['possible_conditions'];
 
@@ -183,6 +194,7 @@ final class MedicalAssessmentEngine
             'associated_symptoms'   => is_array($nlpResult['associated_symptoms'] ?? null) ? $nlpResult['associated_symptoms'] : [],
             'pipeline_stages'       => is_array($nlpResult['pipeline_stages'] ?? null) ? $nlpResult['pipeline_stages'] : [],
             'detected_symptoms'     => $detectedSymptoms,
+            'symptom_evidence'      => $symptomEvidence,
             // Provider-only reference context — not a diagnosis
             'possible_conditions'   => $possibleConditions,
             'confidence'            => $confidence,

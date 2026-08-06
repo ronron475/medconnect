@@ -60,6 +60,7 @@ if (str_ends_with(rtrim($scriptDir, '/'), '/public')) {
         <button type="button" class="cds-chip" data-text="I need a medicine refill.">Medicine refill (EN)</button>
         <button type="button" class="cds-chip" data-text="May sipon kag ubo ako.">Sipon + ubo (HIL)</button>
         <button type="button" class="cds-chip" data-text="May sipon at ubo ako.">Sipon at ubo (FIL)</button>
+        <button type="button" class="cds-chip" data-text="sakit mata ko">Eye pain (HIL)</button>
       </div>
 
       <h3 class="cds-samples__level cds-samples__level--urgent">🟡 Urgent</h3>
@@ -111,6 +112,6 @@ if (str_ends_with(rtrim($scriptDir, '/'), '/public')) {
       phpNlpPrimary: <?= $phpNlpPrimary ? 'true' : 'false' ?>
     };
   </script>
-  <script src="<?= htmlspecialchars($assetBase) ?>/assets/js/nlp_cds_demo.js?v=1.2"></script>
+  <script src="<?= htmlspecialchars($assetBase) ?>/assets/js/nlp_cds_demo.js?v=1.3"></script>
 </body>
 </html>

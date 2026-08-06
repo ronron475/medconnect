@@ -44,6 +44,7 @@ final class HiligaynonMedicalNlpPipeline
      */
     public static function analyze(string $text): array
     {
+        SymptomEvidenceGate::resetPipelineState();
         NlpPipelineDebug::enable();
         NlpPipelineDebug::reset();
         $text = trim($text);
@@ -122,6 +123,7 @@ final class HiligaynonMedicalNlpPipeline
             $termResults,
             $matchedDatasetTerms
         );
+        $concepts = SymptomEvidenceGate::filterConcepts($concepts, $text, $correctedText, $englishTranslation);
         NlpPipelineDebug::step('standardized_concepts', ['concepts' => $concepts]);
 
         $confidence = self::computeConfidence($termResults, $phraseTranslation);
@@ -170,6 +172,7 @@ final class HiligaynonMedicalNlpPipeline
             'confidence_score'       => $confidence,
             'phrase_source'          => $phraseTranslation['source'] ?? null,
             'detected_symptoms'      => $triage['detected_symptoms'] ?? [],
+            'symptom_evidence'       => $triage['symptom_evidence'] ?? [],
             'duration'               => $triage['duration'] ?? '',
             'pain_scale'             => $triage['pain_scale'] ?? [],
             'temperature'            => $triage['temperature'] ?? [],
@@ -191,6 +194,8 @@ final class HiligaynonMedicalNlpPipeline
                 'literal_translation'   => $literalTranslation,
                 'standardized_concepts' => $concepts,
                 'entities'              => $triage['entities'] ?? [],
+                'symptom_evidence'      => $triage['symptom_evidence'] ?? [],
+                'triggered_rules'       => $triage['matched_rules'] ?? [],
                 'clinical_reasoning'    => (string) ($triage['clinical_reasoning'] ?? ($triage['reason'] ?? '')),
                 'classification'        => (string) ($triage['triage_display'] ?? 'NON-URGENT'),
             ],
