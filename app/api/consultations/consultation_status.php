@@ -53,6 +53,7 @@ try {
     $items = [];
     foreach ($rows as $row) {
         $join = consultation_patient_join_access($row);
+        $ctx  = queue_session_context($row);
         $items[] = [
             'id'               => (int) $row['id'],
             'consult_date'     => (string) ($row['consult_date'] ?? ''),
@@ -63,6 +64,8 @@ try {
             'room_token'       => (string) ($row['room_token'] ?? ''),
             'slot_date'        => (string) ($row['slot_date'] ?? ''),
             'slot_start'       => (string) ($row['slot_start'] ?? ''),
+            'scheduled_start'  => $ctx['scheduled_start'] ? (int) $ctx['scheduled_start'] : null,
+            'opens_at_label'   => (string) ($ctx['opens_at_label'] ?? ''),
             'join_allowed'     => (bool) $join['allowed'],
             'join_mode'        => (string) ($join['mode'] ?? 'unavailable'),
             'join_reason'      => (string) ($join['reason'] ?? ''),

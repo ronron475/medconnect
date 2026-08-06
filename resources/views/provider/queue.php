@@ -245,11 +245,11 @@ require_once __DIR__ . '/partials/layout_open.php';
     <section class="queue-metrics" aria-label="Queue summary">
         <div class="queue-metric teal">
             <div class="queue-metric-label">Today</div>
-            <div class="queue-metric-value"><?= (int)$queue_stats['today'] ?></div>
+            <div class="queue-metric-value" data-queue-stat="today"><?= (int)$queue_stats['today'] ?></div>
         </div>
         <div class="queue-metric blue">
             <div class="queue-metric-label">Waiting</div>
-            <div class="queue-metric-value"><?= (int)$queue_stats['waiting'] ?></div>
+            <div class="queue-metric-value" data-queue-stat="waiting"><?= (int)$queue_stats['waiting'] ?></div>
         </div>
         <div class="queue-metric red">
             <div class="queue-metric-label">Urgent</div>
@@ -257,11 +257,11 @@ require_once __DIR__ . '/partials/layout_open.php';
         </div>
         <div class="queue-metric green">
             <div class="queue-metric-label">Active</div>
-            <div class="queue-metric-value"><?= (int)$queue_stats['active'] ?></div>
+            <div class="queue-metric-value" data-queue-stat="active"><?= (int)$queue_stats['active'] ?></div>
         </div>
         <div class="queue-metric gray">
             <div class="queue-metric-label">Completed</div>
-            <div class="queue-metric-value"><?= (int)$queue_stats['completed'] ?></div>
+            <div class="queue-metric-value" data-queue-stat="completed"><?= (int)$queue_stats['completed'] ?></div>
         </div>
     </section>
 
@@ -371,11 +371,15 @@ require_once __DIR__ . '/partials/layout_open.php';
                                 $is_urgent = queue_is_urgent($item['level'] ?? '', $item['urgency_label'] ?? '');
                                 $session_url = 'consultation_session.php?id=' . (int)$item['id'];
                                 $session_access = queue_session_access($item);
+                                $session_ctx = queue_session_context($item);
                                 $symptoms = queue_format_symptoms($item['symptoms'] ?? '');
                                 $complaint = trim((string) ($item['chief_complaint'] ?? ''));
                                 if ($complaint === '') {
                                     $complaint = trim((string) ($item['consult_type'] ?? 'General Consultation'));
                                 }
+                                $display_date = $session_ctx['effective_date'] !== '' ? $session_ctx['effective_date'] : $session_ctx['consult_date'];
+                                $display_time = $session_ctx['consult_time'];
+                                $opens_label = $session_ctx['opens_at_label'] !== '' ? $session_ctx['opens_at_label'] : 'Schedule';
                             ?>
                             <tr>
                                 <td>
@@ -403,11 +407,14 @@ require_once __DIR__ . '/partials/layout_open.php';
                                     </span>
                                 </td>
                                 <td>
-                                    <div style="font-weight:700;"><?= htmlspecialchars(date('M j, Y', strtotime($item['consult_date']))) ?></div>
-                                    <div class="queue-meta"><?= htmlspecialchars(date('g:i A', strtotime($item['consult_time']))) ?></div>
+                                    <div style="font-weight:700;"><?= htmlspecialchars($display_date !== '' ? date('M j, Y', strtotime($display_date)) : '—') ?></div>
+                                    <div class="queue-meta"><?= htmlspecialchars($display_time !== '' ? date('g:i A', strtotime($display_time)) : '—') ?></div>
                                 </td>
                                 <td class="col-status"><span class="queue-badge <?= $status_class ?>"><?= htmlspecialchars(queue_status_label($status)) ?></span></td>
-                                <td>
+                                <td
+                                    data-queue-action="<?= (int) $item['id'] ?>"
+                                    data-scheduled-start="<?= (int) ($session_ctx['scheduled_start'] ?? 0) ?>"
+                                >
                                     <div class="queue-actions">
                                         <?php if ($session_access['allowed']): ?>
                                             <?php if (!empty($item['room_token']) || ($status === 'in_consultation')): ?>
@@ -421,7 +428,7 @@ require_once __DIR__ . '/partials/layout_open.php';
                                                 class="queue-btn primary is-disabled queue-open-session-blocked"
                                                 data-reason="<?= htmlspecialchars($session_access['reason'], ENT_QUOTES, 'UTF-8') ?>"
                                                 title="<?= htmlspecialchars($session_access['reason'], ENT_QUOTES, 'UTF-8') ?>"
-                                            ><?= icon_sm('video') ?> Opens at Schedule</button>
+                                            ><?= icon_sm('video') ?> Opens at <?= htmlspecialchars($opens_label) ?></button>
                                         <?php endif; ?>
                                         <?php if (!empty($item['room_token']) && $session_access['allowed']): ?>
                                             <a href="<?= ASSET_BASE ?>/views/consultation/video_room.php?token=<?= urlencode($item['room_token']) ?>" class="queue-btn"><?= icon_sm('monitor') ?> Live Room</a>
@@ -508,5 +515,7 @@ require_once __DIR__ . '/partials/layout_open.php';
 <?php require __DIR__ . '/partials/session_schedule_modal.php'; ?>
 <script src="<?= ASSET_BASE ?>/assets/js/provider-session-alert.js"></script>
 <script src="<?= ASSET_BASE ?>/assets/js/provider-urgent-followup.js?v=<?= (int) @filemtime(ASSETS_PATH . '/js/provider-urgent-followup.js') ?>"></script>
+<?php $queueLiveJsVer = (int) @filemtime(ASSETS_PATH . '/js/provider-queue-live.js'); ?>
+<script src="<?= ASSET_BASE ?>/assets/js/provider-queue-live.js?v=<?= $queueLiveJsVer ?>"></script>
 
 <?php require __DIR__ . '/partials/layout_close.php'; ?>

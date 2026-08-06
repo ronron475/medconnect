@@ -50,8 +50,10 @@
     return document.getElementById(FRAME_ID);
   }
 
-  function roomUrl(token) {
-    return assetBase() + '/views/consultation/video_room.php?token=' + encodeURIComponent(token) + '&embedded=1';
+  function roomUrl(token, bust) {
+    let url = assetBase() + '/views/consultation/video_room.php?token=' + encodeURIComponent(token) + '&embedded=1';
+    if (bust) url += '&_mc=' + Date.now();
+    return url;
   }
 
   function extractToken(urlOrToken) {
@@ -199,10 +201,8 @@
     const frame = frameEl();
     if (!shell || !frame || !token) return false;
 
-    const url = roomUrl(token);
-    if (frame.src !== url) {
-      frame.src = url;
-    }
+    const url = roomUrl(token, true);
+    frame.src = url;
 
     writeState({
       token: token,
@@ -299,11 +299,20 @@
       return;
     }
     if (type === 'medconnect:call-left') {
-      maximize();
+      minimize();
+      postToFrame({ type: 'medconnect:reset-call-ui' });
+      const st = readState();
+      if (st && st.token) {
+        const frame = frameEl();
+        window.setTimeout(() => {
+          if (frame) frame.src = roomUrl(st.token, true);
+        }, 400);
+      }
       global.dispatchEvent(new CustomEvent('medconnect:video-shell-left', { detail: event.data }));
       return;
     }
     if (type === 'medconnect:call-ended') {
+      postToFrame({ type: 'medconnect:reset-call-ui' });
       closeShell();
       global.dispatchEvent(new CustomEvent('medconnect:video-shell-ended', { detail: event.data }));
       return;
@@ -354,7 +363,7 @@
       const st = readState();
       return !!(st && st.token && st.mode && st.mode !== 'hidden');
     },
-    joinUrl: roomUrl,
+    joinUrl: function (token) { return roomUrl(token, false); },
   };
 
   global.addEventListener('message', handleMessage);

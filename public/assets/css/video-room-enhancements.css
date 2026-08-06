@@ -1,5 +1,30 @@
 /* medConnect — Video room panels, waiting card, post-call */
 
+.mc-vc-postcall[hidden] {
+  display: none !important;
+}
+
+body.mc-vc-call-ended .mc-vc-controls,
+body.mc-vc-call-ended .mc-vc-header,
+body.mc-vc-call-ended .mc-vc-status-bar,
+body.mc-vc-call-ended .mc-vc-panel-toggle,
+body.mc-vc-call-ended .mc-vc-pip,
+body.mc-vc-call-ended .mc-vc-stage {
+  pointer-events: none;
+}
+
+body.mc-vc-call-ended .mc-vc-controls,
+body.mc-vc-call-ended .mc-vc-header,
+body.mc-vc-call-ended .mc-vc-status-bar,
+body.mc-vc-call-ended .mc-vc-panel-toggle {
+  opacity: 0;
+  visibility: hidden;
+}
+
+body.mc-vc-call-ended .mc-vc-postcall {
+  z-index: 500;
+}
+
 .mc-vc-side-backdrop {
   position: fixed;
   inset: 0;
@@ -495,6 +520,28 @@ body.mc-vc-panel-open {
     width: 100%;
     min-height: 48px;
   }
+
+  body.role-patient.mc-vc-call-ended .mc-vc-postcall {
+    padding: 0;
+    align-items: stretch;
+    background: #0b1220;
+  }
+
+  body.role-patient .mc-vc-postcall__card {
+    border-radius: 0;
+    min-height: 100dvh;
+    max-height: none;
+    justify-content: center;
+  }
+
+  body.role-patient .mc-vc-controls {
+    padding-bottom: calc(12px + env(safe-area-inset-bottom, 0px));
+  }
+
+  body.role-patient .mc-vc-btn--end {
+    min-width: 96px;
+    max-width: 42vw;
+  }
 }
 
 @media (max-width: 768px) and (orientation: landscape) {
@@ -523,6 +570,18 @@ body.mc-vc-panel-open {
 
   .mc-vc-postcall__card {
     border-radius: 16px;
+  }
+}
+
+@media (max-width: 768px) {
+  .mc-vc-side-backdrop {
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+  }
+
+  .mc-vc-waiting-card {
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
   }
 }
 
