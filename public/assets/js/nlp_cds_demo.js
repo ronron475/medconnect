@@ -1,9 +1,11 @@
 (function () {
   'use strict';
 
-  const base = window.APP_BASE || '';
+  const config = window.CDS_DEMO || {};
+  const base = config.apiBase || window.APP_BASE || '';
   const apiUrl = base + '/app/api/ai/cds_triage_demo.php';
   const statusUrl = base + '/app/api/ai/service_status.php?no_start=1';
+  const phpNlpPrimary = config.phpNlpPrimary !== false;
 
   const form = document.getElementById('cds-demo-form');
   const complaintEl = document.getElementById('chief-complaint');
@@ -113,10 +115,40 @@
     return fmtPain(pain) + ' · ' + fmtTemp(temp);
   }
 
+  function fetchWithTimeout(url, timeoutMs) {
+    if (typeof AbortController === 'undefined') {
+      return fetch(url);
+    }
+    const controller = new AbortController();
+    const timer = setTimeout(function () {
+      controller.abort();
+    }, timeoutMs);
+    return fetch(url, { signal: controller.signal }).finally(function () {
+      clearTimeout(timer);
+    });
+  }
+
+  function renderPhpPrimaryStatus(pythonNote) {
+    if (!serviceStatusEl) return;
+    serviceStatusEl.hidden = false;
+    serviceStatusEl.className = 'cds-demo-status cds-demo-status--ok';
+    serviceStatusEl.innerHTML =
+      '<div class="cds-status-line"><strong>PHP rule-based CDS engine active</strong> — primary triage path (not a fallback).</div>' +
+      (pythonNote
+        ? '<div class="cds-status-line cds-status-line--muted">' + pythonNote + '</div>'
+        : '<div class="cds-status-line cds-status-line--muted">Python AI service is optional for this demo.</div>');
+  }
+
   async function refreshServiceStatus() {
     if (!serviceStatusEl) return;
+    if (phpNlpPrimary) {
+      renderPhpPrimaryStatus('Checking optional Python AI service status…');
+    }
     try {
-      const res = await fetch(statusUrl, { signal: AbortSignal.timeout(10000) });
+      const res = await fetchWithTimeout(statusUrl, 10000);
+      if (!res.ok) {
+        throw new Error('HTTP ' + res.status);
+      }
       const json = await res.json();
       const d = (json && (json.data || json)) || {};
       const online = !!d.online;
@@ -126,20 +158,19 @@
 
       if (online) {
         serviceStatusEl.innerHTML =
-          '<div class="cds-status-line"><strong>PHP rule-based CDS engine active</strong> — primary triage path (no Python required).</div>' +
+          '<div class="cds-status-line"><strong>PHP rule-based CDS engine active</strong> — primary triage path (not a fallback).</div>' +
           '<div class="cds-status-line cds-status-line--muted">Python AI service also online on port ' +
           escapeHtml(d.port || 8765) +
-          ' (reference only; CDS uses PHP NLP).</div>';
+          ' (optional; CDS uses PHP NLP).</div>';
       } else {
         serviceStatusEl.innerHTML =
-          '<div class="cds-status-line"><strong>PHP rule-based CDS engine active</strong> — full triage via PHP NLP.</div>' +
+          '<div class="cds-status-line"><strong>PHP rule-based CDS engine active</strong> — primary triage path (not a fallback).</div>' +
           '<div class="cds-status-line cds-status-line--muted">Python AI offline (not required for CDS triage).</div>';
       }
     } catch (e) {
-      serviceStatusEl.hidden = false;
-      serviceStatusEl.className = 'cds-demo-status cds-demo-status--warn';
-      serviceStatusEl.innerHTML =
-        '<div class="cds-status-line">Could not check AI service status. PHP fallback will be used if needed.</div>';
+      renderPhpPrimaryStatus(
+        'Optional Python AI status check unavailable — CDS triage still runs on PHP NLP.'
+      );
     }
   }
 
