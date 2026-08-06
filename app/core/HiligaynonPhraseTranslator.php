@@ -303,6 +303,11 @@ final class HiligaynonPhraseTranslator
             );
         }
 
+        $trauma = self::translateTraumaPatterns($normalized);
+        if ($trauma !== null) {
+            return $trauma;
+        }
+
         if (preg_match('/\bmay\s+nana\s+sa\s+bilat\b/u', $normalized)) {
             return self::formatResult('vaginal infection', 'vaginal infection', 'condition', 'vagina', 'contextual_vaginal_infection');
         }
@@ -435,6 +440,111 @@ final class HiligaynonPhraseTranslator
         );
     }
 
+    /**
+     * Trauma / wound / amputation phrase patterns (Hiligaynon + Filipino).
+     *
+     * @return array{
+     *   english:string,
+     *   medical_keyword:string,
+     *   category:string,
+     *   body_part:string,
+     *   source:string,
+     *   input_language:string
+     * }|null
+     */
+    private static function translateTraumaPatterns(string $normalized): ?array
+    {
+        $bodyParts = [
+            'kamot'  => ['en' => 'hand', 'bp' => 'hand'],
+            'kamay'  => ['en' => 'hand', 'bp' => 'hand'],
+            'tudlo'  => ['en' => 'finger', 'bp' => 'finger'],
+            'daliri' => ['en' => 'finger', 'bp' => 'finger'],
+            'tiil'   => ['en' => 'foot', 'bp' => 'foot'],
+            'paa'    => ['en' => 'foot', 'bp' => 'foot'],
+            'braso'  => ['en' => 'arm', 'bp' => 'arm'],
+        ];
+
+        if (preg_match('/\bnautod\b/u', $normalized)) {
+            if (preg_match('/\b(tudlo|daliri)\b/u', $normalized)) {
+                return self::formatResult('finger amputation', 'amputation', 'emergency', 'finger', 'contextual_amputation');
+            }
+            if (preg_match('/\b(kamot|kamay)\b/u', $normalized)) {
+                return self::formatResult('hand amputation', 'amputation', 'emergency', 'hand', 'contextual_amputation');
+            }
+
+            return self::formatResult('amputation', 'amputation', 'emergency', 'body', 'contextual_amputation');
+        }
+
+        if (preg_match('/\b(?:na)?putol\b/u', $normalized)) {
+            foreach ($bodyParts as $part => $meta) {
+                if (!preg_match('/\b' . preg_quote($part, '/') . '\b/u', $normalized)) {
+                    continue;
+                }
+                if (in_array($part, ['tudlo', 'daliri'], true)) {
+                    return self::formatResult(
+                        'finger cut off',
+                        'finger amputation',
+                        'emergency',
+                        $meta['bp'],
+                        'contextual_putol_amputation'
+                    );
+                }
+
+                return self::formatResult(
+                    $meta['en'] . ' cut off',
+                    'hand laceration',
+                    'emergency',
+                    $meta['bp'],
+                    'contextual_putol_trauma'
+                );
+            }
+
+            return self::formatResult('cut or laceration', 'laceration', 'symptom', 'skin', 'contextual_putol');
+        }
+
+        if (preg_match('/\bpilas\b/u', $normalized)) {
+            $hasSevere = (bool) preg_match('/\b(grabe|dako|malalom|nagdugo|gadugo|nagadugo|dugo gid)\b/u', $normalized);
+            foreach ($bodyParts as $part => $meta) {
+                if (!preg_match('/\b' . preg_quote($part, '/') . '\b/u', $normalized)) {
+                    continue;
+                }
+                $en = $hasSevere ? 'severe ' . $meta['en'] . ' wound' : $meta['en'] . ' wound';
+
+                return self::formatResult(
+                    $en,
+                    'laceration',
+                    $hasSevere ? 'emergency' : 'symptom',
+                    $meta['bp'],
+                    'contextual_pilas'
+                );
+            }
+
+            return self::formatResult(
+                $hasSevere ? 'severe wound' : 'wound',
+                'laceration',
+                'symptom',
+                'skin',
+                'contextual_pilas'
+            );
+        }
+
+        if (preg_match('/\b(?:nagdugo|gadugo|nagadugo|nagdugo)\b/u', $normalized)) {
+            foreach ($bodyParts as $part => $meta) {
+                if (preg_match('/\b' . preg_quote($part, '/') . '\b/u', $normalized)) {
+                    return self::formatResult(
+                        $meta['en'] . ' bleeding',
+                        'bleeding',
+                        'emergency',
+                        $meta['bp'],
+                        'contextual_bleeding_body'
+                    );
+                }
+            }
+        }
+
+        return null;
+    }
+
   /**
      * @return array{
      *   english:string,
@@ -453,8 +563,8 @@ final class HiligaynonPhraseTranslator
         string $source
     ): array {
         return [
-            'english'          => trim($english),
-            'medical_keyword'  => trim($medicalKeyword !== '' ? $medicalKeyword : $english),
+            'english'          => trim(MedicalConceptRegistry::canonicalize($english)),
+            'medical_keyword'  => trim(MedicalConceptRegistry::canonicalize($medicalKeyword !== '' ? $medicalKeyword : $english)),
             'category'         => $category !== '' ? $category : 'symptom',
             'body_part'        => $bodyPart,
             'source'           => $source,

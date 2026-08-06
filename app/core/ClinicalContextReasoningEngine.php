@@ -454,9 +454,13 @@ final class ClinicalContextReasoningEngine
     private static function redFlagReason(array $redFlags): string
     {
         $names = [];
-        foreach (array_slice($redFlags, 0, 3) as $flag) {
-            $names[] = (string) (($flag['flag_name'] ?? '') ?: ($flag['english_pattern'] ?? 'warning sign'));
+        foreach (array_slice($redFlags, 0, 5) as $flag) {
+            $n = (string) (($flag['flag_name'] ?? '') ?: ($flag['english_pattern'] ?? 'warning sign'));
+            if ($n !== '' && !in_array($n, $names, true)) {
+                $names[] = $n;
+            }
         }
+        $names = array_slice($names, 0, 3);
 
         return 'Emergency warning sign(s) detected (' . implode(', ', $names) . '). Immediate emergency evaluation is recommended.';
     }

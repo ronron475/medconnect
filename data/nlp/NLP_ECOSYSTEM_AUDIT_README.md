@@ -17,6 +17,9 @@ python scripts/data/optimize_nlp_ecosystem.py
 # PHP inventory summary
 php scripts/dev/nlp_inventory_report.php
 
+# Dataset synchronization (unified vocabulary)
+php scripts/dev/sync_nlp_knowledge.php --sync --report --skip-gold
+
 # Gold triage QA (must stay 100%)
 php scripts/dev/evaluate_triage_validation.php --gold
 ```
@@ -29,6 +32,9 @@ php scripts/dev/evaluate_triage_validation.php --gold
 | KB audit (MD) | `data/nlp/reports/kb_audit_report.md` |
 | Ecosystem audit (JSON) | `data/nlp/reports/ecosystem_audit.json` |
 | Ecosystem audit (MD) | `data/nlp/reports/ecosystem_audit.md` |
+| Dataset sync (JSON) | `data/nlp/reports/dataset_sync_report.json` |
+| Dataset sync (MD) | `data/nlp/reports/dataset_sync_report.md` |
+| Concept registry export | `data/nlp/medical_concepts_registry.csv` |
 
 ## Runtime architecture (preserved)
 
@@ -36,6 +42,8 @@ php scripts/dev/evaluate_triage_validation.php --gold
 Chief complaint
   → Misspelling correction (misspellings.csv, medical_misspellings.csv, medical_abbreviations.csv)
   → Language detection (HiligaynonLanguageDetector)
+  → Phrase translation (HiligaynonPhraseTranslator)
+  → Canonical concept resolution (MedicalConceptRegistry — symptom_knowledge_base.json + canonical_symptom_aliases.csv)
   → Entity extraction (MedicalEntityExtractor + medical_entities.csv)
   → Symptom KB match (symptom_knowledge_base.json + hil/fil/medical_phrases CSV boosts)
   → Negation filter (negation_words.csv)
@@ -77,6 +85,7 @@ See `ecosystem_audit.json` → `dataset_catalog` for per-file wiring status:
 
 After any KB or rule change:
 
-1. `php scripts/dev/evaluate_triage_validation.php --gold`
-2. `php scripts/dev/triage_qa_report.php --limit=200` (optional broader set)
-3. Manual spot-check on `nlp_cds_demo.php` contextual chips
+1. `php scripts/dev/sync_nlp_knowledge.php --sync --report --skip-gold`
+2. `php scripts/dev/evaluate_triage_validation.php --gold`
+3. `php scripts/dev/triage_qa_report.php --limit=200` (optional broader set)
+4. Manual spot-check on `nlp_cds_demo.php` contextual chips

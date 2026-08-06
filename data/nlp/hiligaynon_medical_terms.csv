@@ -14385,3 +14385,556 @@ HILX14383,may ubo gid,Cough,cough,mixed,active
 HILX14384,budlay mag breathe,Difficulty Breathing,difficulty_breathing,mixed,active
 HILX14385,need ko medicine refill,Medicine Refill,administrative,mixed,active
 HILX14386,follow up lang,Follow-up,administrative,mixed,active
+,"pirmi naga suka","Persistent Vomiting",persistent_vomiting,hiligaynon,active
+,"walla gid mahapus suka","Persistent Vomiting",persistent_vomiting,hiligaynon,active
+,"padayon naga suka","Persistent Vomiting",persistent_vomiting,hiligaynon,active
+,"indi maayo pamatyag",Fatigue,fatigue,hiligaynon,active
+,"masakit ang dughan","Chest Pain",chest_pain,hiligaynon,active
+,"masakit akon dibdib","Chest Pain",chest_pain,hiligaynon,active
+,"dugo sa akon suka","Vomiting Blood",vomiting_blood,hiligaynon,active
+,"nagasinghot blood","Coughing Blood",coughing_blood,hiligaynon,active
+,"indi mapunggan ang dugo","Severe Bleeding",severe_bleeding,hiligaynon,active
+,"nag collapse","Loss of Consciousness",loss_of_consciousness,hiligaynon,active
+,"indi makahambal","Stroke Symptoms",stroke_symptoms,hiligaynon,active
+,"indi makabaton sang kamot","Stroke Symptoms",stroke_symptoms,hiligaynon,active
+,"luya isa ka bahin","Stroke Symptoms",stroke_symptoms,hiligaynon,active
+,"gahubag lawas kag budlay magginhawa","Severe Allergic Reaction",severe_allergic_reaction,hiligaynon,active
+,"hubag tutunlan","Severe Allergic Reaction",severe_allergic_reaction,hiligaynon,active
+,nagakalibog,Confusion,confusion,hiligaynon,active
+,"indi makahibalo",Confusion,confusion,hiligaynon,active
+,"lain pamatyag ulo",Confusion,confusion,hiligaynon,active
+,"grabe ka-uga","Severe Dehydration",severe_dehydration,hiligaynon,active
+,"wala ihi","Severe Dehydration",severe_dehydration,hiligaynon,active
+,"luya gid tungod wala tubig","Severe Dehydration",severe_dehydration,hiligaynon,active
+,"nakainom sang lason",Poisoning,poisoning,hiligaynon,active
+,lasón,Poisoning,poisoning,hiligaynon,active
+,"nasunog lawas",Burns,burns,hiligaynon,active
+,napaso,Burns,burns,hiligaynon,active
+,"may wheezing",Wheezing,wheezing,hiligaynon,active
+,"masakit wheezing",Wheezing,wheezing,hiligaynon,active
+,"may asthma exacerbation","Asthma Exacerbation",asthma_exacerbation,hiligaynon,active
+,"masakit asthma exacerbation","Asthma Exacerbation",asthma_exacerbation,hiligaynon,active
+,"may stridor",Stridor,stridor,hiligaynon,active
+,"masakit stridor",Stridor,stridor,hiligaynon,active
+,"may bronchitis",Bronchitis,bronchitis,hiligaynon,active
+,"masakit bronchitis",Bronchitis,bronchitis,hiligaynon,active
+,"may pneumonia symptoms","Pneumonia Symptoms",pneumonia_symptoms,hiligaynon,active
+,"masakit pneumonia symptoms","Pneumonia Symptoms",pneumonia_symptoms,hiligaynon,active
+,"may pleuritic chest pain","Pleuritic Chest Pain",pleuritic_chest_pain,hiligaynon,active
+,"masakit pleuritic chest pain","Pleuritic Chest Pain",pleuritic_chest_pain,hiligaynon,active
+,"may hoarseness",Hoarseness,hoarseness,hiligaynon,active
+,"masakit hoarseness",Hoarseness,hoarseness,hiligaynon,active
+,"may nasal congestion","Nasal Congestion",nasal_congestion,hiligaynon,active
+,"masakit nasal congestion","Nasal Congestion",nasal_congestion,hiligaynon,active
+,"may sinus pain","Sinus Pain",sinus_pain,hiligaynon,active
+,"masakit sinus pain","Sinus Pain",sinus_pain,hiligaynon,active
+,"may hemoptysis",Hemoptysis,hemoptysis,hiligaynon,active
+,"masakit hemoptysis",Hemoptysis,hemoptysis,hiligaynon,active
+,"may throat swelling","Throat Swelling",throat_swelling,hiligaynon,active
+,"masakit throat swelling","Throat Swelling",throat_swelling,hiligaynon,active
+,"may aspiration",Aspiration,aspiration,hiligaynon,active
+,"masakit aspiration",Aspiration,aspiration,hiligaynon,active
+,"may croup",Croup,croup,hiligaynon,active
+,"masakit croup",Croup,croup,hiligaynon,active
+,"may nosebleed",Nosebleed,epistaxis,hiligaynon,active
+,"masakit nosebleed",Nosebleed,epistaxis,hiligaynon,active
+,"may severe nosebleed","Severe Nosebleed",severe_epistaxis,hiligaynon,active
+,"masakit severe nosebleed","Severe Nosebleed",severe_epistaxis,hiligaynon,active
+,"may cyanosis",Cyanosis,cyanosis,hiligaynon,active
+,"masakit cyanosis",Cyanosis,cyanosis,hiligaynon,active
+,"may sleep apnea symptoms","Sleep Apnea Symptoms",sleep_apnea_symptoms,hiligaynon,active
+,"masakit sleep apnea symptoms","Sleep Apnea Symptoms",sleep_apnea_symptoms,hiligaynon,active
+,"may syncope",Syncope,syncope,hiligaynon,active
+,"masakit syncope",Syncope,syncope,hiligaynon,active
+,"may low blood pressure","Low Blood Pressure",hypotension,hiligaynon,active
+,"masakit low blood pressure","Low Blood Pressure",hypotension,hiligaynon,active
+,"may severe hypertension","Severe Hypertension",hypertension_severe,hiligaynon,active
+,"masakit severe hypertension","Severe Hypertension",hypertension_severe,hiligaynon,active
+,"may unilateral leg swelling","Unilateral Leg Swelling",leg_swelling_unilateral,hiligaynon,active
+,"masakit unilateral leg swelling","Unilateral Leg Swelling",leg_swelling_unilateral,hiligaynon,active
+,"may claudication",Claudication,claudication,hiligaynon,active
+,"masakit claudication",Claudication,claudication,hiligaynon,active
+,"may irregular heartbeat","Irregular Heartbeat",arrhythmia,hiligaynon,active
+,"masakit irregular heartbeat","Irregular Heartbeat",arrhythmia,hiligaynon,active
+,"may angina",Angina,angina,hiligaynon,active
+,"masakit angina",Angina,angina,hiligaynon,active
+,"may heart failure symptoms","Heart Failure Symptoms",heart_failure_symptoms,hiligaynon,active
+,"masakit heart failure symptoms","Heart Failure Symptoms",heart_failure_symptoms,hiligaynon,active
+,"may cold extremities","Cold Extremities",cold_extremities,hiligaynon,active
+,"masakit cold extremities","Cold Extremities",cold_extremities,hiligaynon,active
+,"may cardiac arrest","Cardiac Arrest",cardiac_arrest_symptoms,hiligaynon,active
+,"masakit cardiac arrest","Cardiac Arrest",cardiac_arrest_symptoms,hiligaynon,active
+,"may constipation",Constipation,constipation,hiligaynon,active
+,"masakit constipation",Constipation,constipation,hiligaynon,active
+,"may bloating",Bloating,bloating,hiligaynon,active
+,"masakit bloating",Bloating,bloating,hiligaynon,active
+,"may difficulty swallowing","Difficulty Swallowing",dysphagia,hiligaynon,active
+,"masakit difficulty swallowing","Difficulty Swallowing",dysphagia,hiligaynon,active
+,"may painful swallowing","Painful Swallowing",odynophagia,hiligaynon,active
+,"masakit painful swallowing","Painful Swallowing",odynophagia,hiligaynon,active
+,"may black stool","Black Stool",melena,hiligaynon,active
+,"masakit black stool","Black Stool",melena,hiligaynon,active
+,"may blood in stool","Blood in Stool",hematochezia,hiligaynon,active
+,"masakit blood in stool","Blood in Stool",hematochezia,hiligaynon,active
+,"may jaundice",Jaundice,jaundice,hiligaynon,active
+,"masakit jaundice",Jaundice,jaundice,hiligaynon,active
+,"may appendicitis pain","Appendicitis Pain",appendicitis_pain,hiligaynon,active
+,"masakit appendicitis pain","Appendicitis Pain",appendicitis_pain,hiligaynon,active
+,"may pancreatitis pain","Pancreatitis Pain",pancreatitis_pain,hiligaynon,active
+,"masakit pancreatitis pain","Pancreatitis Pain",pancreatitis_pain,hiligaynon,active
+,"may gallbladder pain","Gallbladder Pain",gallbladder_pain,hiligaynon,active
+,"masakit gallbladder pain","Gallbladder Pain",gallbladder_pain,hiligaynon,active
+,"may acid reflux","Acid Reflux",reflux,hiligaynon,active
+,"masakit acid reflux","Acid Reflux",reflux,hiligaynon,active
+,"may indigestion",Indigestion,indigestion,hiligaynon,active
+,"masakit indigestion",Indigestion,indigestion,hiligaynon,active
+,"may loss of appetite","Loss of Appetite",anorexia,hiligaynon,active
+,"masakit loss of appetite","Loss of Appetite",anorexia,hiligaynon,active
+,"may unintentional weight loss","Unintentional Weight Loss",weight_loss,hiligaynon,active
+,"masakit unintentional weight loss","Unintentional Weight Loss",weight_loss,hiligaynon,active
+,"may rectal pain","Rectal Pain",rectal_pain,hiligaynon,active
+,"masakit rectal pain","Rectal Pain",rectal_pain,hiligaynon,active
+,"may hernia pain","Hernia Pain",hernia_pain,hiligaynon,active
+,"masakit hernia pain","Hernia Pain",hernia_pain,hiligaynon,active
+,"may acute abdomen","Acute Abdomen",acute_abdomen,hiligaynon,active
+,"masakit acute abdomen","Acute Abdomen",acute_abdomen,hiligaynon,active
+,"may numbness",Numbness,numbness,hiligaynon,active
+,"masakit numbness",Numbness,numbness,hiligaynon,active
+,"may tingling",Tingling,tingling,hiligaynon,active
+,"masakit tingling",Tingling,tingling,hiligaynon,active
+,"may paralysis",Paralysis,paralysis,hiligaynon,active
+,"masakit paralysis",Paralysis,paralysis,hiligaynon,active
+,"may tremor",Tremor,tremor,hiligaynon,active
+,"masakit tremor",Tremor,tremor,hiligaynon,active
+,"may facial weakness","Facial Weakness",facial_weakness,hiligaynon,active
+,"masakit facial weakness","Facial Weakness",facial_weakness,hiligaynon,active
+,"may vision loss","Vision Loss",vision_loss,hiligaynon,active
+,"masakit vision loss","Vision Loss",vision_loss,hiligaynon,active
+,"may double vision","Double Vision",double_vision,hiligaynon,active
+,"masakit double vision","Double Vision",double_vision,hiligaynon,active
+,"may hearing loss","Hearing Loss",hearing_loss,hiligaynon,active
+,"masakit hearing loss","Hearing Loss",hearing_loss,hiligaynon,active
+,"may vertigo",Vertigo,vertigo,hiligaynon,active
+,"masakit vertigo",Vertigo,vertigo,hiligaynon,active
+,"may severe migraine","Severe Migraine",migraine_severe,hiligaynon,active
+,"masakit severe migraine","Severe Migraine",migraine_severe,hiligaynon,active
+,"may stiff neck","Stiff Neck",stiff_neck,hiligaynon,active
+,"masakit stiff neck","Stiff Neck",stiff_neck,hiligaynon,active
+,"may meningism",Meningism,meningism,hiligaynon,active
+,"masakit meningism",Meningism,meningism,hiligaynon,active
+,"may gait disturbance","Gait Disturbance",gait_disturbance,hiligaynon,active
+,"masakit gait disturbance","Gait Disturbance",gait_disturbance,hiligaynon,active
+,"may acute memory loss","Acute Memory Loss",memory_loss_acute,hiligaynon,active
+,"masakit acute memory loss","Acute Memory Loss",memory_loss_acute,hiligaynon,active
+,"may facial droop","Facial Droop",facial_droop,hiligaynon,active
+,"masakit facial droop","Facial Droop",facial_droop,hiligaynon,active
+,"may slurred speech","Slurred Speech",slurred_speech,hiligaynon,active
+,"masakit slurred speech","Slurred Speech",slurred_speech,hiligaynon,active
+,"may one-sided weakness","One-Sided Weakness",one_sided_weakness,hiligaynon,active
+,"masakit one-sided weakness","One-Sided Weakness",one_sided_weakness,hiligaynon,active
+,"may joint swelling","Joint Swelling",joint_swelling,hiligaynon,active
+,"masakit joint swelling","Joint Swelling",joint_swelling,hiligaynon,active
+,"may muscle cramps","Muscle Cramps",muscle_cramps,hiligaynon,active
+,"masakit muscle cramps","Muscle Cramps",muscle_cramps,hiligaynon,active
+,"may neck pain","Neck Pain",neck_pain,hiligaynon,active
+,"masakit neck pain","Neck Pain",neck_pain,hiligaynon,active
+,"may shoulder pain","Shoulder Pain",shoulder_pain,hiligaynon,active
+,"masakit shoulder pain","Shoulder Pain",shoulder_pain,hiligaynon,active
+,"may hip pain","Hip Pain",hip_pain,hiligaynon,active
+,"masakit hip pain","Hip Pain",hip_pain,hiligaynon,active
+,"may knee pain","Knee Pain",knee_pain,hiligaynon,active
+,"masakit knee pain","Knee Pain",knee_pain,hiligaynon,active
+,"may ankle pain","Ankle Pain",ankle_pain,hiligaynon,active
+,"masakit ankle pain","Ankle Pain",ankle_pain,hiligaynon,active
+,"may wrist pain","Wrist Pain",wrist_pain,hiligaynon,active
+,"masakit wrist pain","Wrist Pain",wrist_pain,hiligaynon,active
+,"may sprain",Sprain,sprain,hiligaynon,active
+,"masakit sprain",Sprain,sprain,hiligaynon,active
+,"may suspected fracture","Suspected Fracture",suspected_fracture,hiligaynon,active
+,"masakit suspected fracture","Suspected Fracture",suspected_fracture,hiligaynon,active
+,"may dislocation",Dislocation,dislocation,hiligaynon,active
+,"masakit dislocation",Dislocation,dislocation,hiligaynon,active
+,"may muscle weakness","Muscle Weakness",muscle_weakness,hiligaynon,active
+,"masakit muscle weakness","Muscle Weakness",muscle_weakness,hiligaynon,active
+,"may hives",Hives,hives,hiligaynon,active
+,"masakit hives",Hives,hives,hiligaynon,active
+,"may itching",Itching,itching,hiligaynon,active
+,"masakit itching",Itching,itching,hiligaynon,active
+,"may cellulitis",Cellulitis,cellulitis,hiligaynon,active
+,"masakit cellulitis",Cellulitis,cellulitis,hiligaynon,active
+,"may abscess",Abscess,abscess,hiligaynon,active
+,"masakit abscess",Abscess,abscess,hiligaynon,active
+,"may wound infection","Wound Infection",wound_infection,hiligaynon,active
+,"masakit wound infection","Wound Infection",wound_infection,hiligaynon,active
+,"may laceration",Laceration,laceration,hiligaynon,active
+,"masakit laceration",Laceration,laceration,hiligaynon,active
+,"may insect bite reaction","Insect Bite Reaction",insect_bite_reaction,hiligaynon,active
+,"masakit insect bite reaction","Insect Bite Reaction",insect_bite_reaction,hiligaynon,active
+,"may purpuric rash","Purpuric Rash",purpuric_rash,hiligaynon,active
+,"masakit purpuric rash","Purpuric Rash",purpuric_rash,hiligaynon,active
+,"may spreading skin infection","Spreading Skin Infection",skin_infection_spreading,hiligaynon,active
+,"masakit spreading skin infection","Spreading Skin Infection",skin_infection_spreading,hiligaynon,active
+,"may tinnitus",Tinnitus,tinnitus,hiligaynon,active
+,"masakit tinnitus",Tinnitus,tinnitus,hiligaynon,active
+,"may hearing change","Hearing Change",hearing_change,hiligaynon,active
+,"masakit hearing change","Hearing Change",hearing_change,hiligaynon,active
+,"may tonsillar swelling","Tonsillar Swelling",tonsillar_swelling,hiligaynon,active
+,"masakit tonsillar swelling","Tonsillar Swelling",tonsillar_swelling,hiligaynon,active
+,"may dental pain","Dental Pain",dental_pain,hiligaynon,active
+,"masakit dental pain","Dental Pain",dental_pain,hiligaynon,active
+,"may jaw pain","Jaw Pain",jaw_pain,hiligaynon,active
+,"masakit jaw pain","Jaw Pain",jaw_pain,hiligaynon,active
+,"may facial pain","Facial Pain",facial_pain,hiligaynon,active
+,"masakit facial pain","Facial Pain",facial_pain,hiligaynon,active
+,"may mouth sores","Mouth Sores",mouth_sores,hiligaynon,active
+,"masakit mouth sores","Mouth Sores",mouth_sores,hiligaynon,active
+,"may facial swelling","Facial Swelling",facial_swelling,hiligaynon,active
+,"masakit facial swelling","Facial Swelling",facial_swelling,hiligaynon,active
+,"may red eye","Red Eye",red_eye,hiligaynon,active
+,"masakit red eye","Red Eye",red_eye,hiligaynon,active
+,"may vision change","Vision Change",vision_change,hiligaynon,active
+,"masakit vision change","Vision Change",vision_change,hiligaynon,active
+,"may eye discharge","Eye Discharge",eye_discharge,hiligaynon,active
+,"masakit eye discharge","Eye Discharge",eye_discharge,hiligaynon,active
+,"may foreign body in eye","Foreign Body in Eye",foreign_body_eye,hiligaynon,active
+,"masakit foreign body in eye","Foreign Body in Eye",foreign_body_eye,hiligaynon,active
+,"may photophobia",Photophobia,photophobia,hiligaynon,active
+,"masakit photophobia",Photophobia,photophobia,hiligaynon,active
+,"may sudden vision loss","Sudden Vision Loss",sudden_vision_loss,hiligaynon,active
+,"masakit sudden vision loss","Sudden Vision Loss",sudden_vision_loss,hiligaynon,active
+,"may urinary retention","Urinary Retention",urinary_retention,hiligaynon,active
+,"masakit urinary retention","Urinary Retention",urinary_retention,hiligaynon,active
+,"may blood in urine","Blood in Urine",hematuria,hiligaynon,active
+,"masakit blood in urine","Blood in Urine",hematuria,hiligaynon,active
+,"may flank pain","Flank Pain",flank_pain,hiligaynon,active
+,"masakit flank pain","Flank Pain",flank_pain,hiligaynon,active
+,"may kidney stone pain","Kidney Stone Pain",kidney_stone_pain,hiligaynon,active
+,"masakit kidney stone pain","Kidney Stone Pain",kidney_stone_pain,hiligaynon,active
+,"may urinary frequency","Urinary Frequency",urinary_frequency,hiligaynon,active
+,"masakit urinary frequency","Urinary Frequency",urinary_frequency,hiligaynon,active
+,"may incontinence",Incontinence,incontinence,hiligaynon,active
+,"masakit incontinence",Incontinence,incontinence,hiligaynon,active
+,"may scrotal pain","Scrotal Pain",scrotal_pain,hiligaynon,active
+,"masakit scrotal pain","Scrotal Pain",scrotal_pain,hiligaynon,active
+,"may testicular pain","Testicular Pain",testicular_pain,hiligaynon,active
+,"masakit testicular pain","Testicular Pain",testicular_pain,hiligaynon,active
+,"may testicular torsion","Testicular Torsion",testicular_torsion,hiligaynon,active
+,"masakit testicular torsion","Testicular Torsion",testicular_torsion,hiligaynon,active
+,"may penile discharge","Penile Discharge",penile_discharge,hiligaynon,active
+,"masakit penile discharge","Penile Discharge",penile_discharge,hiligaynon,active
+,"may anxiety attack","Anxiety Attack",anxiety_attack,hiligaynon,active
+,"masakit anxiety attack","Anxiety Attack",anxiety_attack,hiligaynon,active
+,"may panic attack","Panic Attack",panic_attack,hiligaynon,active
+,"masakit panic attack","Panic Attack",panic_attack,hiligaynon,active
+,"may severe depression","Severe Depression",depression_severe,hiligaynon,active
+,"masakit severe depression","Severe Depression",depression_severe,hiligaynon,active
+,"may agitation",Agitation,agitation,hiligaynon,active
+,"masakit agitation",Agitation,agitation,hiligaynon,active
+,"may aggression",Aggression,aggression,hiligaynon,active
+,"masakit aggression",Aggression,aggression,hiligaynon,active
+,"may hallucinations",Hallucinations,hallucinations,hiligaynon,active
+,"masakit hallucinations",Hallucinations,hallucinations,hiligaynon,active
+,"may substance withdrawal","Substance Withdrawal",substance_withdrawal,hiligaynon,active
+,"masakit substance withdrawal","Substance Withdrawal",substance_withdrawal,hiligaynon,active
+,"may self harm","Self Harm",self_harm,hiligaynon,active
+,"masakit self harm","Self Harm",self_harm,hiligaynon,active
+,"may psychosis",Psychosis,psychosis,hiligaynon,active
+,"masakit psychosis",Psychosis,psychosis,hiligaynon,active
+,"may infant fever","Infant Fever",infant_fever,hiligaynon,active
+,"masakit infant fever","Infant Fever",infant_fever,hiligaynon,active
+,"may poor feeding in infant","Poor Feeding in Infant",poor_feeding_infant,hiligaynon,active
+,"masakit poor feeding in infant","Poor Feeding in Infant",poor_feeding_infant,hiligaynon,active
+,"may decreased wet diapers","Decreased Wet Diapers",decreased_wet_diapers,hiligaynon,active
+,"masakit decreased wet diapers","Decreased Wet Diapers",decreased_wet_diapers,hiligaynon,active
+,"may bulging fontanelle","Bulging Fontanelle",bulging_fontanelle,hiligaynon,active
+,"masakit bulging fontanelle","Bulging Fontanelle",bulging_fontanelle,hiligaynon,active
+,"may irritable infant","Irritable Infant",irritable_infant,hiligaynon,active
+,"masakit irritable infant","Irritable Infant",irritable_infant,hiligaynon,active
+,"may child lethargy","Child Lethargy",child_lethargy,hiligaynon,active
+,"masakit child lethargy","Child Lethargy",child_lethargy,hiligaynon,active
+,"may febrile seizure","Febrile Seizure",febrile_seizure,hiligaynon,active
+,"masakit febrile seizure","Febrile Seizure",febrile_seizure,hiligaynon,active
+,"may child dehydration","Child Dehydration",child_dehydration,hiligaynon,active
+,"masakit child dehydration","Child Dehydration",child_dehydration,hiligaynon,active
+,"may fall injury","Fall Injury",fall_injury,hiligaynon,active
+,"masakit fall injury","Fall Injury",fall_injury,hiligaynon,active
+,"may elderly confusion","Elderly Confusion",elderly_confusion,hiligaynon,active
+,"masakit elderly confusion","Elderly Confusion",elderly_confusion,hiligaynon,active
+,"may failure to thrive","Failure to Thrive",failure_to_thrive,hiligaynon,active
+,"masakit failure to thrive","Failure to Thrive",failure_to_thrive,hiligaynon,active
+,"may unwitnessed fall in elderly","Unwitnessed Fall in Elderly",elderly_fall_unwitnessed,hiligaynon,active
+,"masakit unwitnessed fall in elderly","Unwitnessed Fall in Elderly",elderly_fall_unwitnessed,hiligaynon,active
+,"may reduced fetal movement","Reduced Fetal Movement",reduced_fetal_movement,hiligaynon,active
+,"masakit reduced fetal movement","Reduced Fetal Movement",reduced_fetal_movement,hiligaynon,active
+,"may preterm labor","Preterm Labor",preterm_labor,hiligaynon,active
+,"masakit preterm labor","Preterm Labor",preterm_labor,hiligaynon,active
+,"may preeclampsia symptoms","Preeclampsia Symptoms",preeclampsia_symptoms,hiligaynon,active
+,"masakit preeclampsia symptoms","Preeclampsia Symptoms",preeclampsia_symptoms,hiligaynon,active
+,"may severe headache in pregnancy","Severe Headache in Pregnancy",pregnancy_headache_severe,hiligaynon,active
+,"masakit severe headache in pregnancy","Severe Headache in Pregnancy",pregnancy_headache_severe,hiligaynon,active
+,"may significant swelling in pregnancy","Significant Swelling in Pregnancy",pregnancy_swelling,hiligaynon,active
+,"masakit significant swelling in pregnancy","Significant Swelling in Pregnancy",pregnancy_swelling,hiligaynon,active
+,"may pregnancy bleeding","Pregnancy Bleeding",pregnancy_bleeding,hiligaynon,active
+,"masakit pregnancy bleeding","Pregnancy Bleeding",pregnancy_bleeding,hiligaynon,active
+,"may ectopic pregnancy","Ectopic Pregnancy",ectopic_pregnancy,hiligaynon,active
+,"masakit ectopic pregnancy","Ectopic Pregnancy",ectopic_pregnancy,hiligaynon,active
+,"may miscarriage symptoms","Miscarriage Symptoms",miscarriage_symptoms,hiligaynon,active
+,"masakit miscarriage symptoms","Miscarriage Symptoms",miscarriage_symptoms,hiligaynon,active
+,"may head injury","Head Injury",head_injury,hiligaynon,active
+,"masakit head injury","Head Injury",head_injury,hiligaynon,active
+,"may fall",Fall,fall,hiligaynon,active
+,"masakit fall",Fall,fall,hiligaynon,active
+,"may motor vehicle accident","Motor Vehicle Accident",motor_vehicle_accident,hiligaynon,active
+,"masakit motor vehicle accident","Motor Vehicle Accident",motor_vehicle_accident,hiligaynon,active
+,"may deep laceration","Deep Laceration",deep_laceration,hiligaynon,active
+,"masakit deep laceration","Deep Laceration",deep_laceration,hiligaynon,active
+,"may crush injury","Crush Injury",crush_injury,hiligaynon,active
+,"masakit crush injury","Crush Injury",crush_injury,hiligaynon,active
+,"may amputation",Amputation,amputation,hiligaynon,active
+,"masakit amputation",Amputation,amputation,hiligaynon,active
+,"may gunshot wound","Gunshot Wound",gunshot_wound,hiligaynon,active
+,"masakit gunshot wound","Gunshot Wound",gunshot_wound,hiligaynon,active
+,"may stab wound","Stab Wound",stab_wound,hiligaynon,active
+,"masakit stab wound","Stab Wound",stab_wound,hiligaynon,active
+,"may assault injury","Assault Injury",assault_injury,hiligaynon,active
+,"masakit assault injury","Assault Injury",assault_injury,hiligaynon,active
+,"may spinal injury","Spinal Injury",spinal_injury,hiligaynon,active
+,"masakit spinal injury","Spinal Injury",spinal_injury,hiligaynon,active
+,"may major trauma","Major Trauma",major_trauma,hiligaynon,active
+,"masakit major trauma","Major Trauma",major_trauma,hiligaynon,active
+,"may penetrating trauma","Penetrating Trauma",penetrating_trauma,hiligaynon,active
+,"masakit penetrating trauma","Penetrating Trauma",penetrating_trauma,hiligaynon,active
+,"may rigors",Rigors,rigors,hiligaynon,active
+,"masakit rigors",Rigors,rigors,hiligaynon,active
+,"may night sweats","Night Sweats",night_sweats,hiligaynon,active
+,"masakit night sweats","Night Sweats",night_sweats,hiligaynon,active
+,"may sore throat with fever","Sore Throat with Fever",sore_throat_with_fever,hiligaynon,active
+,"masakit sore throat with fever","Sore Throat with Fever",sore_throat_with_fever,hiligaynon,active
+,"may infectious exposure","Infectious Exposure",infectious_exposure,hiligaynon,active
+,"masakit infectious exposure","Infectious Exposure",infectious_exposure,hiligaynon,active
+,"may sepsis symptoms","Sepsis Symptoms",sepsis_symptoms,hiligaynon,active
+,"masakit sepsis symptoms","Sepsis Symptoms",sepsis_symptoms,hiligaynon,active
+,"may meningitis symptoms","Meningitis Symptoms",meningitis_symptoms,hiligaynon,active
+,"masakit meningitis symptoms","Meningitis Symptoms",meningitis_symptoms,hiligaynon,active
+,"may tuberculosis symptoms","Tuberculosis Symptoms",tuberculosis_symptoms,hiligaynon,active
+,"masakit tuberculosis symptoms","Tuberculosis Symptoms",tuberculosis_symptoms,hiligaynon,active
+,"may dengue symptoms","Dengue Symptoms",dengue_symptoms,hiligaynon,active
+,"masakit dengue symptoms","Dengue Symptoms",dengue_symptoms,hiligaynon,active
+,"may malaria symptoms","Malaria Symptoms",malaria_symptoms,hiligaynon,active
+,"masakit malaria symptoms","Malaria Symptoms",malaria_symptoms,hiligaynon,active
+,"may drug overdose","Drug Overdose",drug_overdose,hiligaynon,active
+,"masakit drug overdose","Drug Overdose",drug_overdose,hiligaynon,active
+,"may alcohol intoxication","Alcohol Intoxication",alcohol_intoxication,hiligaynon,active
+,"masakit alcohol intoxication","Alcohol Intoxication",alcohol_intoxication,hiligaynon,active
+,"may carbon monoxide exposure","Carbon Monoxide Exposure",carbon_monoxide,hiligaynon,active
+,"masakit carbon monoxide exposure","Carbon Monoxide Exposure",carbon_monoxide,hiligaynon,active
+,"may chemical exposure","Chemical Exposure",chemical_exposure,hiligaynon,active
+,"masakit chemical exposure","Chemical Exposure",chemical_exposure,hiligaynon,active
+,"may heat exhaustion","Heat Exhaustion",heat_exhaustion,hiligaynon,active
+,"masakit heat exhaustion","Heat Exhaustion",heat_exhaustion,hiligaynon,active
+,"may heat stroke","Heat Stroke",heat_stroke,hiligaynon,active
+,"masakit heat stroke","Heat Stroke",heat_stroke,hiligaynon,active
+,"may hypothermia",Hypothermia,hypothermia,hiligaynon,active
+,"masakit hypothermia",Hypothermia,hypothermia,hiligaynon,active
+,"may drowning",Drowning,drowning,hiligaynon,active
+,"masakit drowning",Drowning,drowning,hiligaynon,active
+,"may electrocution",Electrocution,electrocution,hiligaynon,active
+,"masakit electrocution",Electrocution,electrocution,hiligaynon,active
+,"may snake bite","Snake Bite",snake_bite,hiligaynon,active
+,"masakit snake bite","Snake Bite",snake_bite,hiligaynon,active
+,"may animal bite","Animal Bite",animal_bite,hiligaynon,active
+,"masakit animal bite","Animal Bite",animal_bite,hiligaynon,active
+,"may human bite","Human Bite",human_bite,hiligaynon,active
+,"masakit human bite","Human Bite",human_bite,hiligaynon,active
+,"may high blood sugar","High Blood Sugar",diabetes_hyperglycemia,hiligaynon,active
+,"masakit high blood sugar","High Blood Sugar",diabetes_hyperglycemia,hiligaynon,active
+,"may low blood sugar","Low Blood Sugar",diabetes_hypoglycemia,hiligaynon,active
+,"masakit low blood sugar","Low Blood Sugar",diabetes_hypoglycemia,hiligaynon,active
+,"may thyroid storm","Thyroid Storm",thyroid_storm,hiligaynon,active
+,"masakit thyroid storm","Thyroid Storm",thyroid_storm,hiligaynon,active
+,"may hypertensive crisis","Hypertensive Crisis",hypertensive_crisis,hiligaynon,active
+,"masakit hypertensive crisis","Hypertensive Crisis",hypertensive_crisis,hiligaynon,active
+,"may copd exacerbation","COPD Exacerbation",copd_exacerbation,hiligaynon,active
+,"masakit copd exacerbation","COPD Exacerbation",copd_exacerbation,hiligaynon,active
+,"may chronic pain","Chronic Pain",chronic_pain,hiligaynon,active
+,"masakit chronic pain","Chronic Pain",chronic_pain,hiligaynon,active
+,"may dehydration",Dehydration,dehydration,hiligaynon,active
+,"masakit dehydration",Dehydration,dehydration,hiligaynon,active
+,"may malaise",Malaise,malaise,hiligaynon,active
+,"masakit malaise",Malaise,malaise,hiligaynon,active
+,"may night pain","Night Pain",night_pain,hiligaynon,active
+,"masakit night pain","Night Pain",night_pain,hiligaynon,active
+,"may weight gain","Weight Gain",weight_gain,hiligaynon,active
+,"masakit weight gain","Weight Gain",weight_gain,hiligaynon,active
+,"may fainting",Fainting,fainting,hiligaynon,active
+,"masakit fainting",Fainting,fainting,hiligaynon,active
+,"may swollen lymph nodes","Swollen Lymph Nodes",lymph_node_swelling,hiligaynon,active
+,"masakit swollen lymph nodes","Swollen Lymph Nodes",lymph_node_swelling,hiligaynon,active
+,"may mouth bleeding","Mouth Bleeding",mouth_bleeding,hiligaynon,active
+,"masakit mouth bleeding","Mouth Bleeding",mouth_bleeding,hiligaynon,active
+,"may postoperative complication","Postoperative Complication",postoperative_complication,hiligaynon,active
+,"masakit postoperative complication","Postoperative Complication",postoperative_complication,hiligaynon,active
+,"may medication side effect","Medication Side Effect",medication_side_effect,hiligaynon,active
+,"masakit medication side effect","Medication Side Effect",medication_side_effect,hiligaynon,active
+,"may mild allergic reaction","Mild Allergic Reaction",allergic_reaction_mild,hiligaynon,active
+,"masakit mild allergic reaction","Mild Allergic Reaction",allergic_reaction_mild,hiligaynon,active
+,"may food poisoning","Food Poisoning",food_poisoning,hiligaynon,active
+,"masakit food poisoning","Food Poisoning",food_poisoning,hiligaynon,active
+,"may travel related illness","Travel Related Illness",travel_related_illness,hiligaynon,active
+,"masakit travel related illness","Travel Related Illness",travel_related_illness,hiligaynon,active
+,"may vaccine reaction","Vaccine Reaction",vaccine_reaction,hiligaynon,active
+,"masakit vaccine reaction","Vaccine Reaction",vaccine_reaction,hiligaynon,active
+,"may dental abscess","Dental Abscess",dental_abscess,hiligaynon,active
+,"masakit dental abscess","Dental Abscess",dental_abscess,hiligaynon,active
+,"may tooth abscess","Tooth Abscess",tooth_abscess,hiligaynon,active
+,"masakit tooth abscess","Tooth Abscess",tooth_abscess,hiligaynon,active
+,"may breast pain","Breast Pain",breast_pain,hiligaynon,active
+,"masakit breast pain","Breast Pain",breast_pain,hiligaynon,active
+,"may breast lump","Breast Lump",breast_lump,hiligaynon,active
+,"masakit breast lump","Breast Lump",breast_lump,hiligaynon,active
+,"may vaginal bleeding","Vaginal Bleeding",vaginal_bleeding,hiligaynon,active
+,"masakit vaginal bleeding","Vaginal Bleeding",vaginal_bleeding,hiligaynon,active
+,"may pelvic pain","Pelvic Pain",pelvic_pain,hiligaynon,active
+,"masakit pelvic pain","Pelvic Pain",pelvic_pain,hiligaynon,active
+,"may menstrual pain","Menstrual Pain",menstrual_pain,hiligaynon,active
+,"masakit menstrual pain","Menstrual Pain",menstrual_pain,hiligaynon,active
+,"may sexual assault","Sexual Assault",sexual_assault,hiligaynon,active
+,"masakit sexual assault","Sexual Assault",sexual_assault,hiligaynon,active
+,"may domestic violence","Domestic Violence",domestic_violence,hiligaynon,active
+,"masakit domestic violence","Domestic Violence",domestic_violence,hiligaynon,active
+,"may minor burn","Minor Burn",burn_mild,hiligaynon,active
+,"masakit minor burn","Minor Burn",burn_mild,hiligaynon,active
+,"may severe burn","Severe Burn",burn_severe,hiligaynon,active
+,"masakit severe burn","Severe Burn",burn_severe,hiligaynon,active
+,"may smoke inhalation","Smoke Inhalation",smoke_inhalation,hiligaynon,active
+,"masakit smoke inhalation","Smoke Inhalation",smoke_inhalation,hiligaynon,active
+,"may foreign body aspiration","Foreign Body Aspiration",foreign_body_aspiration,hiligaynon,active
+,"masakit foreign body aspiration","Foreign Body Aspiration",foreign_body_aspiration,hiligaynon,active
+,"may foreign body swallowed","Foreign Body Swallowed",foreign_body_swallowed,hiligaynon,active
+,"masakit foreign body swallowed","Foreign Body Swallowed",foreign_body_swallowed,hiligaynon,active
+,"may ingested battery","Ingested Battery",ingested_battery,hiligaynon,active
+,"masakit ingested battery","Ingested Battery",ingested_battery,hiligaynon,active
+,"may ingested magnet","Ingested Magnet",ingested_magnet,hiligaynon,active
+,"masakit ingested magnet","Ingested Magnet",ingested_magnet,hiligaynon,active
+,"may needle stick injury","Needle Stick Injury",needle_stick,hiligaynon,active
+,"masakit needle stick injury","Needle Stick Injury",needle_stick,hiligaynon,active
+,"may occupational exposure","Occupational Exposure",occupational_exposure,hiligaynon,active
+,"masakit occupational exposure","Occupational Exposure",occupational_exposure,hiligaynon,active
+,"may rabies exposure","Rabies Exposure",rabies_exposure,hiligaynon,active
+,"masakit rabies exposure","Rabies Exposure",rabies_exposure,hiligaynon,active
+,"may tetanus exposure","Tetanus Exposure",tetanus_exposure,hiligaynon,active
+,"masakit tetanus exposure","Tetanus Exposure",tetanus_exposure,hiligaynon,active
+,"may hiv exposure","HIV Exposure",hiv_exposure,hiligaynon,active
+,"masakit hiv exposure","HIV Exposure",hiv_exposure,hiligaynon,active
+,"may hepatitis exposure","Hepatitis Exposure",hepatitis_exposure,hiligaynon,active
+,"masakit hepatitis exposure","Hepatitis Exposure",hepatitis_exposure,hiligaynon,active
+,"may witnessed collapse","Witnessed Collapse",sudden_death_witnessed,hiligaynon,active
+,"masakit witnessed collapse","Witnessed Collapse",sudden_death_witnessed,hiligaynon,active
+,"may blue lips","Blue Lips",blue_lips,hiligaynon,active
+,"masakit blue lips","Blue Lips",blue_lips,hiligaynon,active
+,"may air hunger","Air Hunger",air_hunger,hiligaynon,active
+,"masakit air hunger","Air Hunger",air_hunger,hiligaynon,active
+,"may cannot speak full sentences","Cannot Speak Full Sentences",cannot_speak_full_sentences,hiligaynon,active
+,"masakit cannot speak full sentences","Cannot Speak Full Sentences",cannot_speak_full_sentences,hiligaynon,active
+,"may pediatric breathing distress","Pediatric Breathing Distress",pediatric_breathing_distress,hiligaynon,active
+,"masakit pediatric breathing distress","Pediatric Breathing Distress",pediatric_breathing_distress,hiligaynon,active
+,"may neonatal distress","Neonatal Distress",neonatal_distress,hiligaynon,active
+,"masakit neonatal distress","Neonatal Distress",neonatal_distress,hiligaynon,active
+,"may feeding difficulty","Feeding Difficulty",feeding_difficulty,hiligaynon,active
+,"masakit feeding difficulty","Feeding Difficulty",feeding_difficulty,hiligaynon,active
+,"may failure to gain weight","Failure to Gain Weight",failure_to_gain_weight,hiligaynon,active
+,"masakit failure to gain weight","Failure to Gain Weight",failure_to_gain_weight,hiligaynon,active
+,"may developmental regression","Developmental Regression",developmental_regression,hiligaynon,active
+,"masakit developmental regression","Developmental Regression",developmental_regression,hiligaynon,active
+,"may school refusal","School Refusal",school_refusal,hiligaynon,active
+,"masakit school refusal","School Refusal",school_refusal,hiligaynon,active
+,"may behavioral change","Behavioral Change",behavioral_change,hiligaynon,active
+,"masakit behavioral change","Behavioral Change",behavioral_change,hiligaynon,active
+,"may substance intoxication","Substance Intoxication",substance_intoxication,hiligaynon,active
+,"masakit substance intoxication","Substance Intoxication",substance_intoxication,hiligaynon,active
+,"may withdrawal seizure","Withdrawal Seizure",withdrawal_seizure,hiligaynon,active
+,"masakit withdrawal seizure","Withdrawal Seizure",withdrawal_seizure,hiligaynon,active
+,"may organ failure symptoms","Organ Failure Symptoms",organ_failure_symptoms,hiligaynon,active
+,"masakit organ failure symptoms","Organ Failure Symptoms",organ_failure_symptoms,hiligaynon,active
+,"may shock symptoms","Shock Symptoms",shock_symptoms,hiligaynon,active
+,"masakit shock symptoms","Shock Symptoms",shock_symptoms,hiligaynon,active
+,"may anemia symptoms","Anemia Symptoms",anemia_symptoms,hiligaynon,active
+,"masakit anemia symptoms","Anemia Symptoms",anemia_symptoms,hiligaynon,active
+,"may easy bruising","Easy Bruising",easy_bruising,hiligaynon,active
+,"masakit easy bruising","Easy Bruising",easy_bruising,hiligaynon,active
+,"may petechiae",Petechiae,petechiae,hiligaynon,active
+,"masakit petechiae",Petechiae,petechiae,hiligaynon,active
+,"may splenomegaly symptoms","Splenomegaly Symptoms",splenomegaly_symptoms,hiligaynon,active
+,"masakit splenomegaly symptoms","Splenomegaly Symptoms",splenomegaly_symptoms,hiligaynon,active
+,"may newborn jaundice","Newborn Jaundice",jaundice_newborn,hiligaynon,active
+,"masakit newborn jaundice","Newborn Jaundice",jaundice_newborn,hiligaynon,active
+,"may umbilical cord infection","Umbilical Cord Infection",umbilical_cord_infection,hiligaynon,active
+,"masakit umbilical cord infection","Umbilical Cord Infection",umbilical_cord_infection,hiligaynon,active
+,"may severe diaper rash","Severe Diaper Rash",diaper_rash_severe,hiligaynon,active
+,"masakit severe diaper rash","Severe Diaper Rash",diaper_rash_severe,hiligaynon,active
+,"may elderly aspiration","Elderly Aspiration",elderly_aspiration,hiligaynon,active
+,"masakit elderly aspiration","Elderly Aspiration",elderly_aspiration,hiligaynon,active
+,"may bedsore infection","Bedsore Infection",bedsore_infection,hiligaynon,active
+,"masakit bedsore infection","Bedsore Infection",bedsore_infection,hiligaynon,active
+,"may urinary catheter issue","Urinary Catheter Issue",urinary_catheter_issue,hiligaynon,active
+,"masakit urinary catheter issue","Urinary Catheter Issue",urinary_catheter_issue,hiligaynon,active
+,"may dialysis complication","Dialysis Complication",dialysis_complication,hiligaynon,active
+,"masakit dialysis complication","Dialysis Complication",dialysis_complication,hiligaynon,active
+,"may transplant rejection symptoms","Transplant Rejection Symptoms",transplant_rejection,hiligaynon,active
+,"masakit transplant rejection symptoms","Transplant Rejection Symptoms",transplant_rejection,hiligaynon,active
+,"may infection in immunocompromised patient","Infection in Immunocompromised Patient",immunosuppression_infection,hiligaynon,active
+,"masakit infection in immunocompromised patient","Infection in Immunocompromised Patient",immunosuppression_infection,hiligaynon,active
+,"may cancer treatment complication","Cancer Treatment Complication",cancer_treatment_complication,hiligaynon,active
+,"masakit cancer treatment complication","Cancer Treatment Complication",cancer_treatment_complication,hiligaynon,active
+,"may chemotherapy nausea","Chemotherapy Nausea",chemotherapy_nausea,hiligaynon,active
+,"masakit chemotherapy nausea","Chemotherapy Nausea",chemotherapy_nausea,hiligaynon,active
+,"may port or line infection","Port or Line Infection",port_infection,hiligaynon,active
+,"masakit port or line infection","Port or Line Infection",port_infection,hiligaynon,active
+,"may surgical site infection","Surgical Site Infection",surgical_site_infection,hiligaynon,active
+,"masakit surgical site infection","Surgical Site Infection",surgical_site_infection,hiligaynon,active
+,"may stent complication","Stent Complication",stent_complication,hiligaynon,active
+,"masakit stent complication","Stent Complication",stent_complication,hiligaynon,active
+,"may pacemaker issue","Pacemaker Issue",pacemaker_issue,hiligaynon,active
+,"masakit pacemaker issue","Pacemaker Issue",pacemaker_issue,hiligaynon,active
+,"may anticoagulant bleeding","Anticoagulant Bleeding",anticoagulant_bleeding,hiligaynon,active
+,"masakit anticoagulant bleeding","Anticoagulant Bleeding",anticoagulant_bleeding,hiligaynon,active
+,"may warfarin bleeding","Warfarin Bleeding",warfarin_bleeding,hiligaynon,active
+,"masakit warfarin bleeding","Warfarin Bleeding",warfarin_bleeding,hiligaynon,active
+,"may insulin error","Insulin Error",insulin_error,hiligaynon,active
+,"masakit insulin error","Insulin Error",insulin_error,hiligaynon,active
+,"may adrenal crisis","Adrenal Crisis",adrenal_crisis,hiligaynon,active
+,"masakit adrenal crisis","Adrenal Crisis",adrenal_crisis,hiligaynon,active
+,"may addisonian crisis","Addisonian Crisis",addisonian_crisis,hiligaynon,active
+,"masakit addisonian crisis","Addisonian Crisis",addisonian_crisis,hiligaynon,active
+,"may hyperkalemia symptoms","Hyperkalemia Symptoms",hyperkalemia_symptoms,hiligaynon,active
+,"masakit hyperkalemia symptoms","Hyperkalemia Symptoms",hyperkalemia_symptoms,hiligaynon,active
+,"may hyponatremia symptoms","Hyponatremia Symptoms",hyponatremia_symptoms,hiligaynon,active
+,"masakit hyponatremia symptoms","Hyponatremia Symptoms",hyponatremia_symptoms,hiligaynon,active
+,"may electrolyte imbalance","Electrolyte Imbalance",electrolyte_imbalance,hiligaynon,active
+,"masakit electrolyte imbalance","Electrolyte Imbalance",electrolyte_imbalance,hiligaynon,active
+,"may renal colic","Renal Colic",renal_colic,hiligaynon,active
+,"masakit renal colic","Renal Colic",renal_colic,hiligaynon,active
+,"may prostatitis",Prostatitis,prostatitis,hiligaynon,active
+,"masakit prostatitis",Prostatitis,prostatitis,hiligaynon,active
+,"may bph symptoms","BPH Symptoms",bph_symptoms,hiligaynon,active
+,"masakit bph symptoms","BPH Symptoms",bph_symptoms,hiligaynon,active
+,"may ovarian torsion","Ovarian Torsion",ovarian_torsion,hiligaynon,active
+,"masakit ovarian torsion","Ovarian Torsion",ovarian_torsion,hiligaynon,active
+,"may ovarian cyst rupture","Ovarian Cyst Rupture",ovarian_cyst_rupture,hiligaynon,active
+,"masakit ovarian cyst rupture","Ovarian Cyst Rupture",ovarian_cyst_rupture,hiligaynon,active
+,"may pelvic inflammatory disease","Pelvic Inflammatory Disease",pid_symptoms,hiligaynon,active
+,"masakit pelvic inflammatory disease","Pelvic Inflammatory Disease",pid_symptoms,hiligaynon,active
+,"may postpartum complication","Postpartum Complication",postpartum_complication,hiligaynon,active
+,"masakit postpartum complication","Postpartum Complication",postpartum_complication,hiligaynon,active
+,"may postpartum hemorrhage","Postpartum Hemorrhage",postpartum_hemorrhage,hiligaynon,active
+,"masakit postpartum hemorrhage","Postpartum Hemorrhage",postpartum_hemorrhage,hiligaynon,active
+,"may mastitis",Mastitis,mastitis,hiligaynon,active
+,"masakit mastitis",Mastitis,mastitis,hiligaynon,active
+,"may breast abscess","Breast Abscess",breast_abscess,hiligaynon,active
+,"masakit breast abscess","Breast Abscess",breast_abscess,hiligaynon,active
+,"may lactation issue","Lactation Issue",lactation_issue,hiligaynon,active
+,"masakit lactation issue","Lactation Issue",lactation_issue,hiligaynon,active
+,"may circumcision complication","Circumcision Complication",circumcision_complication,hiligaynon,active
+,"masakit circumcision complication","Circumcision Complication",circumcision_complication,hiligaynon,active
+,"may circumcision bleeding","Circumcision Bleeding",circumcision_bleeding,hiligaynon,active
+,"masakit circumcision bleeding","Circumcision Bleeding",circumcision_bleeding,hiligaynon,active

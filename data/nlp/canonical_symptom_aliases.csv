@@ -1,0 +1,49 @@
+alias,canonical_concept_id,canonical_name,language,status
+shortness of breath,difficulty_breathing,Difficulty Breathing,english,active
+breathing problem,difficulty_breathing,Difficulty Breathing,english,active
+respiratory difficulty,difficulty_breathing,Difficulty Breathing,english,active
+dyspnea,difficulty_breathing,Difficulty Breathing,english,active
+dyspnoea,difficulty_breathing,Difficulty Breathing,english,active
+sob,difficulty_breathing,Difficulty Breathing,english,active
+hard to breathe,difficulty_breathing,Difficulty Breathing,english,active
+trouble breathing,difficulty_breathing,Difficulty Breathing,english,active
+budlay ginhawa,difficulty_breathing,Difficulty Breathing,hiligaynon,active
+budlay gid ginhawa,difficulty_breathing,Difficulty Breathing,hiligaynon,active
+hirap huminga,difficulty_breathing,Difficulty Breathing,filipino,active
+pain in chest,chest_pain,Chest Pain,english,active
+pain chest,chest_pain,Chest Pain,english,active
+heavy chest,chest_pain,Chest Pain,english,active
+tight chest,chest_pain,Chest Pain,english,active
+pressure in chest,chest_pain,Chest Pain,english,active
+masakit dughan,chest_pain,Chest Pain,hiligaynon,active
+masakit dibdib,chest_pain,Chest Pain,filipino,active
+masakit akon dughan,chest_pain,Chest Pain,hiligaynon,active
+masakit ang dibdib ko,chest_pain,Chest Pain,filipino,active
+sakit dughan,chest_pain,Chest Pain,hiligaynon,active
+high fever,fever,Fever,english,active
+mild fever,fever,Fever,english,active
+lagnat,fever,Fever,hiligaynon,active
+hilanat,fever,Fever,hiligaynon,active
+ginakalagnat,fever,Fever,hiligaynon,active
+nilalagnat,fever,Fever,filipino,active
+head pain,headache,Headache,english,active
+sakit ulo,headache,Headache,hiligaynon,active
+throwing up,vomiting,Vomiting,english,active
+hand wound,laceration,Laceration,english,active
+pilas,laceration,Laceration,hiligaynon,active
+may pilas,laceration,Laceration,hiligaynon,active
+hand cut off,amputation,Amputation,english,active
+finger cut off,amputation,Amputation,english,active
+putol ang kamot,amputation,Amputation,hiligaynon,active
+putol ang kamay,amputation,Amputation,filipino,active
+putol kamot ko,amputation,Amputation,hiligaynon,active
+naputol kamot,amputation,Amputation,hiligaynon,active
+nautod,amputation,Amputation,hiligaynon,active
+syncope,fainting,Fainting,english,active
+fainted,fainting,Fainting,english,active
+passed out,fainting,Fainting,english,active
+difficulty walking,gait_disturbance,Gait Disturbance,english,active
+blood in urine,hematuria,Blood in Urine,english,active
+blood in stool,hematochezia,Blood in Stool,english,active
+dysuria,urinary_symptoms,Painful Urination,english,active
+painful urination,urinary_symptoms,Painful Urination,english,active

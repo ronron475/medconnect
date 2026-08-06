@@ -7685,3 +7685,581 @@ term_id,term,english,concept,language,status
 ,dilaw ang mata,yellowing of eyes,yellowing_of_eyes,filipino,active
 ,nagadilaw ang panit,yellowish skin,yellowish_skin,filipino,active
 ,dilaw ang panit,yellowish skin,yellowish_skin,filipino,active
+,"paulit-ulit na pagsusuka","Persistent Vomiting",persistent_vomiting,filipino,active
+,"hindi tumitigil ang pagsusuka","Persistent Vomiting",persistent_vomiting,filipino,active
+,"hirap sa katawan",Fatigue,fatigue,filipino,active
+,"hindi maganda ang pakiramdam",Fatigue,fatigue,filipino,active
+,"masakit dibdib ko","Chest Pain",chest_pain,filipino,active
+,"hindi mapigil ang pagdurugo","Severe Bleeding",severe_bleeding,filipino,active
+,himatay,"Loss of Consciousness",loss_of_consciousness,filipino,active
+,"walang malay","Loss of Consciousness",loss_of_consciousness,filipino,active
+,nanginginig,Seizure,seizure,filipino,active
+,kumbulsyon,Seizure,seizure,filipino,active
+,pagkakumbulsyon,Seizure,seizure,filipino,active
+,"hirap magsalita","Stroke Symptoms",stroke_symptoms,filipino,active
+,"mahina ang isang braso","Stroke Symptoms",stroke_symptoms,filipino,active
+,"nakasimangot ang mukha","Stroke Symptoms",stroke_symptoms,filipino,active
+,"matinding allergy","Severe Allergic Reaction",severe_allergic_reaction,filipino,active
+,"namamaga ang lalamunan","Severe Allergic Reaction",severe_allergic_reaction,filipino,active
+,anaphylaxis,"Severe Allergic Reaction",severe_allergic_reaction,filipino,active
+,nalilito,Confusion,confusion,filipino,active
+,"hindi alam kung nasaan",Confusion,confusion,filipino,active
+,"magulo ang isip",Confusion,confusion,filipino,active
+,"matinding dehydration","Severe Dehydration",severe_dehydration,filipino,active
+,"walang ihi","Severe Dehydration",severe_dehydration,filipino,active
+,"lubhang tuhog","Severe Dehydration",severe_dehydration,filipino,active
+,"nakainom ng lason",Poisoning,poisoning,filipino,active
+,pagkalason,Poisoning,poisoning,filipino,active
+,overdose,Poisoning,poisoning,filipino,active
+,paso,Burns,burns,filipino,active
+,nasunog,Burns,burns,filipino,active
+,napaso,Burns,burns,filipino,active
+,"gusto magpakamatay","Suicidal Thoughts",suicidal_thoughts,filipino,active
+,"nais magpakamatay","Suicidal Thoughts",suicidal_thoughts,filipino,active
+,suicidal,"Suicidal Thoughts",suicidal_thoughts,filipino,active
+,"pamumula ng balat",Rash,rash,filipino,active
+,"may rash",Rash,rash,filipino,active
+,"sakit ng tenga","Ear Pain",ear_pain,filipino,active
+,"sakit ng mata","Eye Pain",eye_pain,filipino,active
+,"sakit ng likod","Back Pain",back_pain,filipino,active
+,"masakit umihi","Painful Urination",urinary_symptoms,filipino,active
+,"mahapdi umihi","Painful Urination",urinary_symptoms,filipino,active
+,"mabilis ang tibok ng puso",Palpitations,palpitations,filipino,active
+,"kumakabog ang dibdib",Palpitations,palpitations,filipino,active
+,"may wheezing",Wheezing,wheezing,filipino,active
+,"masakit ang wheezing",Wheezing,wheezing,filipino,active
+,"may asthma exacerbation","Asthma Exacerbation",asthma_exacerbation,filipino,active
+,"masakit ang asthma exacerbation","Asthma Exacerbation",asthma_exacerbation,filipino,active
+,"may stridor",Stridor,stridor,filipino,active
+,"masakit ang stridor",Stridor,stridor,filipino,active
+,"may bronchitis",Bronchitis,bronchitis,filipino,active
+,"masakit ang bronchitis",Bronchitis,bronchitis,filipino,active
+,"may pneumonia symptoms","Pneumonia Symptoms",pneumonia_symptoms,filipino,active
+,"masakit ang pneumonia symptoms","Pneumonia Symptoms",pneumonia_symptoms,filipino,active
+,"may pleuritic chest pain","Pleuritic Chest Pain",pleuritic_chest_pain,filipino,active
+,"masakit ang pleuritic chest pain","Pleuritic Chest Pain",pleuritic_chest_pain,filipino,active
+,"may hoarseness",Hoarseness,hoarseness,filipino,active
+,"masakit ang hoarseness",Hoarseness,hoarseness,filipino,active
+,"may nasal congestion","Nasal Congestion",nasal_congestion,filipino,active
+,"masakit ang nasal congestion","Nasal Congestion",nasal_congestion,filipino,active
+,"may sinus pain","Sinus Pain",sinus_pain,filipino,active
+,"masakit ang sinus pain","Sinus Pain",sinus_pain,filipino,active
+,"may hemoptysis",Hemoptysis,hemoptysis,filipino,active
+,"masakit ang hemoptysis",Hemoptysis,hemoptysis,filipino,active
+,"may throat swelling","Throat Swelling",throat_swelling,filipino,active
+,"masakit ang throat swelling","Throat Swelling",throat_swelling,filipino,active
+,"may aspiration",Aspiration,aspiration,filipino,active
+,"masakit ang aspiration",Aspiration,aspiration,filipino,active
+,"may croup",Croup,croup,filipino,active
+,"masakit ang croup",Croup,croup,filipino,active
+,"may nosebleed",Nosebleed,epistaxis,filipino,active
+,"masakit ang nosebleed",Nosebleed,epistaxis,filipino,active
+,"may severe nosebleed","Severe Nosebleed",severe_epistaxis,filipino,active
+,"masakit ang severe nosebleed","Severe Nosebleed",severe_epistaxis,filipino,active
+,"may cyanosis",Cyanosis,cyanosis,filipino,active
+,"masakit ang cyanosis",Cyanosis,cyanosis,filipino,active
+,"may sleep apnea symptoms","Sleep Apnea Symptoms",sleep_apnea_symptoms,filipino,active
+,"masakit ang sleep apnea symptoms","Sleep Apnea Symptoms",sleep_apnea_symptoms,filipino,active
+,"may syncope",Syncope,syncope,filipino,active
+,"masakit ang syncope",Syncope,syncope,filipino,active
+,"may low blood pressure","Low Blood Pressure",hypotension,filipino,active
+,"masakit ang low blood pressure","Low Blood Pressure",hypotension,filipino,active
+,"may severe hypertension","Severe Hypertension",hypertension_severe,filipino,active
+,"masakit ang severe hypertension","Severe Hypertension",hypertension_severe,filipino,active
+,"may unilateral leg swelling","Unilateral Leg Swelling",leg_swelling_unilateral,filipino,active
+,"masakit ang unilateral leg swelling","Unilateral Leg Swelling",leg_swelling_unilateral,filipino,active
+,"may claudication",Claudication,claudication,filipino,active
+,"masakit ang claudication",Claudication,claudication,filipino,active
+,"may irregular heartbeat","Irregular Heartbeat",arrhythmia,filipino,active
+,"masakit ang irregular heartbeat","Irregular Heartbeat",arrhythmia,filipino,active
+,"may angina",Angina,angina,filipino,active
+,"masakit ang angina",Angina,angina,filipino,active
+,"may heart failure symptoms","Heart Failure Symptoms",heart_failure_symptoms,filipino,active
+,"masakit ang heart failure symptoms","Heart Failure Symptoms",heart_failure_symptoms,filipino,active
+,"may cold extremities","Cold Extremities",cold_extremities,filipino,active
+,"masakit ang cold extremities","Cold Extremities",cold_extremities,filipino,active
+,"may cardiac arrest","Cardiac Arrest",cardiac_arrest_symptoms,filipino,active
+,"masakit ang cardiac arrest","Cardiac Arrest",cardiac_arrest_symptoms,filipino,active
+,"may constipation",Constipation,constipation,filipino,active
+,"masakit ang constipation",Constipation,constipation,filipino,active
+,"may bloating",Bloating,bloating,filipino,active
+,"masakit ang bloating",Bloating,bloating,filipino,active
+,"may difficulty swallowing","Difficulty Swallowing",dysphagia,filipino,active
+,"masakit ang difficulty swallowing","Difficulty Swallowing",dysphagia,filipino,active
+,"may painful swallowing","Painful Swallowing",odynophagia,filipino,active
+,"masakit ang painful swallowing","Painful Swallowing",odynophagia,filipino,active
+,"may black stool","Black Stool",melena,filipino,active
+,"masakit ang black stool","Black Stool",melena,filipino,active
+,"may blood in stool","Blood in Stool",hematochezia,filipino,active
+,"masakit ang blood in stool","Blood in Stool",hematochezia,filipino,active
+,"may jaundice",Jaundice,jaundice,filipino,active
+,"masakit ang jaundice",Jaundice,jaundice,filipino,active
+,"may appendicitis pain","Appendicitis Pain",appendicitis_pain,filipino,active
+,"masakit ang appendicitis pain","Appendicitis Pain",appendicitis_pain,filipino,active
+,"may pancreatitis pain","Pancreatitis Pain",pancreatitis_pain,filipino,active
+,"masakit ang pancreatitis pain","Pancreatitis Pain",pancreatitis_pain,filipino,active
+,"may gallbladder pain","Gallbladder Pain",gallbladder_pain,filipino,active
+,"masakit ang gallbladder pain","Gallbladder Pain",gallbladder_pain,filipino,active
+,"may acid reflux","Acid Reflux",reflux,filipino,active
+,"masakit ang acid reflux","Acid Reflux",reflux,filipino,active
+,"may indigestion",Indigestion,indigestion,filipino,active
+,"masakit ang indigestion",Indigestion,indigestion,filipino,active
+,"may loss of appetite","Loss of Appetite",anorexia,filipino,active
+,"masakit ang loss of appetite","Loss of Appetite",anorexia,filipino,active
+,"may unintentional weight loss","Unintentional Weight Loss",weight_loss,filipino,active
+,"masakit ang unintentional weight loss","Unintentional Weight Loss",weight_loss,filipino,active
+,"may rectal pain","Rectal Pain",rectal_pain,filipino,active
+,"masakit ang rectal pain","Rectal Pain",rectal_pain,filipino,active
+,"may hernia pain","Hernia Pain",hernia_pain,filipino,active
+,"masakit ang hernia pain","Hernia Pain",hernia_pain,filipino,active
+,"may acute abdomen","Acute Abdomen",acute_abdomen,filipino,active
+,"masakit ang acute abdomen","Acute Abdomen",acute_abdomen,filipino,active
+,"may numbness",Numbness,numbness,filipino,active
+,"masakit ang numbness",Numbness,numbness,filipino,active
+,"may tingling",Tingling,tingling,filipino,active
+,"masakit ang tingling",Tingling,tingling,filipino,active
+,"may paralysis",Paralysis,paralysis,filipino,active
+,"masakit ang paralysis",Paralysis,paralysis,filipino,active
+,"may tremor",Tremor,tremor,filipino,active
+,"masakit ang tremor",Tremor,tremor,filipino,active
+,"may facial weakness","Facial Weakness",facial_weakness,filipino,active
+,"masakit ang facial weakness","Facial Weakness",facial_weakness,filipino,active
+,"may vision loss","Vision Loss",vision_loss,filipino,active
+,"masakit ang vision loss","Vision Loss",vision_loss,filipino,active
+,"may double vision","Double Vision",double_vision,filipino,active
+,"masakit ang double vision","Double Vision",double_vision,filipino,active
+,"may hearing loss","Hearing Loss",hearing_loss,filipino,active
+,"masakit ang hearing loss","Hearing Loss",hearing_loss,filipino,active
+,"may vertigo",Vertigo,vertigo,filipino,active
+,"masakit ang vertigo",Vertigo,vertigo,filipino,active
+,"may severe migraine","Severe Migraine",migraine_severe,filipino,active
+,"masakit ang severe migraine","Severe Migraine",migraine_severe,filipino,active
+,"may stiff neck","Stiff Neck",stiff_neck,filipino,active
+,"masakit ang stiff neck","Stiff Neck",stiff_neck,filipino,active
+,"may meningism",Meningism,meningism,filipino,active
+,"masakit ang meningism",Meningism,meningism,filipino,active
+,"may gait disturbance","Gait Disturbance",gait_disturbance,filipino,active
+,"masakit ang gait disturbance","Gait Disturbance",gait_disturbance,filipino,active
+,"may acute memory loss","Acute Memory Loss",memory_loss_acute,filipino,active
+,"masakit ang acute memory loss","Acute Memory Loss",memory_loss_acute,filipino,active
+,"may facial droop","Facial Droop",facial_droop,filipino,active
+,"masakit ang facial droop","Facial Droop",facial_droop,filipino,active
+,"may slurred speech","Slurred Speech",slurred_speech,filipino,active
+,"masakit ang slurred speech","Slurred Speech",slurred_speech,filipino,active
+,"may one-sided weakness","One-Sided Weakness",one_sided_weakness,filipino,active
+,"masakit ang one-sided weakness","One-Sided Weakness",one_sided_weakness,filipino,active
+,"may joint swelling","Joint Swelling",joint_swelling,filipino,active
+,"masakit ang joint swelling","Joint Swelling",joint_swelling,filipino,active
+,"may muscle cramps","Muscle Cramps",muscle_cramps,filipino,active
+,"masakit ang muscle cramps","Muscle Cramps",muscle_cramps,filipino,active
+,"may neck pain","Neck Pain",neck_pain,filipino,active
+,"masakit ang neck pain","Neck Pain",neck_pain,filipino,active
+,"may shoulder pain","Shoulder Pain",shoulder_pain,filipino,active
+,"masakit ang shoulder pain","Shoulder Pain",shoulder_pain,filipino,active
+,"may hip pain","Hip Pain",hip_pain,filipino,active
+,"masakit ang hip pain","Hip Pain",hip_pain,filipino,active
+,"may knee pain","Knee Pain",knee_pain,filipino,active
+,"masakit ang knee pain","Knee Pain",knee_pain,filipino,active
+,"may ankle pain","Ankle Pain",ankle_pain,filipino,active
+,"masakit ang ankle pain","Ankle Pain",ankle_pain,filipino,active
+,"may wrist pain","Wrist Pain",wrist_pain,filipino,active
+,"masakit ang wrist pain","Wrist Pain",wrist_pain,filipino,active
+,"may sprain",Sprain,sprain,filipino,active
+,"masakit ang sprain",Sprain,sprain,filipino,active
+,"may suspected fracture","Suspected Fracture",suspected_fracture,filipino,active
+,"masakit ang suspected fracture","Suspected Fracture",suspected_fracture,filipino,active
+,"may dislocation",Dislocation,dislocation,filipino,active
+,"masakit ang dislocation",Dislocation,dislocation,filipino,active
+,"may muscle weakness","Muscle Weakness",muscle_weakness,filipino,active
+,"masakit ang muscle weakness","Muscle Weakness",muscle_weakness,filipino,active
+,"may hives",Hives,hives,filipino,active
+,"masakit ang hives",Hives,hives,filipino,active
+,"may itching",Itching,itching,filipino,active
+,"masakit ang itching",Itching,itching,filipino,active
+,"may cellulitis",Cellulitis,cellulitis,filipino,active
+,"masakit ang cellulitis",Cellulitis,cellulitis,filipino,active
+,"may abscess",Abscess,abscess,filipino,active
+,"masakit ang abscess",Abscess,abscess,filipino,active
+,"may wound infection","Wound Infection",wound_infection,filipino,active
+,"masakit ang wound infection","Wound Infection",wound_infection,filipino,active
+,"may laceration",Laceration,laceration,filipino,active
+,"masakit ang laceration",Laceration,laceration,filipino,active
+,"may insect bite reaction","Insect Bite Reaction",insect_bite_reaction,filipino,active
+,"masakit ang insect bite reaction","Insect Bite Reaction",insect_bite_reaction,filipino,active
+,"may purpuric rash","Purpuric Rash",purpuric_rash,filipino,active
+,"masakit ang purpuric rash","Purpuric Rash",purpuric_rash,filipino,active
+,"may spreading skin infection","Spreading Skin Infection",skin_infection_spreading,filipino,active
+,"masakit ang spreading skin infection","Spreading Skin Infection",skin_infection_spreading,filipino,active
+,"may tinnitus",Tinnitus,tinnitus,filipino,active
+,"masakit ang tinnitus",Tinnitus,tinnitus,filipino,active
+,"may hearing change","Hearing Change",hearing_change,filipino,active
+,"masakit ang hearing change","Hearing Change",hearing_change,filipino,active
+,"may tonsillar swelling","Tonsillar Swelling",tonsillar_swelling,filipino,active
+,"masakit ang tonsillar swelling","Tonsillar Swelling",tonsillar_swelling,filipino,active
+,"may dental pain","Dental Pain",dental_pain,filipino,active
+,"masakit ang dental pain","Dental Pain",dental_pain,filipino,active
+,"may jaw pain","Jaw Pain",jaw_pain,filipino,active
+,"masakit ang jaw pain","Jaw Pain",jaw_pain,filipino,active
+,"may facial pain","Facial Pain",facial_pain,filipino,active
+,"masakit ang facial pain","Facial Pain",facial_pain,filipino,active
+,"may mouth sores","Mouth Sores",mouth_sores,filipino,active
+,"masakit ang mouth sores","Mouth Sores",mouth_sores,filipino,active
+,"may facial swelling","Facial Swelling",facial_swelling,filipino,active
+,"masakit ang facial swelling","Facial Swelling",facial_swelling,filipino,active
+,"may red eye","Red Eye",red_eye,filipino,active
+,"masakit ang red eye","Red Eye",red_eye,filipino,active
+,"may vision change","Vision Change",vision_change,filipino,active
+,"masakit ang vision change","Vision Change",vision_change,filipino,active
+,"may eye discharge","Eye Discharge",eye_discharge,filipino,active
+,"masakit ang eye discharge","Eye Discharge",eye_discharge,filipino,active
+,"may foreign body in eye","Foreign Body in Eye",foreign_body_eye,filipino,active
+,"masakit ang foreign body in eye","Foreign Body in Eye",foreign_body_eye,filipino,active
+,"may photophobia",Photophobia,photophobia,filipino,active
+,"masakit ang photophobia",Photophobia,photophobia,filipino,active
+,"may sudden vision loss","Sudden Vision Loss",sudden_vision_loss,filipino,active
+,"masakit ang sudden vision loss","Sudden Vision Loss",sudden_vision_loss,filipino,active
+,"may urinary retention","Urinary Retention",urinary_retention,filipino,active
+,"masakit ang urinary retention","Urinary Retention",urinary_retention,filipino,active
+,"may blood in urine","Blood in Urine",hematuria,filipino,active
+,"masakit ang blood in urine","Blood in Urine",hematuria,filipino,active
+,"may flank pain","Flank Pain",flank_pain,filipino,active
+,"masakit ang flank pain","Flank Pain",flank_pain,filipino,active
+,"may kidney stone pain","Kidney Stone Pain",kidney_stone_pain,filipino,active
+,"masakit ang kidney stone pain","Kidney Stone Pain",kidney_stone_pain,filipino,active
+,"may urinary frequency","Urinary Frequency",urinary_frequency,filipino,active
+,"masakit ang urinary frequency","Urinary Frequency",urinary_frequency,filipino,active
+,"may incontinence",Incontinence,incontinence,filipino,active
+,"masakit ang incontinence",Incontinence,incontinence,filipino,active
+,"may scrotal pain","Scrotal Pain",scrotal_pain,filipino,active
+,"masakit ang scrotal pain","Scrotal Pain",scrotal_pain,filipino,active
+,"may testicular pain","Testicular Pain",testicular_pain,filipino,active
+,"masakit ang testicular pain","Testicular Pain",testicular_pain,filipino,active
+,"may testicular torsion","Testicular Torsion",testicular_torsion,filipino,active
+,"masakit ang testicular torsion","Testicular Torsion",testicular_torsion,filipino,active
+,"may penile discharge","Penile Discharge",penile_discharge,filipino,active
+,"masakit ang penile discharge","Penile Discharge",penile_discharge,filipino,active
+,"may anxiety attack","Anxiety Attack",anxiety_attack,filipino,active
+,"masakit ang anxiety attack","Anxiety Attack",anxiety_attack,filipino,active
+,"may panic attack","Panic Attack",panic_attack,filipino,active
+,"masakit ang panic attack","Panic Attack",panic_attack,filipino,active
+,"may severe depression","Severe Depression",depression_severe,filipino,active
+,"masakit ang severe depression","Severe Depression",depression_severe,filipino,active
+,"may agitation",Agitation,agitation,filipino,active
+,"masakit ang agitation",Agitation,agitation,filipino,active
+,"may aggression",Aggression,aggression,filipino,active
+,"masakit ang aggression",Aggression,aggression,filipino,active
+,"may hallucinations",Hallucinations,hallucinations,filipino,active
+,"masakit ang hallucinations",Hallucinations,hallucinations,filipino,active
+,"may substance withdrawal","Substance Withdrawal",substance_withdrawal,filipino,active
+,"masakit ang substance withdrawal","Substance Withdrawal",substance_withdrawal,filipino,active
+,"may self harm","Self Harm",self_harm,filipino,active
+,"masakit ang self harm","Self Harm",self_harm,filipino,active
+,"may psychosis",Psychosis,psychosis,filipino,active
+,"masakit ang psychosis",Psychosis,psychosis,filipino,active
+,"may infant fever","Infant Fever",infant_fever,filipino,active
+,"masakit ang infant fever","Infant Fever",infant_fever,filipino,active
+,"may poor feeding in infant","Poor Feeding in Infant",poor_feeding_infant,filipino,active
+,"masakit ang poor feeding in infant","Poor Feeding in Infant",poor_feeding_infant,filipino,active
+,"may decreased wet diapers","Decreased Wet Diapers",decreased_wet_diapers,filipino,active
+,"masakit ang decreased wet diapers","Decreased Wet Diapers",decreased_wet_diapers,filipino,active
+,"may bulging fontanelle","Bulging Fontanelle",bulging_fontanelle,filipino,active
+,"masakit ang bulging fontanelle","Bulging Fontanelle",bulging_fontanelle,filipino,active
+,"may irritable infant","Irritable Infant",irritable_infant,filipino,active
+,"masakit ang irritable infant","Irritable Infant",irritable_infant,filipino,active
+,"may child lethargy","Child Lethargy",child_lethargy,filipino,active
+,"masakit ang child lethargy","Child Lethargy",child_lethargy,filipino,active
+,"may febrile seizure","Febrile Seizure",febrile_seizure,filipino,active
+,"masakit ang febrile seizure","Febrile Seizure",febrile_seizure,filipino,active
+,"may child dehydration","Child Dehydration",child_dehydration,filipino,active
+,"masakit ang child dehydration","Child Dehydration",child_dehydration,filipino,active
+,"may fall injury","Fall Injury",fall_injury,filipino,active
+,"masakit ang fall injury","Fall Injury",fall_injury,filipino,active
+,"may elderly confusion","Elderly Confusion",elderly_confusion,filipino,active
+,"masakit ang elderly confusion","Elderly Confusion",elderly_confusion,filipino,active
+,"may failure to thrive","Failure to Thrive",failure_to_thrive,filipino,active
+,"masakit ang failure to thrive","Failure to Thrive",failure_to_thrive,filipino,active
+,"may unwitnessed fall in elderly","Unwitnessed Fall in Elderly",elderly_fall_unwitnessed,filipino,active
+,"masakit ang unwitnessed fall in elderly","Unwitnessed Fall in Elderly",elderly_fall_unwitnessed,filipino,active
+,"may reduced fetal movement","Reduced Fetal Movement",reduced_fetal_movement,filipino,active
+,"masakit ang reduced fetal movement","Reduced Fetal Movement",reduced_fetal_movement,filipino,active
+,"may preterm labor","Preterm Labor",preterm_labor,filipino,active
+,"masakit ang preterm labor","Preterm Labor",preterm_labor,filipino,active
+,"may preeclampsia symptoms","Preeclampsia Symptoms",preeclampsia_symptoms,filipino,active
+,"masakit ang preeclampsia symptoms","Preeclampsia Symptoms",preeclampsia_symptoms,filipino,active
+,"may severe headache in pregnancy","Severe Headache in Pregnancy",pregnancy_headache_severe,filipino,active
+,"masakit ang severe headache in pregnancy","Severe Headache in Pregnancy",pregnancy_headache_severe,filipino,active
+,"may significant swelling in pregnancy","Significant Swelling in Pregnancy",pregnancy_swelling,filipino,active
+,"masakit ang significant swelling in pregnancy","Significant Swelling in Pregnancy",pregnancy_swelling,filipino,active
+,"may pregnancy bleeding","Pregnancy Bleeding",pregnancy_bleeding,filipino,active
+,"masakit ang pregnancy bleeding","Pregnancy Bleeding",pregnancy_bleeding,filipino,active
+,"may ectopic pregnancy","Ectopic Pregnancy",ectopic_pregnancy,filipino,active
+,"masakit ang ectopic pregnancy","Ectopic Pregnancy",ectopic_pregnancy,filipino,active
+,"may miscarriage symptoms","Miscarriage Symptoms",miscarriage_symptoms,filipino,active
+,"masakit ang miscarriage symptoms","Miscarriage Symptoms",miscarriage_symptoms,filipino,active
+,"may head injury","Head Injury",head_injury,filipino,active
+,"masakit ang head injury","Head Injury",head_injury,filipino,active
+,"may fall",Fall,fall,filipino,active
+,"masakit ang fall",Fall,fall,filipino,active
+,"may motor vehicle accident","Motor Vehicle Accident",motor_vehicle_accident,filipino,active
+,"masakit ang motor vehicle accident","Motor Vehicle Accident",motor_vehicle_accident,filipino,active
+,"may deep laceration","Deep Laceration",deep_laceration,filipino,active
+,"masakit ang deep laceration","Deep Laceration",deep_laceration,filipino,active
+,"may crush injury","Crush Injury",crush_injury,filipino,active
+,"masakit ang crush injury","Crush Injury",crush_injury,filipino,active
+,"may amputation",Amputation,amputation,filipino,active
+,"masakit ang amputation",Amputation,amputation,filipino,active
+,"may gunshot wound","Gunshot Wound",gunshot_wound,filipino,active
+,"masakit ang gunshot wound","Gunshot Wound",gunshot_wound,filipino,active
+,"may stab wound","Stab Wound",stab_wound,filipino,active
+,"masakit ang stab wound","Stab Wound",stab_wound,filipino,active
+,"may assault injury","Assault Injury",assault_injury,filipino,active
+,"masakit ang assault injury","Assault Injury",assault_injury,filipino,active
+,"may spinal injury","Spinal Injury",spinal_injury,filipino,active
+,"masakit ang spinal injury","Spinal Injury",spinal_injury,filipino,active
+,"may major trauma","Major Trauma",major_trauma,filipino,active
+,"masakit ang major trauma","Major Trauma",major_trauma,filipino,active
+,"may penetrating trauma","Penetrating Trauma",penetrating_trauma,filipino,active
+,"masakit ang penetrating trauma","Penetrating Trauma",penetrating_trauma,filipino,active
+,"may rigors",Rigors,rigors,filipino,active
+,"masakit ang rigors",Rigors,rigors,filipino,active
+,"may night sweats","Night Sweats",night_sweats,filipino,active
+,"masakit ang night sweats","Night Sweats",night_sweats,filipino,active
+,"may rash with fever","Rash with Fever",rash_with_fever,filipino,active
+,"masakit ang rash with fever","Rash with Fever",rash_with_fever,filipino,active
+,"may sore throat with fever","Sore Throat with Fever",sore_throat_with_fever,filipino,active
+,"masakit ang sore throat with fever","Sore Throat with Fever",sore_throat_with_fever,filipino,active
+,"may infectious exposure","Infectious Exposure",infectious_exposure,filipino,active
+,"masakit ang infectious exposure","Infectious Exposure",infectious_exposure,filipino,active
+,"may sepsis symptoms","Sepsis Symptoms",sepsis_symptoms,filipino,active
+,"masakit ang sepsis symptoms","Sepsis Symptoms",sepsis_symptoms,filipino,active
+,"may meningitis symptoms","Meningitis Symptoms",meningitis_symptoms,filipino,active
+,"masakit ang meningitis symptoms","Meningitis Symptoms",meningitis_symptoms,filipino,active
+,"may tuberculosis symptoms","Tuberculosis Symptoms",tuberculosis_symptoms,filipino,active
+,"masakit ang tuberculosis symptoms","Tuberculosis Symptoms",tuberculosis_symptoms,filipino,active
+,"may dengue symptoms","Dengue Symptoms",dengue_symptoms,filipino,active
+,"masakit ang dengue symptoms","Dengue Symptoms",dengue_symptoms,filipino,active
+,"may malaria symptoms","Malaria Symptoms",malaria_symptoms,filipino,active
+,"masakit ang malaria symptoms","Malaria Symptoms",malaria_symptoms,filipino,active
+,"may drug overdose","Drug Overdose",drug_overdose,filipino,active
+,"masakit ang drug overdose","Drug Overdose",drug_overdose,filipino,active
+,"may alcohol intoxication","Alcohol Intoxication",alcohol_intoxication,filipino,active
+,"masakit ang alcohol intoxication","Alcohol Intoxication",alcohol_intoxication,filipino,active
+,"may carbon monoxide exposure","Carbon Monoxide Exposure",carbon_monoxide,filipino,active
+,"masakit ang carbon monoxide exposure","Carbon Monoxide Exposure",carbon_monoxide,filipino,active
+,"may chemical exposure","Chemical Exposure",chemical_exposure,filipino,active
+,"masakit ang chemical exposure","Chemical Exposure",chemical_exposure,filipino,active
+,"may heat exhaustion","Heat Exhaustion",heat_exhaustion,filipino,active
+,"masakit ang heat exhaustion","Heat Exhaustion",heat_exhaustion,filipino,active
+,"may heat stroke","Heat Stroke",heat_stroke,filipino,active
+,"masakit ang heat stroke","Heat Stroke",heat_stroke,filipino,active
+,"may hypothermia",Hypothermia,hypothermia,filipino,active
+,"masakit ang hypothermia",Hypothermia,hypothermia,filipino,active
+,"may drowning",Drowning,drowning,filipino,active
+,"masakit ang drowning",Drowning,drowning,filipino,active
+,"may electrocution",Electrocution,electrocution,filipino,active
+,"masakit ang electrocution",Electrocution,electrocution,filipino,active
+,"may snake bite","Snake Bite",snake_bite,filipino,active
+,"masakit ang snake bite","Snake Bite",snake_bite,filipino,active
+,"may animal bite","Animal Bite",animal_bite,filipino,active
+,"masakit ang animal bite","Animal Bite",animal_bite,filipino,active
+,"may human bite","Human Bite",human_bite,filipino,active
+,"masakit ang human bite","Human Bite",human_bite,filipino,active
+,"may high blood sugar","High Blood Sugar",diabetes_hyperglycemia,filipino,active
+,"masakit ang high blood sugar","High Blood Sugar",diabetes_hyperglycemia,filipino,active
+,"may low blood sugar","Low Blood Sugar",diabetes_hypoglycemia,filipino,active
+,"masakit ang low blood sugar","Low Blood Sugar",diabetes_hypoglycemia,filipino,active
+,"may thyroid storm","Thyroid Storm",thyroid_storm,filipino,active
+,"masakit ang thyroid storm","Thyroid Storm",thyroid_storm,filipino,active
+,"may hypertensive crisis","Hypertensive Crisis",hypertensive_crisis,filipino,active
+,"masakit ang hypertensive crisis","Hypertensive Crisis",hypertensive_crisis,filipino,active
+,"may copd exacerbation","COPD Exacerbation",copd_exacerbation,filipino,active
+,"masakit ang copd exacerbation","COPD Exacerbation",copd_exacerbation,filipino,active
+,"may chronic pain","Chronic Pain",chronic_pain,filipino,active
+,"masakit ang chronic pain","Chronic Pain",chronic_pain,filipino,active
+,"may insomnia",Insomnia,insomnia,filipino,active
+,"masakit ang insomnia",Insomnia,insomnia,filipino,active
+,"may swelling",Swelling,swelling,filipino,active
+,"masakit ang swelling",Swelling,swelling,filipino,active
+,"may dehydration",Dehydration,dehydration,filipino,active
+,"masakit ang dehydration",Dehydration,dehydration,filipino,active
+,"masakit ang chills",Chills,chills,filipino,active
+,"may malaise",Malaise,malaise,filipino,active
+,"masakit ang malaise",Malaise,malaise,filipino,active
+,"may night pain","Night Pain",night_pain,filipino,active
+,"masakit ang night pain","Night Pain",night_pain,filipino,active
+,"may weight gain","Weight Gain",weight_gain,filipino,active
+,"masakit ang weight gain","Weight Gain",weight_gain,filipino,active
+,"dumudugo pa",Bleeding,bleeding,filipino,active
+,"grabe ang dugo",Bleeding,bleeding,filipino,active
+,"sobrang hina",Weakness,weakness,filipino,active
+,"walang lakas",Weakness,weakness,filipino,active
+,"may swollen lymph nodes","Swollen Lymph Nodes",lymph_node_swelling,filipino,active
+,"masakit ang swollen lymph nodes","Swollen Lymph Nodes",lymph_node_swelling,filipino,active
+,"may mouth bleeding","Mouth Bleeding",mouth_bleeding,filipino,active
+,"masakit ang mouth bleeding","Mouth Bleeding",mouth_bleeding,filipino,active
+,"may postoperative complication","Postoperative Complication",postoperative_complication,filipino,active
+,"masakit ang postoperative complication","Postoperative Complication",postoperative_complication,filipino,active
+,"may medication side effect","Medication Side Effect",medication_side_effect,filipino,active
+,"masakit ang medication side effect","Medication Side Effect",medication_side_effect,filipino,active
+,"may mild allergic reaction","Mild Allergic Reaction",allergic_reaction_mild,filipino,active
+,"masakit ang mild allergic reaction","Mild Allergic Reaction",allergic_reaction_mild,filipino,active
+,"may food poisoning","Food Poisoning",food_poisoning,filipino,active
+,"masakit ang food poisoning","Food Poisoning",food_poisoning,filipino,active
+,"may travel related illness","Travel Related Illness",travel_related_illness,filipino,active
+,"masakit ang travel related illness","Travel Related Illness",travel_related_illness,filipino,active
+,"may vaccine reaction","Vaccine Reaction",vaccine_reaction,filipino,active
+,"masakit ang vaccine reaction","Vaccine Reaction",vaccine_reaction,filipino,active
+,"may dental abscess","Dental Abscess",dental_abscess,filipino,active
+,"masakit ang dental abscess","Dental Abscess",dental_abscess,filipino,active
+,"may tooth abscess","Tooth Abscess",tooth_abscess,filipino,active
+,"masakit ang tooth abscess","Tooth Abscess",tooth_abscess,filipino,active
+,"may breast pain","Breast Pain",breast_pain,filipino,active
+,"masakit ang breast pain","Breast Pain",breast_pain,filipino,active
+,"may breast lump","Breast Lump",breast_lump,filipino,active
+,"masakit ang breast lump","Breast Lump",breast_lump,filipino,active
+,"may vaginal bleeding","Vaginal Bleeding",vaginal_bleeding,filipino,active
+,"masakit ang vaginal bleeding","Vaginal Bleeding",vaginal_bleeding,filipino,active
+,"may pelvic pain","Pelvic Pain",pelvic_pain,filipino,active
+,"masakit ang pelvic pain","Pelvic Pain",pelvic_pain,filipino,active
+,"may menstrual pain","Menstrual Pain",menstrual_pain,filipino,active
+,"masakit ang menstrual pain","Menstrual Pain",menstrual_pain,filipino,active
+,"may sexual assault","Sexual Assault",sexual_assault,filipino,active
+,"masakit ang sexual assault","Sexual Assault",sexual_assault,filipino,active
+,"may domestic violence","Domestic Violence",domestic_violence,filipino,active
+,"masakit ang domestic violence","Domestic Violence",domestic_violence,filipino,active
+,"may minor burn","Minor Burn",burn_mild,filipino,active
+,"masakit ang minor burn","Minor Burn",burn_mild,filipino,active
+,"may severe burn","Severe Burn",burn_severe,filipino,active
+,"masakit ang severe burn","Severe Burn",burn_severe,filipino,active
+,"may smoke inhalation","Smoke Inhalation",smoke_inhalation,filipino,active
+,"masakit ang smoke inhalation","Smoke Inhalation",smoke_inhalation,filipino,active
+,"may foreign body aspiration","Foreign Body Aspiration",foreign_body_aspiration,filipino,active
+,"masakit ang foreign body aspiration","Foreign Body Aspiration",foreign_body_aspiration,filipino,active
+,"may foreign body swallowed","Foreign Body Swallowed",foreign_body_swallowed,filipino,active
+,"masakit ang foreign body swallowed","Foreign Body Swallowed",foreign_body_swallowed,filipino,active
+,"may ingested battery","Ingested Battery",ingested_battery,filipino,active
+,"masakit ang ingested battery","Ingested Battery",ingested_battery,filipino,active
+,"may ingested magnet","Ingested Magnet",ingested_magnet,filipino,active
+,"masakit ang ingested magnet","Ingested Magnet",ingested_magnet,filipino,active
+,"may needle stick injury","Needle Stick Injury",needle_stick,filipino,active
+,"masakit ang needle stick injury","Needle Stick Injury",needle_stick,filipino,active
+,"may occupational exposure","Occupational Exposure",occupational_exposure,filipino,active
+,"masakit ang occupational exposure","Occupational Exposure",occupational_exposure,filipino,active
+,"may rabies exposure","Rabies Exposure",rabies_exposure,filipino,active
+,"masakit ang rabies exposure","Rabies Exposure",rabies_exposure,filipino,active
+,"may tetanus exposure","Tetanus Exposure",tetanus_exposure,filipino,active
+,"masakit ang tetanus exposure","Tetanus Exposure",tetanus_exposure,filipino,active
+,"may hiv exposure","HIV Exposure",hiv_exposure,filipino,active
+,"masakit ang hiv exposure","HIV Exposure",hiv_exposure,filipino,active
+,"may hepatitis exposure","Hepatitis Exposure",hepatitis_exposure,filipino,active
+,"masakit ang hepatitis exposure","Hepatitis Exposure",hepatitis_exposure,filipino,active
+,"may witnessed collapse","Witnessed Collapse",sudden_death_witnessed,filipino,active
+,"masakit ang witnessed collapse","Witnessed Collapse",sudden_death_witnessed,filipino,active
+,"may blue lips","Blue Lips",blue_lips,filipino,active
+,"masakit ang blue lips","Blue Lips",blue_lips,filipino,active
+,"may air hunger","Air Hunger",air_hunger,filipino,active
+,"masakit ang air hunger","Air Hunger",air_hunger,filipino,active
+,"may cannot speak full sentences","Cannot Speak Full Sentences",cannot_speak_full_sentences,filipino,active
+,"masakit ang cannot speak full sentences","Cannot Speak Full Sentences",cannot_speak_full_sentences,filipino,active
+,"may pediatric breathing distress","Pediatric Breathing Distress",pediatric_breathing_distress,filipino,active
+,"masakit ang pediatric breathing distress","Pediatric Breathing Distress",pediatric_breathing_distress,filipino,active
+,"may neonatal distress","Neonatal Distress",neonatal_distress,filipino,active
+,"masakit ang neonatal distress","Neonatal Distress",neonatal_distress,filipino,active
+,"may feeding difficulty","Feeding Difficulty",feeding_difficulty,filipino,active
+,"masakit ang feeding difficulty","Feeding Difficulty",feeding_difficulty,filipino,active
+,"may failure to gain weight","Failure to Gain Weight",failure_to_gain_weight,filipino,active
+,"masakit ang failure to gain weight","Failure to Gain Weight",failure_to_gain_weight,filipino,active
+,"may developmental regression","Developmental Regression",developmental_regression,filipino,active
+,"masakit ang developmental regression","Developmental Regression",developmental_regression,filipino,active
+,"may school refusal","School Refusal",school_refusal,filipino,active
+,"masakit ang school refusal","School Refusal",school_refusal,filipino,active
+,"may behavioral change","Behavioral Change",behavioral_change,filipino,active
+,"masakit ang behavioral change","Behavioral Change",behavioral_change,filipino,active
+,"may substance intoxication","Substance Intoxication",substance_intoxication,filipino,active
+,"masakit ang substance intoxication","Substance Intoxication",substance_intoxication,filipino,active
+,"may withdrawal seizure","Withdrawal Seizure",withdrawal_seizure,filipino,active
+,"masakit ang withdrawal seizure","Withdrawal Seizure",withdrawal_seizure,filipino,active
+,"may organ failure symptoms","Organ Failure Symptoms",organ_failure_symptoms,filipino,active
+,"masakit ang organ failure symptoms","Organ Failure Symptoms",organ_failure_symptoms,filipino,active
+,"may shock symptoms","Shock Symptoms",shock_symptoms,filipino,active
+,"masakit ang shock symptoms","Shock Symptoms",shock_symptoms,filipino,active
+,"may anemia symptoms","Anemia Symptoms",anemia_symptoms,filipino,active
+,"masakit ang anemia symptoms","Anemia Symptoms",anemia_symptoms,filipino,active
+,"may easy bruising","Easy Bruising",easy_bruising,filipino,active
+,"masakit ang easy bruising","Easy Bruising",easy_bruising,filipino,active
+,"may petechiae",Petechiae,petechiae,filipino,active
+,"masakit ang petechiae",Petechiae,petechiae,filipino,active
+,"may splenomegaly symptoms","Splenomegaly Symptoms",splenomegaly_symptoms,filipino,active
+,"masakit ang splenomegaly symptoms","Splenomegaly Symptoms",splenomegaly_symptoms,filipino,active
+,"may newborn jaundice","Newborn Jaundice",jaundice_newborn,filipino,active
+,"masakit ang newborn jaundice","Newborn Jaundice",jaundice_newborn,filipino,active
+,"may umbilical cord infection","Umbilical Cord Infection",umbilical_cord_infection,filipino,active
+,"masakit ang umbilical cord infection","Umbilical Cord Infection",umbilical_cord_infection,filipino,active
+,"may severe diaper rash","Severe Diaper Rash",diaper_rash_severe,filipino,active
+,"masakit ang severe diaper rash","Severe Diaper Rash",diaper_rash_severe,filipino,active
+,"may elderly aspiration","Elderly Aspiration",elderly_aspiration,filipino,active
+,"masakit ang elderly aspiration","Elderly Aspiration",elderly_aspiration,filipino,active
+,"may bedsore infection","Bedsore Infection",bedsore_infection,filipino,active
+,"masakit ang bedsore infection","Bedsore Infection",bedsore_infection,filipino,active
+,"may urinary catheter issue","Urinary Catheter Issue",urinary_catheter_issue,filipino,active
+,"masakit ang urinary catheter issue","Urinary Catheter Issue",urinary_catheter_issue,filipino,active
+,"may dialysis complication","Dialysis Complication",dialysis_complication,filipino,active
+,"masakit ang dialysis complication","Dialysis Complication",dialysis_complication,filipino,active
+,"may transplant rejection symptoms","Transplant Rejection Symptoms",transplant_rejection,filipino,active
+,"masakit ang transplant rejection symptoms","Transplant Rejection Symptoms",transplant_rejection,filipino,active
+,"may infection in immunocompromised patient","Infection in Immunocompromised Patient",immunosuppression_infection,filipino,active
+,"masakit ang infection in immunocompromised patient","Infection in Immunocompromised Patient",immunosuppression_infection,filipino,active
+,"may cancer treatment complication","Cancer Treatment Complication",cancer_treatment_complication,filipino,active
+,"masakit ang cancer treatment complication","Cancer Treatment Complication",cancer_treatment_complication,filipino,active
+,"may chemotherapy nausea","Chemotherapy Nausea",chemotherapy_nausea,filipino,active
+,"masakit ang chemotherapy nausea","Chemotherapy Nausea",chemotherapy_nausea,filipino,active
+,"may port or line infection","Port or Line Infection",port_infection,filipino,active
+,"masakit ang port or line infection","Port or Line Infection",port_infection,filipino,active
+,"may surgical site infection","Surgical Site Infection",surgical_site_infection,filipino,active
+,"masakit ang surgical site infection","Surgical Site Infection",surgical_site_infection,filipino,active
+,"may stent complication","Stent Complication",stent_complication,filipino,active
+,"masakit ang stent complication","Stent Complication",stent_complication,filipino,active
+,"may pacemaker issue","Pacemaker Issue",pacemaker_issue,filipino,active
+,"masakit ang pacemaker issue","Pacemaker Issue",pacemaker_issue,filipino,active
+,"may anticoagulant bleeding","Anticoagulant Bleeding",anticoagulant_bleeding,filipino,active
+,"masakit ang anticoagulant bleeding","Anticoagulant Bleeding",anticoagulant_bleeding,filipino,active
+,"may warfarin bleeding","Warfarin Bleeding",warfarin_bleeding,filipino,active
+,"masakit ang warfarin bleeding","Warfarin Bleeding",warfarin_bleeding,filipino,active
+,"may insulin error","Insulin Error",insulin_error,filipino,active
+,"masakit ang insulin error","Insulin Error",insulin_error,filipino,active
+,"may adrenal crisis","Adrenal Crisis",adrenal_crisis,filipino,active
+,"masakit ang adrenal crisis","Adrenal Crisis",adrenal_crisis,filipino,active
+,"may addisonian crisis","Addisonian Crisis",addisonian_crisis,filipino,active
+,"masakit ang addisonian crisis","Addisonian Crisis",addisonian_crisis,filipino,active
+,"may hyperkalemia symptoms","Hyperkalemia Symptoms",hyperkalemia_symptoms,filipino,active
+,"masakit ang hyperkalemia symptoms","Hyperkalemia Symptoms",hyperkalemia_symptoms,filipino,active
+,"may hyponatremia symptoms","Hyponatremia Symptoms",hyponatremia_symptoms,filipino,active
+,"masakit ang hyponatremia symptoms","Hyponatremia Symptoms",hyponatremia_symptoms,filipino,active
+,"may electrolyte imbalance","Electrolyte Imbalance",electrolyte_imbalance,filipino,active
+,"masakit ang electrolyte imbalance","Electrolyte Imbalance",electrolyte_imbalance,filipino,active
+,"may renal colic","Renal Colic",renal_colic,filipino,active
+,"masakit ang renal colic","Renal Colic",renal_colic,filipino,active
+,"may prostatitis",Prostatitis,prostatitis,filipino,active
+,"masakit ang prostatitis",Prostatitis,prostatitis,filipino,active
+,"may bph symptoms","BPH Symptoms",bph_symptoms,filipino,active
+,"masakit ang bph symptoms","BPH Symptoms",bph_symptoms,filipino,active
+,"may ovarian torsion","Ovarian Torsion",ovarian_torsion,filipino,active
+,"masakit ang ovarian torsion","Ovarian Torsion",ovarian_torsion,filipino,active
+,"may ovarian cyst rupture","Ovarian Cyst Rupture",ovarian_cyst_rupture,filipino,active
+,"masakit ang ovarian cyst rupture","Ovarian Cyst Rupture",ovarian_cyst_rupture,filipino,active
+,"may pelvic inflammatory disease","Pelvic Inflammatory Disease",pid_symptoms,filipino,active
+,"masakit ang pelvic inflammatory disease","Pelvic Inflammatory Disease",pid_symptoms,filipino,active
+,"may postpartum complication","Postpartum Complication",postpartum_complication,filipino,active
+,"masakit ang postpartum complication","Postpartum Complication",postpartum_complication,filipino,active
+,"may postpartum hemorrhage","Postpartum Hemorrhage",postpartum_hemorrhage,filipino,active
+,"masakit ang postpartum hemorrhage","Postpartum Hemorrhage",postpartum_hemorrhage,filipino,active
+,"may mastitis",Mastitis,mastitis,filipino,active
+,"masakit ang mastitis",Mastitis,mastitis,filipino,active
+,"may breast abscess","Breast Abscess",breast_abscess,filipino,active
+,"masakit ang breast abscess","Breast Abscess",breast_abscess,filipino,active
+,"may lactation issue","Lactation Issue",lactation_issue,filipino,active
+,"masakit ang lactation issue","Lactation Issue",lactation_issue,filipino,active
+,"may circumcision complication","Circumcision Complication",circumcision_complication,filipino,active
+,"masakit ang circumcision complication","Circumcision Complication",circumcision_complication,filipino,active
+,"may circumcision bleeding","Circumcision Bleeding",circumcision_bleeding,filipino,active
+,"masakit ang circumcision bleeding","Circumcision Bleeding",circumcision_bleeding,filipino,active
