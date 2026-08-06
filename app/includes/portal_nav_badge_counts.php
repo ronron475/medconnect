@@ -43,6 +43,8 @@ function portal_nav_provider_counts(PDO $pdo, int $providerId): array
     return [
         'queue'  => (int) ($nav['queue'] ?? 0),
         'triage' => (int) ($nav['triage'] ?? 0),
+        'referrals'  => (int) ($nav['referrals'] ?? 0),
+        'followups'  => (int) ($nav['followups'] ?? 0),
     ];
 }
 
@@ -52,6 +54,7 @@ function portal_nav_provider_counts(PDO $pdo, int $providerId): array
 function portal_nav_patient_counts(PDO $pdo, int $patientId): array
 {
     $upcoming = 0;
+    $triagePending = 0;
     if ($patientId > 0) {
         try {
             $stmt = $pdo->prepare("
@@ -66,8 +69,26 @@ function portal_nav_patient_counts(PDO $pdo, int $patientId): array
         } catch (Throwable $e) {
             $upcoming = 0;
         }
+        try {
+            if ($pdo->query("SHOW TABLES LIKE 'triage_results'")->rowCount()) {
+                $stmt = $pdo->prepare("
+                    SELECT COUNT(*)
+                    FROM triage_results
+                    WHERE patient_id = ?
+                      AND status = 'pending'
+                      AND assessed_at >= DATE_SUB(NOW(), INTERVAL 7 DAY)
+                ");
+                $stmt->execute([$patientId]);
+                $triagePending = (int) $stmt->fetchColumn();
+            }
+        } catch (Throwable $e) {
+            $triagePending = 0;
+        }
     }
-    return ['consultations' => max(0, $upcoming)];
+    return [
+        'consultations'   => max(0, $upcoming),
+        'patient_triage'  => max(0, $triagePending),
+    ];
 }
 
 /**
@@ -79,10 +100,12 @@ function portal_nav_bhw_counts(PDO $pdo, int $bhwId): array
     require_once VIEWS_PATH . '/bhw/partials/bhw_context.php';
 
     $counts = [
-        'bhw_triage'         => 0,
-        'bhw_consultations'  => 0,
-        'bhw_referrals'      => 0,
-        'bhw_records'        => 0,
+        'bhw_triage'            => 0,
+        'bhw_consultations'     => 0,
+        'bhw_referrals'         => 0,
+        'bhw_records'           => 0,
+        'bhw_followups'         => 0,
+        'bhw_patients_pending'  => 0,
     ];
 
     if ($bhwId <= 0) {
@@ -103,6 +126,8 @@ function portal_nav_bhw_counts(PDO $pdo, int $bhwId): array
         $counts['bhw_consultations'] = max(0, (int) ($metrics['upcoming_consultations'] ?? 0));
         $counts['bhw_referrals'] = max(0, (int) ($metrics['referrals'] ?? 0));
         $counts['bhw_records'] = max(0, (int) ($metrics['pending_registrations'] ?? 0));
+        $counts['bhw_followups'] = max(0, (int) ($metrics['followups'] ?? 0));
+        $counts['bhw_patients_pending'] = max(0, (int) ($metrics['pending_registrations'] ?? 0));
     } catch (Throwable $e) {
         // keep zeros
     }
@@ -125,6 +150,9 @@ function portal_nav_admin_counts(PDO $pdo, string $role): array
     $activeConsults = 0;
     $queuePending = 0;
     $notifications = 0;
+    $aiReviewPending = 0;
+    $announcementDrafts = 0;
+    $pendingReferrals = 0;
 
     try {
         $pendingDoctors = (int) $pdo->query("SELECT COUNT(*) FROM doctor_applications WHERE status='pending_approval'")->fetchColumn();
@@ -145,7 +173,36 @@ function portal_nav_admin_counts(PDO $pdo, string $role): array
         }
     } catch (Throwable $e) {
     }
-    if ($role === 'superadmin' && !empty($_SESSION['user_id'])) {
+    try {
+        if ($pdo->query("SHOW TABLES LIKE 'digital_referrals'")->rowCount()) {
+            $pendingReferrals = (int) $pdo->query("SELECT COUNT(*) FROM digital_referrals WHERE status = 'pending'")->fetchColumn();
+        }
+    } catch (Throwable $e) {
+    }
+    try {
+        require_once __DIR__ . '/triage_assessment_schema.php';
+        triage_assessment_ensure_schema($pdo);
+        if ($pdo->query("SHOW TABLES LIKE 'triage_results'")->rowCount()) {
+            $aiReviewPending = (int) $pdo->query("
+                SELECT COUNT(*)
+                FROM triage_results
+                WHERE recommendation_status = 'pending_approval'
+                  AND assessed_at >= DATE_SUB(NOW(), INTERVAL 30 DAY)
+                  AND TRIM(COALESCE(chief_complaint, '')) <> ''
+            ")->fetchColumn();
+        }
+    } catch (Throwable $e) {
+    }
+    try {
+        if ($pdo->query("SHOW TABLES LIKE 'announcements'")->rowCount()) {
+            $announcementDrafts = (int) $pdo->query("
+                SELECT COUNT(*) FROM announcements
+                WHERE status = 'draft' AND deleted_at IS NULL
+            ")->fetchColumn();
+        }
+    } catch (Throwable $e) {
+    }
+    if (!empty($_SESSION['user_id']) && in_array($role, ['admin', 'superadmin'], true)) {
         try {
             require_once __DIR__ . '/../core/NotificationManager.php';
             $notifications = max(0, NotificationManager::getUnreadCount($pdo, (int) $_SESSION['user_id']));
@@ -154,11 +211,14 @@ function portal_nav_admin_counts(PDO $pdo, string $role): array
     }
 
     return [
-        'pending_doctor_apps' => max(0, $pendingDoctors),
-        'pending_bhw_apps'    => max(0, $pendingBhw),
-        'active_consultations'=> max(0, $activeConsults),
-        'queue_pending'       => max(0, $queuePending),
-        'notifications'       => max(0, $notifications),
+        'pending_doctor_apps'  => max(0, $pendingDoctors),
+        'pending_bhw_apps'     => max(0, $pendingBhw),
+        'active_consultations' => max(0, $activeConsults),
+        'queue_pending'        => max(0, $queuePending),
+        'notifications'        => max(0, $notifications),
+        'ai_review_pending'    => max(0, $aiReviewPending),
+        'announcement_drafts'  => max(0, $announcementDrafts),
+        'pending_referrals'    => max(0, $pendingReferrals),
     ];
 }
 
@@ -183,16 +243,19 @@ function portal_nav_badge_key_for_item(string $role, string $file, ?string $item
         return match ($file) {
             'messages.php'      => 'messages',
             'consultations.php' => 'consultations',
+            'triage.php'        => 'patient_triage',
             default             => null,
         };
     }
 
     if ($role === 'provider') {
         return match ($file) {
-            'queue.php'    => 'queue',
-            'triage.php'   => 'triage',
-            'messages.php' => 'messages',
-            default        => null,
+            'queue.php'               => 'queue',
+            'triage.php'              => 'triage',
+            'messages.php'            => 'messages',
+            'referrals.php'           => 'referrals',
+            'followup_management.php' => 'followups',
+            default                   => null,
         };
     }
 
@@ -202,19 +265,26 @@ function portal_nav_badge_key_for_item(string $role, string $file, ?string $item
             'consultations/index.php'  => 'bhw_consultations',
             'referral/status.php'      => 'bhw_referrals',
             'records/index.php'        => 'bhw_records',
+            'followup/track.php'       => 'bhw_followups',
+            'patients/list.php'        => 'bhw_patients_pending',
             default                    => null,
         };
     }
 
     if ($role === 'admin' || $role === 'superadmin') {
+        if ($file === 'facility_management.php' && $itemQuery === 'tab=referral') {
+            return 'pending_referrals';
+        }
         $map = [
-            'doctor_applications.php'      => 'pending_doctor_apps',
-            'doctor_approvals.php'         => 'pending_doctor_apps',
-            'bhw_applications.php'         => 'pending_bhw_apps',
-            'bhw_approvals.php'            => 'pending_bhw_apps',
-            'live_consultation_monitor.php'=> 'active_consultations',
-            'queue_monitoring.php'         => 'queue_pending',
-            'notification_center.php'      => 'notifications',
+            'doctor_applications.php'       => 'pending_doctor_apps',
+            'doctor_approvals.php'          => 'pending_doctor_apps',
+            'bhw_applications.php'          => 'pending_bhw_apps',
+            'bhw_approvals.php'             => 'pending_bhw_apps',
+            'live_consultation_monitor.php' => 'active_consultations',
+            'queue_monitoring.php'          => 'queue_pending',
+            'notification_center.php'       => 'notifications',
+            'ai_review_assignments.php'     => 'ai_review_pending',
+            'announcements.php'             => 'announcement_drafts',
         ];
         return $map[$file] ?? null;
     }

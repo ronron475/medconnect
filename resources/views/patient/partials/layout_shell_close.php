@@ -16,6 +16,7 @@ if (empty($portal_dark_mode_css)) {
 require_once VIEWS_PATH . '/partials/portal_dark_mode_close.php';
 ?>
 <?php require_once VIEWS_PATH . '/partials/theme_scripts.php'; ?>
+<?php require_once VIEWS_PATH . '/partials/portal_nav_badge_scripts.php'; ?>
 <script>window.APP_BASE = window.APP_BASE || <?= json_encode(ASSET_BASE) ?>;</script>
 <?php $ptUrgencyJsVer = (int) @filemtime(ASSETS_PATH . '/js/patient-urgency-modal.js'); ?>
 <script src="<?= ASSET_BASE ?>/assets/js/patient-urgency-modal.js?v=<?= $ptUrgencyJsVer ?>"></script>

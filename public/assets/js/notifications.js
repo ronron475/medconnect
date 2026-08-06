@@ -180,6 +180,16 @@
     document.querySelectorAll('.pd-notif-dot').forEach(function (el) {
       el.style.display = count > 0 ? 'block' : 'none';
     });
+    document.querySelectorAll('[data-nav-badge="notifications"]').forEach(function (el) {
+      el.textContent = count > 99 ? '99+' : String(count);
+      el.hidden = count <= 0;
+      el.setAttribute('aria-hidden', count <= 0 ? 'true' : 'false');
+    });
+    try {
+      window.dispatchEvent(new CustomEvent('medconnect:notifications-unread', {
+        detail: { unread_count: Math.max(0, parseInt(count, 10) || 0), source: 'notifications-ui' },
+      }));
+    } catch (e) { /* ignore */ }
   }
 
   function teardownEscalator(list) {

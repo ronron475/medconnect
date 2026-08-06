@@ -6,7 +6,7 @@
 require_once __DIR__ . '/provider_triage_cases.php';
 
 /**
- * @return array{queue: int, triage: int, triage_urgent: int}
+ * @return array{queue: int, triage: int, triage_urgent: int, referrals: int, followups: int}
  */
 function provider_nav_counts(PDO $pdo, int $providerId): array
 {
@@ -15,7 +15,7 @@ function provider_nav_counts(PDO $pdo, int $providerId): array
     $triageUrgent = 0;
 
     if ($providerId <= 0) {
-        return ['queue' => 0, 'triage' => 0, 'triage_urgent' => 0];
+        return ['queue' => 0, 'triage' => 0, 'triage_urgent' => 0, 'referrals' => 0, 'followups' => 0];
     }
 
     try {
@@ -47,5 +47,47 @@ function provider_nav_counts(PDO $pdo, int $providerId): array
         'queue'         => max(0, $queue),
         'triage'        => max(0, $triage),
         'triage_urgent' => max(0, $triageUrgent),
+        'referrals'     => max(0, portal_nav_provider_referrals_count($pdo, $providerId)),
+        'followups'     => max(0, portal_nav_provider_followups_count($pdo, $providerId)),
     ];
+}
+
+function portal_nav_provider_referrals_count(PDO $pdo, int $providerId): int
+{
+    if ($providerId <= 0) {
+        return 0;
+    }
+    try {
+        if (!$pdo->query("SHOW TABLES LIKE 'digital_referrals'")->rowCount()) {
+            return 0;
+        }
+        $stmt = $pdo->prepare("SELECT COUNT(*) FROM digital_referrals WHERE provider_id = ? AND status = 'pending'");
+        $stmt->execute([$providerId]);
+        return (int) $stmt->fetchColumn();
+    } catch (Throwable $e) {
+        return 0;
+    }
+}
+
+function portal_nav_provider_followups_count(PDO $pdo, int $providerId): int
+{
+    if ($providerId <= 0) {
+        return 0;
+    }
+    try {
+        if (!$pdo->query("SHOW TABLES LIKE 'followups'")->rowCount()) {
+            return 0;
+        }
+        $stmt = $pdo->prepare("
+            SELECT COUNT(*)
+            FROM followups
+            WHERE provider_id = ?
+              AND status IN ('scheduled', 'missed')
+              AND followup_date <= CURDATE()
+        ");
+        $stmt->execute([$providerId]);
+        return (int) $stmt->fetchColumn();
+    } catch (Throwable $e) {
+        return 0;
+    }
 }
