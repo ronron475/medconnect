@@ -389,7 +389,10 @@
       const type = e.data.type;
       if (type === 'medconnect:shell-toggle-audio' && typeof global.toggleAudio === 'function') global.toggleAudio();
       if (type === 'medconnect:shell-toggle-video' && typeof global.toggleVideo === 'function') global.toggleVideo();
-      if (type === 'medconnect:shell-end-call' && typeof global.endCall === 'function') global.endCall();
+      if (type === 'medconnect:shell-end-call' || type === 'medconnect:shell-leave-fast') {
+        if (typeof global.leaveCallFast === 'function') global.leaveCallFast();
+        else if (typeof global.endCall === 'function') global.endCall(true);
+      }
     });
 
     const embedded = window.parent && window.parent !== window;

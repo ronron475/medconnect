@@ -170,11 +170,6 @@ body.mc-video-shell-pip .mc-messages-fab {
   bottom: calc(96px + 250px + env(safe-area-inset-bottom, 0px));
 }
 
-/* PiP toolbar visible on mobile (not fullscreen/docked) */
-.mc-session-float-shell.is-pip .mc-session-float-toolbar {
-  display: flex;
-}
-
 @media (max-width: 720px) {
   .mc-session-float-shell.is-pip {
     width: min(340px, calc(100vw - 16px));
