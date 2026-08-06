@@ -918,4 +918,126 @@ final class NotificationEvents
             'related_id'    => $triageId,
         ]);
     }
+
+    // ── Urgent Follow-up Workflow ───────────────────────────────────────────
+
+    public static function urgentFollowupCaseCreated(
+        PDO $pdo,
+        int $providerId,
+        int $patientId,
+        string $patientName,
+        int $caseId,
+        string $previousConsultDate,
+        string $previousComplaint,
+        string $updatedComplaint,
+        string $triageClassification,
+        float $confidence,
+        bool $canStartImmediately,
+        bool $wasReassigned
+    ): void {
+        $confidenceLabel = number_format($confidence, 0) . '%';
+        $timestamp = date('M j, Y g:i A');
+        $reassignNote = $wasReassigned ? ' (reassigned — original doctor unavailable)' : '';
+        $startNote = $canStartImmediately
+            ? ' You may start a video consultation when ready.'
+            : ' Patient is in your Urgent Follow-up Queue — accept when your current consultation is complete.';
+
+        $message = implode("\n", [
+            "Patient: {$patientName}{$reassignNote}",
+            "Previous consultation: {$previousConsultDate}",
+            "Previous chief complaint: {$previousComplaint}",
+            "Updated chief complaint: {$updatedComplaint}",
+            "AI triage: {$triageClassification}",
+            "AI confidence: {$confidenceLabel}",
+            "Submitted: {$timestamp}",
+        ]) . $startNote;
+
+        NotificationManager::notifyProvider($pdo, $providerId, [
+            'sender_id'     => $patientId,
+            'type'          => NotificationManager::TYPE_EMERGENCY,
+            'title'         => 'Urgent Follow-up Waiting',
+            'message'       => $message,
+            'priority'      => 'critical',
+            'action_url'    => '/views/provider/queue.php#urgent-followup-queue',
+            'related_table' => 'urgent_followup_cases',
+            'related_id'    => $caseId,
+            'icon'          => 'alert-triangle',
+        ]);
+    }
+
+    public static function urgentFollowupEmergencyReferral(
+        PDO $pdo,
+        int $providerId,
+        int $patientId,
+        string $patientName,
+        int $caseId,
+        string $previousConsultDate,
+        string $previousComplaint,
+        string $updatedComplaint,
+        string $triageClassification,
+        float $confidence
+    ): void {
+        $confidenceLabel = number_format($confidence, 0) . '%';
+        $timestamp = date('M j, Y g:i A');
+
+        $message = implode("\n", [
+            "Patient: {$patientName}",
+            "Previous consultation: {$previousConsultDate}",
+            "Previous chief complaint: {$previousComplaint}",
+            "Updated chief complaint: {$updatedComplaint}",
+            "AI triage: {$triageClassification}",
+            "AI confidence: {$confidenceLabel}",
+            "Submitted: {$timestamp}",
+            'Patient has been advised to proceed to the nearest Emergency Department or call local emergency services.',
+        ]);
+
+        NotificationManager::notifyProvider($pdo, $providerId, [
+            'sender_id'     => $patientId,
+            'type'          => NotificationManager::TYPE_EMERGENCY,
+            'title'         => 'Emergency Referral — Follow-up',
+            'message'       => $message,
+            'priority'      => 'emergency',
+            'action_url'    => '/views/provider/queue.php#urgent-followup-queue',
+            'related_table' => 'urgent_followup_cases',
+            'related_id'    => $caseId,
+            'icon'          => 'alert-octagon',
+        ]);
+
+        NotificationManager::notifyPatient($pdo, $patientId, [
+            'sender_id'     => $providerId,
+            'type'          => NotificationManager::TYPE_EMERGENCY,
+            'title'         => 'Seek Emergency Care Immediately',
+            'message'       => 'Your updated symptoms indicate a possible emergency. Do not wait for an appointment — go to the nearest Emergency Department or call your local emergency services now.',
+            'priority'      => 'emergency',
+            'action_url'    => '/views/patient/consultations.php',
+            'related_table' => 'urgent_followup_cases',
+            'related_id'    => $caseId,
+        ]);
+    }
+
+    public static function urgentFollowupAccepted(
+        PDO $pdo,
+        int $patientId,
+        string $patientName,
+        int $caseId,
+        int $consultationId,
+        bool $videoStarted,
+        ?int $providerId = null
+    ): void {
+        $title = $videoStarted ? 'Urgent Follow-up — Join Now' : 'Urgent Follow-up Accepted';
+        $message = $videoStarted
+            ? 'Your doctor has started an urgent follow-up video consultation. Please join now.'
+            : 'Your doctor has accepted your urgent follow-up request. They will connect with you shortly.';
+
+        NotificationManager::notifyPatient($pdo, $patientId, [
+            'sender_id'     => $providerId,
+            'type'          => NotificationManager::TYPE_CONSULTATION,
+            'title'         => $title,
+            'message'       => $message,
+            'priority'      => 'high',
+            'action_url'    => '/views/patient/consultations.php',
+            'related_table' => 'consultations',
+            'related_id'    => $consultationId,
+        ]);
+    }
 }

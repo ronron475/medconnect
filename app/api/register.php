@@ -13,6 +13,8 @@ require_once dirname(dirname(__DIR__)) . '/app/includes/login_security.php';
 require_once dirname(dirname(__DIR__)) . '/app/includes/security_throttle.php';
 require_once dirname(dirname(__DIR__)) . '/app/includes/patient_account_security.php';
 
+patient_registration_ensure_schema($pdo);
+
 $protocol   = isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? 'https' : 'http';
 $host       = $_SERVER['HTTP_HOST'] ?? 'localhost';
 $appRootUrl = $protocol . '://' . $host;
@@ -219,6 +221,20 @@ if ($stmt->fetch()) {
     exit;
 }
 
+$stmt = $pdo->prepare('SELECT id, role FROM users WHERE LOWER(email) = LOWER(?) LIMIT 1');
+$stmt->execute([$email]);
+$existingUser = $stmt->fetch(PDO::FETCH_ASSOC);
+if ($existingUser) {
+    $role = (string) ($existingUser['role'] ?? 'patient');
+    $detail = 'Duplicate email in users table (role=' . $role . ').';
+    logActivity($pdo, null, 'submit_attempt', 'blocked', $detail, $national_id_hash, $ip, $user_agent);
+    echo json_encode([
+        'success' => false,
+        'message' => 'An account with this email address already exists. Please sign in instead of registering again.',
+    ]);
+    exit;
+}
+
 if (patient_registration_contact_exists($pdo, $contact_number)) {
     logActivity($pdo, null, 'submit_attempt', 'blocked', 'Duplicate contact number.', $national_id_hash, $ip, $user_agent);
     echo json_encode([
@@ -378,8 +394,14 @@ try {
         'urgency'   => $triage_urgency !== '' ? $triage_urgency : null,
     ]);
 
-} catch (Exception $e) {
-    if ($pdo->inTransaction()) $pdo->rollBack();
+} catch (Throwable $e) {
+    if ($pdo->inTransaction()) {
+        $pdo->rollBack();
+    }
+    error_log('register.php DB error: ' . $e->getMessage());
     logActivity($pdo, null, 'registration_submitted', 'failure', 'DB error: ' . $e->getMessage(), $national_id_hash, $ip, $user_agent);
-    echo json_encode(['success' => false, 'message' => 'Registration failed. Please try again.']);
+    echo json_encode([
+        'success' => false,
+        'message' => patient_registration_friendly_db_error($e),
+    ]);
 }

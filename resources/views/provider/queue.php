@@ -17,17 +17,20 @@ if (!defined('BASE_PATH')) {
 require_once __DIR__ . '/partials/icons.php';
 require_once __DIR__ . '/partials/data.php';
 require_once __DIR__ . '/partials/queue_helpers.php';
+require_once dirname(__DIR__, 3) . '/app/includes/urgent_followup_workflow.php';
 
 $provider_id = (int)($_SESSION['user_id'] ?? 0);
 
 $queue_items = [];
 $triage_feed = [];
+$urgent_followup_queue = [];
 $queue_stats = [
     'today'     => 0,
     'waiting'   => 0,
     'active'    => 0,
     'urgent'    => 0,
     'completed' => 0,
+    'urgent_followups' => 0,
 ];
 
 try {
@@ -115,6 +118,8 @@ try {
     ");
     $stmt->execute([$provider_id, $provider_id]);
     $triage_feed = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+    $urgent_followup_queue = urgent_followup_queue_load($pdo, $provider_id);
 } catch (Exception $e) {
     error_log('Queue page query failed: ' . $e->getMessage());
 }
@@ -136,6 +141,7 @@ foreach ($queue_items as $item) {
         $queue_stats['urgent']++;
     }
 }
+$queue_stats['urgent_followups'] = count($urgent_followup_queue);
 
 if (!$queue_items && !empty($queue)) {
     foreach ($queue as $q) {
@@ -198,6 +204,30 @@ function queue_format_symptoms(?string $raw): array
     return $list;
 }
 
+function queue_urgent_followup_label(array $case): string
+{
+    $class = strtoupper((string) ($case['triage_classification'] ?? ''));
+    if ($class === 'EMERGENCY' || ($case['status'] ?? '') === 'emergency_referral') {
+        return 'Emergency Referral';
+    }
+    if ($class === 'URGENT') {
+        return 'Urgent Follow-up Waiting';
+    }
+    return 'Follow-up';
+}
+
+function queue_urgent_followup_badge_class(array $case): string
+{
+    $class = strtoupper((string) ($case['triage_classification'] ?? ''));
+    if ($class === 'EMERGENCY' || ($case['status'] ?? '') === 'emergency_referral') {
+        return 'emergency';
+    }
+    if ($class === 'URGENT') {
+        return 'urgent';
+    }
+    return 'routine';
+}
+
 $page_styles = ['provider_queue.css', 'provider_session_alert.css'];
 require_once __DIR__ . '/partials/layout_open.php';
 ?>
@@ -236,6 +266,83 @@ require_once __DIR__ . '/partials/layout_open.php';
     </section>
 
     <section class="queue-layout">
+        <?php if ($urgent_followup_queue): ?>
+        <div class="queue-panel queue-panel--urgent-followup" id="urgent-followup-queue">
+            <div class="queue-panel-header">
+                <div class="queue-panel-title"><?= icon('alert') ?> Urgent Follow-up Queue</div>
+                <span class="queue-badge urgent"><?= count($urgent_followup_queue) ?> case<?= count($urgent_followup_queue) !== 1 ? 's' : '' ?></span>
+            </div>
+            <div class="queue-table-wrap">
+                <table class="queue-table">
+                    <thead>
+                        <tr>
+                            <th>Patient</th>
+                            <th>Previous Complaint</th>
+                            <th>Updated Complaint</th>
+                            <th>AI Triage</th>
+                            <th>Submitted</th>
+                            <th>Status</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <?php foreach ($urgent_followup_queue as $ufCase):
+                            $ufName = trim(($ufCase['first_name'] ?? '') . ' ' . ($ufCase['last_name'] ?? ''));
+                            $isEmergency = strtoupper((string) ($ufCase['triage_classification'] ?? '')) === 'EMERGENCY'
+                                || ($ufCase['status'] ?? '') === 'emergency_referral';
+                            $canAccept = !$isEmergency && in_array((string) ($ufCase['status'] ?? ''), ['waiting', 'accepted'], true);
+                            $canStartNow = $canAccept && !empty($ufCase['can_start_immediately']);
+                        ?>
+                        <tr class="queue-uf-row queue-uf-row--<?= htmlspecialchars(queue_urgent_followup_badge_class($ufCase)) ?>">
+                            <td>
+                                <div class="queue-patient">
+                                    <div class="queue-avatar"><?= htmlspecialchars(queue_initials($ufCase)) ?></div>
+                                    <div>
+                                        <div class="queue-patient-name"><?= htmlspecialchars($ufName ?: 'Patient') ?></div>
+                                        <div class="queue-meta">Prev. visit: <?= htmlspecialchars(!empty($ufCase['previous_consult_date']) ? date('M j, Y', strtotime((string) $ufCase['previous_consult_date'])) : '—') ?></div>
+                                    </div>
+                                </div>
+                            </td>
+                            <td><div class="queue-complaint-main"><?= htmlspecialchars((string) ($ufCase['previous_chief_complaint'] ?? '—')) ?></div></td>
+                            <td><div class="queue-complaint-main"><?= htmlspecialchars((string) ($ufCase['updated_chief_complaint'] ?? '—')) ?></div></td>
+                            <td>
+                                <span class="queue-badge <?= htmlspecialchars(queue_urgent_followup_badge_class($ufCase)) ?>">
+                                    <?= htmlspecialchars((string) ($ufCase['triage_display'] ?? '—')) ?>
+                                </span>
+                                <div class="queue-meta"><?= htmlspecialchars(number_format((float) ($ufCase['confidence_score'] ?? 0), 0)) ?>% confidence</div>
+                            </td>
+                            <td>
+                                <div style="font-weight:700;"><?= htmlspecialchars(date('M j, Y', strtotime((string) ($ufCase['created_at'] ?? 'now')))) ?></div>
+                                <div class="queue-meta"><?= htmlspecialchars(date('g:i A', strtotime((string) ($ufCase['created_at'] ?? 'now')))) ?></div>
+                            </td>
+                            <td>
+                                <span class="queue-badge <?= htmlspecialchars(queue_urgent_followup_badge_class($ufCase)) ?>">
+                                    <?= htmlspecialchars(queue_urgent_followup_label($ufCase)) ?>
+                                </span>
+                            </td>
+                            <td>
+                                <?php if ($isEmergency): ?>
+                                    <span class="queue-meta">Patient advised to seek ER care</span>
+                                <?php elseif ($canAccept): ?>
+                                    <div class="queue-actions">
+                                        <?php if ($canStartNow): ?>
+                                        <button type="button" class="queue-btn primary uf-accept-btn" data-case-id="<?= (int) $ufCase['id'] ?>" data-start-video="1"><?= icon_sm('video') ?> Start Now</button>
+                                        <?php endif; ?>
+                                        <button type="button" class="queue-btn uf-accept-btn" data-case-id="<?= (int) $ufCase['id'] ?>" data-start-video="0">Accept</button>
+                                    </div>
+                                <?php else: ?>
+                                    <span class="queue-meta">In progress</span>
+                                <?php endif; ?>
+                            </td>
+                        </tr>
+                        <?php endforeach; ?>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        <?php endif; ?>
+
+        <div class="queue-layout-inner">
         <div class="queue-panel">
             <div class="queue-panel-header">
                 <div class="queue-panel-title"><?= icon('users') ?> Assigned Consultation Queue</div>
@@ -380,7 +487,8 @@ require_once __DIR__ . '/partials/layout_open.php';
                     $monitor = [
                         ['Waiting', $queue_stats['waiting'], '#f59e0b'],
                         ['In Consultation', $queue_stats['active'], '#2563eb'],
-                        ['Urgent Priority', $queue_stats['urgent'], '#dc2626'],
+                        ['Urgent Follow-ups', $queue_stats['urgent_followups'], '#dc2626'],
+                        ['Urgent Priority', $queue_stats['urgent'], '#ef4444'],
                         ['Completed', $queue_stats['completed'], '#16a34a'],
                     ];
                     foreach ($monitor as [$label, $count, $color]):
@@ -393,10 +501,12 @@ require_once __DIR__ . '/partials/layout_open.php';
                 </div>
             </div>
         </aside>
+        </div>
     </section>
 </div>
 
 <?php require __DIR__ . '/partials/session_schedule_modal.php'; ?>
 <script src="<?= ASSET_BASE ?>/assets/js/provider-session-alert.js"></script>
+<script src="<?= ASSET_BASE ?>/assets/js/provider-urgent-followup.js?v=<?= (int) @filemtime(ASSETS_PATH . '/js/provider-urgent-followup.js') ?>"></script>
 
 <?php require __DIR__ . '/partials/layout_close.php'; ?>

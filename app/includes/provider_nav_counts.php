@@ -4,18 +4,20 @@
  */
 
 require_once __DIR__ . '/provider_triage_cases.php';
+require_once __DIR__ . '/urgent_followup_workflow.php';
 
 /**
- * @return array{queue: int, triage: int, triage_urgent: int, referrals: int, followups: int}
+ * @return array{queue: int, triage: int, triage_urgent: int, referrals: int, followups: int, urgent_followups: int}
  */
 function provider_nav_counts(PDO $pdo, int $providerId): array
 {
     $queue = 0;
     $triage = 0;
     $triageUrgent = 0;
+    $urgentFollowups = 0;
 
     if ($providerId <= 0) {
-        return ['queue' => 0, 'triage' => 0, 'triage_urgent' => 0, 'referrals' => 0, 'followups' => 0];
+        return ['queue' => 0, 'triage' => 0, 'triage_urgent' => 0, 'referrals' => 0, 'followups' => 0, 'urgent_followups' => 0];
     }
 
     try {
@@ -43,12 +45,19 @@ function provider_nav_counts(PDO $pdo, int $providerId): array
         $triageUrgent = 0;
     }
 
+    try {
+        $urgentFollowups = urgent_followup_open_count($pdo, $providerId);
+    } catch (Throwable $e) {
+        $urgentFollowups = 0;
+    }
+
     return [
-        'queue'         => max(0, $queue),
-        'triage'        => max(0, $triage),
-        'triage_urgent' => max(0, $triageUrgent),
-        'referrals'     => max(0, portal_nav_provider_referrals_count($pdo, $providerId)),
-        'followups'     => max(0, portal_nav_provider_followups_count($pdo, $providerId)),
+        'queue'             => max(0, $queue),
+        'triage'            => max(0, $triage),
+        'triage_urgent'     => max(0, $triageUrgent),
+        'referrals'         => max(0, portal_nav_provider_referrals_count($pdo, $providerId)),
+        'followups'         => max(0, portal_nav_provider_followups_count($pdo, $providerId)),
+        'urgent_followups'  => max(0, $urgentFollowups),
     ];
 }
 

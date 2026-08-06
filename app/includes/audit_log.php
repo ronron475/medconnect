@@ -71,6 +71,14 @@ final class AuditAction
     const MESSAGE_DELETED_FOR_ME       = 'message_deleted_for_me';
     const MESSAGE_DELETED_FOR_EVERYONE = 'message_deleted_for_everyone';
 
+    // Urgent follow-up workflow
+    const URGENT_FOLLOWUP_SUBMITTED          = 'urgent_followup_submitted';
+    const URGENT_FOLLOWUP_NON_URGENT         = 'urgent_followup_non_urgent';
+    const URGENT_FOLLOWUP_URGENT_QUEUED      = 'urgent_followup_urgent_queued';
+    const URGENT_FOLLOWUP_EMERGENCY_REFERRAL = 'urgent_followup_emergency_referral';
+    const URGENT_FOLLOWUP_BOOKED             = 'urgent_followup_booked';
+    const URGENT_FOLLOWUP_ACCEPTED           = 'urgent_followup_accepted';
+
     // Announcement module
     const ANNOUNCEMENT_CREATED     = 'announcement_created';
     const ANNOUNCEMENT_EDITED      = 'announcement_edited';
