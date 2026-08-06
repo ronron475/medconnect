@@ -2143,6 +2143,72 @@ html[data-theme-resolved='dark'] body.superadmin-body .leaflet-bar a:hover {
   color: #c4b5fd !important;
 }
 
+/* ── Announcement feedback / editor modals ── */
+html[data-theme-resolved='dark'] body.admin-body .ann-feedback__dialog,
+html[data-theme-resolved='dark'] body.superadmin-body .ann-feedback__dialog,
+html[data-theme-resolved='dark'] body.admin-body .ann-modal__panel,
+html[data-theme-resolved='dark'] body.superadmin-body .ann-modal__panel {
+  background: #1c1c1c !important;
+  border-color: #2a2a2a !important;
+  color: #ffffff !important;
+  box-shadow: 0 24px 64px rgba(0, 0, 0, 0.5) !important;
+}
+
+html[data-theme-resolved='dark'] body.admin-body .ann-feedback__title,
+html[data-theme-resolved='dark'] body.superadmin-body .ann-feedback__title,
+html[data-theme-resolved='dark'] body.admin-body .ann-modal__head h3,
+html[data-theme-resolved='dark'] body.superadmin-body .ann-modal__head h3 {
+  color: #ffffff !important;
+}
+
+html[data-theme-resolved='dark'] body.admin-body .ann-feedback__message,
+html[data-theme-resolved='dark'] body.superadmin-body .ann-feedback__message {
+  color: #a1a1aa !important;
+}
+
+html[data-theme-resolved='dark'] body.admin-body .ann-modal__head,
+html[data-theme-resolved='dark'] body.superadmin-body .ann-modal__head,
+html[data-theme-resolved='dark'] body.admin-body .ann-modal__foot,
+html[data-theme-resolved='dark'] body.superadmin-body .ann-modal__foot {
+  border-color: #2a2a2a !important;
+}
+
+html[data-theme-resolved='dark'] body.admin-body .ann-feedback__btn--secondary,
+html[data-theme-resolved='dark'] body.superadmin-body .ann-feedback__btn--secondary,
+html[data-theme-resolved='dark'] body.admin-body a.ann-feedback__btn--secondary,
+html[data-theme-resolved='dark'] body.superadmin-body a.ann-feedback__btn--secondary {
+  background: #141414 !important;
+  border: 1px solid #3f3f46 !important;
+  color: #5eead4 !important;
+}
+
+html[data-theme-resolved='dark'] body.admin-body .ann-feedback__btn--secondary:hover,
+html[data-theme-resolved='dark'] body.superadmin-body .ann-feedback__btn--secondary:hover,
+html[data-theme-resolved='dark'] body.admin-body a.ann-feedback__btn--secondary:hover,
+html[data-theme-resolved='dark'] body.superadmin-body a.ann-feedback__btn--secondary:hover {
+  background: rgba(94, 234, 212, 0.08) !important;
+  border-color: #5eead4 !important;
+  color: #99f6e4 !important;
+}
+
+html[data-theme-resolved='dark'] body.admin-body .ann-feedback__btn--primary,
+html[data-theme-resolved='dark'] body.superadmin-body .ann-feedback__btn--primary {
+  color: #ffffff !important;
+}
+
+html[data-theme-resolved='dark'] body.admin-body .ann-input,
+html[data-theme-resolved='dark'] body.superadmin-body .ann-input {
+  background: #0a0a0a !important;
+  border-color: #3f3f46 !important;
+  color: #ffffff !important;
+  color-scheme: dark;
+}
+
+html[data-theme-resolved='dark'] body.admin-body .ann-label,
+html[data-theme-resolved='dark'] body.superadmin-body .ann-label {
+  color: #a1a1aa !important;
+}
+
 /* Scrollbars */
 html[data-theme-resolved='dark'] body.admin-body,
 html[data-theme-resolved='dark'] body.superadmin-body {
