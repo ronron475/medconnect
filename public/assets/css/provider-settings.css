@@ -313,15 +313,15 @@ body.provider-body .provider-page-body:has(.ps-page) {
 /* Validation container (strength + requirements) */
 .ps-validation {
   margin-top: 10px;
-  padding: 12px 14px;
-  background: #f8fafc;
-  border: 1px solid #e2e8f0;
+  padding: 14px 16px;
+  background: var(--ps-validation-bg, #f8fafc);
+  border: 1px solid var(--ps-validation-border, #e2e8f0);
   border-radius: 12px;
 }
 
 .ps-validation__head {
   display: flex;
-  align-items: baseline;
+  align-items: center;
   justify-content: space-between;
   gap: 12px;
   margin-bottom: 10px;
@@ -329,21 +329,28 @@ body.provider-body .provider-page-body:has(.ps-page) {
 
 .ps-validation__title {
   font-size: 10px;
-  font-weight: 900;
+  font-weight: 800;
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: #64748b;
+  color: var(--ps-validation-muted, #64748b);
 }
 
 .ps-validation__label {
   font-size: 12px;
-  font-weight: 900;
-  color: #64748b;
+  font-weight: 800;
+  color: var(--ps-validation-muted, #64748b);
+  transition: color 0.2s ease;
 }
 
+.ps-validation__label--weak { color: #ef4444; }
+.ps-validation__label--fair { color: #f97316; }
+.ps-validation__label--good { color: #eab308; }
+.ps-validation__label--strong { color: #22c55e; }
+.ps-validation__label--vstrong { color: #069396; }
+
 .ps-validation__bar {
-  height: 8px;
-  background: #e2e8f0;
+  height: 6px;
+  background: var(--ps-validation-track, #e2e8f0);
   border-radius: 999px;
   overflow: hidden;
   margin-bottom: 12px;
@@ -375,30 +382,32 @@ body.provider-body .provider-page-body:has(.ps-page) {
 
 .ps-validation__grid li {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   gap: 8px;
   min-width: 0;
   font-size: 12px;
-  font-weight: 700;
-  color: #64748b;
-  line-height: 1.35;
+  font-weight: 600;
+  color: var(--ps-validation-muted, #64748b);
+  line-height: 1.4;
 }
 
 .ps-validation__grid li.is-met {
-  color: #059669;
+  color: var(--ps-validation-met, #059669);
 }
 
 .ps-req-dot {
-  width: 9px;
-  height: 9px;
+  width: 8px;
+  height: 8px;
+  margin-top: 4px;
   border-radius: 50%;
-  background: #cbd5e1;
+  background: var(--ps-validation-dot, #cbd5e1);
   flex-shrink: 0;
-  transition: background 0.15s;
+  transition: background 0.15s ease, box-shadow 0.15s ease;
 }
 
 .ps-validation__grid li.is-met .ps-req-dot {
   background: #10b981;
+  box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.2);
 }
 
 .ps-form-grid .ps-span-2 {

@@ -162,7 +162,7 @@ $tabs = [
                 <div class="ps-validation" aria-label="Password strength and requirements">
                   <div class="ps-validation__head">
                     <div class="ps-validation__title">Password Strength</div>
-                    <div id="psPwStrengthLabel" class="ps-validation__label" aria-live="polite">Weak</div>
+                    <div id="psPwStrengthLabel" class="ps-validation__label ps-validation__label--weak" aria-live="polite">Weak</div>
                   </div>
                   <div class="ps-validation__bar" aria-hidden="true">
                     <span id="psPwStrengthFill" class="ps-validation__fill ps-validation__fill--weak"></span>

@@ -74,10 +74,25 @@
     return { checks, met, level, label: p ? labels[level] : 'Weak' };
   }
 
+  const strengthLevelClasses = [
+    'ps-validation__label--weak',
+    'ps-validation__label--fair',
+    'ps-validation__label--good',
+    'ps-validation__label--strong',
+    'ps-validation__label--vstrong',
+  ];
+
+  function applyStrengthLabel(level, text) {
+    if (!strengthLabel) return;
+    strengthLabel.textContent = text;
+    const levelClass = strengthLevelClasses[level] || strengthLevelClasses[0];
+    strengthLabel.className = 'ps-validation__label ' + levelClass;
+  }
+
   function updateStrengthMeter() {
     const v = newPw ? newPw.value : '';
     if (!v) {
-      if (strengthLabel) strengthLabel.textContent = 'Weak';
+      applyStrengthLabel(0, 'Weak');
       if (strengthFill) {
         strengthFill.style.width = '0%';
         strengthFill.className = 'ps-validation__fill ps-validation__fill--weak';
@@ -90,7 +105,7 @@
     }
 
     const r = checkRequirements(v);
-    if (strengthLabel) strengthLabel.textContent = r.label;
+    applyStrengthLabel(r.level, r.label);
     if (strengthFill) {
       const pct = Math.round((r.met / 5) * 100);
       strengthFill.style.width = pct + '%';
