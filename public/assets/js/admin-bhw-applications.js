@@ -33,6 +33,9 @@
   if (formUtils.initPasswordConfirm && passwordInput && passwordConfirm) {
     formUtils.initPasswordConfirm(passwordInput, passwordConfirm);
   }
+  if (formUtils.enhanceFileInputsIn && form) {
+    formUtils.enhanceFileInputsIn(form);
+  }
 
   function validateClient() {
     let ok = true;

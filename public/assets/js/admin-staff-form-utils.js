@@ -179,6 +179,69 @@
     el.className = 'mc-form-alert mc-form-alert--' + (type || 'error') + (message ? ' is-visible' : '');
   }
 
+  function fileInputLabel(input) {
+    if (!input || !input.files || !input.files[0]) return 'No file chosen';
+    return input.files[0].name;
+  }
+
+  function syncFileInputDisplay(input) {
+    if (!input) return;
+    var nameEl = input.parentElement && input.parentElement.querySelector('.mc-file-upload__name');
+    if (!nameEl) return;
+    var empty = !input.files || !input.files.length;
+    nameEl.textContent = fileInputLabel(input);
+    nameEl.classList.toggle('is-empty', empty);
+  }
+
+  function enhanceFileInput(input) {
+    if (!input || input.type !== 'file' || input.dataset.mcFileWrapped) return;
+    input.dataset.mcFileWrapped = '1';
+    input.classList.remove('mc-field__input');
+    input.classList.add('mc-file-upload__input');
+
+    var wrap = document.createElement('div');
+    wrap.className = 'mc-file-upload';
+    input.parentNode.insertBefore(wrap, input);
+    wrap.appendChild(input);
+
+    var control = document.createElement('div');
+    control.className = 'mc-file-upload__control';
+
+    var btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'mc-file-upload__btn';
+    btn.textContent = 'Choose File';
+
+    var name = document.createElement('span');
+    name.className = 'mc-file-upload__name is-empty';
+    name.textContent = 'No file chosen';
+
+    control.appendChild(btn);
+    control.appendChild(name);
+    wrap.appendChild(control);
+
+    btn.addEventListener('click', function () {
+      input.click();
+    });
+
+    input.addEventListener('change', function () {
+      syncFileInputDisplay(input);
+    });
+  }
+
+  function enhanceFileInputsIn(root) {
+    if (!root) return;
+    root.querySelectorAll('input[type="file"].mc-field__input, input[type="file"].mc-file-upload__input').forEach(enhanceFileInput);
+    if (root.tagName === 'FORM' && !root.dataset.mcFileResetBound) {
+      root.dataset.mcFileResetBound = '1';
+      root.addEventListener('reset', function () {
+        window.setTimeout(function () {
+          root.querySelectorAll('.mc-file-upload__input').forEach(syncFileInputDisplay);
+        }, 0);
+      });
+    }
+  }
+
   global.MCStaffForm = {
     wrapPasswordInput: wrapPasswordInput,
     initPasswordConfirm: initPasswordConfirm,
@@ -190,5 +253,8 @@
     setFieldError: setFieldError,
     setFormLoading: setFormLoading,
     showFormAlert: showFormAlert,
+    enhanceFileInput: enhanceFileInput,
+    enhanceFileInputsIn: enhanceFileInputsIn,
+    syncFileInputDisplay: syncFileInputDisplay,
   };
 })(window);
