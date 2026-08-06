@@ -497,3 +497,20 @@
   .fcb-animate-in { animation: none; }
   .fcb-theme-toggle__knob { transition-duration: 0.01ms; }
 }
+
+/* Prevent landing-page global dark input rules from breaking chatbot composer */
+html[data-theme-resolved='dark'] #faq-chatbot textarea.fcb-input {
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  color: var(--fcb-text) !important;
+}
+
+html[data-theme-resolved='dark'] #faq-chatbot .fcb-input-wrap {
+  background: var(--fcb-input-bg) !important;
+  border-color: var(--fcb-input-border) !important;
+}
+
+html[data-theme-resolved='dark'] #faq-chatbot .fcb-input::placeholder {
+  color: var(--fcb-text-muted) !important;
+}
