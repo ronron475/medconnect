@@ -146,6 +146,37 @@
   background: #f8fafc;
 }
 
+.bhw-doc-upload-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 16px;
+  margin-bottom: 12px;
+}
+
+.mc-field__input[type="file"] {
+  padding: 8px 10px;
+  font-size: 0.8125rem;
+  line-height: 1.35;
+}
+
+.mc-field__input[type="file"]::file-selector-button {
+  margin-right: 12px;
+  padding: 8px 12px;
+  border: none;
+  border-radius: 8px;
+  background: var(--mc-ice-blue, #f1f5f9);
+  color: var(--mc-navy-dark, #0f172a);
+  font-weight: 600;
+  font-size: 0.8125rem;
+  font-family: inherit;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.mc-field__input[type="file"]::file-selector-button:hover {
+  background: #e2e8f0;
+}
+
 .mc-field__hint {
   font-size: 0.75rem;
   color: #64748b;
