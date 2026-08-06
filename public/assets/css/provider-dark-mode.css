@@ -1317,6 +1317,74 @@ html[data-theme-resolved='dark'] body.provider-body .ps-field textarea {
   color: #ffffff !important;
 }
 
+html[data-theme-resolved='dark'] body.provider-body .ps-card__head,
+html[data-theme-resolved='dark'] body.provider-body .ps-profile-hero {
+  background: #141414 !important;
+  border-color: #2a2a2a !important;
+}
+
+html[data-theme-resolved='dark'] body.provider-body .ps-card__title,
+html[data-theme-resolved='dark'] body.provider-body .ps-card__sub,
+html[data-theme-resolved='dark'] body.provider-body .ps-field label,
+html[data-theme-resolved='dark'] body.provider-body .ps-field-hint,
+html[data-theme-resolved='dark'] body.provider-body .ps-toggle-pw {
+  color: #a1a1aa !important;
+}
+
+html[data-theme-resolved='dark'] body.provider-body .ps-card__title--security,
+html[data-theme-resolved='dark'] body.provider-body .ps-page-title {
+  color: #ffffff !important;
+}
+
+html[data-theme-resolved='dark'] body.provider-body .ps-toggle-pw:hover {
+  color: #c4b5fd !important;
+}
+
+html[data-theme-resolved='dark'] body.provider-body .ps-actions {
+  border-top-color: #2a2a2a !important;
+}
+
+/* Password strength panel — match dark settings card */
+html[data-theme-resolved='dark'] body.provider-body .ps-validation {
+  --ps-validation-bg: #141414;
+  --ps-validation-border: #2a2a2a;
+  --ps-validation-muted: #a1a1aa;
+  --ps-validation-track: #2a2a2a;
+  --ps-validation-dot: #3f3f46;
+  --ps-validation-met: #4ade80;
+  background: #141414 !important;
+  border-color: #2a2a2a !important;
+}
+
+html[data-theme-resolved='dark'] body.provider-body .ps-validation__title {
+  color: #71717a !important;
+}
+
+html[data-theme-resolved='dark'] body.provider-body .ps-validation__grid li {
+  color: #a1a1aa !important;
+}
+
+html[data-theme-resolved='dark'] body.provider-body .ps-validation__grid li.is-met {
+  color: #4ade80 !important;
+}
+
+html[data-theme-resolved='dark'] body.provider-body .ps-validation__grid li.is-met .ps-req-dot {
+  background: #22c55e !important;
+  box-shadow: 0 0 0 2px rgba(34, 197, 94, 0.25) !important;
+}
+
+html[data-theme-resolved='dark'] body.provider-body .ps-validation__label--weak { color: #f87171 !important; }
+html[data-theme-resolved='dark'] body.provider-body .ps-validation__label--fair { color: #fb923c !important; }
+html[data-theme-resolved='dark'] body.provider-body .ps-validation__label--good { color: #facc15 !important; }
+html[data-theme-resolved='dark'] body.provider-body .ps-validation__label--strong { color: #4ade80 !important; }
+html[data-theme-resolved='dark'] body.provider-body .ps-validation__label--vstrong { color: #2dd4bf !important; }
+
+html[data-theme-resolved='dark'] body.provider-body .ps-session-item {
+  background: #141414 !important;
+  border-color: #2a2a2a !important;
+  color: #ffffff !important;
+}
+
 /* ── GIS ── */
 html[data-theme-resolved='dark'] body.provider-body .gis-page,
 html[data-theme-resolved='dark'] body.provider-body .gis-panel,
