@@ -1,6 +1,6 @@
 /**
  * Registration — silent Chief Complaint NLP (patient never sees technical results).
- * Runs existing PHP proxy → FastAPI analyze-medical-profile pipeline in the background.
+ * Uses the canonical PHP CDS engine (same as nlp_cds_demo.php / assess_chief_complaint.php).
  */
 (function (global) {
   'use strict';
@@ -163,76 +163,51 @@
   }
 
   function extractSymptoms(data) {
-    const clinical = data.clinical_urgency || {};
+    const summary = data.summary || {};
+    const clinical = data.clinical_urgency || data.registration?.clinical_urgency || data.clinical_urgency || {};
     const fromClinical = Array.isArray(clinical.detected_symptoms) ? clinical.detected_symptoms : [];
     if (fromClinical.length) return fromClinical;
-
-    const keywords = data.translated_keywords || data.detected_keywords || [];
-    if (Array.isArray(keywords) && keywords.length) {
-      return keywords
-        .map(function (k) {
-          if (typeof k === 'string') return k;
-          return k.english || k.term || k.standardized_term || '';
-        })
-        .filter(Boolean);
+    if (Array.isArray(summary.detected_symptoms) && summary.detected_symptoms.length) {
+      return summary.detected_symptoms;
     }
-
-    const terms = data.term_results || [];
-    return terms
-      .filter(function (t) {
-        return t && (t.display_status === 'valid' || t.matched);
-      })
-      .map(function (t) {
-        return t.standardized_term || t.english_term || t.original_local || '';
-      })
-      .filter(Boolean);
+    const assessment = data.assessment || data.registration?.assessment || {};
+    return Array.isArray(assessment.detected_symptoms) ? assessment.detected_symptoms : [];
   }
 
   function extractConditions(data) {
-    const clinical = data.clinical_urgency || {};
+    const clinical = data.clinical_urgency || data.registration?.clinical_urgency || {};
     const fromClinical = Array.isArray(clinical.detected_conditions) ? clinical.detected_conditions : [];
     if (fromClinical.length) return fromClinical;
-
-    const matched = data.matched_records || [];
-    return matched
-      .map(function (m) {
-        return m.condition || m.standard_term || m.name || m.matched_term || '';
-      })
-      .filter(Boolean)
-      .slice(0, 5);
+    const assessment = data.assessment || data.registration?.assessment || {};
+    return Array.isArray(assessment.possible_conditions) ? assessment.possible_conditions.slice(0, 5) : [];
   }
 
   function extractConfidence(data) {
-    const clinical = data.clinical_urgency || {};
-    const assessment = data.confidence_assessment || {};
-
+    const summary = data.summary || {};
+    const clinical = data.clinical_urgency || data.registration?.clinical_urgency || {};
     if (clinical.confidence_display) return String(clinical.confidence_display);
-    if (clinical.confidence_score != null && clinical.confidence_score !== '') {
-      const n = Number(clinical.confidence_score);
-      if (!Number.isNaN(n)) {
-        const pct = n <= 1 ? Math.round(n * 100) : Math.round(n);
-        return pct + '%';
-      }
+    if (summary.confidence != null && summary.confidence !== '') {
+      return String(summary.confidence) + '%';
     }
-    if (assessment.overall_confidence_display) return String(assessment.overall_confidence_display);
-    if (assessment.score != null) {
-      const n = Number(assessment.score);
-      if (!Number.isNaN(n)) {
-        const pct = n <= 1 ? Math.round(n * 100) : Math.round(n);
-        return pct + '%';
-      }
+    const assessment = data.assessment || {};
+    if (assessment.confidence && assessment.confidence.score != null) {
+      return String(assessment.confidence.score) + '%';
     }
     return '';
   }
 
   function extractUrgency(data) {
-    const clinical = (data && data.clinical_urgency) || {};
+    const reg = data.registration || {};
+    if (reg.urgency) return String(reg.urgency).toUpperCase().replace(/_/g, '-');
+    const summary = data.summary || {};
+    const clinical = data.clinical_urgency || reg.clinical_urgency || {};
     const raw = String(
-      clinical.triage_display || clinical.urgency || clinical.classification || 'NON-URGENT'
+      summary.classification || clinical.triage_display || clinical.urgency || clinical.classification || 'NON-URGENT'
     )
       .trim()
       .toUpperCase()
-      .replace(/\s+/g, '-');
+      .replace(/\s+/g, '-')
+      .replace(/_/g, '-');
 
     if (raw.includes('EMERGENCY')) return 'EMERGENCY';
     if (raw.includes('URGENT') && !raw.includes('NON')) return 'URGENT';
@@ -240,19 +215,26 @@
   }
 
   function storeResult(data, originalText) {
-    const clinical = (data && data.clinical_urgency) || {};
-    const urgency = extractUrgency(data || {});
+    const reg = data.registration || {};
+    const clinical = data.clinical_urgency || reg.clinical_urgency || {};
+    const summary = data.summary || {};
+    const urgency = extractUrgency(data);
     const payload = {
       clinical_urgency: clinical || null,
       urgency: urgency,
       original_complaint: normalizeComplaint(originalText),
       translated_english:
-        (data && data.translated_english) ||
-        (data && data.translation && data.translation.translated_text) ||
+        summary.english_translation ||
+        reg.translated_english ||
+        (data.assessment && data.assessment.english_translation) ||
         '',
-      detected_symptoms: extractSymptoms(data || {}),
-      detected_conditions: extractConditions(data || {}),
-      confidence: extractConfidence(data || {}),
+      detected_symptoms: extractSymptoms(data),
+      detected_conditions: extractConditions(data),
+      symptom_evidence: summary.symptom_evidence || clinical.symptom_evidence || reg.symptom_evidence || {},
+      clinical_reasoning: summary.clinical_reasoning || clinical.clinical_reasoning || '',
+      confidence: extractConfidence(data),
+      engine_chain: data.engine_chain || 'ChiefComplaintNlpService',
+      assessment: data.assessment || reg.assessment || null,
       timestamp: new Date().toISOString(),
     };
     lastResult = payload;
@@ -345,19 +327,14 @@
     }
 
     try {
-      await waitForPythonService(20000);
-
       const body = new FormData();
       body.append('chief_complaint', text);
-      body.append('existing_conditions', document.getElementById('conditions-yes')?.checked ? 'Yes' : 'No');
-      body.append('current_medications', document.getElementById('meds-yes')?.checked ? 'Yes' : 'No');
-      body.append('allergies', getAllergiesText());
 
       const timer = setTimeout(function () {
         if (analyzeController) analyzeController.abort();
       }, ANALYZE_TIMEOUT_MS);
 
-      const res = await fetch(baseUrl() + '/app/api/ai/analyze_medical_profile.php', {
+      const res = await fetch(baseUrl() + '/app/api/ai/assess_chief_complaint.php', {
         method: 'POST',
         body: body,
         credentials: 'same-origin',
@@ -376,7 +353,7 @@
       const data = (json && (json.data || json)) || {};
 
       if (!res.ok || json.success === false) {
-        if (data.clinical_urgency || data.preprocessing || data.translation) {
+        if (data.summary || data.assessment || data.clinical_urgency) {
           lastAnalyzedText = text;
           const payload = storeResult(data, text);
           setAnalysisState({ ok: true, inFlight: false });

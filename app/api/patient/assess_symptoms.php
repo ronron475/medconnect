@@ -26,7 +26,7 @@ if ($complaint === '' && $symptoms === []) {
     Api::error('Please describe your symptoms or select at least one symptom.');
 }
 
-$assessment = MedicalAssessmentEngine::assess($complaint, $symptoms);
+$assessment = ChiefComplaintNlpService::assess($complaint, $symptoms);
 
 if (!empty($assessment['error'])) {
     Api::error('Unable to analyze symptoms. Please try again.');

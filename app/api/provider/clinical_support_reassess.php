@@ -80,7 +80,7 @@ try {
     }
 
     $original = provider_clinical_support_patient_original($pdo, $consultationId, $patientId);
-    $assessment = MedicalAssessmentEngine::assess($complaint, $symptoms);
+    $assessment = ChiefComplaintNlpService::assess($complaint, $symptoms);
     $support = provider_clinical_support_from_assessment($assessment);
     $support['patient_original_complaint'] = $original['complaint'];
     $support['patient_original_english'] = $original['english'];

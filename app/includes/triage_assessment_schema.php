@@ -493,7 +493,7 @@ function patient_create_emergency_triage_record(
     require_once dirname(__DIR__) . '/core/MedicalAssessmentEngine.php';
 
     if ($assessment === []) {
-        $assessment = MedicalAssessmentEngine::assess($complaint, $symptoms);
+        $assessment = ChiefComplaintNlpService::assess($complaint, $symptoms);
     }
 
     $level = '1';
