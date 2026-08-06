@@ -48,29 +48,12 @@ function patient_submit_symptoms_for_review(
         ];
     }
 
-    $assessment = MedicalAssessmentEngine::assess($complaint, $symptomList);
+    $assessment = ChiefComplaintNlpService::assessWithFallback($complaint, $symptomList);
     $regNlp = patient_symptoms_review_merge_registration_nlp($assessment, $regNlpRaw);
 
-    $level = (string) ($assessment['db_level'] ?? '3');
-    $label = (string) ($assessment['urgency_label'] ?? 'Routine');
+    $level = (string) ($assessment['triage']['db_level'] ?? $assessment['db_level'] ?? '3');
+    $label = (string) ($assessment['triage']['urgency_label'] ?? $assessment['urgency_label'] ?? 'Routine');
     $triageLevel = TriageLevelService::fromAssessment($assessment);
-
-    if (is_array($regNlp) && !empty($regNlp['urgency'])) {
-        $u = strtoupper((string) $regNlp['urgency']);
-        if ($u === 'EMERGENCY') {
-            $level = '1';
-            $label = 'Emergency';
-            $triageLevel = TriageLevelService::EMERGENCY;
-            $assessment['severity']['severity'] = 'emergency';
-            $assessment['triage']['triage_classification'] = 'EMERGENCY';
-        } elseif ($u === 'URGENT') {
-            $level = '2';
-            $label = 'Urgent';
-            $triageLevel = TriageLevelService::URGENT;
-            $assessment['severity']['severity'] = 'urgent';
-            $assessment['triage']['triage_classification'] = 'URGENT';
-        }
-    }
 
     $isEmergency = $triageLevel === TriageLevelService::EMERGENCY
         || strtoupper((string) ($assessment['triage']['triage_classification'] ?? '')) === 'EMERGENCY';

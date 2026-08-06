@@ -11,10 +11,10 @@ Api::requirePost();
 set_time_limit(210);
 
 $allergies = trim((string) ($_POST['allergies'] ?? ''));
+// Chief complaint triage uses assess_chief_complaint.php — not this profile validation API.
 $existing_conditions = trim((string) (
     $_POST['existing_conditions']
     ?? $_POST['current_medications']
-    ?? $_POST['chief_complaint']
     ?? $_POST['text']
     ?? ''
 ));
