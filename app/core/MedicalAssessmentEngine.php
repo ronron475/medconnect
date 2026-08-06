@@ -233,12 +233,16 @@ final class MedicalAssessmentEngine
     /** @return array<string, mixed> */
     private static function runNlpPipeline(string $text): array
     {
-        $serviceData = AiServiceClient::analyzeMedicalText($text);
-        if ($serviceData) {
-            return array_merge($serviceData, [
-                'engine'       => (string) ($serviceData['engine'] ?? 'python-medical-text-nlp'),
-                'service_used' => true,
-            ]);
+        // Rule-based PHP NLP is the default CDS path. Python is opt-in only.
+        $phpOnly = filter_var(getenv('MEDCONNECT_PHP_NLP_ONLY') ?: '1', FILTER_VALIDATE_BOOLEAN);
+        if (!$phpOnly) {
+            $serviceData = AiServiceClient::analyzeMedicalText($text);
+            if ($serviceData) {
+                return array_merge($serviceData, [
+                    'engine'       => (string) ($serviceData['engine'] ?? 'python-medical-text-nlp'),
+                    'service_used' => true,
+                ]);
+            }
         }
 
         $pipeline = MedicalTextAnalysisWorkflow::analyze($text);

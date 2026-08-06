@@ -3,16 +3,20 @@ require dirname(__DIR__, 2) . '/bootstrap/app.php';
 
 $complaint = $argv[1] ?? 'sakit kag d nko kaginhawa';
 $norm = HiligaynonTextNormalizer::normalize($complaint);
-$corrected = MedicalMisspellingsLoader::applyCorrections($complaint);
+$correction = MedicalMisspellingsLoader::applyCorrectionsWithLog($norm);
 $result = ClinicalTriageEngine::assess($complaint, $complaint, [], [], 80);
 
 echo json_encode([
     'input' => $complaint,
     'normalized' => $norm,
-    'corrected' => $corrected,
+    'corrected' => $correction['text'],
+    'corrected_words' => $correction['corrections'],
     'display' => $result['triage_display'] ?? '',
     'reason' => $result['reason'] ?? '',
     'symptoms' => $result['detected_symptoms'] ?? [],
+    'associated_symptoms' => $result['associated_symptoms'] ?? [],
     'red_flags' => $result['red_flags'] ?? [],
+    'clinical_reasoning' => $result['clinical_reasoning'] ?? '',
+    'confidence' => $result['confidence_score'] ?? 0,
     'validation' => $result['validation'] ?? null,
 ], JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE) . PHP_EOL;

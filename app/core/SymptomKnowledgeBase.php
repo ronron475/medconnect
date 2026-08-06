@@ -260,8 +260,29 @@ final class SymptomKnowledgeBase
         $explicit = array_values(array_unique($explicit));
 
         $generic = ['fever', 'pain', 'cough', 'ache', 'bleeding', 'weakness', 'fatigue', 'rash', 'swelling'];
+        $stopWords = ['with', 'in', 'and', 'the', 'of', 'a', 'for', 'to', 'sore', 'mild', 'severe'];
+
+        $isLocalTerm = false;
+        foreach (['hiligaynon_terms', 'filipino_terms'] as $key) {
+            foreach (($symptom[$key] ?? []) as $local) {
+                if (strtolower(trim((string) $local)) === $term) {
+                    $isLocalTerm = true;
+                    break 2;
+                }
+            }
+        }
+
+        // Multi-word symptom names must not match on a single shared English token only.
+        if (!$isLocalTerm && str_contains($name, ' ') && $term !== $name) {
+            if (!self::compoundQualifiersSatisfied($name, $term, $hay, $generic, $stopWords)) {
+                return false;
+            }
+        }
+
         if (in_array($term, $explicit, true) && !in_array($term, $generic, true) && strlen($term) >= 6) {
-            return true;
+            if ($isLocalTerm || !str_contains($name, ' ') || self::compoundQualifiersSatisfied($name, $term, $hay, $generic, $stopWords)) {
+                return true;
+            }
         }
         if (str_contains($term, ' ') && in_array($term, $explicit, true)) {
             return true;
@@ -368,7 +389,7 @@ final class SymptomKnowledgeBase
             $hitLang = '';
             $hitPat = '';
             foreach ($patterns as [$lang, $pat]) {
-                if (str_contains($hay, $pat)) {
+                if (self::redFlagPatternMatches($hay, $pat)) {
                     $hitLang = $lang;
                     $hitPat = $pat;
                     break;
@@ -414,6 +435,93 @@ final class SymptomKnowledgeBase
         }
 
         return $matched;
+    }
+
+    private static function redFlagPatternMatches(string $hay, string $pattern): bool
+    {
+        if ($pattern === '') {
+            return false;
+        }
+        // Short patterns (e.g. "PE") must be whole-word matches to avoid false positives in "persistent".
+        if (strlen($pattern) <= 3) {
+            return (bool) preg_match('/(?<!\w)' . preg_quote($pattern, '/') . '(?!\w)/iu', $hay);
+        }
+
+        return str_contains($hay, $pattern);
+    }
+
+    /**
+     * Require distinguishing qualifiers for compound symptom names.
+     *
+     * @param list<string> $generic
+     * @param list<string> $stopWords
+     */
+    private static function compoundQualifiersSatisfied(
+        string $name,
+        string $term,
+        string $hay,
+        array $generic,
+        array $stopWords
+    ): bool {
+        if (str_contains($hay, $name)) {
+            return true;
+        }
+
+        // "X with Y" — Y must appear in the complaint (e.g. sore throat with fever → fever required).
+        if (preg_match('/\bwith\s+(\w+(?:\s+\w+)?)\b/u', $name, $withMatch)) {
+            $required = strtolower(trim($withMatch[1]));
+            if ($required !== '' && !self::qualifierPresent($hay, $required)) {
+                return false;
+            }
+        }
+
+        // "X in pregnancy" — pregnancy context required.
+        if (str_contains($name, 'pregnancy') && !preg_match('/\b(pregnan|buntis|gravid)\b/u', $hay)) {
+            return false;
+        }
+
+        $nameWords = preg_split('/\s+/u', $name) ?: [];
+        $termWords = preg_split('/\s+/u', $term) ?: [];
+        $qualGeneric = ['fever', 'pain', 'cough', 'bleeding', 'ache', 'symptoms', 'symptom', 'severe', 'acute', 'chronic', 'mild', 'high', 'low', 'with', 'in', 'and', 'the', 'of'];
+
+        $required = array_values(array_filter(
+            array_diff($nameWords, $termWords),
+            static fn (string $w): bool => !in_array($w, array_merge($qualGeneric, $stopWords), true)
+                && strlen($w) >= 4
+        ));
+
+        if ($required === []) {
+            // Still require clinically meaningful qualifiers (swelling, fever, etc.).
+            foreach ($nameWords as $w) {
+                if (in_array($w, $generic, true) && !in_array($w, $termWords, true)) {
+                    $required[] = $w;
+                }
+            }
+        }
+
+        foreach ($required as $q) {
+            if (!self::qualifierPresent($hay, $q)) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    private static function qualifierPresent(string $hay, string $qualifier): bool
+    {
+        if (str_contains($hay, $qualifier)) {
+            return true;
+        }
+
+        $synonyms = [
+            'swelling' => '/\b(swollen|hubag|gahabok|edema|pamamaga)\b/u',
+            'fever'    => '/\b(lagnat|hilanat|pyrexia|hyperthermia|nilalagnat|ginakalagnat)\b/u',
+            'severe'   => '/\b(grabe|worst|unbearable|8\/10|9\/10|10\/10)\b/u',
+            'pregnancy'=> '/\b(buntis|gravid)\b/u',
+        ];
+
+        return isset($synonyms[$qualifier]) && (bool) preg_match($synonyms[$qualifier], $hay);
     }
 
     private static function flexiblePhraseHit(string $hay, string $term): bool

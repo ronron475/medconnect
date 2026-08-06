@@ -70,15 +70,27 @@ final class EmergencyFlagsLoader
             if (isset($seen[$fid])) {
                 continue;
             }
-            if ($flag['hiligaynon_pattern'] !== '' && str_contains($hayHil, $flag['hiligaynon_pattern'])) {
+            if ($flag['hiligaynon_pattern'] !== '' && self::patternMatches($hayHil, $flag['hiligaynon_pattern'])) {
                 $matched[] = array_merge($flag, ['matched_on' => 'hiligaynon']);
                 $seen[$fid] = true;
-            } elseif ($flag['english_pattern'] !== '' && str_contains($hayEng, $flag['english_pattern'])) {
+            } elseif ($flag['english_pattern'] !== '' && self::patternMatches($hayEng, $flag['english_pattern'])) {
                 $matched[] = array_merge($flag, ['matched_on' => 'english']);
                 $seen[$fid] = true;
             }
         }
 
         return $matched;
+    }
+
+    private static function patternMatches(string $hay, string $pattern): bool
+    {
+        if ($pattern === '') {
+            return false;
+        }
+        if (strlen($pattern) <= 3) {
+            return (bool) preg_match('/(?<!\w)' . preg_quote($pattern, '/') . '(?!\w)/iu', $hay);
+        }
+
+        return str_contains($hay, $pattern);
     }
 }
