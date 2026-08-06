@@ -1,0 +1,77 @@
+/* Shared sidebar nav count badges — patient, provider, admin, BHW */
+
+.sb-item .mc-nav-count-badge,
+.sb-item .mc-nav-messages-badge,
+.sba-item .mc-nav-count-badge,
+.sba-item .mc-nav-messages-badge,
+.adm-nav-item .mc-nav-count-badge,
+.adm-nav-item .mc-nav-messages-badge {
+  margin-left: auto;
+  align-self: center;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 6px;
+  border-radius: 999px;
+  background: var(--portal-nav-badge-bg, #ef4444);
+  color: var(--portal-nav-badge-text, #ffffff);
+  border: 1px solid var(--portal-nav-badge-border, transparent);
+  font-size: 10px;
+  font-weight: 800;
+  line-height: 20px;
+  text-align: center;
+  flex-shrink: 0;
+  box-shadow: var(--portal-nav-badge-shadow, 0 1px 2px rgba(0, 0, 0, 0.18));
+}
+
+.sb-item.active .mc-nav-count-badge,
+.sb-item.active .mc-nav-messages-badge,
+.sba-item.is-active .mc-nav-count-badge,
+.sba-item.is-active .mc-nav-messages-badge,
+.adm-nav-item.is-active .mc-nav-count-badge,
+.adm-nav-item.is-active .mc-nav-messages-badge {
+  background: var(--portal-nav-badge-active-bg, #dc2626);
+  color: var(--portal-nav-badge-active-text, #ffffff);
+  border-color: var(--portal-nav-badge-active-border, transparent);
+}
+
+.sb-item .sb-label,
+.sba-item .sba-label,
+.adm-nav-item .adm-label {
+  flex: 1;
+  min-width: 0;
+  line-height: 1.35;
+}
+
+/* Dark mode — muted badges */
+html[data-theme-resolved='dark'] body.provider-body,
+html[data-theme-resolved='dark'] body.patient-portal,
+html[data-theme-resolved='dark'] body.admin-body,
+html[data-theme-resolved='dark'] body.superadmin-body,
+html[data-theme-resolved='dark'] body.bhw-body {
+  --portal-nav-badge-bg: #3a1c1c;
+  --portal-nav-badge-text: #f0a8a8;
+  --portal-nav-badge-border: #5a2828;
+  --portal-nav-badge-shadow: none;
+  --portal-nav-badge-active-bg: #4a2424;
+  --portal-nav-badge-active-text: #fecaca;
+  --portal-nav-badge-active-border: #6b3030;
+}
+
+html[data-theme-resolved='dark'] .mc-nav-count-badge,
+html[data-theme-resolved='dark'] .mc-nav-messages-badge {
+  background: var(--portal-nav-badge-bg) !important;
+  color: var(--portal-nav-badge-text) !important;
+  border: 1px solid var(--portal-nav-badge-border) !important;
+  box-shadow: none !important;
+}
+
+html[data-theme-resolved='dark'] .sb-item.active .mc-nav-count-badge,
+html[data-theme-resolved='dark'] .sb-item.active .mc-nav-messages-badge,
+html[data-theme-resolved='dark'] .sba-item.is-active .mc-nav-count-badge,
+html[data-theme-resolved='dark'] .sba-item.is-active .mc-nav-messages-badge,
+html[data-theme-resolved='dark'] .adm-nav-item.is-active .mc-nav-count-badge,
+html[data-theme-resolved='dark'] .adm-nav-item.is-active .mc-nav-messages-badge {
+  background: var(--portal-nav-badge-active-bg) !important;
+  color: var(--portal-nav-badge-active-text) !important;
+  border-color: var(--portal-nav-badge-active-border) !important;
+}

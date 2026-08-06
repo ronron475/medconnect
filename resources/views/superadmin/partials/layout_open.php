@@ -42,6 +42,7 @@
   $adminDarkVer = file_exists($adminDarkCss) ? (int) filemtime($adminDarkCss) : time();
   ?>
   <link rel="stylesheet" href="<?= ASSET_BASE ?>/assets/css/admin-dark-mode.css?v=<?= $adminDarkVer ?>"/>
+  <?php require_once VIEWS_PATH . '/partials/portal_nav_badge_assets.php'; ?>
 </head>
 <body
   class="admin-body superadmin-body"
