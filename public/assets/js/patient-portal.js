@@ -268,8 +268,18 @@
           : '';
         actionBtn = '<div class="psess-card__actions">' + primary + cancelBtn + '</div>';
       } else {
+        const isCompleted = String(c.status || '').toLowerCase() === 'completed';
+        const canFollowup = isCompleted && (
+          c.followup_eligible === true
+          || (window.PatientFollowup && window.PatientFollowup.isEligible(c.id))
+          || (window.followupEligibleIds || []).indexOf(parseInt(c.id, 10)) !== -1
+        );
+        const followupBtn = canFollowup
+          ? '<button type="button" class="psess-btn psess-btn--primary" data-request-followup="' + escapeHtml(String(c.id || '')) + '">Request Follow-up</button>'
+          : '';
         actionBtn =
           '<div class="psess-card__actions">' +
+          followupBtn +
           '<a href="' + APP_BASE + '/views/patient/my_health.php?tab=timeline" class="psess-btn psess-btn--outline">Care Timeline</a>' +
           '<a href="' + APP_BASE + '/views/patient/my_health.php?tab=files" class="psess-btn psess-btn--outline">Health Files</a>' +
           '</div>';

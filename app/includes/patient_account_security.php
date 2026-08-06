@@ -77,6 +77,65 @@ function patient_security_ensure_schema(PDO $pdo): void
     $done = true;
 }
 
+/**
+ * Ensure patient_registrations schema supports registration (national_id hash width, etc.).
+ */
+function patient_registration_ensure_schema(PDO $pdo): void
+{
+    static $regDone = false;
+    if ($regDone) {
+        return;
+    }
+
+    patient_security_ensure_schema($pdo);
+
+    try {
+        $col = $pdo->query("SHOW COLUMNS FROM patient_registrations LIKE 'national_id'")->fetch(PDO::FETCH_ASSOC);
+        if (is_array($col)) {
+            $type = (string) ($col['Type'] ?? '');
+            if (preg_match('/varchar\((\d+)\)/i', $type, $m) && (int) $m[1] < 64) {
+                $pdo->exec('ALTER TABLE patient_registrations MODIFY COLUMN national_id VARCHAR(64) NOT NULL');
+            }
+        }
+    } catch (PDOException $e) {
+        error_log('patient_registration_ensure_schema national_id: ' . $e->getMessage());
+    }
+
+    $regDone = true;
+}
+
+/**
+ * Map a PDO/DB exception to a safe, actionable registration error for the patient.
+ */
+function patient_registration_friendly_db_error(Throwable $e): string
+{
+    $msg = $e->getMessage();
+
+    if (stripos($msg, 'unique_users_email') !== false
+        || (stripos($msg, 'Duplicate entry') !== false && str_contains($msg, '@'))) {
+        return 'An account with this email address already exists. Please sign in instead of registering again.';
+    }
+
+    if (stripos($msg, 'Duplicate entry') !== false) {
+        if (stripos($msg, 'contact') !== false || stripos($msg, 'phone') !== false) {
+            return 'An account with this contact number already exists. Sign in with your existing account, or use a different mobile number.';
+        }
+        if (stripos($msg, 'national_id') !== false) {
+            return 'An account with this National ID already exists.';
+        }
+    }
+
+    if (stripos($msg, 'national_id') !== false && stripos($msg, 'too long') !== false) {
+        return 'Registration could not save your National ID securely. Please contact the health office for assistance.';
+    }
+
+    if (stripos($msg, 'Data truncated') !== false && stripos($msg, 'national_id') !== false) {
+        return 'Registration could not save your National ID securely. Please contact the health office for assistance.';
+    }
+
+    return 'Registration could not be completed due to a system error. Please try again in a few minutes or contact the City Health Office if this continues.';
+}
+
 /** @return string[] */
 function patient_security_user_columns(PDO $pdo): array
 {
