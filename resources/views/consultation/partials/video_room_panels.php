@@ -48,8 +48,8 @@
 
 <div id="mcVcWaitingCard" class="mc-vc-waiting-card" hidden>
   <div class="mc-vc-waiting-card__inner">
-    <p class="mc-vc-waiting-card__eyebrow">Preparing your visit</p>
-    <h2 class="mc-vc-waiting-card__title" id="mcVcWaitingTitle">Waiting for your healthcare provider</h2>
+    <p class="mc-vc-waiting-card__eyebrow"><?= !empty($is_patient) ? 'Preparing your visit' : 'Preparing session' ?></p>
+    <h2 class="mc-vc-waiting-card__title" id="mcVcWaitingTitle"><?= !empty($is_patient) ? 'Waiting for your healthcare provider' : 'Waiting for your patient' ?></h2>
     <dl class="mc-vc-waiting-card__meta" id="mcVcWaitingMeta"></dl>
     <p class="mc-vc-waiting-card__status" id="mcVcWaitingStatus"></p>
     <button type="button" class="mc-vc-overlay-retry" id="mcVcWaitingRetry">Retry connection</button>

@@ -80,12 +80,22 @@ $clinical = provider_consultation_clinical_support($pdo, $consultId, $patientId)
 $chiefComplaint = (string) ($clinical['chief_complaint'] ?? $clinical['patient_original_complaint'] ?? '');
 
 $waiting = [
-    'doctor_name'       => $providerName !== '' ? 'Dr. ' . preg_replace('/^dr\.?\s*/i', '', $providerName) : 'Your healthcare provider',
-    'appointment_label' => $appointmentLabel,
-    'estimated_wait'    => 'Usually within 5–10 minutes after your scheduled time',
-    'doctor_status'     => ($row['consult_status'] ?? '') === 'in_consultation' ? 'In clinic — connecting' : 'Preparing session',
-    'queue_position'    => null,
-    'connection_status' => 'Secure signaling active',
+    'doctor_name'         => $providerName !== '' ? 'Dr. ' . preg_replace('/^dr\.?\s*/i', '', $providerName) : 'your healthcare provider',
+    'patient_name'        => $patientName !== '' ? $patientName : 'your patient',
+    'title'               => $isPatient
+        ? ('Waiting for ' . ($providerName !== '' ? 'Dr. ' . preg_replace('/^dr\.?\s*/i', '', $providerName) : 'your healthcare provider'))
+        : ('Waiting for ' . ($patientName !== '' ? $patientName : 'your patient')),
+    'subtitle'            => $isPatient
+        ? 'Your visit will begin automatically when your doctor joins.'
+        : 'The visit will begin automatically when your patient joins the call.',
+    'appointment_label'   => $appointmentLabel,
+    'estimated_wait'      => $isPatient
+        ? 'Usually within 5–10 minutes after your scheduled time'
+        : 'Patient can join from their dashboard once you start the room',
+    'doctor_status'       => ($row['consult_status'] ?? '') === 'in_consultation' ? 'In clinic — connecting' : 'Preparing session',
+    'patient_status'      => 'Waiting to join',
+    'queue_position'      => null,
+    'connection_status'   => 'Secure signaling active',
 ];
 
 $patientAge = '';

@@ -68,17 +68,29 @@
 
     const w = ctx.waiting;
     if (title) {
-      title.textContent = 'Waiting for ' + (w.doctor_name || 'your healthcare provider');
+      if (w.title) {
+        title.textContent = w.title;
+      } else if (IS_PATIENT) {
+        title.textContent = 'Waiting for ' + (w.doctor_name || 'your healthcare provider');
+      } else {
+        title.textContent = 'Waiting for ' + (w.patient_name || 'your patient');
+      }
     }
     if (meta) {
+      const peerLabel = IS_PATIENT ? 'Doctor status' : 'Patient status';
+      const peerValue = IS_PATIENT ? (w.doctor_status || '—') : (w.patient_status || 'Waiting to join');
       meta.innerHTML =
         '<div><dt>Appointment</dt><dd>' + escapeHtml(w.appointment_label || '—') + '</dd></div>' +
         '<div><dt>Estimated wait</dt><dd>' + escapeHtml(w.estimated_wait || '—') + '</dd></div>' +
-        '<div><dt>Doctor status</dt><dd>' + escapeHtml(w.doctor_status || '—') + '</dd></div>' +
+        '<div><dt>' + escapeHtml(peerLabel) + '</dt><dd>' + escapeHtml(peerValue) + '</dd></div>' +
         (w.queue_position ? '<div><dt>Queue</dt><dd>#' + escapeHtml(w.queue_position) + '</dd></div>' : '') +
         '<div><dt>Connection</dt><dd>' + escapeHtml(w.connection_status || 'Secure') + '</dd></div>';
     }
-    if (status) status.textContent = 'Your visit will begin automatically when your doctor joins.';
+    if (status) {
+      status.textContent = w.subtitle || (IS_PATIENT
+        ? 'Your visit will begin automatically when your doctor joins.'
+        : 'The visit will begin automatically when your patient joins the call.');
+    }
   }
 
   function renderInfo(ctx) {

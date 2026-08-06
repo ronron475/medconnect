@@ -437,10 +437,10 @@
       const t = String(text || '').toLowerCase();
       if (t.indexOf('waiting for healthcare') >= 0 || t.indexOf('waiting for provider') >= 0 || t.indexOf('waiting for doctor') >= 0) {
         setOverlay(
-          'Waiting for Healthcare Provider…',
+          isPatient ? 'Waiting for Healthcare Provider…' : 'Waiting for Patient…',
           isPatient
             ? 'Your doctor will connect shortly. You can also tap Retry connection below.'
-            : 'You will join automatically when they connect.',
+            : 'The patient can join from their dashboard. Tap Retry connection if needed.',
           true
         );
       } else if (t.indexOf('waiting for patient') >= 0) {
