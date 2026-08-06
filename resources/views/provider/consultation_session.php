@@ -205,6 +205,14 @@ $localhost_app_url = 'http://localhost' . (ASSET_BASE !== '' ? ASSET_BASE : '');
     box-shadow: 0 18px 40px rgba(0, 0, 0, 0.18);
     transition: height 0.25s ease, min-height 0.25s ease, aspect-ratio 0.25s ease;
 }
+.mc-provider-video-dock {
+    width: 100%;
+    height: 100%;
+    min-height: 280px;
+}
+.mc-provider-video-dock .mc-session-float-shell.is-docked {
+    min-height: 280px;
+}
 .video-shell.is-minimized {
     min-height: 0;
     aspect-ratio: auto;
@@ -1173,6 +1181,10 @@ $localhost_app_url = 'http://localhost' . (ASSET_BASE !== '' ? ASSET_BASE : '');
         min-height: 52vh;
         aspect-ratio: auto;
     }
+    .mc-provider-video-dock,
+    .mc-provider-video-dock .mc-session-float-shell.is-docked {
+        min-height: 220px;
+    }
     .video-shell.is-floating {
         width: min(100vw - 16px, 360px);
         height: 200px;
@@ -1322,7 +1334,8 @@ $localhost_app_url = 'http://localhost' . (ASSET_BASE !== '' ? ASSET_BASE : '');
             
             <!-- Active Call UI (hidden initially) -->
             <div id="activeCallUI" class="active-call">
-                <iframe id="videoFrame" src="" allow="camera *; microphone *; display-capture *; autoplay *; fullscreen *" allowfullscreen></iframe>
+                <div id="mcProviderVideoDock" class="mc-provider-video-dock" aria-label="Live video consultation"></div>
+                <iframe id="videoFrame" src="" hidden allow="camera *; microphone *; display-capture *; autoplay *; fullscreen *" allowfullscreen></iframe>
             </div>
 
             <!-- Session Status Overlay -->
@@ -2605,8 +2618,14 @@ window.addEventListener('message', (event) => {
 
     if (event.data.type === 'medconnect:call-ended') {
         timerActive = false;
-        const frame = document.getElementById('videoFrame');
-        if (frame) frame.src = 'about:blank';
+        if (window.McSessionVideoShell) {
+            McSessionVideoShell.close();
+        }
+        const legacy = document.getElementById('videoFrame');
+        if (legacy) {
+            legacy.src = 'about:blank';
+            legacy.hidden = true;
+        }
 
         document.getElementById('activeCallUI').style.display = 'none';
         document.getElementById('videoPlaceholder').style.display = 'flex';
@@ -2649,6 +2668,52 @@ window.addEventListener('message', (event) => {
     }
 });
 
+function mcProviderVideoWindow() {
+    if (window.McSessionVideoShell) {
+        const globalFrame = document.getElementById('mcGlobalVideoFrame');
+        if (globalFrame && globalFrame.contentWindow) return globalFrame.contentWindow;
+    }
+    const frame = document.getElementById('videoFrame');
+    return frame && frame.contentWindow ? frame.contentWindow : null;
+}
+
+function mcProviderOpenVideo(urlOrToken, consultationId) {
+    const token = window.McSessionVideoShell
+        ? McSessionVideoShell.extractToken(urlOrToken)
+        : (String(urlOrToken).match(/[?&]token=([^&]+)/) || [])[1] || String(urlOrToken);
+    const joinUrl = '<?= ASSET_BASE ?>/views/consultation/video_room.php?token=' + token;
+
+    document.getElementById('videoPlaceholder').style.display = 'none';
+    document.getElementById('activeCallUI').style.display = 'block';
+    document.getElementById('callStatusIndicator').style.color = '#ef4444';
+    document.getElementById('callStatusIndicator').textContent = '● LIVE';
+    setVideoShellLive(true);
+    timerActive = true;
+
+    if (window.McSessionVideoShell && token) {
+        McSessionVideoShell.open(token, consultationId || <?= $consultation_id ?>, {
+            mode: 'docked',
+            label: 'Live consultation',
+        });
+        const dock = document.getElementById('mcProviderVideoDock');
+        if (dock) McSessionVideoShell.dock(dock);
+        const legacy = document.getElementById('videoFrame');
+        if (legacy) {
+            legacy.removeAttribute('src');
+            legacy.hidden = true;
+        }
+    } else {
+        const legacy = document.getElementById('videoFrame');
+        if (legacy) {
+            legacy.hidden = false;
+            legacy.src = joinUrl;
+        }
+    }
+
+    showPatientJoinLink(joinUrl);
+    return joinUrl;
+}
+
 async function startVideoCall() {
     try {
         console.log("Starting video call for consultation:", <?= $consultation_id ?>);
@@ -2669,14 +2734,7 @@ async function startVideoCall() {
         console.log("API Response:", data);
         
         if (data.success) {
-            document.getElementById('videoPlaceholder').style.display = 'none';
-            document.getElementById('activeCallUI').style.display = 'block';
-            document.getElementById('videoFrame').src = data.url;
-            document.getElementById('callStatusIndicator').style.color = '#ef4444';
-            document.getElementById('callStatusIndicator').textContent = '● LIVE';
-            setVideoShellLive(true);
-            timerActive = true;
-            showPatientJoinLink(data.url);
+            mcProviderOpenVideo(data.url, <?= $consultation_id ?>);
         } else {
             alert(data.message || 'Could not start video session.');
         }
@@ -2701,8 +2759,8 @@ function showPatientJoinLink(url) {
 
 function openProviderVideoTab() {
     const btn = document.getElementById('openProviderVideoTabBtn');
-    const frame = document.getElementById('videoFrame');
-    const url = (btn && btn.dataset.videoUrl) || (frame && frame.src) || '';
+    const legacy = document.getElementById('videoFrame');
+    const url = (btn && btn.dataset.videoUrl) || (legacy && legacy.src) || '';
     if (url) {
         window.open(url, '_blank', 'noopener');
     }
@@ -2725,15 +2783,7 @@ async function copyPatientJoinLink() {
 window.addEventListener('load', () => {
     const existingToken = '<?= $room_token ?>';
     if (existingToken) {
-        document.getElementById('videoPlaceholder').style.display = 'none';
-        document.getElementById('activeCallUI').style.display = 'block';
-        const joinUrl = '<?= ASSET_BASE ?>/views/consultation/video_room.php?token=' + existingToken;
-        document.getElementById('videoFrame').src = joinUrl;
-        document.getElementById('callStatusIndicator').style.color = '#ef4444';
-        document.getElementById('callStatusIndicator').textContent = '● LIVE';
-        setVideoShellLive(true);
-        timerActive = true;
-        showPatientJoinLink(joinUrl);
+        mcProviderOpenVideo(existingToken, <?= $consultation_id ?>);
     }
 });
 
@@ -2741,7 +2791,7 @@ window.addEventListener('load', () => {
 async function requestExtension() {
     const msg = document.getElementById('extensionMsg');
     const btn = document.getElementById('extendSessionBtn');
-    const frame = document.getElementById('videoFrame');
+    const frameWin = mcProviderVideoWindow();
 
     msg.style.display = 'block';
     msg.textContent = 'Checking schedule and applying extension...';
@@ -2767,8 +2817,8 @@ async function requestExtension() {
             if (endLabel && data.new_end_label) {
                 endLabel.textContent = data.new_end_label;
             }
-            if (frame && frame.contentWindow) {
-                frame.contentWindow.postMessage({
+            if (frameWin) {
+                frameWin.postMessage({
                     type: 'medconnect:extend-session',
                     extension_mins: data.extension_mins || 15,
                     new_end_label: data.new_end_label || '',

@@ -63,8 +63,10 @@
     }
 
     function providerIsMain() {
-      if (swapped) return isPatient;
-      return !isPatient;
+      // Default: provider feed on the large main view for both roles.
+      // Patient sees the doctor large; provider sees themselves large with patient in PiP.
+      if (swapped) return false;
+      return true;
     }
 
     function mountVideos() {
@@ -422,12 +424,25 @@
       if (els.overlayTitle) els.overlayTitle.textContent = title || '';
       if (els.overlaySub) els.overlaySub.textContent = sub || '';
       els.overlay.classList.toggle('is-visible', !!visible);
+      const retryBtn = q('retryConnectBtn');
+      if (retryBtn) {
+        const waiting = /waiting for healthcare|waiting for provider|waiting for doctor|looking for/i.test(
+          String(title || '') + ' ' + String(sub || '')
+        );
+        retryBtn.hidden = !(visible && waiting);
+      }
     }
 
     function updateOverlayFromStatus(text) {
       const t = String(text || '').toLowerCase();
-      if (t.indexOf('waiting for healthcare') >= 0 || t.indexOf('waiting for provider') >= 0) {
-        setOverlay('Waiting for Healthcare Provider…', 'You will join automatically when they connect.', true);
+      if (t.indexOf('waiting for healthcare') >= 0 || t.indexOf('waiting for provider') >= 0 || t.indexOf('waiting for doctor') >= 0) {
+        setOverlay(
+          'Waiting for Healthcare Provider…',
+          isPatient
+            ? 'Your doctor will connect shortly. You can also tap Retry connection below.'
+            : 'You will join automatically when they connect.',
+          true
+        );
       } else if (t.indexOf('waiting for patient') >= 0) {
         setOverlay('Waiting for Patient…', 'The patient can join from their dashboard.', true);
       } else if (t.indexOf('connecting') >= 0) {

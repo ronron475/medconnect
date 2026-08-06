@@ -380,9 +380,11 @@ $patient_page_stylesheets = [
           const item = byId[id];
           if (!item) return;
           if (item.join_allowed && item.room_token) {
+            const safeToken = String(item.room_token).replace(/&/g, '&amp;').replace(/"/g, '&quot;');
             cell.innerHTML =
-              '<a href="' + videoBase + '?token=' + encodeURIComponent(item.room_token) +
-              '" class="pdash-btn pdash-btn--join pdash-btn--sm" style="text-decoration:none;">Join Call</a>';
+              '<button type="button" class="pdash-btn pdash-btn--join pdash-btn--sm" data-mc-video-join data-token="' +
+              safeToken + '" data-consultation-id="' + String(item.id || '') +
+              '">Join Call</button>';
           } else if (item.join_mode === 'waiting') {
             cell.innerHTML =
               '<span class="pdash-btn pdash-btn--waiting pdash-btn--sm consult-waiting-pulse" style="cursor:default;">Waiting for Provider</span>';
