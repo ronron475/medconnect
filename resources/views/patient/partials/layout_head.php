@@ -60,3 +60,4 @@ if (!empty($_SESSION['user_id']) && isset($pdo) && $pdo instanceof PDO) {
   $patientDarkCssVer = file_exists($patientDarkCss) ? (int) filemtime($patientDarkCss) : time();
   ?>
   <link rel="stylesheet" href="<?= ASSET_BASE ?>/assets/css/patient-dark-mode.css?v=<?= $patientDarkCssVer ?>"/>
+  <?php require_once VIEWS_PATH . '/partials/portal_nav_badge_assets.php'; ?>

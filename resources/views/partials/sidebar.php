@@ -30,11 +30,14 @@ $full_name = trim(($_SESSION['first_name'] ?? '') . ' ' . ($_SESSION['last_name'
 $role_path = 'patient';
 $nav_items = require BASE_PATH . '/app/includes/nav/patient_nav.php';
 
-$sidebar_messages_unread = 0;
+require_once BASE_PATH . '/app/includes/portal_nav_badge_counts.php';
+$portal_nav_badge_counts_data = [];
 if (!empty($_SESSION['user_id']) && isset($pdo) && $pdo instanceof PDO) {
-    require_once BASE_PATH . '/app/includes/message_deletion.php';
-    consultation_messages_ensure_schema($pdo);
-    $sidebar_messages_unread = message_unread_count($pdo, (int) $_SESSION['user_id']);
+    try {
+        $portal_nav_badge_counts_data = portal_nav_badge_counts($pdo, 'patient', (int) $_SESSION['user_id']);
+    } catch (Throwable $e) {
+        $portal_nav_badge_counts_data = [];
+    }
 }
 
 $patient_direct_pages = ['dashboard.php', 'messages.php', 'my_health.php', 'profile.php', 'consultations.php', 'triage.php', 'health_summary.php', 'settings.php'];
@@ -53,19 +56,23 @@ $patient_direct_pages = ['dashboard.php', 'messages.php', 'my_health.php', 'prof
         if ($current_page === 'dashboard.php' && empty($_GET['path'])) {
             $is_active = ($file === 'dashboard.php');
         }
+        $badgeKey = portal_nav_badge_key_for_item('patient', $file, null);
+        $navAttr = portal_nav_badge_nav_link_attr($badgeKey);
     ?>
     <a href="<?= htmlspecialchars($href) ?>"
        class="sb-item <?= $is_active ? 'active' : '' ?>"
-       data-view="<?= htmlspecialchars($view_id) ?>"<?= $file === 'messages.php' ? ' data-nav-messages' : '' ?>
+       data-view="<?= htmlspecialchars($view_id) ?>"<?= $navAttr ?>
        <?= $is_active ? 'aria-current="page"' : '' ?>>
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"
            stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
         <?= $icon ?>
       </svg>
       <span class="sb-label"><?= htmlspecialchars($label) ?></span>
-      <?php if ($file === 'messages.php'): ?>
-      <span class="mc-nav-messages-badge" data-nav-messages-badge<?= $sidebar_messages_unread <= 0 ? ' hidden' : '' ?>><?= $sidebar_messages_unread > 99 ? '99+' : (int) $sidebar_messages_unread ?></span>
-      <?php endif; ?>
+      <?php if ($badgeKey !== null):
+          $portal_nav_badge_key = $badgeKey;
+          $portal_nav_badge_count = portal_nav_badge_count_for_item('patient', $file, null, $portal_nav_badge_counts_data);
+          require VIEWS_PATH . '/partials/portal_nav_badge.php';
+      endif; ?>
     </a>
     <?php endforeach; ?>
   </nav>

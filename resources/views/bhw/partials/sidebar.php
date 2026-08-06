@@ -30,6 +30,16 @@ $sidebar_picture_url = profile_picture_public_url($_SESSION['profile_picture'] ?
 $full_name = trim(($_SESSION['first_name'] ?? '') . ' ' . ($_SESSION['last_name'] ?? ''));
 $barangay_name = $_SESSION['user_barangay_name'] ?? 'Unassigned';
 
+require_once BASE_PATH . '/app/includes/portal_nav_badge_counts.php';
+$portal_nav_badge_counts_data = [];
+if (!empty($_SESSION['user_id']) && isset($pdo) && $pdo instanceof PDO) {
+    try {
+        $portal_nav_badge_counts_data = portal_nav_badge_counts($pdo, 'bhw', (int) $_SESSION['user_id']);
+    } catch (Throwable $e) {
+        $portal_nav_badge_counts_data = [];
+    }
+}
+
 function bhw_nav_is_active(string $file, string $current_page, string $current_path, string $current_route = ''): bool
 {
     $resolved = bhw_nav_resolve_file($file);
@@ -74,15 +84,22 @@ function bhw_nav_is_active(string $file, string $current_page, string $current_p
         [$file, $label, $icon_path] = $item;
         $href = $bhw_base . '/' . $file;
         $is_active = bhw_nav_is_active($file, $current_page, $current_path, $current_route);
+        $badgeKey = portal_nav_badge_key_for_item('bhw', $file, null);
+        $navAttr = portal_nav_badge_nav_link_attr($badgeKey);
     ?>
     <a href="<?= htmlspecialchars($href) ?>"
        class="adm-nav-item <?= $is_active ? 'is-active' : '' ?>"
-       <?= $is_active ? 'aria-current="page"' : '' ?>>
+       <?= $is_active ? 'aria-current="page"' : '' ?><?= $navAttr ?>>
       <svg class="adm-nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor"
            stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
         <?= $icon_path ?>
       </svg>
       <span class="adm-label"><?= htmlspecialchars($label) ?></span>
+      <?php if ($badgeKey !== null):
+          $portal_nav_badge_key = $badgeKey;
+          $portal_nav_badge_count = portal_nav_badge_count_for_item('bhw', $file, null, $portal_nav_badge_counts_data);
+          require VIEWS_PATH . '/partials/portal_nav_badge.php';
+      endif; ?>
     </a>
     <?php endforeach; endforeach; ?>
   </nav>

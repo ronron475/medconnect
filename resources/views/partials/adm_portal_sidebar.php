@@ -57,6 +57,16 @@ $nav_sections = require BASE_PATH . '/app/includes/nav/' . $config['nav_file'];
 $views_base = ASSET_BASE . '/views/' . $config['views_segment'];
 $dashboard_href = $views_base . '/dashboard.php';
 $is_profile_page = ($current === 'profile.php');
+
+require_once BASE_PATH . '/app/includes/portal_nav_badge_counts.php';
+$portal_nav_badge_counts_data = [];
+if (!empty($_SESSION['user_id']) && isset($pdo) && $pdo instanceof PDO) {
+    try {
+        $portal_nav_badge_counts_data = portal_nav_badge_counts($pdo, $adm_sidebar_portal, (int) $_SESSION['user_id']);
+    } catch (Throwable $e) {
+        $portal_nav_badge_counts_data = [];
+    }
+}
 ?>
 <aside class="<?= htmlspecialchars($config['sidebar_class']) ?>">
 
@@ -77,15 +87,22 @@ $is_profile_page = ($current === 'profile.php');
         $itemQuery = $item[3] ?? null;
         $href = $views_base . '/' . $file . ($itemQuery ? '?' . $itemQuery : '');
         $is_active = portal_nav_is_active($file, $current, $current_query, $itemQuery);
+        $badgeKey = portal_nav_badge_key_for_item($adm_sidebar_portal, $file, $itemQuery);
+        $navAttr = portal_nav_badge_nav_link_attr($badgeKey);
     ?>
     <a href="<?= htmlspecialchars($href) ?>"
        class="adm-nav-item <?= $is_active ? 'is-active' : '' ?>"
-       <?= $is_active ? 'aria-current="page"' : '' ?>>
+       <?= $is_active ? 'aria-current="page"' : '' ?><?= $navAttr ?>>
       <svg class="adm-nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor"
            stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
         <?= $icon_path ?>
       </svg>
       <span class="adm-label"><?= htmlspecialchars($label) ?></span>
+      <?php if ($badgeKey !== null):
+          $portal_nav_badge_key = $badgeKey;
+          $portal_nav_badge_count = portal_nav_badge_count_for_item($adm_sidebar_portal, $file, $itemQuery, $portal_nav_badge_counts_data);
+          require VIEWS_PATH . '/partials/portal_nav_badge.php';
+      endif; ?>
     </a>
     <?php endforeach; endforeach; ?>
   </nav>
