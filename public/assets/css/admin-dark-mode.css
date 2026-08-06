@@ -1578,6 +1578,319 @@ html[data-theme-resolved='dark'] body.superadmin-body .nlp-catalog-table .nlp-st
   color: #a1a1aa !important;
 }
 
+/* ── Website Dashboard (Landing Page CMS) ── */
+html[data-theme-resolved='dark'] body.admin-body .lp-mgmt,
+html[data-theme-resolved='dark'] body.superadmin-body .lp-mgmt {
+  --lp-navy: #ffffff;
+  --lp-border: #2a2a2a;
+  --lp-muted: #a1a1aa;
+  --lp-surface: #1c1c1c;
+  --lp-surface-muted: #141414;
+}
+
+html[data-theme-resolved='dark'] body.admin-body .lp-mgmt__hero-banner,
+html[data-theme-resolved='dark'] body.superadmin-body .lp-mgmt__hero-banner {
+  background: linear-gradient(135deg, rgba(6, 147, 150, 0.12) 0%, rgba(28, 28, 28, 0.95) 100%) !important;
+  border-color: #2a2a2a !important;
+}
+
+html[data-theme-resolved='dark'] body.admin-body .lp-mgmt__preview-head,
+html[data-theme-resolved='dark'] body.superadmin-body .lp-mgmt__preview-head {
+  background: #141414 !important;
+  border-bottom-color: #2a2a2a !important;
+}
+
+html[data-theme-resolved='dark'] body.admin-body .lp-mgmt__preview-head h3,
+html[data-theme-resolved='dark'] body.superadmin-body .lp-mgmt__preview-head h3,
+html[data-theme-resolved='dark'] body.admin-body .lp-mgmt__card-title,
+html[data-theme-resolved='dark'] body.superadmin-body .lp-mgmt__card-title,
+html[data-theme-resolved='dark'] body.admin-body .lp-mgmt__preview-ann h4,
+html[data-theme-resolved='dark'] body.superadmin-body .lp-mgmt__preview-ann h4,
+html[data-theme-resolved='dark'] body.admin-body .lp-mgmt__toggle-row,
+html[data-theme-resolved='dark'] body.superadmin-body .lp-mgmt__toggle-row,
+html[data-theme-resolved='dark'] body.admin-body .lp-mgmt__form-grid label,
+html[data-theme-resolved='dark'] body.superadmin-body .lp-mgmt__form-grid label {
+  color: #ffffff !important;
+}
+
+html[data-theme-resolved='dark'] body.admin-body .lp-mgmt__preview-meta,
+html[data-theme-resolved='dark'] body.superadmin-body .lp-mgmt__preview-meta,
+html[data-theme-resolved='dark'] body.admin-body .lp-mgmt__card-desc,
+html[data-theme-resolved='dark'] body.superadmin-body .lp-mgmt__card-desc,
+html[data-theme-resolved='dark'] body.admin-body .lp-mgmt__stat-label,
+html[data-theme-resolved='dark'] body.superadmin-body .lp-mgmt__stat-label,
+html[data-theme-resolved='dark'] body.admin-body .lp-mgmt__preview-ann-item,
+html[data-theme-resolved='dark'] body.superadmin-body .lp-mgmt__preview-ann-item {
+  color: #a1a1aa !important;
+}
+
+html[data-theme-resolved='dark'] body.admin-body .lp-mgmt__preview-ann,
+html[data-theme-resolved='dark'] body.superadmin-body .lp-mgmt__preview-ann {
+  background: #1c1c1c !important;
+  border-top-color: #2a2a2a !important;
+}
+
+html[data-theme-resolved='dark'] body.admin-body .lp-mgmt__form-grid input[type="text"],
+html[data-theme-resolved='dark'] body.superadmin-body .lp-mgmt__form-grid input[type="text"],
+html[data-theme-resolved='dark'] body.admin-body .lp-mgmt__form-grid textarea,
+html[data-theme-resolved='dark'] body.superadmin-body .lp-mgmt__form-grid textarea {
+  background: #141414 !important;
+  border-color: #2a2a2a !important;
+  color: #ffffff !important;
+}
+
+html[data-theme-resolved='dark'] body.admin-body .lp-mgmt__toggle-row,
+html[data-theme-resolved='dark'] body.superadmin-body .lp-mgmt__toggle-row {
+  border-bottom-color: #2a2a2a !important;
+}
+
+html[data-theme-resolved='dark'] body.admin-body .lp-mgmt__stat-value--muted,
+html[data-theme-resolved='dark'] body.superadmin-body .lp-mgmt__stat-value--muted {
+  color: #d4d4d8 !important;
+}
+
+/* ── Create Doctor / BHW staff application modal ── */
+html[data-theme-resolved='dark'] body.admin-body .mc-staff-modal .admin-modal-header,
+html[data-theme-resolved='dark'] body.superadmin-body .mc-staff-modal .admin-modal-header {
+  background: #1c1c1c !important;
+  border-bottom-color: #2a2a2a !important;
+}
+
+html[data-theme-resolved='dark'] body.admin-body .mc-staff-modal .admin-modal-title,
+html[data-theme-resolved='dark'] body.superadmin-body .mc-staff-modal .admin-modal-title {
+  color: #ffffff !important;
+}
+
+html[data-theme-resolved='dark'] body.admin-body .mc-staff-modal .admin-modal-subtitle,
+html[data-theme-resolved='dark'] body.superadmin-body .mc-staff-modal .admin-modal-subtitle {
+  color: #a1a1aa !important;
+}
+
+html[data-theme-resolved='dark'] body.admin-body .mc-form-section,
+html[data-theme-resolved='dark'] body.superadmin-body .mc-form-section {
+  background: #141414 !important;
+  border-color: #2a2a2a !important;
+  box-shadow: none !important;
+}
+
+html[data-theme-resolved='dark'] body.admin-body .mc-form-section__title,
+html[data-theme-resolved='dark'] body.superadmin-body .mc-form-section__title,
+html[data-theme-resolved='dark'] body.admin-body .admin-form-section-title,
+html[data-theme-resolved='dark'] body.superadmin-body .admin-form-section-title {
+  color: #5eead4 !important;
+  border-bottom-color: #2a2a2a !important;
+}
+
+html[data-theme-resolved='dark'] body.admin-body .mc-field__label,
+html[data-theme-resolved='dark'] body.superadmin-body .mc-field__label {
+  color: #d4d4d8 !important;
+}
+
+html[data-theme-resolved='dark'] body.admin-body .mc-field__label .mc-optional,
+html[data-theme-resolved='dark'] body.superadmin-body .mc-field__label .mc-optional {
+  color: #71717a !important;
+}
+
+html[data-theme-resolved='dark'] body.admin-body .mc-field__input,
+html[data-theme-resolved='dark'] body.superadmin-body .mc-field__input,
+html[data-theme-resolved='dark'] body.admin-body .mc-field select.mc-field__input,
+html[data-theme-resolved='dark'] body.superadmin-body .mc-field select.mc-field__input {
+  background: #0a0a0a !important;
+  border-color: #3f3f46 !important;
+  color: #ffffff !important;
+  color-scheme: dark;
+}
+
+html[data-theme-resolved='dark'] body.admin-body .mc-field__input::placeholder,
+html[data-theme-resolved='dark'] body.superadmin-body .mc-field__input::placeholder {
+  color: #71717a !important;
+}
+
+html[data-theme-resolved='dark'] body.admin-body .mc-field__input:hover:not(:disabled),
+html[data-theme-resolved='dark'] body.superadmin-body .mc-field__input:hover:not(:disabled) {
+  border-color: #52525b !important;
+}
+
+html[data-theme-resolved='dark'] body.admin-body .mc-field__input:focus,
+html[data-theme-resolved='dark'] body.superadmin-body .mc-field__input:focus {
+  border-color: #5eead4 !important;
+  box-shadow: 0 0 0 3px rgba(94, 234, 212, 0.14) !important;
+}
+
+html[data-theme-resolved='dark'] body.admin-body .mc-field__input:-webkit-autofill,
+html[data-theme-resolved='dark'] body.superadmin-body .mc-field__input:-webkit-autofill,
+html[data-theme-resolved='dark'] body.admin-body .mc-field__input:-webkit-autofill:hover,
+html[data-theme-resolved='dark'] body.superadmin-body .mc-field__input:-webkit-autofill:hover,
+html[data-theme-resolved='dark'] body.admin-body .mc-field__input:-webkit-autofill:focus,
+html[data-theme-resolved='dark'] body.superadmin-body .mc-field__input:-webkit-autofill:focus {
+  -webkit-text-fill-color: #ffffff !important;
+  caret-color: #ffffff !important;
+  -webkit-box-shadow: 0 0 0 1000px #0a0a0a inset !important;
+  box-shadow: 0 0 0 1000px #0a0a0a inset !important;
+}
+
+html[data-theme-resolved='dark'] body.admin-body .mc-field__input:disabled,
+html[data-theme-resolved='dark'] body.superadmin-body .mc-field__input:disabled,
+html[data-theme-resolved='dark'] body.admin-body .mc-staff-form.is-loading .mc-field__input,
+html[data-theme-resolved='dark'] body.superadmin-body .mc-staff-form.is-loading .mc-field__input {
+  background: #141414 !important;
+  opacity: 0.6 !important;
+}
+
+html[data-theme-resolved='dark'] body.admin-body .mc-field__hint,
+html[data-theme-resolved='dark'] body.superadmin-body .mc-field__hint,
+html[data-theme-resolved='dark'] body.admin-body .admin-form-hint,
+html[data-theme-resolved='dark'] body.superadmin-body .admin-form-hint {
+  color: #a1a1aa !important;
+}
+
+html[data-theme-resolved='dark'] body.admin-body .mc-password-toggle,
+html[data-theme-resolved='dark'] body.superadmin-body .mc-password-toggle {
+  color: #a1a1aa !important;
+}
+
+html[data-theme-resolved='dark'] body.admin-body .mc-password-toggle:hover,
+html[data-theme-resolved='dark'] body.superadmin-body .mc-password-toggle:hover {
+  color: #5eead4 !important;
+  background: rgba(94, 234, 212, 0.1) !important;
+}
+
+html[data-theme-resolved='dark'] body.admin-body .mc-staff-modal .admin-modal-actions,
+html[data-theme-resolved='dark'] body.superadmin-body .mc-staff-modal .admin-modal-actions {
+  background: linear-gradient(180deg, rgba(28, 28, 28, 0) 0%, #1c1c1c 24%) !important;
+}
+
+html[data-theme-resolved='dark'] body.admin-body .mc-staff-modal .mc-btn--outline,
+html[data-theme-resolved='dark'] body.superadmin-body .mc-staff-modal .mc-btn--outline {
+  background: transparent !important;
+  border-color: #3f3f46 !important;
+  color: #5eead4 !important;
+}
+
+html[data-theme-resolved='dark'] body.admin-body .mc-staff-modal .mc-btn--outline:hover,
+html[data-theme-resolved='dark'] body.superadmin-body .mc-staff-modal .mc-btn--outline:hover {
+  background: rgba(94, 234, 212, 0.08) !important;
+  border-color: #5eead4 !important;
+  color: #99f6e4 !important;
+}
+
+html[data-theme-resolved='dark'] body.admin-body .prc-verification-panel,
+html[data-theme-resolved='dark'] body.superadmin-body .prc-verification-panel {
+  background: #141414 !important;
+  border-color: #2a2a2a !important;
+}
+
+html[data-theme-resolved='dark'] body.admin-body .prc-verification-panel__title,
+html[data-theme-resolved='dark'] body.superadmin-body .prc-verification-panel__title {
+  color: #ffffff !important;
+}
+
+html[data-theme-resolved='dark'] body.admin-body .prc-verification-status,
+html[data-theme-resolved='dark'] body.superadmin-body .prc-verification-status {
+  background: #0a0a0a !important;
+  border-color: #3f3f46 !important;
+  color: #a1a1aa !important;
+}
+
+html[data-theme-resolved='dark'] body.admin-body .prc-verification-status.is-verified,
+html[data-theme-resolved='dark'] body.superadmin-body .prc-verification-status.is-verified {
+  background: rgba(34, 197, 94, 0.12) !important;
+  border-color: rgba(34, 197, 94, 0.35) !important;
+  color: #86efac !important;
+}
+
+html[data-theme-resolved='dark'] body.admin-body .prc-guide-card,
+html[data-theme-resolved='dark'] body.superadmin-body .prc-guide-card {
+  background: #0a0a0a !important;
+  border-color: #2a2a2a !important;
+}
+
+html[data-theme-resolved='dark'] body.admin-body .prc-guide-card summary,
+html[data-theme-resolved='dark'] body.superadmin-body .prc-guide-card summary {
+  color: #ffffff !important;
+}
+
+html[data-theme-resolved='dark'] body.admin-body .prc-guide-list,
+html[data-theme-resolved='dark'] body.superadmin-body .prc-guide-list {
+  color: #d4d4d8 !important;
+}
+
+html[data-theme-resolved='dark'] body.admin-body .prc-guide-list a,
+html[data-theme-resolved='dark'] body.superadmin-body .prc-guide-list a {
+  color: #5eead4 !important;
+}
+
+html[data-theme-resolved='dark'] body.admin-body .prc-confirm-check,
+html[data-theme-resolved='dark'] body.superadmin-body .prc-confirm-check {
+  color: #d4d4d8 !important;
+}
+
+html[data-theme-resolved='dark'] body.admin-body .prc-success-note,
+html[data-theme-resolved='dark'] body.superadmin-body .prc-success-note {
+  background: rgba(34, 197, 94, 0.12) !important;
+  border-color: rgba(34, 197, 94, 0.35) !important;
+  color: #86efac !important;
+}
+
+html[data-theme-resolved='dark'] body.admin-body .admin-form-warning,
+html[data-theme-resolved='dark'] body.superadmin-body .admin-form-warning {
+  background: rgba(245, 158, 11, 0.12) !important;
+  border-color: rgba(245, 158, 11, 0.35) !important;
+  color: #fcd34d !important;
+}
+
+html[data-theme-resolved='dark'] body.admin-body .bhw-doc-list,
+html[data-theme-resolved='dark'] body.superadmin-body .bhw-doc-list {
+  color: #d4d4d8 !important;
+}
+
+html[data-theme-resolved='dark'] body.admin-body .bhw-doc-list li,
+html[data-theme-resolved='dark'] body.superadmin-body .bhw-doc-list li {
+  background: #0a0a0a !important;
+  border-bottom-color: #2a2a2a !important;
+}
+
+html[data-theme-resolved='dark'] body.admin-body .mc-form-alert--error,
+html[data-theme-resolved='dark'] body.superadmin-body .mc-form-alert--error {
+  background: rgba(220, 38, 38, 0.12) !important;
+  border-color: rgba(220, 38, 38, 0.35) !important;
+  color: #fca5a5 !important;
+}
+
+html[data-theme-resolved='dark'] body.admin-body .mc-form-alert--warn,
+html[data-theme-resolved='dark'] body.superadmin-body .mc-form-alert--warn {
+  background: rgba(245, 158, 11, 0.12) !important;
+  border-color: rgba(245, 158, 11, 0.35) !important;
+  color: #fcd34d !important;
+}
+
+html[data-theme-resolved='dark'] body.admin-body .mc-form-alert--success,
+html[data-theme-resolved='dark'] body.superadmin-body .mc-form-alert--success {
+  background: rgba(34, 197, 94, 0.12) !important;
+  border-color: rgba(34, 197, 94, 0.35) !important;
+  color: #86efac !important;
+}
+
+html[data-theme-resolved='dark'] body.admin-body .mc-password-strength,
+html[data-theme-resolved='dark'] body.superadmin-body .mc-password-strength {
+  color: #a1a1aa !important;
+}
+
+html[data-theme-resolved='dark'] body.admin-body .mc-password-strength__bar,
+html[data-theme-resolved='dark'] body.superadmin-body .mc-password-strength__bar {
+  background: #3f3f46 !important;
+}
+
+html[data-theme-resolved='dark'] body.admin-body .mc-password-rules li,
+html[data-theme-resolved='dark'] body.superadmin-body .mc-password-rules li {
+  color: #71717a !important;
+}
+
+html[data-theme-resolved='dark'] body.admin-body .mc-password-rules li.is-met,
+html[data-theme-resolved='dark'] body.superadmin-body .mc-password-rules li.is-met {
+  color: #86efac !important;
+}
+
 /* Scrollbars */
 html[data-theme-resolved='dark'] body.admin-body,
 html[data-theme-resolved='dark'] body.superadmin-body {
