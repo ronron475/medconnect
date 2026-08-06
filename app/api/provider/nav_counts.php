@@ -35,6 +35,8 @@ try {
         'queue'          => $counts['queue'],
         'triage'         => $counts['triage'],
         'triage_urgent'  => $counts['triage_urgent'],
+        'referrals'      => $counts['referrals'] ?? 0,
+        'followups'      => $counts['followups'] ?? 0,
         'messages'       => $messagesUnread,
         'unread_count'   => $messagesUnread,
     ]);

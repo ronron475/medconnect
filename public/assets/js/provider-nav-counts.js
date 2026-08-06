@@ -8,12 +8,15 @@
   if (global.MedConnectProviderNavCounts) return;
 
   const API_PATH = '/app/api/provider/nav_counts.php';
-  const POLL_MS = 8000;
+  const POLL_MS = 5000;
   const CHANNEL = 'mc_provider_nav_counts_v1';
 
   function getAssetBase() {
     const body = document.body;
     if (body && body.dataset.assetBase) return body.dataset.assetBase;
+    const themeRoot = document.getElementById('medconnectThemeRoot');
+    if (themeRoot && themeRoot.dataset.assetBase) return themeRoot.dataset.assetBase;
+    if (typeof global.APP_BASE === 'string' && global.APP_BASE) return global.APP_BASE;
     return '';
   }
 
@@ -49,6 +52,12 @@
     if (data.triage != null) {
       setBadge('[data-nav-triage-badge]', data.triage, 'Active Triage Review');
     }
+    if (data.referrals != null) {
+      setBadge('[data-nav-badge="referrals"]', data.referrals, 'Referrals');
+    }
+    if (data.followups != null) {
+      setBadge('[data-nav-badge="followups"]', data.followups, 'Follow-Up Management');
+    }
     if (data.messages != null || data.unread_count != null) {
       const messages = clamp(data.messages != null ? data.messages : data.unread_count);
       setBadge('[data-nav-messages-badge]', messages, 'Messages');
@@ -75,12 +84,13 @@
     }));
   }
 
-  let lastCounts = { queue: null, triage: null, triage_urgent: null, messages: null };
+  let lastCounts = { queue: null, triage: null, triage_urgent: null, messages: null, referrals: null, followups: null };
   let timer = null;
   let inFlight = false;
+  let booted = false;
 
   function countsKey(c) {
-    return `${c.queue}|${c.triage}|${c.messages}`;
+    return `${c.queue}|${c.triage}|${c.messages}|${c.referrals}|${c.followups}`;
   }
 
   const bc = (typeof global.BroadcastChannel !== 'undefined')
@@ -96,6 +106,8 @@
         triage: clamp(data.triage),
         triage_urgent: clamp(data.triage_urgent),
         messages: clamp(data.messages),
+        referrals: clamp(data.referrals),
+        followups: clamp(data.followups),
       };
       if (countsKey(payload) === countsKey(lastCounts) && lastCounts.queue !== null) return;
       lastCounts = payload;
@@ -121,6 +133,8 @@
         triage: clamp(json.triage),
         triage_urgent: clamp(json.triage_urgent),
         messages: clamp(json.messages != null ? json.messages : json.unread_count),
+        referrals: clamp(json.referrals),
+        followups: clamp(json.followups),
       };
       if (countsKey(payload) !== countsKey(lastCounts) || lastCounts.queue === null) {
         lastCounts = payload;
@@ -148,7 +162,36 @@
     timer = null;
   }
 
-  /** Allow triage/queue pages to push fresher counts immediately. */
+  function boot() {
+    if (booted) return;
+    if (!document.body || !document.body.classList.contains('provider-body')) return;
+    booted = true;
+    start();
+  }
+
+  document.addEventListener('visibilitychange', () => {
+    if (document.hidden) stop();
+    else {
+      boot();
+      fetchCounts();
+    }
+  });
+
+  global.addEventListener('focus', () => {
+    if (!document.hidden && booted) fetchCounts();
+  });
+
+  global.addEventListener('medconnect:messages-unread', (ev) => {
+    const detail = ev && ev.detail ? ev.detail : null;
+    if (!detail || detail.unread_count == null) return;
+    setCounts({ messages: detail.unread_count });
+  });
+
+  global.addEventListener('medconnect:nav-badges-refresh', () => {
+    fetchCounts();
+  });
+
+  // When triage live refresh finishes, bump sidebar from its stats if provided.
   function setCounts(partial) {
     if (!partial || typeof partial !== 'object') return;
     const cur = { ...lastCounts };
@@ -156,6 +199,8 @@
     if (partial.triage != null) cur.triage = clamp(partial.triage);
     if (partial.triage_urgent != null) cur.triage_urgent = clamp(partial.triage_urgent);
     if (partial.messages != null) cur.messages = clamp(partial.messages);
+    if (partial.referrals != null) cur.referrals = clamp(partial.referrals);
+    if (partial.followups != null) cur.followups = clamp(partial.followups);
     if (countsKey(cur) === countsKey(lastCounts) && lastCounts.triage !== null) return;
     lastCounts = cur;
     applyCounts(partial);
@@ -164,12 +209,7 @@
     }
   }
 
-  document.addEventListener('visibilitychange', () => {
-    if (document.hidden) stop();
-    else start();
-  });
-
-  // When triage live refresh finishes, bump sidebar from its stats if provided.
+  /** Allow triage/queue pages to push fresher counts immediately. */
   global.addEventListener('medconnect:triage-live', (ev) => {
     const d = ev && ev.detail ? ev.detail : null;
     if (!d) return;
@@ -183,7 +223,11 @@
     }
   });
 
-  if (!document.hidden) start();
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', boot);
+  } else {
+    boot();
+  }
 
   global.MedConnectProviderNavCounts = {
     refresh: fetchCounts,

@@ -34,8 +34,6 @@
   <?php require_once VIEWS_PATH . '/partials/notification_assets.php'; ?>
   <?php $unreadSvcVer = (int) @filemtime(ASSETS_PATH . '/js/messages-unread-service.js'); ?>
   <script src="<?= ASSET_BASE ?>/assets/js/messages-unread-service.js?v=<?= $unreadSvcVer ?>" defer></script>
-  <?php $navCountsVer = (int) @filemtime(ASSETS_PATH . '/js/provider-nav-counts.js'); ?>
-  <script src="<?= ASSET_BASE ?>/assets/js/provider-nav-counts.js?v=<?= $navCountsVer ?>" defer></script>
   <?php $providerShellCssVer = (int) filemtime(ASSETS_PATH . '/css/provider_shell.css'); ?>
   <link rel="stylesheet" href="<?= ASSET_BASE ?>/assets/css/provider_shell.css?v=<?= $providerShellCssVer ?>"/>
   <?php $profilePictureCssVer = (int) filemtime(ASSETS_PATH . '/css/profile-picture.css'); ?>
