@@ -398,6 +398,9 @@ RF023,Amputation,,amputation,EMERGENCY,Amputation requires emergency hemorrhage 
 RF023,Amputation,,finger cut off,EMERGENCY,Amputation requires emergency hemorrhage control and replant evaluation.,active
 RF023,Amputation,,severed limb,EMERGENCY,Amputation requires emergency hemorrhage control and replant evaluation.,active
 RF023,Amputation,,partial amputation,EMERGENCY,Amputation requires emergency hemorrhage control and replant evaluation.,active
+RF023,Amputation,putol ang kamot,,EMERGENCY,Amputation requires emergency hemorrhage control and replant evaluation.,active
+RF023,Amputation,putol kamot ko,,EMERGENCY,Amputation requires emergency hemorrhage control and replant evaluation.,active
+RF023,Amputation,putol ang tudlo,,EMERGENCY,Amputation requires emergency hemorrhage control and replant evaluation.,active
 RF023,Amputation,naputol tudlo,,EMERGENCY,Amputation requires emergency hemorrhage control and replant evaluation.,active
 RF023,Amputation,naputol kamot,,EMERGENCY,Amputation requires emergency hemorrhage control and replant evaluation.,active
 RF023,Amputation,amputation,,EMERGENCY,Amputation requires emergency hemorrhage control and replant evaluation.,active

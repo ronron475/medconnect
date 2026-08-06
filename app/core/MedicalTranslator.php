@@ -76,7 +76,8 @@ final class MedicalTranslator
 
         $englishParts = [];
         foreach ($validationQueue as $q) {
-            $englishParts[] = $q['match_term'];
+            $canonical = MedicalConceptRegistry::canonicalize((string) ($q['match_term'] ?? ''));
+            $englishParts[] = $canonical;
         }
         $englishText = implode(', ', array_unique(array_filter($englishParts)));
 
@@ -443,6 +444,7 @@ final class MedicalTranslator
         bool $wasTranslated,
         string $note = 'dictionary'
     ): array {
+        $english = MedicalConceptRegistry::canonicalize($english);
         $category = $entry['category'] ?? $expectedCategory;
         if ($expectedCategory === 'auto' && $entry !== null) {
             $expectedCategory = $category;

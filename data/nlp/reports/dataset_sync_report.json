@@ -1,0 +1,249 @@
+{
+    "generated_at": "2026-08-06T13:14:34+08:00",
+    "engine_version": "3.2",
+    "canonical_source": "symptom_knowledge_base.json",
+    "registry_class": "MedicalConceptRegistry",
+    "summary": {
+        "datasets_analyzed": 43,
+        "datasets_missing": 0,
+        "datasets_loaded_runtime": 25,
+        "canonical_concepts": 305,
+        "aliases_registered": 5335,
+        "duplicate_aliases": [],
+        "orphan_csv_terms": [],
+        "missing_hiligaynon": [],
+        "missing_filipino": [],
+        "missing_synonyms": [],
+        "combination_conflicts": [],
+        "translation_inconsistencies": [],
+        "broken_references": [],
+        "sync_actions": [
+            "Exported medical_concepts_registry.csv (305 concepts)"
+        ]
+    },
+    "dataset_catalog": {
+        "medical_symptoms.csv": {
+            "status": "reference",
+            "rows": 8128,
+            "loader": "reference"
+        },
+        "medical_conditions.csv": {
+            "status": "reference",
+            "rows": 74260,
+            "loader": "reference"
+        },
+        "symptom_synonyms.csv": {
+            "status": "reference",
+            "rows": 20000,
+            "loader": "reference"
+        },
+        "symptom_synonyms_expanded.csv": {
+            "status": "reference",
+            "rows": 45175,
+            "loader": "reference"
+        },
+        "hiligaynon_medical_terms.csv": {
+            "status": "loaded",
+            "rows": 14939,
+            "loader": "SymptomKnowledgeBase CSV boosts"
+        },
+        "filipino_medical_terms.csv": {
+            "status": "loaded",
+            "rows": 8264,
+            "loader": "SymptomKnowledgeBase CSV boosts"
+        },
+        "english_medical_terms.csv": {
+            "status": "reference",
+            "rows": 10012,
+            "loader": "reference"
+        },
+        "body_parts.csv": {
+            "status": "reference",
+            "rows": 204,
+            "loader": "reference"
+        },
+        "body_parts_cds.csv": {
+            "status": "reference",
+            "rows": 204,
+            "loader": "reference"
+        },
+        "pain_scale.csv": {
+            "status": "loaded",
+            "rows": 42,
+            "loader": "NlpFeaturePatternsLoader"
+        },
+        "duration_patterns.csv": {
+            "status": "loaded",
+            "rows": 500,
+            "loader": "NlpFeaturePatternsLoader"
+        },
+        "temperature_patterns.csv": {
+            "status": "loaded",
+            "rows": 300,
+            "loader": "NlpFeaturePatternsLoader"
+        },
+        "risk_factors.csv": {
+            "status": "loaded",
+            "rows": 32,
+            "loader": "NlpFeaturePatternsLoader"
+        },
+        "chronic_conditions.csv": {
+            "status": "loaded",
+            "rows": 19,
+            "loader": "NlpFeaturePatternsLoader"
+        },
+        "emergency_red_flags.csv": {
+            "status": "loaded",
+            "rows": 638,
+            "loader": "ClinicalTriageEngine \/ EmergencyFlagsLoader"
+        },
+        "emergency_flags.csv": {
+            "status": "loaded",
+            "rows": 200,
+            "loader": "ClinicalTriageEngine \/ EmergencyFlagsLoader"
+        },
+        "urgent_conditions.csv": {
+            "status": "reference",
+            "rows": 500,
+            "loader": "reference"
+        },
+        "non_urgent_conditions.csv": {
+            "status": "reference",
+            "rows": 500,
+            "loader": "reference"
+        },
+        "negation_words.csv": {
+            "status": "loaded",
+            "rows": 500,
+            "loader": "NegationDetector"
+        },
+        "medical_abbreviations.csv": {
+            "status": "loaded",
+            "rows": 20,
+            "loader": "MedicalMisspellingsLoader"
+        },
+        "medical_misspellings.csv": {
+            "status": "loaded",
+            "rows": 10928,
+            "loader": "MedicalMisspellingsLoader"
+        },
+        "misspellings.csv": {
+            "status": "loaded",
+            "rows": 10927,
+            "loader": "MedicalMisspellingsLoader"
+        },
+        "symptom_combinations.csv": {
+            "status": "loaded",
+            "rows": 7388,
+            "loader": "ClinicalTriageEngine"
+        },
+        "triage_rules.csv": {
+            "status": "loaded",
+            "rows": 821,
+            "loader": "TriageRulesLoader"
+        },
+        "triage_rules_cds.csv": {
+            "status": "loaded",
+            "rows": 836,
+            "loader": "TriageRulesLoader"
+        },
+        "medical_entities.csv": {
+            "status": "reference",
+            "rows": 5023,
+            "loader": "reference"
+        },
+        "confidence_rules.csv": {
+            "status": "reference",
+            "rows": 5,
+            "loader": "reference"
+        },
+        "clinical_reasoning_rules.csv": {
+            "status": "loaded",
+            "rows": 25,
+            "loader": "ClinicalReasoningRulesLoader"
+        },
+        "symptom_weights.csv": {
+            "status": "reference",
+            "rows": 30,
+            "loader": "reference"
+        },
+        "severity_scores.csv": {
+            "status": "reference",
+            "rows": 3,
+            "loader": "reference"
+        },
+        "chief_complaint_examples.csv": {
+            "status": "reference",
+            "rows": 10522,
+            "loader": "reference"
+        },
+        "translation_dictionary.csv": {
+            "status": "loaded",
+            "rows": 14321,
+            "loader": "MedicalDictionary \/ MedicalTranslator"
+        },
+        "medical_phrases.csv": {
+            "status": "loaded",
+            "rows": 3181,
+            "loader": "MedicalDictionary \/ MedicalTranslator"
+        },
+        "common_patient_sentences.csv": {
+            "status": "reference",
+            "rows": 10522,
+            "loader": "reference"
+        },
+        "canonical_symptom_aliases.csv": {
+            "status": "loaded",
+            "rows": 48,
+            "loader": "MedicalConceptRegistry"
+        },
+        "hiligaynon_chat_shorthand.csv": {
+            "status": "loaded",
+            "rows": 17,
+            "loader": "MedicalMisspellingsLoader"
+        },
+        "symptom_phrases.csv": {
+            "status": "reference",
+            "rows": 11855,
+            "loader": "reference"
+        },
+        "symptom_phrases_seed.csv": {
+            "status": "reference",
+            "rows": 2500,
+            "loader": "reference"
+        },
+        "condition_triage_severity.csv": {
+            "status": "reference",
+            "rows": 182,
+            "loader": "reference"
+        },
+        "symptom_knowledge_base.json": {
+            "status": "loaded",
+            "rows": 305,
+            "loader": "SymptomKnowledgeBase"
+        },
+        "red_flags_library.json": {
+            "status": "loaded",
+            "rows": 75,
+            "loader": "SymptomKnowledgeBase"
+        },
+        "clinical_context_rules.json": {
+            "status": "loaded",
+            "rows": 0,
+            "loader": "ClinicalContextReasoningEngine"
+        }
+    },
+    "gold_validation": {
+        "total": 0,
+        "correct": 0,
+        "accuracy": 0
+    },
+    "synchronization_status": {
+        "unified_vocabulary": true,
+        "canonical_aliases_file": "canonical_symptom_aliases.csv",
+        "registry_export": "medical_concepts_registry.csv",
+        "runtime_resolution": "MedicalConceptRegistry::resolve()",
+        "workflow": "complaint → language → normalize → translate → canonical concepts → entities → reasoning → classify"
+    },
+    "recommendations": []
+}

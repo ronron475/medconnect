@@ -16,14 +16,27 @@ final class TriageRulesLoader
         }
 
         self::$rules = [];
-        $path = BASE_PATH . '/data/nlp/triage_rules.csv';
+        foreach ([
+            BASE_PATH . '/data/nlp/triage_rules_cds.csv',
+            BASE_PATH . '/data/nlp/triage_rules.csv',
+        ] as $path) {
+            self::loadRulesFromCsv($path);
+        }
+
+        usort(self::$rules, static fn (array $a, array $b): int => strlen($b['hiligaynon_pattern']) <=> strlen($a['hiligaynon_pattern']));
+
+        return self::$rules;
+    }
+
+    private static function loadRulesFromCsv(string $path): void
+    {
         if (!is_readable($path)) {
-            return self::$rules;
+            return;
         }
 
         $handle = fopen($path, 'r');
         if ($handle === false) {
-            return self::$rules;
+            return;
         }
 
         $header = fgetcsv($handle);
@@ -37,6 +50,10 @@ final class TriageRulesLoader
             if ($hil === '' && $eng === '') {
                 continue;
             }
+            $status = strtolower((string) ($data['status'] ?? 'active'));
+            if ($status !== '' && $status !== 'active') {
+                continue;
+            }
             $tri = strtolower((string) ($data['triage_level'] ?? 'routine'));
             self::$rules[] = [
                 'hiligaynon_pattern' => $hil,
@@ -45,16 +62,13 @@ final class TriageRulesLoader
                 'severity'           => (string) ($data['severity'] ?? 'moderate'),
                 'medical_category'   => (string) ($data['medical_category'] ?? ''),
                 'reason'             => (string) ($data['reason'] ?? ''),
+                'source'             => basename($path),
             ];
         }
         fclose($handle);
-
-        usort(self::$rules, static fn (array $a, array $b): int => strlen($b['hiligaynon_pattern']) <=> strlen($a['hiligaynon_pattern']));
-
-        return self::$rules;
     }
 
-    /** @return array{triage_level:string,severity:string,reason:string,source:string}|null */
+    /** @return array{triage_level:string,severity:string,reason:string,source:string,pattern:string}|null */
     public static function matchTriage(string $original, string $english = ''): ?array
     {
         $hayHil = strtolower($original);
@@ -66,16 +80,18 @@ final class TriageRulesLoader
                 return [
                     'triage_level' => $rule['triage_level'],
                     'severity'     => $rule['severity'],
-                    'reason'       => $rule['reason'] !== '' ? $rule['reason'] : 'Matched triage rule: ' . $hil,
-                    'source'       => 'triage_rules.csv',
+                    'reason'       => $rule['reason'] !== '' ? $rule['reason'] : 'Matched CDS rule: ' . $hil,
+                    'source'       => (string) ($rule['source'] ?? 'triage_rules.csv'),
+                    'pattern'      => $hil,
                 ];
             }
             if ($eng !== '' && str_contains($hayEng, $eng)) {
                 return [
                     'triage_level' => $rule['triage_level'],
                     'severity'     => $rule['severity'],
-                    'reason'       => $rule['reason'] !== '' ? $rule['reason'] : 'Matched triage rule: ' . $eng,
-                    'source'       => 'triage_rules.csv',
+                    'reason'       => $rule['reason'] !== '' ? $rule['reason'] : 'Matched CDS rule: ' . $eng,
+                    'source'       => (string) ($rule['source'] ?? 'triage_rules.csv'),
+                    'pattern'      => $eng,
                 ];
             }
         }

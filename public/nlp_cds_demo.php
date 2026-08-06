@@ -68,6 +68,7 @@ $assetBase = ASSET_BASE;
         <button type="button" class="cds-chip" data-text="Hirap akong huminga.">Hirap huminga (FIL)</button>
         <button type="button" class="cds-chip" data-text="My left arm suddenly became weak and I cannot speak properly.">Stroke signs (EN)</button>
         <button type="button" class="cds-chip" data-text="I fainted.">Fainted (EN)</button>
+        <button type="button" class="cds-chip" data-text="putol ang kamot ko">Hand cut off (HIL)</button>
       </div>
 
       <h3 class="cds-samples__level">Contextual reasoning</h3>

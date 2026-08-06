@@ -79,14 +79,38 @@
     if (typeof duration === 'string') return duration;
     if (typeof duration === 'object') {
       const parts = [];
+      if (duration.label) parts.push(duration.label);
       if (duration.value != null && duration.unit) {
         parts.push(duration.value + ' ' + duration.unit);
       }
       if (duration.text) parts.push(duration.text);
       if (duration.normalized) parts.push('(' + duration.normalized + ')');
-      return parts.length ? parts.join(' ') : JSON.stringify(duration);
+      return parts.length ? parts.join(' ') : 'Detected';
     }
     return String(duration);
+  }
+
+  function formatPainTemp(pain, temp) {
+    function fmtPain(p) {
+      if (!p) return 'Pain: n/a';
+      if (typeof p === 'string' || typeof p === 'number') return 'Pain ' + p + '/10';
+      if (typeof p === 'object') {
+        if (p.label) return 'Pain: ' + p.label;
+        if (p.score != null) return 'Pain ' + p.score + '/10';
+        if (p.band) return 'Pain: ' + p.band;
+      }
+      return 'Pain: detected';
+    }
+    function fmtTemp(t) {
+      if (!t) return 'Temp: n/a';
+      if (typeof t === 'string' || typeof t === 'number') return 'Temp ' + t;
+      if (typeof t === 'object') {
+        if (t.label) return 'Temp: ' + t.label;
+        if (t.value != null) return 'Temp ' + t.value;
+      }
+      return 'Temp: detected';
+    }
+    return fmtPain(pain) + ' · ' + fmtTemp(temp);
   }
 
   async function refreshServiceStatus() {
@@ -102,18 +126,14 @@
 
       if (online) {
         serviceStatusEl.innerHTML =
-          '<div class="cds-status-line"><strong>Python AI service online</strong> — preferred engine for translation + CDS.</div>' +
-          '<div class="cds-status-line cds-status-line--muted">Port ' +
+          '<div class="cds-status-line"><strong>PHP rule-based CDS engine active</strong> — primary triage path (no Python required).</div>' +
+          '<div class="cds-status-line cds-status-line--muted">Python AI service also online on port ' +
           escapeHtml(d.port || 8765) +
-          ' · Groq: ' +
-          escapeHtml(d.groq || 'unknown') +
-          '</div>';
+          ' (reference only; CDS uses PHP NLP).</div>';
       } else {
         serviceStatusEl.innerHTML =
-          '<div class="cds-status-line"><strong>Python AI offline</strong> — triage still runs via PHP fallback engine.</div>' +
-          '<div class="cds-status-line cds-status-line--muted">Reason: ' +
-          escapeHtml(d.reason || d.message || 'Service not reachable') +
-          '</div>';
+          '<div class="cds-status-line"><strong>PHP rule-based CDS engine active</strong> — full triage via PHP NLP.</div>' +
+          '<div class="cds-status-line cds-status-line--muted">Python AI offline (not required for CDS triage).</div>';
       }
     } catch (e) {
       serviceStatusEl.hidden = false;
@@ -178,7 +198,7 @@
       '</p></div>' +
       '<div class="cds-card"><p class="cds-card__label">Engine</p><p class="cds-card__value">' +
       escapeHtml(engine) +
-      (serviceUsed ? ' (Python)' : ' (PHP fallback)') +
+      (serviceUsed ? ' (Python — not used for CDS)' : ' (PHP rule-based)') +
       '</p></div>' +
       '<div class="cds-card"><p class="cds-card__label">Severity score</p><p class="cds-card__value">' +
       escapeHtml(summary.severity_score != null ? summary.severity_score : triage.severity_score || 0) +
@@ -187,11 +207,7 @@
       escapeHtml(formatDuration(triage.duration)) +
       '</p></div>' +
       '<div class="cds-card"><p class="cds-card__label">Pain / Temp</p><p class="cds-card__value">' +
-      escapeHtml(
-        (triage.pain_scale != null ? 'Pain ' + triage.pain_scale + '/10' : 'Pain: n/a') +
-          ' · ' +
-          (triage.temperature != null ? 'Temp ' + triage.temperature : 'Temp: n/a')
-      ) +
+      escapeHtml(formatPainTemp(triage.pain_scale, triage.temperature)) +
       '</p></div>' +
       '</div>' +
       '<h3 class="cds-section-title">Detected symptoms</h3>' +
@@ -219,6 +235,9 @@
           escapeHtml(assessment.english_translation) +
           '</p>'
         : '') +
+      '<details class="cds-json-toggle"><summary>Pipeline debug trace</summary><pre class="cds-json">' +
+      escapeHtml(JSON.stringify(payload.pipeline_debug || assessment.pipeline_debug || null, null, 2)) +
+      '</pre></details>' +
       '<details class="cds-json-toggle"><summary>Raw JSON response</summary><pre class="cds-json">' +
       escapeHtml(JSON.stringify(payload, null, 2)) +
       '</pre></details>';
@@ -241,6 +260,7 @@
     try {
       const body = new FormData();
       body.append('chief_complaint', text);
+      body.append('debug', '1');
 
       const res = await fetch(apiUrl, { method: 'POST', body: body });
       const json = await res.json();

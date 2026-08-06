@@ -89,6 +89,7 @@ final class ClinicalTriageEngine
         // Negation: never keep denied/negated symptoms
         $kbSymptoms = NegationDetector::filterSymptoms($kbSymptoms, $original, $english);
         $kbSymptoms = self::filterContextualSymptomMatches($kbSymptoms, $original, $english, $features);
+        $kbSymptoms = self::enrichTraumaSymptoms($kbSymptoms, $original, $english);
 
         $detectedNames = array_values(array_filter(array_map(
             static fn (array $s): string => (string) ($s['symptom_name'] ?? ''),
@@ -130,6 +131,7 @@ final class ClinicalTriageEngine
             $english
         );
         $redFlags = array_merge($redFlags, self::scanBreathingEmergencyPatterns($original, $english));
+        $redFlags = array_merge($redFlags, self::scanTraumaEmergencyPatterns($original, $english, $normalizedBase));
         $redFlags = ClinicalContextReasoningEngine::filterContextGatedRedFlags($redFlags, $original, $english, $kbSymptoms);
 
         NlpPipelineDebug::step('entity_extraction', [
@@ -140,7 +142,11 @@ final class ClinicalTriageEngine
         ]);
         [$severityScore, $factors] = self::scoreFromKb($kbSymptoms, $features, $redFlags, $original, $english);
         [$severityScore, $factors] = self::applySymptomCombinations($kbSymptoms, $features, $severityScore, $factors, $redFlags);
+        [$severityScore, $factors, $cdsDisplay] = self::applyCdsTriageRules($rawInput, $english, $severityScore, $factors);
         $preliminaryDisplay = self::classify($severityScore, $redFlags, $kbSymptoms, true);
+        if ($cdsDisplay !== null && $redFlags === []) {
+            $preliminaryDisplay = self::maxDisplay($preliminaryDisplay, $cdsDisplay);
+        }
 
         $context = ClinicalContextReasoningEngine::apply(
             $original,
@@ -416,6 +422,17 @@ final class ClinicalTriageEngine
         $flags = array_merge($flags, self::scanEmergencyRedFlagsCsv($haystack, $english));
         $csvFlags = EmergencyFlagsLoader::scanEmergencyFlags($haystack, $english);
         $seen = [];
+        $deduped = [];
+        foreach ($flags as $f) {
+            $name = strtolower((string) (($f['flag_name'] ?? '') ?: ($f['english_pattern'] ?? '')));
+            if ($name === '' || isset($seen[$name])) {
+                continue;
+            }
+            $seen[$name] = true;
+            $deduped[] = $f;
+        }
+        $flags = $deduped;
+        $seen = array_fill_keys(array_keys($seen), true);
         foreach ($flags as $f) {
             $seen[strtolower((string) ($f['flag_name'] ?? ''))] = true;
         }
@@ -452,6 +469,56 @@ final class ClinicalTriageEngine
         }
 
         return str_contains($hay, $pattern);
+    }
+
+    /**
+     * Add trauma-specific symptoms when cut/amputation/wound patterns are present.
+     *
+     * @param list<array<string, mixed>> $kbSymptoms
+     * @return list<array<string, mixed>>
+     */
+    private static function enrichTraumaSymptoms(array $kbSymptoms, string $original, string $english): array
+    {
+        $hay = strtolower(trim($original . ' ' . $english));
+        if ($hay === '') {
+            return $kbSymptoms;
+        }
+
+        $names = array_map(static fn (array $s): string => strtolower((string) ($s['symptom_name'] ?? '')), $kbSymptoms);
+        $hasMild = (bool) preg_match('/\b(gamay|maliit|minor|mild|slight|superficial|small)\b/u', $hay);
+        $hasSevere = (bool) preg_match('/\b(?:na)?putol|nautod|naputol|grabe|dako|malalom|severe|nagdugo gid\b/u', $hay);
+
+        $add = static function (string $id, string $name, int $weight) use (&$kbSymptoms, &$names): void {
+            if (in_array(strtolower($name), $names, true)) {
+                return;
+            }
+            $kbSymptoms[] = [
+                'id'               => $id,
+                'symptom_name'     => $name,
+                'medical_category' => 'trauma',
+                'severity_weight'   => $weight,
+                'emergency_weight' => $weight >= 10 ? 10 : 0,
+                'urgent_weight'    => $weight >= 6 ? 6 : 0,
+                'danger_sign'      => $weight >= 10,
+                'matched_term'     => 'trauma_context',
+            ];
+            $names[] = strtolower($name);
+        };
+
+        if (preg_match('/\b(?:na)?putol|nautod|naputol|cut off|amputation|severed\b/u', $hay)) {
+            $add('amputation', 'Amputation', 12);
+            $add('laceration', 'Laceration', 8);
+        } elseif (preg_match('/\b(?:grabe|dako|malalom|severe)\s+(?:pilas|wound|cut)\b/u', $hay)) {
+            $add('deep_laceration', 'Deep Laceration', 10);
+        } elseif (preg_match('/\bpilas\b|\bwound\b|\blaceration\b/u', $hay)) {
+            $add('laceration', 'Laceration', $hasMild && !$hasSevere ? 2 : 6);
+        }
+
+        if (preg_match('/\b(?:nagdugo|gadugo|nagadugo|bleeding)\b/u', $hay)) {
+            $add('bleeding', 'Bleeding', 8);
+        }
+
+        return $kbSymptoms;
     }
 
     /**
@@ -561,6 +628,94 @@ final class ClinicalTriageEngine
         }
 
         return $matched;
+    }
+
+    /** @return list<array<string, mixed>> */
+    private static function scanTraumaEmergencyPatterns(string $original, string $english, string $preCorrection = ''): array
+    {
+        $hay = strtolower(trim(implode(' ', array_filter([$preCorrection, $original, $english]))));
+        if ($hay === '') {
+            return [];
+        }
+
+        $traumaPatterns = [
+            '/\bnautod\b/u' => ['Amputation', 'Amputation reported — emergency hemorrhage control required'],
+            '/\b(?:na)?putol\s+ang\s+(?:akon\s+)?(?:sang\s+)?(kamot|kamay|tudlo|daliri|tiil|paa)\b/u' => ['Amputation', 'Severed body part — emergency care required'],
+            '/\b(?:na)?putol\s+(?:ang\s+)?(?:akon\s+)?(kamot|kamay|tudlo|daliri|tiil)\b/u' => ['Amputation', 'Cut-off injury — evaluate for amputation and bleeding'],
+            '/\bnaputol\s+(?:ang\s+)?(kamot|kamay|tudlo|daliri)\b/u' => ['Amputation', 'Severed digit or limb — emergency care'],
+            '/\b(?:nagdugo|gadugo|nagadugo)\s+gid\s+.*\b(kamot|tiil|tudlo)\b/u' => ['Severe Bleeding', 'Uncontrolled bleeding from extremity'],
+            '/\b(?:grabe|dako|malalom)\s+pilas\b/u' => ['Deep Laceration', 'Deep wound requiring urgent evaluation'],
+        ];
+
+        $matched = [];
+        foreach ($traumaPatterns as $pattern => [$name, $rationale]) {
+            if (preg_match($pattern, $hay)) {
+                $matched[] = [
+                    'flag_id'            => 'TRAUMA_' . strtoupper(substr(md5($pattern), 0, 8)),
+                    'flag_name'          => $name,
+                    'category'           => 'trauma',
+                    'auto_triage'        => 'EMERGENCY',
+                    'severity_points'    => 15,
+                    'clinical_rationale' => $rationale,
+                    'matched_on'         => $hay,
+                    'matched_pattern'    => $pattern,
+                    'english_pattern'    => $name,
+                    'source'             => 'trauma_pattern_scan',
+                ];
+                break;
+            }
+        }
+
+        // Mild wound qualifiers downgrade — superficial cut without severe indicators
+        if ($matched !== [] && preg_match('/\b(gamay|minor|maliit|mild|slight|superficial)\b/u', $hay)
+            && !preg_match('/\b(?:na)?putol|nautod|naputol|nagdugo gid|grabe pilas\b/u', $hay)) {
+            return [];
+        }
+
+        return $matched;
+    }
+
+    /**
+     * @param array<string, mixed> $factors
+     * @return array{0:int,1:array<string,mixed>,2:?string}
+     */
+    private static function applyCdsTriageRules(string $original, string $english, int $score, array $factors): array
+    {
+        $match = TriageRulesLoader::matchTriage($original, $english);
+        if ($match === null) {
+            return [$score, $factors, null];
+        }
+
+        NlpPipelineDebug::step('cds_rule_match', $match);
+
+        $level = strtoupper((string) ($match['triage_level'] ?? ''));
+        $display = match ($level) {
+            'EMERGENCY', 'CRITICAL' => 'EMERGENCY',
+            'HIGH', 'URGENT' => 'URGENT',
+            default => 'NON-URGENT',
+        };
+        $pts = match ($display) {
+            'EMERGENCY' => 15,
+            'URGENT' => 8,
+            default => 2,
+        };
+        $score = max($score, $pts);
+        $factors['cds_rule'] = (string) ($match['pattern'] ?? '');
+        $factors['cds_rule_source'] = (string) ($match['source'] ?? '');
+        $factors['score_contributions'][] = [
+            'factor' => 'CDS rule (' . ($match['pattern'] ?? '') . ')',
+            'points' => $pts,
+            'type'   => 'cds_rule',
+        ];
+
+        return [$score, $factors, $display];
+    }
+
+    private static function maxDisplay(string $a, string $b): string
+    {
+        $rank = ['NON-URGENT' => 1, 'URGENT' => 2, 'EMERGENCY' => 3];
+
+        return ($rank[$b] ?? 0) >= ($rank[$a] ?? 0) ? $b : $a;
     }
 
     /** @return list<array<string, mixed>> */
