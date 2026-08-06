@@ -44,14 +44,18 @@ final class HiligaynonMedicalNlpPipeline
      */
     public static function analyze(string $text): array
     {
+        NlpPipelineDebug::enable();
+        NlpPipelineDebug::reset();
         $text = trim($text);
         if ($text === '') {
             return self::emptyResult();
         }
 
+        NlpPipelineDebug::step('detect_language', ['input' => $text]);
         $language = HiligaynonLanguageDetector::detect($text);
         $normalized = HiligaynonTextNormalizer::normalize($text);
         $phraseVariants = HiligaynonTextNormalizer::phraseVariants($text);
+        NlpPipelineDebug::step('normalize_text', ['normalized' => $normalized, 'variants' => $phraseVariants]);
 
         $phraseTranslation = null;
         foreach ($phraseVariants as $variant) {
@@ -148,7 +152,7 @@ final class HiligaynonMedicalNlpPipeline
         $invalidCount = (int) ($datasetValidation['invalid_count'] ?? 0);
         $totalCount = (int) ($datasetValidation['total_count'] ?? 0);
 
-        return [
+        $output = [
             'workflow' => [
                 'version'  => self::VERSION,
                 'steps'    => self::PIPELINE_STEPS,
@@ -183,6 +187,9 @@ final class HiligaynonMedicalNlpPipeline
             'dictionary'              => MedicalDictionary::stats(),
             'engine'                  => 'php-hiligaynon-nlp-v3',
         ];
+        NlpPipelineDebug::attach($output);
+
+        return $output;
     }
 
     /**

@@ -65,6 +65,22 @@ final class ClinicalFeatureExtractors
             return ['raw' => $m[0], 'label' => 'Just started', 'bucket' => 'acute_hours', 'days' => null, 'hours' => 1];
         }
 
+        foreach (NlpFeaturePatternsLoader::patterns()['duration'] ?? [] as $row) {
+            $pattern = (string) ($row['pattern'] ?? '');
+            if ($pattern !== '' && str_contains($low, $pattern)) {
+                $days = ($row['days'] ?? '') !== '' ? (int) $row['days'] : null;
+                $bucket = (string) ($row['bucket'] ?? 'unknown');
+
+                return [
+                    'raw'   => $pattern,
+                    'label' => ucfirst($pattern),
+                    'bucket'=> $bucket,
+                    'days'  => $days,
+                    'hours' => null,
+                ];
+            }
+        }
+
         return ['raw' => '', 'label' => '', 'bucket' => 'unknown', 'days' => null, 'hours' => null];
     }
 
@@ -92,6 +108,16 @@ final class ClinicalFeatureExtractors
                 $score = 5;
             } elseif (preg_match('/\b(mild|gamay|slight)\b/u', $low)) {
                 $score = 2;
+            }
+        }
+
+        if ($score === null) {
+            foreach (NlpFeaturePatternsLoader::patterns()['pain_scale'] ?? [] as $row) {
+                $pattern = (string) ($row['pattern'] ?? '');
+                if ($pattern !== '' && str_contains($low, $pattern)) {
+                    $score = (int) ($row['pain_score'] ?? 0);
+                    break;
+                }
             }
         }
 
@@ -145,6 +171,21 @@ final class ClinicalFeatureExtractors
             return ['celsius' => $celsius, 'band' => 'low_grade', 'label' => "Temperature {$celsius}°C (Low-grade)", 'modifier_key' => 'low_grade'];
         }
 
+        foreach (NlpFeaturePatternsLoader::patterns()['temperature'] ?? [] as $row) {
+            $pattern = (string) ($row['pattern'] ?? '');
+            if ($pattern !== '' && str_contains($low, $pattern)) {
+                $band = (string) ($row['band'] ?? '');
+                $celsiusVal = ($row['celsius'] ?? '') !== '' ? (float) $row['celsius'] : null;
+
+                return [
+                    'celsius'      => $celsiusVal,
+                    'band'         => $band,
+                    'label'        => ucfirst($pattern),
+                    'modifier_key' => $band !== '' ? $band : '',
+                ];
+            }
+        }
+
         return ['celsius' => $celsius, 'band' => 'normal', 'label' => "Temperature {$celsius}°C", 'modifier_key' => ''];
     }
 
@@ -189,6 +230,25 @@ final class ClinicalFeatureExtractors
             }
             if (!$has) {
                 $found[] = ['id' => 'senior', 'label' => 'Senior Citizen'];
+            }
+        }
+
+        foreach (NlpFeaturePatternsLoader::patterns()['risk_factors'] ?? [] as $row) {
+            $pattern = (string) ($row['pattern'] ?? '');
+            $label = (string) ($row['label'] ?? '');
+            if ($pattern === '' || $label === '' || !str_contains($hay, $pattern)) {
+                continue;
+            }
+            $id = strtolower(str_replace(' ', '_', $label));
+            $exists = false;
+            foreach ($found as $f) {
+                if (($f['id'] ?? '') === $id) {
+                    $exists = true;
+                    break;
+                }
+            }
+            if (!$exists) {
+                $found[] = ['id' => $id, 'label' => ucwords($label)];
             }
         }
 

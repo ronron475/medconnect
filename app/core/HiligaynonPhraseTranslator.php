@@ -272,7 +272,8 @@ final class HiligaynonPhraseTranslator
             return self::formatResult('fatigue', 'fatigue', 'symptom', 'body', 'contextual_fatigue');
         }
 
-        if (preg_match('/\bindi ko kaginhawa\b|\bindi ko makaginhawa\b/u', $normalized)) {
+        if (preg_match('/\bindi ko kaginhawa\b|\bindi ko makaginhawa\b/u', $normalized)
+            || preg_match('/\b(indi|dili|wala).{0,25}(kaginhawa|makaginhawa)\b/u', $normalized)) {
             return self::formatResult(
                 'cannot breathe',
                 'respiratory distress',

@@ -46,6 +46,7 @@ final class HiligaynonTextNormalizer
             return '';
         }
 
+        $text = self::normalizeChatShorthand($text);
         $text = preg_replace('/[^a-z0-9\s\-]/u', ' ', $text) ?? $text;
         $text = preg_replace('/\s+/u', ' ', $text) ?? $text;
         $text = trim($text);
@@ -56,6 +57,38 @@ final class HiligaynonTextNormalizer
         $text = self::collapseFillers($text);
 
         return trim(preg_replace('/\s+/u', ' ', $text) ?? $text);
+    }
+
+    /**
+     * Expand Hiligaynon/Filipino chat shorthand before entity extraction.
+     */
+    private static function normalizeChatShorthand(string $text): string
+    {
+        $patterns = [
+            '/\bsakit\s+kag\s+d\s+nko\s+kaginhawa\b/u' => 'sakit kag indi ko kaginhawa',
+            '/\bsakit\s+kag\s+d\s+nako\s+kaginhawa\b/u' => 'sakit kag indi ko kaginhawa',
+            '/\bd\s+nko\s+kaginhawa\b/u'               => 'indi ko kaginhawa',
+            '/\bd\s+nako\s+kaginhawa\b/u'              => 'indi ko kaginhawa',
+            '/\bd\s+nko\b/u'                           => 'indi ko',
+            '/\bd\s+nako\b/u'                          => 'indi ko',
+            '/\bd\s+ko\b/u'                            => 'indi ko',
+            '/\bdko\b/u'                               => 'indi ko',
+            '/\bdli\s+ko\b/u'                          => 'dili ko',
+            '/\bdli\s+nako\b/u'                        => 'dili nako',
+            '/\bwla\s+ko\b/u'                          => 'wala ko',
+            '/\bwla\b/u'                               => 'wala',
+            '/\bkaginahawa\b/u'                        => 'kaginhawa',
+            '/\bginhwa+\b/u'                           => 'ginhawa',
+            '/\bbudlay\s+ginhwa\b/u'                   => 'budlay ginhawa',
+            '/\bmasakit\s+dughan\b/u'                  => 'chest pain',
+            '/\bmasakit\s+dibdib\b/u'                  => 'chest pain',
+        ];
+
+        foreach ($patterns as $pattern => $replacement) {
+            $text = preg_replace($pattern, $replacement, $text) ?? $text;
+        }
+
+        return $text;
     }
 
     /**

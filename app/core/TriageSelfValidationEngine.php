@@ -48,7 +48,9 @@ final class TriageSelfValidationEngine
         '/\b((chest pain|masakit dughan|masakit dibdib).{0,80}(breath|breathing|sweat|dizzy|radiat|collapse|severe|grabe|8\/10|9\/10|10\/10))\b/u',
         '/\b(difficulty breathing|cannot breathe|shortness of breath|unconscious|seizure|stroke|vomiting blood|coughing blood|severe bleeding|anaphylaxis|poisoning)\b/u',
         '/\b(arm (suddenly )?(became )?weak|cannot speak|slurred speech|one[- ]sided weakness|facial droop)\b/u',
-        '/\b(budlay ginhawa|indi makaginhawa|may dugo sa suka|naguyam|nadulaan malay)\b/u',
+        '/\b(budlay ginhawa|indi makaginhawa|indi ko kaginhawa|indi ko makaginhawa|may dugo sa suka|naguyam|nadulaan malay)\b/u',
+        '/\b(indi|dili|wala).{0,25}(kaginhawa|makaginhawa|ginhawa)\b/u',
+        '/\b(i can\'?t breathe|cannot breathe|unable to breathe)\b/u',
         '/\b(hirap huminga|hirap akong huminga|nagsusuka ng dugo|nawalan ng malay)\b/u',
         '/\b(swollen tongue|throat swelling|lip swelling|cannot swallow|airway)\b/u',
     ];
@@ -104,7 +106,7 @@ final class TriageSelfValidationEngine
             'temperature_rules_applied'   => $temp !== '' || !self::mentionsTemperature($hay),
             'pain_scale_rules_applied'    => $pain !== '' || !self::mentionsPainScale($hay),
             'risk_factors_considered'     => $risks !== [] || !self::mentionsRisk($hay),
-            'chronic_disease_detected'    => self::mentionsChronic($hay) === ($risks !== [] || !self::mentionsChronic($hay)),
+            'chronic_disease_detected'    => !self::mentionsChronic($hay) || $risks !== [],
             'pregnancy_detected'          => !preg_match('/\b(pregnant|buntis|buntis ako)\b/u', $hay)
                 || preg_match('/\bpregnan|buntis|pregnancy\b/ui', implode(' ', $risks) . ' ' . implode(' ', $symptoms)),
             'emergency_red_flags_checked' => true, // always scanned in engine
@@ -217,10 +219,11 @@ final class TriageSelfValidationEngine
         if ($redFlags !== []) {
             return 'emergency_red_flags';
         }
-        if (preg_match('/\b(choking|airway|cannot breathe|indi makaginhawa)\b/u', $hay)) {
+        if (preg_match('/\b(choking|airway|cannot breathe|indi makaginhawa|indi ko kaginhawa|indi ko makaginhawa)\b/u', $hay)) {
             return 'airway';
         }
-        if (preg_match('/\b(difficulty breathing|shortness of breath|budlay ginhawa|hirap huminga)\b/u', $hay)) {
+        if (preg_match('/\b(difficulty breathing|shortness of breath|budlay ginhawa|hirap huminga|unable to breathe)\b/u', $hay)
+            || preg_match('/\b(indi|dili|wala).{0,25}(kaginhawa|makaginhawa|ginhawa)\b/u', $hay)) {
             return 'breathing';
         }
         if (preg_match('/\b((chest pain|masakit dughan|masakit dibdib).{0,80}(breath|sweat|dizzy|radiat|collapse|severe|grabe))\b/u', $hay)) {

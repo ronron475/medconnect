@@ -24,3 +24,7 @@ GOLD0022,Kailangan ko ng refill ng gamot.,NON-URGENT,filipino,non_urgent,active
 GOLD0023,May sipon at ubo ako.,NON-URGENT,filipino,non_urgent,active
 GOLD0024,I have fevr for 5 days.,URGENT,english,misspelled,active
 GOLD0025,Budlay ginhwa ko.,EMERGENCY,hiligaynon,misspelled,active
+GOLD0026,sakit kag d nko kaginhawa,EMERGENCY,hiligaynon,chat_shorthand,active
+GOLD0027,I can't breathe,EMERGENCY,english,emergency,active
+GOLD0028,medicine refill,NON-URGENT,english,admin,active
+GOLD0029,chest pain with difficulty breathing,EMERGENCY,english,emergency,active
