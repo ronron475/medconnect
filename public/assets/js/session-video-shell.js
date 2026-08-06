@@ -190,7 +190,7 @@
         const action = btn.getAttribute('data-shell-action');
         if (action === 'mute') postToFrame({ type: 'medconnect:shell-toggle-audio' });
         if (action === 'camera') postToFrame({ type: 'medconnect:shell-toggle-video' });
-        if (action === 'end') postToFrame({ type: 'medconnect:shell-end-call' });
+        if (action === 'end') postToFrame({ type: 'medconnect:shell-leave-fast' });
       });
     });
   }
@@ -202,7 +202,10 @@
     if (!shell || !frame || !token) return false;
 
     const url = roomUrl(token, true);
-    frame.src = url;
+    const alreadySame = frame.src && frame.src.indexOf('token=' + encodeURIComponent(token)) >= 0;
+    if (!options.skipReload || !alreadySame || frame.src === 'about:blank' || !frame.src) {
+      frame.src = url;
+    }
 
     writeState({
       token: token,
@@ -282,7 +285,13 @@
     if (isVideoRoomPage()) return;
     const st = readState();
     if (!st || !st.token) return;
-    open(st.token, st.consultationId, { mode: st.mode || 'pip', label: st.label });
+    const frame = frameEl();
+    const alreadyLoaded = frame && frame.src && frame.src.indexOf(st.token) >= 0 && frame.src !== 'about:blank';
+    open(st.token, st.consultationId, {
+      mode: st.mode || 'pip',
+      label: st.label,
+      skipReload: alreadyLoaded,
+    });
   }
 
   function handleMessage(event) {

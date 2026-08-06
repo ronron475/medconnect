@@ -209,11 +209,14 @@ if (session_status() === PHP_SESSION_ACTIVE) {
   <script src="<?= ASSET_BASE ?>/assets/js/video-room-enhancements.js?v=<?= $videoEnhJsVer ?>"></script>
   <style>
     body { margin:0; background:#0b1220; color:#fff; height:100vh; overflow:hidden; }
-    body:not(.media-ready) .mc-vc-controls { display: none; }
+    body:not(.media-ready) .mc-vc-controls { display: none !important; }
+    body:not(.media-ready) .mc-vc-header,
+    body:not(.media-ready) .mc-vc-status-bar,
+    body:not(.media-ready) .mc-vc-panel-toggle { display: none !important; }
     .end-modal {
       position: fixed;
       inset: 0;
-      z-index: 3000;
+      z-index: 100100;
       display: none;
       align-items: center;
       justify-content: center;
@@ -274,6 +277,11 @@ if (session_status() === PHP_SESSION_ACTIVE) {
         min-height: 48px;
         font-size: 16px;
         width: 100%;
+      }
+      .media-permission-actions .media-permission-leave {
+        background: transparent;
+        color: #fca5a5;
+        border-color: rgba(248, 113, 113, 0.45);
       }
       .media-permission-actions {
         flex-direction: column;
@@ -437,6 +445,11 @@ if (session_status() === PHP_SESSION_ACTIVE) {
       color: #e2e8f0;
       border: 1px solid rgba(148, 163, 184, 0.25);
     }
+    .media-permission-actions .media-permission-leave {
+      background: transparent;
+      color: #fca5a5;
+      border: 1px solid rgba(248, 113, 113, 0.4);
+    }
     .media-permission-actions button:disabled { opacity: .65; cursor: not-allowed; }
     #extensionPrompt {
       display: none;
@@ -482,11 +495,12 @@ if (session_status() === PHP_SESSION_ACTIVE) {
       <p class="media-permission-copy">Tap the button below, then choose <strong>Allow</strong> when your browser asks. This is required to join the video consultation.</p>
       <div id="secureContextWarning" class="media-permission-warn" style="display:none;"></div>
       <div id="mediaPermissionError" class="media-permission-error" role="alert"></div>
-      <div id="mediaPermissionStatus" class="media-permission-status">Waiting for you to allow accessâ€¦</div>
+      <div id="mediaPermissionStatus" class="media-permission-status">Waiting for you to allow access&hellip;</div>
       <div class="media-permission-actions">
         <button type="button" class="primary" id="btnAllowBoth">Allow camera &amp; microphone</button>
         <button type="button" class="secondary" id="btnAllowAudio">Join with audio only</button>
         <button type="button" class="secondary" id="btnRetryMedia" style="display:none;">Try again</button>
+        <button type="button" class="secondary media-permission-leave" id="btnLeaveFromGate">Leave consultation</button>
       </div>
     </div>
   </div>
@@ -936,7 +950,7 @@ if (session_status() === PHP_SESSION_ACTIVE) {
       announceDemoPeer();
       openDataChannel();
       if (!localStream) {
-        setPermissionStatus('Connected â€” tap below to allow camera and microphone.');
+        setPermissionStatus('Connected - tap below to allow camera and microphone.');
         setCallPhase(window.McVideoCallCore ? window.McVideoCallCore.STATUS.PERMISSION : 'permission', {
           callStatusText: 'Allow camera & microphone to join',
         });
@@ -1365,6 +1379,15 @@ if (session_status() === PHP_SESSION_ACTIVE) {
       const gate = document.getElementById('mediaPermissionGate');
       if (gate) gate.classList.add('is-hidden');
       document.body.classList.add('media-ready');
+      startBackgroundSync();
+    }
+
+    let backgroundSyncStarted = false;
+    function startBackgroundSync() {
+      if (backgroundSyncStarted) return;
+      backgroundSyncStarted = true;
+      syncTimerFromServer();
+      pingSessionKeepAlive();
     }
 
     function showMediaPermissionGate() {
@@ -1491,6 +1514,10 @@ if (session_status() === PHP_SESSION_ACTIVE) {
         setPermissionStatus('Tap a button below to request access again.');
         refreshPermissionHints();
       });
+      const leaveGateBtn = document.getElementById('btnLeaveFromGate');
+      if (leaveGateBtn) {
+        leaveGateBtn.addEventListener('click', () => leaveCallFast());
+      }
     }
 
     const embeddedInSession = window.parent && window.parent !== window;
@@ -2066,10 +2093,19 @@ if (session_status() === PHP_SESSION_ACTIVE) {
     }
 
     async function leaveCallConfirmed() {
-      if (endingCall) return;
+      if (endingCall) {
+        if (window.parent && window.parent !== window) {
+          window.parent.postMessage({ type: 'medconnect:call-left', role: userRole, token: roomToken }, window.location.origin);
+        }
+        return;
+      }
       endingCall = true;
-      document.getElementById('endCallBtn').disabled = true;
-      document.getElementById('confirmEndBtn').disabled = true;
+      const endBtn = document.getElementById('endCallBtn');
+      const confirmBtn = document.getElementById('confirmEndBtn');
+      if (endBtn) endBtn.disabled = true;
+      if (confirmBtn) confirmBtn.disabled = true;
+      closeEndModal();
+      hideMediaPermissionGate();
       disconnectLocalCall();
 
       if (window.parent && window.parent !== window) {
@@ -2080,14 +2116,33 @@ if (session_status() === PHP_SESSION_ACTIVE) {
       window.location.href = '../patient/consultations.php';
     }
 
-    async function endCall(skipConfirm = false) {
-      if (!skipConfirm) {
-        showEndModal();
+    async function leaveCallFast() {
+      closeEndModal();
+      if (isPatient) {
+        await leaveCallConfirmed();
         return;
       }
+      if (!localStream && !currentCall) {
+        endingCall = false;
+        if (window.parent && window.parent !== window) {
+          window.parent.postMessage({ type: 'medconnect:call-left', role: userRole, token: roomToken }, window.location.origin);
+          return;
+        }
+      }
+      await endCall(true);
+    }
+
+    async function endCall(skipConfirm = false) {
+      const gateEl = document.getElementById('mediaPermissionGate');
+      const gateOpen = gateEl && !gateEl.classList.contains('is-hidden');
 
       if (isPatient) {
         await leaveCallConfirmed();
+        return;
+      }
+
+      if (!skipConfirm && !gateOpen) {
+        showEndModal();
         return;
       }
 
@@ -2169,6 +2224,10 @@ if (session_status() === PHP_SESSION_ACTIVE) {
         } else {
           applyExtension(event.data.extension_mins || 15, event.data.new_end_label || '');
         }
+        return;
+      }
+      if (event.data.type === 'medconnect:shell-leave-fast' || event.data.type === 'medconnect:shell-end-call') {
+        leaveCallFast();
       }
     });
 
@@ -2202,15 +2261,14 @@ if (session_status() === PHP_SESSION_ACTIVE) {
     }
 
     setInterval(syncTimerFromServer, 20000);
-    syncTimerFromServer();
     setInterval(pingSessionKeepAlive, 45000);
-    pingSessionKeepAlive();
     bindMediaPermissionButtons();
     setupSessionNavigationUi();
     initConsultationUi();
     window.toggleAudio = toggleAudio;
     window.toggleVideo = toggleVideo;
     window.endCall = endCall;
+    window.leaveCallFast = leaveCallFast;
     dismissBootLoader();
     setupDemoBus();
     if (!demoMode) {
