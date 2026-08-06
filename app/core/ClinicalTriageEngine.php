@@ -40,8 +40,12 @@ final class ClinicalTriageEngine
         $rawInput = trim($originalText);
         $original = $rawInput;
         $english = trim($englishText);
-        // Spelling / abbreviation normalization (CSV-expandable)
-        $correctedOriginal = MedicalMisspellingsLoader::applyCorrections($original);
+
+        NlpPipelineDebug::step('input_received', ['raw' => $rawInput]);
+
+        // Normalize slang/chat shorthand, then spelling / abbreviation corrections
+        $normalizedBase = HiligaynonTextNormalizer::normalize($rawInput);
+        $correctedOriginal = MedicalMisspellingsLoader::applyCorrections($normalizedBase !== '' ? $normalizedBase : $rawInput);
         $correctedEnglish = MedicalMisspellingsLoader::applyCorrections($english !== '' ? $english : $correctedOriginal);
         if ($correctedOriginal !== '') {
             $original = $correctedOriginal;
@@ -49,6 +53,12 @@ final class ClinicalTriageEngine
         if ($correctedEnglish !== '') {
             $english = $correctedEnglish;
         }
+
+        NlpPipelineDebug::step('normalization', [
+            'normalized_base' => $normalizedBase,
+            'corrected_text'  => $original,
+            'english'         => $english,
+        ]);
         $detectedLanguage = class_exists('HiligaynonLanguageDetector')
             ? (string) (HiligaynonLanguageDetector::detect($rawInput)['primary'] ?? 'unknown')
             : 'unknown';
@@ -110,7 +120,15 @@ final class ClinicalTriageEngine
         )));
 
         $redFlags = NegationDetector::filterRedFlags(self::mergeRedFlags($original, $english), $original, $english);
+        $redFlags = array_merge($redFlags, self::scanBreathingEmergencyPatterns($original, $english));
         $redFlags = ClinicalContextReasoningEngine::filterContextGatedRedFlags($redFlags, $original, $english, $kbSymptoms);
+
+        NlpPipelineDebug::step('entity_extraction', [
+            'symptoms'   => $detectedNames,
+            'body_parts' => $bodyParts,
+            'red_flags'  => array_map(static fn (array $f): string => (string) ($f['flag_name'] ?? ''), $redFlags),
+            'features'   => $features,
+        ]);
         [$severityScore, $factors] = self::scoreFromKb($kbSymptoms, $features, $redFlags);
         [$severityScore, $factors] = self::applySymptomCombinations($kbSymptoms, $features, $severityScore, $factors, $redFlags);
         $preliminaryDisplay = self::classify($severityScore, $redFlags, $kbSymptoms, true);
@@ -323,11 +341,20 @@ final class ClinicalTriageEngine
                 array_merge($result['knowledge_suggestions'] ?? [], $out['knowledge_suggestions'] ?? []),
                 SORT_REGULAR
             ));
+            NlpPipelineDebug::attach($out);
 
             return $out;
         }
 
         $result['validation']['reprocessed'] = false;
+
+        NlpPipelineDebug::step('classification', [
+            'display'       => (string) ($result['triage_display'] ?? ''),
+            'severity_score'=> (int) ($result['severity_score'] ?? 0),
+            'winning_rule'  => (string) ($result['validation']['winning_rule'] ?? ''),
+            'confidence'    => (int) ($result['confidence_score'] ?? 0),
+        ]);
+        NlpPipelineDebug::attach($result);
 
         return $result;
     }
@@ -400,6 +427,60 @@ final class ClinicalTriageEngine
         }
 
         return $flags;
+    }
+
+    /** @return list<array<string, mixed>> */
+    private static function scanBreathingEmergencyPatterns(string $original, string $english): array
+    {
+        $hay = strtolower(trim($original . ' ' . $english));
+        if ($hay === '') {
+            return [];
+        }
+
+        $patterns = [
+            'indi ko kaginhawa'     => 'Unable to breathe (Hiligaynon)',
+            'indi ko makaginhawa'   => 'Unable to breathe (Hiligaynon)',
+            'indi makaginhawa'      => 'Difficulty breathing (Hiligaynon)',
+            'cannot breathe'        => 'Cannot breathe',
+            'difficulty breathing'  => 'Difficulty breathing',
+            'i can\'t breathe'      => 'Cannot breathe',
+        ];
+
+        $matched = [];
+        foreach ($patterns as $pattern => $label) {
+            if (str_contains($hay, $pattern)) {
+                $matched[] = [
+                    'flag_id'            => 'BREATH_' . strtoupper(substr(md5($pattern), 0, 8)),
+                    'flag_name'          => $label,
+                    'category'           => 'respiratory',
+                    'auto_triage'        => 'EMERGENCY',
+                    'severity_points'    => 15,
+                    'clinical_rationale' => 'Respiratory distress requires immediate emergency evaluation.',
+                    'matched_on'         => $pattern,
+                    'matched_pattern'    => $pattern,
+                    'english_pattern'    => $pattern,
+                    'source'             => 'breathing_pattern_scan',
+                ];
+                break;
+            }
+        }
+
+        if ($matched === [] && preg_match('/\b(indi|dili|wala).{0,25}(kaginhawa|makaginhawa|ginhawa)\b/u', $hay)) {
+            $matched[] = [
+                'flag_id'            => 'BREATH_CONTEXT',
+                'flag_name'          => 'Respiratory distress (contextual)',
+                'category'           => 'respiratory',
+                'auto_triage'        => 'EMERGENCY',
+                'severity_points'    => 15,
+                'clinical_rationale' => 'Negated breathing capacity in local language indicates emergency respiratory distress.',
+                'matched_on'         => $hay,
+                'matched_pattern'    => '(indi|dili|wala) + breathing',
+                'english_pattern'    => 'cannot breathe',
+                'source'             => 'breathing_pattern_scan',
+            ];
+        }
+
+        return $matched;
     }
 
     /** @return list<array<string, mixed>> */
@@ -865,11 +946,18 @@ final class ClinicalTriageEngine
                 foreach (array_slice($redFlags, 0, 3) as $f) {
                     $names[] = (string) (($f['flag_name'] ?? '') ?: ($f['english_pattern'] ?? 'warning sign'));
                 }
+                $template = ClinicalReasoningRulesLoader::render('red_flag_present', ['flags' => implode(', ', $names)]);
 
-                return 'Emergency warning sign(s) detected (' . implode(', ', $names) . '). Immediate emergency evaluation is recommended for patient safety.';
+                return $template !== ''
+                    ? $template
+                    : 'Emergency warning sign(s) detected (' . implode(', ', $names) . '). Immediate emergency evaluation is recommended for patient safety.';
             }
 
-            return "Severity score is {$score}, which meets emergency triage criteria based on detected high-acuity symptoms and clinical modifiers.";
+            $template = ClinicalReasoningRulesLoader::render('score_emergency');
+
+            return $template !== ''
+                ? $template
+                : "Severity score is {$score}, which meets emergency triage criteria based on detected high-acuity symptoms and clinical modifiers.";
         }
         if ($display === 'URGENT') {
             $sym = $symptoms !== [] ? implode(', ', array_slice($symptoms, 0, 4)) : 'reported symptoms';

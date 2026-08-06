@@ -67,6 +67,26 @@ final class MedicalMisspellingsLoader
             }
         }
 
+        $chatPath = BASE_PATH . '/data/nlp/hiligaynon_chat_shorthand.csv';
+        if (is_readable($chatPath)) {
+            $handle = fopen($chatPath, 'r');
+            if ($handle !== false) {
+                $header = fgetcsv($handle);
+                while (($row = fgetcsv($handle)) !== false) {
+                    $data = array_combine(
+                        array_map(static fn ($h) => strtolower(trim((string) $h)), $header ?: []),
+                        array_map(static fn ($v) => trim((string) $v), $row)
+                    ) ?: [];
+                    $wrong = strtolower((string) ($data['shorthand'] ?? ''));
+                    $correct = strtolower((string) ($data['expansion'] ?? ''));
+                    if ($wrong !== '' && $correct !== '' && !isset(self::$map[$wrong])) {
+                        self::$map[$wrong] = $correct;
+                    }
+                }
+                fclose($handle);
+            }
+        }
+
         $enginePath = BASE_PATH . '/data/nlp/phrase_engine/misspelling_rules.json';
         if (is_readable($enginePath)) {
             $rules = json_decode((string) file_get_contents($enginePath), true);
