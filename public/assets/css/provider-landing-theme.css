@@ -609,6 +609,18 @@ html[data-theme-resolved='dark'] body.provider-body .sba-logout:hover {
   border-color: rgba(239, 68, 68, 0.25);
 }
 
+/* Sidebar nav count badges (queue, triage, messages) — muted in dark mode */
+html[data-theme-resolved='dark'] body.provider-body {
+  --sba-nav-badge-bg: #3a1c1c;
+  --sba-nav-badge-text: #f0a8a8;
+  --sba-nav-badge-border: #5a2828;
+  --sba-nav-badge-shadow: none;
+  --sba-nav-badge-active-bg: #4a2424;
+  --sba-nav-badge-active-text: #fecaca;
+  --sba-nav-badge-active-border: #6b3030;
+  --sba-nav-badge-active-shadow: none;
+}
+
 html[data-theme-resolved='dark'] body.provider-body .pd-header {
   background: var(--bg-primary) !important;
   border-bottom: 1px solid var(--border-color) !important;
