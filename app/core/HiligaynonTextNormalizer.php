@@ -32,6 +32,7 @@ final class HiligaynonTextNormalizer
         'ginakapos'  => 'ga kapos ginhawa',
         'kalibangga' => 'kalibanga',
         'lagnat'     => 'hilanat',
+        'lagnaat'    => 'lagnat',
         'pilas'      => 'pilas',
         'nanah'      => 'nanah',
     ];

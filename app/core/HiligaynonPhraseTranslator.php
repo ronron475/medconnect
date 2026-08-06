@@ -564,6 +564,7 @@ final class HiligaynonPhraseTranslator
     ): array {
         return [
             'english'          => trim(MedicalConceptRegistry::canonicalize($english)),
+            'literal_english'  => trim($english),
             'medical_keyword'  => trim(MedicalConceptRegistry::canonicalize($medicalKeyword !== '' ? $medicalKeyword : $english)),
             'category'         => $category !== '' ? $category : 'symptom',
             'body_part'        => $bodyPart,

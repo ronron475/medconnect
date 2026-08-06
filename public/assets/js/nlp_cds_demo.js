@@ -174,6 +174,23 @@
     }
   }
 
+  function renderConcepts(concepts) {
+    if (!Array.isArray(concepts) || concepts.length === 0) {
+      return '<p class="cds-card__value">None mapped</p>';
+    }
+    return (
+      '<ul class="cds-list">' +
+      concepts
+        .map(function (c) {
+          const name = c.canonical_name || c.english || c.medical_keyword || '';
+          const src = c.source ? ' <span class="cds-tag cds-tag--muted">' + escapeHtml(c.source) + '</span>' : '';
+          return '<li>' + escapeHtml(String(name)) + src + '</li>';
+        })
+        .join('') +
+      '</ul>'
+    );
+  }
+
   function renderResults(payload) {
     const assessment = payload.assessment || {};
     const summary = payload.summary || {};
@@ -202,6 +219,19 @@
     const evaluatedContext = clinicalContext.evaluated_context || [];
     const validationPassed = summary.validation_passed != null ? summary.validation_passed : validation.passed;
     const winningRule = summary.winning_rule || validation.winning_rule || contextRule || '';
+
+    const concepts =
+      summary.standardized_medical_concepts ||
+      assessment.standardized_medical_concepts ||
+      (assessment.nlp_pipeline && assessment.nlp_pipeline.nlp_result && assessment.nlp_pipeline.nlp_result.standardized_medical_concepts) ||
+      [];
+    const associated =
+      summary.associated_symptoms || assessment.associated_symptoms || [];
+    const original =
+      summary.original_chief_complaint || assessment.original_chief_complaint || assessment.chief_complaint || '';
+    const corrected = summary.corrected_text || assessment.corrected_text || '';
+    const english =
+      summary.english_translation || assessment.english_translation || '';
 
     resultsEl.hidden = false;
     resultsEl.innerHTML =
@@ -261,10 +291,20 @@
       (winningRule ? ' · Rule: ' + escapeHtml(winningRule) : '') +
       (summary.needs_provider_review || triage.needs_provider_review ? ' · Provider review flagged' : '') +
       '</p></div>' +
-      (assessment.english_translation
-        ? '<h3 class="cds-section-title">English translation</h3><p class="cds-reason">' +
-          escapeHtml(assessment.english_translation) +
+      '<h3 class="cds-section-title">Original chief complaint</h3>' +
+      '<p class="cds-reason">' + escapeHtml(original || '—') + '</p>' +
+      (corrected && corrected !== original
+        ? '<h3 class="cds-section-title">Corrected text</h3><p class="cds-reason">' + escapeHtml(corrected) + '</p>'
+        : '') +
+      (english
+        ? '<h3 class="cds-section-title">English translation (patient meaning)</h3><p class="cds-reason">' +
+          escapeHtml(english) +
           '</p>'
+        : '') +
+      '<h3 class="cds-section-title">Standardized medical concepts (internal)</h3>' +
+      renderConcepts(concepts) +
+      (associated.length
+        ? '<h3 class="cds-section-title">Associated symptoms</h3><div class="cds-tags">' + renderTags(associated, false) + '</div>'
         : '') +
       '<details class="cds-json-toggle"><summary>Pipeline debug trace</summary><pre class="cds-json">' +
       escapeHtml(JSON.stringify(payload.pipeline_debug || assessment.pipeline_debug || null, null, 2)) +
