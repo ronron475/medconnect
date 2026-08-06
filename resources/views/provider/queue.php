@@ -410,10 +410,13 @@ require_once __DIR__ . '/partials/layout_open.php';
                                     <div style="font-weight:700;"><?= htmlspecialchars($display_date !== '' ? date('M j, Y', strtotime($display_date)) : '—') ?></div>
                                     <div class="queue-meta"><?= htmlspecialchars($display_time !== '' ? date('g:i A', strtotime($display_time)) : '—') ?></div>
                                 </td>
-                                <td class="col-status"><span class="queue-badge <?= $status_class ?>"><?= htmlspecialchars(queue_status_label($status)) ?></span></td>
+                                <td class="col-status" data-queue-status="<?= (int) $item['id'] ?>">
+                                    <span class="queue-badge <?= $status_class ?>"><?= htmlspecialchars(queue_status_label($status)) ?></span>
+                                </td>
                                 <td
                                     data-queue-action="<?= (int) $item['id'] ?>"
                                     data-scheduled-start="<?= (int) ($session_ctx['scheduled_start'] ?? 0) ?>"
+                                    data-scheduled-end="<?= (int) ($session_ctx['scheduled_end'] ?? 0) ?>"
                                 >
                                     <div class="queue-actions">
                                         <?php if ($session_access['allowed']): ?>

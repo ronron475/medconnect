@@ -10,6 +10,7 @@
   if (!actionCells.length) return;
 
   const openTimers = new Map();
+  const endTimers = new Map();
 
   function escapeHtml(s) {
     return String(s ?? '')
@@ -17,6 +18,25 @@
       .replace(/</g, '&lt;')
       .replace(/>/g, '&gt;')
       .replace(/"/g, '&quot;');
+  }
+
+  function statusLabel(status) {
+    return String(status || '')
+      .replace(/_/g, ' ')
+      .replace(/\b\w/g, (c) => c.toUpperCase());
+  }
+
+  function statusClass(status) {
+    switch (status) {
+      case 'in_consultation':
+        return 'active';
+      case 'completed':
+        return 'done';
+      case 'cancelled':
+        return 'muted';
+      default:
+        return 'waiting';
+    }
   }
 
   function videoIcon() {
@@ -100,6 +120,39 @@
     openTimers.set(item.id, timer);
   }
 
+  function scheduleSlotEnd(item) {
+    if (!item || !item.id || !item.scheduled_end) return;
+    if (item.status !== 'in_consultation') return;
+    if (endTimers.has(item.id)) return;
+
+    const delay = (item.scheduled_end * 1000) - Date.now() + 800;
+    if (delay <= 0) {
+      refreshQueueStatus();
+      return;
+    }
+
+    const timer = window.setTimeout(() => {
+      endTimers.delete(item.id);
+      refreshQueueStatus();
+    }, Math.min(delay, 24 * 60 * 60 * 1000));
+
+    endTimers.set(item.id, timer);
+  }
+
+  function updateStatusCell(item) {
+    const cell = document.querySelector('[data-queue-status="' + item.id + '"]');
+    if (!cell) return;
+
+    const badge = cell.querySelector('.queue-badge');
+    if (!badge) return;
+
+    const nextLabel = item.status_label || statusLabel(item.status);
+    const nextClass = statusClass(item.status);
+
+    badge.textContent = nextLabel;
+    badge.className = 'queue-badge ' + nextClass;
+  }
+
   function applyItem(item) {
     const cell = document.querySelector('[data-queue-action="' + item.id + '"]');
     if (!cell) return;
@@ -107,6 +160,7 @@
     const wasBlocked = cell.querySelector('.queue-open-session-blocked');
     cell.innerHTML = renderActions(item);
     bindBlockedButtons(cell);
+    updateStatusCell(item);
 
     if (item.session_allowed && wasBlocked) {
       cell.classList.add('queue-action--just-opened');
@@ -114,6 +168,7 @@
     }
 
     scheduleUnlock(item);
+    scheduleSlotEnd(item);
   }
 
   async function refreshQueueStatus() {
@@ -139,8 +194,12 @@
   actionCells.forEach((cell) => {
     const id = parseInt(cell.getAttribute('data-queue-action') || '0', 10);
     const start = parseInt(cell.getAttribute('data-scheduled-start') || '0', 10);
+    const end = parseInt(cell.getAttribute('data-scheduled-end') || '0', 10);
     if (id && start > 0) {
       scheduleUnlock({ id: id, scheduled_start: start, session_allowed: false });
+    }
+    if (id && end > 0) {
+      scheduleSlotEnd({ id: id, scheduled_end: end, status: 'in_consultation' });
     }
   });
 

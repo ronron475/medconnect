@@ -11,6 +11,7 @@ session_start();
 require_once dirname(dirname(dirname(__DIR__))) . '/bootstrap.php';
 require_once dirname(dirname(dirname(__DIR__))) . '/config/db.php';
 require_once dirname(dirname(dirname(__DIR__))) . '/resources/views/provider/partials/queue_helpers.php';
+require_once dirname(dirname(dirname(__DIR__))) . '/app/includes/consultation_expiry.php';
 
 header('Content-Type: application/json; charset=utf-8');
 header('X-Content-Type-Options: nosniff');
@@ -24,6 +25,8 @@ $uid = (int) $_SESSION['user_id'];
 $consultationId = (int) ($_GET['consultation_id'] ?? 0);
 
 try {
+    consultations_auto_expire($pdo, $uid);
+
     $sql = "
         SELECT c.id, c.consult_date, c.consult_time, c.provider_name, c.consult_type, c.status,
                vs.room_token,

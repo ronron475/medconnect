@@ -40,7 +40,7 @@ function consultations_auto_expire(PDO $pdo, ?int $patient_id = null, ?int $prov
            AND s.status = 'booked'
         WHERE c.status IN ('pending', 'scheduled', 'in_consultation')
           {$scope}
-        HAVING session_end_at < DATE_SUB(NOW(), INTERVAL 5 MINUTE)
+        HAVING session_end_at <= NOW()
     ");
     $stmt->execute($params);
     $expired = $stmt->fetchAll(PDO::FETCH_ASSOC);
