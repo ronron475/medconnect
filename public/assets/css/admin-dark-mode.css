@@ -1740,6 +1740,44 @@ html[data-theme-resolved='dark'] body.superadmin-body .mc-field__input[type="fil
   background: #3f3f46 !important;
 }
 
+html[data-theme-resolved='dark'] body.admin-body .mc-file-upload__control,
+html[data-theme-resolved='dark'] body.superadmin-body .mc-file-upload__control {
+  background: #0a0a0a !important;
+  border-color: #3f3f46 !important;
+}
+
+html[data-theme-resolved='dark'] body.admin-body .mc-file-upload__control:hover,
+html[data-theme-resolved='dark'] body.superadmin-body .mc-file-upload__control:hover {
+  border-color: #52525b !important;
+}
+
+html[data-theme-resolved='dark'] body.admin-body .mc-file-upload__control:focus-within,
+html[data-theme-resolved='dark'] body.superadmin-body .mc-file-upload__control:focus-within {
+  border-color: #5eead4 !important;
+  box-shadow: 0 0 0 3px rgba(94, 234, 212, 0.14) !important;
+}
+
+html[data-theme-resolved='dark'] body.admin-body .mc-file-upload__btn,
+html[data-theme-resolved='dark'] body.superadmin-body .mc-file-upload__btn {
+  background: #2a2a2a !important;
+  color: #ffffff !important;
+}
+
+html[data-theme-resolved='dark'] body.admin-body .mc-file-upload__btn:hover,
+html[data-theme-resolved='dark'] body.superadmin-body .mc-file-upload__btn:hover {
+  background: #3f3f46 !important;
+}
+
+html[data-theme-resolved='dark'] body.admin-body .mc-file-upload__name,
+html[data-theme-resolved='dark'] body.superadmin-body .mc-file-upload__name {
+  color: #ffffff !important;
+}
+
+html[data-theme-resolved='dark'] body.admin-body .mc-file-upload__name.is-empty,
+html[data-theme-resolved='dark'] body.superadmin-body .mc-file-upload__name.is-empty {
+  color: #71717a !important;
+}
+
 html[data-theme-resolved='dark'] body.admin-body .mc-field__input:disabled,
 html[data-theme-resolved='dark'] body.superadmin-body .mc-field__input:disabled,
 html[data-theme-resolved='dark'] body.admin-body .mc-staff-form.is-loading .mc-field__input,
