@@ -241,6 +241,8 @@ body.mc-nav-opening .topbar-brand {
     transform: translateX(-100%);
     transition: transform 0.25s ease;
     box-shadow: 4px 0 24px rgba(0, 0, 0, 0.15);
+    pointer-events: none;
+    touch-action: none;
   }
 
   .sidebar.is-open,
@@ -250,6 +252,15 @@ body.mc-nav-opening .topbar-brand {
     transform: translateX(0);
     pointer-events: auto;
     touch-action: manipulation;
+  }
+
+  /* Notification sheet open — block logout / sidebar ghost taps bleeding through. */
+  body.mc-notif-open [data-logout-trigger],
+  body.mc-notif-open .sb-logout,
+  body.mc-notif-open .adm-logout,
+  body.mc-notif-open .sba-logout,
+  body.mc-notif-open .topbar-logout {
+    pointer-events: none !important;
   }
 
   /* Block taps on page content behind the drawer (prevents ghost clicks → dashboard). */
