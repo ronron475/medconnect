@@ -12,9 +12,42 @@
 
   const IS_TOUCH = ('ontouchstart' in window) || (navigator.maxTouchPoints && navigator.maxTouchPoints > 0);
 
+  let lastOutsideCloseAt = 0;
+
+  function isMobilePanel() {
+    return window.matchMedia('(max-width: 768px)').matches;
+  }
+
+  function mountMobilePanel(panel, wrap) {
+    if (!isMobilePanel() || !panel || !wrap) return;
+    if (panel.dataset.mcNotifPortaled === '1') return;
+    const placeholder = document.createComment('mc-notif-panel-placeholder');
+    wrap.insertBefore(placeholder, panel);
+    panel._mcNotifPlaceholder = placeholder;
+    panel._mcNotifWrap = wrap;
+    document.body.appendChild(panel);
+    panel.dataset.mcNotifPortaled = '1';
+  }
+
+  function unmountMobilePanel(panel) {
+    if (!panel || panel.dataset.mcNotifPortaled !== '1') return;
+    const wrap = panel._mcNotifWrap;
+    const placeholder = panel._mcNotifPlaceholder;
+    if (wrap && placeholder && placeholder.parentNode) {
+      wrap.insertBefore(panel, placeholder);
+      placeholder.remove();
+    } else if (wrap) {
+      wrap.appendChild(panel);
+    }
+    delete panel._mcNotifPlaceholder;
+    delete panel._mcNotifWrap;
+    panel.removeAttribute('data-mc-notif-portaled');
+  }
+
   function closeAllNotifPanels() {
     document.querySelectorAll('[data-notif-panel].is-open').forEach(function (panel) {
       panel.classList.remove('is-open');
+      unmountMobilePanel(panel);
     });
     document.querySelectorAll('[data-notif-toggle]').forEach(function (btn) {
       btn.setAttribute('aria-expanded', 'false');
@@ -449,9 +482,15 @@
     } catch (e) { /* silent */ }
   }
 
-  function togglePanel(btn, panel) {
+  function togglePanel(btn, panel, wrap) {
     const open = !panel.classList.contains('is-open');
-    panel.classList.toggle('is-open', open);
+    if (open) {
+      mountMobilePanel(panel, wrap);
+      panel.classList.add('is-open');
+    } else {
+      panel.classList.remove('is-open');
+      unmountMobilePanel(panel);
+    }
     btn.setAttribute('aria-expanded', open ? 'true' : 'false');
     panelOpen = open;
     syncNotifOpenState();
@@ -472,7 +511,7 @@
       if (document.body.classList.contains('mc-nav-open')) {
         return;
       }
-      togglePanel(btn, panel);
+      togglePanel(btn, panel, wrap);
     });
     btn.addEventListener('click', function (e) {
       e.stopPropagation();
@@ -482,19 +521,46 @@
     if (markAllBtn) {
       markAllBtn.addEventListener(TOGGLE_EVENT, function (e) {
         e.preventDefault();
+        e.stopPropagation();
         markAllRead();
       });
     }
 
+    const footerLink = wrap.querySelector('.mc-notif-footer a[href]');
+    if (footerLink) {
+      footerLink.addEventListener(TOGGLE_EVENT, function (e) {
+        followNotifLink(footerLink, e);
+      });
+      footerLink.addEventListener('click', function (e) {
+        e.stopPropagation();
+      });
+    }
+
     const CLOSE_EVENT = IS_TOUCH ? 'pointerdown' : 'click';
-    document.addEventListener(CLOSE_EVENT, function (e) {
-      if (!wrap.contains(e.target)) {
-        panel.classList.remove('is-open');
-        btn.setAttribute('aria-expanded', 'false');
-        panelOpen = false;
-        syncNotifOpenState();
+    function onOutsidePanel(e) {
+      if (IS_TOUCH && e.type === 'click' && Date.now() - lastOutsideCloseAt < 500) {
+        e.preventDefault();
+        e.stopPropagation();
+        e.stopImmediatePropagation();
+        return;
       }
-    }, true);
+      if (!panel.classList.contains('is-open')) return;
+      if (wrap.contains(e.target)) return;
+      if (e.target.closest && e.target.closest('[data-notif-toggle]')) return;
+      e.preventDefault();
+      e.stopPropagation();
+      e.stopImmediatePropagation();
+      panel.classList.remove('is-open');
+      unmountMobilePanel(panel);
+      btn.setAttribute('aria-expanded', 'false');
+      panelOpen = false;
+      syncNotifOpenState();
+      lastOutsideCloseAt = Date.now();
+    }
+    document.addEventListener(CLOSE_EVENT, onOutsidePanel, true);
+    if (IS_TOUCH) {
+      document.addEventListener('click', onOutsidePanel, true);
+    }
 
     btn.addEventListener('keydown', function (e) {
       if (e.key === 'Escape') {

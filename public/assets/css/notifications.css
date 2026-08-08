@@ -543,7 +543,8 @@
     inset: 0;
     background: rgba(15, 23, 42, 0.42);
     z-index: 200008;
-    pointer-events: none;
+    pointer-events: auto;
+    touch-action: none;
   }
 
   html:not([data-theme-resolved='dark']) .mc-notif-panel {
@@ -588,6 +589,12 @@
     border-radius: 18px 18px 0 0;
     z-index: 200010;
     box-shadow: 0 -10px 40px rgba(15, 23, 42, 0.16);
+    pointer-events: auto;
+    touch-action: manipulation;
+  }
+
+  body > .mc-notif-panel.is-open {
+    z-index: 200010;
   }
 
   .mc-notif-panel-header {
@@ -705,6 +712,10 @@
     justify-content: center;
     min-height: 44px;
     font-size: 13px;
+    position: relative;
+    z-index: 1;
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
   }
 
   .mc-notif-page-list .mc-notif-item {
