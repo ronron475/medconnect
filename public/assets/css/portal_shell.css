@@ -448,25 +448,7 @@ body.patient-portal .portal-page-body {
 
     body.patient-portal .topbar--clinical .mc-notif-panel {
 
-        position: fixed;
-
-        top: auto;
-
-        bottom: 0;
-
-        left: 0;
-
-        right: 0;
-
-        width: 100%;
-
-        max-width: 100%;
-
-        max-height: min(75vh, calc(100dvh - 80px));
-
-        border-radius: 16px 16px 0 0;
-
-        z-index: 1300;
+        z-index: 200010;
 
     }
 

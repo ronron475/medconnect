@@ -220,7 +220,8 @@ body.mc-messages-fab-dragging {
 
 /* Care Assistant self-care panel — never block close / footer actions */
 body.pt-remedy-panel-open .mc-messages-fab,
-.mc-messages-fab[data-suppressed-for="pt-remedy"] {
+.mc-messages-fab[data-suppressed-for="pt-remedy"],
+body.mc-notif-open .mc-messages-fab {
   visibility: hidden !important;
   pointer-events: none !important;
   opacity: 0 !important;

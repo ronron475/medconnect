@@ -20,6 +20,12 @@
       btn.setAttribute('aria-expanded', 'false');
     });
     panelOpen = false;
+    syncNotifOpenState();
+  }
+
+  function syncNotifOpenState() {
+    const anyOpen = !!document.querySelector('[data-notif-panel].is-open');
+    document.body.classList.toggle('mc-notif-open', anyOpen);
   }
 
   function followNotifLink(link, e) {
@@ -448,6 +454,7 @@
     panel.classList.toggle('is-open', open);
     btn.setAttribute('aria-expanded', open ? 'true' : 'false');
     panelOpen = open;
+    syncNotifOpenState();
     if (open) loadDropdown();
   }
 
@@ -482,6 +489,7 @@
         panel.classList.remove('is-open');
         btn.setAttribute('aria-expanded', 'false');
         panelOpen = false;
+        syncNotifOpenState();
       }
     }, true);
 
@@ -490,6 +498,7 @@
         panel.classList.remove('is-open');
         btn.setAttribute('aria-expanded', 'false');
         panelOpen = false;
+        syncNotifOpenState();
       }
     });
   }
