@@ -827,11 +827,22 @@
 
   .pdash-hero__actions {
     width: 100%;
+    flex-direction: column;
   }
 
   .pdash-hero__actions .pdash-btn {
-    flex: 1;
+    flex: none;
+    width: 100%;
     justify-content: center;
+  }
+
+  .pdash-care__top {
+    flex-wrap: wrap;
+    align-items: center;
+  }
+
+  .pdash-care__status-chip {
+    margin-left: auto;
   }
 
   .pdash-metrics,
@@ -1226,6 +1237,10 @@
   .pdash-care-steps {
     grid-template-columns: repeat(2, 1fr);
     row-gap: 12px;
+  }
+
+  .pdash-care-steps__item::after {
+    display: none;
   }
 
   .pdash-care-steps__item:nth-child(2n)::after {
