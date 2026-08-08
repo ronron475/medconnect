@@ -25,6 +25,13 @@
   --space-3: 24px;
   --space-4: 32px;
   --space-5: 40px;
+  /* Registration content width — laptop sweet spot 700–900px */
+  --reg-shell-max: min(900px, 100%);
+  --reg-stepper-max: min(820px, 100%);
+  --reg-card-max: min(860px, 100%);
+  --reg-step0-max: min(760px, 100%);
+  --reg-notice-max: min(760px, 100%);
+  --reg-header-max: min(820px, 100%);
 }
 
 /* ── Reset canvas helpers ─────────────────────────────── */
@@ -76,26 +83,43 @@ body.reg-body {
   display: flex;
   align-items: flex-start;
   justify-content: center;
-  padding: 24px 16px 40px;
+  padding: clamp(16px, 2.5vw, 28px) clamp(16px, 4vw, 32px) clamp(28px, 4vw, 48px);
   background: transparent;
   background-image: none !important;
   overflow-x: hidden;
+  box-sizing: border-box;
 }
 .reg-page::before,
 .reg-page::after { display: none; }
 
 .reg-wrapper {
   width: 100%;
-  max-width: 680px;
+  max-width: var(--reg-shell-max);
   margin: 0 auto;
   position: relative;
+  box-sizing: border-box;
 }
 
 .reg-shell {
   width: 100%;
+  max-width: var(--reg-shell-max);
   display: flex;
   flex-direction: column;
-  gap: 14px;
+  align-items: center;
+  gap: clamp(12px, 2vw, 18px);
+  box-sizing: border-box;
+}
+
+.step-panel {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  min-width: 0;
+}
+
+.step-panel--compact .reg-card--compact {
+  width: 100%;
+  max-width: var(--reg-step0-max);
 }
 
 /* ── Top bar (back link) ─────────────────────────────── */
@@ -111,12 +135,14 @@ body.reg-body {
 /* ── Registration header ──────────────────────────────── */
 .registration-header {
   width: 100%;
+  max-width: var(--reg-header-max);
   display: flex;
   flex-direction: column;
-  align-items: flex-start;
-  gap: 10px;
+  align-items: center;
+  text-align: center;
+  gap: clamp(8px, 1.5vw, 12px);
   padding: 0;
-  margin-bottom: 2px;
+  margin-bottom: 0;
   animation: fade-up 0.3s ease both;
 }
 .registration-header__top {
@@ -173,7 +199,7 @@ body.reg-body {
 }
 
 .reg-page-title {
-  font-size: clamp(22px, 4.8vw, 28px);
+  font-size: clamp(22px, 3.2vw, 28px);
   font-weight: 800;
   color: #fff;
   margin: 0;
@@ -182,11 +208,11 @@ body.reg-body {
   text-shadow: 0 1px 2px rgba(0, 0, 0, 0.18);
 }
 .reg-page-sub {
-  font-size: clamp(13px, 1.5vw, 14.5px);
-  color: rgba(255, 255, 255, 0.78);
+  font-size: clamp(13px, 1.6vw, 15px);
+  color: rgba(255, 255, 255, 0.82);
   margin: 0;
   line-height: 1.5;
-  max-width: 36em;
+  max-width: 38em;
 }
 
 /* Legacy header shell (kept for safety if referenced elsewhere) */
@@ -206,8 +232,10 @@ body.reg-body {
   align-items: flex-start;
   justify-content: center;
   gap: 0;
-  margin-bottom: 0;
-  padding: 14px 16px;
+  width: 100%;
+  max-width: var(--reg-stepper-max);
+  margin: 0 auto;
+  padding: clamp(10px, 1.8vw, 14px) clamp(14px, 2.5vw, 20px);
   background: rgba(255, 255, 255, 0.97);
   border-radius: 14px;
   border: 1px solid rgba(226, 232, 240, 0.95);
@@ -215,7 +243,7 @@ body.reg-body {
   animation: fade-up 0.34s ease 0.04s both;
 }
 .step-indicator--compact {
-  padding: 12px 14px;
+  padding: clamp(10px, 1.6vw, 12px) clamp(12px, 2vw, 18px);
 }
 .step-item {
   display: flex;
@@ -224,16 +252,16 @@ body.reg-body {
   gap: 6px;
   flex: 1;
   min-width: 0;
-  max-width: 120px;
+  max-width: 140px;
 }
 .step-dot {
-  width: 30px;
-  height: 30px;
+  width: clamp(28px, 3.2vw, 32px);
+  height: clamp(28px, 3.2vw, 32px);
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 12px;
+  font-size: clamp(11px, 1.2vw, 12px);
   font-weight: 700;
   background: #f1f5f9;
   color: #94a3b8;
@@ -248,7 +276,7 @@ body.reg-body {
   flex-shrink: 0;
 }
 .step-label {
-  font-size: 10.5px;
+  font-size: clamp(10px, 1.1vw, 11.5px);
   font-weight: 600;
   color: #94a3b8;
   text-align: center;
@@ -256,12 +284,12 @@ body.reg-body {
   transition: color 0.24s ease, font-weight 0.24s ease;
 }
 .step-line {
-  flex: 1 1 24px;
+  flex: 1 1 28px;
   height: 2px;
-  min-width: 12px;
-  max-width: 48px;
+  min-width: 16px;
+  max-width: 80px;
   background: #e2e8f0;
-  margin: 15px 6px 0;
+  margin: clamp(14px, 2vw, 16px) 6px 0;
   border-radius: 999px;
   transition: background 0.3s ease;
 }
@@ -286,8 +314,8 @@ body.reg-body {
 .step-item.done .step-dot::after {
   content: '';
   position: absolute;
-  width: 12px;
-  height: 12px;
+  width: 11px;
+  height: 11px;
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='20 6 9 17 4 12'/%3E%3C/svg%3E");
   background-size: contain;
   background-repeat: no-repeat;
@@ -304,12 +332,43 @@ body.reg-body {
 .reg-card {
   background: var(--white);
   border-radius: 16px;
-  padding: 24px 22px 22px;
+  padding: clamp(20px, 2.5vw, 26px) clamp(18px, 2.5vw, 24px);
   border: 1px solid rgba(226, 232, 240, 0.95);
   box-shadow: 0 8px 28px rgba(15, 39, 68, 0.08);
   margin-bottom: 0;
   animation: fade-up 0.38s ease 0.06s both;
   color: var(--text-dark);
+  width: 100%;
+  max-width: var(--reg-card-max);
+  box-sizing: border-box;
+}
+
+.reg-card--compact {
+  max-width: var(--reg-step0-max);
+  padding: clamp(20px, 2.4vw, 26px) clamp(20px, 2.8vw, 28px) clamp(18px, 2.2vw, 24px);
+  min-height: clamp(220px, 28vh, 280px);
+}
+
+.reg-card--compact .card-header {
+  margin-bottom: 14px;
+  padding-bottom: 14px;
+  gap: 12px;
+}
+
+.reg-card--compact .card-icon-wrap {
+  width: 40px;
+  height: 40px;
+  border-radius: 11px;
+}
+
+.reg-card--compact .card-title {
+  font-size: clamp(17px, 1.8vw, 18px);
+  margin-bottom: 4px;
+}
+
+.reg-card--compact .card-sub {
+  font-size: clamp(13px, 1.4vw, 14px);
+  line-height: 1.5;
 }
 
 .card-header {
@@ -652,26 +711,35 @@ body.reg-body {
 
 /* ── OTP Step 0 ──────────────────────────────────────── */
 #step0 .reg-card {
-  padding: 22px 20px 20px;
   min-height: auto;
 }
-#step0 .card-title { font-size: 17px; }
-#step0 .card-sub   { font-size: 13px; }
+#otp-email-panel {
+  width: 100%;
+  max-width: 100%;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+}
 #otp-email-panel .form-group { margin-bottom: 16px; }
-#otp-email-panel .form-group label { font-size: 13px; margin-bottom: 6px; font-weight: 700; }
+#otp-email-panel .form-group label { font-size: 13px; margin-bottom: 8px; font-weight: 700; }
 #otp-email-panel .input-wrap input {
-  height: 48px;
-  font-size: 14.5px;
-  border-radius: 10px;
+  height: clamp(46px, 5vw, 50px);
+  font-size: clamp(14px, 1.5vw, 15px);
+  border-radius: 11px;
   padding: 0 14px 0 42px;
 }
-#otp-email-panel .input-icon { left: 13px; }
+#otp-email-panel .input-icon { left: 14px; }
+.btn-submit--send-otp,
 #btn-send-otp {
-  width: 100%;
-  height: 48px;
-  font-size: 14.5px;
-  border-radius: 10px;
+  width: auto;
+  min-width: clamp(160px, 22vw, 180px);
+  height: clamp(46px, 5vw, 50px);
+  padding: 0 clamp(22px, 3vw, 28px);
+  font-size: clamp(14px, 1.5vw, 15px);
+  border-radius: 11px;
   margin-top: 4px;
+  align-self: flex-start;
 }
 
 /* OTP digit boxes */
@@ -775,14 +843,18 @@ body.reg-body {
   display: flex;
   align-items: flex-start;
   gap: 10px;
-  padding: 12px 14px;
+  width: 100%;
+  max-width: var(--reg-notice-max);
+  margin: 0 auto;
+  padding: clamp(10px, 1.5vw, 12px) clamp(12px, 2vw, 16px);
   border-radius: 12px;
   background: rgba(255, 255, 255, 0.1);
   border: 1px solid rgba(255, 255, 255, 0.16);
   backdrop-filter: blur(6px);
   -webkit-backdrop-filter: blur(6px);
-  color: rgba(255, 255, 255, 0.82);
+  color: rgba(255, 255, 255, 0.84);
   animation: fade-up 0.34s ease 0.1s both;
+  box-sizing: border-box;
 }
 .reg-security-notice svg {
   flex-shrink: 0;
@@ -791,7 +863,7 @@ body.reg-body {
 }
 .reg-security-notice p {
   margin: 0;
-  font-size: 11.5px;
+  font-size: clamp(11px, 1.2vw, 12px);
   line-height: 1.55;
 }
 
@@ -2341,20 +2413,43 @@ body.reg-outcome-open {
 
 /* ── Responsive: tablet ──────────────────────────────── */
 @media (max-width: 900px) {
-  .reg-wrapper { max-width: 100%; }
-  .reg-page { padding: 20px 14px 36px; }
+  body.reg-body .reg-page .reg-wrapper {
+    max-width: 100%;
+  }
+  .reg-page { padding: 20px 16px 36px; }
   .reg-card { padding: 20px 18px 18px; }
+  .step-indicator { max-width: 100%; }
+}
+
+@media (min-width: 901px) {
+  body.reg-body .reg-page .reg-wrapper {
+    max-width: var(--reg-shell-max);
+  }
+}
+
+@media (min-width: 1024px) and (max-width: 1440px) {
+  body.reg-body .reg-page {
+    padding-left: clamp(20px, 4vw, 40px);
+    padding-right: clamp(20px, 4vw, 40px);
+  }
+}
+
+@media (min-width: 1441px) {
+  body.reg-body .reg-page .reg-wrapper {
+    max-width: 900px;
+  }
 }
 
 @media (max-width: 768px) {
-  .reg-page { padding: 16px 12px 32px; }
-  .registration-header { gap: 8px; }
-  .reg-page-title { font-size: clamp(20px, 5.5vw, 24px); }
-  .step-indicator { padding: 10px 12px; }
+  .reg-page { padding: 16px 14px 32px; }
+  .registration-header { gap: 8px; max-width: 100%; }
+  .reg-page-title { font-size: clamp(20px, 5.2vw, 24px); }
+  .step-indicator { padding: 10px 12px; max-width: 100%; }
   .step-dot { width: 28px; height: 28px; font-size: 11px; }
-  .step-label { font-size: 9.5px; }
-  .step-line { margin-top: 14px; min-width: 8px; }
-  .reg-card { padding: 18px 16px 16px; border-radius: 14px; }
+  .step-label { font-size: 10px; }
+  .step-line { margin-top: 14px; min-width: 12px; max-width: 64px; }
+  .reg-card { padding: 18px 16px 16px; border-radius: 14px; max-width: 100%; }
+  .reg-card--compact { max-width: 100%; min-height: auto; }
   .form-row, .form-row-3 { grid-template-columns: 1fr; gap: 14px; }
   .address-grid { grid-template-columns: 1fr; gap: 12px; }
   .step2-actions { flex-direction: column; gap: 10px; }
@@ -2362,11 +2457,18 @@ body.reg-outcome-open {
   .step2-actions .btn-submit { width: 100%; justify-content: center; }
   .btn-proceed { max-width: 100%; }
   .card-icon-wrap { width: 38px; height: 38px; border-radius: 10px; }
+  #otp-email-panel { max-width: 100%; }
+  .btn-submit--send-otp,
+  #btn-send-otp {
+    width: 100%;
+    align-self: stretch;
+  }
+  .reg-security-notice { max-width: 100%; }
 }
 
 /* ── Responsive: mobile ──────────────────────────────── */
 @media (max-width: 640px) {
-  .reg-page { padding: 14px 10px 28px; }
+  .reg-page { padding: 14px 12px 28px; }
   .registration-header__top { gap: 8px; }
   .btn-nav-back { font-size: 12px; padding: 7px 12px; }
   .patient-only-badge { font-size: 9px; padding: 4px 8px; }
@@ -2376,8 +2478,9 @@ body.reg-outcome-open {
   .card-sub { font-size: 12.5px; }
   .btn-submit,
   .btn-back-step,
-  #btn-send-otp,
   #btn-verify-otp { width: 100%; height: 46px; font-size: 14px; }
+  .btn-submit--send-otp,
+  #btn-send-otp { width: 100%; height: 46px; }
   .otp-boxes { gap: 6px; }
   .otp-digit {
     height: 46px;
@@ -2397,7 +2500,7 @@ body.reg-outcome-open {
 }
 
 @media (max-width: 380px) {
-  .reg-page { padding: 12px 8px 24px; }
+  .reg-page { padding: 12px 10px 24px; }
   .reg-card { padding: 14px 12px 12px; }
   .step-dot { width: 26px; height: 26px; font-size: 10px; }
   .step-label { font-size: 8.5px; line-height: 1.2; }
