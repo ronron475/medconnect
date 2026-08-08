@@ -94,6 +94,10 @@ if (!in_array($triage_urgency, ['EMERGENCY', 'URGENT', 'NON-URGENT', 'NON_URGENT
 if ($triage_urgency === 'NON_URGENT') {
     $triage_urgency = 'NON-URGENT';
 }
+if ($chief_complaint === '') {
+    $triage_urgency = '';
+    $nlp_result_json = '';
+}
 
 $full_name        = trim($first_name . ' ' . $middle_name . ' ' . $last_name);
 $address_parts    = array_filter([$street_address, $barangay, $city_municipality, $province, $region]);

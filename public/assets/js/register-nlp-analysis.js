@@ -20,7 +20,20 @@
   let analysisOk = false;
   let analysisInFlight = false;
   let bypassGate = false;
+  let complaintSkipped = false;
   let lastResult = null;
+
+  function isComplaintSkipped() {
+    return complaintSkipped;
+  }
+
+  function hasComplaintText(text) {
+    return normalizeComplaint(text).length >= MIN_CHARS;
+  }
+
+  function shouldRunNlp(text) {
+    return !complaintSkipped && hasComplaintText(text);
+  }
 
   function baseUrl() {
     return String(global.APP_BASE || '').replace(/\/$/, '');
@@ -74,10 +87,9 @@
     const consentOk = !!(consent && consent.checked);
     const loadingSubmit = submitBtn.dataset.loading === '1';
     const nlpBlocking = analysisInFlight;
-    const complaintOk = validateComplaint(
-      normalizeComplaint((els().textarea && els().textarea.value) || ''),
-      { showErrorMsg: false }
-    );
+    const complaintOk = shouldRunNlp((els().textarea && els().textarea.value) || '')
+      || complaintSkipped
+      || !normalizeComplaint((els().textarea && els().textarea.value) || '');
 
     if (loadingSubmit || nlpBlocking) {
       submitBtn.disabled = true;
@@ -102,9 +114,20 @@
       return;
     }
 
-    if (!complaintOk) {
-      submitHint.textContent = 'Please describe your current health concern before submitting.';
+    if (!complaintOk && !complaintSkipped) {
+      const trimmed = normalizeComplaint((els().textarea && els().textarea.value) || '');
+      if (trimmed && trimmed.length < MIN_CHARS) {
+        submitHint.textContent = 'Please provide a bit more detail (at least 10 characters), or skip for now.';
+      } else {
+        submitHint.textContent = 'Please describe your health concern or skip for now.';
+      }
       submitHint.classList.remove('is-ready');
+      return;
+    }
+
+    if (complaintSkipped) {
+      submitHint.textContent = 'Chief complaint skipped. You can submit your registration.';
+      submitHint.classList.add('is-ready');
       return;
     }
 
@@ -249,8 +272,14 @@
     const trimmed = normalizeComplaint(text);
     let message = '';
 
-    if (!trimmed || trimmed.length < MIN_CHARS) {
-      message = 'Please provide a bit more detail (at least 10 characters).';
+    if (complaintSkipped || !trimmed) {
+      if (err) err.textContent = '';
+      if (textarea) textarea.classList.remove('invalid');
+      return true;
+    }
+
+    if (trimmed.length < MIN_CHARS) {
+      message = 'Please provide a bit more detail (at least 10 characters), or skip for now.';
     }
 
     if (showErrorMsg && err) {
@@ -295,6 +324,11 @@
     }
 
     const text = normalizeComplaint(textarea.value);
+    if (!shouldRunNlp(text)) {
+      setAnalysisState({ ok: true, inFlight: false, bypass: false });
+      return { ok: true, urgency: 'NON-URGENT', result: null, skipped: true };
+    }
+
     if (!validateComplaint(text, { showErrorMsg: true })) {
       setAnalysisState({ ok: false, inFlight: false, bypass: false });
       return { ok: false, urgency: 'NON-URGENT', result: null };
@@ -387,22 +421,70 @@
     }
   }
 
-  function allowContinueWithoutNlp() {
-    setAnalysisState({ ok: true, bypass: true, inFlight: false });
-    lastResult = {
-      urgency: 'NON-URGENT',
-      bypass: true,
-      original_complaint: normalizeComplaint((els().textarea && els().textarea.value) || ''),
-      timestamp: new Date().toISOString(),
-    };
+  function updateSkipUi() {
+    const skipBtn = document.getElementById('btn-skip-complaint');
+    const addBtn = document.getElementById('btn-add-complaint');
+    const note = document.getElementById('chief-complaint-skipped-note');
+    const section = document.getElementById('section-chief-complaint');
+    const { textarea } = els();
+
+    if (skipBtn) skipBtn.hidden = complaintSkipped;
+    if (addBtn) addBtn.hidden = !complaintSkipped;
+    if (note) note.hidden = !complaintSkipped;
+    if (section) section.classList.toggle('is-skipped', complaintSkipped);
+    if (textarea) textarea.disabled = complaintSkipped;
+  }
+
+  function skipComplaint() {
+    const { textarea, err } = els();
+    complaintSkipped = true;
+    if (textarea) {
+      textarea.value = '';
+      textarea.classList.remove('invalid');
+    }
+    if (err) err.textContent = '';
+    analysisOk = false;
+    bypassGate = false;
+    lastAnalyzedText = '';
+    lastResult = null;
     try {
-      global.__regNlpLastResult = lastResult;
+      global.__regNlpLastResult = null;
     } catch (_) { /* ignore */ }
-    return lastResult;
+    if (analyzeController) {
+      analyzeController.abort();
+      analyzeController = null;
+    }
+    analysisInFlight = false;
+    updateSkipUi();
+    updateSubmitGate();
+  }
+
+  function resumeComplaint() {
+    complaintSkipped = false;
+    const { textarea } = els();
+    if (textarea) {
+      textarea.disabled = false;
+      textarea.focus();
+    }
+    updateSkipUi();
+    updateSubmitGate();
+  }
+
+  function allowContinueWithoutNlp() {
+    setAnalysisState({ ok: true, bypass: false, inFlight: false });
+    lastResult = null;
+    try {
+      global.__regNlpLastResult = null;
+    } catch (_) { /* ignore */ }
+    return null;
   }
 
   function onComplaintEdited() {
     const { textarea, err } = els();
+    if (complaintSkipped) {
+      complaintSkipped = false;
+      updateSkipUi();
+    }
     analysisOk = false;
     bypassGate = false;
     lastAnalyzedText = '';
@@ -422,9 +504,9 @@
   }
 
   function isReadyForSubmit() {
-    // NLP runs on submit; only require a usable complaint + consent (gate handles consent)
     const text = normalizeComplaint((els().textarea && els().textarea.value) || '');
-    return validateComplaint(text, { showErrorMsg: false }) || bypassGate || analysisOk;
+    if (complaintSkipped || !text) return true;
+    return validateComplaint(text, { showErrorMsg: false });
   }
 
   function getLastUrgency() {
@@ -443,6 +525,13 @@
     if (consent) {
       consent.addEventListener('change', updateSubmitGate);
     }
+
+    const skipBtn = document.getElementById('btn-skip-complaint');
+    const addBtn = document.getElementById('btn-add-complaint');
+    if (skipBtn) skipBtn.addEventListener('click', skipComplaint);
+    if (addBtn) addBtn.addEventListener('click', resumeComplaint);
+
+    updateSkipUi();
     updateSubmitGate();
   }
 
@@ -458,6 +547,10 @@
     isAnalyzing: function () {
       return analysisInFlight;
     },
+    isComplaintSkipped: isComplaintSkipped,
+    shouldRunNlp: shouldRunNlp,
+    skipComplaint: skipComplaint,
+    resumeComplaint: resumeComplaint,
     getLastUrgency: getLastUrgency,
     getLastResult: function () {
       return lastResult || global.__regNlpLastResult || null;

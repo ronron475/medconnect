@@ -527,9 +527,11 @@ const step2Rules = {
   },
   'blood-type':        v => !v ? 'Please select a blood type.' : '',
   'chief-complaint':   v => {
+    const nlp = window.MedConnectRegisterNlp;
+    if (nlp && typeof nlp.isComplaintSkipped === 'function' && nlp.isComplaintSkipped()) return '';
     const t = (v || '').trim();
-    if (!t) return 'Please describe your current health concern (chief complaint).';
-    if (t.length < 10) return 'Please provide a bit more detail (at least 10 characters).';
+    if (!t) return '';
+    if (t.length < 10) return 'Please provide a bit more detail (at least 10 characters), or skip for now.';
     if (t.length > 500) return 'Chief complaint must be 500 characters or fewer.';
     return '';
   },
@@ -866,11 +868,19 @@ function persistPostRegIntent(urgency, nlpResult, redirectUrl) {
   try {
     if (chiefComplaintInput && chiefComplaintInput.value.trim()) {
       sessionStorage.setItem('medconnect_pending_chief_complaint', chiefComplaintInput.value.trim());
+    } else {
+      sessionStorage.removeItem('medconnect_pending_chief_complaint');
     }
     if (nlpResult) {
       sessionStorage.setItem('medconnect_pending_nlp_result', JSON.stringify(nlpResult));
+    } else {
+      sessionStorage.removeItem('medconnect_pending_nlp_result');
     }
-    sessionStorage.setItem('medconnect_post_reg_urgency', urgency || 'NON-URGENT');
+    if (urgency) {
+      sessionStorage.setItem('medconnect_post_reg_urgency', urgency);
+    } else {
+      sessionStorage.removeItem('medconnect_post_reg_urgency');
+    }
     if (urgency === 'URGENT') {
       sessionStorage.setItem('medconnect_prefer_earliest_slot', '1');
     } else {
@@ -938,6 +948,14 @@ function presentPostRegistrationOutcome(urgency, redirectUrl) {
   setLoading(false);
   wireOutcomeActions(redirectUrl);
 
+  if (!urgency) {
+    try {
+      sessionStorage.removeItem('medconnect_post_reg_urgency');
+    } catch (_) { /* ignore */ }
+    showOutcomeModal('reg-outcome-success');
+    return;
+  }
+
   const u = normalizeTriageUrgency(urgency);
   try {
     sessionStorage.setItem('medconnect_post_reg_urgency', u);
@@ -980,16 +998,20 @@ step2Form.addEventListener('submit', async e => {
   }
 
   const nlp = window.MedConnectRegisterNlp;
-  let urgency = 'NON-URGENT';
+  const complaintText = chiefComplaintInput ? chiefComplaintInput.value.trim() : '';
+  const runNlpOnSubmit = nlp && typeof nlp.shouldRunNlp === 'function'
+    ? nlp.shouldRunNlp(complaintText)
+    : complaintText.length >= 10;
+  let urgency = '';
   let nlpResult = null;
 
   setLoading(true);
-  if (nlp && typeof nlp.showOverlay === 'function') {
+  if (runNlpOnSubmit && nlp && typeof nlp.showOverlay === 'function') {
     nlp.showOverlay(true);
   }
 
-  // Silent NLP — patient never sees technical analysis; only loading overlay
-  if (nlp && typeof nlp.runAnalysis === 'function') {
+  // Silent NLP — only when the patient entered a chief complaint
+  if (runNlpOnSubmit && nlp && typeof nlp.runAnalysis === 'function') {
     try {
       const analysis = await nlp.runAnalysis({
         manual: true,
@@ -1005,7 +1027,7 @@ step2Form.addEventListener('submit', async e => {
         setLoading(false);
         return;
       } else {
-        // Soft-fail: allow registration as non-urgent when NLP is unavailable
+        // Soft-fail: allow registration when NLP is unavailable (complaint was provided)
         if (typeof nlp.allowContinueWithoutNlp === 'function') {
           nlpResult = nlp.allowContinueWithoutNlp();
         }
@@ -1017,9 +1039,11 @@ step2Form.addEventListener('submit', async e => {
       }
       urgency = 'NON-URGENT';
     }
+  } else if (nlp && nlp.hideOverlay) {
+    nlp.hideOverlay();
   }
 
-  urgency = normalizeTriageUrgency(urgency);
+  urgency = urgency ? normalizeTriageUrgency(urgency) : '';
   persistPostRegIntent(urgency, nlpResult);
 
   // Build path to register API using APP_BASE for subfolder compatibility
@@ -1030,7 +1054,9 @@ step2Form.addEventListener('submit', async e => {
     const fd = new FormData(step2Form);
 
     // Attach urgency for server logging / future hooks (registration API ignores unknown fields)
-    fd.append('triage_urgency', urgency);
+    if (urgency) {
+      fd.append('triage_urgency', urgency);
+    }
     if (nlpResult) {
       try {
         fd.append('nlp_result_json', JSON.stringify(nlpResult));
@@ -1078,7 +1104,6 @@ step2Form.addEventListener('submit', async e => {
       } else if (data.urgency) {
         finalUrgency = data.urgency;
       }
-      finalUrgency = normalizeTriageUrgency(finalUrgency);
       persistPostRegIntent(finalUrgency, nlpResult);
       presentPostRegistrationOutcome(finalUrgency, data.redirect);
     } else {
