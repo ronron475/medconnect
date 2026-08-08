@@ -129,3 +129,25 @@
 .provider-session-alert__ok:hover {
     background: #02777f;
 }
+
+@media (max-width: 640px) {
+  .provider-session-alert {
+    align-items: flex-end;
+    padding: max(12px, env(safe-area-inset-bottom, 0px)) max(12px, env(safe-area-inset-right, 0px));
+  }
+
+  .provider-session-alert__dialog {
+    border-radius: 16px 16px 0 0;
+    max-height: 90vh;
+    overflow-y: auto;
+  }
+
+  .provider-session-alert__footer {
+    flex-direction: column;
+  }
+
+  .provider-session-alert__ok {
+    width: 100%;
+    min-height: 44px;
+  }
+}
