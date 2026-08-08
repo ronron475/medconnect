@@ -353,6 +353,13 @@ html[data-theme-resolved='dark'] .pt-remedy__choice--outline {
 
 /* Keep messages FAB from covering Care tips panel / actions */
 body.pt-remedy-panel-open .mc-messages-fab,
-.mc-messages-fab[data-suppressed-for="pt-remedy"] {
+.mc-messages-fab[data-suppressed-for="pt-remedy"],
+body.mc-notif-open .mc-messages-fab {
   display: none !important;
+}
+
+body.mc-notif-open .pt-remedy,
+body.mc-notif-open .pt-remedy__fab {
+  visibility: hidden;
+  pointer-events: none;
 }
