@@ -85,12 +85,10 @@ html.signin-skip-motion #signin-modal.hero-signin-panel {
     visibility 0s linear 0.38s;
 }
 
-/* When open: pin to viewport, size to content (avoid tall empty shell / hard clip) */
-body.landing-page.signin-active > #signin-modal.hero-signin-panel,
-body.landing-page.signin-active #signin-modal.hero-signin-panel.is-open,
-body.landing-page.signin-active #signin-modal.hero-signin-panel.is-closing,
-body.landing-page.signin-active #signin-modal.hero-signin-panel.is-viewport-pinned,
-#signin-modal.hero-signin-panel.is-open,
+/* Legacy viewport-pinned mode only (non-hero fallback) */
+body.landing-page.signin-active > #signin-modal.hero-signin-panel.is-viewport-pinned,
+body.landing-page.signin-active #signin-modal.hero-signin-panel.is-viewport-pinned.is-open,
+body.landing-page.signin-active #signin-modal.hero-signin-panel.is-viewport-pinned.is-closing,
 #signin-modal.hero-signin-panel.is-viewport-pinned {
   position: fixed !important;
   top: calc(var(--hero-signin-nav-offset) + var(--hero-signin-gap)) !important;
@@ -109,13 +107,24 @@ body.landing-page.signin-active #signin-modal.hero-signin-panel.is-viewport-pinn
   z-index: 1250 !important;
 }
 
-/* Lock page scroll while sign-in is open (all breakpoints) */
-html:has(body.landing-page.signin-active) {
+/* Hero-anchored open state — stays in landing header, scrolls with hero */
+.landing-page .hero-signin-panel.is-open:not(.is-viewport-pinned),
+.landing-page .hero-signin-panel.is-closing:not(.is-viewport-pinned) {
+  position: absolute;
+  top: 0;
+  right: 0;
+  z-index: 5;
+  max-height: calc(100dvh - var(--hero-signin-nav-offset) - (var(--hero-signin-gap) * 2) - env(safe-area-inset-bottom, 0px));
+  overflow: hidden;
+}
+
+/* Lock page scroll only for viewport-pinned sign-in */
+html:has(body.landing-page.signin-scroll-locked) {
   overflow: hidden !important;
   overscroll-behavior: none;
 }
 
-body.landing-page.signin-active {
+body.landing-page.signin-scroll-locked {
   overflow: hidden !important;
   overscroll-behavior: none;
 }
@@ -663,11 +672,11 @@ html[data-theme-resolved='dark'] .landing-page .hero-signin-panel .signin-modal-
 
 /* Tablet & mobile — viewport-anchored panel (avoids hero overflow clipping) */
 @media (max-width: 960px) {
-  html:has(body.landing-page.signin-active) {
+  html:has(body.landing-page.signin-scroll-locked) {
     overflow: hidden;
   }
 
-  body.landing-page.signin-active {
+  body.landing-page.signin-scroll-locked {
     overflow: hidden !important;
     touch-action: none;
   }
@@ -712,8 +721,8 @@ html[data-theme-resolved='dark'] .landing-page .hero-signin-panel .signin-modal-
     transform: translateX(40px);
   }
 
-  body.landing-page.signin-active > #signin-modal.hero-signin-panel.is-open,
-  body.landing-page.signin-active #signin-modal.hero-signin-panel.is-open {
+  body.landing-page.signin-active > #signin-modal.hero-signin-panel.is-viewport-pinned.is-open,
+  body.landing-page.signin-active #signin-modal.hero-signin-panel.is-viewport-pinned.is-open {
     position: fixed !important;
     top: calc(var(--hero-signin-nav-offset) + var(--hero-signin-gap)) !important;
     right: max(12px, env(safe-area-inset-right, 12px)) !important;
@@ -754,8 +763,8 @@ html[data-theme-resolved='dark'] .landing-page .hero-signin-panel .signin-modal-
 }
 
 @media (max-width: 580px) {
-  body.landing-page.signin-active > #signin-modal.hero-signin-panel.is-open,
-  body.landing-page.signin-active #signin-modal.hero-signin-panel.is-open {
+  body.landing-page.signin-active > #signin-modal.hero-signin-panel.is-viewport-pinned.is-open,
+  body.landing-page.signin-active #signin-modal.hero-signin-panel.is-viewport-pinned.is-open {
     top: calc(var(--hero-signin-nav-offset) + 8px) !important;
     right: max(10px, env(safe-area-inset-right, 10px)) !important;
     left: max(10px, env(safe-area-inset-left, 10px)) !important;

@@ -50,7 +50,71 @@ if (!isLandingPage) {
   let preventTouchMove = null;
   let preventWheel = null;
   let signinHomeParent = null;
+  let scrollToHeroPending = false;
+  let signinOpenedAt = 0;
   const CLOSE_MS = isInlineHero ? 420 : 300;
+  const HERO_ZONE_BUFFER = 72;
+  const SCROLL_CLOSE_GRACE_MS = 650;
+
+  function getNavHeight() {
+    return document.getElementById('navbar')?.offsetHeight || 84;
+  }
+
+  function isInHeroZone() {
+    if (!heroSection) return window.scrollY <= HERO_ZONE_BUFFER;
+    const rect = heroSection.getBoundingClientRect();
+    const navH = getNavHeight();
+    return rect.bottom > navH + HERO_ZONE_BUFFER;
+  }
+
+  function updateHeroSigninOffset() {
+    const navH = getNavHeight();
+    const maintBanner = document.querySelector('.landing-maintenance-banner');
+    const maintH = maintBanner ? maintBanner.offsetHeight : 0;
+    document.documentElement.style.setProperty('--hero-signin-nav-offset', `${navH + maintH}px`);
+  }
+
+  function scrollToHeroTop(done) {
+    const prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const finish = typeof done === 'function' ? done : () => {};
+
+    if (window.scrollY <= 12) {
+      finish();
+      return;
+    }
+
+    window.scrollTo({ top: 0, behavior: prefersReduced ? 'auto' : 'smooth' });
+
+    if (prefersReduced) {
+      finish();
+      return;
+    }
+
+    let lastY = -1;
+    let stillFrames = 0;
+    const deadline = Date.now() + 2400;
+
+    function poll() {
+      const y = window.scrollY;
+      if (y <= 12 || Date.now() > deadline) {
+        finish();
+        return;
+      }
+      if (y === lastY) {
+        stillFrames += 1;
+        if (stillFrames >= 6) {
+          finish();
+          return;
+        }
+      } else {
+        stillFrames = 0;
+        lastY = y;
+      }
+      requestAnimationFrame(poll);
+    }
+
+    requestAnimationFrame(poll);
+  }
 
   function portalSigninToBody() {
     if (!isInlineHero || overlay.parentElement === document.body) return;
@@ -166,20 +230,16 @@ if (!isLandingPage) {
     }
   }
 
-  function openModal() {
+  function openModalPinned() {
     clearTimeout(closeTimer);
     overlay.classList.remove('is-closing');
     lastFocus = document.activeElement;
 
-    if (isInlineHero) {
-      const navH = document.getElementById('navbar')?.offsetHeight || 84;
-      const maintBanner = document.querySelector('.landing-maintenance-banner');
-      const maintH = maintBanner ? maintBanner.offsetHeight : 0;
-      document.documentElement.style.setProperty('--hero-signin-nav-offset', `${navH + maintH}px`);
-    }
+    if (isInlineHero) updateHeroSigninOffset();
 
     portalSigninToBody();
     overlay.classList.add('is-viewport-pinned');
+    document.body.classList.add('signin-scroll-locked');
     lockScroll();
     overlay.removeAttribute('hidden');
     overlay.setAttribute('aria-hidden', 'false');
@@ -187,7 +247,6 @@ if (!isLandingPage) {
     if (heroSection && isInlineHero) heroSection.classList.add('is-signin-open');
     setTriggerExpanded(true);
 
-    // double rAF so display is painted before transition starts
     requestAnimationFrame(() => requestAnimationFrame(() => {
       overlay.classList.add('is-open');
     }));
@@ -200,13 +259,60 @@ if (!isLandingPage) {
     document.addEventListener('keydown', trapFocus);
   }
 
+  function openModalAtHero() {
+    clearTimeout(closeTimer);
+    overlay.classList.remove('is-closing', 'is-viewport-pinned');
+    lastFocus = document.activeElement;
+    updateHeroSigninOffset();
+    restoreSigninPlacement();
+
+    overlay.removeAttribute('hidden');
+    overlay.setAttribute('aria-hidden', 'false');
+    document.body.classList.add('signin-active');
+    document.body.classList.remove('signin-scroll-locked');
+    if (heroSection) heroSection.classList.add('is-signin-open');
+    setTriggerExpanded(true);
+    signinOpenedAt = performance.now();
+
+    requestAnimationFrame(() => requestAnimationFrame(() => {
+      overlay.classList.add('is-open');
+    }));
+
+    document.dispatchEvent(new CustomEvent('medconnect:signin', { detail: { open: true } }));
+
+    const first = overlay.querySelector('input:not([disabled]), button:not([disabled])');
+    if (first) setTimeout(() => first.focus(), 360);
+
+    document.addEventListener('keydown', trapFocus);
+  }
+
+  function openModal() {
+    if (overlay.classList.contains('is-open') || overlay.classList.contains('is-closing')) return;
+
+    if (isInlineHero) {
+      if (!isInHeroZone()) {
+        if (scrollToHeroPending) return;
+        scrollToHeroPending = true;
+        scrollToHeroTop(() => {
+          scrollToHeroPending = false;
+          if (!overlay.classList.contains('is-open')) openModalAtHero();
+        });
+        return;
+      }
+      openModalAtHero();
+      return;
+    }
+
+    openModalPinned();
+  }
+
   function closeModal() {
     if (overlay.hasAttribute('hidden') && !overlay.classList.contains('is-open')) return;
 
     overlay.classList.remove('is-open');
     overlay.classList.add('is-closing');
     if (heroSection && isInlineHero) heroSection.classList.remove('is-signin-open');
-    document.body.classList.remove('signin-active');
+    document.body.classList.remove('signin-active', 'signin-scroll-locked');
     setTriggerExpanded(false);
     unlockScroll();
     document.removeEventListener('keydown', trapFocus);
@@ -244,7 +350,7 @@ if (!isLandingPage) {
     overlay.setAttribute('aria-hidden', 'true');
 
     if (heroSection && isInlineHero) heroSection.classList.remove('is-signin-open');
-    document.body.classList.remove('signin-active');
+    document.body.classList.remove('signin-active', 'signin-scroll-locked');
     setTriggerExpanded(false);
     document.removeEventListener('keydown', trapFocus);
 
@@ -304,6 +410,22 @@ if (!isLandingPage) {
   window.closeSignInModal = closeModal;
   window.closeSignInModalInstant = closeModalInstant;
   window.openSignInModal = openModal;
+
+  if (isInlineHero) {
+    let scrollCloseTicking = false;
+    window.addEventListener('scroll', () => {
+      if (!overlay.classList.contains('is-open') || overlay.classList.contains('is-viewport-pinned')) return;
+      if (performance.now() - signinOpenedAt < SCROLL_CLOSE_GRACE_MS) return;
+      if (scrollCloseTicking) return;
+      scrollCloseTicking = true;
+      requestAnimationFrame(() => {
+        if (overlay.classList.contains('is-open') && !isInHeroZone()) {
+          closeModal();
+        }
+        scrollCloseTicking = false;
+      });
+    }, { passive: true });
+  }
 
   const authQs = new URLSearchParams(window.location.search);
   if (authQs.has('registered') || authQs.has('session_expired') || authQs.has('setup_complete') || authQs.has('signin')) {
