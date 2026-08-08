@@ -43,7 +43,8 @@ $asset = ASSET_BASE;
   <link rel="stylesheet" href="<?= $asset ?>/assets/css/hero-signin-panel.css?v=14" />
   <?php $forgotPwCssVer = (int) @filemtime(ASSETS_PATH . '/css/forgot-password.css'); ?>
   <link rel="stylesheet" href="<?= $asset ?>/assets/css/forgot-password.css?v=<?= $forgotPwCssVer ?>" />
-  <link rel="stylesheet" href="<?= $asset ?>/assets/css/landing-scroll-animations.css?v=5" />
+  <?php $landingScrollAnimCssVer = (int) @filemtime(ASSETS_PATH . '/css/landing-scroll-animations.css'); ?>
+  <link rel="stylesheet" href="<?= $asset ?>/assets/css/landing-scroll-animations.css?v=<?= $landingScrollAnimCssVer ?>" />
   <link rel="stylesheet" href="<?= $asset ?>/assets/css/landing-hero-search.css?v=6" />
   <link rel="stylesheet" href="<?= $asset ?>/assets/css/landing-about-team.css?v=7" />
   <link rel="stylesheet" href="<?= $asset ?>/assets/css/landing-responsive.css?v=5" />
@@ -127,11 +128,7 @@ require __DIR__ . '/partials/landing_navbar.php';
 
           </h1>
 
-          <p class="hero-desc w-100">
-
-            <?= htmlspecialchars($landing_hero['subheading']) ?>
-
-          </p>
+          <p class="hero-desc w-100" data-text="<?= htmlspecialchars($landing_hero['subheading']) ?>"><?= htmlspecialchars($landing_hero['subheading']) ?></p>
 
           <ul class="hero-trust-chips" aria-label="Platform highlights">
 
