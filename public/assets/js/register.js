@@ -48,6 +48,7 @@ if (navbar) {
   const codePanel     = document.getElementById('otp-code-panel');
   const emailInput    = document.getElementById('otp-email');
   const otpInput      = document.getElementById('otp-input');
+  const otpDigits     = Array.from(document.querySelectorAll('.otp-digit'));
   const btnSend       = document.getElementById('btn-send-otp');
   const btnVerify     = document.getElementById('btn-verify-otp');
   const btnResend     = document.getElementById('btn-resend-otp');
@@ -195,10 +196,90 @@ if (navbar) {
     }, 420);
   }
 
+  function syncOtpHiddenInput() {
+    if (!otpInput) return '';
+    const code = otpDigits.map((el) => (el.value || '').replace(/\D/g, '')).join('').slice(0, 6);
+    otpInput.value = code;
+    otpDigits.forEach((el, i) => {
+      el.classList.toggle('filled', !!el.value);
+      if (code.length === 6 && !/^\d$/.test(el.value)) el.classList.remove('filled');
+    });
+    return code;
+  }
+
+  function clearOtpDigits() {
+    otpDigits.forEach((el) => {
+      el.value = '';
+      el.classList.remove('filled', 'invalid');
+    });
+    if (otpInput) otpInput.value = '';
+  }
+
+  function focusOtpDigit(index) {
+    const el = otpDigits[index];
+    if (el) {
+      el.focus();
+      el.select();
+    }
+  }
+
+  function fillOtpDigits(code) {
+    const digits = String(code || '').replace(/\D/g, '').slice(0, 6);
+    otpDigits.forEach((el, i) => {
+      el.value = digits[i] || '';
+      el.classList.toggle('filled', !!digits[i]);
+    });
+    syncOtpHiddenInput();
+    if (digits.length < 6) focusOtpDigit(digits.length);
+  }
+
+  if (otpDigits.length) {
+    otpDigits.forEach((el, index) => {
+      el.addEventListener('input', () => {
+        el.value = (el.value || '').replace(/\D/g, '').slice(-1);
+        el.classList.toggle('filled', !!el.value);
+        el.classList.remove('invalid');
+        const code = syncOtpHiddenInput();
+        if (el.value && index < otpDigits.length - 1) focusOtpDigit(index + 1);
+        if (code.length === 6) btnVerify.click();
+      });
+
+      el.addEventListener('keydown', (e) => {
+        if (e.key === 'Backspace' && !el.value && index > 0) {
+          e.preventDefault();
+          focusOtpDigit(index - 1);
+          otpDigits[index - 1].value = '';
+          otpDigits[index - 1].classList.remove('filled');
+          syncOtpHiddenInput();
+        }
+        if (e.key === 'ArrowLeft' && index > 0) {
+          e.preventDefault();
+          focusOtpDigit(index - 1);
+        }
+        if (e.key === 'ArrowRight' && index < otpDigits.length - 1) {
+          e.preventDefault();
+          focusOtpDigit(index + 1);
+        }
+        if (e.key === 'Enter') {
+          e.preventDefault();
+          btnVerify.click();
+        }
+      });
+
+      el.addEventListener('paste', (e) => {
+        e.preventDefault();
+        const pasted = (e.clipboardData || window.clipboardData).getData('text') || '';
+        fillOtpDigits(pasted);
+      });
+
+      el.addEventListener('focus', () => el.select());
+    });
+  }
+
   function startResendCountdown(seconds) {
     btnResend.disabled = true;
     let remaining = seconds;
-    countdown.textContent = ` (${remaining}s)`;
+    countdown.textContent = `Resend available in ${remaining}s`;
     resendTimer = setInterval(() => {
       remaining--;
       if (remaining <= 0) {
@@ -206,7 +287,7 @@ if (navbar) {
         btnResend.disabled = false;
         countdown.textContent = '';
       } else {
-        countdown.textContent = ` (${remaining}s)`;
+        countdown.textContent = `Resend available in ${remaining}s`;
       }
     }, 1000);
   }
@@ -267,7 +348,7 @@ if (navbar) {
         clearAlert('otp-alert');
         sentNote.textContent = `OTP sent to ${email}. Check your inbox (and spam folder).`;
         startResendCountdown(60);
-        otpInput.focus();
+        focusOtpDigit(0);
       } else {
         // If backend says already registered, keep user on email step and show inline error
         if ((data.message || '').toLowerCase().includes('already registered')) {
@@ -299,8 +380,8 @@ if (navbar) {
         clearAlert('otp-alert');
         if (sentNote) sentNote.textContent = `OTP sent to ${email}. Check your inbox (and spam folder).`;
         startResendCountdown(60);
-        otpInput.value = '';
-        otpInput.focus();
+        clearOtpDigits();
+        focusOtpDigit(0);
       } else {
         showAlert('otp-alert', data.message);
       }
@@ -313,7 +394,7 @@ if (navbar) {
     btnChange.addEventListener('click', () => {
       codePanel.hidden  = true;
       emailPanel.hidden = false;
-      otpInput.value    = '';
+      clearOtpDigits();
       clearAlert('otp-alert');
       clearInterval(resendTimer);
       countdown.textContent = '';
@@ -322,14 +403,20 @@ if (navbar) {
   }
 
   btnVerify.addEventListener('click', async () => {
-    const otp   = otpInput.value.trim();
+    syncOtpHiddenInput();
+    const otp   = (otpInput?.value || '').trim();
     const email = emailInput.value.trim();
     const errEl = document.getElementById('otp-input-error');
     if (!otp || otp.length !== 6 || !/^\d{6}$/.test(otp)) {
       errEl.textContent = 'Please enter the 6-digit OTP.';
+      errEl.classList.add('has-msg');
+      otpDigits.forEach((el) => el.classList.add('invalid'));
+      focusOtpDigit(0);
       return;
     }
+    otpDigits.forEach((el) => el.classList.remove('invalid'));
     errEl.textContent = '';
+    errEl.classList.remove('has-msg');
     setLoading(btnVerify, document.getElementById('verify-otp-btn-text'), document.getElementById('verify-otp-spinner'), true);
     try {
       const fd = new FormData();
@@ -372,8 +459,9 @@ if (navbar) {
     setLoading(btnVerify, document.getElementById('verify-otp-btn-text'), document.getElementById('verify-otp-spinner'), false);
   });
 
-  // Allow Enter key on OTP input
-  otpInput.addEventListener('keydown', e => { if (e.key === 'Enter') btnVerify.click(); });
+  if (otpDigits.length) {
+    otpDigits[0].addEventListener('keydown', e => { if (e.key === 'Enter') btnVerify.click(); });
+  }
   emailInput.addEventListener('keydown', e => { if (e.key === 'Enter') btnSend.click(); });
 })();
 
