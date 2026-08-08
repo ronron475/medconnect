@@ -21,8 +21,11 @@
   <link rel="icon" type="image/png" href="<?= $b ?>/assets/img/medcon_logo.png" />
   <link rel="shortcut icon" type="image/png" href="<?= $b ?>/assets/img/medcon_logo.png" />
   <link rel="apple-touch-icon" href="<?= $b ?>/assets/img/medcon_logo.png" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="<?= $b ?>/assets/css/style.css?v=20260702a" />
-  <link rel="stylesheet" href="<?= $b ?>/assets/css/register.css?v=20260805triage" />
+  <link rel="stylesheet" href="<?= $b ?>/assets/css/register.css?v=20260808ui" />
   <link rel="stylesheet" href="<?= $b ?>/assets/css/responsive.css" />
   <?php require_once dirname(__DIR__) . '/components/loader.php'; mc_loader_assets(); ?>
 </head>
@@ -41,32 +44,37 @@
 
 <main class="reg-page">
   <div class="reg-wrapper">
+    <div class="reg-shell">
 
     <header class="registration-header">
-      <button type="button" class="btn-nav-back" id="btn-back-to-signin">&#8592; Back to Sign In</button>
-      <span class="patient-only-badge">
-        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
-        Patient Registration Only
-      </span>
+      <div class="registration-header__top">
+        <button type="button" class="btn-nav-back" id="btn-back-to-signin">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 18-6-6 6-6"/></svg>
+          Back to Sign In
+        </button>
+        <span class="patient-only-badge">
+          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+          Patient Only
+        </span>
+      </div>
       <h1 class="reg-page-title">Create Patient Account</h1>
-      <p class="reg-page-sub">Create your secure medConnect patient account to access online consultations and healthcare services.</p>
+      <p class="reg-page-sub">Register securely to access online consultations with City Health Office of Bago City.</p>
     </header>
 
-    <!-- STEP INDICATOR -->
-    <nav class="step-indicator" id="step-indicator" aria-label="Registration progress">
+    <nav class="step-indicator step-indicator--compact" id="step-indicator" aria-label="Registration progress">
       <div class="step-item active" id="step-dot-0" aria-current="step">
-        <div class="step-dot" aria-hidden="true">1</div>
+        <div class="step-dot" data-step-num="1" aria-hidden="true">1</div>
         <span class="step-label">Email Verification</span>
       </div>
       <div class="step-line" aria-hidden="true"></div>
       <div class="step-item" id="step-dot-1">
-        <div class="step-dot" aria-hidden="true">2</div>
+        <div class="step-dot" data-step-num="2" aria-hidden="true">2</div>
         <span class="step-label">Identity &amp; Residency</span>
       </div>
       <div class="step-line" aria-hidden="true"></div>
       <div class="step-item" id="step-dot-2">
-        <div class="step-dot" aria-hidden="true">3</div>
-        <span class="step-label">Patient Form</span>
+        <div class="step-dot" data-step-num="3" aria-hidden="true">3</div>
+        <span class="step-label">Patient Details</span>
       </div>
     </nav>
 
@@ -107,22 +115,28 @@
         <div id="otp-code-panel" hidden>
           <p class="otp-sent-note" id="otp-sent-note"></p>
           <div class="form-group">
-            <label for="otp-input">Enter 6-Digit OTP <span class="req">*</span></label>
-            <div class="input-wrap">
-              <span class="input-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="11" x="3" y="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></span>
-              <input type="text" id="otp-input" placeholder="000000" maxlength="6" inputmode="numeric" autocomplete="one-time-code" style="letter-spacing:6px;font-size:20px;font-weight:600;text-align:center" />
+            <label id="otp-label" for="otp-digit-0">Enter 6-Digit OTP <span class="req">*</span></label>
+            <div class="otp-boxes" id="otp-boxes" role="group" aria-labelledby="otp-label">
+              <input type="text" class="otp-digit" id="otp-digit-0" maxlength="1" inputmode="numeric" pattern="[0-9]" data-otp-index="0" autocomplete="one-time-code" aria-label="OTP digit 1 of 6" />
+              <input type="text" class="otp-digit" maxlength="1" inputmode="numeric" pattern="[0-9]" data-otp-index="1" aria-label="OTP digit 2 of 6" />
+              <input type="text" class="otp-digit" maxlength="1" inputmode="numeric" pattern="[0-9]" data-otp-index="2" aria-label="OTP digit 3 of 6" />
+              <input type="text" class="otp-digit" maxlength="1" inputmode="numeric" pattern="[0-9]" data-otp-index="3" aria-label="OTP digit 4 of 6" />
+              <input type="text" class="otp-digit" maxlength="1" inputmode="numeric" pattern="[0-9]" data-otp-index="4" aria-label="OTP digit 5 of 6" />
+              <input type="text" class="otp-digit" maxlength="1" inputmode="numeric" pattern="[0-9]" data-otp-index="5" aria-label="OTP digit 6 of 6" />
             </div>
+            <input type="text" id="otp-input" hidden tabindex="-1" aria-hidden="true" autocomplete="off" />
             <span class="field-error" id="otp-input-error" role="alert"></span>
           </div>
-          <div style="margin-top:8px">
-            <button type="button" class="btn-submit" id="btn-verify-otp" style="width:100%">
+          <div class="otp-actions">
+            <button type="button" class="btn-submit" id="btn-verify-otp">
               <span id="verify-otp-btn-text">Verify OTP</span>
               <span id="verify-otp-spinner" class="btn-spinner" hidden></span>
             </button>
           </div>
-          <p style="margin-top:12px;font-size:13px;color:#6b7280;text-align:center">
-            Didn't receive it? <button type="button" id="btn-resend-otp" style="background:none;border:none;color:#0d9488;cursor:pointer;font-size:13px;padding:0;text-decoration:underline">Resend OTP</button>
-            <span id="resend-countdown" style="color:#6b7280;font-size:13px"></span>
+          <p class="otp-resend-row">
+            <span class="otp-resend-text">Didn't receive it?</span>
+            <button type="button" id="btn-resend-otp" class="otp-resend-btn">Resend OTP</button>
+            <span id="resend-countdown" class="otp-resend-countdown" aria-live="polite"></span>
           </p>
         </div>
 
@@ -491,7 +505,7 @@
             <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" x2="8" y1="13" y2="13"/><line x1="16" x2="8" y1="17" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
           </div>
           <div class="card-header-text">
-            <h2 class="card-title">Step 3 — Patient Form</h2>
+            <h2 class="card-title">Step 3 — Patient Details</h2>
             <p class="card-sub">Complete your account, contact, and basic medical profile. Bago City residency confirmed.</p>
           </div>
           <span class="bago-confirmed-badge">
@@ -766,6 +780,12 @@
       </div><!-- /.reg-card step2 -->
     </div><!-- /#step2 -->
 
+    <aside class="reg-security-notice" role="note">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="m9 12 2 2 4-4"/></svg>
+      <p>Your information is encrypted and handled in compliance with the Data Privacy Act of 2012 (RA 10173). OTP codes expire after a short period and are never shared with third parties.</p>
+    </aside>
+
+    </div><!-- /.reg-shell -->
   </div><!-- /.reg-wrapper -->
 </main>
 
@@ -778,7 +798,7 @@
 <script src="<?= $b ?>/assets/js/phone-validation.js?v=<?= (int) @filemtime(ASSETS_PATH . '/js/phone-validation.js') ?>"></script>
 <script src="<?= $b ?>/assets/js/ocr-national-id.js?v=20260729ocr4"></script>
 <script src="<?= $b ?>/assets/js/register-nlp-analysis.js?v=20260806cds1"></script>
-<script src="<?= $b ?>/assets/js/register.js?v=20260805triage"></script>
+<script src="<?= $b ?>/assets/js/register.js?v=20260808ui"></script>
 
 <!-- Silent NLP loading overlay (patient-facing; no technical AI output) -->
 <?php
