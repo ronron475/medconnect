@@ -590,3 +590,703 @@ body.mc-nav-opening .adm-sidebar a {
     transition: none !important;
   }
 }
+
+/* =============================================================================
+   medConnect Unified Responsive Design System
+   Single layer for all portals, auth, registration, video, and dashboards.
+   Breakpoints: 1280 | 1024 | 768 | 640 | 480 | 414 | 390 | 375 | 320
+   ============================================================================= */
+
+html {
+  overflow-x: clip;
+  max-width: 100%;
+}
+
+body {
+  overflow-x: clip;
+  max-width: 100%;
+}
+
+.portal-shell,
+.root-wrapper,
+.reg-page,
+.landing-page {
+  max-width: 100%;
+  min-width: 0;
+}
+
+.portal-main,
+.portal-page-body,
+.provider-main,
+.provider-page-body,
+.main-content,
+.adm-main,
+.adm-content,
+.pd-content,
+.main,
+.main-workspace,
+.reg-wrapper,
+.reg-shell {
+  max-width: 100%;
+  min-width: 0;
+  overflow-x: clip;
+}
+
+/* Prevent flex/grid children from forcing horizontal scroll */
+.mc-card,
+.reg-card,
+.intake-card,
+.adm-card,
+.pd-card,
+.session-card,
+[class*="grid"],
+[class*="row"] {
+  min-width: 0;
+}
+
+/* ── Touch-friendly controls (all viewports) ── */
+button,
+input[type="button"],
+input[type="submit"],
+input[type="reset"],
+.btn,
+.mc-btn,
+.h-btn,
+.pd-btn,
+.session-btn,
+.btn-submit,
+.btn-back-step,
+.btn-nav-back,
+.toggle-pwd,
+.ch-action-btn,
+.otp-resend-btn,
+a.mc-btn {
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+
+@media (max-width: 1024px) {
+  button:not(.otp-digit):not(.ch-action-btn),
+  .btn,
+  .mc-btn,
+  .h-btn,
+  .pd-btn,
+  .session-btn,
+  .btn-submit,
+  .btn-back-step,
+  .btn-nav-back,
+  .provider-session-alert__ok {
+    min-height: var(--mc-touch-min, 44px);
+  }
+
+  .provider-session-alert__close,
+  .ch-action-btn,
+  .toggle-pwd {
+    min-width: var(--mc-touch-min, 44px);
+    min-height: var(--mc-touch-min, 44px);
+  }
+
+  .mc-btn,
+  .h-btn,
+  .pd-btn,
+  .session-btn,
+  .btn-submit {
+    padding-top: 10px;
+    padding-bottom: 10px;
+  }
+
+  input:not([type="checkbox"]):not([type="radio"]),
+  select,
+  textarea,
+  .input-wrap input,
+  .input-wrap select {
+    min-height: var(--mc-touch-min, 44px);
+    font-size: max(16px, 1em);
+  }
+
+  .otp-digit {
+    min-height: 48px;
+    min-width: 36px;
+  }
+}
+
+/* ── Auth & registration safe areas ── */
+body.reg-body,
+body:has(.signin-card),
+body:has(#login-form) {
+  padding-left: var(--mc-safe-left);
+  padding-right: var(--mc-safe-right);
+}
+
+body.reg-body .reg-page {
+  padding-top: max(16px, var(--mc-safe-top));
+  padding-bottom: max(24px, var(--mc-safe-bottom));
+}
+
+body.reg-body .reg-security-notice {
+  margin-bottom: var(--mc-safe-bottom);
+}
+
+/* Registration stepper — prevent overlap on narrow phones */
+@media (max-width: 480px) {
+  .step-indicator--compact {
+    padding: 10px 8px;
+    gap: 0;
+  }
+
+  .step-item {
+    max-width: 100px;
+  }
+
+  .step-line {
+    min-width: 8px;
+    max-width: 28px;
+    margin-top: 14px;
+  }
+}
+
+@media (max-width: 375px) {
+  .step-label {
+    font-size: 8.5px;
+    line-height: 1.2;
+  }
+
+  .step-dot {
+    width: 26px;
+    height: 26px;
+    font-size: 10px;
+  }
+}
+
+@media (max-width: 320px) {
+  .step-indicator--compact .step-label {
+    display: none;
+  }
+
+  .step-line {
+    margin-top: 13px;
+  }
+}
+
+/* ── Consultation history widget (ch-*) ── */
+.ch-section {
+  padding: 0;
+  overflow: hidden;
+}
+
+.ch-section-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  padding: 16px 18px;
+  border-bottom: 1px solid var(--mc-border-thin, #e2edf1);
+}
+
+.ch-section-title-group {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  min-width: 0;
+}
+
+.ch-section-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  background: rgba(1, 138, 147, 0.1);
+  color: var(--mc-aqua-medium, #018a93);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.ch-title {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 800;
+  color: var(--mc-navy-dark, #012a4a);
+}
+
+.ch-sub {
+  margin: 2px 0 0;
+  font-size: 0.75rem;
+  color: var(--mc-slate-muted, #608395);
+}
+
+.ch-view-all {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.8125rem;
+  font-weight: 700;
+  color: var(--mc-aqua-medium, #018a93);
+  text-decoration: none;
+  white-space: nowrap;
+  min-height: var(--mc-touch-min, 44px);
+  padding: 0 4px;
+}
+
+.ch-table-wrap {
+  width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.ch-table {
+  width: 100%;
+  min-width: 520px;
+  border-collapse: collapse;
+}
+
+.ch-table th,
+.ch-table td {
+  padding: 12px 16px;
+  text-align: left;
+  font-size: 0.8125rem;
+  border-bottom: 1px solid var(--mc-border-thin, #e2edf1);
+}
+
+.ch-table th {
+  font-size: 0.6875rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--mc-slate-muted, #608395);
+  background: rgba(244, 248, 250, 0.8);
+}
+
+.ch-provider {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+.ch-provider-avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: var(--mc-aqua-soft, #d8eaee);
+  color: var(--mc-aqua-medium, #018a93);
+  font-size: 0.75rem;
+  font-weight: 800;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.ch-date {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  white-space: nowrap;
+}
+
+.ch-type {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 4px 8px;
+  border-radius: 999px;
+  background: #f1f5f9;
+  color: #475569;
+}
+
+.ch-type--video {
+  background: #ecfeff;
+  color: #0f766e;
+}
+
+.ch-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  padding: 4px 10px;
+  border-radius: 999px;
+  white-space: nowrap;
+}
+
+.ch-status-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+.ch-status--completed { background: #dcfce7; color: #15803d; }
+.ch-status--scheduled { background: #dbeafe; color: #1d4ed8; }
+.ch-status--pending { background: #fef3c7; color: #b45309; }
+.ch-status--cancelled { background: #fee2e2; color: #b91c1c; }
+.ch-status--noshow { background: #f1f5f9; color: #64748b; }
+
+.ch-action-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  border: 1px solid var(--mc-border-thin, #e2edf1);
+  color: var(--mc-aqua-medium, #018a93);
+  background: #fff;
+  text-decoration: none;
+}
+
+.ch-mobile-list {
+  display: none;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.ch-mobile-item {
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--mc-border-thin, #e2edf1);
+}
+
+.ch-mobile-top,
+.ch-mobile-bottom {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.ch-mobile-top { margin-bottom: 10px; }
+
+.ch-mobile-provider {
+  display: block;
+  font-size: 0.875rem;
+  font-weight: 700;
+  color: var(--mc-navy-dark, #012a4a);
+  word-break: break-word;
+}
+
+.ch-mobile-date {
+  display: block;
+  font-size: 0.75rem;
+  color: var(--mc-slate-muted, #608395);
+  margin-top: 2px;
+}
+
+.ch-empty-state {
+  padding: 32px 20px;
+  text-align: center;
+  color: var(--mc-slate-muted, #608395);
+}
+
+.ch-empty-state p {
+  margin: 10px 0 0;
+  font-size: 0.875rem;
+}
+
+@media (max-width: 768px) {
+  .ch-table-wrap { display: none; }
+  .ch-mobile-list { display: block; }
+  .ch-section-header { padding: 14px 14px; }
+  .ch-view-all { width: 100%; justify-content: center; }
+}
+
+/* ── Admin AI config & dense admin grids ── */
+@media (max-width: 768px) {
+  .nlp-catalog-summary {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+  }
+
+  .nlp-catalog-toolbar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .nlp-catalog-search,
+  .nlp-catalog-filter {
+    width: 100%;
+    min-width: 0;
+  }
+
+  .nlp-catalog-table-wrap {
+    max-height: none;
+  }
+}
+
+@media (max-width: 480px) {
+  .nlp-catalog-summary {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ── Provider session alert modal ── */
+@media (max-width: 640px) {
+  .provider-session-alert {
+    align-items: flex-end;
+    padding: max(12px, var(--mc-safe-bottom)) max(12px, var(--mc-safe-right)) max(12px, var(--mc-safe-bottom)) max(12px, var(--mc-safe-left));
+  }
+
+  .provider-session-alert__dialog {
+    max-width: 100%;
+    border-radius: 16px 16px 0 0;
+    max-height: 90vh;
+    overflow-y: auto;
+  }
+
+  .provider-session-alert__ok {
+    width: 100%;
+    min-height: var(--mc-touch-min, 44px);
+  }
+
+  .provider-session-alert__close {
+    min-width: var(--mc-touch-min, 44px);
+    min-height: var(--mc-touch-min, 44px);
+  }
+}
+
+/* ── Video consultation (global reinforcements) ── */
+@media (max-width: 768px) {
+  .mc-vc-controls,
+  .mc-vc-toolbar,
+  .controls,
+  .video-controls {
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 10px !important;
+    padding-bottom: max(12px, var(--mc-safe-bottom)) !important;
+  }
+
+  .mc-vc-controls button,
+  .mc-vc-toolbar button,
+  .controls button,
+  .video-controls button,
+  .mc-vc-pip-btn {
+    min-width: var(--mc-touch-min, 44px);
+    min-height: var(--mc-touch-min, 44px);
+  }
+
+  .mc-vc-stage,
+  .video-container,
+  .video-shell {
+    min-height: 40vh;
+    max-height: 55vh;
+  }
+
+  .mc-vc-stage video,
+  .video-container video {
+    object-fit: cover;
+    max-height: 55vh;
+  }
+}
+
+@media (max-width: 480px) {
+  .mc-vc-side-panel,
+  .mc-vc-side-panel__body {
+    max-width: 100%;
+  }
+}
+
+/* ── Universal form / grid stacking ── */
+@media (max-width: 768px) {
+  .form-row,
+  .form-row-3,
+  .form-grid,
+  .adm-form-row,
+  .pd-form-row,
+  .bhw-form-row,
+  [class*="col-md-"],
+  .two-col,
+  .split-layout {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 14px !important;
+  }
+
+  .form-row > *,
+  .form-row-3 > *,
+  .form-grid > * {
+    width: 100% !important;
+    max-width: 100% !important;
+  }
+}
+
+/* ── Tables: ensure scroll wrappers everywhere ── */
+table:not(.ch-table) {
+  max-width: 100%;
+}
+
+.adm-table-wrap,
+.bhw-table-wrap,
+.pd-table-wrap,
+.mc-table-wrap,
+.table-responsive,
+.ch-table-wrap,
+.nlp-catalog-table-wrap {
+  max-width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* ── Modals: bottom sheet on phones ── */
+@media (max-width: 640px) {
+  .mc-modal,
+  .mc-modal__dialog,
+  .reg-req-modal__dialog,
+  .reg-outcome-modal__card,
+  .provider-session-alert__dialog {
+    max-width: 100% !important;
+    width: 100% !important;
+  }
+
+  .mc-modal {
+    align-items: flex-end !important;
+    padding: max(10px, var(--mc-safe-top)) max(10px, var(--mc-safe-right)) max(10px, var(--mc-safe-bottom)) max(10px, var(--mc-safe-left)) !important;
+  }
+
+  .mc-modal__dialog {
+    border-radius: 16px 16px 0 0 !important;
+    max-height: min(92vh, calc(100dvh - var(--mc-safe-top) - var(--mc-safe-bottom)));
+    overflow-y: auto;
+  }
+}
+
+/* ── BHW inline layout overrides ── */
+@media (max-width: 768px) {
+  body.bhw-body .portal-page-body .row > [class*="col-"] {
+    flex: 0 0 100%;
+    max-width: 100%;
+  }
+
+  body.bhw-body .bhw-page-actions,
+  body.bhw-body .page-actions {
+    flex-direction: column;
+    align-items: stretch !important;
+    width: 100%;
+  }
+
+  body.bhw-body .bhw-page-actions .mc-btn,
+  body.bhw-body .page-actions .mc-btn {
+    width: 100%;
+    justify-content: center;
+  }
+}
+
+/* ── Provider schedule & queue ── */
+@media (max-width: 991px) {
+  .schedule-grid,
+  .provider-schedule-grid,
+  .queue-grid,
+  .pd-queue-layout {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 16px !important;
+  }
+}
+
+/* ── Patient / provider dashboard cards ── */
+@media (max-width: 640px) {
+  .dashboard-grid,
+  .metrics-row,
+  .adm-metrics,
+  .pd-metrics,
+  .patient-dashboard-grid {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+/* ── Landscape phones & short viewports ── */
+@media (max-height: 500px) and (orientation: landscape) {
+  body.reg-body .reg-page {
+    padding-top: 8px;
+    padding-bottom: 12px;
+  }
+
+  .reg-landing-bg__media {
+    object-position: center top;
+  }
+
+  .mc-vc-stage,
+  .video-container {
+    min-height: 50vh;
+    max-height: 70vh;
+  }
+
+  .signin-modal-inner,
+  .hero-signin-panel .signin-modal-inner {
+    max-height: calc(100dvh - var(--mc-safe-top) - var(--mc-safe-bottom));
+    overflow-y: auto;
+  }
+}
+
+/* ── Device-specific width tuning ── */
+@media (max-width: 414px) {
+  .reg-wrapper { max-width: 100%; }
+  .otp-boxes { gap: 5px; }
+}
+
+@media (max-width: 390px) {
+  .topbar-title,
+  .pd-header-page {
+    font-size: 0.95rem !important;
+  }
+}
+
+@media (max-width: 375px) {
+  .mc-card,
+  .reg-card {
+    padding: 14px 12px !important;
+  }
+}
+
+@media (max-width: 320px) {
+  html { font-size: 15px; }
+
+  .mc-card,
+  .reg-card,
+  .adm-card {
+    padding: 12px 10px !important;
+    border-radius: 12px !important;
+  }
+
+  .otp-digit {
+    max-width: 34px;
+    height: 42px;
+    font-size: 16px;
+  }
+}
+
+/* ── Patient My Health page ── */
+@media (max-width: 768px) {
+  .pmh-hero,
+  .pmh-hero__top,
+  .pmh-grid,
+  .pmh-card-grid,
+  .pmh-records-grid {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 14px !important;
+  }
+
+  .pmh-hero {
+    padding: 16px 14px;
+  }
+}
+@supports (padding: max(0px)) {
+  .landing-fab,
+  .messages-fab,
+  .faq-chatbot-fab,
+  .mc-messages-fab {
+    margin-bottom: var(--mc-safe-bottom);
+  }
+
+  body.reg-body,
+  body.landing-page {
+    padding-left: max(0px, var(--mc-safe-left));
+    padding-right: max(0px, var(--mc-safe-right));
+  }
+}

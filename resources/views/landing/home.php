@@ -14,7 +14,7 @@ $asset = ASSET_BASE;
 
   <meta charset="UTF-8" />
 
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"/>
 
   <title>medConnect Online Video Call Consultation and AI-Powered Triage System </title>
 
@@ -26,7 +26,7 @@ $asset = ASSET_BASE;
 
   <link rel="stylesheet" href="<?= $asset ?>/assets/css/style.css?v=20260702b" />
 
-  <link rel="stylesheet" href="<?= $asset ?>/assets/css/responsive.css" />
+  <link rel="stylesheet" href="<?= $asset ?>/assets/css/responsive.css?v=20260808r" />
 
   <?php require_once dirname(__DIR__) . '/components/loader.php'; mc_loader_assets(); ?>
   <?php $mcModalCssVer = (int) @filemtime(ASSETS_PATH . '/css/mc-modal-system.css'); ?>

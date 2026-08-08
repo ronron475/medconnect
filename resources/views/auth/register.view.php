@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"/>
   <?php require_once dirname(__DIR__) . '/partials/theme_init.php'; ?>
   <title>medConnect — Create Patient Account</title>
   <?php
@@ -26,7 +26,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="<?= $b ?>/assets/css/style.css?v=20260702a" />
   <link rel="stylesheet" href="<?= $b ?>/assets/css/register.css?v=20260808ui" />
-  <link rel="stylesheet" href="<?= $b ?>/assets/css/responsive.css" />
+  <link rel="stylesheet" href="<?= $b ?>/assets/css/responsive.css?v=20260808r" />
   <?php require_once dirname(__DIR__) . '/components/loader.php'; mc_loader_assets(); ?>
 </head>
 <body class="reg-body">

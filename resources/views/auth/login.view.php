@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"/>
   <title>MedConnect — Sign In</title>
   <?php
     if (!defined('BASE_PATH')) {
@@ -18,7 +18,7 @@
     $asset = ASSET_BASE;
   ?>
   <link rel="stylesheet" href="<?= $asset ?>/assets/css/login.css" />
-  <link rel="stylesheet" href="<?= $asset ?>/assets/css/responsive.css" />
+  <link rel="stylesheet" href="<?= $asset ?>/assets/css/responsive.css?v=20260808r" />
   <?php require_once dirname(__DIR__) . '/components/loader.php'; mc_loader_assets(); ?>
 </head>
 <body>

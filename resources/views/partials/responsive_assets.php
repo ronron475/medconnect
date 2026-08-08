@@ -5,9 +5,11 @@
  */
 $assetBase = defined('ASSET_BASE') ? ASSET_BASE : '';
 $scriptsOnly = !empty($responsive_scripts_only);
+$responsiveCssPath = defined('ASSETS_PATH') ? ASSETS_PATH . '/css/responsive.css' : '';
+$responsiveCssVer = ($responsiveCssPath && file_exists($responsiveCssPath)) ? (int) filemtime($responsiveCssPath) : time();
 
 if (!$scriptsOnly): ?>
-<link rel="stylesheet" href="<?= htmlspecialchars($assetBase, ENT_QUOTES) ?>/assets/css/responsive.css"/>
+<link rel="stylesheet" href="<?= htmlspecialchars($assetBase, ENT_QUOTES) ?>/assets/css/responsive.css?v=<?= $responsiveCssVer ?>"/>
 <link rel="stylesheet" href="<?= htmlspecialchars($assetBase, ENT_QUOTES) ?>/assets/css/profile-menu.css"/>
 <?php
 $dashFloatCss = defined('ASSETS_PATH') ? ASSETS_PATH . '/css/dashboard-card-float.css' : '';
