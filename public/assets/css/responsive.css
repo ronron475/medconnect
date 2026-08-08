@@ -113,12 +113,6 @@ body.mc-nav-opening .topbar-brand {
   pointer-events: none !important;
 }
 
-body.mc-nav-opening .sidebar a,
-body.mc-nav-opening .sb-aqua a,
-body.mc-nav-opening .adm-sidebar a {
-  pointer-events: none !important;
-}
-
 /* ── Tables: horizontal scroll on small screens ── */
 .mc-table-wrap,
 .table-responsive,

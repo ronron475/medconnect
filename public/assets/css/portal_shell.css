@@ -189,6 +189,35 @@ body.patient-portal .portal-page-body {
 
 
 
+/* Tablet mini sidebar — offset main content beside icon rail */
+@media (max-width: 1024px) and (min-width: 768px) {
+
+    body.patient-portal.mc-sidebar-mini .topbar {
+
+        left: var(--portal-sidebar-w, 78px) !important;
+
+        width: calc(100% - var(--portal-sidebar-w, 78px)) !important;
+
+    }
+
+
+
+    body.patient-portal.mc-sidebar-mini .main-content.portal-main,
+
+    body.admin-body.mc-sidebar-mini .main.portal-main,
+
+    body.bhw-body.mc-sidebar-mini .main.portal-main {
+
+        margin-left: var(--portal-sidebar-w, 78px) !important;
+
+        width: calc(100% - var(--portal-sidebar-w, 78px)) !important;
+
+    }
+
+}
+
+
+
 /* ── Patient clinical header (matches provider dashboard) ── */
 
 @media (max-width: 768px) {
