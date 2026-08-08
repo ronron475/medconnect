@@ -11,8 +11,11 @@
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
-if (!empty($_SESSION['user_id']) && ($_SESSION['user_role'] ?? '') === 'patient') {
+global $pdo;
+if (!isset($pdo) || !($pdo instanceof PDO)) {
     require_once BASE_PATH . '/config/db.php';
+}
+if (!empty($_SESSION['user_id']) && ($_SESSION['user_role'] ?? '') === 'patient') {
     require_once BASE_PATH . '/app/includes/patient_account_security.php';
     if (patient_requires_account_setup($pdo, (int) $_SESSION['user_id'])) {
         header('Location: ' . ASSET_BASE . '/views/patient/account_setup.php');
