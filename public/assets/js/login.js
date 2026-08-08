@@ -59,13 +59,30 @@ pwdInput.addEventListener('blur', () => {
 });
 
 function setLoading(loading) {
+  if (!loading && lockout && lockout.isLocked()) {
+    btnText.hidden = false;
+    btnSpinner.hidden = true;
+    return;
+  }
   submitBtn.disabled = loading;
   btnText.hidden = loading;
   btnSpinner.hidden = !loading;
 }
 
+const lockout = window.MedConnectLoginLockout
+  ? window.MedConnectLoginLockout.createHandler({
+      form,
+      emailInput,
+      pwdInput,
+      submitBtn,
+      alertEl: alert,
+      extras: [rememberMe, toggleBtn].filter(Boolean),
+    })
+  : null;
+
 form.addEventListener('submit', async (e) => {
   e.preventDefault();
+  if (lockout && lockout.isLocked()) return;
   clearAlert();
 
   const emailVal = emailInput.value.trim();
@@ -112,8 +129,8 @@ form.addEventListener('submit', async (e) => {
         window.location.replace(data.redirect);
       }
     } else {
-      if (data && data.code === 'locked') {
-        showAlert(data.message || 'Account temporarily locked.');
+      const emailVal = emailInput.value.trim();
+      if (lockout && lockout.handleLoginResponse(data, emailVal)) {
         setLoading(false);
         return;
       }

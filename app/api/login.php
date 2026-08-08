@@ -109,20 +109,17 @@ if ($user && !empty($user['lockout_until'])) {
     $lockoutUntil = strtotime((string) $user['lockout_until']) ?: 0;
     if ($lockoutUntil > time()) {
         ob_clean();
-        $mins = (int) ceil(($lockoutUntil - time()) / 60);
-        $mins = max(1, $mins);
-        echo json_encode([
-            'success' => false,
-            'message' => 'Too many failed login attempts. Please try again after 15 minutes.',
-            'code' => 'locked',
-            'locked_until' => (string) $user['lockout_until'],
-            'retry_after_minutes' => $mins,
-        ]);
+        echo json_encode(login_lockout_payload($lockoutUntil));
         exit;
     }
+    login_clear_expired_lockout($pdo, (int) $user['id']);
+    $user['lockout_until'] = null;
+    $user['failed_attempts'] = 0;
 }
 
 if (!$user || !password_verify($password, $user['password'])) {
+    $failedAttempts = 0;
+    $attemptsRemaining = null;
     try {
         // Throttle by IP (e.g., 10 failures/5min => 15min lock)
         if (!empty($ip)) {
@@ -130,43 +127,54 @@ if (!$user || !password_verify($password, $user['password'])) {
         }
         if ($user && in_array('failed_attempts', patient_security_user_columns($pdo), true)) {
             $pdo->prepare('UPDATE users SET failed_attempts = failed_attempts + 1 WHERE id = ?')->execute([(int) $user['id']]);
-            // Lockout after 5 consecutive failures (15 minutes)
             if (in_array('lockout_until', patient_security_user_columns($pdo), true)) {
-                $pdo->prepare("
+                $pdo->prepare('
                     UPDATE users
-                    SET lockout_until = IF(failed_attempts >= 5, DATE_ADD(NOW(), INTERVAL 15 MINUTE), lockout_until)
+                    SET lockout_until = IF(
+                        failed_attempts >= ?,
+                        DATE_ADD(NOW(), INTERVAL ? SECOND),
+                        lockout_until
+                    )
                     WHERE id = ?
-                ")->execute([(int) $user['id']]);
+                ')->execute([LOGIN_MAX_FAILED_ATTEMPTS, LOGIN_LOCKOUT_SECONDS, (int) $user['id']]);
 
-                // If lockout likely triggered, notify admins (best-effort).
                 $s = $pdo->prepare('SELECT failed_attempts, lockout_until FROM users WHERE id = ? LIMIT 1');
                 $s->execute([(int) $user['id']]);
                 $r = $s->fetch(PDO::FETCH_ASSOC) ?: null;
-                if ($r && (int) ($r['failed_attempts'] ?? 0) >= 5 && !empty($r['lockout_until'])) {
-                    require_once dirname(dirname(__DIR__)) . '/app/includes/notification_events.php';
-                    NotificationManager::notifyAdmins($pdo, [
-                        'type'       => NotificationManager::TYPE_CRITICAL,
-                        'title'      => 'Account Lockout Triggered',
-                        'message'    => "Account lockout triggered for {$email}.",
-                        'priority'   => 'critical',
-                        'action_url' => '/views/admin/audit_logs.php',
-                        'email'      => false,
-                    ]);
-                    NotificationManager::create($pdo, (int) $user['id'], [
-                        'receiver_role' => (string) ($user['role'] ?? 'patient'),
-                        'type'          => NotificationManager::TYPE_CRITICAL,
-                        'title'         => 'Account Temporarily Locked',
-                        'message'       => 'Your account was locked after multiple failed login attempts. Try again in 15 minutes or reset your password if you did not attempt to sign in.',
-                        'priority'      => 'critical',
-                        'icon'          => 'alert-octagon',
-                        'action_url'    => '/public/forgot_password.php',
-                    ]);
-                    audit_log($pdo, [
-                        'patient_id'  => (int) $user['id'],
-                        'action_type' => 'account_lockout',
-                        'description' => 'Account temporarily locked due to failed login attempts.',
-                        'meta'        => ['email' => $email, 'locked_until' => (string) ($r['lockout_until'] ?? '')],
-                    ]);
+                if ($r) {
+                    $failedAttempts = (int) ($r['failed_attempts'] ?? 0);
+                    $attemptsRemaining = max(0, LOGIN_MAX_FAILED_ATTEMPTS - $failedAttempts);
+                    $lockoutUntil = !empty($r['lockout_until']) ? (strtotime((string) $r['lockout_until']) ?: 0) : 0;
+                    if ($failedAttempts >= LOGIN_MAX_FAILED_ATTEMPTS && $lockoutUntil > time()) {
+                        require_once dirname(dirname(__DIR__)) . '/app/includes/notification_events.php';
+                        NotificationManager::notifyAdmins($pdo, [
+                            'type'       => NotificationManager::TYPE_CRITICAL,
+                            'title'      => 'Account Lockout Triggered',
+                            'message'    => "Account lockout triggered for {$email}.",
+                            'priority'   => 'critical',
+                            'action_url' => '/views/admin/audit_logs.php',
+                            'email'      => false,
+                        ]);
+                        NotificationManager::create($pdo, (int) $user['id'], [
+                            'receiver_role' => (string) ($user['role'] ?? 'patient'),
+                            'type'          => NotificationManager::TYPE_CRITICAL,
+                            'title'         => 'Account Temporarily Locked',
+                            'message'       => 'Your account was locked after multiple failed login attempts. Try again in 1 minute or reset your password if you did not attempt to sign in.',
+                            'priority'      => 'critical',
+                            'icon'          => 'alert-octagon',
+                            'action_url'    => '/public/forgot_password.php',
+                        ]);
+                        require_once BASE_PATH . '/app/includes/audit_log.php';
+                        audit_log($pdo, [
+                            'patient_id'  => (int) $user['id'],
+                            'action_type' => 'account_lockout',
+                            'description' => 'Account temporarily locked due to failed login attempts.',
+                            'meta'        => ['email' => $email, 'locked_until' => (string) ($r['lockout_until'] ?? '')],
+                        ]);
+                        ob_clean();
+                        echo json_encode(login_lockout_payload($lockoutUntil));
+                        exit;
+                    }
                 }
             }
         }
@@ -192,7 +200,14 @@ if (!$user || !password_verify($password, $user['password'])) {
         }
     } catch (Exception $e) { /* non-fatal */ }
     ob_clean();
-    echo json_encode(['success' => false, 'message' => 'Invalid email or password.']);
+    $failure = ['success' => false, 'message' => 'Invalid email or password.'];
+    if ($failedAttempts > 0) {
+        $failure['failed_attempts'] = $failedAttempts;
+        if ($attemptsRemaining !== null) {
+            $failure['attempts_remaining'] = $attemptsRemaining;
+        }
+    }
+    echo json_encode($failure);
     exit;
 }
 
