@@ -25,8 +25,9 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="<?= $b ?>/assets/css/style.css?v=20260702a" />
-  <link rel="stylesheet" href="<?= $b ?>/assets/css/register.css?v=20260808ui" />
   <link rel="stylesheet" href="<?= $b ?>/assets/css/responsive.css?v=20260808r" />
+  <?php $regCssVer = (int) @filemtime(ASSETS_PATH . '/css/register.css'); ?>
+  <link rel="stylesheet" href="<?= $b ?>/assets/css/register.css?v=<?= $regCssVer ?>" />
   <?php require_once dirname(__DIR__) . '/components/loader.php'; mc_loader_assets(); ?>
 </head>
 <body class="reg-body">
@@ -81,8 +82,8 @@
     <!-- ═══════════════════════════════════════════════════════ -->
     <!-- STEP 0: Email OTP Verification                         -->
     <!-- ═══════════════════════════════════════════════════════ -->
-    <div id="step0" class="step-panel">
-      <div class="reg-card">
+    <div id="step0" class="step-panel step-panel--compact">
+      <div class="reg-card reg-card--compact">
         <div class="card-header">
           <div class="card-icon-wrap" aria-hidden="true">
             <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="16" x="2" y="4" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>
@@ -105,7 +106,7 @@
             </div>
             <span class="field-error" id="otp-email-error" role="alert"></span>
           </div>
-          <button type="button" class="btn-submit" id="btn-send-otp" style="width:100%;margin-top:8px">
+          <button type="button" class="btn-submit btn-submit--send-otp" id="btn-send-otp">
             <span id="send-otp-btn-text">Send OTP</span>
             <span id="send-otp-spinner" class="btn-spinner" hidden></span>
           </button>
