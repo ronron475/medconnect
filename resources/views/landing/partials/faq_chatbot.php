@@ -97,7 +97,7 @@ $faqChatbotAppVer = (int) @filemtime(ASSETS_PATH . '/js/faq-chatbot/app.js');
             <span class="fcb-header__online" title="Online" aria-label="Assistant is online"></span>
           </div>
           <div class="fcb-header__meta">
-            <h2 class="fcb-header__title" id="fcb-header-title">medConnect Assistant</h2>
+            <h2 class="fcb-header__title" id="fcb-header-title"><span class="fcb-header__brand-med">med</span><span class="fcb-header__brand-connect">Connect</span><span class="fcb-header__title-suffix"> Assistant</span></h2>
             <p class="fcb-header__sub" id="fcb-header-sub">
               <span class="fcb-header__sub-label">Official AI Assistant</span>
               <span class="fcb-header__sub-dot" aria-hidden="true">•</span>

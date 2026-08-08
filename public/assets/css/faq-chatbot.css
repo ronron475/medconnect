@@ -371,14 +371,17 @@ body.signin-active .fcb {
 
 .fcb-header__title {
   margin: 0;
-  font-size: 0.9375rem;
+  font-size: clamp(0.875rem, 2.5vw, 1.0625rem);
   font-weight: 800;
-  color: var(--fcb-cho-navy);
-  letter-spacing: -0.02em;
+  letter-spacing: -0.35px;
   line-height: 1.2;
-  white-space: nowrap;
+  white-space: normal;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
   overflow: hidden;
-  text-overflow: ellipsis;
+  opacity: 1;
+  filter: none;
 }
 
 .fcb-header__sub {

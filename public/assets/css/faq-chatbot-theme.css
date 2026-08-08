@@ -25,6 +25,8 @@
   --fcb-accent-2: #069396;
   --fcb-accent-glow: rgba(6, 147, 150, 0.2);
   --fcb-cho-navy: #0b1f38;
+  --fcb-brand-navy: #012A4A;
+  --fcb-brand-teal: #069396;
   --fcb-radius-panel: 24px;
   --fcb-theme-dur: 0.4s;
   --fcb-theme-ease: cubic-bezier(0.22, 1, 0.36, 1);
@@ -522,6 +524,46 @@ html[data-theme-resolved='dark'] #faq-chatbot .fcb-input-wrap {
 
 html[data-theme-resolved='dark'] #faq-chatbot .fcb-input::placeholder {
   color: var(--fcb-text-muted) !important;
+}
+
+/* Header branding — match landing nav logo (medconnect-theme.css sets global h2 white in dark) */
+#faq-chatbot .fcb-header__title {
+  color: var(--fcb-brand-navy) !important;
+  -webkit-text-fill-color: var(--fcb-brand-navy) !important;
+  opacity: 1 !important;
+  filter: none !important;
+}
+
+#faq-chatbot .fcb-header__brand-med,
+#faq-chatbot .fcb-header__title-suffix {
+  color: var(--fcb-brand-navy) !important;
+  -webkit-text-fill-color: var(--fcb-brand-navy) !important;
+  opacity: 1 !important;
+  filter: none !important;
+}
+
+#faq-chatbot .fcb-header__brand-connect {
+  color: var(--fcb-brand-teal) !important;
+  -webkit-text-fill-color: var(--fcb-brand-teal) !important;
+  opacity: 1 !important;
+  filter: none !important;
+}
+
+#faq-chatbot[data-theme="dark"] .fcb-header__title,
+#faq-chatbot[data-theme="dark"] .fcb-header__brand-med,
+#faq-chatbot[data-theme="dark"] .fcb-header__title-suffix {
+  color: #f8fafc !important;
+  -webkit-text-fill-color: #f8fafc !important;
+}
+
+#faq-chatbot[data-theme="dark"] .fcb-header__brand-connect {
+  color: var(--fcb-brand-teal) !important;
+  -webkit-text-fill-color: var(--fcb-brand-teal) !important;
+}
+
+#faq-chatbot .fcb-welcome__title {
+  color: var(--fcb-cho-navy) !important;
+  -webkit-text-fill-color: currentColor !important;
 }
 
 /* Light mode — richer background & less flat white */
