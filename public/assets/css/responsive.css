@@ -70,11 +70,10 @@ svg {
   display: block;
   position: fixed;
   inset: 0;
-  /* Must sit ABOVE page content but BELOW the fixed topbar + toggle button. */
-  z-index: 480;
-  background: rgba(1, 42, 74, 0.45);
-  backdrop-filter: blur(2px);
-  -webkit-backdrop-filter: blur(2px);
+  z-index: 900;
+  background: rgba(15, 23, 42, 0.52);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
   pointer-events: none;
   visibility: hidden;
   opacity: 0;
@@ -91,8 +90,7 @@ svg {
 body.mc-nav-open {
   overflow: hidden;
   overscroll-behavior: none;
-  /* manipulation — not none; none blocks sidebar link taps on mobile (ghost clicks). */
-  touch-action: manipulation;
+  touch-action: none;
 }
 
 /* Brief guard after nav tap — absorbs ghost clicks while drawer closes. */
@@ -239,8 +237,7 @@ body.mc-nav-opening .topbar-brand {
   .sb-aqua,
   .adm-sidebar,
   .adm-sidebar--bhw {
-    /* Keep the drawer above the backdrop overlay */
-    z-index: 520;
+    z-index: 910;
     transform: translateX(-100%);
     transition: transform 0.25s ease;
     box-shadow: 4px 0 24px rgba(0, 0, 0, 0.15);
@@ -274,23 +271,48 @@ body.mc-nav-opening .topbar-brand {
     -webkit-overflow-scrolling: touch;
   }
 
-  body.mc-nav-open .mc-theme-toggle.is-open .mc-theme-toggle__menu {
+  body.mc-nav-open .mc-theme-toggle.is-open .mc-theme-toggle__menu,
+  body.mc-nav-open .mc-notif-panel {
     display: none !important;
+    pointer-events: none !important;
   }
 
-  /* Keep hamburger tappable above the open drawer (all portal headers). */
+  /* Backdrop covers header + page; sidebar sits above backdrop. */
+  body.mc-nav-open .mc-nav-backdrop.is-visible {
+    z-index: 900;
+    pointer-events: auto;
+  }
+
+  /* Header must not sit above the backdrop while drawer is open. */
   body.mc-nav-open .topbar,
   body.mc-nav-open .pd-header {
-    z-index: 530;
-    pointer-events: auto;
+    z-index: 500;
+    pointer-events: none;
   }
 
+  body.mc-nav-open .topbar-right,
+  body.mc-nav-open .pd-header-right,
+  body.mc-nav-open .topbar-left .topbar-title-block,
+  body.mc-nav-open .topbar-left .topbar-brand,
+  body.mc-nav-open .topbar-left .topbar-date-label,
+  body.mc-nav-open .pd-header-title,
+  body.mc-nav-open .pd-header-brand {
+    pointer-events: none !important;
+  }
+
+  /* Only the menu toggle stays tappable (fixed above backdrop). */
   body.mc-nav-open .mc-nav-toggle,
   body.mc-nav-open .pd-hamburger {
-    position: relative;
-    z-index: 531;
+    position: fixed;
+    top: calc(10px + env(safe-area-inset-top, 0px));
+    left: calc(14px + env(safe-area-inset-left, 0px));
+    z-index: 920;
     pointer-events: auto;
     touch-action: manipulation;
+  }
+
+  body.patient-portal.mc-nav-open .topbar--clinical .mc-nav-toggle {
+    left: calc(var(--mob-dash-pad, 16px) + env(safe-area-inset-left, 0px));
   }
 
   /* Dark mode removes sidebar transitions — restore drawer slide (match light mode). */

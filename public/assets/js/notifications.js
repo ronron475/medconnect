@@ -469,6 +469,9 @@
     btn.addEventListener(TOGGLE_EVENT, function (e) {
       e.preventDefault();
       e.stopPropagation();
+      if (document.body.classList.contains('mc-nav-open')) {
+        return;
+      }
       togglePanel(btn, panel);
     });
     btn.addEventListener('click', function (e) {
