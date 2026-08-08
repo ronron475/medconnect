@@ -818,7 +818,8 @@ require __DIR__ . '/partials/landing_navbar.php';
 <script src="<?= $asset ?>/assets/js/draggable-fab.js?v=1" defer></script>
 <script src="<?= $asset ?>/assets/js/signin-req-drawer.js?v=4" defer></script>
 
-<script src="<?= $asset ?>/assets/js/script.js?v=20260711b"></script>
+<script src="<?= $asset ?>/assets/js/login-lockout.js?v=1"></script>
+<script src="<?= $asset ?>/assets/js/script.js?v=20260711c"></script>
 <?php require_once VIEWS_PATH . '/partials/theme_scripts.php'; ?>
 
 <script>

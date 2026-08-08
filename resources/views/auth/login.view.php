@@ -140,6 +140,7 @@
   window.ASSET_BASE = <?= json_encode(ASSET_BASE) ?>;
   window.APP_BASE = window.ASSET_BASE;
 </script>
+<script src="<?= $asset ?>/assets/js/login-lockout.js?v=1"></script>
 <script src="<?= $asset ?>/assets/js/login.js"></script>
 </body>
 </html>

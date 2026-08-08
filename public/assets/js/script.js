@@ -582,7 +582,28 @@ const validatePassword = v => {
 
 const showAlert  = (msg, type = 'error') => { alertBox.textContent = msg; alertBox.className = `alert ${type}`; };
 const clearAlert = () => { alertBox.className = 'alert'; alertBox.textContent = ''; };
-const setLoading = on => { submitBtn.disabled = on; btnText.hidden = on; btnSpinner.hidden = !on; };
+
+const lockout = window.MedConnectLoginLockout
+  ? window.MedConnectLoginLockout.createHandler({
+      form,
+      emailInput,
+      pwdInput,
+      submitBtn,
+      alertEl: alertBox,
+      extras: [rememberMe, toggleBtn].filter(Boolean),
+    })
+  : null;
+
+const setLoading = on => {
+  if (!on && lockout && lockout.isLocked()) {
+    btnText.hidden = false;
+    btnSpinner.hidden = true;
+    return;
+  }
+  submitBtn.disabled = on;
+  btnText.hidden = on;
+  btnSpinner.hidden = !on;
+};
 
 emailInput.addEventListener('blur', () => {
   const e = validateEmail(emailInput.value.trim());
@@ -597,6 +618,7 @@ pwdInput.addEventListener('blur', () => {
 
 form.addEventListener('submit', async e => {
   e.preventDefault();
+  if (lockout && lockout.isLocked()) return;
   clearAlert();
   const eErr = validateEmail(emailInput.value.trim());
   const pErr = validatePassword(pwdInput.value);
@@ -664,8 +686,8 @@ form.addEventListener('submit', async e => {
         window.location.replace(redirectUrl);
       }
     } else {
-      if (data && data.code === 'locked') {
-        showAlert(data.message || 'Account temporarily locked. Please try again later.');
+      const emailVal = emailInput.value.trim();
+      if (lockout && lockout.handleLoginResponse(data, emailVal)) {
         setLoading(false);
         return;
       }

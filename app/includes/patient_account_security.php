@@ -4,6 +4,42 @@
  */
 declare(strict_types=1);
 
+const LOGIN_MAX_FAILED_ATTEMPTS = 5;
+const LOGIN_LOCKOUT_SECONDS = 60;
+
+/**
+ * JSON payload for an active login lockout.
+ */
+function login_lockout_payload(int $lockoutUntilTs): array
+{
+    $seconds = max(1, $lockoutUntilTs - time());
+
+    return [
+        'success'             => false,
+        'message'             => "Too many failed attempts. Please try again in {$seconds} seconds.",
+        'code'                => 'locked',
+        'locked_until'        => date('Y-m-d H:i:s', $lockoutUntilTs),
+        'retry_after_seconds' => $seconds,
+    ];
+}
+
+/**
+ * Clear expired per-user login lockout so the user gets a fresh attempt window.
+ */
+function login_clear_expired_lockout(PDO $pdo, int $userId): void
+{
+    $cols = patient_security_user_columns($pdo);
+    if (!in_array('lockout_until', $cols, true) || !in_array('failed_attempts', $cols, true)) {
+        return;
+    }
+
+    $pdo->prepare('
+        UPDATE users
+        SET failed_attempts = 0, lockout_until = NULL
+        WHERE id = ? AND lockout_until IS NOT NULL AND lockout_until <= NOW()
+    ')->execute([$userId]);
+}
+
 /**
  * Ensure users and patient_registrations have security-related columns.
  */
@@ -364,8 +400,12 @@ function patient_record_login(PDO $pdo, int $userId): void
 {
     $cols = patient_security_user_columns($pdo);
     if (in_array('last_login', $cols, true)) {
-        $pdo->prepare('UPDATE users SET last_login = NOW(), failed_attempts = 0 WHERE id = ?')
-            ->execute([$userId]);
+        $sql = 'UPDATE users SET last_login = NOW(), failed_attempts = 0';
+        if (in_array('lockout_until', $cols, true)) {
+            $sql .= ', lockout_until = NULL';
+        }
+        $sql .= ' WHERE id = ?';
+        $pdo->prepare($sql)->execute([$userId]);
     }
 }
 
