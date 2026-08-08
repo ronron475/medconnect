@@ -19,7 +19,7 @@
   --fcb-panel-h: min(640px, calc(100dvh - 100px));
   --fcb-fab-size: 64px;
   --fcb-shadow: 0 24px 64px rgba(1, 42, 74, 0.2), 0 8px 24px rgba(15, 23, 42, 0.08);
-  --fcb-glass: rgba(255, 255, 255, 0.92);
+  --fcb-glass: rgba(226, 240, 246, 0.94);
   --fcb-ease: cubic-bezier(0.22, 1, 0.36, 1);
 
   position: fixed;
@@ -257,9 +257,9 @@ body.signin-active .fcb {
   display: flex;
   flex-direction: column;
   border-radius: var(--fcb-radius);
-  background: linear-gradient(180deg, #f8fafc 0%, #f1f5f9 100%);
+  background: linear-gradient(180deg, #e2edf4 0%, #d4e4ec 100%);
   box-shadow: var(--fcb-shadow);
-  border: 1px solid rgba(255, 255, 255, 0.8);
+  border: 1px solid #b8ccd8;
   overflow: hidden;
   opacity: 0;
   visibility: hidden;
@@ -294,7 +294,7 @@ body.signin-active .fcb {
   background: var(--fcb-glass);
   backdrop-filter: blur(16px) saturate(1.4);
   -webkit-backdrop-filter: blur(16px) saturate(1.4);
-  border-bottom: 1px solid rgba(226, 232, 240, 0.9);
+  border-bottom: 1px solid var(--fcb-border-strong, #b8ccd8);
   flex-shrink: 0;
 }
 
@@ -342,8 +342,9 @@ body.signin-active .fcb {
   height: 40px;
   border-radius: 10px;
   object-fit: contain;
-  background: #fff;
-  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.08);
+  background: var(--fcb-card, #f3f8fb);
+  border: 1px solid var(--fcb-border-strong, #b8ccd8);
+  box-shadow: 0 2px 8px rgba(11, 31, 56, 0.08);
 }
 
 .fcb-header__online {
@@ -354,7 +355,7 @@ body.signin-active .fcb {
   height: 12px;
   border-radius: 50%;
   background: #22c55e;
-  border: 2px solid #fff;
+  border: 2px solid var(--fcb-card, #f3f8fb);
   box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.5);
   animation: fcb-online-glow 2.4s ease-in-out infinite;
 }
@@ -688,9 +689,9 @@ body.signin-active .fcb {
 .fcb-welcome {
   padding: var(--fcb-space-2);
   border-radius: var(--fcb-radius-sm);
-  background: linear-gradient(145deg, rgba(255,255,255,0.98) 0%, rgba(239,246,255,0.95) 100%);
-  border: 1px solid rgba(59, 130, 246, 0.15);
-  box-shadow: 0 4px 20px rgba(26, 109, 181, 0.08);
+  background: linear-gradient(145deg, rgba(243, 248, 251, 0.98) 0%, rgba(214, 232, 241, 0.96) 100%);
+  border: 1px solid rgba(6, 147, 150, 0.22);
+  box-shadow: 0 4px 20px rgba(11, 31, 56, 0.08);
 }
 
 .fcb-welcome__hero {
@@ -781,10 +782,10 @@ body.signin-active .fcb {
   width: 100%;
   min-height: 44px;
   padding: var(--fcb-space-1) var(--fcb-space-2);
-  border: 1px solid #e2e8f0;
+  border: 1px solid var(--fcb-border-strong, #b8ccd8);
   border-left: 3px solid var(--fcb-accent-2);
   border-radius: var(--fcb-radius-sm);
-  background: #fff;
+  background: var(--fcb-card, #f3f8fb);
   text-align: left;
   cursor: pointer;
   overflow: hidden;
@@ -801,7 +802,7 @@ body.signin-active .fcb {
   transform: translateY(-3px);
   box-shadow: 0 8px 24px rgba(26, 109, 181, 0.14);
   border-left-color: var(--fcb-teal);
-  background: linear-gradient(90deg, rgba(239,246,255,0.6), #fff);
+  background: linear-gradient(90deg, rgba(214, 232, 241, 0.9), var(--fcb-card, #f3f8fb));
 }
 
 .fcb-action-card:active {
@@ -1179,10 +1180,11 @@ body.signin-active .fcb {
 }
 
 .fcb-msg--bot .fcb-msg__bubble {
-  background: #fff;
+  background: var(--fcb-bot-bubble, #edf5f9);
   color: #1e293b;
   border-bottom-left-radius: 4px;
-  box-shadow: 0 2px 10px rgba(15, 23, 42, 0.06);
+  box-shadow: 0 2px 10px rgba(11, 31, 56, 0.08);
+  border: 1px solid var(--fcb-border-strong, #b8ccd8);
 }
 
 .fcb-msg--user .fcb-msg__bubble {
@@ -1461,9 +1463,9 @@ body.signin-active .fcb {
   position: relative;
   min-height: 44px;
   padding: 8px 14px;
-  border: 1.5px solid rgba(59, 130, 246, 0.35);
+  border: 1.5px solid rgba(6, 147, 150, 0.35);
   border-radius: 999px;
-  background: #fff;
+  background: var(--fcb-card, #f3f8fb);
   color: var(--fcb-accent);
   font-size: 0.8125rem;
   font-weight: 600;
@@ -1505,10 +1507,11 @@ body.signin-active .fcb {
   align-items: center;
   gap: 5px;
   padding: 12px 16px;
-  background: #fff;
+  background: var(--fcb-bot-bubble, #edf5f9);
   border-radius: var(--fcb-radius-bubble);
   border-bottom-left-radius: 4px;
-  box-shadow: 0 2px 10px rgba(15, 23, 42, 0.06);
+  border: 1px solid var(--fcb-border-strong, #b8ccd8);
+  box-shadow: 0 2px 10px rgba(11, 31, 56, 0.08);
 }
 
 .fcb-typing span {
@@ -1585,9 +1588,9 @@ body.signin-active .fcb {
 .fcb-suggestion {
   min-height: 44px;
   padding: 10px var(--fcb-space-2);
-  border: 1px solid #e2e8f0;
+  border: 1px solid var(--fcb-border-strong, #b8ccd8);
   border-radius: var(--fcb-radius-sm);
-  background: #fff;
+  background: var(--fcb-card, #f3f8fb);
   color: var(--fcb-accent);
   font-size: 0.8125rem;
   font-weight: 600;
@@ -1618,7 +1621,7 @@ body.signin-active .fcb {
   background: var(--fcb-glass);
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
-  border-top: 1px solid rgba(226, 232, 240, 0.9);
+  border-top: 1px solid var(--fcb-border-strong, #b8ccd8);
 }
 
 .fcb-header__sub-status {
@@ -1650,9 +1653,9 @@ body.signin-active .fcb {
   gap: var(--fcb-space-1);
   padding: 6px 6px 6px var(--fcb-space-2);
   border-radius: var(--fcb-radius-sm);
-  background: #fff;
-  border: 1.5px solid #e2e8f0;
-  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.04);
+  background: var(--fcb-input-bg, #f6fbfd);
+  border: 1.5px solid var(--fcb-input-border, #aec4d2);
+  box-shadow: inset 0 1px 2px rgba(11, 31, 56, 0.04);
   transition:
     border-color 0.2s ease,
     box-shadow 0.2s ease;
