@@ -9,6 +9,7 @@
   const CLOSE_MS = 300;
   const instances = new Map();
   let scrollLockCount = 0;
+  let scrollLockY = 0;
   let loadingOverlay = null;
   let lastFocus = null;
 
@@ -43,6 +44,10 @@
   }
 
   function lockScroll() {
+    if (scrollLockCount === 0) {
+      scrollLockY = window.scrollY || window.pageYOffset || 0;
+      document.body.style.top = '-' + scrollLockY + 'px';
+    }
     scrollLockCount += 1;
     document.body.classList.add('mc-modal-open');
   }
@@ -51,6 +56,8 @@
     scrollLockCount = Math.max(0, scrollLockCount - 1);
     if (scrollLockCount === 0) {
       document.body.classList.remove('mc-modal-open');
+      document.body.style.top = '';
+      window.scrollTo(0, scrollLockY);
     }
   }
 
@@ -443,7 +450,26 @@
     };
   }
 
+  function portalLogoutModalOverlay() {
+    const overlays = document.querySelectorAll('#logout-modal-overlay');
+    if (!overlays.length) return null;
+
+    const overlay = overlays[0];
+    overlays.forEach(function (node, index) {
+      if (index > 0) node.remove();
+    });
+
+    if (overlay.parentNode !== document.body) {
+      document.body.appendChild(overlay);
+    }
+
+    return overlay;
+  }
+
   function initLogoutModal() {
+    const overlay = portalLogoutModalOverlay();
+    if (!overlay) return;
+
     const bound = bindStaticModal('logout-modal-overlay', {});
     if (!bound) return;
 

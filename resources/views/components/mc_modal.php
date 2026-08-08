@@ -71,7 +71,7 @@ if (!function_exists('mc_render_modal_shell')) {
      aria-hidden="<?= $hidden ? 'true' : 'false' ?>"
      <?= $hidden ? 'hidden' : '' ?>>
 
-  <div class="mc-modal mc-modal--<?= htmlspecialchars($size) ?>">
+  <div class="mc-modal mc-modal--<?= htmlspecialchars($size) ?><?= $variant !== '' ? ' mc-modal--' . htmlspecialchars($variant) : '' ?>">
 
     <?php if ($showClose): ?>
     <button type="button" class="mc-modal__close" data-mc-modal-close aria-label="Close dialog">

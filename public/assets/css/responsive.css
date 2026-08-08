@@ -571,11 +571,12 @@ body.mc-nav-opening .topbar-brand {
     overflow-y: auto;
   }
 
-  #logout-modal-box {
-    width: 100% !important;
-    max-width: 100% !important;
-    margin: 12px;
-    padding: 28px 20px !important;
+  #logout-modal-overlay .mc-modal {
+    width: min(calc(100vw - 24px), 420px) !important;
+    max-width: calc(100vw - 24px) !important;
+    margin: 0 auto;
+    max-height: min(90vh, calc(100dvh - 24px));
+    overflow-y: auto;
   }
 }
 
