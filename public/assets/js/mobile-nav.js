@@ -1,6 +1,6 @@
 /**
  * Mobile sidebar drawer — unified across patient, provider, admin, superadmin, and BHW.
- * Drawer open state persists across in-portal page navigations (sessionStorage).
+ * Drawer closes on navigation so destination pages render in the main content area.
  */
 (function () {
   'use strict';
@@ -48,12 +48,32 @@
     } catch (_) { /* ignore */ }
   }
 
-  function shouldRestoreDrawerOpen() {
+  function isSidebarLogoLink(link) {
+    return (
+      link.classList.contains('adm-logo') ||
+      link.classList.contains('sb-logo') ||
+      link.classList.contains('sba-logo')
+    );
+  }
+
+  function normalizeNavPath(href) {
     try {
-      return sessionStorage.getItem(DRAWER_OPEN_KEY) === '1';
+      const url = new URL(href, window.location.href);
+      const path = url.pathname.replace(/\/+$/, '') || '/';
+      return path + url.search;
     } catch (_) {
-      return false;
+      return href;
     }
+  }
+
+  function closeDrawerForNav() {
+    persistDrawerOpen(false);
+    disarmOpenGuard();
+    document.body.classList.add('mc-nav-closing');
+    setOpen(false, { persist: false, skipGuard: true });
+    window.setTimeout(() => {
+      document.body.classList.remove('mc-nav-closing');
+    }, 300);
   }
 
   function getBackdrop() {
@@ -108,7 +128,7 @@
       if (!isOpeningGuarded()) return;
 
       const link = e.target && e.target.closest ? e.target.closest('a[href]') : null;
-      if (!link) return;
+      if (!link || !isSidebarLogoLink(link)) return;
 
       e.preventDefault();
       e.stopImmediatePropagation();
@@ -208,12 +228,10 @@
   }
 
   /**
-   * Kept for API compatibility. Navigation no longer closes the drawer —
-   * open state is persisted so the sidebar stays visible after page loads.
+   * Close the mobile drawer after in-portal navigation.
    */
   function closeAfterNav() {
-    if (!isMobileDrawer()) return;
-    persistDrawerOpen(true);
+    closeDrawerForNav();
   }
 
   function onToggleClick(e) {
@@ -252,27 +270,38 @@
   function bindNavLink(link) {
     link.addEventListener('click', (e) => {
       if (!isMobileDrawer()) return;
-      if (isOpeningGuarded()) {
+
+      const href = link.getAttribute('href');
+      if (!href || href === '#' || href.startsWith('javascript:')) return;
+
+      if (isOpeningGuarded() && isSidebarLogoLink(link)) {
         e.preventDefault();
         e.stopPropagation();
         return;
       }
 
-      // Keep drawer open across full-page navigations.
-      persistDrawerOpen(true);
+      const targetPath = normalizeNavPath(href);
+      const currentPath = normalizeNavPath(window.location.href);
+      const isSamePage = targetPath === currentPath;
+
+      closeDrawerForNav();
+
+      if (isSamePage) {
+        e.preventDefault();
+      }
     });
   }
 
   function restoreDrawerState() {
+    // Never reopen the drawer after navigation or bfcache restore.
+    persistDrawerOpen(false);
+
     if (!isMobileDrawer()) {
-      setOpen(false, { persist: false });
+      setOpen(false, { persist: false, skipGuard: true });
       return;
     }
-    if (shouldRestoreDrawerOpen()) {
-      setOpen(true, { persist: true, skipGuard: true });
-    } else {
-      setOpen(false, { persist: false });
-    }
+
+    setOpen(false, { persist: false, skipGuard: true });
   }
 
   function init() {
@@ -313,8 +342,8 @@
     window.addEventListener('resize', () => {
       if (prefersMiniMode()) {
         // Desktop/tablet mini mode — drawer off-canvas state does not apply.
-        setOpen(false, { persist: false });
-      } else {
+        setOpen(false, { persist: false, skipGuard: true });
+      } else if (isMobileDrawer()) {
         restoreDrawerState();
       }
     });
