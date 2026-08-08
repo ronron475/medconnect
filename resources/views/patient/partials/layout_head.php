@@ -5,7 +5,12 @@
  */
 $page_title = $page_title ?? 'Patient Portal';
 
-if (!empty($_SESSION['user_id']) && isset($pdo) && $pdo instanceof PDO) {
+global $pdo;
+if (!isset($pdo) || !($pdo instanceof PDO)) {
+    require_once BASE_PATH . '/config/db.php';
+}
+
+if (!empty($_SESSION['user_id']) && $pdo instanceof PDO) {
     require_once BASE_PATH . '/app/includes/theme_preferences.php';
     theme_preferences_sync_session($pdo, (int) $_SESSION['user_id'], (string) ($_SESSION['user_role'] ?? 'patient'));
 }
