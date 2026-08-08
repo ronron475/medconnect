@@ -546,6 +546,36 @@
     pointer-events: none;
   }
 
+  html:not([data-theme-resolved='dark']) .mc-notif-panel {
+    background: #ffffff !important;
+    border-color: #e2e8f0 !important;
+    color: #0f172a;
+  }
+
+  html:not([data-theme-resolved='dark']) .mc-notif-panel-header,
+  html:not([data-theme-resolved='dark']) .mc-notif-footer {
+    background: #ffffff !important;
+    border-color: #e2e8f0 !important;
+  }
+
+  html:not([data-theme-resolved='dark']) .mc-notif-panel .mc-notif-item {
+    background: #ffffff;
+    border-bottom-color: #e2e8f0;
+  }
+
+  html:not([data-theme-resolved='dark']) .mc-notif-panel .mc-notif-item.is-unread {
+    background: #f0fdfa;
+  }
+
+  html:not([data-theme-resolved='dark']) .mc-notif-panel .mc-notif-title {
+    color: #0f172a;
+  }
+
+  html:not([data-theme-resolved='dark']) .mc-notif-panel .mc-notif-message,
+  html:not([data-theme-resolved='dark']) .mc-notif-panel .mc-notif-meta {
+    color: #64748b;
+  }
+
   .mc-notif-panel {
     position: fixed;
     top: auto;

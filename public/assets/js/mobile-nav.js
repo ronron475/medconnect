@@ -118,6 +118,17 @@
    * Dark mode CSS removes sidebar transform transitions, so the drawer can appear
    * instantly under the hamburger. The synthetic click then activates the dashboard logo.
    */
+  function closeOverlayPanels() {
+    closeThemeMenus();
+    document.querySelectorAll('[data-notif-panel].is-open').forEach((panel) => {
+      panel.classList.remove('is-open');
+    });
+    document.querySelectorAll('[data-notif-toggle]').forEach((btn) => {
+      btn.setAttribute('aria-expanded', 'false');
+    });
+    document.body.classList.remove('mc-notif-open');
+  }
+
   function armOpenGuard() {
     if (!IS_TOUCH || !isMobileDrawer()) return;
 
@@ -150,7 +161,7 @@
     const wasOpen = sidebar.classList.contains('is-open');
 
     if (open) {
-      closeThemeMenus();
+      closeOverlayPanels();
     } else {
       disarmOpenGuard();
       document.body.classList.remove('mc-nav-closing');
