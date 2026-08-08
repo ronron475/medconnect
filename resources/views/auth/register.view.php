@@ -629,19 +629,24 @@
               </div>
               <div>
                 <h3 class="intake-card__title" id="intake-complaint-title">Current Health Concern (Chief Complaint)</h3>
-                <p class="intake-card__sub">Tell us why you are requesting a consultation today. After you submit, our triage system will securely review your symptoms in the background to guide the next step.</p>
+                <p class="intake-card__sub">Optional during registration. You can describe symptoms now or add them when you book a consultation.</p>
               </div>
             </div>
             <div class="intake-card__body">
               <div class="form-group form-group-full">
-                <label for="chief-complaint">Chief Complaint <span class="req">*</span></label>
+                <label for="chief-complaint">Chief Complaint <span class="opt">(optional)</span></label>
                 <div class="input-wrap">
-                  <textarea id="chief-complaint" name="chief_complaint" maxlength="500" rows="4" class="textarea-field textarea-field--tall" placeholder="Example: I have had a fever, sore throat, and cough for the past two days." required></textarea>
+                  <textarea id="chief-complaint" name="chief_complaint" maxlength="500" rows="4" class="textarea-field textarea-field--tall" placeholder="Example: I have had a fever, sore throat, and cough for the past two days."></textarea>
                 </div>
                 <div class="intake-field-meta">
-                  <p class="intake-helper-text">Describe your main symptoms, when they started, and any important details. Your healthcare provider will use this information during your consultation.</p>
+                  <p class="intake-helper-text" id="chief-complaint-helper">If you enter a concern, our triage system will review it in the background. You can also skip and add this when booking a consultation.</p>
                   <span class="char-counter" id="chief-complaint-count" aria-live="polite">0/500</span>
                 </div>
+                <div class="reg-complaint-actions">
+                  <button type="button" class="btn-complaint-skip" id="btn-skip-complaint">Skip for Now</button>
+                  <button type="button" class="btn-complaint-add" id="btn-add-complaint" hidden>Add Chief Complaint</button>
+                </div>
+                <p class="reg-complaint-skipped-note" id="chief-complaint-skipped-note" hidden role="status">Skipped — you can add your chief complaint when booking a consultation.</p>
                 <span class="field-error" id="chief-complaint-error" role="alert"></span>
               </div>
             </div>

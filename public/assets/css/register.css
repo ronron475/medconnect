@@ -973,6 +973,79 @@ textarea:focus {
   border-bottom-color: #ffedd5;
 }
 
+#step2 .intake-card--complaint.is-skipped {
+  border-color: #e2e8f0;
+  background: #fff;
+}
+
+#step2 .intake-card--complaint.is-skipped .intake-card__head {
+  background: #f8fafc;
+  border-bottom-color: #e2e8f0;
+}
+
+.reg-complaint-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 12px;
+  flex-wrap: wrap;
+}
+
+.btn-complaint-skip,
+.btn-complaint-add {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 40px;
+  padding: 0 16px;
+  border-radius: 10px;
+  font-size: 13px;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  transition: background 0.18s, border-color 0.18s, color 0.18s;
+}
+
+.btn-complaint-skip {
+  border: 1.5px solid #cbd5e1;
+  background: #fff;
+  color: #475569;
+}
+
+.btn-complaint-skip:hover {
+  border-color: #94a3b8;
+  background: #f8fafc;
+  color: #1e293b;
+}
+
+.btn-complaint-add {
+  border: 1.5px solid var(--teal);
+  background: var(--teal-pale);
+  color: var(--teal-dark);
+}
+
+.btn-complaint-add:hover {
+  background: #ccfbf1;
+  border-color: var(--teal-dark);
+}
+
+.reg-complaint-skipped-note {
+  margin: 10px 0 0;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  color: #475569;
+  font-size: 12.5px;
+  line-height: 1.5;
+}
+
+#step2 .intake-card--complaint .textarea-field:disabled {
+  background: #f1f5f9;
+  color: #64748b;
+  cursor: not-allowed;
+}
+
 /* ===== Step 3 NLP (chief complaint) ===== */
 /* Full-screen silent NLP loading + post-registration outcome modals */
 body.reg-nlp-overlay-open,
