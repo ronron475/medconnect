@@ -188,7 +188,8 @@ body.mc-modal-open {
   align-items: center;
   text-align: center;
   gap: 10px;
-  padding-right: 36px;
+  width: 100%;
+  box-sizing: border-box;
   margin-bottom: 20px;
 }
 
@@ -251,7 +252,9 @@ body.mc-modal-open {
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  margin-inline: auto;
   margin-bottom: 4px;
+  flex-shrink: 0;
 }
 
 .mc-modal__icon svg {
@@ -610,10 +613,13 @@ body.mc-global-loader-active.mc-global-loader--modal-active {
   }
 
   .mc-modal__header {
-    padding-right: 44px;
+    width: 100%;
+    padding: 4px 0 0;
     margin-bottom: 14px;
     gap: 8px;
     min-width: 0;
+    align-items: center;
+    text-align: center;
   }
 
   .mc-modal__title {
@@ -634,6 +640,7 @@ body.mc-global-loader-active.mc-global-loader--modal-active {
   .mc-modal__icon {
     width: 56px;
     height: 56px;
+    margin-inline: auto;
     margin-bottom: 2px;
     flex-shrink: 0;
   }
@@ -662,6 +669,7 @@ body.mc-global-loader-active.mc-global-loader--modal-active {
   .mc-modal__footer--split {
     flex-direction: column;
     align-items: stretch;
+    justify-content: center;
   }
 
   .mc-modal__footer--split .mc-modal__btn {
@@ -700,7 +708,7 @@ body.mc-global-loader-active.mc-global-loader--modal-active {
   }
 
   .mc-modal__header {
-    padding-right: 40px;
+    padding-top: 2px;
   }
 
   .mc-modal__title {
