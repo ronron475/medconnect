@@ -132,15 +132,15 @@
 .psess-compare {
   padding: 14px 16px;
   border-radius: 12px;
-  border: 1px dashed #cbd5e1;
-  background: #f8fafc;
+  border: 1px dashed var(--pt-border, #cbd5e1);
+  background: var(--pt-color-surface, #f8fafc);
 }
 
 .psess-compare__title {
   margin: 0 0 10px;
   font-size: 0.78rem;
   font-weight: 700;
-  color: #475569;
+  color: var(--pt-color-text, #475569);
 }
 
 .psess-compare__list {
@@ -148,20 +148,27 @@
   display: flex;
   flex-direction: column;
   gap: 10px;
+  background: transparent;
+}
+
+.psess-compare__list > div {
+  background: transparent;
 }
 
 .psess-compare__list dt {
   font-size: 0.75rem;
   font-weight: 700;
-  color: #028090;
+  color: var(--pt-color-primary, #028090);
   margin-bottom: 2px;
+  background: transparent;
 }
 
 .psess-compare__list dd {
   margin: 0;
   font-size: 0.75rem;
-  color: #64748b;
+  color: var(--pt-color-muted, #64748b);
   line-height: 1.4;
+  background: transparent;
 }
 
 /* Live banner */
@@ -222,9 +229,9 @@
 
 /* Flow guide */
 .psess-flow {
-  border: 1px solid #cce8ec;
+  border: 1px solid var(--pt-border, #cce8ec);
   border-radius: 14px;
-  background: linear-gradient(180deg, #f8fdfd 0%, #eef8f9 100%);
+  background: var(--pt-color-surface, #f8fdfd);
   overflow: hidden;
 }
 
@@ -235,10 +242,11 @@
   padding: 12px 14px;
   font-weight: 700;
   font-size: 0.82rem;
-  color: #0f4c5c;
+  color: var(--pt-color-text, #0f4c5c);
   cursor: pointer;
   list-style: none;
   user-select: none;
+  background: transparent;
 }
 
 .psess-flow__summary::-webkit-details-marker {
@@ -247,7 +255,7 @@
 
 .psess-flow__summary-icon {
   display: flex;
-  color: #028090;
+  color: var(--pt-color-primary, #028090);
 }
 
 .psess-flow__steps {
@@ -257,6 +265,7 @@
   display: flex;
   flex-direction: column;
   gap: 8px;
+  background: transparent;
 }
 
 .psess-flow__steps li {
@@ -264,8 +273,9 @@
   align-items: flex-start;
   gap: 10px;
   font-size: 0.8rem;
-  color: #475569;
+  color: var(--pt-color-muted, #475569);
   line-height: 1.4;
+  background: transparent;
 }
 
 .psess-flow__num {
@@ -273,7 +283,7 @@
   width: 22px;
   height: 22px;
   border-radius: 50%;
-  background: #028090;
+  background: var(--pt-color-primary, #028090);
   color: #fff;
   font-size: 0.7rem;
   font-weight: 800;
@@ -283,14 +293,15 @@
 }
 
 .psess-flow__steps strong {
-  color: #0f172a;
+  color: var(--pt-color-text, #0f172a);
 }
 
 .psess-flow__note {
   margin: 0;
   padding: 0 14px 12px;
   font-size: 0.72rem;
-  color: #64748b;
+  color: var(--pt-color-muted, #64748b);
+  background: transparent;
 }
 
 /* Metrics */

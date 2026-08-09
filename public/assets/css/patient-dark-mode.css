@@ -374,13 +374,65 @@ html[data-theme-resolved='dark'] body.patient-portal .pts-nav__item.is-active {
 /* ── Strict pass — remove white / light-gray strips ── */
 html[data-theme-resolved='dark'] body.patient-portal .table-responsive,
 html[data-theme-resolved='dark'] body.patient-portal .pdash-session,
-html[data-theme-resolved='dark'] body.patient-portal .psess-flow__summary,
-html[data-theme-resolved='dark'] body.patient-portal .pdash-flow__summary,
 html[data-theme-resolved='dark'] body.patient-portal .patient-dash-pill,
 html[data-theme-resolved='dark'] body.patient-portal .patient-dash-pill--id {
   background: #1c1c1c !important;
   border-color: #2a2a2a !important;
   color: #d4d4d8 !important;
+}
+
+html[data-theme-resolved='dark'] body.patient-portal .psess-flow__summary,
+html[data-theme-resolved='dark'] body.patient-portal .pdash-flow__summary {
+  background: transparent !important;
+  border-color: transparent !important;
+  color: #d4d4d8 !important;
+}
+
+/* Sessions sidebar — keep compare/flow panels unified in dark mode */
+html[data-theme-resolved='dark'] body.patient-portal .psess-compare,
+html[data-theme-resolved='dark'] body.patient-portal .psess-flow {
+  background: #1c1c1c !important;
+  background-image: none !important;
+  border-color: #2a2a2a !important;
+  color: #ffffff !important;
+}
+
+html[data-theme-resolved='dark'] body.patient-portal .psess-compare__title,
+html[data-theme-resolved='dark'] body.patient-portal .psess-flow__summary {
+  color: #ffffff !important;
+}
+
+html[data-theme-resolved='dark'] body.patient-portal .psess-compare__list,
+html[data-theme-resolved='dark'] body.patient-portal .psess-compare__list > div,
+html[data-theme-resolved='dark'] body.patient-portal .psess-compare__list dt,
+html[data-theme-resolved='dark'] body.patient-portal .psess-compare__list dd,
+html[data-theme-resolved='dark'] body.patient-portal .psess-flow__steps,
+html[data-theme-resolved='dark'] body.patient-portal .psess-flow__steps li,
+html[data-theme-resolved='dark'] body.patient-portal .psess-flow__note,
+html[data-theme-resolved='dark'] body.patient-portal .pdash-flow__steps,
+html[data-theme-resolved='dark'] body.patient-portal .pdash-flow__steps li {
+  background: transparent !important;
+  background-image: none !important;
+  box-shadow: none !important;
+  border-color: transparent !important;
+}
+
+html[data-theme-resolved='dark'] body.patient-portal .psess-compare__list dt {
+  color: #a78bfa !important;
+}
+
+html[data-theme-resolved='dark'] body.patient-portal .psess-compare__list dd,
+html[data-theme-resolved='dark'] body.patient-portal .psess-flow__steps li,
+html[data-theme-resolved='dark'] body.patient-portal .psess-flow__note {
+  color: #a1a1aa !important;
+}
+
+html[data-theme-resolved='dark'] body.patient-portal .psess-flow__steps strong {
+  color: #ffffff !important;
+}
+
+html[data-theme-resolved='dark'] body.patient-portal .psess-flow__summary-icon {
+  color: #a78bfa !important;
 }
 
 html[data-theme-resolved='dark'] body.patient-portal .pt-dash-consult {
@@ -440,12 +492,12 @@ html[data-theme-resolved='dark'] body.patient-portal .pdash-action,
 html[data-theme-resolved='dark'] body.patient-portal .pdash-quick,
 html[data-theme-resolved='dark'] body.patient-portal .pdash-quick__link,
 html[data-theme-resolved='dark'] body.patient-portal .pdash-chart,
-html[data-theme-resolved='dark'] body.patient-portal .pdash-flow__summary,
 html[data-theme-resolved='dark'] body.patient-portal .pdash-status-item,
 html[data-theme-resolved='dark'] body.patient-portal .psess-card,
 html[data-theme-resolved='dark'] body.patient-portal .psess-related,
 html[data-theme-resolved='dark'] body.patient-portal .psess-empty,
-html[data-theme-resolved='dark'] body.patient-portal .psess-flow__summary,
+html[data-theme-resolved='dark'] body.patient-portal .psess-compare,
+html[data-theme-resolved='dark'] body.patient-portal .psess-flow,
 html[data-theme-resolved='dark'] body.patient-portal .pmh-visit,
 html[data-theme-resolved='dark'] body.patient-portal .pmh-file-card,
 html[data-theme-resolved='dark'] body.patient-portal .pmh-empty,
@@ -654,6 +706,8 @@ html[data-theme-resolved='dark'] body.patient-portal .portal-page-body dd {
 
 html[data-theme-resolved='dark'] body.patient-portal .pdash-flow,
 html[data-theme-resolved='dark'] body.patient-portal .pdash-flow__summary,
+html[data-theme-resolved='dark'] body.patient-portal .psess-flow,
+html[data-theme-resolved='dark'] body.patient-portal .psess-compare,
 html[data-theme-resolved='dark'] body.patient-portal .pdash-alert-widget,
 html[data-theme-resolved='dark'] body.patient-portal .pdash-action,
 html[data-theme-resolved='dark'] body.patient-portal .pdash-card--review,
