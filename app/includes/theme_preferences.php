@@ -46,6 +46,12 @@ function theme_preferences_ensure_defaults(PDO $pdo, int $userId, string $userTy
         return;
     }
 
+    $userCheck = $pdo->prepare('SELECT id FROM users WHERE id = ? LIMIT 1');
+    $userCheck->execute([$userId]);
+    if (!$userCheck->fetchColumn()) {
+        return;
+    }
+
     $theme = 'system';
     if ($userType === 'provider') {
         $theme = theme_preferences_read_provider_legacy($pdo, $userId);
