@@ -140,12 +140,10 @@ require __DIR__ . '/partials/layout_open.php';
       <h3 id="bhwDashQueueTitle">Triage &amp; Scheduling Queue</h3>
       <span class="bhw-dash-compliance">Logistical view · RA 10173 compliant</span>
     </div>
-    <div class="bhw-dash-panel__toolbar">
-      <div class="input-group bhw-dash-search">
-        <span class="input-group-text" aria-hidden="true">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-        </span>
-        <input type="search" id="resident-search" class="form-control" placeholder="Search resident name…" aria-label="Search residents in queue">
+    <div class="bhw-dash-panel__toolbar" role="search">
+      <div class="bhw-dash-search">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        <input type="search" id="resident-search" placeholder="Search by resident name…" aria-label="Search residents in queue">
       </div>
     </div>
     <div class="bhw-dash-panel__body bhw-dash-panel__body--flush">
