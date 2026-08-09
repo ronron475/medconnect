@@ -82,3 +82,6 @@ public/delete_user.php
 # Windows junction (API mirror under public/)
 public/app/
 .vercel
+
+# Large external emotion dataset source (process via scripts/data/import_emotions_csv.py)
+data/nlp/_import_emotions/emotions.csv
