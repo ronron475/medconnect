@@ -43,7 +43,7 @@ function admin_chart_last_n_days(int $days = 7): array
         $ts = strtotime("-{$i} days");
         $series[] = [
             'date'     => date('Y-m-d', $ts),
-            'label'    => $days <= 14 ? date('D', $ts) : date('M j', $ts),
+            'label'    => $days === 1 ? 'Today' : ($days <= 14 ? date('D', $ts) : date('M j', $ts)),
             'count'    => 0,
             'is_today' => $i === 0,
         ];
@@ -147,7 +147,7 @@ function admin_chart_triage_daily(PDO $pdo, int $days = 30): array
 /** @return array<string, mixed> */
 function admin_dashboard_chart_payload(PDO $pdo, int $days = 30): array
 {
-    $days = max(7, min(90, $days));
+    $days = max(1, min(90, $days));
     $consultations = admin_chart_consultations_daily($pdo, $days);
     $registrations = admin_chart_registrations_daily($pdo, min(14, $days));
     $triage        = admin_chart_triage_daily($pdo, $days);

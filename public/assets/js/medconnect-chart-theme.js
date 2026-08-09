@@ -441,6 +441,18 @@
     });
   }
 
+  function periodLabel(days) {
+    var n = parseInt(days, 10);
+    if (!n || n < 1) n = 7;
+    return n === 1 ? 'Today' : ('Last ' + n + ' days');
+  }
+
+  function periodRangeLabel(days) {
+    var n = parseInt(days, 10);
+    if (!n || n < 1) n = 7;
+    return n === 1 ? 'today' : ('last ' + n + ' days');
+  }
+
   global.McChartTheme = {
     REFRESH_MS: REFRESH_MS,
     palette: PALETTE,
@@ -464,5 +476,7 @@
     mountWeeklyBarChartsFromDom: mountWeeklyBarChartsFromDom,
     refreshAllCharts: refreshAllCharts,
     registerThemeRefresh: registerThemeRefresh,
+    periodLabel: periodLabel,
+    periodRangeLabel: periodRangeLabel,
   };
 })(typeof window !== 'undefined' ? window : this);

@@ -889,7 +889,7 @@ final class BhwWorkflows
     public static function parseDashboardFilters(array $input): array
     {
         $days = (int) ($input['days'] ?? 7);
-        $allowed = [7, 14, 30, 90];
+        $allowed = [1, 7, 14, 30, 90];
         if (!in_array($days, $allowed, true)) {
             $days = 7;
         }
@@ -1101,7 +1101,7 @@ final class BhwWorkflows
             ");
             $cStmt->execute(array_merge($params, [$date]));
             $consultWeek[] = [
-                'label'    => $days > 14 ? date('M j', strtotime($date)) : date('D', strtotime($date)),
+                'label'    => $days === 1 ? 'Today' : ($days > 14 ? date('M j', strtotime($date)) : date('D', strtotime($date))),
                 'count'    => (int) $cStmt->fetchColumn(),
                 'is_today' => $isToday,
             ];
@@ -1112,7 +1112,7 @@ final class BhwWorkflows
             ");
             $rStmt->execute(array_merge($params, [$date]));
             $regWeek[] = [
-                'label'    => $days > 14 ? date('M j', strtotime($date)) : date('D', strtotime($date)),
+                'label'    => $days === 1 ? 'Today' : ($days > 14 ? date('M j', strtotime($date)) : date('D', strtotime($date))),
                 'count'    => (int) $rStmt->fetchColumn(),
                 'is_today' => $isToday,
             ];

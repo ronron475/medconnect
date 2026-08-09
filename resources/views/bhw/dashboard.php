@@ -90,6 +90,7 @@ require __DIR__ . '/partials/layout_open.php';
       <div class="mc-chart-filters__field">
         <label class="mc-chart-filters__label" for="bhw_dash_days">Period</label>
         <select class="form-select mc-chart-filters__control" id="bhw_dash_days" aria-label="Chart period in days">
+          <option value="1">Today</option>
           <option value="7" selected>Last 7 days</option>
           <option value="14">Last 14 days</option>
           <option value="30">Last 30 days</option>
@@ -203,13 +204,19 @@ ob_start();
   function updateChartNote(payload) {
     var note = document.getElementById('bhwDashChartsNote');
     var days = (payload && payload.days) || (dashDays ? dashDays.value : 7);
+    var periodText = (window.McChartTheme && McChartTheme.periodLabel)
+      ? McChartTheme.periodLabel(days)
+      : ('Last ' + days + ' days');
+    var rangeText = (window.McChartTheme && McChartTheme.periodRangeLabel)
+      ? McChartTheme.periodRangeLabel(days)
+      : ('last ' + days + ' days');
     if (note) {
-      note.textContent = 'Last ' + days + ' days · ' + stationBarangay;
+      note.textContent = periodText + ' · ' + stationBarangay;
     }
     var tc = document.getElementById('bhw_dash_title_consult');
     var tr = document.getElementById('bhw_dash_title_reg');
-    if (tc) tc.textContent = 'Consultations — last ' + days + ' days';
-    if (tr) tr.textContent = 'New registrations — last ' + days + ' days';
+    if (tc) tc.textContent = 'Consultations — ' + rangeText;
+    if (tr) tr.textContent = 'New registrations — ' + rangeText;
   }
 
   function esc(v) {
