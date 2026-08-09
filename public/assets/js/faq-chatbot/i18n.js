@@ -825,6 +825,9 @@
       affectionate: { _default: 'That\'s kind — thank you for reaching out. How can I help you today?' },
       uncertain: { _default: 'No worries — I\'ll explain things clearly so you can decide comfortably.' },
       mixed: { _default: 'Mixed feelings make sense. Take your time — I\'ll keep things simple and supportive.' },
+      hopeful: { _default: 'It\'s good to hear some hope. I\'m here to help you take the next practical step on medConnect.' },
+      proud: { _default: 'That\'s a meaningful step — congratulations. Let me know if you need help with anything else on medConnect.' },
+      calm: { _default: 'Glad you\'re feeling calmer. I\'m here whenever you need help with medConnect services.' },
     },
     fil: {
       happy: { _default: 'Natutuwa akong bumuti ang pakiramdam mo. Kung kailangan mo ng tulong sa appointments, medical records, o iba pang serbisyo ng medConnect, nandito ako.' },
@@ -869,6 +872,9 @@
       affectionate: { _default: 'Mabait iyon — salamat sa pag-abot. Paano kita matutulungan?' },
       uncertain: { _default: 'Walang problema — ipapaliwanag ko nang malinaw para makapagdesisyon ka nang komportable.' },
       mixed: { _default: 'Natural ang magkahalong damdamin. Huwag magmadali — simple at suportado lang tayo.' },
+      hopeful: { _default: 'Magandang marinig ang pag-asa. Nandito ako para sa susunod na praktikal na hakbang sa medConnect.' },
+      proud: { _default: 'Malaking hakbang iyan — congratulations. Sabihin mo kung kailangan mo pa ng tulong sa medConnect.' },
+      calm: { _default: 'Buti naman kalmado ka na. Nandito ako kapag kailangan mo ng tulong sa medConnect.' },
     },
     hil: {
       happy: { _default: 'Nalipay ako nga maayo ang imo pamatyag. Kon kinahanglan mo sang bulig sa appointments, medical records, ukon iban nga serbisyo sang medConnect, diri ako.' },
@@ -913,6 +919,9 @@
       affectionate: { _default: 'Maayo nga nag-abot ka. Paano ko ikaw matabangan subong?' },
       uncertain: { _default: 'Wala problema — ipahayag ko sing malinaw agod makadesisyon ka sing komportable.' },
       mixed: { _default: 'Natural ang magkahalong pamatyag. Dula lang — simple kag suportado lang ta.' },
+      hopeful: { _default: 'Maayo nga may paglaum. Diri ako para sa sunod nga praktikal nga hakbang sa medConnect.' },
+      proud: { _default: 'Importante nga hakbang — congratulations. Silinga kon kinahanglan mo pa sang bulig sa medConnect.' },
+      calm: { _default: 'Maayo nga malinong ka na. Diri ako kon kinahanglan mo sang bulig sa medConnect.' },
     },
   };
 

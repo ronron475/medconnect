@@ -44,6 +44,9 @@
     AFFECTIONATE: 'affectionate',
     UNCERTAIN: 'uncertain',
     MIXED: 'mixed',
+    HOPEFUL: 'hopeful',
+    PROUD: 'proud',
+    CALM: 'calm',
     // Legacy aliases
     GRATITUDE: 'thankful',
     HAPPINESS: 'happy',
@@ -94,6 +97,9 @@
     affectionate: '🥰',
     uncertain: '😶',
     mixed: '😕',
+    hopeful: '🌱',
+    proud: '😌',
+    calm: '😌',
     gratitude: '🙏',
     happiness: '😊',
     relief: '😌',
@@ -107,7 +113,7 @@
   });
 
   const EMOTION_TONE = Object.freeze({
-    positive: ['happy', 'thankful', 'relieved', 'excited', 'curious', 'gratitude', 'happiness', 'relief'],
+    positive: ['happy', 'thankful', 'relieved', 'excited', 'curious', 'gratitude', 'happiness', 'relief', 'hopeful', 'proud', 'calm'],
     negative: [
       'frustrated', 'worried', 'anxious', 'nervous', 'sad', 'lonely', 'afraid',
       'angry', 'disappointed', 'stressed', 'tired', 'hopeless', 'crying', 'pain',
@@ -146,8 +152,11 @@
     confused: /^(i'?m\s+confused|confused|nalilito\s+ako|nalibog\s+ako|indi\s+ko\s+masabtan|indi\s+ko\s+kabalo|hindi\s+ko\s+maintindihan|wala\s+ko\s+kaintindi|wala\s+ko\s+kasabot)[\s!.?]*$/i,
     relieved: /^(relieved|okay\s+na|maayo\s+na|buti\s+na\s+lang|okay\s+lang)[\s!.?]*$/i,
     sad: /^(sad|subo\s+ko|kasubo\s+ko|nasubo\s+ko|malungkot\s+ako)[\s!.?]*$/i,
-    tired: /^(tired|kapoy\s+ko|ginakapoy\s+ko|pagod\s+na\s+ako)[\s!.?]*$/i,
-    afraid: /^(scared|afraid|nahadlok\s+ko|takot\s+ako)[\s!.?]*$/i,
+    tired: /^(tired|kapoy\s+ko|ginakapoy\s+ko|pagod\s+na\s+ako|kapoy|ginakapoy)[\s!.?]*$/i,
+    afraid: /^(scared|afraid|nahadlok\s+ko|takot\s+ako|nahadlok)[\s!.?]*$/i,
+    worried: /^(grabe|hay\s+naku|hays|ano\s+na)[\s!.?]*$/i,
+    hopeful: /^(hopeful|may\s+paglaum|tani\s+okay\s+lang)[\s!.?]*$/i,
+    calm: /^(calm|malinong|mapanatag)[\s!.?]*$/i,
     anxious: /^(anxious|ginakulbaan\s+ko|kulbaan\s+ko|kinakabahan\s+ako)[\s!.?]*$/i,
     angry: /^(angry|akig\s+ko|galit\s+ako)[\s!.?]*$/i,
   };
@@ -197,6 +206,12 @@
     /\bburden\s+(?:ako|sa)\b/i,
     /\bdon'?t\s+want\s+to\s+(?:live|exist)\b/i,
     /\bi\s+want\s+to\s+(?:die|end\s+it)\b/i,
+    /\b(di\s+ko\s+na\s+kaya|dili\s+ko\s+na\s+kaya)\b/i,
+    /\bwala\s+na\s+pulos\b/i,
+    /\bgusto\s+ko\s+(?:na\s+)?mag.?untat\b/i,
+    /\bgusto\s+ko\s+mawala\b/i,
+    /\bmas\s+maayo\s+pa\s+siguro\s+kung\s+wala\s+na\s+ko\b/i,
+    /\bmabuhi\s+pa\s+ko\b/i,
   ];
 
   /** Normalize Filipino particles / spacing for crisis matching */

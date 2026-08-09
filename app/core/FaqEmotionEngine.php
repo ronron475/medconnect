@@ -11,7 +11,8 @@ final class FaqEmotionEngine
         'emergency', 'panic', 'hopeless', 'afraid', 'angry', 'frustrated', 'irritated', 'anxious',
         'nervous', 'worried', 'stressed', 'overwhelmed', 'pain', 'sick', 'tired', 'bored',
         'sad', 'crying', 'grief', 'lonely', 'disappointed', 'embarrassed', 'ashamed', 'guilty', 'jealous',
-        'confused', 'uncertain', 'curious', 'excited', 'surprised', 'affectionate', 'relieved', 'thankful', 'happy', 'mixed',
+        'confused', 'uncertain', 'curious', 'excited', 'surprised', 'affectionate', 'hopeful', 'proud', 'calm',
+        'relieved', 'thankful', 'happy', 'mixed',
     ];
 
     private const ICONS = [
@@ -23,6 +24,7 @@ final class FaqEmotionEngine
         'tired' => '😴', 'bored' => '😑', 'hopeless' => '💔', 'panic' => '🆘', 'emergency' => '🚨',
         'crying' => '😭', 'pain' => '🤕', 'sick' => '🤒', 'overwhelmed' => '😥',
         'grief' => '🕯️', 'embarrassed' => '😳', 'ashamed' => '😔', 'guilty' => '😣', 'jealous' => '😒',
+        'hopeful' => '🌱', 'proud' => '😌', 'calm' => '😌',
     ];
 
     private const LABELS = [
@@ -38,6 +40,7 @@ final class FaqEmotionEngine
             'grief' => 'Grieving', 'embarrassed' => 'Embarrassed', 'ashamed' => 'Ashamed',
             'guilty' => 'Guilty', 'jealous' => 'Jealous', 'bored' => 'Bored', 'irritated' => 'Irritated',
             'surprised' => 'Surprised', 'affectionate' => 'Warm', 'uncertain' => 'Uncertain', 'mixed' => 'Mixed feelings',
+            'hopeful' => 'Hopeful', 'proud' => 'Proud', 'calm' => 'Calm',
         ],
         'fil' => [
             'happy' => 'Masaya', 'thankful' => 'Pasalamat', 'relieved' => 'Ginhawa',
@@ -47,10 +50,11 @@ final class FaqEmotionEngine
             'afraid' => 'Natakot', 'angry' => 'Galit', 'disappointed' => 'Nadismaya',
             'stressed' => 'Stressed', 'tired' => 'Pagod', 'hopeless' => 'Walang pag-asa',
             'panic' => 'Kailangan ng tulong', 'emergency' => 'Emergency', 'crying' => 'Malungkot',
-            'pain' => 'Sakit', 'sick' => 'May sakit',             'overwhelmed' => 'Overwhelmed',
+            'pain' => 'Sakit', 'sick' => 'May sakit', 'overwhelmed' => 'Overwhelmed',
             'grief' => 'Nagdadalamhati', 'embarrassed' => 'Nahihiya', 'ashamed' => 'Nahihiya',
             'guilty' => 'May guilt', 'jealous' => 'Naiinggit', 'bored' => 'Nabobored', 'irritated' => 'Naiinis',
             'surprised' => 'Nagulat', 'affectionate' => 'Malambing', 'uncertain' => 'Hindi sigurado', 'mixed' => 'Magkahalong damdamin',
+            'hopeful' => 'May pag-asa', 'proud' => 'Proud', 'calm' => 'Kalmado',
         ],
         'hil' => [
             'happy' => 'Masadya', 'thankful' => 'Salamat', 'relieved' => 'Ginhawa',
@@ -64,6 +68,7 @@ final class FaqEmotionEngine
             'grief' => 'Nagakaluoy', 'embarrassed' => 'Nahuya', 'ashamed' => 'Nahuya',
             'guilty' => 'May guilt', 'jealous' => 'Naiinggit', 'bored' => 'Bored', 'irritated' => 'Nainis',
             'surprised' => 'Nagulat', 'affectionate' => 'Malambing', 'uncertain' => 'Indi sigurado', 'mixed' => 'Magkahalong pamatyag',
+            'hopeful' => 'May paglaum', 'proud' => 'Proud', 'calm' => 'Malinong',
         ],
     ];
 
@@ -85,9 +90,12 @@ final class FaqEmotionEngine
             ['tired', '/\b(tired|pagod|kapoy|ginakapoy|kapoy\s+ko|wala\s+na\s+(ko\s+)?kusog|can\'?t\s+sleep|indi\s+ko\s+ka\s*tulog|indi\s+ko\s+katulog)\b/ui', 2.0],
             ['bored', '/\b(bored|boring|walang\s+gana|wala\s+gana|wala\s+ko\s+gana|indi\s+ko\s+gusto\s+maghimo)\b/ui', 2.0],
             ['stressed', '/\b(stress|stressed|na-stress|na\s+stress|grabeng\s+stress|stressed\s+gid|burnout|school\s+stress|work\s+stress|stress\s+sa\s+(eskwela|skwela|obra))\b/ui', 2.0],
-            ['lonely', '/\b(lonely|nag-iisa|isa\s+lang|wala\s+(ako|ko)\s+(makakausap|maistoryahan|makigstorya)|need\s+someone\s+to\s+talk|homesick|nahidlaw)\b/ui', 2.0],
-            ['thankful', '/\b(salamat|thank\s*you|thanks|maraming\s+salamat|damo\s+nga\s+salamat|salamat\s+gid)\b/ui', 2.5],
-            ['hopeless', '/\b(hopeless|walang\s+pag-asa|wala\s+paglaum|wala\s+na\s+solusyon|ayaw\s+ko\s+mabuhay|going\s+to\s+die|gonna\s+die|im\s+going\s+to\s+die|i\'?m\s+going\s+to\s+die|depress(ed|ion)?)\b/ui', 3.0],
+            ['hopeless', '/\b(hopeless|walang\s+pag-asa|wala\s+paglaum|wala\s+na\s+solusyon|ayaw\s+ko\s+mabuhay|going\s+to\s+die|gonna\s+die|im\s+going\s+to\s+die|i\'?m\s+going\s+to\s+die|depress(ed|ion)?|wala\s+na\s+pulos|gusto\s+ko\s+mawala|mag.?untat|mabuhi\s+pa\s+ko)\b/ui', 3.0],
+            ['hopeless', '/\b(di\s+ko\s+na\s+kaya|dili\s+ko\s+na\s+kaya|mas\s+maayo\s+pa\s+siguro\s+kung\s+wala\s+na\s+ko)\b/ui', 3.2],
+            ['hopeful', '/\b(hopeful|may\s+pag.?asa|may\s+paglaum|sana\s+okay|tani\s+okay)\b/ui', 2.0],
+            ['proud', '/\b(proud|nagmalampuson|naka.?achieve)\b/ui', 2.0],
+            ['calm', '/\b(calm|relaxed|malinong|mapanatag|peaceful)\b/ui', 2.0],
+            ['lonely', '/\b(lonely|nag-iisa|isa\s+lang|wala\s+(ako|ko)\s+(makakausap|maistoryahan|makigstorya)|need\s+someone\s+to\s+talk|homesick|nahidlaw|wala\s+gid\s+ko\s+may\s+kastorya|wala\s+ko\s+may\s+maistoryahan)\b/ui', 2.0],
             ['afraid', '/\b(afraid|scared|fearful|nahadlok|nahadlok\s+ko|natakot|takot|afraid\s+of\s+(the\s+)?doctor|nahadlok\s+.*doktor|fear\s+of\s+hospital)\b/ui', 2.2],
             ['grief', '/\b(grief|grieving|namatay|passed\s+away|relationship\s+problem|naglubong|namatay\s+ang)\b/ui', 2.2],
             ['disappointed', '/\b(disappoint|nadismaya|dismaya)\b/ui', 2.0],
@@ -117,6 +125,7 @@ final class FaqEmotionEngine
             ['confused', '/\b(naglibog|libog\s+ko|ano\s+ah|anu\s+ah|ano\s+ni\s+ya|ano\s+man\s+ini)\b/ui', 2.1],
             ['uncertain', '/\b(indi\s+ko\s+sure|di\s+ko\s+sure|wala\s+ko\s+gusto|indi\s+gid\s+ko\s+gusto)\b/ui', 2.1],
             ['happy', '/\b(lipay\s+gid|masadya\s+gid|nami\s+gid|sobra\s+lipay|medyo\s+okay|sige\s+lang)\b/ui', 2.1],
+            ['thankful', '/\b(salamat|thank\s*you|thanks|maraming\s+salamat|salamat\s+gid)\b/ui', 2.5],
             ['thankful', '/\b(salamat\s+kaayo\s+gid|damo\s+gid\s+nga\s+salamat|salamat\s+sa\s+bulig\s+gid|amo\s+gid\s+salamat)\b/ui', 2.6],
             ['surprised', '/\b(grabe\s+gid\s+ya|grabe\s+kaayo|wow\s+gid|nagulat\s+gid)\b/ui', 2.1],
             ['affectionate', '/\b(miss\s+ko\s+kamo|gihigugma\s+ko|malambing\s+ko)\b/ui', 2.1],
@@ -175,7 +184,7 @@ final class FaqEmotionEngine
         if (in_array($emotion, ['panic', 'emergency', 'hopeless'], true)) {
             return 'crisis';
         }
-        if (in_array($emotion, ['happy', 'thankful', 'relieved', 'excited', 'curious'], true)) {
+        if (in_array($emotion, ['happy', 'thankful', 'relieved', 'excited', 'curious', 'hopeful', 'proud', 'calm'], true)) {
             return 'positive';
         }
         if (in_array($emotion, ['confused'], true)) {
@@ -206,8 +215,8 @@ final class FaqEmotionEngine
         if ($emotion === 'thankful') {
             return 'gratitude';
         }
-        if ($emotion === 'happy' || $emotion === 'relieved' || $emotion === 'excited' || $emotion === 'surprised' || $emotion === 'affectionate') {
-            return $emotion === 'surprised' || $emotion === 'affectionate' ? 'happy' : $emotion;
+        if ($emotion === 'happy' || $emotion === 'relieved' || $emotion === 'excited' || $emotion === 'surprised' || $emotion === 'affectionate' || $emotion === 'hopeful' || $emotion === 'proud' || $emotion === 'calm') {
+            return in_array($emotion, ['surprised', 'affectionate'], true) ? 'happy' : $emotion;
         }
         if ($emotion === 'confused' || $emotion === 'curious') {
             return 'clarify';

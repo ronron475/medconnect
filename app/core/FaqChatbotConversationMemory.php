@@ -44,6 +44,7 @@ final class FaqChatbotConversationMemory
             'intent'             => null,
             'appointment_intent' => false,
             'last_kb_key'        => null,
+            'active_situations'  => [],
             'turns'              => [],
         ];
     }
@@ -104,6 +105,12 @@ final class FaqChatbotConversationMemory
         if (!empty($update['kb_key'])) {
             $mem['last_kb_key'] = (string) $update['kb_key'];
         }
+        if (!empty($update['situations']) && is_array($update['situations'])) {
+            $mem['active_situations'] = array_values(array_unique(array_merge(
+                is_array($mem['active_situations'] ?? null) ? $mem['active_situations'] : [],
+                $update['situations']
+            )));
+        }
 
         $turns = is_array($mem['turns']) ? $mem['turns'] : [];
         if (!empty($update['user_text'])) {
@@ -144,7 +151,7 @@ final class FaqChatbotConversationMemory
         if (preg_match('/^(yes|yeah|yep|ok|okay|sure|please|sige|oo|hoo|opo|oo\s+gid|amo\s+gid|amo|oo\s+po|yes\s+po|ano\s+sunod|and\s+then|then\s+what|how|paano|ano|what\s+about|tell\s+me\s+more|more|continue|go\s+on|that|this|same|okay\s+lang|okay\s+lang\s+ko|sige\s+lang|oo\s+man|amo\s+man|hoo\s+man|pwede|pwede\s+man|sige\s+po)\??$/ui', $t)) {
             return true;
         }
-        if (preg_match('/\b(about\s+that|regarding\s+that|same\s+issue|as\s+i\s+said|like\s+i\s+said|sunod|liwat|about\s+it|amo\s+gid|amo\s+man|amo\s+na|pero|but|kay|tungkol\s+sa)\b/ui', $t)) {
+        if (preg_match('/\b(about\s+that|regarding\s+that|same\s+issue|as\s+i\s+said|like\s+i\s+said|sunod|liwat|about\s+it|amo\s+gid|amo\s+man|amo\s+na|pero|but|kay|tungkol\s+sa|gani|nga)\b/ui', $t)) {
             return true;
         }
         if (preg_match('/^(indi\s+ko\s+gusto|hindi\s+ko\s+gusto|wala\s+ko\s+kasabot|indi\s+ko\s+kabalo|indi\s+ko\s+masabtan)\b/ui', $t)) {
@@ -153,7 +160,10 @@ final class FaqChatbotConversationMemory
         if (preg_match('/^(pero|but)\s+(nahadlok|scared|afraid|kapoy|tired|sad|kasubo|nabalaka|worried|akig|angry)\b/ui', $t)) {
             return true;
         }
-        return mb_strlen($t) <= 22 && preg_match('/^(yes|no|sige|pwede|please|help|bulig|tabang|oo|hindi|indi|wala|grabe|hay)\b/ui', $t);
+        if (preg_match('/^(diin|where|paano|how|nga|ngaa|why|pero|but)\s*[?.!]*$/ui', $t)) {
+            return true;
+        }
+        return mb_strlen($t) <= 24 && preg_match('/^(yes|no|sige|pwede|please|help|bulig|tabang|oo|hindi|indi|wala|grabe|hay|hays|salamat)\b/ui', $t);
     }
 
     /**
@@ -222,6 +232,11 @@ final class FaqChatbotConversationMemory
         }
         if (!empty($mem['appointment_intent'])) {
             $parts[] = 'appointment booking';
+        }
+        if (!empty($mem['active_situations']) && is_array($mem['active_situations'])) {
+            foreach ($mem['active_situations'] as $sit) {
+                $parts[] = str_replace('_', ' ', (string) $sit);
+            }
         }
         if (!empty($mem['emotion_detail'])) {
             $parts[] = (string) $mem['emotion_detail'];

@@ -17,6 +17,11 @@
     TECHNICAL: 'technical',
     FEEDBACK: 'feedback',
     EMOTIONAL_SUPPORT: 'emotional_support',
+    CONNECTIVITY: 'connectivity',
+    PRIVACY: 'privacy',
+    WEATHER: 'weather_barrier',
+    TRANSPORT: 'transport',
+    FINANCIAL: 'financial',
     CRISIS: 'crisis',
     MEDICAL_EMERGENCY: 'medical_emergency',
     OFF_TOPIC: 'off_topic',
@@ -44,6 +49,10 @@
     /\bmaabuligan\b/i,
     /\bmatinabang\b/i,
     /\btuod\s+gid\b.*\b(bulig|tabang)\b/i,
+    /\bmasaligan\s+ni\s+bala\b/i,
+    /\bsafe\s+bala\b/i,
+    /\bconfidential\s+bala\b/i,
+    /\btinuod\s+bala\b/i,
     /\bsystem\s+help\s+me\b/i,
     /\bhelp\s+me\s+(with|understand|use)\b/i,
   ];
@@ -64,7 +73,18 @@
     services: INTENT.FAQ,
     contact: INTENT.FAQ,
     welcome: INTENT.GREETING,
+    policy: INTENT.PRIVACY,
+    distress_support: INTENT.EMOTIONAL_SUPPORT,
+    financial: INTENT.FINANCIAL,
   };
+
+  const SITUATION_PATTERNS = [
+    { intent: INTENT.CONNECTIVITY, re: /\b(wala\s+signal|nadula\s+signal|gadula.{0,16}signal|hinay\s+signal|wala\s+internet|putol.{0,12}connection|ga.?lag|di\s+ko\s+ka.?video|wala\s+ko\s+kabati)\b/i },
+    { intent: INTENT.PRIVACY, re: /\b(masaligan\s+ni\s+bala|safe\s+bala|confidential\s+bala|makita\s+bala\s+ni\s+sang\s+iban|tinuod\s+bala|data\s+privacy)\b/i },
+    { intent: INTENT.WEATHER, re: /\b(gaulan|grabe\s+ang\s+ulan|baha|bad\s+weather|indi\s+ko\s+makaguwa)\b/i },
+    { intent: INTENT.TRANSPORT, re: /\b(wala\s+ko\s+masakyan|layo\s+amon|budlay\s+magkadto|wala\s+ko\s+pamasahe|indi\s+ko\s+makakadto)\b/i },
+    { intent: INTENT.FINANCIAL, re: /\b(no\s+money|cannot\s+afford|wala\s+(ko\s+)?kwarta|walang\s+pera|wala\s+budget|libre\s+nga\s+consultation|indi\s+ko\s+kaya\s+magbayad)\b/i },
+  ];
 
   /** Emotions that must not appear as user badges unless urgency is critical */
   const CRISIS_EMOTIONS = ['panic', 'emergency', 'hopeless'];
@@ -109,6 +129,12 @@
 
     if (isReassuranceQuestion(raw)) {
       return { intent: INTENT.REASSURANCE, urgency: URGENCY.NONE, isQuestion };
+    }
+
+    for (const sit of SITUATION_PATTERNS) {
+      if (sit.re.test(raw)) {
+        return { intent: sit.intent, urgency: URGENCY.LOW, isQuestion };
+      }
     }
 
     if (Engine) {

@@ -30,6 +30,7 @@ final class FaqChatbotStandardEmotion
         $e = strtolower(trim($emotion));
         return match ($e) {
             'happy', 'thankful', 'relieved', 'excited', 'surprised', 'affectionate' => self::HAPPY,
+            'hopeful', 'proud', 'calm' => self::HAPPY,
             'sad', 'lonely', 'crying', 'disappointed', 'hopeless', 'tired', 'grief',
             'embarrassed', 'ashamed', 'guilty', 'jealous' => self::SAD,
             'worried', 'anxious', 'nervous', 'stressed', 'overwhelmed', 'uncertain', 'mixed' => self::WORRIED,
