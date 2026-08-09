@@ -38,28 +38,28 @@ require_once __DIR__ . '/partials/layout_open.php';
   </div>
 </header>
 
-<div class="air-review-stats" aria-live="polite">
-  <div class="air-review-stat">
-    <div class="air-review-stat__value" id="airStatTotal">—</div>
-    <div class="air-review-stat__label">Total cases (30 days)</div>
+<div class="staff-apps-stats" id="airReviewStats" aria-live="polite">
+  <div class="staff-apps-stat">
+    <div class="staff-apps-stat__value" id="airStatTotal">—</div>
+    <div class="staff-apps-stat__label">Total cases (30 days)</div>
   </div>
-  <div class="air-review-stat air-review-stat--pending">
-    <div class="air-review-stat__value" id="airStatPending">—</div>
-    <div class="air-review-stat__label">Pending review</div>
+  <div class="staff-apps-stat staff-apps-stat--pending">
+    <div class="staff-apps-stat__value" id="airStatPending">—</div>
+    <div class="staff-apps-stat__label">Pending review</div>
   </div>
-  <div class="air-review-stat air-review-stat--approved">
-    <div class="air-review-stat__value" id="airStatApproved">—</div>
-    <div class="air-review-stat__label">Approved</div>
+  <div class="staff-apps-stat staff-apps-stat--active">
+    <div class="staff-apps-stat__value" id="airStatApproved">—</div>
+    <div class="staff-apps-stat__label">Approved</div>
   </div>
-  <div class="air-review-stat air-review-stat--unassigned">
-    <div class="air-review-stat__value" id="airStatUnassigned">—</div>
-    <div class="air-review-stat__label">Unassigned</div>
+  <div class="staff-apps-stat air-review-stat--unassigned">
+    <div class="staff-apps-stat__value" id="airStatUnassigned">—</div>
+    <div class="staff-apps-stat__label">Unassigned</div>
   </div>
 </div>
 
 <div class="staff-apps-note" role="note">
   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
-  <span>Select a reviewing doctor and click <strong>Save assignment</strong>. The patient will remain linked to that provider for follow-up booking.</span>
+  <span>Choose a reviewing doctor in <strong>Actions</strong>, then click <strong>Save</strong>. The patient stays linked to that provider for follow-up booking.</span>
 </div>
 
 <div class="staff-apps-card">
@@ -75,11 +75,11 @@ require_once __DIR__ . '/partials/layout_open.php';
     </select>
     <button type="button" class="mc-btn mc-btn--outline" id="aiReviewRefresh">Refresh</button>
     <span class="staff-apps-card__count" id="aiReviewCount"></span>
-    <span class="air-review-toolbar__status" id="aiReviewStatus"></span>
+    <span class="air-review-updated" id="aiReviewStatus"></span>
   </div>
 
-  <div class="air-review-table-wrap">
-    <table class="air-review-table" id="aiReviewTable">
+  <div class="staff-apps-table-wrap">
+    <table class="staff-apps-table air-review-table" id="aiReviewTable">
       <thead>
         <tr>
           <th>Patient</th>
@@ -87,11 +87,11 @@ require_once __DIR__ . '/partials/layout_open.php';
           <th>Status</th>
           <th>Assigned reviewer</th>
           <th>Submitted</th>
-          <th>Reassign</th>
+          <th>Actions</th>
         </tr>
       </thead>
       <tbody id="aiReviewTbody">
-        <tr class="air-review-loading"><td colspan="6">Loading AI review cases…</td></tr>
+        <tr><td colspan="6"><div class="staff-apps-loading"><div class="staff-apps-loading__spinner" aria-hidden="true"></div>Loading AI review cases…</div></td></tr>
       </tbody>
     </table>
   </div>
