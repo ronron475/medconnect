@@ -2,7 +2,7 @@
 /**
  * Dashboard card: submit symptoms for provider-reviewed self-care (non-urgent).
  *
- * Expects: $symptoms_review_pending, $symptoms_review_default_complaint, $symptoms_review_booking (optional)
+ * Expects: $symptoms_review_pending, $symptoms_review_registration_reference, $symptoms_review_booking (optional)
  *          $symptoms_review_registration_nlp (optional)
  */
 $symptoms_review_pending = $symptoms_review_pending ?? [
@@ -12,9 +12,8 @@ $symptoms_review_pending = $symptoms_review_pending ?? [
     'provider_id' => 0,
     'provider_name' => '',
 ];
-$symptoms_review_default_complaint = trim((string) ($symptoms_review_default_complaint ?? ''));
+$symptoms_review_registration_reference = trim((string) ($symptoms_review_registration_reference ?? ''));
 $symptoms_review_registration_nlp = trim((string) ($symptoms_review_registration_nlp ?? ''));
-$symptoms_complaint_locked = $symptoms_review_default_complaint !== '';
 $has_pending = !empty($symptoms_review_pending['has_pending']);
 $review_provider_name = trim((string) ($symptoms_review_pending['provider_name'] ?? ''));
 $symptoms_review_booking = $symptoms_review_booking ?? [
@@ -155,33 +154,66 @@ if ($review_provider_name !== '' && !empty($symptoms_review_booking['assigned_ha
     id="pdashSymptomsReviewForm"
     class="pdash-review-form"
     novalidate
-    <?= $symptoms_complaint_locked ? 'data-complaint-locked="1"' : '' ?>
   >
     <?php if ($symptoms_review_registration_nlp !== ''): ?>
     <input type="hidden" id="pdashSymptomsRegistrationNlp" value="<?= htmlspecialchars($symptoms_review_registration_nlp, ENT_QUOTES, 'UTF-8') ?>">
     <?php endif; ?>
+
     <label class="form-label pdash-care-form__label" for="pdashSymptomsComplaint">
-      Chief complaint
-      <?php if ($symptoms_complaint_locked): ?>
-      <span class="pdash-care-form__lock-badge">From registration</span>
-      <?php endif; ?>
+      Current Chief Complaint <span class="pdash-care-form__optional">(required)</span>
     </label>
     <textarea
       id="pdashSymptomsComplaint"
       name="chief_complaint"
-      class="form-control pdash-care-form__input<?= $symptoms_complaint_locked ? ' pdash-care-form__input--locked' : '' ?>"
+      class="form-control pdash-care-form__input"
       rows="3"
       maxlength="500"
-      placeholder="e.g. mild sore throat and runny nose for two days…"
-      <?= $symptoms_complaint_locked ? 'readonly aria-readonly="true"' : 'required' ?>
-    ><?= htmlspecialchars($symptoms_review_default_complaint) ?></textarea>
+      placeholder="Describe your current health concern for doctor review…"
+      required
+    ></textarea>
     <p class="pdash-care-form__hint">
-      <?php if ($symptoms_complaint_locked): ?>
-      This is the chief complaint you entered during registration. Submit it for your doctor to review.
-      <?php else: ?>
-      At least a short sentence helps the doctor review your case faster.
-      <?php endif; ?>
+      Enter what you want your doctor to review now. Each submission is saved separately.
     </p>
+
+    <?php if ($symptoms_review_registration_reference !== ''): ?>
+    <div class="pdash-care-reference">
+      <label class="form-label pdash-care-form__label">Registration Complaint <span class="pdash-care-form__optional">(reference only)</span></label>
+      <div class="pdash-care-reference__box" id="pdashRegistrationComplaintReference">
+        <?= nl2br(htmlspecialchars($symptoms_review_registration_reference)) ?>
+      </div>
+      <p class="pdash-care-form__hint">
+        This is what you shared when you created your account. It is kept for reference and is not used as your current complaint.
+      </p>
+    </div>
+    <?php endif; ?>
+
+    <div class="pdash-care-evidence">
+      <label class="form-label pdash-care-form__label" for="pdashSupportingEvidence">
+        Supporting Evidence <span class="pdash-care-form__optional">(optional)</span>
+      </label>
+      <p class="pdash-care-form__hint pdash-care-evidence__hint">
+        Upload a photo or short video for your doctor to review. This does not affect triage or review priority.
+      </p>
+      <div class="pdash-care-evidence__upload">
+        <input
+          type="file"
+          id="pdashSupportingEvidence"
+          name="supporting_evidence"
+          class="pdash-care-evidence__input"
+          accept="image/jpeg,image/png,image/webp,video/mp4,video/webm"
+        />
+        <button type="button" class="pdash-btn pdash-btn--outline pdash-care-evidence__choose" id="pdashBtnChooseEvidence">
+          Choose photo or video
+        </button>
+        <span class="pdash-care-evidence__filename" id="pdashEvidenceFilename" hidden></span>
+        <button type="button" class="pdash-care-evidence__remove" id="pdashBtnRemoveEvidence" hidden aria-label="Remove supporting evidence">
+          Remove
+        </button>
+      </div>
+      <div class="pdash-care-evidence__preview" id="pdashEvidencePreview" hidden></div>
+      <p class="pdash-care-form__hint">Photos up to 5 MB. Videos up to 25 MB (MP4 or WebM).</p>
+    </div>
+
     <div id="pdashSymptomsReviewAlert" class="patient-triage-alert" role="alert" hidden></div>
     <button type="submit" class="pdash-btn pdash-btn--primary pdash-care-form__submit" id="pdashSymptomsReviewSubmit">
       Submit for doctor review

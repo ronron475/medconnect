@@ -12,6 +12,23 @@
   var registrationNlpEl = document.getElementById('pdashSymptomsRegistrationNlp');
   var registrationNlp = registrationNlpEl ? registrationNlpEl.value : '';
 
+  var IMAGE_MAX = 5 * 1024 * 1024;
+  var VIDEO_MAX = 25 * 1024 * 1024;
+  var ALLOWED = {
+    'image/jpeg': true,
+    'image/png': true,
+    'image/webp': true,
+    'video/mp4': true,
+    'video/webm': true,
+  };
+
+  var evidenceInput = document.getElementById('pdashSupportingEvidence');
+  var chooseBtn = document.getElementById('pdashBtnChooseEvidence');
+  var removeBtn = document.getElementById('pdashBtnRemoveEvidence');
+  var filenameEl = document.getElementById('pdashEvidenceFilename');
+  var previewEl = document.getElementById('pdashEvidencePreview');
+  var previewUrl = null;
+
   function base() {
     return (typeof window.APP_BASE !== 'undefined' && window.APP_BASE)
       ? String(window.APP_BASE).replace(/\/$/, '')
@@ -36,15 +53,102 @@
     alertEl.textContent = message;
   }
 
+  function clearPreview() {
+    if (previewUrl) {
+      URL.revokeObjectURL(previewUrl);
+      previewUrl = null;
+    }
+    if (previewEl) {
+      previewEl.innerHTML = '';
+      previewEl.hidden = true;
+    }
+  }
+
+  function resetEvidence() {
+    if (evidenceInput) evidenceInput.value = '';
+    clearPreview();
+    if (filenameEl) {
+      filenameEl.textContent = '';
+      filenameEl.hidden = true;
+    }
+    if (removeBtn) removeBtn.hidden = true;
+  }
+
+  function validateEvidenceFile(file) {
+    if (!file) return null;
+    if (!ALLOWED[file.type]) {
+      return 'Please choose a JPG, PNG, WEBP photo or MP4/WebM video.';
+    }
+    var isVideo = file.type.indexOf('video/') === 0;
+    var maxSize = isVideo ? VIDEO_MAX : IMAGE_MAX;
+    if (file.size > maxSize) {
+      return isVideo ? 'Video must be 25 MB or smaller.' : 'Photo must be 5 MB or smaller.';
+    }
+    return null;
+  }
+
+  if (chooseBtn && evidenceInput) {
+    chooseBtn.addEventListener('click', function () {
+      evidenceInput.click();
+    });
+  }
+
+  if (removeBtn) {
+    removeBtn.addEventListener('click', resetEvidence);
+  }
+
+  if (evidenceInput) {
+    evidenceInput.addEventListener('change', function () {
+      clearPreview();
+      var file = evidenceInput.files && evidenceInput.files[0];
+      if (!file) {
+        resetEvidence();
+        return;
+      }
+
+      var err = validateEvidenceFile(file);
+      if (err) {
+        resetEvidence();
+        showAlert('error', err);
+        return;
+      }
+
+      if (filenameEl) {
+        filenameEl.textContent = file.name;
+        filenameEl.hidden = false;
+      }
+      if (removeBtn) removeBtn.hidden = false;
+
+      if (previewEl) {
+        previewUrl = URL.createObjectURL(file);
+        if (file.type.indexOf('video/') === 0) {
+          previewEl.innerHTML = '<video src="' + previewUrl + '" controls playsinline muted></video>';
+        } else {
+          previewEl.innerHTML = '<img src="' + previewUrl + '" alt="Supporting evidence preview">';
+        }
+        previewEl.hidden = false;
+      }
+    });
+  }
+
   form.addEventListener('submit', async function (e) {
     e.preventDefault();
     var complaint = (form.querySelector('#pdashSymptomsComplaint')?.value || '').trim();
     if (!complaint) {
-      showAlert('error', 'Please describe your symptoms or concern.');
+      showAlert('error', 'Please enter your current chief complaint for doctor review.');
       return;
     }
 
-    var fd = new FormData();
+    var evidenceFile = evidenceInput && evidenceInput.files ? evidenceInput.files[0] : null;
+    if (evidenceFile) {
+      var evidenceErr = validateEvidenceFile(evidenceFile);
+      if (evidenceErr) {
+        showAlert('error', evidenceErr);
+        return;
+      }
+    }
+
+    var fd = new FormData(form);
     fd.set('chief_complaint', complaint);
     fd.set('csrf_token', csrf());
     try {
@@ -81,12 +185,12 @@
       }
       if (payload.urgent) {
         var urgMsg = data.message || 'Please book an urgent consultation.';
-        var complaint = (form.querySelector('#pdashSymptomsComplaint')?.value || '').trim();
+        var urgentComplaint = (form.querySelector('#pdashSymptomsComplaint')?.value || '').trim();
         var triageId = payload.triage_id ? payload.triage_id : 0;
         showAlert('error', urgMsg);
         if (window.mcPatientUrgencyModal && typeof window.mcPatientUrgencyModal.showUrgent === 'function') {
           window.mcPatientUrgencyModal.showUrgent(urgMsg, payload.book_url || '', {
-            complaint: complaint,
+            complaint: urgentComplaint,
             triageId: triageId,
           });
         } else if (payload.book_url) {
