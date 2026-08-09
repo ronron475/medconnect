@@ -446,7 +446,7 @@ function patient_registration_save_complaint(
 }
 
 /**
- * Load persisted registration complaint for the patient portal booking form.
+ * Load registration-only chief complaint for reference display (never used as current complaint).
  *
  * @return array{complaint:string,urgency:string,nlp_json:string}
  */

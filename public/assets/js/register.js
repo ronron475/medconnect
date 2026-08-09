@@ -866,16 +866,9 @@ function showOutcomeModal(id) {
 
 function persistPostRegIntent(urgency, nlpResult, redirectUrl) {
   try {
-    if (chiefComplaintInput && chiefComplaintInput.value.trim()) {
-      sessionStorage.setItem('medconnect_pending_chief_complaint', chiefComplaintInput.value.trim());
-    } else {
-      sessionStorage.removeItem('medconnect_pending_chief_complaint');
-    }
-    if (nlpResult) {
-      sessionStorage.setItem('medconnect_pending_nlp_result', JSON.stringify(nlpResult));
-    } else {
-      sessionStorage.removeItem('medconnect_pending_nlp_result');
-    }
+    // Registration chief complaint and NLP stay in the database only — never sessionStorage.
+    sessionStorage.removeItem('medconnect_pending_chief_complaint');
+    sessionStorage.removeItem('medconnect_pending_nlp_result');
     if (urgency) {
       sessionStorage.setItem('medconnect_post_reg_urgency', urgency);
     } else {

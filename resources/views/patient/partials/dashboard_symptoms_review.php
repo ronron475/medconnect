@@ -3,7 +3,6 @@
  * Dashboard card: submit symptoms for provider-reviewed self-care (non-urgent).
  *
  * Expects: $symptoms_review_pending, $symptoms_review_registration_reference, $symptoms_review_booking (optional)
- *          $symptoms_review_registration_nlp (optional)
  */
 $symptoms_review_pending = $symptoms_review_pending ?? [
     'has_pending' => false,
@@ -13,7 +12,6 @@ $symptoms_review_pending = $symptoms_review_pending ?? [
     'provider_name' => '',
 ];
 $symptoms_review_registration_reference = trim((string) ($symptoms_review_registration_reference ?? ''));
-$symptoms_review_registration_nlp = trim((string) ($symptoms_review_registration_nlp ?? ''));
 $has_pending = !empty($symptoms_review_pending['has_pending']);
 $review_provider_name = trim((string) ($symptoms_review_pending['provider_name'] ?? ''));
 $symptoms_review_booking = $symptoms_review_booking ?? [
@@ -155,10 +153,6 @@ if ($review_provider_name !== '' && !empty($symptoms_review_booking['assigned_ha
     class="pdash-review-form"
     novalidate
   >
-    <?php if ($symptoms_review_registration_nlp !== ''): ?>
-    <input type="hidden" id="pdashSymptomsRegistrationNlp" value="<?= htmlspecialchars($symptoms_review_registration_nlp, ENT_QUOTES, 'UTF-8') ?>">
-    <?php endif; ?>
-
     <label class="form-label pdash-care-form__label" for="pdashSymptomsComplaint">
       Current Chief Complaint <span class="pdash-care-form__optional">(required)</span>
     </label>

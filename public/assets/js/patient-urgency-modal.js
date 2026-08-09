@@ -179,10 +179,6 @@
     if (urgentCtx.triageId > 0) {
       fd.set('triage_id', String(urgentCtx.triageId));
     }
-    try {
-      var pendingNlp = sessionStorage.getItem('medconnect_pending_nlp_result');
-      if (pendingNlp) fd.set('registration_nlp_json', pendingNlp);
-    } catch (_) { /* ignore */ }
 
     fetch(base() + '/app/api/patient/submit_triage.php', {
       method: 'POST',

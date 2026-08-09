@@ -9,8 +9,6 @@
 
   var alertEl = document.getElementById('pdashSymptomsReviewAlert');
   var submitBtn = document.getElementById('pdashSymptomsReviewSubmit');
-  var registrationNlpEl = document.getElementById('pdashSymptomsRegistrationNlp');
-  var registrationNlp = registrationNlpEl ? registrationNlpEl.value : '';
 
   var IMAGE_MAX = 5 * 1024 * 1024;
   var VIDEO_MAX = 25 * 1024 * 1024;
@@ -151,10 +149,6 @@
     var fd = new FormData(form);
     fd.set('chief_complaint', complaint);
     fd.set('csrf_token', csrf());
-    try {
-      var pendingNlp = registrationNlp || sessionStorage.getItem('medconnect_pending_nlp_result');
-      if (pendingNlp) fd.set('registration_nlp_json', pendingNlp);
-    } catch (_) { /* ignore */ }
 
     if (submitBtn) {
       submitBtn.disabled = true;
