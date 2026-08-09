@@ -261,7 +261,6 @@ $symptoms_review_pending = patient_symptoms_review_pending_state($pdo, (int) $ui
 $symptoms_review_booking = triage_patient_booking_slot_status($pdo, (int) $uid);
 $pending_reg_complaint = patient_registration_load_pending_complaint($pdo, (int) $uid);
 $symptoms_review_registration_reference = trim((string) ($pending_reg_complaint['complaint'] ?? ''));
-$symptoms_review_registration_nlp = trim((string) ($pending_reg_complaint['nlp_json'] ?? ''));
 
 $patient_followups = [];
 if ($pdo->query("SHOW TABLES LIKE 'followups'")->rowCount()) {

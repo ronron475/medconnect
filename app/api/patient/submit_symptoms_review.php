@@ -23,15 +23,13 @@ $symptomList = array_values(array_filter(array_map(static function ($s) {
     return is_string($s) ? trim($s) : '';
 }, $symptoms)));
 
-$regNlpRaw = trim((string) ($_POST['registration_nlp_json'] ?? ''));
-
 $evidenceFile = $_FILES['supporting_evidence'] ?? null;
 $evidenceValidation = complaint_evidence_validate_upload(is_array($evidenceFile) ? $evidenceFile : null);
 if ($evidenceValidation !== null) {
     Api::error((string) $evidenceValidation['error']);
 }
 
-$result = patient_submit_symptoms_for_review($pdo, $patientId, $complaint, $symptomList, $regNlpRaw);
+$result = patient_submit_symptoms_for_review($pdo, $patientId, $complaint, $symptomList);
 
 if ($result['ok']) {
     $triageId = (int) ($result['payload']['triage_id'] ?? 0);

@@ -58,41 +58,6 @@ try {
     Api::error('Unable to analyze symptoms. Please try again.');
 }
 
-// Merge silent registration NLP (provider-facing detail; never shown to patient)
-$regNlp = null;
-$regNlpRaw = trim((string) ($_POST['registration_nlp_json'] ?? ''));
-if ($regNlpRaw !== '') {
-    $decoded = json_decode($regNlpRaw, true);
-    if (is_array($decoded)) {
-        $regNlp = $decoded;
-        if (!empty($regNlp['translated_english']) && empty($assessment['english_translation'])) {
-            $assessment['english_translation'] = (string) $regNlp['translated_english'];
-        }
-        if (!empty($regNlp['detected_symptoms']) && is_array($regNlp['detected_symptoms'])) {
-            $assessment['detected_symptoms'] = array_values(array_unique(array_merge(
-                $assessment['detected_symptoms'] ?? [],
-                $regNlp['detected_symptoms']
-            )));
-        }
-        if (!empty($regNlp['detected_conditions']) && is_array($regNlp['detected_conditions'])) {
-            $assessment['possible_conditions'] = array_values(array_unique(array_merge(
-                $assessment['possible_conditions'] ?? [],
-                $regNlp['detected_conditions']
-            )));
-        }
-        if (!empty($regNlp['confidence']) && empty($assessment['confidence']['score'])) {
-            $pct = (int) preg_replace('/\D+/', '', (string) $regNlp['confidence']);
-            if ($pct > 0) {
-                $assessment['confidence']['score'] = $pct;
-            }
-        }
-    }
-}
-// Registration NLP is supplementary metadata only — triage authority is the fresh CDS assessment above.
-if (is_array($regNlp)) {
-    $assessment['registration_nlp'] = $regNlp;
-}
-
 $level = (string) ($assessment['triage']['db_level'] ?? $assessment['db_level'] ?? '3');
 $label = (string) ($assessment['triage']['urgency_label'] ?? $assessment['urgency_label'] ?? 'Routine');
 $triageLevel = TriageLevelService::fromAssessment($assessment);

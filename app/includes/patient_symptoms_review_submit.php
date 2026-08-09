@@ -20,8 +20,7 @@ function patient_submit_symptoms_for_review(
     PDO $pdo,
     int $patientId,
     string $complaint,
-    array $symptomList,
-    ?string $regNlpRaw = null
+    array $symptomList
 ): array {
     triage_assessment_ensure_schema($pdo);
     BhwPatientWorkflow::ensure_schema($pdo);
@@ -49,7 +48,6 @@ function patient_submit_symptoms_for_review(
     }
 
     $assessment = ChiefComplaintNlpService::assessWithFallback($complaint, $symptomList);
-    $regNlp = patient_symptoms_review_merge_registration_nlp($assessment, $regNlpRaw);
 
     $level = (string) ($assessment['triage']['db_level'] ?? $assessment['db_level'] ?? '3');
     $label = (string) ($assessment['triage']['urgency_label'] ?? $assessment['urgency_label'] ?? 'Routine');

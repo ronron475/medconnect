@@ -132,15 +132,7 @@ $page_title = 'Book Consultation';
   <script>window.BOOKING_ASSIGNED_HAS_SLOTS = <?= json_encode($locked_assigned_has_slots) ?>;</script>
   <script>window.BOOKING_ALTERNATE_AVAILABLE = <?= json_encode($locked_alternate_available) ?>;</script>
   <script>window.TRIAGE_REVIEW_FIRST_ALLOWED = <?= json_encode(empty($review_booking_ctx['locked'])) ?>;</script>
-  <?php if (($pending_reg['nlp_json'] ?? '') !== ''): ?>
-  <script>
-  try {
-    if (!sessionStorage.getItem('medconnect_pending_nlp_result')) {
-      sessionStorage.setItem('medconnect_pending_nlp_result', <?= json_encode($pending_reg['nlp_json']) ?>);
-    }
-  } catch (_) {}
-  </script>
-  <?php endif; ?>
+  <script>window.REGISTRATION_COMPLAINT_REFERENCE = <?= json_encode($registration_complaint_reference) ?>;</script>
   <?php if (($pending_reg['urgency'] ?? '') === 'EMERGENCY'): ?>
   <script>
   try { sessionStorage.setItem('medconnect_block_telemedicine', '1'); } catch (_) {}

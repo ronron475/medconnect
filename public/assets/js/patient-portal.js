@@ -1027,13 +1027,6 @@
         fd.set('csrf_token', csrfToken);
       }
 
-      try {
-        const pendingNlp = sessionStorage.getItem('medconnect_pending_nlp_result');
-        if (pendingNlp) {
-          fd.set('registration_nlp_json', pendingNlp);
-        }
-      } catch (_) { /* ignore */ }
-
       showBookingOverlay(true);
 
       if (submitBtn) {
