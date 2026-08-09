@@ -24,6 +24,85 @@ function auth_session_expired_url(): string
     return auth_landing_url(['session_expired' => '1']);
 }
 
+/**
+ * Clear session and return visitor to the public landing / sign-in flow.
+ */
+function auth_destroy_session_and_redirect(string $reason = 'signin'): void
+{
+    if (session_status() === PHP_SESSION_NONE) {
+        session_start();
+    }
+
+    $_SESSION = [];
+    if (ini_get('session.use_cookies')) {
+        $params = session_get_cookie_params();
+        setcookie(
+            session_name(),
+            '',
+            time() - 42000,
+            $params['path'],
+            $params['domain'],
+            (bool) $params['secure'],
+            (bool) $params['httponly']
+        );
+    }
+    if (session_status() === PHP_SESSION_ACTIVE) {
+        session_destroy();
+    }
+
+    $redirect = match ($reason) {
+        'session_expired' => auth_session_expired_url(),
+        default => auth_signin_required_url(),
+    };
+
+    require_once BASE_PATH . '/app/includes/request_helpers.php';
+    if (request_wants_json()) {
+        header('Content-Type: application/json; charset=utf-8');
+        header('X-Content-Type-Options: nosniff');
+        header('Cache-Control: no-store');
+        http_response_code(401);
+        echo json_encode([
+            'success' => false,
+            'message' => 'Your session is no longer valid. Please sign in again.',
+            'code' => 'session_invalid',
+            'redirect' => $redirect,
+        ], JSON_UNESCAPED_UNICODE);
+        exit;
+    }
+
+    header('Location: ' . $redirect);
+    exit;
+}
+
+/**
+ * Reject sessions whose user row was removed or is no longer active.
+ */
+function auth_ensure_session_user_valid(PDO $pdo): void
+{
+    if (empty($_SESSION['user_id'])) {
+        return;
+    }
+
+    $userId = (int) $_SESSION['user_id'];
+    $role = (string) ($_SESSION['user_role'] ?? '');
+    $stmt = $pdo->prepare('SELECT id, role, account_status FROM users WHERE id = ? LIMIT 1');
+    $stmt->execute([$userId]);
+    $row = $stmt->fetch(PDO::FETCH_ASSOC);
+
+    if (!$row) {
+        auth_destroy_session_and_redirect();
+    }
+
+    if ($role !== '' && (string) ($row['role'] ?? '') !== $role) {
+        auth_destroy_session_and_redirect();
+    }
+
+    $status = strtolower((string) ($row['account_status'] ?? 'active'));
+    if ($status !== '' && $status !== 'active') {
+        auth_destroy_session_and_redirect();
+    }
+}
+
 function auth_portal_dashboard_url(?string $role = null): ?string
 {
     $role = $role ?? (string) ($_SESSION['user_role'] ?? '');
@@ -47,6 +126,11 @@ function auth_redirect_if_logged_in(): void
     }
     if (empty($_SESSION['user_id'])) {
         return;
+    }
+
+    global $pdo;
+    if (isset($pdo) && $pdo instanceof PDO) {
+        auth_ensure_session_user_valid($pdo);
     }
 
     // Keep landing for post-registration, password-setup, or session-timeout messaging.
@@ -114,6 +198,12 @@ function auth_require_login(): void
         header('Location: ' . $redirect);
         exit;
     }
+
+    global $pdo;
+    if (!isset($pdo) || !($pdo instanceof PDO)) {
+        require_once BASE_PATH . '/config/db.php';
+    }
+    auth_ensure_session_user_valid($pdo);
 }
 
 function auth_require_role(string|array $roles): void

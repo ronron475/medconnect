@@ -9,6 +9,9 @@ if (empty($_SESSION['user_id']) || ($_SESSION['user_role'] ?? '') !== 'patient')
     exit;
 }
 
+require_once BASE_PATH . '/app/includes/auth_guard.php';
+auth_ensure_session_user_valid($pdo);
+
 require_once BASE_PATH . '/app/includes/consultation_expiry.php';
 require_once BASE_PATH . '/app/includes/profile_picture.php';
 require_once BASE_PATH . '/app/includes/patient_account_security.php';
