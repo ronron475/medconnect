@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 Build emotion_intent_dataset.js — medConnect FAQ Chatbot
-Target: 10,000 unique emotion-intent phrases (EN · FIL · HIL · mixed)
+Target: 15,000 unique emotion-intent phrases (EN · FIL · HIL · mixed)
 """
 import csv
 import json
@@ -14,7 +14,7 @@ ROOT = Path(__file__).resolve().parents[2]
 CSV_PATH = ROOT / 'data' / 'nlp' / 'emotion_intent_phrases.csv'
 CSV_OUT = ROOT / 'data' / 'nlp' / 'emotion_intent_phrases_full.csv'
 JS_OUT = ROOT / 'public' / 'assets' / 'js' / 'faq-chatbot' / 'emotion_intent_dataset.js'
-TARGET = 10_000
+TARGET = 15_000
 
 PRIORITY = [
     'emergency', 'panic', 'hopeless', 'afraid', 'angry', 'frustrated', 'irritated', 'anxious',
@@ -24,21 +24,55 @@ PRIORITY = [
     'hopeful', 'proud', 'calm',
 ]
 
-# ── Seed from hand-curated CSV ──
+IMPORT_CSV = ROOT / 'data' / 'nlp' / 'emotion_dataset_import.csv'
+CURATED_SEED_PATHS = [
+    CSV_PATH,
+    ROOT / 'data' / 'nlp' / 'emotion_intent_phrases_hil_expansion.csv',
+    ROOT / 'data' / 'nlp' / 'emotion_hiligaynon_extra_phrases.csv',
+    ROOT / 'data' / 'nlp' / 'emotion_situations_phrases.csv',
+]
+# Cap bulk import so build stays fast; Hiligaynon rows prioritized in sampling.
+IMPORT_MAX_PER_BUCKET = 140
+
+
 def load_seed():
     rows = []
-    seed_paths = [
-        CSV_PATH,
-        ROOT / 'data' / 'nlp' / 'emotion_intent_phrases_hil_expansion.csv',
-        ROOT / 'data' / 'nlp' / 'emotion_hiligaynon_extra_phrases.csv',
-        ROOT / 'data' / 'nlp' / 'emotion_situations_phrases.csv',
-    ]
-    for path in seed_paths:
+    for path in CURATED_SEED_PATHS:
         if not path.exists():
             continue
         with path.open(encoding='utf-8') as f:
             for r in csv.DictReader(f):
                 rows.append({'e': r['emotion'], 'p': r['phrase'].strip(), 'l': r['language']})
+
+    if not IMPORT_CSV.exists():
+        return rows
+
+    import_rows = []
+    with IMPORT_CSV.open(encoding='utf-8') as f:
+        for r in csv.DictReader(f):
+            import_rows.append({'e': r['emotion'], 'p': r['phrase'].strip(), 'l': r['language']})
+
+    buckets = {}
+    for r in import_rows:
+        key = (r['e'], r['l'])
+        buckets.setdefault(key, []).append(r)
+
+    random.seed(42)
+    sampled = []
+    # Hiligaynon first for broader local coverage
+    lang_order = ['hil', 'en', 'fil']
+    emotions = sorted({k[0] for k in buckets.keys()})
+    for lang in lang_order:
+        for emo in emotions:
+            items = buckets.get((emo, lang), [])
+            if not items:
+                continue
+            cap = IMPORT_MAX_PER_BUCKET
+            if len(items) > cap:
+                sampled.extend(random.sample(items, cap))
+            else:
+                sampled.extend(items)
+    rows.extend(sampled)
     return rows
 
 # ── Word banks: emotion → language → phrase fragments ──
@@ -405,7 +439,8 @@ def generate_phrases(target: int):
 
 def main():
     seed = load_seed()
-    generated = generate_phrases(TARGET - len(seed))
+    need = max(0, TARGET - len(seed))
+    generated = generate_phrases(need) if need > 0 else []
     all_rows = []
     seen = set()
     for r in seed + generated:
@@ -429,7 +464,7 @@ def main():
             w.writerow({'emotion': r['e'], 'phrase': r['p'], 'language': r['l']})
 
     header = """/**
- * medConnect FAQ Chatbot — Emotion Intent Dataset (10,000 phrases)
+ * medConnect FAQ Chatbot — Emotion Intent Dataset (15,000 phrases)
  * Auto-built: python scripts/data/build_emotion_intent_dataset.py
  */
 (function (global) {
@@ -439,7 +474,7 @@ def main():
   const EMOTION_PRIORITY = {json.dumps(PRIORITY)};
 
   global.McFaqEmotionDataset = {{
-    version: '2.0.0',
+    version: '2.1.0',
     count: {len(all_rows)},
     PHRASES,
     EMOTION_PRIORITY,
