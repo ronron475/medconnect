@@ -2,7 +2,7 @@
 /**
  * Dashboard card: submit symptoms for provider-reviewed self-care (non-urgent).
  *
- * Expects: $symptoms_review_pending, $symptoms_review_registration_reference, $symptoms_review_booking (optional)
+ * Expects: $symptoms_review_pending, $registration_chief_complaint, $symptoms_review_booking (optional)
  */
 $symptoms_review_pending = $symptoms_review_pending ?? [
     'has_pending' => false,
@@ -11,7 +11,8 @@ $symptoms_review_pending = $symptoms_review_pending ?? [
     'provider_id' => 0,
     'provider_name' => '',
 ];
-$symptoms_review_registration_reference = trim((string) ($symptoms_review_registration_reference ?? ''));
+$registration_chief_complaint = trim((string) ($registration_chief_complaint ?? ''));
+$chief_complaint_locked = $registration_chief_complaint !== '';
 $has_pending = !empty($symptoms_review_pending['has_pending']);
 $review_provider_name = trim((string) ($symptoms_review_pending['provider_name'] ?? ''));
 $symptoms_review_booking = $symptoms_review_booking ?? [
@@ -154,32 +155,27 @@ if ($review_provider_name !== '' && !empty($symptoms_review_booking['assigned_ha
     novalidate
   >
     <label class="form-label pdash-care-form__label" for="pdashSymptomsComplaint">
-      Current Chief Complaint <span class="pdash-care-form__optional">(required)</span>
+      Chief Complaint
+      <?php if ($chief_complaint_locked): ?>
+      <span class="pdash-care-form__lock-badge">From registration</span>
+      <?php endif; ?>
     </label>
     <textarea
       id="pdashSymptomsComplaint"
       name="chief_complaint"
-      class="form-control pdash-care-form__input"
+      class="form-control pdash-care-form__input<?= $chief_complaint_locked ? ' pdash-care-form__input--locked' : '' ?>"
       rows="3"
       maxlength="500"
-      placeholder="Describe your current health concern for doctor review…"
-      required
-    ></textarea>
+      placeholder="<?= $chief_complaint_locked ? 'Your registered health concern…' : 'e.g. mild sore throat and runny nose for two days…' ?>"
+      <?= $chief_complaint_locked ? 'readonly aria-readonly="true"' : 'required' ?>
+    ><?= htmlspecialchars($registration_chief_complaint) ?></textarea>
     <p class="pdash-care-form__hint">
-      Enter what you want your doctor to review now. Each submission is saved separately.
+      <?php if ($chief_complaint_locked): ?>
+      This is the chief complaint you entered during registration. It cannot be changed and will be reviewed by your doctor.
+      <?php else: ?>
+      Describe your health concern for doctor review. At least a short sentence helps your doctor review your case faster.
+      <?php endif; ?>
     </p>
-
-    <?php if ($symptoms_review_registration_reference !== ''): ?>
-    <div class="pdash-care-reference">
-      <label class="form-label pdash-care-form__label">Registration Complaint <span class="pdash-care-form__optional">(reference only)</span></label>
-      <div class="pdash-care-reference__box" id="pdashRegistrationComplaintReference">
-        <?= nl2br(htmlspecialchars($symptoms_review_registration_reference)) ?>
-      </div>
-      <p class="pdash-care-form__hint">
-        This is what you shared when you created your account. It is kept for reference and is not used as your current complaint.
-      </p>
-    </div>
-    <?php endif; ?>
 
     <div class="pdash-care-evidence">
       <label class="form-label pdash-care-form__label" for="pdashSupportingEvidence">
