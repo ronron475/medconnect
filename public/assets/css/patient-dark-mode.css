@@ -135,6 +135,8 @@ html[data-theme-resolved='dark'] body.patient-portal .mc-theme-toggle__option.is
 html[data-theme-resolved='dark'] body.patient-portal .pdash-card,
 html[data-theme-resolved='dark'] body.patient-portal .pdash-metric,
 html[data-theme-resolved='dark'] body.patient-portal .pdash-hero,
+html[data-theme-resolved='dark'] body.patient-portal .pmh-hero,
+html[data-theme-resolved='dark'] body.patient-portal .pmh-surface,
 html[data-theme-resolved='dark'] body.patient-portal .pmh-metric,
 html[data-theme-resolved='dark'] body.patient-portal .pmh-visit__body,
 html[data-theme-resolved='dark'] body.patient-portal .pmh-file-card,
@@ -435,6 +437,104 @@ html[data-theme-resolved='dark'] body.patient-portal .psess-flow__summary-icon {
   color: #a78bfa !important;
 }
 
+/* My Health — hero, surface, timeline, and tabs */
+html[data-theme-resolved='dark'] body.patient-portal .pmh-hero,
+html[data-theme-resolved='dark'] body.patient-portal .pmh-surface,
+html[data-theme-resolved='dark'] body.patient-portal .pmh-metric-pill,
+html[data-theme-resolved='dark'] body.patient-portal .pmh-tabs--segment,
+html[data-theme-resolved='dark'] body.patient-portal .pmh-feed {
+  background: #1c1c1c !important;
+  background-image: none !important;
+  border-color: #2a2a2a !important;
+  color: #ffffff !important;
+  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.04), 0 4px 20px rgba(0, 0, 0, 0.5) !important;
+}
+
+html[data-theme-resolved='dark'] body.patient-portal .pmh-metric-pill.is-active {
+  border-color: #7c3aed !important;
+  box-shadow: 0 0 0 1px rgba(124, 58, 237, 0.35) !important;
+}
+
+html[data-theme-resolved='dark'] body.patient-portal .pmh-hero__title,
+html[data-theme-resolved='dark'] body.patient-portal .pmh-surface__title,
+html[data-theme-resolved='dark'] body.patient-portal .pmh-empty h3 {
+  color: #ffffff !important;
+}
+
+html[data-theme-resolved='dark'] body.patient-portal .pmh-hero__text,
+html[data-theme-resolved='dark'] body.patient-portal .pmh-surface__desc,
+html[data-theme-resolved='dark'] body.patient-portal .pmh-empty p,
+html[data-theme-resolved='dark'] body.patient-portal .pmh-metric-pill__label {
+  color: #a1a1aa !important;
+}
+
+html[data-theme-resolved='dark'] body.patient-portal .pmh-hero__eyebrow,
+html[data-theme-resolved='dark'] body.patient-portal .pmh-metric-pill__value,
+html[data-theme-resolved='dark'] body.patient-portal .pmh-hero__id,
+html[data-theme-resolved='dark'] body.patient-portal .pmh-metric-pill__hint {
+  color: #a78bfa !important;
+}
+
+html[data-theme-resolved='dark'] body.patient-portal .pmh-surface__head {
+  border-bottom-color: #2a2a2a !important;
+  background: transparent !important;
+}
+
+html[data-theme-resolved='dark'] body.patient-portal .pmh-surface .pmh-empty,
+html[data-theme-resolved='dark'] body.patient-portal .pmh-empty--care {
+  background: #141414 !important;
+  border-color: #333333 !important;
+  box-shadow: none !important;
+}
+
+html[data-theme-resolved='dark'] body.patient-portal .pmh-empty__icon {
+  background: rgba(124, 58, 237, 0.15) !important;
+  color: #a78bfa !important;
+}
+
+html[data-theme-resolved='dark'] body.patient-portal .pmh-tabs--segment .pmh-tab {
+  background: transparent !important;
+  border-color: transparent !important;
+  box-shadow: none !important;
+}
+
+html[data-theme-resolved='dark'] body.patient-portal .pmh-tabs--segment .pmh-tab:hover {
+  background: rgba(255, 255, 255, 0.05) !important;
+  color: #d4d4d8 !important;
+}
+
+html[data-theme-resolved='dark'] body.patient-portal .pmh-tabs--segment .pmh-tab.is-active {
+  background: rgba(124, 58, 237, 0.2) !important;
+  color: #c4b5fd !important;
+  box-shadow: none !important;
+}
+
+html[data-theme-resolved='dark'] body.patient-portal .pmh-tabs--segment .pmh-tab.is-active svg {
+  stroke: #c4b5fd !important;
+}
+
+html[data-theme-resolved='dark'] body.patient-portal .pmh-soap-list,
+html[data-theme-resolved='dark'] body.patient-portal .pmh-soap-list > div,
+html[data-theme-resolved='dark'] body.patient-portal .pmh-soap-list dt,
+html[data-theme-resolved='dark'] body.patient-portal .pmh-soap-list dd,
+html[data-theme-resolved='dark'] body.patient-portal .pmh-visit__block,
+html[data-theme-resolved='dark'] body.patient-portal .pmh-visit__soap-summary {
+  background: transparent !important;
+  box-shadow: none !important;
+  border-color: transparent !important;
+}
+
+html[data-theme-resolved='dark'] body.patient-portal .pmh-visit__soap-details {
+  background: #141414 !important;
+  border-color: #2a2a2a !important;
+}
+
+html[data-theme-resolved='dark'] body.patient-portal .pmh-btn--outline {
+  background: #141414 !important;
+  border-color: #2a2a2a !important;
+  color: #c4b5fd !important;
+}
+
 html[data-theme-resolved='dark'] body.patient-portal .pt-dash-consult {
   background: linear-gradient(135deg, rgba(124, 58, 237, 0.08) 0%, #1c1c1c 100%) !important;
 }
@@ -479,6 +579,11 @@ html[data-theme-resolved='dark'] body.patient-portal .topbar--clinical {
 
 /* Dashboard / sessions / health / settings surfaces */
 html[data-theme-resolved='dark'] body.patient-portal .pdash-hero,
+html[data-theme-resolved='dark'] body.patient-portal .pmh-hero,
+html[data-theme-resolved='dark'] body.patient-portal .pmh-surface,
+html[data-theme-resolved='dark'] body.patient-portal .pmh-metric-pill,
+html[data-theme-resolved='dark'] body.patient-portal .pmh-tabs--segment,
+html[data-theme-resolved='dark'] body.patient-portal .pmh-feed,
 html[data-theme-resolved='dark'] body.patient-portal .pdash-live,
 html[data-theme-resolved='dark'] body.patient-portal .pdash-metric,
 html[data-theme-resolved='dark'] body.patient-portal .pdash-metric--accent,
