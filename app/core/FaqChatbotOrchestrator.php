@@ -193,6 +193,7 @@ final class FaqChatbotOrchestrator
             'emotion'        => $canonical,
             'emotion_detail' => $emotionResult['emotion'] ?? null,
             'kb_key'         => $kbHit['key'] ?? null,
+            'situations'     => isset($kbHit['barriers']) && is_array($kbHit['barriers']) ? $kbHit['barriers'] : null,
             'user_text'      => $text,
             'bot_snippet'    => $responseHtml !== '' ? $responseHtml : null,
         ]);

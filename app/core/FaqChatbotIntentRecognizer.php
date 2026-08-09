@@ -40,6 +40,11 @@ final class FaqChatbotIntentRecognizer
     public const TRIAGE = 'triage';
     public const REFERRAL = 'referral';
     public const ANNOUNCEMENT = 'announcement';
+    public const CONNECTIVITY = 'connectivity';
+    public const PRIVACY = 'privacy';
+    public const WEATHER = 'weather_barrier';
+    public const TRANSPORT = 'transport';
+    public const REASSURANCE = 'reassurance';
     public const GENERAL = 'general';
 
     /**
@@ -84,8 +89,13 @@ final class FaqChatbotIntentRecognizer
             [self::ANNOUNCEMENT, 0.84, '/\b(announcement|announcements|balita|health\s+advisory)\b/ui', 'services'],
             [self::CONTACT, 0.86, '/\b(city\s+health|contact\s+(support|cho)|tawag\s+sa\s+(support|cho)|cho)\b/ui', 'contact'],
             [self::NAVIGATION, 0.8, '/\b(how\s+do\s+i\s+use|paano\s+gamiton|where\s+(is|do)|diin\s+ko|navigate|help\s+topics|which\s+page)\b/ui', 'services'],
-            [self::FINANCIAL, 0.88, '/\b(no\s+money|cannot\s+afford|can\'?t\s+afford|wala\s+(ko\s+)?kwarta|walang\s+pera|financial)\b/ui', 'financial'],
-            [self::MENTAL_HEALTH, 0.87, '/\b(anxiety|depression|mental\s+health|hopeless|panic|stress(ed)?|lonely|overwhelmed|burnout|grief|ginakulbaan|kasubo|wala\s+paglaum)\b/ui', 'distress_support'],
+            [self::CONNECTIVITY, 0.9, '/\b(wala\s+signal|nadula\s+signal|gadula.{0,16}signal|hinay\s+signal|wala\s+internet|putol.{0,12}connection|ga.?lag|di\s+ko\s+ka.?video|wala\s+ko\s+kabati)\b/ui', 'video'],
+            [self::PRIVACY, 0.88, '/\b(masaligan\s+ni\s+bala|safe\s+bala|confidential\s+bala|data\s+privacy|makita\s+bala\s+ni\s+sang\s+iban|tinuod\s+bala)\b/ui', 'policy'],
+            [self::WEATHER, 0.86, '/\b(gaulan|grabe\s+ang\s+ulan|baha|bad\s+weather|indi\s+ko\s+makaguwa)\b/ui', 'distress_support'],
+            [self::TRANSPORT, 0.86, '/\b(wala\s+ko\s+masakyan|layo\s+amon|budlay\s+magkadto|wala\s+ko\s+pamasahe|indi\s+ko\s+makakadto)\b/ui', 'distress_support'],
+            [self::REASSURANCE, 0.84, '/\b(safe\s+bala|sigurado\s+bala|trust|reliable|legit|masaligan)\b/ui', 'policy'],
+            [self::FINANCIAL, 0.88, '/\b(no\s+money|cannot\s+afford|can\'?t\s+afford|wala\s+(ko\s+)?kwarta|walang\s+pera|financial|wala\s+budget|libre\s+nga\s+consultation|indi\s+ko\s+kaya\s+magbayad)\b/ui', 'financial'],
+            [self::MENTAL_HEALTH, 0.87, '/\b(anxiety|depression|mental\s+health|hopeless|panic|stress(ed)?|lonely|overwhelmed|burnout|grief|ginakulbaan|kasubo|wala\s+paglaum|di\s+ko\s+na\s+kaya|mabuhi\s+pa\s+ko|wala\s+na\s+pulos|mag.?untat)\b/ui', 'distress_support'],
             [self::EMOTIONAL_SUPPORT, 0.9, '/\b(need\s+someone|talk\s+to\s+someone|afraid\s+of\s+(seeing\s+a\s+)?(the\s+)?doctor|scared\s+of\s+(the\s+)?doctor|nahadlok.{0,24}doktor|can\'?t\s+sleep|cannot\s+sleep|indi\s+ko\s+ka\s*tulog|family\s+problem|homesick|relationship\s+problem)\b/ui', 'distress_support'],
             [self::PRESCRIPTION, 0.9, '/\b(prescription|reseta|digital\s+prescription)\b/ui', 'prescriptions'],
             [self::MEDICINE, 0.9, '/\b(gamot|medicine|medication|bulong|tambal)\b/ui', 'prescriptions'],

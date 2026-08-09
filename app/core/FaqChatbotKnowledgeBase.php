@@ -23,6 +23,24 @@ final class FaqChatbotKnowledgeBase
             return null;
         }
 
+        $barriers = self::detectAccessBarriers($hay);
+        if (count($barriers) >= 2) {
+            $sessionId = (string) ($ctx['session_id'] ?? ($_SESSION['faq_chatbot_session_id'] ?? ''));
+            $html = self::pickResponse('multi_access_barriers', $lang, $sessionId);
+            return [
+                'key'      => 'multi_access_barriers',
+                'category' => 'access_barriers',
+                'score'    => round(3.0 + count($barriers) * 0.4, 3),
+                'html'     => $html,
+                'flow_key' => 'distress_support',
+                'barriers' => $barriers,
+            ];
+        }
+
+        $combined = self::matchTopDistinct($hay, $lang, $ctx, 2);
+        if ($combined !== null) {
+            return $combined;
+        }
         $best = null;
         $bestScore = 0.0;
 
@@ -124,8 +142,96 @@ final class FaqChatbotKnowledgeBase
             FaqChatbotIntentRecognizer::IDENTITY => 'identity',
             FaqChatbotIntentRecognizer::CAPABILITIES => 'capabilities',
             FaqChatbotIntentRecognizer::SMALL_TALK => 'small_talk',
+            FaqChatbotIntentRecognizer::CONNECTIVITY => 'signal_internet_problem',
+            FaqChatbotIntentRecognizer::PRIVACY => 'privacy_security',
+            FaqChatbotIntentRecognizer::WEATHER => 'weather_barrier',
+            FaqChatbotIntentRecognizer::TRANSPORT => 'transport_barrier',
+            FaqChatbotIntentRecognizer::REASSURANCE => 'privacy_security',
             default => null,
         };
+    }
+
+    /**
+     * @return list<string> weather|signal|money|transport
+     */
+    public static function detectAccessBarriers(string $hay): array
+    {
+        $barriers = [];
+        if (preg_match('/\b(gaulan|grabe\s+ang\s+ulan|grabe\s+nga\s+ulan|baha|bad\s+weather|storm|ulan\s+pa)\b/ui', $hay)) {
+            $barriers[] = 'weather';
+        }
+        if (preg_match('/\b(wala\s+signal|nadula\s+signal|gadula.{0,16}signal|hinay\s+signal|wala\s+internet|putol.{0,12}connection|ga.?lag|di\s+ko\s+ka.?video|indi\s+ko\s+maka.?video|wala\s+ko\s+kabati)\b/ui', $hay)) {
+            $barriers[] = 'signal';
+        }
+        if (preg_match('/\b(wala\s+(ko\s+)?kwarta|wala\s+budget|indi\s+ko\s+kaya\s+magbayad|walang\s+pera|no\s+money|cannot\s+afford)\b/ui', $hay)) {
+            $barriers[] = 'money';
+        }
+        if (preg_match('/\b(wala\s+ko\s+masakyan|layo\s+amon|budlay\s+magkadto|wala\s+ko\s+pamasahe|indi\s+ko\s+makakadto)\b/ui', $hay)) {
+            $barriers[] = 'transport';
+        }
+        return $barriers;
+    }
+
+    /**
+     * Combine top distinct KB hits when user mentions multiple problems in one message.
+     *
+     * @param array<string, mixed> $ctx
+     */
+    private static function matchTopDistinct(string $hay, string $lang, array $ctx, int $maxParts = 2): ?array
+    {
+        $scored = [];
+        foreach (self::scenarios() as $scenario) {
+            $key = (string) ($scenario['key'] ?? '');
+            if ($key === '' || $key === 'multi_access_barriers') {
+                continue;
+            }
+            $score = self::scoreScenario($hay, $scenario, $ctx);
+            if ($score >= 2.2) {
+                $scored[] = ['scenario' => $scenario, 'score' => $score];
+            }
+        }
+        if (count($scored) < 2) {
+            return null;
+        }
+        usort($scored, static fn ($a, $b) => $b['score'] <=> $a['score']);
+        $picked = [];
+        $categories = [];
+        foreach ($scored as $row) {
+            $cat = (string) ($row['scenario']['category'] ?? '');
+            if (in_array($cat, $categories, true)) {
+                continue;
+            }
+            $picked[] = $row;
+            $categories[] = $cat;
+            if (count($picked) >= $maxParts) {
+                break;
+            }
+        }
+        if (count($picked) < 2) {
+            return null;
+        }
+
+        $sessionId = (string) ($ctx['session_id'] ?? ($_SESSION['faq_chatbot_session_id'] ?? ''));
+        $parts = [];
+        $keys = [];
+        $totalScore = 0.0;
+        $flow = 'distress_support';
+        foreach ($picked as $row) {
+            $scenario = $row['scenario'];
+            $key = (string) $scenario['key'];
+            $keys[] = $key;
+            $totalScore += (float) $row['score'];
+            $parts[] = self::pickResponse($key, $lang, $sessionId);
+            $flow = (string) ($scenario['flow_key'] ?? $flow);
+        }
+
+        return [
+            'key'      => 'multi_' . implode('_', array_slice($keys, 0, 2)),
+            'category' => 'multi_topic',
+            'score'    => round($totalScore, 3),
+            'html'     => '<div class="fcb-kb-multi">' . implode('', $parts) . '</div>',
+            'flow_key' => $flow,
+        ];
     }
 
     private static function needsDisclaimer(string $key): bool
@@ -225,6 +331,7 @@ final class FaqChatbotKnowledgeBase
         }
         $all = array_merge(
             FaqChatbotKbEmotions::scenarios(),
+            FaqChatbotKbSituations::scenarios(),
             FaqChatbotKbHealthcare::scenarios(),
             FaqChatbotKbServices::scenarios(),
             FaqChatbotKbGeneral::scenarios()
@@ -241,6 +348,7 @@ final class FaqChatbotKnowledgeBase
         }
         $all = array_merge(
             FaqChatbotKbEmotions::responses(),
+            FaqChatbotKbSituations::responses(),
             FaqChatbotKbHealthcare::responses(),
             FaqChatbotKbServices::responses(),
             FaqChatbotKbGeneral::responses()

@@ -21,6 +21,7 @@ PRIORITY = [
     'nervous', 'worried', 'stressed', 'tired', 'bored', 'sad', 'lonely', 'disappointed',
     'grief', 'embarrassed', 'ashamed', 'guilty', 'jealous', 'confused', 'uncertain', 'mixed',
     'curious', 'excited', 'surprised', 'affectionate', 'relieved', 'thankful', 'happy',
+    'hopeful', 'proud', 'calm',
 ]
 
 # ── Seed from hand-curated CSV ──
@@ -30,6 +31,7 @@ def load_seed():
         CSV_PATH,
         ROOT / 'data' / 'nlp' / 'emotion_intent_phrases_hil_expansion.csv',
         ROOT / 'data' / 'nlp' / 'emotion_hiligaynon_extra_phrases.csv',
+        ROOT / 'data' / 'nlp' / 'emotion_situations_phrases.csv',
     ]
     for path in seed_paths:
         if not path.exists():

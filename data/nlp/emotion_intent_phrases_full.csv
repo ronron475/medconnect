@@ -455,6 +455,64 @@ sad,indi man,hil
 worried,basi lang,hil
 curious,ano man ini,hil
 curious,paano man,hil
+worried,gaulan pa daan,hil
+worried,grabe ang ulan,hil
+worried,basi indi ko makakadto,hil
+worried,paano na lang ni,hil
+worried,paano na ni,hil
+anxious,gakulbaan ko magpa check,hil
+anxious,gakulbaan ko magpa-check up,hil
+anxious,kinabahan ko magpa check,hil
+stressed,kapoy na ko sa tanan,hil
+hopeless,di ko na kaya,hil
+hopeless,wala na pulos,hil
+hopeless,mabuhi pa ko,hil
+hopeless,gusto ko mag untat,hil
+lonely,wala gid ko may kastorya,hil
+confused,indi ko kasabat,hil
+confused,wala ko kabalo,hil
+confused,ano ubrahon ko,hil
+confused,ngaa amo ni,hil
+frustrated,wala signal gid,hil
+worried,nadula signal,hil
+worried,gadula signal ko,hil
+worried,hinay signal,hil
+frustrated,wala internet,hil
+frustrated,putol putol ang connection,hil
+frustrated,ga lag ang video,hil
+worried,wala ko kabati,hil
+worried,wala ko kwarta,hil
+worried,wala ko budget,hil
+worried,indi ko kaya magbayad,hil
+curious,may libre nga consultation,hil
+worried,wala ko pamasahe,hil
+worried,wala ko masakyan,hil
+worried,layo amon,hil
+worried,budlay magkadto,hil
+curious,masaligan ni bala,hil
+curious,safe bala ni,hil
+curious,confidential bala ni,hil
+curious,makita bala ni sang iban,hil
+curious,tinuod bala ni,hil
+frustrated,nadula akon appointment,hil
+frustrated,di ko makita ang doctor,hil
+mixed,gaulan kag wala signal,hil
+mixed,wala signal kag wala kwarta,hil
+mixed,gaulan wala signal wala kwarta paano na,hil
+sad,hays,hil
+sad,hay naku,hil
+worried,grabe,hil
+tired,kapoy,hil
+afraid,nahadlok,hil
+hopeless,di ko kaya,hil
+confused,wala ko idea,hil
+worried,ano na,hil
+relieved,tani okay lang,hil
+thankful,tabangi ko bi,hil
+thankful,buligi ko bi,hil
+happy,hopeful ko,hil
+happy,calm na ko,hil
+proud,proud ko,hil
 happy,i'm happy with login,en
 happy,i'm happy with sign in,en
 happy,i'm happy with my account,en
@@ -9760,242 +9818,184 @@ tired,exhausted about my appointment,en
 tired,exhausted about my health,en
 tired,exhausted about my records,en
 tired,so exhausted,en
-tired,exhausted so,en
-tired,very exhausted,en
-tired,exhausted very,en
-tired,really exhausted,en
-tired,exhausted really,en
-tired,super exhausted,en
-tired,exhausted super,en
-tired,extremely exhausted,en
-tired,exhausted extremely,en
-tired,quite exhausted,en
-tired,exhausted quite,en
-tired,so tired with login,en
-tired,so tired with sign in,en
-tired,so tired with my account,en
-tired,so tired with appointment,en
-tired,so tired with booking,en
-tired,so tired with password,en
-tired,so tired with medconnect,en
-tired,so tired with the website,en
-tired,so tired with registration,en
-tired,so tired about my appointment,en
-tired,so tired about my health,en
-tired,so tired about my records,en
-tired,so so tired,en
-tired,so tired so,en
-tired,very so tired,en
-tired,so tired very,en
-tired,really so tired,en
-tired,so tired really,en
-tired,super so tired,en
-tired,so tired super,en
-tired,extremely so tired,en
-tired,so tired extremely,en
-tired,quite so tired,en
-tired,so tired quite,en
-tired,no energy with login,en
-tired,no energy with sign in,en
-tired,no energy with my account,en
-tired,no energy with appointment,en
-tired,no energy with booking,en
-tired,no energy with password,en
-tired,no energy with medconnect,en
-tired,no energy with the website,en
-tired,no energy with registration,en
-tired,no energy about my appointment,en
-tired,no energy about my health,en
-tired,no energy about my records,en
-tired,so no energy,en
-tired,no energy so,en
-tired,very no energy,en
-tired,no energy very,en
-tired,really no energy,en
-tired,no energy really,en
-tired,super no energy,en
-tired,no energy super,en
-tired,extremely no energy,en
-tired,no energy extremely,en
-uncertain,medconnect help request 9818,hil
-mixed,medconnect help request 9819,en
-curious,medconnect help request 9820,fil
-excited,medconnect help request 9821,hil
-surprised,medconnect help request 9822,en
-affectionate,medconnect help request 9823,fil
-relieved,medconnect help request 9824,hil
-thankful,medconnect help request 9825,en
-happy,medconnect help request 9826,fil
-emergency,medconnect help request 9827,hil
-panic,medconnect help request 9828,en
-hopeless,medconnect help request 9829,fil
-afraid,medconnect help request 9830,hil
-angry,medconnect help request 9831,en
-frustrated,medconnect help request 9832,fil
-irritated,medconnect help request 9833,hil
-anxious,medconnect help request 9834,en
-nervous,medconnect help request 9835,fil
-worried,medconnect help request 9836,hil
-stressed,medconnect help request 9837,en
-tired,medconnect help request 9838,fil
-bored,medconnect help request 9839,hil
-sad,medconnect help request 9840,en
-lonely,medconnect help request 9841,fil
-disappointed,medconnect help request 9842,hil
-grief,medconnect help request 9843,en
-embarrassed,medconnect help request 9844,fil
-ashamed,medconnect help request 9845,hil
-guilty,medconnect help request 9846,en
-jealous,medconnect help request 9847,fil
-confused,medconnect help request 9848,hil
-uncertain,medconnect help request 9849,en
-mixed,medconnect help request 9850,fil
-curious,medconnect help request 9851,hil
-excited,medconnect help request 9852,en
-surprised,medconnect help request 9853,fil
-affectionate,medconnect help request 9854,hil
-relieved,medconnect help request 9855,en
-thankful,medconnect help request 9856,fil
-happy,medconnect help request 9857,hil
-emergency,medconnect help request 9858,en
-panic,medconnect help request 9859,fil
-hopeless,medconnect help request 9860,hil
-afraid,medconnect help request 9861,en
-angry,medconnect help request 9862,fil
-frustrated,medconnect help request 9863,hil
-irritated,medconnect help request 9864,en
-anxious,medconnect help request 9865,fil
-nervous,medconnect help request 9866,hil
-worried,medconnect help request 9867,en
-stressed,medconnect help request 9868,fil
-tired,medconnect help request 9869,hil
-bored,medconnect help request 9870,en
-sad,medconnect help request 9871,fil
-lonely,medconnect help request 9872,hil
-disappointed,medconnect help request 9873,en
-grief,medconnect help request 9874,fil
-embarrassed,medconnect help request 9875,hil
-ashamed,medconnect help request 9876,en
-guilty,medconnect help request 9877,fil
-jealous,medconnect help request 9878,hil
-confused,medconnect help request 9879,en
-uncertain,medconnect help request 9880,fil
-mixed,medconnect help request 9881,hil
-curious,medconnect help request 9882,en
-excited,medconnect help request 9883,fil
-surprised,medconnect help request 9884,hil
-affectionate,medconnect help request 9885,en
-relieved,medconnect help request 9886,fil
-thankful,medconnect help request 9887,hil
-happy,medconnect help request 9888,en
-emergency,medconnect help request 9889,fil
-panic,medconnect help request 9890,hil
-hopeless,medconnect help request 9891,en
-afraid,medconnect help request 9892,fil
-angry,medconnect help request 9893,hil
-frustrated,medconnect help request 9894,en
-irritated,medconnect help request 9895,fil
-anxious,medconnect help request 9896,hil
-nervous,medconnect help request 9897,en
-worried,medconnect help request 9898,fil
-stressed,medconnect help request 9899,hil
-tired,medconnect help request 9900,en
-bored,medconnect help request 9901,fil
-sad,medconnect help request 9902,hil
-lonely,medconnect help request 9903,en
-disappointed,medconnect help request 9904,fil
-grief,medconnect help request 9905,hil
-embarrassed,medconnect help request 9906,en
-ashamed,medconnect help request 9907,fil
-guilty,medconnect help request 9908,hil
-jealous,medconnect help request 9909,en
-confused,medconnect help request 9910,fil
-uncertain,medconnect help request 9911,hil
-mixed,medconnect help request 9912,en
-curious,medconnect help request 9913,fil
-excited,medconnect help request 9914,hil
-surprised,medconnect help request 9915,en
-affectionate,medconnect help request 9916,fil
-relieved,medconnect help request 9917,hil
-thankful,medconnect help request 9918,en
-happy,medconnect help request 9919,fil
-emergency,medconnect help request 9920,hil
-panic,medconnect help request 9921,en
-hopeless,medconnect help request 9922,fil
-afraid,medconnect help request 9923,hil
-angry,medconnect help request 9924,en
-frustrated,medconnect help request 9925,fil
-irritated,medconnect help request 9926,hil
-anxious,medconnect help request 9927,en
-nervous,medconnect help request 9928,fil
-worried,medconnect help request 9929,hil
-stressed,medconnect help request 9930,en
-tired,medconnect help request 9931,fil
-bored,medconnect help request 9932,hil
-sad,medconnect help request 9933,en
-lonely,medconnect help request 9934,fil
-disappointed,medconnect help request 9935,hil
-grief,medconnect help request 9936,en
-embarrassed,medconnect help request 9937,fil
-ashamed,medconnect help request 9938,hil
-guilty,medconnect help request 9939,en
-jealous,medconnect help request 9940,fil
-confused,medconnect help request 9941,hil
-uncertain,medconnect help request 9942,en
-mixed,medconnect help request 9943,fil
-curious,medconnect help request 9944,hil
-excited,medconnect help request 9945,en
-surprised,medconnect help request 9946,fil
-affectionate,medconnect help request 9947,hil
-relieved,medconnect help request 9948,en
-thankful,medconnect help request 9949,fil
-happy,medconnect help request 9950,hil
-emergency,medconnect help request 9951,en
-panic,medconnect help request 9952,fil
-hopeless,medconnect help request 9953,hil
-afraid,medconnect help request 9954,en
-angry,medconnect help request 9955,fil
-frustrated,medconnect help request 9956,hil
-irritated,medconnect help request 9957,en
-anxious,medconnect help request 9958,fil
-nervous,medconnect help request 9959,hil
-worried,medconnect help request 9960,en
-stressed,medconnect help request 9961,fil
-tired,medconnect help request 9962,hil
-bored,medconnect help request 9963,en
-sad,medconnect help request 9964,fil
-lonely,medconnect help request 9965,hil
-disappointed,medconnect help request 9966,en
-grief,medconnect help request 9967,fil
-embarrassed,medconnect help request 9968,hil
-ashamed,medconnect help request 9969,en
-guilty,medconnect help request 9970,fil
-jealous,medconnect help request 9971,hil
-confused,medconnect help request 9972,en
-uncertain,medconnect help request 9973,fil
-mixed,medconnect help request 9974,hil
-curious,medconnect help request 9975,en
-excited,medconnect help request 9976,fil
-surprised,medconnect help request 9977,hil
-affectionate,medconnect help request 9978,en
-relieved,medconnect help request 9979,fil
-thankful,medconnect help request 9980,hil
-happy,medconnect help request 9981,en
-emergency,medconnect help request 9982,fil
-panic,medconnect help request 9983,hil
-hopeless,medconnect help request 9984,en
-afraid,medconnect help request 9985,fil
-angry,medconnect help request 9986,hil
-frustrated,medconnect help request 9987,en
-irritated,medconnect help request 9988,fil
-anxious,medconnect help request 9989,hil
-nervous,medconnect help request 9990,en
-worried,medconnect help request 9991,fil
-stressed,medconnect help request 9992,hil
-tired,medconnect help request 9993,en
-bored,medconnect help request 9994,fil
-sad,medconnect help request 9995,hil
-lonely,medconnect help request 9996,en
-disappointed,medconnect help request 9997,fil
-grief,medconnect help request 9998,hil
-embarrassed,medconnect help request 9999,en
+affectionate,medconnect help request 9819,en
+relieved,medconnect help request 9820,fil
+thankful,medconnect help request 9821,hil
+happy,medconnect help request 9822,en
+hopeful,medconnect help request 9823,fil
+proud,medconnect help request 9824,hil
+calm,medconnect help request 9825,en
+emergency,medconnect help request 9826,fil
+panic,medconnect help request 9827,hil
+hopeless,medconnect help request 9828,en
+afraid,medconnect help request 9829,fil
+angry,medconnect help request 9830,hil
+frustrated,medconnect help request 9831,en
+irritated,medconnect help request 9832,fil
+anxious,medconnect help request 9833,hil
+nervous,medconnect help request 9834,en
+worried,medconnect help request 9835,fil
+stressed,medconnect help request 9836,hil
+tired,medconnect help request 9837,en
+bored,medconnect help request 9838,fil
+sad,medconnect help request 9839,hil
+lonely,medconnect help request 9840,en
+disappointed,medconnect help request 9841,fil
+grief,medconnect help request 9842,hil
+embarrassed,medconnect help request 9843,en
+ashamed,medconnect help request 9844,fil
+guilty,medconnect help request 9845,hil
+jealous,medconnect help request 9846,en
+confused,medconnect help request 9847,fil
+uncertain,medconnect help request 9848,hil
+mixed,medconnect help request 9849,en
+curious,medconnect help request 9850,fil
+excited,medconnect help request 9851,hil
+surprised,medconnect help request 9852,en
+affectionate,medconnect help request 9853,fil
+relieved,medconnect help request 9854,hil
+thankful,medconnect help request 9855,en
+happy,medconnect help request 9856,fil
+hopeful,medconnect help request 9857,hil
+proud,medconnect help request 9858,en
+calm,medconnect help request 9859,fil
+emergency,medconnect help request 9860,hil
+panic,medconnect help request 9861,en
+hopeless,medconnect help request 9862,fil
+afraid,medconnect help request 9863,hil
+angry,medconnect help request 9864,en
+frustrated,medconnect help request 9865,fil
+irritated,medconnect help request 9866,hil
+anxious,medconnect help request 9867,en
+nervous,medconnect help request 9868,fil
+worried,medconnect help request 9869,hil
+stressed,medconnect help request 9870,en
+tired,medconnect help request 9871,fil
+bored,medconnect help request 9872,hil
+sad,medconnect help request 9873,en
+lonely,medconnect help request 9874,fil
+disappointed,medconnect help request 9875,hil
+grief,medconnect help request 9876,en
+embarrassed,medconnect help request 9877,fil
+ashamed,medconnect help request 9878,hil
+guilty,medconnect help request 9879,en
+jealous,medconnect help request 9880,fil
+confused,medconnect help request 9881,hil
+uncertain,medconnect help request 9882,en
+mixed,medconnect help request 9883,fil
+curious,medconnect help request 9884,hil
+excited,medconnect help request 9885,en
+surprised,medconnect help request 9886,fil
+affectionate,medconnect help request 9887,hil
+relieved,medconnect help request 9888,en
+thankful,medconnect help request 9889,fil
+happy,medconnect help request 9890,hil
+hopeful,medconnect help request 9891,en
+proud,medconnect help request 9892,fil
+calm,medconnect help request 9893,hil
+emergency,medconnect help request 9894,en
+panic,medconnect help request 9895,fil
+hopeless,medconnect help request 9896,hil
+afraid,medconnect help request 9897,en
+angry,medconnect help request 9898,fil
+frustrated,medconnect help request 9899,hil
+irritated,medconnect help request 9900,en
+anxious,medconnect help request 9901,fil
+nervous,medconnect help request 9902,hil
+worried,medconnect help request 9903,en
+stressed,medconnect help request 9904,fil
+tired,medconnect help request 9905,hil
+bored,medconnect help request 9906,en
+sad,medconnect help request 9907,fil
+lonely,medconnect help request 9908,hil
+disappointed,medconnect help request 9909,en
+grief,medconnect help request 9910,fil
+embarrassed,medconnect help request 9911,hil
+ashamed,medconnect help request 9912,en
+guilty,medconnect help request 9913,fil
+jealous,medconnect help request 9914,hil
+confused,medconnect help request 9915,en
+uncertain,medconnect help request 9916,fil
+mixed,medconnect help request 9917,hil
+curious,medconnect help request 9918,en
+excited,medconnect help request 9919,fil
+surprised,medconnect help request 9920,hil
+affectionate,medconnect help request 9921,en
+relieved,medconnect help request 9922,fil
+thankful,medconnect help request 9923,hil
+happy,medconnect help request 9924,en
+hopeful,medconnect help request 9925,fil
+proud,medconnect help request 9926,hil
+calm,medconnect help request 9927,en
+emergency,medconnect help request 9928,fil
+panic,medconnect help request 9929,hil
+hopeless,medconnect help request 9930,en
+afraid,medconnect help request 9931,fil
+angry,medconnect help request 9932,hil
+frustrated,medconnect help request 9933,en
+irritated,medconnect help request 9934,fil
+anxious,medconnect help request 9935,hil
+nervous,medconnect help request 9936,en
+worried,medconnect help request 9937,fil
+stressed,medconnect help request 9938,hil
+tired,medconnect help request 9939,en
+bored,medconnect help request 9940,fil
+sad,medconnect help request 9941,hil
+lonely,medconnect help request 9942,en
+disappointed,medconnect help request 9943,fil
+grief,medconnect help request 9944,hil
+embarrassed,medconnect help request 9945,en
+ashamed,medconnect help request 9946,fil
+guilty,medconnect help request 9947,hil
+jealous,medconnect help request 9948,en
+confused,medconnect help request 9949,fil
+uncertain,medconnect help request 9950,hil
+mixed,medconnect help request 9951,en
+curious,medconnect help request 9952,fil
+excited,medconnect help request 9953,hil
+surprised,medconnect help request 9954,en
+affectionate,medconnect help request 9955,fil
+relieved,medconnect help request 9956,hil
+thankful,medconnect help request 9957,en
+happy,medconnect help request 9958,fil
+hopeful,medconnect help request 9959,hil
+proud,medconnect help request 9960,en
+calm,medconnect help request 9961,fil
+emergency,medconnect help request 9962,hil
+panic,medconnect help request 9963,en
+hopeless,medconnect help request 9964,fil
+afraid,medconnect help request 9965,hil
+angry,medconnect help request 9966,en
+frustrated,medconnect help request 9967,fil
+irritated,medconnect help request 9968,hil
+anxious,medconnect help request 9969,en
+nervous,medconnect help request 9970,fil
+worried,medconnect help request 9971,hil
+stressed,medconnect help request 9972,en
+tired,medconnect help request 9973,fil
+bored,medconnect help request 9974,hil
+sad,medconnect help request 9975,en
+lonely,medconnect help request 9976,fil
+disappointed,medconnect help request 9977,hil
+grief,medconnect help request 9978,en
+embarrassed,medconnect help request 9979,fil
+ashamed,medconnect help request 9980,hil
+guilty,medconnect help request 9981,en
+jealous,medconnect help request 9982,fil
+confused,medconnect help request 9983,hil
+uncertain,medconnect help request 9984,en
+mixed,medconnect help request 9985,fil
+curious,medconnect help request 9986,hil
+excited,medconnect help request 9987,en
+surprised,medconnect help request 9988,fil
+affectionate,medconnect help request 9989,hil
+relieved,medconnect help request 9990,en
+thankful,medconnect help request 9991,fil
+happy,medconnect help request 9992,hil
+hopeful,medconnect help request 9993,en
+proud,medconnect help request 9994,fil
+calm,medconnect help request 9995,hil
+emergency,medconnect help request 9996,en
+panic,medconnect help request 9997,fil
+hopeless,medconnect help request 9998,hil
+afraid,medconnect help request 9999,en

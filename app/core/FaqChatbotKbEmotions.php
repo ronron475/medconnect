@@ -16,6 +16,7 @@ final class FaqChatbotKbEmotions
                 'patterns' => [
                     '/\b(want\s+to\s+die|kill\s+myself|suicide|end\s+my\s+life|no\s+reason\s+to\s+live|self[\s-]?harm|cut\s+myself)\b/ui',
                     '/\b(ayaw\s+ko\s+mabuhay|indi\s+ko\s+gusto\s+mabuhi|wala\s+(na\s+)?paglaum|magpakamatay|gusto\s+ko\s+mamatay)\b/ui',
+                    '/\b(di\s+ko\s+na\s+kaya|wala\s+na\s+pulos|mag.?untat|gusto\s+ko\s+mawala|mas\s+maayo\s+pa\s+siguro\s+kung\s+wala\s+na\s+ko)\b/ui',
                 ],
                 'keywords' => ['hopeless', 'wala paglaum', 'suicide', 'self harm'],
             ],
