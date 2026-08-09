@@ -427,9 +427,27 @@ if (!isLandingPage) {
     }, { passive: true });
   }
 
+  const AUTH_MODAL_PARAMS = ['registered', 'session_expired', 'setup_complete', 'signin'];
+
+  function stripAuthModalParams() {
+    const url = new URL(window.location.href);
+    let changed = false;
+    AUTH_MODAL_PARAMS.forEach((key) => {
+      if (url.searchParams.has(key)) {
+        url.searchParams.delete(key);
+        changed = true;
+      }
+    });
+    if (!changed) return;
+    const qs = url.searchParams.toString();
+    const next = url.pathname + (qs ? `?${qs}` : '') + url.hash;
+    window.history.replaceState({}, document.title, next);
+  }
+
   const authQs = new URLSearchParams(window.location.search);
-  if (authQs.has('registered') || authQs.has('session_expired') || authQs.has('setup_complete') || authQs.has('signin')) {
+  if (AUTH_MODAL_PARAMS.some((key) => authQs.has(key))) {
     openModal();
+    stripAuthModalParams();
   }
 })();
 
@@ -702,8 +720,19 @@ const validatePassword = v => {
   return '';
 };
 
-const showAlert  = (msg, type = 'error') => { alertBox.textContent = msg; alertBox.className = `alert ${type}`; };
-const clearAlert = () => { alertBox.className = 'alert'; alertBox.textContent = ''; };
+const showAlert  = (msg, type = 'error') => {
+  alertBox.textContent = msg;
+  alertBox.className = `alert ${type}`;
+  alertBox.style.display = 'block';
+  document.querySelectorAll('.signin-context-alert').forEach((el) => {
+    el.hidden = true;
+  });
+};
+const clearAlert = () => {
+  alertBox.className = 'alert';
+  alertBox.textContent = '';
+  alertBox.style.display = '';
+};
 
 const lockout = window.MedConnectLoginLockout
   ? window.MedConnectLoginLockout.createHandler({
