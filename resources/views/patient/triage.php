@@ -20,18 +20,15 @@ $booking_today_ymd   = date('Y-m-d');
 $booking_today_label = date('l, M j, Y');
 
 $triage_history = [];
-$default_complaint = '';
+$registration_complaint_reference = '';
 $pending_reg = patient_registration_load_pending_complaint($pdo, (int) $uid);
 if ($pending_reg['complaint'] !== '') {
-    $default_complaint = $pending_reg['complaint'];
+    $registration_complaint_reference = $pending_reg['complaint'];
 }
 if ($pdo->query("SHOW TABLES LIKE 'triage_results'")->rowCount()) {
     $s = $pdo->prepare('SELECT level, symptoms, assessed_at, chief_complaint, urgency_label, triage_level FROM triage_results WHERE patient_id=? ORDER BY assessed_at DESC');
     $s->execute([$uid]);
     $triage_history = $s->fetchAll(PDO::FETCH_ASSOC);
-    if ($default_complaint === '' && !empty($triage_history[0]['chief_complaint'])) {
-        $default_complaint = (string) $triage_history[0]['chief_complaint'];
-    }
 }
 
 $booking_providers = [];

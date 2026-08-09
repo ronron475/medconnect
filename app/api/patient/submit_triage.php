@@ -16,6 +16,8 @@ require_once dirname(dirname(dirname(__DIR__))) . '/app/includes/bhw_patient_wor
 require_once dirname(dirname(dirname(__DIR__))) . '/app/includes/notification_events.php';
 require_once dirname(dirname(dirname(__DIR__))) . '/app/includes/triage_provider_assignment.php';
 require_once dirname(dirname(dirname(__DIR__))) . '/app/includes/patient_symptoms_review_submit.php';
+require_once dirname(dirname(dirname(__DIR__))) . '/app/includes/complaint_evidence.php';
+require_once dirname(dirname(dirname(__DIR__))) . '/app/includes/patient_chief_complaints.php';
 
 Api::startJson();
 Api::requirePatientReady($pdo);
@@ -37,6 +39,12 @@ if (!is_array($symptoms)) {
 
 if (empty($symptoms) && $complaint === '') {
     Api::error('Please provide symptoms or a complaint.');
+}
+
+$evidenceFile = $_FILES['supporting_evidence'] ?? null;
+$evidenceValidation = complaint_evidence_validate_upload(is_array($evidenceFile) ? $evidenceFile : null);
+if ($evidenceValidation !== null) {
+    Api::error((string) $evidenceValidation['error']);
 }
 
 $symptomList = array_values(array_filter(array_map(static function ($s) {
@@ -99,11 +107,11 @@ $consult_type = $complaint !== ''
 $nameStmt = $pdo->prepare('SELECT CONCAT(first_name, " ", last_name) FROM users WHERE id = ? LIMIT 1');
 $nameStmt->execute([$patient_id]);
 $patientName = trim((string) ($nameStmt->fetchColumn() ?: 'Patient'));
+$registrationComplaintRef = patient_chief_complaint_registration_reference($pdo, $patient_id);
 
 try {
     $pdo->beginTransaction();
 
-    $reusedCareTipsTriage = false;
     $openCareTipsRow = null;
     $reviewerBeforeBooking = 0;
     $reuseTriageId = (int) ($_POST['triage_id'] ?? 0);
@@ -142,6 +150,8 @@ try {
             $existingTriageId = (int) ($openCareTipsRow['id'] ?? 0);
             $assignedId = (int) ($openCareTipsRow['assigned_provider_id'] ?? 0);
 
+            complaint_evidence_try_attach($pdo, $patient_id, $existingTriageId, is_array($evidenceFile) ? $evidenceFile : null);
+
             Api::success([
                 'booked'                   => false,
                 'awaiting_provider_review' => true,
@@ -158,68 +168,45 @@ try {
     }
 
     if ($openCareTipsRow !== null && $slot_id > 0) {
-        $reusedCareTipsTriage = true;
-        $triageId = (int) ($openCareTipsRow['id'] ?? 0);
         $reviewerBeforeBooking = (int) ($openCareTipsRow['assigned_provider_id'] ?? 0);
-
-        $complaint = trim((string) ($openCareTipsRow['chief_complaint'] ?? $complaint));
-        $level = (string) ($openCareTipsRow['level'] ?? $level);
-        $label = (string) ($openCareTipsRow['urgency_label'] ?? $label);
-        $triageLevel = (string) ($openCareTipsRow['triage_level'] ?? TriageLevelService::NON_URGENT);
-        if (!TriageLevelService::isValid($triageLevel)) {
-            $triageLevel = TriageLevelService::NON_URGENT;
-        }
-
-        $recStatus = (string) ($openCareTipsRow['recommendation_status'] ?? 'hidden');
-        if ($recStatus === '') {
-            $recStatus = 'hidden';
-        }
-        $decodedPayload = json_decode((string) ($openCareTipsRow['assessment_payload'] ?? ''), true);
-        if (is_array($decodedPayload)) {
-            $assessment = $decodedPayload;
-        }
-
-        $consult_type = $complaint !== ''
-            ? $complaint
-            : ($symptomList !== [] ? implode(', ', $symptomList) : 'General Consultation');
-    } else {
-        $stmt = $pdo->prepare("
-            INSERT INTO triage_results
-                (patient_id, symptoms, chief_complaint, level, urgency_label, status, assessed_at,
-                 confidence_score, severity, triage_level, triage_classification, english_complaint,
-                 detected_symptoms_json, possible_conditions_json, recommendations,
-                 assessment_payload, engine)
-            VALUES (?, ?, ?, ?, ?, 'pending', NOW(), ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-        ");
-        $stmt->execute([
-            $patient_id,
-            json_encode($symptomList),
-            $complaint,
-            $level,
-            $label,
-            (int) ($assessment['confidence']['score'] ?? 0),
-            (string) ($assessment['severity']['severity'] ?? ''),
-            $triageLevel,
-            (string) ($assessment['triage']['triage_classification'] ?? ''),
-            (string) ($assessment['english_translation'] ?? ''),
-            json_encode($assessment['detected_symptoms'] ?? [], JSON_UNESCAPED_UNICODE),
-            json_encode($assessment['possible_conditions'] ?? [], JSON_UNESCAPED_UNICODE),
-            implode("\n", $assessment['recommendations'] ?? []),
-            json_encode($assessment, JSON_UNESCAPED_UNICODE),
-            (string) ($assessment['engine'] ?? MedicalAssessmentEngine::VERSION),
-        ]);
-
-        $triageId = (int) $pdo->lastInsertId();
-        $recText = implode("\n", $assessment['recommendations'] ?? []);
-        $recStatus = triage_recommendation_status_for_insert(
-            $triageLevel,
-            $complaint,
-            $recText,
-            (string) ($assessment['triage']['triage_classification'] ?? '')
-        );
-        $pdo->prepare('UPDATE triage_results SET recommendation_status = ?, recommendation_patient_ack_at = NULL WHERE id = ?')
-            ->execute([$recStatus, $triageId]);
     }
+
+    $stmt = $pdo->prepare("
+        INSERT INTO triage_results
+            (patient_id, symptoms, chief_complaint, level, urgency_label, status, assessed_at,
+             confidence_score, severity, triage_level, triage_classification, english_complaint,
+             detected_symptoms_json, possible_conditions_json, recommendations,
+             assessment_payload, engine)
+        VALUES (?, ?, ?, ?, ?, 'pending', NOW(), ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    ");
+    $stmt->execute([
+        $patient_id,
+        json_encode($symptomList),
+        $complaint,
+        $level,
+        $label,
+        (int) ($assessment['confidence']['score'] ?? 0),
+        (string) ($assessment['severity']['severity'] ?? ''),
+        $triageLevel,
+        (string) ($assessment['triage']['triage_classification'] ?? ''),
+        (string) ($assessment['english_translation'] ?? ''),
+        json_encode($assessment['detected_symptoms'] ?? [], JSON_UNESCAPED_UNICODE),
+        json_encode($assessment['possible_conditions'] ?? [], JSON_UNESCAPED_UNICODE),
+        implode("\n", $assessment['recommendations'] ?? []),
+        json_encode($assessment, JSON_UNESCAPED_UNICODE),
+        (string) ($assessment['engine'] ?? MedicalAssessmentEngine::VERSION),
+    ]);
+
+    $triageId = (int) $pdo->lastInsertId();
+    $recText = implode("\n", $assessment['recommendations'] ?? []);
+    $recStatus = triage_recommendation_status_for_insert(
+        $triageLevel,
+        $complaint,
+        $recText,
+        (string) ($assessment['triage']['triage_classification'] ?? '')
+    );
+    $pdo->prepare('UPDATE triage_results SET recommendation_status = ?, recommendation_patient_ack_at = NULL WHERE id = ?')
+        ->execute([$recStatus, $triageId]);
 
     // ── Emergency: hospital referral only (no teleconsult booking) ─────────
     if ($isEmergency) {
@@ -239,6 +226,19 @@ try {
         }
 
         $pdo->commit();
+
+        patient_chief_complaint_record(
+            $pdo,
+            $patient_id,
+            $complaint,
+            'emergency_referral',
+            $triageId,
+            null,
+            null,
+            $registrationComplaintRef !== '' ? $registrationComplaintRef : null
+        );
+
+        complaint_evidence_try_attach($pdo, $patient_id, $triageId, is_array($evidenceFile) ? $evidenceFile : null);
 
         try {
             BhwPatientWorkflow::onPatientPortalEmergency($pdo, $patient_id, [
@@ -291,6 +291,19 @@ try {
         }
 
         $pdo->commit();
+
+        patient_chief_complaint_record(
+            $pdo,
+            $patient_id,
+            $complaint,
+            'care_tips_review',
+            $triageId,
+            null,
+            null,
+            $registrationComplaintRef !== '' ? $registrationComplaintRef : null
+        );
+
+        complaint_evidence_try_attach($pdo, $patient_id, $triageId, is_array($evidenceFile) ? $evidenceFile : null);
 
         NotificationEvents::aiSelfCareReviewRequired(
             $pdo,
@@ -552,6 +565,25 @@ try {
 
     $pdo->commit();
 
+    patient_chief_complaint_record(
+        $pdo,
+        $patient_id,
+        $complaint,
+        'consultation_booking',
+        $triageId,
+        $consultation_id,
+        $slot_id,
+        $registrationComplaintRef !== '' ? $registrationComplaintRef : null
+    );
+
+    complaint_evidence_try_attach(
+        $pdo,
+        $patient_id,
+        $triageId,
+        is_array($evidenceFile) ? $evidenceFile : null,
+        $consultation_id
+    );
+
     try {
         BhwPatientWorkflow::onPatientPortalBooking($pdo, $patient_id, $triageLevel);
     } catch (Throwable $e) {
@@ -564,7 +596,7 @@ try {
         NotificationEvents::appointmentCreated($pdo, $consultation_id, $patient_id, $provider_id, $when, $patient_id);
         NotificationEvents::aiTriageCompleted($pdo, $patient_id, $label, $patient_id);
         if ($awaitingProviderReview) {
-            $notifyReviewer = !$reusedCareTipsTriage || $reviewerBeforeBooking !== $provider_id;
+            $notifyReviewer = $reviewerBeforeBooking !== $provider_id;
             if ($notifyReviewer) {
                 NotificationEvents::aiSelfCareReviewRequired(
                     $pdo,
@@ -586,7 +618,7 @@ try {
         'booked'           => true,
         'emergency'        => false,
         'triage_id'        => $triageId,
-        'reused_existing_triage' => $reusedCareTipsTriage,
+        'reused_existing_triage' => false,
         'consultation_id'  => $consultation_id,
         'consult_date'     => $consult_date,
         'consult_time'     => $consult_time,
