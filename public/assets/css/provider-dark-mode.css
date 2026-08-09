@@ -1186,6 +1186,152 @@ html[data-theme-resolved='dark'] body.provider-body .sched-day__badge--locked {
   color: #fca5a5 !important;
 }
 
+html[data-theme-resolved='dark'] body.provider-body .sched-day__summary {
+  color: #a1a1aa !important;
+}
+
+html[data-theme-resolved='dark'] body.provider-body .sched-day__hint--locked {
+  background: rgba(220, 38, 38, 0.12) !important;
+  border-color: rgba(220, 38, 38, 0.35) !important;
+  color: #fca5a5 !important;
+}
+
+html[data-theme-resolved='dark'] body.provider-body .sched-day__toggle {
+  background: #141414 !important;
+  border-color: #2a2a2a !important;
+  color: #ffffff !important;
+}
+
+html[data-theme-resolved='dark'] body.provider-body .sched-day__toggle:hover {
+  background: #1f1f1f !important;
+  border-color: #7c3aed !important;
+  color: #c4b5fd !important;
+}
+
+html[data-theme-resolved='dark'] body.provider-body .sched-day-active-label {
+  color: #e4e4e7 !important;
+}
+
+html[data-theme-resolved='dark'] body.provider-body .sched-session-card {
+  background: #141414 !important;
+  border-color: #2a2a2a !important;
+  box-shadow: none !important;
+}
+
+html[data-theme-resolved='dark'] body.provider-body .sched-session-card__head {
+  border-bottom-color: #2a2a2a !important;
+}
+
+html[data-theme-resolved='dark'] body.provider-body .sched-session-card__label {
+  color: #a78bfa !important;
+}
+
+html[data-theme-resolved='dark'] body.provider-body .sched-session-field label {
+  color: #a1a1aa !important;
+}
+
+html[data-theme-resolved='dark'] body.provider-body .sched-field {
+  background: #1c1c1c !important;
+  border-color: #2a2a2a !important;
+  color: #ffffff !important;
+}
+
+html[data-theme-resolved='dark'] body.provider-body .sched-field:focus {
+  border-color: #7c3aed !important;
+  box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.2) !important;
+}
+
+html[data-theme-resolved='dark'] body.provider-body .sched-session-remove {
+  background: rgba(220, 38, 38, 0.12) !important;
+  border-color: rgba(220, 38, 38, 0.35) !important;
+  color: #fca5a5 !important;
+}
+
+html[data-theme-resolved='dark'] body.provider-body .sched-session-remove:hover {
+  background: rgba(220, 38, 38, 0.2) !important;
+}
+
+html[data-theme-resolved='dark'] body.provider-body .sched-add-session {
+  background: rgba(124, 58, 237, 0.08) !important;
+  border-color: rgba(124, 58, 237, 0.35) !important;
+  color: #c4b5fd !important;
+}
+
+html[data-theme-resolved='dark'] body.provider-body .sched-add-session:hover {
+  background: rgba(124, 58, 237, 0.16) !important;
+  border-color: #7c3aed !important;
+}
+
+html[data-theme-resolved='dark'] body.provider-body .sched-readonly-session {
+  background: #141414 !important;
+  border-color: #2a2a2a !important;
+  color: #e4e4e7 !important;
+}
+
+html[data-theme-resolved='dark'] body.provider-body .sched-readonly-session__num {
+  color: #a78bfa !important;
+}
+
+html[data-theme-resolved='dark'] body.provider-body .sched-readonly-session__time {
+  color: #ffffff !important;
+}
+
+html[data-theme-resolved='dark'] body.provider-body .sched-readonly-session__dur,
+html[data-theme-resolved='dark'] body.provider-body .sched-readonly-empty {
+  color: #a1a1aa !important;
+}
+
+html[data-theme-resolved='dark'] body.provider-body .sched-status-pill--active {
+  background: rgba(34, 197, 94, 0.15) !important;
+  color: #86efac !important;
+}
+
+html[data-theme-resolved='dark'] body.provider-body .sched-status-pill--inactive {
+  background: #2a2a2a !important;
+  color: #a1a1aa !important;
+}
+
+html[data-theme-resolved='dark'] body.provider-body .sched-validation {
+  background: rgba(220, 38, 38, 0.12) !important;
+  border-color: rgba(220, 38, 38, 0.35) !important;
+  color: #fca5a5 !important;
+}
+
+html[data-theme-resolved='dark'] body.provider-body .sched-slot-stat,
+html[data-theme-resolved='dark'] body.provider-body .sched-preview-empty,
+html[data-theme-resolved='dark'] body.provider-body .sched-slot-card.is-past {
+  background: #141414 !important;
+  border-color: #2a2a2a !important;
+  color: #e4e4e7 !important;
+}
+
+html[data-theme-resolved='dark'] body.provider-body .sched-slot-card.is-available {
+  background: rgba(124, 58, 237, 0.1) !important;
+  border-color: rgba(124, 58, 237, 0.35) !important;
+}
+
+html[data-theme-resolved='dark'] body.provider-body .sched-slot-card.is-booked {
+  background: rgba(220, 38, 38, 0.12) !important;
+  border-color: rgba(220, 38, 38, 0.35) !important;
+}
+
+html[data-theme-resolved='dark'] body.provider-body .sched-slot-time {
+  color: #ffffff !important;
+}
+
+html[data-theme-resolved='dark'] body.provider-body .sched-confirm__dialog {
+  background: #1c1c1c !important;
+  border-color: #2a2a2a !important;
+}
+
+html[data-theme-resolved='dark'] body.provider-body .sched-confirm__title {
+  color: #ffffff !important;
+}
+
+html[data-theme-resolved='dark'] body.provider-body .sched-confirm__message {
+  color: #a1a1aa !important;
+}
+
 /* ── Medical Records ── */
 html[data-theme-resolved='dark'] body.provider-body .mr-tabs,
 html[data-theme-resolved='dark'] body.provider-body .mr-subtabs,
