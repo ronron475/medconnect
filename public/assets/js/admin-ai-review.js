@@ -32,16 +32,19 @@
     return (parts[0].charAt(0) + parts[parts.length - 1].charAt(0)).toUpperCase();
   }
 
-  function formatDateParts(raw) {
-    if (!raw) return { day: '—', time: '' };
+  function formatSubmitted(raw) {
+    if (!raw) return '—';
     try {
       var d = new Date(String(raw).replace(' ', 'T'));
-      return {
-        day: d.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' }),
-        time: d.toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' }),
-      };
+      return d.toLocaleString(undefined, {
+        month: 'short',
+        day: 'numeric',
+        year: 'numeric',
+        hour: 'numeric',
+        minute: '2-digit',
+      });
     } catch (e) {
-      return { day: raw, time: '' };
+      return raw;
     }
   }
 
@@ -87,52 +90,61 @@
     });
   }
 
+  function emptyStateHtml() {
+    return (
+      '<tr><td colspan="6">' +
+        '<div class="staff-apps-empty">' +
+          '<div class="staff-apps-empty__icon" aria-hidden="true">' +
+            '<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>' +
+          '</div>' +
+          '<p class="staff-apps-empty__title">No AI review cases found</p>' +
+          '<p class="staff-apps-empty__text">Try another filter or search term.</p>' +
+        '</div>' +
+      '</td></tr>'
+    );
+  }
+
   function renderRows(rows) {
     updateStats(allRows);
-    if (countEl) countEl.textContent = rows.length + ' case' + (rows.length === 1 ? '' : 's');
+    if (countEl) {
+      countEl.textContent = rows.length + ' case' + (rows.length === 1 ? '' : 's');
+    }
 
     if (!rows.length) {
-      tbody.innerHTML =
-        '<tr><td colspan="6" class="air-review-empty">' +
-          '<p class="air-review-empty__title">No AI review cases found</p>' +
-          '<p class="air-review-empty__text">Try another filter or search term.</p>' +
-        '</td></tr>';
+      tbody.innerHTML = emptyStateHtml();
       return;
     }
 
     tbody.innerHTML = rows.map(function (row) {
       var status = row.recommendation_status || '';
       var badge = status === 'pending_approval'
-        ? '<span class="mc-badge mc-badge--pending">Pending</span>'
-        : '<span class="mc-badge mc-badge--approved">Approved</span>';
+        ? '<span class="staff-app-status staff-app-status--pending">Pending</span>'
+        : '<span class="staff-app-status staff-app-status--active">Approved</span>';
       var assignId = row.assigned_provider_id || '';
       var reviewer = row.reviewer_name || '';
-      var reviewerClass = reviewer ? 'air-review-reviewer' : 'air-review-reviewer is-unassigned';
-      var reviewerLabel = reviewer || 'Unassigned';
-      var dateParts = formatDateParts(row.assessed_at);
+      var reviewerHtml = reviewer
+        ? '<span class="staff-apps-meta">' + esc(reviewer) + '</span>'
+        : '<span class="staff-apps-meta staff-apps-meta--muted air-review-reviewer is-unassigned">Unassigned</span>';
 
       return '<tr data-triage-id="' + esc(row.id) + '">' +
-        '<td>' +
-          '<div class="air-review-patient">' +
-            '<div class="air-review-patient__avatar" aria-hidden="true">' + esc(initials(row.patient_name)) + '</div>' +
-            '<div class="air-review-patient__name">' + esc(row.patient_name) + '</div>' +
+        '<td class="staff-apps-td--applicant" data-label="">' +
+          '<div class="staff-apps-applicant">' +
+            '<div class="staff-apps-avatar" aria-hidden="true">' + esc(initials(row.patient_name)) + '</div>' +
+            '<div class="staff-apps-applicant__name">' + esc(row.patient_name) + '</div>' +
           '</div>' +
         '</td>' +
-        '<td><div class="air-review-concern" title="' + esc(row.chief_complaint || '') + '">' + esc(row.chief_complaint || '—') + '</div></td>' +
-        '<td>' + badge + '</td>' +
-        '<td><span class="' + reviewerClass + '">' + esc(reviewerLabel) + '</span></td>' +
-        '<td>' +
-          '<div class="air-review-date">' +
-            '<span class="air-review-date__day">' + esc(dateParts.day) + '</span>' +
-            (dateParts.time ? '<span class="air-review-date__time">' + esc(dateParts.time) + '</span>' : '') +
-          '</div>' +
+        '<td data-label="Concern">' +
+          '<div class="air-review-concern" title="' + esc(row.chief_complaint || '') + '">' + esc(row.chief_complaint || '—') + '</div>' +
         '</td>' +
-        '<td>' +
-          '<div class="air-review-reassign">' +
-            '<select class="air-review-reassign__select ai-review-provider-select" data-triage="' + esc(row.id) + '" aria-label="Select reviewing doctor for ' + esc(row.patient_name) + '">' +
+        '<td data-label="Status">' + badge + '</td>' +
+        '<td data-label="Assigned reviewer">' + reviewerHtml + '</td>' +
+        '<td data-label="Submitted"><span class="staff-apps-meta staff-apps-meta--muted">' + esc(formatSubmitted(row.assessed_at)) + '</span></td>' +
+        '<td class="staff-apps-td--actions" data-label="Actions">' +
+          '<div class="air-review-actions">' +
+            '<select class="staff-apps-filter air-review-actions__select ai-review-provider-select" data-triage="' + esc(row.id) + '" aria-label="Reviewer for ' + esc(row.patient_name) + '">' +
               providerOptions(assignId) +
             '</select>' +
-            '<button type="button" class="mc-btn mc-btn--primary mc-btn--sm air-review-reassign__btn ai-review-save" data-triage="' + esc(row.id) + '">Save assignment</button>' +
+            '<button type="button" class="mc-btn mc-btn--primary mc-btn--sm air-review-actions__save ai-review-save" data-triage="' + esc(row.id) + '">Save</button>' +
           '</div>' +
         '</td>' +
       '</tr>';
@@ -160,14 +172,17 @@
 
   async function load() {
     setStatus('Loading…', false);
-    tbody.innerHTML = '<tr class="air-review-loading"><td colspan="6">Loading AI review cases…</td></tr>';
+    tbody.innerHTML =
+      '<tr><td colspan="6"><div class="staff-apps-loading">' +
+      '<div class="staff-apps-loading__spinner" aria-hidden="true"></div>Loading AI review cases…</div></td></tr>';
+
     var status = filterEl ? filterEl.value : 'active';
     try {
       var res = await fetch(apiUrl + '?status=' + encodeURIComponent(status), { credentials: 'same-origin' });
       var data = await res.json();
       if (!data.success) {
         setStatus(data.message || 'Could not load.', true);
-        tbody.innerHTML = '<tr><td colspan="6" class="air-review-empty">Could not load assignments.</td></tr>';
+        tbody.innerHTML = emptyStateHtml();
         return;
       }
       providers = data.providers || [];
@@ -176,7 +191,7 @@
       setStatus('Updated ' + new Date().toLocaleTimeString(), false);
     } catch (e) {
       setStatus('Load failed.', true);
-      tbody.innerHTML = '<tr><td colspan="6" class="air-review-empty">Load failed. Please try again.</td></tr>';
+      tbody.innerHTML = emptyStateHtml();
     }
   }
 
@@ -190,6 +205,7 @@
 
     btn.disabled = true;
     btn.classList.add('is-saving');
+    var prevLabel = btn.textContent;
     btn.textContent = 'Saving…';
     try {
       var fd = new FormData();
@@ -206,7 +222,7 @@
     } finally {
       btn.disabled = false;
       btn.classList.remove('is-saving');
-      btn.textContent = 'Save assignment';
+      btn.textContent = prevLabel || 'Save';
     }
   });
 
