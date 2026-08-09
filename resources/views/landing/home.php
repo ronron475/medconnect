@@ -39,8 +39,8 @@ $asset = ASSET_BASE;
   <link rel="stylesheet" href="<?= $asset ?>/assets/css/landing-fab.css?v=12" />
   <link rel="stylesheet" href="<?= $asset ?>/assets/css/landing-fab-modals.css?v=2" />
   <link rel="stylesheet" href="<?= $asset ?>/assets/css/signin-req-drawer.css?v=9" />
-  <link rel="stylesheet" href="<?= $asset ?>/assets/css/signin-card-polish.css?v=3" />
-  <link rel="stylesheet" href="<?= $asset ?>/assets/css/hero-signin-panel.css?v=14" />
+  <link rel="stylesheet" href="<?= $asset ?>/assets/css/signin-card-polish.css?v=4" />
+  <link rel="stylesheet" href="<?= $asset ?>/assets/css/hero-signin-panel.css?v=15" />
   <?php $forgotPwCssVer = (int) @filemtime(ASSETS_PATH . '/css/forgot-password.css'); ?>
   <link rel="stylesheet" href="<?= $asset ?>/assets/css/forgot-password.css?v=<?= $forgotPwCssVer ?>" />
   <?php $landingScrollAnimCssVer = (int) @filemtime(ASSETS_PATH . '/css/landing-scroll-animations.css'); ?>
@@ -228,6 +228,34 @@ require __DIR__ . '/partials/landing_navbar.php';
 
             <div class="signin-card signin-card--hero-inline" id="signin-card">
 
+            <div class="signin-card__alerts" id="signin-card-alerts" aria-live="polite">
+              <div class="alert" id="alert" role="alert"></div>
+
+              <?php if (!empty($_GET['registered'])): ?>
+              <div class="alert alert--success signin-context-alert" style="display:block;" role="alert">
+                Patient account has been successfully created. Please sign in using your registered email to open your care portal.
+              </div>
+              <?php endif; ?>
+
+              <?php if (!empty($_GET['setup_complete'])): ?>
+              <div class="alert alert--success signin-context-alert" style="display:block;" role="alert">
+                Your password has been set. Sign in with your email and new password to access your patient portal.
+              </div>
+              <?php endif; ?>
+
+              <?php if (!empty($_GET['session_expired'])): ?>
+              <div class="alert alert--warning signin-context-alert" style="display:block;" role="alert">
+                Your session expired due to inactivity.
+              </div>
+              <?php endif; ?>
+
+              <?php if (!empty($_GET['signin'])): ?>
+              <div class="alert alert--info signin-context-alert" style="display:block;" role="alert">
+                Please sign in to access your portal.
+              </div>
+              <?php endif; ?>
+            </div>
+
             <div class="card-top signin-card__head">
 
               <img src="<?= $asset ?>/assets/img/medcon_logo.png" alt="medConnect" class="signin-card__logo" />
@@ -243,32 +271,6 @@ require __DIR__ . '/partials/landing_navbar.php';
             </div>
 
             <div class="signin-card__primary">
-
-            <div class="alert" id="alert" role="alert" aria-live="polite"></div>
-
-            <?php if (!empty($_GET['registered'])): ?>
-            <div class="alert alert--success" style="display:block;" role="alert">
-              Patient account has been successfully created. Please sign in using your registered email to open your care portal.
-            </div>
-            <?php endif; ?>
-
-            <?php if (!empty($_GET['setup_complete'])): ?>
-            <div class="alert alert--success" style="display:block;" role="alert">
-              Your password has been set. Sign in with your email and new password to access your patient portal.
-            </div>
-            <?php endif; ?>
-
-            <?php if (!empty($_GET['session_expired'])): ?>
-            <div class="alert alert--warning" style="display:block;" role="alert">
-              Your session expired due to inactivity.
-            </div>
-            <?php endif; ?>
-
-            <?php if (!empty($_GET['signin'])): ?>
-            <div class="alert alert--info" style="display:block;" role="alert">
-              Please sign in to access your portal.
-            </div>
-            <?php endif; ?>
 
             <form id="login-form" novalidate>
 
@@ -815,7 +817,7 @@ require __DIR__ . '/partials/landing_navbar.php';
 <script src="<?= $asset ?>/assets/js/draggable-fab.js?v=1" defer></script>
 <script src="<?= $asset ?>/assets/js/signin-req-drawer.js?v=4" defer></script>
 
-<script src="<?= $asset ?>/assets/js/login-lockout.js?v=1"></script>
+<script src="<?= $asset ?>/assets/js/login-lockout.js?v=2"></script>
 <script src="<?= $asset ?>/assets/js/script.js?v=20260808d"></script>
 <?php require_once VIEWS_PATH . '/partials/theme_scripts.php'; ?>
 

@@ -59,6 +59,20 @@
 }
 
 /* Alerts */
+.signin-modal-inner .signin-card .signin-card__alerts {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: var(--signin-space-md);
+}
+
+.signin-modal-inner .signin-card .signin-card__alerts .alert:empty {
+  display: none !important;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
 .signin-modal-inner .signin-card .alert {
   margin-bottom: var(--signin-space-md);
   border-radius: 10px;
