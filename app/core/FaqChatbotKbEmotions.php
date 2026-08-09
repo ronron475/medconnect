@@ -210,6 +210,106 @@ final class FaqChatbotKbEmotions
                 'keywords' => ['sad', 'kasubo', 'malungkot', 'budlay pamatyagon'],
             ],
             [
+                'key' => 'uncertainty_support',
+                'category' => 'emotional_support',
+                'flow_key' => 'distress_support',
+                'weight' => 1.08,
+                'patterns' => [
+                    '/\b(not\s+sure|uncertain|indi\s+ko\s+kabalo|indi\s+ko\s+bal-an|wala\s+ko\s+kasabot|wala\s+ko\s+kaintindi|hindi\s+ko\s+alam)\b/ui',
+                ],
+                'keywords' => ['not sure', 'indi ko kabalo', 'wala ko kasabot', 'uncertain'],
+            ],
+            [
+                'key' => 'mixed_feelings',
+                'category' => 'emotional_support',
+                'flow_key' => 'distress_support',
+                'weight' => 1.1,
+                'patterns' => [
+                    '/\b(mixed\s+feelings|magkahalong|conflicted|pero\s+nahadlok|pero\s+kapoy|pero\s+sad|but\s+scared|but\s+afraid|but\s+tired)\b/ui',
+                ],
+                'keywords' => ['mixed feelings', 'pero nahadlok', 'but scared', 'magkahalong'],
+            ],
+            [
+                'key' => 'embarrassment_support',
+                'category' => 'emotional_support',
+                'flow_key' => 'distress_support',
+                'weight' => 1.06,
+                'patterns' => [
+                    '/\b(embarrass|nahihiya|nahuya|hiya\s+ko|ashamed|shame)\b/ui',
+                ],
+                'keywords' => ['embarrassed', 'nahuya', 'ashamed', 'nahihiya'],
+            ],
+            [
+                'key' => 'boredom_support',
+                'category' => 'emotional_support',
+                'flow_key' => 'distress_support',
+                'weight' => 1.05,
+                'patterns' => [
+                    '/\b(bored|boring|wala\s+gana|wala\s+ko\s+gana|walang\s+gana)\b/ui',
+                ],
+                'keywords' => ['bored', 'wala gana', 'boring'],
+            ],
+            [
+                'key' => 'irritation_support',
+                'category' => 'emotional_support',
+                'flow_key' => 'distress_support',
+                'weight' => 1.08,
+                'patterns' => [
+                    '/\b(irritat|so\s+annoying|lain\s+gid|lain\s+gid\s+ya|nainis|nakainis)\b/ui',
+                ],
+                'keywords' => ['irritated', 'lain gid', 'annoying', 'nainis'],
+            ],
+            [
+                'key' => 'guilt_support',
+                'category' => 'emotional_support',
+                'flow_key' => 'distress_support',
+                'weight' => 1.08,
+                'patterns' => [
+                    '/\b(guilty|guilt|may\s+guilt|kasalanan\s+ko|nagkasala)\b/ui',
+                ],
+                'keywords' => ['guilty', 'guilt', 'kasalanan', 'may guilt'],
+            ],
+            [
+                'key' => 'shame_support',
+                'category' => 'emotional_support',
+                'flow_key' => 'distress_support',
+                'weight' => 1.08,
+                'patterns' => [
+                    '/\b(ashamed|shame|nakahuya|nahuya\s+gid|huya\s+gid)\b/ui',
+                ],
+                'keywords' => ['ashamed', 'shame', 'nahuya', 'nakahuya'],
+            ],
+            [
+                'key' => 'jealousy_support',
+                'category' => 'emotional_support',
+                'flow_key' => 'distress_support',
+                'weight' => 1.06,
+                'patterns' => [
+                    '/\b(jealous|jealousy|naiinggit|inggit|selos)\b/ui',
+                ],
+                'keywords' => ['jealous', 'naiinggit', 'selos', 'inggit'],
+            ],
+            [
+                'key' => 'social_anxiety',
+                'category' => 'emotional_support',
+                'flow_key' => 'distress_support',
+                'weight' => 1.1,
+                'patterns' => [
+                    '/\b(social\s+anxiety|scared\s+of\s+people|nahadlok\s+sa\s+(mga\s+)?tao|nahuya\s+sa\s+(mga\s+)?tao)\b/ui',
+                ],
+                'keywords' => ['social anxiety', 'scared of people', 'nahadlok sa tao'],
+            ],
+            [
+                'key' => 'exam_anxiety',
+                'category' => 'emotional_support',
+                'flow_key' => 'distress_support',
+                'weight' => 1.1,
+                'patterns' => [
+                    '/\b(exam\s+anxiety|test\s+anxiety|kinabahan\s+sa\s+exam|kulba\s+sa\s+exam|stress\s+sa\s+exam)\b/ui',
+                ],
+                'keywords' => ['exam anxiety', 'kinabahan sa exam', 'test anxiety'],
+            ],
+            [
                 'key' => 'mental_wellness',
                 'category' => 'mental_health',
                 'flow_key' => 'distress_support',
@@ -358,6 +458,56 @@ final class FaqChatbotKbEmotions
                 'en' => ['<p>Mental wellness matters as much as physical health: sleep, movement, connection, and asking for help early. For personal concerns, please consult a qualified professional. I can guide medConnect booking — I don\'t provide therapy.</p>'],
                 'fil' => ['<p>Mahalaga ang mental wellness: tulog, galaw, koneksyon, at humingi ng tulong. Para sa personal na usapin, magpatingin sa propesyonal.</p>'],
                 'hil' => ['<p>Importante ang mental wellness: tulog, movement, koneksyon, kag mangayo bulig. Para sa personal nga concern, magpa-check sa propesyonal.</p>'],
+            ],
+            'uncertainty_support' => [
+                'en' => ['<p>It\'s okay not to know everything right away. I can explain medConnect step by step — no pressure, and you set the pace.</p>'],
+                'fil' => ['<p>Okay lang hindi alam lahat agad. Ipapaliwanag ko ang medConnect hakbang-hakbang — walang pressure.</p>'],
+                'hil' => ['<p>Okay lang indi mahibal-an tanan dayon. Ipahayag ko ang medConnect pahuway-pahuway — wala pressure.</p>'],
+            ],
+            'mixed_feelings' => [
+                'en' => ['<p>Mixed feelings make sense — you can feel more than one thing at once. Take a breath. When you\'re ready, we can find one small next step or connect you with care on medConnect.</p>'],
+                'fil' => ['<p>Natural ang magkahalong damdamin. Huminga muna. Kapag handa ka, makakahanap tayo ng maliit na hakbang o care sa medConnect.</p>'],
+                'hil' => ['<p>Natural ang magkahalong pamatyag. Magginhawa anay. Kon ready ka, makita ta ang gamay nga sunod nga hakbang ukon care sa medConnect.</p>'],
+            ],
+            'embarrassment_support' => [
+                'en' => ['<p>Many people feel shy or embarrassed about health topics — that\'s normal. This is a safe space to ask questions. I\'m an automated assistant, not a judge, and City Health staff are trained to help respectfully.</p>'],
+                'fil' => ['<p>Marami ang nahihiya sa health topics — normal iyan. Safe space ito para magtanong. Hindi ako humuhusga — ang City Health staff ay trained na tumulong nang may respeto.</p>'],
+                'hil' => ['<p>Damo ang mahuya sa health topics — normal sina. Safe space ini para magpamangkot. Indi ako maghuhukom — ang City Health staff trained nga magbulig sing may respeto.</p>'],
+            ],
+            'boredom_support' => [
+                'en' => ['<p>Low motivation happens, especially when you\'re tired or stressed. A short walk, water, or rest can help. If low mood lasts and affects daily life, consider a consult — I can guide medConnect booking.</p>'],
+                'fil' => ['<p>Normal ang mababang gana minsan. Subukan ang maliit na pahinga. Kung matagal, mag-consult — matutulungan kitang mag-book.</p>'],
+                'hil' => ['<p>Normal ang wala gana kon kaisa. Tilawi ang gamay nga pahuway. Kon magdugay, mag-consult — matabangan ko mag-book.</p>'],
+            ],
+            'irritation_support' => [
+                'en' => ['<p>I hear that something feels irritating right now. Let\'s tackle one thing at a time — I can help with practical medConnect steps when you\'re ready.</p>'],
+                'fil' => ['<p>Naririnig ko na nakakainis ngayon. Isa-isang hakbang lang — matutulungan kitang sa praktikal na medConnect steps.</p>'],
+                'hil' => ['<p>Nabatian ko nga makalain subong. Isa ka hakbang lang — matabangan ko sa praktikal nga medConnect steps kon ready ka.</p>'],
+            ],
+            'guilt_support' => [
+                'en' => ['<p>Guilt can feel heavy — you\'re not alone in that. I\'m not a counselor, but I can guide you to healthcare or City Health support when you\'re ready.</p>'],
+                'fil' => ['<p>Mabigat ang guilt — hindi ka nag-iisa. Hindi ako counselor, pero matutulungan kitang sa healthcare o City Health.</p>'],
+                'hil' => ['<p>Mabug-at ang guilt — indi ka isa. Indi ako counselor, pero matabangan ko sa healthcare ukon City Health.</p>'],
+            ],
+            'shame_support' => [
+                'en' => ['<p>Shame is hard, especially around health. Many people feel this way — City Health staff are trained to help respectfully. I can guide medConnect booking without judgment.</p>'],
+                'fil' => ['<p>Mahirap ang shame lalo na sa health. Marami ang nakakaramdam nito — ang City Health staff ay trained na tumulong nang may respeto.</p>'],
+                'hil' => ['<p>Budlay ang shame lalo na sa health. Damo ang amo sini — ang City Health staff trained nga magbulig sing may respeto.</p>'],
+            ],
+            'jealousy_support' => [
+                'en' => ['<p>Jealous or envious feelings are valid. If they\'re affecting your mood or health, talking with a provider via medConnect may help — I can guide the steps.</p>'],
+                'fil' => ['<p>Valid ang jealousy o inggit. Kung naaapektuhan ang mood o kalusugan, makakatulong ang consult sa medConnect.</p>'],
+                'hil' => ['<p>Valid ang jealousy ukon inggit. Kon maka-apekto sa mood ukon kahimsog, makabulig ang consult sa medConnect.</p>'],
+            ],
+            'social_anxiety' => [
+                'en' => ['<p>Feeling nervous around others is common. You can start with a short video consult on medConnect if that feels easier — you set the pace.</p>'],
+                'fil' => ['<p>Normal ang kabahan sa ibang tao. Puwede kang magsimula sa maikling video consult sa medConnect — ikaw ang magdesisyon ng tempo.</p>'],
+                'hil' => ['<p>Normal ang kabahan sa iban nga tawo. Pwede ka magsugod sa mubo nga video consult sa medConnect — ikaw ang magdesisyon sang tempo.</p>'],
+            ],
+            'exam_anxiety' => [
+                'en' => ['<p>Exam stress is real. Break study into small chunks, rest, and ask for help early. If anxiety feels overwhelming, Hopeline <strong>1553</strong> or a consult can help.</p>'],
+                'fil' => ['<p>Real ang exam stress. Hatiin ang pag-aaral, magpahinga, humingi ng tulong. Kung sobra ang anxiety, Hopeline <strong>1553</strong>.</p>'],
+                'hil' => ['<p>Real ang exam stress. Bahinon ang pagtuon, magpahulay, mangayo bulig. Kon sobra ang anxiety, Hopeline <strong>1553</strong>.</p>'],
             ],
         ];
     }

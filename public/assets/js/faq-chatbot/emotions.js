@@ -33,6 +33,17 @@
     PAIN: 'pain',
     SICK: 'sick',
     OVERWHELMED: 'overwhelmed',
+    GRIEF: 'grief',
+    EMBARRASSED: 'embarrassed',
+    ASHAMED: 'ashamed',
+    GUILTY: 'guilty',
+    BORED: 'bored',
+    IRRITATED: 'irritated',
+    JEALOUS: 'jealous',
+    SURPRISED: 'surprised',
+    AFFECTIONATE: 'affectionate',
+    UNCERTAIN: 'uncertain',
+    MIXED: 'mixed',
     // Legacy aliases
     GRATITUDE: 'thankful',
     HAPPINESS: 'happy',
@@ -72,6 +83,17 @@
     pain: '🤕',
     sick: '🤒',
     overwhelmed: '😥',
+    grief: '🕯️',
+    embarrassed: '😳',
+    ashamed: '😔',
+    guilty: '😣',
+    bored: '😑',
+    irritated: '😒',
+    jealous: '😒',
+    surprised: '😲',
+    affectionate: '🥰',
+    uncertain: '😶',
+    mixed: '😕',
     gratitude: '🙏',
     happiness: '😊',
     relief: '😌',
@@ -89,7 +111,7 @@
     negative: [
       'frustrated', 'worried', 'anxious', 'nervous', 'sad', 'lonely', 'afraid',
       'angry', 'disappointed', 'stressed', 'tired', 'hopeless', 'crying', 'pain',
-      'sick', 'overwhelmed',
+      'sick', 'overwhelmed', 'grief', 'embarrassed', 'ashamed', 'guilty', 'jealous', 'irritated', 'bored', 'uncertain', 'mixed',
       'frustration', 'worry', 'anxiety', 'fear', 'sadness', 'distress',
     ],
     crisis: ['panic', 'emergency'],
@@ -120,9 +142,14 @@
 
   const STANDALONE = {
     thankful: /^(thank\s*you|thanks|thank\s*u|salamat|salamat\s+guid|salamat\s+kaayo|maraming\s+salamat|ty|tysm|thank\s+you\s+gid)[\s!.?]*$/i,
-    happy: /^(i'?m\s+happy|happy|masaya\s+ako|masadya\s+ko|lipay\s+ko|okay\s+na\s+ko)[\s!.?]*$/i,
-    confused: /^(i'?m\s+confused|confused|nalilito\s+ako|nalibog\s+ako|indi\s+ko\s+masabtan|hindi\s+ko\s+maintindihan|wala\s+ko\s+kaintindi)[\s!.?]*$/i,
-    relieved: /^(relieved|okay\s+na|maayo\s+na|buti\s+na\s+lang)[\s!.?]*$/i,
+    happy: /^(i'?m\s+happy|happy|masaya\s+ako|masadya\s+ko|lipay\s+ko|malipayon\s+ko|okay\s+na\s+ko|okay\s+lang\s+ko)[\s!.?]*$/i,
+    confused: /^(i'?m\s+confused|confused|nalilito\s+ako|nalibog\s+ako|indi\s+ko\s+masabtan|indi\s+ko\s+kabalo|hindi\s+ko\s+maintindihan|wala\s+ko\s+kaintindi|wala\s+ko\s+kasabot)[\s!.?]*$/i,
+    relieved: /^(relieved|okay\s+na|maayo\s+na|buti\s+na\s+lang|okay\s+lang)[\s!.?]*$/i,
+    sad: /^(sad|subo\s+ko|kasubo\s+ko|nasubo\s+ko|malungkot\s+ako)[\s!.?]*$/i,
+    tired: /^(tired|kapoy\s+ko|ginakapoy\s+ko|pagod\s+na\s+ako)[\s!.?]*$/i,
+    afraid: /^(scared|afraid|nahadlok\s+ko|takot\s+ako)[\s!.?]*$/i,
+    anxious: /^(anxious|ginakulbaan\s+ko|kulbaan\s+ko|kinakabahan\s+ako)[\s!.?]*$/i,
+    angry: /^(angry|akig\s+ko|galit\s+ako)[\s!.?]*$/i,
   };
 
   const SELF_HARM_PATTERNS = [
@@ -207,19 +234,33 @@
 
   /** Boost patterns when dataset misses edge cases */
   const BOOST_RULES = [
-    { emotion: EMOTION.FRUSTRATED, re: /\b(frustrat|annoyed|irritat|kapoy\s+na\s+ko\s+sini)\b/i, w: 2 },
-    { emotion: EMOTION.ANGRY, re: /\b(angry|galit|akig|badtrip)\b/i, w: 2 },
+    { emotion: EMOTION.FRUSTRATED, re: /\b(frustrat|annoyed|irritat|kapoy\s+na\s+ko\s+sini|nabudlayan|nabudlay)\b/i, w: 2 },
+    { emotion: EMOTION.IRRITATED, re: /\b(irritat|inis|nainis|lain\s+gid|lain\s+gid\s+ya|nakainis)\b/i, w: 2.1 },
+    { emotion: EMOTION.ANGRY, re: /\b(angry|galit|akig|akig\s+ko)\b/i, w: 2 },
     { emotion: EMOTION.WORRIED, re: /\b(worri|concerned|nabalaka|kabalaka)\b/i, w: 2 },
-    { emotion: EMOTION.ANXIOUS, re: /\b(anxious|anxiety|ginakulbaan)\b/i, w: 2 },
+    { emotion: EMOTION.ANXIOUS, re: /\b(anxious|anxiety|ginakulbaan|kulba|kulbaan\s+ko)\b/i, w: 2 },
     { emotion: EMOTION.PANIC, re: /\b(panic|ginapanik|buligi\s+ko)\b/i, w: 2.5 },
-    { emotion: EMOTION.SAD, re: /\b(sad|lungkot|kasubo|subo)\b/i, w: 2 },
-    { emotion: EMOTION.TIRED, re: /\b(tired|pagod|kapoy|wala\s+na\s+(ko\s+)?kusog)\b/i, w: 2 },
-    { emotion: EMOTION.STRESSED, re: /\b(stress|stressed|overwhelm|grabeng\s+stress)\b/i, w: 2 },
+    { emotion: EMOTION.SAD, re: /\b(sad|lungkot|kasubo|subo|nasubo)\b/i, w: 2 },
+    { emotion: EMOTION.TIRED, re: /\b(tired|pagod|kapoy|ginakapoy|kapoy\s+ko|wala\s+na\s+(ko\s+)?kusog)\b/i, w: 2 },
+    { emotion: EMOTION.BORED, re: /\b(bored|boring|wala\s+gana|wala\s+ko\s+gana)\b/i, w: 2 },
+    { emotion: EMOTION.STRESSED, re: /\b(stress|stressed|na-stress|na\s+stress|grabeng\s+stress)\b/i, w: 2 },
     { emotion: EMOTION.LONELY, re: /\b(lonely|nag-iisa|isa\s+lang|wala\s+(ako|ko)\s+(makakausap|maistoryahan))\b/i, w: 2 },
-    { emotion: EMOTION.THANKFUL, re: /\b(salamat|thank\s*you|thanks|maraming\s+salamat)\b/i, w: 2.5 },
+    { emotion: EMOTION.THANKFUL, re: /\b(salamat|thank\s*you|thanks|maraming\s+salamat|salamat\s+gid)\b/i, w: 2.5 },
     { emotion: EMOTION.HOPELESS, re: /\b(hopeless|going\s+to\s+die|gonna\s+die|want\s+to\s+die|walang\s+pag-asa|wala\s+paglaum|wala\s+na\s+solusyon)\b/i, w: 2 },
+    { emotion: EMOTION.GRIEF, re: /\b(grief|grieving|namatay|passed\s+away|naglubong)\b/i, w: 2.2 },
     { emotion: EMOTION.DISAPPOINTED, re: /\b(disappoint|nadismaya|dismaya)\b/i, w: 2 },
-    { emotion: EMOTION.NERVOUS, re: /\b(nervous|kinakabahan|kabado|kulba)\b/i, w: 2 },
+    { emotion: EMOTION.EMBARRASSED, re: /\b(embarrass|nahihiya|nahuya|hiya\s+ko)\b/i, w: 2 },
+    { emotion: EMOTION.ASHAMED, re: /\b(ashamed|shame|nahuya|nakahuya)\b/i, w: 2 },
+    { emotion: EMOTION.GUILTY, re: /\b(guilty|guilt|nagkasala)\b/i, w: 2 },
+    { emotion: EMOTION.JEALOUS, re: /\b(jealous|naiinggit|inggit|selos)\b/i, w: 2 },
+    { emotion: EMOTION.NERVOUS, re: /\b(nervous|kinakabahan|kabado)\b/i, w: 2 },
+    { emotion: EMOTION.SURPRISED, re: /\b(surprised|shocked|nagulat|wow)\b/i, w: 2 },
+    { emotion: EMOTION.AFFECTIONATE, re: /\b(love\s+you|miss\s+you|malambing|gihigugma)\b/i, w: 2 },
+    { emotion: EMOTION.UNCERTAIN, re: /\b(uncertain|not\s+sure|indi\s+ko\s+kabalo|indi\s+ko\s+bal-an|wala\s+ko\s+kasabot|wala\s+ko\s+kaintindi)\b/i, w: 2.2 },
+    { emotion: EMOTION.CONFUSED, re: /\b(confus|nalibog|nalilito|libog|indi\s+ko\s+masabtan|ano\s+ni)\b/i, w: 2 },
+    { emotion: EMOTION.HAPPY, re: /\b(happy|masaya|masadya|malipayon|malipayon\s+ko|lipay\s+ko)\b/i, w: 2 },
+    { emotion: EMOTION.RELIEVED, re: /\b(relieved|okay\s+lang\s+ko|okay\s+lang|ginhawa)\b/i, w: 2 },
+    { emotion: EMOTION.MIXED, re: /\b(mixed\s+feelings|magkahalong|pero\s+nahadlok|pero\s+kapoy|but\s+scared|but\s+afraid)\b/i, w: 2.3 },
     { emotion: EMOTION.PAIN, re: /\b(sakit\s+ulo|headache|masakit)\b/i, w: 2.5 },
     { emotion: EMOTION.SICK, re: /\b(hilanat|lagnat|fever|sick|sipon|ubo|gasuka)\b/i, w: 2.5 },
     { emotion: EMOTION.CRYING, re: /\b(crying|umiiyak|naga\s*hilib)\b/i, w: 2 },
@@ -227,7 +268,36 @@
     { emotion: EMOTION.HOPELESS, re: /\b(ayaw\s+ko\s+mabuhay|hopeless|walang\s+pag-asa|wala\s+paglaum)\b/i, w: 3 },
   ];
 
-  /** Short panic phrases that must not match inside longer questions */
+  function scoreEmojis(text, scores) {
+    const raw = String(text || '');
+    if (/😭|🥺/.test(raw)) {
+      scores[EMOTION.CRYING] = (scores[EMOTION.CRYING] || 0) + 2.4;
+      scores[EMOTION.SAD] = (scores[EMOTION.SAD] || 0) + 2;
+    }
+    if (/😔|😞/.test(raw)) scores[EMOTION.SAD] = (scores[EMOTION.SAD] || 0) + 2;
+    if (/😊|😄|🥰|❤️|💕/.test(raw)) scores[EMOTION.HAPPY] = (scores[EMOTION.HAPPY] || 0) + 2;
+    if (/😰|😨|😱/.test(raw)) {
+      scores[EMOTION.ANXIOUS] = (scores[EMOTION.ANXIOUS] || 0) + 2;
+      scores[EMOTION.AFRAID] = (scores[EMOTION.AFRAID] || 0) + 1.8;
+    }
+    if (/😠|😡/.test(raw)) scores[EMOTION.ANGRY] = (scores[EMOTION.ANGRY] || 0) + 2;
+    if (/😳/.test(raw)) scores[EMOTION.EMBARRASSED] = (scores[EMOTION.EMBARRASSED] || 0) + 2;
+  }
+
+  function scoreExpressiveTokens(norm, scores) {
+    if (/^(hay|haay|sigh)\b/i.test(norm)) {
+      scores[EMOTION.SAD] = (scores[EMOTION.SAD] || 0) + 1.5;
+      scores[EMOTION.WORRIED] = (scores[EMOTION.WORRIED] || 0) + 1.2;
+    }
+    if (/^(grabe|grabeh)\b/i.test(norm) && norm.length <= 16) {
+      scores[EMOTION.SURPRISED] = (scores[EMOTION.SURPRISED] || 0) + 1.4;
+      scores[EMOTION.STRESSED] = (scores[EMOTION.STRESSED] || 0) + 1.2;
+    }
+    if (/hahaha|hehehe|lol\b/i.test(norm) && !/\b(sad|cry|subo|kasubo)\b/i.test(norm)) {
+      scores[EMOTION.HAPPY] = (scores[EMOTION.HAPPY] || 0) + 1.2;
+    }
+  }
+
   const GENERIC_PANIC_PHRASES = new Set([
     'help', 'help me', 'need help', 'need help now', 'buligi ko', 'help now',
   ]);
@@ -244,8 +314,17 @@
   }
 
   function normalize(text) {
-    return String(text || '')
-      .toLowerCase()
+    const expanded = String(text || '').toLowerCase()
+      .replace(/\bd\s+nko\b/g, 'indi ko')
+      .replace(/\bd\s+nako\b/g, 'indi ko')
+      .replace(/\bd\s+ko\b/g, 'indi ko')
+      .replace(/\bdko\b/g, 'indi ko')
+      .replace(/\bwla\s+ko\b/g, 'wala ko')
+      .replace(/\bwla\b/g, 'wala')
+      .replace(/\bndi\s+ko\b/g, 'indi ko')
+      .replace(/\bginhwa\b/g, 'ginhawa')
+      .replace(/\bbudlay\s+ginhwa\b/g, 'budlay ginhawa');
+    return expanded
       .replace(/[^a-z0-9\s]/g, ' ')
       .replace(/\s+/g, ' ')
       .trim();
@@ -413,6 +492,8 @@
     }
 
     const scores = scoreFromDataset(raw);
+    scoreEmojis(raw, scores);
+    scoreExpressiveTokens(normalize(raw), scores);
 
     for (const rule of BOOST_RULES) {
       if (rule.re.test(raw)) {
@@ -450,7 +531,9 @@
     if (e === EMOTION.HAPPY || e === EMOTION.RELIEVED || e === EMOTION.EXCITED) return e;
     if ([EMOTION.PANIC, EMOTION.HOPELESS, EMOTION.ANXIOUS, EMOTION.NERVOUS,
       EMOTION.WORRIED, EMOTION.STRESSED, EMOTION.OVERWHELMED, EMOTION.SAD,
-      EMOTION.CRYING, EMOTION.LONELY, EMOTION.AFRAID].includes(e)) {
+      EMOTION.CRYING, EMOTION.LONELY, EMOTION.AFRAID, EMOTION.GRIEF,
+      EMOTION.EMBARRASSED, EMOTION.ASHAMED, EMOTION.GUILTY, EMOTION.JEALOUS,
+      EMOTION.IRRITATED, EMOTION.BORED, EMOTION.UNCERTAIN, EMOTION.MIXED].includes(e)) {
       return 'distress_support';
     }
     if (e === EMOTION.PAIN || e === EMOTION.SICK) return 'pain_sick';

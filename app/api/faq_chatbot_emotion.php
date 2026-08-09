@@ -40,8 +40,9 @@ if (!$rl['allowed']) {
 
 $nlp = FaqChatbotNlpPipeline::process($pdo, $text, $lang);
 
-$prev = $_SESSION['faq_emotion_context'] ?? null;
-$result = FaqEmotionEngine::analyze($nlp['english_text'], $nlp['reply_lang'], $intent !== '' ? $intent : null, is_array($prev) ? $prev : null);
+$prev = FaqChatbotConversationMemory::emotionContext();
+$contextualNlp = FaqChatbotConversationMemory::contextualMatchText($text, $nlp['english_text']);
+$result = FaqEmotionEngine::analyze($text, $nlp['reply_lang'], $intent !== '' ? $intent : null, $prev, $contextualNlp);
 
 if (!empty($result['emotion'])) {
     $_SESSION['faq_emotion_context'] = [

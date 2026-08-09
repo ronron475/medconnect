@@ -17,16 +17,24 @@ JS_OUT = ROOT / 'public' / 'assets' / 'js' / 'faq-chatbot' / 'emotion_intent_dat
 TARGET = 10_000
 
 PRIORITY = [
-    'emergency', 'panic', 'hopeless', 'afraid', 'angry', 'frustrated', 'anxious',
-    'nervous', 'worried', 'stressed', 'tired', 'sad', 'lonely', 'disappointed',
-    'confused', 'curious', 'excited', 'relieved', 'thankful', 'happy',
+    'emergency', 'panic', 'hopeless', 'afraid', 'angry', 'frustrated', 'irritated', 'anxious',
+    'nervous', 'worried', 'stressed', 'tired', 'bored', 'sad', 'lonely', 'disappointed',
+    'grief', 'embarrassed', 'ashamed', 'guilty', 'jealous', 'confused', 'uncertain', 'mixed',
+    'curious', 'excited', 'surprised', 'affectionate', 'relieved', 'thankful', 'happy',
 ]
 
 # ── Seed from hand-curated CSV ──
 def load_seed():
     rows = []
-    if CSV_PATH.exists():
-        with CSV_PATH.open(encoding='utf-8') as f:
+    seed_paths = [
+        CSV_PATH,
+        ROOT / 'data' / 'nlp' / 'emotion_intent_phrases_hil_expansion.csv',
+        ROOT / 'data' / 'nlp' / 'emotion_hiligaynon_extra_phrases.csv',
+    ]
+    for path in seed_paths:
+        if not path.exists():
+            continue
+        with path.open(encoding='utf-8') as f:
             for r in csv.DictReader(f):
                 rows.append({'e': r['emotion'], 'p': r['phrase'].strip(), 'l': r['language']})
     return rows
@@ -48,7 +56,63 @@ BANKS = {
             "masadya ko", "okay na ko", "nami pamatyag ko", "lipay ko", "maayo gid",
             "maayo na ko", "nami gid", "lipay na ko", "maayo ang adlaw ko",
             "maayo ang pamatyag ko", "okay na gid", "maayo na ang tanan",
+            "malipayon ko", "okay lang ko",
         ],
+    },
+    'grief': {
+        'en': ["grieving", "passed away", "someone died", "loss of a loved one", "mourning"],
+        'fil': ["namatay", "naglubong", "nawala ang mahal ko", "namatay ang"],
+        'hil': ["namatay", "naglubong", "namatay ang", "nawala ang ginhigugma ko"],
+    },
+    'embarrassed': {
+        'en': ["embarrassed", "so embarrassed", "feel embarrassed", "ashamed to ask"],
+        'fil': ["nahihiya ako", "nahihiya", "hiya ako"],
+        'hil': ["nahuya ko", "nahuya", "hiya ko"],
+    },
+    'ashamed': {
+        'en': ["ashamed", "feel ashamed", "shame"],
+        'fil': ["nahihiya ako", "nakahiya", "may hiya"],
+        'hil': ["nahuya ko", "nakahuya", "may hiya"],
+    },
+    'guilty': {
+        'en': ["guilty", "feel guilty", "my fault"],
+        'fil': ["guilty ako", "may guilt", "kasalanan ko"],
+        'hil': ["guilty ko", "may guilt", "kasalanan ko"],
+    },
+    'bored': {
+        'en': ["bored", "so bored", "nothing to do", "unmotivated"],
+        'fil': ["bored ako", "wala gana", "walang gana"],
+        'hil': ["bored ko", "wala gana", "wala ko gana"],
+    },
+    'irritated': {
+        'en': ["irritated", "so annoying", "annoyed", "irritating"],
+        'fil': ["nainis ako", "nakainis", "inis na ako"],
+        'hil': ["lain gid ya", "lain gid", "nainis ko", "nakainis ko"],
+    },
+    'jealous': {
+        'en': ["jealous", "feeling jealous", "envy"],
+        'fil': ["naiinggit ako", "selos ako", "inggit"],
+        'hil': ["naiinggit ko", "selos ko", "inggit"],
+    },
+    'surprised': {
+        'en': ["surprised", "shocked", "wow", "can't believe"],
+        'fil': ["nagulat ako", "grabe", "wow"],
+        'hil': ["nagulat ko", "grabe", "wow gid"],
+    },
+    'affectionate': {
+        'en': ["love you", "miss you", "care about you", "warm feelings"],
+        'fil': ["miss ko kayo", "mahal ko kayo", "malambing"],
+        'hil': ["miss ko kamo", "gihigugma ko", "malambing"],
+    },
+    'uncertain': {
+        'en': ["not sure", "uncertain", "don't know", "unsure"],
+        'fil': ["hindi ko alam", "hindi sigurado", "di ko sure"],
+        'hil': ["indi ko kabalo", "indi ko bal-an", "wala ko kasabot", "wala ko kaintindi", "ano ni"],
+    },
+    'mixed': {
+        'en': ["mixed feelings", "conflicted", "but scared", "but tired", "but sad"],
+        'fil': ["magkahalong damdamin", "pero natatakot", "pero pagod"],
+        'hil': ["magkahalong pamatyag", "pero nahadlok ko", "pero kapoy ko", "pero sad ko"],
     },
     'thankful': {
         'en': [
@@ -106,6 +170,7 @@ BANKS = {
         'hil': [
             "kaakig ko", "kapoy na ko sini", "hindi gid mag-login", "indi mag-work",
             "frustrated gid ko", "indi gid mag function", "kapoy na", "akig ko",
+            "nabudlayan ko", "na-stress ko", "na stress ko",
         ],
     },
     'worried': {
@@ -125,7 +190,7 @@ BANKS = {
     'anxious': {
         'en': ["anxious", "i'm anxious", "feeling anxious", "anxiety", "stressed and anxious", "on edge"],
         'fil': ["ginakulbaan ko", "kinakabahan ako", "anxious ako", "may anxiety ako", "kaba na kaba"],
-        'hil': ["ginakulbaan ko", "daw indi ko mapanatag", "anxious ko", "kulba gid ko", "kaba na gid"],
+        'hil': ["ginakulbaan ko", "daw indi ko mapanatag", "anxious ko", "kulba gid ko", "kaba na gid", "kulbaan ko"],
     },
     'nervous': {
         'en': ["nervous", "i'm nervous", "feeling nervous", "jittery", "on pins and needles"],
@@ -135,7 +200,7 @@ BANKS = {
     'sad': {
         'en': ["sad", "i'm sad", "depressed", "feeling down", "so sad", "feeling low", "unhappy"],
         'fil': ["malungkot ako", "depressed ako", "nalulungkot ako", "sad ako", "down ako", "subo"],
-        'hil': ["subo ko", "kasubo gid", "malungkot ko", "sad ko", "daw gusto ko maghibi", "naguiliran ko"],
+        'hil': ["subo ko", "kasubo gid", "malungkot ko", "sad ko", "daw gusto ko maghibi", "naguiliran ko", "nasubo ko"],
     },
     'lonely': {
         'en': ["lonely", "i feel lonely", "i'm alone", "so lonely", "feel alone", "no one to talk to"],
@@ -145,7 +210,7 @@ BANKS = {
     'afraid': {
         'en': ["scared", "i'm scared", "afraid", "frightened", "so scared", "i'm afraid"],
         'fil': ["natakot ako", "takot ako", "nahadlok ako", "afraid ako", "natatakot ako"],
-        'hil': ["nahadlok ko", "kulba gid ko", "basi delikado ni", "takot ko", "hadlok ko"],
+        'hil': ["nahadlok ko", "kulba gid ko", "basi delikado ni", "takot ko", "hadlok ko", "nahadlok gid ko"],
     },
     'angry': {
         'en': ["angry", "i'm angry", "this system is terrible", "so angry", "furious", "mad"],
@@ -165,7 +230,7 @@ BANKS = {
     'tired': {
         'en': ["tired", "exhausted", "so tired", "no energy", "worn out", "drained"],
         'fil': ["pagod na ako", "wala na akong lakas", "exhausted na", "pagod", "walang energy"],
-        'hil': ["kapoy ko", "kapoy na gid ko", "wala na ko energy", "pagod gid ko", "kapoy na"],
+        'hil': ["kapoy ko", "kapoy na gid ko", "wala na ko energy", "pagod gid ko", "kapoy na", "ginakapoy ko"],
     },
     'hopeless': {
         'en': ["hopeless", "no hope", "feel hopeless", "giving up", "nothing will work"],

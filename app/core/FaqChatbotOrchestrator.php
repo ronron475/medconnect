@@ -76,19 +76,20 @@ final class FaqChatbotOrchestrator
         $history = $this->convRepo->recentMessages($conversationId, 8);
         $memoryBoost = FaqChatbotConversationMemory::contextBoostText();
         $contextText = trim($this->mergeContextText($history, $nlpText) . ' ' . $memoryBoost);
-
-        $matchText = $nlpText;
-        if (FaqChatbotConversationMemory::isFollowUpUtterance($text) && $memoryBoost !== '') {
-            $matchText = trim($nlpText . ' ' . $memoryBoost);
-        }
+        $matchText = FaqChatbotConversationMemory::contextualMatchText($text, $nlpText);
 
         $emergency = FaqChatbotEmergencyDetector::detect($contextText . ' ' . $text);
         $intentPack = FaqChatbotIntentRecognizer::recognize($matchText);
         $intent = $intentPack['intent'];
         $flowKey = $intentPack['flow_key'];
 
-        $prev = $_SESSION['faq_emotion_context'] ?? null;
-        $emotionResult = FaqEmotionEngine::analyze($matchText, $replyLang, $intent, is_array($prev) ? $prev : null);
+        $emotionResult = FaqEmotionEngine::analyze(
+            $text,
+            $replyLang,
+            $intent,
+            FaqChatbotConversationMemory::emotionContext(),
+            $matchText
+        );
         $canonical = FaqChatbotStandardEmotion::canonicalize($emotionResult['emotion'] ?? null);
 
         if (!empty($emotionResult['emotion'])) {

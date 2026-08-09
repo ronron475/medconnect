@@ -141,13 +141,70 @@ final class FaqChatbotConversationMemory
         if ($t === '') {
             return false;
         }
-        if (preg_match('/^(yes|yeah|yep|ok|okay|sure|please|sige|oo|hoo|ano\s+sunod|and\s+then|then\s+what|how|paano|ano|what\s+about|tell\s+me\s+more|more|continue|go\s+on|that|this|same)\??$/ui', $t)) {
+        if (preg_match('/^(yes|yeah|yep|ok|okay|sure|please|sige|oo|hoo|opo|oo\s+gid|amo\s+gid|amo|oo\s+po|yes\s+po|ano\s+sunod|and\s+then|then\s+what|how|paano|ano|what\s+about|tell\s+me\s+more|more|continue|go\s+on|that|this|same|okay\s+lang|okay\s+lang\s+ko|sige\s+lang|oo\s+man|amo\s+man|hoo\s+man|pwede|pwede\s+man|sige\s+po)\??$/ui', $t)) {
             return true;
         }
-        if (preg_match('/\b(about\s+that|regarding\s+that|same\s+issue|as\s+i\s+said|like\s+i\s+said|sunod|liwat|about\s+it)\b/ui', $t)) {
+        if (preg_match('/\b(about\s+that|regarding\s+that|same\s+issue|as\s+i\s+said|like\s+i\s+said|sunod|liwat|about\s+it|amo\s+gid|amo\s+man|amo\s+na|pero|but|kay|tungkol\s+sa)\b/ui', $t)) {
             return true;
         }
-        return mb_strlen($t) <= 18 && preg_match('/^(yes|no|sige|pwede|please|help|bulig|tabang)\b/ui', $t);
+        if (preg_match('/^(indi\s+ko\s+gusto|hindi\s+ko\s+gusto|wala\s+ko\s+kasabot|indi\s+ko\s+kabalo|indi\s+ko\s+masabtan)\b/ui', $t)) {
+            return true;
+        }
+        if (preg_match('/^(pero|but)\s+(nahadlok|scared|afraid|kapoy|tired|sad|kasubo|nabalaka|worried|akig|angry)\b/ui', $t)) {
+            return true;
+        }
+        return mb_strlen($t) <= 22 && preg_match('/^(yes|no|sige|pwede|please|help|bulig|tabang|oo|hindi|indi|wala|grabe|hay)\b/ui', $t);
+    }
+
+    /**
+     * Enrich short/contextual messages with session memory for NLP matching.
+     */
+    public static function contextualMatchText(string $text, string $nlpText): string
+    {
+        $mem = self::get();
+        $boost = self::contextBoostText();
+        $base = trim($nlpText);
+
+        if (!self::isFollowUpUtterance($text) && mb_strlen(FaqEmotionEngine::normalizeText($text)) > 28) {
+            return $boost !== '' ? trim($base . ' ' . $boost) : $base;
+        }
+
+        $parts = [];
+        if ($boost !== '') {
+            $parts[] = $boost;
+        }
+        $turns = is_array($mem['turns']) ? $mem['turns'] : [];
+        foreach (array_slice($turns, -4) as $turn) {
+            if (($turn['role'] ?? '') === 'user' && !empty($turn['text'])) {
+                $parts[] = (string) $turn['text'];
+            }
+        }
+        $parts[] = $text;
+        return trim(implode(' ', $parts));
+    }
+
+    /**
+     * @return array{emotion?: string|null, tone?: string, at?: int, topic?: ?string, intent?: ?string}
+     */
+    public static function emotionContext(): array
+    {
+        $mem = self::get();
+        $ctx = $_SESSION['faq_emotion_context'] ?? null;
+        if (!is_array($ctx)) {
+            $ctx = [];
+        }
+        if (!empty($mem['emotion_detail'])) {
+            $ctx['emotion'] = (string) $mem['emotion_detail'];
+        } elseif (!empty($mem['emotion'])) {
+            $ctx['emotion'] = (string) $mem['emotion'];
+        }
+        if (!empty($mem['current_topic'])) {
+            $ctx['topic'] = (string) $mem['current_topic'];
+        }
+        if (!empty($mem['intent'])) {
+            $ctx['intent'] = (string) $mem['intent'];
+        }
+        return $ctx;
     }
 
     /**
