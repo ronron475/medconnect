@@ -20,10 +20,10 @@ $booking_today_ymd   = date('Y-m-d');
 $booking_today_label = date('l, M j, Y');
 
 $triage_history = [];
-$registration_complaint_reference = '';
+$registration_chief_complaint = '';
 $pending_reg = patient_registration_load_pending_complaint($pdo, (int) $uid);
 if ($pending_reg['complaint'] !== '') {
-    $registration_complaint_reference = $pending_reg['complaint'];
+    $registration_chief_complaint = $pending_reg['complaint'];
 }
 if ($pdo->query("SHOW TABLES LIKE 'triage_results'")->rowCount()) {
     $s = $pdo->prepare('SELECT level, symptoms, assessed_at, chief_complaint, urgency_label, triage_level FROM triage_results WHERE patient_id=? ORDER BY assessed_at DESC');
@@ -132,7 +132,7 @@ $page_title = 'Book Consultation';
   <script>window.BOOKING_ASSIGNED_HAS_SLOTS = <?= json_encode($locked_assigned_has_slots) ?>;</script>
   <script>window.BOOKING_ALTERNATE_AVAILABLE = <?= json_encode($locked_alternate_available) ?>;</script>
   <script>window.TRIAGE_REVIEW_FIRST_ALLOWED = <?= json_encode(empty($review_booking_ctx['locked'])) ?>;</script>
-  <script>window.REGISTRATION_COMPLAINT_REFERENCE = <?= json_encode($registration_complaint_reference) ?>;</script>
+  <script>window.REGISTRATION_COMPLAINT_REFERENCE = <?= json_encode($registration_chief_complaint) ?>;</script>
   <?php if (($pending_reg['urgency'] ?? '') === 'EMERGENCY'): ?>
   <script>
   try { sessionStorage.setItem('medconnect_block_telemedicine', '1'); } catch (_) {}

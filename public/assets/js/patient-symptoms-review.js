@@ -133,7 +133,10 @@
     e.preventDefault();
     var complaint = (form.querySelector('#pdashSymptomsComplaint')?.value || '').trim();
     if (!complaint) {
-      showAlert('error', 'Please enter your current chief complaint for doctor review.');
+      var locked = document.getElementById('pdashSymptomsComplaint')?.hasAttribute('readonly');
+      showAlert('error', locked
+        ? 'Your chief complaint from registration is missing. Please contact the health office.'
+        : 'Please describe your symptoms or concern.');
       return;
     }
 

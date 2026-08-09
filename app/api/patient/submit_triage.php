@@ -30,7 +30,8 @@ triage_assessment_ensure_schema($pdo);
 BhwPatientWorkflow::ensure_schema($pdo);
 
 $symptoms   = $_POST['symptoms'] ?? [];
-$complaint  = trim((string) ($_POST['chief_complaint'] ?? ''));
+$submittedComplaint = trim((string) ($_POST['chief_complaint'] ?? ''));
+$complaint  = patient_portal_resolve_chief_complaint($pdo, $patient_id, $submittedComplaint);
 $slot_id    = (int) ($_POST['slot_id'] ?? 0);
 
 if (!is_array($symptoms)) {

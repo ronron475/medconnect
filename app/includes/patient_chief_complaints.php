@@ -112,3 +112,16 @@ function patient_chief_complaint_registration_reference(PDO $pdo, int $patientId
 
     return trim((string) ($pending['complaint'] ?? ''));
 }
+
+/**
+ * Use registration chief complaint when on file; otherwise accept submitted text (skipped at registration).
+ */
+function patient_portal_resolve_chief_complaint(PDO $pdo, int $patientId, string $submittedComplaint): string
+{
+    $registrationComplaint = patient_chief_complaint_registration_reference($pdo, $patientId);
+    if ($registrationComplaint !== '') {
+        return $registrationComplaint;
+    }
+
+    return trim($submittedComplaint);
+}

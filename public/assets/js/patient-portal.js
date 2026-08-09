@@ -1010,7 +1010,7 @@
       const reviewFirstAllowed = window.TRIAGE_REVIEW_FIRST_ALLOWED === true;
 
       if (!complaint) {
-        showTriageAlert(alertEl, 'error', 'Please enter your current chief complaint for this visit.');
+        showTriageAlert(alertEl, 'error', 'Your chief complaint from registration is missing. Please contact the health office.');
         return;
       }
 

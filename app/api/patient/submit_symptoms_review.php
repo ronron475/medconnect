@@ -14,7 +14,8 @@ Api::requirePost();
 Api::requireCsrf();
 
 $patientId = (int) $_SESSION['user_id'];
-$complaint = trim((string) ($_POST['chief_complaint'] ?? ''));
+$submittedComplaint = trim((string) ($_POST['chief_complaint'] ?? ''));
+$complaint = patient_portal_resolve_chief_complaint($pdo, $patientId, $submittedComplaint);
 $symptoms = $_POST['symptoms'] ?? [];
 if (!is_array($symptoms)) {
     $symptoms = [];

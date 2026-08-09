@@ -2,11 +2,12 @@
 /**
  * Book consultation + visit history (AI runs silently — not shown to patients).
  * Expects: $active_consultation, $booking_providers, $booking_today_ymd, $booking_today_label,
- *          $triage_history, $registration_complaint_reference (optional)
+ *          $triage_history, $registration_chief_complaint (optional)
  */
 require_once __DIR__ . '/triage_helpers.php';
 
-$registration_complaint_reference = trim((string) ($registration_complaint_reference ?? ''));
+$registration_chief_complaint = trim((string) ($registration_chief_complaint ?? ''));
+$chief_complaint_locked = $registration_chief_complaint !== '';
 $review_booking_ctx = $review_booking_ctx ?? ['locked' => false, 'provider_id' => 0, 'provider_name' => ''];
 $locked_provider_id = (int) ($locked_provider_id ?? 0);
 $locked_provider_name = trim((string) ($locked_provider_name ?? ''));
@@ -60,33 +61,25 @@ $locked_alternate_available = !empty($locked_alternate_available);
     <input type="hidden" name="csrf_token" value="<?= htmlspecialchars((string) ($_SESSION['csrf_token'] ?? ''), ENT_QUOTES, 'UTF-8') ?>">
     <div class="form-group">
       <label class="form-label" for="chief_complaint">
-        Current Chief Complaint <span class="text-muted">(required)</span>
+        Chief Complaint<?= $chief_complaint_locked ? ' <span class="text-muted">(from registration)</span>' : '' ?>
       </label>
       <textarea
         id="chief_complaint"
         name="chief_complaint"
         class="form-control"
-        rows="3"
-        placeholder="Describe your current health concern for this visit…"
+        rows="<?= $chief_complaint_locked ? 2 : 3 ?>"
+        placeholder="<?= $chief_complaint_locked ? 'Your registered health concern…' : 'Briefly describe why you need this visit…' ?>"
         maxlength="500"
-        required
-      ></textarea>
+        <?= $chief_complaint_locked ? 'readonly aria-readonly="true"' : 'required' ?>
+      ><?= htmlspecialchars($registration_chief_complaint) ?></textarea>
       <p class="text-xs text-muted" style="margin-top:6px;">
-        Enter what you want your doctor to address during this consultation.
+        <?php if ($chief_complaint_locked): ?>
+        This is the chief complaint from your registration. It cannot be changed and will be reviewed by your doctor.
+        <?php else: ?>
+        Briefly describe why you need this visit.
+        <?php endif; ?>
       </p>
     </div>
-
-    <?php if ($registration_complaint_reference !== ''): ?>
-    <div class="form-group complaint-reference-group">
-      <label class="form-label">Registration Complaint <span class="text-muted">(reference only)</span></label>
-      <div class="complaint-reference-box" id="registrationComplaintReference">
-        <?= nl2br(htmlspecialchars($registration_complaint_reference)) ?>
-      </div>
-      <p class="text-xs text-muted" style="margin-top:6px;">
-        This is what you shared when you created your account. It is kept for reference and is not used as your current complaint.
-      </p>
-    </div>
-    <?php endif; ?>
 
     <div class="form-group complaint-evidence-group">
       <label class="form-label" for="supporting_evidence">
