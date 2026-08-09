@@ -8,16 +8,151 @@ declare(strict_types=1);
 require_once __DIR__ . '/provider_activity.php';
 require_once __DIR__ . '/provider_triage_cases.php';
 
+function provider_parse_dashboard_period(string $input): string
+{
+    $allowed = ['today', 'week', 'month', 'year'];
+    $period = strtolower(trim($input));
+
+    return in_array($period, $allowed, true) ? $period : 'week';
+}
+
+function provider_dashboard_period_label(string $period): string
+{
+    return match ($period) {
+        'today' => 'Today',
+        'month' => 'This month',
+        'year'  => 'This year',
+        default => 'This week',
+    };
+}
+
+function provider_dashboard_total_label(string $period): string
+{
+    return match ($period) {
+        'today' => 'today',
+        'month' => 'this month',
+        'year'  => 'this year',
+        default => 'this week',
+    };
+}
+
+function provider_count_consultations_on_date(PDO $pdo, int $providerId, string $date): int
+{
+    try {
+        $stmt = $pdo->prepare('SELECT COUNT(*) FROM consultations WHERE provider_id = ? AND consult_date = ?');
+        $stmt->execute([$providerId, $date]);
+
+        return (int) $stmt->fetchColumn();
+    } catch (Throwable $e) {
+        return 0;
+    }
+}
+
+/**
+ * @return array{
+ *   period: string,
+ *   period_label: string,
+ *   total_label: string,
+ *   series: list<array{label:string,date:string,count:int,is_today:bool}>,
+ *   total: int
+ * }
+ */
+function provider_dashboard_consultation_chart(PDO $pdo, int $providerId, string $period): array
+{
+    $period = provider_parse_dashboard_period($period);
+    $today = date('Y-m-d');
+    $series = [];
+
+    switch ($period) {
+        case 'today':
+            $series[] = [
+                'label'    => 'Today',
+                'date'     => date('M j'),
+                'count'    => provider_count_consultations_on_date($pdo, $providerId, $today),
+                'is_today' => true,
+            ];
+            break;
+
+        case 'month':
+            $cursor = date('Y-m-01');
+            while ($cursor <= $today) {
+                $dayCount = (int) date('t', strtotime($cursor . ' 00:00:00'));
+                $series[] = [
+                    'label'    => $dayCount > 14 ? date('M j', strtotime($cursor)) : date('D', strtotime($cursor)),
+                    'date'     => date('M j', strtotime($cursor)),
+                    'count'    => provider_count_consultations_on_date($pdo, $providerId, $cursor),
+                    'is_today' => $cursor === $today,
+                ];
+                $cursor = date('Y-m-d', strtotime($cursor . ' +1 day'));
+            }
+            break;
+
+        case 'year':
+            $year = (int) date('Y');
+            $currentMonth = (int) date('n');
+            for ($month = 1; $month <= $currentMonth; $month++) {
+                $monthStart = sprintf('%04d-%02d-01', $year, $month);
+                $monthEnd = date('Y-m-t', strtotime($monthStart));
+                if ($monthEnd > $today) {
+                    $monthEnd = $today;
+                }
+                $count = 0;
+                try {
+                    $stmt = $pdo->prepare('
+                        SELECT COUNT(*)
+                        FROM consultations
+                        WHERE provider_id = ? AND consult_date >= ? AND consult_date <= ?
+                    ');
+                    $stmt->execute([$providerId, $monthStart, $monthEnd]);
+                    $count = (int) $stmt->fetchColumn();
+                } catch (Throwable $e) {
+                    $count = 0;
+                }
+                $series[] = [
+                    'label'    => date('M', strtotime($monthStart)),
+                    'date'     => date('M Y', strtotime($monthStart)),
+                    'count'    => $count,
+                    'is_today' => $month === $currentMonth,
+                ];
+            }
+            break;
+
+        case 'week':
+        default:
+            for ($i = 6; $i >= 0; $i--) {
+                $date = date('Y-m-d', strtotime("-{$i} days"));
+                $series[] = [
+                    'label'    => date('D', strtotime($date)),
+                    'date'     => date('M j', strtotime($date)),
+                    'count'    => provider_count_consultations_on_date($pdo, $providerId, $date),
+                    'is_today' => ($i === 0),
+                ];
+            }
+            break;
+    }
+
+    return [
+        'period'       => $period,
+        'period_label' => provider_dashboard_period_label($period),
+        'total_label'  => provider_dashboard_total_label($period),
+        'series'       => $series,
+        'total'        => array_sum(array_column($series, 'count')),
+    ];
+}
+
 /**
  * @return array{
  *   stats: array<string,int>,
+ *   chart_period: string,
+ *   chart_period_label: string,
+ *   chart_total_label: string,
  *   week_chart: list<array{label:string,date:string,count:int,is_today:bool}>,
  *   week_total: int,
  *   queue: list<array<string,mixed>>,
  *   activity: list<array{msg:string,time:string,icon:string}>
  * }
  */
-function provider_dashboard_live_payload(PDO $pdo, int $providerId): array
+function provider_dashboard_live_payload(PDO $pdo, int $providerId, string $period = 'week'): array
 {
     $stats = [
         'appointments' => 0,
@@ -101,25 +236,9 @@ function provider_dashboard_live_payload(PDO $pdo, int $providerId): array
         // keep zeros
     }
 
-    $weekChart = [];
-    for ($i = 6; $i >= 0; $i--) {
-        $date = date('Y-m-d', strtotime("-{$i} days"));
-        $count = 0;
-        try {
-            $cStmt = $pdo->prepare('SELECT COUNT(*) FROM consultations WHERE provider_id = ? AND consult_date = ?');
-            $cStmt->execute([$providerId, $date]);
-            $count = (int) $cStmt->fetchColumn();
-        } catch (Throwable $e) {
-            $count = 0;
-        }
-        $weekChart[] = [
-            'label'    => date('D', strtotime($date)),
-            'date'     => date('M j', strtotime($date)),
-            'count'    => $count,
-            'is_today' => ($i === 0),
-        ];
-    }
-    $weekTotal = array_sum(array_column($weekChart, 'count'));
+    $chart = provider_dashboard_consultation_chart($pdo, $providerId, $period);
+    $weekChart = $chart['series'];
+    $weekTotal = $chart['total'];
 
     $queue = [];
     try {
@@ -202,11 +321,14 @@ function provider_dashboard_live_payload(PDO $pdo, int $providerId): array
     }
 
     return [
-        'stats'      => $stats,
-        'week_chart' => $weekChart,
-        'week_total' => $weekTotal,
-        'queue'      => $queue,
-        'activity'   => $activity,
-        'updated_at' => date('c'),
+        'stats'              => $stats,
+        'chart_period'       => $chart['period'],
+        'chart_period_label' => $chart['period_label'],
+        'chart_total_label'  => $chart['total_label'],
+        'week_chart'         => $weekChart,
+        'week_total'         => $weekTotal,
+        'queue'              => $queue,
+        'activity'           => $activity,
+        'updated_at'         => date('c'),
     ];
 }

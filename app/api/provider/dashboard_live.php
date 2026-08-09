@@ -18,9 +18,10 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') !== 'GET') {
 }
 
 $providerId = (int) $_SESSION['user_id'];
+$period = provider_parse_dashboard_period($_GET['period'] ?? 'week');
 
 try {
-    Api::success(provider_dashboard_live_payload($pdo, $providerId));
+    Api::success(provider_dashboard_live_payload($pdo, $providerId, $period));
 } catch (Throwable $e) {
     Api::error('Could not load dashboard data.', 500);
 }

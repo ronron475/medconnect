@@ -12,6 +12,16 @@
   var lastFingerprint = '';
   var timer = null;
   var inFlight = false;
+  var chartPeriod = 'week';
+
+  function periodSelect() {
+    return document.getElementById('provDashChartPeriod');
+  }
+
+  function currentPeriod() {
+    var sel = periodSelect();
+    return sel && sel.value ? sel.value : chartPeriod;
+  }
 
   function assetBase() {
     return (document.body && document.body.dataset.assetBase) || '';
@@ -69,16 +79,34 @@
     if (urgentVal) urgentVal.textContent = String(urgent);
   }
 
-  function updateChart(weekChart, weekTotal) {
-    var badge = document.querySelector('[data-live-week-total]');
-    if (badge) badge.textContent = (weekTotal || 0) + ' this week';
+  function updateChart(weekChart, weekTotal, meta) {
+    meta = meta || {};
+    var totalLabel = meta.chart_total_label || 'this week';
+    var periodLabel = meta.chart_period_label || 'This week';
+    var period = meta.chart_period || currentPeriod();
+
+    var badge = document.querySelector('[data-live-chart-total]');
+    if (badge) badge.textContent = (weekTotal || 0) + ' ' + totalLabel;
+
+    var sub = document.querySelector('[data-live-chart-sub]');
+    if (sub) {
+      sub.textContent = 'Consultation activity — ' + String(periodLabel).toLowerCase() + ' · auto-refreshes';
+    }
+
+    var hint = document.querySelector('[data-live-chart-hint]');
+    if (hint) {
+      hint.textContent = period === 'year' ? 'Hover bars for monthly totals' : 'Hover bars for counts';
+    }
 
     var dataEl = document.getElementById('provWeekChartData');
     if (dataEl) dataEl.textContent = JSON.stringify(weekChart || []);
 
     var legend = document.querySelector('[data-live-week-today]');
     if (legend && weekChart && weekChart.length) {
-      legend.textContent = (weekChart[weekChart.length - 1].date || 'Today') + ' = today';
+      var lastPoint = weekChart[weekChart.length - 1];
+      legend.textContent = period === 'year'
+        ? (lastPoint.date || periodLabel)
+        : ((lastPoint.date || 'Today') + ' = today');
     }
 
     var canvas = document.querySelector('canvas[data-mc-weekly-bar="provWeekChartData"]');
@@ -177,6 +205,7 @@
   function fingerprint(payload) {
     try {
       return JSON.stringify({
+        p: payload.chart_period || currentPeriod(),
         s: payload.stats,
         w: payload.week_chart,
         q: (payload.queue || []).map(function (x) { return [x.id, x.raw_status, x.session_allowed]; }),
@@ -196,7 +225,7 @@
     }
     lastFingerprint = fp;
     updateMetrics(payload.stats || {});
-    updateChart(payload.week_chart || [], payload.week_total || 0);
+    updateChart(payload.week_chart || [], payload.week_total || 0, payload);
     updateQueue(payload.queue || []);
     updateActivity(payload.activity || []);
     touchSync(payload.updated_at);
@@ -216,7 +245,8 @@
     if (inFlight) return;
     inFlight = true;
     try {
-      var res = await fetch(assetBase() + API_PATH + '?_=' + Date.now(), {
+      var url = assetBase() + API_PATH + '?period=' + encodeURIComponent(currentPeriod()) + '&_=' + Date.now();
+      var res = await fetch(url, {
         credentials: 'same-origin',
         cache: 'no-store',
         headers: { Accept: 'application/json' },
@@ -246,6 +276,15 @@
 
   function boot() {
     if (!document.querySelector('.prov-dash[data-live-dashboard]')) return;
+    var sel = periodSelect();
+    if (sel) {
+      chartPeriod = sel.value || 'week';
+      sel.addEventListener('change', function () {
+        chartPeriod = sel.value || 'week';
+        lastFingerprint = '';
+        refresh();
+      });
+    }
     start();
     document.addEventListener('visibilitychange', function () {
       if (document.hidden) stop();

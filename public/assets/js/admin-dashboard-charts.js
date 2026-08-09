@@ -191,7 +191,9 @@
       destroy('admChartTriage');
     } else {
       if (fourthTitle) fourthTitle.textContent = 'AI Triage Volume';
-      if (fourthSub) fourthSub.textContent = 'Daily assessments — last ' + (data.days || 30) + ' days';
+      if (fourthSub) {
+        fourthSub.textContent = 'Daily assessments — ' + (T().periodRangeLabel ? T().periodRangeLabel(data.days) : ('last ' + (data.days || 30) + ' days'));
+      }
       if (fourthKpi) fourthKpi.textContent = Number(triage.total || 0).toLocaleString();
       if (fourthKpiLabel) fourthKpiLabel.textContent = 'Period total';
       if (statusCanvas) statusCanvas.style.display = 'none';

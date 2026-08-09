@@ -7,11 +7,13 @@ $barangay_label = htmlspecialchars($bhw_barangay_name);
 $reports_css_ver = (int) @filemtime(ASSETS_PATH . '/css/bhw-reports.css');
 $reports_js_ver = (int) @filemtime(ASSETS_PATH . '/js/bhw-reports.js');
 $chart_theme_js_ver = (int) @filemtime(ASSETS_PATH . '/js/medconnect-chart-theme.js');
+$bhw_extra_js = [
+    'https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js',
+    ASSET_BASE . '/assets/js/medconnect-chart-theme.js?v=' . $chart_theme_js_ver,
+    ASSET_BASE . '/assets/js/bhw-reports.js?v=' . $reports_js_ver,
+];
 ?>
 <link rel="stylesheet" href="<?= ASSET_BASE ?>/assets/css/bhw-reports.css?v=<?= $reports_css_ver ?>">
-<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js" defer></script>
-<script src="<?= ASSET_BASE ?>/assets/js/medconnect-chart-theme.js?v=<?= $chart_theme_js_ver ?>" defer></script>
-<script src="<?= ASSET_BASE ?>/assets/js/bhw-reports.js?v=<?= $reports_js_ver ?>" defer></script>
 
 <div class="bhw-reports-page" id="bhwReportsRoot" data-barangay="<?= $barangay_label ?>">
 

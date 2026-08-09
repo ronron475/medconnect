@@ -1,10 +1,70 @@
 (function () {
   var charts = {};
   var activeTab = 'patients';
+  var lastReportData = {};
   var base = document.body.dataset.assetBase || '';
 
   function theme() {
     return window.McChartTheme;
+  }
+
+  function ready(fn) {
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', fn);
+    } else {
+      fn();
+    }
+  }
+
+  function whenChartReady() {
+    return new Promise(function (resolve) {
+      var tries = 0;
+      (function wait() {
+        if (typeof Chart !== 'undefined' && theme()) {
+          theme().applyDefaults();
+          resolve();
+          return;
+        }
+        tries += 1;
+        if (tries > 80) {
+          resolve();
+          return;
+        }
+        setTimeout(wait, 50);
+      })();
+    });
+  }
+
+  function rowValue(row) {
+    if (!row) return 0;
+    if (row.value != null) return Number(row.value) || 0;
+    if (row.count != null) return Number(row.count) || 0;
+    return 0;
+  }
+
+  function hasChartValues(rows) {
+    return (rows || []).some(function (row) { return rowValue(row) > 0; });
+  }
+
+  function normalizeRows(rows, emptyLabel) {
+    var data = Array.isArray(rows) ? rows.slice() : [];
+    if (!data.length || !hasChartValues(data)) {
+      return [{ label: emptyLabel || 'No data yet', value: 1, _placeholder: true }];
+    }
+    return data;
+  }
+
+  function normalizeSeries(rows) {
+    var data = Array.isArray(rows) ? rows.slice() : [];
+    if (data.length) return data;
+    var out = [];
+    var now = new Date();
+    for (var i = 5; i >= 0; i--) {
+      var d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+      var label = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0');
+      out.push({ label: label, value: 0, _placeholder: true });
+    }
+    return out;
   }
 
   var SUMMARY_GROUPS = [
@@ -45,14 +105,6 @@
     },
   ];
 
-  function ready(fn) {
-    if (document.readyState === 'loading') {
-      document.addEventListener('DOMContentLoaded', fn);
-    } else {
-      fn();
-    }
-  }
-
   function filters() {
     return {
       date_from: document.getElementById('rf_date_from')?.value || '',
@@ -74,37 +126,52 @@
   function ringData(rows) {
     var T = theme();
     if (T) T.syncColors();
-    var n = (rows || []).length;
+    var normalized = normalizeRows(rows);
+    var isPlaceholder = normalized.length === 1 && normalized[0]._placeholder;
+    var n = normalized.length;
     return {
-      labels: (rows || []).map(function (r) { return r.label || '—'; }),
+      labels: normalized.map(function (r) { return r.label || '—'; }),
       datasets: [{
-        data: (rows || []).map(function (r) { return r.value; }),
-        backgroundColor: T ? T.colorsForCount(n) : [],
+        data: normalized.map(function (r) { return rowValue(r) || 1; }),
+        backgroundColor: isPlaceholder
+          ? [T ? T.hexToRgba(T.colors.text, 0.18) : '#e2e8f0']
+          : (T ? T.colorsForCount(n) : []),
         borderColor: T ? T.segmentBorderColor() : '#fff',
         borderWidth: 2,
-        hoverOffset: 6,
+        hoverOffset: isPlaceholder ? 0 : 6,
       }],
     };
   }
 
   function cartesianData(type, rows) {
     var T = theme();
-    var labels = (rows || []).map(function (r) { return r.label; });
+    var normalized = type === 'line' ? normalizeSeries(rows) : normalizeRows(rows);
+    var isPlaceholder = normalized.length === 1 && normalized[0]._placeholder;
+    var labels = normalized.map(function (r) { return r.label; });
     if (type === 'line' && T) {
-      var series = (rows || []).map(function (r) {
-        return { label: r.label, count: r.value };
+      var series = normalized.map(function (r) {
+        return { label: r.label, count: rowValue(r), value: rowValue(r) };
       });
+      var dataset = T.lineDataset(series, T.colors.blue);
+      if (isPlaceholder || normalized.every(function (r) { return rowValue(r) === 0; })) {
+        dataset.borderColor = T.hexToRgba(T.colors.blue, 0.35);
+        dataset.backgroundColor = T.hexToRgba(T.colors.blue, 0.08);
+        dataset.pointRadius = 2;
+      }
       return {
         labels: labels,
-        datasets: [T.lineDataset(series, T.colors.blue)],
+        datasets: [dataset],
       };
     }
-    var colors = T ? T.colorsForCount((rows || []).length) : [];
+    var colors = T ? T.colorsForCount(normalized.length) : [];
+    if (isPlaceholder) {
+      colors = [T ? T.hexToRgba(T.colors.text, 0.2) : '#e2e8f0'];
+    }
     return {
       labels: labels,
       datasets: [{
         label: 'Count',
-        data: (rows || []).map(function (r) { return r.value; }),
+        data: normalized.map(function (r) { return isPlaceholder ? 1 : rowValue(r); }),
         backgroundColor: colors,
         borderRadius: 4,
         maxBarThickness: 36,
@@ -164,6 +231,77 @@
     });
   }
 
+  function resizeVisibleCharts() {
+    requestAnimationFrame(function () {
+      Object.keys(charts).forEach(function (id) {
+        if (charts[id]) charts[id].resize();
+      });
+    });
+  }
+
+  function renderPatientsCharts(rep) {
+    makeChart('chart_pat_monthly', 'line', rep.monthly);
+    makeChart('chart_pat_gender', 'doughnut', rep.genderDist);
+    makeChart('chart_pat_age', 'bar', rep.ageDist);
+    makeChart('chart_pat_purok', 'bar', rep.purokDist, { indexAxis: 'y' });
+    resizeVisibleCharts();
+  }
+
+  function renderConsultationsCharts(rep) {
+    makeChart('chart_con_status', 'pie', rep.by_status);
+    makeChart('chart_con_monthly', 'line', rep.monthly_trend);
+    makeChart('chart_con_provider', 'bar', rep.provider_dist, { indexAxis: 'y' });
+    resizeVisibleCharts();
+  }
+
+  function renderTriageCharts(rep) {
+    makeChart('chart_tri_urgency', 'doughnut', [
+      { label: 'Low Risk', value: rep.low_risk },
+      { label: 'Moderate', value: rep.moderate_risk },
+      { label: 'High Risk', value: rep.high_risk },
+      { label: 'Emergency', value: rep.emergency },
+    ]);
+    makeChart('chart_tri_class', 'bar', rep.classifications);
+    makeChart('chart_tri_symptoms', 'bar', rep.top_symptoms, { indexAxis: 'y' });
+    resizeVisibleCharts();
+  }
+
+  function renderReferralsCharts(rep) {
+    makeChart('chart_ref_type', 'pie', rep.by_type);
+    makeChart('chart_ref_status', 'bar', rep.by_status);
+    resizeVisibleCharts();
+  }
+
+  function renderFollowupsCharts(rep) {
+    makeChart('chart_fol_overview', 'bar', [
+      { label: 'Home Visits', value: rep.homeVisits },
+      { label: 'Completed', value: rep.completed },
+      { label: 'Pending', value: rep.pending },
+      { label: 'Overdue', value: rep.overdue },
+    ]);
+    makeChart('chart_fol_visits', 'pie', rep.visitTypes);
+    resizeVisibleCharts();
+  }
+
+  function renderDiseaseCharts(rep) {
+    makeChart('chart_dis_conditions', 'bar', rep.top_diseases, { indexAxis: 'y' });
+    makeChart('chart_dis_symptoms', 'bar', rep.top_symptoms, { indexAxis: 'y' });
+    makeChart('chart_dis_age', 'pie', rep.age_groups);
+    makeChart('chart_dis_monthly', 'line', rep.monthly_trends);
+    resizeVisibleCharts();
+  }
+
+  function rerenderActiveTab() {
+    var rep = lastReportData[activeTab];
+    if (!rep) return;
+    if (activeTab === 'patients') renderPatientsCharts(rep);
+    else if (activeTab === 'consultations') renderConsultationsCharts(rep);
+    else if (activeTab === 'triage') renderTriageCharts(rep);
+    else if (activeTab === 'referrals') renderReferralsCharts(rep);
+    else if (activeTab === 'followups') renderFollowupsCharts(rep);
+    else if (activeTab === 'disease') renderDiseaseCharts(rep);
+  }
+
   function renderSummary(summary) {
     var row = document.getElementById('bhwSummaryRow');
     var skel = document.getElementById('bhwSummarySkeleton');
@@ -194,59 +332,41 @@
   function loadPatients() {
     return BhwPortal.get('reports.php', Object.assign({ action: 'patients' }, filters())).then(function (r) {
       if (!r.success || !r.report) return;
-      var rep = r.report;
-      makeChart('chart_pat_monthly', 'line', rep.monthly);
-      makeChart('chart_pat_gender', 'doughnut', rep.genderDist);
-      makeChart('chart_pat_age', 'bar', rep.ageDist);
-      makeChart('chart_pat_purok', 'bar', rep.purokDist, { indexAxis: 'y' });
+      lastReportData.patients = r.report;
+      renderPatientsCharts(r.report);
     });
   }
 
   function loadConsultations() {
     return BhwPortal.get('reports.php', Object.assign({ action: 'consultations' }, filters())).then(function (r) {
       if (!r.success || !r.report) return;
-      var rep = r.report;
-      makeChart('chart_con_status', 'pie', rep.by_status);
-      makeChart('chart_con_monthly', 'line', rep.monthly_trend);
-      makeChart('chart_con_provider', 'bar', rep.provider_dist, { indexAxis: 'y' });
+      lastReportData.consultations = r.report;
+      renderConsultationsCharts(r.report);
     });
   }
 
   function loadTriage() {
     return BhwPortal.get('reports.php', Object.assign({ action: 'triage' }, filters())).then(function (r) {
       if (!r.success || !r.report) return;
-      var rep = r.report;
-      makeChart('chart_tri_urgency', 'doughnut', [
-        { label: 'Low Risk', value: rep.low_risk },
-        { label: 'Moderate', value: rep.moderate_risk },
-        { label: 'High Risk', value: rep.high_risk },
-        { label: 'Emergency', value: rep.emergency },
-      ]);
-      makeChart('chart_tri_class', 'bar', rep.classifications);
-      makeChart('chart_tri_symptoms', 'bar', rep.top_symptoms, { indexAxis: 'y' });
+      lastReportData.triage = r.report;
+      renderTriageCharts(r.report);
     });
   }
 
   function loadReferrals() {
     return BhwPortal.get('reports.php', Object.assign({ action: 'referrals' }, filters())).then(function (r) {
       if (!r.success || !r.report) return;
-      var rep = r.report;
-      makeChart('chart_ref_type', 'pie', rep.by_type);
-      makeChart('chart_ref_status', 'bar', rep.by_status);
+      lastReportData.referrals = r.report;
+      renderReferralsCharts(r.report);
     });
   }
 
   function loadFollowups() {
     return BhwPortal.get('reports.php', Object.assign({ action: 'followups' }, filters())).then(function (r) {
       if (!r.success || !r.report) return;
+      lastReportData.followups = r.report;
       var rep = r.report;
-      makeChart('chart_fol_overview', 'bar', [
-        { label: 'Home Visits', value: rep.homeVisits },
-        { label: 'Completed', value: rep.completed },
-        { label: 'Pending', value: rep.pending },
-        { label: 'Overdue', value: rep.overdue },
-      ]);
-      makeChart('chart_fol_visits', 'pie', rep.visitTypes);
+      renderFollowupsCharts(rep);
       var list = document.getElementById('fol_requiring_list');
       if (list) {
         var rows = rep.requiring || [];
@@ -265,11 +385,8 @@
   function loadDisease() {
     return BhwPortal.get('reports.php', Object.assign({ action: 'disease' }, filters())).then(function (r) {
       if (!r.success || !r.report) return;
-      var rep = r.report;
-      makeChart('chart_dis_conditions', 'bar', rep.top_diseases, { indexAxis: 'y' });
-      makeChart('chart_dis_symptoms', 'bar', rep.top_symptoms, { indexAxis: 'y' });
-      makeChart('chart_dis_age', 'pie', rep.age_groups);
-      makeChart('chart_dis_monthly', 'line', rep.monthly_trends);
+      lastReportData.disease = r.report;
+      renderDiseaseCharts(r.report);
     });
   }
 
@@ -303,7 +420,21 @@
   }
 
   function loadTab(tab) {
-    if (loaders[tab]) loaders[tab]();
+    if (loaders[tab]) return loaders[tab]();
+    return Promise.resolve();
+  }
+
+  function bootReports() {
+    if (theme() && typeof theme().registerThemeRefresh === 'function') {
+      theme().registerThemeRefresh(function () {
+        rerenderActiveTab();
+      });
+    }
+
+    loadSummary().then(function () {
+      return loadTab('patients');
+    }).then(touchReportsSync);
+    startReportsPolling();
   }
 
   function exportUrl(fmt) {
@@ -315,12 +446,13 @@
     var root = document.getElementById('bhwReportsRoot');
     if (!root) return;
 
-    if (theme()) {
-      theme().applyDefaults();
-    }
-
-    loadSummary().then(function () { return loadTab('patients'); }).then(touchReportsSync);
-    startReportsPolling();
+    whenChartReady().then(function () {
+      if (typeof window.BhwPortal === 'undefined') {
+        setTimeout(bootReports, 100);
+      } else {
+        bootReports();
+      }
+    });
 
     document.addEventListener('visibilitychange', function () {
       if (!document.hidden) refreshReportsLive();

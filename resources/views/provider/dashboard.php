@@ -11,31 +11,15 @@ require __DIR__.'/partials/data.php';
 require __DIR__.'/partials/queue_helpers.php';
 require __DIR__.'/partials/layout_open.php';
 
+require_once BASE_PATH . '/app/includes/provider_dashboard_live.php';
+
 $queue = $queue ?? [];
 $stats = $stats ?? [];
 $provider_id = (int) ($_SESSION['user_id'] ?? 0);
-
-// Weekly consultation activity (last 7 days)
-$week_chart = [];
-for ($i = 6; $i >= 0; $i--) {
-    $date = date('Y-m-d', strtotime("-{$i} days"));
-    $count = 0;
-    try {
-        $c_stmt = $pdo->prepare('SELECT COUNT(*) FROM consultations WHERE provider_id = ? AND consult_date = ?');
-        $c_stmt->execute([$provider_id, $date]);
-        $count = (int) $c_stmt->fetchColumn();
-    } catch (Exception $e) {
-        $count = 0;
-    }
-    $week_chart[] = [
-        'label'    => date('D', strtotime($date)),
-        'date'     => date('M j', strtotime($date)),
-        'count'    => $count,
-        'is_today' => ($i === 0),
-    ];
-}
-$chart_max = max(1, ...array_column($week_chart, 'count'));
-$week_total = array_sum(array_column($week_chart, 'count'));
+$chart_period = provider_parse_dashboard_period($_GET['period'] ?? 'week');
+$chart_data = provider_dashboard_consultation_chart($pdo, $provider_id, $chart_period);
+$week_chart = $chart_data['series'];
+$week_total = $chart_data['total'];
 
 // Session recordings
 $recordings = [];
@@ -124,16 +108,24 @@ $last_name = $provider['last_name'] ?? 'Provider';
       <section class="prov-dash-card">
         <div class="prov-dash-card__head">
           <h3 class="prov-dash-card__title"><?= icon('activity') ?> Consultation Activity</h3>
-          <span class="mc-badge" data-live-week-total><?= $week_total ?> this week</span>
+          <div class="prov-dash-chart-toolbar">
+            <span class="mc-badge" data-live-chart-total><?= (int) $week_total ?> <?= htmlspecialchars($chart_data['total_label']) ?></span>
+            <select id="provDashChartPeriod" class="prov-dash-chart-period" aria-label="Chart period">
+              <option value="today"<?= $chart_period === 'today' ? ' selected' : '' ?>>Today</option>
+              <option value="week"<?= $chart_period === 'week' ? ' selected' : '' ?>>This week</option>
+              <option value="month"<?= $chart_period === 'month' ? ' selected' : '' ?>>This month</option>
+              <option value="year"<?= $chart_period === 'year' ? ' selected' : '' ?>>This year</option>
+            </select>
+          </div>
         </div>
-        <p class="prov-dash-card__sub">Daily consultations over the last 7 days · auto-refreshes</p>
+        <p class="prov-dash-card__sub" data-live-chart-sub>Consultation activity — <?= htmlspecialchars(strtolower($chart_data['period_label'])) ?> · auto-refreshes</p>
         <div class="mc-chart-canvas-wrap" style="min-height:220px;height:220px;">
-          <canvas data-mc-weekly-bar="provWeekChartData" aria-label="Weekly consultation bar chart"></canvas>
+          <canvas data-mc-weekly-bar="provWeekChartData" aria-label="Consultation activity bar chart"></canvas>
         </div>
         <script type="application/json" id="provWeekChartData"><?= json_encode($week_chart, JSON_UNESCAPED_UNICODE) ?></script>
         <div class="prov-chart-legend">
-          <span>Hover bars for daily counts</span>
-          <strong data-live-week-today><?= htmlspecialchars(end($week_chart)['date'] ?? 'Today') ?> = today</strong>
+          <span data-live-chart-hint>Hover bars for counts</span>
+          <strong data-live-week-today><?= htmlspecialchars(end($week_chart)['date'] ?? 'Today') ?><?= $chart_period === 'year' ? '' : ' = today' ?></strong>
         </div>
       </section>
 
