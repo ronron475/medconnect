@@ -858,27 +858,116 @@
     });
   }
 
+  function initComplaintEvidence() {
+    const input = document.getElementById('supporting_evidence');
+    const chooseBtn = document.getElementById('btnChooseEvidence');
+    const removeBtn = document.getElementById('btnRemoveEvidence');
+    const filenameEl = document.getElementById('evidenceFilename');
+    const previewEl = document.getElementById('evidencePreview');
+    if (!input || !chooseBtn) return;
+
+    const IMAGE_MAX = 5 * 1024 * 1024;
+    const VIDEO_MAX = 25 * 1024 * 1024;
+    const ALLOWED = new Set([
+      'image/jpeg',
+      'image/png',
+      'image/webp',
+      'video/mp4',
+      'video/webm',
+    ]);
+
+    let previewUrl = null;
+
+    function clearPreview() {
+      if (previewUrl) {
+        URL.revokeObjectURL(previewUrl);
+        previewUrl = null;
+      }
+      if (previewEl) {
+        previewEl.innerHTML = '';
+        previewEl.hidden = true;
+      }
+    }
+
+    function resetEvidence() {
+      input.value = '';
+      clearPreview();
+      if (filenameEl) {
+        filenameEl.textContent = '';
+        filenameEl.hidden = true;
+      }
+      if (removeBtn) removeBtn.hidden = true;
+    }
+
+    chooseBtn.addEventListener('click', () => input.click());
+
+    if (removeBtn) {
+      removeBtn.addEventListener('click', resetEvidence);
+    }
+
+    input.addEventListener('change', () => {
+      clearPreview();
+      const file = input.files && input.files[0];
+      if (!file) {
+        resetEvidence();
+        return;
+      }
+
+      if (!ALLOWED.has(file.type)) {
+        resetEvidence();
+        const alertEl = document.getElementById('triageFormAlert');
+        showTriageAlert(alertEl, 'error', 'Please choose a JPG, PNG, WEBP photo or MP4/WebM video.');
+        return;
+      }
+
+      const isVideo = file.type.startsWith('video/');
+      const maxSize = isVideo ? VIDEO_MAX : IMAGE_MAX;
+      if (file.size > maxSize) {
+        resetEvidence();
+        const alertEl = document.getElementById('triageFormAlert');
+        showTriageAlert(
+          alertEl,
+          'error',
+          isVideo ? 'Video must be 25 MB or smaller.' : 'Photo must be 5 MB or smaller.'
+        );
+        return;
+      }
+
+      if (filenameEl) {
+        filenameEl.textContent = file.name;
+        filenameEl.hidden = false;
+      }
+      if (removeBtn) removeBtn.hidden = false;
+
+      if (previewEl) {
+        previewUrl = URL.createObjectURL(file);
+        if (isVideo) {
+          previewEl.innerHTML = `<video src="${previewUrl}" controls playsinline muted></video>`;
+        } else {
+          previewEl.innerHTML = `<img src="${previewUrl}" alt="Supporting evidence preview">`;
+        }
+        previewEl.hidden = false;
+      }
+    });
+  }
+
   function initTriageForm() {
     const form = document.getElementById('patientTriageForm');
     if (!form) return;
 
     initBookingPicker();
     initAlternateBookingProvider();
+    initComplaintEvidence();
 
     const alertEl = document.getElementById('triageFormAlert');
     const submitBtn = form.querySelector('button[type="submit"]');
-    const complaintEl = form.querySelector('#chief_complaint');
 
-    // Prefill from registration if the patient just signed up
+    // Do not prefill current complaint from registration — registration text is reference-only in the UI.
     try {
-      const pending = sessionStorage.getItem('medconnect_pending_chief_complaint');
-      if (pending && complaintEl && !complaintEl.value.trim()) {
-        complaintEl.value = pending;
-        complaintEl.removeAttribute('readonly');
-        complaintEl.rows = 2;
-        sessionStorage.removeItem('medconnect_pending_chief_complaint');
-      }
+      sessionStorage.removeItem('medconnect_pending_chief_complaint');
+    } catch (_) { /* ignore */ }
 
+    try {
       const blockTele = sessionStorage.getItem('medconnect_block_telemedicine') === '1'
         || String(window.REGISTRATION_URGENCY || '').toUpperCase() === 'EMERGENCY';
       if (blockTele) {
@@ -921,7 +1010,7 @@
       const reviewFirstAllowed = window.TRIAGE_REVIEW_FIRST_ALLOWED === true;
 
       if (!complaint) {
-        showTriageAlert(alertEl, 'error', 'Your health concern from registration is missing. Please contact support or update your profile.');
+        showTriageAlert(alertEl, 'error', 'Please enter your current chief complaint for this visit.');
         return;
       }
 

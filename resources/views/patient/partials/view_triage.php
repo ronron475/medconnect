@@ -2,11 +2,11 @@
 /**
  * Book consultation + visit history (AI runs silently — not shown to patients).
  * Expects: $active_consultation, $booking_providers, $booking_today_ymd, $booking_today_label,
- *          $triage_history, $default_complaint (optional)
+ *          $triage_history, $registration_complaint_reference (optional)
  */
 require_once __DIR__ . '/triage_helpers.php';
 
-$default_complaint = trim((string) ($default_complaint ?? ''));
+$registration_complaint_reference = trim((string) ($registration_complaint_reference ?? ''));
 $review_booking_ctx = $review_booking_ctx ?? ['locked' => false, 'provider_id' => 0, 'provider_name' => ''];
 $locked_provider_id = (int) ($locked_provider_id ?? 0);
 $locked_provider_name = trim((string) ($locked_provider_name ?? ''));
@@ -59,22 +59,61 @@ $locked_alternate_available = !empty($locked_alternate_available);
   <form id="patientTriageForm" novalidate>
     <input type="hidden" name="csrf_token" value="<?= htmlspecialchars((string) ($_SESSION['csrf_token'] ?? ''), ENT_QUOTES, 'UTF-8') ?>">
     <div class="form-group">
-      <?php $has_complaint = $default_complaint !== ''; ?>
       <label class="form-label" for="chief_complaint">
-        Health concern<?= $has_complaint ? ' <span class="text-muted">(from registration)</span>' : '' ?>
+        Current Chief Complaint <span class="text-muted">(required)</span>
       </label>
       <textarea
         id="chief_complaint"
         name="chief_complaint"
         class="form-control"
-        rows="<?= $has_complaint ? 2 : 3 ?>"
-        placeholder="<?= $has_complaint ? 'Your registered health concern…' : 'Briefly describe why you need this visit…' ?>"
+        rows="3"
+        placeholder="Describe your current health concern for this visit…"
         maxlength="500"
-        <?= $has_complaint ? 'readonly' : 'required' ?>
-      ><?= htmlspecialchars($default_complaint) ?></textarea>
-      <?php if ($has_complaint): ?>
-      <p class="text-xs text-muted" style="margin-top:6px;">Already on file from registration. Contact the health office if this needs to be updated.</p>
-      <?php endif; ?>
+        required
+      ></textarea>
+      <p class="text-xs text-muted" style="margin-top:6px;">
+        Enter what you want your doctor to address during this consultation.
+      </p>
+    </div>
+
+    <?php if ($registration_complaint_reference !== ''): ?>
+    <div class="form-group complaint-reference-group">
+      <label class="form-label">Registration Complaint <span class="text-muted">(reference only)</span></label>
+      <div class="complaint-reference-box" id="registrationComplaintReference">
+        <?= nl2br(htmlspecialchars($registration_complaint_reference)) ?>
+      </div>
+      <p class="text-xs text-muted" style="margin-top:6px;">
+        This is what you shared when you created your account. It is kept for reference and is not used as your current complaint.
+      </p>
+    </div>
+    <?php endif; ?>
+
+    <div class="form-group complaint-evidence-group">
+      <label class="form-label" for="supporting_evidence">
+        Supporting Evidence <span class="text-muted">(optional)</span>
+      </label>
+      <p class="text-xs text-muted complaint-evidence-hint">
+        Upload a photo or short video of your concern for your doctor to review.
+        This does not affect triage or appointment priority.
+      </p>
+      <div class="complaint-evidence-upload">
+        <input
+          type="file"
+          id="supporting_evidence"
+          name="supporting_evidence"
+          class="complaint-evidence-input"
+          accept="image/jpeg,image/png,image/webp,video/mp4,video/webm"
+        />
+        <button type="button" class="mc-btn mc-btn--outline complaint-evidence-choose" id="btnChooseEvidence">
+          Choose photo or video
+        </button>
+        <span class="complaint-evidence-filename text-xs text-muted" id="evidenceFilename" hidden></span>
+        <button type="button" class="complaint-evidence-remove" id="btnRemoveEvidence" hidden aria-label="Remove supporting evidence">
+          Remove
+        </button>
+      </div>
+      <div class="complaint-evidence-preview" id="evidencePreview" hidden></div>
+      <p class="text-xs text-muted" style="margin-top:6px;">Photos up to 5 MB. Videos up to 25 MB (MP4 or WebM).</p>
     </div>
 
     <div class="form-group">

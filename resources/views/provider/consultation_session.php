@@ -1542,6 +1542,62 @@ $localhost_app_url = 'http://localhost' . (ASSET_BASE !== '' ? ASSET_BASE : '');
                                 <br><span style="color:#64748b;">English: <span id="cspEnglishText"><?= htmlspecialchars($clinical_support['english_complaint']) ?></span></span>
                             </span>
                         </p>
+                        <?php if (!empty($clinical_support['registration_complaint_reference'])): ?>
+                        <p id="cspRegistrationRefLine" style="margin: 10px 0 0; font-size: 12px; color: #64748b; line-height: 1.45;">
+                            <strong>Registration reference:</strong>
+                            <span id="cspRegistrationRefText"><?= htmlspecialchars((string) $clinical_support['registration_complaint_reference']) ?></span>
+                        </p>
+                        <?php endif; ?>
+                        <?php if (!empty($clinical_support['current_complaint_submitted_at'])): ?>
+                        <p id="cspComplaintSubmittedLine" style="margin: 6px 0 0; font-size: 12px; color: #64748b;">
+                            Current complaint submitted: <span id="cspComplaintSubmittedAt"><?= htmlspecialchars((string) $clinical_support['current_complaint_submitted_at']) ?></span>
+                        </p>
+                        <?php endif; ?>
+                        <?php $cspEvidence = is_array($clinical_support['supporting_evidence'] ?? null) ? $clinical_support['supporting_evidence'] : []; ?>
+                        <div
+                            id="cspEvidenceBlock"
+                            class="csp-evidence"
+                            <?= empty($cspEvidence['has_evidence']) ? 'hidden' : '' ?>
+                            style="margin-top:12px;padding:10px 12px;border-radius:10px;background:#f8fafc;border:1px solid #e2e8f0;"
+                        >
+                            <p style="margin:0 0 8px;font-size:12px;font-weight:700;color:#475569;text-transform:uppercase;letter-spacing:.04em;">
+                                Supporting Evidence
+                            </p>
+                            <p style="margin:0 0 8px;font-size:12px;color:#64748b;line-height:1.45;">
+                                Patient-submitted — for clinical review only. Not used for automated triage.
+                            </p>
+                            <?php if (!empty($cspEvidence['has_evidence'])): ?>
+                                <?php if (($cspEvidence['media_type'] ?? '') === 'video'): ?>
+                                    <video
+                                        id="cspEvidenceMedia"
+                                        src="<?= htmlspecialchars((string) ($cspEvidence['view_url'] ?? ''), ENT_QUOTES) ?>"
+                                        controls
+                                        playsinline
+                                        style="max-width:100%;max-height:220px;border-radius:8px;background:#0f172a;"
+                                    ></video>
+                                <?php else: ?>
+                                    <a
+                                        id="cspEvidenceLink"
+                                        href="<?= htmlspecialchars((string) ($cspEvidence['view_url'] ?? ''), ENT_QUOTES) ?>"
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        style="display:inline-block;"
+                                    >
+                                        <img
+                                            id="cspEvidenceMedia"
+                                            src="<?= htmlspecialchars((string) ($cspEvidence['view_url'] ?? ''), ENT_QUOTES) ?>"
+                                            alt="Patient supporting evidence"
+                                            style="max-width:100%;max-height:220px;border-radius:8px;border:1px solid #cbd5e1;"
+                                        >
+                                    </a>
+                                <?php endif; ?>
+                                <?php if (!empty($cspEvidence['uploaded_label'])): ?>
+                                    <p id="cspEvidenceMeta" style="margin:8px 0 0;font-size:12px;color:#64748b;">
+                                        Uploaded <?= htmlspecialchars((string) $cspEvidence['uploaded_label']) ?>
+                                    </p>
+                                <?php endif; ?>
+                            <?php endif; ?>
+                        </div>
                     </div>
 
                     <div class="csp-section">
