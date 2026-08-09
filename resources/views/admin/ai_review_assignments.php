@@ -15,151 +15,90 @@ require_once BASE_PATH . '/app/includes/triage_assessment_schema.php';
 
 $page_title = 'AI Review Assignments';
 $apiUrl = ASSET_BASE . '/app/api/admin/triage_review_assignments.php';
+$is_superadmin_portal = defined('MC_PORTAL_SHELL') && MC_PORTAL_SHELL === 'superadmin';
+$portal_eyebrow = $is_superadmin_portal ? 'Super Administration · AI Triage' : 'Administration · AI Triage';
+$cssVer = (int) @filemtime(ASSETS_PATH . '/css/admin-ai-review.css');
+$jsVer = (int) @filemtime(ASSETS_PATH . '/js/admin-ai-review.js');
 
 require_once __DIR__ . '/partials/layout_open.php';
 ?>
 
-<div class="header-row" style="margin-bottom:24px;">
-  <h2 class="text-h2">AI Review Assignments</h2>
-  <p class="text-muted" style="margin:8px 0 0;">
-    Reassign reviewing doctors for non-urgent self-care cases. Patients stay locked to the assigned provider when booking follow-up consultations.
-  </p>
+<link rel="stylesheet" href="<?= ASSET_BASE ?>/assets/css/admin-staff-applications.css?v=1.1">
+<link rel="stylesheet" href="<?= ASSET_BASE ?>/assets/css/admin-ai-review.css?v=<?= $cssVer ?>">
+
+<article class="air-review-page staff-apps-page" id="airReviewRoot" data-api="<?= htmlspecialchars($apiUrl) ?>">
+
+<header class="staff-apps-hero">
+  <div class="staff-apps-hero__content">
+    <span class="staff-apps-hero__eyebrow"><?= htmlspecialchars($portal_eyebrow) ?></span>
+    <h1 class="staff-apps-hero__title">AI Review Assignments</h1>
+    <p class="staff-apps-hero__desc">
+      Reassign reviewing doctors for non-urgent self-care cases. Patients stay locked to the assigned provider when booking follow-up consultations.
+    </p>
+  </div>
+</header>
+
+<div class="air-review-stats" aria-live="polite">
+  <div class="air-review-stat">
+    <div class="air-review-stat__value" id="airStatTotal">—</div>
+    <div class="air-review-stat__label">Total cases (30 days)</div>
+  </div>
+  <div class="air-review-stat air-review-stat--pending">
+    <div class="air-review-stat__value" id="airStatPending">—</div>
+    <div class="air-review-stat__label">Pending review</div>
+  </div>
+  <div class="air-review-stat air-review-stat--approved">
+    <div class="air-review-stat__value" id="airStatApproved">—</div>
+    <div class="air-review-stat__label">Approved</div>
+  </div>
+  <div class="air-review-stat air-review-stat--unassigned">
+    <div class="air-review-stat__value" id="airStatUnassigned">—</div>
+    <div class="air-review-stat__label">Unassigned</div>
+  </div>
 </div>
 
-<div class="mc-card" style="margin-bottom:16px;display:flex;gap:12px;flex-wrap:wrap;align-items:center;">
-  <label class="text-sm" for="aiReviewFilter">Show</label>
-  <select id="aiReviewFilter" class="form-control" style="max-width:220px;">
-    <option value="active">Pending + approved (30 days)</option>
-    <option value="pending">Pending review only</option>
-    <option value="approved">Approved only</option>
-  </select>
-  <button type="button" class="mc-btn mc-btn--outline" id="aiReviewRefresh">Refresh</button>
-  <span class="text-xs text-muted" id="aiReviewStatus"></span>
+<div class="staff-apps-note" role="note">
+  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+  <span>Select a reviewing doctor and click <strong>Save assignment</strong>. The patient will remain linked to that provider for follow-up booking.</span>
 </div>
 
-<div class="mc-card" style="padding:0;overflow:hidden;">
-  <table class="mc-table" id="aiReviewTable">
-    <thead>
-      <tr>
-        <th>Patient</th>
-        <th>Concern</th>
-        <th>Status</th>
-        <th>Assigned reviewer</th>
-        <th>Submitted</th>
-        <th>Reassign</th>
-      </tr>
-    </thead>
-    <tbody id="aiReviewTbody">
-      <tr><td colspan="6" class="text-muted" style="padding:20px;">Loading…</td></tr>
-    </tbody>
-  </table>
+<div class="staff-apps-card">
+  <div class="staff-apps-card__toolbar">
+    <div class="staff-apps-search">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+      <input type="search" id="aiReviewSearch" class="staff-apps-search__input" placeholder="Search patient, concern, or reviewer…" aria-label="Search AI review cases">
+    </div>
+    <select id="aiReviewFilter" class="staff-apps-filter" aria-label="Filter cases">
+      <option value="active">Pending + approved (30 days)</option>
+      <option value="pending">Pending review only</option>
+      <option value="approved">Approved only</option>
+    </select>
+    <button type="button" class="mc-btn mc-btn--outline" id="aiReviewRefresh">Refresh</button>
+    <span class="staff-apps-card__count" id="aiReviewCount"></span>
+    <span class="air-review-toolbar__status" id="aiReviewStatus"></span>
+  </div>
+
+  <div class="air-review-table-wrap">
+    <table class="air-review-table" id="aiReviewTable">
+      <thead>
+        <tr>
+          <th>Patient</th>
+          <th>Concern</th>
+          <th>Status</th>
+          <th>Assigned reviewer</th>
+          <th>Submitted</th>
+          <th>Reassign</th>
+        </tr>
+      </thead>
+      <tbody id="aiReviewTbody">
+        <tr class="air-review-loading"><td colspan="6">Loading AI review cases…</td></tr>
+      </tbody>
+    </table>
+  </div>
 </div>
 
-<script>
-(function () {
-  var apiUrl = <?= json_encode($apiUrl) ?>;
-  var csrf = document.body.dataset.csrf || '';
-  var providers = [];
-  var filterEl = document.getElementById('aiReviewFilter');
-  var tbody = document.getElementById('aiReviewTbody');
-  var statusEl = document.getElementById('aiReviewStatus');
+</article>
 
-  function esc(s) {
-    return String(s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/"/g, '&quot;');
-  }
-
-  function formatDate(raw) {
-    if (!raw) return '—';
-    try {
-      return new Date(raw.replace(' ', 'T')).toLocaleString();
-    } catch (e) {
-      return raw;
-    }
-  }
-
-  function providerOptions(selectedId) {
-    var html = '';
-    providers.forEach(function (p) {
-      var sel = Number(p.id) === Number(selectedId) ? ' selected' : '';
-      html += '<option value="' + esc(p.id) + '"' + sel + '>' + esc(p.name) + '</option>';
-    });
-    return html;
-  }
-
-  function renderRows(rows) {
-    if (!rows.length) {
-      tbody.innerHTML = '<tr><td colspan="6" class="text-muted" style="padding:20px;">No AI review cases in this filter.</td></tr>';
-      return;
-    }
-    tbody.innerHTML = rows.map(function (row) {
-      var status = row.recommendation_status || '';
-      var badge = status === 'pending_approval'
-        ? '<span class="mc-badge mc-badge--pending">Pending</span>'
-        : '<span class="mc-badge mc-badge--approved">Approved</span>';
-      var assignId = row.assigned_provider_id || '';
-      return '<tr data-triage-id="' + esc(row.id) + '">' +
-        '<td>' + esc(row.patient_name) + '</td>' +
-        '<td style="max-width:240px;">' + esc((row.chief_complaint || '').slice(0, 120)) + '</td>' +
-        '<td>' + badge + '</td>' +
-        '<td>' + esc(row.reviewer_name || 'Unassigned') + '</td>' +
-        '<td style="white-space:nowrap;font-size:12px;">' + esc(formatDate(row.assessed_at)) + '</td>' +
-        '<td style="min-width:200px;">' +
-          '<select class="form-control ai-review-provider-select" data-triage="' + esc(row.id) + '" style="display:inline-block;max-width:160px;margin-right:6px;">' +
-            providerOptions(assignId) +
-          '</select>' +
-          '<button type="button" class="mc-btn mc-btn--primary mc-btn--sm ai-review-save" data-triage="' + esc(row.id) + '">Save</button>' +
-        '</td>' +
-      '</tr>';
-    }).join('');
-  }
-
-  async function load() {
-    statusEl.textContent = 'Loading…';
-    var status = filterEl ? filterEl.value : 'active';
-    try {
-      var res = await fetch(apiUrl + '?status=' + encodeURIComponent(status), { credentials: 'same-origin' });
-      var data = await res.json();
-      if (!data.success) {
-        statusEl.textContent = data.message || 'Could not load.';
-        return;
-      }
-      providers = data.providers || [];
-      renderRows(data.rows || []);
-      statusEl.textContent = 'Updated ' + new Date().toLocaleTimeString();
-    } catch (e) {
-      statusEl.textContent = 'Load failed.';
-    }
-  }
-
-  tbody.addEventListener('click', async function (ev) {
-    var btn = ev.target.closest('.ai-review-save');
-    if (!btn) return;
-    var triageId = btn.getAttribute('data-triage');
-    var row = btn.closest('tr');
-    var sel = row ? row.querySelector('.ai-review-provider-select') : null;
-    if (!triageId || !sel || !sel.value) return;
-    btn.disabled = true;
-    try {
-      var fd = new FormData();
-      fd.append('action', 'reassign');
-      fd.append('triage_id', triageId);
-      fd.append('provider_id', sel.value);
-      fd.append('csrf_token', csrf);
-      var res = await fetch(apiUrl, { method: 'POST', body: fd, credentials: 'same-origin' });
-      var data = await res.json();
-      alert(data.message || (data.success ? 'Saved.' : 'Could not reassign.'));
-      if (data.success) load();
-    } catch (e) {
-      alert('Could not reassign.');
-    } finally {
-      btn.disabled = false;
-    }
-  });
-
-  document.getElementById('aiReviewRefresh').addEventListener('click', load);
-  if (filterEl) filterEl.addEventListener('change', load);
-  load();
-})();
-</script>
+<script src="<?= ASSET_BASE ?>/assets/js/admin-ai-review.js?v=<?= $jsVer ?>"></script>
 
 <?php require_once __DIR__ . '/partials/layout_close.php'; ?>
