@@ -6,6 +6,26 @@
   animation: staffAppsFadeIn 0.35s ease;
 }
 
+/* Inverted brand hero — teal background, light copy */
+.air-review-page .staff-apps-hero {
+  background: linear-gradient(135deg, #012a4a 0%, #016970 52%, #018a93 100%);
+  border-color: rgba(255, 255, 255, 0.14);
+  border-left-color: rgba(255, 255, 255, 0.9);
+  box-shadow: 0 4px 18px rgba(1, 42, 74, 0.2);
+}
+
+.air-review-page .staff-apps-hero__eyebrow {
+  color: rgba(255, 255, 255, 0.72);
+}
+
+.air-review-page .staff-apps-hero__title {
+  color: #fff;
+}
+
+.air-review-page .staff-apps-hero__desc {
+  color: rgba(255, 255, 255, 0.9);
+}
+
 .air-review-stat--unassigned .staff-apps-stat__value {
   color: #dc2626;
 }
@@ -116,6 +136,29 @@
 }
 
 /* Dark mode */
+html[data-theme-resolved='dark'] body.admin-body .air-review-page .staff-apps-hero,
+html[data-theme-resolved='dark'] body.superadmin-body .air-review-page .staff-apps-hero {
+  background: linear-gradient(135deg, #0a1f33 0%, #014d54 52%, #016970 100%) !important;
+  border-color: rgba(255, 255, 255, 0.1) !important;
+  border-left-color: rgba(125, 211, 252, 0.7) !important;
+  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.35) !important;
+}
+
+html[data-theme-resolved='dark'] body.admin-body .air-review-page .staff-apps-hero__eyebrow,
+html[data-theme-resolved='dark'] body.superadmin-body .air-review-page .staff-apps-hero__eyebrow {
+  color: rgba(186, 230, 253, 0.85) !important;
+}
+
+html[data-theme-resolved='dark'] body.admin-body .air-review-page .staff-apps-hero__title,
+html[data-theme-resolved='dark'] body.superadmin-body .air-review-page .staff-apps-hero__title {
+  color: #f8fafc !important;
+}
+
+html[data-theme-resolved='dark'] body.admin-body .air-review-page .staff-apps-hero__desc,
+html[data-theme-resolved='dark'] body.superadmin-body .air-review-page .staff-apps-hero__desc {
+  color: rgba(226, 232, 240, 0.88) !important;
+}
+
 html[data-theme-resolved='dark'] body.admin-body .air-review-concern,
 html[data-theme-resolved='dark'] body.superadmin-body .air-review-concern {
   color: #cbd5e1;
