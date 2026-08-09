@@ -575,6 +575,7 @@
   const DISTRESS_EMOTIONS = new Set([
     'worried', 'anxious', 'stressed', 'overwhelmed', 'sad', 'lonely', 'afraid',
     'frustrated', 'angry', 'disappointed', 'nervous', 'crying', 'tired', 'hopeless', 'panic',
+    'grief', 'embarrassed', 'ashamed', 'guilty', 'jealous', 'irritated', 'bored', 'uncertain', 'mixed',
   ]);
 
   function shouldTreatAsEmotionalSupport(emoKey, emotion, phpSuggestedFlow, text, classification, bridge) {

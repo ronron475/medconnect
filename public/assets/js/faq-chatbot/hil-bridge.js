@@ -89,6 +89,26 @@
     ['salamat gid', 'thank you very much'],
     ['damo nga salamat', 'thank you very much'],
     ['salamat guid', 'thank you'],
+    ['okay lang ko', 'okay i am fine relieved'],
+    ['okay lang', 'okay fine relieved'],
+    ['kapoy ko', 'i am tired exhausted'],
+    ['ginakapoy ko', 'i am getting tired exhausted'],
+    ['nasubo ko', 'i am sad feeling down'],
+    ['malipayon ko', 'i am happy glad'],
+    ['nahadlok ko', 'i am scared afraid'],
+    ['kulbaan ko', 'i am anxious nervous'],
+    ['nabudlayan ko', 'i am frustrated struggling'],
+    ['na stress ko', 'i am stressed'],
+    ['na-stress ko', 'i am stressed'],
+    ['akig ko', 'i am angry'],
+    ['lain gid ya', 'this is frustrating annoying'],
+    ['lain gid', 'frustrated annoying'],
+    ['indi ko kabalo', 'i do not know confused uncertain'],
+    ['indi ko bal an', 'i do not know confused uncertain'],
+    ['wala ko kasabot', 'i do not understand confused'],
+    ['wala ko kaintindi', 'i do not understand confused'],
+    ['ano ni', 'what is this confused'],
+    ['ano ini', 'what is this confused'],
     ['buligi ko palihog', 'help me please'],
     ['kinahanglan ko bulig', 'i need help'],
     ['buligi ko', 'help me'],
@@ -110,6 +130,25 @@
     ['nawad an malay', 'unconscious'],
     ['wala paglaum', 'hopeless'],
     ['wala na paglaum', 'hopeless'],
+    ['naguol ko', 'i am grieving sad'],
+    ['naghuoy ko', 'i am weary sad tired'],
+    ['nagkasubo ko', 'i am sad grieving'],
+    ['subo gid ko', 'i am very sad'],
+    ['badtrip ko', 'frustrated badtrip'],
+    ['naglibog ko', 'i am confused'],
+    ['kinabahan ko', 'i am nervous anxious'],
+    ['sobra stress ko', 'very stressed overwhelmed'],
+    ['nahuya gid ko', 'very embarrassed ashamed'],
+    ['may guilt ko', 'guilty feeling guilt'],
+    ['naiinggit ko', 'jealous envious'],
+    ['miss ko ang pamilya', 'miss my family lonely homesick'],
+    ['buligi ko daw', 'help me please panic'],
+    ['kinahanglan ko sang dulungan', 'need help urgent distress'],
+    ['gasakit lawas ko', 'body pain sick'],
+    ['may sipon ko', 'have cold sick cough'],
+    ['may ubo ko', 'have cough sick'],
+    ['budlay ginhawa', 'difficulty breathing worried'],
+    ['indi ko kaginhawa', 'cannot breathe difficulty breathing'],
     ['kumusta', 'hello greeting'],
     ['musta', 'hello greeting'],
     ['maayong aga', 'good morning greeting'],
@@ -132,6 +171,32 @@
     nalibog: 'confused',
     libog: 'confused',
     masadya: 'happy',
+    malipayon: 'happy glad',
+    nasubo: 'sad',
+    nabudlay: 'frustrated struggling',
+    nabudlayan: 'frustrated struggling',
+    naguol: 'grieving sad',
+    naghuoy: 'weary sad tired',
+    nagkasubo: 'sad grieving',
+    naglibog: 'confused',
+    kinabahan: 'nervous anxious',
+    nahuya: 'embarrassed ashamed',
+    naiinggit: 'jealous',
+    selos: 'jealous',
+    inggit: 'jealous',
+    gasuka: 'nauseous sick',
+    sipon: 'cold sick cough',
+    ginhawa: 'breathing',
+    kaginhawa: 'breathing',
+    dulungan: 'help support',
+    grabe: 'intense surprised stressed',
+    bwesit: 'frustrated annoyed',
+    yawa: 'frustrated annoyed',
+    kasabot: 'understand',
+    kaintindi: 'understand',
+    'bal-an': 'know',
+    kabalo: 'know',
+    lain: 'bad wrong frustrating',
     salamat: 'thankful',
     bulig: 'help',
     buligi: 'help me',
@@ -193,10 +258,33 @@
     medconnect: 'medconnect',
   };
 
-  const HIL_MARKERS = /\b(gid|guid|sang|kag|indi|nabalaka|nahadlok|kasubo|kapoy|nalibog|buligi|tabangi|diin|subong|kon|nga|halin|amo|maayong|kumusta|musta|palihog|lawas|dughan|hilanat|nakalimtan|rehistro|konsultasyon)\b/i;
+  const HIL_MARKERS = /\b(gid|guid|sang|kag|indi|nabalaka|nahadlok|kasubo|kapoy|nalibog|buligi|tabangi|diin|subong|kon|nga|halin|amo|maayong|kumusta|musta|palihog|lawas|dughan|hilanat|nakalimtan|rehistro|konsultasyon|nasubo|malipayon|kulbaan|kasabot|kabalo|nabudlay)\b/i;
+
+  const SHORTHAND_MAP = [
+    ['sakit kag d nko kaginhawa', 'sakit kag indi ko kaginhawa'],
+    ['d nako kaginhawa', 'indi ko kaginhawa'],
+    ['d nko kaginhawa', 'indi ko kaginhawa'],
+    ['budlay ginhwa', 'budlay ginhawa'],
+    ['d nako', 'indi ko'],
+    ['d nko', 'indi ko'],
+    ['d ko', 'indi ko'],
+    ['wla ko', 'wala ko'],
+    ['wla', 'wala'],
+    ['dko', 'indi ko'],
+    ['ndi ko', 'indi ko'],
+    ['ginhwa', 'ginhawa'],
+  ];
+
+  function expandShorthand(text) {
+    let work = String(text || '').toLowerCase();
+    SHORTHAND_MAP.forEach(([from, to]) => {
+      if (work.includes(from)) work = work.split(from).join(to);
+    });
+    return work;
+  }
 
   function normalize(text) {
-    return String(text || '')
+    return expandShorthand(text)
       .toLowerCase()
       .replace(/[^\w\s\u00C0-\u024F'-]/g, ' ')
       .replace(/\s+/g, ' ')
@@ -252,6 +340,10 @@
       frustrated: 'Pasensya sa abala — tuytuyan ta ini.',
       lonely: 'Indi ka isa lang — diri ako para buligan ka.',
       tired: 'Mabug-at gid — magpahuway lang anay.',
+      uncertain: 'Wala problema — ipahayag ko sing malinaw agod makadesisyon ka.',
+      mixed: 'Natural ang magkahalong pamatyag — dula lang, suportado lang ta.',
+      embarrassed: 'Okay lang mahuya — diri ako nga wala hatol.',
+      grief: 'Nagakaluoy gid ako sa imo gina-agi.',
       confused: 'Wala problema — ipahayag ko sing malinaw.',
       happy: 'Maayo nga mabatian!',
     };
