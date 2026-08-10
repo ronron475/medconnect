@@ -13,7 +13,6 @@ require_once BASE_PATH . '/app/includes/landing_page_config.php';
 AnnouncementService::ensureSchema($pdo);
 $landing_announcements = AnnouncementService::listPublic($pdo, 6);
 $landing_announcements_total = AnnouncementService::countPublic($pdo);
-$landing_search_announcements = AnnouncementService::listPublic($pdo, 100);
 $landing_hero = LandingPageConfig::hero($pdo);
 $landing_sections = LandingPageConfig::sections($pdo);
 $landing_maintenance = [
