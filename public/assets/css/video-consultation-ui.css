@@ -393,6 +393,11 @@
 
 .mc-vc-overlay.is-visible {
   opacity: 1;
+  pointer-events: none;
+}
+
+.mc-vc-overlay.is-visible .mc-vc-overlay-card {
+  pointer-events: auto;
 }
 
 .mc-vc-overlay-card {
@@ -433,7 +438,8 @@
   filter: brightness(1.08);
 }
 
-.mc-vc-overlay-retry[hidden] {
+.mc-vc-overlay-retry[hidden],
+.mc-vc-waiting-card .mc-vc-overlay-retry[hidden] {
   display: none !important;
 }
 
@@ -476,7 +482,7 @@ body.role-patient .mc-vc-main {
   bottom: 0;
   left: 0;
   right: 0;
-  z-index: 15;
+  z-index: 20;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -545,6 +551,9 @@ body.role-patient .mc-vc-main {
   font-weight: 800;
   font-size: 13px;
   background: var(--mc-vc-danger);
+  position: relative;
+  z-index: 21;
+  pointer-events: auto;
 }
 
 .mc-vc-btn--end:disabled {
@@ -609,6 +618,81 @@ body.compact-mode {
   min-height: 100vh;
 }
 
+/* Embedded provider iframe — fill dock without covering parent page */
+body.embedded-shell {
+  overflow: hidden;
+  height: 100%;
+  min-height: 0;
+  margin: 0;
+}
+
+body.embedded-shell .mc-vc-root {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  border-radius: 12px;
+  z-index: 1;
+}
+
+body.embedded-shell.role-provider .mc-vc-root {
+  position: relative;
+  height: 100%;
+  min-height: 220px;
+}
+
+body.embedded-shell .mc-vc-top-actions {
+  top: 8px;
+  right: 8px;
+  z-index: 20;
+}
+
+body.embedded-shell .compact-hint {
+  display: none;
+}
+
+body.embedded-shell.compact-mode .mc-vc-root,
+body.embedded-shell.role-provider .mc-vc-root {
+  height: 100%;
+  min-height: 200px;
+}
+
+@media (max-width: 720px) {
+  body.embedded-shell.role-provider .mc-vc-status-bar {
+    top: calc(var(--mc-vc-header-height) + var(--mc-vc-safe-top));
+    max-height: 52px;
+    overflow: hidden;
+  }
+
+  body.embedded-shell.role-provider .mc-vc-media-status span:not(#mediaStatusConn) {
+    display: none;
+  }
+
+  body.embedded-shell.role-provider .mc-vc-pip {
+    width: 88px;
+    height: 66px;
+    min-width: 88px;
+    min-height: 66px;
+  }
+
+  body.embedded-shell.role-provider .mc-vc-controls-inner {
+    gap: 5px;
+    padding: 6px 8px;
+  }
+
+  body.embedded-shell.role-provider .mc-vc-btn {
+    width: 40px;
+    height: 40px;
+  }
+
+  body.embedded-shell.role-provider .mc-vc-btn--end {
+    min-width: 76px;
+    height: 40px;
+    font-size: 11px;
+  }
+}
+
 /* Permission gate stays above */
 .media-permission-gate {
   z-index: 100050;
@@ -632,9 +716,24 @@ body.compact-mode {
 }
 .extend-btn:disabled { opacity: .6; cursor: not-allowed; }
 
-@keyframes mc-vc-pulse {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.45; }
+/* Desktop — centered stage without excessive side gutters on ultrawide */
+@media (min-width: 1100px) {
+  body:not(.embedded-shell) .mc-vc-main video {
+    object-fit: contain;
+    background: #0b1220;
+  }
+
+  body:not(.embedded-shell) .mc-vc-main {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  body:not(.embedded-shell) .mc-vc-main video {
+    width: 100%;
+    height: 100%;
+    max-height: 100%;
+  }
 }
 
 /* Mobile */

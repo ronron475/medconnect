@@ -18,11 +18,34 @@
   var myPeerJsId = null;
   var peerRetryTimer = null;
   var listeners = {};
+  var userMicMuted = false;
+  var lastRemoteStream = null;
+  var iceRecoveryTimer = null;
+  var reconnectTimer = null;
+  var reconnectInProgress = false;
+  var reconnectAttempts = 0;
+  var wiredCalls = typeof WeakSet !== 'undefined' ? new WeakSet() : null;
+  var intentionalLeave = false;
+  var MAX_RECONNECT_ATTEMPTS = 6;
+  var ICE_DISCONNECT_GRACE_MS = 2800;
+
   var config = {
     peerOptions: {},
     useAutoPeerId: false,
     onRecreate: null,
+    onNeedsRedial: null,
   };
+
+  function setIntentionalLeave(value) {
+    intentionalLeave = !!value;
+    if (intentionalLeave) {
+      clearRecoveryTimers();
+    }
+  }
+
+  function isIntentionalLeave() {
+    return intentionalLeave;
+  }
 
   function on(event, fn) {
     if (!listeners[event]) listeners[event] = [];
@@ -33,6 +56,23 @@
     (listeners[event] || []).forEach(function (fn) {
       try { fn(data || {}); } catch (e) { console.warn('[McWebrtcPeerCall]', e); }
     });
+  }
+
+  function clearTimer(timerRef) {
+    if (timerRef) clearTimeout(timerRef);
+    return null;
+  }
+
+  function isCallWired(call) {
+    if (!call) return false;
+    if (wiredCalls) return wiredCalls.has(call);
+    return !!call._mcWired;
+  }
+
+  function markCallWired(call) {
+    if (!call) return;
+    if (wiredCalls) wiredCalls.add(call);
+    else call._mcWired = true;
   }
 
   /** ZIP: addLocalVideo — attach local stream to #localVideo */
@@ -49,9 +89,18 @@
     emit('local-video-attached', { stream: stream });
   }
 
+  function ensureRemoteAudioTracks(stream) {
+    if (!stream || !stream.getAudioTracks) return;
+    stream.getAudioTracks().forEach(function (track) {
+      try { track.enabled = true; } catch (e) {}
+    });
+  }
+
   /** ZIP: addRemoteVideo — attach remote stream via McVideoCallCore or #remoteVideo */
   function addRemoteVideo(stream) {
     if (!stream) return;
+    ensureRemoteAudioTracks(stream);
+    lastRemoteStream = stream;
     if (global.McVideoCallCore && typeof global.McVideoCallCore.attachRemoteMedia === 'function') {
       global.McVideoCallCore.attachRemoteMedia(stream).then(function (ok) {
         emit('remote-video-attached', { stream: stream, audioUnlocked: ok });
@@ -67,6 +116,10 @@
       playPromise.catch(function () {});
     }
     emit('remote-video-attached', { stream: stream, audioUnlocked: true });
+  }
+
+  function refreshRemoteMedia() {
+    if (lastRemoteStream) addRemoteVideo(lastRemoteStream);
   }
 
   /** ZIP: toggleVideo */
@@ -92,12 +145,19 @@
     else if (enabled === false || enabled === 'false') on = false;
     else on = !track.enabled;
     track.enabled = on;
+    userMicMuted = !on;
     return on;
   }
 
   function setLocalStream(stream) {
     myStream = stream;
-    if (stream) addLocalVideo(stream);
+    if (stream) {
+      var audioTrack = stream.getAudioTracks()[0];
+      if (audioTrack && !userMicMuted) {
+        try { audioTrack.enabled = true; } catch (e) {}
+      }
+      addLocalVideo(stream);
+    }
   }
 
   function getLocalStream() {
@@ -148,6 +208,152 @@
     }
   }
 
+  function getPeerConnection(call) {
+    var target = call || currentCall;
+    if (!target) return null;
+    try {
+      return target.peerConnection || null;
+    } catch (e) {
+      return null;
+    }
+  }
+
+  function attemptIceRestart(call) {
+    var pc = getPeerConnection(call);
+    if (!pc || pc.signalingState === 'closed') return Promise.resolve(false);
+    if (typeof pc.createOffer !== 'function') return Promise.resolve(false);
+    return pc.createOffer({ iceRestart: true })
+      .then(function (offer) { return pc.setLocalDescription(offer); })
+      .then(function () {
+        emit('ice-restart', { call: call || currentCall });
+        return true;
+      })
+      .catch(function (err) {
+        console.warn('[McWebrtcPeerCall] ICE restart failed:', err);
+        return false;
+      });
+  }
+
+  function scheduleIceRecovery(reason) {
+    if (intentionalLeave) return;
+    if (iceRecoveryTimer) return;
+    emit('recovering', { reason: reason || 'ice-disconnected' });
+    iceRecoveryTimer = setTimeout(function () {
+      iceRecoveryTimer = null;
+      var pc = getPeerConnection();
+      if (!pc) {
+        scheduleReconnect(reason || 'no-pc');
+        return;
+      }
+      var state = pc.iceConnectionState || '';
+      if (state === 'connected' || state === 'completed') {
+        emit('recovered', { reason: 'ice-self-healed' });
+        reconnectAttempts = 0;
+        return;
+      }
+      attemptIceRestart(currentCall).then(function (ok) {
+        if (ok) return;
+        scheduleReconnect(reason || 'ice-restart-failed');
+      });
+    }, ICE_DISCONNECT_GRACE_MS);
+  }
+
+  function scheduleReconnect(reason) {
+    if (intentionalLeave) return;
+    if (reconnectInProgress) return;
+    if (reconnectAttempts >= MAX_RECONNECT_ATTEMPTS) {
+      emit('connection-failed', { reason: reason, attempts: reconnectAttempts });
+      return;
+    }
+    if (reconnectTimer) return;
+
+    reconnectAttempts += 1;
+    reconnectInProgress = true;
+    emit('recovering', { reason: reason, attempt: reconnectAttempts });
+
+    reconnectTimer = setTimeout(function () {
+      reconnectTimer = null;
+      reconnectInProgress = false;
+
+      var hadRemote = callHasRemoteStream;
+      closeCurrentCall({ preserveRemoteFlag: hadRemote, silent: true });
+
+      if (typeof config.onNeedsRedial === 'function') {
+        config.onNeedsRedial({ reason: reason, attempt: reconnectAttempts });
+      } else {
+        emit('needs-redial', { reason: reason, attempt: reconnectAttempts });
+      }
+    }, 900 + Math.min(reconnectAttempts * 400, 2000));
+  }
+
+  function clearRecoveryTimers() {
+    iceRecoveryTimer = clearTimer(iceRecoveryTimer);
+    reconnectTimer = clearTimer(reconnectTimer);
+    reconnectInProgress = false;
+  }
+
+  function handleIceStateChange(call) {
+    var pc = getPeerConnection(call);
+    if (!pc) return;
+    var iceState = pc.iceConnectionState || '';
+    var connState = pc.connectionState || '';
+
+    emit('ice-state', {
+      call: call,
+      iceConnectionState: iceState,
+      connectionState: connState,
+    });
+
+    if (iceState === 'connected' || iceState === 'completed' || connState === 'connected') {
+      clearRecoveryTimers();
+      reconnectAttempts = 0;
+      emit('recovered', { iceConnectionState: iceState, connectionState: connState });
+      return;
+    }
+
+    if (iceState === 'disconnected' || connState === 'disconnected') {
+      scheduleIceRecovery('disconnected');
+      return;
+    }
+
+    if (iceState === 'failed' || connState === 'failed') {
+      iceRecoveryTimer = clearTimer(iceRecoveryTimer);
+      attemptIceRestart(call).then(function (ok) {
+        if (!ok) scheduleReconnect('failed');
+      });
+    }
+  }
+
+  function wirePeerConnection(call) {
+    if (!call || isCallWired(call)) return;
+    markCallWired(call);
+
+    var pc = getPeerConnection(call);
+    if (!pc) return;
+
+    var onIceChange = function () { handleIceStateChange(call); };
+    pc.addEventListener('iceconnectionstatechange', onIceChange);
+    pc.addEventListener('connectionstatechange', onIceChange);
+
+    pc.addEventListener('track', function (ev) {
+      var stream = (ev.streams && ev.streams[0]) || null;
+      if (!stream) return;
+      callHasRemoteStream = true;
+      addRemoteVideo(stream);
+      emit('remote-stream', { stream: stream, call: call, peer: call.peer, track: ev.track });
+    });
+  }
+
+  function handleRemoteStream(call, remoteStream) {
+    if (!remoteStream) return;
+    if (peerList.indexOf(call.peer) === -1) peerList.push(call.peer);
+    callHasRemoteStream = true;
+    clearRecoveryTimers();
+    reconnectAttempts = 0;
+    addRemoteVideo(remoteStream);
+    emit('remote-stream', { stream: remoteStream, call: call, peer: call.peer });
+  }
+
   function handleCall(call) {
     if (!call) return;
     if (currentCall === call && callHasRemoteStream) return;
@@ -159,14 +365,13 @@
     currentCall = call;
     global.__mcCurrentCall = call;
     outboundCallInFlight = false;
-    callHasRemoteStream = false;
+    if (!callHasRemoteStream) callHasRemoteStream = false;
     emit('call-started', { call: call, peer: call.peer });
 
+    wirePeerConnection(call);
+
     call.on('stream', function (remoteStream) {
-      if (peerList.indexOf(call.peer) === -1) peerList.push(call.peer);
-      callHasRemoteStream = true;
-      addRemoteVideo(remoteStream);
-      emit('remote-stream', { stream: remoteStream, call: call, peer: call.peer });
+      handleRemoteStream(call, remoteStream);
     });
 
     call.on('close', function () {
@@ -175,14 +380,18 @@
         global.__mcCurrentCall = null;
       }
       outboundCallInFlight = false;
+      var hadRemote = callHasRemoteStream;
       callHasRemoteStream = false;
-      emit('call-close', { call: call, peer: call.peer });
+      emit('call-close', { call: call, peer: call.peer, hadRemote: hadRemote, intentionalLeave: intentionalLeave });
     });
 
     call.on('error', function (err) {
       outboundCallInFlight = false;
-      if (currentCall === call && !callHasRemoteStream) currentCall = null;
       emit('call-error', { error: err, call: call });
+      if (intentionalLeave) return;
+      if (currentCall === call && !callHasRemoteStream) {
+        scheduleReconnect('call-error');
+      }
     });
   }
 
@@ -204,7 +413,8 @@
 
   /** ZIP: listenToCall */
   function listenToCall() {
-    if (!peer) return;
+    if (!peer || peer._mcListening) return;
+    peer._mcListening = true;
     peer.on('call', function (call) {
       emit('incoming-call', { call: call, peer: call.peer });
       if (!myStream) {
@@ -239,13 +449,6 @@
 
     if (call) {
       handleCall(call);
-      setTimeout(function () {
-        if (currentCall === call && !callHasRemoteStream) {
-          outboundCallInFlight = false;
-          try { call.close(); } catch (err) {}
-          if (currentCall === call) currentCall = null;
-        }
-      }, 8000);
     } else {
       outboundCallInFlight = false;
     }
@@ -268,11 +471,14 @@
   }
 
   function destroyPeer() {
+    clearRecoveryTimers();
     peerReady = false;
     myPeerJsId = null;
     outboundCallInFlight = false;
     callHasRemoteStream = false;
     pendingIncomingCall = null;
+    lastRemoteStream = null;
+    reconnectAttempts = 0;
     if (peerRetryTimer) {
       clearTimeout(peerRetryTimer);
       peerRetryTimer = null;
@@ -294,6 +500,7 @@
   }
 
   function recreatePeer(reason) {
+    if (intentionalLeave) return;
     console.warn('Recreating PeerJS connection:', reason || 'retry');
     destroyPeer();
     peerRetryTimer = setTimeout(function () {
@@ -311,6 +518,7 @@
     if (options.peerOptions) config.peerOptions = options.peerOptions;
     config.useAutoPeerId = !!options.useAutoPeerId;
     if (typeof options.onRecreate === 'function') config.onRecreate = options.onRecreate;
+    if (typeof options.onNeedsRedial === 'function') config.onNeedsRedial = options.onNeedsRedial;
 
     destroyPeer();
 
@@ -332,6 +540,7 @@
 
     peer.on('disconnected', function () {
       emit('disconnected', {});
+      if (intentionalLeave) return;
       try {
         if (peer && !peer.destroyed) peer.reconnect();
       } catch (e) {
@@ -347,24 +556,46 @@
   }
 
   function isCallConnected() {
+    var pc = getPeerConnection();
+    if (pc) {
+      var ice = pc.iceConnectionState || '';
+      var conn = pc.connectionState || '';
+      if (ice === 'connected' || ice === 'completed' || conn === 'connected') return true;
+    }
     return !!(currentCall && currentCall.open);
   }
 
-  function closeCurrentCall() {
+  function closeCurrentCall(options) {
+    options = options || {};
+    clearRecoveryTimers();
     if (currentCall) {
       try { currentCall.close(); } catch (e) {}
       currentCall = null;
       global.__mcCurrentCall = null;
     }
     outboundCallInFlight = false;
-    callHasRemoteStream = false;
+    if (!options.preserveRemoteFlag) {
+      callHasRemoteStream = false;
+      lastRemoteStream = null;
+    }
+    if (!options.silent) {
+      reconnectAttempts = 0;
+    }
   }
 
   function resetCallState() {
     pendingIncomingCall = null;
     outboundCallInFlight = false;
     callHasRemoteStream = false;
+    lastRemoteStream = null;
+    clearRecoveryTimers();
+    reconnectAttempts = 0;
     peerList = [];
+  }
+
+  function requestReconnect(reason) {
+    reconnectAttempts = 0;
+    scheduleReconnect(reason || 'manual');
   }
 
   global.McWebrtcPeerCall = {
@@ -373,12 +604,14 @@
     makeCall: makeCall,
     addLocalVideo: addLocalVideo,
     addRemoteVideo: addRemoteVideo,
+    refreshRemoteMedia: refreshRemoteMedia,
     toggleVideo: toggleVideo,
     toggleAudio: toggleAudio,
     setLocalStream: setLocalStream,
     getLocalStream: getLocalStream,
     getPeer: function () { return peer; },
     getCurrentCall: function () { return currentCall; },
+    getPeerConnection: function () { return getPeerConnection(); },
     isReady: function () { return peerReady; },
     getMyPeerId: function () { return myPeerJsId; },
     hasRemoteStream: function () { return callHasRemoteStream; },
@@ -393,6 +626,9 @@
     recreatePeer: recreatePeer,
     closeCurrentCall: closeCurrentCall,
     resetCallState: resetCallState,
+    requestReconnect: requestReconnect,
+    setIntentionalLeave: setIntentionalLeave,
+    isIntentionalLeave: isIntentionalLeave,
     on: on,
   };
 })(window);

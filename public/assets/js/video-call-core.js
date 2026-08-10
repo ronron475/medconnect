@@ -53,6 +53,16 @@
       try { t.enabled = true; } catch (e) {}
     });
 
+    if (!stream._mcTrackListener) {
+      stream._mcTrackListener = true;
+      stream.addEventListener('addtrack', (ev) => {
+        if (ev.track && ev.track.kind === 'audio') {
+          try { ev.track.enabled = true; } catch (e) {}
+          attachRemoteMedia(stream, options);
+        }
+      });
+    }
+
     if (videoEl) {
       videoEl.srcObject = stream;
       videoEl.playsInline = true;

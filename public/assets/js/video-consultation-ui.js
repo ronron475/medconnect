@@ -419,17 +419,47 @@
       }, 1000);
     }
 
-    function setOverlay(title, sub, visible) {
-      if (!els.overlay) return;
-      if (els.overlayTitle) els.overlayTitle.textContent = title || '';
-      if (els.overlaySub) els.overlaySub.textContent = sub || '';
-      els.overlay.classList.toggle('is-visible', !!visible);
+    let connectionFailed = false;
+
+    function setRetryVisible(show) {
       const retryBtn = q('retryConnectBtn');
-      if (retryBtn) {
-        const waiting = /waiting for healthcare|waiting for provider|waiting for doctor|looking for/i.test(
-          String(title || '') + ' ' + String(sub || '')
+      const waitingRetry = q('mcVcWaitingRetry');
+      if (retryBtn) retryBtn.hidden = !show;
+      if (waitingRetry) waitingRetry.hidden = !show;
+    }
+
+    function setOverlay(title, sub, visible, options) {
+      options = options || {};
+      if (els.overlay) {
+        if (els.overlayTitle) els.overlayTitle.textContent = title || '';
+        if (els.overlaySub) els.overlaySub.textContent = sub || '';
+        els.overlay.classList.toggle('is-visible', !!visible);
+        els.overlay.setAttribute('aria-hidden', visible ? 'false' : 'true');
+      }
+      if (options.showRetry === true) {
+        connectionFailed = true;
+        setRetryVisible(true);
+      } else if (options.showRetry === false) {
+        connectionFailed = false;
+        setRetryVisible(false);
+      } else if (!visible) {
+        setRetryVisible(false);
+      } else {
+        setRetryVisible(connectionFailed);
+      }
+    }
+
+    function setConnectionFailed(failed, message) {
+      connectionFailed = !!failed;
+      if (failed) {
+        setOverlay(
+          'Connection interrupted',
+          message || 'We could not restore the call automatically. Tap Retry connection to try again.',
+          true,
+          { showRetry: true }
         );
-        retryBtn.hidden = !(visible && waiting);
+      } else {
+        setRetryVisible(false);
       }
     }
 
@@ -439,25 +469,32 @@
         setOverlay(
           isPatient ? 'Waiting for Healthcare Provider…' : 'Waiting for Patient…',
           isPatient
-            ? 'Your doctor will connect shortly. You can also tap Retry connection below.'
-            : 'The patient can join from their dashboard. Tap Retry connection if needed.',
-          true
+            ? 'Your doctor will connect shortly. This happens automatically — no action needed.'
+            : 'The patient can join from their dashboard. Connection starts automatically when they arrive.',
+          true,
+          { showRetry: false }
         );
       } else if (t.indexOf('waiting for patient') >= 0) {
-        setOverlay('Waiting for Patient…', 'The patient can join from their dashboard.', true);
+        setOverlay(
+          'Waiting for Patient…',
+          'The patient can join from their dashboard. Connection starts automatically when they arrive.',
+          true,
+          { showRetry: false }
+        );
       } else if (t.indexOf('connecting') >= 0) {
-        setOverlay('Connecting…', 'Establishing a secure consultation channel.', true);
+        setOverlay('Connecting…', 'Establishing a secure consultation channel.', true, { showRetry: false });
       } else if (t.indexOf('reconnecting') >= 0) {
-        setOverlay('Reconnecting…', 'Temporary network interruption — your call will resume.', true);
+        setOverlay('Reconnecting…', 'Temporary network interruption — your call will resume automatically.', true, { showRetry: false });
       } else if (t.indexOf('poor network') >= 0) {
-        setOverlay('Poor Network Connection', 'Move closer to your router or switch networks if possible.', true);
+        setOverlay('Poor Network Connection', 'Move closer to your router or switch networks if possible.', true, { showRetry: false });
       } else if (t.indexOf('ended') >= 0 || t.indexOf('consultation ended') >= 0) {
-        setOverlay('Consultation Ended', 'Thank you for using medConnect.', true);
+        setOverlay('Consultation Ended', 'Thank you for using medConnect.', true, { showRetry: false });
       } else if (t.indexOf('connected') >= 0) {
-        setOverlay('', '', false);
+        connectionFailed = false;
+        setOverlay('', '', false, { showRetry: false });
         startDurationTimer();
       } else {
-        setOverlay('', '', false);
+        setOverlay('', '', false, { showRetry: false });
       }
     }
 
@@ -624,6 +661,8 @@
       showControlsTemporarily,
       updateOverlayFromStatus,
       setOverlay,
+      setConnectionFailed,
+      setRetryVisible,
       startDurationTimer,
       getIsFloating: () => isFloating,
     };

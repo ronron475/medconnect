@@ -52,7 +52,7 @@
     <h2 class="mc-vc-waiting-card__title" id="mcVcWaitingTitle"><?= !empty($is_patient) ? 'Waiting for your healthcare provider' : 'Waiting for your patient' ?></h2>
     <dl class="mc-vc-waiting-card__meta" id="mcVcWaitingMeta"></dl>
     <p class="mc-vc-waiting-card__status" id="mcVcWaitingStatus"></p>
-    <button type="button" class="mc-vc-overlay-retry" id="mcVcWaitingRetry">Retry connection</button>
+    <button type="button" class="mc-vc-overlay-retry" id="mcVcWaitingRetry" hidden>Retry connection</button>
   </div>
 </div>
 

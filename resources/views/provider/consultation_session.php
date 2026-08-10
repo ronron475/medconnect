@@ -1178,12 +1178,20 @@ $localhost_app_url = 'http://localhost' . (ASSET_BASE !== '' ? ASSET_BASE : '');
 @media (max-width: 760px) {
     .hs-grid { grid-template-columns: 1fr; }
     .video-shell {
-        min-height: 52vh;
+        min-height: 200px;
+        max-height: 32vh;
         aspect-ratio: auto;
+        height: auto;
+    }
+    .video-shell.is-live:not(.is-floating) {
+        min-height: 180px;
+        max-height: 28vh;
+        height: 28vh;
     }
     .mc-provider-video-dock,
     .mc-provider-video-dock .mc-session-float-shell.is-docked {
-        min-height: 220px;
+        min-height: 180px;
+        max-height: 28vh;
     }
     .video-shell.is-floating {
         width: min(100vw - 16px, 360px);
@@ -2763,6 +2771,17 @@ function mcProviderOpenVideo(urlOrToken, consultationId) {
         if (legacy) {
             legacy.hidden = false;
             legacy.src = joinUrl;
+        }
+    }
+
+    if (window.matchMedia && window.matchMedia('(max-width: 760px)').matches) {
+        const shell = document.getElementById('videoInterface');
+        if (shell && !shell.classList.contains('is-floating')) {
+            window.setTimeout(() => {
+                if (!shell.classList.contains('is-floating')) {
+                    toggleVideoShellSize();
+                }
+            }, 600);
         }
     }
 

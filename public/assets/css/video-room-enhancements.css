@@ -308,16 +308,18 @@ body.mc-vc-panel-open {
 .mc-vc-waiting-card {
   position: absolute;
   inset: 0;
-  z-index: 90;
+  z-index: 6;
   display: flex;
   align-items: center;
   justify-content: center;
   background: rgba(15, 23, 42, 0.82);
   backdrop-filter: blur(6px);
   padding: 1.5rem;
+  pointer-events: none;
 }
 
 .mc-vc-waiting-card__inner {
+  pointer-events: auto;
   max-width: 420px;
   width: 100%;
   background: #1e293b;
