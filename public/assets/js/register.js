@@ -1275,12 +1275,14 @@ step2Form.addEventListener('submit', async e => {
   const btnProceed   = document.getElementById('btn-proceed');
   const proceedHint  = document.getElementById('step1-cta-hint');
   const browseBtn    = document.getElementById('btn-ocr-browse');
+  const extractOverlay = document.getElementById('ocr-extract-overlay');
 
   if (!fileInput || !scanBtn) return;
 
   let summaryHideTimer = null;
+  const OCR_EXTRACT_ERROR_DEFAULT = "We couldn't read the information from this ID image. Please upload a clearer image or try again.";
   const OCR_VERIFY_COPY = {
-    title: 'Verifying Identity & Residency',
+    title: 'VERIFYING IDENTITY & RESIDENCY…',
     desc: 'Please wait while we securely verify the information from your uploaded ID.',
     progress: 'Verification in progress…',
     complete: 'Verification completed successfully.',
@@ -1489,9 +1491,11 @@ step2Form.addEventListener('submit', async e => {
       statusPanelDesc.hidden = false;
     }
     if (statusPanelStatus) statusPanelStatus.textContent = OCR_VERIFY_COPY.progress;
+    if (progressEl) progressEl.hidden = true;
+    if (progressFill) progressFill.style.width = '';
   }
 
-  function showOcrStatusPanel() {
+  function showVerifyStatusPanel() {
     if (!statusPanel) return;
     statusPanel.hidden = false;
     statusPanel.classList.add('is-processing');
@@ -1506,17 +1510,37 @@ step2Form.addEventListener('submit', async e => {
     if (statusPanelStatus) statusPanelStatus.textContent = OCR_VERIFY_COPY.progress;
   }
 
-  function setOcrStatusStep(state) {
-    if (!statusPanel) return;
+  function showExtractOverlay(on) {
+    if (!extractOverlay) return;
+    extractOverlay.hidden = !on;
+    extractOverlay.setAttribute('aria-hidden', on ? 'false' : 'true');
+    extractOverlay.setAttribute('aria-busy', on ? 'true' : 'false');
+    document.body.classList.toggle('reg-ocr-extract-open', on);
+  }
 
-    if (state === 'done' || state === 'error') {
-      resetOcrStatusPanel();
-      if (progressFill) progressFill.style.width = state === 'done' ? '100%' : '0%';
-      return;
-    }
+  function hideOcrResultsUI() {
+    if (uploadSuccess) uploadSuccess.hidden = true;
+    if (previewWrap) previewWrap.setAttribute('hidden', '');
+    if (actionsRow) actionsRow.setAttribute('hidden', '');
+    if (retryBtn) retryBtn.hidden = true;
+    hideReviewAndSummary();
+    hideErrorCard();
+    hideStatus();
+    resetResultPanel();
+    resetOcrStatusPanel();
+  }
 
-    showOcrStatusPanel();
-    if (statusPanelStatus) statusPanelStatus.textContent = OCR_VERIFY_COPY.progress;
+  function revealOcrSuccessUI() {
+    if (uploadSuccess) uploadSuccess.hidden = false;
+    if (previewWrap) previewWrap.removeAttribute('hidden');
+    if (actionsRow) actionsRow.removeAttribute('hidden');
+    if (retryBtn) retryBtn.hidden = false;
+  }
+
+  function revealOcrFailureUI() {
+    if (previewWrap) previewWrap.removeAttribute('hidden');
+    if (actionsRow) actionsRow.removeAttribute('hidden');
+    if (retryBtn) retryBtn.hidden = false;
   }
 
   function hideReviewAndSummary() {
@@ -1561,10 +1585,9 @@ step2Form.addEventListener('submit', async e => {
     if (!errorCard) return;
     hideReviewAndSummary();
     if (errorMessage) {
-      errorMessage.textContent = msg || 'Please upload a clearer image or manually complete the missing fields.';
+      errorMessage.textContent = msg || OCR_EXTRACT_ERROR_DEFAULT;
     }
     errorCard.hidden = false;
-    setOcrStatusStep('error');
   }
 
   function resetConfirmCheck() {
@@ -1575,75 +1598,48 @@ step2Form.addEventListener('submit', async e => {
     fileInput.disabled = on;
     if (browseBtn) browseBtn.classList.toggle('disabled', on);
     if (uploadArea) uploadArea.classList.toggle('ocr-processing', on);
+    if (scanBtn) scanBtn.disabled = on;
     if (clearBtn) clearBtn.disabled = on;
     if (retryBtn) retryBtn.disabled = on;
-  }
-
-  function showProgress(on) {
-    if (!progressEl) return;
-    progressEl.hidden = !on;
-    if (on) {
-      showOcrStatusPanel();
-      if (progressFill) {
-        progressFill.style.width = '0%';
-        requestAnimationFrame(() => { progressFill.style.width = '85%'; });
-      }
-    }
-    if (!on && progressFill) progressFill.style.width = '0%';
-  }
-
-  function updateProgress() {
-    hideStatus();
-    setOcrStatusStep('processing');
   }
 
   async function runExtract(file, force) {
     if (!ocrApi || extractRunning) return;
     extractRunning = true;
     setUploadLocked(true);
-    hideErrorCard();
-    hideReviewAndSummary();
-    hideStatus();
-    showProgress(true);
+    hideOcrResultsUI();
     resetVerification();
-    resetResultPanel();
     resetConfirmCheck();
     if (ocrApi) ocrApi.resetExtractionPreview();
     extractComplete = false;
-    setOcrStatusStep('processing');
-
-    ocrApi.startProgress(updateProgress);
+    showExtractOverlay(true);
 
     try {
       const data = await ocrApi.extractFromImage(file, { force: !!force });
 
-      ocrApi.stopProgress();
-      showProgress(false);
-
       if (!data.success) {
-        showStatus(data.message || "We couldn't accurately read your National ID. Please upload a clearer photo taken in good lighting.", 'error');
-        showErrorCard(data.message || 'Please upload a clearer image or manually complete the missing fields.');
-        if (retryBtn) retryBtn.hidden = false;
+        showExtractOverlay(false);
+        revealOcrFailureUI();
+        showErrorCard(data.message || OCR_EXTRACT_ERROR_DEFAULT);
         if (ocrApi) ocrApi.unlockOcrFields();
         return;
       }
 
       if (data.low_confidence || !data.confidence_ok) {
-        showStatus(data.message || 'We could not read your National ID with enough confidence. Please upload a clearer photo.', 'error');
-        showErrorCard(data.message || 'Please upload a clearer image or manually complete the missing fields.');
-        if (retryBtn) retryBtn.hidden = false;
+        showExtractOverlay(false);
+        revealOcrFailureUI();
+        showErrorCard(data.message || OCR_EXTRACT_ERROR_DEFAULT);
         if (ocrApi) ocrApi.unlockOcrFields();
         return;
       }
 
-      setOcrStatusStep('processing');
       const { filled, reviewCount, missingCount, isBagoResident, addressMatched } = await ocrApi.applyAutofill(data);
       lockAddressIfAutofilled(addressMatched, isBagoResident);
       await new Promise((r) => setTimeout(r, 350));
-      setOcrStatusStep('done');
 
+      showExtractOverlay(false);
       extractComplete = true;
-      if (retryBtn) retryBtn.hidden = false;
+      revealOcrSuccessUI();
       showReviewNotice();
       showSummaryCard(filled, reviewCount || 0, missingCount || 0);
       hideErrorCard();
@@ -1673,15 +1669,14 @@ step2Form.addEventListener('submit', async e => {
       }
       updateProceedState();
     } catch (err) {
-      ocrApi.stopProgress();
-      showProgress(false);
+      showExtractOverlay(false);
       console.error('OCR extract error:', err);
-      showStatus("We couldn't accurately read your National ID. Please upload a clearer photo taken in good lighting.", 'error');
-      showErrorCard("We couldn't accurately read your National ID. Please upload a clearer image or manually complete the missing fields.");
-      if (retryBtn) retryBtn.hidden = false;
+      revealOcrFailureUI();
+      showErrorCard(OCR_EXTRACT_ERROR_DEFAULT);
       if (ocrApi) ocrApi.unlockOcrFields();
     } finally {
       extractRunning = false;
+      showExtractOverlay(false);
       setUploadLocked(false);
     }
   }
@@ -1690,6 +1685,7 @@ step2Form.addEventListener('submit', async e => {
     if (extractRunning) return;
     if (this.files && this.files[0]) {
       selectedFile = this.files[0];
+      showExtractOverlay(true);
       handleFile(selectedFile);
       runExtract(selectedFile, false);
     }
@@ -1702,7 +1698,9 @@ step2Form.addEventListener('submit', async e => {
     if (extractRunning) return;
     const dropped = e.dataTransfer.files[0]; if (!dropped) return;
     try { const dt = new DataTransfer(); dt.items.add(dropped); fileInput.files = dt.files; } catch (_) {}
-    selectedFile = dropped; handleFile(dropped);
+    selectedFile = dropped;
+    showExtractOverlay(true);
+    handleFile(dropped);
     runExtract(dropped, false);
   });
   uploadArea.addEventListener('click', () => {
@@ -1717,26 +1715,27 @@ step2Form.addEventListener('submit', async e => {
   });
 
   function handleFile(file) {
-    resetVerification(); hideStatus(); hideErrorCard(); hideReviewAndSummary(); resetConfirmCheck();
+    resetVerification();
+    hideOcrResultsUI();
+    resetConfirmCheck();
     filenameText.textContent = file.name;
     filenameEl.classList.add('visible');
     if (uploadSuccessFile) uploadSuccessFile.textContent = file.name;
-    if (uploadSuccess) uploadSuccess.hidden = false;
-    previewWrap.removeAttribute('hidden');
     placeholder.setAttribute('hidden', '');
     uploadArea.classList.add('has-file');
     if (file.type.startsWith('image/')) {
       pdfIndicator.setAttribute('hidden', '');
-      previewImg.src = ''; previewImg.removeAttribute('hidden');
+      previewImg.src = '';
+      previewImg.removeAttribute('hidden');
       const reader = new FileReader();
       reader.onload = ev => { previewImg.src = ev.target.result; };
       reader.readAsDataURL(file);
     } else {
-      previewImg.setAttribute('hidden', ''); previewImg.src = '';
-      pdfName.textContent = file.name; pdfIndicator.removeAttribute('hidden');
+      previewImg.setAttribute('hidden', '');
+      previewImg.src = '';
+      pdfName.textContent = file.name;
+      pdfIndicator.removeAttribute('hidden');
     }
-    actionsRow.removeAttribute('hidden');
-    if (retryBtn) retryBtn.hidden = true;
   }
 
   clearBtn.addEventListener('click', () => {
@@ -1758,7 +1757,7 @@ step2Form.addEventListener('submit', async e => {
       ocrApi.resetOcrFieldLock();
     }
     clearStep1AddressFields();
-    showProgress(false);
+    showExtractOverlay(false);
     resetOcrStatusPanel();
     hideReviewAndSummary();
     hideErrorCard();
@@ -1772,6 +1771,7 @@ step2Form.addEventListener('submit', async e => {
       const file = (fileInput.files && fileInput.files[0]) || selectedFile;
       if (!file || extractRunning) return;
       if (ocrApi) ocrApi.clearCache(file);
+      showExtractOverlay(true);
       runExtract(file, true);
     });
   }
@@ -1796,6 +1796,7 @@ step2Form.addEventListener('submit', async e => {
     }
 
     setScanLoading(true);
+    showVerifyStatusPanel();
     showStatus('Verifying your National ID and Bago City residency…', 'scanning');
     scanRanOnce = false;
     resetVerification({ keepExtract: true });
@@ -1877,11 +1878,15 @@ step2Form.addEventListener('submit', async e => {
       return false;
     } finally {
       setScanLoading(false);
+      resetOcrStatusPanel();
       updateProceedState();
     }
   }
 
-  scanBtn.addEventListener('click', () => { runVerify(); });
+  scanBtn.addEventListener('click', () => {
+    if (extractRunning) return;
+    runVerify();
+  });
 
   ['first-name', 'middle-name', 'last-name', 'dob', 'national-id', 'street-address'].forEach(id => {
     const el = document.getElementById(id);
@@ -2099,8 +2104,8 @@ step2Form.addEventListener('submit', async e => {
     scanBtn.disabled = on;
     ocrBtnText.hidden = on;
     ocrSpinner.hidden = !on;
-    if (on) setUploadLocked(true);
-    else if (!extractRunning) setUploadLocked(false);
+    if (retryBtn) retryBtn.disabled = on;
+    if (clearBtn) clearBtn.disabled = on;
   }
   function showStatus(msg, type) { statusEl.textContent = msg; statusEl.className = `ocr-status ${type}`; statusEl.hidden = false; }
   function hideStatus() { statusEl.hidden = true; statusEl.textContent = ''; }
