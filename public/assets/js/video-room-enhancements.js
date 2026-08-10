@@ -1,6 +1,6 @@
 /**
  * medConnect — Video room UI enhancements (panels, chat, waiting, post-call).
- * WebRTC remains in video_room.php inline script.
+ * WebRTC remains in webrtc-peer-call.js + video_room.php session script.
  */
 (function (global) {
   'use strict';

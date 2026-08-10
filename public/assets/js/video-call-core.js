@@ -1,6 +1,6 @@
 /**
  * medConnect video call helpers — status, mic/cam indicators, remote audio unlock.
- * Keeps PeerJS call ownership in video_room.php; this module is UI + media helpers only.
+ * Keeps PeerJS call ownership in webrtc-peer-call.js; this module is UI + media helpers only.
  */
 (function (global) {
   'use strict';
