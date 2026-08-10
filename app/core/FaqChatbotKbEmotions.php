@@ -126,7 +126,7 @@ final class FaqChatbotKbEmotions
                 'flow_key' => 'financial',
                 'weight' => 1.2,
                 'patterns' => [
-                    '/\b(no\s+money|cannot\s+afford|can\'?t\s+afford|walang\s+pera|wala\s+(ko|ako)\s+kwarta|wala\s+kwarta|financial\s+problem)\b/ui',
+                    '/\b(no\s+money|i\s+have\s+no\s+money|cannot\s+afford|can\'?t\s+afford|walang\s+pera|wala\s+(ko|ako)\s+kwarta|wala\s+kwarta|financial\s+problem|too\s+expensive|im\s+broke)\b/ui',
                 ],
                 'keywords' => ['wala ko kwarta', 'no money', 'cannot afford', 'financial'],
             ],

@@ -107,6 +107,13 @@
       keys: ['help', 'menu', 'hi', 'hello', 'kumusta', 'start', 'good morning', 'good afternoon'],
       target: 'welcome',
     },
+    {
+      keys: [
+        'no money', 'wala kwarta', 'wala ko kwarta', 'walang pera', 'cannot afford', 'cant afford',
+        'wala budget', 'libre nga consultation', 'too expensive', 'broke', 'indi ko kaya magbayad',
+      ],
+      target: 'financial',
+    },
   ];
 
   function isEmergency(text) {

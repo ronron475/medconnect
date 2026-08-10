@@ -14,7 +14,7 @@ ROOT = Path(__file__).resolve().parents[2]
 CSV_PATH = ROOT / 'data' / 'nlp' / 'emotion_intent_phrases.csv'
 CSV_OUT = ROOT / 'data' / 'nlp' / 'emotion_intent_phrases_full.csv'
 JS_OUT = ROOT / 'public' / 'assets' / 'js' / 'faq-chatbot' / 'emotion_intent_dataset.js'
-TARGET = 15_000
+TARGET = 20_000
 
 PRIORITY = [
     'emergency', 'panic', 'hopeless', 'afraid', 'angry', 'frustrated', 'irritated', 'anxious',

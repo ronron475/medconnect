@@ -707,6 +707,24 @@
         }, lastPhpAssist.typing_ms || TYPING_MS);
         return;
       }
+      if (lastPhpAssist && !lastPhpAssist.use_server_response
+        && lastPhpAssist.intent
+        && ['financial', 'appointment', 'login', 'registration', 'consultation', 'symptoms', 'emotional_support'].includes(lastPhpAssist.intent)
+        && (lastPhpAssist.confidence || 0) >= 0.65) {
+        appendUser(trimmed);
+        Understanding.incrementMessageCount();
+        const flowFromIntent = {
+          financial: 'financial',
+          appointment: 'appointment',
+          login: 'signin',
+          registration: 'register',
+          consultation: 'video',
+          symptoms: 'pain_sick',
+          emotional_support: 'distress_support',
+        };
+        runFlow(flowFromIntent[lastPhpAssist.intent] || 'distress_support', false, { lang: replyLang });
+        return;
+      }
     }
 
     const classification = Intent.classify(nlpText);
@@ -827,6 +845,29 @@
     if (classification.intent === INTENT.REASSURANCE) {
       Understanding.incrementMessageCount();
       runFlow('reassurance', false, { lang: replyLang, emotion: displayEmo || 'curious' });
+      return;
+    }
+
+    if (classification.intent === INTENT.FINANCIAL) {
+      Understanding.incrementMessageCount();
+      runFlow('financial', false, {
+        lang: replyLang,
+        emotion: emoKey || 'worried',
+        empathyHtml: empathyHtmlFor(emoKey || 'worried', 'financial', contextPrefix, phpEmpathyHtml, bridge),
+        empathy: true,
+      });
+      return;
+    }
+
+    if ([INTENT.CONNECTIVITY, INTENT.TRANSPORT, INTENT.WEATHER, INTENT.PRIVACY].includes(classification.intent)) {
+      const flowMap = {
+        [INTENT.CONNECTIVITY]: 'video',
+        [INTENT.PRIVACY]: 'policy',
+        [INTENT.WEATHER]: 'distress_support',
+        [INTENT.TRANSPORT]: 'distress_support',
+      };
+      Understanding.incrementMessageCount();
+      runFlow(flowMap[classification.intent] || 'distress_support', false, { lang: replyLang, emotion: displayEmo });
       return;
     }
 

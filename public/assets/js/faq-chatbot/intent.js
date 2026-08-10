@@ -78,12 +78,20 @@
     financial: INTENT.FINANCIAL,
   };
 
+  const SITUATION_FLOW_MAP = {
+    [INTENT.CONNECTIVITY]: 'video',
+    [INTENT.PRIVACY]: 'policy',
+    [INTENT.WEATHER]: 'distress_support',
+    [INTENT.TRANSPORT]: 'distress_support',
+    [INTENT.FINANCIAL]: 'financial',
+  };
+
   const SITUATION_PATTERNS = [
-    { intent: INTENT.CONNECTIVITY, re: /\b(wala\s+signal|nadula\s+signal|gadula.{0,16}signal|hinay\s+signal|wala\s+internet|putol.{0,12}connection|ga.?lag|di\s+ko\s+ka.?video|wala\s+ko\s+kabati)\b/i },
-    { intent: INTENT.PRIVACY, re: /\b(masaligan\s+ni\s+bala|safe\s+bala|confidential\s+bala|makita\s+bala\s+ni\s+sang\s+iban|tinuod\s+bala|data\s+privacy)\b/i },
-    { intent: INTENT.WEATHER, re: /\b(gaulan|grabe\s+ang\s+ulan|baha|bad\s+weather|indi\s+ko\s+makaguwa)\b/i },
-    { intent: INTENT.TRANSPORT, re: /\b(wala\s+ko\s+masakyan|layo\s+amon|budlay\s+magkadto|wala\s+ko\s+pamasahe|indi\s+ko\s+makakadto)\b/i },
-    { intent: INTENT.FINANCIAL, re: /\b(no\s+money|cannot\s+afford|wala\s+(ko\s+)?kwarta|walang\s+pera|wala\s+budget|libre\s+nga\s+consultation|indi\s+ko\s+kaya\s+magbayad)\b/i },
+    { intent: INTENT.CONNECTIVITY, flowKey: 'video', re: /\b(wala\s+signal|nadula\s+signal|gadula.{0,16}signal|hinay\s+signal|wala\s+internet|putol.{0,12}connection|ga.?lag|di\s+ko\s+ka.?video|wala\s+ko\s+kabati)\b/i },
+    { intent: INTENT.PRIVACY, flowKey: 'policy', re: /\b(masaligan\s+ni\s+bala|safe\s+bala|confidential\s+bala|makita\s+bala\s+ni\s+sang\s+iban|tinuod\s+bala|data\s+privacy)\b/i },
+    { intent: INTENT.WEATHER, flowKey: 'distress_support', re: /\b(gaulan|grabe\s+ang\s+ulan|baha|bad\s+weather|indi\s+ko\s+makaguwa)\b/i },
+    { intent: INTENT.TRANSPORT, flowKey: 'distress_support', re: /\b(wala\s+ko\s+masakyan|layo\s+amon|budlay\s+magkadto|wala\s+ko\s+pamasahe|indi\s+ko\s+makakadto)\b/i },
+    { intent: INTENT.FINANCIAL, flowKey: 'financial', re: /\b(no\s+money|i\s+have\s+no\s+money|cannot\s+afford|can'?t\s+afford|wala\s+(ko|ako)\s+kwarta|walang\s+pera|wala\s+budget|libre\s+nga\s+consultation|indi\s+ko\s+kaya\s+magbayad|too\s+expensive|broke)\b/i },
   ];
 
   /** Emotions that must not appear as user badges unless urgency is critical */
@@ -133,7 +141,7 @@
 
     for (const sit of SITUATION_PATTERNS) {
       if (sit.re.test(raw)) {
-        return { intent: sit.intent, urgency: URGENCY.LOW, isQuestion };
+        return { intent: sit.intent, urgency: URGENCY.LOW, isQuestion, flowKey: sit.flowKey || SITUATION_FLOW_MAP[sit.intent] || null };
       }
     }
 
