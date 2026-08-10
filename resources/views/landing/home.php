@@ -45,7 +45,6 @@ $asset = ASSET_BASE;
   <link rel="stylesheet" href="<?= $asset ?>/assets/css/forgot-password.css?v=<?= $forgotPwCssVer ?>" />
   <?php $landingScrollAnimCssVer = (int) @filemtime(ASSETS_PATH . '/css/landing-scroll-animations.css'); ?>
   <link rel="stylesheet" href="<?= $asset ?>/assets/css/landing-scroll-animations.css?v=<?= $landingScrollAnimCssVer ?>" />
-  <link rel="stylesheet" href="<?= $asset ?>/assets/css/landing-hero-search.css?v=6" />
   <link rel="stylesheet" href="<?= $asset ?>/assets/css/landing-about-team.css?v=7" />
   <link rel="stylesheet" href="<?= $asset ?>/assets/css/landing-responsive.css?v=5" />
   <?php $landingThemeFabCssVer = (int) @filemtime(ASSETS_PATH . '/css/landing-theme-fab.css'); ?>
@@ -815,7 +814,6 @@ require __DIR__ . '/partials/landing_navbar.php';
 <script src="<?= $asset ?>/assets/js/landing-about-project-milestone.js?v=2" defer></script>
   <script src="<?= $asset ?>/assets/js/landing-scroll-animations.js?v=9" defer></script>
 <script src="<?= $asset ?>/assets/js/landing-interactions.js?v=10" defer></script>
-<script src="<?= $asset ?>/assets/js/landing-hero-search.js?v=6" defer></script>
 <script src="<?= $asset ?>/assets/js/landing-fab.js" defer></script>
 <script src="<?= $asset ?>/assets/js/draggable-fab.js?v=1" defer></script>
 <script src="<?= $asset ?>/assets/js/signin-req-drawer.js?v=4" defer></script>
