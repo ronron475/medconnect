@@ -8,6 +8,7 @@ require_once __DIR__ . '/triage_helpers.php';
 
 $registration_chief_complaint = trim((string) ($registration_chief_complaint ?? ''));
 $chief_complaint_locked = $registration_chief_complaint !== '';
+$show_evidence_section = $chief_complaint_locked && $registration_chief_complaint !== '';
 $review_booking_ctx = $review_booking_ctx ?? ['locked' => false, 'provider_id' => 0, 'provider_name' => ''];
 $locked_provider_id = (int) ($locked_provider_id ?? 0);
 $locked_provider_name = trim((string) ($locked_provider_name ?? ''));
@@ -81,7 +82,11 @@ $locked_alternate_available = !empty($locked_alternate_available);
       </p>
     </div>
 
-    <div class="form-group complaint-evidence-group">
+    <div
+      class="form-group complaint-evidence-group<?= $show_evidence_section ? '' : ' complaint-evidence-group--collapsed' ?>"
+      id="complaintEvidenceSection"
+      <?= $show_evidence_section ? '' : 'hidden' ?>
+    >
       <label class="form-label" for="supporting_evidence">
         Supporting Evidence <span class="text-muted">(optional)</span>
       </label>
