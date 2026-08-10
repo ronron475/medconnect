@@ -56,7 +56,9 @@
       <h2 class="card-title">Start Your Consultation</h2>
       <p class="card-sub">Sign in to connect with a doctor now</p>
 
-      <div class="alert" id="alert" role="alert"></div>
+      <div class="signin-card__error-slot">
+        <div class="alert" id="alert" role="alert"></div>
+      </div>
 
       <form id="login-form" novalidate>
         <div class="form-group">

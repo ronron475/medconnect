@@ -27,7 +27,6 @@ const btnSpinner = document.getElementById('btn-spinner');
 function showAlert(message, type = 'error') {
   alert.textContent = message;
   alert.className = `alert ${type}`;
-  alert.style.display = 'block';
   document.querySelectorAll('.signin-context-alert').forEach((el) => {
     el.hidden = true;
   });
@@ -36,7 +35,6 @@ function showAlert(message, type = 'error') {
 function clearAlert() {
   alert.className = 'alert';
   alert.textContent = '';
-  alert.style.display = '';
 }
 
 function validateEmail(value) {

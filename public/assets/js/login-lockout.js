@@ -61,7 +61,6 @@
       if (!alertEl) return;
       alertEl.textContent = msg;
       alertEl.className = `alert ${type || 'error'}`;
-      alertEl.style.display = 'block';
       document.querySelectorAll('.signin-context-alert').forEach((el) => {
         el.hidden = true;
       });
@@ -71,7 +70,6 @@
       if (!alertEl) return;
       alertEl.className = 'alert';
       alertEl.textContent = '';
-      alertEl.style.display = '';
     }
 
     function clearLockout() {

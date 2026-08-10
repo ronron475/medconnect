@@ -59,6 +59,10 @@
 }
 
 /* Alerts */
+.signin-modal-inner .signin-card {
+  --signin-error-slot-height: 52px;
+}
+
 .signin-modal-inner .signin-card .signin-card__alerts {
   display: flex;
   flex-direction: column;
@@ -66,11 +70,39 @@
   margin-bottom: var(--signin-space-md);
 }
 
-.signin-modal-inner .signin-card .signin-card__alerts .alert:empty {
-  display: none !important;
+.signin-modal-inner .signin-card .signin-card__error-slot {
+  position: relative;
+  flex: 0 0 var(--signin-error-slot-height);
+  height: var(--signin-error-slot-height);
+  min-height: var(--signin-error-slot-height);
+  max-height: var(--signin-error-slot-height);
   margin: 0;
-  padding: 0;
-  border: 0;
+}
+
+.signin-modal-inner .signin-card .signin-card__error-slot .alert {
+  position: absolute;
+  inset: 0;
+  margin: 0 !important;
+  padding: 10px 12px;
+  display: flex !important;
+  align-items: center;
+  box-sizing: border-box;
+  overflow: hidden;
+  border-radius: 10px;
+  font-size: 0.8125rem;
+  line-height: 1.45;
+}
+
+.signin-modal-inner .signin-card .signin-card__error-slot .alert:empty {
+  visibility: hidden;
+  opacity: 0;
+  border-color: transparent !important;
+  background: transparent !important;
+  pointer-events: none;
+}
+
+.signin-modal-inner .signin-card .signin-card__alerts .signin-context-alert[hidden] {
+  display: none !important;
 }
 
 .signin-modal-inner .signin-card .alert {
@@ -401,6 +433,7 @@
 /* Mobile */
 @media (max-width: 480px) {
   .signin-modal-inner .signin-card {
+    --signin-error-slot-height: 56px;
     padding: 26px 22px 22px;
     border-radius: 16px;
   }
