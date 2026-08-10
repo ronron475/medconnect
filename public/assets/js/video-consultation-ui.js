@@ -1,7 +1,7 @@
 /**
  * medConnect — Telemedicine video consultation UI controller.
  * Layout, PiP drag, fullscreen, minimize, network quality, mobile controls.
- * WebRTC / PeerJS logic remains in video_room.php.
+ * WebRTC / PeerJS logic in webrtc-peer-call.js; layout in this module.
  */
 (function (global) {
   'use strict';

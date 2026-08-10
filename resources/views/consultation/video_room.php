@@ -186,6 +186,7 @@ if (session_status() === PHP_SESSION_ACTIVE) {
   $muteTtsCssVer = (int) @filemtime(ASSETS_PATH . '/css/video-mute-tts.css');
   $muteTtsJsVer = (int) @filemtime(ASSETS_PATH . '/js/video-mute-tts.js');
   $videoCoreJsVer = (int) @filemtime(ASSETS_PATH . '/js/video-call-core.js');
+  $webrtcPeerJsVer = (int) @filemtime(ASSETS_PATH . '/js/webrtc-peer-call.js');
   $videoUiCssVer = (int) @filemtime(ASSETS_PATH . '/css/video-consultation-ui.css');
   $videoUiJsVer = (int) @filemtime(ASSETS_PATH . '/js/video-consultation-ui.js');
   $videoEnhCssVer = (int) @filemtime(ASSETS_PATH . '/css/video-room-enhancements.css');
@@ -195,6 +196,7 @@ if (session_status() === PHP_SESSION_ACTIVE) {
   <link rel="stylesheet" href="<?= ASSET_BASE ?>/assets/css/video-consultation-ui.css?v=<?= $videoUiCssVer ?>"/>
   <link rel="stylesheet" href="<?= ASSET_BASE ?>/assets/css/video-room-enhancements.css?v=<?= $videoEnhCssVer ?>"/>
   <script src="<?= ASSET_BASE ?>/assets/js/video-call-core.js?v=<?= $videoCoreJsVer ?>"></script>
+  <script src="<?= ASSET_BASE ?>/assets/js/webrtc-peer-call.js?v=<?= $webrtcPeerJsVer ?>"></script>
   <script src="<?= ASSET_BASE ?>/assets/js/video-consultation-ui.js?v=<?= $videoUiJsVer ?>"></script>
   <script src="<?= ASSET_BASE ?>/assets/js/video-mute-tts.js?v=<?= $muteTtsJsVer ?>"></script>
   <script>
@@ -692,15 +694,24 @@ if (session_status() === PHP_SESSION_ACTIVE) {
     const demoAs = '';
     console.log('[medConnect] apiBase=', apiBase, 'role=', '<?= $role ?>');
     const peerId = userRole + '-' + roomToken;
-    let peer = null;
-    let peerReady = false;
-    let peerRetryTimer = null;
+    const peerOptions = {
+      host: '0.peerjs.com',
+      port: 443,
+      path: '/',
+      secure: true,
+      debug: demoMode ? 1 : 0,
+      config: {
+        iceServers: [
+          { urls: 'stun:stun.l.google.com:19302' },
+          { urls: 'stun:stun1.l.google.com:19302' }
+        ]
+      }
+    };
     let myPeerJsId = null;
     let remoteDiscoveredId = null;
     let demoBus = null;
     let demoHelloTimer = null;
     let localStream;
-    let currentCall;
     let timeLeft = <?= (int) $seconds_remaining ?>;
     let extendingSession = false;
     let timerInterval;
@@ -714,11 +725,8 @@ if (session_status() === PHP_SESSION_ACTIVE) {
     let recordingAudioContext;
     let recordingAudioDestination;
     let remoteAudioConnected = false;
-    let pendingIncomingCall = null;
     let callInterval = null;
-    let dataConn = null;
     let muteTts = null;
-    let outboundCallInFlight = false;
     let remoteMediaUnlocked = false;
     let silentAudioFallback = null;
     let patientMayDial = false;
@@ -792,7 +800,7 @@ if (session_status() === PHP_SESSION_ACTIVE) {
           }
           // Answer their hello so both sides know each other even if one started later.
           announceDemoPeer();
-          if (localStream && peerReady && !callHasRemoteStream) {
+          if (localStream && window.McWebrtcPeerCall && McWebrtcPeerCall.isReady() && !callHasRemoteStream) {
             beginConnectionRetries();
           }
           return;
@@ -870,13 +878,8 @@ if (session_status() === PHP_SESSION_ACTIVE) {
 
     function sendMuteData(payload) {
       let sent = false;
-      if (dataConn && dataConn.open) {
-        try {
-          dataConn.send(payload);
-          sent = true;
-        } catch (e) {
-          console.warn('Data channel send failed:', e);
-        }
+      if (window.McWebrtcPeerCall && McWebrtcPeerCall.sendData(payload)) {
+        sent = true;
       }
       // Same-browser demo: BroadcastChannel paths (local WebRTC + legacy demo bus).
       if (demoMode) {
@@ -898,55 +901,18 @@ if (session_status() === PHP_SESSION_ACTIVE) {
       return sent;
     }
 
-    function wireDataConnection(conn) {
-      if (!conn) return;
-      // Prefer an open connection; ignore duplicate closed ones.
-      if (dataConn && dataConn.open && dataConn !== conn) {
-        try { conn.close(); } catch (e) {}
-        return;
-      }
-      dataConn = conn;
-      conn.on('open', () => {
-        console.log('Peer data channel open:', conn.peer);
-        // Remote peer is online — patient may dial if provider call has not arrived yet.
-        if (userRole === 'patient' && !callHasRemoteStream && !endingCall) {
-          patientMayDial = true;
-          startCall();
-        }
-        // Re-announce mute once the live data channel is ready (production + demo).
-        if (muteTts && typeof muteTts.syncMuteStateToPeer === 'function') {
-          muteTts.syncMuteStateToPeer();
-        }
-      });
-      conn.on('data', (data) => {
-        if (muteTts) muteTts.handleIncomingData(data);
-      });
-      conn.on('close', () => {
-        if (dataConn === conn) dataConn = null;
-      });
-      conn.on('error', (err) => console.warn('Data channel error:', err));
-    }
-
     function openDataChannel() {
-      if (!peerReady || endingCall || !peer) return;
-      if (dataConn && dataConn.open) return;
+      if (!window.McWebrtcPeerCall || endingCall) return;
+      if (!McWebrtcPeerCall.isReady()) return;
       const target = remotePeerId();
       if (!target) return;
       if (demoMode && !remoteDiscoveredId) return;
-      // Production: either side may open so mute TTS / mute_state still works if provider connect failed.
-      // Demo: wait until discovery, then either side may open.
-      try {
-        const conn = peer.connect(target, { reliable: true });
-        wireDataConnection(conn);
-      } catch (e) {
-        console.warn('Could not open data channel:', e);
-      }
+      McWebrtcPeerCall.openDataChannel(target);
     }
 
     function onPeerOpen(id) {
       console.log('Peer open with ID:', id);
       myPeerJsId = id;
-      peerReady = true;
       announceDemoPeer();
       openDataChannel();
       if (!localStream) {
@@ -959,101 +925,91 @@ if (session_status() === PHP_SESSION_ACTIVE) {
       }
     }
 
-    function recreatePeer(reason) {
-      console.warn('Recreating PeerJS connection:', reason || 'retry');
-      peerReady = false;
-      myPeerJsId = null;
-      outboundCallInFlight = false;
-      if (peerRetryTimer) {
-        clearTimeout(peerRetryTimer);
-        peerRetryTimer = null;
-      }
-      try {
-        if (peer && !peer.destroyed) peer.destroy();
-      } catch (e) {}
-      peer = null;
-      peerRetryTimer = setTimeout(() => createPeer(), 1200);
+    function createPeer() {
+      if (!window.McWebrtcPeerCall) return;
+      McWebrtcPeerCall.init(demoMode ? undefined : peerId, {
+        peerOptions: peerOptions,
+        useAutoPeerId: demoMode,
+        onRecreate: function () { createPeer(); },
+      });
     }
 
-    function createPeer() {
-      if (peer && !peer.destroyed) {
-        try { peer.destroy(); } catch (e) {}
-      }
-      peerReady = false;
-      const peerOptions = {
-        host: '0.peerjs.com',
-        port: 443,
-        path: '/',
-        secure: true,
-        debug: demoMode ? 1 : 0,
-        config: {
-          iceServers: [
-            { urls: 'stun:stun.l.google.com:19302' },
-            { urls: 'stun:stun1.l.google.com:19302' }
-          ]
-        }
-      };
-      // Demo: auto PeerJS id + BroadcastChannel discovery (avoids unavailable-id / dead custom ids).
-      // Production: stable role-token ids so patient/provider can find each other without a bus.
-      peer = demoMode ? new Peer(peerOptions) : new Peer(peerId, peerOptions);
+    function setupWebrtcEvents() {
+      if (!window.McWebrtcPeerCall) return;
+      const rtc = McWebrtcPeerCall;
 
-      // Register immediately â€” Chrome dual-tab races if the other side dials first.
-      peer.on('open', onPeerOpen);
-      peer.on('connection', (conn) => wireDataConnection(conn));
-      peer.on('call', (call) => {
-        console.log('Incoming call from:', call.peer);
-        if (!localStream) {
-          pendingIncomingCall = call;
-          setPermissionStatus('Other participant is waiting â€” allow camera/microphone to connect.');
-          document.getElementById('callStatus').textContent = 'Participant ready â€” allow access to join';
-          return;
+      rtc.on('open', function (ev) { onPeerOpen(ev.id); });
+
+      rtc.on('data-open', function () {
+        console.log('Peer data channel open');
+        if (userRole === 'patient' && !callHasRemoteStream && !endingCall) {
+          patientMayDial = true;
+          startCall();
         }
-        // Glare: if we already have a live call with audio/video, ignore extras.
-        if (currentCall && currentCall !== call && callHasRemoteStream && currentCall.open) {
-          try { call.close(); } catch (e) {}
-          return;
+        if (muteTts && typeof muteTts.syncMuteStateToPeer === 'function') {
+          muteTts.syncMuteStateToPeer();
         }
-        // Prefer answering the inbound offer over a half-open outbound dial.
-        if (currentCall && currentCall !== call) {
-          try { currentCall.close(); } catch (e) {}
-          currentCall = null;
-          outboundCallInFlight = false;
-          callHasRemoteStream = false;
-        }
-        if (demoMode && call.peer) {
-          remoteDiscoveredId = call.peer;
-        }
-        call.answer(localStream);
-        handleCall(call);
       });
-      peer.on('disconnected', () => {
-        console.warn('Peer disconnected â€” reconnecting signalingâ€¦');
+
+      rtc.on('data', function (ev) {
+        if (muteTts) muteTts.handleIncomingData(ev.data);
+      });
+
+      rtc.on('incoming-call', function (ev) {
+        console.log('Incoming call from:', ev.peer);
+        if (demoMode && ev.peer) remoteDiscoveredId = ev.peer;
+      });
+
+      rtc.on('incoming-call-waiting-media', function () {
+        setPermissionStatus('Other participant is waiting — allow camera/microphone to connect.');
+        document.getElementById('callStatus').textContent = 'Participant ready — allow access to join';
+      });
+
+      rtc.on('remote-stream', function (ev) {
+        onRemoteStreamReceived(ev.stream, ev.peer);
+      });
+
+      rtc.on('call-close', function () {
+        console.log('Call closed');
+        callHasRemoteStream = false;
+        remoteMediaUnlocked = false;
+        showEnableSoundButton(false);
+        if (!endingCall && localStream && !callInterval) {
+          setCallPhase(window.McVideoCallCore ? window.McVideoCallCore.STATUS.RECONNECTING : 'reconnecting', {
+            callStatusText: 'Reconnecting…',
+          });
+          beginConnectionRetries();
+        }
+      });
+
+      rtc.on('call-error', function (ev) {
+        console.error('Call error:', ev.error);
+      });
+
+      rtc.on('disconnected', function () {
+        console.warn('Peer disconnected — reconnecting signaling…');
         setCallPhase(window.McVideoCallCore ? window.McVideoCallCore.STATUS.RECONNECTING : 'reconnecting');
-        try {
-          if (peer && !peer.destroyed) peer.reconnect();
-        } catch (e) {
-          recreatePeer('disconnected');
-        }
       });
-      peer.on('error', (err) => {
+
+      rtc.on('error', function (ev) {
+        const err = ev.error || {};
         console.error('Peer error:', err);
-        const type = err && err.type ? err.type : '';
+        const type = err.type ? err.type : '';
         if (type === 'unavailable-id') {
-          document.getElementById('callStatus').textContent = 'Signaling ID busy â€” retryingâ€¦';
-          recreatePeer('unavailable-id');
+          document.getElementById('callStatus').textContent = 'Signaling ID busy — retrying…';
+          McWebrtcPeerCall.recreatePeer('unavailable-id');
           return;
         }
         if (type === 'network' || type === 'server-error' || type === 'socket-error' || type === 'socket-closed') {
-          document.getElementById('callStatus').textContent = 'Signaling reconnectingâ€¦';
-          recreatePeer(type);
+          document.getElementById('callStatus').textContent = 'Signaling reconnecting…';
+          McWebrtcPeerCall.recreatePeer(type);
           return;
         }
         if (type === 'peer-unavailable') {
           if (demoMode) {
-            // Other tab PeerJS id not registered yet â€” keep discovering via BroadcastChannel.
             announceDemoPeer();
             remoteDiscoveredId = null;
-            document.getElementById('callStatus').textContent = 'Looking for other tabâ€¦';
+            document.getElementById('callStatus').textContent = 'Looking for other tab…';
             return;
           }
           setCallPhase(
@@ -1063,6 +1019,53 @@ if (session_status() === PHP_SESSION_ACTIVE) {
           );
         }
       });
+    }
+
+    function onRemoteStreamReceived(remoteStream, peerLabel) {
+      console.log('Remote stream received from:', peerLabel);
+      callHasRemoteStream = true;
+      if (callInterval) {
+        clearInterval(callInterval);
+        callInterval = null;
+      }
+
+      const audioTracks = remoteStream.getAudioTracks ? remoteStream.getAudioTracks() : [];
+      audioTracks.forEach((track) => { track.enabled = true; });
+
+      if (!audioTracks.length) {
+        document.getElementById('callStatus').textContent = 'Connected — remote mic missing. Ask other tab to rejoin with audio.';
+      }
+
+      attachRemoteCallStream(remoteStream).then((ok) => {
+        if (!ok) {
+          showEnableSoundButton(true);
+          document.getElementById('callStatus').textContent = 'Connected — tap to enable sound';
+        }
+      });
+      if (consultUi && typeof consultUi.mountVideos === 'function') consultUi.mountVideos();
+      document.getElementById('remoteName').textContent = '<?= htmlspecialchars($other_name) ?>';
+      setCallPhase(window.McVideoCallCore ? window.McVideoCallCore.STATUS.CONNECTED : 'connected', {
+        callStatusText: 'Connected',
+      });
+      if (consultUi && typeof consultUi.setOverlay === 'function') {
+        consultUi.setOverlay('', '', false);
+      }
+      if (consultUi && typeof consultUi.startDurationTimer === 'function') {
+        consultUi.startDurationTimer();
+      }
+      syncMediaStatus({ connectionLabel: '● Good Connection', connectionState: 'connected' });
+      const tip = document.getElementById('demoConnectTip');
+      if (tip) tip.style.display = 'none';
+      connectRemoteAudioToRecording();
+      setTimeout(() => unlockRemoteAudio(), 200);
+      setTimeout(() => unlockRemoteAudio(), 1000);
+      if (userRole === 'provider' && (!mediaRecorder || mediaRecorder.state === 'inactive')) {
+        startRecording();
+      }
+      openDataChannel();
+      if (muteTts && typeof muteTts.syncMuteStateToPeer === 'function') {
+        muteTts.syncMuteStateToPeer();
+      }
     }
 
     async function createSilentMediaStream() {
@@ -1154,43 +1157,26 @@ if (session_status() === PHP_SESSION_ACTIVE) {
 
     function isCallConnected() {
       if (demoMode && localDemoCall && localDemoCall.isConnected()) return true;
-      return !!(currentCall && currentCall.open);
+      return window.McWebrtcPeerCall ? McWebrtcPeerCall.isCallConnected() : false;
     }
 
     function hasActiveOrPendingCall() {
-      return !!(currentCall || outboundCallInFlight || pendingIncomingCall);
+      if (!window.McWebrtcPeerCall) return false;
+      return !!(McWebrtcPeerCall.getCurrentCall() || McWebrtcPeerCall.isOutboundInFlight());
     }
 
     function flushPendingCall() {
-      if (!pendingIncomingCall || !localStream) return;
-      const call = pendingIncomingCall;
-      pendingIncomingCall = null;
-      try {
-        if (call.open === false && typeof call.close === 'function') {
-          const pc = call.peerConnection;
-          if (pc && (pc.connectionState === 'closed' || pc.connectionState === 'failed')) {
-            console.warn('Discarding stale pending call; waiting for redial');
-            return;
-          }
-        }
-      } catch (e) {}
-      console.log('Answering queued call from:', call.peer);
-      try {
-        call.answer(localStream);
-        handleCall(call);
-      } catch (e) {
-        console.warn('Could not answer pending call:', e);
-      }
+      if (window.McWebrtcPeerCall) McWebrtcPeerCall.flushPendingCall();
     }
 
     function startCall() {
-      if (demoMode) return; // demo uses McDemoLocalWebrtc
-      if (!peerReady || !localStream || endingCall || !peer) return;
+      if (demoMode) return;
+      if (!window.McWebrtcPeerCall || !McWebrtcPeerCall.isReady() || !localStream || endingCall) return;
       if (isCallConnected() && callHasRemoteStream) return;
 
       if (userRole === 'patient' && !patientMayDial) {
         setCallPhase(window.McVideoCallCore ? window.McVideoCallCore.STATUS.WAITING_PROVIDER : 'waiting_provider', {
-          callStatusText: 'Online â€” waiting for doctor to connect...',
+          callStatusText: 'Online — waiting for doctor to connect...',
         });
         return;
       }
@@ -1202,46 +1188,23 @@ if (session_status() === PHP_SESSION_ACTIVE) {
             : (window.McVideoCallCore ? window.McVideoCallCore.STATUS.WAITING_PROVIDER : 'waiting_provider'),
           {
             callStatusText: userRole === 'provider'
-              ? 'Waiting for Patientâ€¦'
-              : 'Waiting for Healthcare Providerâ€¦',
+              ? 'Waiting for Patient…'
+              : 'Waiting for Healthcare Provider…',
           }
         );
       }
 
-      if (currentCall && (!currentCall.open || !callHasRemoteStream)) {
-        try { currentCall.close(); } catch (e) {}
-        currentCall = null;
-        outboundCallInFlight = false;
+      const rtc = McWebrtcPeerCall;
+      if (rtc.getCurrentCall() && (!rtc.isCallConnected() || !callHasRemoteStream)) {
+        rtc.closeCurrentCall();
       }
-      if (outboundCallInFlight) return;
-      if (pendingIncomingCall) {
-        flushPendingCall();
-        return;
-      }
+      if (rtc.isOutboundInFlight()) return;
+      McWebrtcPeerCall.flushPendingCall();
+      if (rtc.getCurrentCall() && callHasRemoteStream) return;
 
       const targetId = remotePeerId();
       console.log('Attempting to call:', targetId);
-      outboundCallInFlight = true;
-      let call = null;
-      try {
-        call = peer.call(targetId, localStream);
-      } catch (e) {
-        console.warn('peer.call failed:', e);
-        outboundCallInFlight = false;
-        return;
-      }
-      if (call) {
-        handleCall(call);
-        setTimeout(() => {
-          if (currentCall === call && !callHasRemoteStream) {
-            outboundCallInFlight = false;
-            try { call.close(); } catch (e) {}
-            if (currentCall === call) currentCall = null;
-          }
-        }, 8000);
-      } else {
-        outboundCallInFlight = false;
-      }
+      McWebrtcPeerCall.makeCall(targetId);
     }
 
     function beginConnectionRetries() {
@@ -1259,7 +1222,6 @@ if (session_status() === PHP_SESSION_ACTIVE) {
         }
         const demo = ensureLocalDemoCall();
         if (demo) {
-          peerReady = true;
           dismissBootLoader();
           console.log('[medConnect demo] starting local WebRTC as', userRole, 'token', roomToken.slice(0, 8), 'apiBase', apiBase);
           demo.start();
@@ -1889,7 +1851,11 @@ if (session_status() === PHP_SESSION_ACTIVE) {
         if (!localStream) return;
 
         console.log('Local stream obtained.');
-        attachStreamToVideo(document.getElementById('localVideo'), localStream, { muted: true });
+        if (window.McWebrtcPeerCall) {
+          McWebrtcPeerCall.setLocalStream(localStream);
+        } else {
+          attachStreamToVideo(document.getElementById('localVideo'), localStream, { muted: true });
+        }
         if (consultUi && typeof consultUi.mountVideos === 'function') consultUi.mountVideos();
 
         const hasVideo = localStream.getVideoTracks().length > 0;
@@ -1922,111 +1888,19 @@ if (session_status() === PHP_SESSION_ACTIVE) {
       }
     }
 
-    function handleCall(call) {
-      if (currentCall === call) return;
-      if (currentCall && currentCall.open && callHasRemoteStream && currentCall.peer === call.peer) return;
-      if (currentCall && currentCall !== call) {
-        try { currentCall.close(); } catch (e) {}
-      }
-
-      currentCall = call;
-      window.__mcCurrentCall = call;
-      outboundCallInFlight = false;
-      callHasRemoteStream = false;
-      console.log('Handling call with:', call.peer);
-
-      call.on('stream', remoteStream => {
-        console.log('Remote stream received from:', call.peer);
-        callHasRemoteStream = true;
-        if (callInterval) {
-          clearInterval(callInterval);
-          callInterval = null;
-        }
-
-        const audioTracks = remoteStream.getAudioTracks ? remoteStream.getAudioTracks() : [];
-        audioTracks.forEach((track) => {
-          track.enabled = true;
-        });
-        console.log('Remote audio tracks:', audioTracks.length, audioTracks.map((t) => ({
-          enabled: t.enabled,
-          muted: t.muted,
-          readyState: t.readyState,
-        })));
-
-        if (!audioTracks.length) {
-          document.getElementById('callStatus').textContent = 'Connected â€” remote mic missing. Ask other tab to rejoin with audio.';
-        }
-
-        attachRemoteCallStream(remoteStream).then((ok) => {
-          if (!ok) {
-            showEnableSoundButton(true);
-            document.getElementById('callStatus').textContent = 'Connected â€” tap to enable sound';
-          }
-        });
-        if (consultUi && typeof consultUi.mountVideos === 'function') consultUi.mountVideos();
-        document.getElementById('remoteName').textContent = '<?= htmlspecialchars($other_name) ?>';
-        setCallPhase(window.McVideoCallCore ? window.McVideoCallCore.STATUS.CONNECTED : 'connected', {
-          callStatusText: 'Connected',
-        });
-        if (consultUi && typeof consultUi.setOverlay === 'function') {
-          consultUi.setOverlay('', '', false);
-        }
-        if (consultUi && typeof consultUi.startDurationTimer === 'function') {
-          consultUi.startDurationTimer();
-        }
-        syncMediaStatus({ connectionLabel: 'â— Good Connection', connectionState: 'connected' });
-        const tip = document.getElementById('demoConnectTip');
-        if (tip) tip.style.display = 'none';
-        connectRemoteAudioToRecording();
-
-        // Chrome often needs one gesture to start remote audio even after getUserMedia.
-        setTimeout(() => unlockRemoteAudio(), 200);
-        setTimeout(() => unlockRemoteAudio(), 1000);
-
-        if (userRole === 'provider' && (!mediaRecorder || mediaRecorder.state === 'inactive')) {
-          startRecording();
-        }
-        openDataChannel();
-        if (muteTts && typeof muteTts.syncMuteStateToPeer === 'function') {
-          muteTts.syncMuteStateToPeer();
-        }
-      });
-
-      call.on('close', () => {
-        console.log('Call closed with:', call.peer);
-        if (currentCall === call) {
-          currentCall = null;
-          window.__mcCurrentCall = null;
-        }
-        outboundCallInFlight = false;
-        callHasRemoteStream = false;
-        remoteMediaUnlocked = false;
-        showEnableSoundButton(false);
-        if (!endingCall && localStream && !callInterval) {
-          setCallPhase(window.McVideoCallCore ? window.McVideoCallCore.STATUS.RECONNECTING : 'reconnecting', {
-            callStatusText: 'Reconnectingâ€¦',
-          });
-          beginConnectionRetries();
-        }
-      });
-
-      call.on('error', err => {
-        console.error('Call error:', err);
-        outboundCallInFlight = false;
-        if (currentCall === call && !callHasRemoteStream) {
-          currentCall = null;
-        }
-      });
-    }
-
     function toggleAudio() {
       if (!localStream) return;
+      if (window.McWebrtcPeerCall) {
+        McWebrtcPeerCall.toggleAudio();
+      } else {
+        const audioTrack = localStream.getAudioTracks()[0];
+        if (audioTrack) audioTrack.enabled = !audioTrack.enabled;
+      }
       const audioTrack = localStream.getAudioTracks()[0];
       if (!audioTrack) {
         syncMediaStatus({ micPermissionDenied: false });
         return;
       }
-      audioTrack.enabled = !audioTrack.enabled;
       const muted = !audioTrack.enabled;
       const muteBtn = document.getElementById('muteAudio');
       if (muteBtn) {
@@ -2039,9 +1913,14 @@ if (session_status() === PHP_SESSION_ACTIVE) {
 
     function toggleVideo() {
       if (!localStream) return;
+      if (window.McWebrtcPeerCall) {
+        McWebrtcPeerCall.toggleVideo();
+      } else {
+        const videoTrack = localStream.getVideoTracks()[0];
+        if (videoTrack) videoTrack.enabled = !videoTrack.enabled;
+      }
       const videoTrack = localStream.getVideoTracks()[0];
       if (!videoTrack) return;
-      videoTrack.enabled = !videoTrack.enabled;
       document.getElementById('toggleVideo').classList.toggle('off', !videoTrack.enabled);
       syncMediaStatus();
     }
@@ -2086,13 +1965,8 @@ if (session_status() === PHP_SESSION_ACTIVE) {
       if (remoteVideo) {
         try { remoteVideo.srcObject = null; } catch (e) {}
       }
-      if (dataConn) {
-        try { dataConn.close(); } catch (e) {}
-        dataConn = null;
-      }
-      if (currentCall) {
-        try { currentCall.close(); } catch (e) {}
-        currentCall = null;
+      if (window.McWebrtcPeerCall) {
+        McWebrtcPeerCall.destroy();
       }
       if (callInterval) {
         clearInterval(callInterval);
@@ -2134,7 +2008,7 @@ if (session_status() === PHP_SESSION_ACTIVE) {
         await leaveCallConfirmed();
         return;
       }
-      if (!localStream && !currentCall) {
+      if (!localStream && !(window.McWebrtcPeerCall && McWebrtcPeerCall.getCurrentCall())) {
         endingCall = false;
         if (window.parent && window.parent !== window) {
           window.parent.postMessage({ type: 'medconnect:call-left', role: userRole, token: roomToken }, window.location.origin);
@@ -2244,6 +2118,7 @@ if (session_status() === PHP_SESSION_ACTIVE) {
     });
 
     window.__mcReplaceVideoTrack = async function (newTrack) {
+      const currentCall = window.McWebrtcPeerCall ? McWebrtcPeerCall.getCurrentCall() : null;
       if (!currentCall || !currentCall.peerConnection || !newTrack) return;
       try {
         const senders = currentCall.peerConnection.getSenders();
@@ -2283,10 +2158,10 @@ if (session_status() === PHP_SESSION_ACTIVE) {
     window.leaveCallFast = leaveCallFast;
     dismissBootLoader();
     setupDemoBus();
+    setupWebrtcEvents();
     if (!demoMode) {
       createPeer();
     } else {
-      peerReady = true;
       document.getElementById('callStatus').textContent = 'Allow camera & microphone to join';
     }
     document.getElementById('callStatus').textContent = 'Allow camera & microphone to join';
@@ -2309,14 +2184,12 @@ if (session_status() === PHP_SESSION_ACTIVE) {
 
     document.getElementById('retryConnectBtn')?.addEventListener('click', () => {
       callHasRemoteStream = false;
-      pendingIncomingCall = null;
       remoteDiscoveredId = null;
-      outboundCallInFlight = false;
-      if (currentCall) {
-        try { currentCall.close(); } catch (e) {}
-        currentCall = null;
+      if (window.McWebrtcPeerCall) {
+        McWebrtcPeerCall.resetCallState();
+        McWebrtcPeerCall.closeCurrentCall();
       }
-      document.getElementById('callStatus').textContent = 'Retrying connectionâ€¦';
+      document.getElementById('callStatus').textContent = 'Retrying connection…';
       if (demoMode) {
         const demo = ensureLocalDemoCall();
         if (demo) demo.retry();
@@ -2329,8 +2202,12 @@ if (session_status() === PHP_SESSION_ACTIVE) {
       if (consultUi && typeof consultUi.setOverlay === 'function') {
         consultUi.setOverlay('Retrying connection…', 'Please wait while we reconnect to your doctor.', true);
       }
-      if (!peerReady) {
-        recreatePeer('manual-retry');
+      if (!window.McWebrtcPeerCall || !McWebrtcPeerCall.isReady()) {
+        if (window.McWebrtcPeerCall) {
+          McWebrtcPeerCall.recreatePeer('manual-retry');
+        } else {
+          createPeer();
+        }
       } else {
         beginConnectionRetries();
       }
@@ -2353,7 +2230,7 @@ if (session_status() === PHP_SESSION_ACTIVE) {
       } catch (e) {}
       if (demoHelloTimer) clearInterval(demoHelloTimer);
       try {
-        if (peer && !peer.destroyed) peer.destroy();
+        if (window.McWebrtcPeerCall) McWebrtcPeerCall.destroy();
       } catch (e) {}
       if (silentAudioFallback) {
         try { silentAudioFallback.oscillator.stop(); } catch (e) {}
