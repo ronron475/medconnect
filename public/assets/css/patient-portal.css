@@ -320,6 +320,10 @@ body.patient-portal {
   margin-top: 4px;
 }
 
+.complaint-evidence-group--collapsed {
+  display: none;
+}
+
 .complaint-reference-group {
   margin-top: 0;
 }

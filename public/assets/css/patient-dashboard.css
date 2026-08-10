@@ -1257,6 +1257,10 @@
   margin-top: 16px;
 }
 
+.pdash-care-evidence--collapsed {
+  display: none;
+}
+
 .pdash-care-evidence__hint {
   margin-top: 4px;
   line-height: 1.45;

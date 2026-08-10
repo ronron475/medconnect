@@ -32,6 +32,8 @@ if ($review_provider_name !== '') {
     $provider_initials = strtoupper($first . $last) ?: 'DR';
 }
 
+$show_evidence_section = $chief_complaint_locked && $registration_chief_complaint !== '';
+
 $booking_hint = '';
 $booking_hint_type = 'muted';
 if ($review_provider_name !== '' && !empty($symptoms_review_booking['assigned_has_slots_today'])) {
@@ -138,7 +140,7 @@ if ($review_provider_name !== '' && !empty($symptoms_review_booking['assigned_ha
   <ol class="pdash-care-steps pdash-care-steps--idle" aria-label="Care tips progress">
     <li class="pdash-care-steps__item is-current" aria-current="step">
       <span class="pdash-care-steps__dot" aria-hidden="true">1</span>
-      <span class="pdash-care-steps__label">Describe concern</span>
+      <span class="pdash-care-steps__label">Chief complaint</span>
     </li>
     <li class="pdash-care-steps__item">
       <span class="pdash-care-steps__dot" aria-hidden="true">2</span>
@@ -178,7 +180,11 @@ if ($review_provider_name !== '' && !empty($symptoms_review_booking['assigned_ha
       <?php endif; ?>
     </p>
 
-    <div class="pdash-care-evidence">
+    <div
+      class="pdash-care-evidence<?= $show_evidence_section ? '' : ' pdash-care-evidence--collapsed' ?>"
+      id="pdashCareEvidenceSection"
+      <?= $show_evidence_section ? '' : 'hidden' ?>
+    >
       <label class="form-label pdash-care-form__label" for="pdashSupportingEvidence">
         Supporting Evidence <span class="pdash-care-form__optional">(optional)</span>
       </label>

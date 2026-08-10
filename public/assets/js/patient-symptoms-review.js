@@ -25,6 +25,8 @@
   var removeBtn = document.getElementById('pdashBtnRemoveEvidence');
   var filenameEl = document.getElementById('pdashEvidenceFilename');
   var previewEl = document.getElementById('pdashEvidencePreview');
+  var complaintEl = document.getElementById('pdashSymptomsComplaint');
+  var evidenceSection = document.getElementById('pdashCareEvidenceSection');
   var previewUrl = null;
 
   function base() {
@@ -70,6 +72,16 @@
       filenameEl.hidden = true;
     }
     if (removeBtn) removeBtn.hidden = true;
+  }
+
+  function syncEvidenceSection() {
+    if (!evidenceSection) return;
+    var hasComplaint = (complaintEl && complaintEl.value ? complaintEl.value : '').trim().length > 0;
+    evidenceSection.hidden = !hasComplaint;
+    evidenceSection.classList.toggle('pdash-care-evidence--collapsed', !hasComplaint);
+    if (evidenceInput) evidenceInput.disabled = !hasComplaint;
+    if (chooseBtn) chooseBtn.disabled = !hasComplaint;
+    if (!hasComplaint) resetEvidence();
   }
 
   function validateEvidenceFile(file) {
@@ -127,6 +139,11 @@
         previewEl.hidden = false;
       }
     });
+  }
+
+  if (complaintEl) {
+    complaintEl.addEventListener('input', syncEvidenceSection);
+    syncEvidenceSection();
   }
 
   form.addEventListener('submit', async function (e) {

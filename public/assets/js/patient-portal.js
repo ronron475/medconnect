@@ -864,6 +864,8 @@
     const removeBtn = document.getElementById('btnRemoveEvidence');
     const filenameEl = document.getElementById('evidenceFilename');
     const previewEl = document.getElementById('evidencePreview');
+    const complaintEl = document.getElementById('chief_complaint');
+    const evidenceSection = document.getElementById('complaintEvidenceSection');
     if (!input || !chooseBtn) return;
 
     const IMAGE_MAX = 5 * 1024 * 1024;
@@ -897,6 +899,16 @@
         filenameEl.hidden = true;
       }
       if (removeBtn) removeBtn.hidden = true;
+    }
+
+    function syncEvidenceSection() {
+      if (!evidenceSection) return;
+      const hasComplaint = (complaintEl?.value || '').trim().length > 0;
+      evidenceSection.hidden = !hasComplaint;
+      evidenceSection.classList.toggle('complaint-evidence-group--collapsed', !hasComplaint);
+      input.disabled = !hasComplaint;
+      chooseBtn.disabled = !hasComplaint;
+      if (!hasComplaint) resetEvidence();
     }
 
     chooseBtn.addEventListener('click', () => input.click());
@@ -949,6 +961,11 @@
         previewEl.hidden = false;
       }
     });
+
+    if (complaintEl) {
+      complaintEl.addEventListener('input', syncEvidenceSection);
+      syncEvidenceSection();
+    }
   }
 
   function initTriageForm() {
