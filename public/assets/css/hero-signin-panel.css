@@ -321,7 +321,7 @@ body.landing-page.signin-active #signin-modal {
   --signin-space-md: 14px;
   --signin-space-lg: 18px;
   --signin-input-height: 46px;
-  --signin-error-slot-height: 52px;
+  --signin-error-slot-height: 44px;
 
   padding: 20px 20px 16px;
   border-radius: 18px;
@@ -346,13 +346,19 @@ body.landing-page.signin-active #signin-modal {
   padding-right: 88px;
 }
 
+.landing-page .hero-signin-panel .signin-card__alerts:empty {
+  display: none;
+  margin: 0;
+}
+
 .landing-page .hero-signin-panel .signin-card__error-slot {
   position: relative;
-  flex: 0 0 var(--signin-error-slot-height, 52px);
-  height: var(--signin-error-slot-height, 52px);
-  min-height: var(--signin-error-slot-height, 52px);
-  max-height: var(--signin-error-slot-height, 52px);
-  margin: 0;
+  flex: 0 0 var(--signin-error-slot-height, 44px);
+  height: var(--signin-error-slot-height, 44px);
+  min-height: var(--signin-error-slot-height, 44px);
+  max-height: var(--signin-error-slot-height, 44px);
+  margin: 0 0 8px;
+  padding-right: 88px;
 }
 
 .landing-page .hero-signin-panel .signin-card__error-slot .alert {
@@ -820,7 +826,7 @@ html[data-theme-resolved='dark'] .landing-page .hero-signin-panel .signin-modal-
     --signin-space-md: 10px;
     --signin-space-lg: 14px;
     --signin-input-height: 44px;
-    --signin-error-slot-height: 56px;
+    --signin-error-slot-height: 48px;
 
     padding: 14px 14px 12px;
     border-radius: 16px;

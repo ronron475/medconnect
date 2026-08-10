@@ -60,7 +60,7 @@
 
 /* Alerts */
 .signin-modal-inner .signin-card {
-  --signin-error-slot-height: 52px;
+  --signin-error-slot-height: 44px;
 }
 
 .signin-modal-inner .signin-card .signin-card__alerts {
@@ -70,13 +70,18 @@
   margin-bottom: var(--signin-space-md);
 }
 
+.signin-modal-inner .signin-card .signin-card__alerts:empty {
+  display: none;
+  margin: 0;
+}
+
 .signin-modal-inner .signin-card .signin-card__error-slot {
   position: relative;
   flex: 0 0 var(--signin-error-slot-height);
   height: var(--signin-error-slot-height);
   min-height: var(--signin-error-slot-height);
   max-height: var(--signin-error-slot-height);
-  margin: 0;
+  margin: 0 0 8px;
 }
 
 .signin-modal-inner .signin-card .signin-card__error-slot .alert {
@@ -433,7 +438,7 @@
 /* Mobile */
 @media (max-width: 480px) {
   .signin-modal-inner .signin-card {
-    --signin-error-slot-height: 56px;
+    --signin-error-slot-height: 48px;
     padding: 26px 22px 22px;
     border-radius: 16px;
   }
