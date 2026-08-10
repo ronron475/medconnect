@@ -359,6 +359,7 @@
       }
 
       showAlert('success', data.message || 'Submitted for provider review.');
+      if (window.MedConnectNavBadgesRefresh) window.MedConnectNavBadgesRefresh();
       setTimeout(function () { window.location.reload(); }, 1400);
       return true;
     } catch (_) {

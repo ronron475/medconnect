@@ -53,42 +53,107 @@ function portal_nav_provider_counts(PDO $pdo, int $providerId): array
  */
 function portal_nav_patient_counts(PDO $pdo, int $patientId): array
 {
-    $upcoming = 0;
-    $triagePending = 0;
-    if ($patientId > 0) {
-        try {
+    return [
+        'consultations'  => max(0, portal_nav_patient_sessions_attention_count($pdo, $patientId)),
+        'patient_triage' => max(0, portal_nav_patient_booking_actions_count($pdo, $patientId)),
+    ];
+}
+
+/**
+ * Sessions requiring the patient's attention (join/wait/active today).
+ */
+function portal_nav_patient_sessions_attention_count(PDO $pdo, int $patientId): int
+{
+    if ($patientId <= 0) {
+        return 0;
+    }
+    try {
+        if (!$pdo->query("SHOW TABLES LIKE 'consultations'")->rowCount()) {
+            return 0;
+        }
+        $stmt = $pdo->prepare("
+            SELECT COUNT(*)
+            FROM consultations
+            WHERE patient_id = ?
+              AND LOWER(COALESCE(status, '')) NOT IN ('cancelled', 'canceled', 'completed')
+              AND (
+                LOWER(COALESCE(status, '')) IN ('waiting', 'in_consultation')
+                OR (
+                  LOWER(COALESCE(status, '')) IN ('pending', 'scheduled')
+                  AND consult_date = CURDATE()
+                )
+              )
+        ");
+        $stmt->execute([$patientId]);
+
+        return (int) $stmt->fetchColumn();
+    } catch (Throwable $e) {
+        return 0;
+    }
+}
+
+/**
+ * Book-consultation actions still required (urgent triage, approved care tips booking).
+ */
+function portal_nav_patient_booking_actions_count(PDO $pdo, int $patientId): int
+{
+    if ($patientId <= 0) {
+        return 0;
+    }
+
+    $count = 0;
+
+    try {
+        require_once __DIR__ . '/triage_assessment_schema.php';
+        triage_assessment_ensure_schema($pdo);
+        if ($pdo->query("SHOW TABLES LIKE 'triage_results'")->rowCount()) {
             $stmt = $pdo->prepare("
                 SELECT COUNT(*)
-                FROM consultations
-                WHERE patient_id = ?
-                  AND consult_date >= CURDATE()
-                  AND status IN ('pending', 'scheduled', 'in_consultation', 'waiting')
+                FROM triage_results tr
+                WHERE tr.patient_id = ?
+                  AND COALESCE(tr.triage_level, '') = 'urgent'
+                  AND tr.assessed_at >= DATE_SUB(NOW(), INTERVAL 14 DAY)
+                  AND COALESCE(tr.recommendation_status, '') NOT IN ('rejected')
+                  AND NOT EXISTS (
+                    SELECT 1
+                    FROM consultations c
+                    WHERE c.patient_id = tr.patient_id
+                      AND c.consult_date >= DATE(tr.assessed_at)
+                      AND LOWER(COALESCE(c.status, '')) NOT IN ('cancelled', 'canceled')
+                  )
             ");
             $stmt->execute([$patientId]);
-            $upcoming = (int) $stmt->fetchColumn();
-        } catch (Throwable $e) {
-            $upcoming = 0;
+            $count += (int) $stmt->fetchColumn();
         }
-        try {
-            if ($pdo->query("SHOW TABLES LIKE 'triage_results'")->rowCount()) {
+    } catch (Throwable $e) {
+        // non-fatal
+    }
+
+    try {
+        require_once __DIR__ . '/triage_provider_assignment.php';
+        $ctx = triage_patient_review_booking_context($pdo, $patientId);
+        if (!empty($ctx['locked']) && (int) ($ctx['triage_id'] ?? 0) > 0) {
+            $openConsult = 0;
+            if ($pdo->query("SHOW TABLES LIKE 'consultations'")->rowCount()) {
                 $stmt = $pdo->prepare("
                     SELECT COUNT(*)
-                    FROM triage_results
+                    FROM consultations
                     WHERE patient_id = ?
-                      AND status = 'pending'
-                      AND assessed_at >= DATE_SUB(NOW(), INTERVAL 7 DAY)
+                      AND consult_date >= CURDATE()
+                      AND LOWER(COALESCE(status, '')) NOT IN ('cancelled', 'canceled', 'completed')
                 ");
                 $stmt->execute([$patientId]);
-                $triagePending = (int) $stmt->fetchColumn();
+                $openConsult = (int) $stmt->fetchColumn();
             }
-        } catch (Throwable $e) {
-            $triagePending = 0;
+            if ($openConsult === 0) {
+                $count += 1;
+            }
         }
+    } catch (Throwable $e) {
+        // non-fatal
     }
-    return [
-        'consultations'   => max(0, $upcoming),
-        'patient_triage'  => max(0, $triagePending),
-    ];
+
+    return max(0, $count);
 }
 
 /**
@@ -125,7 +190,7 @@ function portal_nav_bhw_counts(PDO $pdo, int $bhwId): array
         );
         $counts['bhw_consultations'] = max(0, (int) ($metrics['upcoming_consultations'] ?? 0));
         $counts['bhw_referrals'] = max(0, (int) ($metrics['referrals'] ?? 0));
-        $counts['bhw_records'] = max(0, (int) ($metrics['pending_registrations'] ?? 0));
+        $counts['bhw_records'] = max(0, (int) ($metrics['pending_triage'] ?? 0));
         $counts['bhw_followups'] = max(0, (int) ($metrics['followups'] ?? 0));
         $counts['bhw_patients_pending'] = max(0, (int) ($metrics['pending_registrations'] ?? 0));
     } catch (Throwable $e) {
