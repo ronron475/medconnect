@@ -484,6 +484,11 @@ body.mc-urgency-modal-open {
   box-shadow: 0 8px 24px rgba(194, 65, 12, 0.3);
 }
 
+.mc-urgency-modal.is-non-urgent .mc-urgency-modal__icon {
+  background: linear-gradient(145deg, #22c55e, #15803d);
+  box-shadow: 0 8px 24px rgba(21, 128, 61, 0.28);
+}
+
 .mc-urgency-modal__eyebrow {
   margin: 0 0 6px;
   font-size: 0.7rem;
@@ -499,6 +504,10 @@ body.mc-urgency-modal-open {
 
 .mc-urgency-modal.is-urgent .mc-urgency-modal__eyebrow {
   color: #c2410c;
+}
+
+.mc-urgency-modal.is-non-urgent .mc-urgency-modal__eyebrow {
+  color: #15803d;
 }
 
 .mc-urgency-modal__title {

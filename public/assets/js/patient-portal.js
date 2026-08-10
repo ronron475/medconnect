@@ -1143,7 +1143,15 @@
       const reviewFirstAllowed = window.TRIAGE_REVIEW_FIRST_ALLOWED === true;
 
       if (!complaint) {
-        showTriageAlert(alertEl, 'error', 'Your chief complaint from registration is missing. Please contact the health office.');
+        const complaintField = form.querySelector('#chief_complaint');
+        const isLocked = complaintField && complaintField.hasAttribute('readonly');
+        showTriageAlert(
+          alertEl,
+          'error',
+          isLocked
+            ? 'Your chief complaint is not available. Please contact the health office.'
+            : 'Please describe your symptoms or concern.'
+        );
         return;
       }
 

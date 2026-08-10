@@ -2,10 +2,15 @@
 /**
  * Dashboard card: Chief Complaint + optional supporting evidence (all patients).
  *
- * Expects: $registration_chief_complaint, $show_dashboard_care_tips_section (optional).
+ * Expects: $registration_chief_complaint, $show_dashboard_care_tips_section (optional),
+ *          $chief_complaint_locked, $chief_complaint_source (optional).
  */
 $registration_chief_complaint = trim((string) ($registration_chief_complaint ?? ''));
-$chief_complaint_locked = $registration_chief_complaint !== '';
+$chief_complaint_locked = isset($chief_complaint_locked)
+    ? (bool) $chief_complaint_locked
+    : ($registration_chief_complaint !== '');
+$chief_complaint_source = trim((string) ($chief_complaint_source ?? ''));
+$chief_complaint_source_label = patient_portal_complaint_source_label($chief_complaint_source);
 $show_evidence_section = false;
 $show_care_tips_context = !empty($show_dashboard_care_tips_section);
 $submit_label = $show_care_tips_context ? 'Submit for doctor review' : 'Submit chief complaint';
@@ -54,7 +59,7 @@ $submit_label = $show_care_tips_context ? 'Submit for doctor review' : 'Submit c
     <label class="form-label pdash-care-form__label" for="pdashSymptomsComplaint">
       Chief Complaint
       <?php if ($chief_complaint_locked): ?>
-      <span class="pdash-care-form__lock-badge">From registration</span>
+      <span class="pdash-care-form__lock-badge"><?= htmlspecialchars(ucfirst($chief_complaint_source_label)) ?></span>
       <?php endif; ?>
     </label>
     <textarea
@@ -63,12 +68,12 @@ $submit_label = $show_care_tips_context ? 'Submit for doctor review' : 'Submit c
       class="form-control pdash-care-form__input<?= $chief_complaint_locked ? ' pdash-care-form__input--locked' : '' ?>"
       rows="3"
       maxlength="500"
-      placeholder="<?= $chief_complaint_locked ? 'Your registered health concern…' : 'e.g. mild sore throat and runny nose for two days…' ?>"
+      placeholder="<?= $chief_complaint_locked ? 'Your submitted health concern…' : 'e.g. mild sore throat and runny nose for two days…' ?>"
       <?= $chief_complaint_locked ? 'readonly aria-readonly="true"' : 'required' ?>
     ><?= htmlspecialchars($registration_chief_complaint) ?></textarea>
     <p class="pdash-care-form__hint">
       <?php if ($chief_complaint_locked): ?>
-      This is the chief complaint you entered during registration. It cannot be changed and will be reviewed by your doctor.
+      This chief complaint is already on file from your <?= htmlspecialchars($chief_complaint_source === 'registration' ? 'registration' : 'earlier submission') ?>. It cannot be changed here and will be reviewed by your doctor.
       <?php else: ?>
       Describe your health concern. At least a short sentence helps your care team understand your case faster.
       <?php endif; ?>

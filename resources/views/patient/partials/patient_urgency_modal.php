@@ -1,6 +1,6 @@
 <?php
 /**
- * Patient urgency modal — emergency / urgent after symptom submit.
+ * Patient urgency modal — emergency / urgent / non-urgent after symptom submit or triage.
  */
 $asset = defined('ASSET_BASE') ? ASSET_BASE : '';
 $bookUrl = $asset . '/views/patient/triage.php';

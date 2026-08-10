@@ -15,15 +15,21 @@ if (!defined('BASE_PATH')) {
 require_once BASE_PATH . '/app/includes/patient_portal_bootstrap.php';
 require_once BASE_PATH . '/app/includes/triage_assessment_schema.php';
 require_once BASE_PATH . '/app/includes/triage_provider_assignment.php';
+require_once BASE_PATH . '/app/includes/patient_chief_complaints.php';
 
 $booking_today_ymd   = date('Y-m-d');
 $booking_today_label = date('l, M j, Y');
 
 $triage_history = [];
-$registration_chief_complaint = '';
 $pending_reg = patient_registration_load_pending_complaint($pdo, (int) $uid);
-if ($pending_reg['complaint'] !== '') {
-    $registration_chief_complaint = $pending_reg['complaint'];
+$active_chief_complaint = patient_portal_active_chief_complaint($pdo, (int) $uid);
+$registration_chief_complaint = trim((string) ($active_chief_complaint['complaint'] ?? ''));
+$chief_complaint_locked = !empty($active_chief_complaint['locked']) && $registration_chief_complaint !== '';
+$chief_complaint_source = (string) ($active_chief_complaint['source'] ?? '');
+$active_chief_complaint_triage_id = (int) ($active_chief_complaint['triage_id'] ?? 0);
+$portal_triage_urgency = (string) ($active_chief_complaint['urgency'] ?? '');
+if ($portal_triage_urgency === '') {
+    $portal_triage_urgency = (string) ($pending_reg['urgency'] ?? '');
 }
 if ($pdo->query("SHOW TABLES LIKE 'triage_results'")->rowCount()) {
     $s = $pdo->prepare('SELECT level, symptoms, assessed_at, chief_complaint, urgency_label, triage_level FROM triage_results WHERE patient_id=? ORDER BY assessed_at DESC');
@@ -126,14 +132,15 @@ $page_title = 'Book Consultation';
   <script>window.BOOKING_BLOCKED_IN_CONSULTATION = <?= json_encode($booking_blocked_in_consultation) ?>;</script>
   <script>window.BOOKING_BLOCKED_FUTURE_APPOINTMENT = <?= json_encode($booking_blocked_future) ?>;</script>
   <script>window.BOOKING_FUTURE_APPOINTMENT_LABEL = <?= json_encode($booking_future_label) ?>;</script>
-  <script>window.REGISTRATION_URGENCY = <?= json_encode($pending_reg['urgency'] ?? '') ?>;</script>
+  <script>window.REGISTRATION_URGENCY = <?= json_encode($portal_triage_urgency) ?>;</script>
   <script>window.BOOKING_LOCKED_PROVIDER_ID = <?= json_encode($locked_provider_id > 0 ? $locked_provider_id : null) ?>;</script>
   <script>window.BOOKING_LOCKED_PROVIDER_NAME = <?= json_encode($locked_provider_name) ?>;</script>
   <script>window.BOOKING_ASSIGNED_HAS_SLOTS = <?= json_encode($locked_assigned_has_slots) ?>;</script>
   <script>window.BOOKING_ALTERNATE_AVAILABLE = <?= json_encode($locked_alternate_available) ?>;</script>
   <script>window.TRIAGE_REVIEW_FIRST_ALLOWED = <?= json_encode(empty($review_booking_ctx['locked'])) ?>;</script>
+  <script>window.ACTIVE_CHIEF_COMPLAINT_TRIAGE_ID = <?= json_encode($active_chief_complaint_triage_id > 0 ? $active_chief_complaint_triage_id : null) ?>;</script>
   <script>window.REGISTRATION_COMPLAINT_REFERENCE = <?= json_encode($registration_chief_complaint) ?>;</script>
-  <?php if (($pending_reg['urgency'] ?? '') === 'EMERGENCY'): ?>
+  <?php if ($portal_triage_urgency === 'EMERGENCY'): ?>
   <script>
   try { sessionStorage.setItem('medconnect_block_telemedicine', '1'); } catch (_) {}
   </script>
