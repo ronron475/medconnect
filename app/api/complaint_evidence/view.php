@@ -40,7 +40,7 @@ if (!preg_match('/^evidence_\d+_\d+_[a-f0-9]{16}\.(jpe?g|png|webp|mp4|webm)$/i',
 }
 
 $path = complaint_evidence_storage_dir() . '/' . $stored;
-if (!is_file($path)) {
+if (!is_file($path) || !complaint_evidence_validate_stored_file($path, $row)) {
     http_response_code(404);
     exit('File missing.');
 }

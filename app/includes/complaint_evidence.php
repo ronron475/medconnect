@@ -251,6 +251,75 @@ function complaint_evidence_view_url(int $evidenceId): string
     return ASSET_BASE . '/app/api/complaint_evidence/view.php?id=' . $evidenceId;
 }
 
+function complaint_evidence_is_allowed_mime(string $mime): bool
+{
+    $mime = strtolower(trim($mime));
+
+    return in_array($mime, array_merge(COMPLAINT_EVIDENCE_IMAGE_MIMES, COMPLAINT_EVIDENCE_VIDEO_MIMES), true);
+}
+
+function complaint_evidence_format_file_type_label(string $mime, string $mediaType): string
+{
+    $mime = strtolower(trim($mime));
+    $map = [
+        'image/jpeg' => 'JPEG photo',
+        'image/jpg'  => 'JPEG photo',
+        'image/png'  => 'PNG photo',
+        'image/webp' => 'WEBP photo',
+        'video/mp4'  => 'MP4 video',
+        'video/webm' => 'WebM video',
+    ];
+    if (isset($map[$mime])) {
+        return $map[$mime];
+    }
+
+    return $mediaType === 'video' ? 'Video' : 'Photo';
+}
+
+function complaint_evidence_format_file_size(int $bytes): string
+{
+    if ($bytes <= 0) {
+        return '';
+    }
+    if ($bytes < 1024) {
+        return $bytes . ' B';
+    }
+    if ($bytes < 1024 * 1024) {
+        return round($bytes / 1024, 1) . ' KB';
+    }
+
+    return round($bytes / (1024 * 1024), 1) . ' MB';
+}
+
+/**
+ * Verify stored evidence file is safe to stream (type/size on disk).
+ */
+function complaint_evidence_validate_stored_file(string $path, array $row): bool
+{
+    if (!is_file($path)) {
+        return false;
+    }
+
+    $mediaType = (string) ($row['media_type'] ?? '');
+    $size = (int) filesize($path);
+    if ($mediaType === 'video' && $size > COMPLAINT_EVIDENCE_VIDEO_MAX_BYTES) {
+        return false;
+    }
+    if ($mediaType === 'image' && $size > COMPLAINT_EVIDENCE_IMAGE_MAX_BYTES) {
+        return false;
+    }
+
+    $recordedMime = strtolower(trim((string) ($row['mime_type'] ?? '')));
+    if ($recordedMime !== '' && !complaint_evidence_is_allowed_mime($recordedMime)) {
+        return false;
+    }
+
+    $finfo = new finfo(FILEINFO_MIME_TYPE);
+    $detected = strtolower((string) $finfo->file($path));
+
+    return complaint_evidence_is_allowed_mime($detected);
+}
+
 /**
  * @return array{
  *   has_evidence:bool,
@@ -267,6 +336,10 @@ function complaint_evidence_clinical_support_meta(PDO $pdo, int $triageId): arra
         'has_evidence'      => false,
         'id'                => 0,
         'media_type'        => '',
+        'mime_type'         => '',
+        'file_type_label'   => '',
+        'file_size_display' => '',
+        'meta_line'         => '',
         'view_url'          => '',
         'original_filename' => '',
         'uploaded_label'    => '',
@@ -279,13 +352,28 @@ function complaint_evidence_clinical_support_meta(PDO $pdo, int $triageId): arra
 
     $uploadedAt = (string) ($row['uploaded_at'] ?? '');
     $label = $uploadedAt !== '' ? date('M j, Y g:i A', strtotime($uploadedAt)) : '';
+    $mime = (string) ($row['mime_type'] ?? '');
+    $mediaType = (string) ($row['media_type'] ?? '');
+    $originalFilename = (string) ($row['original_filename'] ?? '');
+    $fileTypeLabel = complaint_evidence_format_file_type_label($mime, $mediaType);
+    $fileSizeDisplay = complaint_evidence_format_file_size((int) ($row['file_size_bytes'] ?? 0));
+    $metaParts = array_values(array_filter([
+        $originalFilename !== '' ? $originalFilename : null,
+        $fileTypeLabel !== '' ? $fileTypeLabel : null,
+        $fileSizeDisplay !== '' ? $fileSizeDisplay : null,
+        $label !== '' ? $label : null,
+    ]));
 
     return [
         'has_evidence'      => true,
         'id'                => (int) $row['id'],
-        'media_type'        => (string) ($row['media_type'] ?? ''),
+        'media_type'        => $mediaType,
+        'mime_type'         => $mime,
+        'file_type_label'   => $fileTypeLabel,
+        'file_size_display' => $fileSizeDisplay,
+        'meta_line'         => implode(' • ', $metaParts),
         'view_url'          => complaint_evidence_view_url((int) $row['id']),
-        'original_filename' => (string) ($row['original_filename'] ?? ''),
+        'original_filename' => $originalFilename,
         'uploaded_label'    => $label,
     ];
 }

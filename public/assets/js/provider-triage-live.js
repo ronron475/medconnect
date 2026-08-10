@@ -181,15 +181,84 @@
     if (el) el.textContent = text;
   }
 
+  function formatPatientId(patientId) {
+    var id = Number(patientId || 0);
+    if (!id) return '—';
+    return 'MC-' + String(id).padStart(6, '0');
+  }
+
+  function renderSupportingEvidence(t) {
+    var evidenceSection = document.getElementById('modalEvidenceSection');
+    var mediaEl = document.getElementById('modalEvidenceMedia');
+    var metaEl = document.getElementById('modalEvidenceMeta');
+    var openLink = document.getElementById('modalEvidenceOpenLink');
+    var evidence = t && t.supporting_evidence && typeof t.supporting_evidence === 'object'
+      ? t.supporting_evidence
+      : {};
+
+    if (!evidenceSection) return;
+
+    if (!evidence.has_evidence) {
+      evidenceSection.hidden = true;
+      if (mediaEl) mediaEl.innerHTML = '';
+      if (metaEl) metaEl.textContent = '';
+      if (openLink) {
+        openLink.href = '#';
+        openLink.style.display = 'none';
+      }
+      return;
+    }
+
+    var url = String(evidence.view_url || '');
+    evidenceSection.hidden = false;
+
+    if (mediaEl) {
+      if (evidence.media_type === 'video') {
+        mediaEl.innerHTML =
+          '<video src="' + attrEsc(url) + '" controls playsinline class="triage-evidence-media"></video>';
+      } else {
+        mediaEl.innerHTML =
+          '<a href="' + attrEsc(url) + '" target="_blank" rel="noopener noreferrer" class="triage-evidence-media-link">' +
+          '<img src="' + attrEsc(url) + '" alt="Patient supporting evidence" class="triage-evidence-media">' +
+          '</a>';
+      }
+    }
+
+    if (metaEl) {
+      var metaLine = String(evidence.meta_line || '').trim();
+      if (!metaLine) {
+        var parts = [];
+        if (evidence.original_filename) parts.push(String(evidence.original_filename));
+        if (evidence.file_type_label) parts.push(String(evidence.file_type_label));
+        if (evidence.file_size_display) parts.push(String(evidence.file_size_display));
+        if (evidence.uploaded_label) parts.push(String(evidence.uploaded_label));
+        metaLine = parts.join(' • ');
+      }
+      metaEl.textContent = metaLine;
+    }
+
+    if (openLink) {
+      openLink.href = url || '#';
+      openLink.style.display = url ? 'inline-flex' : 'none';
+    }
+  }
+
   function viewTriageDetails(t) {
     currentTriageId = t.id;
     document.getElementById('modalName').textContent = t.name || '—';
+    var patientMetaEl = document.getElementById('modalPatientMeta');
+    if (patientMetaEl) {
+      var submitted = [t.date, t.time].filter(Boolean).join(' at ');
+      patientMetaEl.textContent = 'Patient ID: ' + formatPatientId(t.patient_id)
+        + (submitted ? ' · Submitted ' + submitted : '');
+    }
 
     var symptoms = Array.isArray(t.symptoms_list) && t.symptoms_list.length
       ? t.symptoms_list.join(', ')
       : (t.symptoms_display || '—');
     document.getElementById('modalSymptoms').textContent = symptoms;
     document.getElementById('modalComplaint').textContent = t.complaint || 'No detailed complaint provided.';
+    renderSupportingEvidence(t);
     document.getElementById('overrideLevel').value = t.level || '3';
 
     var urgencyEl = document.getElementById('modalUrgency');
