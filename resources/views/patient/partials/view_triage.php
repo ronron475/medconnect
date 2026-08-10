@@ -8,7 +8,7 @@ require_once __DIR__ . '/triage_helpers.php';
 
 $registration_chief_complaint = trim((string) ($registration_chief_complaint ?? ''));
 $chief_complaint_locked = $registration_chief_complaint !== '';
-$show_evidence_section = $registration_chief_complaint !== '';
+$show_evidence_section = false;
 $review_booking_ctx = $review_booking_ctx ?? ['locked' => false, 'provider_id' => 0, 'provider_name' => ''];
 $locked_provider_id = (int) ($locked_provider_id ?? 0);
 $locked_provider_name = trim((string) ($locked_provider_name ?? ''));
