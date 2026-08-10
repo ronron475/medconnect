@@ -229,9 +229,16 @@
       badge.removeAttribute('title');
       if (el) el.classList.add('ocr-field-verified');
       if (wrap) wrap.classList.add('ocr-field--verified');
+    } else if (state === 'autofill') {
+      badge.hidden = false;
+      badge.textContent = 'Auto-filled from ID';
+      badge.className = 'ocr-field-badge ocr-field-badge--verified';
+      badge.title = 'Address normalized from your uploaded ID.';
+      if (el) el.classList.add('ocr-field-verified');
+      if (wrap) wrap.classList.add('ocr-field--verified');
     } else if (state === 'low') {
       badge.hidden = false;
-      badge.innerHTML = '<span aria-hidden="true">⚠</span> Review';
+      badge.innerHTML = '<span aria-hidden="true">⚠</span> Review Required';
       badge.className = 'ocr-field-badge ocr-field-badge--low';
       badge.title = 'This field may contain OCR recognition errors. Please verify.';
       if (el) el.classList.add('ocr-field-low-conf');
@@ -428,11 +435,10 @@
         const street = document.getElementById('street-address');
         if (street && street.value) {
           street.dataset.ocrSourceValue = street.value;
-          const addrConf = fieldConfidence(ex.address);
-          if (addrConf != null) street.dataset.ocrConfidence = String(addrConf);
-          const low = addrConf != null && addrConf < LOW_CONFIDENCE_THRESHOLD;
-          setFieldBadge('street-address', low ? 'low' : 'verified');
-          if (low) reviewCount++;
+          const needsReview = addrResult.streetNeedsReview === true
+            || street.dataset.ocrStreetReview === '1';
+          setFieldBadge('street-address', needsReview ? 'low' : 'autofill');
+          if (needsReview) reviewCount++;
           highlightField(street);
         } else {
           markManualEntryNeeded('street-address');
@@ -446,16 +452,21 @@
           street.removeAttribute('readonly');
           street.classList.remove('ocr-gated');
           street.dataset.ocrUnlocked = '1';
-          street.dataset.ocrSourceValue = String(ex.address.value).trim();
-          street.value = String(ex.address.value).trim();
+          const fallbackRaw = String(ex.address.value).trim();
+          if (global.PhAddressAutofill?.normalizeOcrAddress) {
+            const normOnly = global.PhAddressAutofill.normalizeOcrAddress(fallbackRaw);
+            street.dataset.ocrSourceValue = normOnly;
+            street.value = normOnly.toUpperCase();
+          } else {
+            street.dataset.ocrSourceValue = fallbackRaw;
+            street.value = fallbackRaw;
+          }
           street.dispatchEvent(new Event('input', { bubbles: true }));
           highlightField(street);
-          const addrConf = fieldConfidence(ex.address);
-          const low = addrConf != null && addrConf < LOW_CONFIDENCE_THRESHOLD;
-          setFieldBadge('street-address', low ? 'low' : 'verified');
-          if (low) reviewCount++;
+          setFieldBadge('street-address', 'low');
+          reviewCount++;
           filled++;
-          addressMatched.street = ex.address.value;
+          addressMatched.street = street.value;
         }
       }
     } else {
