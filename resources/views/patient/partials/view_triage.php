@@ -59,7 +59,7 @@ $locked_alternate_available = !empty($locked_alternate_available);
   <div id="triageFormAlert" class="patient-triage-alert" role="alert"></div>
   <form id="patientTriageForm" novalidate>
     <input type="hidden" name="csrf_token" value="<?= htmlspecialchars((string) ($_SESSION['csrf_token'] ?? ''), ENT_QUOTES, 'UTF-8') ?>">
-    <div class="form-group">
+    <div class="form-group" id="chief-complaint">
       <label class="form-label" for="chief_complaint">
         Chief Complaint<?= $chief_complaint_locked ? ' <span class="text-muted">(from registration)</span>' : '' ?>
       </label>
