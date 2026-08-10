@@ -229,7 +229,9 @@ require __DIR__ . '/partials/landing_navbar.php';
             <div class="signin-card signin-card--hero-inline" id="signin-card">
 
             <div class="signin-card__alerts" id="signin-card-alerts" aria-live="polite">
-              <div class="alert" id="alert" role="alert"></div>
+              <div class="signin-card__error-slot">
+                <div class="alert" id="alert" role="alert"></div>
+              </div>
 
               <?php if (!empty($_GET['registered'])): ?>
               <div class="alert alert--success signin-context-alert" style="display:block;" role="alert">

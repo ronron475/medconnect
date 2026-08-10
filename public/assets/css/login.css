@@ -160,6 +160,38 @@ body {
 }
 
 /* Alert */
+.signin-card__error-slot {
+  position: relative;
+  height: 52px;
+  min-height: 52px;
+  max-height: 52px;
+  margin-bottom: 16px;
+}
+
+.signin-card__error-slot .alert {
+  position: absolute;
+  inset: 0;
+  margin: 0 !important;
+  padding: 10px 14px;
+  display: flex !important;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  overflow: hidden;
+  border-radius: 8px;
+  font-size: 13px;
+  line-height: 1.45;
+  text-align: center;
+}
+
+.signin-card__error-slot .alert:empty {
+  visibility: hidden;
+  opacity: 0;
+  border-color: transparent !important;
+  background: transparent !important;
+  pointer-events: none;
+}
+
 .alert {
   display: none;
   padding: 10px 14px;
@@ -169,7 +201,9 @@ body {
   text-align: center;
 }
 .alert.error { display: block; background: #fef2f2; color: var(--error); border: 1px solid #fecaca; }
+.signin-card__error-slot .alert.error { display: flex !important; }
 .alert.success { display: block; background: #f0fdf4; color: #16a34a; border: 1px solid #bbf7d0; }
+.signin-card__error-slot .alert.success { display: flex !important; }
 
 .form-group { margin-bottom: 14px; }
 .form-group label {

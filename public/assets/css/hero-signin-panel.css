@@ -321,6 +321,7 @@ body.landing-page.signin-active #signin-modal {
   --signin-space-md: 14px;
   --signin-space-lg: 18px;
   --signin-input-height: 46px;
+  --signin-error-slot-height: 52px;
 
   padding: 20px 20px 16px;
   border-radius: 18px;
@@ -345,11 +346,39 @@ body.landing-page.signin-active #signin-modal {
   padding-right: 88px;
 }
 
-.landing-page .hero-signin-panel .signin-card__alerts .alert:empty {
-  display: none !important;
+.landing-page .hero-signin-panel .signin-card__error-slot {
+  position: relative;
+  flex: 0 0 var(--signin-error-slot-height, 52px);
+  height: var(--signin-error-slot-height, 52px);
+  min-height: var(--signin-error-slot-height, 52px);
+  max-height: var(--signin-error-slot-height, 52px);
   margin: 0;
-  padding: 0;
-  border: 0;
+}
+
+.landing-page .hero-signin-panel .signin-card__error-slot .alert {
+  position: absolute;
+  inset: 0;
+  margin: 0 !important;
+  padding: 10px 12px;
+  display: flex !important;
+  align-items: center;
+  box-sizing: border-box;
+  overflow: hidden;
+  border-radius: 10px;
+  font-size: 0.8125rem;
+  line-height: 1.45;
+}
+
+.landing-page .hero-signin-panel .signin-card__error-slot .alert:empty {
+  visibility: hidden;
+  opacity: 0;
+  border-color: transparent !important;
+  background: transparent !important;
+  pointer-events: none;
+}
+
+.landing-page .hero-signin-panel .signin-card__alerts .signin-context-alert[hidden] {
+  display: none !important;
 }
 
 .landing-page .hero-signin-panel .signin-card__head {
@@ -791,6 +820,7 @@ html[data-theme-resolved='dark'] .landing-page .hero-signin-panel .signin-modal-
     --signin-space-md: 10px;
     --signin-space-lg: 14px;
     --signin-input-height: 44px;
+    --signin-error-slot-height: 56px;
 
     padding: 14px 14px 12px;
     border-radius: 16px;
