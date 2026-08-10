@@ -3,6 +3,7 @@
 :root {
   --hero-signin-nav-offset: 76px;
   --hero-signin-gap: 12px;
+  --hero-signin-lift: 40px;
 }
 
 /* Skip hero/panel motion during auth handoff (prevents flash on sign-in success). */
@@ -39,7 +40,7 @@ html.signin-skip-motion #signin-modal.hero-signin-panel {
 /* Panel — closed state (in hero flow for layout) */
 .landing-page .hero-signin-panel {
   position: absolute;
-  top: 0;
+  top: calc(-1 * var(--hero-signin-lift));
   right: 0;
   z-index: 4;
   width: min(400px, 42vw);
@@ -91,14 +92,14 @@ body.landing-page.signin-active #signin-modal.hero-signin-panel.is-viewport-pinn
 body.landing-page.signin-active #signin-modal.hero-signin-panel.is-viewport-pinned.is-closing,
 #signin-modal.hero-signin-panel.is-viewport-pinned {
   position: fixed !important;
-  top: calc(var(--hero-signin-nav-offset) + var(--hero-signin-gap)) !important;
+  top: calc(var(--hero-signin-nav-offset) + var(--hero-signin-gap) - var(--hero-signin-lift)) !important;
   right: max(20px, calc((100vw - 1320px) / 2 + 24px)) !important;
   left: auto !important;
   bottom: auto !important;
   width: min(400px, calc(100vw - 40px)) !important;
   max-width: 400px !important;
   height: auto !important;
-  max-height: calc(100dvh - var(--hero-signin-nav-offset) - (var(--hero-signin-gap) * 2) - env(safe-area-inset-bottom, 0px)) !important;
+  max-height: calc(100dvh - var(--hero-signin-nav-offset) - (var(--hero-signin-gap) * 2) - env(safe-area-inset-bottom, 0px) + var(--hero-signin-lift)) !important;
   display: flex !important;
   flex-direction: column !important;
   align-items: stretch;
@@ -111,10 +112,10 @@ body.landing-page.signin-active #signin-modal.hero-signin-panel.is-viewport-pinn
 .landing-page .hero-signin-panel.is-open:not(.is-viewport-pinned),
 .landing-page .hero-signin-panel.is-closing:not(.is-viewport-pinned) {
   position: absolute;
-  top: 0;
+  top: calc(-1 * var(--hero-signin-lift));
   right: 0;
   z-index: 5;
-  max-height: calc(100dvh - var(--hero-signin-nav-offset) - (var(--hero-signin-gap) * 2) - env(safe-area-inset-bottom, 0px));
+  max-height: calc(100dvh - var(--hero-signin-nav-offset) - (var(--hero-signin-gap) * 2) - env(safe-area-inset-bottom, 0px) + var(--hero-signin-lift));
   overflow: hidden;
 }
 
@@ -774,14 +775,14 @@ html[data-theme-resolved='dark'] .landing-page .hero-signin-panel .signin-modal-
   body.landing-page.signin-active > #signin-modal.hero-signin-panel.is-viewport-pinned.is-open,
   body.landing-page.signin-active #signin-modal.hero-signin-panel.is-viewport-pinned.is-open {
     position: fixed !important;
-    top: calc(var(--hero-signin-nav-offset) + var(--hero-signin-gap)) !important;
+    top: calc(var(--hero-signin-nav-offset) + var(--hero-signin-gap) - var(--hero-signin-lift)) !important;
     right: max(12px, env(safe-area-inset-right, 12px)) !important;
     left: max(12px, env(safe-area-inset-left, 12px)) !important;
     bottom: auto !important;
     width: auto !important;
     max-width: none !important;
     height: auto !important;
-    max-height: calc(100dvh - var(--hero-signin-nav-offset) - (var(--hero-signin-gap) * 2) - env(safe-area-inset-bottom, 0px)) !important;
+    max-height: calc(100dvh - var(--hero-signin-nav-offset) - (var(--hero-signin-gap) * 2) - env(safe-area-inset-bottom, 0px) + var(--hero-signin-lift)) !important;
     margin: 0 !important;
     transform: none !important;
     display: flex !important;
@@ -815,11 +816,11 @@ html[data-theme-resolved='dark'] .landing-page .hero-signin-panel .signin-modal-
 @media (max-width: 580px) {
   body.landing-page.signin-active > #signin-modal.hero-signin-panel.is-viewport-pinned.is-open,
   body.landing-page.signin-active #signin-modal.hero-signin-panel.is-viewport-pinned.is-open {
-    top: calc(var(--hero-signin-nav-offset) + 8px) !important;
+    top: calc(var(--hero-signin-nav-offset) + 8px - var(--hero-signin-lift)) !important;
     right: max(10px, env(safe-area-inset-right, 10px)) !important;
     left: max(10px, env(safe-area-inset-left, 10px)) !important;
     bottom: auto !important;
-    max-height: calc(100dvh - var(--hero-signin-nav-offset) - 16px - env(safe-area-inset-bottom, 0px)) !important;
+    max-height: calc(100dvh - var(--hero-signin-nav-offset) - 16px - env(safe-area-inset-bottom, 0px) + var(--hero-signin-lift)) !important;
   }
 
   .landing-page .hero-signin-panel .signin-card--hero-inline {
