@@ -227,7 +227,7 @@
               <div class="ocr-status-inline" id="ocr-status-panel" hidden aria-live="polite" role="status">
                 <span class="ocr-verify-spinner" id="ocr-verify-spinner" aria-hidden="true"></span>
                 <p class="ocr-status-inline__message">
-                  <strong class="ocr-status-inline__title" id="ocr-status-panel-title">VERIFYING IDENTITY &amp; RESIDENCY&hellip;</strong>
+                  <strong class="ocr-status-inline__title" id="ocr-status-panel-title">Verifying Identity &amp; Residency</strong>
                   <span class="ocr-status-inline__sep" aria-hidden="true"> — </span>
                   <span class="ocr-status-inline__desc" id="ocr-status-panel-desc">Please wait while we securely verify the information from your uploaded ID.</span>
                   <span class="ocr-status-inline__desc-short" aria-hidden="true">Please wait…</span>
@@ -261,8 +261,8 @@
                   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" x2="12" y1="8" y2="12"/><line x1="12" x2="12.01" y1="16" y2="16"/></svg>
                 </div>
                 <div class="ocr-error-card__content">
-                  <strong>OCR Extraction Unsuccessful</strong>
-                  <p id="ocr-error-message">We couldn&rsquo;t read the information from this ID image. Please upload a clearer image or try again.</p>
+                  <strong>We couldn’t accurately read your National ID.</strong>
+                  <p id="ocr-error-message">Please upload a clearer image or manually complete the missing fields.</p>
                   <div class="ocr-error-card__actions">
                     <button type="button" class="btn-ocr-retry" id="btn-ocr-error-reupload">Upload Another ID</button>
                     <button type="button" class="btn-ocr-manual" id="btn-ocr-manual-entry">Continue with Manual Entry</button>
@@ -810,17 +810,6 @@
 <script src="<?= $b ?>/assets/js/ocr-national-id.js?v=20260729ocr4"></script>
 <script src="<?= $b ?>/assets/js/register-nlp-analysis.js?v=20260806cds1"></script>
 <script src="<?= $b ?>/assets/js/register.js?v=20260808ui"></script>
-
-<!-- OCR extraction loading overlay (separate from residency verification) -->
-<div id="ocr-extract-overlay" class="reg-nlp-overlay ocr-extract-overlay" hidden aria-hidden="true" role="dialog" aria-modal="true" aria-labelledby="ocr-extract-overlay-title" aria-busy="false">
-  <div class="reg-nlp-overlay__card ocr-extract-overlay__card">
-    <h2 id="ocr-extract-overlay-title" class="ocr-extract-overlay__title">EXTRACTING ID INFORMATION&hellip;</h2>
-    <div class="reg-nlp-overlay__progress ocr-extract-overlay__progress" aria-hidden="true">
-      <span class="reg-nlp-overlay__progress-bar"></span>
-    </div>
-    <p class="ocr-extract-overlay__sub">Please wait while we securely read your National ID.</p>
-  </div>
-</div>
 
 <!-- Silent NLP loading overlay (patient-facing; no technical AI output) -->
 <?php

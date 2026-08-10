@@ -1065,7 +1065,6 @@ textarea:focus {
 /* ===== Step 3 NLP (chief complaint) ===== */
 /* Full-screen silent NLP loading + post-registration outcome modals */
 body.reg-nlp-overlay-open,
-body.reg-ocr-extract-open,
 body.reg-outcome-open {
   overflow: hidden;
 }
@@ -1085,33 +1084,8 @@ body.reg-outcome-open {
 }
 
 .reg-nlp-overlay[hidden],
-.reg-outcome-modal[hidden],
-.ocr-extract-overlay[hidden] {
+.reg-outcome-modal[hidden] {
   display: none !important;
-}
-
-/* OCR extraction full-screen loader (minimal; no spinner) */
-.ocr-extract-overlay__card {
-  width: min(400px, 100%);
-  padding: 32px 28px 28px;
-}
-.ocr-extract-overlay__title {
-  margin: 0 0 22px;
-  font-size: 14.5px;
-  font-weight: 800;
-  letter-spacing: 0.07em;
-  text-transform: uppercase;
-  color: #0f766e;
-  line-height: 1.35;
-}
-.ocr-extract-overlay__progress {
-  margin-bottom: 20px;
-}
-.ocr-extract-overlay__sub {
-  margin: 0;
-  font-size: 13.5px;
-  line-height: 1.55;
-  color: #475569;
 }
 
 @keyframes regNlpFadeIn {
