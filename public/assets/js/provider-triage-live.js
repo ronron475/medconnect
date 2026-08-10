@@ -187,59 +187,65 @@
     return 'MC-' + String(id).padStart(6, '0');
   }
 
+  function evidenceItems(evidence) {
+    if (!evidence || !evidence.has_evidence) {
+      return [];
+    }
+    if (Array.isArray(evidence.items) && evidence.items.length) {
+      return evidence.items;
+    }
+    if (evidence.view_url) {
+      return [evidence];
+    }
+    return [];
+  }
+
+  function renderEvidenceCard(item) {
+    var url = String(item.view_url || '');
+    if (!url) {
+      return '';
+    }
+    var filename = esc(item.original_filename || 'Supporting evidence');
+    var uploaded = esc(item.uploaded_label || '');
+    var isVideo = item.media_type === 'video';
+    var safeUrl = attrEsc(url);
+    var preview = isVideo
+      ? '<video src="' + safeUrl + '" controls playsinline preload="metadata" class="triage-evidence-card__media"></video>'
+      : '<img src="' + safeUrl + '" alt="' + filename + '" class="triage-evidence-card__thumb">';
+    var actionLabel = isVideo ? 'Open video' : 'View full size';
+    var metaParts = [];
+    if (item.original_filename) metaParts.push('<span class="triage-evidence-card__filename">' + filename + '</span>');
+    if (uploaded) metaParts.push('<span class="triage-evidence-card__date">' + uploaded + '</span>');
+
+    return '<article class="triage-evidence-card">'
+      + '<div class="triage-evidence-card__preview">' + preview + '</div>'
+      + '<div class="triage-evidence-card__body">'
+      + (metaParts.length ? '<p class="triage-evidence-card__meta">' + metaParts.join('') + '</p>' : '')
+      + '<a href="' + safeUrl + '" target="_blank" rel="noopener noreferrer" class="mc-btn mc-btn--outline triage-evidence-card__btn">'
+      + esc(actionLabel) + '</a>'
+      + '</div>'
+      + '</article>';
+  }
+
   function renderSupportingEvidence(t) {
     var evidenceSection = document.getElementById('modalEvidenceSection');
-    var mediaEl = document.getElementById('modalEvidenceMedia');
-    var metaEl = document.getElementById('modalEvidenceMeta');
-    var openLink = document.getElementById('modalEvidenceOpenLink');
+    var listEl = document.getElementById('modalEvidenceList');
     var evidence = t && t.supporting_evidence && typeof t.supporting_evidence === 'object'
       ? t.supporting_evidence
       : {};
+    var items = evidenceItems(evidence);
 
     if (!evidenceSection) return;
 
-    if (!evidence.has_evidence) {
+    if (!items.length) {
       evidenceSection.hidden = true;
-      if (mediaEl) mediaEl.innerHTML = '';
-      if (metaEl) metaEl.textContent = '';
-      if (openLink) {
-        openLink.href = '#';
-        openLink.style.display = 'none';
-      }
+      if (listEl) listEl.innerHTML = '';
       return;
     }
 
-    var url = String(evidence.view_url || '');
     evidenceSection.hidden = false;
-
-    if (mediaEl) {
-      if (evidence.media_type === 'video') {
-        mediaEl.innerHTML =
-          '<video src="' + attrEsc(url) + '" controls playsinline class="triage-evidence-media"></video>';
-      } else {
-        mediaEl.innerHTML =
-          '<a href="' + attrEsc(url) + '" target="_blank" rel="noopener noreferrer" class="triage-evidence-media-link">' +
-          '<img src="' + attrEsc(url) + '" alt="Patient supporting evidence" class="triage-evidence-media">' +
-          '</a>';
-      }
-    }
-
-    if (metaEl) {
-      var metaLine = String(evidence.meta_line || '').trim();
-      if (!metaLine) {
-        var parts = [];
-        if (evidence.original_filename) parts.push(String(evidence.original_filename));
-        if (evidence.file_type_label) parts.push(String(evidence.file_type_label));
-        if (evidence.file_size_display) parts.push(String(evidence.file_size_display));
-        if (evidence.uploaded_label) parts.push(String(evidence.uploaded_label));
-        metaLine = parts.join(' • ');
-      }
-      metaEl.textContent = metaLine;
-    }
-
-    if (openLink) {
-      openLink.href = url || '#';
-      openLink.style.display = url ? 'inline-flex' : 'none';
+    if (listEl) {
+      listEl.innerHTML = items.map(renderEvidenceCard).join('');
     }
   }
 
