@@ -287,6 +287,14 @@
     } catch (e) { /* ignore */ }
   }
 
+  function autoResizeGuidanceTextarea() {
+    var el = document.getElementById('modalRecommendationsEdit');
+    if (!el) return;
+    el.style.height = 'auto';
+    var min = 180;
+    el.style.height = Math.max(el.scrollHeight, min) + 'px';
+  }
+
   function viewTriageDetails(t) {
     currentTriageId = t.id;
     document.getElementById('modalName').textContent = t.name || '—';
@@ -402,6 +410,7 @@
     var recEdit = document.getElementById('modalRecommendationsEdit');
     if (recEdit) {
       recEdit.value = t.recommendations || '';
+      autoResizeGuidanceTextarea();
     }
     var gateHint = document.getElementById('modalRecommendationGateHint');
     var recStatus = String(t.recommendation_status || 'hidden');
@@ -611,6 +620,12 @@
     document.getElementById('triageModal')?.addEventListener('click', function (event) {
       if (event.target.id === 'triageModal') closeTriageModal();
     });
+
+    var recEdit = document.getElementById('modalRecommendationsEdit');
+    if (recEdit && !recEdit.dataset.resizeBound) {
+      recEdit.dataset.resizeBound = '1';
+      recEdit.addEventListener('input', autoResizeGuidanceTextarea);
+    }
   }
 
   window.closeTriageModal = closeTriageModal;
