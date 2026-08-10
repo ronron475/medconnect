@@ -941,10 +941,19 @@ function presentPostRegistrationOutcome(urgency, redirectUrl) {
   setLoading(false);
   wireOutcomeActions(redirectUrl);
 
+  const successBadge = document.getElementById('reg-outcome-success-badge');
+  const noComplaintMsg = document.getElementById('reg-outcome-success-no-complaint-msg');
+  const noComplaintHint = document.getElementById('reg-outcome-success-no-complaint-hint');
+  const triageMsg = document.getElementById('reg-outcome-success-triage-msg');
+
   if (!urgency) {
     try {
       sessionStorage.removeItem('medconnect_post_reg_urgency');
     } catch (_) { /* ignore */ }
+    if (successBadge) successBadge.hidden = true;
+    if (noComplaintMsg) noComplaintMsg.hidden = false;
+    if (noComplaintHint) noComplaintHint.hidden = false;
+    if (triageMsg) triageMsg.hidden = true;
     showOutcomeModal('reg-outcome-success');
     return;
   }
@@ -961,6 +970,17 @@ function presentPostRegistrationOutcome(urgency, redirectUrl) {
   if (u === 'URGENT') {
     showOutcomeModal('reg-outcome-urgent');
     return;
+  }
+
+  if (successBadge) {
+    successBadge.hidden = false;
+    successBadge.textContent = 'NON-URGENT';
+  }
+  if (noComplaintMsg) noComplaintMsg.hidden = true;
+  if (noComplaintHint) noComplaintHint.hidden = true;
+  if (triageMsg) {
+    triageMsg.hidden = false;
+    triageMsg.innerHTML = 'Triage result: <strong>Non-Urgent</strong>. You may schedule a consultation at your preferred available date and time.';
   }
   showOutcomeModal('reg-outcome-success');
 }
@@ -1013,8 +1033,13 @@ step2Form.addEventListener('submit', async e => {
         keepOverlay: true,
       });
       if (analysis && analysis.ok) {
-        urgency = normalizeTriageUrgency(analysis.urgency || 'NON-URGENT');
-        nlpResult = analysis.result || nlp.getLastResult?.() || null;
+        if (analysis.skipped) {
+          urgency = '';
+          nlpResult = null;
+        } else {
+          urgency = normalizeTriageUrgency(analysis.urgency || 'NON-URGENT');
+          nlpResult = analysis.result || nlp.getLastResult?.() || null;
+        }
       } else if (analysis && analysis.error === 'aborted') {
         if (nlp.hideOverlay) nlp.hideOverlay();
         setLoading(false);
@@ -1046,7 +1071,11 @@ step2Form.addEventListener('submit', async e => {
   try {
     const fd = new FormData(step2Form);
 
-    // Attach urgency for server logging / future hooks (registration API ignores unknown fields)
+    if (nlp && typeof nlp.isComplaintSkipped === 'function' && nlp.isComplaintSkipped()) {
+      fd.append('chief_complaint_skipped', '1');
+    }
+
+    // Attach urgency only when chief complaint triage actually ran
     if (urgency) {
       fd.append('triage_urgency', urgency);
     }
@@ -1090,12 +1119,15 @@ step2Form.addEventListener('submit', async e => {
     }
 
     if (data.success) {
-      // Prefer server triage when present; always show Non-Urgent / Urgent / Emergency modal
-      let finalUrgency = urgency;
-      if (data.emergency === true) {
-        finalUrgency = 'EMERGENCY';
-      } else if (data.urgency) {
-        finalUrgency = data.urgency;
+      let finalUrgency = '';
+      if (runNlpOnSubmit) {
+        if (data.emergency === true) {
+          finalUrgency = 'EMERGENCY';
+        } else if (data.urgency) {
+          finalUrgency = data.urgency;
+        } else if (urgency) {
+          finalUrgency = urgency;
+        }
       }
       persistPostRegIntent(finalUrgency, nlpResult);
       presentPostRegistrationOutcome(finalUrgency, data.redirect);
