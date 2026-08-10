@@ -2,7 +2,8 @@
 /**
  * Dashboard card: submit symptoms for provider-reviewed self-care (non-urgent).
  *
- * Expects: $symptoms_review_pending, $registration_chief_complaint, $symptoms_review_booking (optional)
+ * Expects: $symptoms_review_pending, $registration_chief_complaint, $symptoms_review_booking (optional).
+ * Included only when $show_dashboard_care_tips_section is true (non-urgent chief complaint workflow).
  */
 $symptoms_review_pending = $symptoms_review_pending ?? [
     'has_pending' => false,

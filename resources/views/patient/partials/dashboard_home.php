@@ -73,7 +73,9 @@ foreach ($upcoming_list as $c) {
   </div>
   <?php endif; ?>
 
+  <?php if (!empty($show_dashboard_care_tips_section)): ?>
   <?php require __DIR__ . '/dashboard_symptoms_review.php'; ?>
+  <?php endif; ?>
 
   <div class="pdash-metrics" aria-label="Health summary">
     <div class="pdash-metric <?= $dash_today_appts > 0 ? 'pdash-metric--accent' : '' ?>">
