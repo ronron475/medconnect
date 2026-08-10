@@ -237,6 +237,12 @@
     if (!document.hidden && booted) fetchCounts({ force: true });
   });
 
+  global.addEventListener('pageshow', function (ev) {
+    if (ev && ev.persisted && booted) {
+      fetchCounts({ force: true });
+    }
+  });
+
   function init() {
     boot();
   }

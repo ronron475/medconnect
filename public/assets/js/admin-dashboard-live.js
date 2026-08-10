@@ -228,6 +228,7 @@
     if (payload.scope === 'superadmin') updateSuperadmin(payload);
     else updateAdmin(payload);
     touchSync(payload.updated_at);
+    if (window.MedConnectNavBadgesRefresh) window.MedConnectNavBadgesRefresh();
   }
 
   async function refresh() {

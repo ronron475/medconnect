@@ -211,24 +211,31 @@
   }
 
   function updateBadge(count) {
+    const n = Math.max(0, parseInt(count, 10) || 0);
+    const label = n > 99 ? '99+' : String(n);
     document.querySelectorAll('[data-notif-badge]').forEach(function (el) {
-      el.textContent = count > 99 ? '99+' : String(count);
-      el.dataset.count = String(count);
-      el.setAttribute('aria-label', count + ' unread notifications');
+      el.textContent = n > 0 ? label : '';
+      el.dataset.count = String(n);
+      el.setAttribute('aria-label', n + ' unread notifications');
+      el.hidden = n <= 0;
+      el.setAttribute('aria-hidden', n <= 0 ? 'true' : 'false');
     });
     document.querySelectorAll('.pd-notif-dot').forEach(function (el) {
-      el.style.display = count > 0 ? 'block' : 'none';
+      el.style.display = n > 0 ? 'block' : 'none';
     });
     document.querySelectorAll('[data-nav-badge="notifications"]').forEach(function (el) {
-      el.textContent = count > 99 ? '99+' : String(count);
-      el.hidden = count <= 0;
-      el.setAttribute('aria-hidden', count <= 0 ? 'true' : 'false');
+      el.textContent = n > 0 ? label : '';
+      el.hidden = n <= 0;
+      el.setAttribute('aria-hidden', n <= 0 ? 'true' : 'false');
     });
     try {
       window.dispatchEvent(new CustomEvent('medconnect:notifications-unread', {
-        detail: { unread_count: Math.max(0, parseInt(count, 10) || 0), source: 'notifications-ui' },
+        detail: { unread_count: n, source: 'notifications-ui' },
       }));
     } catch (e) { /* ignore */ }
+    if (typeof window.MedConnectNavBadgesRefresh === 'function') {
+      window.MedConnectNavBadgesRefresh();
+    }
   }
 
   function teardownEscalator(list) {

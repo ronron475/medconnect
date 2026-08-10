@@ -1234,6 +1234,7 @@
             }
           } catch (_) { /* ignore */ }
           showBookingOverlay(false);
+          if (window.MedConnectNavBadgesRefresh) window.MedConnectNavBadgesRefresh();
           if (emergency) {
             const emMsg =
               data.message ||

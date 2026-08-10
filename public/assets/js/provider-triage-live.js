@@ -524,6 +524,7 @@
       alert(data.message || 'Recommendations withheld.');
       closeTriageModal();
       refreshTriage(true);
+      if (window.MedConnectNavBadgesRefresh) window.MedConnectNavBadgesRefresh();
     } catch (e) {
       alert('Could not update recommendations.');
     }
@@ -536,6 +537,7 @@
       if (data && data.success) {
         closeTriageModal();
         refreshTriage(true);
+        if (window.MedConnectNavBadgesRefresh) window.MedConnectNavBadgesRefresh();
       } else {
         alert((data && data.message) || 'Could not update triage status.');
       }
@@ -563,6 +565,7 @@
       if (data.success) {
         closeTriageModal();
         refreshTriage(true);
+        if (window.MedConnectNavBadgesRefresh) window.MedConnectNavBadgesRefresh();
       } else {
         alert(data.message || 'Could not update priority.');
       }

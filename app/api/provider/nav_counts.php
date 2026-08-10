@@ -5,8 +5,8 @@
  */
 require_once dirname(dirname(dirname(__DIR__))) . '/bootstrap.php';
 require_once dirname(dirname(dirname(__DIR__))) . '/config/db.php';
+require_once dirname(dirname(dirname(__DIR__))) . '/app/includes/portal_nav_badge_counts.php';
 require_once dirname(dirname(dirname(__DIR__))) . '/app/includes/provider_nav_counts.php';
-require_once dirname(dirname(dirname(__DIR__))) . '/app/includes/message_deletion.php';
 
 Api::startJson();
 
@@ -21,22 +21,16 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') !== 'GET') {
 $providerId = (int) $_SESSION['user_id'];
 
 try {
-    $counts = provider_nav_counts($pdo, $providerId);
-
-    $messagesUnread = 0;
-    try {
-        consultation_messages_ensure_schema($pdo);
-        $messagesUnread = message_unread_count($pdo, $providerId);
-    } catch (Throwable $e) {
-        $messagesUnread = 0;
-    }
+    $counts = portal_nav_badge_counts($pdo, 'provider', $providerId);
+    $details = provider_nav_counts($pdo, $providerId);
+    $messagesUnread = (int) ($counts['messages'] ?? 0);
 
     Api::success([
-        'queue'          => $counts['queue'],
-        'triage'         => $counts['triage'],
-        'triage_urgent'  => $counts['triage_urgent'],
-        'referrals'      => $counts['referrals'] ?? 0,
-        'followups'      => $counts['followups'] ?? 0,
+        'queue'          => (int) ($counts['queue'] ?? 0),
+        'triage'         => (int) ($counts['triage'] ?? 0),
+        'triage_urgent'  => (int) ($details['triage_urgent'] ?? 0),
+        'referrals'      => (int) ($counts['referrals'] ?? 0),
+        'followups'      => (int) ($counts['followups'] ?? 0),
         'messages'       => $messagesUnread,
         'unread_count'   => $messagesUnread,
     ]);

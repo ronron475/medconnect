@@ -17,9 +17,11 @@ require_once VIEWS_PATH . '/partials/portal_dark_mode_close.php';
 $prefsJsVer = (int) @filemtime(ASSETS_PATH . '/js/provider-preferences.js');
 $idleJsVer = (int) @filemtime(ASSETS_PATH . '/js/provider-idle.js');
 $providerNavCountsVer = (int) @filemtime(ASSETS_PATH . '/js/provider-nav-counts.js');
+$navBadgesRefreshVer = (int) @filemtime(ASSETS_PATH . '/js/nav-badges-refresh.js');
 ?>
 <?php require_once VIEWS_PATH . '/partials/theme_scripts.php'; ?>
 <?php require_once VIEWS_PATH . '/components/session_video_shell.php'; ?>
+<script src="<?= ASSET_BASE ?>/assets/js/nav-badges-refresh.js?v=<?= $navBadgesRefreshVer ?>"></script>
 <script src="<?= ASSET_BASE ?>/assets/js/provider-nav-counts.js?v=<?= $providerNavCountsVer ?>"></script>
 <script src="<?= ASSET_BASE ?>/assets/js/provider-preferences.js?v=<?= $prefsJsVer ?>"></script>
 <script src="<?= ASSET_BASE ?>/assets/js/provider-idle.js?v=<?= $idleJsVer ?>"></script>
