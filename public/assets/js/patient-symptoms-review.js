@@ -9,6 +9,9 @@
 
   var alertEl = document.getElementById('pdashSymptomsReviewAlert');
   var submitBtn = document.getElementById('pdashSymptomsReviewSubmit');
+  if (submitBtn && !submitBtn.dataset.defaultLabel) {
+    submitBtn.dataset.defaultLabel = submitBtn.textContent.trim();
+  }
 
   var IMAGE_MAX = 5 * 1024 * 1024;
   var VIDEO_MAX = 25 * 1024 * 1024;
@@ -220,7 +223,7 @@
     } finally {
       if (submitBtn) {
         submitBtn.disabled = false;
-        submitBtn.textContent = 'Submit for doctor review';
+        submitBtn.textContent = submitBtn.dataset.defaultLabel || 'Submit chief complaint';
       }
     }
   });

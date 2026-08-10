@@ -1,9 +1,9 @@
 <?php
 /**
- * Dashboard card: submit symptoms for provider-reviewed self-care (non-urgent).
+ * Dashboard card: in-review status for provider-reviewed self-care (non-urgent).
  *
- * Expects: $symptoms_review_pending, $registration_chief_complaint, $symptoms_review_booking (optional).
- * Included only when $show_dashboard_care_tips_section is true (non-urgent chief complaint workflow).
+ * Expects: $symptoms_review_pending, $symptoms_review_booking (optional).
+ * Included only when care tips section applies and a review is already pending.
  */
 $symptoms_review_pending = $symptoms_review_pending ?? [
     'has_pending' => false,
@@ -12,9 +12,11 @@ $symptoms_review_pending = $symptoms_review_pending ?? [
     'provider_id' => 0,
     'provider_name' => '',
 ];
-$registration_chief_complaint = trim((string) ($registration_chief_complaint ?? ''));
-$chief_complaint_locked = $registration_chief_complaint !== '';
 $has_pending = !empty($symptoms_review_pending['has_pending']);
+if (!$has_pending) {
+    return;
+}
+
 $review_provider_name = trim((string) ($symptoms_review_pending['provider_name'] ?? ''));
 $symptoms_review_booking = $symptoms_review_booking ?? [
     'assigned_has_slots_today' => true,
@@ -31,8 +33,6 @@ if ($review_provider_name !== '') {
     $last = mb_substr($parts[count($parts) - 1] ?? '', 0, 1);
     $provider_initials = strtoupper($first . $last) ?: 'DR';
 }
-
-$show_evidence_section = $chief_complaint_locked && $registration_chief_complaint !== '';
 
 $booking_hint = '';
 $booking_hint_type = 'muted';
@@ -58,14 +58,9 @@ if ($review_provider_name !== '' && !empty($symptoms_review_booking['assigned_ha
         <p class="pdash-care__lead">AI drafts self-care steps; your doctor approves them before you see them.</p>
       </div>
     </div>
-    <?php if ($has_pending): ?>
     <span class="pdash-care__status-chip pdash-care__status-chip--review">In review</span>
-    <?php else: ?>
-    <span class="pdash-care__status-chip pdash-care__status-chip--idle">Not started</span>
-    <?php endif; ?>
   </div>
 
-  <?php if ($has_pending): ?>
   <ol class="pdash-care-steps" aria-label="Care tips progress">
     <li class="pdash-care-steps__item is-done">
       <span class="pdash-care-steps__dot" aria-hidden="true">✓</span>
@@ -134,97 +129,4 @@ if ($review_provider_name !== '' && !empty($symptoms_review_booking['assigned_ha
       <li>When approved, open <strong>Care tips</strong> to read doctor-approved guidance.</li>
     </ul>
   </details>
-
-  <?php else: ?>
-
-  <ol class="pdash-care-steps pdash-care-steps--idle" aria-label="Care tips progress">
-    <li class="pdash-care-steps__item is-current" aria-current="step">
-      <span class="pdash-care-steps__dot" aria-hidden="true">1</span>
-      <span class="pdash-care-steps__label">Chief complaint</span>
-    </li>
-    <li class="pdash-care-steps__item">
-      <span class="pdash-care-steps__dot" aria-hidden="true">2</span>
-      <span class="pdash-care-steps__label">Doctor reviews</span>
-    </li>
-    <li class="pdash-care-steps__item">
-      <span class="pdash-care-steps__dot" aria-hidden="true">3</span>
-      <span class="pdash-care-steps__label">Care tips ready</span>
-    </li>
-  </ol>
-
-  <form
-    id="pdashSymptomsReviewForm"
-    class="pdash-review-form"
-    novalidate
-  >
-    <label class="form-label pdash-care-form__label" for="pdashSymptomsComplaint">
-      Chief Complaint
-      <?php if ($chief_complaint_locked): ?>
-      <span class="pdash-care-form__lock-badge">From registration</span>
-      <?php endif; ?>
-    </label>
-    <textarea
-      id="pdashSymptomsComplaint"
-      name="chief_complaint"
-      class="form-control pdash-care-form__input<?= $chief_complaint_locked ? ' pdash-care-form__input--locked' : '' ?>"
-      rows="3"
-      maxlength="500"
-      placeholder="<?= $chief_complaint_locked ? 'Your registered health concern…' : 'e.g. mild sore throat and runny nose for two days…' ?>"
-      <?= $chief_complaint_locked ? 'readonly aria-readonly="true"' : 'required' ?>
-    ><?= htmlspecialchars($registration_chief_complaint) ?></textarea>
-    <p class="pdash-care-form__hint">
-      <?php if ($chief_complaint_locked): ?>
-      This is the chief complaint you entered during registration. It cannot be changed and will be reviewed by your doctor.
-      <?php else: ?>
-      Describe your health concern for doctor review. At least a short sentence helps your doctor review your case faster.
-      <?php endif; ?>
-    </p>
-
-    <div
-      class="pdash-care-evidence<?= $show_evidence_section ? '' : ' pdash-care-evidence--collapsed' ?>"
-      id="pdashCareEvidenceSection"
-      <?= $show_evidence_section ? '' : 'hidden' ?>
-    >
-      <label class="form-label pdash-care-form__label" for="pdashSupportingEvidence">
-        Supporting Evidence <span class="pdash-care-form__optional">(optional)</span>
-      </label>
-      <p class="pdash-care-form__hint pdash-care-evidence__hint">
-        Upload a photo or short video for your doctor to review. This does not affect triage or review priority.
-      </p>
-      <div class="pdash-care-evidence__upload">
-        <input
-          type="file"
-          id="pdashSupportingEvidence"
-          name="supporting_evidence"
-          class="pdash-care-evidence__input"
-          accept="image/jpeg,image/png,image/webp,video/mp4,video/webm"
-        />
-        <button type="button" class="pdash-btn pdash-btn--outline pdash-care-evidence__choose" id="pdashBtnChooseEvidence">
-          Choose photo or video
-        </button>
-        <span class="pdash-care-evidence__filename" id="pdashEvidenceFilename" hidden></span>
-        <button type="button" class="pdash-care-evidence__remove" id="pdashBtnRemoveEvidence" hidden aria-label="Remove supporting evidence">
-          Remove
-        </button>
-      </div>
-      <div class="pdash-care-evidence__preview" id="pdashEvidencePreview" hidden></div>
-      <p class="pdash-care-form__hint">Photos up to 5 MB. Videos up to 25 MB (MP4 or WebM).</p>
-    </div>
-
-    <div id="pdashSymptomsReviewAlert" class="patient-triage-alert" role="alert" hidden></div>
-    <button type="submit" class="pdash-btn pdash-btn--primary pdash-care-form__submit" id="pdashSymptomsReviewSubmit">
-      Submit for doctor review
-    </button>
-  </form>
-
-  <details class="pdash-care-how">
-    <summary>How this works</summary>
-    <ul>
-      <li>AI suggests self-care steps; a licensed doctor must approve before you see them.</li>
-      <li>A doctor is assigned automatically—you’ll see their name after you submit.</li>
-      <li>Track progress here and under <strong>My Health → Care tips</strong>.</li>
-    </ul>
-  </details>
-
-  <?php endif; ?>
 </section>
