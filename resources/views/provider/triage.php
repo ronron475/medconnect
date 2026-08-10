@@ -233,32 +233,24 @@ $pending_count    = count(array_filter($display_cases, fn($t) => empty($t['revie
         <div id="modalComplaint" class="triage-modal-box triage-modal-box--complaint"></div>
       </section>
 
+      <section class="triage-review-section" aria-labelledby="triagePatientWordsHeading">
+        <div class="triage-review-section__head">
+          <h3 id="triagePatientWordsHeading" class="triage-review-section__title">Symptoms Selected</h3>
+          <p class="triage-review-section__hint">Structured symptoms recorded with this submission.</p>
+        </div>
+        <div id="modalSymptoms" class="triage-modal-box"></div>
+      </section>
+
       <section id="modalEvidenceSection" class="triage-review-section triage-evidence-section" aria-labelledby="triageEvidenceHeading" hidden>
         <div class="triage-review-section__head">
           <h3 id="triageEvidenceHeading" class="triage-review-section__title">
             Supporting Evidence <span class="triage-review-section__optional">(optional)</span>
           </h3>
-          <p class="triage-review-section__hint">Patient-submitted photo or video for clinical context only. Not used for AI triage classification.</p>
         </div>
-        <div class="triage-evidence-panel">
-          <div id="modalEvidenceMedia" class="triage-evidence-panel__media"></div>
-          <p id="modalEvidenceMeta" class="triage-evidence-panel__meta"></p>
-          <a
-            id="modalEvidenceOpenLink"
-            class="mc-btn mc-btn--outline triage-evidence-panel__open"
-            href="#"
-            target="_blank"
-            rel="noopener noreferrer"
-          >Open full size</a>
-        </div>
-      </section>
-
-      <section class="triage-review-section" aria-labelledby="triagePatientWordsHeading">
-        <div class="triage-review-section__head">
-          <h3 id="triagePatientWordsHeading" class="triage-review-section__title">Symptoms selected</h3>
-          <p class="triage-review-section__hint">Structured symptoms recorded with this submission.</p>
-        </div>
-        <div id="modalSymptoms" class="triage-modal-box"></div>
+        <p class="triage-evidence-note">
+          Patient-uploaded evidence for clinical review. This does not determine the AI triage classification.
+        </p>
+        <div id="modalEvidenceList" class="triage-evidence-list"></div>
       </section>
 
       <section id="modalNlpAnalysis" class="triage-review-section triage-nlp-panel" aria-labelledby="triageNlpHeading" hidden>

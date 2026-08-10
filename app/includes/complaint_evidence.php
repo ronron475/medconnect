@@ -322,34 +322,19 @@ function complaint_evidence_validate_stored_file(string $path, array $row): bool
 
 /**
  * @return array{
- *   has_evidence:bool,
  *   id:int,
  *   media_type:string,
+ *   mime_type:string,
+ *   file_type_label:string,
+ *   file_size_display:string,
+ *   meta_line:string,
  *   view_url:string,
  *   original_filename:string,
  *   uploaded_label:string
  * }
  */
-function complaint_evidence_clinical_support_meta(PDO $pdo, int $triageId): array
+function complaint_evidence_row_to_item_meta(array $row): array
 {
-    $empty = [
-        'has_evidence'      => false,
-        'id'                => 0,
-        'media_type'        => '',
-        'mime_type'         => '',
-        'file_type_label'   => '',
-        'file_size_display' => '',
-        'meta_line'         => '',
-        'view_url'          => '',
-        'original_filename' => '',
-        'uploaded_label'    => '',
-    ];
-
-    $row = complaint_evidence_find_for_triage($pdo, $triageId);
-    if ($row === null) {
-        return $empty;
-    }
-
     $uploadedAt = (string) ($row['uploaded_at'] ?? '');
     $label = $uploadedAt !== '' ? date('M j, Y g:i A', strtotime($uploadedAt)) : '';
     $mime = (string) ($row['mime_type'] ?? '');
@@ -365,17 +350,56 @@ function complaint_evidence_clinical_support_meta(PDO $pdo, int $triageId): arra
     ]));
 
     return [
-        'has_evidence'      => true,
-        'id'                => (int) $row['id'],
+        'id'                => (int) ($row['id'] ?? 0),
         'media_type'        => $mediaType,
         'mime_type'         => $mime,
         'file_type_label'   => $fileTypeLabel,
         'file_size_display' => $fileSizeDisplay,
         'meta_line'         => implode(' • ', $metaParts),
-        'view_url'          => complaint_evidence_view_url((int) $row['id']),
+        'view_url'          => complaint_evidence_view_url((int) ($row['id'] ?? 0)),
         'original_filename' => $originalFilename,
         'uploaded_label'    => $label,
     ];
+}
+
+/**
+ * @return array{
+ *   has_evidence:bool,
+ *   id:int,
+ *   media_type:string,
+ *   view_url:string,
+ *   original_filename:string,
+ *   uploaded_label:string,
+ *   items:list<array<string, mixed>>
+ * }
+ */
+function complaint_evidence_clinical_support_meta(PDO $pdo, int $triageId): array
+{
+    $empty = [
+        'has_evidence'      => false,
+        'id'                => 0,
+        'media_type'        => '',
+        'mime_type'         => '',
+        'file_type_label'   => '',
+        'file_size_display' => '',
+        'meta_line'         => '',
+        'view_url'          => '',
+        'original_filename' => '',
+        'uploaded_label'    => '',
+        'items'             => [],
+    ];
+
+    $row = complaint_evidence_find_for_triage($pdo, $triageId);
+    if ($row === null) {
+        return $empty;
+    }
+
+    $item = complaint_evidence_row_to_item_meta($row);
+
+    return array_merge($empty, $item, [
+        'has_evidence' => true,
+        'items'        => [$item],
+    ]);
 }
 
 function complaint_evidence_can_view(PDO $pdo, array $row, int $userId, string $role): bool
