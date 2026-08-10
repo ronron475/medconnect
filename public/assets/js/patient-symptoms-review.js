@@ -1,8 +1,12 @@
 /**
  * Patient dashboard — chief complaint review with triage-gated supporting evidence.
+ * Triage uses the same Step 3 pipeline as registration (assess_chief_complaint.php).
  */
 (function () {
   'use strict';
+
+  var MIN_CHARS = 10;
+  var ANALYZE_TIMEOUT_MS = 120000;
 
   var form = document.getElementById('pdashSymptomsReviewForm');
   if (!form) return;
@@ -62,6 +66,10 @@
     return complaintText().length > 0;
   }
 
+  function shouldRunTriage(text) {
+    return String(text || '').trim().length >= MIN_CHARS;
+  }
+
   function clearTriageState() {
     triageLevel = null;
     triageComplaint = '';
@@ -77,24 +85,32 @@
     return canShowEvidence();
   }
 
-  function resolveTriageLevel(assessment) {
-    if (!assessment || typeof assessment !== 'object') return null;
+  /** Same urgency extraction as register-nlp-analysis.js (Registration Step 3). */
+  function extractUrgency(data) {
+    if (!data || typeof data !== 'object') return '';
+    var reg = data.registration || {};
+    if (reg.urgency) return String(reg.urgency).toUpperCase().replace(/_/g, '-');
+    var summary = data.summary || {};
+    var clinical = data.clinical_urgency || reg.clinical_urgency || {};
+    var raw = String(
+      summary.classification || clinical.triage_display || clinical.urgency || clinical.classification || 'NON-URGENT'
+    )
+      .trim()
+      .toUpperCase()
+      .replace(/\s+/g, '-')
+      .replace(/_/g, '-');
 
-    var triage = assessment.triage && typeof assessment.triage === 'object' ? assessment.triage : {};
-    var explicit = String(assessment.triage_level || '').toLowerCase();
-    if (explicit === 'non_urgent' || explicit === 'urgent' || explicit === 'emergency') {
-      return explicit;
-    }
+    if (raw.indexOf('EMERGENCY') !== -1) return 'EMERGENCY';
+    if (raw.indexOf('URGENT') !== -1 && raw.indexOf('NON') === -1) return 'URGENT';
+    return 'NON-URGENT';
+  }
 
-    var classification = String(triage.triage_classification || '').toUpperCase();
-    if (classification === 'EMERGENCY') return 'emergency';
-    if (classification === 'URGENT') return 'urgent';
-
-    var dbLevel = String(triage.db_level || assessment.db_level || '').toLowerCase();
-    if (dbLevel === '1' || dbLevel === 'high' || dbLevel === 'emergency') return 'emergency';
-    if (dbLevel === '2' || dbLevel === 'urgent') return 'urgent';
-
-    return 'non_urgent';
+  function urgencyToLevel(urgency) {
+    var raw = String(urgency || '').trim().toUpperCase().replace(/_/g, '-');
+    if (raw === 'EMERGENCY' || raw.indexOf('EMERGENCY') !== -1) return 'emergency';
+    if (raw === 'URGENT' || (raw.indexOf('URGENT') !== -1 && raw.indexOf('NON') === -1)) return 'urgent';
+    if (raw === 'NON-URGENT' || raw.indexOf('NON-URGENT') !== -1) return 'non_urgent';
+    return null;
   }
 
   function showAlert(type, message) {
@@ -208,25 +224,50 @@
     return canShowEvidence() && evidenceInput && !evidenceInput.disabled;
   }
 
-  async function runTriageAssessment(complaint) {
-    var fd = new FormData();
-    fd.set('chief_complaint', complaint);
-    fd.set('csrf_token', csrf());
+  async function runStep3Triage(complaint) {
+    var body = new FormData();
+    body.append('chief_complaint', complaint);
 
-    var res = await fetch(base() + '/app/api/patient/assess_symptoms.php', {
-      method: 'POST',
-      body: fd,
-      credentials: 'same-origin',
-      headers: { 'X-MC-No-Loader': '1' },
-    });
+    var controller = new AbortController();
+    var timer = window.setTimeout(function () {
+      controller.abort();
+    }, ANALYZE_TIMEOUT_MS);
 
-    var data = await res.json().catch(function () { return null; });
-    if (!data || !data.success || !data.assessment) {
-      showAlert('error', (data && data.message) || 'Could not analyze your symptoms. Please try again.');
+    try {
+      var res = await fetch(base() + '/app/api/ai/assess_chief_complaint.php', {
+        method: 'POST',
+        body: body,
+        credentials: 'same-origin',
+        signal: controller.signal,
+        headers: { 'X-MC-No-Loader': '1' },
+      });
+      window.clearTimeout(timer);
+
+      var json = await res.json().catch(function () { return null; });
+      if (!json) {
+        showAlert('error', 'Could not analyze your complaint. Please try again.');
+        return null;
+      }
+
+      var data = (json && (json.data || json)) || {};
+      if (!res.ok || json.success === false) {
+        if (data.summary || data.assessment || data.clinical_urgency) {
+          return data;
+        }
+        showAlert('error', json.message || 'Could not analyze your complaint. Please try again.');
+        return null;
+      }
+
+      return data;
+    } catch (err) {
+      window.clearTimeout(timer);
+      if (err && err.name === 'AbortError') {
+        showAlert('error', 'Analysis timed out. Please try again.');
+      } else {
+        showAlert('error', 'Network error. Please try again.');
+      }
       return null;
     }
-
-    return data.assessment;
   }
 
   async function submitForReview(complaint, evidenceFile) {
@@ -303,16 +344,22 @@
   }
 
   async function processTriageCheck(complaint) {
+    if (!shouldRunTriage(complaint)) {
+      showAlert('error', 'Please provide a bit more detail (at least 10 characters).');
+      return false;
+    }
+
     if (submitBtn) {
       submitBtn.disabled = true;
-      submitBtn.textContent = 'Checking symptoms…';
+      submitBtn.textContent = 'Assessing urgency…';
     }
 
     try {
-      var assessment = await runTriageAssessment(complaint);
-      if (!assessment) return false;
+      var step3Data = await runStep3Triage(complaint);
+      if (!step3Data) return false;
 
-      var level = resolveTriageLevel(assessment);
+      var urgency = extractUrgency(step3Data);
+      var level = urgencyToLevel(urgency);
       if (!level) {
         showAlert('error', 'Could not determine triage level. Please try again.');
         return false;
@@ -329,12 +376,6 @@
 
       syncEvidenceSection();
       updateSubmitButtonLabel();
-
-      if (level === 'urgent') {
-        showAlert('success', 'Urgent symptoms detected. You may add optional supporting evidence, then submit to continue.');
-      } else {
-        showAlert('success', 'Symptoms checked. You may add optional supporting evidence, then submit for review.');
-      }
       return true;
     } finally {
       if (submitBtn) {
@@ -426,10 +467,6 @@
 
   syncEvidenceSection();
   updateSubmitButtonLabel();
-
-  if (complaintEl && complaintEl.hasAttribute('readonly') && hasValidComplaint()) {
-    processTriageCheck(complaintText());
-  }
 
   form.addEventListener('submit', async function (e) {
     e.preventDefault();

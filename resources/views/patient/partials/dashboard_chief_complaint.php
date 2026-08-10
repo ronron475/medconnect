@@ -26,7 +26,7 @@ $submit_label = $show_care_tips_context ? 'Submit for doctor review' : 'Submit c
           <?php if ($show_care_tips_context): ?>
           Describe your concern first. For non-urgent cases, your doctor can approve self-care tips after you submit.
           <?php else: ?>
-          Describe your health concern first. After your symptoms are checked, you can add optional photo or video evidence.
+          Describe your health concern first. After triage assessment, you can add optional photo or video evidence for non-urgent and urgent cases.
           <?php endif; ?>
         </p>
       </div>
