@@ -442,10 +442,10 @@
               </div>
               <div class="address-lock-notice" id="address-lock-notice" hidden>
                 <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
-                Address locked — OCR confirmed Bago City residency.
+                Address locked — auto-filled from your National ID.
               </div>
 
-              <div class="form-group form-group-full" style="margin-top:14px" data-ocr-field="street-address">
+              <div class="form-group form-group-full address-street-field" style="margin-top:14px" data-ocr-field="street-address">
                 <label for="street-address">Street / House Address <span class="ocr-field-badge" id="badge-street-address" hidden></span></label>
                 <div class="input-wrap">
                   <span class="input-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg></span>

@@ -1977,7 +1977,17 @@ body.reg-outcome-open {
 .ocr-badge--fail { background: var(--red-light); color: var(--red); border: 1px solid #fca5a5; }
 .ocr-review-note { padding: 8px 16px; background: #fffbeb; border-top: 1px solid #fde68a; font-size: 11.5px; color: #92400e; display: flex; flex-wrap: wrap; gap: 5px; }
 .ocr-review-note span { background: rgba(251,191,36,0.15); border-radius: 4px; padding: 2px 7px; }
-.address-grid.ocr-locked { opacity: 0.55; pointer-events: none; }
+.address-grid.ocr-locked { opacity: 0.72; pointer-events: none; }
+.address-grid.ocr-locked select {
+  cursor: not-allowed;
+  background: #f1f5f9;
+}
+.address-street-field .input-wrap input.ocr-gated {
+  opacity: 1;
+  cursor: not-allowed;
+  background: #f1f5f9;
+  color: var(--text-dark);
+}
 .address-lock-notice {
   display: flex;
   align-items: center;
