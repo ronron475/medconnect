@@ -7,6 +7,7 @@
   var refreshInFlight = false;
   var currentTriageId = null;
   var activeFilter = 'all';
+  var triageCaseCache = {};
 
   function esc(s) {
     var d = document.createElement('div');
@@ -23,12 +24,25 @@
       .replace(/>/g, '&gt;');
   }
 
-  function parseTriagePayload(raw) {
+  function cacheTriageCases(cases) {
+    if (!Array.isArray(cases)) return;
+    cases.forEach(function (t) {
+      if (t && t.id) {
+        triageCaseCache[t.id] = t;
+      }
+    });
+  }
+
+  function readBootstrapCases() {
+    var el = document.getElementById('triageCasesBootstrap');
+    if (!el) return;
     try {
-      return JSON.parse(raw);
-    } catch (e) {
-      return null;
-    }
+      cacheTriageCases(JSON.parse(el.textContent || '[]'));
+    } catch (e) { /* ignore */ }
+  }
+
+  function getTriageCaseById(id) {
+    return triageCaseCache[Number(id)] || null;
   }
 
   function applyRowFilter() {
@@ -81,9 +95,8 @@
   }
 
   function renderActions(t) {
-    var payload = attrEsc(JSON.stringify(t));
     var html = '<div class="triage-actions">';
-    html += '<button type="button" class="mc-btn mc-btn--outline triage-view-btn" style="padding: 6px 12px; font-size: 11px;" data-triage="' + payload + '">View Details</button>';
+    html += '<button type="button" class="mc-btn mc-btn--outline triage-view-btn" style="padding: 6px 12px; font-size: 11px;" data-triage-id="' + esc(t.id) + '">View Details</button>';
     if (t.can_accept) {
       html += '<button type="button" class="mc-btn mc-btn--primary triage-accept-btn" style="padding: 6px 12px; font-size: 11px;" data-id="' + esc(t.id) + '">Mark reviewed</button>';
     } else if (!t.reviewed && t.expired) {
@@ -249,6 +262,31 @@
     }
   }
 
+  async function loadSupportingEvidence(triageId, caseData) {
+    renderSupportingEvidence(caseData || {});
+    if (!triageId || !cfg.evidenceApi) {
+      return;
+    }
+
+    try {
+      var res = await fetch(cfg.evidenceApi + '?triage_id=' + encodeURIComponent(String(triageId)), {
+        credentials: 'same-origin',
+        headers: { Accept: 'application/json' },
+      });
+      var data = await res.json().catch(function () { return null; });
+      if (!data || !data.success || !data.supporting_evidence) {
+        return;
+      }
+
+      var cached = getTriageCaseById(triageId);
+      if (cached) {
+        cached.supporting_evidence = data.supporting_evidence;
+      }
+
+      renderSupportingEvidence({ supporting_evidence: data.supporting_evidence });
+    } catch (e) { /* ignore */ }
+  }
+
   function viewTriageDetails(t) {
     currentTriageId = t.id;
     document.getElementById('modalName').textContent = t.name || '—';
@@ -264,7 +302,7 @@
       : (t.symptoms_display || '—');
     document.getElementById('modalSymptoms').textContent = symptoms;
     document.getElementById('modalComplaint').textContent = t.complaint || 'No detailed complaint provided.';
-    renderSupportingEvidence(t);
+    loadSupportingEvidence(t.id, t);
     document.getElementById('overrideLevel').value = t.level || '3';
 
     var urgencyEl = document.getElementById('modalUrgency');
@@ -523,6 +561,7 @@
       }
 
       renderTable(data.cases || []);
+      cacheTriageCases(data.cases || []);
       updateStats(data.stats || {});
       setRefreshStatus('Updated ' + new Date().toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' }));
     } catch (e) {
@@ -541,7 +580,8 @@
     document.querySelector('#triageTable')?.addEventListener('click', function (event) {
       var viewBtn = event.target.closest('.triage-view-btn');
       if (viewBtn) {
-        var payload = parseTriagePayload(viewBtn.dataset.triage || '');
+        var triageId = Number(viewBtn.dataset.triageId || 0);
+        var payload = triageId ? getTriageCaseById(triageId) : null;
         if (payload) viewTriageDetails(payload);
         return;
       }
@@ -572,6 +612,7 @@
   window.rejectRecommendationsFromModal = rejectRecommendationsFromModal;
 
   bindUi();
+  readBootstrapCases();
   refreshTriage(true);
   startPolling();
   document.addEventListener('visibilitychange', function () {

@@ -127,7 +127,6 @@ $pending_count    = count(array_filter($display_cases, fn($t) => empty($t['revie
         </tr>
       <?php else: foreach ($display_cases as $t):
         $is_urgent = $t['urgency'] === 'Urgent';
-        $payload   = htmlspecialchars(json_encode($t, JSON_UNESCAPED_UNICODE), ENT_QUOTES, 'UTF-8');
       ?>
         <tr
           class="<?= $is_urgent ? 'triage-row-urgent' : '' ?><?= !empty($t['expired']) ? ' triage-row-expired' : '' ?>"
@@ -184,7 +183,7 @@ $pending_count    = count(array_filter($display_cases, fn($t) => empty($t['revie
           </td>
           <td data-label="Actions">
             <div class="triage-actions">
-              <button type="button" class="mc-btn mc-btn--outline triage-view-btn" style="padding: 6px 12px; font-size: 11px;" data-triage="<?= $payload ?>">View Details</button>
+              <button type="button" class="mc-btn mc-btn--outline triage-view-btn" style="padding: 6px 12px; font-size: 11px;" data-triage-id="<?= (int) $t['id'] ?>">View Details</button>
               <?php if (!empty($t['can_accept'])): ?>
               <button type="button" class="mc-btn mc-btn--primary triage-accept-btn" style="padding: 6px 12px; font-size: 11px;" data-id="<?= (int) $t['id'] ?>">Mark reviewed</button>
               <?php elseif (!$t['reviewed'] && !empty($t['expired'])): ?>
@@ -342,9 +341,11 @@ $pending_count    = count(array_filter($display_cases, fn($t) => empty($t['revie
 </div>
 
 <?php $triageLiveJsVer = (int) @filemtime(ASSETS_PATH . '/js/provider-triage-live.js'); ?>
+<script type="application/json" id="triageCasesBootstrap"><?= json_encode($display_cases, JSON_UNESCAPED_UNICODE) ?></script>
 <script>
 window.MedConnectTriage = {
   listApi: <?= json_encode(ASSET_BASE . '/app/api/provider/get_triage.php') ?>,
+  evidenceApi: <?= json_encode(ASSET_BASE . '/app/api/provider/get_triage_evidence.php') ?>,
   updateApi: <?= json_encode(ASSET_BASE . '/app/api/provider/update_triage.php') ?>,
   tab: <?= json_encode($module_tab) ?>,
   refreshMs: 15000,
