@@ -1254,7 +1254,10 @@ step2Form.addEventListener('submit', async e => {
   const progressFill = document.getElementById('ocr-progress-fill');
   const statusPanel  = document.getElementById('ocr-status-panel');
   const statusPanelTitle = document.getElementById('ocr-status-panel-title');
-  const statusSpinner = document.getElementById('ocr-status-spinner');
+  const statusPanelDesc = document.getElementById('ocr-status-panel-desc');
+  const statusPanelStatus = document.getElementById('ocr-status-panel-status');
+  const statusSpinner = document.getElementById('ocr-verify-spinner');
+  const statusCheck = document.getElementById('ocr-status-check');
   const reviewNotice = document.getElementById('ocr-review-notice');
   const summaryCard  = document.getElementById('ocr-summary-card');
   const summaryStats = document.getElementById('ocr-summary-stats');
@@ -1276,7 +1279,14 @@ step2Form.addEventListener('submit', async e => {
   if (!fileInput || !scanBtn) return;
 
   let summaryHideTimer = null;
-  const OCR_STATUS_ORDER = ['uploaded', 'reading', 'extracting', 'validating', 'done'];
+  const OCR_VERIFY_COPY = {
+    title: 'Verifying Identity & Residency',
+    desc: 'Please wait while we securely verify the information from your uploaded ID.',
+    progress: 'Verification in progress…',
+    complete: 'Verification completed successfully.',
+    errorTitle: 'Verification could not be completed',
+    errorStatus: 'Please review your uploaded ID and try again.',
+  };
 
   const ocrApi = window.NationalIdOcr;
   if (ocrApi) {
@@ -1452,12 +1462,14 @@ step2Form.addEventListener('submit', async e => {
     if (!statusPanel) return;
     statusPanel.hidden = true;
     statusPanel.classList.remove('is-complete', 'is-error', 'is-processing');
-    if (statusSpinner) statusSpinner.hidden = true;
-    if (statusPanelTitle) statusPanelTitle.textContent = 'Processing your National ID';
-    statusPanel.querySelectorAll('.ocr-status-step').forEach((li) => {
-      li.classList.remove('is-active', 'is-done', 'is-pending');
-      li.classList.add('is-pending');
-    });
+    if (statusSpinner) statusSpinner.hidden = false;
+    if (statusCheck) statusCheck.hidden = true;
+    if (statusPanelTitle) statusPanelTitle.textContent = OCR_VERIFY_COPY.title;
+    if (statusPanelDesc) {
+      statusPanelDesc.textContent = OCR_VERIFY_COPY.desc;
+      statusPanelDesc.hidden = false;
+    }
+    if (statusPanelStatus) statusPanelStatus.textContent = OCR_VERIFY_COPY.progress;
   }
 
   function showOcrStatusPanel() {
@@ -1466,47 +1478,44 @@ step2Form.addEventListener('submit', async e => {
     statusPanel.classList.add('is-processing');
     statusPanel.classList.remove('is-complete', 'is-error');
     if (statusSpinner) statusSpinner.hidden = false;
+    if (statusCheck) statusCheck.hidden = true;
+    if (statusPanelTitle) statusPanelTitle.textContent = OCR_VERIFY_COPY.title;
+    if (statusPanelDesc) {
+      statusPanelDesc.textContent = OCR_VERIFY_COPY.desc;
+      statusPanelDesc.hidden = false;
+    }
+    if (statusPanelStatus) statusPanelStatus.textContent = OCR_VERIFY_COPY.progress;
   }
 
-  function setOcrStatusStep(activeKey) {
+  function setOcrStatusStep(state) {
     if (!statusPanel) return;
-    showOcrStatusPanel();
-    const activeIdx = OCR_STATUS_ORDER.indexOf(activeKey);
-    statusPanel.querySelectorAll('.ocr-status-step').forEach((li) => {
-      const key = li.getAttribute('data-step');
-      const idx = OCR_STATUS_ORDER.indexOf(key);
-      li.classList.remove('is-active', 'is-done', 'is-pending');
-      if (activeIdx < 0) {
-        li.classList.add('is-pending');
-      } else if (idx < activeIdx) {
-        li.classList.add('is-done');
-      } else if (idx === activeIdx) {
-        li.classList.add(activeKey === 'done' ? 'is-done' : 'is-active');
-      } else {
-        li.classList.add('is-pending');
-      }
-    });
-    if (activeKey === 'done') {
-      statusPanel.classList.remove('is-processing');
+    statusPanel.hidden = false;
+
+    if (state === 'done') {
+      statusPanel.classList.remove('is-processing', 'is-error');
       statusPanel.classList.add('is-complete');
       if (statusSpinner) statusSpinner.hidden = true;
-      if (statusPanelTitle) statusPanelTitle.textContent = 'OCR completed successfully';
-    } else if (statusPanelTitle) {
-      const labels = {
-        uploaded: 'National ID uploaded',
-        reading: 'Reading your National ID',
-        extracting: 'Extracting personal information',
-        validating: 'Validating residency',
-      };
-      statusPanelTitle.textContent = labels[activeKey] || 'Processing your National ID';
+      if (statusCheck) statusCheck.hidden = false;
+      if (statusPanelTitle) statusPanelTitle.textContent = OCR_VERIFY_COPY.title;
+      if (statusPanelDesc) statusPanelDesc.hidden = true;
+      if (statusPanelStatus) statusPanelStatus.textContent = OCR_VERIFY_COPY.complete;
+      if (progressFill) progressFill.style.width = '100%';
+      return;
     }
-  }
 
-  function mapProgressMessageToStep(msg) {
-    const m = String(msg || '').toLowerCase();
-    if (m.includes('validat') || m.includes('residenc') || m.includes('almost')) return 'validating';
-    if (m.includes('extract')) return 'extracting';
-    return 'reading';
+    if (state === 'error') {
+      statusPanel.classList.remove('is-processing', 'is-complete');
+      statusPanel.classList.add('is-error');
+      if (statusSpinner) statusSpinner.hidden = true;
+      if (statusCheck) statusCheck.hidden = true;
+      if (statusPanelTitle) statusPanelTitle.textContent = OCR_VERIFY_COPY.errorTitle;
+      if (statusPanelDesc) statusPanelDesc.hidden = true;
+      if (statusPanelStatus) statusPanelStatus.textContent = OCR_VERIFY_COPY.errorStatus;
+      return;
+    }
+
+    showOcrStatusPanel();
+    if (statusPanelStatus) statusPanelStatus.textContent = OCR_VERIFY_COPY.progress;
   }
 
   function hideReviewAndSummary() {
@@ -1554,12 +1563,7 @@ step2Form.addEventListener('submit', async e => {
       errorMessage.textContent = msg || 'Please upload a clearer image or manually complete the missing fields.';
     }
     errorCard.hidden = false;
-    if (statusPanel) {
-      statusPanel.classList.add('is-error');
-      statusPanel.classList.remove('is-processing', 'is-complete');
-      if (statusSpinner) statusSpinner.hidden = true;
-      if (statusPanelTitle) statusPanelTitle.textContent = 'OCR needs your attention';
-    }
+    setOcrStatusStep('error');
   }
 
   function resetConfirmCheck() {
@@ -1587,10 +1591,9 @@ step2Form.addEventListener('submit', async e => {
     if (!on && progressFill) progressFill.style.width = '0%';
   }
 
-  function updateProgress(msg) {
-    if (progressText) progressText.textContent = msg;
-    setOcrStatusStep(mapProgressMessageToStep(msg));
-    showStatus(msg, 'scanning');
+  function updateProgress() {
+    hideStatus();
+    setOcrStatusStep('processing');
   }
 
   async function runExtract(file, force) {
@@ -1599,14 +1602,14 @@ step2Form.addEventListener('submit', async e => {
     setUploadLocked(true);
     hideErrorCard();
     hideReviewAndSummary();
+    hideStatus();
     showProgress(true);
     resetVerification();
     resetResultPanel();
     resetConfirmCheck();
     if (ocrApi) ocrApi.resetExtractionPreview();
     extractComplete = false;
-    setOcrStatusStep('uploaded');
-    setTimeout(() => setOcrStatusStep('reading'), 300);
+    setOcrStatusStep('processing');
 
     ocrApi.startProgress(updateProgress);
 
@@ -1632,9 +1635,8 @@ step2Form.addEventListener('submit', async e => {
         return;
       }
 
-      setOcrStatusStep('extracting');
+      setOcrStatusStep('processing');
       const { filled, reviewCount, missingCount, isBagoResident } = await ocrApi.applyAutofill(data);
-      setOcrStatusStep('validating');
       await new Promise((r) => setTimeout(r, 350));
       setOcrStatusStep('done');
 
@@ -1732,7 +1734,6 @@ step2Form.addEventListener('submit', async e => {
     }
     actionsRow.removeAttribute('hidden');
     if (retryBtn) retryBtn.hidden = true;
-    setOcrStatusStep('uploaded');
   }
 
   clearBtn.addEventListener('click', () => {

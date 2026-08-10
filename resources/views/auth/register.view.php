@@ -223,22 +223,23 @@
                 <span id="ocr-filename-text"></span>
               </div>
 
-              <!-- Live OCR processing status -->
-              <div class="ocr-status-panel" id="ocr-status-panel" hidden aria-live="polite">
-                <div class="ocr-status-panel__head">
-                  <span class="ocr-status-spinner" id="ocr-status-spinner" aria-hidden="true"></span>
-                  <strong id="ocr-status-panel-title">Processing your National ID</strong>
-                </div>
-                <ul class="ocr-status-steps" id="ocr-status-steps">
-                  <li class="ocr-status-step" data-step="uploaded"><span class="ocr-status-step__icon" aria-hidden="true"></span><span>National ID uploaded successfully.</span></li>
-                  <li class="ocr-status-step" data-step="reading"><span class="ocr-status-step__icon" aria-hidden="true"></span><span>Reading your National ID...</span></li>
-                  <li class="ocr-status-step" data-step="extracting"><span class="ocr-status-step__icon" aria-hidden="true"></span><span>Extracting personal information...</span></li>
-                  <li class="ocr-status-step" data-step="validating"><span class="ocr-status-step__icon" aria-hidden="true"></span><span>Validating residency...</span></li>
-                  <li class="ocr-status-step" data-step="done"><span class="ocr-status-step__icon" aria-hidden="true"></span><span>OCR completed successfully.</span></li>
-                </ul>
-                <div class="ocr-progress" id="ocr-progress" hidden>
-                  <div class="ocr-progress-bar"><div class="ocr-progress-fill" id="ocr-progress-fill"></div></div>
-                  <span class="ocr-progress-text" id="ocr-progress-text">Reading National ID...</span>
+              <!-- Live verification status (patient-facing; internal OCR steps stay hidden) -->
+              <div class="ocr-status-panel" id="ocr-status-panel" hidden aria-live="polite" role="status">
+                <div class="ocr-status-panel__inner">
+                  <div class="ocr-status-panel__icon" aria-hidden="true">
+                    <span class="ocr-verify-spinner" id="ocr-verify-spinner"></span>
+                    <svg class="ocr-status-check" id="ocr-status-check" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" hidden>
+                      <circle cx="12" cy="12" r="10"/>
+                      <polyline points="8 12 11 15 16 9"/>
+                    </svg>
+                  </div>
+                  <h3 class="ocr-status-panel__title" id="ocr-status-panel-title">Verifying Identity &amp; Residency</h3>
+                  <p class="ocr-status-panel__desc" id="ocr-status-panel-desc">Please wait while we securely verify the information from your uploaded ID.</p>
+                  <div class="ocr-progress ocr-progress--formal" id="ocr-progress" hidden>
+                    <div class="ocr-progress-bar"><div class="ocr-progress-fill" id="ocr-progress-fill"></div></div>
+                  </div>
+                  <p class="ocr-status-panel__status" id="ocr-status-panel-status">Verification in progress…</p>
+                  <span class="ocr-progress-text" id="ocr-progress-text" hidden aria-hidden="true"></span>
                 </div>
               </div>
 
