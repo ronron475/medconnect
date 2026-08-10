@@ -459,9 +459,25 @@
     var res = await fetch(cfg.updateApi, {
       method: 'POST',
       credentials: 'same-origin',
+      headers: { Accept: 'application/json' },
       body: new URLSearchParams(body),
     });
-    return res.json();
+    var raw = await res.text();
+    var data = null;
+    try {
+      data = raw ? JSON.parse(raw) : null;
+    } catch (parseErr) {
+      var snippet = raw ? String(raw).replace(/\s+/g, ' ').trim().slice(0, 160) : '';
+      throw new Error(
+        snippet
+          ? ('Server error: ' + snippet)
+          : ('Server returned an invalid response (HTTP ' + res.status + '). Refresh and try again.')
+      );
+    }
+    if (!res.ok && (!data || !data.message)) {
+      return { success: false, message: 'Request failed (HTTP ' + res.status + '). Refresh and try again.' };
+    }
+    return data;
   }
 
   async function approveRecommendationsFromModal() {
@@ -488,7 +504,7 @@
       closeTriageModal();
       refreshTriage(true);
     } catch (e) {
-      alert('Could not approve recommendations.');
+      alert((e && e.message) || 'Could not approve recommendations.');
     }
   }
 

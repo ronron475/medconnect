@@ -242,24 +242,7 @@ function provider_triage_cases_load(PDO $pdo, int $providerId): array
         $status  = (string) ($t['status'] ?? 'pending');
         $expired = triage_case_is_expired((string) ($t['assessed_at'] ?? ''));
 
-        $canApprove = (
-            trim((string) ($t['chief_complaint'] ?? '')) !== ''
-            && trim((string) ($t['recommendations'] ?? '')) !== ''
-            && (
-                in_array((string) ($t['recommendation_status'] ?? 'hidden'), ['pending_approval', 'rejected'], true)
-                || (
-                    (string) ($t['recommendation_status'] ?? 'hidden') === 'hidden'
-                    && (
-                        strtolower((string) ($t['triage_level'] ?? '')) === 'non_urgent'
-                        || stripos((string) ($t['urgency_label'] ?? ''), 'non-urgent') !== false
-                        || stripos((string) ($t['urgency_label'] ?? ''), 'routine') !== false
-                    )
-                    && (string) ($t['triage_level'] ?? '') !== 'urgent'
-                    && (string) ($t['triage_level'] ?? '') !== 'emergency'
-                    && (int) ($t['triage'] ?? 3) >= 3
-                )
-            )
-        );
+        $canApprove = triage_provider_can_approve_recommendations($t);
 
         $cases[] = [
             'id'                    => (int) $t['id'],

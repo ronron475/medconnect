@@ -2,12 +2,18 @@
 /**
  * Book consultation + visit history (AI runs silently — not shown to patients).
  * Expects: $active_consultation, $booking_providers, $booking_today_ymd, $booking_today_label,
- *          $triage_history, $registration_chief_complaint (optional)
+ *          $triage_history, $registration_chief_complaint (optional),
+ *          $chief_complaint_locked, $chief_complaint_source, $active_chief_complaint_triage_id (optional)
  */
 require_once __DIR__ . '/triage_helpers.php';
 
 $registration_chief_complaint = trim((string) ($registration_chief_complaint ?? ''));
-$chief_complaint_locked = $registration_chief_complaint !== '';
+$chief_complaint_locked = isset($chief_complaint_locked)
+    ? (bool) $chief_complaint_locked
+    : ($registration_chief_complaint !== '');
+$chief_complaint_source = trim((string) ($chief_complaint_source ?? ''));
+$chief_complaint_source_label = patient_portal_complaint_source_label($chief_complaint_source);
+$active_chief_complaint_triage_id = (int) ($active_chief_complaint_triage_id ?? 0);
 $show_evidence_section = false;
 $review_booking_ctx = $review_booking_ctx ?? ['locked' => false, 'provider_id' => 0, 'provider_name' => ''];
 $locked_provider_id = (int) ($locked_provider_id ?? 0);
@@ -60,22 +66,25 @@ $locked_alternate_available = !empty($locked_alternate_available);
   <div id="triageFormAlert" class="patient-triage-alert" role="alert"></div>
   <form id="patientTriageForm" novalidate>
     <input type="hidden" name="csrf_token" value="<?= htmlspecialchars((string) ($_SESSION['csrf_token'] ?? ''), ENT_QUOTES, 'UTF-8') ?>">
+    <?php if ($active_chief_complaint_triage_id > 0): ?>
+    <input type="hidden" name="triage_id" value="<?= (int) $active_chief_complaint_triage_id ?>">
+    <?php endif; ?>
     <div class="form-group" id="chief-complaint">
       <label class="form-label" for="chief_complaint">
-        Chief Complaint<?= $chief_complaint_locked ? ' <span class="text-muted">(from registration)</span>' : '' ?>
+        Chief Complaint<?= $chief_complaint_locked ? ' <span class="text-muted">(' . htmlspecialchars($chief_complaint_source_label) . ')</span>' : '' ?>
       </label>
       <textarea
         id="chief_complaint"
         name="chief_complaint"
         class="form-control"
         rows="<?= $chief_complaint_locked ? 2 : 3 ?>"
-        placeholder="<?= $chief_complaint_locked ? 'Your registered health concern…' : 'Briefly describe why you need this visit…' ?>"
+        placeholder="<?= $chief_complaint_locked ? 'Your submitted health concern…' : 'Briefly describe why you need this visit…' ?>"
         maxlength="500"
         <?= $chief_complaint_locked ? 'readonly aria-readonly="true"' : 'required' ?>
       ><?= htmlspecialchars($registration_chief_complaint) ?></textarea>
       <p class="text-xs text-muted" style="margin-top:6px;">
         <?php if ($chief_complaint_locked): ?>
-        This is the chief complaint from your registration. It cannot be changed and will be reviewed by your doctor.
+        This chief complaint is already on file from your <?= htmlspecialchars($chief_complaint_source === 'registration' ? 'registration' : 'earlier submission') ?>. It cannot be changed here and will be used for this consultation.
         <?php else: ?>
         Briefly describe why you need this visit.
         <?php endif; ?>

@@ -114,10 +114,203 @@ function patient_chief_complaint_registration_reference(PDO $pdo, int $patientId
 }
 
 /**
+ * Normalize triage urgency from a triage_results row or registration string.
+ */
+function patient_portal_normalize_urgency(?string $triageLevel, ?string $classification, ?string $registrationUrgency = ''): string
+{
+    $raw = strtoupper(str_replace('_', '-', trim((string) ($classification ?? ''))));
+    if ($raw === '' && $triageLevel !== null) {
+        $raw = strtoupper(str_replace('_', '-', trim((string) $triageLevel)));
+    }
+    if ($raw === '' && $registrationUrgency !== null) {
+        $raw = strtoupper(str_replace('_', '-', trim((string) $registrationUrgency)));
+    }
+    if ($raw === 'NON URGENT') {
+        $raw = 'NON-URGENT';
+    }
+    if (str_contains($raw, 'EMERGENCY')) {
+        return 'EMERGENCY';
+    }
+    if (str_contains($raw, 'URGENT') && !str_contains($raw, 'NON')) {
+        return 'URGENT';
+    }
+    if ($raw !== '') {
+        return 'NON-URGENT';
+    }
+
+    return '';
+}
+
+/**
+ * Shared chief complaint for patient dashboard and book consultation (single source of truth).
+ *
+ * @return array{
+ *   complaint:string,
+ *   source:string,
+ *   triage_id:int,
+ *   urgency:string,
+ *   triage_level:string,
+ *   submitted_at:string,
+ *   locked:bool
+ * }
+ */
+function patient_portal_active_chief_complaint(PDO $pdo, int $patientId): array
+{
+    require_once __DIR__ . '/triage_assessment_schema.php';
+
+    $empty = [
+        'complaint'     => '',
+        'source'        => '',
+        'triage_id'     => 0,
+        'urgency'       => '',
+        'triage_level'  => '',
+        'submitted_at'  => '',
+        'locked'        => false,
+    ];
+    if ($patientId <= 0) {
+        return $empty;
+    }
+
+    triage_assessment_ensure_schema($pdo);
+    patient_chief_complaints_ensure_schema($pdo);
+
+    $triageRow = null;
+    try {
+        $stmt = $pdo->prepare("
+            SELECT id, chief_complaint, triage_level, triage_classification, urgency_label, assessed_at
+            FROM triage_results
+            WHERE patient_id = ?
+              AND TRIM(COALESCE(chief_complaint, '')) <> ''
+            ORDER BY assessed_at DESC, id DESC
+            LIMIT 1
+        ");
+        $stmt->execute([$patientId]);
+        $triageRow = $stmt->fetch(PDO::FETCH_ASSOC) ?: null;
+    } catch (PDOException $e) {
+        $triageRow = null;
+    }
+
+    $pccRow = null;
+    try {
+        $stmt = $pdo->prepare("
+            SELECT complaint_text, source, triage_result_id, submitted_at
+            FROM patient_chief_complaints
+            WHERE patient_id = ?
+              AND TRIM(COALESCE(complaint_text, '')) <> ''
+            ORDER BY submitted_at DESC, id DESC
+            LIMIT 1
+        ");
+        $stmt->execute([$patientId]);
+        $pccRow = $stmt->fetch(PDO::FETCH_ASSOC) ?: null;
+    } catch (PDOException $e) {
+        $pccRow = null;
+    }
+
+    $reg = patient_registration_load_pending_complaint($pdo, $patientId);
+    $regUrgency = (string) ($reg['urgency'] ?? '');
+
+    $triageTs = $triageRow ? strtotime((string) ($triageRow['assessed_at'] ?? '')) : 0;
+    $pccTs = $pccRow ? strtotime((string) ($pccRow['submitted_at'] ?? '')) : 0;
+
+    if ($triageRow && (!$pccRow || $triageTs >= $pccTs)) {
+        $complaint = trim((string) ($triageRow['chief_complaint'] ?? ''));
+        if ($complaint === '') {
+            return $empty;
+        }
+        $triageLevel = (string) ($triageRow['triage_level'] ?? '');
+        $classification = (string) ($triageRow['triage_classification'] ?? '');
+
+        return [
+            'complaint'    => $complaint,
+            'source'       => 'triage',
+            'triage_id'    => (int) ($triageRow['id'] ?? 0),
+            'urgency'      => patient_portal_normalize_urgency($triageLevel, $classification, $regUrgency),
+            'triage_level' => $triageLevel,
+            'submitted_at' => (string) ($triageRow['assessed_at'] ?? ''),
+            'locked'       => true,
+        ];
+    }
+
+    if ($pccRow) {
+        $complaint = trim((string) ($pccRow['complaint_text'] ?? ''));
+        if ($complaint === '') {
+            return $empty;
+        }
+        $triageId = (int) ($pccRow['triage_result_id'] ?? 0);
+        $urgency = $regUrgency;
+        $triageLevel = '';
+        if ($triageId > 0) {
+            try {
+                $tStmt = $pdo->prepare('
+                    SELECT triage_level, triage_classification
+                    FROM triage_results
+                    WHERE id = ? AND patient_id = ?
+                    LIMIT 1
+                ');
+                $tStmt->execute([$triageId, $patientId]);
+                $tRow = $tStmt->fetch(PDO::FETCH_ASSOC);
+                if ($tRow) {
+                    $triageLevel = (string) ($tRow['triage_level'] ?? '');
+                    $urgency = patient_portal_normalize_urgency(
+                        $triageLevel,
+                        (string) ($tRow['triage_classification'] ?? ''),
+                        $regUrgency
+                    );
+                }
+            } catch (PDOException $e) { /* non-fatal */ }
+        }
+
+        return [
+            'complaint'    => $complaint,
+            'source'       => trim((string) ($pccRow['source'] ?? 'portal')),
+            'triage_id'    => $triageId,
+            'urgency'      => $urgency,
+            'triage_level' => $triageLevel,
+            'submitted_at' => (string) ($pccRow['submitted_at'] ?? ''),
+            'locked'       => true,
+        ];
+    }
+
+    $regComplaint = trim((string) ($reg['complaint'] ?? ''));
+    if ($regComplaint !== '') {
+        return [
+            'complaint'    => $regComplaint,
+            'source'       => 'registration',
+            'triage_id'    => 0,
+            'urgency'      => patient_portal_normalize_urgency('', '', $regUrgency),
+            'triage_level' => '',
+            'submitted_at' => '',
+            'locked'       => true,
+        ];
+    }
+
+    return $empty;
+}
+
+/**
+ * Human-readable label for where the active chief complaint came from.
+ */
+function patient_portal_complaint_source_label(string $source): string
+{
+    return match (trim($source)) {
+        'registration' => 'from registration',
+        'consultation_booking' => 'on file',
+        'care_tips_review' => 'on file',
+        'triage' => 'on file',
+        default => 'on file',
+    };
+}
+
+/**
  * Use registration chief complaint when on file; otherwise accept submitted text (skipped at registration).
  */
 function patient_portal_resolve_chief_complaint(PDO $pdo, int $patientId, string $submittedComplaint): string
 {
+    $active = patient_portal_active_chief_complaint($pdo, $patientId);
+    if ($active['locked'] && $active['complaint'] !== '') {
+        return $active['complaint'];
+    }
+
     $registrationComplaint = patient_chief_complaint_registration_reference($pdo, $patientId);
     if ($registrationComplaint !== '') {
         return $registrationComplaint;

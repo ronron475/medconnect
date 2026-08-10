@@ -50,7 +50,11 @@ function triage_assessment_ensure_schema(PDO $pdo): void
         if (isset($existing[$name])) {
             continue;
         }
-        $pdo->exec("ALTER TABLE triage_results ADD COLUMN `{$name}` {$definition}");
+        try {
+            $pdo->exec("ALTER TABLE triage_results ADD COLUMN `{$name}` {$definition}");
+        } catch (PDOException $e) {
+            error_log("triage_assessment_ensure_schema: could not add {$name}: " . $e->getMessage());
+        }
     }
 
     triage_assessment_backfill_triage_level($pdo);
@@ -130,6 +134,69 @@ function triage_case_can_accept(?string $assessedAt, string $status = 'pending')
 }
 
 /**
+ * True when a triage row is non-urgent enough for patient-facing self-care release.
+ *
+ * @param array<string, mixed> $row
+ */
+function triage_case_qualifies_for_patient_recommendations(array $row): bool
+{
+    if (trim((string) ($row['chief_complaint'] ?? '')) === '') {
+        return false;
+    }
+    if (trim((string) ($row['recommendations'] ?? '')) === '') {
+        return false;
+    }
+
+    $triageLevel = strtolower(trim((string) ($row['triage_level'] ?? '')));
+    $classification = strtoupper(trim(str_replace(['-', ' '], '_', (string) ($row['triage_classification'] ?? ''))));
+    $urgencyLabel = (string) ($row['urgency_label'] ?? '');
+    $levelNum = (int) ($row['level'] ?? $row['triage'] ?? 0);
+
+    if (in_array($triageLevel, ['urgent', 'emergency'], true)) {
+        return false;
+    }
+
+    return in_array($triageLevel, ['non_urgent', 'non-urgent', 'low'], true)
+        || in_array($classification, ['NON_URGENT', 'NONURGENT'], true)
+        || stripos($urgencyLabel, 'non-urgent') !== false
+        || stripos($urgencyLabel, 'routine') !== false
+        || $levelNum >= 3;
+}
+
+/**
+ * Provider UI + API: may the doctor approve / release self-care guidance?
+ *
+ * @param array<string, mixed> $row
+ */
+function triage_provider_can_approve_recommendations(array $row): bool
+{
+    if (!triage_case_qualifies_for_patient_recommendations($row)) {
+        return false;
+    }
+
+    $status = (string) ($row['recommendation_status'] ?? 'hidden');
+
+    return in_array($status, ['pending_approval', 'rejected'], true)
+        || $status === 'hidden';
+}
+
+/**
+ * Provider API: may this triage row be approved or re-approved now?
+ *
+ * @param array<string, mixed> $row
+ */
+function triage_provider_may_release_recommendations(array $row): bool
+{
+    if (!triage_case_qualifies_for_patient_recommendations($row)) {
+        return false;
+    }
+
+    $status = (string) ($row['recommendation_status'] ?? 'hidden');
+
+    return in_array($status, ['pending_approval', 'approved', 'rejected', 'hidden'], true);
+}
+
+/**
  * Initial patient-facing recommendation gate after NLP assessment save.
  * No chief complaint => never show NLP remedies to the patient.
  * Non-urgent with remedies => pending provider approval.
@@ -140,20 +207,12 @@ function triage_recommendation_status_for_insert(
     string $recommendationsText,
     string $classification = ''
 ): string {
-    if (trim($chiefComplaint) === '') {
-        return 'hidden';
-    }
-    if (trim($recommendationsText) === '') {
-        return 'hidden';
-    }
-
-    $level = strtolower(trim($triageLevel));
-    $class = strtoupper(trim(str_replace(['-', ' '], '_', $classification)));
-
-    $isNonUrgent = in_array($level, ['non_urgent', 'non-urgent', 'low'], true)
-        || in_array($class, ['NON_URGENT', 'NONURGENT'], true);
-
-    return $isNonUrgent ? 'pending_approval' : 'hidden';
+    return triage_case_qualifies_for_patient_recommendations([
+        'chief_complaint' => $chiefComplaint,
+        'recommendations' => $recommendationsText,
+        'triage_level' => $triageLevel,
+        'triage_classification' => $classification,
+    ]) ? 'pending_approval' : 'hidden';
 }
 
 /**

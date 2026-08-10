@@ -17,6 +17,7 @@ require_once BASE_PATH . '/app/includes/profile_picture.php';
 require_once BASE_PATH . '/app/includes/patient_portal_bootstrap.php';
 require_once BASE_PATH . '/app/includes/triage_assessment_schema.php';
 require_once BASE_PATH . '/app/includes/patient_symptoms_review_submit.php';
+require_once BASE_PATH . '/app/includes/patient_chief_complaints.php';
 
 $booking_today_ymd   = date('Y-m-d');
 $booking_today_label = date('l, M j, Y');
@@ -260,7 +261,15 @@ foreach ($triage_history as $t) {
 $symptoms_review_pending = patient_symptoms_review_pending_state($pdo, (int) $uid);
 $symptoms_review_booking = triage_patient_booking_slot_status($pdo, (int) $uid);
 $pending_reg_complaint = patient_registration_load_pending_complaint($pdo, (int) $uid);
-$registration_chief_complaint = trim((string) ($pending_reg_complaint['complaint'] ?? ''));
+$active_chief_complaint = patient_portal_active_chief_complaint($pdo, (int) $uid);
+$registration_chief_complaint = trim((string) ($active_chief_complaint['complaint'] ?? ''));
+$chief_complaint_locked = !empty($active_chief_complaint['locked']) && $registration_chief_complaint !== '';
+$chief_complaint_source = (string) ($active_chief_complaint['source'] ?? '');
+$active_chief_complaint_triage_id = (int) ($active_chief_complaint['triage_id'] ?? 0);
+$portal_triage_urgency = (string) ($active_chief_complaint['urgency'] ?? '');
+if ($portal_triage_urgency === '') {
+    $portal_triage_urgency = (string) ($pending_reg_complaint['urgency'] ?? '');
+}
 $show_dashboard_care_tips_section = patient_dashboard_show_care_tips_section(
     $pending_reg_complaint,
     $symptoms_review_pending

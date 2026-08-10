@@ -92,9 +92,14 @@
     if (reg.urgency) return String(reg.urgency).toUpperCase().replace(/_/g, '-');
     var summary = data.summary || {};
     var clinical = data.clinical_urgency || reg.clinical_urgency || {};
-    var raw = String(
-      summary.classification || clinical.triage_display || clinical.urgency || clinical.classification || 'NON-URGENT'
-    )
+    var rawSource = summary.classification || clinical.triage_display || clinical.urgency || clinical.classification || '';
+    if (!rawSource && data.assessment && data.assessment.triage) {
+      var triage = data.assessment.triage;
+      rawSource = triage.triage_display || triage.triage_classification || '';
+    }
+    if (!rawSource) return '';
+
+    var raw = String(rawSource)
       .trim()
       .toUpperCase()
       .replace(/\s+/g, '-')
@@ -111,6 +116,25 @@
     if (raw === 'URGENT' || (raw.indexOf('URGENT') !== -1 && raw.indexOf('NON') === -1)) return 'urgent';
     if (raw === 'NON-URGENT' || raw.indexOf('NON-URGENT') !== -1) return 'non_urgent';
     return null;
+  }
+
+  function buildTriageOutcomeMessage(level) {
+    if (level === 'emergency') {
+      return 'Based on the symptoms you entered, your condition may be a medical emergency. '
+        + 'Please seek immediate medical attention at the nearest hospital or emergency department. '
+        + 'Do not wait for an online consultation if you are experiencing severe or worsening symptoms.';
+    }
+    if (level === 'urgent') {
+      return 'Based on the symptoms you provided, your condition may require prompt medical attention. '
+        + 'Triage result: Urgent. After you submit, you can book the earliest available consultation time.';
+    }
+    return 'Triage result: Non-Urgent. You may add optional supporting evidence, then submit for provider review.';
+  }
+
+  function presentTriageOutcome(level) {
+    var modal = window.mcPatientUrgencyModal;
+    if (!modal || typeof modal.showTriageResult !== 'function') return;
+    modal.showTriageResult(level, buildTriageOutcomeMessage(level));
   }
 
   function showAlert(type, message) {
@@ -270,12 +294,13 @@
     }
   }
 
-  async function submitForReview(complaint, evidenceFile) {
+  async function submitForReview(complaint, evidenceFile, options) {
+    options = options || {};
     if (evidenceFile) {
       var evidenceErr = validateEvidenceFile(evidenceFile);
       if (evidenceErr) {
         showAlert('error', evidenceErr);
-        return;
+        return false;
       }
     }
 
@@ -301,7 +326,7 @@
       var data = await res.json().catch(function () { return null; });
       if (!data || !data.success) {
         showAlert('error', (data && data.message) || 'Could not submit. Please try again.');
-        return;
+        return false;
       }
 
       var payload = data.data || data;
@@ -309,11 +334,13 @@
         clearTriageState();
         syncEvidenceSection();
         var emMsg = data.message || 'Emergency symptoms detected. Seek emergency care.';
-        showAlert('error', emMsg);
-        if (window.mcPatientUrgencyModal && typeof window.mcPatientUrgencyModal.showEmergency === 'function') {
-          window.mcPatientUrgencyModal.showEmergency(emMsg);
+        if (!options.skipOutcomeModal) {
+          showAlert('error', emMsg);
+          if (window.mcPatientUrgencyModal && typeof window.mcPatientUrgencyModal.showEmergency === 'function') {
+            window.mcPatientUrgencyModal.showEmergency(emMsg);
+          }
         }
-        return;
+        return true;
       }
       if (payload.urgent) {
         var urgMsg = data.message || 'Please book an urgent consultation.';
@@ -328,13 +355,15 @@
         } else if (payload.book_url) {
           setTimeout(function () { window.location.href = payload.book_url; }, 2200);
         }
-        return;
+        return true;
       }
 
       showAlert('success', data.message || 'Submitted for provider review.');
       setTimeout(function () { window.location.reload(); }, 1400);
+      return true;
     } catch (_) {
       showAlert('error', 'Network error. Please try again.');
+      return false;
     } finally {
       if (submitBtn) {
         submitBtn.disabled = false;
@@ -370,10 +399,17 @@
 
       if (level === 'emergency') {
         syncEvidenceSection();
-        await submitForReview(complaint, null);
-        return true;
+        var emergencySubmitted = await submitForReview(complaint, null, { skipOutcomeModal: true });
+        if (emergencySubmitted) {
+          presentTriageOutcome(level);
+        } else {
+          clearTriageState();
+          syncEvidenceSection();
+        }
+        return emergencySubmitted;
       }
 
+      presentTriageOutcome(level);
       syncEvidenceSection();
       updateSubmitButtonLabel();
       return true;
@@ -478,7 +514,7 @@
       syncEvidenceSection();
       var locked = complaintEl && complaintEl.hasAttribute('readonly');
       showAlert('error', locked
-        ? 'Your chief complaint from registration is missing. Please contact the health office.'
+        ? 'Your chief complaint is not available. Please contact the health office.'
         : 'Please describe your symptoms or concern.');
       return;
     }

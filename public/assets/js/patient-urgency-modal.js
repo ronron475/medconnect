@@ -1,14 +1,22 @@
 /**
- * Patient urgency modal (emergency / urgent) after symptom or triage submit.
- * Urgent: lists each doctor's earliest open slot today and allows confirm-to-book.
+ * Patient urgency modal (emergency / urgent / non-urgent) after symptom or triage submit.
+ * Urgent booking mode: lists each doctor's earliest open slot today and allows confirm-to-book.
  */
 (function (window, document) {
   'use strict';
+
+  var WARNING_ICON_SVG = '<svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">'
+    + '<path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>'
+    + '<line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>';
+  var SUCCESS_ICON_SVG = '<svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">'
+    + '<path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>'
+    + '<polyline points="22 4 12 14.01 9 11.01"/></svg>';
 
   var modal = null;
   var titleEl = null;
   var msgEl = null;
   var eyebrowEl = null;
+  var iconEl = null;
   var stepsEl = null;
   var primaryBtn = null;
   var slotsWrap = null;
@@ -42,6 +50,7 @@
       msgEl = document.getElementById('mcPatientUrgencyMessage');
       eyebrowEl = document.getElementById('mcPatientUrgencyEyebrow');
       stepsEl = document.getElementById('mcPatientUrgencySteps');
+      iconEl = document.getElementById('mcPatientUrgencyIcon');
       primaryBtn = document.getElementById('mcPatientUrgencyPrimary');
       slotsWrap = document.getElementById('mcPatientUrgencySlots');
       slotsList = document.getElementById('mcPatientUrgencySlotsList');
@@ -230,28 +239,54 @@
       });
   }
 
+  function normalizeKind(kind) {
+    var raw = String(kind || 'emergency').trim().toLowerCase().replace(/_/g, '-');
+    if (raw === 'non-urgent' || raw === 'nonurgent') return 'non_urgent';
+    if (raw === 'urgent') return 'urgent';
+    return 'emergency';
+  }
+
+  function setIcon(kind) {
+    if (!iconEl) return;
+    iconEl.innerHTML = kind === 'non_urgent' ? SUCCESS_ICON_SVG : WARNING_ICON_SVG;
+  }
+
   function open(opts) {
     if (!els()) return;
     opts = opts || {};
     lastFocus = document.activeElement;
     bookingInFlight = false;
 
-    var kind = opts.kind === 'urgent' ? 'urgent' : 'emergency';
+    var kind = normalizeKind(opts.kind);
+    var triageResult = opts.mode === 'triage_result';
+
     modal.classList.toggle('is-urgent', kind === 'urgent');
     modal.classList.toggle('is-emergency', kind === 'emergency');
+    modal.classList.toggle('is-non-urgent', kind === 'non_urgent');
+    setIcon(kind);
 
     if (eyebrowEl) {
-      eyebrowEl.textContent = kind === 'urgent' ? 'Urgent' : 'Emergency';
+      if (kind === 'non_urgent') eyebrowEl.textContent = 'Non-urgent';
+      else if (kind === 'urgent') eyebrowEl.textContent = 'Urgent';
+      else eyebrowEl.textContent = 'Emergency';
     }
     if (titleEl) {
       titleEl.textContent = opts.title
-        || (kind === 'urgent' ? 'Prompt medical attention recommended' : 'Seek emergency care now');
+        || (kind === 'non_urgent'
+          ? 'Routine Care Recommended'
+          : (kind === 'urgent'
+            ? 'Urgent Medical Attention Recommended'
+            : 'Emergency Symptoms Detected'));
     }
     if (msgEl) {
       msgEl.textContent = opts.message
-        || (kind === 'urgent'
-          ? 'Your symptoms may need prompt care. Choose the soonest available doctor below.'
-          : 'Emergency symptoms were detected. Please go to the nearest hospital or emergency department.');
+        || (kind === 'non_urgent'
+          ? 'Triage result: Non-Urgent. You may add optional supporting evidence, then submit for provider review.'
+          : (kind === 'urgent'
+            ? (triageResult
+              ? 'Based on the symptoms you provided, your condition may require prompt medical attention.'
+              : 'Your symptoms may need prompt care. Choose the soonest available doctor below.')
+            : 'Based on the symptoms you entered, your condition may be a medical emergency. Please seek immediate medical attention at the nearest hospital or emergency department.'));
     }
 
     if (kind === 'emergency') {
@@ -260,6 +295,28 @@
         'Call local emergency services if needed',
         'Go to the nearest hospital or ER',
         'Do not wait for online care tips or a video slot',
+      ]);
+      if (primaryBtn) {
+        primaryBtn.hidden = true;
+        primaryBtn.removeAttribute('href');
+      }
+    } else if (kind === 'non_urgent') {
+      hideSlots();
+      setSteps([
+        'Supporting evidence is optional',
+        'Submit your chief complaint for provider review',
+        'Seek urgent or emergency care if symptoms worsen',
+      ]);
+      if (primaryBtn) {
+        primaryBtn.hidden = true;
+        primaryBtn.removeAttribute('href');
+      }
+    } else if (triageResult) {
+      hideSlots();
+      setSteps([
+        'You may add optional supporting evidence before submitting',
+        'After submit, book the earliest available consultation',
+        'Seek ER care if symptoms suddenly worsen',
       ]);
       if (primaryBtn) {
         primaryBtn.hidden = true;
@@ -340,6 +397,21 @@
         complaint: extra.complaint || '',
         triageId: extra.triageId || 0,
       });
+    },
+    showNonUrgent: function (message) {
+      open({ kind: 'non_urgent', mode: 'triage_result', message: message || '' });
+    },
+    showTriageResult: function (urgency, message) {
+      var kind = normalizeKind(urgency);
+      if (kind === 'non_urgent') {
+        open({ kind: 'non_urgent', mode: 'triage_result', message: message || '' });
+        return;
+      }
+      if (kind === 'urgent') {
+        open({ kind: 'urgent', mode: 'triage_result', message: message || '' });
+        return;
+      }
+      open({ kind: 'emergency', mode: 'triage_result', message: message || '' });
     },
     close: close,
   };

@@ -127,7 +127,7 @@ try {
     else if ($action === 'approve_recommendations' || $action === 'reject_recommendations') {
         $meta = $pdo->prepare("
             SELECT chief_complaint, recommendations, recommendation_status, triage_level, triage_classification,
-                   assigned_provider_id
+                   urgency_label, level, assigned_provider_id
             FROM triage_results WHERE id = ? LIMIT 1
         ");
         $meta->execute([$id]);
@@ -158,15 +158,7 @@ try {
             exit;
         }
 
-        $currentStatus = (string) ($metaRow['recommendation_status'] ?? 'hidden');
-        if (!in_array($currentStatus, ['pending_approval', 'approved', 'rejected'], true)
-            && triage_recommendation_status_for_insert(
-                (string) ($metaRow['triage_level'] ?? ''),
-                $complaint,
-                (string) ($metaRow['recommendations'] ?? ''),
-                (string) ($metaRow['triage_classification'] ?? '')
-            ) !== 'pending_approval'
-        ) {
+        if (!triage_provider_may_release_recommendations($metaRow)) {
             echo json_encode([
                 'success' => false,
                 'message' => 'Only non-urgent cases with a chief complaint can release self-care recommendations to the patient.',
@@ -282,7 +274,11 @@ try {
         echo json_encode(['success' => false, 'message' => 'Invalid action.']);
     }
 
-} catch (PDOException $e) {
+} catch (Throwable $e) {
+    error_log('update_triage error: ' . $e->getMessage());
     http_response_code(500);
-    echo json_encode(['success' => false, 'message' => 'Database error.']);
+    echo json_encode([
+        'success' => false,
+        'message' => 'Could not complete triage update. Please refresh the page and try again.',
+    ]);
 }
