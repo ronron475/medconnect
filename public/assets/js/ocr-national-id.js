@@ -6,8 +6,8 @@
 
   const CACHE_PREFIX = 'medconnect_ocr_philsys_v4_';
   const OCR_FIELD_IDS = ['first-name', 'middle-name', 'last-name', 'dob', 'national-id', 'street-address'];
-  /** Identity fields filled from OCR cannot be edited; re-upload the ID to change them. */
-  const OCR_IMMUTABLE_AFTER_FILL = ['first-name', 'middle-name', 'last-name', 'dob', 'national-id'];
+  /** Identity + address fields filled from OCR cannot be edited; re-upload the ID to change them. */
+  const OCR_IMMUTABLE_AFTER_FILL = ['first-name', 'middle-name', 'last-name', 'dob', 'national-id', 'street-address'];
   const FILL_ORDER = [
     { id: 'first-name', key: 'first_name' },
     { id: 'middle-name', key: 'middle_name' },
@@ -440,6 +440,7 @@
           setFieldBadge('street-address', needsReview ? 'low' : 'autofill');
           if (needsReview) reviewCount++;
           highlightField(street);
+          lockFieldFromOcr(street);
         } else {
           markManualEntryNeeded('street-address');
           missingCount++;
@@ -448,10 +449,6 @@
         console.error('Address autofill error:', err);
         const street = document.getElementById('street-address');
         if (street) {
-          street.readOnly = false;
-          street.removeAttribute('readonly');
-          street.classList.remove('ocr-gated');
-          street.dataset.ocrUnlocked = '1';
           const fallbackRaw = String(ex.address.value).trim();
           if (global.PhAddressAutofill?.normalizeOcrAddress) {
             const normOnly = global.PhAddressAutofill.normalizeOcrAddress(fallbackRaw);
@@ -464,6 +461,7 @@
           street.dispatchEvent(new Event('input', { bubbles: true }));
           highlightField(street);
           setFieldBadge('street-address', 'low');
+          lockFieldFromOcr(street);
           reviewCount++;
           filled++;
           addressMatched.street = street.value;
@@ -534,6 +532,7 @@
     clearAllClientCache,
     lockOcrFields,
     unlockOcrFields,
+    lockFieldFromOcr,
     resetOcrFieldLock,
     guardAgainstBrowserAutofill,
     markFieldEdited,

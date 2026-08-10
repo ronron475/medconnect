@@ -1329,18 +1329,37 @@ step2Form.addEventListener('submit', async e => {
 
   function lockAddress() {
     if (addressGrid) addressGrid.classList.add('ocr-locked');
-    if (lockNotice)  lockNotice.removeAttribute('hidden');
+    if (lockNotice) lockNotice.removeAttribute('hidden');
     addressSelects.forEach(sel => { if (sel) sel.disabled = true; });
+    const street = document.getElementById('street-address');
+    if (street && String(street.value || '').trim() !== '') {
+      if (ocrApi && typeof ocrApi.lockFieldFromOcr === 'function') {
+        ocrApi.lockFieldFromOcr(street);
+      } else {
+        street.readOnly = true;
+        street.setAttribute('readonly', 'readonly');
+        street.classList.add('ocr-gated');
+        street.dataset.ocrFilled = '1';
+      }
+    }
   }
   function unlockAddress() {
     if (addressGrid) addressGrid.classList.remove('ocr-locked');
-    if (lockNotice)  lockNotice.setAttribute('hidden', '');
+    if (lockNotice) lockNotice.setAttribute('hidden', '');
     const region = document.getElementById('region');
     if (region) region.disabled = false;
     ['province', 'city', 'barangay'].forEach(id => {
       const sel = document.getElementById(id);
       if (sel && sel.options.length > 1) sel.disabled = false;
     });
+  }
+
+  function lockAddressIfAutofilled(addressMatched, isBagoResident) {
+    const matched = addressMatched && typeof addressMatched === 'object' ? addressMatched : {};
+    const hasGeo = !!(matched.barangay || matched.city || matched.province || matched.region);
+    if (hasGeo || isBagoResident === true) {
+      lockAddress();
+    }
   }
 
   function isStep1FormComplete() {
@@ -1618,7 +1637,8 @@ step2Form.addEventListener('submit', async e => {
       }
 
       setOcrStatusStep('processing');
-      const { filled, reviewCount, missingCount, isBagoResident } = await ocrApi.applyAutofill(data);
+      const { filled, reviewCount, missingCount, isBagoResident, addressMatched } = await ocrApi.applyAutofill(data);
+      lockAddressIfAutofilled(addressMatched, isBagoResident);
       await new Promise((r) => setTimeout(r, 350));
       setOcrStatusStep('done');
 
@@ -1635,6 +1655,7 @@ step2Form.addEventListener('submit', async e => {
         if (/\b(bago|bgo)\b/.test(streetNorm) && /\bnegros\b/.test(streetNorm) && window.PhAddressAutofill) {
           const retry = await window.PhAddressAutofill.fillFromText(street);
           if (retry.isBagoResident) {
+            lockAddressIfAutofilled(retry.matched, retry.isBagoResident);
             showStatus(
               `Successfully auto-filled ${retry.filled || filled} field(s). Bago City address detected.${cacheNote}`,
               'success'
@@ -1913,6 +1934,7 @@ step2Form.addEventListener('submit', async e => {
   if (btnManualEntry) {
     btnManualEntry.addEventListener('click', () => {
       hideErrorCard();
+      unlockAddress();
       if (ocrApi) ocrApi.unlockOcrFields();
       ['first-name', 'middle-name', 'last-name', 'dob', 'national-id', 'street-address'].forEach((id) => {
         const el = document.getElementById(id);
@@ -2059,7 +2081,9 @@ step2Form.addEventListener('submit', async e => {
     if (!keepExtract) scanRanOnce = false;
     badge.hidden = true;
     badge.className = 'ocr-badge';
-    unlockAddress();
+    if (!keepExtract) {
+      unlockAddress();
+    }
     resetResultPanel();
     if (!keepExtract) extractComplete = false;
     updateProceedState();
