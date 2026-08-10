@@ -217,6 +217,7 @@ $pending_count    = count(array_filter($display_cases, fn($t) => empty($t['revie
         <div class="triage-review-hero__main">
           <span class="triage-field-label">Patient</span>
           <div id="modalName" class="triage-field-value triage-review-hero__name"></div>
+          <p id="modalPatientMeta" class="triage-review-hero__meta"></p>
         </div>
         <div class="triage-review-hero__urgency">
           <span class="triage-field-label">AI urgency</span>
@@ -224,29 +225,48 @@ $pending_count    = count(array_filter($display_cases, fn($t) => empty($t['revie
         </div>
       </section>
 
+      <section class="triage-review-section" aria-labelledby="triageChiefComplaintHeading">
+        <div class="triage-review-section__head">
+          <h3 id="triageChiefComplaintHeading" class="triage-review-section__title">Chief Complaint</h3>
+          <p class="triage-review-section__hint">Patient's reported concern in their own words.</p>
+        </div>
+        <div id="modalComplaint" class="triage-modal-box triage-modal-box--complaint"></div>
+      </section>
+
+      <section id="modalEvidenceSection" class="triage-review-section triage-evidence-section" aria-labelledby="triageEvidenceHeading" hidden>
+        <div class="triage-review-section__head">
+          <h3 id="triageEvidenceHeading" class="triage-review-section__title">
+            Supporting Evidence <span class="triage-review-section__optional">(optional)</span>
+          </h3>
+          <p class="triage-review-section__hint">Patient-submitted photo or video for clinical context only. Not used for AI triage classification.</p>
+        </div>
+        <div class="triage-evidence-panel">
+          <div id="modalEvidenceMedia" class="triage-evidence-panel__media"></div>
+          <p id="modalEvidenceMeta" class="triage-evidence-panel__meta"></p>
+          <a
+            id="modalEvidenceOpenLink"
+            class="mc-btn mc-btn--outline triage-evidence-panel__open"
+            href="#"
+            target="_blank"
+            rel="noopener noreferrer"
+          >Open full size</a>
+        </div>
+      </section>
+
       <section class="triage-review-section" aria-labelledby="triagePatientWordsHeading">
         <div class="triage-review-section__head">
-          <h3 id="triagePatientWordsHeading" class="triage-review-section__title">Patient submission</h3>
-          <p class="triage-review-section__hint">Original statement as entered by the patient.</p>
+          <h3 id="triagePatientWordsHeading" class="triage-review-section__title">Symptoms selected</h3>
+          <p class="triage-review-section__hint">Structured symptoms recorded with this submission.</p>
         </div>
-        <div class="triage-review-stack">
-          <div>
-            <span class="triage-field-label">Chief complaint</span>
-            <div id="modalComplaint" class="triage-modal-box triage-modal-box--complaint"></div>
-          </div>
-          <div>
-            <span class="triage-field-label">Symptoms selected</span>
-            <div id="modalSymptoms" class="triage-modal-box"></div>
-          </div>
-        </div>
+        <div id="modalSymptoms" class="triage-modal-box"></div>
       </section>
 
       <section id="modalNlpAnalysis" class="triage-review-section triage-nlp-panel" aria-labelledby="triageNlpHeading" hidden>
         <div class="triage-review-section__head">
-          <h3 id="triageNlpHeading" class="triage-review-section__title">Natural language analysis</h3>
+          <h3 id="triageNlpHeading" class="triage-review-section__title">AI Triage Assessment</h3>
           <span class="triage-review-pill">Internal use</span>
         </div>
-        <p class="triage-review-section__hint">For clinician reference only. Confirm findings before clinical action.</p>
+        <p class="triage-review-section__hint">Classification and NLP details for clinician reference. Confirm findings before clinical action.</p>
 
         <div class="triage-nlp-grid">
           <div class="triage-nlp-card">
@@ -300,9 +320,10 @@ $pending_count    = count(array_filter($display_cases, fn($t) => empty($t['revie
 
       <details class="triage-override-box">
         <summary class="triage-override-box__summary">
-          <span class="triage-field-label" style="margin:0;">Manual clinical override</span>
+          <span class="triage-field-label" style="margin:0;">Doctor Review &amp; Decision</span>
           <span class="triage-override-box__chev" aria-hidden="true">▾</span>
         </summary>
+        <p class="text-xs text-muted" style="margin: 0 0 10px;">Manual clinical override — priority changes are recorded in the system audit log.</p>
         <div class="triage-override-row">
           <select id="overrideLevel" class="triage-override-select">
             <option value="1">Urgent (Priority 1)</option>
@@ -313,7 +334,7 @@ $pending_count    = count(array_filter($display_cases, fn($t) => empty($t['revie
           </select>
           <button type="button" class="mc-btn mc-btn--outline triage-override-btn" onclick="applyOverride()">Apply override</button>
         </div>
-        <p class="text-xs text-muted" style="margin: 8px 0 0;">Priority changes are recorded in the system audit log.</p>
+        <p class="text-xs text-muted" style="margin: 8px 0 0;">Use the actions below to mark reviewed, approve self-care guidance, or withhold recommendations.</p>
       </details>
     </div>
 

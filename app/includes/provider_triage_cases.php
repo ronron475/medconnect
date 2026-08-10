@@ -2,6 +2,7 @@
 
 require_once __DIR__ . '/triage_assessment_schema.php';
 require_once __DIR__ . '/triage_provider_assignment.php';
+require_once __DIR__ . '/complaint_evidence.php';
 
 /**
  * Load triage cases visible to a provider
@@ -294,6 +295,7 @@ function provider_triage_cases_load(PDO $pdo, int $providerId): array
             'reviewed'              => ($status !== 'pending'),
             'expired'               => $expired,
             'can_accept'            => triage_case_can_accept((string) ($t['assessed_at'] ?? ''), $status),
+            'supporting_evidence'   => complaint_evidence_clinical_support_meta($pdo, (int) $t['id']),
         ];
     }
 

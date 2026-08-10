@@ -418,6 +418,63 @@
     font-weight: 800;
 }
 
+.triage-review-hero__meta {
+    margin: 6px 0 0;
+    font-size: 12px;
+    color: #64748b;
+    line-height: 1.45;
+}
+
+.triage-review-section__optional {
+    font-weight: 600;
+    color: #64748b;
+    text-transform: none;
+    letter-spacing: 0;
+}
+
+.triage-evidence-section[hidden] {
+    display: none !important;
+}
+
+.triage-evidence-panel {
+    padding: 14px;
+    border-radius: 10px;
+    border: 1px solid #e2e8f0;
+    background: #f8fafc;
+}
+
+.triage-evidence-panel__media {
+    margin-bottom: 10px;
+}
+
+.triage-evidence-media {
+    display: block;
+    max-width: 100%;
+    max-height: 280px;
+    width: auto;
+    height: auto;
+    border-radius: 8px;
+    border: 1px solid #cbd5e1;
+    background: #0f172a;
+}
+
+.triage-evidence-media-link {
+    display: inline-block;
+}
+
+.triage-evidence-panel__meta {
+    margin: 0 0 10px;
+    font-size: 12px;
+    color: #64748b;
+    line-height: 1.45;
+    word-break: break-word;
+}
+
+.triage-evidence-panel__open {
+    padding: 6px 12px;
+    font-size: 11px;
+}
+
 .triage-review-hero__urgency {
     text-align: right;
 }
