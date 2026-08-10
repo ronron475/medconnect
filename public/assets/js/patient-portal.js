@@ -879,6 +879,86 @@
     ]);
 
     let previewUrl = null;
+    let triageLevel = null;
+    let triageComplaint = '';
+
+    function complaintText() {
+      return String(complaintEl && complaintEl.value ? complaintEl.value : '').trim();
+    }
+
+    function clearTriageState() {
+      triageLevel = null;
+      triageComplaint = '';
+    }
+
+    function resolveTriageLevel(assessment) {
+      if (!assessment || typeof assessment !== 'object') return null;
+      const triage = assessment.triage && typeof assessment.triage === 'object' ? assessment.triage : {};
+      const explicit = String(assessment.triage_level || '').toLowerCase();
+      if (explicit === 'non_urgent' || explicit === 'urgent' || explicit === 'emergency') {
+        return explicit;
+      }
+      const classification = String(triage.triage_classification || '').toUpperCase();
+      if (classification === 'EMERGENCY') return 'emergency';
+      if (classification === 'URGENT') return 'urgent';
+      const dbLevel = String(triage.db_level || assessment.db_level || '').toLowerCase();
+      if (dbLevel === '1' || dbLevel === 'high' || dbLevel === 'emergency') return 'emergency';
+      if (dbLevel === '2' || dbLevel === 'urgent') return 'urgent';
+      return 'non_urgent';
+    }
+
+    function applyAssessment(assessment) {
+      const complaint = complaintText();
+      if (!complaint || !assessment) return;
+      const level = resolveTriageLevel(assessment);
+      if (!level) return;
+      triageComplaint = complaint;
+      triageLevel = level;
+      syncEvidenceSection();
+    }
+
+    function hasValidComplaint() {
+      return complaintText().length > 0;
+    }
+
+    function canShowEvidence() {
+      return (triageLevel === 'non_urgent' || triageLevel === 'urgent')
+        && hasValidComplaint()
+        && complaintText() === triageComplaint;
+    }
+
+    function canUseEvidenceUpload() {
+      return canShowEvidence() && input && !input.disabled;
+    }
+
+    function syncEvidenceSection() {
+      if (!evidenceSection) return;
+      const show = canShowEvidence();
+      evidenceSection.hidden = !show;
+      evidenceSection.classList.toggle('complaint-evidence-group--collapsed', !show);
+      evidenceSection.setAttribute('aria-hidden', show ? 'false' : 'true');
+      if (show) {
+        evidenceSection.removeAttribute('inert');
+      } else {
+        evidenceSection.setAttribute('inert', '');
+      }
+      input.disabled = !show;
+      if (show) {
+        input.removeAttribute('tabindex');
+      } else {
+        input.setAttribute('tabindex', '-1');
+      }
+      chooseBtn.disabled = !show;
+      if (removeBtn) removeBtn.disabled = !show;
+      if (!show) resetEvidence();
+    }
+
+    function onComplaintChanged() {
+      if (complaintText() !== triageComplaint) {
+        clearTriageState();
+      }
+      syncEvidenceSection();
+    }
 
     function clearPreview() {
       if (previewUrl) {
@@ -901,36 +981,6 @@
       if (removeBtn) removeBtn.hidden = true;
     }
 
-    function hasValidComplaint() {
-      return !!(complaintEl && String(complaintEl.value || '').trim());
-    }
-
-    function canUseEvidenceUpload() {
-      return hasValidComplaint() && input && !input.disabled;
-    }
-
-    function syncEvidenceSection() {
-      if (!evidenceSection) return;
-      const hasComplaint = hasValidComplaint();
-      evidenceSection.hidden = !hasComplaint;
-      evidenceSection.classList.toggle('complaint-evidence-group--collapsed', !hasComplaint);
-      evidenceSection.setAttribute('aria-hidden', hasComplaint ? 'false' : 'true');
-      if (hasComplaint) {
-        evidenceSection.removeAttribute('inert');
-      } else {
-        evidenceSection.setAttribute('inert', '');
-      }
-      input.disabled = !hasComplaint;
-      if (hasComplaint) {
-        input.removeAttribute('tabindex');
-      } else {
-        input.setAttribute('tabindex', '-1');
-      }
-      chooseBtn.disabled = !hasComplaint;
-      if (removeBtn) removeBtn.disabled = !hasComplaint;
-      if (!hasComplaint) resetEvidence();
-    }
-
     chooseBtn.addEventListener('click', (e) => {
       if (!canUseEvidenceUpload()) {
         e.preventDefault();
@@ -943,7 +993,7 @@
 
     if (removeBtn) {
       removeBtn.addEventListener('click', () => {
-        if (!hasValidComplaint()) {
+        if (!canUseEvidenceUpload()) {
           resetEvidence();
           return;
         }
@@ -1009,12 +1059,28 @@
     });
 
     if (complaintEl) {
-      complaintEl.addEventListener('input', syncEvidenceSection);
-      complaintEl.addEventListener('change', syncEvidenceSection);
+      complaintEl.addEventListener('input', onComplaintChanged);
+      complaintEl.addEventListener('change', onComplaintChanged);
       complaintEl.addEventListener('paste', () => {
-        window.setTimeout(syncEvidenceSection, 0);
+        window.setTimeout(onComplaintChanged, 0);
       });
+    }
+
+    document.addEventListener('mc:assessment-complete', (event) => {
+      const assessment = event && event.detail ? event.detail : null;
+      if (!assessment) return;
+      const level = resolveTriageLevel(assessment);
+      triageComplaint = complaintText();
+      triageLevel = level === 'emergency' ? null : level;
       syncEvidenceSection();
+    });
+
+    syncEvidenceSection();
+
+    if (complaintEl && complaintEl.hasAttribute('readonly') && hasValidComplaint()) {
+      if (window.MedConnectAssessment && typeof window.MedConnectAssessment.run === 'function') {
+        window.MedConnectAssessment.run({ skipAnimation: true });
+      }
     }
   }
 

@@ -6,7 +6,7 @@
  */
 $registration_chief_complaint = trim((string) ($registration_chief_complaint ?? ''));
 $chief_complaint_locked = $registration_chief_complaint !== '';
-$show_evidence_section = $registration_chief_complaint !== '';
+$show_evidence_section = false;
 $show_care_tips_context = !empty($show_dashboard_care_tips_section);
 $submit_label = $show_care_tips_context ? 'Submit for doctor review' : 'Submit chief complaint';
 ?>
@@ -26,7 +26,7 @@ $submit_label = $show_care_tips_context ? 'Submit for doctor review' : 'Submit c
           <?php if ($show_care_tips_context): ?>
           Describe your concern first. For non-urgent cases, your doctor can approve self-care tips after you submit.
           <?php else: ?>
-          Describe your health concern first. You can add optional photo or video evidence after you enter your complaint.
+          Describe your health concern first. After your symptoms are checked, you can add optional photo or video evidence.
           <?php endif; ?>
         </p>
       </div>
