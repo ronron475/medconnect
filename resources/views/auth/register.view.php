@@ -625,28 +625,32 @@
           <!-- Current Health Concern (Chief Complaint) -->
           <section class="intake-card intake-card--complaint" id="section-chief-complaint" aria-labelledby="intake-complaint-title">
             <div class="intake-card__head">
-              <div class="intake-card__icon intake-card__icon--amber" aria-hidden="true">
+              <div class="intake-card__icon" aria-hidden="true">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
               </div>
               <div>
-                <h3 class="intake-card__title" id="intake-complaint-title">Current Health Concern (Chief Complaint)</h3>
-                <p class="intake-card__sub">Optional during registration. You can describe symptoms now or add them when you book a consultation.</p>
+                <h3 class="intake-card__title" id="intake-complaint-title">Current Health Concern</h3>
+                <p class="intake-card__sub">Optional — You can share your symptoms now or skip this step and continue registration.</p>
               </div>
             </div>
             <div class="intake-card__body">
               <div class="form-group form-group-full">
-                <label for="chief-complaint">Chief Complaint <span class="opt">(optional)</span></label>
+                <label for="chief-complaint" class="complaint-field-label">
+                  <span class="complaint-field-label__text">Chief Complaint</span>
+                  <span class="complaint-optional-badge">Optional</span>
+                </label>
                 <div class="input-wrap">
                   <textarea id="chief-complaint" name="chief_complaint" maxlength="500" rows="4" class="textarea-field textarea-field--tall" placeholder="Example: I have had a fever, sore throat, and cough for the past two days."></textarea>
                 </div>
                 <div class="intake-field-meta">
-                  <p class="intake-helper-text" id="chief-complaint-helper">If you enter a concern, our triage system will review it in the background. You can also skip and add this when booking a consultation.</p>
+                  <p class="intake-helper-text" id="chief-complaint-helper">If you have a current health concern, describe it above. If you don't have one or don't want to provide one now, you can skip this step and continue your registration.</p>
                   <span class="char-counter" id="chief-complaint-count" aria-live="polite">0/500</span>
                 </div>
                 <div class="reg-complaint-actions">
                   <button type="button" class="btn-complaint-skip" id="btn-skip-complaint">Skip for Now</button>
                   <button type="button" class="btn-complaint-add" id="btn-add-complaint" hidden>Add Chief Complaint</button>
                 </div>
+                <p class="reg-complaint-later-hint">You can provide a health concern later when booking a consultation.</p>
                 <p class="reg-complaint-skipped-note" id="chief-complaint-skipped-note" hidden role="status">Skipped — you can add your chief complaint when booking a consultation.</p>
                 <span class="field-error" id="chief-complaint-error" role="alert"></span>
               </div>

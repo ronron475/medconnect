@@ -957,30 +957,46 @@ textarea:focus {
   border-color: var(--green-border);
 }
 
-#step2 .intake-card__icon--amber {
-  background: #fff7ed;
-  color: #c2410c;
-  border: 1px solid #fed7aa;
+#step2 .intake-card--complaint.is-skipped .reg-complaint-later-hint {
+  display: none;
 }
 
-#step2 .intake-card--complaint {
-  border-color: #fdba74;
-  background: linear-gradient(180deg, #fffbeb 0%, #fff 55%);
+.complaint-field-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 8px;
 }
 
-#step2 .intake-card--complaint .intake-card__head {
-  background: linear-gradient(180deg, #fff7ed 0%, #fff 100%);
-  border-bottom-color: #ffedd5;
+.complaint-field-label__text {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--blue-text);
 }
 
-#step2 .intake-card--complaint.is-skipped {
-  border-color: #e2e8f0;
-  background: #fff;
+.complaint-optional-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: #64748b;
+  background: #f1f5f9;
+  border: 1px solid #e2e8f0;
 }
 
-#step2 .intake-card--complaint.is-skipped .intake-card__head {
-  background: #f8fafc;
-  border-bottom-color: #e2e8f0;
+.reg-complaint-later-hint {
+  margin: 8px 0 0;
+  font-size: 12px;
+  line-height: 1.45;
+  color: #94a3b8;
+  font-style: italic;
 }
 
 .reg-complaint-actions {
