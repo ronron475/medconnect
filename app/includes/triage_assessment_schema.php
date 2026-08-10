@@ -468,11 +468,41 @@ function patient_registration_load_pending_complaint(PDO $pdo, int $patientUserI
             return $out;
         }
         $out['complaint'] = trim((string) ($row['pending_chief_complaint'] ?? ''));
-        $out['urgency'] = strtoupper(trim((string) ($row['registration_urgency'] ?? '')));
+        $out['urgency'] = strtoupper(str_replace('_', '-', trim((string) ($row['registration_urgency'] ?? ''))));
         $out['nlp_json'] = trim((string) ($row['pending_nlp_json'] ?? ''));
     } catch (PDOException $e) { /* non-fatal */ }
 
     return $out;
+}
+
+/**
+ * True only when registration urgency is explicitly NON-URGENT (empty/null is not non-urgent).
+ */
+function patient_registration_urgency_is_non_urgent(?string $urgency): bool
+{
+    $norm = strtoupper(str_replace('_', '-', trim((string) $urgency)));
+
+    return $norm === 'NON-URGENT';
+}
+
+/**
+ * Patient dashboard "Reviewed care tips" card — non-urgent chief complaint workflow only.
+ *
+ * @param array{complaint:string,urgency:string,nlp_json:string} $pendingReg
+ * @param array{has_pending:bool,triage_id:int,complaint:string,provider_id:int,provider_name:string} $symptomsReviewPending
+ */
+function patient_dashboard_show_care_tips_section(array $pendingReg, array $symptomsReviewPending): bool
+{
+    if (!empty($symptomsReviewPending['has_pending'])) {
+        return true;
+    }
+
+    $complaint = trim((string) ($pendingReg['complaint'] ?? ''));
+    if ($complaint === '') {
+        return false;
+    }
+
+    return patient_registration_urgency_is_non_urgent($pendingReg['urgency'] ?? '');
 }
 
 /**

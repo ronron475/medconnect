@@ -261,6 +261,10 @@ $symptoms_review_pending = patient_symptoms_review_pending_state($pdo, (int) $ui
 $symptoms_review_booking = triage_patient_booking_slot_status($pdo, (int) $uid);
 $pending_reg_complaint = patient_registration_load_pending_complaint($pdo, (int) $uid);
 $registration_chief_complaint = trim((string) ($pending_reg_complaint['complaint'] ?? ''));
+$show_dashboard_care_tips_section = patient_dashboard_show_care_tips_section(
+    $pending_reg_complaint,
+    $symptoms_review_pending
+);
 
 $patient_followups = [];
 if ($pdo->query("SHOW TABLES LIKE 'followups'")->rowCount()) {
