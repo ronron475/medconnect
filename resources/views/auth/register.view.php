@@ -822,14 +822,16 @@ mc_render_loader_panel([
 ]);
 ?>
 
-<!-- Post-registration: Non-urgent -->
+<!-- Post-registration: success (no triage) or non-urgent triage -->
 <div id="reg-outcome-success" class="reg-outcome-modal" hidden aria-hidden="true" role="dialog" aria-modal="true" aria-labelledby="reg-outcome-success-title">
   <div class="reg-outcome-modal__card reg-outcome-modal__card--success">
     <div class="reg-outcome-modal__icon" aria-hidden="true">✓</div>
-    <span class="reg-outcome-badge reg-outcome-badge--non-urgent" id="reg-outcome-success-badge">NON-URGENT</span>
+    <span class="reg-outcome-badge reg-outcome-badge--non-urgent" id="reg-outcome-success-badge" hidden>NON-URGENT</span>
     <h2 id="reg-outcome-success-title" class="reg-outcome-modal__title">Registration Successful</h2>
     <p class="reg-outcome-modal__msg">Your account has been created successfully.</p>
-    <p class="reg-outcome-modal__msg">Triage result: <strong>Non-Urgent</strong>. You may schedule a consultation at your preferred available date and time.</p>
+    <p class="reg-outcome-modal__msg" id="reg-outcome-success-no-complaint-msg">No health concern was provided.</p>
+    <p class="reg-outcome-modal__msg" id="reg-outcome-success-no-complaint-hint">You can add a health concern later when booking a consultation.</p>
+    <p class="reg-outcome-modal__msg" id="reg-outcome-success-triage-msg" hidden>Triage result: <strong>Non-Urgent</strong>. You may schedule a consultation at your preferred available date and time.</p>
     <div class="reg-outcome-modal__actions">
       <button type="button" class="reg-outcome-btn reg-outcome-btn--primary" id="reg-outcome-success-go">Continue to Sign In</button>
     </div>

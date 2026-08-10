@@ -333,7 +333,7 @@
     const text = normalizeComplaint(textarea.value);
     if (!shouldRunNlp(text)) {
       setAnalysisState({ ok: true, inFlight: false, bypass: false });
-      return { ok: true, urgency: 'NON-URGENT', result: null, skipped: true };
+      return { ok: true, urgency: '', result: null, skipped: true };
     }
 
     if (!validateComplaint(text, { showErrorMsg: true })) {
@@ -521,7 +521,7 @@
     if (global.__regNlpLastResult && global.__regNlpLastResult.urgency) {
       return global.__regNlpLastResult.urgency;
     }
-    return 'NON-URGENT';
+    return '';
   }
 
   function init() {

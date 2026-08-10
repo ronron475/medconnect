@@ -88,13 +88,16 @@ $consent_given        = isset($_POST['consent_given']) && $_POST['consent_given'
 $chief_complaint      = trim((string) ($_POST['chief_complaint'] ?? ''));
 $triage_urgency       = strtoupper(trim((string) ($_POST['triage_urgency'] ?? '')));
 $nlp_result_json      = trim((string) ($_POST['nlp_result_json'] ?? ''));
+$chief_complaint_skipped = ($_POST['chief_complaint_skipped'] ?? '') === '1';
 if (!in_array($triage_urgency, ['EMERGENCY', 'URGENT', 'NON-URGENT', 'NON_URGENT'], true)) {
     $triage_urgency = '';
 }
 if ($triage_urgency === 'NON_URGENT') {
     $triage_urgency = 'NON-URGENT';
 }
-if ($chief_complaint === '') {
+// No chief complaint (skipped, empty, or too short) — do not persist triage or NLP output.
+if ($chief_complaint_skipped || $chief_complaint === '' || mb_strlen($chief_complaint) < 10) {
+    $chief_complaint = '';
     $triage_urgency = '';
     $nlp_result_json = '';
 }
