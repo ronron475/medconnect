@@ -8,7 +8,7 @@ require_once __DIR__ . '/triage_helpers.php';
 
 $registration_chief_complaint = trim((string) ($registration_chief_complaint ?? ''));
 $chief_complaint_locked = $registration_chief_complaint !== '';
-$show_evidence_section = $chief_complaint_locked && $registration_chief_complaint !== '';
+$show_evidence_section = $registration_chief_complaint !== '';
 $review_booking_ctx = $review_booking_ctx ?? ['locked' => false, 'provider_id' => 0, 'provider_name' => ''];
 $locked_provider_id = (int) ($locked_provider_id ?? 0);
 $locked_provider_name = trim((string) ($locked_provider_name ?? ''));
@@ -85,7 +85,7 @@ $locked_alternate_available = !empty($locked_alternate_available);
     <div
       class="form-group complaint-evidence-group<?= $show_evidence_section ? '' : ' complaint-evidence-group--collapsed' ?>"
       id="complaintEvidenceSection"
-      <?= $show_evidence_section ? '' : 'hidden' ?>
+      <?= $show_evidence_section ? '' : 'hidden inert aria-hidden="true"' ?>
     >
       <label class="form-label" for="supporting_evidence">
         Supporting Evidence <span class="text-muted">(optional)</span>
@@ -101,8 +101,14 @@ $locked_alternate_available = !empty($locked_alternate_available);
           name="supporting_evidence"
           class="complaint-evidence-input"
           accept="image/jpeg,image/png,image/webp,video/mp4,video/webm"
+          <?= $show_evidence_section ? '' : 'disabled tabindex="-1"' ?>
         />
-        <button type="button" class="mc-btn mc-btn--outline complaint-evidence-choose" id="btnChooseEvidence">
+        <button
+          type="button"
+          class="mc-btn mc-btn--outline complaint-evidence-choose"
+          id="btnChooseEvidence"
+          <?= $show_evidence_section ? '' : 'disabled' ?>
+        >
           Choose photo or video
         </button>
         <span class="complaint-evidence-filename text-xs text-muted" id="evidenceFilename" hidden></span>

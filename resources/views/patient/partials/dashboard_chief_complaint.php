@@ -6,7 +6,7 @@
  */
 $registration_chief_complaint = trim((string) ($registration_chief_complaint ?? ''));
 $chief_complaint_locked = $registration_chief_complaint !== '';
-$show_evidence_section = $chief_complaint_locked && $registration_chief_complaint !== '';
+$show_evidence_section = $registration_chief_complaint !== '';
 $show_care_tips_context = !empty($show_dashboard_care_tips_section);
 $submit_label = $show_care_tips_context ? 'Submit for doctor review' : 'Submit chief complaint';
 ?>
@@ -77,7 +77,7 @@ $submit_label = $show_care_tips_context ? 'Submit for doctor review' : 'Submit c
     <div
       class="pdash-care-evidence<?= $show_evidence_section ? '' : ' pdash-care-evidence--collapsed' ?>"
       id="pdashCareEvidenceSection"
-      <?= $show_evidence_section ? '' : 'hidden' ?>
+      <?= $show_evidence_section ? '' : 'hidden inert aria-hidden="true"' ?>
     >
       <label class="form-label pdash-care-form__label" for="pdashSupportingEvidence">
         Supporting Evidence <span class="pdash-care-form__optional">(optional)</span>
@@ -92,8 +92,14 @@ $submit_label = $show_care_tips_context ? 'Submit for doctor review' : 'Submit c
           name="supporting_evidence"
           class="pdash-care-evidence__input"
           accept="image/jpeg,image/png,image/webp,video/mp4,video/webm"
+          <?= $show_evidence_section ? '' : 'disabled tabindex="-1"' ?>
         />
-        <button type="button" class="pdash-btn pdash-btn--outline pdash-care-evidence__choose" id="pdashBtnChooseEvidence">
+        <button
+          type="button"
+          class="pdash-btn pdash-btn--outline pdash-care-evidence__choose"
+          id="pdashBtnChooseEvidence"
+          <?= $show_evidence_section ? '' : 'disabled' ?>
+        >
           Choose photo or video
         </button>
         <span class="pdash-care-evidence__filename" id="pdashEvidenceFilename" hidden></span>

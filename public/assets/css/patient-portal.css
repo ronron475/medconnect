@@ -316,12 +316,18 @@ body.patient-portal {
   color: #92400e;
 }
 
-.complaint-evidence-group {
-  margin-top: 4px;
+.complaint-evidence-group[hidden],
+.complaint-evidence-group--collapsed {
+  display: none !important;
 }
 
-.complaint-evidence-group--collapsed {
-  display: none;
+.complaint-evidence-group[inert] {
+  pointer-events: none;
+  user-select: none;
+}
+
+.complaint-evidence-group {
+  margin-top: 4px;
 }
 
 .complaint-reference-group {
