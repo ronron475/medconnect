@@ -479,7 +479,7 @@ body.landing-page.signin-active #signin-modal {
 .landing-page .hero-signin-panel .signin-card .alert.error {
   background: rgba(248, 113, 113, 0.16) !important;
   border: 1px solid rgba(252, 165, 165, 0.4) !important;
-  color: #fecaca !important;
+  color: #fee2e2 !important;
 }
 
 .landing-page .hero-signin-panel .provider-note--compact,
@@ -1040,4 +1040,11 @@ body.landing-page.landing-bg--light .hero-signin-panel .signin-card .alert.alert
   background: rgba(251, 191, 36, 0.14) !important;
   border-color: rgba(245, 158, 11, 0.32) !important;
   color: #78350f !important;
+}
+
+html[data-theme-resolved='light'] .landing-page .hero-signin-panel .signin-card .alert.error,
+body.landing-page.landing-bg--light .hero-signin-panel .signin-card .alert.error {
+  background: #fef2f2 !important;
+  border-color: #fecaca !important;
+  color: #b91c1c !important;
 }
