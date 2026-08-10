@@ -223,24 +223,24 @@
                 <span id="ocr-filename-text"></span>
               </div>
 
-              <!-- Live verification status (patient-facing; internal OCR steps stay hidden) -->
-              <div class="ocr-status-panel" id="ocr-status-panel" hidden aria-live="polite" role="status">
-                <div class="ocr-status-panel__inner">
-                  <div class="ocr-status-panel__icon" aria-hidden="true">
-                    <span class="ocr-verify-spinner" id="ocr-verify-spinner"></span>
-                    <svg class="ocr-status-check" id="ocr-status-check" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" hidden>
-                      <circle cx="12" cy="12" r="10"/>
-                      <polyline points="8 12 11 15 16 9"/>
-                    </svg>
-                  </div>
-                  <h3 class="ocr-status-panel__title" id="ocr-status-panel-title">Verifying Identity &amp; Residency</h3>
-                  <p class="ocr-status-panel__desc" id="ocr-status-panel-desc">Please wait while we securely verify the information from your uploaded ID.</p>
-                  <div class="ocr-progress ocr-progress--formal" id="ocr-progress" hidden>
-                    <div class="ocr-progress-bar"><div class="ocr-progress-fill" id="ocr-progress-fill"></div></div>
-                  </div>
-                  <p class="ocr-status-panel__status" id="ocr-status-panel-status">Verification in progress…</p>
-                  <span class="ocr-progress-text" id="ocr-progress-text" hidden aria-hidden="true"></span>
+              <!-- Live verification status (compact inline indicator) -->
+              <div class="ocr-status-inline" id="ocr-status-panel" hidden aria-live="polite" role="status">
+                <span class="ocr-verify-spinner" id="ocr-verify-spinner" aria-hidden="true"></span>
+                <p class="ocr-status-inline__message">
+                  <strong class="ocr-status-inline__title" id="ocr-status-panel-title">Verifying Identity &amp; Residency</strong>
+                  <span class="ocr-status-inline__sep" aria-hidden="true"> — </span>
+                  <span class="ocr-status-inline__desc" id="ocr-status-panel-desc">Please wait while we securely verify the information from your uploaded ID.</span>
+                  <span class="ocr-status-inline__desc-short" aria-hidden="true">Please wait…</span>
+                </p>
+                <span id="ocr-status-panel-status" class="ocr-status-inline__sr">Verification in progress…</span>
+                <svg class="ocr-status-check" id="ocr-status-check" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" hidden aria-hidden="true">
+                  <circle cx="12" cy="12" r="10"/>
+                  <polyline points="8 12 11 15 16 9"/>
+                </svg>
+                <div class="ocr-progress ocr-progress--formal" id="ocr-progress" hidden>
+                  <div class="ocr-progress-bar"><div class="ocr-progress-fill" id="ocr-progress-fill"></div></div>
                 </div>
+                <span class="ocr-progress-text" id="ocr-progress-text" hidden aria-hidden="true"></span>
               </div>
 
               <!-- OCR extraction summary -->

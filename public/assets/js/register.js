@@ -1489,28 +1489,10 @@ step2Form.addEventListener('submit', async e => {
 
   function setOcrStatusStep(state) {
     if (!statusPanel) return;
-    statusPanel.hidden = false;
 
-    if (state === 'done') {
-      statusPanel.classList.remove('is-processing', 'is-error');
-      statusPanel.classList.add('is-complete');
-      if (statusSpinner) statusSpinner.hidden = true;
-      if (statusCheck) statusCheck.hidden = false;
-      if (statusPanelTitle) statusPanelTitle.textContent = OCR_VERIFY_COPY.title;
-      if (statusPanelDesc) statusPanelDesc.hidden = true;
-      if (statusPanelStatus) statusPanelStatus.textContent = OCR_VERIFY_COPY.complete;
-      if (progressFill) progressFill.style.width = '100%';
-      return;
-    }
-
-    if (state === 'error') {
-      statusPanel.classList.remove('is-processing', 'is-complete');
-      statusPanel.classList.add('is-error');
-      if (statusSpinner) statusSpinner.hidden = true;
-      if (statusCheck) statusCheck.hidden = true;
-      if (statusPanelTitle) statusPanelTitle.textContent = OCR_VERIFY_COPY.errorTitle;
-      if (statusPanelDesc) statusPanelDesc.hidden = true;
-      if (statusPanelStatus) statusPanelStatus.textContent = OCR_VERIFY_COPY.errorStatus;
+    if (state === 'done' || state === 'error') {
+      resetOcrStatusPanel();
+      if (progressFill) progressFill.style.width = state === 'done' ? '100%' : '0%';
       return;
     }
 

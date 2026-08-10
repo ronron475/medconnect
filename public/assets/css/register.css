@@ -2111,48 +2111,58 @@ body.reg-outcome-open {
   background: linear-gradient(180deg, #f8fafc 0%, #fff 100%);
 }
 
-/* Live verification status panel */
-.ocr-status-panel {
-  margin-top: 16px;
-  padding: clamp(24px, 4vw, 32px) clamp(18px, 3vw, 28px);
-  border-radius: 14px;
-  border: 1px solid var(--border);
-  background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
-  box-shadow: 0 1px 3px rgba(15, 39, 68, 0.06);
-}
-.ocr-status-panel.is-processing {
-  border-color: rgba(13, 148, 136, 0.28);
-  background: linear-gradient(180deg, #ffffff 0%, var(--teal-pale) 100%);
-}
-.ocr-status-panel.is-complete {
-  border-color: var(--green-border);
-  background: linear-gradient(180deg, #ffffff 0%, var(--green-light) 100%);
-}
-.ocr-status-panel.is-error {
-  border-color: #fca5a5;
-  background: linear-gradient(180deg, #ffffff 0%, #fff7f7 100%);
-}
-.ocr-status-panel__inner {
-  display: flex;
-  flex-direction: column;
+/* Compact inline verification status */
+.ocr-status-inline {
+  display: inline-flex;
   align-items: center;
-  text-align: center;
   gap: 10px;
-  max-width: 420px;
-  margin: 0 auto;
+  margin-top: 10px;
+  padding: 0;
+  max-width: 100%;
+  color: var(--teal-dark);
+  font-size: 13px;
+  line-height: 1.4;
 }
-.ocr-status-panel__icon {
-  position: relative;
-  width: 52px;
-  height: 52px;
-  margin-bottom: 4px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+.ocr-status-inline[hidden] {
+  display: none !important;
+}
+.ocr-status-inline__message {
+  margin: 0;
+  flex: 1;
+  min-width: 0;
+  color: var(--text-mid);
+  font-size: 13px;
+  line-height: 1.45;
+}
+.ocr-status-inline__title {
+  font-weight: 600;
+  color: var(--blue-text);
+}
+.ocr-status-inline__sep {
+  color: var(--text-muted, #94a3b8);
+  font-weight: 400;
+}
+.ocr-status-inline__desc {
+  font-weight: 400;
+}
+.ocr-status-inline__desc-short {
+  display: none;
+  font-weight: 400;
+}
+.ocr-status-inline__sr {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
 }
 .ocr-verify-spinner {
-  width: 36px;
-  height: 36px;
+  width: 28px;
+  height: 28px;
   border-radius: 50%;
   border: 2.5px solid rgba(13, 148, 136, 0.18);
   border-top-color: var(--teal);
@@ -2160,57 +2170,15 @@ body.reg-outcome-open {
   flex-shrink: 0;
 }
 .ocr-status-check {
+  display: none;
+  flex-shrink: 0;
   color: var(--green);
 }
-.ocr-status-panel.is-complete .ocr-verify-spinner { display: none; }
-.ocr-status-panel.is-complete .ocr-status-check:not([hidden]) { display: block; }
-.ocr-status-panel.is-processing .ocr-status-check,
-.ocr-status-panel.is-error .ocr-status-check { display: none; }
 @keyframes ocrSpin {
   to { transform: rotate(360deg); }
 }
-.ocr-status-panel__title {
-  margin: 0;
-  font-size: clamp(15px, 1.8vw, 17px);
-  font-weight: 700;
-  color: var(--blue-text);
-  letter-spacing: -0.01em;
-  line-height: 1.35;
-}
-.ocr-status-panel.is-complete .ocr-status-panel__title { color: #14532d; }
-.ocr-status-panel.is-error .ocr-status-panel__title { color: #991b1b; }
-.ocr-status-panel__desc {
-  margin: 0;
-  font-size: clamp(12.5px, 1.4vw, 13.5px);
-  color: var(--text-mid);
-  line-height: 1.55;
-  max-width: 34ch;
-}
-.ocr-status-panel.is-complete .ocr-status-panel__desc,
-.ocr-status-panel.is-error .ocr-status-panel__desc {
-  display: none;
-}
-.ocr-status-panel__status {
-  margin: 2px 0 0;
-  font-size: clamp(12px, 1.3vw, 13px);
-  font-weight: 600;
-  color: var(--teal-dark);
-  letter-spacing: 0.01em;
-}
-.ocr-status-panel.is-complete .ocr-status-panel__status {
-  color: var(--green);
-  font-size: clamp(12.5px, 1.4vw, 13.5px);
-}
-.ocr-status-panel.is-error .ocr-status-panel__status {
-  color: #b91c1c;
-}
 .ocr-progress--formal {
-  width: 100%;
-  max-width: 280px;
-  margin: 6px 0 2px;
-  padding: 0;
-  background: transparent;
-  border: none;
+  display: none;
 }
 .ocr-progress--formal .ocr-progress-bar {
   height: 3px;
@@ -2560,9 +2528,14 @@ body.reg-outcome-open {
     align-self: stretch;
   }
   .reg-security-notice { max-width: 100%; }
-  .ocr-status-panel { padding: 22px 16px; }
-  .ocr-status-panel__inner { max-width: 100%; }
-  .ocr-progress--formal { max-width: 100%; }
+  .ocr-status-inline {
+    gap: 8px;
+    font-size: 12.5px;
+  }
+  .ocr-status-inline__message { font-size: 12.5px; }
+  .ocr-status-inline__desc { display: none; }
+  .ocr-status-inline__desc-short { display: inline; }
+  .ocr-verify-spinner { width: 24px; height: 24px; }
 }
 
 /* ── Responsive: mobile ──────────────────────────────── */
