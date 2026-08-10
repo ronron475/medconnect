@@ -597,7 +597,7 @@ if (session_status() === PHP_SESSION_ACTIVE) {
         <button type="button" class="mc-vc-btn" id="mcVcMinimizeBtn" title="Minimize call" aria-label="Minimize call">
           <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9V5a1 1 0 0 1 1-1h4M18 9V5a1 1 0 0 0-1-1h-4M6 15v4a1 1 0 0 0 1 1h4M18 15v4a1 1 0 0 1-1 1h-4"/></svg>
         </button>
-        <button class="mc-vc-btn mc-vc-btn--end btn-end" id="endCallBtn" onclick="endCall()"><?= $is_patient ? 'Leave' : 'End' ?></button>
+        <button type="button" class="mc-vc-btn mc-vc-btn--end btn-end" id="endCallBtn"><?= $is_patient ? 'Leave' : 'End' ?></button>
       </div>
     </div>
   </div>
@@ -733,6 +733,9 @@ if (session_status() === PHP_SESSION_ACTIVE) {
     let mediaJoinAt = 0;
     let callHasRemoteStream = false;
     let localDemoCall = null;
+    let syncTimerInterval = null;
+    let keepAliveInterval = null;
+    let remotePeerLeft = false;
 
     function dismissBootLoader() {
       try {
@@ -812,6 +815,9 @@ if (session_status() === PHP_SESSION_ACTIVE) {
         // Same-browser mute TTS / mute state backup (does not need PeerJS data channel).
         if ((msg.type === 'mute_tts' || msg.type === 'mute_state') && muteTts) {
           muteTts.handleIncomingData(msg);
+        }
+        if (msg.type === 'peer_left') {
+          handlePeerLeftMessage(msg);
         }
       };
       if (demoHelloTimer) clearInterval(demoHelloTimer);
@@ -931,7 +937,46 @@ if (session_status() === PHP_SESSION_ACTIVE) {
         peerOptions: peerOptions,
         useAutoPeerId: demoMode,
         onRecreate: function () { createPeer(); },
+        onNeedsRedial: function () {
+          if (endingCall || !localStream) return;
+          patientMayDial = true;
+          flushPendingCall();
+          openDataChannel();
+          startCall();
+        },
       });
+    }
+
+    function handleConnectionFailed(reason) {
+      if (endingCall) return;
+      setCallPhase(window.McVideoCallCore ? window.McVideoCallCore.STATUS.RECONNECTING : 'reconnecting', {
+        callStatusText: 'Connection interrupted — tap Retry if this persists',
+      });
+      if (consultUi && typeof consultUi.setConnectionFailed === 'function') {
+        consultUi.setConnectionFailed(true);
+      }
+      if (window.McVideoRoomEnhancements && typeof McVideoRoomEnhancements.setWaitingRetryVisible === 'function') {
+        McVideoRoomEnhancements.setWaitingRetryVisible(true);
+      }
+      console.warn('[medConnect] WebRTC connection failed:', reason);
+    }
+
+    function handleConnectionRecovered() {
+      if (consultUi && typeof consultUi.setConnectionFailed === 'function') {
+        consultUi.setConnectionFailed(false);
+      }
+      if (window.McVideoRoomEnhancements && typeof McVideoRoomEnhancements.setWaitingRetryVisible === 'function') {
+        McVideoRoomEnhancements.setWaitingRetryVisible(false);
+      }
+      if (callHasRemoteStream) {
+        setCallPhase(window.McVideoCallCore ? window.McVideoCallCore.STATUS.CONNECTED : 'connected', {
+          callStatusText: 'Connected',
+        });
+        if (consultUi && typeof consultUi.setOverlay === 'function') {
+          consultUi.setOverlay('', '', false, { showRetry: false });
+        }
+        setTimeout(() => unlockRemoteAudio(), 200);
+      }
     }
 
     function setupWebrtcEvents() {
@@ -952,6 +997,7 @@ if (session_status() === PHP_SESSION_ACTIVE) {
       });
 
       rtc.on('data', function (ev) {
+        if (handlePeerLeftMessage(ev.data)) return;
         if (muteTts) muteTts.handleIncomingData(ev.data);
       });
 
@@ -966,20 +1012,51 @@ if (session_status() === PHP_SESSION_ACTIVE) {
       });
 
       rtc.on('remote-stream', function (ev) {
+        handleConnectionRecovered();
         onRemoteStreamReceived(ev.stream, ev.peer);
       });
 
-      rtc.on('call-close', function () {
+      rtc.on('call-close', function (ev) {
         console.log('Call closed');
         callHasRemoteStream = false;
         remoteMediaUnlocked = false;
         showEnableSoundButton(false);
+        if (endingCall || (window.McWebrtcPeerCall && McWebrtcPeerCall.isIntentionalLeave && McWebrtcPeerCall.isIntentionalLeave())) {
+          return;
+        }
         if (!endingCall && localStream && !callInterval) {
           setCallPhase(window.McVideoCallCore ? window.McVideoCallCore.STATUS.RECONNECTING : 'reconnecting', {
             callStatusText: 'Reconnecting…',
           });
           beginConnectionRetries();
         }
+      });
+
+      rtc.on('recovering', function () {
+        if (endingCall) return;
+        setCallPhase(window.McVideoCallCore ? window.McVideoCallCore.STATUS.RECONNECTING : 'reconnecting', {
+          callStatusText: 'Reconnecting…',
+        });
+        if (consultUi && typeof consultUi.setOverlay === 'function') {
+          consultUi.setOverlay('Reconnecting…', 'Restoring your secure video connection automatically.', true, { showRetry: false });
+        }
+      });
+
+      rtc.on('recovered', function () {
+        handleConnectionRecovered();
+      });
+
+      rtc.on('connection-failed', function (ev) {
+        handleConnectionFailed(ev && ev.reason ? ev.reason : 'unknown');
+      });
+
+      rtc.on('needs-redial', function () {
+        if (endingCall || !localStream) return;
+        if (window.McWebrtcPeerCall && McWebrtcPeerCall.isIntentionalLeave && McWebrtcPeerCall.isIntentionalLeave()) return;
+        patientMayDial = true;
+        flushPendingCall();
+        openDataChannel();
+        startCall();
       });
 
       rtc.on('call-error', function (ev) {
@@ -1048,7 +1125,7 @@ if (session_status() === PHP_SESSION_ACTIVE) {
         callStatusText: 'Connected',
       });
       if (consultUi && typeof consultUi.setOverlay === 'function') {
-        consultUi.setOverlay('', '', false);
+        consultUi.setOverlay('', '', false, { showRetry: false });
       }
       if (consultUi && typeof consultUi.startDurationTimer === 'function') {
         consultUi.startDurationTimer();
@@ -1208,6 +1285,7 @@ if (session_status() === PHP_SESSION_ACTIVE) {
     }
 
     function beginConnectionRetries() {
+      if (endingCall) return;
       mediaJoinAt = Date.now();
 
       // Chrome dual-tab demo: local WebRTC over HTTP signaling relay.
@@ -1790,7 +1868,19 @@ if (session_status() === PHP_SESSION_ACTIVE) {
       })
         .then((res) => res.json())
         .then((data) => {
-          if (!data.success || typeof data.seconds_remaining !== 'number') return;
+          if (!data.success) {
+            if (!endingCall) {
+              if (isPatient) {
+                document.getElementById('callStatus').textContent = 'This consultation has ended.';
+                leaveCallConfirmed({ reason: 'session_ended', skipApi: true });
+              } else {
+                document.getElementById('callStatus').textContent = 'Video session closed.';
+                endCall(true);
+              }
+            }
+            return;
+          }
+          if (typeof data.seconds_remaining !== 'number') return;
 
           const previous = timeLeft;
           timeLeft = data.seconds_remaining;
@@ -1925,6 +2015,136 @@ if (session_status() === PHP_SESSION_ACTIVE) {
       syncMediaStatus();
     }
 
+    function notifyPeerLeft() {
+      const payload = { type: 'peer_left', role: userRole, token: roomToken, at: Date.now() };
+      sendMuteData(payload);
+      if (demoMode && demoBus) {
+        try {
+          demoBus.postMessage(Object.assign({}, payload, { token: roomToken, role: userRole }));
+        } catch (e) {}
+      }
+    }
+
+    function handlePeerLeftMessage(data) {
+      if (!data || data.type !== 'peer_left') return false;
+      if (data.role === userRole) return true;
+      if (endingCall) return true;
+
+      if (data.role === 'patient' && userRole === 'provider') {
+        remotePeerLeft = true;
+        callHasRemoteStream = false;
+        remoteMediaUnlocked = false;
+        clearRemoteMedia();
+        if (window.McWebrtcPeerCall) {
+          McWebrtcPeerCall.closeCurrentCall();
+        }
+        setCallPhase(window.McVideoCallCore ? window.McVideoCallCore.STATUS.WAITING_PATIENT : 'waiting_patient', {
+          callStatusText: 'Patient left the call',
+        });
+        if (consultUi && typeof consultUi.setOverlay === 'function') {
+          consultUi.setOverlay(
+            'Patient left the call',
+            'They can rejoin from their dashboard while this session is still active.',
+            true,
+            { showRetry: false }
+          );
+        }
+        return true;
+      }
+
+      if (data.role === 'provider' && userRole === 'patient') {
+        document.getElementById('callStatus').textContent = 'Your healthcare provider ended the consultation.';
+        leaveCallConfirmed({ reason: 'provider_left', skipApi: true });
+        return true;
+      }
+
+      return true;
+    }
+
+    function stopAllCallTimers() {
+      if (callInterval) {
+        clearInterval(callInterval);
+        callInterval = null;
+      }
+      if (syncTimerInterval) {
+        clearInterval(syncTimerInterval);
+        syncTimerInterval = null;
+      }
+      if (keepAliveInterval) {
+        clearInterval(keepAliveInterval);
+        keepAliveInterval = null;
+      }
+      if (demoHelloTimer) {
+        clearInterval(demoHelloTimer);
+        demoHelloTimer = null;
+      }
+      if (drawInterval) {
+        clearInterval(drawInterval);
+        drawInterval = null;
+      }
+      if (timerInterval) {
+        clearInterval(timerInterval);
+        timerInterval = null;
+      }
+    }
+
+    function clearRemoteMedia() {
+      const remoteAudio = document.getElementById('remoteAudio');
+      if (remoteAudio) {
+        try { remoteAudio.pause(); } catch (e) {}
+        try { remoteAudio.srcObject = null; } catch (e) {}
+      }
+      const remoteVideo = document.getElementById('remoteVideo');
+      if (remoteVideo) {
+        try { remoteVideo.srcObject = null; } catch (e) {}
+      }
+    }
+
+    async function postLeaveApi() {
+      try {
+        await fetch(apiBase + '/app/api/consultations/end_video.php', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+          body: 'token=' + encodeURIComponent(roomToken)
+            + '&csrf_token=' + encodeURIComponent(document.body.dataset.csrf || ''),
+          credentials: 'same-origin',
+        });
+      } catch (e) {}
+    }
+
+    function redirectAfterLeave(options) {
+      options = options || {};
+      if (window.parent && window.parent !== window) {
+        window.parent.postMessage({
+          type: options.parentMessageType || 'medconnect:call-left',
+          role: userRole,
+          token: roomToken,
+          reason: options.reason || '',
+        }, window.location.origin);
+        return;
+      }
+      if (options.redirectUrl) {
+        window.location.href = options.redirectUrl;
+        return;
+      }
+      if (isPatient) {
+        window.location.href = apiBase + '/views/patient/consultations.php';
+        return;
+      }
+      if (consultationId) {
+        window.location.href = apiBase + '/views/provider/consultation_session.php?id=' + encodeURIComponent(consultationId) + '&followup=1';
+        return;
+      }
+      window.location.href = apiBase + '/views/provider/dashboard.php';
+    }
+
+    function setLeaveButtonsDisabled(disabled) {
+      const endBtn = document.getElementById('endCallBtn');
+      const confirmBtn = document.getElementById('confirmEndBtn');
+      if (endBtn) endBtn.disabled = !!disabled;
+      if (confirmBtn) confirmBtn.disabled = !!disabled;
+    }
+
     function showEndModal() {
       document.getElementById('endCallModal').classList.add('show');
     }
@@ -1945,61 +2165,103 @@ if (session_status() === PHP_SESSION_ACTIVE) {
     }
 
     function disconnectLocalCall() {
+      stopAllCallTimers();
+
       if (localDemoCall) {
         try { localDemoCall.stop(); } catch (e) {}
         localDemoCall = null;
       }
+
+      if (silentAudioFallback) {
+        try { silentAudioFallback.oscillator.stop(); } catch (e) {}
+        try { silentAudioFallback.ctx.close(); } catch (e) {}
+        silentAudioFallback = null;
+      }
+
+      try {
+        if (demoBus) {
+          demoBus.postMessage({ type: 'peer-bye', token: roomToken, role: userRole });
+        }
+      } catch (e) {}
+
+      if (mediaRecorder && mediaRecorder.state !== 'inactive') {
+        try { mediaRecorder.stop(); } catch (e) {}
+      }
+
+      if (recordingAudioContext) {
+        try { recordingAudioContext.close(); } catch (e) {}
+        recordingAudioContext = null;
+        recordingAudioDestination = null;
+        remoteAudioConnected = false;
+      }
+
       if (localStream) {
         if (window.McVideoCallCore) {
           window.McVideoCallCore.stopStreamTracks(localStream);
         } else {
-          localStream.getTracks().forEach(track => track.stop());
+          localStream.getTracks().forEach((track) => {
+            try { track.stop(); } catch (e) {}
+          });
         }
         localStream = null;
       }
-      const remoteAudio = document.getElementById('remoteAudio');
-      if (remoteAudio) {
-        try { remoteAudio.srcObject = null; } catch (e) {}
+
+      const localVideo = document.getElementById('localVideo');
+      if (localVideo) {
+        try { localVideo.srcObject = null; } catch (e) {}
       }
-      const remoteVideo = document.getElementById('remoteVideo');
-      if (remoteVideo) {
-        try { remoteVideo.srcObject = null; } catch (e) {}
-      }
+
+      clearRemoteMedia();
+
       if (window.McWebrtcPeerCall) {
+        McWebrtcPeerCall.setIntentionalLeave(true);
         McWebrtcPeerCall.destroy();
       }
-      if (callInterval) {
-        clearInterval(callInterval);
-        callInterval = null;
-      }
-      clearInterval(timerInterval);
+
       setCallPhase(window.McVideoCallCore ? window.McVideoCallCore.STATUS.ENDED : 'ended', {
         callStatusText: 'Consultation Ended',
       });
     }
 
-    async function leaveCallConfirmed() {
+    async function leaveCallConfirmed(options) {
+      options = options || {};
       if (endingCall) {
-        if (window.parent && window.parent !== window) {
-          window.parent.postMessage({ type: 'medconnect:call-left', role: userRole, token: roomToken }, window.location.origin);
-        }
+        redirectAfterLeave(options);
         return;
       }
+
       endingCall = true;
-      const endBtn = document.getElementById('endCallBtn');
-      const confirmBtn = document.getElementById('confirmEndBtn');
-      if (endBtn) endBtn.disabled = true;
-      if (confirmBtn) confirmBtn.disabled = true;
+      window.__mcCallEnded = true;
+      setLeaveButtonsDisabled(true);
       closeEndModal();
+
+      if (window.McWebrtcPeerCall) {
+        McWebrtcPeerCall.setIntentionalLeave(true);
+      }
+
+      notifyPeerLeft();
+
+      if (!options.skipApi) {
+        await postLeaveApi();
+      }
+
       hideMediaPermissionGate();
       disconnectLocalCall();
 
-      if (window.parent && window.parent !== window) {
-        window.parent.postMessage({ type: 'medconnect:call-left', role: userRole, token: roomToken }, window.location.origin);
-        return;
+      if (window.MedConnectLoader && typeof window.MedConnectLoader.forceHide === 'function') {
+        window.MedConnectLoader.forceHide();
       }
 
-      window.location.href = '../patient/consultations.php';
+      if (window.McVideoRoomEnhancements) {
+        if (typeof window.McVideoRoomEnhancements.markCallEnded === 'function') {
+          window.McVideoRoomEnhancements.markCallEnded();
+        }
+        if (isPatient && typeof window.McVideoRoomEnhancements.showPostCall === 'function') {
+          window.McVideoRoomEnhancements.showPostCall();
+        }
+      }
+
+      redirectAfterLeave(options);
     }
 
     async function leaveCallFast() {
@@ -2007,13 +2269,6 @@ if (session_status() === PHP_SESSION_ACTIVE) {
       if (isPatient) {
         await leaveCallConfirmed();
         return;
-      }
-      if (!localStream && !(window.McWebrtcPeerCall && McWebrtcPeerCall.getCurrentCall())) {
-        endingCall = false;
-        if (window.parent && window.parent !== window) {
-          window.parent.postMessage({ type: 'medconnect:call-left', role: userRole, token: roomToken }, window.location.origin);
-          return;
-        }
       }
       await endCall(true);
     }
@@ -2034,8 +2289,8 @@ if (session_status() === PHP_SESSION_ACTIVE) {
 
       if (endingCall) return;
       endingCall = true;
-      document.getElementById('endCallBtn').disabled = true;
-      document.getElementById('confirmEndBtn').disabled = true;
+      window.__mcCallEnded = true;
+      setLeaveButtonsDisabled(true);
 
       const isRecording = mediaRecorder && mediaRecorder.state === 'recording';
       showSavingModal(
@@ -2045,49 +2300,41 @@ if (session_status() === PHP_SESSION_ACTIVE) {
           : 'Please wait while medConnect closes the secure room.'
       );
 
-        if (mediaRecorder && mediaRecorder.state === 'recording') {
-          try { mediaRecorder.requestData(); } catch(e) {}
-          mediaRecorder.stop();
-          if (uploadPromise) {
-            console.log("Waiting for recording upload...");
-            await uploadPromise;
-          }
+      if (window.McWebrtcPeerCall) {
+        McWebrtcPeerCall.setIntentionalLeave(true);
+      }
+
+      notifyPeerLeft();
+
+      if (mediaRecorder && mediaRecorder.state === 'recording') {
+        try { mediaRecorder.requestData(); } catch (e) {}
+        mediaRecorder.stop();
+        if (uploadPromise) {
+          console.log('Waiting for recording upload...');
+          await uploadPromise;
         }
-        try {
-          await fetch('<?= ASSET_BASE ?>/app/api/consultations/end_video.php', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-            body: 'token=' + encodeURIComponent(roomToken)
-              + '&csrf_token=' + encodeURIComponent(document.body.dataset.csrf || '')
-          });
-        } catch(e) {}
+      }
 
-        disconnectLocalCall();
+      await postLeaveApi();
+      disconnectLocalCall();
 
-        if (window.MedConnectLoader && typeof window.MedConnectLoader.forceHide === 'function') {
-          window.MedConnectLoader.forceHide();
+      if (window.MedConnectLoader && typeof window.MedConnectLoader.forceHide === 'function') {
+        window.MedConnectLoader.forceHide();
+      }
+
+      if (window.McVideoRoomEnhancements) {
+        if (typeof window.McVideoRoomEnhancements.markCallEnded === 'function') {
+          window.McVideoRoomEnhancements.markCallEnded();
         }
-
-        if (window.McVideoRoomEnhancements) {
-          if (typeof window.McVideoRoomEnhancements.markCallEnded === 'function') {
-            window.McVideoRoomEnhancements.markCallEnded();
-          }
-          if (typeof window.McVideoRoomEnhancements.showPostCall === 'function') {
-            window.McVideoRoomEnhancements.showPostCall();
-          }
+        if (typeof window.McVideoRoomEnhancements.showPostCall === 'function') {
+          window.McVideoRoomEnhancements.showPostCall();
         }
+      }
 
-        if (window.parent && window.parent !== window) {
-          window.parent.postMessage({ type: 'medconnect:call-ended', role: userRole, token: roomToken }, window.location.origin);
-          return;
-        }
-
-        if (userRole === 'provider' && consultationId) {
-          window.location.href = '../provider/consultation_session.php?id=' + encodeURIComponent(consultationId) + '&followup=1';
-          return;
-        }
-
-        window.location.href = '../provider/dashboard.php';
+      redirectAfterLeave({
+        parentMessageType: 'medconnect:call-ended',
+        reason: 'provider_ended',
+      });
     }
 
     function confirmEndCall() {
@@ -2145,10 +2392,19 @@ if (session_status() === PHP_SESSION_ACTIVE) {
         onMaximize: () => notifyParent({ type: 'medconnect:maximize-video', token: roomToken }),
       });
       consultUi.init();
+
+      if (embeddedInSession && userRole === 'provider') {
+        document.body.classList.add('compact-mode');
+        const compactBtn = document.getElementById('compactModeBtn');
+        if (compactBtn) compactBtn.textContent = 'Full view';
+        if (window.matchMedia && window.matchMedia('(max-width: 720px)').matches) {
+          notifyParent({ type: 'medconnect:minimize-video', token: roomToken });
+        }
+      }
     }
 
-    setInterval(syncTimerFromServer, 20000);
-    setInterval(pingSessionKeepAlive, 45000);
+    syncTimerInterval = setInterval(syncTimerFromServer, 20000);
+    keepAliveInterval = setInterval(pingSessionKeepAlive, 45000);
     bindMediaPermissionButtons();
     setupSessionNavigationUi();
     initConsultationUi();
@@ -2156,6 +2412,14 @@ if (session_status() === PHP_SESSION_ACTIVE) {
     window.toggleVideo = toggleVideo;
     window.endCall = endCall;
     window.leaveCallFast = leaveCallFast;
+    const endCallBtnEl = document.getElementById('endCallBtn');
+    if (endCallBtnEl) {
+      endCallBtnEl.addEventListener('click', (event) => {
+        event.preventDefault();
+        event.stopPropagation();
+        endCall();
+      });
+    }
     dismissBootLoader();
     setupDemoBus();
     setupWebrtcEvents();
@@ -2185,6 +2449,12 @@ if (session_status() === PHP_SESSION_ACTIVE) {
     document.getElementById('retryConnectBtn')?.addEventListener('click', () => {
       callHasRemoteStream = false;
       remoteDiscoveredId = null;
+      if (consultUi && typeof consultUi.setConnectionFailed === 'function') {
+        consultUi.setConnectionFailed(false);
+      }
+      if (window.McVideoRoomEnhancements && typeof McVideoRoomEnhancements.setWaitingRetryVisible === 'function') {
+        McVideoRoomEnhancements.setWaitingRetryVisible(false);
+      }
       if (window.McWebrtcPeerCall) {
         McWebrtcPeerCall.resetCallState();
         McWebrtcPeerCall.closeCurrentCall();

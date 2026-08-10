@@ -130,7 +130,14 @@
 
   function showWaitingCard(visible) {
     const card = q('mcVcWaitingCard');
+    const retry = q('mcVcWaitingRetry');
     if (card) card.hidden = !visible;
+    if (retry && visible) retry.hidden = true;
+  }
+
+  function setWaitingRetryVisible(show) {
+    const retry = q('mcVcWaitingRetry');
+    if (retry) retry.hidden = !show;
   }
 
   function watchCallStatusForWaiting() {
@@ -461,5 +468,6 @@
     hidePostCall: hidePostCall,
     markCallEnded: markCallEnded,
     resetCallUi: resetCallUi,
+    setWaitingRetryVisible: setWaitingRetryVisible,
   };
 })(window);
