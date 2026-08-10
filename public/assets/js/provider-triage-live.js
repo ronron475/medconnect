@@ -316,113 +316,120 @@
     }
 
     var nlpPanel = document.getElementById('modalNlpAnalysis');
+    var questionsSection = document.getElementById('modalQuestionsSection');
+    var suggested = Array.isArray(t.suggested_questions) ? t.suggested_questions : [];
+    var hasNlpAssessment =
+      (t.english_complaint && String(t.english_complaint).trim()) ||
+      (Array.isArray(t.detected_symptoms_ai) && t.detected_symptoms_ai.length) ||
+      (Array.isArray(t.possible_conditions) && t.possible_conditions.length) ||
+      (t.confidence_display && String(t.confidence_display).trim()) ||
+      (t.triage_level && String(t.triage_level).trim());
+
     if (nlpPanel) {
-      var hasNlp =
-        (t.english_complaint && String(t.english_complaint).trim()) ||
-        (Array.isArray(t.detected_symptoms_ai) && t.detected_symptoms_ai.length) ||
-        (Array.isArray(t.possible_conditions) && t.possible_conditions.length) ||
-        (t.confidence_display && String(t.confidence_display).trim()) ||
-        (t.recommendations && String(t.recommendations).trim()) ||
-        (t.triage_level && String(t.triage_level).trim());
-
-      nlpPanel.hidden = !hasNlp;
-      var setText = function (id, value, fallback) {
-        var el = document.getElementById(id);
-        if (el) el.textContent = value && String(value).trim() ? String(value) : (fallback || '—');
-      };
-      setText(
-        'modalEnglishComplaint',
-        t.english_complaint && String(t.english_complaint).trim() !== String(t.complaint || '').trim()
-          ? t.english_complaint
-          : '',
-        t.english_complaint || 'Same as chief complaint / not translated'
-      );
-      setText(
-        'modalDetectedSymptoms',
-        Array.isArray(t.detected_symptoms_ai) && t.detected_symptoms_ai.length
-          ? t.detected_symptoms_ai.join(', ')
-          : '',
-        'No symptoms extracted — confirm from patient submission'
-      );
-
-      var condEl = document.getElementById('modalPossibleConditions');
-      if (condEl) {
-        condEl.className = 'triage-modal-box';
-        var conditions =
-          Array.isArray(t.possible_conditions) && t.possible_conditions.length
-            ? t.possible_conditions
-            : ['Differential pending clinical review'];
-        condEl.innerHTML = conditions
-          .map(function (c) {
-            return '<span class="triage-interp-chip">' + esc(String(c)) + '</span>';
-          })
-          .join('');
-      }
-
-      var confEl = document.getElementById('modalConfidence');
-      if (confEl) {
-        confEl.className = 'triage-modal-box triage-modal-box--metric';
-        var confText = String(t.confidence_display || '').trim();
-        var confVal = confText.replace(/[^\d.]/g, '');
-        var confNum = parseFloat(confVal);
-        if (!confText || isNaN(confNum)) {
-          confText = 'Not scored';
-          confNum = 0;
-        } else if (confText.indexOf('%') < 0) {
-          confText = String(Math.round(confNum)) + '%';
-        }
-        confEl.innerHTML =
-          '<span class="triage-metric-value">' + esc(confText) + '</span>' +
-          '<span class="triage-metric-bar" aria-hidden="true"><span style="width:' +
-          Math.max(0, Math.min(100, confNum)) + '%"></span></span>';
-      }
-
-      setText(
-        'modalTriageLevel',
-        [t.triage_level || t.triage_classification, t.label].filter(Boolean).join(' · '),
-        '—'
-      );
-      setText(
-        'modalAssessedAt',
-        [t.date, t.time].filter(Boolean).join(' at '),
-        t.assessed_at || '—'
-      );
-      var suggested = Array.isArray(t.suggested_questions) ? t.suggested_questions : [];
-      setText(
-        'modalSuggestedQuestions',
-        suggested.length ? suggested.map(function (q, i) { return (i + 1) + '. ' + q; }).join('\n') : '',
-        suggested.length ? '' : '—'
-      );
-      setText('modalRecommendations', t.recommendations || '', '—');
-      var recEdit = document.getElementById('modalRecommendationsEdit');
-      if (recEdit) {
-        recEdit.value = t.recommendations || '';
-      }
-      var gateHint = document.getElementById('modalRecommendationGateHint');
-      var recStatus = String(t.recommendation_status || 'hidden');
-      var canApproveRec = !!t.can_approve_recommendations;
-      if (gateHint) {
-        if (!t.complaint || !String(t.complaint).trim()) {
-          gateHint.textContent = 'No chief complaint — NLP recommendations will not be shown to the patient.';
-        } else if (recStatus === 'approved') {
-          gateHint.textContent = 'Approved self-care advice is available on the patient dashboard.';
-        } else if (recStatus === 'rejected') {
-          gateHint.textContent = 'Recommendations were withheld from the patient.';
-        } else if (canApproveRec) {
-          gateHint.textContent = 'Non-urgent case: review/edit self-care advice, then approve before the patient can see it.';
-        } else {
-          gateHint.textContent = 'Patient-facing NLP recommendations are only released for non-urgent cases after provider approval.';
-        }
-      }
-      var approveBtn = document.getElementById('modalApproveRecBtn');
-      var rejectBtn = document.getElementById('modalRejectRecBtn');
-      if (approveBtn) approveBtn.style.display = canApproveRec ? 'inline-flex' : 'none';
-      if (rejectBtn) rejectBtn.style.display = canApproveRec ? 'inline-flex' : 'none';
+      nlpPanel.hidden = !hasNlpAssessment;
     }
+    if (questionsSection) {
+      questionsSection.hidden = suggested.length === 0;
+    }
+
+    var setText = function (id, value, fallback) {
+      var el = document.getElementById(id);
+      if (el) el.textContent = value && String(value).trim() ? String(value) : (fallback || '—');
+    };
+    setText(
+      'modalEnglishComplaint',
+      t.english_complaint && String(t.english_complaint).trim() !== String(t.complaint || '').trim()
+        ? t.english_complaint
+        : '',
+      t.english_complaint || 'Same as chief complaint / not translated'
+    );
+    setText(
+      'modalDetectedSymptoms',
+      Array.isArray(t.detected_symptoms_ai) && t.detected_symptoms_ai.length
+        ? t.detected_symptoms_ai.join(', ')
+        : '',
+      'No symptoms extracted — confirm from patient submission'
+    );
+
+    var condEl = document.getElementById('modalPossibleConditions');
+    if (condEl) {
+      condEl.className = 'triage-modal-box';
+      var conditions =
+        Array.isArray(t.possible_conditions) && t.possible_conditions.length
+          ? t.possible_conditions
+          : ['Differential pending clinical review'];
+      condEl.innerHTML = conditions
+        .map(function (c) {
+          return '<span class="triage-interp-chip">' + esc(String(c)) + '</span>';
+        })
+        .join('');
+    }
+
+    var confEl = document.getElementById('modalConfidence');
+    if (confEl) {
+      confEl.className = 'triage-modal-box triage-modal-box--metric';
+      var confText = String(t.confidence_display || '').trim();
+      var confVal = confText.replace(/[^\d.]/g, '');
+      var confNum = parseFloat(confVal);
+      if (!confText || isNaN(confNum)) {
+        confText = 'Not scored';
+        confNum = 0;
+      } else if (confText.indexOf('%') < 0) {
+        confText = String(Math.round(confNum)) + '%';
+      }
+      confEl.innerHTML =
+        '<span class="triage-metric-value">' + esc(confText) + '</span>' +
+        '<span class="triage-metric-bar" aria-hidden="true"><span style="width:' +
+        Math.max(0, Math.min(100, confNum)) + '%"></span></span>';
+    }
+
+    setText(
+      'modalTriageLevel',
+      [t.triage_level || t.triage_classification, t.label].filter(Boolean).join(' · '),
+      '—'
+    );
+    setText(
+      'modalAssessedAt',
+      [t.date, t.time].filter(Boolean).join(' at '),
+      t.assessed_at || '—'
+    );
+    setText(
+      'modalSuggestedQuestions',
+      suggested.length ? suggested.map(function (q, i) { return (i + 1) + '. ' + q; }).join('\n') : '',
+      suggested.length ? '' : '—'
+    );
+    setText('modalRecommendations', t.recommendations || '', '—');
+    var recEdit = document.getElementById('modalRecommendationsEdit');
+    if (recEdit) {
+      recEdit.value = t.recommendations || '';
+    }
+    var gateHint = document.getElementById('modalRecommendationGateHint');
+    var recStatus = String(t.recommendation_status || 'hidden');
+    var canApproveRec = !!t.can_approve_recommendations;
+    if (gateHint) {
+      if (!t.complaint || !String(t.complaint).trim()) {
+        gateHint.textContent = 'No chief complaint — NLP recommendations will not be shown to the patient.';
+      } else if (recStatus === 'approved') {
+        gateHint.textContent = 'Approved self-care advice is available on the patient dashboard.';
+      } else if (recStatus === 'rejected') {
+        gateHint.textContent = 'Recommendations were withheld from the patient.';
+      } else if (canApproveRec) {
+        gateHint.textContent = 'Non-urgent case: review/edit self-care advice, then approve before the patient can see it.';
+      } else {
+        gateHint.textContent = 'Patient-facing NLP recommendations are only released for non-urgent cases after provider approval.';
+      }
+    }
+    var approveBtn = document.getElementById('modalApproveRecBtn');
+    var rejectBtn = document.getElementById('modalRejectRecBtn');
+    if (approveBtn) approveBtn.style.display = canApproveRec ? 'inline-flex' : 'none';
+    if (rejectBtn) rejectBtn.style.display = canApproveRec ? 'inline-flex' : 'none';
 
     document.getElementById('modalAcceptBtn').style.display = (t.reviewed || t.expired || !t.can_accept) ? 'none' : 'inline-flex';
 
     var modal = document.getElementById('triageModal');
+    var scrollEl = modal ? modal.querySelector('.triage-modal__scroll') : null;
+    if (scrollEl) scrollEl.scrollTop = 0;
+    if (document.body) document.body.style.overflow = 'hidden';
     modal.classList.add('is-open');
     modal.setAttribute('aria-hidden', 'false');
   }
@@ -432,6 +439,7 @@
     if (!modal) return;
     modal.classList.remove('is-open');
     modal.setAttribute('aria-hidden', 'true');
+    if (document.body) document.body.style.overflow = '';
   }
 
   function csrfToken() {
