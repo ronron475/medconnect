@@ -873,6 +873,11 @@
   overflow: hidden;
 }
 
+.pdash-card--complaint {
+  margin-bottom: 20px;
+  scroll-margin-top: 88px;
+}
+
 /* —— Care tips tracker —— */
 .pdash-care__top {
   display: flex;

@@ -265,9 +265,9 @@ $show_dashboard_care_tips_section = patient_dashboard_show_care_tips_section(
     $pending_reg_complaint,
     $symptoms_review_pending
 );
-$dash_chief_complaint_url = $show_dashboard_care_tips_section
+$dash_chief_complaint_url = !empty($symptoms_review_pending['has_pending'])
     ? '#pdashSymptomsReview'
-    : ASSET_BASE . '/views/patient/triage.php#chief-complaint';
+    : '#pdashChiefComplaint';
 
 $patient_followups = [];
 if ($pdo->query("SHOW TABLES LIKE 'followups'")->rowCount()) {
