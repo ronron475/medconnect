@@ -1258,12 +1258,18 @@
   word-break: break-word;
 }
 
-.pdash-care-evidence {
-  margin-top: 16px;
+.pdash-care-evidence[hidden],
+.pdash-care-evidence--collapsed {
+  display: none !important;
 }
 
-.pdash-care-evidence--collapsed {
-  display: none;
+.pdash-care-evidence[inert] {
+  pointer-events: none;
+  user-select: none;
+}
+
+.pdash-care-evidence {
+  margin-top: 16px;
 }
 
 .pdash-care-evidence__hint {
@@ -1293,6 +1299,12 @@
 
 .pdash-care-evidence__choose {
   min-width: 0;
+}
+
+.pdash-care-evidence__choose:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+  pointer-events: none;
 }
 
 .pdash-care-evidence__filename {

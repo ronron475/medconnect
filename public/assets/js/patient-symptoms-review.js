@@ -49,6 +49,10 @@
     return '';
   }
 
+  function hasValidComplaint() {
+    return !!(complaintEl && String(complaintEl.value || '').trim());
+  }
+
   function showAlert(type, message) {
     if (!alertEl) return;
     alertEl.hidden = false;
@@ -68,23 +72,54 @@
   }
 
   function resetEvidence() {
-    if (evidenceInput) evidenceInput.value = '';
+    if (evidenceInput) {
+      evidenceInput.value = '';
+    }
     clearPreview();
     if (filenameEl) {
       filenameEl.textContent = '';
       filenameEl.hidden = true;
     }
-    if (removeBtn) removeBtn.hidden = true;
+    if (removeBtn) {
+      removeBtn.hidden = true;
+      removeBtn.disabled = !hasValidComplaint();
+    }
   }
 
   function syncEvidenceSection() {
     if (!evidenceSection) return;
-    var hasComplaint = (complaintEl && complaintEl.value ? complaintEl.value : '').trim().length > 0;
+    var hasComplaint = hasValidComplaint();
+
     evidenceSection.hidden = !hasComplaint;
     evidenceSection.classList.toggle('pdash-care-evidence--collapsed', !hasComplaint);
-    if (evidenceInput) evidenceInput.disabled = !hasComplaint;
-    if (chooseBtn) chooseBtn.disabled = !hasComplaint;
-    if (!hasComplaint) resetEvidence();
+    evidenceSection.setAttribute('aria-hidden', hasComplaint ? 'false' : 'true');
+
+    if (hasComplaint) {
+      evidenceSection.removeAttribute('inert');
+    } else {
+      evidenceSection.setAttribute('inert', '');
+    }
+
+    if (evidenceInput) {
+      evidenceInput.disabled = !hasComplaint;
+      if (hasComplaint) {
+        evidenceInput.removeAttribute('tabindex');
+      } else {
+        evidenceInput.setAttribute('tabindex', '-1');
+      }
+    }
+
+    if (chooseBtn) {
+      chooseBtn.disabled = !hasComplaint;
+    }
+
+    if (removeBtn) {
+      removeBtn.disabled = !hasComplaint;
+    }
+
+    if (!hasComplaint) {
+      resetEvidence();
+    }
   }
 
   function validateEvidenceFile(file) {
@@ -100,18 +135,39 @@
     return null;
   }
 
+  function canUseEvidenceUpload() {
+    return hasValidComplaint() && evidenceInput && !evidenceInput.disabled;
+  }
+
   if (chooseBtn && evidenceInput) {
-    chooseBtn.addEventListener('click', function () {
+    chooseBtn.addEventListener('click', function (e) {
+      if (!canUseEvidenceUpload()) {
+        e.preventDefault();
+        e.stopPropagation();
+        resetEvidence();
+        return;
+      }
       evidenceInput.click();
     });
   }
 
   if (removeBtn) {
-    removeBtn.addEventListener('click', resetEvidence);
+    removeBtn.addEventListener('click', function () {
+      if (!hasValidComplaint()) {
+        resetEvidence();
+        return;
+      }
+      resetEvidence();
+    });
   }
 
   if (evidenceInput) {
     evidenceInput.addEventListener('change', function () {
+      if (!canUseEvidenceUpload()) {
+        resetEvidence();
+        return;
+      }
+
       clearPreview();
       var file = evidenceInput.files && evidenceInput.files[0];
       if (!file) {
@@ -130,7 +186,10 @@
         filenameEl.textContent = file.name;
         filenameEl.hidden = false;
       }
-      if (removeBtn) removeBtn.hidden = false;
+      if (removeBtn) {
+        removeBtn.hidden = false;
+        removeBtn.disabled = false;
+      }
 
       if (previewEl) {
         previewUrl = URL.createObjectURL(file);
@@ -142,10 +201,22 @@
         previewEl.hidden = false;
       }
     });
+
+    evidenceInput.addEventListener('click', function (e) {
+      if (!canUseEvidenceUpload()) {
+        e.preventDefault();
+        e.stopPropagation();
+        resetEvidence();
+      }
+    });
   }
 
   if (complaintEl) {
     complaintEl.addEventListener('input', syncEvidenceSection);
+    complaintEl.addEventListener('change', syncEvidenceSection);
+    complaintEl.addEventListener('paste', function () {
+      window.setTimeout(syncEvidenceSection, 0);
+    });
     syncEvidenceSection();
   }
 
@@ -153,6 +224,7 @@
     e.preventDefault();
     var complaint = (form.querySelector('#pdashSymptomsComplaint')?.value || '').trim();
     if (!complaint) {
+      syncEvidenceSection();
       var locked = document.getElementById('pdashSymptomsComplaint')?.hasAttribute('readonly');
       showAlert('error', locked
         ? 'Your chief complaint from registration is missing. Please contact the health office.'
@@ -160,7 +232,11 @@
       return;
     }
 
-    var evidenceFile = evidenceInput && evidenceInput.files ? evidenceInput.files[0] : null;
+    var evidenceFile = null;
+    if (canUseEvidenceUpload() && evidenceInput && evidenceInput.files) {
+      evidenceFile = evidenceInput.files[0] || null;
+    }
+
     if (evidenceFile) {
       var evidenceErr = validateEvidenceFile(evidenceFile);
       if (evidenceErr) {
@@ -172,6 +248,9 @@
     var fd = new FormData(form);
     fd.set('chief_complaint', complaint);
     fd.set('csrf_token', csrf());
+    if (!evidenceFile) {
+      fd.delete('supporting_evidence');
+    }
 
     if (submitBtn) {
       submitBtn.disabled = true;

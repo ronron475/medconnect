@@ -901,23 +901,69 @@
       if (removeBtn) removeBtn.hidden = true;
     }
 
+    function hasValidComplaint() {
+      return !!(complaintEl && String(complaintEl.value || '').trim());
+    }
+
+    function canUseEvidenceUpload() {
+      return hasValidComplaint() && input && !input.disabled;
+    }
+
     function syncEvidenceSection() {
       if (!evidenceSection) return;
-      const hasComplaint = (complaintEl?.value || '').trim().length > 0;
+      const hasComplaint = hasValidComplaint();
       evidenceSection.hidden = !hasComplaint;
       evidenceSection.classList.toggle('complaint-evidence-group--collapsed', !hasComplaint);
+      evidenceSection.setAttribute('aria-hidden', hasComplaint ? 'false' : 'true');
+      if (hasComplaint) {
+        evidenceSection.removeAttribute('inert');
+      } else {
+        evidenceSection.setAttribute('inert', '');
+      }
       input.disabled = !hasComplaint;
+      if (hasComplaint) {
+        input.removeAttribute('tabindex');
+      } else {
+        input.setAttribute('tabindex', '-1');
+      }
       chooseBtn.disabled = !hasComplaint;
+      if (removeBtn) removeBtn.disabled = !hasComplaint;
       if (!hasComplaint) resetEvidence();
     }
 
-    chooseBtn.addEventListener('click', () => input.click());
+    chooseBtn.addEventListener('click', (e) => {
+      if (!canUseEvidenceUpload()) {
+        e.preventDefault();
+        e.stopPropagation();
+        resetEvidence();
+        return;
+      }
+      input.click();
+    });
 
     if (removeBtn) {
-      removeBtn.addEventListener('click', resetEvidence);
+      removeBtn.addEventListener('click', () => {
+        if (!hasValidComplaint()) {
+          resetEvidence();
+          return;
+        }
+        resetEvidence();
+      });
     }
 
+    input.addEventListener('click', (e) => {
+      if (!canUseEvidenceUpload()) {
+        e.preventDefault();
+        e.stopPropagation();
+        resetEvidence();
+      }
+    });
+
     input.addEventListener('change', () => {
+      if (!canUseEvidenceUpload()) {
+        resetEvidence();
+        return;
+      }
       clearPreview();
       const file = input.files && input.files[0];
       if (!file) {
@@ -964,6 +1010,10 @@
 
     if (complaintEl) {
       complaintEl.addEventListener('input', syncEvidenceSection);
+      complaintEl.addEventListener('change', syncEvidenceSection);
+      complaintEl.addEventListener('paste', () => {
+        window.setTimeout(syncEvidenceSection, 0);
+      });
       syncEvidenceSection();
     }
   }
@@ -1039,6 +1089,17 @@
       const fd = new FormData(form);
       // Slot optional for emergency (server creates hospital referral). Required for normal booking.
       fd.set('slot_id', slotId || '0');
+      if (!complaint) {
+        fd.delete('supporting_evidence');
+      } else {
+        const evidenceInput = document.getElementById('supporting_evidence');
+        const evidenceFile = evidenceInput && !evidenceInput.disabled && evidenceInput.files
+          ? evidenceInput.files[0]
+          : null;
+        if (!evidenceFile) {
+          fd.delete('supporting_evidence');
+        }
+      }
       const csrfToken = getCsrfToken();
       if (csrfToken) {
         fd.set('csrf_token', csrfToken);
