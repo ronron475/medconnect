@@ -704,8 +704,7 @@
 
 .triage-rec-edit {
     width: 100%;
-    min-height: 120px;
-    max-height: 220px;
+    min-height: 180px;
     resize: vertical;
     font: inherit;
     color: #0f172a;
@@ -715,7 +714,8 @@
     padding: 12px 14px;
     box-sizing: border-box;
     line-height: 1.55;
-    overflow-y: auto;
+    overflow-y: hidden;
+    field-sizing: content;
 }
 
 .triage-rec-edit:focus {

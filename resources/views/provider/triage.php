@@ -310,7 +310,7 @@ $pending_count    = count(array_filter($display_cases, fn($t) => empty($t['revie
         <textarea
           id="modalRecommendationsEdit"
           class="triage-rec-edit"
-          rows="6"
+          rows="10"
           placeholder="Enter or revise self-care recommendations prior to patient release."
         ></textarea>
         <p id="modalRecommendationGateHint" class="triage-gate-hint"></p>
