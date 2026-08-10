@@ -427,7 +427,7 @@
     document.getElementById('modalAcceptBtn').style.display = (t.reviewed || t.expired || !t.can_accept) ? 'none' : 'inline-flex';
 
     var modal = document.getElementById('triageModal');
-    var scrollEl = modal ? modal.querySelector('.triage-modal__scroll') : null;
+    var scrollEl = modal ? modal.querySelector('.triage-modal__body') : null;
     if (scrollEl) scrollEl.scrollTop = 0;
     if (document.body) document.body.style.overflow = 'hidden';
     modal.classList.add('is-open');
