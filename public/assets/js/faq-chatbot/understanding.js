@@ -62,6 +62,8 @@
     'paano', 'ano', 'diin', 'tawag', 'buligi', 'oras', 'bukas',
     'nabalaka', 'nahadlok', 'kasubo', 'kapoy', 'nalibog', 'masadya', 'rehistro', 'password',
     'worried', 'sad', 'scared', 'help', 'register', 'login',
+    'money', 'kwarta', 'pera', 'budget', 'afford', 'libre', 'expensive', 'broke',
+    'nahadlok', 'nabalaka', 'nalibog', 'buligi', 'bulig', 'sakit', 'doktor', 'doctor',
   ];
 
   const RESTART_PATTERNS = [
@@ -99,16 +101,16 @@
 
   const NONE_POOL = {
     en: [
-      '<p>I\'m sorry, but I couldn\'t understand your message. Could you please rephrase your question?</p><p>I\'m here to help with <strong>appointments</strong>, <strong>consultations</strong>, <strong>account assistance</strong>, <strong>medical records</strong>, and other City Health Office services.</p>',
-      '<p>I didn\'t quite understand your question. Could you rephrase it?</p><p>I can assist with medConnect registration, login, appointments, video consultations, and general healthcare service information.</p>',
+      '<p>I want to make sure I understand you correctly. Are you asking about your <strong>appointment</strong>, <strong>consultation cost</strong>, <strong>health symptoms</strong>, <strong>account/login</strong>, or something else?</p>',
+      '<p>Thanks for your message. I can help with medConnect registration, login, appointments, video consultations, costs, and City Health services — could you tell me a bit more about what you need?</p>',
     ],
     fil: [
-      '<p>Paumanhin, ngunit hindi ko naintindihan ang iyong mensahe. Maaari mo bang i-rephrase ang iyong tanong?</p><p>Nandito ako para tumulong sa <strong>appointments</strong>, <strong>konsultasyon</strong>, <strong>account assistance</strong>, <strong>medical records</strong>, at iba pang serbisyo ng City Health Office.</p>',
-      '<p>Hindi ko lubos na naintindihan ang iyong tanong. Maaari mo bang i-rephrase ito?</p><p>Makakatulong ako sa medConnect registration, login, appointments, video consultations, at impormasyon ng healthcare services.</p>',
+      '<p>Gusto kong matiyak na naiintindihan kita. Tungkol ba ito sa <strong>appointment</strong>, <strong>gastos ng konsultasyon</strong>, <strong>symptoms</strong>, <strong>account/login</strong>, o iba pa?</p>',
+      '<p>Salamat sa mensahe. Makakatulong ako sa medConnect registration, login, appointments, video consultations, gastos, at City Health — maaari mo bang magbahagi ng kaunti pa?</p>',
     ],
     hil: [
-      '<p>Pasensya, indi ko maintindihan ang imo mensahe. Pwede mo bala i-rephrase ang imo pamangkot?</p><p>Diri ako para makabulig sa <strong>appointments</strong>, <strong>konsultasyon</strong>, <strong>account assistance</strong>, <strong>medical records</strong>, kag iban pa nga serbisyo sang City Health Office.</p>',
-      '<p>Indi ko gid maintindihan ang imo pamangkot. Pwede mo bala i-rephrase ini?</p><p>Makabulig ako sa medConnect registration, login, appointments, video consultations, kag impormasyon sang healthcare services.</p>',
+      '<p>Gusto ko siguraduhon nga husto ang akon pag-intindi. Parte bala ini sa <strong>appointment</strong>, <strong>cost sang konsultasyon</strong>, <strong>symptoms</strong>, <strong>account/login</strong>, ukon iban pa?</p>',
+      '<p>Salamat sa imo mensahe. Makabulig ako sa medConnect registration, login, appointments, video consultations, gastos, kag City Health — pwede ka magpaambit gamay pa?</p>',
     ],
   };
 
@@ -232,6 +234,11 @@
     } = ctx;
 
     if (classification?.intent === 'emotional_support') return 88;
+
+    const situationIntents = ['financial', 'connectivity', 'transport', 'weather_barrier', 'privacy'];
+    if (situationIntents.includes(classification?.intent)) return 92;
+
+    if (classification?.flowKey) return 91;
 
     if (classification?.urgency === 'critical') return 98;
     if (classification?.intent === 'crisis' || classification?.intent === 'medical_emergency') return 98;

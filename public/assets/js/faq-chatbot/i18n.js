@@ -753,6 +753,23 @@
         actions: ['bookAppointment', 'openSignIn', 'contactCho'],
       },
     },
+    financial: {
+      en: {
+        html: '<p>Worrying about money is completely understandable. City Health often has public services — you can ask about free or low-cost options. I can guide you through medConnect booking. For emergencies, call <strong>911</strong> right away.</p>',
+        followUpKey: 'policyFollowUp',
+        actions: ['bookAppointment', 'contactCho', 'services'],
+      },
+      fil: {
+        html: '<p>Natural lang mag-alala sa gastos. May pampublikong serbisyo ang City Health — magtanong tungkol sa libre o abot-kayang opsyon. Matutulungan kitang mag-book sa medConnect. Para sa emergency, tumawag sa <strong>911</strong>.</p>',
+        followUpKey: 'policyFollowUp',
+        actions: ['bookAppointment', 'contactCho', 'services'],
+      },
+      hil: {
+        html: '<p>Natural lang mag-alala sa kwarta. May pampubliko nga serbisyo ang City Health — pamangkota parte sa libre ukon low-cost options. Matabangan ko ikaw sa medConnect booking. Para sa emergency, tawagi ang <strong>911</strong>.</p>',
+        followUpKey: 'policyFollowUp',
+        actions: ['bookAppointment', 'contactCho', 'services'],
+      },
+    },
     crisis: {
       en: {
         html: '<div class="fcb-emergency-support fcb-emergency-support--crisis"><p class="fcb-emergency-support__title">🚨 Emergency Support</p><p>I\'m really sorry you\'re going through something so difficult.</p><p>Your message suggests you may need <strong>immediate support</strong>. If you\'re in immediate danger or think you may act on these thoughts, please contact <strong>emergency services (911)</strong> or the <strong>National Center for Mental Health Hopeline: 1553</strong> immediately, or go to the nearest hospital.</p><p>If possible, reach out to someone you trust — a family member, friend, or caregiver — and let them know how you\'re feeling.</p><p>I\'m a medConnect FAQ assistant and cannot provide counseling, but help is available right now. When you\'re ready, I can also help you connect with City Health Office services.</p></div>',

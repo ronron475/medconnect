@@ -94,7 +94,7 @@ final class FaqChatbotIntentRecognizer
             [self::WEATHER, 0.86, '/\b(gaulan|grabe\s+ang\s+ulan|baha|bad\s+weather|indi\s+ko\s+makaguwa)\b/ui', 'distress_support'],
             [self::TRANSPORT, 0.86, '/\b(wala\s+ko\s+masakyan|layo\s+amon|budlay\s+magkadto|wala\s+ko\s+pamasahe|indi\s+ko\s+makakadto)\b/ui', 'distress_support'],
             [self::REASSURANCE, 0.84, '/\b(safe\s+bala|sigurado\s+bala|trust|reliable|legit|masaligan)\b/ui', 'policy'],
-            [self::FINANCIAL, 0.88, '/\b(no\s+money|cannot\s+afford|can\'?t\s+afford|wala\s+(ko\s+)?kwarta|walang\s+pera|financial|wala\s+budget|libre\s+nga\s+consultation|indi\s+ko\s+kaya\s+magbayad)\b/ui', 'financial'],
+            [self::FINANCIAL, 0.88, '/\b(no\s+money|i\s+have\s+no\s+money|cannot\s+afford|can\'?t\s+afford|wala\s+(ko|ako)\s+kwarta|walang\s+pera|financial|wala\s+budget|libre\s+nga\s+consultation|indi\s+ko\s+kaya\s+magbayad|too\s+expensive|im\s+broke)\b/ui', 'financial'],
             [self::MENTAL_HEALTH, 0.87, '/\b(anxiety|depression|mental\s+health|hopeless|panic|stress(ed)?|lonely|overwhelmed|burnout|grief|ginakulbaan|kasubo|wala\s+paglaum|di\s+ko\s+na\s+kaya|mabuhi\s+pa\s+ko|wala\s+na\s+pulos|mag.?untat)\b/ui', 'distress_support'],
             [self::EMOTIONAL_SUPPORT, 0.9, '/\b(need\s+someone|talk\s+to\s+someone|afraid\s+of\s+(seeing\s+a\s+)?(the\s+)?doctor|scared\s+of\s+(the\s+)?doctor|nahadlok.{0,24}doktor|can\'?t\s+sleep|cannot\s+sleep|indi\s+ko\s+ka\s*tulog|family\s+problem|homesick|relationship\s+problem)\b/ui', 'distress_support'],
             [self::PRESCRIPTION, 0.9, '/\b(prescription|reseta|digital\s+prescription)\b/ui', 'prescriptions'],

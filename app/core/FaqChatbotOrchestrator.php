@@ -152,6 +152,29 @@ final class FaqChatbotOrchestrator
                     'context_boost'  => $memoryBoost,
                 ]);
 
+                // Unified knowledge layer: scenario index + KB packs + synonyms
+                if ($kbHit === null || (float) ($kbHit['score'] ?? 0) < 2.0) {
+                    $unified = FaqChatbotUnifiedKnowledge::search($this->pdo, $text, $matchText, $replyLang, [
+                        'intent'        => $intent,
+                        'emotion'       => $emotionResult['emotion'] ?? null,
+                        'session_id'    => $sessionId,
+                        'context_boost' => $memoryBoost,
+                    ]);
+                    if ($unified !== null && (float) ($unified['score'] ?? 0) >= 1.85) {
+                        $kbHit = [
+                            'key'      => $unified['key'],
+                            'category' => $unified['category'],
+                            'score'    => $unified['score'],
+                            'html'     => $unified['html'],
+                            'flow_key' => $unified['flow_key'],
+                        ];
+                        if (($unified['intent'] ?? '') !== '') {
+                            $intent = (string) $unified['intent'];
+                            $_SESSION['faq_chatbot_last_intent'] = $intent;
+                        }
+                    }
+                }
+
                 $followBridge = '';
                 if (FaqChatbotConversationMemory::isFollowUpUtterance($text)
                     && !empty(FaqChatbotConversationMemory::get()['current_topic'])) {
@@ -176,6 +199,13 @@ final class FaqChatbotOrchestrator
                         'session_id'    => $sessionId,
                         'context_boost' => $memoryBoost,
                     ]);
+                    if (str_contains($fallback, 'not_understood') || str_contains($fallback, "didn't quite understand")) {
+                        $fallback = FaqChatbotUnifiedKnowledge::smartClarification(
+                            $replyLang,
+                            $intent,
+                            $emotionResult['emotion'] ?? null
+                        );
+                    }
                     $lead = $empathyWrap ?? FaqChatbotResponseGenerator::wrapAnswer($empathy, '');
                     $responseHtml = $followBridge . $lead . $fallback;
                     $confidence = max(0.42, (float) ($emotionResult['confidence'] ?? 0.4));
@@ -198,10 +228,23 @@ final class FaqChatbotOrchestrator
             'bot_snippet'    => $responseHtml !== '' ? $responseHtml : null,
         ]);
 
-        // Assist mode: serve PHP replies for emergency, FAQ hits, and strong KB (emotion/intent) matches
-        $kbStrong = $kbHit !== null && (($kbHit['score'] ?? 0) >= 2.2);
+        // Assist mode: serve PHP replies for emergency, FAQ, KB, intent-clear, or unified matches
+        $kbStrong = $kbHit !== null && (($kbHit['score'] ?? 0) >= 1.85);
+        $intentStrong = in_array($intent, [
+            FaqChatbotIntentRecognizer::FINANCIAL,
+            FaqChatbotIntentRecognizer::APPOINTMENT,
+            FaqChatbotIntentRecognizer::LOGIN,
+            FaqChatbotIntentRecognizer::REGISTRATION,
+            FaqChatbotIntentRecognizer::CONSULTATION,
+            FaqChatbotIntentRecognizer::SYMPTOMS,
+            FaqChatbotIntentRecognizer::EMOTIONAL_SUPPORT,
+            FaqChatbotIntentRecognizer::CONNECTIVITY,
+            FaqChatbotIntentRecognizer::TRANSPORT,
+            FaqChatbotIntentRecognizer::WEATHER,
+            FaqChatbotIntentRecognizer::EMERGENCY,
+        ], true) && ($intentPack['confidence'] ?? 0) >= 0.72;
         $useServer = $mode === 'full'
-            || ($mode === 'assist' && ($emergency['is_emergency'] || $faqId !== null || $kbStrong));
+            || ($mode === 'assist' && ($emergency['is_emergency'] || $faqId !== null || $kbStrong || $intentStrong));
 
         if ($mode === 'assist' && !$useServer) {
             if ($suggestions === []) {
