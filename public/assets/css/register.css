@@ -739,7 +739,7 @@ body.reg-body {
   font-size: clamp(14px, 1.5vw, 15px);
   border-radius: 11px;
   margin-top: 4px;
-  align-self: flex-start;
+  align-self: center;
 }
 
 /* OTP digit boxes */
