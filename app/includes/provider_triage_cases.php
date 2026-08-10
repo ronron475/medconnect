@@ -295,7 +295,12 @@ function provider_triage_cases_load(PDO $pdo, int $providerId): array
             'reviewed'              => ($status !== 'pending'),
             'expired'               => $expired,
             'can_accept'            => triage_case_can_accept((string) ($t['assessed_at'] ?? ''), $status),
-            'supporting_evidence'   => complaint_evidence_clinical_support_meta($pdo, (int) $t['id']),
+            'supporting_evidence'   => complaint_evidence_provider_case_meta(
+                $pdo,
+                (int) $t['id'],
+                (int) $t['patient_id'],
+                (string) ($t['assessed_at'] ?? '')
+            ),
         ];
     }
 

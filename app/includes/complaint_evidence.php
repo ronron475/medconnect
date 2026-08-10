@@ -402,6 +402,78 @@ function complaint_evidence_clinical_support_meta(PDO $pdo, int $triageId): arra
     ]);
 }
 
+/**
+ * Provider triage View Details — direct triage evidence, with same-day patient fallback.
+ */
+function complaint_evidence_provider_case_meta(
+    PDO $pdo,
+    int $triageId,
+    int $patientId,
+    string $assessedAt = ''
+): array {
+    $meta = complaint_evidence_clinical_support_meta($pdo, $triageId);
+    if (!empty($meta['has_evidence']) || $patientId <= 0) {
+        return $meta;
+    }
+
+    $row = complaint_evidence_find_recent_for_patient($pdo, $patientId, $assessedAt);
+    if ($row === null) {
+        return $meta;
+    }
+
+    $item = complaint_evidence_row_to_item_meta($row);
+
+    return array_merge($meta, $item, [
+        'has_evidence' => true,
+        'items'        => [$item],
+    ]);
+}
+
+/**
+ * Latest supporting evidence for a patient near a triage assessment time.
+ *
+ * @return array<string, mixed>|null
+ */
+function complaint_evidence_find_recent_for_patient(PDO $pdo, int $patientId, string $assessedAt = ''): ?array
+{
+    if ($patientId <= 0) {
+        return null;
+    }
+
+    complaint_evidence_ensure_schema($pdo);
+    $assessedAt = trim($assessedAt);
+
+    if ($assessedAt !== '') {
+        $stmt = $pdo->prepare('
+            SELECT id, patient_id, triage_result_id, media_type, stored_filename, original_filename,
+                   mime_type, file_size_bytes, uploaded_at
+            FROM complaint_evidence
+            WHERE patient_id = ?
+              AND uploaded_at BETWEEN DATE_SUB(?, INTERVAL 6 HOUR) AND DATE_ADD(?, INTERVAL 6 HOUR)
+            ORDER BY ABS(TIMESTAMPDIFF(SECOND, uploaded_at, ?)) ASC, id DESC
+            LIMIT 1
+        ');
+        $stmt->execute([$patientId, $assessedAt, $assessedAt, $assessedAt]);
+        $row = $stmt->fetch(PDO::FETCH_ASSOC);
+        if ($row) {
+            return $row;
+        }
+    }
+
+    $stmt = $pdo->prepare('
+        SELECT id, patient_id, triage_result_id, media_type, stored_filename, original_filename,
+               mime_type, file_size_bytes, uploaded_at
+        FROM complaint_evidence
+        WHERE patient_id = ?
+        ORDER BY uploaded_at DESC, id DESC
+        LIMIT 1
+    ');
+    $stmt->execute([$patientId]);
+    $row = $stmt->fetch(PDO::FETCH_ASSOC);
+
+    return $row ?: null;
+}
+
 function complaint_evidence_can_view(PDO $pdo, array $row, int $userId, string $role): bool
 {
     $patientId = (int) ($row['patient_id'] ?? 0);
