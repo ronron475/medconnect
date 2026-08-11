@@ -46,7 +46,30 @@ if (empty($slot_list)) {
         <?php endif; ?>
 
         <?php if ($is_booked && $pendingReschedule): ?>
-        <p class="sched-slot-note">Reschedule pending patient confirmation</p>
+        <div class="sched-slot-pending">
+            <p class="sched-slot-note sched-slot-note--pending">
+                Reschedule pending — patient must confirm
+            </p>
+            <?php if (!empty($sl['reschedule_reason'])): ?>
+            <p class="sched-slot-reason">
+                <strong>Reason:</strong>
+                <?= htmlspecialchars((string) $sl['reschedule_reason']) ?>
+            </p>
+            <?php endif; ?>
+            <?php if (!empty($sl['reschedule_new_time'])):
+                $proposedLabel = date('g:i A', strtotime((string) $sl['reschedule_new_time']));
+                $wasLabel = !empty($sl['reschedule_old_time'])
+                    ? date('g:i A', strtotime((string) $sl['reschedule_old_time']))
+                    : '';
+            ?>
+            <p class="sched-slot-proposed">
+                <strong>Proposed:</strong> <?= htmlspecialchars($proposedLabel) ?>
+                <?php if ($wasLabel !== '' && $status === 'booked'): ?>
+                <span class="sched-slot-proposed-was">(was <?= htmlspecialchars($wasLabel) ?>)</span>
+                <?php endif; ?>
+            </p>
+            <?php endif; ?>
+        </div>
         <?php elseif ($is_booked): ?>
         <p class="sched-slot-note sched-slot-note--locked">
             BOOKED — This time slot cannot be changed because a patient has an appointment.

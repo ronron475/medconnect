@@ -35,10 +35,22 @@ $s_stmt = $pdo->prepare("
     SELECT s.id, s.start_time, s.end_time, s.status, s.consultation_id,
            COALESCE(CONCAT(u.first_name, ' ', u.last_name), '') AS patient_name,
            COALESCE(c.reschedule_status, 'none') AS reschedule_status,
-           c.status AS consultation_status
+           c.status AS consultation_status,
+           r.reason AS reschedule_reason,
+           r.old_time AS reschedule_old_time,
+           r.new_time AS reschedule_new_time
     FROM appointment_slots s
     LEFT JOIN users u ON u.id = s.patient_id
     LEFT JOIN consultations c ON c.id = s.consultation_id
+    LEFT JOIN appointment_reschedule_log r
+        ON r.consultation_id = c.id
+       AND r.status = 'pending_patient'
+       AND r.id = (
+           SELECT MAX(r2.id)
+           FROM appointment_reschedule_log r2
+           WHERE r2.consultation_id = c.id
+             AND r2.status = 'pending_patient'
+       )
     WHERE s.provider_id = ? AND s.slot_date = CURDATE()
     ORDER BY s.start_time ASC
 ");
