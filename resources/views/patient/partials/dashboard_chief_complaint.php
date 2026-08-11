@@ -15,21 +15,23 @@ $show_evidence_section = false;
 $show_care_tips_context = !empty($show_dashboard_care_tips_section);
 $is_new_consultation_flow = !$chief_complaint_locked
     && empty($active_consultation)
-    && function_exists('patient_portal_has_completed_visit')
     && isset($pdo, $uid)
-    && patient_portal_has_completed_visit($pdo, (int) $uid);
+    && (
+        (function_exists('patient_portal_has_completed_visit') && patient_portal_has_completed_visit($pdo, (int) $uid))
+        || (function_exists('patient_portal_has_stale_or_finished_consultation') && patient_portal_has_stale_or_finished_consultation($pdo, (int) $uid))
+    );
 $card_title = $is_new_consultation_flow ? 'Start New Consultation' : 'Chief Complaint';
 $card_lead = $is_new_consultation_flow
-    ? 'What is your current health concern? Enter a new chief complaint — previous visits stay in history.'
+    ? 'Share your current health concern to start a new consultation.'
     : ($show_care_tips_context
         ? 'Describe your concern; your doctor can approve self-care tips after you submit.'
         : 'Share your current health concern to start triage.');
 $submit_label = $is_new_consultation_flow
-    ? 'Continue'
+    ? 'Submit chief complaint'
     : ($show_care_tips_context ? 'Submit for doctor review' : 'Submit chief complaint');
 $placeholder = $chief_complaint_locked
     ? 'Your submitted health concern…'
-    : 'Describe your symptoms or concern…';
+    : 'Describe your current health concern...';
 ?>
 <section
   class="pdash-card pdash-card--complaint pdash-care"
@@ -83,9 +85,9 @@ $placeholder = $chief_complaint_locked
     ><?= htmlspecialchars($registration_chief_complaint) ?></textarea>
     <p class="pdash-care-form__hint">
       <?php if ($chief_complaint_locked): ?>
-      This chief complaint is already on file from your <?= htmlspecialchars($chief_complaint_source === 'registration' ? 'registration' : 'earlier submission') ?>. It cannot be changed here and will be reviewed by your doctor.
+      This chief complaint is already on file and will be reviewed by your doctor. It cannot be changed while this consultation is still active.
       <?php elseif ($is_new_consultation_flow): ?>
-      Enter a <strong>new</strong> health concern for this consultation. Previous complaints remain in your visit history and are not reused.
+      Enter a <strong>new</strong> health concern for this consultation. Previous complaints remain in My Sessions and are not reused.
       <?php else: ?>
       Describe your health concern. At least a short sentence helps your care team understand your case faster.
       <?php endif; ?>

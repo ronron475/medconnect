@@ -175,22 +175,112 @@ function patient_portal_active_chief_complaint(PDO $pdo, int $patientId): array
     triage_assessment_ensure_schema($pdo);
     patient_chief_complaints_ensure_schema($pdo);
 
+    // Prefer the consultation that is still in the current cycle (future start
+    // or live in_consultation). Never use ORDER BY alone for "current" complaint.
+    try {
+        $openStmt = $pdo->prepare("
+            SELECT c.id, c.status, c.consult_date, c.consult_time,
+                   s.slot_date, s.start_time AS slot_start
+            FROM consultations c
+            LEFT JOIN appointment_slots s
+              ON s.consultation_id = c.id AND s.status = 'booked'
+            WHERE c.patient_id = ?
+              AND LOWER(COALESCE(c.status, '')) IN (
+                'pending', 'scheduled', 'waiting', 'in_consultation'
+              )
+            ORDER BY c.id DESC
+            LIMIT 20
+        ");
+        $openStmt->execute([$patientId]);
+        $openRows = $openStmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
+        $activeConsult = patient_portal_select_active_consultation($openRows);
+        if ($activeConsult) {
+            $consultId = (int) ($activeConsult['id'] ?? 0);
+            $pccForConsult = $consultId > 0
+                ? patient_chief_complaint_for_consultation($pdo, $consultId)
+                : null;
+            $complaint = trim((string) ($pccForConsult['complaint'] ?? ''));
+            $triageId = 0;
+            $urgency = '';
+            $triageLevel = '';
+            $submittedAt = '';
+            $source = trim((string) ($pccForConsult['source'] ?? 'consultation_booking'));
+
+            if ($complaint === '' && $consultId > 0) {
+                try {
+                    $link = $pdo->prepare('
+                        SELECT triage_result_id
+                        FROM consultations
+                        WHERE id = ? AND patient_id = ?
+                        LIMIT 1
+                    ');
+                    $link->execute([$consultId, $patientId]);
+                    $triageId = (int) ($link->fetchColumn() ?: 0);
+                } catch (Throwable $e) {
+                    $triageId = 0;
+                }
+                if ($triageId > 0) {
+                    try {
+                        $tStmt = $pdo->prepare('
+                            SELECT chief_complaint, triage_level, triage_classification, assessed_at
+                            FROM triage_results
+                            WHERE id = ? AND patient_id = ?
+                            LIMIT 1
+                        ');
+                        $tStmt->execute([$triageId, $patientId]);
+                        $tRow = $tStmt->fetch(PDO::FETCH_ASSOC);
+                        if ($tRow) {
+                            $complaint = trim((string) ($tRow['chief_complaint'] ?? ''));
+                            $triageLevel = (string) ($tRow['triage_level'] ?? '');
+                            $urgency = patient_portal_normalize_urgency(
+                                $triageLevel,
+                                (string) ($tRow['triage_classification'] ?? ''),
+                                ''
+                            );
+                            $submittedAt = (string) ($tRow['assessed_at'] ?? '');
+                            $source = 'triage';
+                        }
+                    } catch (Throwable $e) {
+                        // non-fatal
+                    }
+                }
+            }
+
+            if ($complaint !== '') {
+                return [
+                    'complaint'    => $complaint,
+                    'source'       => $source !== '' ? $source : 'consultation_booking',
+                    'triage_id'    => $triageId,
+                    'urgency'      => $urgency,
+                    'triage_level' => $triageLevel,
+                    'submitted_at' => $submittedAt,
+                    'locked'       => true,
+                ];
+            }
+        }
+    } catch (Throwable $e) {
+        // Fall through to triage / PCC / registration paths.
+    }
+
     $triageRow = patient_portal_find_active_triage_row($pdo, $patientId);
 
     $pccRow = null;
     try {
+        // Walk recent rows until we find one still tied to an active cycle.
         $stmt = $pdo->prepare("
             SELECT complaint_text, source, triage_result_id, consultation_id, submitted_at
             FROM patient_chief_complaints
             WHERE patient_id = ?
               AND TRIM(COALESCE(complaint_text, '')) <> ''
             ORDER BY submitted_at DESC, id DESC
-            LIMIT 1
+            LIMIT 10
         ");
         $stmt->execute([$patientId]);
-        $pccCandidate = $stmt->fetch(PDO::FETCH_ASSOC) ?: null;
-        if ($pccCandidate && patient_chief_complaint_row_is_active($pdo, $patientId, $pccCandidate)) {
-            $pccRow = $pccCandidate;
+        while ($pccCandidate = $stmt->fetch(PDO::FETCH_ASSOC)) {
+            if (patient_chief_complaint_row_is_active($pdo, $patientId, $pccCandidate)) {
+                $pccRow = $pccCandidate;
+                break;
+            }
         }
     } catch (PDOException $e) {
         $pccRow = null;
@@ -263,7 +353,12 @@ function patient_portal_active_chief_complaint(PDO $pdo, int $patientId): array
 
     $regComplaint = trim((string) ($reg['complaint'] ?? ''));
     if ($regComplaint !== '') {
+        // Registration complaint is a one-time seed for the first cycle only.
+        // After any finished/stale visit (or when a new cycle should start), do not lock it.
         if (patient_portal_has_completed_visit($pdo, $patientId) && !$triageRow) {
+            return $empty;
+        }
+        if (!$triageRow && patient_portal_has_stale_or_finished_consultation($pdo, $patientId)) {
             return $empty;
         }
 
@@ -312,9 +407,10 @@ function patient_portal_resolve_chief_complaint(PDO $pdo, int $patientId, string
         return $submitted;
     }
 
-    // Registration seed only when the patient has never completed a visit
-    // and has no active triage/case yet.
-    if (patient_portal_has_completed_visit($pdo, $patientId)) {
+    // Registration seed only for the first cycle — never after a finished
+    // or past-due consultation that should start a new complaint.
+    if (patient_portal_has_completed_visit($pdo, $patientId)
+        || patient_portal_has_stale_or_finished_consultation($pdo, $patientId)) {
         return '';
     }
 
