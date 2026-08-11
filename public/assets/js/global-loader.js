@@ -51,8 +51,14 @@
   }
 
   function getOverlay() {
-    let el = document.getElementById('mc-loader-boot')
-      || document.getElementById('mc-global-loader');
+    const boot = document.getElementById('mc-loader-boot');
+    const legacy = document.getElementById('mc-global-loader');
+
+    if (boot && legacy && legacy !== boot) {
+      legacy.remove();
+    }
+
+    let el = boot || legacy;
 
     if (!el) {
       el = document.createElement('div');
@@ -71,11 +77,49 @@
     return el;
   }
 
+  function hideLoaderElement(el, animate) {
+    if (!el) return;
+    if (hideTimer) {
+      clearTimeout(hideTimer);
+      hideTimer = null;
+    }
+
+    el.setAttribute('aria-busy', 'false');
+    el.classList.remove('mc-global-loader--visible', 'mc-loader--visible', 'mc-loader-panel--visible');
+
+    if (animate === false) {
+      el.classList.remove('mc-global-loader--exit', 'mc-loader--exit', 'mc-global-loader--modal');
+      el.setAttribute('aria-hidden', 'true');
+      el.setAttribute('hidden', '');
+      return;
+    }
+
+    el.classList.add('mc-global-loader--exit', 'mc-loader--exit');
+    hideTimer = setTimeout(function () {
+      el.classList.remove('mc-global-loader--exit', 'mc-loader--exit', 'mc-global-loader--modal');
+      el.setAttribute('aria-hidden', 'true');
+      el.setAttribute('hidden', '');
+      hideTimer = null;
+    }, FADE_MS);
+  }
+
   function removeDuplicateLoaders() {
-    const primary = getOverlay();
-    ['mc-login-loading'].forEach(function (id) {
+    const boot = document.getElementById('mc-loader-boot');
+    const legacy = document.getElementById('mc-global-loader');
+    const primary = boot || legacy;
+
+    if (boot && legacy && legacy !== boot) {
+      legacy.remove();
+    }
+
+    ['mc-login-loading', 'mc-global-loader'].forEach(function (id) {
       const dup = document.getElementById(id);
-      if (dup && dup !== primary) dup.remove();
+      if (!dup || dup === primary) return;
+      if (boot && id === 'mc-global-loader') {
+        dup.remove();
+      } else if (dup !== primary) {
+        dup.remove();
+      }
     });
   }
 
@@ -152,6 +196,7 @@
     authActive = true;
     booting = false;
 
+    removeDuplicateLoaders();
     const el = getOverlay();
     setAuthModal(el, status, sr);
 
@@ -223,7 +268,13 @@
 
     function finishRedirect() {
       try {
-        sessionStorage.setItem('mc_auth_handoff', mode);
+        // Login only: continue spinner on the destination portal.
+        // Logout already showed the loader on the source page — do not repeat on landing.
+        if (mode === 'login') {
+          sessionStorage.setItem('mc_auth_handoff', mode);
+        } else {
+          sessionStorage.removeItem('mc_auth_handoff');
+        }
       } catch (_) { /* ignore */ }
       global.location.replace(redirectTarget);
     }
@@ -273,7 +324,7 @@
     });
   }
 
-  /** Continue loader only after login/logout redirect handoff. */
+  /** Continue loader only after login redirect handoff. */
   function initPageBoot() {
     const boot = document.getElementById('mc-loader-boot');
     if (!boot) return;
@@ -284,13 +335,13 @@
       if (authHandoff) sessionStorage.removeItem('mc_auth_handoff');
     } catch (_) { /* ignore */ }
 
-    if (authHandoff !== 'login' && authHandoff !== 'logout') {
-      boot.setAttribute('hidden', '');
-      boot.setAttribute('aria-hidden', 'true');
-      boot.setAttribute('aria-busy', 'false');
-      boot.classList.remove('mc-global-loader--visible', 'mc-loader--visible', 'mc-global-loader--modal');
+    // Logout spinner is shown only on the source portal — never repeat on landing.
+    if (authHandoff !== 'login') {
+      hideLoaderElement(boot, false);
+      hideLoaderElement(document.getElementById('mc-global-loader'), false);
       authActive = false;
       booting = false;
+      isVisible = false;
       setBodyActive(false);
       return;
     }
@@ -298,8 +349,6 @@
     const statusEl = boot.querySelector('.mc-loader__status');
     if (authHandoff === 'login') {
       if (statusEl) statusEl.textContent = 'Signing In...';
-    } else if (authHandoff === 'logout') {
-      if (statusEl) statusEl.textContent = 'Signing Out...';
     }
 
     boot.classList.add('mc-global-loader--modal');
@@ -331,7 +380,11 @@
     setTimeout(endBoot, BOOT_MAX_MS);
   }
 
+  let bootInitialized = false;
+
   function init() {
+    if (bootInitialized) return;
+    bootInitialized = true;
     removeDuplicateLoaders();
     try { sessionStorage.removeItem('mc_nav_handoff'); } catch (_) { /* ignore */ }
     initPageBoot();
@@ -346,7 +399,10 @@
   function forceHide() {
     authActive = false;
     booting = false;
-    applyVisible(false, false);
+    isVisible = false;
+    hideLoaderElement(document.getElementById('mc-loader-boot'), false);
+    hideLoaderElement(document.getElementById('mc-global-loader'), false);
+    setBodyActive(false);
   }
 
   function maybeShowAuth(options) {
