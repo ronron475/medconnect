@@ -43,6 +43,29 @@
     all: 0.5,
   };
 
+  const LOCATION_SOURCE = {
+    gps: {
+      label: 'GPS',
+      hint: 'Device GPS — highest map accuracy',
+      badgeClass: 'gis-loc-badge--gps',
+    },
+    barangay_centroid: {
+      label: 'Approximate',
+      hint: 'Barangay center — not the patient\'s exact address',
+      badgeClass: 'gis-loc-badge--approx',
+    },
+    manual: {
+      label: 'Manual',
+      hint: 'Manually entered coordinates',
+      badgeClass: 'gis-loc-badge--manual',
+    },
+    imported: {
+      label: 'Imported',
+      hint: 'Imported from external data',
+      badgeClass: 'gis-loc-badge--imported',
+    },
+  };
+
   const POLL_INTERVAL_MS = 15000;
 
   /** Read canonical triage_level from API — GIS never classifies locally. */
@@ -324,6 +347,31 @@
     return GisTriage.badgeClass(severity);
   }
 
+  function normalizeLocationSource(row) {
+    const src = String(row?.location_source || 'barangay_centroid').toLowerCase();
+    if (src === 'gps') return 'gps';
+    if (src === 'manual') return 'manual';
+    if (src === 'imported') return 'imported';
+    return 'barangay_centroid';
+  }
+
+  function locationSourceMeta(row) {
+    return LOCATION_SOURCE[normalizeLocationSource(row)] || LOCATION_SOURCE.barangay_centroid;
+  }
+
+  function locationSourceBadgeHtml(row) {
+    const meta = locationSourceMeta(row);
+    return (
+      '<span class="gis-loc-badge ' +
+      meta.badgeClass +
+      '" title="' +
+      escapeHtml(meta.hint) +
+      '">' +
+      escapeHtml(meta.label) +
+      '</span>'
+    );
+  }
+
   function renderTable() {
     const rows = sortedPatients();
     const totalPages = Math.max(1, Math.ceil(rows.length / PAGE_SIZE));
@@ -333,7 +381,7 @@
 
     if (!pageRows.length) {
       els.tableBody.innerHTML =
-        '<tr><td colspan="6" class="gis-table-empty">No patient location records match the current filters.</td></tr>';
+        '<tr><td colspan="7" class="gis-table-empty">No patient location records match the current filters.</td></tr>';
     } else {
       els.tableBody.innerHTML = pageRows
         .map(function (row) {
@@ -366,6 +414,9 @@
             '</td>' +
             '<td>' +
             escapeHtml(row.registration_date_display || row.registration_date) +
+            '</td>' +
+            '<td>' +
+            locationSourceBadgeHtml(row) +
             '</td>' +
             '<td><span class="gis-badge ' +
             statusClass +
@@ -438,12 +489,20 @@
       html += '<strong>Patient #' + escapeHtml(row.patient_id) + '</strong>';
     }
 
+    const locMeta = locationSourceMeta(row);
+
     html +=
-      '<p><span class="gis-badge ' +
+      '<p class="gis-popup__badges">' +
+      '<span class="gis-badge ' +
       severityBadgeClass(severity) +
       '">' +
       escapeHtml(severityLabel) +
-      '</span></p>' +
+      '</span> ' +
+      locationSourceBadgeHtml(row) +
+      '</p>' +
+      '<p class="gis-popup__loc-hint text-xs text-muted">' +
+      escapeHtml(locMeta.hint) +
+      '</p>' +
       '<p><strong>Barangay:</strong> ' +
       escapeHtml(row.barangay || '—') +
       '</p>' +
@@ -557,16 +616,25 @@
     updateLayerSwitchPreview();
   }
 
-  function severityMarkerIcon(severity) {
+  function severityMarkerIcon(severity, locationSource) {
     const color = SEVERITY_COLORS[severity] || SEVERITY_COLORS.non_urgent;
+    const isPrecise = locationSource === 'gps';
+    const ring = isPrecise
+      ? 'box-shadow:0 0 0 2px ' + color + '99'
+      : 'box-shadow:0 0 0 2px rgba(255,255,255,0.95),0 0 0 4px ' + color + '55';
+    const border = isPrecise ? '2px solid #fff' : '2px dashed #fff';
     return L.divIcon({
-      className: 'gis-severity-marker',
+      className: 'gis-severity-marker' + (isPrecise ? '' : ' gis-severity-marker--approx'),
       html:
         '<div style="background:' +
         color +
-        ';width:14px;height:14px;border-radius:50%;border:2px solid #fff;box-shadow:0 0 0 2px ' +
-        color +
-        '99"></div>',
+        ';width:14px;height:14px;border-radius:50%;border:' +
+        border +
+        ';' +
+        ring +
+        '" title="' +
+        (isPrecise ? 'GPS pin' : 'Approximate barangay pin') +
+        '"></div>',
       iconSize: [14, 14],
       iconAnchor: [7, 7],
     });
@@ -653,7 +721,9 @@
       if (!isValidCoord(lat, lng)) return;
       bounds.push([lat, lng]);
       const severity = readTriageLevel(row);
-      const marker = L.marker([lat, lng], { icon: severityMarkerIcon(severity) });
+      const marker = L.marker([lat, lng], {
+        icon: severityMarkerIcon(severity, normalizeLocationSource(row)),
+      });
       marker.bindPopup(popupHtml(row));
       state.cluster.addLayer(marker);
     });
