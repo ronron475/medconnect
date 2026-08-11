@@ -1516,6 +1516,160 @@ html[data-theme-resolved='dark'] .booking-today-date {
   border-color: #334155;
 }
 
+/* ── Book Consultation page ── */
+.patient-triage-lead {
+  margin: -8px 0 16px;
+  line-height: 1.5;
+}
+
+.patient-triage-alert--spaced {
+  margin-bottom: 16px;
+}
+
+.patient-triage-alert--spaced-sm {
+  margin-bottom: 14px;
+}
+
+.patient-triage-alert__line {
+  margin: 0 0 8px;
+}
+
+.patient-triage-alert__line:last-child {
+  margin-bottom: 0;
+}
+
+.patient-triage-submit {
+  width: 100%;
+  max-width: 320px;
+  min-height: 44px;
+}
+
+.patient-triage-submit-hint {
+  margin-top: 10px;
+  max-width: 520px;
+  line-height: 1.45;
+}
+
+.patient-triage-alt-btn {
+  width: 100%;
+  max-width: 360px;
+  min-height: 44px;
+}
+
+.patient-triage-history {
+  padding: 0;
+  overflow: hidden;
+}
+
+.patient-triage-history-lead {
+  margin: -8px 0 14px;
+  font-size: 0.9rem;
+  line-height: 1.45;
+}
+
+@media (max-width: 768px) {
+  body.patient-portal:has(.patient-triage-page) .portal-page-body {
+    padding-bottom: calc(116px + env(safe-area-inset-bottom, 0px)) !important;
+  }
+
+  .patient-triage-page .patient-triage-lead,
+  .patient-triage-page .patient-triage-history-lead {
+    font-size: 0.82rem;
+    margin-bottom: 12px;
+  }
+
+  .patient-triage-page .patient-triage-form {
+    margin-bottom: 16px;
+  }
+
+  .patient-triage-page .patient-triage-alert {
+    font-size: 0.82rem;
+    line-height: 1.45;
+    padding: 10px 12px;
+  }
+
+  .patient-triage-page .patient-triage-submit,
+  .patient-triage-page .patient-triage-alt-btn,
+  .patient-triage-page .complaint-evidence-choose {
+    width: 100%;
+    max-width: none;
+  }
+
+  .patient-triage-page .booking-slots-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+  }
+
+  .patient-triage-page .booking-slot-btn {
+    padding: 12px 8px;
+    font-size: 11px;
+    min-height: 44px;
+  }
+
+  .patient-triage-page .booking-today-date {
+    font-size: 13px;
+    padding: 10px 12px;
+    flex-wrap: wrap;
+  }
+
+  .patient-triage-page .patient-triage-history .mc-table thead {
+    display: none;
+  }
+
+  .patient-triage-page .patient-triage-history .mc-table tbody tr {
+    display: block;
+    border-bottom: 1px solid var(--mc-border-thin, #e2e8f0);
+  }
+
+  .patient-triage-page .patient-triage-history .mc-table tbody td {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 8px 16px;
+    border: none;
+    max-width: none;
+  }
+
+  .patient-triage-page .patient-triage-history .mc-table tbody td::before {
+    content: attr(data-label);
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    color: #94a3b8;
+    flex-shrink: 0;
+    min-width: 72px;
+  }
+
+  .patient-triage-page .patient-triage-history .mc-table tbody td:first-child {
+    display: block;
+    padding-top: 12px;
+    font-size: 0.95rem;
+  }
+
+  .patient-triage-page .patient-triage-history .mc-table tbody td:first-child::before {
+    display: none;
+  }
+
+  .patient-triage-page .triage-symptoms-cell {
+    max-width: none;
+    text-align: right;
+    flex: 1;
+    min-width: 0;
+  }
+
+  .patient-triage-page .patient-triage-history .mc-table-empty {
+    padding: 24px 16px;
+  }
+}
+
+@media (max-width: 359px) {
+  .patient-triage-page .booking-slots-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
 /* Silent booking overlay (patient — no AI technical output) */
 body.patient-booking-overlay-open {
   overflow: hidden;
