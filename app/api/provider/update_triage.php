@@ -10,6 +10,7 @@ require_once dirname(dirname(dirname(__DIR__))) . '/app/includes/provider_patien
 require_once dirname(dirname(dirname(__DIR__))) . '/app/includes/triage_assessment_schema.php';
 require_once BASE_PATH . '/app/core/TriageLevelService.php';
 require_once BASE_PATH . '/app/includes/notification_events.php';
+require_once BASE_PATH . '/app/includes/case_reports.php';
 
 if (empty($_SESSION['user_id']) || ($_SESSION['user_role'] ?? '') !== 'provider') {
     http_response_code(403);
@@ -36,7 +37,7 @@ if (!$id) {
 
 try {
     // IDOR protection: triage must belong to a patient this provider is allowed to act on.
-    $t = $pdo->prepare('SELECT patient_id, assessed_at, status FROM triage_results WHERE id = ? LIMIT 1');
+    $t = $pdo->prepare('SELECT patient_id, assessed_at, status, outcome, triage_level, urgency_label FROM triage_results WHERE id = ? LIMIT 1');
     $t->execute([$id]);
     $triageRow = $t->fetch(PDO::FETCH_ASSOC);
     if (!$triageRow) {
@@ -54,6 +55,11 @@ try {
     if (!$access['allowed']) {
         http_response_code(403);
         echo json_encode(['success' => false, 'message' => 'Access denied.']);
+        exit;
+    }
+
+    if (triage_case_is_terminated_row($triageRow)) {
+        echo json_encode(['success' => false, 'message' => 'This case has been terminated and cannot continue through the clinical workflow.']);
         exit;
     }
 
@@ -175,6 +181,8 @@ try {
                 WHERE id = ?
             ")->execute([(int) $_SESSION['user_id'], $id]);
 
+            triage_mark_provider_review_complete($pdo, $id);
+
             audit_log($pdo, [
                 'patient_id'  => $patientId,
                 'action_type' => 'TRIAGE_RECOMMENDATIONS_REJECTED',
@@ -189,7 +197,7 @@ try {
                 $id
             );
 
-            echo json_encode(['success' => true, 'message' => 'Recommendations were not released to the patient.']);
+            echo json_encode(['success' => true, 'message' => 'Review complete. Self-care guidance was withheld from the patient.']);
             exit;
         }
 
@@ -242,6 +250,8 @@ try {
             WHERE id = ?
         ")->execute([$savedText, (int) $_SESSION['user_id'], (int) $_SESSION['user_id'], $id]);
 
+        triage_mark_provider_review_complete($pdo, $id);
+
         audit_log($pdo, [
             'patient_id'  => $patientId,
             'action_type' => 'TRIAGE_RECOMMENDATIONS_APPROVED',
@@ -262,7 +272,7 @@ try {
 
         echo json_encode([
             'success' => true,
-            'message' => 'Self-care recommendations approved. The patient can now view them.',
+            'message' => 'Review complete. Self-care recommendations are now available to the patient.',
             'data' => [
                 'recommendation_status' => 'approved',
                 'recommendations' => $savedText,

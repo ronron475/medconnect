@@ -3,6 +3,7 @@
 require_once __DIR__ . '/triage_assessment_schema.php';
 require_once __DIR__ . '/triage_provider_assignment.php';
 require_once __DIR__ . '/complaint_evidence.php';
+require_once __DIR__ . '/case_reports.php';
 
 /**
  * Load triage cases visible to a provider
@@ -24,6 +25,7 @@ function provider_triage_cases_load(PDO $pdo, int $providerId): array
             tr.recommendation_status, tr.recommendation_approved_at, tr.recommendation_patient_ack_at,
             tr.assigned_provider_id, tr.assigned_at,
             tr.recommendation_approved_by,
+            tr.outcome,
             u.first_name, u.last_name
         FROM triage_results tr
         JOIN users u ON tr.patient_id = u.id
@@ -62,6 +64,9 @@ function provider_triage_cases_load(PDO $pdo, int $providerId): array
     ");
     $stmt->execute([$providerId, $providerId, $providerId, $providerId]);
     $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+    $consultByTriage = provider_triage_linked_consultations($pdo, array_column($rows, 'id'));
+    $reportByTriage = case_reports_active_map($pdo, array_column($rows, 'id'));
 
     $cases = [];
     foreach ($rows as $t) {
@@ -241,8 +246,25 @@ function provider_triage_cases_load(PDO $pdo, int $providerId): array
 
         $status  = (string) ($t['status'] ?? 'pending');
         $expired = triage_case_is_expired((string) ($t['assessed_at'] ?? ''));
+        $recStatus = (string) ($t['recommendation_status'] ?? 'hidden');
 
-        $canApprove = triage_provider_can_approve_recommendations($t);
+        $linkedConsult = $consultByTriage[(int) $t['id']] ?? null;
+        $consultationStatus = (string) ($linkedConsult['status'] ?? '');
+        $isBooked = $linkedConsult !== null
+            && in_array($consultationStatus, ['pending', 'scheduled', 'in_consultation'], true);
+
+        $canDecideTips = triage_provider_can_decide_care_tips($t);
+        $needsTipsApproval = $canDecideTips
+            && in_array($recStatus, ['pending_approval', 'hidden'], true);
+
+        $isTerminated = triage_case_is_terminated_row($t);
+        if ($isTerminated) {
+            $canDecideTips = false;
+            $needsTipsApproval = false;
+        }
+
+        $reportMeta = $reportByTriage[(int) $t['id']] ?? null;
+        $hasActiveReport = !empty($reportMeta['has_active']);
 
         $cases[] = [
             'id'                    => (int) $t['id'],
@@ -261,8 +283,9 @@ function provider_triage_cases_load(PDO $pdo, int $providerId): array
             'recommendation_status' => (string) ($t['recommendation_status'] ?? 'hidden'),
             'recommendation_approved_at' => (string) ($t['recommendation_approved_at'] ?? ''),
             'recommendation_patient_ack_at' => (string) ($t['recommendation_patient_ack_at'] ?? ''),
-            'can_approve_recommendations' => $canApprove,
-            'needs_tips_approval'   => $canApprove,
+            'can_approve_recommendations' => $canDecideTips,
+            'can_decide_care_tips'       => $canDecideTips,
+            'needs_tips_approval'        => $needsTipsApproval,
             'confidence_score'      => $confidence,
             'confidence_display'    => $confidence_display,
             'severity'              => (string) ($t['severity'] ?? ''),
@@ -277,7 +300,22 @@ function provider_triage_cases_load(PDO $pdo, int $providerId): array
             'date'                  => date('M j, Y', strtotime($t['assessed_at'])),
             'reviewed'              => ($status !== 'pending'),
             'expired'               => $expired,
-            'can_accept'            => triage_case_can_accept((string) ($t['assessed_at'] ?? ''), $status),
+            'is_booked'             => $isBooked,
+            'consultation_status'   => $consultationStatus,
+            'consultation_id'       => (int) ($linkedConsult['id'] ?? 0),
+            'is_terminated'         => $isTerminated,
+            'is_emergency'          => triage_case_is_emergency_row($t),
+            'has_active_report'     => $hasActiveReport,
+            'active_report_status'  => (string) ($reportMeta['status'] ?? ''),
+            'workflow_badges'       => provider_triage_workflow_badges(
+                $status,
+                $recStatus,
+                $expired,
+                $isBooked,
+                $consultationStatus,
+                $isTerminated,
+                $hasActiveReport
+            ),
             'supporting_evidence'   => complaint_evidence_provider_case_meta(
                 $pdo,
                 (int) $t['id'],
@@ -291,11 +329,110 @@ function provider_triage_cases_load(PDO $pdo, int $providerId): array
 }
 
 /**
- * Active queue: unreviewed cases OR cases still waiting for care-tip approval.
+ * Latest consultation row per triage_result_id.
+ *
+ * @param list<int|string> $triageIds
+ * @return array<int, array<string, mixed>>
+ */
+function provider_triage_linked_consultations(PDO $pdo, array $triageIds): array
+{
+    $ids = array_values(array_unique(array_filter(array_map('intval', $triageIds))));
+    if ($ids === []) {
+        return [];
+    }
+
+    $cols = $pdo->query('SHOW COLUMNS FROM consultations')->fetchAll(PDO::FETCH_COLUMN);
+    if (!in_array('triage_result_id', $cols, true)) {
+        return [];
+    }
+
+    $placeholders = implode(',', array_fill(0, count($ids), '?'));
+    $stmt = $pdo->prepare("
+        SELECT id, triage_result_id, status
+        FROM consultations
+        WHERE triage_result_id IN ({$placeholders})
+        ORDER BY id DESC
+    ");
+    $stmt->execute($ids);
+
+    $map = [];
+    foreach ($stmt->fetchAll(PDO::FETCH_ASSOC) as $row) {
+        $tid = (int) ($row['triage_result_id'] ?? 0);
+        if ($tid > 0 && !isset($map[$tid])) {
+            $map[$tid] = $row;
+        }
+    }
+
+    return $map;
+}
+
+/**
+ * @return list<array{class:string,label:string}>
+ */
+function provider_triage_workflow_badges(
+    string $status,
+    string $recommendationStatus,
+    bool $expired,
+    bool $isBooked,
+    string $consultationStatus,
+    bool $isTerminated = false,
+    bool $hasActiveReport = false
+): array {
+    $badges = [];
+
+    if ($isTerminated) {
+        $badges[] = ['class' => 'terminated', 'label' => 'Terminated'];
+    }
+    if ($hasActiveReport) {
+        $badges[] = ['class' => 'reported', 'label' => 'Reported'];
+    }
+
+    if ($isTerminated) {
+        return $badges;
+    }
+
+    if ($status === 'pending' && !$expired) {
+        $badges[] = ['class' => 'pending', 'label' => 'Pending'];
+    } elseif ($status === 'pending' && $expired) {
+        $badges[] = ['class' => 'expired', 'label' => 'Expired'];
+    } elseif ($recommendationStatus === 'approved') {
+        $badges[] = ['class' => 'tips-approved', 'label' => 'Tips approved'];
+    } elseif ($recommendationStatus === 'rejected') {
+        $badges[] = ['class' => 'reviewed', 'label' => 'Reviewed'];
+    } elseif ($status !== 'pending') {
+        $badges[] = ['class' => 'reviewed', 'label' => 'Reviewed'];
+    }
+
+    if ($isBooked) {
+        $badges[] = ['class' => 'booked', 'label' => 'Booked'];
+    }
+    if ($consultationStatus === 'completed') {
+        $badges[] = ['class' => 'completed', 'label' => 'Completed'];
+    }
+
+    return $badges;
+}
+
+/**
+ * Active queue: pending review, tips awaiting decision, or open booked visit.
  */
 function provider_triage_case_is_active(array $t): bool
 {
-    return empty($t['reviewed']) || !empty($t['needs_tips_approval']) || !empty($t['can_approve_recommendations']);
+    if (!empty($t['is_terminated'])) {
+        return false;
+    }
+    if (empty($t['reviewed'])) {
+        return true;
+    }
+    if (!empty($t['needs_tips_approval'])) {
+        return true;
+    }
+    if (!empty($t['is_booked'])) {
+        $consultStatus = (string) ($t['consultation_status'] ?? '');
+        return !in_array($consultStatus, ['completed', 'cancelled'], true);
+    }
+
+    return false;
 }
 
 /**

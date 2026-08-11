@@ -77,33 +77,21 @@
   }
 
   function renderWorkflow(t) {
-    var html = '';
-    var tipsPending = !!(t.needs_tips_approval || t.can_approve_recommendations);
-    if (tipsPending) {
-      html += '<span class="triage-badge triage-badge--urgent">Tips pending</span> ';
+    var badges = Array.isArray(t.workflow_badges) ? t.workflow_badges : [];
+    if (!badges.length) {
+      return '<span class="triage-badge triage-badge--pending">Pending</span>';
     }
-    if (t.reviewed && !tipsPending) {
-      html += '<span class="triage-badge triage-badge--reviewed">Reviewed</span>';
-    } else if (t.reviewed && tipsPending) {
-      html += '<span class="triage-badge triage-badge--reviewed">Booked</span>';
-    } else if (t.expired) {
-      html += '<span class="triage-badge triage-badge--expired">Expired</span>';
-    } else if (!tipsPending) {
-      html += '<span class="triage-badge triage-badge--pending">Pending</span>';
-    }
-    return html;
+    return badges.map(function (badge) {
+      return '<span class="triage-badge triage-badge--' + esc(badge.class || 'pending') + '">'
+        + esc(badge.label || '') + '</span>';
+    }).join(' ');
   }
 
   function renderActions(t) {
-    var html = '<div class="triage-actions">';
-    html += '<button type="button" class="mc-btn mc-btn--outline triage-view-btn" style="padding: 6px 12px; font-size: 11px;" data-triage-id="' + esc(t.id) + '">View Details</button>';
-    if (t.can_accept) {
-      html += '<button type="button" class="mc-btn mc-btn--primary triage-accept-btn" style="padding: 6px 12px; font-size: 11px;" data-id="' + esc(t.id) + '" title="Record that you reviewed this AI triage">Confirm review</button>';
-    } else if (!t.reviewed && t.expired) {
-      html += '<span class="triage-expired-note" title="Only same-day triage cases can be marked reviewed.">Cannot mark reviewed</span>';
-    }
-    html += '</div>';
-    return html;
+    return '<div class="triage-actions">'
+      + '<button type="button" class="mc-btn mc-btn--outline triage-view-btn" style="padding: 6px 12px; font-size: 11px;" data-triage-id="'
+      + esc(t.id) + '">View Details</button>'
+      + '</div>';
   }
 
   function renderRow(t) {
@@ -414,26 +402,83 @@
     }
     var gateHint = document.getElementById('modalRecommendationGateHint');
     var recStatus = String(t.recommendation_status || 'hidden');
-    var canApproveRec = !!t.can_approve_recommendations;
+    var canDecideTips = !!(t.can_decide_care_tips || t.can_approve_recommendations);
+    var isReviewed = !!t.reviewed;
     if (gateHint) {
       if (!t.complaint || !String(t.complaint).trim()) {
         gateHint.textContent = 'No chief complaint — NLP recommendations will not be shown to the patient.';
       } else if (recStatus === 'approved') {
-        gateHint.textContent = 'Approved self-care advice is available on the patient dashboard.';
+        gateHint.textContent = 'Review complete. Approved self-care advice is available to the patient.';
       } else if (recStatus === 'rejected') {
-        gateHint.textContent = 'Recommendations were withheld from the patient.';
-      } else if (canApproveRec) {
-        gateHint.textContent = 'Non-urgent case: review/edit self-care advice, then approve before the patient can see it.';
+        gateHint.textContent = 'Review complete. Self-care guidance was withheld from the patient.';
+      } else if (canDecideTips) {
+        gateHint.textContent = 'Choose Approve for Patient or Withhold Guidance to complete this review.';
+      } else if (t.urgency === 'Urgent') {
+        gateHint.textContent = 'Urgent case — use the existing urgent booking workflow. Self-care approval does not apply.';
       } else {
         gateHint.textContent = 'Patient-facing NLP recommendations are only released for non-urgent cases after provider approval.';
       }
     }
     var approveBtn = document.getElementById('modalApproveRecBtn');
     var rejectBtn = document.getElementById('modalRejectRecBtn');
-    if (approveBtn) approveBtn.style.display = canApproveRec ? 'inline-flex' : 'none';
-    if (rejectBtn) rejectBtn.style.display = canApproveRec ? 'inline-flex' : 'none';
+    var reviewNote = document.getElementById('modalReviewStatusNote');
+    if (approveBtn) approveBtn.style.display = canDecideTips ? 'inline-flex' : 'none';
+    if (rejectBtn) rejectBtn.style.display = canDecideTips ? 'inline-flex' : 'none';
+    if (recEdit) {
+      recEdit.readOnly = !canDecideTips;
+      recEdit.classList.toggle('is-readonly', !canDecideTips);
+    }
+    if (reviewNote) {
+      if (isReviewed) {
+        var note = recStatus === 'approved'
+          ? 'Status: Tips approved · Reviewed'
+          : recStatus === 'rejected'
+            ? 'Status: Guidance withheld · Reviewed'
+            : 'Status: Reviewed';
+        if (t.is_booked) note += ' · Booked';
+        reviewNote.textContent = note;
+        reviewNote.hidden = false;
+      } else if (t.is_terminated) {
+        reviewNote.textContent = 'Status: Case terminated';
+        reviewNote.hidden = false;
+      } else if (t.expired) {
+        reviewNote.textContent = 'This same-day case has expired.';
+        reviewNote.hidden = false;
+      } else {
+        reviewNote.hidden = true;
+        reviewNote.textContent = '';
+      }
+    }
 
-    document.getElementById('modalAcceptBtn').style.display = (t.reviewed || t.expired || !t.can_accept) ? 'none' : 'inline-flex';
+    var caseActions = document.getElementById('triageCaseActions');
+    var reportBtn = document.getElementById('modalReportCaseBtn');
+    var terminateBtn = document.getElementById('modalTerminateCaseBtn');
+    var activeReportNote = document.getElementById('modalActiveReportNote');
+    if (caseActions) {
+      caseActions.hidden = false;
+      var terminated = !!t.is_terminated;
+      var hasReport = !!t.has_active_report;
+      var isEmergency = !!t.is_emergency;
+      if (reportBtn) {
+        reportBtn.disabled = hasReport;
+        reportBtn.title = hasReport ? 'This case has already been reported and is currently under review.' : '';
+      }
+      if (terminateBtn) {
+        terminateBtn.disabled = terminated || isEmergency;
+        terminateBtn.title = isEmergency
+          ? 'Emergency cases must follow the existing emergency clinical pathway.'
+          : (terminated ? 'This case is already terminated.' : '');
+      }
+      if (activeReportNote) {
+        if (hasReport) {
+          activeReportNote.textContent = 'This case has already been reported and is currently under review.';
+          activeReportNote.hidden = false;
+        } else {
+          activeReportNote.hidden = true;
+          activeReportNote.textContent = '';
+        }
+      }
+    }
 
     var modal = document.getElementById('triageModal');
     var scrollEl = modal ? modal.querySelector('.triage-modal__body') : null;
@@ -488,7 +533,7 @@
       alert('Add at least one self-care recommendation before approving.');
       return;
     }
-    if (!confirm('Approve these self-care recommendations for the patient to view?')) return;
+    if (!confirm('Approve these self-care recommendations for the patient? This will complete your review.')) return;
     try {
       var data = await postTriageAction({
         id: String(currentTriageId),
@@ -510,7 +555,7 @@
 
   async function rejectRecommendationsFromModal() {
     if (!currentTriageId) return;
-    if (!confirm('Do not release these NLP recommendations to the patient?')) return;
+    if (!confirm('Withhold self-care guidance from the patient? This will complete your review.')) return;
     try {
       var data = await postTriageAction({
         id: String(currentTriageId),
@@ -528,51 +573,6 @@
     } catch (e) {
       alert('Could not update recommendations.');
     }
-  }
-
-  var pendingAcceptTriageId = 0;
-
-  function closeTriageReviewConfirm() {
-    var modal = document.getElementById('triageReviewConfirm');
-    if (!modal) return;
-    modal.hidden = true;
-    modal.setAttribute('aria-hidden', 'true');
-    pendingAcceptTriageId = 0;
-  }
-
-  function openTriageReviewConfirm(id) {
-    var modal = document.getElementById('triageReviewConfirm');
-    if (!modal || !id) return;
-    pendingAcceptTriageId = id;
-    modal.hidden = false;
-    modal.setAttribute('aria-hidden', 'false');
-    modal.querySelector('[data-triage-review-yes]')?.focus();
-  }
-
-  async function submitTriageReview(id) {
-    try {
-      var data = await postTriageAction({ id: String(id), action: 'accept', csrf_token: csrfToken() });
-      if (data && data.success) {
-        closeTriageReviewConfirm();
-        closeTriageModal();
-        refreshTriage(true);
-        if (window.MedConnectNavBadgesRefresh) window.MedConnectNavBadgesRefresh();
-      } else {
-        alert((data && data.message) || 'Could not update triage status.');
-      }
-    } catch (e) {
-      alert('Error updating triage status.');
-    }
-  }
-
-  function acceptTriage(id) {
-    if (!id) return;
-    openTriageReviewConfirm(id);
-  }
-
-  async function confirmTriageReview() {
-    if (!pendingAcceptTriageId) return;
-    await submitTriageReview(pendingAcceptTriageId);
   }
 
   async function applyOverride() {
@@ -603,8 +603,92 @@
     }
   }
 
-  function acceptTriageFromModal() {
-    if (currentTriageId) acceptTriage(currentTriageId);
+  async function postCaseAction(url, body) {
+    var res = await fetch(url, {
+      method: 'POST',
+      credentials: 'same-origin',
+      headers: { Accept: 'application/json' },
+      body: new URLSearchParams(body),
+    });
+    var raw = await res.text();
+    var data = null;
+    try {
+      data = raw ? JSON.parse(raw) : null;
+    } catch (e) {
+      throw new Error('Invalid server response.');
+    }
+    return data;
+  }
+
+  function openTriageSubModal(id) {
+    var el = document.getElementById(id);
+    if (!el) return;
+    el.classList.add('is-open');
+    el.setAttribute('aria-hidden', 'false');
+  }
+
+  function closeTriageSubModal(id) {
+    var el = document.getElementById(id);
+    if (!el) return;
+    el.classList.remove('is-open');
+    el.setAttribute('aria-hidden', 'true');
+  }
+
+  async function submitCaseReport() {
+    if (!currentTriageId) return;
+    var reasonEl = document.getElementById('triageReportReason');
+    var notesEl = document.getElementById('triageReportNotes');
+    var reason = reasonEl ? String(reasonEl.value || '').trim() : '';
+    if (!reason) {
+      alert('Please select a report reason.');
+      return;
+    }
+    try {
+      var data = await postCaseAction(cfg.reportApi, {
+        triage_id: String(currentTriageId),
+        reason: reason,
+        notes: notesEl ? String(notesEl.value || '') : '',
+        csrf_token: csrfToken(),
+      });
+      if (!data || !data.success) {
+        alert((data && data.message) || 'Could not submit report.');
+        return;
+      }
+      alert(data.message || 'Report submitted.');
+      closeTriageSubModal('triageReportModal');
+      closeTriageModal();
+      refreshTriage(true);
+    } catch (e) {
+      alert('Could not submit report.');
+    }
+  }
+
+  async function submitCaseTerminate() {
+    if (!currentTriageId) return;
+    var reasonEl = document.getElementById('triageTerminateReason');
+    var reason = reasonEl ? String(reasonEl.value || '').trim() : '';
+    if (reason.length < 5) {
+      alert('Please provide a reason (at least 5 characters).');
+      return;
+    }
+    try {
+      var data = await postCaseAction(cfg.terminateApi, {
+        triage_id: String(currentTriageId),
+        reason: reason,
+        csrf_token: csrfToken(),
+      });
+      if (!data || !data.success) {
+        alert((data && data.message) || 'Could not terminate case.');
+        return;
+      }
+      alert(data.message || 'Case terminated.');
+      closeTriageSubModal('triageTerminateModal');
+      closeTriageModal();
+      refreshTriage(true);
+      if (window.MedConnectNavBadgesRefresh) window.MedConnectNavBadgesRefresh();
+    } catch (e) {
+      alert('Could not terminate case.');
+    }
   }
 
   async function refreshTriage(silent) {
@@ -644,14 +728,10 @@
   function bindUi() {
     document.querySelector('#triageTable')?.addEventListener('click', function (event) {
       var viewBtn = event.target.closest('.triage-view-btn');
-      if (viewBtn) {
-        var triageId = Number(viewBtn.dataset.triageId || 0);
-        var payload = triageId ? getTriageCaseById(triageId) : null;
-        if (payload) viewTriageDetails(payload);
-        return;
-      }
-      var acceptBtn = event.target.closest('.triage-accept-btn');
-      if (acceptBtn) acceptTriage(Number(acceptBtn.dataset.id || 0));
+      if (!viewBtn) return;
+      var triageId = Number(viewBtn.dataset.triageId || 0);
+      var payload = triageId ? getTriageCaseById(triageId) : null;
+      if (payload) viewTriageDetails(payload);
     });
 
     document.querySelectorAll('.triage-tab[data-filter]').forEach(function (tab) {
@@ -669,26 +749,25 @@
       if (event.target.id === 'triageModal') closeTriageModal();
     });
 
-    var reviewConfirm = document.getElementById('triageReviewConfirm');
-    if (reviewConfirm && !reviewConfirm.dataset.bound) {
-      reviewConfirm.dataset.bound = '1';
-      reviewConfirm.addEventListener('click', function (event) {
-        if (event.target.closest('[data-triage-review-yes]')) {
-          event.preventDefault();
-          confirmTriageReview();
-          return;
-        }
-        if (event.target.closest('[data-triage-review-cancel]')) {
-          event.preventDefault();
-          closeTriageReviewConfirm();
-        }
+    document.getElementById('modalReportCaseBtn')?.addEventListener('click', function () {
+      openTriageSubModal('triageReportModal');
+    });
+    document.getElementById('modalTerminateCaseBtn')?.addEventListener('click', function () {
+      openTriageSubModal('triageTerminateModal');
+    });
+    document.querySelector('[data-triage-report-cancel]')?.addEventListener('click', function () {
+      closeTriageSubModal('triageReportModal');
+    });
+    document.querySelector('[data-triage-report-submit]')?.addEventListener('click', submitCaseReport);
+    document.querySelector('[data-triage-terminate-cancel]')?.addEventListener('click', function () {
+      closeTriageSubModal('triageTerminateModal');
+    });
+    document.querySelector('[data-triage-terminate-submit]')?.addEventListener('click', submitCaseTerminate);
+    ['triageReportModal', 'triageTerminateModal'].forEach(function (modalId) {
+      document.getElementById(modalId)?.addEventListener('click', function (event) {
+        if (event.target.id === modalId) closeTriageSubModal(modalId);
       });
-      document.addEventListener('keydown', function (event) {
-        if (event.key === 'Escape' && reviewConfirm && !reviewConfirm.hidden) {
-          closeTriageReviewConfirm();
-        }
-      });
-    }
+    });
 
     var recEdit = document.getElementById('modalRecommendationsEdit');
     if (recEdit && !recEdit.dataset.resizeBound) {
@@ -699,7 +778,6 @@
 
   window.closeTriageModal = closeTriageModal;
   window.applyOverride = applyOverride;
-  window.acceptTriageFromModal = acceptTriageFromModal;
   window.approveRecommendationsFromModal = approveRecommendationsFromModal;
   window.rejectRecommendationsFromModal = rejectRecommendationsFromModal;
 

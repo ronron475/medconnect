@@ -5,9 +5,15 @@
 require_once dirname(dirname(dirname(__DIR__))) . '/bootstrap.php';
 require_once dirname(dirname(dirname(__DIR__))) . '/config/db.php';
 require_once dirname(dirname(dirname(__DIR__))) . '/app/includes/appointment_slots.php';
+require_once dirname(dirname(dirname(__DIR__))) . '/app/includes/user_account_status.php';
 
 Api::startJson();
 Api::requirePatientReady($pdo);
+
+$bookingCheck = patient_account_may_submit_consultation($pdo, (int) $_SESSION['user_id']);
+if (!$bookingCheck['allowed']) {
+    Api::error($bookingCheck['message'], 403, ['code' => $bookingCheck['code'] ?? 'account_blocked']);
+}
 
 $provider_id = (int) ($_GET['provider_id'] ?? 0);
 $date        = trim((string) ($_GET['date'] ?? ''));

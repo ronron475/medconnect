@@ -134,6 +134,38 @@ function triage_case_can_accept(?string $assessedAt, string $status = 'pending')
 }
 
 /**
+ * Record that the provider completed clinical review (without changing care-tip decision).
+ */
+function triage_mark_provider_review_complete(PDO $pdo, int $triageId): void
+{
+    if ($triageId <= 0) {
+        return;
+    }
+    $pdo->prepare("UPDATE triage_results SET status = 'accepted' WHERE id = ? AND status = 'pending'")
+        ->execute([$triageId]);
+}
+
+/**
+ * Provider may approve or withhold self-care guidance (non-urgent, pending review only).
+ *
+ * @param array<string, mixed> $row
+ */
+function triage_provider_can_decide_care_tips(array $row): bool
+{
+    if (strtolower(trim((string) ($row['outcome'] ?? ''))) === 'terminated') {
+        return false;
+    }
+    if (triage_case_is_expired((string) ($row['assessed_at'] ?? ''))) {
+        return false;
+    }
+    if ((string) ($row['status'] ?? 'pending') !== 'pending') {
+        return false;
+    }
+
+    return triage_provider_may_release_recommendations($row);
+}
+
+/**
  * True when a triage row is non-urgent enough for patient-facing self-care release.
  *
  * @param array<string, mixed> $row

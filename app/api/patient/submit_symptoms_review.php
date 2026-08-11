@@ -7,9 +7,15 @@ require_once dirname(dirname(dirname(__DIR__))) . '/config/db.php';
 require_once dirname(dirname(dirname(__DIR__))) . '/app/includes/patient_symptoms_review_submit.php';
 require_once dirname(dirname(dirname(__DIR__))) . '/app/includes/complaint_evidence.php';
 require_once dirname(dirname(dirname(__DIR__))) . '/app/includes/patient_chief_complaints.php';
+require_once dirname(dirname(dirname(__DIR__))) . '/app/includes/user_account_status.php';
 
 Api::startJson();
 Api::requirePatientReady($pdo);
+
+$submissionCheck = patient_account_may_submit_consultation($pdo, (int) $_SESSION['user_id']);
+if (!$submissionCheck['allowed']) {
+    Api::error($submissionCheck['message'], 403, ['code' => $submissionCheck['code'] ?? 'account_blocked']);
+}
 Api::requirePost();
 Api::requireCsrf();
 

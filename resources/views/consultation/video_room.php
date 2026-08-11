@@ -52,7 +52,7 @@ $stmt = $pdo->prepare("
            p.first_name as patient_first, p.last_name as patient_last,
            d.first_name as doctor_first, d.last_name as doctor_last,
            pp.specialty as provider_specialty,
-           s.slot_date, s.start_time AS slot_start, s.end_time AS slot_end
+           s.id AS slot_id, s.slot_date, s.start_time AS slot_start, s.end_time AS slot_end
     FROM video_sessions vs
     JOIN consultations c ON vs.consultation_id = c.id
     LEFT JOIN users p ON c.patient_id = p.id
@@ -263,6 +263,74 @@ if (session_status() === PHP_SESSION_ACTIVE) {
     .end-actions .keep { background: #1e293b; color: #fff; }
     .end-actions .confirm { background: #dc2626; color: #fff; border-color: #dc2626; }
     .end-actions button:disabled { opacity: .6; cursor: not-allowed; }
+    .mc-vc-btn--report {
+      font-size: 12px;
+      font-weight: 800;
+      padding: 0 12px;
+      min-width: auto;
+      background: rgba(251, 191, 36, 0.12);
+      color: #fbbf24;
+      border: 1px solid rgba(251, 191, 36, 0.35);
+    }
+    .violation-modal {
+      position: fixed;
+      inset: 0;
+      z-index: 100090;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      background: rgba(2, 6, 23, 0.72);
+      backdrop-filter: blur(6px);
+    }
+    .violation-modal.show { display: flex; }
+    .violation-dialog {
+      width: min(480px, 100%);
+      max-height: min(90dvh, 720px);
+      overflow: auto;
+      background: #0f172a;
+      border: 1px solid rgba(148, 163, 184, 0.25);
+      border-radius: 18px;
+      padding: 22px;
+      box-shadow: 0 24px 70px rgba(0,0,0,.45);
+      color: #fff;
+      text-align: left;
+    }
+    .violation-dialog h2 { margin: 0 0 8px; font-size: 18px; font-weight: 800; }
+    .violation-dialog p { color: #cbd5e1; font-size: 13.5px; line-height: 1.55; margin: 0 0 14px; }
+    .violation-dialog label { display: block; font-size: 12px; font-weight: 700; margin-bottom: 6px; color: #e2e8f0; }
+    .violation-dialog select,
+    .violation-dialog textarea {
+      width: 100%;
+      box-sizing: border-box;
+      border-radius: 10px;
+      border: 1px solid rgba(148, 163, 184, 0.3);
+      background: #1e293b;
+      color: #fff;
+      padding: 10px 12px;
+      font: inherit;
+      margin-bottom: 12px;
+    }
+    .violation-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      justify-content: flex-end;
+      margin-top: 8px;
+    }
+    .violation-actions button {
+      height: 40px;
+      border-radius: 10px;
+      border: 1px solid rgba(148, 163, 184, 0.25);
+      padding: 0 14px;
+      font-weight: 800;
+      cursor: pointer;
+      font-size: 13px;
+    }
+    .violation-actions .ghost { background: #1e293b; color: #fff; }
+    .violation-actions .primary { background: #2563eb; color: #fff; border-color: #2563eb; }
+    .violation-actions .warn { background: #b45309; color: #fff; border-color: #b45309; }
+    .violation-actions .danger { background: #dc2626; color: #fff; border-color: #dc2626; }
     @media (max-width: 720px) {
       .media-permission-gate {
         padding: calc(16px + env(safe-area-inset-top, 0px)) calc(16px + env(safe-area-inset-right, 0px)) calc(16px + env(safe-area-inset-bottom, 0px)) calc(16px + env(safe-area-inset-left, 0px));
@@ -606,6 +674,9 @@ if (session_status() === PHP_SESSION_ACTIVE) {
         <button type="button" class="mc-vc-btn" id="mcVcMinimizeBtn" title="Minimize call" aria-label="Minimize call">
           <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9V5a1 1 0 0 1 1-1h4M18 9V5a1 1 0 0 0-1-1h-4M6 15v4a1 1 0 0 0 1 1h4M18 15v4a1 1 0 0 1-1 1h-4"/></svg>
         </button>
+        <?php if (!$is_patient): ?>
+        <button type="button" class="mc-vc-btn mc-vc-btn--report" id="violationReportBtn" title="Report possible violation" aria-label="Report possible violation">Report</button>
+        <?php endif; ?>
         <button type="button" class="mc-vc-btn mc-vc-btn--end btn-end" id="endCallBtn"><?= $is_patient ? 'Leave' : 'End' ?></button>
       </div>
     </div>
@@ -682,6 +753,32 @@ if (session_status() === PHP_SESSION_ACTIVE) {
       </div>
     </div>
   </div>
+
+  <?php if (!$is_patient): ?>
+  <div class="violation-modal" id="violationReportModal" role="dialog" aria-modal="true" aria-labelledby="violationModalTitle">
+    <div class="violation-dialog">
+      <h2 id="violationModalTitle">Report Possible Violation</h2>
+      <p>Report a possible violation during this consultation. The report will be reviewed by an authorized administrator. This does not automatically suspend the patient's account.</p>
+      <label for="violationReason">Possible violation reason</label>
+      <select id="violationReason" required>
+        <option value="">Select a reason…</option>
+        <?php
+        require_once BASE_PATH . '/app/includes/case_reports_schema.php';
+        foreach (case_report_valid_video_reasons() as $vr): ?>
+        <option value="<?= htmlspecialchars($vr) ?>"><?= htmlspecialchars(case_report_reason_label($vr)) ?></option>
+        <?php endforeach; ?>
+      </select>
+      <label for="violationNotes">Describe what happened (optional)</label>
+      <textarea id="violationNotes" rows="3" placeholder="Optional notes for administrators"></textarea>
+      <div class="violation-actions">
+        <button type="button" class="ghost" id="violationCancelBtn">Cancel</button>
+        <button type="button" class="primary" id="violationSubmitBtn">Submit Report</button>
+        <button type="button" class="warn" id="violationEndOnlyBtn">End Consultation</button>
+        <button type="button" class="danger" id="violationReportEndBtn">Report &amp; End</button>
+      </div>
+    </div>
+  </div>
+  <?php endif; ?>
 
   <script>
     const roomToken = '<?= $token ?>';
@@ -2447,6 +2544,87 @@ if (session_status() === PHP_SESSION_ACTIVE) {
     window.endCall = endCall;
     window.leaveCallFast = leaveCallFast;
     bindLeaveButton(document.getElementById('endCallBtn'));
+
+    (function bindViolationReportUi() {
+      if (isPatient || !consultationId) return;
+      const modal = document.getElementById('violationReportModal');
+      const openBtn = document.getElementById('violationReportBtn');
+      if (!modal || !openBtn) return;
+
+      function csrf() {
+        return document.body.dataset.csrf || (window.__mcVideoRoomMeta && window.__mcVideoRoomMeta.csrf) || '';
+      }
+
+      function openViolationModal() {
+        modal.classList.add('show');
+      }
+      function closeViolationModal() {
+        modal.classList.remove('show');
+      }
+
+      async function postViolation(body) {
+        const res = await fetch(apiBase + '/app/api/provider/consultation_violation_report.php', {
+          method: 'POST',
+          credentials: 'same-origin',
+          headers: { 'Content-Type': 'application/x-www-form-urlencoded', Accept: 'application/json' },
+          body: new URLSearchParams(body),
+        });
+        return res.json();
+      }
+
+      async function submitViolation(endConsultation, endOnly) {
+        const reasonEl = document.getElementById('violationReason');
+        const notesEl = document.getElementById('violationNotes');
+        const reason = reasonEl ? String(reasonEl.value || '').trim() : '';
+        const notes = notesEl ? String(notesEl.value || '').trim() : '';
+
+        if (!endOnly && !reason) {
+          alert('Please select a possible violation reason.');
+          return;
+        }
+
+        const payload = {
+          consultation_id: String(consultationId),
+          csrf_token: csrf(),
+        };
+        if (endOnly) {
+          payload.action = 'end_only';
+          payload.reason = reason || notes || 'Provider ended consultation.';
+        } else {
+          payload.reason = reason;
+          payload.notes = notes;
+          payload.end_consultation = endConsultation ? '1' : '0';
+        }
+
+        const data = await postViolation(payload);
+        if (!data || !data.success) {
+          alert((data && data.message) || 'Unable to complete request.');
+          return;
+        }
+
+        closeViolationModal();
+        if (endConsultation || endOnly || data.ended) {
+          alert(data.message || 'Consultation ended.');
+          await leaveCallConfirmed({ skipApi: false });
+          return;
+        }
+        alert(data.message || 'Report submitted.');
+      }
+
+      openBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        openViolationModal();
+      });
+      document.getElementById('violationCancelBtn')?.addEventListener('click', closeViolationModal);
+      document.getElementById('violationSubmitBtn')?.addEventListener('click', () => submitViolation(false, false));
+      document.getElementById('violationEndOnlyBtn')?.addEventListener('click', () => submitViolation(false, true));
+      document.getElementById('violationReportEndBtn')?.addEventListener('click', () => submitViolation(true, false));
+      modal.addEventListener('click', (e) => {
+        if (e.target === modal) closeViolationModal();
+      });
+    })();
+
     dismissBootLoader();
     setupDemoBus();
     setupWebrtcEvents();
