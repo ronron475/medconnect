@@ -9,6 +9,9 @@ final class GisDashboardService
 {
     private PDO $pdo;
 
+    /** @var list<string>|null */
+    private ?array $patientRegistrationColumns = null;
+
     public function __construct(PDO $pdo)
     {
         $this->pdo = $pdo;
@@ -88,7 +91,10 @@ final class GisDashboardService
                     address VARCHAR(255) NULL,
                     latitude DECIMAL(10,8) NULL,
                     longitude DECIMAL(11,8) NULL,
-                    location_source ENUM('gps','manual','barangay_centroid','imported') NOT NULL DEFAULT 'barangay_centroid',
+                    location_source VARCHAR(32) NOT NULL DEFAULT 'barangay_centroid',
+                    location_accuracy VARCHAR(20) NULL,
+                    address_confidence VARCHAR(20) NULL,
+                    canonical_barangay VARCHAR(120) NULL,
                     created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
                     updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
                     PRIMARY KEY (id),
@@ -97,7 +103,72 @@ final class GisDashboardService
             ");
         }
 
+        $this->ensurePatientLocationColumns();
+
         $this->ensureBarangayReferenceData();
+    }
+
+    private function ensurePatientLocationColumns(): void
+    {
+        if (!$this->tableExists('patient_locations')) {
+            return;
+        }
+
+        $columns = [
+            'location_accuracy'   => 'VARCHAR(20) NULL',
+            'address_confidence'  => 'VARCHAR(20) NULL',
+            'canonical_barangay'  => 'VARCHAR(120) NULL',
+        ];
+
+        foreach ($columns as $name => $definition) {
+            if (!$this->columnExists('patient_locations', $name)) {
+                try {
+                    $this->pdo->exec("ALTER TABLE patient_locations ADD COLUMN {$name} {$definition}");
+                } catch (Throwable $e) {
+                    // Non-fatal for partial migrations.
+                }
+            }
+        }
+
+        try {
+            $this->pdo->exec(
+                "ALTER TABLE patient_locations
+                 MODIFY COLUMN location_source VARCHAR(32) NOT NULL DEFAULT 'barangay_centroid'"
+            );
+        } catch (Throwable $e) {
+            // Column may already be VARCHAR.
+        }
+    }
+
+    /**
+     * @return list<string>
+     */
+    private function patientRegistrationColumns(): array
+    {
+        if ($this->patientRegistrationColumns !== null) {
+            return $this->patientRegistrationColumns;
+        }
+
+        $this->patientRegistrationColumns = [];
+        if (!$this->tableExists('patient_registrations')) {
+            return $this->patientRegistrationColumns;
+        }
+
+        $stmt = $this->pdo->query('SHOW COLUMNS FROM patient_registrations');
+        if ($stmt) {
+            while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
+                $this->patientRegistrationColumns[] = (string) ($row['Field'] ?? '');
+            }
+        }
+
+        return $this->patientRegistrationColumns;
+    }
+
+    private function registrationColumnExpr(string $column, string $fallback = "''"): string
+    {
+        return in_array($column, $this->patientRegistrationColumns(), true)
+            ? 'pr.' . $column
+            : $fallback;
     }
 
     private function ensureBarangayReferenceData(): void
@@ -121,8 +192,17 @@ final class GisDashboardService
         }
 
         $sql = "
-            SELECT u.id AS patient_id, pr.province, pr.city_municipality, pr.barangay,
-                   COALESCE(pr.full_address, pr.address, '') AS address, u.created_at
+            SELECT u.id AS patient_id,
+                   pr.province,
+                   pr.city_municipality,
+                   pr.barangay AS pr_barangay,
+                   COALESCE(pr.full_address, pr.address, '') AS full_address,
+                   COALESCE(pr.full_address, pr.address, '') AS address,
+                   " . $this->registrationColumnExpr('purok') . " AS purok,
+                   " . $this->registrationColumnExpr('sitio') . " AS sitio,
+                   " . $this->registrationColumnExpr('house_number') . " AS house_number,
+                   " . $this->registrationColumnExpr('street') . " AS street,
+                   u.created_at
             FROM users u
             INNER JOIN patient_registrations pr ON pr.email = u.email
             LEFT JOIN patient_locations pl ON pl.patient_id = u.id
@@ -135,27 +215,13 @@ final class GisDashboardService
             return;
         }
 
-        $insert = $this->pdo->prepare("
-            INSERT INTO patient_locations
-                (patient_id, province, city_municipality, barangay, address, latitude, longitude, location_source, created_at, updated_at)
-            VALUES (?, ?, ?, ?, ?, ?, ?, 'barangay_centroid', ?, NOW())
-        ");
-
         while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
-            $coords = $this->resolveBarangayCoordinates(
-                (string) ($row['barangay'] ?? ''),
-                (string) ($row['city_municipality'] ?? 'Bago City')
-            );
-            $insert->execute([
-                (int) $row['patient_id'],
-                $row['province'] ?? null,
-                $row['city_municipality'] ?? null,
-                $row['barangay'] ?? null,
-                $row['address'] ?? null,
-                $coords['lat'],
-                $coords['lng'],
-                $row['created_at'] ?? date('Y-m-d H:i:s'),
-            ]);
+            $resolved = $this->resolvePatientRow($row);
+            if (empty($resolved['has_map_marker'])) {
+                continue;
+            }
+
+            $this->persistResolvedLocation((int) $row['patient_id'], $row, $resolved, $row['created_at'] ?? null);
         }
     }
 
@@ -169,13 +235,36 @@ final class GisDashboardService
         ?float $longitude,
         ?string $storedSource = null
     ): array {
-        return $this->resolvePatientLocation($barangay, $city, $latitude, $longitude, $storedSource);
+        $resolved = $this->locationResolver()->resolve([
+            'barangay'          => $barangay,
+            'city_municipality' => $city,
+            'latitude'          => $latitude,
+            'longitude'         => $longitude,
+            'location_source'   => $storedSource,
+        ]);
+
+        return [
+            'lat'    => $resolved['latitude'],
+            'lng'    => $resolved['longitude'],
+            'source' => $resolved['location_source'],
+        ];
     }
 
     /**
      * Resolve map coordinates for a patient without inventing random offsets.
      *
-     * @return array{lat: float, lng: float, source: string}
+     * @param array<string, mixed> $row
+     * @return array<string, mixed>
+     */
+    public function resolvePatientRow(array $row): array
+    {
+        return $this->locationResolver()->resolve($row);
+    }
+
+    /**
+     * @deprecated Use resolvePatientRow() for full metadata.
+     *
+     * @return array{lat: ?float, lng: ?float, source: string}
      */
     public function resolvePatientLocation(
         string $barangay,
@@ -184,30 +273,39 @@ final class GisDashboardService
         ?float $longitude,
         ?string $storedSource = null
     ): array {
-        $source = $this->normalizeLocationSource($storedSource);
+        $resolved = $this->resolvePatientRow([
+            'barangay'          => $barangay,
+            'city_municipality' => $city,
+            'latitude'          => $latitude,
+            'longitude'         => $longitude,
+            'location_source'   => $storedSource,
+        ]);
 
-        if ($latitude !== null && $longitude !== null && $this->validCoordinate($latitude, $longitude)) {
-            if (in_array($source, ['gps', 'manual', 'imported'], true)) {
-                return ['lat' => $latitude, 'lng' => $longitude, 'source' => $source];
-            }
-
-            return ['lat' => $latitude, 'lng' => $longitude, 'source' => 'barangay_centroid'];
-        }
-
-        return $this->resolveBarangayCoordinates($barangay, $city);
+        return [
+            'lat'    => $resolved['latitude'],
+            'lng'    => $resolved['longitude'],
+            'source' => (string) $resolved['location_source'],
+        ];
     }
 
     /**
-     * @return array{lat: float, lng: float, source: string}
+     * @return array{lat: float, lng: float, source: string}|array{lat: null, lng: null, source: string}
      */
     public function resolveBarangayCoordinates(string $barangay, string $city = 'Bago City'): array
     {
         require_once $this->appBasePath() . '/app/core/BagoBarangayCentroids.php';
 
-        $canonical = BagoBarangayCentroids::canonicalName($barangay);
-        $lookupName = $canonical ?? trim($barangay);
+        $canonical = BagoBarangayCentroids::canonicalName($barangay) ?? trim($barangay);
+        $coords = BagoBarangayCentroids::resolveBarangayCenter($canonical);
+        if ($coords !== null) {
+            return [
+                'lat'    => $coords['lat'],
+                'lng'    => $coords['lng'],
+                'source' => 'barangay_center',
+            ];
+        }
 
-        if ($this->tableExists('barangays') && $lookupName !== '') {
+        if ($this->tableExists('barangays') && $canonical !== '') {
             $activeClause = $this->columnExists('barangays', 'is_active') ? ' AND is_active = 1' : '';
             $stmt = $this->pdo->prepare(
                 'SELECT latitude, longitude, name
@@ -219,7 +317,7 @@ final class GisDashboardService
                  AND (city = ? OR city LIKE ?)' . $activeClause . '
                  LIMIT 1'
             );
-            $stmt->execute([$lookupName, $lookupName, $city, 'Bago%']);
+            $stmt->execute([$canonical, $canonical, $city, 'Bago%']);
             $row = $stmt->fetch(PDO::FETCH_ASSOC);
             if ($row && $row['latitude'] !== null && $row['longitude'] !== null) {
                 $lat = (float) $row['latitude'];
@@ -228,18 +326,16 @@ final class GisDashboardService
                     return [
                         'lat'    => $lat,
                         'lng'    => $lng,
-                        'source' => 'barangay_centroid',
+                        'source' => 'barangay_center',
                     ];
                 }
             }
         }
 
-        $centroid = BagoBarangayCentroids::resolve($barangay, $city);
-
         return [
-            'lat'    => $centroid['lat'],
-            'lng'    => $centroid['lng'],
-            'source' => 'barangay_centroid',
+            'lat'    => null,
+            'lng'    => null,
+            'source' => 'unavailable',
         ];
     }
 
@@ -264,11 +360,11 @@ final class GisDashboardService
     private function normalizeLocationSource(?string $source): string
     {
         $source = strtolower(trim((string) $source));
-        if (in_array($source, ['gps', 'manual', 'imported', 'barangay_centroid'], true)) {
-            return $source;
+        if (in_array($source, ['gps', 'manual', 'imported', 'address_geocoded', 'barangay_centroid', 'barangay_center', 'unavailable'], true)) {
+            return $source === 'barangay_centroid' ? 'barangay_center' : $source;
         }
 
-        return 'barangay_centroid';
+        return 'barangay_center';
     }
 
     private function parseCoordinate(mixed $value): ?float
@@ -324,7 +420,7 @@ final class GisDashboardService
      * @param array<string, mixed> $filters
      * @return list<array<string, mixed>>
      */
-    public function getPatientRecords(array $filters = []): array
+    public function getPatientRecords(array $filters = [], string $viewerRole = 'admin'): array
     {
         $this->syncMissingLocations();
 
@@ -340,7 +436,7 @@ final class GisDashboardService
             $params[] = '%' . $filters['municipality'] . '%';
         }
         if (!empty($filters['barangay'])) {
-            $where[] = 'COALESCE(pl.barangay, pr.barangay) LIKE ?';
+            $where[] = 'COALESCE(pl.canonical_barangay, pl.barangay, pr.barangay) LIKE ?';
             $params[] = '%' . $filters['barangay'] . '%';
         }
         if (!empty($filters['status'])) {
@@ -385,13 +481,24 @@ final class GisDashboardService
             SELECT
                 u.id AS patient_id,
                 CONCAT(u.first_name, ' ', u.last_name) AS patient_name,
-                COALESCE(pl.barangay, pr.barangay, '') AS barangay,
+                pl.barangay AS pl_barangay,
+                pr.barangay AS pr_barangay,
+                COALESCE(pl.canonical_barangay, pl.barangay, pr.barangay, '') AS barangay,
                 COALESCE(pl.city_municipality, pr.city_municipality, '') AS municipality,
+                COALESCE(pl.city_municipality, pr.city_municipality, '') AS city_municipality,
                 COALESCE(pl.province, pr.province, 'Negros Occidental') AS province,
                 COALESCE(pl.address, pr.full_address, pr.address, '') AS address,
+                COALESCE(pr.full_address, pr.address, '') AS full_address,
+                " . $this->registrationColumnExpr('purok') . " AS purok,
+                " . $this->registrationColumnExpr('sitio') . " AS sitio,
+                " . $this->registrationColumnExpr('house_number') . " AS house_number,
+                " . $this->registrationColumnExpr('street') . " AS street,
                 pl.latitude,
                 pl.longitude,
                 pl.location_source,
+                pl.location_accuracy,
+                pl.address_confidence,
+                pl.canonical_barangay,
                 pl.updated_at AS location_updated_at,
                 u.created_at AS registration_date,
                 CASE WHEN COALESCE(u.is_active, 1) = 1 THEN 'Active' ELSE 'Inactive' END AS patient_status,
@@ -416,17 +523,9 @@ final class GisDashboardService
         $rows = $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
 
         foreach ($rows as &$row) {
-            $coords = $this->resolvePatientLocation(
-                (string) ($row['barangay'] ?? ''),
-                (string) ($row['municipality'] ?? 'Bago City'),
-                $this->parseCoordinate($row['latitude'] ?? null),
-                $this->parseCoordinate($row['longitude'] ?? null),
-                isset($row['location_source']) ? (string) $row['location_source'] : null
-            );
-            $row['latitude'] = $coords['lat'];
-            $row['longitude'] = $coords['lng'];
-            $row['location_source'] = $coords['source'];
-            $row['location_accuracy'] = $coords['source'];
+            $resolved = $this->resolvePatientRow($row);
+            $row = array_merge($row, $resolved);
+            $row = $this->applyViewerPrivacy($row, $viewerRole);
             $row['triage_level'] = $this->normalizeStoredTriageLevel((string) ($row['triage_level'] ?? ''));
             $row['is_emergency'] = $row['triage_level'] === 'emergency';
             $row['registration_date_display'] = !empty($row['registration_date'])
@@ -464,7 +563,7 @@ final class GisDashboardService
      *   last_updated: string
      * }
      */
-    public function getTriageStats(): array
+    public function getTriageStats(string $viewerRole = 'admin'): array
     {
         require_once $this->appBasePath() . '/app/core/TriageLevelService.php';
 
@@ -480,7 +579,7 @@ final class GisDashboardService
             'emergency'   => [],
         ];
 
-        foreach ($this->getPatientRecords([]) as $row) {
+        foreach ($this->getPatientRecords([], $viewerRole) as $row) {
             $level = (string) ($row['triage_level'] ?? TriageLevelService::NON_URGENT);
             if (!isset($counts[$level])) {
                 $level = TriageLevelService::NON_URGENT;
@@ -526,7 +625,7 @@ final class GisDashboardService
             return [
                 'changed'      => [],
                 'summary'      => $this->getSummary(),
-                'triage_stats' => $this->getTriageStats(),
+                'triage_stats' => $this->getTriageStats((string) ($filters['viewer_role'] ?? 'admin')),
                 'server_ts'    => date('c'),
             ];
         }
@@ -534,9 +633,9 @@ final class GisDashboardService
         $filters['patient_ids'] = $changedIds;
 
         return [
-            'changed'      => $this->getPatientRecords($filters),
+            'changed'      => $this->getPatientRecords($filters, (string) ($filters['viewer_role'] ?? 'admin')),
             'summary'      => $this->getSummary(),
-            'triage_stats' => $this->getTriageStats(),
+            'triage_stats' => $this->getTriageStats((string) ($filters['viewer_role'] ?? 'admin')),
             'server_ts'    => date('c'),
         ];
     }
@@ -563,20 +662,40 @@ final class GisDashboardService
     ): void {
         $this->ensureSchema();
 
-        if ($latitude !== null && $longitude !== null && $this->validCoordinate($latitude, $longitude)) {
-            $coords = [
-                'lat'    => $latitude,
-                'lng'    => $longitude,
-                'source' => $this->normalizeLocationSource($source),
-            ];
-        } else {
-            $coords = $this->resolveBarangayCoordinates($barangay, $city);
-        }
+        $resolved = $this->resolvePatientRow([
+            'barangay'          => $barangay,
+            'city_municipality' => $city,
+            'province'          => $province,
+            'address'           => $address,
+            'full_address'      => $address,
+            'latitude'          => $latitude,
+            'longitude'         => $longitude,
+            'location_source'   => $source,
+        ]);
 
+        $this->persistResolvedLocation($patientId, [
+            'province'          => $province,
+            'city_municipality' => $city,
+            'barangay'          => $barangay,
+            'address'           => $address,
+        ], $resolved);
+    }
+
+    /**
+     * @param array<string, mixed> $sourceRow
+     * @param array<string, mixed> $resolved
+     */
+    private function persistResolvedLocation(
+        int $patientId,
+        array $sourceRow,
+        array $resolved,
+        ?string $createdAt = null
+    ): void {
         $stmt = $this->pdo->prepare("
             INSERT INTO patient_locations
-                (patient_id, province, city_municipality, barangay, address, latitude, longitude, location_source)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+                (patient_id, province, city_municipality, barangay, address, latitude, longitude,
+                 location_source, location_accuracy, address_confidence, canonical_barangay, created_at, updated_at)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, COALESCE(?, NOW()), NOW())
             ON DUPLICATE KEY UPDATE
                 province = VALUES(province),
                 city_municipality = VALUES(city_municipality),
@@ -585,18 +704,88 @@ final class GisDashboardService
                 latitude = VALUES(latitude),
                 longitude = VALUES(longitude),
                 location_source = VALUES(location_source),
+                location_accuracy = VALUES(location_accuracy),
+                address_confidence = VALUES(address_confidence),
+                canonical_barangay = VALUES(canonical_barangay),
                 updated_at = NOW()
         ");
         $stmt->execute([
             $patientId,
-            $province ?: null,
-            $city ?: null,
-            $barangay ?: null,
-            $address ?: null,
-            $coords['lat'],
-            $coords['lng'],
-            $coords['source'],
+            $sourceRow['province'] ?? null,
+            $sourceRow['city_municipality'] ?? null,
+            $resolved['canonical_barangay'] ?: ($sourceRow['barangay'] ?? null),
+            $resolved['display_address'] ?: ($sourceRow['address'] ?? null),
+            $resolved['latitude'],
+            $resolved['longitude'],
+            $resolved['location_source'],
+            $resolved['location_accuracy'],
+            $resolved['address_confidence'],
+            $resolved['canonical_barangay'] ?: null,
+            $createdAt,
         ]);
+    }
+
+    private function locationResolver(): PatientLocationResolver
+    {
+        require_once $this->appBasePath() . '/app/core/PatientLocationResolver.php';
+
+        static $resolver = null;
+        if ($resolver === null) {
+            $resolver = new PatientLocationResolver($this->pdo);
+        }
+
+        return $resolver;
+    }
+
+    /**
+     * @param array<string, mixed> $row
+     * @return array<string, mixed>
+     */
+    private function applyViewerPrivacy(array $row, string $viewerRole): array
+    {
+        $role = strtolower(trim($viewerRole));
+        if (in_array($role, ['admin', 'superadmin'], true)) {
+            $row['can_view_exact_location'] = true;
+
+            return $row;
+        }
+
+        $row['can_view_exact_location'] = false;
+        $accuracy = (string) ($row['location_accuracy'] ?? '');
+        if (!in_array($accuracy, ['exact', 'geocoded'], true)) {
+            return $row;
+        }
+
+        $row['location_privacy_masked'] = true;
+        $fallback = $this->resolveBarangayCoordinates(
+            (string) ($row['canonical_barangay'] ?? $row['barangay'] ?? ''),
+            (string) ($row['municipality'] ?? 'Bago City')
+        );
+
+        if ($fallback['lat'] !== null && $fallback['lng'] !== null) {
+            $row['latitude'] = $fallback['lat'];
+            $row['longitude'] = $fallback['lng'];
+            $row['location_source'] = 'barangay_center';
+            $row['location_accuracy'] = 'approximate';
+            $row['location_note'] = 'Exact patient location is restricted. Showing verified barangay center.';
+            $row['barangay_center_label'] = 'Barangay ' . ($row['canonical_barangay'] ?: $row['barangay']) . ' center';
+        } else {
+            $row['latitude'] = null;
+            $row['longitude'] = null;
+            $row['location_source'] = 'unavailable';
+            $row['location_accuracy'] = 'unavailable';
+            $row['has_map_marker'] = false;
+        }
+
+        $parts = array_filter([
+            !empty($row['canonical_barangay']) ? 'Barangay ' . $row['canonical_barangay'] : '',
+            (string) ($row['municipality'] ?? 'Bago City'),
+            (string) ($row['province'] ?? 'Negros Occidental'),
+        ]);
+        $row['display_address'] = implode(', ', $parts);
+        $row['address'] = $row['display_address'];
+
+        return $row;
     }
 
     /**

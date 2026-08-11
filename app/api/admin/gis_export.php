@@ -29,7 +29,7 @@ $filters = [
     'date_to'      => trim((string) ($_GET['date_to'] ?? '')),
 ];
 
-$rows = $gis->getPatientRecords($filters);
+$rows = $gis->getPatientRecords($filters, $role);
 $filename = 'medConnect_GIS_Report_' . date('Y-m-d') . '.' . ($format === 'xlsx' ? 'xls' : 'csv');
 
 audit_log($pdo, [
@@ -53,17 +53,18 @@ fputcsv($out, [
 ]);
 
 foreach ($rows as $row) {
-    $accuracy = $row['location_accuracy'] ?? ($row['location_source'] ?? 'barangay_centroid');
+    $accuracy = $row['location_accuracy'] ?? 'unavailable';
+    $source = $row['location_source'] ?? 'unavailable';
     fputcsv($out, [
         $row['patient_id'] ?? '',
         $row['patient_name'] ?? '',
         $row['barangay'] ?? '',
         $row['municipality'] ?? '',
         $row['province'] ?? '',
-        $row['address'] ?? '',
+        $row['display_address'] ?? ($row['address'] ?? ''),
         $row['latitude'] ?? '',
         $row['longitude'] ?? '',
-        $row['location_source'] ?? 'barangay_centroid',
+        $source,
         $accuracy,
         $row['registration_date'] ?? '',
         $row['patient_status'] ?? '',

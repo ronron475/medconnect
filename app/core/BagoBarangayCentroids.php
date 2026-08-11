@@ -154,18 +154,30 @@ final class BagoBarangayCentroids
     }
 
     /**
+     * Resolve verified barangay center only — returns null when barangay cannot be matched.
+     *
+     * @return array{lat: float, lng: float}|null
+     */
+    public static function resolveBarangayCenter(string $barangay): ?array
+    {
+        $canonical = self::canonicalName($barangay);
+        if ($canonical !== null && isset(self::barangayMap()[$canonical])) {
+            return self::barangayMap()[$canonical];
+        }
+
+        return null;
+    }
+
+    /**
      * @return array{lat: float, lng: float}
      */
     public static function resolve(string $barangay, string $city = 'Bago City'): array
     {
         unset($city);
 
-        $canonical = self::canonicalName($barangay);
-        if ($canonical !== null && isset(self::barangayMap()[$canonical])) {
-            return self::barangayMap()[$canonical];
-        }
+        $center = self::resolveBarangayCenter($barangay);
 
-        return self::cityCenter();
+        return $center ?? self::cityCenter();
     }
 
     /**

@@ -45,24 +45,46 @@
 
   const LOCATION_SOURCE = {
     gps: {
-      label: 'GPS',
-      hint: 'Device GPS — highest map accuracy',
+      label: 'GPS (Exact)',
+      hint: 'Verified device GPS coordinates',
       badgeClass: 'gis-loc-badge--gps',
+      markerStyle: 'exact',
+    },
+    address_geocoded: {
+      label: 'Address (Geocoded)',
+      hint: 'Derived from the registered address — not GPS',
+      badgeClass: 'gis-loc-badge--geocoded',
+      markerStyle: 'geocoded',
+    },
+    barangay_center: {
+      label: 'Approximate (Barangay)',
+      hint: 'Verified barangay center — not the exact patient address',
+      badgeClass: 'gis-loc-badge--approx',
+      markerStyle: 'approx',
     },
     barangay_centroid: {
-      label: 'Approximate',
-      hint: 'Barangay center — not the patient\'s exact address',
+      label: 'Approximate (Barangay)',
+      hint: 'Verified barangay center — not the exact patient address',
       badgeClass: 'gis-loc-badge--approx',
+      markerStyle: 'approx',
     },
     manual: {
-      label: 'Manual',
-      hint: 'Manually entered coordinates',
-      badgeClass: 'gis-loc-badge--manual',
+      label: 'GPS (Exact)',
+      hint: 'Manually verified coordinates',
+      badgeClass: 'gis-loc-badge--gps',
+      markerStyle: 'exact',
     },
     imported: {
-      label: 'Imported',
-      hint: 'Imported from external data',
-      badgeClass: 'gis-loc-badge--imported',
+      label: 'GPS (Exact)',
+      hint: 'Imported verified coordinates',
+      badgeClass: 'gis-loc-badge--gps',
+      markerStyle: 'exact',
+    },
+    unavailable: {
+      label: 'Location unavailable',
+      hint: 'No verified patient location could be determined',
+      badgeClass: 'gis-loc-badge--unavailable',
+      markerStyle: 'unavailable',
     },
   };
 
@@ -358,11 +380,39 @@
   }
 
   function normalizeLocationSource(row) {
-    const src = String(row?.location_source || row?.location_accuracy || 'barangay_centroid').toLowerCase();
-    if (src === 'gps') return 'gps';
-    if (src === 'manual') return 'manual';
-    if (src === 'imported') return 'imported';
-    return 'barangay_centroid';
+    const source = String(row?.location_source || '').toLowerCase();
+    const accuracy = String(row?.location_accuracy || '').toLowerCase();
+
+    if (source === 'unavailable' || accuracy === 'unavailable') {
+      return 'unavailable';
+    }
+    if (source === 'gps' || source === 'manual' || source === 'imported' || accuracy === 'exact') {
+      return 'gps';
+    }
+    if (source === 'address_geocoded' || accuracy === 'geocoded') {
+      return 'address_geocoded';
+    }
+    if (source === 'barangay_center' || source === 'barangay_centroid' || accuracy === 'approximate') {
+      return 'barangay_center';
+    }
+
+    return 'barangay_center';
+  }
+
+  function hasMapMarker(row) {
+    if (row && row.has_map_marker === false) {
+      return false;
+    }
+    if (normalizeLocationSource(row) === 'unavailable') {
+      return false;
+    }
+    const lat = Number(row?.latitude);
+    const lng = Number(row?.longitude);
+    return isValidCoord(lat, lng);
+  }
+
+  function displayAddress(row) {
+    return (row?.display_address || row?.address || '').trim();
   }
 
   function getMapConfig() {
@@ -384,7 +434,7 @@
   }
 
   function locationSourceMeta(row) {
-    return LOCATION_SOURCE[normalizeLocationSource(row)] || LOCATION_SOURCE.barangay_centroid;
+    return LOCATION_SOURCE[normalizeLocationSource(row)] || LOCATION_SOURCE.barangay_center;
   }
 
   function locationSourceBadgeHtml(row) {
@@ -509,6 +559,9 @@
     const severityLabel = SEVERITY_LABELS[severity];
     const lat = Number(row.latitude);
     const lng = Number(row.longitude);
+    const locKey = normalizeLocationSource(row);
+    const locMeta = locationSourceMeta(row);
+    const address = displayAddress(row) || '—';
     let html = '<div class="gis-popup">';
 
     if (canShowPatientName()) {
@@ -516,8 +569,6 @@
     } else {
       html += '<strong>Patient #' + escapeHtml(row.patient_id) + '</strong>';
     }
-
-    const locMeta = locationSourceMeta(row);
 
     html +=
       '<p class="gis-popup__badges">' +
@@ -527,13 +578,57 @@
       escapeHtml(severityLabel) +
       '</span> ' +
       locationSourceBadgeHtml(row) +
-      '</p>' +
-      '<p class="gis-popup__loc-hint text-xs text-muted">' +
-      escapeHtml(locMeta.hint) +
-      '</p>' +
-      '<p><strong>Barangay:</strong> ' +
-      escapeHtml(row.barangay || '—') +
-      '</p>' +
+      '</p>';
+
+    if (locKey === 'unavailable') {
+      html +=
+        '<p class="gis-popup__loc-hint text-xs text-muted">No verified patient location is available for mapping.</p>' +
+        '<p><strong>Address:</strong> ' +
+        escapeHtml(address) +
+        '</p>';
+    } else if (locKey === 'gps') {
+      html +=
+        '<p class="gis-popup__loc-hint text-xs text-muted">' +
+        escapeHtml(locMeta.hint) +
+        '</p>' +
+        '<p><strong>Address:</strong> ' +
+        escapeHtml(address) +
+        '</p>';
+      if (canShowCoordinates() && isValidCoord(lat, lng)) {
+        html +=
+          '<p><strong>Coordinates:</strong> ' +
+          escapeHtml(lat.toFixed(6) + ', ' + lng.toFixed(6)) +
+          '</p>';
+      }
+    } else if (locKey === 'address_geocoded') {
+      html +=
+        '<p class="gis-popup__loc-hint text-xs text-muted">' +
+        escapeHtml(locMeta.hint) +
+        '</p>' +
+        '<p><strong>Address:</strong> ' +
+        escapeHtml(address) +
+        '</p>';
+      if (canShowCoordinates() && isValidCoord(lat, lng)) {
+        html +=
+          '<p><strong>Coordinates:</strong> ' +
+          escapeHtml(lat.toFixed(6) + ', ' + lng.toFixed(6)) +
+          '</p>';
+      }
+    } else {
+      html +=
+        '<p class="gis-popup__loc-hint text-xs text-muted">' +
+        escapeHtml(row.location_note || locMeta.hint) +
+        '</p>' +
+        '<p><strong>Address:</strong> ' +
+        escapeHtml(address) +
+        '</p>' +
+        '<p><strong>Location:</strong> ' +
+        escapeHtml(row.barangay_center_label || ('Barangay ' + (row.barangay || '—') + ' center')) +
+        '</p>' +
+        '<p class="text-xs text-muted"><em>Note: Exact patient location is unavailable.</em></p>';
+    }
+
+    html +=
       '<p><strong>Consultation status:</strong> ' +
       escapeHtml(consultationStatusLabel(row)) +
       '</p>' +
@@ -546,13 +641,6 @@
       '<p><strong>Assigned doctor:</strong> ' +
       escapeHtml(row.assigned_doctor || 'Not assigned') +
       '</p>';
-
-    if (canShowCoordinates() && isValidCoord(lat, lng)) {
-      html +=
-        '<p><strong>Coordinates:</strong> ' +
-        escapeHtml(lat.toFixed(6) + ', ' + lng.toFixed(6)) +
-        '</p>';
-    }
 
     html += '</div>';
     return html;
@@ -646,13 +734,23 @@
 
   function severityMarkerIcon(severity, locationSource) {
     const color = SEVERITY_COLORS[severity] || SEVERITY_COLORS.non_urgent;
-    const isPrecise = locationSource === 'gps';
-    const ring = isPrecise
+    const meta = LOCATION_SOURCE[locationSource] || LOCATION_SOURCE.barangay_center;
+    const markerStyle = meta.markerStyle || 'approx';
+    const isExact = markerStyle === 'exact';
+    const isGeocoded = markerStyle === 'geocoded';
+    const ring = isExact
       ? 'box-shadow:0 0 0 2px ' + color + '99'
       : 'box-shadow:0 0 0 2px rgba(255,255,255,0.95),0 0 0 4px ' + color + '55';
-    const border = isPrecise ? '2px solid #fff' : '2px dashed #fff';
+    const border = isExact ? '2px solid #fff' : isGeocoded ? '2px dotted #fff' : '2px dashed #fff';
+    const title = isExact
+      ? 'GPS pin (exact)'
+      : isGeocoded
+        ? 'Geocoded address pin'
+        : 'Approximate barangay pin';
     return L.divIcon({
-      className: 'gis-severity-marker' + (isPrecise ? '' : ' gis-severity-marker--approx'),
+      className:
+        'gis-severity-marker' +
+        (isExact ? '' : isGeocoded ? ' gis-severity-marker--geocoded' : ' gis-severity-marker--approx'),
       html:
         '<div style="background:' +
         color +
@@ -661,7 +759,7 @@
         ';' +
         ring +
         '" title="' +
-        (isPrecise ? 'GPS pin' : 'Approximate barangay pin') +
+        title +
         '"></div>',
       iconSize: [14, 14],
       iconAnchor: [7, 7],
@@ -717,7 +815,7 @@
   }
 
   function heatPoints(layerName) {
-    const rows = patientsForLayer(layerName);
+    const rows = patientsForLayer(layerName).filter(hasMapMarker);
     const baseIntensity = HEAT_INTENSITY[layerName] || HEAT_INTENSITY.all;
 
     if (layerName === 'all') {
@@ -753,6 +851,9 @@
     const visiblePatients = patientsForLayer(layerName);
 
     visiblePatients.forEach(function (row) {
+      if (!hasMapMarker(row)) {
+        return;
+      }
       const lat = Number(row.latitude);
       const lng = Number(row.longitude);
       if (!isValidCoord(lat, lng)) return;

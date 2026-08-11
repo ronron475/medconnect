@@ -108,20 +108,15 @@ function bhw_notify(PDO $pdo, int $userId, string $type, string $title, string $
 function bhw_sync_gis(PDO $pdo, int $patientId, array $ctx, ?string $address = null): void
 {
     require_once __DIR__ . '/../core/GisDashboardService.php';
-    require_once __DIR__ . '/../core/BagoBarangayCentroids.php';
     $gis = new GisDashboardService($pdo);
-    $gis->ensureSchema();
-    $centroid = BagoBarangayCentroids::resolve($ctx['barangay_name'] ?? '');
-    $lat = $centroid['lat'] ?? null;
-    $lng = $centroid['lng'] ?? null;
     $gis->savePatientLocation(
         $patientId,
         'Negros Occidental',
         'Bago City',
         $ctx['barangay_name'],
         $address ?? ('Brgy. ' . $ctx['barangay_name'] . ', Bago City'),
-        $lat,
-        $lng,
-        ($lat !== null && $lng !== null) ? 'barangay_centroid' : 'manual'
+        null,
+        null,
+        'barangay_centroid'
     );
 }
