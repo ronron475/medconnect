@@ -59,6 +59,20 @@
   transform: translateY(-8px);
 }
 
+@media (max-width: 768px) {
+  .mc-vc-root.is-fullscreen .mc-vc-header,
+  .mc-vc-root.is-fullscreen .mc-vc-status-bar {
+    display: none;
+  }
+
+  .mc-vc-root.is-fullscreen .mc-vc-controls,
+  .mc-vc-root.is-fullscreen.controls-hidden .mc-vc-controls {
+    opacity: 1;
+    pointer-events: auto;
+    transform: none;
+  }
+}
+
 .mc-vc-root.is-fullscreen.controls-visible .mc-vc-header,
 .mc-vc-root.is-fullscreen.controls-visible .mc-vc-status-bar,
 .mc-vc-root.is-fullscreen.controls-visible .mc-vc-controls {
@@ -424,6 +438,24 @@
   max-width: min(420px, calc(100% - 32px));
 }
 
+.mc-vc-overlay.is-status .mc-vc-overlay-card {
+  padding: 10px 16px;
+  max-width: min(300px, calc(100% - 40px));
+  border-radius: 12px;
+  background: rgba(2, 6, 23, 0.72);
+}
+
+.mc-vc-overlay.is-status .mc-vc-overlay-title {
+  font-size: 13px;
+  font-weight: 700;
+  margin-bottom: 4px;
+}
+
+.mc-vc-overlay.is-status .mc-vc-overlay-sub {
+  font-size: 11px;
+  line-height: 1.45;
+}
+
 .mc-vc-overlay-title {
   font-size: 15px;
   font-weight: 800;
@@ -527,6 +559,45 @@ body.role-patient .mc-vc-main {
   pointer-events: auto;
   position: relative;
   z-index: 1;
+}
+
+.mc-vc-controls-primary,
+.mc-vc-controls-secondary {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  flex-wrap: nowrap;
+}
+
+@media (min-width: 769px) {
+  .mc-vc-controls-inner {
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+
+  .mc-vc-controls-primary,
+  .mc-vc-controls-secondary {
+    display: contents;
+  }
+}
+
+.mc-vc-btn--desktop-only {
+  display: flex;
+}
+
+.mc-vc-btn--report {
+  width: auto;
+  min-width: 96px;
+  height: 48px;
+  border-radius: 14px;
+  padding: 0 16px;
+  font-weight: 800;
+  font-size: 13px;
+  background: rgba(251, 191, 36, 0.18);
+  color: #fbbf24;
+  border: 1px solid rgba(251, 191, 36, 0.42);
 }
 
 .mc-vc-btn {
@@ -706,9 +777,9 @@ body.embedded-shell.role-provider .mc-vc-root {
 
 @media (max-width: 720px) {
   body.embedded-shell.role-provider .mc-vc-status-bar {
-    top: calc(var(--mc-vc-header-height) + var(--mc-vc-safe-top));
-    max-height: 52px;
-    overflow: hidden;
+    top: auto;
+    max-height: none;
+    overflow: visible;
   }
 
   body.embedded-shell.role-provider .mc-vc-media-status span:not(#mediaStatusConn) {
@@ -723,19 +794,20 @@ body.embedded-shell.role-provider .mc-vc-root {
   }
 
   body.embedded-shell.role-provider .mc-vc-controls-inner {
-    gap: 5px;
-    padding: 6px 8px;
+    gap: 10px;
+    padding: 10px 12px;
   }
 
   body.embedded-shell.role-provider .mc-vc-btn {
-    width: 40px;
-    height: 40px;
+    width: 48px;
+    height: 48px;
   }
 
-  body.embedded-shell.role-provider .mc-vc-btn--end {
-    min-width: 76px;
-    height: 40px;
-    font-size: 11px;
+  body.embedded-shell.role-provider .mc-vc-btn--end,
+  body.embedded-shell.role-provider .mc-vc-btn--report {
+    min-width: 96px;
+    height: 48px;
+    font-size: 13px;
   }
 
   body.embedded-shell.role-provider .mc-vc-main video,
@@ -806,19 +878,140 @@ body.embedded-shell.role-provider .mc-vc-root {
 }
 
 /* Mobile */
-@media (max-width: 720px) {
+@media (max-width: 768px) {
   :root {
-    --mc-vc-controls-height: 108px;
+    --mc-vc-controls-height: 152px;
     --mc-vc-header-height: 56px;
   }
 
-  .mc-vc-btn--mobile-only {
+  .mc-vc-root {
     display: flex;
+    flex-direction: column;
+    height: 100%;
+    min-height: 0;
+  }
+
+  body.embedded-shell.role-provider .mc-vc-root.is-fullscreen,
+  .mc-vc-root.is-fullscreen {
+    height: 100dvh;
+    min-height: 0;
   }
 
   .mc-vc-header {
+    position: relative;
+    top: auto;
+    left: auto;
+    right: auto;
+    flex-shrink: 0;
     min-height: var(--mc-vc-header-height);
     padding: calc(8px + var(--mc-vc-safe-top)) calc(10px + var(--mc-vc-safe-right)) 8px calc(10px + var(--mc-vc-safe-left));
+  }
+
+  .mc-vc-status-bar {
+    position: relative;
+    top: auto;
+    left: auto;
+    right: auto;
+    flex-shrink: 0;
+    padding: 0 calc(8px + var(--mc-vc-safe-right)) 6px calc(8px + var(--mc-vc-safe-left));
+    max-width: none;
+    gap: 6px;
+    flex-wrap: wrap;
+  }
+
+  .mc-vc-stage {
+    position: relative;
+    inset: auto;
+    flex: 1 1 auto;
+    min-height: 0;
+    width: 100%;
+  }
+
+  .mc-vc-main {
+    position: absolute;
+    inset: 0;
+    top: 0;
+  }
+
+  body.role-patient .mc-vc-main {
+    top: 0;
+  }
+
+  .mc-vc-controls {
+    position: relative;
+    bottom: auto;
+    left: auto;
+    right: auto;
+    flex-shrink: 0;
+    width: 100%;
+    box-sizing: border-box;
+    padding: calc(8px + var(--mc-vc-safe-top)) calc(8px + var(--mc-vc-safe-right)) calc(12px + var(--mc-vc-safe-bottom)) calc(8px + var(--mc-vc-safe-left));
+    background: linear-gradient(0deg, rgba(2, 6, 23, 0.94) 0%, rgba(2, 6, 23, 0.55) 100%);
+    border-top: 1px solid rgba(148, 163, 184, 0.12);
+  }
+
+  .mc-vc-controls-inner {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+    width: 100%;
+    max-width: 100%;
+    padding: 10px 12px;
+    border-radius: 16px;
+    flex-wrap: nowrap;
+  }
+
+  .mc-vc-controls-primary,
+  .mc-vc-controls-secondary {
+    width: 100%;
+    justify-content: center;
+    gap: 10px;
+  }
+
+  .mc-vc-btn--desktop-only {
+    display: none !important;
+  }
+
+  body.embedded-shell .mc-vc-top-actions {
+    display: none !important;
+  }
+
+  .mc-vc-top-actions {
+    display: none !important;
+  }
+
+  .mc-vc-btn {
+    width: 48px;
+    height: 48px;
+    flex: 0 0 auto;
+  }
+
+  .mc-vc-btn--report,
+  .mc-vc-btn--end {
+    min-width: 0;
+    flex: 1 1 0;
+    max-width: 168px;
+    height: 48px;
+    border-radius: 24px;
+    font-size: 13px;
+  }
+
+  .mc-vc-btn--end {
+    min-width: 96px;
+  }
+
+  .mc-vc-pip[data-corner="bottom-left"],
+  .mc-vc-pip[data-corner="bottom-right"] {
+    top: calc(var(--mc-vc-header-height) + 42px + var(--mc-vc-safe-top));
+    bottom: auto;
+    right: calc(10px + var(--mc-vc-safe-right));
+    left: auto;
+  }
+}
+
+@media (max-width: 720px) {
+  .mc-vc-btn--mobile-only {
+    display: flex;
   }
 
   .mc-vc-header-meta .mc-vc-pill--secure,
@@ -839,46 +1032,8 @@ body.embedded-shell.role-provider .mc-vc-root {
     font-size: 11px;
   }
 
-  .mc-vc-status-bar {
-    top: calc(var(--mc-vc-header-height) + var(--mc-vc-safe-top));
-    left: calc(8px + var(--mc-vc-safe-left));
-    right: calc(8px + var(--mc-vc-safe-right));
-    gap: 6px;
-    flex-wrap: wrap;
-  }
-
-  body.role-patient .mc-vc-main {
-    top: calc(var(--mc-vc-header-height) + 48px + var(--mc-vc-safe-top));
-  }
-
   .mc-vc-media-status span {
     font-size: 11px;
-  }
-
-  .mc-vc-controls {
-    padding: calc(8px + var(--mc-vc-safe-bottom)) calc(8px + var(--mc-vc-safe-right)) calc(10px + var(--mc-vc-safe-bottom)) calc(8px + var(--mc-vc-safe-left));
-  }
-
-  .mc-vc-controls-inner {
-    gap: 6px;
-    padding: 8px 10px;
-    max-width: 100%;
-    flex-wrap: wrap;
-    justify-content: center;
-    border-radius: 18px;
-  }
-
-  .mc-vc-btn {
-    width: 44px;
-    height: 44px;
-    flex: 0 0 auto;
-  }
-
-  .mc-vc-btn--end {
-    min-width: 88px;
-    height: 44px;
-    font-size: 12px;
-    border-radius: 22px;
   }
 
   .mc-vc-pip {
@@ -886,31 +1041,6 @@ body.embedded-shell.role-provider .mc-vc-root {
     height: 78px;
     min-width: 104px;
     min-height: 78px;
-  }
-
-  /* Keep PiP top-right so it does not collide with bottom actions/controls */
-  .mc-vc-pip[data-corner="bottom-left"],
-  .mc-vc-pip[data-corner="bottom-right"] {
-    top: calc(var(--mc-vc-header-height) + 42px + var(--mc-vc-safe-top));
-    bottom: auto;
-    right: calc(10px + var(--mc-vc-safe-right));
-    left: auto;
-  }
-
-  .mc-vc-top-actions {
-    top: auto;
-    bottom: calc(var(--mc-vc-controls-height) + 6px + var(--mc-vc-safe-bottom));
-    right: calc(8px + var(--mc-vc-safe-right));
-    left: calc(8px + var(--mc-vc-safe-left));
-    justify-content: center;
-    gap: 6px;
-    flex-wrap: wrap;
-  }
-
-  .mc-vc-top-actions a,
-  .mc-vc-top-actions button {
-    font-size: 11px;
-    padding: 7px 10px;
   }
 
   .mc-vc-root.is-floating {
@@ -953,7 +1083,7 @@ body.embedded-shell.role-provider .mc-vc-root {
 
 @media (max-width: 720px) and (orientation: landscape) {
   :root {
-    --mc-vc-controls-height: 64px;
+    --mc-vc-controls-height: 112px;
     --mc-vc-header-height: 44px;
   }
 
@@ -972,10 +1102,25 @@ body.embedded-shell.role-provider .mc-vc-root {
   }
 
   .mc-vc-controls-inner {
+    flex-direction: column;
+    overflow: visible;
+    max-width: 100%;
+  }
+
+  .mc-vc-controls-primary,
+  .mc-vc-controls-secondary {
     flex-wrap: nowrap;
-    overflow-x: auto;
-    max-width: calc(100vw - 24px);
-    -webkit-overflow-scrolling: touch;
+  }
+
+  .mc-vc-btn {
+    width: 44px;
+    height: 44px;
+  }
+
+  .mc-vc-btn--report,
+  .mc-vc-btn--end {
+    height: 44px;
+    font-size: 12px;
   }
 
   .mc-vc-pip {
@@ -984,9 +1129,20 @@ body.embedded-shell.role-provider .mc-vc-root {
     min-width: 128px;
     min-height: 90px;
   }
+}
 
-  .mc-vc-top-actions {
-    bottom: calc(var(--mc-vc-controls-height) + 4px + var(--mc-vc-safe-bottom));
+@media (max-width: 480px) {
+  .mc-vc-controls-primary {
+    gap: 8px;
+  }
+
+  .mc-vc-controls-secondary {
+    gap: 8px;
+  }
+
+  .mc-vc-btn {
+    width: 44px;
+    height: 44px;
   }
 }
 
@@ -996,16 +1152,33 @@ body.embedded-shell.role-provider .mc-vc-root {
   }
 
   .mc-vc-controls-inner {
-    gap: 5px;
+    gap: 8px;
+    padding: 8px 10px;
+  }
+
+  .mc-vc-controls-primary {
+    gap: 6px;
   }
 
   .mc-vc-btn--end {
     min-width: 72px;
     padding: 0 10px;
+    font-size: 12px;
+  }
+
+  .mc-vc-btn--report {
+    min-width: 72px;
+    padding: 0 10px;
+    font-size: 12px;
   }
 }
 
 #mcVcWaitingCard[hidden] {
+  display: none !important;
+  pointer-events: none !important;
+}
+
+body.media-ready .mc-vc-waiting-card {
   display: none !important;
   pointer-events: none !important;
 }

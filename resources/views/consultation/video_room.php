@@ -654,30 +654,34 @@ if (session_status() === PHP_SESSION_ACTIVE) {
     <button type="button" id="enableSoundBtn" class="mc-vc-enable-sound enable-sound-btn" hidden>🔊 Enable Audio</button>
     <span id="remoteName" hidden><?= htmlspecialchars($other_name) ?></span>
 
-    <div class="mc-vc-controls" id="mcVcControls">
-      <div class="mc-vc-controls-inner controls">
-        <button class="mc-vc-btn btn-mute" id="muteAudio" onclick="toggleAudio()" title="Mute / unmute microphone" aria-pressed="false" aria-label="Mute microphone">
-          <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v1a7 7 0 0 1-14 0v-1M12 18v4M8 22h8"/></svg>
-        </button>
-        <button class="mc-vc-btn btn-mute" id="toggleVideo" onclick="toggleVideo()" title="Turn camera on / off" aria-label="Toggle camera">
-          <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><path d="m23 7-7 5 7 5V7z"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/></svg>
-        </button>
-        <button type="button" class="mc-vc-btn mc-vc-btn--mobile-only" id="mcVcFlipBtn" title="Switch camera" aria-label="Switch front/back camera">
-          <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 2l4 4-4 4"/><path d="M3 11V9a4 4 0 0 1 4-4h14M7 22l-4-4 4-4"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg>
-        </button>
-        <button type="button" class="mc-vc-btn mc-vc-btn--mobile-only" id="mcVcSpeakerBtn" title="Speaker on / off" aria-label="Toggle speaker">
-          <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 5L6 9H2v6h4l5 4V5z"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"/></svg>
-        </button>
-        <button type="button" class="mc-vc-btn" id="mcVcFullscreenBtn" title="Expand video" aria-label="Expand video">
-          <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/></svg>
-        </button>
-        <button type="button" class="mc-vc-btn" id="mcVcMinimizeBtn" title="Minimize call" aria-label="Minimize call">
-          <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9V5a1 1 0 0 1 1-1h4M18 9V5a1 1 0 0 0-1-1h-4M6 15v4a1 1 0 0 0 1 1h4M18 15v4a1 1 0 0 1-1 1h-4"/></svg>
-        </button>
-        <?php if (!$is_patient): ?>
-        <button type="button" class="mc-vc-btn mc-vc-btn--report" id="violationReportBtn" title="Report possible violation" aria-label="Report possible violation">Report</button>
-        <?php endif; ?>
-        <button type="button" class="mc-vc-btn mc-vc-btn--end btn-end" id="endCallBtn"><?= $is_patient ? 'Leave' : 'End' ?></button>
+    <div class="mc-vc-controls video-call-controls" id="mcVcControls">
+      <div class="mc-vc-controls-inner">
+        <div class="mc-vc-controls-primary" role="group" aria-label="Call controls">
+          <button class="mc-vc-btn btn-mute" id="muteAudio" onclick="toggleAudio()" title="Mute microphone" aria-pressed="false" aria-label="Mute microphone">
+            <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v1a7 7 0 0 1-14 0v-1M12 18v4M8 22h8"/></svg>
+          </button>
+          <button class="mc-vc-btn btn-mute" id="toggleVideo" onclick="toggleVideo()" title="Turn camera on or off" aria-label="Toggle camera">
+            <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><path d="m23 7-7 5 7 5V7z"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/></svg>
+          </button>
+          <button type="button" class="mc-vc-btn mc-vc-btn--mobile-only" id="mcVcFlipBtn" title="Switch camera" aria-label="Switch front or back camera">
+            <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 2l4 4-4 4"/><path d="M3 11V9a4 4 0 0 1 4-4h14M7 22l-4-4 4-4"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg>
+          </button>
+          <button type="button" class="mc-vc-btn mc-vc-btn--mobile-only mc-vc-btn--speaker" id="mcVcSpeakerBtn" title="Speaker on or off" aria-label="Toggle speaker">
+            <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 5L6 9H2v6h4l5 4V5z"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"/></svg>
+          </button>
+          <button type="button" class="mc-vc-btn" id="mcVcFullscreenBtn" title="Enter fullscreen" aria-label="Enter fullscreen">
+            <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/></svg>
+          </button>
+          <button type="button" class="mc-vc-btn mc-vc-btn--desktop-only" id="mcVcMinimizeBtn" title="Minimize call" aria-label="Minimize call">
+            <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9V5a1 1 0 0 1 1-1h4M18 9V5a1 1 0 0 0-1-1h-4M6 15v4a1 1 0 0 0 1 1h4M18 15v4a1 1 0 0 1-1 1h-4"/></svg>
+          </button>
+        </div>
+        <div class="mc-vc-controls-secondary" role="group" aria-label="Call actions">
+          <?php if (!$is_patient): ?>
+          <button type="button" class="mc-vc-btn mc-vc-btn--report" id="violationReportBtn" title="Report possible violation" aria-label="Report possible violation">Report</button>
+          <?php endif; ?>
+          <button type="button" class="mc-vc-btn mc-vc-btn--end btn-end" id="endCallBtn"><?= $is_patient ? 'Leave' : 'End Call' ?></button>
+        </div>
       </div>
     </div>
   </div>

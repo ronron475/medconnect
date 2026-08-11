@@ -484,13 +484,14 @@ body.mc-vc-panel-open {
 
   .mc-vc-waiting-card {
     padding: 1rem;
-    align-items: flex-end;
+    align-items: center;
+    justify-content: center;
   }
 
   .mc-vc-waiting-card__inner {
     padding: 1.25rem;
-    border-radius: 16px 16px 0 0;
-    max-height: 85dvh;
+    border-radius: 16px;
+    max-height: min(70dvh, calc(100dvh - var(--mc-vc-controls-height, 152px) - 24px));
     overflow: auto;
     -webkit-overflow-scrolling: touch;
   }
