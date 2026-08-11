@@ -300,6 +300,7 @@ function patient_symptoms_review_pending_state(PDO $pdo, int $patientId): array
 {
     triage_assessment_ensure_schema($pdo);
     require_once __DIR__ . '/triage_provider_assignment.php';
+    require_once __DIR__ . '/patient_booking_status.php';
 
     $empty = [
         'has_pending' => false,
@@ -307,13 +308,17 @@ function patient_symptoms_review_pending_state(PDO $pdo, int $patientId): array
         'complaint' => '',
         'provider_id' => 0,
         'provider_name' => '',
+        'recommendation_status' => '',
     ];
 
+    // "Doctor reviewing" is only for care tips still awaiting approval —
+    // never for scheduled / in-progress visits or approved tips.
     $stmt = $pdo->prepare("
-        SELECT id, chief_complaint, assigned_provider_id
+        SELECT id, chief_complaint, assigned_provider_id, assessed_at, recommendation_status
         FROM triage_results tr
         WHERE tr.patient_id = ?
           AND TRIM(COALESCE(tr.chief_complaint, '')) <> ''
+          AND COALESCE(tr.recommendation_status, 'hidden') = 'pending_approval'
           " . patient_triage_sql_active_only('tr') . "
         ORDER BY tr.assessed_at DESC
         LIMIT 1
@@ -324,14 +329,31 @@ function patient_symptoms_review_pending_state(PDO $pdo, int $patientId): array
         return $empty;
     }
 
+    $triageId = (int) ($row['id'] ?? 0);
+    $bookingState = patient_triage_row_booking_state(
+        $pdo,
+        $patientId,
+        (string) ($row['assessed_at'] ?? ''),
+        $triageId
+    );
+    if ($bookingState === 'booked' || $bookingState === 'completed') {
+        return $empty;
+    }
+
+    // An open visit always wins over the care-tips review card.
+    if (patient_portal_has_open_consultation($pdo, $patientId)) {
+        return $empty;
+    }
+
     $providerId = (int) ($row['assigned_provider_id'] ?? 0);
 
     return [
         'has_pending' => true,
-        'triage_id' => (int) ($row['id'] ?? 0),
+        'triage_id' => $triageId,
         'complaint' => trim((string) ($row['chief_complaint'] ?? '')),
         'provider_id' => $providerId,
         'provider_name' => triage_provider_display_name($pdo, $providerId),
+        'recommendation_status' => (string) ($row['recommendation_status'] ?? ''),
     ];
 }
 

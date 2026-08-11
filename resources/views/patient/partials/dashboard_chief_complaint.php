@@ -13,7 +13,23 @@ $chief_complaint_source = trim((string) ($chief_complaint_source ?? ''));
 $chief_complaint_source_label = patient_portal_complaint_source_label($chief_complaint_source);
 $show_evidence_section = false;
 $show_care_tips_context = !empty($show_dashboard_care_tips_section);
-$submit_label = $show_care_tips_context ? 'Submit for doctor review' : 'Submit chief complaint';
+$is_new_consultation_flow = !$chief_complaint_locked
+    && empty($active_consultation)
+    && function_exists('patient_portal_has_completed_visit')
+    && isset($pdo, $uid)
+    && patient_portal_has_completed_visit($pdo, (int) $uid);
+$card_title = $is_new_consultation_flow ? 'Start New Consultation' : 'Chief Complaint';
+$card_lead = $is_new_consultation_flow
+    ? 'What is your current health concern? Enter a new chief complaint — previous visits stay in history.'
+    : ($show_care_tips_context
+        ? 'Describe your concern; your doctor can approve self-care tips after you submit.'
+        : 'Share your current health concern to start triage.');
+$submit_label = $is_new_consultation_flow
+    ? 'Continue'
+    : ($show_care_tips_context ? 'Submit for doctor review' : 'Submit chief complaint');
+$placeholder = $chief_complaint_locked
+    ? 'Your submitted health concern…'
+    : 'Describe your symptoms or concern…';
 ?>
 <section
   class="pdash-card pdash-card--complaint pdash-care"
@@ -26,14 +42,8 @@ $submit_label = $show_care_tips_context ? 'Submit for doctor review' : 'Submit c
         <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" x2="8" y1="13" y2="13"/><line x1="16" x2="8" y1="17" y2="17"/></svg>
       </span>
       <div>
-        <h2 class="pdash-card__title pdash-care__title" id="pdashChiefComplaintTitle">Chief Complaint</h2>
-        <p class="pdash-care__lead">
-          <?php if ($show_care_tips_context): ?>
-          Describe your concern; your doctor can approve self-care tips after you submit.
-          <?php else: ?>
-          Share your current health concern to start triage.
-          <?php endif; ?>
-        </p>
+        <h2 class="pdash-card__title pdash-care__title" id="pdashChiefComplaintTitle"><?= htmlspecialchars($card_title) ?></h2>
+        <p class="pdash-care__lead"><?= htmlspecialchars($card_lead) ?></p>
       </div>
     </div>
   </div>
@@ -68,12 +78,14 @@ $submit_label = $show_care_tips_context ? 'Submit for doctor review' : 'Submit c
       class="form-control pdash-care-form__input<?= $chief_complaint_locked ? ' pdash-care-form__input--locked' : '' ?>"
       rows="3"
       maxlength="500"
-      placeholder="<?= $chief_complaint_locked ? 'Your submitted health concern…' : 'e.g. mild sore throat and runny nose for two days…' ?>"
+      placeholder="<?= htmlspecialchars($placeholder) ?>"
       <?= $chief_complaint_locked ? 'readonly aria-readonly="true"' : 'required' ?>
     ><?= htmlspecialchars($registration_chief_complaint) ?></textarea>
     <p class="pdash-care-form__hint">
       <?php if ($chief_complaint_locked): ?>
       This chief complaint is already on file from your <?= htmlspecialchars($chief_complaint_source === 'registration' ? 'registration' : 'earlier submission') ?>. It cannot be changed here and will be reviewed by your doctor.
+      <?php elseif ($is_new_consultation_flow): ?>
+      Enter a <strong>new</strong> health concern for this consultation. Previous complaints remain in your visit history and are not reused.
       <?php else: ?>
       Describe your health concern. At least a short sentence helps your care team understand your case faster.
       <?php endif; ?>

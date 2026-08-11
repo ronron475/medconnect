@@ -47,8 +47,13 @@ foreach ($upcoming_list as $c) {
       </div>
     </div>
     <div class="pdash-hero__actions">
-      <a href="<?= ASSET_BASE ?>/views/patient/triage.php" class="pdash-btn pdash-btn--primary">Book Consultation</a>
+      <?php if (!empty($active_consultation) && in_array(strtolower((string) ($active_consultation['status'] ?? '')), ['pending', 'scheduled', 'waiting', 'in_consultation'], true)): ?>
+      <a href="#pdashActiveConsultation" class="pdash-btn pdash-btn--primary">View Active Consultation</a>
       <a href="<?= ASSET_BASE ?>/views/patient/consultations.php" class="pdash-btn pdash-btn--outline">My Sessions</a>
+      <?php else: ?>
+      <a href="<?= ASSET_BASE ?>/views/patient/triage.php" class="pdash-btn pdash-btn--primary">Book New Consultation</a>
+      <a href="<?= ASSET_BASE ?>/views/patient/consultations.php" class="pdash-btn pdash-btn--outline">My Sessions</a>
+      <?php endif; ?>
     </div>
   </section>
 
@@ -75,10 +80,16 @@ foreach ($upcoming_list as $c) {
 
   <?php
   $symptoms_review_has_pending = !empty($symptoms_review_pending['has_pending']);
-  if (!$symptoms_review_has_pending):
+  $has_active_consultation = !empty($active_consultation)
+      && in_array(strtolower((string) ($active_consultation['status'] ?? '')), ['pending', 'scheduled', 'waiting', 'in_consultation'], true);
+
+  // Active scheduled/in-progress visit always wins over care-tips review / new complaint.
+  if ($has_active_consultation):
+      require __DIR__ . '/dashboard_active_consultation.php';
+  elseif (!$symptoms_review_has_pending):
       require __DIR__ . '/dashboard_chief_complaint.php';
   endif;
-  if (!empty($show_dashboard_care_tips_section) && $symptoms_review_has_pending):
+  if (!$has_active_consultation && !empty($show_dashboard_care_tips_section) && $symptoms_review_has_pending):
       require __DIR__ . '/dashboard_symptoms_review.php';
   endif;
   ?>
@@ -220,7 +231,11 @@ foreach ($upcoming_list as $c) {
             <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/></svg>
           </div>
           <p>No upcoming consultations scheduled.</p>
-          <a href="<?= ASSET_BASE ?>/views/patient/triage.php" class="pdash-btn pdash-btn--primary">Book Consultation</a>
+          <?php if (!empty($has_active_consultation)): ?>
+          <a href="#pdashActiveConsultation" class="pdash-btn pdash-btn--primary">View Active Consultation</a>
+          <?php else: ?>
+          <a href="<?= ASSET_BASE ?>/views/patient/triage.php" class="pdash-btn pdash-btn--primary">Book New Consultation</a>
+          <?php endif; ?>
         </div>
         <?php endif; ?>
       </section>
