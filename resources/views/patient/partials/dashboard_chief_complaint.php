@@ -29,9 +29,9 @@ $submit_label = $show_care_tips_context ? 'Submit for doctor review' : 'Submit c
         <h2 class="pdash-card__title pdash-care__title" id="pdashChiefComplaintTitle">Chief Complaint</h2>
         <p class="pdash-care__lead">
           <?php if ($show_care_tips_context): ?>
-          Describe your concern first. For non-urgent cases, your doctor can approve self-care tips after you submit.
+          Describe your concern; your doctor can approve self-care tips after you submit.
           <?php else: ?>
-          Describe your health concern first. After triage assessment, you can add optional photo or video evidence for non-urgent and urgent cases.
+          Share your current health concern to start triage.
           <?php endif; ?>
         </p>
       </div>

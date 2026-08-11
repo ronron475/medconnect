@@ -21,6 +21,11 @@ body:has(.landing-fab) .mc-messages-fab {
   bottom: calc(var(--mc-messages-fab-bottom) + var(--mc-messages-fab-size) + 18px);
 }
 
+/* Stack above Care tips FAB on patient portal (pill ~44px + 12px gap). */
+body:has(#ptRemedyFab:not([hidden])) .mc-messages-fab {
+  bottom: calc(12px + 44px + 12px + env(safe-area-inset-bottom, 0px));
+}
+
 .mc-messages-fab {
   position: fixed;
   right: var(--mc-messages-fab-right);

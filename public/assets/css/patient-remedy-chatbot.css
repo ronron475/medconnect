@@ -328,8 +328,9 @@ html[data-theme-resolved='dark'] .pt-remedy__choice--outline {
 @media (max-width: 720px) {
   .pt-remedy {
     right: 12px;
-    bottom: 12px;
+    bottom: calc(12px + env(safe-area-inset-bottom, 0px));
     left: auto;
+    z-index: 12035;
   }
 
   .pt-remedy__panel {

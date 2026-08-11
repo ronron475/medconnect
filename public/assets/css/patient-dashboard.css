@@ -810,23 +810,169 @@
     grid-template-columns: 1fr;
   }
 
+  .pdash-main {
+    order: 1;
+  }
+
   .pdash-side {
-    order: -1;
+    order: 2;
   }
 
   .pdash-metrics,
   .pdash-quick {
-    grid-template-columns: repeat(2, 1fr);
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 768px) {
+  body.patient-portal:has(#view-dashboard) .portal-page-body {
+    padding-bottom: calc(116px + env(safe-area-inset-bottom, 0px)) !important;
+  }
+
+  .pdash-page {
+    gap: 10px;
+  }
+
+  .pdash-hero {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .pdash-hero__content {
+    min-width: 0;
+  }
+
+  .pdash-hero__sub {
+    font-size: 0.82rem;
+    margin-bottom: 10px;
+    max-width: none;
+  }
+
+  .pdash-hero__actions {
+    width: 100%;
+  }
+
+  .pdash-hero__actions .pdash-btn {
+    flex: 1 1 auto;
+    min-height: 44px;
+  }
+
+  .pdash-metrics {
+    order: 3;
+    gap: 10px;
+    margin-bottom: 4px;
+  }
+
+  .pdash-card--complaint,
+  .pdash-card--review {
+    order: 4;
+  }
+
+  .pdash-live {
+    order: 2;
+  }
+
+  .pdash-quick {
+    order: 5;
+    gap: 8px;
+  }
+
+  .pdash-grid {
+    order: 6;
+  }
+
+  .pdash-metric {
+    padding: 10px 8px;
+  }
+
+  .pdash-metric__value {
+    font-size: 1.35rem;
+  }
+
+  .pdash-metric__label {
+    font-size: 0.62rem;
+    line-height: 1.25;
+  }
+
+  .pdash-card--complaint,
+  .pdash-card--review {
+    padding: 14px;
+    margin-bottom: 10px;
+  }
+
+  .pdash-care__top {
+    margin-bottom: 12px;
+  }
+
+  .pdash-care__icon {
+    width: 38px;
+    height: 38px;
+    border-radius: 10px;
+  }
+
+  .pdash-care__icon svg {
+    width: 18px;
+    height: 18px;
+  }
+
+  .pdash-care__title {
+    font-size: 1.05rem;
+  }
+
+  .pdash-care__lead {
+    display: none;
+  }
+
+  .pdash-care-form__input {
+    min-height: 84px;
+  }
+
+  .pdash-care-form__hint {
+    font-size: 0.78rem;
+    line-height: 1.4;
+  }
+
+  .pdash-care-form__submit {
+    max-width: none;
+    width: 100%;
+    min-height: 44px;
+  }
+
+  .pdash-quick__link {
+    padding: 10px 12px;
+    font-size: 0.78rem;
+  }
+
+  .pdash-quick__icon {
+    width: 32px;
+    height: 32px;
+  }
+
+  .pdash-flow {
+    display: none;
+  }
+
+  .pdash-session {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .pdash-session__action {
+    width: 100%;
+  }
+
+  .pdash-session__action .pdash-btn {
+    width: 100%;
+    justify-content: center;
   }
 }
 
 @media (max-width: 560px) {
   .pdash-hero {
-    padding: 18px 16px;
+    padding: 16px 14px;
   }
 
   .pdash-hero__actions {
-    width: 100%;
     flex-direction: column;
   }
 
@@ -844,24 +990,12 @@
   .pdash-care__status-chip {
     margin-left: auto;
   }
+}
 
+@media (max-width: 359px) {
   .pdash-metrics,
   .pdash-quick {
     grid-template-columns: 1fr;
-  }
-
-  .pdash-session {
-    flex-direction: column;
-    align-items: flex-start;
-  }
-
-  .pdash-session__action {
-    width: 100%;
-  }
-
-  .pdash-session__action .pdash-btn {
-    width: 100%;
-    justify-content: center;
   }
 }
 
