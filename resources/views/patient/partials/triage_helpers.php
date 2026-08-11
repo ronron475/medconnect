@@ -2,6 +2,15 @@
 /**
  * Format triage symptoms for display (JSON array or plain text).
  */
+
+if (!function_exists('patient_triage_row_booking_state')) {
+    $bookingStatusPath = defined('BASE_PATH')
+        ? BASE_PATH . '/app/includes/patient_booking_status.php'
+        : dirname(__DIR__, 4) . '/app/includes/patient_booking_status.php';
+    if (is_file($bookingStatusPath)) {
+        require_once $bookingStatusPath;
+    }
+}
 function mc_format_triage_symptoms(?string $raw): string
 {
     if ($raw === null || $raw === '') {
@@ -41,24 +50,66 @@ function mc_triage_level_label(string $level, ?string $urgency_label = null): st
     return htmlspecialchars($map[$level] ?? strtoupper($level));
 }
 
-/** Patient-facing visit status (no NLP / confidence exposure). */
-function mc_patient_visit_status_label(array $row): string
+/**
+ * Patient-facing visit status (no NLP / confidence exposure).
+ *
+ * @param array<string, mixed> $row
+ * @param PDO|null $pdo Optional — when provided, reflects actual booking state.
+ * @param int $patientId
+ */
+function mc_patient_visit_status_label(array $row, ?PDO $pdo = null, int $patientId = 0): string
 {
+    $bookingState = (string) ($row['_booking_state'] ?? '');
+    if ($bookingState === '' && $pdo instanceof PDO && $patientId > 0 && !empty($row['assessed_at'])) {
+        $bookingState = patient_triage_row_booking_state($pdo, $patientId, (string) $row['assessed_at']);
+    }
+
+    if ($bookingState === 'booked') {
+        return 'Visit booked';
+    }
+    if ($bookingState === 'completed') {
+        return 'Visit completed';
+    }
+
+    $recStatus = strtolower((string) ($row['recommendation_status'] ?? ''));
+    if ($recStatus === 'pending_approval') {
+        return 'Care tips in review';
+    }
+    if ($recStatus === 'approved') {
+        return 'Approved — book a visit';
+    }
+
     $level = strtoupper((string) ($row['level'] ?? ''));
     $label = strtolower((string) ($row['urgency_label'] ?? ''));
     $triageLevel = strtolower((string) ($row['triage_level'] ?? ''));
 
     if ($level === '1' || str_contains($label, 'emergency') || $triageLevel === 'emergency') {
-        return 'Priority — seek care promptly';
+        return 'Emergency — seek care promptly';
     }
     if ($level === '2' || str_contains($label, 'urgent') || $triageLevel === 'urgent') {
-        return 'Priority visit scheduled';
+        return 'Urgent — book a time slot';
     }
-    return 'Routine visit';
+    return 'Routine — book when ready';
 }
 
 function mc_patient_visit_status_class(array $row): string
 {
+    $bookingState = (string) ($row['_booking_state'] ?? '');
+    if ($bookingState === 'booked') {
+        return 'badge-risk--low';
+    }
+    if ($bookingState === 'completed') {
+        return 'badge-risk--low';
+    }
+
+    $recStatus = strtolower((string) ($row['recommendation_status'] ?? ''));
+    if ($recStatus === 'pending_approval') {
+        return 'badge-risk--moderate';
+    }
+    if ($recStatus === 'approved') {
+        return 'badge-risk--moderate';
+    }
+
     $level = strtoupper((string) ($row['level'] ?? ''));
     $label = strtolower((string) ($row['urgency_label'] ?? ''));
     $triageLevel = strtolower((string) ($row['triage_level'] ?? ''));
