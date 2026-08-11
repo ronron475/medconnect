@@ -101,24 +101,42 @@ if ($pdo->query("SHOW TABLES LIKE 'consultations'")->rowCount()) {
 }
 
 $active_consultation = null;
+$future_scheduled_consultation = null;
 foreach ($all_consults as $c) {
-    if (in_array($c['status'] ?? '', ['pending', 'scheduled', 'waiting', 'in_consultation'], true)) {
+    if (!in_array($c['status'] ?? '', ['pending', 'scheduled', 'waiting', 'in_consultation'], true)) {
+        continue;
+    }
+    if (($c['status'] ?? '') === 'in_consultation') {
         $active_consultation = $c;
         break;
+    }
+    if (consultation_is_future_day($c['consult_date'] ?? null)) {
+        $future_scheduled_consultation = $future_scheduled_consultation ?? $c;
+        continue;
+    }
+    if ($active_consultation === null) {
+        $active_consultation = $c;
     }
 }
 
 $booking_blocked_in_consultation = ($active_consultation['status'] ?? '') === 'in_consultation';
-$booking_blocked_future = !$booking_blocked_in_consultation
+$booking_blocked_future = false;
+$booking_same_day_reschedule = !$booking_blocked_in_consultation
     && $active_consultation
-    && consultation_is_future_day($active_consultation['consult_date'] ?? null);
+    && !consultation_is_future_day($active_consultation['consult_date'] ?? null);
 $booking_future_label = '';
-if ($booking_blocked_future) {
+if ($future_scheduled_consultation) {
+    $booking_future_label = date('M j, Y', strtotime((string) $future_scheduled_consultation['consult_date']));
+    if (!empty($future_scheduled_consultation['consult_time'])) {
+        $booking_future_label .= ' at ' . date('g:i A', strtotime((string) $future_scheduled_consultation['consult_time']));
+    }
+} elseif ($booking_same_day_reschedule && !empty($active_consultation['consult_date'])) {
     $booking_future_label = date('M j, Y', strtotime((string) $active_consultation['consult_date']));
     if (!empty($active_consultation['consult_time'])) {
         $booking_future_label .= ' at ' . date('g:i A', strtotime((string) $active_consultation['consult_time']));
     }
 }
+$patient_has_scheduled_followup = patient_portal_has_scheduled_followup($pdo, (int) $uid);
 
 $page_title = 'Book Consultation';
 $patient_has_completed_visit = patient_portal_has_completed_visit($pdo, (int) $uid);
@@ -140,8 +158,9 @@ $patient_has_completed_visit = patient_portal_has_completed_visit($pdo, (int) $u
 
   <script>window.APP_BASE = <?= json_encode(ASSET_BASE) ?>;</script>
   <script>window.BOOKING_BLOCKED_IN_CONSULTATION = <?= json_encode($booking_blocked_in_consultation) ?>;</script>
-  <script>window.BOOKING_BLOCKED_FUTURE_APPOINTMENT = <?= json_encode($booking_blocked_future) ?>;</script>
+  <script>window.BOOKING_BLOCKED_FUTURE_APPOINTMENT = <?= json_encode(false) ?>;</script>
   <script>window.BOOKING_FUTURE_APPOINTMENT_LABEL = <?= json_encode($booking_future_label) ?>;</script>
+  <script>window.PATIENT_HAS_SCHEDULED_FOLLOWUP = <?= json_encode($patient_has_scheduled_followup) ?>;</script>
   <script>window.REGISTRATION_URGENCY = <?= json_encode($portal_triage_urgency) ?>;</script>
   <script>window.BOOKING_LOCKED_PROVIDER_ID = <?= json_encode($locked_provider_id > 0 ? $locked_provider_id : null) ?>;</script>
   <script>window.BOOKING_LOCKED_PROVIDER_NAME = <?= json_encode($locked_provider_name) ?>;</script>

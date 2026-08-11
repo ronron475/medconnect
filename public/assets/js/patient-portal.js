@@ -500,15 +500,21 @@
       return;
     }
 
-    const futureBlocked = window.BOOKING_BLOCKED_FUTURE_APPOINTMENT === true;
-    if (futureBlocked) {
-      const when = window.BOOKING_FUTURE_APPOINTMENT_LABEL || 'a future date';
-      providerSelect.disabled = true;
-      clearSlots(
-        'You already have an appointment scheduled for ' + when +
-          '. Cancel or complete that visit before booking another slot.'
-      );
-      return;
+    const futureAppointmentLabel = window.BOOKING_FUTURE_APPOINTMENT_LABEL || '';
+    const hasScheduledFollowup = window.PATIENT_HAS_SCHEDULED_FOLLOWUP === true;
+    if (futureAppointmentLabel !== '' || hasScheduledFollowup) {
+      const parts = [];
+      if (futureAppointmentLabel !== '') {
+        parts.push('You have an appointment scheduled for ' + futureAppointmentLabel + '.');
+      }
+      if (hasScheduledFollowup) {
+        parts.push('Your doctor also scheduled a follow-up — that visit stays on your record.');
+      }
+      parts.push('Enter a new chief complaint below to start a separate consultation for a different health concern.');
+      const followupAlertEl = document.getElementById('triageFormAlert');
+      if (followupAlertEl) {
+        showTriageAlert(followupAlertEl, 'success', parts.join(' '));
+      }
     }
 
     const parseSlotTimeParts = (raw) => {

@@ -31,20 +31,27 @@ $locked_alternate_available = !empty($locked_alternate_available);
 <p class="text-sm text-muted" style="margin-top:-8px;margin-bottom:16px;">
   Choose a doctor and an open time slot for your online consultation.
   (If you already submitted symptoms for <strong>Care tips</strong>, the system will lock booking to the same doctor who reviews your case.)
-  <?php if (!empty($patient_has_completed_visit)): ?>
-  <span class="text-muted"> Previous completed visits stay in your history below — enter a new chief complaint for this booking.</span>
+  <?php if (!empty($patient_has_completed_visit) || !empty($patient_has_scheduled_followup)): ?>
+  <span class="text-muted"> Enter a new chief complaint below for a separate consultation — scheduled follow-ups and past visits stay on your record.</span>
   <?php endif; ?>
 </p>
 <?php endif; ?>
 
-<?php if (!empty($active_consultation)): ?>
+<?php if (!empty($future_scheduled_consultation) || !empty($patient_has_scheduled_followup)): ?>
+<div class="patient-triage-alert patient-triage-alert--success is-visible" style="margin-bottom: 16px;">
+  <?php if (!empty($future_scheduled_consultation)): ?>
+    You have an appointment scheduled<?= $booking_future_label !== '' ? ' for ' . htmlspecialchars($booking_future_label) : '' ?>.
+  <?php endif; ?>
+  <?php if (!empty($patient_has_scheduled_followup)): ?>
+    <?= !empty($future_scheduled_consultation) ? 'Your doctor also scheduled a follow-up.' : 'Your doctor scheduled a follow-up for you.' ?>
+  <?php endif; ?>
+  You can still book a <strong>new consultation</strong> here with a different chief complaint — your follow-up appointment will not be changed.
+</div>
+<?php elseif (!empty($active_consultation)): ?>
 <div class="patient-triage-alert patient-triage-alert--warning is-visible" style="margin-bottom: 16px;">
   <?php if (($active_consultation['status'] ?? '') === 'in_consultation'): ?>
     You currently have a consultation in progress. A new slot cannot be booked until that visit is completed.
-  <?php elseif (!empty($booking_blocked_future)): ?>
-    You already have an appointment scheduled<?= $booking_future_label !== '' ? ' for ' . htmlspecialchars($booking_future_label) : '' ?>.
-    Cancel or complete that visit before booking another slot today.
-  <?php else: ?>
+  <?php elseif (!empty($booking_same_day_reschedule)): ?>
     You already have an open appointment<?= !empty($active_consultation['consult_date']) ? ' on ' . htmlspecialchars(date('M j, Y', strtotime($active_consultation['consult_date']))) : '' ?>.
     Submitting here will update it to your newly selected slot for today.
   <?php endif; ?>

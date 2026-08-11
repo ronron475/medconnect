@@ -4,7 +4,7 @@
  * Uses AI Assessment Engine for NLP-driven triage classification.
  *
  * Emergency: saves triage + hospital referral; never books teleconsult (aligned with BHW).
- * Booking: same-day only; auto-accepts triage; will not overwrite a future (multi-day) appointment.
+ * Booking: same-day only; auto-accepts triage; creates a new consultation when a separate case is open.
  */
 require_once dirname(dirname(dirname(__DIR__))) . '/bootstrap.php';
 require_once dirname(dirname(dirname(__DIR__))) . '/config/db.php';
@@ -18,6 +18,7 @@ require_once dirname(dirname(dirname(__DIR__))) . '/app/includes/triage_provider
 require_once dirname(dirname(dirname(__DIR__))) . '/app/includes/patient_symptoms_review_submit.php';
 require_once dirname(dirname(dirname(__DIR__))) . '/app/includes/complaint_evidence.php';
 require_once dirname(dirname(dirname(__DIR__))) . '/app/includes/patient_chief_complaints.php';
+require_once dirname(dirname(dirname(__DIR__))) . '/app/includes/patient_booking_status.php';
 
 Api::startJson();
 Api::requirePatientReady($pdo);
@@ -338,8 +339,14 @@ try {
         . $provider_name
         . '.';
 
+    $consultCols = $pdo->query('SHOW COLUMNS FROM consultations')->fetchAll(PDO::FETCH_COLUMN);
+    $hasTriageLink = in_array('triage_result_id', $consultCols, true);
+    $existingSelect = $hasTriageLink
+        ? 'SELECT id, status, consult_date, consult_time, triage_result_id'
+        : 'SELECT id, status, consult_date, consult_time';
+
     $existing_stmt = $pdo->prepare("
-        SELECT id, status, consult_date, consult_time
+        {$existingSelect}
         FROM consultations
         WHERE patient_id = ?
           AND status IN ('pending', 'scheduled', 'in_consultation')
@@ -356,20 +363,11 @@ try {
         Api::error('You have a consultation in progress — finish it before booking a new appointment slot.');
     }
 
-    // Protect BHW (or any) future-day appointments from same-day patient rebook overwrite.
-    if ($existing_consult && consultation_is_future_day($existing_consult['consult_date'] ?? null)) {
-        $futureLabel = date('M j, Y', strtotime((string) $existing_consult['consult_date']));
-        if (!empty($existing_consult['consult_time'])) {
-            $futureLabel .= ' at ' . date('g:i A', strtotime((string) $existing_consult['consult_time']));
-        }
-        throw new RuntimeException(
-            'You already have an appointment scheduled for ' . $futureLabel
-            . '. Cancel or complete that visit before booking a new slot today.'
-        );
+    // Keep follow-up / prior-case appointments intact — only reuse today's open slot for the same case.
+    if ($existing_consult && !patient_consultation_may_be_rebooked_in_place($existing_consult, $triageId)) {
+        $existing_consult = null;
     }
 
-    $consultCols = $pdo->query('SHOW COLUMNS FROM consultations')->fetchAll(PDO::FETCH_COLUMN);
-    $hasTriageLink = in_array('triage_result_id', $consultCols, true);
     $hasPriorityCol = in_array('consult_priority', $consultCols, true);
     $consultPriority = $triageLevel === TriageLevelService::URGENT ? 'urgent' : 'standard';
 
