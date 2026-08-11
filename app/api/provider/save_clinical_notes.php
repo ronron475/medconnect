@@ -192,6 +192,9 @@ try {
     require_once dirname(dirname(dirname(__DIR__))) . '/app/includes/bhw_patient_workflow.php';
     BhwPatientWorkflow::onConsultationCompleted($pdo, (int) $data['patient_id'], 'provider_notes');
 
+    require_once dirname(dirname(dirname(__DIR__))) . '/app/includes/patient_booking_status.php';
+    patient_triage_close_cases_for_consultation($pdo, (int) $data['consultation_id']);
+
     $msg = 'Clinical notes saved and consultation finalized.';
     if ($rxIssued) {
         $msg .= ' Prescription saved to the patient record.';

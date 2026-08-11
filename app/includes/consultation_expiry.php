@@ -3,6 +3,7 @@
  * Auto-end consultations after their scheduled slot time has passed.
  */
 require_once __DIR__ . '/bhw_patient_workflow.php';
+require_once __DIR__ . '/patient_booking_status.php';
 
 /**
  * Mark overdue consultations ended and close any stale video sessions.
@@ -83,6 +84,7 @@ function consultations_auto_expire(PDO $pdo, ?int $patient_id = null, ?int $prov
                 $pid = (int) ($pidStmt->fetchColumn() ?: 0);
                 if ($pid > 0) {
                     BhwPatientWorkflow::onConsultationCompleted($pdo, $pid, 'session_expired');
+                    patient_triage_close_cases_for_consultation($pdo, $id);
                 }
             }
         } else {

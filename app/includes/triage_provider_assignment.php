@@ -69,6 +69,7 @@ function triage_provider_format_doctor_name(string $name): string
 function triage_patient_review_booking_context(PDO $pdo, int $patientId): array
 {
     triage_assessment_ensure_schema($pdo);
+    require_once __DIR__ . '/patient_booking_status.php';
 
     $empty = ['provider_id' => 0, 'provider_name' => '', 'locked' => false, 'triage_id' => 0];
     if ($patientId <= 0) {
@@ -83,9 +84,9 @@ function triage_patient_review_booking_context(PDO $pdo, int $patientId): array
         WHERE tr.patient_id = ?
           AND tr.assigned_provider_id IS NOT NULL
           AND tr.assigned_provider_id > 0
-          AND tr.recommendation_status IN ('pending_approval', 'approved')
           AND TRIM(COALESCE(tr.chief_complaint, '')) <> ''
           AND tr.assessed_at >= DATE_SUB(NOW(), INTERVAL 30 DAY)
+          " . patient_triage_sql_active_only('tr') . "
         ORDER BY tr.assessed_at DESC
         LIMIT 1
     ");

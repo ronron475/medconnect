@@ -10,6 +10,7 @@ require_once __DIR__ . '/triage_provider_assignment.php';
 require_once __DIR__ . '/bhw_patient_workflow.php';
 require_once __DIR__ . '/notification_events.php';
 require_once __DIR__ . '/consultation_expiry.php';
+require_once __DIR__ . '/patient_booking_status.php';
 require_once dirname(__DIR__) . '/core/TriageLevelService.php';
 
 /**
@@ -32,10 +33,11 @@ function patient_submit_symptoms_for_review(
     }
 
     $dup = $pdo->prepare("
-        SELECT id FROM triage_results
-        WHERE patient_id = ?
-          AND recommendation_status = 'pending_approval'
-          AND assessed_at >= DATE_SUB(NOW(), INTERVAL 14 DAY)
+        SELECT id FROM triage_results tr
+        WHERE tr.patient_id = ?
+          AND tr.recommendation_status = 'pending_approval'
+          AND tr.assessed_at >= DATE_SUB(NOW(), INTERVAL 14 DAY)
+          " . patient_triage_sql_active_only('tr') . "
         LIMIT 1
     ");
     $dup->execute([$patientId]);
@@ -271,13 +273,13 @@ function patient_find_open_care_tips_triage(PDO $pdo, int $patientId, bool $forU
                triage_level, triage_classification, recommendation_status,
                assigned_provider_id, recommendations, english_complaint,
                detected_symptoms_json, possible_conditions_json, assessment_payload, engine
-        FROM triage_results
-        WHERE patient_id = ?
-          AND recommendation_status = 'pending_approval'
-          AND TRIM(COALESCE(chief_complaint, '')) <> ''
-          AND assessed_at >= DATE_SUB(NOW(), INTERVAL 14 DAY)
-          AND COALESCE(triage_level, 'non_urgent') = 'non_urgent'
-        ORDER BY assessed_at DESC
+        FROM triage_results tr
+        WHERE tr.patient_id = ?
+          AND TRIM(COALESCE(tr.chief_complaint, '')) <> ''
+          AND tr.assessed_at >= DATE_SUB(NOW(), INTERVAL 14 DAY)
+          AND COALESCE(tr.triage_level, 'non_urgent') = 'non_urgent'
+          " . patient_triage_sql_active_only('tr') . "
+        ORDER BY tr.assessed_at DESC
         LIMIT 1
     ";
     if ($forUpdate) {
@@ -309,11 +311,11 @@ function patient_symptoms_review_pending_state(PDO $pdo, int $patientId): array
 
     $stmt = $pdo->prepare("
         SELECT id, chief_complaint, assigned_provider_id
-        FROM triage_results
-        WHERE patient_id = ?
-          AND recommendation_status = 'pending_approval'
-          AND TRIM(COALESCE(chief_complaint, '')) <> ''
-        ORDER BY assessed_at DESC
+        FROM triage_results tr
+        WHERE tr.patient_id = ?
+          AND TRIM(COALESCE(tr.chief_complaint, '')) <> ''
+          " . patient_triage_sql_active_only('tr') . "
+        ORDER BY tr.assessed_at DESC
         LIMIT 1
     ");
     $stmt->execute([$patientId]);

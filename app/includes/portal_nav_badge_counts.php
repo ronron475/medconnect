@@ -119,12 +119,15 @@ function portal_nav_patient_booking_actions_count(PDO $pdo, int $patientId): int
                   AND COALESCE(tr.triage_level, '') = 'urgent'
                   AND tr.assessed_at >= DATE_SUB(NOW(), INTERVAL 14 DAY)
                   AND COALESCE(tr.recommendation_status, '') NOT IN ('rejected')
+                  " . patient_triage_sql_active_only('tr') . "
                   AND NOT EXISTS (
                     SELECT 1
                     FROM consultations c
                     WHERE c.patient_id = tr.patient_id
                       AND c.consult_date >= DATE(tr.assessed_at)
-                      AND LOWER(COALESCE(c.status, '')) NOT IN ('cancelled', 'canceled')
+                      AND LOWER(COALESCE(c.status, '')) IN (
+                        'pending', 'scheduled', 'waiting', 'in_consultation'
+                      )
                   )
             ");
             $stmt->execute([$patientId]);
