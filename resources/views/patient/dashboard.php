@@ -106,6 +106,10 @@ $upcoming_consults = array_filter($all_consults, function($c) {
 });
 
 require_once BASE_PATH . '/app/includes/patient_booking_status.php';
+require_once BASE_PATH . '/app/includes/patient_consultation_records.php';
+require_once BASE_PATH . '/app/includes/clinical_tables.php';
+clinical_tables_ensure($pdo);
+patient_consultation_records_schema_ensure($pdo);
 $active_consultation = patient_portal_select_active_consultation($all_consults);
 
 // ── DATA FETCHING: Clinical Records (prescriptions + notes from consultations) ─
@@ -133,7 +137,7 @@ try {
         $health_files[] = $row;
     }
 
-    // Clinical notes from consultations
+    // Clinical notes from finalized consultations only
     $s = $pdo->prepare("
         SELECT
             COALESCE(NULLIF(cn.diagnosis, ''), 'Clinical Note') AS name,
@@ -147,6 +151,7 @@ try {
         JOIN consultations c ON c.id = cn.consultation_id
         JOIN users u ON u.id = cn.provider_id
         WHERE cn.patient_id = ?
+          AND " . patient_consultation_record_visible_sql('c', 'cn') . "
         ORDER BY cn.created_at DESC
         LIMIT 20
     ");

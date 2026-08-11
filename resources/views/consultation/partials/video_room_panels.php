@@ -30,6 +30,7 @@
     <?php if (empty($is_patient)): ?>
     <div class="mc-vc-side-panel__pane" data-panel-pane="soap" id="mcVcSoapPane">
       <form id="mcVcSoapForm" class="mc-vc-soap-form">
+        <input type="hidden" name="patient_id" value="<?= (int) ($session['patient_id'] ?? 0) ?>">
         <label>Subjective<textarea name="subjective" rows="2"></textarea></label>
         <label>Objective<textarea name="objective" rows="2"></textarea></label>
         <label>Assessment<textarea name="assessment" rows="2"></textarea></label>
@@ -53,8 +54,8 @@
     <div class="mc-vc-postcall__actions">
       <?php if (!empty($is_patient)): ?>
       <a href="<?= htmlspecialchars(ASSET_BASE) ?>/views/patient/triage.php" class="mc-vc-postcall__btn mc-vc-postcall__btn--primary">Schedule Follow-up</a>
-      <a href="<?= htmlspecialchars(ASSET_BASE) ?>/views/patient/my_health.php?tab=files" class="mc-vc-postcall__btn">View Prescription / Files</a>
-      <a href="<?= htmlspecialchars(ASSET_BASE) ?>/views/patient/dashboard.php" class="mc-vc-postcall__btn">Return to Dashboard</a>
+      <a href="<?= htmlspecialchars(ASSET_BASE) ?>/views/patient/consultation_detail.php?id=<?= (int) $consultation_id ?>" class="mc-vc-postcall__btn">View Medical Record</a>
+      <a href="<?= htmlspecialchars(ASSET_BASE) ?>/views/patient/my_health.php?tab=timeline" class="mc-vc-postcall__btn">My Health</a>
       <?php else: ?>
       <button type="button" class="mc-vc-postcall__btn mc-vc-postcall__btn--primary" id="mcVcPostCallFollowup">Schedule Follow-up</button>
       <a href="<?= htmlspecialchars(ASSET_BASE) ?>/views/provider/consultation_session.php?id=<?= (int) $consultation_id ?>" class="mc-vc-postcall__btn">Return to Session</a>

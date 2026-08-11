@@ -14,6 +14,11 @@ if (!defined('BASE_PATH')) {
 }
 require_once BASE_PATH . '/app/includes/patient_portal_bootstrap.php';
 require_once BASE_PATH . '/app/includes/triage_assessment_schema.php';
+require_once BASE_PATH . '/app/includes/patient_consultation_records.php';
+require_once BASE_PATH . '/app/includes/clinical_tables.php';
+
+clinical_tables_ensure($pdo);
+patient_consultation_records_schema_ensure($pdo);
 
 $uid = (int) $uid;
 $tab = (string) ($_GET['tab'] ?? 'timeline');
@@ -45,11 +50,14 @@ if (!empty($history)) {
         $placeholders = implode(',', array_fill(0, count($ids), '?'));
         try {
             $rxStmt = $pdo->prepare("
-                SELECT consultation_id, medication_name, dosage, frequency
-                FROM prescriptions
-                WHERE consultation_id IN ($placeholders)
+                SELECT p.consultation_id, p.medication_name, p.dosage, p.frequency
+                FROM prescriptions p
+                JOIN consultations c ON c.id = p.consultation_id
+                WHERE p.consultation_id IN ($placeholders)
+                  AND c.patient_id = ?
+                  AND c.status = 'completed'
             ");
-            $rxStmt->execute(array_values($ids));
+            $rxStmt->execute(array_merge(array_values($ids), [$uid]));
             while ($row = $rxStmt->fetch(PDO::FETCH_ASSOC)) {
                 $cid = (int) ($row['consultation_id'] ?? 0);
                 $rx_by_consult[$cid][] = $row;
@@ -57,11 +65,15 @@ if (!empty($history)) {
         } catch (PDOException $e) { /* optional */ }
         try {
             $cnStmt = $pdo->prepare("
-                SELECT consultation_id, subjective, objective, assessment, plan, diagnosis, treatment_plan, created_at
-                FROM clinical_notes
-                WHERE consultation_id IN ($placeholders)
+                SELECT cn.consultation_id, cn.subjective, cn.objective, cn.assessment, cn.plan,
+                       cn.diagnosis, cn.treatment_plan, cn.created_at
+                FROM clinical_notes cn
+                JOIN consultations c ON c.id = cn.consultation_id
+                WHERE cn.consultation_id IN ($placeholders)
+                  AND c.patient_id = ?
+                  AND " . patient_consultation_record_visible_sql('c', 'cn') . "
             ");
-            $cnStmt->execute(array_values($ids));
+            $cnStmt->execute(array_merge(array_values($ids), [$uid]));
             while ($row = $cnStmt->fetch(PDO::FETCH_ASSOC)) {
                 $cid = (int) ($row['consultation_id'] ?? 0);
                 $notes_by_consult[$cid] = $row;
@@ -78,8 +90,11 @@ try {
         SELECT CONCAT(pr.medication_name, ' ', pr.dosage) AS record_name, pr.frequency, pr.duration,
                COALESCE(pr.notes, '') AS detail, DATE(pr.created_at) AS record_date,
                CONCAT(u.first_name, ' ', u.last_name) AS provider_name
-        FROM prescriptions pr JOIN users u ON u.id = pr.provider_id
-        WHERE pr.patient_id = ? ORDER BY pr.created_at DESC
+        FROM prescriptions pr
+        JOIN consultations c ON c.id = pr.consultation_id
+        JOIN users u ON u.id = pr.provider_id
+        WHERE pr.patient_id = ? AND c.status = 'completed'
+        ORDER BY pr.created_at DESC
     ");
     $s->execute([$uid]);
     $prescriptions = $s->fetchAll(PDO::FETCH_ASSOC);
@@ -97,7 +112,9 @@ try {
         FROM clinical_notes cn
         JOIN consultations c ON c.id = cn.consultation_id
         JOIN users u ON u.id = cn.provider_id
-        WHERE cn.patient_id = ? ORDER BY cn.created_at DESC
+        WHERE cn.patient_id = ?
+          AND " . patient_consultation_record_visible_sql('c', 'cn') . "
+        ORDER BY cn.created_at DESC
     ");
     $s->execute([$uid]);
     $clinical_notes = $s->fetchAll(PDO::FETCH_ASSOC);
@@ -108,8 +125,11 @@ try {
         SELECT CONCAT(dr.referral_type, ' Referral') AS record_name, dr.reason AS frequency,
                COALESCE(dr.destination_facility, '') AS duration, dr.status AS detail,
                DATE(dr.created_at) AS record_date, CONCAT(u.first_name, ' ', u.last_name) AS provider_name
-        FROM digital_referrals dr JOIN users u ON u.id = dr.provider_id
-        WHERE dr.patient_id = ? ORDER BY dr.created_at DESC
+        FROM digital_referrals dr
+        JOIN consultations c ON c.id = dr.consultation_id
+        JOIN users u ON u.id = dr.provider_id
+        WHERE dr.patient_id = ? AND c.status = 'completed'
+        ORDER BY dr.created_at DESC
     ");
     $s->execute([$uid]);
     $referrals = $s->fetchAll(PDO::FETCH_ASSOC);
@@ -268,6 +288,11 @@ $patient_page_stylesheets = [
 <?php require_once VIEWS_PATH . '/patient/partials/layout_shell_close.php'; ?>
 
 <script>
+document.addEventListener('medconnect:consultation-completed', function () {
+  if (document.querySelector('.pmh-feed--timeline')) {
+    window.setTimeout(function () { window.location.reload(); }, 1200);
+  }
+});
 function filterHealthFiles(type) {
   document.querySelectorAll('[data-health-filter]').forEach(function (btn) {
     var match = btn.getAttribute('data-health-filter') === type;

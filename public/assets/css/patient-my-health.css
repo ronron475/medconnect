@@ -1769,3 +1769,105 @@ body.pmh-care-modal-open .pt-remedy__fab {
     grid-template-columns: 1fr;
   }
 }
+
+/* Consultation detail + live completion banner */
+.pmh-detail__head {
+  margin-bottom: 16px;
+}
+
+.pmh-detail__back {
+  display: inline-block;
+  margin-bottom: 8px;
+  font-size: 0.88rem;
+  font-weight: 700;
+  color: var(--pt-color-primary, #0f766e);
+  text-decoration: none;
+}
+
+.pmh-detail__title {
+  margin: 0 0 6px;
+  font-size: clamp(1.25rem, 2.4vw, 1.5rem);
+}
+
+.pmh-detail__meta {
+  margin: 0 0 4px;
+  color: var(--pt-color-muted, #64748b);
+  font-size: 0.92rem;
+}
+
+.pmh-detail__section {
+  padding: 16px 0;
+  border-top: 1px solid var(--pt-border, rgba(2, 128, 144, 0.14));
+}
+
+.pmh-detail__section:first-child {
+  border-top: none;
+  padding-top: 0;
+}
+
+.pmh-detail__section h3 {
+  margin: 0 0 10px;
+  font-size: 0.78rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--pt-color-primary, #0f766e);
+}
+
+.pmh-detail__pending {
+  padding: 18px;
+  border-radius: 12px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  color: #334155;
+}
+
+.pmh-visit__pending {
+  margin: 12px 0 0;
+  padding: 12px 14px;
+  border-radius: 10px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  color: #475569;
+  font-size: 0.92rem;
+}
+
+.pmh-visit__actions {
+  margin: 14px 0 0;
+}
+
+.pmh-visit__block--full {
+  grid-column: 1 / -1;
+}
+
+.pmh-record-banner-host {
+  position: sticky;
+  top: 0;
+  z-index: 120;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 10px 12px 0;
+}
+
+.pmh-record-banner {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 14px;
+  border-radius: 12px;
+  background: #ecfdf5;
+  border: 1px solid #86efac;
+  box-shadow: 0 8px 24px rgba(16, 185, 129, 0.12);
+}
+
+.pmh-record-banner__body p {
+  margin: 4px 0 0;
+  font-size: 0.9rem;
+  color: #166534;
+}
+
+.pmh-record-banner__cta {
+  white-space: nowrap;
+}

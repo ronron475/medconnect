@@ -9,6 +9,7 @@
   const API = String(META.apiBase || global.APP_BASE || '').replace(/\/$/, '');
   const TOKEN = META.roomToken || '';
   const CONSULTATION_ID = META.consultationId || 0;
+  const PATIENT_ID = META.patientId || 0;
   const IS_PATIENT = !!META.isPatient;
   const CSRF = META.csrf || '';
 
@@ -336,6 +337,9 @@
     function save() {
       const fd = new FormData(form);
       fd.set('consultation_id', String(CONSULTATION_ID));
+      if (!fd.get('patient_id') && PATIENT_ID) {
+        fd.set('patient_id', String(PATIENT_ID));
+      }
       fd.set('csrf_token', CSRF);
       fd.set('autosave', '1');
       fetch(API + '/app/api/provider/save_clinical_notes.php', {
