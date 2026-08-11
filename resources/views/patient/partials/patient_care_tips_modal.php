@@ -26,17 +26,19 @@
       </button>
     </header>
 
-    <div class="pmh-care-modal__meta">
-      <time class="pmh-care-modal__datetime" id="pmhCareTipsModalDate"></time>
-      <span class="pmh-care-modal__status" id="pmhCareTipsModalStatus"></span>
+    <div class="pmh-care-modal__content">
+      <div class="pmh-care-modal__meta">
+        <time class="pmh-care-modal__datetime" id="pmhCareTipsModalDate"></time>
+        <span class="pmh-care-modal__status" id="pmhCareTipsModalStatus"></span>
+      </div>
+
+      <p class="pmh-care-modal__provider" id="pmhCareTipsModalProvider" hidden></p>
+
+      <p class="pmh-care-modal__approval" id="pmhCareTipsModalDesc">
+        These self-care steps were reviewed and approved by your licensed provider before being shared with you.
+      </p>
+
+      <ol class="pmh-care-modal__list" id="pmhCareTipsModalList"></ol>
     </div>
-
-    <p class="pmh-care-modal__provider" id="pmhCareTipsModalProvider" hidden></p>
-
-    <p class="pmh-care-modal__approval" id="pmhCareTipsModalDesc">
-      These self-care steps were reviewed and approved by your licensed provider before being shared with you.
-    </p>
-
-    <ol class="pmh-care-modal__list" id="pmhCareTipsModalList"></ol>
   </div>
 </div>
