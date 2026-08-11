@@ -178,6 +178,7 @@
     baseLayer: localStorage.getItem(BASE_LAYER_KEY) === 'satellite' ? 'satellite' : 'street',
     pollTimer: null,
     mapConfig: null,
+    satelliteTileErrors: 0,
   };
 
   const els = {
@@ -421,16 +422,65 @@
 
   function getMapCenter() {
     const cfg = getMapConfig();
-    return [Number(cfg.center.lat), Number(cfg.center.lng)];
+    const lat = Number(cfg.center?.lat ?? cfg.center?.[0]);
+    const lng = Number(cfg.center?.lng ?? cfg.center?.[1]);
+    if (isValidCoord(lat, lng)) {
+      return [lat, lng];
+    }
+    return [DEFAULT_MAP_CONFIG.center.lat, DEFAULT_MAP_CONFIG.center.lng];
   }
 
   function getMapBounds() {
     const cfg = getMapConfig();
     const b = cfg.bounds || DEFAULT_MAP_CONFIG.bounds;
+    const south = Number(b.south);
+    const west = Number(b.west);
+    const north = Number(b.north);
+    const east = Number(b.east);
+    if ([south, west, north, east].every(Number.isFinite)) {
+      return [
+        [south, west],
+        [north, east],
+      ];
+    }
+    const fallback = DEFAULT_MAP_CONFIG.bounds;
     return [
-      [Number(b.south), Number(b.west)],
-      [Number(b.north), Number(b.east)],
+      [fallback.south, fallback.west],
+      [fallback.north, fallback.east],
     ];
+  }
+
+  function focusMapOnMarkers(markerBounds) {
+    const cfg = getMapConfig();
+    const defaultZoom = Number(cfg.default_zoom || DEFAULT_MAP_CONFIG.default_zoom);
+
+    if (!markerBounds.length) {
+      state.map.setView(getMapCenter(), defaultZoom);
+      return;
+    }
+
+    if (markerBounds.length === 1) {
+      state.map.setView(markerBounds[0], Math.min(defaultZoom, 14));
+      return;
+    }
+
+    const latLngBounds = L.latLngBounds(markerBounds);
+    if (!latLngBounds.isValid()) {
+      state.map.setView(getMapCenter(), defaultZoom);
+      return;
+    }
+
+    const northEast = latLngBounds.getNorthEast();
+    const southWest = latLngBounds.getSouthWest();
+    const latSpan = Math.abs(northEast.lat - southWest.lat);
+    const lngSpan = Math.abs(northEast.lng - southWest.lng);
+
+    if (latSpan < 0.0005 && lngSpan < 0.0005) {
+      state.map.setView(latLngBounds.getCenter(), Math.min(defaultZoom, 14));
+      return;
+    }
+
+    state.map.fitBounds(latLngBounds, { padding: [36, 36], maxZoom: 14 });
   }
 
   function locationSourceMeta(row) {
@@ -662,7 +712,7 @@
     const tile = latLngToTile(center[0], center[1], 12);
     if (layerType === 'satellite') {
       return (
-        'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/' +
+        'https://services.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/' +
         tile.z +
         '/' +
         tile.y +
@@ -706,6 +756,7 @@
     }
 
     state.baseLayer = target;
+    state.satelliteTileErrors = 0;
     localStorage.setItem(BASE_LAYER_KEY, target);
     updateLayerSwitchPreview();
     ensureOverlayOrder();
@@ -777,20 +828,30 @@
       maxBounds: bounds,
       maxBoundsViscosity: 0.85,
       minZoom: Number(cfg.min_zoom || DEFAULT_MAP_CONFIG.min_zoom),
+      maxZoom: 18,
     }).setView(center, Number(cfg.default_zoom || DEFAULT_MAP_CONFIG.default_zoom));
 
-    state.streetLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    state.streetLayer = L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
       maxZoom: 19,
-      attribution: '&copy; OpenStreetMap contributors',
+      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
     });
 
     state.satelliteLayer = L.tileLayer(
-      'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
+      'https://services.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
       {
-        maxZoom: 19,
-        attribution: 'Tiles &copy; Esri &mdash; Source: Esri, Maxar, Earthstar Geographics',
+        maxZoom: 18,
+        maxNativeZoom: 17,
+        attribution:
+          'Tiles &copy; Esri &mdash; Source: Esri, Maxar, Earthstar Geographics, and the GIS User Community',
       }
     );
+
+    state.satelliteLayer.on('tileerror', function () {
+      state.satelliteTileErrors += 1;
+      if (state.satelliteTileErrors >= 4 && state.baseLayer === 'satellite') {
+        applyBaseLayer('street');
+      }
+    });
 
     applyBaseLayer(state.baseLayer);
 
@@ -885,11 +946,7 @@
 
     ensureOverlayOrder();
 
-    if (bounds.length) {
-      state.map.fitBounds(bounds, { padding: [36, 36], maxZoom: 14 });
-    } else {
-      state.map.setView(getMapCenter(), Number(getMapConfig().default_zoom || DEFAULT_MAP_CONFIG.default_zoom));
-    }
+    focusMapOnMarkers(bounds);
 
     setTimeout(function () {
       state.map.invalidateSize();
