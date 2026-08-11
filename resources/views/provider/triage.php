@@ -75,6 +75,16 @@ $pending_count    = count(array_filter($display_cases, fn($t) => empty($t['revie
 </div>
 <?php endif; ?>
 
+<div class="triage-banner triage-banner--actions" style="margin-top:0;">
+  <?= icon_col('alert', '#0e7490') ?>
+  <span>
+    <strong>Three separate actions:</strong>
+    <em>Confirm review</em> = you saw the AI assessment.
+    <em>Approve for patient</em> = release self-care tips.
+    <em>Live Queue</em> = video visits already booked.
+  </span>
+</div>
+
 <div class="triage-tabs">
   <button type="button" class="triage-tab active" data-filter="all">
     All Cases <span class="triage-tab-count"><?= count($display_cases) ?></span>
@@ -185,7 +195,7 @@ $pending_count    = count(array_filter($display_cases, fn($t) => empty($t['revie
             <div class="triage-actions">
               <button type="button" class="mc-btn mc-btn--outline triage-view-btn" style="padding: 6px 12px; font-size: 11px;" data-triage-id="<?= (int) $t['id'] ?>">View Details</button>
               <?php if (!empty($t['can_accept'])): ?>
-              <button type="button" class="mc-btn mc-btn--primary triage-accept-btn" style="padding: 6px 12px; font-size: 11px;" data-id="<?= (int) $t['id'] ?>">Mark reviewed</button>
+              <button type="button" class="mc-btn mc-btn--primary triage-accept-btn" style="padding: 6px 12px; font-size: 11px;" data-id="<?= (int) $t['id'] ?>" title="Record that you reviewed this AI triage (does not release care tips or book a visit)">Confirm review</button>
               <?php elseif (!$t['reviewed'] && !empty($t['expired'])): ?>
               <span class="triage-expired-note" title="Only same-day triage cases can be marked reviewed.">Cannot mark reviewed</span>
               <?php endif; ?>
@@ -345,8 +355,30 @@ $pending_count    = count(array_filter($display_cases, fn($t) => empty($t['revie
       <div class="triage-modal__footer-actions">
         <button type="button" id="modalRejectRecBtn" class="mc-btn mc-btn--danger-outline" style="display:none;" onclick="rejectRecommendationsFromModal()">Withhold guidance</button>
         <button type="button" id="modalApproveRecBtn" class="mc-btn mc-btn--primary" style="display:none;" onclick="approveRecommendationsFromModal()">Approve for patient</button>
-        <button type="button" id="modalAcceptBtn" class="mc-btn mc-btn--primary" onclick="acceptTriageFromModal()">Mark as reviewed</button>
+        <button type="button" id="modalAcceptBtn" class="mc-btn mc-btn--outline" onclick="acceptTriageFromModal()" title="Record clinical review only — does not approve care tips">Confirm clinical review</button>
       </div>
+    </div>
+  </div>
+</div>
+
+<div id="triageReviewConfirm" class="triage-review-confirm" hidden aria-hidden="true">
+  <div class="triage-review-confirm__backdrop" data-triage-review-cancel></div>
+  <div class="triage-review-confirm__dialog" role="dialog" aria-modal="true" aria-labelledby="triageReviewConfirmTitle">
+    <h3 id="triageReviewConfirmTitle" class="triage-review-confirm__title">Confirm clinical review</h3>
+    <p class="triage-review-confirm__lead">
+      This records that <strong>you reviewed</strong> the patient&apos;s AI triage submission today.
+    </p>
+    <ul class="triage-review-confirm__list">
+      <li><strong>Does:</strong> Closes the case from your <em>Pending</em> queue and logs the review in the audit trail.</li>
+      <li><strong>Does not:</strong> Release self-care tips to the patient — use <em>Approve for patient</em> for that.</li>
+      <li><strong>Does not:</strong> Book or change a video visit — booked patients already appear in <em>Live Queue</em>.</li>
+    </ul>
+    <p class="triage-review-confirm__when">
+      Use this when you have read the assessment and no further triage action is needed on this screen.
+    </p>
+    <div class="triage-review-confirm__actions">
+      <button type="button" class="mc-btn mc-btn--outline" data-triage-review-cancel>Cancel</button>
+      <button type="button" class="mc-btn mc-btn--primary" data-triage-review-yes>Yes, mark as reviewed</button>
     </div>
   </div>
 </div>

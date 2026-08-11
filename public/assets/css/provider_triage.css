@@ -1006,3 +1006,94 @@
         max-width: none;
     }
 }
+
+/* Clinical review confirmation (replaces browser alert) */
+.triage-banner--actions {
+    background: #ecfeff;
+    border-color: #a5f3fc;
+    color: #155e75;
+}
+
+.triage-review-confirm {
+    position: fixed;
+    inset: 0;
+    z-index: 1300;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 16px;
+}
+
+.triage-review-confirm[hidden] {
+    display: none;
+}
+
+.triage-review-confirm__backdrop {
+    position: absolute;
+    inset: 0;
+    background: rgba(15, 23, 42, 0.5);
+}
+
+.triage-review-confirm__dialog {
+    position: relative;
+    width: min(100%, 440px);
+    background: #fff;
+    border-radius: 14px;
+    padding: 22px 20px 18px;
+    box-shadow: 0 24px 60px rgba(15, 23, 42, 0.22);
+}
+
+.triage-review-confirm__title {
+    margin: 0 0 8px;
+    font-size: 18px;
+    color: var(--mc-navy-dark, #0f172a);
+}
+
+.triage-review-confirm__lead {
+    margin: 0 0 12px;
+    font-size: 13px;
+    line-height: 1.5;
+    color: #334155;
+}
+
+.triage-review-confirm__list {
+    margin: 0 0 12px;
+    padding-left: 18px;
+    font-size: 12px;
+    line-height: 1.55;
+    color: #475569;
+}
+
+.triage-review-confirm__list li + li {
+    margin-top: 6px;
+}
+
+.triage-review-confirm__when {
+    margin: 0 0 16px;
+    font-size: 12px;
+    line-height: 1.45;
+    color: #0e7490;
+    background: #f0fdfa;
+    border: 1px solid #99f6e4;
+    border-radius: 8px;
+    padding: 8px 10px;
+}
+
+.triage-review-confirm__actions {
+    display: flex;
+    gap: 8px;
+    justify-content: flex-end;
+}
+
+@media (prefers-color-scheme: dark) {
+    .triage-review-confirm__dialog {
+        background: #1e293b;
+    }
+    .triage-review-confirm__title {
+        color: #f1f5f9;
+    }
+    .triage-review-confirm__lead,
+    .triage-review-confirm__list {
+        color: #cbd5e1;
+    }
+}

@@ -98,7 +98,7 @@
     var html = '<div class="triage-actions">';
     html += '<button type="button" class="mc-btn mc-btn--outline triage-view-btn" style="padding: 6px 12px; font-size: 11px;" data-triage-id="' + esc(t.id) + '">View Details</button>';
     if (t.can_accept) {
-      html += '<button type="button" class="mc-btn mc-btn--primary triage-accept-btn" style="padding: 6px 12px; font-size: 11px;" data-id="' + esc(t.id) + '">Mark reviewed</button>';
+      html += '<button type="button" class="mc-btn mc-btn--primary triage-accept-btn" style="padding: 6px 12px; font-size: 11px;" data-id="' + esc(t.id) + '" title="Record that you reviewed this AI triage">Confirm review</button>';
     } else if (!t.reviewed && t.expired) {
       html += '<span class="triage-expired-note" title="Only same-day triage cases can be marked reviewed.">Cannot mark reviewed</span>';
     }
@@ -530,11 +530,30 @@
     }
   }
 
-  async function acceptTriage(id) {
-    if (!confirm('Mark this triage case as reviewed? (Booked visits already appear in Live Queue.)')) return;
+  var pendingAcceptTriageId = 0;
+
+  function closeTriageReviewConfirm() {
+    var modal = document.getElementById('triageReviewConfirm');
+    if (!modal) return;
+    modal.hidden = true;
+    modal.setAttribute('aria-hidden', 'true');
+    pendingAcceptTriageId = 0;
+  }
+
+  function openTriageReviewConfirm(id) {
+    var modal = document.getElementById('triageReviewConfirm');
+    if (!modal || !id) return;
+    pendingAcceptTriageId = id;
+    modal.hidden = false;
+    modal.setAttribute('aria-hidden', 'false');
+    modal.querySelector('[data-triage-review-yes]')?.focus();
+  }
+
+  async function submitTriageReview(id) {
     try {
       var data = await postTriageAction({ id: String(id), action: 'accept', csrf_token: csrfToken() });
       if (data && data.success) {
+        closeTriageReviewConfirm();
         closeTriageModal();
         refreshTriage(true);
         if (window.MedConnectNavBadgesRefresh) window.MedConnectNavBadgesRefresh();
@@ -544,6 +563,16 @@
     } catch (e) {
       alert('Error updating triage status.');
     }
+  }
+
+  function acceptTriage(id) {
+    if (!id) return;
+    openTriageReviewConfirm(id);
+  }
+
+  async function confirmTriageReview() {
+    if (!pendingAcceptTriageId) return;
+    await submitTriageReview(pendingAcceptTriageId);
   }
 
   async function applyOverride() {
@@ -639,6 +668,27 @@
     document.getElementById('triageModal')?.addEventListener('click', function (event) {
       if (event.target.id === 'triageModal') closeTriageModal();
     });
+
+    var reviewConfirm = document.getElementById('triageReviewConfirm');
+    if (reviewConfirm && !reviewConfirm.dataset.bound) {
+      reviewConfirm.dataset.bound = '1';
+      reviewConfirm.addEventListener('click', function (event) {
+        if (event.target.closest('[data-triage-review-yes]')) {
+          event.preventDefault();
+          confirmTriageReview();
+          return;
+        }
+        if (event.target.closest('[data-triage-review-cancel]')) {
+          event.preventDefault();
+          closeTriageReviewConfirm();
+        }
+      });
+      document.addEventListener('keydown', function (event) {
+        if (event.key === 'Escape' && reviewConfirm && !reviewConfirm.hidden) {
+          closeTriageReviewConfirm();
+        }
+      });
+    }
 
     var recEdit = document.getElementById('modalRecommendationsEdit');
     if (recEdit && !recEdit.dataset.resizeBound) {
