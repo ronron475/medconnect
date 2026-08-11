@@ -61,6 +61,10 @@
   text-decoration: underline;
 }
 
+.pmh-hero__text-short {
+  display: none;
+}
+
 .pmh-hero__id {
   font-weight: 800;
   color: #0f766e;
@@ -1197,31 +1201,119 @@
 }
 
 /* Responsive */
-@media (max-width: 720px) {
+@media (max-width: 768px) {
+  body.patient-portal:has(.pmh-page) .portal-page-body {
+    padding-bottom: calc(116px + env(safe-area-inset-bottom, 0px)) !important;
+  }
+
   .pmh-hero {
     padding: 16px 14px;
+    margin-bottom: 14px;
+    border-radius: 14px;
   }
 
   .pmh-hero__top {
     flex-direction: column;
+    gap: 12px;
+    margin-bottom: 14px;
+  }
+
+  .pmh-hero__text-full {
+    display: none;
+  }
+
+  .pmh-hero__text-short {
+    display: inline;
+  }
+
+  .pmh-hero__text {
+    font-size: 0.82rem;
+    line-height: 1.45;
+    max-width: none;
   }
 
   .pmh-hero__actions {
     width: 100%;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
   }
 
   .pmh-hero__actions .pmh-btn {
-    flex: 1 1 auto;
-    text-align: center;
+    width: 100%;
+    min-height: 44px;
+    padding: 10px 12px;
+    font-size: 0.8rem;
   }
 
   .pmh-hero__metrics {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+  }
+
+  .pmh-metric-pill {
+    padding: 10px 12px;
+    border-radius: 12px;
+  }
+
+  .pmh-metric-pill__value {
+    font-size: 1.2rem;
+  }
+
+  .pmh-metric-pill__label {
+    font-size: 0.65rem;
+    line-height: 1.25;
+  }
+
+  .pmh-metric-pill__hint {
+    font-size: 0.62rem;
+  }
+
+  .pmh-tabs--segment {
+    margin-bottom: 14px;
+    padding: 4px;
+    border-radius: 12px;
+  }
+
+  .pmh-tabs--segment .pmh-tab {
+    padding: 8px 10px;
+    font-size: 0.78rem;
+    gap: 6px;
+    min-width: 0;
+    flex: 1 1 0;
+  }
+
+  .pmh-tabs--segment .pmh-tab svg {
+    display: none;
   }
 
   .pmh-surface {
-    padding: 16px 14px 18px;
+    padding: 14px 12px 16px;
     border-radius: 14px;
+  }
+
+  .pmh-surface__head {
+    margin-bottom: 14px;
+    padding-bottom: 12px;
+  }
+
+  .pmh-surface__head--split {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .pmh-surface__head--split .pmh-btn {
+    width: 100%;
+    min-height: 44px;
+  }
+
+  .pmh-surface__title {
+    font-size: 1rem;
+  }
+
+  .pmh-surface__desc {
+    font-size: 0.82rem;
+    max-width: none;
   }
 
   .pmh-metrics {
@@ -1256,9 +1348,60 @@
     gap: 4px;
   }
 
+  .pmh-care-card {
+    padding: 14px 12px 14px 10px;
+    grid-template-columns: 20px 1fr;
+    gap: 0 10px;
+  }
+
   .pmh-care-card__head {
-    flex-direction: column;
+    flex-direction: row;
+    flex-wrap: wrap;
     align-items: flex-start;
+    gap: 8px;
+  }
+
+  .pmh-care-card__titles {
+    flex: 1 1 auto;
+    min-width: 0;
+  }
+
+  .pmh-care-card__title {
+    font-size: 0.92rem;
+    word-break: break-word;
+  }
+
+  .pmh-care-card__meta {
+    font-size: 0.72rem;
+  }
+
+  .pmh-care-card__status {
+    margin-left: auto;
+    max-width: 100%;
+    text-align: right;
+  }
+
+  .pmh-care-card__tips-summary {
+    padding: 10px 12px;
+    font-size: 0.8rem;
+  }
+
+  .pmh-care-card__tips-list {
+    padding: 0 12px 12px 24px;
+    font-size: 0.84rem;
+  }
+
+  .pmh-care-card__message {
+    padding: 10px 12px;
+    font-size: 0.82rem;
+  }
+
+  .pmh-care-section__title {
+    font-size: 0.95rem;
+  }
+
+  .pmh-care-section__hint {
+    font-size: 0.8rem;
   }
 
   .pmh-visit__grid {
@@ -1269,7 +1412,44 @@
     flex-direction: column;
   }
 
-  .pmh-files__list {
+  .pmh-visit__body {
+    padding: 14px 14px;
+  }
+
+  .pmh-files__list,
+  .pmh-feed--files {
+    grid-template-columns: 1fr;
+  }
+
+  .pmh-files__filters {
+    overflow-x: auto;
+    flex-wrap: nowrap;
+    -webkit-overflow-scrolling: touch;
+    padding-bottom: 4px;
+    margin-bottom: 12px;
+  }
+
+  .pmh-files__filter {
+    flex-shrink: 0;
+  }
+
+  .pmh-empty {
+    padding: 28px 16px;
+  }
+}
+
+@media (max-width: 560px) {
+  .pmh-hero__actions {
+    grid-template-columns: 1fr;
+  }
+
+  .pmh-hero__title {
+    font-size: 1.2rem;
+  }
+}
+
+@media (max-width: 359px) {
+  .pmh-hero__metrics {
     grid-template-columns: 1fr;
   }
 }
