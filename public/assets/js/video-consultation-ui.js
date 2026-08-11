@@ -234,14 +234,19 @@
       });
     }
 
+    function updateFullscreenBtn() {
+      if (!els.fullscreenBtn) return;
+      const label = isFullscreen ? 'Exit fullscreen' : 'Expand video';
+      els.fullscreenBtn.setAttribute('aria-label', label);
+      els.fullscreenBtn.title = label;
+    }
+
     function toggleFullscreen() {
       const target = els.root;
       if (!target) return;
 
       if (embedded && onMaximize) {
         onMaximize();
-        isFullscreen = !isFullscreen;
-        target.classList.toggle('is-fullscreen', isFullscreen);
         showControlsTemporarily();
         return;
       }
@@ -275,8 +280,17 @@
       if (!document.fullscreenElement) {
         isFullscreen = false;
         els.root.classList.remove('is-fullscreen', 'controls-hidden');
+        updateFullscreenBtn();
       }
     });
+
+    function setMobileFullscreen(expanded) {
+      isFullscreen = !!expanded;
+      if (els.root) {
+        els.root.classList.toggle('is-fullscreen', isFullscreen);
+      }
+      updateFullscreenBtn();
+    }
 
     function toggleFloating() {
       if (!els.root) return;
@@ -632,6 +646,7 @@
       bindStageTap();
       wireControlButtons();
       bindExistingControls();
+      updateFullscreenBtn();
       watchCallStatus();
       startNetworkMonitor();
 
@@ -664,6 +679,7 @@
       swapViews,
       toggleFloating,
       toggleFullscreen,
+      setMobileFullscreen,
       showControlsTemporarily,
       updateOverlayFromStatus,
       setOverlay,
