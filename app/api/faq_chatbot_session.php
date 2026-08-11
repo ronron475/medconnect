@@ -23,5 +23,6 @@ if (empty($_SESSION['faq_chatbot_session_id'])
 Api::success([
     'data' => [
         'session_id' => $_SESSION['faq_chatbot_session_id'],
+        'security'   => FaqChatbotMessageGuard::clientStatus((string) $_SESSION['faq_chatbot_session_id']),
     ],
 ], 'OK');

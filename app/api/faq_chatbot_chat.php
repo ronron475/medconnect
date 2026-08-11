@@ -27,7 +27,10 @@ faq_chatbot_ensure_schema($pdo);
 
 $rl = mc_rate_limiter_allow('faq_chatbot_chat', 40, 60, (int) ($_SESSION['user_id'] ?? 0));
 if (!$rl['allowed']) {
-    Api::error('Too many messages. Please wait a moment.', 429);
+    Api::error('Too many messages. Please wait a moment.', 429, [
+        'code' => 'rate_limited',
+        'restriction_seconds' => 30,
+    ]);
 }
 
 $rawBody = file_get_contents('php://input') ?: '';
@@ -56,6 +59,16 @@ $_SESSION['faq_chatbot_lang'] = FaqEmotionEngine::normalizeLang($lang);
 
 if ($text === '' && !in_array($mode, ['log_bot', 'log_only'], true)) {
     Api::error('Text is required.');
+}
+
+if ($text !== '' && !in_array($mode, ['log_bot', 'log_only'], true)) {
+    $guard = FaqChatbotMessageGuard::evaluate($text, $sessionId, (int) ($_SESSION['user_id'] ?? 0), $lang);
+    $text = (string) $guard['sanitized_text'];
+
+    if (!$guard['allowed']) {
+        $payload = FaqChatbotMessageGuard::assistPayload($guard, $sessionId, $lang);
+        Api::success(['data' => $payload], 'OK');
+    }
 }
 
 try {
