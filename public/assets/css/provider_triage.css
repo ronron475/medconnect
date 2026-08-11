@@ -1098,47 +1098,92 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    padding: 16px;
+    padding: max(16px, env(safe-area-inset-top, 0px)) 16px max(16px, env(safe-area-inset-bottom, 0px));
 }
 
 .triage-review-confirm[hidden] {
-    display: none;
+    display: none !important;
 }
 
 .triage-review-confirm__backdrop {
     position: absolute;
     inset: 0;
-    background: rgba(15, 23, 42, 0.5);
+    background: rgba(15, 23, 42, 0.55);
+    backdrop-filter: blur(3px);
+    -webkit-backdrop-filter: blur(3px);
 }
 
 .triage-review-confirm__dialog {
     position: relative;
     width: min(100%, 440px);
     background: #fff;
+    border-radius: 16px;
+    border: 1px solid #e2e8f0;
+    padding: 24px 22px 18px;
+    box-shadow: 0 24px 60px rgba(15, 23, 42, 0.24);
+    animation: triageConfirmIn 0.18s ease-out;
+}
+
+@keyframes triageConfirmIn {
+    from {
+        opacity: 0;
+        transform: translateY(8px) scale(0.98);
+    }
+    to {
+        opacity: 1;
+        transform: none;
+    }
+}
+
+.triage-review-confirm__icon {
+    width: 48px;
+    height: 48px;
     border-radius: 14px;
-    padding: 22px 20px 18px;
-    box-shadow: 0 24px 60px rgba(15, 23, 42, 0.22);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 14px;
+    background: #ecfeff;
+    color: #0e7490;
+    border: 1px solid #a5f3fc;
+}
+
+.triage-review-confirm--danger .triage-review-confirm__icon {
+    background: #fef2f2;
+    color: #b91c1c;
+    border-color: #fecaca;
+}
+
+.triage-review-confirm__icon svg {
+    width: 24px;
+    height: 24px;
 }
 
 .triage-review-confirm__title {
     margin: 0 0 8px;
-    font-size: 18px;
+    font-size: 1.125rem;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    line-height: 1.3;
     color: var(--mc-navy-dark, #0f172a);
 }
 
 .triage-review-confirm__lead {
-    margin: 0 0 12px;
-    font-size: 13px;
-    line-height: 1.5;
-    color: #334155;
+    margin: 0 0 14px;
+    font-size: 0.875rem;
+    line-height: 1.55;
+    color: #475569;
 }
 
 .triage-review-confirm__list {
-    margin: 0 0 12px;
-    padding-left: 18px;
-    font-size: 12px;
+    margin: 0 0 14px;
+    padding: 12px 14px 12px 32px;
+    border-radius: 10px;
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    font-size: 0.8125rem;
     line-height: 1.55;
-    color: #475569;
+    color: #334155;
 }
 
 .triage-review-confirm__list li + li {
@@ -1146,31 +1191,69 @@
 }
 
 .triage-review-confirm__when {
-    margin: 0 0 16px;
-    font-size: 12px;
+    margin: 0 0 18px;
+    font-size: 0.8125rem;
     line-height: 1.45;
     color: #0e7490;
     background: #f0fdfa;
     border: 1px solid #99f6e4;
-    border-radius: 8px;
-    padding: 8px 10px;
+    border-radius: 10px;
+    padding: 10px 12px;
+}
+
+.triage-review-confirm--danger .triage-review-confirm__when {
+    color: #9f1239;
+    background: #fff1f2;
+    border-color: #fecdd3;
 }
 
 .triage-review-confirm__actions {
     display: flex;
-    gap: 8px;
+    flex-wrap: wrap;
+    gap: 10px;
     justify-content: flex-end;
+}
+
+.triage-review-confirm__actions .mc-btn {
+    min-width: 108px;
+}
+
+@media (max-width: 480px) {
+    .triage-review-confirm__dialog {
+        padding: 20px 16px 16px;
+        border-radius: 14px;
+    }
+
+    .triage-review-confirm__actions {
+        flex-direction: column-reverse;
+    }
+
+    .triage-review-confirm__actions .mc-btn {
+        width: 100%;
+        min-width: 0;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .triage-review-confirm__dialog {
+        animation: none;
+    }
 }
 
 @media (prefers-color-scheme: dark) {
     .triage-review-confirm__dialog {
         background: #1e293b;
+        border-color: #334155;
     }
     .triage-review-confirm__title {
         color: #f1f5f9;
     }
-    .triage-review-confirm__lead,
+    .triage-review-confirm__lead {
+        color: #cbd5e1;
+    }
     .triage-review-confirm__list {
+        background: #0f172a;
+        border-color: #334155;
         color: #cbd5e1;
     }
 }

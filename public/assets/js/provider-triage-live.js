@@ -494,6 +494,8 @@
     modal.classList.remove('is-open');
     modal.setAttribute('aria-hidden', 'true');
     if (document.body) document.body.style.overflow = '';
+    closeReviewConfirm('triageApproveConfirm');
+    closeReviewConfirm('triageWithholdConfirm');
   }
 
   function csrfToken() {
@@ -525,6 +527,62 @@
     return data;
   }
 
+  function openReviewConfirm(modalId) {
+    var el = document.getElementById(modalId);
+    if (!el) return null;
+    el.hidden = false;
+    el.setAttribute('aria-hidden', 'false');
+    var focusBtn = el.querySelector('[data-mc-autofocus], .mc-btn--primary, .mc-btn--danger');
+    if (focusBtn && typeof focusBtn.focus === 'function') {
+      setTimeout(function () { focusBtn.focus(); }, 10);
+    }
+    return el;
+  }
+
+  function closeReviewConfirm(modalId) {
+    var el = document.getElementById(modalId);
+    if (!el) return;
+    el.hidden = true;
+    el.setAttribute('aria-hidden', 'true');
+  }
+
+  function askReviewConfirm(modalId, confirmAttr, cancelAttr) {
+    return new Promise(function (resolve) {
+      var el = openReviewConfirm(modalId);
+      if (!el) {
+        resolve(false);
+        return;
+      }
+
+      function cleanup(result) {
+        el.removeEventListener('click', onClick);
+        document.removeEventListener('keydown', onKey);
+        closeReviewConfirm(modalId);
+        resolve(result);
+      }
+
+      function onClick(event) {
+        if (event.target.closest('[' + cancelAttr + ']')) {
+          cleanup(false);
+          return;
+        }
+        if (event.target.closest('[' + confirmAttr + ']')) {
+          cleanup(true);
+        }
+      }
+
+      function onKey(event) {
+        if (event.key === 'Escape') {
+          event.preventDefault();
+          cleanup(false);
+        }
+      }
+
+      el.addEventListener('click', onClick);
+      document.addEventListener('keydown', onKey);
+    });
+  }
+
   async function approveRecommendationsFromModal() {
     if (!currentTriageId) return;
     var recEdit = document.getElementById('modalRecommendationsEdit');
@@ -533,7 +591,12 @@
       alert('Add at least one self-care recommendation before approving.');
       return;
     }
-    if (!confirm('Approve these self-care recommendations for the patient? This will complete your review.')) return;
+    var confirmed = await askReviewConfirm(
+      'triageApproveConfirm',
+      'data-triage-approve-confirm',
+      'data-triage-approve-cancel'
+    );
+    if (!confirmed) return;
     try {
       var data = await postTriageAction({
         id: String(currentTriageId),
@@ -555,7 +618,12 @@
 
   async function rejectRecommendationsFromModal() {
     if (!currentTriageId) return;
-    if (!confirm('Withhold self-care guidance from the patient? This will complete your review.')) return;
+    var confirmed = await askReviewConfirm(
+      'triageWithholdConfirm',
+      'data-triage-withhold-confirm',
+      'data-triage-withhold-cancel'
+    );
+    if (!confirmed) return;
     try {
       var data = await postTriageAction({
         id: String(currentTriageId),
