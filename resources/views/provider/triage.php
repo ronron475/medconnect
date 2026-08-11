@@ -462,6 +462,38 @@ $pending_count    = count(array_filter($display_cases, fn($t) => empty($t['revie
   </div>
 </div>
 
+<div
+  id="triageReviewNotice"
+  class="triage-review-confirm triage-review-confirm--success"
+  hidden
+  role="dialog"
+  aria-modal="true"
+  aria-labelledby="triageReviewNoticeTitle"
+  aria-describedby="triageReviewNoticeLead"
+>
+  <div class="triage-review-confirm__backdrop" data-triage-notice-ok tabindex="-1" aria-hidden="true"></div>
+  <div class="triage-review-confirm__dialog">
+    <div class="triage-review-confirm__icon" aria-hidden="true">
+      <svg data-triage-notice-icon-success viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
+        <polyline points="22 4 12 14.01 9 11.01"/>
+      </svg>
+      <svg data-triage-notice-icon-error hidden viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="12" cy="12" r="10"/>
+        <line x1="12" y1="8" x2="12" y2="12"/>
+        <line x1="12" y1="16" x2="12.01" y2="16"/>
+      </svg>
+    </div>
+    <h2 id="triageReviewNoticeTitle" class="triage-review-confirm__title">Review complete</h2>
+    <p id="triageReviewNoticeLead" class="triage-review-confirm__lead">
+      Self-care recommendations are now available to the patient.
+    </p>
+    <div class="triage-review-confirm__actions">
+      <button type="button" class="mc-btn mc-btn--primary" data-triage-notice-ok data-mc-autofocus>OK</button>
+    </div>
+  </div>
+</div>
+
 <?php $triageLiveJsVer = (int) @filemtime(ASSETS_PATH . '/js/provider-triage-live.js'); ?>
 <script type="application/json" id="triageCasesBootstrap"><?= json_encode($display_cases, JSON_UNESCAPED_UNICODE) ?></script>
 <script>

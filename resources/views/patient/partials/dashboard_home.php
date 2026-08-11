@@ -50,6 +50,12 @@ foreach ($upcoming_list as $c) {
       <?php if (!empty($active_consultation) && in_array(strtolower((string) ($active_consultation['status'] ?? '')), ['pending', 'scheduled', 'waiting', 'in_consultation'], true)): ?>
       <a href="#pdashActiveConsultation" class="pdash-btn pdash-btn--primary">View Active Consultation</a>
       <a href="<?= ASSET_BASE ?>/views/patient/consultations.php" class="pdash-btn pdash-btn--outline">My Sessions</a>
+      <?php elseif (!empty($care_tips_ready_to_schedule['ready'])): ?>
+      <a href="#pdashCareTipsReady" class="pdash-btn pdash-btn--primary">Book Consultation</a>
+      <a href="<?= ASSET_BASE ?>/views/patient/consultations.php" class="pdash-btn pdash-btn--outline">My Sessions</a>
+      <?php elseif (!empty($symptoms_review_pending['has_pending'])): ?>
+      <a href="#pdashSymptomsReview" class="pdash-btn pdash-btn--primary">View Review Status</a>
+      <a href="<?= ASSET_BASE ?>/views/patient/consultations.php" class="pdash-btn pdash-btn--outline">My Sessions</a>
       <?php else: ?>
       <a href="<?= ASSET_BASE ?>/views/patient/triage.php" class="pdash-btn pdash-btn--primary">Book New Consultation</a>
       <a href="<?= ASSET_BASE ?>/views/patient/consultations.php" class="pdash-btn pdash-btn--outline">My Sessions</a>
@@ -80,17 +86,19 @@ foreach ($upcoming_list as $c) {
 
   <?php
   $symptoms_review_has_pending = !empty($symptoms_review_pending['has_pending']);
+  $care_tips_ready = !empty($care_tips_ready_to_schedule['ready']);
   $has_active_consultation = !empty($active_consultation)
       && in_array(strtolower((string) ($active_consultation['status'] ?? '')), ['pending', 'scheduled', 'waiting', 'in_consultation'], true);
 
   // Active scheduled/in-progress visit always wins over care-tips review / new complaint.
   if ($has_active_consultation):
       require __DIR__ . '/dashboard_active_consultation.php';
-  elseif (!$symptoms_review_has_pending):
-      require __DIR__ . '/dashboard_chief_complaint.php';
-  endif;
-  if (!$has_active_consultation && !empty($show_dashboard_care_tips_section) && $symptoms_review_has_pending):
+  elseif ($symptoms_review_has_pending && !empty($show_dashboard_care_tips_section)):
       require __DIR__ . '/dashboard_symptoms_review.php';
+  elseif ($care_tips_ready):
+      require __DIR__ . '/dashboard_ready_to_schedule.php';
+  else:
+      require __DIR__ . '/dashboard_chief_complaint.php';
   endif;
   ?>
 

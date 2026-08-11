@@ -496,6 +496,7 @@
     if (document.body) document.body.style.overflow = '';
     closeReviewConfirm('triageApproveConfirm');
     closeReviewConfirm('triageWithholdConfirm');
+    closeReviewConfirm('triageReviewNotice');
   }
 
   function csrfToken() {
@@ -583,12 +584,48 @@
     });
   }
 
+  function showReviewNotice(message, options) {
+    options = options || {};
+    var tone = options.tone === 'error' ? 'error' : 'success';
+    var title = options.title || (tone === 'error' ? 'Something went wrong' : 'Review complete');
+    var el = document.getElementById('triageReviewNotice');
+    if (!el) {
+      window.alert(message);
+      return Promise.resolve();
+    }
+
+    var titleEl = document.getElementById('triageReviewNoticeTitle');
+    var leadEl = document.getElementById('triageReviewNoticeLead');
+    if (titleEl) titleEl.textContent = title;
+    if (leadEl) leadEl.textContent = message || '';
+
+    el.classList.toggle('triage-review-confirm--success', tone === 'success');
+    el.classList.toggle('triage-review-confirm--error', tone === 'error');
+    el.classList.remove('triage-review-confirm--danger');
+
+    var okIcon = el.querySelector('[data-triage-notice-icon-success]');
+    var errIcon = el.querySelector('[data-triage-notice-icon-error]');
+    if (okIcon) okIcon.hidden = tone !== 'success';
+    if (errIcon) errIcon.hidden = tone !== 'error';
+
+    return askReviewConfirm(
+      'triageReviewNotice',
+      'data-triage-notice-ok',
+      'data-triage-notice-ok'
+    ).then(function () {
+      return true;
+    });
+  }
+
   async function approveRecommendationsFromModal() {
     if (!currentTriageId) return;
     var recEdit = document.getElementById('modalRecommendationsEdit');
     var text = recEdit ? String(recEdit.value || '').trim() : '';
     if (!text) {
-      alert('Add at least one self-care recommendation before approving.');
+      await showReviewNotice('Add at least one self-care recommendation before approving.', {
+        tone: 'error',
+        title: 'Recommendations required',
+      });
       return;
     }
     var confirmed = await askReviewConfirm(
@@ -605,14 +642,23 @@
         csrf_token: csrfToken(),
       });
       if (!data || !data.success) {
-        alert((data && data.message) || 'Could not approve recommendations.');
+        await showReviewNotice((data && data.message) || 'Could not approve recommendations.', {
+          tone: 'error',
+          title: 'Approval failed',
+        });
         return;
       }
-      alert(data.message || 'Recommendations approved for the patient.');
       closeTriageModal();
       refreshTriage(true);
+      await showReviewNotice(
+        data.message || 'Review complete. Self-care recommendations are now available to the patient.',
+        { title: 'Review complete' }
+      );
     } catch (e) {
-      alert((e && e.message) || 'Could not approve recommendations.');
+      await showReviewNotice((e && e.message) || 'Could not approve recommendations.', {
+        tone: 'error',
+        title: 'Approval failed',
+      });
     }
   }
 
@@ -631,15 +677,24 @@
         csrf_token: csrfToken(),
       });
       if (!data || !data.success) {
-        alert((data && data.message) || 'Could not update recommendations.');
+        await showReviewNotice((data && data.message) || 'Could not update recommendations.', {
+          tone: 'error',
+          title: 'Update failed',
+        });
         return;
       }
-      alert(data.message || 'Recommendations withheld.');
       closeTriageModal();
       refreshTriage(true);
       if (window.MedConnectNavBadgesRefresh) window.MedConnectNavBadgesRefresh();
+      await showReviewNotice(
+        data.message || 'Review complete. Self-care guidance was withheld from the patient.',
+        { title: 'Review complete' }
+      );
     } catch (e) {
-      alert('Could not update recommendations.');
+      await showReviewNotice('Could not update recommendations.', {
+        tone: 'error',
+        title: 'Update failed',
+      });
     }
   }
 

@@ -254,6 +254,7 @@ foreach ($triage_history as $t) {
 }
 
 $symptoms_review_pending = patient_symptoms_review_pending_state($pdo, (int) $uid);
+$care_tips_ready_to_schedule = patient_care_tips_ready_to_schedule_state($pdo, (int) $uid);
 $symptoms_review_booking = triage_patient_booking_slot_status($pdo, (int) $uid);
 $pending_reg_complaint = patient_registration_load_pending_complaint($pdo, (int) $uid);
 $active_chief_complaint = patient_portal_active_chief_complaint($pdo, (int) $uid);
@@ -267,11 +268,14 @@ if ($portal_triage_urgency === '') {
 }
 $show_dashboard_care_tips_section = patient_dashboard_show_care_tips_section(
     $pending_reg_complaint,
-    $symptoms_review_pending
+    $symptoms_review_pending,
+    $care_tips_ready_to_schedule
 );
 $dash_chief_complaint_url = !empty($symptoms_review_pending['has_pending'])
     ? '#pdashSymptomsReview'
-    : '#pdashChiefComplaint';
+    : (!empty($care_tips_ready_to_schedule['ready'])
+        ? '#pdashCareTipsReady'
+        : '#pdashChiefComplaint');
 
 $patient_followups = [];
 if ($pdo->query("SHOW TABLES LIKE 'followups'")->rowCount()) {

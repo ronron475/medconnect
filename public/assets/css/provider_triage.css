@@ -1154,6 +1154,18 @@
     border-color: #fecaca;
 }
 
+.triage-review-confirm--success .triage-review-confirm__icon {
+    background: #ecfdf5;
+    color: #047857;
+    border-color: #a7f3d0;
+}
+
+.triage-review-confirm--error .triage-review-confirm__icon {
+    background: #fff7ed;
+    color: #c2410c;
+    border-color: #fed7aa;
+}
+
 .triage-review-confirm__icon svg {
     width: 24px;
     height: 24px;
