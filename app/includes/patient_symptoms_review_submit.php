@@ -358,6 +358,82 @@ function patient_symptoms_review_pending_state(PDO $pdo, int $patientId): array
 }
 
 /**
+ * Approved care tips with no booked visit yet — patient may schedule with the
+ * same reviewing doctor. This is NOT a completed consultation.
+ *
+ * @return array{
+ *   ready:bool,
+ *   triage_id:int,
+ *   complaint:string,
+ *   provider_id:int,
+ *   provider_name:string,
+ *   recommendation_status:string
+ * }
+ */
+function patient_care_tips_ready_to_schedule_state(PDO $pdo, int $patientId): array
+{
+    triage_assessment_ensure_schema($pdo);
+    require_once __DIR__ . '/triage_provider_assignment.php';
+    require_once __DIR__ . '/patient_booking_status.php';
+
+    $empty = [
+        'ready' => false,
+        'triage_id' => 0,
+        'complaint' => '',
+        'provider_id' => 0,
+        'provider_name' => '',
+        'recommendation_status' => '',
+    ];
+
+    if ($patientId <= 0) {
+        return $empty;
+    }
+
+    // Live/future visits own the dashboard — not the ready-to-schedule card.
+    if (patient_portal_has_open_consultation($pdo, $patientId)) {
+        return $empty;
+    }
+
+    $stmt = $pdo->prepare("
+        SELECT id, chief_complaint, assigned_provider_id, assessed_at, recommendation_status
+        FROM triage_results tr
+        WHERE tr.patient_id = ?
+          AND TRIM(COALESCE(tr.chief_complaint, '')) <> ''
+          AND COALESCE(tr.recommendation_status, 'hidden') = 'approved'
+          " . patient_triage_sql_active_only('tr') . "
+        ORDER BY tr.assessed_at DESC, tr.id DESC
+        LIMIT 1
+    ");
+    $stmt->execute([$patientId]);
+    $row = $stmt->fetch(PDO::FETCH_ASSOC);
+    if (!$row) {
+        return $empty;
+    }
+
+    $triageId = (int) ($row['id'] ?? 0);
+    $bookingState = patient_triage_row_booking_state(
+        $pdo,
+        $patientId,
+        (string) ($row['assessed_at'] ?? ''),
+        $triageId
+    );
+    if ($bookingState === 'booked' || $bookingState === 'completed') {
+        return $empty;
+    }
+
+    $providerId = (int) ($row['assigned_provider_id'] ?? 0);
+
+    return [
+        'ready' => true,
+        'triage_id' => $triageId,
+        'complaint' => trim((string) ($row['chief_complaint'] ?? '')),
+        'provider_id' => $providerId,
+        'provider_name' => triage_provider_display_name($pdo, $providerId),
+        'recommendation_status' => (string) ($row['recommendation_status'] ?? 'approved'),
+    ];
+}
+
+/**
  * Admin: reassign AI review provider for a triage case.
  *
  * @return array{ok:bool,message:string}

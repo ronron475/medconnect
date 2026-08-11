@@ -11,15 +11,15 @@ require_once __DIR__ . '/triage_assessment_schema.php';
  * SQL fragment: triage row is still part of the patient's active workflow.
  * Historical rows (completed/cancelled visits, hidden/rejected) are excluded.
  *
- * Note: `approved` care tips may still be readable in the Care Tips chatbot,
- * but once a visit for that case was booked and then finished/cancelled, the
- * triage must not keep blocking a brand-new chief complaint cycle.
+ * `approved` care tips WITHOUT a booked visit remain active so the patient can
+ * schedule with the same reviewing doctor. Once a visit for that case exists
+ * (including cancelled/completed), the triage leaves the active booking cycle.
  */
 function patient_triage_sql_active_only(string $alias = 'tr'): string
 {
     $a = preg_replace('/[^a-zA-Z0-9_]/', '', $alias) ?: 'tr';
 
-    // Active care-tips triage only while doctor review is open / tips are current
+    // Active while doctor review is open OR tips are approved and ready to book,
     // and no visit has already been scheduled / started / finished / cancelled.
     return "
           AND COALESCE({$a}.recommendation_status, 'hidden') IN ('pending_approval', 'approved')
@@ -543,12 +543,6 @@ function patient_chief_complaint_row_is_active(PDO $pdo, int $patientId, array $
             $stmt->execute([$triageId, $patientId]);
             $triage = $stmt->fetch(PDO::FETCH_ASSOC);
             if (!$triage) {
-                return false;
-            }
-
-            $recStatus = strtolower(trim((string) ($triage['recommendation_status'] ?? '')));
-            // Approved tips without an open consultation no longer lock a new cycle.
-            if ($recStatus === 'approved' && !patient_portal_has_open_consultation($pdo, $patientId)) {
                 return false;
             }
 

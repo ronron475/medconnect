@@ -581,10 +581,17 @@ function patient_registration_urgency_is_non_urgent(?string $urgency): bool
  *
  * @param array{complaint:string,urgency:string,nlp_json:string} $pendingReg
  * @param array{has_pending:bool,triage_id:int,complaint:string,provider_id:int,provider_name:string} $symptomsReviewPending
+ * @param array{ready?:bool} $readyToSchedule
  */
-function patient_dashboard_show_care_tips_section(array $pendingReg, array $symptomsReviewPending): bool
-{
+function patient_dashboard_show_care_tips_section(
+    array $pendingReg,
+    array $symptomsReviewPending,
+    array $readyToSchedule = []
+): bool {
     if (!empty($symptomsReviewPending['has_pending'])) {
+        return true;
+    }
+    if (!empty($readyToSchedule['ready'])) {
         return true;
     }
 

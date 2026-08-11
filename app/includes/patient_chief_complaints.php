@@ -264,16 +264,6 @@ function patient_portal_active_chief_complaint(PDO $pdo, int $patientId): array
 
     $triageRow = patient_portal_find_active_triage_row($pdo, $patientId);
 
-    // Approved care tips must remain readable in the Care Tips chatbot, but they
-    // must NOT permanently lock the dashboard chief complaint. Once there is no
-    // live/future consultation, the patient may start a NEW complaint cycle.
-    if ($triageRow) {
-        $recStatus = strtolower(trim((string) ($triageRow['recommendation_status'] ?? '')));
-        if ($recStatus === 'approved' && !patient_portal_has_open_consultation($pdo, $patientId)) {
-            $triageRow = null;
-        }
-    }
-
     $pccRow = null;
     try {
         // Walk recent rows until we find one still tied to an active cycle.
@@ -365,17 +355,15 @@ function patient_portal_active_chief_complaint(PDO $pdo, int $patientId): array
     if ($regComplaint !== '') {
         // Registration complaint is a one-time seed for the first cycle only.
         // After any finished/stale visit (or when a new cycle should start), do not lock it.
-        // Also unlock when approved care tips remain but there is no live consultation —
-        // otherwise patients who cancelled after tips stay stuck on the registration text.
         if (patient_portal_has_completed_visit($pdo, $patientId) && !$triageRow) {
             return $empty;
         }
         if (!$triageRow && patient_portal_has_stale_or_finished_consultation($pdo, $patientId)) {
             return $empty;
         }
+        // If the patient already had a triage cycle and there is no active
+        // pending/approved case left, do not keep locking the registration seed.
         if (!$triageRow && !patient_portal_has_open_consultation($pdo, $patientId)) {
-            // Prefer an editable new-complaint flow over permanently locking the
-            // registration seed when the patient is not mid-review / mid-visit.
             $hasPriorTriage = false;
             try {
                 $prior = $pdo->prepare('
