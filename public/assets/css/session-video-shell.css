@@ -111,8 +111,10 @@
 
 .mc-session-float-body {
   position: relative;
+  z-index: 1;
   flex: 1 1 auto;
   min-height: 0;
+  overflow: hidden;
   background: #000;
 }
 
@@ -125,6 +127,9 @@
 }
 
 .mc-session-float-toolbar {
+  position: relative;
+  z-index: 5;
+  flex: 0 0 auto;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -132,6 +137,7 @@
   padding: 8px 10px;
   background: rgba(2, 6, 23, 0.94);
   border-top: 1px solid rgba(148, 163, 184, 0.18);
+  pointer-events: auto;
 }
 
 .mc-session-float-shell.is-docked .mc-session-float-handle,
@@ -152,6 +158,10 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  touch-action: manipulation;
+  pointer-events: auto;
+  position: relative;
+  z-index: 1;
   -webkit-tap-highlight-color: transparent;
 }
 
@@ -164,6 +174,11 @@
 
 body.mc-video-shell-fullscreen {
   overflow: hidden !important;
+}
+
+body.mc-video-shell-fullscreen .portal-mobile-nav,
+body.mc-video-shell-fullscreen .patient-mobile-nav {
+  display: none !important;
 }
 
 body.mc-video-shell-pip .mc-messages-fab {

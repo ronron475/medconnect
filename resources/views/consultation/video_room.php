@@ -569,6 +569,15 @@ if (session_status() === PHP_SESSION_ACTIVE) {
           <button type="button" class="mc-vc-overlay-retry" id="retryConnectBtn" hidden>Retry connection</button>
         </div>
       </div>
+      <div id="mcVcWaitingCard" class="mc-vc-waiting-card" hidden>
+        <div class="mc-vc-waiting-card__inner">
+          <p class="mc-vc-waiting-card__eyebrow"><?= $is_patient ? 'Preparing your visit' : 'Preparing session' ?></p>
+          <h2 class="mc-vc-waiting-card__title" id="mcVcWaitingTitle"><?= $is_patient ? 'Waiting for your healthcare provider' : 'Waiting for your patient' ?></h2>
+          <dl class="mc-vc-waiting-card__meta" id="mcVcWaitingMeta"></dl>
+          <p class="mc-vc-waiting-card__status" id="mcVcWaitingStatus"></p>
+          <button type="button" class="mc-vc-overlay-retry" id="mcVcWaitingRetry" hidden>Retry connection</button>
+        </div>
+      </div>
     </div>
 
     <!-- Hidden video elements (mounted into main/PiP slots by UI module) -->
