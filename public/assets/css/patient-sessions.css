@@ -855,3 +855,28 @@
 body.psess-followup-open {
   overflow: hidden;
 }
+
+.psess-reschedule-banner {
+  margin-top: 10px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: #fffbeb;
+  border: 1px solid #fcd34d;
+  font-size: 0.8125rem;
+  line-height: 1.45;
+}
+
+.psess-reschedule-banner p {
+  margin: 4px 0 0;
+}
+
+.psess-reschedule-reason {
+  color: #92400e;
+}
+
+.psess-reschedule-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 10px;
+}

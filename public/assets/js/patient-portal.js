@@ -141,6 +141,20 @@
       .replace(/"/g, '&quot;');
   }
 
+  function formatConsultWhen(dateStr, timeStr) {
+    if (!dateStr) return '—';
+    const dateLabel = new Date(String(dateStr) + 'T00:00:00').toLocaleDateString('en-US', {
+      month: 'short', day: 'numeric', year: 'numeric',
+    });
+    if (!timeStr) return dateLabel;
+    const tp = String(timeStr).split(':');
+    const th = parseInt(tp[0] || '0', 10);
+    const tm = String(tp[1] || '00').padStart(2, '0');
+    const ampm = th >= 12 ? 'PM' : 'AM';
+    const h12 = ((th + 11) % 12) + 1;
+    return dateLabel + ' at ' + h12 + ':' + tm + ' ' + ampm;
+  }
+
   function statusBadgeClass(mode, status) {
     if (mode === 'join') return 'psess-status--ready';
     if (mode === 'waiting') return 'psess-status--waiting';
@@ -309,6 +323,23 @@
           : joinAccess.mode === 'scheduled_wait' ? 'Opens at scheduled time'
           : (c.status || '—');
 
+      let rescheduleBanner = '';
+      const pending = c.pending_reschedule;
+      if (pending && pending.status === 'pending_patient') {
+        const oldWhen = formatConsultWhen(pending.old_date, pending.old_time);
+        const newWhen = formatConsultWhen(pending.new_date, pending.new_time);
+        rescheduleBanner =
+          '<div class="psess-reschedule-banner" role="alert">' +
+          '<strong>Reschedule request from ' + escapeHtml(c.provider_name || 'your doctor') + '</strong>' +
+          '<p>Current confirmed time: <strong>' + escapeHtml(oldWhen) + '</strong></p>' +
+          '<p>Proposed new time: <strong>' + escapeHtml(newWhen) + '</strong></p>' +
+          (pending.reason ? '<p class="psess-reschedule-reason">Reason: ' + escapeHtml(pending.reason) + '</p>' : '') +
+          '<div class="psess-reschedule-actions">' +
+          '<button type="button" class="psess-btn psess-btn--primary" data-reschedule-accept="' + escapeHtml(String(pending.id)) + '">Accept new time</button>' +
+          '<button type="button" class="psess-btn psess-btn--outline" data-reschedule-decline="' + escapeHtml(String(pending.id)) + '">Keep original time</button>' +
+          '</div></div>';
+      }
+
       const cardMod =
         joinAccess.mode === 'join' ? ' psess-card--ready'
           : joinAccess.mode === 'waiting' ? ' psess-card--waiting' : '';
@@ -323,7 +354,9 @@
         '<p class="psess-card__datetime">' +
         '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/></svg>' +
         dateLabel + (timeLabel ? ' · ' + timeLabel : '') +
-        '</p></div></div>' +
+        '</p>' +
+        rescheduleBanner +
+        '</div></div>' +
         '<div class="psess-card__aside">' +
         '<span class="psess-status ' + statusBadgeClass(joinAccess.mode, c.status) + '">' + escapeHtml(statusLabel) + '</span>' +
         actionBtn +
@@ -381,6 +414,58 @@
     if (!btn) return;
     e.preventDefault();
     cancelPatientConsultation(btn.getAttribute('data-cancel-consult'));
+  });
+
+  async function respondReschedule(rescheduleId, action) {
+    const id = parseInt(String(rescheduleId || '0'), 10);
+    if (!id) return;
+
+    const confirmMsg = action === 'accept'
+      ? 'Accept the new appointment time proposed by your doctor?'
+      : 'Keep your original appointment time and decline this reschedule request?';
+    if (!window.confirm(confirmMsg)) return;
+
+    const csrf = getCsrfToken();
+    if (!csrf) {
+      window.alert('Security token missing. Please refresh the page and try again.');
+      return;
+    }
+
+    try {
+      const fd = new FormData();
+      fd.set('reschedule_id', String(id));
+      fd.set('action', action);
+      fd.set('csrf_token', csrf);
+      const res = await fetch(APP_BASE + '/app/api/patient/respond_reschedule.php', {
+        method: 'POST',
+        body: fd,
+        credentials: 'same-origin',
+        headers: { 'X-MC-No-Loader': '1' },
+      });
+      const data = await res.json().catch(() => null);
+      if (!data || !data.success) {
+        window.alert((data && data.message) || 'Could not update reschedule request.');
+        return;
+      }
+      window.alert(data.message || 'Response saved.');
+      window.location.reload();
+    } catch (_) {
+      window.alert('Network error. Please try again.');
+    }
+  }
+
+  document.addEventListener('click', (e) => {
+    const acceptBtn = e.target && e.target.closest ? e.target.closest('[data-reschedule-accept]') : null;
+    if (acceptBtn) {
+      e.preventDefault();
+      respondReschedule(acceptBtn.getAttribute('data-reschedule-accept'), 'accept');
+      return;
+    }
+    const declineBtn = e.target && e.target.closest ? e.target.closest('[data-reschedule-decline]') : null;
+    if (declineBtn) {
+      e.preventDefault();
+      respondReschedule(declineBtn.getAttribute('data-reschedule-decline'), 'decline');
+    }
   });
 
   function updateJoinHint(list) {

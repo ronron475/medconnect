@@ -14,24 +14,41 @@ if (!defined('BASE_PATH')) {
 }
 require_once BASE_PATH . '/app/includes/patient_portal_bootstrap.php';
 require_once BASE_PATH . '/app/includes/urgent_followup_workflow.php';
+require_once BASE_PATH . '/app/includes/appointment_reschedule.php';
+require_once BASE_PATH . '/app/includes/appointment_schedule_schema.php';
+appointment_schedule_ensure_schema($pdo);
 
 $all_consults = [];
 $followup_eligible_ids = [];
 $followup_eligible_map = [];
+$pending_reschedules = appointment_reschedule_pending_for_patient($pdo, $uid);
+$pending_reschedule_by_consult = [];
+foreach ($pending_reschedules as $pr) {
+    $pending_reschedule_by_consult[(int) ($pr['consultation_id'] ?? 0)] = $pr;
+}
 
 if ($pdo->query("SHOW TABLES LIKE 'consultations'")->rowCount()) {
     $s = $pdo->prepare("
         SELECT c.id, c.consult_date, c.consult_time, c.provider_id, c.provider_name, c.consult_type, c.status, c.diagnosis, c.recommendation,
+               c.original_consult_date, c.original_consult_time, c.reschedule_status,
                vs.room_token,
                s.slot_date, s.start_time AS slot_start
         FROM consultations c
         LEFT JOIN video_sessions vs ON c.id = vs.consultation_id AND vs.status = 'active'
-        LEFT JOIN appointment_slots s ON s.consultation_id = c.id AND s.status = 'booked'
+        LEFT JOIN appointment_slots s ON s.consultation_id = c.id AND s.status IN ('booked', 'blocked')
         WHERE c.patient_id = ?
         ORDER BY c.consult_date DESC, c.consult_time DESC
     ");
     $s->execute([$uid]);
     $all_consults = $s->fetchAll(PDO::FETCH_ASSOC);
+
+    foreach ($all_consults as &$consult) {
+        $cid = (int) ($consult['id'] ?? 0);
+        if (isset($pending_reschedule_by_consult[$cid])) {
+            $consult['pending_reschedule'] = $pending_reschedule_by_consult[$cid];
+        }
+    }
+    unset($consult);
 
     $eligible = urgent_followup_eligible_consultations($pdo, $uid);
     foreach ($eligible as $row) {

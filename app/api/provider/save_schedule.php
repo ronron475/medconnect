@@ -88,6 +88,9 @@ $sessions = $validation['sessions'];
 try {
     $pdo->beginTransaction();
 
+    appointment_schedule_ensure_schema($pdo);
+    appointment_slots_expire_passed($pdo, $provider_id);
+
     provider_schedule_save_day($pdo, $provider_id, $day, $sessions, $day_active);
 
     appointment_slots_clear_day($pdo, $provider_id, $day);

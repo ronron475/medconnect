@@ -24,16 +24,13 @@ function consultation_release_booked_slots(
         return 0;
     }
 
-    $stmt = $pdo->prepare("
-        UPDATE appointment_slots
-        SET status = 'available',
-            patient_id = NULL,
-            consultation_id = NULL
-        WHERE consultation_id = ?
-          AND status = 'booked'
-    ");
-    $stmt->execute([$consultationId]);
-    $freed = (int) $stmt->rowCount();
+    require_once __DIR__ . '/appointment_slots.php';
+    appointment_schedule_ensure_schema($pdo);
+
+    $freed = appointment_slot_set_consultation_status($pdo, $consultationId, 'cancelled');
+    if ($freed > 0) {
+        return $freed;
+    }
 
     // Legacy / edge cases: booked by patient+time without consultation_id link.
     if ($freed === 0 && $patientId !== null && $patientId > 0 && $consultDate && $consultTime) {
@@ -44,9 +41,8 @@ function consultation_release_booked_slots(
         }
         $fallback = $pdo->prepare("
             UPDATE appointment_slots
-            SET status = 'available',
-                patient_id = NULL,
-                consultation_id = NULL
+            SET status = 'cancelled',
+                patient_id = NULL
             WHERE patient_id = ?
               AND slot_date = ?
               AND start_time = ?

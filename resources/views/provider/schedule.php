@@ -6,6 +6,7 @@ require __DIR__.'/partials/icons.php';
 require __DIR__.'/partials/data.php';
 require_once BASE_PATH . '/app/includes/appointment_slots.php';
 require_once BASE_PATH . '/app/includes/provider_schedule_sessions.php';
+appointment_schedule_ensure_schema($pdo);
 require __DIR__.'/partials/layout_open.php';
 
 $provider_id = (int) $_SESSION['user_id'];
@@ -31,23 +32,35 @@ $today_sessions = $schedules_by_day[$today_name] ?? [];
 $today_is_active = provider_schedule_day_is_active($today_sessions);
 
 $s_stmt = $pdo->prepare("
-    SELECT s.start_time, s.end_time, s.status,
-           COALESCE(CONCAT(u.first_name, ' ', u.last_name), '') AS patient_name
+    SELECT s.id, s.start_time, s.end_time, s.status, s.consultation_id,
+           COALESCE(CONCAT(u.first_name, ' ', u.last_name), '') AS patient_name,
+           COALESCE(c.reschedule_status, 'none') AS reschedule_status,
+           c.status AS consultation_status
     FROM appointment_slots s
     LEFT JOIN users u ON u.id = s.patient_id
+    LEFT JOIN consultations c ON c.id = s.consultation_id
     WHERE s.provider_id = ? AND s.slot_date = CURDATE()
     ORDER BY s.start_time ASC
 ");
 $s_stmt->execute([$provider_id]);
 $today_slots = $s_stmt->fetchAll();
 
-$slot_counts = ['available' => 0, 'booked' => 0, 'passed' => 0];
+$slot_counts = ['available' => 0, 'booked' => 0, 'passed' => 0, 'completed' => 0, 'cancelled' => 0];
 foreach ($today_slots as $sl) {
-    if (($sl['status'] ?? '') === 'booked') {
+    $st = strtolower((string) ($sl['status'] ?? ''));
+    if (in_array($st, ['booked', 'blocked'], true)) {
         $slot_counts['booked']++;
         continue;
     }
-    if (substr((string) ($sl['start_time'] ?? ''), 0, 8) <= date('H:i:s')) {
+    if ($st === 'completed') {
+        $slot_counts['completed']++;
+        continue;
+    }
+    if ($st === 'cancelled') {
+        $slot_counts['cancelled']++;
+        continue;
+    }
+    if (in_array($st, ['expired'], true) || substr((string) ($sl['start_time'] ?? ''), 0, 8) <= date('H:i:s')) {
         $slot_counts['passed']++;
     } else {
         $slot_counts['available']++;
@@ -125,7 +138,7 @@ $session_count_today = count($today_sessions);
         <div class="sched-slot-stats">
           <div class="sched-slot-stat sched-slot-stat--open">
             <strong><?= $slot_counts['available'] ?></strong>
-            <span>Open</span>
+            <span>Available</span>
           </div>
           <div class="sched-slot-stat sched-slot-stat--booked">
             <strong><?= $slot_counts['booked'] ?></strong>
@@ -133,14 +146,19 @@ $session_count_today = count($today_sessions);
           </div>
           <div class="sched-slot-stat sched-slot-stat--past">
             <strong><?= $slot_counts['passed'] ?></strong>
-            <span>Passed</span>
+            <span>Expired</span>
           </div>
         </div>
+        <p class="sched-slot-legend">
+          Only <strong>AVAILABLE</strong> slots can be removed.
+          <strong>BOOKED</strong> appointments must use Reschedule — never edit the time directly.
+        </p>
         <h4 class="sched-preview-title"><?= htmlspecialchars($today_name) ?> timeline</h4>
         <div class="sched-slot-grid-wrap">
           <?php
           $slot_list = $today_slots;
           $slot_preview_date = date('Y-m-d');
+          $slot_actions_enabled = true;
           include __DIR__ . '/partials/schedule_slot_grid.php';
           ?>
         </div>
@@ -184,10 +202,43 @@ $session_count_today = count($today_sessions);
   </div>
 </div>
 
+<div id="schedRescheduleModal" class="sched-reschedule" hidden aria-hidden="true">
+  <div class="sched-reschedule__backdrop" data-sched-reschedule-cancel></div>
+  <div class="sched-reschedule__dialog" role="dialog" aria-modal="true" aria-labelledby="schedRescheduleTitle">
+    <h3 id="schedRescheduleTitle" class="sched-reschedule__title">Reschedule appointment</h3>
+    <p id="schedReschedulePatient" class="sched-reschedule__patient"></p>
+    <p class="sched-reschedule__hint">
+      Choose a new available time. The patient must confirm before the appointment changes.
+    </p>
+    <form id="schedRescheduleForm" class="sched-reschedule__form">
+      <input type="hidden" name="consultation_id" id="schedRescheduleConsultId" value="">
+      <input type="hidden" name="old_slot_id" id="schedRescheduleOldSlotId" value="">
+      <label class="sched-reschedule__field">
+        <span>New time slot</span>
+        <select name="new_slot_id" id="schedRescheduleNewSlot" required>
+          <option value="">Loading available slots…</option>
+        </select>
+      </label>
+      <label class="sched-reschedule__field">
+        <span>Reason for reschedule</span>
+        <textarea name="reason" id="schedRescheduleReason" rows="3" required maxlength="500"
+                  placeholder="Explain why this time needs to change"></textarea>
+      </label>
+      <div class="sched-reschedule__actions">
+        <button type="button" class="mc-btn mc-btn--outline" data-sched-reschedule-cancel>Cancel</button>
+        <button type="submit" class="mc-btn mc-btn--primary">Send reschedule request</button>
+      </div>
+    </form>
+  </div>
+</div>
+
 <script>
   window.SCHEDULE_CONFIG = <?= json_encode([
       'today'    => $today_name,
       'api'      => ASSET_BASE . '/app/api/provider/save_schedule.php',
+      'removeSlotApi' => ASSET_BASE . '/app/api/provider/remove_slot.php',
+      'rescheduleApi' => ASSET_BASE . '/app/api/provider/request_reschedule.php',
+      'rescheduleSlotsApi' => ASSET_BASE . '/app/api/provider/reschedule_slots.php',
       'loginUrl' => ASSET_BASE . '/index.php',
   ], JSON_THROW_ON_ERROR) ?>;
 </script>

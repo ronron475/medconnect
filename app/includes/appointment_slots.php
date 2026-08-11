@@ -3,6 +3,8 @@
  * Appointment slot generation and patient booking rules.
  */
 
+require_once __DIR__ . '/appointment_schedule_schema.php';
+
 function appointment_now(): DateTimeImmutable
 {
     return new DateTimeImmutable('now', new DateTimeZone(APP_TIMEZONE));
@@ -17,6 +19,96 @@ function appointment_slot_start_datetime(string $slotDate, string $startTime): D
         $slotDate . ' ' . $time,
         new DateTimeZone(APP_TIMEZONE)
     ) ?: appointment_now();
+}
+
+/**
+ * Slot statuses that may be edited or removed by the provider.
+ */
+function appointment_slot_editable_statuses(): array
+{
+    return ['available'];
+}
+
+function appointment_slot_is_editable(string $status): bool
+{
+    return in_array(strtolower($status), appointment_slot_editable_statuses(), true);
+}
+
+function appointment_slot_display_status(string $status, bool $isPast = false): string
+{
+    $status = strtolower($status);
+    if ($status === 'available' && $isPast) {
+        return 'EXPIRED';
+    }
+
+    return strtoupper($status);
+}
+
+/**
+ * Mark past unbooked slots as expired (today only).
+ */
+function appointment_slots_expire_passed(PDO $pdo, ?int $providerId = null): int
+{
+    appointment_schedule_ensure_schema($pdo);
+
+    $sql = "
+        UPDATE appointment_slots
+        SET status = 'expired'
+        WHERE status = 'available'
+          AND slot_date = CURDATE()
+          AND start_time <= CURTIME()
+    ";
+    $params = [];
+    if ($providerId !== null && $providerId > 0) {
+        $sql .= ' AND provider_id = ?';
+        $params[] = $providerId;
+    }
+
+    $stmt = $pdo->prepare($sql);
+    $stmt->execute($params);
+
+    return (int) $stmt->rowCount();
+}
+
+/**
+ * Mark booked slots linked to a consultation with a terminal slot status.
+ */
+function appointment_slot_set_consultation_status(PDO $pdo, int $consultationId, string $slotStatus): int
+{
+    if ($consultationId <= 0) {
+        return 0;
+    }
+
+    appointment_schedule_ensure_schema($pdo);
+    $slotStatus = strtolower($slotStatus);
+    if (!in_array($slotStatus, ['completed', 'cancelled', 'available'], true)) {
+        return 0;
+    }
+
+    if ($slotStatus === 'available') {
+        $stmt = $pdo->prepare("
+            UPDATE appointment_slots
+            SET status = 'available',
+                patient_id = NULL,
+                consultation_id = NULL
+            WHERE consultation_id = ?
+              AND status IN ('booked', 'blocked')
+        ");
+        $stmt->execute([$consultationId]);
+
+        return (int) $stmt->rowCount();
+    }
+
+    $stmt = $pdo->prepare("
+        UPDATE appointment_slots
+        SET status = ?,
+            patient_id = NULL
+        WHERE consultation_id = ?
+          AND status IN ('booked', 'blocked')
+    ");
+    $stmt->execute([$slotStatus, $consultationId]);
+
+    return (int) $stmt->rowCount();
 }
 
 /**
@@ -87,6 +179,8 @@ function appointment_slots_sync_provider(PDO $pdo, int $provider_id, int $daysAh
  */
 function appointment_slots_clear_day(PDO $pdo, int $provider_id, string $day): void
 {
+    appointment_schedule_ensure_schema($pdo);
+
     // Use WEEKDAY (0=Mon … 6=Sun) instead of DAYNAME() to avoid collation mismatches on Hostinger.
     $weekdayMap = [
         'Monday' => 0, 'Tuesday' => 1, 'Wednesday' => 2, 'Thursday' => 3,
@@ -97,14 +191,71 @@ function appointment_slots_clear_day(PDO $pdo, int $provider_id, string $day): v
         return;
     }
 
+    // Only remove unprotected slots. Booked/completed slots stay regardless of schedule edits.
     $stmt = $pdo->prepare("
-        DELETE FROM appointment_slots
-        WHERE provider_id = ?
-          AND WEEKDAY(slot_date) = ?
-          AND slot_date >= CURDATE()
-          AND status = 'available'
+        DELETE s FROM appointment_slots s
+        LEFT JOIN consultations c ON c.id = s.consultation_id
+        WHERE s.provider_id = ?
+          AND WEEKDAY(s.slot_date) = ?
+          AND s.slot_date >= CURDATE()
+          AND (
+            s.status IN ('available', 'expired')
+            OR (
+                s.status = 'cancelled'
+                AND (s.consultation_id IS NULL OR c.status IN ('cancelled', 'completed'))
+            )
+          )
     ");
     $stmt->execute([$provider_id, $weekday]);
+}
+
+/**
+ * Remove a single available slot (provider action).
+ *
+ * @return array{ok:bool,message:string}
+ */
+function appointment_slot_remove_available(PDO $pdo, int $providerId, int $slotId): array
+{
+    appointment_schedule_ensure_schema($pdo);
+
+    if ($providerId <= 0 || $slotId <= 0) {
+        return ['ok' => false, 'message' => 'Invalid slot.'];
+    }
+
+    $stmt = $pdo->prepare("
+        SELECT id, provider_id, slot_date, start_time, status
+        FROM appointment_slots
+        WHERE id = ?
+        LIMIT 1
+        FOR UPDATE
+    ");
+    $stmt->execute([$slotId]);
+    $slot = $stmt->fetch(PDO::FETCH_ASSOC);
+    if (!$slot) {
+        return ['ok' => false, 'message' => 'Slot not found.'];
+    }
+    if ((int) $slot['provider_id'] !== $providerId) {
+        return ['ok' => false, 'message' => 'This slot does not belong to your schedule.'];
+    }
+    if (!appointment_slot_is_editable((string) ($slot['status'] ?? ''))) {
+        return ['ok' => false, 'message' => 'Only available slots can be removed. Booked appointments are protected.'];
+    }
+    if (!appointment_slot_is_today((string) $slot['slot_date'])) {
+        return ['ok' => false, 'message' => 'Today\'s schedule is locked. Only today\'s availability can be edited.'];
+    }
+
+    $del = $pdo->prepare("
+        DELETE FROM appointment_slots
+        WHERE id = ?
+          AND provider_id = ?
+          AND status = 'available'
+    ");
+    $del->execute([$slotId, $providerId]);
+    if ($del->rowCount() < 1) {
+        return ['ok' => false, 'message' => 'Could not remove slot. It may have just been booked.'];
+    }
+
+    return ['ok' => true, 'message' => 'Time slot removed.'];
 }
 
 /**
@@ -151,6 +302,9 @@ function appointment_slot_is_bookable(string $slotDate, string $startTime, ?stri
  */
 function appointment_slots_sync_today(PDO $pdo, int $provider_id): int
 {
+    appointment_schedule_ensure_schema($pdo);
+    appointment_slots_expire_passed($pdo, $provider_id);
+
     $todayDay = appointment_now()->format('l');
     $stmt = $pdo->prepare("
         SELECT COUNT(*)

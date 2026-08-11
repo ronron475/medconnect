@@ -133,6 +133,9 @@ try {
         $data['consultation_id'], $data['provider_id'],
     ]);
 
+    require_once dirname(dirname(dirname(__DIR__))) . '/app/includes/appointment_slots.php';
+    appointment_slot_set_consultation_status($pdo, (int) $data['consultation_id'], 'completed');
+
     // End any active video room for this consultation.
     try {
         $pdo->prepare("
