@@ -498,14 +498,21 @@ final class NotificationEvents
         ]);
     }
 
-    public static function consultationCompleted(PDO $pdo, int $consultationId, int $patientId, int $providerId, ?int $senderId = null): void
+    public static function consultationCompleted(PDO $pdo, int $consultationId, int $patientId, int $providerId, ?int $senderId = null, ?string $providerName = null): void
     {
+        require_once __DIR__ . '/patient_consultation_records.php';
+        $name = trim((string) ($providerName ?? 'your healthcare provider'));
+        if ($name !== '' && stripos($name, 'dr.') !== 0) {
+            $name = 'Dr. ' . $name;
+        }
+        $detailUrl = patient_consultation_detail_url($consultationId);
+
         NotificationManager::notifyPatient($pdo, $patientId, [
             'sender_id'     => $senderId,
             'type'          => NotificationManager::TYPE_SUCCESS,
-            'title'         => 'Consultation Completed',
-            'message'       => 'Your consultation has been completed. Review notes and prescriptions.',
-            'action_url'    => '/views/patient/my_health.php?tab=files',
+            'title'         => 'Consultation completed',
+            'message'       => "Your consultation with {$name} has been completed. Your medical record and care plan are now available.",
+            'action_url'    => $detailUrl,
             'related_table' => 'consultations',
             'related_id'    => $consultationId,
         ]);
@@ -630,14 +637,21 @@ final class NotificationEvents
         }
     }
 
-    public static function prescriptionAvailable(PDO $pdo, int $patientId, int $providerId, ?int $senderId = null): void
+    public static function prescriptionAvailable(PDO $pdo, int $patientId, int $providerId, ?int $senderId = null, ?int $consultationId = null): void
     {
+        require_once __DIR__ . '/patient_consultation_records.php';
+        $actionUrl = $consultationId
+            ? patient_consultation_detail_url($consultationId)
+            : '/views/patient/my_health.php?tab=files';
+
         NotificationManager::notifyPatient($pdo, $patientId, [
             'sender_id'     => $senderId,
             'type'          => NotificationManager::TYPE_MEDICAL,
             'title'         => 'Prescription Available',
             'message'       => 'A new prescription is available for you.',
-            'action_url'    => '/views/patient/my_health.php?tab=files',
+            'action_url'    => $actionUrl,
+            'related_table' => $consultationId ? 'consultations' : null,
+            'related_id'    => $consultationId,
         ]);
         NotificationManager::notifyProvider($pdo, $providerId, [
             'sender_id'  => $senderId,

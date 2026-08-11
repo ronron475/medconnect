@@ -204,6 +204,7 @@ if (session_status() === PHP_SESSION_ACTIVE) {
       apiBase: <?= json_encode((string) ASSET_BASE) ?>,
       roomToken: <?= json_encode($token) ?>,
       consultationId: <?= (int) $consultation_id ?>,
+      patientId: <?= (int) ($session['patient_id'] ?? 0) ?>,
       isPatient: <?= $is_patient ? 'true' : 'false' ?>,
       csrf: <?= json_encode($pageCsrfToken) ?>,
     };

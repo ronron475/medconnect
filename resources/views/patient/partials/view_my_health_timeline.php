@@ -43,8 +43,18 @@ function pmh_note_text(?string $value, string $fallback = ''): string {
       $note = $notes_by_consult[$cid] ?? null;
       $status = (string) ($h['status'] ?? 'pending');
       $statusLabel = ucwords(str_replace('_', ' ', $status));
-      $diagnosis = pmh_note_text($note['diagnosis'] ?? '', pmh_note_text($h['diagnosis'] ?? '', 'No diagnosis recorded.'));
-      $recommendation = pmh_note_text($note['treatment_plan'] ?? '', pmh_note_text($note['plan'] ?? '', pmh_note_text($h['recommendation'] ?? '', 'No recommendations recorded.')));
+      $isCompleted = strtolower($status) === 'completed';
+      $hasFinalizedNote = $isCompleted && !empty($note);
+      $chiefComplaint = trim((string) ($h['consult_type'] ?? ''));
+      if ($chiefComplaint === '' || strcasecmp($chiefComplaint, 'General consultation') === 0) {
+          $chiefComplaint = '';
+      }
+      $diagnosis = $hasFinalizedNote
+          ? pmh_note_text($note['diagnosis'] ?? '', pmh_note_text($h['diagnosis'] ?? '', 'No diagnosis recorded.'))
+          : ($isCompleted ? pmh_note_text($h['diagnosis'] ?? '', 'No diagnosis recorded.') : '');
+      $recommendation = $hasFinalizedNote
+          ? pmh_note_text($note['treatment_plan'] ?? '', pmh_note_text($note['plan'] ?? '', pmh_note_text($h['recommendation'] ?? '', 'No recommendations recorded.')))
+          : '';
       $timeLabel = '';
       if (!empty($h['consult_time'])) {
           $tp = explode(':', (string) $h['consult_time']);
@@ -70,10 +80,17 @@ function pmh_note_text(?string $value, string $fallback = ''): string {
               </p>
             </div>
           </div>
-          <span class="pmh-status <?= pmh_status_class($status) ?>"><?= htmlspecialchars($statusLabel) ?></span>
+          <span class="pmh-status <?= pmh_status_class($status) ?>" data-consult-status="<?= (int) $cid ?>"><?= htmlspecialchars($statusLabel) ?></span>
         </header>
 
+        <?php if ($hasFinalizedNote): ?>
         <div class="pmh-visit__grid">
+          <?php if ($chiefComplaint !== ''): ?>
+          <section class="pmh-visit__block pmh-visit__block--full">
+            <h4 class="pmh-visit__label">Chief complaint</h4>
+            <p><?= htmlspecialchars($chiefComplaint) ?></p>
+          </section>
+          <?php endif; ?>
           <section class="pmh-visit__block">
             <h4 class="pmh-visit__label">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
@@ -90,7 +107,6 @@ function pmh_note_text(?string $value, string $fallback = ''): string {
           </section>
         </div>
 
-        <?php if ($note): ?>
         <details class="pmh-visit__soap-details">
           <summary class="pmh-visit__soap-summary">Clinical note (SOAP)</summary>
           <dl class="pmh-soap-list">
@@ -108,9 +124,21 @@ function pmh_note_text(?string $value, string $fallback = ''): string {
             <?php endif; ?>
           </dl>
         </details>
+
+        <p class="pmh-visit__actions">
+          <a href="<?= ASSET_BASE ?>/views/patient/consultation_detail.php?id=<?= (int) $cid ?>" class="pmh-btn pmh-btn--primary pmh-btn--sm">View Consultation</a>
+        </p>
+        <?php elseif (in_array(strtolower($status), ['in_consultation', 'scheduled', 'pending'], true)): ?>
+        <div class="pmh-visit__pending">
+          <p>Your consultation is still being documented by your provider.</p>
+        </div>
+        <?php elseif ($isCompleted): ?>
+        <div class="pmh-visit__pending">
+          <p>Your consultation is complete. Your medical record will appear here once your provider finalizes documentation.</p>
+        </div>
         <?php endif; ?>
 
-        <?php if (!empty($p_list)): ?>
+        <?php if ($hasFinalizedNote && !empty($p_list)): ?>
         <section class="pmh-visit__rx">
           <h4 class="pmh-visit__label">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="m10.5 20.5 10-10a4.95 4.95 0 1 0-7-7l-10 10a4.95 4.95 0 1 0 7 7Z"/><line x1="8.5" y1="8.5" x2="15.5" y2="15.5"/></svg>

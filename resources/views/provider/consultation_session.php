@@ -6,7 +6,12 @@ require __DIR__.'/partials/data.php';
 require_once BASE_PATH . '/app/includes/message_deletion.php';
 require_once BASE_PATH . '/app/includes/patient_health_summary.php';
 require_once BASE_PATH . '/app/includes/provider_clinical_support.php';
+require_once BASE_PATH . '/app/includes/clinical_tables.php';
+require_once BASE_PATH . '/app/includes/patient_consultation_records.php';
 require __DIR__ . '/partials/queue_helpers.php';
+
+clinical_tables_ensure($pdo);
+patient_consultation_records_schema_ensure($pdo);
 
 $consultation_id = (int)($_GET['id'] ?? 0);
 
@@ -36,6 +41,18 @@ if (!$c) {
     echo "Consultation not found or access denied.";
     exit;
 }
+
+$clinical_note = null;
+try {
+    $cnStmt = $pdo->prepare('SELECT * FROM clinical_notes WHERE consultation_id = ? AND provider_id = ? LIMIT 1');
+    $cnStmt->execute([$consultation_id, (int) $_SESSION['user_id']]);
+    $clinical_note = $cnStmt->fetch(PDO::FETCH_ASSOC) ?: null;
+} catch (PDOException $e) {
+    $clinical_note = null;
+}
+
+$consultation_completed = strtolower(trim((string) ($c['status'] ?? ''))) === 'completed';
+$soap_readonly = $consultation_completed;
 
 $session_access = queue_session_access($c);
 if (!$session_access['allowed']) {
@@ -1584,11 +1601,20 @@ body.consultation-mobile-call-fullscreen .mc-provider-video-dock .mc-session-flo
             <div class="session-card-header">
                 <div class="session-card-title"><?= icon('file') ?> Clinical Documentation (SOAP)</div>
                 <div style="display: flex; gap: 8px; flex-wrap: wrap;">
-                    <button class="session-btn primary" onclick="saveSOAP()">Save Progress</button>
-                    <button class="session-btn" onclick="document.getElementById('soapForm').reset()">Clear</button>
+                    <?php if ($consultation_completed): ?>
+                    <span class="session-btn" style="background:#dcfce7;color:#166534;border:1px solid #86efac;cursor:default;">✓ Consultation Completed</span>
+                    <?php else: ?>
+                    <button class="session-btn primary" type="button" onclick="saveSOAP()">Save Progress</button>
+                    <button class="session-btn" type="button" onclick="document.getElementById('soapForm').reset()">Clear</button>
+                    <?php endif; ?>
                 </div>
             </div>
             <div class="session-card-body">
+                <?php if ($consultation_completed): ?>
+                <p class="text-sm" style="margin:0 0 16px;padding:12px 14px;border-radius:10px;background:#ecfdf5;border:1px solid #a7f3d0;color:#065f46;">
+                    This consultation has been finalized. SOAP notes are read-only. The patient can view this record in My Health.
+                </p>
+                <?php endif; ?>
                 <form id="soapForm">
                     <input type="hidden" name="consultation_id" value="<?= $consultation_id ?>">
                     <input type="hidden" name="patient_id" value="<?= (int)$c['patient_id'] ?>">
@@ -1596,19 +1622,19 @@ body.consultation-mobile-call-fullscreen .mc-provider-video-dock .mc-session-flo
                     <div class="soap-grid">
                         <div>
                             <label class="pd-label">Subjective</label>
-                            <textarea name="subjective" class="pd-textarea" placeholder="Chief complaint, history of present illness..."></textarea>
+                            <textarea name="subjective" class="pd-textarea" placeholder="Chief complaint, history of present illness..."<?= $soap_readonly ? ' readonly' : '' ?>><?= htmlspecialchars((string) ($clinical_note['subjective'] ?? '')) ?></textarea>
                         </div>
                         <div>
                             <label class="pd-label">Objective</label>
-                            <textarea name="objective" class="pd-textarea" placeholder="Vital signs, physical exam findings..."></textarea>
+                            <textarea name="objective" class="pd-textarea" placeholder="Vital signs, physical exam findings..."<?= $soap_readonly ? ' readonly' : '' ?>><?= htmlspecialchars((string) ($clinical_note['objective'] ?? '')) ?></textarea>
                         </div>
                         <div>
                             <label class="pd-label">Assessment</label>
-                            <textarea name="assessment" class="pd-textarea" placeholder="Differential diagnosis, clinical reasoning..."></textarea>
+                            <textarea name="assessment" class="pd-textarea" placeholder="Differential diagnosis, clinical reasoning..."<?= $soap_readonly ? ' readonly' : '' ?>><?= htmlspecialchars((string) ($clinical_note['assessment'] ?? '')) ?></textarea>
                         </div>
                         <div>
                             <label class="pd-label">Plan</label>
-                            <textarea name="plan" class="pd-textarea" placeholder="Management, medications, follow-up..."></textarea>
+                            <textarea name="plan" class="pd-textarea" placeholder="Management, medications, follow-up..."<?= $soap_readonly ? ' readonly' : '' ?>><?= htmlspecialchars((string) ($clinical_note['plan'] ?? '')) ?></textarea>
                         </div>
                     </div>
 
@@ -1617,22 +1643,26 @@ body.consultation-mobile-call-fullscreen .mc-provider-video-dock .mc-session-flo
                     <div class="soap-grid">
                         <div>
                             <label class="pd-label">Final Diagnosis</label>
-                            <textarea name="diagnosis" class="pd-textarea" placeholder="ICD-10 or clinical diagnosis..."></textarea>
+                            <textarea name="diagnosis" class="pd-textarea" placeholder="ICD-10 or clinical diagnosis..."<?= $soap_readonly ? ' readonly' : '' ?>><?= htmlspecialchars((string) ($clinical_note['diagnosis'] ?? '')) ?></textarea>
                         </div>
                         <div>
                             <label class="pd-label">Digital Prescription</label>
-                            <textarea name="prescription" class="pd-textarea" placeholder="Medication, Dosage, Frequency, Duration..."></textarea>
+                            <textarea name="prescription" class="pd-textarea" placeholder="Medication, Dosage, Frequency, Duration..."<?= $soap_readonly ? ' readonly' : '' ?>><?= htmlspecialchars((string) ($clinical_note['prescription'] ?? '')) ?></textarea>
                         </div>
                     </div>
 
+                    <?php if (!$consultation_completed): ?>
                     <div class="soap-full">
                         <label class="pd-label" style="color: #018a93;">Digital Signature Authorization</label>
                         <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
-                            <input type="text" name="signature_data" class="pd-input" style="flex: 1; min-width: 220px;" placeholder="Type full name to sign electronically">
-                            <button type="button" class="session-btn primary" onclick="finalizeConsultation()">Finalize & Sign</button>
+                            <input type="text" name="signature_data" class="pd-input" style="flex: 1; min-width: 220px;" placeholder="Type full name to sign electronically" value="<?= htmlspecialchars((string) ($clinical_note['signature_data'] ?? '')) ?>">
+                            <button type="button" class="session-btn primary" onclick="finalizeConsultation()">Finalize Consultation</button>
                         </div>
-                        <p class="text-xs text-muted" style="margin-top: 8px;">By signing, you authorize this record and prescription as legally binding.</p>
+                        <p class="text-xs text-muted" style="margin-top: 8px;">By signing, you authorize this record and prescription as legally binding. The patient will receive their finalized record immediately.</p>
                     </div>
+                    <?php else: ?>
+                    <input type="hidden" name="signature_data" value="<?= htmlspecialchars((string) ($clinical_note['signature_data'] ?? '')) ?>">
+                    <?php endif; ?>
                 </form>
             </div>
         </div>
@@ -3281,7 +3311,11 @@ async function saveSOAP(finalize = false) {
             credentials: 'same-origin',
         });
         const data = await res.json();
-        alert(data.message || (data.success ? 'Saved.' : 'Could not save notes.'));
+        if (!finalize) {
+            alert(data.message || (data.success ? 'Draft saved.' : 'Could not save notes.'));
+        } else if (!data.success) {
+            alert(data.message || 'Could not finalize consultation.');
+        }
         return data;
     } catch (e) {
         alert('Error saving notes.');
@@ -3295,12 +3329,12 @@ async function finalizeConsultation() {
     if (!sign || !String(sign).trim()) {
         return alert('Please provide your digital signature to finalize.');
     }
-    if (!confirm('Finalize this consultation? This will close the session and save all records.')) {
+    if (!confirm('Finalize this consultation? The patient will immediately be able to view their medical record.')) {
         return;
     }
     const data = await saveSOAP(true);
     if (data && data.success) {
-        window.location.href = '<?= ASSET_BASE ?>/views/provider/dashboard.php';
+        window.location.href = '<?= ASSET_BASE ?>/views/provider/consultation_history.php';
     }
 }
 
