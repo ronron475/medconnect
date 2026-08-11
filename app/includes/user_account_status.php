@@ -12,6 +12,7 @@ final class AccountStatus
 {
     public const PENDING_APPROVAL = 'pending_approval';
     public const ACTIVE           = 'active';
+    public const RESTRICTED       = 'restricted';
     public const SUSPENDED        = 'suspended';
     public const DEACTIVATED      = 'deactivated';
     public const REJECTED         = 'rejected';
@@ -23,6 +24,7 @@ final class AccountStatus
         return [
             self::PENDING_APPROVAL,
             self::ACTIVE,
+            self::RESTRICTED,
             self::SUSPENDED,
             self::DEACTIVATED,
             self::REJECTED,
@@ -35,6 +37,7 @@ final class AccountStatus
         return match (self::normalize($status)) {
             self::PENDING_APPROVAL => 'Pending Approval',
             self::ACTIVE           => 'Active',
+            self::RESTRICTED       => 'Restricted',
             self::SUSPENDED        => 'Suspended',
             self::DEACTIVATED      => 'Deactivated',
             self::REJECTED         => 'Rejected',
@@ -61,6 +64,7 @@ final class AccountStatus
         return match (self::normalize($status)) {
             self::ACTIVE           => ['bg' => '#dcfce7', 'color' => '#16a34a', 'label' => 'Active', 'class' => 'mc-badge--active'],
             self::PENDING_APPROVAL => ['bg' => '#fef3c7', 'color' => '#b45309', 'label' => 'Pending Approval', 'class' => 'mc-badge--pending'],
+            self::RESTRICTED       => ['bg' => '#fef9c3', 'color' => '#a16207', 'label' => 'Restricted', 'class' => 'mc-badge--restricted'],
             self::SUSPENDED        => ['bg' => '#ffedd5', 'color' => '#c2410c', 'label' => 'Suspended', 'class' => 'mc-badge--suspended'],
             self::DEACTIVATED      => ['bg' => '#fee2e2', 'color' => '#991b1b', 'label' => 'Deactivated', 'class' => 'mc-badge--danger'],
             self::REJECTED         => ['bg' => '#fee2e2', 'color' => '#b91c1c', 'label' => 'Rejected', 'class' => 'mc-badge--danger'],
@@ -71,8 +75,54 @@ final class AccountStatus
 
     public static function isLoginAllowed(string $status): bool
     {
+        return in_array(self::normalize($status), [self::ACTIVE, self::RESTRICTED], true);
+    }
+
+    /** Patient may submit a new chief complaint / book a new consultation. */
+    public static function canSubmitConsultation(string $status): bool
+    {
         return self::normalize($status) === self::ACTIVE;
     }
+}
+
+/**
+ * @return array{allowed: bool, message: string, code?: string}
+ */
+function patient_account_may_submit_consultation(PDO $pdo, int $patientId): array
+{
+    user_account_status_ensure_schema($pdo);
+    $stmt = $pdo->prepare('SELECT account_status, is_active, role FROM users WHERE id = ? LIMIT 1');
+    $stmt->execute([$patientId]);
+    $row = $stmt->fetch(PDO::FETCH_ASSOC);
+    if (!$row || ($row['role'] ?? '') !== 'patient') {
+        return ['allowed' => false, 'message' => 'Invalid patient account.'];
+    }
+
+    $status = user_account_status_effective($row);
+    if (AccountStatus::canSubmitConsultation($status)) {
+        return ['allowed' => true, 'message' => ''];
+    }
+
+    if ($status === AccountStatus::RESTRICTED) {
+        return [
+            'allowed' => false,
+            'message' => 'Your account currently has a restriction that prevents new consultation submissions.',
+            'code'    => 'account_restricted',
+        ];
+    }
+    if ($status === AccountStatus::SUSPENDED) {
+        return [
+            'allowed' => false,
+            'message' => 'Your account is currently suspended. Please contact the health office for assistance.',
+            'code'    => 'account_suspended',
+        ];
+    }
+
+    return [
+        'allowed' => false,
+        'message' => 'Your account cannot submit new consultations at this time.',
+        'code'    => 'account_blocked',
+    ];
 }
 
 function user_account_status_ensure_schema(PDO $pdo): void
@@ -258,7 +308,8 @@ function user_account_status_allowed_actions(string $currentStatus): array
 
     return match ($status) {
         AccountStatus::PENDING_APPROVAL => ['approve', 'reject'],
-        AccountStatus::ACTIVE           => ['deactivate', 'suspend', 'archive'],
+        AccountStatus::ACTIVE           => ['deactivate', 'suspend', 'restrict', 'archive'],
+        AccountStatus::RESTRICTED       => ['lift_restriction', 'suspend', 'archive'],
         AccountStatus::SUSPENDED        => ['reactivate', 'archive'],
         AccountStatus::DEACTIVATED      => ['activate', 'archive'],
         AccountStatus::REJECTED         => ['activate', 'archive'],
@@ -299,6 +350,8 @@ function user_account_status_action_to_status(string $action, string $currentSta
         'reactivate' => AccountStatus::ACTIVE,
         'deactivate' => AccountStatus::DEACTIVATED,
         'suspend'    => AccountStatus::SUSPENDED,
+        'restrict'   => AccountStatus::RESTRICTED,
+        'lift_restriction' => AccountStatus::ACTIVE,
         'reject'     => AccountStatus::REJECTED,
         'archive'    => AccountStatus::ARCHIVED,
         'restore'    => AccountStatus::ACTIVE,
@@ -314,6 +367,8 @@ function user_account_status_action_label(string $action): string
         'reactivate' => 'Reactivate',
         'deactivate' => 'Deactivate',
         'suspend'    => 'Suspend',
+        'restrict'   => 'Restrict',
+        'lift_restriction' => 'Restore access',
         'reject'     => 'Reject',
         'archive'    => 'Archive',
         'restore'    => 'Restore',
@@ -338,6 +393,7 @@ function user_account_status_matches_filter(string $effectiveStatus, string $sta
 
     return match ($filter) {
         AccountStatus::ACTIVE           => $effective === AccountStatus::ACTIVE,
+        AccountStatus::RESTRICTED       => $effective === AccountStatus::RESTRICTED,
         AccountStatus::PENDING_APPROVAL => $effective === AccountStatus::PENDING_APPROVAL,
         AccountStatus::SUSPENDED        => $effective === AccountStatus::SUSPENDED,
         AccountStatus::ARCHIVED         => $effective === AccountStatus::ARCHIVED,
@@ -376,7 +432,7 @@ function user_account_status_change(
         return ['success' => false, 'message' => 'Please provide a more detailed restore reason (at least 5 characters).'];
     }
 
-    $validActions = ['approve', 'verify', 'activate', 'deactivate', 'suspend', 'reactivate', 'reject', 'archive', 'restore'];
+    $validActions = ['approve', 'verify', 'activate', 'deactivate', 'suspend', 'restrict', 'lift_restriction', 'reactivate', 'reject', 'archive', 'restore'];
     if (!in_array($action, $validActions, true)) {
         return ['success' => false, 'message' => 'Invalid account status action.'];
     }
@@ -386,13 +442,6 @@ function user_account_status_change(
     }
 
     $performerRole = user_account_status_user_role($pdo, $performedBy);
-    if ($performerRole === 'admin' && $action !== 'archive') {
-        return ['success' => false, 'message' => 'Only the Super Administrator can perform this action.'];
-    }
-
-    if ($action === 'restore' && $performerRole !== 'superadmin') {
-        return ['success' => false, 'message' => 'Only the Super Administrator can restore archived accounts.'];
-    }
 
     $stmt = $pdo->prepare("
         SELECT u.id, u.first_name, u.last_name, u.email, u.role, u.is_active, u.account_status,
@@ -411,6 +460,21 @@ function user_account_status_change(
 
     if ($target['role'] === 'superadmin') {
         return ['success' => false, 'message' => 'Super Administrator accounts cannot be modified through this action.'];
+    }
+
+    if ($performerRole === 'admin') {
+        $patientOnlyRestrict = $action === 'restrict' && ($target['role'] ?? '') === 'patient';
+        if (!in_array($action, ['archive'], true) && !$patientOnlyRestrict) {
+            return ['success' => false, 'message' => 'Only the Super Administrator can perform this action.'];
+        }
+    }
+
+    if ($action === 'restore' && $performerRole !== 'superadmin') {
+        return ['success' => false, 'message' => 'Only the Super Administrator can restore archived accounts.'];
+    }
+
+    if (in_array($action, ['lift_restriction', 'reactivate', 'suspend'], true) && $performerRole !== 'superadmin') {
+        return ['success' => false, 'message' => 'Only the Super Administrator can perform this action.'];
     }
 
     if ($performerRole === 'admin' && ($target['role'] ?? '') === 'admin') {

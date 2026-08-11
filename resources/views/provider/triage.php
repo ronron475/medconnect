@@ -71,19 +71,9 @@ $pending_count    = count(array_filter($display_cases, fn($t) => empty($t['revie
 <?php if ($tips_pending_count > 0 && $module_tab === 'active'): ?>
 <div class="triage-banner" style="margin-top:0;">
   <?= icon_col('alert', '#b45309') ?>
-  <span><strong><?= (int) $tips_pending_count ?></strong> case(s) need self-care tip approval before patients can see Care tips. Open the case and choose <strong>Approve Self-Care for Patient</strong>.</span>
+  <span><strong><?= (int) $tips_pending_count ?></strong> case(s) need a review decision. Open the case and choose <strong>Approve for Patient</strong> or <strong>Withhold Guidance</strong>.</span>
 </div>
 <?php endif; ?>
-
-<div class="triage-banner triage-banner--actions" style="margin-top:0;">
-  <?= icon_col('alert', '#0e7490') ?>
-  <span>
-    <strong>Three separate actions:</strong>
-    <em>Confirm review</em> = you saw the AI assessment.
-    <em>Approve for patient</em> = release self-care tips.
-    <em>Live Queue</em> = video visits already booked.
-  </span>
-</div>
 
 <div class="triage-tabs">
   <button type="button" class="triage-tab active" data-filter="all">
@@ -178,27 +168,18 @@ $pending_count    = count(array_filter($display_cases, fn($t) => empty($t['revie
             <?= htmlspecialchars($t['date']) ?><br><?= htmlspecialchars($t['time']) ?>
           </td>
           <td data-label="Workflow">
-            <?php if (!empty($t['needs_tips_approval'])): ?>
-            <span class="triage-badge triage-badge--urgent">Tips pending</span>
-            <?php endif; ?>
-            <?php if ($t['reviewed'] && empty($t['needs_tips_approval'])): ?>
-            <span class="triage-badge triage-badge--reviewed">Reviewed</span>
-            <?php elseif ($t['reviewed'] && !empty($t['needs_tips_approval'])): ?>
-            <span class="triage-badge triage-badge--reviewed">Booked</span>
-            <?php elseif (!empty($t['expired'])): ?>
-            <span class="triage-badge triage-badge--expired">Expired</span>
-            <?php elseif (empty($t['needs_tips_approval'])): ?>
+            <?php foreach ($t['workflow_badges'] ?? [] as $badge): ?>
+            <span class="triage-badge triage-badge--<?= htmlspecialchars((string) $badge['class']) ?>">
+              <?= htmlspecialchars((string) $badge['label']) ?>
+            </span>
+            <?php endforeach; ?>
+            <?php if (empty($t['workflow_badges'])): ?>
             <span class="triage-badge triage-badge--pending">Pending</span>
             <?php endif; ?>
           </td>
           <td data-label="Actions">
             <div class="triage-actions">
               <button type="button" class="mc-btn mc-btn--outline triage-view-btn" style="padding: 6px 12px; font-size: 11px;" data-triage-id="<?= (int) $t['id'] ?>">View Details</button>
-              <?php if (!empty($t['can_accept'])): ?>
-              <button type="button" class="mc-btn mc-btn--primary triage-accept-btn" style="padding: 6px 12px; font-size: 11px;" data-id="<?= (int) $t['id'] ?>" title="Record that you reviewed this AI triage (does not release care tips or book a visit)">Confirm review</button>
-              <?php elseif (!$t['reviewed'] && !empty($t['expired'])): ?>
-              <span class="triage-expired-note" title="Only same-day triage cases can be marked reviewed.">Cannot mark reviewed</span>
-              <?php endif; ?>
             </div>
           </td>
         </tr>
@@ -214,7 +195,7 @@ $pending_count    = count(array_filter($display_cases, fn($t) => empty($t['revie
       <div class="triage-modal__header-text">
         <p class="triage-modal__eyebrow">Clinical decision support</p>
         <h2 id="triageModalTitle" class="triage-modal__title">AI Assessment Review</h2>
-        <p class="triage-modal__lead">Verify the assessment below. Edit self-care guidance as required, then approve release to the patient or withhold recommendations.</p>
+        <p class="triage-modal__lead">Verify the assessment below. For non-urgent cases, choose <strong>Approve for Patient</strong> or <strong>Withhold Guidance</strong> to complete your review.</p>
       </div>
       <button type="button" class="triage-modal__close" onclick="closeTriageModal()" aria-label="Close">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M18 6L6 18M6 6l12 12"/></svg>
@@ -343,9 +324,19 @@ $pending_count    = count(array_filter($display_cases, fn($t) => empty($t['revie
             </select>
             <button type="button" class="mc-btn mc-btn--outline triage-override-btn" onclick="applyOverride()">Apply override</button>
           </div>
-          <p class="triage-override-box__foot">Use the actions below to mark reviewed, approve self-care guidance, or withhold recommendations.</p>
+          <p class="triage-override-box__foot">Use <strong>Approve for Patient</strong> or <strong>Withhold Guidance</strong> below to complete your review. Priority overrides are optional.</p>
         </div>
       </details>
+
+      <div class="triage-case-actions" id="triageCaseActions" hidden>
+        <h3 class="triage-case-actions__title">Case administration</h3>
+        <p class="triage-case-actions__note">Reporting a case does not suspend the patient account. Terminating closes only this consultation case.</p>
+        <div class="triage-case-actions__buttons">
+          <button type="button" id="modalReportCaseBtn" class="mc-btn mc-btn--outline mc-btn--sm">Report Case</button>
+          <button type="button" id="modalTerminateCaseBtn" class="mc-btn mc-btn--danger-outline mc-btn--sm">Terminate Case</button>
+        </div>
+        <p id="modalActiveReportNote" class="triage-case-actions__warn" hidden></p>
+      </div>
 
       </div>
     </div>
@@ -353,32 +344,54 @@ $pending_count    = count(array_filter($display_cases, fn($t) => empty($t['revie
     <div class="triage-modal__footer">
       <button type="button" class="mc-btn mc-btn--ghost" onclick="closeTriageModal()">Close</button>
       <div class="triage-modal__footer-actions">
-        <button type="button" id="modalRejectRecBtn" class="mc-btn mc-btn--danger-outline" style="display:none;" onclick="rejectRecommendationsFromModal()">Withhold guidance</button>
-        <button type="button" id="modalApproveRecBtn" class="mc-btn mc-btn--primary" style="display:none;" onclick="approveRecommendationsFromModal()">Approve for patient</button>
-        <button type="button" id="modalAcceptBtn" class="mc-btn mc-btn--outline" onclick="acceptTriageFromModal()" title="Record clinical review only — does not approve care tips">Confirm clinical review</button>
+        <button type="button" id="modalRejectRecBtn" class="mc-btn mc-btn--danger-outline" style="display:none;" onclick="rejectRecommendationsFromModal()">Withhold Guidance</button>
+        <button type="button" id="modalApproveRecBtn" class="mc-btn mc-btn--primary" style="display:none;" onclick="approveRecommendationsFromModal()">Approve for Patient</button>
+        <span id="modalReviewStatusNote" class="triage-modal__review-note" hidden></span>
       </div>
     </div>
   </div>
 </div>
 
-<div id="triageReviewConfirm" class="triage-review-confirm" hidden aria-hidden="true">
-  <div class="triage-review-confirm__backdrop" data-triage-review-cancel></div>
-  <div class="triage-review-confirm__dialog" role="dialog" aria-modal="true" aria-labelledby="triageReviewConfirmTitle">
-    <h3 id="triageReviewConfirmTitle" class="triage-review-confirm__title">Confirm clinical review</h3>
-    <p class="triage-review-confirm__lead">
-      This records that <strong>you reviewed</strong> the patient&apos;s AI triage submission today.
-    </p>
-    <ul class="triage-review-confirm__list">
-      <li><strong>Does:</strong> Closes the case from your <em>Pending</em> queue and logs the review in the audit trail.</li>
-      <li><strong>Does not:</strong> Release self-care tips to the patient — use <em>Approve for patient</em> for that.</li>
-      <li><strong>Does not:</strong> Book or change a video visit — booked patients already appear in <em>Live Queue</em>.</li>
-    </ul>
-    <p class="triage-review-confirm__when">
-      Use this when you have read the assessment and no further triage action is needed on this screen.
-    </p>
-    <div class="triage-review-confirm__actions">
-      <button type="button" class="mc-btn mc-btn--outline" data-triage-review-cancel>Cancel</button>
-      <button type="button" class="mc-btn mc-btn--primary" data-triage-review-yes>Yes, mark as reviewed</button>
+<div id="triageReportModal" class="triage-modal triage-confirm-modal" aria-hidden="true">
+  <div class="triage-modal__dialog" role="dialog" aria-modal="true" aria-labelledby="triageReportModalTitle">
+    <div class="triage-modal__header">
+      <h2 id="triageReportModalTitle" class="triage-modal__title">Report this case?</h2>
+      <p class="triage-modal__lead">Reporting a case does not automatically suspend the patient's account. An administrator will review the report.</p>
+    </div>
+    <div class="triage-modal__body">
+      <label class="mc-label" for="triageReportReason">Reason <span aria-hidden="true">*</span></label>
+      <select id="triageReportReason" class="mc-input" required>
+        <option value="">Select a reason…</option>
+        <option value="prank_fake">Suspected prank / fake submission</option>
+        <option value="spam_irrelevant">Spam / irrelevant submission</option>
+        <option value="abusive_inappropriate">Abusive / inappropriate content</option>
+        <option value="false_misleading">False or misleading information</option>
+        <option value="repeated_suspicious">Repeated suspicious submission</option>
+        <option value="other">Other concern</option>
+      </select>
+      <label class="mc-label" for="triageReportNotes" style="margin-top:12px;">Additional notes (optional)</label>
+      <textarea id="triageReportNotes" class="mc-input" rows="3" placeholder="Optional context for administrators"></textarea>
+    </div>
+    <div class="triage-modal__footer">
+      <button type="button" class="mc-btn mc-btn--ghost" data-triage-report-cancel>Cancel</button>
+      <button type="button" class="mc-btn mc-btn--primary" data-triage-report-submit>Submit Report</button>
+    </div>
+  </div>
+</div>
+
+<div id="triageTerminateModal" class="triage-modal triage-confirm-modal" aria-hidden="true">
+  <div class="triage-modal__dialog" role="dialog" aria-modal="true" aria-labelledby="triageTerminateModalTitle">
+    <div class="triage-modal__header">
+      <h2 id="triageTerminateModalTitle" class="triage-modal__title">Terminate this case?</h2>
+      <p class="triage-modal__lead">This will close the current consultation case. The patient's account and previous medical records will remain available.</p>
+    </div>
+    <div class="triage-modal__body">
+      <label class="mc-label" for="triageTerminateReason">Reason <span aria-hidden="true">*</span></label>
+      <textarea id="triageTerminateReason" class="mc-input" rows="3" required placeholder="Brief clinical or administrative reason"></textarea>
+    </div>
+    <div class="triage-modal__footer">
+      <button type="button" class="mc-btn mc-btn--ghost" data-triage-terminate-cancel>Cancel</button>
+      <button type="button" class="mc-btn mc-btn--danger" data-triage-terminate-submit>Terminate Case</button>
     </div>
   </div>
 </div>
@@ -390,6 +403,8 @@ window.MedConnectTriage = {
   listApi: <?= json_encode(ASSET_BASE . '/app/api/provider/get_triage.php') ?>,
   evidenceApi: <?= json_encode(ASSET_BASE . '/app/api/provider/get_triage_evidence.php') ?>,
   updateApi: <?= json_encode(ASSET_BASE . '/app/api/provider/update_triage.php') ?>,
+  reportApi: <?= json_encode(ASSET_BASE . '/app/api/provider/case_report.php') ?>,
+  terminateApi: <?= json_encode(ASSET_BASE . '/app/api/provider/terminate_case.php') ?>,
   tab: <?= json_encode($module_tab) ?>,
   refreshMs: 15000,
 };

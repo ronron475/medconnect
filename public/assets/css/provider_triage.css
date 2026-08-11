@@ -193,6 +193,69 @@
     color: #991b1b;
 }
 
+.triage-badge--tips-approved {
+    background: #eff6ff;
+    color: #1d4ed8;
+}
+
+.triage-badge--booked {
+    background: #dbeafe;
+    color: #1e40af;
+}
+
+.triage-badge--completed {
+    background: #ecfdf5;
+    color: #047857;
+}
+
+.triage-badge--terminated {
+    background: #f1f5f9;
+    color: #475569;
+}
+
+.triage-badge--reported {
+    background: #fef3c7;
+    color: #b45309;
+}
+
+.triage-case-actions {
+    margin-top: 20px;
+    padding-top: 16px;
+    border-top: 1px solid var(--mc-border, #e2e8f0);
+}
+
+.triage-case-actions__title {
+    margin: 0 0 6px;
+    font-size: 13px;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: #64748b;
+}
+
+.triage-case-actions__note,
+.triage-case-actions__warn {
+    margin: 0 0 10px;
+    font-size: 13px;
+    color: #64748b;
+    line-height: 1.45;
+}
+
+.triage-case-actions__warn {
+    color: #b45309;
+    font-weight: 600;
+}
+
+.triage-case-actions__buttons {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.triage-confirm-modal .triage-modal__dialog {
+    max-width: 480px;
+}
+
 .triage-expired-note {
     font-size: 11px;
     font-weight: 700;
@@ -380,6 +443,20 @@
     gap: 8px;
     justify-content: flex-end;
     margin-left: auto;
+    align-items: center;
+}
+
+.triage-modal__review-note {
+    font-size: 12px;
+    font-weight: 600;
+    color: #0e7490;
+    margin-right: auto;
+    text-align: left;
+}
+
+.triage-rec-edit.is-readonly {
+    background: #f8fafc;
+    color: #64748b;
 }
 
 .triage-modal__title {

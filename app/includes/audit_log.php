@@ -79,6 +79,19 @@ final class AuditAction
     const URGENT_FOLLOWUP_BOOKED             = 'urgent_followup_booked';
     const URGENT_FOLLOWUP_ACCEPTED           = 'urgent_followup_accepted';
 
+    // Case misuse / termination workflow
+    const CASE_REPORTED      = 'CASE_REPORTED';
+    const CASE_TERMINATED    = 'CASE_TERMINATED';
+    const REPORT_DISMISSED   = 'REPORT_DISMISSED';
+    const MISUSE_CONFIRMED   = 'MISUSE_CONFIRMED';
+    const VIOLATION_CONFIRMED = 'VIOLATION_CONFIRMED';
+    const REPORT_CREATED     = 'REPORT_CREATED';
+    const CONSULTATION_TERMINATED = 'CONSULTATION_TERMINATED';
+    const PATIENT_RESTRICTED = 'PATIENT_RESTRICTED';
+    const PATIENT_SUSPENDED  = 'PATIENT_SUSPENDED';
+    const PATIENT_RESTORED   = 'PATIENT_RESTORED';
+    const REPORT_ESCALATED   = 'REPORT_ESCALATED';
+
     // Announcement module
     const ANNOUNCEMENT_CREATED     = 'announcement_created';
     const ANNOUNCEMENT_EDITED      = 'announcement_edited';

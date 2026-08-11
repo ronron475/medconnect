@@ -1109,4 +1109,143 @@ final class NotificationEvents
             'related_id'    => $consultationId,
         ]);
     }
+
+    public static function caseReportSubmittedForAdmin(
+        PDO $pdo,
+        int $reportId,
+        int $triageId,
+        int $patientId,
+        int $providerId,
+        string $reason
+    ): void {
+        require_once __DIR__ . '/case_reports_schema.php';
+        $label = case_report_reason_label($reason);
+        NotificationManager::notifyAdmins($pdo, [
+            'sender_id'     => $providerId,
+            'type'          => NotificationManager::TYPE_WARNING,
+            'title'         => 'Case Report Submitted',
+            'message'       => "A provider reported case #{$triageId} ({$label}). Administrative review is required.",
+            'priority'      => 'high',
+            'action_url'    => '/views/admin/case_reports.php?id=' . $reportId,
+            'related_table' => 'case_reports',
+            'related_id'    => $reportId,
+            'icon'          => 'flag',
+        ]);
+    }
+
+    public static function caseReportEscalatedForSuperadmin(
+        PDO $pdo,
+        int $reportId,
+        int $triageId,
+        int $patientId,
+        int $adminId
+    ): void {
+        NotificationManager::notifySuperadmins($pdo, [
+            'sender_id'     => $adminId,
+            'type'          => NotificationManager::TYPE_WARNING,
+            'title'         => 'Case Report Escalated',
+            'message'       => "Case report #{$reportId} for triage case #{$triageId} was escalated for Super Administrator review.",
+            'priority'      => 'high',
+            'action_url'    => '/views/admin/case_reports.php?id=' . $reportId,
+            'related_table' => 'case_reports',
+            'related_id'    => $reportId,
+            'icon'          => 'alert-triangle',
+        ]);
+    }
+
+    public static function caseTerminatedForPatient(
+        PDO $pdo,
+        int $patientId,
+        int $triageId,
+        ?int $providerId = null
+    ): void {
+        NotificationManager::notifyPatient($pdo, $patientId, [
+            'sender_id'     => $providerId,
+            'type'          => NotificationManager::TYPE_INFORMATION,
+            'title'         => 'Consultation Case Closed',
+            'message'       => 'Your current consultation case has been closed by the healthcare provider.',
+            'action_url'    => '/views/patient/consultations.php',
+            'related_table' => 'triage_results',
+            'related_id'    => $triageId,
+        ]);
+    }
+
+    public static function patientAccountRestricted(PDO $pdo, int $patientId, int $adminId): void
+    {
+        NotificationManager::notifyPatient($pdo, $patientId, [
+            'sender_id'  => $adminId,
+            'type'       => NotificationManager::TYPE_WARNING,
+            'title'      => 'Account Restriction',
+            'message'    => 'Your account currently has a restriction that prevents new consultation submissions.',
+            'action_url' => '/views/patient/dashboard.php',
+            'related_table' => 'users',
+            'related_id'    => $patientId,
+        ]);
+    }
+
+    public static function patientAccountSuspended(PDO $pdo, int $patientId, int $adminId): void
+    {
+        NotificationManager::notifyPatient($pdo, $patientId, [
+            'sender_id'  => $adminId,
+            'type'       => NotificationManager::TYPE_WARNING,
+            'title'      => 'Account Suspended',
+            'message'    => 'Your account is currently suspended. Please contact the health office for assistance.',
+            'action_url' => '/views/patient/dashboard.php',
+            'related_table' => 'users',
+            'related_id'    => $patientId,
+        ]);
+    }
+
+    public static function patientAccountRestored(PDO $pdo, int $patientId, int $adminId): void
+    {
+        NotificationManager::notifyPatient($pdo, $patientId, [
+            'sender_id'  => $adminId,
+            'type'       => NotificationManager::TYPE_SUCCESS,
+            'title'      => 'Account Access Restored',
+            'message'    => 'Your account restrictions have been lifted. You may submit new health concerns when ready.',
+            'action_url' => '/views/patient/triage.php',
+            'related_table' => 'users',
+            'related_id'    => $patientId,
+        ]);
+    }
+
+    public static function consultationViolationReportedForAdmin(
+        PDO $pdo,
+        int $reportId,
+        int $consultationId,
+        int $patientId,
+        int $providerId,
+        string $reason
+    ): void {
+        require_once __DIR__ . '/case_reports_schema.php';
+        $label = case_report_reason_label($reason);
+        NotificationManager::notifyAdmins($pdo, [
+            'sender_id'     => $providerId,
+            'type'          => NotificationManager::TYPE_WARNING,
+            'title'         => 'Possible Video Consultation Violation',
+            'message'       => "A provider reported a possible violation during consultation #{$consultationId} ({$label}).",
+            'priority'      => 'high',
+            'action_url'    => '/views/admin/case_reports.php?id=' . $reportId,
+            'related_table' => 'case_reports',
+            'related_id'    => $reportId,
+            'icon'          => 'flag',
+        ]);
+    }
+
+    public static function consultationEndedForPatient(
+        PDO $pdo,
+        int $patientId,
+        int $consultationId,
+        ?int $providerId = null
+    ): void {
+        NotificationManager::notifyPatient($pdo, $patientId, [
+            'sender_id'     => $providerId,
+            'type'          => NotificationManager::TYPE_INFORMATION,
+            'title'         => 'Video Consultation Ended',
+            'message'       => 'Your current video consultation has been ended by the healthcare provider.',
+            'action_url'    => '/views/patient/consultations.php',
+            'related_table' => 'consultations',
+            'related_id'    => $consultationId,
+        ]);
+    }
 }

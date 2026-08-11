@@ -226,6 +226,7 @@ function portal_nav_admin_counts(PDO $pdo, string $role): array
     $aiReviewPending = 0;
     $announcementDrafts = 0;
     $pendingReferrals = 0;
+    $caseReportsPending = 0;
 
     try {
         $pendingDoctors = (int) $pdo->query("SELECT COUNT(*) FROM doctor_applications WHERE status='pending_approval'")->fetchColumn();
@@ -275,6 +276,11 @@ function portal_nav_admin_counts(PDO $pdo, string $role): array
         }
     } catch (Throwable $e) {
     }
+    try {
+        require_once __DIR__ . '/case_reports.php';
+        $caseReportsPending = case_reports_pending_count($pdo);
+    } catch (Throwable $e) {
+    }
     if (!empty($_SESSION['user_id']) && in_array($role, ['admin', 'superadmin'], true)) {
         try {
             require_once __DIR__ . '/../core/NotificationManager.php';
@@ -292,6 +298,7 @@ function portal_nav_admin_counts(PDO $pdo, string $role): array
         'ai_review_pending'    => max(0, $aiReviewPending),
         'announcement_drafts'  => max(0, $announcementDrafts),
         'pending_referrals'    => max(0, $pendingReferrals),
+        'case_reports_pending' => max(0, $caseReportsPending),
     ];
 }
 
@@ -357,6 +364,7 @@ function portal_nav_badge_key_for_item(string $role, string $file, ?string $item
             'queue_monitoring.php'          => 'queue_pending',
             'notification_center.php'       => 'notifications',
             'ai_review_assignments.php'     => 'ai_review_pending',
+            'case_reports.php'              => 'case_reports_pending',
             'announcements.php'             => 'announcement_drafts',
         ];
         return $map[$file] ?? null;
