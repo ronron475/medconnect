@@ -221,6 +221,7 @@ mc_render_loader_panel([
 
 <h3 class="text-h3 mb-md">Visit History</h3>
 <p class="text-muted" style="margin: -8px 0 14px; font-size: 0.9rem;">
+  These rows are your submitted health concerns and triage assessments — not confirmed appointments until the status shows <strong>Visit booked</strong>.
   Approved self-care tips are saved under
   <a href="<?= ASSET_BASE ?>/views/patient/my_health.php?tab=care-tips">My Health → Care tips</a>.
 </p>
@@ -242,7 +243,7 @@ mc_render_loader_panel([
             <td data-label="Date" style="font-weight: 700; color: var(--mc-navy-dark);"><?= !empty($t['assessed_at']) ? date('M j, Y', strtotime($t['assessed_at'])) : '—' ?></td>
             <td data-label="Concern" class="triage-symptoms-cell"><?= htmlspecialchars($t['chief_complaint'] ?? '—') ?></td>
             <td data-label="Status">
-              <span class="badge-risk <?= mc_patient_visit_status_class($t) ?>"><?= mc_patient_visit_status_label($t) ?></span>
+              <span class="badge-risk <?= mc_patient_visit_status_class($t) ?>"><?= mc_patient_visit_status_label($t, $pdo ?? null, (int) ($uid ?? 0)) ?></span>
             </td>
           </tr>
         <?php endforeach; endif; ?>

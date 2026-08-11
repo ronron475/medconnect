@@ -6,6 +6,7 @@ declare(strict_types=1);
  */
 
 require_once __DIR__ . '/message_deletion.php';
+require_once __DIR__ . '/patient_booking_status.php';
 
 /**
  * @return array<string, int>
@@ -98,6 +99,10 @@ function portal_nav_patient_sessions_attention_count(PDO $pdo, int $patientId): 
 function portal_nav_patient_booking_actions_count(PDO $pdo, int $patientId): int
 {
     if ($patientId <= 0) {
+        return 0;
+    }
+
+    if (patient_portal_has_upcoming_consultation($pdo, $patientId)) {
         return 0;
     }
 

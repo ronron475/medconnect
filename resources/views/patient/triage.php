@@ -32,10 +32,19 @@ if ($portal_triage_urgency === '') {
     $portal_triage_urgency = (string) ($pending_reg['urgency'] ?? '');
 }
 if ($pdo->query("SHOW TABLES LIKE 'triage_results'")->rowCount()) {
-    $s = $pdo->prepare('SELECT level, symptoms, assessed_at, chief_complaint, urgency_label, triage_level FROM triage_results WHERE patient_id=? ORDER BY assessed_at DESC');
+    $s = $pdo->prepare('SELECT id, level, symptoms, assessed_at, chief_complaint, urgency_label, triage_level, recommendation_status FROM triage_results WHERE patient_id=? ORDER BY assessed_at DESC');
     $s->execute([$uid]);
     $triage_history = $s->fetchAll(PDO::FETCH_ASSOC);
 }
+
+require_once BASE_PATH . '/app/includes/patient_booking_status.php';
+foreach ($triage_history as &$triageHistoryRow) {
+    $assessedAt = (string) ($triageHistoryRow['assessed_at'] ?? '');
+    $triageHistoryRow['_booking_state'] = $assessedAt !== ''
+        ? patient_triage_row_booking_state($pdo, (int) $uid, $assessedAt)
+        : 'none';
+}
+unset($triageHistoryRow);
 
 $booking_providers = [];
 if ($pdo->query("SHOW TABLES LIKE 'users'")->rowCount()) {
@@ -93,7 +102,7 @@ if ($pdo->query("SHOW TABLES LIKE 'consultations'")->rowCount()) {
 
 $active_consultation = null;
 foreach ($all_consults as $c) {
-    if (in_array($c['status'] ?? '', ['pending', 'scheduled', 'in_consultation'], true)) {
+    if (in_array($c['status'] ?? '', ['pending', 'scheduled', 'waiting', 'in_consultation'], true)) {
         $active_consultation = $c;
         break;
     }
