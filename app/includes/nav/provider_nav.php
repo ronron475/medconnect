@@ -18,6 +18,7 @@ return [
         'items' => [
             ['queue.php',  'Live Queue',           '<path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="23" y1="11" x2="17" y2="11"/>'],
             ['triage.php', 'Active Triage Review', '<polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>'],
+            ['consultation_history.php', 'Consultation History', '<circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>'],
         ],
     ],
     [
