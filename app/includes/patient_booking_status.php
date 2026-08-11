@@ -9,14 +9,18 @@ require_once __DIR__ . '/triage_assessment_schema.php';
 
 /**
  * SQL fragment: triage row is still part of the patient's active workflow.
- * Historical rows (completed visits, hidden/rejected) are excluded.
+ * Historical rows (completed/cancelled visits, hidden/rejected) are excluded.
+ *
+ * Note: `approved` care tips may still be readable in the Care Tips chatbot,
+ * but once a visit for that case was booked and then finished/cancelled, the
+ * triage must not keep blocking a brand-new chief complaint cycle.
  */
 function patient_triage_sql_active_only(string $alias = 'tr'): string
 {
     $a = preg_replace('/[^a-zA-Z0-9_]/', '', $alias) ?: 'tr';
 
-    // Active care-tips triage only while doctor review is open and no visit
-    // has already been scheduled / started / completed for this case.
+    // Active care-tips triage only while doctor review is open / tips are current
+    // and no visit has already been scheduled / started / finished / cancelled.
     return "
           AND COALESCE({$a}.recommendation_status, 'hidden') IN ('pending_approval', 'approved')
           AND NOT EXISTS (
@@ -31,7 +35,8 @@ function patient_triage_sql_active_only(string $alias = 'tr'): string
                 ) > {$a}.assessed_at
               )
               AND LOWER(COALESCE(c_link.status, '')) IN (
-                'pending', 'scheduled', 'waiting', 'in_consultation', 'completed'
+                'pending', 'scheduled', 'waiting', 'in_consultation',
+                'completed', 'cancelled', 'canceled'
               )
           )
     ";
@@ -540,6 +545,13 @@ function patient_chief_complaint_row_is_active(PDO $pdo, int $patientId, array $
             if (!$triage) {
                 return false;
             }
+
+            $recStatus = strtolower(trim((string) ($triage['recommendation_status'] ?? '')));
+            // Approved tips without an open consultation no longer lock a new cycle.
+            if ($recStatus === 'approved' && !patient_portal_has_open_consultation($pdo, $patientId)) {
+                return false;
+            }
+
             $active = patient_portal_find_active_triage_row($pdo, $patientId);
 
             return $active && (int) ($active['id'] ?? 0) === $triageId;
