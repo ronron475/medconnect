@@ -126,6 +126,7 @@ form.addEventListener('submit', async (e) => {
 
     const data = await res.json();
     if (data.success) {
+      setLoading(false);
       if (window.MedConnectLoginLoading && typeof MedConnectLoginLoading.show === 'function') {
         MedConnectLoginLoading.show(data.redirect);
       } else {

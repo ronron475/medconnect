@@ -831,6 +831,7 @@ form.addEventListener('submit', async e => {
         }
       } catch (_) { /* ignore */ }
 
+      setLoading(false);
       if (window.MedConnectLoginLoading && typeof window.MedConnectLoginLoading.show === 'function') {
         window.MedConnectLoginLoading.show(redirectUrl);
       } else {
