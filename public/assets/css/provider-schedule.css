@@ -775,6 +775,39 @@
   color: #b45309;
 }
 
+.sched-slot-note--pending {
+  color: #0e7490;
+  font-weight: 700;
+}
+
+.sched-slot-pending {
+  margin-top: 6px;
+  padding: 6px 6px 4px;
+  border-radius: 6px;
+  background: rgba(14, 116, 144, 0.08);
+  border: 1px solid rgba(14, 116, 144, 0.18);
+  text-align: left;
+}
+
+.sched-slot-reason,
+.sched-slot-proposed {
+  font-size: 9px;
+  line-height: 1.4;
+  color: #334155;
+  margin: 4px 0 0;
+  overflow-wrap: anywhere;
+}
+
+.sched-slot-reason strong,
+.sched-slot-proposed strong {
+  color: #0f172a;
+}
+
+.sched-slot-proposed-was {
+  color: #64748b;
+  font-weight: 600;
+}
+
 .sched-slot-legend {
   font-size: 11px;
   line-height: 1.45;
