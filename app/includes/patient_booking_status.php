@@ -40,6 +40,7 @@ function patient_triage_sql_active_only(string $alias = 'tr'): string
 /**
  * Pick the patient's current active consultation using explicit status priority.
  * Prefer live visits, then the soonest scheduled/open visit — never latest-created alone.
+ * Past-start scheduled/pending visits are excluded unless the visit is in progress.
  *
  * @param list<array<string, mixed>> $consults
  * @return array<string, mixed>|null
@@ -50,9 +51,14 @@ function patient_portal_select_active_consultation(array $consults): ?array
     $open = [];
     foreach ($consults as $c) {
         $status = strtolower(trim((string) ($c['status'] ?? '')));
-        if (in_array($status, $openStatuses, true)) {
-            $open[] = $c;
+        if (!in_array($status, $openStatuses, true)) {
+            continue;
         }
+        // Only keep consultations that still belong to the current cycle.
+        if (!patient_consultation_keeps_chief_complaint_locked($c)) {
+            continue;
+        }
+        $open[] = $c;
     }
     if ($open === []) {
         return null;
@@ -65,10 +71,8 @@ function patient_portal_select_active_consultation(array $consults): ?array
     }
 
     usort($open, static function (array $a, array $b): int {
-        $ta = strtotime(trim(($a['consult_date'] ?? '') . ' ' . ($a['consult_time'] ?? '00:00:00')));
-        $tb = strtotime(trim(($b['consult_date'] ?? '') . ' ' . ($b['consult_time'] ?? '00:00:00')));
-        $ta = $ta === false ? PHP_INT_MAX : $ta;
-        $tb = $tb === false ? PHP_INT_MAX : $tb;
+        $ta = patient_consultation_schedule_start_ts($a) ?? PHP_INT_MAX;
+        $tb = patient_consultation_schedule_start_ts($b) ?? PHP_INT_MAX;
         if ($ta === $tb) {
             return ((int) ($a['id'] ?? 0)) <=> ((int) ($b['id'] ?? 0));
         }
@@ -77,6 +81,73 @@ function patient_portal_select_active_consultation(array $consults): ?array
     });
 
     return $open[0];
+}
+
+/**
+ * Unix timestamp for a consultation's scheduled start (Asia/Manila via APP_TIMEZONE).
+ *
+ * @param array<string, mixed> $consult
+ */
+function patient_consultation_schedule_start_ts(array $consult): ?int
+{
+    $date = substr(trim((string) ($consult['consult_date'] ?? $consult['slot_date'] ?? '')), 0, 10);
+    if ($date === '' || !preg_match('/^\d{4}-\d{2}-\d{2}$/', $date)) {
+        return null;
+    }
+    $time = trim((string) ($consult['consult_time'] ?? $consult['slot_start'] ?? $consult['start_time'] ?? '00:00:00'));
+    if ($time === '') {
+        $time = '00:00:00';
+    }
+    if (preg_match('/^\d{2}:\d{2}$/', $time)) {
+        $time .= ':00';
+    }
+    $time = substr($time, 0, 8);
+    if (!preg_match('/^\d{2}:\d{2}:\d{2}$/', $time)) {
+        return null;
+    }
+
+    $tzName = defined('APP_TIMEZONE') ? (string) APP_TIMEZONE : 'Asia/Manila';
+    try {
+        $tz = new DateTimeZone($tzName);
+        $dt = DateTimeImmutable::createFromFormat('Y-m-d H:i:s', $date . ' ' . $time, $tz);
+        if (!$dt instanceof DateTimeImmutable) {
+            return null;
+        }
+
+        return $dt->getTimestamp();
+    } catch (Throwable $e) {
+        $ts = strtotime($date . ' ' . $time);
+
+        return $ts === false ? null : $ts;
+    }
+}
+
+/**
+ * Whether this consultation should keep the patient's chief complaint locked.
+ * - IN_PROGRESS: always locked
+ * - SCHEDULED/PENDING before start: locked
+ * - SCHEDULED/PENDING after start (missed / waiting past due): unlocked for a NEW consultation
+ * - COMPLETED/CANCELLED: unlocked
+ *
+ * @param array<string, mixed> $consult
+ */
+function patient_consultation_keeps_chief_complaint_locked(array $consult): bool
+{
+    $status = strtolower(trim((string) ($consult['status'] ?? '')));
+    if ($status === 'in_consultation') {
+        return true;
+    }
+    if (!in_array($status, ['pending', 'scheduled', 'waiting'], true)) {
+        return false;
+    }
+
+    $startTs = patient_consultation_schedule_start_ts($consult);
+    if ($startTs === null) {
+        // Missing schedule data — treat as still open to avoid accidental unlock mid-flow.
+        return true;
+    }
+
+    return $startTs > time();
 }
 
 /**
@@ -93,7 +164,7 @@ function patient_portal_has_open_consultation(PDO $pdo, int $patientId): bool
             return false;
         }
         $stmt = $pdo->prepare("
-            SELECT COUNT(*)
+            SELECT id, status, consult_date, consult_time
             FROM consultations
             WHERE patient_id = ?
               AND LOWER(COALESCE(status, '')) IN (
@@ -101,8 +172,51 @@ function patient_portal_has_open_consultation(PDO $pdo, int $patientId): bool
               )
         ");
         $stmt->execute([$patientId]);
+        while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
+            if (patient_consultation_keeps_chief_complaint_locked($row)) {
+                return true;
+            }
+        }
 
-        return (int) $stmt->fetchColumn() > 0;
+        return false;
+    } catch (Throwable $e) {
+        return false;
+    }
+}
+
+/**
+ * Whether the patient has a finished visit or a past-due scheduled visit
+ * that should no longer seed/lock a chief complaint.
+ */
+function patient_portal_has_stale_or_finished_consultation(PDO $pdo, int $patientId): bool
+{
+    if ($patientId <= 0) {
+        return false;
+    }
+    try {
+        if (!$pdo->query("SHOW TABLES LIKE 'consultations'")->rowCount()) {
+            return false;
+        }
+        $stmt = $pdo->prepare("
+            SELECT id, status, consult_date, consult_time
+            FROM consultations
+            WHERE patient_id = ?
+            ORDER BY id DESC
+            LIMIT 20
+        ");
+        $stmt->execute([$patientId]);
+        while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
+            $status = strtolower(trim((string) ($row['status'] ?? '')));
+            if (in_array($status, ['completed', 'cancelled', 'canceled'], true)) {
+                return true;
+            }
+            if (in_array($status, ['pending', 'scheduled', 'waiting'], true)
+                && !patient_consultation_keeps_chief_complaint_locked($row)) {
+                return true;
+            }
+        }
+
+        return false;
     } catch (Throwable $e) {
         return false;
     }
@@ -395,19 +509,18 @@ function patient_chief_complaint_row_is_active(PDO $pdo, int $patientId, array $
     if ($consultationId > 0) {
         try {
             $stmt = $pdo->prepare("
-                SELECT LOWER(COALESCE(status, ''))
+                SELECT id, status, consult_date, consult_time
                 FROM consultations
                 WHERE id = ? AND patient_id = ?
                 LIMIT 1
             ");
             $stmt->execute([$consultationId, $patientId]);
-            $status = (string) ($stmt->fetchColumn() ?: '');
-            if ($status === 'completed' || $status === 'cancelled' || $status === 'canceled') {
+            $consult = $stmt->fetch(PDO::FETCH_ASSOC);
+            if (!$consult) {
                 return false;
             }
-            if ($status !== '') {
-                return true;
-            }
+
+            return patient_consultation_keeps_chief_complaint_locked($consult);
         } catch (Throwable $e) {
             return false;
         }

@@ -87,15 +87,15 @@ $locked_alternate_available = !empty($locked_alternate_available);
         name="chief_complaint"
         class="form-control"
         rows="<?= $chief_complaint_locked ? 2 : 3 ?>"
-        placeholder="<?= $chief_complaint_locked ? 'Your submitted health concern…' : 'Briefly describe why you need this visit…' ?>"
+        placeholder="<?= $chief_complaint_locked ? 'Your submitted health concern…' : 'Describe your current health concern...' ?>"
         maxlength="500"
         <?= $chief_complaint_locked ? 'readonly aria-readonly="true"' : 'required' ?>
       ><?= htmlspecialchars($registration_chief_complaint) ?></textarea>
       <p class="text-xs text-muted" style="margin-top:6px;">
         <?php if ($chief_complaint_locked): ?>
-        This chief complaint is already on file from your <?= htmlspecialchars($chief_complaint_source === 'registration' ? 'registration' : 'earlier submission') ?>. It cannot be changed here and will be used for this consultation.
+        This chief complaint is already on file and will be reviewed by your doctor. It cannot be changed while this consultation is still active.
         <?php else: ?>
-        Briefly describe why you need this visit.
+        Share your current health concern to start a new consultation. Previous complaints stay in My Sessions and are not reused.
         <?php endif; ?>
       </p>
     </div>

@@ -383,16 +383,32 @@ try {
           consult_date ASC,
           consult_time ASC,
           id ASC
-        LIMIT 1
+        LIMIT 10
         FOR UPDATE
     ");
     $existing_stmt->execute([$patient_id]);
-    $existing_consult = $existing_stmt->fetch(PDO::FETCH_ASSOC);
+    $existingCandidates = $existing_stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
+    $existing_consult = null;
+    foreach ($existingCandidates as $candidate) {
+        if (strtolower((string) ($candidate['status'] ?? '')) === 'in_consultation') {
+            $existing_consult = $candidate;
+            break;
+        }
+        if (patient_consultation_keeps_chief_complaint_locked($candidate)) {
+            $existing_consult = $candidate;
+            break;
+        }
+    }
 
     if ($existing_consult && $existing_consult['status'] === 'in_consultation') {
         // Do not leave an orphan pending triage when booking is blocked.
         $pdo->rollBack();
         Api::error('You have a consultation in progress — finish it before booking a new appointment slot.');
+    }
+
+    // Past-due scheduled visits must not be overwritten — start a new consultation instead.
+    if ($existing_consult && !patient_consultation_keeps_chief_complaint_locked($existing_consult)) {
+        $existing_consult = null;
     }
 
     // Keep follow-up / prior-case appointments intact — only reuse today's open slot for the same case.
