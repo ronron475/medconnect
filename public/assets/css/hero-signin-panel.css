@@ -821,8 +821,8 @@ html[data-theme-resolved='dark'] .landing-page .hero-signin-panel .signin-modal-
   body.landing-page.signin-active #signin-modal.hero-signin-panel.is-viewport-pinned.is-open {
     position: fixed !important;
     top: calc(var(--hero-signin-nav-offset) + var(--hero-signin-gap) - var(--hero-signin-lift)) !important;
-    right: max(12px, env(safe-area-inset-right, 12px)) !important;
-    left: max(12px, env(safe-area-inset-left, 12px)) !important;
+    right: max(14px, env(safe-area-inset-right, 14px)) !important;
+    left: max(14px, env(safe-area-inset-left, 14px)) !important;
     bottom: auto !important;
     width: auto !important;
     max-width: none !important;
@@ -862,20 +862,20 @@ html[data-theme-resolved='dark'] .landing-page .hero-signin-panel .signin-modal-
   body.landing-page.signin-active > #signin-modal.hero-signin-panel.is-viewport-pinned.is-open,
   body.landing-page.signin-active #signin-modal.hero-signin-panel.is-viewport-pinned.is-open {
     top: calc(var(--hero-signin-nav-offset) + 8px - var(--hero-signin-lift)) !important;
-    right: max(10px, env(safe-area-inset-right, 10px)) !important;
-    left: max(10px, env(safe-area-inset-left, 10px)) !important;
+    right: max(14px, env(safe-area-inset-right, 14px)) !important;
+    left: max(14px, env(safe-area-inset-left, 14px)) !important;
     bottom: auto !important;
-    max-height: calc(100dvh - var(--hero-signin-nav-offset) - 16px - env(safe-area-inset-bottom, 0px) + var(--hero-signin-lift)) !important;
+    max-height: calc(100dvh - var(--hero-signin-nav-offset) - 20px - env(safe-area-inset-bottom, 0px) + var(--hero-signin-lift)) !important;
   }
 
   .landing-page .hero-signin-panel .signin-card--hero-inline {
-    --signin-space-md: 10px;
-    --signin-space-lg: 14px;
+    --signin-space-md: 12px;
+    --signin-space-lg: 16px;
     --signin-input-height: 44px;
     --signin-error-slot-height: 48px;
     --signin-context-alert-height: 38px;
 
-    padding: 14px 14px 12px;
+    padding: 16px 16px 14px;
     border-radius: 16px;
   }
 
@@ -912,7 +912,7 @@ html[data-theme-resolved='dark'] .landing-page .hero-signin-panel .signin-modal-
   }
 
   .landing-page .hero-signin-panel .signin-card__primary .form-footer-row {
-    margin-bottom: 10px;
+    margin-bottom: 12px;
   }
 
   .landing-page .hero-signin-panel .signin-card__primary .btn-signin {
@@ -920,31 +920,58 @@ html[data-theme-resolved='dark'] .landing-page .hero-signin-panel .signin-modal-
   }
 
   .landing-page .hero-signin-panel .signin-card__primary .card-register {
-    margin-top: 10px;
+    margin-top: 12px;
   }
 
   .landing-page .hero-signin-panel .signin-card__extras {
-    margin-top: 10px;
-    padding-top: 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-top: 12px;
+    padding-top: 12px;
   }
 
   .landing-page .hero-signin-panel .provider-note--compact,
   .landing-page .hero-signin-panel .emergency-note--compact {
-    padding: 8px 10px;
-    margin-bottom: 6px;
-    font-size: 0.7rem;
-    line-height: 1.45;
+    padding: 10px 12px;
+    margin-bottom: 0;
+    font-size: 0.72rem;
+    line-height: 1.5;
+  }
+
+  .landing-page .hero-signin-panel .signin-modal-inner .signin-card .form-footer-row {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    box-sizing: border-box;
+  }
+
+  .landing-page .hero-signin-panel .signin-modal-inner .signin-card .forgot-link {
+    align-self: flex-end;
+    margin-left: 0;
+    padding: 4px 0;
+  }
+
+  .landing-page .hero-signin-panel .signin-modal-inner .signin-card .remember-me-label {
+    padding-right: 4px;
   }
 
   .landing-page .hero-signin-panel .signin-modal-inner .signin-card .input-wrap,
   .landing-page .hero-signin-panel .signin-modal-inner .signin-card .input-wrap input,
   .landing-page .hero-signin-panel .signin-modal-inner .signin-card .input-wrap select,
-  .landing-page .hero-signin-panel .signin-modal-inner .signin-card .btn-signin,
-  .landing-page .hero-signin-panel .signin-modal-inner .signin-card .form-footer-row {
+  .landing-page .hero-signin-panel .signin-modal-inner .signin-card .btn-signin {
     width: 100%;
     max-width: 100%;
     min-width: 0;
     box-sizing: border-box;
+  }
+
+  .landing-page .hero-signin-panel .card-badges--compact {
+    margin-top: 4px;
+    gap: 10px 12px;
   }
 }
 
