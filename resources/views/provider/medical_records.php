@@ -12,23 +12,12 @@ $tab = $_GET['tab'] ?? 'overview';
 $view = ($_GET['view'] ?? 'patients') === 'history' ? 'history' : 'patients';
 $provider_id = (int) ($_SESSION['user_id'] ?? 0);
 
-$consultation_history = [];
 if ($view === 'history') {
-    try {
-        $hist_stmt = $pdo->prepare("
-            SELECT c.*, u.first_name, u.last_name, cn.diagnosis
-            FROM consultations c
-            JOIN users u ON c.patient_id = u.id
-            LEFT JOIN clinical_notes cn ON c.id = cn.consultation_id
-            WHERE c.provider_id = ? AND c.status = 'completed'
-            ORDER BY c.consult_date DESC, c.consult_time DESC
-        ");
-        $hist_stmt->execute([$provider_id]);
-        $consultation_history = $hist_stmt->fetchAll(PDO::FETCH_ASSOC);
-    } catch (PDOException $e) {
-        $consultation_history = [];
-    }
+    header('Location: ' . ASSET_BASE . '/views/provider/consultation_history.php', true, 302);
+    exit;
 }
+
+$selected = null;
 
 function mr_fetch_patient(PDO $pdo, int $id): ?array {
     $s = $pdo->prepare("
@@ -46,14 +35,13 @@ function mr_fetch_patient(PDO $pdo, int $id): ?array {
             CASE WHEN u.is_active=1 THEN 'Active' ELSE 'Inactive' END AS status,
             CONCAT('MC-',LPAD(u.id,6,'0')) AS patient_number
         FROM users u
-        LEFT JOIN patient_registrations pr ON pr.user_id = u.id OR pr.email = u.email
+        LEFT JOIN patient_registrations pr ON pr.user_id = u.id
         WHERE u.id=? AND u.role='patient' LIMIT 1
     ");
     $s->execute([$id]);
     return $s->fetch(PDO::FETCH_ASSOC) ?: null;
 }
 
-$selected = null;
 if ($requested_id > 0) {
     $access = provider_patient_assert_access($pdo, (int) ($_SESSION['user_id'] ?? 0), $requested_id, 0);
     if ($access['allowed']) {
@@ -178,72 +166,17 @@ $tabs_list = ['overview' => 'Overview', 'consultations' => 'Consultations', 'cli
   <div class="mr-toolbar">
     <div class="mr-toolbar__left">
       <h2 class="mr-toolbar__title">Medical Records</h2>
-      <span class="mr-badge"><?= $view === 'history' ? count($consultation_history) . ' completed' : $patient_count . ' patients' ?></span>
+      <span class="mr-badge"><?= $patient_count . ' patients' ?></span>
       <nav class="mr-tabs" aria-label="Records view">
-        <a href="?view=patients" class="<?= $view === 'patients' ? 'is-active' : '' ?>">Patient Directory</a>
-        <a href="?view=history" class="<?= $view === 'history' ? 'is-active' : '' ?>">Consultation History</a>
+        <a href="?view=patients" class="is-active">Patient Directory</a>
+        <a href="<?= ASSET_BASE ?>/views/provider/consultation_history.php">Consultation History</a>
       </nav>
     </div>
-    <?php if ($view === 'patients'): ?>
     <div class="mr-search">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
       <input id="mrSearch" type="search" placeholder="Search patients…" oninput="mrFilterPatients(this.value)" autocomplete="off">
     </div>
-    <?php endif; ?>
   </div>
-
-  <?php if ($view === 'history'): ?>
-
-  <div class="mr-history-panel">
-    <div class="mr-panel__head">
-      <span>Finalized consultation records</span>
-      <div class="mr-search">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-        <input id="mrHistorySearch" type="search" placeholder="Search history…" oninput="mrFilterHistory(this.value)" autocomplete="off">
-      </div>
-    </div>
-    <div style="overflow-x:auto;">
-      <table class="mc-table">
-        <thead>
-          <tr>
-            <th>Date</th>
-            <th>Patient</th>
-            <th>Type</th>
-            <th>Diagnosis</th>
-            <th>Status</th>
-            <th></th>
-          </tr>
-        </thead>
-        <tbody id="mrHistoryBody">
-          <?php if (empty($consultation_history)): ?>
-          <tr><td colspan="6"><div class="mr-empty"><p>No finalized consultations in your history.</p></div></td></tr>
-          <?php else: foreach ($consultation_history as $h):
-            $patient_name = trim(($h['first_name'] ?? '') . ' ' . ($h['last_name'] ?? ''));
-            $search_blob = strtolower($patient_name . ' ' . ($h['diagnosis'] ?? '') . ' ' . ($h['consult_type'] ?? ''));
-          ?>
-          <tr data-history-row data-search="<?= htmlspecialchars($search_blob) ?>">
-            <td style="white-space:nowrap;">
-              <strong><?= date('M j, Y', strtotime($h['consult_date'])) ?></strong><br>
-              <span class="text-xs text-muted"><?= date('g:i A', strtotime($h['consult_time'])) ?></span>
-            </td>
-            <td>
-              <strong><?= htmlspecialchars($patient_name) ?></strong><br>
-              <span class="text-xs text-muted">#<?= (int) $h['patient_id'] ?></span>
-            </td>
-            <td><?= htmlspecialchars($h['consult_type'] ?? '—') ?></td>
-            <td><?= htmlspecialchars($h['diagnosis'] ?? '—') ?></td>
-            <td><span class="mr-chip mr-chip--active">Completed</span></td>
-            <td>
-              <a href="?view=patients&amp;patient_id=<?= (int) $h['patient_id'] ?>&amp;tab=consultations" class="mc-btn mc-btn--outline" style="padding:4px 10px;font-size:11px;">Open</a>
-            </td>
-          </tr>
-          <?php endforeach; endif; ?>
-        </tbody>
-      </table>
-    </div>
-  </div>
-
-  <?php else: ?>
 
   <?php if (!empty($provider_assigned_pending)): ?>
   <div class="mr-assigned-pending" role="status">
@@ -411,7 +344,6 @@ $tabs_list = ['overview' => 'Overview', 'consultations' => 'Consultations', 'cli
     </div>
   </div>
 
-  <?php endif; ?>
 </div>
 
 <script>
@@ -419,13 +351,6 @@ function mrFilterPatients(q) {
   q = (q || '').toLowerCase().trim();
   document.querySelectorAll('#mrPatientList .mr-patient-row').forEach(function (el) {
     el.style.display = !q || (el.getAttribute('data-name') || '').includes(q) ? '' : 'none';
-  });
-}
-function mrFilterHistory(q) {
-  q = (q || '').toLowerCase().trim();
-  document.querySelectorAll('#mrHistoryBody [data-history-row]').forEach(function (el) {
-    var blob = el.getAttribute('data-search') || '';
-    el.style.display = !q || blob.includes(q) ? '' : 'none';
   });
 }
 

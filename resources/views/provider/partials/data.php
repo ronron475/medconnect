@@ -319,17 +319,21 @@ try {
             CASE WHEN u.is_active = 1 THEN 'Active' ELSE 'Inactive' END AS status
         FROM users u
         INNER JOIN (
-            SELECT patient_id, MAX(consult_date) AS last_consult
-            FROM consultations
-            WHERE provider_id = ?
-            GROUP BY patient_id
-            UNION
-            SELECT patient_id, MAX(slot_date) AS last_consult
-            FROM appointment_slots
-            WHERE provider_id = ? AND status = 'booked'
+            SELECT patient_id, MAX(last_consult) AS last_consult
+            FROM (
+                SELECT patient_id, MAX(consult_date) AS last_consult
+                FROM consultations
+                WHERE provider_id = ?
+                GROUP BY patient_id
+                UNION ALL
+                SELECT patient_id, MAX(slot_date) AS last_consult
+                FROM appointment_slots
+                WHERE provider_id = ? AND status = 'booked'
+                GROUP BY patient_id
+            ) combined
             GROUP BY patient_id
         ) rel ON rel.patient_id = u.id
-        LEFT JOIN patient_registrations pr ON pr.user_id = u.id OR pr.email = u.email
+        LEFT JOIN patient_registrations pr ON pr.user_id = u.id
         WHERE u.role = 'patient'
         ORDER BY rel.last_consult DESC, u.last_name ASC
     ");

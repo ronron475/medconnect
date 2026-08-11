@@ -37,7 +37,7 @@ function provider_nav_is_active(string $file, string $current_page, string $curr
 
     // Legacy aliases that redirect into another nav destination.
     $aliases = [
-        'medical_records.php' => ['patients.php', 'records.php', 'consultation_history.php', 'patient_files.php'],
+        'medical_records.php' => ['patients.php', 'records.php', 'patient_files.php'],
         'triage.php' => ['triage_history.php'],
     ];
     foreach ($aliases[$file] ?? [] as $alias) {
