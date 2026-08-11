@@ -10,6 +10,7 @@
   var statusEl = null;
   var providerEl = null;
   var listEl = null;
+  var contentEl = null;
   var tipsById = {};
   var lastFocus = null;
 
@@ -26,6 +27,7 @@
     statusEl = document.getElementById('pmhCareTipsModalStatus');
     providerEl = document.getElementById('pmhCareTipsModalProvider');
     listEl = document.getElementById('pmhCareTipsModalList');
+    contentEl = modal.querySelector('.pmh-care-modal__content');
     return true;
   }
 
@@ -96,6 +98,9 @@
 
     modal.hidden = false;
     document.body.classList.add('pmh-care-modal-open');
+    if (contentEl) {
+      contentEl.scrollTop = 0;
+    }
     var closeBtn = modal.querySelector('.pmh-care-modal__close');
     if (closeBtn) {
       closeBtn.focus();
