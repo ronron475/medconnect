@@ -871,57 +871,61 @@ mc_render_loader_panel([
 </div>
 
 <!-- Back to Sign In confirmation modal -->
-<div id="backToSigninModal" style="display:none;position:fixed;inset:0;z-index:2000;background:rgba(4,12,24,0.80);backdrop-filter:blur(7px);align-items:center;justify-content:center;padding:20px">
-  <div style="background:linear-gradient(160deg,#0b1f38,#071525);border:1px solid rgba(45,212,191,0.18);border-radius:18px;padding:36px 30px;max-width:400px;width:100%;box-shadow:0 24px 72px rgba(0,0,0,0.60);text-align:center;animation:regModalIn 0.25s ease">
-    <!-- Icon -->
-    <div style="width:56px;height:56px;border-radius:50%;background:rgba(239,68,68,0.12);border:1.5px solid rgba(239,68,68,0.28);display:flex;align-items:center;justify-content:center;margin:0 auto 18px">
-      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+<div
+  id="backToSigninModal"
+  class="reg-leave-modal"
+  hidden
+  role="dialog"
+  aria-modal="true"
+  aria-labelledby="reg-leave-modal-title"
+  aria-describedby="reg-leave-modal-desc reg-leave-modal-support"
+>
+  <div class="reg-leave-modal__backdrop" id="backToSigninBackdrop" tabindex="-1" aria-hidden="true"></div>
+  <div class="reg-leave-modal__card">
+    <div class="reg-leave-modal__icon" aria-hidden="true">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
         <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
         <polyline points="16 17 21 12 16 7"/>
-        <line x1="21" x2="9" y1="12" y2="12"/>
+        <line x1="21" y1="12" x2="9" y2="12"/>
       </svg>
     </div>
-    <!-- Title -->
-    <h3 style="font-size:18px;font-weight:800;color:#fff;margin:0 0 10px">Leave Registration?</h3>
-    <!-- Message -->
-    <p style="font-size:13.5px;color:rgba(255,255,255,0.58);margin:0 0 26px;line-height:1.65">Are you sure you want to go back to Sign In?<br>Your registration progress will be lost.</p>
-    <!-- Buttons -->
-    <div style="display:flex;gap:10px;justify-content:center">
-      <button id="backToSigninCancel" type="button"
-        style="height:42px;padding:0 24px;border-radius:10px;border:1px solid rgba(255,255,255,0.16);background:rgba(255,255,255,0.08);color:rgba(255,255,255,0.82);font-size:14px;font-weight:600;font-family:inherit;cursor:pointer;transition:background 0.2s"
-        onmouseover="this.style.background='rgba(255,255,255,0.14)'"
-        onmouseout="this.style.background='rgba(255,255,255,0.08)'">
-        Cancel
-      </button>
-      <button id="backToSigninConfirm" type="button"
-        style="height:42px;padding:0 24px;border-radius:10px;border:none;background:linear-gradient(135deg,#dc2626,#ef4444);color:#fff;font-size:14px;font-weight:700;font-family:inherit;cursor:pointer;transition:opacity 0.2s"
-        onmouseover="this.style.opacity='0.88'"
-        onmouseout="this.style.opacity='1'">
-        Yes, Go Back
-      </button>
+    <h2 id="reg-leave-modal-title" class="reg-leave-modal__title">Leave Registration?</h2>
+    <p id="reg-leave-modal-desc" class="reg-leave-modal__message">Are you sure you want to leave registration?</p>
+    <p id="reg-leave-modal-support" class="reg-leave-modal__support">Your registration progress will be lost and you&rsquo;ll return to the Sign In page.</p>
+    <div class="reg-leave-modal__actions">
+      <button id="backToSigninCancel" type="button" class="reg-leave-modal__btn reg-leave-modal__btn--secondary" data-mc-autofocus>Stay on Registration</button>
+      <button id="backToSigninConfirm" type="button" class="reg-leave-modal__btn reg-leave-modal__btn--danger">Leave Registration</button>
     </div>
   </div>
 </div>
 
-<style>
-@keyframes regModalIn {
-  from { opacity:0; transform:translateY(18px) scale(0.97); }
-  to   { opacity:1; transform:translateY(0)    scale(1);    }
-}
-</style>
-
 <script>
 (function () {
   const modal      = document.getElementById('backToSigninModal');
+  const backdrop   = document.getElementById('backToSigninBackdrop');
   const btnOpen    = document.getElementById('btn-back-to-signin');
   const btnCancel  = document.getElementById('backToSigninCancel');
   const btnConfirm = document.getElementById('backToSigninConfirm');
   const signInUrl  = <?= json_encode($b . '/index.php') ?>;
 
-  function openModal()  { modal.style.display = 'flex'; }
-  function closeModal() { modal.style.display = 'none'; }
+  function openModal() {
+    if (!modal) return;
+    modal.hidden = false;
+    modal.setAttribute('aria-hidden', 'false');
+    modal.classList.add('is-open');
+    document.body.classList.add('reg-leave-modal-open');
+    if (btnCancel) btnCancel.focus();
+  }
 
-  // Always show modal — user is on the registration page
+  function closeModal() {
+    if (!modal) return;
+    modal.classList.remove('is-open');
+    modal.setAttribute('aria-hidden', 'true');
+    modal.hidden = true;
+    document.body.classList.remove('reg-leave-modal-open');
+    if (btnOpen) btnOpen.focus();
+  }
+
   if (btnOpen) {
     btnOpen.addEventListener('click', e => {
       e.preventDefault();
@@ -929,15 +933,19 @@ mc_render_loader_panel([
     });
   }
 
-  if (btnCancel)  btnCancel.addEventListener('click', closeModal);
+  if (btnCancel) btnCancel.addEventListener('click', closeModal);
   if (btnConfirm) btnConfirm.addEventListener('click', () => { window.location.href = signInUrl; });
+
+  if (backdrop) {
+    backdrop.addEventListener('click', closeModal);
+  }
 
   if (modal) {
     modal.addEventListener('click', e => { if (e.target === modal) closeModal(); });
   }
 
   document.addEventListener('keydown', e => {
-    if (e.key === 'Escape' && modal?.style.display === 'flex') closeModal();
+    if (e.key === 'Escape' && modal && !modal.hidden) closeModal();
   });
 })();
 </script>
