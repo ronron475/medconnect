@@ -176,6 +176,24 @@ function provider_consultation_history_patient_detail(PDO $pdo, int $providerId,
         $cStmt->execute([$patientId, $providerId]);
         $consultations = $cStmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
 
+        require_once __DIR__ . '/provider_clinical_support.php';
+        foreach ($consultations as &$consultRow) {
+            $cid = (int) ($consultRow['id'] ?? 0);
+            if ($cid <= 0) {
+                continue;
+            }
+            $support = provider_consultation_clinical_support($pdo, $cid, $patientId);
+            $aiBucket = provider_clinical_support_normalize_bucket((string) ($support['ai_urgency_bucket'] ?? ''));
+            $finalBucket = provider_clinical_support_normalize_bucket((string) ($support['risk_bucket'] ?? 'unknown'));
+            $consultRow['ai_classification'] = $aiBucket !== 'unknown'
+                ? provider_clinical_support_urgency_label($aiBucket)
+                : '';
+            $consultRow['final_classification'] = $finalBucket !== 'unknown'
+                ? (trim((string) ($support['final_urgency'] ?? '')) ?: provider_clinical_support_urgency_label($finalBucket))
+                : '';
+        }
+        unset($consultRow);
+
         return ['patient' => $patient, 'consultations' => $consultations];
     } catch (PDOException $e) {
         error_log('provider_consultation_history_patient_detail: ' . $e->getMessage());

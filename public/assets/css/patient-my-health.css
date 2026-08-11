@@ -1871,3 +1871,67 @@ body.pmh-care-modal-open .pt-remedy__fab {
 .pmh-record-banner__cta {
   white-space: nowrap;
 }
+
+.pmh-case-level {
+  display: inline-flex;
+  align-items: center;
+  padding: 6px 12px;
+  border-radius: 999px;
+  font-size: 0.78rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+}
+
+.pmh-case-level--emergency {
+  background: #fef2f2;
+  color: #b91c1c;
+  border: 1px solid #fecaca;
+}
+
+.pmh-case-level--urgent {
+  background: #fff7ed;
+  color: #c2410c;
+  border: 1px solid #fed7aa;
+}
+
+.pmh-case-level--non-urgent {
+  background: #ecfdf5;
+  color: #047857;
+  border: 1px solid #a7f3d0;
+}
+
+.pmh-visit__case-level {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin: 0 0 10px;
+}
+
+.pmh-visit__ai-ref {
+  font-size: 0.8rem;
+  color: #64748b;
+}
+
+.pmh-detail__case-sub,
+.pmh-detail__ai-note {
+  margin: 8px 0 0;
+  color: #475569;
+  font-size: 0.92rem;
+}
+
+.pmh-detail__actions-list {
+  margin: 10px 0 0;
+  padding-left: 1.1rem;
+  color: #334155;
+}
+
+.pmh-detail__emergency {
+  margin-top: 12px;
+  padding: 12px;
+  border-radius: 10px;
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  color: #7f1d1d;
+  font-size: 0.9rem;
+}

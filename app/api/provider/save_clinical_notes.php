@@ -208,6 +208,30 @@ try {
         $providerName = 'Dr. ' . $providerName;
     }
 
+    require_once dirname(dirname(dirname(__DIR__))) . '/app/includes/provider_clinical_support.php';
+    $clinicalSupport = provider_consultation_clinical_support(
+        $pdo,
+        (int) $data['consultation_id'],
+        (int) $data['patient_id']
+    );
+    if (!empty($clinicalSupport['available'])) {
+        provider_clinical_support_save_event(
+            $pdo,
+            (int) $data['consultation_id'],
+            (int) $data['provider_id'],
+            (int) $data['patient_id'],
+            'consultation_finalized',
+            $clinicalSupport,
+            'Consultation finalized with SOAP.',
+            $providerName
+        );
+    }
+
+    $finalCaseLevel = '';
+    if (!empty($clinicalSupport['available'])) {
+        $finalCaseLevel = patient_case_level_label((string) ($clinicalSupport['risk_bucket'] ?? ''));
+    }
+
     require_once dirname(dirname(dirname(__DIR__))) . '/app/includes/notification_events.php';
     NotificationEvents::consultationCompleted(
         $pdo,
@@ -215,7 +239,8 @@ try {
         (int) $data['patient_id'],
         (int) $data['provider_id'],
         (int) $data['provider_id'],
-        $providerName
+        $providerName,
+        $finalCaseLevel
     );
     if ($rxIssued) {
         NotificationEvents::prescriptionAvailable(
