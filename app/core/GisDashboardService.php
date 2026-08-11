@@ -54,6 +54,7 @@ final class GisDashboardService
     public function ensureSchema(): void
     {
         if ($this->tableExists('patient_locations')) {
+            $this->ensurePatientLocationColumns();
             $this->ensureBarangayReferenceData();
 
             return;
@@ -171,6 +172,13 @@ final class GisDashboardService
             : $fallback;
     }
 
+    private function patientLocationColumnExpr(string $column, string $fallback = 'NULL'): string
+    {
+        return $this->columnExists('patient_locations', $column)
+            ? 'pl.' . $column
+            : $fallback;
+    }
+
     private function ensureBarangayReferenceData(): void
     {
         $barangaysPath = $this->appBasePath() . '/app/includes/barangays_bago.php';
@@ -216,7 +224,7 @@ final class GisDashboardService
         }
 
         while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
-            $resolved = $this->resolvePatientRow($row);
+            $resolved = $this->resolvePatientRow($row, false);
             if (empty($resolved['has_map_marker'])) {
                 continue;
             }
@@ -256,9 +264,9 @@ final class GisDashboardService
      * @param array<string, mixed> $row
      * @return array<string, mixed>
      */
-    public function resolvePatientRow(array $row): array
+    public function resolvePatientRow(array $row, bool $allowLiveGeocode = false): array
     {
-        return $this->locationResolver()->resolve($row);
+        return $this->locationResolver()->resolve($row, $allowLiveGeocode);
     }
 
     /**
@@ -496,9 +504,9 @@ final class GisDashboardService
                 pl.latitude,
                 pl.longitude,
                 pl.location_source,
-                pl.location_accuracy,
-                pl.address_confidence,
-                pl.canonical_barangay,
+                " . $this->patientLocationColumnExpr('location_accuracy') . " AS location_accuracy,
+                " . $this->patientLocationColumnExpr('address_confidence') . " AS address_confidence,
+                " . $this->patientLocationColumnExpr('canonical_barangay', "''") . " AS canonical_barangay,
                 pl.updated_at AS location_updated_at,
                 u.created_at AS registration_date,
                 CASE WHEN COALESCE(u.is_active, 1) = 1 THEN 'Active' ELSE 'Inactive' END AS patient_status,
@@ -671,7 +679,7 @@ final class GisDashboardService
             'latitude'          => $latitude,
             'longitude'         => $longitude,
             'location_source'   => $source,
-        ]);
+        ], true);
 
         $this->persistResolvedLocation($patientId, [
             'province'          => $province,
