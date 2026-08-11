@@ -586,6 +586,14 @@ html[data-theme-resolved='light'] .signin-req-drawer__panel label.signin-req-dra
     left: 16px;
   }
 
+  /* Keep requirements FAB off form fields — dock bottom-left while sign-in is open */
+  body.signin-active .signin-req-fab-wrap:not([data-custom-pos="true"]) {
+    top: auto;
+    bottom: max(20px, env(safe-area-inset-bottom, 20px));
+    left: max(16px, env(safe-area-inset-left, 16px));
+    transform: none;
+  }
+
   .signin-req-fab {
     width: 50px;
     height: 50px;
@@ -601,6 +609,13 @@ html[data-theme-resolved='light'] .signin-req-drawer__panel label.signin-req-dra
     left: 16px;
     top: 50%;
     transform: translateY(-50%);
+  }
+
+  body.signin-active .signin-req-fab-wrap:not([data-custom-pos="true"]) {
+    top: auto;
+    bottom: max(16px, env(safe-area-inset-bottom, 16px));
+    left: max(12px, env(safe-area-inset-left, 12px));
+    transform: none;
   }
 
   .signin-req-fab {

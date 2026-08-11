@@ -662,7 +662,7 @@ body.landing-page.landing-nav-open {
 
 @media (max-width: 768px) {
   .landing-page .hero-signin-panel .signin-card--hero-inline {
-    padding: var(--landing-space-sm) var(--landing-space-xs);
+    padding: var(--landing-space-md) var(--landing-space-sm);
     border-radius: var(--landing-radius-md);
   }
 
@@ -671,12 +671,24 @@ body.landing-page.landing-nav-open {
   }
 
   .landing-page .hero-signin-panel .form-footer-row {
-    flex-wrap: wrap;
-    gap: 8px;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
   }
 
   .landing-page .hero-signin-panel .forgot-link {
-    margin-left: auto;
+    align-self: flex-end;
+    margin-left: 0;
+  }
+
+  .landing-page .hero-signin-panel .signin-card__extras {
+    gap: 8px;
+  }
+
+  .landing-page .hero-signin-panel .provider-note--compact,
+  .landing-page .hero-signin-panel .emergency-note--compact {
+    padding: 10px 12px;
+    line-height: 1.5;
   }
 }
 
