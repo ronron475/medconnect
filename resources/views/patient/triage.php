@@ -150,7 +150,7 @@ $patient_has_completed_visit = patient_portal_has_completed_visit($pdo, (int) $u
 
   <?php require_once VIEWS_PATH . '/patient/partials/layout_shell_open.php'; ?>
 
-    <div class="patient-page">
+    <div class="patient-page patient-triage-page">
       <?php require VIEWS_PATH . '/patient/partials/view_triage.php'; ?>
     </div>
 

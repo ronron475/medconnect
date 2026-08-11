@@ -23,22 +23,21 @@ $locked_alternate_available = !empty($locked_alternate_available);
 ?>
 <h2 class="text-h2 mb-md">Book Consultation</h2>
 <?php if (!empty($review_booking_ctx['locked']) && $locked_provider_name !== ''): ?>
-<p class="text-sm text-muted" style="margin-top:-8px;margin-bottom:16px;">
-  Your care tips were assigned to <strong><?= htmlspecialchars($locked_provider_name) ?></strong>.
-  Book your video visit with this doctor and choose an available time below.
+<p class="text-sm text-muted patient-triage-lead">
+  Your care tips doctor is <strong><?= htmlspecialchars($locked_provider_name) ?></strong>.
+  Choose an available time below to book your video visit.
 </p>
 <?php else: ?>
-<p class="text-sm text-muted" style="margin-top:-8px;margin-bottom:16px;">
-  Choose a doctor and an open time slot for your online consultation.
-  (If you already submitted symptoms for <strong>Care tips</strong>, the system will lock booking to the same doctor who reviews your case.)
+<p class="text-sm text-muted patient-triage-lead">
+  Choose a doctor and an available time slot for your video visit.
   <?php if (!empty($patient_has_completed_visit) || !empty($patient_has_scheduled_followup)): ?>
-  <span class="text-muted"> Enter a new chief complaint below for a separate consultation — scheduled follow-ups and past visits stay on your record.</span>
+  Enter a new chief complaint below for a separate consultation — follow-ups and past visits stay on your record.
   <?php endif; ?>
 </p>
 <?php endif; ?>
 
 <?php if (!empty($future_scheduled_consultation) || !empty($patient_has_scheduled_followup)): ?>
-<div class="patient-triage-alert patient-triage-alert--success is-visible" style="margin-bottom: 16px;">
+<div class="patient-triage-alert patient-triage-alert--success is-visible patient-triage-alert--spaced">
   <?php if (!empty($future_scheduled_consultation)): ?>
     You have an appointment scheduled<?= $booking_future_label !== '' ? ' for ' . htmlspecialchars($booking_future_label) : '' ?>.
   <?php endif; ?>
@@ -48,7 +47,7 @@ $locked_alternate_available = !empty($locked_alternate_available);
   You can still book a <strong>new consultation</strong> here with a different chief complaint — your follow-up appointment will not be changed.
 </div>
 <?php elseif (!empty($active_consultation)): ?>
-<div class="patient-triage-alert patient-triage-alert--warning is-visible" style="margin-bottom: 16px;">
+<div class="patient-triage-alert patient-triage-alert--warning is-visible patient-triage-alert--spaced">
   <?php if (($active_consultation['status'] ?? '') === 'in_consultation'): ?>
     You currently have a consultation in progress. A new slot cannot be booked until that visit is completed.
   <?php elseif (!empty($booking_same_day_reschedule)): ?>
@@ -59,14 +58,14 @@ $locked_alternate_available = !empty($locked_alternate_available);
 <?php endif; ?>
 
 <?php if (!empty($review_booking_ctx['locked']) && $locked_provider_name !== ''): ?>
-<div class="patient-triage-alert patient-triage-alert--warning is-visible" style="margin-bottom: 16px;">
+<div class="patient-triage-alert patient-triage-alert--warning is-visible patient-triage-alert--spaced">
   Your self-care guidance was reviewed by <strong><?= htmlspecialchars($locked_provider_name) ?></strong>.
   Please book your online consultation with the same doctor unless an administrator changes your assignment.
 </div>
 <?php endif; ?>
 
 <?php if (empty($booking_providers)): ?>
-<div class="patient-triage-alert patient-triage-alert--error is-visible" style="margin-bottom: 16px;">
+<div class="patient-triage-alert patient-triage-alert--error is-visible patient-triage-alert--spaced">
   No providers are available for booking right now. Please contact the health office.
 </div>
 <?php endif; ?>
@@ -156,22 +155,22 @@ $locked_alternate_available = !empty($locked_alternate_available);
     </div>
 
     <?php if (!empty($review_booking_ctx['locked']) && $locked_provider_name !== '' && $locked_assigned_has_slots): ?>
-    <div class="patient-triage-alert patient-triage-alert--success is-visible" style="margin-bottom:14px;" role="status">
+    <div class="patient-triage-alert patient-triage-alert--success is-visible patient-triage-alert--spaced-sm" role="status">
       <strong><?= htmlspecialchars($locked_provider_name) ?></strong> has open clinic times today. Pick a slot below to book your video visit.
     </div>
     <?php endif; ?>
 
     <?php if (!empty($review_booking_ctx['locked']) && !$locked_assigned_has_slots && $locked_alternate_available): ?>
-    <div id="bookingAlternatePanel" class="patient-triage-alert patient-triage-alert--warning is-visible" style="margin-bottom:14px;" role="status">
-      <p style="margin:0 0 8px;"><strong><?= htmlspecialchars($locked_provider_name) ?></strong> has no open slots left today.</p>
-      <p class="text-sm text-muted" style="margin:0 0 12px;">You can request the <strong>next available doctor</strong> who has clinic hours today. Your care tips review will move to that doctor too.</p>
-      <button type="button" class="mc-btn mc-btn--outline" id="btnRequestAlternateProvider" style="width:100%;max-width:360px;">
+    <div id="bookingAlternatePanel" class="patient-triage-alert patient-triage-alert--warning is-visible patient-triage-alert--spaced-sm" role="status">
+      <p class="patient-triage-alert__line"><strong><?= htmlspecialchars($locked_provider_name) ?></strong> has no open slots left today.</p>
+      <p class="text-sm text-muted patient-triage-alert__line">You can request the <strong>next available doctor</strong> who has clinic hours today. Your care tips review will move to that doctor too.</p>
+      <button type="button" class="mc-btn mc-btn--outline patient-triage-alt-btn" id="btnRequestAlternateProvider">
         Request next available doctor
       </button>
       <p id="bookingAlternateStatus" class="text-xs text-muted" style="margin:10px 0 0;" hidden role="alert"></p>
     </div>
     <?php elseif (!empty($review_booking_ctx['locked']) && !$locked_assigned_has_slots && !$locked_alternate_available): ?>
-    <div class="patient-triage-alert patient-triage-alert--warning is-visible" style="margin-bottom:14px;" role="status">
+    <div class="patient-triage-alert patient-triage-alert--warning is-visible patient-triage-alert--spaced-sm" role="status">
       <strong><?= htmlspecialchars($locked_provider_name) ?></strong> has no open slots today, and no other doctor has clinic hours right now.
       Please contact the City Health Office or try again on the next clinic day.
     </div>
@@ -203,11 +202,11 @@ $locked_alternate_available = !empty($locked_alternate_available);
       <input type="hidden" id="booking_slot_id" name="slot_id" value="">
     </div>
 
-    <button type="submit" class="mc-btn mc-btn--primary" id="patientTriageSubmit" style="width:100%;max-width:320px;">
+    <button type="submit" class="mc-btn mc-btn--primary patient-triage-submit" id="patientTriageSubmit">
       <?= !empty($review_booking_ctx['locked']) ? 'Book Appointment' : 'Submit / Book Appointment' ?>
     </button>
     <?php if (empty($review_booking_ctx['locked'])): ?>
-    <p class="text-xs text-muted" style="margin-top:10px;max-width:520px;">
+    <p class="text-xs text-muted patient-triage-submit-hint">
       For non-urgent cases, you may submit without choosing a time slot to request provider-reviewed self-care guidance first.
       Select a slot only when you are ready to book a consultation.
     </p>
@@ -229,13 +228,13 @@ mc_render_loader_panel([
 ]);
 ?>
 
-<h3 class="text-h3 mb-md">Visit History</h3>
-<p class="text-muted" style="margin: -8px 0 14px; font-size: 0.9rem;">
-  These rows are your submitted health concerns and triage assessments — not confirmed appointments until the status shows <strong>Visit booked</strong>.
-  Approved self-care tips are saved under
+<h3 class="text-h3 mb-md patient-triage-history-title">Visit History</h3>
+<p class="text-muted patient-triage-history-lead">
+  Submitted health concerns and triage assessments — confirmed only when status shows <strong>Visit booked</strong>.
+  Approved care tips are under
   <a href="<?= ASSET_BASE ?>/views/patient/my_health.php?tab=care-tips">My Health → Care tips</a>.
 </p>
-<div class="mc-card" style="padding: 0; overflow: hidden;">
+<div class="mc-card patient-triage-history">
   <div class="mc-table-wrap">
     <table class="mc-table">
       <thead>
