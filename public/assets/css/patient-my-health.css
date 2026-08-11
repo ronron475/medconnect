@@ -1182,6 +1182,242 @@
   transform: rotate(180deg);
 }
 
+.pmh-care-card__tips-trigger {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  width: 100%;
+  margin: 0;
+  padding: 11px 14px;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  background: #f8fafc;
+  color: #028090;
+  font-size: 0.85rem;
+  font-weight: 700;
+  font-family: inherit;
+  cursor: pointer;
+  text-align: left;
+  transition: border-color 0.15s ease, background 0.15s ease, box-shadow 0.15s ease;
+}
+
+.pmh-care-card__tips-trigger:hover {
+  border-color: #99f6e4;
+  background: #f0fdfa;
+  box-shadow: 0 2px 8px rgba(2, 128, 144, 0.08);
+}
+
+.pmh-care-card__tips-trigger:focus-visible {
+  outline: 3px solid rgba(2, 128, 144, 0.28);
+  outline-offset: 2px;
+}
+
+.pmh-care-card__tips-icon {
+  flex-shrink: 0;
+  color: #94a3b8;
+}
+
+.pmh-care-card__tips-trigger:hover .pmh-care-card__tips-icon {
+  color: #028090;
+}
+
+/* Care tips modal */
+body.pmh-care-modal-open {
+  overflow: hidden;
+}
+
+body.pmh-care-modal-open .mc-messages-fab,
+body.pmh-care-modal-open .pt-remedy__fab {
+  visibility: hidden !important;
+  pointer-events: none !important;
+}
+
+.pmh-care-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 200050;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+
+.pmh-care-modal[hidden] {
+  display: none !important;
+}
+
+.pmh-care-modal__backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.55);
+  backdrop-filter: blur(4px);
+}
+
+.pmh-care-modal__dialog {
+  position: relative;
+  z-index: 1;
+  width: min(100%, 520px);
+  max-height: min(90vh, 720px);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  border-radius: 18px;
+  border: 1px solid #e2e8f0;
+  background: #fff;
+  box-shadow: 0 24px 64px rgba(15, 23, 42, 0.22);
+  animation: pmhCareModalIn 0.24s ease-out;
+}
+
+@keyframes pmhCareModalIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.pmh-care-modal__header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 18px 18px 12px;
+  border-bottom: 1px solid #f1f5f9;
+  background: linear-gradient(180deg, #f0fdfa 0%, #fff 100%);
+}
+
+.pmh-care-modal__header-text {
+  min-width: 0;
+  flex: 1 1 auto;
+}
+
+.pmh-care-modal__eyebrow {
+  margin: 0 0 4px;
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #0f766e;
+}
+
+.pmh-care-modal__title {
+  margin: 0;
+  font-size: 1.1rem;
+  font-weight: 800;
+  line-height: 1.35;
+  color: #0f172a;
+  word-break: break-word;
+}
+
+.pmh-care-modal__close {
+  flex-shrink: 0;
+  width: 36px;
+  height: 36px;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  background: #fff;
+  color: #64748b;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: border-color 0.15s ease, color 0.15s ease, background 0.15s ease;
+}
+
+.pmh-care-modal__close:hover {
+  border-color: #99f6e4;
+  color: #028090;
+  background: #f0fdfa;
+}
+
+.pmh-care-modal__close:focus-visible {
+  outline: 3px solid rgba(2, 128, 144, 0.28);
+  outline-offset: 2px;
+}
+
+.pmh-care-modal__meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 10px;
+  padding: 12px 18px 0;
+}
+
+.pmh-care-modal__datetime {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #64748b;
+}
+
+.pmh-care-modal__status {
+  font-size: 0.68rem;
+}
+
+.pmh-care-modal__provider {
+  margin: 10px 18px 0;
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: #028090;
+}
+
+.pmh-care-modal__approval {
+  margin: 10px 18px 0;
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1px solid #ccfbf1;
+  background: #f0fdfa;
+  font-size: 0.8rem;
+  line-height: 1.45;
+  color: #0f766e;
+}
+
+.pmh-care-modal__list {
+  list-style: none;
+  margin: 14px 0 0;
+  padding: 0 18px 18px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.pmh-care-modal__item {
+  position: relative;
+  padding: 12px 14px 12px 42px;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  background: #f8fafc;
+  font-size: 0.88rem;
+  line-height: 1.5;
+  color: #334155;
+  counter-increment: pmh-care-tip;
+}
+
+.pmh-care-modal__list {
+  counter-reset: pmh-care-tip;
+}
+
+.pmh-care-modal__item::before {
+  content: counter(pmh-care-tip);
+  position: absolute;
+  left: 12px;
+  top: 12px;
+  width: 22px;
+  height: 22px;
+  border-radius: 999px;
+  background: #ccfbf1;
+  color: #0f766e;
+  font-size: 0.72rem;
+  font-weight: 800;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
 .pmh-care-card__tips-list {
   margin: 0;
   padding: 0 14px 14px 32px;
@@ -1379,6 +1615,47 @@
     margin-left: auto;
     max-width: 100%;
     text-align: right;
+  }
+
+  .pmh-care-card__tips-trigger {
+    padding: 10px 12px;
+    font-size: 0.8rem;
+  }
+
+  .pmh-care-modal {
+    padding: 12px;
+    align-items: flex-end;
+  }
+
+  .pmh-care-modal__dialog {
+    width: 100%;
+    max-height: min(88vh, 720px);
+    border-radius: 16px 16px 14px 14px;
+  }
+
+  .pmh-care-modal__header {
+    padding: 14px 14px 10px;
+  }
+
+  .pmh-care-modal__title {
+    font-size: 1rem;
+  }
+
+  .pmh-care-modal__meta,
+  .pmh-care-modal__provider,
+  .pmh-care-modal__approval {
+    padding-left: 14px;
+    padding-right: 14px;
+  }
+
+  .pmh-care-modal__provider,
+  .pmh-care-modal__approval {
+    margin-left: 14px;
+    margin-right: 14px;
+  }
+
+  .pmh-care-modal__list {
+    padding: 12px 14px 14px;
   }
 
   .pmh-care-card__tips-summary {

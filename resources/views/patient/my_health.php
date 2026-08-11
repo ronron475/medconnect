@@ -136,14 +136,19 @@ $care_tips_history = [];
 $care_tips_active_count = 0;
 if ($pdo->query("SHOW TABLES LIKE 'triage_results'")->rowCount()) {
     $ct = $pdo->prepare("
-        SELECT id, chief_complaint, recommendations, recommendation_status,
-               recommendation_approved_at, recommendation_patient_ack_at, assessed_at
-        FROM triage_results
-        WHERE patient_id = ?
-          AND TRIM(COALESCE(chief_complaint, '')) <> ''
-          AND TRIM(COALESCE(recommendations, '')) <> ''
-          AND recommendation_status IN ('pending_approval', 'approved', 'rejected', 'hidden')
-        ORDER BY COALESCE(recommendation_approved_at, assessed_at) DESC, id DESC
+        SELECT tr.id, tr.chief_complaint, tr.recommendations, tr.recommendation_status,
+               tr.recommendation_approved_at, tr.recommendation_patient_ack_at, tr.assessed_at,
+               tr.assigned_provider_id, tr.recommendation_approved_by,
+               TRIM(CONCAT(reviewer.first_name, ' ', reviewer.last_name)) AS reviewer_name,
+               TRIM(CONCAT(assignee.first_name, ' ', assignee.last_name)) AS assigned_name
+        FROM triage_results tr
+        LEFT JOIN users reviewer ON reviewer.id = tr.recommendation_approved_by
+        LEFT JOIN users assignee ON assignee.id = tr.assigned_provider_id
+        WHERE tr.patient_id = ?
+          AND TRIM(COALESCE(tr.chief_complaint, '')) <> ''
+          AND TRIM(COALESCE(tr.recommendations, '')) <> ''
+          AND tr.recommendation_status IN ('pending_approval', 'approved', 'rejected', 'hidden')
+        ORDER BY COALESCE(tr.recommendation_approved_at, tr.assessed_at) DESC, tr.id DESC
     ");
     $ct->execute([$uid]);
     $care_tips_history = $ct->fetchAll(PDO::FETCH_ASSOC);

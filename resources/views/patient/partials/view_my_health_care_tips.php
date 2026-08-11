@@ -9,6 +9,55 @@ require_once BASE_PATH . '/app/includes/triage_assessment_schema.php';
 $care_tips_history = $care_tips_history ?? [];
 $care_tips_active = [];
 $care_tips_past = [];
+$pmh_care_tips_modal = [];
+
+/**
+ * @param array<string, mixed> $row
+ */
+function pmh_care_tip_provider_label(array $row): string
+{
+    $name = trim((string) ($row['reviewer_name'] ?? ''));
+    if ($name === '') {
+        $name = trim((string) ($row['assigned_name'] ?? ''));
+    }
+    if ($name === '') {
+        return '';
+    }
+    if (stripos($name, 'dr.') !== 0 && stripos($name, 'dr ') !== 0) {
+        return 'Dr. ' . $name;
+    }
+
+    return $name;
+}
+
+/**
+ * @param array<string, mixed> $row
+ * @param array<string, mixed> $meta
+ * @param list<string> $tips
+ * @return array<string, mixed>
+ */
+function pmh_care_tip_modal_entry(array $row, array $meta, array $tips): array
+{
+    $dateRaw = (string) ($row['recommendation_approved_at'] ?? '');
+    if ($dateRaw === '') {
+        $dateRaw = (string) ($row['assessed_at'] ?? '');
+    }
+    $dateLabel = $dateRaw !== '' ? date('M j, Y', strtotime($dateRaw)) : '—';
+    $timeLabel = $dateRaw !== '' ? date('g:i A', strtotime($dateRaw)) : '';
+    $datetimeLabel = $timeLabel !== '' ? $dateLabel . ' · ' . $timeLabel : $dateLabel;
+    $complaint = trim((string) ($row['chief_complaint'] ?? ''));
+
+    return [
+        'triageId' => (int) ($row['id'] ?? 0),
+        'complaint' => $complaint !== '' ? $complaint : 'Health concern',
+        'datetimeIso' => $dateRaw,
+        'datetimeLabel' => $datetimeLabel,
+        'statusLabel' => (string) ($meta['label'] ?? 'Recorded'),
+        'statusClass' => (string) ($meta['class'] ?? 'pmh-care-card__status--default'),
+        'providerName' => pmh_care_tip_provider_label($row),
+        'tips' => array_values($tips),
+    ];
+}
 
 foreach ($care_tips_history as $row) {
     $meta = mc_patient_care_tip_meta($row);
@@ -17,12 +66,24 @@ foreach ($care_tips_history as $row) {
     } else {
         $care_tips_past[] = $row;
     }
+
+    if (empty($meta['show_tips'])) {
+        continue;
+    }
+    $tips = triage_recommendations_to_list((string) ($row['recommendations'] ?? ''));
+    if ($tips === []) {
+        continue;
+    }
+    $triageId = (int) ($row['id'] ?? 0);
+    if ($triageId > 0) {
+        $pmh_care_tips_modal[$triageId] = pmh_care_tip_modal_entry($row, $meta, $tips);
+    }
 }
 
 /**
  * @param array<string, mixed> $row
  */
-function pmh_care_tip_card(array $row, bool $expandTipsDefault): void
+function pmh_care_tip_card(array $row): void
 {
     $meta = mc_patient_care_tip_meta($row);
     $kind = (string) ($meta['kind'] ?? 'default');
@@ -37,6 +98,7 @@ function pmh_care_tip_card(array $row, bool $expandTipsDefault): void
     $dateLabel = $dateRaw !== '' ? date('M j, Y', strtotime($dateRaw)) : '—';
     $timeLabel = $dateRaw !== '' ? date('g:i A', strtotime($dateRaw)) : '';
     $status = (string) ($row['recommendation_status'] ?? '');
+    $triageId = (int) ($row['id'] ?? 0);
     ?>
     <article class="pmh-care-card pmh-care-card--<?= htmlspecialchars($kind) ?>">
       <div class="pmh-care-card__timeline" aria-hidden="true">
@@ -60,17 +122,17 @@ function pmh_care_tip_card(array $row, bool $expandTipsDefault): void
         </header>
 
         <?php if ($meta['show_tips'] && $tips !== []): ?>
-          <details class="pmh-care-card__tips"<?= $expandTipsDefault ? ' open' : '' ?>>
-            <summary class="pmh-care-card__tips-summary">
-              <span><?= count($tips) ?> self-care tip<?= count($tips) === 1 ? '' : 's' ?></span>
-              <svg class="pmh-care-card__chev" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><polyline points="6 9 12 15 18 9"/></svg>
-            </summary>
-            <ol class="pmh-care-card__tips-list">
-              <?php foreach ($tips as $tip): ?>
-                <li><?= htmlspecialchars($tip) ?></li>
-              <?php endforeach; ?>
-            </ol>
-          </details>
+          <button
+            type="button"
+            class="pmh-care-card__tips-trigger"
+            data-pmh-care-tips-open
+            data-triage-id="<?= $triageId ?>"
+            aria-haspopup="dialog"
+            aria-controls="pmhCareTipsModal"
+          >
+            <span><?= count($tips) ?> self-care tip<?= count($tips) === 1 ? '' : 's' ?></span>
+            <svg class="pmh-care-card__tips-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><polyline points="9 18 15 12 9 6"/></svg>
+          </button>
         <?php elseif ($status === 'pending_approval'): ?>
           <div class="pmh-care-card__message pmh-care-card__message--pending">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
@@ -114,7 +176,7 @@ function pmh_care_tip_card(array $row, bool $expandTipsDefault): void
         </div>
         <div class="pmh-care-feed">
           <?php foreach ($care_tips_active as $row) {
-              pmh_care_tip_card($row, true);
+              pmh_care_tip_card($row);
           } ?>
         </div>
       </section>
@@ -130,10 +192,17 @@ function pmh_care_tip_card(array $row, bool $expandTipsDefault): void
         </div>
         <div class="pmh-care-feed pmh-care-feed--compact">
           <?php foreach ($care_tips_past as $row) {
-              pmh_care_tip_card($row, false);
+              pmh_care_tip_card($row);
           } ?>
         </div>
       </section>
     <?php endif; ?>
   </div>
+<?php endif; ?>
+
+<?php if ($pmh_care_tips_modal !== []): ?>
+  <?php require __DIR__ . '/patient_care_tips_modal.php'; ?>
+  <script type="application/json" id="pmhCareTipsData"><?= json_encode($pmh_care_tips_modal, JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) ?></script>
+  <?php $pmhCareTipsJsVer = (int) @filemtime(ASSETS_PATH . '/js/patient-care-tips-modal.js'); ?>
+  <script src="<?= ASSET_BASE ?>/assets/js/patient-care-tips-modal.js?v=<?= $pmhCareTipsJsVer ?>"></script>
 <?php endif; ?>
