@@ -29,19 +29,30 @@
   }
 
   function listToText(items) {
-    if (!items || !items.length) return 'None recorded';
-    return items.join(', ');
+    const filtered = (items || []).filter(function (item) {
+      return !isEmptyMedicalValue(item);
+    });
+    if (!filtered.length) return 'None recorded';
+    return filtered.join(', ');
+  }
+
+  function isEmptyMedicalValue(item) {
+    const v = String(item || '').trim().toLowerCase();
+    return v === '' || v === 'no' || v === 'none' || v === 'n/a' || v === 'na' || v === 'wala';
   }
 
   function renderChipList(el, emptyEl, items, medClass) {
     if (!el) return;
     el.innerHTML = '';
-    if (!items || !items.length) {
+    const filtered = (items || []).filter(function (item) {
+      return !isEmptyMedicalValue(item);
+    });
+    if (!filtered.length) {
       if (emptyEl) emptyEl.hidden = false;
       return;
     }
     if (emptyEl) emptyEl.hidden = true;
-    items.forEach(function (item) {
+    filtered.forEach(function (item) {
       const li = document.createElement('li');
       li.className = 'phs-chip' + (medClass ? ' phs-chip--med' : '');
       li.textContent = item;
@@ -49,10 +60,22 @@
     });
   }
 
+  function renderBloodType(el, value) {
+    if (!el) return;
+    const raw = String(value || '').trim();
+    if (!raw || isEmptyMedicalValue(raw)) {
+      el.textContent = 'Not recorded';
+      el.classList.add('phs-value--empty');
+      return;
+    }
+    el.classList.remove('phs-value--empty');
+    el.textContent = raw;
+  }
+
   function renderSummary(data) {
     const s = data.summary || data;
     summaryCache = s;
-    document.getElementById('phsBloodType').textContent = s.blood_type || 'Not recorded';
+    renderBloodType(document.getElementById('phsBloodType'), s.blood_type);
     renderChipList(document.getElementById('phsAllergies'), document.getElementById('phsAllergiesEmpty'), s.allergies);
     renderChipList(document.getElementById('phsConditions'), document.getElementById('phsConditionsEmpty'), s.conditions);
     renderChipList(document.getElementById('phsMedications'), document.getElementById('phsMedicationsEmpty'), s.medications, true);

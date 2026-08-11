@@ -18,7 +18,10 @@ require_once BASE_PATH . '/app/includes/patient_health_summary.php';
 $page_title = 'Health Summary';
 $health_css_ver = (int) @filemtime(ASSETS_PATH . '/css/patient-health-summary.css');
 $health_js_ver = (int) @filemtime(ASSETS_PATH . '/js/patient-health-summary.js');
-$patient_page_stylesheets = [];
+$dash_css_ver = (int) @filemtime(ASSETS_PATH . '/css/patient-dashboard.css');
+$patient_page_stylesheets = [
+    ASSET_BASE . '/assets/css/patient-dashboard.css?v=' . $dash_css_ver,
+];
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -30,7 +33,7 @@ $patient_page_stylesheets = [];
 <?php require_once VIEWS_PATH . '/patient/partials/layout_shell_open.php'; ?>
 <link rel="stylesheet" href="<?= ASSET_BASE ?>/assets/css/patient-health-summary.css?v=<?= $health_css_ver ?>"/>
 
-<div class="patient-page patient-health-summary-page"
+<div class="patient-page pdash-page patient-health-summary-page"
      id="patientHealthSummaryRoot"
      data-csrf="<?= htmlspecialchars($_SESSION['csrf_token'] ?? '') ?>"
      data-api="<?= htmlspecialchars(ASSET_BASE) ?>/app/api/patient">
