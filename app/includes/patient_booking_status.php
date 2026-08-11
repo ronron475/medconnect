@@ -15,22 +15,97 @@ function patient_triage_sql_active_only(string $alias = 'tr'): string
 {
     $a = preg_replace('/[^a-zA-Z0-9_]/', '', $alias) ?: 'tr';
 
+    // Active care-tips triage only while doctor review is open and no visit
+    // has already been scheduled / started / completed for this case.
     return "
           AND COALESCE({$a}.recommendation_status, 'hidden') IN ('pending_approval', 'approved')
           AND NOT EXISTS (
             SELECT 1
-            FROM consultations c_done
-            WHERE c_done.patient_id = {$a}.patient_id
+            FROM consultations c_link
+            WHERE c_link.patient_id = {$a}.patient_id
               AND (
-                c_done.triage_result_id = {$a}.id
+                c_link.triage_result_id = {$a}.id
                 OR TIMESTAMP(
-                  c_done.consult_date,
-                  COALESCE(c_done.consult_time, '23:59:59')
+                  c_link.consult_date,
+                  COALESCE(c_link.consult_time, '23:59:59')
                 ) > {$a}.assessed_at
               )
-              AND LOWER(COALESCE(c_done.status, '')) = 'completed'
+              AND LOWER(COALESCE(c_link.status, '')) IN (
+                'pending', 'scheduled', 'waiting', 'in_consultation', 'completed'
+              )
           )
     ";
+}
+
+/**
+ * Pick the patient's current active consultation using explicit status priority.
+ * Prefer live visits, then the soonest scheduled/open visit — never latest-created alone.
+ *
+ * @param list<array<string, mixed>> $consults
+ * @return array<string, mixed>|null
+ */
+function patient_portal_select_active_consultation(array $consults): ?array
+{
+    $openStatuses = ['pending', 'scheduled', 'waiting', 'in_consultation'];
+    $open = [];
+    foreach ($consults as $c) {
+        $status = strtolower(trim((string) ($c['status'] ?? '')));
+        if (in_array($status, $openStatuses, true)) {
+            $open[] = $c;
+        }
+    }
+    if ($open === []) {
+        return null;
+    }
+
+    foreach ($open as $c) {
+        if (strtolower((string) ($c['status'] ?? '')) === 'in_consultation') {
+            return $c;
+        }
+    }
+
+    usort($open, static function (array $a, array $b): int {
+        $ta = strtotime(trim(($a['consult_date'] ?? '') . ' ' . ($a['consult_time'] ?? '00:00:00')));
+        $tb = strtotime(trim(($b['consult_date'] ?? '') . ' ' . ($b['consult_time'] ?? '00:00:00')));
+        $ta = $ta === false ? PHP_INT_MAX : $ta;
+        $tb = $tb === false ? PHP_INT_MAX : $tb;
+        if ($ta === $tb) {
+            return ((int) ($a['id'] ?? 0)) <=> ((int) ($b['id'] ?? 0));
+        }
+
+        return $ta <=> $tb;
+    });
+
+    return $open[0];
+}
+
+/**
+ * Whether the patient currently has an open consultation that should block
+ * starting a brand-new chief-complaint / triage cycle.
+ */
+function patient_portal_has_open_consultation(PDO $pdo, int $patientId): bool
+{
+    if ($patientId <= 0) {
+        return false;
+    }
+    try {
+        if (!$pdo->query("SHOW TABLES LIKE 'consultations'")->rowCount()) {
+            return false;
+        }
+        $stmt = $pdo->prepare("
+            SELECT COUNT(*)
+            FROM consultations
+            WHERE patient_id = ?
+              AND LOWER(COALESCE(status, '')) IN (
+                'pending', 'scheduled', 'waiting', 'in_consultation'
+              )
+        ");
+        $stmt->execute([$patientId]);
+
+        return (int) $stmt->fetchColumn() > 0;
+    } catch (Throwable $e) {
+        return false;
+    }
 }
 
 /**

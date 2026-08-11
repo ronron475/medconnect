@@ -97,6 +97,10 @@ function consultations_auto_expire(PDO $pdo, ?int $patient_id = null, ?int $prov
             if ($cancel->rowCount() > 0) {
                 require_once __DIR__ . '/patient_consultation_cancel.php';
                 consultation_release_booked_slots($pdo, $id);
+                // Close linked care-tips / chief-complaint cases so a cancelled
+                // visit never keeps the dashboard stuck on "Doctor reviewing"
+                // or a locked previous complaint.
+                patient_triage_close_cases_for_consultation($pdo, $id);
             }
         }
 

@@ -296,17 +296,26 @@ function patient_portal_complaint_source_label(string $source): string
 }
 
 /**
- * Use registration chief complaint when on file; otherwise accept submitted text (skipped at registration).
+ * Use an active (locked) chief complaint while a case is open.
+ * After COMPLETED/CANCELLED visits, do not reuse previous complaints —
+ * the patient must enter a new chief complaint for a new consultation.
  */
 function patient_portal_resolve_chief_complaint(PDO $pdo, int $patientId, string $submittedComplaint): string
 {
     $submitted = trim($submittedComplaint);
     $active = patient_portal_active_chief_complaint($pdo, $patientId);
     if (!empty($active['locked']) && ($active['complaint'] ?? '') !== '') {
+        // Mid-flow lock only — never pull a completed visit's complaint into a new case.
         return (string) $active['complaint'];
     }
     if ($submitted !== '') {
         return $submitted;
+    }
+
+    // Registration seed only when the patient has never completed a visit
+    // and has no active triage/case yet.
+    if (patient_portal_has_completed_visit($pdo, $patientId)) {
+        return '';
     }
 
     $registrationComplaint = patient_chief_complaint_registration_reference($pdo, $patientId);

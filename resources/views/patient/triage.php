@@ -100,6 +100,7 @@ if ($pdo->query("SHOW TABLES LIKE 'consultations'")->rowCount()) {
     $all_consults = $s->fetchAll(PDO::FETCH_ASSOC);
 }
 
+require_once BASE_PATH . '/app/includes/patient_booking_status.php';
 $active_consultation = null;
 $future_scheduled_consultation = null;
 foreach ($all_consults as $c) {
@@ -111,11 +112,31 @@ foreach ($all_consults as $c) {
         break;
     }
     if (consultation_is_future_day($c['consult_date'] ?? null)) {
-        $future_scheduled_consultation = $future_scheduled_consultation ?? $c;
+        if ($future_scheduled_consultation === null) {
+            $future_scheduled_consultation = $c;
+        }
         continue;
     }
     if ($active_consultation === null) {
         $active_consultation = $c;
+    }
+}
+// Prefer soonest same-day/open visit when multiple exist.
+if ($active_consultation === null) {
+    $active_consultation = patient_portal_select_active_consultation($all_consults);
+    if ($active_consultation && consultation_is_future_day($active_consultation['consult_date'] ?? null)
+        && strtolower((string) ($active_consultation['status'] ?? '')) !== 'in_consultation') {
+        $future_scheduled_consultation = $future_scheduled_consultation ?? $active_consultation;
+        $active_consultation = null;
+    }
+} else {
+    $picked = patient_portal_select_active_consultation(array_values(array_filter(
+        $all_consults,
+        static fn(array $c): bool => in_array($c['status'] ?? '', ['pending', 'scheduled', 'waiting', 'in_consultation'], true)
+            && !consultation_is_future_day($c['consult_date'] ?? null)
+    )));
+    if ($picked) {
+        $active_consultation = $picked;
     }
 }
 

@@ -105,13 +105,8 @@ $upcoming_consults = array_filter($all_consults, function($c) {
     return $c['status'] !== 'cancelled' && strtotime($c['consult_date']) >= strtotime(date('Y-m-d'));
 });
 
-$active_consultation = null;
-foreach ($all_consults as $c) {
-    if (in_array($c['status'] ?? '', ['pending', 'scheduled', 'in_consultation'], true)) {
-        $active_consultation = $c;
-        break;
-    }
-}
+require_once BASE_PATH . '/app/includes/patient_booking_status.php';
+$active_consultation = patient_portal_select_active_consultation($all_consults);
 
 // ── DATA FETCHING: Clinical Records (prescriptions + notes from consultations) ─
 // Pulls real rows from prescriptions and clinical_notes joined to consultations.

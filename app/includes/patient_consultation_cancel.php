@@ -136,6 +136,10 @@ function patient_cancel_consultation(PDO $pdo, int $patientId, int $consultation
         return ['ok' => false, 'message' => 'Could not cancel appointment. Please try again.'];
     }
 
+    // Unlock previous care-tips / chief complaint so the patient can start a new case.
+    require_once __DIR__ . '/patient_booking_status.php';
+    patient_triage_close_cases_for_consultation($pdo, $consultationId);
+
     $providerId = (int) ($row['provider_id'] ?? 0);
     $reasonNote = trim($reason);
     audit_log($pdo, [

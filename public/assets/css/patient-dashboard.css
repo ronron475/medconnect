@@ -1071,6 +1071,18 @@
   border-color: #fed7aa;
 }
 
+.pdash-care__status-chip--scheduled {
+  background: #f0fdfa;
+  color: #0f766e;
+  border-color: #99f6e4;
+}
+
+.pdash-care__status-chip--ready {
+  background: #f0fdf4;
+  color: #15803d;
+  border-color: #86efac;
+}
+
 .pdash-care__status-chip--idle {
   background: #f1f5f9;
   color: #475569;
