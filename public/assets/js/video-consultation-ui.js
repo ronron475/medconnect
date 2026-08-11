@@ -289,6 +289,7 @@
 
       isFloating = !isFloating;
       els.root.classList.toggle('is-floating', isFloating);
+      els.root.classList.toggle('mc-vc-drag-handle', isFloating);
 
       if (isFloating) {
         initFloatingDrag(els.root);

@@ -30,7 +30,7 @@ $shellJsVer  = (int) @filemtime(ASSETS_PATH . '/js/session-video-shell.js');
   <div class="mc-session-float-toolbar" id="mcGlobalVideoToolbar" hidden>
     <button type="button" class="mc-session-float-tool" data-shell-action="mute" title="Mute">🎤</button>
     <button type="button" class="mc-session-float-tool" data-shell-action="camera" title="Camera">📷</button>
-    <button type="button" class="mc-session-float-tool mc-session-float-tool--end" data-shell-action="end" title="End call">Leave</button>
+    <button type="button" class="mc-session-float-tool mc-session-float-tool--end" id="mcGlobalVideoLeave" data-shell-action="end" title="Leave call" aria-label="Leave call">Leave</button>
   </div>
 </div>
 <script src="<?= ASSET_BASE ?>/assets/js/session-video-shell.js?v=<?= $shellJsVer ?>"></script>

@@ -120,15 +120,54 @@
   }
 
   function leaveFromShell() {
-    if (postToFrame({ type: 'medconnect:shell-leave-fast' })) return;
+    let handled = false;
+    try {
+      const win = frameEl() && frameEl().contentWindow;
+      if (win && typeof win.leaveCallFast === 'function') {
+        win.leaveCallFast();
+        handled = true;
+      } else if (win && typeof win.endCall === 'function') {
+        win.endCall(true);
+        handled = true;
+      }
+    } catch (_) { /* ignore */ }
+
+    if (handled) return;
+
+    postLeaveApiFromShell().finally(() => {
+      const st = readState();
+      closeShell();
+      if (st && st.consultationId) {
+        global.location.href = assetBase() + '/views/provider/consultation_session.php?id=' + encodeURIComponent(st.consultationId);
+        return;
+      }
+      global.location.href = assetBase() + '/views/patient/consultations.php';
+    });
+  }
+
+  function postLeaveApiFromShell() {
     const st = readState();
-    if (!st || !st.token) return;
-    closeShell();
-    if (st.consultationId) {
-      global.location.href = assetBase() + '/views/provider/consultation_session.php?id=' + encodeURIComponent(st.consultationId);
-      return;
-    }
-    global.location.href = assetBase() + '/views/patient/consultations.php';
+    if (!st || !st.token) return Promise.resolve(false);
+    const csrf = String((document.body && document.body.dataset.csrf) || '');
+    return fetch(assetBase() + '/app/api/consultations/end_video.php', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: 'token=' + encodeURIComponent(st.token) + '&csrf_token=' + encodeURIComponent(csrf),
+      credentials: 'same-origin',
+    }).catch(() => null).then(() => true);
+  }
+
+  function bindShellAction(btn) {
+    if (!btn || btn.dataset.shellBound) return;
+    btn.dataset.shellBound = '1';
+    const action = btn.getAttribute('data-shell-action');
+    btn.addEventListener('click', (event) => {
+      event.preventDefault();
+      event.stopPropagation();
+      if (action === 'mute') postToFrame({ type: 'medconnect:shell-toggle-audio' });
+      if (action === 'camera') postToFrame({ type: 'medconnect:shell-toggle-video' });
+      if (action === 'end') leaveFromShell();
+    });
   }
 
   function initDrag(shell) {
@@ -221,15 +260,10 @@
     }
 
     document.querySelectorAll('[data-shell-action]').forEach((btn) => {
-      btn.addEventListener('click', (event) => {
-        event.preventDefault();
-        event.stopPropagation();
-        const action = btn.getAttribute('data-shell-action');
-        if (action === 'mute') postToFrame({ type: 'medconnect:shell-toggle-audio' });
-        if (action === 'camera') postToFrame({ type: 'medconnect:shell-toggle-video' });
-        if (action === 'end') leaveFromShell();
-      });
+      bindShellAction(btn);
     });
+    const leaveBtn = document.getElementById('mcGlobalVideoLeave');
+    if (leaveBtn) bindShellAction(leaveBtn);
   }
 
   function open(token, consultationId, options) {
