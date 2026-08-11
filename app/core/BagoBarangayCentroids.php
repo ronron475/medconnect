@@ -1,16 +1,93 @@
 <?php
 /**
- * Approximate coordinates for Bago City barangays when GPS is unavailable.
+ * Bago City barangay geographic reference data.
+ *
+ * Canonical coordinates live in data/geo/bago_barangay_locations.json and are
+ * synced into the barangays table at runtime. No random or per-patient offsets.
  */
 final class BagoBarangayCentroids
 {
-    private const CITY_CENTER = ['lat' => 10.5378, 'lng' => 122.8383];
+    private const DATA_FILE = 'data/geo/bago_barangay_locations.json';
+
+    /** @var array<string, mixed>|null */
+    private static ?array $dataset = null;
 
     /** @var array<string, array{lat: float, lng: float}>|null */
     private static ?array $map = null;
 
+    /** @var array<string, string>|null */
+    private static ?array $aliases = null;
+
     /** @var list<string>|null */
     private static ?array $names = null;
+
+    /**
+     * @return array<string, mixed>
+     */
+    public static function dataset(): array
+    {
+        if (self::$dataset !== null) {
+            return self::$dataset;
+        }
+
+        $base = defined('BASE_PATH') ? BASE_PATH : dirname(__DIR__, 2);
+        $path = $base . '/' . self::DATA_FILE;
+        if (!is_file($path)) {
+            self::$dataset = self::fallbackDataset();
+
+            return self::$dataset;
+        }
+
+        $json = file_get_contents($path);
+        $decoded = json_decode($json ?: '', true);
+        self::$dataset = is_array($decoded) ? $decoded : self::fallbackDataset();
+
+        return self::$dataset;
+    }
+
+    /**
+     * @return array{lat: float, lng: float}
+     */
+    public static function cityCenter(): array
+    {
+        $center = self::dataset()['center'] ?? [];
+
+        return [
+            'lat' => (float) ($center['lat'] ?? 10.538797),
+            'lng' => (float) ($center['lng'] ?? 122.838447),
+        ];
+    }
+
+    /**
+     * @return array{south: float, west: float, north: float, east: float}
+     */
+    public static function cityBounds(): array
+    {
+        $bounds = self::dataset()['bounds'] ?? [];
+
+        return [
+            'south' => (float) ($bounds['south'] ?? 10.478),
+            'west'  => (float) ($bounds['west'] ?? 122.748),
+            'north' => (float) ($bounds['north'] ?? 10.598),
+            'east'  => (float) ($bounds['east'] ?? 122.898),
+        ];
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    public static function mapConfig(): array
+    {
+        $dataset = self::dataset();
+
+        return [
+            'center'       => self::cityCenter(),
+            'bounds'       => self::cityBounds(),
+            'default_zoom' => (int) ($dataset['default_zoom'] ?? 12),
+            'city'         => (string) ($dataset['city'] ?? 'Bago City'),
+            'province'     => (string) ($dataset['province'] ?? 'Negros Occidental'),
+        ];
+    }
 
     /**
      * Official barangays of Bago City, Negros Occidental (24).
@@ -23,8 +100,8 @@ final class BagoBarangayCentroids
             return self::$names;
         }
 
-        self::$names = array_keys(self::rawCentroidRows());
-        usort(self::$names, static fn(string $a, string $b): int => strcasecmp($a, $b));
+        self::$names = array_keys(self::barangayMap());
+        usort(self::$names, static fn (string $a, string $b): int => strcasecmp($a, $b));
 
         return self::$names;
     }
@@ -48,36 +125,32 @@ final class BagoBarangayCentroids
     }
 
     /**
-     * @return array<string, array{0: float, 1: float}>
+     * Resolve canonical barangay name from free-text input.
      */
-    private static function rawCentroidRows(): array
+    public static function canonicalName(string $barangay): ?string
     {
-        return [
-            'Poblacion' => [10.5378, 122.8383],
-            'Abuanan' => [10.5521, 122.8512],
-            'Alianza' => [10.5289, 122.8124],
-            'Atipuluan' => [10.5612, 122.8245],
-            'Bacong-Montilla' => [10.5198, 122.8456],
-            'Bagroy' => [10.5445, 122.8156],
-            'Balingasag' => [10.5312, 122.8289],
-            'Binubuhan' => [10.5567, 122.8367],
-            'Busay' => [10.5234, 122.8567],
-            'Calumangan' => [10.5489, 122.8023],
-            'Caridad' => [10.5156, 122.8312],
-            'Dulao' => [10.5678, 122.8489],
-            'Ilijan' => [10.5389, 122.8678],
-            'Lag-Asan' => [10.5123, 122.8198],
-            'Ma-ao' => [10.5545, 122.7934],
-            'Mailum' => [10.5267, 122.8745],
-            'Malingin' => [10.5412, 122.8056],
-            'Napoles' => [10.5589, 122.8612],
-            'Pacol' => [10.5178, 122.8423],
-            'Sagasa' => [10.5498, 122.8289],
-            'Sampinit' => [10.5334, 122.7989],
-            'Tabunan' => [10.5623, 122.8178],
-            'Taloc' => [10.5212, 122.8634],
-            'Taba-ao' => [10.5456, 122.8523],
-        ];
+        $key = self::normalizeKey($barangay);
+        if ($key === '') {
+            return null;
+        }
+
+        $aliases = self::aliasMap();
+        if (isset($aliases[$key])) {
+            return $aliases[$key];
+        }
+
+        foreach (self::barangayMap() as $name => $_coords) {
+            if (self::normalizeKey($name) === $key) {
+                return $name;
+            }
+        }
+
+        return null;
+    }
+
+    public static function normalizeBarangayName(string $barangay): string
+    {
+        return self::canonicalName($barangay) ?? trim($barangay);
     }
 
     /**
@@ -85,58 +158,102 @@ final class BagoBarangayCentroids
      */
     public static function resolve(string $barangay, string $city = 'Bago City'): array
     {
-        $key = self::normalizeKey($barangay);
-        if ($key !== '' && isset(self::centroidMap()[$key])) {
-            return self::centroidMap()[$key];
+        unset($city);
+
+        $canonical = self::canonicalName($barangay);
+        if ($canonical !== null && isset(self::barangayMap()[$canonical])) {
+            return self::barangayMap()[$canonical];
         }
 
-        if ($key !== '') {
-            return self::hashJitter($key);
-        }
-
-        return self::CITY_CENTER;
+        return self::cityCenter();
     }
 
     /**
      * @return array<string, array{lat: float, lng: float}>
      */
-    private static function centroidMap(): array
+    private static function barangayMap(): array
     {
         if (self::$map !== null) {
             return self::$map;
         }
 
-        $rows = self::rawCentroidRows();
-
         self::$map = [];
-        foreach ($rows as $name => [$lat, $lng]) {
-            self::$map[self::normalizeKey($name)] = ['lat' => $lat, 'lng' => $lng];
+        $rows = self::dataset()['barangays'] ?? [];
+        if (!is_array($rows)) {
+            return self::$map;
+        }
+
+        foreach ($rows as $name => $coords) {
+            if (!is_array($coords)) {
+                continue;
+            }
+            self::$map[(string) $name] = [
+                'lat' => round((float) ($coords['lat'] ?? 0), 6),
+                'lng' => round((float) ($coords['lng'] ?? 0), 6),
+            ];
         }
 
         return self::$map;
     }
 
     /**
-     * @return array{lat: float, lng: float}
+     * @return array<string, string>
      */
-    private static function hashJitter(string $normalizedBarangay): array
+    private static function aliasMap(): array
     {
-        $hash = crc32($normalizedBarangay);
-        $latOffset = (($hash & 0xff) - 128) / 8000.0;
-        $lngOffset = ((($hash >> 8) & 0xff) - 128) / 8000.0;
+        if (self::$aliases !== null) {
+            return self::$aliases;
+        }
 
-        return [
-            'lat' => round(self::CITY_CENTER['lat'] + $latOffset, 6),
-            'lng' => round(self::CITY_CENTER['lng'] + $lngOffset, 6),
-        ];
+        self::$aliases = [];
+        $rows = self::dataset()['aliases'] ?? [];
+        if (!is_array($rows)) {
+            return self::$aliases;
+        }
+
+        foreach ($rows as $alias => $canonical) {
+            $key = self::normalizeKey((string) $alias);
+            if ($key !== '') {
+                self::$aliases[$key] = (string) $canonical;
+            }
+        }
+
+        return self::$aliases;
     }
 
     private static function normalizeKey(string $barangay): string
     {
         $value = strtolower(trim($barangay));
         $value = preg_replace('/\s*\(pob\.?\)\s*/i', '', $value) ?? $value;
+        $value = preg_replace('/\s*brgy\.?\s*/i', '', $value) ?? $value;
+        $value = preg_replace('/\s*barangay\s*/i', '', $value) ?? $value;
+        $value = preg_replace('/[^a-z0-9\s\-]/', '', $value) ?? $value;
         $value = preg_replace('/\s+/', ' ', $value) ?? $value;
+        $value = str_replace([' ', '-'], '', $value);
 
         return $value;
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private static function fallbackDataset(): array
+    {
+        return [
+            'city' => 'Bago City',
+            'province' => 'Negros Occidental',
+            'center' => ['lat' => 10.538797, 'lng' => 122.838447],
+            'bounds' => [
+                'south' => 10.478,
+                'west' => 122.748,
+                'north' => 10.598,
+                'east' => 122.898,
+            ],
+            'default_zoom' => 12,
+            'barangays' => [
+                'Poblacion' => ['lat' => 10.538797, 'lng' => 122.838447],
+            ],
+            'aliases' => [],
+        ];
     }
 }

@@ -68,6 +68,15 @@
 
   const POLL_INTERVAL_MS = 15000;
 
+  const DEFAULT_MAP_CONFIG = {
+    center: { lat: 10.538797, lng: 122.838447 },
+    bounds: { south: 10.478, west: 122.748, north: 10.598, east: 122.898 },
+    default_zoom: 12,
+    min_zoom: 11,
+    city: 'Bago City',
+    province: 'Negros Occidental',
+  };
+
   /** Read canonical triage_level from API — GIS never classifies locally. */
   const GisTriage = {
     levels: SEVERITY,
@@ -146,6 +155,7 @@
     satelliteLayer: null,
     baseLayer: localStorage.getItem(BASE_LAYER_KEY) === 'satellite' ? 'satellite' : 'street',
     pollTimer: null,
+    mapConfig: null,
   };
 
   const els = {
@@ -348,11 +358,29 @@
   }
 
   function normalizeLocationSource(row) {
-    const src = String(row?.location_source || 'barangay_centroid').toLowerCase();
+    const src = String(row?.location_source || row?.location_accuracy || 'barangay_centroid').toLowerCase();
     if (src === 'gps') return 'gps';
     if (src === 'manual') return 'manual';
     if (src === 'imported') return 'imported';
     return 'barangay_centroid';
+  }
+
+  function getMapConfig() {
+    return state.mapConfig || DEFAULT_MAP_CONFIG;
+  }
+
+  function getMapCenter() {
+    const cfg = getMapConfig();
+    return [Number(cfg.center.lat), Number(cfg.center.lng)];
+  }
+
+  function getMapBounds() {
+    const cfg = getMapConfig();
+    const b = cfg.bounds || DEFAULT_MAP_CONFIG.bounds;
+    return [
+      [Number(b.south), Number(b.west)],
+      [Number(b.north), Number(b.east)],
+    ];
   }
 
   function locationSourceMeta(row) {
@@ -542,8 +570,8 @@
   }
 
   function previewTileUrl(layerType) {
-    const center = { lat: 10.5378, lng: 122.8383 };
-    const tile = latLngToTile(center.lat, center.lng, 12);
+    const center = getMapCenter();
+    const tile = latLngToTile(center[0], center[1], 12);
     if (layerType === 'satellite') {
       return (
         'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/' +
@@ -642,7 +670,16 @@
 
   function initMap() {
     if (state.map || typeof L === 'undefined') return;
-    state.map = L.map('gis-map', { scrollWheelZoom: true }).setView([10.5378, 122.8383], 12);
+    const cfg = getMapConfig();
+    const center = getMapCenter();
+    const bounds = getMapBounds();
+
+    state.map = L.map('gis-map', {
+      scrollWheelZoom: true,
+      maxBounds: bounds,
+      maxBoundsViscosity: 0.85,
+      minZoom: Number(cfg.min_zoom || DEFAULT_MAP_CONFIG.min_zoom),
+    }).setView(center, Number(cfg.default_zoom || DEFAULT_MAP_CONFIG.default_zoom));
 
     state.streetLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
       maxZoom: 19,
@@ -750,7 +787,7 @@
     if (bounds.length) {
       state.map.fitBounds(bounds, { padding: [36, 36], maxZoom: 14 });
     } else {
-      state.map.setView([10.5378, 122.8383], 12);
+      state.map.setView(getMapCenter(), Number(getMapConfig().default_zoom || DEFAULT_MAP_CONFIG.default_zoom));
     }
 
     setTimeout(function () {
@@ -876,6 +913,7 @@
       state.patients = data.patients || [];
       state.analytics = data.analytics || null;
       state.triageStats = data.triage_stats || data.summary?.triage_stats || null;
+      state.mapConfig = data.map_config || DEFAULT_MAP_CONFIG;
       state.lastSync = data.server_ts || new Date().toISOString();
       fillFilterOptions(state.patients);
       refreshDashboard();
@@ -883,7 +921,7 @@
       console.error(err);
       if (els.tableBody) {
         els.tableBody.innerHTML =
-          '<tr><td colspan="6" class="gis-table-empty">Unable to load GIS dashboard data.</td></tr>';
+          '<tr><td colspan="7" class="gis-table-empty">Unable to load GIS dashboard data.</td></tr>';
       }
     }
   }

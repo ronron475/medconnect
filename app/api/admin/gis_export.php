@@ -48,10 +48,12 @@ header('Content-Disposition: attachment; filename=' . $filename);
 $out = fopen('php://output', 'w');
 fputcsv($out, [
     'Patient ID', 'Patient Name', 'Barangay', 'Municipality', 'Province',
-    'Address', 'Latitude', 'Longitude', 'Location Source', 'Registration Date', 'Status', 'Triage Level', 'Emergency',
+    'Address', 'Latitude', 'Longitude', 'Location Source', 'Location Accuracy',
+    'Registration Date', 'Status', 'Triage Level', 'Emergency',
 ]);
 
 foreach ($rows as $row) {
+    $accuracy = $row['location_accuracy'] ?? ($row['location_source'] ?? 'barangay_centroid');
     fputcsv($out, [
         $row['patient_id'] ?? '',
         $row['patient_name'] ?? '',
@@ -62,6 +64,7 @@ foreach ($rows as $row) {
         $row['latitude'] ?? '',
         $row['longitude'] ?? '',
         $row['location_source'] ?? 'barangay_centroid',
+        $accuracy,
         $row['registration_date'] ?? '',
         $row['patient_status'] ?? '',
         $row['triage_level'] ?? 'non_urgent',
