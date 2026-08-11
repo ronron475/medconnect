@@ -1,5 +1,4 @@
 <?php
-session_start();
 $active_page = 'consultation';
 $page_title  = 'Tele-Consultation Session';
 require __DIR__.'/partials/icons.php';
@@ -248,6 +247,26 @@ $localhost_app_url = 'http://localhost' . (ASSET_BASE !== '' ? ASSET_BASE : '');
 }
 .video-shell.is-live .video-shell-tools {
     display: flex;
+}
+/* Active call: single iframe UI only — no duplicate LIVE overlay or shell chrome */
+.video-shell.is-call-active {
+    background: #000;
+    min-height: 0;
+}
+.video-shell.is-call-active .video-shell-tools,
+.video-shell.is-call-active .session-status {
+    display: none !important;
+}
+.video-shell.is-call-active .active-call {
+    position: absolute;
+    inset: 0;
+    display: block !important;
+}
+.video-shell.is-call-active .mc-provider-video-dock,
+.video-shell.is-call-active .mc-provider-video-dock .mc-session-float-shell.is-docked {
+    min-height: 100%;
+    height: 100%;
+    max-height: none;
 }
 .video-size-btn {
     height: 34px;
@@ -1179,25 +1198,35 @@ $localhost_app_url = 'http://localhost' . (ASSET_BASE !== '' ? ASSET_BASE : '');
     .hs-grid { grid-template-columns: 1fr; }
     .video-shell {
         min-height: 200px;
-        max-height: 32vh;
         aspect-ratio: auto;
         height: auto;
     }
-    .video-shell.is-live:not(.is-floating) {
-        min-height: 180px;
-        max-height: 28vh;
-        height: 28vh;
+    .video-shell.is-call-active {
+        position: relative;
+        width: 100%;
+        min-height: 52vw;
+        height: min(56vw, 320px);
+        max-height: none;
+        aspect-ratio: auto;
+        border-radius: 12px;
+        overflow: hidden;
+    }
+    .video-shell.is-call-active.is-floating {
+        position: relative;
+        width: 100%;
+        height: min(56vw, 320px);
+        left: auto !important;
+        right: auto;
+        top: auto;
+        bottom: auto;
+        z-index: 1;
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
     }
     .mc-provider-video-dock,
     .mc-provider-video-dock .mc-session-float-shell.is-docked {
-        min-height: 180px;
-        max-height: 28vh;
-    }
-    .video-shell.is-floating {
-        width: min(100vw - 16px, 360px);
-        height: 200px;
-        left: 8px !important;
-        right: 8px;
+        min-height: 100%;
+        height: 100%;
+        max-height: none;
     }
     .session-page {
         gap: 14px;
@@ -2562,6 +2591,7 @@ function setVideoShellLive(isLive) {
     const floatingBtn = document.getElementById('floatingScrollAiBtn');
     if (!shell) return;
     shell.classList.toggle('is-live', !!isLive);
+    shell.classList.toggle('is-call-active', !!isLive);
     if (floatingBtn) {
         floatingBtn.classList.toggle('show', !!isLive);
     }
@@ -2572,13 +2602,24 @@ function toggleVideoShellSize() {
     const btn = document.getElementById('toggleVideoSizeBtn');
     if (!shell || !btn) return;
 
+    if (window.McSessionVideoShell && McSessionVideoShell.isActive()) {
+        const st = McSessionVideoShell.getState();
+        if (st && st.mode === 'fullscreen') {
+            McSessionVideoShell.dock(document.getElementById('mcProviderVideoDock'));
+            btn.textContent = 'Expand video';
+        } else {
+            McSessionVideoShell.maximize();
+            btn.textContent = 'Minimize video';
+        }
+        return;
+    }
+
     const willFloat = !shell.classList.contains('is-floating');
     shell.classList.remove('is-minimized');
     shell.classList.toggle('is-floating', willFloat);
     btn.textContent = willFloat ? 'Expand video' : 'Minimize video';
 
     if (willFloat) {
-        initFloatingVideoShell(shell);
         scrollToClinicalSupport();
     } else {
         shell.style.top = '';
@@ -2701,20 +2742,32 @@ window.addEventListener('message', (event) => {
     }
 
     if (event.data.type === 'medconnect:minimize-video') {
-        const shell = document.getElementById('videoInterface');
-        const btn = document.getElementById('toggleVideoSizeBtn');
-        if (shell && !shell.classList.contains('is-floating')) {
-            shell.classList.remove('is-minimized');
-            shell.classList.add('is-floating');
-            initFloatingVideoShell(shell);
-            if (btn) btn.textContent = 'Expand video';
-        }
         scrollToClinicalSupport();
         return;
     }
 
     if (event.data.type === 'medconnect:maximize-video') {
-        maximizeVideoShell();
+        if (window.McSessionVideoShell && McSessionVideoShell.isActive()) {
+            McSessionVideoShell.maximize();
+        } else {
+            maximizeVideoShell();
+        }
+        return;
+    }
+
+    if (event.data.type === 'medconnect:call-state') {
+        const indicator = document.getElementById('callStatusIndicator');
+        const timerEl = document.getElementById('sessionTimer');
+        if (indicator && event.data.statusLabel) {
+            indicator.textContent = event.data.statusLabel;
+            indicator.style.color = event.data.connected ? '#22c55e' : '#ef4444';
+        }
+        if (timerEl && event.data.timerActive === false) {
+            timerActive = false;
+        }
+        if (timerEl && event.data.timerActive === true) {
+            timerActive = true;
+        }
         return;
     }
 
@@ -2749,15 +2802,18 @@ function mcProviderOpenVideo(urlOrToken, consultationId) {
 
     document.getElementById('videoPlaceholder').style.display = 'none';
     document.getElementById('activeCallUI').style.display = 'block';
-    document.getElementById('callStatusIndicator').style.color = '#ef4444';
-    document.getElementById('callStatusIndicator').textContent = '● LIVE';
+    document.getElementById('callStatusIndicator').style.color = '#94a3b8';
+    document.getElementById('callStatusIndicator').textContent = '● Connecting…';
     setVideoShellLive(true);
-    timerActive = true;
+    timerActive = false;
 
     if (window.McSessionVideoShell && token) {
+        const frame = document.getElementById('mcGlobalVideoFrame');
+        const alreadySame = frame && frame.src && frame.src.indexOf('token=' + encodeURIComponent(token)) >= 0 && frame.src !== 'about:blank';
         McSessionVideoShell.open(token, consultationId || <?= $consultation_id ?>, {
             mode: 'docked',
             label: 'Live consultation',
+            skipReload: alreadySame,
         });
         const dock = document.getElementById('mcProviderVideoDock');
         if (dock) McSessionVideoShell.dock(dock);
@@ -2771,17 +2827,6 @@ function mcProviderOpenVideo(urlOrToken, consultationId) {
         if (legacy) {
             legacy.hidden = false;
             legacy.src = joinUrl;
-        }
-    }
-
-    if (window.matchMedia && window.matchMedia('(max-width: 760px)').matches) {
-        const shell = document.getElementById('videoInterface');
-        if (shell && !shell.classList.contains('is-floating')) {
-            window.setTimeout(() => {
-                if (!shell.classList.contains('is-floating')) {
-                    toggleVideoShellSize();
-                }
-            }, 600);
         }
     }
 
