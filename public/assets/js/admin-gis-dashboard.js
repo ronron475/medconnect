@@ -1024,6 +1024,11 @@
         els.tableBody.innerHTML =
           '<tr><td colspan="7" class="gis-table-empty">Unable to load GIS dashboard data.</td></tr>';
       }
+      try {
+        renderMap();
+      } catch (mapErr) {
+        console.error('GIS map render failed:', mapErr);
+      }
     }
   }
 

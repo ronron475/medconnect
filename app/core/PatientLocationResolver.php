@@ -19,7 +19,7 @@ final class PatientLocationResolver
    * @param array<string, mixed> $row
    * @return array<string, mixed>
    */
-  public function resolve(array $row): array
+  public function resolve(array $row, bool $allowLiveGeocode = false): array
   {
     $canonicalBarangay = $this->resolveCanonicalBarangay($row);
     $row['canonical_barangay'] = $canonicalBarangay;
@@ -70,7 +70,7 @@ final class PatientLocationResolver
       }
     }
 
-    if (in_array($addressConfidence, ['HIGH', 'MEDIUM'], true) && $displayAddress !== '') {
+    if ($allowLiveGeocode && in_array($addressConfidence, ['HIGH', 'MEDIUM'], true) && $displayAddress !== '') {
       $geocoded = $this->geocoder()->geocode($displayAddress . ', Philippines', $addressConfidence);
       if ($geocoded !== null) {
         return $this->result(
