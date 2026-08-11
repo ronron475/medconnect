@@ -323,6 +323,7 @@ body.landing-page.signin-active #signin-modal {
   --signin-space-lg: 18px;
   --signin-input-height: 46px;
   --signin-error-slot-height: 44px;
+  --signin-context-alert-height: 40px;
 
   padding: 20px 20px 16px;
   border-radius: 18px;
@@ -342,14 +343,58 @@ body.landing-page.signin-active #signin-modal {
 .landing-page .hero-signin-panel .signin-card__alerts {
   display: flex;
   flex-direction: column;
-  gap: 10px;
-  margin-bottom: 14px;
+  gap: 0;
+  margin-bottom: 10px;
   padding-right: 88px;
+  flex: 0 0 auto;
+  max-height: var(--signin-context-alert-height);
+  overflow: hidden;
 }
 
 .landing-page .hero-signin-panel .signin-card__alerts:empty {
   display: none;
   margin: 0;
+  max-height: 0;
+}
+
+.landing-page .hero-signin-panel .signin-card__alerts .signin-context-alert {
+  margin: 0 !important;
+  padding: 8px 12px;
+  font-size: 0.75rem;
+  line-height: 1.35;
+  border-radius: 10px;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
+  max-height: var(--signin-context-alert-height);
+  box-sizing: border-box;
+}
+
+/* When a context banner is visible, hide the empty login-error spacer. */
+.landing-page .hero-signin-panel .signin-card__alerts:not(:empty) + .signin-card__error-slot:has(.alert:empty) {
+  flex: 0 0 0;
+  height: 0;
+  min-height: 0;
+  max-height: 0;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+}
+
+.landing-page .hero-signin-panel .signin-card--hero-inline:has(.signin-card__alerts:not(:empty)) {
+  --signin-space-md: 12px;
+  --signin-space-lg: 14px;
+}
+
+.landing-page .hero-signin-panel .signin-card--hero-inline:has(.signin-card__alerts:not(:empty)) .signin-card__head {
+  margin-bottom: 12px;
+  padding-bottom: 12px;
+}
+
+.landing-page .hero-signin-panel .signin-card--hero-inline:has(.signin-card__alerts:not(:empty)) .signin-card__extras {
+  margin-top: 10px;
+  padding-top: 10px;
 }
 
 .landing-page .hero-signin-panel .signin-card__error-slot {
@@ -440,10 +485,10 @@ body.landing-page.signin-active #signin-modal {
 }
 
 /* Flash / status alerts — glass theme (override light inline banners) */
-.landing-page .hero-signin-panel .signin-card .alert[style],
-.landing-page .hero-signin-panel .signin-card .alert.alert--info,
-.landing-page .hero-signin-panel .signin-card .alert.alert--success,
-.landing-page .hero-signin-panel .signin-card .alert.alert--warning {
+.landing-page .hero-signin-panel .signin-card .alert[style]:not(.signin-context-alert),
+.landing-page .hero-signin-panel .signin-card .alert.alert--info:not(.signin-context-alert),
+.landing-page .hero-signin-panel .signin-card .alert.alert--success:not(.signin-context-alert),
+.landing-page .hero-signin-panel .signin-card .alert.alert--warning:not(.signin-context-alert) {
   border-radius: 10px;
   padding: 10px 12px;
   font-size: 0.8125rem;
@@ -828,9 +873,15 @@ html[data-theme-resolved='dark'] .landing-page .hero-signin-panel .signin-modal-
     --signin-space-lg: 14px;
     --signin-input-height: 44px;
     --signin-error-slot-height: 48px;
+    --signin-context-alert-height: 38px;
 
     padding: 14px 14px 12px;
     border-radius: 16px;
+  }
+
+  .landing-page .hero-signin-panel .signin-card__alerts {
+    padding-right: 48px;
+    margin-bottom: 8px;
   }
 
   .landing-page .hero-signin-panel .signin-card__head {
