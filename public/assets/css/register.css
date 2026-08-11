@@ -2998,3 +2998,74 @@ body.reg-req-modal-open {
 .reg-location-map {
   display: none;
 }
+
+/* ═══════════════════════════════════════════════════════
+   Registration: isolated light cards on hero background
+   Portal dark theme must not wash out headings / inputs.
+   ═══════════════════════════════════════════════════════ */
+html[data-theme-resolved='dark'] body.reg-body .reg-card,
+html[data-theme-resolved='dark'] body.reg-body .step-indicator {
+  background: #ffffff !important;
+  color: var(--text-dark) !important;
+  border-color: rgba(226, 232, 240, 0.95) !important;
+}
+
+html[data-theme-resolved='dark'] body.reg-body .reg-card .card-title,
+html[data-theme-resolved='dark'] body.reg-body .reg-card h2,
+html[data-theme-resolved='dark'] body.reg-body .reg-card h3,
+html[data-theme-resolved='dark'] body.reg-body .reg-card .section-title {
+  color: var(--blue-text) !important;
+}
+
+html[data-theme-resolved='dark'] body.reg-body .reg-card .card-sub,
+html[data-theme-resolved='dark'] body.reg-body .reg-card .card-header-text p,
+html[data-theme-resolved='dark'] body.reg-body .reg-card .otp-sent-note,
+html[data-theme-resolved='dark'] body.reg-body .reg-card .card-footer-link {
+  color: var(--text-mid) !important;
+}
+
+html[data-theme-resolved='dark'] body.reg-body .reg-card label,
+html[data-theme-resolved='dark'] body.reg-body .reg-card .form-group label {
+  color: var(--text-dark) !important;
+}
+
+html[data-theme-resolved='dark'] body.reg-body .reg-card .input-wrap input,
+html[data-theme-resolved='dark'] body.reg-body .reg-card .input-wrap select,
+html[data-theme-resolved='dark'] body.reg-body .reg-card .otp-digit,
+html[data-theme-resolved='dark'] body.reg-body .reg-card textarea {
+  background: #ffffff !important;
+  color: var(--text-dark) !important;
+  border-color: var(--border) !important;
+}
+
+html[data-theme-resolved='dark'] body.reg-body .reg-card .input-wrap input::placeholder,
+html[data-theme-resolved='dark'] body.reg-body .reg-card textarea::placeholder {
+  color: var(--text-light) !important;
+}
+
+html[data-theme-resolved='dark'] body.reg-body .reg-card .input-icon {
+  color: var(--text-light) !important;
+}
+
+html[data-theme-resolved='dark'] body.reg-body .reg-card .input-wrap.is-invalid .input-icon,
+html[data-theme-resolved='dark'] body.reg-body .reg-card .input-icon.is-invalid {
+  color: #ef4444 !important;
+}
+
+html[data-theme-resolved='dark'] body.reg-body .reg-card .field-error {
+  color: var(--red) !important;
+}
+
+html[data-theme-resolved='dark'] body.reg-body .step-indicator .step-label {
+  color: var(--text-mid) !important;
+}
+
+html[data-theme-resolved='dark'] body.reg-body .step-indicator .step-item.active .step-label {
+  color: var(--teal-dark) !important;
+}
+
+html[data-theme-resolved='dark'] body.reg-body .privacy-notice {
+  background: var(--teal-pale) !important;
+  color: var(--teal-dark) !important;
+  border-color: #99f6e4 !important;
+}
