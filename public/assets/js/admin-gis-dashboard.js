@@ -829,7 +829,10 @@
       maxBoundsViscosity: 0.85,
       minZoom: Number(cfg.min_zoom || DEFAULT_MAP_CONFIG.min_zoom),
       maxZoom: 18,
+      zoomControl: false,
     }).setView(center, Number(cfg.default_zoom || DEFAULT_MAP_CONFIG.default_zoom));
+
+    L.control.zoom({ position: 'topright' }).addTo(state.map);
 
     state.streetLayer = L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
       maxZoom: 19,
