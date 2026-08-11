@@ -396,6 +396,72 @@ $pending_count    = count(array_filter($display_cases, fn($t) => empty($t['revie
   </div>
 </div>
 
+<div
+  id="triageApproveConfirm"
+  class="triage-review-confirm"
+  hidden
+  role="dialog"
+  aria-modal="true"
+  aria-labelledby="triageApproveConfirmTitle"
+  aria-describedby="triageApproveConfirmLead"
+>
+  <div class="triage-review-confirm__backdrop" data-triage-approve-cancel tabindex="-1" aria-hidden="true"></div>
+  <div class="triage-review-confirm__dialog">
+    <div class="triage-review-confirm__icon" aria-hidden="true">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
+        <polyline points="22 4 12 14.01 9 11.01"/>
+      </svg>
+    </div>
+    <h2 id="triageApproveConfirmTitle" class="triage-review-confirm__title">Approve self-care recommendations?</h2>
+    <p id="triageApproveConfirmLead" class="triage-review-confirm__lead">
+      Approve these self-care recommendations for the patient? This will complete your review.
+    </p>
+    <ul class="triage-review-confirm__list">
+      <li>The patient will see the approved guidance in their Care Tips chat.</li>
+      <li>This Active Triage Review case will be marked complete.</li>
+    </ul>
+    <p class="triage-review-confirm__when">You can still edit the recommendation text in the review panel before confirming.</p>
+    <div class="triage-review-confirm__actions">
+      <button type="button" class="mc-btn mc-btn--ghost" data-triage-approve-cancel>Cancel</button>
+      <button type="button" class="mc-btn mc-btn--primary" data-triage-approve-confirm data-mc-autofocus>Approve for Patient</button>
+    </div>
+  </div>
+</div>
+
+<div
+  id="triageWithholdConfirm"
+  class="triage-review-confirm triage-review-confirm--danger"
+  hidden
+  role="dialog"
+  aria-modal="true"
+  aria-labelledby="triageWithholdConfirmTitle"
+  aria-describedby="triageWithholdConfirmLead"
+>
+  <div class="triage-review-confirm__backdrop" data-triage-withhold-cancel tabindex="-1" aria-hidden="true"></div>
+  <div class="triage-review-confirm__dialog">
+    <div class="triage-review-confirm__icon" aria-hidden="true">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="12" cy="12" r="10"/>
+        <line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/>
+      </svg>
+    </div>
+    <h2 id="triageWithholdConfirmTitle" class="triage-review-confirm__title">Withhold self-care guidance?</h2>
+    <p id="triageWithholdConfirmLead" class="triage-review-confirm__lead">
+      Withhold self-care guidance from the patient? This will complete your review.
+    </p>
+    <ul class="triage-review-confirm__list">
+      <li>The patient will not receive these AI self-care tips.</li>
+      <li>This Active Triage Review case will be marked complete.</li>
+    </ul>
+    <p class="triage-review-confirm__when">Use this when the guidance is not appropriate for the patient’s case.</p>
+    <div class="triage-review-confirm__actions">
+      <button type="button" class="mc-btn mc-btn--ghost" data-triage-withhold-cancel>Cancel</button>
+      <button type="button" class="mc-btn mc-btn--danger" data-triage-withhold-confirm data-mc-autofocus>Withhold Guidance</button>
+    </div>
+  </div>
+</div>
+
 <?php $triageLiveJsVer = (int) @filemtime(ASSETS_PATH . '/js/provider-triage-live.js'); ?>
 <script type="application/json" id="triageCasesBootstrap"><?= json_encode($display_cases, JSON_UNESCAPED_UNICODE) ?></script>
 <script>
