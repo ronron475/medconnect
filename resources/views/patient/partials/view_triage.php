@@ -31,6 +31,9 @@ $locked_alternate_available = !empty($locked_alternate_available);
 <p class="text-sm text-muted" style="margin-top:-8px;margin-bottom:16px;">
   Choose a doctor and an open time slot for your online consultation.
   (If you already submitted symptoms for <strong>Care tips</strong>, the system will lock booking to the same doctor who reviews your case.)
+  <?php if (!empty($patient_has_completed_visit)): ?>
+  <span class="text-muted"> Previous completed visits stay in your history below — enter a new chief complaint for this booking.</span>
+  <?php endif; ?>
 </p>
 <?php endif; ?>
 

@@ -41,7 +41,7 @@ require_once BASE_PATH . '/app/includes/patient_booking_status.php';
 foreach ($triage_history as &$triageHistoryRow) {
     $assessedAt = (string) ($triageHistoryRow['assessed_at'] ?? '');
     $triageHistoryRow['_booking_state'] = $assessedAt !== ''
-        ? patient_triage_row_booking_state($pdo, (int) $uid, $assessedAt)
+        ? patient_triage_row_booking_state($pdo, (int) $uid, $assessedAt, (int) ($triageHistoryRow['id'] ?? 0))
         : 'none';
 }
 unset($triageHistoryRow);
@@ -121,6 +121,7 @@ if ($booking_blocked_future) {
 }
 
 $page_title = 'Book Consultation';
+$patient_has_completed_visit = patient_portal_has_completed_visit($pdo, (int) $uid);
 ?>
 <!DOCTYPE html>
 <html lang="en">

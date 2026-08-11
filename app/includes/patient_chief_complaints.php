@@ -157,6 +157,7 @@ function patient_portal_normalize_urgency(?string $triageLevel, ?string $classif
 function patient_portal_active_chief_complaint(PDO $pdo, int $patientId): array
 {
     require_once __DIR__ . '/triage_assessment_schema.php';
+    require_once __DIR__ . '/patient_booking_status.php';
 
     $empty = [
         'complaint'     => '',
@@ -174,26 +175,12 @@ function patient_portal_active_chief_complaint(PDO $pdo, int $patientId): array
     triage_assessment_ensure_schema($pdo);
     patient_chief_complaints_ensure_schema($pdo);
 
-    $triageRow = null;
-    try {
-        $stmt = $pdo->prepare("
-            SELECT id, chief_complaint, triage_level, triage_classification, urgency_label, assessed_at
-            FROM triage_results
-            WHERE patient_id = ?
-              AND TRIM(COALESCE(chief_complaint, '')) <> ''
-            ORDER BY assessed_at DESC, id DESC
-            LIMIT 1
-        ");
-        $stmt->execute([$patientId]);
-        $triageRow = $stmt->fetch(PDO::FETCH_ASSOC) ?: null;
-    } catch (PDOException $e) {
-        $triageRow = null;
-    }
+    $triageRow = patient_portal_find_active_triage_row($pdo, $patientId);
 
     $pccRow = null;
     try {
         $stmt = $pdo->prepare("
-            SELECT complaint_text, source, triage_result_id, submitted_at
+            SELECT complaint_text, source, triage_result_id, consultation_id, submitted_at
             FROM patient_chief_complaints
             WHERE patient_id = ?
               AND TRIM(COALESCE(complaint_text, '')) <> ''
@@ -201,7 +188,10 @@ function patient_portal_active_chief_complaint(PDO $pdo, int $patientId): array
             LIMIT 1
         ");
         $stmt->execute([$patientId]);
-        $pccRow = $stmt->fetch(PDO::FETCH_ASSOC) ?: null;
+        $pccCandidate = $stmt->fetch(PDO::FETCH_ASSOC) ?: null;
+        if ($pccCandidate && patient_chief_complaint_row_is_active($pdo, $patientId, $pccCandidate)) {
+            $pccRow = $pccCandidate;
+        }
     } catch (PDOException $e) {
         $pccRow = null;
     }
@@ -273,6 +263,10 @@ function patient_portal_active_chief_complaint(PDO $pdo, int $patientId): array
 
     $regComplaint = trim((string) ($reg['complaint'] ?? ''));
     if ($regComplaint !== '') {
+        if (patient_portal_has_completed_visit($pdo, $patientId) && !$triageRow) {
+            return $empty;
+        }
+
         return [
             'complaint'    => $regComplaint,
             'source'       => 'registration',

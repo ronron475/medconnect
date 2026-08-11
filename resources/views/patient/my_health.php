@@ -131,6 +131,7 @@ $counts = [
 $completed_visits = count(array_filter($history, fn($h) => ($h['status'] ?? '') === 'completed'));
 
 triage_assessment_ensure_schema($pdo);
+require_once BASE_PATH . '/app/includes/patient_booking_status.php';
 $care_tips_history = [];
 $care_tips_active_count = 0;
 if ($pdo->query("SHOW TABLES LIKE 'triage_results'")->rowCount()) {
@@ -141,11 +142,18 @@ if ($pdo->query("SHOW TABLES LIKE 'triage_results'")->rowCount()) {
         WHERE patient_id = ?
           AND TRIM(COALESCE(chief_complaint, '')) <> ''
           AND TRIM(COALESCE(recommendations, '')) <> ''
-          AND recommendation_status IN ('pending_approval', 'approved', 'rejected')
+          AND recommendation_status IN ('pending_approval', 'approved', 'rejected', 'hidden')
         ORDER BY COALESCE(recommendation_approved_at, assessed_at) DESC, id DESC
     ");
     $ct->execute([$uid]);
     $care_tips_history = $ct->fetchAll(PDO::FETCH_ASSOC);
+    foreach ($care_tips_history as &$careTipsRow) {
+        $assessedAt = (string) ($careTipsRow['assessed_at'] ?? '');
+        $careTipsRow['_booking_state'] = $assessedAt !== ''
+            ? patient_triage_row_booking_state($pdo, (int) $uid, $assessedAt, (int) ($careTipsRow['id'] ?? 0))
+            : 'none';
+    }
+    unset($careTipsRow);
     require_once VIEWS_PATH . '/patient/partials/triage_helpers.php';
     foreach ($care_tips_history as $ctRow) {
         $meta = mc_patient_care_tip_meta($ctRow);
@@ -164,7 +172,7 @@ foreach ($care_tips_history as $ctRow) {
         $care_tips_pending_count++;
     } elseif ($k === 'ready') {
         $care_tips_ready_count++;
-    } elseif ($k === 'acked' || $k === 'rejected') {
+    } elseif ($k === 'acked' || $k === 'rejected' || $k === 'historical') {
         $care_tips_completed_count++;
     }
 }

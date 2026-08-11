@@ -61,7 +61,12 @@ function mc_patient_visit_status_label(array $row, ?PDO $pdo = null, int $patien
 {
     $bookingState = (string) ($row['_booking_state'] ?? '');
     if ($bookingState === '' && $pdo instanceof PDO && $patientId > 0 && !empty($row['assessed_at'])) {
-        $bookingState = patient_triage_row_booking_state($pdo, $patientId, (string) $row['assessed_at']);
+        $bookingState = patient_triage_row_booking_state(
+            $pdo,
+            $patientId,
+            (string) $row['assessed_at'],
+            (int) ($row['id'] ?? 0)
+        );
     }
 
     if ($bookingState === 'booked') {
@@ -72,6 +77,9 @@ function mc_patient_visit_status_label(array $row, ?PDO $pdo = null, int $patien
     }
 
     $recStatus = strtolower((string) ($row['recommendation_status'] ?? ''));
+    if ($recStatus === 'hidden') {
+        return 'Visit completed';
+    }
     if ($recStatus === 'pending_approval') {
         return 'Care tips in review';
     }
@@ -103,6 +111,9 @@ function mc_patient_visit_status_class(array $row): string
     }
 
     $recStatus = strtolower((string) ($row['recommendation_status'] ?? ''));
+    if ($recStatus === 'hidden') {
+        return 'badge-risk--low';
+    }
     if ($recStatus === 'pending_approval') {
         return 'badge-risk--moderate';
     }
@@ -131,6 +142,18 @@ function mc_patient_visit_status_class(array $row): string
 function mc_patient_care_tip_meta(array $row): array
 {
     $status = (string) ($row['recommendation_status'] ?? '');
+    $bookingState = (string) ($row['_booking_state'] ?? '');
+    $historical = $status === 'hidden' || $bookingState === 'completed';
+    if ($historical) {
+        return [
+            'label' => 'Visit completed',
+            'class' => 'pmh-care-card__status--acked',
+            'show_tips' => true,
+            'active' => false,
+            'kind' => 'historical',
+        ];
+    }
+
     $acked = !empty($row['recommendation_patient_ack_at']);
     $approvedAt = (string) ($row['recommendation_approved_at'] ?? '');
     $approvedTs = $approvedAt !== '' ? strtotime($approvedAt) : false;
