@@ -90,10 +90,45 @@
 
   function postToFrame(message) {
     const frame = frameEl();
-    if (!frame || !frame.contentWindow) return;
+    if (!frame || !frame.contentWindow) return false;
     try {
-      frame.contentWindow.postMessage(message, global.location.origin);
-    } catch (_) { /* ignore */ }
+      const win = frame.contentWindow;
+      const type = message && message.type;
+      if (type === 'medconnect:shell-leave-fast' || type === 'medconnect:shell-end-call') {
+        if (typeof win.leaveCallFast === 'function') {
+          win.leaveCallFast();
+          return true;
+        }
+        if (typeof win.endCall === 'function') {
+          win.endCall(true);
+          return true;
+        }
+      }
+      if (type === 'medconnect:shell-toggle-audio' && typeof win.toggleAudio === 'function') {
+        win.toggleAudio();
+        return true;
+      }
+      if (type === 'medconnect:shell-toggle-video' && typeof win.toggleVideo === 'function') {
+        win.toggleVideo();
+        return true;
+      }
+      win.postMessage(message, global.location.origin);
+      return true;
+    } catch (_) {
+      return false;
+    }
+  }
+
+  function leaveFromShell() {
+    if (postToFrame({ type: 'medconnect:shell-leave-fast' })) return;
+    const st = readState();
+    if (!st || !st.token) return;
+    closeShell();
+    if (st.consultationId) {
+      global.location.href = assetBase() + '/views/provider/consultation_session.php?id=' + encodeURIComponent(st.consultationId);
+      return;
+    }
+    global.location.href = assetBase() + '/views/patient/consultations.php';
   }
 
   function initDrag(shell) {
@@ -186,11 +221,13 @@
     }
 
     document.querySelectorAll('[data-shell-action]').forEach((btn) => {
-      btn.addEventListener('click', () => {
+      btn.addEventListener('click', (event) => {
+        event.preventDefault();
+        event.stopPropagation();
         const action = btn.getAttribute('data-shell-action');
         if (action === 'mute') postToFrame({ type: 'medconnect:shell-toggle-audio' });
         if (action === 'camera') postToFrame({ type: 'medconnect:shell-toggle-video' });
-        if (action === 'end') postToFrame({ type: 'medconnect:shell-leave-fast' });
+        if (action === 'end') leaveFromShell();
       });
     });
   }

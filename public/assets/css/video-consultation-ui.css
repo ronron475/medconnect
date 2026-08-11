@@ -482,7 +482,7 @@ body.role-patient .mc-vc-main {
   bottom: 0;
   left: 0;
   right: 0;
-  z-index: 20;
+  z-index: 30;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -552,7 +552,7 @@ body.role-patient .mc-vc-main {
   font-size: 13px;
   background: var(--mc-vc-danger);
   position: relative;
-  z-index: 21;
+  z-index: 31;
   pointer-events: auto;
 }
 
@@ -646,6 +646,11 @@ body.embedded-shell .mc-vc-top-actions {
   top: 8px;
   right: 8px;
   z-index: 20;
+}
+
+/* Patient embedded in portal shell — parent toolbar owns mic/camera/leave */
+body.embedded-shell.role-patient .mc-vc-controls {
+  display: none !important;
 }
 
 body.embedded-shell .compact-hint {
@@ -936,58 +941,7 @@ body.embedded-shell.role-provider .mc-vc-root {
   }
 }
 
-/* Floating shell in provider session page */
-.mc-session-float-shell {
-  position: fixed;
-  width: min(380px, calc(100vw - 24px));
-  height: 240px;
-  z-index: 2000;
-  border-radius: 14px;
-  overflow: hidden;
-  box-shadow: 0 22px 50px rgba(0, 0, 0, 0.45), 0 0 0 1px rgba(148, 163, 184, 0.2);
-  background: #000;
-  transition: width 0.25s ease, height 0.25s ease;
-  touch-action: none;
-}
-
-.mc-session-float-shell .active-call,
-.mc-session-float-shell .active-call iframe {
-  width: 100%;
-  height: 100%;
-}
-
-.mc-session-float-shell .video-shell-tools {
-  display: flex;
-  top: 8px;
-  right: 8px;
-}
-
-.mc-session-float-handle {
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 36px;
-  z-index: 5;
-  background: linear-gradient(180deg, rgba(2, 6, 23, 0.85), transparent);
-  cursor: grab;
-  display: flex;
-  align-items: center;
-  padding: 0 12px;
-  font-size: 11px;
-  font-weight: 800;
-  color: #e2e8f0;
-  gap: 8px;
-}
-
-.mc-session-float-handle:active {
-  cursor: grabbing;
-}
-
-.mc-session-float-dot {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  background: #22c55e;
-  animation: mc-vc-pulse 2s infinite;
+#mcVcWaitingCard[hidden] {
+  display: none !important;
+  pointer-events: none !important;
 }
