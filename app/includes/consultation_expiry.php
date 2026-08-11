@@ -38,7 +38,7 @@ function consultations_auto_expire(PDO $pdo, ?int $patient_id = null, ?int $prov
         FROM consultations c
         LEFT JOIN appointment_slots s
             ON s.consultation_id = c.id
-           AND s.status = 'booked'
+           AND s.status IN ('booked', 'blocked')
         WHERE c.status IN ('pending', 'scheduled', 'in_consultation')
           {$scope}
         HAVING session_end_at <= NOW()
@@ -77,8 +77,12 @@ function consultations_auto_expire(PDO $pdo, ?int $patient_id = null, ?int $prov
 
         if ($status === 'in_consultation') {
             $complete->execute([$id]);
-            $updated += $complete->rowCount();
-            if ($complete->rowCount() > 0) {
+            $completedRows = $complete->rowCount();
+            $updated += $completedRows;
+            if ($completedRows > 0) {
+                require_once __DIR__ . '/appointment_slots.php';
+                appointment_slot_set_consultation_status($pdo, $id, 'completed');
+
                 $pidStmt = $pdo->prepare('SELECT patient_id FROM consultations WHERE id = ? LIMIT 1');
                 $pidStmt->execute([$id]);
                 $pid = (int) ($pidStmt->fetchColumn() ?: 0);

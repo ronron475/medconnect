@@ -294,13 +294,17 @@ final class NotificationEvents
         ]);
     }
 
-    public static function appointmentRescheduled(PDO $pdo, int $consultationId, int $patientId, int $providerId, string $newDate, ?int $senderId = null): void
+    public static function appointmentRescheduled(PDO $pdo, int $consultationId, int $patientId, int $providerId, string $newDate, ?int $senderId = null, ?string $oldDate = null): void
     {
+        $message = $oldDate !== null && $oldDate !== ''
+            ? "Your appointment moved from {$oldDate} to {$newDate}."
+            : "Your appointment has been rescheduled to {$newDate}.";
+
         NotificationManager::notifyPatient($pdo, $patientId, [
             'sender_id'     => $senderId,
             'type'          => NotificationManager::TYPE_APPOINTMENT,
             'title'         => 'Appointment Rescheduled',
-            'message'       => "Your appointment has been rescheduled to {$newDate}.",
+            'message'       => $message,
             'action_url'    => '/views/patient/consultations.php',
             'related_table' => 'consultations',
             'related_id'    => $consultationId,
@@ -310,7 +314,9 @@ final class NotificationEvents
             'sender_id'     => $senderId,
             'type'          => NotificationManager::TYPE_APPOINTMENT,
             'title'         => 'Appointment Rescheduled',
-            'message'       => "An appointment has been rescheduled to {$newDate}.",
+            'message'       => $oldDate
+                ? "Patient confirmed reschedule from {$oldDate} to {$newDate}."
+                : "An appointment has been rescheduled to {$newDate}.",
             'action_url'    => '/views/provider/queue.php',
             'related_table' => 'consultations',
             'related_id'    => $consultationId,
@@ -319,8 +325,71 @@ final class NotificationEvents
             'sender_id'     => $senderId,
             'type'          => NotificationManager::TYPE_APPOINTMENT,
             'title'         => 'Consultation Rescheduled',
-            'message'       => "Patient consultation rescheduled to {$newDate}.",
+            'message'       => $oldDate
+                ? "Patient consultation moved from {$oldDate} to {$newDate}."
+                : "Patient consultation rescheduled to {$newDate}.",
             'action_url'    => '/views/bhw/consultations/index.php',
+            'related_table' => 'consultations',
+            'related_id'    => $consultationId,
+        ]);
+    }
+
+    public static function appointmentRescheduleRequested(
+        PDO $pdo,
+        int $consultationId,
+        int $patientId,
+        int $providerId,
+        string $oldDate,
+        string $newDate,
+        string $reason,
+        ?int $senderId = null
+    ): void {
+        $message = "Your doctor requested to move your appointment from {$oldDate} to {$newDate}. "
+            . 'Please review and confirm in My Sessions. Reason: ' . $reason;
+
+        NotificationManager::notifyPatient($pdo, $patientId, [
+            'sender_id'     => $senderId,
+            'type'          => NotificationManager::TYPE_APPOINTMENT,
+            'title'         => 'Reschedule Request — Action Required',
+            'message'       => $message,
+            'action_url'    => '/views/patient/consultations.php',
+            'related_table' => 'consultations',
+            'related_id'    => $consultationId,
+            'email'         => true,
+        ]);
+        NotificationManager::notifyProvider($pdo, $providerId, [
+            'sender_id'     => $senderId,
+            'type'          => NotificationManager::TYPE_APPOINTMENT,
+            'title'         => 'Reschedule Request Sent',
+            'message'       => "Waiting for patient to confirm moving from {$oldDate} to {$newDate}.",
+            'action_url'    => '/views/provider/schedule.php',
+            'related_table' => 'consultations',
+            'related_id'    => $consultationId,
+        ]);
+    }
+
+    public static function appointmentRescheduleDeclined(
+        PDO $pdo,
+        int $consultationId,
+        int $patientId,
+        int $providerId,
+        ?int $senderId = null
+    ): void {
+        NotificationManager::notifyProvider($pdo, $providerId, [
+            'sender_id'     => $senderId,
+            'type'          => NotificationManager::TYPE_WARNING,
+            'title'         => 'Reschedule Declined',
+            'message'       => 'The patient declined your reschedule request. The original appointment time remains.',
+            'action_url'    => '/views/provider/schedule.php',
+            'related_table' => 'consultations',
+            'related_id'    => $consultationId,
+        ]);
+        NotificationManager::notifyPatient($pdo, $patientId, [
+            'sender_id'     => $senderId,
+            'type'          => NotificationManager::TYPE_APPOINTMENT,
+            'title'         => 'Original Appointment Kept',
+            'message'       => 'You declined the reschedule. Your original appointment time is unchanged.',
+            'action_url'    => '/views/patient/consultations.php',
             'related_table' => 'consultations',
             'related_id'    => $consultationId,
         ]);

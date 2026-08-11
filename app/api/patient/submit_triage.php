@@ -26,6 +26,7 @@ Api::requirePost();
 Api::requireCsrf();
 
 $patient_id = (int) $_SESSION['user_id'];
+appointment_schedule_ensure_schema($pdo);
 consultations_auto_expire($pdo, $patient_id);
 triage_assessment_ensure_schema($pdo);
 BhwPatientWorkflow::ensure_schema($pdo);
@@ -314,6 +315,9 @@ try {
     if ($slot['status'] !== 'available') {
         throw new RuntimeException('That appointment slot is no longer available. Please choose another time.');
     }
+    if ((int) $slot['provider_id'] <= 0) {
+        throw new RuntimeException('Invalid provider for this slot.');
+    }
     if (!appointment_slot_is_today((string) $slot['slot_date'])) {
         throw new RuntimeException('Appointments can only be booked for today.');
     }
@@ -369,6 +373,8 @@ try {
     }
 
     $hasPriorityCol = in_array('consult_priority', $consultCols, true);
+    $hasOriginalCols = in_array('original_consult_date', $consultCols, true)
+        && in_array('original_consult_time', $consultCols, true);
     $consultPriority = $triageLevel === TriageLevelService::URGENT ? 'urgent' : 'standard';
 
     if ($existing_consult) {
@@ -376,7 +382,7 @@ try {
 
         $release = $pdo->prepare("
             UPDATE appointment_slots
-            SET status = 'available', patient_id = NULL, consultation_id = NULL
+            SET status = 'cancelled', patient_id = NULL, consultation_id = NULL
             WHERE consultation_id = ?
               AND status = 'booked'
         ");
@@ -502,6 +508,16 @@ try {
             ]);
         }
         $consultation_id = (int) $pdo->lastInsertId();
+
+        if ($hasOriginalCols) {
+            $pdo->prepare("
+                UPDATE consultations
+                SET original_consult_date = ?,
+                    original_consult_time = ?
+                WHERE id = ?
+                  AND patient_id = ?
+            ")->execute([$consult_date, $consult_time, $consultation_id, $patient_id]);
+        }
     }
 
     $book = $pdo->prepare("
@@ -510,9 +526,10 @@ try {
             patient_id = ?,
             consultation_id = ?
         WHERE id = ?
+          AND provider_id = ?
           AND status = 'available'
     ");
-    $book->execute([$patient_id, $consultation_id, $slot_id]);
+    $book->execute([$patient_id, $consultation_id, $slot_id, $provider_id]);
 
     if ($book->rowCount() === 0) {
         throw new RuntimeException('Could not book the selected slot. It may have just been taken.');

@@ -764,6 +764,150 @@
   text-overflow: ellipsis;
 }
 
+.sched-slot-note {
+  font-size: 9px;
+  line-height: 1.35;
+  color: #64748b;
+  margin: 6px 0 0;
+}
+
+.sched-slot-note--locked {
+  color: #b45309;
+}
+
+.sched-slot-legend {
+  font-size: 11px;
+  line-height: 1.45;
+  color: var(--mc-slate-muted);
+  margin: 0 0 12px;
+}
+
+.sched-slot-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  justify-content: center;
+  margin-top: 8px;
+}
+
+.sched-slot-btn {
+  font-size: 10px;
+  font-weight: 700;
+  padding: 4px 8px;
+  border-radius: 6px;
+  border: 1px solid transparent;
+  cursor: pointer;
+}
+
+.sched-slot-btn--danger {
+  background: #fff;
+  border-color: #fecaca;
+  color: #dc2626;
+}
+
+.sched-slot-btn--primary {
+  background: #069396;
+  border-color: #069396;
+  color: #fff;
+}
+
+.sched-slot-view-only {
+  font-size: 9px;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: #94a3b8;
+}
+
+.sched-slot-card.is-completed {
+  border-color: #bbf7d0;
+  background: #f0fdf4;
+}
+
+.sched-slot-card.is-cancelled {
+  border-color: #e2e8f0;
+  background: #f8fafc;
+  opacity: 0.85;
+}
+
+.sched-reschedule {
+  position: fixed;
+  inset: 0;
+  z-index: 1200;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+}
+
+.sched-reschedule[hidden] {
+  display: none;
+}
+
+.sched-reschedule__backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.45);
+}
+
+.sched-reschedule__dialog {
+  position: relative;
+  width: min(100%, 420px);
+  background: #fff;
+  border-radius: 14px;
+  padding: 20px;
+  box-shadow: 0 20px 50px rgba(15, 23, 42, 0.2);
+}
+
+.sched-reschedule__title {
+  margin: 0 0 6px;
+  font-size: 18px;
+}
+
+.sched-reschedule__patient {
+  margin: 0 0 8px;
+  font-size: 13px;
+  color: var(--mc-slate-muted);
+}
+
+.sched-reschedule__hint {
+  margin: 0 0 14px;
+  font-size: 12px;
+  line-height: 1.45;
+  color: #155e75;
+  background: #ecfeff;
+  border: 1px solid #a5f3fc;
+  border-radius: 8px;
+  padding: 8px 10px;
+}
+
+.sched-reschedule__field {
+  display: block;
+  margin-bottom: 12px;
+}
+
+.sched-reschedule__field span {
+  display: block;
+  font-size: 12px;
+  font-weight: 700;
+  margin-bottom: 4px;
+}
+
+.sched-reschedule__field select,
+.sched-reschedule__field textarea {
+  width: 100%;
+  border: 1px solid var(--mc-border-thin);
+  border-radius: 8px;
+  padding: 8px 10px;
+  font-size: 13px;
+}
+
+.sched-reschedule__actions {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+  margin-top: 8px;
+}
+
 .sched-preview-empty {
   font-size: 12px;
   line-height: 1.55;

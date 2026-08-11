@@ -8,6 +8,9 @@
 
   const SCHEDULE_TODAY = window.SCHEDULE_CONFIG?.today || '';
   const SCHEDULE_API = window.SCHEDULE_CONFIG?.api || '';
+  const REMOVE_SLOT_API = window.SCHEDULE_CONFIG?.removeSlotApi || '';
+  const RESCHEDULE_API = window.SCHEDULE_CONFIG?.rescheduleApi || '';
+  const RESCHEDULE_SLOTS_API = window.SCHEDULE_CONFIG?.rescheduleSlotsApi || '';
   const LOGIN_URL = window.SCHEDULE_CONFIG?.loginUrl || '/';
 
   const DURATION_OPTIONS = [
@@ -354,6 +357,144 @@
     bindToggle(dayBlock);
     if (dayBlock.dataset.editable === '1') {
       bindEditableDay(dayBlock);
+    }
+  });
+
+  function getCsrfToken() {
+    return (document.body && document.body.dataset.csrf) || '';
+  }
+
+  async function removeSlot(slotId) {
+    if (!REMOVE_SLOT_API || !slotId) return;
+    if (!window.confirm('Remove this available time slot?')) return;
+
+    const fd = new FormData();
+    fd.append('slot_id', String(slotId));
+    const csrf = getCsrfToken();
+    if (csrf) fd.append('csrf_token', csrf);
+
+    try {
+      const res = await fetch(REMOVE_SLOT_API, {
+        method: 'POST',
+        body: fd,
+        credentials: 'include',
+        headers: { 'X-Requested-With': 'XMLHttpRequest', 'X-MC-No-Loader': '1' },
+      });
+      const data = await res.json();
+      if (data.success) {
+        notify(data.message || 'Slot removed.');
+        window.location.reload();
+        return;
+      }
+      notify(data.message || 'Could not remove slot.', true);
+    } catch (err) {
+      notify(err.message || 'Error removing slot.', true);
+    }
+  }
+
+  const rescheduleModal = document.getElementById('schedRescheduleModal');
+  const rescheduleForm = document.getElementById('schedRescheduleForm');
+  const reschedulePatient = document.getElementById('schedReschedulePatient');
+  const rescheduleConsultId = document.getElementById('schedRescheduleConsultId');
+  const rescheduleOldSlotId = document.getElementById('schedRescheduleOldSlotId');
+  const rescheduleNewSlot = document.getElementById('schedRescheduleNewSlot');
+  const rescheduleReason = document.getElementById('schedRescheduleReason');
+
+  function closeRescheduleModal() {
+    if (!rescheduleModal) return;
+    rescheduleModal.hidden = true;
+    rescheduleModal.setAttribute('aria-hidden', 'true');
+  }
+
+  async function loadRescheduleSlots(excludeSlotId) {
+    if (!rescheduleNewSlot || !RESCHEDULE_SLOTS_API) return;
+    rescheduleNewSlot.innerHTML = '<option value="">Loading…</option>';
+    const url = RESCHEDULE_SLOTS_API
+      + (excludeSlotId ? ('?exclude_slot_id=' + encodeURIComponent(excludeSlotId)) : '');
+    const res = await fetch(url, { credentials: 'include', cache: 'no-store' });
+    const data = await res.json();
+    if (!data.success || !Array.isArray(data.slots) || !data.slots.length) {
+      rescheduleNewSlot.innerHTML = '<option value="">No available slots today</option>';
+      return;
+    }
+    rescheduleNewSlot.innerHTML = '<option value="">Select a new time</option>'
+      + data.slots.map((s) => '<option value="' + s.id + '">' + escapeHtml(s.label) + '</option>').join('');
+  }
+
+  function openRescheduleModal(btn) {
+    if (!rescheduleModal || !btn) return;
+    const consultationId = btn.getAttribute('data-consultation-id') || '';
+    const slotId = btn.getAttribute('data-reschedule-slot') || '';
+    const patientName = btn.getAttribute('data-patient-name') || 'Patient';
+    const slotTime = btn.getAttribute('data-slot-time') || '';
+
+    if (rescheduleConsultId) rescheduleConsultId.value = consultationId;
+    if (rescheduleOldSlotId) rescheduleOldSlotId.value = slotId;
+    if (reschedulePatient) {
+      reschedulePatient.textContent = patientName + ' — current time: ' + slotTime;
+    }
+    if (rescheduleReason) rescheduleReason.value = '';
+
+    rescheduleModal.hidden = false;
+    rescheduleModal.setAttribute('aria-hidden', 'false');
+    loadRescheduleSlots(slotId);
+  }
+
+  document.querySelectorAll('[data-remove-slot]').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      removeSlot(btn.getAttribute('data-remove-slot'));
+    });
+  });
+
+  document.querySelectorAll('[data-reschedule-slot]').forEach((btn) => {
+    btn.addEventListener('click', () => openRescheduleModal(btn));
+  });
+
+  rescheduleModal?.querySelectorAll('[data-sched-reschedule-cancel]').forEach((el) => {
+    el.addEventListener('click', closeRescheduleModal);
+  });
+
+  rescheduleForm?.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    if (!RESCHEDULE_API) return;
+
+    const consultationId = rescheduleConsultId?.value || '';
+    const newSlotId = rescheduleNewSlot?.value || '';
+    const reason = (rescheduleReason?.value || '').trim();
+    if (!consultationId || !newSlotId || !reason) {
+      notify('Please select a new time and provide a reason.', true);
+      return;
+    }
+
+    const fd = new FormData();
+    fd.append('consultation_id', consultationId);
+    fd.append('new_slot_id', newSlotId);
+    fd.append('reason', reason);
+    const csrf = getCsrfToken();
+    if (csrf) fd.append('csrf_token', csrf);
+
+    const submitBtn = rescheduleForm.querySelector('[type="submit"]');
+    if (submitBtn) submitBtn.disabled = true;
+
+    try {
+      const res = await fetch(RESCHEDULE_API, {
+        method: 'POST',
+        body: fd,
+        credentials: 'include',
+        headers: { 'X-Requested-With': 'XMLHttpRequest', 'X-MC-No-Loader': '1' },
+      });
+      const data = await res.json();
+      if (data.success) {
+        notify(data.message || 'Reschedule request sent.');
+        closeRescheduleModal();
+        window.location.reload();
+        return;
+      }
+      notify(data.message || 'Could not send reschedule request.', true);
+    } catch (err) {
+      notify(err.message || 'Error sending reschedule request.', true);
+    } finally {
+      if (submitBtn) submitBtn.disabled = false;
     }
   });
 })();
