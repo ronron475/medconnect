@@ -215,10 +215,10 @@ $faqChatbotAppVer = (int) @filemtime(ASSETS_PATH . '/js/faq-chatbot/app.js');
     <!-- Input -->
     <footer class="fcb-footer">
       <div class="fcb-restricted" id="fcb-restricted" role="alert" aria-live="assertive" hidden>
-        <span class="fcb-restricted__icon" aria-hidden="true">⚠</span>
+        <span class="fcb-restricted__icon" aria-hidden="true">🔒</span>
         <span class="fcb-restricted__text">
-          Chat temporarily restricted —
-          <strong data-fcb-restricted-timer>30</strong>s remaining
+          Chat temporarily limited —
+          <strong data-fcb-restricted-timer>30</strong> remaining
         </span>
       </div>
       <div class="fcb-input-wrap">

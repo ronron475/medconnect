@@ -681,6 +681,37 @@
     if (phpChatEnabled && window.McFaqChatApi) {
       await window.McFaqChatApi.ensureSession();
       lastPhpAssist = await window.McFaqChatApi.assist(workingText, replyLang);
+
+      if (lastPhpAssist && lastPhpAssist._error) {
+        if (lastPhpAssist.rateLimited) {
+          Moderation.applyServerRestriction(lastPhpAssist.restriction_seconds || 30);
+          appendUser(trimmed);
+          runFlow('restricted', false, {
+            instant: true,
+            cooldownSec: lastPhpAssist.restriction_seconds || 30,
+            lang: replyLang,
+          });
+          setRestrictedState(true, lastPhpAssist.restriction_seconds || 30);
+        }
+        return;
+      }
+
+      if (lastPhpAssist && lastPhpAssist.guard_action) {
+        appendUser(trimmed);
+        Understanding.incrementMessageCount();
+        if (lastPhpAssist.restricted || lastPhpAssist.guard_action === 'restricted') {
+          const sec = lastPhpAssist.restriction_seconds || 60;
+          Moderation.applyServerRestriction(sec);
+          setRestrictedState(true, sec);
+        }
+        showTyping(lastPhpAssist.typing_ms || MODERATION_TYPING_MS);
+        window.setTimeout(() => {
+          removeTyping();
+          deliverFromPhp(lastPhpAssist, replyLang);
+        }, lastPhpAssist.typing_ms || MODERATION_TYPING_MS);
+        return;
+      }
+
       if (lastPhpAssist && lastPhpAssist.emergency) {
         appendUser(trimmed);
         Understanding.incrementMessageCount();
@@ -1116,6 +1147,10 @@
   updateCharCount();
   const onCooldown = Moderation.isOnCooldown();
   setRestrictedState(onCooldown, onCooldown ? Moderation.cooldownRemainingSec() : 0);
+
+  if (phpChatEnabled && window.McFaqChatApi) {
+    window.McFaqChatApi.ensureSession().catch(() => {});
+  }
 
   if (window.McFaqTheme) window.McFaqTheme.init();
 

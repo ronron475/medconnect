@@ -50,6 +50,16 @@ if (!in_array($mime, $allowed, true) && !in_array($ext, ['webm', 'wav', 'mp3', '
     Api::error('Unsupported audio format.');
 }
 
+require_once BASE_PATH . '/app/includes/rate_limiter.php';
+
+$rl = mc_rate_limiter_allow('faq_chatbot_voice', 20, 60, (int) ($_SESSION['user_id'] ?? 0));
+if (!$rl['allowed']) {
+    Api::error('Too many voice requests. Please wait a moment.', 429, [
+        'code' => 'rate_limited',
+        'restriction_seconds' => 30,
+    ]);
+}
+
 try {
     if (!AiServiceClient::isHealthy()) {
         AiServiceLauncher::ensureRunning(true);

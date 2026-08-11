@@ -241,8 +241,11 @@
     if (onCooldownChange) onCooldownChange(false, 0);
   }
 
-  function startCooldown() {
-    cooldownUntil = Date.now() + COOLDOWN_MS;
+  function startCooldown(seconds) {
+    const ms = typeof seconds === 'number' && seconds > 0
+      ? Math.round(seconds * 1000)
+      : COOLDOWN_MS;
+    cooldownUntil = Date.now() + ms;
     consecutiveViolations = 0;
 
     if (cooldownTimer) global.clearInterval(cooldownTimer);
@@ -262,6 +265,12 @@
 
     tick();
     cooldownTimer = global.setInterval(tick, 1000);
+  }
+
+  /** Server-authoritative restriction (seconds). */
+  function applyServerRestriction(seconds) {
+    const sec = Math.max(1, parseInt(seconds, 10) || 60);
+    startCooldown(sec);
   }
 
   /**
@@ -391,16 +400,15 @@
 
   function getRestrictedFlowHtml(seconds) {
     return [
-      '<div class="fcb-mod-badge fcb-mod-badge--restricted" role="alert"><span aria-hidden="true">⚠</span> Chat Temporarily Restricted</div>',
-      '<p>Your recent messages violate our community guidelines.</p>',
-      '<p>Please wait <strong data-fcb-cooldown>' + String(seconds) + '</strong> seconds before sending another message.</p>',
+      '<div class="fcb-mod-badge fcb-mod-badge--restricted" role="alert"><span aria-hidden="true">🔒</span> Chat temporarily limited</div>',
+      '<p>Several invalid or repetitive messages were detected. Please wait before sending another message.</p>',
+      '<p>Please wait <strong data-fcb-cooldown>' + String(seconds) + '</strong> seconds.</p>',
     ].join('');
   }
 
   function getSpamFlowHtml() {
     return [
-      '<p>I couldn\'t understand that message. It may be spam or random text.</p>',
-      '<p>Please type a clear question about medConnect or City Health Office services.</p>',
+      '<p>I couldn\'t understand that message. Please enter a clear question or describe your health concern.</p>',
     ].join('');
   }
 
@@ -416,6 +424,7 @@
     cooldownRemainingSec,
     resetViolations,
     clearCooldown,
+    applyServerRestriction,
     setCooldownListener,
     getModerationFlowHtml,
     getRestrictedFlowHtml,

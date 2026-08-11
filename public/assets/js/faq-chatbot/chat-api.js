@@ -19,6 +19,15 @@
     return mode !== '0' && mode !== 'off' && mode !== 'false';
   }
 
+  function syncServerSecurity(security) {
+    if (!security || !security.restricted) return;
+    const sec = parseInt(security.restriction_seconds, 10);
+    if (sec > 0 && global.McFaqModeration
+      && typeof global.McFaqModeration.applyServerRestriction === 'function') {
+      global.McFaqModeration.applyServerRestriction(sec);
+    }
+  }
+
   async function ensureSession() {
     let sid = '';
     try {
@@ -33,6 +42,7 @@
       });
       const json = await res.json().catch(() => ({}));
       sid = json.data?.session_id || json.session_id || '';
+      syncServerSecurity(json.data?.security);
       if (sid) {
         try {
           sessionStorage.setItem(SESSION_KEY, sid);
@@ -52,7 +62,18 @@
     });
     const json = await res.json().catch(() => ({}));
     if (!res.ok || !json.success) {
-      return null;
+      const restrictionSeconds = parseInt(
+        json.restriction_seconds || json.data?.restriction_seconds || 30,
+        10
+      );
+      return {
+        _error: true,
+        status: res.status,
+        message: json.message || 'Request failed.',
+        rateLimited: res.status === 429 || json.code === 'rate_limited',
+        restriction_seconds: restrictionSeconds,
+        code: json.code || json.data?.code || '',
+      };
     }
     return json.data || json;
   }
@@ -117,5 +138,6 @@
     logBot,
     sendFeedback,
     translate,
+    syncServerSecurity,
   };
 })(window);
