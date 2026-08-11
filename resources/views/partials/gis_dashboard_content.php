@@ -4,7 +4,7 @@ $gisUserRole = (string) ($userRole ?? $_SESSION['user_role'] ?? '');
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin=""/>
 <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css" crossorigin=""/>
 <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css" crossorigin=""/>
-<link rel="stylesheet" href="<?= htmlspecialchars($assetBase) ?>/assets/css/admin-gis-dashboard.css?v=3.1"/>
+<link rel="stylesheet" href="<?= htmlspecialchars($assetBase) ?>/assets/css/admin-gis-dashboard.css?v=3.2"/>
 
 <div class="gis-page" id="gis-dashboard"
      data-api="<?= htmlspecialchars($apiBase) ?>"
@@ -54,18 +54,22 @@ $gisUserRole = (string) ($userRole ?? $_SESSION['user_role'] ?? '');
       </div>
       <div class="gis-map-wrap">
         <div id="gis-map" class="gis-map" aria-label="Interactive patient severity map"></div>
-        <div class="gis-map-legend" id="gis-map-legend" aria-label="Severity legend">
+        <div class="gis-map-legend" id="gis-map-legend" aria-label="Map legend">
           <div class="gis-map-legend__title">Severity</div>
           <div class="gis-map-legend__item"><span class="gis-map-legend__dot gis-map-legend__dot--non-urgent"></span> Non-Urgent</div>
           <div class="gis-map-legend__item"><span class="gis-map-legend__dot gis-map-legend__dot--urgent"></span> Urgent</div>
           <div class="gis-map-legend__item"><span class="gis-map-legend__dot gis-map-legend__dot--emergency"></span> Emergency</div>
+          <div class="gis-map-legend__divider" aria-hidden="true"></div>
+          <div class="gis-map-legend__title">Pin accuracy</div>
+          <div class="gis-map-legend__item"><span class="gis-map-legend__dot gis-map-legend__dot--gps"></span> GPS (exact)</div>
+          <div class="gis-map-legend__item"><span class="gis-map-legend__dot gis-map-legend__dot--approx"></span> Approximate (barangay)</div>
         </div>
         <button type="button" class="gis-map-layer-switch" id="gisMapLayerSwitch" aria-label="Switch map layer">
           <span class="gis-map-layer-switch__thumb" id="gisMapLayerThumb" aria-hidden="true"></span>
           <span class="gis-map-layer-switch__label" id="gisMapLayerLabel">Satellite</span>
         </button>
       </div>
-      <p class="gis-map-note text-xs text-muted">Severity is sourced from each patient's latest <code>triage_level</code> (AI/NLP or manual reassessment). Markers and heatmaps update automatically when triage changes.</p>
+      <p class="gis-map-note text-xs text-muted">Severity is sourced from each patient's latest <code>triage_level</code>. Pin accuracy badges show whether a marker uses GPS or an approximate barangay center.</p>
     </div>
     <div class="gis-analytics-grid" id="gis-analytics-grid">
       <div class="mc-card gis-analytics-card">
@@ -101,8 +105,8 @@ $gisUserRole = (string) ($userRole ?? $_SESSION['user_role'] ?? '');
       </div>
       <div class="gis-table-wrap">
         <table class="gis-table" id="gis-patient-table">
-          <thead><tr><th>Patient</th><th>Barangay</th><th>Municipality</th><th>Province</th><th>Registration Date</th><th>Status</th></tr></thead>
-          <tbody id="gis-table-body"><tr><td colspan="6" class="gis-table-empty">Loading…</td></tr></tbody>
+          <thead><tr><th>Patient</th><th>Barangay</th><th>Municipality</th><th>Province</th><th>Registration Date</th><th>Pin accuracy</th><th>Status</th></tr></thead>
+          <tbody id="gis-table-body"><tr><td colspan="7" class="gis-table-empty">Loading…</td></tr></tbody>
         </table>
       </div>
       <div class="gis-pagination" id="gis-pagination"></div>
@@ -115,4 +119,4 @@ $gisUserRole = (string) ($userRole ?? $_SESSION['user_role'] ?? '');
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
 <script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js" crossorigin=""></script>
 <script src="https://unpkg.com/leaflet.heat@0.2.0/dist/leaflet-heat.js" crossorigin=""></script>
-<script src="<?= htmlspecialchars($assetBase) ?>/assets/js/admin-gis-dashboard.js?v=3.0"></script>
+<script src="<?= htmlspecialchars($assetBase) ?>/assets/js/admin-gis-dashboard.js?v=3.1"></script>
