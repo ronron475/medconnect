@@ -131,6 +131,10 @@
   function showWaitingCard(visible) {
     const card = q('mcVcWaitingCard');
     const retry = q('mcVcWaitingRetry');
+    // After media is granted, the compact in-call overlay handles waiting state.
+    if (visible && document.body.classList.contains('media-ready')) {
+      visible = false;
+    }
     if (card) card.hidden = !visible;
     if (retry && visible) retry.hidden = true;
   }

@@ -15,6 +15,7 @@
       cam: '<path d="m23 7-7 5 7 5V7z"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/>',
       swap: '<path d="M16 3h5v5M4 20 21 3M21 16v5h-5M15 15l6 6M4 4l5 5"/>',
       fullscreen: '<path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/>',
+      fullscreenExit: '<path d="M4 14h6v6M20 10h-6V4M14 10l7-7M3 21l7-7"/>',
       minimize: '<path d="M6 9V5a1 1 0 0 1 1-1h4M18 9V5a1 1 0 0 0-1-1h-4M6 15v4a1 1 0 0 0 1 1h4M18 15v4a1 1 0 0 1-1 1h-4"/>',
       maximize: '<path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/>',
       speaker: '<path d="M11 5L6 9H2v6h4l5 4V5z"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"/>',
@@ -204,13 +205,17 @@
       pip.addEventListener('pointercancel', onPointerUp);
     }
 
+    function isMobileLayout() {
+      return window.matchMedia('(max-width: 768px)').matches;
+    }
+
     function showControlsTemporarily() {
       if (!els.root) return;
       els.root.classList.remove('controls-hidden');
       els.root.classList.add('controls-visible');
       controlsHidden = false;
       clearTimeout(controlsTimer);
-      if (isFullscreen || document.fullscreenElement) {
+      if ((isFullscreen || document.fullscreenElement) && !isMobileLayout()) {
         controlsTimer = setTimeout(() => {
           els.root.classList.add('controls-hidden');
           els.root.classList.remove('controls-visible');
@@ -223,6 +228,7 @@
       const stage = els.stage;
       if (!stage) return;
       stage.addEventListener('click', () => {
+        if (isMobileLayout()) return;
         if (isFullscreen || document.fullscreenElement) {
           if (controlsHidden) {
             showControlsTemporarily();
@@ -236,17 +242,26 @@
 
     function updateFullscreenBtn() {
       if (!els.fullscreenBtn) return;
-      const label = isFullscreen ? 'Exit fullscreen' : 'Expand video';
+      const label = isFullscreen ? 'Exit fullscreen' : 'Enter fullscreen';
       els.fullscreenBtn.setAttribute('aria-label', label);
       els.fullscreenBtn.title = label;
+      els.fullscreenBtn.innerHTML = svgIcon(isFullscreen ? 'fullscreenExit' : 'fullscreen');
     }
 
     function toggleFullscreen() {
       const target = els.root;
       if (!target) return;
 
-      if (embedded && onMaximize) {
-        onMaximize();
+      if (embedded) {
+        const entering = !isFullscreen;
+        isFullscreen = entering;
+        target.classList.toggle('is-fullscreen', entering);
+        if (entering) {
+          if (onMaximize) onMaximize();
+        } else if (onMinimize) {
+          onMinimize();
+        }
+        updateFullscreenBtn();
         showControlsTemporarily();
         return;
       }
@@ -254,14 +269,21 @@
       if (!document.fullscreenElement && !isFullscreen) {
         const req = target.requestFullscreen || target.webkitRequestFullscreen;
         if (req) {
-          req.call(target).catch(() => {
+          req.call(target).then(() => {
             isFullscreen = true;
             target.classList.add('is-fullscreen');
+            updateFullscreenBtn();
+            showControlsTemporarily();
+          }).catch(() => {
+            isFullscreen = true;
+            target.classList.add('is-fullscreen');
+            updateFullscreenBtn();
             showControlsTemporarily();
           });
         } else {
           isFullscreen = true;
           target.classList.add('is-fullscreen');
+          updateFullscreenBtn();
           showControlsTemporarily();
         }
       } else {
@@ -272,16 +294,18 @@
         isFullscreen = false;
         target.classList.remove('is-fullscreen', 'controls-hidden');
         target.classList.remove('controls-visible');
+        updateFullscreenBtn();
       }
     }
 
     document.addEventListener('fullscreenchange', () => {
       if (!els.root) return;
-      if (!document.fullscreenElement) {
-        isFullscreen = false;
-        els.root.classList.remove('is-fullscreen', 'controls-hidden');
-        updateFullscreenBtn();
+      isFullscreen = !!document.fullscreenElement;
+      els.root.classList.toggle('is-fullscreen', isFullscreen);
+      if (!isFullscreen) {
+        els.root.classList.remove('controls-hidden');
       }
+      updateFullscreenBtn();
     });
 
     function setMobileFullscreen(expanded) {
@@ -455,6 +479,8 @@
         if (els.overlaySub) els.overlaySub.textContent = sub || '';
         els.overlay.classList.toggle('is-visible', !!visible);
         els.overlay.setAttribute('aria-hidden', visible ? 'false' : 'true');
+        const isStatus = !!visible && !options.showRetry && /waiting|connecting|reconnecting|live|connected/i.test(String(title || '') + String(sub || ''));
+        els.overlay.classList.toggle('is-status', isStatus);
       }
       if (options.showRetry === true) {
         connectionFailed = true;
@@ -487,24 +513,24 @@
       const t = String(text || '').toLowerCase();
       if (t.indexOf('waiting for healthcare') >= 0 || t.indexOf('waiting for provider') >= 0 || t.indexOf('waiting for doctor') >= 0) {
         setOverlay(
-          isPatient ? 'Waiting for Healthcare Provider…' : 'Waiting for Patient…',
+          '● Waiting for healthcare provider…',
           isPatient
             ? 'Your doctor will connect shortly. This happens automatically — no action needed.'
-            : 'The patient can join from their dashboard. Connection starts automatically when they arrive.',
+            : 'The patient can join from their dashboard.',
           true,
           { showRetry: false }
         );
       } else if (t.indexOf('waiting for patient') >= 0) {
         setOverlay(
-          'Waiting for Patient…',
-          'The patient can join from their dashboard. Connection starts automatically when they arrive.',
+          '● Waiting for patient…',
+          'The patient can join from their dashboard.',
           true,
           { showRetry: false }
         );
       } else if (t.indexOf('connecting') >= 0) {
-        setOverlay('Connecting…', 'Establishing a secure consultation channel.', true, { showRetry: false });
+        setOverlay('● Connecting…', 'Establishing a secure consultation channel.', true, { showRetry: false });
       } else if (t.indexOf('reconnecting') >= 0) {
-        setOverlay('Reconnecting…', 'Temporary network interruption — your call will resume automatically.', true, { showRetry: false });
+        setOverlay('● Reconnecting…', 'Temporary network interruption — your call will resume automatically.', true, { showRetry: false });
       } else if (t.indexOf('poor network') >= 0) {
         setOverlay('Poor Network Connection', 'Move closer to your router or switch networks if possible.', true, { showRetry: false });
       } else if (t.indexOf('ended') >= 0 || t.indexOf('consultation ended') >= 0) {
@@ -614,6 +640,10 @@
       if (endBtn) {
         endBtn.classList.add('mc-vc-btn', 'mc-vc-btn--end');
         if (endBtn.classList.contains('btn-end')) endBtn.classList.remove('btn-end');
+      }
+      const reportBtn = q('violationReportBtn');
+      if (reportBtn) {
+        reportBtn.classList.add('mc-vc-btn', 'mc-vc-btn--report');
       }
     }
 
