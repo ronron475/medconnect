@@ -22,9 +22,12 @@ $scheduled_visits = count(array_filter($history ?? [], static function ($h) {
           <span class="pmh-hero__id"><?= htmlspecialchars($patientNumber) ?></span>
           <span class="pmh-hero__sep" aria-hidden="true">·</span>
         <?php endif; ?>
-        Visits, provider records, and approved self-care guidance in one place.
-        Permanent profile details live in
-        <a href="<?= ASSET_BASE ?>/views/patient/health_summary.php">Health Summary</a>.
+        <span class="pmh-hero__text-full">
+          Visits, provider records, and approved self-care guidance in one place.
+          Permanent profile details live in
+          <a href="<?= ASSET_BASE ?>/views/patient/health_summary.php">Health Summary</a>.
+        </span>
+        <span class="pmh-hero__text-short">Visits, records, and care tips in one place.</span>
       </p>
     </div>
     <div class="pmh-hero__actions">
