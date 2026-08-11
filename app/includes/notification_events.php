@@ -498,7 +498,7 @@ final class NotificationEvents
         ]);
     }
 
-    public static function consultationCompleted(PDO $pdo, int $consultationId, int $patientId, int $providerId, ?int $senderId = null, ?string $providerName = null): void
+    public static function consultationCompleted(PDO $pdo, int $consultationId, int $patientId, int $providerId, ?int $senderId = null, ?string $providerName = null, ?string $finalCaseLevel = null): void
     {
         require_once __DIR__ . '/patient_consultation_records.php';
         $name = trim((string) ($providerName ?? 'your healthcare provider'));
@@ -506,12 +506,17 @@ final class NotificationEvents
             $name = 'Dr. ' . $name;
         }
         $detailUrl = patient_consultation_detail_url($consultationId);
+        $level = trim((string) ($finalCaseLevel ?? ''));
+        $message = "Your consultation with {$name} has been completed. Your medical record and care plan are now available.";
+        if ($level !== '') {
+            $message = "Your consultation with {$name} has been completed. Final case level: {$level}. Your medical record is now available.";
+        }
 
         NotificationManager::notifyPatient($pdo, $patientId, [
             'sender_id'     => $senderId,
             'type'          => NotificationManager::TYPE_SUCCESS,
             'title'         => 'Consultation completed',
-            'message'       => "Your consultation with {$name} has been completed. Your medical record and care plan are now available.",
+            'message'       => $message,
             'action_url'    => $detailUrl,
             'related_table' => 'consultations',
             'related_id'    => $consultationId,

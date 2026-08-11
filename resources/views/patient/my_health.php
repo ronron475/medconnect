@@ -43,6 +43,7 @@ $history = $consults->fetchAll(PDO::FETCH_ASSOC);
 
 $rx_by_consult = [];
 $notes_by_consult = [];
+$outcomes_by_consult = [];
 if (!empty($history)) {
     $ids = array_map('intval', array_column($history, 'id'));
     $ids = array_filter($ids);
@@ -79,6 +80,19 @@ if (!empty($history)) {
                 $notes_by_consult[$cid] = $row;
             }
         } catch (PDOException $e) { /* optional */ }
+        foreach ($history as $hRow) {
+            $hid = (int) ($hRow['id'] ?? 0);
+            if ($hid <= 0 || strtolower((string) ($hRow['status'] ?? '')) !== 'completed') {
+                continue;
+            }
+            if (empty($notes_by_consult[$hid])) {
+                continue;
+            }
+            $outcome = patient_consultation_clinical_outcome($pdo, $hid, $uid, false);
+            if ($outcome) {
+                $outcomes_by_consult[$hid] = $outcome;
+            }
+        }
     }
 }
 

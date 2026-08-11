@@ -83,6 +83,10 @@ try {
         if ($provider !== '' && stripos($provider, 'dr.') !== 0) {
             $provider = 'Dr. ' . $provider;
         }
+        $outcome = null;
+        if (patient_consultation_is_finalized((string) ($row['status'] ?? ''), $row['signature_data'] ?? '')) {
+            $outcome = patient_consultation_clinical_outcome($pdo, $cid, $uid, false);
+        }
         $completed[] = [
             'id'              => $cid,
             'status'          => 'completed',
@@ -92,6 +96,9 @@ try {
             'record_available'=> true,
             'detail_url'      => patient_consultation_detail_url($cid),
             'completed_at'    => (string) ($row['completed_at'] ?? ''),
+            'final_case_bucket' => (string) ($outcome['final_case_bucket'] ?? ''),
+            'final_case_level'  => (string) ($outcome['final_case_level'] ?? ''),
+            'ai_case_level'     => (string) ($outcome['ai_case_level'] ?? ''),
         ];
     }
 

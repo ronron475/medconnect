@@ -89,6 +89,10 @@ $status = (string) ($consult['status'] ?? '');
 $statusLabel = ucwords(str_replace('_', ' ', $status));
 $dateLabel = !empty($consult['consult_date']) ? date('F j, Y', strtotime($consult['consult_date'])) : '—';
 
+$clinicalOutcome = $isFinalized
+    ? patient_consultation_clinical_outcome($pdo, $consultationId, $uid, false)
+    : null;
+
 $page_title = 'Consultation Details';
 $pmh_css_ver = (int) @filemtime(ASSETS_PATH . '/css/patient-my-health.css');
 $patient_page_stylesheets = [
@@ -123,6 +127,44 @@ $patient_page_stylesheets = [
         <p class="text-muted">You will receive a notification when your medical record is ready to view.</p>
       </div>
     <?php else: ?>
+      <?php if (!empty($clinicalOutcome['final_case_level'])): ?>
+      <section class="pmh-detail__section pmh-detail__section--case-level">
+        <h3>Final case level</h3>
+        <p class="pmh-case-level <?= htmlspecialchars(patient_case_level_chip_class((string) ($clinicalOutcome['final_case_bucket'] ?? ''))) ?>">
+          <?= htmlspecialchars((string) $clinicalOutcome['final_case_level']) ?>
+        </p>
+        <?php if (!empty($clinicalOutcome['final_case_display'])): ?>
+        <p class="pmh-detail__case-sub"><?= htmlspecialchars((string) $clinicalOutcome['final_case_display']) ?></p>
+        <?php endif; ?>
+        <?php if (!empty($clinicalOutcome['ai_case_level']) && $clinicalOutcome['ai_case_level'] !== $clinicalOutcome['final_case_level']): ?>
+        <p class="pmh-detail__ai-note">
+          <strong>AI triage (reference):</strong> <?= htmlspecialchars((string) $clinicalOutcome['ai_case_level']) ?>
+          <?php if (!empty($clinicalOutcome['ai_case_display'])): ?>
+            — <?= htmlspecialchars((string) $clinicalOutcome['ai_case_display']) ?>
+          <?php endif; ?>
+        </p>
+        <?php endif; ?>
+        <?php if (!empty($clinicalOutcome['recommended_actions'])): ?>
+        <ul class="pmh-detail__actions-list">
+          <?php foreach ($clinicalOutcome['recommended_actions'] as $action): ?>
+          <li><?= htmlspecialchars((string) $action) ?></li>
+          <?php endforeach; ?>
+        </ul>
+        <?php endif; ?>
+        <?php if (($clinicalOutcome['final_case_bucket'] ?? '') === 'emergency' && !empty($clinicalOutcome['emergency_warning_signs'])): ?>
+        <div class="pmh-detail__emergency">
+          <strong>Emergency guidance</strong>
+          <ul>
+            <?php foreach ($clinicalOutcome['emergency_warning_signs'] as $sign): ?>
+            <li><?= htmlspecialchars((string) $sign) ?></li>
+            <?php endforeach; ?>
+          </ul>
+          <p>Go to the nearest emergency department or call local emergency services if symptoms worsen.</p>
+        </div>
+        <?php endif; ?>
+      </section>
+      <?php endif; ?>
+
       <section class="pmh-detail__section">
         <h3>Chief complaint</h3>
         <p><?= htmlspecialchars($chiefComplaint !== '' ? $chiefComplaint : 'Not recorded.') ?></p>

@@ -96,6 +96,12 @@ function pch_filter_url(string $filter): string
           </div>
           <div class="pch-consult-card__row"><strong>Chief complaint:</strong> <?= htmlspecialchars($complaint) ?></div>
           <div class="pch-consult-card__row"><strong>Doctor:</strong> <?= htmlspecialchars((string) ($row['doctor_name'] ?? '—')) ?></div>
+          <?php if (!empty($row['ai_classification'])): ?>
+          <div class="pch-consult-card__row"><strong>AI classification:</strong> <?= htmlspecialchars((string) $row['ai_classification']) ?></div>
+          <?php endif; ?>
+          <?php if (!empty($row['final_classification'])): ?>
+          <div class="pch-consult-card__row"><strong>Final doctor classification:</strong> <?= htmlspecialchars((string) $row['final_classification']) ?></div>
+          <?php endif; ?>
           <?php if (!empty($row['diagnosis'])): ?>
           <div class="pch-consult-card__row"><strong>Diagnosis:</strong> <?= htmlspecialchars((string) $row['diagnosis']) ?></div>
           <?php endif; ?>

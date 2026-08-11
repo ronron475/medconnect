@@ -1,10 +1,11 @@
 <?php
 /**
  * My Health — Care timeline tab.
- * Expects: $history, $rx_by_consult, $notes_by_consult (optional)
+ * Expects: $history, $rx_by_consult, $notes_by_consult, $outcomes_by_consult (optional)
  */
 $rx_by_consult = $rx_by_consult ?? [];
 $notes_by_consult = $notes_by_consult ?? [];
+$outcomes_by_consult = $outcomes_by_consult ?? [];
 
 function pmh_status_class(string $status): string {
     $s = strtolower(trim($status));
@@ -41,6 +42,7 @@ function pmh_note_text(?string $value, string $fallback = ''): string {
       $cid = (int) ($h['id'] ?? 0);
       $p_list = $rx_by_consult[$cid] ?? [];
       $note = $notes_by_consult[$cid] ?? null;
+      $outcome = $outcomes_by_consult[$cid] ?? null;
       $status = (string) ($h['status'] ?? 'pending');
       $statusLabel = ucwords(str_replace('_', ' ', $status));
       $isCompleted = strtolower($status) === 'completed';
@@ -84,6 +86,16 @@ function pmh_note_text(?string $value, string $fallback = ''): string {
         </header>
 
         <?php if ($hasFinalizedNote): ?>
+        <?php if (!empty($outcome['final_case_level'])): ?>
+        <p class="pmh-visit__case-level">
+          <span class="pmh-case-level <?= htmlspecialchars(patient_case_level_chip_class((string) ($outcome['final_case_bucket'] ?? ''))) ?>">
+            Final: <?= htmlspecialchars((string) $outcome['final_case_level']) ?>
+          </span>
+          <?php if (!empty($outcome['ai_case_level']) && $outcome['ai_case_level'] !== $outcome['final_case_level']): ?>
+          <span class="pmh-visit__ai-ref">AI reference: <?= htmlspecialchars((string) $outcome['ai_case_level']) ?></span>
+          <?php endif; ?>
+        </p>
+        <?php endif; ?>
         <div class="pmh-visit__grid">
           <?php if ($chiefComplaint !== ''): ?>
           <section class="pmh-visit__block pmh-visit__block--full">

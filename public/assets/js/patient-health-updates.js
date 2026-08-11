@@ -44,6 +44,20 @@
 
     host.appendChild(banner);
 
+    const bucket = String(item.final_case_bucket || '').toLowerCase();
+    if (window.mcPatientUrgencyModal) {
+      if (bucket === 'emergency' && typeof window.mcPatientUrgencyModal.showEmergency === 'function') {
+        window.mcPatientUrgencyModal.showEmergency(
+          'Your doctor has finalized this consultation as an EMERGENCY. Go to the nearest emergency department or call local emergency services if symptoms worsen.'
+        );
+      } else if (bucket === 'urgent' && typeof window.mcPatientUrgencyModal.showUrgent === 'function') {
+        window.mcPatientUrgencyModal.showUrgent(
+          'Your doctor has finalized this consultation as URGENT. Follow your care plan and seek care promptly if symptoms worsen.',
+          item.detail_url || ''
+        );
+      }
+    }
+
     document.dispatchEvent(new CustomEvent('medconnect:consultation-completed', { detail: item }));
 
     if (typeof global.McNotifications !== 'undefined' && typeof global.McNotifications.poll === 'function') {
