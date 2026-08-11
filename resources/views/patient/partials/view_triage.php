@@ -231,8 +231,6 @@ mc_render_loader_panel([
 <h3 class="text-h3 mb-md patient-triage-history-title">Visit History</h3>
 <p class="text-muted patient-triage-history-lead">
   Submitted health concerns and triage assessments — confirmed only when status shows <strong>Visit booked</strong>.
-  Approved care tips are under
-  <a href="<?= ASSET_BASE ?>/views/patient/my_health.php?tab=care-tips">My Health → Care tips</a>.
 </p>
 <div class="mc-card patient-triage-history">
   <div class="mc-table-wrap">
@@ -260,3 +258,8 @@ mc_render_loader_panel([
     </table>
   </div>
 </div>
+<a href="<?= ASSET_BASE ?>/views/patient/my_health.php?tab=care-tips" class="patient-triage-care-link">
+  <span class="patient-triage-care-link__text">Approved care tips</span>
+  <span class="patient-triage-care-link__meta">My Health · Care tips</span>
+  <svg class="patient-triage-care-link__chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><polyline points="9 18 15 12 9 6"/></svg>
+</a>
