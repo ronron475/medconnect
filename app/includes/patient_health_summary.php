@@ -153,7 +153,7 @@ function patient_health_parse_list(?string $raw): array
         return [];
     }
     $lower = strtolower($raw);
-    foreach (['none', 'n/a', 'na', 'wala', 'no known allergies', 'walang allergy', 'no maintenance medications'] as $skip) {
+    foreach (['none', 'n/a', 'na', 'wala', 'no', 'no known allergies', 'walang allergy', 'no maintenance medications'] as $skip) {
         if ($lower === $skip) {
             return [];
         }
@@ -162,7 +162,7 @@ function patient_health_parse_list(?string $raw): array
     $out = [];
     foreach ($parts as $p) {
         $p = trim($p);
-        if ($p !== '' && !in_array(strtolower($p), ['none', 'n/a', 'na', 'wala'], true)) {
+        if ($p !== '' && !in_array(strtolower($p), ['none', 'n/a', 'na', 'wala', 'no'], true)) {
             $out[] = $p;
         }
     }
