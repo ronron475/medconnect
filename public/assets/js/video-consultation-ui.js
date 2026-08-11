@@ -238,6 +238,14 @@
       const target = els.root;
       if (!target) return;
 
+      if (embedded && onMaximize) {
+        onMaximize();
+        isFullscreen = !isFullscreen;
+        target.classList.toggle('is-fullscreen', isFullscreen);
+        showControlsTemporarily();
+        return;
+      }
+
       if (!document.fullscreenElement && !isFullscreen) {
         const req = target.requestFullscreen || target.webkitRequestFullscreen;
         if (req) {
@@ -390,15 +398,12 @@
     function toggleSpeaker() {
       speakerOn = !speakerOn;
       const audioEl = q('remoteAudio');
-      const remoteV = getRemoteVideo();
       if (audioEl) {
         audioEl.muted = !speakerOn;
+        audioEl.volume = speakerOn ? 1 : 0;
         if (speakerOn) {
           try { audioEl.play(); } catch (e) {}
         }
-      }
-      if (remoteV) {
-        remoteV.muted = !speakerOn;
       }
       if (els.speakerBtn) {
         els.speakerBtn.classList.toggle('off', !speakerOn);

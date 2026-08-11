@@ -33,6 +33,8 @@
       el.autoplay = true;
       el.playsInline = true;
       el.setAttribute('playsinline', '');
+      el.setAttribute('webkit-playsinline', '');
+      el.preload = 'auto';
       el.style.display = 'none';
       document.body.appendChild(el);
     }
