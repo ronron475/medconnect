@@ -29,6 +29,7 @@ $filters = [
     'status'       => trim((string) ($_GET['status'] ?? '')),
     'date_from'    => trim((string) ($_GET['date_from'] ?? '')),
     'date_to'      => trim((string) ($_GET['date_to'] ?? '')),
+    'viewer_role'  => $role,
 ];
 
 try {
@@ -38,7 +39,7 @@ try {
             break;
 
         case 'patients':
-            $payload = ['patients' => $gis->getPatientRecords($filters)];
+            $payload = ['patients' => $gis->getPatientRecords($filters, $role)];
             break;
 
         case 'analytics':
@@ -70,9 +71,9 @@ try {
         default:
             $payload = [
                 'summary'      => $gis->getSummary(),
-                'patients'     => $gis->getPatientRecords($filters),
+                'patients'     => $gis->getPatientRecords($filters, $role),
                 'analytics'    => $gis->getAnalytics(),
-                'triage_stats' => $gis->getTriageStats(),
+                'triage_stats' => $gis->getTriageStats($role),
                 'map_config'   => $gis->getMapConfig(),
                 'server_ts'    => date('c'),
             ];

@@ -4,7 +4,7 @@ $gisUserRole = (string) ($userRole ?? $_SESSION['user_role'] ?? '');
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin=""/>
 <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css" crossorigin=""/>
 <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css" crossorigin=""/>
-<link rel="stylesheet" href="<?= htmlspecialchars($assetBase) ?>/assets/css/admin-gis-dashboard.css?v=3.2"/>
+<link rel="stylesheet" href="<?= htmlspecialchars($assetBase) ?>/assets/css/admin-gis-dashboard.css?v=3.3"/>
 
 <div class="gis-page" id="gis-dashboard"
      data-api="<?= htmlspecialchars($apiBase) ?>"
@@ -61,15 +61,16 @@ $gisUserRole = (string) ($userRole ?? $_SESSION['user_role'] ?? '');
           <div class="gis-map-legend__item"><span class="gis-map-legend__dot gis-map-legend__dot--emergency"></span> Emergency</div>
           <div class="gis-map-legend__divider" aria-hidden="true"></div>
           <div class="gis-map-legend__title">Pin accuracy</div>
-          <div class="gis-map-legend__item"><span class="gis-map-legend__dot gis-map-legend__dot--gps"></span> GPS (exact)</div>
-          <div class="gis-map-legend__item"><span class="gis-map-legend__dot gis-map-legend__dot--approx"></span> Approximate (barangay)</div>
+          <div class="gis-map-legend__item"><span class="gis-map-legend__dot gis-map-legend__dot--gps"></span> GPS (Exact)</div>
+          <div class="gis-map-legend__item"><span class="gis-map-legend__dot gis-map-legend__dot--geocoded"></span> Address (Geocoded)</div>
+          <div class="gis-map-legend__item"><span class="gis-map-legend__dot gis-map-legend__dot--approx"></span> Approximate (Barangay)</div>
         </div>
         <button type="button" class="gis-map-layer-switch" id="gisMapLayerSwitch" aria-label="Switch map layer">
           <span class="gis-map-layer-switch__thumb" id="gisMapLayerThumb" aria-hidden="true"></span>
           <span class="gis-map-layer-switch__label" id="gisMapLayerLabel">Satellite</span>
         </button>
       </div>
-      <p class="gis-map-note text-xs text-muted">Severity is sourced from each patient's latest <code>triage_level</code>. Pin accuracy badges show whether a marker uses GPS or an approximate barangay center.</p>
+      <p class="gis-map-note text-xs text-muted">Severity is sourced from each patient's latest <code>triage_level</code>. Pin badges reflect GPS, geocoded address, or verified barangay-center accuracy. Patients without a verified location are listed but not mapped.</p>
     </div>
     <div class="gis-analytics-grid" id="gis-analytics-grid">
       <div class="mc-card gis-analytics-card">
@@ -119,4 +120,4 @@ $gisUserRole = (string) ($userRole ?? $_SESSION['user_role'] ?? '');
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
 <script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js" crossorigin=""></script>
 <script src="https://unpkg.com/leaflet.heat@0.2.0/dist/leaflet-heat.js" crossorigin=""></script>
-<script src="<?= htmlspecialchars($assetBase) ?>/assets/js/admin-gis-dashboard.js?v=3.2"></script>
+<script src="<?= htmlspecialchars($assetBase) ?>/assets/js/admin-gis-dashboard.js?v=3.3"></script>
