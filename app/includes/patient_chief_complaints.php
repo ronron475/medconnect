@@ -300,15 +300,16 @@ function patient_portal_complaint_source_label(string $source): string
  */
 function patient_portal_resolve_chief_complaint(PDO $pdo, int $patientId, string $submittedComplaint): string
 {
+    $submitted = trim($submittedComplaint);
     $active = patient_portal_active_chief_complaint($pdo, $patientId);
-    if ($active['locked'] && $active['complaint'] !== '') {
-        return $active['complaint'];
+    if (!empty($active['locked']) && ($active['complaint'] ?? '') !== '') {
+        return (string) $active['complaint'];
+    }
+    if ($submitted !== '') {
+        return $submitted;
     }
 
     $registrationComplaint = patient_chief_complaint_registration_reference($pdo, $patientId);
-    if ($registrationComplaint !== '') {
-        return $registrationComplaint;
-    }
 
-    return trim($submittedComplaint);
+    return $registrationComplaint !== '' ? $registrationComplaint : '';
 }

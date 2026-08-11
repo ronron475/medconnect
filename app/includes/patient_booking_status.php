@@ -60,6 +60,55 @@ function patient_portal_has_completed_visit(PDO $pdo, int $patientId): bool
 }
 
 /**
+ * Whether the patient has a provider-scheduled follow-up task (followups table).
+ */
+function patient_portal_has_scheduled_followup(PDO $pdo, int $patientId): bool
+{
+    if ($patientId <= 0) {
+        return false;
+    }
+    try {
+        if (!$pdo->query("SHOW TABLES LIKE 'followups'")->rowCount()) {
+            return false;
+        }
+        $stmt = $pdo->prepare("
+            SELECT COUNT(*)
+            FROM followups
+            WHERE patient_id = ?
+              AND LOWER(COALESCE(status, '')) = 'scheduled'
+              AND followup_date >= CURDATE()
+        ");
+        $stmt->execute([$patientId]);
+
+        return (int) $stmt->fetchColumn() > 0;
+    } catch (Throwable $e) {
+        return false;
+    }
+}
+
+/**
+ * Whether an open consultation can be updated in-place (same-day slot change for the same case).
+ *
+ * @param array<string, mixed> $consult
+ */
+function patient_consultation_may_be_rebooked_in_place(array $consult, int $newTriageId): bool
+{
+    if ($newTriageId <= 0) {
+        return false;
+    }
+    if (strtolower((string) ($consult['status'] ?? '')) === 'in_consultation') {
+        return false;
+    }
+    if (consultation_is_future_day((string) ($consult['consult_date'] ?? ''))) {
+        return false;
+    }
+
+    $linkedTriage = (int) ($consult['triage_result_id'] ?? 0);
+
+    return $linkedTriage <= 0 || $linkedTriage === $newTriageId;
+}
+
+/**
  * Active visit booked for today or a future date.
  */
 function patient_portal_has_upcoming_consultation(PDO $pdo, int $patientId): bool
