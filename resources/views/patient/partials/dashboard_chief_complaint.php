@@ -131,9 +131,11 @@ $placeholder = $chief_complaint_locked
     </div>
 
     <div id="pdashSymptomsReviewAlert" class="patient-triage-alert" role="alert" hidden></div>
+    <?php if (!$chief_complaint_locked): ?>
     <button type="submit" class="pdash-btn pdash-btn--primary pdash-care-form__submit" id="pdashSymptomsReviewSubmit">
       <?= htmlspecialchars($submit_label) ?>
     </button>
+    <?php endif; ?>
   </form>
 
   <?php if ($show_care_tips_context): ?>
