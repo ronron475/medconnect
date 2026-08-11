@@ -107,9 +107,14 @@
 }
 
 .mc-vc-drag-handle {
+  cursor: default;
+  touch-action: auto;
+  user-select: none;
+}
+
+.mc-vc-root.is-floating.mc-vc-drag-handle {
   cursor: grab;
   touch-action: none;
-  user-select: none;
 }
 
 .mc-vc-drag-handle:active {
@@ -273,6 +278,15 @@
   position: absolute;
   inset: 0;
   background: #000;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.mc-vc-main,
+.mc-vc-pip,
+.mc-vc-overlay.is-visible .mc-vc-overlay-card,
+.mc-vc-waiting-card__inner {
+  pointer-events: auto;
 }
 
 .mc-vc-main {
@@ -482,7 +496,9 @@ body.role-patient .mc-vc-main {
   bottom: 0;
   left: 0;
   right: 0;
-  z-index: 30;
+  z-index: 40;
+  isolation: isolate;
+  pointer-events: auto;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -508,6 +524,9 @@ body.role-patient .mc-vc-main {
   border: 1px solid var(--mc-vc-glass-border);
   backdrop-filter: blur(14px);
   box-shadow: 0 12px 40px rgba(0, 0, 0, 0.35);
+  pointer-events: auto;
+  position: relative;
+  z-index: 1;
 }
 
 .mc-vc-btn {
@@ -523,6 +542,10 @@ body.role-patient .mc-vc-main {
   background: #334155;
   transition: background 0.18s ease, transform 0.15s ease;
   flex-shrink: 0;
+  touch-action: manipulation;
+  user-select: none;
+  -webkit-user-select: none;
+  pointer-events: auto;
 }
 
 .mc-vc-btn:hover {
@@ -552,8 +575,11 @@ body.role-patient .mc-vc-main {
   font-size: 13px;
   background: var(--mc-vc-danger);
   position: relative;
-  z-index: 31;
+  z-index: 41;
   pointer-events: auto;
+  touch-action: manipulation;
+  user-select: none;
+  -webkit-user-select: none;
 }
 
 .mc-vc-btn--end:disabled {
@@ -649,8 +675,11 @@ body.embedded-shell .mc-vc-top-actions {
 }
 
 /* Patient embedded in portal shell — parent toolbar owns mic/camera/leave */
-body.embedded-shell.role-patient .mc-vc-controls {
+body.embedded-shell.role-patient .mc-vc-controls,
+body.shell-embedded-patient .mc-vc-controls {
   display: none !important;
+  pointer-events: none !important;
+  visibility: hidden !important;
 }
 
 body.embedded-shell .compact-hint {

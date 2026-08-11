@@ -517,7 +517,7 @@ if (session_status() === PHP_SESSION_ACTIVE) {
 
   <div id="extendToast" class="extend-toast" role="status" aria-live="polite"></div>
 
-  <div id="mcVideoConsultRoot" class="mc-vc-root mc-vc-drag-handle" aria-label="Video consultation">
+  <div id="mcVideoConsultRoot" class="mc-vc-root" aria-label="Video consultation">
     <header class="mc-vc-header" id="mcVcHeader">
       <div class="mc-vc-participant" id="mcVcRemoteParticipant">
         <div class="mc-vc-avatar" aria-hidden="true"><?= $is_patient ? htmlspecialchars($provider_initials) : htmlspecialchars($patient_initials) ?></div>
@@ -1570,6 +1570,10 @@ if (session_status() === PHP_SESSION_ACTIVE) {
     }
 
     const embeddedInSession = window.parent && window.parent !== window;
+    if (embeddedInSession) {
+      document.body.classList.add('embedded-shell');
+      if (isPatient) document.body.classList.add('shell-embedded-patient');
+    }
     const consultMeta = {
       providerName: <?= json_encode($provider_name) ?>,
       providerSpecialty: <?= json_encode($provider_specialty) ?>,
@@ -2417,18 +2421,32 @@ if (session_status() === PHP_SESSION_ACTIVE) {
     bindMediaPermissionButtons();
     setupSessionNavigationUi();
     initConsultationUi();
+    function bindLeaveButton(el) {
+      if (!el || el.dataset.leaveBound) return;
+      el.dataset.leaveBound = '1';
+      let leaveBusy = false;
+      let lastTrigger = 0;
+      const triggerLeave = (event) => {
+        if (event) {
+          event.preventDefault();
+          event.stopPropagation();
+        }
+        const now = Date.now();
+        if (leaveBusy || (now - lastTrigger) < 500) return;
+        lastTrigger = now;
+        leaveBusy = true;
+        Promise.resolve(endCall()).finally(() => {
+          window.setTimeout(() => { leaveBusy = false; }, 600);
+        });
+      };
+      el.addEventListener('click', triggerLeave);
+    }
+
     window.toggleAudio = toggleAudio;
     window.toggleVideo = toggleVideo;
     window.endCall = endCall;
     window.leaveCallFast = leaveCallFast;
-    const endCallBtnEl = document.getElementById('endCallBtn');
-    if (endCallBtnEl) {
-      endCallBtnEl.addEventListener('click', (event) => {
-        event.preventDefault();
-        event.stopPropagation();
-        endCall();
-      });
-    }
+    bindLeaveButton(document.getElementById('endCallBtn'));
     dismissBootLoader();
     setupDemoBus();
     setupWebrtcEvents();
