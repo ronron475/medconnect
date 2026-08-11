@@ -2748,7 +2748,13 @@ window.addEventListener('message', (event) => {
 
     if (event.data.type === 'medconnect:maximize-video') {
         if (window.McSessionVideoShell && McSessionVideoShell.isActive()) {
-            McSessionVideoShell.maximize();
+            const st = McSessionVideoShell.getState();
+            const dock = document.getElementById('mcProviderVideoDock');
+            if (st && st.mode === 'fullscreen' && dock) {
+                McSessionVideoShell.dock(dock);
+            } else {
+                McSessionVideoShell.maximize();
+            }
         } else {
             maximizeVideoShell();
         }
@@ -2905,6 +2911,10 @@ window.addEventListener('load', () => {
     if (existingToken) {
         mcProviderOpenVideo(existingToken, <?= $consultation_id ?>);
     }
+});
+
+window.addEventListener('medconnect:video-shell-scroll-away', () => {
+    scrollToClinicalSupport();
 });
 
 // EXTEND SESSION

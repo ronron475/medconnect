@@ -96,6 +96,37 @@
     });
   }
 
+  function getOrCreateRemoteStream(call) {
+    if (!call) return null;
+    if (!call._mcRemoteStream) {
+      call._mcRemoteStream = new MediaStream();
+    }
+    return call._mcRemoteStream;
+  }
+
+  function mergeRemoteTrack(call, track) {
+    if (!call || !track) return null;
+    var stream = getOrCreateRemoteStream(call);
+    var exists = stream.getTracks().some(function (t) { return t.id === track.id; });
+    if (!exists) {
+      try { track.enabled = true; } catch (e) {}
+      stream.addTrack(track);
+    }
+    return stream;
+  }
+
+  function logLocalTrackState(stream, context) {
+    if (!stream || !stream.getTracks) return;
+    stream.getTracks().forEach(function (track) {
+      if (typeof console === 'undefined' || !console.debug) return;
+      console.debug('[McWebrtcPeerCall] local ' + track.kind + ' track', context || '', {
+        enabled: track.enabled,
+        readyState: track.readyState,
+        muted: track.muted,
+      });
+    });
+  }
+
   /** ZIP: addRemoteVideo — attach remote stream via McVideoCallCore or #remoteVideo */
   function addRemoteVideo(stream) {
     if (!stream) return;
@@ -156,6 +187,7 @@
       if (audioTrack && !userMicMuted) {
         try { audioTrack.enabled = true; } catch (e) {}
       }
+      logLocalTrackState(stream, 'setLocalStream');
       addLocalVideo(stream);
     }
   }
@@ -337,6 +369,11 @@
 
     pc.addEventListener('track', function (ev) {
       var stream = (ev.streams && ev.streams[0]) || null;
+      if (!stream && ev.track) {
+        stream = mergeRemoteTrack(call, ev.track);
+      } else if (stream && ev.track) {
+        mergeRemoteTrack(call, ev.track);
+      }
       if (!stream) return;
       callHasRemoteStream = true;
       addRemoteVideo(stream);
@@ -350,8 +387,12 @@
     callHasRemoteStream = true;
     clearRecoveryTimers();
     reconnectAttempts = 0;
-    addRemoteVideo(remoteStream);
-    emit('remote-stream', { stream: remoteStream, call: call, peer: call.peer });
+    remoteStream.getTracks().forEach(function (track) {
+      mergeRemoteTrack(call, track);
+    });
+    var merged = getOrCreateRemoteStream(call);
+    addRemoteVideo(merged || remoteStream);
+    emit('remote-stream', { stream: merged || remoteStream, call: call, peer: call.peer });
   }
 
   function handleCall(call) {
@@ -437,6 +478,7 @@
     }
 
     outboundCallInFlight = true;
+    logLocalTrackState(myStream, 'makeCall');
     var call = null;
     try {
       call = peer.call(receiverId, myStream);
@@ -520,6 +562,10 @@
     if (typeof options.onRecreate === 'function') config.onRecreate = options.onRecreate;
     if (typeof options.onNeedsRedial === 'function') config.onNeedsRedial = options.onNeedsRedial;
 
+    if (!config.useAutoPeerId && peer && peerReady && !peer.destroyed && myPeerJsId === userId) {
+      return peer;
+    }
+
     destroyPeer();
 
     peer = config.useAutoPeerId
@@ -569,6 +615,14 @@
     options = options || {};
     clearRecoveryTimers();
     if (currentCall) {
+      if (currentCall._mcRemoteStream) {
+        try {
+          currentCall._mcRemoteStream.getTracks().forEach(function (t) {
+            try { currentCall._mcRemoteStream.removeTrack(t); } catch (e) {}
+          });
+        } catch (e) {}
+        currentCall._mcRemoteStream = null;
+      }
       try { currentCall.close(); } catch (e) {}
       currentCall = null;
       global.__mcCurrentCall = null;

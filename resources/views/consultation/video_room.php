@@ -651,7 +651,7 @@ if (session_status() === PHP_SESSION_ACTIVE) {
     <!-- Hidden video elements (mounted into main/PiP slots by UI module) -->
     <video id="localVideo" autoplay muted playsinline style="display:none"></video>
     <video id="remoteVideo" autoplay playsinline style="display:none"></video>
-    <button type="button" id="enableSoundBtn" class="mc-vc-enable-sound enable-sound-btn" hidden>ðŸ”Š Tap to enable sound</button>
+    <button type="button" id="enableSoundBtn" class="mc-vc-enable-sound enable-sound-btn" hidden>🔊 Enable Audio</button>
     <span id="remoteName" hidden><?= htmlspecialchars($other_name) ?></span>
 
     <div class="mc-vc-controls" id="mcVcControls">
@@ -1037,8 +1037,12 @@ if (session_status() === PHP_SESSION_ACTIVE) {
       }
     }
 
+    let peerInitialized = false;
+
     function createPeer() {
       if (!window.McWebrtcPeerCall) return;
+      if (peerInitialized && McWebrtcPeerCall.isReady()) return;
+      peerInitialized = true;
       McWebrtcPeerCall.init(demoMode ? undefined : peerId, {
         peerOptions: peerOptions,
         useAutoPeerId: demoMode,
@@ -1283,11 +1287,10 @@ if (session_status() === PHP_SESSION_ACTIVE) {
     function setCallPhase(statusKey, overrides = {}) {
       if (window.McVideoCallCore) {
         window.McVideoCallCore.setCallPhase(userRole, statusKey, Object.assign({ stream: localStream }, overrides));
-        return;
-      }
-      if (overrides.callStatusText) {
+      } else if (overrides.callStatusText) {
         document.getElementById('callStatus').textContent = overrides.callStatusText;
       }
+      notifyParentCallState(statusKey, overrides);
     }
 
     function unlockRemoteAudio() {
@@ -1648,6 +1651,7 @@ if (session_status() === PHP_SESSION_ACTIVE) {
 
       hideMediaPermissionGate();
       await startCallWithStream();
+      unlockRemoteAudio().catch(() => {});
     }
 
     function bindMediaPermissionButtons() {
@@ -1684,6 +1688,24 @@ if (session_status() === PHP_SESSION_ACTIVE) {
       if (embeddedInSession) {
         window.parent.postMessage(payload, window.location.origin);
       }
+    }
+
+    function notifyParentCallState(statusKey, overrides) {
+      if (!embeddedInSession || userRole !== 'provider') return;
+      const STATUS = window.McVideoCallCore ? window.McVideoCallCore.STATUS : {};
+      const connected = statusKey === 'connected' || statusKey === STATUS.CONNECTED;
+      const reconnecting = statusKey === 'reconnecting' || statusKey === STATUS.RECONNECTING;
+      let label = '● Connecting…';
+      if (connected) label = '● LIVE';
+      else if (reconnecting) label = '● Reconnecting…';
+      else if (statusKey === STATUS.WAITING_PATIENT || statusKey === 'waiting_patient') label = '● Waiting for patient';
+      else if (statusKey === STATUS.ENDED || statusKey === 'ended') label = '● Ended';
+      notifyParent({
+        type: 'medconnect:call-state',
+        statusLabel: label,
+        connected: connected,
+        timerActive: connected,
+      });
     }
 
     function setupSessionNavigationUi() {
@@ -2327,6 +2349,7 @@ if (session_status() === PHP_SESSION_ACTIVE) {
         McWebrtcPeerCall.setIntentionalLeave(true);
         McWebrtcPeerCall.destroy();
       }
+      peerInitialized = false;
 
       setCallPhase(window.McVideoCallCore ? window.McVideoCallCore.STATUS.ENDED : 'ended', {
         callStatusText: 'Consultation Ended',
@@ -2507,9 +2530,6 @@ if (session_status() === PHP_SESSION_ACTIVE) {
         document.body.classList.add('compact-mode');
         const compactBtn = document.getElementById('compactModeBtn');
         if (compactBtn) compactBtn.textContent = 'Full view';
-        if (window.matchMedia && window.matchMedia('(max-width: 720px)').matches) {
-          notifyParent({ type: 'medconnect:minimize-video', token: roomToken });
-        }
       }
     }
 

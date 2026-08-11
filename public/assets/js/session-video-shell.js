@@ -306,6 +306,10 @@
   function minimize() {
     const shell = shellEl();
     if (!shell) return;
+    if (shell.classList.contains('is-docked')) {
+      global.dispatchEvent(new CustomEvent('medconnect:video-shell-scroll-away', { detail: readState() }));
+      return;
+    }
     setMode('pip');
     if (!shell.style.left) {
       shell.style.right = '16px';
@@ -356,6 +360,10 @@
     if (isVideoRoomPage()) return;
     const st = readState();
     if (!st || !st.token) return;
+    const onProviderSession = /\/views\/provider\/consultation_session\.php/i.test(global.location.pathname || '');
+    if (onProviderSession && st.mode === 'docked') {
+      return;
+    }
     const frame = frameEl();
     const alreadyLoaded = frame && frame.src && frame.src.indexOf(st.token) >= 0 && frame.src !== 'about:blank';
     open(st.token, st.consultationId, {
@@ -371,6 +379,11 @@
     if (!type || !String(type).startsWith('medconnect:')) return;
 
     if (type === 'medconnect:minimize-video') {
+      const shell = shellEl();
+      if (shell && shell.classList.contains('is-docked')) {
+        global.dispatchEvent(new CustomEvent('medconnect:video-shell-scroll-away', { detail: readState() }));
+        return;
+      }
       minimize();
       return;
     }

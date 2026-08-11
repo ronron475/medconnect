@@ -666,6 +666,18 @@ body.embedded-shell.role-provider .mc-vc-root {
   position: relative;
   height: 100%;
   min-height: 220px;
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+body.embedded-shell.role-provider .mc-vc-header {
+  min-height: 44px;
+  padding: 6px 10px;
+}
+
+body.embedded-shell.role-provider .mc-vc-controls {
+  position: relative;
+  flex-shrink: 0;
 }
 
 body.embedded-shell .mc-vc-top-actions {
