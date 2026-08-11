@@ -51,6 +51,8 @@ final class GisDashboardService
     public function ensureSchema(): void
     {
         if ($this->tableExists('patient_locations')) {
+            $this->ensureBarangayReferenceData();
+
             return;
         }
 
@@ -94,6 +96,21 @@ final class GisDashboardService
                 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
             ");
         }
+
+        $this->ensureBarangayReferenceData();
+    }
+
+    private function ensureBarangayReferenceData(): void
+    {
+        $barangaysPath = $this->appBasePath() . '/app/includes/barangays_bago.php';
+        if (!is_file($barangaysPath)) {
+            return;
+        }
+
+        require_once $barangaysPath;
+        if (function_exists('barangays_ensure_bago_city')) {
+            barangays_ensure_bago_city($this->pdo);
+        }
     }
 
     public function syncMissingLocations(): void
@@ -125,11 +142,9 @@ final class GisDashboardService
         ");
 
         while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
-            $coords = $this->resolveCoordinates(
+            $coords = $this->resolveBarangayCoordinates(
                 (string) ($row['barangay'] ?? ''),
-                (string) ($row['city_municipality'] ?? ''),
-                null,
-                null
+                (string) ($row['city_municipality'] ?? 'Bago City')
             );
             $insert->execute([
                 (int) $row['patient_id'],
@@ -151,30 +166,118 @@ final class GisDashboardService
         string $barangay,
         string $city,
         ?float $latitude,
-        ?float $longitude
+        ?float $longitude,
+        ?string $storedSource = null
     ): array {
+        return $this->resolvePatientLocation($barangay, $city, $latitude, $longitude, $storedSource);
+    }
+
+    /**
+     * Resolve map coordinates for a patient without inventing random offsets.
+     *
+     * @return array{lat: float, lng: float, source: string}
+     */
+    public function resolvePatientLocation(
+        string $barangay,
+        string $city,
+        ?float $latitude,
+        ?float $longitude,
+        ?string $storedSource = null
+    ): array {
+        $source = $this->normalizeLocationSource($storedSource);
+
         if ($latitude !== null && $longitude !== null && $this->validCoordinate($latitude, $longitude)) {
-            return ['lat' => $latitude, 'lng' => $longitude, 'source' => 'gps'];
+            if (in_array($source, ['gps', 'manual', 'imported'], true)) {
+                return ['lat' => $latitude, 'lng' => $longitude, 'source' => $source];
+            }
+
+            return ['lat' => $latitude, 'lng' => $longitude, 'source' => 'barangay_centroid'];
         }
 
-        if ($this->tableExists('barangays') && $barangay !== '') {
+        return $this->resolveBarangayCoordinates($barangay, $city);
+    }
+
+    /**
+     * @return array{lat: float, lng: float, source: string}
+     */
+    public function resolveBarangayCoordinates(string $barangay, string $city = 'Bago City'): array
+    {
+        require_once $this->appBasePath() . '/app/core/BagoBarangayCentroids.php';
+
+        $canonical = BagoBarangayCentroids::canonicalName($barangay);
+        $lookupName = $canonical ?? trim($barangay);
+
+        if ($this->tableExists('barangays') && $lookupName !== '') {
+            $activeClause = $this->columnExists('barangays', 'is_active') ? ' AND is_active = 1' : '';
             $stmt = $this->pdo->prepare(
-                'SELECT latitude, longitude FROM barangays WHERE LOWER(name) = LOWER(?) LIMIT 1'
+                'SELECT latitude, longitude, name
+                 FROM barangays
+                 WHERE (
+                    LOWER(name) = LOWER(?)
+                    OR LOWER(REPLACE(name, \' \', \'\')) = LOWER(REPLACE(?, \' \', \'\'))
+                 )
+                 AND (city = ? OR city LIKE ?)' . $activeClause . '
+                 LIMIT 1'
             );
-            $stmt->execute([preg_replace('/\s*\(Pob\.?\)\s*/i', '', $barangay)]);
+            $stmt->execute([$lookupName, $lookupName, $city, 'Bago%']);
             $row = $stmt->fetch(PDO::FETCH_ASSOC);
             if ($row && $row['latitude'] !== null && $row['longitude'] !== null) {
-                return [
-                    'lat'  => (float) $row['latitude'],
-                    'lng'  => (float) $row['longitude'],
-                    'source' => 'barangay_centroid',
-                ];
+                $lat = (float) $row['latitude'];
+                $lng = (float) $row['longitude'];
+                if ($this->validCoordinate($lat, $lng)) {
+                    return [
+                        'lat'    => $lat,
+                        'lng'    => $lng,
+                        'source' => 'barangay_centroid',
+                    ];
+                }
             }
         }
 
         $centroid = BagoBarangayCentroids::resolve($barangay, $city);
 
-        return ['lat' => $centroid['lat'], 'lng' => $centroid['lng'], 'source' => 'barangay_centroid'];
+        return [
+            'lat'    => $centroid['lat'],
+            'lng'    => $centroid['lng'],
+            'source' => 'barangay_centroid',
+        ];
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    public function getMapConfig(): array
+    {
+        require_once $this->appBasePath() . '/app/core/BagoBarangayCentroids.php';
+        $config = BagoBarangayCentroids::mapConfig();
+
+        return [
+            'center'       => $config['center'],
+            'bounds'       => $config['bounds'],
+            'default_zoom' => (int) ($config['default_zoom'] ?? 12),
+            'min_zoom'     => 11,
+            'city'         => (string) ($config['city'] ?? 'Bago City'),
+            'province'     => (string) ($config['province'] ?? 'Negros Occidental'),
+        ];
+    }
+
+    private function normalizeLocationSource(?string $source): string
+    {
+        $source = strtolower(trim((string) $source));
+        if (in_array($source, ['gps', 'manual', 'imported', 'barangay_centroid'], true)) {
+            return $source;
+        }
+
+        return 'barangay_centroid';
+    }
+
+    private function parseCoordinate(mixed $value): ?float
+    {
+        if ($value === null || $value === '') {
+            return null;
+        }
+
+        return is_numeric($value) ? (float) $value : null;
     }
 
     /**
@@ -313,15 +416,17 @@ final class GisDashboardService
         $rows = $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
 
         foreach ($rows as &$row) {
-            $coords = $this->resolveCoordinates(
+            $coords = $this->resolvePatientLocation(
                 (string) ($row['barangay'] ?? ''),
-                (string) ($row['municipality'] ?? ''),
-                isset($row['latitude']) ? (float) $row['latitude'] : null,
-                isset($row['longitude']) ? (float) $row['longitude'] : null
+                (string) ($row['municipality'] ?? 'Bago City'),
+                $this->parseCoordinate($row['latitude'] ?? null),
+                $this->parseCoordinate($row['longitude'] ?? null),
+                isset($row['location_source']) ? (string) $row['location_source'] : null
             );
             $row['latitude'] = $coords['lat'];
             $row['longitude'] = $coords['lng'];
-            $row['location_source'] = $row['location_source'] ?: $coords['source'];
+            $row['location_source'] = $coords['source'];
+            $row['location_accuracy'] = $coords['source'];
             $row['triage_level'] = $this->normalizeStoredTriageLevel((string) ($row['triage_level'] ?? ''));
             $row['is_emergency'] = $row['triage_level'] === 'emergency';
             $row['registration_date_display'] = !empty($row['registration_date'])
@@ -457,9 +562,15 @@ final class GisDashboardService
         string $source = 'gps'
     ): void {
         $this->ensureSchema();
-        $coords = $this->resolveCoordinates($barangay, $city, $latitude, $longitude);
+
         if ($latitude !== null && $longitude !== null && $this->validCoordinate($latitude, $longitude)) {
-            $coords = ['lat' => $latitude, 'lng' => $longitude, 'source' => $source];
+            $coords = [
+                'lat'    => $latitude,
+                'lng'    => $longitude,
+                'source' => $this->normalizeLocationSource($source),
+            ];
+        } else {
+            $coords = $this->resolveBarangayCoordinates($barangay, $city);
         }
 
         $stmt = $this->pdo->prepare("

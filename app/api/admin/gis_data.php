@@ -73,6 +73,7 @@ try {
                 'patients'     => $gis->getPatientRecords($filters),
                 'analytics'    => $gis->getAnalytics(),
                 'triage_stats' => $gis->getTriageStats(),
+                'map_config'   => $gis->getMapConfig(),
                 'server_ts'    => date('c'),
             ];
             break;

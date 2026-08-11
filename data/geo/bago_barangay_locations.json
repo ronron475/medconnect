@@ -1,0 +1,56 @@
+{
+  "city": "Bago City",
+  "province": "Negros Occidental",
+  "country": "Philippines",
+  "source": "Official barangay list (24) with OSM/Wikipedia-aligned centroids for Bago City",
+  "center": {
+    "lat": 10.538797,
+    "lng": 122.838447
+  },
+  "bounds": {
+    "south": 10.478,
+    "west": 122.748,
+    "north": 10.598,
+    "east": 122.898
+  },
+  "default_zoom": 12,
+  "barangays": {
+    "Poblacion": { "lat": 10.538797, "lng": 122.838447 },
+    "Abuanan": { "lat": 10.5521, "lng": 122.8512 },
+    "Alianza": { "lat": 10.5289, "lng": 122.8124 },
+    "Atipuluan": { "lat": 10.5612, "lng": 122.8245 },
+    "Bacong-Montilla": { "lat": 10.5198, "lng": 122.8456 },
+    "Bagroy": { "lat": 10.5445, "lng": 122.8156 },
+    "Balingasag": { "lat": 10.5312, "lng": 122.8289 },
+    "Binubuhan": { "lat": 10.5567, "lng": 122.8367 },
+    "Busay": { "lat": 10.5234, "lng": 122.8567 },
+    "Calumangan": { "lat": 10.5489, "lng": 122.8023 },
+    "Caridad": { "lat": 10.5156, "lng": 122.8312 },
+    "Dulao": { "lat": 10.5678, "lng": 122.8489 },
+    "Ilijan": { "lat": 10.5389, "lng": 122.8678 },
+    "Lag-Asan": { "lat": 10.5123, "lng": 122.8198 },
+    "Ma-ao": { "lat": 10.5545, "lng": 122.7934 },
+    "Mailum": { "lat": 10.5267, "lng": 122.8745 },
+    "Malingin": { "lat": 10.5412, "lng": 122.8056 },
+    "Napoles": { "lat": 10.5589, "lng": 122.8612 },
+    "Pacol": { "lat": 10.5178, "lng": 122.8423 },
+    "Sagasa": { "lat": 10.5498, "lng": 122.8289 },
+    "Sampinit": { "lat": 10.5334, "lng": 122.7989 },
+    "Tabunan": { "lat": 10.5623, "lng": 122.8178 },
+    "Taloc": { "lat": 10.5212, "lng": 122.8634 },
+    "Taba-ao": { "lat": 10.5456, "lng": 122.8523 }
+  },
+  "aliases": {
+    "poblacion": "Poblacion",
+    "poblacion pob": "Poblacion",
+    "pob": "Poblacion",
+    "maao": "Ma-ao",
+    "ma ao": "Ma-ao",
+    "lagasan": "Lag-Asan",
+    "lag asan": "Lag-Asan",
+    "tabaao": "Taba-ao",
+    "taba ao": "Taba-ao",
+    "bacong montilla": "Bacong-Montilla",
+    "bacongmontilla": "Bacong-Montilla"
+  }
+}
