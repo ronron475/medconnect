@@ -17,6 +17,7 @@ require_once BASE_PATH . '/app/includes/patient_consultation_records.php';
 require_once BASE_PATH . '/app/includes/clinical_tables.php';
 require_once BASE_PATH . '/app/includes/clinical_note_signature.php';
 require_once BASE_PATH . '/app/includes/consultation_video_history.php';
+$GLOBALS['pdo'] = $pdo;
 
 clinical_tables_ensure($pdo);
 patient_consultation_records_schema_ensure($pdo);
@@ -221,7 +222,7 @@ $patient_page_stylesheets = [
 
     <?php if (!$isFinalized): ?>
       <div class="pmh-detail__pending">
-        <p>Your consultation is still being documented by your provider.</p>
+        <p>Provider documentation is still in progress.</p>
         <p class="text-muted">Released notes, diagnosis, and prescriptions will appear here and in My Health when ready.</p>
       </div>
     <?php else: ?>

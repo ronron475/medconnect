@@ -151,7 +151,25 @@
     document.body.classList.add('mc-tips-ready-modal-open');
   }
 
+  function shouldSuppressCareTipsAutoUi() {
+    try {
+      var path = String(window.location.pathname || '');
+      if (path.indexOf('/consultation_detail.php') !== -1) return true;
+      if (path.indexOf('/consultations.php') !== -1) {
+        var q = String(window.location.search || '');
+        if (q.indexOf('tab=past') !== -1) return true;
+      }
+      if (path.indexOf('/view_recording.php') !== -1) return true;
+      // Returning from recording/history should not reopen care tips.
+      var ref = String(document.referrer || '');
+      if (ref.indexOf('view_recording.php') !== -1) return true;
+      if (ref.indexOf('consultation_detail.php') !== -1) return true;
+    } catch (e) { /* ignore */ }
+    return !!suppressAutoOpen;
+  }
+
   function maybeShowTipsCancelPrompt(prompt) {
+    if (shouldSuppressCareTipsAutoUi()) return;
     if (!prompt || !prompt.upcoming_consultation || !prompt.upcoming_consultation.id) return;
     window.CAN_CANCEL_AFTER_TIPS_APPROVED = true;
     openTipsReadyCancelModal({

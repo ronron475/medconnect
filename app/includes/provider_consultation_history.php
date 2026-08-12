@@ -174,6 +174,8 @@ function provider_consultation_history_patient_detail(PDO $pdo, int $providerId,
                 COALESCE(NULLIF(cn.diagnosis, ''), NULLIF(c.diagnosis, ''), '') AS diagnosis,
                 COALESCE(NULLIF(cn.subjective, ''), c.consult_type, '') AS chief_complaint,
                 cn.id AS clinical_note_id,
+                cn.signature_data AS clinical_note_signature,
+                cn.finalized_at AS clinical_note_finalized_at,
                 s.slot_date,
                 s.start_time,
                 s.end_time
@@ -188,6 +190,7 @@ function provider_consultation_history_patient_detail(PDO $pdo, int $providerId,
         $consultations = $cStmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
 
         require_once __DIR__ . '/provider_clinical_support.php';
+        require_once __DIR__ . '/patient_consultation_records.php';
         consultation_video_history_enrich_rows(
             $pdo,
             $consultations,
@@ -199,6 +202,11 @@ function provider_consultation_history_patient_detail(PDO $pdo, int $providerId,
             if ($cid <= 0) {
                 continue;
             }
+            $consultRow['clinical_note_finalized'] = patient_consultation_is_finalized(
+                (string) ($consultRow['status'] ?? ''),
+                isset($consultRow['clinical_note_signature']) ? (string) $consultRow['clinical_note_signature'] : '',
+                isset($consultRow['clinical_note_finalized_at']) ? (string) $consultRow['clinical_note_finalized_at'] : null
+            );
             $support = provider_consultation_clinical_support($pdo, $cid, $patientId);
             $aiBucket = provider_clinical_support_normalize_bucket((string) ($support['ai_urgency_bucket'] ?? ''));
             $finalBucket = provider_clinical_support_normalize_bucket((string) ($support['risk_bucket'] ?? 'unknown'));

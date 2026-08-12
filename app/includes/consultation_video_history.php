@@ -40,13 +40,21 @@ function consultation_format_video_duration(?string $startedAt, ?string $endedAt
  */
 function consultation_video_recording_view_url(int $consultationId): string
 {
-    if ($consultationId <= 0 || !isset($GLOBALS['pdo']) || !($GLOBALS['pdo'] instanceof PDO)) {
+    if ($consultationId <= 0) {
         return '';
     }
-    $row = consultation_video_session_row($GLOBALS['pdo'], $consultationId);
+    $pdo = null;
+    if (isset($GLOBALS['pdo']) && $GLOBALS['pdo'] instanceof PDO) {
+        $pdo = $GLOBALS['pdo'];
+    }
+    if (!$pdo) {
+        return '';
+    }
+    $row = consultation_video_session_row($pdo, $consultationId);
     if (!$row) {
         return '';
     }
+    // Only expose the authorized player URL when a real file exists.
     $rel = consultation_video_recording_public_path(
         (string) ($row['recording_path'] ?? ''),
         (string) ($row['recording_url'] ?? '')
@@ -55,7 +63,7 @@ function consultation_video_recording_view_url(int $consultationId): string
         return '';
     }
     $base = defined('ASSET_BASE') ? (string) ASSET_BASE : '';
-    return rtrim($base, '/') . '/' . ltrim($rel, '/');
+    return rtrim($base, '/') . '/app/api/consultations/view_recording.php?consultation_id=' . $consultationId;
 }
 
 function consultation_video_recording_public_path(?string $recordingPath, ?string $recordingUrl = null): string

@@ -66,6 +66,36 @@ $stmt->execute([$token]);
 $session = $stmt->fetch();
 
 if (!$session) {
+    // Token may belong to an ended room — never restart WebRTC for completed sessions.
+    $endedStmt = $pdo->prepare("
+        SELECT vs.status AS video_status, c.id AS consultation_id, c.status AS consult_status,
+               c.patient_id, c.provider_id
+        FROM video_sessions vs
+        JOIN consultations c ON c.id = vs.consultation_id
+        WHERE vs.room_token = ?
+        LIMIT 1
+    ");
+    $endedStmt->execute([$token]);
+    $ended = $endedStmt->fetch(PDO::FETCH_ASSOC);
+    if ($ended) {
+        $isOwner = ($role === 'patient' && (int) $uid === (int) ($ended['patient_id'] ?? 0))
+            || ($role === 'provider' && (int) $uid === (int) ($ended['provider_id'] ?? 0));
+        http_response_code(403);
+        header('Content-Type: text/html; charset=utf-8');
+        $historyUrl = $role === 'patient'
+            ? (ASSET_BASE . '/views/patient/consultation_detail.php?id=' . (int) ($ended['consultation_id'] ?? 0) . '&from=sessions')
+            : (ASSET_BASE . '/views/provider/consultation_history.php?patient_id=' . (int) ($ended['patient_id'] ?? 0));
+        echo '<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Consultation ended</title>';
+        echo '<style>body{font-family:system-ui,sans-serif;background:#f4f8fa;color:#012a4a;margin:0;padding:32px 16px} .card{max-width:520px;margin:40px auto;background:#fff;border:1px solid #e2edf1;border-radius:14px;padding:24px;box-shadow:0 8px 24px rgba(1,42,74,.06)} h1{font-size:1.25rem;margin:0 0 10px} p{color:#608395;line-height:1.55} a{display:inline-flex;margin-top:14px;padding:10px 14px;border-radius:10px;background:#018a93;color:#fff;text-decoration:none;font-weight:700}</style></head><body><div class="card">';
+        echo '<h1>This consultation has already ended</h1>';
+        echo '<p>This consultation has already ended. You can only view its historical record.</p>';
+        echo '<p>The live video room cannot be restarted or rejoined.</p>';
+        if ($isOwner) {
+            echo '<a href="' . htmlspecialchars($historyUrl) . '">View historical record</a>';
+        }
+        echo '</div></body></html>';
+        exit;
+    }
     die('Invalid or expired consultation link.');
 }
 

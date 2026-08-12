@@ -162,10 +162,18 @@ function queue_session_access(array $item): array
         ];
     }
 
-    if (in_array($ctx['status'], ['completed', 'cancelled'], true)) {
+    if ($ctx['status'] === 'completed') {
         return [
             'allowed'         => false,
-            'reason'          => 'This consultation is already ' . ucwords(str_replace('_', ' ', $ctx['status'])) . '.',
+            'reason'          => 'This consultation has already ended. You can only view its historical record.',
+            'scheduled_label' => $ctx['scheduled_label'],
+        ];
+    }
+
+    if ($ctx['status'] === 'cancelled') {
+        return [
+            'allowed'         => false,
+            'reason'          => 'This consultation is already Cancelled.',
             'scheduled_label' => $ctx['scheduled_label'],
         ];
     }
@@ -229,6 +237,15 @@ function consultation_patient_join_access(array $item): array
     $ctx        = queue_session_context($item);
     $room_token = trim((string) ($item['room_token'] ?? ''));
 
+    if ($ctx['status'] === 'completed') {
+        return [
+            'allowed'         => false,
+            'mode'            => 'ended',
+            'reason'          => 'This consultation has already ended. You can only view its historical record.',
+            'scheduled_label' => $ctx['scheduled_label'],
+        ];
+    }
+
     // Best practice: patient may join ONLY after provider started the live room.
     if ($ctx['status'] === 'in_consultation' && $room_token !== '') {
         return [
@@ -286,6 +303,14 @@ function consultation_patient_join_access(array $item): array
 function consultation_video_room_access(array $item): array
 {
     $ctx = queue_session_context($item);
+
+    if ($ctx['status'] === 'completed') {
+        return [
+            'allowed'         => false,
+            'reason'          => 'This consultation has already ended. You can only view its historical record.',
+            'scheduled_label' => $ctx['scheduled_label'],
+        ];
+    }
 
     if ($ctx['status'] === 'in_consultation') {
         return [

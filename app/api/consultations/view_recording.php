@@ -75,7 +75,7 @@ $allowed = ($role === 'provider' && $uid === (int) ($row['provider_id'] ?? 0))
     || ($role === 'patient' && $uid === (int) ($row['patient_id'] ?? 0));
 if (!$allowed) {
     http_response_code(403);
-    echo 'You are not authorized to view this recording.';
+    echo 'Access denied.';
     exit;
 }
 
@@ -105,7 +105,7 @@ if ($stream) {
     exit;
 }
 
-$streamUrl = consultation_video_recording_view_url($consultationId) . '&stream=1';
+$streamUrl = ASSET_BASE . '/app/api/consultations/view_recording.php?consultation_id=' . $consultationId . '&stream=1';
 $patientName = trim((string) ($row['patient_name'] ?? '')) ?: 'Patient';
 $providerName = trim((string) ($row['provider_name'] ?? '')) ?: 'Provider';
 if (!preg_match('/^dr\.?\s/i', $providerName)) {
@@ -125,8 +125,8 @@ if (!empty($row['started_at']) && strtotime((string) $row['started_at'])) {
     }
 }
 $backUrl = $role === 'patient'
-    ? ASSET_BASE . '/views/patient/consultation_detail.php?id=' . $consultationId
-    : ASSET_BASE . '/views/provider/consultation_session.php?id=' . $consultationId;
+    ? ASSET_BASE . '/views/patient/consultation_detail.php?id=' . $consultationId . '&from=sessions'
+    : ASSET_BASE . '/views/provider/consultation_history.php?patient_id=' . (int) ($row['patient_id'] ?? 0);
 $logoUrl = ASSET_BASE . '/assets/img/medcon_logo.png';
 ?>
 <!DOCTYPE html>

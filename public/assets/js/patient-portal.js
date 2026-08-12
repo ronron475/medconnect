@@ -326,7 +326,7 @@
         const viewUrl = APP_BASE + '/views/patient/consultation_detail.php?id=' + encodeURIComponent(String(c.id || '')) + '&from=sessions';
         actionBtn =
           '<div class="psess-card__actions">' +
-          '<a href="' + viewUrl + '" class="psess-btn psess-btn--primary">View Session</a>' +
+          '<a href="' + viewUrl + '" class="psess-btn psess-btn--primary">View Consultation</a>' +
           '</div>';
       }
 
@@ -407,12 +407,17 @@
         }
       }
 
+      const consultIdLine = type === 'past' && c.id
+        ? '<p class="psess-card__type">Consultation #' + escapeHtml(String(c.id)) + '</p>'
+        : '';
+
       container.innerHTML +=
         '<article class="psess-card' + cardMod + '" data-consult-id="' + (c.id || '') + '">' +
         '<div class="psess-card__main">' +
         '<div class="psess-card__avatar">' + providerInitials(c.provider_name) + '</div>' +
         '<div class="psess-card__info">' +
         '<h3>' + escapeHtml(c.provider_name || 'Healthcare Provider') + '</h3>' +
+        consultIdLine +
         '<p class="psess-card__type">' + typeLine + '</p>' +
         '<p class="psess-card__datetime">' +
         '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/></svg>' +

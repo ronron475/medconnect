@@ -57,6 +57,18 @@ try {
         exit;
     }
 
+    $consultStatus = strtolower(trim((string) ($consultation['status'] ?? '')));
+    if ($consultStatus === 'completed') {
+        ob_end_clean();
+        echo json_encode([
+            'success' => false,
+            'message' => 'This consultation has already ended. You can only view its historical record.',
+            'code'    => 'consultation_ended',
+            'mode'    => 'ended',
+        ]);
+        exit;
+    }
+
     $join = consultation_patient_join_access($consultation);
     if (!$join['allowed']) {
         ob_end_clean();
