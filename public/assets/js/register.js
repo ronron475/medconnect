@@ -521,7 +521,7 @@ const step2Rules = {
     if (window.MCPhoneValidation) return window.MCPhoneValidation.validatePhone(v);
     const digits = (v || '').replace(/\D/g, '');
     if (!digits) return 'Contact number is required.';
-    if (digits.length !== 11) return 'Phone number must be exactly 11 digits (e.g. 09171234567).';
+    if (digits.length !== 11) return 'Contact number must be exactly 11 digits.';
     if (!/^09\d{9}$/.test(digits)) return 'Enter a valid Philippine mobile number starting with 09.';
     return '';
   },
