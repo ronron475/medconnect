@@ -140,10 +140,10 @@ try {
     // Clinical notes from finalized consultations only
     $s = $pdo->prepare("
         SELECT
-            COALESCE(NULLIF(cn.diagnosis, ''), 'Clinical Note') AS name,
+            COALESCE(NULLIF(cn.diagnosis, ''), 'Consultation health file') AS name,
             DATE(cn.created_at)                                  AS file_date,
             CONCAT(u.first_name, ' ', u.last_name)               AS doctor,
-            'Clinical Note'                                      AS record_type,
+            'Health File'                                        AS record_type,
             cn.assessment                                        AS frequency,
             cn.plan                                              AS duration,
             cn.treatment_plan                                    AS detail

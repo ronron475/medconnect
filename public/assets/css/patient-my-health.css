@@ -419,6 +419,10 @@
   box-shadow: 0 1px 3px rgba(2, 128, 144, 0.05);
 }
 
+.pmh-file-card--highlight {
+  box-shadow: 0 0 0 2px #028090, 0 8px 24px rgba(2, 128, 144, 0.15);
+}
+
 .pmh-feed--files .pmh-file-card:hover {
   transform: translateY(-1px);
   box-shadow: 0 4px 12px rgba(2, 128, 144, 0.1);
@@ -670,6 +674,14 @@
   line-height: 1.45;
 }
 
+.pmh-file-card__soap-list {
+  margin-top: 10px;
+}
+
+.pmh-file-card__link {
+  margin: 12px 0 0;
+}
+
 .pmh-file-card__soap {
   margin: 6px 0 0;
   font-size: 0.8rem;
@@ -821,7 +833,8 @@
 }
 
 .pmh-file-card__badge--prescription { background: #dbeafe; color: #1d4ed8; }
-.pmh-file-card__badge--clinical-note { background: #dcfce7; color: #166534; }
+.pmh-file-card__badge--clinical-note,
+.pmh-file-card__badge--health-file { background: #dcfce7; color: #166534; }
 .pmh-file-card__badge--referral { background: #fef3c7; color: #92400e; }
 
 .pmh-file-card__title {
@@ -1833,6 +1846,9 @@ body.pmh-care-modal-open .pt-remedy__fab {
 
 .pmh-visit__actions {
   margin: 14px 0 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
 }
 
 .pmh-visit__block--full {

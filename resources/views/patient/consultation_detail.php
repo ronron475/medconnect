@@ -171,7 +171,7 @@ $patient_page_stylesheets = [
       </section>
 
       <section class="pmh-detail__section">
-        <h3>SOAP notes</h3>
+        <h3>Health file</h3>
         <dl class="pmh-soap-list">
           <div><dt>Subjective</dt><dd><?= nl2br(htmlspecialchars(trim((string) ($note['subjective'] ?? '')) ?: '—')) ?></dd></div>
           <div><dt>Objective</dt><dd><?= nl2br(htmlspecialchars(trim((string) ($note['objective'] ?? '')) ?: '—')) ?></dd></div>

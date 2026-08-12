@@ -119,26 +119,9 @@ function pmh_note_text(?string $value, string $fallback = ''): string {
           </section>
         </div>
 
-        <details class="pmh-visit__soap-details">
-          <summary class="pmh-visit__soap-summary">Clinical note (SOAP)</summary>
-          <dl class="pmh-soap-list">
-            <?php if (pmh_note_text($note['subjective'] ?? '')): ?>
-            <div><dt>Subjective</dt><dd><?= htmlspecialchars($note['subjective']) ?></dd></div>
-            <?php endif; ?>
-            <?php if (pmh_note_text($note['objective'] ?? '')): ?>
-            <div><dt>Objective</dt><dd><?= htmlspecialchars($note['objective']) ?></dd></div>
-            <?php endif; ?>
-            <?php if (pmh_note_text($note['assessment'] ?? '')): ?>
-            <div><dt>Assessment</dt><dd><?= htmlspecialchars($note['assessment']) ?></dd></div>
-            <?php endif; ?>
-            <?php if (pmh_note_text($note['plan'] ?? '')): ?>
-            <div><dt>Plan</dt><dd><?= htmlspecialchars($note['plan']) ?></dd></div>
-            <?php endif; ?>
-          </dl>
-        </details>
-
         <p class="pmh-visit__actions">
-          <a href="<?= ASSET_BASE ?>/views/patient/consultation_detail.php?id=<?= (int) $cid ?>" class="pmh-btn pmh-btn--primary pmh-btn--sm">View Consultation</a>
+          <a href="<?= ASSET_BASE ?>/views/patient/my_health.php?tab=files#health-file-<?= (int) $cid ?>" class="pmh-btn pmh-btn--primary pmh-btn--sm">View Health File</a>
+          <a href="<?= ASSET_BASE ?>/views/patient/consultation_detail.php?id=<?= (int) $cid ?>" class="pmh-btn pmh-btn--outline pmh-btn--sm">Consultation details</a>
         </p>
         <?php elseif (in_array(strtolower($status), ['in_consultation', 'scheduled', 'pending'], true)): ?>
         <div class="pmh-visit__pending">

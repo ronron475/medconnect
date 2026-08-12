@@ -94,7 +94,7 @@ try {
             'consult_date'    => (string) ($row['consult_date'] ?? ''),
             'consult_type'    => (string) ($row['consult_type'] ?? ''),
             'record_available'=> true,
-            'detail_url'      => patient_consultation_detail_url($cid),
+            'detail_url'      => patient_health_files_url($cid),
             'completed_at'    => (string) ($row['completed_at'] ?? ''),
             'final_case_bucket' => (string) ($outcome['final_case_bucket'] ?? ''),
             'final_case_level'  => (string) ($outcome['final_case_level'] ?? ''),

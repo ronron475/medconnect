@@ -36,11 +36,11 @@
     banner.innerHTML =
       '<div class="pmh-record-banner__body">' +
       '<strong>Consultation completed</strong>' +
-      '<p>Your doctor has finalized your consultation record.</p>' +
+      '<p>Your doctor has finalized your health file. Open My Health → Health Files to view it.</p>' +
       '</div>' +
       '<a class="pmh-btn pmh-btn--primary pmh-record-banner__cta" href="' +
-      (item.detail_url || (APP_BASE + '/views/patient/consultation_detail.php?id=' + item.id)) +
-      '">View Medical Record</a>';
+      (item.detail_url || (APP_BASE + '/views/patient/my_health.php?tab=files#health-file-' + item.id)) +
+      '">View Health Files</a>';
 
     host.appendChild(banner);
 
