@@ -73,6 +73,18 @@ try {
     }
 
     $current_end_ts = strtotime($slot_date . ' ' . $current_end_time);
+    if ($current_end_ts === false) {
+        echo json_encode(['success' => false, 'message' => 'Could not resolve the consultation end time.']);
+        exit;
+    }
+    // Server-side gate: expired slots cannot be revived by client-side timer manipulation.
+    if ($current_end_ts <= time()) {
+        echo json_encode([
+            'success' => false,
+            'message' => 'This consultation slot has already expired and cannot be extended.',
+        ]);
+        exit;
+    }
     $new_end_ts = $current_end_ts + ($extension_mins * 60);
     $new_end_time = date('H:i:s', $new_end_ts);
 

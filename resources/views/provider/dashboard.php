@@ -25,11 +25,22 @@ $week_total = $chart_data['total'];
 $recordings = [];
 try {
     $rec_stmt = $pdo->prepare("
-        SELECT vs.recording_url, vs.ended_at, u.first_name, u.last_name
+        SELECT
+            COALESCE(NULLIF(vs.recording_path, ''), NULLIF(vs.recording_url, '')) AS recording_url,
+            vs.ended_at,
+            u.first_name,
+            u.last_name,
+            c.id AS consultation_id,
+            c.patient_id,
+            c.provider_id
         FROM video_sessions vs
         JOIN consultations c ON vs.consultation_id = c.id
         JOIN users u ON c.patient_id = u.id
-        WHERE c.provider_id = ? AND vs.recording_url IS NOT NULL
+        WHERE c.provider_id = ?
+          AND (
+            (vs.recording_path IS NOT NULL AND vs.recording_path <> '')
+            OR (vs.recording_url IS NOT NULL AND vs.recording_url <> '')
+          )
         ORDER BY vs.ended_at DESC
         LIMIT 5
     ");
