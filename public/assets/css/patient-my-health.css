@@ -689,6 +689,14 @@
   line-height: 1.4;
 }
 
+.pmh-soap-signed {
+  margin: 10px 0 0;
+  font-size: 0.8rem;
+  color: #0f766e;
+  font-weight: 600;
+  line-height: 1.45;
+}
+
 .pmh-rx-list {
   list-style: none;
   margin: 8px 0 0;

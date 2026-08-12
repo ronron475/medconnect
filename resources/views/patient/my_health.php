@@ -16,6 +16,7 @@ require_once BASE_PATH . '/app/includes/patient_portal_bootstrap.php';
 require_once BASE_PATH . '/app/includes/triage_assessment_schema.php';
 require_once BASE_PATH . '/app/includes/patient_consultation_records.php';
 require_once BASE_PATH . '/app/includes/clinical_tables.php';
+require_once BASE_PATH . '/app/includes/clinical_note_signature.php';
 
 clinical_tables_ensure($pdo);
 patient_consultation_records_schema_ensure($pdo);
@@ -67,7 +68,7 @@ if (!empty($history)) {
         try {
             $cnStmt = $pdo->prepare("
                 SELECT cn.consultation_id, cn.subjective, cn.objective, cn.assessment, cn.plan,
-                       cn.diagnosis, cn.treatment_plan, cn.created_at
+                       cn.diagnosis, cn.treatment_plan, cn.signature_name, cn.signed_at, cn.finalized_at, cn.created_at
                 FROM clinical_notes cn
                 JOIN consultations c ON c.id = cn.consultation_id
                 WHERE cn.consultation_id IN ($placeholders)
@@ -122,7 +123,8 @@ try {
                cn.plan AS duration,
                COALESCE(NULLIF(cn.treatment_plan, ''), NULLIF(cn.subjective, ''), '') AS detail,
                cn.subjective, cn.objective, cn.assessment, cn.plan, cn.diagnosis, cn.treatment_plan,
-               DATE(cn.created_at) AS record_date,
+               cn.signature_name, cn.signed_at, cn.finalized_at,
+               DATE(COALESCE(cn.finalized_at, cn.created_at)) AS record_date,
                CONCAT(u.first_name, ' ', u.last_name) AS provider_name
         FROM clinical_notes cn
         JOIN consultations c ON c.id = cn.consultation_id

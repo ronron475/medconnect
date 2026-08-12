@@ -69,13 +69,20 @@ function clinical_tables_ensure(PDO $pdo): void
                 diagnosis TEXT NULL,
                 treatment_plan TEXT NULL,
                 prescription TEXT NULL,
-                signature_data TEXT NULL,
+                signature_data MEDIUMTEXT NULL,
+                signature_method VARCHAR(20) NULL DEFAULT NULL,
+                signature_name VARCHAR(255) NULL DEFAULT NULL,
+                signed_at DATETIME NULL DEFAULT NULL,
+                finalized_at DATETIME NULL DEFAULT NULL,
                 created_at TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP,
                 PRIMARY KEY (id),
                 UNIQUE KEY consultation_id (consultation_id)
             ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
         ");
     } catch (PDOException $e) { /* non-fatal */ }
+
+    require_once __DIR__ . '/clinical_note_signature.php';
+    clinical_note_signature_schema_ensure($pdo);
 
     $done = true;
 }

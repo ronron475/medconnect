@@ -119,6 +119,22 @@ function pmh_note_text(?string $value, string $fallback = ''): string {
             <h4 class="pmh-visit__label">Plan</h4>
             <p><?= nl2br(htmlspecialchars(pmh_note_text($note['plan'] ?? '', $recommendation))) ?></p>
           </section>
+          <?php
+            $signedBy = function_exists('clinical_note_signed_by_label')
+              ? clinical_note_signed_by_label($note, trim((string) (($h['first_name'] ?? '') . ' ' . ($h['last_name'] ?? ''))))
+              : '';
+            $signedAt = function_exists('clinical_note_signed_at_label')
+              ? clinical_note_signed_at_label($note)
+              : '';
+          ?>
+          <?php if ($signedBy !== '' || $signedAt !== ''): ?>
+          <section class="pmh-visit__block pmh-visit__block--full">
+            <p class="pmh-soap-signed">
+              <?php if ($signedBy !== ''): ?><?= htmlspecialchars($signedBy) ?><?php endif; ?>
+              <?php if ($signedAt !== ''): ?><?php if ($signedBy !== ''): ?><br><?php endif; ?><?= htmlspecialchars($signedAt) ?><?php endif; ?>
+            </p>
+          </section>
+          <?php endif; ?>
           <?php if (pmh_note_text($note['diagnosis'] ?? '', '') !== '' || $diagnosis !== 'No diagnosis recorded.'): ?>
           <section class="pmh-visit__block">
             <h4 class="pmh-visit__label">Diagnosis</h4>

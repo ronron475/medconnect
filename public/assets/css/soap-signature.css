@@ -1,0 +1,295 @@
+/* SOAP electronic signature — desktop + mobile */
+.soap-sign {
+  margin-top: 18px;
+  padding: 16px;
+  background: #f0fdfa;
+  border: 1px solid #b8ece6;
+  border-radius: 12px;
+  max-width: 100%;
+  overflow-x: hidden;
+  box-sizing: border-box;
+}
+
+.soap-sign__title {
+  margin: 0 0 6px;
+  font-size: 13px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: #018a93;
+}
+
+.soap-sign__lead {
+  margin: 0 0 14px;
+  font-size: 13px;
+  color: #475569;
+  line-height: 1.45;
+}
+
+.soap-sign__methods {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 14px;
+}
+
+.soap-sign__method {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 44px;
+  padding: 8px 14px;
+  border: 1px solid #cbd5e1;
+  border-radius: 10px;
+  background: #fff;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 600;
+  color: #0f172a;
+  flex: 1 1 160px;
+  max-width: 100%;
+}
+
+.soap-sign__method input {
+  width: 18px;
+  height: 18px;
+  margin: 0;
+  accent-color: #018a93;
+  flex-shrink: 0;
+}
+
+.soap-sign__method.is-active {
+  border-color: #018a93;
+  background: #ecfeff;
+  box-shadow: 0 0 0 3px rgba(1, 138, 147, 0.12);
+}
+
+.soap-sign__panel[hidden] {
+  display: none !important;
+}
+
+.soap-sign__hint {
+  margin: 6px 0 0;
+  font-size: 12px;
+  color: #64748b;
+  line-height: 1.4;
+}
+
+.soap-sign__canvas-wrap {
+  position: relative;
+  width: 100%;
+  max-width: 100%;
+  height: 180px;
+  border: 1px dashed #94a3b8;
+  border-radius: 12px;
+  background: #fff;
+  overflow: hidden;
+  touch-action: none;
+  overscroll-behavior: contain;
+}
+
+.soap-sign__canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+  touch-action: none;
+  cursor: crosshair;
+}
+
+.soap-sign__placeholder {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+  color: #94a3b8;
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.soap-sign__canvas-wrap.is-drawn .soap-sign__placeholder {
+  display: none;
+}
+
+.soap-sign__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.soap-sign__clear {
+  min-height: 44px;
+  min-width: 140px;
+}
+
+.soap-sign__confirm {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  margin: 16px 0 12px;
+  font-size: 13px;
+  line-height: 1.45;
+  color: #0f172a;
+}
+
+.soap-sign__confirm input {
+  width: 20px;
+  height: 20px;
+  margin-top: 2px;
+  flex-shrink: 0;
+  accent-color: #018a93;
+}
+
+.soap-sign__finalize {
+  width: 100%;
+  min-height: 48px;
+}
+
+.soap-sign__finalize:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.soap-sign__error {
+  margin: 8px 0 0;
+  font-size: 13px;
+  color: #b91c1c;
+  line-height: 1.4;
+}
+
+.soap-sign__error:empty {
+  display: none;
+}
+
+.soap-sign__done {
+  margin: 0;
+  padding: 12px 14px;
+  border-radius: 10px;
+  background: #ecfdf5;
+  border: 1px solid #a7f3d0;
+  color: #065f46;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.soap-finalize-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 200020;
+  display: none;
+  align-items: flex-end;
+  justify-content: center;
+  padding: 16px;
+  background: rgba(15, 23, 42, 0.45);
+}
+
+.soap-finalize-modal.is-open {
+  display: flex;
+}
+
+.soap-finalize-modal__dialog {
+  width: min(440px, 100%);
+  background: #fff;
+  border-radius: 16px;
+  box-shadow: 0 20px 50px rgba(15, 23, 42, 0.2);
+  overflow: hidden;
+}
+
+.soap-finalize-modal__body {
+  padding: 20px 18px 8px;
+}
+
+.soap-finalize-modal__title {
+  margin: 0 0 8px;
+  font-size: 18px;
+  font-weight: 800;
+  color: #0f172a;
+}
+
+.soap-finalize-modal__text {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.55;
+  color: #475569;
+}
+
+.soap-finalize-modal__footer {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  padding: 16px 18px 18px;
+}
+
+.soap-finalize-modal__footer .session-btn {
+  flex: 1 1 140px;
+  min-height: 44px;
+}
+
+@media (min-width: 640px) {
+  .soap-sign__canvas-wrap {
+    height: 200px;
+  }
+
+  .soap-finalize-modal {
+    align-items: center;
+  }
+}
+
+@media (max-width: 414px) {
+  .soap-sign {
+    padding: 14px 12px;
+  }
+
+  .soap-sign__canvas-wrap {
+    height: 168px;
+  }
+
+  .soap-sign__method {
+    flex: 1 1 100%;
+  }
+}
+
+@media (max-width: 320px) {
+  .soap-sign__canvas-wrap {
+    height: 150px;
+  }
+
+  .soap-sign__title {
+    font-size: 12px;
+  }
+}
+
+html[data-theme-resolved='dark'] .soap-sign {
+  background: #0f172a;
+  border-color: #334155;
+}
+
+html[data-theme-resolved='dark'] .soap-sign__method,
+html[data-theme-resolved='dark'] .soap-sign__canvas-wrap,
+html[data-theme-resolved='dark'] .soap-finalize-modal__dialog {
+  background: #1e293b;
+  border-color: #334155;
+  color: #e2e8f0;
+}
+
+html[data-theme-resolved='dark'] .soap-sign__method.is-active {
+  background: #134e4a;
+  border-color: #2dd4bf;
+}
+
+html[data-theme-resolved='dark'] .soap-sign__canvas-wrap {
+  background: #fff;
+}
+
+html[data-theme-resolved='dark'] .soap-sign__lead,
+html[data-theme-resolved='dark'] .soap-sign__hint,
+html[data-theme-resolved='dark'] .soap-finalize-modal__text {
+  color: #94a3b8;
+}
+
+html[data-theme-resolved='dark'] .soap-sign__confirm,
+html[data-theme-resolved='dark'] .soap-finalize-modal__title {
+  color: #f8fafc;
+}

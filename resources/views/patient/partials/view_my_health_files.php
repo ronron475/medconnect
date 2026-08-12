@@ -80,6 +80,20 @@ function pmh_health_file_text(?string $value): bool
         <?php if (pmh_health_file_text($r['treatment_plan'] ?? '')): ?>
         <p class="pmh-file-card__soap"><strong>Care plan:</strong> <?= nl2br(htmlspecialchars($r['treatment_plan'])) ?></p>
         <?php endif; ?>
+        <?php
+          $signedBy = function_exists('clinical_note_signed_by_label')
+            ? clinical_note_signed_by_label($r, (string) ($r['provider_name'] ?? ''))
+            : '';
+          $signedAt = function_exists('clinical_note_signed_at_label')
+            ? clinical_note_signed_at_label($r)
+            : '';
+        ?>
+        <?php if ($signedBy !== '' || $signedAt !== ''): ?>
+        <p class="pmh-soap-signed">
+          <?php if ($signedBy !== ''): ?><?= htmlspecialchars($signedBy) ?><?php endif; ?>
+          <?php if ($signedAt !== ''): ?><?php if ($signedBy !== ''): ?><br><?php endif; ?><?= htmlspecialchars($signedAt) ?><?php endif; ?>
+        </p>
+        <?php endif; ?>
         <?php if ($consultId > 0): ?>
         <p class="pmh-file-card__link">
           <a href="<?= htmlspecialchars(patient_consultation_detail_url($consultId)) ?>" class="pmh-btn pmh-btn--outline pmh-btn--sm">Full consultation details</a>
