@@ -53,7 +53,7 @@
     <div class="pt-remedy__choices" id="ptRemedyChoicesWaiting" hidden>
       <p class="pt-remedy__choice-label">Your provider reviews non-urgent concerns before tips are shared.</p>
       <a href="<?= ASSET_BASE ?>/views/patient/triage.php" class="pt-remedy__choice pt-remedy__choice--primary" id="ptRemedyBookWaiting">
-        Book a consultation instead
+        Book a consultation
       </a>
       <button
         type="button"
@@ -74,8 +74,41 @@
         Cancel my video visit
       </button>
       <a href="<?= ASSET_BASE ?>/views/patient/triage.php" class="pt-remedy__choice pt-remedy__choice--outline" id="ptRemedyBook">
-        Book a consultation instead
+        Book a consultation
       </a>
     </div>
   </section>
+</div>
+
+<div
+  id="mcCarePlanAcceptedModal"
+  class="mc-tips-ready-modal"
+  hidden
+  role="dialog"
+  aria-modal="true"
+  aria-labelledby="mcCarePlanAcceptedTitle"
+  aria-describedby="mcCarePlanAcceptedMessage"
+>
+  <div class="mc-tips-ready-modal__backdrop" data-mc-care-plan-dismiss></div>
+  <div class="mc-tips-ready-modal__card" role="document">
+    <div class="mc-tips-ready-modal__icon" aria-hidden="true">
+      <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
+        <polyline points="22 4 12 14.01 9 11.01"/>
+      </svg>
+    </div>
+    <p class="mc-tips-ready-modal__eyebrow">Care guidance</p>
+    <h2 class="mc-tips-ready-modal__title" id="mcCarePlanAcceptedTitle">Care Plan Accepted</h2>
+    <p class="mc-tips-ready-modal__message" id="mcCarePlanAcceptedMessage">
+      You can follow the doctor-approved care tips at home. Your current health concern remains saved in your health record. You can still book a consultation anytime if you want to speak with a doctor about this concern.
+    </p>
+    <div class="mc-tips-ready-modal__actions">
+      <a href="<?= ASSET_BASE ?>/views/patient/dashboard.php" class="mc-tips-ready-modal__btn mc-tips-ready-modal__btn--primary" id="mcCarePlanDashboardBtn">
+        Continue to Dashboard
+      </a>
+      <a href="<?= ASSET_BASE ?>/views/patient/triage.php" class="mc-tips-ready-modal__btn mc-tips-ready-modal__btn--outline" id="mcCarePlanBookBtn">
+        Book Consultation
+      </a>
+    </div>
+  </div>
 </div>

@@ -391,16 +391,12 @@
       maximize();
       return;
     }
+    if (type === 'medconnect:call-completed') {
+      global.dispatchEvent(new CustomEvent('medconnect:video-shell-completed', { detail: event.data }));
+      return;
+    }
     if (type === 'medconnect:call-left') {
-      minimize();
-      postToFrame({ type: 'medconnect:reset-call-ui' });
-      const st = readState();
-      if (st && st.token) {
-        const frame = frameEl();
-        window.setTimeout(() => {
-          if (frame) frame.src = roomUrl(st.token, true);
-        }, 400);
-      }
+      closeShell();
       global.dispatchEvent(new CustomEvent('medconnect:video-shell-left', { detail: event.data }));
       return;
     }

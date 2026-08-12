@@ -49,6 +49,7 @@ if (!$token || !$role || !$uid) {
 
 $stmt = $pdo->prepare("
     SELECT vs.*, c.patient_id, c.provider_id, c.consult_date, c.consult_time, c.status AS consult_status,
+           c.consult_type,
            p.first_name as patient_first, p.last_name as patient_last,
            d.first_name as doctor_first, d.last_name as doctor_last,
            pp.specialty as provider_specialty,
@@ -100,6 +101,25 @@ if (!$video_access['allowed']) {
 
 $patient_name = trim(($session['patient_first'] ?? '') . ' ' . ($session['patient_last'] ?? ''));
 $provider_name = trim(($session['doctor_first'] ?? '') . ' ' . ($session['doctor_last'] ?? ''));
+$patient_number = 'MC-' . str_pad((string) (int) ($session['patient_id'] ?? 0), 6, '0', STR_PAD_LEFT);
+$chief_complaint_seed = trim((string) ($session['consult_type'] ?? ''));
+$patient_age_seed = '';
+if (!empty($session['patient_dob'])) {
+    try {
+        $patient_age_seed = (string) (new DateTime((string) $session['patient_dob']))->diff(new DateTime('today'))->y;
+    } catch (Throwable $e) {
+        $patient_age_seed = '';
+    }
+}
+$appointment_label = '';
+$apptDate = (string) ($session['slot_date'] ?? $session['consult_date'] ?? '');
+$apptTime = (string) ($session['slot_start'] ?? $session['consult_time'] ?? '');
+if ($apptDate !== '') {
+    $appointment_label = date('M j, Y', strtotime($apptDate));
+    if ($apptTime !== '') {
+        $appointment_label .= ' — ' . date('g:i A', strtotime($apptTime));
+    }
+}
 $provider_specialty = trim((string) ($session['provider_specialty'] ?? ''));
 if ($provider_specialty === '') {
     $provider_specialty = 'General Medicine';
@@ -207,6 +227,16 @@ if (session_status() === PHP_SESSION_ACTIVE) {
       patientId: <?= (int) ($session['patient_id'] ?? 0) ?>,
       isPatient: <?= $is_patient ? 'true' : 'false' ?>,
       csrf: <?= json_encode($pageCsrfToken) ?>,
+      providerName: <?= json_encode($provider_name) ?>,
+      patientName: <?= json_encode($patient_name) ?>,
+      patientNumber: <?= json_encode($patient_number) ?>,
+      patientAge: <?= json_encode($patient_age_seed) ?>,
+      patientSex: <?= json_encode((string) ($session['patient_sex'] ?? '')) ?>,
+      specialty: <?= json_encode($provider_specialty) ?>,
+      chiefComplaint: <?= json_encode($chief_complaint_seed) ?>,
+      appointmentLabel: <?= json_encode($appointment_label) ?>,
+      consultDate: <?= json_encode((string) ($session['consult_date'] ?? '')) ?>,
+      videoStartedAt: <?= json_encode((string) ($session['started_at'] ?? '')) ?>,
     };
   </script>
   <script src="<?= ASSET_BASE ?>/assets/js/video-room-enhancements.js?v=<?= $videoEnhJsVer ?>"></script>
@@ -678,10 +708,13 @@ if (session_status() === PHP_SESSION_ACTIVE) {
           </button>
         </div>
         <div class="mc-vc-controls-secondary" role="group" aria-label="Call actions">
+          <button type="button" class="mc-vc-btn mc-vc-btn--label" id="mcVcInfoBtn" title="<?= $is_patient ? 'Consultation details' : 'Patient Info' ?>" aria-label="<?= $is_patient ? 'Open consultation details' : 'Open patient information' ?>">Info</button>
+          <button type="button" class="mc-vc-btn mc-vc-btn--label" id="mcVcChatBtn" title="Chat" aria-label="Open chat">Chat</button>
+          <button type="button" class="mc-vc-btn mc-vc-btn--label" id="mcVcTtsBtn" title="Text message while muted" aria-label="Open text message while muted">Text</button>
           <?php if (!$is_patient): ?>
           <button type="button" class="mc-vc-btn mc-vc-btn--report" id="violationReportBtn" title="Report possible violation" aria-label="Report possible violation">Report</button>
           <?php endif; ?>
-          <button type="button" class="mc-vc-btn mc-vc-btn--end btn-end" id="endCallBtn"><?= $is_patient ? 'Leave' : 'End Call' ?></button>
+          <button type="button" class="mc-vc-btn mc-vc-btn--end btn-end" id="endCallBtn"><?= $is_patient ? 'Leave' : 'End Consultation' ?></button>
         </div>
       </div>
     </div>
@@ -705,23 +738,26 @@ if (session_status() === PHP_SESSION_ACTIVE) {
 
   <div id="muteTtsBanner" class="mute-tts-banner" aria-hidden="true" role="status">
     <?php if ($is_patient): ?>
-      Your microphone is muted. Type below â€” the provider will hear it as speech and see the text.
+      Your microphone is muted. Type a message — the provider will hear it as speech and see the text.
     <?php else: ?>
-      Your microphone is muted. Type below â€” the patient will hear it as speech and see the text.
+      Your microphone is muted. Type a message — the patient will hear it as speech and see the text.
     <?php endif; ?>
   </div>
   <div id="remoteMuteBanner" class="remote-mute-banner" aria-hidden="true" role="status">
     <?php if ($is_patient): ?>
-      Provider microphone is muted. Wait for typed voice messages â€” they will play as speech here.
+      Provider microphone is muted. Typed voice messages will play as speech here.
     <?php else: ?>
       Patient microphone is muted. Their typed messages will appear here and play as speech.
     <?php endif; ?>
   </div>
-  <div id="muteTtsPanel" class="mute-tts-panel" aria-hidden="true" role="region" aria-label="Text communication while muted">
-    <p class="mute-tts-panel__title">Text message while muted</p>
+  <div id="muteTtsPanel" class="mute-tts-panel" aria-hidden="true" role="dialog" aria-labelledby="muteTtsPanelTitle">
+    <div class="mute-tts-panel__head">
+      <p class="mute-tts-panel__title" id="muteTtsPanelTitle">Text message while muted</p>
+      <button type="button" class="mute-tts-panel__close" id="muteTtsCloseBtn" aria-label="Close text message panel" title="Close">×</button>
+    </div>
     <p class="mute-tts-panel__sub"><?= $is_patient
-      ? 'Type your message and press Send. Your provider will hear it spoken aloud and see the text.'
-      : 'Type your message and press Send. The patient will hear it spoken aloud and see the text.' ?></p>
+      ? 'Type your message and press Send. Your provider will hear it as spoken audio and see the text.'
+      : 'Type your message and press Send. The patient will hear it as spoken audio and see the text.' ?></p>
     <label for="muteTtsInput" class="sr-only" style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0);">Type your message</label>
     <textarea id="muteTtsInput" maxlength="500" placeholder="<?= $is_patient
       ? 'Example: I have a headache for three days.'
@@ -737,7 +773,10 @@ if (session_status() === PHP_SESSION_ACTIVE) {
     <div id="muteTtsLog" class="mute-tts-log" aria-live="polite"></div>
   </div>
   <div id="muteTtsReceivePanel" class="mute-tts-receive-panel" aria-label="<?= $is_patient ? 'Messages from provider' : 'Messages from patient' ?>">
-    <div class="mute-tts-receive-panel__title"><?= $is_patient ? 'Messages from provider' : 'Messages from patient' ?></div>
+    <div class="mute-tts-receive-panel__head">
+      <div class="mute-tts-receive-panel__title"><?= $is_patient ? 'Messages from provider' : 'Messages from patient' ?></div>
+      <button type="button" class="mute-tts-panel__close" id="muteTtsReceiveCloseBtn" aria-label="Close incoming messages" title="Close">×</button>
+    </div>
     <div id="muteTtsReceiveLog" class="mute-tts-receive-log mute-tts-log" aria-live="polite"></div>
   </div>
   <div id="muteTtsRestoreToast" class="mute-tts-restore" role="status">Voice communication restored.</div>
@@ -748,13 +787,13 @@ if (session_status() === PHP_SESSION_ACTIVE) {
       <div id="endModalIcon" class="end-icon">
         <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2A19.79 19.79 0 0 1 11.19 19a19.5 19.5 0 0 1-6-6A19.79 19.79 0 0 1 2.08 4.18 2 2 0 0 1 4.06 2h3a2 2 0 0 1 2 1.72c.12.9.34 1.77.66 2.6a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.48-1.18a2 2 0 0 1 2.11-.45c.83.32 1.7.54 2.6.66A2 2 0 0 1 22 16.92z"/></svg>
       </div>
-      <div id="endModalTitle" class="end-title"><?= $is_patient ? 'Leave the video call?' : 'End consultation?' ?></div>
+      <div id="endModalTitle" class="end-title"><?= $is_patient ? 'Leave consultation?' : 'End consultation?' ?></div>
       <div id="endModalCopy" class="end-copy"><?= $is_patient
-        ? 'You will disconnect from the video call, but the session stays open. You can rejoin anytime today from your patient dashboard while your doctor is still in session.'
-        : 'The consultation room will close for both sides. If recording is active, medConnect will save it before leaving this page.' ?></div>
+        ? 'You are about to leave the video consultation. The session stays open so you can rejoin from My Sessions while your doctor is still in the room.'
+        : 'The video consultation will end for both sides. You will then complete SOAP documentation. SOAP is not finalized until you save it.' ?></div>
       <div class="end-actions" id="endModalActions">
-        <button type="button" class="keep" onclick="closeEndModal()"><?= $is_patient ? 'Stay on Call' : 'Keep Call' ?></button>
-        <button type="button" class="confirm" id="confirmEndBtn" onclick="confirmEndCall()"><?= $is_patient ? 'Leave Call' : 'End Consultation' ?></button>
+        <button type="button" class="keep" onclick="closeEndModal()">Cancel</button>
+        <button type="button" class="confirm" id="confirmEndBtn" onclick="confirmEndCall()"><?= $is_patient ? 'Leave Consultation' : 'End Consultation' ?></button>
       </div>
     </div>
   </div>
@@ -2301,11 +2340,11 @@ if (session_status() === PHP_SESSION_ACTIVE) {
         return;
       }
       if (isPatient) {
-        window.location.href = apiBase + '/views/patient/consultations.php';
+        window.location.href = apiBase + '/views/patient/consultations.php?tab=active';
         return;
       }
       if (consultationId) {
-        window.location.href = apiBase + '/views/provider/consultation_session.php?id=' + encodeURIComponent(consultationId) + '&followup=1';
+        window.location.href = apiBase + '/views/provider/consultation_session.php?id=' + encodeURIComponent(consultationId) + '&soap=1#soapDocumentation';
         return;
       }
       window.location.href = apiBase + '/views/provider/dashboard.php';
@@ -2399,7 +2438,11 @@ if (session_status() === PHP_SESSION_ACTIVE) {
 
     async function leaveCallConfirmed(options) {
       options = options || {};
+      const fullyEnded = ['provider_left', 'session_ended', 'provider_ended'].indexOf(options.reason || '') !== -1;
       if (endingCall) {
+        if (isPatient && fullyEnded) {
+          return;
+        }
         redirectAfterLeave(options);
         return;
       }
@@ -2430,9 +2473,22 @@ if (session_status() === PHP_SESSION_ACTIVE) {
         if (typeof window.McVideoRoomEnhancements.markCallEnded === 'function') {
           window.McVideoRoomEnhancements.markCallEnded();
         }
-        if (isPatient && typeof window.McVideoRoomEnhancements.showPostCall === 'function') {
+      }
+
+      if (isPatient && fullyEnded) {
+        if (window.McVideoRoomEnhancements && typeof window.McVideoRoomEnhancements.showPostCall === 'function') {
           window.McVideoRoomEnhancements.showPostCall();
         }
+        if (window.parent && window.parent !== window) {
+          window.parent.postMessage({
+            type: 'medconnect:call-completed',
+            role: userRole,
+            token: roomToken,
+            consultationId: consultationId,
+            reason: options.reason || '',
+          }, window.location.origin);
+        }
+        return;
       }
 
       redirectAfterLeave(options);
@@ -2452,7 +2508,11 @@ if (session_status() === PHP_SESSION_ACTIVE) {
       const gateOpen = gateEl && !gateEl.classList.contains('is-hidden');
 
       if (isPatient) {
-        await leaveCallConfirmed();
+        if (!skipConfirm && !gateOpen) {
+          showEndModal();
+          return;
+        }
+        await leaveCallConfirmed({ reason: 'patient_left' });
         return;
       }
 
@@ -2508,6 +2568,9 @@ if (session_status() === PHP_SESSION_ACTIVE) {
       redirectAfterLeave({
         parentMessageType: 'medconnect:call-ended',
         reason: 'provider_ended',
+        redirectUrl: consultationId
+          ? (apiBase + '/views/provider/consultation_session.php?id=' + encodeURIComponent(consultationId) + '&soap=1#soapDocumentation')
+          : '',
       });
     }
 
@@ -2520,7 +2583,14 @@ if (session_status() === PHP_SESSION_ACTIVE) {
     });
 
     document.addEventListener('keydown', (event) => {
-      if (event.key === 'Escape') closeEndModal();
+      if (event.key !== 'Escape') return;
+      closeEndModal();
+      if (muteTts && typeof muteTts.closeComposer === 'function') {
+        muteTts.closeComposer();
+      }
+      if (window.McVideoRoomEnhancements && typeof window.McVideoRoomEnhancements.closePanel === 'function') {
+        window.McVideoRoomEnhancements.closePanel();
+      }
     });
 
     window.addEventListener('message', (event) => {
@@ -2794,6 +2864,16 @@ if (session_status() === PHP_SESSION_ACTIVE) {
         sendData: sendMuteData,
         notifyParent: typeof notifyParent === 'function' ? notifyParent : null,
       });
+      const ttsBtn = document.getElementById('mcVcTtsBtn');
+      if (ttsBtn) {
+        ttsBtn.addEventListener('click', (event) => {
+          event.preventDefault();
+          event.stopPropagation();
+          if (muteTts && typeof muteTts.openComposer === 'function') {
+            muteTts.openComposer();
+          }
+        });
+      }
     }
   </script>
   <?php require_once VIEWS_PATH . '/partials/theme_scripts.php'; ?>

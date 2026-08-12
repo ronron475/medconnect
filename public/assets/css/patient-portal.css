@@ -823,6 +823,18 @@ body.mc-tips-ready-modal-open {
 .mc-tips-ready-modal__btn--primary {
   background: linear-gradient(135deg, #0d9488, #0f766e);
   color: #fff;
+  text-decoration: none;
+}
+
+.mc-tips-ready-modal__btn--outline {
+  background: #fff;
+  border-color: #99f6e4;
+  color: #0f766e;
+  text-decoration: none;
+}
+
+.mc-tips-ready-modal__btn--outline:hover {
+  background: #f0fdfa;
 }
 
 .mc-tips-ready-modal__link {

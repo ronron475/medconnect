@@ -103,6 +103,10 @@
       return { allowed: true, mode: 'join' };
     }
 
+    if (status === 'in_consultation') {
+      return { allowed: false, mode: 'ended' };
+    }
+
     if (isBeforeScheduledStart(c)) {
       return {
         allowed: false,
@@ -112,10 +116,6 @@
     }
 
     const isToday = consultDateYmd(c.consult_date) === localTodayYmd();
-
-    if (status === 'in_consultation') {
-      return { allowed: false, mode: 'waiting' };
-    }
 
     if (isToday && (status === 'scheduled' || status === 'pending' || status === 'waiting')) {
       return { allowed: false, mode: 'waiting' };
@@ -155,35 +155,71 @@
     return dateLabel + ' at ' + h12 + ':' + tm + ' ' + ampm;
   }
 
-  function statusBadgeClass(mode, status) {
-    if (mode === 'join') return 'psess-status--ready';
+  function formatConsultTime(timeStr) {
+    if (!timeStr) return '';
+    const tp = String(timeStr).split(':');
+    const th = parseInt(tp[0] || '0', 10);
+    const tm = String(tp[1] || '00').padStart(2, '0');
+    const ampm = th >= 12 ? 'PM' : 'AM';
+    const h12 = ((th + 11) % 12) + 1;
+    return h12 + ':' + tm + ' ' + ampm;
+  }
+
+  function formatPastSessionDate(dateStr) {
+    if (!dateStr) return '—';
+    return new Date(String(dateStr) + 'T00:00:00').toLocaleDateString('en-US', {
+      month: 'long', day: 'numeric', year: 'numeric',
+    });
+  }
+
+  function sessionBucket(c) {
+    const status = String(c.status || '').toLowerCase().replace(/\s+/g, '_');
+    const hasLiveRoom = !!(c.room_token && String(c.room_token).trim());
+    if (status === 'in_consultation' && hasLiveRoom) return 'active';
+    if (status === 'cancelled' || status === 'canceled') return 'past';
+    if (status === 'completed') return 'past';
+    if (status === 'in_consultation') return 'past';
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    if (parseConsultDate(c.consult_date) < today.getTime()) return 'past';
+    return 'upcoming';
+  }
+
+  function sessionStatusLabel(c, bucket, joinAccess) {
+    const status = String(c.status || '').toLowerCase();
+    if (status === 'cancelled' || status === 'canceled') return 'Cancelled';
+    if (bucket === 'active' || (joinAccess && joinAccess.mode === 'join')) return 'Active';
+    if (bucket === 'upcoming') return 'Upcoming';
+    return 'Completed';
+  }
+
+  function statusBadgeClass(mode, status, bucket) {
+    const st = String(status || '').toLowerCase();
+    if (st === 'cancelled' || st === 'canceled') return 'psess-status--cancelled';
+    if (mode === 'join' || bucket === 'active') return 'psess-status--active';
     if (mode === 'waiting') return 'psess-status--waiting';
     if (mode === 'scheduled_wait') return 'psess-status--scheduled';
-    if (String(status).toLowerCase() === 'cancelled') return 'psess-status--cancelled';
-    return 'psess-status--past';
+    if (bucket === 'upcoming') return 'psess-status--scheduled';
+    return 'psess-status--completed';
   }
 
   function updateSessionMetrics(list) {
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    const todayMs = today.getTime();
     let upcoming = 0;
-    let ready = 0;
+    let active = 0;
     let past = 0;
     (list || []).forEach((c) => {
-      const isUpcoming = parseConsultDate(c.consult_date) >= todayMs && c.status !== 'cancelled';
-      if (isUpcoming) {
-        upcoming++;
-        if (consultationJoinAccess(c).mode === 'join') ready++;
-      } else {
-        past++;
-      }
+      const bucket = sessionBucket(c);
+      if (bucket === 'upcoming') upcoming++;
+      else if (bucket === 'active') active++;
+      else past++;
     });
     const elUp = document.getElementById('psess-metric-upcoming');
+    const elActive = document.getElementById('psess-metric-active');
     const elReady = document.getElementById('psess-metric-ready');
     const elPast = document.getElementById('psess-metric-past');
     if (elUp) elUp.textContent = String(upcoming);
-    if (elReady) elReady.textContent = String(ready);
+    if (elActive) elActive.textContent = String(active);
+    if (elReady) elReady.textContent = String(active);
     if (elPast) elPast.textContent = String(past);
   }
 
@@ -192,23 +228,17 @@
     const list = window.consultations || [];
     if (!container) return;
 
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    const todayMs = today.getTime();
+    if (type !== 'upcoming' && type !== 'active' && type !== 'past') {
+      type = 'upcoming';
+    }
 
     updateSessionMetrics(list);
 
-    const filtered = list.filter((c) => {
-      const isUpcoming =
-        parseConsultDate(c.consult_date) >= todayMs && c.status !== 'cancelled';
-      return type === 'upcoming' ? isUpcoming : !isUpcoming;
-    });
+    const filtered = list.filter((c) => sessionBucket(c) === type);
+    const counts = { upcoming: 0, active: 0, past: 0 };
+    list.forEach((c) => { counts[sessionBucket(c)] += 1; });
 
     container.innerHTML = '';
-    const pastCount = (list || []).filter((c) => {
-      const isUpcoming = parseConsultDate(c.consult_date) >= todayMs && c.status !== 'cancelled';
-      return !isUpcoming;
-    }).length;
 
     if (filtered.length === 0) {
       if (type === 'upcoming') {
@@ -221,10 +251,19 @@
           '<p class="psess-empty__sub">Schedule a video visit with an available provider.</p>' +
           '<div class="psess-empty__actions">' +
           '<a href="' + APP_BASE + '/views/patient/triage.php" class="psess-btn psess-btn--primary">Book Consultation</a>' +
-          (pastCount > 0
-            ? '<a href="#" class="psess-empty__link" data-psess-switch-tab="past">View ' + pastCount + ' past visit' + (pastCount !== 1 ? 's' : '') + ' →</a>'
+          (counts.past > 0
+            ? '<a href="#" class="psess-empty__link" data-psess-switch-tab="past">View ' + counts.past + ' past session' + (counts.past !== 1 ? 's' : '') + ' →</a>'
             : '<a href="' + APP_BASE + '/views/patient/my_health.php" class="psess-empty__link">Browse My Health records →</a>') +
           '</div></div>';
+      } else if (type === 'active') {
+        container.innerHTML =
+          '<div class="psess-empty">' +
+          '<div class="psess-empty__icon" aria-hidden="true">' +
+          '<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 10l4.553-2.276A1 1 0 0 1 21 8.618v6.764a1 1 0 0 1-1.447.894L15 14M5 18h8a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2z"/></svg>' +
+          '</div>' +
+          '<p>No active consultation</p>' +
+          '<p class="psess-empty__sub">When your doctor starts the video room, the join button appears here.</p>' +
+          '</div>';
       } else {
         container.innerHTML =
           '<div class="psess-empty">' +
@@ -232,7 +271,7 @@
           '<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>' +
           '</div>' +
           '<p>No past sessions yet</p>' +
-          '<p class="psess-empty__sub">After your first visit, notes and prescriptions appear in My Health.</p>' +
+          '<p class="psess-empty__sub">Completed video consultations will appear here. Medical records stay in My Health.</p>' +
           '<div class="psess-empty__actions">' +
           '<a href="' + APP_BASE + '/views/patient/triage.php" class="psess-btn psess-btn--primary">Book Consultation</a>' +
           '<a href="' + APP_BASE + '/views/patient/my_health.php" class="psess-empty__link">Go to My Health →</a>' +
@@ -244,18 +283,18 @@
           window.filterSessions(link.getAttribute('data-psess-switch-tab') || 'past');
         });
       });
-      updateJoinHint(type === 'upcoming' ? filtered : []);
+      updateJoinHint(type === 'upcoming' || type === 'active' ? filtered : []);
       return;
     }
 
     filtered.forEach((c) => {
-      const joinAccess =
-        type === 'upcoming'
-          ? consultationJoinAccess(c)
-          : { allowed: false, mode: 'past' };
+      const bucket = sessionBucket(c);
+      const joinAccess = (type === 'upcoming' || type === 'active')
+        ? consultationJoinAccess(c)
+        : { allowed: false, mode: 'past' };
 
       let actionBtn = '';
-      if (type === 'upcoming') {
+      if (type === 'upcoming' || type === 'active') {
         const canCancel =
           ['pending', 'scheduled'].includes(String(c.status || '').toLowerCase());
         let primary = '';
@@ -290,38 +329,26 @@
           || (window.PatientFollowup && window.PatientFollowup.isEligible(c.id))
           || (window.followupEligibleIds || []).indexOf(parseInt(c.id, 10)) !== -1
         );
+        const viewUrl = APP_BASE + '/views/patient/consultation_detail.php?id=' + encodeURIComponent(String(c.id || '')) + '&from=sessions';
         const followupBtn = canFollowup
-          ? '<button type="button" class="psess-btn psess-btn--primary" data-request-followup="' + escapeHtml(String(c.id || '')) + '">Request Follow-up</button>'
+          ? '<button type="button" class="psess-btn psess-btn--outline" data-request-followup="' + escapeHtml(String(c.id || '')) + '">Request Follow-up</button>'
           : '';
         actionBtn =
           '<div class="psess-card__actions">' +
+          '<a href="' + viewUrl + '" class="psess-btn psess-btn--primary">View Session</a>' +
           followupBtn +
-          '<a href="' + APP_BASE + '/views/patient/my_health.php?tab=timeline" class="psess-btn psess-btn--outline">Care Timeline</a>' +
-          '<a href="' + APP_BASE + '/views/patient/my_health.php?tab=files" class="psess-btn psess-btn--outline">Health Files</a>' +
           '</div>';
       }
 
-      const dateLabel = c.consult_date
-        ? new Date(c.consult_date + 'T00:00:00').toLocaleDateString('en-US', {
-            month: 'short', day: 'numeric', year: 'numeric',
-          })
-        : '—';
-
-      let timeLabel = '';
-      if (c.consult_time) {
-        const tp = String(c.consult_time).split(':');
-        const th = parseInt(tp[0] || '0', 10);
-        const tm = String(tp[1] || '00').padStart(2, '0');
-        const ampm = th >= 12 ? 'PM' : 'AM';
-        const h12 = ((th + 11) % 12) + 1;
-        timeLabel = h12 + ':' + tm + ' ' + ampm;
-      }
-
-      const statusLabel =
-        joinAccess.mode === 'waiting' ? 'Waiting for provider'
-          : joinAccess.mode === 'join' ? 'Ready to join'
-          : joinAccess.mode === 'scheduled_wait' ? 'Opens at scheduled time'
-          : (c.status || '—');
+      const dateLabel = type === 'past'
+        ? formatPastSessionDate(c.consult_date)
+        : (c.consult_date
+          ? new Date(c.consult_date + 'T00:00:00').toLocaleDateString('en-US', {
+              month: 'short', day: 'numeric', year: 'numeric',
+            })
+          : '—');
+      const timeLabel = formatConsultTime(c.consult_time);
+      const statusLabel = sessionStatusLabel(c, bucket, joinAccess);
 
       let rescheduleBanner = '';
       const pending = c.pending_reschedule;
@@ -344,26 +371,43 @@
         joinAccess.mode === 'join' ? ' psess-card--ready'
           : joinAccess.mode === 'waiting' ? ' psess-card--waiting' : '';
 
+      const typeLine = type === 'past'
+        ? 'Medical Video Consultation'
+        : escapeHtml(c.consult_type || 'General Consultation');
+
+      let extraMeta = '';
+      if (type === 'past') {
+        if (c.duration_label) {
+          extraMeta +=
+            '<p class="psess-card__meta"><span>Duration</span> ' + escapeHtml(c.duration_label) + '</p>';
+        }
+        if (c.chief_complaint) {
+          extraMeta +=
+            '<p class="psess-card__meta"><span>Chief Complaint</span> ' + escapeHtml(c.chief_complaint) + '</p>';
+        }
+      }
+
       container.innerHTML +=
         '<article class="psess-card' + cardMod + '" data-consult-id="' + (c.id || '') + '">' +
         '<div class="psess-card__main">' +
         '<div class="psess-card__avatar">' + providerInitials(c.provider_name) + '</div>' +
         '<div class="psess-card__info">' +
         '<h3>' + escapeHtml(c.provider_name || 'Healthcare Provider') + '</h3>' +
-        '<p class="psess-card__type">' + escapeHtml(c.consult_type || 'General Consultation') + '</p>' +
+        '<p class="psess-card__type">' + typeLine + '</p>' +
         '<p class="psess-card__datetime">' +
         '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/></svg>' +
-        dateLabel + (timeLabel ? ' · ' + timeLabel : '') +
+        dateLabel + (timeLabel ? (type === 'past' ? '</p><p class="psess-card__datetime psess-card__datetime--time">' + timeLabel : ' · ' + timeLabel) : '') +
         '</p>' +
+        extraMeta +
         rescheduleBanner +
         '</div></div>' +
         '<div class="psess-card__aside">' +
-        '<span class="psess-status ' + statusBadgeClass(joinAccess.mode, c.status) + '">' + escapeHtml(statusLabel) + '</span>' +
+        '<span class="psess-status ' + statusBadgeClass(joinAccess.mode, c.status, bucket) + '">' + escapeHtml(statusLabel) + '</span>' +
         actionBtn +
         '</div></article>';
     });
 
-    updateJoinHint(type === 'upcoming' ? filtered : []);
+    updateJoinHint(type === 'upcoming' || type === 'active' ? filtered : []);
   };
 
   async function cancelPatientConsultation(consultationId) {

@@ -53,16 +53,32 @@ try {
         exit;
     }
 
+    $own = $pdo->prepare("
+        SELECT vs.id, c.id AS consultation_id, c.provider_id
+        FROM video_sessions vs
+        JOIN consultations c ON c.id = vs.consultation_id
+        WHERE vs.room_token = ?
+          AND vs.status = 'active'
+        LIMIT 1
+    ");
+    $own->execute([$token]);
+    $sessionRow = $own->fetch(PDO::FETCH_ASSOC);
+    if (!$sessionRow || (int) ($sessionRow['provider_id'] ?? 0) !== (int) $_SESSION['user_id']) {
+        ob_end_clean();
+        echo json_encode(['success' => false, 'message' => 'Video session not found.']);
+        exit;
+    }
+
     $stmt = $pdo->prepare("
         UPDATE video_sessions
         SET status = 'ended', ended_at = NOW()
-        WHERE room_token = ?
+        WHERE id = ?
           AND status = 'active'
     ");
-    $stmt->execute([$token]);
+    $stmt->execute([(int) $sessionRow['id']]);
 
     ob_end_clean();
-    echo json_encode(['success' => true]);
+    echo json_encode(['success' => true, 'consultation_id' => (int) $sessionRow['consultation_id']]);
 } catch (PDOException $e) {
     ob_end_clean();
     http_response_code(500);

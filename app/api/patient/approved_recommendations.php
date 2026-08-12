@@ -114,14 +114,14 @@ try {
             $shouldAutoOpen = !$firstOpened && !$dismissed;
             $reviewerName = trim((string) ($row['reviewer_name'] ?? ''));
             $assignedId = (int) ($row['assigned_provider_id'] ?? 0);
-            $bookUrl = $assetBase . '/views/patient/triage.php';
+            $bookUrl = $assetBase . '/views/patient/triage.php?triage_id=' . $tipId;
             if ($assignedId > 0) {
-                $bookUrl .= '?provider_id=' . $assignedId;
+                $bookUrl .= '&provider_id=' . $assignedId;
             }
 
             $upcoming = patient_upcoming_cancellable_consultation($pdo, $patientId);
             $bookMessage = 'You can follow these tips at home. If you still want an online consultation, book with the same doctor who reviewed your guidance.';
-            $bookCta = 'Proceed to Book Consultation';
+            $bookCta = 'Book a consultation';
             $bookUrlOut = $bookUrl;
             if ($upcoming !== null) {
                 $bookMessage = 'Your care tips are ready. You already have a video visit booked for '

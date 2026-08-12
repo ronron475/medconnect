@@ -24,22 +24,29 @@ if ($uid <= 0 || $role === '') {
 $stmt = $pdo->prepare("
     SELECT vs.*, c.id AS consultation_id, c.patient_id, c.provider_id,
            c.consult_date, c.consult_time, c.status AS consult_status, c.provider_name,
+           c.consult_type,
            p.first_name AS patient_first, p.last_name AS patient_last,
-           p.date_of_birth AS patient_dob, p.sex AS patient_sex,
+           pr.date_of_birth AS patient_dob, pr.age AS patient_age, pr.gender AS patient_sex,
            d.first_name AS doctor_first, d.last_name AS doctor_last,
            pp.specialty AS provider_specialty,
            s.slot_date, s.start_time AS slot_start, s.end_time AS slot_end
     FROM video_sessions vs
     JOIN consultations c ON vs.consultation_id = c.id
     LEFT JOIN users p ON c.patient_id = p.id
+    LEFT JOIN patient_registrations pr ON pr.user_id = c.patient_id
     LEFT JOIN users d ON c.provider_id = d.id
     LEFT JOIN provider_profiles pp ON pp.user_id = c.provider_id
     LEFT JOIN appointment_slots s ON s.consultation_id = c.id AND s.status = 'booked'
     WHERE vs.room_token = ? AND vs.status = 'active'
     LIMIT 1
 ");
-$stmt->execute([$token]);
-$row = $stmt->fetch(PDO::FETCH_ASSOC);
+try {
+    $stmt->execute([$token]);
+    $row = $stmt->fetch(PDO::FETCH_ASSOC);
+} catch (Throwable $e) {
+    error_log('session_context query: ' . $e->getMessage());
+    Api::error('Could not load consultation details.', 500);
+}
 
 if (!$row) {
     Api::error('Active consultation session not found.', 404);
@@ -76,8 +83,14 @@ if ($slotDate !== '') {
     }
 }
 
-$clinical = provider_consultation_clinical_support($pdo, $consultId, $patientId);
-$chiefComplaint = (string) ($clinical['chief_complaint'] ?? $clinical['patient_original_complaint'] ?? '');
+$clinical = [];
+try {
+    $clinical = provider_consultation_clinical_support($pdo, $consultId, $patientId);
+} catch (Throwable $e) {
+    error_log('session_context clinical: ' . $e->getMessage());
+    $clinical = [];
+}
+$chiefComplaint = trim((string) ($clinical['chief_complaint'] ?? $clinical['patient_original_complaint'] ?? $row['consult_type'] ?? ''));
 
 $waiting = [
     'doctor_name'         => $providerName !== '' ? 'Dr. ' . preg_replace('/^dr\.?\s*/i', '', $providerName) : 'your healthcare provider',
@@ -98,8 +111,8 @@ $waiting = [
     'connection_status'   => 'Secure signaling active',
 ];
 
-$patientAge = '';
-if (!empty($row['patient_dob'])) {
+$patientAge = trim((string) ($row['patient_age'] ?? ''));
+if ($patientAge === '' && !empty($row['patient_dob'])) {
     try {
         $dob = new DateTime((string) $row['patient_dob']);
         $patientAge = (string) $dob->diff(new DateTime('today'))->y;
@@ -108,29 +121,54 @@ if (!empty($row['patient_dob'])) {
     }
 }
 
-$health = patient_health_summary_load($pdo, $patientId);
+$health = [
+    'allergies' => [],
+    'conditions' => [],
+    'medications' => [],
+    'blood_type' => '—',
+];
+try {
+    $loaded = patient_health_summary_load($pdo, $patientId);
+    if (is_array($loaded)) {
+        $health = array_merge($health, $loaded);
+    }
+} catch (Throwable $e) {
+    error_log('session_context health: ' . $e->getMessage());
+}
+
+$patientNumber = 'MC-' . str_pad((string) $patientId, 6, '0', STR_PAD_LEFT);
+$aiClass = trim((string) ($clinical['ai_urgency'] ?? $clinical['risk_level'] ?? 'Not assessed'));
+$finalClass = trim((string) ($clinical['final_urgency'] ?? ''));
+if ($finalClass === '') {
+    $finalClass = $aiClass;
+}
 
 $patientPanel = [
     'doctor_name'       => $waiting['doctor_name'],
     'specialization'    => trim((string) ($row['provider_specialty'] ?? 'General Medicine')) ?: 'General Medicine',
     'appointment_label' => $appointmentLabel,
     'chief_complaint'   => $chiefComplaint,
-    'triage_level'      => (string) ($clinical['risk_level'] ?? 'Not assessed'),
-    'triage_bucket'     => (string) ($clinical['risk_bucket'] ?? 'unknown'),
+    'triage_level'      => $aiClass !== '' ? $aiClass : 'Not assessed',
+    'triage_bucket'     => (string) ($clinical['risk_bucket'] ?? $clinical['ai_urgency_bucket'] ?? 'unknown'),
+    'consultation_id'   => $consultId,
 ];
 
 $providerPanel = [
-    'patient_name'    => $patientName,
-    'age'             => $patientAge,
-    'sex'             => (string) ($row['patient_sex'] ?? '—'),
-    'chief_complaint' => $chiefComplaint,
-    'ai_classification' => (string) ($clinical['risk_level'] ?? 'Not assessed'),
-    'confidence'      => (string) ($clinical['confidence_display'] ?? ''),
-    'allergies'       => $health['allergies'] ?? [],
-    'conditions'      => $health['conditions'] ?? [],
-    'medications'     => $health['medications'] ?? [],
-    'blood_type'      => (string) ($health['blood_type'] ?? '—'),
-    'possible_conditions' => $clinical['possible_conditions'] ?? [],
+    'patient_name'         => $patientName,
+    'patient_number'       => $patientNumber,
+    'age'                  => $patientAge,
+    'sex'                  => (string) ($row['patient_sex'] ?? '—'),
+    'chief_complaint'      => $chiefComplaint,
+    'ai_classification'    => $aiClass !== '' ? $aiClass : 'Not assessed',
+    'final_classification' => $finalClass !== '' ? $finalClass : '—',
+    'confidence'           => (string) ($clinical['confidence_display'] ?? ''),
+    'appointment_label'    => $appointmentLabel,
+    'consultation_id'      => $consultId,
+    'allergies'            => $health['allergies'] ?? [],
+    'conditions'           => $health['conditions'] ?? [],
+    'medications'          => $health['medications'] ?? [],
+    'blood_type'           => (string) ($health['blood_type'] ?? '—'),
+    'possible_conditions'  => $clinical['possible_conditions'] ?? [],
 ];
 
 Api::success([

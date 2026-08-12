@@ -39,11 +39,61 @@ BhwPatientWorkflow::ensure_schema($pdo);
 
 $symptoms   = $_POST['symptoms'] ?? [];
 $submittedComplaint = trim((string) ($_POST['chief_complaint'] ?? ''));
-$complaint  = patient_portal_resolve_chief_complaint($pdo, $patient_id, $submittedComplaint);
+$forceNewConcern = ($_POST['new_concern'] ?? '') === '1';
 $slot_id    = (int) ($_POST['slot_id'] ?? 0);
+$reuseTriageIdEarly = (int) ($_POST['triage_id'] ?? 0);
 
 if (!is_array($symptoms)) {
     $symptoms = [];
+}
+
+$openCareTipsPreview = null;
+if (!$forceNewConcern) {
+    $openCareTipsPreview = patient_find_open_care_tips_triage($pdo, $patient_id, false);
+    if ($openCareTipsPreview) {
+        $existingCc = trim((string) ($openCareTipsPreview['chief_complaint'] ?? ''));
+        if ($submittedComplaint !== '' && $existingCc !== '' && !patient_complaints_are_same($submittedComplaint, $existingCc)) {
+            $openCareTipsPreview = null;
+            $forceNewConcern = true;
+        }
+    }
+}
+
+// Explicit booking of an existing approved/pending case (Care Plan Accepted → Book Consultation).
+if ($openCareTipsPreview === null && !$forceNewConcern && $reuseTriageIdEarly > 0 && $slot_id > 0) {
+    $earlyReuseStmt = $pdo->prepare("
+        SELECT id, patient_id, symptoms, chief_complaint, level, urgency_label, status,
+               triage_level, triage_classification, recommendation_status,
+               assigned_provider_id, recommendations, english_complaint,
+               detected_symptoms_json, possible_conditions_json, assessment_payload, engine
+        FROM triage_results
+        WHERE id = ?
+          AND patient_id = ?
+          AND COALESCE(recommendation_status, 'hidden') IN ('pending_approval', 'approved')
+        LIMIT 1
+    ");
+    $earlyReuseStmt->execute([$reuseTriageIdEarly, $patient_id]);
+    $earlyReuseRow = $earlyReuseStmt->fetch(PDO::FETCH_ASSOC);
+    if ($earlyReuseRow) {
+        $existingCc = trim((string) ($earlyReuseRow['chief_complaint'] ?? ''));
+        if ($submittedComplaint !== '' && $existingCc !== '' && !patient_complaints_are_same($submittedComplaint, $existingCc)) {
+            $forceNewConcern = true;
+        } else {
+            $openCareTipsPreview = $earlyReuseRow;
+        }
+    }
+}
+
+$reuseExistingForBooking = $openCareTipsPreview !== null && $slot_id > 0 && !$forceNewConcern;
+
+if ($forceNewConcern) {
+    $complaint = $submittedComplaint;
+} elseif ($reuseExistingForBooking) {
+    $complaint = trim((string) ($openCareTipsPreview['chief_complaint'] ?? '')) !== ''
+        ? trim((string) $openCareTipsPreview['chief_complaint'])
+        : patient_portal_resolve_chief_complaint($pdo, $patient_id, $submittedComplaint);
+} else {
+    $complaint = patient_portal_resolve_chief_complaint($pdo, $patient_id, $submittedComplaint);
 }
 
 if (empty($symptoms) && $complaint === '') {
@@ -60,19 +110,32 @@ $symptomList = array_values(array_filter(array_map(static function ($s) {
     return is_string($s) ? trim($s) : '';
 }, $symptoms)));
 
-try {
-    $assessment = ChiefComplaintNlpService::assessWithFallback($complaint, $symptomList);
-} catch (Throwable $e) {
-    error_log('submit_triage assess: ' . $e->getMessage());
-    Api::error('Unable to analyze symptoms. Please try again.');
+$assessment = [];
+$level = '3';
+$label = 'Routine';
+$triageLevel = TriageLevelService::NON_URGENT;
+$isEmergency = false;
+
+if ($reuseExistingForBooking) {
+    $level = (string) ($openCareTipsPreview['level'] ?? '3');
+    $label = (string) ($openCareTipsPreview['urgency_label'] ?? 'Routine');
+    $triageLevel = (string) ($openCareTipsPreview['triage_level'] ?? TriageLevelService::NON_URGENT);
+    $isEmergency = false;
+} else {
+    try {
+        $assessment = ChiefComplaintNlpService::assessWithFallback($complaint, $symptomList);
+    } catch (Throwable $e) {
+        error_log('submit_triage assess: ' . $e->getMessage());
+        Api::error('Unable to analyze symptoms. Please try again.');
+    }
+
+    $level = (string) ($assessment['triage']['db_level'] ?? $assessment['db_level'] ?? '3');
+    $label = (string) ($assessment['triage']['urgency_label'] ?? $assessment['urgency_label'] ?? 'Routine');
+    $triageLevel = TriageLevelService::fromAssessment($assessment);
+
+    $isEmergency = $triageLevel === TriageLevelService::EMERGENCY
+        || strtoupper((string) ($assessment['triage']['triage_classification'] ?? '')) === 'EMERGENCY';
 }
-
-$level = (string) ($assessment['triage']['db_level'] ?? $assessment['db_level'] ?? '3');
-$label = (string) ($assessment['triage']['urgency_label'] ?? $assessment['urgency_label'] ?? 'Routine');
-$triageLevel = TriageLevelService::fromAssessment($assessment);
-
-$isEmergency = $triageLevel === TriageLevelService::EMERGENCY
-    || strtoupper((string) ($assessment['triage']['triage_classification'] ?? '')) === 'EMERGENCY';
 
 $consult_type = $complaint !== ''
     ? $complaint
@@ -88,16 +151,22 @@ try {
 
     $openCareTipsRow = null;
     $reviewerBeforeBooking = 0;
-    $reuseTriageId = (int) ($_POST['triage_id'] ?? 0);
+    $reuseTriageId = $reuseTriageIdEarly;
     $reusedExistingTriage = false;
 
-    if (!$isEmergency) {
+    if (!$isEmergency && !$forceNewConcern) {
         $openCareTipsRow = patient_find_open_care_tips_triage($pdo, $patient_id, true);
+        if ($openCareTipsRow) {
+            $existingCc = trim((string) ($openCareTipsRow['chief_complaint'] ?? ''));
+            if ($submittedComplaint !== '' && $existingCc !== '' && !patient_complaints_are_same($submittedComplaint, $existingCc)) {
+                $openCareTipsRow = null;
+            }
+        }
     }
 
-    // Reuse today's urgent triage when booking from the urgent earliest-slot modal.
-    if ($openCareTipsRow === null && $reuseTriageId > 0 && $slot_id > 0 && !$isEmergency) {
-        $urg = $pdo->prepare("
+    // Reuse the posted triage row (approved care tips or today's urgent case).
+    if ($openCareTipsRow === null && $reuseTriageId > 0 && $slot_id > 0 && !$isEmergency && !$forceNewConcern) {
+        $reuseStmt = $pdo->prepare("
             SELECT id, patient_id, symptoms, chief_complaint, level, urgency_label, status,
                    triage_level, triage_classification, recommendation_status,
                    assigned_provider_id, recommendations, english_complaint,
@@ -105,15 +174,20 @@ try {
             FROM triage_results
             WHERE id = ?
               AND patient_id = ?
-              AND triage_level = 'urgent'
-              AND assessed_at >= CURDATE()
+              AND (
+                    (triage_level = 'urgent' AND assessed_at >= CURDATE())
+                 OR (
+                      COALESCE(triage_level, 'non_urgent') = 'non_urgent'
+                      AND COALESCE(recommendation_status, 'hidden') IN ('pending_approval', 'approved')
+                    )
+              )
             LIMIT 1
             FOR UPDATE
         ");
-        $urg->execute([$reuseTriageId, $patient_id]);
-        $urgRow = $urg->fetch(PDO::FETCH_ASSOC);
-        if ($urgRow) {
-            $openCareTipsRow = $urgRow;
+        $reuseStmt->execute([$reuseTriageId, $patient_id]);
+        $reuseRow = $reuseStmt->fetch(PDO::FETCH_ASSOC);
+        if ($reuseRow) {
+            $openCareTipsRow = $reuseRow;
         }
     }
 

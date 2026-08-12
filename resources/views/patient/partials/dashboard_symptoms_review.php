@@ -23,7 +23,8 @@ $symptoms_review_booking = $symptoms_review_booking ?? [
     'alternate_available' => false,
 ];
 $asset = defined('ASSET_BASE') ? ASSET_BASE : '';
-$book_url = $asset . '/views/patient/triage.php';
+$pending_triage_id = (int) ($symptoms_review_pending['triage_id'] ?? 0);
+$book_url = $asset . '/views/patient/triage.php' . ($pending_triage_id > 0 ? ('?triage_id=' . $pending_triage_id) : '');
 $care_tips_url = $asset . '/views/patient/my_health.php?tab=care-tips';
 
 $provider_initials = 'DR';

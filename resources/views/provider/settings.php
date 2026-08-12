@@ -25,7 +25,7 @@ $profile_display_name = trim(($profile['first_name'] ?? '') . ' ' . ($profile['l
 $profile_role_label = $profile['specialty'] ?? $provider['role'] ?? 'General Medicine';
 
 $tabs = [
-    ['profile', 'user', 'profile_information', 'Update your professional identity and contact details.'],
+    ['profile', 'user', 'profile_information', 'View your professional identity and contact details.'],
     ['security', 'lock', 'security_password', 'Change your password and secure your account.'],
     ['notifications', 'bell', 'notification_preferences', 'Choose how you receive clinical alerts.'],
     ['system', 'monitor', 'system_preferences', 'Theme, language, and session preferences.'],
@@ -74,7 +74,7 @@ $tabs = [
           <div class="ps-card__head">
             <div>
               <h3 class="ps-card__title"><?= icon('user') ?> Profile Information</h3>
-              <p class="ps-card__sub">Your public-facing provider details for patients and staff.</p>
+              <p class="ps-card__sub">Your public-facing provider details for patients and staff. These fields are read-only.</p>
             </div>
           </div>
 
@@ -88,45 +88,63 @@ $tabs = [
           <div class="ps-card__body">
             <div id="psAlertProfile" class="ps-alert" role="status"></div>
 
-            <form id="providerProfileForm" class="ps-form-grid" novalidate>
+            <?php
+            $birthdate_display = '';
+            if (!empty($profile['birthdate'])) {
+                $birthTs = strtotime((string) $profile['birthdate']);
+                $birthdate_display = $birthTs ? date('F j, Y', $birthTs) : (string) $profile['birthdate'];
+            }
+            ?>
+            <form id="providerProfileForm" class="ps-form-grid" aria-label="Read-only profile information">
               <div class="ps-field">
                 <label for="firstName">First Name</label>
-                <input class="ps-input" type="text" id="firstName" name="first_name" required maxlength="80"
+                <input class="ps-input" type="text" id="firstName" name="first_name" readonly tabindex="-1" aria-readonly="true"
                   value="<?= htmlspecialchars($profile['first_name'] ?? '') ?>">
               </div>
               <div class="ps-field">
+                <label for="middleName">Middle Name</label>
+                <input class="ps-input" type="text" id="middleName" name="middle_name" readonly tabindex="-1" aria-readonly="true"
+                  value="<?= htmlspecialchars($profile['middle_name'] ?? '') ?>">
+              </div>
+              <div class="ps-field">
                 <label for="lastName">Last Name</label>
-                <input class="ps-input" type="text" id="lastName" name="last_name" required maxlength="80"
+                <input class="ps-input" type="text" id="lastName" name="last_name" readonly tabindex="-1" aria-readonly="true"
                   value="<?= htmlspecialchars($profile['last_name'] ?? '') ?>">
               </div>
               <div class="ps-field">
+                <label for="birthdate">Birthdate</label>
+                <input class="ps-input" type="text" id="birthdate" name="birthdate" readonly tabindex="-1" aria-readonly="true"
+                  value="<?= htmlspecialchars($birthdate_display) ?>">
+              </div>
+              <div class="ps-field">
                 <label for="email">Email</label>
-                <input class="ps-input" type="email" id="email" name="email" required maxlength="180"
+                <input class="ps-input" type="email" id="email" name="email" readonly tabindex="-1" aria-readonly="true"
                   value="<?= htmlspecialchars($profile['email'] ?? '') ?>">
               </div>
               <div class="ps-field">
                 <label for="phone">Phone Number</label>
-                <input class="ps-input" type="tel" id="phone" name="phone" maxlength="20" placeholder="09XXXXXXXXX"
+                <input class="ps-input" type="tel" id="phone" name="phone" readonly tabindex="-1" aria-readonly="true"
                   value="<?= htmlspecialchars($profile['phone'] ?? '') ?>">
               </div>
               <div class="ps-field">
                 <label for="specialty">Specialty</label>
-                <input class="ps-input" type="text" id="specialty" name="specialty" required maxlength="120"
+                <input class="ps-input" type="text" id="specialty" name="specialty" readonly tabindex="-1" aria-readonly="true"
                   value="<?= htmlspecialchars($profile['specialty'] ?? 'General Medicine') ?>">
               </div>
               <div class="ps-field">
                 <label for="licenseNumber">License Number (PRC)</label>
-                <input class="ps-input" type="text" id="licenseNumber" name="license_number" required maxlength="32"
+                <input class="ps-input" type="text" id="licenseNumber" name="license_number" readonly tabindex="-1" aria-readonly="true"
                   value="<?= htmlspecialchars($profile['license_number'] ?? '') ?>">
               </div>
               <div class="ps-field">
                 <label for="facility">Facility / Assignment</label>
-                <input class="ps-input" type="text" id="facility" name="facility" required maxlength="200"
+                <input class="ps-input" type="text" id="facility" name="facility" readonly tabindex="-1" aria-readonly="true"
                   value="<?= htmlspecialchars($profile['facility'] ?? 'City Health Office') ?>">
               </div>
-              <div class="ps-actions ps-span-2">
-                <button type="submit" class="mc-btn mc-btn--primary ps-save-btn">Save Changes</button>
-              </div>
+              <p class="ps-readonly-note ps-span-2" role="note">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+                Name, contact, license, and assignment are <strong>read-only</strong>. Ask an administrator if this information needs to be updated.
+              </p>
             </form>
           </div>
         </div>

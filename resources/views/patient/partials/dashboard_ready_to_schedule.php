@@ -22,7 +22,9 @@ $symptoms_review_booking = $symptoms_review_booking ?? [
     'alternate_available' => false,
 ];
 $asset = defined('ASSET_BASE') ? ASSET_BASE : '';
-$book_url = $asset . '/views/patient/triage.php';
+$ready_triage_id = (int) ($care_tips_ready_to_schedule['triage_id'] ?? 0);
+$book_url = $asset . '/views/patient/triage.php' . ($ready_triage_id > 0 ? ('?triage_id=' . $ready_triage_id) : '');
+$new_concern_url = $asset . '/views/patient/triage.php?new_concern=1';
 $care_tips_url = $asset . '/views/patient/my_health.php?tab=care-tips';
 
 $provider_initials = 'DR';
@@ -112,5 +114,8 @@ if ($review_provider_name !== '' && !empty($symptoms_review_booking['assigned_ha
         Book Consultation
       </a>
     </div>
+    <p class="pdash-care-hint pdash-care-hint--muted" style="margin-top:10px;">
+      <a href="<?= htmlspecialchars($new_concern_url) ?>">This is a different health concern</a>
+    </p>
   </div>
 </section>

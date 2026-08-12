@@ -15,6 +15,7 @@ if (!defined('BASE_PATH')) {
 require_once BASE_PATH . '/app/includes/patient_portal_bootstrap.php';
 require_once BASE_PATH . '/app/includes/patient_consultation_records.php';
 require_once BASE_PATH . '/app/includes/clinical_tables.php';
+require_once BASE_PATH . '/app/includes/consultation_video_history.php';
 
 clinical_tables_ensure($pdo);
 patient_consultation_records_schema_ensure($pdo);
@@ -75,19 +76,77 @@ try {
     $referrals = $rf->fetchAll(PDO::FETCH_ASSOC);
 } catch (PDOException $e) { /* optional */ }
 
-$providerName = trim((string) ($consult['provider_display'] ?? ''));
-if ($providerName !== '' && stripos($providerName, 'dr.') !== 0) {
-    $providerName = 'Dr. ' . $providerName;
+$providerName = patient_provider_display_name(trim((string) ($consult['provider_display'] ?? '')));
+$chiefComplaint = patient_session_chief_complaint($pdo, $uid, $consult);
+
+$video = null;
+try {
+    $vStmt = $pdo->prepare("
+        SELECT started_at, ended_at, status
+        FROM video_sessions
+        WHERE consultation_id = ?
+        ORDER BY id DESC
+        LIMIT 1
+    ");
+    $vStmt->execute([$consultationId]);
+    $video = $vStmt->fetch(PDO::FETCH_ASSOC) ?: null;
+} catch (Throwable $e) {
+    $video = null;
 }
 
-$chiefComplaint = trim((string) ($consult['consult_type'] ?? ''));
-if ($chiefComplaint === '' || strcasecmp($chiefComplaint, 'General consultation') === 0) {
-    $chiefComplaint = trim((string) ($consult['diagnosis'] ?? ''));
+$videoStarted = trim((string) ($video['started_at'] ?? ''));
+$videoEnded = trim((string) ($video['ended_at'] ?? ''));
+$durationLabel = patient_format_call_duration($videoStarted, $videoEnded);
+$startLabel = $videoStarted !== '' ? date('g:i A', strtotime($videoStarted)) : '';
+$endLabel = $videoEnded !== '' ? date('g:i A', strtotime($videoEnded)) : '';
+
+$status = strtolower(trim((string) ($consult['status'] ?? '')));
+if ($status === 'cancelled' || $status === 'canceled') {
+    $statusLabel = 'Cancelled';
+    $statusChip = 'cancelled';
+} elseif ($isFinalized || $status === 'completed' || ($video && (string) ($video['status'] ?? '') === 'ended')) {
+    $statusLabel = 'Completed';
+    $statusChip = 'completed';
+} elseif ($status === 'in_consultation') {
+    $statusLabel = 'Active';
+    $statusChip = 'live';
+} else {
+    $statusLabel = 'Upcoming';
+    $statusChip = 'live';
 }
 
-$status = (string) ($consult['status'] ?? '');
-$statusLabel = ucwords(str_replace('_', ' ', $status));
-$dateLabel = !empty($consult['consult_date']) ? date('F j, Y', strtotime($consult['consult_date'])) : '—';
+$videoHistory = consultation_video_history_summary(
+    (string) ($consult['status'] ?? ''),
+    $video,
+    isset($consult['completed_at']) ? (string) $consult['completed_at'] : null,
+    $providerName,
+    ''
+);
+
+$timeline = [];
+if (!empty($consult['consult_date'])) {
+    $schedAt = (string) $consult['consult_date'];
+    if (!empty($consult['consult_time'])) {
+        $schedAt .= ' ' . $consult['consult_time'];
+    }
+    $timeline[] = ['label' => 'Consultation scheduled', 'at' => $schedAt];
+}
+if ($videoStarted !== '') {
+    $timeline[] = ['label' => 'Video consultation started', 'at' => $videoStarted];
+}
+if ($videoEnded !== '') {
+    $timeline[] = ['label' => 'Video consultation ended', 'at' => $videoEnded];
+}
+$finalizedAt = trim((string) ($consult['completed_at'] ?? $note['finalized_at'] ?? ''));
+if ($isFinalized && $finalizedAt !== '') {
+    $timeline[] = ['label' => 'Doctor finalized consultation', 'at' => $finalizedAt];
+}
+
+$fromSessions = (string) ($_GET['from'] ?? '') === 'sessions';
+$backUrl = $fromSessions
+    ? ASSET_BASE . '/views/patient/consultations.php?tab=past'
+    : ASSET_BASE . '/views/patient/my_health.php?tab=timeline';
+$backLabel = $fromSessions ? '← My Sessions' : '← My Health';
 
 $clinicalOutcome = $isFinalized
     ? patient_consultation_clinical_outcome($pdo, $consultationId, $uid, false)
@@ -109,22 +168,50 @@ $patient_page_stylesheets = [
 
 <div class="patient-page pmh-page pmh-page--detail">
   <header class="pmh-detail__head">
-    <a href="<?= ASSET_BASE ?>/views/patient/my_health.php?tab=timeline" class="pmh-detail__back">← My Health</a>
-    <h2 class="pmh-detail__title">Consultation Details</h2>
-    <p class="pmh-detail__meta">
-      <?= htmlspecialchars($providerName) ?>
-      <?php if (!empty($consult['consult_type']) && strcasecmp($consult['consult_type'], 'General consultation') !== 0): ?>
-        · <?= htmlspecialchars($consult['consult_type']) ?>
-      <?php endif; ?>
-    </p>
-    <p class="pmh-detail__meta"><?= htmlspecialchars($dateLabel) ?> · <span class="pmh-status pmh-status--<?= $isFinalized ? 'completed' : 'live' ?>"><?= htmlspecialchars($isFinalized ? 'Completed' : $statusLabel) ?></span></p>
+    <a href="<?= htmlspecialchars($backUrl) ?>" class="pmh-detail__back"><?= htmlspecialchars($backLabel) ?></a>
+    <h2 class="pmh-detail__title">Session Details</h2>
+    <p class="pmh-detail__meta"><?= htmlspecialchars($providerName) ?> · Medical Video Consultation</p>
+    <p class="pmh-detail__meta"><?= htmlspecialchars($dateLabel) ?> · <span class="pmh-status pmh-status--<?= htmlspecialchars($statusChip) ?>"><?= htmlspecialchars($statusLabel) ?></span></p>
   </header>
 
   <div class="pmh-surface pmh-detail">
+    <section class="pmh-detail__section">
+      <h3>Session</h3>
+      <dl class="pmh-session-kv">
+        <div><dt>Doctor</dt><dd><?= htmlspecialchars($providerName) ?></dd></div>
+        <div><dt>Date</dt><dd><?= htmlspecialchars($dateLabel) ?></dd></div>
+        <?php if ($startLabel !== ''): ?>
+        <div><dt>Start</dt><dd><?= htmlspecialchars($startLabel) ?></dd></div>
+        <?php endif; ?>
+        <?php if ($endLabel !== ''): ?>
+        <div><dt>End</dt><dd><?= htmlspecialchars($endLabel) ?></dd></div>
+        <?php endif; ?>
+        <?php if ($durationLabel !== ''): ?>
+        <div><dt>Duration</dt><dd><?= htmlspecialchars($durationLabel) ?></dd></div>
+        <?php endif; ?>
+        <div><dt>Status</dt><dd><?= htmlspecialchars($statusLabel) ?></dd></div>
+        <div><dt>Chief Complaint</dt><dd><?= htmlspecialchars($chiefComplaint !== '' ? $chiefComplaint : 'Not recorded.') ?></dd></div>
+      </dl>
+    </section>
+
+    <?php if ($timeline !== []): ?>
+    <section class="pmh-detail__section">
+      <h3>Session timeline</h3>
+      <ol class="pmh-session-timeline">
+        <?php foreach ($timeline as $event): ?>
+        <li>
+          <strong><?= htmlspecialchars((string) $event['label']) ?></strong>
+          <span><?= htmlspecialchars(date('M j, Y g:i A', strtotime((string) $event['at']))) ?></span>
+        </li>
+        <?php endforeach; ?>
+      </ol>
+    </section>
+    <?php endif; ?>
+
     <?php if (!$isFinalized): ?>
       <div class="pmh-detail__pending">
         <p>Your consultation is still being documented by your provider.</p>
-        <p class="text-muted">You will receive a notification when your medical record is ready to view.</p>
+        <p class="text-muted">Released notes, diagnosis, and prescriptions will appear here and in My Health when ready.</p>
       </div>
     <?php else: ?>
       <?php if (!empty($clinicalOutcome['final_case_level'])): ?>
@@ -164,11 +251,6 @@ $patient_page_stylesheets = [
         <?php endif; ?>
       </section>
       <?php endif; ?>
-
-      <section class="pmh-detail__section">
-        <h3>Chief complaint</h3>
-        <p><?= htmlspecialchars($chiefComplaint !== '' ? $chiefComplaint : 'Not recorded.') ?></p>
-      </section>
 
       <section class="pmh-detail__section">
         <h3>Health file</h3>

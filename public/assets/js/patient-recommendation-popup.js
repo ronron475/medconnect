@@ -75,6 +75,39 @@
     } catch (e) { /* ignore */ }
   }
 
+  function closeCarePlanAcceptedModal() {
+    var modal = el('mcCarePlanAcceptedModal');
+    if (!modal) return;
+    modal.hidden = true;
+    document.body.classList.remove('mc-tips-ready-modal-open');
+  }
+
+  function openCarePlanAcceptedModal() {
+    var modal = el('mcCarePlanAcceptedModal');
+    if (!modal) return;
+    var dashBtn = el('mcCarePlanDashboardBtn');
+    var bookBtn = el('mcCarePlanBookBtn');
+    if (dashBtn) {
+      dashBtn.setAttribute('href', base + '/views/patient/dashboard.php');
+    }
+    if (bookBtn) {
+      var href = base + '/views/patient/triage.php';
+      if (currentId) {
+        href += '?triage_id=' + encodeURIComponent(String(currentId));
+      }
+      bookBtn.setAttribute('href', href);
+    }
+    modal.hidden = false;
+    document.body.classList.add('mc-tips-ready-modal-open');
+  }
+
+  function acceptCareTipsKeepCase() {
+    if (currentId) {
+      acknowledge(currentId);
+      postCareEvent('dismissed', currentId);
+    }
+  }
+
   function closeTipsReadyCancelModal() {
     var modal = el('mcTipsReadyCancelModal');
     if (!modal) return;
@@ -535,8 +568,12 @@
     var bookBtn = el('ptRemedyBook');
     var cancelBtn = el('ptRemedyCancelVisit');
     if (bookBtn) {
-      bookBtn.setAttribute('href', item.book_url || (base + '/views/patient/triage.php'));
-      bookBtn.textContent = item.book_cta_label || 'Proceed to Book Consultation';
+      var bookHref = item.book_url || (base + '/views/patient/triage.php');
+      if (item.id && bookHref.indexOf('triage_id=') === -1 && bookHref.indexOf('/triage.php') !== -1) {
+        bookHref += (bookHref.indexOf('?') === -1 ? '?' : '&') + 'triage_id=' + encodeURIComponent(String(item.id));
+      }
+      bookBtn.setAttribute('href', bookHref);
+      bookBtn.textContent = item.book_cta_label || 'Book a consultation';
     }
     if (cancelBtn) {
       cancelBtn.hidden = !(upcomingConsult && upcomingConsult.id);
@@ -628,7 +665,12 @@
     var choices = el('ptRemedyChoicesWaiting');
     var bookBtn = el('ptRemedyBookWaiting');
     if (bookBtn) {
-      bookBtn.setAttribute('href', base + '/views/patient/triage.php');
+      var waitHref = base + '/views/patient/triage.php';
+      var waitId = Number((info && info.id) || currentId || 0);
+      if (waitId > 0) {
+        waitHref += '?triage_id=' + encodeURIComponent(String(waitId));
+      }
+      bookBtn.setAttribute('href', waitHref);
     }
     if (choices) choices.hidden = false;
   }
@@ -967,59 +1009,34 @@
     }
 
     if (selfCareBtn) {
-      selfCareBtn.addEventListener('click', async function () {
+      selfCareBtn.addEventListener('click', function () {
         if (mode !== 'approved') return;
         appendBubble('I’ll follow the self-care tips.', 'user');
-
-        if (upcomingConsult && upcomingConsult.id) {
-          var shouldCancel = window.confirm(
-            'You have a video visit booked for ' + (upcomingConsult.label || 'soon') +
-            '.\n\nCancel it so the doctor’s slot becomes free again?\n\nOK = cancel visit\nCancel = keep my video visit'
-          );
-          if (!shouldCancel) {
-            appendBubble('I’ll keep my video visit for now.', 'user');
-            appendBubble(
-              'Okay — your appointment stays booked. See you at your scheduled time. You can still use these tips meanwhile.',
-              'bot'
-            );
-            acknowledge(currentId);
-            postCareEvent('dismissed', currentId);
-            window.setTimeout(function () {
-              closePanel(true);
-              upcomingConsult = null;
-            }, 1800);
-            return;
-          }
-
-          appendBubble('Please cancel my video visit and free the slot.', 'user');
-          var cancelResult = await cancelUpcomingVisit('Chose self-care tips after approval');
-          if (!cancelResult.ok) {
-            appendBubble(cancelResult.message || 'Could not cancel the visit. You can cancel from My Sessions.', 'bot');
-            return;
-          }
-          appendBubble(
-            'Done — your video visit is cancelled and that time slot is open again for other patients. Take care with the self-care tips.',
-            'bot'
-          );
-          acknowledge(currentId);
-          postCareEvent('dismissed', currentId);
-          window.setTimeout(function () {
-            closePanel(true);
-          }, 2000);
-          return;
+        acceptCareTipsKeepCase();
+        openCarePlanAcceptedModal();
+      });
+    }
+    var carePlanModal = el('mcCarePlanAcceptedModal');
+    if (carePlanModal) {
+      carePlanModal.addEventListener('click', function (e) {
+        var target = e.target;
+        if (target && target.getAttribute && target.getAttribute('data-mc-care-plan-dismiss') !== null) {
+          closeCarePlanAcceptedModal();
         }
-
-        window.setTimeout(function () {
-          appendBubble(
-            'Sounds good. Take care — you can book a consultation later if symptoms change or you want to talk with a licensed doctor. Tips stay available in Care Assistant for 24 hours, and forever in Care Tips History.',
-            'bot'
-          );
-          acknowledge(currentId);
-          postCareEvent('dismissed', currentId);
-          window.setTimeout(function () {
-            closePanel(true);
-          }, 1800);
-        }, 350);
+      });
+    }
+    var carePlanDashBtn = el('mcCarePlanDashboardBtn');
+    if (carePlanDashBtn) {
+      carePlanDashBtn.addEventListener('click', function () {
+        closeCarePlanAcceptedModal();
+        closePanel(true);
+      });
+    }
+    var carePlanBookBtn = el('mcCarePlanBookBtn');
+    if (carePlanBookBtn) {
+      carePlanBookBtn.addEventListener('click', function () {
+        closeCarePlanAcceptedModal();
+        closePanel(true);
       });
     }
     if (cancelVisitBtn) {

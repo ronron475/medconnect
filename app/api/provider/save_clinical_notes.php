@@ -77,18 +77,31 @@ if (!$consultRow) {
 }
 
 $currentStatus = strtolower(trim((string) ($consultRow['status'] ?? '')));
-if ($currentStatus === 'completed' && !$finalize) {
-    echo json_encode(['success' => false, 'message' => 'This consultation is already finalized and cannot be edited.']);
+
+$existingStmt = $pdo->prepare('SELECT signature_data, finalized_at FROM clinical_notes WHERE consultation_id = ? LIMIT 1');
+$existingStmt->execute([(int) $data['consultation_id']]);
+$existingNote = $existingStmt->fetch(PDO::FETCH_ASSOC) ?: null;
+$alreadyFinalized = trim((string) ($existingNote['signature_data'] ?? '')) !== '';
+
+if ($alreadyFinalized) {
+    echo json_encode(['success' => false, 'message' => 'This SOAP note has already been finalized and cannot be edited.']);
     exit;
+}
+
+if ($finalize) {
+    foreach (['subjective', 'objective', 'assessment', 'plan'] as $soapField) {
+        if (trim((string) ($data[$soapField] ?? '')) === '') {
+            echo json_encode([
+                'success' => false,
+                'message' => 'Please complete all SOAP sections (Subjective, Objective, Assessment, and Plan) before finalizing.',
+            ]);
+            exit;
+        }
+    }
 }
 
 if ($finalize && trim((string) $data['signature']) === '') {
     echo json_encode(['success' => false, 'message' => 'Digital signature is required to finalize.']);
-    exit;
-}
-
-if ($finalize && $currentStatus === 'completed') {
-    echo json_encode(['success' => false, 'message' => 'This consultation has already been finalized.']);
     exit;
 }
 
@@ -115,7 +128,7 @@ try {
 
         echo json_encode([
             'success'          => true,
-            'message'          => 'Clinical notes saved. Consultation remains in progress.',
+            'message'          => 'Draft SOAP saved. The patient cannot see this note until you finalize it.',
             'consultation_id'  => (int) $data['consultation_id'],
             'status'           => $currentStatus,
             'finalized'        => false,
@@ -258,7 +271,7 @@ try {
     require_once dirname(dirname(dirname(__DIR__))) . '/app/includes/patient_booking_status.php';
     patient_triage_close_cases_for_consultation($pdo, (int) $data['consultation_id']);
 
-    $msg = 'Consultation finalized. The patient can now view their medical record.';
+    $msg = 'SOAP note finalized successfully. The patient can now view this record in My Health.';
     if ($rxIssued) {
         $msg .= ' Prescription saved to the patient record.';
     }
