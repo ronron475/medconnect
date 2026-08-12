@@ -311,7 +311,9 @@ body.landing-page.signin-active .landing-fab,
 body.landing-page.signin-active .faq-chatbot-fab,
 body.landing-page.signin-active .messages-fab,
 body.landing-page.signin-active .mc-messages-fab,
-body.landing-page.signin-active .landing-theme-fab {
+body.landing-page.signin-active .landing-theme-fab,
+body.landing-page.signin-active .fcb-fab-wrap,
+body.landing-page.signin-active .fcb-fab {
   opacity: 0 !important;
   visibility: hidden !important;
   pointer-events: none !important;
