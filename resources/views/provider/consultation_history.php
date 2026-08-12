@@ -5,6 +5,7 @@ $page_styles = ['provider-consultation-history.css'];
 require __DIR__ . '/partials/icons.php';
 require __DIR__ . '/partials/data.php';
 require_once BASE_PATH . '/app/includes/provider_consultation_history.php';
+$GLOBALS['pdo'] = $pdo;
 require_once BASE_PATH . '/app/includes/patient_consultation_records.php';
 patient_consultation_records_schema_ensure($pdo);
 require __DIR__ . '/partials/layout_open.php';
@@ -120,9 +121,12 @@ function pch_filter_url(string $filter): string
             <div class="pch-consult-card__row"><strong>Started:</strong> <?= htmlspecialchars((string) ($vh['started_label'] ?? '—')) ?></div>
             <div class="pch-consult-card__row"><strong>Ended:</strong> <?= htmlspecialchars((string) ($vh['ended_label'] ?? '—')) ?></div>
             <div class="pch-consult-card__row"><strong>Duration:</strong> <?= htmlspecialchars((string) ($vh['duration_label'] ?? '—')) ?></div>
-            <?php if (!empty($vh['has_recording']) && !empty($vh['recording_path'])): ?>
+            <?php
+              $recUrl = consultation_video_recording_view_url((int) ($row['id'] ?? 0));
+            ?>
+            <?php if ($recUrl !== ''): ?>
             <div class="pch-consult-card__actions" style="margin-top:8px;">
-              <a href="<?= htmlspecialchars(ASSET_BASE . '/' . ltrim((string) $vh['recording_path'], '/')) ?>" target="_blank" rel="noopener" class="mc-btn mc-btn--outline" style="padding:6px 12px;font-size:11px;">View Recording</a>
+              <a href="<?= htmlspecialchars($recUrl) ?>" target="_blank" rel="noopener" class="mc-btn mc-btn--outline" style="padding:6px 12px;font-size:11px;">View Recording</a>
             </div>
             <?php else: ?>
             <div class="pch-consult-card__row"><strong>Video recording:</strong> Not available</div>
@@ -132,9 +136,11 @@ function pch_filter_url(string $filter): string
             <?php endif; ?>
           </div>
           <div class="pch-consult-card__actions">
-            <a href="<?= htmlspecialchars($sessionUrl) ?>" class="mc-btn mc-btn--outline" style="padding:6px 12px;font-size:11px;">View details</a>
-            <?php if ($status === 'completed' && !empty($row['clinical_note_id'])): ?>
+            <a href="<?= htmlspecialchars($sessionUrl) ?>" class="mc-btn mc-btn--outline" style="padding:6px 12px;font-size:11px;">View History</a>
+            <?php if ($status === 'completed' && !empty($row['clinical_note_finalized'])): ?>
             <a href="<?= htmlspecialchars(ASSET_BASE) ?>/views/provider/medical_records.php?view=patients&amp;patient_id=<?= (int) $patient_detail['id'] ?>&amp;tab=clinical_notes" class="mc-btn mc-btn--outline" style="padding:6px 12px;font-size:11px;">View SOAP</a>
+            <?php elseif ($status === 'completed'): ?>
+            <span class="pch-consult-card__row" style="margin:0;">Provider documentation is still in progress.</span>
             <?php endif; ?>
           </div>
         </article>

@@ -3335,6 +3335,10 @@ function mcProviderOpenVideo(urlOrToken, consultationId) {
 }
 
 async function startVideoCall() {
+    <?php if (!empty($history_view)): ?>
+    alert('This consultation has already ended. You can only view its historical record.');
+    return;
+    <?php endif; ?>
     try {
         console.log("Starting video call for consultation:", <?= $consultation_id ?>);
         const res = await fetch('<?= ASSET_BASE ?>/app/api/consultations/start_video.php', {
