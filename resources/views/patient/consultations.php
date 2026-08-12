@@ -18,6 +18,7 @@ require_once BASE_PATH . '/app/includes/appointment_reschedule.php';
 require_once BASE_PATH . '/app/includes/appointment_schedule_schema.php';
 require_once BASE_PATH . '/app/includes/clinical_tables.php';
 require_once BASE_PATH . '/app/includes/patient_consultation_records.php';
+require_once BASE_PATH . '/app/includes/consultation_video_history.php';
 appointment_schedule_ensure_schema($pdo);
 clinical_tables_ensure($pdo);
 patient_consultation_records_schema_ensure($pdo);
@@ -76,10 +77,21 @@ if ($pdo->query("SHOW TABLES LIKE 'consultations'")->rowCount()) {
         }
         $consult['provider_name'] = patient_provider_display_name((string) ($consult['provider_name'] ?? ''));
         $consult['chief_complaint'] = patient_session_chief_complaint($pdo, (int) $uid, $consult);
-        $consult['duration_label'] = patient_format_call_duration(
-            (string) ($consult['video_started_at'] ?? ''),
-            (string) ($consult['video_ended_at'] ?? '')
+        $vh = consultation_video_history_summary(
+            (string) ($consult['status'] ?? ''),
+            [
+                'status' => (string) ($consult['video_status'] ?? ''),
+                'started_at' => (string) ($consult['video_started_at'] ?? ''),
+                'ended_at' => (string) ($consult['video_ended_at'] ?? ''),
+                'recording_path' => '',
+                'recording_url' => '',
+            ],
+            isset($consult['completed_at']) ? (string) $consult['completed_at'] : null,
+            (string) ($consult['provider_name'] ?? ''),
+            ''
         );
+        $consult['video_history'] = $vh;
+        $consult['duration_label'] = (string) ($vh['duration_label'] ?? '');
         unset($consult['triage_result_id']);
     }
     unset($consult);

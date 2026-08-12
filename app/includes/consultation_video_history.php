@@ -38,6 +38,26 @@ function consultation_format_video_duration(?string $startedAt, ?string $endedAt
 /**
  * Resolve a stored recording path only when the file actually exists on disk.
  */
+function consultation_video_recording_view_url(int $consultationId): string
+{
+    if ($consultationId <= 0 || !isset($GLOBALS['pdo']) || !($GLOBALS['pdo'] instanceof PDO)) {
+        return '';
+    }
+    $row = consultation_video_session_row($GLOBALS['pdo'], $consultationId);
+    if (!$row) {
+        return '';
+    }
+    $rel = consultation_video_recording_public_path(
+        (string) ($row['recording_path'] ?? ''),
+        (string) ($row['recording_url'] ?? '')
+    );
+    if ($rel === '') {
+        return '';
+    }
+    $base = defined('ASSET_BASE') ? (string) ASSET_BASE : '';
+    return rtrim($base, '/') . '/' . ltrim($rel, '/');
+}
+
 function consultation_video_recording_public_path(?string $recordingPath, ?string $recordingUrl = null): string
 {
     $candidates = [];
@@ -63,15 +83,6 @@ function consultation_video_recording_public_path(?string $recordingPath, ?strin
     }
 
     return '';
-}
-
-/**
- * Authorized player URL for a stored consultation recording.
- */
-function consultation_video_recording_view_url(int $consultationId): string
-{
-    $base = defined('ASSET_BASE') ? (string) ASSET_BASE : '';
-    return $base . '/app/api/consultations/view_recording.php?consultation_id=' . $consultationId;
 }
 
 /**
@@ -119,21 +130,6 @@ function consultation_video_session_row(PDO $pdo, int $consultationId): ?array
 
 /**
  * Build display summary for history cards / detail panels.
- *
- * @param array<string, mixed>|null $videoRow
- * @return array{
- *   has_session: bool,
- *   video_status: string,
- *   video_status_label: string,
- *   show_completed_details: bool,
- *   date_label: string,
- *   started_label: string,
- *   ended_label: string,
- *   duration_label: string,
- *   recording_path: string,
- *   has_recording: bool,
- *   timeline: list<array{label:string,time_label:string}>
- * }
  */
 function consultation_video_history_summary(
     string $consultationStatus,
@@ -189,8 +185,6 @@ function consultation_video_history_summary(
         return $empty;
     }
 
-    // completed (and any other terminal-like status): only show completed video
-    // details when real start+end exist on an ended (or any) session row.
     if (!$videoRow) {
         $empty['video_status_label'] = 'Not started';
         return $empty;
@@ -273,7 +267,7 @@ function consultation_video_history_summary(
 }
 
 /**
- * Attach video history summary onto consultation rows (mutates by reference).
+ * Attach video history summary onto consultation rows.
  *
  * @param list<array<string,mixed>> $consultations
  */

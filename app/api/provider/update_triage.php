@@ -234,7 +234,7 @@ try {
         }
         $savedText = triage_recommendations_from_list($list);
 
-        // New approval resets Care Assistant lifecycle so it auto-opens once again.
+        // New approval resets Care Assistant lifecycle so the floating Care Tips button appears again.
         $pdo->prepare("
             UPDATE triage_results
             SET recommendations = ?,

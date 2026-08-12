@@ -5,6 +5,7 @@
 declare(strict_types=1);
 
 require_once __DIR__ . '/provider_patient_access.php';
+require_once __DIR__ . '/consultation_video_history.php';
 
 /** Statuses that count toward total visits. */
 function provider_consultation_history_visit_statuses(): array
@@ -150,6 +151,15 @@ function provider_consultation_history_patient_detail(PDO $pdo, int $providerId,
             return $empty;
         }
 
+        $hasCompletedAt = false;
+        try {
+            $colCheck = $pdo->query("SHOW COLUMNS FROM consultations LIKE 'completed_at'");
+            $hasCompletedAt = (bool) ($colCheck && $colCheck->fetch(PDO::FETCH_ASSOC));
+        } catch (Throwable $e) {
+            $hasCompletedAt = false;
+        }
+        $completedAtSelect = $hasCompletedAt ? 'c.completed_at,' : 'NULL AS completed_at,';
+
         $cStmt = $pdo->prepare("
             SELECT
                 c.id,
@@ -159,6 +169,7 @@ function provider_consultation_history_patient_detail(PDO $pdo, int $providerId,
                 c.consult_time,
                 c.consult_type,
                 c.status,
+                {$completedAtSelect}
                 COALESCE(NULLIF(c.provider_name, ''), CONCAT(pu.first_name, ' ', pu.last_name), '—') AS doctor_name,
                 COALESCE(NULLIF(cn.diagnosis, ''), NULLIF(c.diagnosis, ''), '') AS diagnosis,
                 COALESCE(NULLIF(cn.subjective, ''), c.consult_type, '') AS chief_complaint,
@@ -177,6 +188,12 @@ function provider_consultation_history_patient_detail(PDO $pdo, int $providerId,
         $consultations = $cStmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
 
         require_once __DIR__ . '/provider_clinical_support.php';
+        consultation_video_history_enrich_rows(
+            $pdo,
+            $consultations,
+            'doctor_name',
+            (string) ($patient['patient_name'] ?? '')
+        );
         foreach ($consultations as &$consultRow) {
             $cid = (int) ($consultRow['id'] ?? 0);
             if ($cid <= 0) {
