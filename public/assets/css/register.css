@@ -1,4 +1,4 @@
-﻿/* ===== MEDCONNECT REGISTRATION — HEALTHCARE UI REDESIGN ===== */
+/* ===== MEDCONNECT REGISTRATION — HEALTHCARE UI REDESIGN ===== */
 :root {
   --teal:          #0d9488;
   --teal-dark:     #0f766e;
@@ -548,7 +548,8 @@ body.reg-body {
   transition: opacity 0.18s ease, transform 0.18s ease;
 }
 .field-error.success {
-  color: var(--green);
+  color: #1e293b;
+  font-weight: 600;
 }
 .field-error.has-msg {
   opacity: 1;
@@ -1012,7 +1013,7 @@ textarea:focus {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  min-height: 40px;
+  min-height: 44px;
   padding: 0 16px;
   border-radius: 10px;
   font-size: 13px;
@@ -1020,6 +1021,9 @@ textarea:focus {
   font-family: inherit;
   cursor: pointer;
   transition: background 0.18s, border-color 0.18s, color 0.18s;
+  position: relative;
+  z-index: 10;
+  touch-action: manipulation;
 }
 
 .btn-complaint-skip {
@@ -2134,7 +2138,15 @@ body.reg-outcome-open {
   margin-bottom: 12px;
 }
 #step1 .kyc-section--confirm {
+  margin-top: 24px;
   background: linear-gradient(180deg, #f8fafc 0%, #fff 100%);
+}
+
+/* Lock address/personal fields while OCR is extracting */
+#section-id-verification:has(#ocr-status-panel:not([hidden])) ~ .kyc-section {
+  pointer-events: none;
+  user-select: none;
+  opacity: 0.6;
 }
 
 /* Compact inline verification status */
