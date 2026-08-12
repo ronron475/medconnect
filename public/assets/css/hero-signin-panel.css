@@ -827,38 +827,48 @@ html[data-theme-resolved='dark'] .landing-page .hero-signin-panel .signin-modal-
   body.landing-page.signin-active > #signin-modal.hero-signin-panel.is-viewport-pinned.is-open,
   body.landing-page.signin-active #signin-modal.hero-signin-panel.is-viewport-pinned.is-open {
     position: fixed !important;
-    top: calc(var(--hero-signin-nav-offset) + var(--hero-signin-gap) - var(--hero-signin-lift)) !important;
-    right: max(14px, env(safe-area-inset-right, 14px)) !important;
-    left: max(14px, env(safe-area-inset-left, 14px)) !important;
-    bottom: auto !important;
-    width: auto !important;
-    max-width: none !important;
-    height: auto !important;
-    max-height: calc(100dvh - var(--hero-signin-nav-offset) - (var(--hero-signin-gap) * 2) - env(safe-area-inset-bottom, 0px) + var(--hero-signin-lift)) !important;
+    top: 0 !important;
+    right: 0 !important;
+    left: 0 !important;
+    bottom: 0 !important;
+    width: 100vw !important;
+    max-width: 100vw !important;
+    height: 100dvh !important;
+    max-height: 100dvh !important;
     margin: 0 !important;
+    padding: max(16px, env(safe-area-inset-top, 16px)) max(14px, env(safe-area-inset-right, 14px)) max(16px, env(safe-area-inset-bottom, 16px)) max(14px, env(safe-area-inset-left, 14px)) !important;
     transform: none !important;
     display: flex !important;
     flex-direction: column !important;
-    align-items: stretch !important;
-    overflow: hidden !important;
-    z-index: 1200;
+    align-items: center !important;
+    justify-content: center !important;
+    overflow-y: auto !important;
+    z-index: 1250 !important;
+    box-sizing: border-box !important;
   }
 
   body.landing-page.signin-active > #signin-modal.hero-signin-panel.is-open .signin-modal-wrap,
   body.landing-page.signin-active #signin-modal.hero-signin-panel.is-open .signin-modal-wrap {
-    flex: 1 1 auto;
+    flex: 0 1 auto;
     min-height: 0;
-    max-height: 100%;
+    height: auto;
+    width: min(420px, 100%);
+    max-width: 420px;
+    max-height: min(90dvh, calc(100dvh - 32px));
     overflow: visible;
     display: flex;
     flex-direction: column;
+    margin: auto;
   }
 
   body.landing-page.signin-active > #signin-modal.hero-signin-panel.is-open .signin-modal-inner,
   body.landing-page.signin-active #signin-modal.hero-signin-panel.is-open .signin-modal-inner {
-    flex: 1 1 auto;
+    flex: 0 1 auto;
     min-height: 0;
-    max-height: 100%;
+    height: auto;
+    width: 100%;
+    max-width: 420px;
+    max-height: min(90dvh, calc(100dvh - 32px));
     overflow-y: auto;
     overscroll-behavior: contain;
     -webkit-overflow-scrolling: touch;
@@ -868,14 +878,16 @@ html[data-theme-resolved='dark'] .landing-page .hero-signin-panel .signin-modal-
 @media (max-width: 580px) {
   body.landing-page.signin-active > #signin-modal.hero-signin-panel.is-viewport-pinned.is-open,
   body.landing-page.signin-active #signin-modal.hero-signin-panel.is-viewport-pinned.is-open {
-    top: calc(var(--hero-signin-nav-offset) + 8px - var(--hero-signin-lift)) !important;
-    right: max(14px, env(safe-area-inset-right, 14px)) !important;
-    left: max(14px, env(safe-area-inset-left, 14px)) !important;
-    bottom: auto !important;
-    max-height: calc(100dvh - var(--hero-signin-nav-offset) - 20px - env(safe-area-inset-bottom, 0px) + var(--hero-signin-lift)) !important;
+    padding: max(12px, env(safe-area-inset-top, 12px)) max(12px, env(safe-area-inset-right, 12px)) max(12px, env(safe-area-inset-bottom, 12px)) max(12px, env(safe-area-inset-left, 12px)) !important;
+    align-items: center !important;
+    justify-content: center !important;
   }
 
   .landing-page .hero-signin-panel .signin-card--hero-inline {
+    width: 100% !important;
+    max-width: 420px !important;
+    height: auto !important;
+    margin: 0 auto !important;
     --signin-space-md: 12px;
     --signin-space-lg: 16px;
     --signin-input-height: 44px;
