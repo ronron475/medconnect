@@ -505,11 +505,11 @@ final class NotificationEvents
         if ($name !== '' && stripos($name, 'dr.') !== 0) {
             $name = 'Dr. ' . $name;
         }
-        $detailUrl = patient_consultation_detail_url($consultationId);
+        $detailUrl = patient_health_files_url($consultationId);
         $level = trim((string) ($finalCaseLevel ?? ''));
-        $message = "Your consultation with {$name} has been completed. Your medical record and care plan are now available.";
+        $message = "Your consultation with {$name} has been completed. Your health file and care plan are now available in My Health.";
         if ($level !== '') {
-            $message = "Your consultation with {$name} has been completed. Final case level: {$level}. Your medical record is now available.";
+            $message = "Your consultation with {$name} has been completed. Final case level: {$level}. View your health file in My Health.";
         }
 
         NotificationManager::notifyPatient($pdo, $patientId, [

@@ -54,7 +54,7 @@
     <div class="mc-vc-postcall__actions">
       <?php if (!empty($is_patient)): ?>
       <a href="<?= htmlspecialchars(ASSET_BASE) ?>/views/patient/triage.php" class="mc-vc-postcall__btn mc-vc-postcall__btn--primary">Schedule Follow-up</a>
-      <a href="<?= htmlspecialchars(ASSET_BASE) ?>/views/patient/consultation_detail.php?id=<?= (int) $consultation_id ?>" class="mc-vc-postcall__btn">View Medical Record</a>
+      <a href="<?= htmlspecialchars(ASSET_BASE) ?>/views/patient/my_health.php?tab=files#health-file-<?= (int) $consultation_id ?>" class="mc-vc-postcall__btn">View Health Files</a>
       <a href="<?= htmlspecialchars(ASSET_BASE) ?>/views/patient/my_health.php?tab=timeline" class="mc-vc-postcall__btn">My Health</a>
       <?php else: ?>
       <button type="button" class="mc-vc-postcall__btn mc-vc-postcall__btn--primary" id="mcVcPostCallFollowup">Schedule Follow-up</button>

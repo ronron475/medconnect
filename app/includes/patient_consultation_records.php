@@ -46,6 +46,17 @@ function patient_consultation_detail_url(int $consultationId): string
     return $base . '/views/patient/consultation_detail.php?id=' . $consultationId;
 }
 
+/** Patient My Health → Health Files tab (optional consultation anchor). */
+function patient_health_files_url(?int $consultationId = null): string
+{
+    $base = defined('ASSET_BASE') ? (string) ASSET_BASE : '';
+    $url = $base . '/views/patient/my_health.php?tab=files';
+    if ($consultationId !== null && $consultationId > 0) {
+        $url .= '#health-file-' . $consultationId;
+    }
+    return $url;
+}
+
 /**
  * Display label for doctor final case level (NON-URGENT / URGENT / EMERGENCY).
  */

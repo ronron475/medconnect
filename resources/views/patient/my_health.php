@@ -116,7 +116,8 @@ try {
 
 try {
     $s = $pdo->prepare("
-        SELECT COALESCE(NULLIF(cn.diagnosis, ''), 'Clinical Note') AS record_name,
+        SELECT cn.consultation_id,
+               COALESCE(NULLIF(cn.diagnosis, ''), 'Consultation health file') AS record_name,
                cn.assessment AS frequency,
                cn.plan AS duration,
                COALESCE(NULLIF(cn.treatment_plan, ''), NULLIF(cn.subjective, ''), '') AS detail,
@@ -151,13 +152,13 @@ try {
 
 $all_records = [];
 foreach ($prescriptions as $r) { $r['record_type'] = 'Prescription'; $all_records[] = $r; }
-foreach ($clinical_notes as $r) { $r['record_type'] = 'Clinical Note'; $all_records[] = $r; }
+foreach ($clinical_notes as $r) { $r['record_type'] = 'Health File'; $all_records[] = $r; }
 foreach ($referrals as $r) { $r['record_type'] = 'Referral'; $all_records[] = $r; }
 usort($all_records, fn($a, $b) => strcmp($b['record_date'] ?? '', $a['record_date'] ?? ''));
 
 $counts = [
     'Prescription'  => count($prescriptions),
-    'Clinical Note' => count($clinical_notes),
+    'Health File'   => count($clinical_notes),
     'Referral'      => count($referrals),
     'all'           => count($all_records),
 ];
@@ -274,7 +275,7 @@ $patient_page_stylesheets = [
       <div class="pmh-surface__head">
         <div>
           <h3 class="pmh-surface__title">Health files</h3>
-          <p class="pmh-surface__desc">Prescriptions, clinical notes, and referrals from your consultations.</p>
+          <p class="pmh-surface__desc">Prescriptions, consultation health files, and referrals from your doctors.</p>
         </div>
       </div>
       <?php require VIEWS_PATH . '/patient/partials/view_my_health_files.php'; ?>
@@ -303,7 +304,7 @@ $patient_page_stylesheets = [
 
 <script>
 document.addEventListener('medconnect:consultation-completed', function () {
-  if (document.querySelector('.pmh-feed--timeline')) {
+  if (document.querySelector('.pmh-feed--timeline') || document.getElementById('pmh-files-list')) {
     window.setTimeout(function () { window.location.reload(); }, 1200);
   }
 });
@@ -323,6 +324,13 @@ document.querySelectorAll('[data-health-filter]').forEach(function (btn) {
 });
 if (document.getElementById('pmh-files-list')) {
   filterHealthFiles('all');
+  var hashTarget = window.location.hash ? document.getElementById(window.location.hash.slice(1)) : null;
+  if (hashTarget) {
+    window.setTimeout(function () {
+      hashTarget.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      hashTarget.classList.add('pmh-file-card--highlight');
+    }, 150);
+  }
 }
 </script>
 </body>
