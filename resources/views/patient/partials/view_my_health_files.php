@@ -72,18 +72,10 @@ function pmh_health_file_text(?string $value): bool
       <?php endif; ?>
       <?php if ($type === 'Health File'): ?>
         <dl class="pmh-soap-list pmh-file-card__soap-list">
-          <?php if (pmh_health_file_text($r['subjective'] ?? '')): ?>
-          <div><dt>Subjective</dt><dd><?= nl2br(htmlspecialchars($r['subjective'])) ?></dd></div>
-          <?php endif; ?>
-          <?php if (pmh_health_file_text($r['objective'] ?? '')): ?>
-          <div><dt>Objective</dt><dd><?= nl2br(htmlspecialchars($r['objective'])) ?></dd></div>
-          <?php endif; ?>
-          <?php if (pmh_health_file_text($r['assessment'] ?? '')): ?>
-          <div><dt>Assessment</dt><dd><?= nl2br(htmlspecialchars($r['assessment'])) ?></dd></div>
-          <?php endif; ?>
-          <?php if (pmh_health_file_text($r['plan'] ?? '')): ?>
-          <div><dt>Plan</dt><dd><?= nl2br(htmlspecialchars($r['plan'])) ?></dd></div>
-          <?php endif; ?>
+          <div><dt>Subjective</dt><dd><?= nl2br(htmlspecialchars(pmh_health_file_text($r['subjective'] ?? '') ? $r['subjective'] : '—')) ?></dd></div>
+          <div><dt>Objective</dt><dd><?= nl2br(htmlspecialchars(pmh_health_file_text($r['objective'] ?? '') ? $r['objective'] : '—')) ?></dd></div>
+          <div><dt>Assessment</dt><dd><?= nl2br(htmlspecialchars(pmh_health_file_text($r['assessment'] ?? '') ? $r['assessment'] : '—')) ?></dd></div>
+          <div><dt>Plan</dt><dd><?= nl2br(htmlspecialchars(pmh_health_file_text($r['plan'] ?? '') ? $r['plan'] : '—')) ?></dd></div>
         </dl>
         <?php if (pmh_health_file_text($r['treatment_plan'] ?? '')): ?>
         <p class="pmh-file-card__soap"><strong>Care plan:</strong> <?= nl2br(htmlspecialchars($r['treatment_plan'])) ?></p>

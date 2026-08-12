@@ -79,20 +79,14 @@ try {
 $providerName = patient_provider_display_name(trim((string) ($consult['provider_display'] ?? '')));
 $chiefComplaint = patient_session_chief_complaint($pdo, $uid, $consult);
 
-$video = null;
-try {
-    $vStmt = $pdo->prepare("
-        SELECT started_at, ended_at, status
-        FROM video_sessions
-        WHERE consultation_id = ?
-        ORDER BY id DESC
-        LIMIT 1
-    ");
-    $vStmt->execute([$consultationId]);
-    $video = $vStmt->fetch(PDO::FETCH_ASSOC) ?: null;
-} catch (Throwable $e) {
-    $video = null;
-}
+$video = consultation_video_session_row($pdo, $consultationId);
+$videoHistory = consultation_video_history_summary(
+    (string) ($consult['status'] ?? ''),
+    $video,
+    isset($consult['completed_at']) ? (string) $consult['completed_at'] : null,
+    $providerName,
+    ''
+);
 
 $videoStarted = trim((string) ($video['started_at'] ?? ''));
 $videoEnded = trim((string) ($video['ended_at'] ?? ''));
@@ -115,13 +109,7 @@ if ($status === 'cancelled' || $status === 'canceled') {
     $statusChip = 'live';
 }
 
-$videoHistory = consultation_video_history_summary(
-    (string) ($consult['status'] ?? ''),
-    $video,
-    isset($consult['completed_at']) ? (string) $consult['completed_at'] : null,
-    $providerName,
-    ''
-);
+$dateLabel = !empty($consult['consult_date']) ? date('F j, Y', strtotime($consult['consult_date'])) : '—';
 
 $timeline = [];
 if (!empty($consult['consult_date'])) {
@@ -178,6 +166,7 @@ $patient_page_stylesheets = [
     <section class="pmh-detail__section">
       <h3>Session</h3>
       <dl class="pmh-session-kv">
+        <div><dt>Consultation ID</dt><dd>#<?= (int) $consultationId ?></dd></div>
         <div><dt>Doctor</dt><dd><?= htmlspecialchars($providerName) ?></dd></div>
         <div><dt>Date</dt><dd><?= htmlspecialchars($dateLabel) ?></dd></div>
         <?php if ($startLabel !== ''): ?>
@@ -192,6 +181,26 @@ $patient_page_stylesheets = [
         <div><dt>Status</dt><dd><?= htmlspecialchars($statusLabel) ?></dd></div>
         <div><dt>Chief Complaint</dt><dd><?= htmlspecialchars($chiefComplaint !== '' ? $chiefComplaint : 'Not recorded.') ?></dd></div>
       </dl>
+    </section>
+
+    <section class="pmh-detail__section">
+      <h3>Video consultation</h3>
+      <dl class="pmh-session-kv">
+        <?php if (!empty($videoHistory['date_label'])): ?>
+        <div><dt>Date</dt><dd><?= htmlspecialchars((string) $videoHistory['date_label']) ?></dd></div>
+        <?php endif; ?>
+        <?php if (!empty($videoHistory['duration_label'])): ?>
+        <div><dt>Duration</dt><dd><?= htmlspecialchars((string) $videoHistory['duration_label']) ?></dd></div>
+        <?php endif; ?>
+        <div><dt>Provider</dt><dd><?= htmlspecialchars($providerName) ?></dd></div>
+      </dl>
+      <?php if (!empty($videoHistory['has_recording']) && !empty($videoHistory['recording_path'])): ?>
+      <p class="pmh-file-card__link">
+        <a class="pmh-btn pmh-btn--outline pmh-btn--sm" href="<?= htmlspecialchars(ASSET_BASE . '/' . ltrim((string) $videoHistory['recording_path'], '/')) ?>" target="_blank" rel="noopener">View Recording</a>
+      </p>
+      <?php else: ?>
+      <p class="text-muted">Video recording not available for this consultation.</p>
+      <?php endif; ?>
     </section>
 
     <?php if ($timeline !== []): ?>
@@ -253,7 +262,7 @@ $patient_page_stylesheets = [
       <?php endif; ?>
 
       <section class="pmh-detail__section">
-        <h3>Health file</h3>
+        <h3>SOAP Note</h3>
         <dl class="pmh-soap-list">
           <div><dt>Subjective</dt><dd><?= nl2br(htmlspecialchars(trim((string) ($note['subjective'] ?? '')) ?: '—')) ?></dd></div>
           <div><dt>Objective</dt><dd><?= nl2br(htmlspecialchars(trim((string) ($note['objective'] ?? '')) ?: '—')) ?></dd></div>

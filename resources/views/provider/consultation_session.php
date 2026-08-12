@@ -3099,7 +3099,9 @@ window.addEventListener('message', (event) => {
         document.getElementById('callStatusIndicator').style.color = '#64748b';
         document.getElementById('callStatusIndicator').textContent = '● READY';
         setVideoShellLive(false);
-        openFollowUpModal({ fromCallEnd: true });
+        window.location.replace(
+            <?= json_encode(ASSET_BASE . '/views/provider/consultation_session.php?id=' . (int) $consultation_id . '&soap=1#soapDocumentation') ?>
+        );
         return;
     }
 
