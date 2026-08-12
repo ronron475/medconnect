@@ -336,6 +336,16 @@ body.landing-page.landing-bg--light .about-team-section__story {
   box-shadow: 0 12px 40px rgba(15, 23, 42, 0.08) !important;
 }
 
+html[data-theme-resolved='light'] .landing-page .about-project-milestone__scroll-box,
+body.landing-page.landing-bg--light .about-project-milestone__scroll-box {
+  background: #020d1a !important;
+}
+
+html[data-theme-resolved='light'] .landing-page .about-project-milestone__text,
+body.landing-page.landing-bg--light .about-project-milestone__text {
+  color: #f1f5f9 !important;
+}
+
 /* Dark mode — keep institutional navy panels */
 html[data-theme-resolved='dark'] body.landing-page .services-section,
 html[data-theme-resolved='dark'] body.landing-page .contact-section,
