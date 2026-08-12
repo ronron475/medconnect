@@ -186,7 +186,9 @@ function consultation_video_history_summary(
     }
 
     if (!$videoRow) {
-        $empty['video_status_label'] = 'Not started';
+        $empty['video_status_label'] = ($status === 'completed')
+            ? 'No video call recorded'
+            : 'Not started';
         return $empty;
     }
 
@@ -261,7 +263,9 @@ function consultation_video_history_summary(
         return $summary;
     }
 
-    $summary['video_status_label'] = 'Not started';
+    $summary['video_status_label'] = ($status === 'completed')
+        ? 'No video call recorded'
+        : 'Not started';
     $summary['has_session'] = false;
     return $summary;
 }

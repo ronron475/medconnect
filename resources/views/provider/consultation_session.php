@@ -1561,8 +1561,19 @@ body.consultation-mobile-call-fullscreen .mc-provider-video-dock .mc-session-flo
                     <div class="video-pre-call__icon"><?= icon('video') ?></div>
                     <h2 class="video-pre-call__title">Secure Video Consultation</h2>
                     <p class="video-pre-call__patient">Patient: <?= htmlspecialchars($patient['name']) ?></p>
+                    <?php if (!empty($history_view)): ?>
+                    <p class="video-pre-call__prompt">This consultation is closed.</p>
+                    <p class="text-xs text-muted" style="margin:0;max-width:360px;line-height:1.5;">
+                        <?php if (!empty($video_history['show_completed_details'])): ?>
+                        Video call details are in the <strong>Video Consultation Session</strong> panel.
+                        <?php else: ?>
+                        No video call was recorded for this consultation. Completing SOAP alone does not create a past video session.
+                        <?php endif; ?>
+                    </p>
+                    <?php else: ?>
                     <p class="video-pre-call__prompt">Ready to start the consultation?</p>
                     <button type="button" onclick="startVideoCall()" class="session-btn primary video-pre-call__start" aria-label="Start video consultation"><?= icon_sm('video') ?> Start Video Consultation</button>
+                    <?php endif; ?>
                 </div>
             </div>
             
@@ -1582,7 +1593,7 @@ body.consultation-mobile-call-fullscreen .mc-provider-video-dock .mc-session-flo
             </div>
         </div>
 
-        <div id="videoPreCallHelp" class="video-pre-call-help">
+        <div id="videoPreCallHelp" class="video-pre-call-help"<?= !empty($history_view) ? ' hidden' : '' ?>>
             <p style="margin:0 0 6px;"><strong>How to start</strong></p>
             <ol>
                 <li>Click <strong>Start Video Consultation</strong> to open the live room.</li>
@@ -1658,6 +1669,9 @@ body.consultation-mobile-call-fullscreen .mc-provider-video-dock .mc-session-flo
                 <div class="info-row"><span class="info-key">Started</span><span class="info-val"><?= htmlspecialchars((string) $video_history['started_label']) ?></span></div>
                 <?php endif; ?>
                 <div class="info-row" style="margin-top:10px;"><span class="info-key">Video recording</span><span class="info-val">Not available</span></div>
+                <?php if (!empty($history_view)): ?>
+                <p class="text-xs text-muted" style="margin-top:10px;line-height:1.5;">No past video call exists for this consultation in the database. A video session appears here only after <strong>Start Video Consultation</strong> runs and the call is ended.</p>
+                <?php endif; ?>
                 <?php endif; ?>
                 <?php if (!empty($history_view)): ?>
                 <p class="text-xs text-muted" style="margin-top:12px;">Read-only history view for a closed consultation.</p>
