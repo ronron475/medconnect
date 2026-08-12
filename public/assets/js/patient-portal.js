@@ -323,20 +323,10 @@
           : '';
         actionBtn = '<div class="psess-card__actions">' + primary + cancelBtn + '</div>';
       } else {
-        const isCompleted = String(c.status || '').toLowerCase() === 'completed';
-        const canFollowup = isCompleted && (
-          c.followup_eligible === true
-          || (window.PatientFollowup && window.PatientFollowup.isEligible(c.id))
-          || (window.followupEligibleIds || []).indexOf(parseInt(c.id, 10)) !== -1
-        );
         const viewUrl = APP_BASE + '/views/patient/consultation_detail.php?id=' + encodeURIComponent(String(c.id || '')) + '&from=sessions';
-        const followupBtn = canFollowup
-          ? '<button type="button" class="psess-btn psess-btn--outline" data-request-followup="' + escapeHtml(String(c.id || '')) + '">Request Follow-up</button>'
-          : '';
         actionBtn =
           '<div class="psess-card__actions">' +
           '<a href="' + viewUrl + '" class="psess-btn psess-btn--primary">View Session</a>' +
-          followupBtn +
           '</div>';
       }
 
@@ -377,9 +367,32 @@
 
       let extraMeta = '';
       if (type === 'past') {
-        if (c.duration_label) {
+        const vh = c.video_history || {};
+        if (vh.show_completed_details) {
           extraMeta +=
-            '<p class="psess-card__meta"><span>Duration</span> ' + escapeHtml(c.duration_label) + '</p>';
+            '<p class="psess-card__meta"><span>Video consultation</span> Completed</p>';
+          if (vh.started_label) {
+            extraMeta +=
+              '<p class="psess-card__meta"><span>Started</span> ' + escapeHtml(vh.started_label) + '</p>';
+          }
+          if (vh.ended_label) {
+            extraMeta +=
+              '<p class="psess-card__meta"><span>Ended</span> ' + escapeHtml(vh.ended_label) + '</p>';
+          }
+          const dur = c.duration_label || vh.duration_label || '';
+          if (dur) {
+            extraMeta +=
+              '<p class="psess-card__meta"><span>Duration</span> ' + escapeHtml(dur) + '</p>';
+          }
+        } else {
+          const vLabel = vh.video_status_label
+            || (String(c.status || '').toLowerCase() === 'in_consultation' ? 'In progress' : 'Not started');
+          extraMeta +=
+            '<p class="psess-card__meta"><span>Video consultation</span> ' + escapeHtml(vLabel) + '</p>';
+          if (c.duration_label) {
+            extraMeta +=
+              '<p class="psess-card__meta"><span>Duration</span> ' + escapeHtml(c.duration_label) + '</p>';
+          }
         }
         if (c.chief_complaint) {
           extraMeta +=

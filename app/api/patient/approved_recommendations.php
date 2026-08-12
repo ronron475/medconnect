@@ -109,9 +109,10 @@ try {
                 ], 'Care Tips expired.');
             }
 
-            // Within 24h — auto-open once until first open or close is persisted.
-            // After that, patient reopens via floating Care tips button only.
-            $shouldAutoOpen = !$firstOpened && !$dismissed;
+            // Tips may be available (FAB) without the panel being open.
+            // Never instruct the client to auto-open; only an explicit click opens it.
+            $isNewApproval = !$firstOpened && !$dismissed;
+            $shouldAutoOpen = false;
             $reviewerName = trim((string) ($row['reviewer_name'] ?? ''));
             $assignedId = (int) ($row['assigned_provider_id'] ?? 0);
             $bookUrl = $assetBase . '/views/patient/triage.php?triage_id=' . $tipId;
@@ -167,13 +168,13 @@ try {
                 ],
                 'awaiting_provider' => null,
                 'expired' => null,
-                'tips_cancel_prompt' => ($shouldAutoOpen && $upcoming !== null)
+                'tips_cancel_prompt' => ($isNewApproval && $upcoming !== null)
                     ? [
                         'tip_id' => $tipId,
                         'chief_complaint' => trim((string) ($row['chief_complaint'] ?? '')),
                         'upcoming_consultation' => $upcoming,
                     ]
-                    : ($shouldAutoOpen ? patient_tips_ready_cancel_prompt($pdo, $patientId) : null),
+                    : ($isNewApproval ? patient_tips_ready_cancel_prompt($pdo, $patientId) : null),
             ], 'Approved recommendations ready.');
         }
     }

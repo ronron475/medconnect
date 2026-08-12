@@ -5,6 +5,8 @@ $page_styles = ['provider-consultation-history.css'];
 require __DIR__ . '/partials/icons.php';
 require __DIR__ . '/partials/data.php';
 require_once BASE_PATH . '/app/includes/provider_consultation_history.php';
+require_once BASE_PATH . '/app/includes/patient_consultation_records.php';
+patient_consultation_records_schema_ensure($pdo);
 require __DIR__ . '/partials/layout_open.php';
 
 $provider_id = (int) ($_SESSION['user_id'] ?? 0);
@@ -105,6 +107,30 @@ function pch_filter_url(string $filter): string
           <?php if (!empty($row['diagnosis'])): ?>
           <div class="pch-consult-card__row"><strong>Diagnosis:</strong> <?= htmlspecialchars((string) $row['diagnosis']) ?></div>
           <?php endif; ?>
+          <?php
+            $vh = is_array($row['video_history'] ?? null) ? $row['video_history'] : [];
+            $vhLabel = (string) ($vh['video_status_label'] ?? 'Not started');
+            $vhCompleted = !empty($vh['show_completed_details']);
+          ?>
+          <div class="pch-video-block">
+            <div class="pch-video-block__title">VIDEO CONSULTATION</div>
+            <?php if ($vhCompleted): ?>
+            <div class="pch-video-block__status pch-video-block__status--done">&#10003; Completed</div>
+            <div class="pch-consult-card__row"><strong>Video call date:</strong> <?= htmlspecialchars((string) ($vh['date_label'] ?? '—')) ?></div>
+            <div class="pch-consult-card__row"><strong>Started:</strong> <?= htmlspecialchars((string) ($vh['started_label'] ?? '—')) ?></div>
+            <div class="pch-consult-card__row"><strong>Ended:</strong> <?= htmlspecialchars((string) ($vh['ended_label'] ?? '—')) ?></div>
+            <div class="pch-consult-card__row"><strong>Duration:</strong> <?= htmlspecialchars((string) ($vh['duration_label'] ?? '—')) ?></div>
+            <?php if (!empty($vh['has_recording']) && !empty($vh['recording_path'])): ?>
+            <div class="pch-consult-card__actions" style="margin-top:8px;">
+              <a href="<?= htmlspecialchars(ASSET_BASE . '/' . ltrim((string) $vh['recording_path'], '/')) ?>" target="_blank" rel="noopener" class="mc-btn mc-btn--outline" style="padding:6px 12px;font-size:11px;">View Recording</a>
+            </div>
+            <?php else: ?>
+            <div class="pch-consult-card__row"><strong>Video recording:</strong> Not available</div>
+            <?php endif; ?>
+            <?php else: ?>
+            <div class="pch-consult-card__row"><strong>Video consultation:</strong> <?= htmlspecialchars($vhLabel) ?></div>
+            <?php endif; ?>
+          </div>
           <div class="pch-consult-card__actions">
             <a href="<?= htmlspecialchars($sessionUrl) ?>" class="mc-btn mc-btn--outline" style="padding:6px 12px;font-size:11px;">View details</a>
             <?php if ($status === 'completed' && !empty($row['clinical_note_id'])): ?>

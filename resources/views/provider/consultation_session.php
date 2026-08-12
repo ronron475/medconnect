@@ -13,6 +13,7 @@ require __DIR__ . '/partials/queue_helpers.php';
 
 clinical_tables_ensure($pdo);
 patient_consultation_records_schema_ensure($pdo);
+$GLOBALS['pdo'] = $pdo;
 
 $consultation_id = (int)($_GET['id'] ?? 0);
 
@@ -60,7 +61,8 @@ $consultation_completed = $soap_finalized;
 $soap_readonly = $soap_finalized;
 
 $session_access = queue_session_access($c);
-if (!$session_access['allowed']) {
+$history_view = in_array(strtolower(trim((string) ($c['status'] ?? ''))), ['completed', 'cancelled'], true);
+if (!$session_access['allowed'] && !$history_view) {
     $page_title = 'Session Not Available';
     require __DIR__ . '/partials/layout_open.php';
     ?>
@@ -166,11 +168,18 @@ $v_stmt = $pdo->prepare("SELECT room_token FROM video_sessions WHERE consultatio
 $v_stmt->execute([$consultation_id]);
 $v_session = $v_stmt->fetch();
 $room_token = $v_session ? $v_session['room_token'] : '';
+$video_doctor_name = trim((string) ($_SESSION['first_name'] ?? '') . ' ' . (string) ($_SESSION['last_name'] ?? ''));
+if ($video_doctor_name === '') {
+    $video_doctor_name = trim((string) ($c['provider_name'] ?? 'Healthcare Provider'));
+}
+if ($video_doctor_name !== '' && !preg_match('/^dr\.?\s+/i', $video_doctor_name)) {
+    $video_doctor_name = 'Dr. ' . $video_doctor_name;
+}
 $video_history = consultation_video_history_summary(
     (string) ($c['status'] ?? ''),
     consultation_video_session_row($pdo, $consultation_id),
     isset($c['completed_at']) ? (string) $c['completed_at'] : null,
-    trim((string) ($_SESSION['first_name'] ?? '') . ' ' . (string) ($_SESSION['last_name'] ?? '')),
+    $video_doctor_name,
     trim((string) ($c['first_name'] ?? '') . ' ' . (string) ($c['last_name'] ?? ''))
 );
 $show_video_demo_tip = function_exists('medconnect_is_local_dev_host') && medconnect_is_local_dev_host();
@@ -1608,24 +1617,51 @@ body.consultation-mobile-call-fullscreen .mc-provider-video-dock .mc-session-flo
 
 <button type="button" class="scroll-ai-btn" id="floatingScrollAiBtn" onclick="scrollToClinicalSupport()">Clinical Support</button>
 
-        <div class="session-card">
+        <div class="session-card" id="videoConsultationSessionCard">
             <div class="session-card-header">
-                <div class="session-card-title"><?= icon('video') ?> Video consultation</div>
+                <div class="session-card-title"><?= icon('video') ?> Video Consultation Session</div>
             </div>
             <div class="session-card-body">
-                <?php if (!empty($video_history['date_label'])): ?>
-                <p style="margin:0 0 6px;"><strong>Date:</strong> <?= htmlspecialchars((string) $video_history['date_label']) ?></p>
+                <?php if (!empty($video_history['show_completed_details'])): ?>
+                <div class="info-row"><span class="info-key">Status</span><span class="info-val">Completed</span></div>
+                <div class="info-row"><span class="info-key">Date</span><span class="info-val"><?= htmlspecialchars((string) ($video_history['date_label'] ?? '—')) ?></span></div>
+                <div class="info-row"><span class="info-key">Started</span><span class="info-val"><?= htmlspecialchars((string) ($video_history['started_label'] ?? '—')) ?></span></div>
+                <div class="info-row"><span class="info-key">Ended</span><span class="info-val"><?= htmlspecialchars((string) ($video_history['ended_label'] ?? '—')) ?></span></div>
+                <div class="info-row"><span class="info-key">Duration</span><span class="info-val"><?= htmlspecialchars((string) ($video_history['duration_label'] ?? '—')) ?></span></div>
+                <?php if (!empty($video_history['participants_label'])): ?>
+                <div class="info-row"><span class="info-key">Participants</span><span class="info-val"><?= htmlspecialchars((string) $video_history['participants_label']) ?></span></div>
                 <?php endif; ?>
-                <?php if (!empty($video_history['duration_label'])): ?>
-                <p style="margin:0 0 6px;"><strong>Duration:</strong> <?= htmlspecialchars((string) $video_history['duration_label']) ?></p>
+                <div class="info-row"><span class="info-key">Session status</span><span class="info-val"><?= htmlspecialchars((string) ($video_history['session_outcome_label'] ?? 'Successfully completed')) ?></span></div>
+                <?php if (!empty($video_history['timeline']) && is_array($video_history['timeline'])): ?>
+                <div style="margin-top:12px;">
+                    <strong style="font-size:12px;color:#0f766e;">Timeline</strong>
+                    <ul style="margin:8px 0 0;padding-left:18px;font-size:12px;color:#334155;line-height:1.6;">
+                        <?php foreach ($video_history['timeline'] as $ev): ?>
+                        <li><?= htmlspecialchars((string) ($ev['label'] ?? '')) ?> — <?= htmlspecialchars((string) ($ev['time_label'] ?? '')) ?></li>
+                        <?php endforeach; ?>
+                    </ul>
+                </div>
                 <?php endif; ?>
-                <p style="margin:0 0 6px;"><strong>Status:</strong> <?= htmlspecialchars((string) ($video_history['video_status_label'] ?? '—')) ?></p>
-                <?php if (!empty($video_history['has_recording']) && !empty($video_history['recording_path'])): ?>
-                <p style="margin:8px 0 0;">
-                    <a class="session-btn primary" href="<?= htmlspecialchars(consultation_video_recording_view_url((int) $consultation_id)) ?>" target="_blank" rel="noopener">View Recording</a>
+                <?php
+                  $recUrl = consultation_video_recording_view_url((int) $consultation_id);
+                ?>
+                <?php if ($recUrl !== ''): ?>
+                <p style="margin:12px 0 0;">
+                    <a class="session-btn primary" href="<?= htmlspecialchars($recUrl) ?>" target="_blank" rel="noopener">View Recording</a>
                 </p>
                 <?php else: ?>
-                <p style="margin:8px 0 0;color:var(--mc-slate-muted);">Video recording not available for this consultation.</p>
+                <div class="info-row" style="margin-top:10px;"><span class="info-key">Video recording</span><span class="info-val">Not available</span></div>
+                <?php endif; ?>
+                <?php else: ?>
+                <div class="info-row"><span class="info-key">Video consultation</span><span class="info-val"><?= htmlspecialchars((string) ($video_history['video_status_label'] ?? 'Not started')) ?></span></div>
+                <?php if (!empty($video_history['started_label'])): ?>
+                <div class="info-row"><span class="info-key">Started</span><span class="info-val"><?= htmlspecialchars((string) $video_history['started_label']) ?></span></div>
+                <?php endif; ?>
+                <div class="info-row" style="margin-top:10px;"><span class="info-key">Video recording</span><span class="info-val">Not available</span></div>
+                <?php endif; ?>
+                <?php if (!empty($history_view)): ?>
+                <p class="text-xs text-muted" style="margin-top:12px;">Read-only history view for a closed consultation.</p>
+                <a href="<?= ASSET_BASE ?>/views/provider/consultation_history.php?patient_id=<?= (int) ($c['patient_id'] ?? 0) ?>" class="session-btn" style="width:100%;margin-top:8px;text-align:center;">Back to Consultation History</a>
                 <?php endif; ?>
             </div>
         </div>

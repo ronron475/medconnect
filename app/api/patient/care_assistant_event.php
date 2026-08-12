@@ -1,7 +1,8 @@
 <?php
 /**
  * Patient API: Care Assistant lifecycle events (opened / dismissed / viewed).
- * Persists one-time auto-open and close state without removing Care Tips History.
+ * Persists viewed/dismissed timestamps without removing Care Tips History.
+ * These events must not be used to auto-open the Care Assistant panel.
  */
 require_once dirname(dirname(dirname(__DIR__))) . '/bootstrap.php';
 require_once dirname(dirname(dirname(__DIR__))) . '/config/db.php';

@@ -49,6 +49,8 @@
   var voicesReady = false;
   var ttsUserPrimed = false;
   var suppressAutoOpen = false;
+  /** Panel visibility. Availability (FAB) is independent — never restore this as true on load. */
+  var careTipsOpen = false;
   var loadGeneration = 0;
   var tipsReadyPromptShownFor = 0;
   var expiredNoticeShown = false;
@@ -371,10 +373,23 @@
   }
 
   function setPanelOpenState(open) {
-    document.body.classList.toggle('pt-remedy-panel-open', open);
+    careTipsOpen = !!open;
+    document.body.classList.toggle('pt-remedy-panel-open', careTipsOpen);
     var root = el('ptRemedyChat');
-    if (root) root.setAttribute('data-open', open ? 'true' : 'false');
-    syncMessagesFabSuppressed(open);
+    if (root) root.setAttribute('data-open', careTipsOpen ? 'true' : 'false');
+    syncMessagesFabSuppressed(careTipsOpen);
+  }
+
+  function careTipsAvailable() {
+    return mode === 'approved' || mode === 'waiting' || !!lastActiveItem;
+  }
+
+  /** Page load / back-forward: panel closed. FAB stays if tips are available. */
+  function forcePanelClosedKeepFab() {
+    closePanel(careTipsAvailable());
+    if (careTipsAvailable()) {
+      showFab(true);
+    }
   }
 
   async function postCareEvent(action, id) {
@@ -468,6 +483,7 @@
   window.MedConnectPtRemedy = {
     close: closeRemedyPanel,
     open: openCareAssistant,
+    isOpen: function () { return !!careTipsOpen; },
   };
 
   function hideAllChoices() {
@@ -782,17 +798,21 @@
       if (item) {
         if (item.history_url) historyUrl = item.history_url;
         var tipId = Number(item.id || 0);
-        var shouldAutoOpen = item.should_auto_open === true;
         var fabVisible = item.fab_visible !== false;
         lastActiveItem = item;
+        currentId = tipId;
+        mode = 'approved';
 
-        // Always keep floating Care tips button while tips are active (24h).
+        // Tips are available (FAB) but the panel stays closed unless the patient clicked.
         if (fabVisible) {
           showFab(true);
         }
 
-        if (mode === 'approved' && currentId === tipId && silent && !manualOpen && !shouldAutoOpen) {
-          // Same tip already handled — FAB stays; do not re-auto-open.
+        if (manualOpen) {
+          clearThread();
+          openPanel();
+          playConversation(item);
+          postCareEvent('viewed', tipId);
           maybeShowTipsCancelPrompt(cancelPrompt || {
             tip_id: item.id,
             chief_complaint: item.chief_complaint,
@@ -801,29 +821,16 @@
           return;
         }
 
-        currentId = tipId;
-        mode = 'approved';
-
-        // Auto-open only once per approval; afterward reopen via Care tips FAB only.
-        if (manualOpen || shouldAutoOpen) {
-          clearThread();
-          openPanel();
-          playConversation(item);
-          if (shouldAutoOpen && !manualOpen) {
-            postCareEvent('opened', tipId);
-          } else if (manualOpen) {
-            postCareEvent('viewed', tipId);
-          }
-          maybeShowTipsCancelPrompt(cancelPrompt || {
-            tip_id: item.id,
-            chief_complaint: item.chief_complaint,
-            upcoming_consultation: item.upcoming_consultation,
-          });
-        } else {
-          // Manual-only session: leave panel closed; tips open when FAB is clicked.
+        // Page load, poll, back/forward, refresh: never open the panel.
+        if (!careTipsOpen) {
           closePanel(true);
           showFab(true);
         }
+        maybeShowTipsCancelPrompt(cancelPrompt || {
+          tip_id: item.id,
+          chief_complaint: item.chief_complaint,
+          upcoming_consultation: item.upcoming_consultation,
+        });
         return;
       }
 
@@ -833,9 +840,6 @@
         showFab(false);
         if (manualOpen) {
           showExpiredNotice(expired, { force: true });
-        } else if (!hasShownExpiredNotice(expired)) {
-          // One-time expiry notice (not on every login after that).
-          showExpiredNotice(expired);
         } else {
           closePanel(false);
           mode = '';
@@ -846,24 +850,20 @@
       if (awaiting) {
         var waitId = Number(awaiting.id || 0);
         currentId = waitId;
+        mode = 'waiting';
         showFab(true);
-        var dismissed = suppressAutoOpen || isWaitingDismissed(waitId);
-        if (dismissed) {
-          mode = 'waiting';
-          if (!silent) {
-            playWaiting(awaiting);
+        if (manualOpen) {
+          playWaiting(awaiting);
+          openPanel();
+          if (ttsUserPrimed) {
+            window.setTimeout(readAloudNow, 180);
           }
-          closePanel(true);
           return;
         }
-        if (mode !== 'waiting' || !silent || manualOpen) {
-          playWaiting(awaiting);
-          if (!silent || manualOpen) {
-            openPanel();
-          }
-        }
-        if (ttsUserPrimed) {
-          window.setTimeout(readAloudNow, 180);
+        // Available via FAB only — do not auto-open waiting chat on page load.
+        if (!careTipsOpen) {
+          closePanel(true);
+          showFab(true);
         }
         return;
       }
@@ -1075,17 +1075,25 @@
     }
   }
 
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', function () {
-      primeVoices();
-      bind();
-      load();
-      startPoll();
-    });
-  } else {
+  function startPatientCareTips() {
     primeVoices();
     bind();
-    load();
+    careTipsOpen = false;
+    closePanel(false);
+    load({ silent: true });
     startPoll();
+    window.addEventListener('pageshow', function () {
+      // Back/forward and bfcache restore must not leave the panel open.
+      forcePanelClosedKeepFab();
+    });
+    window.addEventListener('popstate', function () {
+      forcePanelClosedKeepFab();
+    });
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', startPatientCareTips);
+  } else {
+    startPatientCareTips();
   }
 })();
