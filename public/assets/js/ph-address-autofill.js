@@ -171,7 +171,8 @@
   }
 
   function extractLocalityFromAddress(addressRaw, parts) {
-    const segments = String(addressRaw || '')
+    const cleanedRaw = String(addressRaw || '').replace(/\r?\n/g, ', ');
+    const segments = cleanedRaw
       .split(',')
       .map((s) => s.trim())
       .filter(Boolean);
@@ -189,9 +190,11 @@
       'occidental',
     ].filter(Boolean).map((x) => norm(x));
 
+    const ocrClean = (w) => norm(w).replace(/[1l|]/g, 'i').replace(/0/g, 'o');
+
     const kept = [];
     for (const seg of segments) {
-      const sn = norm(seg);
+      const sn = normalizeOcrAddress(seg);
       if (!sn || isGeoNoiseSegment(seg)) continue;
       const compactSeg = compact(seg);
       let skip = false;
@@ -205,6 +208,16 @@
           break;
         }
       }
+
+      // Fuzzy check if this segment is actually the barangay name
+      if (!skip && parts.barangay?.brgy_name) {
+        const cleanedBc = ocrClean(parts.barangay.brgy_name);
+        const cleanedSeg = ocrClean(seg);
+        if (levenshtein(cleanedSeg, cleanedBc) <= 3) {
+          skip = true;
+        }
+      }
+
       if (!skip) kept.push(seg);
     }
 
@@ -285,6 +298,13 @@
   function formatOfficialStreet(locality, parts) {
     const segments = [];
     if (locality) segments.push(toOfficialCase(locality));
+
+    if (parts.barangay?.brgy_name) {
+      const bName = toOfficialCase(parts.barangay.brgy_name);
+      if (!locality || !norm(locality).includes(norm(bName))) {
+        segments.push(bName);
+      }
+    }
 
     if (parts.city && isBagoCityRecord(parts.city)) {
       segments.push('CITY OF BAGO');
@@ -474,32 +494,40 @@
     const pool = barangays.filter((b) => b.city_code === cityCode);
     if (!pool.length) return { record: null, distance: 99, ambiguous: false };
 
+    // Bago City is "064502"
+    const isBago = pool.length > 0 && pool[0].city_code === '064502';
+    const maxDist = isBago ? 3 : FUZZY_BARANGAY_MAX_DIST;
+
+    // Helper to clean common OCR characters: 1/l/| -> i, 0 -> o
+    const ocrClean = (w) => norm(w).replace(/[1l|]/g, 'i').replace(/0/g, 'o');
+
     for (const b of pool) {
       const bn = norm(b.brgy_name);
       const bc = compact(b.brgy_name);
       if (bn && addressNorm.includes(bn)) return { record: b, distance: 0, ambiguous: false };
       if (bc.length >= 4 && addressCompact.includes(bc)) return { record: b, distance: 0, ambiguous: false };
-    }
 
-    const tokens = addressNorm.split(/[,\s]+/).filter((t) => t.length >= 4);
-    for (const b of pool) {
-      const bc = compact(b.brgy_name);
-      for (const token of tokens) {
-        if (token === bc) return { record: b, distance: 0, ambiguous: false };
-        const dist = levenshtein(token, bc);
-        if (dist <= FUZZY_BARANGAY_MAX_DIST) return { record: b, distance: dist, ambiguous: false };
+      // Try cleaned exact match
+      const cleanedBc = ocrClean(b.brgy_name);
+      if (cleanedBc.length >= 4 && ocrClean(addressNorm).includes(cleanedBc)) {
+        return { record: b, distance: 0, ambiguous: false };
       }
     }
 
     let best = null;
-    let bestDist = FUZZY_BARANGAY_MAX_DIST + 1;
+    let bestDist = maxDist + 1;
     let ties = 0;
+
+    const tokens = addressNorm.split(/[,\s\n]+/).filter((t) => t.length >= 4);
     for (const b of pool) {
       const bc = compact(b.brgy_name);
-      if (bc.length < 4) continue;
-      for (let i = 0; i <= addressCompact.length - bc.length + 1; i++) {
-        const slice = addressCompact.slice(i, i + bc.length);
-        const dist = levenshtein(slice, bc);
+      const cleanedBc = ocrClean(bc);
+      for (const token of tokens) {
+        const cleanedToken = ocrClean(token);
+        if (cleanedToken === cleanedBc) {
+          return { record: b, distance: 0, ambiguous: false };
+        }
+        const dist = levenshtein(cleanedToken, cleanedBc);
         if (dist < bestDist) {
           bestDist = dist;
           best = b;
@@ -510,9 +538,36 @@
       }
     }
 
-    if (best && bestDist <= FUZZY_BARANGAY_MAX_DIST) {
+    if (best && bestDist <= maxDist) {
       return { record: best, distance: bestDist, ambiguous: ties > 1 };
     }
+
+    // Try sliding window on cleaned strings
+    best = null;
+    bestDist = maxDist + 1;
+    ties = 0;
+    const cleanedAddressCompact = ocrClean(addressCompact);
+    for (const b of pool) {
+      const bc = compact(b.brgy_name);
+      const cleanedBc = ocrClean(bc);
+      if (cleanedBc.length < 4) continue;
+      for (let i = 0; i <= cleanedAddressCompact.length - cleanedBc.length + 1; i++) {
+        const slice = cleanedAddressCompact.slice(i, i + cleanedBc.length);
+        const dist = levenshtein(slice, cleanedBc);
+        if (dist < bestDist) {
+          bestDist = dist;
+          best = b;
+          ties = 1;
+        } else if (dist === bestDist && best && b.brgy_code !== best.brgy_code) {
+          ties++;
+        }
+      }
+    }
+
+    if (best && bestDist <= maxDist) {
+      return { record: best, distance: bestDist, ambiguous: ties > 1 };
+    }
+
     return { record: null, distance: 99, ambiguous: false };
   }
 
