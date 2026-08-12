@@ -120,6 +120,10 @@
    */
   function closeOverlayPanels() {
     closeThemeMenus();
+    if (window.MedConnectNotifications && typeof window.MedConnectNotifications.close === 'function') {
+      window.MedConnectNotifications.close();
+      return;
+    }
     document.querySelectorAll('[data-notif-panel].is-open').forEach((panel) => {
       panel.classList.remove('is-open');
     });

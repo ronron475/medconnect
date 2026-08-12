@@ -534,7 +534,7 @@
 @media (max-width: 768px) {
   body.mc-notif-open {
     overflow: hidden;
-    touch-action: none;
+    overscroll-behavior: none;
   }
 
   body.mc-notif-open::before {
@@ -544,7 +544,6 @@
     background: rgba(15, 23, 42, 0.42);
     z-index: 200008;
     pointer-events: auto;
-    touch-action: none;
   }
 
   html:not([data-theme-resolved='dark']) .mc-notif-panel {
@@ -590,11 +589,17 @@
     z-index: 200010;
     box-shadow: 0 -10px 40px rgba(15, 23, 42, 0.16);
     pointer-events: auto;
-    touch-action: manipulation;
+    touch-action: pan-y;
   }
 
   body > .mc-notif-panel.is-open {
     z-index: 200010;
+    pointer-events: auto;
+  }
+
+  .mc-notif-list {
+    touch-action: pan-y;
+    -webkit-overflow-scrolling: touch;
   }
 
   .mc-notif-panel-header {
@@ -610,10 +615,6 @@
     min-height: 40px;
     padding: 8px 10px;
     font-size: 13px;
-  }
-
-  .mc-notif-list {
-    -webkit-overflow-scrolling: touch;
   }
 
   .mc-notif-btn,
@@ -633,6 +634,9 @@
   .mc-notif-item-link {
     gap: 10px;
     align-items: flex-start;
+    pointer-events: auto;
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
   }
 
   .mc-notif-icon {
