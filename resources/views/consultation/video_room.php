@@ -2268,7 +2268,8 @@ if (session_status() === PHP_SESSION_ACTIVE) {
       }
 
       if (data.role === 'provider' && userRole === 'patient') {
-        document.getElementById('callStatus').textContent = 'Your healthcare provider ended the consultation.';
+        document.getElementById('callStatus').textContent =
+          'The consultation has ended. You can view this consultation in My Sessions.';
         leaveCallConfirmed({ reason: 'provider_left', skipApi: true });
         return true;
       }
