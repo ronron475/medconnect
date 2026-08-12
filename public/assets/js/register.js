@@ -1145,6 +1145,7 @@ step2Form.addEventListener('submit', async e => {
       // Show the exact backend message (e.g. "Email already exists", "OCR not verified")
       if (nlp && nlp.hideOverlay) nlp.hideOverlay();
       showAlert('step2-alert', data.message || 'Registration failed. Please try again.');
+      if (data._debug) console.error('Registration debug:', data._debug);
       if (data.error_details) console.error('Backend error:', data.error_details, 'at', data.error_file, 'line', data.error_line);
       setLoading(false);
     }
