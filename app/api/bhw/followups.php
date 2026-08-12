@@ -28,6 +28,9 @@ try {
         Api::success(['visit_id' => $visitId], 'Home visit logged.');
     } elseif ($action === 'visits') {
         $patientId = (int) ($_GET['patient_id'] ?? 0);
+        if ($patientId > 0) {
+            bhw_api_require_patient_in_sector($pdo, $ctx, $patientId);
+        }
         Api::success(['visits' => BhwWorkflows::listHomeVisits($pdo, $ctx, $patientId > 0 ? $patientId : null)]);
     } else {
         Api::error('Unknown action.', 400);

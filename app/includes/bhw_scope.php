@@ -8,7 +8,12 @@
 require_once VIEWS_PATH . '/bhw/partials/bhw_context.php';
 require_once __DIR__ . '/barangays_bago.php';
 
-function bhw_api_bootstrap(PDO $pdo, bool $requirePost = false): array
+/**
+ * @param bool $requireSector Endpoints that touch patient data must keep this true.
+ *                            Account-level endpoints pass false so an unassigned BHW
+ *                            still loads their own page — with an empty data scope.
+ */
+function bhw_api_bootstrap(PDO $pdo, bool $requirePost = false, bool $requireSector = true): array
 {
     require_once __DIR__ . '/../core/Api.php';
     require_once __DIR__ . '/auth_guard.php';
@@ -25,7 +30,11 @@ function bhw_api_bootstrap(PDO $pdo, bool $requirePost = false): array
     patient_registrations_ensure_barangay_id($pdo);
     $ctx = bhw_resolve_context($pdo);
     if (!$ctx['allowed'] || (int) ($ctx['barangay_id'] ?? 0) <= 0) {
-        Api::error('BHW sector not assigned. Contact administrator.', 403);
+        if ($requireSector) {
+            Api::error('BHW sector not assigned. Contact administrator.', 403);
+        }
+        // barangay_id 0 makes every scope clause resolve to "1 = 0" — zero patient rows.
+        $ctx = ['allowed' => true, 'barangay_id' => 0, 'barangay_name' => 'Unassigned'];
     }
     require_once __DIR__ . '/patient_account_security.php';
     patient_security_ensure_schema($pdo);
@@ -134,6 +143,18 @@ function bhw_list_barangay_options(PDO $pdo): array
 }
 
 /**
+ * Join condition linking a patient_registrations row to its user account.
+ *
+ * user_id is authoritative; the email match only covers legacy rows written
+ * before the column was backfilled.
+ */
+function bhw_pr_user_join(string $prAlias = 'pr', string $userAlias = 'u'): string
+{
+    return "({$prAlias}.user_id = {$userAlias}.id"
+        . " OR ({$prAlias}.user_id IS NULL AND {$prAlias}.email = {$userAlias}.email))";
+}
+
+/**
  * Deny unless patient belongs to the logged-in BHW's assigned barangay.
  */
 function bhw_assert_patient_in_sector(PDO $pdo, array $ctx, int $patientId): bool
@@ -142,9 +163,10 @@ function bhw_assert_patient_in_sector(PDO $pdo, array $ctx, int $patientId): boo
         return false;
     }
     [$clause, $params] = bhw_patient_sector_clause($pdo, $ctx, 'pr');
+    $join = bhw_pr_user_join('pr', 'u');
     $sql = "
         SELECT u.id FROM users u
-        INNER JOIN patient_registrations pr ON pr.email = u.email
+        INNER JOIN patient_registrations pr ON {$join}
         WHERE u.id = ? AND u.role = 'patient' AND {$clause}
         LIMIT 1
     ";

@@ -174,8 +174,6 @@ ob_start();
     var links = document.getElementById('hero_quick_links');
     if (links && pid) {
       links.innerHTML =
-        '<a class="bhw-update-quick-link" href="../triage/submit.php' + q + '">' +
-          '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><rect x="8" y="2" width="8" height="4" rx="1"/></svg>Triage</a>' +
         '<a class="bhw-update-quick-link" href="../records/index.php?patient_id=' + pid + '">' +
           '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>Records</a>' +
         '<a class="bhw-update-quick-link" href="../consultations/index.php">' +

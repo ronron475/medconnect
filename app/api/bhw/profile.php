@@ -5,7 +5,7 @@ require_once dirname(dirname(dirname(__DIR__))) . '/app/includes/bhw_scope.php';
 require_once dirname(dirname(dirname(__DIR__))) . '/app/includes/bhw_workflows.php';
 require_once dirname(dirname(dirname(__DIR__))) . '/app/includes/profile_picture.php';
 
-$ctx = bhw_api_bootstrap($pdo, ($_SERVER['REQUEST_METHOD'] ?? '') === 'POST');
+$ctx = bhw_api_bootstrap($pdo, ($_SERVER['REQUEST_METHOD'] ?? '') === 'POST', false);
 $userId = (int) $_SESSION['user_id'];
 
 if (($_GET['action'] ?? $_POST['action'] ?? 'get') === 'get') {

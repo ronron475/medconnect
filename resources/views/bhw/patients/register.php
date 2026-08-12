@@ -1,9 +1,17 @@
 <?php
 /**
- * Patient Assistance — existing registered patients in the BHW's barangay.
- * BHWs do not create a separate registration record here.
+ * Retired: BHWs do not register patients. Patients register through the main flow.
+ * Kept as a redirect so existing links and bookmarks land on the Patient List.
  */
-$page_title = 'Patient Assistance';
-$bhw_current_file = 'patients/register.php';
-$bhw_patient_assist_mode = true;
-require __DIR__ . '/list.php';
+if (!defined('BASE_PATH')) {
+    $d = __DIR__;
+    while ($d !== dirname($d)) {
+        if (is_file($d . '/mc_load.php')) {
+            require_once $d . '/mc_load.php';
+            break;
+        }
+        $d = dirname($d);
+    }
+}
+header('Location: ' . ASSET_BASE . '/views/bhw/patients/list.php', true, 302);
+exit;

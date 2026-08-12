@@ -96,7 +96,8 @@ try {
         }
         unset($doc);
         $records['documents'] = $docs;
-        $s = $pdo->prepare('SELECT * FROM prescriptions WHERE patient_id = ? ORDER BY created_at DESC LIMIT 20');
+        // Dispensing fields only — the prescriber's private notes stay doctor-only.
+        $s = $pdo->prepare('SELECT id, medication_name, dosage, frequency, duration, created_at FROM prescriptions WHERE patient_id = ? ORDER BY created_at DESC LIMIT 20');
         $s->execute([$patientId]);
         $records['prescriptions'] = $s->fetchAll(PDO::FETCH_ASSOC);
         bhw_audit($pdo, $patientId, 'bhw_records_viewed', 'BHW viewed patient records.');

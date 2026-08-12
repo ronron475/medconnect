@@ -114,7 +114,7 @@
   function renderTable(rows) {
     var visible = filterRows(rows);
     if (!visible.length) {
-      tbody.innerHTML = '<tr><td colspan="6" class="bhw-cons-empty"><strong>No consultations found</strong>Try another date, status filter, or search term. You can also book via Triage &amp; Book.</td></tr>';
+      tbody.innerHTML = '<tr><td colspan="6" class="bhw-cons-empty"><strong>No consultations found</strong>Try another date, status filter, or search term.</td></tr>';
       return;
     }
 

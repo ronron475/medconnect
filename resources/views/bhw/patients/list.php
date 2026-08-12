@@ -5,17 +5,14 @@ if (!isset($page_title)) {
 if (!isset($bhw_current_file)) {
     $bhw_current_file = 'patients/list.php';
 }
-$bhw_patient_assist_mode = !empty($bhw_patient_assist_mode);
 require __DIR__ . '/../partials/bhw_bootstrap.php';
 $pl_css_path = ASSETS_PATH . '/css/bhw-patient-list.css';
 $bhw_head_css = ASSET_BASE . '/assets/css/bhw-patient-list.css?v=' . (file_exists($pl_css_path) ? (int) filemtime($pl_css_path) : time());
 require __DIR__ . '/../partials/layout_open.php';
 $barangay_label = htmlspecialchars($bhw_barangay_name);
-$pl_heading = $bhw_patient_assist_mode ? 'Patient Assistance' : 'Patient Management';
-$pl_intro = $bhw_patient_assist_mode
-    ? 'View and assist patients already registered in <strong>Brgy. ' . $barangay_label . '</strong>.'
-    : 'Manage, search, update, and monitor registered patients within <strong>Brgy. ' . $barangay_label . '</strong>.';
-$pl_print_title = $bhw_patient_assist_mode ? 'Patient Assistance' : 'Patient List';
+$pl_heading = 'Patient List';
+$pl_intro = 'Search and assist patients already registered in <strong>Brgy. ' . $barangay_label . '</strong>.';
+$pl_print_title = 'Patient List';
 
 ob_start();
 ?>
@@ -126,7 +123,6 @@ ob_start();
       '<button type="button" class="bhw-pl-menu-trigger" aria-haspopup="true" aria-expanded="false" aria-label="More actions for patient ' + id + '">Actions <span class="bhw-pl-menu-caret" aria-hidden="true">▾</span></button>' +
       '<div class="bhw-pl-menu-panel" hidden role="menu">' +
       '<a role="menuitem" href="update.php' + q + '">Update contact</a>' +
-      '<a role="menuitem" href="../triage/submit.php' + q + '">Triage &amp; book</a>' +
       '<a role="menuitem" href="../records/index.php?patient_id=' + id + '">Medical records</a>' +
       '<a role="menuitem" href="../consultations/index.php">Consultation center</a>' +
       '<a role="menuitem" href="../consultations/index.php?filter=active">Assist video call</a>' +
@@ -434,7 +430,6 @@ ob_start();
         row('Medications', p.current_medications) + '</dl></div>' +
         '<div class="bhw-pl-drawer-section bhw-pl-drawer-actions no-print"><h4>Quick Actions</h4><div class="d-flex flex-wrap gap-2">' +
         '<a class="bhw-pl-btn bhw-pl-btn--outline" href="update.php?patient_id=' + id + '">Update</a>' +
-        '<a class="bhw-pl-btn bhw-pl-btn--outline" href="../triage/submit.php?patient_id=' + id + '">Triage</a>' +
         '<a class="bhw-pl-btn bhw-pl-btn--outline" href="../referral/create.php?patient_id=' + id + '">Refer</a>' +
         '</div></div>';
       els.drawer.classList.add('is-open');

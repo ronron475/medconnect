@@ -20,6 +20,15 @@ try {
             trim($_POST['facility_name'] ?? '')
         );
         Api::success(['referral_id' => $id], 'Referral created.');
+    } elseif ($action === 'update_status') {
+        BhwWorkflows::updateReferralStatus(
+            $pdo,
+            $ctx,
+            (int) ($_POST['referral_id'] ?? 0),
+            trim($_POST['status'] ?? ''),
+            trim($_POST['note'] ?? '')
+        );
+        Api::success([], 'Referral updated. The patient and provider have been notified.');
     } else {
         Api::error('Unknown action.', 400);
     }
@@ -27,4 +36,6 @@ try {
     $msg = $e->getMessage();
     $denied = stripos($msg, 'barangay') !== false || strcasecmp($msg, 'ACCESS DENIED') === 0;
     Api::error($denied ? 'ACCESS DENIED' : $msg, $denied ? 403 : 400);
+} catch (Throwable $e) {
+    Api::error($e->getMessage(), 500);
 }
