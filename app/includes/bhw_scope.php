@@ -153,6 +153,35 @@ function bhw_assert_patient_in_sector(PDO $pdo, array $ctx, int $patientId): boo
     return (bool) $stmt->fetchColumn();
 }
 
+function bhw_patient_account_exists(PDO $pdo, int $patientId): bool
+{
+    if ($patientId <= 0) {
+        return false;
+    }
+    $stmt = $pdo->prepare("SELECT id FROM users WHERE id = ? AND role = 'patient' LIMIT 1");
+    $stmt->execute([$patientId]);
+    return (bool) $stmt->fetchColumn();
+}
+
+/**
+ * API gate: 403 when the patient is outside the BHW barangay (or BHW has no barangay).
+ */
+function bhw_api_require_patient_in_sector(PDO $pdo, array $ctx, int $patientId): void
+{
+    if ($patientId <= 0) {
+        Api::error('Patient is required.', 400);
+    }
+    if ((int) ($ctx['barangay_id'] ?? 0) <= 0) {
+        Api::error('NO PATIENT ACCESS', 403);
+    }
+    if (!bhw_patient_account_exists($pdo, $patientId)) {
+        Api::error('Patient not found.', 404);
+    }
+    if (!bhw_assert_patient_in_sector($pdo, $ctx, $patientId)) {
+        Api::error('ACCESS DENIED', 403);
+    }
+}
+
 function bhw_notify(PDO $pdo, int $userId, string $type, string $title, string $message, ?string $link = null): void
 {
     require_once __DIR__ . '/../core/NotificationManager.php';

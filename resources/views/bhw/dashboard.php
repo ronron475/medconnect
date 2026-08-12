@@ -165,7 +165,7 @@ require __DIR__ . '/partials/layout_open.php';
               <td colspan="4">
                 <div class="bhw-dash-queue-empty">
                   No triage records in your barangay yet.
-                  <a href="patients/register.php">Register a patient</a> or
+                  <a href="patients/register.php">Open Patient Assistance</a> or
                   <a href="triage/submit.php">submit triage</a>.
                 </div>
               </td>

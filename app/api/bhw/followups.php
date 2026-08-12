@@ -14,6 +14,7 @@ try {
         BhwWorkflows::sendFollowupReminder($pdo, $ctx, (int) ($_POST['followup_id'] ?? 0));
         Api::success([], 'Reminder sent.');
     } elseif ($action === 'log_visit') {
+        bhw_api_require_patient_in_sector($pdo, $ctx, (int) ($_POST['patient_id'] ?? 0));
         $visitId = BhwWorkflows::logHomeVisit(
             $pdo,
             $ctx,
@@ -32,7 +33,9 @@ try {
         Api::error('Unknown action.', 400);
     }
 } catch (InvalidArgumentException $e) {
-    Api::error($e->getMessage());
+    $msg = $e->getMessage();
+    $denied = stripos($msg, 'barangay') !== false || stripos($msg, 'sector') !== false || strcasecmp($msg, 'ACCESS DENIED') === 0;
+    Api::error($denied ? 'ACCESS DENIED' : $msg, $denied ? 403 : 400);
 } catch (Throwable $e) {
     Api::error($e->getMessage(), 500);
 }

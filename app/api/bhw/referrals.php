@@ -10,6 +10,7 @@ try {
     if ($action === 'list') {
         Api::success(['referrals' => BhwWorkflows::listReferrals($pdo, $ctx)]);
     } elseif ($action === 'create') {
+        bhw_api_require_patient_in_sector($pdo, $ctx, (int) ($_POST['patient_id'] ?? 0));
         $id = BhwWorkflows::createReferral(
             $pdo, $ctx,
             (int) ($_POST['patient_id'] ?? 0),
@@ -23,5 +24,7 @@ try {
         Api::error('Unknown action.', 400);
     }
 } catch (InvalidArgumentException $e) {
-    Api::error($e->getMessage());
+    $msg = $e->getMessage();
+    $denied = stripos($msg, 'barangay') !== false || strcasecmp($msg, 'ACCESS DENIED') === 0;
+    Api::error($denied ? 'ACCESS DENIED' : $msg, $denied ? 403 : 400);
 }
