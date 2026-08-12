@@ -302,9 +302,19 @@ body.landing-page.signin-active .landing-navbar,
 body.landing-page.signin-active .hero,
 body.landing-page.signin-active .announcements-section,
 body.landing-page.signin-active .services-section,
-body.landing-page.signin-active .contact-section,
-body.landing-page.signin-active #landing-fab {
+body.landing-page.signin-active .contact-section {
   pointer-events: none;
+}
+
+body.landing-page.signin-active #landing-fab,
+body.landing-page.signin-active .landing-fab,
+body.landing-page.signin-active .faq-chatbot-fab,
+body.landing-page.signin-active .messages-fab,
+body.landing-page.signin-active .mc-messages-fab,
+body.landing-page.signin-active .landing-theme-fab {
+  opacity: 0 !important;
+  visibility: hidden !important;
+  pointer-events: none !important;
 }
 
 body.landing-page.signin-active .landing-navbar {
@@ -847,7 +857,7 @@ html[data-theme-resolved='dark'] .landing-page .hero-signin-panel .signin-modal-
     height: 100dvh !important;
     max-height: 100dvh !important;
     margin: 0 !important;
-    padding: max(16px, env(safe-area-inset-top, 16px)) max(14px, env(safe-area-inset-right, 14px)) max(28px, env(safe-area-inset-bottom, 28px)) max(14px, env(safe-area-inset-left, 14px)) !important;
+    padding: max(16px, env(safe-area-inset-top, 16px)) max(14px, env(safe-area-inset-right, 14px)) max(80px, calc(48px + env(safe-area-inset-bottom, 24px))) max(14px, env(safe-area-inset-left, 14px)) !important;
     transform: none !important;
     display: flex !important;
     flex-direction: column !important;
@@ -881,9 +891,9 @@ html[data-theme-resolved='dark'] .landing-page .hero-signin-panel .signin-modal-
 @media (max-width: 580px) {
   body.landing-page.signin-active > #signin-modal.hero-signin-panel.is-viewport-pinned.is-open,
   body.landing-page.signin-active #signin-modal.hero-signin-panel.is-viewport-pinned.is-open {
-    padding: max(12px, env(safe-area-inset-top, 12px)) max(12px, env(safe-area-inset-right, 12px)) max(12px, env(safe-area-inset-bottom, 12px)) max(12px, env(safe-area-inset-left, 12px)) !important;
+    padding: max(16px, env(safe-area-inset-top, 16px)) max(12px, env(safe-area-inset-right, 12px)) max(80px, calc(48px + env(safe-area-inset-bottom, 24px))) max(12px, env(safe-area-inset-left, 12px)) !important;
     align-items: center !important;
-    justify-content: center !important;
+    justify-content: flex-start !important;
   }
 
   .landing-page .hero-signin-panel .signin-card--hero-inline {
@@ -1352,8 +1362,8 @@ body.landing-page.landing-bg--light .hero-signin-panel .signin-card .alert.error
     height: 100dvh !important;
     display: flex !important;
     align-items: center !important;
-    justify-content: center !important;
-    padding: max(12px, env(safe-area-inset-top, 12px)) max(10px, env(safe-area-inset-right, 10px)) max(12px, env(safe-area-inset-bottom, 12px)) max(10px, env(safe-area-inset-left, 10px)) !important;
+    justify-content: flex-start !important;
+    padding: max(16px, env(safe-area-inset-top, 16px)) max(10px, env(safe-area-inset-right, 10px)) max(80px, calc(48px + env(safe-area-inset-bottom, 24px))) max(10px, env(safe-area-inset-left, 10px)) !important;
   }
 
   .landing-page .hero-signin-panel .signin-card--hero-inline {
