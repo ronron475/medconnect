@@ -489,19 +489,42 @@
     } catch (e) { /* silent */ }
   }
 
+  function eventInsideNotifUi(e, wrap, panel, btn) {
+    const t = e.target;
+    if (!t) return false;
+    if (btn && (t === btn || (btn.contains && btn.contains(t)))) return true;
+    if (panel && (t === panel || (panel.contains && panel.contains(t)))) return true;
+    if (wrap && (t === wrap || (wrap.contains && wrap.contains(t)))) return true;
+    if (t.closest) {
+      if (t.closest('[data-notif-panel]')) return true;
+      if (t.closest('[data-notif-toggle]')) return true;
+      if (t.closest('[data-notif-wrap]')) return true;
+    }
+    return false;
+  }
+
+  function closeBellPanel(btn, panel) {
+    if (!panel) return;
+    panel.classList.remove('is-open');
+    unmountMobilePanel(panel);
+    if (btn) btn.setAttribute('aria-expanded', 'false');
+    panelOpen = false;
+    syncNotifOpenState();
+  }
+
   function togglePanel(btn, panel, wrap) {
     const open = !panel.classList.contains('is-open');
     if (open) {
       mountMobilePanel(panel, wrap);
       panel.classList.add('is-open');
     } else {
-      panel.classList.remove('is-open');
-      unmountMobilePanel(panel);
+      closeBellPanel(btn, panel);
+      return;
     }
-    btn.setAttribute('aria-expanded', open ? 'true' : 'false');
-    panelOpen = open;
+    btn.setAttribute('aria-expanded', 'true');
+    panelOpen = true;
     syncNotifOpenState();
-    if (open) loadDropdown();
+    loadDropdown();
   }
 
   function initBell(wrap) {
@@ -524,7 +547,7 @@
       e.stopPropagation();
     });
 
-    const markAllBtn = wrap.querySelector('[data-notif-mark-all]');
+    const markAllBtn = panel.querySelector('[data-notif-mark-all]');
     if (markAllBtn) {
       markAllBtn.addEventListener(TOGGLE_EVENT, function (e) {
         e.preventDefault();
@@ -533,7 +556,7 @@
       });
     }
 
-    const footerLink = wrap.querySelector('.mc-notif-footer a[href]');
+    const footerLink = panel.querySelector('.mc-notif-footer a[href]');
     if (footerLink) {
       footerLink.addEventListener(TOGGLE_EVENT, function (e) {
         followNotifLink(footerLink, e);
@@ -552,16 +575,11 @@
         return;
       }
       if (!panel.classList.contains('is-open')) return;
-      if (wrap.contains(e.target)) return;
-      if (e.target.closest && e.target.closest('[data-notif-toggle]')) return;
+      if (eventInsideNotifUi(e, wrap, panel, btn)) return;
       e.preventDefault();
       e.stopPropagation();
       e.stopImmediatePropagation();
-      panel.classList.remove('is-open');
-      unmountMobilePanel(panel);
-      btn.setAttribute('aria-expanded', 'false');
-      panelOpen = false;
-      syncNotifOpenState();
+      closeBellPanel(btn, panel);
       lastOutsideCloseAt = Date.now();
     }
     document.addEventListener(CLOSE_EVENT, onOutsidePanel, true);
@@ -571,10 +589,7 @@
 
     btn.addEventListener('keydown', function (e) {
       if (e.key === 'Escape') {
-        panel.classList.remove('is-open');
-        btn.setAttribute('aria-expanded', 'false');
-        panelOpen = false;
-        syncNotifOpenState();
+        closeBellPanel(btn, panel);
       }
     });
   }
@@ -715,5 +730,6 @@
     refresh: loadDropdown,
     poll: poll,
     markAllRead: markAllRead,
+    close: closeAllNotifPanels,
   };
 })();
