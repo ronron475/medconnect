@@ -29,7 +29,7 @@ try {
             Api::error('Select a patient before running triage.');
         }
         if (!bhw_assert_patient_in_sector($pdo, $ctx, $patientId)) {
-            Api::error('Patient not in your assigned barangay.');
+            Api::error('ACCESS DENIED', 403);
         }
         $result = BhwWorkflows::assessTriageWithPipeline($complaint, $patientId);
         $assessment = $result['assessment'];
@@ -80,7 +80,9 @@ try {
         Api::error('Unknown action.', 400);
     }
 } catch (InvalidArgumentException|RuntimeException $e) {
-    Api::error($e->getMessage());
+    $msg = $e->getMessage();
+    $denied = stripos($msg, 'barangay') !== false || strcasecmp($msg, 'ACCESS DENIED') === 0;
+    Api::error($denied ? 'ACCESS DENIED' : $msg, $denied ? 403 : 400);
 } catch (Throwable $e) {
     Api::error('Triage failed: ' . $e->getMessage(), 500);
 }

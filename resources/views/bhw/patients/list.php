@@ -1,12 +1,21 @@
 <?php
-$page_title = 'Patient List';
-$bhw_current_file = 'patients/list.php';
+if (!isset($page_title)) {
+    $page_title = 'Patient List';
+}
+if (!isset($bhw_current_file)) {
+    $bhw_current_file = 'patients/list.php';
+}
+$bhw_patient_assist_mode = !empty($bhw_patient_assist_mode);
 require __DIR__ . '/../partials/bhw_bootstrap.php';
 $pl_css_path = ASSETS_PATH . '/css/bhw-patient-list.css';
 $bhw_head_css = ASSET_BASE . '/assets/css/bhw-patient-list.css?v=' . (file_exists($pl_css_path) ? (int) filemtime($pl_css_path) : time());
 require __DIR__ . '/../partials/layout_open.php';
 $barangay_label = htmlspecialchars($bhw_barangay_name);
-$registered_hint = isset($_GET['registered']) ? (int) $_GET['registered'] : 0;
+$pl_heading = $bhw_patient_assist_mode ? 'Patient Assistance' : 'Patient Management';
+$pl_intro = $bhw_patient_assist_mode
+    ? 'View and assist patients already registered in <strong>Brgy. ' . $barangay_label . '</strong>.'
+    : 'Manage, search, update, and monitor registered patients within <strong>Brgy. ' . $barangay_label . '</strong>.';
+$pl_print_title = $bhw_patient_assist_mode ? 'Patient Assistance' : 'Patient List';
 
 ob_start();
 ?>
@@ -172,7 +181,6 @@ ob_start();
   }
 
   function applyFilters() {
-    var q = (els.search.value || '').toLowerCase().trim();
     var purok = els.purok.value;
     var status = els.status.value;
     var gender = els.gender.value;
@@ -180,9 +188,7 @@ ob_start();
     var sort = els.sort.value;
 
     filtered = allPatients.filter(function (p) {
-      var hay = ((p.first_name || '') + ' ' + (p.last_name || '') + ' ' + (p.email || '') + ' ' + (p.contact_number || '') + ' ' + (p.id || '')).toLowerCase();
-      if (q && hay.indexOf(q) < 0) return false;
-      if (purok && dash(p.barangay) !== purok) return false;
+      if (purok && dash(p.purok || p.barangay) !== purok) return false;
       if (status === 'active' && !p.is_active) return false;
       if (status === 'inactive' && p.is_active) return false;
       if (gender && (p.gender || '').toLowerCase() !== gender) return false;
@@ -265,8 +271,15 @@ ob_start();
     if (!allPatients.length) {
       els.tableWrap.style.display = 'none';
       els.empty.style.display = 'block';
-      els.empty.querySelector('h3').textContent = 'No registered patients found';
-      els.empty.querySelector('p').textContent = 'Register your first patient in this barangay to begin managing care.';
+      var emptyTitle = els.empty.querySelector('h3');
+      var emptyCopy = els.empty.querySelector('p');
+      var q = (els.search.value || '').trim();
+      if (emptyTitle) emptyTitle.textContent = q ? 'No matching patients' : 'No registered patients found';
+      if (emptyCopy) {
+        emptyCopy.textContent = q
+          ? 'No patients in your assigned barangay match this search.'
+          : 'Patients from this barangay appear here automatically after they complete the main registration.';
+      }
       els.pageInfo.textContent = '';
       els.pagination.innerHTML = '';
       return;
@@ -439,7 +452,8 @@ ob_start();
   }
 
   function loadPatients() {
-    BhwPortal.get('patients.php', { action: 'list', q: '' }).then(function (r) {
+    var q = (els.search.value || '').trim();
+    BhwPortal.get('patients.php', { action: 'list', q: q }).then(function (r) {
       if (!r.success) {
         els.tbody.innerHTML = '<tr><td colspan="12">' + esc(r.message || 'Failed to load') + '</td></tr>';
         return;
@@ -511,7 +525,11 @@ ob_start();
     URL.revokeObjectURL(a.href);
   }
 
-  els.search.addEventListener('input', applyFilters);
+  var searchTimer = null;
+  els.search.addEventListener('input', function () {
+    clearTimeout(searchTimer);
+    searchTimer = setTimeout(loadPatients, 250);
+  });
   [els.purok, els.status, els.gender, els.age, els.sort].forEach(function (el) {
     el.addEventListener('change', applyFilters);
   });
@@ -522,7 +540,7 @@ ob_start();
     els.gender.value = '';
     els.age.value = '';
     els.sort.value = 'name';
-    applyFilters();
+    loadPatients();
   });
   els.refresh.addEventListener('click', loadPatients);
   els.exportCsv.addEventListener('click', exportCsv);
@@ -556,11 +574,6 @@ ob_start();
   window.addEventListener('scroll', closeAllMenus, true);
 
   loadPatients();
-  <?php if ($registered_hint): ?>
-  setTimeout(function () {
-    BhwPortal.toast('Patient registered successfully.', true, { title: 'Registration Complete' });
-  }, 300);
-  <?php endif; ?>
 })();
 <?php
 $bhw_inline_script = ob_get_clean();
@@ -573,20 +586,20 @@ $bhw_inline_script = ob_get_clean();
       <strong>medConnect</strong>
       <span>City Health Office — Bago City</span>
     </div>
-    <h1 class="bhw-pl-print-title">Patient List</h1>
+    <h1 class="bhw-pl-print-title"><?= htmlspecialchars($pl_print_title) ?></h1>
     <p class="bhw-pl-print-sub" id="bhwPlPrintMeta">Brgy. <?= $barangay_label ?> · Generated <?= date('M j, Y g:i A') ?></p>
   </div>
 
   <header class="bhw-pl-header">
     <div>
-      <h2 class="text-h2">Patient Management</h2>
-      <p>Manage, search, update, and monitor registered patients within <strong>Brgy. <?= $barangay_label ?></strong>.</p>
+      <h2 class="text-h2"><?= htmlspecialchars($pl_heading) ?></h2>
+      <p><?= $pl_intro ?></p>
     </div>
     <div class="bhw-pl-header-actions no-print">
       <button type="button" class="bhw-pl-btn bhw-pl-btn--ghost" id="bhwPlRefresh" aria-label="Refresh list">Refresh</button>
       <button type="button" class="bhw-pl-btn bhw-pl-btn--outline" id="bhwPlExportCsv">Export CSV</button>
       <button type="button" class="bhw-pl-btn bhw-pl-btn--outline" id="bhwPlExportPdf">Export PDF</button>
-      <a href="register.php" class="bhw-pl-btn bhw-pl-btn--primary">Register Patient</a>
+      <a href="update.php" class="bhw-pl-btn bhw-pl-btn--primary">Assist Patient</a>
     </div>
   </header>
 
@@ -618,8 +631,8 @@ $bhw_inline_script = ob_get_clean();
   <div id="bhwPlEmpty" class="bhw-pl-table-wrap bhw-pl-empty" style="display:none;">
     <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="1.5" aria-hidden="true"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="17" y1="11" x2="23" y2="11"/></svg>
     <h3>No registered patients found</h3>
-    <p>Register your first patient in this barangay to begin managing care.</p>
-    <a href="register.php" class="bhw-pl-btn bhw-pl-btn--primary">Register Patient</a>
+    <p>Patients from this barangay appear here automatically after they complete the main registration.</p>
+    <a href="update.php" class="bhw-pl-btn bhw-pl-btn--primary">Assist Patient</a>
   </div>
 
   <div class="bhw-pl-table-wrap" id="bhwPlTableWrap">

@@ -19,9 +19,9 @@ function bhw_nav_groups(): array
             'id' => 'patients',
             'icon' => '<path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>',
             'label' => 'Patient Management',
-            'description' => 'Register and update patient information',
+            'description' => 'Assist and update registered patient information',
             'children' => [
-                ['file' => 'patients/register.php', 'label' => 'Register Patient', 'hint' => 'Add a new resident', 'icon' => 'user-plus', 'sidebar' => true],
+                ['file' => 'patients/register.php', 'label' => 'Patient Assistance', 'hint' => 'Assist registered patients', 'icon' => 'user-plus', 'sidebar' => true],
                 ['file' => 'patients/list.php', 'label' => 'Patient List', 'hint' => 'Search barangay patients', 'icon' => 'list', 'sidebar' => true],
                 ['file' => 'patients/update.php', 'label' => 'Update Patient Info', 'hint' => 'Edit contact & medical data', 'icon' => 'edit', 'sidebar' => false],
             ],

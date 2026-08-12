@@ -30,9 +30,16 @@ final class BhwWorkflows
             WHERE u.role = 'patient' AND {$clause}
         ";
         if ($search !== '') {
-            $sql .= " AND (u.first_name LIKE ? OR u.last_name LIKE ? OR u.email LIKE ? OR pr.contact_number LIKE ?)";
+            $sql .= " AND (
+                u.first_name LIKE ?
+                OR u.last_name LIKE ?
+                OR CONCAT(u.first_name, ' ', u.last_name) LIKE ?
+                OR u.email LIKE ?
+                OR pr.contact_number LIKE ?
+                OR pr.patient_code LIKE ?
+            )";
             $s = '%' . $search . '%';
-            $params = array_merge($params, [$s, $s, $s, $s]);
+            $params = array_merge($params, [$s, $s, $s, $s, $s, $s]);
         }
         $sql .= ' ORDER BY u.last_name, u.first_name LIMIT 500';
         $stmt = $pdo->prepare($sql);
@@ -58,203 +65,8 @@ final class BhwWorkflows
 
     public static function registerPatient(PDO $pdo, array $ctx, array $data): array
     {
-        patient_security_ensure_schema($pdo);
-
-        $first    = trim($data['first_name'] ?? '');
-        $middle   = trim($data['middle_name'] ?? '');
-        $last     = trim($data['last_name'] ?? '');
-        $suffix   = trim($data['suffix'] ?? '');
-        $email    = trim($data['email'] ?? '');
-        $dob      = trim($data['date_of_birth'] ?? '');
-        $gender   = strtolower(trim($data['gender'] ?? ''));
-        $contact  = trim($data['contact_number'] ?? '');
-        $civil    = trim($data['civil_status'] ?? '');
-        $address  = trim($data['address'] ?? '');
-        $purok    = trim($data['purok'] ?? '');
-        $blood    = trim($data['blood_type'] ?? 'Unknown');
-        $conditions = trim($data['existing_conditions'] ?? '');
-        $allergies  = trim($data['allergies'] ?? '');
-        $medications = trim($data['medications'] ?? $data['current_medications'] ?? '');
-        $ecName   = trim($data['emergency_contact_name'] ?? '');
-        $ecPhone  = trim($data['emergency_contact_phone'] ?? '');
-        $ecRel    = trim($data['emergency_contact_relation'] ?? '');
-        $consent  = !empty($data['consent_given']);
-        $bhwId    = (int) ($_SESSION['user_id'] ?? 0);
-        $bhwName  = trim(($_SESSION['user_name'] ?? '') ?: (($_SESSION['first_name'] ?? '') . ' ' . ($_SESSION['last_name'] ?? '')));
-
-        if ($first === '' || $last === '' || $email === '' || $dob === '' || $gender === '' || $contact === '') {
-            throw new InvalidArgumentException('Required fields: first name, last name, email, date of birth, gender, and contact number.');
-        }
-        if (!in_array($gender, ['male', 'female'], true)) {
-            throw new InvalidArgumentException('Gender must be Male or Female.');
-        }
-        if (!$consent) {
-            throw new InvalidArgumentException('Patient consent under RA 10173 is required.');
-        }
-        if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
-            throw new InvalidArgumentException('Invalid email address.');
-        }
-        if (!patient_is_valid_ph_mobile($contact)) {
-            $err = patient_phone_validation_error($contact);
-            throw new InvalidArgumentException($err ?? 'Contact number must be a valid Philippine mobile (09XXXXXXXXX).');
-        }
-
-        $dup = $pdo->prepare('SELECT id FROM users WHERE email = ? LIMIT 1');
-        $dup->execute([$email]);
-        if ($dup->fetch()) {
-            throw new InvalidArgumentException('Email already registered.');
-        }
-
-        $normContact = patient_normalize_phone($contact);
-        $contactDup = $pdo->prepare('SELECT id FROM patient_registrations WHERE REPLACE(REPLACE(REPLACE(contact_number, " ", ""), "-", ""), "+", "") LIKE ? LIMIT 1');
-        $contactDup->execute(['%' . substr($normContact, -10)]);
-        if ($contactDup->fetch()) {
-            throw new InvalidArgumentException('Contact number already registered.');
-        }
-
-        $dobDate = DateTime::createFromFormat('Y-m-d', $dob);
-        if (!$dobDate || $dobDate->format('Y-m-d') !== $dob) {
-            throw new InvalidArgumentException('Invalid date of birth.');
-        }
-        $age = (new DateTime())->diff($dobDate)->y;
-        if ($age < 0 || $age > 120) {
-            throw new InvalidArgumentException('Date of birth must represent a valid age (0–120).');
-        }
-
-        $barangay = $ctx['barangay_name'];
-        $city = 'Bago City';
-        $province = 'Negros Occidental';
-        $region = 'Western Visayas';
-        $fullName = trim(implode(' ', array_filter([$first, $middle, $last, $suffix])));
-        $nationalHash = hash('sha256', 'bhw-' . $bhwId . '-' . $email . '-' . time());
-        $patientCode = patient_generate_code($pdo);
-        $tempPassword = patient_generate_temp_password();
-        $setup = patient_generate_setup_token();
-        $passwordHash = patient_hash_password($tempPassword);
-
-        $pdo->beginTransaction();
-        try {
-            $pdo->prepare("
-                INSERT INTO users (
-                    first_name, last_name, email, password, role, is_active, is_email_verified,
-                    must_change_password, account_status, password_setup_token, password_setup_expiry, created_at
-                ) VALUES (?, ?, ?, ?, 'patient', 1, 0, 1, 'active', ?, ?, NOW())
-            ")->execute([
-                $first,
-                $last,
-                $email,
-                $passwordHash,
-                $setup['token'],
-                $setup['expiry'],
-            ]);
-            $patientId = (int) $pdo->lastInsertId();
-
-            $cols = bhw_pr_columns($pdo);
-            $insertCols = [
-                'first_name', 'last_name', 'full_name', 'email', 'date_of_birth', 'age', 'gender',
-                'barangay', 'city_municipality', 'province', 'region', 'contact_number', 'blood_type', 'status',
-            ];
-            $insertVals = [
-                $first, $last, $fullName, $email, $dob, $age, $gender,
-                $barangay, $city, $province, $region, $contact, $blood, 'verified',
-            ];
-
-            $optional = [
-                'middle_name'                => $middle ?: null,
-                'suffix'                     => $suffix ?: null,
-                'civil_status'               => $civil ?: null,
-                'purok'                      => $purok ?: null,
-                'full_address'               => $address ?: null,
-                'address'                    => $address ?: null,
-                'existing_conditions'        => $conditions ?: null,
-                'allergies'                  => $allergies ?: null,
-                'current_medications'        => $medications ?: null,
-                'emergency_contact_name'     => $ecName ?: null,
-                'emergency_contact_phone'    => $ecPhone ?: null,
-                'emergency_contact_relation' => $ecRel ?: null,
-                'consent_given'              => 1,
-                'national_id'                => $nationalHash,
-                'barangay_id'                => (int) $ctx['barangay_id'],
-                'registered_by_bhw_id'       => $bhwId,
-                'user_id'                    => $patientId,
-                'patient_code'               => $patientCode,
-            ];
-            foreach ($optional as $col => $val) {
-                if (in_array($col, $cols, true)) {
-                    $insertCols[] = $col;
-                    $insertVals[] = $val;
-                }
-            }
-
-            $ph = implode(',', array_fill(0, count($insertCols), '?'));
-            $pdo->prepare('INSERT INTO patient_registrations (' . implode(',', $insertCols) . ') VALUES (' . $ph . ')')
-                ->execute($insertVals);
-
-            bhw_sync_gis($pdo, $patientId, $ctx, $address !== '' ? $address . ', Brgy. ' . $barangay : null);
-            $pdo->commit();
-        } catch (Throwable $e) {
-            if ($pdo->inTransaction()) {
-                $pdo->rollBack();
-            }
-            throw $e;
-        }
-
-        require_once BASE_PATH . '/app/includes/mailer.php';
-        $emailSent = false;
-        if (defined('MAIL_USERNAME') && MAIL_USERNAME !== '') {
-            $mailResult = sendPatientWelcomeEmail($email, $fullName, $patientCode, $setup['token']);
-            $emailSent = !empty($mailResult['success']);
-        }
-
-        require_once BASE_PATH . '/app/includes/audit_log.php';
-        audit_log($pdo, [
-            'patient_id'  => $patientId,
-            'action_type' => AuditAction::PATIENT_REGISTERED,
-            'description' => 'Registered New Patient',
-            'meta'        => [
-                'bhw_id'       => $bhwId,
-                'bhw_name'     => $bhwName,
-                'patient_name' => $fullName,
-                'patient_code' => $patientCode,
-                'barangay'     => $barangay,
-                'email'        => $email,
-                'email_sent'   => $emailSent,
-                'registered_at'=> date('Y-m-d H:i:s'),
-            ],
-        ]);
-            bhw_audit($pdo, $patientId, 'bhw_patient_registered', "BHW registered patient {$fullName} ({$patientCode}) in Brgy. {$barangay}.", [
-            'email' => $email,
-            'patient_code' => $patientCode,
-            'bhw_name' => $bhwName,
-            'patient_name' => $fullName,
-        ]);
-        require_once __DIR__ . '/notification_events.php';
-        NotificationEvents::patientRegistered($pdo, $patientId, $fullName, $bhwId);
-        NotificationEvents::bhwPatientRegistered($pdo, $bhwId, $patientId, $fullName, $bhwId);
-
-        BhwPatientWorkflow::ensure_schema($pdo);
-        BhwPatientWorkflow::setStatus($pdo, $patientId, BhwPatientWorkflow::AWAITING_COMPLAINT, [
-            'source' => 'registration',
-        ]);
-
-        $result = [
-            'patient_id'   => $patientId,
-            'patient_code' => $patientCode,
-            'email'        => $email,
-            'account_status' => 'Active',
-            'email_sent'   => $emailSent,
-            'workflow_status' => BhwPatientWorkflow::AWAITING_COMPLAINT,
-            'next_step'    => 'chief_complaint',
-            'redirect'     => ASSET_BASE . '/views/bhw/triage/submit.php?patient_id=' . $patientId,
-        ];
-        if (!$emailSent) {
-            $result['temporary_password'] = $tempPassword;
-            $result['password_delivery'] = 'manual';
-        } else {
-            $result['password_delivery'] = 'email';
-        }
-
-        return $result;
+        unset($pdo, $ctx, $data);
+        throw new RuntimeException('BHWs cannot register new patients. Patients must complete the main registration flow.');
     }
 
     public static function updatePatient(PDO $pdo, array $ctx, int $patientId, array $data): void

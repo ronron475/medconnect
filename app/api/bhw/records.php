@@ -80,7 +80,7 @@ try {
     if ($action === 'list') {
         $patientId = (int) ($_GET['patient_id'] ?? 0);
         if (!bhw_assert_patient_in_sector($pdo, $ctx, $patientId)) {
-            Api::error('Patient not in your barangay.', 403);
+            Api::error('ACCESS DENIED', 403);
         }
         $records = [];
         $metaCols = bhw_residency_doc_columns($pdo);
@@ -107,7 +107,7 @@ try {
         bhw_residency_doc_ensure_metadata($pdo);
         $patientId = (int) ($_POST['patient_id'] ?? 0);
         if (!bhw_assert_patient_in_sector($pdo, $ctx, $patientId)) {
-            Api::error('Patient not in your barangay.', 403);
+            Api::error('ACCESS DENIED', 403);
         }
         $documentType = trim((string) ($_POST['document_type'] ?? ''));
         $documentTitle = trim((string) ($_POST['document_title'] ?? ''));
@@ -182,7 +182,7 @@ try {
             Api::error('Document not found.', 404);
         }
         if (!bhw_assert_patient_in_sector($pdo, $ctx, (int) $doc['patient_id'])) {
-            Api::error('Access denied.', 403);
+            Api::error('ACCESS DENIED', 403);
         }
         $path = BASE_PATH . '/storage/residency/' . $doc['file_name'];
         if (!is_file($path)) {
