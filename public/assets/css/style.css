@@ -2311,7 +2311,7 @@ img {
 
   /* Sign-in modal wrap — constrained card on tablet/mobile */
   .signin-modal-wrap  { width: min(420px, 100%); max-width: 420px; margin: 0 auto; padding-top: 16px; }
-  .signin-modal-inner { max-height: calc(100svh - 60px); }
+  .signin-modal-inner { max-height: none !important; height: auto !important; overflow: visible !important; }
 
   /* Feature pills — allow wrapping */
   .hero-features { flex-wrap: wrap; gap: 8px; justify-content: center; }

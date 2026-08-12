@@ -579,9 +579,10 @@ body.mc-nav-opening .topbar-brand {
     max-width: 420px !important;
     width: min(420px, 100%) !important;
     height: auto !important;
+    min-height: auto !important;
+    max-height: none !important;
     border-radius: 18px !important;
-    max-height: min(90vh, calc(100dvh - 32px));
-    overflow-y: auto;
+    overflow: visible !important;
     margin: 0 auto !important;
   }
 
