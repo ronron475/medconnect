@@ -731,20 +731,43 @@ body.landing-page.landing-nav-open {
 }
 
 @media (max-width: 400px) {
-  .landing-page .nav-logo__partner {
-    display: none;
+  .landing-page .nav-logo {
+    gap: 6px;
   }
-
-  .landing-page .nav-logo__divider {
-    display: none;
+  .landing-page .nav-logo__icon {
+    width: 28px;
+    height: 28px;
+    max-width: 28px;
+    max-height: 28px;
+  }
+  .landing-page .nav-logo .logo-text {
+    font-size: 14px;
+  }
+  .landing-page .nav-logo__partner {
+    max-width: 60px;
+    height: 20px;
+    max-height: 20px;
   }
 }
 
 @media (max-width: 360px) {
-  .landing-page .nav-logo__partners {
-    display: none;
+  .landing-page .nav-logo {
+    gap: 4px;
   }
-
+  .landing-page .nav-logo__icon {
+    width: 24px;
+    height: 24px;
+    max-width: 24px;
+    max-height: 24px;
+  }
+  .landing-page .nav-logo .logo-text {
+    font-size: 13px;
+  }
+  .landing-page .nav-logo__partner {
+    max-width: 50px;
+    height: 16px;
+    max-height: 16px;
+  }
   .landing-page .hero-trust-chip {
     flex: 1 1 calc(50% - 4px);
     justify-content: center;
