@@ -405,10 +405,19 @@ try {
     if ($pdo->inTransaction()) {
         $pdo->rollBack();
     }
-    error_log('register.php DB error: ' . $e->getMessage());
+    error_log('register.php DB error: ' . $e->getMessage() . ' in ' . $e->getFile() . ':' . $e->getLine());
     logActivity($pdo, null, 'registration_submitted', 'failure', 'DB error: ' . $e->getMessage(), $national_id_hash, $ip, $user_agent);
-    echo json_encode([
+
+    $isLocalhost = in_array($_SERVER['REMOTE_ADDR'] ?? '', ['127.0.0.1', '::1', '::1'], true)
+        || (($_SERVER['HTTP_HOST'] ?? '') === 'localhost');
+    $response = [
         'success' => false,
         'message' => patient_registration_friendly_db_error($e),
-    ]);
+    ];
+    if ($isLocalhost) {
+        $response['_debug'] = get_class($e) . ': ' . $e->getMessage()
+            . ' in ' . basename($e->getFile()) . ':' . $e->getLine();
+    }
+    echo json_encode($response);
 }
+
