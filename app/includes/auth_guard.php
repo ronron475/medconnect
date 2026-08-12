@@ -4,6 +4,15 @@
  */
 require_once __DIR__ . '/portal_auth.php';
 
+function auth_prevent_back_cache(): void
+{
+    if (!headers_sent()) {
+        header('Cache-Control: no-store, no-cache, must-revalidate, max-age=0');
+        header('Pragma: no-cache');
+        header('Expires: Sat, 01 Jan 2000 00:00:00 GMT');
+    }
+}
+
 function auth_landing_url(array $params = []): string
 {
     $url = BASE_URL . '/index.php';
@@ -121,6 +130,7 @@ function auth_portal_dashboard_url(?string $role = null): ?string
  */
 function auth_redirect_if_logged_in(): void
 {
+    auth_prevent_back_cache();
     if (session_status() === PHP_SESSION_NONE) {
         session_start();
     }
@@ -174,6 +184,7 @@ function auth_require_superadmin(): void
 
 function auth_require_login(): void
 {
+    auth_prevent_back_cache();
     if (session_status() === PHP_SESSION_NONE) {
         session_start();
     }

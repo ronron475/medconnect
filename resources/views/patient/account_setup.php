@@ -20,6 +20,9 @@ if (empty($_SESSION['user_id']) || ($_SESSION['user_role'] ?? '') !== 'patient')
     exit;
 }
 
+require_once BASE_PATH . '/app/includes/auth_guard.php';
+auth_prevent_back_cache();
+
 $userId = (int) $_SESSION['user_id'];
 if (!patient_requires_account_setup($pdo, $userId)) {
     header('Location: ' . ASSET_BASE . '/views/patient/dashboard.php');
