@@ -51,6 +51,7 @@ storage/logs/*.lock
 # Runtime data — do not push to GitHub
 storage/recordings/*
 !storage/recordings/.gitkeep
+!storage/recordings/.htaccess
 storage/ratelimit/*
 !storage/ratelimit/.gitkeep
 storage/reports/*

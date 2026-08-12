@@ -19,6 +19,11 @@ RewriteRule ^ https://%{HTTP_HOST}%{REQUEST_URI} [R=301,L]
     Header always set Permissions-Policy "camera=(self), microphone=(self), display-capture=(self)"
 </IfModule>
 
+<IfModule mod_mime.c>
+    AddType video/webm .webm
+    AddType video/mp4 .mp4
+</IfModule>
+
 
 
 # ── Legacy controllers URL (backward-compatible) ───────────────
@@ -50,6 +55,10 @@ RewriteRule ^hospital-referral/(.*)$ modules/hospital_referral/$1 [L]
 RewriteRule ^philippine-address-selector-main/(.*)$ modules/address_selector/$1 [L]
 
 
+
+# ── Block internal application directories (before serving existing files) ─
+RewriteRule ^(bootstrap|config|data|database|resources|storage|scripts|modules)/ - [F,L]
+RewriteRule ^app/(core|includes|models)/ - [F,L]
 
 # ── Serve real files and directories directly ──────────────────
 
