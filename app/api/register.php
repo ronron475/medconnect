@@ -185,7 +185,7 @@ if (empty($national_id_raw)) {
 
 if (!$consent_given) $errors[] = 'You must agree to the data privacy consent to proceed.';
 
-if (!empty($city_municipality) && !preg_match('/\bbago\s*city\b/i', preg_replace('/\s+/', ' ', $city_municipality))) {
+if (!empty($city_municipality) && !preg_match('/\bbago\b/i', preg_replace('/\s+/', ' ', $city_municipality))) {
     $errors[] = 'Only residents of Bago City may register. If you live outside Bago City, please use the hospital referral to find care in your area.';
 }
 

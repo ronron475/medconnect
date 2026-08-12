@@ -646,27 +646,36 @@ const stepDot2    = document.getElementById('step-dot-2');
 const btnProceed  = document.getElementById('btn-proceed');
 const proceedHint = document.getElementById('step1-cta-hint');
 
+function syncStep1HiddenFields() {
+  const getVal = (id) => (document.getElementById(id) ? document.getElementById(id).value : '');
+  const setHidden = (hId, val) => {
+    const el = document.getElementById(hId);
+    if (el) el.value = val;
+  };
+
+  setHidden('h-first-name', getVal('first-name'));
+  setHidden('h-middle-name', getVal('middle-name'));
+  setHidden('h-last-name', getVal('last-name'));
+  setHidden('h-dob', getVal('dob'));
+  setHidden('h-age', getVal('age'));
+  setHidden('h-gender', getVal('gender'));
+  setHidden('h-civil-status', getVal('civil-status'));
+  setHidden('h-region', getVal('region-text'));
+  setHidden('h-province', getVal('province-text'));
+  setHidden('h-city', getVal('city-text'));
+  setHidden('h-barangay', getVal('barangay-text'));
+  setHidden('h-street-address', getVal('street-address'));
+  setHidden('h-national-id', getVal('national-id'));
+
+  const fileInput = document.getElementById('national-id-image');
+  if (fileInput && fileInput.files && fileInput.files[0]) {
+    setHidden('h-national-id-image', fileInput.files[0].name);
+  }
+}
+
 function goToStep2() {
   // Copy Step 1 values into hidden fields for Step 2 form submission
-  document.getElementById('h-first-name').value   = document.getElementById('first-name').value;
-  document.getElementById('h-middle-name').value  = document.getElementById('middle-name').value;
-  document.getElementById('h-last-name').value    = document.getElementById('last-name').value;
-  document.getElementById('h-dob').value         = document.getElementById('dob').value;
-  document.getElementById('h-age').value         = document.getElementById('age').value;
-  document.getElementById('h-gender').value       = document.getElementById('gender').value;
-  document.getElementById('h-civil-status').value = document.getElementById('civil-status').value;
-  document.getElementById('h-region').value       = document.getElementById('region-text').value;
-  document.getElementById('h-province').value    = document.getElementById('province-text').value;
-  document.getElementById('h-city').value         = document.getElementById('city-text').value;
-  document.getElementById('h-barangay').value     = document.getElementById('barangay-text').value;
-  document.getElementById('h-street-address').value = document.getElementById('street-address')?.value || '';
-  document.getElementById('h-national-id').value  = document.getElementById('national-id').value;
-  
-  // Get the file input element and check if there's a file selected
-  const fileInput = document.getElementById('national-id-image');
-  if (fileInput.files && fileInput.files[0]) {
-    document.getElementById('h-national-id-image').value = fileInput.files[0].name;
-  }
+  syncStep1HiddenFields();
 
   step1Panel.setAttribute('hidden', '');
   step2Panel.removeAttribute('hidden');
@@ -1069,6 +1078,7 @@ step2Form.addEventListener('submit', async e => {
   const registerUrl = base + '/app/api/register.php';
 
   try {
+    syncStep1HiddenFields();
     const fd = new FormData(step2Form);
 
     if (nlp && typeof nlp.isComplaintSkipped === 'function' && nlp.isComplaintSkipped()) {
