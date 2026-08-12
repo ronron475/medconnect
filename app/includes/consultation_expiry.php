@@ -52,12 +52,29 @@ function consultations_auto_expire(PDO $pdo, ?int $patient_id = null, ?int $prov
 
     $updated = 0;
 
-    $complete = $pdo->prepare("
-        UPDATE consultations
-        SET status = 'completed'
-        WHERE id = ?
-          AND status = 'in_consultation'
-    ");
+    $hasCompletedAt = false;
+    try {
+        $col = $pdo->query("SHOW COLUMNS FROM consultations LIKE 'completed_at'");
+        $hasCompletedAt = (bool) ($col && $col->fetch(PDO::FETCH_ASSOC));
+    } catch (Throwable $e) {
+        $hasCompletedAt = false;
+    }
+    if ($hasCompletedAt) {
+        $complete = $pdo->prepare("
+            UPDATE consultations
+            SET status = 'completed',
+                completed_at = COALESCE(completed_at, NOW())
+            WHERE id = ?
+              AND status = 'in_consultation'
+        ");
+    } else {
+        $complete = $pdo->prepare("
+            UPDATE consultations
+            SET status = 'completed'
+            WHERE id = ?
+              AND status = 'in_consultation'
+        ");
+    }
     $cancel = $pdo->prepare("
         UPDATE consultations
         SET status = 'cancelled'

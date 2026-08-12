@@ -361,9 +361,16 @@
         joinAccess.mode === 'join' ? ' psess-card--ready'
           : joinAccess.mode === 'waiting' ? ' psess-card--waiting' : '';
 
-      const typeLine = type === 'past'
-        ? 'Medical Video Consultation'
-        : escapeHtml(c.consult_type || 'General Consultation');
+      const typeLine = (function () {
+        if (type !== 'past') {
+          return escapeHtml(c.consult_type || 'General Consultation');
+        }
+        const vh = c.video_history || {};
+        if (vh.show_completed_details) {
+          return 'Medical Video Consultation';
+        }
+        return escapeHtml(c.consult_type || 'Consultation');
+      })();
 
       let extraMeta = '';
       if (type === 'past') {
