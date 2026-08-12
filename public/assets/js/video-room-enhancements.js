@@ -401,12 +401,26 @@
   }
 
   function loadContext(fromRetry) {
-    setInfoStatus(fromRetry ? 'Loading consultation details…' : '', false);
     return fetchContext().then((ctx) => {
       contextData = ctx || fallbackContext();
       renderWaiting(ctx || contextData);
       renderInfo(ctx || contextData);
-      setInfoStatus(ctx ? '' : 'Live details unavailable. Showing session information from this visit.', !ctx);
+      if (!ctx) {
+        const pane = q('mcVcInfoPane');
+        if (pane && !q('mcVcInfoRetry')) {
+          const note = document.createElement('p');
+          note.className = 'mc-vc-info-refresh';
+          note.textContent = 'Live details unavailable. Showing session information from this visit.';
+          const btn = document.createElement('button');
+          btn.type = 'button';
+          btn.id = 'mcVcInfoRetry';
+          btn.className = 'mc-vc-info-retry';
+          btn.textContent = 'Retry loading details';
+          btn.addEventListener('click', () => loadContext(true));
+          pane.appendChild(note);
+          pane.appendChild(btn);
+        }
+      }
       return ctx;
     });
   }

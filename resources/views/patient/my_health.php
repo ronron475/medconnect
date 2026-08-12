@@ -117,7 +117,7 @@ try {
 try {
     $s = $pdo->prepare("
         SELECT cn.consultation_id,
-               COALESCE(NULLIF(cn.diagnosis, ''), 'Consultation health file') AS record_name,
+               CONCAT('Consultation #', cn.consultation_id, ' SOAP Note') AS record_name,
                cn.assessment AS frequency,
                cn.plan AS duration,
                COALESCE(NULLIF(cn.treatment_plan, ''), NULLIF(cn.subjective, ''), '') AS detail,

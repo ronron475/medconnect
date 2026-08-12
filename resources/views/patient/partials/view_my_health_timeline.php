@@ -103,20 +103,28 @@ function pmh_note_text(?string $value, string $fallback = ''): string {
             <p><?= htmlspecialchars($chiefComplaint) ?></p>
           </section>
           <?php endif; ?>
+          <section class="pmh-visit__block pmh-visit__block--full">
+            <h4 class="pmh-visit__label">Subjective</h4>
+            <p><?= nl2br(htmlspecialchars(pmh_note_text($note['subjective'] ?? '', '—'))) ?></p>
+          </section>
+          <section class="pmh-visit__block pmh-visit__block--full">
+            <h4 class="pmh-visit__label">Objective</h4>
+            <p><?= nl2br(htmlspecialchars(pmh_note_text($note['objective'] ?? '', '—'))) ?></p>
+          </section>
+          <section class="pmh-visit__block pmh-visit__block--full">
+            <h4 class="pmh-visit__label">Assessment</h4>
+            <p><?= nl2br(htmlspecialchars(pmh_note_text($note['assessment'] ?? '', '—'))) ?></p>
+          </section>
+          <section class="pmh-visit__block pmh-visit__block--full">
+            <h4 class="pmh-visit__label">Plan</h4>
+            <p><?= nl2br(htmlspecialchars(pmh_note_text($note['plan'] ?? '', $recommendation))) ?></p>
+          </section>
+          <?php if (pmh_note_text($note['diagnosis'] ?? '', '') !== '' || $diagnosis !== 'No diagnosis recorded.'): ?>
           <section class="pmh-visit__block">
-            <h4 class="pmh-visit__label">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
-              Diagnosis
-            </h4>
+            <h4 class="pmh-visit__label">Diagnosis</h4>
             <p><?= htmlspecialchars($diagnosis) ?></p>
           </section>
-          <section class="pmh-visit__block">
-            <h4 class="pmh-visit__label">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
-              Plan / Recommendations
-            </h4>
-            <p><?= htmlspecialchars($recommendation) ?></p>
-          </section>
+          <?php endif; ?>
         </div>
 
         <p class="pmh-visit__actions">
