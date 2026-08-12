@@ -528,7 +528,7 @@ body.role-patient .mc-vc-main {
   bottom: 0;
   left: 0;
   right: 0;
-  z-index: 40;
+  z-index: 50;
   isolation: isolate;
   pointer-events: auto;
   display: flex;
@@ -634,6 +634,21 @@ body.role-patient .mc-vc-main {
 
 .mc-vc-btn--primary-accent {
   background: var(--mc-vc-accent);
+}
+
+.mc-vc-btn--label {
+  width: auto;
+  min-width: 48px;
+  padding: 0 12px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+}
+
+.mc-vc-btn--label.is-active {
+  background: #0d9488;
+  box-shadow: 0 0 0 2px rgba(13, 148, 136, 0.45);
 }
 
 .mc-vc-btn--end {

@@ -412,10 +412,23 @@ function patient_portal_complaint_source_label(string $source): string
 }
 
 /**
- * Use an active (locked) chief complaint while a case is open.
- * After COMPLETED/CANCELLED visits, do not reuse previous complaints —
- * the patient must enter a new chief complaint for a new consultation.
+ * True when two chief-complaint strings refer to the same health concern.
  */
+function patient_complaints_are_same(string $a, string $b): bool
+{
+    $norm = static function (string $s): string {
+        $s = mb_strtolower(trim($s));
+        $s = preg_replace('/\s+/u', ' ', $s) ?? $s;
+
+        return $s;
+    };
+
+    $left = $norm($a);
+    $right = $norm($b);
+
+    return $left !== '' && $left === $right;
+}
+
 function patient_portal_resolve_chief_complaint(PDO $pdo, int $patientId, string $submittedComplaint): string
 {
     $submitted = trim($submittedComplaint);

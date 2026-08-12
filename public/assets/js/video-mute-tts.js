@@ -87,10 +87,14 @@
     const restoreToast = document.getElementById('muteTtsRestoreToast');
     const typingBadge = document.getElementById('ttsTypingBadge');
     const remoteMuteBanner = document.getElementById('remoteMuteBanner');
+    const closeBtn = document.getElementById('muteTtsCloseBtn');
+    const receiveCloseBtn = document.getElementById('muteTtsReceiveCloseBtn');
+    const ttsOpenBtn = document.getElementById('mcVcTtsBtn');
 
     let micMuted = false;
     let remoteMuted = false;
     let speaking = false;
+    let composerDismissed = false;
     let lastSpokenServerId = 0;
     const roleLabel = userRole === 'provider' ? 'Provider' : 'Patient';
     const otherLabel = userRole === 'provider' ? 'Patient' : 'Provider';
@@ -179,21 +183,50 @@
         panel.setAttribute('aria-hidden', visible ? 'false' : 'true');
       }
       if (banner) {
-        banner.classList.toggle('is-open', visible);
-        banner.setAttribute('aria-hidden', visible ? 'false' : 'true');
+        banner.classList.toggle('is-open', visible && micMuted);
+        banner.setAttribute('aria-hidden', visible && micMuted ? 'false' : 'true');
       }
       if (typingBadge) {
         typingBadge.hidden = !visible;
+      }
+      if (ttsOpenBtn) {
+        ttsOpenBtn.classList.toggle('is-active', micMuted && !visible);
+        ttsOpenBtn.setAttribute('aria-pressed', micMuted && !visible ? 'true' : 'false');
       }
       if (visible && input) {
         window.setTimeout(() => input.focus(), 220);
       }
     }
 
+    function closeComposer() {
+      if (!panel || !panel.classList.contains('is-open')) return;
+      composerDismissed = true;
+      setPanelVisible(false);
+    }
+
+    function openComposer(options) {
+      const opts = options || {};
+      if (!micMuted) {
+        if (!opts.silent) {
+          showToast('Mute your microphone to send a typed voice message.', 'warn');
+        }
+        return false;
+      }
+      composerDismissed = false;
+      setPanelVisible(true);
+      return true;
+    }
+
+    function hideReceivePanel() {
+      if (!receivePanel) return;
+      receivePanel.classList.remove('has-items', 'is-watching');
+    }
+
     function onMuteChanged(muted) {
       micMuted = Boolean(muted);
 
       if (micMuted) {
+        composerDismissed = false;
         setPanelVisible(true);
         showToast(
           userRole === 'patient'
@@ -205,6 +238,7 @@
           sendData({ type: 'mute_state', muted: true, role: userRole });
         }
       } else {
+        composerDismissed = false;
         setPanelVisible(false);
         setStatus('');
         if (restoreToast) {
@@ -417,6 +451,19 @@
     }
     speakBtn?.addEventListener('click', sendTypedMessage);
     clearBtn?.addEventListener('click', clearInput);
+    closeBtn?.addEventListener('click', (event) => {
+      event.preventDefault();
+      event.stopPropagation();
+      closeComposer();
+    });
+    receiveCloseBtn?.addEventListener('click', (event) => {
+      event.preventDefault();
+      event.stopPropagation();
+      hideReceivePanel();
+    });
+    banner?.addEventListener('click', () => {
+      if (micMuted) openComposer({ silent: true });
+    });
     updateCharCount();
 
     window.setInterval(pollMuteMessages, 2500);
@@ -431,6 +478,8 @@
       handleIncomingData,
       playMuteTtsMessage,
       syncMuteStateToPeer,
+      closeComposer,
+      openComposer,
       isMicMuted: () => micMuted,
     };
   }

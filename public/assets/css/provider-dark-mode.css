@@ -274,6 +274,24 @@ html[data-theme-resolved='dark'] body.provider-body .ps-input:focus {
   box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.25) !important;
 }
 
+html[data-theme-resolved='dark'] body.provider-body .ps-input[readonly],
+html[data-theme-resolved='dark'] body.provider-body .ps-input[aria-readonly="true"] {
+  background: rgba(15, 23, 42, 0.35) !important;
+  cursor: default;
+}
+
+html[data-theme-resolved='dark'] body.provider-body .ps-input[readonly]:focus,
+html[data-theme-resolved='dark'] body.provider-body .ps-input[aria-readonly="true"]:focus {
+  border-color: var(--border-color) !important;
+  box-shadow: none !important;
+}
+
+html[data-theme-resolved='dark'] body.provider-body .ps-readonly-note {
+  background: rgba(15, 23, 42, 0.35);
+  border-color: var(--border-color);
+  color: var(--text-muted);
+}
+
 /* â”€â”€ Tables â”€â”€ */
 html[data-theme-resolved='dark'] body.provider-body table,
 html[data-theme-resolved='dark'] body.provider-body .mc-table,

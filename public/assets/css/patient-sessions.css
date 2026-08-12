@@ -496,9 +496,47 @@
   color: #0369a1;
 }
 
-.psess-status--past {
-  background: #f1f5f9;
-  color: #475569;
+.psess-status--active {
+  background: #d1fae5;
+  color: #065f46;
+}
+
+.psess-status--completed {
+  background: #ecfdf5;
+  color: #047857;
+}
+
+.psess-card__datetime--time {
+  margin-top: 2px;
+  font-weight: 700;
+}
+
+.psess-card__meta {
+  margin: 8px 0 0;
+  font-size: 0.82rem;
+  color: #334155;
+  line-height: 1.45;
+}
+
+.psess-card__meta span {
+  display: block;
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: #64748b;
+  margin-bottom: 1px;
+}
+
+@media (max-width: 720px) {
+  .psess-card__aside {
+    align-items: stretch;
+    width: 100%;
+  }
+
+  .psess-card__actions {
+    width: 100%;
+  }
 }
 
 .psess-status--cancelled {

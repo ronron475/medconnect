@@ -60,6 +60,49 @@
       .catch(() => null);
   }
 
+  function fallbackContext() {
+    const doctor = META.providerName
+      ? (/^dr\.?\s/i.test(META.providerName) ? META.providerName : ('Dr. ' + META.providerName))
+      : 'Your healthcare provider';
+    return {
+      consultation_id: CONSULTATION_ID,
+      patient_panel: {
+        doctor_name: doctor,
+        specialization: META.specialty || 'General Medicine',
+        appointment_label: META.appointmentLabel || '',
+        chief_complaint: META.chiefComplaint || '',
+        triage_level: 'Not assessed',
+        triage_bucket: 'unknown',
+        consultation_id: CONSULTATION_ID,
+      },
+      provider_panel: {
+        patient_name: META.patientName || 'Patient',
+        patient_number: META.patientNumber || '',
+        age: META.patientAge || '',
+        sex: META.patientSex || '—',
+        chief_complaint: META.chiefComplaint || '',
+        ai_classification: '',
+        final_classification: '',
+        appointment_label: META.appointmentLabel || '',
+        consultation_id: CONSULTATION_ID,
+        allergies: [],
+        conditions: [],
+        medications: [],
+        blood_type: '—',
+      },
+    };
+  }
+
+  function setInfoStatus(text, showRetry) {
+    const status = q('mcVcInfoStatus');
+    const retry = q('mcVcInfoRetry');
+    if (status) {
+      status.hidden = !text;
+      status.textContent = text || '';
+    }
+    if (retry) retry.hidden = !showRetry;
+  }
+
   function renderWaiting(ctx) {
     const card = q('mcVcWaitingCard');
     const title = q('mcVcWaitingTitle');
@@ -96,15 +139,17 @@
 
   function renderInfo(ctx) {
     const pane = q('mcVcInfoPane');
-    if (!pane || !ctx) return;
+    if (!pane) return;
+    const data = ctx || fallbackContext();
 
-    if (IS_PATIENT && ctx.patient_panel) {
-      const p = ctx.patient_panel;
+    if (IS_PATIENT) {
+      const p = data.patient_panel || fallbackContext().patient_panel;
       pane.innerHTML =
         '<div class="mc-vc-info-card">' +
-        '<h3 class="mc-vc-info-card__title">' + escapeHtml(p.doctor_name) + '</h3>' +
-        '<p class="mc-vc-info-card__sub">' + escapeHtml(p.specialization) + '</p>' +
+        '<h3 class="mc-vc-info-card__title">' + escapeHtml(p.doctor_name || 'Your healthcare provider') + '</h3>' +
+        '<p class="mc-vc-info-card__sub">' + escapeHtml(p.specialization || 'General Medicine') + '</p>' +
         '<dl class="mc-vc-info-dl">' +
+        '<div><dt>Consultation</dt><dd>#' + escapeHtml(p.consultation_id || CONSULTATION_ID || '—') + '</dd></div>' +
         '<div><dt>Appointment</dt><dd>' + escapeHtml(p.appointment_label || '—') + '</dd></div>' +
         '<div><dt>Chief complaint</dt><dd>' + escapeHtml(p.chief_complaint || '—') + '</dd></div>' +
         '<div><dt>AI triage</dt><dd><span class="mc-vc-triage mc-vc-triage--' + escapeHtml(p.triage_bucket || 'unknown') + '">' + escapeHtml(p.triage_level || 'Not assessed') + '</span></dd></div>' +
@@ -112,21 +157,23 @@
       return;
     }
 
-    if (!IS_PATIENT && ctx.provider_panel) {
-      const p = ctx.provider_panel;
-      const list = (arr) => (Array.isArray(arr) && arr.length ? arr.map(escapeHtml).join(', ') : 'None recorded');
-      pane.innerHTML =
-        '<div class="mc-vc-info-card">' +
-        '<h3 class="mc-vc-info-card__title">' + escapeHtml(p.patient_name) + '</h3>' +
-        '<p class="mc-vc-info-card__sub">' + escapeHtml(p.age ? p.age + ' yrs' : '—') + ' · ' + escapeHtml(p.sex || '—') + ' · Blood type: ' + escapeHtml(p.blood_type || '—') + '</p>' +
-        '<dl class="mc-vc-info-dl">' +
-        '<div><dt>Chief complaint</dt><dd>' + escapeHtml(p.chief_complaint || '—') + '</dd></div>' +
-        '<div><dt>AI classification</dt><dd>' + escapeHtml(p.ai_classification || '—') + (p.confidence ? ' <span class="mc-vc-muted">(' + escapeHtml(p.confidence) + ')</span>' : '') + '</dd></div>' +
-        '<div><dt>Allergies</dt><dd>' + list(p.allergies) + '</dd></div>' +
-        '<div><dt>Conditions</dt><dd>' + list(p.conditions) + '</dd></div>' +
-        '<div><dt>Medications</dt><dd>' + list(p.medications) + '</dd></div>' +
-        '</dl></div>';
-    }
+    const p = data.provider_panel || fallbackContext().provider_panel;
+    const list = (arr) => (Array.isArray(arr) && arr.length ? arr.map(escapeHtml).join(', ') : 'None recorded');
+    pane.innerHTML =
+      '<div class="mc-vc-info-card">' +
+      '<h3 class="mc-vc-info-card__title">' + escapeHtml(p.patient_name || 'Patient') + '</h3>' +
+      '<p class="mc-vc-info-card__sub">' + escapeHtml(p.age ? p.age + ' yrs' : '—') + ' · ' + escapeHtml(p.sex || '—') + (p.blood_type ? ' · Blood type: ' + escapeHtml(p.blood_type) : '') + '</p>' +
+      '<dl class="mc-vc-info-dl">' +
+      '<div><dt>Patient ID</dt><dd>' + escapeHtml(p.patient_number || '—') + '</dd></div>' +
+      '<div><dt>Consultation</dt><dd>#' + escapeHtml(p.consultation_id || CONSULTATION_ID || '—') + '</dd></div>' +
+      '<div><dt>Appointment</dt><dd>' + escapeHtml(p.appointment_label || '—') + '</dd></div>' +
+      '<div><dt>Chief complaint</dt><dd>' + escapeHtml(p.chief_complaint || '—') + '</dd></div>' +
+      '<div><dt>AI classification</dt><dd>' + escapeHtml(p.ai_classification || '—') + (p.confidence ? ' <span class="mc-vc-muted">(' + escapeHtml(p.confidence) + ')</span>' : '') + '</dd></div>' +
+      '<div><dt>Final classification</dt><dd>' + escapeHtml(p.final_classification || p.ai_classification || '—') + '</dd></div>' +
+      '<div><dt>Allergies</dt><dd>' + list(p.allergies) + '</dd></div>' +
+      '<div><dt>Conditions</dt><dd>' + list(p.conditions) + '</dd></div>' +
+      '<div><dt>Medications</dt><dd>' + list(p.medications) + '</dd></div>' +
+      '</dl></div>';
   }
 
   function showWaitingCard(visible) {
@@ -294,11 +341,20 @@
     document.body.classList.toggle('mc-vc-panel-open', open && isMobilePanel());
   }
 
+  function openPanelTab(tab) {
+    setPanelOpen(true);
+    const btn = document.querySelector('[data-panel-tab="' + tab + '"]');
+    if (btn) btn.click();
+  }
+
   function bindPanelTabs() {
     const panel = q('mcVcSidePanel');
     const toggle = q('mcVcPanelToggle');
     const closeBtn = q('mcVcPanelClose');
     const backdrop = q('mcVcPanelBackdrop');
+    const infoBtn = q('mcVcInfoBtn');
+    const chatBtn = q('mcVcChatBtn');
+    const retryBtn = q('mcVcInfoRetry');
 
     if (toggle && panel) {
       toggle.addEventListener('click', () => {
@@ -310,6 +366,21 @@
     }
     if (backdrop) {
       backdrop.addEventListener('click', () => setPanelOpen(false));
+    }
+    if (infoBtn) {
+      infoBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        openPanelTab('info');
+      });
+    }
+    if (chatBtn) {
+      chatBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        openPanelTab('chat');
+      });
+    }
+    if (retryBtn) {
+      retryBtn.addEventListener('click', () => loadContext(true));
     }
     document.querySelectorAll('[data-panel-tab]').forEach((btn) => {
       btn.addEventListener('click', () => {
@@ -326,6 +397,17 @@
       const backdropEl = q('mcVcPanelBackdrop');
       if (backdropEl) backdropEl.hidden = !isMobilePanel();
       document.body.classList.toggle('mc-vc-panel-open', isMobilePanel());
+    });
+  }
+
+  function loadContext(fromRetry) {
+    setInfoStatus(fromRetry ? 'Loading consultation details…' : '', false);
+    return fetchContext().then((ctx) => {
+      contextData = ctx || fallbackContext();
+      renderWaiting(ctx || contextData);
+      renderInfo(ctx || contextData);
+      setInfoStatus(ctx ? '' : 'Live details unavailable. Showing session information from this visit.', !ctx);
+      return ctx;
     });
   }
 
@@ -396,6 +478,44 @@
     });
   }
 
+  function fillPatientPostCall(summary) {
+    const doctorEl = q('mcVcPostCallDoctor');
+    const dateEl = q('mcVcPostCallDate');
+    const durationEl = q('mcVcPostCallDuration');
+    const durationRow = q('mcVcPostCallDurationRow');
+    const viewBtn = q('mcVcPostCallViewSession');
+    const data = summary || {};
+    const doctor = data.provider_name || META.providerName || '';
+    if (doctorEl && doctor) {
+      doctorEl.textContent = /^dr\.?\s/i.test(doctor) ? doctor : ('Dr. ' + doctor);
+    }
+    if (dateEl && data.date_label) {
+      dateEl.textContent = data.date_label;
+    }
+    if (durationEl && durationRow) {
+      if (data.duration_label) {
+        durationEl.textContent = data.duration_label;
+        durationRow.hidden = false;
+      }
+    }
+    if (viewBtn && data.detail_url) {
+      viewBtn.setAttribute('href', data.detail_url);
+    }
+  }
+
+  function fetchSessionSummary() {
+    const id = Number(CONSULTATION_ID || 0);
+    if (!id || !API) return Promise.resolve(null);
+    return fetch(API + '/app/api/consultations/session_summary.php?consultation_id=' + encodeURIComponent(String(id)), {
+      credentials: 'same-origin',
+      cache: 'no-store',
+      headers: { 'X-MC-No-Loader': '1' },
+    }).then((res) => res.json()).then((data) => {
+      if (!data || !data.success) return null;
+      return data;
+    }).catch(() => null);
+  }
+
   function showPostCall() {
     if (!callEnded && !window.__mcCallEnded) return;
     const modal = q('mcVcPostCallModal');
@@ -408,6 +528,12 @@
     if (panelToggle) panelToggle.hidden = true;
     setPanelOpen(false);
     stopChatPoll();
+    if (IS_PATIENT) {
+      fillPatientPostCall(null);
+      fetchSessionSummary().then((summary) => {
+        if (summary) fillPatientPostCall(summary);
+      });
+    }
   }
 
   function bindShellBridge() {
@@ -457,11 +583,7 @@
     watchCallStatusForWaiting();
     enhanceNetworkMonitor();
 
-    fetchContext().then((ctx) => {
-      contextData = ctx;
-      renderWaiting(ctx);
-      renderInfo(ctx);
-    });
+    loadContext(false);
   }
 
   if (document.readyState === 'loading') {
@@ -477,5 +599,7 @@
     markCallEnded: markCallEnded,
     resetCallUi: resetCallUi,
     setWaitingRetryVisible: setWaitingRetryVisible,
+    closePanel: function () { setPanelOpen(false); },
+    openPanelTab: openPanelTab,
   };
 })(window);

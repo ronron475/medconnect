@@ -7,7 +7,6 @@
   const csrf = root.dataset.csrf || '';
   const assetBase = root.dataset.assetBase || '';
   const api = {
-    profile: assetBase + '/app/api/provider/settings/save_profile.php',
     password: assetBase + '/app/api/provider/settings/change_password.php',
     notifications: assetBase + '/app/api/provider/settings/save_notifications.php',
     system: assetBase + '/app/api/provider/settings/save_system.php',
@@ -66,7 +65,13 @@
       credentials: 'include',
       cache: 'no-store',
     });
-    const data = await res.json();
+    const text = await res.text();
+    let data;
+    try {
+      data = JSON.parse(text);
+    } catch (e) {
+      throw new Error(res.ok ? 'Unexpected server response. Please refresh and try again.' : 'Could not save. Please refresh the page and try again.');
+    }
     if (data.status === 'error' || data.success === false) {
       throw new Error(data.message || 'Request failed.');
     }
@@ -99,25 +104,9 @@
     });
   });
 
-  // Profile save
-  const profileForm = document.getElementById('providerProfileForm');
-  if (profileForm) {
-    profileForm.addEventListener('submit', async (e) => {
-      e.preventDefault();
-      clearAlert(alerts.profile);
-      const btn = profileForm.querySelector('[type="submit"]');
-      setLoading(btn, true, 'Save Changes');
-      try {
-        const fd = new FormData(profileForm);
-        const data = await postForm(api.profile, fd);
-        showAlert(alerts.profile, data.message, 'success');
-      } catch (err) {
-        showAlert(alerts.profile, err.message, 'error');
-      } finally {
-        setLoading(btn, false, 'Save Changes');
-      }
-    });
-  }
+  document.getElementById('providerProfileForm')?.addEventListener('submit', (e) => {
+    e.preventDefault();
+  });
 
   // Notifications save
   const notificationsForm = document.getElementById('providerNotificationsForm');

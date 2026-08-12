@@ -105,7 +105,8 @@ function provider_settings_load(PDO $pdo, int $userId): array
 
     $stmt = $pdo->prepare('
         SELECT u.id, u.first_name, u.last_name, u.email, u.phone, u.profile_picture,
-               pp.prc_license_number, pp.specialty, pp.facility, pp.verification_status
+               pp.prc_license_number, pp.specialty, pp.facility, pp.verification_status,
+               pp.middle_name, pp.birthdate
         FROM users u
         LEFT JOIN provider_profiles pp ON pp.user_id = u.id
         WHERE u.id = ? AND u.role = ?
@@ -124,11 +125,17 @@ function provider_settings_load(PDO $pdo, int $userId): array
     $system = system_preferences_get($pdo, $userId);
 
     $initials = profile_picture_initials($user['first_name'], $user['last_name']);
+    $birthdate = (string) ($user['birthdate'] ?? '');
+    if ($birthdate === '0000-00-00' || !preg_match('/^\d{4}-\d{2}-\d{2}$/', $birthdate)) {
+        $birthdate = '';
+    }
 
     return [
         'profile' => [
             'first_name' => (string) $user['first_name'],
+            'middle_name' => (string) ($user['middle_name'] ?? ''),
             'last_name' => (string) $user['last_name'],
+            'birthdate' => $birthdate,
             'email' => (string) $user['email'],
             'phone' => (string) ($user['phone'] ?? ''),
             'specialty' => (string) ($user['specialty'] ?? 'General Medicine'),
@@ -179,7 +186,22 @@ function provider_settings_validate_phone(string $phone): ?string
     if ($phone === '') {
         return null;
     }
+    $digits = patient_normalize_phone($phone);
+    if ($digits === '') {
+        return null;
+    }
     return patient_phone_validation_error($phone);
+}
+
+function provider_settings_canonical_phone(string $phone): string
+{
+    require_once __DIR__ . '/patient_account_security.php';
+    $phone = trim($phone);
+    if ($phone === '') {
+        return '';
+    }
+    $canonical = patient_canonical_ph_mobile($phone);
+    return preg_match('/^09\d{9}$/', $canonical) ? $canonical : $phone;
 }
 
 function provider_settings_password_strength(string $password): ?string
@@ -203,87 +225,18 @@ function provider_settings_password_strength(string $password): ?string
 }
 
 /**
- * @return array{success:bool,message:string,data?:array}
+ * Provider identity is admin-managed. Settings cannot change profile fields.
+ *
+ * @return array{success:bool,message:string}
  */
 function provider_settings_save_profile(PDO $pdo, int $userId, array $input): array
 {
-    provider_settings_ensure_schema($pdo);
+    unset($pdo, $userId, $input);
 
-    $first = trim((string) ($input['first_name'] ?? ''));
-    $last = trim((string) ($input['last_name'] ?? ''));
-    $email = trim((string) ($input['email'] ?? ''));
-    $phone = trim((string) ($input['phone'] ?? ''));
-    $specialty = trim((string) ($input['specialty'] ?? ''));
-    $license = trim((string) ($input['license_number'] ?? ''));
-    $facility = trim((string) ($input['facility'] ?? ''));
-
-    if ($first === '' || $last === '') {
-        return ['success' => false, 'message' => 'First name and last name are required.'];
-    }
-    if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
-        return ['success' => false, 'message' => 'Please enter a valid email address.'];
-    }
-    if ($phoneErr = provider_settings_validate_phone($phone)) {
-        return ['success' => false, 'message' => $phoneErr];
-    }
-    if ($specialty === '') {
-        return ['success' => false, 'message' => 'Specialty is required.'];
-    }
-    if ($facility === '') {
-        return ['success' => false, 'message' => 'Facility is required.'];
-    }
-
-    $licenseNorm = provider_verification_normalize_prc($license);
-    if ($prcErr = provider_verification_validate_prc($licenseNorm)) {
-        return ['success' => false, 'message' => $prcErr];
-    }
-
-    $dup = $pdo->prepare('SELECT id FROM users WHERE email = ? AND id != ? LIMIT 1');
-    $dup->execute([$email, $userId]);
-    if ($dup->fetch()) {
-        return ['success' => false, 'message' => 'That email is already registered to another account.'];
-    }
-
-    $pdo->beginTransaction();
-    try {
-        $pdo->prepare('
-            UPDATE users SET first_name = ?, last_name = ?, email = ?, phone = ? WHERE id = ? AND role = ?
-        ')->execute([$first, $last, $email, $phone !== '' ? $phone : null, $userId, 'provider']);
-
-        $existing = $pdo->prepare('SELECT prc_license_number, verification_status FROM provider_profiles WHERE user_id = ? LIMIT 1');
-        $existing->execute([$userId]);
-        $profile = $existing->fetch(PDO::FETCH_ASSOC);
-
-        if ($profile) {
-            $licenseChanged = provider_verification_normalize_prc((string) $profile['prc_license_number']) !== $licenseNorm;
-            $verification = $licenseChanged ? 'pending' : ($profile['verification_status'] ?? 'pending');
-            $pdo->prepare('
-                UPDATE provider_profiles
-                SET prc_license_number = ?, specialty = ?, facility = ?, verification_status = ?
-                WHERE user_id = ?
-            ')->execute([$licenseNorm, $specialty, $facility, $verification, $userId]);
-        } else {
-            $pdo->prepare('
-                INSERT INTO provider_profiles (user_id, prc_license_number, specialty, facility, verification_status)
-                VALUES (?, ?, ?, ?, ?)
-            ')->execute([$userId, $licenseNorm, $specialty, $facility, 'pending']);
-        }
-
-        $pdo->commit();
-    } catch (Exception $e) {
-        $pdo->rollBack();
-        return ['success' => false, 'message' => 'Could not save profile. Please try again.'];
-    }
-
-    $settings = provider_settings_load($pdo, $userId);
-    provider_settings_sync_session($settings);
-
-    $msg = 'Profile updated successfully.';
-    if (!empty($profile) && provider_verification_normalize_prc((string) $profile['prc_license_number']) !== $licenseNorm) {
-        $msg = 'Profile saved. License number changed — admin re-verification may be required.';
-    }
-
-    return ['success' => true, 'message' => $msg, 'data' => $settings];
+    return [
+        'success' => false,
+        'message' => 'Profile information is read-only. Ask an administrator if this information needs to be updated.',
+    ];
 }
 
 /**

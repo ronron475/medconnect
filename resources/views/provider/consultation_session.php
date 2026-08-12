@@ -8,6 +8,7 @@ require_once BASE_PATH . '/app/includes/patient_health_summary.php';
 require_once BASE_PATH . '/app/includes/provider_clinical_support.php';
 require_once BASE_PATH . '/app/includes/clinical_tables.php';
 require_once BASE_PATH . '/app/includes/patient_consultation_records.php';
+require_once BASE_PATH . '/app/includes/consultation_video_history.php';
 require __DIR__ . '/partials/queue_helpers.php';
 
 clinical_tables_ensure($pdo);
@@ -51,8 +52,12 @@ try {
     $clinical_note = null;
 }
 
-$consultation_completed = strtolower(trim((string) ($c['status'] ?? ''))) === 'completed';
-$soap_readonly = $consultation_completed;
+$soap_finalized = patient_consultation_is_finalized(
+    (string) ($c['status'] ?? ''),
+    $clinical_note['signature_data'] ?? ''
+);
+$consultation_completed = $soap_finalized;
+$soap_readonly = $soap_finalized;
 
 $session_access = queue_session_access($c);
 if (!$session_access['allowed']) {
@@ -161,6 +166,13 @@ $v_stmt = $pdo->prepare("SELECT room_token FROM video_sessions WHERE consultatio
 $v_stmt->execute([$consultation_id]);
 $v_session = $v_stmt->fetch();
 $room_token = $v_session ? $v_session['room_token'] : '';
+$video_history = consultation_video_history_summary(
+    (string) ($c['status'] ?? ''),
+    consultation_video_session_row($pdo, $consultation_id),
+    isset($c['completed_at']) ? (string) $c['completed_at'] : null,
+    trim((string) ($_SESSION['first_name'] ?? '') . ' ' . (string) ($_SESSION['last_name'] ?? '')),
+    trim((string) ($c['first_name'] ?? '') . ' ' . (string) ($c['last_name'] ?? ''))
+);
 $show_video_demo_tip = function_exists('medconnect_is_local_dev_host') && medconnect_is_local_dev_host();
 $localhost_app_url = 'http://localhost' . (ASSET_BASE !== '' ? ASSET_BASE : '');
 ?>
@@ -1596,15 +1608,37 @@ body.consultation-mobile-call-fullscreen .mc-provider-video-dock .mc-session-flo
 
 <button type="button" class="scroll-ai-btn" id="floatingScrollAiBtn" onclick="scrollToClinicalSupport()">Clinical Support</button>
 
-        <!-- SOAP ENCODING FORM -->
         <div class="session-card">
+            <div class="session-card-header">
+                <div class="session-card-title"><?= icon('video') ?> Video consultation</div>
+            </div>
+            <div class="session-card-body">
+                <?php if (!empty($video_history['date_label'])): ?>
+                <p style="margin:0 0 6px;"><strong>Date:</strong> <?= htmlspecialchars((string) $video_history['date_label']) ?></p>
+                <?php endif; ?>
+                <?php if (!empty($video_history['duration_label'])): ?>
+                <p style="margin:0 0 6px;"><strong>Duration:</strong> <?= htmlspecialchars((string) $video_history['duration_label']) ?></p>
+                <?php endif; ?>
+                <p style="margin:0 0 6px;"><strong>Status:</strong> <?= htmlspecialchars((string) ($video_history['video_status_label'] ?? '—')) ?></p>
+                <?php if (!empty($video_history['has_recording']) && !empty($video_history['recording_path'])): ?>
+                <p style="margin:8px 0 0;">
+                    <a class="session-btn primary" href="<?= htmlspecialchars(ASSET_BASE . '/' . ltrim((string) $video_history['recording_path'], '/')) ?>" target="_blank" rel="noopener">View Recording</a>
+                </p>
+                <?php else: ?>
+                <p style="margin:8px 0 0;color:var(--mc-slate-muted);">Video recording not available for this consultation.</p>
+                <?php endif; ?>
+            </div>
+        </div>
+
+        <!-- SOAP ENCODING FORM -->
+        <div class="session-card" id="soapDocumentation">
             <div class="session-card-header">
                 <div class="session-card-title"><?= icon('file') ?> Clinical Documentation (SOAP)</div>
                 <div style="display: flex; gap: 8px; flex-wrap: wrap;">
                     <?php if ($consultation_completed): ?>
-                    <span class="session-btn" style="background:#dcfce7;color:#166534;border:1px solid #86efac;cursor:default;">✓ Consultation Completed</span>
+                    <span class="session-btn" style="background:#dcfce7;color:#166534;border:1px solid #86efac;cursor:default;">✓ SOAP Finalized</span>
                     <?php else: ?>
-                    <button class="session-btn primary" type="button" onclick="saveSOAP()">Save Progress</button>
+                    <button class="session-btn primary" type="button" onclick="saveSOAP()">Save Draft</button>
                     <button class="session-btn" type="button" onclick="document.getElementById('soapForm').reset()">Clear</button>
                     <?php endif; ?>
                 </div>
@@ -1656,7 +1690,7 @@ body.consultation-mobile-call-fullscreen .mc-provider-video-dock .mc-session-flo
                         <label class="pd-label" style="color: #018a93;">Digital Signature Authorization</label>
                         <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
                             <input type="text" name="signature_data" class="pd-input" style="flex: 1; min-width: 220px;" placeholder="Type full name to sign electronically" value="<?= htmlspecialchars((string) ($clinical_note['signature_data'] ?? '')) ?>">
-                            <button type="button" class="session-btn primary" onclick="finalizeConsultation()">Finalize Consultation</button>
+                            <button type="button" class="session-btn primary" onclick="finalizeConsultation()">Finalize SOAP Note</button>
                         </div>
                         <p class="text-xs text-muted" style="margin-top: 8px;">By signing, you authorize this record and prescription as legally binding. The patient will receive their finalized record immediately.</p>
                     </div>
@@ -2525,7 +2559,15 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
     const params = new URLSearchParams(window.location.search);
-    if (params.get('followup') === '1') {
+    if (params.get('soap') === '1' || window.location.hash === '#soapDocumentation') {
+        const soapCard = document.getElementById('soapDocumentation');
+        if (soapCard) {
+            window.setTimeout(() => soapCard.scrollIntoView({ behavior: 'smooth', block: 'start' }), 200);
+        }
+        params.delete('soap');
+        const next = window.location.pathname + (params.toString() ? '?' + params.toString() : '') + (window.location.hash || '#soapDocumentation');
+        window.history.replaceState({}, '', next);
+    } else if (params.get('followup') === '1') {
         openFollowUpModal({ fromCallEnd: true });
         params.delete('followup');
         const next = window.location.pathname + (params.toString() ? '?' + params.toString() : '') + window.location.hash;
@@ -3325,15 +3367,25 @@ async function saveSOAP(finalize = false) {
 
 // FINALIZE CONSULTATION
 async function finalizeConsultation() {
+    const form = document.getElementById('soapForm');
+    if (!form) return;
+    const required = ['subjective', 'objective', 'assessment', 'plan'];
+    for (const name of required) {
+        const field = form.querySelector('[name="' + name + '"]');
+        if (!field || !String(field.value || '').trim()) {
+            return alert('Please complete all SOAP sections (Subjective, Objective, Assessment, and Plan) before finalizing.');
+        }
+    }
     const sign = document.querySelector('input[name="signature_data"]').value;
     if (!sign || !String(sign).trim()) {
         return alert('Please provide your digital signature to finalize.');
     }
-    if (!confirm('Finalize this consultation? The patient will immediately be able to view their medical record.')) {
+    if (!confirm('Finalize this SOAP note? The patient will immediately be able to view this record in My Health.')) {
         return;
     }
     const data = await saveSOAP(true);
     if (data && data.success) {
+        alert(data.message || 'SOAP note finalized successfully.');
         window.location.href = '<?= ASSET_BASE ?>/views/provider/consultation_history.php';
     }
 }

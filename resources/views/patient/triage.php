@@ -27,6 +27,44 @@ $registration_chief_complaint = trim((string) ($active_chief_complaint['complain
 $chief_complaint_locked = !empty($active_chief_complaint['locked']) && $registration_chief_complaint !== '';
 $chief_complaint_source = (string) ($active_chief_complaint['source'] ?? '');
 $active_chief_complaint_triage_id = (int) ($active_chief_complaint['triage_id'] ?? 0);
+$force_new_concern = (string) ($_GET['new_concern'] ?? '') === '1';
+$requested_triage_id = (int) ($_GET['triage_id'] ?? 0);
+if ($force_new_concern) {
+    $chief_complaint_locked = false;
+    $registration_chief_complaint = '';
+    $chief_complaint_source = '';
+    $active_chief_complaint_triage_id = 0;
+} elseif ($requested_triage_id > 0) {
+    require_once BASE_PATH . '/app/includes/patient_booking_status.php';
+    try {
+        $reqStmt = $pdo->prepare("
+            SELECT id, chief_complaint, assigned_provider_id, triage_level, triage_classification, assessed_at
+            FROM triage_results tr
+            WHERE tr.id = ?
+              AND tr.patient_id = ?
+              AND TRIM(COALESCE(tr.chief_complaint, '')) <> ''
+              " . patient_triage_sql_active_only('tr') . "
+            LIMIT 1
+        ");
+        $reqStmt->execute([$requested_triage_id, (int) $uid]);
+        $reqRow = $reqStmt->fetch(PDO::FETCH_ASSOC);
+        if ($reqRow) {
+            $reqComplaint = trim((string) ($reqRow['chief_complaint'] ?? ''));
+            if ($reqComplaint !== '') {
+                $registration_chief_complaint = $reqComplaint;
+                $chief_complaint_locked = true;
+                $chief_complaint_source = $chief_complaint_source !== '' ? $chief_complaint_source : 'care_tips_review';
+                $active_chief_complaint_triage_id = (int) $reqRow['id'];
+            }
+        } elseif ($active_chief_complaint_triage_id <= 0) {
+            $active_chief_complaint_triage_id = $requested_triage_id;
+        }
+    } catch (Throwable $e) {
+        if ($active_chief_complaint_triage_id <= 0) {
+            $active_chief_complaint_triage_id = $requested_triage_id;
+        }
+    }
+}
 $portal_triage_urgency = (string) ($active_chief_complaint['urgency'] ?? '');
 if ($portal_triage_urgency === '') {
     $portal_triage_urgency = (string) ($pending_reg['urgency'] ?? '');
@@ -58,6 +96,9 @@ if ($pdo->query("SHOW TABLES LIKE 'users'")->rowCount()) {
 }
 
 $review_booking_ctx = triage_patient_review_booking_context($pdo, (int) $uid);
+if ($force_new_concern) {
+    $review_booking_ctx = ['locked' => false, 'provider_id' => 0, 'provider_name' => '', 'triage_id' => 0];
+}
 $review_booking_slots = triage_patient_booking_slot_status($pdo, (int) $uid);
 $locked_provider_id = (int) ($review_booking_ctx['provider_id'] ?? 0);
 $locked_provider_name = trim((string) ($review_booking_ctx['provider_name'] ?? ''));

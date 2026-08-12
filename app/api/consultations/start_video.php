@@ -94,11 +94,16 @@ try {
             SET status = 'in_consultation'
             WHERE id = ? AND status IN ('scheduled', 'pending')
         ")->execute([$consultation_id]);
+        $pdo->prepare("
+            UPDATE video_sessions
+            SET started_at = COALESCE(started_at, NOW())
+            WHERE consultation_id = ? AND status = 'active' AND room_token = ?
+        ")->execute([$consultation_id, $token]);
     } else {
         $token = bin2hex(random_bytes(16));
         $ins = $pdo->prepare("
-            INSERT INTO video_sessions (consultation_id, room_token, status)
-            VALUES (?, ?, 'active')
+            INSERT INTO video_sessions (consultation_id, room_token, status, started_at)
+            VALUES (?, ?, 'active', NOW())
         ");
         $ins->execute([$consultation_id, $token]);
 

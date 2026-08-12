@@ -78,6 +78,9 @@ $locked_alternate_available = !empty($locked_alternate_available);
     <?php if ($active_chief_complaint_triage_id > 0): ?>
     <input type="hidden" name="triage_id" value="<?= (int) $active_chief_complaint_triage_id ?>">
     <?php endif; ?>
+    <?php if (!empty($force_new_concern)): ?>
+    <input type="hidden" name="new_concern" value="1">
+    <?php endif; ?>
     <div class="form-group" id="chief-complaint">
       <label class="form-label" for="chief_complaint">
         Chief Complaint<?= $chief_complaint_locked ? ' <span class="text-muted">(' . htmlspecialchars($chief_complaint_source_label) . ')</span>' : '' ?>
@@ -94,6 +97,9 @@ $locked_alternate_available = !empty($locked_alternate_available);
       <p class="text-xs text-muted" style="margin-top:6px;">
         <?php if ($chief_complaint_locked): ?>
         This chief complaint is already on file and will be reviewed by your doctor. It cannot be changed while this consultation is still active.
+        <?php if (empty($active_consultation) && empty($force_new_concern)): ?>
+        If this is a different health concern, <a href="<?= htmlspecialchars((defined('ASSET_BASE') ? ASSET_BASE : '') . '/views/patient/triage.php?new_concern=1') ?>">start a new case</a>.
+        <?php endif; ?>
         <?php else: ?>
         Share your current health concern to start a new consultation. Previous complaints stay in My Sessions and are not reused.
         <?php endif; ?>

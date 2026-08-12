@@ -454,6 +454,41 @@ body.provider-body .provider-page-body:has(.ps-page) {
   border-color: #ef4444;
 }
 
+.ps-input[readonly],
+.ps-input[aria-readonly="true"] {
+  background: #f8fafc;
+  color: #334155;
+  cursor: default;
+  border-color: #e2e8f0;
+  box-shadow: none;
+}
+
+.ps-input[readonly]:focus,
+.ps-input[aria-readonly="true"]:focus {
+  border-color: #e2e8f0;
+  box-shadow: none;
+}
+
+.ps-readonly-note {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  margin: 4px 0 0;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  color: #475569;
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.ps-readonly-note svg {
+  flex-shrink: 0;
+  margin-top: 1px;
+  color: #64748b;
+}
+
 .ps-select {
   cursor: pointer;
 }

@@ -399,6 +399,42 @@ body.mc-vc-panel-open {
   margin: 0 0 1.25rem;
 }
 
+.mc-vc-postcall__meta {
+  display: grid;
+  gap: 8px;
+  margin: 0 0 1rem;
+  text-align: left;
+}
+
+.mc-vc-postcall__meta div {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 8px 0;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.mc-vc-postcall__meta dt {
+  margin: 0;
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: #64748b;
+}
+
+.mc-vc-postcall__meta dd {
+  margin: 0;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.mc-vc-postcall__saved {
+  margin: 0 0 1.25rem;
+  color: #0f766e;
+  font-weight: 600;
+}
+
 .mc-vc-postcall__actions {
   display: flex;
   flex-direction: column;

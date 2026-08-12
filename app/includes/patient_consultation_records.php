@@ -150,3 +150,89 @@ function patient_consultation_clinical_outcome(
         'emergency_warning_signs' => is_array($support['emergency_warning_signs'] ?? null) ? $support['emergency_warning_signs'] : [],
     ];
 }
+
+function patient_provider_display_name(string $name): string
+{
+    $name = trim($name);
+    if ($name === '') {
+        return 'Healthcare Provider';
+    }
+    if (preg_match('/^dr\.?\s+/i', $name)) {
+        return $name;
+    }
+
+    return 'Dr. ' . $name;
+}
+
+/**
+ * Real video-call duration from video_sessions.started_at / ended_at.
+ * Empty string when either timestamp is missing (do not invent a duration).
+ */
+function patient_format_call_duration(?string $startedAt, ?string $endedAt): string
+{
+    $start = $startedAt !== null && $startedAt !== '' ? strtotime($startedAt) : false;
+    $end = $endedAt !== null && $endedAt !== '' ? strtotime($endedAt) : false;
+    if ($start === false || $end === false || $end < $start) {
+        return '';
+    }
+
+    $sec = (int) ($end - $start);
+    $hours = intdiv($sec, 3600);
+    $minutes = intdiv($sec % 3600, 60);
+    $seconds = $sec % 60;
+
+    $parts = [];
+    if ($hours > 0) {
+        $parts[] = $hours . ' hr';
+    }
+    if ($minutes > 0 || $hours > 0) {
+        $parts[] = $minutes . ' min';
+    }
+    $parts[] = $seconds . ' sec';
+
+    return implode(' ', $parts);
+}
+
+/**
+ * Patient-visible chief complaint for a consultation (existing complaint text only).
+ */
+function patient_session_chief_complaint(PDO $pdo, int $patientId, array $consult): string
+{
+    $consultationId = (int) ($consult['id'] ?? 0);
+    if ($patientId <= 0 || $consultationId <= 0) {
+        return '';
+    }
+
+    require_once __DIR__ . '/patient_chief_complaints.php';
+    $pcc = patient_chief_complaint_for_consultation($pdo, $consultationId);
+    $fromPcc = trim((string) ($pcc['complaint'] ?? ''));
+    if ($fromPcc !== '') {
+        return $fromPcc;
+    }
+
+    $triageId = (int) ($consult['triage_result_id'] ?? 0);
+    if ($triageId > 0) {
+        try {
+            $stmt = $pdo->prepare('
+                SELECT chief_complaint
+                FROM triage_results
+                WHERE id = ? AND patient_id = ?
+                LIMIT 1
+            ');
+            $stmt->execute([$triageId, $patientId]);
+            $fromTriage = trim((string) ($stmt->fetchColumn() ?: ''));
+            if ($fromTriage !== '') {
+                return $fromTriage;
+            }
+        } catch (Throwable $e) {
+            // optional link
+        }
+    }
+
+    $consultType = trim((string) ($consult['consult_type'] ?? ''));
+    if ($consultType !== '' && strcasecmp($consultType, 'General Consultation') !== 0) {
+        return $consultType;
+    }
+
+    return '';
+}

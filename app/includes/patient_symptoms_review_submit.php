@@ -256,7 +256,8 @@ function patient_symptoms_review_merge_registration_nlp(array &$assessment, ?str
 }
 
 /**
- * Open non-urgent care-tips triage row (pending provider approval) for reuse when booking.
+ * Open non-urgent care-tips triage row (pending approval or approved, no visit yet)
+ * for reuse when booking the same health concern.
  *
  * @return array<string, mixed>|null
  */

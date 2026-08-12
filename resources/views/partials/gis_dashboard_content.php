@@ -36,7 +36,7 @@ $gisUserRole = (string) ($userRole ?? $_SESSION['user_role'] ?? '');
       <div class="gis-stat-value" id="stat-emergency">—</div>
     </div>
     <div class="mc-card gis-stat-card gis-stat-card--barangay" data-severity-stat="barangay">
-      <div class="gis-stat-label">📍 Most Affected Barangay</div>
+      <div class="gis-stat-label">📍 Most Login Barangay</div>
       <div class="gis-stat-value gis-stat-value--text" id="stat-top_barangay">—</div>
     </div>
   </div>
