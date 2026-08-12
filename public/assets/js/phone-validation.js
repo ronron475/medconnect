@@ -9,7 +9,7 @@
 
   var ERRORS = {
     required: 'Contact number is required.',
-    length: 'Phone number must be exactly 11 digits (e.g. 09171234567).',
+    length: 'Contact number must be exactly 11 digits.',
     format: 'Enter a valid Philippine mobile number starting with 09.',
     digits: 'Phone number must contain digits only.',
   };
