@@ -267,6 +267,9 @@ final class BhwWorkflows
             throw new InvalidArgumentException('Patient not found.');
         }
 
+        // BHW cannot reassign patient barangay (Admin/Superadmin only).
+        unset($data['barangay'], $data['barangay_id']);
+
         $email = trim($data['email'] ?? $patient['email'] ?? '');
         $contact = trim($data['contact_number'] ?? '');
         $blood = trim($data['blood_type'] ?? $patient['blood_type'] ?? 'Unknown');
@@ -440,16 +443,20 @@ final class BhwWorkflows
 
         $pdo->beginTransaction();
         try {
-            $stmt = $pdo->prepare("
-                INSERT INTO triage_results
-                    (patient_id, symptoms, chief_complaint, level, urgency_label, status, assessed_at,
-                     confidence_score, severity, triage_level, triage_classification, english_complaint,
-                     detected_symptoms_json, possible_conditions_json, recommendations,
-                     assessment_payload, engine)
-                VALUES (?, ?, ?, ?, ?, 'pending', NOW(), ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-            ");
-            $stmt->execute([
-                $patientId, json_encode($symptomList), $complaint, $level, $label,
+            $triageCols = [];
+            try {
+                $triageCols = $pdo->query('SHOW COLUMNS FROM triage_results')->fetchAll(PDO::FETCH_COLUMN) ?: [];
+            } catch (PDOException $e) {
+                $triageCols = [];
+            }
+            $triageInsertCols = [
+                'patient_id', 'symptoms', 'chief_complaint', 'level', 'urgency_label', 'status', 'assessed_at',
+                'confidence_score', 'severity', 'triage_level', 'triage_classification', 'english_complaint',
+                'detected_symptoms_json', 'possible_conditions_json', 'recommendations',
+                'assessment_payload', 'engine',
+            ];
+            $triageInsertVals = [
+                $patientId, json_encode($symptomList), $complaint, $level, $label, 'pending', date('Y-m-d H:i:s'),
                 (int) ($assessment['confidence']['score'] ?? 0),
                 (string) ($assessment['severity']['severity'] ?? ''),
                 $triageTier,
@@ -460,7 +467,15 @@ final class BhwWorkflows
                 implode("\n", $assessment['recommendations'] ?? []),
                 json_encode($assessment, JSON_UNESCAPED_UNICODE),
                 (string) ($assessment['engine'] ?? MedicalAssessmentEngine::VERSION),
-            ]);
+            ];
+            if (in_array('barangay_id', $triageCols, true) && (int) ($ctx['barangay_id'] ?? 0) > 0) {
+                $triageInsertCols[] = 'barangay_id';
+                $triageInsertVals[] = (int) $ctx['barangay_id'];
+            }
+            $triagePh = implode(',', array_fill(0, count($triageInsertCols), '?'));
+            $pdo->prepare(
+                'INSERT INTO triage_results (' . implode(',', $triageInsertCols) . ') VALUES (' . $triagePh . ')'
+            )->execute($triageInsertVals);
             $triageResultId = (int) $pdo->lastInsertId();
 
             $recText = implode("\n", $assessment['recommendations'] ?? []);

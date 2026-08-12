@@ -255,24 +255,34 @@ if (patient_registration_contact_exists($pdo, $contact_number)) {
 $id_document_path = $_SESSION['ocr_id_document_path'] ?? null;
 $ocr_result       = $_SESSION['ocr_final_state']       ?? 'verified';
 
+// Resolve Step-2 barangay name → barangays.id (no UI change; automatic BHW sector link).
+require_once dirname(dirname(__DIR__)) . '/app/includes/barangays_bago.php';
+patient_registrations_ensure_barangay_id($pdo);
+$barangayCanonical = \BagoBarangayCentroids::normalizeBarangayName($barangay);
+if ($barangayCanonical !== '') {
+    $barangay = $barangayCanonical;
+}
+$barangayId = barangay_resolve_id_by_name($pdo, $barangay);
+
 // ── Insert ──────────────────────────────────────────────────
 try {
     $pdo->beginTransaction();
 
-    $stmt = $pdo->prepare("
-        INSERT INTO patient_registrations
-            (first_name, middle_name, last_name, full_name,
-             date_of_birth, age, gender, email, civil_status,
-             barangay, city_municipality, province, region, full_address,
-             employment_status, monthly_income_bracket,
-             contact_number, philhealth_status,
-             national_id, blood_type, existing_conditions, allergies, current_medications,
-             ocr_result, ocr_bago_confirmed, id_document_path,
-             consent_given, consent_timestamp, consent_version,
-             status, created_at)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1, ?, ?, NOW(), '1.0', 'verified', NOW())
-    ");
-    $stmt->execute([
+    $prCols = $pdo->query('SHOW COLUMNS FROM patient_registrations')->fetchAll(PDO::FETCH_COLUMN) ?: [];
+    $hasBarangayId = in_array('barangay_id', $prCols, true);
+
+    $insertCols = [
+        'first_name', 'middle_name', 'last_name', 'full_name',
+        'date_of_birth', 'age', 'gender', 'email', 'civil_status',
+        'barangay', 'city_municipality', 'province', 'region', 'full_address',
+        'employment_status', 'monthly_income_bracket',
+        'contact_number', 'philhealth_status',
+        'national_id', 'blood_type', 'existing_conditions', 'allergies', 'current_medications',
+        'ocr_result', 'ocr_bago_confirmed', 'id_document_path',
+        'consent_given', 'consent_timestamp', 'consent_version',
+        'status', 'created_at',
+    ];
+    $insertVals = [
         $first_name, $middle_name, $last_name, $full_name,
         $dob, $age, $gender, $email, $civil_status,
         $barangay, $city_municipality, $province, $region, $full_address,
@@ -284,9 +294,20 @@ try {
         $existing_conditions ?: null,
         $allergies           ?: null,
         $current_medications ?: null,
-        $ocr_result, $id_document_path,
-        $consent_given,
-    ]);
+        $ocr_result, 1, $id_document_path,
+        $consent_given, date('Y-m-d H:i:s'), '1.0',
+        'verified', date('Y-m-d H:i:s'),
+    ];
+    if ($hasBarangayId) {
+        $insertCols[] = 'barangay_id';
+        $insertVals[] = $barangayId;
+    }
+
+    $placeholders = implode(',', array_fill(0, count($insertCols), '?'));
+    $stmt = $pdo->prepare(
+        'INSERT INTO patient_registrations (' . implode(',', $insertCols) . ') VALUES (' . $placeholders . ')'
+    );
+    $stmt->execute($insertVals);
 
     $registration_id = (int) $pdo->lastInsertId();
 

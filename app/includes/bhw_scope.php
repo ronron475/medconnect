@@ -1,8 +1,12 @@
 <?php
 /**
  * BHW barangay-scoped access control and SQL helpers.
+ *
+ * Core rule: logged-in BHW.barangay_id === patient.barangay_id → ALLOW
+ * No assigned barangay on BHW → DENY (never city-wide access).
  */
 require_once VIEWS_PATH . '/bhw/partials/bhw_context.php';
+require_once __DIR__ . '/barangays_bago.php';
 
 function bhw_api_bootstrap(PDO $pdo, bool $requirePost = false): array
 {
@@ -18,8 +22,9 @@ function bhw_api_bootstrap(PDO $pdo, bool $requirePost = false): array
     if ($requirePost) {
         Api::requirePost();
     }
+    patient_registrations_ensure_barangay_id($pdo);
     $ctx = bhw_resolve_context($pdo);
-    if (!$ctx['allowed']) {
+    if (!$ctx['allowed'] || (int) ($ctx['barangay_id'] ?? 0) <= 0) {
         Api::error('BHW sector not assigned. Contact administrator.', 403);
     }
     require_once __DIR__ . '/patient_account_security.php';
@@ -39,11 +44,28 @@ function bhw_audit(PDO $pdo, int $subjectPatientId, string $action, string $desc
     ]);
 }
 
-function bhw_pr_columns(PDO $pdo): array
+function bhw_pr_columns_reset(): void
+{
+    bhw_pr_columns(null, true);
+}
+
+/**
+ * @return list<string>
+ */
+function bhw_pr_columns(?PDO $pdo = null, bool $refresh = false): array
 {
     static $cols = null;
+    if ($refresh) {
+        $cols = null;
+        if ($pdo === null) {
+            return [];
+        }
+    }
     if ($cols !== null) {
         return $cols;
+    }
+    if ($pdo === null) {
+        return [];
     }
     try {
         $cols = $pdo->query('SHOW COLUMNS FROM patient_registrations')->fetchAll(PDO::FETCH_COLUMN);
@@ -53,13 +75,45 @@ function bhw_pr_columns(PDO $pdo): array
     return $cols;
 }
 
+/**
+ * Server-side sector filter for patient_registrations.
+ *
+ * Prefers patient.barangay_id = BHW.barangay_id.
+ * Falls back to Step-2 barangay name match only when barangay_id is NULL (legacy rows).
+ *
+ * @return array{0: string, 1: list<mixed>}
+ */
 function bhw_patient_sector_clause(PDO $pdo, array $ctx, string $prAlias = 'pr'): array
 {
-    $cols = bhw_pr_columns($pdo);
-    if (in_array('barangay_id', $cols, true) && !empty($ctx['barangay_id'])) {
-        return ["{$prAlias}.barangay_id = ?", [(int) $ctx['barangay_id']]];
+    patient_registrations_ensure_barangay_id($pdo);
+
+    $barangayId = (int) ($ctx['barangay_id'] ?? 0);
+    $barangayName = trim((string) ($ctx['barangay_name'] ?? ''));
+
+    // NULL / missing BHW barangay must never mean "all patients".
+    if ($barangayId <= 0) {
+        return ['1 = 0', []];
     }
-    return ["LOWER(TRIM({$prAlias}.barangay)) = LOWER(?)", [$ctx['barangay_name']]];
+
+    $cols = bhw_pr_columns($pdo);
+    $nameExpr = "LOWER(TRIM(CONVERT({$prAlias}.barangay USING utf8mb4))) COLLATE utf8mb4_unicode_ci";
+    $nameParam = "LOWER(TRIM(CONVERT(? USING utf8mb4))) COLLATE utf8mb4_unicode_ci";
+
+    if (in_array('barangay_id', $cols, true)) {
+        if ($barangayName !== '') {
+            return [
+                "({$prAlias}.barangay_id = ? OR ({$prAlias}.barangay_id IS NULL AND {$nameExpr} = {$nameParam}))",
+                [$barangayId, $barangayName],
+            ];
+        }
+        return ["{$prAlias}.barangay_id = ?", [$barangayId]];
+    }
+
+    if ($barangayName === '') {
+        return ['1 = 0', []];
+    }
+
+    return ["{$nameExpr} = {$nameParam}", [$barangayName]];
 }
 
 /**
@@ -76,15 +130,15 @@ function bhw_patient_scope_clause(PDO $pdo, array $ctx, array $filters, string $
 
 function bhw_list_barangay_options(PDO $pdo): array
 {
-    require_once __DIR__ . '/barangays_bago.php';
-    barangays_ensure_bago_city($pdo);
-
     return barangays_list_bago_city($pdo);
 }
 
+/**
+ * Deny unless patient belongs to the logged-in BHW's assigned barangay.
+ */
 function bhw_assert_patient_in_sector(PDO $pdo, array $ctx, int $patientId): bool
 {
-    if ($patientId <= 0) {
+    if ($patientId <= 0 || (int) ($ctx['barangay_id'] ?? 0) <= 0) {
         return false;
     }
     [$clause, $params] = bhw_patient_sector_clause($pdo, $ctx, 'pr');

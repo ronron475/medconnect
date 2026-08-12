@@ -137,6 +137,10 @@ function patient_registration_ensure_schema(PDO $pdo): void
         error_log('patient_registration_ensure_schema national_id: ' . $e->getMessage());
     }
 
+    // Link Step-2 barangay name → barangays.id for BHW sector authorization.
+    require_once __DIR__ . '/barangays_bago.php';
+    patient_registrations_ensure_barangay_id($pdo);
+
     $regDone = true;
 }
 

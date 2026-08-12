@@ -90,3 +90,96 @@ function barangays_list_bago_city(PDO $pdo): array
 
     return $stmt ? ($stmt->fetchAll(PDO::FETCH_ASSOC) ?: []) : [];
 }
+
+/**
+ * Resolve a free-text barangay name to barangays.id (Bago City).
+ * Uses canonical name aliases when available. Returns null when unmatched.
+ */
+function barangay_resolve_id_by_name(PDO $pdo, string $barangayName): ?int
+{
+    $raw = trim($barangayName);
+    if ($raw === '') {
+        return null;
+    }
+
+    barangays_ensure_bago_city($pdo);
+
+    $canonical = BagoBarangayCentroids::canonicalName($raw) ?? $raw;
+    $candidates = array_values(array_unique(array_filter([$canonical, $raw], static fn ($v) => trim((string) $v) !== '')));
+
+    $stmt = $pdo->prepare("
+        SELECT id
+        FROM barangays
+        WHERE is_active = 1
+          AND (city = 'Bago City' OR city LIKE 'Bago%')
+          AND LOWER(TRIM(CONVERT(name USING utf8mb4))) COLLATE utf8mb4_unicode_ci
+            = LOWER(TRIM(CONVERT(? USING utf8mb4))) COLLATE utf8mb4_unicode_ci
+        LIMIT 1
+    ");
+
+    foreach ($candidates as $name) {
+        $stmt->execute([(string) $name]);
+        $id = $stmt->fetchColumn();
+        if ($id !== false && (int) $id > 0) {
+            return (int) $id;
+        }
+    }
+
+    return null;
+}
+
+/**
+ * Ensure patient_registrations.barangay_id exists and backfill from Step-2 name.
+ */
+function patient_registrations_ensure_barangay_id(PDO $pdo): void
+{
+    static $done = false;
+    if ($done) {
+        return;
+    }
+
+    barangays_ensure_bago_city($pdo);
+
+    $cols = [];
+    try {
+        $cols = $pdo->query('SHOW COLUMNS FROM patient_registrations')->fetchAll(PDO::FETCH_COLUMN) ?: [];
+    } catch (PDOException $e) {
+        return;
+    }
+
+    if (!in_array('barangay_id', $cols, true)) {
+        try {
+            $pdo->exec('ALTER TABLE patient_registrations ADD COLUMN barangay_id INT UNSIGNED NULL DEFAULT NULL AFTER barangay');
+        } catch (PDOException $e) {
+            if (strpos($e->getMessage(), 'Duplicate column') === false) {
+                error_log('patient_registrations_ensure_barangay_id add column: ' . $e->getMessage());
+                return;
+            }
+        }
+        try {
+            $pdo->exec('CREATE INDEX idx_pr_barangay_id ON patient_registrations (barangay_id)');
+        } catch (PDOException $e) {
+            // Index may already exist.
+        }
+        if (function_exists('bhw_pr_columns_reset')) {
+            bhw_pr_columns_reset();
+        }
+    }
+
+    try {
+        $pdo->exec("
+            UPDATE patient_registrations pr
+            INNER JOIN barangays b
+              ON LOWER(TRIM(CONVERT(b.name USING utf8mb4))) COLLATE utf8mb4_unicode_ci
+               = LOWER(TRIM(CONVERT(pr.barangay USING utf8mb4))) COLLATE utf8mb4_unicode_ci
+            SET pr.barangay_id = b.id
+            WHERE pr.barangay_id IS NULL
+              AND pr.barangay IS NOT NULL
+              AND TRIM(pr.barangay) <> ''
+        ");
+    } catch (PDOException $e) {
+        error_log('patient_registrations_ensure_barangay_id backfill: ' . $e->getMessage());
+    }
+
+    $done = true;
+}
