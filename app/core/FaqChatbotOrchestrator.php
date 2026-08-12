@@ -281,7 +281,7 @@ final class FaqChatbotOrchestrator
             $faqId
         );
 
-        $typingMs = (int) min(2200, max(650, 400 + mb_strlen($responseHtml) * 2));
+        $typingMs = 0;
 
         $this->convRepo->logConversationHistory(
             $sessionId,

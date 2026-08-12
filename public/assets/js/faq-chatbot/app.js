@@ -36,8 +36,8 @@
   if (!root || !fab || !panel || !messagesEl) return;
 
   const MAX_CHARS = 500;
-  const TYPING_MS = 780;
-  const MODERATION_TYPING_MS = 420;
+  const TYPING_MS = 0;
+  const MODERATION_TYPING_MS = 0;
   const STORAGE_KEY = 'mc_fcb_opened';
   const BADGE_DISMISSED_KEY = 'mc_fcb_badge_dismissed';
   const HISTORY_KEY = 'mc_fcb_thread_html';
@@ -52,6 +52,7 @@
   let typingTimer = null;
   let pulseTimer = null;
   let inputDebounce = null;
+  let isProcessing = false;
   let inConversation = false;
 
   const MOBILE_MQ = window.matchMedia('(max-width: 767px)');
@@ -679,8 +680,11 @@
 
     lastPhpAssist = null;
     if (phpChatEnabled && window.McFaqChatApi) {
+      const typingEl = showTyping();
       await window.McFaqChatApi.ensureSession();
       lastPhpAssist = await window.McFaqChatApi.assist(workingText, replyLang);
+      removeTyping();
+      if (typingEl && typingEl.parentNode) typingEl.remove();
 
       if (lastPhpAssist && lastPhpAssist._error) {
         if (lastPhpAssist.rateLimited) {
@@ -704,11 +708,7 @@
           Moderation.applyServerRestriction(sec);
           setRestrictedState(true, sec);
         }
-        showTyping(lastPhpAssist.typing_ms || MODERATION_TYPING_MS);
-        window.setTimeout(() => {
-          removeTyping();
-          deliverFromPhp(lastPhpAssist, replyLang);
-        }, lastPhpAssist.typing_ms || MODERATION_TYPING_MS);
+        deliverFromPhp(lastPhpAssist, replyLang);
         return;
       }
 
@@ -716,11 +716,7 @@
         appendUser(trimmed);
         Understanding.incrementMessageCount();
         if (lastPhpAssist.use_server_response) {
-          showTyping(lastPhpAssist.typing_ms || TYPING_MS);
-          window.setTimeout(() => {
-            removeTyping();
-            deliverFromPhp(lastPhpAssist, replyLang);
-          }, lastPhpAssist.typing_ms || TYPING_MS);
+          deliverFromPhp(lastPhpAssist, replyLang);
         } else if (lastPhpAssist.emergency_flow === 'crisis') {
           runFlow('crisis', false, { lang: replyLang });
         } else {
@@ -731,11 +727,7 @@
       if (lastPhpAssist && lastPhpAssist.use_server_response && lastPhpAssist.response_html) {
         appendUser(trimmed);
         Understanding.incrementMessageCount();
-        showTyping(lastPhpAssist.typing_ms || TYPING_MS);
-        window.setTimeout(() => {
-          removeTyping();
-          deliverFromPhp(lastPhpAssist, replyLang);
-        }, lastPhpAssist.typing_ms || TYPING_MS);
+        deliverFromPhp(lastPhpAssist, replyLang);
         return;
       }
       if (lastPhpAssist && !lastPhpAssist.use_server_response
@@ -1068,13 +1060,20 @@
   }
 
   async function handleSend() {
-    if (!inputEl || Moderation.isOnCooldown()) return;
+    if (!inputEl || Moderation.isOnCooldown() || isProcessing) return;
     const text = inputEl.value.trim();
     if (!text) return;
+    isProcessing = true;
+    if (sendBtn) sendBtn.disabled = true;
     inputEl.value = '';
     resizeInput();
     updateCharCount();
-    await processUserText(text);
+    try {
+      await processUserText(text);
+    } finally {
+      isProcessing = false;
+      updateCharCount();
+    }
   }
 
   function onInputChange() {
