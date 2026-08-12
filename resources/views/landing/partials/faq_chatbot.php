@@ -108,9 +108,6 @@ $faqChatbotAppVer = (int) @filemtime(ASSETS_PATH . '/js/faq-chatbot/app.js');
           </div>
         </div>
         <div class="fcb-header__actions fcb-header__actions--window" role="toolbar" aria-label="Window controls">
-          <button type="button" class="fcb-icon-btn" id="fcb-minimize" aria-label="Minimize chat" title="Minimize">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true"><path d="M5 12h14"/></svg>
-          </button>
           <button type="button" class="fcb-icon-btn" id="fcb-close" aria-label="Close chat" title="Close">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
           </button>
