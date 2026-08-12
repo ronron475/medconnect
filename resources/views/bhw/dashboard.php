@@ -13,12 +13,13 @@ $page_title = $dashboard_nav['label'];
 $page_description = $dashboard_nav['description'];
 
 $bhwCtx = [
-    'barangay_id' => $bhw_barangay_id,
+    'barangay_id' => (int) $bhw_barangay_id,
     'barangay_name' => $bhw_barangay_name,
-    'allowed' => true,
+    'allowed' => empty($bhw_no_sector),
 ];
 $stationBarangayName = $bhw_barangay_name;
 $dashFilters = ['days' => 7];
+// Unassigned BHW (barangay_id=0) uses deny-all SQL → live zeros, same UI shell.
 $metricsRaw = BhwWorkflows::getDashboardMetrics($pdo, $bhwCtx, $dashFilters);
 $dashboardCharts = BhwWorkflows::getDashboardCharts($pdo, $bhwCtx, $dashFilters);
 $queueRaw = BhwWorkflows::getTriageQueue($pdo, $bhwCtx, 15, $dashFilters);

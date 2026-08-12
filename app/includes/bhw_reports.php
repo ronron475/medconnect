@@ -680,7 +680,14 @@ final class BhwReports
                 SELECT DISTINCT TRIM(pr.purok) AS purok
                 FROM patient_registrations pr
                 WHERE pr.purok IS NOT NULL AND TRIM(pr.purok) != ''
-                  AND (pr.barangay_id = ? OR LOWER(TRIM(pr.barangay)) = LOWER(?))
+                  AND (
+                    pr.barangay_id = ?
+                    OR (
+                      pr.barangay_id IS NULL
+                      AND LOWER(TRIM(CONVERT(pr.barangay USING utf8mb4))) COLLATE utf8mb4_unicode_ci
+                        = LOWER(TRIM(CONVERT(? USING utf8mb4))) COLLATE utf8mb4_unicode_ci
+                    )
+                  )
             ";
             $params = [$barangayId, $name];
         }

@@ -256,16 +256,35 @@ final class NotificationManager
         return self::create($pdo, $bhwId, $options);
     }
 
-    /** Notify BHW users assigned to a patient's barangay. */
+    /**
+     * Notify BHW users assigned to a patient's barangay only.
+     * Uses patient.barangay_id when set; otherwise resolves Step-2 barangay name.
+     * Never falls back to notifying all BHWs.
+     */
     public static function notifyBhwForPatient(PDO $pdo, int $patientId, array $options): int
     {
         self::ensureSchema($pdo);
+        if ($patientId <= 0) {
+            return 0;
+        }
+
+        require_once dirname(__DIR__) . '/includes/barangays_bago.php';
+        patient_registrations_ensure_barangay_id($pdo);
+
         $count = 0;
         $stmt = $pdo->prepare("
-            SELECT u.id FROM users u
-            INNER JOIN patient_registrations pr ON pr.email = (SELECT email FROM users WHERE id = ? LIMIT 1)
-            WHERE u.role = 'bhw' AND u.is_active = 1
-              AND u.barangay_id = (SELECT b.id FROM barangays b WHERE b.name = pr.barangay LIMIT 1)
+            SELECT DISTINCT u.id
+            FROM users u
+            INNER JOIN users pu ON pu.id = ? AND pu.role = 'patient'
+            INNER JOIN patient_registrations pr ON pr.email = pu.email
+            LEFT JOIN barangays b_name
+              ON LOWER(TRIM(CONVERT(b_name.name USING utf8mb4))) COLLATE utf8mb4_unicode_ci
+               = LOWER(TRIM(CONVERT(pr.barangay USING utf8mb4))) COLLATE utf8mb4_unicode_ci
+            WHERE u.role = 'bhw'
+              AND u.is_active = 1
+              AND u.barangay_id IS NOT NULL
+              AND u.barangay_id > 0
+              AND u.barangay_id = COALESCE(pr.barangay_id, b_name.id)
         ");
         try {
             $stmt->execute([$patientId]);
@@ -275,13 +294,7 @@ final class NotificationManager
                 }
             }
         } catch (PDOException $e) {
-            // Fallback: notify all BHW if barangay join fails
-            $fallback = $pdo->query("SELECT id FROM users WHERE role = 'bhw' AND is_active = 1");
-            while ($bhwId = $fallback->fetchColumn()) {
-                if (self::notifyBhw($pdo, (int) $bhwId, $options)) {
-                    $count++;
-                }
-            }
+            error_log('notifyBhwForPatient: ' . $e->getMessage());
         }
         return $count;
     }
