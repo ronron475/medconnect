@@ -1806,44 +1806,51 @@ if (session_status() === PHP_SESSION_ACTIVE) {
       const doctorVideo = document.getElementById('localVideo');
       const patientVideo = document.getElementById('remoteVideo');
 
+      function drawContainedVideo(video, x, y, w, h) {
+        const vw = video.videoWidth || 0;
+        const vh = video.videoHeight || 0;
+        if (!vw || !vh) {
+          canvasContext.drawImage(video, x, y, w, h);
+          return;
+        }
+        const scale = Math.max(w / vw, h / vh);
+        const dw = vw * scale;
+        const dh = vh * scale;
+        const dx = x + (w - dw) / 2;
+        const dy = y + (h - dh) / 2;
+        canvasContext.save();
+        canvasContext.beginPath();
+        canvasContext.rect(x, y, w, h);
+        canvasContext.clip();
+        canvasContext.drawImage(video, dx, dy, dw, dh);
+        canvasContext.restore();
+      }
+
       // 2. Composite Drawing Function (Doctor in Corner, Patient Full Screen)
       function drawFrame() {
         if (!canvasContext) return;
-        
-        // Background (Black)
-        canvasContext.fillStyle = '#000';
-        canvasContext.fillRect(0, 0, canvas.width, canvas.height);
-        
-        const hasPatientVideo = patientVideo.readyState >= 2 && patientVideo.srcObject;
-        const hasDoctorVideo = doctorVideo.readyState >= 2;
 
-        // Draw Patient full screen once connected. Until then, record the provider view.
+        canvasContext.fillStyle = '#0b1220';
+        canvasContext.fillRect(0, 0, canvas.width, canvas.height);
+
+        const hasPatientVideo = patientVideo.readyState >= 2 && patientVideo.srcObject;
+        const hasDoctorVideo = doctorVideo.readyState >= 2 && doctorVideo.srcObject;
+
         if (hasPatientVideo) {
-          canvasContext.drawImage(patientVideo, 0, 0, canvas.width, canvas.height);
+          drawContainedVideo(patientVideo, 0, 0, canvas.width, canvas.height);
         } else if (hasDoctorVideo) {
-          canvasContext.drawImage(doctorVideo, 0, 0, canvas.width, canvas.height);
-          canvasContext.fillStyle = 'rgba(0, 0, 0, 0.42)';
-          canvasContext.fillRect(0, canvas.height - 92, canvas.width, 92);
-          canvasContext.fillStyle = '#fff';
-          canvasContext.font = '600 28px system-ui, sans-serif';
-          canvasContext.fillText('Waiting for patient to join...', 34, canvas.height - 38);
-        } else {
-          canvasContext.fillStyle = '#0f172a';
-          canvasContext.fillRect(0, 0, canvas.width, canvas.height);
-          canvasContext.fillStyle = '#94a3b8';
-          canvasContext.font = '600 28px system-ui, sans-serif';
-          canvasContext.fillText('Secure consultation recording', 34, canvas.height - 38);
+          drawContainedVideo(doctorVideo, 0, 0, canvas.width, canvas.height);
         }
-        
-        // Draw Doctor PiP once the patient is the main view.
+
         if (hasPatientVideo && hasDoctorVideo) {
           const pipWidth = 320;
           const pipHeight = 180;
           const padding = 20;
-          canvasContext.strokeStyle = '#fff';
-          canvasContext.lineWidth = 2;
-          canvasContext.strokeRect(canvas.width - pipWidth - padding, canvas.height - pipHeight - padding, pipWidth, pipHeight);
-          canvasContext.drawImage(doctorVideo, canvas.width - pipWidth - padding, canvas.height - pipHeight - padding, pipWidth, pipHeight);
+          const pipX = canvas.width - pipWidth - padding;
+          const pipY = canvas.height - pipHeight - padding;
+          canvasContext.fillStyle = '#020617';
+          canvasContext.fillRect(pipX - 2, pipY - 2, pipWidth + 4, pipHeight + 4);
+          drawContainedVideo(doctorVideo, pipX, pipY, pipWidth, pipHeight);
         }
       }
 
@@ -2175,10 +2182,6 @@ if (session_status() === PHP_SESSION_ACTIVE) {
             ? 'Connectingâ€¦'
             : 'Connectingâ€¦',
         });
-
-        if (userRole === 'provider') {
-          startRecording();
-        }
 
         beginConnectionRetries();
         startTimer();
