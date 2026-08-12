@@ -87,12 +87,15 @@ function portal_nav_provider_followups_count(PDO $pdo, int $providerId): int
         if (!$pdo->query("SHOW TABLES LIKE 'followups'")->rowCount()) {
             return 0;
         }
+        // Match Follow-Up Management default "Upcoming" list:
+        // scheduled, today or later, and only patients who still exist.
         $stmt = $pdo->prepare("
             SELECT COUNT(*)
-            FROM followups
-            WHERE provider_id = ?
-              AND status IN ('scheduled', 'missed')
-              AND followup_date <= CURDATE()
+            FROM followups f
+            INNER JOIN users u ON u.id = f.patient_id AND u.role = 'patient'
+            WHERE f.provider_id = ?
+              AND f.status = 'scheduled'
+              AND f.followup_date >= CURDATE()
         ");
         $stmt->execute([$providerId]);
         return (int) $stmt->fetchColumn();
