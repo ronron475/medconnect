@@ -1622,7 +1622,7 @@ body.consultation-mobile-call-fullscreen .mc-provider-video-dock .mc-session-flo
                 <p style="margin:0 0 6px;"><strong>Status:</strong> <?= htmlspecialchars((string) ($video_history['video_status_label'] ?? '—')) ?></p>
                 <?php if (!empty($video_history['has_recording']) && !empty($video_history['recording_path'])): ?>
                 <p style="margin:8px 0 0;">
-                    <a class="session-btn primary" href="<?= htmlspecialchars(ASSET_BASE . '/' . ltrim((string) $video_history['recording_path'], '/')) ?>" target="_blank" rel="noopener">View Recording</a>
+                    <a class="session-btn primary" href="<?= htmlspecialchars(consultation_video_recording_view_url((int) $consultation_id)) ?>" target="_blank" rel="noopener">View Recording</a>
                 </p>
                 <?php else: ?>
                 <p style="margin:8px 0 0;color:var(--mc-slate-muted);">Video recording not available for this consultation.</p>

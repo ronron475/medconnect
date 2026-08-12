@@ -12,6 +12,7 @@ require __DIR__.'/partials/queue_helpers.php';
 require __DIR__.'/partials/layout_open.php';
 
 require_once BASE_PATH . '/app/includes/provider_dashboard_live.php';
+require_once BASE_PATH . '/app/includes/consultation_video_history.php';
 
 $queue = $queue ?? [];
 $stats = $stats ?? [];
@@ -308,7 +309,7 @@ $last_name = $provider['last_name'] ?? 'Provider';
               <div class="prov-recording-item__date"><?= date('M j, Y g:i A', strtotime($rec['ended_at'])) ?></div>
             </div>
             <div class="prov-recording-actions">
-              <a href="<?= ASSET_BASE ?>/<?= htmlspecialchars($rec['recording_url']) ?>" target="_blank" rel="noopener" class="mc-btn mc-btn--outline" style="padding:4px 8px;font-size:10px;">View</a>
+              <a href="<?= htmlspecialchars(consultation_video_recording_view_url((int) ($rec['consultation_id'] ?? 0))) ?>" target="_blank" rel="noopener" class="mc-btn mc-btn--outline" style="padding:4px 8px;font-size:10px;">View</a>
             </div>
           </div>
           <?php endforeach; ?>

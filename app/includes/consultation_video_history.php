@@ -66,6 +66,15 @@ function consultation_video_recording_public_path(?string $recordingPath, ?strin
 }
 
 /**
+ * Authorized player URL for a stored consultation recording.
+ */
+function consultation_video_recording_view_url(int $consultationId): string
+{
+    $base = defined('ASSET_BASE') ? (string) ASSET_BASE : '';
+    return $base . '/app/api/consultations/view_recording.php?consultation_id=' . $consultationId;
+}
+
+/**
  * Latest video_sessions row for a consultation (real DB data only).
  *
  * @return array<string, mixed>|null
