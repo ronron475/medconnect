@@ -116,6 +116,57 @@
     return true;
   }
 
+  /**
+   * Remove city/province reference phrases from a single address segment.
+   * Used BEFORE word-level geo-stripping so multi-word phrases like
+   * "OF BAGO NEG" or "CITY OF BAGO" are caught as a unit.
+   * Does NOT touch legitimate barangay/purok names containing "Bago".
+   */
+  function stripBagoCityFragments(segment) {
+    let s = String(segment || '');
+    // Order matters: longest/most-specific patterns first.
+    const patterns = [
+      /,?\s*city\s+of\s+bago,?\s*negros\s+occ(?:idental)?\.?/gi,
+      /,?\s*bago\s+city,?\s*negros\s+occ(?:idental)?\.?/gi,
+      /,?\s*city\s+of\s+bago/gi,
+      /,?\s*bago\s+city/gi,
+      /\bof\s+bago\s+neg(?:ros)?\.?\b/gi,
+      /\bof\s+bago\b/gi,
+      /\bcity\s+oe\s+bago\b/gi,   // common OCR variant
+      /\bc1ty\s+of\s+bago\b/gi,  // OCR 1->i confusion
+    ];
+    for (const re of patterns) {
+      s = s.replace(re, '');
+    }
+    return s.replace(/[,\s]+$/g, '').replace(/^[,\s]+/, '').replace(/\s+/g, ' ').trim();
+  }
+
+  function preprocessRawAddress(raw) {
+    let s = String(raw || '')
+      .replace(/\r?\n/g, ', ')
+      .replace(/,\s*,+/g, ',')
+      .replace(/\s+/g, ' ')
+      .trim();
+
+    // Strip city-reference phrases inside each comma-separated segment FIRST
+    // so they don't contaminate the street/purok/barangay components.
+    s = s.split(',').map((seg) => {
+      const stripped = stripBagoCityFragments(seg);
+      return stripped;
+    }).filter(Boolean).join(', ');
+
+    // Correct block/unit spacing (e.g. "1 B", "5 A" -> "1-B", "5-A")
+    s = s.replace(/\b(\d+)\s+([A-Za-z])\b/g, (m, num, letter) => `${num}-${letter.toUpperCase()}`);
+
+    // Correct specific Bago City barangay spacing/hyphens
+    s = s
+      .replace(/\blag\s+asan\b/gi, 'LAG-ASAN')
+      .replace(/\bma\s+ao\b/gi, 'MA-AO')
+      .replace(/\bdon\s+jorge\s+l\s+araneta\b/gi, 'DON JORGE L. ARANETA');
+
+    return s;
+  }
+
   function normalizeOcrAddress(raw) {
     let s = String(raw || '')
       .replace(/,\s*,+/g, ',')
@@ -196,6 +247,15 @@
       return /^(city|of|oe|0f|bgo|bago|negros|occidental|occ|oriental|philippines|ph|neg|province|region|go|cty|ctty|c1ty)$/.test(w);
     }
 
+    const STRUCTURAL_WORDS = /^(purok|sitio|brgy\.?|barangay|blk\.?|block|phase|subd\.?|subdivision|street|st\.?|house|lot|no\.?)$/i;
+
+    function isStructuralOnly(words) {
+      return words.every(w => {
+        const wn = norm(w);
+        return !wn || STRUCTURAL_WORDS.test(wn) || /^[0-9\-\#\/]+$/.test(wn);
+      });
+    }
+
     function shouldRemoveWord(word) {
       const wn = norm(word);
       const cleanedWord = ocrClean(wn);
@@ -222,11 +282,22 @@
     for (const seg of segments) {
       const words = seg.split(/[\s\-]+/);
       const cleanWords = [];
+      const removedWords = [];
       for (const word of words) {
         if (!shouldRemoveWord(word)) {
           cleanWords.push(word);
+        } else {
+          removedWords.push(word);
         }
       }
+
+      if (removedWords.length > 0) {
+        if (cleanWords.length > 0 && isStructuralOnly(cleanWords)) {
+          kept.push(seg);
+          continue;
+        }
+      }
+
       const cleanedSeg = cleanWords.join(' ').trim();
       if (cleanedSeg && !isGeoNoiseSegment(cleanedSeg)) {
         kept.push(cleanedSeg);
@@ -330,17 +401,22 @@
 
   function formatOfficialStreet(locality, parts) {
     const segments = [];
-    if (locality) segments.push(toOfficialCase(locality));
+
+    // Safety-net: strip any residual Bago City phrases from the locality
+    // (these should have been caught earlier, but belt-and-suspenders).
+    const cleanLocality = locality ? stripBagoCityFragments(locality).replace(/\s+/g, ' ').trim() : '';
+    if (cleanLocality) segments.push(toOfficialCase(cleanLocality));
 
     if (parts.barangay?.brgy_name) {
       const bName = toOfficialCase(parts.barangay.brgy_name);
-      if (!locality || !norm(locality).includes(norm(bName))) {
+      if (!cleanLocality || !norm(cleanLocality).includes(norm(bName))) {
         segments.push(bName);
       }
     }
 
+    // Always emit the canonical "BAGO CITY" (not "CITY OF BAGO") for consistency.
     if (parts.city && isBagoCityRecord(parts.city)) {
-      segments.push('CITY OF BAGO');
+      segments.push('BAGO CITY');
     } else if (parts.city?.city_name) {
       segments.push(toOfficialCase(parts.city.city_name));
     }
@@ -609,6 +685,7 @@
   }
 
   function parseAddress(addressRaw, datasets) {
+    addressRaw = preprocessRawAddress(addressRaw);
     const addressNorm = normalizeOcrAddress(addressRaw);
     const addressCompact = compact(addressNorm);
     const { provinces, cities, regions, barangays } = datasets;
@@ -662,6 +739,8 @@
     if (!addressRaw || !String(addressRaw).trim()) {
       return { filled: 0, matched: {} };
     }
+
+    addressRaw = preprocessRawAddress(addressRaw);
 
     await ensureRegionOptions();
 
