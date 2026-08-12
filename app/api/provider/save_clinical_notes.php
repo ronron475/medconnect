@@ -13,9 +13,11 @@ require_once dirname(dirname(dirname(__DIR__))) . '/app/includes/auth_guard.php'
 require_once dirname(dirname(dirname(__DIR__))) . '/app/includes/provider_patient_access.php';
 require_once dirname(dirname(dirname(__DIR__))) . '/app/includes/clinical_tables.php';
 require_once dirname(dirname(dirname(__DIR__))) . '/app/includes/patient_consultation_records.php';
+require_once dirname(dirname(dirname(__DIR__))) . '/app/includes/clinical_note_signature.php';
 
 clinical_tables_ensure($pdo);
 patient_consultation_records_schema_ensure($pdo);
+clinical_note_signature_schema_ensure($pdo);
 
 if (empty($_SESSION['user_id']) || $_SESSION['user_role'] !== 'provider') {
     echo json_encode(['success' => false, 'message' => 'Unauthorized.']);
@@ -37,10 +39,14 @@ if (!auth_csrf_validate($csrf)) {
 
 $finalize = in_array(strtolower(trim((string) ($_POST['finalize'] ?? ''))), ['1', 'true', 'yes'], true);
 
+$providerId = (int) $_SESSION['user_id'];
+$consultationId = (int) ($_POST['consultation_id'] ?? 0);
+$patientId = (int) ($_POST['patient_id'] ?? 0);
+
 $data = [
-    'consultation_id' => (int) ($_POST['consultation_id'] ?? 0),
-    'patient_id'      => (int) ($_POST['patient_id'] ?? 0),
-    'provider_id'     => (int) $_SESSION['user_id'],
+    'consultation_id' => $consultationId,
+    'patient_id'      => $patientId,
+    'provider_id'     => $providerId,
     'subjective'      => $_POST['subjective']      ?? '',
     'objective'       => $_POST['objective']       ?? '',
     'assessment'      => $_POST['assessment']      ?? '',
@@ -48,7 +54,8 @@ $data = [
     'diagnosis'       => $_POST['diagnosis']       ?? '',
     'treatment_plan'  => $_POST['treatment_plan']  ?? '',
     'prescription'    => $_POST['prescription']    ?? '',
-    'signature'       => $_POST['signature_data']  ?? '',
+    'signature'       => (string) ($_POST['signature_data'] ?? ''),
+    'signature_method'=> strtolower(trim((string) ($_POST['signature_method'] ?? ''))),
 ];
 
 if (!$data['consultation_id'] || !$data['patient_id']) {
@@ -78,10 +85,16 @@ if (!$consultRow) {
 
 $currentStatus = strtolower(trim((string) ($consultRow['status'] ?? '')));
 
-$existingStmt = $pdo->prepare('SELECT signature_data, finalized_at FROM clinical_notes WHERE consultation_id = ? LIMIT 1');
+$existingStmt = $pdo->prepare('SELECT * FROM clinical_notes WHERE consultation_id = ? LIMIT 1');
 $existingStmt->execute([(int) $data['consultation_id']]);
 $existingNote = $existingStmt->fetch(PDO::FETCH_ASSOC) ?: null;
-$alreadyFinalized = trim((string) ($existingNote['signature_data'] ?? '')) !== '';
+if ($existingNote && (int) ($existingNote['provider_id'] ?? 0) !== (int) $data['provider_id']) {
+    http_response_code(403);
+    echo json_encode(['success' => false, 'message' => 'You are not authorized to sign or finalize this SOAP note.']);
+    exit;
+}
+$alreadyFinalized = trim((string) ($existingNote['finalized_at'] ?? '')) !== ''
+    || trim((string) ($existingNote['signature_data'] ?? '')) !== '';
 
 if ($alreadyFinalized) {
     echo json_encode(['success' => false, 'message' => 'This SOAP note has already been finalized and cannot be edited.']);
@@ -98,11 +111,54 @@ if ($finalize) {
             exit;
         }
     }
-}
 
-if ($finalize && trim((string) $data['signature']) === '') {
-    echo json_encode(['success' => false, 'message' => 'Digital signature is required to finalize.']);
-    exit;
+    $confirmed = in_array(strtolower(trim((string) ($_POST['soap_confirm'] ?? ''))), ['1', 'true', 'yes', 'on'], true);
+    if (!$confirmed) {
+        echo json_encode([
+            'success' => false,
+            'message' => 'Please confirm that you reviewed and completed this SOAP note.',
+        ]);
+        exit;
+    }
+
+    $method = $data['signature_method'];
+    if ($method !== 'typed' && $method !== 'drawn') {
+        echo json_encode([
+            'success' => false,
+            'message' => 'Please provide your electronic signature before finalizing the SOAP note.',
+        ]);
+        exit;
+    }
+
+    $identity = clinical_note_provider_identity($pdo, (int) $data['provider_id']);
+    $signatureName = $identity['legal_name'] !== '' ? $identity['legal_name'] : $identity['full_name'];
+    if ($signatureName === '') {
+        echo json_encode(['success' => false, 'message' => 'Provider identity could not be verified.']);
+        exit;
+    }
+
+    if ($method === 'typed') {
+        $typed = trim((string) ($_POST['signature_name'] ?? $data['signature']));
+        if ($typed === '' || !clinical_note_typed_name_matches($typed, $identity)) {
+            echo json_encode([
+                'success' => false,
+                'message' => 'The typed name must match your authenticated provider account.',
+            ]);
+            exit;
+        }
+        $data['signature'] = $typed;
+        $data['signature_name'] = $signatureName;
+    } else {
+        $drawn = clinical_note_drawn_signature_valid((string) $data['signature']);
+        if (!$drawn['ok']) {
+            echo json_encode([
+                'success' => false,
+                'message' => $drawn['message'],
+            ]);
+            exit;
+        }
+        $data['signature_name'] = $signatureName;
+    }
 }
 
 try {
@@ -140,8 +196,8 @@ try {
 
     $stmt = $pdo->prepare("
         INSERT INTO clinical_notes
-        (consultation_id, patient_id, provider_id, subjective, objective, assessment, plan, diagnosis, treatment_plan, prescription, signature_data, finalized_at)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())
+        (consultation_id, patient_id, provider_id, subjective, objective, assessment, plan, diagnosis, treatment_plan, prescription, signature_data, signature_method, signature_name, signed_at, finalized_at)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW())
         ON DUPLICATE KEY UPDATE
             subjective = VALUES(subjective),
             objective = VALUES(objective),
@@ -151,12 +207,16 @@ try {
             treatment_plan = VALUES(treatment_plan),
             prescription = VALUES(prescription),
             signature_data = VALUES(signature_data),
+            signature_method = VALUES(signature_method),
+            signature_name = VALUES(signature_name),
+            signed_at = NOW(),
             finalized_at = NOW()
     ");
     $stmt->execute([
         $data['consultation_id'], $data['patient_id'], $data['provider_id'],
         $data['subjective'], $data['objective'], $data['assessment'], $data['plan'],
         $data['diagnosis'], $data['treatment_plan'], $data['prescription'], $data['signature'],
+        $data['signature_method'], $data['signature_name'],
     ]);
 
     $diag = trim((string) ($data['diagnosis'] ?? ''));

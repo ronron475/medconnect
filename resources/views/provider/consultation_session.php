@@ -8,11 +8,13 @@ require_once BASE_PATH . '/app/includes/patient_health_summary.php';
 require_once BASE_PATH . '/app/includes/provider_clinical_support.php';
 require_once BASE_PATH . '/app/includes/clinical_tables.php';
 require_once BASE_PATH . '/app/includes/patient_consultation_records.php';
+require_once BASE_PATH . '/app/includes/clinical_note_signature.php';
 require_once BASE_PATH . '/app/includes/consultation_video_history.php';
 require __DIR__ . '/partials/queue_helpers.php';
 
 clinical_tables_ensure($pdo);
 patient_consultation_records_schema_ensure($pdo);
+clinical_note_signature_schema_ensure($pdo);
 $GLOBALS['pdo'] = $pdo;
 
 $consultation_id = (int)($_GET['id'] ?? 0);
@@ -55,10 +57,16 @@ try {
 
 $soap_finalized = patient_consultation_is_finalized(
     (string) ($c['status'] ?? ''),
-    $clinical_note['signature_data'] ?? ''
+    $clinical_note['signature_data'] ?? '',
+    $clinical_note['finalized_at'] ?? null
 );
 $consultation_completed = $soap_finalized;
 $soap_readonly = $soap_finalized;
+$soap_signer = clinical_note_provider_identity($pdo, (int) $_SESSION['user_id']);
+$soap_signed_by = $clinical_note
+    ? clinical_note_signed_by_label($clinical_note, $soap_signer['display_name'])
+    : '';
+$soap_signed_at = $clinical_note ? clinical_note_signed_at_label($clinical_note) : '';
 
 $session_access = queue_session_access($c);
 $history_view = in_array(strtolower(trim((string) ($c['status'] ?? ''))), ['completed', 'cancelled'], true);
@@ -186,6 +194,8 @@ $show_video_demo_tip = function_exists('medconnect_is_local_dev_host') && medcon
 $localhost_app_url = 'http://localhost' . (ASSET_BASE !== '' ? ASSET_BASE : '');
 ?>
 
+<?php $soapSigCssVer = (int) @filemtime(ASSETS_PATH . '/css/soap-signature.css'); ?>
+<link rel="stylesheet" href="<?= ASSET_BASE ?>/assets/css/soap-signature.css?v=<?= $soapSigCssVer ?: time() ?>"/>
 <style>
 .session-page {
     display: grid;
@@ -1736,16 +1746,58 @@ body.consultation-mobile-call-fullscreen .mc-provider-video-dock .mc-session-flo
                     </div>
 
                     <?php if (!$consultation_completed): ?>
-                    <div class="soap-full">
-                        <label class="pd-label" style="color: #018a93;">Digital Signature Authorization</label>
-                        <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
-                            <input type="text" name="signature_data" class="pd-input" style="flex: 1; min-width: 220px;" placeholder="Type full name to sign electronically" value="<?= htmlspecialchars((string) ($clinical_note['signature_data'] ?? '')) ?>">
-                            <button type="button" class="session-btn primary" onclick="finalizeConsultation()">Finalize SOAP Note</button>
+                    <div class="soap-sign" id="soapSignature">
+                        <h3 class="soap-sign__title">Electronic Signature</h3>
+                        <p class="soap-sign__lead">Choose how you want to sign. The signature must belong to your authenticated provider account.</p>
+
+                        <div class="soap-sign__methods" role="radiogroup" aria-label="Signature method">
+                            <label class="soap-sign__method is-active">
+                                <input type="radio" name="signature_method" value="typed" checked>
+                                Type Full Name
+                            </label>
+                            <label class="soap-sign__method">
+                                <input type="radio" name="signature_method" value="drawn">
+                                Draw Signature
+                            </label>
                         </div>
-                        <p class="text-xs text-muted" style="margin-top: 8px;">By signing, you authorize this record and prescription as legally binding. The patient will receive their finalized record immediately.</p>
+
+                        <div class="soap-sign__panel" id="soapTypedPanel">
+                            <label class="pd-label" for="soapTypedName">Full Name</label>
+                            <input type="text" id="soapTypedName" name="signature_name" class="pd-input" autocomplete="off" inputmode="text" maxlength="120" placeholder="<?= htmlspecialchars($soap_signer['full_name'] !== '' ? $soap_signer['full_name'] : 'Your registered name') ?>" value="">
+                            <p class="soap-sign__hint">Type your registered name (for example <?= htmlspecialchars($soap_signer['full_name'] !== '' ? $soap_signer['full_name'] : 'First Last') ?>). It must match your provider account.</p>
+                        </div>
+
+                        <div class="soap-sign__panel" id="soapDrawnPanel" hidden>
+                            <p class="pd-label">Sign below</p>
+                            <div class="soap-sign__canvas-wrap" id="soapCanvasWrap">
+                                <canvas id="soapSignatureCanvas" class="soap-sign__canvas" width="600" height="180" aria-label="Draw your signature"></canvas>
+                                <span class="soap-sign__placeholder" id="soapCanvasHint">Sign here</span>
+                            </div>
+                            <div class="soap-sign__actions">
+                                <button type="button" class="session-btn soap-sign__clear" id="soapClearSignature">Clear Signature</button>
+                            </div>
+                        </div>
+
+                        <input type="hidden" name="signature_data" id="soapSignatureData" value="">
+
+                        <label class="soap-sign__confirm">
+                            <input type="checkbox" name="soap_confirm" id="soapConfirm" value="1">
+                            <span>I confirm that I reviewed and completed this SOAP note.</span>
+                        </label>
+
+                        <button type="button" class="session-btn primary soap-sign__finalize" id="soapFinalizeBtn" disabled>Finalize SOAP Note</button>
+                        <p class="soap-sign__error" id="soapSignError" role="alert"></p>
                     </div>
                     <?php else: ?>
-                    <input type="hidden" name="signature_data" value="<?= htmlspecialchars((string) ($clinical_note['signature_data'] ?? '')) ?>">
+                    <div class="soap-sign">
+                        <p class="soap-sign__done">
+                            <?php if ($soap_signed_by !== ''): ?>
+                                <?= htmlspecialchars($soap_signed_by) ?><?php if ($soap_signed_at !== ''): ?><br><?= htmlspecialchars($soap_signed_at) ?><?php endif; ?>
+                            <?php else: ?>
+                                This SOAP note has been electronically signed and finalized.
+                            <?php endif; ?>
+                        </p>
+                    </div>
                     <?php endif; ?>
                 </form>
             </div>
@@ -2297,7 +2349,22 @@ body.consultation-mobile-call-fullscreen .mc-provider-video-dock .mc-session-flo
   </div>
 </div>
 
+<div id="soapFinalizeModal" class="soap-finalize-modal" aria-hidden="true">
+  <div class="soap-finalize-modal__dialog" role="dialog" aria-modal="true" aria-labelledby="soapFinalizeTitle">
+    <div class="soap-finalize-modal__body">
+      <h2 id="soapFinalizeTitle" class="soap-finalize-modal__title">Finalize SOAP Note?</h2>
+      <p class="soap-finalize-modal__text">You are about to electronically sign and finalize this clinical record. After finalization, the SOAP note will become available to the patient and ordinary editing will be disabled.</p>
+    </div>
+    <div class="soap-finalize-modal__footer">
+      <button type="button" class="session-btn" id="soapFinalizeCancel">Cancel</button>
+      <button type="button" class="session-btn primary" id="soapFinalizeConfirm">Confirm &amp; Finalize</button>
+    </div>
+  </div>
+</div>
+
 <script src="<?= ASSET_BASE ?>/assets/js/messages-delete.js?v=3"></script>
+<?php $soapSigJsVer = (int) @filemtime(ASSETS_PATH . '/js/soap-signature.js'); ?>
+<script src="<?= ASSET_BASE ?>/assets/js/soap-signature.js?v=<?= $soapSigJsVer ?: time() ?>"></script>
 <script>
 // SESSION TIMER
 let seconds = 0;
@@ -3393,10 +3460,14 @@ async function requestExtension() {
 
 // SAVE SOAP NOTES (draft by default; finalize=true completes the visit)
 async function saveSOAP(finalize = false) {
-    const fd = new FormData(document.getElementById('soapForm'));
+    const form = document.getElementById('soapForm');
+    if (!form) return { success: false };
+    syncSoapSignatureFields();
+    const fd = new FormData(form);
     fd.append('csrf_token', sessionCsrf || document.body.dataset.csrf || '');
     if (finalize) {
         fd.append('finalize', '1');
+        fd.append('soap_confirm', document.getElementById('soapConfirm') && document.getElementById('soapConfirm').checked ? '1' : '0');
     }
     try {
         const res = await fetch('<?= ASSET_BASE ?>/app/api/provider/save_clinical_notes.php', {
@@ -3407,8 +3478,6 @@ async function saveSOAP(finalize = false) {
         const data = await res.json();
         if (!finalize) {
             alert(data.message || (data.success ? 'Draft saved.' : 'Could not save notes.'));
-        } else if (!data.success) {
-            alert(data.message || 'Could not finalize consultation.');
         }
         return data;
     } catch (e) {
@@ -3417,28 +3486,228 @@ async function saveSOAP(finalize = false) {
     }
 }
 
-// FINALIZE CONSULTATION
-async function finalizeConsultation() {
+const soapSignerNames = <?= json_encode([
+    'full' => $soap_signer['full_name'] ?? '',
+    'candidates' => clinical_note_typed_name_candidates($soap_signer),
+], JSON_UNESCAPED_UNICODE) ?>;
+
+let soapPad = null;
+let soapUiReady = false;
+
+function soapNormalizeName(value) {
+    return String(value || '')
+        .replace(/^(dr\.?|dra\.?|doctor)\s+/i, '')
+        .replace(/ñ/gi, 'n')
+        .toLowerCase()
+        .replace(/[^a-z\s]/g, '')
+        .replace(/\s+/g, ' ')
+        .trim();
+}
+
+function soapTypedNameMatches(value) {
+    const typed = soapNormalizeName(value);
+    if (!typed) return false;
+    const candidates = soapSignerNames.candidates || [];
+    if (candidates.indexOf(typed) !== -1) return true;
+    return typed === soapNormalizeName(soapSignerNames.full);
+}
+
+function soapSelectedMethod() {
+    const checked = document.querySelector('#soapForm input[name="signature_method"]:checked');
+    return checked ? checked.value : '';
+}
+
+function syncSoapSignatureFields() {
+    const hidden = document.getElementById('soapSignatureData');
+    const method = soapSelectedMethod();
+    if (!hidden) return;
+    if (method === 'drawn' && soapPad && soapPad.hasInk()) {
+        hidden.value = soapPad.toDataURL();
+    } else if (method === 'typed') {
+        const nameEl = document.getElementById('soapTypedName');
+        hidden.value = nameEl ? String(nameEl.value || '').trim() : '';
+    } else {
+        hidden.value = '';
+    }
+}
+
+function soapClientValidationMessage() {
     const form = document.getElementById('soapForm');
-    if (!form) return;
+    if (!form) return 'SOAP form is missing.';
     const required = ['subjective', 'objective', 'assessment', 'plan'];
-    for (const name of required) {
-        const field = form.querySelector('[name="' + name + '"]');
+    for (let i = 0; i < required.length; i++) {
+        const field = form.querySelector('[name="' + required[i] + '"]');
         if (!field || !String(field.value || '').trim()) {
-            return alert('Please complete all SOAP sections (Subjective, Objective, Assessment, and Plan) before finalizing.');
+            return 'Please complete all SOAP sections (Subjective, Objective, Assessment, and Plan) before finalizing.';
         }
     }
-    const sign = document.querySelector('input[name="signature_data"]').value;
-    if (!sign || !String(sign).trim()) {
-        return alert('Please provide your digital signature to finalize.');
+    const method = soapSelectedMethod();
+    if (method !== 'typed' && method !== 'drawn') {
+        return 'Please provide your electronic signature before finalizing the SOAP note.';
     }
-    if (!confirm('Finalize this SOAP note? The patient will immediately be able to view this record in My Health.')) {
+    if (method === 'typed') {
+        const nameEl = document.getElementById('soapTypedName');
+        const typed = nameEl ? String(nameEl.value || '').trim() : '';
+        if (!typed || !soapTypedNameMatches(typed)) {
+            return 'The typed name must match your authenticated provider account.';
+        }
+    } else if (!soapPad || !soapPad.hasInk()) {
+        return 'Please provide your electronic signature before finalizing the SOAP note.';
+    }
+    const confirmEl = document.getElementById('soapConfirm');
+    if (!confirmEl || !confirmEl.checked) {
+        return 'Please confirm that you reviewed and completed this SOAP note.';
+    }
+    return '';
+}
+
+function updateSoapFinalizeReady() {
+    const btn = document.getElementById('soapFinalizeBtn');
+    const err = document.getElementById('soapSignError');
+    const msg = soapClientValidationMessage();
+    if (btn) btn.disabled = msg !== '';
+    if (err && msg === '') err.textContent = '';
+}
+
+function setSoapMethod(method) {
+    const typedPanel = document.getElementById('soapTypedPanel');
+    const drawnPanel = document.getElementById('soapDrawnPanel');
+    document.querySelectorAll('.soap-sign__method').forEach(function (label) {
+        const input = label.querySelector('input[name="signature_method"]');
+        label.classList.toggle('is-active', !!(input && input.value === method && input.checked));
+    });
+    if (typedPanel) typedPanel.hidden = method !== 'typed';
+    if (drawnPanel) drawnPanel.hidden = method !== 'drawn';
+    if (method === 'drawn' && soapPad) {
+        requestAnimationFrame(function () { soapPad.fit(); });
+    }
+    updateSoapFinalizeReady();
+}
+
+function openSoapFinalizeModal() {
+    const modal = document.getElementById('soapFinalizeModal');
+    if (!modal) return;
+    modal.classList.add('is-open');
+    modal.setAttribute('aria-hidden', 'false');
+}
+
+function closeSoapFinalizeModal() {
+    const modal = document.getElementById('soapFinalizeModal');
+    if (!modal) return;
+    modal.classList.remove('is-open');
+    modal.setAttribute('aria-hidden', 'true');
+}
+
+function initSoapSignatureUi() {
+    if (soapUiReady) return;
+    soapUiReady = true;
+    const canvas = document.getElementById('soapSignatureCanvas');
+    if (canvas && window.SoapSignaturePad) {
+        soapPad = new window.SoapSignaturePad(canvas, {
+            wrap: document.getElementById('soapCanvasWrap'),
+            placeholder: document.getElementById('soapCanvasHint'),
+        });
+        soapPad.onChange = updateSoapFinalizeReady;
+    }
+
+    document.querySelectorAll('input[name="signature_method"]').forEach(function (input) {
+        input.addEventListener('change', function () {
+            setSoapMethod(input.value);
+        });
+    });
+
+    const nameEl = document.getElementById('soapTypedName');
+    if (nameEl) nameEl.addEventListener('input', updateSoapFinalizeReady);
+
+    const confirmEl = document.getElementById('soapConfirm');
+    if (confirmEl) confirmEl.addEventListener('change', updateSoapFinalizeReady);
+
+    const form = document.getElementById('soapForm');
+    if (form) {
+        form.addEventListener('input', updateSoapFinalizeReady);
+        form.addEventListener('change', updateSoapFinalizeReady);
+        form.addEventListener('reset', function () {
+            setTimeout(function () {
+                if (soapPad) soapPad.clear();
+                setSoapMethod('typed');
+                updateSoapFinalizeReady();
+            }, 0);
+        });
+    }
+
+    const clearBtn = document.getElementById('soapClearSignature');
+    if (clearBtn) {
+        clearBtn.addEventListener('click', function () {
+            if (soapPad) soapPad.clear();
+        });
+    }
+
+    const finalizeBtn = document.getElementById('soapFinalizeBtn');
+    if (finalizeBtn) {
+        finalizeBtn.addEventListener('click', function () {
+            const msg = soapClientValidationMessage();
+            const err = document.getElementById('soapSignError');
+            if (msg) {
+                if (err) err.textContent = msg;
+                return;
+            }
+            if (err) err.textContent = '';
+            openSoapFinalizeModal();
+        });
+    }
+
+    const cancelBtn = document.getElementById('soapFinalizeCancel');
+    if (cancelBtn) cancelBtn.addEventListener('click', closeSoapFinalizeModal);
+
+    const confirmBtn = document.getElementById('soapFinalizeConfirm');
+    if (confirmBtn) {
+        confirmBtn.addEventListener('click', function () {
+            closeSoapFinalizeModal();
+            finalizeConsultation();
+        });
+    }
+
+    const modal = document.getElementById('soapFinalizeModal');
+    if (modal) {
+        modal.addEventListener('click', function (e) {
+            if (e.target === modal) closeSoapFinalizeModal();
+        });
+    }
+
+    setSoapMethod(soapSelectedMethod() || 'typed');
+    updateSoapFinalizeReady();
+}
+
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initSoapSignatureUi);
+} else {
+    initSoapSignatureUi();
+}
+
+// FINALIZE CONSULTATION
+async function finalizeConsultation() {
+    const err = document.getElementById('soapSignError');
+    const msg = soapClientValidationMessage();
+    if (msg) {
+        if (err) err.textContent = msg;
         return;
     }
+    const confirmBtn = document.getElementById('soapFinalizeConfirm');
+    const finalizeBtn = document.getElementById('soapFinalizeBtn');
+    if (confirmBtn) confirmBtn.disabled = true;
+    if (finalizeBtn) finalizeBtn.disabled = true;
     const data = await saveSOAP(true);
+    if (confirmBtn) confirmBtn.disabled = false;
     if (data && data.success) {
-        alert(data.message || 'SOAP note finalized successfully.');
+        alert(data.message || 'SOAP Note finalized successfully.');
         window.location.href = '<?= ASSET_BASE ?>/views/provider/consultation_history.php';
+        return;
+    }
+    if (finalizeBtn) finalizeBtn.disabled = false;
+    if (err) {
+        err.textContent = (data && data.message) ? data.message : 'Could not finalize consultation.';
+    } else {
+        alert((data && data.message) ? data.message : 'Could not finalize consultation.');
     }
 }
 

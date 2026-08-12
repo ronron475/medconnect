@@ -15,6 +15,7 @@ if (!defined('BASE_PATH')) {
 require_once BASE_PATH . '/app/includes/patient_portal_bootstrap.php';
 require_once BASE_PATH . '/app/includes/patient_consultation_records.php';
 require_once BASE_PATH . '/app/includes/clinical_tables.php';
+require_once BASE_PATH . '/app/includes/clinical_note_signature.php';
 require_once BASE_PATH . '/app/includes/consultation_video_history.php';
 
 clinical_tables_ensure($pdo);
@@ -52,7 +53,8 @@ $note = $nStmt->fetch(PDO::FETCH_ASSOC) ?: null;
 
 $isFinalized = patient_consultation_is_finalized(
     (string) ($consult['status'] ?? ''),
-    $note['signature_data'] ?? ''
+    $note['signature_data'] ?? '',
+    $note['finalized_at'] ?? null
 );
 
 $prescriptions = [];
@@ -269,6 +271,16 @@ $patient_page_stylesheets = [
           <div><dt>Assessment</dt><dd><?= nl2br(htmlspecialchars(trim((string) ($note['assessment'] ?? '')) ?: '—')) ?></dd></div>
           <div><dt>Plan</dt><dd><?= nl2br(htmlspecialchars(trim((string) ($note['plan'] ?? '')) ?: '—')) ?></dd></div>
         </dl>
+        <?php
+          $signedBy = clinical_note_signed_by_label($note ?: [], $providerName);
+          $signedAt = clinical_note_signed_at_label($note ?: []);
+        ?>
+        <?php if ($signedBy !== '' || $signedAt !== ''): ?>
+        <p class="pmh-soap-signed">
+          <?php if ($signedBy !== ''): ?><?= htmlspecialchars($signedBy) ?><?php endif; ?>
+          <?php if ($signedAt !== ''): ?><?php if ($signedBy !== ''): ?><br><?php endif; ?><?= htmlspecialchars($signedAt) ?><?php endif; ?>
+        </p>
+        <?php endif; ?>
         <?php if (trim((string) ($note['diagnosis'] ?? '')) !== ''): ?>
         <p class="pmh-detail__diag"><strong>Diagnosis:</strong> <?= htmlspecialchars($note['diagnosis']) ?></p>
         <?php endif; ?>

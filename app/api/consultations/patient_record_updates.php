@@ -52,7 +52,7 @@ try {
                c.consult_type, c.diagnosis,
                u.first_name, u.last_name,
                COALESCE(NULLIF(TRIM(c.provider_name), ''), CONCAT(u.first_name, ' ', u.last_name)) AS provider_display,
-               cn.signature_data
+               cn.signature_data, cn.finalized_at
         FROM consultations c
         JOIN users u ON u.id = c.provider_id
         LEFT JOIN clinical_notes cn ON cn.consultation_id = c.id
@@ -75,7 +75,7 @@ try {
 
     $completed = [];
     while ($row = $cStmt->fetch(PDO::FETCH_ASSOC)) {
-        if (!patient_consultation_is_finalized((string) ($row['status'] ?? ''), $row['signature_data'] ?? '')) {
+        if (!patient_consultation_is_finalized((string) ($row['status'] ?? ''), $row['signature_data'] ?? '', $row['finalized_at'] ?? null)) {
             continue;
         }
         $cid = (int) $row['id'];
@@ -84,7 +84,7 @@ try {
             $provider = 'Dr. ' . $provider;
         }
         $outcome = null;
-        if (patient_consultation_is_finalized((string) ($row['status'] ?? ''), $row['signature_data'] ?? '')) {
+        if (patient_consultation_is_finalized((string) ($row['status'] ?? ''), $row['signature_data'] ?? '', $row['finalized_at'] ?? null)) {
             $outcome = patient_consultation_clinical_outcome($pdo, $cid, $uid, false);
         }
         $completed[] = [

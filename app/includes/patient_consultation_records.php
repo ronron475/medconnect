@@ -18,26 +18,31 @@ function patient_consultation_records_schema_ensure(PDO $pdo): void
     } catch (PDOException $e) { /* non-fatal */ }
 
     try {
-        $cols = $pdo->query('SHOW COLUMNS FROM clinical_notes')->fetchAll(PDO::FETCH_COLUMN);
-        if (is_array($cols) && !in_array('finalized_at', $cols, true)) {
-            $pdo->exec('ALTER TABLE clinical_notes ADD COLUMN finalized_at DATETIME NULL DEFAULT NULL AFTER signature_data');
-        }
-    } catch (PDOException $e) { /* non-fatal */ }
+        require_once __DIR__ . '/clinical_note_signature.php';
+        clinical_note_signature_schema_ensure($pdo);
+    } catch (Throwable $e) { /* non-fatal */ }
 
     $done = true;
 }
 
-function patient_consultation_is_finalized(string $consultationStatus, ?string $signatureData): bool
+function patient_consultation_is_finalized(string $consultationStatus, ?string $signatureData, ?string $finalizedAt = null): bool
 {
-    return strtolower(trim($consultationStatus)) === 'completed'
-        && trim((string) $signatureData) !== '';
+    if (strtolower(trim($consultationStatus)) !== 'completed') {
+        return false;
+    }
+    if (trim((string) $finalizedAt) !== '') {
+        return true;
+    }
+    return trim((string) $signatureData) !== '';
 }
 
 function patient_consultation_record_visible_sql(string $consultAlias = 'c', string $noteAlias = 'cn'): string
 {
     return "{$consultAlias}.status = 'completed'
-        AND {$noteAlias}.signature_data IS NOT NULL
-        AND TRIM({$noteAlias}.signature_data) <> ''";
+        AND (
+            ({$noteAlias}.finalized_at IS NOT NULL AND {$noteAlias}.finalized_at <> '0000-00-00 00:00:00')
+            OR ({$noteAlias}.signature_data IS NOT NULL AND TRIM({$noteAlias}.signature_data) <> '')
+        )";
 }
 
 function patient_consultation_detail_url(int $consultationId): string
@@ -111,10 +116,10 @@ function patient_consultation_clinical_outcome(
     }
 
     if ($requireFinalized) {
-        $nStmt = $pdo->prepare('SELECT signature_data FROM clinical_notes WHERE consultation_id = ? AND patient_id = ? LIMIT 1');
+        $nStmt = $pdo->prepare('SELECT signature_data, finalized_at FROM clinical_notes WHERE consultation_id = ? AND patient_id = ? LIMIT 1');
         $nStmt->execute([$consultationId, $patientId]);
         $note = $nStmt->fetch(PDO::FETCH_ASSOC) ?: null;
-        if (!patient_consultation_is_finalized((string) ($consult['status'] ?? ''), $note['signature_data'] ?? '')) {
+        if (!patient_consultation_is_finalized((string) ($consult['status'] ?? ''), $note['signature_data'] ?? '', $note['finalized_at'] ?? null)) {
             return null;
         }
     }
