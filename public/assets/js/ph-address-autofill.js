@@ -177,52 +177,85 @@
       .map((s) => s.trim())
       .filter(Boolean);
 
-    const removeNames = [
-      parts.barangay?.brgy_name,
-      parts.city?.city_name,
-      parts.province?.province_name,
-      parts.region?.region_name,
-      'city of bago',
-      'bago city',
-      'negros occidental',
-      'negros oriental',
-      'negros',
-      'occidental',
-    ].filter(Boolean).map((x) => norm(x));
+    const targetWords = [];
+    if (parts.barangay?.brgy_name) {
+      targetWords.push(...norm(parts.barangay.brgy_name).split(' '));
+    }
+    if (parts.city?.city_name) {
+      targetWords.push(...norm(parts.city.city_name).split(' '));
+    }
+    if (parts.province?.province_name) {
+      targetWords.push(...norm(parts.province.province_name).split(' '));
+    }
+    const noise = ['city', 'of', 'oe', '0f', 'province', 'region', 'philippines', 'ph', 'negros', 'occidental', 'oriental', 'bago', 'bgo'];
+    targetWords.push(...noise);
 
     const ocrClean = (w) => norm(w).replace(/[1l|]/g, 'i').replace(/0/g, 'o');
 
-    const kept = [];
-    for (const seg of segments) {
-      const sn = normalizeOcrAddress(seg);
-      if (!sn || isGeoNoiseSegment(seg)) continue;
-      const compactSeg = compact(seg);
-      let skip = false;
-      for (const rn of removeNames) {
-        if (sn === rn || sn.includes(rn) || rn.includes(sn)) {
-          skip = true;
-          break;
-        }
-        if (compact(rn).length >= 4 && compactSeg.includes(compact(rn))) {
-          skip = true;
-          break;
-        }
-      }
-
-      // Fuzzy check if this segment is actually the barangay name
-      if (!skip && parts.barangay?.brgy_name) {
-        const cleanedBc = ocrClean(parts.barangay.brgy_name);
-        const cleanedSeg = ocrClean(seg);
-        if (levenshtein(cleanedSeg, cleanedBc) <= 3) {
-          skip = true;
-        }
-      }
-
-      if (!skip) kept.push(seg);
+    function isGeoNoiseWord(w) {
+      return /^(city|of|oe|0f|bgo|bago|negros|occidental|occ|oriental|philippines|ph|neg|province|region|go|cty|ctty|c1ty)$/.test(w);
     }
 
-    if (kept.length) {
-      return toOfficialCase(kept.join(', '));
+    function shouldRemoveWord(word) {
+      const wn = norm(word);
+      const cleanedWord = ocrClean(wn);
+      if (!wn || wn.length < 2) return false;
+      if (isGeoNoiseWord(wn)) return true;
+
+      for (const target of targetWords) {
+        const tn = norm(target);
+        if (!tn || tn.length < 2) continue;
+
+        if (wn === tn || cleanedWord === ocrClean(tn)) return true;
+
+        if (tn.length >= 4) {
+          const cleanedTarget = ocrClean(tn);
+          const dist = levenshtein(cleanedWord, cleanedTarget);
+          const maxAllowedDist = tn.length <= 5 ? 1 : (tn.length <= 7 ? 2 : 3);
+          if (dist <= maxAllowedDist) return true;
+        }
+      }
+      return false;
+    }
+
+    const kept = [];
+    for (const seg of segments) {
+      const words = seg.split(/[\s\-]+/);
+      const cleanWords = [];
+      for (const word of words) {
+        if (!shouldRemoveWord(word)) {
+          cleanWords.push(word);
+        }
+      }
+      const cleanedSeg = cleanWords.join(' ').trim();
+      if (cleanedSeg && !isGeoNoiseSegment(cleanedSeg)) {
+        kept.push(cleanedSeg);
+      }
+    }
+
+    const uniqueKept = [];
+    for (const seg of kept) {
+      const cleanSeg = toOfficialCase(seg);
+      let isDuplicate = false;
+      for (const existing of uniqueKept) {
+        if (cleanSeg === existing) {
+          isDuplicate = true;
+          break;
+        }
+        if (cleanSeg.length >= 6 && existing.length >= 6) {
+          if (levenshtein(compact(cleanSeg), compact(existing)) <= 2) {
+            isDuplicate = true;
+            break;
+          }
+        }
+      }
+      if (!isDuplicate) {
+        uniqueKept.push(cleanSeg);
+      }
+    }
+
+    if (uniqueKept.length) {
+      return toOfficialCase(uniqueKept.join(', '));
     }
 
     const purokMatch = normalizeOcrAddress(addressRaw).match(
