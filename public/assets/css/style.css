@@ -1178,7 +1178,7 @@ body.landing-page:has(.landing-maintenance-banner) .hero--cinematic {
   .hero-ctas { flex-direction: column; align-items: center; gap: 12px; }
   .cta-primary, .cta-secondary { width: 100%; justify-content: center; text-align: center; }
 
-  .signin-card { width: min(420px, 100%); max-width: 420px; margin: 0 auto; padding: 26px 22px 22px; border-radius: 16px; height: auto; }
+  .signin-card { width: 100%; max-width: 100%; padding: 26px 22px 22px; border-radius: 16px; max-height: none; }
   .card-top { gap: 12px; margin-bottom: 18px; padding-bottom: 14px; }
   .card-icon-wrap { width: 40px; height: 40px; }
   .card-title { font-size: 17px; }
@@ -2309,9 +2309,9 @@ img {
   .contact-copy     { font-size: 12px; }
   .contact-copy-note { font-size: 10.5px; }
 
-  /* Sign-in modal wrap — constrained card on tablet/mobile */
-  .signin-modal-wrap  { width: min(420px, 100%); max-width: 420px; margin: 0 auto; padding-top: 16px; }
-  .signin-modal-inner { max-height: none !important; height: auto !important; overflow: visible !important; }
+  /* Sign-in modal wrap — full width on tablet */
+  .signin-modal-wrap  { max-width: 100%; padding-top: 16px; }
+  .signin-modal-inner { max-height: calc(100svh - 60px); }
 
   /* Feature pills — allow wrapping */
   .hero-features { flex-wrap: wrap; gap: 8px; justify-content: center; }

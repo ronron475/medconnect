@@ -554,18 +554,14 @@ body.mc-nav-opening .topbar-brand {
     word-break: break-word;
   }
 
-  .signin-modal-overlay {
-    padding: max(12px, env(safe-area-inset-left)) !important;
-    align-items: center !important;
-    justify-content: center !important;
-  }
-
+  .signin-modal-overlay,
   #forgot-modal,
   #announcement-modal {
     padding: 12px !important;
     align-items: flex-end !important;
   }
 
+  .signin-modal-wrap .signin-card,
   .ann-box,
   #forgot-modal > div {
     max-width: 100% !important;
@@ -573,17 +569,6 @@ body.mc-nav-opening .topbar-brand {
     border-radius: 16px 16px 0 0 !important;
     max-height: 92vh;
     overflow-y: auto;
-  }
-
-  .signin-modal-wrap .signin-card {
-    max-width: 420px !important;
-    width: min(420px, 100%) !important;
-    height: auto !important;
-    min-height: auto !important;
-    max-height: none !important;
-    border-radius: 18px !important;
-    overflow: visible !important;
-    margin: 0 auto !important;
   }
 
   #logout-modal-overlay .mc-modal {
