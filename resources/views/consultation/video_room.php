@@ -122,12 +122,12 @@ $slot_date = $session['slot_date'] ?? $session['consult_date'] ?? date('Y-m-d');
 if (!empty($session['slot_end'])) {
     $slot_end_ts = strtotime($slot_date . ' ' . $session['slot_end']);
     if ($slot_end_ts) {
-        $seconds_remaining = max(60, $slot_end_ts - time());
+        $seconds_remaining = max(0, $slot_end_ts - time());
         $slot_end_label = date('g:i A', $slot_end_ts);
     }
 } elseif (!empty($session['consult_time'])) {
     $slot_end_ts = strtotime($slot_date . ' ' . $session['consult_time']) + ($slot_minutes * 60);
-    $seconds_remaining = max(60, $slot_end_ts - time());
+    $seconds_remaining = max(0, $slot_end_ts - time());
     $slot_end_label = date('g:i A', $slot_end_ts);
 }
 $is_patient = ($role === 'patient');
@@ -1812,14 +1812,17 @@ if (session_status() === PHP_SESSION_ACTIVE) {
       drawInterval = setInterval(drawFrame, 1000 / 30);
       canvasStream = canvas.captureStream(30);
 
-      // 4. Mix Audio Tracks
+      // 4. Mix Audio Tracks (provider local + patient remote into one destination)
       recordingAudioContext = new AudioContext();
       recordingAudioDestination = recordingAudioContext.createMediaStreamDestination();
-      
+      if (recordingAudioContext.state === 'suspended') {
+        recordingAudioContext.resume().catch(function () {});
+      }
+
       if (localStream.getAudioTracks().length > 0) {
         recordingAudioContext.createMediaStreamSource(localStream).connect(recordingAudioDestination);
       }
-      
+
       connectRemoteAudioToRecording();
 
       // 5. Combine Canvas Video + Mixed Audio
@@ -1850,6 +1853,10 @@ if (session_status() === PHP_SESSION_ACTIVE) {
         const blob = new Blob(recordedChunks, { type: 'video/webm' });
         if (!blob.size) {
           console.warn("Recording blob is empty; skipping upload.");
+          document.getElementById('callStatus').textContent = 'Recording was empty — nothing saved.';
+          document.getElementById('callStatus').style.color = '#fca5a5';
+          showSavingModal('Recording upload failed', 'The recorder produced an empty file, so nothing was saved.');
+          await new Promise((r) => setTimeout(r, 2000));
           resolveUpload();
           return;
         }
@@ -1865,11 +1872,23 @@ if (session_status() === PHP_SESSION_ACTIVE) {
           const data = await res.json();
           if (data.success) {
             console.log("Recording uploaded successfully:", data.path);
+            document.getElementById('callStatus').textContent = 'Recording saved.';
+            document.getElementById('callStatus').style.color = '#86efac';
+            showSavingModal('Recording saved', 'Consultation recording was uploaded successfully.');
           } else {
-            console.error("Recording upload failed:", data.message || data);
+            const msg = (data && data.message) ? String(data.message) : 'Upload rejected by server.';
+            console.error("Recording upload failed:", msg);
+            document.getElementById('callStatus').textContent = 'Recording upload failed.';
+            document.getElementById('callStatus').style.color = '#fca5a5';
+            showSavingModal('Recording upload failed', msg);
+            await new Promise((r) => setTimeout(r, 2500));
           }
         } catch (e) {
           console.error("Upload error:", e);
+          document.getElementById('callStatus').textContent = 'Recording upload failed.';
+          document.getElementById('callStatus').style.color = '#fca5a5';
+          showSavingModal('Recording upload failed', 'Network error while uploading the consultation recording.');
+          await new Promise((r) => setTimeout(r, 2500));
         } finally {
           resolveUpload(); // Signal that we're done
         }
@@ -1881,11 +1900,28 @@ if (session_status() === PHP_SESSION_ACTIVE) {
 
     function connectRemoteAudioToRecording() {
       if (!recordingAudioContext || !recordingAudioDestination || remoteAudioConnected) return;
+      if (recordingAudioContext.state === 'suspended') {
+        recordingAudioContext.resume().catch(function () {});
+      }
 
+      let remoteStream = null;
       const remoteVideo = document.getElementById('remoteVideo');
-      if (remoteVideo.srcObject && remoteVideo.srcObject.getAudioTracks().length > 0) {
-        recordingAudioContext.createMediaStreamSource(remoteVideo.srcObject).connect(recordingAudioDestination);
+      const remoteAudio = document.getElementById('remoteAudio');
+
+      if (remoteVideo && remoteVideo.srcObject && remoteVideo.srcObject.getAudioTracks().length > 0) {
+        remoteStream = remoteVideo.srcObject;
+      } else if (remoteAudio && remoteAudio.srcObject && remoteAudio.srcObject.getAudioTracks().length > 0) {
+        remoteStream = remoteAudio.srcObject;
+      }
+
+      if (!remoteStream) return;
+
+      try {
+        recordingAudioContext.createMediaStreamSource(remoteStream).connect(recordingAudioDestination);
         remoteAudioConnected = true;
+        console.log('Remote participant audio connected to consultation recording.');
+      } catch (err) {
+        console.warn('Could not mix remote audio into recording:', err);
       }
     }
 

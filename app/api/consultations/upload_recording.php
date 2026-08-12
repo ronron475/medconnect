@@ -55,10 +55,39 @@ try {
     }
 
     if (move_uploaded_file($video_file['tmp_name'], $upload_path)) {
-        // 3. Update DB
+        // 3. Update DB (write both columns — dashboard historically queried recording_url)
         $db_path = 'storage/recordings/' . $filename;
-        $stmt = $pdo->prepare("UPDATE video_sessions SET recording_path = ? WHERE room_token = ?");
-        $stmt->execute([$db_path, $token]);
+        $cols = [];
+        try {
+            $colStmt = $pdo->query('SHOW COLUMNS FROM video_sessions');
+            $cols = $colStmt ? $colStmt->fetchAll(PDO::FETCH_COLUMN) : [];
+        } catch (Throwable $e) {
+            $cols = [];
+        }
+        $hasPath = in_array('recording_path', $cols, true);
+        $hasUrl = in_array('recording_url', $cols, true);
+
+        if ($hasPath && $hasUrl) {
+            $stmt = $pdo->prepare('UPDATE video_sessions SET recording_path = ?, recording_url = ? WHERE room_token = ?');
+            $stmt->execute([$db_path, $db_path, $token]);
+        } elseif ($hasPath) {
+            $stmt = $pdo->prepare('UPDATE video_sessions SET recording_path = ? WHERE room_token = ?');
+            $stmt->execute([$db_path, $token]);
+        } elseif ($hasUrl) {
+            $stmt = $pdo->prepare('UPDATE video_sessions SET recording_url = ? WHERE room_token = ?');
+            $stmt->execute([$db_path, $token]);
+        } else {
+            throw new Exception('Recording metadata columns missing on video_sessions.');
+        }
+
+        if ($stmt->rowCount() < 1) {
+            // Row may already have same path; verify the token still resolves.
+            $verify = $pdo->prepare('SELECT id FROM video_sessions WHERE room_token = ? LIMIT 1');
+            $verify->execute([$token]);
+            if (!$verify->fetchColumn()) {
+                throw new Exception('Recording saved to disk but session metadata update failed.');
+            }
+        }
 
         $ai_result = null;
         if ($transcribe_recording) {
