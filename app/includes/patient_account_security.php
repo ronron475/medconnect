@@ -173,6 +173,15 @@ function patient_registration_friendly_db_error(Throwable $e): string
         return 'Registration could not save your National ID securely. Please contact the health office for assistance.';
     }
 
+    if (stripos($msg, "doesn't have a default value") !== false
+        || stripos($msg, 'cannot be null') !== false) {
+        return 'Registration could not save your address or required details. Please go back one step, confirm your barangay, and try again.';
+    }
+
+    if (stripos($msg, 'Illegal mix of collations') !== false) {
+        return 'Registration could not match your barangay on the server. Please re-select your barangay in Step 2 and try again.';
+    }
+
     return 'Registration could not be completed due to a system error. Please try again in a few minutes or contact the City Health Office if this continues.';
 }
 

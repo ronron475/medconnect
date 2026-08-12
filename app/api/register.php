@@ -102,9 +102,13 @@ if ($chief_complaint_skipped || $chief_complaint === '' || mb_strlen($chief_comp
     $nlp_result_json = '';
 }
 
-$full_name        = trim($first_name . ' ' . $middle_name . ' ' . $last_name);
+$full_name        = trim(preg_replace('/\s+/', ' ', $first_name . ' ' . $middle_name . ' ' . $last_name));
 $address_parts    = array_filter([$street_address, $barangay, $city_municipality, $province, $region]);
 $full_address     = implode(', ', $address_parts);
+$address          = $street_address !== '' ? $street_address : $full_address;
+if ($address === '') {
+    $address = $barangay !== '' ? ('Brgy. ' . $barangay . ', Bago City') : 'Bago City';
+}
 $national_id_hash = hash('sha256', preg_replace('/[\s\-]/', '', $national_id_raw));
 
 // ── Validation ──────────────────────────────────────────────
@@ -298,6 +302,11 @@ try {
         $consent_given, date('Y-m-d H:i:s'), '1.0',
         'verified', date('Y-m-d H:i:s'),
     ];
+    // Hostinger STRICT mode rejects the insert when `address` is NOT NULL with no default.
+    if (in_array('address', $prCols, true)) {
+        $insertCols[] = 'address';
+        $insertVals[] = $address;
+    }
     if ($hasBarangayId) {
         $insertCols[] = 'barangay_id';
         $insertVals[] = $barangayId;
@@ -361,49 +370,57 @@ try {
         );
     }
 
-    require_once dirname(dirname(__DIR__)) . '/app/core/BagoBarangayCentroids.php';
-    require_once dirname(dirname(__DIR__)) . '/app/core/GisDashboardService.php';
-    $gis = new GisDashboardService($pdo);
-    $gis->savePatientLocation(
-        $patient_user_id,
-        $province,
-        $city_municipality,
-        $barangay,
-        $street_address ?: $full_address,
-        null,
-        null,
-        'barangay_centroid'
-    );
-
     $pdo->commit();
 
     logActivity($pdo, $registration_id, 'registration_submitted', 'success',
         'Patient registered and account activated.', $national_id_hash, $ip, $user_agent);
 
-    require_once dirname(dirname(__DIR__)) . '/app/includes/notification_events.php';
-    NotificationEvents::patientRegistered($pdo, $patient_user_id, trim($first_name . ' ' . $last_name));
-
-    require_once dirname(dirname(__DIR__)) . '/app/includes/bhw_patient_workflow.php';
-    if (is_array($emergencyMeta) && (int) ($emergencyMeta['triage_id'] ?? 0) > 0) {
-        BhwPatientWorkflow::onPatientPortalEmergency($pdo, $patient_user_id, [
-            'triage_id'   => (int) $emergencyMeta['triage_id'],
-            'referral_id' => (int) ($emergencyMeta['referral_id'] ?? 0),
-            'source'      => 'self_registration',
-        ]);
-        $providerId = (int) ($emergencyMeta['provider_id'] ?? 0);
-        $referralId = (int) ($emergencyMeta['referral_id'] ?? 0);
-        NotificationEvents::highRiskPatient(
-            $pdo,
+    try {
+        require_once dirname(dirname(__DIR__)) . '/app/core/BagoBarangayCentroids.php';
+        require_once dirname(dirname(__DIR__)) . '/app/core/GisDashboardService.php';
+        $gis = new GisDashboardService($pdo);
+        $gis->savePatientLocation(
             $patient_user_id,
-            trim($first_name . ' ' . $last_name),
-            'Emergency triage at registration',
-            $patient_user_id
+            $province,
+            $city_municipality,
+            $barangay,
+            $address,
+            null,
+            null,
+            'barangay_centroid'
         );
-        if ($referralId > 0) {
-            NotificationEvents::referralCreated($pdo, $referralId, $patient_user_id, $providerId > 0 ? $providerId : null, $patient_user_id);
+    } catch (Throwable $e) {
+        error_log('register.php GIS (non-fatal): ' . $e->getMessage());
+    }
+
+    try {
+        require_once dirname(dirname(__DIR__)) . '/app/includes/notification_events.php';
+        NotificationEvents::patientRegistered($pdo, $patient_user_id, trim($first_name . ' ' . $last_name));
+
+        require_once dirname(dirname(__DIR__)) . '/app/includes/bhw_patient_workflow.php';
+        if (is_array($emergencyMeta) && (int) ($emergencyMeta['triage_id'] ?? 0) > 0) {
+            BhwPatientWorkflow::onPatientPortalEmergency($pdo, $patient_user_id, [
+                'triage_id'   => (int) $emergencyMeta['triage_id'],
+                'referral_id' => (int) ($emergencyMeta['referral_id'] ?? 0),
+                'source'      => 'self_registration',
+            ]);
+            $providerId = (int) ($emergencyMeta['provider_id'] ?? 0);
+            $referralId = (int) ($emergencyMeta['referral_id'] ?? 0);
+            NotificationEvents::highRiskPatient(
+                $pdo,
+                $patient_user_id,
+                trim($first_name . ' ' . $last_name),
+                'Emergency triage at registration',
+                $patient_user_id
+            );
+            if ($referralId > 0) {
+                NotificationEvents::referralCreated($pdo, $referralId, $patient_user_id, $providerId > 0 ? $providerId : null, $patient_user_id);
+            }
+        } else {
+            BhwPatientWorkflow::onSelfRegistration($pdo, $patient_user_id);
         }
-    } else {
-        BhwPatientWorkflow::onSelfRegistration($pdo, $patient_user_id);
+    } catch (Throwable $e) {
+        error_log('register.php notify/workflow (non-fatal): ' . $e->getMessage());
     }
 
     unset(
