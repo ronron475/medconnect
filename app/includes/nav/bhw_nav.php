@@ -21,18 +21,8 @@ function bhw_nav_groups(): array
             'label' => 'Patient Management',
             'description' => 'Assist and update registered patient information',
             'children' => [
-                ['file' => 'patients/register.php', 'label' => 'Patient Assistance', 'hint' => 'Assist registered patients', 'icon' => 'user-plus', 'sidebar' => true],
                 ['file' => 'patients/list.php', 'label' => 'Patient List', 'hint' => 'Search barangay patients', 'icon' => 'list', 'sidebar' => true],
                 ['file' => 'patients/update.php', 'label' => 'Update Patient Info', 'hint' => 'Edit contact & medical data', 'icon' => 'edit', 'sidebar' => false],
-            ],
-        ],
-        [
-            'id' => 'triage',
-            'icon' => '<path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><rect x="8" y="2" width="8" height="4" rx="1" ry="1"/>',
-            'label' => 'Triage & Booking',
-            'description' => 'AI triage assessment and book consultation',
-            'children' => [
-                ['file' => 'triage/submit.php', 'label' => 'Triage & Book Consultation', 'hint' => 'AI symptom check & booking', 'icon' => 'clipboard'],
             ],
         ],
         [
@@ -87,10 +77,10 @@ function bhw_nav_groups(): array
         [
             'id' => 'settings',
             'icon' => '<circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>',
-            'label' => 'Settings',
+            'label' => 'Account',
             'description' => 'Manage profile and logout',
             'children' => [
-                ['file' => 'settings/profile.php', 'label' => 'Profile', 'hint' => 'Name, photo & contact', 'icon' => 'user', 'sidebar' => false],
+                ['file' => 'settings/profile.php', 'label' => 'Profile', 'hint' => 'Name, photo & assigned barangay', 'icon' => 'user', 'sidebar' => true],
                 ['type' => 'logout', 'label' => 'Logout'],
             ],
         ],
@@ -116,11 +106,13 @@ function bhw_nav_find_group_for_file(string $file): ?array
 function bhw_nav_resolve_file(string $file): string
 {
     $legacy = [
-        'appointments/book.php'      => 'triage/submit.php',
+        'appointments/book.php'      => 'patients/list.php',
         'appointments/schedule.php'  => 'consultations/index.php',
         'consultation/assist.php'    => 'consultations/index.php',
         'consultation/status.php'    => 'consultations/index.php',
-        'triage/encode.php'          => 'triage/submit.php',
+        'triage/encode.php'          => 'patients/list.php',
+        'triage/submit.php'          => 'patients/list.php',
+        'patients/register.php'      => 'patients/list.php',
         'patients/update.php'        => 'patients/list.php',
         'records/upload.php'         => 'records/index.php',
         'followup/reminders.php'     => 'followup/track.php',
@@ -217,8 +209,9 @@ function bhw_nav_sections(): array
             [$dash['file'], $dash['label'], $dash['icon']],
         ]],
         ['section' => 'Barangay Operations', 'items' => $collectItems([
-            'patients', 'triage', 'consultations', 'records', 'followup', 'referral',
+            'patients', 'consultations', 'records', 'followup', 'referral',
         ])],
         ['section' => 'Reports', 'items' => $collectItems(['reports'])],
+        ['section' => 'Account', 'items' => $collectItems(['settings'])],
     ];
 }

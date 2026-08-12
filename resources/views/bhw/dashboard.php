@@ -165,8 +165,7 @@ require __DIR__ . '/partials/layout_open.php';
               <td colspan="4">
                 <div class="bhw-dash-queue-empty">
                   No triage records in your barangay yet.
-                  <a href="patients/register.php">Open Patient Assistance</a> or
-                  <a href="triage/submit.php">submit triage</a>.
+                  <a href="patients/list.php">Open Patient List</a>.
                 </div>
               </td>
             </tr>
@@ -261,7 +260,7 @@ ob_start();
         '<td data-label="Urgency"><span class="bhw-badge ' + badgeClass(urgency) + '">' + esc(String(urgency).toUpperCase()) + '</span></td>' +
         '<td data-label="Status"><span class="bhw-badge bhw-badge-scheduled">' + esc(status) + '</span></td>' +
         '<td class="text-end" data-label="Action">' +
-          '<a class="bhw-btn-teal" href="triage/submit.php?patient_id=' + encodeURIComponent(pid) + '">Triage &amp; Book</a>' +
+          '<a class="bhw-btn-teal" href="patients/list.php?patient_id=' + encodeURIComponent(pid) + '">View Patient</a>' +
         '</td></tr>';
     }).join('');
     filterRows();

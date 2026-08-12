@@ -32,7 +32,7 @@ $bhw_extra_js = [
     </div>
     <div class="bhw-cons-hero__actions">
       <span class="bhw-cons-sync">Last sync: <span id="bhwConsLastSync">—</span></span>
-      <a href="../triage/submit.php" class="bhw-btn-teal">Triage &amp; Book</a>
+      <a href="../patients/list.php" class="bhw-btn-teal">Patient List</a>
     </div>
   </header>
 

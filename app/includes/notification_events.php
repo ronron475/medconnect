@@ -587,7 +587,7 @@ final class NotificationEvents
             'title'         => 'High-Risk Patient Detected',
             'message'       => "{$patientName}: {$reason}",
             'priority'      => 'emergency',
-            'action_url'    => '/views/bhw/triage/submit.php',
+            'action_url'    => '/views/bhw/patients/list.php',
             'related_table' => 'triage_results',
             'related_id'    => $patientId,
         ]);

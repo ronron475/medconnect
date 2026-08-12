@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 /**
  * BHW workflow business logic — shared across API endpoints.
  */
@@ -17,6 +17,7 @@ final class BhwWorkflows
     public static function listPatients(PDO $pdo, array $ctx, string $search = ''): array
     {
         [$clause, $params] = bhw_patient_sector_clause($pdo, $ctx, 'pr');
+        $join = bhw_pr_user_join('pr', 'u');
         $sql = "
             SELECT u.id, u.first_name, u.last_name, u.email, u.is_active, u.created_at,
                    pr.contact_number, pr.barangay, pr.purok, pr.age, pr.gender, pr.patient_code,
@@ -26,7 +27,7 @@ final class BhwWorkflows
                    (SELECT CONCAT(prv.first_name, ' ', prv.last_name) FROM consultations c
                     JOIN users prv ON prv.id = c.provider_id WHERE c.patient_id = u.id ORDER BY c.id DESC LIMIT 1) AS provider_name
             FROM users u
-            INNER JOIN patient_registrations pr ON pr.email = u.email
+            INNER JOIN patient_registrations pr ON {$join}
             WHERE u.role = 'patient' AND {$clause}
         ";
         if ($search !== '') {
@@ -52,11 +53,14 @@ final class BhwWorkflows
         if (!bhw_assert_patient_in_sector($pdo, $ctx, $patientId)) {
             return null;
         }
+        $join = bhw_pr_user_join('pr', 'u');
+        // pr.* is selected first so the trailing user columns win the name clash on
+        // `id` — callers pass a user id and must get the same id back.
         $stmt = $pdo->prepare("
-            SELECT u.id, u.first_name, u.last_name, u.email, u.is_active,
-                   pr.*
+            SELECT pr.*, pr.id AS registration_id,
+                   u.id, u.first_name, u.last_name, u.email, u.is_active
             FROM users u
-            LEFT JOIN patient_registrations pr ON pr.email = u.email
+            LEFT JOIN patient_registrations pr ON {$join}
             WHERE u.id = ? LIMIT 1
         ");
         $stmt->execute([$patientId]);
@@ -570,6 +574,69 @@ final class BhwWorkflows
         require_once __DIR__ . '/notification_events.php';
         NotificationEvents::referralCreated($pdo, $id, $patientId, $providerId > 0 ? $providerId : null, (int) ($_SESSION['user_id'] ?? 0));
         return $id;
+    }
+
+    /**
+     * BHW confirms how a referral was carried out (e.g. the patient went face-to-face).
+     *
+     * Only the fulfilment status moves; the clinical urgency recorded by the
+     * provider is never touched here. Patient and referring provider are both
+     * notified so the three sides stay in sync without manual follow-up.
+     */
+    public static function updateReferralStatus(PDO $pdo, array $ctx, int $referralId, string $status, string $note = ''): void
+    {
+        $allowed = ['pending', 'completed'];
+        if (!in_array($status, $allowed, true)) {
+            throw new InvalidArgumentException('Unsupported referral status.');
+        }
+
+        $stmt = $pdo->prepare('SELECT id, patient_id, provider_id, referral_type, status FROM digital_referrals WHERE id = ? LIMIT 1');
+        $stmt->execute([$referralId]);
+        $referral = $stmt->fetch(PDO::FETCH_ASSOC);
+        if (!$referral) {
+            throw new InvalidArgumentException('Referral not found.');
+        }
+
+        $patientId = (int) $referral['patient_id'];
+        if (!bhw_assert_patient_in_sector($pdo, $ctx, $patientId)) {
+            throw new InvalidArgumentException('ACCESS DENIED');
+        }
+
+        $pdo->prepare('UPDATE digital_referrals SET status = ? WHERE id = ?')->execute([$status, $referralId]);
+
+        $faceToFace = $status === 'completed';
+        $headline = $faceToFace ? 'Face-to-Face Referral Confirmed' : 'Referral Reopened';
+        $detail = $faceToFace
+            ? 'Your BHW confirmed you are proceeding with a face-to-face visit for this referral.'
+            : 'Your BHW reopened this referral for follow-up.';
+        if ($note !== '') {
+            $detail .= ' Note: ' . $note;
+        }
+
+        bhw_notify($pdo, $patientId, 'referral', $headline, $detail, ASSET_BASE . '/views/patient/dashboard.php#action-items');
+
+        $providerId = (int) $referral['provider_id'];
+        if ($providerId > 0) {
+            $name = $pdo->prepare("SELECT CONCAT(first_name,' ',last_name) FROM users WHERE id = ? LIMIT 1");
+            $name->execute([$patientId]);
+            $patientName = (string) ($name->fetchColumn() ?: 'Patient');
+            bhw_notify(
+                $pdo,
+                $providerId,
+                'referral',
+                $headline,
+                $patientName . ' — referral #' . $referralId . ' marked ' . $status . ' by the barangay health worker.'
+                    . ($note !== '' ? ' Note: ' . $note : ''),
+                ASSET_BASE . '/views/provider/referrals.php'
+            );
+        }
+
+        bhw_audit($pdo, $patientId, 'bhw_referral_status_updated', "BHW updated referral #{$referralId} to {$status}.", [
+            'referral_id' => $referralId,
+            'from'        => (string) $referral['status'],
+            'to'          => $status,
+            'note'        => $note,
+        ]);
     }
 
     public static function listFollowups(PDO $pdo, array $ctx, ?string $status = null): array
