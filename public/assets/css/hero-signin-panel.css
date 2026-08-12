@@ -616,19 +616,27 @@ body.landing-page.signin-active #signin-modal {
 
 .landing-page .hero-signin-panel .card-badges--compact .trust-badge {
   font-size: 0.625rem;
-  color: rgba(255, 255, 255, 0.82);
+  color: #0f766e;
   display: inline-flex;
   align-items: center;
   gap: 5px;
+}
+
+html[data-theme-resolved='dark'] .landing-page .hero-signin-panel .card-badges--compact .trust-badge {
+  color: rgba(255, 255, 255, 0.82) !important;
 }
 
 .landing-page .hero-signin-panel .card-badges--compact .trust-badge svg {
   width: 12px;
   height: 12px;
   flex-shrink: 0;
-  color: #5eead4;
+  color: #0f766e;
   stroke: currentColor;
   opacity: 1;
+}
+
+html[data-theme-resolved='dark'] .landing-page .hero-signin-panel .card-badges--compact .trust-badge svg {
+  color: #5eead4 !important;
 }
 
 /* Form fields — glass theme */
