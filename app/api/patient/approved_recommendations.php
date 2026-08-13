@@ -109,10 +109,10 @@ try {
                 ], 'Care Tips expired.');
             }
 
-            // Tips may be available (FAB) without the panel being open.
-            // Never instruct the client to auto-open; only an explicit click opens it.
+            // Auto-open only the first time after provider approval.
+            // After first_opened (or dismiss), patient must use the Care Tips button.
             $isNewApproval = !$firstOpened && !$dismissed;
-            $shouldAutoOpen = false;
+            $shouldAutoOpen = $isNewApproval;
             $reviewerName = trim((string) ($row['reviewer_name'] ?? ''));
             $assignedId = (int) ($row['assigned_provider_id'] ?? 0);
             $bookUrl = $assetBase . '/views/patient/triage.php?triage_id=' . $tipId;

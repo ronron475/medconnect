@@ -527,10 +527,11 @@
           true,
           { showRetry: false }
         );
+      } else if (t.indexOf('reconnecting') >= 0) {
+        // Must check before "connecting" — "reconnecting".indexOf("connecting") === 2.
+        setOverlay('● Reconnecting…', 'Temporary network interruption — your call will resume automatically.', true, { showRetry: false });
       } else if (t.indexOf('connecting') >= 0) {
         setOverlay('● Connecting…', 'Establishing a secure consultation channel.', true, { showRetry: false });
-      } else if (t.indexOf('reconnecting') >= 0) {
-        setOverlay('● Reconnecting…', 'Temporary network interruption — your call will resume automatically.', true, { showRetry: false });
       } else if (t.indexOf('poor network') >= 0) {
         setOverlay('Poor Network Connection', 'Move closer to your router or switch networks if possible.', true, { showRetry: false });
       } else if (t.indexOf('ended') >= 0 || t.indexOf('consultation ended') >= 0) {
@@ -570,7 +571,25 @@
       networkInterval = setInterval(async () => {
         const pc = getPeerConnection();
         const netEl = els.networkPill || q('mediaStatusConn');
-        if (!pc || !netEl) return;
+        if (!netEl) return;
+
+        const statusEl = q('callStatus');
+        const statusText = statusEl ? String(statusEl.textContent || '') : '';
+        const mediaLinked = !!(window.McWebrtcPeerCall && McWebrtcPeerCall.hasRemoteStream && McWebrtcPeerCall.hasRemoteStream());
+        const looksConnected = mediaLinked || /\bconnected\b/i.test(statusText);
+
+        if (!pc || !looksConnected) {
+          if (/reconnecting/i.test(statusText)) {
+            netEl.textContent = '◌ Reconnecting…';
+            netEl.dataset.state = 'reconnecting';
+            netEl.dataset.level = 'reconnecting';
+          } else if (/waiting|connecting/i.test(statusText)) {
+            netEl.textContent = '◌ Connecting…';
+            netEl.dataset.state = 'connecting';
+            netEl.dataset.level = 'connecting';
+          }
+          return;
+        }
 
         try {
           const stats = await pc.getStats();

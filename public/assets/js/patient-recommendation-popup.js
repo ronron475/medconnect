@@ -57,6 +57,8 @@
   var historyUrl = base + '/views/patient/my_health.php?tab=care-tips';
   /** Cached active approved tip (within 24h) for floating Care tips button reopen. */
   var lastActiveItem = null;
+  /** Prevent double auto-open while first-open event is saving. */
+  var autoOpenedTipIds = {};
 
   function tipsReadyPromptKey(tipId) {
     return 'mc_tips_ready_cancel_prompt_' + String(tipId || 0);
@@ -839,16 +841,31 @@
           return;
         }
 
-        // Page load, poll, back/forward, refresh: never open the panel.
+        // First approval only: pop Care Tips open once. After that, FAB click required.
+        var canAutoOpen = !!item.should_auto_open
+          && !item.first_opened
+          && !item.dismissed
+          && !autoOpenedTipIds[tipId]
+          && !shouldSuppressCareTipsAutoUi();
+        if (canAutoOpen) {
+          autoOpenedTipIds[tipId] = true;
+          clearThread();
+          openPanel();
+          playConversation(item);
+          postCareEvent('opened', tipId);
+          maybeShowTipsCancelPrompt(cancelPrompt || {
+            tip_id: item.id,
+            chief_complaint: item.chief_complaint,
+            upcoming_consultation: item.upcoming_consultation,
+          });
+          return;
+        }
+
+        // Later visits / refresh / poll: keep panel closed; FAB stays available.
         if (!careTipsOpen) {
           closePanel(true);
           showFab(true);
         }
-        maybeShowTipsCancelPrompt(cancelPrompt || {
-          tip_id: item.id,
-          chief_complaint: item.chief_complaint,
-          upcoming_consultation: item.upcoming_consultation,
-        });
         return;
       }
 
