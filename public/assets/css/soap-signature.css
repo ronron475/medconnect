@@ -227,6 +227,90 @@
   min-height: 44px;
 }
 
+.soap-success-modal__dialog {
+  width: min(460px, 100%);
+}
+
+.soap-success-modal__body {
+  text-align: center;
+  padding: 28px 22px 10px;
+}
+
+.soap-success-modal__icon {
+  display: flex;
+  justify-content: center;
+  margin: 0 0 14px;
+}
+
+.soap-success-modal__icon svg {
+  display: block;
+}
+
+.soap-success-modal__eyebrow {
+  margin: 0 0 6px;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: #0f766e;
+}
+
+.soap-success-modal .soap-finalize-modal__title {
+  margin-bottom: 10px;
+}
+
+.soap-success-modal .soap-finalize-modal__text {
+  margin: 0 auto;
+  max-width: 34ch;
+}
+
+.soap-success-modal__list {
+  list-style: none;
+  margin: 16px 0 0;
+  padding: 0;
+  display: grid;
+  gap: 8px;
+  text-align: left;
+}
+
+.soap-success-modal__list li {
+  position: relative;
+  padding: 10px 12px 10px 36px;
+  border-radius: 10px;
+  background: #f0fdfa;
+  border: 1px solid #ccfbf1;
+  color: #134e4a;
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.35;
+}
+
+.soap-success-modal__list li::before {
+  content: '';
+  position: absolute;
+  left: 12px;
+  top: 50%;
+  width: 16px;
+  height: 16px;
+  margin-top: -8px;
+  border-radius: 50%;
+  background:
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath fill='none' stroke='%23059669' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round' d='M3.5 8.2l2.8 2.8 6.2-6'%3E%3C/path%3E%3C/svg%3E") center / 12px 12px no-repeat,
+    #d1fae5;
+}
+
+.soap-success-modal__footer {
+  padding-top: 12px;
+}
+
+.soap-success-modal__footer .session-btn {
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+}
+
 @media (min-width: 640px) {
   .soap-sign__canvas-wrap {
     height: 200px;
@@ -292,4 +376,14 @@ html[data-theme-resolved='dark'] .soap-finalize-modal__text {
 html[data-theme-resolved='dark'] .soap-sign__confirm,
 html[data-theme-resolved='dark'] .soap-finalize-modal__title {
   color: #f8fafc;
+}
+
+html[data-theme-resolved='dark'] .soap-success-modal__eyebrow {
+  color: #5eead4;
+}
+
+html[data-theme-resolved='dark'] .soap-success-modal__list li {
+  background: #134e4a;
+  border-color: #115e59;
+  color: #ccfbf1;
 }

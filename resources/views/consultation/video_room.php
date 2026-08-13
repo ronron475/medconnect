@@ -1455,12 +1455,20 @@ if (session_status() === PHP_SESSION_ACTIVE) {
       }
 
       const rtc = McWebrtcPeerCall;
-      if (rtc.getCurrentCall() && (!rtc.isCallConnected() || !callHasRemoteStream)) {
-        rtc.closeCurrentCall();
-      }
-      if (rtc.isOutboundInFlight()) return;
       McWebrtcPeerCall.flushPendingCall();
-      if (rtc.getCurrentCall() && callHasRemoteStream) return;
+      if (callHasRemoteStream && rtc.isCallConnected()) return;
+
+      // Do not tear down an in-progress PeerJS negotiation every 2.5s — that
+      // was leaving patients stuck on Connecting / Reconnecting with no remote video.
+      if (rtc.isOutboundInFlight && rtc.isOutboundInFlight()) return;
+      if (rtc.isCallNegotiating && rtc.isCallNegotiating()) return;
+      if (rtc.getCurrentCall()) {
+        if (rtc.shouldAbandonCurrentCall && rtc.shouldAbandonCurrentCall()) {
+          rtc.closeCurrentCall({ silent: true });
+        } else {
+          return;
+        }
+      }
 
       const targetId = remotePeerId();
       console.log('Attempting to call:', targetId);
@@ -1505,13 +1513,13 @@ if (session_status() === PHP_SESSION_ACTIVE) {
       if (userRole === 'provider') {
         patientMayDial = true;
       } else if (userRole === 'patient') {
-        // If the doctor is slow to dial, let the patient initiate after a short grace period.
+        // Prefer answering the doctor's dial; only fall back to patient dial after grace.
         setTimeout(() => {
           if (!callHasRemoteStream && !endingCall) {
             patientMayDial = true;
             startCall();
           }
-        }, 6000);
+        }, 12000);
       }
       flushPendingCall();
       openDataChannel();
@@ -1520,7 +1528,7 @@ if (session_status() === PHP_SESSION_ACTIVE) {
       callInterval = setInterval(() => {
         openDataChannel();
         startCall();
-      }, 2500);
+      }, 4000);
     }
 
     function isLocalDevHost() {

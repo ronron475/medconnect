@@ -26,8 +26,11 @@
   var reconnectAttempts = 0;
   var wiredCalls = typeof WeakSet !== 'undefined' ? new WeakSet() : null;
   var intentionalLeave = false;
+  var callStartedAt = 0;
   var MAX_RECONNECT_ATTEMPTS = 6;
   var ICE_DISCONNECT_GRACE_MS = 2800;
+  /** Allow ICE/media to settle before a redial tears the call down. */
+  var NEGOTIATION_GRACE_MS = 12000;
 
   var config = {
     peerOptions: {},
@@ -406,6 +409,7 @@
     currentCall = call;
     global.__mcCurrentCall = call;
     outboundCallInFlight = false;
+    callStartedAt = Date.now();
     if (!callHasRemoteStream) callHasRemoteStream = false;
     emit('call-started', { call: call, peer: call.peer });
 
@@ -608,12 +612,56 @@
       var conn = pc.connectionState || '';
       if (ice === 'connected' || ice === 'completed' || conn === 'connected') return true;
     }
-    return !!(currentCall && currentCall.open);
+    // Require remote media — PeerJS "open" alone is not a usable consult link.
+    return !!(currentCall && callHasRemoteStream);
+  }
+
+  function getCallAgeMs() {
+    if (!currentCall || !callStartedAt) return 0;
+    return Math.max(0, Date.now() - callStartedAt);
+  }
+
+  /** True while a MediaConnection is alive and still waiting for remote A/V. */
+  function isCallNegotiating() {
+    if (!currentCall || callHasRemoteStream || intentionalLeave) return false;
+    if (outboundCallInFlight) return true;
+    var pc = getPeerConnection();
+    if (pc) {
+      var ice = String(pc.iceConnectionState || '');
+      var conn = String(pc.connectionState || '');
+      if (ice === 'failed' || ice === 'closed' || conn === 'failed' || conn === 'closed') {
+        return false;
+      }
+      if (
+        ice === 'new' || ice === 'checking' || ice === 'connected' || ice === 'completed' ||
+        conn === 'new' || conn === 'connecting' || conn === 'connected'
+      ) {
+        return getCallAgeMs() < NEGOTIATION_GRACE_MS;
+      }
+    }
+    return getCallAgeMs() < NEGOTIATION_GRACE_MS;
+  }
+
+  /** True when the current attempt is dead or stuck past the negotiation grace. */
+  function shouldAbandonCurrentCall() {
+    if (!currentCall && !outboundCallInFlight) return false;
+    if (callHasRemoteStream && isCallConnected()) return false;
+    if (isCallNegotiating()) return false;
+    var pc = getPeerConnection();
+    if (pc) {
+      var ice = String(pc.iceConnectionState || '');
+      var conn = String(pc.connectionState || '');
+      if (ice === 'failed' || ice === 'closed' || conn === 'failed' || conn === 'closed') {
+        return true;
+      }
+    }
+    return getCallAgeMs() >= NEGOTIATION_GRACE_MS;
   }
 
   function closeCurrentCall(options) {
     options = options || {};
     clearRecoveryTimers();
+    callStartedAt = 0;
     if (currentCall) {
       if (currentCall._mcRemoteStream) {
         try {
@@ -671,6 +719,8 @@
     hasRemoteStream: function () { return callHasRemoteStream; },
     isOutboundInFlight: function () { return outboundCallInFlight; },
     isCallConnected: isCallConnected,
+    isCallNegotiating: isCallNegotiating,
+    shouldAbandonCurrentCall: shouldAbandonCurrentCall,
     flushPendingCall: flushPendingCall,
     answerCall: answerCall,
     openDataChannel: openDataChannel,

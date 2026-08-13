@@ -2362,6 +2362,31 @@ body.consultation-mobile-call-fullscreen .mc-provider-video-dock .mc-session-flo
   </div>
 </div>
 
+<div id="soapSuccessModal" class="soap-finalize-modal soap-success-modal" aria-hidden="true">
+  <div class="soap-finalize-modal__dialog soap-success-modal__dialog" role="dialog" aria-modal="true" aria-labelledby="soapSuccessTitle">
+    <div class="soap-finalize-modal__body soap-success-modal__body">
+      <div class="soap-success-modal__icon" aria-hidden="true">
+        <svg viewBox="0 0 48 48" width="48" height="48" fill="none">
+          <circle cx="24" cy="24" r="22" fill="#ecfdf5" stroke="#86efac" stroke-width="2"/>
+          <path d="M15 24.5l5.5 5.5L33 17.5" stroke="#059669" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </div>
+      <p class="soap-success-modal__eyebrow">Consultation #<?= (int) $consultation_id ?></p>
+      <h2 id="soapSuccessTitle" class="soap-finalize-modal__title">SOAP note finalized</h2>
+      <p id="soapSuccessText" class="soap-finalize-modal__text">This clinical record is now saved. The patient can view it in My Health, and it appears in your Consultation History.</p>
+      <ul class="soap-success-modal__list">
+        <li>Record is read-only</li>
+        <li>Available in patient My Health</li>
+        <li>Saved to Consultation History</li>
+      </ul>
+    </div>
+    <div class="soap-finalize-modal__footer soap-success-modal__footer">
+      <button type="button" class="session-btn" id="soapSuccessStay">View this record</button>
+      <a href="<?= ASSET_BASE ?>/views/provider/consultation_history.php?patient_id=<?= (int) ($c['patient_id'] ?? 0) ?>" class="session-btn primary" id="soapSuccessHistory">View Consultation History</a>
+    </div>
+  </div>
+</div>
+
 <script src="<?= ASSET_BASE ?>/assets/js/messages-delete.js?v=3"></script>
 <?php $soapSigJsVer = (int) @filemtime(ASSETS_PATH . '/js/soap-signature.js'); ?>
 <script src="<?= ASSET_BASE ?>/assets/js/soap-signature.js?v=<?= $soapSigJsVer ?: time() ?>"></script>
@@ -3602,6 +3627,28 @@ function closeSoapFinalizeModal() {
     modal.setAttribute('aria-hidden', 'true');
 }
 
+function openSoapSuccessModal(message) {
+    const modal = document.getElementById('soapSuccessModal');
+    const text = document.getElementById('soapSuccessText');
+    if (!modal) return;
+    if (text && message) {
+        text.textContent = message;
+    }
+    modal.classList.add('is-open');
+    modal.setAttribute('aria-hidden', 'false');
+    const focusBtn = document.getElementById('soapSuccessHistory');
+    if (focusBtn && typeof focusBtn.focus === 'function') {
+        window.setTimeout(function () { focusBtn.focus(); }, 40);
+    }
+}
+
+function closeSoapSuccessModal() {
+    const modal = document.getElementById('soapSuccessModal');
+    if (!modal) return;
+    modal.classList.remove('is-open');
+    modal.setAttribute('aria-hidden', 'true');
+}
+
 function initSoapSignatureUi() {
     if (soapUiReady) return;
     soapUiReady = true;
@@ -3703,15 +3750,25 @@ async function finalizeConsultation() {
     const data = await saveSOAP(true);
     if (confirmBtn) confirmBtn.disabled = false;
     if (data && data.success) {
-        alert(data.message || 'SOAP Note finalized successfully.');
-        window.location.href = '<?= ASSET_BASE ?>/views/provider/consultation_history.php';
+        openSoapSuccessModal(
+            data.message ||
+            'SOAP note finalized successfully. The patient can now view this record in My Health.'
+        );
+        const stayBtn = document.getElementById('soapSuccessStay');
+        if (stayBtn && !stayBtn.dataset.bound) {
+            stayBtn.dataset.bound = '1';
+            stayBtn.addEventListener('click', function () {
+                window.location.reload();
+            });
+        }
         return;
     }
     if (finalizeBtn) finalizeBtn.disabled = false;
+    const failMsg = (data && data.message) ? data.message : 'Could not finalize consultation.';
     if (err) {
-        err.textContent = (data && data.message) ? data.message : 'Could not finalize consultation.';
+        err.textContent = failMsg;
     } else {
-        alert((data && data.message) ? data.message : 'Could not finalize consultation.');
+        alert(failMsg);
     }
 }
 
