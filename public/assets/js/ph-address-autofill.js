@@ -14,8 +14,10 @@
   const FUZZY_BARANGAY_MAX_DIST = 2;
   const STREET_REVIEW_THRESHOLD = 0.65;
 
-  const GEO_NOISE_RE = /\b(city|of|oe|bgo|bago|negros|occidental|occ|oriental|philippines|ph|neg|province|region)\b/i;
+  const GEO_NOISE_RE = /\b(city|of|oe|bgo|bago|negros|occidental|occid|occ|oriental|philippines|ph|neg|province|region)\b/i;
   const PUROK_PREFIX_RE = /^(purok|sitio|brgy\.?|barangay|blk\.?|block|phase|subd\.?|subdivision)\b/i;
+  /** Stop purok capture before city/province/barangay tokens (PhilID order). */
+  const PUROK_STOP_RE = /\b(city|of|oe|bago|bgo|negros|occidental|occid|occ|oriental|philippines|province|region|municipality)\b/i;
 
   function norm(s) {
     return String(s || '')
@@ -126,19 +128,56 @@
     let s = String(segment || '');
     // Order matters: longest/most-specific patterns first.
     const patterns = [
-      /,?\s*city\s+of\s+bago,?\s*negros\s+occ(?:idental)?\.?/gi,
-      /,?\s*bago\s+city,?\s*negros\s+occ(?:idental)?\.?/gi,
+      /,?\s*city\s+of\s+bago,?\s*negros\s+occ(?:id|idental)?\.?/gi,
+      /,?\s*bago\s+city,?\s*negros\s+occ(?:id|idental)?\.?/gi,
       /,?\s*city\s+of\s+bago/gi,
       /,?\s*bago\s+city/gi,
+      /,?\s*negros\s+occ(?:id|idental)?\.?/gi,
       /\bof\s+bago\s+neg(?:ros)?\.?\b/gi,
       /\bof\s+bago\b/gi,
       /\bcity\s+oe\s+bago\b/gi,   // common OCR variant
       /\bc1ty\s+of\s+bago\b/gi,  // OCR 1->i confusion
+      /\bocc(?:id|idental)\b/gi,
     ];
     for (const re of patterns) {
       s = s.replace(re, '');
     }
     return s.replace(/[,\s]+$/g, '').replace(/^[,\s]+/, '').replace(/\s+/g, ' ').trim();
+  }
+
+  /** Keep only the purok/sitio phrase; drop barangay / city / province that OCR glued on. */
+  function trimPurokPhrase(phrase, barangayName) {
+    let s = String(phrase || '').replace(/\s+/g, ' ').trim();
+    if (!s) return '';
+
+    s = stripBagoCityFragments(s);
+
+    if (barangayName) {
+      const bn = norm(barangayName);
+      if (bn) {
+        const re = new RegExp('\\b' + bn.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '\\b', 'ig');
+        s = s.replace(re, ' ');
+      }
+    }
+
+    const stop = s.search(PUROK_STOP_RE);
+    if (stop > 0) s = s.slice(0, stop);
+
+    s = s
+      .replace(GEO_NOISE_RE, ' ')
+      .replace(/\s+/g, ' ')
+      .replace(/[,\s]+$/g, '')
+      .replace(/^[,\s]+/, '')
+      .trim();
+
+    // Prefer "PUROK NAME" only (first 1–3 tokens after the prefix).
+    const m = s.match(/^(purok|sitio|brgy\.?|barangay|blk\.?|block)\s+(.+)$/i);
+    if (m) {
+      const rest = m[2].split(/\s+/).filter(Boolean).slice(0, 3).join(' ');
+      if (rest) return toOfficialCase(`${m[1]} ${rest}`);
+    }
+
+    return toOfficialCase(s);
   }
 
   function preprocessRawAddress(raw) {
@@ -209,7 +248,7 @@
   function isGeoNoiseSegment(segment) {
     const t = norm(segment);
     if (!t || t.length < 2) return true;
-    if (/^(city|of|oe|bgo|bago|negros|occidental|occ|oriental|philippines|ph|neg|province|region)$/.test(t)) {
+    if (/^(city|of|oe|bgo|bago|negros|occidental|occid|occ|oriental|philippines|ph|neg|province|region)$/.test(t)) {
       return true;
     }
     if (/^city\s+of(\s+bago)?$/.test(t)) return true;
@@ -244,7 +283,7 @@
     const ocrClean = (w) => norm(w).replace(/[1l|]/g, 'i').replace(/0/g, 'o');
 
     function isGeoNoiseWord(w) {
-      return /^(city|of|oe|0f|bgo|bago|negros|occidental|occ|oriental|philippines|ph|neg|province|region|go|cty|ctty|c1ty)$/.test(w);
+      return /^(city|of|oe|0f|bgo|bago|negros|occidental|occid|occ|oriental|philippines|ph|neg|province|region|go|cty|ctty|c1ty)$/.test(w);
     }
 
     const STRUCTURAL_WORDS = /^(purok|sitio|brgy\.?|barangay|blk\.?|block|phase|subd\.?|subdivision|street|st\.?|house|lot|no\.?)$/i;
@@ -383,42 +422,68 @@
       return { label: toOfficialCase(best), confidence: 0.82, source: 'catalog-fuzzy' };
     }
 
+    // Capture purok name only up to a comma / geo keyword so we do not swallow
+    // barangay + "CITY OF BAGO, NEGROS OCCIDENTAL" (which produced "OCCID").
     const extracted = addressNorm.match(
-      /\b(purok|sitio|brgy\.?|barangay|blk\.?|block)\s+([a-z0-9][a-z0-9\s\-]{1,40})/i
+      /\b(purok|sitio|brgy\.?|barangay|blk\.?|block)\s+([a-z0-9][a-z0-9\-]*(?:\s+[a-z0-9][a-z0-9\-]*){0,2})/i
     );
     if (extracted) {
-      let phrase = `${extracted[1]} ${extracted[2]}`
-        .replace(GEO_NOISE_RE, '')
-        .replace(/[,\s]+$/g, '')
-        .trim();
+      const phrase = trimPurokPhrase(`${extracted[1]} ${extracted[2]}`, barangayName);
       if (phrase.length >= 4) {
-        return { label: toOfficialCase(phrase), confidence: 0.88, source: 'extracted' };
+        return { label: phrase, confidence: 0.88, source: 'extracted' };
       }
     }
 
     return null;
   }
 
+  /**
+   * PhilID-style street line:
+   *   PUROK BALATONG, ILIJAN, CITY OF BAGO, NEGROS OCCIDENTAL
+   */
   function formatOfficialStreet(locality, parts) {
     const segments = [];
+    const barangayName = parts.barangay?.brgy_name || '';
+    const barangayNorm = norm(barangayName);
 
-    // Safety-net: strip any residual Bago City phrases from the locality
-    // (these should have been caught earlier, but belt-and-suspenders).
-    const cleanLocality = locality ? stripBagoCityFragments(locality).replace(/\s+/g, ' ').trim() : '';
-    if (cleanLocality) segments.push(toOfficialCase(cleanLocality));
+    const localityParts = String(locality || '')
+      .split(',')
+      .map((seg) => stripBagoCityFragments(seg).replace(/\s+/g, ' ').trim())
+      .filter(Boolean)
+      .map((seg) => {
+        if (PUROK_PREFIX_RE.test(seg)) {
+          return trimPurokPhrase(seg, barangayName);
+        }
+        // House / street line: drop glued barangay + geo noise only.
+        let s = seg;
+        if (barangayNorm) {
+          s = s.replace(new RegExp('\\b' + barangayNorm.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '\\b', 'ig'), ' ');
+        }
+        s = s.replace(GEO_NOISE_RE, ' ').replace(/\s+/g, ' ').trim();
+        return toOfficialCase(s);
+      })
+      .filter((seg) => seg && (!barangayNorm || norm(seg) !== barangayNorm));
 
-    if (parts.barangay?.brgy_name) {
-      const bName = toOfficialCase(parts.barangay.brgy_name);
-      if (!cleanLocality || !norm(cleanLocality).includes(norm(bName))) {
-        segments.push(bName);
+    for (const seg of localityParts) {
+      if (!segments.some((existing) => norm(existing) === norm(seg))) {
+        segments.push(seg);
       }
     }
 
-    // Always emit the canonical "BAGO CITY" (not "CITY OF BAGO") for consistency.
+    if (barangayName) {
+      segments.push(toOfficialCase(barangayName));
+    }
+
+    // Match PhilID wording: "CITY OF BAGO" (not "BAGO CITY").
     if (parts.city && isBagoCityRecord(parts.city)) {
-      segments.push('BAGO CITY');
+      segments.push('CITY OF BAGO');
     } else if (parts.city?.city_name) {
-      segments.push(toOfficialCase(parts.city.city_name));
+      const cn = norm(parts.city.city_name);
+      if (cn.endsWith(' city') && !cn.startsWith('city of ')) {
+        segments.push(toOfficialCase('CITY OF ' + parts.city.city_name.replace(/\s+city$/i, '')));
+      } else {
+        segments.push(toOfficialCase(parts.city.city_name));
+      }
     }
 
     if (parts.province?.province_name) {
@@ -456,6 +521,30 @@
     let locality = purokMatch?.label || extractLocalityFromAddress(addressRaw, parts);
     if (!locality) {
       locality = extractLocalityFromAddress(addressRaw, { ...parts, barangay: null });
+    }
+
+    // Keep a short house/street prefix before purok when present on the same line.
+    // e.g. "TORRES STREET PUROK KAPAYAPAS ..." → "TORRES STREET, PUROK KAPAYAPAS"
+    if (purokMatch?.label) {
+      const prefixMatch = addressNorm.match(
+        /^([a-z0-9][a-z0-9\s\-\/]{1,40}?)\s+\b(purok|sitio|blk\.?|block)\b/
+      );
+      if (prefixMatch) {
+        const prefix = toOfficialCase(
+          prefixMatch[1]
+            .replace(GEO_NOISE_RE, ' ')
+            .replace(/\s+/g, ' ')
+            .trim()
+        );
+        if (
+          prefix
+          && prefix.length >= 3
+          && !norm(purokMatch.label).includes(norm(prefix))
+          && !PUROK_STOP_RE.test(norm(prefix))
+        ) {
+          locality = `${prefix}, ${purokMatch.label}`;
+        }
+      }
     }
 
     const street = formatOfficialStreet(locality, parts);
