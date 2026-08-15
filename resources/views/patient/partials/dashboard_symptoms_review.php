@@ -100,7 +100,7 @@ if ($review_provider_name !== '' && !empty($symptoms_review_booking['assigned_ha
 
       <?php if (!empty($symptoms_review_pending['complaint'])): ?>
       <div class="pdash-care-concern">
-        <span class="pdash-care-concern__label">Your concern</span>
+        <span class="pdash-care-concern__label">Patient complaint</span>
         <p class="pdash-care-concern__text"><?= htmlspecialchars($symptoms_review_pending['complaint']) ?></p>
       </div>
       <?php endif; ?>
