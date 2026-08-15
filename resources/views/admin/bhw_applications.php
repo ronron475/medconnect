@@ -130,7 +130,7 @@ require_once __DIR__ . '/partials/layout_open.php';
             </div>
             <button type="button" class="admin-modal-close" id="bhwModalClose" aria-label="Close">&times;</button>
         </div>
-        <form id="bhwAppForm" class="mc-staff-form" novalidate>
+        <form id="bhwAppForm" class="mc-staff-form admin-modal-body" novalidate>
             <input type="hidden" name="application_id" id="bhwApplicationId" value="">
 
             <section class="mc-form-section">
@@ -236,10 +236,10 @@ require_once __DIR__ . '/partials/layout_open.php';
     </div>
 </div>
 
-<link rel="stylesheet" href="<?= ASSET_BASE ?>/assets/css/admin-staff-applications.css?v=1.0">
-<link rel="stylesheet" href="<?= ASSET_BASE ?>/assets/css/admin-staff-forms.css?v=1.3">
-<link rel="stylesheet" href="<?= ASSET_BASE ?>/assets/css/admin-bhw-applications.css?v=1.1">
-<script src="<?= ASSET_BASE ?>/assets/js/admin-staff-form-utils.js?v=1.1"></script>
+<link rel="stylesheet" href="<?= ASSET_BASE ?>/assets/css/admin-staff-applications.css?v=1.2">
+<link rel="stylesheet" href="<?= ASSET_BASE ?>/assets/css/admin-staff-forms.css?v=1.4">
+<link rel="stylesheet" href="<?= ASSET_BASE ?>/assets/css/admin-bhw-applications.css?v=1.2">
+<script src="<?= ASSET_BASE ?>/assets/js/admin-staff-form-utils.js?v=1.2"></script>
 <script src="<?= ASSET_BASE ?>/assets/js/admin-staff-applications.js?v=1.0"></script>
 <script>
 window.MC_BHW_APP = {

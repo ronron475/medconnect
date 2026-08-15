@@ -257,4 +257,68 @@
     enhanceFileInputsIn: enhanceFileInputsIn,
     syncFileInputDisplay: syncFileInputDisplay,
   };
+
+  var staffModalLockCount = 0;
+  var staffModalScrollY = 0;
+
+  function isStaffModalOpen(modal) {
+    if (!modal) return false;
+    var display = (modal.style && modal.style.display) || '';
+    if (display === 'none') return false;
+    if (display === 'flex' || display === 'block') return true;
+    return window.getComputedStyle(modal).display !== 'none';
+  }
+
+  function lockStaffModalScroll() {
+    if (staffModalLockCount === 0) {
+      staffModalScrollY = window.scrollY || window.pageYOffset || 0;
+      document.documentElement.classList.add('mc-staff-modal-open');
+      document.body.classList.add('mc-staff-modal-open');
+      document.body.style.top = '-' + staffModalScrollY + 'px';
+    }
+    staffModalLockCount += 1;
+  }
+
+  function unlockStaffModalScroll() {
+    staffModalLockCount = Math.max(0, staffModalLockCount - 1);
+    if (staffModalLockCount === 0) {
+      document.documentElement.classList.remove('mc-staff-modal-open');
+      document.body.classList.remove('mc-staff-modal-open');
+      document.body.style.top = '';
+      window.scrollTo(0, staffModalScrollY);
+    }
+  }
+
+  function bindStaffModalShell(modal) {
+    if (!modal || modal.dataset.mcStaffShellBound === '1') return;
+    modal.dataset.mcStaffShellBound = '1';
+    var locked = false;
+
+    function sync() {
+      var open = isStaffModalOpen(modal);
+      if (open && !locked) {
+        lockStaffModalScroll();
+        locked = true;
+        var scroller = modal.querySelector('.admin-modal-body, form.mc-staff-form');
+        if (scroller) scroller.scrollTop = 0;
+      } else if (!open && locked) {
+        unlockStaffModalScroll();
+        locked = false;
+      }
+    }
+
+    var observer = new MutationObserver(sync);
+    observer.observe(modal, { attributes: true, attributeFilter: ['style', 'class'] });
+    sync();
+  }
+
+  function bindAllStaffModals() {
+    document.querySelectorAll('.mc-staff-modal').forEach(bindStaffModalShell);
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', bindAllStaffModals);
+  } else {
+    bindAllStaffModals();
+  }
 })(window);
