@@ -61,12 +61,16 @@ try {
         </select>
       </div>
       <div class="fu-field">
-        <label for="fuFrom">From</label>
-        <input id="fuFrom" type="date" name="from" value="<?= htmlspecialchars($date_from) ?>" class="fu-input">
+        <label for="fuFrom">From date</label>
+        <div class="fu-date">
+          <input id="fuFrom" type="date" name="from" value="<?= htmlspecialchars($date_from) ?>" class="fu-input" placeholder="YYYY-MM-DD" aria-label="From date">
+        </div>
       </div>
       <div class="fu-field">
-        <label for="fuTo">To</label>
-        <input id="fuTo" type="date" name="to" value="<?= htmlspecialchars($date_to) ?>" class="fu-input">
+        <label for="fuTo">To date</label>
+        <div class="fu-date">
+          <input id="fuTo" type="date" name="to" value="<?= htmlspecialchars($date_to) ?>" class="fu-input" placeholder="YYYY-MM-DD" aria-label="To date">
+        </div>
       </div>
       <div class="fu-field fu-field--search">
         <label for="fuSearch">Search Patient</label>
