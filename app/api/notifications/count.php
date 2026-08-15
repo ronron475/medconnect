@@ -11,6 +11,7 @@ Api::startJson();
 Api::requireAuth();
 
 $userId = (int) $_SESSION['user_id'];
+Api::releaseSession();
 
 try {
     Api::success([

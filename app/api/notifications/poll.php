@@ -12,6 +12,7 @@ Api::requireAuth();
 
 $userId  = (int) $_SESSION['user_id'];
 $sinceId = (int) ($_GET['since_id'] ?? 0);
+Api::releaseSession();
 
 try {
     $filters = ['limit' => 20, 'since_id' => $sinceId > 0 ? $sinceId : null];

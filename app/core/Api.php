@@ -92,6 +92,14 @@ final class Api
         }
     }
 
+    /** Release the PHP session lock so concurrent badge/poll requests are not queued. */
+    public static function releaseSession(): void
+    {
+        if (session_status() === PHP_SESSION_ACTIVE) {
+            session_write_close();
+        }
+    }
+
     public static function requireCsrf(): void
     {
         require_once dirname(__DIR__) . '/includes/auth_guard.php';

@@ -18,6 +18,7 @@ if (!auth_csrf_validate($_POST['csrf_token'] ?? '')) {
 
 $userId = (int) $_SESSION['user_id'];
 $notificationId = (int) ($_POST['notification_id'] ?? 0);
+Api::releaseSession();
 $action = $_POST['action'] ?? '';
 
 if ($notificationId <= 0) {

@@ -4,7 +4,7 @@
 (function () {
   'use strict';
 
-  const POLL_INTERVAL = 30000;
+  const POLL_INTERVAL = 8000;
 
   let lastId = 0;
   let pollTimer = null;
@@ -210,6 +210,39 @@
     return String(s || '').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
   }
 
+  function currentBadgeCount() {
+    const el = document.querySelector('[data-notif-badge]');
+    if (!el) return 0;
+    return Math.max(0, parseInt(el.dataset.count, 10) || 0);
+  }
+
+  function extractUnreadCount(data) {
+    if (!data) return null;
+    if (typeof data.unread_count !== 'undefined' && data.unread_count !== null) {
+      return Math.max(0, parseInt(data.unread_count, 10) || 0);
+    }
+    if (data.data && typeof data.data.unread_count !== 'undefined' && data.data.unread_count !== null) {
+      return Math.max(0, parseInt(data.data.unread_count, 10) || 0);
+    }
+    return null;
+  }
+
+  function applyUnreadFromResponse(data) {
+    const count = extractUnreadCount(data);
+    if (count === null) return;
+    updateBadge(count);
+  }
+
+  function markItemReadInDom(id) {
+    if (!id) return;
+    document.querySelectorAll('.mc-notif-item[data-id="' + id + '"]').forEach(function (row) {
+      row.classList.remove('is-unread');
+      row.querySelectorAll('.mc-notif-meta span').forEach(function (span) {
+        if ((span.textContent || '').trim() === 'Unread') span.remove();
+      });
+    });
+  }
+
   function updateBadge(count) {
     const n = Math.max(0, parseInt(count, 10) || 0);
     const label = n > 99 ? '99+' : String(n);
@@ -233,9 +266,6 @@
         detail: { unread_count: n, source: 'notifications-ui' },
       }));
     } catch (e) { /* ignore */ }
-    if (typeof window.MedConnectNavBadgesRefresh === 'function') {
-      window.MedConnectNavBadgesRefresh();
-    }
   }
 
   function teardownEscalator(list) {
@@ -420,28 +450,60 @@
       fd.append('notification_id', String(id));
       if (action === 'delete') {
         fd.append('action', 'delete');
-        await fetch(API_BASE + 'manage.php', { method: 'POST', body: fd, credentials: 'same-origin' });
-      } else {
-        fd.append('action', action);
-        const res = await fetch(API_BASE + 'mark_read.php', { method: 'POST', body: fd, credentials: 'same-origin' });
+        const res = await fetch(API_BASE + 'manage.php', {
+          method: 'POST',
+          body: fd,
+          credentials: 'same-origin',
+          cache: 'no-store',
+          keepalive: true,
+        });
         const data = await res.json();
-        if (data.success) updateBadge(data.unread_count || 0);
+        if (data.success) applyUnreadFromResponse(data);
+      } else {
+        if (action === 'read') {
+          markItemReadInDom(id);
+          updateBadge(Math.max(0, currentBadgeCount() - 1));
+        } else if (action === 'unread') {
+          updateBadge(currentBadgeCount() + 1);
+        }
+        fd.append('action', action);
+        const res = await fetch(API_BASE + 'mark_read.php', {
+          method: 'POST',
+          body: fd,
+          credentials: 'same-origin',
+          cache: 'no-store',
+          keepalive: true,
+          headers: { Accept: 'application/json' },
+        });
+        const data = await res.json();
+        if (data.success) applyUnreadFromResponse(data);
       }
       loadDropdown();
     } catch (e) { /* silent */ }
   }
 
   async function fetchJson(url) {
-    const res = await fetch(url, { credentials: 'same-origin', headers: { Accept: 'application/json' } });
+    const res = await fetch(url, {
+      credentials: 'same-origin',
+      cache: 'no-store',
+      headers: { Accept: 'application/json' },
+    });
     return res.json();
+  }
+
+  async function refreshCount() {
+    try {
+      const data = await fetchJson(API_BASE + 'count.php?_=' + Date.now());
+      if (data.success) applyUnreadFromResponse(data);
+    } catch (e) { /* silent */ }
   }
 
   async function loadDropdown() {
     try {
-      const data = await fetchJson(API_BASE + 'list.php?limit=10');
+      const data = await fetchJson(API_BASE + 'list.php?limit=10&_=' + Date.now());
       if (data.success) {
         renderList(data.notifications);
-        updateBadge(data.unread_count || 0);
+        applyUnreadFromResponse(data);
         if (data.notifications.length) {
           lastId = Math.max(lastId, ...data.notifications.map(function (n) { return n.notification_id; }));
         }
@@ -451,10 +513,10 @@
 
   async function poll() {
     try {
-      const url = API_BASE + 'poll.php' + (lastId ? '?since_id=' + lastId : '');
+      const url = API_BASE + 'poll.php' + (lastId ? '?since_id=' + lastId + '&_=' + Date.now() : '?_=' + Date.now());
       const data = await fetchJson(url);
       if (data.success) {
-        updateBadge(data.unread_count || 0);
+        applyUnreadFromResponse(data);
         if (data.last_id) lastId = Math.max(lastId, data.last_id);
         if (panelOpen && data.notifications && data.notifications.length) {
           loadDropdown();
@@ -465,25 +527,49 @@
 
   async function markRead(id) {
     if (!id) return;
+    const row = document.querySelector('.mc-notif-item[data-id="' + id + '"]');
+    const wasUnread = !!(row && row.classList.contains('is-unread'));
+    if (wasUnread) {
+      markItemReadInDom(id);
+      updateBadge(Math.max(0, currentBadgeCount() - 1));
+    }
     try {
       const fd = new FormData();
       fd.append('csrf_token', csrf());
       fd.append('notification_id', String(id));
-      const res = await fetch(API_BASE + 'mark_read.php', { method: 'POST', body: fd, credentials: 'same-origin' });
+      const res = await fetch(API_BASE + 'mark_read.php', {
+        method: 'POST',
+        body: fd,
+        credentials: 'same-origin',
+        cache: 'no-store',
+        keepalive: true,
+        headers: { Accept: 'application/json' },
+      });
       const data = await res.json();
-      if (data.success) updateBadge(data.unread_count || 0);
+      if (data.success) applyUnreadFromResponse(data);
     } catch (e) { /* silent */ }
   }
 
   async function markAllRead() {
+    updateBadge(0);
+    document.querySelectorAll('.mc-notif-item.is-unread').forEach(function (row) {
+      markItemReadInDom(itemId(row));
+    });
     try {
       const fd = new FormData();
       fd.append('csrf_token', csrf());
       fd.append('action', 'all');
-      const res = await fetch(API_BASE + 'mark_read.php', { method: 'POST', body: fd, credentials: 'same-origin' });
+      const res = await fetch(API_BASE + 'mark_read.php', {
+        method: 'POST',
+        body: fd,
+        credentials: 'same-origin',
+        cache: 'no-store',
+        keepalive: true,
+        headers: { Accept: 'application/json' },
+      });
       const data = await res.json();
       if (data.success) {
-        updateBadge(0);
+        applyUnreadFromResponse(data);
         loadDropdown();
       }
     } catch (e) { /* silent */ }
@@ -524,6 +610,7 @@
     btn.setAttribute('aria-expanded', 'true');
     panelOpen = true;
     syncNotifOpenState();
+    refreshCount();
     loadDropdown();
   }
 
@@ -613,7 +700,7 @@
       if (statusEl && statusEl.value === 'unread') params.set('unread_only', '1');
       if (statusEl && statusEl.value === 'archived') params.set('status', 'archived');
 
-      const data = await fetchJson(API_BASE + 'list.php?' + params.toString());
+      const data = await fetchJson(API_BASE + 'list.php?' + params.toString() + '&_=' + Date.now());
       if (!data.success || !listEl) return;
 
       if (!data.notifications.length) {
@@ -642,7 +729,7 @@
           '<span>Page ' + p.page + ' of ' + p.total_pages + '</span>' +
           '<button type="button" data-page="' + (p.page + 1) + '" ' + (p.page >= p.total_pages ? 'disabled' : '') + '>Next</button>';
       }
-      updateBadge(data.unread_count || 0);
+      applyUnreadFromResponse(data);
     }
 
     page.addEventListener('click', async function (e) {
@@ -662,13 +749,35 @@
         if (action === 'read' || action === 'unread') {
           fd.append('notification_id', id);
           fd.append('action', action);
-          const res = await fetch(API_BASE + 'mark_read.php', { method: 'POST', body: fd, credentials: 'same-origin' });
+          if (action === 'read') {
+            markItemReadInDom(parseInt(id, 10));
+            updateBadge(Math.max(0, currentBadgeCount() - 1));
+          } else {
+            updateBadge(currentBadgeCount() + 1);
+          }
+          const res = await fetch(API_BASE + 'mark_read.php', {
+            method: 'POST',
+            body: fd,
+            credentials: 'same-origin',
+            cache: 'no-store',
+            keepalive: true,
+            headers: { Accept: 'application/json' },
+          });
           const data = await res.json();
-          if (data.success) updateBadge(data.unread_count || 0);
+          if (data.success) applyUnreadFromResponse(data);
         } else {
           fd.append('notification_id', id);
           fd.append('action', action === 'delete' ? 'delete' : 'archive');
-          await fetch(API_BASE + 'manage.php', { method: 'POST', body: fd, credentials: 'same-origin' });
+          const res = await fetch(API_BASE + 'manage.php', {
+            method: 'POST',
+            body: fd,
+            credentials: 'same-origin',
+            cache: 'no-store',
+            keepalive: true,
+            headers: { Accept: 'application/json' },
+          });
+          const data = await res.json();
+          if (data.success) applyUnreadFromResponse(data);
         }
         loadPage(currentPage);
       }
@@ -700,9 +809,10 @@
     const containers = document.querySelectorAll('[data-notif-widgets]');
     if (!containers.length) return;
 
-    fetchJson(API_BASE + 'widgets.php').then(function (data) {
+    fetchJson(API_BASE + 'widgets.php?_=' + Date.now()).then(function (data) {
       if (!data.success || !data.widgets) return;
       const w = data.widgets;
+      if (typeof w.unread_count !== 'undefined') updateBadge(w.unread_count);
       containers.forEach(function (container) {
         container.querySelectorAll('[data-widget]').forEach(function (el) {
           const key = el.dataset.widget;
@@ -722,13 +832,27 @@
     document.querySelectorAll('[data-notif-wrap]').forEach(initBell);
     initPage();
     initWidgets();
+    refreshCount();
     loadDropdown();
     pollTimer = setInterval(poll, POLL_INTERVAL);
+
+    document.addEventListener('visibilitychange', function () {
+      if (document.hidden) return;
+      refreshCount();
+      poll();
+    });
+    window.addEventListener('focus', function () {
+      if (!document.hidden) refreshCount();
+    });
+    window.addEventListener('pageshow', function () {
+      refreshCount();
+    });
   });
 
   window.MedConnectNotifications = {
     refresh: loadDropdown,
     poll: poll,
+    refreshCount: refreshCount,
     markAllRead: markAllRead,
     close: closeAllNotifPanels,
   };
