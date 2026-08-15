@@ -69,10 +69,12 @@ try {
 
         case 'bundle':
         default:
+            $patients = $gis->getPatientRecords($filters, $role);
             $payload = [
                 'summary'      => $gis->getSummary(),
-                'patients'     => $gis->getPatientRecords($filters, $role),
+                'patients'     => $patients,
                 'analytics'    => $gis->getAnalytics(),
+                'monitoring'   => $gis->getMonitoringInsights($patients),
                 'triage_stats' => $gis->getTriageStats($role),
                 'map_config'   => $gis->getMapConfig(),
                 'server_ts'    => date('c'),

@@ -31,8 +31,17 @@ final class PatientLocationResolver
     $storedLat = $this->parseCoordinate($row['latitude'] ?? null);
     $storedLng = $this->parseCoordinate($row['longitude'] ?? null);
     $storedSource = $this->normalizeStoredSource((string) ($row['location_source'] ?? ''));
+    $invalidStored = false;
 
-    if ($storedLat !== null && $storedLng !== null && $this->validCoordinate($storedLat, $storedLng)) {
+    if ($storedLat !== null && $storedLng !== null) {
+      if (!$this->validCoordinate($storedLat, $storedLng) || !$this->inCityBounds($storedLat, $storedLng)) {
+        $invalidStored = true;
+        $storedLat = null;
+        $storedLng = null;
+      }
+    }
+
+    if ($storedLat !== null && $storedLng !== null) {
       if (in_array($storedSource, ['gps', 'manual', 'imported'], true)) {
         return $this->result(
           $storedLat,
@@ -42,7 +51,8 @@ final class PatientLocationResolver
           $displayAddress,
           $addressConfidence,
           $canonicalBarangay,
-          'Verified patient GPS coordinates.'
+          'Verified patient GPS coordinates.',
+          'EXACT_LOCATION'
         );
       }
 
@@ -55,18 +65,19 @@ final class PatientLocationResolver
           $displayAddress,
           $addressConfidence,
           $canonicalBarangay,
-          'Location derived from the registered address.'
+          'Location derived from the registered address.',
+          'GEOCODED_LOCATION'
         );
       }
 
       if ($storedSource === 'barangay_centroid' && $canonicalBarangay !== '') {
-        return $this->barangayResult($canonicalBarangay, $displayAddress, $addressConfidence, $storedLat, $storedLng);
+        return $this->barangayResult($canonicalBarangay, $displayAddress, $addressConfidence, $storedLat, $storedLng, $invalidStored);
       }
 
       if ($storedSource === 'barangay_centroid' && $canonicalBarangay === '') {
         // Ignore legacy centroid rows tied to invalid barangay values (e.g. city-center fallbacks).
       } elseif ($storedSource === 'barangay_center' && $canonicalBarangay !== '') {
-        return $this->barangayResult($canonicalBarangay, $displayAddress, $addressConfidence, $storedLat, $storedLng);
+        return $this->barangayResult($canonicalBarangay, $displayAddress, $addressConfidence, $storedLat, $storedLng, $invalidStored);
       }
     }
 
@@ -81,7 +92,8 @@ final class PatientLocationResolver
           $displayAddress,
           $addressConfidence,
           $canonicalBarangay,
-          'Location derived from the registered address.'
+          'Location derived from the registered address.',
+          'GEOCODED_LOCATION'
         );
       }
     }
@@ -89,7 +101,7 @@ final class PatientLocationResolver
     if ($canonicalBarangay !== '') {
       $coords = $this->lookupBarangayCoordinates($canonicalBarangay, (string) ($row['city_municipality'] ?? ($row['municipality'] ?? 'Bago City')));
       if ($coords !== null) {
-        return $this->barangayResult($canonicalBarangay, $displayAddress, $addressConfidence, $coords['lat'], $coords['lng']);
+        return $this->barangayResult($canonicalBarangay, $displayAddress, $addressConfidence, $coords['lat'], $coords['lng'], $invalidStored);
       }
     }
 
@@ -97,11 +109,14 @@ final class PatientLocationResolver
       null,
       null,
       'unavailable',
-      'unavailable',
+      $invalidStored ? 'invalid' : 'unavailable',
       $displayAddress,
       $addressConfidence,
       $canonicalBarangay,
-      'Exact patient location is unavailable.'
+      $invalidStored
+        ? 'Stored coordinates were invalid or outside Bago City and were not plotted.'
+        : 'Exact patient location is unavailable.',
+      $invalidStored ? 'INVALID_LOCATION' : 'MISSING_LOCATION'
     );
   }
 
@@ -198,7 +213,7 @@ final class PatientLocationResolver
       if ($row && $row['latitude'] !== null && $row['longitude'] !== null) {
         $lat = (float) $row['latitude'];
         $lng = (float) $row['longitude'];
-        if ($this->validCoordinate($lat, $lng)) {
+        if ($this->validCoordinate($lat, $lng) && $this->inCityBounds($lat, $lng)) {
           return ['lat' => $lat, 'lng' => $lng];
         }
       }
@@ -215,8 +230,13 @@ final class PatientLocationResolver
     string $displayAddress,
     string $addressConfidence,
     float $lat,
-    float $lng
+    float $lng,
+    bool $invalidStored = false
   ): array {
+    $note = 'Exact patient location is unavailable. Marker shows the verified barangay center.';
+    if ($invalidStored) {
+      $note = 'Stored coordinates were invalid or outside Bago City. Marker shows the verified barangay center.';
+    }
     $result = $this->result(
       $lat,
       $lng,
@@ -225,7 +245,8 @@ final class PatientLocationResolver
       $displayAddress,
       $addressConfidence,
       $canonicalBarangay,
-      'Exact patient location is unavailable. Marker shows the verified barangay center.'
+      $note,
+      'BARANGAY_LOCATION'
     );
     $result['barangay_center_label'] = 'Barangay ' . $canonicalBarangay . ' center';
 
@@ -243,13 +264,15 @@ final class PatientLocationResolver
     string $displayAddress,
     string $addressConfidence,
     string $canonicalBarangay,
-    string $locationNote
+    string $locationNote,
+    string $locationQuality = 'MISSING_LOCATION'
   ): array {
     return [
       'latitude'              => $lat,
       'longitude'             => $lng,
       'location_source'       => $locationSource,
       'location_accuracy'     => $locationAccuracy,
+      'location_quality'      => $locationQuality,
       'display_address'       => $displayAddress,
       'address'               => $displayAddress,
       'address_confidence'    => $addressConfidence,
@@ -294,6 +317,14 @@ final class PatientLocationResolver
   {
     return $lat >= -90 && $lat <= 90 && $lng >= -180 && $lng <= 180
       && !($lat == 0.0 && $lng == 0.0);
+  }
+
+  private function inCityBounds(float $lat, float $lng): bool
+  {
+    $bounds = BagoBarangayCentroids::cityBounds();
+
+    return $lat >= $bounds['south'] && $lat <= $bounds['north']
+      && $lng >= $bounds['west'] && $lng <= $bounds['east'];
   }
 
   private function tableExists(string $table): bool

@@ -563,6 +563,19 @@ final class GisDashboardService
     }
 
     /**
+     * Spatial / coverage insights from real patient rows. Never invents population.
+     *
+     * @param list<array<string, mixed>> $patients
+     * @return array<string, mixed>
+     */
+    public function getMonitoringInsights(array $patients): array
+    {
+        require_once $this->appBasePath() . '/app/core/GisMonitoringInsights.php';
+
+        return GisMonitoringInsights::fromPatients($patients, $this->loadBarangayPopulations());
+    }
+
+    /**
      * Live triage severity totals and most-affected barangay per layer.
      *
      * @return array{
@@ -775,6 +788,7 @@ final class GisDashboardService
             $row['longitude'] = $fallback['lng'];
             $row['location_source'] = 'barangay_center';
             $row['location_accuracy'] = 'approximate';
+            $row['location_quality'] = 'BARANGAY_LOCATION';
             $row['location_note'] = 'Exact patient location is restricted. Showing verified barangay center.';
             $row['barangay_center_label'] = 'Barangay ' . ($row['canonical_barangay'] ?: $row['barangay']) . ' center';
         } else {
@@ -782,6 +796,7 @@ final class GisDashboardService
             $row['longitude'] = null;
             $row['location_source'] = 'unavailable';
             $row['location_accuracy'] = 'unavailable';
+            $row['location_quality'] = 'MISSING_LOCATION';
             $row['has_map_marker'] = false;
         }
 
@@ -1213,5 +1228,55 @@ final class GisDashboardService
     {
         return $lat >= -90 && $lat <= 90 && $lng >= -180 && $lng <= 180
             && !($lat == 0.0 && $lng == 0.0);
+    }
+
+    /**
+     * Official barangay population if a real dataset exists. Empty means unavailable.
+     *
+     * @return array<string, int>
+     */
+    private function loadBarangayPopulations(): array
+    {
+        $map = [];
+        $path = $this->appBasePath() . '/data/geo/bago_barangay_population.json';
+        if (is_file($path)) {
+            $decoded = json_decode((string) file_get_contents($path), true);
+            $rows = [];
+            if (is_array($decoded)) {
+                if (isset($decoded['barangays']) && is_array($decoded['barangays'])) {
+                    $rows = $decoded['barangays'];
+                } elseif (!isset($decoded['center']) && !isset($decoded['bounds'])) {
+                    $rows = $decoded;
+                }
+            }
+            foreach ($rows as $name => $value) {
+                if (is_array($value)) {
+                    $value = $value['population'] ?? $value['count'] ?? 0;
+                }
+                $label = trim((string) $name);
+                $count = is_numeric($value) ? (int) $value : 0;
+                if ($label !== '' && $count > 0) {
+                    $map[$label] = $count;
+                }
+            }
+        }
+
+        if ($this->tableExists('barangays') && $this->columnExists('barangays', 'population')) {
+            try {
+                $stmt = $this->pdo->query('SELECT name, population FROM barangays WHERE population IS NOT NULL AND population > 0');
+                $rows = $stmt ? ($stmt->fetchAll(PDO::FETCH_ASSOC) ?: []) : [];
+                foreach ($rows as $row) {
+                    $label = trim((string) ($row['name'] ?? ''));
+                    $count = (int) ($row['population'] ?? 0);
+                    if ($label !== '' && $count > 0) {
+                        $map[$label] = $count;
+                    }
+                }
+            } catch (Throwable $e) {
+                // Column may exist in information_schema but not be queryable yet.
+            }
+        }
+
+        return $map;
     }
 }

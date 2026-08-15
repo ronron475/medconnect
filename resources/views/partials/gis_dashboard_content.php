@@ -4,7 +4,7 @@ $gisUserRole = (string) ($userRole ?? $_SESSION['user_role'] ?? '');
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin=""/>
 <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css" crossorigin=""/>
 <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css" crossorigin=""/>
-<link rel="stylesheet" href="<?= htmlspecialchars($assetBase) ?>/assets/css/admin-gis-dashboard.css?v=3.8"/>
+<link rel="stylesheet" href="<?= htmlspecialchars($assetBase) ?>/assets/css/admin-gis-dashboard.css?v=4.0"/>
 
 <div class="gis-page" id="gis-dashboard"
      data-api="<?= htmlspecialchars($apiBase) ?>"
@@ -38,6 +38,22 @@ $gisUserRole = (string) ($userRole ?? $_SESSION['user_role'] ?? '');
     <div class="mc-card gis-stat-card gis-stat-card--barangay" data-severity-stat="barangay">
       <div class="gis-stat-label">📍 Most Login Barangay</div>
       <div class="gis-stat-value gis-stat-value--text" id="stat-top_barangay">—</div>
+    </div>
+    <div class="mc-card gis-stat-card" data-gis-insight="today">
+      <div class="gis-stat-label">New cases today</div>
+      <div class="gis-stat-value" id="stat-new_today">—</div>
+    </div>
+    <div class="mc-card gis-stat-card" data-gis-insight="unmapped">
+      <div class="gis-stat-label">Cases without valid location</div>
+      <div class="gis-stat-value" id="stat-unmapped">—</div>
+    </div>
+    <div class="mc-card gis-stat-card" data-gis-insight="bhw">
+      <div class="gis-stat-label">Cases without assigned BHW</div>
+      <div class="gis-stat-value" id="stat-unassigned_bhw">—</div>
+    </div>
+    <div class="mc-card gis-stat-card" data-gis-insight="hotspots">
+      <div class="gis-stat-label">Detected hotspots</div>
+      <div class="gis-stat-value" id="stat-hotspots">—</div>
     </div>
   </div>
 
@@ -93,6 +109,16 @@ $gisUserRole = (string) ($userRole ?? $_SESSION['user_role'] ?? '');
         <p class="gis-analytics-caption text-xs text-muted" data-analytics-caption>Loading…</p>
         <ul class="gis-rank-list" id="analytics-symptoms"><li class="gis-rank-list__loading">Loading…</li></ul>
       </div>
+      <div class="mc-card gis-analytics-card">
+        <h3 class="text-h3">Barangay monitoring status</h3>
+        <p class="gis-analytics-caption text-xs text-muted" id="analytics-status-caption">Spatial monitoring only — does not change medical triage.</p>
+        <ul class="gis-rank-list" id="analytics-status"><li class="gis-rank-list__loading">Loading…</li></ul>
+      </div>
+      <div class="mc-card gis-analytics-card">
+        <h3 class="text-h3">Coverage &amp; location quality</h3>
+        <p class="gis-analytics-caption text-xs text-muted" id="analytics-quality-caption">From registered BHW assignment and validated map locations.</p>
+        <ul class="gis-rank-list" id="analytics-quality"><li class="gis-rank-list__loading">Loading…</li></ul>
+      </div>
     </div>
   </div>
 
@@ -127,4 +153,4 @@ $gisUserRole = (string) ($userRole ?? $_SESSION['user_role'] ?? '');
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
 <script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js" crossorigin=""></script>
 <script src="https://unpkg.com/leaflet.heat@0.2.0/dist/leaflet-heat.js" crossorigin=""></script>
-<script src="<?= htmlspecialchars($assetBase) ?>/assets/js/admin-gis-dashboard.js?v=3.8"></script>
+<script src="<?= htmlspecialchars($assetBase) ?>/assets/js/admin-gis-dashboard.js?v=4.0"></script>
