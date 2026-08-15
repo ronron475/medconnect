@@ -1142,101 +1142,91 @@ body.landing-page.landing-bg--light .hero-signin-panel .signin-card .alert.error
   color: #b91c1c !important;
 }
 
-/* ── Mobile sign-in layout (320px–768px) ──
-   Keep the panel in normal document flow so the page (not the card) scrolls. */
+/* ── Mobile sign-in: true modal overlay (do not insert into page flow) ── */
 @media (max-width: 768px) {
   html:has(body.landing-page.signin-active),
   html:has(body.landing-page.signin-scroll-locked) {
-    height: auto !important;
-    max-height: none !important;
-    overflow-x: hidden !important;
-    overflow-y: auto !important;
+    overflow: hidden !important;
+    overscroll-behavior: none;
   }
 
   body.landing-page.signin-active,
   body.landing-page.signin-scroll-locked {
-    height: auto !important;
-    max-height: none !important;
-    overflow-x: hidden !important;
-    overflow-y: auto !important;
-    touch-action: auto !important;
-    position: static !important;
-    top: auto !important;
-    left: auto !important;
-    right: auto !important;
-    width: auto !important;
+    overflow: hidden !important;
+    overscroll-behavior: none;
+    touch-action: auto;
   }
 
   body.landing-page.signin-active::before {
-    display: none;
+    content: '';
+    display: block;
+    position: fixed;
+    inset: 0;
+    z-index: 1240;
+    background: rgba(1, 20, 40, 0.55);
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+    pointer-events: auto;
   }
 
-  body.landing-page.signin-active .bg-canvas,
-  body.landing-page.signin-active .landing-navbar,
   body.landing-page.signin-active .hero,
   body.landing-page.signin-active .announcements-section,
   body.landing-page.signin-active .services-section,
   body.landing-page.signin-active .contact-section,
   body.landing-page.signin-active #landing-fab {
-    pointer-events: auto;
+    pointer-events: none;
   }
 
   body.landing-page.signin-active .landing-navbar {
-    opacity: 1;
-    visibility: visible;
+    pointer-events: none;
+  }
+
+  body.landing-page.signin-active #signin-modal {
     pointer-events: auto;
   }
 
-  .landing-page.signin-active .hero--cinematic,
-  .landing-page .hero--cinematic.is-signin-open {
-    height: auto;
-    max-height: none;
-    overflow: visible;
-  }
-
-  .landing-page.signin-active .hero--cinematic .hero-inner,
-  .landing-page .hero--cinematic.is-signin-open .hero-inner {
-    min-height: 0;
-    height: auto;
-    max-height: none;
-  }
-
-  .landing-page.signin-active .hero--cinematic .hero-stage,
-  .landing-page .hero--cinematic.is-signin-open .hero-stage {
-    display: flex;
-    flex-direction: column;
-    align-items: stretch;
-  }
-
-  /* In-flow panel: login sits under hero copy and pushes announcements down */
+  body.landing-page.signin-active #signin-modal.hero-signin-panel.is-viewport-pinned,
+  body.landing-page.signin-active > #signin-modal.hero-signin-panel.is-viewport-pinned,
   body.landing-page.signin-active #signin-modal.hero-signin-panel.is-open,
+  body.landing-page.signin-active #signin-modal.hero-signin-panel.is-closing,
   body.landing-page.signin-active > #signin-modal.hero-signin-panel.is-open,
+  body.landing-page.signin-active > #signin-modal.hero-signin-panel.is-closing,
   body.landing-page.signin-active #signin-modal.hero-signin-panel.is-viewport-pinned.is-open,
-  body.landing-page.signin-active > #signin-modal.hero-signin-panel.is-viewport-pinned.is-open {
-    position: relative !important;
-    top: auto !important;
-    right: auto !important;
-    left: auto !important;
-    bottom: auto !important;
+  body.landing-page.signin-active #signin-modal.hero-signin-panel.is-viewport-pinned.is-closing,
+  body.landing-page.signin-active > #signin-modal.hero-signin-panel.is-viewport-pinned.is-open,
+  body.landing-page.signin-active > #signin-modal.hero-signin-panel.is-viewport-pinned.is-closing {
+    position: fixed !important;
+    inset: 0 !important;
+    top: 0 !important;
+    right: 0 !important;
+    bottom: 0 !important;
+    left: 0 !important;
     width: 100% !important;
-    max-width: 100% !important;
-    height: auto !important;
+    max-width: none !important;
+    height: 100dvh !important;
     max-height: none !important;
-    margin: 12px 0 8px !important;
+    margin: 0 !important;
+    padding: max(12px, env(safe-area-inset-top, 12px)) max(12px, env(safe-area-inset-right, 12px)) max(12px, env(safe-area-inset-bottom, 12px)) max(12px, env(safe-area-inset-left, 12px)) !important;
     transform: none !important;
-    overflow: visible !important;
-    z-index: 5 !important;
+    overflow: hidden !important;
+    z-index: 1250 !important;
     box-sizing: border-box;
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    justify-content: center !important;
+    background: transparent;
   }
 
   body.landing-page.signin-active #signin-modal.hero-signin-panel.is-open .signin-modal-wrap,
-  body.landing-page.signin-active #signin-modal.hero-signin-panel.is-viewport-pinned.is-open .signin-modal-wrap {
-    flex: 0 0 auto;
-    min-height: 0;
-    max-height: none;
-    width: 100%;
+  body.landing-page.signin-active #signin-modal.hero-signin-panel.is-viewport-pinned.is-open .signin-modal-wrap,
+  body.landing-page.signin-active #signin-modal.hero-signin-panel.is-closing .signin-modal-wrap {
+    flex: 0 1 auto;
+    width: min(400px, 100%);
     max-width: 100%;
-    overflow: visible;
+    min-height: 0;
+    max-height: calc(100dvh - 24px - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px));
+    overflow: hidden;
     display: flex;
     flex-direction: column;
     box-sizing: border-box;
@@ -1245,11 +1235,13 @@ body.landing-page.landing-bg--light .hero-signin-panel .signin-card .alert.error
   body.landing-page.signin-active #signin-modal.hero-signin-panel.is-open .signin-modal-inner,
   body.landing-page.signin-active #signin-modal.hero-signin-panel.is-viewport-pinned.is-open .signin-modal-inner,
   .landing-page .hero-signin-panel.is-open .signin-modal-inner {
-    flex: 0 0 auto;
+    flex: 1 1 auto;
     min-height: 0;
-    max-height: none !important;
-    overflow: visible !important;
-    overscroll-behavior: auto;
+    max-height: 100% !important;
+    overflow-x: hidden !important;
+    overflow-y: auto !important;
+    overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch;
     padding-bottom: 8px;
     box-sizing: border-box;
   }
@@ -1395,14 +1387,6 @@ body.landing-page.landing-bg--light .hero-signin-panel .signin-card .alert.error
 }
 
 @media (max-width: 430px) {
-  body.landing-page.signin-active #signin-modal.hero-signin-panel.is-open,
-  body.landing-page.signin-active > #signin-modal.hero-signin-panel.is-open {
-    top: auto !important;
-    right: auto !important;
-    left: auto !important;
-    bottom: auto !important;
-  }
-
   .landing-page .hero-signin-panel .signin-card--hero-inline {
     padding: 14px 12px 16px;
   }
