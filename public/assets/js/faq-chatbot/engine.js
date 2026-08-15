@@ -8,19 +8,21 @@
   const I18n = global.McFaqI18n;
   const BOT_NAME = 'medConnect Assistant';
 
-  const EMERGENCY_PATTERNS = [
+    const EMERGENCY_PATTERNS = [
     /\bchest\s+pain\b/i, /\bheart\s+attack\b/i, /\bstroke\b/i,
-    /\bsevere\s+bleeding\b/i,
+    /\bsevere\s+bleeding\b/i, /\bdugo\s+gid\b/i,
     /\bunconscious\b/i, /\bpassed\s+out\b/i, /\bcan'?t\s+breathe\b/i,
     /\bdifficulty\s+breathing\b/i, /\btrouble\s+breathing\b/i, /\bnot\s+breathing\b/i,
-    /\bchoking\b/i, /\bseizure\b/i, /\boverdose\b/i, /\bpoisoning\b/i, /\bmedical\s+emergency\b/i,
+    /\bchoking\b/i, /\bseizure\b/i, /\bnag\s+seizure\b/i, /\boverdose\b/i, /\bpoisoning\b/i, /\bmedical\s+emergency\b/i,
+    /\bblue\s+lips\b/i, /\bfacial\s+droop/i, /\bsevere\s+chest\s+pain\b/i, /\bgrabe\s+chest\s+pain\b/i,
     // Filipino
     /\bmasakit\s+ang\s+dibdib\b/i, /\bhirap\s+huminga\b/i, /\bdi\s+makahinga\b/i,
     /\bpagdurugo\b/i, /\bmalubhang\s+dugo\b/i, /\bwalang\s+malay\b/i,
-    /\bnawalan\s+ng\s+malay\b/i, /\blason\b/i, /\bnalason\b/i,
+    /\bnawalan\s+ng\s+malay\b/i, /\blason\b/i, /\bnalason\b/i, /\bnahimatay\b/i,
     // Hiligaynon
     /\bsakit\s+ang\s+dibdib\b/i, /\bindi\s+makaginhawa\b/i, /\bindi\s+makahinga\b/i,
-    /\bgrabeng\s+dugo\b/i, /\bwala\s+malay\b/i, /\bnawad-an\s+malay\b/i,
+    /\bindi\s+ko\s+kaginhawa\b/i, /\bindi\s+ko\s+ginhawa\b/i, /\bbudlay\s+mag\s*ginhawa\b/i,
+    /\bgrabeng\s+dugo\b/i, /\bwala\s+malay\b/i, /\bwala\s+ko\s+malay\b/i, /\bnawad-an\s+malay\b/i,
     /\blason\b/i, /\bnalason\b/i,
   ];
 
@@ -39,6 +41,7 @@
         'sign in', 'signin', 'login', 'log in', 'sulod', 'mag login', 'mag-login', 'mag-sign in',
         'paano mag login', 'paano mag-sign in', 'diin mag login', 'indi ako maka-login',
         'maka-login', 'hindi ako maka-login', 'maka login', 'paano mag sign in',
+        'wala ko ka login', 'indi ko ka login', 'cannot login', "can't login", 'di ko maka login',
       ],
       target: 'signin',
     },
@@ -53,18 +56,27 @@
     {
       keys: [
         'password', 'reset', 'forgot', 'kalimtan', 'nakalimtan', 'nakalimutan', 'nakalimot',
-        'forgot ko', 'reset password', 'mag-reset', 'i-reset',
+        'forgot ko', 'reset password', 'mag-reset', 'i-reset', 'nalipat', 'passwrod',
       ],
       target: 'reset',
     },
     {
       keys: [
+        'otp', 'wala otp', 'wala ko otp', 'verification code', 'wala nag-abot otp', 'wala nagabot otp',
+      ],
+      target: 'signin',
+    },
+    {
+      keys: [
         'appointment', 'book', 'schedule', 'consultation schedule', 'mag-book',
-        'maka-book', 'mag book', 'paano mag-book', 'diin maka-book', 'appointment status',
-        'status sang appointment', 'status ng appointment',
+        'maka-book', 'mag book', 'paano mag-book', 'how to book', 'diin maka-book', 'diin ko maka book',
+        'appointment status', 'status sang appointment', 'status ng appointment',
         'consult', 'consultation', 'konsultasyon', 'konsulta', 'mag-konsulta', 'mag konsulta',
         'want to consult', 'need to consult', 'need consultation', 'want consultation',
         'gusto mag-consult', 'gusto mag consult', 'kailangan mag-consult',
+        'need doctor', 'doctor pls', 'gusto ko doktor', 'pa checkup', 'magpakonsulta',
+        'pano magpa checkup', 'checkup', 'pakonsulta', 'diin ko mag book', 'paano magpakonsulta',
+        'gusto ko magpa checkup', 'kinahanglan ko doktor',
       ],
       target: 'appointment',
     },
@@ -75,12 +87,14 @@
     {
       keys: [
         'video', 'call', 'online consult', 'telemedicine', 'video consult', 'video konsultasyon',
-        'video consultation', 'online consultation',
+        'video consultation', 'online consultation', 'camera', 'microphone',
+        'cannot hear', "can't hear", 'indi ko mabatian', 'indi ko makita',
+        'camera indi naga work', 'wala doctor sa video', 'video not working',
       ],
       target: 'video',
     },
     {
-      keys: ['record', 'medical history', 'medical record', 'emr', 'my health', 'health summary'],
+      keys: ['record', 'medical history', 'medical record', 'emr', 'my health', 'health summary', 'soap', 'consultation history'],
       target: 'records',
     },
     {
@@ -104,13 +118,18 @@
       target: 'contact',
     },
     {
-      keys: ['help', 'menu', 'hi', 'hello', 'kumusta', 'start', 'good morning', 'good afternoon'],
+      keys: [
+        'help', 'menu', 'hi', 'hello', 'kumusta', 'start', 'good morning', 'good afternoon',
+        'what can you do', 'who are you', 'buligi ko', 'tulungan mo ako', 'di ko alam paano',
+        'wala ko kabalo', 'indi ko kabalo',
+      ],
       target: 'welcome',
     },
     {
       keys: [
         'no money', 'wala kwarta', 'wala ko kwarta', 'walang pera', 'cannot afford', 'cant afford',
         'wala budget', 'libre nga consultation', 'too expensive', 'broke', 'indi ko kaya magbayad',
+        'how much', 'may bayad', 'libre ni', 'free ni', 'mahal',
       ],
       target: 'financial',
     },

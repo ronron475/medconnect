@@ -147,6 +147,9 @@ final class FaqChatbotKnowledgeBase
             FaqChatbotIntentRecognizer::WEATHER => 'weather_barrier',
             FaqChatbotIntentRecognizer::TRANSPORT => 'transport_barrier',
             FaqChatbotIntentRecognizer::REASSURANCE => 'privacy_security',
+            FaqChatbotIntentRecognizer::BHW => 'bhw_help',
+            FaqChatbotIntentRecognizer::TECHNICAL => 'technical_support',
+            FaqChatbotIntentRecognizer::DOCTOR => 'doctor_clarify',
             default => null,
         };
     }

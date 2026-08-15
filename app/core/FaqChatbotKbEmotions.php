@@ -320,6 +320,26 @@ final class FaqChatbotKbEmotions
                 ],
                 'keywords' => ['mental health', 'mental wellness', 'self care'],
             ],
+            [
+                'key' => 'anger_support',
+                'category' => 'emotional_support',
+                'flow_key' => 'distress_support',
+                'weight' => 1.08,
+                'patterns' => [
+                    '/\b(i\s+am\s+angry|so\s+angry|galit\s+ako|akig\s+(gid\s+)?ko|nagalit)\b/ui',
+                ],
+                'keywords' => ['angry', 'galit', 'akig'],
+            ],
+            [
+                'key' => 'disappointment_support',
+                'category' => 'emotional_support',
+                'flow_key' => 'distress_support',
+                'weight' => 1.06,
+                'patterns' => [
+                    '/\b(disappoint|nadismaya|dismaya|wala\s+natuman|let\s+down)\b/ui',
+                ],
+                'keywords' => ['disappointed', 'nadismaya', 'dismaya'],
+            ],
         ];
     }
 
@@ -335,9 +355,18 @@ final class FaqChatbotKbEmotions
         return [
             'crisis_hopeless' => $crisis,
             'panic_support' => [
-                'en' => ['<p>I\'m with you. Try slow breaths: in 4, hold 4, out 6. If this may be a medical emergency (chest pain, can\'t breathe), call <strong>911</strong>. For emotional crisis: Hopeline <strong>1553</strong>.</p>'],
-                'fil' => ['<p>Nandito ako. Huminga: 4-4-6. Emergency → <strong>911</strong>. Crisis → Hopeline <strong>1553</strong>.</p>'],
-                'hil' => ['<p>Diri ako. Maghinay: 4-4-6. Emergency → <strong>911</strong>. Crisis → Hopeline <strong>1553</strong>.</p>'],
+                'en' => [
+                    '<p>I\'m with you. Try slow breaths: in 4, hold 4, out 6. If this may be a medical emergency (chest pain, can\'t breathe), call <strong>911</strong>. For emotional crisis: Hopeline <strong>1553</strong>.</p>',
+                    '<p>Panic can feel like the body is in danger even when you are in a chat. Sit if you can, name 5 things you see, then breathe slowly. Emergency symptoms → <strong>911</strong>. Need a human voice → Hopeline <strong>1553</strong>.</p>',
+                ],
+                'fil' => [
+                    '<p>Nandito ako. Huminga: 4-4-6. Emergency → <strong>911</strong>. Crisis → Hopeline <strong>1553</strong>.</p>',
+                    '<p>Natural ang panic. Umupo, huminga nang dahan-dahan. Hindi ako doktor. Kung hindi makahinga o may chest pain, <strong>911</strong>.</p>',
+                ],
+                'hil' => [
+                    '<p>Diri ako. Maghinay magginhawa: 4-4-6. Emergency → <strong>911</strong>. Crisis → Hopeline <strong>1553</strong>.</p>',
+                    '<p>Nasabtan ko nga ginapanik ka. Pungko anay, isugid ang 5 nga makita mo, maghinay magginhawa. Emergency sintomas → <strong>911</strong>. Kinahanglan sang tawo → Hopeline <strong>1553</strong>.</p>',
+                ],
             ],
             'depression_support' => [
                 'en' => [
@@ -386,9 +415,18 @@ final class FaqChatbotKbEmotions
                 'hil' => ['<p>Nagakaluoy ako. Wala takdo nga oras ang kaguol. Mangayo bulig sa trusted people ukon Hopeline <strong>1553</strong>.</p>'],
             ],
             'crying_support' => [
-                'en' => ['<p>It\'s okay to cry — your feelings are valid. I\'m here with you in this chat. When you\'re ready, we can find a small next step, or you can call Hopeline <strong>1553</strong> if you need a human voice now.</p>'],
-                'fil' => ['<p>Okay umiyak — valid ang nararamdaman mo. Nandito ako. Kung kailangan ng tao, Hopeline <strong>1553</strong>.</p>'],
-                'hil' => ['<p>Okay maghibi — valid ang imo nabatyagan. Diri ako. Kon kinahanglan sang tawo, Hopeline <strong>1553</strong>.</p>'],
+                'en' => [
+                    '<p>It\'s okay to cry — your feelings are valid. I\'m here with you in this chat. When you\'re ready, we can find a small next step, or you can call Hopeline <strong>1553</strong> if you need a human voice now.</p>',
+                    '<p>Tears are allowed here. You do not have to explain everything at once. I can stay with a practical medConnect step when you want one.</p>',
+                ],
+                'fil' => [
+                    '<p>Okay umiyak — valid ang nararamdaman mo. Nandito ako. Kung kailangan ng tao, Hopeline <strong>1553</strong>.</p>',
+                    '<p>Hindi mo kailangang magmadali. Isa-isang hakbang lang. Hindi ako therapist, pero nandito ako.</p>',
+                ],
+                'hil' => [
+                    '<p>Okay maghibi — valid ang imo nabatyagan. Diri ako. Kon kinahanglan sang tawo, Hopeline <strong>1553</strong>.</p>',
+                    '<p>Nasabtan ko nga nagahibi ka. Indi ka isa. Kon ready ka, isa ka gamay nga hakbang lang kita sa medConnect.</p>',
+                ],
             ],
             'financial_barrier' => [
                 'en' => [
@@ -418,9 +456,16 @@ final class FaqChatbotKbEmotions
             'need_to_talk' => [
                 'en' => [
                     '<p>I\'m glad you reached out. I can listen and guide medConnect services, though I\'m an automated assistant. For a real person urgently, call Hopeline <strong>1553</strong> or visit City Health.</p>',
+                    '<p>You do not have to carry this alone. Tell me if you want booking help, account help, or just a calm next step. For a human voice: Hopeline <strong>1553</strong>.</p>',
                 ],
-                'fil' => ['<p>Salamat sa pagsagot. Makikinig ako, pero automated assistant lang ako. Kung kailangan ng tao: Hopeline <strong>1553</strong>.</p>'],
-                'hil' => ['<p>Nalipay ako nga nag-abot ka. Makapamati ako, pero automated assistant lang ako. Kinahanglan sang tawo: Hopeline <strong>1553</strong>.</p>'],
+                'fil' => [
+                    '<p>Salamat sa pagsagot. Makikinig ako, pero automated assistant lang ako. Kung kailangan ng tao: Hopeline <strong>1553</strong>.</p>',
+                    '<p>Hindi ka nag-iisa. Sabihin mo kung appointment, account, o gusto mo lang ng tahimik na hakbang.</p>',
+                ],
+                'hil' => [
+                    '<p>Nalipay ako nga nag-abot ka. Makapamati ako, pero automated assistant lang ako. Kinahanglan sang tawo: Hopeline <strong>1553</strong>.</p>',
+                    '<p>Indi ka isa. Silinga lang — appointment, account, ukon gusto mo lang sang malinong nga sunod nga hakbang.</p>',
+                ],
             ],
             'cant_sleep' => [
                 'en' => ['<p>Trouble sleeping is common when stressed. Try a quieter wind-down and less late caffeine. If it continues, book a consult — I cannot diagnose sleep disorders. Severe symptoms → <strong>911</strong>.</p>'],
@@ -437,22 +482,46 @@ final class FaqChatbotKbEmotions
                 ],
             ],
             'anxiety_support' => [
-                'en' => ['<p>Anxiety can feel scary. Try grounding: 5 things you see, 4 you touch, 3 you hear. When ready, book a consult. Urgent distress → <strong>911</strong> / Hopeline <strong>1553</strong>.</p>'],
-                'fil' => ['<p>Natural ang kabahan. Grounding: 5-4-3. Mag-book kapag handa. Urgent → <strong>911</strong> / <strong>1553</strong>.</p>'],
-                'hil' => ['<p>Natural ang ginakulbaan. Grounding: 5-4-3. Mag-book kon ready. Urgent → <strong>911</strong> / <strong>1553</strong>.</p>'],
+                'en' => [
+                    '<p>Anxiety can feel scary. Try grounding: 5 things you see, 4 you touch, 3 you hear. When you are ready, I can guide a consult on medConnect. Urgent distress → <strong>911</strong> / Hopeline <strong>1553</strong>.</p>',
+                    '<p>I hear the worry. Slow your breathing if you can. I am not a therapist, but I can help you reach City Health care when you want that next step.</p>',
+                ],
+                'fil' => [
+                    '<p>Natural ang kabahan. Grounding: 5-4-3. Mag-book kapag handa. Urgent → <strong>911</strong> / <strong>1553</strong>.</p>',
+                    '<p>Naririnig ko ang alala. Huminga nang dahan-dahan. Hindi ako therapist, pero matutulungan kitang magpa-consult sa City Health.</p>',
+                ],
+                'hil' => [
+                    '<p>Nasabtan ko nga ginakulbaan ka. Maghinay magginhawa. Grounding: 5 nga makita mo, 4 nga matandog, 3 nga mabatian. Kon ready ka, matabangan ko sa consultation. Urgent → <strong>911</strong> / Hopeline <strong>1553</strong>.</p>',
+                    '<p>Natural ang ginakulbaan. Diri ako para buligan ka sing malinong — indi ako therapist, pero mahimo ta ikaw i-guide sa City Health care.</p>',
+                ],
             ],
             'fear_support' => [
-                'en' => ['<p>It\'s okay to feel afraid. I\'m here to guide you gently — booking a visit or learning City Health options. You set the pace.</p>'],
-                'fil' => ['<p>Okay lang matakot. Nandito ako para gabayan ka nang mahinahon.</p>'],
-                'hil' => ['<p>Okay lang mahadlok. Diri ako para giyahan ka — ikaw ang magdesisyon sang tempo.</p>'],
+                'en' => [
+                    '<p>I understand you feel afraid. I\'ll help you figure out what to do next. If you have severe or emergency symptoms, seek emergency medical help right away. If it is not an emergency, I can guide you toward a consultation.</p>',
+                    '<p>It is okay to feel scared. You are not alone in this chat. Tell me if this is about symptoms, an appointment, or something else — and I will keep the next step small.</p>',
+                ],
+                'fil' => [
+                    '<p>Naiintindihan ko na natatakot ka. Tutulungan kitang malaman ang susunod na hakbang. Kung malala o emergency, agad na medical help. Kung hindi, matutulungan kitang magpa-konsulta.</p>',
+                    '<p>Okay lang matakot. Hindi ka nag-iisa. Sabihin mo kung symptoms, appointment, o ibang bagay — maliit na hakbang lang.</p>',
+                ],
+                'hil' => [
+                    '<p>Nasabtan ko nga nahadlok ka. Buligan ta ikaw nga mahibaluan kung ano ang dapat himuon. Kung may severe ukon emergency symptoms ka, magpangayo dayon sang emergency medical help.</p>',
+                    '<p>Nasabtan ko nga nahadlok ka. Buligan ta ikaw. Kung indi emergency, mahimo ta ikaw i-guide sa consultation.</p>',
+                    '<p>Okay lang mahadlok. Indi ka isa. Silinga lang — appointment, account, video consult, ukon health concern — kag isa ka hakbang lang kita.</p>',
+                ],
             ],
             'sadness_support' => [
                 'en' => [
                     '<p>I\'m sorry things feel hard. Thank you for sharing. You deserve support — Hopeline <strong>1553</strong> or a medConnect consult can help when you\'re ready.</p>',
+                    '<p>Sadness is a real weight. I cannot replace a counselor, but I can stay with you on practical next steps for care through City Health.</p>',
                 ],
-                'fil' => ['<p>Paumanhin na mabigat. Karapat-dapat kang suportahan — Hopeline <strong>1553</strong> o consult sa medConnect.</p>'],
+                'fil' => [
+                    '<p>Paumanhin na mabigat. Karapat-dapat kang suportahan — Hopeline <strong>1553</strong> o consult sa medConnect.</p>',
+                    '<p>Naiintindihan ko na malungkot ka. Hindi ako counselor, pero nandito ako. Kapag handa ka, matutulungan kitang magpa-konsulta.</p>',
+                ],
                 'hil' => [
                     '<p>Pasensya nga budlay ang pamatyagon. May kinahanglan ka nga support — Hopeline <strong>1553</strong> ukon consult sa medConnect.</p>',
+                    '<p>Nasabtan ko nga nasubo ka. Indi ako counselor, pero diri ako. Kon ready ka, matabangan ko sa consultation sa City Health.</p>',
                 ],
             ],
             'mental_wellness' => [
@@ -461,9 +530,16 @@ final class FaqChatbotKbEmotions
                 'hil' => ['<p>Importante ang mental wellness: tulog, movement, koneksyon, kag mangayo bulig. Para sa personal nga concern, magpa-check sa propesyonal.</p>'],
             ],
             'uncertainty_support' => [
-                'en' => ['<p>It\'s okay not to know everything right away. I can explain medConnect step by step — no pressure, and you set the pace.</p>'],
-                'fil' => ['<p>Okay lang hindi alam lahat agad. Ipapaliwanag ko ang medConnect hakbang-hakbang — walang pressure.</p>'],
-                'hil' => ['<p>Okay lang indi mahibal-an tanan dayon. Ipahayag ko ang medConnect pahuway-pahuway — wala pressure.</p>'],
+                'en' => [
+                    '<p>Okay, I\'ll help you step by step. 😊 You can tell me if the problem is your account, appointment, video consultation, registration, or a health concern.</p>',
+                    '<p>It\'s okay not to know the next step. Are you asking about an appointment, your account, a video visit, or how you feel?</p>',
+                ],
+                'fil' => [
+                    '<p>Sige, hakbang-hakbang. 😊 Sabihin mo kung account, appointment, video consultation, registration, o health concern.</p>',
+                ],
+                'hil' => [
+                    '<p>Okay, buligan ta ikaw step-by-step. 😊 Pwede mo isiling kung ano ang problema mo—account, appointment, video consultation, registration, ukon health concern.</p>',
+                ],
             ],
             'mixed_feelings' => [
                 'en' => ['<p>Mixed feelings make sense — you can feel more than one thing at once. Take a breath. When you\'re ready, we can find one small next step or connect you with care on medConnect.</p>'],
@@ -509,6 +585,42 @@ final class FaqChatbotKbEmotions
                 'en' => ['<p>Exam stress is real. Break study into small chunks, rest, and ask for help early. If anxiety feels overwhelming, Hopeline <strong>1553</strong> or a consult can help.</p>'],
                 'fil' => ['<p>Real ang exam stress. Hatiin ang pag-aaral, magpahinga, humingi ng tulong. Kung sobra ang anxiety, Hopeline <strong>1553</strong>.</p>'],
                 'hil' => ['<p>Real ang exam stress. Bahinon ang pagtuon, magpahulay, mangayo bulig. Kon sobra ang anxiety, Hopeline <strong>1553</strong>.</p>'],
+            ],
+            'anger_support' => [
+                'en' => [
+                    '<p>I hear that you are angry. That feeling is valid. Let\'s take one practical step — account, appointment, or another medConnect issue — when you are ready. I will not argue with you.</p>',
+                    '<p>Anger often means something important was blocked. Tell me the one thing you want fixed first, and I will keep the reply short and useful.</p>',
+                ],
+                'fil' => [
+                    '<p>Naririnig ko na galit ka. Valid iyon. Isa-isang hakbang lang — account, appointment, o ibang medConnect issue — kapag handa ka.</p>',
+                    '<p>Okay magalit. Sabihin mo ang isang bagay na gusto mong ayusin, at tutulungan kita nang direkta.</p>',
+                ],
+                'hil' => [
+                    '<p>Nabatian ko nga akig ka. Valid ina. Isa ka praktikal nga hakbang — account, appointment, ukon iban nga medConnect issue — kon ready ka. Indi ako magbinais.</p>',
+                    '<p>Nasabtan ko nga akig ka. Silinga lang ang isa ka butang nga gusto mo ma-ayos, kag direkta kita nga buligan.</p>',
+                ],
+            ],
+            'disappointment_support' => [
+                'en' => [
+                    '<p>I\'m sorry it did not go as you hoped. Disappointment is valid. We can still take one useful next step on medConnect — booking, account, or another concern.</p>',
+                ],
+                'fil' => [
+                    '<p>Paumanhin na hindi natuloy ang inaasahan mo. Valid iyon. May isa pa tayong hakbang sa medConnect kung handa ka.</p>',
+                ],
+                'hil' => [
+                    '<p>Pasensya nga wala natuman ang imo gina-laum. Valid ina. May isa pa kita ka hakbang sa medConnect kon ready ka.</p>',
+                ],
+            ],
+            'emotion_and_symptoms' => [
+                'en' => [
+                    '<p>I understand you feel afraid, and I\'m sorry you\'re in pain. I cannot diagnose. If the pain is severe, or you have weakness, fainting, trouble speaking, or cannot breathe, seek emergency medical help now. If it is not an emergency, I can guide you to a consultation on medConnect.</p>',
+                ],
+                'fil' => [
+                    '<p>Naiintindihan ko na natatakot ka, at paumanhin sa sakit. Hindi ako nagda-diagnose. Kung malala, may panghihina, pagkahimatay, hirap magsalita, o hindi makahinga — emergency help ngayon. Kung hindi emergency, matutulungan kitang magpa-konsulta.</p>',
+                ],
+                'hil' => [
+                    '<p>Nasabtan ko nga nahadlok ka. Buligan ta ikaw. Kung grabe gid ang sakit sang ulo, ukon may iban ka nga seryoso nga sintomas pareho sang pagkaluya, pagkawala sang malay, budlay maghambal, ukon indi makaginhawa, magpangayo dayon sang emergency medical help. Kung indi man emergency, mahimo ta ikaw i-guide sa consultation.</p>',
+                ],
             ],
         ];
     }

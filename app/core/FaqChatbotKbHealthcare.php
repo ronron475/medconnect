@@ -135,7 +135,7 @@ final class FaqChatbotKbHealthcare
                 'flow_key' => 'pain_sick',
                 'weight' => 1.05,
                 'patterns' => [
-                    '/\b(headache|sakit\s+ulo|ginasakit\s+ulo|fever|hilanat|lagnat|stomach\s+ache|sakit\s+tiyan|symptom)\b/ui',
+                    '/\b(headache|sakit\s+ulo|ginasakit\s+ulo|fever|hilanat|lagnat|stomach\s+ache|sakit\s+tiyan|symptom|head\s+feels\s+heavy|tummy\s+hurts|feel\s+like\s+fainting|chest\s+feels\s+tight|hard\s+to\s+breathe|body\s+feels\s+weak|eyes\s+hurt|throat\s+hurts)\b/ui',
                 ],
                 'keywords' => ['sakit ulo', 'headache', 'symptom', 'masakit', 'hilanat'],
             ],
@@ -221,14 +221,31 @@ final class FaqChatbotKbHealthcare
                 ],
             ],
             'symptoms_general' => [
-                'en' => ['<p>I\'m sorry you\'re not feeling well. Rest and fluids may help mild illness, but only a provider can evaluate symptoms. Want help booking on medConnect?</p>'],
-                'fil' => ['<p>Paumanhin sa hindi magandang pakiramdam. Provider ang makakapag-evaluate. Gusto mo bang tulungan kitang mag-book?</p>'],
-                'hil' => ['<p>Pasensya nga indi ka maayo. Provider ang makasusi. Gusto mo matabangan ko mag-book sa medConnect?</p>'],
+                'en' => [
+                    '<p>I\'m sorry you\'re not feeling well. Rest and fluids may help mild illness, but only a provider can evaluate symptoms. If pain is severe, or you have weakness, fainting, trouble breathing, or sudden worsening, seek urgent in-person care / <strong>911</strong>. Would you like help booking on medConnect?</p>',
+                    '<p>Thank you for telling me. Symptoms can have several possible causes — I cannot diagnose. For medical assessment, please consult a healthcare provider. Severe or emergency symptoms need immediate care.</p>',
+                ],
+                'fil' => ['<p>Paumanhin sa hindi magandang pakiramdam. Provider ang makakapag-evaluate — hindi ako nagda-diagnose. Kung malala o emergency, agad na care / <strong>911</strong>. Gusto mo bang tulungan kitang mag-book?</p>'],
+                'hil' => [
+                    '<p>Nasabtan ko nga indi ka maayo. Provider ang makasusi — indi ako nagadiagnose. Kung grabe gid ang sakit, may pagkaluya, pagkalipong, pagkawala sang malay, ukon iban nga seryoso nga sintomas, pangayo dayon sang emergency medical help. Gusto mo matabangan ko mag-book sa medConnect?</p>',
+                    '<p>Salamat nga ginsugid mo. Ang sintomas may madamo nga posible nga hinungdan — indi ako nagadiagnose. Kon indi emergency, mahimo ta ikaw i-guide sa Appointments.</p>',
+                ],
             ],
             'health_education' => [
                 'en' => ['<p>medConnect helps residents connect with City Health — appointments, records, and consultations. For personal medical advice, see a licensed provider. I share general guidance only and never diagnose.</p>'],
                 'fil' => ['<p>Ang medConnect ay tumutulong makipag-ugnayan sa City Health. Para sa personal na payo, magpatingin sa lisensyadong provider.</p>'],
                 'hil' => ['<p>Ang medConnect nagabulig makakonekta sa City Health. Para sa personal nga advice, magpa-check sa licensed provider.</p>'],
+            ],
+            'symptom_and_booking' => [
+                'en' => [
+                    '<p>I\'m sorry you\'re not feeling well, and I can help you see a provider. Symptoms can have several possible causes — I cannot diagnose. If symptoms are severe or worsening, seek immediate medical attention. Otherwise, sign in and open <strong>Appointments</strong> to book a consultation.</p>',
+                ],
+                'fil' => [
+                    '<p>Paumanhin sa pakiramdam, at matutulungan kitang magpatingin. Hindi ako nagda-diagnose. Kung malala, agarang care. Kung hindi, mag-login at buksan ang <strong>Appointments</strong>.</p>',
+                ],
+                'hil' => [
+                    '<p>Nasabtan ko nga indi ka maayo, kag matabangan ko ikaw magpakonsulta. Indi ako nagadiagnose. Kung grabe, pangayo emergency help. Kung indi, mag-login kag buksan ang <strong>Appointments</strong>.</p>',
+                ],
             ],
         ];
     }

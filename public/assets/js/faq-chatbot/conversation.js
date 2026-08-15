@@ -40,7 +40,14 @@
     /\bheadache\b/i,
     /\btummy\s+ache\b/i,
     /\bstomach\s+ache\b/i,
-    /\bmasakit\s+ang\s+likod\b/i,
+    /\bmasakit\s+ulo\b/i,
+    /\bsakit\s+akon\s+ulo\b/i,
+    /\bga\s+sakit\s+ulo\b/i,
+    /\bnagasakit\s+ulo\b/i,
+    /\bhead\s+feels\s+heavy\b/i,
+    /\btummy\s+hurts\b/i,
+    /\bfeel\s+like\s+fainting\b/i,
+    /\bmy\s+throat\s+hurts\b/i,
   ];
 
   const CHEST_EMERGENCY = [

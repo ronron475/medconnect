@@ -735,8 +735,8 @@
       }
       if (lastPhpAssist && !lastPhpAssist.use_server_response
         && lastPhpAssist.intent
-        && ['financial', 'appointment', 'login', 'registration', 'consultation', 'symptoms', 'emotional_support'].includes(lastPhpAssist.intent)
-        && (lastPhpAssist.confidence || 0) >= 0.65) {
+        && ['financial', 'appointment', 'login', 'registration', 'consultation', 'symptoms', 'emotional_support', 'bhw', 'technical', 'doctor', 'password_reset', 'capabilities'].includes(lastPhpAssist.intent)
+        && (lastPhpAssist.confidence || 0) >= 0.60) {
         appendUser(trimmed);
         Understanding.incrementMessageCount();
         const flowFromIntent = {
@@ -747,6 +747,11 @@
           consultation: 'video',
           symptoms: 'pain_sick',
           emotional_support: 'distress_support',
+          bhw: 'services',
+          technical: 'services',
+          doctor: 'appointment',
+          password_reset: 'reset',
+          capabilities: 'services',
         };
         runFlow(flowFromIntent[lastPhpAssist.intent] || 'distress_support', false, { lang: replyLang });
         return;
@@ -817,12 +822,20 @@
     const skipUnderstandingGate = [
       INTENT.REASSURANCE,
       INTENT.EMOTIONAL_SUPPORT,
+      INTENT.APPOINTMENT,
+      INTENT.LOGIN,
+      INTENT.REGISTRATION,
+      INTENT.FINANCIAL,
+      INTENT.FAQ,
+      INTENT.TECHNICAL,
+      INTENT.CONNECTIVITY,
     ].includes(classification.intent)
       || emotion.standalone
       || (Conversation && Conversation.isPainOrSick(nlpText))
       || Emotions.isSelfHarmCrisis(nlpText)
       || Engine.isMedicalAdviceRequest(nlpText)
       || bridge.isHiligaynon
+      || /\b(doctor|doktor|checkup|sakit|ulo|book|login|bulig|appointment|scared|nahadlok|ginakulbaan|bhw|otp|camera|video|password|register|mabatian|makita|ginhawa|kulbaan)\b/i.test(nlpText)
       || shouldTreatAsEmotionalSupport(emoKey, emotion, phpSuggestedFlow, nlpText, classification, bridge);
 
     appendUser(trimmed, displayEmo);

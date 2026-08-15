@@ -119,13 +119,15 @@ final class FaqChatbotKbGeneral
             ],
             'capabilities' => [
                 'en' => [
-                    '<p>I can help with: <strong>appointments</strong>, <strong>video consultation</strong>, <strong>AI Triage info</strong>, <strong>records</strong>, <strong>login/register/password</strong>, <strong>City Health contact</strong>, general wellness tips, and supportive listening. I never diagnose or prescribe. What do you need?</p>',
+                    '<p>Of course. I\'m here to help. 😊 What do you need — appointment, account/login, video consultation, registration, or a health concern?</p>',
+                    '<p>I can help with appointments, registration, account problems, video consultations, and general health information. Which of those should we start with?</p>',
                 ],
                 'fil' => [
-                    '<p>Matutulungan kita sa: appointments, video consult, AI Triage info, records, login/register/password, City Health contact, at supportive guidance. Hindi ako nagda-diagnose. Ano ang kailangan mo?</p>',
+                    '<p>Oo, tutulong ako. Ano ang kailangan mo — appointment, account/login, video consultation, registration, o health concern?</p>',
                 ],
                 'hil' => [
-                    '<p>Matabangan ko ikaw sa: appointments, video konsultasyon, AI Triage info, records, login/register/password, City Health contact, kag supportive guidance. Indi ako nagadiagnose. Ano ang imo kinahanglan?</p>',
+                    '<p>Of course. Ari lang ako para buligan ka. 😊 Ano ang imo kinahanglan—appointment, account/login, video consultation, registration, ukon health concern?</p>',
+                    '<p>Matabangan ko ikaw sa appointments, registration, account, video consultation, kag general health information. Diin kita magsugod?</p>',
                 ],
             ],
             'small_talk' => [
@@ -176,28 +178,28 @@ final class FaqChatbotKbGeneral
             ],
             'greeting' => [
                 'en' => [
-                    '<p>Hello! I\'m the medConnect Assistant. I can help with appointments, registration, login, video consultation, and City Health questions. How are you feeling today?</p>',
-                    '<p>Hi there — welcome to medConnect. I\'m here to guide you calmly. What would you like help with?</p>',
-                    '<p>Good day! Ask me about booking, accounts, wellness tips, or getting care through City Health.</p>',
+                    '<p>Hello! 👋 I\'m the medConnect Assistant. I can help you with appointments, registration, account problems, video consultations, and general health information. What can I help you with today?</p>',
+                    '<p>Hi there — I\'m the medConnect Assistant. I can guide you with booking, login, video visits, and City Health questions. What do you need?</p>',
+                    '<p>Good day! I\'m here for appointments, registration, account help, video consultation, and general health information. How can I help?</p>',
                 ],
                 'fil' => [
-                    '<p>Kumusta! Ako ang medConnect Assistant. Matutulungan kita sa appointments, rehistro, login, video consultation, at City Health. Ano ang maitutulong ko?</p>',
+                    '<p>Kumusta! 👋 Ako ang medConnect Assistant. Matutulungan kita sa appointments, registration, account, video consultation, at general health information. Ano ang maitutulong ko ngayon?</p>',
                 ],
                 'hil' => [
-                    '<p>Maayong adlaw! Ako ang medConnect Assistant. Matabangan ko ikaw sa appointments, rehistro, login, video konsultasyon, kag City Health. Paano ko ikaw matabangan?</p>',
-                    '<p>Kumusta! Welcome sa medConnect. Diri ako para giyahan ka sing malinong. Ano ang imo kinahanglan?</p>',
+                    '<p>Maayong adlaw! 👋 Ako ang medConnect Assistant. Matabangan ko ikaw sa appointments, registration, account, video consultation, kag general health information. Ano ang imo kinahanglan subong?</p>',
+                    '<p>Kumusta! Ako ang medConnect Assistant. Matabangan ko ikaw sa booking, login, video consult, kag City Health. Paano ko ikaw matabangan?</p>',
                 ],
             ],
             'thank_you' => [
                 'en' => [
-                    '<p>You\'re very welcome. I\'m glad I could help. If you need booking, login, or support — just ask.</p>',
-                    '<p>Happy to help. Take care, and I\'m here whenever you need medConnect guidance.</p>',
+                    '<p>You\'re welcome! I\'m glad I could help. If you need anything else, just ask.</p>',
+                    '<p>Happy to help. Take care — I\'m here whenever you need medConnect guidance.</p>',
                 ],
                 'fil' => [
-                    '<p>Walang anuman. Kung may kailangan pa — booking, login, o support — sabihin mo lang.</p>',
+                    '<p>Walang anuman! Kung may kailangan ka pa, sabihin mo lang.</p>',
                 ],
                 'hil' => [
-                    '<p>Wala sapayan. Kon may kinahanglan ka pa — booking, login, ukon support — silinga lang.</p>',
+                    '<p>Wala sapayan! Kon may kinahanglan ka pa, silinga lang.</p>',
                 ],
             ],
             'goodbye' => [
