@@ -63,8 +63,9 @@
   function renderBloodType(el, value) {
     if (!el) return;
     const raw = String(value || '').trim();
-    if (!raw || isEmptyMedicalValue(raw)) {
-      el.textContent = 'Not recorded';
+    const lower = raw.toLowerCase();
+    if (!raw || isEmptyMedicalValue(raw) || lower === 'unknown') {
+      el.textContent = lower === 'unknown' ? 'Unknown' : 'Not recorded';
       el.classList.add('phs-value--empty');
       return;
     }
