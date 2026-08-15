@@ -138,7 +138,7 @@ require_once __DIR__ . '/partials/layout_open.php';
 
 <div class="ch-section mc-card admin-card-accent">
     <div style="overflow-x: auto;">
-        <table class="ch-table" style="width: 100%; border-collapse: collapse;">
+        <table class="ch-table admin-stack-table" style="width: 100%; border-collapse: collapse;">
             <thead>
                 <tr style="background: #f8fafc; text-align: left;">
                     <th style="padding: 14px 20px; font-size: 11px; text-transform: uppercase; color: var(--mc-text-muted);">Name</th>
@@ -152,7 +152,7 @@ require_once __DIR__ . '/partials/layout_open.php';
             <tbody>
                 <?php foreach ($staff as $s): ?>
                 <tr>
-                    <td style="padding: 16px 20px; font-size: 14px;">
+                    <td data-label="Name" style="padding: 16px 20px; font-size: 14px;">
                         <div style="display: flex; align-items: center; gap: 10px;">
                             <div class="ch-provider-avatar" style="background: var(--mc-blue); color: #fff;">
                                 <?= strtoupper(substr($s['first_name'], 0, 1) . substr($s['last_name'], 0, 1)) ?>
@@ -163,15 +163,15 @@ require_once __DIR__ . '/partials/layout_open.php';
                             </div>
                         </div>
                     </td>
-                    <td style="padding: 16px 20px; font-size: 14px; color: var(--mc-text-muted);"><?= htmlspecialchars($s['email']) ?></td>
-                    <td style="padding: 16px 20px; font-size: 13px;">
+                    <td data-label="Email" style="padding: 16px 20px; font-size: 14px; color: var(--mc-text-muted);"><?= htmlspecialchars($s['email']) ?></td>
+                    <td data-label="PRC License" style="padding: 16px 20px; font-size: 13px;">
                         <?php if ($s['role'] === 'provider'): ?>
                             <?= $s['prc_license_number'] ? htmlspecialchars($s['prc_license_number']) : '<span class="text-muted">Not set</span>' ?>
                         <?php else: ?>
                             <span class="text-muted">—</span>
                         <?php endif; ?>
                     </td>
-                    <td style="padding: 16px 20px;">
+                    <td data-label="Verification" style="padding: 16px 20px;">
                         <?php if ($s['role'] === 'provider' && $s['verification_status']): ?>
                             <?php
                               $v = $s['verification_status'];
@@ -191,7 +191,7 @@ require_once __DIR__ . '/partials/layout_open.php';
                             <span class="text-muted">—</span>
                         <?php endif; ?>
                     </td>
-                    <td style="padding: 16px 20px;">
+                    <td data-label="Account" style="padding: 16px 20px;">
                         <?php
                           $effective = user_account_status_effective($s);
                           $acctBadge = AccountStatus::badge($effective);
@@ -200,7 +200,7 @@ require_once __DIR__ . '/partials/layout_open.php';
                             <?= htmlspecialchars($acctBadge['label']) ?>
                         </span>
                     </td>
-                    <td style="padding: 16px 20px;">
+                    <td data-label="Actions" style="padding: 16px 20px;">
                         <?php
                           $staff_actions = user_account_status_allowed_actions_for_role(
                               $effective,

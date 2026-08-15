@@ -21,7 +21,7 @@ require_once __DIR__ . '/partials/layout_open.php';
 </div>
 
 <div class="mc-card" style="padding:0;overflow:hidden;">
-  <table class="mc-table">
+  <table class="mc-table admin-stack-table">
     <thead><tr><th>Table</th><th>Rows (est.)</th><th>Size (MB)</th></tr></thead>
     <tbody id="dbMonBody"><tr><td colspan="3"><div class="mc-table-empty"><p>Loading…</p></div></td></tr></tbody>
   </table>
@@ -51,7 +51,7 @@ require_once __DIR__ . '/partials/layout_open.php';
           tb.innerHTML = '<tr><td colspan="3"><div class="mc-table-empty"><p>No tables found.</p></div></td></tr>';
         } else {
           tb.innerHTML = j.tables.map(function (t) {
-            return '<tr><td>' + esc(t.table_name) + '</td><td>' + Number(t.table_rows || 0).toLocaleString() + '</td><td>' + esc(t.size_mb) + '</td></tr>';
+            return '<tr><td data-label="Table">' + esc(t.table_name) + '</td><td data-label="Rows">' + Number(t.table_rows || 0).toLocaleString() + '</td><td data-label="Size (MB)">' + esc(t.size_mb) + '</td></tr>';
           }).join('');
         }
         document.getElementById('dbMonUpdated').textContent = 'Updated ' + new Date().toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });

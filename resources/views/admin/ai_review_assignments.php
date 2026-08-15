@@ -66,7 +66,7 @@ require_once __DIR__ . '/partials/layout_open.php';
   <div class="staff-apps-card__toolbar">
     <div class="staff-apps-search">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-      <input type="search" id="aiReviewSearch" class="staff-apps-search__input" placeholder="Search patient, concern, or reviewer…" aria-label="Search AI review cases">
+      <input type="search" id="aiReviewSearch" class="staff-apps-search__input" placeholder="Search patient or concern…" aria-label="Search AI review cases">
     </div>
     <select id="aiReviewFilter" class="staff-apps-filter" aria-label="Filter cases">
       <option value="active">Pending + approved (30 days)</option>

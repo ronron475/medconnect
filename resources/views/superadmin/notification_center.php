@@ -70,7 +70,7 @@ require_once __DIR__ . '/partials/layout_open.php';
 </div>
 
 <div class="mc-card" style="padding:0;overflow:hidden;">
-  <table class="mc-table">
+  <table class="mc-table admin-stack-table">
     <thead>
       <tr><th>User</th><th>Type</th><th>Title</th><th>Priority</th><th>Read</th><th>Time</th><th></th></tr>
     </thead>
@@ -79,18 +79,18 @@ require_once __DIR__ . '/partials/layout_open.php';
       <tr><td colspan="7"><div class="mc-table-empty"><p>No notifications found.</p></div></td></tr>
       <?php else: foreach ($recent as $n): ?>
       <tr data-id="<?= (int) $n['id'] ?>">
-        <td class="text-xs"><?= htmlspecialchars($n['email'] ?? '—') ?></td>
-        <td><?= htmlspecialchars($n['type'] ?? '') ?></td>
-        <td>
+        <td data-label="User" class="text-xs"><?= htmlspecialchars($n['email'] ?? '—') ?></td>
+        <td data-label="Type"><?= htmlspecialchars($n['type'] ?? '') ?></td>
+        <td data-label="Title">
           <strong><?= htmlspecialchars($n['title'] ?? '') ?></strong>
           <?php if (!empty($n['message'])): ?>
           <div class="text-xs text-muted"><?= htmlspecialchars(mb_strimwidth($n['message'], 0, 80, '…')) ?></div>
           <?php endif; ?>
         </td>
-        <td><span class="mc-badge"><?= htmlspecialchars($n['priority'] ?? 'normal') ?></span></td>
-        <td><?= $n['is_read'] ? 'Yes' : 'No' ?></td>
-        <td class="text-xs text-muted"><?= date('M j, g:i A', strtotime($n['created_at'])) ?></td>
-        <td style="white-space:nowrap;">
+        <td data-label="Priority"><span class="mc-badge"><?= htmlspecialchars($n['priority'] ?? 'normal') ?></span></td>
+        <td data-label="Read"><?= $n['is_read'] ? 'Yes' : 'No' ?></td>
+        <td data-label="Time" class="text-xs text-muted"><?= date('M j, g:i A', strtotime($n['created_at'])) ?></td>
+        <td data-label="Actions" style="white-space:nowrap;">
           <?php if (!$n['is_read']): ?>
           <button type="button" class="mc-btn mc-btn--outline js-mark-read" data-id="<?= (int) $n['id'] ?>" style="padding:2px 8px;font-size:10px;">Read</button>
           <?php else: ?>

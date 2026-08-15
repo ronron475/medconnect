@@ -151,3 +151,78 @@ html[data-theme-resolved='dark'] body.superadmin-body .adm-sidebar--superadmin {
     grid-template-columns: 1fr;
   }
 }
+
+@media (max-width: 768px) {
+  body.superadmin-body .topbar-eyebrow {
+    white-space: normal;
+    overflow: visible;
+    text-overflow: unset;
+  }
+
+  .superadmin-banner {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+  }
+
+  .superadmin-banner-actions {
+    width: 100%;
+  }
+
+  .superadmin-approval-strip {
+    grid-template-columns: 1fr;
+  }
+
+  .superadmin-stat-grid--compact {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  body.superadmin-body form.mc-card .mc-btn--primary,
+  body.superadmin-body #sysForm .mc-btn--primary,
+  body.superadmin-body #apiForm .mc-btn--primary,
+  body.superadmin-body #pwForm .mc-btn--primary {
+    width: 100%;
+    justify-content: center;
+  }
+
+  #blockIpForm {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  #blockIpForm input,
+  #blockIpForm .mc-btn,
+  #blockIpForm label {
+    width: 100%;
+    min-width: 0 !important;
+  }
+
+  #adminModal {
+    padding: 8px !important;
+    align-items: flex-end !important;
+    box-sizing: border-box;
+  }
+
+  #adminModal > .mc-card {
+    width: 100% !important;
+    max-width: 100%;
+    margin: 0 !important;
+    max-height: calc(100dvh - 16px);
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    border-radius: 16px 16px 0 0;
+  }
+
+  #adminModal form > div {
+    flex-direction: column;
+  }
+
+  #adminModal form .mc-btn {
+    width: 100%;
+    justify-content: center;
+  }
+
+  body.superadmin-body [style*="minmax(320px"] {
+    grid-template-columns: 1fr !important;
+  }
+}

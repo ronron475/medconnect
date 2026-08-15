@@ -99,7 +99,7 @@ require_once __DIR__ . '/partials/layout_open.php';
                     type="search"
                     name="q"
                     class="audit-logs-search__input"
-                    placeholder="Search user, action, description, or IP…"
+                    placeholder="Search user, action, or IP…"
                     value="<?= htmlspecialchars($search) ?>"
                     autocomplete="off"
                 >

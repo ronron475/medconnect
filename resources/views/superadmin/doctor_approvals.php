@@ -80,7 +80,7 @@ require_once __DIR__ . '/partials/layout_open.php';
     <div class="staff-apps-card__toolbar">
         <div class="staff-apps-search">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-            <input type="search" id="doctorApprovalSearch" class="staff-apps-search__input" placeholder="Search doctor, PRC, specialization…" aria-label="Search applications">
+            <input type="search" id="doctorApprovalSearch" class="staff-apps-search__input" placeholder="Search doctor or PRC…" aria-label="Search applications">
         </div>
         <select id="doctorApprovalStatusFilter" class="staff-apps-filter" aria-label="Filter by status">
             <option value="all">All in queue</option>
@@ -144,8 +144,8 @@ require_once __DIR__ . '/partials/layout_open.php';
     </div>
 </div>
 
-<link rel="stylesheet" href="<?= ASSET_BASE ?>/assets/css/admin-staff-applications.css?v=1.1">
-<link rel="stylesheet" href="<?= ASSET_BASE ?>/assets/css/admin-staff-forms.css?v=1.0">
+<link rel="stylesheet" href="<?= ASSET_BASE ?>/assets/css/admin-staff-applications.css?v=1.2">
+<link rel="stylesheet" href="<?= ASSET_BASE ?>/assets/css/admin-staff-forms.css?v=1.3">
 <link rel="stylesheet" href="<?= ASSET_BASE ?>/assets/css/admin-bhw-applications.css?v=1.1">
 <script src="<?= ASSET_BASE ?>/assets/js/admin-staff-applications.js?v=1.1"></script>
 <script>
