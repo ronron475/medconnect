@@ -620,14 +620,14 @@
             </div>
           </section>
 
-          <!-- Current Health Concern (Chief Complaint) -->
+          <!-- Patient Complaint -->
           <section class="intake-card intake-card--complaint" id="section-chief-complaint" aria-labelledby="intake-complaint-title">
             <div class="intake-card__head">
               <div class="intake-card__icon" aria-hidden="true">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
               </div>
               <div>
-                <h3 class="intake-card__title" id="intake-complaint-title">Current Health Concern</h3>
+                <h3 class="intake-card__title" id="intake-complaint-title">Patient Complaint</h3>
                 <p class="intake-card__sub">Optional — You can share your symptoms now or skip this step and continue registration.</p>
               </div>
             </div>
@@ -641,14 +641,14 @@
                   <textarea id="chief-complaint" name="chief_complaint" maxlength="500" rows="4" class="textarea-field textarea-field--tall" placeholder="Example: I have had a fever, sore throat, and cough for the past two days."></textarea>
                 </div>
                 <div class="intake-field-meta">
-                  <p class="intake-helper-text" id="chief-complaint-helper">If you have a current health concern, describe it above. If you don't have one or don't want to provide one now, you can skip this step and continue your registration.</p>
+                  <p class="intake-helper-text" id="chief-complaint-helper">If you have a patient complaint to share, describe it above. If you don't have one or don't want to provide one now, you can skip this step and continue your registration.</p>
                   <span class="char-counter" id="chief-complaint-count" aria-live="polite">0/500</span>
                 </div>
                 <div class="reg-complaint-actions">
                   <button type="button" class="btn-complaint-skip" id="btn-skip-complaint">Skip for Now</button>
                   <button type="button" class="btn-complaint-add" id="btn-add-complaint" hidden>Add Patient Complaint</button>
                 </div>
-                <p class="reg-complaint-later-hint">You can provide a health concern later when booking a consultation.</p>
+                <p class="reg-complaint-later-hint">You can provide a patient complaint later when booking a consultation.</p>
                 <p class="reg-complaint-skipped-note" id="chief-complaint-skipped-note" hidden role="status">Skipped — you can add your patient complaint when booking a consultation.</p>
                 <span class="field-error" id="chief-complaint-error" role="alert"></span>
               </div>
@@ -827,8 +827,8 @@ mc_render_loader_panel([
     <span class="reg-outcome-badge reg-outcome-badge--non-urgent" id="reg-outcome-success-badge" hidden>NON-URGENT</span>
     <h2 id="reg-outcome-success-title" class="reg-outcome-modal__title">Registration Successful</h2>
     <p class="reg-outcome-modal__msg">Your account has been created successfully.</p>
-    <p class="reg-outcome-modal__msg" id="reg-outcome-success-no-complaint-msg">No health concern was provided.</p>
-    <p class="reg-outcome-modal__msg" id="reg-outcome-success-no-complaint-hint">You can add a health concern later when booking a consultation.</p>
+    <p class="reg-outcome-modal__msg" id="reg-outcome-success-no-complaint-msg">No patient complaint was provided.</p>
+    <p class="reg-outcome-modal__msg" id="reg-outcome-success-no-complaint-hint">You can add a patient complaint later when booking a consultation.</p>
     <p class="reg-outcome-modal__msg" id="reg-outcome-success-triage-msg" hidden>Triage result: <strong>Non-Urgent</strong>. You may schedule a consultation at your preferred available date and time.</p>
     <div class="reg-outcome-modal__actions">
       <button type="button" class="reg-outcome-btn reg-outcome-btn--primary" id="reg-outcome-success-go">Continue to Sign In</button>
