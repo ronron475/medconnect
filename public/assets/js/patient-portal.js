@@ -403,7 +403,7 @@
         }
         if (c.chief_complaint) {
           extraMeta +=
-            '<p class="psess-card__meta"><span>Chief Complaint</span> ' + escapeHtml(c.chief_complaint) + '</p>';
+            '<p class="psess-card__meta"><span>Patient Complaint</span> ' + escapeHtml(c.chief_complaint) + '</p>';
         }
       }
 
@@ -664,7 +664,7 @@
       if (hasScheduledFollowup) {
         parts.push('Your doctor also scheduled a follow-up — that visit stays on your record.');
       }
-      parts.push('Enter a new chief complaint below to start a separate consultation for a different health concern.');
+      parts.push('Enter a new patient complaint below to start a separate consultation for a different health concern.');
       const followupAlertEl = document.getElementById('triageFormAlert');
       if (followupAlertEl) {
         showTriageAlert(followupAlertEl, 'success', parts.join(' '));
@@ -1309,7 +1309,7 @@
           alertEl,
           'error',
           isLocked
-            ? 'Your chief complaint is not available. Please contact the health office.'
+            ? 'Your patient complaint is not available. Please contact the health office.'
             : 'Please describe your symptoms or concern.'
         );
         return;

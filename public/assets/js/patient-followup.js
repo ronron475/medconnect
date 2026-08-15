@@ -41,7 +41,7 @@
       '<h2 id="psess-followup-title">Request Follow-up</h2>' +
       '<p class="psess-followup-modal__sub">Describe how your condition has changed since your last visit. Our clinical AI will assess urgency.</p>' +
       '<div id="psess-followup-context" class="psess-followup-context"></div>' +
-      '<label class="psess-followup-label" for="psess-followup-complaint">Updated chief complaint</label>' +
+      '<label class="psess-followup-label" for="psess-followup-complaint">Updated patient complaint</label>' +
       '<textarea id="psess-followup-complaint" class="psess-followup-textarea" rows="4" maxlength="1000" placeholder="Describe your current symptoms…"></textarea>' +
       '<div id="psess-followup-result" class="psess-followup-result" hidden></div>' +
       '<div id="psess-followup-booking" class="psess-followup-booking" hidden></div>' +
@@ -104,7 +104,7 @@
   async function submitFollowup() {
     const complaint = document.getElementById('psess-followup-complaint').value.trim();
     if (!complaint) {
-      window.alert('Please describe your updated chief complaint.');
+      window.alert('Please describe your updated patient complaint.');
       return;
     }
     const csrf = getCsrfToken();

@@ -532,7 +532,7 @@ const step2Rules = {
     const t = (v || '').trim();
     if (!t) return '';
     if (t.length < 10) return 'Please provide a bit more detail (at least 10 characters), or skip for now.';
-    if (t.length > 500) return 'Chief complaint must be 500 characters or fewer.';
+    if (t.length > 500) return 'Patient complaint must be 500 characters or fewer.';
     return '';
   },
 };

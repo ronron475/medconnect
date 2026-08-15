@@ -99,7 +99,7 @@ function pmh_note_text(?string $value, string $fallback = ''): string {
         <div class="pmh-visit__grid">
           <?php if ($chiefComplaint !== ''): ?>
           <section class="pmh-visit__block pmh-visit__block--full">
-            <h4 class="pmh-visit__label">Chief complaint</h4>
+            <h4 class="pmh-visit__label">Patient complaint</h4>
             <p><?= htmlspecialchars($chiefComplaint) ?></p>
           </section>
           <?php endif; ?>

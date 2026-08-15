@@ -119,21 +119,21 @@
       if (trimmed && trimmed.length < MIN_CHARS) {
         submitHint.textContent = 'Please provide a bit more detail (at least 10 characters), or skip for now.';
       } else {
-        submitHint.textContent = 'Chief complaint is optional. You can skip it and continue registration.';
+        submitHint.textContent = 'Patient complaint is optional. You can skip it and continue registration.';
       }
       submitHint.classList.remove('is-ready');
       return;
     }
 
     if (complaintSkipped) {
-      submitHint.textContent = 'Chief complaint skipped. You can submit your registration.';
+      submitHint.textContent = 'Patient complaint skipped. You can submit your registration.';
       submitHint.classList.add('is-ready');
       return;
     }
 
     const trimmed = normalizeComplaint((els().textarea && els().textarea.value) || '');
     if (!trimmed) {
-      submitHint.textContent = 'Chief complaint is optional. You can submit your registration without entering symptoms.';
+      submitHint.textContent = 'Patient complaint is optional. You can submit your registration without entering symptoms.';
       submitHint.classList.add('is-ready');
       return;
     }

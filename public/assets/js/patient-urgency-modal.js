@@ -304,7 +304,7 @@
       hideSlots();
       setSteps([
         'Supporting evidence is optional',
-        'Submit your chief complaint for provider review',
+        'Submit your patient complaint for provider review',
         'Seek urgent or emergency care if symptoms worsen',
       ]);
       if (primaryBtn) {
