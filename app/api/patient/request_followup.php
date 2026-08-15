@@ -31,7 +31,7 @@ if ($consultationId <= 0) {
     Api::error('Please select a consultation to follow up on.');
 }
 if ($complaint === '' && $symptomList === []) {
-    Api::error('Please describe your updated chief complaint.');
+    Api::error('Please describe your updated patient complaint.');
 }
 
 try {

@@ -182,7 +182,7 @@ $patient_page_stylesheets = [
         <div><dt>Duration</dt><dd><?= htmlspecialchars($durationLabel) ?></dd></div>
         <?php endif; ?>
         <div><dt>Status</dt><dd><?= htmlspecialchars($statusLabel) ?></dd></div>
-        <div><dt>Chief Complaint</dt><dd><?= htmlspecialchars($chiefComplaint !== '' ? $chiefComplaint : 'Not recorded.') ?></dd></div>
+        <div><dt>Patient Complaint</dt><dd><?= htmlspecialchars($chiefComplaint !== '' ? $chiefComplaint : 'Not recorded.') ?></dd></div>
       </dl>
     </section>
 

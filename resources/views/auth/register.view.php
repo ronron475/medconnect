@@ -634,7 +634,7 @@
             <div class="intake-card__body">
               <div class="form-group form-group-full">
                 <label for="chief-complaint" class="complaint-field-label">
-                  <span class="complaint-field-label__text">Chief Complaint</span>
+                  <span class="complaint-field-label__text">Patient Complaint</span>
                   <span class="complaint-optional-badge">Optional</span>
                 </label>
                 <div class="input-wrap">
@@ -646,10 +646,10 @@
                 </div>
                 <div class="reg-complaint-actions">
                   <button type="button" class="btn-complaint-skip" id="btn-skip-complaint">Skip for Now</button>
-                  <button type="button" class="btn-complaint-add" id="btn-add-complaint" hidden>Add Chief Complaint</button>
+                  <button type="button" class="btn-complaint-add" id="btn-add-complaint" hidden>Add Patient Complaint</button>
                 </div>
                 <p class="reg-complaint-later-hint">You can provide a health concern later when booking a consultation.</p>
-                <p class="reg-complaint-skipped-note" id="chief-complaint-skipped-note" hidden role="status">Skipped — you can add your chief complaint when booking a consultation.</p>
+                <p class="reg-complaint-skipped-note" id="chief-complaint-skipped-note" hidden role="status">Skipped — you can add your patient complaint when booking a consultation.</p>
                 <span class="field-error" id="chief-complaint-error" role="alert"></span>
               </div>
             </div>

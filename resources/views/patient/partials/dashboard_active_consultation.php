@@ -70,7 +70,7 @@ if ($providerName !== '') {
 
       <?php if ($concern !== ''): ?>
       <div class="pdash-care-concern">
-        <span class="pdash-care-concern__label">Chief complaint</span>
+        <span class="pdash-care-concern__label">Patient complaint</span>
         <p class="pdash-care-concern__text"><?= htmlspecialchars($concern) ?></p>
       </div>
       <?php endif; ?>

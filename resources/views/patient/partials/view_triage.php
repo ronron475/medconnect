@@ -31,7 +31,7 @@ $locked_alternate_available = !empty($locked_alternate_available);
 <p class="text-sm text-muted patient-triage-lead">
   Choose a doctor and an available time slot for your video visit.
   <?php if (!empty($patient_has_completed_visit) || !empty($patient_has_scheduled_followup)): ?>
-  Enter a new chief complaint below for a separate consultation — follow-ups and past visits stay on your record.
+  Enter a new patient complaint below for a separate consultation — follow-ups and past visits stay on your record.
   <?php endif; ?>
 </p>
 <?php endif; ?>
@@ -44,7 +44,7 @@ $locked_alternate_available = !empty($locked_alternate_available);
   <?php if (!empty($patient_has_scheduled_followup)): ?>
     <?= !empty($future_scheduled_consultation) ? 'Your doctor also scheduled a follow-up.' : 'Your doctor scheduled a follow-up for you.' ?>
   <?php endif; ?>
-  You can still book a <strong>new consultation</strong> here with a different chief complaint — your follow-up appointment will not be changed.
+  You can still book a <strong>new consultation</strong> here with a different patient complaint — your follow-up appointment will not be changed.
 </div>
 <?php elseif (!empty($active_consultation)): ?>
 <div class="patient-triage-alert patient-triage-alert--warning is-visible patient-triage-alert--spaced">
@@ -83,7 +83,7 @@ $locked_alternate_available = !empty($locked_alternate_available);
     <?php endif; ?>
     <div class="form-group" id="chief-complaint">
       <label class="form-label" for="chief_complaint">
-        Chief Complaint<?= $chief_complaint_locked ? ' <span class="text-muted">(' . htmlspecialchars($chief_complaint_source_label) . ')</span>' : '' ?>
+        Patient Complaint<?= $chief_complaint_locked ? ' <span class="text-muted">(' . htmlspecialchars($chief_complaint_source_label) . ')</span>' : '' ?>
       </label>
       <textarea
         id="chief_complaint"
@@ -96,7 +96,7 @@ $locked_alternate_available = !empty($locked_alternate_available);
       ><?= htmlspecialchars($registration_chief_complaint) ?></textarea>
       <p class="text-xs text-muted" style="margin-top:6px;">
         <?php if ($chief_complaint_locked): ?>
-        This chief complaint is already on file and will be reviewed by your doctor. It cannot be changed while this consultation is still active.
+        This patient complaint is already on file and will be reviewed by your doctor. It cannot be changed while this consultation is still active.
         <?php if (empty($active_consultation) && empty($force_new_concern)): ?>
         If this is a different health concern, <a href="<?= htmlspecialchars((defined('ASSET_BASE') ? ASSET_BASE : '') . '/views/patient/triage.php?new_concern=1') ?>">start a new case</a>.
         <?php endif; ?>

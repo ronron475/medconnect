@@ -294,7 +294,7 @@ function urgent_followup_submit(
         throw new InvalidArgumentException('Invalid patient or consultation.');
     }
     if (trim($complaint) === '' && $symptomList === []) {
-        throw new InvalidArgumentException('Please describe your updated chief complaint.');
+        throw new InvalidArgumentException('Please describe your updated patient complaint.');
     }
 
     $stmt = $pdo->prepare("

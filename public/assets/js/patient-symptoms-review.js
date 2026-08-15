@@ -16,7 +16,7 @@
   if (submitBtn && !submitBtn.dataset.defaultLabel) {
     submitBtn.dataset.defaultLabel = submitBtn.textContent.trim();
   }
-  var finalSubmitLabel = submitBtn ? (submitBtn.dataset.defaultLabel || 'Submit chief complaint') : 'Submit chief complaint';
+  var finalSubmitLabel = submitBtn ? (submitBtn.dataset.defaultLabel || 'Submit patient complaint') : 'Submit patient complaint';
 
   var IMAGE_MAX = 5 * 1024 * 1024;
   var VIDEO_MAX = 25 * 1024 * 1024;
@@ -515,7 +515,7 @@
       syncEvidenceSection();
       var locked = complaintEl && complaintEl.hasAttribute('readonly');
       showAlert('error', locked
-        ? 'Your chief complaint is not available. Please contact the health office.'
+        ? 'Your patient complaint is not available. Please contact the health office.'
         : 'Please describe your symptoms or concern.');
       return;
     }
