@@ -31,6 +31,9 @@ $filters = [
     'date_to'      => trim((string) ($_GET['date_to'] ?? '')),
     'viewer_role'  => $role,
 ];
+if ($role === 'provider') {
+    $filters['provider_id'] = (int) ($_SESSION['user_id'] ?? 0);
+}
 
 try {
     switch ($action) {
@@ -64,7 +67,7 @@ try {
             break;
 
         case 'triage_stats':
-            $payload = ['triage_stats' => $gis->getTriageStats()];
+            $payload = ['triage_stats' => $gis->getTriageStats($role, $filters)];
             break;
 
         case 'bundle':
@@ -75,7 +78,7 @@ try {
                 'patients'     => $patients,
                 'analytics'    => $gis->getAnalytics(),
                 'monitoring'   => $gis->getMonitoringInsights($patients),
-                'triage_stats' => $gis->getTriageStats($role),
+                'triage_stats' => $gis->getTriageStats($role, $filters),
                 'map_config'   => $gis->getMapConfig(),
                 'server_ts'    => date('c'),
             ];

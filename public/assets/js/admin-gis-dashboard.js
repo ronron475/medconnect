@@ -337,10 +337,25 @@
     const monitoring = currentMonitoring();
     const todayEl = document.getElementById('stat-new_today');
     const unmappedEl = document.getElementById('stat-unmapped');
-    const bhwEl = document.getElementById('stat-unassigned_bhw');
-    const hotEl = document.getElementById('stat-hotspots');
     if (todayEl) todayEl.textContent = Number(monitoring.new_cases_today || 0).toLocaleString();
     if (unmappedEl) unmappedEl.textContent = Number(monitoring.unmapped_cases || 0).toLocaleString();
+
+    if (userRole === 'provider') {
+      let visits = 0;
+      let pending = 0;
+      (state.patients || []).forEach(function (row) {
+        visits += Number(row.visits_today || 0);
+        pending += Number(row.pending_review || 0);
+      });
+      const visitsEl = document.getElementById('stat-visits_today');
+      const pendingEl = document.getElementById('stat-pending_review');
+      if (visitsEl) visitsEl.textContent = visits.toLocaleString();
+      if (pendingEl) pendingEl.textContent = pending.toLocaleString();
+      return;
+    }
+
+    const bhwEl = document.getElementById('stat-unassigned_bhw');
+    const hotEl = document.getElementById('stat-hotspots');
     if (bhwEl) bhwEl.textContent = Number(monitoring.unassigned_bhw || 0).toLocaleString();
     if (hotEl) hotEl.textContent = Number((monitoring.hotspots || []).length).toLocaleString();
   }
@@ -886,6 +901,32 @@
       '<p><strong>Assigned doctor:</strong> ' +
       escapeHtml(row.assigned_doctor || 'Not assigned') +
       '</p>';
+
+    if (userRole === 'provider') {
+      const recordsUrl = String(root.dataset.recordsUrl || '').trim();
+      const historyUrl = String(root.dataset.historyUrl || '').trim();
+      const pid = encodeURIComponent(String(row.patient_id || ''));
+      if (recordsUrl || historyUrl) {
+        html += '<p class="gis-popup__actions">';
+        if (recordsUrl) {
+          html +=
+            '<a class="gis-popup__link" href="' +
+            escapeHtml(recordsUrl) +
+            '?view=patients&amp;patient_id=' +
+            pid +
+            '">Open records</a>';
+        }
+        if (historyUrl) {
+          html +=
+            '<a class="gis-popup__link" href="' +
+            escapeHtml(historyUrl) +
+            '?patient_id=' +
+            pid +
+            '">Visit history</a>';
+        }
+        html += '</p>';
+      }
+    }
 
     html += '</div>';
     return html;

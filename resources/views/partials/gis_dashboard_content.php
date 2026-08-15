@@ -1,20 +1,31 @@
 <?php
 $gisUserRole = (string) ($userRole ?? $_SESSION['user_role'] ?? '');
+$gisIsProvider = $gisUserRole === 'provider';
+$gisRecordsUrl = $gisIsProvider ? (rtrim((string) $assetBase, '/') . '/views/provider/medical_records.php') : '';
+$gisHistoryUrl = $gisIsProvider ? (rtrim((string) $assetBase, '/') . '/views/provider/consultation_history.php') : '';
+$gisSubtitle = $gisIsProvider
+    ? 'Your assigned patients across Bago City — Non-Urgent, Urgent, and Emergency cases on your caseload. Pins show barangay location, not exact home GPS.'
+    : 'Monitor patient severity geography across Bago City — identify Non-Urgent, Urgent, and Emergency cases at a glance.';
+$gisMapNote = $gisIsProvider
+    ? 'This map lists only patients already assigned to you (consultations, booked visits, Care tips review, or pending Health Summary requests). Severity comes from each patient\'s latest triage level. Exact home GPS is hidden; pins use the verified barangay center.'
+    : 'Severity is sourced from each patient\'s latest triage_level. Pin badges reflect GPS, geocoded address, or verified barangay-center accuracy. Patients without a verified location are listed but not mapped.';
 ?>
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin=""/>
 <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css" crossorigin=""/>
 <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css" crossorigin=""/>
-<link rel="stylesheet" href="<?= htmlspecialchars($assetBase) ?>/assets/css/admin-gis-dashboard.css?v=4.0"/>
+<link rel="stylesheet" href="<?= htmlspecialchars($assetBase) ?>/assets/css/admin-gis-dashboard.css?v=4.1"/>
 
 <div class="gis-page" id="gis-dashboard"
      data-api="<?= htmlspecialchars($apiBase) ?>"
      data-export="<?= htmlspecialchars($exportBase) ?>"
-     data-user-role="<?= htmlspecialchars($gisUserRole) ?>">
+     data-user-role="<?= htmlspecialchars($gisUserRole) ?>"
+     data-records-url="<?= htmlspecialchars($gisRecordsUrl) ?>"
+     data-history-url="<?= htmlspecialchars($gisHistoryUrl) ?>">
 
   <div class="gis-header">
     <div>
-      <h2 class="text-h2 gis-title">GIS Dashboard</h2>
-      <p class="text-muted gis-subtitle">Monitor patient severity geography across Bago City — identify Non-Urgent, Urgent, and Emergency cases at a glance.</p>
+      <h2 class="text-h2 gis-title"><?= $gisIsProvider ? 'My patient map' : 'GIS Dashboard' ?></h2>
+      <p class="text-muted gis-subtitle"><?= htmlspecialchars($gisSubtitle) ?></p>
     </div>
     <div class="gis-view-toggle" role="tablist" aria-label="GIS view mode">
       <button type="button" class="gis-toggle-btn is-active" data-view="map" role="tab" aria-selected="true">Map View</button>
@@ -36,17 +47,27 @@ $gisUserRole = (string) ($userRole ?? $_SESSION['user_role'] ?? '');
       <div class="gis-stat-value" id="stat-emergency">—</div>
     </div>
     <div class="mc-card gis-stat-card gis-stat-card--barangay" data-severity-stat="barangay">
-      <div class="gis-stat-label">📍 Most Login Barangay</div>
+      <div class="gis-stat-label"><?= $gisIsProvider ? '📍 Top barangay on your list' : '📍 Most Login Barangay' ?></div>
       <div class="gis-stat-value gis-stat-value--text" id="stat-top_barangay">—</div>
     </div>
     <div class="mc-card gis-stat-card" data-gis-insight="today">
-      <div class="gis-stat-label">New cases today</div>
+      <div class="gis-stat-label"><?= $gisIsProvider ? 'New on your list today' : 'New cases today' ?></div>
       <div class="gis-stat-value" id="stat-new_today">—</div>
     </div>
     <div class="mc-card gis-stat-card" data-gis-insight="unmapped">
       <div class="gis-stat-label">Cases without valid location</div>
       <div class="gis-stat-value" id="stat-unmapped">—</div>
     </div>
+    <?php if ($gisIsProvider): ?>
+    <div class="mc-card gis-stat-card" data-gis-insight="visits_today">
+      <div class="gis-stat-label">Visits scheduled today</div>
+      <div class="gis-stat-value" id="stat-visits_today">—</div>
+    </div>
+    <div class="mc-card gis-stat-card" data-gis-insight="pending_review">
+      <div class="gis-stat-label">Awaiting your review</div>
+      <div class="gis-stat-value" id="stat-pending_review">—</div>
+    </div>
+    <?php else: ?>
     <div class="mc-card gis-stat-card" data-gis-insight="bhw">
       <div class="gis-stat-label">Cases without assigned BHW</div>
       <div class="gis-stat-value" id="stat-unassigned_bhw">—</div>
@@ -55,6 +76,7 @@ $gisUserRole = (string) ($userRole ?? $_SESSION['user_role'] ?? '');
       <div class="gis-stat-label">Detected hotspots</div>
       <div class="gis-stat-value" id="stat-hotspots">—</div>
     </div>
+    <?php endif; ?>
   </div>
 
   <div class="gis-panel gis-panel--map is-active" id="gis-map-panel" role="tabpanel">
@@ -86,7 +108,7 @@ $gisUserRole = (string) ($userRole ?? $_SESSION['user_role'] ?? '');
           <span class="gis-map-layer-switch__label" id="gisMapLayerLabel">Satellite</span>
         </button>
       </div>
-      <p class="gis-map-note text-xs text-muted">Severity is sourced from each patient's latest <code>triage_level</code>. Pin badges reflect GPS, geocoded address, or verified barangay-center accuracy. Patients without a verified location are listed but not mapped.</p>
+      <p class="gis-map-note text-xs text-muted"><?= $gisMapNote ?></p>
     </div>
     <div class="gis-analytics-grid" id="gis-analytics-grid">
       <div class="mc-card gis-analytics-card">
@@ -153,4 +175,4 @@ $gisUserRole = (string) ($userRole ?? $_SESSION['user_role'] ?? '');
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
 <script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js" crossorigin=""></script>
 <script src="https://unpkg.com/leaflet.heat@0.2.0/dist/leaflet-heat.js" crossorigin=""></script>
-<script src="<?= htmlspecialchars($assetBase) ?>/assets/js/admin-gis-dashboard.js?v=4.0"></script>
+<script src="<?= htmlspecialchars($assetBase) ?>/assets/js/admin-gis-dashboard.js?v=4.1"></script>

@@ -1,6 +1,6 @@
 <?php
 $active_page = 'gis_dashboard';
-$page_title  = 'GIS Dashboard';
+$page_title  = 'My patient map';
 require __DIR__ . '/partials/data.php';
 
 $assetBase = ASSET_BASE;

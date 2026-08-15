@@ -1,0 +1,85 @@
+/**
+ * Provider portal — phones and tablets.
+ * Compact type, wrapping titles, and space for the messages button.
+ */
+
+@media (max-width: 768px) {
+  body.provider-body .provider-page-body {
+    padding-bottom: calc(96px + env(safe-area-inset-bottom, 0px)) !important;
+  }
+
+  body.provider-body .provider-page-body h1,
+  body.provider-body .provider-page-body h2,
+  body.provider-body .provider-page-body h3,
+  body.provider-body .provider-page-body .text-h1,
+  body.provider-body .provider-page-body .text-h2,
+  body.provider-body .provider-page-body .text-h3,
+  body.provider-body .provider-page-body .gis-title,
+  body.provider-body .provider-page-body .queue-hero h1,
+  body.provider-body .provider-page-body .mr-page h1,
+  body.provider-body .provider-page-body .ps-page h1 {
+    font-size: 1.1rem !important;
+    line-height: 1.3 !important;
+    overflow-wrap: anywhere;
+    word-break: break-word;
+  }
+
+  body.provider-body .provider-page-body p,
+  body.provider-body .provider-page-body .text-muted,
+  body.provider-body .provider-page-body .gis-subtitle {
+    overflow-wrap: anywhere;
+  }
+
+  body.provider-body .provider-page-body .prov-dash-stat strong,
+  body.provider-body .provider-page-body .queue-metric-value,
+  body.provider-body .provider-page-body .prov-dash-metrics--unified > .mc-notif-widget-value,
+  body.provider-body .provider-page-body .triage-stat-value,
+  body.provider-body .provider-page-body .ps-stat strong,
+  body.provider-body .provider-page-body .gis-stat-value {
+    font-size: 1.1rem !important;
+    line-height: 1.2 !important;
+  }
+
+  body.provider-body .provider-page-body .gis-stat-value--text {
+    font-size: 0.95rem !important;
+  }
+
+  body.provider-body .provider-page-body .mc-card,
+  body.provider-body .provider-page-body .prov-dash-card,
+  body.provider-body .provider-page-body .queue-panel,
+  body.provider-body .provider-page-body .pd-panel,
+  body.provider-body .provider-page-body .triage-panel,
+  body.provider-body .provider-page-body .mr-card,
+  body.provider-body .provider-page-body .ps-card {
+    min-width: 0;
+    max-width: 100%;
+  }
+
+  body.provider-body .provider-page-body table {
+    min-width: 0;
+  }
+
+  body.provider-body .provider-page-body .gis-table-wrap,
+  body.provider-body .provider-page-body .mr-table-wrap,
+  body.provider-body .provider-page-body .queue-table-wrap {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    max-width: 100%;
+  }
+
+  body.provider-body .provider-page-body .mc-btn,
+  body.provider-body .provider-page-body button,
+  body.provider-body .provider-page-body .pd-btn {
+    white-space: normal;
+    overflow-wrap: anywhere;
+  }
+}
+
+@media (max-width: 480px) {
+  body.provider-body .provider-page-body .prov-dash-stat strong,
+  body.provider-body .provider-page-body .queue-metric-value,
+  body.provider-body .provider-page-body .triage-stat-value,
+  body.provider-body .provider-page-body .gis-stat-value {
+    font-size: 1.05rem !important;
+  }
+}
