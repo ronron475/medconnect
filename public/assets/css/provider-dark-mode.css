@@ -353,10 +353,11 @@ html[data-theme-resolved='dark'] body.provider-body .chat-bubble {
   color: var(--text-primary) !important;
 }
 
-html[data-theme-resolved='dark'] body.provider-body .chat-bubble.mine,
+html[data-theme-resolved='dark'] body.provider-body .chat-bubble.mine:not(.is-mute-tts),
 html[data-theme-resolved='dark'] body.provider-body .msg-bubble--sent {
-  background: rgba(37, 99, 235, 0.2) !important;
-  border-color: rgba(37, 99, 235, 0.35) !important;
+  background: #0f766e !important;
+  border-color: #0d9488 !important;
+  color: #fff !important;
 }
 
 /* â”€â”€ Triage â”€â”€ */
