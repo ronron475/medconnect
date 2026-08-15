@@ -286,8 +286,18 @@ if (!isLandingPage) {
     document.addEventListener('keydown', trapFocus);
   }
 
+  function isMobileSigninModal() {
+    return window.matchMedia('(max-width: 768px)').matches;
+  }
+
   function openModal() {
     if (overlay.classList.contains('is-open') || overlay.classList.contains('is-closing')) return;
+
+    /* Phones: always a locked overlay modal, never a page section. */
+    if (isMobileSigninModal()) {
+      openModalPinned();
+      return;
+    }
 
     if (isInlineHero) {
       if (!isInHeroZone()) {
@@ -392,11 +402,12 @@ if (!isLandingPage) {
   const closeBtn = document.getElementById('close-signin-modal');
   if (closeBtn) closeBtn.addEventListener('click', closeModal);
 
-  if (!isInlineHero) {
-    overlay.addEventListener('click', (e) => {
-      if (e.target === overlay) closeModal();
-    });
-  }
+  overlay.addEventListener('click', (e) => {
+    if (e.target !== overlay) return;
+    if (!isInlineHero || overlay.classList.contains('is-viewport-pinned')) {
+      closeModal();
+    }
+  });
 
   document.addEventListener('keydown', (e) => {
     if (e.key !== 'Escape' || !overlay.classList.contains('is-open')) return;
@@ -415,7 +426,6 @@ if (!isLandingPage) {
     let scrollCloseTicking = false;
     window.addEventListener('scroll', () => {
       if (!overlay.classList.contains('is-open') || overlay.classList.contains('is-viewport-pinned')) return;
-      /* Mobile: panel is in document flow; scrolling to announcements must not close it. */
       if (window.matchMedia('(max-width: 768px)').matches) return;
       if (performance.now() - signinOpenedAt < SCROLL_CLOSE_GRACE_MS) return;
       if (scrollCloseTicking) return;
