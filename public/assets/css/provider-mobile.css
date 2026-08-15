@@ -104,6 +104,13 @@
     overflow-wrap: anywhere;
     word-break: normal;
   }
+
+  body.provider-body .provider-page-body .pch-search input,
+  body.provider-body .provider-page-body .pch-search input[type="search"],
+  body.provider-body .provider-page-body .mr-search input,
+  body.provider-body .provider-page-body .mr-search input[type="search"] {
+    padding-left: 40px;
+  }
 }
 
 @media (max-width: 480px) {
