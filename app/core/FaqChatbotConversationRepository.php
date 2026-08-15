@@ -87,18 +87,22 @@ final class FaqChatbotConversationRepository
         float $confidence,
         array $scores = []
     ): void {
-        $stmt = $this->pdo->prepare(
-            'INSERT INTO chatbot_emotions (message_id, emotion, canonical_emotion, score, confidence, scores_json)
-             VALUES (:mid, :emo, :canon, :score, :conf, :json)'
-        );
-        $stmt->execute([
-            ':mid'   => $messageId,
-            ':emo'   => $rawEmotion ?? '',
-            ':canon' => $canonical,
-            ':score' => $score,
-            ':conf'  => $confidence,
-            ':json'  => $scores === [] ? null : json_encode($scores, JSON_UNESCAPED_UNICODE),
-        ]);
+        try {
+            $stmt = $this->pdo->prepare(
+                'INSERT INTO chatbot_emotions (message_id, emotion, canonical_emotion, score, confidence, scores_json)
+                 VALUES (:mid, :emo, :canon, :score, :conf, :json)'
+            );
+            $stmt->execute([
+                ':mid'   => $messageId,
+                ':emo'   => $rawEmotion ?? '',
+                ':canon' => $canonical,
+                ':score' => $score,
+                ':conf'  => $confidence,
+                ':json'  => $scores === [] ? null : json_encode($scores, JSON_UNESCAPED_UNICODE),
+            ]);
+        } catch (Throwable) {
+            // Logging must not take down the live chatbot.
+        }
     }
 
     public function saveFeedback(int $messageId, string $rating, ?string $comment = null): void

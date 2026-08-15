@@ -121,53 +121,87 @@ final class FaqChatbotScenarioIndex
         if (self::$data !== null) {
             return;
         }
-        $path = BASE_PATH . '/' . self::INDEX_PATH;
-        if (!is_readable($path)) {
-            self::$data = ['count' => 0, 'scenarios' => []];
+        try {
+            $path = BASE_PATH . '/' . self::INDEX_PATH;
+            $size = is_readable($path) ? (int) filesize($path) : 0;
+            if ($size <= 0 || !self::canLoadIndex($size)) {
+                self::emptyIndex();
+                return;
+            }
+
+            $raw = json_decode((string) file_get_contents($path), true);
+            if (!is_array($raw) || !isset($raw['scenarios']) || !is_array($raw['scenarios'])) {
+                self::emptyIndex();
+                return;
+            }
+
+            self::$data = $raw;
             self::$exactIndex = [];
             self::$tokenIndex = [];
-            return;
-        }
 
-        $raw = json_decode((string) file_get_contents($path), true);
-        if (!is_array($raw) || !isset($raw['scenarios']) || !is_array($raw['scenarios'])) {
-            self::$data = ['count' => 0, 'scenarios' => []];
-            self::$exactIndex = [];
-            self::$tokenIndex = [];
-            return;
-        }
-
-        self::$data = $raw;
-        self::$exactIndex = [];
-        self::$tokenIndex = [];
-
-        foreach ($raw['scenarios'] as $idx => $row) {
-            if (!is_array($row)) {
-                continue;
-            }
-            $norm = FaqEmotionEngine::normalizeText((string) ($row['phrase'] ?? ''));
-            if ($norm !== '') {
-                self::$exactIndex[$norm] = $row;
-            }
-            $tokenSet = [];
-            foreach ((array) ($row['keywords'] ?? []) as $kw) {
-                $kw = FaqEmotionEngine::normalizeText((string) $kw);
-                if (mb_strlen($kw) >= 3) {
-                    $tokenSet[$kw] = true;
+            foreach ($raw['scenarios'] as $idx => $row) {
+                if (!is_array($row)) {
+                    continue;
+                }
+                $norm = FaqEmotionEngine::normalizeText((string) ($row['phrase'] ?? ''));
+                if ($norm !== '') {
+                    self::$exactIndex[$norm] = $row;
+                }
+                $tokenSet = [];
+                foreach ((array) ($row['keywords'] ?? []) as $kw) {
+                    $kw = FaqEmotionEngine::normalizeText((string) $kw);
+                    if (mb_strlen($kw) >= 3) {
+                        $tokenSet[$kw] = true;
+                    }
+                }
+                foreach (self::tokens($norm) as $tok) {
+                    $tokenSet[$tok] = true;
+                }
+                foreach (array_keys($tokenSet) as $tok) {
+                    self::$tokenIndex[$tok][] = (int) $idx;
                 }
             }
-            foreach (self::tokens($norm) as $tok) {
-                $tokenSet[$tok] = true;
-            }
-            foreach (array_keys($tokenSet) as $tok) {
-                self::$tokenIndex[$tok][] = (int) $idx;
-            }
-        }
 
-        // Deduplicate index lists (keeps memory + match time bounded)
-        foreach (self::$tokenIndex as $tok => $ids) {
-            self::$tokenIndex[$tok] = array_values(array_unique($ids));
+            foreach (self::$tokenIndex as $tok => $ids) {
+                self::$tokenIndex[$tok] = array_values(array_unique($ids));
+            }
+        } catch (Throwable) {
+            self::emptyIndex();
         }
+    }
+
+    private static function emptyIndex(): void
+    {
+        self::$data = ['count' => 0, 'scenarios' => []];
+        self::$exactIndex = [];
+        self::$tokenIndex = [];
+    }
+
+    private static function canLoadIndex(int $fileSize): bool
+    {
+        $limit = self::memoryLimitBytes();
+        if ($limit <= 0) {
+            return true;
+        }
+        // JSON expands several times in PHP arrays; keep a safety margin for Hostinger.
+        $needed = ($fileSize * 8) + (16 * 1024 * 1024);
+        return (memory_get_usage(true) + $needed) < (int) ($limit * 0.72);
+    }
+
+    private static function memoryLimitBytes(): int
+    {
+        $raw = strtolower(trim((string) ini_get('memory_limit')));
+        if ($raw === '' || $raw === '-1') {
+            return 0;
+        }
+        $unit = substr($raw, -1);
+        $n = (int) $raw;
+        return match ($unit) {
+            'g' => $n * 1024 * 1024 * 1024,
+            'm' => $n * 1024 * 1024,
+            'k' => $n * 1024,
+            default => (int) $raw,
+        };
     }
 
     /**
