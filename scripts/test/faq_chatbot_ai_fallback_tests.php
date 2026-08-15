@@ -36,6 +36,57 @@ function expect_true(bool $ok, string $label): void
 
 echo "FAQ chatbot AI fallback\n";
 
+expect_true(FaqChatbotAiFallback::isGenericKnowledgeKey('capabilities'), 'capabilities is generic');
+expect_true(FaqChatbotAiFallback::isGenericKnowledgeKey('navigation_help'), 'navigation_help is generic');
+expect_true(!FaqChatbotAiFallback::isGenericKnowledgeKey('password_reset'), 'password_reset is specific');
+expect_true(FaqChatbotAiFallback::isEmotionKnowledgeKey('fear_support'), 'fear_support defers to AI');
+expect_true(FaqChatbotAiFallback::isGenericFallbackHtml("<p>I'm here to help with medConnect and City Health services.</p>"), 'generic help line is fallback');
+expect_true(FaqChatbotAiFallback::isClearGreeting('hello'), 'hello is a greeting');
+expect_true(!FaqChatbotAiFallback::isClearGreeting('are you sure?'), 'are you sure is not a greeting');
+
+$genericHelp = "<p class=\"fcb-php-lead\"><em>I'm here to help with medConnect and City Health services.</em></p><div class=\"fcb-kb-answer\">Hello</div>";
+expect_true(!FaqChatbotAiFallback::shouldUseDatasetAnswer(
+    'are you sure?',
+    false,
+    null,
+    null,
+    ['key' => 'capabilities', 'score' => 3.0, 'html' => $genericHelp]
+), 'are you sure? must not keep a generic capabilities card');
+
+expect_true(FaqChatbotAiFallback::shouldUseDatasetAnswer(
+    'How do I reset my password?',
+    false,
+    12,
+    ['question' => 'How do I reset my password?', 'keywords' => 'password reset otp', 'category' => 'login', 'score' => 3.2],
+    null,
+    '<div class="fcb-faq-answer">Use Forgot Password on Sign In.</div>'
+), 'password FAQ is a meaningful dataset answer');
+
+expect_true(!FaqChatbotAiFallback::shouldUseDatasetAnswer(
+    'What should I prepare before talking to a doctor?',
+    false,
+    4,
+    ['question' => 'How does video consultation work?', 'keywords' => 'video join camera', 'category' => 'consultation', 'score' => 1.9],
+    null,
+    '<div class="fcb-faq-answer">Open Consultations and join the video room.</div>'
+), 'unrelated consultation FAQ must not block Gemini');
+
+expect_true(FaqChatbotAiFallback::shouldUseDatasetAnswer(
+    'nahadlok gid ko',
+    true,
+    null,
+    null,
+    ['key' => 'fear_support', 'score' => 3.0, 'html' => '<p>scared</p>']
+), 'emergency still uses dataset/safety path');
+
+expect_true(!FaqChatbotAiFallback::shouldUseDatasetAnswer(
+    'nahadlok gid ko',
+    false,
+    null,
+    null,
+    ['key' => 'fear_support', 'score' => 3.2, 'html' => '<p>I understand you feel afraid.</p>']
+), 'emotional support card yields to Gemini');
+
 $html = FaqChatbotAiFallback::toSafeHtml("Hello.\n\n<script>alert(1)</script>Need a doctor?");
 expect_true(str_contains($html, '<p>') && !str_contains($html, '<script>'), 'HTML wrap strips tags');
 expect_true(str_contains($html, 'Need a doctor?'), 'plain text preserved');

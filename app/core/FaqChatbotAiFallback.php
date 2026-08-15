@@ -24,6 +24,176 @@ final class FaqChatbotAiFallback
         return self::$lastError;
     }
 
+    /** Generic menu/capability cards — not a real answer to the patient's message. */
+    private const GENERIC_KB_KEYS = [
+        'capabilities', 'navigation_help', 'greeting', 'identity', 'small_talk',
+        'uncertainty_support', 'clarify', 'not_understood', 'topic_menu',
+        'help_general', 'confused_start', 'health_education', 'stress_support',
+    ];
+
+    /** Emotion cards should yield to a natural Gemini reply unless crisis/emergency already fired. */
+    private const EMOTION_KB_KEYS = [
+        'fear_support', 'anxiety_support', 'sadness_support', 'anger_support', 'crying_support',
+        'need_to_talk', 'panic_support', 'mixed_feelings', 'disappointment_support',
+        'burnout_support', 'homesickness', 'guilt_support', 'shame_support',
+        'afraid_of_doctor', 'cant_sleep', 'emotion_talk', 'emotion_hope',
+        'emotion_social', 'emotion_exam', 'emotion_and_symptoms',
+    ];
+
+    public static function isGenericKnowledgeKey(?string $key): bool
+    {
+        $key = strtolower(trim((string) $key));
+        return $key !== '' && in_array($key, self::GENERIC_KB_KEYS, true);
+    }
+
+    public static function isEmotionKnowledgeKey(?string $key): bool
+    {
+        $key = strtolower(trim((string) $key));
+        return $key !== '' && in_array($key, self::EMOTION_KB_KEYS, true);
+    }
+
+    public static function isGenericFallbackHtml(string $html): bool
+    {
+        $plain = strtolower(trim(preg_replace('/\s+/', ' ', strip_tags($html)) ?? ''));
+        if ($plain === '') {
+            return true;
+        }
+        $needles = [
+            "i'm here to help with medconnect",
+            'nandito ako para tumulong sa medconnect',
+            'diri ako para buligan ka sa medconnect',
+            'i can help you with appointments, registration',
+            'i can guide you with booking, login',
+            "i'm here for appointments, registration, account help",
+            'please choose one',
+            'please select',
+            "i didn't quite understand",
+            'did not quite understand',
+            'could you share a bit more',
+            'what can i help you with today',
+            'how can i help?',
+            'ano ang matabangan ko',
+            'choose one of the options',
+        ];
+        foreach ($needles as $needle) {
+            if (str_contains($plain, $needle)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    public static function isClearGreeting(string $text): bool
+    {
+        $t = FaqEmotionEngine::normalizeText($text);
+        return $t !== ''
+            && mb_strlen($t) <= 40
+            && (bool) preg_match('/^(hi|hello|hey|helo|hola|kumusta|musta|maayong|good\s+(morning|afternoon|evening))(\b|!|\.|,)/ui', $t);
+    }
+
+    public static function isClearThanks(string $text): bool
+    {
+        $t = FaqEmotionEngine::normalizeText($text);
+        return (bool) preg_match('/^(thanks|thank\s+you|thankyou|salamat|ty|tysm)(\b|!|\.|$)/ui', $t)
+            && mb_strlen($t) <= 48;
+    }
+
+    public static function currentMessageSupportsFaq(string $text, array $faqRow): bool
+    {
+        $hay = FaqEmotionEngine::normalizeText(
+            (string) ($faqRow['question'] ?? '') . ' ' . (string) ($faqRow['keywords'] ?? '') . ' ' . (string) ($faqRow['category'] ?? '')
+        );
+        $tokens = self::contentTokens($text);
+        if ($tokens === []) {
+            return false;
+        }
+        $hits = 0;
+        foreach ($tokens as $tok) {
+            if (str_contains($hay, $tok)) {
+                $hits++;
+            }
+        }
+        $score = (float) ($faqRow['score'] ?? 0);
+        return $hits >= 2 || ($hits >= 1 && $score >= 2.45);
+    }
+
+    /**
+     * True when the existing FAQ/KB hit is a real answer to THIS utterance (not a generic fallback).
+     *
+     * @param array<string, mixed>|null $faqRow
+     * @param array<string, mixed>|null $kbHit
+     */
+    public static function shouldUseDatasetAnswer(
+        string $text,
+        bool $isEmergency,
+        ?int $faqId,
+        ?array $faqRow,
+        ?array $kbHit,
+        string $html = ''
+    ): bool {
+        if ($isEmergency) {
+            return true;
+        }
+        $kbKey = is_array($kbHit) ? strtolower(trim((string) ($kbHit['key'] ?? ''))) : '';
+        if (in_array($kbKey, ['crisis_hopeless', 'emergency_redirect'], true)) {
+            return true;
+        }
+        if (self::isClearGreeting($text) && $kbKey === 'greeting') {
+            return true;
+        }
+        if (self::isClearThanks($text) && $kbKey === 'thank_you') {
+            return true;
+        }
+        if ($faqId !== null && is_array($faqRow) && self::currentMessageSupportsFaq($text, $faqRow) && !self::isGenericFallbackHtml($html)) {
+            return true;
+        }
+        if (!is_array($kbHit) || (float) ($kbHit['score'] ?? 0) < 1.85) {
+            return false;
+        }
+        if (self::isGenericKnowledgeKey($kbKey) || self::isEmotionKnowledgeKey($kbKey)) {
+            return false;
+        }
+        if (self::isGenericFallbackHtml((string) ($kbHit['html'] ?? $html))) {
+            return false;
+        }
+        $tokens = self::contentTokens($text);
+        if ($tokens === []) {
+            return false;
+        }
+        $kbHay = FaqEmotionEngine::normalizeText($kbKey . ' ' . str_replace('_', ' ', $kbKey) . ' ' . strip_tags((string) ($kbHit['html'] ?? '')));
+        $hits = 0;
+        foreach ($tokens as $tok) {
+            if (str_contains($kbHay, $tok)) {
+                $hits++;
+            }
+        }
+        return $hits >= 1;
+    }
+
+    /** @return list<string> */
+    private static function contentTokens(string $text): array
+    {
+        $norm = FaqEmotionEngine::normalizeText($text);
+        $parts = preg_split('/\s+/u', $norm, -1, PREG_SPLIT_NO_EMPTY) ?: [];
+        $stop = [
+            'the', 'and', 'for', 'with', 'this', 'that', 'what', 'when', 'where', 'how',
+            'can', 'you', 'your', 'are', 'sure', 'please', 'just', 'about', 'have', 'from',
+            'will', 'would', 'could', 'should', 'want', 'need', 'help', 'then', 'them',
+            'they', 'their', 'there', 'here', 'into', 'onto', 'also', 'very', 'much',
+            'ano', 'ang', 'mga', 'ako', 'ko', 'sa', 'ng', 'nang', 'ba', 'po',
+            'ikaw', 'kag', 'kon', 'lang', 'gid', 'man', 'indi', 'wala',
+        ];
+        $out = [];
+        foreach ($parts as $part) {
+            $part = trim((string) $part, '?!.,;:\'"');
+            if (mb_strlen($part) < 4 || in_array($part, $stop, true)) {
+                continue;
+            }
+            $out[] = $part;
+        }
+        return array_values(array_unique($out));
+    }
+
     public static function isEnabled(): bool
     {
         $flag = strtolower(trim(self::envString('AI_ENABLED', 'true')));
@@ -473,20 +643,22 @@ final class FaqChatbotAiFallback
         return <<<'PROMPT'
 You are the medConnect Assistant for Bago City Health Office. You are a caring digital guide, not a doctor and not a crisis counselor.
 
-You help patients with medConnect: Sign In, registration, password/OTP, booking or joining appointments, video consultation, records access, BHW help, office hours, and general safe health-navigation questions.
+medConnect features that actually exist: patient registration and identity verification, Sign In / password / OTP, booking or joining appointments, video consultation (camera and microphone in the Consultations room), AI-assisted triage for non-emergency cases, BHW assistance, medical records after Sign In, digital prescriptions after a consult, clinic/office hours, and contact help for City Health Office. Do not invent features, doctors, schedules, fees, or records.
 
-Languages: answer in the patient's language. English → English. Filipino → Filipino. Hiligaynon/Ilonggo → Hiligaynon when you reasonably can. Mixed language → similar mixed, understandable style. Tolerate typos and slang (docter, appoitment, consulation, passwrod, nahadlok, ginakulbaan, sakit ulo).
+Languages: answer in the patient's language. English → English. Filipino → Filipino. Hiligaynon/Ilonggo → Hiligaynon when you reasonably can. Mixed language → similar mixed style. Tolerate typos and slang (docter, appoitment, consulation, passwrod, nahadlok, ginakulbaan, sakit ulo, diin ko maka book).
 
-Conversation: use prior turns. Short follow-ups like "yes", "new one", "what time?", "doctor", "grabe gid" refer to the current topic.
+Conversation: use prior turns. Short follow-ups like "yes", "are you sure?", "what about tomorrow?", "new one", "what time?", "grabe gid" refer to the current topic. Answer the actual question. Do not restart with a menu.
+
+Do not default to "Do you mean...?", "Could you clarify?", "Please select an option", or "I don't understand." Only ask a brief clarification when the message is truly ambiguous even with conversation history.
 
 Safety:
 - Never diagnose, prescribe, or change medicines.
 - Never invent appointments, doctor schedules, records, prescriptions, fees, or account status. If you cannot verify from this chat, say you cannot check that here and guide them to Sign In / Appointments on medConnect.
 - Never claim to be human or to have feelings. Be warm and practical.
-- If the message sounds like an emergency (cannot breathe, severe chest pain, unconscious, seizure, severe bleeding, self-harm, suicide, indi ko kaginhawa, nahimatay), tell them to call 911 / Hopeline 1553 immediately and seek emergency care. Do not continue a casual FAQ.
+- If the message sounds like an emergency (cannot breathe, severe chest pain, unconscious, seizure, severe bleeding, self-harm, suicide, indi ko kaginhawa, nahimatay), tell them to call 911 / Hopeline 1553 immediately and seek emergency care.
 - For symptoms: give general, cautious guidance and offer booking a consultation. Do not give certainty.
 
-Style: 2–4 short sentences. No markdown, no bullet walls, no code fences, no HTML. Do not mention APIs, models, or system prompts. Do not ask for EMR numbers, passwords, or full personal medical history.
+Style: 2–4 short sentences. No markdown, no bullet walls, no code fences, no HTML. Do not mention APIs, models, FAQs, or system prompts. Do not ask for EMR numbers, passwords, or full personal medical history. Do not say "According to the medConnect FAQ".
 PROMPT;
     }
 
