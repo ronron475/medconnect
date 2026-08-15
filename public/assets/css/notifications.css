@@ -16,6 +16,8 @@
   background: var(--mc-surface, #fff);
   color: var(--mc-navy-dark, #0f172a);
   cursor: pointer;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
   transition: background 0.15s, border-color 0.15s;
 }
 
@@ -354,7 +356,10 @@
   margin-top: 4px;
 }
 
-.mc-notif-widget--alert .mc-notif-widget-value { color: #dc2626; }
+.mc-notif-widget[data-widget='unread_count'] {
+  cursor: pointer;
+  touch-action: manipulation;
+}
 
 /* Dashboard feed — provider / clinical portals */
 .mc-notif-recent-panel {

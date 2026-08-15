@@ -13,6 +13,7 @@
   const IS_TOUCH = ('ontouchstart' in window) || (navigator.maxTouchPoints && navigator.maxTouchPoints > 0);
 
   let lastOutsideCloseAt = 0;
+  let ignoreOutsideUntil = 0;
 
   function isMobilePanel() {
     return window.matchMedia('(max-width: 768px)').matches;
@@ -603,15 +604,30 @@
     if (open) {
       mountMobilePanel(panel, wrap);
       panel.classList.add('is-open');
-    } else {
-      closeBellPanel(btn, panel);
+      btn.setAttribute('aria-expanded', 'true');
+      panelOpen = true;
+      ignoreOutsideUntil = Date.now() + 500;
+      requestAnimationFrame(function () {
+        syncNotifOpenState();
+      });
+      refreshCount();
+      loadDropdown();
       return;
     }
-    btn.setAttribute('aria-expanded', 'true');
-    panelOpen = true;
-    syncNotifOpenState();
-    refreshCount();
-    loadDropdown();
+    closeBellPanel(btn, panel);
+  }
+
+  function openBellPanel() {
+    const wrap = document.querySelector('[data-notif-wrap]');
+    if (!wrap) return false;
+    const btn = wrap.querySelector('[data-notif-toggle]');
+    const panel = wrap.querySelector('[data-notif-panel]');
+    if (!btn || !panel) return false;
+    if (document.body.classList.contains('mc-nav-open')) return false;
+    if (!panel.classList.contains('is-open')) {
+      togglePanel(btn, panel, wrap);
+    }
+    return true;
   }
 
   function initBell(wrap) {
@@ -619,10 +635,9 @@
     const panel = wrap.querySelector('[data-notif-panel]');
     if (!btn || !panel) return;
 
-    const TOGGLE_EVENT = IS_TOUCH ? 'pointerup' : 'click';
-
     btn.style.pointerEvents = 'auto';
-    btn.addEventListener(TOGGLE_EVENT, function (e) {
+    btn.style.touchAction = 'manipulation';
+    btn.addEventListener('click', function (e) {
       e.preventDefault();
       e.stopPropagation();
       if (document.body.classList.contains('mc-nav-open')) {
@@ -630,13 +645,10 @@
       }
       togglePanel(btn, panel, wrap);
     });
-    btn.addEventListener('click', function (e) {
-      e.stopPropagation();
-    });
 
     const markAllBtn = panel.querySelector('[data-notif-mark-all]');
     if (markAllBtn) {
-      markAllBtn.addEventListener(TOGGLE_EVENT, function (e) {
+      markAllBtn.addEventListener('click', function (e) {
         e.preventDefault();
         e.stopPropagation();
         markAllRead();
@@ -645,16 +657,14 @@
 
     const footerLink = panel.querySelector('.mc-notif-footer a[href]');
     if (footerLink) {
-      footerLink.addEventListener(TOGGLE_EVENT, function (e) {
-        followNotifLink(footerLink, e);
-      });
       footerLink.addEventListener('click', function (e) {
         e.stopPropagation();
+        followNotifLink(footerLink, e);
       });
     }
 
-    const CLOSE_EVENT = IS_TOUCH ? 'pointerdown' : 'click';
     function onOutsidePanel(e) {
+      if (Date.now() < ignoreOutsideUntil) return;
       if (IS_TOUCH && e.type === 'click' && Date.now() - lastOutsideCloseAt < 500) {
         e.preventDefault();
         e.stopPropagation();
@@ -669,7 +679,7 @@
       closeBellPanel(btn, panel);
       lastOutsideCloseAt = Date.now();
     }
-    document.addEventListener(CLOSE_EVENT, onOutsidePanel, true);
+    document.addEventListener(IS_TOUCH ? 'pointerdown' : 'click', onOutsidePanel, true);
     if (IS_TOUCH) {
       document.addEventListener('click', onOutsidePanel, true);
     }
@@ -828,10 +838,34 @@
     }).catch(function () {});
   }
 
+  function bindUnreadWidgets() {
+    document.querySelectorAll('[data-widget="unread_count"]').forEach(function (el) {
+      if (el.dataset.mcNotifBound === '1') return;
+      el.dataset.mcNotifBound = '1';
+      el.setAttribute('role', 'button');
+      el.setAttribute('tabindex', '0');
+      el.setAttribute('aria-label', 'Open notifications');
+      el.addEventListener('click', function (e) {
+        e.preventDefault();
+        e.stopPropagation();
+        if (!openBellPanel()) {
+          window.location.assign(assetBase() + '/views/notifications/index.php');
+        }
+      });
+      el.addEventListener('keydown', function (e) {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          el.click();
+        }
+      });
+    });
+  }
+
   document.addEventListener('DOMContentLoaded', function () {
     document.querySelectorAll('[data-notif-wrap]').forEach(initBell);
     initPage();
     initWidgets();
+    bindUnreadWidgets();
     refreshCount();
     loadDropdown();
     pollTimer = setInterval(poll, POLL_INTERVAL);
@@ -855,5 +889,6 @@
     refreshCount: refreshCount,
     markAllRead: markAllRead,
     close: closeAllNotifPanels,
+    open: openBellPanel,
   };
 })();
