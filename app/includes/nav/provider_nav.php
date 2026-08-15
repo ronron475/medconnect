@@ -45,7 +45,7 @@ return [
         'label'     => 'Insights',
         'secondary' => true,
         'items'     => [
-            ['gis_dashboard.php', 'GIS Dashboard', '<path d="M1 6v16l7-4 8 4V2L8 6 1 2z"/><circle cx="12" cy="10" r="3"/>'],
+            ['gis_dashboard.php', 'Patient map', '<path d="M1 6v16l7-4 8 4V2L8 6 1 2z"/><circle cx="12" cy="10" r="3"/>'],
         ],
     ],
 ];

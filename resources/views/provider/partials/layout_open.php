@@ -49,6 +49,11 @@
   $providerDarkVer = file_exists($providerDarkCss) ? (int) filemtime($providerDarkCss) : time();
   ?>
   <link rel="stylesheet" href="<?= ASSET_BASE ?>/assets/css/provider-dark-mode.css?v=<?= $providerDarkVer ?>"/>
+  <?php
+  $providerMobileCss = ASSETS_PATH . '/css/provider-mobile.css';
+  $providerMobileVer = file_exists($providerMobileCss) ? (int) filemtime($providerMobileCss) : time();
+  ?>
+  <link rel="stylesheet" href="<?= ASSET_BASE ?>/assets/css/provider-mobile.css?v=<?= $providerMobileVer ?>"/>
   <?php $portal_nav_badges_skip_js = true; require_once VIEWS_PATH . '/partials/portal_nav_badge_assets.php'; ?>
 </head>
 <body

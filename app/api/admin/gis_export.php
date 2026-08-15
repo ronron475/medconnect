@@ -27,7 +27,11 @@ $filters = [
     'status'       => trim((string) ($_GET['status'] ?? '')),
     'date_from'    => trim((string) ($_GET['date_from'] ?? '')),
     'date_to'      => trim((string) ($_GET['date_to'] ?? '')),
+    'viewer_role'  => $role,
 ];
+if ($role === 'provider') {
+    $filters['provider_id'] = (int) ($_SESSION['user_id'] ?? 0);
+}
 
 $rows = $gis->getPatientRecords($filters, $role);
 $filename = 'medConnect_GIS_Report_' . date('Y-m-d') . '.' . ($format === 'xlsx' ? 'xls' : 'csv');

@@ -485,6 +485,31 @@ final class GisDashboardService
             }
         }
 
+        $providerId = strtolower(trim($viewerRole)) === 'provider'
+            ? (int) ($filters['provider_id'] ?? 0)
+            : 0;
+        if (strtolower(trim($viewerRole)) === 'provider') {
+            $this->applyProviderCaseloadFilter($where, $params, $providerId);
+        }
+
+        $selectParams = [];
+        $visitsTodaySql = '0';
+        $pendingReviewSql = '0';
+        if ($providerId > 0 && $this->tableExists('consultations')) {
+            $visitsTodaySql = "(SELECT COUNT(*) FROM consultations vc
+                WHERE vc.patient_id = u.id AND vc.provider_id = ?
+                  AND vc.consult_date = CURDATE()
+                  AND vc.status IN ('scheduled','in_consultation','pending'))";
+            $selectParams[] = $providerId;
+        }
+        if ($providerId > 0 && $this->tableExists('triage_results') && $this->columnExists('triage_results', 'assigned_provider_id')) {
+            $pendingReviewSql = "(SELECT COUNT(*) FROM triage_results prw
+                WHERE prw.patient_id = u.id AND prw.assigned_provider_id = ?
+                  AND prw.recommendation_status = 'pending_approval')";
+            $selectParams[] = $providerId;
+        }
+        $params = array_merge($selectParams, $params);
+
         $sql = "
             SELECT
                 u.id AS patient_id,
@@ -517,7 +542,9 @@ final class GisDashboardService
                 " . $this->assignedBhwSelectSql() . " AS assigned_bhw,
                 " . $this->assignedDoctorSelectSql() . " AS assigned_doctor,
                 (SELECT COUNT(*) FROM consultations c WHERE c.patient_id = u.id
-                    AND c.status IN ('scheduled','in_consultation','pending')) AS active_consultations
+                    AND c.status IN ('scheduled','in_consultation','pending')) AS active_consultations,
+                {$visitsTodaySql} AS visits_today,
+                {$pendingReviewSql} AS pending_review
             FROM users u
             LEFT JOIN patient_registrations pr ON pr.email = u.email
             LEFT JOIN patient_locations pl ON pl.patient_id = u.id
@@ -584,7 +611,7 @@ final class GisDashboardService
      *   last_updated: string
      * }
      */
-    public function getTriageStats(string $viewerRole = 'admin'): array
+    public function getTriageStats(string $viewerRole = 'admin', array $filters = []): array
     {
         require_once $this->appBasePath() . '/app/core/TriageLevelService.php';
 
@@ -600,7 +627,10 @@ final class GisDashboardService
             'emergency'   => [],
         ];
 
-        foreach ($this->getPatientRecords([], $viewerRole) as $row) {
+        $statFilters = $filters;
+        unset($statFilters['patient_ids']);
+
+        foreach ($this->getPatientRecords($statFilters, $viewerRole) as $row) {
             $level = (string) ($row['triage_level'] ?? TriageLevelService::NON_URGENT);
             if (!isset($counts[$level])) {
                 $level = TriageLevelService::NON_URGENT;
@@ -641,12 +671,15 @@ final class GisDashboardService
     {
         $since = date('Y-m-d H:i:s', strtotime($sinceIso) ?: time() - 60);
         $changedIds = $this->findChangedPatientIds($since, $filters);
+        $viewerRole = (string) ($filters['viewer_role'] ?? 'admin');
+        $statFilters = $filters;
+        unset($statFilters['patient_ids']);
 
         if ($changedIds === []) {
             return [
                 'changed'      => [],
                 'summary'      => $this->getSummary(),
-                'triage_stats' => $this->getTriageStats((string) ($filters['viewer_role'] ?? 'admin')),
+                'triage_stats' => $this->getTriageStats($viewerRole, $statFilters),
                 'server_ts'    => date('c'),
             ];
         }
@@ -654,9 +687,9 @@ final class GisDashboardService
         $filters['patient_ids'] = $changedIds;
 
         return [
-            'changed'      => $this->getPatientRecords($filters, (string) ($filters['viewer_role'] ?? 'admin')),
+            'changed'      => $this->getPatientRecords($filters, $viewerRole),
             'summary'      => $this->getSummary(),
-            'triage_stats' => $this->getTriageStats((string) ($filters['viewer_role'] ?? 'admin')),
+            'triage_stats' => $this->getTriageStats($viewerRole, $statFilters),
             'server_ts'    => date('c'),
         ];
     }
@@ -1068,6 +1101,11 @@ final class GisDashboardService
             $params[] = $term;
         }
 
+        $viewerRole = strtolower(trim((string) ($filters['viewer_role'] ?? '')));
+        if ($viewerRole === 'provider') {
+            $this->applyProviderCaseloadFilter($where, $params, (int) ($filters['provider_id'] ?? 0));
+        }
+
         $joinPr = $this->tableExists('patient_registrations')
             ? 'LEFT JOIN patient_registrations pr ON pr.email = u.email'
             : '';
@@ -1149,6 +1187,68 @@ final class GisDashboardService
             {$alias}.level IN ('1','2','high','emergency','EMERGENCY','HIGH','URGENT')
             OR LOWER(COALESCE({$alias}.urgency_label, '')) REGEXP 'emerg|urgent|critical|high'
         )";
+    }
+
+    /**
+     * Limit provider GIS to patients this doctor already has a clinical relationship with.
+     * Mirrors provider_patient_assert_access: consults, booked slots, assigned triage,
+     * recent referrals, and pending Health Summary requests. Never invents assignments.
+     *
+     * @param list<string> $where
+     * @param list<mixed> $params
+     */
+    private function applyProviderCaseloadFilter(array &$where, array &$params, int $providerId): void
+    {
+        if ($providerId <= 0) {
+            $where[] = '0 = 1';
+            return;
+        }
+
+        $parts = [];
+        if ($this->tableExists('consultations')) {
+            $parts[] = 'EXISTS (SELECT 1 FROM consultations c WHERE c.patient_id = u.id AND c.provider_id = ?)';
+            $params[] = $providerId;
+        }
+        if ($this->tableExists('appointment_slots')) {
+            $parts[] = "EXISTS (
+                SELECT 1 FROM appointment_slots a
+                WHERE a.patient_id = u.id AND a.provider_id = ?
+                  AND a.status = 'booked'
+                  AND a.slot_date >= DATE_SUB(CURDATE(), INTERVAL 30 DAY)
+            )";
+            $params[] = $providerId;
+        }
+        if ($this->tableExists('triage_results') && $this->columnExists('triage_results', 'assigned_provider_id')) {
+            $parts[] = "EXISTS (
+                SELECT 1 FROM triage_results tr
+                WHERE tr.patient_id = u.id AND tr.assigned_provider_id = ?
+                  AND tr.assessed_at >= DATE_SUB(NOW(), INTERVAL 30 DAY)
+            )";
+            $params[] = $providerId;
+        }
+        if ($this->tableExists('digital_referrals')) {
+            $parts[] = "EXISTS (
+                SELECT 1 FROM digital_referrals r
+                WHERE r.patient_id = u.id AND r.provider_id = ?
+                  AND r.created_at >= DATE_SUB(CURDATE(), INTERVAL 30 DAY)
+            )";
+            $params[] = $providerId;
+        }
+        if ($this->tableExists('patient_medical_update_requests')) {
+            $parts[] = "EXISTS (
+                SELECT 1 FROM patient_medical_update_requests hs
+                WHERE hs.patient_id = u.id AND hs.provider_id = ?
+                  AND hs.status IN ('pending', 'in_review')
+            )";
+            $params[] = $providerId;
+        }
+
+        if ($parts === []) {
+            $where[] = '0 = 1';
+            return;
+        }
+
+        $where[] = '(' . implode(' OR ', $parts) . ')';
     }
 
     private function assignedBhwSelectSql(): string
