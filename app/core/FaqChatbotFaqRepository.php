@@ -83,6 +83,7 @@ final class FaqChatbotFaqRepository
         if ($tokens === []) {
             return [];
         }
+        $limit = max(1, min(30, $limit));
         $wheres = [];
         $params = [];
         foreach (array_slice($tokens, 0, 6) as $i => $tok) {
@@ -90,10 +91,33 @@ final class FaqChatbotFaqRepository
             $wheres[] = "(question LIKE $key OR answer LIKE $key OR keywords LIKE $key)";
             $params[$key] = '%' . $tok . '%';
         }
-        $sql = 'SELECT id, category, question, answer, keywords FROM faq WHERE is_active = 1 AND (' . implode(' OR ', $wheres) . ') ORDER BY sort_order ASC LIMIT ' . (int) $limit;
-        $stmt = $this->pdo->prepare($sql);
-        $stmt->execute($params);
-        return $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
+        $sql = 'SELECT id, category, question, answer, keywords FROM faq WHERE is_active = 1 AND (' . implode(' OR ', $wheres) . ') ORDER BY sort_order ASC LIMIT ' . $limit;
+        try {
+            $stmt = $this->pdo->prepare($sql);
+            $stmt->execute($params);
+            return $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
+        } catch (Throwable) {
+            $wheres = [];
+            $params = [];
+            foreach (array_slice($tokens, 0, 6) as $i => $tok) {
+                $key = ':t' . $i;
+                $wheres[] = "(question LIKE $key OR answer LIKE $key)";
+                $params[$key] = '%' . $tok . '%';
+            }
+            try {
+                $sql = 'SELECT id, category, question, answer FROM faq WHERE is_active = 1 AND (' . implode(' OR ', $wheres) . ') ORDER BY id ASC LIMIT ' . $limit;
+                $stmt = $this->pdo->prepare($sql);
+                $stmt->execute($params);
+                $rows = $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
+                foreach ($rows as &$row) {
+                    $row['keywords'] = $row['keywords'] ?? '';
+                }
+                unset($row);
+                return $rows;
+            } catch (Throwable) {
+                return [];
+            }
+        }
     }
 
     /** @return list<array<string, mixed>> */

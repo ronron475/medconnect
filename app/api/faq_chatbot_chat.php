@@ -98,6 +98,8 @@ try {
             'mode'                => $mode,
             'confidence'          => 0,
             'pipeline_error'      => (new ReflectionClass($e))->getShortName(),
+            'pipeline_at'         => basename($e->getFile()) . ':' . $e->getLine(),
+            'pipeline_msg'        => substr(preg_replace('/\s+/', ' ', $e->getMessage()) ?? '', 0, 180),
         ],
     ], 'OK');
 }

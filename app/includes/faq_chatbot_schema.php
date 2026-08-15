@@ -90,6 +90,30 @@ function faq_chatbot_ensure_schema(PDO $pdo): void
 
     faq_chatbot_seed_if_empty($pdo);
     faq_chatbot_ensure_nlp_tables($pdo);
+    faq_chatbot_ensure_columns($pdo);
+}
+
+function faq_chatbot_ensure_columns(PDO $pdo): void
+{
+    $alters = [
+        "ALTER TABLE `faq` ADD COLUMN `keywords` VARCHAR(1000) NOT NULL DEFAULT ''",
+        "ALTER TABLE `faq` ADD COLUMN `is_active` TINYINT(1) NOT NULL DEFAULT 1",
+        "ALTER TABLE `faq` ADD COLUMN `sort_order` INT NOT NULL DEFAULT 0",
+        "ALTER TABLE `chatbot_messages` ADD COLUMN `intent` VARCHAR(64) NULL DEFAULT NULL",
+        "ALTER TABLE `chatbot_messages` ADD COLUMN `flow_key` VARCHAR(64) NULL DEFAULT NULL",
+        "ALTER TABLE `chatbot_messages` ADD COLUMN `confidence` DECIMAL(5,4) NULL DEFAULT NULL",
+        "ALTER TABLE `chatbot_messages` ADD COLUMN `faq_id` INT UNSIGNED NULL DEFAULT NULL",
+        "ALTER TABLE `chatbot_emotions` ADD COLUMN `canonical_emotion` VARCHAR(32) NOT NULL DEFAULT 'neutral'",
+        "ALTER TABLE `chatbot_emotions` ADD COLUMN `scores_json` JSON NULL",
+        "ALTER TABLE `chatbot_conversations` ADD COLUMN `meta_json` JSON NULL",
+    ];
+    foreach ($alters as $sql) {
+        try {
+            $pdo->exec($sql);
+        } catch (Throwable) {
+            // column already exists
+        }
+    }
 }
 
 function faq_chatbot_ensure_nlp_tables(PDO $pdo): void
