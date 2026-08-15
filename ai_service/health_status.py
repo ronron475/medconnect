@@ -54,7 +54,7 @@ def build_health_payload() -> dict[str, Any]:
         lexicon_stats = {"path": str(data_dir / "hiligaynon_symptom_lexicon.json"), "loaded": False}
 
     groq_status = "missing"
-    groq_model = "llama-3.3-70b-versatile"
+    groq_model = "openai/gpt-oss-120b"
     groq_error: str | None = None
     try:
         from ai_interpreter_config import provider_status, GROQ_API_KEY, GROQ_MODEL

@@ -25,7 +25,12 @@ if (!defined('LOCAL_LLAMA_MODEL')) {
 }
 
 if (!defined('GROQ_MODEL')) {
-    define('GROQ_MODEL', (string) (getenv('MEDCONNECT_GROQ_MODEL') ?: 'llama-3.3-70b-versatile'));
+    $groqModel = (string) (getenv('MEDCONNECT_GROQ_MODEL') ?: getenv('GROQ_MODEL') ?: 'openai/gpt-oss-120b');
+    $deprecatedGroq = [
+        'llama-3.3-70b-versatile' => 'openai/gpt-oss-120b',
+        'llama-3.1-8b-instant'    => 'openai/gpt-oss-120b',
+    ];
+    define('GROQ_MODEL', $deprecatedGroq[$groqModel] ?? $groqModel);
 }
 
 if (!defined('OPENAI_MODEL')) {

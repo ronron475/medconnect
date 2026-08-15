@@ -35,7 +35,20 @@ OPENAI_API_KEY = _env("OPENAI_API_KEY", _env("MEDCONNECT_OPENAI_API_KEY"))
 LOCAL_LLAMA_URL = _env("MEDCONNECT_LOCAL_LLAMA_URL", "http://127.0.0.1:11434")
 LOCAL_LLAMA_MODEL = _env("MEDCONNECT_LOCAL_LLAMA_MODEL", "llama3")
 
-GROQ_MODEL = _env("GROQ_MODEL", _env("MEDCONNECT_GROQ_MODEL", "llama-3.3-70b-versatile"))
+# Groq decommissions llama-3.3-70b-versatile and llama-3.1-8b-instant on 2026-08-16.
+_GROQ_MODEL_DEFAULT = "openai/gpt-oss-120b"
+_DEPRECATED_GROQ_MODELS = {
+    "llama-3.3-70b-versatile": "openai/gpt-oss-120b",
+    "llama-3.1-8b-instant": "openai/gpt-oss-120b",
+}
+
+
+def _resolve_groq_model() -> str:
+    raw = _env("GROQ_MODEL", _env("MEDCONNECT_GROQ_MODEL", _GROQ_MODEL_DEFAULT))
+    return _DEPRECATED_GROQ_MODELS.get(raw, raw) or _GROQ_MODEL_DEFAULT
+
+
+GROQ_MODEL = _resolve_groq_model()
 OPENAI_MODEL = _env("MEDCONNECT_OPENAI_MODEL", "gpt-4o-mini")
 
 AI_INTERPRETER_ENABLED = _env("MEDCONNECT_AI_INTERPRETER", "1").lower() not in ("0", "false", "no", "off")
