@@ -36,7 +36,7 @@ $asset = ASSET_BASE;
   <link rel="stylesheet" href="<?= $asset ?>/assets/css/location-modal.css?v=1" />
   <link rel="stylesheet" href="<?= $asset ?>/assets/css/landing-announcements.css?v=24" />
   <link rel="stylesheet" href="<?= $asset ?>/assets/css/landing-nav.css?v=3.5" />
-  <link rel="stylesheet" href="<?= $asset ?>/assets/css/landing-fab.css?v=12" />
+  <link rel="stylesheet" href="<?= $asset ?>/assets/css/landing-fab.css?v=13" />
   <link rel="stylesheet" href="<?= $asset ?>/assets/css/landing-fab-modals.css?v=2" />
   <link rel="stylesheet" href="<?= $asset ?>/assets/css/signin-req-drawer.css?v=11" />
   <link rel="stylesheet" href="<?= $asset ?>/assets/css/signin-card-polish.css?v=4" />
