@@ -40,7 +40,7 @@ $asset = ASSET_BASE;
   <link rel="stylesheet" href="<?= $asset ?>/assets/css/landing-fab-modals.css?v=2" />
   <link rel="stylesheet" href="<?= $asset ?>/assets/css/signin-req-drawer.css?v=11" />
   <link rel="stylesheet" href="<?= $asset ?>/assets/css/signin-card-polish.css?v=4" />
-  <link rel="stylesheet" href="<?= $asset ?>/assets/css/hero-signin-panel.css?v=17" />
+  <link rel="stylesheet" href="<?= $asset ?>/assets/css/hero-signin-panel.css?v=18" />
   <?php $forgotPwCssVer = (int) @filemtime(ASSETS_PATH . '/css/forgot-password.css'); ?>
   <link rel="stylesheet" href="<?= $asset ?>/assets/css/forgot-password.css?v=<?= $forgotPwCssVer ?>" />
   <?php $landingScrollAnimCssVer = (int) @filemtime(ASSETS_PATH . '/css/landing-scroll-animations.css'); ?>
@@ -819,7 +819,7 @@ require __DIR__ . '/partials/landing_navbar.php';
 <script src="<?= $asset ?>/assets/js/signin-req-drawer.js?v=4" defer></script>
 
 <script src="<?= $asset ?>/assets/js/login-lockout.js?v=2"></script>
-<script src="<?= $asset ?>/assets/js/script.js?v=20260810a"></script>
+<script src="<?= $asset ?>/assets/js/script.js?v=20260815a"></script>
 <?php require_once VIEWS_PATH . '/partials/theme_scripts.php'; ?>
 
 <script>

@@ -415,10 +415,16 @@ if (!isLandingPage) {
     let scrollCloseTicking = false;
     window.addEventListener('scroll', () => {
       if (!overlay.classList.contains('is-open') || overlay.classList.contains('is-viewport-pinned')) return;
+      /* Mobile: panel is in document flow; scrolling to announcements must not close it. */
+      if (window.matchMedia('(max-width: 768px)').matches) return;
       if (performance.now() - signinOpenedAt < SCROLL_CLOSE_GRACE_MS) return;
       if (scrollCloseTicking) return;
       scrollCloseTicking = true;
       requestAnimationFrame(() => {
+        if (window.matchMedia('(max-width: 768px)').matches) {
+          scrollCloseTicking = false;
+          return;
+        }
         if (overlay.classList.contains('is-open') && !isInHeroZone()) {
           closeModal();
         }
