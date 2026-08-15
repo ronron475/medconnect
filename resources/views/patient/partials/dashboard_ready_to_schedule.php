@@ -96,7 +96,7 @@ if ($review_provider_name !== '' && !empty($symptoms_review_booking['assigned_ha
 
       <?php if ($complaint !== ''): ?>
       <div class="pdash-care-concern">
-        <span class="pdash-care-concern__label">Your concern</span>
+        <span class="pdash-care-concern__label">Patient complaint</span>
         <p class="pdash-care-concern__text"><?= htmlspecialchars($complaint) ?></p>
       </div>
       <?php endif; ?>
@@ -115,7 +115,7 @@ if ($review_provider_name !== '' && !empty($symptoms_review_booking['assigned_ha
       </a>
     </div>
     <p class="pdash-care-hint pdash-care-hint--muted" style="margin-top:10px;">
-      <a href="<?= htmlspecialchars($new_concern_url) ?>">This is a different health concern</a>
+      <a href="<?= htmlspecialchars($new_concern_url) ?>">This is a different patient complaint</a>
     </p>
   </div>
 </section>
