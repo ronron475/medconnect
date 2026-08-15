@@ -18,7 +18,7 @@ require_once __DIR__ . '/partials/layout_open.php';
 </div>
 
 <div class="mc-card" style="padding:0;overflow:hidden;">
-  <table class="mc-table" id="adminsTable">
+  <table class="mc-table admin-stack-table" id="adminsTable">
     <thead>
       <tr>
         <th>Name</th>
@@ -32,12 +32,12 @@ require_once __DIR__ . '/partials/layout_open.php';
     <tbody>
       <?php foreach ($admins as $a): ?>
       <tr data-id="<?= (int) $a['id'] ?>">
-        <td><strong><?= htmlspecialchars($a['first_name'] . ' ' . $a['last_name']) ?></strong></td>
-        <td><?= htmlspecialchars($a['email']) ?></td>
-        <td><span class="mc-badge"><?= strtoupper($a['role']) ?></span></td>
-        <td><?= $a['is_active'] ? '<span style="color:#16a34a;font-weight:700;">Active</span>' : '<span style="color:#ef233c;font-weight:700;">Suspended</span>' ?></td>
-        <td class="text-xs text-muted"><?= date('M j, Y', strtotime($a['created_at'])) ?></td>
-        <td>
+        <td data-label="Name"><strong><?= htmlspecialchars($a['first_name'] . ' ' . $a['last_name']) ?></strong></td>
+        <td data-label="Email"><?= htmlspecialchars($a['email']) ?></td>
+        <td data-label="Role"><span class="mc-badge"><?= strtoupper($a['role']) ?></span></td>
+        <td data-label="Status"><?= $a['is_active'] ? '<span style="color:#16a34a;font-weight:700;">Active</span>' : '<span style="color:#ef233c;font-weight:700;">Suspended</span>' ?></td>
+        <td data-label="Joined" class="text-xs text-muted"><?= date('M j, Y', strtotime($a['created_at'])) ?></td>
+        <td data-label="Actions">
           <?php if ($a['role'] !== 'superadmin'): ?>
           <div style="display:flex;gap:6px;flex-wrap:wrap;">
             <button type="button" class="mc-btn mc-btn--outline btn-edit" style="padding:4px 10px;font-size:11px;" data-id="<?= (int) $a['id'] ?>" data-first="<?= htmlspecialchars($a['first_name']) ?>" data-last="<?= htmlspecialchars($a['last_name']) ?>" data-email="<?= htmlspecialchars($a['email']) ?>">Edit</button>

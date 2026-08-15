@@ -202,7 +202,7 @@ $prc_portal_url = 'https://verification.prc.gov.ph/';
     </div>
 </div>
 
-<link rel="stylesheet" href="<?= ASSET_BASE ?>/assets/css/admin-staff-forms.css?v=1.2">
+<link rel="stylesheet" href="<?= ASSET_BASE ?>/assets/css/admin-staff-forms.css?v=1.3">
 <script src="<?= ASSET_BASE ?>/assets/js/admin-staff-form-utils.js?v=1.1"></script>
 
 <script>

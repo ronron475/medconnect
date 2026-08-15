@@ -11,17 +11,17 @@ require_once __DIR__ . '/partials/layout_open.php';
   <button type="button" class="mc-btn mc-btn--primary" id="btnBackup">Create Manual Backup</button>
 </div>
 <div class="mc-card" style="padding:0;overflow:hidden;">
-  <table class="mc-table">
+  <table class="mc-table admin-stack-table">
     <thead><tr><th>File</th><th>Type</th><th>Status</th><th>Size</th><th>Created</th><th>Actions</th></tr></thead>
     <tbody>
       <?php foreach ($backups as $b): ?>
       <tr>
-        <td><?= htmlspecialchars($b['filename']) ?></td>
-        <td><?= htmlspecialchars($b['backup_type']) ?></td>
-        <td><span class="mc-badge"><?= strtoupper($b['status']) ?></span></td>
-        <td class="text-xs"><?= $b['file_size'] ? number_format($b['file_size']/1024, 1).' KB' : '—' ?></td>
-        <td class="text-xs text-muted"><?= date('M j, Y g:i A', strtotime($b['created_at'])) ?></td>
-        <td style="display:flex;gap:6px;flex-wrap:wrap;">
+        <td data-label="File"><?= htmlspecialchars($b['filename']) ?></td>
+        <td data-label="Type"><?= htmlspecialchars($b['backup_type']) ?></td>
+        <td data-label="Status"><span class="mc-badge"><?= strtoupper($b['status']) ?></span></td>
+        <td data-label="Size" class="text-xs"><?= $b['file_size'] ? number_format($b['file_size']/1024, 1).' KB' : '—' ?></td>
+        <td data-label="Created" class="text-xs text-muted"><?= date('M j, Y g:i A', strtotime($b['created_at'])) ?></td>
+        <td data-label="Actions" style="display:flex;gap:6px;flex-wrap:wrap;">
           <?php if ($b['status'] === 'success'): ?>
           <a class="mc-btn mc-btn--outline" style="padding:4px 10px;font-size:11px;" href="<?= $api ?>?action=download&id=<?= (int)$b['id'] ?>">Download</a>
           <button type="button" class="mc-btn mc-btn--outline btn-restore" style="padding:4px 10px;font-size:11px;" data-id="<?= (int)$b['id'] ?>">Restore</button>

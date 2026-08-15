@@ -771,3 +771,39 @@
 .staff-approval-modal #bhwReviewError {
   display: none;
 }
+
+@media (max-width: 768px) {
+  .staff-approval-modal .admin-modal-dialog {
+    max-height: calc(100dvh - 8px);
+    max-height: calc(100vh - 8px);
+    border-radius: 16px 16px 0 0;
+  }
+
+  .staff-approval-modal .admin-modal-header {
+    padding: 20px 20px 14px;
+    border-radius: 16px 16px 0 0;
+  }
+
+  .staff-approval-modal .bhw-checklist,
+  .staff-approval-modal #doctorReviewContent,
+  .staff-approval-modal #bhwReviewContent {
+    margin: 0 20px;
+  }
+
+  .staff-approval-modal .admin-modal-actions {
+    padding: 12px 20px 24px;
+    flex-direction: column-reverse;
+  }
+
+  .staff-approval-modal .admin-modal-actions .mc-btn {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .staff-approval-modal .admin-form-error.is-visible,
+  .staff-approval-modal #doctorReviewError.is-visible,
+  .staff-approval-modal #bhwReviewError.is-visible {
+    margin-left: 20px;
+    margin-right: 20px;
+  }
+}

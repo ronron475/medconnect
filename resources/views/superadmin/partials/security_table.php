@@ -13,7 +13,7 @@
   <?php if (!empty($page_desc)): ?><p class="text-muted"><?= htmlspecialchars($page_desc) ?></p><?php endif; ?>
 </div>
 <div class="mc-card" style="padding:0;overflow:hidden;overflow-x:auto;">
-  <table class="mc-table">
+  <table class="mc-table admin-stack-table">
     <thead><tr><?php foreach ($columns as $col): ?><th><?= htmlspecialchars($col) ?></th><?php endforeach; ?></tr></thead>
     <tbody>
       <?php if (empty($rows)): ?>
@@ -21,7 +21,7 @@
       <?php else: foreach ($rows as $row): ?>
         <tr>
           <?php foreach (array_keys($columns) as $key): ?>
-            <td class="text-sm"><?= htmlspecialchars((string) ($row[$key] ?? '—')) ?></td>
+            <td class="text-sm" data-label="<?= htmlspecialchars($columns[$key]) ?>"><?= htmlspecialchars((string) ($row[$key] ?? '—')) ?></td>
           <?php endforeach; ?>
         </tr>
       <?php endforeach; endif; ?>

@@ -17,9 +17,9 @@
   ?>
   <link rel="stylesheet" href="<?= ASSET_BASE ?>/assets/css/design-system.css"/>
   <link rel="stylesheet" href="<?= ASSET_BASE ?>/assets/css/admin_dashboard.css"/>
-  <link rel="stylesheet" href="<?= ASSET_BASE ?>/assets/css/admin-dashboard-mobile.css"/>
+  <link rel="stylesheet" href="<?= ASSET_BASE ?>/assets/css/admin-dashboard-mobile.css?v=<?= (int) @filemtime(ASSETS_PATH . '/css/admin-dashboard-mobile.css') ?>"/>
   <link rel="stylesheet" href="<?= ASSET_BASE ?>/assets/css/admin-dashboard-charts.css"/>
-  <link rel="stylesheet" href="<?= ASSET_BASE ?>/assets/css/superadmin_dashboard.css"/>
+  <link rel="stylesheet" href="<?= ASSET_BASE ?>/assets/css/superadmin_dashboard.css?v=<?= (int) @filemtime(ASSETS_PATH . '/css/superadmin_dashboard.css') ?>"/>
   <link rel="stylesheet" href="<?= ASSET_BASE ?>/assets/css/sidebar.css"/>
   <link rel="stylesheet" href="<?= ASSET_BASE ?>/assets/css/topbar.css"/>
   <link rel="stylesheet" href="<?= ASSET_BASE ?>/assets/css/dashboard.css"/>

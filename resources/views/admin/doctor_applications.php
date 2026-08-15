@@ -89,7 +89,7 @@ require_once __DIR__ . '/partials/layout_open.php';
     <div class="staff-apps-card__toolbar">
         <div class="staff-apps-search">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-            <input type="search" id="doctorAppSearch" class="staff-apps-search__input" placeholder="Search by name, email, PRC, specialization…" aria-label="Search applications">
+            <input type="search" id="doctorAppSearch" class="staff-apps-search__input" placeholder="Search name, email, or PRC…" aria-label="Search applications">
         </div>
         <select id="doctorAppStatusFilter" class="staff-apps-filter" aria-label="Filter by status">
             <option value="all">All statuses</option>

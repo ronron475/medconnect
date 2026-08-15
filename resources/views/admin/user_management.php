@@ -134,7 +134,7 @@ require_once __DIR__ . '/partials/layout_open.php';
 <?php endif; ?>
 
 <div class="mc-card" style="padding: 0; overflow: hidden;">
-    <table class="mc-table">
+    <table class="mc-table admin-stack-table">
         <thead>
             <tr>
                 <?php if ($is_archived_view): ?>
@@ -182,7 +182,7 @@ require_once __DIR__ . '/partials/layout_open.php';
                 $archiver_name = trim(($u['archiver_first_name'] ?? '') . ' ' . ($u['archiver_last_name'] ?? ''));
             ?>
             <tr>
-                <td>
+                <td data-label="Name &amp; ID">
                     <div style="display: flex; align-items: center; gap: 12px;">
                         <?php if ($picture_url): ?>
                             <?= profile_picture_render($initials, $picture_url, '', 'sm') ?>
@@ -197,9 +197,9 @@ require_once __DIR__ . '/partials/layout_open.php';
                         </div>
                     </div>
                 </td>
-                <td><span class="text-sm"><?= htmlspecialchars($u['email']) ?></span></td>
-                <td><span class="mc-badge"><?= htmlspecialchars(user_account_role_label((string) $u['role'])) ?></span></td>
-                <td>
+                <td data-label="Email"><span class="text-sm"><?= htmlspecialchars($u['email']) ?></span></td>
+                <td data-label="Role"><span class="mc-badge"><?= htmlspecialchars(user_account_role_label((string) $u['role'])) ?></span></td>
+                <td data-label="Status">
                     <span class="mc-badge <?= htmlspecialchars($badge['class'] ?? '', ENT_QUOTES, 'UTF-8') ?>">
                         <?= htmlspecialchars($badge['label']) ?>
                     </span>
@@ -208,11 +208,11 @@ require_once __DIR__ . '/partials/layout_open.php';
                 <?php if ($is_archived_view):
                     $archived_ts = $u['archived_at'] ? strtotime((string) $u['archived_at']) : null;
                 ?>
-                <td><span class="text-xs text-muted"><?= $archived_ts ? date('M j, Y', $archived_ts) : '—' ?></span></td>
-                <td><span class="text-xs text-muted"><?= $archived_ts ? date('g:i A', $archived_ts) : '—' ?></span></td>
-                <td><span class="text-xs"><?= $archiver_name !== '' ? htmlspecialchars($archiver_name) : '—' ?></span></td>
-                <td><span class="text-xs" style="max-width:200px;display:block;"><?= !empty($u['archive_reason']) ? htmlspecialchars((string) $u['archive_reason']) : '—' ?></span></td>
-                <td>
+                <td data-label="Date Archived"><span class="text-xs text-muted"><?= $archived_ts ? date('M j, Y', $archived_ts) : '—' ?></span></td>
+                <td data-label="Time"><span class="text-xs text-muted"><?= $archived_ts ? date('g:i A', $archived_ts) : '—' ?></span></td>
+                <td data-label="Archived By"><span class="text-xs"><?= $archiver_name !== '' ? htmlspecialchars($archiver_name) : '—' ?></span></td>
+                <td data-label="Archive Reason"><span class="text-xs" style="max-width:200px;display:block;"><?= !empty($u['archive_reason']) ? htmlspecialchars((string) $u['archive_reason']) : '—' ?></span></td>
+                <td data-label="Actions">
                     <div class="mc-status-actions">
                         <?php if ($is_superadmin): ?>
                         <button type="button" class="mc-btn mc-btn--primary js-archived-restore" style="padding:6px 10px;font-size:11px;" data-user-id="<?= (int) $u['id'] ?>" data-user-name="<?= $full_name ?>">Restore</button>
@@ -227,15 +227,15 @@ require_once __DIR__ . '/partials/layout_open.php';
                     </div>
                 </td>
                 <?php else: ?>
-                <td>
+                <td data-label="PRC">
                     <?php if ($is_provider): ?>
                         <span class="text-xs"><?= $u['prc_license_number'] ? htmlspecialchars($u['prc_license_number']) : '—' ?></span>
                     <?php else: ?>
                         <span class="text-muted">—</span>
                     <?php endif; ?>
                 </td>
-                <td><span class="text-xs text-muted"><?= date('M j, Y', strtotime($u['created_at'])) ?></span></td>
-                <td>
+                <td data-label="Joined"><span class="text-xs text-muted"><?= date('M j, Y', strtotime($u['created_at'])) ?></span></td>
+                <td data-label="Actions">
                     <?php if (!empty($allowed_actions)): ?>
                     <div class="mc-status-actions">
                         <?php foreach ($allowed_actions as $act):
