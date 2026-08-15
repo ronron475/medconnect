@@ -75,8 +75,13 @@ final class FaqChatbotOrchestrator
         FaqChatbotConversationMemory::rememberLanguage($replyLang);
         $history = $this->convRepo->recentMessages($conversationId, 8);
         $memoryBoost = FaqChatbotConversationMemory::contextBoostText();
+        $resolvedShort = FaqChatbotConversationMemory::resolveShortUtterance($text);
+        $effectiveText = $resolvedShort ?? $text;
+        if ($resolvedShort !== null && $resolvedShort !== $text) {
+            $nlpText = trim($nlpText . ' ' . $resolvedShort);
+        }
         $contextText = trim($this->mergeContextText($history, $nlpText) . ' ' . $memoryBoost);
-        $matchText = FaqChatbotConversationMemory::contextualMatchText($text, $nlpText);
+        $matchText = FaqChatbotConversationMemory::contextualMatchText($effectiveText, $nlpText);
 
         $emergency = FaqChatbotEmergencyDetector::detect($contextText . ' ' . $text);
         $intentPack = FaqChatbotIntentRecognizer::recognize($matchText);
@@ -181,6 +186,13 @@ final class FaqChatbotOrchestrator
                     $followBridge = FaqChatbotConversationMemory::followUpBridge($replyLang);
                 }
 
+                $combined = $this->combineMultiIntentHtml($effectiveText, $matchText, $replyLang, $sessionId);
+                if ($combined !== null) {
+                    $kbHit = $combined;
+                    $intent = (string) ($combined['intent'] ?? $intent);
+                    $_SESSION['faq_chatbot_last_intent'] = $intent;
+                }
+
                 if ($kbHit !== null) {
                     $lead = $empathyWrap ?? FaqChatbotResponseGenerator::wrapAnswer($empathy, '');
                     // Crisis / emergency KB cards already carry strong framing — light empathy only
@@ -242,33 +254,60 @@ final class FaqChatbotOrchestrator
             FaqChatbotIntentRecognizer::TRANSPORT,
             FaqChatbotIntentRecognizer::WEATHER,
             FaqChatbotIntentRecognizer::EMERGENCY,
-        ], true) && ($intentPack['confidence'] ?? 0) >= 0.72;
+            FaqChatbotIntentRecognizer::PASSWORD_RESET,
+            FaqChatbotIntentRecognizer::BHW,
+            FaqChatbotIntentRecognizer::TECHNICAL,
+            FaqChatbotIntentRecognizer::DOCTOR,
+            FaqChatbotIntentRecognizer::PRIVACY,
+            FaqChatbotIntentRecognizer::RECORDS,
+            FaqChatbotIntentRecognizer::CAPABILITIES,
+            FaqChatbotIntentRecognizer::GREETING,
+            FaqChatbotIntentRecognizer::THANKS,
+            FaqChatbotIntentRecognizer::OTP,
+        ], true) && ($intentPack['confidence'] ?? 0) >= 0.62;
         $useServer = $mode === 'full'
             || ($mode === 'assist' && ($emergency['is_emergency'] || $faqId !== null || $kbStrong || $intentStrong));
 
         if ($mode === 'assist' && !$useServer) {
-            if ($suggestions === []) {
-                $suggestions = $this->formatSuggestions($this->faqRepo->suggestionsForCategory(null, 3));
+            $aiHtml = FaqChatbotAiFallback::tryReply($text, $replyLang, [
+                'intent'  => $intent,
+                'emotion' => $canonical,
+                'topic'   => $kbHit['category'] ?? ($flowKey ?: $intent),
+                'turns'   => FaqChatbotConversationMemory::get()['turns'] ?? [],
+            ]);
+            if (is_string($aiHtml) && $aiHtml !== '') {
+                $responseHtml = $aiHtml;
+                $useServer = true;
+                $confidence = max($confidence, 0.58);
+                $flowKey = 'ai_conversation';
+                FaqChatbotConversationMemory::update([
+                    'bot_snippet' => $aiHtml,
+                    'topic'       => 'ai_conversation',
+                ]);
+            } else {
+                if ($suggestions === []) {
+                    $suggestions = $this->formatSuggestions($this->faqRepo->suggestionsForCategory(null, 3));
+                }
+                return $this->payload(
+                    $sessionId,
+                    $conversationId,
+                    $userMsgId,
+                    0,
+                    $canonical,
+                    $emotionResult,
+                    $intent,
+                    $flowKey,
+                    $emergency,
+                    '',
+                    $suggestions,
+                    $confidence,
+                    false,
+                    $mode,
+                    0,
+                    $replyLang,
+                    $nlp
+                );
             }
-            return $this->payload(
-                $sessionId,
-                $conversationId,
-                $userMsgId,
-                0,
-                $canonical,
-                $emotionResult,
-                $intent,
-                $flowKey,
-                $emergency,
-                '',
-                $suggestions,
-                $confidence,
-                false,
-                $mode,
-                0,
-                $replyLang,
-                $nlp
-            );
         }
 
         $botMsgId = $this->convRepo->insertMessage(
@@ -330,6 +369,64 @@ final class FaqChatbotOrchestrator
         $parts[] = $current;
         $tail = array_slice($parts, -3);
         return trim(implode(' ', $tail));
+    }
+
+    /**
+     * Merge two distinct intents (emotion+symptom, symptom+booking, login+appointment).
+     *
+     * @return array{key: string, category: string, score: float, html: string, flow_key: string, intent: string}|null
+     */
+    private function combineMultiIntentHtml(string $text, string $matchText, string $lang, string $sessionId): ?array
+    {
+        $multi = FaqChatbotConversationalIntents::matchAll($text, $matchText, 2);
+        if (count($multi) < 2) {
+            return null;
+        }
+        $cats = array_column($multi, 'category');
+        $keys = array_column($multi, 'kb_key');
+        $hasEmotion = in_array('emotional_support', $cats, true);
+        $hasHealth = in_array('healthcare', $cats, true);
+        $hasBook = in_array('appointments', $cats, true);
+        $hasAccount = in_array('accounts', $cats, true);
+
+        $comboKey = null;
+        $intent = (string) ($multi[0]['intent'] ?? FaqChatbotIntentRecognizer::GENERAL);
+        $flow = (string) ($multi[0]['flow_key'] ?? 'conversational');
+        if ($hasEmotion && $hasHealth) {
+            $comboKey = 'emotion_and_symptoms';
+            $intent = FaqChatbotIntentRecognizer::EMOTIONAL_SUPPORT;
+            $flow = 'distress_support';
+        } elseif ($hasHealth && $hasBook) {
+            $comboKey = 'symptom_and_booking';
+            $intent = FaqChatbotIntentRecognizer::APPOINTMENT;
+            $flow = 'appointment';
+        } elseif ($hasAccount && $hasBook) {
+            $comboKey = 'login_and_appointment';
+            $intent = FaqChatbotIntentRecognizer::LOGIN;
+            $flow = 'signin';
+        }
+
+        if ($comboKey === null) {
+            $html = FaqChatbotKnowledgeBase::pickResponse((string) ($keys[0] ?? 'navigation_help'), $lang, $sessionId)
+                . FaqChatbotKnowledgeBase::pickResponse((string) ($keys[1] ?? 'navigation_help'), $lang, $sessionId);
+            return [
+                'key'      => (string) ($keys[0] ?? 'navigation_help'),
+                'category' => (string) ($multi[0]['category'] ?? 'general'),
+                'score'    => 3.1,
+                'html'     => $html,
+                'flow_key' => $flow,
+                'intent'   => $intent,
+            ];
+        }
+
+        return [
+            'key'      => $comboKey,
+            'category' => (string) ($multi[0]['category'] ?? 'general'),
+            'score'    => 3.4,
+            'html'     => FaqChatbotKnowledgeBase::pickResponse($comboKey, $lang, $sessionId),
+            'flow_key' => $flow,
+            'intent'   => $intent,
+        ];
     }
 
     /**

@@ -32,21 +32,40 @@ final class FaqChatbotUnifiedKnowledge
         $best = null;
         $bestScore = 0.0;
 
-        $scenario = FaqChatbotScenarioIndex::match($rawText, $nlpText, $ctx);
-        if ($scenario !== null && ($scenario['kb_key'] ?? '') !== '') {
-            $kbKey = (string) $scenario['kb_key'];
+        $lex = FaqChatbotConversationalIntents::match($rawText, $nlpText);
+        if ($lex !== null && ($lex['kb_key'] ?? '') !== '') {
+            $kbKey = (string) $lex['kb_key'];
             $html = FaqChatbotKnowledgeBase::pickResponse($kbKey, $lang, (string) ($ctx['session_id'] ?? ''));
-            $score = (float) $scenario['score'];
             $best = [
                 'key'      => $kbKey,
-                'category' => (string) $scenario['category'],
-                'score'    => $score,
+                'category' => (string) $lex['category'],
+                'score'    => max(2.4, (float) $lex['score']),
                 'html'     => $html,
-                'flow_key' => self::flowForIntent((string) $scenario['intent'], $kbKey),
-                'intent'   => (string) $scenario['intent'],
-                'sources'  => ['scenario_index'],
+                'flow_key' => (string) ($lex['flow_key'] ?: self::flowForIntent((string) $lex['intent'], $kbKey)),
+                'intent'   => (string) $lex['intent'],
+                'sources'  => ['conversational_lexicon'],
             ];
-            $bestScore = $score;
+            $bestScore = (float) $best['score'];
+            $sources[] = 'conversational_lexicon';
+        }
+
+        $scenario = FaqChatbotScenarioIndex::match($rawText, $nlpText, $ctx);
+        if ($scenario !== null && ($scenario['kb_key'] ?? '') !== '') {
+            $score = (float) $scenario['score'];
+            if ($score > $bestScore) {
+                $kbKey = (string) $scenario['kb_key'];
+                $html = FaqChatbotKnowledgeBase::pickResponse($kbKey, $lang, (string) ($ctx['session_id'] ?? ''));
+                $best = [
+                    'key'      => $kbKey,
+                    'category' => (string) $scenario['category'],
+                    'score'    => $score,
+                    'html'     => $html,
+                    'flow_key' => self::flowForIntent((string) $scenario['intent'], $kbKey),
+                    'intent'   => (string) $scenario['intent'],
+                    'sources'  => array_values(array_unique([...$sources, 'scenario_index'])),
+                ];
+                $bestScore = $score;
+            }
             $sources[] = 'scenario_index';
         }
 
@@ -144,7 +163,11 @@ final class FaqChatbotUnifiedKnowledge
                 : ($L === 'hil'
                     ? '<p>Gusto ko ikaw matabangan. Pwede mo bala ihambal ang mga sintomas kag san-o nagsugod?</p>'
                     : '<p>I want to help. Could you share your symptoms and when they started?</p>'),
-            default => FaqChatbotResponseTemplates::html('no_exact_faq', $L),
+            default => $L === 'fil'
+                ? '<p>Gusto kong matiyak na matutulungan kita nang tama. Tungkol ba ito sa appointment, account, video consultation, o health concern?</p>'
+                : ($L === 'hil'
+                    ? '<p>Gusto ko siguraduhon nga husto ang bulig ko. Parte bala ini sa appointment, account, video consultation, ukon health concern?</p>'
+                    : '<p>I want to make sure I help you correctly. Are you asking about your appointment, your account, a video consultation, or a health concern?</p>'),
         };
 
         if ($emotionLead !== '') {

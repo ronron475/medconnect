@@ -24,7 +24,7 @@ final class FaqChatbotKbServices
                 'flow_key' => 'signin',
                 'weight' => 1.15,
                 'patterns' => [
-                    '/\b(otp|one\s*time\s*pin|verification\s*code|code\s+not\s+received|wala\s+ako\s+nabaton\s+nga\s+otp)\b/ui',
+                    '/\b(otp|one\s*time\s*pin|verification\s*code|code\s+not\s+received|wala\s+(ko\s+)?otp|wala\s+nag-?abot\s+otp|wala\s+ako\s+nabaton\s+nga\s+otp)\b/ui',
                 ],
                 'keywords' => ['otp', 'verification code', 'one time pin'],
             ],
@@ -74,7 +74,7 @@ final class FaqChatbotKbServices
                 'flow_key' => 'signin',
                 'weight' => 1.1,
                 'patterns' => [
-                    '/\b(how\s+to\s+(log\s*in|sign\s*in)|cannot\s+log\s*in|can\'?t\s+log\s*in|indi\s+(ko\s+)?makasulod)\b/ui',
+                    '/\b(how\s+to\s+(log\s*in|sign\s*in)|cannot\s+log\s*in|can\'?t\s+log\s*in|indi\s+(ko\s+)?(ka\s*)?(login|makasulod)|wala\s+ko\s+ka\s*login|hindi\s+ako\s+makalogin)\b/ui',
                 ],
                 'keywords' => ['login', 'sign in', 'log in', 'sulod'],
             ],
@@ -208,6 +208,66 @@ final class FaqChatbotKbServices
                 ],
                 'keywords' => ['how to use', 'paano gamiton', 'where is', 'navigation'],
             ],
+            [
+                'key' => 'cancel_appointment',
+                'category' => 'appointments',
+                'flow_key' => 'appointment',
+                'weight' => 1.14,
+                'patterns' => [
+                    '/\b(cancel\s+(my\s+)?appointment|reschedule|can\s+i\s+cancel|i-?cancel|move\s+my\s+appointment)\b/ui',
+                ],
+                'keywords' => ['cancel', 'reschedule', 'i-cancel', 'move appointment'],
+            ],
+            [
+                'key' => 'appointment_status',
+                'category' => 'appointments',
+                'flow_key' => 'appointment',
+                'weight' => 1.12,
+                'patterns' => [
+                    '/\b(appointment\s+status|where\s+is\s+my\s+(consultation|appointment)|di\s+ko\s+makita\s+appointment|upcoming\s+appointment|missed\s+appointment)\b/ui',
+                ],
+                'keywords' => ['appointment status', 'upcoming appointment', 'where is my consultation'],
+            ],
+            [
+                'key' => 'video_troubleshooting',
+                'category' => 'video_consultation',
+                'flow_key' => 'video',
+                'weight' => 1.16,
+                'patterns' => [
+                    '/\b(video\s+call\s+not\s+working|doctor\s+(didn\'?t|did\s+not)\s+join|no\s+(audio|camera|microphone)|camera\s+(permission|doesn\'?t\s+work|indi\s+naga\s+work)|video\s+frozen|indi\s+naga\s+work\s+ang\s+video|indi\s+ko\s+(makita|mabatian|marinig)|wala\s+doctor\s+sa\s+video|can\'?t\s+hear\s+(the\s+)?doctor)\b/ui',
+                ],
+                'keywords' => ['video not working', 'doctor didn\'t join', 'no camera', 'no microphone'],
+            ],
+            [
+                'key' => 'consultation_cost',
+                'category' => 'access_barriers',
+                'flow_key' => 'financial',
+                'weight' => 1.14,
+                'patterns' => [
+                    '/\b(how\s+much|may\s+bayad|libre\s+ni|free\s+ni|consultation\s+fee|wala\s+ko\s+kwarta|mahal\??)\b/ui',
+                ],
+                'keywords' => ['how much', 'may bayad', 'libre', 'consultation fee', 'free ni'],
+            ],
+            [
+                'key' => 'bhw_help',
+                'category' => 'bhw',
+                'flow_key' => 'services',
+                'weight' => 1.18,
+                'patterns' => [
+                    '/\b(what\s+is\s+bhw|can\s+bhw\s+help|barangay\s+health\s+worker|\bbhw\b)\b/ui',
+                ],
+                'keywords' => ['bhw', 'barangay health worker', 'health worker'],
+            ],
+            [
+                'key' => 'technical_support',
+                'category' => 'technical',
+                'flow_key' => 'services',
+                'weight' => 1.1,
+                'patterns' => [
+                    '/\b(website\s+not\s+loading|page\s+stuck|blank\s+page|button\s+not\s+working|loading\s+forever|error\s+message|dashboard\s+problem)\b/ui',
+                ],
+                'keywords' => ['website not loading', 'blank page', 'button not working', 'error message'],
+            ],
         ];
     }
 
@@ -246,14 +306,33 @@ final class FaqChatbotKbServices
                 'hil' => ['<p>Magrehistro: <strong>Sign In</strong> → register, kompletoha ang fields, i-verify kon kinahanglan, dayon pwede mag-book.</p>'],
             ],
             'login_help' => [
-                'en' => ['<p>Use <strong>Sign In</strong> on the landing page with your account details. Forgot password? Use the reset link on the form. Still stuck? I can guide you to Contact / City Health support.</p>'],
-                'fil' => ['<p>Sa landing page, pindutin ang <strong>Sign In</strong>. Nakalimutan ang password → reset link. Problema pa → Contact support.</p>'],
-                'hil' => ['<p>Sa landing page, pinduta ang <strong>Sign In</strong>. Nakalimtan ang password → reset link. Problema pa → Contact support.</p>'],
+                'en' => [
+                    '<p>Use <strong>Sign In</strong> on the landing page with your account details. Forgot password? Use the reset link on the form. Still stuck? I can guide you to Contact / City Health support.</p>',
+                    '<p>Cannot log in? Check email/phone and password, then try <strong>Sign In</strong> again. Use Forgot password if the password is wrong. I cannot unlock the account from chat.</p>',
+                ],
+                'fil' => [
+                    '<p>Sa landing page, pindutin ang <strong>Sign In</strong>. Nakalimutan ang password → reset link. Problema pa → Contact support.</p>',
+                    '<p>Hindi maka-login? Tingnan ang details, then Sign In. Forgot password kung mali ang password.</p>',
+                ],
+                'hil' => [
+                    '<p>Sa landing page, pinduta ang <strong>Sign In</strong>. Nakalimtan ang password → reset link. Problema pa → Contact support.</p>',
+                    '<p>Indi ka login? Tan-awa ang details, dayon Sign In. Forgot password kon mali ang password.</p>',
+                ],
             ],
             'book_appointment' => [
-                'en' => ['<p>Sign in as a patient, open <strong>Appointments</strong>, and choose an available schedule. Urgent symptoms need ER/<strong>911</strong>, not a routine slot. I can guide steps here but cannot book for you in chat.</p>'],
-                'fil' => ['<p>Mag-login bilang patient → <strong>Appointments</strong> → pumili ng schedule. Emergency → <strong>911</strong>.</p>'],
-                'hil' => ['<p>Mag-login bilang patient → <strong>Appointments</strong> → pilia ang schedule. Emergency → <strong>911</strong>.</p>'],
+                'en' => [
+                    '<p>Sign in as a patient, open <strong>Appointments</strong>, and choose an available schedule. Urgent symptoms need ER/<strong>911</strong>, not a routine slot. I can guide steps here but cannot book for you in chat.</p>',
+                    '<p>To book: Sign In → <strong>Appointments</strong> → pick a free slot. If this is an emergency, call <strong>911</strong> instead of waiting for a routine visit.</p>',
+                    '<p>You can schedule a consultation after signing in. Look for Appointments on medConnect. I cannot complete the booking inside this chat.</p>',
+                ],
+                'fil' => [
+                    '<p>Mag-login bilang patient → <strong>Appointments</strong> → pumili ng schedule. Emergency → <strong>911</strong>.</p>',
+                    '<p>Para mag-book: Sign In, then Appointments. Hindi ko ito mabobook dito sa chat.</p>',
+                ],
+                'hil' => [
+                    '<p>Mag-login bilang patient → <strong>Appointments</strong> → pilia ang schedule. Emergency → <strong>911</strong>.</p>',
+                    '<p>Para mag-book: Sign In, dayon Appointments. Indi ko ini mabook diri sa chat.</p>',
+                ],
             ],
             'video_consult' => [
                 'en' => ['<p>Video consultation lets you meet a provider online after signing in. Check Appointments/Consultation for scheduled video visits and use a stable connection. It does not replace emergency care.</p>'],
@@ -266,9 +345,9 @@ final class FaqChatbotKbServices
                 'hil' => ['<p>Ang <strong>AI Triage</strong> nagabulig mag-ayos sang sintomas — <strong>indi diagnosis</strong>. Emergency → <strong>911</strong>.</p>'],
             ],
             'medical_records' => [
-                'en' => ['<p>After signing in, open <strong>Medical Records</strong> / Health Summary to view available history. Records depend on what providers have entered. Need a correction? Ask your clinic/provider.</p>'],
-                'fil' => ['<p>Pagkatapos mag-login, buksan ang <strong>Medical Records</strong> / Health Summary. Depende ito sa na-encode ng provider.</p>'],
-                'hil' => ['<p>Pagkatapos mag-login, buksan ang <strong>Medical Records</strong> / Health Summary. Depende ini sa na-encode sang provider.</p>'],
+                'en' => ['<p>After signing in, open <strong>Medical Records</strong> / Health Summary for available history. SOAP notes and diagnoses are written by your healthcare provider — the chatbot cannot change clinical records. Need a correction? Ask your clinic/provider.</p>'],
+                'fil' => ['<p>Pagkatapos mag-login, buksan ang <strong>Medical Records</strong> / Health Summary. Ang SOAP at diagnosis ay mula sa provider — hindi ko ito mababago. Para sa correction, sa clinic/provider magtanong.</p>'],
+                'hil' => ['<p>Pagkatapos mag-login, buksan ang <strong>Medical Records</strong> / Health Summary. Ang SOAP kag diagnosis halin sa provider — indi ko ini mabag-o.</p>'],
             ],
             'referrals' => [
                 'en' => ['<p>Referrals are usually created by your provider when you need another service or facility. Check your appointments/records after a visit, or ask City Health staff. I cannot issue referrals in chat.</p>'],
@@ -314,6 +393,72 @@ final class FaqChatbotKbServices
                 'en' => ['<p>Quick map: <strong>Sign In</strong> (account), <strong>Appointments</strong> (book), <strong>Video</strong> consult when offered, <strong>Announcements</strong>, and <strong>Contact</strong> for City Health. Tell me which page you need.</p>'],
                 'fil' => ['<p>Gabay: <strong>Sign In</strong>, <strong>Appointments</strong>, <strong>Video</strong>, <strong>Announcements</strong>, <strong>Contact</strong>. Sabihin kung alin ang kailangan mo.</p>'],
                 'hil' => ['<p>Mapa: <strong>Sign In</strong>, <strong>Appointments</strong>, <strong>Video</strong>, <strong>Announcements</strong>, <strong>Contact</strong>. Silinga kon ano ang imo kinahanglan.</p>'],
+            ],
+            'cancel_appointment' => [
+                'en' => [
+                    '<p>Yes — after you sign in, open <strong>Appointments</strong> / your scheduled visit to cancel or reschedule when the system still allows it. If the visit already started, contact City Health or your provider. I cannot cancel it from this chat.</p>',
+                    '<p>You can usually cancel or move a booking from your signed-in Appointments page. Need a different time? Pick another available slot. Staff can also help if the page does not show the visit.</p>',
+                ],
+                'fil' => ['<p>Oo — mag-login, buksan ang <strong>Appointments</strong> para i-cancel o i-reschedule kung available pa. Hindi ko ito mae-edit dito sa chat.</p>'],
+                'hil' => ['<p>Huo — mag-login, buksan ang <strong>Appointments</strong> para i-cancel ukon i-reschedule kon pwede pa. Indi ko ini ma-edit diri sa chat.</p>'],
+            ],
+            'appointment_status' => [
+                'en' => ['<p>Sign in and open <strong>Appointments</strong> or your consultation list to see upcoming, missed, or completed visits. If a visit is missing, refresh the page or contact City Health support — I cannot look up a live schedule in chat.</p>'],
+                'fil' => ['<p>Mag-login at buksan ang <strong>Appointments</strong> para sa upcoming o past visits. Kung wala, i-refresh o kontakin ang City Health.</p>'],
+                'hil' => ['<p>Mag-login kag buksan ang <strong>Appointments</strong> para sa upcoming ukon past visits. Kon wala, i-refresh ukon contact City Health.</p>'],
+            ],
+            'video_troubleshooting' => [
+                'en' => [
+                    '<p>If video is not working: allow <strong>camera and microphone</strong> in the browser, use a supported browser, and check your internet. If the doctor has not joined yet, wait a moment or re-enter from Appointments. This chat does not start the video room.</p>',
+                    '<p>No picture or sound? Check permissions, close extra tabs, and rejoin from your scheduled consultation. If the provider still does not appear, message City Health or try again when your connection is stable.</p>',
+                ],
+                'fil' => ['<p>Kung hindi gumagana ang video: payagan ang camera/microphone, suriin ang internet, at bumalik mula sa Appointments. Hindi ko masisimulan ang video dito.</p>'],
+                'hil' => ['<p>Kon indi naga-andar ang video: pasugta ang camera/microphone, tan-awa ang internet, kag magbalik sa Appointments. Indi ko masugdan ang video diri.</p>'],
+            ],
+            'consultation_cost' => [
+                'en' => [
+                    '<p>I do not list fees in this chat because charges can depend on City Health Office policy and the service. For cost or whether a visit is free, please check <strong>Contact</strong> / City Health staff. medConnect is the booking and records portal — not a payment quote.</p>',
+                    '<p>Asking if it is free or how much it costs? Please ask City Health Office through the Contact section. I will not invent a price here.</p>',
+                ],
+                'fil' => ['<p>Hindi ko ililista ang presyo dito. Para sa bayad o kung libre, tanungin ang City Health sa <strong>Contact</strong>. Hindi ako magbibigay ng haka-hakang fee.</p>'],
+                'hil' => ['<p>Indi ko ilista ang presyo diri. Para sa bayad ukon kon libre, pamangkota ang City Health sa <strong>Contact</strong>. Indi ako maghimo sang fee.</p>'],
+            ],
+            'bhw_help' => [
+                'en' => [
+                    '<p>A <strong>Barangay Health Worker (BHW)</strong> in medConnect can help register or assist an existing patient, update contact details, help with appointment/triage intake, and make emergency referrals. BHWs <strong>cannot diagnose</strong>, prescribe, or override AI triage. Ask your barangay BHW or City Health if you need in-person help.</p>',
+                ],
+                'fil' => ['<p>Ang <strong>BHW</strong> ay makakatulong magrehistro o tulungan ang existing patient, appointment/triage intake, at emergency referral. <strong>Hindi sila nagda-diagnose</strong> at hindi nila mababago ang AI triage.</p>'],
+                'hil' => ['<p>Ang <strong>BHW</strong> makabulig magrehistro ukon magbulig sa existing patient, appointment/triage, kag emergency referral. <strong>Indi sila nagadiagnose</strong> kag indi nila mabag-o ang AI triage.</p>'],
+            ],
+            'technical_support' => [
+                'en' => [
+                    '<p>If a page is stuck or blank: refresh, try another browser, and check your internet. Allow camera/mic if a video visit needs them. OTP/email delays — wait a minute and check spam. Still blocked? Use <strong>Contact</strong> / City Health support and describe the page and error.</p>',
+                ],
+                'fil' => ['<p>Kung nakasabit o blanko: i-refresh, ibang browser, suriin ang internet. OTP/email — hintay at spam folder. Problema pa → Contact / City Health.</p>'],
+                'hil' => ['<p>Kon naga-stuck ukon blanko: i-refresh, iban nga browser, tan-awa ang internet. OTP/email — maghulat kag spam. Problema pa → Contact / City Health.</p>'],
+            ],
+            'doctor_clarify' => [
+                'en' => [
+                    '<p>Sure. Are you trying to <strong>book a new consultation</strong>, or <strong>join an appointment you already have</strong>?</p>',
+                    '<p>I can help you see a doctor through medConnect. Do you want to book a new visit, or join one that is already scheduled?</p>',
+                ],
+                'fil' => [
+                    '<p>Sige. Gusto mo bang <strong>mag-book ng bagong consultation</strong>, o <strong>sumali sa appointment na meron ka na</strong>?</p>',
+                ],
+                'hil' => [
+                    '<p>Sige. Gusto mo mag-<strong>book sang bag-o nga consultation</strong>, ukon <strong>join sang appointment nga may ara ka na</strong>?</p>',
+                ],
+            ],
+            'login_and_appointment' => [
+                'en' => [
+                    '<p>Let\'s fix <strong>Sign In</strong> first so you can reach your appointment: use the landing-page Sign In form (Forgot password if needed). After you are in, open <strong>Appointments</strong> for today\'s visit. I cannot log you in from this chat.</p>',
+                ],
+                'fil' => [
+                    '<p>Ayusin muna ang <strong>Sign In</strong> para maabot ang appointment: landing page → Sign In (Forgot password kung kailangan). Pagkatapos, buksan ang <strong>Appointments</strong>.</p>',
+                ],
+                'hil' => [
+                    '<p>Ayuhon ta anay ang <strong>Sign In</strong> agod maabot ang appointment: landing page → Sign In. Pagkatapos, buksan ang <strong>Appointments</strong>.</p>',
+                ],
             ],
         ];
     }

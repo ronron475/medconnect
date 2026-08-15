@@ -1,0 +1,478 @@
+{
+  "version": "1.0",
+  "languages": ["en", "fil", "hil", "mixed"],
+  "intents": [
+    {
+      "id": "json_help_more",
+      "category": "general",
+      "intent": "capabilities",
+      "kb_key": "capabilities",
+      "flow_key": "services",
+      "phrases": [
+        "what can you help with",
+        "ano ang kaya mo",
+        "paano ka makabulig",
+        "tell me about medconnect",
+        "ano ang medconnect",
+        "city health office chatbot",
+        "digital assistant",
+        "i need assistance",
+        "pwede ka magbulig",
+        "can you assist me"
+      ]
+    },
+    {
+      "id": "json_login_more",
+      "category": "accounts",
+      "intent": "login",
+      "kb_key": "login_help",
+      "flow_key": "signin",
+      "phrases": [
+        "wrong password",
+        "mali password",
+        "account ko locked",
+        "email problems login",
+        "phone number login",
+        "sign in button not working",
+        "cannot access my account",
+        "indi mag open ang login"
+      ]
+    },
+    {
+      "id": "json_register_more",
+      "category": "accounts",
+      "intent": "registration",
+      "kb_key": "registration_help",
+      "flow_key": "register",
+      "phrases": [
+        "registration requirements",
+        "philid",
+        "national id ocr",
+        "address barangay purok",
+        "birth information register",
+        "contact information register",
+        "patient assistance register",
+        "bhw help me register",
+        "who can register in medconnect",
+        "existing patient register"
+      ]
+    },
+    {
+      "id": "json_book_more",
+      "category": "appointments",
+      "intent": "appointment",
+      "kb_key": "book_appointment",
+      "flow_key": "appointment",
+      "phrases": [
+        "no available doctor",
+        "consultation queue",
+        "doctor assignment",
+        "appointment date",
+        "appointment time",
+        "pwede ba magpa checkup",
+        "i need a doctor",
+        "gusto ko mag consult",
+        "book now",
+        "schedule me"
+      ]
+    },
+    {
+      "id": "json_video_more",
+      "category": "video_consultation",
+      "intent": "consultation",
+      "kb_key": "video_consult",
+      "flow_key": "video",
+      "phrases": [
+        "start consultation",
+        "join video",
+        "session saved",
+        "consultation ended",
+        "patient left",
+        "doctor left",
+        "consultation history video"
+      ]
+    },
+    {
+      "id": "json_symptoms_more",
+      "category": "healthcare",
+      "intent": "symptoms",
+      "kb_key": "symptoms_general",
+      "flow_key": "pain_sick",
+      "phrases": [
+        "masakit ulo",
+        "sakit ulo",
+        "head hurts",
+        "eye pain",
+        "difficulty breathing mild",
+        "shortness of breath",
+        "weakness",
+        "injury",
+        "wound",
+        "bleeding nose",
+        "sakit akon tiyan",
+        "ga sakit dughan mild"
+      ]
+    },
+    {
+      "id": "json_emotion_uncertainty",
+      "category": "emotional_support",
+      "intent": "emotional_support",
+      "kb_key": "uncertainty_support",
+      "flow_key": "distress_support",
+      "phrases": [
+        "i dont know what to do",
+        "i still don't know",
+        "ano gid himuon ko",
+        "wala ko kabalo pa"
+      ]
+    },
+    {
+      "id": "json_emotion_anxiety_more",
+      "category": "emotional_support",
+      "intent": "emotional_support",
+      "kb_key": "anxiety_support",
+      "flow_key": "distress_support",
+      "phrases": [
+        "im worried about my health",
+        "nabalaka gid",
+        "kulbaan gid ako subong",
+        "naga-overthink ko gid"
+      ]
+    },
+    {
+      "id": "json_emotion_fear_more",
+      "category": "emotional_support",
+      "intent": "emotional_support",
+      "kb_key": "fear_support",
+      "flow_key": "distress_support",
+      "phrases": [
+        "hadlok gid ako",
+        "grabe ko kahadlok subong",
+        "takot na takot na ako"
+      ]
+    },
+    {
+      "id": "json_emotion_sad_more",
+      "category": "emotional_support",
+      "intent": "emotional_support",
+      "kb_key": "sadness_support",
+      "flow_key": "distress_support",
+      "phrases": [
+        "nasubo gid ako",
+        "kasubo gid subong",
+        "wala na ko kalipay"
+      ]
+    },
+    {
+      "id": "json_emotion_anger_more",
+      "category": "emotional_support",
+      "intent": "emotional_support",
+      "kb_key": "anger_support",
+      "flow_key": "distress_support",
+      "phrases": [
+        "akig gid ako subong",
+        "init gid ulo ko",
+        "galit na galit na ako"
+      ]
+    },
+    {
+      "id": "json_emotion_crying_more",
+      "category": "emotional_support",
+      "intent": "emotional_support",
+      "kb_key": "crying_support",
+      "flow_key": "distress_support",
+      "phrases": [
+        "gahibi ko",
+        "indi ko mahunong maghibi",
+        "luha ko wala hunong"
+      ]
+    },
+    {
+      "id": "json_emergency_more",
+      "category": "emergency",
+      "intent": "emergency",
+      "kb_key": "emergency_redirect",
+      "flow_key": "emergency",
+      "emergency_flag": true,
+      "phrases": [
+        "severe shortness of breath",
+        "sudden weakness",
+        "throat swelling",
+        "allergic shock",
+        "overdose",
+        "choking",
+        "indi makaginhawa",
+        "hirap huminga",
+        "nawalan ng malay",
+        "grabeng pagdugo"
+      ]
+    },
+    {
+      "id": "json_cost_more",
+      "category": "access_barriers",
+      "intent": "financial",
+      "kb_key": "consultation_cost",
+      "flow_key": "financial",
+      "phrases": [
+        "consultation fee",
+        "payment",
+        "cost",
+        "affordable healthcare",
+        "walang pera",
+        "broke",
+        "too expensive",
+        "libre ba"
+      ]
+    },
+    {
+      "id": "json_bhw_more",
+      "category": "bhw",
+      "intent": "bhw",
+      "kb_key": "bhw_help",
+      "flow_key": "services",
+      "phrases": [
+        "what can bhw do",
+        "bhw cannot diagnose",
+        "bhw appointment assistance",
+        "how bhw helps patients",
+        "barangay health",
+        "health worker help"
+      ]
+    },
+    {
+      "id": "json_tech_more",
+      "category": "technical",
+      "intent": "technical",
+      "kb_key": "technical_support",
+      "flow_key": "services",
+      "phrases": [
+        "site down",
+        "cannot open page",
+        "camera not allowed",
+        "mic not allowed",
+        "internet slow",
+        "otp delayed"
+      ]
+    },
+    {
+      "id": "json_hil_book_more",
+      "category": "appointments",
+      "intent": "appointment",
+      "kb_key": "book_appointment",
+      "flow_key": "appointment",
+      "phrases": [
+        "diin ko mag book",
+        "diin ko maka pa check up",
+        "paano magpa appointment",
+        "paano magpakonsulta",
+        "gusto ko magpa checkup",
+        "gusto ko mag book appointment",
+        "kinahanglan ko magpakonsulta",
+        "pwede magpa doctor",
+        "saan magbook",
+        "kailangan ko magpacheckup"
+      ]
+    },
+    {
+      "id": "json_hil_emotion_fear",
+      "category": "emotional_support",
+      "intent": "emotional_support",
+      "kb_key": "fear_support",
+      "flow_key": "distress_support",
+      "phrases": [
+        "nahadlok gid ko",
+        "natatakot ako",
+        "i am scared"
+      ]
+    },
+    {
+      "id": "json_hil_emotion_anxiety",
+      "category": "emotional_support",
+      "intent": "emotional_support",
+      "kb_key": "anxiety_support",
+      "flow_key": "distress_support",
+      "phrases": [
+        "kulbaan gid ko",
+        "nabalaka gid ko",
+        "ginakulbaan gid ko",
+        "kinakabahan ako",
+        "i am worried"
+      ]
+    },
+    {
+      "id": "json_hil_emotion_lonely",
+      "category": "emotional_support",
+      "intent": "emotional_support",
+      "kb_key": "need_to_talk",
+      "flow_key": "distress_support",
+      "phrases": [
+        "wala ko sang kaistoryahan",
+        "isa lang gid ko subong"
+      ]
+    },
+    {
+      "id": "json_emotion_tired_more",
+      "category": "emotional_support",
+      "intent": "emotional_support",
+      "kb_key": "burnout_support",
+      "flow_key": "distress_support",
+      "phrases": [
+        "kapoy na gid ko sa tanan",
+        "pagod na pagod na ako"
+      ]
+    },
+    {
+      "id": "json_emotion_sleep_more",
+      "category": "emotional_support",
+      "intent": "emotional_support",
+      "kb_key": "cant_sleep",
+      "flow_key": "distress_support",
+      "phrases": [
+        "wala ko katulog gab-i",
+        "puyat gid ko"
+      ]
+    },
+    {
+      "id": "json_video_trouble_more",
+      "category": "video_consultation",
+      "intent": "connectivity",
+      "kb_key": "video_troubleshooting",
+      "flow_key": "video",
+      "phrases": [
+        "indi ko makita",
+        "indi ko mabatian",
+        "camera indi naga work",
+        "wala doctor sa video",
+        "cannot hear the doctor",
+        "camera doesn't work",
+        "my camera isn't working"
+      ]
+    },
+    {
+      "id": "json_thanks_more",
+      "category": "general",
+      "intent": "thanks",
+      "kb_key": "thank_you",
+      "flow_key": "gratitude",
+      "phrases": [
+        "okay thank you",
+        "ok thanks",
+        "salamat gid",
+        "that's all",
+        "got it thanks"
+      ]
+    },
+    {
+      "id": "json_hil_login_more",
+      "category": "accounts",
+      "intent": "login",
+      "kb_key": "login_help",
+      "flow_key": "signin",
+      "phrases": [
+        "indi gid ko ka login",
+        "wala gid ko ka sulod",
+        "login ko error",
+        "account ko indi mag open",
+        "di ako maka sign in",
+        "hindi gumagana yung login"
+      ]
+    },
+    {
+      "id": "json_hil_symptom_more",
+      "category": "healthcare",
+      "intent": "symptoms",
+      "kb_key": "symptoms_general",
+      "flow_key": "pain_sick",
+      "phrases": [
+        "ga sakit akon ulo",
+        "nagasakit akon tiyan",
+        "daw malipong ko",
+        "ginahilanat ko",
+        "ginaubo ko",
+        "sakit akon tutunlan",
+        "sakit akon mata",
+        "lawas ko kapoy",
+        "my head feels heavy",
+        "my tummy hurts",
+        "i feel like fainting"
+      ]
+    },
+    {
+      "id": "json_records_privacy_more",
+      "category": "records",
+      "intent": "medical_record",
+      "kb_key": "medical_records",
+      "flow_key": "records",
+      "phrases": [
+        "diin ko makita records",
+        "where are my records",
+        "soap notes ko",
+        "consultation history ko",
+        "health summary ko"
+      ]
+    },
+    {
+      "id": "json_hours_contact_more",
+      "category": "general",
+      "intent": "contact",
+      "kb_key": "contact_cho",
+      "flow_key": "contact",
+      "phrases": [
+        "tawag sa city health",
+        "diin ang cho",
+        "contact number cho",
+        "leave message sa cho"
+      ]
+    },
+    {
+      "id": "json_mixed_more",
+      "category": "appointments",
+      "intent": "appointment",
+      "kb_key": "book_appointment",
+      "flow_key": "appointment",
+      "phrases": [
+        "sakit ulo ko need doctor",
+        "gusto ko mag book appointment",
+        "may appointment ko pero wala doctor"
+      ]
+    },
+    {
+      "id": "json_health_nav_more",
+      "category": "healthcare",
+      "intent": "health_advice",
+      "kb_key": "vaccinations",
+      "flow_key": "policy",
+      "phrases": [
+        "diin magpabakuna",
+        "bakuna sa city health",
+        "vaccine schedule",
+        "child vaccine"
+      ]
+    },
+    {
+      "id": "json_pregnancy_more",
+      "category": "healthcare",
+      "intent": "symptoms",
+      "kb_key": "pregnancy",
+      "flow_key": "pain_sick",
+      "phrases": [
+        "prenatal checkup",
+        "magpa prenatal",
+        "i am pregnant",
+        "buntis checkup"
+      ]
+    },
+    {
+      "id": "json_account_lock_more",
+      "category": "accounts",
+      "intent": "login",
+      "kb_key": "account_recovery",
+      "flow_key": "reset",
+      "phrases": [
+        "account ko naka lock",
+        "na-lock ang account",
+        "too many login attempts"
+      ]
+    }
+  ]
+}

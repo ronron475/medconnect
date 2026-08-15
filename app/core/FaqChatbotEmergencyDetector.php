@@ -9,10 +9,12 @@ final class FaqChatbotEmergencyDetector
     private const RULES = [
         ['medical', '/\b(chest\s+pain|heart\s+attack|masakit\s+ang\s+dibdib|sakit\s+ang\s+dibdib|sakit\s+(ang\s+)?dughan|gapalanakit\s+(ang\s+)?dughan)\b/ui'],
         ['medical', '/\b(stroke|stroke\s+symptoms|face\s+droop|arm\s+weakness|slurred\s+speech|biglang\s+pagkaparalisa)\b/ui'],
-        ['medical', '/\b(can\'?t\s+breathe|cannot\s+breathe|difficulty\s+breathing|trouble\s+breathing|not\s+breathing|hirap\s+huminga|di\s+makahinga|indi\s+makahinga|indi\s+makaginhawa)\b/ui'],
-        ['medical', '/\b(unconscious|passed\s+out|walang\s+malay|nawalan\s+ng\s+malay|wala\s+malay|nawad\s*an\s+malay)\b/ui'],
-        ['medical', '/\b(severe\s+bleeding|heavy\s+bleeding|malubhang\s+dugo|grabeng\s+dugo|pagdurugo|grabeng\s+pagdugo)\b/ui'],
-        ['medical', '/\b(seizure|seizures|convulsion|choking|overdose|poisoning|lason|nalason)\b/ui'],
+        ['medical', '/\b(can\'?t\s+breathe|cannot\s+breathe|difficulty\s+breathing|trouble\s+breathing|not\s+breathing|shortness\s+of\s+breath|hirap\s+huminga|di\s+makahinga|indi\s+makahinga|indi\s+makaginhawa|indi\s+ko\s+kaginhawa|indi\s+ko\s+ginhawa|budlay\s+mag\s*ginhawa|budlay\s+ginhawa)\b/ui'],
+        ['medical', '/\b(unconscious|passed\s+out|fainting|fainted|walang\s+malay|nawalan\s+ng\s+malay|wala\s+malay|wala\s+ko\s+malay|nawad\s*an\s+malay|nahimatay)\b/ui'],
+        ['medical', '/\b(severe\s+bleeding|heavy\s+bleeding|malubhang\s+dugo|grabeng\s+dugo|pagdurugo|grabeng\s+pagdugo|dugo\s+gid)\b/ui'],
+        ['medical', '/\b(seizure|seizures|convulsion|nag\s+seizure|choking|overdose|poisoning|lason|nalason)\b/ui'],
+        ['medical', '/\b(blue\s+lips|facial\s+droop|face\s+drooping|difficulty\s+speaking|slurred\s+speech|sudden\s+weakness)\b/ui'],
+        ['medical', '/\b(grabe\s+chest\s+pain|severe\s+chest\s+pain)\b/ui'],
         ['medical', '/\b(anaphyla|severe\s+allerg|allergic\s+shock|dila\s+nagabukol|throat\s+swelling)\b/ui'],
         ['crisis', '/\b(suicide|suicidal|kill\s+myself|end\s+my\s+life|want\s+to\s+die|going\s+to\s+die|gonna\s+die|i\'?m\s+going\s+to\s+die|im\s+going\s+to\s+die|no\s+reason\s+to\s+live)\b/ui'],
         ['crisis', '/\b(ayaw\s+ko\s+mabuhay|gusto\s+kong\s+mamatay|gusto\s+ko\s+mamatay|magpakamatay|indi\s+ko\s+gusto\s+mabuhi|wala\s+(na\s+)?paglaum\s+sa\s+kinabuhi)\b/ui'],
@@ -27,6 +29,16 @@ final class FaqChatbotEmergencyDetector
         $norm = FaqEmotionEngine::normalizeText($text);
         if ($norm === '') {
             return ['is_emergency' => false, 'type' => null, 'flow' => null, 'reason' => ''];
+        }
+
+        $lex = FaqChatbotConversationalIntents::match($text);
+        if ($lex !== null && !empty($lex['emergency'])) {
+            return [
+                'is_emergency' => true,
+                'type'         => 'medical',
+                'flow'         => 'emergency',
+                'reason'       => 'conversational_emergency_lexicon',
+            ];
         }
 
         foreach (self::RULES as [$type, $pattern]) {

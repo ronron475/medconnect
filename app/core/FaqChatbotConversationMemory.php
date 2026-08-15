@@ -44,6 +44,7 @@ final class FaqChatbotConversationMemory
             'intent'             => null,
             'appointment_intent' => false,
             'last_kb_key'        => null,
+            'pending_prompt'     => null,
             'active_situations'  => [],
             'turns'              => [],
         ];
@@ -104,6 +105,12 @@ final class FaqChatbotConversationMemory
         }
         if (!empty($update['kb_key'])) {
             $mem['last_kb_key'] = (string) $update['kb_key'];
+            $mem['pending_prompt'] = match ((string) $update['kb_key']) {
+                'doctor_clarify' => 'book_or_join',
+                'symptoms_general', 'worry_symptoms', 'emotion_and_symptoms' => 'severe_or_book',
+                'capabilities', 'navigation_help', 'uncertainty_support' => 'topic_menu',
+                default => null,
+            };
         }
         if (!empty($update['situations']) && is_array($update['situations'])) {
             $mem['active_situations'] = array_values(array_unique(array_merge(
@@ -148,7 +155,10 @@ final class FaqChatbotConversationMemory
         if ($t === '') {
             return false;
         }
-        if (preg_match('/^(yes|yeah|yep|ok|okay|sure|please|sige|oo|hoo|opo|oo\s+gid|amo\s+gid|amo|oo\s+po|yes\s+po|ano\s+sunod|and\s+then|then\s+what|how|paano|ano|what\s+about|tell\s+me\s+more|more|continue|go\s+on|that|this|same|okay\s+lang|okay\s+lang\s+ko|sige\s+lang|oo\s+man|amo\s+man|hoo\s+man|pwede|pwede\s+man|sige\s+po)\??$/ui', $t)) {
+        if (preg_match('/^(yes|yeah|yep|ok|okay|sure|please|sige|oo|hoo|opo|oo\s+gid|amo\s+gid|amo|oo\s+po|yes\s+po|ano\s+sunod|and\s+then|then\s+what|how|paano|ano|what\s+about|tell\s+me\s+more|more|continue|go\s+on|that|this|same|okay\s+lang|sige\s+lang|oo\s+man|amo\s+man|pwede|sige\s+po)\??$/ui', $t)) {
+            return true;
+        }
+        if (preg_match('/^(book(\s+one)?|one|new|new\s+one|join|existing|where|diin|saan|how|paano|pano)\??$/ui', $t)) {
             return true;
         }
         if (preg_match('/\b(about\s+that|regarding\s+that|same\s+issue|as\s+i\s+said|like\s+i\s+said|sunod|liwat|about\s+it|amo\s+gid|amo\s+man|amo\s+na|pero|but|kay|tungkol\s+sa|gani|nga)\b/ui', $t)) {
@@ -271,5 +281,88 @@ final class FaqChatbotConversationMemory
         ];
         $lines = $pool[$L] ?? $pool['en'];
         return $lines[random_int(0, count($lines) - 1)];
+    }
+
+    /**
+     * Expand short/contextual replies ("yes", "book one", "where?") using session memory.
+     * Returns null when the utterance should be matched as-is.
+     */
+    public static function resolveShortUtterance(string $text): ?string
+    {
+        $t = FaqEmotionEngine::normalizeText($text);
+        if ($t === '') {
+            return null;
+        }
+        if (preg_match('/\b(thank|thanks|salamat|got it|that\'?s all)\b/ui', $t)) {
+            return null;
+        }
+        if (preg_match('/^(hi|hello|hey|kumusta|musta|maayong)\b/ui', $t) && mb_strlen($t) <= 24) {
+            return null;
+        }
+
+        $mem = self::get();
+        $intent = (string) ($mem['intent'] ?? '');
+        $kb = (string) ($mem['last_kb_key'] ?? '');
+        $topic = (string) ($mem['current_topic'] ?? '');
+        $pending = (string) ($mem['pending_prompt'] ?? '');
+        $hasContext = $intent !== '' || $kb !== '' || $topic !== '';
+        if (!$hasContext && $pending === '') {
+            return null;
+        }
+
+        $apptish = $mem['appointment_intent']
+            || in_array($intent, [
+                FaqChatbotIntentRecognizer::APPOINTMENT,
+                FaqChatbotIntentRecognizer::DOCTOR,
+                FaqChatbotIntentRecognizer::CONSULTATION,
+            ], true)
+            || in_array($kb, ['book_appointment', 'doctor_clarify', 'appointment_status'], true);
+
+        if (preg_match('/^(book(\s+one)?|one|new|new\s+one)$/ui', $t)) {
+            return 'book a new appointment consultation';
+        }
+        if (preg_match('/^(join|existing|already have)$/ui', $t)) {
+            return 'join existing appointment video consultation';
+        }
+
+        if (preg_match('/^(yes|yeah|yep|oo|hoo|opo|sige|okay|ok|sure)$/ui', $t)) {
+            if ($pending === 'book_or_join' || $apptish) {
+                return $text . ' book a new appointment consultation';
+            }
+            if ($pending === 'severe_or_book' || $intent === FaqChatbotIntentRecognizer::SYMPTOMS || str_contains($kb, 'symptom')) {
+                return $text . ' book appointment consultation for symptoms';
+            }
+            if ($intent === FaqChatbotIntentRecognizer::LOGIN || $kb === 'login_help') {
+                return $text . ' login help account';
+            }
+            if ($topic !== '') {
+                return trim($text . ' ' . str_replace('_', ' ', $topic));
+            }
+        }
+
+        if (preg_match('/^(where|diin|saan)\??$/ui', $t)) {
+            if ($apptish || $pending === 'book_or_join') {
+                return 'where do I book an appointment';
+            }
+            $hint = $kb !== '' ? $kb : $topic;
+            return $hint !== '' ? trim($text . ' ' . str_replace('_', ' ', $hint)) : null;
+        }
+
+        if (preg_match('/^(how|paano|pano)\??$/ui', $t)) {
+            if ($apptish) {
+                return 'how do I book an appointment';
+            }
+            $hint = $kb !== '' ? $kb : $topic;
+            return $hint !== '' ? trim($text . ' ' . str_replace('_', ' ', $hint)) : null;
+        }
+
+        if (preg_match('/^(doctor|doktor|doc)$/ui', $t)) {
+            if ($intent === FaqChatbotIntentRecognizer::SYMPTOMS || str_contains($kb, 'symptom') || str_contains($topic, 'symptom')) {
+                return 'need doctor because of symptoms book appointment';
+            }
+            return 'I need a doctor book or join appointment';
+        }
+
+        return null;
     }
 }

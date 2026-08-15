@@ -679,17 +679,17 @@
     },
     welcome: {
       en: {
-        html: '<p>Hello! 👋 I\'m here to help you navigate <strong>medConnect</strong> for the City Health Office of Bago City.</p>',
+        html: '<p>Hello! 👋 I\'m the medConnect Assistant. I can help you with appointments, registration, account problems, video consultations, and general health information. What can I help you with today?</p>',
         followUpKey: 'chooseTopic',
         actions: ['signIn', 'createAccount', 'bookAppointment', 'contactCho'],
       },
       fil: {
-        html: '<p>Kumusta! 👋 Nandito ako para tulungan kayong mag-navigate sa <strong>medConnect</strong> para sa City Health Office ng Bago City.</p>',
+        html: '<p>Kumusta! 👋 Ako ang medConnect Assistant. Matutulungan kita sa appointments, registration, account, video consultation, at general health information. Ano ang maitutulong ko ngayon?</p>',
         followUpKey: 'chooseTopic',
         actions: ['signIn', 'createAccount', 'bookAppointment', 'contactCho'],
       },
       hil: {
-        html: '<p>Kumusta! 👋 Diri ako para buligan kamo mag-navigate sa <strong>medConnect</strong> para sa City Health Office sang Bago City.</p>',
+        html: '<p>Kumusta! 👋 Ako ang medConnect Assistant. Matabangan ko ikaw sa appointments, registration, account, video consultation, kag general health information. Ano ang imo kinahanglan subong?</p>',
         followUpKey: 'chooseTopic',
         actions: ['signIn', 'createAccount', 'bookAppointment', 'contactCho'],
       },

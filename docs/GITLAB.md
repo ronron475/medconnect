@@ -88,6 +88,17 @@ MEDCONNECT_AI_AUTO_START=false
 MEDCONNECT_AI_REQUIRE_PYTHON=true
 GROQ_API_KEY=your_groq_key
 MEDCONNECT_GROQ_MODEL=openai/gpt-oss-120b
+
+# Landing FAQ chatbot (PHP on Hostinger — not Railway)
+AI_ENABLED=true
+AI_PROVIDER=gemini
+AI_API_KEY=your_gemini_key
+AI_MODEL=gemini-3.5-flash
+AI_MAX_HISTORY=12
+AI_TIMEOUT=15
+AI_COOLDOWN_SECONDS=2
+AI_MAX_REQUESTS_PER_HOUR=25
+AI_SSL_VERIFY=true
 ```
 
 Import `database/schema.sql` and migrations on the production database when schema changes.
@@ -105,6 +116,8 @@ PHP on Hostinger cannot run Python. Deploy `ai_service/` separately on [Railway]
 | `MEDCONNECT_AI_INTERPRETER` | `1` |
 | `MEDCONNECT_AI_PROVIDER_ORDER` | `groq,openai,local` |
 | `MEDCONNECT_AI_HOST` | `0.0.0.0` |
+
+Do **not** put the FAQ chatbot `AI_API_KEY` (Gemini) on Railway. That key is read by PHP on Hostinger. Railway only runs `ai_service/` (Python medical interpreter).
 
 Do **not** set `MEDCONNECT_AI_SERVICE_URL` on Railway — that belongs on Hostinger `.env` only.
 
