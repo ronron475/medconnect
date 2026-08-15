@@ -179,6 +179,8 @@
     pollTimer: null,
     mapConfig: null,
     satelliteTileErrors: 0,
+    monitoring: null,
+    populationByBarangay: {},
   };
 
   const els = {
@@ -201,6 +203,8 @@
     analyticsEmergency: document.getElementById('analytics-emergency'),
     analyticsConsultations: document.getElementById('analytics-consultations'),
     analyticsSymptoms: document.getElementById('analytics-symptoms'),
+    analyticsStatus: document.getElementById('analytics-status'),
+    analyticsQuality: document.getElementById('analytics-quality'),
   };
 
   function escapeHtml(value) {
@@ -318,6 +322,7 @@
     if (urgEl) urgEl.textContent = counts.urgent.toLocaleString();
     if (emEl) emEl.textContent = counts.emergency.toLocaleString();
     if (barEl) barEl.textContent = topBarangayForLayer(layer);
+    renderInsightStats();
 
     root.querySelectorAll('[data-severity-stat]').forEach(function (card) {
       const key = card.getAttribute('data-severity-stat');
@@ -326,6 +331,185 @@
         (layer !== 'all' && key === layer);
       card.classList.toggle('is-highlight', highlight);
     });
+  }
+
+  function renderInsightStats() {
+    const monitoring = currentMonitoring();
+    const todayEl = document.getElementById('stat-new_today');
+    const unmappedEl = document.getElementById('stat-unmapped');
+    const bhwEl = document.getElementById('stat-unassigned_bhw');
+    const hotEl = document.getElementById('stat-hotspots');
+    if (todayEl) todayEl.textContent = Number(monitoring.new_cases_today || 0).toLocaleString();
+    if (unmappedEl) unmappedEl.textContent = Number(monitoring.unmapped_cases || 0).toLocaleString();
+    if (bhwEl) bhwEl.textContent = Number(monitoring.unassigned_bhw || 0).toLocaleString();
+    if (hotEl) hotEl.textContent = Number((monitoring.hotspots || []).length).toLocaleString();
+  }
+
+  function currentMonitoring() {
+    return buildClientMonitoring();
+  }
+
+  function rowDateStamp(row) {
+    const raw = String(row.registration_date || '');
+    if (!raw) return '';
+    const d = new Date(raw);
+    if (Number.isNaN(d.getTime())) return raw.slice(0, 10);
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return y + '-' + m + '-' + day;
+  }
+
+  function barangayStatusForCounts(stats) {
+    const emergency = stats.emergency || 0;
+    const urgent = stats.urgent || 0;
+    const recent = stats.recent_7d || 0;
+    const total = stats.total || 0;
+    if (emergency >= 2 || (emergency >= 1 && urgent >= 2)) return 'critical';
+    if (emergency >= 1 || urgent >= 2) return 'elevated';
+    if (urgent >= 1 || recent >= 2 || total >= 3) return 'monitoring';
+    return 'stable';
+  }
+
+  function statusLabel(status) {
+    if (status === 'critical') return 'Critical';
+    if (status === 'elevated') return 'Elevated';
+    if (status === 'monitoring') return 'Monitoring';
+    return 'Stable';
+  }
+
+  function buildClientMonitoring() {
+    const popMap = state.populationByBarangay || {};
+    const populationAvailable = Object.keys(popMap).some(function (key) {
+      return Number(popMap[key]) > 0;
+    });
+    const today = new Date();
+    const todayStamp =
+      today.getFullYear() +
+      '-' +
+      String(today.getMonth() + 1).padStart(2, '0') +
+      '-' +
+      String(today.getDate()).padStart(2, '0');
+    const weekAgo = new Date(today.getTime() - 7 * 24 * 60 * 60 * 1000);
+    const weekStamp =
+      weekAgo.getFullYear() +
+      '-' +
+      String(weekAgo.getMonth() + 1).padStart(2, '0') +
+      '-' +
+      String(weekAgo.getDate()).padStart(2, '0');
+
+    const barangays = {};
+    let newToday = 0;
+    let unmapped = 0;
+    let invalid = 0;
+    let unassignedBhw = 0;
+    let exact = 0;
+    let geocoded = 0;
+    let barangayLevel = 0;
+
+    (state.patients || []).forEach(function (row) {
+      const name = (row.barangay || '').trim() || 'Unknown';
+      if (!barangays[name]) {
+        barangays[name] = {
+          name: name,
+          total: 0,
+          non_urgent: 0,
+          urgent: 0,
+          emergency: 0,
+          recent_7d: 0,
+          unassigned_bhw: 0,
+          unmapped: 0,
+          active_consultations: 0,
+        };
+      }
+      const stats = barangays[name];
+      stats.total += 1;
+      stats.active_consultations += Number(row.active_consultations || 0);
+      const level = readTriageLevel(row);
+      if (level === SEVERITY.EMERGENCY) stats.emergency += 1;
+      else if (level === SEVERITY.URGENT) stats.urgent += 1;
+      else stats.non_urgent += 1;
+
+      const created = rowDateStamp(row);
+      if (created === todayStamp) newToday += 1;
+      if (created && created >= weekStamp) stats.recent_7d += 1;
+
+      const bhw = String(row.assigned_bhw || '').trim();
+      if (!bhw || bhw.toLowerCase() === 'not assigned') {
+        unassignedBhw += 1;
+        stats.unassigned_bhw += 1;
+      }
+
+      const quality = String(row.location_quality || '').toUpperCase();
+      const accuracy = String(row.location_accuracy || '').toLowerCase();
+      const hasMarker = !!row.has_map_marker && isValidCoord(Number(row.latitude), Number(row.longitude));
+      if (quality === 'INVALID_LOCATION' || accuracy === 'invalid') invalid += 1;
+      if (!hasMarker || quality === 'MISSING_LOCATION' || accuracy === 'unavailable') {
+        unmapped += 1;
+        stats.unmapped += 1;
+      } else if (quality === 'EXACT_LOCATION' || accuracy === 'exact') {
+        exact += 1;
+      } else if (quality === 'GEOCODED_LOCATION' || accuracy === 'geocoded') {
+        geocoded += 1;
+      } else {
+        barangayLevel += 1;
+      }
+    });
+
+    const list = Object.keys(barangays).map(function (name) {
+      const stats = barangays[name];
+      const pop = Number(popMap[name]) > 0 ? Number(popMap[name]) : null;
+      stats.population = pop;
+      stats.rate_per_1000 = pop ? Math.round((stats.total / pop) * 100000) / 100 : null;
+      stats.status = barangayStatusForCounts(stats);
+      stats.status_label = statusLabel(stats.status);
+      stats.is_hotspot = stats.status === 'critical' || stats.status === 'elevated';
+      return stats;
+    });
+
+    const rates = list.map(function (row) { return row.rate_per_1000; }).filter(function (v) { return v !== null; });
+    if (rates.length >= 2) {
+      const mean = rates.reduce(function (a, b) { return a + b; }, 0) / rates.length;
+      const std = Math.sqrt(rates.reduce(function (a, b) { return a + (b - mean) * (b - mean); }, 0) / rates.length);
+      list.forEach(function (row) {
+        if (
+          row.rate_per_1000 !== null &&
+          row.total >= 2 &&
+          row.rate_per_1000 >= mean + std &&
+          row.urgent + row.emergency >= 1
+        ) {
+          row.is_hotspot = true;
+        }
+      });
+    }
+
+    list.sort(function (a, b) {
+      const rank = { critical: 0, elevated: 1, monitoring: 2, stable: 3 };
+      const cmp = (rank[a.status] || 9) - (rank[b.status] || 9);
+      if (cmp !== 0) return cmp;
+      if (b.emergency !== a.emergency) return b.emergency - a.emergency;
+      return b.total - a.total;
+    });
+
+    return {
+      population_available: populationAvailable,
+      new_cases_today: newToday,
+      unmapped_cases: unmapped,
+      invalid_coordinates: invalid,
+      unassigned_bhw: unassignedBhw,
+      location_quality: {
+        exact: exact,
+        geocoded: geocoded,
+        barangay: barangayLevel,
+        missing: unmapped,
+        invalid: invalid,
+      },
+      hotspots: list.filter(function (row) { return row.is_hotspot; }),
+      barangays: list,
+      note: populationAvailable
+        ? 'Case rates use recorded barangay population. GIS status is spatial monitoring only and does not change medical triage.'
+        : 'Population data unavailable — case rates per 1,000 are not calculated. GIS status uses emergency/urgent concentration only and does not change medical triage.',
+    };
   }
 
   function fillFilterOptions(patients) {
@@ -616,8 +800,19 @@
 
     if (canShowPatientName()) {
       html += '<strong>' + escapeHtml(row.patient_name) + '</strong>';
+      html += '<p class="text-xs text-muted">Patient #' + escapeHtml(row.patient_id) + '</p>';
     } else {
       html += '<strong>Patient #' + escapeHtml(row.patient_id) + '</strong>';
+    }
+    html +=
+      '<p><strong>Barangay:</strong> ' +
+      escapeHtml(row.barangay || '—') +
+      '</p>';
+    if ((row.purok || row.street || '').toString().trim()) {
+      html +=
+        '<p><strong>Purok/Street:</strong> ' +
+        escapeHtml((row.purok || row.street || '').toString().trim()) +
+        '</p>';
     }
 
     html +=
@@ -694,6 +889,30 @@
 
     html += '</div>';
     return html;
+  }
+
+  function popupOptions() {
+    const size = state.map && typeof state.map.getSize === 'function'
+      ? state.map.getSize()
+      : { x: 640, y: 520 };
+    const isNarrow = size.x < 640;
+    const maxWidth = Math.max(180, Math.min(280, size.x - 72));
+    const maxHeight = Math.max(
+      150,
+      Math.min(isNarrow ? Math.floor(size.y * 0.48) : 320, size.y - 88)
+    );
+    return {
+      className: 'gis-leaflet-popup',
+      autoPan: true,
+      autoPanPaddingTopLeft: L.point(isNarrow ? 10 : 16, isNarrow ? 12 : 20),
+      autoPanPaddingBottomRight: L.point(isNarrow ? 50 : 56, isNarrow ? 36 : 44),
+      maxWidth: maxWidth,
+      minWidth: Math.min(200, maxWidth),
+      maxHeight: maxHeight,
+      closeOnClick: true,
+      keepInView: false,
+      autoClose: true,
+    };
   }
 
   function latLngToTile(lat, lng, zoom) {
@@ -861,28 +1080,32 @@
     state.cluster = L.markerClusterGroup({
       showCoverageOnHover: false,
       maxClusterRadius: 48,
-      zoomToBoundsOnClick: false,
+      zoomToBoundsOnClick: true,
       spiderfyOnMaxZoom: true,
-    });
-    state.cluster.on('clusterclick', function (e) {
-      if (e && e.layer && typeof e.layer.spiderfy === 'function') {
-        e.layer.spiderfy();
-      }
+      disableClusteringAtZoom: 18,
     });
     state.map.addLayer(state.cluster);
     initLayerSwitch();
   }
 
   function isValidCoord(lat, lng) {
-    return (
-      Number.isFinite(lat) &&
-      Number.isFinite(lng) &&
-      lat >= -90 &&
-      lat <= 90 &&
-      lng >= -180 &&
-      lng <= 180 &&
-      !(lat === 0 && lng === 0)
-    );
+    if (
+      !Number.isFinite(lat) ||
+      !Number.isFinite(lng) ||
+      lat < -90 ||
+      lat > 90 ||
+      lng < -180 ||
+      lng > 180 ||
+      (lat === 0 && lng === 0)
+    ) {
+      return false;
+    }
+    const bounds = getMapBounds();
+    const south = bounds[0][0];
+    const west = bounds[0][1];
+    const north = bounds[1][0];
+    const east = bounds[1][1];
+    return lat >= south && lat <= north && lng >= west && lng <= east;
   }
 
   function heatPoints(layerName) {
@@ -934,11 +1157,7 @@
       const marker = L.marker([lat, lng], {
         icon: severityMarkerIcon(severity, normalizeLocationSource(row)),
       });
-      marker.bindPopup(popupHtml(row), {
-        autoPan: false,
-        closeOnClick: true,
-        maxWidth: 280,
-      });
+      marker.bindPopup(popupHtml(row), popupOptions());
       state.cluster.addLayer(marker);
     });
 
@@ -1029,6 +1248,7 @@
 
   function renderClientAnalytics() {
     const analytics = buildClientAnalytics();
+    const monitoring = currentMonitoring();
     updateAnalyticsCaptions();
     renderRankList(els.analyticsBarangay, analytics.by_barangay || [], 'label');
     renderRankList(els.analyticsEmergency, analytics.emergencies || [], 'barangay');
@@ -1037,12 +1257,71 @@
       els.analyticsSymptoms,
       (analytics.symptoms || []).map(function (item) {
         return {
-          label: (item.barangay || 'Unknown') + ' — ' + (item.label || 'Not triaged'),
+          label: (item.barangay || '—') + ' · ' + (item.label || '—'),
           count: item.count,
         };
       }),
       'label'
     );
+
+    const statusCaption = document.getElementById('analytics-status-caption');
+    if (statusCaption) statusCaption.textContent = monitoring.note || '';
+    renderStatusList(els.analyticsStatus, monitoring.barangays || []);
+
+    const qualityCaption = document.getElementById('analytics-quality-caption');
+    if (qualityCaption) {
+      qualityCaption.textContent = monitoring.population_available
+        ? 'Population-adjusted rates are included where census counts exist.'
+        : 'Population data unavailable. BHW coverage uses existing assignment records only.';
+    }
+    const q = monitoring.location_quality || {};
+    renderRankList(
+      els.analyticsQuality,
+      [
+        { label: 'Exact location', count: q.exact || 0 },
+        { label: 'Geocoded address', count: q.geocoded || 0 },
+        { label: 'Barangay location', count: q.barangay || 0 },
+        { label: 'Missing location', count: q.missing || 0 },
+        { label: 'Invalid coordinates', count: q.invalid || 0 },
+        { label: 'No assigned BHW', count: monitoring.unassigned_bhw || 0 },
+      ],
+      'label'
+    );
+  }
+
+  function renderStatusList(container, rows) {
+    if (!container) return;
+    if (!rows.length) {
+      container.innerHTML = '<li class="gis-rank-list__empty">No barangay data</li>';
+      return;
+    }
+    container.innerHTML = rows
+      .slice(0, 8)
+      .map(function (row, index) {
+        const status = row.status || 'stable';
+        const extra =
+          row.rate_per_1000 !== null && row.rate_per_1000 !== undefined
+            ? ' · ' + row.rate_per_1000 + '/1,000'
+            : '';
+        const hotspot = row.is_hotspot ? ' · Hotspot' : '';
+        return (
+          '<li><span><span class="gis-rank-list__rank">' +
+          (index + 1) +
+          '.</span> ' +
+          '<span class="gis-status-pill gis-status-pill--' +
+          escapeHtml(status) +
+          '">' +
+          escapeHtml(row.status_label || statusLabel(status)) +
+          '</span> ' +
+          escapeHtml(row.name || '—') +
+          hotspot +
+          extra +
+          '</span><strong>' +
+          Number(row.total || 0).toLocaleString() +
+          '</strong></li>'
+        );
+      })
+      .join('');
   }
 
   function renderRankList(container, rows, labelKey) {
@@ -1083,6 +1362,8 @@
       const data = await fetchBundle();
       state.patients = data.patients || [];
       state.analytics = data.analytics || null;
+      state.monitoring = data.monitoring || null;
+      state.populationByBarangay = (data.monitoring && data.monitoring.population_by_barangay) || {};
       state.triageStats = data.triage_stats || data.summary?.triage_stats || null;
       state.mapConfig = data.map_config || DEFAULT_MAP_CONFIG;
       state.lastSync = data.server_ts || new Date().toISOString();
