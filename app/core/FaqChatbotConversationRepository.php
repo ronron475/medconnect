@@ -39,16 +39,19 @@ final class FaqChatbotConversationRepository
      */
     public function recentMessages(int $conversationId, int $limit = 6): array
     {
-        $stmt = $this->pdo->prepare(
-            'SELECT role, content FROM chatbot_messages
-             WHERE conversation_id = :cid
-             ORDER BY id DESC LIMIT :lim'
-        );
-        $stmt->bindValue(':cid', $conversationId, PDO::PARAM_INT);
-        $stmt->bindValue(':lim', $limit, PDO::PARAM_INT);
-        $stmt->execute();
-        $rows = $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
-        return array_reverse($rows);
+        $limit = max(1, min(50, $limit));
+        try {
+            $stmt = $this->pdo->prepare(
+                'SELECT role, content FROM chatbot_messages
+                 WHERE conversation_id = :cid
+                 ORDER BY id DESC LIMIT ' . $limit
+            );
+            $stmt->execute([':cid' => $conversationId]);
+            $rows = $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
+            return array_reverse($rows);
+        } catch (Throwable) {
+            return [];
+        }
     }
 
     public function insertMessage(

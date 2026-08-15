@@ -64,10 +64,9 @@ final class FaqChatbotFaqRepository
                  FROM faq
                  WHERE is_active = 1
                    AND MATCH(question, answer, keywords) AGAINST (:q IN NATURAL LANGUAGE MODE)
-                 LIMIT :lim'
+                 LIMIT ' . $limit
             );
             $stmt->bindValue(':q', $norm);
-            $stmt->bindValue(':lim', $limit, PDO::PARAM_INT);
             $stmt->execute();
             return $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
         } catch (Throwable) {
@@ -100,12 +99,15 @@ final class FaqChatbotFaqRepository
     /** @return list<array<string, mixed>> */
     private function fetchActive(int $limit): array
     {
-        $stmt = $this->pdo->prepare(
-            'SELECT id, category, question, answer, keywords FROM faq WHERE is_active = 1 ORDER BY sort_order ASC LIMIT :lim'
-        );
-        $stmt->bindValue(':lim', $limit, PDO::PARAM_INT);
-        $stmt->execute();
-        return $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
+        $limit = max(1, min(30, $limit));
+        try {
+            $stmt = $this->pdo->query(
+                'SELECT id, category, question, answer, keywords FROM faq WHERE is_active = 1 ORDER BY sort_order ASC LIMIT ' . $limit
+            );
+            return $stmt ? ($stmt->fetchAll(PDO::FETCH_ASSOC) ?: []) : [];
+        } catch (Throwable) {
+            return [];
+        }
     }
 
     /**
@@ -152,21 +154,21 @@ final class FaqChatbotFaqRepository
     public function suggestionsForCategory(?string $category, int $limit = 3): array
     {
         $limit = max(1, min(6, $limit));
-        if ($category) {
-            $stmt = $this->pdo->prepare(
-                'SELECT id, question, category FROM faq WHERE is_active = 1 AND category = :cat ORDER BY sort_order ASC LIMIT :lim'
-            );
-            $stmt->bindValue(':cat', $category);
-            $stmt->bindValue(':lim', $limit, PDO::PARAM_INT);
-            $stmt->execute();
-            return $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
-        }
+        try {
+            if ($category) {
+                $stmt = $this->pdo->prepare(
+                    'SELECT id, question, category FROM faq WHERE is_active = 1 AND category = :cat ORDER BY sort_order ASC LIMIT ' . $limit
+                );
+                $stmt->execute([':cat' => $category]);
+                return $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
+            }
 
-        $stmt = $this->pdo->prepare(
-            'SELECT id, question, category FROM faq WHERE is_active = 1 ORDER BY sort_order ASC LIMIT :lim'
-        );
-        $stmt->bindValue(':lim', $limit, PDO::PARAM_INT);
-        $stmt->execute();
-        return $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
+            $stmt = $this->pdo->query(
+                'SELECT id, question, category FROM faq WHERE is_active = 1 ORDER BY sort_order ASC LIMIT ' . $limit
+            );
+            return $stmt ? ($stmt->fetchAll(PDO::FETCH_ASSOC) ?: []) : [];
+        } catch (Throwable) {
+            return [];
+        }
     }
 }
