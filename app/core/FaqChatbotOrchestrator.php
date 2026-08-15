@@ -107,15 +107,20 @@ final class FaqChatbotOrchestrator
 
         $_SESSION['faq_chatbot_last_intent'] = $intent;
 
-        $userMsgId = $this->convRepo->insertMessage($conversationId, 'user', $text, $intent, $flowKey, null, null);
-        $this->convRepo->insertEmotion(
-            $userMsgId,
-            $emotionResult['emotion'] ?? null,
-            $canonical,
-            (float) ($emotionResult['score'] ?? 0),
-            (float) ($emotionResult['confidence'] ?? 0),
-            is_array($emotionResult['scores'] ?? null) ? $emotionResult['scores'] : []
-        );
+        $userMsgId = 0;
+        try {
+            $userMsgId = $this->convRepo->insertMessage($conversationId, 'user', $text, $intent, $flowKey, null, null);
+            $this->convRepo->insertEmotion(
+                $userMsgId,
+                $emotionResult['emotion'] ?? null,
+                $canonical,
+                (float) ($emotionResult['score'] ?? 0),
+                (float) ($emotionResult['confidence'] ?? 0),
+                is_array($emotionResult['scores'] ?? null) ? $emotionResult['scores'] : []
+            );
+        } catch (Throwable) {
+            $userMsgId = 0;
+        }
 
         $empathy = FaqChatbotResponseGenerator::empathyLine($canonical, $replyLang);
         if ($bridge['is_hiligaynon'] && $canonical !== FaqChatbotStandardEmotion::NEUTRAL) {
@@ -157,7 +162,12 @@ final class FaqChatbotOrchestrator
             $responseHtml = FaqChatbotResponseGenerator::emergencyHtml($replyLang, $flowKey);
             $confidence = 0.99;
         } else {
-            $faqHits = $this->faqRepo->search($contextText, 5);
+            $faqHits = [];
+            try {
+                $faqHits = $this->faqRepo->search($contextText, 5);
+            } catch (Throwable) {
+                $faqHits = [];
+            }
             $best = $faqHits[0] ?? null;
             $faqThreshold = 1.85;
 
@@ -318,15 +328,20 @@ final class FaqChatbotOrchestrator
             }
         }
 
-        $botMsgId = $this->convRepo->insertMessage(
-            $conversationId,
-            'bot',
-            strip_tags($responseHtml),
-            $intent,
-            $flowKey,
-            $confidence,
-            $faqId
-        );
+        $botMsgId = 0;
+        try {
+            $botMsgId = $this->convRepo->insertMessage(
+                $conversationId,
+                'bot',
+                strip_tags($responseHtml),
+                $intent,
+                $flowKey,
+                $confidence,
+                $faqId
+            );
+        } catch (Throwable) {
+            $botMsgId = 0;
+        }
 
         $typingMs = 0;
 
