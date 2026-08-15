@@ -89,7 +89,8 @@ MEDCONNECT_AI_REQUIRE_PYTHON=true
 GROQ_API_KEY=your_groq_key
 MEDCONNECT_GROQ_MODEL=openai/gpt-oss-120b
 
-# Landing FAQ chatbot (PHP on Hostinger — not Railway)
+# Landing FAQ chatbot
+# Local XAMPP can call Gemini from PHP. Live site uses Railway /faq-chatbot/assist.
 AI_ENABLED=true
 AI_PROVIDER=gemini
 AI_API_KEY=your_gemini_key
@@ -106,18 +107,23 @@ Import `database/schema.sql` and migrations on the production database when sche
 ## 6. Python AI on Railway
 
 PHP on Hostinger cannot run Python. Deploy `ai_service/` separately on [Railway](https://railway.app).
+The landing FAQ widget still talks to Hostinger PHP; PHP then asks Railway for Gemini replies when FAQ/KB is not confident.
 
-### Railway variables (Python service only)
+### Railway variables (Python service)
 
 | Variable | Value |
 |----------|--------|
-| `GROQ_API_KEY` | From Groq console |
+| `GROQ_API_KEY` | From Groq console (medical NLP + FAQ backup) |
 | `MEDCONNECT_GROQ_MODEL` | `openai/gpt-oss-120b` |
 | `MEDCONNECT_AI_INTERPRETER` | `1` |
 | `MEDCONNECT_AI_PROVIDER_ORDER` | `groq,openai,local` |
 | `MEDCONNECT_AI_HOST` | `0.0.0.0` |
+| `AI_ENABLED` | `true` |
+| `AI_API_KEY` | Gemini key from Google AI Studio (FAQ chatbot) |
+| `AI_MODEL` | `gemini-3.5-flash` |
+| `AI_TIMEOUT` | `15` |
 
-Do **not** put the FAQ chatbot `AI_API_KEY` (Gemini) on Railway. That key is read by PHP on Hostinger. Railway only runs `ai_service/` (Python medical interpreter).
+Hostinger does **not** need `AI_API_KEY` if Railway has the Gemini key. Keep emergency/FAQ/KB matching on PHP.
 
 Do **not** set `MEDCONNECT_AI_SERVICE_URL` on Railway — that belongs on Hostinger `.env` only.
 
@@ -137,6 +143,7 @@ Or connect a GitHub mirror of this repo; Railway builds `ai_service/Dockerfile` 
 
 1. `https://your-service.up.railway.app/health` → `"status": "ok"`
 2. `https://medconnect.bccbsis.com/app/api/ai/groq_health.php` → `"groq": true`
+3. `POST https://your-service.up.railway.app/faq-chatbot/assist` with `{"text":"how do I book?","lang":"en"}` → `"success": true`
 
 ## 7. Push code changes
 

@@ -59,6 +59,53 @@ final class AiServiceClient
     }
 
     /**
+     * FAQ chatbot conversational fallback (Gemini/Groq on Railway).
+     *
+     * @param list<array{role?: string, text?: string}> $history
+     * @return array{html?: string}|null
+     */
+    public static function faqChatAssist(
+        string $text,
+        string $lang = 'en',
+        string $intent = '',
+        string $emotion = '',
+        string $topic = '',
+        array $history = [],
+        int $timeoutSeconds = 15
+    ): ?array {
+        $turns = [];
+        foreach ($history as $turn) {
+            if (!is_array($turn)) {
+                continue;
+            }
+            $role = (string) ($turn['role'] ?? '');
+            $message = trim((string) ($turn['text'] ?? ''));
+            if ($message === '' || !in_array($role, ['user', 'assistant', 'bot', 'model'], true)) {
+                continue;
+            }
+            $turns[] = [
+                'role' => $role === 'user' ? 'user' : 'assistant',
+                'text' => $message,
+            ];
+        }
+
+        $response = self::postJson(
+            AI_SERVICE_BASE_URL . '/faq-chatbot/assist',
+            [
+                'text'    => $text,
+                'lang'    => $lang,
+                'intent'  => $intent,
+                'emotion' => $emotion,
+                'topic'   => $topic,
+                'history' => $turns,
+            ],
+            max(5, min(25, $timeoutSeconds))
+        );
+
+        return self::extractData($response);
+    }
+
+    /**
      * @param list<string> $symptoms
      * @param list<string> $urgentFlags
      */

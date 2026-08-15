@@ -30,7 +30,7 @@ final class FaqChatbotAiFallback
         if (in_array($flag, ['0', 'false', 'no', 'off'], true)) {
             return false;
         }
-        return self::apiKey() !== '';
+        return self::apiKey() !== '' || self::shouldUseRailway();
     }
 
     public static function provider(): string
@@ -96,16 +96,30 @@ final class FaqChatbotAiFallback
 
         try {
             $history = self::historyForApi($context);
-            $text = self::provider() === 'groq'
-                ? self::completeGroq($userText, $lang, $context, $history)
-                : self::completeGemini($userText, $lang, $context, $history);
+            $html = null;
+            if (self::shouldUseRailway()) {
+                try {
+                    $html = self::completeRailway($userText, $lang, $context, $history);
+                } catch (Throwable $e) {
+                    self::$lastError = $e->getMessage();
+                    if (self::apiKey() === '') {
+                        self::markFailure();
+                        return null;
+                    }
+                }
+            }
+            if ($html === null || $html === '') {
+                $text = self::provider() === 'groq'
+                    ? self::completeGroq($userText, $lang, $context, $history)
+                    : self::completeGemini($userText, $lang, $context, $history);
+                $html = self::toSafeHtml($text);
+            }
         } catch (Throwable $e) {
             self::$lastError = $e->getMessage();
             self::markFailure();
             return null;
         }
 
-        $html = self::toSafeHtml($text);
         if ($html === '') {
             return null;
         }
@@ -156,6 +170,51 @@ final class FaqChatbotAiFallback
             return $groq !== '' ? $groq : trim(self::envString('AI_API_KEY'));
         }
         return self::geminiKey();
+    }
+
+    /**
+     * Production Hostinger should call Railway so Gemini keys stay on the Python service.
+     * Local XAMPP keeps a direct Gemini/Groq call unless MEDCONNECT_AI_SERVICE_URL is Railway.
+     */
+    private static function shouldUseRailway(): bool
+    {
+        if (!defined('AI_SERVICE_ENABLED') || !AI_SERVICE_ENABLED) {
+            return false;
+        }
+        if (!defined('AI_SERVICE_BASE_URL') || !is_string(AI_SERVICE_BASE_URL) || AI_SERVICE_BASE_URL === '') {
+            return false;
+        }
+        $url = strtolower(AI_SERVICE_BASE_URL);
+        if (str_contains($url, 'railway.app')) {
+            return true;
+        }
+        return function_exists('medconnect_is_production_host') && medconnect_is_production_host();
+    }
+
+    /**
+     * @param array<string, mixed> $context
+     * @param list<array{role: string, text: string}> $history
+     */
+    private static function completeRailway(string $userText, string $lang, array $context, array $history): string
+    {
+        if (!class_exists('AiServiceClient')) {
+            throw new RuntimeException('ai client missing');
+        }
+        $data = AiServiceClient::faqChatAssist(
+            $userText,
+            $lang,
+            trim((string) ($context['intent'] ?? '')),
+            trim((string) ($context['emotion'] ?? '')),
+            trim((string) ($context['topic'] ?? '')),
+            $history,
+            self::timeout()
+        );
+        $html = is_array($data) ? trim((string) ($data['html'] ?? '')) : '';
+        $html = strip_tags($html, '<p><br>');
+        if ($html === '') {
+            throw new RuntimeException('empty railway faq reply');
+        }
+        return $html;
     }
 
     private static function envString(string $name, string $default = ''): string
