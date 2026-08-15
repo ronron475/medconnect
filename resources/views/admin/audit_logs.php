@@ -50,7 +50,7 @@ require_once __DIR__ . '/partials/layout_open.php';
 ?>
 
 <link rel="stylesheet" href="<?= ASSET_BASE ?>/assets/css/admin-staff-applications.css?v=1.1">
-<link rel="stylesheet" href="<?= ASSET_BASE ?>/assets/css/admin-audit-logs.css?v=1.1">
+<link rel="stylesheet" href="<?= ASSET_BASE ?>/assets/css/admin-audit-logs.css?v=1.2">
 
 <article class="audit-logs-page staff-apps-page">
 
