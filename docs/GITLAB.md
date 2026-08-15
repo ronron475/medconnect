@@ -87,7 +87,7 @@ MEDCONNECT_AI_SERVICE_URL=https://medconnect-production-a654.up.railway.app
 MEDCONNECT_AI_AUTO_START=false
 MEDCONNECT_AI_REQUIRE_PYTHON=true
 GROQ_API_KEY=your_groq_key
-MEDCONNECT_GROQ_MODEL=llama-3.1-8b-instant
+MEDCONNECT_GROQ_MODEL=openai/gpt-oss-120b
 ```
 
 Import `database/schema.sql` and migrations on the production database when schema changes.
@@ -101,7 +101,7 @@ PHP on Hostinger cannot run Python. Deploy `ai_service/` separately on [Railway]
 | Variable | Value |
 |----------|--------|
 | `GROQ_API_KEY` | From Groq console |
-| `MEDCONNECT_GROQ_MODEL` | `llama-3.1-8b-instant` |
+| `MEDCONNECT_GROQ_MODEL` | `openai/gpt-oss-120b` |
 | `MEDCONNECT_AI_INTERPRETER` | `1` |
 | `MEDCONNECT_AI_PROVIDER_ORDER` | `groq,openai,local` |
 | `MEDCONNECT_AI_HOST` | `0.0.0.0` |

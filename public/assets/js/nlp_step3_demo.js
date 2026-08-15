@@ -51,7 +51,7 @@
       const d = (json && (json.data || json)) || {};
       const online = !!d.online;
       const port = d.port || 8765;
-      const model = d.model || d.groq_model || 'llama-3.3-70b-versatile';
+      const model = d.model || d.groq_model || 'openai/gpt-oss-120b';
       const reason = d.reason || d.message || 'Unknown error';
 
       serviceStatusEl.hidden = false;
@@ -1460,7 +1460,7 @@
     html +=
       '<ul class="nlp-step-bullets">' +
       '<li>Patient Input → Medical Dictionary → Hiligaynon Dataset → Keyword Extraction</li>' +
-      '<li>Groq Context Analysis (Llama 3.3) → English Interpretation</li>' +
+      '<li>Groq Context Analysis (GPT OSS 120B) → English Interpretation</li>' +
       '<li>All translated terms still pass Fuzzy Matching (Step 3) and Validation (Step 4)</li>' +
       '</ul>';
     html +=
