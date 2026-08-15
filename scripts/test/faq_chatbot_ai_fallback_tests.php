@@ -4,6 +4,7 @@
  * CLI: php scripts/test/faq_chatbot_ai_fallback_tests.php
  *
  * Live Gemini/Groq call runs only when AI_API_KEY or GEMINI_API_KEY / GROQ_API_KEY is set.
+ * Production Hostinger can also use Railway /faq-chatbot/assist without a local Gemini key.
  */
 $root = dirname(__DIR__, 2);
 if (!defined('BASE_PATH')) {

@@ -26,6 +26,7 @@ def root() -> dict:
                 "/fuzzy/match-profile",
                 "/fuzzy/match-text-queue",
                 "/ocr/extract",
+                "/faq-chatbot/assist",
             ],
         },
     }

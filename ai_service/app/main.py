@@ -14,6 +14,7 @@ from app.core.startup import run_startup_tasks
 from app.middleware.security import SecurityHeadersMiddleware
 from app.routers import (
     consultation,
+    faq_chatbot,
     fuzzy,
     health,
     medical_text,
@@ -79,6 +80,7 @@ def create_app() -> FastAPI:
     app.include_router(ml.router)
     app.include_router(fuzzy.router)
     app.include_router(ocr.router)
+    app.include_router(faq_chatbot.router)
 
     return app
 
