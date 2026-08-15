@@ -294,7 +294,7 @@ require_once __DIR__ . '/partials/layout_open.php';
                             $canStartNow = $canAccept && !empty($ufCase['can_start_immediately']);
                         ?>
                         <tr class="queue-uf-row queue-uf-row--<?= htmlspecialchars(queue_urgent_followup_badge_class($ufCase)) ?>">
-                            <td>
+                            <td class="queue-td--patient" data-label="Patient">
                                 <div class="queue-patient">
                                     <div class="queue-avatar"><?= htmlspecialchars(queue_initials($ufCase)) ?></div>
                                     <div>
@@ -303,24 +303,24 @@ require_once __DIR__ . '/partials/layout_open.php';
                                     </div>
                                 </div>
                             </td>
-                            <td><div class="queue-complaint-main"><?= htmlspecialchars((string) ($ufCase['previous_chief_complaint'] ?? '—')) ?></div></td>
-                            <td><div class="queue-complaint-main"><?= htmlspecialchars((string) ($ufCase['updated_chief_complaint'] ?? '—')) ?></div></td>
-                            <td>
+                            <td data-label="Previous complaint"><div class="queue-complaint-main"><?= htmlspecialchars((string) ($ufCase['previous_chief_complaint'] ?? '—')) ?></div></td>
+                            <td data-label="Updated complaint"><div class="queue-complaint-main"><?= htmlspecialchars((string) ($ufCase['updated_chief_complaint'] ?? '—')) ?></div></td>
+                            <td data-label="AI triage">
                                 <span class="queue-badge <?= htmlspecialchars(queue_urgent_followup_badge_class($ufCase)) ?>">
                                     <?= htmlspecialchars((string) ($ufCase['triage_display'] ?? '—')) ?>
                                 </span>
                                 <div class="queue-meta"><?= htmlspecialchars(number_format((float) ($ufCase['confidence_score'] ?? 0), 0)) ?>% confidence</div>
                             </td>
-                            <td>
+                            <td data-label="Submitted">
                                 <div style="font-weight:700;"><?= htmlspecialchars(date('M j, Y', strtotime((string) ($ufCase['created_at'] ?? 'now')))) ?></div>
                                 <div class="queue-meta"><?= htmlspecialchars(date('g:i A', strtotime((string) ($ufCase['created_at'] ?? 'now')))) ?></div>
                             </td>
-                            <td>
+                            <td data-label="Status">
                                 <span class="queue-badge <?= htmlspecialchars(queue_urgent_followup_badge_class($ufCase)) ?>">
                                     <?= htmlspecialchars(queue_urgent_followup_label($ufCase)) ?>
                                 </span>
                             </td>
-                            <td>
+                            <td data-label="Action">
                                 <?php if ($isEmergency): ?>
                                     <span class="queue-meta">Patient advised to seek ER care</span>
                                 <?php elseif ($canAccept): ?>
@@ -382,7 +382,7 @@ require_once __DIR__ . '/partials/layout_open.php';
                                 $opens_label = $session_ctx['opens_at_label'] !== '' ? $session_ctx['opens_at_label'] : 'Schedule';
                             ?>
                             <tr>
-                                <td>
+                                <td class="queue-td--patient" data-label="Patient">
                                     <div class="queue-patient">
                                         <div class="queue-avatar"><?= htmlspecialchars(queue_initials($item)) ?></div>
                                         <div>
@@ -391,7 +391,7 @@ require_once __DIR__ . '/partials/layout_open.php';
                                         </div>
                                     </div>
                                 </td>
-                                <td>
+                                <td data-label="Chief complaint">
                                     <div class="queue-complaint-main"><?= htmlspecialchars($complaint) ?></div>
                                     <?php if ($symptoms): ?>
                                     <div class="queue-chip-list">
@@ -401,19 +401,20 @@ require_once __DIR__ . '/partials/layout_open.php';
                                     </div>
                                     <?php endif; ?>
                                 </td>
-                                <td>
+                                <td data-label="Triage">
                                     <span class="queue-badge <?= $is_urgent ? 'urgent' : 'routine' ?>">
                                         <?= htmlspecialchars($item['urgency_label'] ?: ($is_urgent ? 'Urgent' : 'Not triaged')) ?>
                                     </span>
                                 </td>
-                                <td>
+                                <td data-label="Schedule">
                                     <div style="font-weight:700;"><?= htmlspecialchars($display_date !== '' ? date('M j, Y', strtotime($display_date)) : '—') ?></div>
                                     <div class="queue-meta"><?= htmlspecialchars($display_time !== '' ? date('g:i A', strtotime($display_time)) : '—') ?></div>
                                 </td>
-                                <td class="col-status" data-queue-status="<?= (int) $item['id'] ?>">
+                                <td class="col-status" data-label="Status" data-queue-status="<?= (int) $item['id'] ?>">
                                     <span class="queue-badge <?= $status_class ?>"><?= htmlspecialchars(queue_status_label($status)) ?></span>
                                 </td>
                                 <td
+                                    data-label="Action"
                                     data-queue-action="<?= (int) $item['id'] ?>"
                                     data-scheduled-start="<?= (int) ($session_ctx['scheduled_start'] ?? 0) ?>"
                                     data-scheduled-end="<?= (int) ($session_ctx['scheduled_end'] ?? 0) ?>"

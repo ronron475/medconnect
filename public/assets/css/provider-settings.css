@@ -422,6 +422,8 @@ body.provider-body .provider-page-body:has(.ps-page) {
   margin-bottom: 4px;
   text-transform: uppercase;
   letter-spacing: 0.05em;
+  white-space: normal;
+  overflow: visible;
 }
 
 .ps-input,
@@ -487,6 +489,13 @@ body.provider-body .provider-page-body:has(.ps-page) {
   flex-shrink: 0;
   margin-top: 1px;
   color: #64748b;
+}
+
+.ps-readonly-note span {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow-wrap: anywhere;
+  word-break: normal;
 }
 
 .ps-select {
@@ -755,7 +764,37 @@ body.provider-body .provider-page-body:has(.ps-page) {
     padding-right: 12px;
   }
 
+  .ps-page-title {
+    font-size: 1.1rem;
+    overflow-wrap: anywhere;
+  }
+
   .ps-nav__item {
     flex: 1 1 100%;
+  }
+
+  .ps-form-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .ps-card__title,
+  .ps-card__sub {
+    overflow-wrap: anywhere;
+    word-break: normal;
+  }
+
+  .ps-field label {
+    font-size: 11px;
+    color: #475569;
+  }
+
+  .ps-input[readonly],
+  .ps-input[aria-readonly="true"] {
+    height: auto;
+    min-height: 38px;
+    padding: 8px 10px;
+    white-space: normal;
+    overflow-wrap: anywhere;
+    word-break: break-word;
   }
 }

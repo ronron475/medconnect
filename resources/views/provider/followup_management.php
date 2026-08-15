@@ -1,6 +1,7 @@
 <?php
 $active_page = 'followup_management';
 $page_title  = 'Follow-Up Management';
+$page_styles = ['provider-followup.css'];
 require __DIR__.'/partials/icons.php';
 require __DIR__.'/partials/data.php';
 require __DIR__.'/partials/layout_open.php';
@@ -43,48 +44,77 @@ try {
 } catch (PDOException $e) {}
 ?>
 
-<div class="greeting-banner" style="margin-bottom:20px;">
-  <div><h2 class="text-h2">Follow-Up Management</h2><p class="text-muted text-sm">Track scheduled, completed, and missed follow-ups.</p></div>
-</div>
+<div class="fu-page">
+  <div class="fu-hero">
+    <h2 class="fu-title">Follow-Up Management</h2>
+    <p class="fu-sub">Track scheduled, completed, and missed follow-ups.</p>
+  </div>
 
-<div class="mc-card" style="margin-bottom:16px;padding:16px;">
-  <form method="get" style="display:flex;flex-wrap:wrap;gap:10px;align-items:end;">
-    <div>
-      <label class="text-xs text-muted">Status</label>
-      <select name="status" class="mc-btn mc-btn--outline" style="display:block;background:#fff;">
-        <option value="upcoming" <?= $status_filter==='upcoming'?'selected':'' ?>>Upcoming</option>
-        <option value="completed" <?= $status_filter==='completed'?'selected':'' ?>>Completed</option>
-        <option value="missed" <?= $status_filter==='missed'?'selected':'' ?>>Missed</option>
-      </select>
-    </div>
-    <div><label class="text-xs text-muted">From</label><input type="date" name="from" value="<?= htmlspecialchars($date_from) ?>" class="mc-btn mc-btn--outline" style="background:#fff;display:block;"></div>
-    <div><label class="text-xs text-muted">To</label><input type="date" name="to" value="<?= htmlspecialchars($date_to) ?>" class="mc-btn mc-btn--outline" style="background:#fff;display:block;"></div>
-    <div style="flex:1;min-width:200px;"><label class="text-xs text-muted">Search Patient</label><input type="text" name="q" value="<?= htmlspecialchars($search) ?>" placeholder="Name or email" class="mc-btn mc-btn--outline" style="width:100%;background:#fff;display:block;"></div>
-    <button type="submit" class="mc-btn mc-btn--primary">Filter</button>
-  </form>
-</div>
+  <div class="fu-card">
+    <form method="get" class="fu-filters">
+      <div class="fu-field">
+        <label for="fuStatus">Status</label>
+        <select id="fuStatus" name="status" class="fu-input">
+          <option value="upcoming" <?= $status_filter==='upcoming'?'selected':'' ?>>Upcoming</option>
+          <option value="completed" <?= $status_filter==='completed'?'selected':'' ?>>Completed</option>
+          <option value="missed" <?= $status_filter==='missed'?'selected':'' ?>>Missed</option>
+        </select>
+      </div>
+      <div class="fu-field">
+        <label for="fuFrom">From</label>
+        <input id="fuFrom" type="date" name="from" value="<?= htmlspecialchars($date_from) ?>" class="fu-input">
+      </div>
+      <div class="fu-field">
+        <label for="fuTo">To</label>
+        <input id="fuTo" type="date" name="to" value="<?= htmlspecialchars($date_to) ?>" class="fu-input">
+      </div>
+      <div class="fu-field fu-field--search">
+        <label for="fuSearch">Search Patient</label>
+        <input id="fuSearch" type="text" name="q" value="<?= htmlspecialchars($search) ?>" placeholder="Name or email" class="fu-input" autocomplete="off">
+      </div>
+      <div class="fu-field fu-field--action">
+        <button type="submit" class="mc-btn mc-btn--primary fu-filter-btn">Filter</button>
+      </div>
+    </form>
+  </div>
 
-<div class="mc-card" style="padding:0;overflow:hidden;">
-  <table class="mc-table">
-    <thead><tr><th>Patient</th><th>Follow-Up Date</th><th>Status</th><th>Notes</th><th>Actions</th></tr></thead>
-    <tbody>
-      <?php if (empty($followups)): ?>
-      <tr><td colspan="5"><div class="mc-table-empty"><p>No follow-ups found for this filter.</p></div></td></tr>
-      <?php else: foreach ($followups as $f): ?>
-      <tr>
-        <td><strong><?= htmlspecialchars($f['first_name'].' '.$f['last_name']) ?></strong><div class="text-xs text-muted"><?= htmlspecialchars($f['email']) ?></div></td>
-        <td><?= date('M j, Y', strtotime($f['followup_date'])) ?></td>
-        <td><span class="mc-badge"><?= htmlspecialchars($f['status']) ?></span></td>
-        <td class="text-sm"><?= htmlspecialchars($f['notes'] ?? $f['message'] ?? '—') ?></td>
-        <td>
-          <?php if ($f['status'] === 'scheduled'): ?>
-          <button type="button" class="mc-btn mc-btn--outline mc-btn--sm" data-reschedule="<?= (int)$f['id'] ?>" data-date="<?= htmlspecialchars($f['followup_date']) ?>">Reschedule</button>
-          <?php endif; ?>
-        </td>
-      </tr>
-      <?php endforeach; endif; ?>
-    </tbody>
-  </table>
+  <div class="fu-card fu-card--table">
+    <table class="mc-table fu-table">
+      <thead>
+        <tr>
+          <th>Patient</th>
+          <th>Follow-Up Date</th>
+          <th>Status</th>
+          <th>Notes</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        <?php if (empty($followups)): ?>
+        <tr class="fu-empty-row">
+          <td colspan="5"><div class="mc-table-empty"><p>No follow-ups found for this filter.</p></div></td>
+        </tr>
+        <?php else: foreach ($followups as $f): ?>
+        <tr>
+          <td class="fu-td--patient" data-label="Patient">
+            <strong><?= htmlspecialchars($f['first_name'].' '.$f['last_name']) ?></strong>
+            <div class="text-xs text-muted"><?= htmlspecialchars($f['email']) ?></div>
+          </td>
+          <td data-label="Follow-up date"><?= date('M j, Y', strtotime($f['followup_date'])) ?></td>
+          <td data-label="Status"><span class="mc-badge"><?= htmlspecialchars($f['status']) ?></span></td>
+          <td data-label="Notes" class="text-sm"><?= htmlspecialchars($f['notes'] ?? $f['message'] ?? '—') ?></td>
+          <td data-label="Action">
+            <?php if ($f['status'] === 'scheduled'): ?>
+            <button type="button" class="mc-btn mc-btn--outline mc-btn--sm" data-reschedule="<?= (int)$f['id'] ?>" data-date="<?= htmlspecialchars($f['followup_date']) ?>">Reschedule</button>
+            <?php else: ?>
+            <span class="text-xs text-muted">—</span>
+            <?php endif; ?>
+          </td>
+        </tr>
+        <?php endforeach; endif; ?>
+      </tbody>
+    </table>
+  </div>
 </div>
 
 <script>

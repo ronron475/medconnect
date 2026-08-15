@@ -19,7 +19,11 @@
   <link rel="stylesheet" href="<?= ASSET_BASE ?>/assets/css/provider_dashboard.css"/>
   <?php if (!empty($page_styles) && is_array($page_styles)): ?>
     <?php foreach ($page_styles as $css_file): ?>
-  <link rel="stylesheet" href="<?= ASSET_BASE ?>/assets/css/<?= htmlspecialchars($css_file) ?>"/>
+      <?php
+        $cssPath = ASSETS_PATH . '/css/' . basename((string) $css_file);
+        $cssVer = is_file($cssPath) ? (int) filemtime($cssPath) : time();
+      ?>
+  <link rel="stylesheet" href="<?= ASSET_BASE ?>/assets/css/<?= htmlspecialchars($css_file) ?>?v=<?= $cssVer ?>"/>
     <?php endforeach; ?>
   <?php endif; ?>
   <?php

@@ -419,7 +419,11 @@ body.provider-body .provider-page-body:has(.mr-page) {
   }
 
   .mr-panel {
-    min-height: 320px;
+    min-height: 0;
+  }
+
+  .mr-split > .mr-panel:first-child {
+    max-height: 220px;
   }
 
   .mr-info-grid {
@@ -427,10 +431,71 @@ body.provider-body .provider-page-body:has(.mr-page) {
   }
 }
 
+@media (max-width: 768px) {
+  .mr-page {
+    min-height: 0;
+    gap: 8px;
+  }
+
+  .mr-toolbar__title {
+    font-size: 1.05rem;
+    overflow-wrap: anywhere;
+    word-break: normal;
+  }
+
+  .mr-tabs {
+    width: 100%;
+  }
+
+  .mr-tabs a {
+    flex: 1 1 auto;
+    text-align: center;
+    white-space: nowrap;
+  }
+
+  .mr-detail-name {
+    font-size: 1rem;
+    overflow-wrap: anywhere;
+    word-break: normal;
+  }
+
+  .mr-detail-meta,
+  .mr-patient-row__name,
+  .mr-patient-row__meta,
+  .mr-info-item span {
+    overflow-wrap: anywhere;
+    word-break: normal;
+  }
+
+  .mr-patient-row__meta {
+    white-space: normal;
+  }
+
+  .mr-subtabs {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: thin;
+  }
+
+  .mr-subtabs a {
+    flex: 0 0 auto;
+    white-space: nowrap;
+  }
+}
+
 @media (max-width: 640px) {
   .mr-toolbar {
     flex-direction: column;
     align-items: stretch;
+  }
+
+  .mr-split > .mr-panel:first-child {
+    max-height: 180px;
+  }
+
+  .mr-detail-head {
+    padding: 12px 14px;
   }
 }
 

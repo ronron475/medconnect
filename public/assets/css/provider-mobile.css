@@ -20,14 +20,15 @@
   body.provider-body .provider-page-body .ps-page h1 {
     font-size: 1.1rem !important;
     line-height: 1.3 !important;
-    overflow-wrap: anywhere;
-    word-break: break-word;
+    overflow-wrap: break-word;
+    word-break: normal;
   }
 
   body.provider-body .provider-page-body p,
   body.provider-body .provider-page-body .text-muted,
   body.provider-body .provider-page-body .gis-subtitle {
-    overflow-wrap: anywhere;
+    overflow-wrap: break-word;
+    word-break: normal;
   }
 
   body.provider-body .provider-page-body .prov-dash-stat strong,
@@ -55,10 +56,6 @@
     max-width: 100%;
   }
 
-  body.provider-body .provider-page-body table {
-    min-width: 0;
-  }
-
   body.provider-body .provider-page-body .gis-table-wrap,
   body.provider-body .provider-page-body .mr-table-wrap,
   body.provider-body .provider-page-body .queue-table-wrap {
@@ -67,11 +64,45 @@
     max-width: 100%;
   }
 
-  body.provider-body .provider-page-body .mc-btn,
+  body.provider-body .provider-page-body .mc-btn:not(input):not(select),
   body.provider-body .provider-page-body button,
   body.provider-body .provider-page-body .pd-btn {
     white-space: normal;
     overflow-wrap: anywhere;
+  }
+
+  body.provider-body .provider-page-body input[type="date"],
+  body.provider-body .provider-page-body input[type="time"],
+  body.provider-body .provider-page-body .fu-input,
+  body.provider-body .provider-page-body input.fu-input[type="date"],
+  body.provider-body .provider-page-body select.fu-input {
+    appearance: none;
+    -webkit-appearance: none;
+    background-color: var(--card-bg, #fff);
+    color: var(--mc-navy-dark, #0f172a);
+    border: 1px solid #dbe4ea;
+    outline: none;
+    min-width: 0;
+  }
+
+  body.provider-body .provider-page-body textarea {
+    white-space: pre-wrap;
+    overflow-wrap: break-word;
+    word-break: normal;
+  }
+
+  body.provider-body .provider-page-body .ps-input[readonly],
+  body.provider-body .provider-page-body .ps-input[aria-readonly="true"] {
+    white-space: normal;
+    overflow-wrap: anywhere;
+    word-break: break-word;
+    height: auto;
+  }
+
+  body.provider-body .provider-page-body .ps-readonly-note span {
+    min-width: 0;
+    overflow-wrap: anywhere;
+    word-break: normal;
   }
 }
 
