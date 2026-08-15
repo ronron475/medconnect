@@ -861,6 +861,13 @@
     state.cluster = L.markerClusterGroup({
       showCoverageOnHover: false,
       maxClusterRadius: 48,
+      zoomToBoundsOnClick: false,
+      spiderfyOnMaxZoom: true,
+    });
+    state.cluster.on('clusterclick', function (e) {
+      if (e && e.layer && typeof e.layer.spiderfy === 'function') {
+        e.layer.spiderfy();
+      }
     });
     state.map.addLayer(state.cluster);
     initLayerSwitch();
@@ -906,6 +913,7 @@
   }
 
   function renderMap() {
+    const isFirstMapRender = !state.map;
     initMap();
     if (!state.map || !state.cluster) return;
 
@@ -926,7 +934,11 @@
       const marker = L.marker([lat, lng], {
         icon: severityMarkerIcon(severity, normalizeLocationSource(row)),
       });
-      marker.bindPopup(popupHtml(row));
+      marker.bindPopup(popupHtml(row), {
+        autoPan: false,
+        closeOnClick: true,
+        maxWidth: 280,
+      });
       state.cluster.addLayer(marker);
     });
 
@@ -949,11 +961,9 @@
 
     ensureOverlayOrder();
 
-    focusMapOnMarkers(bounds);
-
-    setTimeout(function () {
-      state.map.invalidateSize();
-    }, 120);
+    if (isFirstMapRender) {
+      focusMapOnMarkers(bounds);
+    }
   }
 
   function aggregateByBarangay(rows, predicate) {
