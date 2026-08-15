@@ -19,6 +19,7 @@ if (!auth_csrf_validate($_POST['csrf_token'] ?? '')) {
 $userId = (int) $_SESSION['user_id'];
 $action = $_POST['action'] ?? 'single';
 $notificationId = (int) ($_POST['notification_id'] ?? 0);
+Api::releaseSession();
 
 try {
     if ($action === 'all') {

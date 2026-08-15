@@ -12,6 +12,7 @@ Api::requireAuth();
 
 $userId = (int) $_SESSION['user_id'];
 $role   = (string) ($_SESSION['user_role'] ?? 'patient');
+Api::releaseSession();
 
 try {
     Api::success([
