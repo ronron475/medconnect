@@ -310,6 +310,13 @@ body.provider-body .provider-page-body .ps-input {
   border: 1px solid var(--pv-border);
 }
 
+body.provider-body .provider-page-body .pch-search input,
+body.provider-body .provider-page-body .pch-search input[type="search"],
+body.provider-body .provider-page-body .mr-search input,
+body.provider-body .provider-page-body .mr-search input[type="search"] {
+  padding-left: 40px;
+}
+
 body.provider-body .provider-page-body textarea {
   min-height: 80px;
   padding: var(--pv-space-sm);

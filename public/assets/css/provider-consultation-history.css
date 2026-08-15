@@ -72,14 +72,22 @@ body.provider-body .provider-page-body:has(.pch-page) {
   flex: 1;
 }
 
-.pch-search input {
+body.provider-body .provider-page-body .pch-search input,
+body.provider-body .provider-page-body .pch-search input[type="search"] {
   width: 100%;
   height: 36px;
-  padding: 0 12px 0 34px;
-  border: 1px solid #e2e8f0;
+  padding: 0 12px 0 40px;
+  border: 1px solid #dbe4ea;
   border-radius: 8px;
   font-size: 13px;
   box-sizing: border-box;
+  background: var(--card-bg, #fff);
+  color: var(--mc-navy-dark, #0f172a);
+}
+
+body.provider-body .provider-page-body .pch-search input[type="search"]::-webkit-search-decoration,
+body.provider-body .provider-page-body .pch-search input[type="search"]::-webkit-search-cancel-button {
+  -webkit-appearance: none;
 }
 
 .pch-search svg {
