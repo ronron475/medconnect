@@ -49,7 +49,12 @@ final class FaqChatbotUnifiedKnowledge
             $sources[] = 'conversational_lexicon';
         }
 
-        $scenario = FaqChatbotScenarioIndex::match($rawText, $nlpText, $ctx);
+        $scenario = null;
+        try {
+            $scenario = FaqChatbotScenarioIndex::match($rawText, $nlpText, $ctx);
+        } catch (Throwable) {
+            $scenario = null;
+        }
         if ($scenario !== null && ($scenario['kb_key'] ?? '') !== '') {
             $score = (float) $scenario['score'];
             if ($score > $bestScore) {

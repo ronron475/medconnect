@@ -85,6 +85,19 @@ try {
 } catch (InvalidArgumentException $e) {
     Api::error($e->getMessage(), 422);
 } catch (Throwable $e) {
-    error_log('faq_chatbot_chat: ' . $e->getMessage());
-    Api::error('Unable to process your message right now. Please try again.', 500);
+    error_log('faq_chatbot_chat: ' . $e->getMessage() . ' @ ' . $e->getFile() . ':' . $e->getLine());
+    // Keep the landing widget alive: JS assist mode continues with the rule-based client engine.
+    Api::success([
+        'data' => [
+            'session_id'          => $sessionId,
+            'conversation_id'     => 0,
+            'user_message_id'     => 0,
+            'bot_message_id'      => 0,
+            'response_html'       => '',
+            'use_server_response' => false,
+            'mode'                => $mode,
+            'confidence'          => 0,
+            'pipeline_error'      => (new ReflectionClass($e))->getShortName(),
+        ],
+    ], 'OK');
 }

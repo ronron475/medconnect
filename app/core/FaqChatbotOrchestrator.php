@@ -128,6 +128,29 @@ final class FaqChatbotOrchestrator
         $kbHit = null;
         $confidence = (float) ($intentPack['confidence'] ?? 0.35);
         $suggestions = [];
+        $intentStrong = in_array($intent, [
+            FaqChatbotIntentRecognizer::FINANCIAL,
+            FaqChatbotIntentRecognizer::APPOINTMENT,
+            FaqChatbotIntentRecognizer::LOGIN,
+            FaqChatbotIntentRecognizer::REGISTRATION,
+            FaqChatbotIntentRecognizer::CONSULTATION,
+            FaqChatbotIntentRecognizer::SYMPTOMS,
+            FaqChatbotIntentRecognizer::EMOTIONAL_SUPPORT,
+            FaqChatbotIntentRecognizer::CONNECTIVITY,
+            FaqChatbotIntentRecognizer::TRANSPORT,
+            FaqChatbotIntentRecognizer::WEATHER,
+            FaqChatbotIntentRecognizer::EMERGENCY,
+            FaqChatbotIntentRecognizer::PASSWORD_RESET,
+            FaqChatbotIntentRecognizer::BHW,
+            FaqChatbotIntentRecognizer::TECHNICAL,
+            FaqChatbotIntentRecognizer::DOCTOR,
+            FaqChatbotIntentRecognizer::PRIVACY,
+            FaqChatbotIntentRecognizer::RECORDS,
+            FaqChatbotIntentRecognizer::CAPABILITIES,
+            FaqChatbotIntentRecognizer::GREETING,
+            FaqChatbotIntentRecognizer::THANKS,
+            FaqChatbotIntentRecognizer::OTP,
+        ], true) && $confidence >= 0.62;
 
         if ($emergency['is_emergency']) {
             $flowKey = $emergency['flow'] ?? 'emergency';
@@ -150,21 +173,29 @@ final class FaqChatbotOrchestrator
                     $this->faqRepo->suggestionsForCategory((string) ($best['category'] ?? ''), 3)
                 );
             } else {
-                $kbHit = FaqChatbotResponseGenerator::kbMatchForAssist($text, $matchText, $replyLang, [
-                    'intent'         => $intent,
-                    'emotion'        => $emotionResult['emotion'] ?? null,
-                    'session_id'     => $sessionId,
-                    'context_boost'  => $memoryBoost,
-                ]);
-
-                // Unified knowledge layer: scenario index + KB packs + synonyms
-                if ($kbHit === null || (float) ($kbHit['score'] ?? 0) < 2.0) {
-                    $unified = FaqChatbotUnifiedKnowledge::search($this->pdo, $text, $matchText, $replyLang, [
-                        'intent'        => $intent,
-                        'emotion'       => $emotionResult['emotion'] ?? null,
-                        'session_id'    => $sessionId,
-                        'context_boost' => $memoryBoost,
+                try {
+                    $kbHit = FaqChatbotResponseGenerator::kbMatchForAssist($text, $matchText, $replyLang, [
+                        'intent'         => $intent,
+                        'emotion'        => $emotionResult['emotion'] ?? null,
+                        'session_id'     => $sessionId,
+                        'context_boost'  => $memoryBoost,
                     ]);
+                } catch (Throwable) {
+                    $kbHit = null;
+                }
+
+                // Skip the 20MB scenario index when intent is already clear (Hostinger memory).
+                if (!$intentStrong && ($kbHit === null || (float) ($kbHit['score'] ?? 0) < 2.0)) {
+                    try {
+                        $unified = FaqChatbotUnifiedKnowledge::search($this->pdo, $text, $matchText, $replyLang, [
+                            'intent'        => $intent,
+                            'emotion'       => $emotionResult['emotion'] ?? null,
+                            'session_id'    => $sessionId,
+                            'context_boost' => $memoryBoost,
+                        ]);
+                    } catch (Throwable) {
+                        $unified = null;
+                    }
                     if ($unified !== null && (float) ($unified['score'] ?? 0) >= 1.85) {
                         $kbHit = [
                             'key'      => $unified['key'],
@@ -242,33 +273,10 @@ final class FaqChatbotOrchestrator
 
         // Assist mode: serve PHP replies for emergency, FAQ, KB, intent-clear, or unified matches
         $kbStrong = $kbHit !== null && (($kbHit['score'] ?? 0) >= 1.85);
-        $intentStrong = in_array($intent, [
-            FaqChatbotIntentRecognizer::FINANCIAL,
-            FaqChatbotIntentRecognizer::APPOINTMENT,
-            FaqChatbotIntentRecognizer::LOGIN,
-            FaqChatbotIntentRecognizer::REGISTRATION,
-            FaqChatbotIntentRecognizer::CONSULTATION,
-            FaqChatbotIntentRecognizer::SYMPTOMS,
-            FaqChatbotIntentRecognizer::EMOTIONAL_SUPPORT,
-            FaqChatbotIntentRecognizer::CONNECTIVITY,
-            FaqChatbotIntentRecognizer::TRANSPORT,
-            FaqChatbotIntentRecognizer::WEATHER,
-            FaqChatbotIntentRecognizer::EMERGENCY,
-            FaqChatbotIntentRecognizer::PASSWORD_RESET,
-            FaqChatbotIntentRecognizer::BHW,
-            FaqChatbotIntentRecognizer::TECHNICAL,
-            FaqChatbotIntentRecognizer::DOCTOR,
-            FaqChatbotIntentRecognizer::PRIVACY,
-            FaqChatbotIntentRecognizer::RECORDS,
-            FaqChatbotIntentRecognizer::CAPABILITIES,
-            FaqChatbotIntentRecognizer::GREETING,
-            FaqChatbotIntentRecognizer::THANKS,
-            FaqChatbotIntentRecognizer::OTP,
-        ], true) && ($intentPack['confidence'] ?? 0) >= 0.62;
         $useServer = $mode === 'full'
             || ($mode === 'assist' && ($emergency['is_emergency'] || $faqId !== null || $kbStrong || $intentStrong));
 
-        if ($mode === 'assist' && !$useServer) {
+        if ($mode === 'assist' && !$useServer && class_exists('FaqChatbotAiFallback')) {
             $aiHtml = FaqChatbotAiFallback::tryReply($text, $replyLang, [
                 'intent'  => $intent,
                 'emotion' => $canonical,
