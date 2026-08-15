@@ -436,14 +436,27 @@ body.patient-portal .phs-meta-item__value {
 }
 
 /* Modal */
+body.phs-modal-open {
+  overflow: hidden;
+}
+
+body.phs-modal-open .mc-messages-fab,
+body.phs-modal-open .pt-remedy,
+body.phs-modal-open .pt-remedy__fab {
+  display: none !important;
+  visibility: hidden !important;
+  pointer-events: none !important;
+}
+
 body.patient-portal .phs-modal {
   position: fixed;
   inset: 0;
-  z-index: 10050;
+  z-index: 200310;
   display: flex;
   align-items: center;
   justify-content: center;
   padding: 16px;
+  box-sizing: border-box;
 }
 
 body.patient-portal .phs-modal[hidden] {
@@ -453,23 +466,33 @@ body.patient-portal .phs-modal[hidden] {
 body.patient-portal .phs-modal__backdrop {
   position: absolute;
   inset: 0;
-  background: rgba(15, 23, 42, 0.45);
+  background: rgba(15, 23, 42, 0.5);
 }
 
 body.patient-portal .phs-modal__card {
   position: relative;
+  display: flex;
+  flex-direction: column;
   background: #fff;
   border-radius: 16px;
-  padding: 22px;
+  padding: 0;
   max-width: 420px;
   width: 100%;
+  min-width: 0;
   box-shadow: 0 20px 48px rgba(15, 23, 42, 0.18);
-  max-height: calc(100vh - 32px);
-  overflow-y: auto;
+  max-height: min(90vh, 760px);
+  overflow: hidden;
+  box-sizing: border-box;
 }
 
 body.patient-portal .phs-modal__card--wide {
-  max-width: 720px;
+  max-width: 760px;
+}
+
+body.patient-portal .phs-modal__head {
+  flex-shrink: 0;
+  padding: 20px 22px 14px;
+  border-bottom: 1px solid #eef2f6;
 }
 
 body.patient-portal .phs-modal__title {
@@ -477,29 +500,47 @@ body.patient-portal .phs-modal__title {
   font-size: 1.1rem;
   font-weight: 800;
   color: #0f172a;
+  line-height: 1.3;
+  overflow-wrap: anywhere;
 }
 
 body.patient-portal .phs-modal__lead {
   margin: 0;
   font-size: 0.85rem;
   color: #64748b;
-  line-height: 1.5;
+  line-height: 1.55;
+  overflow-wrap: anywhere;
+}
+
+body.patient-portal .phs-modal__body {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  padding: 16px 22px 8px;
 }
 
 body.patient-portal .phs-field {
   display: block;
-  margin: 14px 0 0;
+  margin: 0 0 14px;
+  min-width: 0;
 }
 
-body.patient-portal .phs-field__label {
+body.patient-portal .phs-field__label,
+body.patient-portal .phs-request-readonly__label {
   display: block;
   font-size: 0.8rem;
   font-weight: 700;
   color: #475569;
   margin-bottom: 6px;
+  text-transform: none;
+  letter-spacing: 0;
+  line-height: 1.3;
 }
 
-body.patient-portal .phs-field__input {
+body.patient-portal .phs-field__input,
+body.patient-portal .phs-request-readonly__value {
+  display: block;
   width: 100%;
   min-height: 44px;
   padding: 10px 12px;
@@ -508,9 +549,18 @@ body.patient-portal .phs-field__input {
   font: inherit;
   font-size: 0.9rem;
   color: #0f172a;
+  line-height: 1.45;
   resize: vertical;
   box-sizing: border-box;
   background: #fff;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+body.patient-portal .phs-request-readonly__value {
+  background: #f8fafc;
+  font-weight: 600;
+  color: #334155;
 }
 
 body.patient-portal textarea.phs-field__input {
@@ -527,19 +577,28 @@ body.patient-portal .phs-modal__actions {
   display: flex;
   gap: 10px;
   justify-content: flex-end;
-  margin-top: 18px;
   flex-wrap: wrap;
+  flex-shrink: 0;
+  margin: 0;
+  padding: 14px 22px calc(14px + env(safe-area-inset-bottom, 0px));
+  border-top: 1px solid #eef2f6;
+  background: #fff;
 }
 
 body.patient-portal .phs-request-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 16px;
-  margin: 16px 0 0;
+  gap: 20px 24px;
+  margin: 0 0 8px;
+  align-items: start;
+}
+
+body.patient-portal .phs-request-col {
+  min-width: 0;
 }
 
 body.patient-portal .phs-request-col__title {
-  margin: 0 0 10px;
+  margin: 0 0 14px;
   font-size: 0.75rem;
   font-weight: 800;
   text-transform: uppercase;
@@ -548,19 +607,8 @@ body.patient-portal .phs-request-col__title {
 }
 
 body.patient-portal .phs-request-readonly {
-  margin: 0 0 10px;
-  font-size: 0.85rem;
-  line-height: 1.45;
-  color: #334155;
-}
-
-body.patient-portal .phs-request-readonly__label {
-  display: block;
-  font-size: 0.72rem;
-  font-weight: 700;
-  text-transform: uppercase;
-  color: #94a3b8;
-  margin-bottom: 2px;
+  margin: 0 0 14px;
+  min-width: 0;
 }
 
 body.patient-portal select.phs-field__input {
@@ -576,7 +624,8 @@ body.patient-portal select.phs-field__input {
 
 @media (max-width: 900px) {
   body.patient-portal .phs-grid,
-  body.patient-portal .phs-skeleton-grid {
+  body.patient-portal .phs-skeleton-grid,
+  body.patient-portal .phs-request-grid {
     grid-template-columns: 1fr;
   }
 }
@@ -644,25 +693,44 @@ body.patient-portal select.phs-field__input {
   }
 
   body.patient-portal .phs-modal {
-    align-items: flex-end;
-    padding: 0;
+    align-items: stretch;
+    padding: max(8px, env(safe-area-inset-top, 0px)) 0 0;
   }
 
   body.patient-portal .phs-modal__card {
     max-width: none;
     width: 100%;
-    max-height: min(92dvh, 100%);
+    height: 100%;
+    max-height: none;
     border-radius: 16px 16px 0 0;
-    padding: 16px 16px calc(16px + env(safe-area-inset-bottom, 0px));
+  }
+
+  body.patient-portal .phs-modal__head {
+    padding: 16px 16px 12px;
+  }
+
+  body.patient-portal .phs-modal__title {
+    font-size: 1.05rem;
+  }
+
+  body.patient-portal .phs-modal__body {
+    padding: 14px 16px 8px;
+  }
+
+  body.patient-portal .phs-request-grid {
+    grid-template-columns: 1fr;
+    gap: 18px;
   }
 
   body.patient-portal .phs-modal__actions {
     flex-direction: column-reverse;
+    padding: 12px 16px calc(12px + env(safe-area-inset-bottom, 0px));
   }
 
   body.patient-portal .phs-modal__actions .pdash-btn {
     width: 100%;
     white-space: normal;
+    justify-content: center;
   }
 }
 

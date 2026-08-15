@@ -158,12 +158,16 @@
     fillCurrentReadonly();
     if (modal) {
       modal.hidden = false;
-      document.getElementById('phsProposedBlood')?.focus();
+      document.body.classList.add('phs-modal-open');
+      if (window.matchMedia && !window.matchMedia('(max-width: 768px)').matches) {
+        document.getElementById('phsProposedBlood')?.focus();
+      }
     }
   }
 
   function closeModal() {
     if (modal) modal.hidden = true;
+    document.body.classList.remove('phs-modal-open');
     ['phsRequestNote', 'phsProposedAllergies', 'phsProposedConditions', 'phsProposedMeds'].forEach(function (id) {
       const el = document.getElementById(id);
       if (el) el.value = '';

@@ -144,49 +144,66 @@
 <div id="phsRequestModal" class="phs-modal" hidden role="dialog" aria-modal="true" aria-labelledby="phsRequestModalTitle">
   <div class="phs-modal__backdrop" data-phs-close-modal></div>
   <div class="phs-modal__card phs-modal__card--wide">
-    <h3 id="phsRequestModalTitle" class="phs-modal__title">Request Health Information Update</h3>
-    <p class="phs-modal__lead">You cannot edit verified health information directly. Submit your requested corrections below. Your assigned doctor will review and approve changes before your official Health Summary is updated.</p>
+    <header class="phs-modal__head">
+      <h3 id="phsRequestModalTitle" class="phs-modal__title">Request Health Information Update</h3>
+      <p class="phs-modal__lead">You cannot edit verified health information directly. Submit your requested corrections below. Your assigned doctor will review and approve changes before your official Health Summary is updated.</p>
+    </header>
 
-    <div class="phs-request-grid">
-      <div class="phs-request-col">
-        <h4 class="phs-request-col__title">Current (verified)</h4>
-        <p class="phs-request-readonly"><span class="phs-request-readonly__label">Blood type</span> <span id="phsCurrentBlood">—</span></p>
-        <p class="phs-request-readonly"><span class="phs-request-readonly__label">Allergies</span> <span id="phsCurrentAllergies">—</span></p>
-        <p class="phs-request-readonly"><span class="phs-request-readonly__label">Conditions</span> <span id="phsCurrentConditions">—</span></p>
-        <p class="phs-request-readonly"><span class="phs-request-readonly__label">Medications</span> <span id="phsCurrentMeds">—</span></p>
+    <div class="phs-modal__body">
+      <div class="phs-request-grid">
+        <div class="phs-request-col">
+          <h4 class="phs-request-col__title">Current (verified)</h4>
+          <div class="phs-request-readonly">
+            <span class="phs-request-readonly__label">Blood type</span>
+            <span class="phs-request-readonly__value" id="phsCurrentBlood">—</span>
+          </div>
+          <div class="phs-request-readonly">
+            <span class="phs-request-readonly__label">Allergies</span>
+            <span class="phs-request-readonly__value" id="phsCurrentAllergies">—</span>
+          </div>
+          <div class="phs-request-readonly">
+            <span class="phs-request-readonly__label">Medical conditions</span>
+            <span class="phs-request-readonly__value" id="phsCurrentConditions">—</span>
+          </div>
+          <div class="phs-request-readonly">
+            <span class="phs-request-readonly__label">Maintenance medications</span>
+            <span class="phs-request-readonly__value" id="phsCurrentMeds">—</span>
+          </div>
+        </div>
+        <div class="phs-request-col">
+          <h4 class="phs-request-col__title">Requested changes</h4>
+          <label class="phs-field" for="phsProposedBlood">
+            <span class="phs-field__label">Blood type</span>
+            <select id="phsProposedBlood" class="phs-field__input">
+              <option value="">— No change —</option>
+              <option value="A+">A+</option><option value="A-">A-</option>
+              <option value="B+">B+</option><option value="B-">B-</option>
+              <option value="AB+">AB+</option><option value="AB-">AB-</option>
+              <option value="O+">O+</option><option value="O-">O-</option>
+              <option value="Unknown">Unknown</option>
+            </select>
+          </label>
+          <label class="phs-field" for="phsProposedAllergies">
+            <span class="phs-field__label">Allergies</span>
+            <textarea id="phsProposedAllergies" class="phs-field__input" rows="2" maxlength="500" placeholder="Leave blank if no change"></textarea>
+          </label>
+          <label class="phs-field" for="phsProposedConditions">
+            <span class="phs-field__label">Medical conditions</span>
+            <textarea id="phsProposedConditions" class="phs-field__input" rows="2" maxlength="500" placeholder="Leave blank if no change"></textarea>
+          </label>
+          <label class="phs-field" for="phsProposedMeds">
+            <span class="phs-field__label">Maintenance medications</span>
+            <textarea id="phsProposedMeds" class="phs-field__input" rows="2" maxlength="500" placeholder="Leave blank if no change"></textarea>
+          </label>
+        </div>
       </div>
-      <div class="phs-request-col">
-        <h4 class="phs-request-col__title">Requested changes</h4>
-        <label class="phs-field" for="phsProposedBlood">
-          <span class="phs-field__label">Blood type</span>
-          <select id="phsProposedBlood" class="phs-field__input">
-            <option value="">— No change —</option>
-            <option value="A+">A+</option><option value="A-">A-</option>
-            <option value="B+">B+</option><option value="B-">B-</option>
-            <option value="AB+">AB+</option><option value="AB-">AB-</option>
-            <option value="O+">O+</option><option value="O-">O-</option>
-            <option value="Unknown">Unknown</option>
-          </select>
-        </label>
-        <label class="phs-field" for="phsProposedAllergies">
-          <span class="phs-field__label">Allergies</span>
-          <textarea id="phsProposedAllergies" class="phs-field__input" rows="2" maxlength="500" placeholder="Leave blank if no change"></textarea>
-        </label>
-        <label class="phs-field" for="phsProposedConditions">
-          <span class="phs-field__label">Medical conditions</span>
-          <textarea id="phsProposedConditions" class="phs-field__input" rows="2" maxlength="500" placeholder="Leave blank if no change"></textarea>
-        </label>
-        <label class="phs-field" for="phsProposedMeds">
-          <span class="phs-field__label">Maintenance medications</span>
-          <textarea id="phsProposedMeds" class="phs-field__input" rows="2" maxlength="500" placeholder="Leave blank if no change"></textarea>
-        </label>
-      </div>
+
+      <label class="phs-field" for="phsRequestNote">
+        <span class="phs-field__label">Additional note (optional)</span>
+        <textarea id="phsRequestNote" class="phs-field__input" rows="3" maxlength="500" placeholder="Describe what needs to be updated…"></textarea>
+      </label>
     </div>
 
-    <label class="phs-field" for="phsRequestNote">
-      <span class="phs-field__label">Additional note (optional)</span>
-      <textarea id="phsRequestNote" class="phs-field__input" rows="3" maxlength="500" placeholder="Describe what needs to be updated…"></textarea>
-    </label>
     <div class="phs-modal__actions">
       <button type="button" class="pdash-btn pdash-btn--outline" data-phs-close-modal>Cancel</button>
       <button type="button" class="pdash-btn pdash-btn--primary" id="phsRequestSubmit">Submit Request</button>
