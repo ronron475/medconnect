@@ -131,6 +131,7 @@ final class FaqChatbotOrchestrator
         $responseHtml = '';
         $faqId = null;
         $kbHit = null;
+        $best = null;
         $confidence = (float) ($intentPack['confidence'] ?? 0.35);
         $suggestions = [];
         $intentStrong = in_array($intent, [
@@ -164,7 +165,7 @@ final class FaqChatbotOrchestrator
         } else {
             $faqHits = [];
             try {
-                $faqHits = $this->faqRepo->search($contextText, 5);
+                $faqHits = $this->faqRepo->search($text, 5);
             } catch (Throwable) {
                 $faqHits = [];
             }
@@ -281,12 +282,21 @@ final class FaqChatbotOrchestrator
             'bot_snippet'    => $responseHtml !== '' ? $responseHtml : null,
         ]);
 
-        // Assist mode: serve PHP replies for emergency, FAQ, KB, intent-clear, or unified matches
-        $kbStrong = $kbHit !== null && (($kbHit['score'] ?? 0) >= 1.85);
-        $useServer = $mode === 'full'
-            || ($mode === 'assist' && ($emergency['is_emergency'] || $faqId !== null || $kbStrong || $intentStrong));
+        // Assist mode: dataset only when the CURRENT message has a meaningful match.
+        // Generic "I'm here to help with medConnect..." cards must not block Gemini.
+        $useDataset = class_exists('FaqChatbotAiFallback')
+            ? FaqChatbotAiFallback::shouldUseDatasetAnswer(
+                $text,
+                (bool) $emergency['is_emergency'],
+                $faqId,
+                ($faqId !== null && is_array($best ?? null)) ? $best : null,
+                $kbHit,
+                $responseHtml
+            )
+            : ((bool) $emergency['is_emergency'] || $faqId !== null);
+        $useServer = $mode === 'full' || ($mode === 'assist' && $useDataset);
 
-        if ($mode === 'assist' && !$useServer && class_exists('FaqChatbotAiFallback')) {
+        if ($mode === 'assist' && !$useDataset && class_exists('FaqChatbotAiFallback')) {
             $aiHtml = FaqChatbotAiFallback::tryReply($text, $replyLang, [
                 'intent'  => $intent,
                 'emotion' => $canonical,
@@ -302,7 +312,7 @@ final class FaqChatbotOrchestrator
                     'bot_snippet' => $aiHtml,
                     'topic'       => 'ai_conversation',
                 ]);
-            } else {
+            } elseif ($responseHtml === '') {
                 if ($suggestions === []) {
                     $suggestions = $this->formatSuggestions($this->faqRepo->suggestionsForCategory(null, 3));
                 }
@@ -326,6 +336,7 @@ final class FaqChatbotOrchestrator
                     $nlp
                 );
             }
+            // Gemini failed: keep the existing generic reply as last resort.
         }
 
         $botMsgId = 0;
