@@ -4,7 +4,7 @@ $gisUserRole = (string) ($userRole ?? $_SESSION['user_role'] ?? '');
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin=""/>
 <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css" crossorigin=""/>
 <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css" crossorigin=""/>
-<link rel="stylesheet" href="<?= htmlspecialchars($assetBase) ?>/assets/css/admin-gis-dashboard.css?v=3.7"/>
+<link rel="stylesheet" href="<?= htmlspecialchars($assetBase) ?>/assets/css/admin-gis-dashboard.css?v=3.8"/>
 
 <div class="gis-page" id="gis-dashboard"
      data-api="<?= htmlspecialchars($apiBase) ?>"
@@ -102,7 +102,14 @@ $gisUserRole = (string) ($userRole ?? $_SESSION['user_role'] ?? '');
         <input type="search" id="gis-search" class="gis-input" placeholder="Search patient name, ID, or email…"/>
         <select id="gis-filter-barangay" class="gis-input"><option value="">All barangays</option></select>
         <select id="gis-filter-status" class="gis-input"><option value="">All statuses</option><option value="active">Active</option><option value="inactive">Inactive</option></select>
-        <input type="date" id="gis-filter-from" class="gis-input"/><input type="date" id="gis-filter-to" class="gis-input"/>
+        <label class="gis-date-field">
+          <span class="gis-date-field__label">From date</span>
+          <input type="date" id="gis-filter-from" class="gis-input" aria-label="From date"/>
+        </label>
+        <label class="gis-date-field">
+          <span class="gis-date-field__label">To date</span>
+          <input type="date" id="gis-filter-to" class="gis-input" aria-label="To date"/>
+        </label>
       </div>
       <div class="gis-table-wrap">
         <table class="gis-table" id="gis-patient-table">

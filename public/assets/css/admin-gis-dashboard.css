@@ -418,6 +418,40 @@
   color: var(--mc-navy-dark, #0f172a);
 }
 
+.gis-date-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+
+.gis-date-field__label {
+  font-size: 0.72rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--mc-text-muted, #64748b);
+}
+
+.gis-input[type="date"] {
+  font: unset;
+  font-family: inherit;
+  font-size: 1rem;
+  font-weight: 500;
+  min-height: 44px;
+  color: var(--mc-navy-dark, #0f172a);
+  color-scheme: light;
+}
+
+.gis-input[type="date"]::-webkit-datetime-edit,
+.gis-input[type="date"]::-webkit-datetime-edit-fields-wrapper,
+.gis-input[type="date"]::-webkit-datetime-edit-text,
+.gis-input[type="date"]::-webkit-datetime-edit-month-field,
+.gis-input[type="date"]::-webkit-datetime-edit-day-field,
+.gis-input[type="date"]::-webkit-datetime-edit-year-field {
+  color: inherit;
+}
+
 .gis-table-actions {
   display: flex;
   flex-wrap: wrap;
@@ -697,6 +731,14 @@ html[data-theme-resolved='dark'] .gis-table th {
   background: #0f172a;
   color: #e2e8f0;
   border-color: #334155;
+}
+
+html[data-theme-resolved='dark'] .gis-date-field__label {
+  color: #94a3b8;
+}
+
+html[data-theme-resolved='dark'] .gis-input[type="date"] {
+  color-scheme: dark;
 }
 
 html[data-theme-resolved='dark'] .gis-stat-value,
