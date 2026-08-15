@@ -119,6 +119,7 @@ require_once __DIR__ . '/partials/layout_open.php';
             </div>
             <button type="button" class="admin-modal-close" id="bhwReviewClose" aria-label="Close">&times;</button>
         </div>
+        <div class="admin-modal-body">
         <div id="bhwReviewContent"></div>
         <div class="bhw-checklist" id="bhwChecklist">
             <h4 class="admin-form-section-title">Approval Checklist</h4>
@@ -135,12 +136,14 @@ require_once __DIR__ . '/partials/layout_open.php';
             <button type="button" class="mc-btn mc-btn--outline bhw-btn-reject" id="bhwRejectBtn">Reject</button>
             <button type="button" class="mc-btn mc-btn--primary" id="bhwApproveBtn" disabled>Approve &amp; Activate</button>
         </div>
+        </div>
     </div>
 </div>
 
-<link rel="stylesheet" href="<?= ASSET_BASE ?>/assets/css/admin-staff-applications.css?v=1.2">
-<link rel="stylesheet" href="<?= ASSET_BASE ?>/assets/css/admin-staff-forms.css?v=1.3">
-<link rel="stylesheet" href="<?= ASSET_BASE ?>/assets/css/admin-bhw-applications.css?v=1.1">
+<link rel="stylesheet" href="<?= ASSET_BASE ?>/assets/css/admin-staff-applications.css?v=1.3">
+<link rel="stylesheet" href="<?= ASSET_BASE ?>/assets/css/admin-staff-forms.css?v=1.4">
+<link rel="stylesheet" href="<?= ASSET_BASE ?>/assets/css/admin-bhw-applications.css?v=1.2">
+<script src="<?= ASSET_BASE ?>/assets/js/admin-staff-form-utils.js?v=1.2"></script>
 <script src="<?= ASSET_BASE ?>/assets/js/admin-staff-applications.js?v=1.1"></script>
 <script>
 window.MC_BHW_APPROVAL = {

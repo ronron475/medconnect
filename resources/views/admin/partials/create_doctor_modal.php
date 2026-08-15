@@ -25,7 +25,7 @@ $prc_portal_url = 'https://verification.prc.gov.ph/';
             <button type="button" class="admin-modal-close" data-close-modal="<?= htmlspecialchars($create_doctor_modal_id) ?>" aria-label="Close">&times;</button>
         </div>
 
-        <form id="<?= htmlspecialchars($create_doctor_form_id) ?>" class="mc-staff-form" novalidate>
+        <form id="<?= htmlspecialchars($create_doctor_form_id) ?>" class="mc-staff-form admin-modal-body" novalidate>
             <input type="hidden" name="application_id" id="<?= htmlspecialchars($create_doctor_form_id) ?>ApplicationId" value="">
 
             <section class="mc-form-section" id="<?= htmlspecialchars($create_doctor_form_id) ?>DoctorSections">
@@ -202,8 +202,8 @@ $prc_portal_url = 'https://verification.prc.gov.ph/';
     </div>
 </div>
 
-<link rel="stylesheet" href="<?= ASSET_BASE ?>/assets/css/admin-staff-forms.css?v=1.3">
-<script src="<?= ASSET_BASE ?>/assets/js/admin-staff-form-utils.js?v=1.1"></script>
+<link rel="stylesheet" href="<?= ASSET_BASE ?>/assets/css/admin-staff-forms.css?v=1.4">
+<script src="<?= ASSET_BASE ?>/assets/js/admin-staff-form-utils.js?v=1.2"></script>
 
 <script>
 (function () {
@@ -538,8 +538,9 @@ $prc_portal_url = 'https://verification.prc.gov.ph/';
 <style>
 .admin-modal-dialog--doctor {
     width: min(680px, 100%);
+    max-height: min(92dvh, 900px);
     max-height: min(92vh, 900px);
-    overflow-y: auto;
+    overflow: hidden;
 }
 .admin-modal-title {
     font-size: 20px;
