@@ -62,7 +62,7 @@ $faqChatbotAppVer = (int) @filemtime(ASSETS_PATH . '/js/faq-chatbot/app.js');
       <svg class="fcb-fab__icon" width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
         <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
       </svg>
-      <span class="fcb-fab__badge" id="fcb-fab-badge" hidden aria-label="New message">1</span>
+      <span class="fcb-fab__badge" id="fcb-fab-badge" hidden aria-hidden="true" aria-label="New message"></span>
     </button>
   </div>
 

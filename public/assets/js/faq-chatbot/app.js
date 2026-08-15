@@ -40,6 +40,7 @@
   const MODERATION_TYPING_MS = 0;
   const STORAGE_KEY = 'mc_fcb_opened';
   const BADGE_DISMISSED_KEY = 'mc_fcb_badge_dismissed';
+  const UNREAD_KEY = 'mc_fcb_unread';
   const HISTORY_KEY = 'mc_fcb_thread_html';
   const PULSE_INTERVAL = 8000;
 
@@ -129,10 +130,6 @@
     return Boolean(
       messagesEl.querySelector('.fcb-msg, .fcb-welcome, .fcb-actions')
     );
-  }
-
-  function hasUserMessages() {
-    return Boolean(messagesEl && messagesEl.querySelector('.fcb-msg--user'));
   }
 
   function persistThread() {
@@ -246,16 +243,19 @@
     } catch (_) { /* ignore */ }
     badgeEl.textContent = '1';
     badgeEl.hidden = false;
+    badgeEl.setAttribute('aria-hidden', 'false');
     root.classList.add('fcb--has-badge');
   }
 
   function hideBadge() {
     if (badgeEl) {
       badgeEl.hidden = true;
+      badgeEl.setAttribute('aria-hidden', 'true');
       root.classList.remove('fcb--has-badge');
     }
     try {
       sessionStorage.setItem(BADGE_DISMISSED_KEY, '1');
+      sessionStorage.removeItem(UNREAD_KEY);
     } catch (_) { /* ignore */ }
   }
 
@@ -263,6 +263,7 @@
   function markChatUnread() {
     try {
       sessionStorage.removeItem(BADGE_DISMISSED_KEY);
+      sessionStorage.setItem(UNREAD_KEY, '1');
     } catch (_) { /* ignore */ }
     showBadge();
   }
@@ -1130,16 +1131,14 @@
   });
 
   try {
-    if (sessionStorage.getItem(STORAGE_KEY) === '1') {
-      hideBadge();
-    }
-    const restored = restoreThreadFromStorage();
-    if (restored && hasUserMessages()) {
+    restoreThreadFromStorage();
+    // Badge is only for real unread bot replies — never a fake "1" teaser on load/login.
+    if (sessionStorage.getItem(UNREAD_KEY) === '1' && sessionStorage.getItem(BADGE_DISMISSED_KEY) !== '1') {
       showBadge();
-    } else if (!sessionStorage.getItem(STORAGE_KEY)) {
-      window.setTimeout(() => {
-        if (!isOpen && !hasActiveThread()) showBadge();
-      }, 3500);
+    } else if (badgeEl) {
+      badgeEl.hidden = true;
+      badgeEl.setAttribute('aria-hidden', 'true');
+      root.classList.remove('fcb--has-badge');
     }
   } catch (_) { /* ignore */ }
 

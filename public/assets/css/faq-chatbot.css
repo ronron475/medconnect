@@ -194,6 +194,7 @@ body.signin-active .fcb {
 }
 
 .fcb-fab__badge {
+  display: none;
   position: absolute;
   top: -2px;
   right: -2px;
@@ -212,7 +213,10 @@ body.signin-active .fcb {
   box-shadow:
     0 3px 10px rgba(220, 38, 38, 0.55),
     0 0 0 1px rgba(127, 29, 29, 0.25);
-  animation: fcb-badge-pulse 1.8s ease-in-out infinite;
+}
+
+.fcb-fab__badge[hidden] {
+  display: none !important;
 }
 
 .fcb--has-badge .fcb-fab {
@@ -221,7 +225,10 @@ body.signin-active .fcb {
     0 0 0 3px rgba(239, 68, 68, 0.35);
 }
 
-.fcb--has-badge .fcb-fab__badge {
+.fcb--has-badge .fcb-fab__badge:not([hidden]) {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   animation: fcb-badge-pulse 1.2s ease-in-out infinite;
 }
 
