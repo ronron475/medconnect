@@ -229,6 +229,13 @@
     }, 5000);
   }
 
+  function chatInitials(name) {
+    const parts = String(name || '').trim().split(/\s+/).filter(Boolean);
+    if (!parts.length) return '?';
+    if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
+    return (parts[0].charAt(0) + parts[parts.length - 1].charAt(0)).toUpperCase();
+  }
+
   function renderChat(messages) {
     const log = q('mcVcChatLog');
     if (!log) return;
@@ -238,10 +245,28 @@
     }
     log.innerHTML = messages.map((m) => {
       const mine = String(m.sender_role || '') === (IS_PATIENT ? 'patient' : 'provider');
+      const name = m.sender_name || 'Participant';
+      const time = m.time_label || '';
+      const body = escapeHtml(m.message || m.body || '');
+      const roleClass = String(m.sender_role || '') === 'patient' ? ' is-from-patient' : ' is-from-provider';
+      if (mine) {
+        return (
+          '<div class="mc-vc-chat-msg is-mine' + roleClass + '">' +
+            '<div class="mc-vc-chat-msg__head">' +
+              (time ? '<span class="mc-vc-chat-msg__time">' + escapeHtml(time) + '</span>' : '') +
+            '</div>' +
+            '<div class="mc-vc-chat-msg__body">' + body + '</div>' +
+          '</div>'
+        );
+      }
       return (
-        '<div class="mc-vc-chat-msg' + (mine ? ' is-mine' : '') + '">' +
-        '<div class="mc-vc-chat-msg__meta">' + escapeHtml(m.sender_name || 'Participant') + ' · ' + escapeHtml(m.time_label || '') + '</div>' +
-        '<div class="mc-vc-chat-msg__body">' + escapeHtml(m.message || m.body || '') + '</div>' +
+        '<div class="mc-vc-chat-msg is-theirs' + roleClass + '">' +
+          '<div class="mc-vc-chat-msg__head">' +
+            '<span class="mc-vc-chat-msg__avatar" aria-hidden="true">' + escapeHtml(chatInitials(name)) + '</span>' +
+            '<span class="mc-vc-chat-msg__name">' + escapeHtml(name) + '</span>' +
+            (time ? '<span class="mc-vc-chat-msg__time">' + escapeHtml(time) + '</span>' : '') +
+          '</div>' +
+          '<div class="mc-vc-chat-msg__body">' + body + '</div>' +
         '</div>'
       );
     }).join('');

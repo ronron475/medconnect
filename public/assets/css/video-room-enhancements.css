@@ -231,16 +231,95 @@ body.mc-vc-panel-open {
 }
 
 .mc-vc-chat-msg {
-  max-width: 92%;
+  max-width: 88%;
+  display: flex;
+  flex-direction: column;
+  gap: 0.28rem;
+  background: transparent;
+  padding: 0;
+  border-radius: 0;
+}
+
+.mc-vc-chat-msg.is-theirs {
   align-self: flex-start;
-  background: rgba(255, 255, 255, 0.06);
-  border-radius: 10px;
-  padding: 0.5rem 0.65rem;
+  align-items: flex-start;
 }
 
 .mc-vc-chat-msg.is-mine {
   align-self: flex-end;
-  background: rgba(37, 99, 235, 0.35);
+  align-items: flex-end;
+}
+
+.mc-vc-chat-msg__head {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  min-width: 0;
+}
+
+.mc-vc-chat-msg.is-mine .mc-vc-chat-msg__head {
+  justify-content: flex-end;
+}
+
+.mc-vc-chat-msg__avatar {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.62rem;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  background: linear-gradient(135deg, #0d9488, #2563eb);
+  color: #fff;
+}
+
+.mc-vc-chat-msg__name {
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: rgba(255, 255, 255, 0.82);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 9.5rem;
+}
+
+.mc-vc-chat-msg__time {
+  font-size: 0.68rem;
+  color: rgba(255, 255, 255, 0.48);
+  flex-shrink: 0;
+}
+
+.mc-vc-chat-msg__body {
+  max-width: 100%;
+  padding: 0.55rem 0.75rem;
+  font-size: 0.86rem;
+  line-height: 1.45;
+  word-break: break-word;
+  overflow-wrap: anywhere;
+}
+
+.mc-vc-chat-msg__body img,
+.mc-vc-chat-msg__body video,
+.mc-vc-chat-msg__body audio {
+  max-width: 100%;
+  height: auto;
+}
+
+.mc-vc-chat-msg.is-theirs .mc-vc-chat-msg__body {
+  background: #fff;
+  color: #0f172a;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px 12px 12px 4px;
+}
+
+.mc-vc-chat-msg.is-mine .mc-vc-chat-msg__body {
+  background: #0f766e;
+  color: #fff;
+  border: 1px solid #0d9488;
+  border-radius: 12px 12px 4px 12px;
 }
 
 .mc-vc-chat-msg__meta {
@@ -249,11 +328,17 @@ body.mc-vc-panel-open {
   margin-bottom: 0.2rem;
 }
 
+.mc-vc-side-panel__pane[data-panel-pane="chat"] {
+  overflow: hidden;
+  min-height: 0;
+}
+
 .mc-vc-chat-compose {
   display: grid;
   grid-template-columns: auto 1fr auto;
   gap: 0.35rem;
   align-items: end;
+  flex-shrink: 0;
 }
 
 .mc-vc-chat-compose textarea {
@@ -526,6 +611,79 @@ body.mc-vc-panel-open {
     -webkit-overflow-scrolling: touch;
   }
 
+  .mc-vc-side-panel__pane[data-panel-pane="chat"] {
+    min-height: 0;
+    padding: 0.65rem 0.75rem calc(0.5rem + env(safe-area-inset-bottom, 0px));
+  }
+
+  .mc-vc-chat-log {
+    min-height: 0;
+    gap: 0.5rem;
+    margin-bottom: 0.5rem;
+    -webkit-overflow-scrolling: touch;
+    overflow-x: hidden;
+  }
+
+  .mc-vc-chat-msg {
+    max-width: min(86%, 22rem);
+  }
+
+  .mc-vc-chat-msg__head {
+    flex-wrap: wrap;
+    row-gap: 0.1rem;
+    max-width: 100%;
+  }
+
+  .mc-vc-chat-msg__name {
+    max-width: min(46vw, 8.75rem);
+    font-size: 0.7rem;
+  }
+
+  .mc-vc-chat-msg__avatar {
+    width: 24px;
+    height: 24px;
+    font-size: 0.6rem;
+  }
+
+  .mc-vc-chat-msg__time {
+    font-size: 0.65rem;
+  }
+
+  .mc-vc-chat-msg__body {
+    font-size: 0.92rem;
+    padding: 0.6rem 0.8rem;
+    max-width: 100%;
+  }
+
+  .mc-vc-chat-compose {
+    position: sticky;
+    bottom: 0;
+    z-index: 2;
+    background: var(--mc-vc-panel-bg, #0f172a);
+    padding-top: 0.45rem;
+    grid-template-columns: 44px minmax(0, 1fr) auto;
+    grid-template-areas: "attach input send";
+    gap: 0.4rem;
+    align-items: stretch;
+  }
+
+  .mc-vc-chat-attach { grid-area: attach; }
+
+  .mc-vc-chat-compose textarea {
+    grid-area: input;
+    min-height: 44px;
+    max-height: 96px;
+    font-size: 16px;
+  }
+
+  .mc-vc-chat-send {
+    grid-area: send;
+    width: auto;
+    min-width: 64px;
+    min-height: 44px;
+    padding: 0 0.85rem;
+  }
+
   .mc-vc-panel-toggle {
     top: auto;
     bottom: calc(var(--mc-vc-controls-height, 108px) + 12px + env(safe-area-inset-bottom, 0px));
@@ -567,22 +725,6 @@ body.mc-vc-panel-open {
     -webkit-overflow-scrolling: touch;
   }
 
-  .mc-vc-chat-compose {
-    grid-template-columns: auto 1fr;
-    grid-template-areas:
-      "attach input"
-      "send send";
-    gap: 0.5rem;
-  }
-
-  .mc-vc-chat-attach { grid-area: attach; }
-  .mc-vc-chat-compose textarea { grid-area: input; }
-  .mc-vc-chat-send {
-    grid-area: send;
-    width: 100%;
-    min-height: 48px;
-  }
-
   body.role-patient.mc-vc-call-ended .mc-vc-postcall {
     padding: 0;
     align-items: stretch;
@@ -606,10 +748,32 @@ body.mc-vc-panel-open {
   }
 }
 
+@media (max-width: 380px) {
+  .mc-vc-chat-compose {
+    grid-template-columns: 44px minmax(0, 1fr);
+    grid-template-areas:
+      "attach input"
+      "send send";
+  }
+
+  .mc-vc-chat-send {
+    width: 100%;
+    min-height: 48px;
+  }
+}
+
 @media (max-width: 768px) and (orientation: landscape) {
   .mc-vc-side-panel {
     height: min(85dvh, calc(100dvh - var(--mc-vc-controls-height, 64px) - 8px));
     max-height: 85dvh;
+  }
+
+  .mc-vc-chat-msg {
+    max-width: min(70%, 20rem);
+  }
+
+  .mc-vc-side-panel__pane[data-panel-pane="chat"] {
+    padding-bottom: 0.35rem;
   }
 
   .mc-vc-panel-toggle {

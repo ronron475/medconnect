@@ -750,11 +750,41 @@ body.consultation-mobile-call-fullscreen .mc-provider-video-dock .mc-session-flo
 .chat-row {
     display: flex;
     gap: 9px;
-    align-items: flex-end;
+    align-items: flex-start;
     margin-bottom: 12px;
 }
 .chat-row.mine {
     flex-direction: row-reverse;
+}
+.chat-row.mine .chat-avatar {
+    display: none;
+}
+.chat-msg-col {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    min-width: 0;
+}
+.chat-row.mine .chat-msg-col {
+    align-items: flex-end;
+}
+.chat-msg-head {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    min-width: 0;
+}
+.chat-row.mine .chat-msg-head {
+    justify-content: flex-end;
+}
+.chat-msg-name {
+    font-size: 11px;
+    font-weight: 800;
+    color: #334155;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 140px;
 }
 .chat-avatar {
     width: 30px;
@@ -775,6 +805,14 @@ body.consultation-mobile-call-fullscreen .mc-provider-video-dock .mc-session-flo
     padding: 10px 12px;
     font-size: 12.5px;
     line-height: 1.45;
+    word-break: break-word;
+    overflow-wrap: anywhere;
+}
+.chat-bubble img,
+.chat-bubble video,
+.chat-bubble audio {
+    max-width: 100%;
+    height: auto;
 }
 .chat-bubble.patient {
     background: #fff;
@@ -783,9 +821,9 @@ body.consultation-mobile-call-fullscreen .mc-provider-video-dock .mc-session-flo
     border-bottom-left-radius: 4px;
 }
 .chat-bubble.mine {
-    background: #ccfbf1;
-    border: 1px solid #99f6e4;
-    color: #134e4a;
+    background: #0f766e;
+    border: 1px solid #0d9488;
+    color: #fff;
     border-bottom-right-radius: 4px;
 }
 .chat-bubble.is-mute-tts {
@@ -820,7 +858,7 @@ body.consultation-mobile-call-fullscreen .mc-provider-video-dock .mc-session-flo
 .chat-time {
     color: #608395;
     font-size: 10.5px;
-    margin-top: 3px;
+    flex-shrink: 0;
 }
 .session-chat-composer {
     display: flex;
@@ -839,6 +877,10 @@ body.consultation-mobile-call-fullscreen .mc-provider-video-dock .mc-session-flo
     font: inherit;
     font-size: 12.5px;
     color: #012a4a;
+}
+.session-chat-composer .session-btn {
+    height: 38px;
+    flex-shrink: 0;
 }
 .session-chat-alert {
     display: none;
@@ -1493,6 +1535,53 @@ body.consultation-mobile-call-fullscreen .mc-provider-video-dock .mc-session-flo
     .session-btn {
         min-height: 44px;
     }
+    .session-chat-body {
+        height: min(42dvh, 320px);
+        padding: 12px;
+        overflow-x: hidden;
+        -webkit-overflow-scrolling: touch;
+    }
+    .chat-row {
+        gap: 8px;
+        margin-bottom: 10px;
+        max-width: 100%;
+    }
+    .chat-msg-col {
+        max-width: calc(100% - 38px);
+    }
+    .chat-row.mine .chat-msg-col {
+        max-width: 100%;
+    }
+    .chat-msg-name {
+        max-width: min(42vw, 130px);
+    }
+    .chat-bubble {
+        max-width: min(78vw, 280px);
+        font-size: 14px;
+        padding: 10px 12px;
+    }
+    .chat-mute-tts-play {
+        min-height: 44px;
+        width: 100%;
+        padding: 8px 10px;
+    }
+    .session-chat-composer {
+        flex-wrap: nowrap;
+        gap: 8px;
+        padding: 10px;
+        padding-bottom: calc(10px + env(safe-area-inset-bottom, 0px));
+    }
+    .session-chat-composer input {
+        min-height: 44px;
+        height: 44px;
+        font-size: 16px;
+    }
+    .session-chat-composer button {
+        height: 44px;
+        min-height: 44px;
+        min-width: 64px;
+        flex-shrink: 0;
+    }
 }
 .video-demo-tip {
     margin-top: 16px;
@@ -2100,7 +2189,7 @@ body.consultation-mobile-call-fullscreen .mc-provider-video-dock .mc-session-flo
             </div>
             <div class="session-chat-composer">
                 <input type="text" id="sessionMessageInput" placeholder="Message patient..." aria-label="Message patient">
-                <button type="button" class="session-btn primary" id="sessionSendBtn" style="height:38px;">Send</button>
+                <button type="button" class="session-btn primary" id="sessionSendBtn">Send</button>
             </div>
         </div>
 
@@ -2544,10 +2633,13 @@ function renderSessionChat() {
             : '';
         row.innerHTML = `
             <div class="chat-avatar">${escapeChatHtml(mine ? sessionProviderInitials : sessionPatientInitials)}</div>
-            <div>
+            <div class="chat-msg-col">
+                <div class="chat-msg-head">
+                    ${mine ? '' : '<span class="chat-msg-name">' + escapeChatHtml(message.sender_name || (mine ? 'You' : 'Patient')) + '</span>'}
+                    <div class="chat-time">${escapeChatHtml(message.time || '')}</div>
+                </div>
                 ${MedConnectMessages.buildChatBubbleHtml(message, mine ? 'mine' : 'patient')}
                 ${playBtn}
-                <div class="chat-time" style="${mine ? 'text-align:right' : ''}">${escapeChatHtml(message.time || '')}</div>
             </div>
         `;
         fragment.appendChild(row);
