@@ -79,29 +79,33 @@
 
       const providerVideo = isProvider ? localV : remoteV;
       const patientVideo = isProvider ? remoteV : localV;
+      const mainVideo = providerIsMain() ? providerVideo : patientVideo;
+      const pipVideo = providerIsMain() ? patientVideo : providerVideo;
 
-      mainSlot.innerHTML = '';
-      pipSlot.innerHTML = '';
-
-      if (providerIsMain()) {
-        mainSlot.appendChild(providerVideo);
-        pipSlot.appendChild(patientVideo);
-        if (els.mainLabel) els.mainLabel.textContent = providerName;
-        if (els.pipLabel) els.pipLabel.textContent = patientName;
-      } else {
-        mainSlot.appendChild(patientVideo);
-        pipSlot.appendChild(providerVideo);
-        if (els.mainLabel) els.mainLabel.textContent = patientName;
-        if (els.pipLabel) els.pipLabel.textContent = providerName;
+      // Move nodes only when needed. innerHTML = '' remounts <video> and on iOS
+      // that pauses playback and can drop the remote audio track.
+      if (mainSlot.firstElementChild !== mainVideo) {
+        mainSlot.appendChild(mainVideo);
+      }
+      if (pipSlot.firstElementChild !== pipVideo) {
+        pipSlot.appendChild(pipVideo);
       }
 
-      providerVideo.style.display = 'block';
-      patientVideo.style.display = 'block';
+      mainVideo.style.display = 'block';
+      pipVideo.style.display = 'block';
+      mainVideo.setAttribute('playsinline', '');
+      mainVideo.setAttribute('webkit-playsinline', '');
+      pipVideo.setAttribute('playsinline', '');
+      pipVideo.setAttribute('webkit-playsinline', '');
 
-      // Enable sound button stays on main remote area
+      if (els.mainLabel) els.mainLabel.textContent = providerIsMain() ? providerName : patientName;
+      if (els.pipLabel) els.pipLabel.textContent = providerIsMain() ? patientName : providerName;
+
       const enableBtn = q('enableSoundBtn');
-      if (enableBtn && remoteV.parentElement !== mainSlot) {
+      if (enableBtn && remoteV.parentElement === mainSlot && enableBtn.parentElement !== mainSlot) {
         mainSlot.appendChild(enableBtn);
+      } else if (enableBtn && remoteV.parentElement !== mainSlot && enableBtn.parentElement !== pipSlot) {
+        pipSlot.appendChild(enableBtn);
       }
     }
 
@@ -418,18 +422,27 @@
         const newTrack = newStream.getVideoTracks()[0];
         if (!newTrack) return;
 
-        const senderReplace = window.__mcReplaceVideoTrack;
-        if (typeof senderReplace === 'function') {
-          await senderReplace(newTrack);
+        if (window.McWebrtcPeerCall && typeof McWebrtcPeerCall.replaceLocalVideoTrack === 'function') {
+          await McWebrtcPeerCall.replaceLocalVideoTrack(newTrack);
+        } else if (typeof window.__mcReplaceVideoTrack === 'function') {
+          await window.__mcReplaceVideoTrack(newTrack);
+          stream.removeTrack(videoTrack);
+          videoTrack.stop();
+          stream.addTrack(newTrack);
+          localV.srcObject = stream;
         }
 
-        stream.removeTrack(videoTrack);
-        videoTrack.stop();
-        stream.addTrack(newTrack);
-        localV.srcObject = stream;
+        newStream.getTracks().forEach((t) => {
+          if (t !== newTrack) t.stop();
+        });
         mountVideos();
+        if (localV.paused) {
+          const p = localV.play();
+          if (p && typeof p.catch === 'function') p.catch(() => {});
+        }
       } catch (e) {
         console.warn('Camera switch failed:', e);
+        facingMode = facingMode === 'user' ? 'environment' : 'user';
       }
     }
 

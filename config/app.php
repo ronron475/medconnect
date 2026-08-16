@@ -111,7 +111,7 @@ if (!function_exists('medconnect_ice_servers')) {
         $stunEnv = trim((string) (getenv('MEDCONNECT_STUN_URLS') ?: ''));
         $stunUrls = $stunEnv !== ''
             ? array_values(array_filter(array_map('trim', explode(',', $stunEnv))))
-            : ['stun:stun.l.google.com:19302', 'stun:stun1.l.google.com:19302'];
+            : ['stun:stun.l.google.com:19302', 'stun:stun1.l.google.com:19302', 'stun:stun.cloudflare.com:3478'];
 
         $servers = [];
         foreach ($stunUrls as $url) {

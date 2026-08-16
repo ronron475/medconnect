@@ -35,6 +35,7 @@
   var config = {
     peerOptions: {},
     useAutoPeerId: false,
+    originator: false,
     onRecreate: null,
     onNeedsRedial: null,
   };
@@ -359,12 +360,17 @@
     }
   }
 
-  function wirePeerConnection(call) {
+  function wirePeerConnection(call, attempt) {
     if (!call || isCallWired(call)) return;
-    markCallWired(call);
-
     var pc = getPeerConnection(call);
-    if (!pc) return;
+    if (!pc) {
+      var n = attempt || 0;
+      if (n < 20) {
+        setTimeout(function () { wirePeerConnection(call, n + 1); }, 50);
+      }
+      return;
+    }
+    markCallWired(call);
 
     var onIceChange = function () { handleIceStateChange(call); };
     pc.addEventListener('iceconnectionstatechange', onIceChange);
@@ -400,10 +406,28 @@
 
   function handleCall(call) {
     if (!call) return;
-    if (currentCall === call && callHasRemoteStream) return;
-    if (currentCall && currentCall.open && callHasRemoteStream && currentCall.peer === call.peer) return;
+
+    // Glare: both phones dialing at once must not close the live connection.
     if (currentCall && currentCall !== call) {
+      var samePeer = currentCall.peer === call.peer;
+      var existingLive = callHasRemoteStream || (currentCall.open && isCallNegotiating());
+      if (existingLive && samePeer) {
+        try { call.close(); } catch (e) {}
+        return;
+      }
+      if (config.originator && outboundCallInFlight && samePeer) {
+        try { call.close(); } catch (e) {}
+        return;
+      }
       try { currentCall.close(); } catch (e) {}
+      currentCall = null;
+      outboundCallInFlight = false;
+      if (!callHasRemoteStream) callHasRemoteStream = false;
+    }
+
+    if (currentCall === call) {
+      wirePeerConnection(call);
+      return;
     }
 
     currentCall = call;
@@ -474,8 +498,10 @@
   /** ZIP: makeCall */
   function makeCall(receiverId) {
     if (!peerReady || !myStream || !peer || !receiverId) return null;
-    if (currentCall && currentCall.open && callHasRemoteStream) return currentCall;
-    if (outboundCallInFlight) return currentCall;
+    if (currentCall && callHasRemoteStream && isCallConnected()) return currentCall;
+    if (currentCall && (currentCall.open || outboundCallInFlight || isCallNegotiating())) {
+      return currentCall;
+    }
     if (pendingIncomingCall) {
       flushPendingCall();
       return currentCall;
@@ -563,6 +589,7 @@
     options = options || {};
     if (options.peerOptions) config.peerOptions = options.peerOptions;
     config.useAutoPeerId = !!options.useAutoPeerId;
+    config.originator = !!options.originator;
     if (typeof options.onRecreate === 'function') config.onRecreate = options.onRecreate;
     if (typeof options.onNeedsRedial === 'function') config.onNeedsRedial = options.onNeedsRedial;
 
@@ -700,6 +727,45 @@
     scheduleReconnect(reason || 'manual');
   }
 
+  function replaceLocalVideoTrack(newTrack) {
+    if (!newTrack) return Promise.resolve(false);
+    if (myStream) {
+      myStream.getVideoTracks().forEach(function (old) {
+        try { myStream.removeTrack(old); } catch (e) {}
+        try { old.stop(); } catch (e) {}
+      });
+      try { myStream.addTrack(newTrack); } catch (e) {}
+      addLocalVideo(myStream);
+    }
+
+    var pc = getPeerConnection();
+    if (!pc || typeof pc.getSenders !== 'function') return Promise.resolve(true);
+
+    var senders = pc.getSenders();
+    var videoSender = null;
+    for (var i = 0; i < senders.length; i++) {
+      if (senders[i].track && senders[i].track.kind === 'video') {
+        videoSender = senders[i];
+        break;
+      }
+    }
+    if (!videoSender) {
+      for (var j = 0; j < senders.length; j++) {
+        if (!senders[j].track) {
+          videoSender = senders[j];
+          break;
+        }
+      }
+    }
+    if (videoSender && typeof videoSender.replaceTrack === 'function') {
+      return videoSender.replaceTrack(newTrack).then(function () { return true; }).catch(function (err) {
+        console.warn('[McWebrtcPeerCall] replaceTrack failed:', err);
+        return false;
+      });
+    }
+    return Promise.resolve(true);
+  }
+
   global.McWebrtcPeerCall = {
     init: init,
     listenToCall: listenToCall,
@@ -709,6 +775,7 @@
     refreshRemoteMedia: refreshRemoteMedia,
     toggleVideo: toggleVideo,
     toggleAudio: toggleAudio,
+    replaceLocalVideoTrack: replaceLocalVideoTrack,
     setLocalStream: setLocalStream,
     getLocalStream: getLocalStream,
     getPeer: function () { return peer; },
