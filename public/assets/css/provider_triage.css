@@ -370,7 +370,7 @@
 .triage-modal__dialog--review {
     max-width: min(760px, calc(100vw - 32px));
     width: 100%;
-    height: auto;
+    height: fit-content;
     max-height: min(88dvh, 820px);
     display: flex;
     flex-direction: column;
@@ -402,8 +402,8 @@
 }
 
 .triage-modal__body {
-    flex: 1 1 0;
-    min-height: 0;
+    flex: 1 1 auto;
+    min-height: 12rem;
     overflow-x: hidden;
     overflow-y: auto;
     overscroll-behavior: contain;
@@ -963,7 +963,7 @@
     .triage-modal__dialog--review {
         max-width: 100%;
         width: 100%;
-        height: auto;
+        height: min(92dvh, 100%);
         max-height: calc(100dvh - env(safe-area-inset-top, 0px));
         border-radius: 16px 16px 0 0;
         margin-top: env(safe-area-inset-top, 0px);
