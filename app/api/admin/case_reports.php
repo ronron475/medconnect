@@ -28,17 +28,6 @@ try {
                 echo json_encode(['success' => false, 'message' => 'Report not found.']);
                 exit;
             }
-            require_once dirname(dirname(dirname(__DIR__))) . '/app/includes/complaint_evidence.php';
-            if ((string) ($detail['source_type'] ?? '') !== case_report_source_video() && !empty($detail['triage_id'])) {
-                $detail['supporting_evidence'] = complaint_evidence_provider_case_meta(
-                    $pdo,
-                    (int) ($detail['triage_id'] ?? 0),
-                    (int) ($detail['patient_id'] ?? 0),
-                    (string) ($detail['assessed_at'] ?? '')
-                );
-            } else {
-                $detail['supporting_evidence'] = ['has_file' => false];
-            }
             echo json_encode(['success' => true, 'report' => $detail]);
             exit;
         }

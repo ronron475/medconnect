@@ -208,93 +208,6 @@
     return 'MC-' + String(id).padStart(6, '0');
   }
 
-  function evidenceItems(evidence) {
-    if (!evidence || !evidence.has_evidence) {
-      return [];
-    }
-    if (Array.isArray(evidence.items) && evidence.items.length) {
-      return evidence.items;
-    }
-    if (evidence.view_url) {
-      return [evidence];
-    }
-    return [];
-  }
-
-  function renderEvidenceCard(item) {
-    var url = String(item.view_url || '');
-    if (!url) {
-      return '';
-    }
-    var filename = esc(item.original_filename || 'Supporting evidence');
-    var uploaded = esc(item.uploaded_label || '');
-    var isVideo = item.media_type === 'video';
-    var safeUrl = attrEsc(url);
-    var preview = isVideo
-      ? '<video src="' + safeUrl + '" controls playsinline preload="metadata" class="triage-evidence-card__media"></video>'
-      : '<img src="' + safeUrl + '" alt="' + filename + '" class="triage-evidence-card__thumb">';
-    var actionLabel = isVideo ? 'Open video' : 'View full size';
-    var metaParts = [];
-    if (item.original_filename) metaParts.push('<span class="triage-evidence-card__filename">' + filename + '</span>');
-    if (uploaded) metaParts.push('<span class="triage-evidence-card__date">' + uploaded + '</span>');
-
-    return '<article class="triage-evidence-card">'
-      + '<div class="triage-evidence-card__preview">' + preview + '</div>'
-      + '<div class="triage-evidence-card__body">'
-      + (metaParts.length ? '<p class="triage-evidence-card__meta">' + metaParts.join('') + '</p>' : '')
-      + '<a href="' + safeUrl + '" target="_blank" rel="noopener noreferrer" class="mc-btn mc-btn--outline triage-evidence-card__btn">'
-      + esc(actionLabel) + '</a>'
-      + '</div>'
-      + '</article>';
-  }
-
-  function renderSupportingEvidence(t) {
-    var evidenceSection = document.getElementById('modalEvidenceSection');
-    var listEl = document.getElementById('modalEvidenceList');
-    var evidence = t && t.supporting_evidence && typeof t.supporting_evidence === 'object'
-      ? t.supporting_evidence
-      : {};
-    var items = evidenceItems(evidence);
-
-    if (!evidenceSection) return;
-
-    if (!items.length) {
-      evidenceSection.hidden = true;
-      if (listEl) listEl.innerHTML = '';
-      return;
-    }
-
-    evidenceSection.hidden = false;
-    if (listEl) {
-      listEl.innerHTML = items.map(renderEvidenceCard).join('');
-    }
-  }
-
-  async function loadSupportingEvidence(triageId, caseData) {
-    renderSupportingEvidence(caseData || {});
-    if (!triageId || !cfg.evidenceApi) {
-      return;
-    }
-
-    try {
-      var res = await fetch(cfg.evidenceApi + '?triage_id=' + encodeURIComponent(String(triageId)), {
-        credentials: 'same-origin',
-        headers: { Accept: 'application/json' },
-      });
-      var data = await res.json().catch(function () { return null; });
-      if (!data || !data.success || !data.supporting_evidence) {
-        return;
-      }
-
-      var cached = getTriageCaseById(triageId);
-      if (cached) {
-        cached.supporting_evidence = data.supporting_evidence;
-      }
-
-      renderSupportingEvidence({ supporting_evidence: data.supporting_evidence });
-    } catch (e) { /* ignore */ }
-  }
-
   function setItemHidden(id, hidden) {
     var el = document.getElementById(id);
     if (el) el.hidden = !!hidden;
@@ -354,7 +267,6 @@
 
     var complaintText = String(t.complaint || '').trim();
     document.getElementById('modalComplaint').textContent = complaintText || 'No detailed complaint provided.';
-    loadSupportingEvidence(t.id, t);
     document.getElementById('overrideLevel').value = t.level || '3';
 
     var urgencyEl = document.getElementById('modalUrgency');

@@ -16,7 +16,6 @@ require_once dirname(dirname(dirname(__DIR__))) . '/app/includes/bhw_patient_wor
 require_once dirname(dirname(dirname(__DIR__))) . '/app/includes/notification_events.php';
 require_once dirname(dirname(dirname(__DIR__))) . '/app/includes/triage_provider_assignment.php';
 require_once dirname(dirname(dirname(__DIR__))) . '/app/includes/patient_symptoms_review_submit.php';
-require_once dirname(dirname(dirname(__DIR__))) . '/app/includes/complaint_evidence.php';
 require_once dirname(dirname(dirname(__DIR__))) . '/app/includes/patient_chief_complaints.php';
 require_once dirname(dirname(dirname(__DIR__))) . '/app/includes/patient_booking_status.php';
 require_once dirname(dirname(dirname(__DIR__))) . '/app/includes/user_account_status.php';
@@ -98,12 +97,6 @@ if ($forceNewConcern) {
 
 if (empty($symptoms) && $complaint === '') {
     Api::error('Please provide symptoms or a complaint.');
-}
-
-$evidenceFile = $_FILES['supporting_evidence'] ?? null;
-$evidenceValidation = complaint_evidence_validate_upload(is_array($evidenceFile) ? $evidenceFile : null);
-if ($evidenceValidation !== null) {
-    Api::error((string) $evidenceValidation['error']);
 }
 
 $symptomList = array_values(array_filter(array_map(static function ($s) {
@@ -198,8 +191,6 @@ try {
 
             $existingTriageId = (int) ($openCareTipsRow['id'] ?? 0);
             $assignedId = (int) ($openCareTipsRow['assigned_provider_id'] ?? 0);
-
-            complaint_evidence_try_attach($pdo, $patient_id, $existingTriageId, is_array($evidenceFile) ? $evidenceFile : null);
 
             Api::success([
                 'booked'                   => false,
@@ -301,8 +292,6 @@ try {
             $registrationComplaintRef !== '' ? $registrationComplaintRef : null
         );
 
-        complaint_evidence_try_attach($pdo, $patient_id, $triageId, is_array($evidenceFile) ? $evidenceFile : null);
-
         try {
             BhwPatientWorkflow::onPatientPortalEmergency($pdo, $patient_id, [
                 'triage_id'   => $triageId,
@@ -365,8 +354,6 @@ try {
             null,
             $registrationComplaintRef !== '' ? $registrationComplaintRef : null
         );
-
-        complaint_evidence_try_attach($pdo, $patient_id, $triageId, is_array($evidenceFile) ? $evidenceFile : null);
 
         NotificationEvents::aiSelfCareReviewRequired(
             $pdo,
@@ -662,14 +649,6 @@ try {
         $consultation_id,
         $slot_id,
         $registrationComplaintRef !== '' ? $registrationComplaintRef : null
-    );
-
-    complaint_evidence_try_attach(
-        $pdo,
-        $patient_id,
-        $triageId,
-        is_array($evidenceFile) ? $evidenceFile : null,
-        $consultation_id
     );
 
     try {
