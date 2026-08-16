@@ -259,6 +259,45 @@ body.provider-body .provider-page-body .pch-search input[type="search"]::-webkit
   margin-top: 12px;
 }
 
+.pch-doc-pending {
+  margin: 0;
+  font-size: 12px;
+  color: #64748b;
+  line-height: 1.45;
+}
+
+@media (min-width: 769px) {
+  .pch-consult-card__row {
+    display: grid;
+    grid-template-columns: 11.75rem minmax(0, 1fr);
+    column-gap: 12px;
+    align-items: start;
+    font-size: 13px;
+    line-height: 1.45;
+    margin-top: 6px;
+  }
+
+  .pch-consult-card__row strong {
+    color: #64748b;
+    font-weight: 700;
+  }
+
+  .pch-consult-card__actions {
+    align-items: center;
+  }
+
+  .pch-doc-pending {
+    flex: 1 1 100%;
+    display: block;
+    margin-top: 2px;
+    color: #64748b;
+  }
+
+  .pch-video-block__title {
+    margin-bottom: 8px;
+  }
+}
+
 @media (max-width: 768px) {
   .pch-table th:nth-child(4),
   .pch-table td:nth-child(4) {

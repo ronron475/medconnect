@@ -140,7 +140,7 @@ function pch_filter_url(string $filter): string
             <?php if ($status === 'completed' && !empty($row['clinical_note_finalized'])): ?>
             <a href="<?= htmlspecialchars(ASSET_BASE) ?>/views/provider/medical_records.php?view=patients&amp;patient_id=<?= (int) $patient_detail['id'] ?>&amp;tab=clinical_notes" class="mc-btn mc-btn--outline" style="padding:6px 12px;font-size:11px;">View SOAP</a>
             <?php elseif ($status === 'completed'): ?>
-            <span class="pch-consult-card__row" style="margin:0;">Provider documentation is still in progress.</span>
+            <span class="pch-doc-pending">Provider documentation is still in progress.</span>
             <?php endif; ?>
           </div>
         </article>
