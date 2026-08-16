@@ -47,6 +47,19 @@
   display: none !important;
 }
 
+.mc-session-float-shell.is-ended {
+  background: #f4f8fa;
+}
+
+.mc-session-float-shell.is-ended .mc-session-float-body {
+  background: #f4f8fa;
+}
+
+html[data-theme-resolved='dark'] .mc-session-float-shell.is-ended,
+html[data-theme-resolved='dark'] .mc-session-float-shell.is-ended .mc-session-float-body {
+  background: #0a0a0a;
+}
+
 .mc-session-float-shell.is-fullscreen .mc-session-float-body,
 .mc-session-float-shell.is-chrome-delegated .mc-session-float-body {
   padding-bottom: 0;

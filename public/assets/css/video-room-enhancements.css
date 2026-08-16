@@ -9,21 +9,23 @@ body.mc-vc-call-ended .mc-vc-header,
 body.mc-vc-call-ended .mc-vc-status-bar,
 body.mc-vc-call-ended .mc-vc-panel-toggle,
 body.mc-vc-call-ended .mc-vc-pip,
-body.mc-vc-call-ended .mc-vc-stage {
-  pointer-events: none;
-}
-
-body.mc-vc-call-ended .mc-vc-controls,
-body.mc-vc-call-ended .mc-vc-header,
-body.mc-vc-call-ended .mc-vc-status-bar,
-body.mc-vc-call-ended .mc-vc-panel-toggle,
-body.mc-vc-call-ended .mc-vc-overlay {
-  opacity: 0;
-  visibility: hidden;
+body.mc-vc-call-ended .mc-vc-stage,
+body.mc-vc-call-ended .mc-vc-overlay,
+body.mc-vc-call-ended .mc-vc-waiting-card,
+body.mc-vc-call-ended .mc-vc-more-menu,
+body.is-ended-consultation .mc-vc-controls,
+body.is-ended-consultation .mc-vc-header,
+body.is-ended-consultation .mc-vc-status-bar,
+body.is-ended-consultation .mc-vc-panel-toggle,
+body.is-ended-consultation .mc-vc-pip,
+body.is-ended-consultation .mc-vc-stage {
   display: none !important;
+  pointer-events: none !important;
+  visibility: hidden;
 }
 
-body.mc-vc-call-ended .mc-vc-postcall {
+body.mc-vc-call-ended .mc-vc-postcall,
+body.is-ended-consultation .mc-vc-postcall {
   z-index: 500;
 }
 
@@ -482,26 +484,41 @@ body.mc-vc-panel-open {
   position: fixed;
   inset: 0;
   z-index: 200;
-  background: rgba(15, 23, 42, 0.75);
+  background: #f4f8fa;
   display: flex;
   align-items: center;
   justify-content: center;
   padding: 1rem;
+  overflow: auto;
+  -webkit-overflow-scrolling: touch;
 }
 
 .mc-vc-postcall__card {
   background: #fff;
   color: #0f172a;
   border-radius: 16px;
-  padding: 1.75rem;
+  padding: 1.75rem 1.5rem;
   max-width: 420px;
   width: 100%;
   text-align: center;
+  box-shadow: 0 10px 32px rgba(1, 42, 74, 0.08);
+  border: 1px solid #e2edf1;
+}
+
+.mc-vc-postcall__card h2,
+.mc-vc-postcall__card #mcVcPostCallTitle {
+  margin: 0 0 0.75rem;
+  font-size: 1.35rem;
+  font-weight: 800;
+  color: #012a4a;
+  letter-spacing: -0.02em;
 }
 
 .mc-vc-postcall__sub {
-  color: #64748b;
+  color: #334155;
   margin: 0 0 1.25rem;
+  line-height: 1.55;
+  font-size: 0.98rem;
 }
 
 .mc-vc-postcall__meta:not(:has(div:not([hidden]))) {
@@ -511,17 +528,22 @@ body.mc-vc-panel-open {
 .mc-vc-postcall__meta div {
   display: flex;
   justify-content: space-between;
+  align-items: baseline;
   gap: 12px;
-  padding: 8px 0;
+  padding: 10px 0;
   border-bottom: 1px solid #e2e8f0;
+}
+
+.mc-vc-postcall__meta div[hidden] {
+  display: none !important;
 }
 
 .mc-vc-postcall__meta dt {
   margin: 0;
-  font-size: 0.75rem;
+  font-size: 0.72rem;
   font-weight: 700;
   text-transform: uppercase;
-  letter-spacing: 0.04em;
+  letter-spacing: 0.06em;
   color: #64748b;
 }
 
@@ -529,12 +551,13 @@ body.mc-vc-panel-open {
   margin: 0;
   font-weight: 700;
   color: #0f172a;
+  font-size: 0.98rem;
 }
 
 .mc-vc-postcall__saved {
-  margin: 0 0 1.25rem;
+  margin: 1.1rem 0 1.25rem;
   color: #0f766e;
-  font-weight: 600;
+  font-weight: 700;
 }
 
 .mc-vc-postcall__actions {
@@ -544,11 +567,13 @@ body.mc-vc-panel-open {
 }
 
 .mc-vc-postcall__btn {
-  display: block;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   padding: 0.75rem 1rem;
   border-radius: 10px;
   text-decoration: none;
-  font-weight: 600;
+  font-weight: 700;
   border: 1px solid #e2e8f0;
   background: #f8fafc;
   color: #0f172a;
@@ -556,6 +581,7 @@ body.mc-vc-panel-open {
   min-height: 48px;
   font-size: 0.95rem;
   -webkit-tap-highlight-color: transparent;
+  box-sizing: border-box;
 }
 
 .mc-vc-postcall__btn--primary {
@@ -712,29 +738,33 @@ body.mc-vc-panel-open {
   }
 
   .mc-vc-postcall {
-    padding: calc(1rem + env(safe-area-inset-top, 0px)) calc(1rem + env(safe-area-inset-right, 0px)) calc(1rem + env(safe-area-inset-bottom, 0px)) calc(1rem + env(safe-area-inset-left, 0px));
-    align-items: flex-end;
+    padding: calc(1.25rem + env(safe-area-inset-top, 0px)) calc(1rem + env(safe-area-inset-right, 0px)) calc(1.25rem + env(safe-area-inset-bottom, 0px)) calc(1rem + env(safe-area-inset-left, 0px));
+    align-items: center;
+    justify-content: center;
   }
 
   .mc-vc-postcall__card {
-    border-radius: 16px 16px 0 0;
-    padding: 1.25rem 1rem calc(1rem + env(safe-area-inset-bottom, 0px));
-    max-height: 90dvh;
-    overflow: auto;
-    -webkit-overflow-scrolling: touch;
-  }
-
-  body.role-patient.mc-vc-call-ended .mc-vc-postcall {
-    padding: 0;
-    align-items: stretch;
-    background: #0b1220;
-  }
-
-  body.role-patient .mc-vc-postcall__card {
-    border-radius: 0;
-    min-height: 100dvh;
+    border-radius: 16px;
+    padding: 1.5rem 1.15rem calc(1.15rem + env(safe-area-inset-bottom, 0px));
     max-height: none;
+    overflow: visible;
+  }
+
+  body.role-patient.mc-vc-call-ended .mc-vc-postcall,
+  body.role-patient.is-ended-consultation .mc-vc-postcall {
+    padding: calc(1.25rem + env(safe-area-inset-top, 0px)) 1rem calc(1.25rem + env(safe-area-inset-bottom, 0px));
+    align-items: center;
     justify-content: center;
+    background: #f4f8fa;
+  }
+
+  body.role-patient.mc-vc-call-ended .mc-vc-postcall__card,
+  body.role-patient.is-ended-consultation .mc-vc-postcall__card,
+  body.role-patient .mc-vc-postcall__card {
+    border-radius: 16px;
+    min-height: 0;
+    max-height: none;
+    justify-content: flex-start;
   }
 
   body.role-patient .mc-vc-controls {
@@ -824,4 +854,57 @@ body.mc-vc-panel-open {
   .mc-vc-info-card__title {
     font-size: 0.95rem;
   }
+}
+
+html[data-theme-resolved='dark'] .mc-vc-postcall {
+  background: #0a0a0a;
+}
+
+html[data-theme-resolved='dark'] .mc-vc-postcall__card {
+  background: #1c1c1c;
+  color: #f8fafc;
+  border-color: #2a2a2a;
+  box-shadow: 0 10px 32px rgba(0, 0, 0, 0.45);
+}
+
+html[data-theme-resolved='dark'] .mc-vc-postcall__card h2,
+html[data-theme-resolved='dark'] .mc-vc-postcall__card #mcVcPostCallTitle {
+  color: #f8fafc;
+}
+
+html[data-theme-resolved='dark'] .mc-vc-postcall__sub {
+  color: #cbd5e1;
+}
+
+html[data-theme-resolved='dark'] .mc-vc-postcall__meta div {
+  border-bottom-color: #2a2a2a;
+}
+
+html[data-theme-resolved='dark'] .mc-vc-postcall__meta dt {
+  color: #a1a1aa;
+}
+
+html[data-theme-resolved='dark'] .mc-vc-postcall__meta dd {
+  color: #f8fafc;
+}
+
+html[data-theme-resolved='dark'] .mc-vc-postcall__saved {
+  color: #5eead4;
+}
+
+html[data-theme-resolved='dark'] .mc-vc-postcall__btn {
+  background: #141414;
+  border-color: #2a2a2a;
+  color: #f8fafc;
+}
+
+html[data-theme-resolved='dark'] .mc-vc-postcall__btn--primary {
+  background: #2563eb;
+  border-color: #2563eb;
+  color: #fff;
+}
+
+html[data-theme-resolved='dark'] body.role-patient.mc-vc-call-ended .mc-vc-postcall,
+html[data-theme-resolved='dark'] body.role-patient.is-ended-consultation .mc-vc-postcall {
+  background: #0a0a0a;
 }

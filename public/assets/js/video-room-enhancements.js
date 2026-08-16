@@ -23,7 +23,8 @@
   function hidePostCall() {
     const modal = q('mcVcPostCallModal');
     if (modal) modal.hidden = true;
-    document.body.classList.remove('mc-vc-call-ended');
+    document.body.classList.remove('mc-vc-call-ended', 'is-ended-consultation');
+    document.body.classList.add('is-active-consultation');
     callEnded = false;
   }
 
@@ -569,8 +570,12 @@
       }
     }
     if (durationEl && durationRow) {
-      if (data.duration_label) {
-        durationEl.textContent = data.duration_label;
+      const liveTimer = document.getElementById('consultDuration');
+      const liveLabel = liveTimer ? String(liveTimer.textContent || '').trim() : '';
+      const apiLabel = String(data.duration_label || '').trim();
+      const label = (liveLabel && liveLabel !== '00:00') ? liveLabel : apiLabel;
+      if (label) {
+        durationEl.textContent = label;
         durationRow.hidden = false;
       }
     }
@@ -599,7 +604,8 @@
     if (!modal) return;
     postCallShown = true;
     modal.hidden = false;
-    document.body.classList.add('mc-vc-call-ended');
+    document.body.classList.add('mc-vc-call-ended', 'is-ended-consultation');
+    document.body.classList.remove('is-active-consultation');
     const endModal = document.getElementById('endCallModal');
     if (endModal) endModal.classList.remove('show');
     const controls = q('mcVcControls');
@@ -613,6 +619,14 @@
     if (gate) gate.classList.add('is-hidden');
     const panelToggle = q('mcVcPanelToggle');
     if (panelToggle) panelToggle.hidden = true;
+    const moreMenu = q('mcVcMoreMenu');
+    if (moreMenu) moreMenu.hidden = true;
+    if (global.consultUi && typeof global.consultUi.closeMoreMenu === 'function') {
+      global.consultUi.closeMoreMenu();
+    }
+    if (global.consultUi && typeof global.consultUi.stopMonitors === 'function') {
+      global.consultUi.stopMonitors();
+    }
     setPanelOpen(false);
     stopChatPoll();
     if (IS_PATIENT) {
@@ -630,7 +644,8 @@
       if (type === 'medconnect:shell-mode') {
         document.body.setAttribute('data-shell-mode', e.data.mode || '');
         if (e.data.ended) {
-          document.body.classList.add('mc-vc-call-ended');
+          document.body.classList.add('mc-vc-call-ended', 'is-ended-consultation');
+          document.body.classList.remove('is-active-consultation');
           window.__mcCallEnded = true;
         }
         return;
