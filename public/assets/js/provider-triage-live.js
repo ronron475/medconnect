@@ -67,15 +67,39 @@
     });
   }
 
+  function classificationDetail(t, badge) {
+    if (t.classification_detail) {
+      return String(t.classification_detail);
+    }
+    var label = String(t.label || '').trim();
+    var badgeText = String(badge || '').trim();
+    if (!label || label.toLowerCase() === badgeText.toLowerCase()) {
+      return '';
+    }
+    var escaped = badgeText.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    var paren = label.match(new RegExp('^' + escaped + '\\s*(\\([^)]*\\))\\s*$', 'i'));
+    if (paren) {
+      return paren[1];
+    }
+    var stripped = label.replace(new RegExp('^' + escaped + '\\s*', 'i'), '').trim();
+    if (stripped && stripped.toLowerCase() !== label.toLowerCase()) {
+      return stripped;
+    }
+    if (label.indexOf('(') === -1 && label.length <= 24) {
+      return '(' + label + ')';
+    }
+    return label;
+  }
+
   function renderWorkflow(t) {
     var badges = Array.isArray(t.workflow_badges) ? t.workflow_badges : [];
-    if (!badges.length) {
-      return '<span class="triage-badge triage-badge--pending">Pending</span>';
-    }
-    return badges.map(function (badge) {
-      return '<span class="triage-badge triage-badge--' + esc(badge.class || 'pending') + '">'
-        + esc(badge.label || '') + '</span>';
-    }).join(' ');
+    var html = !badges.length
+      ? '<span class="triage-badge triage-badge--pending">Pending</span>'
+      : badges.map(function (badge) {
+          return '<span class="triage-badge triage-badge--' + esc(badge.class || 'pending') + '">'
+            + esc(badge.label || '') + '</span>';
+        }).join(' ');
+    return '<div class="triage-status">' + html + '</div>';
   }
 
   function renderActions(t) {
@@ -89,12 +113,16 @@
     var isUrgent = t.urgency === 'Urgent';
     var tipsPending = !!(t.needs_tips_approval || t.can_approve_recommendations);
     var rowClass = (isUrgent || tipsPending ? 'triage-row-urgent' : '') + (t.expired ? ' triage-row-expired' : '');
-    var classification = isUrgent
-      ? '<span class="triage-badge triage-badge--urgent">Urgent</span>'
-      : '<span class="triage-badge triage-badge--routine">Non-Urgent</span>';
-    if (t.label) {
-      classification += '<div class="text-xs text-muted" style="margin-top: 4px;">' + esc(t.label) + '</div>';
+    var badgeLabel = isUrgent ? 'Urgent' : 'Non-Urgent';
+    var classification = '<div class="triage-classification">'
+      + (isUrgent
+        ? '<span class="triage-badge triage-badge--urgent">Urgent</span>'
+        : '<span class="triage-badge triage-badge--routine">Non-Urgent</span>');
+    var detail = classificationDetail(t, badgeLabel);
+    if (detail) {
+      classification += '<div class="triage-classification__detail">' + esc(detail) + '</div>';
     }
+    classification += '</div>';
 
     return '<tr class="' + rowClass.trim() + '"'
       + ' data-urgency="' + (isUrgent ? 'urgent' : 'non-urgent') + '"'
@@ -105,7 +133,7 @@
       + '<td data-label="Patient" style="font-weight: 700; color: var(--mc-navy-dark);">' + esc(t.name) + '</td>'
       + '<td data-label="Patient Complaint"><span class="triage-complaint" title="' + esc(t.complaint || '—') + '">' + esc(t.complaint || '—') + '</span></td>'
       + '<td data-label="AI Classification">' + classification + '</td>'
-      + '<td data-label="Submitted" style="white-space: nowrap; font-size: 12px; color: var(--mc-slate-muted);">' + esc(t.date) + '<br>' + esc(t.time) + '</td>'
+      + '<td data-label="Submitted"><div class="triage-submitted">' + esc(t.date) + '<br>' + esc(t.time) + '</div></td>'
       + '<td data-label="Status">' + renderWorkflow(t) + '</td>'
       + '<td data-label="Action">' + renderActions(t) + '</td>'
       + '</tr>';

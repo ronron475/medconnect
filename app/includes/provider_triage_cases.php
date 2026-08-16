@@ -6,6 +6,36 @@ require_once __DIR__ . '/complaint_evidence.php';
 require_once __DIR__ . '/case_reports.php';
 
 /**
+ * Qualifier under the AI classification badge, without repeating Urgent / Non-Urgent.
+ * "Non-Urgent (Routine)" → "(Routine)".
+ */
+function provider_triage_classification_detail(string $badge, string $label): string
+{
+    $badge = trim($badge);
+    $label = trim($label);
+    if ($label === '' || strcasecmp($label, $badge) === 0) {
+        return '';
+    }
+
+    if ($badge !== '' && preg_match('/^' . preg_quote($badge, '/') . '\s*(\(.*\))\s*$/i', $label, $m)) {
+        return $m[1];
+    }
+
+    if ($badge !== '') {
+        $stripped = trim((string) preg_replace('/^' . preg_quote($badge, '/') . '\s*/i', '', $label));
+        if ($stripped !== '' && strcasecmp($stripped, $label) !== 0) {
+            return $stripped;
+        }
+    }
+
+    if (!str_contains($label, '(') && strlen($label) <= 24) {
+        return '(' . $label . ')';
+    }
+
+    return $label;
+}
+
+/**
  * Load triage cases visible to a provider
  * (consultations, booked slots, or recent digital referrals — including emergency-only).
  *
@@ -295,6 +325,10 @@ function provider_triage_cases_load(PDO $pdo, int $providerId): array
             'level'                 => (string) ($t['triage'] ?? '3'),
             'urgency'               => $urgencyBucket,
             'label'                 => (string) ($t['urgency_label'] ?? ''),
+            'classification_detail' => provider_triage_classification_detail(
+                $urgencyBucket,
+                (string) ($t['urgency_label'] ?? '')
+            ),
             'assessed_at'           => (string) ($t['assessed_at'] ?? ''),
             'time'                  => date('g:i A', strtotime($t['assessed_at'])),
             'date'                  => date('M j, Y', strtotime($t['assessed_at'])),

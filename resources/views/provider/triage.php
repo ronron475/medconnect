@@ -143,27 +143,33 @@ $pending_count    = count(array_filter($display_cases, fn($t) => empty($t['revie
             </span>
           </td>
           <td data-label="AI Classification">
-            <?php if ($is_urgent): ?>
-            <span class="triage-badge triage-badge--urgent">Urgent</span>
-            <?php else: ?>
-            <span class="triage-badge triage-badge--routine">Non-Urgent</span>
-            <?php endif; ?>
-            <?php if (!empty($t['label'])): ?>
-            <div class="text-xs text-muted" style="margin-top: 4px;"><?= htmlspecialchars($t['label']) ?></div>
-            <?php endif; ?>
+            <div class="triage-classification">
+              <?php if ($is_urgent): ?>
+              <span class="triage-badge triage-badge--urgent">Urgent</span>
+              <?php else: ?>
+              <span class="triage-badge triage-badge--routine">Non-Urgent</span>
+              <?php endif; ?>
+              <?php if (!empty($t['classification_detail'])): ?>
+              <div class="triage-classification__detail"><?= htmlspecialchars($t['classification_detail']) ?></div>
+              <?php endif; ?>
+            </div>
           </td>
-          <td data-label="Submitted" style="white-space: nowrap; font-size: 12px; color: var(--mc-slate-muted);">
-            <?= htmlspecialchars($t['date']) ?><br><?= htmlspecialchars($t['time']) ?>
+          <td data-label="Submitted">
+            <div class="triage-submitted">
+              <?= htmlspecialchars($t['date']) ?><br><?= htmlspecialchars($t['time']) ?>
+            </div>
           </td>
           <td data-label="Status">
-            <?php foreach ($t['workflow_badges'] ?? [] as $badge): ?>
-            <span class="triage-badge triage-badge--<?= htmlspecialchars((string) $badge['class']) ?>">
-              <?= htmlspecialchars((string) $badge['label']) ?>
-            </span>
-            <?php endforeach; ?>
-            <?php if (empty($t['workflow_badges'])): ?>
-            <span class="triage-badge triage-badge--pending">Pending</span>
-            <?php endif; ?>
+            <div class="triage-status">
+              <?php foreach ($t['workflow_badges'] ?? [] as $badge): ?>
+              <span class="triage-badge triage-badge--<?= htmlspecialchars((string) $badge['class']) ?>">
+                <?= htmlspecialchars((string) $badge['label']) ?>
+              </span>
+              <?php endforeach; ?>
+              <?php if (empty($t['workflow_badges'])): ?>
+              <span class="triage-badge triage-badge--pending">Pending</span>
+              <?php endif; ?>
+            </div>
           </td>
           <td data-label="Action">
             <div class="triage-actions">
