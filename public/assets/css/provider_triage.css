@@ -814,7 +814,8 @@
 
 .triage-rec-edit {
     width: 100%;
-    min-height: 180px;
+    min-height: 7.5rem;
+    max-height: min(42vh, 20rem);
     resize: vertical;
     font: inherit;
     color: #0f172a;
@@ -824,7 +825,12 @@
     padding: 12px 14px;
     box-sizing: border-box;
     line-height: 1.55;
-    overflow-y: hidden;
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+    word-break: break-word;
+    overflow-x: hidden;
+    overflow-y: auto;
+    overscroll-behavior: contain;
     field-sizing: content;
 }
 
@@ -988,11 +994,11 @@
     }
 
     .triage-rec-edit {
-        min-height: 96px;
-        max-height: 140px;
+        min-height: 6.5rem;
+        max-height: min(36vh, 16.5rem);
         font-size: 13px;
+        overflow-x: hidden;
         overflow-y: auto;
-        field-sizing: fixed;
         resize: none;
     }
 
