@@ -993,6 +993,18 @@
     alertEl.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
   }
 
+  function setBookingConfirmed(confirmed) {
+    const page = document.querySelector('.patient-triage-page');
+    const card = document.querySelector('.patient-triage-form');
+    const panel = document.getElementById('patientTriageBookedPanel');
+    if (page) page.classList.toggle('is-booked', !!confirmed);
+    if (card) card.classList.toggle('is-booked', !!confirmed);
+    if (panel) panel.hidden = !confirmed;
+    if (confirmed && card) {
+      card.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  }
+
   const BOOKING_OVERLAY_STEPS = [
     'Reviewing your health concern…',
     'Confirming provider availability…',
@@ -1109,6 +1121,19 @@
 
     const alertEl = document.getElementById('triageFormAlert');
     const submitBtn = form.querySelector('button[type="submit"]');
+    const changeTimeBtn = document.getElementById('patientTriageChangeTime');
+    if (changeTimeBtn) {
+      changeTimeBtn.addEventListener('click', function () {
+        setBookingConfirmed(false);
+        if (typeof window.refreshBookingPicker === 'function') {
+          window.refreshBookingPicker(true);
+        }
+        const slotWrap = document.getElementById('bookingSlotsWrap');
+        if (slotWrap) {
+          slotWrap.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+      });
+    }
 
     // Do not prefill current complaint from registration — registration text is reference-only in the UI.
     try {
@@ -1282,9 +1307,7 @@
                 : (data.message || 'Your visit was recorded, but the slot could not be booked.')
             );
             if (booked) {
-              if (typeof window.refreshBookingPicker === 'function') {
-                window.refreshBookingPicker(true);
-              }
+              setBookingConfirmed(true);
               if (typeof window.refreshConsultationStatus === 'function') {
                 window.refreshConsultationStatus();
               }

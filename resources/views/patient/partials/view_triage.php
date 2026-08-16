@@ -20,7 +20,7 @@ $locked_provider_name = trim((string) ($locked_provider_name ?? ''));
 $locked_assigned_has_slots = !empty($locked_assigned_has_slots);
 $locked_alternate_available = !empty($locked_alternate_available);
 ?>
-<h2 class="text-h2 mb-md">Book Consultation</h2>
+<h2 class="text-h2 mb-md patient-triage-page__title">Book Consultation</h2>
 <?php if (!empty($review_booking_ctx['locked']) && $locked_provider_name !== ''): ?>
 <p class="text-sm text-muted patient-triage-lead">
   Your care tips doctor is <strong><?= htmlspecialchars($locked_provider_name) ?></strong>.
@@ -179,6 +179,13 @@ $locked_alternate_available = !empty($locked_alternate_available);
     </p>
     <?php endif; ?>
   </form>
+  <div id="patientTriageBookedPanel" class="patient-triage-booked" hidden>
+    <p class="patient-triage-booked__hint">Your video visit is confirmed. Open My Sessions when it is time to join, or change the time if you still need a different slot today.</p>
+    <div class="patient-triage-booked__actions">
+      <a class="mc-btn mc-btn--primary" href="<?= htmlspecialchars((defined('ASSET_BASE') ? ASSET_BASE : '') . '/views/patient/consultations.php') ?>">View my session</a>
+      <button type="button" class="mc-btn mc-btn--outline" id="patientTriageChangeTime">Change time</button>
+    </div>
+  </div>
 </div>
 
 <!-- Silent booking overlay (no technical AI output) -->
