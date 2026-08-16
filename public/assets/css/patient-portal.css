@@ -510,6 +510,45 @@ body.mc-urgency-modal-open {
   color: #15803d;
 }
 
+.mc-urgency-lang {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin: 0 0 14px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #64748b;
+}
+
+.mc-urgency-lang__label {
+  white-space: nowrap;
+}
+
+.mc-urgency-lang__select {
+  min-height: 36px;
+  min-width: 9.5rem;
+  max-width: 100%;
+  padding: 4px 8px;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  background: #fff;
+  color: #0f172a;
+  font-size: 0.8125rem;
+  font-weight: 600;
+}
+
+.mc-urgency-lang__select:focus-visible {
+  outline: 2px solid #0d9488;
+  outline-offset: 2px;
+}
+
+@media (max-width: 420px) {
+  .mc-urgency-lang {
+    flex-wrap: wrap;
+  }
+}
+
 .mc-urgency-modal__title {
   margin: 0 0 10px;
   font-size: 1.35rem;

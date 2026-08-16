@@ -23,8 +23,16 @@ $bookUrl = $asset . '/views/patient/triage.php';
         <line x1="12" y1="17" x2="12.01" y2="17"/>
       </svg>
     </div>
-    <p class="mc-urgency-modal__eyebrow" id="mcPatientUrgencyEyebrow">Important</p>
-    <h2 class="mc-urgency-modal__title" id="mcPatientUrgencyTitle">Seek emergency care</h2>
+    <p class="mc-urgency-modal__eyebrow" id="mcPatientUrgencyEyebrow">NON-URGENT</p>
+    <h2 class="mc-urgency-modal__title" id="mcPatientUrgencyTitle">Routine Care Recommended</h2>
+    <label class="mc-urgency-lang" for="mcPatientUrgencyLang">
+      <span class="mc-urgency-lang__label" data-i18n="language">Language</span>
+      <select id="mcPatientUrgencyLang" class="mc-urgency-lang__select" aria-label="Language">
+        <option value="en">English</option>
+        <option value="fil">Filipino</option>
+        <option value="hil">Hiligaynon</option>
+      </select>
+    </label>
     <p class="mc-urgency-modal__message" id="mcPatientUrgencyMessage">
       Emergency symptoms were detected. Please go to the nearest hospital or emergency department.
       Online self-care tips and teleconsultation are not appropriate for this case.
@@ -36,13 +44,13 @@ $bookUrl = $asset . '/views/patient/triage.php';
     </ul>
 
     <div id="mcPatientUrgencySlots" class="mc-urgency-slots" hidden>
-      <p class="mc-urgency-slots__heading">Soonest available today</p>
+      <p class="mc-urgency-slots__heading" data-i18n="slots_heading">Soonest available today</p>
       <div id="mcPatientUrgencySlotsList" class="mc-urgency-slots__list" role="list"></div>
       <p id="mcPatientUrgencySlotsStatus" class="mc-urgency-slots__status" hidden role="status"></p>
     </div>
 
     <div class="mc-urgency-modal__actions">
-      <button type="button" class="mc-urgency-modal__btn mc-urgency-modal__btn--ghost" data-mc-urgency-close>
+      <button type="button" class="mc-urgency-modal__btn mc-urgency-modal__btn--ghost" data-mc-urgency-close data-i18n="i_understand">
         I understand
       </button>
       <a
@@ -50,6 +58,7 @@ $bookUrl = $asset . '/views/patient/triage.php';
         class="mc-urgency-modal__btn mc-urgency-modal__btn--primary"
         href="<?= htmlspecialchars($bookUrl) ?>"
         hidden
+        data-i18n="choose_another_time"
       >Choose another time</a>
     </div>
   </div>
