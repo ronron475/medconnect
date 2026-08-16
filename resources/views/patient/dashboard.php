@@ -432,10 +432,20 @@ $patient_page_stylesheets = [
     }
 
     refreshDashJoinButtons();
-    setInterval(refreshDashJoinButtons, 5000);
+    setInterval(function () {
+      if (document.hidden) return;
+      if (window.MedConnectLiveSync && Date.now() - (window.MedConnectLiveSync.lastHubAt() || 0) < 4000) return;
+      refreshDashJoinButtons();
+    }, 5000);
 
     document.addEventListener('visibilitychange', () => {
       if (!document.hidden) refreshDashJoinButtons();
+    });
+    document.addEventListener('medconnect:live-sync', function (ev) {
+      var changed = (ev.detail && ev.detail.changed) || [];
+      if (changed.indexOf('appointments') !== -1 || changed.indexOf('queue') !== -1) {
+        refreshDashJoinButtons();
+      }
     });
 
     if (window.location.hash === '#action-items') {

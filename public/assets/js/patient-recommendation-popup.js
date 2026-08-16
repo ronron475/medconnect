@@ -671,6 +671,9 @@
       upcomingConsult = null;
       var cancelBtn = el('ptRemedyCancelVisit');
       if (cancelBtn) cancelBtn.hidden = true;
+      if (typeof window.refreshBookingPicker === 'function') {
+        window.refreshBookingPicker(true);
+      }
       return {
         ok: true,
         message: data.message || 'Appointment cancelled. Slot freed.',

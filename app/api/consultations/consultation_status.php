@@ -21,6 +21,9 @@ require_once dirname(dirname(dirname(__DIR__))) . '/app/includes/patient_setting
 
 patient_settings_require_patient_ready($pdo);
 $uid = (int) $_SESSION['user_id'];
+if (session_status() === PHP_SESSION_ACTIVE) {
+    session_write_close();
+}
 
 $consultationId = (int) ($_GET['consultation_id'] ?? 0);
 

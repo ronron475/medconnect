@@ -19,6 +19,7 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') !== 'GET') {
 
 $providerId = (int) $_SESSION['user_id'];
 $period = provider_parse_dashboard_period($_GET['period'] ?? 'week');
+Api::releaseSession();
 
 try {
     Api::success(provider_dashboard_live_payload($pdo, $providerId, $period));

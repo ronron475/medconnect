@@ -84,7 +84,11 @@
   function start() {
     if (timer) return;
     fetchUnread();
-    timer = global.setInterval(fetchUnread, POLL_MS);
+    timer = global.setInterval(function () {
+      if (document.hidden) return;
+      if (global.MedConnectLiveSync && Date.now() - (global.MedConnectLiveSync.lastHubAt() || 0) < 4000) return;
+      fetchUnread();
+    }, POLL_MS);
   }
 
   function stop() {

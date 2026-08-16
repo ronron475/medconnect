@@ -13,8 +13,11 @@ if (empty($slot_list)) {
         $is_booked = $status === 'booked' || $status === 'blocked';
         $is_past = false;
         if (!empty($slot_preview_date) && $status === 'available') {
-            $is_past = $slot_preview_date === date('Y-m-d')
-                && substr((string) ($sl['start_time'] ?? ''), 0, 8) <= date('H:i:s');
+            $nowSlot = function_exists('appointment_now') ? appointment_now() : null;
+            $todayYmd = $nowSlot ? $nowSlot->format('Y-m-d') : date('Y-m-d');
+            $nowHis = $nowSlot ? $nowSlot->format('H:i:s') : date('H:i:s');
+            $is_past = $slot_preview_date === $todayYmd
+                && substr((string) ($sl['start_time'] ?? ''), 0, 8) <= $nowHis;
         }
         if ($status === 'expired') {
             $is_past = true;

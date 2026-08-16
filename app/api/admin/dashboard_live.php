@@ -19,6 +19,9 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') !== 'GET') {
 
 $role = (string) ($_SESSION['user_role'] ?? '');
 $userId = (int) ($_SESSION['user_id'] ?? 0);
+if (session_status() === PHP_SESSION_ACTIVE) {
+    session_write_close();
+}
 
 try {
     if ($role === 'superadmin') {

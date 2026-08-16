@@ -629,11 +629,9 @@ function urgent_followup_book_appointment(PDO $pdo, int $patientId, int $caseId,
 
     $consultationId = (int) $pdo->lastInsertId();
 
-    $pdo->prepare("
-        UPDATE appointment_slots
-        SET status = 'booked', patient_id = ?, consultation_id = ?
-        WHERE id = ?
-    ")->execute([$patientId, $consultationId, $slotId]);
+    if (!appointment_slot_claim_available($pdo, $slotId, $providerId, $patientId, $consultationId)) {
+        throw new RuntimeException('This clinical slot was just booked by another patient. Please choose another available time.');
+    }
 
     $pdo->prepare("
         UPDATE urgent_followup_cases

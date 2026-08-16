@@ -845,7 +845,17 @@
 
   function startPolling() {
     if (pollTimer) clearInterval(pollTimer);
-    pollTimer = setInterval(function () { refreshTriage(true); }, REFRESH_MS);
+    pollTimer = setInterval(function () {
+      if (document.hidden) return;
+      if (window.MedConnectLiveSync && Date.now() - (window.MedConnectLiveSync.lastHubAt() || 0) < 4000) return;
+      refreshTriage(true);
+    }, REFRESH_MS);
+  }
+
+  function stopPolling() {
+    if (!pollTimer) return;
+    clearInterval(pollTimer);
+    pollTimer = null;
   }
 
   function bindUi() {
@@ -909,6 +919,19 @@
   refreshTriage(true);
   startPolling();
   document.addEventListener('visibilitychange', function () {
-    if (!document.hidden) refreshTriage(true);
+    if (document.hidden) {
+      stopPolling();
+      return;
+    }
+    startPolling();
+    refreshTriage(true);
   });
+  document.addEventListener('medconnect:live-sync', function (ev) {
+    var changed = (ev.detail && ev.detail.changed) || [];
+    if (changed.indexOf('triage') !== -1 || changed.indexOf('queue') !== -1) {
+      refreshTriage(true);
+    }
+  });
+
+  window.MedConnectTriageLive = { refresh: refreshTriage };
 })();

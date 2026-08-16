@@ -204,9 +204,21 @@
   });
 
   refreshQueueStatus();
-  window.setInterval(refreshQueueStatus, POLL_MS);
+  window.setInterval(function () {
+    if (document.hidden) return;
+    if (window.MedConnectLiveSync && Date.now() - (window.MedConnectLiveSync.lastHubAt() || 0) < 4000) return;
+    refreshQueueStatus();
+  }, POLL_MS);
 
   document.addEventListener('visibilitychange', () => {
     if (!document.hidden) refreshQueueStatus();
   });
+  document.addEventListener('medconnect:live-sync', (ev) => {
+    const changed = (ev.detail && ev.detail.changed) || [];
+    if (changed.indexOf('queue') !== -1 || changed.indexOf('appointments') !== -1) {
+      refreshQueueStatus();
+    }
+  });
+
+  window.MedConnectProviderQueueLive = { refresh: refreshQueueStatus };
 })();

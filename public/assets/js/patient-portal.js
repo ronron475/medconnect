@@ -473,6 +473,9 @@
       }
       window.alert(data.message || 'Appointment cancelled. Slot freed.');
       window.filterSessions('upcoming');
+      if (typeof window.refreshBookingPicker === 'function') {
+        window.refreshBookingPicker(true);
+      }
     } catch (_) {
       window.alert('Network error. Please try again.');
     }
@@ -604,10 +607,25 @@
     }
   }
 
+  window.refreshConsultationStatus = refreshConsultationStatus;
+
   // Live poll while waiting for provider to start the room.
   if (document.getElementById('sessions-list')) {
     refreshConsultationStatus();
-    setInterval(refreshConsultationStatus, 5000);
+    setInterval(function () {
+      if (document.hidden) return;
+      if (window.MedConnectLiveSync && Date.now() - (window.MedConnectLiveSync.lastHubAt() || 0) < 4000) return;
+      refreshConsultationStatus();
+    }, 5000);
+    document.addEventListener('visibilitychange', function () {
+      if (!document.hidden) refreshConsultationStatus();
+    });
+    document.addEventListener('medconnect:live-sync', function (ev) {
+      var changed = (ev.detail && ev.detail.changed) || [];
+      if (changed.indexOf('appointments') !== -1 || changed.indexOf('queue') !== -1) {
+        refreshConsultationStatus();
+      }
+    });
   }
 
   // Keep tab highlight in sync when filterSessions is called from elsewhere.
@@ -717,8 +735,11 @@
       slotInput.value = btn.dataset.slotId || '';
     });
 
-    const renderSlots = (slots) => {
-      slotInput.value = '';
+    const renderSlots = (slots, options) => {
+      const keepId = options && options.preserveSelected ? String(options.preserveSelected) : '';
+      if (!keepId) {
+        slotInput.value = '';
+      }
       const bookableSlots = slots.filter((slot) => isSlotBookable(slot));
 
       if (!slots.length) {
@@ -756,10 +777,21 @@
 
       slotsWrap.appendChild(grid);
 
+      if (keepId) {
+        const keepBtn = slotsWrap.querySelector('.booking-slot-btn[data-slot-id="' + keepId + '"]');
+        if (keepBtn && !keepBtn.disabled) {
+          keepBtn.classList.add('is-selected');
+          keepBtn.setAttribute('aria-pressed', 'true');
+          slotInput.value = keepId;
+        } else {
+          slotInput.value = '';
+        }
+      }
+
       // Urgent post-registration: auto-select earliest bookable slot
       try {
         const preferEarliest = sessionStorage.getItem('medconnect_prefer_earliest_slot') === '1';
-        if (preferEarliest) {
+        if (preferEarliest && !slotInput.value) {
           const firstBookable = slotsWrap.querySelector('.booking-slot-btn:not(.is-past):not([disabled])');
           if (firstBookable) {
             firstBookable.click();
@@ -805,44 +837,73 @@
       clearSlots('Loading today\'s available slots…');
 
       try {
-        await loadSlots(providerId, today);
+        await loadSlots(providerId, today, false);
       } catch {
         clearSlots('Could not load today\'s appointment slots.');
       }
     };
 
-    const loadSlots = async (providerId, date) => {
+    let slotsFingerprint = '';
+    let slotsPollTimer = null;
+    let slotsInFlight = false;
+
+    const loadSlots = async (providerId, date, silent) => {
       const requested = date || dateInput.value || dateDisplay?.dataset.today || localTodayYmd();
 
-      clearSlots('Loading available slots…');
-      const url =
-        APP_BASE +
-        '/app/api/appointments/get_available_slots.php?provider_id=' +
-        encodeURIComponent(providerId) +
-        '&date=' +
-        encodeURIComponent(requested) +
-        '&_=' +
-        Date.now();
-
-      const res = await fetch(url, { credentials: 'same-origin', cache: 'no-store' });
-      const data = await res.json();
-      const payload = data.data || data;
-      const slots = payload.slots || [];
-      if (payload.today) {
-        setTodayDisplay(payload.today);
+      if (!silent) {
+        clearSlots('Loading available slots…');
+        slotsFingerprint = '';
       }
-
-      if (!data.success) {
-        clearSlots(data.message || payload.message || 'Could not load today\'s slots.');
+      if (slotsInFlight && silent) {
         return;
       }
+      slotsInFlight = true;
 
-      if (!slots.length) {
-        clearSlots(payload.message || 'No clinical slots available for this doctor on this date.');
-        return;
+      try {
+        const url =
+          APP_BASE +
+          '/app/api/appointments/get_available_slots.php?provider_id=' +
+          encodeURIComponent(providerId) +
+          '&date=' +
+          encodeURIComponent(requested) +
+          (silent ? '&live=1' : '') +
+          '&_=' +
+          Date.now();
+
+        const res = await fetch(url, {
+          credentials: 'same-origin',
+          cache: 'no-store',
+          headers: { 'X-MC-No-Loader': '1' },
+        });
+        const data = await res.json();
+        const payload = data.data || data;
+        const slots = payload.slots || [];
+        if (payload.today) {
+          setTodayDisplay(payload.today);
+        }
+
+        if (!data.success) {
+          if (!silent) {
+            clearSlots(data.message || payload.message || 'Could not load today\'s slots.');
+          }
+          return;
+        }
+
+        const fp = payload.fingerprint || slots.map((s) => String(s.id)).join(',');
+        if (silent && fp && fp === slotsFingerprint) {
+          return;
+        }
+        slotsFingerprint = fp;
+
+        if (!slots.length) {
+          clearSlots(payload.message || 'No clinical slots available for this doctor on this date.');
+          return;
+        }
+
+        renderSlots(slots, { preserveSelected: silent ? slotInput.value : '' });
+      } finally {
+        slotsInFlight = false;
       }
-
-      renderSlots(slots);
     };
 
     providerSelect.addEventListener('change', () => {
@@ -865,14 +926,45 @@
       }
     }
 
+    const pollSlots = () => {
+      if (document.hidden) return;
+      const providerId = resolveProviderId();
+      if (!providerId) return;
+      if (window.MedConnectLiveSync && Date.now() - (window.MedConnectLiveSync.lastHubAt() || 0) < 4000) return;
+      loadSlots(providerId, dateInput.value || dateDisplay?.dataset.today || localTodayYmd(), true);
+    };
+
+    slotsPollTimer = window.setInterval(pollSlots, 5000);
     document.addEventListener('visibilitychange', () => {
       if (document.visibilityState === 'visible') {
-        const providerId = resolveProviderId();
-        if (providerId) {
-          loadTodayBooking(providerId);
-        }
+        pollSlots();
       }
     });
+    document.addEventListener('medconnect:live-sync', (ev) => {
+      const changed = (ev.detail && ev.detail.changed) || [];
+      if (changed.indexOf('slots') !== -1 || changed.indexOf('schedule') !== -1) {
+        const providerId = resolveProviderId();
+        if (!providerId) return;
+        loadSlots(providerId, dateInput.value || dateDisplay?.dataset.today || localTodayYmd(), true);
+      }
+    });
+
+    window.refreshBookingPicker = function refreshBookingPicker(silent) {
+      const lockedId = window.BOOKING_LOCKED_PROVIDER_ID;
+      let providerId = lockedId ? String(lockedId) : resolveProviderId();
+      if (!providerId && providerSelect.options.length === 2) {
+        providerSelect.selectedIndex = 1;
+        providerId = resolveProviderId();
+      }
+      if (!providerId) {
+        return;
+      }
+      if (silent) {
+        loadSlots(providerId, dateInput.value || dateDisplay?.dataset.today || localTodayYmd(), true);
+        return;
+      }
+      loadTodayBooking(providerId);
+    };
   }
 
   window.refreshBookingPicker = function refreshBookingPicker() {
@@ -1413,7 +1505,16 @@
                 : (data.message || 'Your visit was recorded, but the slot could not be booked.')
             );
             if (booked) {
-              setTimeout(() => window.location.reload(), 1600);
+              if (typeof window.refreshBookingPicker === 'function') {
+                window.refreshBookingPicker(true);
+              }
+              if (typeof window.refreshConsultationStatus === 'function') {
+                window.refreshConsultationStatus();
+              }
+              if (window.MedConnectNavBadgesRefresh) window.MedConnectNavBadgesRefresh();
+              if (window.MedConnectLiveSync && typeof window.MedConnectLiveSync.refresh === 'function') {
+                window.MedConnectLiveSync.refresh();
+              }
             }
           }
         } else {

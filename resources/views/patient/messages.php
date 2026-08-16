@@ -458,7 +458,11 @@ async function refreshActiveMessages(silent=true){
 }
 function startMessageAutoRefresh(){
   clearInterval(refreshTimer);
-  refreshTimer=setInterval(()=>refreshActiveMessages(true),5000);
+  refreshTimer=setInterval(()=>{
+    if (document.hidden) return;
+    if (window.MedConnectLiveSync && Date.now() - (window.MedConnectLiveSync.lastHubAt() || 0) < 4000) return;
+    refreshActiveMessages(true);
+  },5000);
   if (realtimePoller) realtimePoller.stop();
   lastEventId = 0;
   realtimePoller = MedConnectMessages.createRealtimePoller(
@@ -525,6 +529,13 @@ window.addEventListener('resize', () => {
   if (!isMobileMessages()) {
     openListOnMobile();
   }
+});
+document.addEventListener('visibilitychange', () => {
+  if (!document.hidden) refreshActiveMessages(true);
+});
+document.addEventListener('medconnect:live-sync', (ev) => {
+  const changed = (ev.detail && ev.detail.changed) || [];
+  if (changed.indexOf('messages') !== -1) refreshActiveMessages(true);
 });
 setActiveConversation(0);
 conversations.forEach((conv, index) => updateConversationPreview(index, conv));

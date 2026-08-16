@@ -242,7 +242,7 @@
   }
 
   async function refresh() {
-    if (inFlight) return;
+    if (inFlight || document.hidden) return;
     inFlight = true;
     try {
       var url = assetBase() + API_PATH + '?period=' + encodeURIComponent(currentPeriod()) + '&_=' + Date.now();
@@ -289,6 +289,12 @@
     document.addEventListener('visibilitychange', function () {
       if (document.hidden) stop();
       else start();
+    });
+    document.addEventListener('medconnect:live-sync', function (ev) {
+      var changed = (ev.detail && ev.detail.changed) || [];
+      if (changed.indexOf('appointments') !== -1 || changed.indexOf('queue') !== -1 || changed.indexOf('triage') !== -1) {
+        refresh();
+      }
     });
   }
 

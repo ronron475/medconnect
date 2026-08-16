@@ -232,7 +232,7 @@
   }
 
   async function refresh() {
-    if (inFlight) return;
+    if (inFlight || document.hidden) return;
     inFlight = true;
     try {
       var res = await fetch(assetBase() + API_PATH + '?_=' + Date.now(), {
@@ -267,6 +267,12 @@
     document.addEventListener('visibilitychange', function () {
       if (document.hidden) stop();
       else start();
+    });
+    document.addEventListener('medconnect:live-sync', function (ev) {
+      var changed = (ev.detail && ev.detail.changed) || [];
+      if (changed.indexOf('dashboard') !== -1 || changed.indexOf('queue') !== -1 || changed.indexOf('triage') !== -1) {
+        refresh();
+      }
     });
   }
 

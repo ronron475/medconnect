@@ -4,6 +4,7 @@ require_once dirname(dirname(dirname(__DIR__))) . '/config/db.php';
 require_once dirname(dirname(dirname(__DIR__))) . '/app/includes/bhw_workflows.php';
 
 $ctx = bhw_api_bootstrap($pdo, false, false);
+Api::releaseSession();
 $filters = BhwWorkflows::parseDashboardFilters($_GET);
 
 Api::success([

@@ -653,7 +653,11 @@ function startMessageRealtime() {
 
 function startMessageAutoRefresh() {
   clearInterval(refreshTimer);
-  refreshTimer = setInterval(() => refreshActiveMessages(true), 2000);
+  refreshTimer = setInterval(() => {
+    if (document.hidden) return;
+    if (window.MedConnectLiveSync && Date.now() - (window.MedConnectLiveSync.lastHubAt() || 0) < 4000) return;
+    refreshActiveMessages(true);
+  }, 2000);
 }
 
 document.querySelectorAll('.msg-item').forEach((button) => {
@@ -795,6 +799,10 @@ videoButton.addEventListener('click', async () => {
 
 document.addEventListener('visibilitychange', () => {
   if (!document.hidden) refreshActiveMessages(true);
+});
+document.addEventListener('medconnect:live-sync', (ev) => {
+  const changed = (ev.detail && ev.detail.changed) || [];
+  if (changed.indexOf('messages') !== -1) refreshActiveMessages(true);
 });
 
 setActiveConversation(0);
