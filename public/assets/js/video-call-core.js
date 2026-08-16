@@ -68,8 +68,10 @@
       el.playsInline = true;
       el.setAttribute('playsinline', '');
       el.setAttribute('webkit-playsinline', '');
+      el.setAttribute('autoplay', '');
       el.preload = 'auto';
-      el.style.display = 'none';
+      // iOS Safari will not play audio elements with display:none.
+      el.style.cssText = 'position:absolute;width:1px;height:1px;opacity:0.01;pointer-events:none;left:0;bottom:0;';
       document.body.appendChild(el);
     }
     return el;
@@ -323,6 +325,15 @@
     };
   }
 
+  /** Prefer front camera; `ideal` avoids NotReadableError on phones that reject exact facingMode. */
+  function getVideoConstraints() {
+    return {
+      facingMode: { ideal: 'user' },
+      width: { ideal: 640 },
+      height: { ideal: 480 },
+    };
+  }
+
   function micStateFromStream(stream) {
     if (!stream) return 'unavailable';
     const track = stream.getAudioTracks()[0];
@@ -414,6 +425,7 @@
     attachRemoteMedia,
     unlockRemoteAudio,
     getAudioConstraints,
+    getVideoConstraints,
     micStateFromStream,
     camStateFromStream,
     updateMediaStatusUI,

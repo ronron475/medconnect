@@ -882,7 +882,9 @@ if (session_status() === PHP_SESSION_ACTIVE) {
       secure: true,
       debug: demoMode ? 1 : 0,
       config: {
-        iceServers: <?= json_encode(medconnect_ice_servers(), JSON_UNESCAPED_SLASHES) ?>
+        iceServers: <?= json_encode(medconnect_ice_servers(), JSON_UNESCAPED_SLASHES) ?>,
+        iceTransportPolicy: 'all',
+        bundlePolicy: 'max-bundle'
       }
     };
     const hasTurnServer = <?= medconnect_has_turn_server() ? 'true' : 'false' ?>;
@@ -1122,13 +1124,13 @@ if (session_status() === PHP_SESSION_ACTIVE) {
       McWebrtcPeerCall.init(demoMode ? undefined : peerId, {
         peerOptions: peerOptions,
         useAutoPeerId: demoMode,
+        originator: userRole === 'provider',
         onRecreate: function () { createPeer(); },
         onNeedsRedial: function () {
           if (endingCall || !localStream) return;
-          patientMayDial = true;
           flushPendingCall();
           openDataChannel();
-          startCall();
+          if (userRole === 'provider') startCall();
         },
       });
     }
@@ -1164,22 +1166,24 @@ if (session_status() === PHP_SESSION_ACTIVE) {
       }
     }
 
+    let webrtcEventsBound = false;
     function setupWebrtcEvents() {
       if (!window.McWebrtcPeerCall) return;
+      if (webrtcEventsBound) return;
+      webrtcEventsBound = true;
       const rtc = McWebrtcPeerCall;
 
       rtc.on('open', function (ev) { onPeerOpen(ev.id); });
 
       rtc.on('data-open', function () {
         console.log('Peer data channel open');
-        if (userRole === 'patient' && !callHasRemoteStream && !endingCall) {
-          patientMayDial = true;
-          startCall();
-        }
         if (muteTts && typeof muteTts.syncMuteStateToPeer === 'function') {
           muteTts.syncMuteStateToPeer();
         }
         announceLocalMicState();
+        if (userRole === 'provider' && !callHasRemoteStream && !endingCall) {
+          startCall();
+        }
       });
 
       rtc.on('data', function (ev) {
@@ -1240,10 +1244,9 @@ if (session_status() === PHP_SESSION_ACTIVE) {
       rtc.on('needs-redial', function () {
         if (endingCall || !localStream) return;
         if (window.McWebrtcPeerCall && McWebrtcPeerCall.isIntentionalLeave && McWebrtcPeerCall.isIntentionalLeave()) return;
-        patientMayDial = true;
         flushPendingCall();
         openDataChannel();
-        startCall();
+        if (userRole === 'provider') startCall();
       });
 
       rtc.on('call-error', function (ev) {
@@ -1581,23 +1584,24 @@ if (session_status() === PHP_SESSION_ACTIVE) {
       }
 
       if (userRole === 'provider') {
-        patientMayDial = true;
+        patientMayDial = false;
       } else if (userRole === 'patient') {
-        // Prefer answering the doctor's dial; only fall back to patient dial after grace.
+        // Provider originates. Patient only dials if no inbound call arrives.
         setTimeout(() => {
-          if (!callHasRemoteStream && !endingCall) {
+          if (!callHasRemoteStream && !endingCall && !hasActiveOrPendingCall()) {
             patientMayDial = true;
             startCall();
           }
-        }, 12000);
+        }, 15000);
       }
       flushPendingCall();
       openDataChannel();
-      startCall();
+      if (userRole === 'provider') startCall();
       if (callInterval) clearInterval(callInterval);
       callInterval = setInterval(() => {
         openDataChannel();
-        startCall();
+        flushPendingCall();
+        if (userRole === 'provider' || patientMayDial) startCall();
       }, 4000);
     }
 
@@ -1748,10 +1752,13 @@ if (session_status() === PHP_SESSION_ACTIVE) {
       const audioConstraints = (window.McVideoCallCore && window.McVideoCallCore.getAudioConstraints)
         ? window.McVideoCallCore.getAudioConstraints()
         : { echoCancellation: true, noiseSuppression: true, autoGainControl: true };
+      const videoConstraints = (window.McVideoCallCore && window.McVideoCallCore.getVideoConstraints)
+        ? window.McVideoCallCore.getVideoConstraints()
+        : { facingMode: { ideal: 'user' }, width: { ideal: 640 }, height: { ideal: 480 } };
 
       try {
         localStream = await navigator.mediaDevices.getUserMedia({
-          video: videoEnabled ? { facingMode: 'user' } : false,
+          video: videoEnabled ? videoConstraints : false,
           audio: audioConstraints
         });
       } catch (err) {
@@ -1761,18 +1768,33 @@ if (session_status() === PHP_SESSION_ACTIVE) {
             localStream = await navigator.mediaDevices.getUserMedia({ video: false, audio: audioConstraints });
             setPermissionStatus('Camera blocked â€” joined with audio only.');
           } catch (audioErr) {
-            // Chrome dual-tab: camera/mic may be locked by the other tab. Join with silent track so PeerJS can still connect.
-            try {
-              localStream = await createSilentMediaStream();
-              localMicUnavailable = true;
-              setPermissionStatus('Mic busy in the other tab â€” joined with silent audio so the call can connect. Use mute TTS to type.');
-              syncMicButtonUi(true);
-              syncCameraButtonUi(true);
-            } catch (silentErr) {
+            // Dual-tab Chrome demo only: a silent track keeps PeerJS connected when
+            // the same machine already holds the mic. Real consultations must not
+            // send a fake microphone — the other phone would "connect" with no voice.
+            if (demoMode) {
+              try {
+                localStream = await createSilentMediaStream();
+                localMicUnavailable = true;
+                setPermissionStatus('Mic busy in the other tab — joined with silent audio so the call can connect. Use mute TTS to type.');
+                syncMicButtonUi(true);
+                syncCameraButtonUi(true);
+              } catch (silentErr) {
+                document.getElementById('btnAllowBoth').disabled = false;
+                document.getElementById('btnAllowAudio').disabled = false;
+                showPermissionError(mediaErrorMessage(audioErr));
+                setPermissionStatus('Permission denied or unavailable.');
+                setCallPhase(window.McVideoCallCore ? window.McVideoCallCore.STATUS.PERMISSION : 'permission', {
+                  callStatusText: 'Waiting for camera/mic permission',
+                  micPermissionDenied: (audioErr && (audioErr.name === 'NotAllowedError' || audioErr.name === 'PermissionDeniedError')),
+                });
+                syncMediaStatus({ micPermissionDenied: true });
+                return;
+              }
+            } else {
               document.getElementById('btnAllowBoth').disabled = false;
               document.getElementById('btnAllowAudio').disabled = false;
               showPermissionError(mediaErrorMessage(audioErr));
-              setPermissionStatus('Permission denied or unavailable.');
+              setPermissionStatus('Microphone is required for this consultation.');
               setCallPhase(window.McVideoCallCore ? window.McVideoCallCore.STATUS.PERMISSION : 'permission', {
                 callStatusText: 'Waiting for camera/mic permission',
                 micPermissionDenied: (audioErr && (audioErr.name === 'NotAllowedError' || audioErr.name === 'PermissionDeniedError')),
@@ -1782,17 +1804,30 @@ if (session_status() === PHP_SESSION_ACTIVE) {
             }
           }
         } else {
-          try {
-            localStream = await createSilentMediaStream();
-            localMicUnavailable = true;
-            setPermissionStatus('Microphone unavailable â€” joined with silent audio. Mute TTS still works for typed voice.');
-            syncMicButtonUi(true);
-            syncCameraButtonUi(true);
-          } catch (silentErr) {
+          if (demoMode) {
+            try {
+              localStream = await createSilentMediaStream();
+              localMicUnavailable = true;
+              setPermissionStatus('Microphone unavailable — joined with silent audio. Mute TTS still works for typed voice.');
+              syncMicButtonUi(true);
+              syncCameraButtonUi(true);
+            } catch (silentErr) {
+              document.getElementById('btnAllowBoth').disabled = false;
+              document.getElementById('btnAllowAudio').disabled = false;
+              showPermissionError(mediaErrorMessage(err));
+              setPermissionStatus('Permission denied or unavailable.');
+              setCallPhase(window.McVideoCallCore ? window.McVideoCallCore.STATUS.PERMISSION : 'permission', {
+                callStatusText: 'Waiting for microphone permission',
+                micPermissionDenied: (err && (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError')),
+              });
+              syncMediaStatus({ micPermissionDenied: true });
+              return;
+            }
+          } else {
             document.getElementById('btnAllowBoth').disabled = false;
             document.getElementById('btnAllowAudio').disabled = false;
             showPermissionError(mediaErrorMessage(err));
-            setPermissionStatus('Permission denied or unavailable.');
+            setPermissionStatus('Microphone is required for this consultation.');
             setCallPhase(window.McVideoCallCore ? window.McVideoCallCore.STATUS.PERMISSION : 'permission', {
               callStatusText: 'Waiting for microphone permission',
               micPermissionDenied: (err && (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError')),
@@ -2712,6 +2747,9 @@ if (session_status() === PHP_SESSION_ACTIVE) {
     });
 
     window.__mcReplaceVideoTrack = async function (newTrack) {
+      if (window.McWebrtcPeerCall && typeof McWebrtcPeerCall.replaceLocalVideoTrack === 'function') {
+        return McWebrtcPeerCall.replaceLocalVideoTrack(newTrack);
+      }
       const currentCall = window.McWebrtcPeerCall ? McWebrtcPeerCall.getCurrentCall() : null;
       if (!currentCall || !currentCall.peerConnection || !newTrack) return;
       try {
@@ -2930,22 +2968,49 @@ if (session_status() === PHP_SESSION_ACTIVE) {
       }, { passive: true });
     });
 
-    window.addEventListener('pagehide', () => {
+    window.addEventListener('pagehide', (event) => {
       try {
         if (demoBus) {
           demoBus.postMessage({ type: 'peer-bye', token: roomToken, role: userRole });
-          demoBus.close();
         }
       } catch (e) {}
-      if (demoHelloTimer) clearInterval(demoHelloTimer);
+      // iOS Safari fires pagehide when the phone is locked or the browser is
+      // backgrounded. Destroying PeerJS here immediately killed phone-to-phone
+      // calls. Only tear down on a real navigation (not bfcache / background).
+      if (event && event.persisted) return;
+      if (document.visibilityState === 'hidden' && !endingCall) return;
       try {
-        if (window.McWebrtcPeerCall) McWebrtcPeerCall.destroy();
+        if (demoBus) demoBus.close();
       } catch (e) {}
-      if (silentAudioFallback) {
-        try { silentAudioFallback.oscillator.stop(); } catch (e) {}
-        try { silentAudioFallback.ctx.close(); } catch (e) {}
-        silentAudioFallback = null;
+      if (demoHelloTimer) clearInterval(demoHelloTimer);
+    });
+
+    function resumeMediaAfterForeground() {
+      if (endingCall) return;
+      unlockRemoteAudio().catch(() => {});
+      if (window.McWebrtcPeerCall && typeof McWebrtcPeerCall.refreshRemoteMedia === 'function') {
+        McWebrtcPeerCall.refreshRemoteMedia();
       }
+      const localV = document.getElementById('localVideo');
+      if (localV && localV.paused && localV.srcObject) {
+        const p = localV.play();
+        if (p && typeof p.catch === 'function') p.catch(() => {});
+      }
+      const pc = window.McWebrtcPeerCall ? McWebrtcPeerCall.getPeerConnection() : null;
+      if (pc) {
+        const ice = pc.iceConnectionState || '';
+        if ((ice === 'disconnected' || ice === 'failed') && !endingCall) {
+          McWebrtcPeerCall.requestReconnect('foreground');
+        }
+      }
+    }
+
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'visible') resumeMediaAfterForeground();
+    });
+    window.addEventListener('pageshow', resumeMediaAfterForeground);
+    window.addEventListener('orientationchange', () => {
+      setTimeout(resumeMediaAfterForeground, 300);
     });
 
     if (window.McMuteTts) {
