@@ -1195,13 +1195,13 @@ step2Form.addEventListener('submit', async e => {
   selRegion.addEventListener('change', function () {
     const regionCode = this.value;
     inpRegion.value = this.options[this.selectedIndex].text;
+    clearError('region');
+    if (window.__ocrAutofillActive) return;
     inpProvince.value = ''; inpCity.value = ''; inpBarangay.value = '';
     clearSelect(selProvince, 'Loading…', true);
     clearSelect(selCity, 'Choose City / Municipality');
     clearSelect(selBarangay, 'Choose Barangay');
-    clearError('region');
-    if (window.__ocrAutofillActive) { /* skip */ }
-    else if (window.__ocrInvalidate) window.__ocrInvalidate();
+    if (window.__ocrInvalidate) window.__ocrInvalidate();
     fetch(JSON_BASE + 'province.json')
       .then(r => { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
       .then(data => {
@@ -1220,12 +1220,12 @@ step2Form.addEventListener('submit', async e => {
   selProvince.addEventListener('change', function () {
     const provCode = this.value;
     inpProvince.value = this.options[this.selectedIndex].text;
+    clearError('province');
+    if (window.__ocrAutofillActive) return;
     inpCity.value = ''; inpBarangay.value = '';
     clearSelect(selCity, 'Loading…', true);
     clearSelect(selBarangay, 'Choose Barangay');
-    clearError('province');
-    if (window.__ocrAutofillActive) { /* skip */ }
-    else if (window.__ocrInvalidate) window.__ocrInvalidate();
+    if (window.__ocrInvalidate) window.__ocrInvalidate();
     fetch(JSON_BASE + 'city.json')
       .then(r => { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
       .then(data => {
@@ -1244,11 +1244,11 @@ step2Form.addEventListener('submit', async e => {
   selCity.addEventListener('change', function () {
     const cityCode = this.value;
     inpCity.value = this.options[this.selectedIndex].text;
+    clearError('city');
+    if (window.__ocrAutofillActive) return;
     inpBarangay.value = '';
     clearSelect(selBarangay, 'Loading…', true);
-    clearError('city');
-    if (window.__ocrAutofillActive) { /* skip */ }
-    else if (window.__ocrInvalidate) window.__ocrInvalidate();
+    if (window.__ocrInvalidate) window.__ocrInvalidate();
     fetch(JSON_BASE + 'barangay.json')
       .then(r => { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
       .then(data => {
@@ -1373,7 +1373,13 @@ step2Form.addEventListener('submit', async e => {
   function lockAddress() {
     if (addressGrid) addressGrid.classList.add('ocr-locked');
     if (lockNotice) lockNotice.removeAttribute('hidden');
-    addressSelects.forEach(sel => { if (sel) sel.disabled = true; });
+    // Keep selects enabled so the chosen OCR values stay visible and submit.
+    // .ocr-locked already blocks clicks with pointer-events: none.
+    addressSelects.forEach((sel) => {
+      if (!sel) return;
+      sel.disabled = false;
+      sel.setAttribute('aria-readonly', 'true');
+    });
     const street = document.getElementById('street-address');
     if (street && String(street.value || '').trim() !== '') {
       if (ocrApi && typeof ocrApi.lockFieldFromOcr === 'function') {

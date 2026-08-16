@@ -14,6 +14,65 @@
   const FUZZY_BARANGAY_MAX_DIST = 2;
   const STREET_REVIEW_THRESHOLD = 0.65;
 
+  /** Official Bago City PSGC — used so OCR never depends on the 4.7MB barangay.json. */
+  const BAGO_PSGC = {
+    region: {
+      region_code: '06',
+      region_name: 'Negros Island Region (NIR)',
+    },
+    province: {
+      province_code: '0645',
+      province_name: 'Negros Occidental',
+      region_code: '06',
+    },
+    city: {
+      city_code: '064502',
+      city_name: 'Bago City',
+      province_code: '0645',
+    },
+    barangays: [
+      { brgy_code: '064502001', brgy_name: 'Abuanan', city_code: '064502' },
+      { brgy_code: '064502002', brgy_name: 'Alianza', city_code: '064502' },
+      { brgy_code: '064502003', brgy_name: 'Atipuluan', city_code: '064502' },
+      { brgy_code: '064502004', brgy_name: 'Bacong-Montilla', city_code: '064502' },
+      { brgy_code: '064502005', brgy_name: 'Bagroy', city_code: '064502' },
+      { brgy_code: '064502006', brgy_name: 'Balingasag', city_code: '064502' },
+      { brgy_code: '064502007', brgy_name: 'Binubuhan', city_code: '064502' },
+      { brgy_code: '064502008', brgy_name: 'Busay', city_code: '064502' },
+      { brgy_code: '064502009', brgy_name: 'Calumangan', city_code: '064502' },
+      { brgy_code: '064502010', brgy_name: 'Caridad', city_code: '064502' },
+      { brgy_code: '064502011', brgy_name: 'Dulao', city_code: '064502' },
+      { brgy_code: '064502012', brgy_name: 'Ilijan', city_code: '064502' },
+      { brgy_code: '064502013', brgy_name: 'Lag-Asan', city_code: '064502' },
+      { brgy_code: '064502014', brgy_name: 'Ma-ao Barrio', city_code: '064502' },
+      { brgy_code: '064502015', brgy_name: 'Jorge L. Araneta (Ma-ao Central)', city_code: '064502' },
+      { brgy_code: '064502016', brgy_name: 'Mailum', city_code: '064502' },
+      { brgy_code: '064502017', brgy_name: 'Malingin', city_code: '064502' },
+      { brgy_code: '064502018', brgy_name: 'Napoles', city_code: '064502' },
+      { brgy_code: '064502019', brgy_name: 'Pacol', city_code: '064502' },
+      { brgy_code: '064502020', brgy_name: 'Poblacion', city_code: '064502' },
+      { brgy_code: '064502021', brgy_name: 'Sagasa', city_code: '064502' },
+      { brgy_code: '064502022', brgy_name: 'Tabunan', city_code: '064502' },
+      { brgy_code: '064502023', brgy_name: 'Taloc', city_code: '064502' },
+      { brgy_code: '064502024', brgy_name: 'Sampinit', city_code: '064502' },
+    ],
+  };
+
+  const BAGO_BARANGAY_ALIASES = {
+    'ma ao': 'Ma-ao Barrio',
+    maao: 'Ma-ao Barrio',
+    'ma-ao': 'Ma-ao Barrio',
+    'ma ao barrio': 'Ma-ao Barrio',
+    'don jorge l araneta': 'Jorge L. Araneta (Ma-ao Central)',
+    'jorge l araneta': 'Jorge L. Araneta (Ma-ao Central)',
+    'ma ao central': 'Jorge L. Araneta (Ma-ao Central)',
+    'bacong montilla': 'Bacong-Montilla',
+    bacong: 'Bacong-Montilla',
+    'lag asan': 'Lag-Asan',
+    lagasan: 'Lag-Asan',
+    'taba ao': 'Taloc',
+  };
+
   const GEO_NOISE_RE = /\b(city|of|oe|bgo|bago|negros|occidental|occid|occ|oriental|philippines|ph|neg|province|region)\b/i;
   const PUROK_PREFIX_RE = /^(purok|sitio|brgy\.?|barangay|blk\.?|block|phase|subd\.?|subdivision)\b/i;
   /** Stop purok capture before city/province/barangay tokens (PhilID order). */
@@ -93,15 +152,20 @@
     setTimeout(() => wrap.classList.remove('ocr-autofilled-pulse'), 1600);
   }
 
-  async function setSelect(id, hiddenId, code) {
+  function setSelect(id, hiddenId, code) {
     const sel = document.getElementById(id);
     const hidden = document.getElementById(hiddenId);
-    if (!sel || !code) return false;
+    if (!sel || code == null || String(code) === '') return false;
 
+    sel.disabled = false;
+    sel.removeAttribute('disabled');
+    const want = String(code);
     let matched = false;
-    for (const opt of sel.options) {
-      if (opt.value === code) {
-        sel.value = code;
+    for (let i = 0; i < sel.options.length; i++) {
+      if (String(sel.options[i].value) === want) {
+        sel.selectedIndex = i;
+        sel.options[i].selected = true;
+        sel.value = want;
         matched = true;
         break;
       }
@@ -112,8 +176,6 @@
       hidden.value = sel.options[sel.selectedIndex].text;
     }
 
-    global.__ocrAutofillActive = true;
-    sel.dispatchEvent(new Event('change', { bubbles: true }));
     highlightSelect(id);
     return true;
   }
@@ -187,23 +249,48 @@
       .replace(/\s+/g, ' ')
       .trim();
 
-    // Strip city-reference phrases inside each comma-separated segment FIRST
-    // so they don't contaminate the street/purok/barangay components.
-    s = s.split(',').map((seg) => {
-      const stripped = stripBagoCityFragments(seg);
-      return stripped;
-    }).filter(Boolean).join(', ');
-
     // Correct block/unit spacing (e.g. "1 B", "5 A" -> "1-B", "5-A")
     s = s.replace(/\b(\d+)\s+([A-Za-z])\b/g, (m, num, letter) => `${num}-${letter.toUpperCase()}`);
 
-    // Correct specific Bago City barangay spacing/hyphens
     s = s
       .replace(/\blag\s+asan\b/gi, 'LAG-ASAN')
       .replace(/\bma\s+ao\b/gi, 'MA-AO')
       .replace(/\bdon\s+jorge\s+l\s+araneta\b/gi, 'DON JORGE L. ARANETA');
 
     return s;
+  }
+
+  /**
+   * PhilID prints one line without commas:
+   *   PUROK BALATONG ILIJAN CITY OF BAGO NEGROS OCCIDENTAL
+   * Split that into street / barangay / city / province before matching dropdowns.
+   */
+  function segmentPhilIdAddress(raw) {
+    let s = preprocessRawAddress(raw);
+    if (!s) return '';
+
+    s = s.replace(/\bcity\s+oe\s+bago\b/gi, 'CITY OF BAGO');
+    s = s.replace(/\bc1ty\s+of\s+bago\b/gi, 'CITY OF BAGO');
+    s = s.replace(/\bbago\s+city\b/gi, 'CITY OF BAGO');
+    s = s.replace(/\bcity\s+of\s+bago\b/gi, 'CITY OF BAGO');
+    s = s.replace(/\bnegros\s+occ(?:id|idental)?\.?\b/gi, 'NEGROS OCCIDENTAL');
+
+    if (!/,/.test(s)) {
+      s = s.replace(/\bCITY OF BAGO\b/g, ', CITY OF BAGO,');
+      s = s.replace(/\bNEGROS OCCIDENTAL\b/g, ', NEGROS OCCIDENTAL,');
+
+      const names = BAGO_PSGC.barangays
+        .map((b) => b.brgy_name)
+        .concat(['Ma-ao', 'Don Jorge L. Araneta', 'Taba-ao'])
+        .sort((a, b) => b.length - a.length);
+
+      for (const name of names) {
+        const escaped = name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&').replace(/\s+/g, '\\s+');
+        s = s.replace(new RegExp('\\b' + escaped + '\\b', 'ig'), ', ' + name + ',');
+      }
+    }
+
+    return s.replace(/,\s*,+/g, ',').replace(/^[,\s]+|[,\s]+$/g, '').replace(/\s+/g, ' ').trim();
   }
 
   function normalizeOcrAddress(raw) {
@@ -547,9 +634,11 @@
       }
     }
 
-    const street = formatOfficialStreet(locality, parts);
+    const street = locality ? toOfficialCase(locality) : '';
     const confidence = computeStreetConfidence(parts, barangayMeta, purokMatch, locality);
-    const needsReview = !street
+    const geoOk = !!(parts.city && isBagoCityRecord(parts.city) && (parts.barangay || street));
+    const needsReview = !geoOk
+      || !street
       || confidence < STREET_REVIEW_THRESHOLD
       || (barangayMeta && barangayMeta.distance > FUZZY_BARANGAY_MAX_DIST)
       || (barangayMeta && barangayMeta.ambiguous);
@@ -588,9 +677,14 @@
 
   function hasStrongBagoSignal(addressNorm) {
     return (
-      (containsWord(addressNorm, 'bago') || containsWord(addressNorm, 'bgo'))
-      && containsWord(addressNorm, 'negros')
-    ) || containsWord(addressNorm, 'binubuhan');
+      containsWord(addressNorm, 'city of bago')
+      || containsWord(addressNorm, 'bago city')
+      || containsWord(addressNorm, 'binubuhan')
+      || (
+        (containsWord(addressNorm, 'bago') || containsWord(addressNorm, 'bgo'))
+        && containsWord(addressNorm, 'negros')
+      )
+    );
   }
 
   function detectBagoCity(addressNorm, cities, barangays) {
@@ -622,9 +716,9 @@
   }
 
   function findBagoCity(cities) {
-    return cities.find((c) => norm(c.city_name) === 'bago city')
-      || cities.find((c) => norm(c.city_name).includes('bago') && norm(c.city_name).includes('city'))
-      || null;
+    return (cities || []).find((c) => norm(c.city_name) === 'bago city')
+      || (cities || []).find((c) => norm(c.city_name).includes('bago') && norm(c.city_name).includes('city'))
+      || BAGO_PSGC.city;
   }
 
   function findNegrosProvince(provinces, addressNorm) {
@@ -689,8 +783,17 @@
   }
 
   function findBarangay(barangays, cityCode, addressNorm, addressCompact) {
-    const pool = barangays.filter((b) => b.city_code === cityCode);
+    const pool = (barangays && barangays.length)
+      ? barangays.filter((b) => !cityCode || b.city_code === cityCode)
+      : BAGO_PSGC.barangays.filter((b) => !cityCode || b.city_code === cityCode);
     if (!pool.length) return { record: null, distance: 99, ambiguous: false };
+
+    for (const [alias, canonical] of Object.entries(BAGO_BARANGAY_ALIASES)) {
+      if (alias.length >= 4 && addressNorm.includes(alias)) {
+        const aliased = pool.find((b) => norm(b.brgy_name) === norm(canonical));
+        if (aliased) return { record: aliased, distance: 0, ambiguous: false };
+      }
+    }
 
     // Bago City is "064502"
     const isBago = pool.length > 0 && pool[0].city_code === '064502';
@@ -774,7 +877,7 @@
   }
 
   function parseAddress(addressRaw, datasets) {
-    addressRaw = preprocessRawAddress(addressRaw);
+    addressRaw = segmentPhilIdAddress(addressRaw);
     const addressNorm = normalizeOcrAddress(addressRaw);
     const addressCompact = compact(addressNorm);
     const { provinces, cities, regions, barangays } = datasets;
@@ -811,120 +914,176 @@
     return { region, province, city, barangay, barangayMeta, street, addressNorm, parts };
   }
 
+  async function loadJsonSafe(name, fallback) {
+    try {
+      const data = await loadJson(name);
+      return Array.isArray(data) && data.length ? data : (fallback || []);
+    } catch (_) {
+      return fallback || [];
+    }
+  }
+
+  function mergeUnique(list, extra, key) {
+    const out = Array.isArray(list) ? list.slice() : [];
+    const seen = new Set(out.map((item) => item[key]));
+    (Array.isArray(extra) ? extra : [extra]).forEach((item) => {
+      if (item && item[key] && !seen.has(item[key])) {
+        out.push(item);
+        seen.add(item[key]);
+      }
+    });
+    return out;
+  }
+
+  function populateSelect(id, items, labelKey, valueKey, placeholder) {
+    const sel = document.getElementById(id);
+    if (!sel || !items || !items.length) return false;
+    sel.disabled = false;
+    sel.removeAttribute('disabled');
+    sel.innerHTML = '';
+    items.forEach((item) => {
+      sel.append(new Option(item[labelKey], String(item[valueKey])));
+    });
+    if (sel.options.length === 0 && placeholder) {
+      sel.append(new Option(placeholder, ''));
+    }
+    return sel.options.length > 0;
+  }
+
   async function ensureRegionOptions() {
     const sel = document.getElementById('region');
     if (!sel || sel.options.length > 1) return;
-    const regions = await loadJson('region');
-    clearSelectPlaceholder(sel, 'Choose Region');
-    regions.forEach((r) => sel.append(new Option(r.region_name, r.region_code)));
-    sel.disabled = false;
+    const regions = await loadJsonSafe('region', [BAGO_PSGC.region]);
+    populateSelect('region', regions, 'region_name', 'region_code', 'Choose Region');
   }
 
   function clearSelectPlaceholder(sel, placeholder) {
     sel.innerHTML = `<option value="" disabled selected>${placeholder}</option>`;
   }
 
-  async function fillFromText(addressRaw) {
-    if (!addressRaw || !String(addressRaw).trim()) {
-      return { filled: 0, matched: {} };
-    }
-
-    addressRaw = preprocessRawAddress(addressRaw);
-
-    await ensureRegionOptions();
-
-    const [regions, provinces, cities, barangays] = await Promise.all([
-      loadJson('region'),
-      loadJson('province'),
-      loadJson('city'),
-      loadJson('barangay'),
-    ]);
-
-    const parsed = parseAddress(addressRaw, { regions, provinces, cities, barangays });
-    const catalog = await loadBagoPurokCatalog();
-    const selectedBarangayEl = document.getElementById('barangay-text');
-    const selectedBarangayName = selectedBarangayEl?.value?.trim() || parsed.barangay?.brgy_name || '';
-    const partsForStreet = {
-      ...parsed.parts,
-      barangay: parsed.barangay || (selectedBarangayName
-        ? barangays.find((b) => norm(b.brgy_name) === norm(selectedBarangayName))
-        : null),
-    };
-    const streetResult = normalizeStreetAddress(
-      addressRaw,
-      partsForStreet,
-      parsed.barangayMeta,
-      catalog
-    );
-
+  function applyParsedToForm(parsed, streetResult) {
     let filled = 0;
     const matched = {};
+    global.__ocrAutofillActive = true;
 
-    try {
-      global.__ocrAutofillActive = true;
-
-      const selRegion = document.getElementById('region');
-      if (parsed.region && selRegion) {
-        if (selRegion.options.length < 2) {
-          await waitForOptions(selRegion, 2);
-        }
-        if (await setSelect('region', 'region-text', parsed.region.region_code)) {
-          matched.region = parsed.region.region_name;
-          filled++;
-          await waitForOptions(document.getElementById('province'), 2, 15000);
-        }
-      }
-
-      if (parsed.province) {
-        if (await setSelect('province', 'province-text', parsed.province.province_code)) {
-          matched.province = parsed.province.province_name;
-          filled++;
-          await waitForOptions(document.getElementById('city'), 2, 15000);
-        }
-      }
-
-      if (parsed.city) {
-        if (await setSelect('city', 'city-text', parsed.city.city_code)) {
-          matched.city = parsed.city.city_name;
-          filled++;
-          await waitForOptions(document.getElementById('barangay'), 2, 15000);
-        }
-      }
-
-      if (parsed.barangay) {
-        if (await setSelect('barangay', 'barangay-text', parsed.barangay.brgy_code)) {
-          matched.barangay = parsed.barangay.brgy_name;
-          filled++;
-        }
-      }
-
-      const streetEl = document.getElementById('street-address');
-      const streetVal = streetResult.street || parsed.street || addressRaw;
-      if (streetEl && streetVal) {
-        streetEl.value = streetVal;
-        streetEl.dataset.ocrNormalized = streetResult.normalized ? '1' : '0';
-        streetEl.dataset.ocrStreetConfidence = String(streetResult.confidence || 0);
-        streetEl.dataset.ocrStreetReview = streetResult.needsReview ? '1' : '0';
-        streetEl.dispatchEvent(new Event('input', { bubbles: true }));
-        const wrap = streetEl.closest('.input-wrap') || streetEl;
-        wrap.classList.add('ocr-autofilled', 'ocr-autofilled-pulse');
-        setTimeout(() => wrap.classList.remove('ocr-autofilled-pulse'), 1600);
-        matched.street = streetVal;
+    if (parsed.region) {
+      populateSelect('region', [parsed.region], 'region_name', 'region_code', 'Choose Region');
+      if (setSelect('region', 'region-text', parsed.region.region_code)) {
+        matched.region = parsed.region.region_name;
         filled++;
       }
-    } finally {
-      setTimeout(() => { global.__ocrAutofillActive = false; }, 300);
     }
 
-    return {
-      filled,
-      matched,
-      parsed,
-      streetResult,
-      streetConfidence: streetResult.confidence,
-      streetNeedsReview: streetResult.needsReview,
-      isBagoResident: isBagoCityRecord(parsed.city),
-    };
+    if (parsed.province) {
+      populateSelect('province', [parsed.province], 'province_name', 'province_code', 'Choose Province');
+      if (setSelect('province', 'province-text', parsed.province.province_code)) {
+        matched.province = parsed.province.province_name;
+        filled++;
+      }
+    }
+
+    if (parsed.city) {
+      populateSelect('city', [parsed.city], 'city_name', 'city_code', 'Choose City / Municipality');
+      if (setSelect('city', 'city-text', parsed.city.city_code)) {
+        matched.city = parsed.city.city_name;
+        filled++;
+      }
+    }
+
+    if (parsed.barangay) {
+      populateSelect(
+        'barangay',
+        BAGO_PSGC.barangays,
+        'brgy_name',
+        'brgy_code',
+        'Choose Barangay'
+      );
+      if (setSelect('barangay', 'barangay-text', parsed.barangay.brgy_code)) {
+        matched.barangay = parsed.barangay.brgy_name;
+        filled++;
+      }
+    }
+
+    const streetEl = document.getElementById('street-address');
+    const streetVal = (streetResult && (streetResult.street || streetResult.locality)) || '';
+    if (streetEl && streetVal) {
+      streetEl.disabled = false;
+      streetEl.readOnly = false;
+      streetEl.value = streetVal;
+      streetEl.dataset.ocrNormalized = streetResult.normalized ? '1' : '0';
+      streetEl.dataset.ocrStreetConfidence = String(streetResult.confidence || 0);
+      streetEl.dataset.ocrStreetReview = streetResult.needsReview ? '1' : '0';
+      streetEl.dispatchEvent(new Event('input', { bubbles: true }));
+      const wrap = streetEl.closest('.input-wrap') || streetEl;
+      wrap.classList.add('ocr-autofilled', 'ocr-autofilled-pulse');
+      setTimeout(() => wrap.classList.remove('ocr-autofilled-pulse'), 1600);
+      matched.street = streetVal;
+      filled++;
+    }
+
+    return { filled, matched };
+  }
+
+  async function fillFromText(addressRaw) {
+    if (!addressRaw || !String(addressRaw).trim()) {
+      return { filled: 0, matched: {}, isBagoResident: false };
+    }
+
+    try {
+      const segmented = segmentPhilIdAddress(addressRaw);
+      const datasets = {
+        regions: [BAGO_PSGC.region],
+        provinces: [BAGO_PSGC.province],
+        cities: [BAGO_PSGC.city],
+        barangays: BAGO_PSGC.barangays,
+      };
+      const parsed = parseAddress(segmented, datasets);
+      if (!parsed.city && hasStrongBagoSignal(parsed.addressNorm || normalizeOcrAddress(segmented))) {
+        parsed.city = BAGO_PSGC.city;
+        parsed.province = BAGO_PSGC.province;
+        parsed.region = BAGO_PSGC.region;
+        parsed.barangayMeta = findBarangay(
+          datasets.barangays,
+          BAGO_PSGC.city.city_code,
+          parsed.addressNorm || normalizeOcrAddress(segmented),
+          compact(parsed.addressNorm || normalizeOcrAddress(segmented))
+        );
+        parsed.barangay = parsed.barangayMeta.record;
+        parsed.parts = {
+          region: parsed.region,
+          province: parsed.province,
+          city: parsed.city,
+          barangay: parsed.barangay,
+        };
+      }
+      if (!parsed.region && parsed.province) {
+        parsed.region = BAGO_PSGC.region;
+        parsed.parts.region = parsed.region;
+      }
+
+      const streetResult = normalizeStreetAddress(
+        segmented,
+        parsed.parts,
+        parsed.barangayMeta,
+        null
+      );
+      const applied = applyParsedToForm(parsed, streetResult);
+
+      return {
+        filled: applied.filled,
+        matched: applied.matched,
+        parsed,
+        streetResult,
+        streetConfidence: streetResult.confidence,
+        streetNeedsReview: streetResult.needsReview === true && !applied.matched.barangay,
+        isBagoResident: isBagoCityRecord(parsed.city),
+      };
+    } catch (err) {
+      console.error('Address autofill error:', err);
+      return { filled: 0, matched: {}, isBagoResident: false };
+    } finally {
+      setTimeout(() => { global.__ocrAutofillActive = false; }, 2000);
+    }
   }
 
   global.PhAddressAutofill = {
@@ -933,5 +1092,6 @@
     loadJson,
     normalizeOcrAddress,
     normalizeStreetAddress,
+    segmentPhilIdAddress,
   };
 })(window);

@@ -470,11 +470,16 @@ def extract_address(raw_text: str) -> dict[str, Any]:
     for i, line in enumerate(lines):
         line_up = line.upper().strip()
         if line_up in ("ADDRESS", "TIRAHAN"):
-            for j in range(i + 1, min(i + 3, len(lines))):
+            parts: list[str] = []
+            for j in range(i + 1, min(i + 5, len(lines))):
                 nxt = lines[j].strip()
                 if not nxt or _is_address_label(nxt.upper()):
                     continue
-                return {"value": format_address_line(nxt), "confidence": 0.82, "source": "label"}
+                parts.append(format_address_line(nxt))
+                if len(parts) >= 3:
+                    break
+            if parts:
+                return {"value": format_address_line(", ".join(parts)), "confidence": 0.82, "source": "label"}
             break
     addr_lines = []
     for line in lines:
