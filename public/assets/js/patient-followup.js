@@ -203,24 +203,19 @@
       return;
     }
 
-    const now = new Date();
-    const today =
-      now.getFullYear() + '-' +
-      String(now.getMonth() + 1).padStart(2, '0') + '-' +
-      String(now.getDate()).padStart(2, '0');
-
     try {
       const res = await fetch(
         APP_BASE + '/app/api/appointments/get_available_slots.php?provider_id=' +
-          encodeURIComponent(providerId) + '&date=' + encodeURIComponent(today),
-        { credentials: 'same-origin', headers: { 'X-MC-No-Loader': '1' } }
+          encodeURIComponent(providerId) + '&_=' + Date.now(),
+        { credentials: 'same-origin', cache: 'no-store', headers: { 'X-MC-No-Loader': '1' } }
       );
       const data = await res.json();
-      const slots = (data.slots || data.data?.slots || []).filter(function (slot) {
+      const payload = data.data || data;
+      const slots = (payload.slots || []).filter(function (slot) {
         return slot.bookable !== false;
       });
       if (!slots.length) {
-        wrap.innerHTML = '<p>No slots available today. Please check back later or contact your provider.</p>';
+        wrap.innerHTML = '<p>' + escapeHtml(payload.message || 'No clinical slots available for this doctor on this date.') + '</p>';
         return;
       }
       wrap.innerHTML = slots.map(function (slot) {

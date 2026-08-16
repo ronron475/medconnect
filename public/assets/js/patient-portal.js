@@ -671,31 +671,14 @@
       }
     }
 
-    const parseSlotTimeParts = (raw) => {
-      const value = String(raw || '00:00:00').trim();
-      const timeOnly = value.includes(' ') ? value.split(' ').pop() : value;
-      const parts = timeOnly.split(':').map(Number);
-      return parts.length >= 2 && !Number.isNaN(parts[0]) && !Number.isNaN(parts[1]) ? parts : null;
-    };
-
-    const isSlotStartInFuture = (slot) => {
-      const parts = String(slot.slot_date || '').split('-').map(Number);
-      const timeParts = parseSlotTimeParts(slot.start_time);
-      if (parts.length !== 3 || !timeParts) {
-        return false;
-      }
-      const slotStart = new Date(parts[0], parts[1] - 1, parts[2], timeParts[0], timeParts[1], timeParts[2] || 0);
-      return slotStart.getTime() > Date.now();
-    };
-
     const isSlotBookable = (slot) => {
-      if (slot.bookable === true) {
+      if (slot.bookable === true || String(slot.status || '').toUpperCase() === 'AVAILABLE') {
         return true;
       }
       if (slot.bookable === false) {
         return false;
       }
-      return isSlotStartInFuture(slot);
+      return false;
     };
 
     const resolveProviderId = () => {
@@ -739,7 +722,7 @@
       const bookableSlots = slots.filter((slot) => isSlotBookable(slot));
 
       if (!slots.length) {
-        clearSlots('No appointment slots were generated for today. Ask the provider to enable today in their schedule.');
+        clearSlots('No clinical slots available for this doctor on this date.');
         return;
       }
 
@@ -829,11 +812,7 @@
     };
 
     const loadSlots = async (providerId, date) => {
-      const today = dateInput.value || dateDisplay?.dataset.today || localTodayYmd();
-      if (date !== today) {
-        clearSlots('Appointments can only be booked for today.');
-        return;
-      }
+      const requested = date || dateInput.value || dateDisplay?.dataset.today || localTodayYmd();
 
       clearSlots('Loading available slots…');
       const url =
@@ -841,23 +820,25 @@
         '/app/api/appointments/get_available_slots.php?provider_id=' +
         encodeURIComponent(providerId) +
         '&date=' +
-        encodeURIComponent(today) +
+        encodeURIComponent(requested) +
         '&_=' +
         Date.now();
 
       const res = await fetch(url, { credentials: 'same-origin', cache: 'no-store' });
       const data = await res.json();
-      const slots = data.data?.slots || data.slots || [];
+      const payload = data.data || data;
+      const slots = payload.slots || [];
+      if (payload.today) {
+        setTodayDisplay(payload.today);
+      }
 
       if (!data.success) {
-        clearSlots(data.message || 'Could not load today\'s slots.');
+        clearSlots(data.message || payload.message || 'Could not load today\'s slots.');
         return;
       }
 
       if (!slots.length) {
-        clearSlots(
-          'No slots for today. The doctor has not opened today\'s schedule yet or all clinic hours have passed.'
-        );
+        clearSlots(payload.message || 'No clinical slots available for this doctor on this date.');
         return;
       }
 
@@ -883,6 +864,15 @@
         loadTodayBooking(fallbackId);
       }
     }
+
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'visible') {
+        const providerId = resolveProviderId();
+        if (providerId) {
+          loadTodayBooking(providerId);
+        }
+      }
+    });
   }
 
   window.refreshBookingPicker = function refreshBookingPicker() {
@@ -1429,6 +1419,9 @@
         } else {
           showBookingOverlay(false);
           showTriageAlert(alertEl, 'error', data.message || 'Could not book your appointment.');
+          if (typeof window.refreshBookingPicker === 'function') {
+            window.refreshBookingPicker();
+          }
         }
       } catch {
         showBookingOverlay(false);
