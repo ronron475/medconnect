@@ -126,25 +126,26 @@ function pch_filter_url(string $filter): string
             <?php
               $recUrl = consultation_video_recording_view_url((int) ($row['id'] ?? 0));
             ?>
-            <?php if ($recUrl !== ''): ?>
-            <div class="pch-consult-card__actions" style="margin-top:8px;">
-              <a href="<?= htmlspecialchars($recUrl) ?>" target="_blank" rel="noopener" class="mc-btn mc-btn--outline" style="padding:6px 12px;font-size:11px;">View Recording</a>
-            </div>
-            <?php else: ?>
+            <?php if ($recUrl === ''): ?>
             <div class="pch-consult-card__row"><strong>Video recording:</strong> Not available</div>
             <?php endif; ?>
             <?php else: ?>
+            <?php $recUrl = ''; ?>
             <div class="pch-consult-card__row"><strong>Video consultation:</strong> <?= htmlspecialchars($vhLabel) ?></div>
             <?php endif; ?>
           </div>
           <div class="pch-consult-card__actions">
-            <a href="<?= htmlspecialchars($sessionUrl) ?>" class="mc-btn mc-btn--outline" style="padding:6px 12px;font-size:11px;">View History</a>
+            <?php if ($vhCompleted && $recUrl !== ''): ?>
+            <a href="<?= htmlspecialchars($recUrl) ?>" target="_blank" rel="noopener" class="mc-btn mc-btn--outline pch-consult-card__btn">View Recording</a>
+            <?php endif; ?>
+            <a href="<?= htmlspecialchars($sessionUrl) ?>" class="mc-btn mc-btn--outline pch-consult-card__btn">View History</a>
             <?php if ($status === 'completed' && !empty($row['clinical_note_finalized'])): ?>
-            <a href="<?= htmlspecialchars(ASSET_BASE) ?>/views/provider/medical_records.php?view=patients&amp;patient_id=<?= (int) $patient_detail['id'] ?>&amp;tab=clinical_notes" class="mc-btn mc-btn--outline" style="padding:6px 12px;font-size:11px;">View SOAP</a>
-            <?php elseif ($status === 'completed'): ?>
-            <span class="pch-doc-pending">Provider documentation is still in progress.</span>
+            <a href="<?= htmlspecialchars(ASSET_BASE) ?>/views/provider/medical_records.php?view=patients&amp;patient_id=<?= (int) $patient_detail['id'] ?>&amp;tab=clinical_notes" class="mc-btn mc-btn--outline pch-consult-card__btn">View SOAP</a>
             <?php endif; ?>
           </div>
+          <?php if ($status === 'completed' && empty($row['clinical_note_finalized'])): ?>
+          <p class="pch-doc-pending">Provider documentation is still in progress.</p>
+          <?php endif; ?>
         </article>
         <?php endforeach; ?>
       <?php endif; ?>

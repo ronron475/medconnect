@@ -272,13 +272,27 @@ body.provider-body .provider-page-body .pch-search input[type="search"]::-webkit
 
 .pch-consult-card__actions {
   display: flex;
-  gap: 8px;
+  flex-direction: row;
   flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
   margin-top: 12px;
 }
 
+.pch-consult-card__btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 32px;
+  padding: 0 12px;
+  font-size: 11px;
+  line-height: 1;
+  box-sizing: border-box;
+  white-space: nowrap;
+}
+
 .pch-doc-pending {
-  margin: 0;
+  margin: 8px 0 0;
   font-size: 12px;
   color: #64748b;
   line-height: 1.45;
@@ -333,7 +347,7 @@ body.provider-body .provider-page-body .pch-search input[type="search"]::-webkit
   .pch-consult-card {
     display: flex;
     flex-wrap: wrap;
-    align-items: center;
+    align-items: flex-start;
     column-gap: 8px;
     padding: 16px 18px 18px;
   }
@@ -376,14 +390,14 @@ body.provider-body .provider-page-body .pch-search input[type="search"]::-webkit
 
   .pch-video-block .pch-consult-card__actions,
   .pch-consult-card > .pch-consult-card__actions {
-    flex: 0 0 auto;
-    display: inline-flex;
+    flex: 1 1 100%;
+    display: flex;
     flex-direction: row;
     flex-wrap: wrap;
     align-items: center;
-    width: auto;
+    width: 100%;
     margin-top: 12px;
-    margin-right: 8px;
+    margin-right: 0;
   }
 
   .pch-doc-pending {
