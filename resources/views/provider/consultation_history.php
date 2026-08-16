@@ -41,10 +41,12 @@ function pch_filter_url(string $filter): string
 
   <?php if ($detail_patient_id > 0 && $patient_detail): ?>
 
-  <a href="<?= htmlspecialchars(pch_filter_url($filter)) ?>" class="pch-back" aria-label="Back to consultation history list">← Back to patient list</a>
-
   <div class="pch-panel">
     <div class="pch-detail-head">
+      <a href="<?= htmlspecialchars(pch_filter_url($filter)) ?>" class="pch-back" aria-label="Back to patient list">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 18l-6-6 6-6"/></svg>
+        Back to patient list
+      </a>
       <h2 class="pch-detail-name"><?= htmlspecialchars((string) $patient_detail['patient_name']) ?></h2>
       <div class="pch-detail-meta">
         Patient ID: <?= htmlspecialchars((string) $patient_detail['patient_number']) ?>
