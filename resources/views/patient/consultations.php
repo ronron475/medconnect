@@ -80,6 +80,7 @@ if ($pdo->query("SHOW TABLES LIKE 'consultations'")->rowCount()) {
         $vh = consultation_video_history_summary(
             (string) ($consult['status'] ?? ''),
             [
+                'consultation_id' => $cid,
                 'status' => (string) ($consult['video_status'] ?? ''),
                 'started_at' => (string) ($consult['video_started_at'] ?? ''),
                 'ended_at' => (string) ($consult['video_ended_at'] ?? ''),

@@ -448,6 +448,12 @@
       return;
     }
     if (type === 'medconnect:call-left') {
+      if (event.data.rejoinable) {
+        writeState({ ended: false });
+        syncChrome();
+        global.dispatchEvent(new CustomEvent('medconnect:video-shell-left', { detail: event.data }));
+        return;
+      }
       writeState({ ended: true });
       closeShell();
       global.dispatchEvent(new CustomEvent('medconnect:video-shell-left', { detail: event.data }));

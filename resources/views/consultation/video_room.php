@@ -1010,6 +1010,12 @@ if (session_status() === PHP_SESSION_ACTIVE) {
     let syncTimerInterval = null;
     let keepAliveInterval = null;
     let remotePeerLeft = false;
+    let patientWaitMode = false;
+    let patientLeftRejoinable = false;
+    let recordingSegmentIndex = 1;
+    let recordingStartedAtMs = 0;
+    let recordingQuietStop = false;
+    let pendingStartRecording = false;
 
     function dismissBootLoader() {
       try {
@@ -1116,16 +1122,20 @@ if (session_status() === PHP_SESSION_ACTIVE) {
       });
       if (consultUi && typeof consultUi.mountVideos === 'function') consultUi.mountVideos();
       document.getElementById('remoteName').textContent = '<?= htmlspecialchars($other_name) ?>';
-      setCallPhase(window.McVideoCallCore ? window.McVideoCallCore.STATUS.CONNECTED : 'connected', {
-        callStatusText: 'Connected',
-      });
-      syncMediaStatus({ connectionLabel: 'â— Good Connection', connectionState: 'connected' });
+      const wasWaiting = patientWaitMode || remotePeerLeft;
+      markPatientReconnected();
+      if (!wasWaiting) {
+        setCallPhase(window.McVideoCallCore ? window.McVideoCallCore.STATUS.CONNECTED : 'connected', {
+          callStatusText: 'Connected',
+        });
+      }
+      syncMediaStatus({ connectionLabel: '● Good Connection', connectionState: 'connected' });
       const tip = document.getElementById('demoConnectTip');
       if (tip) tip.style.display = 'none';
       connectRemoteAudioToRecording();
       setTimeout(() => unlockRemoteAudio(), 200);
       setTimeout(() => unlockRemoteAudio(), 800);
-      if (userRole === 'provider' && (!mediaRecorder || mediaRecorder.state === 'inactive')) {
+      if (userRole === 'provider' && !recorderIsRecording()) {
         startRecording();
       }
       // Re-announce mute so the other side sees mute banner if we muted before connect.
@@ -1231,16 +1241,26 @@ if (session_status() === PHP_SESSION_ACTIVE) {
     }
 
     function handleConnectionFailed(reason) {
-      if (endingCall) return;
-      setCallPhase(window.McVideoCallCore ? window.McVideoCallCore.STATUS.RECONNECTING : 'reconnecting', {
-        callStatusText: 'Connection interrupted — tap Retry if this persists',
-      });
-      // The stage overlay owns the single Retry control. Showing the waiting
-      // card's retry as well put two identical buttons on screen at once.
-      if (consultUi && typeof consultUi.setConnectionFailed === 'function') {
-        consultUi.setConnectionFailed(true);
-      }
+      if (endingCall || window.__mcCallEnded) return;
       console.warn('[medConnect] WebRTC connection failed:', reason);
+      if (userRole === 'provider') {
+        showProviderWaitingForPatient();
+        finalizeRecordingSegment({ quiet: true });
+        if (window.McWebrtcPeerCall) {
+          McWebrtcPeerCall.closeCurrentCall();
+        }
+        beginConnectionRetries();
+        return;
+      }
+      setCallPhase(window.McVideoCallCore ? window.McVideoCallCore.STATUS.RECONNECTING : 'reconnecting', {
+        callStatusText: 'Connection lost',
+      });
+      if (consultUi && typeof consultUi.setOverlay === 'function') {
+        consultUi.setOverlay('Connection lost', 'Trying to reconnect…', true, { showRetry: true });
+      }
+      if (consultUi && typeof consultUi.setConnectionFailed === 'function') {
+        consultUi.setConnectionFailed(true, 'Trying to reconnect…');
+      }
     }
 
     function handleConnectionRecovered() {
@@ -1251,11 +1271,15 @@ if (session_status() === PHP_SESSION_ACTIVE) {
         McVideoRoomEnhancements.setWaitingRetryVisible(false);
       }
       if (callHasRemoteStream) {
-        setCallPhase(window.McVideoCallCore ? window.McVideoCallCore.STATUS.CONNECTED : 'connected', {
-          callStatusText: 'Connected',
-        });
-        if (consultUi && typeof consultUi.setOverlay === 'function') {
-          consultUi.setOverlay('', '', false, { showRetry: false });
+        const wasWaiting = patientWaitMode || remotePeerLeft;
+        markPatientReconnected();
+        if (!wasWaiting) {
+          setCallPhase(window.McVideoCallCore ? window.McVideoCallCore.STATUS.CONNECTED : 'connected', {
+            callStatusText: 'Connected',
+          });
+          if (consultUi && typeof consultUi.setOverlay === 'function') {
+            consultUi.setOverlay('', '', false, { showRetry: false });
+          }
         }
         setTimeout(() => unlockRemoteAudio(), 200);
       }
@@ -1310,19 +1334,30 @@ if (session_status() === PHP_SESSION_ACTIVE) {
         if (endingCall || (window.McWebrtcPeerCall && McWebrtcPeerCall.isIntentionalLeave && McWebrtcPeerCall.isIntentionalLeave())) {
           return;
         }
+        if (patientWaitMode || remotePeerLeft) {
+          beginConnectionRetries();
+          return;
+        }
         if (!endingCall && localStream && !callInterval) {
           setCallPhase(window.McVideoCallCore ? window.McVideoCallCore.STATUS.RECONNECTING : 'reconnecting', {
-            callStatusText: 'Reconnecting…',
+            callStatusText: userRole === 'patient' ? 'Connection lost' : 'Reconnecting…',
           });
+          if (userRole === 'patient' && consultUi && typeof consultUi.setOverlay === 'function') {
+            consultUi.setOverlay('Connection lost', 'Trying to reconnect…', true, { showRetry: false });
+          }
           beginConnectionRetries();
         }
       });
 
       rtc.on('recovering', function () {
         if (endingCall || window.__mcCallEnded) return;
+        if (patientWaitMode) return;
         setCallPhase(window.McVideoCallCore ? window.McVideoCallCore.STATUS.RECONNECTING : 'reconnecting', {
-          callStatusText: 'Reconnecting…',
+          callStatusText: userRole === 'patient' ? 'Trying to reconnect…' : 'Reconnecting…',
         });
+        if (userRole === 'patient' && consultUi && typeof consultUi.setOverlay === 'function') {
+          consultUi.setOverlay('Connection lost', 'Trying to reconnect…', true, { showRetry: false });
+        }
       });
 
       rtc.on('recovered', function () {
@@ -1356,7 +1391,10 @@ if (session_status() === PHP_SESSION_ACTIVE) {
       rtc.on('disconnected', function () {
         if (endingCall || window.__mcCallEnded) return;
         console.warn('Peer disconnected — reconnecting signaling…');
-        setCallPhase(window.McVideoCallCore ? window.McVideoCallCore.STATUS.RECONNECTING : 'reconnecting');
+        if (patientWaitMode) return;
+        setCallPhase(window.McVideoCallCore ? window.McVideoCallCore.STATUS.RECONNECTING : 'reconnecting', {
+          callStatusText: userRole === 'patient' ? 'Connection lost' : 'Reconnecting…',
+        });
       });
 
       rtc.on('error', function (ev) {
@@ -1413,11 +1451,15 @@ if (session_status() === PHP_SESSION_ACTIVE) {
       });
       if (consultUi && typeof consultUi.mountVideos === 'function') consultUi.mountVideos();
       document.getElementById('remoteName').textContent = '<?= htmlspecialchars($other_name) ?>';
-      setCallPhase(window.McVideoCallCore ? window.McVideoCallCore.STATUS.CONNECTED : 'connected', {
-        callStatusText: 'Connected',
-      });
-      if (consultUi && typeof consultUi.setOverlay === 'function') {
-        consultUi.setOverlay('', '', false, { showRetry: false });
+      const wasWaiting = patientWaitMode || remotePeerLeft;
+      markPatientReconnected();
+      if (!wasWaiting) {
+        setCallPhase(window.McVideoCallCore ? window.McVideoCallCore.STATUS.CONNECTED : 'connected', {
+          callStatusText: 'Connected',
+        });
+        if (consultUi && typeof consultUi.setOverlay === 'function') {
+          consultUi.setOverlay('', '', false, { showRetry: false });
+        }
       }
       if (consultUi && typeof consultUi.startDurationTimer === 'function') {
         consultUi.startDurationTimer();
@@ -1428,7 +1470,7 @@ if (session_status() === PHP_SESSION_ACTIVE) {
       connectRemoteAudioToRecording();
       setTimeout(() => unlockRemoteAudio(), 200);
       setTimeout(() => unlockRemoteAudio(), 1000);
-      if (userRole === 'provider' && (!mediaRecorder || mediaRecorder.state === 'inactive')) {
+      if (userRole === 'provider' && !recorderIsRecording()) {
         startRecording();
       }
       openDataChannel();
@@ -1978,16 +2020,22 @@ if (session_status() === PHP_SESSION_ACTIVE) {
       const STATUS = window.McVideoCallCore ? window.McVideoCallCore.STATUS : {};
       const connected = statusKey === 'connected' || statusKey === STATUS.CONNECTED;
       const reconnecting = statusKey === 'reconnecting' || statusKey === STATUS.RECONNECTING;
+      const ended = statusKey === STATUS.ENDED || statusKey === 'ended' || !!window.__mcCallEnded;
+      const waitingPatient = patientWaitMode
+        || statusKey === STATUS.WAITING_PATIENT
+        || statusKey === 'waiting_patient';
       let label = '● Connecting…';
-      if (connected) label = '● LIVE';
+      if (ended) label = '● Ended';
+      else if (patientWaitMode) label = '● Patient disconnected';
+      else if (connected) label = '● LIVE';
       else if (reconnecting) label = '● Reconnecting…';
-      else if (statusKey === STATUS.WAITING_PATIENT || statusKey === 'waiting_patient') label = '● Waiting for patient';
-      else if (statusKey === STATUS.ENDED || statusKey === 'ended') label = '● Ended';
+      else if (waitingPatient) label = '● Waiting for patient';
       notifyParent({
         type: 'medconnect:call-state',
         statusLabel: label,
-        connected: connected,
-        timerActive: connected,
+        connected: connected && !patientWaitMode,
+        timerActive: !ended,
+        patientDisconnected: !!patientWaitMode,
       });
     }
 
@@ -2013,15 +2061,93 @@ if (session_status() === PHP_SESSION_ACTIVE) {
     }
 
 
+    function recorderIsRecording() {
+      return !!(mediaRecorder && mediaRecorder.state === 'recording');
+    }
+
+    function teardownRecordingPipeline() {
+      if (drawInterval) {
+        clearInterval(drawInterval);
+        drawInterval = null;
+      }
+      if (recordingAudioContext) {
+        try { recordingAudioContext.close(); } catch (e) {}
+        recordingAudioContext = null;
+        recordingAudioDestination = null;
+      }
+      remoteAudioConnected = false;
+      canvasStream = null;
+      canvasContext = null;
+    }
+
+    function finalizeRecordingSegment(options) {
+      options = options || {};
+      if (!mediaRecorder || mediaRecorder.state === 'inactive') {
+        return uploadPromise || Promise.resolve();
+      }
+      if (mediaRecorder.state !== 'recording') {
+        return uploadPromise || Promise.resolve();
+      }
+      recordingQuietStop = !!options.quiet;
+      try { mediaRecorder.requestData(); } catch (e) {}
+      try { mediaRecorder.stop(); } catch (e) {}
+      return uploadPromise || Promise.resolve();
+    }
+
+    function showProviderWaitingForPatient() {
+      if (userRole !== 'provider' || endingCall) return;
+      patientWaitMode = true;
+      remotePeerLeft = true;
+      setCallPhase(window.McVideoCallCore ? window.McVideoCallCore.STATUS.WAITING_PATIENT : 'waiting_patient', {
+        callStatusText: 'Patient disconnected',
+      });
+      if (consultUi && typeof consultUi.setOverlay === 'function') {
+        consultUi.setOverlay(
+          'Patient disconnected',
+          'Waiting for patient to reconnect…',
+          true,
+          { showRetry: false }
+        );
+      }
+    }
+
+    function markPatientReconnected() {
+      const wasWaiting = patientWaitMode || remotePeerLeft;
+      patientWaitMode = false;
+      remotePeerLeft = false;
+      if (!wasWaiting || userRole !== 'provider') return;
+      setCallPhase(window.McVideoCallCore ? window.McVideoCallCore.STATUS.CONNECTED : 'connected', {
+        callStatusText: 'Patient reconnected',
+      });
+      if (consultUi && typeof consultUi.setOverlay === 'function') {
+        consultUi.setOverlay('Patient reconnected', '', true, { showRetry: false });
+      }
+      setTimeout(() => {
+        if (endingCall || window.__mcCallEnded || !callHasRemoteStream) return;
+        setCallPhase(window.McVideoCallCore ? window.McVideoCallCore.STATUS.CONNECTED : 'connected', {
+          callStatusText: 'Connected',
+        });
+      }, 1800);
+    }
+
     function startRecording() {
       if (userRole !== 'provider') return;
-      if (mediaRecorder && mediaRecorder.state === 'recording') return;
-      
+      if (endingCall || window.__mcCallEnded) return;
+      if (recorderIsRecording()) return;
+      if (mediaRecorder || uploadPromise) {
+        pendingStartRecording = true;
+        return;
+      }
+
+      teardownRecordingPipeline();
+
       console.log("Initializing PiP Recording...");
       recordedChunks = [];
       remoteAudioConnected = false;
+      recordingQuietStop = false;
+      recordingStartedAtMs = Date.now();
+      pendingStartRecording = false;
 
-      // Create a promise that resolves when upload finishes
       let resolveUpload;
       uploadPromise = new Promise(resolve => { resolveUpload = resolve; });
 
@@ -2118,58 +2244,108 @@ if (session_status() === PHP_SESSION_ACTIVE) {
       };
 
       mediaRecorder.onstop = async () => {
+        const quiet = recordingQuietStop;
+        const segmentIndex = recordingSegmentIndex;
+        const startedMs = recordingStartedAtMs;
+        const chunks = recordedChunks.slice();
+        recordedChunks = [];
+        const stoppedRecorder = mediaRecorder;
+        mediaRecorder = null;
+        teardownRecordingPipeline();
+
         console.log("Recording stopped. Preparing upload...");
-        document.getElementById('callStatus').textContent = 'Saving Recording... Please wait.';
-        document.getElementById('callStatus').style.color = '#fbbf24';
-        showSavingModal('Saving consultation recording', 'Please keep this page open while the recording is uploaded.');
-        
-        clearInterval(drawInterval);
-        const blob = new Blob(recordedChunks, { type: 'video/webm' });
+        if (!quiet) {
+          document.getElementById('callStatus').textContent = 'Saving Recording... Please wait.';
+          document.getElementById('callStatus').style.color = '#fbbf24';
+          showSavingModal('Saving consultation recording', 'Please keep this page open while the recording is uploaded.');
+        } else if (!patientWaitMode) {
+          document.getElementById('callStatus').textContent = 'Saving video segment…';
+        }
+
+        const blob = new Blob(chunks, { type: 'video/webm' });
         if (!blob.size) {
           console.warn("Recording blob is empty; skipping upload.");
-          document.getElementById('callStatus').textContent = 'Recording was empty — nothing saved.';
-          document.getElementById('callStatus').style.color = '#fca5a5';
-          showSavingModal('Recording upload failed', 'The recorder produced an empty file, so nothing was saved.');
-          await new Promise((r) => setTimeout(r, 2000));
+          if (!quiet) {
+            document.getElementById('callStatus').textContent = 'Recording was empty — nothing saved.';
+            document.getElementById('callStatus').style.color = '#fca5a5';
+            showSavingModal('Recording upload failed', 'The recorder produced an empty file, so nothing was saved.');
+            await new Promise((r) => setTimeout(r, 2000));
+          }
           resolveUpload();
+          uploadPromise = null;
+          if (pendingStartRecording && callHasRemoteStream && !endingCall) {
+            pendingStartRecording = false;
+            startRecording();
+          }
           return;
         }
+
+        const startedAt = startedMs ? new Date(startedMs).toISOString() : '';
         const formData = new FormData();
-        formData.append('video', blob);
+        formData.append('video', blob, 'consultation-' + consultationId + '-seg-' + segmentIndex + '.webm');
         formData.append('token', roomToken);
+        formData.append('csrf_token', document.body.dataset.csrf || '');
+        formData.append('upload_key', roomToken + '-s' + segmentIndex + '-' + String(startedMs || Date.now()));
+        formData.append('segment_index', String(segmentIndex));
+        formData.append('started_at', startedAt);
+        formData.append('ended_at', new Date().toISOString());
 
         try {
           const res = await fetch('<?= ASSET_BASE ?>/app/api/consultations/upload_recording.php', {
             method: 'POST',
-            body: formData
+            body: formData,
+            credentials: 'same-origin',
           });
           const data = await res.json();
           if (data.success) {
+            recordingSegmentIndex = segmentIndex + 1;
             console.log("Recording uploaded successfully:", data.path);
-            document.getElementById('callStatus').textContent = 'Recording saved.';
-            document.getElementById('callStatus').style.color = '#86efac';
-            showSavingModal('Recording saved', 'Consultation recording was uploaded successfully.');
+            if (!quiet) {
+              document.getElementById('callStatus').textContent = 'Recording saved.';
+              document.getElementById('callStatus').style.color = '#86efac';
+              showSavingModal('Recording saved', 'Consultation recording was uploaded successfully.');
+            } else if (patientWaitMode) {
+              document.getElementById('callStatus').textContent = 'Patient disconnected';
+              document.getElementById('callStatus').style.color = '';
+            }
           } else {
             const msg = (data && data.message) ? String(data.message) : 'Upload rejected by server.';
             console.error("Recording upload failed:", msg);
             document.getElementById('callStatus').textContent = 'Recording upload failed.';
             document.getElementById('callStatus').style.color = '#fca5a5';
-            showSavingModal('Recording upload failed', msg);
-            await new Promise((r) => setTimeout(r, 2500));
+            if (!quiet) {
+              showSavingModal('Recording upload failed', msg);
+              await new Promise((r) => setTimeout(r, 2500));
+            }
           }
         } catch (e) {
           console.error("Upload error:", e);
           document.getElementById('callStatus').textContent = 'Recording upload failed.';
           document.getElementById('callStatus').style.color = '#fca5a5';
-          showSavingModal('Recording upload failed', 'Network error while uploading the consultation recording.');
-          await new Promise((r) => setTimeout(r, 2500));
+          if (!quiet) {
+            showSavingModal('Recording upload failed', 'Network error while uploading the consultation recording.');
+            await new Promise((r) => setTimeout(r, 2500));
+          }
         } finally {
-          resolveUpload(); // Signal that we're done
+          try { if (stoppedRecorder) stoppedRecorder.ondataavailable = null; } catch (e) {}
+          const done = resolveUpload;
+          uploadPromise = null;
+          done();
+          if (pendingStartRecording && callHasRemoteStream && !endingCall) {
+            pendingStartRecording = false;
+            startRecording();
+          }
         }
       };
 
-      mediaRecorder.start(1000);
-      console.log("PiP Recording started.");
+      mediaRecorder.onerror = (event) => {
+        console.error('MediaRecorder error:', event && event.error ? event.error : event);
+      };
+
+      if (mediaRecorder.state === 'inactive') {
+        mediaRecorder.start(1000);
+        console.log("PiP Recording started.");
+      }
     }
 
     function connectRemoteAudioToRecording() {
@@ -2316,16 +2492,29 @@ if (session_status() === PHP_SESSION_ACTIVE) {
         .then((res) => res.json())
         .then((data) => {
           if (!data.success) {
-            if (!endingCall && !window.__mcCallEnded) {
-              if (isPatient) {
-                document.getElementById('callStatus').textContent = 'This consultation has ended.';
-                leaveCallConfirmed({ reason: 'session_ended', skipApi: true });
-              } else {
-                document.getElementById('callStatus').textContent = 'Video session closed.';
-                endCall(true);
-              }
-            }
             return;
+          }
+          const consultStatus = String(data.consultation_status || '').toLowerCase();
+          const videoStatus = String(data.video_status || '').toLowerCase();
+          const consultDone = consultStatus === 'completed' || consultStatus === 'cancelled';
+          const videoEnded = videoStatus === 'ended';
+          if ((consultDone || videoEnded) && !endingCall && !window.__mcCallEnded) {
+            if (isPatient) {
+              document.getElementById('callStatus').textContent = 'This consultation has ended.';
+              leaveCallConfirmed({ reason: 'session_ended', skipApi: true });
+              return;
+            }
+            if (consultDone) {
+              document.getElementById('callStatus').textContent = 'This consultation has ended.';
+              endingCall = true;
+              window.__mcCallEnded = true;
+              disconnectLocalCall();
+              redirectAfterLeave({
+                parentMessageType: 'medconnect:call-ended',
+                reason: 'session_ended',
+              });
+              return;
+            }
           }
           if (typeof data.seconds_remaining !== 'number') return;
 
@@ -2465,24 +2654,15 @@ if (session_status() === PHP_SESSION_ACTIVE) {
       if (endingCall) return true;
 
       if (data.role === 'patient' && userRole === 'provider') {
-        remotePeerLeft = true;
         callHasRemoteStream = false;
         remoteMediaUnlocked = false;
         clearRemoteMedia();
         if (window.McWebrtcPeerCall) {
           McWebrtcPeerCall.closeCurrentCall();
         }
-        setCallPhase(window.McVideoCallCore ? window.McVideoCallCore.STATUS.WAITING_PATIENT : 'waiting_patient', {
-          callStatusText: 'Patient left the call',
-        });
-        if (consultUi && typeof consultUi.setOverlay === 'function') {
-          consultUi.setOverlay(
-            'Patient left the call',
-            'They can rejoin from their dashboard while this session is still active.',
-            true,
-            { showRetry: false }
-          );
-        }
+        showProviderWaitingForPatient();
+        finalizeRecordingSegment({ quiet: true });
+        beginConnectionRetries();
         return true;
       }
 
@@ -2609,7 +2789,8 @@ if (session_status() === PHP_SESSION_ACTIVE) {
       document.getElementById('endCallModal').classList.add('show');
     }
 
-    function disconnectLocalCall() {
+    function disconnectLocalCall(options) {
+      options = options || {};
       stopAllCallTimers();
 
       if (localDemoCall) {
@@ -2629,16 +2810,13 @@ if (session_status() === PHP_SESSION_ACTIVE) {
         }
       } catch (e) {}
 
-      if (mediaRecorder && mediaRecorder.state !== 'inactive') {
+      if (mediaRecorder && mediaRecorder.state === 'recording') {
+        try { mediaRecorder.requestData(); } catch (e) {}
         try { mediaRecorder.stop(); } catch (e) {}
       }
 
-      if (recordingAudioContext) {
-        try { recordingAudioContext.close(); } catch (e) {}
-        recordingAudioContext = null;
-        recordingAudioDestination = null;
-        remoteAudioConnected = false;
-      }
+      teardownRecordingPipeline();
+      mediaRecorder = null;
 
       if (localStream) {
         if (window.McVideoCallCore) {
@@ -2664,14 +2842,19 @@ if (session_status() === PHP_SESSION_ACTIVE) {
       }
       peerInitialized = false;
 
-      setCallPhase(window.McVideoCallCore ? window.McVideoCallCore.STATUS.ENDED : 'ended', {
-        callStatusText: 'Consultation Ended',
-      });
+      if (options.endedUi !== false) {
+        setCallPhase(window.McVideoCallCore ? window.McVideoCallCore.STATUS.ENDED : 'ended', {
+          callStatusText: 'Consultation Ended',
+        });
+      }
     }
 
     async function leaveCallConfirmed(options) {
       options = options || {};
       if (endingCall) {
+        if (isPatient && patientLeftRejoinable) {
+          return;
+        }
         if (isPatient) {
           return;
         }
@@ -2679,8 +2862,14 @@ if (session_status() === PHP_SESSION_ACTIVE) {
         return;
       }
 
+      const rejoinable = isPatient
+        && options.reason !== 'provider_left'
+        && options.reason !== 'session_ended';
+
       endingCall = true;
-      window.__mcCallEnded = true;
+      if (!rejoinable) {
+        window.__mcCallEnded = true;
+      }
       setLeaveButtonsDisabled(true);
       closeEndModal();
 
@@ -2695,10 +2884,38 @@ if (session_status() === PHP_SESSION_ACTIVE) {
       }
 
       hideMediaPermissionGate();
-      disconnectLocalCall();
+      disconnectLocalCall({ endedUi: !rejoinable });
 
       if (window.MedConnectLoader && typeof window.MedConnectLoader.forceHide === 'function') {
         window.MedConnectLoader.forceHide();
+      }
+
+      if (rejoinable) {
+        patientLeftRejoinable = true;
+        const retryBtn = document.getElementById('retryConnectBtn');
+        if (retryBtn) retryBtn.textContent = 'Rejoin consultation';
+        setCallPhase(window.McVideoCallCore ? window.McVideoCallCore.STATUS.WAITING_PROVIDER : 'waiting_provider', {
+          callStatusText: 'You left the call',
+        });
+        if (consultUi && typeof consultUi.setOverlay === 'function') {
+          consultUi.setOverlay(
+            'You left the call',
+            'The consultation is still open. Rejoin while your doctor is in the room.',
+            true,
+            { showRetry: true }
+          );
+        }
+        if (window.parent && window.parent !== window) {
+          window.parent.postMessage({
+            type: 'medconnect:call-left',
+            role: userRole,
+            token: roomToken,
+            consultationId: consultationId,
+            rejoinable: true,
+            reason: options.reason || 'patient_left',
+          }, window.location.origin);
+        }
+        return;
       }
 
       if (window.McVideoRoomEnhancements) {
@@ -2772,13 +2989,10 @@ if (session_status() === PHP_SESSION_ACTIVE) {
 
       notifyPeerLeft();
 
-      if (mediaRecorder && mediaRecorder.state === 'recording') {
-        try { mediaRecorder.requestData(); } catch (e) {}
-        mediaRecorder.stop();
-        if (uploadPromise) {
-          console.log('Waiting for recording upload...');
-          await uploadPromise;
-        }
+      if (recorderIsRecording() || (mediaRecorder && mediaRecorder.state !== 'inactive')) {
+        await finalizeRecordingSegment({ quiet: false });
+      } else if (uploadPromise) {
+        await uploadPromise;
       }
 
       await postLeaveApi();
@@ -3023,6 +3237,10 @@ if (session_status() === PHP_SESSION_ACTIVE) {
     });
 
     document.getElementById('retryConnectBtn')?.addEventListener('click', () => {
+      if (patientLeftRejoinable) {
+        window.location.reload();
+        return;
+      }
       callHasRemoteStream = false;
       remoteDiscoveredId = null;
       if (consultUi && typeof consultUi.setConnectionFailed === 'function') {

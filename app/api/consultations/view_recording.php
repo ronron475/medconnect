@@ -9,6 +9,7 @@ require_once dirname(dirname(dirname(__DIR__))) . '/config/db.php';
 require_once dirname(dirname(dirname(__DIR__))) . '/app/includes/auth_guard.php';
 require_once dirname(dirname(dirname(__DIR__))) . '/app/includes/clinical_tables.php';
 require_once dirname(dirname(dirname(__DIR__))) . '/app/includes/consultation_video_history.php';
+require_once dirname(dirname(dirname(__DIR__))) . '/app/includes/consultation_recording_segments.php';
 
 $uid = (int) ($_SESSION['user_id'] ?? 0);
 $role = (string) ($_SESSION['user_role'] ?? '');
@@ -79,19 +80,59 @@ if (!$allowed) {
     exit;
 }
 
-$rel = consultation_video_recording_public_path(
+$segments = consultation_recording_segments_list($pdo, $consultationId);
+$legacyRel = consultation_video_recording_public_path(
     (string) ($row['recording_path'] ?? ''),
     (string) ($row['recording_url'] ?? '')
 );
-$recordingsDir = realpath(STORAGE_PATH . DIRECTORY_SEPARATOR . 'recordings');
-$abs = $rel !== '' ? realpath(BASE_PATH . DIRECTORY_SEPARATOR . str_replace('/', DIRECTORY_SEPARATOR, $rel)) : false;
-if ($rel === '' || $abs === false || $recordingsDir === false || !str_starts_with($abs, $recordingsDir) || !is_file($abs)) {
-    http_response_code(404);
-    echo 'Video recording not available for this consultation.';
-    exit;
+if ($segments === [] && $legacyRel !== '') {
+    $segments[] = [
+        'id' => 0,
+        'segment_index' => 1,
+        'recording_path' => $legacyRel,
+        'status' => 'saved',
+        'started_at' => (string) ($row['started_at'] ?? ''),
+        'ended_at' => (string) ($row['ended_at'] ?? ''),
+        'started_label' => '',
+        'ended_label' => '',
+        'duration_label' => '',
+        'playable' => true,
+    ];
 }
 
-$ext = strtolower((string) pathinfo($abs, PATHINFO_EXTENSION));
+$resolveAbs = static function (string $rel) {
+    $recordingsDir = realpath(STORAGE_PATH . DIRECTORY_SEPARATOR . 'recordings');
+    $abs = $rel !== '' ? realpath(BASE_PATH . DIRECTORY_SEPARATOR . str_replace('/', DIRECTORY_SEPARATOR, $rel)) : false;
+    if ($abs === false || $recordingsDir === false || !str_starts_with($abs, $recordingsDir) || !is_file($abs)) {
+        return false;
+    }
+    return $abs;
+};
+
+$requestedSegmentId = (int) ($_GET['segment_id'] ?? 0);
+$active = null;
+if ($requestedSegmentId > 0) {
+    foreach ($segments as $segment) {
+        if ((int) ($segment['id'] ?? 0) === $requestedSegmentId) {
+            $active = $segment;
+            break;
+        }
+    }
+}
+if ($active === null) {
+    foreach ($segments as $segment) {
+        if (!empty($segment['playable'])) {
+            $active = $segment;
+            break;
+        }
+    }
+}
+
+$rel = is_array($active) ? (string) ($active['recording_path'] ?? '') : '';
+$abs = $rel !== '' ? $resolveAbs($rel) : false;
+$playable = $abs !== false && is_array($active) && !empty($active['playable']);
+
+$ext = $playable ? strtolower((string) pathinfo((string) $abs, PATHINFO_EXTENSION)) : '';
 $mime = match ($ext) {
     'webm' => 'video/webm',
     'mp4' => 'video/mp4',
@@ -101,11 +142,22 @@ $mime = match ($ext) {
 
 $stream = isset($_GET['stream']) && (string) $_GET['stream'] === '1';
 if ($stream) {
-    consultation_stream_recording_file($abs, $mime);
+    if (!$playable) {
+        http_response_code(404);
+        echo 'Recording segment not available.';
+        exit;
+    }
+    consultation_stream_recording_file((string) $abs, $mime);
     exit;
 }
 
-$streamUrl = ASSET_BASE . '/app/api/consultations/view_recording.php?consultation_id=' . $consultationId . '&stream=1';
+$streamUrl = '';
+if ($playable) {
+    $streamUrl = ASSET_BASE . '/app/api/consultations/view_recording.php?consultation_id=' . $consultationId . '&stream=1';
+    if ((int) ($active['id'] ?? 0) > 0) {
+        $streamUrl .= '&segment_id=' . (int) $active['id'];
+    }
+}
 $patientName = trim((string) ($row['patient_name'] ?? '')) ?: 'Patient';
 $providerName = trim((string) ($row['provider_name'] ?? '')) ?: 'Provider';
 if (!preg_match('/^dr\.?\s/i', $providerName)) {
@@ -259,6 +311,45 @@ $logoUrl = ASSET_BASE . '/assets/img/medcon_logo.png';
       color: var(--slate);
       line-height: 1.45;
     }
+    .segments {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      padding: 0 20px 16px;
+    }
+    .seg-btn {
+      display: inline-flex;
+      flex-direction: column;
+      align-items: flex-start;
+      min-height: 44px;
+      padding: 8px 12px;
+      border-radius: 10px;
+      border: 1px solid var(--line);
+      background: var(--ice);
+      color: var(--navy);
+      text-decoration: none;
+      font-size: 13px;
+      font-weight: 600;
+    }
+    .seg-btn small {
+      font-weight: 500;
+      color: var(--slate);
+    }
+    .seg-btn.is-active {
+      border-color: var(--aqua);
+      background: #e7f6f7;
+      color: var(--aqua);
+    }
+    .seg-btn.is-disabled {
+      opacity: 0.65;
+      pointer-events: none;
+    }
+    .empty {
+      margin: 0;
+      padding: 28px 20px;
+      text-align: center;
+      color: var(--slate);
+    }
     @media (max-width: 640px) {
       .meta { grid-template-columns: 1fr; }
       .page { padding: 16px 12px calc(24px + var(--safe-bottom)); }
@@ -289,14 +380,49 @@ $logoUrl = ASSET_BASE . '/assets/img/medcon_logo.png';
           <?php if ($durationLabel !== ''): ?>
           <div><dt>Duration</dt><dd><?= htmlspecialchars($durationLabel) ?></dd></div>
           <?php endif; ?>
+          <?php if (count($segments) > 1): ?>
+          <div><dt>Recordings</dt><dd><?= (int) count($segments) ?> segments</dd></div>
+          <?php endif; ?>
         </dl>
       </div>
+      <?php if (count($segments) > 1): ?>
+      <div class="segments">
+        <?php foreach ($segments as $segment):
+          $sid = (int) ($segment['id'] ?? 0);
+          $idx = (int) ($segment['segment_index'] ?? 0);
+          $canPlay = !empty($segment['playable']);
+          $isActive = $active && (int) ($active['id'] ?? 0) === $sid;
+          $href = ASSET_BASE . '/app/api/consultations/view_recording.php?consultation_id=' . $consultationId
+            . ($sid > 0 ? '&segment_id=' . $sid : '');
+          $timeBits = trim((string) ($segment['started_label'] ?? '') . ((string) ($segment['ended_label'] ?? '') !== '' ? '–' . $segment['ended_label'] : ''));
+          $statusBit = $canPlay ? ($timeBits !== '' ? $timeBits : 'Ready') : ucfirst((string) ($segment['status'] ?? 'unavailable'));
+        ?>
+        <?php if ($canPlay): ?>
+        <a class="seg-btn<?= $isActive ? ' is-active' : '' ?>" href="<?= htmlspecialchars($href) ?>">Play Segment <?= $idx ?: 1 ?><small><?= htmlspecialchars($statusBit) ?></small></a>
+        <?php else: ?>
+        <span class="seg-btn is-disabled">Segment <?= $idx ?: 1 ?><small><?= htmlspecialchars($statusBit) ?></small></span>
+        <?php endif; ?>
+        <?php endforeach; ?>
+      </div>
+      <?php endif; ?>
       <div class="stage">
+        <?php if ($playable && $streamUrl !== ''): ?>
         <video controls playsinline preload="metadata" src="<?= htmlspecialchars($streamUrl) ?>">
           Your browser cannot play this recording.
         </video>
+        <?php else: ?>
+        <p class="empty">No playable recording file is available for this consultation.</p>
+        <?php endif; ?>
       </div>
-      <p class="hint">This is the saved consultation recording. Use the player controls to play, pause, or enter fullscreen.</p>
+      <p class="hint"><?php
+        if (!$playable) {
+            echo 'A recording was not saved, or the file is missing from storage.';
+        } elseif (count($segments) > 1) {
+            echo 'This consultation has multiple recording segments (for example after a reconnect). Use the buttons above to play each saved segment.';
+        } else {
+            echo 'This is the saved consultation recording. Use the player controls to play, pause, or enter fullscreen.';
+        }
+      ?></p>
     </article>
   </main>
 </body>
