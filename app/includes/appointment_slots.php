@@ -10,6 +10,21 @@ function appointment_now(): DateTimeImmutable
     return new DateTimeImmutable('now', new DateTimeZone(APP_TIMEZONE));
 }
 
+function appointment_slot_normalize_time(string $time): string
+{
+    $time = trim($time);
+    if (preg_match('/^(\d{1,2}):(\d{2})(?::(\d{2}))?/', $time, $m)) {
+        return sprintf('%02d:%02d:%02d', (int) $m[1], (int) $m[2], (int) ($m[3] ?? 0));
+    }
+
+    return '';
+}
+
+function appointment_slot_duration_minutes(int $duration): int
+{
+    return in_array($duration, [15, 30, 45, 60], true) ? $duration : 30;
+}
+
 function appointment_slot_start_datetime(string $slotDate, string $startTime): DateTimeImmutable
 {
     $time = substr($startTime, 0, 8);
@@ -141,15 +156,15 @@ function appointment_slots_sync_provider(PDO $pdo, int $provider_id, int $daysAh
     ");
 
     $created = 0;
+    $tz = new DateTimeZone(APP_TIMEZONE);
     foreach ($schedules as $schedule) {
         $day = (string) $schedule['day_of_week'];
-        $start_ts = strtotime(substr((string) $schedule['start_time'], 0, 8));
-        $end_ts = strtotime(substr((string) $schedule['end_time'], 0, 8));
-        if ($start_ts === false || $end_ts === false || $end_ts <= $start_ts) {
+        $startTime = appointment_slot_normalize_time((string) $schedule['start_time']);
+        $endTime = appointment_slot_normalize_time((string) $schedule['end_time']);
+        $duration = appointment_slot_duration_minutes((int) $schedule['slot_duration']);
+        if ($startTime === '' || $endTime === '') {
             continue;
         }
-
-        $interval = max(1, (int) $schedule['slot_duration']) * 60;
 
         for ($i = 0; $i <= $daysAhead; $i++) {
             $dayDate = appointment_now()->modify('+' . $i . ' days');
@@ -157,16 +172,27 @@ function appointment_slots_sync_provider(PDO $pdo, int $provider_id, int $daysAh
                 continue;
             }
             $date = $dayDate->format('Y-m-d');
+            $windowStart = DateTimeImmutable::createFromFormat('Y-m-d H:i:s', $date . ' ' . $startTime, $tz);
+            $windowEnd = DateTimeImmutable::createFromFormat('Y-m-d H:i:s', $date . ' ' . $endTime, $tz);
+            if (!$windowStart || !$windowEnd || $windowEnd <= $windowStart) {
+                continue;
+            }
 
-            for ($current = $start_ts; $current < $end_ts; $current += $interval) {
-                if ($current + $interval > $end_ts) {
+            $cursor = $windowStart;
+            while (true) {
+                $slotEnd = $cursor->modify('+' . $duration . ' minutes');
+                if ($slotEnd > $windowEnd) {
                     break;
                 }
 
-                $s_time = date('H:i:s', $current);
-                $e_time = date('H:i:s', $current + $interval);
-                $insert->execute([$provider_id, $date, $s_time, $e_time]);
+                $insert->execute([
+                    $provider_id,
+                    $date,
+                    $cursor->format('H:i:s'),
+                    $slotEnd->format('H:i:s'),
+                ]);
                 $created += $insert->rowCount();
+                $cursor = $slotEnd;
             }
         }
     }
@@ -177,9 +203,32 @@ function appointment_slots_sync_provider(PDO $pdo, int $provider_id, int $daysAh
 /**
  * Remove unbooked future slots for one weekday (before regenerating).
  */
-function appointment_slots_clear_day(PDO $pdo, int $provider_id, string $day): void
+function appointment_slots_clear_day(PDO $pdo, int $provider_id, string $day, ?string $onlyDate = null): void
 {
     appointment_schedule_ensure_schema($pdo);
+
+    $unprotected = "
+        (
+          s.status IN ('available', 'expired')
+          OR (
+              s.status = 'cancelled'
+              AND (s.consultation_id IS NULL OR c.status IN ('cancelled', 'completed'))
+          )
+        )
+    ";
+
+    if ($onlyDate !== null && preg_match('/^\d{4}-\d{2}-\d{2}$/', $onlyDate)) {
+        $stmt = $pdo->prepare("
+            DELETE s FROM appointment_slots s
+            LEFT JOIN consultations c ON c.id = s.consultation_id
+            WHERE s.provider_id = ?
+              AND s.slot_date = ?
+              AND {$unprotected}
+        ");
+        $stmt->execute([$provider_id, $onlyDate]);
+
+        return;
+    }
 
     // Use WEEKDAY (0=Mon … 6=Sun) instead of DAYNAME() to avoid collation mismatches on Hostinger.
     $weekdayMap = [
@@ -198,13 +247,7 @@ function appointment_slots_clear_day(PDO $pdo, int $provider_id, string $day): v
         WHERE s.provider_id = ?
           AND WEEKDAY(s.slot_date) = ?
           AND s.slot_date >= CURDATE()
-          AND (
-            s.status IN ('available', 'expired')
-            OR (
-                s.status = 'cancelled'
-                AND (s.consultation_id IS NULL OR c.status IN ('cancelled', 'completed'))
-            )
-          )
+          AND {$unprotected}
     ");
     $stmt->execute([$provider_id, $weekday]);
 }
@@ -333,4 +376,99 @@ function appointment_provider_has_today_schedule(PDO $pdo, int $provider_id): bo
     $stmt->execute([$provider_id, appointment_now()->format('l')]);
 
     return (int) $stmt->fetchColumn() > 0;
+}
+
+/**
+ * Patient-facing today's slots for one provider (Asia/Manila).
+ *
+ * @return array{
+ *   date: string,
+ *   today: string,
+ *   today_only: bool,
+ *   has_schedule: bool,
+ *   empty_reason: string,
+ *   message: string,
+ *   slots: list<array<string, mixed>>
+ * }
+ */
+function appointment_slots_patient_today(PDO $pdo, int $providerId): array
+{
+    $today = appointment_now()->format('Y-m-d');
+    appointment_slots_sync_today($pdo, $providerId);
+    $hasSchedule = appointment_provider_has_today_schedule($pdo, $providerId);
+
+    $stmt = $pdo->prepare("
+        SELECT id, slot_date, start_time, end_time, status
+        FROM appointment_slots
+        WHERE provider_id = ?
+          AND slot_date = ?
+        ORDER BY start_time ASC
+    ");
+    $stmt->execute([$providerId, $today]);
+    $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+    $booked = 0;
+    $past = 0;
+    $slots = [];
+    foreach ($rows as $row) {
+        $status = strtolower((string) ($row['status'] ?? ''));
+        $bookable = $status === 'available'
+            && appointment_slot_is_bookable(
+                (string) $row['slot_date'],
+                (string) $row['start_time'],
+                (string) $row['end_time']
+            );
+
+        if ($status === 'booked') {
+            $booked++;
+            continue;
+        }
+        if ($status === 'available' && !$bookable) {
+            $past++;
+            continue;
+        }
+        if (!$bookable) {
+            continue;
+        }
+
+        $startTime = (string) $row['start_time'];
+        $endTime = (string) $row['end_time'];
+        $slots[] = [
+            'id'         => (int) $row['id'],
+            'slot_date'  => (string) $row['slot_date'],
+            'start_time' => $startTime,
+            'end_time'   => $endTime,
+            'status'     => 'AVAILABLE',
+            'bookable'   => true,
+            'label'      => date('g:i A', strtotime($startTime))
+                . ' – '
+                . date('g:i A', strtotime($endTime)),
+        ];
+    }
+
+    $emptyReason = '';
+    $message = '';
+    if (!$hasSchedule) {
+        $emptyReason = 'not_available';
+        $message = 'Doctor is not available on this date.';
+    } elseif ($slots === [] && $booked > 0) {
+        $emptyReason = 'all_booked';
+        $message = 'All clinical slots are currently booked.';
+    } elseif ($slots === [] && $past > 0) {
+        $emptyReason = 'all_past';
+        $message = 'All of today\'s clinical slots have already passed.';
+    } elseif ($slots === []) {
+        $emptyReason = 'none';
+        $message = 'No clinical slots available for this doctor on this date.';
+    }
+
+    return [
+        'date'          => $today,
+        'today'         => $today,
+        'today_only'    => true,
+        'has_schedule'  => $hasSchedule,
+        'empty_reason'  => $emptyReason,
+        'message'       => $message,
+        'slots'         => $slots,
+    ];
 }

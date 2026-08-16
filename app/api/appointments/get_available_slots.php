@@ -22,59 +22,19 @@ if ($provider_id <= 0) {
     Api::error('Provider ID is required.');
 }
 
-if ($date === '' || !preg_match('/^\d{4}-\d{2}-\d{2}$/', $date)) {
-    Api::error('A valid date (YYYY-MM-DD) is required.');
-}
-
 $today = appointment_now()->format('Y-m-d');
-if ($date !== $today) {
-    Api::error('Appointments can only be booked for today.');
+if ($date === '' || !preg_match('/^\d{4}-\d{2}-\d{2}$/', $date)) {
+    $date = $today;
 }
 
 try {
-    appointment_slots_sync_today($pdo, $provider_id);
+    $payload = appointment_slots_patient_today($pdo, $provider_id);
+    // Patients book today only in Asia/Manila. Ignore a mismatched client date
+    // so browser timezone cannot empty the grid.
+    $payload['requested_date'] = $date;
+    $payload['date'] = $payload['today'];
 
-    $stmt = $pdo->prepare("
-        SELECT
-            id,
-            slot_date,
-            start_time,
-            end_time,
-            status
-        FROM appointment_slots
-        WHERE provider_id = ?
-          AND slot_date = ?
-          AND status = 'available'
-        ORDER BY start_time ASC
-    ");
-    $stmt->execute([$provider_id, $date]);
-    $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
-
-    $slots = array_map(static function (array $row): array {
-        $slotDate  = (string) $row['slot_date'];
-        $startTime = (string) $row['start_time'];
-        $endTime   = (string) $row['end_time'];
-        $bookable  = appointment_slot_is_bookable($slotDate, $startTime, $endTime);
-
-        return [
-            'id'         => (int) $row['id'],
-            'slot_date'  => $slotDate,
-            'start_time' => $startTime,
-            'end_time'   => (string) $row['end_time'],
-            'bookable'   => $bookable,
-            'label'      => date('g:i A', strtotime($startTime))
-                . ' – '
-                . date('g:i A', strtotime((string) $row['end_time']))
-                . ($bookable ? '' : ' (passed)'),
-        ];
-    }, $rows);
-
-    Api::success([
-        'date'       => $date,
-        'today'      => $today,
-        'today_only' => true,
-        'slots'      => $slots,
-    ]);
+    Api::success($payload);
 } catch (PDOException $e) {
     Api::error('Could not load slots: ' . $e->getMessage(), 500);
 }

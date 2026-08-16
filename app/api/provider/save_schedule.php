@@ -48,7 +48,9 @@ if (!in_array($day, provider_schedule_valid_days(), true)) {
     exit;
 }
 
-$today_name = date('l');
+$today_now  = appointment_now();
+$today_name = $today_now->format('l');
+$today_ymd  = $today_now->format('Y-m-d');
 if ($day !== $today_name) {
     echo json_encode([
         'success' => false,
@@ -93,7 +95,7 @@ try {
 
     provider_schedule_save_day($pdo, $provider_id, $day, $sessions, $day_active);
 
-    appointment_slots_clear_day($pdo, $provider_id, $day);
+    appointment_slots_clear_day($pdo, $provider_id, $day, $today_ymd);
 
     $slots_created = 0;
     if ($day_active && $sessions !== []) {
@@ -138,7 +140,7 @@ try {
         'patients_notified' => $patients_notified,
         'day'               => $day,
         'is_today'          => true,
-        'today'             => date('Y-m-d'),
+        'today'             => $today_ymd,
     ]);
 } catch (Throwable $e) {
     if ($pdo->inTransaction()) {

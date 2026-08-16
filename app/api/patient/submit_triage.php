@@ -408,7 +408,7 @@ try {
         throw new RuntimeException('Selected appointment slot was not found.');
     }
     if ($slot['status'] !== 'available') {
-        throw new RuntimeException('That appointment slot is no longer available. Please choose another time.');
+        throw new RuntimeException('This clinical slot was just booked by another patient. Please choose another available time.');
     }
     if ((int) $slot['provider_id'] <= 0) {
         throw new RuntimeException('Invalid provider for this slot.');
@@ -650,7 +650,7 @@ try {
     $book->execute([$patient_id, $consultation_id, $slot_id, $provider_id]);
 
     if ($book->rowCount() === 0) {
-        throw new RuntimeException('Could not book the selected slot. It may have just been taken.');
+        throw new RuntimeException('This clinical slot was just booked by another patient. Please choose another available time.');
     }
 
     // Match BHW: triage is accepted when a consult is booked.

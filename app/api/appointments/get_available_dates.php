@@ -15,7 +15,7 @@ if ($provider_id <= 0) {
 }
 
 try {
-    $today = date('Y-m-d');
+    $today = appointment_now()->format('Y-m-d');
     appointment_slots_sync_today($pdo, $provider_id);
 
     if (!appointment_provider_has_today_schedule($pdo, $provider_id)) {
