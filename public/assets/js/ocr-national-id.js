@@ -424,20 +424,34 @@
       }
     }
 
-    if (ex.address?.value && global.PhAddressAutofill) {
+    const addressText = typeof ex.address === 'string'
+      ? ex.address.trim()
+      : String(ex.address?.value || '').trim();
+    if (addressText && global.PhAddressAutofill) {
       try {
-        const addrResult = await global.PhAddressAutofill.fillFromText(ex.address.value);
+        const addrResult = await global.PhAddressAutofill.fillFromText(addressText);
         filled += addrResult.filled || 0;
         addressMatched = addrResult.matched || {};
         if (typeof addrResult.isBagoResident === 'boolean') {
           isBagoResident = addrResult.isBagoResident;
         }
         const street = document.getElementById('street-address');
+        const regionSel = document.getElementById('region');
+        if (addressText && (!regionSel || !regionSel.value)) {
+          const retry = await global.PhAddressAutofill.fillFromText(addressText);
+          if (retry && retry.matched) {
+            addressMatched = { ...addressMatched, ...retry.matched };
+            if (typeof retry.isBagoResident === 'boolean') {
+              isBagoResident = retry.isBagoResident;
+            }
+          }
+        }
         if (street && street.value) {
           street.dataset.ocrSourceValue = street.value;
-          const needsReview = addrResult.streetNeedsReview === true
+          const geoFilled = !!(addressMatched.region && addressMatched.province && addressMatched.city && addressMatched.barangay);
+          const needsReview = !geoFilled || addrResult.streetNeedsReview === true
             || street.dataset.ocrStreetReview === '1';
-          setFieldBadge('street-address', needsReview ? 'low' : 'autofill');
+          setFieldBadge('street-address', needsReview ? 'low' : 'verified');
           if (needsReview) reviewCount++;
           highlightField(street);
           lockFieldFromOcr(street);
@@ -449,7 +463,7 @@
         console.error('Address autofill error:', err);
         const street = document.getElementById('street-address');
         if (street) {
-          const fallbackRaw = String(ex.address.value).trim();
+          const fallbackRaw = addressText;
           if (global.PhAddressAutofill?.normalizeOcrAddress) {
             const normOnly = global.PhAddressAutofill.normalizeOcrAddress(fallbackRaw);
             street.dataset.ocrSourceValue = normOnly;
@@ -478,7 +492,7 @@
     }
 
     renderExtractionPreview();
-    window.setTimeout(() => { global.__ocrAutofillActive = false; }, 350);
+    window.setTimeout(() => { global.__ocrAutofillActive = false; }, 2000);
     return { filled, reviewCount, missingCount, addressMatched, isBagoResident };
   }
 

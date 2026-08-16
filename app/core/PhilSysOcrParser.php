@@ -826,20 +826,22 @@ final class PhilSysOcrParser
         foreach ($lines as $i => $line) {
             $lineUp = strtoupper(trim($line));
             if ($lineUp === 'ADDRESS' || $lineUp === 'TIRAHAN') {
-                for ($j = $i + 1; $j <= $i + 2 && $j < count($lines); $j++) {
+                for ($j = $i + 1; $j <= $i + 4 && $j < count($lines); $j++) {
                     $next = trim($lines[$j]);
                     if ($next === '' || self::isAddressLabel(strtoupper($next))) {
                         continue;
                     }
                     $parts[] = self::formatAddressLine($next);
-                    break;
+                    if (count($parts) >= 3) {
+                        break;
+                    }
                 }
                 break;
             }
         }
 
         if (!empty($parts)) {
-            $address = self::formatAddressLine($parts[0]);
+            $address = self::formatAddressLine(implode(', ', $parts));
             return ['value' => $address, 'confidence' => 0.82, 'source' => 'label'];
         }
 

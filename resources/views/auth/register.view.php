@@ -803,11 +803,11 @@
   window.APP_BASE = <?= json_encode($b) ?>;
   window.CSRF_TOKEN = <?= json_encode((string) ($_SESSION['csrf_token'] ?? '')) ?>;
 </script>
-<script src="<?= $b ?>/assets/js/ph-address-autofill.js?v=20260813b"></script>
+<script src="<?= $b ?>/assets/js/ph-address-autofill.js?v=20260816ocr4"></script>
 <script src="<?= $b ?>/assets/js/phone-validation.js?v=<?= (int) @filemtime(ASSETS_PATH . '/js/phone-validation.js') ?>"></script>
-<script src="<?= $b ?>/assets/js/ocr-national-id.js?v=20260729ocr4"></script>
+<script src="<?= $b ?>/assets/js/ocr-national-id.js?v=20260816ocr4"></script>
 <script src="<?= $b ?>/assets/js/register-nlp-analysis.js?v=20260806cds1"></script>
-<script src="<?= $b ?>/assets/js/register.js?v=20260808ui"></script>
+<script src="<?= $b ?>/assets/js/register.js?v=20260816ocr4"></script>
 
 <!-- Silent NLP loading overlay (patient-facing; no technical AI output) -->
 <?php
