@@ -604,6 +604,13 @@
     if (endModal) endModal.classList.remove('show');
     const controls = q('mcVcControls');
     if (controls) controls.style.display = 'none';
+    const overlay = q('mcVcOverlay');
+    if (overlay) {
+      overlay.classList.remove('is-visible');
+      overlay.setAttribute('aria-hidden', 'true');
+    }
+    const gate = q('mediaPermissionGate');
+    if (gate) gate.classList.add('is-hidden');
     const panelToggle = q('mcVcPanelToggle');
     if (panelToggle) panelToggle.hidden = true;
     setPanelOpen(false);
@@ -620,6 +627,14 @@
     window.addEventListener('message', (e) => {
       if (e.origin !== location.origin || !e.data) return;
       const type = e.data.type;
+      if (type === 'medconnect:shell-mode') {
+        document.body.setAttribute('data-shell-mode', e.data.mode || '');
+        if (e.data.ended) {
+          document.body.classList.add('mc-vc-call-ended');
+          window.__mcCallEnded = true;
+        }
+        return;
+      }
       if (type === 'medconnect:shell-toggle-audio' && typeof global.toggleAudio === 'function') global.toggleAudio();
       if (type === 'medconnect:shell-toggle-video' && typeof global.toggleVideo === 'function') global.toggleVideo();
       if (type === 'medconnect:shell-end-call' || type === 'medconnect:shell-leave-fast') {
@@ -653,6 +668,8 @@
   }
 
   function init() {
+    if (document.documentElement.dataset.mcVcEnhInit === '1') return;
+    document.documentElement.dataset.mcVcEnhInit = '1';
     hidePostCall();
     trackControlsHeight();
     bindPanelTabs();

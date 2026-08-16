@@ -473,6 +473,21 @@
       }, 1000);
     }
 
+    function stopMonitors() {
+      if (durationInterval) {
+        clearInterval(durationInterval);
+        durationInterval = null;
+      }
+      if (networkInterval) {
+        clearInterval(networkInterval);
+        networkInterval = null;
+      }
+      if (controlsTimer) {
+        clearTimeout(controlsTimer);
+        controlsTimer = null;
+      }
+    }
+
     let connectionFailed = false;
 
     function setRetryVisible(show) {
@@ -484,12 +499,16 @@
 
     function setOverlay(title, sub, visible, options) {
       options = options || {};
+      if (window.__mcCallEnded && visible && !/ended|completed/i.test(String(title || ''))) {
+        visible = false;
+      }
       if (els.overlay) {
         if (els.overlayTitle) els.overlayTitle.textContent = title || '';
         if (els.overlaySub) els.overlaySub.textContent = sub || '';
         els.overlay.classList.toggle('is-visible', !!visible);
         els.overlay.setAttribute('aria-hidden', visible ? 'false' : 'true');
-        const isStatus = !!visible && !options.showRetry && /waiting|connecting|reconnecting|live|connected|poor|muted/i.test(String(title || '') + String(sub || ''));
+        const blob = String(title || '') + ' ' + String(sub || '');
+        const isStatus = !!visible && options.showRetry !== true && /waiting|connecting|reconnecting|live|connected|poor|fair|muted/i.test(blob);
         els.overlay.classList.toggle('is-status', isStatus);
       }
       if (options.showRetry === true) {
@@ -520,17 +539,17 @@
     }
 
     function updateOverlayFromStatus(text) {
+      if (window.__mcCallEnded) {
+        setOverlay('', '', false, { showRetry: false });
+        return;
+      }
       const t = String(text || '').toLowerCase();
       if (t.indexOf('waiting for healthcare') >= 0 || t.indexOf('waiting for provider') >= 0 || t.indexOf('waiting for doctor') >= 0) {
         setOverlay('Waiting for healthcare provider…', '', true, { showRetry: false });
       } else if (t.indexOf('waiting for patient') >= 0) {
         setOverlay('Waiting for patient…', '', true, { showRetry: false });
-      } else if (t.indexOf('reconnecting') >= 0) {
-        setOverlay('Poor connection — reconnecting…', '', true, { showRetry: false });
-      } else if (t.indexOf('connecting') >= 0) {
-        setOverlay('Connecting…', '', true, { showRetry: false });
-      } else if (t.indexOf('poor network') >= 0 || t.indexOf('poor connection') >= 0) {
-        setOverlay('Poor connection — reconnecting…', '', true, { showRetry: false });
+      } else if (t.indexOf('reconnecting') >= 0 || t.indexOf('connecting') >= 0 || t.indexOf('poor network') >= 0 || t.indexOf('poor connection') >= 0) {
+        setOverlay('', '', false, { showRetry: false });
       } else if (t.indexOf('ended') >= 0 || t.indexOf('consultation ended') >= 0) {
         setOverlay('Consultation ended', '', true, { showRetry: false });
       } else if (t.indexOf('connected') >= 0) {
@@ -564,8 +583,9 @@
     }
 
     function startNetworkMonitor() {
-      if (networkInterval) clearInterval(networkInterval);
+      if (networkInterval) return;
       networkInterval = setInterval(async () => {
+        if (window.__mcCallEnded) return;
         const pc = getPeerConnection();
         const netEl = els.networkPill || q('mediaStatusConn');
         if (!netEl) return;
@@ -618,20 +638,6 @@
           netEl.textContent = label;
           netEl.dataset.state = level;
           netEl.dataset.level = level;
-
-          if (level === 'poor' && els.overlay && !els.overlay.classList.contains('is-visible')) {
-            const statusEl = q('callStatus');
-            if (statusEl && /connected/i.test(statusEl.textContent)) {
-              setOverlay('Poor connection — reconnecting…', '', true);
-              setTimeout(() => {
-                if (/connected/i.test(statusEl.textContent) && netEl.dataset.level !== 'poor') {
-                  setOverlay('', '', false);
-                } else if (/connected/i.test(statusEl.textContent)) {
-                  setOverlay('', '', false);
-                }
-              }, 2800);
-            }
-          }
         } catch (e) {}
       }, 5000);
     }
@@ -704,6 +710,8 @@
     function init() {
       const root = q('mcVideoConsultRoot');
       if (!root) return;
+      if (root.dataset.mcVcInit === '1') return;
+      root.dataset.mcVcInit = '1';
 
       els.root = root;
       els.stage = q('mcVcStage');
@@ -771,6 +779,7 @@
       setConnectionFailed,
       setRetryVisible,
       startDurationTimer,
+      stopMonitors,
       getIsFloating: () => isFloating,
     };
   }

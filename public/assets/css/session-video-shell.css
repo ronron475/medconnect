@@ -35,10 +35,21 @@
   height: 100dvh;
   border-radius: 0;
   z-index: 200060;
-  padding-top: env(safe-area-inset-top, 0px);
-  padding-left: env(safe-area-inset-left, 0px);
-  padding-right: env(safe-area-inset-right, 0px);
+  padding: 0;
   overflow: hidden;
+}
+
+.mc-session-float-shell.is-fullscreen .mc-session-float-handle,
+.mc-session-float-shell.is-fullscreen .mc-session-float-toolbar,
+.mc-session-float-shell.is-chrome-delegated .mc-session-float-handle,
+.mc-session-float-shell.is-chrome-delegated .mc-session-float-toolbar,
+.mc-session-float-shell.is-ended .mc-session-float-toolbar {
+  display: none !important;
+}
+
+.mc-session-float-shell.is-fullscreen .mc-session-float-body,
+.mc-session-float-shell.is-chrome-delegated .mc-session-float-body {
+  padding-bottom: 0;
 }
 
 .mc-session-float-shell.is-docked {
@@ -120,7 +131,7 @@
   box-sizing: border-box;
 }
 
-.mc-session-float-shell:not(.is-docked) .mc-session-float-body {
+.mc-session-float-shell:not(.is-docked):not(.is-fullscreen):not(.is-chrome-delegated) .mc-session-float-body {
   padding-bottom: calc(60px + env(safe-area-inset-bottom, 0px));
 }
 
@@ -228,13 +239,13 @@ body.mc-video-shell-pip .mc-messages-fab {
   }
 
   .mc-session-float-shell.is-fullscreen .mc-session-float-handle {
-    padding-top: env(safe-area-inset-top, 0px);
-    min-height: calc(44px + env(safe-area-inset-top, 0px));
+    display: none !important;
   }
 
   .mc-session-float-shell.is-fullscreen .mc-session-float-body {
     flex: 1;
     min-height: 0;
+    padding-bottom: 0;
   }
 
   .mc-session-float-toolbar {

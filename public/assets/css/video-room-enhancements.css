@@ -16,9 +16,11 @@ body.mc-vc-call-ended .mc-vc-stage {
 body.mc-vc-call-ended .mc-vc-controls,
 body.mc-vc-call-ended .mc-vc-header,
 body.mc-vc-call-ended .mc-vc-status-bar,
-body.mc-vc-call-ended .mc-vc-panel-toggle {
+body.mc-vc-call-ended .mc-vc-panel-toggle,
+body.mc-vc-call-ended .mc-vc-overlay {
   opacity: 0;
   visibility: hidden;
+  display: none !important;
 }
 
 body.mc-vc-call-ended .mc-vc-postcall {
