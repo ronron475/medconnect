@@ -293,18 +293,51 @@
     } catch (e) { /* ignore */ }
   }
 
-  function autoResizeGuidanceTextarea() {
-    var el = document.getElementById('modalRecommendationsEdit');
-    if (!el) return;
-    el.style.overflowX = 'hidden';
-    el.style.overflowY = 'auto';
-    var supportsFieldSizing = typeof CSS !== 'undefined' && CSS.supports && CSS.supports('field-sizing', 'content');
-    if (supportsFieldSizing) {
-      el.style.height = '';
-      return;
-    }
-    el.style.height = 'auto';
-    el.style.height = el.scrollHeight + 'px';
+  function setItemHidden(id, hidden) {
+    var el = document.getElementById(id);
+    if (el) el.hidden = !!hidden;
+  }
+
+  function updateGuidanceOverflowHint() {
+    var view = document.getElementById('modalRecommendationsView');
+    var hint = document.getElementById('modalRecommendationsScrollHint');
+    if (!view || !hint) return;
+    hint.hidden = view.scrollHeight <= view.clientHeight + 4;
+  }
+
+  function renderGuidancePanel(text) {
+    var view = document.getElementById('modalRecommendationsView');
+    var recEdit = document.getElementById('modalRecommendationsEdit');
+    var section = document.getElementById('modalGuidanceSection');
+    var hiddenBox = document.getElementById('modalRecommendations');
+    var raw = String(text || '');
+    if (recEdit) recEdit.value = raw;
+    if (hiddenBox) hiddenBox.textContent = raw;
+    var items = raw.split(/\r?\n/).map(function (line) {
+      return line.trim();
+    }).filter(Boolean);
+    if (section) section.hidden = false;
+    if (!view) return;
+    var recLabel = section ? section.querySelector('.triage-field-label') : null;
+    if (recLabel) recLabel.hidden = items.length === 0;
+    view.hidden = items.length === 0;
+    view.innerHTML = items.map(function (item) {
+      return '<p class="triage-rec-panel__item">' + esc(item) + '</p>';
+    }).join('');
+    requestAnimationFrame(updateGuidanceOverflowHint);
+  }
+
+  function renderReviewQuestions(questions) {
+    var list = document.getElementById('modalSuggestedQuestions');
+    var section = document.getElementById('modalQuestionsSection');
+    var items = Array.isArray(questions) ? questions.filter(function (q) {
+      return String(q || '').trim() !== '';
+    }) : [];
+    if (section) section.hidden = items.length === 0;
+    if (!list) return;
+    list.innerHTML = items.map(function (q) {
+      return '<li>' + esc(String(q)) + '</li>';
+    }).join('');
   }
 
   function viewTriageDetails(t) {
@@ -318,94 +351,69 @@
     }
 
     var complaintText = String(t.complaint || '').trim();
-    var structuredSymptoms = Array.isArray(t.symptoms_list)
-      ? t.symptoms_list.filter(function (symptom) {
-          var value = String(symptom || '').trim();
-          return value !== '' && value.toLowerCase() !== complaintText.toLowerCase();
-        })
-      : [];
-    var symptomsHeading = document.getElementById('triagePatientWordsHeading');
-    var symptomsSection = symptomsHeading ? symptomsHeading.closest('section') : null;
-    if (symptomsSection) {
-      symptomsSection.hidden = structuredSymptoms.length === 0;
-    }
-    document.getElementById('modalSymptoms').textContent = structuredSymptoms.length
-      ? structuredSymptoms.join(', ')
-      : (t.symptoms_display || '—');
     document.getElementById('modalComplaint').textContent = complaintText || 'No detailed complaint provided.';
     loadSupportingEvidence(t.id, t);
     document.getElementById('overrideLevel').value = t.level || '3';
 
     var urgencyEl = document.getElementById('modalUrgency');
     var triageLevel = String(t.triage_level || t.triage_classification || '').toUpperCase();
-    if (triageLevel === 'EMERGENCY' || /emergency/i.test(String(t.label || ''))) {
-      urgencyEl.innerHTML = '<span class="triage-badge triage-badge--urgent">Emergency</span>';
-    } else if (t.urgency === 'Urgent') {
-      urgencyEl.innerHTML = '<span class="triage-badge triage-badge--urgent">Urgent</span>';
-    } else {
-      urgencyEl.innerHTML = '<span class="triage-badge triage-badge--routine">Non-Urgent</span>';
+    var isEmergency = triageLevel === 'EMERGENCY' || /emergency/i.test(String(t.label || ''));
+    if (urgencyEl) {
+      if (isEmergency) {
+        urgencyEl.innerHTML = '<span class="triage-badge triage-badge--emergency">Emergency</span>';
+      } else if (t.urgency === 'Urgent') {
+        urgencyEl.innerHTML = '<span class="triage-badge triage-badge--urgent">Urgent</span>';
+      } else {
+        urgencyEl.innerHTML = '<span class="triage-badge triage-badge--routine">Non-Urgent</span>';
+      }
     }
 
     var nlpPanel = document.getElementById('modalNlpAnalysis');
-    var questionsSection = document.getElementById('modalQuestionsSection');
+    if (nlpPanel) nlpPanel.hidden = false;
+
     var suggested = Array.isArray(t.suggested_questions) ? t.suggested_questions : [];
-    var hasNlpAssessment =
-      (t.english_complaint && String(t.english_complaint).trim()) ||
-      (Array.isArray(t.detected_symptoms_ai) && t.detected_symptoms_ai.length) ||
-      (Array.isArray(t.possible_conditions) && t.possible_conditions.length) ||
-      (t.confidence_display && String(t.confidence_display).trim()) ||
-      (t.triage_level && String(t.triage_level).trim());
+    renderReviewQuestions(suggested);
 
-    if (nlpPanel) {
-      nlpPanel.hidden = !hasNlpAssessment;
-    }
-    if (questionsSection) {
-      questionsSection.hidden = suggested.length === 0;
-    }
+    var english = String(t.english_complaint || '').trim();
+    var showEnglish = english !== '' && english.toLowerCase() !== complaintText.toLowerCase();
+    setItemHidden('modalAssessEnglishWrap', !showEnglish);
+    var englishEl = document.getElementById('modalEnglishComplaint');
+    if (englishEl) englishEl.textContent = english;
 
-    var setText = function (id, value, fallback) {
-      var el = document.getElementById(id);
-      if (el) el.textContent = value && String(value).trim() ? String(value) : (fallback || '—');
-    };
-    setText(
-      'modalEnglishComplaint',
-      t.english_complaint && String(t.english_complaint).trim() !== String(t.complaint || '').trim()
-        ? t.english_complaint
-        : '',
-      t.english_complaint || 'Same as patient complaint / not translated'
-    );
-    setText(
-      'modalDetectedSymptoms',
-      Array.isArray(t.detected_symptoms_ai) && t.detected_symptoms_ai.length
-        ? t.detected_symptoms_ai.join(', ')
-        : '',
-      'No symptoms extracted — confirm from patient submission'
-    );
-
-    var condEl = document.getElementById('modalPossibleConditions');
-    if (condEl) {
-      condEl.className = 'triage-modal-box';
-      var conditions =
-        Array.isArray(t.possible_conditions) && t.possible_conditions.length
-          ? t.possible_conditions
-          : ['Differential pending clinical review'];
-      condEl.innerHTML = conditions
-        .map(function (c) {
-          return '<span class="triage-interp-chip">' + esc(String(c)) + '</span>';
+    var detected = Array.isArray(t.detected_symptoms_ai) ? t.detected_symptoms_ai.filter(Boolean) : [];
+    var structuredSymptoms = Array.isArray(t.symptoms_list)
+      ? t.symptoms_list.filter(function (symptom) {
+          var value = String(symptom || '').trim();
+          return value !== '' && value.toLowerCase() !== complaintText.toLowerCase();
         })
-        .join('');
+      : [];
+    var symptomSource = detected.length ? detected : structuredSymptoms;
+    var symptomsEl = document.getElementById('modalDetectedSymptoms');
+    var showSymptoms = symptomSource.length > 0;
+    setItemHidden('modalAssessSymptomsWrap', !showSymptoms);
+    if (symptomsEl) symptomsEl.textContent = showSymptoms ? symptomSource.join(', ') : '';
+    var modalSymptoms = document.getElementById('modalSymptoms');
+    if (modalSymptoms) modalSymptoms.textContent = showSymptoms ? symptomSource.join(', ') : '';
+
+    var conditions = Array.isArray(t.possible_conditions)
+      ? t.possible_conditions.filter(function (c) { return String(c || '').trim() !== ''; })
+      : [];
+    var condEl = document.getElementById('modalPossibleConditions');
+    setItemHidden('modalAssessConditionsWrap', conditions.length === 0);
+    if (condEl) {
+      condEl.innerHTML = conditions.map(function (c) {
+        return '<span class="triage-interp-chip">' + esc(String(c)) + '</span>';
+      }).join('');
     }
 
     var confEl = document.getElementById('modalConfidence');
-    if (confEl) {
-      confEl.className = 'triage-modal-box triage-modal-box--metric';
-      var confText = String(t.confidence_display || '').trim();
-      var confVal = confText.replace(/[^\d.]/g, '');
-      var confNum = parseFloat(confVal);
-      if (!confText || isNaN(confNum)) {
-        confText = 'Not scored';
-        confNum = 0;
-      } else if (confText.indexOf('%') < 0) {
+    var confText = String(t.confidence_display || '').trim();
+    var confVal = confText.replace(/[^\d.]/g, '');
+    var confNum = parseFloat(confVal);
+    var showConfidence = confText !== '' && !isNaN(confNum);
+    setItemHidden('modalAssessConfidenceWrap', !showConfidence);
+    if (confEl && showConfidence) {
+      if (confText.indexOf('%') < 0) {
         confText = String(Math.round(confNum)) + '%';
       }
       confEl.innerHTML =
@@ -414,27 +422,26 @@
         Math.max(0, Math.min(100, confNum)) + '%"></span></span>';
     }
 
-    setText(
-      'modalTriageLevel',
-      [t.triage_level || t.triage_classification, t.label].filter(Boolean).join(' · '),
-      '—'
-    );
-    setText(
-      'modalAssessedAt',
-      [t.date, t.time].filter(Boolean).join(' at '),
-      t.assessed_at || '—'
-    );
-    setText(
-      'modalSuggestedQuestions',
-      suggested.length ? suggested.map(function (q, i) { return (i + 1) + '. ' + q; }).join('\n') : '',
-      suggested.length ? '' : '—'
-    );
-    setText('modalRecommendations', t.recommendations || '', '—');
-    var recEdit = document.getElementById('modalRecommendationsEdit');
-    if (recEdit) {
-      recEdit.value = t.recommendations || '';
-      autoResizeGuidanceTextarea();
+    var priorityDetail = String(t.classification_detail || '').trim();
+    var levelLabel = String(t.triage_level || t.triage_classification || '').trim();
+    var priorityText = [priorityDetail, levelLabel].filter(Boolean).join(' · ');
+    if (!priorityText) {
+      priorityText = String(t.label || '').trim();
+      var badge = isEmergency ? 'Emergency' : (t.urgency === 'Urgent' ? 'Urgent' : 'Non-Urgent');
+      if (priorityText && priorityText.toLowerCase().indexOf(badge.toLowerCase()) === 0) {
+        priorityText = priorityText.slice(badge.length).replace(/^\s*[·\-–:]?\s*/, '').trim();
+      }
     }
+    setItemHidden('modalAssessPriorityWrap', priorityText === '');
+    var levelEl = document.getElementById('modalTriageLevel');
+    if (levelEl) levelEl.textContent = priorityText;
+
+    var assessedAt = [t.date, t.time].filter(Boolean).join(' at ') || String(t.assessed_at || '').trim();
+    setItemHidden('modalAssessedAtWrap', assessedAt === '');
+    var assessedEl = document.getElementById('modalAssessedAt');
+    if (assessedEl) assessedEl.textContent = assessedAt;
+
+    renderGuidancePanel(t.recommendations || '');
     var gateHint = document.getElementById('modalRecommendationGateHint');
     var recStatus = String(t.recommendation_status || 'hidden');
     var canDecideTips = !!(t.can_decide_care_tips || t.can_approve_recommendations);
@@ -459,9 +466,10 @@
     var reviewNote = document.getElementById('modalReviewStatusNote');
     if (approveBtn) approveBtn.style.display = canDecideTips ? 'inline-flex' : 'none';
     if (rejectBtn) rejectBtn.style.display = canDecideTips ? 'inline-flex' : 'none';
+    var recEdit = document.getElementById('modalRecommendationsEdit');
     if (recEdit) {
-      recEdit.readOnly = !canDecideTips;
-      recEdit.classList.toggle('is-readonly', !canDecideTips);
+      recEdit.readOnly = true;
+      recEdit.classList.add('is-readonly');
     }
     if (reviewNote) {
       if (isReviewed) {
@@ -521,6 +529,7 @@
     if (document.body) document.body.style.overflow = 'hidden';
     modal.classList.add('is-open');
     modal.setAttribute('aria-hidden', 'false');
+    requestAnimationFrame(updateGuidanceOverflowHint);
   }
 
   function closeTriageModal() {
@@ -937,10 +946,11 @@
       });
     });
 
-    var recEdit = document.getElementById('modalRecommendationsEdit');
-    if (recEdit && !recEdit.dataset.resizeBound) {
-      recEdit.dataset.resizeBound = '1';
-      recEdit.addEventListener('input', autoResizeGuidanceTextarea);
+    var recView = document.getElementById('modalRecommendationsView');
+    if (recView && !recView.dataset.overflowBound) {
+      recView.dataset.overflowBound = '1';
+      recView.addEventListener('scroll', updateGuidanceOverflowHint, { passive: true });
+      window.addEventListener('resize', updateGuidanceOverflowHint);
     }
   }
 
