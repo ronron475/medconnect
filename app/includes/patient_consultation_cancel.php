@@ -27,7 +27,7 @@ function consultation_release_booked_slots(
     require_once __DIR__ . '/appointment_slots.php';
     appointment_schedule_ensure_schema($pdo);
 
-    $freed = appointment_slot_set_consultation_status($pdo, $consultationId, 'cancelled');
+    $freed = appointment_slot_set_consultation_status($pdo, $consultationId, 'available');
     if ($freed > 0) {
         return $freed;
     }
@@ -41,8 +41,9 @@ function consultation_release_booked_slots(
         }
         $fallback = $pdo->prepare("
             UPDATE appointment_slots
-            SET status = 'cancelled',
-                patient_id = NULL
+            SET status = 'available',
+                patient_id = NULL,
+                consultation_id = NULL
             WHERE patient_id = ?
               AND slot_date = ?
               AND start_time = ?

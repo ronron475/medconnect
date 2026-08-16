@@ -32,5 +32,6 @@
 <?php $responsive_scripts_only = true; require VIEWS_PATH . '/partials/responsive_assets.php'; ?>
 <?php $notification_scripts_only = true; require VIEWS_PATH . '/partials/notification_assets.php'; ?>
 <?php require_once VIEWS_PATH . '/partials/portal_nav_badge_scripts.php'; ?>
+<?php require_once VIEWS_PATH . '/partials/live_sync_assets.php'; ?>
 </body>
 </html>

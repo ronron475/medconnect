@@ -500,7 +500,7 @@ try {
 
         $release = $pdo->prepare("
             UPDATE appointment_slots
-            SET status = 'cancelled', patient_id = NULL, consultation_id = NULL
+            SET status = 'available', patient_id = NULL, consultation_id = NULL
             WHERE consultation_id = ?
               AND status = 'booked'
         ");
@@ -638,18 +638,7 @@ try {
         }
     }
 
-    $book = $pdo->prepare("
-        UPDATE appointment_slots
-        SET status = 'booked',
-            patient_id = ?,
-            consultation_id = ?
-        WHERE id = ?
-          AND provider_id = ?
-          AND status = 'available'
-    ");
-    $book->execute([$patient_id, $consultation_id, $slot_id, $provider_id]);
-
-    if ($book->rowCount() === 0) {
+    if (!appointment_slot_claim_available($pdo, $slot_id, $provider_id, $patient_id, $consultation_id)) {
         throw new RuntimeException('This clinical slot was just booked by another patient. Please choose another available time.');
     }
 

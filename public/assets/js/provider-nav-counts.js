@@ -153,7 +153,11 @@
   function start() {
     if (timer) return;
     fetchCounts();
-    timer = global.setInterval(fetchCounts, POLL_MS);
+    timer = global.setInterval(function () {
+      if (document.hidden) return;
+      if (global.MedConnectLiveSync && Date.now() - (global.MedConnectLiveSync.lastHubAt() || 0) < 4000) return;
+      fetchCounts();
+    }, POLL_MS);
   }
 
   function stop() {

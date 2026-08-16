@@ -82,7 +82,66 @@ function appointment_slots_expire_passed(PDO $pdo, ?int $providerId = null): int
     $stmt = $pdo->prepare($sql);
     $stmt->execute($params);
 
+    appointment_slots_reopen_released($pdo, $providerId);
+
     return (int) $stmt->rowCount();
+}
+
+/**
+ * Reopen leftover cancelled rows for today so the same clock time can be booked again.
+ * Patient cancel now writes status=available; this heals older cancelled leftovers.
+ */
+function appointment_slots_reopen_released(PDO $pdo, ?int $providerId = null): int
+{
+    appointment_schedule_ensure_schema($pdo);
+    $today = appointment_now()->format('Y-m-d');
+    $sql = "
+        UPDATE appointment_slots
+        SET status = 'available',
+            patient_id = NULL,
+            consultation_id = NULL
+        WHERE status = 'cancelled'
+          AND slot_date = ?
+          AND (patient_id IS NULL OR patient_id = 0)
+    ";
+    $params = [$today];
+    if ($providerId !== null && $providerId > 0) {
+        $sql .= ' AND provider_id = ?';
+        $params[] = $providerId;
+    }
+
+    $stmt = $pdo->prepare($sql);
+    $stmt->execute($params);
+
+    return (int) $stmt->rowCount();
+}
+
+/**
+ * Atomically claim an available slot. Returns false if another patient already took it.
+ */
+function appointment_slot_claim_available(
+    PDO $pdo,
+    int $slotId,
+    int $providerId,
+    int $patientId,
+    int $consultationId
+): bool {
+    if ($slotId <= 0 || $providerId <= 0 || $patientId <= 0 || $consultationId <= 0) {
+        return false;
+    }
+
+    $stmt = $pdo->prepare("
+        UPDATE appointment_slots
+        SET status = 'booked',
+            patient_id = ?,
+            consultation_id = ?
+        WHERE id = ?
+          AND provider_id = ?
+          AND status = 'available'
+    ");
+    $stmt->execute([$patientId, $consultationId, $slotId, $providerId]);
+
+    return $stmt->rowCount() > 0;
 }
 
 /**
@@ -391,10 +450,14 @@ function appointment_provider_has_today_schedule(PDO $pdo, int $provider_id): bo
  *   slots: list<array<string, mixed>>
  * }
  */
-function appointment_slots_patient_today(PDO $pdo, int $providerId): array
+function appointment_slots_patient_today(PDO $pdo, int $providerId, bool $generateMissing = true): array
 {
     $today = appointment_now()->format('Y-m-d');
-    appointment_slots_sync_today($pdo, $providerId);
+    if ($generateMissing) {
+        appointment_slots_sync_today($pdo, $providerId);
+    } else {
+        appointment_slots_expire_passed($pdo, $providerId);
+    }
     $hasSchedule = appointment_provider_has_today_schedule($pdo, $providerId);
 
     $stmt = $pdo->prepare("
@@ -462,6 +525,11 @@ function appointment_slots_patient_today(PDO $pdo, int $providerId): array
         $message = 'No clinical slots available for this doctor on this date.';
     }
 
+    $fingerprintParts = [$hasSchedule ? '1' : '0', $emptyReason];
+    foreach ($slots as $slot) {
+        $fingerprintParts[] = (string) $slot['id'];
+    }
+
     return [
         'date'          => $today,
         'today'         => $today,
@@ -469,6 +537,7 @@ function appointment_slots_patient_today(PDO $pdo, int $providerId): array
         'has_schedule'  => $hasSchedule,
         'empty_reason'  => $emptyReason,
         'message'       => $message,
+        'fingerprint'   => hash('sha256', implode('|', $fingerprintParts)),
         'slots'         => $slots,
     ];
 }

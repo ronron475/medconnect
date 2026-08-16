@@ -11,7 +11,9 @@
   const REMOVE_SLOT_API = window.SCHEDULE_CONFIG?.removeSlotApi || '';
   const RESCHEDULE_API = window.SCHEDULE_CONFIG?.rescheduleApi || '';
   const RESCHEDULE_SLOTS_API = window.SCHEDULE_CONFIG?.rescheduleSlotsApi || '';
+  const LIVE_API = window.SCHEDULE_CONFIG?.liveApi || '';
   const LOGIN_URL = window.SCHEDULE_CONFIG?.loginUrl || '/';
+  const LIVE_POLL_MS = 5000;
 
   const DURATION_OPTIONS = [
     { v: 15, l: '15 min' },
@@ -393,7 +395,7 @@
       const data = await res.json();
       if (data.success) {
         notify(data.message || 'Slot removed.');
-        window.location.reload();
+        refreshLive(true);
         return;
       }
       notify(data.message || 'Could not remove slot.', true);
@@ -450,15 +452,22 @@
     loadRescheduleSlots(slotId);
   }
 
-  document.querySelectorAll('[data-remove-slot]').forEach((btn) => {
-    btn.addEventListener('click', () => {
-      removeSlot(btn.getAttribute('data-remove-slot'));
+  const previewCard = document.querySelector('.sched-preview-card');
+  if (previewCard) {
+    previewCard.addEventListener('click', (e) => {
+      const removeBtn = e.target.closest('[data-remove-slot]');
+      if (removeBtn) {
+        e.preventDefault();
+        removeSlot(removeBtn.getAttribute('data-remove-slot'));
+        return;
+      }
+      const rescheduleBtn = e.target.closest('[data-reschedule-slot]');
+      if (rescheduleBtn) {
+        e.preventDefault();
+        openRescheduleModal(rescheduleBtn);
+      }
     });
-  });
-
-  document.querySelectorAll('[data-reschedule-slot]').forEach((btn) => {
-    btn.addEventListener('click', () => openRescheduleModal(btn));
-  });
+  }
 
   rescheduleModal?.querySelectorAll('[data-sched-reschedule-cancel]').forEach((el) => {
     el.addEventListener('click', closeRescheduleModal);
@@ -497,7 +506,7 @@
       if (data.success) {
         notify(data.message || 'Reschedule request sent.');
         closeRescheduleModal();
-        window.location.reload();
+        refreshLive(true);
         return;
       }
       notify(data.message || 'Could not send reschedule request.', true);
@@ -507,4 +516,199 @@
       if (submitBtn) submitBtn.disabled = false;
     }
   });
+
+  let liveFingerprint = window.SCHEDULE_CONFIG?.liveFingerprint || '';
+  let liveSlots = [];
+  let liveInFlight = false;
+  let liveTimer = null;
+
+  function plural(n, one, many) {
+    return n + ' ' + (n === 1 ? one : many);
+  }
+
+  function slotCardHtml(slot) {
+    let html = '<div class="sched-slot-card ' + escapeHtml(slot.card_class || 'is-available')
+      + '" data-slot-id="' + String(slot.id || 0) + '">';
+    html += '<div class="sched-slot-time">' + escapeHtml(slot.label || '') + '</div>';
+    html += '<div class="sched-slot-status" title="' + escapeHtml(slot.display_status || '') + '">'
+      + escapeHtml(slot.display_status || '') + '</div>';
+
+    if (slot.is_booked && slot.patient_name) {
+      html += '<div class="sched-slot-patient" title="' + escapeHtml(slot.patient_name) + '">'
+        + escapeHtml(slot.patient_name) + '</div>';
+    }
+
+    if (slot.is_booked && slot.pending_reschedule) {
+      html += '<div class="sched-slot-pending"><p class="sched-slot-note sched-slot-note--pending">'
+        + 'Reschedule pending — patient must confirm</p>';
+      if (slot.reschedule_reason) {
+        html += '<p class="sched-slot-reason"><strong>Reason:</strong> '
+          + escapeHtml(slot.reschedule_reason) + '</p>';
+      }
+      if (slot.reschedule_new_label) {
+        html += '<p class="sched-slot-proposed"><strong>Proposed:</strong> '
+          + escapeHtml(slot.reschedule_new_label);
+        if (slot.reschedule_old_label && slot.status === 'booked') {
+          html += ' <span class="sched-slot-proposed-was">(was '
+            + escapeHtml(slot.reschedule_old_label) + ')</span>';
+        }
+        html += '</p>';
+      }
+      html += '</div>';
+    } else if (slot.is_booked) {
+      html += '<p class="sched-slot-note sched-slot-note--locked">'
+        + 'BOOKED — This time slot cannot be changed because a patient has an appointment.</p>';
+    }
+
+    html += '<div class="sched-slot-actions">';
+    if (slot.can_remove) {
+      html += '<button type="button" class="sched-slot-btn sched-slot-btn--danger" data-remove-slot="'
+        + String(slot.id) + '">Remove</button>';
+    } else if (slot.can_reschedule) {
+      html += '<button type="button" class="sched-slot-btn sched-slot-btn--primary"'
+        + ' data-reschedule-slot="' + String(slot.id) + '"'
+        + ' data-consultation-id="' + String(slot.consultation_id || 0) + '"'
+        + ' data-patient-name="' + escapeHtml(slot.patient_name || 'Patient') + '"'
+        + ' data-slot-time="' + escapeHtml(slot.label || '') + '">Reschedule</button>';
+    } else if (slot.is_past || ['completed', 'cancelled', 'expired'].indexOf(slot.status) !== -1) {
+      html += '<span class="sched-slot-view-only">View only</span>';
+    }
+    html += '</div></div>';
+    return html;
+  }
+
+  function renderLivePanel(data) {
+    const panel = document.querySelector('[data-sched-live-panel]');
+    if (!panel) return;
+
+    const dayName = data.today || SCHEDULE_TODAY || 'Today';
+    const counts = data.counts || {};
+    const slots = Array.isArray(data.slots) ? data.slots : [];
+    const isActive = !!data.is_active;
+
+    let html = isActive
+      ? '<div class="sched-status-banner sched-status-banner--ok"><strong>'
+        + escapeHtml(dayName) + ' is active.</strong> Slots from all sessions appear below in chronological order.</div>'
+      : '<div class="sched-status-banner sched-status-banner--warn"><strong>'
+        + escapeHtml(dayName) + ' is inactive.</strong> Add sessions, enable bookings, and click <strong>Save</strong>.</div>';
+
+    if (slots.length) {
+      html += '<div class="sched-slot-stats">'
+        + '<div class="sched-slot-stat sched-slot-stat--open"><strong data-sched-count="available">'
+        + String(counts.available || 0) + '</strong><span>Available</span></div>'
+        + '<div class="sched-slot-stat sched-slot-stat--booked"><strong data-sched-count="booked">'
+        + String(counts.booked || 0) + '</strong><span>Booked</span></div>'
+        + '<div class="sched-slot-stat sched-slot-stat--past"><strong data-sched-count="passed">'
+        + String(counts.passed || 0) + '</strong><span>Expired</span></div>'
+        + '</div>'
+        + '<p class="sched-slot-legend">Only <strong>AVAILABLE</strong> slots can be removed. '
+        + '<strong>BOOKED</strong> appointments must use Reschedule — never edit the time directly.</p>'
+        + '<h4 class="sched-preview-title">' + escapeHtml(dayName) + ' timeline</h4>'
+        + '<div class="sched-slot-grid-wrap"><div class="sched-slot-grid">'
+        + slots.map(slotCardHtml).join('')
+        + '</div></div>';
+    } else if (isActive) {
+      html += '<p class="sched-preview-empty">Sessions are active but no slots were generated yet.<br>'
+        + 'Configure your sessions and click <strong>Save ' + escapeHtml(dayName) + ' Schedule</strong>.</p>';
+    } else {
+      html += '<p class="sched-preview-empty">No slots for today.<br>Add sessions, enable bookings, and save.</p>';
+    }
+
+    panel.innerHTML = html;
+
+    const activeChip = document.querySelector('[data-sched-live-active]');
+    if (activeChip) {
+      activeChip.textContent = 'Today: ' + (isActive ? 'Accepting bookings' : 'Not active');
+    }
+    const sessionChip = document.querySelector('[data-sched-live-sessions]');
+    if (sessionChip && typeof data.session_count === 'number') {
+      sessionChip.textContent = plural(data.session_count, 'session', 'sessions') + ' today';
+    }
+    const slotChip = document.querySelector('[data-sched-live-slot-count]');
+    if (slotChip) {
+      slotChip.textContent = plural(slots.length, 'slot', 'slots') + ' generated';
+    }
+  }
+
+  function announceLiveChanges(prevSlots, nextSlots) {
+    if (!prevSlots.length) return;
+    const prevMap = new Map(prevSlots.map((s) => [String(s.id), s]));
+    const booked = [];
+    const cancelled = [];
+    nextSlots.forEach((slot) => {
+      const prev = prevMap.get(String(slot.id));
+      if (!prev) return;
+      const wasBooked = !!prev.is_booked;
+      const nowBooked = !!slot.is_booked;
+      if (!wasBooked && nowBooked) booked.push(slot.label || 'a time');
+      if (wasBooked && !nowBooked) cancelled.push(slot.label || 'a time');
+    });
+    if (booked.length === 1) {
+      notify('Patient booked ' + booked[0] + '.');
+    } else if (booked.length > 1) {
+      notify(booked.length + ' slots were just booked.');
+    }
+    if (cancelled.length === 1) {
+      notify('Appointment cancelled — ' + cancelled[0] + ' is available again.');
+    } else if (cancelled.length > 1) {
+      notify(cancelled.length + ' appointments were cancelled. Those times are open again.');
+    }
+  }
+
+  async function refreshLive(force) {
+    if (!LIVE_API || liveInFlight) return;
+    if (document.hidden && !force) return;
+    liveInFlight = true;
+    try {
+      const res = await fetch(LIVE_API, {
+        method: 'GET',
+        credentials: 'include',
+        cache: 'no-store',
+        headers: { 'X-Requested-With': 'XMLHttpRequest', 'X-MC-No-Loader': '1' },
+      });
+      const data = await res.json();
+      if (!data || !data.success) return;
+      const nextFp = data.fingerprint || '';
+      const nextSlots = Array.isArray(data.slots) ? data.slots : [];
+      if (!force && nextFp && nextFp === liveFingerprint) {
+        liveSlots = nextSlots;
+        return;
+      }
+      if (liveSlots.length) {
+        announceLiveChanges(liveSlots, nextSlots);
+      }
+      liveFingerprint = nextFp;
+      liveSlots = nextSlots;
+      renderLivePanel(data);
+    } catch (err) {
+      /* next poll retries */
+    } finally {
+      liveInFlight = false;
+    }
+  }
+
+  function startLivePolling() {
+    if (!LIVE_API || !document.querySelector('[data-sched-live-panel]')) return;
+    refreshLive(false);
+    liveTimer = window.setInterval(() => {
+      if (document.hidden) return;
+      if (window.MedConnectLiveSync && Date.now() - (window.MedConnectLiveSync.lastHubAt() || 0) < 4000) return;
+      refreshLive(false);
+    }, LIVE_POLL_MS);
+    document.addEventListener('visibilitychange', () => {
+      if (!document.hidden) refreshLive(false);
+    });
+    document.addEventListener('medconnect:live-sync', (ev) => {
+      const changed = (ev.detail && ev.detail.changed) || [];
+      if (changed.indexOf('slots') !== -1 || changed.indexOf('schedule') !== -1 || changed.indexOf('appointments') !== -1) {
+        refreshLive(false);
+      }
+    });
+  }
+
+  startLivePolling();
+
+  window.MedConnectProviderScheduleLive = {
+    refresh: refreshLive,
+  };
 })();

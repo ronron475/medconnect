@@ -6,6 +6,7 @@ require __DIR__.'/partials/icons.php';
 require __DIR__.'/partials/data.php';
 require_once BASE_PATH . '/app/includes/appointment_slots.php';
 require_once BASE_PATH . '/app/includes/provider_schedule_sessions.php';
+require_once BASE_PATH . '/app/includes/provider_schedule_live.php';
 appointment_schedule_ensure_schema($pdo);
 require __DIR__.'/partials/layout_open.php';
 
@@ -30,58 +31,13 @@ $days_order = provider_schedule_valid_days();
 $today_now = appointment_now();
 $today_name = $today_now->format('l');
 $today_ymd = $today_now->format('Y-m-d');
-$today_time = $today_now->format('H:i:s');
 $today_label = $today_now->format('M j, Y');
 $today_sessions = $schedules_by_day[$today_name] ?? [];
 $today_is_active = provider_schedule_day_is_active($today_sessions);
 
-$s_stmt = $pdo->prepare("
-    SELECT s.id, s.start_time, s.end_time, s.status, s.consultation_id,
-           COALESCE(CONCAT(u.first_name, ' ', u.last_name), '') AS patient_name,
-           COALESCE(c.reschedule_status, 'none') AS reschedule_status,
-           c.status AS consultation_status,
-           r.reason AS reschedule_reason,
-           r.old_time AS reschedule_old_time,
-           r.new_time AS reschedule_new_time
-    FROM appointment_slots s
-    LEFT JOIN users u ON u.id = s.patient_id
-    LEFT JOIN consultations c ON c.id = s.consultation_id
-    LEFT JOIN appointment_reschedule_log r
-        ON r.consultation_id = c.id
-       AND r.status = 'pending_patient'
-       AND r.id = (
-           SELECT MAX(r2.id)
-           FROM appointment_reschedule_log r2
-           WHERE r2.consultation_id = c.id
-             AND r2.status = 'pending_patient'
-       )
-    WHERE s.provider_id = ? AND s.slot_date = ?
-    ORDER BY s.start_time ASC
-");
-$s_stmt->execute([$provider_id, $today_ymd]);
-$today_slots = $s_stmt->fetchAll();
-
-$slot_counts = ['available' => 0, 'booked' => 0, 'passed' => 0, 'completed' => 0, 'cancelled' => 0];
-foreach ($today_slots as $sl) {
-    $st = strtolower((string) ($sl['status'] ?? ''));
-    if (in_array($st, ['booked', 'blocked'], true)) {
-        $slot_counts['booked']++;
-        continue;
-    }
-    if ($st === 'completed') {
-        $slot_counts['completed']++;
-        continue;
-    }
-    if ($st === 'cancelled') {
-        $slot_counts['cancelled']++;
-        continue;
-    }
-    if (in_array($st, ['expired'], true) || substr((string) ($sl['start_time'] ?? ''), 0, 8) <= $today_time) {
-        $slot_counts['passed']++;
-    } else {
-        $slot_counts['available']++;
-    }
-}
+$schedule_live = provider_schedule_live_payload($pdo, $provider_id, false);
+$today_slots = $schedule_live['rows'];
+$slot_counts = $schedule_live['counts'];
 
 $session_count_today = count($today_sessions);
 ?>
@@ -96,13 +52,13 @@ $session_count_today = count($today_sessions);
     </p>
   </div>
   <div class="sched-summary">
-    <span class="sched-summary-chip sched-summary-chip--today">
+    <span class="sched-summary-chip sched-summary-chip--today" data-sched-live-active>
       Today: <?= $today_is_active ? 'Accepting bookings' : 'Not active' ?>
     </span>
-    <span class="sched-summary-chip sched-summary-chip--sessions">
+    <span class="sched-summary-chip sched-summary-chip--sessions" data-sched-live-sessions>
       <?= $session_count_today ?> session<?= $session_count_today === 1 ? '' : 's' ?> today
     </span>
-    <span class="sched-summary-chip sched-summary-chip--slots">
+    <span class="sched-summary-chip sched-summary-chip--slots" data-sched-live-slot-count>
       <?= count($today_slots) ?> slot<?= count($today_slots) === 1 ? '' : 's' ?> generated
     </span>
   </div>
@@ -137,7 +93,7 @@ $session_count_today = count($today_sessions);
         <h3 class="text-h3"><?= icon('clock') ?> Today&apos;s Slots</h3>
         <span class="mc-badge"><?= htmlspecialchars($today_label) ?></span>
       </div>
-      <div class="mc-card-body mt-2">
+      <div class="mc-card-body mt-2" data-sched-live-panel>
         <?php if ($today_is_active): ?>
         <div class="sched-status-banner sched-status-banner--ok">
           <strong><?= htmlspecialchars($today_name) ?> is active.</strong>
@@ -153,15 +109,15 @@ $session_count_today = count($today_sessions);
         <?php if (!empty($today_slots)): ?>
         <div class="sched-slot-stats">
           <div class="sched-slot-stat sched-slot-stat--open">
-            <strong><?= $slot_counts['available'] ?></strong>
+            <strong data-sched-count="available"><?= $slot_counts['available'] ?></strong>
             <span>Available</span>
           </div>
           <div class="sched-slot-stat sched-slot-stat--booked">
-            <strong><?= $slot_counts['booked'] ?></strong>
+            <strong data-sched-count="booked"><?= $slot_counts['booked'] ?></strong>
             <span>Booked</span>
           </div>
           <div class="sched-slot-stat sched-slot-stat--past">
-            <strong><?= $slot_counts['passed'] ?></strong>
+            <strong data-sched-count="passed"><?= $slot_counts['passed'] ?></strong>
             <span>Expired</span>
           </div>
         </div>
@@ -255,6 +211,8 @@ $session_count_today = count($today_sessions);
       'removeSlotApi' => ASSET_BASE . '/app/api/provider/remove_slot.php',
       'rescheduleApi' => ASSET_BASE . '/app/api/provider/request_reschedule.php',
       'rescheduleSlotsApi' => ASSET_BASE . '/app/api/provider/reschedule_slots.php',
+      'liveApi'  => ASSET_BASE . '/app/api/provider/schedule_live.php',
+      'liveFingerprint' => $schedule_live['fingerprint'],
       'loginUrl' => ASSET_BASE . '/index.php',
   ], JSON_THROW_ON_ERROR) ?>;
 </script>

@@ -9,6 +9,7 @@ require_once dirname(dirname(dirname(__DIR__))) . '/app/includes/user_account_st
 
 Api::startJson();
 Api::requirePatientReady($pdo);
+Api::releaseSession();
 
 $bookingCheck = patient_account_may_submit_consultation($pdo, (int) $_SESSION['user_id']);
 if (!$bookingCheck['allowed']) {
@@ -28,7 +29,8 @@ if ($date === '' || !preg_match('/^\d{4}-\d{2}-\d{2}$/', $date)) {
 }
 
 try {
-    $payload = appointment_slots_patient_today($pdo, $provider_id);
+    $livePoll = isset($_GET['live']) && (string) $_GET['live'] === '1';
+    $payload = appointment_slots_patient_today($pdo, $provider_id, !$livePoll);
     // Patients book today only in Asia/Manila. Ignore a mismatched client date
     // so browser timezone cannot empty the grid.
     $payload['requested_date'] = $date;

@@ -170,7 +170,23 @@
   BhwPortal.post('activity.php', { action: 'log', event: 'consultations_viewed' }).catch(function () {});
 
   loadConsultations();
-  pollTimer = window.setInterval(loadConsultations, 30000);
+  pollTimer = window.setInterval(function () {
+    if (document.hidden) return;
+    if (window.MedConnectLiveSync && Date.now() - (window.MedConnectLiveSync.lastHubAt() || 0) < 4000) return;
+    loadConsultations();
+  }, 30000);
+
+  document.addEventListener('visibilitychange', function () {
+    if (!document.hidden) loadConsultations();
+  });
+  document.addEventListener('medconnect:live-sync', function (ev) {
+    var changed = (ev.detail && ev.detail.changed) || [];
+    if (changed.indexOf('appointments') !== -1 || changed.indexOf('queue') !== -1) {
+      loadConsultations();
+    }
+  });
+
+  window.refreshBhwConsultations = loadConsultations;
 
   window.addEventListener('beforeunload', function () {
     if (pollTimer) window.clearInterval(pollTimer);

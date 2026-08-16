@@ -66,6 +66,7 @@
     if (!modalEl) return;
     modalEl.hidden = true;
     document.body.classList.remove('psess-followup-open');
+    stopFollowupSlotPoll();
   }
 
   let activeConsultId = 0;
@@ -193,20 +194,26 @@
         '<div id="psess-followup-slots" class="psess-followup-slots">Loading available slots…</div>';
       bookingEl.hidden = false;
       loadFollowupSlots(activeProviderId || data.provider_id);
+      startFollowupSlotPoll(activeProviderId || data.provider_id);
     }
   }
 
-  async function loadFollowupSlots(providerId) {
+  let followupSlotsTimer = null;
+  let followupSlotsProviderId = 0;
+  let followupSlotsFingerprint = '';
+
+  async function loadFollowupSlots(providerId, silent) {
     const wrap = document.getElementById('psess-followup-slots');
     if (!wrap || !providerId) {
       if (wrap) wrap.textContent = 'No provider available for booking.';
       return;
     }
+    followupSlotsProviderId = providerId;
 
     try {
       const res = await fetch(
         APP_BASE + '/app/api/appointments/get_available_slots.php?provider_id=' +
-          encodeURIComponent(providerId) + '&_=' + Date.now(),
+          encodeURIComponent(providerId) + (silent ? '&live=1' : '') + '&_=' + Date.now(),
         { credentials: 'same-origin', cache: 'no-store', headers: { 'X-MC-No-Loader': '1' } }
       );
       const data = await res.json();
@@ -214,6 +221,11 @@
       const slots = (payload.slots || []).filter(function (slot) {
         return slot.bookable !== false;
       });
+      const fp = payload.fingerprint || slots.map(function (s) { return String(s.id || s.slot_id); }).join(',');
+      if (silent && fp && fp === followupSlotsFingerprint) {
+        return;
+      }
+      followupSlotsFingerprint = fp;
       if (!slots.length) {
         wrap.innerHTML = '<p>' + escapeHtml(payload.message || 'No clinical slots available for this doctor on this date.') + '</p>';
         return;
@@ -229,9 +241,38 @@
         });
       });
     } catch (err) {
-      wrap.textContent = 'Unable to load slots.';
+      if (!silent) wrap.textContent = 'Unable to load slots.';
     }
   }
+
+  function startFollowupSlotPoll(providerId) {
+    stopFollowupSlotPoll();
+    followupSlotsProviderId = providerId || 0;
+    if (!followupSlotsProviderId) return;
+    followupSlotsTimer = window.setInterval(function () {
+      if (document.hidden) return;
+      const wrap = document.getElementById('psess-followup-slots');
+      if (!wrap || wrap.hidden) return;
+      if (window.MedConnectLiveSync && Date.now() - (window.MedConnectLiveSync.lastHubAt() || 0) < 4000) return;
+      loadFollowupSlots(followupSlotsProviderId, true);
+    }, 5000);
+  }
+
+  function stopFollowupSlotPoll() {
+    if (followupSlotsTimer) {
+      window.clearInterval(followupSlotsTimer);
+      followupSlotsTimer = null;
+    }
+  }
+
+  document.addEventListener('medconnect:live-sync', function (ev) {
+    const wrap = document.getElementById('psess-followup-slots');
+    if (!wrap || wrap.hidden || !followupSlotsProviderId) return;
+    const changed = (ev.detail && ev.detail.changed) || [];
+    if (changed.indexOf('slots') !== -1 || changed.indexOf('schedule') !== -1) {
+      loadFollowupSlots(followupSlotsProviderId, true);
+    }
+  });
 
   async function bookFollowupSlot(slotId) {
     if (!activeCaseId || !slotId) return;
@@ -251,11 +292,23 @@
       const data = await res.json();
       if (!data.success) {
         window.alert(data.message || 'Unable to book appointment.');
+        if (followupSlotsProviderId) {
+          loadFollowupSlots(followupSlotsProviderId, false);
+        }
         return;
       }
       window.alert('Follow-up appointment booked successfully.');
       closeModal();
-      window.location.reload();
+      if (typeof window.refreshConsultationStatus === 'function') {
+        window.refreshConsultationStatus();
+      }
+      if (typeof window.refreshBookingPicker === 'function') {
+        window.refreshBookingPicker(true);
+      }
+      if (window.MedConnectNavBadgesRefresh) window.MedConnectNavBadgesRefresh();
+      if (window.MedConnectLiveSync && typeof window.MedConnectLiveSync.refresh === 'function') {
+        window.MedConnectLiveSync.refresh();
+      }
     } catch (err) {
       window.alert('Network error. Please try again.');
     }

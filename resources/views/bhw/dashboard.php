@@ -276,6 +276,7 @@ ob_start();
   }
 
   function refreshDashboard() {
+    if (document.hidden) return;
     BhwPortal.get('dashboard.php', dashFilters()).then(function (res) {
       if (!res.success) return;
       var m = res.metrics || {};
@@ -304,7 +305,22 @@ ob_start();
   searchInput.addEventListener('input', filterRows);
   if (initialQueue.length) renderQueue(initialQueue);
   updateChartNote(<?= json_encode($dashboardCharts) ?>);
-  setInterval(refreshDashboard, REFRESH_MS);
+  window.refreshBhwDashboard = refreshDashboard;
+
+  var dashTimer = setInterval(function () {
+    if (document.hidden) return;
+    if (window.MedConnectLiveSync && Date.now() - (window.MedConnectLiveSync.lastHubAt() || 0) < 4000) return;
+    refreshDashboard();
+  }, REFRESH_MS);
+  document.addEventListener('visibilitychange', function () {
+    if (!document.hidden) refreshDashboard();
+  });
+  document.addEventListener('medconnect:live-sync', function (ev) {
+    var changed = (ev.detail && ev.detail.changed) || [];
+    if (changed.indexOf('triage') !== -1 || changed.indexOf('queue') !== -1 || changed.indexOf('appointments') !== -1) {
+      refreshDashboard();
+    }
+  });
 })();
 <?php
 $bhw_inline_script = ob_get_clean();

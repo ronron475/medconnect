@@ -866,14 +866,39 @@
     initPage();
     initWidgets();
     bindUnreadWidgets();
+    function startPoll() {
+      if (pollTimer) return;
+      pollTimer = setInterval(function () {
+        if (document.hidden) return;
+        if (window.MedConnectLiveSync && Date.now() - (window.MedConnectLiveSync.lastHubAt() || 0) < 4000) return;
+        poll();
+      }, POLL_INTERVAL);
+    }
+    function stopPoll() {
+      if (!pollTimer) return;
+      clearInterval(pollTimer);
+      pollTimer = null;
+    }
+
     refreshCount();
     loadDropdown();
-    pollTimer = setInterval(poll, POLL_INTERVAL);
+    startPoll();
 
     document.addEventListener('visibilitychange', function () {
-      if (document.hidden) return;
+      if (document.hidden) {
+        stopPoll();
+        return;
+      }
+      startPoll();
       refreshCount();
       poll();
+    });
+    document.addEventListener('medconnect:live-sync', function (ev) {
+      var changed = (ev.detail && ev.detail.changed) || [];
+      if (changed.indexOf('notifications') === -1) return;
+      refreshCount();
+      poll();
+      if (panelOpen) loadDropdown();
     });
     window.addEventListener('focus', function () {
       if (!document.hidden) refreshCount();
