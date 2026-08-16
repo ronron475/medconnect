@@ -90,3 +90,66 @@ if (!defined('AI_SERVICE_TIMEOUT_TRANSCRIBE')) {
     define('AI_SERVICE_TIMEOUT_TRANSCRIBE', 180);
 }
 
+/**
+ * WebRTC ICE servers for the consultation room.
+ *
+ * STUN alone cannot traverse the symmetric NAT used by most mobile carriers, so a
+ * TURN relay is required for phone-to-laptop calls to connect reliably. Configure
+ * in .env; without TURN credentials the room still works on networks where STUN
+ * is enough (same LAN, most home broadband).
+ *
+ *   MEDCONNECT_TURN_URLS=turn:turn.example.com:3478,turns:turn.example.com:5349
+ *   MEDCONNECT_TURN_USERNAME=...
+ *   MEDCONNECT_TURN_CREDENTIAL=...
+ */
+if (!function_exists('medconnect_ice_servers')) {
+    /**
+     * @return list<array{urls: string|list<string>, username?: string, credential?: string}>
+     */
+    function medconnect_ice_servers(): array
+    {
+        $stunEnv = trim((string) (getenv('MEDCONNECT_STUN_URLS') ?: ''));
+        $stunUrls = $stunEnv !== ''
+            ? array_values(array_filter(array_map('trim', explode(',', $stunEnv))))
+            : ['stun:stun.l.google.com:19302', 'stun:stun1.l.google.com:19302'];
+
+        $servers = [];
+        foreach ($stunUrls as $url) {
+            $servers[] = ['urls' => $url];
+        }
+
+        $turnUrls = array_values(array_filter(array_map(
+            'trim',
+            explode(',', (string) (getenv('MEDCONNECT_TURN_URLS') ?: ''))
+        )));
+        $turnUser = trim((string) (getenv('MEDCONNECT_TURN_USERNAME') ?: ''));
+        $turnPass = trim((string) (getenv('MEDCONNECT_TURN_CREDENTIAL') ?: ''));
+
+        if ($turnUrls !== [] && $turnUser !== '' && $turnPass !== '') {
+            $servers[] = [
+                'urls'       => $turnUrls,
+                'username'   => $turnUser,
+                'credential' => $turnPass,
+            ];
+        }
+
+        return $servers;
+    }
+}
+
+/** True once a TURN relay is configured; used to warn during development only. */
+if (!function_exists('medconnect_has_turn_server')) {
+    function medconnect_has_turn_server(): bool
+    {
+        foreach (medconnect_ice_servers() as $server) {
+            foreach ((array) $server['urls'] as $url) {
+                if (stripos((string) $url, 'turn:') === 0 || stripos((string) $url, 'turns:') === 0) {
+                    return true;
+                }
+            }
+        }
+
+        return false;
+    }
+}
+

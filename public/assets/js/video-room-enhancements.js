@@ -17,6 +17,8 @@
   let chatPollTimer = null;
   let soapSaveTimer = null;
   let callEnded = false;
+  /** Several end paths can call showPostCall(); the modal must only open once. */
+  let postCallShown = false;
 
   function hidePostCall() {
     const modal = q('mcVcPostCallModal');
@@ -31,6 +33,7 @@
   }
 
   function resetCallUi() {
+    postCallShown = false;
     hidePostCall();
     const endModal = q('endCallModal');
     if (endModal) endModal.classList.remove('show');
@@ -351,6 +354,33 @@
     return global.matchMedia('(max-width: 768px)').matches;
   }
 
+  /**
+   * --mc-vc-controls-height is the clearance every floating element (PiP, chat
+   * panel, TTS panels) reserves above the call controls. It was a hardcoded
+   * guess per breakpoint, so whenever the control bar wrapped to an extra row —
+   * which it does on narrow phones — those elements sat on top of the controls.
+   * Measuring the real bar keeps the clearance correct at any width.
+   */
+  function trackControlsHeight() {
+    const controls = q('mcVcControls');
+    if (!controls) return;
+
+    const apply = () => {
+      const height = Math.round(controls.getBoundingClientRect().height);
+      if (height > 0) {
+        document.documentElement.style.setProperty('--mc-vc-controls-height', height + 'px');
+      }
+    };
+
+    apply();
+    if (typeof global.ResizeObserver === 'function') {
+      new global.ResizeObserver(apply).observe(controls);
+    } else {
+      global.addEventListener('resize', apply);
+      global.addEventListener('orientationchange', apply);
+    }
+  }
+
   function setPanelOpen(open) {
     const panel = q('mcVcSidePanel');
     const toggle = q('mcVcPanelToggle');
@@ -557,8 +587,10 @@
 
   function showPostCall() {
     if (!callEnded && !window.__mcCallEnded) return;
+    if (postCallShown) return;
     const modal = q('mcVcPostCallModal');
     if (!modal) return;
+    postCallShown = true;
     modal.hidden = false;
     document.body.classList.add('mc-vc-call-ended');
     const controls = q('mcVcControls');
@@ -613,6 +645,7 @@
 
   function init() {
     hidePostCall();
+    trackControlsHeight();
     bindPanelTabs();
     bindChat();
     bindSoapAutosave();

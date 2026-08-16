@@ -1329,6 +1329,22 @@ body.consultation-mobile-call-fullscreen .mc-provider-video-dock .mc-session-flo
 }
 .fu-status.is-ok { color: #047857; }
 .fu-status.is-error { color: #b91c1c; }
+.fu-decision {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+.fu-decision .session-btn {
+    flex: 1 1 180px;
+    min-height: 44px;
+}
+.fu-decision .session-btn[aria-pressed="true"] {
+    outline: 2px solid #0f766e;
+    outline-offset: 1px;
+}
+@media (max-width: 420px) {
+    .fu-decision .session-btn { flex-basis: 100%; }
+}
 
 /* Provider Health Summary card */
 .hs-card .session-card-header { background: #f1f5f9; }
@@ -2392,48 +2408,37 @@ body.consultation-mobile-call-fullscreen .mc-provider-video-dock .mc-session-flo
       <h2 id="followUpModalTitle" class="fu-modal__title">Schedule patient follow-up</h2>
     </div>
     <div class="fu-modal__body">
-      <p class="fu-hint" style="margin-top:0;margin-bottom:14px;">
-        The video call has ended. Schedule a follow-up and send a Gmail reminder to the patient.
-      </p>
       <div class="fu-field">
         <label>Patient</label>
         <div class="fu-contact"><?= htmlspecialchars($patient['name']) ?></div>
       </div>
-      <div class="fu-field">
-        <label>Registered email (Gmail reminder)</label>
-        <div class="fu-contact" id="fuEmailDisplay"><?= htmlspecialchars($patient_email !== '' ? $patient_email : 'Not on file') ?></div>
-        <p class="fu-hint">Pulled from the patient account. Reminder is sent via MedConnect Gmail SMTP.</p>
+
+      <div class="fu-field" id="fuDecisionStep">
+        <label id="fuDecisionLabel">Follow-up required?</label>
+        <div class="fu-decision" role="group" aria-labelledby="fuDecisionLabel">
+          <button type="button" class="session-btn primary" id="fuDecisionYes" aria-pressed="false">Yes, schedule follow-up</button>
+          <button type="button" class="session-btn" id="fuDecisionNo" aria-pressed="false">No follow-up needed</button>
+        </div>
       </div>
-      <div class="fu-field">
-        <label>Registered mobile (reference)</label>
-        <div class="fu-contact" id="fuContactDisplay"><?= htmlspecialchars($patient_contact !== '' ? $patient_contact : 'Not on file') ?></div>
+
+      <div class="fu-field" id="fuSlotStep" hidden>
+        <label for="fuSlotSelect">Available follow-up times</label>
+        <select id="fuSlotSelect" class="pd-input" style="width:100%;">
+          <option value="">Loading your available slots…</option>
+        </select>
+        <p class="fu-hint" id="fuSlotHint">Only real openings from your own schedule are listed.</p>
       </div>
-      <div class="fu-field">
-        <label for="fuFollowUpDate">Follow-up date</label>
-        <input type="date" id="fuFollowUpDate" class="pd-input" style="width:100%;">
-      </div>
-      <div class="fu-field">
-        <label for="fuFollowUpMessage">Message / notes</label>
+
+      <div class="fu-field" id="fuNotesStep" hidden>
+        <label for="fuFollowUpMessage">Notes for the patient (optional)</label>
         <textarea id="fuFollowUpMessage" class="pd-textarea" rows="3" placeholder="Follow-up instructions for the patient…"></textarea>
       </div>
-      <label class="fu-check">
-        <input type="checkbox" id="fuSendEmail" <?= $patient_email !== '' ? 'checked' : 'disabled' ?>>
-        <span>
-          Send Gmail follow-up reminder
-          <?php if ($patient_email === ''): ?>
-            <span class="fu-hint" style="display:block;">No patient email on file — in-app reminder only.</span>
-          <?php elseif ($gmail_ready): ?>
-            <span class="fu-hint" style="display:block;">Gmail SMTP is ready.</span>
-          <?php else: ?>
-            <span class="fu-hint" style="display:block;">Mailer not ready — check Gmail SMTP settings.</span>
-          <?php endif; ?>
-        </span>
-      </label>
+
       <p id="fuModalStatus" class="fu-status" aria-live="polite"></p>
     </div>
     <div class="fu-modal__footer">
-      <button type="button" class="session-btn" id="fuSkipBtn">Skip for now</button>
-      <button type="button" class="session-btn primary" id="fuSaveBtn">Schedule follow-up</button>
+      <button type="button" class="session-btn" id="fuSkipBtn">Decide later</button>
+      <button type="button" class="session-btn primary" id="fuSaveBtn" hidden>Save follow-up</button>
     </div>
   </div>
 </div>
@@ -2581,6 +2586,19 @@ let sessionChatRefreshInFlight = false;
 let sessionLastEventId = 0;
 let sessionRealtimePoller = null;
 
+/**
+ * The video room iframe runs its own speech queue. While it is open this page must
+ * stay silent or the provider hears every typed-voice message twice, since the two
+ * documents have separate speechSynthesis contexts and separate dedup sets.
+ */
+function callFrameOwnsSpeech() {
+    const shellFrame = document.getElementById('mcGlobalVideoFrame');
+    if (shellFrame && String(shellFrame.src || '').indexOf('video_room.php') !== -1) return true;
+    const legacy = document.getElementById('videoFrame');
+    if (legacy && !legacy.hidden && String(legacy.src || '').indexOf('video_room.php') !== -1) return true;
+    return false;
+}
+
 function speakMuteTtsMessage(message, force) {
     if (!message || message.message_kind !== 'mute_tts' || message.is_deleted_for_everyone) return;
     const id = String(message.id || '');
@@ -2592,6 +2610,13 @@ function speakMuteTtsMessage(message, force) {
     }
     if (id) sessionSpokenMuteIds.add(id);
     if (key) sessionRecentMuteTexts.set(key, Date.now());
+    if (!force && callFrameOwnsSpeech()) return;
+    // Same read-aloud preference the in-call panel writes.
+    if (!force) {
+        try {
+            if (window.localStorage.getItem('mc_tts_read_aloud') === '0') return;
+        } catch (e) { /* preference unavailable; keep speaking */ }
+    }
     if (!('speechSynthesis' in window)) return;
     try {
         window.speechSynthesis.cancel();
@@ -3333,9 +3358,10 @@ window.addEventListener('message', (event) => {
         document.getElementById('callStatusIndicator').style.color = '#64748b';
         document.getElementById('callStatusIndicator').textContent = '● READY';
         setVideoShellLive(false);
-        window.location.replace(
-            <?= json_encode(ASSET_BASE . '/views/provider/consultation_session.php?id=' . (int) $consultation_id . '&soap=1#soapDocumentation') ?>
-        );
+        // The consultation is saved server-side by end_video.php before this
+        // message fires, so the follow-up decision comes next rather than
+        // throwing the provider straight into SOAP.
+        openFollowUpModal({ fromCallEnd: true });
         return;
     }
 
@@ -3902,33 +3928,115 @@ async function scheduleFollowUp() {
     }
 }
 
-function defaultFollowUpDate() {
-    const d = new Date();
-    d.setDate(d.getDate() + 7);
-    return d.toISOString().slice(0, 10);
+/* ── Post-consultation follow-up decision ──────────────────────────────────
+   The provider answers "follow-up required?" once. Choosing Yes offers only
+   real openings from their own schedule; when there are none the follow-up is
+   still saved as required-but-unscheduled rather than inventing a time. */
+
+let fuFollowUpRequired = null;
+let fuSlotsLoaded = false;
+let fuSaveInFlight = false;
+let fuOpenedFromCallEnd = false;
+
+function fuSetStatus(text, tone) {
+    const status = document.getElementById('fuModalStatus');
+    if (!status) return;
+    status.className = 'fu-status' + (tone ? ' is-' + tone : '');
+    status.textContent = text || '';
+}
+
+function fuSetDecision(required) {
+    fuFollowUpRequired = required;
+    const yes = document.getElementById('fuDecisionYes');
+    const no = document.getElementById('fuDecisionNo');
+    const slotStep = document.getElementById('fuSlotStep');
+    const notesStep = document.getElementById('fuNotesStep');
+    const saveBtn = document.getElementById('fuSaveBtn');
+
+    if (yes) yes.setAttribute('aria-pressed', required ? 'true' : 'false');
+    if (no) no.setAttribute('aria-pressed', required ? 'false' : 'true');
+    if (slotStep) slotStep.hidden = !required;
+    if (notesStep) notesStep.hidden = !required;
+    if (saveBtn) {
+        saveBtn.hidden = false;
+        saveBtn.textContent = required ? 'Save follow-up' : 'Confirm no follow-up';
+    }
+
+    if (required && !fuSlotsLoaded) fuLoadSlots();
+    else if (!required) fuSetStatus('');
+}
+
+async function fuLoadSlots() {
+    const select = document.getElementById('fuSlotSelect');
+    const hint = document.getElementById('fuSlotHint');
+    if (!select) return;
+
+    try {
+        const url = sessionAssetBase + '/app/api/provider/followup_decision.php?consultation_id='
+            + encodeURIComponent(sessionConsultationId);
+        const res = await fetch(url, { credentials: 'same-origin', cache: 'no-store' });
+        const data = await res.json();
+        if (!data || !data.success) {
+            select.innerHTML = '<option value="">Could not load your schedule</option>';
+            return;
+        }
+
+        fuSlotsLoaded = true;
+
+        if (data.already_decided) {
+            fuSetStatus('A follow-up decision was already saved for this consultation.', 'ok');
+            const saveBtn = document.getElementById('fuSaveBtn');
+            if (saveBtn) saveBtn.disabled = true;
+            return;
+        }
+
+        const slots = Array.isArray(data.slots) ? data.slots : [];
+        if (!slots.length) {
+            select.innerHTML = '<option value="">No available follow-up slots yet.</option>';
+            select.disabled = true;
+            if (hint) {
+                hint.textContent = 'No future openings in your schedule. Saving will flag this patient as needing a follow-up, and you can book a time once you add availability.';
+            }
+            return;
+        }
+
+        select.disabled = false;
+        select.innerHTML = '<option value="">Select an available time…</option>'
+            + slots.map((s) => '<option value="' + Number(s.id) + '">'
+                + escapeChatHtml(String(s.label || '')) + '</option>').join('');
+        if (hint) hint.textContent = 'Only real openings from your own schedule are listed.';
+    } catch (e) {
+        select.innerHTML = '<option value="">Network error loading slots</option>';
+    }
 }
 
 function openFollowUpModal(opts) {
     const modal = document.getElementById('followUpModal');
     if (!modal) return;
-    const dateEl = document.getElementById('fuFollowUpDate');
-    const msgEl = document.getElementById('fuFollowUpMessage');
-    const status = document.getElementById('fuModalStatus');
-    const sideDate = document.getElementById('followUpDate');
-    if (dateEl && !dateEl.value) {
-        dateEl.value = (sideDate && sideDate.value) ? sideDate.value : defaultFollowUpDate();
+
+    fuFollowUpRequired = null;
+    fuSlotsLoaded = false;
+    fuOpenedFromCallEnd = !!(opts && opts.fromCallEnd);
+    const slotStep = document.getElementById('fuSlotStep');
+    const notesStep = document.getElementById('fuNotesStep');
+    const saveBtn = document.getElementById('fuSaveBtn');
+    if (slotStep) slotStep.hidden = true;
+    if (notesStep) notesStep.hidden = true;
+    if (saveBtn) {
+        saveBtn.hidden = true;
+        saveBtn.disabled = false;
     }
-    if (msgEl && !msgEl.value) {
-        msgEl.value = 'Please return for follow-up as advised by your provider.';
-    }
-    if (status) {
-        status.className = 'fu-status';
-        status.textContent = opts && opts.fromCallEnd
-            ? 'Video consultation ended. Please schedule a follow-up if needed.'
-            : '';
-    }
+    ['fuDecisionYes', 'fuDecisionNo'].forEach((id) => {
+        const el = document.getElementById(id);
+        if (el) el.setAttribute('aria-pressed', 'false');
+    });
+
+    fuSetStatus(opts && opts.fromCallEnd ? 'Consultation completed.' : '', opts && opts.fromCallEnd ? 'ok' : '');
+
     modal.classList.add('is-open');
     modal.setAttribute('aria-hidden', 'false');
+    const yes = document.getElementById('fuDecisionYes');
+    if (yes) yes.focus();
 }
 
 function closeFollowUpModal() {
@@ -3936,73 +4044,80 @@ function closeFollowUpModal() {
     if (!modal) return;
     modal.classList.remove('is-open');
     modal.setAttribute('aria-hidden', 'true');
+
+    // Ending the call is the only path that navigates, and only once the
+    // provider has answered or explicitly deferred the follow-up question.
+    if (fuOpenedFromCallEnd) {
+        fuOpenedFromCallEnd = false;
+        window.location.replace(
+            <?= json_encode(ASSET_BASE . '/views/provider/consultation_session.php?id=' . (int) $consultation_id . '&soap=1#soapDocumentation') ?>
+        );
+    }
 }
 
 async function saveFollowUpFromModal() {
-    const dateEl = document.getElementById('fuFollowUpDate');
-    const msgEl = document.getElementById('fuFollowUpMessage');
-    const emailEl = document.getElementById('fuSendEmail');
-    const status = document.getElementById('fuModalStatus');
-    const saveBtn = document.getElementById('fuSaveBtn');
-    const date = dateEl ? dateEl.value : '';
-    if (!date) {
-        if (status) {
-            status.className = 'fu-status is-error';
-            status.textContent = 'Select a follow-up date.';
-        }
+    if (fuSaveInFlight) return;
+    if (fuFollowUpRequired === null) {
+        fuSetStatus('Choose whether a follow-up is required.', 'error');
         return;
     }
 
+    const msgEl = document.getElementById('fuFollowUpMessage');
+    const select = document.getElementById('fuSlotSelect');
+    const saveBtn = document.getElementById('fuSaveBtn');
+    const slotId = (fuFollowUpRequired && select && !select.disabled) ? (select.value || '') : '';
+
+    fuSaveInFlight = true;
     if (saveBtn) {
         saveBtn.disabled = true;
-        saveBtn.textContent = 'Scheduling…';
+        saveBtn.textContent = 'Saving…';
     }
-    if (status) {
-        status.className = 'fu-status';
-        status.textContent = 'Saving follow-up…';
-    }
+    fuSetStatus('Saving follow-up decision…');
 
     try {
         const fd = new FormData();
-        fd.append('patient_id', sessionPatientId);
         fd.append('consultation_id', sessionConsultationId);
-        fd.append('followup_date', date);
-        fd.append('message', (msgEl && msgEl.value.trim()) ? msgEl.value.trim() : 'Follow-up scheduled after video consultation.');
+        fd.append('follow_up_required', fuFollowUpRequired ? '1' : '0');
+        if (slotId) fd.append('slot_id', slotId);
+        if (msgEl && msgEl.value.trim()) fd.append('notes', msgEl.value.trim());
         fd.append('csrf_token', sessionCsrf);
-        fd.append('send_email', (emailEl && emailEl.checked) ? '1' : '0');
-        const res = await fetch(sessionAssetBase + '/app/api/provider/schedule_followup.php', {
+
+        const res = await fetch(sessionAssetBase + '/app/api/provider/followup_decision.php', {
             method: 'POST',
             body: fd,
             credentials: 'same-origin'
         });
         const data = await res.json();
-        if (!data.success) {
-            if (status) {
-                status.className = 'fu-status is-error';
-                status.textContent = data.message || 'Could not schedule follow-up.';
+
+        if (!data || !data.success) {
+            fuSetStatus((data && data.message) || 'Could not save the follow-up decision.', 'error');
+            if (data && /no longer available/i.test(String(data.message || ''))) {
+                fuSlotsLoaded = false;
+                fuLoadSlots();
             }
             return;
         }
-        const sideDate = document.getElementById('followUpDate');
-        if (sideDate) sideDate.value = date;
-        if (status) {
-            status.className = 'fu-status is-ok';
-            status.textContent = data.message || 'Follow-up scheduled.';
-        }
-        showSessionChatAlert(data.message || 'Follow-up scheduled.', 'success');
-        setTimeout(closeFollowUpModal, 900);
+
+        fuSetStatus(data.message || 'Follow-up decision saved.', 'ok');
+        showSessionChatAlert(data.message || 'Follow-up decision saved.', 'success');
+        setTimeout(closeFollowUpModal, 1200);
     } catch (e) {
-        if (status) {
-            status.className = 'fu-status is-error';
-            status.textContent = 'Network error scheduling follow-up.';
-        }
+        fuSetStatus('Network error saving the follow-up decision.', 'error');
     } finally {
+        fuSaveInFlight = false;
         if (saveBtn) {
             saveBtn.disabled = false;
-            saveBtn.textContent = 'Schedule follow-up';
+            saveBtn.textContent = fuFollowUpRequired ? 'Save follow-up' : 'Confirm no follow-up';
         }
     }
 }
+
+(function bindFollowUpDecision() {
+    const yes = document.getElementById('fuDecisionYes');
+    const no = document.getElementById('fuDecisionNo');
+    if (yes) yes.addEventListener('click', () => fuSetDecision(true));
+    if (no) no.addEventListener('click', () => fuSetDecision(false));
+})();
 
 (function () {
     var card = document.getElementById('sessionMedicalUpdateCard');

@@ -327,6 +327,64 @@ function patient_canonical_ph_mobile(string $phone): string
 }
 
 /**
+ * National ID lookup values used at registration (hash + legacy plaintext).
+ *
+ * @return list<string>
+ */
+function patient_registration_national_id_variants(string $raw): array
+{
+    $raw = trim($raw);
+    $digits = preg_replace('/\D+/', '', $raw) ?? '';
+    $hash = $digits !== '' ? hash('sha256', $digits) : '';
+    $out = [];
+    foreach ([$raw, $digits, $hash] as $value) {
+        if ($value !== '' && !in_array($value, $out, true)) {
+            $out[] = $value;
+        }
+    }
+
+    return $out;
+}
+
+/**
+ * @return array<string, mixed>|null
+ */
+function patient_registration_find_by_national_id(PDO $pdo, string $raw): ?array
+{
+    $variants = patient_registration_national_id_variants($raw);
+    if ($variants === []) {
+        return null;
+    }
+    $placeholders = implode(',', array_fill(0, count($variants), '?'));
+    $stmt = $pdo->prepare("SELECT * FROM patient_registrations WHERE national_id IN ({$placeholders}) LIMIT 1");
+    $stmt->execute($variants);
+    $row = $stmt->fetch(PDO::FETCH_ASSOC);
+
+    return $row ?: null;
+}
+
+/**
+ * Remove a National ID registration that is not linked to a real user account.
+ * Keeps a completed patient account in place.
+ */
+function patient_registration_release_orphan_national_id(PDO $pdo, string $raw): void
+{
+    $row = patient_registration_find_by_national_id($pdo, $raw);
+    if (!$row) {
+        return;
+    }
+    $userId = (int) ($row['user_id'] ?? 0);
+    if ($userId > 0) {
+        $stmt = $pdo->prepare('SELECT id FROM users WHERE id = ? LIMIT 1');
+        $stmt->execute([$userId]);
+        if ($stmt->fetch()) {
+            return;
+        }
+    }
+    $pdo->prepare('DELETE FROM patient_registrations WHERE id = ?')->execute([(int) $row['id']]);
+}
+
+/**
  * True if another patient registration already uses this mobile (last 10 digits).
  */
 function patient_registration_contact_exists(PDO $pdo, string $phone): bool

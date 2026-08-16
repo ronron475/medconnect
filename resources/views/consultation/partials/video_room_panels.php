@@ -67,9 +67,9 @@ $info_sub = !empty($is_patient)
   </div>
 </aside>
 
-<button type="button" class="mc-vc-panel-toggle" id="mcVcPanelToggle" title="<?= !empty($is_patient) ? 'Consultation details' : 'Patient Info' ?>" aria-label="<?= !empty($is_patient) ? 'Open consultation details' : 'Open patient information' ?>">
-  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 6h16M4 12h16M4 18h10"/></svg>
-</button>
+<?php /* The floating hamburger opened this same panel as the Info and Chat buttons
+         in the control bar. It was a third entry point that also floated over the
+         video on small screens, so the control bar is now the only way in. */ ?>
 
 <div id="mcVcPostCallModal" class="mc-vc-postcall" hidden role="dialog" aria-modal="true" aria-labelledby="mcVcPostCallTitle">
   <div class="mc-vc-postcall__card">

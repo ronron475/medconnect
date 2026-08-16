@@ -471,7 +471,7 @@ function provider_triage_case_is_active(array $t): bool
 
 /**
  * @param list<array<string, mixed>> $cases
- * @return array{total: int, urgent: int, non_urgent: int, reviewed: int, pending: int, tips_pending: int}
+ * @return array{total: int, urgent: int, non_urgent: int, reviewed: int, pending: int, tips_pending: int, needs_review: int, needs_review_urgent: int}
  */
 function provider_triage_cases_stats(array $cases): array
 {
@@ -480,13 +480,20 @@ function provider_triage_cases_stats(array $cases): array
     $total      = count($cases);
     $non_urgent = count(array_filter($cases, fn($t) => ($t['urgency'] ?? '') === 'Non-Urgent'));
     $tipsPending = count(array_filter($cases, fn($t) => !empty($t['needs_tips_approval'])));
+    $needsReview = array_values(array_filter(
+        $cases,
+        static fn($t) => empty($t['is_terminated'])
+            && (empty($t['reviewed']) || !empty($t['needs_tips_approval']))
+    ));
 
     return [
-        'total'        => $total,
-        'urgent'       => $urgent,
-        'non_urgent'   => $non_urgent,
-        'reviewed'     => $reviewed,
-        'pending'      => count(array_filter($cases, fn($t) => empty($t['reviewed']))),
-        'tips_pending' => $tipsPending,
+        'total'               => $total,
+        'urgent'              => $urgent,
+        'non_urgent'          => $non_urgent,
+        'reviewed'            => $reviewed,
+        'pending'             => count(array_filter($cases, fn($t) => empty($t['reviewed']))),
+        'tips_pending'        => $tipsPending,
+        'needs_review'        => count($needsReview),
+        'needs_review_urgent' => count(array_filter($needsReview, fn($t) => ($t['urgency'] ?? '') === 'Urgent')),
     ];
 }
