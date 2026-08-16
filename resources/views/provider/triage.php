@@ -189,7 +189,7 @@ $pending_count    = count(array_filter($display_cases, fn($t) => empty($t['revie
       <div class="triage-modal__header-text">
         <p class="triage-modal__eyebrow">Clinical decision support</p>
         <h2 id="triageModalTitle" class="triage-modal__title">AI Assessment Review</h2>
-        <p class="triage-modal__lead">Verify the assessment, then choose <strong>Approve for Patient</strong> or <strong>Withhold Guidance</strong>.</p>
+        <p class="triage-modal__lead">Review the AI assessment before deciding whether guidance can be provided to the patient.</p>
       </div>
       <button type="button" class="triage-modal__close" onclick="closeTriageModal()" aria-label="Close">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M18 6L6 18M6 6l12 12"/></svg>
@@ -199,19 +199,12 @@ $pending_count    = count(array_filter($display_cases, fn($t) => empty($t['revie
     <div class="triage-modal__body">
       <div class="triage-modal__scroll">
 
-      <section class="triage-review-section" aria-labelledby="triagePatientHeading">
-        <div class="triage-review-section__head">
-          <h3 id="triagePatientHeading" class="triage-review-section__title">Patient Information</h3>
-        </div>
+      <section class="triage-review-section triage-review-identity" aria-labelledby="triagePatientHeading">
         <div class="triage-review-hero" aria-label="Patient summary">
           <div class="triage-review-hero__main">
-            <span class="triage-field-label">Patient name</span>
+            <span class="triage-field-label" id="triagePatientHeading">Patient</span>
             <div id="modalName" class="triage-field-value triage-review-hero__name"></div>
             <p id="modalPatientMeta" class="triage-review-hero__meta"></p>
-          </div>
-          <div class="triage-review-hero__urgency">
-            <span class="triage-field-label">AI urgency</span>
-            <div id="modalUrgency"></div>
           </div>
         </div>
       </section>
@@ -219,7 +212,6 @@ $pending_count    = count(array_filter($display_cases, fn($t) => empty($t['revie
       <section class="triage-review-section" aria-labelledby="triageChiefComplaintHeading">
         <div class="triage-review-section__head">
           <h3 id="triageChiefComplaintHeading" class="triage-review-section__title">Patient Complaint</h3>
-          <p class="triage-review-section__hint">Patient's reported concern in their own words.</p>
         </div>
         <div id="modalComplaint" class="triage-modal-box triage-modal-box--complaint"></div>
       </section>
@@ -227,87 +219,74 @@ $pending_count    = count(array_filter($display_cases, fn($t) => empty($t['revie
       <section id="modalEvidenceSection" class="triage-review-section triage-evidence-section" aria-labelledby="triageEvidenceHeading" hidden>
         <div class="triage-review-section__head">
           <h3 id="triageEvidenceHeading" class="triage-review-section__title">Supporting Evidence</h3>
-          <p class="triage-review-section__hint">Patient-uploaded evidence for clinical review. This does not determine the AI triage classification.</p>
         </div>
         <div id="modalEvidenceList" class="triage-evidence-list"></div>
       </section>
 
-      <section class="triage-review-section" aria-labelledby="triagePatientWordsHeading">
+      <section id="modalNlpAnalysis" class="triage-review-section triage-assess-panel" aria-labelledby="triageNlpHeading">
         <div class="triage-review-section__head">
-          <h3 id="triagePatientWordsHeading" class="triage-review-section__title">Symptoms Selected</h3>
-          <p class="triage-review-section__hint">Structured symptoms recorded with this submission.</p>
+          <h3 id="triageNlpHeading" class="triage-review-section__title">AI Assessment</h3>
         </div>
-        <div id="modalSymptoms" class="triage-modal-box"></div>
-      </section>
-
-      <section id="modalNlpAnalysis" class="triage-review-section triage-nlp-panel" aria-labelledby="triageNlpHeading" hidden>
-        <div class="triage-review-section__head triage-review-section__head--row">
-          <div>
-            <h3 id="triageNlpHeading" class="triage-review-section__title">AI Triage Assessment</h3>
-            <p class="triage-review-section__hint">Classification and NLP details for clinician reference.</p>
+        <div class="triage-assess-grid">
+          <div class="triage-assess-item" id="modalAssessClassWrap">
+            <span class="triage-field-label">Classification</span>
+            <div id="modalUrgency"></div>
           </div>
-          <span class="triage-review-pill">Internal use</span>
-        </div>
-
-        <div class="triage-nlp-grid">
-          <div class="triage-nlp-card">
-            <span class="triage-nlp-label">English translation</span>
-            <div id="modalEnglishComplaint" class="triage-modal-box"></div>
+          <div class="triage-assess-item" id="modalAssessPriorityWrap" hidden>
+            <span class="triage-field-label">Priority</span>
+            <div id="modalTriageLevel" class="triage-assess-value"></div>
           </div>
-          <div class="triage-nlp-card">
-            <span class="triage-nlp-label">Identified symptoms</span>
-            <div id="modalDetectedSymptoms" class="triage-modal-box"></div>
+          <div class="triage-assess-item" id="modalAssessConfidenceWrap" hidden>
+            <span class="triage-field-label">Confidence</span>
+            <div id="modalConfidence" class="triage-modal-box--metric"></div>
           </div>
-          <div class="triage-nlp-card triage-nlp-card--wide">
-            <span class="triage-nlp-label">Possible clinical interpretation</span>
-            <div id="modalPossibleConditions" class="triage-modal-box"></div>
+          <div class="triage-assess-item triage-assess-item--wide" id="modalAssessEnglishWrap" hidden>
+            <span class="triage-field-label">English translation</span>
+            <div id="modalEnglishComplaint" class="triage-assess-value"></div>
           </div>
-          <div class="triage-nlp-card">
-            <span class="triage-nlp-label">Model confidence</span>
-            <div id="modalConfidence" class="triage-modal-box triage-modal-box--metric"></div>
+          <div class="triage-assess-item triage-assess-item--wide" id="modalAssessSymptomsWrap" hidden>
+            <span class="triage-field-label">Identified symptoms</span>
+            <div id="modalDetectedSymptoms" class="triage-assess-value"></div>
           </div>
-          <div class="triage-nlp-card">
-            <span class="triage-nlp-label">Assigned triage level</span>
-            <div id="modalTriageLevel" class="triage-modal-box"></div>
+          <div class="triage-assess-item triage-assess-item--wide" id="modalAssessConditionsWrap" hidden>
+            <span class="triage-field-label">Clinical interpretation</span>
+            <div id="modalPossibleConditions"></div>
           </div>
-          <div class="triage-nlp-card">
-            <span class="triage-nlp-label">Assessment timestamp</span>
-            <div id="modalAssessedAt" class="triage-modal-box"></div>
+          <div class="triage-assess-item" id="modalAssessedAtWrap" hidden>
+            <span class="triage-field-label">Assessed</span>
+            <div id="modalAssessedAt" class="triage-assess-value"></div>
           </div>
         </div>
+        <div id="modalSymptoms" hidden></div>
       </section>
 
       <section id="modalQuestionsSection" class="triage-review-section" aria-labelledby="triageQuestionsHeading" hidden>
         <div class="triage-review-section__head">
-          <h3 id="triageQuestionsHeading" class="triage-review-section__title">Suggested Clarifying Questions</h3>
-          <p class="triage-review-section__hint">Use these prompts if you need more detail from the patient.</p>
+          <h3 id="triageQuestionsHeading" class="triage-review-section__title">Clinical Review Questions</h3>
         </div>
-        <div id="modalSuggestedQuestions" class="triage-modal-box triage-modal-box--scroll"></div>
+        <ol id="modalSuggestedQuestions" class="triage-review-questions"></ol>
       </section>
 
       <section id="modalGuidanceSection" class="triage-review-section triage-care-tips-block" aria-labelledby="triageGuidanceHeading">
         <div class="triage-review-section__head">
           <h3 id="triageGuidanceHeading" class="triage-review-section__title">Patient-Facing Self-Care Guidance</h3>
-          <p class="triage-care-tips-block__hint">Revise the text as needed. Content is disclosed to the patient only upon approval.</p>
         </div>
-        <div id="modalRecommendations" class="triage-modal-box" hidden></div>
-        <label class="triage-field-label" for="modalRecommendationsEdit">Guidance text (one recommendation per line)</label>
-        <textarea
-          id="modalRecommendationsEdit"
-          class="triage-rec-edit"
-          rows="5"
-          placeholder="Enter or revise self-care recommendations prior to patient release."
-        ></textarea>
+        <span class="triage-field-label">Recommendations for patient</span>
+        <div id="modalRecommendationsView" class="triage-rec-panel" tabindex="0"></div>
+        <p id="modalRecommendationsScrollHint" class="triage-rec-panel__hint" hidden>Scroll to review all recommendations.</p>
+        <div id="modalRecommendations" hidden></div>
+        <textarea id="modalRecommendationsEdit" class="triage-rec-edit" hidden readonly></textarea>
         <p id="modalRecommendationGateHint" class="triage-gate-hint"></p>
       </section>
 
-      <details class="triage-override-box triage-review-section triage-review-section--last">
-        <summary class="triage-override-box__summary">
-          <span class="triage-review-section__title" style="margin:0;">Doctor Review &amp; Decision</span>
-          <span class="triage-override-box__chev" aria-hidden="true">▾</span>
-        </summary>
+      <p class="triage-review-safety">Review the AI-generated assessment and recommendations carefully before approving. The provider remains responsible for the final clinical decision.</p>
+
+      <section class="triage-override-box triage-review-section triage-review-section--last" aria-labelledby="triageDecisionHeading">
+        <div class="triage-review-section__head">
+          <h3 id="triageDecisionHeading" class="triage-review-section__title">Doctor Review &amp; Decision</h3>
+        </div>
         <div class="triage-override-box__body">
-          <p class="triage-override-box__intro">Manual clinical override — priority changes are recorded in the system audit log.</p>
+          <span class="triage-field-label">Provider Decision</span>
           <div class="triage-override-row">
             <select id="overrideLevel" class="triage-override-select" aria-label="Override triage priority level">
               <option value="1">Urgent (Priority 1)</option>
@@ -318,9 +297,8 @@ $pending_count    = count(array_filter($display_cases, fn($t) => empty($t['revie
             </select>
             <button type="button" class="mc-btn mc-btn--outline triage-override-btn" onclick="applyOverride()">Apply override</button>
           </div>
-          <p class="triage-override-box__foot">Use <strong>Approve for Patient</strong> or <strong>Withhold Guidance</strong> below to complete your review. Priority overrides are optional.</p>
         </div>
-      </details>
+      </section>
 
       <div class="triage-case-actions" id="triageCaseActions" hidden>
         <h3 class="triage-case-actions__title">Case administration</h3>
@@ -415,7 +393,7 @@ $pending_count    = count(array_filter($display_cases, fn($t) => empty($t['revie
       <li>The patient will see the approved guidance in their Care Tips chat.</li>
       <li>This Active Triage Review case will be marked complete.</li>
     </ul>
-    <p class="triage-review-confirm__when">You can still edit the recommendation text in the review panel before confirming.</p>
+    <p class="triage-review-confirm__when">Approved recommendations will be shown to the patient in Care Tips.</p>
     <div class="triage-review-confirm__actions">
       <button type="button" class="mc-btn mc-btn--ghost" data-triage-approve-cancel>Cancel</button>
       <button type="button" class="mc-btn mc-btn--primary" data-triage-approve-confirm data-mc-autofocus>Approve for Patient</button>
