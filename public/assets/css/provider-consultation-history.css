@@ -267,34 +267,82 @@ body.provider-body .provider-page-body .pch-search input[type="search"]::-webkit
 }
 
 @media (min-width: 769px) {
+  .pch-detail-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    max-width: 880px;
+    gap: 12px 24px;
+  }
+
+  .pch-detail-grid label {
+    font-size: 11px;
+    color: #64748b;
+  }
+
+  .pch-consult-list {
+    padding: 16px 20px 20px;
+  }
+
+  .pch-consult-card {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    column-gap: 8px;
+    padding: 16px 18px 18px;
+  }
+
+  .pch-consult-card__head,
+  .pch-consult-card > .pch-consult-card__row {
+    flex: 1 1 100%;
+  }
+
   .pch-consult-card__row {
-    display: grid;
-    grid-template-columns: 11.75rem minmax(0, 1fr);
-    column-gap: 12px;
-    align-items: start;
+    display: block;
     font-size: 13px;
-    line-height: 1.45;
+    line-height: 1.5;
     margin-top: 6px;
   }
 
   .pch-consult-card__row strong {
-    color: #64748b;
+    display: inline;
+    margin-right: 0.4em;
+    color: #475569;
     font-weight: 700;
   }
 
-  .pch-consult-card__actions {
+  .pch-video-block {
+    display: contents;
+  }
+
+  .pch-video-block__title,
+  .pch-video-block__status,
+  .pch-video-block .pch-consult-card__row {
+    flex: 1 1 100%;
+  }
+
+  .pch-video-block__title {
+    margin-top: 12px;
+    margin-bottom: 8px;
+    padding-top: 12px;
+    border-top: 1px dashed #dbe4ee;
+  }
+
+  .pch-video-block .pch-consult-card__actions,
+  .pch-consult-card > .pch-consult-card__actions {
+    flex: 0 0 auto;
+    display: inline-flex;
+    flex-direction: row;
+    flex-wrap: wrap;
     align-items: center;
+    width: auto;
+    margin-top: 12px;
+    margin-right: 8px;
   }
 
   .pch-doc-pending {
     flex: 1 1 100%;
     display: block;
-    margin-top: 2px;
+    margin-top: 8px;
     color: #64748b;
-  }
-
-  .pch-video-block__title {
-    margin-bottom: 8px;
   }
 }
 
