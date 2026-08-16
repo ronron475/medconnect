@@ -29,6 +29,7 @@ $card_lead = $is_new_consultation_flow
 $submit_label = $is_new_consultation_flow
     ? 'Submit patient complaint'
     : ($show_care_tips_context ? 'Submit for doctor review' : 'Submit patient complaint');
+$submit_kind = ($show_care_tips_context && !$is_new_consultation_flow) ? 'review' : 'complaint';
 $placeholder = $chief_complaint_locked
     ? 'Your submitted health concern…'
     : 'Describe your current health concern...';
@@ -99,9 +100,9 @@ $placeholder = $chief_complaint_locked
       <?= $show_evidence_section ? '' : 'hidden inert aria-hidden="true"' ?>
     >
       <label class="form-label pdash-care-form__label" for="pdashSupportingEvidence">
-        Supporting Evidence <span class="pdash-care-form__optional">(optional)</span>
+        <span data-i18n="evidence_label">Supporting Evidence</span> <span class="pdash-care-form__optional" data-i18n="evidence_optional">(optional)</span>
       </label>
-      <p class="pdash-care-form__hint pdash-care-evidence__hint">
+      <p class="pdash-care-form__hint pdash-care-evidence__hint" data-i18n="evidence_hint">
         Upload a photo or short video for your doctor to review. This does not affect triage or review priority.
       </p>
       <div class="pdash-care-evidence__upload">
@@ -117,22 +118,23 @@ $placeholder = $chief_complaint_locked
           type="button"
           class="pdash-btn pdash-btn--outline pdash-care-evidence__choose"
           id="pdashBtnChooseEvidence"
+          data-i18n="evidence_choose"
           <?= $show_evidence_section ? '' : 'disabled' ?>
         >
           Choose photo or video
         </button>
         <span class="pdash-care-evidence__filename" id="pdashEvidenceFilename" hidden></span>
-        <button type="button" class="pdash-care-evidence__remove" id="pdashBtnRemoveEvidence" hidden aria-label="Remove supporting evidence">
+        <button type="button" class="pdash-care-evidence__remove" id="pdashBtnRemoveEvidence" hidden aria-label="Remove supporting evidence" data-i18n="evidence_remove">
           Remove
         </button>
       </div>
       <div class="pdash-care-evidence__preview" id="pdashEvidencePreview" hidden></div>
-      <p class="pdash-care-form__hint">Photos up to 5 MB. Videos up to 25 MB (MP4 or WebM).</p>
+      <p class="pdash-care-form__hint" data-i18n="evidence_limits">Photos up to 5 MB. Videos up to 25 MB (MP4 or WebM).</p>
     </div>
 
     <div id="pdashSymptomsReviewAlert" class="patient-triage-alert" role="alert" hidden></div>
     <?php if (!$chief_complaint_locked): ?>
-    <button type="submit" class="pdash-btn pdash-btn--primary pdash-care-form__submit" id="pdashSymptomsReviewSubmit">
+    <button type="submit" class="pdash-btn pdash-btn--primary pdash-care-form__submit" id="pdashSymptomsReviewSubmit" data-submit-kind="<?= htmlspecialchars($submit_kind) ?>">
       <?= htmlspecialchars($submit_label) ?>
     </button>
     <?php endif; ?>

@@ -22,7 +22,16 @@
   var slotsWrap = null;
   var slotsList = null;
   var slotsStatus = null;
+  var lastOpts = null;
+  var langSelect = null;
   var lastFocus = null;
+
+  function i18n(key, vars) {
+    if (window.McPatientTriageI18n && typeof window.McPatientTriageI18n.t === 'function') {
+      return window.McPatientTriageI18n.t(key, vars);
+    }
+    return key;
+  }
   var urgentCtx = { complaint: '', triageId: 0, bookUrl: '' };
   var bookingInFlight = false;
 
@@ -55,6 +64,10 @@
       slotsWrap = document.getElementById('mcPatientUrgencySlots');
       slotsList = document.getElementById('mcPatientUrgencySlotsList');
       slotsStatus = document.getElementById('mcPatientUrgencySlotsStatus');
+      langSelect = document.getElementById('mcPatientUrgencyLang');
+      if (langSelect && window.McPatientTriageI18n && typeof window.McPatientTriageI18n.bindSelector === 'function') {
+        window.McPatientTriageI18n.bindSelector(langSelect);
+      }
     }
     return !!modal;
   }
@@ -94,7 +107,7 @@
     slotsWrap.hidden = false;
 
     if (!options || !options.length) {
-      setSlotsStatus('No video slots left today. Contact the health office or try again tomorrow. If symptoms worsen, go to the ER.', true);
+      setSlotsStatus(i18n('slots_empty'), true);
       return;
     }
 
@@ -109,15 +122,15 @@
 
       var name = document.createElement('strong');
       name.className = 'mc-urgency-slot-card__name';
-      name.textContent = opt.provider_name || 'Doctor';
+      name.textContent = opt.provider_name || i18n('doctor');
 
       var time = document.createElement('span');
       time.className = 'mc-urgency-slot-card__time';
-      time.textContent = 'Earliest: ' + (opt.time_label || opt.range_label || '—');
+      time.textContent = i18n('slots_earliest', { time: opt.time_label || opt.range_label || '—' });
 
       var sub = document.createElement('span');
       sub.className = 'mc-urgency-slot-card__sub';
-      sub.textContent = 'Today · Video · ' + (opt.range_label || '');
+      sub.textContent = i18n('slots_today_video', { range: opt.range_label || '' });
 
       meta.appendChild(name);
       meta.appendChild(time);
@@ -126,7 +139,7 @@
       var btn = document.createElement('button');
       btn.type = 'button';
       btn.className = 'mc-urgency-slot-card__btn';
-      btn.textContent = 'Book this slot';
+      btn.textContent = i18n('slots_book');
       btn.dataset.slotId = String(opt.slot_id || '');
       btn.dataset.providerName = String(opt.provider_name || '');
       btn.dataset.timeLabel = String(opt.time_label || '');
@@ -141,7 +154,7 @@
     if (!slotsWrap || !slotsList) return;
     slotsWrap.hidden = false;
     slotsList.innerHTML = '';
-    setSlotsStatus('Loading soonest doctor times…');
+    setSlotsStatus(i18n('slots_loading'));
 
     fetch(base() + '/app/api/patient/urgent_earliest_slots.php?_=' + Date.now(), {
       credentials: 'same-origin',
@@ -151,14 +164,14 @@
       .then(function (res) { return res.json().catch(function () { return null; }); })
       .then(function (data) {
         if (!data || !data.success) {
-          setSlotsStatus((data && data.message) || 'Could not load doctor times. Use “Choose another time”.', true);
+          setSlotsStatus((data && data.message) || i18n('slots_load_fail'), true);
           return;
         }
         var options = (data.data && data.data.options) || data.options || [];
         renderSlotOptions(options);
       })
       .catch(function () {
-        setSlotsStatus('Network error loading slots. Use “Choose another time”.', true);
+        setSlotsStatus(i18n('slots_network'), true);
       });
   }
 
@@ -166,17 +179,20 @@
     if (bookingInFlight || !slotId) return;
     var complaint = (urgentCtx.complaint || '').trim();
     if (!complaint) {
-      setSlotsStatus('Missing health concern. Close and submit again, or use Choose another time.', true);
+      setSlotsStatus(i18n('slots_missing_complaint'), true);
       return;
     }
 
-    var confirmMsg = 'Book video with ' + (providerName || 'this doctor') + ' at ' + (timeLabel || 'the selected time') + '?';
+    var confirmMsg = i18n('slots_confirm', {
+      name: providerName || i18n('doctor'),
+      time: timeLabel || '',
+    });
     if (!window.confirm(confirmMsg)) {
       return;
     }
 
     bookingInFlight = true;
-    setSlotsStatus('Booking…');
+    setSlotsStatus(i18n('slots_booking'));
     if (slotsList) {
       slotsList.querySelectorAll('button').forEach(function (b) { b.disabled = true; });
     }
@@ -199,7 +215,7 @@
       .then(function (data) {
         bookingInFlight = false;
         if (!data || !data.success) {
-          setSlotsStatus((data && data.message) || 'Could not book. Try another doctor or Choose another time.', true);
+          setSlotsStatus((data && data.message) || i18n('slots_book_fail'), true);
           if (slotsList) {
             slotsList.querySelectorAll('button').forEach(function (b) { b.disabled = false; });
           }
@@ -208,7 +224,7 @@
         }
 
         if (data.emergency === true || (data.data && data.data.emergency)) {
-          setSlotsStatus(data.message || 'Emergency care required — video booking is not available.', true);
+          setSlotsStatus(data.message || i18n('slots_emergency'), true);
           return;
         }
 
@@ -218,21 +234,21 @@
         }
 
         if (!booked) {
-          setSlotsStatus(data.message || 'Could not complete booking.', true);
+          setSlotsStatus(data.message || i18n('slots_incomplete'), true);
           if (slotsList) {
             slotsList.querySelectorAll('button').forEach(function (b) { b.disabled = false; });
           }
           return;
         }
 
-        setSlotsStatus(data.message || 'Appointment booked. Redirecting…');
+        setSlotsStatus(data.message || i18n('slots_booked'));
         setTimeout(function () {
           window.location.href = base() + '/views/patient/consultations.php';
         }, 1200);
       })
       .catch(function () {
         bookingInFlight = false;
-        setSlotsStatus('Network error. Please try again.', true);
+        setSlotsStatus(i18n('slots_book_network'), true);
         if (slotsList) {
           slotsList.querySelectorAll('button').forEach(function (b) { b.disabled = false; });
         }
@@ -254,6 +270,7 @@
   function open(opts) {
     if (!els()) return;
     opts = opts || {};
+    lastOpts = opts;
     lastFocus = document.activeElement;
     bookingInFlight = false;
 
@@ -265,69 +282,56 @@
     modal.classList.toggle('is-non-urgent', kind === 'non_urgent');
     setIcon(kind);
 
+    if (langSelect && window.McPatientTriageI18n) {
+      langSelect.value = window.McPatientTriageI18n.current();
+    }
+
     if (eyebrowEl) {
-      if (kind === 'non_urgent') eyebrowEl.textContent = 'Non-urgent';
-      else if (kind === 'urgent') eyebrowEl.textContent = 'Urgent';
-      else eyebrowEl.textContent = 'Emergency';
+      if (kind === 'non_urgent') eyebrowEl.textContent = i18n('eyebrow_non_urgent');
+      else if (kind === 'urgent') eyebrowEl.textContent = i18n('eyebrow_urgent');
+      else eyebrowEl.textContent = i18n('eyebrow_emergency');
     }
     if (titleEl) {
       titleEl.textContent = opts.title
         || (kind === 'non_urgent'
-          ? 'Routine Care Recommended'
-          : (kind === 'urgent'
-            ? 'Urgent Medical Attention Recommended'
-            : 'Emergency Symptoms Detected'));
+          ? i18n('title_non_urgent')
+          : (kind === 'urgent' ? i18n('title_urgent') : i18n('title_emergency')));
     }
     if (msgEl) {
-      msgEl.textContent = opts.message
-        || (kind === 'non_urgent'
-          ? 'Triage result: Non-Urgent. You may add optional supporting evidence, then submit for provider review.'
-          : (kind === 'urgent'
-            ? (triageResult
-              ? 'Based on the symptoms you provided, your condition may require prompt medical attention.'
-              : 'Your symptoms may need prompt care. Choose the soonest available doctor below.')
-            : 'Based on the symptoms you entered, your condition may be a medical emergency. Please seek immediate medical attention at the nearest hospital or emergency department.'));
+      var defaultMsg = kind === 'non_urgent'
+        ? i18n('msg_non_urgent')
+        : (kind === 'urgent'
+          ? i18n('msg_urgent')
+          : i18n('msg_emergency'));
+      msgEl.textContent = opts.useCustomMessage && opts.message ? opts.message : defaultMsg;
     }
+
+    var closeBtn = modal.querySelector('[data-mc-urgency-close]');
+    if (closeBtn) closeBtn.textContent = i18n('i_understand');
 
     if (kind === 'emergency') {
       hideSlots();
-      setSteps([
-        'Call local emergency services if needed',
-        'Go to the nearest hospital or ER',
-        'Do not wait for online care tips or a video slot',
-      ]);
+      setSteps([i18n('step_em_1'), i18n('step_em_2'), i18n('step_em_3')]);
       if (primaryBtn) {
         primaryBtn.hidden = true;
         primaryBtn.removeAttribute('href');
       }
     } else if (kind === 'non_urgent') {
       hideSlots();
-      setSteps([
-        'Supporting evidence is optional',
-        'Submit your patient complaint for provider review',
-        'Seek urgent or emergency care if symptoms worsen',
-      ]);
+      setSteps([i18n('step_nu_1'), i18n('step_nu_2'), i18n('step_nu_3')]);
       if (primaryBtn) {
         primaryBtn.hidden = true;
         primaryBtn.removeAttribute('href');
       }
     } else if (triageResult) {
       hideSlots();
-      setSteps([
-        'You may add optional supporting evidence before submitting',
-        'After submit, book the earliest available consultation',
-        'Seek ER care if symptoms suddenly worsen',
-      ]);
+      setSteps([i18n('step_urg_triage_1'), i18n('step_urg_triage_2'), i18n('step_urg_triage_3')]);
       if (primaryBtn) {
         primaryBtn.hidden = true;
         primaryBtn.removeAttribute('href');
       }
     } else {
-      setSteps([
-        'Pick a doctor’s earliest open time today',
-        'Confirm to book the video visit',
-        'Seek ER care if symptoms suddenly worsen',
-      ]);
+      setSteps([i18n('step_urg_book_1'), i18n('step_urg_book_2'), i18n('step_urg_book_3')]);
       urgentCtx = {
         complaint: String(opts.complaint || '').trim(),
         triageId: parseInt(opts.triageId, 10) || 0,
@@ -336,7 +340,7 @@
       };
       if (primaryBtn) {
         primaryBtn.hidden = false;
-        primaryBtn.textContent = 'Choose another time';
+        primaryBtn.textContent = i18n('choose_another_time');
         primaryBtn.href = urgentCtx.bookUrl;
       }
       loadEarliestSlots();
@@ -344,7 +348,6 @@
 
     modal.hidden = false;
     document.body.classList.add('mc-urgency-modal-open');
-    var closeBtn = modal.querySelector('[data-mc-urgency-close]');
     if (closeBtn) closeBtn.focus();
   }
 
@@ -384,34 +387,38 @@
     }
   });
 
+  window.addEventListener('medconnect:patient-ui-lang', function () {
+    if (modal && !modal.hidden && lastOpts) {
+      open(lastOpts);
+    }
+  });
+
   window.mcPatientUrgencyModal = {
     showEmergency: function (message) {
-      open({ kind: 'emergency', message: message || '' });
+      open({ kind: 'emergency', mode: 'triage_result', useCustomMessage: !!message, message: message || '' });
     },
     showUrgent: function (message, bookUrl, extra) {
       extra = extra || {};
       open({
         kind: 'urgent',
         message: message || '',
+        useCustomMessage: false,
         bookUrl: bookUrl || '',
         complaint: extra.complaint || '',
         triageId: extra.triageId || 0,
       });
     },
     showNonUrgent: function (message) {
-      open({ kind: 'non_urgent', mode: 'triage_result', message: message || '' });
+      open({ kind: 'non_urgent', mode: 'triage_result', useCustomMessage: false, message: message || '' });
     },
     showTriageResult: function (urgency, message) {
       var kind = normalizeKind(urgency);
-      if (kind === 'non_urgent') {
-        open({ kind: 'non_urgent', mode: 'triage_result', message: message || '' });
-        return;
-      }
-      if (kind === 'urgent') {
-        open({ kind: 'urgent', mode: 'triage_result', message: message || '' });
-        return;
-      }
-      open({ kind: 'emergency', mode: 'triage_result', message: message || '' });
+      open({
+        kind: kind,
+        mode: 'triage_result',
+        useCustomMessage: false,
+        message: message || '',
+      });
     },
     close: close,
   };

@@ -22,6 +22,8 @@ require_once VIEWS_PATH . '/partials/portal_dark_mode_close.php';
 <script>window.APP_BASE = window.APP_BASE || <?= json_encode(ASSET_BASE) ?>;</script>
 <?php $ptHealthUpdatesVer = (int) @filemtime(ASSETS_PATH . '/js/patient-health-updates.js'); ?>
 <script src="<?= ASSET_BASE ?>/assets/js/patient-health-updates.js?v=<?= $ptHealthUpdatesVer ?>"></script>
+<?php $ptI18nJsVer = (int) @filemtime(ASSETS_PATH . '/js/patient-triage-i18n.js'); ?>
+<script src="<?= ASSET_BASE ?>/assets/js/patient-triage-i18n.js?v=<?= $ptI18nJsVer ?>"></script>
 <?php $ptUrgencyJsVer = (int) @filemtime(ASSETS_PATH . '/js/patient-urgency-modal.js'); ?>
 <script src="<?= ASSET_BASE ?>/assets/js/patient-urgency-modal.js?v=<?= $ptUrgencyJsVer ?>"></script>
 <?php $ptRecJsVer = (int) @filemtime(ASSETS_PATH . '/js/patient-recommendation-popup.js'); ?>

@@ -18,6 +18,23 @@
   }
   var finalSubmitLabel = submitBtn ? (submitBtn.dataset.defaultLabel || 'Submit patient complaint') : 'Submit patient complaint';
 
+  function i18n(key) {
+    if (window.McPatientTriageI18n && typeof window.McPatientTriageI18n.t === 'function') {
+      return window.McPatientTriageI18n.t(key);
+    }
+    return key;
+  }
+
+  function refreshSubmitLabels() {
+    if (!submitBtn) return;
+    var review = submitBtn.getAttribute('data-submit-kind') === 'review';
+    finalSubmitLabel = i18n(review ? 'submit_review' : 'submit_complaint');
+    submitBtn.dataset.defaultLabel = finalSubmitLabel;
+    if (!submitBtn.disabled) submitBtn.textContent = finalSubmitLabel;
+  }
+
+  refreshSubmitLabels();
+
   var IMAGE_MAX = 5 * 1024 * 1024;
   var VIDEO_MAX = 25 * 1024 * 1024;
   var ALLOWED = {
@@ -119,19 +136,15 @@
   }
 
   function buildTriageOutcomeMessage(level) {
-    if (level === 'emergency') {
-      return 'Based on the symptoms you entered, your condition may be a medical emergency. '
-        + 'Please seek immediate medical attention at the nearest hospital or emergency department. '
-        + 'Do not wait for an online consultation if you are experiencing severe or worsening symptoms.';
-    }
-    if (level === 'urgent') {
-      return 'Based on the symptoms you provided, your condition may require prompt medical attention. '
-        + 'Triage result: Urgent. After you submit, you can book the earliest available consultation time.';
-    }
-    return 'Triage result: Non-Urgent. You may add optional supporting evidence, then submit for provider review.';
+    if (level === 'emergency') return i18n('msg_emergency');
+    if (level === 'urgent') return i18n('msg_urgent');
+    return i18n('msg_non_urgent');
   }
 
-  function presentTriageOutcome(level) {
+  function presentTriageOutcome(level, complaint, apiPayload) {
+    if (window.McPatientTriageI18n && typeof window.McPatientTriageI18n.resolveForComplaint === 'function') {
+      window.McPatientTriageI18n.resolveForComplaint(complaint || '', apiPayload || {});
+    }
     var modal = window.mcPatientUrgencyModal;
     if (!modal || typeof modal.showTriageResult !== 'function') return;
     modal.showTriageResult(level, buildTriageOutcomeMessage(level));
@@ -234,12 +247,12 @@
   function validateEvidenceFile(file) {
     if (!file) return null;
     if (!ALLOWED[file.type]) {
-      return 'Please choose a JPG, PNG, WEBP photo or MP4/WebM video.';
+      return i18n('err_file_type');
     }
     var isVideo = file.type.indexOf('video/') === 0;
     var maxSize = isVideo ? VIDEO_MAX : IMAGE_MAX;
     if (file.size > maxSize) {
-      return isVideo ? 'Video must be 25 MB or smaller.' : 'Photo must be 5 MB or smaller.';
+      return isVideo ? i18n('err_video_size') : i18n('err_photo_size');
     }
     return null;
   }
@@ -269,7 +282,7 @@
 
       var json = await res.json().catch(function () { return null; });
       if (!json) {
-        showAlert('error', 'Could not analyze your complaint. Please try again.');
+        showAlert('error', i18n('err_analyze'));
         return null;
       }
 
@@ -278,7 +291,7 @@
         if (data.summary || data.assessment || data.clinical_urgency) {
           return data;
         }
-        showAlert('error', json.message || 'Could not analyze your complaint. Please try again.');
+        showAlert('error', json.message || i18n('err_analyze'));
         return null;
       }
 
@@ -286,9 +299,9 @@
     } catch (err) {
       window.clearTimeout(timer);
       if (err && err.name === 'AbortError') {
-        showAlert('error', 'Analysis timed out. Please try again.');
+        showAlert('error', i18n('err_timeout'));
       } else {
-        showAlert('error', 'Network error. Please try again.');
+        showAlert('error', i18n('err_network'));
       }
       return null;
     }
@@ -313,7 +326,7 @@
 
     if (submitBtn) {
       submitBtn.disabled = true;
-      submitBtn.textContent = 'Submitting…';
+      submitBtn.textContent = i18n('submitting');
     }
 
     try {
@@ -325,7 +338,7 @@
       });
       var data = await res.json().catch(function () { return null; });
       if (!data || !data.success) {
-        showAlert('error', (data && data.message) || 'Could not submit. Please try again.');
+        showAlert('error', (data && data.message) || i18n('err_submit'));
         return false;
       }
 
@@ -333,7 +346,7 @@
       if (payload.emergency) {
         clearTriageState();
         syncEvidenceSection();
-        var emMsg = data.message || 'Emergency symptoms detected. Seek emergency care.';
+        var emMsg = i18n('em_submit');
         if (!options.skipOutcomeModal) {
           showAlert('error', emMsg);
           if (window.mcPatientUrgencyModal && typeof window.mcPatientUrgencyModal.showEmergency === 'function') {
@@ -343,7 +356,7 @@
         return true;
       }
       if (payload.urgent) {
-        var urgMsg = data.message || 'Please book an urgent consultation.';
+        var urgMsg = i18n('urg_submit');
         var urgentComplaint = complaint;
         var triageId = payload.triage_id ? payload.triage_id : 0;
         showAlert('error', urgMsg);
@@ -358,12 +371,12 @@
         return true;
       }
 
-      showAlert('success', data.message || 'Submitted for provider review.');
+      showAlert('success', i18n('ok_submitted'));
       if (window.MedConnectNavBadgesRefresh) window.MedConnectNavBadgesRefresh();
       setTimeout(function () { window.location.reload(); }, 1400);
       return true;
     } catch (_) {
-      showAlert('error', 'Network error. Please try again.');
+      showAlert('error', i18n('err_network'));
       return false;
     } finally {
       if (submitBtn) {
@@ -375,13 +388,13 @@
 
   async function processTriageCheck(complaint) {
     if (!shouldRunTriage(complaint)) {
-      showAlert('error', 'Please provide a bit more detail (at least 10 characters).');
+      showAlert('error', i18n('err_min_chars'));
       return false;
     }
 
     if (submitBtn) {
       submitBtn.disabled = true;
-      submitBtn.textContent = 'Assessing urgency…';
+      submitBtn.textContent = i18n('assessing');
     }
 
     try {
@@ -391,7 +404,7 @@
       var urgency = extractUrgency(step3Data);
       var level = urgencyToLevel(urgency);
       if (!level) {
-        showAlert('error', 'Could not determine triage level. Please try again.');
+        showAlert('error', i18n('err_triage_level'));
         return false;
       }
 
@@ -402,7 +415,7 @@
         syncEvidenceSection();
         var emergencySubmitted = await submitForReview(complaint, null, { skipOutcomeModal: true });
         if (emergencySubmitted) {
-          presentTriageOutcome(level);
+          presentTriageOutcome(level, complaint, step3Data);
         } else {
           clearTriageState();
           syncEvidenceSection();
@@ -410,7 +423,7 @@
         return emergencySubmitted;
       }
 
-      presentTriageOutcome(level);
+      presentTriageOutcome(level, complaint, step3Data);
       syncEvidenceSection();
       updateSubmitButtonLabel();
       return true;
@@ -505,6 +518,11 @@
   syncEvidenceSection();
   updateSubmitButtonLabel();
 
+  window.addEventListener('medconnect:patient-ui-lang', function () {
+    refreshSubmitLabels();
+    updateSubmitButtonLabel();
+  });
+
   form.addEventListener('submit', async function (e) {
     e.preventDefault();
     clearAlert();
@@ -515,8 +533,8 @@
       syncEvidenceSection();
       var locked = complaintEl && complaintEl.hasAttribute('readonly');
       showAlert('error', locked
-        ? 'Your patient complaint is not available. Please contact the health office.'
-        : 'Please describe your symptoms or concern.');
+        ? i18n('err_locked')
+        : i18n('err_empty'));
       return;
     }
 
