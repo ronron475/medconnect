@@ -200,7 +200,7 @@ $slot_waiting_count = count(array_filter($display_cases, fn($t) => !empty($t['sl
       <div class="triage-modal__header-text">
         <p class="triage-modal__eyebrow">Clinical decision support</p>
         <h2 id="triageModalTitle" class="triage-modal__title">AI Assessment Review</h2>
-        <p class="triage-modal__lead">Review the AI assessment before deciding whether guidance can be provided to the patient.</p>
+        <p class="triage-modal__lead">Review the assessment, then decide if the patient can receive guidance.</p>
       </div>
       <button type="button" class="triage-modal__close" onclick="closeTriageModal()" aria-label="Close">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M18 6L6 18M6 6l12 12"/></svg>
@@ -280,7 +280,7 @@ $slot_waiting_count = count(array_filter($display_cases, fn($t) => !empty($t['sl
 
       <section id="modalGuidanceSection" class="triage-review-section triage-care-tips-block" aria-labelledby="triageGuidanceHeading">
         <div class="triage-review-section__head">
-          <h3 id="triageGuidanceHeading" class="triage-review-section__title">Patient-Facing Self-Care Guidance</h3>
+          <h3 id="triageGuidanceHeading" class="triage-review-section__title">Self-Care Guidance</h3>
         </div>
         <span class="triage-field-label">Recommendations for patient</span>
         <div id="modalRecommendationsView" class="triage-rec-panel" tabindex="0"></div>

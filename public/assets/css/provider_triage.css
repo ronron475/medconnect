@@ -532,12 +532,12 @@
 }
 
 .triage-modal__dialog--review .triage-modal__title {
-    font-size: clamp(1.5rem, 4.5vw, 1.75rem);
+    font-size: clamp(1.125rem, 3.2vw, 1.5rem);
     line-height: 1.2;
 }
 
 .triage-modal__dialog--review .triage-review-section__title {
-    font-size: clamp(1.25rem, 4vw, 1.4375rem);
+    font-size: clamp(1rem, 3.2vw, 1.25rem);
 }
 
 .triage-modal__close {
@@ -661,7 +661,7 @@
 
 .triage-review-section__title {
     margin: 0;
-    font-size: clamp(1.25rem, 4vw, 1.4375rem);
+    font-size: clamp(1rem, 3.2vw, 1.25rem);
     font-weight: 800;
     color: #0f172a;
     line-height: 1.25;
@@ -753,10 +753,18 @@
 
 .triage-assess-value {
     color: #0f172a;
-    font-size: clamp(0.9375rem, 2.8vw, 1.0625rem);
+    font-size: clamp(0.875rem, 2.6vw, 1rem);
     line-height: 1.4;
     overflow-wrap: anywhere;
     word-break: break-word;
+}
+
+#modalPossibleConditions,
+#modalPossibleConditions * {
+    max-width: 100%;
+    overflow-wrap: anywhere;
+    word-break: break-word;
+    white-space: normal;
 }
 
 .triage-assess-item .triage-metric-value {
@@ -967,11 +975,31 @@
         gap: 8px;
     }
 
+    .triage-modal__eyebrow {
+        display: none;
+    }
+
+    .triage-modal__dialog--review .triage-modal__title,
+    .triage-modal__title {
+        font-size: 1.05rem;
+        line-height: 1.2;
+    }
+
+    .triage-modal__lead {
+        font-size: 0.75rem;
+        line-height: 1.3;
+        margin-top: 2px;
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+    }
+
     .triage-modal__close {
-        width: 44px;
-        height: 44px;
-        min-width: 44px;
-        min-height: 44px;
+        width: 40px;
+        height: 40px;
+        min-width: 40px;
+        min-height: 40px;
     }
 
     .triage-modal__body {
@@ -982,7 +1010,7 @@
     }
 
     .triage-modal__scroll {
-        padding: 10px 14px 12px;
+        padding: 8px 12px 10px;
     }
 
     .triage-review-section {
@@ -990,16 +1018,54 @@
     }
 
     .triage-review-identity {
-        padding-bottom: 8px;
+        padding-bottom: 6px;
     }
 
     .triage-review-section__head {
         margin-bottom: 4px;
     }
 
+    .triage-modal__dialog--review .triage-review-section__title,
+    .triage-review-section__title {
+        font-size: 0.95rem;
+    }
+
+    .triage-field-label {
+        font-size: 0.65rem;
+        letter-spacing: 0.03em;
+        margin-bottom: 2px;
+    }
+
+    .triage-review-hero__name {
+        font-size: 0.95rem;
+    }
+
+    .triage-review-hero__meta,
+    .triage-modal-box,
+    .triage-assess-value,
+    .triage-rec-panel__item,
+    .triage-review-questions li {
+        font-size: 0.8125rem;
+        line-height: 1.4;
+    }
+
+    .triage-assess-item .triage-metric-value {
+        font-size: 0.95rem;
+    }
+
     .triage-assess-grid {
-        grid-template-columns: 1fr;
-        gap: 8px;
+        grid-template-columns: 1fr 1fr;
+        gap: 8px 10px;
+    }
+
+    .triage-assess-item--wide {
+        grid-column: 1 / -1;
+    }
+
+    #modalAssessPriorityWrap,
+    #modalAssessedAtWrap,
+    .triage-review-safety {
+        display: none !important;
     }
 
     .triage-assess-panel,
@@ -1008,8 +1074,9 @@
     }
 
     .triage-rec-panel {
-        max-height: clamp(240px, 32vh, 320px);
+        max-height: clamp(180px, 28vh, 260px);
         min-height: 0;
+        padding: 8px;
     }
 
     .triage-override-row {
@@ -1022,6 +1089,7 @@
     .triage-override-select {
         min-width: 0;
         width: 100%;
+        font-size: 0.875rem;
     }
 
     .triage-review-hero {
@@ -1065,8 +1133,8 @@
     .triage-modal__footer-actions .mc-btn {
         flex: 1 1 calc(50% - 4px);
         justify-content: center;
-        min-height: 44px;
-        font-size: 14px;
+        min-height: 40px;
+        font-size: 13px;
         padding: 8px 10px;
         white-space: normal;
     }
@@ -1075,6 +1143,10 @@
         flex-direction: row;
         align-items: center;
         justify-content: space-between;
+    }
+
+    .triage-modal-box--complaint {
+        padding: 8px 10px;
     }
 }
 
