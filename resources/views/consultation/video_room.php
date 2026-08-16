@@ -85,6 +85,7 @@ if (!$session) {
             || ($role === 'provider' && (int) $uid === (int) ($ended['provider_id'] ?? 0));
         http_response_code(403);
         header('Content-Type: text/html; charset=utf-8');
+        require_once BASE_PATH . '/app/includes/consultation_video_history.php';
         $historyUrl = $role === 'patient'
             ? (ASSET_BASE . '/views/patient/consultation_detail.php?id=' . (int) ($ended['consultation_id'] ?? 0) . '&from=sessions')
             : (ASSET_BASE . '/views/provider/consultation_history.php?patient_id=' . (int) ($ended['patient_id'] ?? 0));
@@ -100,62 +101,20 @@ if (!$session) {
             $endedTs = strtotime((string) $ended['consult_date']);
             $endedDateLabel = $endedTs ? date('F j, Y', $endedTs) : '';
         }
-        $endedDuration = '';
-        $startTs = !empty($ended['started_at']) ? strtotime((string) $ended['started_at']) : false;
-        $endTs = !empty($ended['ended_at']) ? strtotime((string) $ended['ended_at']) : false;
-        if ($startTs && $endTs && $endTs >= $startTs) {
-            $sec = (int) ($endTs - $startTs);
-            $endedDuration = sprintf('%02d:%02d', intdiv($sec, 60), $sec % 60);
-        }
-        echo '<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"><title>Consultation Completed</title>';
-        echo '<style>
-html,body{min-height:100%;min-height:100dvh;margin:0}
-body{font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;background:#f4f8fa;color:#012a4a;padding:calc(24px + env(safe-area-inset-top,0px)) 16px calc(24px + env(safe-area-inset-bottom,0px));box-sizing:border-box;display:flex;align-items:center;justify-content:center}
-.card{max-width:420px;width:100%;margin:0 auto;background:#fff;border:1px solid #e2edf1;border-radius:16px;padding:28px 22px;box-shadow:0 10px 32px rgba(1,42,74,.08);text-align:center}
-h1{font-size:1.35rem;font-weight:800;margin:0 0 10px;color:#012a4a;letter-spacing:-.02em}
-.sub{color:#334155;line-height:1.55;margin:0 0 18px}
-.meta{margin:0 0 8px;text-align:left}
-.meta div{display:flex;justify-content:space-between;gap:12px;padding:10px 0;border-bottom:1px solid #e2e8f0}
-.meta dt{margin:0;font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:#64748b}
-.meta dd{margin:0;font-weight:700;color:#0f172a}
-.saved{margin:16px 0 18px;color:#0f766e;font-weight:700}
-.actions{display:flex;flex-direction:column;gap:10px;margin-top:8px}
-a{display:flex;align-items:center;justify-content:center;min-height:48px;padding:10px 14px;border-radius:10px;background:#2563eb;color:#fff;text-decoration:none;font-weight:700;box-sizing:border-box}
-a.secondary{background:#f8fafc;color:#0f172a;border:1px solid #e2e8f0}
-html[data-theme-resolved="dark"] body{background:#0a0a0a;color:#f8fafc}
-html[data-theme-resolved="dark"] .card{background:#1c1c1c;border-color:#2a2a2a;color:#f8fafc}
-html[data-theme-resolved="dark"] h1{color:#f8fafc}
-html[data-theme-resolved="dark"] .sub{color:#cbd5e1}
-html[data-theme-resolved="dark"] .meta div{border-bottom-color:#2a2a2a}
-html[data-theme-resolved="dark"] .meta dt{color:#a1a1aa}
-html[data-theme-resolved="dark"] .meta dd{color:#f8fafc}
-html[data-theme-resolved="dark"] .saved{color:#5eead4}
-html[data-theme-resolved="dark"] a.secondary{background:#141414;color:#f8fafc;border-color:#2a2a2a}
-</style></head><body class="is-ended-consultation"><div class="card">';
-        echo '<h1>Consultation Completed</h1>';
-        if ($role === 'patient') {
-            echo '<p class="sub">Your video consultation with <strong>' . htmlspecialchars($endedProvider !== '' ? $endedProvider : 'your doctor') . '</strong> has ended.</p>';
-            echo '<dl class="meta">';
-            if ($endedDateLabel !== '') {
-                echo '<div><dt>Date</dt><dd>' . htmlspecialchars($endedDateLabel) . '</dd></div>';
-            }
-            if ($endedDuration !== '') {
-                echo '<div><dt>Duration</dt><dd>' . htmlspecialchars($endedDuration) . '</dd></div>';
-            }
-            echo '</dl>';
-            echo '<p class="saved">✓ Your consultation has been saved to My Sessions.</p>';
-        } else {
-            echo '<p class="sub">Your video consultation has ended. The live call cannot be restarted.</p>';
-            echo '<p class="saved">Consultation saved successfully.</p>';
-        }
-        echo '<div class="actions">';
-        if ($isOwner) {
-            echo '<a href="' . htmlspecialchars($historyUrl) . '" target="_top">View Session</a>';
-        }
-        echo '<a class="secondary" href="' . htmlspecialchars($dashUrl) . '" target="_top">Return to Dashboard</a>';
-        echo '</div></div>';
-        echo '<script>(function(){try{var p=localStorage.getItem("medconnect_theme");var dark=p==="dark"||((!p||p==="system")&&window.matchMedia("(prefers-color-scheme: dark)").matches);if(dark)document.documentElement.setAttribute("data-theme-resolved","dark");if(window.parent&&window.parent!==window){window.parent.postMessage({type:"medconnect:call-completed",ended:true,historical:true},window.location.origin);}}catch(e){}})();</script>';
-        echo '</body></html>';
+        $endedDuration = consultation_format_video_duration(
+            isset($ended['started_at']) ? (string) $ended['started_at'] : null,
+            isset($ended['ended_at']) ? (string) $ended['ended_at'] : null
+        );
+        $endedStatusRaw = strtolower(str_replace(' ', '_', trim((string) ($ended['consult_status'] ?? ''))));
+        $endedStatusLabel = $endedStatusRaw !== ''
+            ? ucwords(str_replace('_', ' ', $endedStatusRaw))
+            : '';
+        $endedRecordingUrl = ($role === 'patient' && $isOwner)
+            ? consultation_video_recording_view_url((int) ($ended['consultation_id'] ?? 0))
+            : '';
+        $endedCssVer = (int) @filemtime(ASSETS_PATH . '/css/video-room-enhancements.css');
+        $endedLogo = ASSET_BASE . '/assets/img/medcon_logo.png';
+        require BASE_PATH . '/resources/views/consultation/partials/consultation_completed_page.php';
         exit;
     }
     die('Invalid or expired consultation link.');

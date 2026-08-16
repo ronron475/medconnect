@@ -550,6 +550,7 @@
 
   function fillPatientPostCall(summary) {
     const doctorEl = q('mcVcPostCallDoctor');
+    const providerEl = q('mcVcPostCallProvider');
     const dateEl = q('mcVcPostCallDate');
     const dateRow = q('mcVcPostCallDateRow');
     const durationEl = q('mcVcPostCallDuration');
@@ -557,8 +558,12 @@
     const viewBtn = q('mcVcPostCallViewSession');
     const data = summary || {};
     const doctor = data.provider_name || META.providerName || '';
-    if (doctorEl && doctor) {
-      doctorEl.textContent = /^dr\.?\s/i.test(doctor) ? doctor : ('Dr. ' + doctor);
+    const named = doctor ? (/^dr\.?\s/i.test(doctor) ? doctor : ('Dr. ' + doctor)) : '';
+    if (doctorEl && named) {
+      doctorEl.textContent = named;
+    }
+    if (providerEl && named) {
+      providerEl.textContent = named;
     }
     if (dateEl && dateRow) {
       const label = String(data.date_label || dateEl.textContent || '').trim();
@@ -576,6 +581,9 @@
       const label = (liveLabel && liveLabel !== '00:00') ? liveLabel : apiLabel;
       if (label) {
         durationEl.textContent = label;
+        durationRow.hidden = false;
+      } else {
+        durationEl.textContent = '—';
         durationRow.hidden = false;
       }
     }
