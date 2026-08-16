@@ -67,15 +67,6 @@
     });
   }
 
-  function renderSymptomChips(symptoms) {
-    if (!symptoms || !symptoms.length) {
-      return '<span class="text-muted">—</span>';
-    }
-    return '<div class="triage-symptom-chips">' + symptoms.map(function (symptom) {
-      return '<span class="triage-symptom-chip">' + esc(symptom) + '</span>';
-    }).join('') + '</div>';
-  }
-
   function renderWorkflow(t) {
     var badges = Array.isArray(t.workflow_badges) ? t.workflow_badges : [];
     if (!badges.length) {
@@ -112,12 +103,11 @@
       + ' data-tips-pending="' + (tipsPending ? 'true' : 'false') + '"'
       + ' data-expired="' + (t.expired ? 'true' : 'false') + '">'
       + '<td data-label="Patient" style="font-weight: 700; color: var(--mc-navy-dark);">' + esc(t.name) + '</td>'
-      + '<td data-label="Symptoms">' + renderSymptomChips(t.symptoms_list) + '</td>'
-      + '<td data-label="Complaint"><span class="triage-complaint" title="' + esc(t.complaint || '—') + '">' + esc(t.complaint || '—') + '</span></td>'
-      + '<td data-label="Classification">' + classification + '</td>'
+      + '<td data-label="Patient Complaint"><span class="triage-complaint" title="' + esc(t.complaint || '—') + '">' + esc(t.complaint || '—') + '</span></td>'
+      + '<td data-label="AI Classification">' + classification + '</td>'
       + '<td data-label="Submitted" style="white-space: nowrap; font-size: 12px; color: var(--mc-slate-muted);">' + esc(t.date) + '<br>' + esc(t.time) + '</td>'
-      + '<td data-label="Workflow">' + renderWorkflow(t) + '</td>'
-      + '<td data-label="Actions">' + renderActions(t) + '</td>'
+      + '<td data-label="Status">' + renderWorkflow(t) + '</td>'
+      + '<td data-label="Action">' + renderActions(t) + '</td>'
       + '</tr>';
   }
 
@@ -126,7 +116,7 @@
     if (!tbody) return;
 
     if (!cases || !cases.length) {
-      tbody.innerHTML = '<tr><td colspan="7"><div class="triage-empty"><p>No triage cases yet. New patient assessments will appear here.</p></div></td></tr>';
+      tbody.innerHTML = '<tr><td colspan="6"><div class="triage-empty"><p>No triage cases yet. New patient assessments will appear here.</p></div></td></tr>';
       return;
     }
 
@@ -293,11 +283,22 @@
         + (submitted ? ' · Submitted ' + submitted : '');
     }
 
-    var symptoms = Array.isArray(t.symptoms_list) && t.symptoms_list.length
-      ? t.symptoms_list.join(', ')
+    var complaintText = String(t.complaint || '').trim();
+    var structuredSymptoms = Array.isArray(t.symptoms_list)
+      ? t.symptoms_list.filter(function (symptom) {
+          var value = String(symptom || '').trim();
+          return value !== '' && value.toLowerCase() !== complaintText.toLowerCase();
+        })
+      : [];
+    var symptomsHeading = document.getElementById('triagePatientWordsHeading');
+    var symptomsSection = symptomsHeading ? symptomsHeading.closest('section') : null;
+    if (symptomsSection) {
+      symptomsSection.hidden = structuredSymptoms.length === 0;
+    }
+    document.getElementById('modalSymptoms').textContent = structuredSymptoms.length
+      ? structuredSymptoms.join(', ')
       : (t.symptoms_display || '—');
-    document.getElementById('modalSymptoms').textContent = symptoms;
-    document.getElementById('modalComplaint').textContent = t.complaint || 'No detailed complaint provided.';
+    document.getElementById('modalComplaint').textContent = complaintText || 'No detailed complaint provided.';
     loadSupportingEvidence(t.id, t);
     document.getElementById('overrideLevel').value = t.level || '3';
 
@@ -337,7 +338,7 @@
       t.english_complaint && String(t.english_complaint).trim() !== String(t.complaint || '').trim()
         ? t.english_complaint
         : '',
-      t.english_complaint || 'Same as chief complaint / not translated'
+      t.english_complaint || 'Same as patient complaint / not translated'
     );
     setText(
       'modalDetectedSymptoms',
@@ -406,7 +407,7 @@
     var isReviewed = !!t.reviewed;
     if (gateHint) {
       if (!t.complaint || !String(t.complaint).trim()) {
-        gateHint.textContent = 'No chief complaint — NLP recommendations will not be shown to the patient.';
+        gateHint.textContent = 'No patient complaint — NLP recommendations will not be shown to the patient.';
       } else if (recStatus === 'approved') {
         gateHint.textContent = 'Review complete. Approved self-care advice is available to the patient.';
       } else if (recStatus === 'rejected') {

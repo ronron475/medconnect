@@ -2023,7 +2023,7 @@ body.consultation-mobile-call-fullscreen .mc-provider-video-dock .mc-session-flo
                             <?php endif; ?>
                         </div>
                         <p id="cspComplaintLine" style="margin: 8px 0 0; font-size: 13px; color: #334155; line-height: 1.45;" <?= $clinical_support['chief_complaint'] === '' ? 'hidden' : '' ?>>
-                            <strong>Complaint:</strong> <span id="cspComplaintText"><?= htmlspecialchars($clinical_support['chief_complaint']) ?></span>
+                            <strong>Patient complaint:</strong> <span id="cspComplaintText"><?= htmlspecialchars($clinical_support['chief_complaint']) ?></span>
                             <span id="cspEnglishWrap" <?= ($clinical_support['english_complaint'] === '' || strcasecmp($clinical_support['english_complaint'], $clinical_support['chief_complaint']) === 0) ? 'hidden' : '' ?>>
                                 <br><span style="color:#64748b;">English: <span id="cspEnglishText"><?= htmlspecialchars($clinical_support['english_complaint']) ?></span></span>
                             </span>
@@ -2166,7 +2166,7 @@ body.consultation-mobile-call-fullscreen .mc-provider-video-dock .mc-session-flo
                                             <br><?= htmlspecialchars($entry['audit_note']) ?>
                                         <?php endif; ?>
                                         <?php if ($entry['chief_complaint'] !== ''): ?>
-                                            <br>Complaint: <?= htmlspecialchars(strlen($entry['chief_complaint']) > 120 ? substr($entry['chief_complaint'], 0, 117) . '…' : $entry['chief_complaint']) ?>
+                                            <br>Patient complaint: <?= htmlspecialchars(strlen($entry['chief_complaint']) > 120 ? substr($entry['chief_complaint'], 0, 117) . '…' : $entry['chief_complaint']) ?>
                                         <?php endif; ?>
                                     </div>
                                 </li>
@@ -2344,7 +2344,7 @@ body.consultation-mobile-call-fullscreen .mc-provider-video-dock .mc-session-flo
                 <?php endif; ?>
 
                 <div class="complaint-box">
-                    <strong>Chief Complaint (this visit)</strong>
+                    <strong>Patient Complaint (this visit)</strong>
                     <?= htmlspecialchars($patient['complaint']) ?>
                 </div>
 
@@ -2869,7 +2869,7 @@ function renderClinicalAudit(audit) {
             const short = String(entry.chief_complaint).length > 120
                 ? String(entry.chief_complaint).slice(0, 117) + '…'
                 : entry.chief_complaint;
-            meta += '<br>Complaint: ' + escapeHtml(short);
+            meta += '<br>Patient complaint: ' + escapeHtml(short);
         }
         li.innerHTML =
             '<div class="csp-audit__head"><span>' + escapeHtml(entry.event_label || entry.event_type) +

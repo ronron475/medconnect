@@ -97,7 +97,7 @@ function pch_filter_url(string $filter): string
               <?= htmlspecialchars(provider_consultation_status_label($status)) ?>
             </span>
           </div>
-          <div class="pch-consult-card__row"><strong>Chief complaint:</strong> <?= htmlspecialchars($complaint) ?></div>
+          <div class="pch-consult-card__row"><strong>Patient complaint:</strong> <?= htmlspecialchars($complaint) ?></div>
           <div class="pch-consult-card__row"><strong>Doctor:</strong> <?= htmlspecialchars((string) ($row['doctor_name'] ?? '—')) ?></div>
           <?php if (!empty($row['ai_classification'])): ?>
           <div class="pch-consult-card__row"><strong>AI classification:</strong> <?= htmlspecialchars((string) $row['ai_classification']) ?></div>
@@ -186,7 +186,7 @@ function pch_filter_url(string $filter): string
             <th>Patient</th>
             <th>Last consultation</th>
             <th>Total visits</th>
-            <th>Last chief complaint</th>
+            <th>Last patient complaint</th>
             <th>Status</th>
             <th>Action</th>
           </tr>

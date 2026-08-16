@@ -204,6 +204,18 @@ function queue_format_symptoms(?string $raw): array
     return $list;
 }
 
+function queue_symptoms_distinct_from_complaint(array $symptoms, string $complaint): array
+{
+    $complaintNorm = strtolower(trim($complaint));
+    if ($complaintNorm === '') {
+        return $symptoms;
+    }
+
+    return array_values(array_filter($symptoms, static function ($symptom) use ($complaintNorm) {
+        return strtolower(trim((string) $symptom)) !== $complaintNorm;
+    }));
+}
+
 function queue_urgent_followup_label(array $case): string
 {
     $class = strtoupper((string) ($case['triage_classification'] ?? ''));
@@ -353,7 +365,7 @@ require_once __DIR__ . '/partials/layout_open.php';
                     <thead>
                         <tr>
                             <th class="col-patient">Patient</th>
-                            <th class="col-complaint">Chief Complaint</th>
+                            <th class="col-complaint">Patient Complaint</th>
                             <th class="col-triage">Triage</th>
                             <th class="col-schedule">Schedule</th>
                             <th class="col-status">Status</th>
@@ -372,11 +384,14 @@ require_once __DIR__ . '/partials/layout_open.php';
                                 $session_url = 'consultation_session.php?id=' . (int)$item['id'];
                                 $session_access = queue_session_access($item);
                                 $session_ctx = queue_session_context($item);
-                                $symptoms = queue_format_symptoms($item['symptoms'] ?? '');
                                 $complaint = trim((string) ($item['chief_complaint'] ?? ''));
                                 if ($complaint === '') {
                                     $complaint = trim((string) ($item['consult_type'] ?? 'General Consultation'));
                                 }
+                                $symptoms = queue_symptoms_distinct_from_complaint(
+                                    queue_format_symptoms($item['symptoms'] ?? ''),
+                                    $complaint
+                                );
                                 $display_date = $session_ctx['effective_date'] !== '' ? $session_ctx['effective_date'] : $session_ctx['consult_date'];
                                 $display_time = $session_ctx['consult_time'];
                                 $opens_label = $session_ctx['opens_at_label'] !== '' ? $session_ctx['opens_at_label'] : 'Schedule';
@@ -391,7 +406,7 @@ require_once __DIR__ . '/partials/layout_open.php';
                                         </div>
                                     </div>
                                 </td>
-                                <td data-label="Chief complaint">
+                                <td data-label="Patient complaint">
                                     <div class="queue-complaint-main"><?= htmlspecialchars($complaint) ?></div>
                                     <?php if ($symptoms): ?>
                                     <div class="queue-chip-list">
@@ -460,8 +475,11 @@ require_once __DIR__ . '/partials/layout_open.php';
                         <?php foreach ($triage_feed as $case):
                             $urgent = queue_is_urgent($case['level'] ?? '', $case['urgency_label'] ?? '');
                             $case_name = trim(($case['first_name'] ?? '') . ' ' . ($case['last_name'] ?? ''));
-                            $feed_symptoms = queue_format_symptoms($case['symptoms'] ?? '');
                             $feed_complaint = trim((string) ($case['chief_complaint'] ?? ''));
+                            $feed_symptoms = queue_symptoms_distinct_from_complaint(
+                                queue_format_symptoms($case['symptoms'] ?? ''),
+                                $feed_complaint
+                            );
                         ?>
                         <div class="queue-feed-card <?= $urgent ? 'urgent' : 'routine' ?>">
                             <div class="queue-feed-top">
