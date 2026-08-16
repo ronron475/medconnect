@@ -313,8 +313,7 @@ $pending_count    = count(array_filter($display_cases, fn($t) => empty($t['revie
       </div>
     </div>
 
-    <div class="triage-modal__footer">
-      <button type="button" class="mc-btn mc-btn--ghost" onclick="closeTriageModal()">Close</button>
+    <div class="triage-modal__footer triage-modal__footer--review">
       <div class="triage-modal__footer-actions">
         <button type="button" id="modalRejectRecBtn" class="mc-btn mc-btn--danger-outline" style="display:none;" onclick="rejectRecommendationsFromModal()">Withhold Guidance</button>
         <button type="button" id="modalApproveRecBtn" class="mc-btn mc-btn--primary" style="display:none;" onclick="approveRecommendationsFromModal()">Approve for Patient</button>
