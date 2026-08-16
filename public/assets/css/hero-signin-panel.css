@@ -324,6 +324,7 @@ body.landing-page.signin-active #signin-modal {
   --signin-input-height: 46px;
   --signin-error-slot-height: 44px;
   --signin-context-alert-height: 40px;
+  --signin-toolbar-clearance: 88px;
 
   padding: 20px 20px 16px;
   border-radius: 18px;
@@ -345,7 +346,7 @@ body.landing-page.signin-active #signin-modal {
   flex-direction: column;
   gap: 0;
   margin-bottom: 10px;
-  padding-right: 88px;
+  padding-right: var(--signin-toolbar-clearance, 88px);
   flex: 0 0 auto;
   max-height: var(--signin-context-alert-height);
   overflow: hidden;
@@ -404,12 +405,16 @@ body.landing-page.signin-active #signin-modal {
   min-height: var(--signin-error-slot-height, 44px);
   max-height: var(--signin-error-slot-height, 44px);
   margin: 0 0 8px;
-  padding-right: 88px;
+  padding-right: 0;
 }
 
 .landing-page .hero-signin-panel .signin-card__error-slot .alert {
   position: absolute;
-  inset: 0;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  right: var(--signin-toolbar-clearance, 88px);
+  width: auto;
   margin: 0 !important;
   padding: 10px 12px;
   display: flex !important;
@@ -437,7 +442,7 @@ body.landing-page.signin-active #signin-modal {
   gap: 14px;
   margin-bottom: 16px;
   padding-bottom: 14px;
-  padding-right: 88px;
+  padding-right: var(--signin-toolbar-clearance, 88px);
   border-bottom-color: rgba(255, 255, 255, 0.14);
 }
 
@@ -889,13 +894,14 @@ html[data-theme-resolved='dark'] .landing-page .hero-signin-panel .signin-modal-
     --signin-input-height: 44px;
     --signin-error-slot-height: 48px;
     --signin-context-alert-height: 38px;
+    --signin-toolbar-clearance: 48px;
 
     padding: 16px 16px 14px;
     border-radius: 16px;
   }
 
   .landing-page .hero-signin-panel .signin-card__alerts {
-    padding-right: 48px;
+    padding-right: var(--signin-toolbar-clearance, 48px);
     margin-bottom: 8px;
   }
 
@@ -903,7 +909,7 @@ html[data-theme-resolved='dark'] .landing-page .hero-signin-panel .signin-modal-
     gap: 10px;
     margin-bottom: 12px;
     padding-bottom: 10px;
-    padding-right: 48px;
+    padding-right: var(--signin-toolbar-clearance, 48px);
   }
 
   .landing-page .hero-signin-panel .signin-modal-close {
@@ -1251,6 +1257,7 @@ body.landing-page.landing-bg--light .hero-signin-panel .signin-card .alert.error
     --signin-space-lg: 16px;
     --signin-input-height: 44px;
     --signin-error-slot-height: auto;
+    --signin-toolbar-clearance: 52px;
 
     height: auto;
     max-height: none;
@@ -1265,7 +1272,7 @@ body.landing-page.landing-bg--light .hero-signin-panel .signin-card .alert.error
     max-height: none;
     overflow: visible;
     margin-bottom: 10px;
-    padding-right: 52px;
+    padding-right: var(--signin-toolbar-clearance, 52px);
   }
 
   .landing-page .hero-signin-panel .signin-card__alerts .signin-context-alert {
@@ -1282,12 +1289,16 @@ body.landing-page.landing-bg--light .hero-signin-panel .signin-card .alert.error
     min-height: 0;
     max-height: none;
     margin: 0 0 10px;
-    padding-right: 52px;
+    padding-right: var(--signin-toolbar-clearance, 52px);
   }
 
   .landing-page .hero-signin-panel .signin-card__error-slot .alert {
     position: relative;
     inset: auto;
+    top: auto;
+    right: auto;
+    bottom: auto;
+    left: auto;
     min-height: 0;
   }
 
@@ -1302,7 +1313,7 @@ body.landing-page.landing-bg--light .hero-signin-panel .signin-card .alert.error
     gap: 10px;
     margin-bottom: 14px;
     padding-bottom: 12px;
-    padding-right: 52px;
+    padding-right: var(--signin-toolbar-clearance, 52px);
   }
 
   .landing-page .hero-signin-panel .signin-card__primary .form-group {
