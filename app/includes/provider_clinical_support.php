@@ -7,7 +7,6 @@
 
 require_once __DIR__ . '/triage_assessment_schema.php';
 require_once __DIR__ . '/triage_provider_assignment.php';
-require_once __DIR__ . '/complaint_evidence.php';
 require_once __DIR__ . '/patient_chief_complaints.php';
 
 /**
@@ -57,14 +56,6 @@ function provider_consultation_clinical_support(PDO $pdo, int $consultationId, i
         'ai_urgency_bucket' => '',
         'manual_urgency' => false,
         'manual_override_note' => '',
-        'supporting_evidence' => [
-            'has_evidence' => false,
-            'id' => 0,
-            'media_type' => '',
-            'view_url' => '',
-            'original_filename' => '',
-            'uploaded_label' => '',
-        ],
         'registration_complaint_reference' => '',
         'current_complaint_submitted_at' => '',
     ];
@@ -101,11 +92,6 @@ function provider_consultation_clinical_support(PDO $pdo, int $consultationId, i
                 if (empty($decoded['patient_original_english'])) {
                     $decoded['patient_original_english'] = $original['english'];
                 }
-                $triageIdForEvidence = (int) ($decoded['triage_id'] ?? 0);
-                if ($triageIdForEvidence <= 0) {
-                    $triageIdForEvidence = provider_clinical_support_resolve_triage_id($pdo, $consultationId, $patientId);
-                }
-                $decoded['supporting_evidence'] = complaint_evidence_clinical_support_meta($pdo, $triageIdForEvidence);
                 return array_merge($empty, $decoded);
             }
         }
@@ -356,7 +342,6 @@ function provider_consultation_clinical_support(PDO $pdo, int $consultationId, i
         'ai_urgency_bucket' => $bucket,
         'manual_urgency' => false,
         'manual_override_note' => '',
-        'supporting_evidence' => complaint_evidence_clinical_support_meta($pdo, (int) $row['id']),
         'registration_complaint_reference' => $registrationReference,
         'current_complaint_submitted_at' => $currentComplaintSubmittedAt,
     ];

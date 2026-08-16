@@ -1,6 +1,6 @@
 <?php
 /**
- * Dashboard card: Chief Complaint + optional supporting evidence (all patients).
+ * Dashboard card: Chief Complaint (all patients).
  *
  * Expects: $registration_chief_complaint, $show_dashboard_care_tips_section (optional),
  *          $chief_complaint_locked, $chief_complaint_source (optional).
@@ -11,7 +11,6 @@ $chief_complaint_locked = isset($chief_complaint_locked)
     : ($registration_chief_complaint !== '');
 $chief_complaint_source = trim((string) ($chief_complaint_source ?? ''));
 $chief_complaint_source_label = patient_portal_complaint_source_label($chief_complaint_source);
-$show_evidence_section = false;
 $show_care_tips_context = !empty($show_dashboard_care_tips_section);
 $is_new_consultation_flow = !$chief_complaint_locked
     && empty($active_consultation)
@@ -93,44 +92,6 @@ $placeholder = $chief_complaint_locked
       Describe your health concern. At least a short sentence helps your care team understand your case faster.
       <?php endif; ?>
     </p>
-
-    <div
-      class="pdash-care-evidence<?= $show_evidence_section ? '' : ' pdash-care-evidence--collapsed' ?>"
-      id="pdashCareEvidenceSection"
-      <?= $show_evidence_section ? '' : 'hidden inert aria-hidden="true"' ?>
-    >
-      <label class="form-label pdash-care-form__label" for="pdashSupportingEvidence">
-        <span data-i18n="evidence_label">Supporting Evidence</span> <span class="pdash-care-form__optional" data-i18n="evidence_optional">(optional)</span>
-      </label>
-      <p class="pdash-care-form__hint pdash-care-evidence__hint" data-i18n="evidence_hint">
-        Upload a photo or short video for your doctor to review. This does not affect triage or review priority.
-      </p>
-      <div class="pdash-care-evidence__upload">
-        <input
-          type="file"
-          id="pdashSupportingEvidence"
-          name="supporting_evidence"
-          class="pdash-care-evidence__input"
-          accept="image/jpeg,image/png,image/webp,video/mp4,video/webm"
-          <?= $show_evidence_section ? '' : 'disabled tabindex="-1"' ?>
-        />
-        <button
-          type="button"
-          class="pdash-btn pdash-btn--outline pdash-care-evidence__choose"
-          id="pdashBtnChooseEvidence"
-          data-i18n="evidence_choose"
-          <?= $show_evidence_section ? '' : 'disabled' ?>
-        >
-          Choose photo or video
-        </button>
-        <span class="pdash-care-evidence__filename" id="pdashEvidenceFilename" hidden></span>
-        <button type="button" class="pdash-care-evidence__remove" id="pdashBtnRemoveEvidence" hidden aria-label="Remove supporting evidence" data-i18n="evidence_remove">
-          Remove
-        </button>
-      </div>
-      <div class="pdash-care-evidence__preview" id="pdashEvidencePreview" hidden></div>
-      <p class="pdash-care-form__hint" data-i18n="evidence_limits">Photos up to 5 MB. Videos up to 25 MB (MP4 or WebM).</p>
-    </div>
 
     <div id="pdashSymptomsReviewAlert" class="patient-triage-alert" role="alert" hidden></div>
     <?php if (!$chief_complaint_locked): ?>

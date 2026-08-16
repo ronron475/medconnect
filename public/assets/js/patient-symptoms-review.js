@@ -1,5 +1,5 @@
 /**
- * Patient dashboard — chief complaint review with triage-gated supporting evidence.
+ * Patient dashboard — chief complaint review.
  * Triage uses the same Step 3 pipeline as registration (assess_chief_complaint.php).
  */
 (function () {
@@ -35,24 +35,7 @@
 
   refreshSubmitLabels();
 
-  var IMAGE_MAX = 5 * 1024 * 1024;
-  var VIDEO_MAX = 25 * 1024 * 1024;
-  var ALLOWED = {
-    'image/jpeg': true,
-    'image/png': true,
-    'image/webp': true,
-    'video/mp4': true,
-    'video/webm': true,
-  };
-
-  var evidenceInput = document.getElementById('pdashSupportingEvidence');
-  var chooseBtn = document.getElementById('pdashBtnChooseEvidence');
-  var removeBtn = document.getElementById('pdashBtnRemoveEvidence');
-  var filenameEl = document.getElementById('pdashEvidenceFilename');
-  var previewEl = document.getElementById('pdashEvidencePreview');
   var complaintEl = document.getElementById('pdashSymptomsComplaint');
-  var evidenceSection = document.getElementById('pdashCareEvidenceSection');
-  var previewUrl = null;
 
   /** @type {null|'non_urgent'|'urgent'|'emergency'} */
   var triageLevel = null;
@@ -92,14 +75,10 @@
     triageComplaint = '';
   }
 
-  function canShowEvidence() {
+  function isReadyForFinalSubmit() {
     return (triageLevel === 'non_urgent' || triageLevel === 'urgent')
       && hasValidComplaint()
       && complaintText() === triageComplaint;
-  }
-
-  function isReadyForFinalSubmit() {
-    return canShowEvidence();
   }
 
   /** Same urgency extraction as register-nlp-analysis.js (Registration Step 3). */
@@ -164,101 +143,16 @@
     alertEl.textContent = '';
   }
 
-  function clearPreview() {
-    if (previewUrl) {
-      URL.revokeObjectURL(previewUrl);
-      previewUrl = null;
-    }
-    if (previewEl) {
-      previewEl.innerHTML = '';
-      previewEl.hidden = true;
-    }
-  }
-
-  function resetEvidence() {
-    if (evidenceInput) {
-      evidenceInput.value = '';
-    }
-    clearPreview();
-    if (filenameEl) {
-      filenameEl.textContent = '';
-      filenameEl.hidden = true;
-    }
-    if (removeBtn) {
-      removeBtn.hidden = true;
-      removeBtn.disabled = true;
-    }
-  }
-
-  function syncEvidenceSection() {
-    if (!evidenceSection) return;
-    var show = canShowEvidence();
-
-    evidenceSection.hidden = !show;
-    evidenceSection.classList.toggle('pdash-care-evidence--collapsed', !show);
-    evidenceSection.setAttribute('aria-hidden', show ? 'false' : 'true');
-
-    if (show) {
-      evidenceSection.removeAttribute('inert');
-    } else {
-      evidenceSection.setAttribute('inert', '');
-    }
-
-    if (evidenceInput) {
-      evidenceInput.disabled = !show;
-      if (show) {
-        evidenceInput.removeAttribute('tabindex');
-      } else {
-        evidenceInput.setAttribute('tabindex', '-1');
-      }
-    }
-
-    if (chooseBtn) {
-      chooseBtn.disabled = !show;
-    }
-
-    if (removeBtn && !show) {
-      removeBtn.disabled = true;
-    }
-
-    if (!show) {
-      resetEvidence();
-    }
-  }
-
   function updateSubmitButtonLabel() {
     if (!submitBtn) return;
-    if (isReadyForFinalSubmit()) {
-      submitBtn.textContent = finalSubmitLabel;
-      return;
-    }
     submitBtn.textContent = finalSubmitLabel;
   }
 
   function onComplaintChanged() {
     if (complaintText() !== triageComplaint) {
       clearTriageState();
-      resetEvidence();
     }
-    syncEvidenceSection();
     updateSubmitButtonLabel();
-  }
-
-  function validateEvidenceFile(file) {
-    if (!file) return null;
-    if (!ALLOWED[file.type]) {
-      return i18n('err_file_type');
-    }
-    var isVideo = file.type.indexOf('video/') === 0;
-    var maxSize = isVideo ? VIDEO_MAX : IMAGE_MAX;
-    if (file.size > maxSize) {
-      return isVideo ? i18n('err_video_size') : i18n('err_photo_size');
-    }
-    return null;
-  }
-
-  function canUseEvidenceUpload() {
-    return canShowEvidence() && evidenceInput && !evidenceInput.disabled;
   }
 
   async function runStep3Triage(complaint) {
@@ -307,22 +201,12 @@
     }
   }
 
-  async function submitForReview(complaint, evidenceFile, options) {
+  async function submitForReview(complaint, options) {
     options = options || {};
-    if (evidenceFile) {
-      var evidenceErr = validateEvidenceFile(evidenceFile);
-      if (evidenceErr) {
-        showAlert('error', evidenceErr);
-        return false;
-      }
-    }
 
     var fd = new FormData(form);
     fd.set('chief_complaint', complaint);
     fd.set('csrf_token', csrf());
-    if (!evidenceFile) {
-      fd.delete('supporting_evidence');
-    }
 
     if (submitBtn) {
       submitBtn.disabled = true;
@@ -345,7 +229,6 @@
       var payload = data.data || data;
       if (payload.emergency) {
         clearTriageState();
-        syncEvidenceSection();
         var emMsg = i18n('em_submit');
         if (!options.skipOutcomeModal) {
           showAlert('error', emMsg);
@@ -412,19 +295,16 @@
       triageLevel = level;
 
       if (level === 'emergency') {
-        syncEvidenceSection();
-        var emergencySubmitted = await submitForReview(complaint, null, { skipOutcomeModal: true });
+        var emergencySubmitted = await submitForReview(complaint, { skipOutcomeModal: true });
         if (emergencySubmitted) {
           presentTriageOutcome(level, complaint, step3Data);
         } else {
           clearTriageState();
-          syncEvidenceSection();
         }
         return emergencySubmitted;
       }
 
       presentTriageOutcome(level, complaint, step3Data);
-      syncEvidenceSection();
       updateSubmitButtonLabel();
       return true;
     } finally {
@@ -435,78 +315,6 @@
     }
   }
 
-  if (chooseBtn && evidenceInput) {
-    chooseBtn.addEventListener('click', function (e) {
-      if (!canUseEvidenceUpload()) {
-        e.preventDefault();
-        e.stopPropagation();
-        resetEvidence();
-        return;
-      }
-      evidenceInput.click();
-    });
-  }
-
-  if (removeBtn) {
-    removeBtn.addEventListener('click', function () {
-      if (!canUseEvidenceUpload()) {
-        resetEvidence();
-        return;
-      }
-      resetEvidence();
-    });
-  }
-
-  if (evidenceInput) {
-    evidenceInput.addEventListener('change', function () {
-      if (!canUseEvidenceUpload()) {
-        resetEvidence();
-        return;
-      }
-
-      clearPreview();
-      var file = evidenceInput.files && evidenceInput.files[0];
-      if (!file) {
-        resetEvidence();
-        return;
-      }
-
-      var err = validateEvidenceFile(file);
-      if (err) {
-        resetEvidence();
-        showAlert('error', err);
-        return;
-      }
-
-      if (filenameEl) {
-        filenameEl.textContent = file.name;
-        filenameEl.hidden = false;
-      }
-      if (removeBtn) {
-        removeBtn.hidden = false;
-        removeBtn.disabled = false;
-      }
-
-      if (previewEl) {
-        previewUrl = URL.createObjectURL(file);
-        if (file.type.indexOf('video/') === 0) {
-          previewEl.innerHTML = '<video src="' + previewUrl + '" controls playsinline muted></video>';
-        } else {
-          previewEl.innerHTML = '<img src="' + previewUrl + '" alt="Supporting evidence preview">';
-        }
-        previewEl.hidden = false;
-      }
-    });
-
-    evidenceInput.addEventListener('click', function (e) {
-      if (!canUseEvidenceUpload()) {
-        e.preventDefault();
-        e.stopPropagation();
-        resetEvidence();
-      }
-    });
-  }
-
   if (complaintEl) {
     complaintEl.addEventListener('input', onComplaintChanged);
     complaintEl.addEventListener('change', onComplaintChanged);
@@ -515,7 +323,6 @@
     });
   }
 
-  syncEvidenceSection();
   updateSubmitButtonLabel();
 
   window.addEventListener('medconnect:patient-ui-lang', function () {
@@ -530,7 +337,6 @@
     var complaint = complaintText();
     if (!complaint) {
       clearTriageState();
-      syncEvidenceSection();
       var locked = complaintEl && complaintEl.hasAttribute('readonly');
       showAlert('error', locked
         ? i18n('err_locked')
@@ -543,11 +349,6 @@
       return;
     }
 
-    var evidenceFile = null;
-    if (canUseEvidenceUpload() && evidenceInput && evidenceInput.files) {
-      evidenceFile = evidenceInput.files[0] || null;
-    }
-
-    await submitForReview(complaint, evidenceFile);
+    await submitForReview(complaint);
   });
 })();

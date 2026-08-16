@@ -14,7 +14,6 @@ $chief_complaint_locked = isset($chief_complaint_locked)
 $chief_complaint_source = trim((string) ($chief_complaint_source ?? ''));
 $chief_complaint_source_label = patient_portal_complaint_source_label($chief_complaint_source);
 $active_chief_complaint_triage_id = (int) ($active_chief_complaint_triage_id ?? 0);
-$show_evidence_section = false;
 $review_booking_ctx = $review_booking_ctx ?? ['locked' => false, 'provider_id' => 0, 'provider_name' => ''];
 $locked_provider_id = (int) ($locked_provider_id ?? 0);
 $locked_provider_name = trim((string) ($locked_provider_name ?? ''));
@@ -104,44 +103,6 @@ $locked_alternate_available = !empty($locked_alternate_available);
         Share your current health concern to start a new consultation. Previous complaints stay in My Sessions and are not reused.
         <?php endif; ?>
       </p>
-    </div>
-
-    <div
-      class="form-group complaint-evidence-group<?= $show_evidence_section ? '' : ' complaint-evidence-group--collapsed' ?>"
-      id="complaintEvidenceSection"
-      <?= $show_evidence_section ? '' : 'hidden inert aria-hidden="true"' ?>
-    >
-      <label class="form-label" for="supporting_evidence">
-        Supporting Evidence <span class="text-muted">(optional)</span>
-      </label>
-      <p class="text-xs text-muted complaint-evidence-hint">
-        Upload a photo or short video of your concern for your doctor to review.
-        This does not affect triage or appointment priority.
-      </p>
-      <div class="complaint-evidence-upload">
-        <input
-          type="file"
-          id="supporting_evidence"
-          name="supporting_evidence"
-          class="complaint-evidence-input"
-          accept="image/jpeg,image/png,image/webp,video/mp4,video/webm"
-          <?= $show_evidence_section ? '' : 'disabled tabindex="-1"' ?>
-        />
-        <button
-          type="button"
-          class="mc-btn mc-btn--outline complaint-evidence-choose"
-          id="btnChooseEvidence"
-          <?= $show_evidence_section ? '' : 'disabled' ?>
-        >
-          Choose photo or video
-        </button>
-        <span class="complaint-evidence-filename text-xs text-muted" id="evidenceFilename" hidden></span>
-        <button type="button" class="complaint-evidence-remove" id="btnRemoveEvidence" hidden aria-label="Remove supporting evidence">
-          Remove
-        </button>
-      </div>
-      <div class="complaint-evidence-preview" id="evidencePreview" hidden></div>
-      <p class="text-xs text-muted" style="margin-top:6px;">Photos up to 5 MB. Videos up to 25 MB (MP4 or WebM).</p>
     </div>
 
     <div class="form-group">

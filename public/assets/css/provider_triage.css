@@ -588,90 +588,9 @@
     letter-spacing: 0;
 }
 
-.triage-evidence-section[hidden],
 #modalQuestionsSection[hidden],
 #modalNlpAnalysis[hidden] {
     display: none !important;
-}
-
-.triage-evidence-list {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-    gap: 12px;
-}
-
-.triage-evidence-card {
-    display: flex;
-    flex-direction: column;
-    border: 1px solid #e2e8f0;
-    border-radius: 10px;
-    background: #fff;
-    overflow: hidden;
-    min-width: 0;
-}
-
-.triage-evidence-card__preview {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    min-height: 120px;
-    max-height: 200px;
-    padding: 8px;
-    background: #f1f5f9;
-    border-bottom: 1px solid #e2e8f0;
-    overflow: hidden;
-}
-
-.triage-evidence-card__thumb,
-.triage-evidence-card__media {
-    display: block;
-    max-width: 100%;
-    max-height: 180px;
-    width: auto;
-    height: auto;
-    border-radius: 6px;
-    border: 1px solid #cbd5e1;
-    background: #0f172a;
-    object-fit: contain;
-}
-
-.triage-evidence-card__body {
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-    padding: 10px 12px 12px;
-}
-
-.triage-evidence-card__meta {
-    margin: 0;
-    display: flex;
-    flex-direction: column;
-    gap: 2px;
-    font-size: 12px;
-    line-height: 1.4;
-    color: #64748b;
-    word-break: break-word;
-}
-
-.triage-evidence-card__filename {
-    font-weight: 600;
-    color: #334155;
-}
-
-.triage-evidence-card__date {
-    color: #64748b;
-}
-
-.triage-evidence-card__btn {
-    align-self: flex-start;
-    padding: 5px 10px;
-    font-size: 11px;
-}
-
-@media (max-width: 560px) {
-    .triage-evidence-list {
-        grid-template-columns: 1fr;
-    }
 }
 
 .triage-review-hero__urgency {

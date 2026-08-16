@@ -316,20 +316,6 @@ body.patient-portal {
   color: #92400e;
 }
 
-.complaint-evidence-group[hidden],
-.complaint-evidence-group--collapsed {
-  display: none !important;
-}
-
-.complaint-evidence-group[inert] {
-  pointer-events: none;
-  user-select: none;
-}
-
-.complaint-evidence-group {
-  margin-top: 4px;
-}
-
 .complaint-reference-group {
   margin-top: 0;
 }
@@ -344,68 +330,6 @@ body.patient-portal {
   line-height: 1.5;
   white-space: normal;
   word-break: break-word;
-}
-
-.complaint-evidence-hint {
-  margin: 0 0 10px;
-  line-height: 1.45;
-}
-
-.complaint-evidence-upload {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 10px;
-}
-
-.complaint-evidence-input {
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  padding: 0;
-  margin: -1px;
-  overflow: hidden;
-  clip: rect(0, 0, 0, 0);
-  white-space: nowrap;
-  border: 0;
-}
-
-.complaint-evidence-choose {
-  min-width: 0;
-}
-
-.complaint-evidence-filename {
-  flex: 1 1 auto;
-  min-width: 120px;
-  word-break: break-word;
-}
-
-.complaint-evidence-remove {
-  border: 0;
-  background: transparent;
-  color: #dc2626;
-  font-size: 13px;
-  font-weight: 600;
-  cursor: pointer;
-  padding: 6px 0;
-}
-
-.complaint-evidence-remove:hover {
-  text-decoration: underline;
-}
-
-.complaint-evidence-preview {
-  margin-top: 12px;
-}
-
-.complaint-evidence-preview img,
-.complaint-evidence-preview video {
-  display: block;
-  max-width: 100%;
-  max-height: 220px;
-  border-radius: 10px;
-  border: 1px solid #e2e8f0;
-  background: #f8fafc;
 }
 
 /* ── Urgency modal (emergency / urgent) ── */
@@ -1684,8 +1608,7 @@ html[data-theme-resolved='dark'] .booking-today-date {
   }
 
   .patient-triage-page .patient-triage-submit,
-  .patient-triage-page .patient-triage-alt-btn,
-  .patient-triage-page .complaint-evidence-choose {
+  .patient-triage-page .patient-triage-alt-btn {
     width: 100%;
     max-width: none;
   }

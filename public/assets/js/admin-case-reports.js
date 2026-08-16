@@ -91,11 +91,6 @@
     var footer = document.getElementById('crDetailFooter');
     if (!body || !footer) return;
 
-    var evidence = report.supporting_evidence || {};
-    var evidenceHtml = evidence.has_file
-      ? '<p class="cr-kv"><a href="' + esc(evidence.view_url || '#') + '" target="_blank" rel="noopener">View supporting evidence</a></p>'
-      : '<p class="cr-kv text-muted">No supporting evidence uploaded.</p>';
-
     body.innerHTML = ''
       + '<section class="cr-section"><h3>Patient</h3>'
       + '<p class="cr-kv"><strong>' + esc(report.patient_name) + '</strong> · ID ' + esc(report.patient_id) + '</p>'
@@ -119,7 +114,7 @@
           + '<p class="cr-kv"><strong>AI classification:</strong> ' + esc(report.triage_level || report.triage_classification || '—') + '</p>'
           + '<p class="cr-kv"><strong>Submitted:</strong> ' + formatDate(report.assessed_at) + '</p>'
           + '<p class="cr-kv"><strong>Case status:</strong> ' + statusBadge(report.case_terminated ? 'terminated' : report.triage_status, 'case') + '</p>'
-          + evidenceHtml + '</section>');
+          + '</section>');
 
     var canReview = ['pending', 'under_review', 'escalated'].indexOf(String(report.status)) >= 0;
     footer.innerHTML = '';

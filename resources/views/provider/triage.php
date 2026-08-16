@@ -216,13 +216,6 @@ $pending_count    = count(array_filter($display_cases, fn($t) => empty($t['revie
         <div id="modalComplaint" class="triage-modal-box triage-modal-box--complaint"></div>
       </section>
 
-      <section id="modalEvidenceSection" class="triage-review-section triage-evidence-section" aria-labelledby="triageEvidenceHeading" hidden>
-        <div class="triage-review-section__head">
-          <h3 id="triageEvidenceHeading" class="triage-review-section__title">Supporting Evidence</h3>
-        </div>
-        <div id="modalEvidenceList" class="triage-evidence-list"></div>
-      </section>
-
       <section id="modalNlpAnalysis" class="triage-review-section triage-assess-panel" aria-labelledby="triageNlpHeading">
         <div class="triage-review-section__head">
           <h3 id="triageNlpHeading" class="triage-review-section__title">AI Assessment</h3>
@@ -470,7 +463,6 @@ $pending_count    = count(array_filter($display_cases, fn($t) => empty($t['revie
 <script>
 window.MedConnectTriage = {
   listApi: <?= json_encode(ASSET_BASE . '/app/api/provider/get_triage.php') ?>,
-  evidenceApi: <?= json_encode(ASSET_BASE . '/app/api/provider/get_triage_evidence.php') ?>,
   updateApi: <?= json_encode(ASSET_BASE . '/app/api/provider/update_triage.php') ?>,
   reportApi: <?= json_encode(ASSET_BASE . '/app/api/provider/case_report.php') ?>,
   terminateApi: <?= json_encode(ASSET_BASE . '/app/api/provider/terminate_case.php') ?>,

@@ -2,7 +2,6 @@
 
 require_once __DIR__ . '/triage_assessment_schema.php';
 require_once __DIR__ . '/triage_provider_assignment.php';
-require_once __DIR__ . '/complaint_evidence.php';
 require_once __DIR__ . '/case_reports.php';
 
 /**
@@ -349,12 +348,6 @@ function provider_triage_cases_load(PDO $pdo, int $providerId): array
                 $consultationStatus,
                 $isTerminated,
                 $hasActiveReport
-            ),
-            'supporting_evidence'   => complaint_evidence_provider_case_meta(
-                $pdo,
-                (int) $t['id'],
-                (int) $t['patient_id'],
-                (string) ($t['assessed_at'] ?? '')
             ),
         ];
     }
