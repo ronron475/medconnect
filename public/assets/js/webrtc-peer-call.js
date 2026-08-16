@@ -295,7 +295,7 @@
   }
 
   function scheduleReconnect(reason) {
-    if (intentionalLeave) return;
+    if (intentionalLeave || global.__mcCallEnded) return;
     if (reconnectInProgress) return;
     if (reconnectAttempts >= MAX_RECONNECT_ATTEMPTS) {
       emit('connection-failed', { reason: reason, attempts: reconnectAttempts });
@@ -572,7 +572,7 @@
   }
 
   function recreatePeer(reason) {
-    if (intentionalLeave) return;
+    if (intentionalLeave || global.__mcCallEnded) return;
     console.warn('Recreating PeerJS connection:', reason || 'retry');
     destroyPeer();
     peerRetryTimer = setTimeout(function () {
@@ -690,6 +690,10 @@
     clearRecoveryTimers();
     callStartedAt = 0;
     if (currentCall) {
+      var pcClose = getPeerConnection(currentCall);
+      if (pcClose && pcClose.signalingState !== 'closed') {
+        try { pcClose.close(); } catch (e) {}
+      }
       if (currentCall._mcRemoteStream) {
         try {
           currentCall._mcRemoteStream.getTracks().forEach(function (t) {

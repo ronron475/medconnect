@@ -73,6 +73,25 @@
     postToFrame(message);
   }
 
+  function isEndedState() {
+    const st = readState();
+    return !!(st && st.ended);
+  }
+
+  function syncChrome() {
+    const shell = shellEl();
+    const toolbar = document.getElementById('mcGlobalVideoToolbar');
+    const mode = (shell && shell.dataset.mode) || 'hidden';
+    const ended = isEndedState();
+    const pip = mode === 'pip' && !ended;
+    if (toolbar) toolbar.hidden = !pip;
+    if (shell) {
+      shell.classList.toggle('is-ended', ended);
+      shell.classList.toggle('is-chrome-delegated', mode === 'fullscreen' || mode === 'docked');
+    }
+    postToFrame({ type: 'medconnect:shell-mode', mode: mode, ended: ended });
+  }
+
   function setMode(mode) {
     const shell = shellEl();
     if (!shell) return;
@@ -86,6 +105,7 @@
     document.body.classList.toggle('mc-video-shell-pip', mode === 'pip');
     document.body.classList.toggle('mc-video-shell-fullscreen', mode === 'fullscreen');
     writeState({ mode: mode });
+    syncChrome();
   }
 
   function postToFrame(message) {
@@ -242,7 +262,10 @@
     }, true);
   }
 
+  let chromeBound = false;
   function bindChrome() {
+    if (chromeBound) return;
+    chromeBound = true;
     const expandBtn = document.getElementById('mcGlobalVideoExpand');
     const minBtn = document.getElementById('mcGlobalVideoMinimize');
     if (expandBtn) {
@@ -266,33 +289,52 @@
     if (leaveBtn) bindShellAction(leaveBtn);
   }
 
+  function frameHasToken(frame, token) {
+    if (!frame || !frame.src || frame.src === 'about:blank') return false;
+    return frame.src.indexOf('token=' + encodeURIComponent(token)) >= 0
+      || frame.src.indexOf('token=' + token) >= 0;
+  }
+
   function open(token, consultationId, options) {
     options = options || {};
     const shell = shellEl();
     const frame = frameEl();
     if (!shell || !frame || !token) return false;
 
-    const url = roomUrl(token, true);
-    const alreadySame = frame.src && frame.src.indexOf('token=' + encodeURIComponent(token)) >= 0;
-    if (!options.skipReload || !alreadySame || frame.src === 'about:blank' || !frame.src) {
-      frame.src = url;
+    const prev = readState() || {};
+    if (prev.ended && prev.token === token && !options.forceLive) {
+      return false;
     }
+
+    const alreadySame = frameHasToken(frame, token);
+    const mode = options.mode || 'fullscreen';
+    const alreadyVisible = !shell.hidden && (shell.dataset.mode === 'fullscreen' || shell.dataset.mode === 'docked' || shell.dataset.mode === 'pip');
 
     writeState({
       token: token,
-      consultationId: consultationId || null,
-      mode: options.mode || 'fullscreen',
-      label: options.label || 'Video consultation',
+      consultationId: consultationId || prev.consultationId || null,
+      mode: mode,
+      label: options.label || prev.label || 'Video consultation',
+      ended: false,
     });
 
     const label = document.getElementById('mcGlobalVideoHandleLabel');
-    if (label && options.label) label.textContent = options.label;
-
-    const toolbar = document.getElementById('mcGlobalVideoToolbar');
-    if (toolbar) toolbar.hidden = false;
+    if (label && (options.label || prev.label)) {
+      label.textContent = options.label || prev.label;
+    }
 
     initDrag(shell);
-    setMode(options.mode || 'fullscreen');
+
+    if (alreadySame && alreadyVisible && !options.forceReload && options.skipReload !== false) {
+      setMode(mode);
+      return true;
+    }
+
+    if (!options.skipReload || !alreadySame) {
+      frame.src = roomUrl(token, !alreadySame);
+    }
+
+    setMode(mode);
 
     const st = readState();
     if (st && st.mode === 'pip' && typeof st.pipLeft === 'number') {
@@ -360,12 +402,16 @@
     if (isVideoRoomPage()) return;
     const st = readState();
     if (!st || !st.token) return;
+    if (st.ended) {
+      clearState();
+      return;
+    }
     const onProviderSession = /\/views\/provider\/consultation_session\.php/i.test(global.location.pathname || '');
     if (onProviderSession && st.mode === 'docked') {
       return;
     }
     const frame = frameEl();
-    const alreadyLoaded = frame && frame.src && frame.src.indexOf(st.token) >= 0 && frame.src !== 'about:blank';
+    const alreadyLoaded = frameHasToken(frame, st.token);
     open(st.token, st.consultationId, {
       mode: st.mode || 'pip',
       label: st.label,
@@ -392,15 +438,20 @@
       return;
     }
     if (type === 'medconnect:call-completed') {
+      writeState({ ended: true });
+      syncChrome();
       global.dispatchEvent(new CustomEvent('medconnect:video-shell-completed', { detail: event.data }));
       return;
     }
     if (type === 'medconnect:call-left') {
+      writeState({ ended: true });
       closeShell();
       global.dispatchEvent(new CustomEvent('medconnect:video-shell-left', { detail: event.data }));
       return;
     }
     if (type === 'medconnect:call-ended') {
+      writeState({ ended: true });
+      syncChrome();
       postToFrame({ type: 'medconnect:reset-call-ui' });
       closeShell();
       global.dispatchEvent(new CustomEvent('medconnect:video-shell-ended', { detail: event.data }));
@@ -425,7 +476,10 @@
     return open(token, consultationId, options || { mode: 'fullscreen', label: 'Video consultation' });
   }
 
+  let joinTriggersBound = false;
   function bindJoinTriggers() {
+    if (joinTriggersBound) return;
+    joinTriggersBound = true;
     document.addEventListener('click', (e) => {
       const btn = e.target.closest('[data-mc-video-join]');
       if (!btn) return;
@@ -433,7 +487,11 @@
       const token = btn.getAttribute('data-token') || btn.getAttribute('data-room-token') || '';
       const consultId = btn.getAttribute('data-consultation-id') || '';
       const label = btn.getAttribute('data-label') || 'Video consultation';
-      joinConsultation(token, consultId ? parseInt(consultId, 10) : null, { mode: 'fullscreen', label: label });
+      joinConsultation(token, consultId ? parseInt(consultId, 10) : null, {
+        mode: 'fullscreen',
+        label: label,
+        skipReload: true,
+      });
     });
   }
 
@@ -461,6 +519,13 @@
     bindChrome();
     bindJoinTriggers();
     bindNavigationPreserve();
+    const frame = frameEl();
+    if (frame && !frame.dataset.shellLoadBound) {
+      frame.dataset.shellLoadBound = '1';
+      frame.addEventListener('load', function () {
+        syncChrome();
+      });
+    }
     restoreFromStorage();
   });
 })(window);

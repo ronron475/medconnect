@@ -85,15 +85,22 @@ if (!$session) {
         $historyUrl = $role === 'patient'
             ? (ASSET_BASE . '/views/patient/consultation_detail.php?id=' . (int) ($ended['consultation_id'] ?? 0) . '&from=sessions')
             : (ASSET_BASE . '/views/provider/consultation_history.php?patient_id=' . (int) ($ended['patient_id'] ?? 0));
-        echo '<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Consultation ended</title>';
-        echo '<style>body{font-family:system-ui,sans-serif;background:#f4f8fa;color:#012a4a;margin:0;padding:32px 16px} .card{max-width:520px;margin:40px auto;background:#fff;border:1px solid #e2edf1;border-radius:14px;padding:24px;box-shadow:0 8px 24px rgba(1,42,74,.06)} h1{font-size:1.25rem;margin:0 0 10px} p{color:#608395;line-height:1.55} a{display:inline-flex;margin-top:14px;padding:10px 14px;border-radius:10px;background:#018a93;color:#fff;text-decoration:none;font-weight:700}</style></head><body><div class="card">';
-        echo '<h1>This consultation has already ended</h1>';
-        echo '<p>This consultation has already ended. You can only view its historical record.</p>';
-        echo '<p>The live video room cannot be restarted or rejoined.</p>';
+        echo '<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Consultation completed</title>';
+        echo '<style>html,body{height:100%;margin:0}body{font-family:system-ui,sans-serif;background:#f4f8fa;color:#012a4a;padding:24px 16px;box-sizing:border-box}.card{max-width:520px;margin:40px auto;background:#fff;border:1px solid #e2edf1;border-radius:14px;padding:24px;box-shadow:0 8px 24px rgba(1,42,74,.06)}h1{font-size:1.25rem;margin:0 0 10px}p{color:#608395;line-height:1.55}.actions{display:flex;flex-wrap:wrap;gap:10px;margin-top:16px}a{display:inline-flex;padding:10px 14px;border-radius:10px;background:#018a93;color:#fff;text-decoration:none;font-weight:700}a.secondary{background:#e2edf1;color:#012a4a}</style></head><body><div class="card">';
+        echo '<h1>Consultation completed</h1>';
+        echo '<p>Your video consultation has ended. The live call cannot be restarted.</p>';
+        echo '<p>Consultation saved successfully.</p>';
+        echo '<div class="actions">';
         if ($isOwner) {
-            echo '<a href="' . htmlspecialchars($historyUrl) . '">View historical record</a>';
+            echo '<a href="' . htmlspecialchars($historyUrl) . '" target="_top">View Session</a>';
         }
-        echo '</div></body></html>';
+        $dashUrl = $role === 'patient'
+            ? (ASSET_BASE . '/views/patient/dashboard.php')
+            : (ASSET_BASE . '/views/provider/dashboard.php');
+        echo '<a class="secondary" href="' . htmlspecialchars($dashUrl) . '" target="_top">Return to Dashboard</a>';
+        echo '</div></div>';
+        echo '<script>(function(){try{if(window.parent&&window.parent!==window){window.parent.postMessage({type:"medconnect:call-completed",ended:true,historical:true},window.location.origin);}}catch(e){}})();</script>';
+        echo '</body></html>';
         exit;
     }
     die('Invalid or expired consultation link.');
@@ -271,7 +278,8 @@ if (session_status() === PHP_SESSION_ACTIVE) {
   </script>
   <script src="<?= ASSET_BASE ?>/assets/js/video-room-enhancements.js?v=<?= $videoEnhJsVer ?>"></script>
   <style>
-    body { margin:0; background:#0b1220; color:#fff; height:100vh; overflow:hidden; }
+    html, body { margin:0; background:#0b1220; color:#fff; height:100%; width:100%; max-width:100%; overflow:hidden; }
+    body { height:100vh; height:100dvh; }
     body:not(.media-ready) .mc-vc-controls { display: none !important; }
     body:not(.media-ready) .mc-vc-header,
     body:not(.media-ready) .mc-vc-status-bar,
@@ -721,30 +729,30 @@ if (session_status() === PHP_SESSION_ACTIVE) {
       <div class="mc-vc-controls-inner">
         <div class="mc-vc-controls-primary" role="group" aria-label="Call controls">
           <button class="mc-vc-btn btn-mute" id="muteAudio" onclick="toggleAudio()" title="Mute microphone" aria-pressed="false" aria-label="Mute microphone">
-            <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v1a7 7 0 0 1-14 0v-1M12 18v4M8 22h8"/></svg>
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v1a7 7 0 0 1-14 0v-1M12 18v4M8 22h8"/></svg>
           </button>
           <button class="mc-vc-btn btn-mute" id="toggleVideo" onclick="toggleVideo()" title="Turn camera off" aria-pressed="false" aria-label="Turn camera off">
-            <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><path d="m23 7-7 5 7 5V7z"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/></svg>
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m23 7-7 5 7 5V7z"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/></svg>
           </button>
           <button type="button" class="mc-vc-btn mc-vc-btn--mobile-only" id="mcVcFlipBtn" title="Switch camera" aria-label="Switch front or back camera">
-            <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 2l4 4-4 4"/><path d="M3 11V9a4 4 0 0 1 4-4h14M7 22l-4-4 4-4"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg>
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 2l4 4-4 4"/><path d="M3 11V9a4 4 0 0 1 4-4h14M7 22l-4-4 4-4"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg>
           </button>
           <button type="button" class="mc-vc-btn mc-vc-btn--mobile-only mc-vc-btn--speaker mc-vc-btn--overflow-menu" id="mcVcSpeakerBtn" title="Speaker on or off" aria-label="Toggle speaker">
-            <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 5L6 9H2v6h4l5 4V5z"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"/></svg>
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 5L6 9H2v6h4l5 4V5z"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"/></svg>
           </button>
           <button type="button" class="mc-vc-btn" id="mcVcFullscreenBtn" title="Enter fullscreen" aria-label="Enter fullscreen">
-            <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/></svg>
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/></svg>
           </button>
           <?php if (!$is_patient): ?>
           <button type="button" class="mc-vc-btn mc-vc-btn--desktop-only" id="mcVcMinimizeBtn" title="Minimize call" aria-label="Minimize call">
-            <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9V5a1 1 0 0 1 1-1h4M18 9V5a1 1 0 0 0-1-1h-4M6 15v4a1 1 0 0 0 1 1h4M18 15v4a1 1 0 0 1-1 1h-4"/></svg>
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9V5a1 1 0 0 1 1-1h4M18 9V5a1 1 0 0 0-1-1h-4M6 15v4a1 1 0 0 0 1 1h4M18 15v4a1 1 0 0 1-1 1h-4"/></svg>
           </button>
           <?php endif; ?>
         </div>
         <div class="mc-vc-controls-secondary" role="group" aria-label="Call actions">
           <div class="mc-vc-more">
             <button type="button" class="mc-vc-btn" id="mcVcMoreBtn" aria-haspopup="true" aria-expanded="false" aria-controls="mcVcMoreMenu" title="More tools" aria-label="More tools">
-              <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="5" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="12" cy="19" r="1.6"/></svg>
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="5" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="12" cy="19" r="1.6"/></svg>
             </button>
             <div id="mcVcMoreMenu" class="mc-vc-more-menu" hidden role="menu">
               <button type="button" class="mc-vc-more-item" id="mcVcInfoBtn" role="menuitem" title="<?= $is_patient ? 'Consultation details' : 'Patient information' ?>" aria-label="<?= $is_patient ? 'Open consultation details' : 'Open patient information' ?>">Info</button>
@@ -1125,6 +1133,7 @@ if (session_status() === PHP_SESSION_ACTIVE) {
     let peerInitialized = false;
 
     function createPeer() {
+      if (endingCall || window.__mcCallEnded) return;
       if (!window.McWebrtcPeerCall) return;
       if (peerInitialized && McWebrtcPeerCall.isReady()) return;
       peerInitialized = true;
@@ -1132,9 +1141,13 @@ if (session_status() === PHP_SESSION_ACTIVE) {
         peerOptions: peerOptions,
         useAutoPeerId: demoMode,
         originator: userRole === 'provider',
-        onRecreate: function () { createPeer(); },
+        onRecreate: function () {
+          if (endingCall || window.__mcCallEnded) return;
+          peerInitialized = false;
+          createPeer();
+        },
         onNeedsRedial: function () {
-          if (endingCall || !localStream) return;
+          if (endingCall || window.__mcCallEnded || !localStream) return;
           flushPendingCall();
           openDataChannel();
           if (userRole === 'provider') startCall();
@@ -1231,13 +1244,10 @@ if (session_status() === PHP_SESSION_ACTIVE) {
       });
 
       rtc.on('recovering', function () {
-        if (endingCall) return;
+        if (endingCall || window.__mcCallEnded) return;
         setCallPhase(window.McVideoCallCore ? window.McVideoCallCore.STATUS.RECONNECTING : 'reconnecting', {
           callStatusText: 'Reconnecting…',
         });
-        if (consultUi && typeof consultUi.setOverlay === 'function') {
-          consultUi.setOverlay('Reconnecting…', 'Restoring your secure video connection automatically.', true, { showRetry: false });
-        }
       });
 
       rtc.on('recovered', function () {
@@ -1249,7 +1259,7 @@ if (session_status() === PHP_SESSION_ACTIVE) {
       });
 
       rtc.on('needs-redial', function () {
-        if (endingCall || !localStream) return;
+        if (endingCall || window.__mcCallEnded || !localStream) return;
         if (window.McWebrtcPeerCall && McWebrtcPeerCall.isIntentionalLeave && McWebrtcPeerCall.isIntentionalLeave()) return;
         flushPendingCall();
         openDataChannel();
@@ -1269,11 +1279,13 @@ if (session_status() === PHP_SESSION_ACTIVE) {
       });
 
       rtc.on('disconnected', function () {
+        if (endingCall || window.__mcCallEnded) return;
         console.warn('Peer disconnected — reconnecting signaling…');
         setCallPhase(window.McVideoCallCore ? window.McVideoCallCore.STATUS.RECONNECTING : 'reconnecting');
       });
 
       rtc.on('error', function (ev) {
+        if (endingCall || window.__mcCallEnded) return;
         const err = ev.error || {};
         console.error('Peer error:', err);
         const type = err.type ? err.type : '';
@@ -2229,7 +2241,7 @@ if (session_status() === PHP_SESSION_ACTIVE) {
         .then((res) => res.json())
         .then((data) => {
           if (!data.success) {
-            if (!endingCall) {
+            if (!endingCall && !window.__mcCallEnded) {
               if (isPatient) {
                 document.getElementById('callStatus').textContent = 'This consultation has ended.';
                 leaveCallConfirmed({ reason: 'session_ended', skipApi: true });
@@ -2429,6 +2441,9 @@ if (session_status() === PHP_SESSION_ACTIVE) {
       if (drawInterval) {
         clearInterval(drawInterval);
         drawInterval = null;
+      }
+      if (consultUi && typeof consultUi.stopMonitors === 'function') {
+        consultUi.stopMonitors();
       }
       if (timerInterval) {
         clearInterval(timerInterval);
@@ -2770,6 +2785,7 @@ if (session_status() === PHP_SESSION_ACTIVE) {
     };
 
     function initConsultationUi() {
+      if (consultUi) return;
       if (!window.McVideoConsultationUi) return;
       consultUi = window.McVideoConsultationUi.createController({
         isPatient: isPatient,
@@ -2783,12 +2799,6 @@ if (session_status() === PHP_SESSION_ACTIVE) {
         onMaximize: () => notifyParent({ type: 'medconnect:maximize-video', token: roomToken }),
       });
       consultUi.init();
-
-      if (embeddedInSession && userRole === 'provider') {
-        document.body.classList.add('compact-mode');
-        const compactBtn = document.getElementById('compactModeBtn');
-        if (compactBtn) compactBtn.textContent = 'Full view';
-      }
     }
 
     syncTimerInterval = setInterval(syncTimerFromServer, 20000);

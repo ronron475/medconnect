@@ -408,11 +408,13 @@ $localhost_app_url = 'http://localhost' . (ASSET_BASE !== '' ? ASSET_BASE : '');
 }
 @media (min-width: 769px) {
     .video-shell.is-call-active {
-        min-height: 430px;
-        aspect-ratio: 16 / 9;
+        min-height: min(62dvh, calc(100dvh - 10rem));
+        height: min(64dvh, calc(100dvh - 9rem));
+        max-height: calc(100dvh - 8.5rem);
+        aspect-ratio: auto;
     }
     .video-shell.is-call-active .video-shell-tools {
-        display: flex !important;
+        display: none !important;
     }
 }
 .video-shell.is-call-active .active-call {
