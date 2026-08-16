@@ -296,13 +296,15 @@
   function autoResizeGuidanceTextarea() {
     var el = document.getElementById('modalRecommendationsEdit');
     if (!el) return;
-    var mobile = window.matchMedia('(max-width: 720px)').matches;
-    var min = mobile ? 96 : 180;
-    var max = mobile ? 140 : 480;
+    el.style.overflowX = 'hidden';
+    el.style.overflowY = 'auto';
+    var supportsFieldSizing = typeof CSS !== 'undefined' && CSS.supports && CSS.supports('field-sizing', 'content');
+    if (supportsFieldSizing) {
+      el.style.height = '';
+      return;
+    }
     el.style.height = 'auto';
-    var next = Math.max(el.scrollHeight, min);
-    el.style.height = Math.min(next, max) + 'px';
-    el.style.overflowY = next > max ? 'auto' : 'hidden';
+    el.style.height = el.scrollHeight + 'px';
   }
 
   function viewTriageDetails(t) {
