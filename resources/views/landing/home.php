@@ -40,7 +40,7 @@ $asset = ASSET_BASE;
   <link rel="stylesheet" href="<?= $asset ?>/assets/css/landing-fab-modals.css?v=2" />
   <link rel="stylesheet" href="<?= $asset ?>/assets/css/signin-req-drawer.css?v=11" />
   <link rel="stylesheet" href="<?= $asset ?>/assets/css/signin-card-polish.css?v=4" />
-  <link rel="stylesheet" href="<?= $asset ?>/assets/css/hero-signin-panel.css?v=19" />
+  <link rel="stylesheet" href="<?= $asset ?>/assets/css/hero-signin-panel.css?v=20" />
   <?php $forgotPwCssVer = (int) @filemtime(ASSETS_PATH . '/css/forgot-password.css'); ?>
   <link rel="stylesheet" href="<?= $asset ?>/assets/css/forgot-password.css?v=<?= $forgotPwCssVer ?>" />
   <?php $landingScrollAnimCssVer = (int) @filemtime(ASSETS_PATH . '/css/landing-scroll-animations.css'); ?>
