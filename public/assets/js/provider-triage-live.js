@@ -296,9 +296,13 @@
   function autoResizeGuidanceTextarea() {
     var el = document.getElementById('modalRecommendationsEdit');
     if (!el) return;
+    var mobile = window.matchMedia('(max-width: 720px)').matches;
+    var min = mobile ? 96 : 180;
+    var max = mobile ? 140 : 480;
     el.style.height = 'auto';
-    var min = 180;
-    el.style.height = Math.max(el.scrollHeight, min) + 'px';
+    var next = Math.max(el.scrollHeight, min);
+    el.style.height = Math.min(next, max) + 'px';
+    el.style.overflowY = next > max ? 'auto' : 'hidden';
   }
 
   function viewTriageDetails(t) {

@@ -189,7 +189,7 @@ $pending_count    = count(array_filter($display_cases, fn($t) => empty($t['revie
       <div class="triage-modal__header-text">
         <p class="triage-modal__eyebrow">Clinical decision support</p>
         <h2 id="triageModalTitle" class="triage-modal__title">AI Assessment Review</h2>
-        <p class="triage-modal__lead">Verify the assessment below. For non-urgent cases, choose <strong>Approve for Patient</strong> or <strong>Withhold Guidance</strong> to complete your review.</p>
+        <p class="triage-modal__lead">Verify the assessment, then choose <strong>Approve for Patient</strong> or <strong>Withhold Guidance</strong>.</p>
       </div>
       <button type="button" class="triage-modal__close" onclick="closeTriageModal()" aria-label="Close">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M18 6L6 18M6 6l12 12"/></svg>
@@ -295,7 +295,7 @@ $pending_count    = count(array_filter($display_cases, fn($t) => empty($t['revie
         <textarea
           id="modalRecommendationsEdit"
           class="triage-rec-edit"
-          rows="10"
+          rows="5"
           placeholder="Enter or revise self-care recommendations prior to patient release."
         ></textarea>
         <p id="modalRecommendationGateHint" class="triage-gate-hint"></p>
