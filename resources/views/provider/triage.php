@@ -108,18 +108,17 @@ $pending_count    = count(array_filter($display_cases, fn($t) => empty($t['revie
       <thead>
         <tr>
           <th>Patient</th>
-          <th>Symptoms</th>
-          <th>Chief Complaint</th>
+          <th>Patient Complaint</th>
           <th>AI Classification</th>
           <th>Submitted</th>
-          <th>Workflow</th>
-          <th>Actions</th>
+          <th>Status</th>
+          <th>Action</th>
         </tr>
       </thead>
       <tbody>
       <?php if (empty($display_cases)): ?>
         <tr>
-          <td colspan="7">
+          <td colspan="6">
             <div class="triage-empty">
               <p>No triage cases yet. New patient assessments will appear here.</p>
             </div>
@@ -138,23 +137,12 @@ $pending_count    = count(array_filter($display_cases, fn($t) => empty($t['revie
           <td data-label="Patient" style="font-weight: 700; color: var(--mc-navy-dark);">
             <?= htmlspecialchars($t['name']) ?>
           </td>
-          <td data-label="Symptoms">
-            <div class="triage-symptom-chips">
-              <?php if (!empty($t['symptoms_list'])): ?>
-                <?php foreach ($t['symptoms_list'] as $symptom): ?>
-                <span class="triage-symptom-chip"><?= htmlspecialchars($symptom) ?></span>
-                <?php endforeach; ?>
-              <?php else: ?>
-                <span class="text-muted">—</span>
-              <?php endif; ?>
-            </div>
-          </td>
-          <td data-label="Complaint">
+          <td data-label="Patient Complaint">
             <span class="triage-complaint" title="<?= htmlspecialchars($t['complaint'] ?: '—') ?>">
               <?= htmlspecialchars($t['complaint'] ?: '—') ?>
             </span>
           </td>
-          <td data-label="Classification">
+          <td data-label="AI Classification">
             <?php if ($is_urgent): ?>
             <span class="triage-badge triage-badge--urgent">Urgent</span>
             <?php else: ?>
@@ -167,7 +155,7 @@ $pending_count    = count(array_filter($display_cases, fn($t) => empty($t['revie
           <td data-label="Submitted" style="white-space: nowrap; font-size: 12px; color: var(--mc-slate-muted);">
             <?= htmlspecialchars($t['date']) ?><br><?= htmlspecialchars($t['time']) ?>
           </td>
-          <td data-label="Workflow">
+          <td data-label="Status">
             <?php foreach ($t['workflow_badges'] ?? [] as $badge): ?>
             <span class="triage-badge triage-badge--<?= htmlspecialchars((string) $badge['class']) ?>">
               <?= htmlspecialchars((string) $badge['label']) ?>
@@ -177,7 +165,7 @@ $pending_count    = count(array_filter($display_cases, fn($t) => empty($t['revie
             <span class="triage-badge triage-badge--pending">Pending</span>
             <?php endif; ?>
           </td>
-          <td data-label="Actions">
+          <td data-label="Action">
             <div class="triage-actions">
               <button type="button" class="mc-btn mc-btn--outline triage-view-btn" style="padding: 6px 12px; font-size: 11px;" data-triage-id="<?= (int) $t['id'] ?>">View Details</button>
             </div>
@@ -224,7 +212,7 @@ $pending_count    = count(array_filter($display_cases, fn($t) => empty($t['revie
 
       <section class="triage-review-section" aria-labelledby="triageChiefComplaintHeading">
         <div class="triage-review-section__head">
-          <h3 id="triageChiefComplaintHeading" class="triage-review-section__title">Chief Complaint</h3>
+          <h3 id="triageChiefComplaintHeading" class="triage-review-section__title">Patient Complaint</h3>
           <p class="triage-review-section__hint">Patient's reported concern in their own words.</p>
         </div>
         <div id="modalComplaint" class="triage-modal-box triage-modal-box--complaint"></div>

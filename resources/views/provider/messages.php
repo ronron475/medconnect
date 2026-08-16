@@ -118,7 +118,7 @@ try {
         $name = trim(($row['first_name'] ?? '') . ' ' . ($row['last_name'] ?? ''));
         $complaint = $row['chief_complaint'] ?: $row['consult_type'] ?: 'General Consultation';
         $preview = $row['chief_complaint']
-            ? 'Chief complaint: ' . $row['chief_complaint']
+            ? 'Patient complaint: ' . $row['chief_complaint']
             : 'Consultation request for ' . ($row['consult_type'] ?: 'General Consultation');
 
         $session_access = queue_session_access([
