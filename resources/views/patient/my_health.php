@@ -17,6 +17,7 @@ require_once BASE_PATH . '/app/includes/triage_assessment_schema.php';
 require_once BASE_PATH . '/app/includes/patient_consultation_records.php';
 require_once BASE_PATH . '/app/includes/clinical_tables.php';
 require_once BASE_PATH . '/app/includes/clinical_note_signature.php';
+require_once BASE_PATH . '/app/includes/community_bhw_activity.php';
 
 clinical_tables_ensure($pdo);
 patient_consultation_records_schema_ensure($pdo);
@@ -219,6 +220,9 @@ foreach ($care_tips_history as $ctRow) {
     }
 }
 
+$bhw_activity = community_bhw_activity_load($pdo, $uid);
+$bhw_activity_variant = 'patient';
+
 $page_title = 'My Health';
 $pmh_css_ver = (int) @filemtime(ASSETS_PATH . '/css/patient-my-health.css');
 $patient_page_stylesheets = [
@@ -272,6 +276,7 @@ $patient_page_stylesheets = [
           <p class="pmh-surface__desc">Consultation visits with diagnosis, plans, and prescriptions from your doctors.</p>
         </div>
       </div>
+      <?php require VIEWS_PATH . '/partials/bhw_activity_panel.php'; ?>
       <?php require VIEWS_PATH . '/patient/partials/view_my_health_timeline.php'; ?>
     <?php elseif ($active_tab === 'files'): ?>
       <div class="pmh-surface__head">
