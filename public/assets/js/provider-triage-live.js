@@ -99,7 +99,10 @@
           return '<span class="triage-badge triage-badge--' + esc(badge.class || 'pending') + '">'
             + esc(badge.label || '') + '</span>';
         }).join(' ');
-    return '<div class="triage-status">' + html + '</div>';
+    return '<div class="triage-status">' + html + '</div>'
+      + (t.slot_waiting_since_label
+        ? '<div class="triage-wait-meta">Waiting since ' + esc(t.slot_waiting_since_label) + '</div>'
+        : '');
   }
 
   function renderActions(t) {
@@ -268,6 +271,24 @@
     var complaintText = String(t.complaint || '').trim();
     document.getElementById('modalComplaint').textContent = complaintText || 'No detailed complaint provided.';
     document.getElementById('overrideLevel').value = t.level || '3';
+
+    var waitSection = document.getElementById('modalWaitlistSection');
+    var waitBody = document.getElementById('modalWaitlistBody');
+    if (waitSection && waitBody) {
+      if (t.slot_wait_status === 'waiting' || t.slot_wait_status === 'slot_available') {
+        var waitBits = [];
+        waitBits.push('Waiting status: ' + (t.slot_wait_status === 'slot_available' ? 'Slot available' : 'Waiting for available slot'));
+        if (t.slot_waiting_since_label) waitBits.push('Waiting since ' + t.slot_waiting_since_label);
+        waitBits.push('Triage: ' + (t.urgency || 'Non-Urgent'));
+        waitBits.push('Care guidance: ' + (t.care_tips_reviewed || t.recommendation_status === 'approved' ? 'Reviewed / approved' : (t.recommendation_status === 'pending_approval' ? 'Pending provider review' : 'Not released')));
+        waitBits.push('Scheduled consultation: ' + (t.is_booked ? 'Yes' : 'No'));
+        waitBody.textContent = waitBits.join(' · ');
+        waitSection.hidden = false;
+      } else {
+        waitSection.hidden = true;
+        waitBody.textContent = '';
+      }
+    }
 
     var urgencyEl = document.getElementById('modalUrgency');
     var triageLevel = String(t.triage_level || t.triage_classification || '').toUpperCase();

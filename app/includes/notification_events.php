@@ -944,6 +944,61 @@ final class NotificationEvents
         ]);
     }
 
+    /**
+     * Email + in-app notice when a waiting NON-URGENT patient can book a slot.
+     */
+    public static function consultationSlotAvailable(
+        PDO $pdo,
+        int $patientId,
+        int $providerId,
+        string $providerName,
+        int $waitlistId,
+        int $triageId
+    ): ?int {
+        if ($patientId <= 0 || $waitlistId <= 0) {
+            return null;
+        }
+
+        $providerName = trim($providerName) !== '' ? trim($providerName) : 'A healthcare provider';
+        $bookUrl = '/views/patient/triage.php' . ($triageId > 0 ? ('?triage_id=' . $triageId) : '');
+
+        try {
+            $dedupe = $pdo->prepare("
+                SELECT id FROM notifications
+                WHERE user_id = ?
+                  AND related_table = 'patient_slot_waitlist'
+                  AND related_id = ?
+                  AND type = ?
+                  AND created_at > DATE_SUB(NOW(), INTERVAL 2 MINUTE)
+                LIMIT 1
+            ");
+            $dedupe->execute([
+                $patientId,
+                $waitlistId,
+                NotificationManager::TYPE_APPOINTMENT,
+            ]);
+            $existingId = (int) ($dedupe->fetchColumn() ?: 0);
+            if ($existingId > 0) {
+                return $existingId;
+            }
+        } catch (PDOException $e) {
+            error_log('consultationSlotAvailable dedupe: ' . $e->getMessage());
+        }
+
+        return NotificationManager::notifyPatient($pdo, $patientId, [
+            'sender_id'     => $providerId > 0 ? $providerId : null,
+            'type'          => NotificationManager::TYPE_APPOINTMENT,
+            'title'         => 'Consultation Slot Available',
+            'message'       => "A consultation slot is now available with {$providerName}. Your patient complaint was classified as NON-URGENT and you were previously waiting for provider availability. Please log in to medConnect to view and book an available consultation slot. Provider: {$providerName}.",
+            'action_url'    => $bookUrl,
+            'related_table' => 'patient_slot_waitlist',
+            'related_id'    => $waitlistId,
+            'priority'      => 'high',
+            'icon'          => 'calendar',
+            'email'         => true,
+        ]);
+    }
+
     public static function aiSelfCareReviewRequired(
         PDO $pdo,
         int $providerId,
@@ -973,15 +1028,55 @@ final class NotificationEvents
         int $triageId,
         ?int $senderId = null
     ): void {
+        $providerName = trim($providerName) !== '' ? trim($providerName) : 'your healthcare provider';
+        $complaint = '';
+        if ($triageId > 0) {
+            try {
+                $st = $pdo->prepare('SELECT chief_complaint FROM triage_results WHERE id = ? AND patient_id = ? LIMIT 1');
+                $st->execute([$triageId, $patientId]);
+                $complaint = trim((string) ($st->fetchColumn() ?: ''));
+            } catch (PDOException $e) {
+                $complaint = '';
+            }
+        }
+        $message = "Your patient complaint has been reviewed by {$providerName}. Your provider has also reviewed your care guidance.";
+        if ($complaint !== '') {
+            $message .= ' Patient Complaint: ' . $complaint . '.';
+        }
+        $message .= ' Triage Classification: Non-Urgent. Reviewed By: ' . $providerName . '. Status: Reviewed. Please log in to your medConnect account to view the reviewed information and continue with your consultation if applicable.';
+
+        try {
+            $dedupe = $pdo->prepare("
+                SELECT id FROM notifications
+                WHERE user_id = ?
+                  AND related_table = 'triage_results'
+                  AND related_id = ?
+                  AND title = ?
+                  AND created_at > DATE_SUB(NOW(), INTERVAL 10 MINUTE)
+                LIMIT 1
+            ");
+            $dedupe->execute([
+                $patientId,
+                $triageId,
+                'Your Patient Complaint Has Been Reviewed',
+            ]);
+            if ((int) ($dedupe->fetchColumn() ?: 0) > 0) {
+                return;
+            }
+        } catch (PDOException $e) {
+            error_log('careTipsApprovedForPatient dedupe: ' . $e->getMessage());
+        }
+
         NotificationManager::notifyPatient($pdo, $patientId, [
             'sender_id'     => $senderId ?? $providerId,
             'type'          => NotificationManager::TYPE_SUCCESS,
-            'title'         => 'Self-Care Guidance Ready',
-            'message'       => "{$providerName} reviewed your case. Open Care tips to view doctor-approved guidance.",
-            'action_url'    => '/views/patient/dashboard.php',
+            'title'         => 'Your Patient Complaint Has Been Reviewed',
+            'message'       => $message,
+            'action_url'    => '/views/patient/my_health.php?tab=care-tips',
             'related_table' => 'triage_results',
             'related_id'    => $triageId,
             'icon'          => 'heart',
+            'email'         => true,
         ]);
     }
 

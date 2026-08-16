@@ -52,7 +52,8 @@ $stats = [
     'urgent'       => 0,
     'ongoing'      => 0,
     'completed'    => 0,
-    'missed'       => 0
+    'missed'       => 0,
+    'slot_waiting' => 0,
 ];
 
 $hr = (int)date('H');
@@ -134,6 +135,9 @@ try {
     ");
     $s->execute([$providerId]);
     $stats['completed'] = (int) $s->fetchColumn();
+
+    require_once BASE_PATH . '/app/includes/patient_slot_waitlist.php';
+    $stats['slot_waiting'] = patient_slot_waitlist_count_for_provider($pdo, $providerId);
 
     // 6. Missed (Check if status exists, else fallback to 0)
     $stats['missed'] = 0;
@@ -233,7 +237,7 @@ try {
 } catch (Exception $e) {
     error_log("Data.php Error: " . $e->getMessage());
     // DB not ready — use safe empty defaults
-    $stats        = ['appointments' => 0, 'pending' => 0, 'urgent' => 0, 'ongoing' => 0, 'completed' => 0, 'missed' => 0];
+    $stats        = ['appointments' => 0, 'pending' => 0, 'urgent' => 0, 'ongoing' => 0, 'completed' => 0, 'missed' => 0, 'slot_waiting' => 0];
     $queue        = [];
     $triage_cases = [];
     $schedule     = [];

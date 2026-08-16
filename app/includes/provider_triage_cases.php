@@ -96,6 +96,8 @@ function provider_triage_cases_load(PDO $pdo, int $providerId): array
 
     $consultByTriage = provider_triage_linked_consultations($pdo, array_column($rows, 'id'));
     $reportByTriage = case_reports_active_map($pdo, array_column($rows, 'id'));
+    require_once __DIR__ . '/patient_slot_waitlist.php';
+    $waitByTriage = patient_slot_waitlist_map_for_triages($pdo, array_column($rows, 'id'));
 
     $cases = [];
     foreach ($rows as $t) {
@@ -294,6 +296,9 @@ function provider_triage_cases_load(PDO $pdo, int $providerId): array
 
         $reportMeta = $reportByTriage[(int) $t['id']] ?? null;
         $hasActiveReport = !empty($reportMeta['has_active']);
+        $waitRow = $waitByTriage[(int) $t['id']] ?? null;
+        $waitStatus = (string) ($waitRow['status'] ?? '');
+        $isWaitingSlot = in_array($waitStatus, ['waiting', 'slot_available'], true);
 
         $cases[] = [
             'id'                    => (int) $t['id'],
@@ -340,6 +345,14 @@ function provider_triage_cases_load(PDO $pdo, int $providerId): array
             'is_emergency'          => triage_case_is_emergency_row($t),
             'has_active_report'     => $hasActiveReport,
             'active_report_status'  => (string) ($reportMeta['status'] ?? ''),
+            'slot_wait_status'      => $waitStatus,
+            'slot_waiting'          => $isWaitingSlot && $waitStatus === 'waiting',
+            'slot_available_for_patient' => $isWaitingSlot && $waitStatus === 'slot_available',
+            'slot_waiting_since'    => (string) ($waitRow['waiting_since'] ?? ''),
+            'slot_waiting_since_label' => !empty($waitRow['waiting_since'])
+                ? date('M j, Y g:i A', strtotime((string) $waitRow['waiting_since']))
+                : '',
+            'care_tips_reviewed'    => $recStatus === 'approved',
             'workflow_badges'       => provider_triage_workflow_badges(
                 $status,
                 $recStatus,
@@ -347,7 +360,8 @@ function provider_triage_cases_load(PDO $pdo, int $providerId): array
                 $isBooked,
                 $consultationStatus,
                 $isTerminated,
-                $hasActiveReport
+                $hasActiveReport,
+                $waitStatus
             ),
         ];
     }
@@ -403,7 +417,8 @@ function provider_triage_workflow_badges(
     bool $isBooked,
     string $consultationStatus,
     bool $isTerminated = false,
-    bool $hasActiveReport = false
+    bool $hasActiveReport = false,
+    string $waitStatus = ''
 ): array {
     $badges = [];
 
@@ -430,8 +445,14 @@ function provider_triage_workflow_badges(
         $badges[] = ['class' => 'reviewed', 'label' => 'Reviewed'];
     }
 
+    if ($waitStatus === 'waiting') {
+        $badges[] = ['class' => 'slot-wait', 'label' => 'Waiting for Provider Availability'];
+    } elseif ($waitStatus === 'slot_available') {
+        $badges[] = ['class' => 'slot-open', 'label' => 'Consultation Slot Available'];
+    }
+
     if ($isBooked) {
-        $badges[] = ['class' => 'booked', 'label' => 'Booked'];
+        $badges[] = ['class' => 'booked', 'label' => 'Scheduled'];
     }
     if ($consultationStatus === 'completed') {
         $badges[] = ['class' => 'completed', 'label' => 'Completed'];
@@ -457,6 +478,9 @@ function provider_triage_case_is_active(array $t): bool
     if (!empty($t['is_booked'])) {
         $consultStatus = (string) ($t['consultation_status'] ?? '');
         return !in_array($consultStatus, ['completed', 'cancelled'], true);
+    }
+    if (!empty($t['slot_waiting']) || !empty($t['slot_available_for_patient'])) {
+        return true;
     }
 
     return false;

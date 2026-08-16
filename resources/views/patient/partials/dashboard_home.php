@@ -48,16 +48,22 @@ foreach ($upcoming_list as $c) {
     </div>
     <div class="pdash-hero__actions">
       <?php if (!empty($active_consultation) && in_array(strtolower((string) ($active_consultation['status'] ?? '')), ['pending', 'scheduled', 'waiting', 'in_consultation'], true)): ?>
-      <a href="#pdashActiveConsultation" class="pdash-btn pdash-btn--primary">View Active Consultation</a>
+      <a href="#pdashActiveConsultation" class="pdash-btn pdash-btn--primary" id="pdashHeroPrimary">View Active Consultation</a>
+      <a href="<?= ASSET_BASE ?>/views/patient/consultations.php" class="pdash-btn pdash-btn--outline">My Sessions</a>
+      <?php elseif (!empty($slot_wait_state['active']) && ($slot_wait_state['status'] ?? '') === 'slot_available'): ?>
+      <a href="#pdashSlotWait" class="pdash-btn pdash-btn--primary" id="pdashHeroPrimary">Book Consultation</a>
+      <a href="<?= ASSET_BASE ?>/views/patient/consultations.php" class="pdash-btn pdash-btn--outline">My Sessions</a>
+      <?php elseif (!empty($slot_wait_state['active'])): ?>
+      <a href="#pdashSlotWait" class="pdash-btn pdash-btn--primary" id="pdashHeroPrimary">View waiting status</a>
       <a href="<?= ASSET_BASE ?>/views/patient/consultations.php" class="pdash-btn pdash-btn--outline">My Sessions</a>
       <?php elseif (!empty($care_tips_ready_to_schedule['ready'])): ?>
-      <a href="#pdashCareTipsReady" class="pdash-btn pdash-btn--primary">Book Consultation</a>
+      <a href="#pdashCareTipsReady" class="pdash-btn pdash-btn--primary" id="pdashHeroPrimary">Book Consultation</a>
       <a href="<?= ASSET_BASE ?>/views/patient/consultations.php" class="pdash-btn pdash-btn--outline">My Sessions</a>
       <?php elseif (!empty($symptoms_review_pending['has_pending'])): ?>
-      <a href="#pdashSymptomsReview" class="pdash-btn pdash-btn--primary">View Review Status</a>
+      <a href="#pdashSymptomsReview" class="pdash-btn pdash-btn--primary" id="pdashHeroPrimary">View Review Status</a>
       <a href="<?= ASSET_BASE ?>/views/patient/consultations.php" class="pdash-btn pdash-btn--outline">My Sessions</a>
       <?php else: ?>
-      <a href="<?= ASSET_BASE ?>/views/patient/triage.php" class="pdash-btn pdash-btn--primary">Book New Consultation</a>
+      <a href="<?= ASSET_BASE ?>/views/patient/triage.php" class="pdash-btn pdash-btn--primary" id="pdashHeroPrimary">Book New Consultation</a>
       <a href="<?= ASSET_BASE ?>/views/patient/consultations.php" class="pdash-btn pdash-btn--outline">My Sessions</a>
       <?php endif; ?>
     </div>
@@ -84,15 +90,19 @@ foreach ($upcoming_list as $c) {
   </div>
   <?php endif; ?>
 
+  <div id="pdashPrimaryCard">
   <?php
   $symptoms_review_has_pending = !empty($symptoms_review_pending['has_pending']);
   $care_tips_ready = !empty($care_tips_ready_to_schedule['ready']);
   $has_active_consultation = !empty($active_consultation)
       && in_array(strtolower((string) ($active_consultation['status'] ?? '')), ['pending', 'scheduled', 'waiting', 'in_consultation'], true);
+  $has_slot_wait = !empty($slot_wait_state['active']);
 
   // Active scheduled/in-progress visit always wins over care-tips review / new complaint.
   if ($has_active_consultation):
       require __DIR__ . '/dashboard_active_consultation.php';
+  elseif ($has_slot_wait):
+      require __DIR__ . '/dashboard_slot_wait.php';
   elseif ($symptoms_review_has_pending && !empty($show_dashboard_care_tips_section)):
       require __DIR__ . '/dashboard_symptoms_review.php';
   elseif ($care_tips_ready):
@@ -101,6 +111,7 @@ foreach ($upcoming_list as $c) {
       require __DIR__ . '/dashboard_chief_complaint.php';
   endif;
   ?>
+  </div>
 
   <div class="pdash-metrics" aria-label="Health summary">
     <div class="pdash-metric <?= $dash_today_appts > 0 ? 'pdash-metric--accent' : '' ?>">

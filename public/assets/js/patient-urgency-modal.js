@@ -228,9 +228,9 @@
           return;
         }
 
-        var booked = data.booked !== false && !(data.awaiting_provider_review === true);
+        var booked = data.booked !== false && !(data.awaiting_provider_review === true) && !(data.waiting_for_slot === true);
         if (data.data && typeof data.data.booked !== 'undefined') {
-          booked = data.data.booked !== false && !data.data.awaiting_provider_review;
+          booked = data.data.booked !== false && !data.data.awaiting_provider_review && !data.data.waiting_for_slot;
         }
 
         if (!booked) {

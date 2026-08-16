@@ -19,6 +19,7 @@ $non_urgent_count = count(array_filter($display_cases, fn($t) => $t['urgency'] =
 $tips_pending_count = count(array_filter($display_cases, fn($t) => !empty($t['needs_tips_approval'])));
 $reviewed_count   = count(array_filter($display_cases, fn($t) => !empty($t['reviewed']) && empty($t['needs_tips_approval'])));
 $pending_count    = count(array_filter($display_cases, fn($t) => empty($t['reviewed'])));
+$slot_waiting_count = count(array_filter($display_cases, fn($t) => !empty($t['slot_waiting']) || !empty($t['slot_available_for_patient'])));
 ?>
 
 <div class="greeting-banner" style="margin-bottom:16px;">
@@ -72,6 +73,13 @@ $pending_count    = count(array_filter($display_cases, fn($t) => empty($t['revie
 <div class="triage-banner" style="margin-top:0;">
   <?= icon_col('alert', '#b45309') ?>
   <span><strong><?= (int) $tips_pending_count ?></strong> case(s) need a review decision. Open the case and choose <strong>Approve for Patient</strong> or <strong>Withhold Guidance</strong>.</span>
+</div>
+<?php endif; ?>
+
+<?php if ($slot_waiting_count > 0 && $module_tab === 'active'): ?>
+<div class="triage-banner" style="margin-top:0;">
+  <?= icon_col('alert', '#0f766e') ?>
+  <span><strong><?= (int) $slot_waiting_count ?></strong> non-urgent patient(s) are waiting for a consultation slot. They stay on this case — no duplicate record is created.</span>
 </div>
 <?php endif; ?>
 
@@ -170,6 +178,9 @@ $pending_count    = count(array_filter($display_cases, fn($t) => empty($t['revie
               <span class="triage-badge triage-badge--pending">Pending</span>
               <?php endif; ?>
             </div>
+            <?php if (!empty($t['slot_waiting_since_label'])): ?>
+            <div class="triage-wait-meta">Waiting since <?= htmlspecialchars((string) $t['slot_waiting_since_label']) ?></div>
+            <?php endif; ?>
           </td>
           <td data-label="Action">
             <div class="triage-actions">
@@ -214,6 +225,13 @@ $pending_count    = count(array_filter($display_cases, fn($t) => empty($t['revie
           <h3 id="triageChiefComplaintHeading" class="triage-review-section__title">Patient Complaint</h3>
         </div>
         <div id="modalComplaint" class="triage-modal-box triage-modal-box--complaint"></div>
+      </section>
+
+      <section id="modalWaitlistSection" class="triage-review-section" hidden>
+        <div class="triage-review-section__head">
+          <h3 class="triage-review-section__title">Slot waiting queue</h3>
+        </div>
+        <div id="modalWaitlistBody" class="triage-modal-box"></div>
       </section>
 
       <section id="modalNlpAnalysis" class="triage-review-section triage-assess-panel" aria-labelledby="triageNlpHeading">

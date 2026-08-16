@@ -137,9 +137,19 @@ function patient_cancel_consultation(PDO $pdo, int $patientId, int $consultation
         return ['ok' => false, 'message' => 'Could not cancel appointment. Please try again.'];
     }
 
-    // Unlock previous care-tips / chief complaint so the patient can start a new case.
-    require_once __DIR__ . '/patient_booking_status.php';
-    patient_triage_close_cases_for_consultation($pdo, $consultationId);
+    // NON-URGENT waitlist bookings return to the queue instead of wiping the case.
+    $requeued = false;
+    try {
+        require_once __DIR__ . '/patient_slot_waitlist.php';
+        $requeued = patient_slot_waitlist_requeue_after_cancel($pdo, $patientId, $consultationId);
+    } catch (Throwable $e) {
+        error_log('patient_cancel_consultation requeue: ' . $e->getMessage());
+    }
+
+    if (!$requeued) {
+        require_once __DIR__ . '/patient_booking_status.php';
+        patient_triage_close_cases_for_consultation($pdo, $consultationId);
+    }
 
     $providerId = (int) ($row['provider_id'] ?? 0);
     $reasonNote = trim($reason);
@@ -155,11 +165,23 @@ function patient_cancel_consultation(PDO $pdo, int $patientId, int $consultation
         NotificationEvents::appointmentCancelled($pdo, $consultationId, $patientId, $providerId, $patientId);
     }
 
+    if ($requeued || $slotsFreed > 0) {
+        try {
+            require_once __DIR__ . '/patient_slot_waitlist.php';
+            patient_slot_waitlist_after_slots_changed($pdo);
+        } catch (Throwable $e) {
+            error_log('patient_cancel_consultation waitlist: ' . $e->getMessage());
+        }
+    }
+
     return [
         'ok' => true,
-        'message' => 'Appointment cancelled. The doctor’s time slot is free again for other patients.',
+        'message' => $requeued
+            ? 'Appointment cancelled. Your case stays in the waiting queue — we will notify you when the next slot is available.'
+            : 'Appointment cancelled. The doctor’s time slot is free again for other patients.',
         'slots_freed' => $slotsFreed,
         'consultation_id' => $consultationId,
+        'requeued' => $requeued,
     ];
 }
 

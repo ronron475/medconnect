@@ -462,6 +462,11 @@ function patient_triage_close_cases_for_consultation(PDO $pdo, int $consultation
             WHERE id IN ({$placeholders})
               AND patient_id = ?
         ")->execute($params);
+
+        require_once __DIR__ . '/patient_slot_waitlist.php';
+        foreach (array_keys($triageIds) as $tid) {
+            patient_slot_waitlist_cancel_for_triage($pdo, (int) $tid);
+        }
     } catch (Throwable $e) {
         // non-fatal
     }

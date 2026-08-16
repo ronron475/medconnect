@@ -139,7 +139,7 @@ $locked_alternate_available = !empty($locked_alternate_available);
     <?php elseif (!empty($review_booking_ctx['locked']) && !$locked_assigned_has_slots && !$locked_alternate_available): ?>
     <div class="patient-triage-alert patient-triage-alert--warning is-visible patient-triage-alert--spaced-sm" role="status">
       <strong><?= htmlspecialchars($locked_provider_name) ?></strong> has no open slots today, and no other doctor has clinic hours right now.
-      Please contact the City Health Office or try again on the next clinic day.
+      You are in the waiting queue. We will notify you by email when a consultation slot becomes available — you do not need to start over.
     </div>
     <?php endif; ?>
 

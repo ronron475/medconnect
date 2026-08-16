@@ -331,6 +331,37 @@ function triage_patient_request_alternate_booking_provider(PDO $pdo, int $patien
 
     triage_bind_assigned_provider($pdo, $triageId, $newId);
 
+    try {
+        require_once __DIR__ . '/patient_slot_waitlist.php';
+        if (patient_slot_waitlist_table_ready($pdo)) {
+            $displayName = triage_provider_display_name($pdo, $newId);
+            $pdo->prepare("
+                UPDATE patient_slot_waitlist
+                SET assigned_provider_id = ?,
+                    eligible_provider_id = ?,
+                    eligible_provider_name = ?,
+                    status = 'waiting',
+                    waiting_since = NOW(),
+                    slot_available_at = NULL,
+                    notified_at = NULL,
+                    availability_key = NULL,
+                    updated_at = NOW()
+                WHERE patient_id = ?
+                  AND triage_result_id = ?
+                  AND status IN ('waiting', 'slot_available')
+            ")->execute([
+                $newId,
+                $newId,
+                $displayName !== '' ? $displayName : null,
+                $patientId,
+                $triageId,
+            ]);
+            patient_slot_waitlist_after_slots_changed($pdo);
+        }
+    } catch (Throwable $e) {
+        error_log('triage_patient_request_alternate_booking_provider waitlist: ' . $e->getMessage());
+    }
+
     require_once __DIR__ . '/audit_log.php';
     audit_log($pdo, [
         'patient_id' => $patientId,
@@ -365,6 +396,15 @@ function triage_assert_patient_may_book_provider(PDO $pdo, int $patientId, int $
     }
     if ((int) $ctx['provider_id'] === $providerId) {
         return;
+    }
+
+    try {
+        require_once __DIR__ . '/patient_slot_waitlist.php';
+        if (patient_slot_waitlist_patient_may_book_provider($pdo, $patientId, $providerId)) {
+            return;
+        }
+    } catch (Throwable $e) {
+        // keep assigned-doctor lock
     }
 
     $name = trim((string) ($ctx['provider_name'] ?? ''));

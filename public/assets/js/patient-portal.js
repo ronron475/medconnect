@@ -1225,9 +1225,10 @@
         }
 
         if (data.success) {
-          const booked = data.booked !== false && !data.awaiting_provider_review;
+          const booked = data.booked !== false && !data.awaiting_provider_review && !data.waiting_for_slot;
           const emergency = data.emergency === true;
           const awaitingReview = data.awaiting_provider_review === true;
+          const waitingForSlot = data.waiting_for_slot === true;
           try {
             sessionStorage.removeItem('medconnect_pending_nlp_result');
             sessionStorage.removeItem('medconnect_prefer_earliest_slot');
@@ -1250,6 +1251,20 @@
             if (submitBtn) submitBtn.disabled = true;
             const providerSelect = document.getElementById('booking_provider');
             if (providerSelect) providerSelect.disabled = true;
+          } else if (waitingForSlot) {
+            showTriageAlert(
+              alertEl,
+              'success',
+              data.message ||
+                'No suitable doctor schedule is currently available. You are in the waiting queue and will be notified by email when a slot opens.'
+            );
+            if (submitBtn) submitBtn.disabled = false;
+            if (window.MedConnectLiveSync && typeof window.MedConnectLiveSync.refresh === 'function') {
+              window.MedConnectLiveSync.refresh();
+            }
+            setTimeout(function () {
+              window.location.href = APP_BASE + '/views/patient/dashboard.php';
+            }, 1200);
           } else if (awaitingReview) {
             showTriageAlert(
               alertEl,

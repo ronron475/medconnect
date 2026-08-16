@@ -124,5 +124,14 @@ function consultations_auto_expire(PDO $pdo, ?int $patient_id = null, ?int $prov
         $end_video->execute([$id]);
     }
 
+    if ($updated > 0) {
+        try {
+            require_once __DIR__ . '/patient_slot_waitlist.php';
+            patient_slot_waitlist_after_slots_changed($pdo);
+        } catch (Throwable $e) {
+            error_log('consultations_auto_expire waitlist: ' . $e->getMessage());
+        }
+    }
+
     return $updated;
 }
