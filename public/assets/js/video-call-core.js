@@ -25,6 +25,40 @@
     permission: 'Allow camera & microphone…',
   };
 
+  /**
+   * One stable audio-only MediaStream is reused for the whole call. Re-assigning
+   * audioEl.srcObject aborts any in-flight play() promise, which browsers surface as
+   * an AbortError that is indistinguishable from a blocked autoplay — so the element
+   * would be treated as "blocked" and left silent. Mutating one stream in place
+   * avoids that entirely.
+   */
+  let remoteAudioStream = null;
+
+  const diagnostics = {
+    remoteAudioTracks: 0,
+    remoteVideoTracks: 0,
+    audioElementPlaying: false,
+    audioPlaybackVia: 'none',
+    lastPlayError: '',
+    connectionState: '',
+    iceConnectionState: '',
+    signalingState: '',
+  };
+
+  function debugEnabled() {
+    try {
+      if (/[?&]mcdebug=1/.test(global.location.search || '')) return true;
+      return global.localStorage && global.localStorage.getItem('mc_webrtc_debug') === '1';
+    } catch (e) {
+      return false;
+    }
+  }
+
+  function debugLog() {
+    if (!debugEnabled() || typeof console === 'undefined' || !console.debug) return;
+    console.debug.apply(console, ['[McVideoCallCore]'].concat(Array.prototype.slice.call(arguments)));
+  }
+
   function ensureRemoteAudioEl() {
     let el = document.getElementById('remoteAudio');
     if (!el) {
@@ -41,6 +75,28 @@
     return el;
   }
 
+  /** Mutate the stable remote audio stream in place to match the incoming audio tracks. */
+  function syncRemoteAudioStream(audioTracks) {
+    if (!remoteAudioStream) remoteAudioStream = new MediaStream();
+    const existing = remoteAudioStream.getAudioTracks();
+
+    existing.forEach((track) => {
+      const stillPresent = audioTracks.some((t) => t.id === track.id);
+      if (!stillPresent || track.readyState === 'ended') {
+        try { remoteAudioStream.removeTrack(track); } catch (e) {}
+      }
+    });
+
+    audioTracks.forEach((track) => {
+      const alreadyAdded = remoteAudioStream.getAudioTracks().some((t) => t.id === track.id);
+      if (!alreadyAdded) {
+        try { remoteAudioStream.addTrack(track); } catch (e) {}
+      }
+    });
+
+    return remoteAudioStream;
+  }
+
   /**
    * Attach remote MediaStream for viewing + reliable Chrome audio playback.
    * Uses an audio-only MediaStream on #remoteAudio, and falls back to unmuted <video>.
@@ -55,6 +111,9 @@
       try { t.enabled = true; } catch (e) {}
     });
 
+    diagnostics.remoteAudioTracks = audioTracks.length;
+    diagnostics.remoteVideoTracks = stream.getVideoTracks ? stream.getVideoTracks().length : 0;
+
     if (!stream._mcTrackListener) {
       stream._mcTrackListener = true;
       stream.addEventListener('addtrack', (ev) => {
@@ -66,40 +125,51 @@
     }
 
     if (videoEl) {
-      videoEl.srcObject = stream;
+      if (videoEl.srcObject !== stream) videoEl.srcObject = stream;
       videoEl.playsInline = true;
       // Start muted so Chrome allows autoplay; unlockRemoteAudio unmutes after gesture / permission.
       videoEl.muted = true;
-      const vp = videoEl.play();
-      if (vp && typeof vp.catch === 'function') vp.catch(() => {});
+      if (videoEl.paused) {
+        const vp = videoEl.play();
+        if (vp && typeof vp.catch === 'function') vp.catch(() => {});
+      }
     }
 
     // Audio element must use audio tracks only — some Chrome builds ignore audio on mixed streams.
-    try {
-      audioEl.srcObject = audioTracks.length
-        ? new MediaStream(audioTracks)
-        : stream;
-    } catch (e) {
-      audioEl.srcObject = stream;
-    }
+    const audioStream = syncRemoteAudioStream(audioTracks);
+    if (audioEl.srcObject !== audioStream) audioEl.srcObject = audioStream;
     audioEl.muted = false;
     audioEl.volume = 1;
 
+    // Nothing to play yet. Stay silent rather than reporting success: the ontrack /
+    // addtrack handlers re-enter here once the audio track actually arrives.
+    if (!audioTracks.length) {
+      diagnostics.audioPlaybackVia = 'none';
+      diagnostics.audioElementPlaying = false;
+      debugLog('remote stream has no audio track yet', { videoTracks: diagnostics.remoteVideoTracks });
+      return Promise.resolve(false);
+    }
+
     const tryPlayAudio = () => {
+      if (!audioEl.paused) return Promise.resolve(true);
       const p = audioEl.play();
       if (p && typeof p.catch === 'function') {
-        return p.then(() => true).catch(() => false);
+        return p.then(() => true).catch((err) => {
+          diagnostics.lastPlayError = (err && err.name) || 'PlayError';
+          return false;
+        });
       }
       return Promise.resolve(true);
     };
 
     const tryUnmuteVideo = () => {
-      if (!videoEl) return Promise.resolve(false);
+      if (!videoEl || !videoEl.srcObject) return Promise.resolve(false);
       videoEl.muted = false;
       videoEl.volume = 1;
       const p = videoEl.play();
       if (p && typeof p.catch === 'function') {
-        return p.then(() => true).catch(() => {
+        return p.then(() => true).catch((err) => {
+          diagnostics.lastPlayError = (err && err.name) || 'PlayError';
           videoEl.muted = true;
           return false;
         });
@@ -112,15 +182,24 @@
         // Avoid double playback: keep video muted when dedicated audio works.
         if (videoEl) videoEl.muted = true;
         if (enableSoundBtn) enableSoundBtn.hidden = true;
+        diagnostics.audioPlaybackVia = 'audio-element';
+        diagnostics.audioElementPlaying = true;
+        debugLog('remote audio playing via #remoteAudio', { tracks: audioTracks.length });
         return true;
       }
       return tryUnmuteVideo().then((videoOk) => {
         if (videoOk) {
           try { audioEl.pause(); } catch (e) {}
           if (enableSoundBtn) enableSoundBtn.hidden = true;
+          diagnostics.audioPlaybackVia = 'video-element';
+          diagnostics.audioElementPlaying = true;
+          debugLog('remote audio playing via unmuted #remoteVideo');
           return true;
         }
         if (enableSoundBtn) enableSoundBtn.hidden = false;
+        diagnostics.audioPlaybackVia = 'blocked';
+        diagnostics.audioElementPlaying = false;
+        debugLog('remote audio blocked', { lastPlayError: diagnostics.lastPlayError });
         return false;
       });
     });
@@ -131,15 +210,15 @@
     const videoEl = document.getElementById('remoteVideo');
     const enableSoundBtn = options.enableSoundBtn || document.getElementById('enableSoundBtn');
 
-    if (!audioEl.srcObject && videoEl && videoEl.srcObject) {
-      const tracks = videoEl.srcObject.getAudioTracks ? videoEl.srcObject.getAudioTracks() : [];
-      try {
-        audioEl.srcObject = tracks.length ? new MediaStream(tracks) : videoEl.srcObject;
-      } catch (e) {
-        audioEl.srcObject = videoEl.srcObject;
-      }
+    if (videoEl && videoEl.srcObject && videoEl.srcObject.getAudioTracks) {
+      syncRemoteAudioStream(videoEl.srcObject.getAudioTracks());
     }
-    if (!audioEl.srcObject && !(videoEl && videoEl.srcObject)) {
+    if (remoteAudioStream && audioEl.srcObject !== remoteAudioStream) {
+      audioEl.srcObject = remoteAudioStream;
+    }
+
+    const hasAudioTrack = !!(remoteAudioStream && remoteAudioStream.getAudioTracks().length);
+    if (!hasAudioTrack && !(videoEl && videoEl.srcObject)) {
       return Promise.resolve(false);
     }
 
@@ -147,10 +226,14 @@
     audioEl.volume = 1;
 
     const playAudio = () => {
-      if (!audioEl.srcObject) return Promise.resolve(false);
+      if (!hasAudioTrack) return Promise.resolve(false);
+      if (!audioEl.paused) return Promise.resolve(true);
       const p = audioEl.play();
       if (p && typeof p.catch === 'function') {
-        return p.then(() => true).catch(() => false);
+        return p.then(() => true).catch((err) => {
+          diagnostics.lastPlayError = (err && err.name) || 'PlayError';
+          return false;
+        });
       }
       return Promise.resolve(true);
     };
@@ -173,18 +256,63 @@
       if (ok) {
         if (videoEl) videoEl.muted = true;
         if (enableSoundBtn) enableSoundBtn.hidden = true;
+        diagnostics.audioPlaybackVia = 'audio-element';
+        diagnostics.audioElementPlaying = true;
         return true;
       }
       return playVideo().then((vOk) => {
         if (vOk) {
           try { audioEl.pause(); } catch (e) {}
           if (enableSoundBtn) enableSoundBtn.hidden = true;
+          diagnostics.audioPlaybackVia = 'video-element';
+          diagnostics.audioElementPlaying = true;
           return true;
         }
         if (enableSoundBtn) enableSoundBtn.hidden = false;
+        diagnostics.audioPlaybackVia = 'blocked';
+        diagnostics.audioElementPlaying = false;
+        debugLog('unlock failed', { lastPlayError: diagnostics.lastPlayError });
         return false;
       });
     });
+  }
+
+  /**
+   * Snapshot of the real media pipeline. Developer-facing only:
+   * enable with ?mcdebug=1 or localStorage.mc_webrtc_debug = '1'.
+   */
+  function getDiagnostics(peerConnection, localStream) {
+    const audioEl = document.getElementById('remoteAudio');
+    const videoEl = document.getElementById('remoteVideo');
+    const localAudio = localStream && localStream.getAudioTracks ? localStream.getAudioTracks()[0] : null;
+    const remoteAudio = remoteAudioStream ? remoteAudioStream.getAudioTracks()[0] : null;
+
+    if (peerConnection) {
+      diagnostics.connectionState = peerConnection.connectionState || '';
+      diagnostics.iceConnectionState = peerConnection.iceConnectionState || '';
+      diagnostics.signalingState = peerConnection.signalingState || '';
+    }
+
+    return {
+      connectionState: diagnostics.connectionState,
+      iceConnectionState: diagnostics.iceConnectionState,
+      signalingState: diagnostics.signalingState,
+      localAudioTrack: localAudio
+        ? { enabled: localAudio.enabled, muted: localAudio.muted, readyState: localAudio.readyState, label: localAudio.label }
+        : null,
+      remoteAudioTrack: remoteAudio
+        ? { enabled: remoteAudio.enabled, muted: remoteAudio.muted, readyState: remoteAudio.readyState }
+        : null,
+      remoteAudioTracks: diagnostics.remoteAudioTracks,
+      remoteVideoTracks: diagnostics.remoteVideoTracks,
+      remoteStreamExists: !!(videoEl && videoEl.srcObject),
+      audioElement: audioEl
+        ? { paused: audioEl.paused, muted: audioEl.muted, volume: audioEl.volume, hasSrc: !!audioEl.srcObject }
+        : null,
+      videoElementMuted: videoEl ? videoEl.muted : null,
+      audioPlaybackVia: diagnostics.audioPlaybackVia,
+      lastPlayError: diagnostics.lastPlayError,
+    };
   }
 
   function getAudioConstraints() {
@@ -293,5 +421,7 @@
     connectionLabelFor,
     stopStreamTracks,
     ensureRemoteAudioEl,
+    getDiagnostics,
+    debugEnabled,
   };
 })(window);

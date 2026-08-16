@@ -8,6 +8,29 @@
   const MAX_CHARS = 500;
   const spokenIds = new Set();
   const recentSpokenTexts = new Map();
+  const SPEECH_PREF_KEY = 'mc_tts_read_aloud';
+
+  /**
+   * Read-aloud is an accessibility aid, so it stays on by default, but it must be
+   * something the user can switch off. Only incoming typed-voice messages are ever
+   * spoken — never UI labels, button names or connection status.
+   */
+  function speechEnabled() {
+    try {
+      return global.localStorage.getItem(SPEECH_PREF_KEY) !== '0';
+    } catch (e) {
+      return true;
+    }
+  }
+
+  function setSpeechEnabled(on) {
+    try {
+      global.localStorage.setItem(SPEECH_PREF_KEY, on ? '1' : '0');
+    } catch (e) { /* preference is best-effort */ }
+    if (!on && 'speechSynthesis' in global) {
+      try { global.speechSynthesis.cancel(); } catch (e) {}
+    }
+  }
 
   function markSpoken(text, id) {
     if (id) spokenIds.add(String(id));
@@ -57,6 +80,9 @@
     if (wasRecentlySpoken(message.message, id)) return;
     markSpoken(message.message, id);
 
+    // A manual replay always speaks; automatic playback honours the toggle.
+    if (!options.force && !speechEnabled()) return;
+
     const onReplay = options.onReplay;
     speakText(message.message, options).then(() => {
       if (typeof onReplay === 'function') onReplay(message);
@@ -89,6 +115,7 @@
     const remoteMuteBanner = document.getElementById('remoteMuteBanner');
     const closeBtn = document.getElementById('muteTtsCloseBtn');
     const receiveCloseBtn = document.getElementById('muteTtsReceiveCloseBtn');
+    const speechToggle = document.getElementById('muteTtsSpeechToggle');
     const ttsOpenBtn = document.getElementById('mcVcTtsBtn');
 
     let micMuted = false;
@@ -157,6 +184,7 @@
       const replay = item.querySelector('.mute-tts-replay');
       if (replay) {
         replay.addEventListener('click', () => speakText(text));
+        replay.setAttribute('aria-label', 'Play this message as speech');
       }
       target.prepend(item);
       while (target.children.length > 12) {
@@ -461,6 +489,23 @@
       event.stopPropagation();
       hideReceivePanel();
     });
+
+    function renderSpeechToggle() {
+      if (!speechToggle) return;
+      const on = speechEnabled();
+      speechToggle.textContent = on ? '🔊 Read aloud' : '🔇 Read aloud off';
+      speechToggle.setAttribute('aria-pressed', on ? 'true' : 'false');
+      speechToggle.setAttribute('aria-label', on ? 'Turn read-aloud off' : 'Turn read-aloud on');
+    }
+    if (speechToggle) {
+      renderSpeechToggle();
+      speechToggle.addEventListener('click', (event) => {
+        event.preventDefault();
+        event.stopPropagation();
+        setSpeechEnabled(!speechEnabled());
+        renderSpeechToggle();
+      });
+    }
     banner?.addEventListener('click', () => {
       if (micMuted) openComposer({ silent: true });
     });
@@ -489,5 +534,7 @@
     speakText,
     playMuteTtsMessage,
     createController,
+    speechEnabled,
+    setSpeechEnabled,
   };
 })(window);

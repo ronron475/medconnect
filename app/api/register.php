@@ -216,9 +216,9 @@ if (empty($_SESSION['ocr_bago_city'])) {
 }
 
 // ── Uniqueness checks ───────────────────────────────────────
-$stmt = $pdo->prepare("SELECT id FROM patient_registrations WHERE national_id = ? LIMIT 1");
-$stmt->execute([$national_id_hash]);
-if ($stmt->fetch()) {
+patient_registration_release_orphan_national_id($pdo, $national_id_raw);
+$existingNid = patient_registration_find_by_national_id($pdo, $national_id_raw);
+if ($existingNid) {
     logActivity($pdo, null, 'submit_attempt', 'blocked', 'Duplicate National ID.', $national_id_hash, $ip, $user_agent);
     echo json_encode(['success' => false, 'message' => 'An account with this National ID already exists.']);
     exit;

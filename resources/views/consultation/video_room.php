@@ -639,7 +639,7 @@ if (session_status() === PHP_SESSION_ACTIVE) {
   <?php if (!$is_patient): ?>
   <div class="mc-vc-top-actions" id="topActions">
     <a href="<?= htmlspecialchars(ASSET_BASE . '/views/provider/consultation_session.php?id=' . $consultation_id) ?>" id="sessionAiLink">Session &amp; AI</a>
-    <button type="button" id="minimizeVideoBtn" style="display:none;">Minimize video</button>
+    <?php /* Minimize lives in the call control bar only (#mcVcMinimizeBtn). */ ?>
     <button type="button" id="compactModeBtn">Compact view</button>
   </div>
   <?php endif; ?>
@@ -721,7 +721,7 @@ if (session_status() === PHP_SESSION_ACTIVE) {
           <button class="mc-vc-btn btn-mute" id="muteAudio" onclick="toggleAudio()" title="Mute microphone" aria-pressed="false" aria-label="Mute microphone">
             <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v1a7 7 0 0 1-14 0v-1M12 18v4M8 22h8"/></svg>
           </button>
-          <button class="mc-vc-btn btn-mute" id="toggleVideo" onclick="toggleVideo()" title="Turn camera on or off" aria-label="Toggle camera">
+          <button class="mc-vc-btn btn-mute" id="toggleVideo" onclick="toggleVideo()" title="Turn camera off" aria-pressed="false" aria-label="Turn camera off">
             <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><path d="m23 7-7 5 7 5V7z"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/></svg>
           </button>
           <button type="button" class="mc-vc-btn mc-vc-btn--mobile-only" id="mcVcFlipBtn" title="Switch camera" aria-label="Switch front or back camera">
@@ -744,7 +744,7 @@ if (session_status() === PHP_SESSION_ACTIVE) {
           <?php if (!$is_patient): ?>
           <button type="button" class="mc-vc-btn mc-vc-btn--report" id="violationReportBtn" title="Report possible violation" aria-label="Report possible violation">Report</button>
           <?php endif; ?>
-          <button type="button" class="mc-vc-btn mc-vc-btn--end btn-end" id="endCallBtn"><?= $is_patient ? 'Leave' : 'End Consultation' ?></button>
+          <button type="button" class="mc-vc-btn mc-vc-btn--end btn-end" id="endCallBtn" aria-label="<?= $is_patient ? 'Leave consultation' : 'End consultation' ?>"><?= $is_patient ? 'Leave' : 'End Consultation' ?></button>
         </div>
       </div>
     </div>
@@ -805,6 +805,7 @@ if (session_status() === PHP_SESSION_ACTIVE) {
   <div id="muteTtsReceivePanel" class="mute-tts-receive-panel" aria-label="<?= $is_patient ? 'Messages from provider' : 'Messages from patient' ?>">
     <div class="mute-tts-receive-panel__head">
       <div class="mute-tts-receive-panel__title"><?= $is_patient ? 'Messages from provider' : 'Messages from patient' ?></div>
+      <button type="button" class="mute-tts-speech-toggle" id="muteTtsSpeechToggle" aria-pressed="true" aria-label="Turn read-aloud off" title="Read incoming messages aloud">🔊 Read aloud</button>
       <button type="button" class="mute-tts-panel__close" id="muteTtsReceiveCloseBtn" aria-label="Close incoming messages" title="Close">×</button>
     </div>
     <div id="muteTtsReceiveLog" class="mute-tts-receive-log mute-tts-log" aria-live="polite"></div>
@@ -881,12 +882,10 @@ if (session_status() === PHP_SESSION_ACTIVE) {
       secure: true,
       debug: demoMode ? 1 : 0,
       config: {
-        iceServers: [
-          { urls: 'stun:stun.l.google.com:19302' },
-          { urls: 'stun:stun1.l.google.com:19302' }
-        ]
+        iceServers: <?= json_encode(medconnect_ice_servers(), JSON_UNESCAPED_SLASHES) ?>
       }
     };
+    const hasTurnServer = <?= medconnect_has_turn_server() ? 'true' : 'false' ?>;
     let myPeerJsId = null;
     let remoteDiscoveredId = null;
     let demoBus = null;
@@ -909,6 +908,9 @@ if (session_status() === PHP_SESSION_ACTIVE) {
     let muteTts = null;
     let remoteMediaUnlocked = false;
     let silentAudioFallback = null;
+    let localMicUnavailable = false;
+    let remoteMicUnavailable = false;
+    let navigationIssued = false;
     let patientMayDial = false;
     let mediaJoinAt = 0;
     let callHasRemoteStream = false;
@@ -1136,11 +1138,10 @@ if (session_status() === PHP_SESSION_ACTIVE) {
       setCallPhase(window.McVideoCallCore ? window.McVideoCallCore.STATUS.RECONNECTING : 'reconnecting', {
         callStatusText: 'Connection interrupted — tap Retry if this persists',
       });
+      // The stage overlay owns the single Retry control. Showing the waiting
+      // card's retry as well put two identical buttons on screen at once.
       if (consultUi && typeof consultUi.setConnectionFailed === 'function') {
         consultUi.setConnectionFailed(true);
-      }
-      if (window.McVideoRoomEnhancements && typeof McVideoRoomEnhancements.setWaitingRetryVisible === 'function') {
-        McVideoRoomEnhancements.setWaitingRetryVisible(true);
       }
       console.warn('[medConnect] WebRTC connection failed:', reason);
     }
@@ -1178,10 +1179,12 @@ if (session_status() === PHP_SESSION_ACTIVE) {
         if (muteTts && typeof muteTts.syncMuteStateToPeer === 'function') {
           muteTts.syncMuteStateToPeer();
         }
+        announceLocalMicState();
       });
 
       rtc.on('data', function (ev) {
         if (handlePeerLeftMessage(ev.data)) return;
+        if (handleMicStateMessage(ev.data)) return;
         if (muteTts) muteTts.handleIncomingData(ev.data);
       });
 
@@ -1245,6 +1248,14 @@ if (session_status() === PHP_SESSION_ACTIVE) {
 
       rtc.on('call-error', function (ev) {
         console.error('Call error:', ev.error);
+      });
+
+      rtc.on('ice-state', function (ev) {
+        logCallDiagnostics('ice-state: ' + (ev.iceConnectionState || '?') + '/' + (ev.connectionState || '?'));
+      });
+
+      rtc.on('remote-video-attached', function (ev) {
+        logCallDiagnostics('remote-video-attached audioUnlocked=' + !!(ev && ev.audioUnlocked));
       });
 
       rtc.on('disconnected', function () {
@@ -1327,6 +1338,8 @@ if (session_status() === PHP_SESSION_ACTIVE) {
       if (muteTts && typeof muteTts.syncMuteStateToPeer === 'function') {
         muteTts.syncMuteStateToPeer();
       }
+      announceLocalMicState();
+      logCallDiagnostics('remote-stream-received');
     }
 
     async function createSilentMediaStream() {
@@ -1356,6 +1369,63 @@ if (session_status() === PHP_SESSION_ACTIVE) {
       if (window.McVideoCallCore) {
         window.McVideoCallCore.updateMediaStatusUI(localStream, extras);
       }
+    }
+
+    /**
+     * Keep a toggle's visual state, tooltip and accessible name in one place —
+     * a screen reader user previously always heard "Mute microphone", even when
+     * the mic was already muted.
+     */
+    function syncToggleButtonUi(id, isOff, onLabel, offLabel) {
+      const btn = document.getElementById(id);
+      if (!btn) return;
+      btn.classList.toggle('off', isOff);
+      btn.setAttribute('aria-pressed', isOff ? 'true' : 'false');
+      const label = isOff ? offLabel : onLabel;
+      btn.setAttribute('aria-label', label);
+      btn.setAttribute('title', label);
+    }
+
+    function syncMicButtonUi(muted) {
+      syncToggleButtonUi('muteAudio', muted, 'Mute microphone', 'Unmute microphone');
+    }
+
+    function syncCameraButtonUi(off) {
+      syncToggleButtonUi('toggleVideo', off, 'Turn camera off', 'Turn camera on');
+    }
+
+    /** Developer-only. Enable with ?mcdebug=1 or localStorage.mc_webrtc_debug = '1'. */
+    function logCallDiagnostics(context) {
+      if (!window.McVideoCallCore || !McVideoCallCore.debugEnabled()) return;
+      const pc = window.McWebrtcPeerCall ? McWebrtcPeerCall.getPeerConnection() : null;
+      console.debug('[medConnect webrtc]', context || '', McVideoCallCore.getDiagnostics(pc, localStream));
+    }
+
+    if (!hasTurnServer && window.McVideoCallCore && McVideoCallCore.debugEnabled()) {
+      console.warn('[medConnect webrtc] No TURN relay configured — calls over mobile data may fail to connect. Set MEDCONNECT_TURN_* in .env.');
+    }
+
+    /**
+     * The silent-oscillator fallback keeps PeerJS connectable when the mic is
+     * unavailable, but it transmits silence. Without this notice the other side
+     * sees a healthy "Connected" call and simply hears nothing.
+     */
+    function announceLocalMicState() {
+      sendMuteData({
+        type: 'mc_mic_state',
+        role: userRole,
+        available: !localMicUnavailable,
+      });
+    }
+
+    function handleMicStateMessage(data) {
+      if (!data || data.type !== 'mc_mic_state' || data.role === userRole) return false;
+      const banner = document.getElementById('callStatus');
+      if (!data.available && banner) {
+        banner.textContent = 'Connected — the other participant\u2019s microphone is unavailable. Use chat or typed voice.';
+      }
+      remoteMicUnavailable = !data.available;
+      return true;
     }
 
     function setCallPhase(statusKey, overrides = {}) {
@@ -1694,9 +1764,10 @@ if (session_status() === PHP_SESSION_ACTIVE) {
             // Chrome dual-tab: camera/mic may be locked by the other tab. Join with silent track so PeerJS can still connect.
             try {
               localStream = await createSilentMediaStream();
+              localMicUnavailable = true;
               setPermissionStatus('Mic busy in the other tab â€” joined with silent audio so the call can connect. Use mute TTS to type.');
-              document.getElementById('muteAudio').classList.add('off');
-              document.getElementById('toggleVideo').classList.add('off');
+              syncMicButtonUi(true);
+              syncCameraButtonUi(true);
             } catch (silentErr) {
               document.getElementById('btnAllowBoth').disabled = false;
               document.getElementById('btnAllowAudio').disabled = false;
@@ -1713,9 +1784,10 @@ if (session_status() === PHP_SESSION_ACTIVE) {
         } else {
           try {
             localStream = await createSilentMediaStream();
+            localMicUnavailable = true;
             setPermissionStatus('Microphone unavailable â€” joined with silent audio. Mute TTS still works for typed voice.');
-            document.getElementById('muteAudio').classList.add('off');
-            document.getElementById('toggleVideo').classList.add('off');
+            syncMicButtonUi(true);
+            syncCameraButtonUi(true);
           } catch (silentErr) {
             document.getElementById('btnAllowBoth').disabled = false;
             document.getElementById('btnAllowAudio').disabled = false;
@@ -1794,21 +1866,10 @@ if (session_status() === PHP_SESSION_ACTIVE) {
       if (isPatient) return;
 
       const sessionLink = document.getElementById('sessionAiLink');
-      const minimizeBtn = document.getElementById('minimizeVideoBtn');
       const compactBtn = document.getElementById('compactModeBtn');
 
-      if (embeddedInSession) {
-        if (sessionLink) sessionLink.style.display = 'none';
-        if (minimizeBtn) minimizeBtn.style.display = 'inline-flex';
-      }
-
-      if (minimizeBtn) {
-        minimizeBtn.addEventListener('click', () => {
-          notifyParent({ type: 'medconnect:minimize-video', token: roomToken });
-          if (consultUi && typeof consultUi.toggleFloating === 'function') {
-            consultUi.toggleFloating();
-          }
-        });
+      if (embeddedInSession && sessionLink) {
+        sessionLink.style.display = 'none';
       }
 
       if (compactBtn) {
@@ -2207,12 +2268,8 @@ if (session_status() === PHP_SESSION_ACTIVE) {
 
         const hasVideo = localStream.getVideoTracks().length > 0;
         const hasAudio = localStream.getAudioTracks().length > 0;
-        if (!hasVideo) {
-          document.getElementById('toggleVideo').classList.add('off');
-        }
-        if (!hasAudio) {
-          document.getElementById('muteAudio').classList.add('off');
-        }
+        if (!hasVideo) syncCameraButtonUi(true);
+        if (!hasAudio) syncMicButtonUi(true);
 
         syncMediaStatus();
         setCallPhase(window.McVideoCallCore ? window.McVideoCallCore.STATUS.CONNECTING : 'connecting', {
@@ -2244,14 +2301,9 @@ if (session_status() === PHP_SESSION_ACTIVE) {
         syncMediaStatus({ micPermissionDenied: false });
         return;
       }
-      const muted = !audioTrack.enabled;
-      const muteBtn = document.getElementById('muteAudio');
-      if (muteBtn) {
-        muteBtn.classList.toggle('off', muted);
-        muteBtn.setAttribute('aria-pressed', muted ? 'true' : 'false');
-      }
+      syncMicButtonUi(!audioTrack.enabled);
       syncMediaStatus();
-      if (muteTts) muteTts.onMuteChanged(muted);
+      if (muteTts) muteTts.onMuteChanged(!audioTrack.enabled);
     }
 
     function toggleVideo() {
@@ -2264,7 +2316,7 @@ if (session_status() === PHP_SESSION_ACTIVE) {
       }
       const videoTrack = localStream.getVideoTracks()[0];
       if (!videoTrack) return;
-      document.getElementById('toggleVideo').classList.toggle('off', !videoTrack.enabled);
+      syncCameraButtonUi(!videoTrack.enabled);
       syncMediaStatus();
     }
 
@@ -2366,8 +2418,15 @@ if (session_status() === PHP_SESSION_ACTIVE) {
       } catch (e) {}
     }
 
+    /**
+     * Single exit point. Timer expiry, peer-left, the session poll, the violation
+     * modal, the shell and the Leave button can all reach the end flow, so without
+     * this guard a consultation could postMessage the parent and navigate twice.
+     */
     function redirectAfterLeave(options) {
       options = options || {};
+      if (navigationIssued) return;
+      navigationIssued = true;
       if (window.parent && window.parent !== window) {
         window.parent.postMessage({
           type: options.parentMessageType || 'medconnect:call-left',
@@ -2598,13 +2657,11 @@ if (session_status() === PHP_SESSION_ACTIVE) {
         window.MedConnectLoader.forceHide();
       }
 
-      if (window.McVideoRoomEnhancements) {
-        if (typeof window.McVideoRoomEnhancements.markCallEnded === 'function') {
-          window.McVideoRoomEnhancements.markCallEnded();
-        }
-        if (typeof window.McVideoRoomEnhancements.showPostCall === 'function') {
-          window.McVideoRoomEnhancements.showPostCall();
-        }
+      // The provider always leaves the room straight after ending (parent shell
+      // navigates to SOAP). Opening the in-room post-call modal here only flashes
+      // it for a frame before the iframe is torn down.
+      if (window.McVideoRoomEnhancements && typeof window.McVideoRoomEnhancements.markCallEnded === 'function') {
+        window.McVideoRoomEnhancements.markCallEnded();
       }
 
       redirectAfterLeave({

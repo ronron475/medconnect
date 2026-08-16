@@ -181,18 +181,20 @@
         + (tips ? ' · ' + tips + ' tips pending' : '');
     }
 
-    // Push live totals to the sidebar badges.
-    try {
-      window.dispatchEvent(new CustomEvent('medconnect:triage-live', {
-        detail: {
-          triage: Number(stats.total || 0),
-          total: Number(stats.total || 0),
-          urgent: Number(stats.urgent || 0),
-          pending: Number(stats.pending || 0),
-          tips_pending: Number(stats.tips_pending || 0),
-        },
-      }));
-    } catch (e) { /* ignore */ }
+    // Sidebar "Active Triage Review" = cases still needing a decision, not booked-but-reviewed.
+    if (cfg.tab !== 'history') {
+      try {
+        window.dispatchEvent(new CustomEvent('medconnect:triage-live', {
+          detail: {
+            triage: Number(stats.needs_review != null ? stats.needs_review : (stats.pending || 0)),
+            total: Number(stats.total || 0),
+            urgent: Number(stats.needs_review_urgent != null ? stats.needs_review_urgent : (stats.urgent || 0)),
+            pending: Number(stats.pending || 0),
+            tips_pending: Number(stats.tips_pending || 0),
+          },
+        }));
+      } catch (e) { /* ignore */ }
+    }
   }
 
   function setRefreshStatus(text) {
@@ -694,6 +696,7 @@
       }
       closeTriageModal();
       refreshTriage(true);
+      if (window.MedConnectNavBadgesRefresh) window.MedConnectNavBadgesRefresh();
       await showReviewNotice(
         data.message || 'Review complete. Self-care recommendations are now available to the patient.',
         { title: 'Review complete' }

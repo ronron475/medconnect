@@ -38,8 +38,8 @@ function provider_nav_counts(PDO $pdo, int $providerId): array
         $cases = provider_triage_cases_load($pdo, $providerId);
         $active = array_values(array_filter($cases, 'provider_triage_case_is_active'));
         $stats = provider_triage_cases_stats($active);
-        $triage = (int) ($stats['total'] ?? count($active));
-        $triageUrgent = (int) ($stats['urgent'] ?? 0);
+        $triage = (int) ($stats['needs_review'] ?? $stats['pending'] ?? 0);
+        $triageUrgent = (int) ($stats['needs_review_urgent'] ?? 0);
     } catch (Throwable $e) {
         $triage = 0;
         $triageUrgent = 0;
