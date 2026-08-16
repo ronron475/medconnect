@@ -192,16 +192,40 @@ try {
             $existingTriageId = (int) ($openCareTipsRow['id'] ?? 0);
             $assignedId = (int) ($openCareTipsRow['assigned_provider_id'] ?? 0);
 
+            $waitingForSlot = false;
+            $waitStatus = '';
+            try {
+                require_once dirname(dirname(dirname(__DIR__))) . '/app/includes/patient_slot_waitlist.php';
+                $queued = patient_slot_waitlist_enqueue_if_no_assigned_slot(
+                    $pdo,
+                    $patient_id,
+                    $existingTriageId,
+                    $assignedId,
+                    (string) ($openCareTipsRow['chief_complaint'] ?? $complaint),
+                    (string) ($openCareTipsRow['triage_level'] ?? $triageLevel)
+                );
+                $waitStatus = (string) ($queued['status'] ?? '');
+                $waitingForSlot = in_array($waitStatus, ['waiting', 'slot_available'], true);
+            } catch (Throwable $e) {
+                error_log('submit_triage existing waitlist enqueue: ' . $e->getMessage());
+            }
+
+            $reuseMsg = $waitingForSlot
+                ? 'No suitable doctor schedule is currently available. You are in the waiting queue and will be notified by email when a consultation slot becomes available.'
+                : 'You already have a care tips case in review. Book a video consultation with your assigned doctor, or wait for approved tips in Care tips.';
+
             Api::success([
                 'booked'                   => false,
                 'awaiting_provider_review' => true,
+                'waiting_for_slot'         => $waitingForSlot,
+                'waitlist_status'          => $waitStatus,
                 'emergency'                => false,
                 'triage_id'                => $existingTriageId,
                 'assigned_provider_id'     => $assignedId,
                 'reused_existing_triage'   => true,
                 'level'                    => (string) ($openCareTipsRow['level'] ?? $level),
                 'label'                    => (string) ($openCareTipsRow['urgency_label'] ?? $label),
-            ], 'You already have a care tips case in review. Book a video consultation with your assigned doctor, or wait for approved tips in Care tips.');
+            ], $reuseMsg);
         }
         // Urgent reuse without a slot should fall through to normal validation (slot required).
         $openCareTipsRow = null;
@@ -364,15 +388,39 @@ try {
             $patient_id
         );
 
+        $waitingForSlot = false;
+        $waitStatus = '';
+        try {
+            require_once dirname(dirname(dirname(__DIR__))) . '/app/includes/patient_slot_waitlist.php';
+            $queued = patient_slot_waitlist_enqueue_if_no_assigned_slot(
+                $pdo,
+                $patient_id,
+                $triageId,
+                $assignedId,
+                $complaint,
+                $triageLevel
+            );
+            $waitStatus = (string) ($queued['status'] ?? '');
+            $waitingForSlot = in_array($waitStatus, ['waiting', 'slot_available'], true);
+        } catch (Throwable $e) {
+            error_log('submit_triage waitlist enqueue: ' . $e->getMessage());
+        }
+
+        $successMsg = $waitingForSlot
+            ? 'No suitable doctor schedule is currently available. You are in the waiting queue and will be notified by email when a consultation slot becomes available.'
+            : 'Your symptoms were submitted. A healthcare provider will review your case and prepare self-care guidance.';
+
         Api::success([
             'booked'                   => false,
             'awaiting_provider_review' => true,
+            'waiting_for_slot'         => $waitingForSlot,
+            'waitlist_status'          => $waitStatus,
             'emergency'                => false,
             'triage_id'                => $triageId,
             'assigned_provider_id'     => $assignedId,
             'level'                    => $level,
             'label'                    => $label,
-        ], 'Your symptoms were submitted. A healthcare provider will review your case and prepare self-care guidance.');
+        ], $successMsg);
     }
 
     if ($slot_id <= 0) {
@@ -395,7 +443,7 @@ try {
         throw new RuntimeException('Selected appointment slot was not found.');
     }
     if ($slot['status'] !== 'available') {
-        throw new RuntimeException('This clinical slot was just booked by another patient. Please choose another available time.');
+        throw new RuntimeException('This consultation slot is no longer available. Please choose another available time.');
     }
     if ((int) $slot['provider_id'] <= 0) {
         throw new RuntimeException('Invalid provider for this slot.');
@@ -626,7 +674,7 @@ try {
     }
 
     if (!appointment_slot_claim_available($pdo, $slot_id, $provider_id, $patient_id, $consultation_id)) {
-        throw new RuntimeException('This clinical slot was just booked by another patient. Please choose another available time.');
+        throw new RuntimeException('This consultation slot is no longer available. Please choose another available time.');
     }
 
     // Match BHW: triage is accepted when a consult is booked.
@@ -639,6 +687,14 @@ try {
     }
 
     $pdo->commit();
+
+    try {
+        require_once dirname(dirname(dirname(__DIR__))) . '/app/includes/patient_slot_waitlist.php';
+        patient_slot_waitlist_mark_booked($pdo, $patient_id, $triageId, $consultation_id);
+        patient_slot_waitlist_after_slots_changed($pdo);
+    } catch (Throwable $e) {
+        error_log('submit_triage waitlist booked: ' . $e->getMessage());
+    }
 
     patient_chief_complaint_record(
         $pdo,

@@ -436,6 +436,14 @@ function case_terminate(
         return ['success' => false, 'message' => 'Unable to terminate case. Please try again.'];
     }
 
+    try {
+        require_once __DIR__ . '/patient_slot_waitlist.php';
+        patient_slot_waitlist_cancel_for_triage($pdo, $triageId);
+        patient_slot_waitlist_after_slots_changed($pdo);
+    } catch (Throwable $e) {
+        error_log('case_terminate waitlist: ' . $e->getMessage());
+    }
+
     audit_log($pdo, [
         'patient_id'  => $patientId,
         'action_type' => AuditAction::CASE_TERMINATED,

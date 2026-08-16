@@ -261,6 +261,13 @@ $last_name = $provider['last_name'] ?? 'Provider';
             </span>
             <strong data-live-status="completed"><?= (int) ($stats['completed'] ?? 0) ?></strong>
           </div>
+          <div class="prov-status-item" data-live-slot-wait-wrap<?= empty($stats['slot_waiting']) ? ' hidden' : '' ?>>
+            <span class="prov-status-item__label">
+              <span class="prov-status-dot" style="background:#f59e0b;"></span>
+              Waiting for Provider Availability
+            </span>
+            <strong data-live-status="slot_waiting"><?= (int) ($stats['slot_waiting'] ?? 0) ?></strong>
+          </div>
           <div class="prov-status-item" data-live-urgent-wrap style="border-color:#fecaca;background:#fef2f2;"<?= empty($stats['urgent']) ? ' hidden' : '' ?>>
             <span class="prov-status-item__label">
               <span class="prov-status-dot" style="background:#ef4444;"></span>

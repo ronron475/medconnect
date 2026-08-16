@@ -1437,3 +1437,55 @@
 .pdash-review-form textarea.form-control {
   min-height: 88px;
 }
+
+.pdash-care__status-chip--wait {
+  background: #fffbeb;
+  color: #b45309;
+  border-color: #fde68a;
+}
+
+.pdash-wait__badge {
+  display: inline-flex;
+  align-items: center;
+  margin: 0 0 14px;
+  padding: 6px 12px;
+  border-radius: 999px;
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #0f766e;
+  background: #ecfdf5;
+  border: 1px solid #a7f3d0;
+}
+
+.pdash-wait[data-wait-status="waiting"] .pdash-wait__badge {
+  color: #b45309;
+  background: #fffbeb;
+  border-color: #fde68a;
+}
+
+.pdash-wait__care {
+  margin-top: 4px;
+}
+
+.pdash-wait__care .pdash-care-hint + .pdash-care-hint {
+  margin-top: 8px;
+}
+
+@media (max-width: 640px) {
+  .pdash-wait .pdash-care-actions {
+    flex-direction: column;
+  }
+
+  .pdash-wait .pdash-care-actions__btn {
+    width: 100%;
+    min-width: 0;
+  }
+
+  .pdash-wait__badge {
+    max-width: 100%;
+    white-space: normal;
+    line-height: 1.35;
+  }
+}

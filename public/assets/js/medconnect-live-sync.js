@@ -82,16 +82,19 @@
       }
     }
 
-    if (has('slots') || has('schedule')) {
+    if (has('slots') || has('schedule') || has('booking_state')) {
       if (typeof global.refreshBookingPicker === 'function') {
         global.refreshBookingPicker(true);
       }
       if (global.MedConnectProviderScheduleLive && typeof global.MedConnectProviderScheduleLive.refresh === 'function') {
         global.MedConnectProviderScheduleLive.refresh(false);
       }
+      if (global.MedConnectPatientSlotWait && typeof global.MedConnectPatientSlotWait.refresh === 'function') {
+        global.MedConnectPatientSlotWait.refresh();
+      }
     }
 
-    if (has('appointments') || has('queue')) {
+    if (has('appointments') || has('queue') || has('booking_state')) {
       if (typeof global.refreshConsultationStatus === 'function') {
         global.refreshConsultationStatus();
       }
@@ -106,9 +109,12 @@
       }
     }
 
-    if (has('triage') || has('queue')) {
+    if (has('triage') || has('queue') || has('booking_state')) {
       if (global.MedConnectTriageLive && typeof global.MedConnectTriageLive.refresh === 'function') {
         global.MedConnectTriageLive.refresh(true);
+      }
+      if (global.MedConnectPatientSlotWait && typeof global.MedConnectPatientSlotWait.refresh === 'function') {
+        global.MedConnectPatientSlotWait.refresh();
       }
     }
 

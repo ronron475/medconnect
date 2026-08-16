@@ -237,6 +237,28 @@
     color: #1e40af;
 }
 
+.triage-badge--tips-pending {
+    background: #fff7ed;
+    color: #c2410c;
+}
+
+.triage-badge--slot-wait {
+    background: #fffbeb;
+    color: #b45309;
+}
+
+.triage-badge--slot-open {
+    background: #ecfdf5;
+    color: #047857;
+}
+
+.triage-wait-meta {
+    margin-top: 6px;
+    font-size: 11px;
+    color: #64748b;
+    font-weight: 600;
+}
+
 .triage-badge--completed {
     background: #ecfdf5;
     color: #047857;

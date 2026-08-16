@@ -39,6 +39,12 @@ try {
         exit;
     }
     $pdo->commit();
+    try {
+        require_once dirname(dirname(dirname(__DIR__))) . '/app/includes/patient_slot_waitlist.php';
+        patient_slot_waitlist_after_slots_changed($pdo);
+    } catch (Throwable $e) {
+        error_log('remove_slot waitlist: ' . $e->getMessage());
+    }
     echo json_encode(['success' => true, 'message' => $result['message']]);
 } catch (Throwable $e) {
     if ($pdo->inTransaction()) {

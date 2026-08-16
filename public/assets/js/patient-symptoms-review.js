@@ -254,9 +254,16 @@
         return true;
       }
 
-      showAlert('success', i18n('ok_submitted'));
+      showAlert('success', data.message || i18n('ok_submitted'));
       if (window.MedConnectNavBadgesRefresh) window.MedConnectNavBadgesRefresh();
-      setTimeout(function () { window.location.reload(); }, 1400);
+      var waitingForSlot = !!(payload.waiting_for_slot);
+      setTimeout(function () {
+        if (waitingForSlot) {
+          window.location.href = base() + '/views/patient/dashboard.php';
+        } else {
+          window.location.reload();
+        }
+      }, 1400);
       return true;
     } catch (_) {
       showAlert('error', i18n('err_network'));

@@ -27,16 +27,29 @@ function live_sync_payload(PDO $pdo, int $userId, string $role): array
     ];
 
     if ($role === 'provider') {
+        require_once __DIR__ . '/patient_slot_waitlist.php';
+        patient_slot_waitlist_process_throttled($pdo);
         $fingerprints['slots'] = live_sync_provider_slots_fp($pdo, $userId, $today, $todayDay);
         $fingerprints['schedule'] = $fingerprints['slots'];
         $fingerprints['appointments'] = live_sync_consultations_fp($pdo, 'provider_id', $userId, $today);
         $fingerprints['queue'] = $fingerprints['appointments'];
         $fingerprints['triage'] = live_sync_provider_triage_fp($pdo, $userId);
+        $fingerprints['booking_state'] = live_sync_hash(
+            $fingerprints['triage'],
+            patient_slot_waitlist_provider_fingerprint($pdo, $userId)
+        );
     } elseif ($role === 'patient') {
+        require_once __DIR__ . '/patient_slot_waitlist.php';
+        patient_slot_waitlist_process_throttled($pdo);
         $fingerprints['slots'] = live_sync_patient_slots_fp($pdo, $today, $todayDay);
         $fingerprints['schedule'] = $fingerprints['slots'];
         $fingerprints['appointments'] = live_sync_consultations_fp($pdo, 'patient_id', $userId, $today);
         $fingerprints['triage'] = live_sync_patient_triage_fp($pdo, $userId);
+        $fingerprints['booking_state'] = live_sync_hash(
+            $fingerprints['slots'],
+            $fingerprints['triage'],
+            patient_slot_waitlist_fingerprint($pdo, $userId)
+        );
     } elseif ($role === 'bhw') {
         $barangayId = live_sync_bhw_barangay_id($pdo, $userId);
         $fingerprints['triage'] = live_sync_bhw_triage_fp($pdo, $barangayId);
@@ -274,7 +287,13 @@ function live_sync_patient_triage_fp(PDO $pdo, int $patientId): string
     return live_sync_hash(live_sync_row(
         $pdo,
         "SELECT COUNT(*), COALESCE(MAX(id),0),
-                COALESCE(MAX(UNIX_TIMESTAMP(assessed_at)),0)
+                COALESCE(MAX(UNIX_TIMESTAMP(assessed_at)),0),
+                COALESCE(MAX(UNIX_TIMESTAMP(assigned_at)),0),
+                COALESCE(SUM(CASE COALESCE(recommendation_status,'hidden')
+                    WHEN 'pending_approval' THEN 1
+                    WHEN 'approved' THEN 2
+                    WHEN 'rejected' THEN 4
+                    ELSE 0 END),0)
          FROM triage_results
          WHERE patient_id = ?",
         [$patientId]

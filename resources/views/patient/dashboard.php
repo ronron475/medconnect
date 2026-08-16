@@ -18,6 +18,8 @@ require_once BASE_PATH . '/app/includes/patient_portal_bootstrap.php';
 require_once BASE_PATH . '/app/includes/triage_assessment_schema.php';
 require_once BASE_PATH . '/app/includes/patient_symptoms_review_submit.php';
 require_once BASE_PATH . '/app/includes/patient_chief_complaints.php';
+require_once BASE_PATH . '/app/includes/triage_provider_assignment.php';
+require_once BASE_PATH . '/app/includes/patient_slot_waitlist.php';
 
 $booking_today_ymd   = date('Y-m-d');
 $booking_today_label = date('l, M j, Y');
@@ -261,6 +263,8 @@ foreach ($triage_history as $t) {
 $symptoms_review_pending = patient_symptoms_review_pending_state($pdo, (int) $uid);
 $care_tips_ready_to_schedule = patient_care_tips_ready_to_schedule_state($pdo, (int) $uid);
 $symptoms_review_booking = triage_patient_booking_slot_status($pdo, (int) $uid);
+patient_slot_waitlist_process_throttled($pdo);
+$slot_wait_state = patient_slot_waitlist_dashboard_state($pdo, (int) $uid);
 $pending_reg_complaint = patient_registration_load_pending_complaint($pdo, (int) $uid);
 $active_chief_complaint = patient_portal_active_chief_complaint($pdo, (int) $uid);
 $registration_chief_complaint = trim((string) ($active_chief_complaint['complaint'] ?? ''));
@@ -275,12 +279,14 @@ $show_dashboard_care_tips_section = patient_dashboard_show_care_tips_section(
     $pending_reg_complaint,
     $symptoms_review_pending,
     $care_tips_ready_to_schedule
-);
-$dash_chief_complaint_url = !empty($symptoms_review_pending['has_pending'])
+) || !empty($slot_wait_state['active']);
+$dash_chief_complaint_url = !empty($slot_wait_state['active'])
+    ? '#pdashSlotWait'
+    : (!empty($symptoms_review_pending['has_pending'])
     ? '#pdashSymptomsReview'
     : (!empty($care_tips_ready_to_schedule['ready'])
         ? '#pdashCareTipsReady'
-        : '#pdashChiefComplaint');
+        : '#pdashChiefComplaint'));
 
 $patient_followups = [];
 if ($pdo->query("SHOW TABLES LIKE 'followups'")->rowCount()) {
@@ -376,6 +382,7 @@ $patient_page_stylesheets = [
   <script src="<?= ASSET_BASE ?>/assets/js/medconnect-portal-charts.js?v=<?= (int) @filemtime(ASSETS_PATH . '/js/medconnect-portal-charts.js') ?>"></script>
   <script src="<?= ASSET_BASE ?>/assets/js/patient-portal.js?v=<?= $patient_portal_ver ?>"></script>
   <script src="<?= ASSET_BASE ?>/assets/js/patient-symptoms-review.js?v=<?= (int) @filemtime(ASSETS_PATH . '/js/patient-symptoms-review.js') ?>"></script>
+  <script src="<?= ASSET_BASE ?>/assets/js/patient-slot-wait.js?v=<?= (int) @filemtime(ASSETS_PATH . '/js/patient-slot-wait.js') ?>"></script>
   <script>
   (function () {
     const cells = document.querySelectorAll('[data-consult-action]');

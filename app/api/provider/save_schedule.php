@@ -142,6 +142,13 @@ try {
         }
     }
 
+    try {
+        require_once dirname(dirname(dirname(__DIR__))) . '/app/includes/patient_slot_waitlist.php';
+        patient_slot_waitlist_after_slots_changed($pdo);
+    } catch (Throwable $waitErr) {
+        error_log('save_schedule waitlist: ' . $waitErr->getMessage());
+    }
+
     echo json_encode([
         'success'           => true,
         'message'           => $savedActive

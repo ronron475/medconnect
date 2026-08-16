@@ -77,6 +77,12 @@
       urgentWrap.hidden = urgent <= 0;
     }
     if (urgentVal) urgentVal.textContent = String(urgent);
+
+    var slotWrap = document.querySelector('[data-live-slot-wait-wrap]');
+    var slotVal = document.querySelector('[data-live-status="slot_waiting"]');
+    var slotWaiting = Number(stats.slot_waiting || 0);
+    if (slotWrap) slotWrap.hidden = slotWaiting <= 0;
+    if (slotVal) slotVal.textContent = String(slotWaiting);
   }
 
   function updateChart(weekChart, weekTotal, meta) {

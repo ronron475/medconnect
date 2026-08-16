@@ -190,11 +190,35 @@ function patient_submit_symptoms_for_review(
             $patientId
         );
 
+        $waitingForSlot = false;
+        $waitStatus = '';
+        try {
+            require_once __DIR__ . '/patient_slot_waitlist.php';
+            $queued = patient_slot_waitlist_enqueue_if_no_assigned_slot(
+                $pdo,
+                $patientId,
+                $triageId,
+                $assignedId,
+                $complaint,
+                $triageLevel
+            );
+            $waitStatus = (string) ($queued['status'] ?? '');
+            $waitingForSlot = in_array($waitStatus, ['waiting', 'slot_available'], true);
+        } catch (Throwable $e) {
+            error_log('patient_submit_symptoms_for_review waitlist: ' . $e->getMessage());
+        }
+
+        $msg = $waitingForSlot
+            ? 'No suitable doctor schedule is currently available. You are in the waiting queue and will be notified by email when a consultation slot becomes available.'
+            : 'Your case is currently being reviewed by a healthcare provider. Please wait while your guidance is being prepared.';
+
         return [
             'ok' => true,
-            'message' => 'Your case is currently being reviewed by a healthcare provider. Please wait while your guidance is being prepared.',
+            'message' => $msg,
             'payload' => [
                 'awaiting_provider_review' => true,
+                'waiting_for_slot' => $waitingForSlot,
+                'waitlist_status' => $waitStatus,
                 'triage_id' => $triageId,
                 'assigned_provider_id' => $assignedId,
             ],
