@@ -815,7 +815,7 @@ if (session_status() === PHP_SESSION_ACTIVE) {
           <button type="button" class="mc-vc-btn mc-vc-btn--mobile-only mc-vc-btn--speaker mc-vc-btn--overflow-menu" id="mcVcSpeakerBtn" title="Speaker on or off" aria-label="Toggle speaker">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 5L6 9H2v6h4l5 4V5z"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"/></svg>
           </button>
-          <button type="button" class="mc-vc-btn" id="mcVcFullscreenBtn" title="Enter fullscreen" aria-label="Enter fullscreen">
+          <button type="button" class="mc-vc-btn" id="mcVcFullscreenBtn" title="<?= (!$is_patient && !empty($_GET['embedded'])) ? 'Expand video' : 'Enter fullscreen' ?>" aria-label="<?= (!$is_patient && !empty($_GET['embedded'])) ? 'Maximize video consultation' : 'Enter fullscreen' ?>">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/></svg>
           </button>
           <?php if (!$is_patient): ?>
@@ -2839,6 +2839,13 @@ if (session_status() === PHP_SESSION_ACTIVE) {
       }
       if (event.data.type === 'medconnect:mobile-fullscreen-state' && consultUi && typeof consultUi.setMobileFullscreen === 'function') {
         consultUi.setMobileFullscreen(!!event.data.expanded);
+        document.body.classList.toggle('mc-workspace-expanded', !!event.data.expanded);
+        return;
+      }
+      if (event.data.type === 'medconnect:workspace-expanded-state' && consultUi && typeof consultUi.setMobileFullscreen === 'function') {
+        consultUi.setMobileFullscreen(!!event.data.expanded);
+        document.body.classList.toggle('mc-workspace-expanded', !!event.data.expanded);
+        return;
       }
     });
 

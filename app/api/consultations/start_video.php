@@ -71,7 +71,7 @@ try {
     }
 
     $consultStatus = strtolower(trim((string) ($consultation['status'] ?? '')));
-    if ($consultStatus === 'completed') {
+    if (in_array($consultStatus, ['completed', 'cancelled', 'ended', 'closed'], true)) {
         ob_end_clean();
         echo json_encode([
             'success' => false,

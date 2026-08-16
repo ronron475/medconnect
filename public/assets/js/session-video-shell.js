@@ -426,14 +426,18 @@
 
     if (type === 'medconnect:minimize-video') {
       const shell = shellEl();
+      // Docked provider session owns in-app expand/restore. Do not PiP or scroll away.
       if (shell && shell.classList.contains('is-docked')) {
-        global.dispatchEvent(new CustomEvent('medconnect:video-shell-scroll-away', { detail: readState() }));
         return;
       }
       minimize();
       return;
     }
     if (type === 'medconnect:maximize-video') {
+      const shell = shellEl();
+      if (shell && shell.classList.contains('is-docked')) {
+        return;
+      }
       maximize();
       return;
     }

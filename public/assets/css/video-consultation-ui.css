@@ -848,6 +848,10 @@ body.embedded-shell.role-provider .mc-vc-root {
   overflow: hidden;
 }
 
+body.embedded-shell.role-provider.mc-workspace-expanded .mc-vc-root {
+  border-radius: 0;
+}
+
 body.embedded-shell .mc-vc-header {
   position: relative;
   flex: 0 0 auto;
@@ -897,6 +901,23 @@ body.embedded-shell.role-provider .mc-vc-root {
   min-height: 0;
 }
 
+body.embedded-shell.role-provider #mcVcFullscreenBtn {
+  display: flex !important;
+}
+
+body.embedded-shell.role-provider .mc-vc-more-item--compact[data-mc-proxy="mcVcFullscreenBtn"] {
+  display: none;
+}
+
+body.embedded-shell.role-provider .mc-vc-main video,
+body.embedded-shell.role-provider .mc-vc-pip video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
+  background: #000;
+}
+
 @media (max-width: 720px) {
   body.embedded-shell.role-provider .mc-vc-status-bar {
     top: auto;
@@ -932,14 +953,6 @@ body.embedded-shell.role-provider .mc-vc-root {
     font-size: 13px;
   }
 
-  body.embedded-shell.role-provider .mc-vc-main video,
-  body.embedded-shell.role-provider .mc-vc-pip video {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    background: #000;
-  }
-
   body.embedded-shell.role-provider .mc-vc-root.is-fullscreen {
     position: absolute;
     inset: 0;
@@ -947,12 +960,6 @@ body.embedded-shell.role-provider .mc-vc-root {
     height: 100%;
     min-height: 0;
     border-radius: 0;
-  }
-}
-
-@media (orientation: landscape) and (max-width: 900px) {
-  body.embedded-shell.role-provider .mc-vc-main video {
-    object-fit: contain;
   }
 }
 
@@ -1945,13 +1952,34 @@ body.role-provider #mediaStatusConn {
   color: #cbd5e1;
 }
 
+body.role-provider .mc-vc-controls {
+  z-index: 50;
+}
+
+body.role-provider .mc-vc-header {
+  z-index: 20;
+}
+
+body.role-provider .mc-vc-status-bar {
+  z-index: 21;
+}
+
 body.role-provider .mc-vc-pip {
   z-index: 30;
 }
 
+body.role-provider .mc-vc-overlay.is-status {
+  z-index: 16;
+}
+
+body.role-provider .mc-vc-more-menu,
+body.role-provider .mc-vc-more-menu.is-ported {
+  z-index: 100200;
+}
+
 body.role-provider .mc-vc-btn--overflow-menu,
 body.role-provider #mcVcFlipBtn,
-body.role-provider #mcVcFullscreenBtn {
+body.role-provider #mcVcMinimizeBtn {
   display: none !important;
 }
 
@@ -2007,6 +2035,10 @@ body.role-provider:not(.embedded-shell) .mc-vc-header {
     --mc-vc-controls-height: 84px;
     --mc-vc-header-height: 52px;
     overflow: hidden;
+  }
+
+  body.role-provider:not(.embedded-shell) #mcVcFullscreenBtn {
+    display: none !important;
   }
 
   body.role-provider .mc-vc-root {
@@ -2083,7 +2115,7 @@ body.role-provider:not(.embedded-shell) .mc-vc-header {
 }
 
 @media (max-width: 480px) {
-  body.role-provider #mcVcFullscreenBtn {
+  body.role-provider:not(.embedded-shell) #mcVcFullscreenBtn {
     display: none !important;
   }
 

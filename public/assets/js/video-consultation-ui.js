@@ -243,10 +243,17 @@
 
     function updateFullscreenBtn() {
       if (!els.fullscreenBtn) return;
-      const label = isFullscreen ? 'Exit fullscreen' : 'Enter fullscreen';
-      els.fullscreenBtn.setAttribute('aria-label', label);
+      const inApp = embedded && isProvider;
+      const label = isFullscreen
+        ? (inApp ? 'Restore video' : 'Exit fullscreen')
+        : (inApp ? 'Expand video' : 'Enter fullscreen');
+      els.fullscreenBtn.setAttribute('aria-label', isFullscreen
+        ? (inApp ? 'Restore video consultation' : 'Exit fullscreen')
+        : (inApp ? 'Maximize video consultation' : 'Enter fullscreen'));
       els.fullscreenBtn.title = label;
-      els.fullscreenBtn.innerHTML = svgIcon(isFullscreen ? 'fullscreenExit' : 'fullscreen');
+      els.fullscreenBtn.innerHTML = svgIcon(isFullscreen
+        ? (inApp ? 'minimize' : 'fullscreenExit')
+        : (inApp ? 'maximize' : 'fullscreen'));
     }
 
     function toggleFullscreen() {
@@ -256,7 +263,11 @@
       if (embedded) {
         const entering = !isFullscreen;
         isFullscreen = entering;
-        target.classList.toggle('is-fullscreen', entering);
+        if (isProvider) {
+          target.classList.remove('is-fullscreen');
+        } else {
+          target.classList.toggle('is-fullscreen', entering);
+        }
         if (entering) {
           if (onMaximize) onMaximize();
         } else if (onMinimize) {
@@ -312,7 +323,11 @@
     function setMobileFullscreen(expanded) {
       isFullscreen = !!expanded;
       if (els.root) {
-        els.root.classList.toggle('is-fullscreen', isFullscreen);
+        if (embedded && isProvider) {
+          els.root.classList.remove('is-fullscreen');
+        } else {
+          els.root.classList.toggle('is-fullscreen', isFullscreen);
+        }
       }
       updateFullscreenBtn();
     }

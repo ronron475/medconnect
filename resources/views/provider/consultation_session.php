@@ -69,7 +69,7 @@ $soap_signed_by = $clinical_note
 $soap_signed_at = $clinical_note ? clinical_note_signed_at_label($clinical_note) : '';
 
 $session_access = queue_session_access($c);
-$history_view = in_array(strtolower(trim((string) ($c['status'] ?? ''))), ['completed', 'cancelled'], true);
+$history_view = in_array(strtolower(trim((string) ($c['status'] ?? ''))), ['completed', 'cancelled', 'ended', 'closed'], true);
 if (!$session_access['allowed'] && !$history_view) {
     $page_title = 'Session Not Available';
     require __DIR__ . '/partials/layout_open.php';
@@ -199,9 +199,11 @@ $localhost_app_url = 'http://localhost' . (ASSET_BASE !== '' ? ASSET_BASE : '');
 <style>
 .session-page {
     display: grid;
-    grid-template-columns: minmax(0, 1fr) 360px;
+    grid-template-columns: minmax(0, 1fr) minmax(280px, 360px);
     gap: 22px;
     align-items: start;
+    overflow-x: hidden;
+    max-width: 100%;
 }
 .session-left {
     display: flex;
@@ -407,14 +409,88 @@ $localhost_app_url = 'http://localhost' . (ASSET_BASE !== '' ? ASSET_BASE : '');
     display: none !important;
 }
 @media (min-width: 769px) {
+    .session-page {
+        align-items: stretch;
+    }
     .video-shell.is-call-active {
-        min-height: min(62dvh, calc(100dvh - 10rem));
-        height: min(64dvh, calc(100dvh - 9rem));
-        max-height: calc(100dvh - 8.5rem);
+        min-height: clamp(280px, 38dvh, 360px);
+        height: clamp(320px, calc(100dvh - var(--mc-header-offset, 64px) - 5rem), calc(100dvh - var(--mc-header-offset, 64px) - 3.25rem));
+        max-height: calc(100dvh - var(--mc-header-offset, 64px) - 3.25rem);
         aspect-ratio: auto;
     }
     .video-shell.is-call-active .video-shell-tools {
         display: none !important;
+    }
+}
+
+/* Desktop in-app expand: keep the same iframe docked; only the page chrome changes. */
+@media (min-width: 769px) {
+    body.provider-body.consultation-desktop-video-expanded {
+        overflow: hidden !important;
+    }
+    body.provider-body.consultation-desktop-video-expanded .sb-aqua,
+    body.provider-body.consultation-desktop-video-expanded .sidebar {
+        display: none !important;
+    }
+    body.provider-body.consultation-desktop-video-expanded .pd-header {
+        left: 0 !important;
+        width: 100% !important;
+    }
+    body.provider-body.consultation-desktop-video-expanded .main-content.provider-main {
+        margin-left: 0 !important;
+        width: 100% !important;
+    }
+    body.provider-body.consultation-desktop-video-expanded .provider-page-body {
+        padding: var(--mc-header-offset, var(--provider-header-h, 64px)) 0 0 !important;
+        height: 100dvh;
+        max-height: 100dvh;
+        overflow: hidden;
+    }
+    body.provider-body.consultation-desktop-video-expanded .session-page {
+        display: block;
+        gap: 0;
+        margin: 0;
+        padding: 0;
+        height: calc(100dvh - var(--mc-header-offset, var(--provider-header-h, 64px)));
+        max-height: calc(100dvh - var(--mc-header-offset, var(--provider-header-h, 64px)));
+        overflow: hidden;
+    }
+    body.provider-body.consultation-desktop-video-expanded .session-side,
+    body.provider-body.consultation-desktop-video-expanded .session-left > .session-card,
+    body.provider-body.consultation-desktop-video-expanded #soapDocumentation,
+    body.provider-body.consultation-desktop-video-expanded #videoConsultationSessionCard,
+    body.provider-body.consultation-desktop-video-expanded .video-pre-call-help,
+    body.provider-body.consultation-desktop-video-expanded .video-demo-link,
+    body.provider-body.consultation-desktop-video-expanded .scroll-ai-btn,
+    body.provider-body.consultation-desktop-video-expanded #floatingScrollAiBtn {
+        display: none !important;
+    }
+    body.provider-body.consultation-desktop-video-expanded .session-left,
+    body.provider-body.consultation-desktop-video-expanded .video-panel,
+    body.provider-body.consultation-desktop-video-expanded .video-panel.is-call-active {
+        display: flex;
+        flex-direction: column;
+        gap: 0;
+        height: 100%;
+        min-height: 0;
+        max-height: 100%;
+    }
+    body.provider-body.consultation-desktop-video-expanded .video-shell.is-call-active {
+        flex: 1 1 auto;
+        position: relative;
+        width: 100%;
+        height: 100%;
+        min-height: 0;
+        max-height: none;
+        border-radius: 0;
+        box-shadow: none;
+    }
+    body.provider-body.consultation-desktop-video-expanded .mc-provider-video-dock,
+    body.provider-body.consultation-desktop-video-expanded .mc-provider-video-dock .mc-session-float-shell.is-docked {
+        height: 100%;
+        min-height: 100%;
+        max-height: none;
+        border-radius: 0;
     }
 }
 .video-shell.is-call-active .active-call {
@@ -429,7 +505,7 @@ $localhost_app_url = 'http://localhost' . (ASSET_BASE !== '' ? ASSET_BASE : '');
     max-height: none;
 }
 .mobile-call-expand-btn {
-    display: none;
+    display: none !important;
     position: absolute;
     right: 12px;
     bottom: 12px;
@@ -1504,7 +1580,7 @@ body.consultation-mobile-call-fullscreen .mc-provider-video-dock .mc-session-flo
         border-radius: 12px;
     }
     .video-shell.is-call-active .mobile-call-expand-btn {
-        display: inline-flex;
+        display: none !important;
     }
     .mc-provider-video-dock,
     .mc-provider-video-dock .mc-session-float-shell.is-docked {
@@ -1740,10 +1816,6 @@ body.consultation-mobile-call-fullscreen .mc-provider-video-dock .mc-session-flo
             </div>
             <?php endif; ?>
         </div>
-
-        </div>
-
-<button type="button" class="scroll-ai-btn" id="floatingScrollAiBtn" onclick="scrollToClinicalSupport()">Clinical Support</button>
 
         <div class="session-card" id="videoConsultationSessionCard">
             <div class="session-card-header">
@@ -2357,6 +2429,8 @@ body.consultation-mobile-call-fullscreen .mc-provider-video-dock .mc-session-flo
 
 </div>
 
+<button type="button" class="scroll-ai-btn" id="floatingScrollAiBtn" onclick="scrollToClinicalSupport()">Clinical Support</button>
+
 <!-- Post-call follow-up modal -->
 <div id="followUpModal" class="fu-modal" aria-hidden="true">
   <div class="fu-modal__dialog" role="dialog" aria-modal="true" aria-labelledby="followUpModalTitle">
@@ -2446,6 +2520,8 @@ body.consultation-mobile-call-fullscreen .mc-provider-video-dock .mc-session-flo
 let seconds = 0;
 let timerActive = false;
 let mobileCallFullscreen = false;
+let desktopVideoExpanded = false;
+let videoCallClosed = <?= !empty($history_view) ? 'true' : 'false' ?>;
 const MOBILE_CONSULT_BREAK = 768;
 
 function isMobileConsultation() {
@@ -2471,10 +2547,8 @@ function enterMobileCallFullscreen() {
     if (req) {
         req.call(shell).catch(function () { /* CSS fallback active */ });
     }
-    syncMobileFullscreenToFrame(true);
-    updateMobileExpandBtn();
-    const toolsBtn = document.getElementById('toggleVideoSizeBtn');
-    if (toolsBtn) toolsBtn.textContent = 'Minimize video';
+    syncVideoExpandedToFrame(true);
+    updateExpandButtons();
 }
 
 function exitMobileCallFullscreen() {
@@ -2486,10 +2560,8 @@ function exitMobileCallFullscreen() {
         const exit = document.exitFullscreen || document.webkitExitFullscreen;
         if (exit) exit.call(document).catch(function () {});
     }
-    syncMobileFullscreenToFrame(false);
-    updateMobileExpandBtn();
-    const toolsBtn = document.getElementById('toggleVideoSizeBtn');
-    if (toolsBtn) toolsBtn.textContent = 'Expand video';
+    syncVideoExpandedToFrame(false);
+    updateExpandButtons();
 }
 
 function toggleMobileCallFullscreen() {
@@ -2497,7 +2569,7 @@ function toggleMobileCallFullscreen() {
     else enterMobileCallFullscreen();
 }
 
-function syncMobileFullscreenToFrame(expanded) {
+function syncVideoExpandedToFrame(expanded) {
     const win = mcProviderVideoWindow();
     if (!win) return;
     try {
@@ -2505,8 +2577,89 @@ function syncMobileFullscreenToFrame(expanded) {
             type: 'medconnect:mobile-fullscreen-state',
             expanded: !!expanded,
         }, window.location.origin);
+        win.postMessage({
+            type: 'medconnect:workspace-expanded-state',
+            expanded: !!expanded,
+        }, window.location.origin);
     } catch (e) {}
 }
+
+function updateExpandButtons() {
+    updateMobileExpandBtn();
+    const toolsBtn = document.getElementById('toggleVideoSizeBtn');
+    if (!toolsBtn) return;
+    const expanded = desktopVideoExpanded || mobileCallFullscreen;
+    toolsBtn.textContent = expanded ? 'Restore video' : 'Expand video';
+    toolsBtn.setAttribute('aria-label', expanded ? 'Restore video consultation' : 'Maximize video consultation');
+    toolsBtn.title = expanded ? 'Restore video' : 'Expand video';
+}
+
+function enterDesktopVideoExpanded() {
+    const shell = document.getElementById('videoInterface');
+    if (!shell || !shell.classList.contains('is-call-active')) return;
+    if (isMobileConsultation()) {
+        enterMobileCallFullscreen();
+        return;
+    }
+    desktopVideoExpanded = true;
+    document.body.classList.add('consultation-desktop-video-expanded');
+    const dock = document.getElementById('mcProviderVideoDock');
+    if (window.McSessionVideoShell && McSessionVideoShell.isActive() && dock) {
+        McSessionVideoShell.dock(dock);
+    }
+    const floatingBtn = document.getElementById('floatingScrollAiBtn');
+    if (floatingBtn) floatingBtn.classList.remove('show');
+    syncVideoExpandedToFrame(true);
+    updateExpandButtons();
+}
+
+function exitDesktopVideoExpanded() {
+    desktopVideoExpanded = false;
+    document.body.classList.remove('consultation-desktop-video-expanded');
+    const dock = document.getElementById('mcProviderVideoDock');
+    if (window.McSessionVideoShell && McSessionVideoShell.isActive() && dock) {
+        McSessionVideoShell.dock(dock);
+    }
+    const shell = document.getElementById('videoInterface');
+    const floatingBtn = document.getElementById('floatingScrollAiBtn');
+    if (floatingBtn) {
+        floatingBtn.classList.toggle('show', !!(shell && shell.classList.contains('is-call-active')));
+    }
+    syncVideoExpandedToFrame(false);
+    updateExpandButtons();
+}
+
+function toggleDesktopVideoExpanded() {
+    if (desktopVideoExpanded) exitDesktopVideoExpanded();
+    else enterDesktopVideoExpanded();
+}
+
+function markVideoCallClosed() {
+    videoCallClosed = true;
+    const preCall = document.getElementById('videoPreCall');
+    if (preCall) preCall.style.display = 'flex';
+    const title = document.querySelector('.video-pre-call__title');
+    const prompt = document.querySelector('.video-pre-call__prompt');
+    const startBtn = document.querySelector('.video-pre-call__start');
+    if (title) title.textContent = 'Consultation ended';
+    if (prompt) prompt.textContent = 'The video call has ended. Complete SOAP documentation below. This session cannot be restarted.';
+    if (startBtn) startBtn.hidden = true;
+    const help = document.getElementById('videoPreCallHelp');
+    if (help) help.hidden = true;
+}
+
+window.addEventListener('resize', function () {
+    if (!document.getElementById('videoInterface') || !document.getElementById('videoInterface').classList.contains('is-call-active')) {
+        return;
+    }
+    if (desktopVideoExpanded && isMobileConsultation()) {
+        exitDesktopVideoExpanded();
+        enterMobileCallFullscreen();
+    } else if (mobileCallFullscreen && !isMobileConsultation()) {
+        exitMobileCallFullscreen();
+        enterDesktopVideoExpanded();
+    }
+});
 
 document.addEventListener('fullscreenchange', function () {
     const shell = document.getElementById('videoInterface');
@@ -2520,8 +2673,8 @@ document.addEventListener('fullscreenchange', function () {
         mobileCallFullscreen = true;
         document.body.classList.add('consultation-mobile-call-fullscreen');
         shell.classList.add('is-mobile-fullscreen');
-        syncMobileFullscreenToFrame(true);
-        updateMobileExpandBtn();
+        syncVideoExpandedToFrame(true);
+        updateExpandButtons();
     }
 });
 const sessionMessages = <?= json_encode($session_messages, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_AMP | JSON_HEX_QUOT) ?>;
@@ -3164,8 +3317,9 @@ function setVideoShellLive(isLive) {
     }
     if (!isLive) {
         exitMobileCallFullscreen();
+        exitDesktopVideoExpanded();
     }
-    updateMobileExpandBtn();
+    updateExpandButtons();
 }
 
 function toggleVideoShellSize() {
@@ -3173,36 +3327,15 @@ function toggleVideoShellSize() {
         toggleMobileCallFullscreen();
         return;
     }
+    toggleDesktopVideoExpanded();
+}
 
-    const shell = document.getElementById('videoInterface');
-    const btn = document.getElementById('toggleVideoSizeBtn');
-    if (!shell || !btn) return;
-
-    if (window.McSessionVideoShell && McSessionVideoShell.isActive()) {
-        const st = McSessionVideoShell.getState();
-        if (st && st.mode === 'fullscreen') {
-            McSessionVideoShell.dock(document.getElementById('mcProviderVideoDock'));
-            btn.textContent = 'Expand video';
-        } else {
-            McSessionVideoShell.maximize();
-            btn.textContent = 'Minimize video';
-        }
+function maximizeVideoShell() {
+    if (isMobileConsultation()) {
+        enterMobileCallFullscreen();
         return;
     }
-
-    const willFloat = !shell.classList.contains('is-floating');
-    shell.classList.remove('is-minimized');
-    shell.classList.toggle('is-floating', willFloat);
-    btn.textContent = willFloat ? 'Expand video' : 'Minimize video';
-
-    if (willFloat) {
-        scrollToClinicalSupport();
-    } else {
-        shell.style.top = '';
-        shell.style.left = '';
-        shell.style.right = '';
-        shell.style.bottom = '';
-    }
+    enterDesktopVideoExpanded();
 }
 
 function initFloatingVideoShell(shell) {
@@ -3256,18 +3389,6 @@ function initFloatingVideoShell(shell) {
     shell.addEventListener('pointercancel', pointerUp);
 }
 
-function maximizeVideoShell() {
-    const shell = document.getElementById('videoInterface');
-    const btn = document.getElementById('toggleVideoSizeBtn');
-    if (!shell) return;
-    shell.classList.remove('is-floating', 'is-minimized');
-    shell.style.top = '';
-    shell.style.left = '';
-    shell.style.right = '';
-    shell.style.bottom = '';
-    if (btn) btn.textContent = 'Minimize video';
-}
-
 function scrollToClinicalSupport() {
     const card = document.querySelector('.csp-card');
     if (card) {
@@ -3310,10 +3431,9 @@ window.addEventListener('message', (event) => {
         }
 
         document.getElementById('activeCallUI').style.display = 'none';
-        const preCall = document.getElementById('videoPreCall');
-        if (preCall) preCall.style.display = 'flex';
+        markVideoCallClosed();
         document.getElementById('callStatusIndicator').style.color = '#64748b';
-        document.getElementById('callStatusIndicator').textContent = '● READY';
+        document.getElementById('callStatusIndicator').textContent = '● ENDED';
         setVideoShellLive(false);
         // The consultation is saved server-side by end_video.php before this
         // message fires, so the follow-up decision comes next rather than
@@ -3323,10 +3443,10 @@ window.addEventListener('message', (event) => {
     }
 
     if (event.data.type === 'medconnect:minimize-video') {
-        if (isMobileConsultation() && mobileCallFullscreen) {
+        if (isMobileConsultation()) {
             exitMobileCallFullscreen();
         } else {
-            scrollToClinicalSupport();
+            exitDesktopVideoExpanded();
         }
         return;
     }
@@ -3334,16 +3454,8 @@ window.addEventListener('message', (event) => {
     if (event.data.type === 'medconnect:maximize-video') {
         if (isMobileConsultation()) {
             enterMobileCallFullscreen();
-        } else if (window.McSessionVideoShell && McSessionVideoShell.isActive()) {
-            const st = McSessionVideoShell.getState();
-            const dock = document.getElementById('mcProviderVideoDock');
-            if (st && st.mode === 'fullscreen' && dock) {
-                McSessionVideoShell.dock(dock);
-            } else {
-                McSessionVideoShell.maximize();
-            }
         } else {
-            maximizeVideoShell();
+            enterDesktopVideoExpanded();
         }
         return;
     }
@@ -3388,6 +3500,9 @@ function mcProviderVideoWindow() {
 }
 
 function mcProviderOpenVideo(urlOrToken, consultationId) {
+    if (videoCallClosed) {
+        return '';
+    }
     const token = window.McSessionVideoShell
         ? McSessionVideoShell.extractToken(urlOrToken)
         : (String(urlOrToken).match(/[?&]token=([^&]+)/) || [])[1] || String(urlOrToken);
@@ -3439,6 +3554,10 @@ async function startVideoCall() {
     alert('This consultation has already ended. You can only view its historical record.');
     return;
     <?php endif; ?>
+    if (videoCallClosed) {
+        alert('This consultation has already ended. You can only view its historical record.');
+        return;
+    }
     try {
         console.log("Starting video call for consultation:", <?= $consultation_id ?>);
         const res = await fetch('<?= ASSET_BASE ?>/app/api/consultations/start_video.php', {
@@ -3506,7 +3625,7 @@ async function copyPatientJoinLink() {
 // Check if there's already an active session on load
 window.addEventListener('load', () => {
     const existingToken = '<?= $room_token ?>';
-    if (existingToken) {
+    if (existingToken && !videoCallClosed) {
         mcProviderOpenVideo(existingToken, <?= $consultation_id ?>);
     }
 });
