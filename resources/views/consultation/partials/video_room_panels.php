@@ -90,7 +90,7 @@ $info_sub = !empty($is_patient)
         <dd id="mcVcPostCallDuration"></dd>
       </div>
     </dl>
-    <p class="mc-vc-postcall__saved">Your consultation has been saved to My Sessions.</p>
+    <p class="mc-vc-postcall__saved">✓ Your consultation has been saved to My Sessions.</p>
     <div class="mc-vc-postcall__actions">
       <a
         href="<?= htmlspecialchars(ASSET_BASE) ?>/views/patient/consultation_detail.php?id=<?= (int) $consultation_id ?>&amp;from=sessions"
