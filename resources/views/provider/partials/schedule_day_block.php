@@ -74,7 +74,11 @@ $summaryText = implode(' · ', $summaryParts);
 
     <div class="sched-day-active-row">
       <label class="sched-day-active-label">
-        <input type="checkbox" class="schedule-day-active" <?= $day_active ? 'checked' : '' ?>>
+        <input type="checkbox"
+               class="schedule-day-active"
+               name="accept_bookings"
+               value="1"
+               <?= $day_active ? 'checked' : '' ?>>
         <span>Accept patient bookings today</span>
       </label>
     </div>

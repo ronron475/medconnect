@@ -8,9 +8,11 @@
  *   At midnight the day locks; the next day requires a new schedule.
  *
  * POST:
- *   day         — weekday name (must be today)
- *   is_active   — 1|0 day-level booking toggle
- *   sessions    — JSON array [{id?, start_time, end_time, duration}]
+ *   day              — weekday name (must be today)
+ *   accept_bookings  — 1|0 day-level booking toggle (preferred)
+ *   booking_enabled  — 1|0 alias
+ *   is_active        — 1|0 alias
+ *   sessions         — JSON array [{id?, start_time, end_time, duration, is_active?}]
  */
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
@@ -40,7 +42,6 @@ auth_csrf_require();
 
 $provider_id = (int) $_SESSION['user_id'];
 $day         = trim((string) ($_POST['day'] ?? ''));
-$day_active  = isset($_POST['is_active']) && (string) $_POST['is_active'] !== '0';
 $sessionsRaw = $_POST['sessions'] ?? '[]';
 
 if (!in_array($day, provider_schedule_valid_days(), true)) {
@@ -75,6 +76,8 @@ if ($sessionsInput === [] && !empty($_POST['start_time']) && !empty($_POST['end_
     ]];
 }
 
+$day_active = provider_schedule_parse_day_active($_POST, $sessionsInput);
+
 $validation = provider_schedule_validate_sessions($sessionsInput, $day_active);
 if (!$validation['valid']) {
     echo json_encode([
@@ -95,11 +98,20 @@ try {
 
     provider_schedule_save_day($pdo, $provider_id, $day, $sessions, $day_active);
 
+    $savedSessions = provider_schedule_load_grouped($pdo, $provider_id)[$day] ?? [];
+    $savedActive = provider_schedule_day_is_active($savedSessions);
+    if ($sessions !== [] && $savedActive !== $day_active) {
+        throw new RuntimeException('Could not persist today\'s booking-enabled state.');
+    }
+    if ($sessions !== [] && $savedSessions === []) {
+        throw new RuntimeException('Could not persist today\'s schedule sessions.');
+    }
+
     appointment_slots_clear_day($pdo, $provider_id, $day, $today_ymd);
 
     $slots_created = 0;
     if ($day_active && $sessions !== []) {
-        // Patients book today-only; regenerate today's open slots.
+        // Patients book today-only; regenerate today's open slots from the saved schedule.
         $slots_created = appointment_slots_sync_today($pdo, $provider_id);
     }
 
@@ -132,13 +144,15 @@ try {
 
     echo json_encode([
         'success'           => true,
-        'message'           => $day_active
+        'message'           => $savedActive
             ? 'Today\'s schedule saved. ' . $slots_created . ' appointment slot(s) are available for patients.'
             : 'Today\'s schedule saved. Bookings are off — no new slots were opened.',
         'slots_created'     => $slots_created,
-        'sessions_saved'    => count($sessions),
+        'sessions_saved'    => count($savedSessions),
         'patients_notified' => $patients_notified,
         'day'               => $day,
+        'is_active'         => $savedActive,
+        'accept_bookings'   => $savedActive,
         'is_today'          => true,
         'today'             => $today_ymd,
     ]);

@@ -295,10 +295,20 @@
       saveBtn.classList.add('is-saving');
       saveBtn.textContent = 'Saving…';
 
+      const persistActive = !!(dayBlock.querySelector('.schedule-day-active')?.checked);
+      const sessions = collectSessions(dayBlock).map((s) => ({
+        ...s,
+        is_active: persistActive ? 1 : 0,
+        accept_bookings: persistActive ? 1 : 0,
+        booking_enabled: persistActive ? 1 : 0,
+      }));
+
       const fd = new FormData();
       fd.append('day', day);
-      if (dayActive) fd.append('is_active', '1');
-      fd.append('sessions', JSON.stringify(collectSessions(dayBlock)));
+      fd.append('accept_bookings', persistActive ? '1' : '0');
+      fd.append('booking_enabled', persistActive ? '1' : '0');
+      fd.append('is_active', persistActive ? '1' : '0');
+      fd.append('sessions', JSON.stringify(sessions));
       const csrf = (document.body && document.body.dataset.csrf) || '';
       if (csrf) fd.append('csrf_token', csrf);
 

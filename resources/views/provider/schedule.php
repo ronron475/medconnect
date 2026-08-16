@@ -27,7 +27,11 @@ function schedule_duration_label(int $minutes): string
 
 $schedules_by_day = provider_schedule_load_grouped($pdo, $provider_id);
 $days_order = provider_schedule_valid_days();
-$today_name = date('l');
+$today_now = appointment_now();
+$today_name = $today_now->format('l');
+$today_ymd = $today_now->format('Y-m-d');
+$today_time = $today_now->format('H:i:s');
+$today_label = $today_now->format('M j, Y');
 $today_sessions = $schedules_by_day[$today_name] ?? [];
 $today_is_active = provider_schedule_day_is_active($today_sessions);
 
@@ -51,10 +55,10 @@ $s_stmt = $pdo->prepare("
            WHERE r2.consultation_id = c.id
              AND r2.status = 'pending_patient'
        )
-    WHERE s.provider_id = ? AND s.slot_date = CURDATE()
+    WHERE s.provider_id = ? AND s.slot_date = ?
     ORDER BY s.start_time ASC
 ");
-$s_stmt->execute([$provider_id]);
+$s_stmt->execute([$provider_id, $today_ymd]);
 $today_slots = $s_stmt->fetchAll();
 
 $slot_counts = ['available' => 0, 'booked' => 0, 'passed' => 0, 'completed' => 0, 'cancelled' => 0];
@@ -72,7 +76,7 @@ foreach ($today_slots as $sl) {
         $slot_counts['cancelled']++;
         continue;
     }
-    if (in_array($st, ['expired'], true) || substr((string) ($sl['start_time'] ?? ''), 0, 8) <= date('H:i:s')) {
+    if (in_array($st, ['expired'], true) || substr((string) ($sl['start_time'] ?? ''), 0, 8) <= $today_time) {
         $slot_counts['passed']++;
     } else {
         $slot_counts['available']++;
@@ -87,7 +91,7 @@ $session_count_today = count($today_sessions);
     <h2 class="text-h2">Daily Availability</h2>
     <p>
       Set your <strong>video consultation</strong> hours for <strong>today only</strong>
-      (<?= htmlspecialchars($today_name) ?>, <?= date('M j, Y') ?>).
+      (<?= htmlspecialchars($today_name) ?>, <?= htmlspecialchars($today_label) ?>).
       At <strong>12:00 AM</strong> today&apos;s schedule locks — create a new one tomorrow.
     </p>
   </div>
@@ -131,7 +135,7 @@ $session_count_today = count($today_sessions);
     <div class="mc-card sched-preview-card">
       <div class="mc-card-header">
         <h3 class="text-h3"><?= icon('clock') ?> Today&apos;s Slots</h3>
-        <span class="mc-badge"><?= date('M j, Y') ?></span>
+        <span class="mc-badge"><?= htmlspecialchars($today_label) ?></span>
       </div>
       <div class="mc-card-body mt-2">
         <?php if ($today_is_active): ?>
@@ -169,7 +173,7 @@ $session_count_today = count($today_sessions);
         <div class="sched-slot-grid-wrap">
           <?php
           $slot_list = $today_slots;
-          $slot_preview_date = date('Y-m-d');
+          $slot_preview_date = $today_ymd;
           $slot_actions_enabled = true;
           include __DIR__ . '/partials/schedule_slot_grid.php';
           ?>

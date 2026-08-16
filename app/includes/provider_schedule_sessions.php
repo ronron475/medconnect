@@ -211,6 +211,80 @@ function provider_schedule_day_is_active(array $sessions): bool
 }
 
 /**
+ * Coerce a POST/JSON flag to bool. Returns null when the value is absent/blank.
+ */
+function provider_schedule_coerce_bool(mixed $raw): ?bool
+{
+    if ($raw === null) {
+        return null;
+    }
+    if (is_bool($raw)) {
+        return $raw;
+    }
+    if (is_int($raw) || is_float($raw)) {
+        return ((int) $raw) !== 0;
+    }
+    if (is_array($raw)) {
+        $raw = reset($raw);
+        if ($raw === false) {
+            return null;
+        }
+
+        return provider_schedule_coerce_bool($raw);
+    }
+
+    $val = strtolower(trim((string) $raw));
+    if ($val === '') {
+        return null;
+    }
+    if (in_array($val, ['0', 'false', 'off', 'no', 'inactive', 'disabled'], true)) {
+        return false;
+    }
+    if (in_array($val, ['1', 'true', 'on', 'yes', 'active', 'enabled'], true)) {
+        return true;
+    }
+
+    return null;
+}
+
+/**
+ * Day-level booking toggle from POST and/or session payload.
+ * Prefer accept_bookings / booking_enabled so a filter that strips is_active cannot drop the flag.
+ *
+ * @param array<string, mixed> $post
+ * @param array<int, mixed> $sessionsInput
+ */
+function provider_schedule_parse_day_active(array $post, array $sessionsInput): bool
+{
+    foreach (['accept_bookings', 'booking_enabled', 'is_active', 'enabled', 'active'] as $key) {
+        if (!array_key_exists($key, $post)) {
+            continue;
+        }
+        $parsed = provider_schedule_coerce_bool($post[$key]);
+        if ($parsed !== null) {
+            return $parsed;
+        }
+    }
+
+    foreach ($sessionsInput as $session) {
+        if (!is_array($session)) {
+            continue;
+        }
+        foreach (['accept_bookings', 'booking_enabled', 'is_active'] as $key) {
+            if (!array_key_exists($key, $session)) {
+                continue;
+            }
+            $parsed = provider_schedule_coerce_bool($session[$key]);
+            if ($parsed === true) {
+                return true;
+            }
+        }
+    }
+
+    return false;
+}
+
+/**
  * @param array<int, array{id: ?int, start_time: string, end_time: string, slot_duration: int}> $sessions
  */
 function provider_schedule_save_day(
@@ -251,21 +325,34 @@ function provider_schedule_save_day(
         WHERE id = ? AND provider_id = ? AND day_of_week = ?
     ');
 
+    $existsStmt = $pdo->prepare('
+        SELECT id FROM provider_schedules
+        WHERE id = ? AND provider_id = ? AND day_of_week = ?
+        LIMIT 1
+    ');
+
     $savedIds = [];
     foreach ($sessions as $sort => $session) {
-        if (!empty($session['id'])) {
-            $update->execute([
-                $sort,
-                $session['start_time'],
-                $session['end_time'],
-                $session['slot_duration'],
-                $isActive,
-                (int) $session['id'],
-                $providerId,
-                $day,
-            ]);
-            $savedIds[] = (int) $session['id'];
-        } else {
+        $sessionId = !empty($session['id']) ? (int) $session['id'] : 0;
+        $updated = false;
+        if ($sessionId > 0) {
+            $existsStmt->execute([$sessionId, $providerId, $day]);
+            if ($existsStmt->fetchColumn()) {
+                $update->execute([
+                    $sort,
+                    $session['start_time'],
+                    $session['end_time'],
+                    $session['slot_duration'],
+                    $isActive,
+                    $sessionId,
+                    $providerId,
+                    $day,
+                ]);
+                $savedIds[] = $sessionId;
+                $updated = true;
+            }
+        }
+        if (!$updated) {
             $upsert->execute([
                 $providerId,
                 $day,
