@@ -523,7 +523,7 @@
         els.overlay.classList.toggle('is-visible', !!visible);
         els.overlay.setAttribute('aria-hidden', visible ? 'false' : 'true');
         const blob = String(title || '') + ' ' + String(sub || '');
-        const isStatus = !!visible && options.showRetry !== true && /waiting|connecting|reconnecting|live|connected|poor|fair|muted/i.test(blob);
+        const isStatus = !!visible && options.showRetry !== true && /waiting|connecting|reconnecting|live|connected|poor|fair|muted|disconnected|lost|rejoin/i.test(blob);
         els.overlay.classList.toggle('is-status', isStatus);
       }
       if (options.showRetry === true) {
@@ -561,8 +561,16 @@
       const t = String(text || '').toLowerCase();
       if (t.indexOf('waiting for healthcare') >= 0 || t.indexOf('waiting for provider') >= 0 || t.indexOf('waiting for doctor') >= 0) {
         setOverlay('Waiting for healthcare provider…', '', true, { showRetry: false });
+      } else if (t.indexOf('you left') >= 0) {
+        setOverlay('You left the call', 'The consultation is still open. Rejoin while your doctor is in the room.', true, { showRetry: true });
+      } else if (t.indexOf('patient disconnected') >= 0 || t.indexOf('waiting for patient to reconnect') >= 0) {
+        setOverlay('Patient disconnected', 'Waiting for patient to reconnect…', true, { showRetry: false });
       } else if (t.indexOf('waiting for patient') >= 0) {
         setOverlay('Waiting for patient…', '', true, { showRetry: false });
+      } else if (t.indexOf('connection lost') >= 0 || t.indexOf('trying to reconnect') >= 0) {
+        setOverlay('Connection lost', 'Trying to reconnect…', true, { showRetry: false });
+      } else if (t.indexOf('reconnected') >= 0) {
+        setOverlay('Patient reconnected', '', true, { showRetry: false });
       } else if (t.indexOf('reconnecting') >= 0 || t.indexOf('connecting') >= 0 || t.indexOf('poor network') >= 0 || t.indexOf('poor connection') >= 0) {
         setOverlay('', '', false, { showRetry: false });
       } else if (t.indexOf('ended') >= 0 || t.indexOf('consultation ended') >= 0) {

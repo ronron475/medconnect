@@ -1883,22 +1883,21 @@ body.consultation-mobile-call-fullscreen .mc-provider-video-dock .mc-session-flo
                 </div>
                 <?php endif; ?>
                 <?php
-                  $recUrl = consultation_video_recording_view_url((int) $consultation_id);
+                  $consultation_id = (int) $consultation_id;
+                  $video_history = $video_history;
+                  $recording_btn_class = 'session-btn primary';
+                  require BASE_PATH . '/resources/views/partials/consultation_recording_panel.php';
                 ?>
-                <?php if ($recUrl !== ''): ?>
-                <p style="margin:12px 0 0;">
-                    <a class="session-btn primary" href="<?= htmlspecialchars($recUrl) ?>" target="_blank" rel="noopener">View Recording</a>
-                </p>
-                <?php else: ?>
-                <div class="info-row" style="margin-top:10px;"><span class="info-key">Video recording</span><span class="info-val">Not available</span></div>
-                <?php endif; ?>
                 <?php else: ?>
                 <div class="info-row"><span class="info-key">Video consultation</span><span class="info-val"><?= htmlspecialchars((string) ($video_history['video_status_label'] ?? 'Not started')) ?></span></div>
                 <?php if (!empty($video_history['started_label'])): ?>
                 <div class="info-row"><span class="info-key">Started</span><span class="info-val"><?= htmlspecialchars((string) $video_history['started_label']) ?></span></div>
                 <?php endif; ?>
-                <div class="info-row" style="margin-top:10px;"><span class="info-key">Video recording</span><span class="info-val">Not available</span></div>
-                <?php if (!empty($history_view)): ?>
+                <?php
+                  $recording_btn_class = 'session-btn primary';
+                  require BASE_PATH . '/resources/views/partials/consultation_recording_panel.php';
+                ?>
+                <?php if (!empty($history_view) && empty($video_history['has_session']) && empty($video_history['has_recording'])): ?>
                 <p class="text-xs text-muted" style="margin-top:10px;line-height:1.5;">No past video call exists for this consultation in the database. A video session appears here only after <strong>Start Video Consultation</strong> runs and the call is ended.</p>
                 <?php endif; ?>
                 <?php endif; ?>
@@ -3509,7 +3508,9 @@ window.addEventListener('message', (event) => {
             indicator.textContent = event.data.statusLabel;
             indicator.style.color = event.data.connected ? '#22c55e' : '#ef4444';
         }
-        if (timerEl && event.data.timerActive === false) {
+        if (timerEl && event.data.patientDisconnected) {
+            timerActive = true;
+        } else if (timerEl && event.data.timerActive === false) {
             timerActive = false;
         }
         if (timerEl && event.data.timerActive === true) {

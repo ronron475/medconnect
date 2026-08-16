@@ -197,10 +197,13 @@ $patient_page_stylesheets = [
         <?php endif; ?>
         <div><dt>Provider</dt><dd><?= htmlspecialchars($providerName) ?></dd></div>
       </dl>
-      <?php if (!empty($videoHistory['has_recording']) && !empty($videoHistory['recording_path'])): ?>
+      <?php if (!empty($videoHistory['has_recording'])): ?>
       <p class="pmh-file-card__link">
         <a class="pmh-btn pmh-btn--outline pmh-btn--sm" href="<?= htmlspecialchars(consultation_video_recording_view_url((int) $consultationId)) ?>" target="_blank" rel="noopener">View Recording</a>
       </p>
+      <?php if (!empty($videoHistory['recording_segment_count']) && (int) $videoHistory['recording_segment_count'] > 1): ?>
+      <p class="text-muted"><?= (int) $videoHistory['recording_segment_count'] ?> recording segments</p>
+      <?php endif; ?>
       <?php else: ?>
       <p class="text-muted">Video recording not available for this consultation.</p>
       <?php endif; ?>

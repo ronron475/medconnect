@@ -84,5 +84,8 @@ function clinical_tables_ensure(PDO $pdo): void
     require_once __DIR__ . '/clinical_note_signature.php';
     clinical_note_signature_schema_ensure($pdo);
 
+    require_once __DIR__ . '/consultation_recording_segments.php';
+    consultation_recording_segments_ensure($pdo);
+
     $done = true;
 }

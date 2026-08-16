@@ -22,14 +22,13 @@ if ($token === '' || $userId <= 0) {
 
 try {
     $stmt = $pdo->prepare("
-        SELECT vs.consultation_id, c.patient_id, c.provider_id, c.status AS consult_status,
-               c.consult_date, c.consult_time,
+        SELECT vs.consultation_id, vs.status AS video_status, c.patient_id, c.provider_id,
+               c.status AS consult_status, c.consult_date, c.consult_time,
                s.slot_date, s.end_time AS slot_end
         FROM video_sessions vs
         JOIN consultations c ON c.id = vs.consultation_id
         LEFT JOIN appointment_slots s ON s.consultation_id = c.id AND s.status = 'booked'
         WHERE vs.room_token = ?
-          AND vs.status = 'active'
           AND (c.provider_id = ? OR c.patient_id = ?)
         LIMIT 1
     ");
@@ -68,6 +67,8 @@ try {
         'end_label' => date('g:i A', $end_ts),
         'slot_expired' => $slot_expired,
         'consultation_status' => $liveStatus,
+        'video_status' => (string) ($row['video_status'] ?? ''),
+        'consultation_id' => (int) $row['consultation_id'],
     ]);
 } catch (Exception $e) {
     echo json_encode(['success' => false, 'message' => 'Error: ' . $e->getMessage()]);

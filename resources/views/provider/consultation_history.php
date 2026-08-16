@@ -124,18 +124,46 @@ function pch_filter_url(string $filter): string
             <div class="pch-consult-card__row"><strong>Ended:</strong> <?= htmlspecialchars((string) ($vh['ended_label'] ?? '—')) ?></div>
             <div class="pch-consult-card__row"><strong>Duration:</strong> <?= htmlspecialchars((string) ($vh['duration_label'] ?? '—')) ?></div>
             <?php
-              $recUrl = consultation_video_recording_view_url((int) ($row['id'] ?? 0));
+              $consultation_id = (int) ($row['id'] ?? 0);
+              $recUrl = consultation_video_recording_view_url($consultation_id);
             ?>
             <?php if ($recUrl === ''): ?>
             <div class="pch-consult-card__row"><strong>Video recording:</strong> Not available</div>
+            <?php else: ?>
+            <div class="pch-consult-card__row"><strong>Video recording:</strong> <?= htmlspecialchars((string) ($vh['recording_label'] ?? 'Available')) ?></div>
+            <?php if (!empty($vh['recording_segments']) && is_array($vh['recording_segments'])): ?>
+            <?php foreach ($vh['recording_segments'] as $seg):
+                $segIdx = (int) ($seg['segment_index'] ?? 0);
+                if (empty($seg['playable'])) {
+                    echo '<div class="pch-consult-card__row"><strong>Segment ' . ($segIdx > 0 ? $segIdx : '1') . ':</strong> ' . htmlspecialchars(ucfirst((string) ($seg['status'] ?? 'unavailable'))) . '</div>';
+                    continue;
+                }
+                $segUrl = consultation_video_recording_segment_url($consultation_id, (int) ($seg['id'] ?? 0));
+                $timeBits = trim((string) ($seg['started_label'] ?? ''));
+                if ((string) ($seg['ended_label'] ?? '') !== '') {
+                    $timeBits .= ($timeBits !== '' ? '–' : '') . (string) $seg['ended_label'];
+                }
+            ?>
+            <div class="pch-consult-card__row">
+                <strong>Segment <?= $segIdx > 0 ? $segIdx : 1 ?>:</strong>
+                <?= htmlspecialchars($timeBits !== '' ? $timeBits : 'Ready') ?>
+                <?php if ($segUrl !== ''): ?>
+                — <a href="<?= htmlspecialchars($segUrl) ?>" target="_blank" rel="noopener">Play</a>
+                <?php endif; ?>
+            </div>
+            <?php endforeach; ?>
+            <?php endif; ?>
             <?php endif; ?>
             <?php else: ?>
-            <?php $recUrl = ''; ?>
+            <?php $recUrl = consultation_video_recording_view_url((int) ($row['id'] ?? 0)); ?>
             <div class="pch-consult-card__row"><strong>Video consultation:</strong> <?= htmlspecialchars($vhLabel) ?></div>
+            <?php if ($recUrl !== ''): ?>
+            <div class="pch-consult-card__row"><strong>Video recording:</strong> <?= htmlspecialchars((string) ($vh['recording_label'] ?? 'Available')) ?></div>
+            <?php endif; ?>
             <?php endif; ?>
           </div>
           <div class="pch-consult-card__actions">
-            <?php if ($vhCompleted && $recUrl !== ''): ?>
+            <?php if ($recUrl !== ''): ?>
             <a href="<?= htmlspecialchars($recUrl) ?>" target="_blank" rel="noopener" class="mc-btn mc-btn--outline pch-consult-card__btn">View Recording</a>
             <?php endif; ?>
             <a href="<?= htmlspecialchars($sessionUrl) ?>" class="mc-btn mc-btn--outline pch-consult-card__btn">View History</a>

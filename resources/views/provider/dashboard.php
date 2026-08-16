@@ -22,34 +22,7 @@ $chart_data = provider_dashboard_consultation_chart($pdo, $provider_id, $chart_p
 $week_chart = $chart_data['series'];
 $week_total = $chart_data['total'];
 
-// Session recordings
-$recordings = [];
-try {
-    $rec_stmt = $pdo->prepare("
-        SELECT
-            COALESCE(NULLIF(vs.recording_path, ''), NULLIF(vs.recording_url, '')) AS recording_url,
-            vs.ended_at,
-            u.first_name,
-            u.last_name,
-            c.id AS consultation_id,
-            c.patient_id,
-            c.provider_id
-        FROM video_sessions vs
-        JOIN consultations c ON vs.consultation_id = c.id
-        JOIN users u ON c.patient_id = u.id
-        WHERE c.provider_id = ?
-          AND (
-            (vs.recording_path IS NOT NULL AND vs.recording_path <> '')
-            OR (vs.recording_url IS NOT NULL AND vs.recording_url <> '')
-          )
-        ORDER BY vs.ended_at DESC
-        LIMIT 5
-    ");
-    $rec_stmt->execute([$provider_id]);
-    $recordings = $rec_stmt->fetchAll(PDO::FETCH_ASSOC);
-} catch (Exception $e) {
-    $recordings = [];
-}
+$recordings = consultation_provider_recent_recordings($pdo, $provider_id, 5);
 
 $display_name = $provider['display_name'] ?? trim(($provider['first_name'] ?? '') . ' ' . ($provider['last_name'] ?? ''));
 $last_name = $provider['last_name'] ?? 'Provider';
@@ -309,14 +282,23 @@ $last_name = $provider['last_name'] ?? 'Provider';
         <p class="text-xs text-muted" style="text-align:center;padding:12px 0;margin:0;">No recordings yet.</p>
         <?php else: ?>
         <div style="display:flex;flex-direction:column;gap:8px;">
-          <?php foreach ($recordings as $rec): ?>
+          <?php foreach ($recordings as $rec):
+            $recUrl = (string) ($rec['view_url'] ?? '');
+            if ($recUrl === '') {
+                continue;
+            }
+            $segCount = (int) ($rec['segment_count'] ?? 1);
+          ?>
           <div class="prov-recording-item">
             <div>
-              <div class="prov-recording-item__name"><?= htmlspecialchars(trim($rec['first_name'] . ' ' . $rec['last_name'])) ?></div>
-              <div class="prov-recording-item__date"><?= date('M j, Y g:i A', strtotime($rec['ended_at'])) ?></div>
+              <div class="prov-recording-item__name"><?= htmlspecialchars((string) ($rec['patient_name'] ?? 'Patient')) ?></div>
+              <div class="prov-recording-item__date"><?= htmlspecialchars((string) (($rec['ended_label'] ?? '') !== '' ? $rec['ended_label'] : ('Consultation #' . (int) ($rec['consultation_id'] ?? 0)))) ?></div>
+              <?php if ($segCount > 1): ?>
+              <div class="prov-recording-item__date"><?= $segCount ?> recording segments</div>
+              <?php endif; ?>
             </div>
             <div class="prov-recording-actions">
-              <a href="<?= htmlspecialchars(consultation_video_recording_view_url((int) ($rec['consultation_id'] ?? 0))) ?>" target="_blank" rel="noopener" class="mc-btn mc-btn--outline" style="padding:4px 8px;font-size:10px;">View</a>
+              <a href="<?= htmlspecialchars($recUrl) ?>" target="_blank" rel="noopener" class="mc-btn mc-btn--outline" style="padding:4px 8px;font-size:10px;">View</a>
             </div>
           </div>
           <?php endforeach; ?>
