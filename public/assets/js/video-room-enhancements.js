@@ -550,6 +550,7 @@
   function fillPatientPostCall(summary) {
     const doctorEl = q('mcVcPostCallDoctor');
     const dateEl = q('mcVcPostCallDate');
+    const dateRow = q('mcVcPostCallDateRow');
     const durationEl = q('mcVcPostCallDuration');
     const durationRow = q('mcVcPostCallDurationRow');
     const viewBtn = q('mcVcPostCallViewSession');
@@ -558,8 +559,14 @@
     if (doctorEl && doctor) {
       doctorEl.textContent = /^dr\.?\s/i.test(doctor) ? doctor : ('Dr. ' + doctor);
     }
-    if (dateEl && data.date_label) {
-      dateEl.textContent = data.date_label;
+    if (dateEl && dateRow) {
+      const label = String(data.date_label || dateEl.textContent || '').trim();
+      if (label && label !== '—') {
+        dateEl.textContent = label;
+        dateRow.hidden = false;
+      } else {
+        dateRow.hidden = true;
+      }
     }
     if (durationEl && durationRow) {
       if (data.duration_label) {
@@ -593,6 +600,8 @@
     postCallShown = true;
     modal.hidden = false;
     document.body.classList.add('mc-vc-call-ended');
+    const endModal = document.getElementById('endCallModal');
+    if (endModal) endModal.classList.remove('show');
     const controls = q('mcVcControls');
     if (controls) controls.style.display = 'none';
     const panelToggle = q('mcVcPanelToggle');

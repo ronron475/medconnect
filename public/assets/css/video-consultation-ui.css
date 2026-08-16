@@ -438,22 +438,83 @@
   max-width: min(420px, calc(100% - 32px));
 }
 
+.mc-vc-overlay-sub:empty {
+  display: none;
+}
+
+.mc-vc-overlay.is-status {
+  align-items: flex-start;
+  justify-content: center;
+  padding-top: calc(var(--mc-vc-header-height, 56px) + 8px);
+  background: transparent;
+}
+
 .mc-vc-overlay.is-status .mc-vc-overlay-card {
-  padding: 10px 16px;
-  max-width: min(300px, calc(100% - 40px));
-  border-radius: 12px;
-  background: rgba(2, 6, 23, 0.72);
+  padding: 6px 12px;
+  max-width: min(280px, calc(100% - 48px));
 }
 
 .mc-vc-overlay.is-status .mc-vc-overlay-title {
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 700;
-  margin-bottom: 4px;
+  margin: 0;
 }
 
 .mc-vc-overlay.is-status .mc-vc-overlay-sub {
-  font-size: 11px;
-  line-height: 1.45;
+  display: none;
+}
+
+body.media-ready .compact-hint {
+  display: none !important;
+}
+
+.mc-vc-more {
+  position: relative;
+  flex: 0 0 auto;
+}
+
+.mc-vc-more-menu {
+  position: absolute;
+  right: 0;
+  bottom: calc(100% + 10px);
+  min-width: 188px;
+  max-height: min(70vh, 360px);
+  overflow: auto;
+  padding: 6px;
+  border-radius: 12px;
+  background: #0f172a;
+  border: 1px solid rgba(148, 163, 184, 0.22);
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.45);
+  z-index: 70;
+}
+
+.mc-vc-more-menu[hidden] {
+  display: none !important;
+}
+
+.mc-vc-more-item {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  min-height: 44px;
+  padding: 0 12px;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  color: #f8fafc;
+  font-size: 14px;
+  font-weight: 700;
+  text-align: left;
+  cursor: pointer;
+}
+
+.mc-vc-more-item:hover,
+.mc-vc-more-item:focus-visible {
+  background: rgba(13, 148, 136, 0.22);
+}
+
+.mc-vc-more-item--compact {
+  display: flex;
 }
 
 .mc-vc-overlay-title {
@@ -489,37 +550,9 @@
   display: none !important;
 }
 
-/* Patient layout — tighter header/status, less overlap */
+/* Patient layout — full-viewport overlay styles live at the end of this file. */
 body.role-patient .mc-vc-status-bar {
-  top: calc(52px + var(--mc-vc-safe-top));
   max-width: calc(100% - 28px);
-}
-
-body.role-patient .mc-vc-media-status {
-  max-width: 100%;
-}
-
-body.role-patient .mc-vc-media-status span {
-  font-size: 10px;
-  padding: 2px 7px;
-}
-
-body.role-patient .mc-vc-call-status {
-  flex: 1 1 100%;
-  font-size: 12px;
-}
-
-body.role-patient .mc-vc-pip[data-corner="top-left"],
-body.role-patient .mc-vc-pip[data-corner="top-right"] {
-  top: calc(96px + var(--mc-vc-safe-top));
-}
-
-body.role-patient .mc-vc-stage {
-  box-sizing: border-box;
-}
-
-body.role-patient .mc-vc-main {
-  top: calc(88px + var(--mc-vc-safe-top));
 }
 
 /* Controls */
@@ -1264,4 +1297,695 @@ body.embedded-shell.role-provider .mc-vc-root {
 body.media-ready .mc-vc-waiting-card {
   display: none !important;
   pointer-events: none !important;
+}
+
+/* ── Patient telemedicine layout (does not change provider chrome) ───────────
+   Full-viewport provider video, floating self-view, one control bar.
+   Chat/Info/Text stay behind #mcVcMoreBtn and reuse existing panels. */
+body.role-patient {
+  --mc-vc-controls-height: 88px;
+  --mc-vc-header-height: 56px;
+  overflow: hidden;
+  width: 100%;
+  max-width: 100%;
+}
+
+html:has(body.role-patient) {
+  overflow: hidden;
+  width: 100%;
+  max-width: 100%;
+}
+
+body.role-patient .mc-vc-root {
+  display: block;
+  width: 100%;
+  max-width: 100%;
+  height: 100%;
+  height: 100dvh;
+  min-height: 0;
+  overflow: hidden;
+  background: #0b1220;
+}
+
+body.role-patient .mc-vc-header {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 20;
+  min-height: var(--mc-vc-header-height);
+  padding: calc(8px + var(--mc-vc-safe-top)) calc(12px + var(--mc-vc-safe-right)) 28px calc(12px + var(--mc-vc-safe-left));
+  background: linear-gradient(180deg, rgba(2, 6, 23, 0.78) 0%, rgba(2, 6, 23, 0) 100%);
+  pointer-events: none;
+}
+
+body.role-patient .mc-vc-header .mc-vc-participant,
+body.role-patient .mc-vc-header .mc-vc-header-meta {
+  pointer-events: auto;
+}
+
+body.role-patient .mc-vc-slot-timer,
+body.role-patient .mc-vc-pill--secure {
+  display: none;
+}
+
+body.role-patient .mc-vc-status-bar {
+  position: absolute;
+  top: calc(10px + var(--mc-vc-safe-top));
+  left: 50%;
+  right: auto;
+  transform: translateX(-50%);
+  z-index: 21;
+  width: auto;
+  max-width: min(70vw, 280px);
+  padding: 0;
+  background: transparent;
+  pointer-events: none;
+  justify-content: center;
+}
+
+body.role-patient .mc-vc-call-status,
+body.role-patient .mc-vc-live-dot,
+body.role-patient #mediaStatusMic,
+body.role-patient #mediaStatusCam {
+  display: none !important;
+}
+
+body.role-patient #mediaStatusConn {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: rgba(2, 6, 23, 0.55);
+  color: #cbd5e1;
+  pointer-events: none;
+}
+
+body.role-patient .mc-vc-stage {
+  position: absolute;
+  inset: 0;
+  padding: 0 !important;
+  min-height: 0;
+  width: 100%;
+  background: #0b1220;
+}
+
+body.role-patient .mc-vc-main {
+  position: absolute;
+  inset: 0;
+  top: 0 !important;
+  display: block;
+  background: #0b1220;
+}
+
+body.role-patient .mc-vc-main video,
+body.role-patient .mc-vc-pip video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
+  background: #0b1220;
+}
+
+body.role-patient .mc-vc-main-label {
+  bottom: calc(var(--mc-vc-controls-height) + 14px);
+  left: calc(14px + var(--mc-vc-safe-left));
+}
+
+body.role-patient .mc-vc-pip {
+  width: min(26vw, 168px);
+  height: min(19.5vw, 126px);
+  min-width: 96px;
+  min-height: 72px;
+  max-width: 36vw;
+  border-radius: 12px;
+  border: 2px solid rgba(255, 255, 255, 0.28);
+  box-sizing: border-box;
+  z-index: 30;
+  background: #1e293b;
+}
+
+body.role-patient .mc-vc-pip[data-corner="top-left"] {
+  top: calc(56px + var(--mc-vc-safe-top));
+  left: calc(12px + var(--mc-vc-safe-left));
+  bottom: auto;
+  right: auto !important;
+}
+
+body.role-patient .mc-vc-pip[data-corner="top-right"] {
+  top: calc(56px + var(--mc-vc-safe-top));
+  left: auto !important;
+  right: calc(12px + var(--mc-vc-safe-right)) !important;
+  bottom: auto;
+  width: min(168px, 28%);
+  height: auto;
+  aspect-ratio: 4 / 3;
+  min-width: 88px;
+  min-height: 66px;
+}
+
+body.role-patient .mc-vc-pip[data-corner="bottom-left"] {
+  top: auto;
+  bottom: calc(var(--mc-vc-controls-height) + 16px);
+  left: calc(12px + var(--mc-vc-safe-left));
+  right: auto;
+}
+
+body.role-patient .mc-vc-pip[data-corner="bottom-right"] {
+  top: auto;
+  bottom: calc(var(--mc-vc-controls-height) + 16px);
+  right: calc(12px + var(--mc-vc-safe-right));
+  left: auto;
+}
+
+body.role-patient .mc-vc-controls {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 50;
+  width: 100%;
+  box-sizing: border-box;
+  padding: 12px calc(12px + var(--mc-vc-safe-right)) calc(14px + var(--mc-vc-safe-bottom)) calc(12px + var(--mc-vc-safe-left));
+  background: linear-gradient(0deg, rgba(2, 6, 23, 0.92) 0%, rgba(2, 6, 23, 0.35) 55%, rgba(2, 6, 23, 0) 100%);
+  border-top: none;
+}
+
+body.role-patient .mc-vc-controls-inner {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: nowrap;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: auto;
+  max-width: calc(100% - 16px);
+  margin: 0 auto;
+  padding: 8px 14px;
+  overflow: visible;
+  box-sizing: border-box;
+}
+
+body.role-patient .mc-vc-controls-primary,
+body.role-patient .mc-vc-controls-secondary {
+  width: auto;
+  flex: 0 0 auto;
+  flex-wrap: nowrap;
+  justify-content: center;
+  gap: 10px;
+}
+
+body.role-patient .mc-vc-btn--overflow-menu,
+body.role-patient .mc-vc-btn--patient-overflow,
+body.role-patient #mcVcFlipBtn,
+body.role-patient #mcVcFullscreenBtn {
+  display: none !important;
+}
+
+body.role-patient .mc-vc-more-item--compact {
+  display: flex;
+}
+
+body.role-patient .mc-vc-btn--end {
+  order: 0;
+  flex: 0 0 auto;
+  min-width: 76px;
+  max-width: none;
+  width: auto;
+  height: 48px;
+  padding: 0 16px;
+}
+
+body.role-patient .mc-vc-more {
+  position: relative;
+  flex: 0 0 auto;
+}
+
+body.role-patient .mc-vc-more-menu {
+  position: absolute;
+  right: 0;
+  bottom: calc(100% + 10px);
+  min-width: 188px;
+  max-height: min(70vh, 360px);
+  overflow: auto;
+  padding: 6px;
+  border-radius: 12px;
+  background: #0f172a;
+  border: 1px solid rgba(148, 163, 184, 0.22);
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.45);
+  z-index: 70;
+}
+
+body.role-patient .mc-vc-more-menu[hidden] {
+  display: none !important;
+}
+
+body.role-patient .mc-vc-more-item {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  min-height: 44px;
+  padding: 0 12px;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  color: #f8fafc;
+  font-size: 14px;
+  font-weight: 700;
+  text-align: left;
+  cursor: pointer;
+}
+
+body.role-patient .mc-vc-more-item:hover,
+body.role-patient .mc-vc-more-item:focus-visible {
+  background: rgba(13, 148, 136, 0.22);
+}
+
+@media (min-width: 769px) {
+  body.role-patient #mcVcFullscreenBtn {
+    display: flex !important;
+  }
+
+  body.role-patient .mc-vc-more-item--compact[data-mc-proxy="mcVcFullscreenBtn"] {
+    display: none;
+  }
+}
+
+body.role-patient.mc-vc-call-ended #endCallModal,
+body.role-patient.mc-vc-call-ended .mute-tts-banner,
+body.role-patient.mc-vc-call-ended .mute-tts-panel,
+body.role-patient.mc-vc-call-ended .mute-tts-receive-panel,
+body.role-patient.mc-vc-call-ended .mc-vc-side-panel,
+body.role-patient.mc-vc-call-ended .mc-vc-side-backdrop {
+  display: none !important;
+}
+
+@media (min-width: 1100px) {
+  body.role-patient:not(.embedded-shell) .mc-vc-main {
+    display: block;
+  }
+
+  body.role-patient:not(.embedded-shell) .mc-vc-main video {
+    object-fit: cover;
+    width: 100%;
+    height: 100%;
+  }
+}
+
+@media (max-width: 768px) {
+  body.role-patient {
+    --mc-vc-controls-height: 84px;
+    --mc-vc-header-height: 52px;
+  }
+
+  body.role-patient .mc-vc-header-meta .mc-vc-pill--duration {
+    display: inline-flex;
+  }
+
+  body.role-patient .mc-vc-header,
+  body.role-patient .mc-vc-status-bar,
+  body.role-patient .mc-vc-stage,
+  body.role-patient .mc-vc-controls {
+    position: absolute;
+  }
+
+  body.role-patient .mc-vc-root {
+    display: block;
+    position: fixed;
+    inset: 0;
+    height: 100dvh;
+  }
+
+  body.role-patient .mc-vc-header {
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: auto;
+  }
+
+  body.role-patient .mc-vc-stage {
+    inset: 0;
+    flex: none;
+  }
+
+  body.role-patient .mc-vc-controls {
+    top: auto;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    flex-shrink: 0;
+  }
+
+  body.role-patient .mc-vc-controls-inner {
+    flex-direction: row;
+    flex-wrap: nowrap;
+  }
+
+  body.role-patient .mc-vc-participant-sub {
+    display: none;
+  }
+
+  body.role-patient .mc-vc-btn--end {
+    flex: 0 0 auto;
+    min-width: 72px;
+    max-width: none;
+  }
+}
+
+@media (max-width: 480px) {
+  body.role-patient .mc-vc-pip {
+    width: 96px;
+    height: 72px;
+    min-width: 88px;
+    min-height: 66px;
+    max-width: 30vw;
+  }
+
+  body.role-patient .mc-vc-avatar {
+    width: 32px;
+    height: 32px;
+    font-size: 12px;
+  }
+
+  body.role-patient .mc-vc-btn {
+    width: 46px;
+    height: 46px;
+  }
+
+  body.role-patient .mc-vc-controls-inner {
+    gap: 8px;
+    padding: 6px 8px;
+  }
+
+  body.role-patient .mc-vc-controls-primary,
+  body.role-patient .mc-vc-controls-secondary {
+    gap: 8px;
+  }
+}
+
+@media (max-width: 414px) {
+  body.role-patient .mc-vc-controls-inner,
+  body.role-patient .mc-vc-controls-primary,
+  body.role-patient .mc-vc-controls-secondary {
+    flex-wrap: nowrap;
+    width: auto;
+  }
+
+  body.role-patient .mc-vc-btn--end {
+    order: 0;
+    flex: 0 0 auto;
+    min-width: 56px;
+    width: auto;
+  }
+}
+
+@media (max-width: 360px) {
+  body.role-patient .mc-vc-btn {
+    width: 40px !important;
+    height: 40px !important;
+  }
+
+  body.role-patient .mc-vc-btn--end {
+    min-width: 52px !important;
+    width: auto !important;
+    padding: 0 8px !important;
+    font-size: 11px !important;
+    height: 40px;
+  }
+
+  body.role-patient .mc-vc-controls-inner {
+    gap: 4px !important;
+    padding: 6px 8px !important;
+  }
+
+  body.role-patient .mc-vc-controls-primary,
+  body.role-patient .mc-vc-controls-secondary {
+    gap: 4px !important;
+  }
+}
+
+@media (max-width: 340px) {
+  body.role-patient .mc-vc-btn {
+    width: 42px;
+    height: 42px;
+  }
+
+  body.role-patient .mc-vc-btn--end {
+    min-width: 60px;
+    padding: 0 10px;
+    font-size: 12px;
+  }
+
+  body.role-patient .mc-vc-controls-inner {
+    gap: 6px;
+    padding: 6px 8px;
+  }
+
+  body.role-patient .mc-vc-controls-primary,
+  body.role-patient .mc-vc-controls-secondary {
+    gap: 6px;
+  }
+
+  body.role-patient .mc-vc-header-meta .mc-vc-pill--duration {
+    display: none;
+  }
+
+  body.role-patient .mc-vc-status-bar {
+    display: none;
+  }
+}
+
+@media (max-width: 768px) and (orientation: landscape) {
+  body.role-patient {
+    --mc-vc-controls-height: 72px;
+    --mc-vc-header-height: 40px;
+  }
+
+  body.role-patient .mc-vc-status-bar {
+    display: flex;
+  }
+
+  body.role-patient .mc-vc-controls-inner {
+    flex-direction: row;
+  }
+
+  body.role-patient .mc-vc-pip {
+    width: 120px;
+    height: 84px;
+    min-width: 120px;
+    min-height: 84px;
+  }
+}
+
+/* ── Provider telemedicine layout ───────────────────────────────────────────
+   Remote patient is the main feed; provider self-view is PiP.
+   Secondary tools live in #mcVcMoreBtn. Embedded desktop shell stays in-card. */
+body.role-provider {
+  --mc-vc-controls-height: 88px;
+}
+
+body.role-provider .mc-vc-call-status,
+body.role-provider #mediaStatusMic,
+body.role-provider #mediaStatusCam {
+  display: none !important;
+}
+
+body.role-provider #mediaStatusConn {
+  font-size: 11px;
+  font-weight: 700;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: rgba(2, 6, 23, 0.55);
+  color: #cbd5e1;
+}
+
+body.role-provider .mc-vc-pip {
+  z-index: 30;
+}
+
+body.role-provider .mc-vc-btn--overflow-menu,
+body.role-provider #mcVcFlipBtn,
+body.role-provider #mcVcFullscreenBtn {
+  display: none !important;
+}
+
+body.role-provider .mc-vc-controls-inner {
+  flex-direction: row;
+  flex-wrap: nowrap;
+  justify-content: center;
+  max-width: calc(100% - 16px);
+  box-sizing: border-box;
+}
+
+body.role-provider .mc-vc-controls-primary,
+body.role-provider .mc-vc-controls-secondary {
+  width: auto;
+  flex-wrap: nowrap;
+}
+
+body.role-provider .mc-vc-btn--end {
+  order: 0;
+  flex: 0 0 auto;
+  min-width: 64px;
+  max-width: none;
+  width: auto;
+}
+
+body.role-provider:not(.embedded-shell) .mc-vc-root {
+  display: block;
+  overflow: hidden;
+}
+
+body.role-provider:not(.embedded-shell) .mc-vc-main video,
+body.role-provider:not(.embedded-shell) .mc-vc-pip video {
+  object-fit: cover;
+  object-position: center;
+}
+
+body.role-provider:not(.embedded-shell) .mc-vc-header {
+  background: linear-gradient(180deg, rgba(2, 6, 23, 0.78) 0%, rgba(2, 6, 23, 0) 100%);
+}
+
+@media (min-width: 769px) {
+  body.role-provider #mcVcFullscreenBtn {
+    display: flex !important;
+  }
+
+  body.role-provider .mc-vc-more-item--compact[data-mc-proxy="mcVcFullscreenBtn"] {
+    display: none;
+  }
+}
+
+@media (max-width: 768px) {
+  body.role-provider {
+    --mc-vc-controls-height: 84px;
+    --mc-vc-header-height: 52px;
+    overflow: hidden;
+  }
+
+  body.role-provider .mc-vc-root {
+    overflow: hidden;
+  }
+
+  body.role-provider .mc-vc-header {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 20;
+    background: linear-gradient(180deg, rgba(2, 6, 23, 0.78) 0%, rgba(2, 6, 23, 0) 100%);
+  }
+
+  body.role-provider .mc-vc-status-bar {
+    position: absolute;
+    top: calc(10px + var(--mc-vc-safe-top));
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 21;
+    width: auto;
+    padding: 0;
+    background: transparent;
+  }
+
+  body.role-provider .mc-vc-stage {
+    position: absolute;
+    inset: 0;
+    padding: 0;
+  }
+
+  body.role-provider .mc-vc-main {
+    inset: 0;
+    top: 0;
+  }
+
+  body.role-provider .mc-vc-controls {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    padding-bottom: calc(12px + var(--mc-vc-safe-bottom));
+  }
+
+  body.role-provider .mc-vc-controls-inner {
+    flex-direction: row;
+    flex-wrap: nowrap;
+  }
+
+  body.role-provider .mc-vc-btn--end {
+    flex: 0 0 auto;
+    min-width: 56px;
+  }
+
+  body.role-provider .mc-vc-waiting-card__meta,
+  body.role-provider .mc-vc-waiting-card__eyebrow {
+    display: none;
+  }
+
+  body.role-provider .mc-vc-waiting-card__inner {
+    padding: 1rem 1.1rem;
+    max-width: min(320px, calc(100% - 24px));
+  }
+
+  body.role-provider .mc-vc-waiting-card__title {
+    font-size: 1rem;
+    margin: 0;
+  }
+
+  body.role-provider .mc-vc-pill--secure {
+    display: none;
+  }
+}
+
+@media (max-width: 480px) {
+  body.role-provider #mcVcFullscreenBtn {
+    display: none !important;
+  }
+
+  body.role-provider .mc-vc-btn {
+    width: 46px;
+    height: 46px;
+  }
+
+  body.role-provider .mc-vc-pip {
+    width: 96px;
+    height: 72px;
+    min-width: 88px;
+    min-height: 66px;
+  }
+}
+
+@media (max-width: 414px) {
+  body.role-provider .mc-vc-controls-inner,
+  body.role-provider .mc-vc-controls-primary,
+  body.role-provider .mc-vc-controls-secondary {
+    flex-wrap: nowrap;
+    width: auto;
+  }
+
+  body.role-provider .mc-vc-btn--end {
+    order: 0;
+    flex: 0 0 auto;
+    min-width: 56px;
+    width: auto;
+  }
+}
+
+@media (max-width: 360px) {
+  body.role-provider .mc-vc-btn {
+    width: 40px !important;
+    height: 40px !important;
+  }
+
+  body.role-provider .mc-vc-btn--end {
+    min-width: 52px !important;
+    padding: 0 8px !important;
+    font-size: 11px !important;
+    height: 40px;
+  }
+
+  body.role-provider .mc-vc-controls-inner {
+    gap: 4px !important;
+    padding: 6px 8px !important;
+  }
 }

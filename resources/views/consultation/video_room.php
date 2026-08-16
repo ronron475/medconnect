@@ -656,7 +656,7 @@ if (session_status() === PHP_SESSION_ACTIVE) {
         </div>
       </div>
       <div class="mc-vc-header-meta">
-        <span class="mc-vc-pill mc-vc-pill--secure mc-vc-secure-label" title="WebRTC encrypted peer connection">
+        <span class="mc-vc-pill mc-vc-pill--secure mc-vc-secure-label" title="WebRTC encrypted peer connection"<?= $is_patient ? ' hidden' : '' ?>>
           <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
           Secure
         </span>
@@ -684,12 +684,14 @@ if (session_status() === PHP_SESSION_ACTIVE) {
         <div id="mcVcMainSlot"></div>
         <span class="mc-vc-main-label" id="mcVcMainLabel"></span>
       </div>
-      <div class="mc-vc-pip" id="mcVcPip" data-corner="bottom-right">
+      <div class="mc-vc-pip" id="mcVcPip" data-corner="top-right">
         <div id="mcVcPipSlot"></div>
         <span class="mc-vc-pip-label" id="mcVcPipLabel"></span>
+        <?php if (!$is_patient): ?>
         <button type="button" class="mc-vc-pip-swap" id="mcVcSwapBtn" title="Switch main view" aria-label="Switch main view">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 3h5v5M4 20 21 3M21 16v5h-5M15 15l6 6M4 4l5 5"/></svg>
         </button>
+        <?php endif; ?>
       </div>
       <div class="mc-vc-overlay" id="mcVcOverlay" aria-hidden="true">
         <div class="mc-vc-overlay-card">
@@ -727,24 +729,36 @@ if (session_status() === PHP_SESSION_ACTIVE) {
           <button type="button" class="mc-vc-btn mc-vc-btn--mobile-only" id="mcVcFlipBtn" title="Switch camera" aria-label="Switch front or back camera">
             <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 2l4 4-4 4"/><path d="M3 11V9a4 4 0 0 1 4-4h14M7 22l-4-4 4-4"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg>
           </button>
-          <button type="button" class="mc-vc-btn mc-vc-btn--mobile-only mc-vc-btn--speaker" id="mcVcSpeakerBtn" title="Speaker on or off" aria-label="Toggle speaker">
+          <button type="button" class="mc-vc-btn mc-vc-btn--mobile-only mc-vc-btn--speaker mc-vc-btn--overflow-menu" id="mcVcSpeakerBtn" title="Speaker on or off" aria-label="Toggle speaker">
             <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 5L6 9H2v6h4l5 4V5z"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"/></svg>
           </button>
           <button type="button" class="mc-vc-btn" id="mcVcFullscreenBtn" title="Enter fullscreen" aria-label="Enter fullscreen">
             <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/></svg>
           </button>
+          <?php if (!$is_patient): ?>
           <button type="button" class="mc-vc-btn mc-vc-btn--desktop-only" id="mcVcMinimizeBtn" title="Minimize call" aria-label="Minimize call">
             <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9V5a1 1 0 0 1 1-1h4M18 9V5a1 1 0 0 0-1-1h-4M6 15v4a1 1 0 0 0 1 1h4M18 15v4a1 1 0 0 1-1 1h-4"/></svg>
           </button>
+          <?php endif; ?>
         </div>
         <div class="mc-vc-controls-secondary" role="group" aria-label="Call actions">
-          <button type="button" class="mc-vc-btn mc-vc-btn--label" id="mcVcInfoBtn" title="<?= $is_patient ? 'Consultation details' : 'Patient Info' ?>" aria-label="<?= $is_patient ? 'Open consultation details' : 'Open patient information' ?>">Info</button>
-          <button type="button" class="mc-vc-btn mc-vc-btn--label" id="mcVcChatBtn" title="Chat" aria-label="Open chat">Chat</button>
-          <button type="button" class="mc-vc-btn mc-vc-btn--label" id="mcVcTtsBtn" title="Text message while muted" aria-label="Open text message while muted">Text</button>
-          <?php if (!$is_patient): ?>
-          <button type="button" class="mc-vc-btn mc-vc-btn--report" id="violationReportBtn" title="Report possible violation" aria-label="Report possible violation">Report</button>
-          <?php endif; ?>
-          <button type="button" class="mc-vc-btn mc-vc-btn--end btn-end" id="endCallBtn" aria-label="<?= $is_patient ? 'Leave consultation' : 'End consultation' ?>"><?= $is_patient ? 'Leave' : 'End Consultation' ?></button>
+          <div class="mc-vc-more">
+            <button type="button" class="mc-vc-btn" id="mcVcMoreBtn" aria-haspopup="true" aria-expanded="false" aria-controls="mcVcMoreMenu" title="More tools" aria-label="More tools">
+              <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="5" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="12" cy="19" r="1.6"/></svg>
+            </button>
+            <div id="mcVcMoreMenu" class="mc-vc-more-menu" hidden role="menu">
+              <button type="button" class="mc-vc-more-item" id="mcVcInfoBtn" role="menuitem" title="<?= $is_patient ? 'Consultation details' : 'Patient information' ?>" aria-label="<?= $is_patient ? 'Open consultation details' : 'Open patient information' ?>">Info</button>
+              <button type="button" class="mc-vc-more-item" id="mcVcChatBtn" role="menuitem" title="Chat" aria-label="Open chat">Chat</button>
+              <button type="button" class="mc-vc-more-item" id="mcVcTtsBtn" role="menuitem" title="Type a message while muted" aria-label="Open typed voice message">Text</button>
+              <?php if (!$is_patient): ?>
+              <button type="button" class="mc-vc-more-item" id="violationReportBtn" role="menuitem" title="Report possible violation" aria-label="Report possible violation">Report case</button>
+              <?php endif; ?>
+              <button type="button" class="mc-vc-more-item mc-vc-more-item--compact" data-mc-proxy="mcVcFlipBtn" role="menuitem">Switch camera</button>
+              <button type="button" class="mc-vc-more-item mc-vc-more-item--compact" data-mc-proxy="mcVcSpeakerBtn" role="menuitem">Speaker</button>
+              <button type="button" class="mc-vc-more-item mc-vc-more-item--compact" data-mc-proxy="mcVcFullscreenBtn" role="menuitem">Fullscreen</button>
+            </div>
+          </div>
+          <button type="button" class="mc-vc-btn mc-vc-btn--end btn-end" id="endCallBtn" aria-label="<?= $is_patient ? 'Leave consultation' : 'End consultation' ?>"><?= $is_patient ? 'Leave' : 'End' ?></button>
         </div>
       </div>
     </div>
@@ -767,18 +781,11 @@ if (session_status() === PHP_SESSION_ACTIVE) {
   </div>
 
   <div id="muteTtsBanner" class="mute-tts-banner" aria-hidden="true" role="status">
-    <?php if ($is_patient): ?>
-      Your microphone is muted. Type a message — the provider will hear it as speech and see the text.
-    <?php else: ?>
-      Your microphone is muted. Type a message — the patient will hear it as speech and see the text.
-    <?php endif; ?>
+    <span>Microphone muted</span>
+    <button type="button" class="mute-tts-banner__action" id="muteTtsBannerOpen">Type a message</button>
   </div>
   <div id="remoteMuteBanner" class="remote-mute-banner" aria-hidden="true" role="status">
-    <?php if ($is_patient): ?>
-      Provider microphone is muted. Typed voice messages will play as speech here.
-    <?php else: ?>
-      Patient microphone is muted. Their typed messages will appear here and play as speech.
-    <?php endif; ?>
+    <?= $is_patient ? 'Provider microphone muted' : 'Patient microphone muted' ?>
   </div>
   <div id="muteTtsPanel" class="mute-tts-panel" aria-hidden="true" role="dialog" aria-labelledby="muteTtsPanelTitle">
     <div class="mute-tts-panel__head">
@@ -2574,9 +2581,8 @@ if (session_status() === PHP_SESSION_ACTIVE) {
 
     async function leaveCallConfirmed(options) {
       options = options || {};
-      const fullyEnded = ['provider_left', 'session_ended', 'provider_ended'].indexOf(options.reason || '') !== -1;
       if (endingCall) {
-        if (isPatient && fullyEnded) {
+        if (isPatient) {
           return;
         }
         redirectAfterLeave(options);
@@ -2611,7 +2617,7 @@ if (session_status() === PHP_SESSION_ACTIVE) {
         }
       }
 
-      if (isPatient && fullyEnded) {
+      if (isPatient) {
         if (window.McVideoRoomEnhancements && typeof window.McVideoRoomEnhancements.showPostCall === 'function') {
           window.McVideoRoomEnhancements.showPostCall();
         }
@@ -2703,7 +2709,7 @@ if (session_status() === PHP_SESSION_ACTIVE) {
         parentMessageType: 'medconnect:call-ended',
         reason: 'provider_ended',
         redirectUrl: consultationId
-          ? (apiBase + '/views/provider/consultation_session.php?id=' + encodeURIComponent(consultationId) + '&soap=1#soapDocumentation')
+          ? (apiBase + '/views/provider/consultation_session.php?id=' + encodeURIComponent(consultationId) + '&followup=1')
           : '',
       });
     }

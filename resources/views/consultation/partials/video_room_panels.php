@@ -81,9 +81,9 @@ $info_sub = !empty($is_patient)
       has ended.
     </p>
     <dl class="mc-vc-postcall__meta">
-      <div>
+      <div id="mcVcPostCallDateRow"<?= empty($session['consult_date']) ? ' hidden' : '' ?>>
         <dt>Date</dt>
-        <dd id="mcVcPostCallDate"><?= !empty($session['consult_date']) ? htmlspecialchars(date('F j, Y', strtotime((string) $session['consult_date']))) : '—' ?></dd>
+        <dd id="mcVcPostCallDate"><?= !empty($session['consult_date']) ? htmlspecialchars(date('F j, Y', strtotime((string) $session['consult_date']))) : '' ?></dd>
       </div>
       <div id="mcVcPostCallDurationRow" hidden>
         <dt>Duration</dt>
@@ -106,13 +106,10 @@ $info_sub = !empty($is_patient)
     </div>
     <?php else: ?>
     <h2 id="mcVcPostCallTitle">Consultation ended</h2>
-    <p class="mc-vc-postcall__sub">Complete SOAP documentation next. Notes are not visible to the patient until you finalize them.</p>
+    <p class="mc-vc-postcall__sub">The session has been saved. Next, choose whether a follow-up is required, then complete SOAP notes.</p>
     <div class="mc-vc-postcall__actions">
-      <a href="<?= htmlspecialchars(ASSET_BASE) ?>/views/provider/consultation_session.php?id=<?= (int) $consultation_id ?>&amp;soap=1#soapDocumentation" class="mc-vc-postcall__btn mc-vc-postcall__btn--primary">Document SOAP</a>
-      <button type="button" class="mc-vc-postcall__btn" id="mcVcPostCallFollowup">Schedule Follow-up</button>
-      <a href="<?= htmlspecialchars(ASSET_BASE) ?>/views/provider/dashboard.php" class="mc-vc-postcall__btn">Dashboard</a>
+      <a href="<?= htmlspecialchars(ASSET_BASE) ?>/views/provider/consultation_session.php?id=<?= (int) $consultation_id ?>&amp;followup=1" class="mc-vc-postcall__btn mc-vc-postcall__btn--primary" target="_top">Continue</a>
     </div>
-    <button type="button" class="mc-vc-postcall__dismiss" id="mcVcPostCallDismiss">Close</button>
     <?php endif; ?>
   </div>
 </div>

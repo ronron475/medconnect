@@ -502,11 +502,8 @@ body.mc-vc-panel-open {
   margin: 0 0 1.25rem;
 }
 
-.mc-vc-postcall__meta {
-  display: grid;
-  gap: 8px;
-  margin: 0 0 1rem;
-  text-align: left;
+.mc-vc-postcall__meta:not(:has(div:not([hidden]))) {
+  display: none;
 }
 
 .mc-vc-postcall__meta div {
@@ -743,8 +740,13 @@ body.mc-vc-panel-open {
   }
 
   body.role-patient .mc-vc-btn--end {
-    min-width: 96px;
-    max-width: 42vw;
+    min-width: 56px;
+    max-width: none;
+  }
+
+  body.role-provider .mc-vc-btn--end {
+    min-width: 56px;
+    max-width: none;
   }
 }
 

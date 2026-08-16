@@ -161,10 +161,6 @@
         remoteMuteBanner.classList.toggle('is-open', remoteMuted);
         remoteMuteBanner.setAttribute('aria-hidden', remoteMuted ? 'false' : 'true');
       }
-      // Keep chat panel open on provider while patient is muted so messages are obvious.
-      if (userRole === 'provider') {
-        setReceivePanelWatching(remoteMuted);
-      }
     }
 
     function appendToLog(target, entry) {
@@ -205,22 +201,28 @@
       if (receivePanel) receivePanel.classList.add('has-items');
     }
 
+    function syncMuteChrome() {
+      const panelOpen = !!(panel && panel.classList.contains('is-open'));
+      if (banner) {
+        const show = micMuted && !panelOpen;
+        banner.classList.toggle('is-open', show);
+        banner.setAttribute('aria-hidden', show ? 'false' : 'true');
+      }
+      if (ttsOpenBtn) {
+        ttsOpenBtn.classList.toggle('is-active', micMuted && !panelOpen);
+        ttsOpenBtn.setAttribute('aria-pressed', micMuted && !panelOpen ? 'true' : 'false');
+      }
+    }
+
     function setPanelVisible(visible) {
       if (panel) {
         panel.classList.toggle('is-open', visible);
         panel.setAttribute('aria-hidden', visible ? 'false' : 'true');
       }
-      if (banner) {
-        banner.classList.toggle('is-open', visible && micMuted);
-        banner.setAttribute('aria-hidden', visible && micMuted ? 'false' : 'true');
-      }
       if (typingBadge) {
         typingBadge.hidden = !visible;
       }
-      if (ttsOpenBtn) {
-        ttsOpenBtn.classList.toggle('is-active', micMuted && !visible);
-        ttsOpenBtn.setAttribute('aria-pressed', micMuted && !visible ? 'true' : 'false');
-      }
+      syncMuteChrome();
       if (visible && input) {
         window.setTimeout(() => input.focus(), 220);
       }
@@ -255,13 +257,8 @@
 
       if (micMuted) {
         composerDismissed = false;
-        setPanelVisible(true);
-        showToast(
-          userRole === 'patient'
-            ? 'Microphone muted. Type your message — the provider will hear and see it.'
-            : 'Microphone muted. Type your message — the patient will hear and see it.',
-          'warn'
-        );
+        setPanelVisible(false);
+        showToast('Microphone muted', 'warn');
         if (typeof sendData === 'function') {
           sendData({ type: 'mute_state', muted: true, role: userRole });
         }
@@ -274,9 +271,9 @@
           window.clearTimeout(onMuteChanged._restoreTimer);
           onMuteChanged._restoreTimer = window.setTimeout(() => {
             restoreToast.classList.remove('show');
-          }, 2800);
+          }, 2200);
         }
-        showToast('Voice communication restored.', 'ok');
+        showToast('Voice restored', 'ok');
         if (typeof sendData === 'function') {
           sendData({ type: 'mute_state', muted: false, role: userRole });
         }
@@ -506,6 +503,12 @@
         renderSpeechToggle();
       });
     }
+    const bannerOpen = document.getElementById('muteTtsBannerOpen');
+    bannerOpen?.addEventListener('click', (event) => {
+      event.preventDefault();
+      event.stopPropagation();
+      if (micMuted) openComposer({ silent: true });
+    });
     banner?.addEventListener('click', () => {
       if (micMuted) openComposer({ silent: true });
     });

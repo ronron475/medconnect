@@ -63,11 +63,8 @@
       return q('remoteVideo');
     }
 
-    function providerIsMain() {
-      // Default: provider feed on the large main view for both roles.
-      // Patient sees the doctor large; provider sees themselves large with patient in PiP.
-      if (swapped) return false;
-      return true;
+    function remoteIsMain() {
+      return !swapped;
     }
 
     function mountVideos() {
@@ -77,10 +74,10 @@
       const remoteV = getRemoteVideo();
       if (!mainSlot || !pipSlot || !localV || !remoteV) return;
 
-      const providerVideo = isProvider ? localV : remoteV;
-      const patientVideo = isProvider ? remoteV : localV;
-      const mainVideo = providerIsMain() ? providerVideo : patientVideo;
-      const pipVideo = providerIsMain() ? patientVideo : providerVideo;
+      const mainVideo = remoteIsMain() ? remoteV : localV;
+      const pipVideo = remoteIsMain() ? localV : remoteV;
+      const remoteName = isPatient ? providerName : patientName;
+      const localName = isPatient ? patientName : providerName;
 
       // Move nodes only when needed. innerHTML = '' remounts <video> and on iOS
       // that pauses playback and can drop the remote audio track.
@@ -98,8 +95,8 @@
       pipVideo.setAttribute('playsinline', '');
       pipVideo.setAttribute('webkit-playsinline', '');
 
-      if (els.mainLabel) els.mainLabel.textContent = providerIsMain() ? providerName : patientName;
-      if (els.pipLabel) els.pipLabel.textContent = providerIsMain() ? patientName : providerName;
+      if (els.mainLabel) els.mainLabel.textContent = remoteIsMain() ? remoteName : localName;
+      if (els.pipLabel) els.pipLabel.textContent = remoteIsMain() ? localName : remoteName;
 
       const enableBtn = q('enableSoundBtn');
       if (enableBtn && remoteV.parentElement === mainSlot && enableBtn.parentElement !== mainSlot) {
@@ -135,13 +132,13 @@
       })();
       const isMobile = window.matchMedia && window.matchMedia('(max-width: 720px)').matches;
       if (saved && CORNERS.indexOf(saved) >= 0) {
-        // On phones, prefer top corners so PiP does not cover controls.
-        if (isMobile && String(saved).indexOf('bottom') === 0) {
+        // Prefer top corners so PiP does not cover faces or the control bar.
+        if (String(saved).indexOf('bottom') === 0) {
           pip.setAttribute('data-corner', 'top-right');
         } else {
           pip.setAttribute('data-corner', saved);
         }
-      } else if (isMobile) {
+      } else {
         pip.setAttribute('data-corner', 'top-right');
       }
 
@@ -492,7 +489,7 @@
         if (els.overlaySub) els.overlaySub.textContent = sub || '';
         els.overlay.classList.toggle('is-visible', !!visible);
         els.overlay.setAttribute('aria-hidden', visible ? 'false' : 'true');
-        const isStatus = !!visible && !options.showRetry && /waiting|connecting|reconnecting|live|connected/i.test(String(title || '') + String(sub || ''));
+        const isStatus = !!visible && !options.showRetry && /waiting|connecting|reconnecting|live|connected|poor|muted/i.test(String(title || '') + String(sub || ''));
         els.overlay.classList.toggle('is-status', isStatus);
       }
       if (options.showRetry === true) {
@@ -525,30 +522,17 @@
     function updateOverlayFromStatus(text) {
       const t = String(text || '').toLowerCase();
       if (t.indexOf('waiting for healthcare') >= 0 || t.indexOf('waiting for provider') >= 0 || t.indexOf('waiting for doctor') >= 0) {
-        setOverlay(
-          '● Waiting for healthcare provider…',
-          isPatient
-            ? 'Your doctor will connect shortly. This happens automatically — no action needed.'
-            : 'The patient can join from their dashboard.',
-          true,
-          { showRetry: false }
-        );
+        setOverlay('Waiting for healthcare provider…', '', true, { showRetry: false });
       } else if (t.indexOf('waiting for patient') >= 0) {
-        setOverlay(
-          '● Waiting for patient…',
-          'The patient can join from their dashboard.',
-          true,
-          { showRetry: false }
-        );
+        setOverlay('Waiting for patient…', '', true, { showRetry: false });
       } else if (t.indexOf('reconnecting') >= 0) {
-        // Must check before "connecting" — "reconnecting".indexOf("connecting") === 2.
-        setOverlay('● Reconnecting…', 'Temporary network interruption — your call will resume automatically.', true, { showRetry: false });
+        setOverlay('Poor connection — reconnecting…', '', true, { showRetry: false });
       } else if (t.indexOf('connecting') >= 0) {
-        setOverlay('● Connecting…', 'Establishing a secure consultation channel.', true, { showRetry: false });
-      } else if (t.indexOf('poor network') >= 0) {
-        setOverlay('Poor Network Connection', 'Move closer to your router or switch networks if possible.', true, { showRetry: false });
+        setOverlay('Connecting…', '', true, { showRetry: false });
+      } else if (t.indexOf('poor network') >= 0 || t.indexOf('poor connection') >= 0) {
+        setOverlay('Poor connection — reconnecting…', '', true, { showRetry: false });
       } else if (t.indexOf('ended') >= 0 || t.indexOf('consultation ended') >= 0) {
-        setOverlay('Consultation Ended', 'Thank you for using medConnect.', true, { showRetry: false });
+        setOverlay('Consultation ended', '', true, { showRetry: false });
       } else if (t.indexOf('connected') >= 0) {
         connectionFailed = false;
         setOverlay('', '', false, { showRetry: false });
@@ -621,14 +605,14 @@
           const total = packetsLost + packetsReceived;
           const lossRate = total > 0 ? packetsLost / total : 0;
           let level = 'good';
-          let label = '● Good Connection';
+          let label = '● Good connection';
 
           if (lossRate > 0.08 || jitter > 0.05) {
             level = 'poor';
-            label = '◌ Poor Network Connection';
+            label = '● Poor connection — reconnecting…';
           } else if (lossRate > 0.02 || jitter > 0.02) {
             level = 'fair';
-            label = '◌ Fair Connection';
+            label = '● Fair connection';
           }
 
           netEl.textContent = label;
@@ -638,10 +622,14 @@
           if (level === 'poor' && els.overlay && !els.overlay.classList.contains('is-visible')) {
             const statusEl = q('callStatus');
             if (statusEl && /connected/i.test(statusEl.textContent)) {
-              setOverlay('Poor Network Connection', 'Video quality may be reduced. Stay on the call — we are reconnecting if needed.', true);
+              setOverlay('Poor connection — reconnecting…', '', true);
               setTimeout(() => {
-                if (/connected/i.test(statusEl.textContent)) setOverlay('', '', false);
-              }, 4000);
+                if (/connected/i.test(statusEl.textContent) && netEl.dataset.level !== 'poor') {
+                  setOverlay('', '', false);
+                } else if (/connected/i.test(statusEl.textContent)) {
+                  setOverlay('', '', false);
+                }
+              }, 2800);
             }
           }
         } catch (e) {}
@@ -674,9 +662,43 @@
         if (endBtn.classList.contains('btn-end')) endBtn.classList.remove('btn-end');
       }
       const reportBtn = q('violationReportBtn');
-      if (reportBtn) {
+      if (reportBtn && !reportBtn.classList.contains('mc-vc-more-item')) {
         reportBtn.classList.add('mc-vc-btn', 'mc-vc-btn--report');
       }
+    }
+
+    function bindMoreMenu() {
+      const btn = q('mcVcMoreBtn');
+      const menu = q('mcVcMoreMenu');
+      if (!btn || !menu) return;
+
+      function setOpen(open) {
+        menu.hidden = !open;
+        btn.setAttribute('aria-expanded', open ? 'true' : 'false');
+      }
+
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        setOpen(menu.hidden);
+      });
+      menu.querySelectorAll('[data-mc-proxy]').forEach((item) => {
+        item.addEventListener('click', () => {
+          const target = q(item.getAttribute('data-mc-proxy') || '');
+          if (target) target.click();
+          setOpen(false);
+        });
+      });
+      menu.querySelectorAll('button:not([data-mc-proxy])').forEach((item) => {
+        item.addEventListener('click', () => setOpen(false));
+      });
+      document.addEventListener('click', (e) => {
+        if (menu.hidden) return;
+        if (menu.contains(e.target) || btn.contains(e.target)) return;
+        setOpen(false);
+      });
+      document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') setOpen(false);
+      });
     }
 
     function init() {
@@ -708,6 +730,7 @@
       bindStageTap();
       wireControlButtons();
       bindExistingControls();
+      bindMoreMenu();
       updateFullscreenBtn();
       watchCallStatus();
       startNetworkMonitor();
