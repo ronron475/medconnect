@@ -10,6 +10,7 @@ require_once BASE_PATH . '/app/includes/clinical_tables.php';
 require_once BASE_PATH . '/app/includes/patient_consultation_records.php';
 require_once BASE_PATH . '/app/includes/clinical_note_signature.php';
 require_once BASE_PATH . '/app/includes/consultation_video_history.php';
+require_once BASE_PATH . '/app/includes/community_bhw_activity.php';
 require __DIR__ . '/partials/queue_helpers.php';
 
 clinical_tables_ensure($pdo);
@@ -94,6 +95,8 @@ require __DIR__.'/partials/layout_open.php';
 
 $profile = patient_registration_profile_fields($pdo, (int) $c['patient_id']);
 $health_summary = patient_health_summary_load($pdo, (int) $c['patient_id']);
+$bhw_activity = community_bhw_activity_load($pdo, (int) $c['patient_id']);
+$bhw_activity_variant = 'provider';
 
 $patient = [
     'name' => trim(($c['first_name'] ?? '') . ' ' . ($c['last_name'] ?? '')),
@@ -1543,6 +1546,42 @@ body.consultation-mobile-call-fullscreen .mc-provider-video-dock .mc-session-flo
     background: #ecfdf5;
     color: #047857;
 }
+.bhw-act-lead {
+    margin: 0 0 14px;
+    font-size: 12px;
+    line-height: 1.45;
+    color: #64748b;
+}
+.bhw-act-section + .bhw-act-section {
+    margin-top: 14px;
+}
+.bhw-act-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+.bhw-act-item__title {
+    font-size: 13px;
+    font-weight: 700;
+    color: #0f172a;
+    line-height: 1.35;
+}
+.bhw-act-item__meta {
+    margin-top: 3px;
+    font-size: 11px;
+    color: #64748b;
+    line-height: 1.4;
+}
+.bhw-act-item__note {
+    margin: 6px 0 0;
+    font-size: 12px;
+    line-height: 1.45;
+    color: #334155;
+    white-space: pre-wrap;
+}
 .hs-empty {
     font-size: 12px;
     color: #94a3b8;
@@ -1603,7 +1642,8 @@ body.consultation-mobile-call-fullscreen .mc-provider-video-dock .mc-session-flo
         display: grid;
         grid-template-columns: repeat(2, minmax(0, 1fr));
     }
-    .csp-card {
+    .csp-card,
+    .bhw-act-card {
         grid-column: 1 / -1;
     }
 }
@@ -2400,6 +2440,8 @@ body.consultation-mobile-call-fullscreen .mc-provider-video-dock .mc-session-flo
                 </p>
             </div>
         </div>
+
+        <?php require VIEWS_PATH . '/partials/bhw_activity_panel.php'; ?>
 
         <!-- WORKFLOW ACTIONS -->
         <div class="session-card">
