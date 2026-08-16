@@ -73,36 +73,92 @@ $info_sub = !empty($is_patient)
 
 <div id="mcVcPostCallModal" class="mc-vc-postcall" hidden role="dialog" aria-modal="true" aria-labelledby="mcVcPostCallTitle">
   <div class="mc-vc-postcall__card">
+    <?php
+      $postcallProvider = trim((string) ($provider_name ?? ''));
+      if ($postcallProvider !== '' && !preg_match('/^dr\.?\s/i', $postcallProvider)) {
+          $postcallProvider = 'Dr. ' . $postcallProvider;
+      }
+      $postcallDate = !empty($session['consult_date']) ? date('F j, Y', strtotime((string) $session['consult_date'])) : '';
+      $postcallHasRecording = false;
+      if (!empty($is_patient) && isset($pdo) && $pdo instanceof PDO && (int) $consultation_id > 0) {
+          require_once BASE_PATH . '/app/includes/consultation_video_history.php';
+          $postcallHasRecording = consultation_video_recording_view_url((int) $consultation_id) !== '';
+      }
+    ?>
     <?php if (!empty($is_patient)): ?>
-    <h2 id="mcVcPostCallTitle">Consultation Completed</h2>
-    <p class="mc-vc-postcall__sub">
-      Your video consultation with
-      <strong id="mcVcPostCallDoctor"><?= htmlspecialchars($provider_name !== '' ? (preg_match('/^dr\.?\s/i', $provider_name) ? $provider_name : 'Dr. ' . $provider_name) : 'your doctor') ?></strong>
-      has ended.
-    </p>
-    <dl class="mc-vc-postcall__meta">
-      <div id="mcVcPostCallDateRow"<?= empty($session['consult_date']) ? ' hidden' : '' ?>>
-        <dt>Date</dt>
-        <dd id="mcVcPostCallDate"><?= !empty($session['consult_date']) ? htmlspecialchars(date('F j, Y', strtotime((string) $session['consult_date']))) : '' ?></dd>
+    <div class="mc-vc-postcall__brand">
+      <img src="<?= htmlspecialchars(ASSET_BASE) ?>/assets/img/medcon_logo.png" width="28" height="28" alt="">
+      <span>medConnect</span>
+    </div>
+    <div class="mc-vc-postcall__hero">
+      <div class="mc-vc-postcall__check" aria-hidden="true">
+        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
       </div>
-      <div id="mcVcPostCallDurationRow" hidden>
-        <dt>Duration</dt>
-        <dd id="mcVcPostCallDuration"></dd>
-      </div>
-    </dl>
-    <p class="mc-vc-postcall__saved">✓ Your consultation has been saved to My Sessions.</p>
+      <h2 id="mcVcPostCallTitle">Consultation Completed</h2>
+      <p class="mc-vc-postcall__sub">
+        Your video consultation with
+        <strong id="mcVcPostCallDoctor"><?= htmlspecialchars($postcallProvider !== '' ? $postcallProvider : 'your doctor') ?></strong>
+        has ended successfully.
+      </p>
+    </div>
+    <section class="mc-vc-postcall__summary" aria-label="Consultation summary">
+      <h2>Consultation Summary</h2>
+      <dl class="mc-vc-postcall__meta">
+        <div id="mcVcPostCallDateRow"<?= $postcallDate === '' ? ' hidden' : '' ?>>
+          <dt>
+            <span class="mc-vc-postcall__ico" aria-hidden="true"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg></span>
+            Date
+          </dt>
+          <dd id="mcVcPostCallDate"><?= htmlspecialchars($postcallDate) ?></dd>
+        </div>
+        <div>
+          <dt>
+            <span class="mc-vc-postcall__ico" aria-hidden="true"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></span>
+            Provider
+          </dt>
+          <dd id="mcVcPostCallProvider"><?= htmlspecialchars($postcallProvider !== '' ? $postcallProvider : 'your doctor') ?></dd>
+        </div>
+        <div>
+          <dt>
+            <span class="mc-vc-postcall__ico" aria-hidden="true"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg></span>
+            Status
+          </dt>
+          <dd>Completed</dd>
+        </div>
+        <div id="mcVcPostCallDurationRow">
+          <dt>
+            <span class="mc-vc-postcall__ico" aria-hidden="true"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg></span>
+            Duration
+          </dt>
+          <dd id="mcVcPostCallDuration">—</dd>
+        </div>
+      </dl>
+    </section>
+    <div class="mc-vc-postcall__confirm">
+      <p class="mc-vc-postcall__confirm-title">Consultation saved successfully</p>
+      <p class="mc-vc-postcall__confirm-copy">Your consultation record is now available in My Sessions.</p>
+      <?php if ($postcallHasRecording): ?>
+      <p class="mc-vc-postcall__confirm-copy">A video recording is available in this session.</p>
+      <?php endif; ?>
+    </div>
     <div class="mc-vc-postcall__actions">
       <a
         href="<?= htmlspecialchars(ASSET_BASE) ?>/views/patient/consultation_detail.php?id=<?= (int) $consultation_id ?>&amp;from=sessions"
         class="mc-vc-postcall__btn mc-vc-postcall__btn--primary"
         id="mcVcPostCallViewSession"
         target="_top"
-      >View Session</a>
+      >
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6M16 13H8M16 17H8M10 9H8"/></svg>
+        View Session
+      </a>
       <a
         href="<?= htmlspecialchars(ASSET_BASE) ?>/views/patient/dashboard.php"
         class="mc-vc-postcall__btn"
         target="_top"
-      >Return to Dashboard</a>
+      >
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><path d="M9 22V12h6v10"/></svg>
+        Return to Dashboard
+      </a>
     </div>
     <?php else: ?>
     <h2 id="mcVcPostCallTitle">Consultation ended</h2>
