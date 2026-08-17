@@ -633,18 +633,32 @@
         actions: ['signIn', 'bookAppointment', 'contactCho'],
       },
     },
-    domain_out_of_scope: {
+    healthcare_unmatched: {
       en: {
-        html: '<p>I\'m here to help with healthcare-related concerns only. Please tell me about a symptom, health problem, medication, treatment, appointment, or other medical concern.</p>',
-        actions: ['bookAppointment', 'contactCho'],
+        html: '<p>I understand this sounds like a health concern. I can\'t diagnose or prescribe, but I can share general guidance and help you book a medConnect consultation. If symptoms are sudden, severe, or include trouble breathing, chest pain, fainting, or heavy bleeding, seek emergency care or call 911.</p>',
+        actions: [],
       },
       fil: {
-        html: '<p>Para sa healthcare-related concerns lang ang medConnect Assistant. Pakisulat ang iyong sintomas, sakit, gamot, treatment, appointment, o iba pang health concern.</p>',
-        actions: ['bookAppointment', 'contactCho'],
+        html: '<p>Naiintindihan ko na ito ay health concern. Hindi ako nagda-diagnose o nagre-reseta, pero makakapagbigay ako ng pangkalahatang gabay at matutulungan kitang mag-book ng konsultasyon sa medConnect. Kung biglaan, malala, o may hirap sa paghinga, sakit sa dibdib, pagkahimatay, o mabigat na pagdurugo, magpunta sa emergency o tumawag sa 911.</p>',
+        actions: [],
       },
       hil: {
-        html: '<p>Para sa healthcare-related concerns lang ang medConnect Assistant. Palihog isulat ang imo sintomas, sakit, tambal, treatment, appointment, ukon iban nga health concern.</p>',
-        actions: ['bookAppointment', 'contactCho'],
+        html: '<p>Naintiendihan ko nga health concern ini. Indi ako nagadiagnose ukon nagareseta, pero makahatag ako sang general nga giya kag matabangan ko ikaw mag-book sang konsultasyon sa medConnect. Kon bigla, grabe, ukon may budlay ginhawa, sakit sa dughan, pagkalipong, ukon grabeng dugo, magpangayo emergency care ukon tawag sa 911.</p>',
+        actions: [],
+      },
+    },
+    domain_out_of_scope: {
+      en: {
+        html: '<p>I\'m here to assist with healthcare and medConnect-related concerns. Please ask me about a health concern, symptom, medication, appointment, consultation, or another healthcare-related topic.</p>',
+        actions: [],
+      },
+      fil: {
+        html: '<p>Ako ang medConnect Assistant, kaya healthcare at medConnect-related concerns lang ang matutulungan ko. Magtanong po tungkol sa sintomas, gamot, appointment, konsultasyon, o ibang health concern.</p>',
+        actions: [],
+      },
+      hil: {
+        html: '<p>Ako ang medConnect Assistant, gani healthcare kag medConnect-related concerns lang ang matabangan ko. Palihog pamangkot parte sa sintomas, tambal, appointment, konsultasyon, ukon iban nga health concern.</p>',
+        actions: [],
       },
     },
     domain_ambiguous: {

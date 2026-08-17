@@ -19,27 +19,25 @@ GEMINI_ENDPOINT = "https://generativelanguage.googleapis.com/v1beta/models/{mode
 
 SYSTEM_PROMPT = """You are a healthcare assistant for medConnect.
 
-The user message has already passed the healthcare-scope gate. Answer only the healthcare-related question presented. Do not invent an emergency. Do not classify a patient as emergency unless the existing triage rules or clearly described symptoms support it.
+First classify whether the user message is related to healthcare, medicine, a symptom, illness, injury, treatment, medication, doctor/provider consultation, medical records, appointment, emergency, or another legitimate medConnect healthcare concern.
 
-You may respond to:
-- symptoms, illnesses, and medical conditions
-- medications, side effects, first aid, and self-care
-- preventive health and general health information
-- questions about seeking medical care
-- medConnect care-access topics (appointments, consultation, records, prescriptions, BHW, Sign In / OTP only as access to care)
+Understand English, Filipino/Tagalog, Hiligaynon/Ilonggo, mixed language, slang, abbreviations, misspellings, and short informal sentences. Example: "sakit ulo ko" means the patient has a headache.
 
-Do not invent a diagnosis.
-Do not claim certainty about a medical condition.
-Do not provide unsafe medical instructions.
-Never diagnose, prescribe, or change medicines.
-If the message clearly describes an emergency (cannot breathe, severe chest pain, unconscious, seizure, severe bleeding, self-harm, suicide, indi ko kaginhawa, nahimatay), tell them to call 911 / Hopeline 1553 immediately. Do not treat money problems, time, weather, identity questions, or other non-symptom chat as emergencies.
+If it IS healthcare-related, write a helpful reply in the patient's language:
+- Acknowledge the concern (for "sakit ulo ko", talk about head pain / headache).
+- You may ask relevant follow-up questions and give safe general information.
+- Do not diagnose, prescribe, or invent records.
+- Do not claim to be a doctor.
+- Recommend professional care when appropriate.
+- Do not invent an emergency unless clearly described symptoms support it (cannot breathe, severe chest pain, unconscious, seizure, severe bleeding, self-harm, suicide, indi ko kaginhawa, nahimatay). Then set urgency to EMERGENCY and tell them to call 911 / Hopeline 1553.
 
-Languages: answer in the patient's language. English → English. Filipino → Filipino. Hiligaynon/Ilonggo → Hiligaynon when you reasonably can. Tolerate typos and slang.
+If it is NOT healthcare-related (jokes, weather, sports, trivia, coding, cooking, money-only chat with no health context), set is_healthcare_related to false and leave reply empty.
 
-Always reply in this exact format:
-CLASSIFICATION: HEALTHCARE|POSSIBLY_HEALTHCARE
-REPLY:
-<your reply in 2–4 short sentences, no markdown, no HTML, no code fences>
+Return ONLY this JSON object, no markdown, no extra text:
+{"is_healthcare_related":true,"intent":"symptom","language":"Hiligaynon","normalized_meaning":"headache","urgency":"NON_URGENT","confidence":0.94,"reply":"your 2-4 sentence reply"}
+
+intent must be one of: symptom, medication, appointment, records, consultation, emergency, medconnect, other_healthcare, non_healthcare
+urgency must be one of: EMERGENCY, URGENT, NON_URGENT
 """
 
 CLASS_GREETING = "GREETING"
@@ -109,7 +107,11 @@ def _complete_gemini(user_text: str, lang: str, context: dict[str, Any], history
     payload = {
         "systemInstruction": {"parts": [{"text": SYSTEM_PROMPT}]},
         "contents": contents,
-        "generationConfig": {"temperature": 0.4, "maxOutputTokens": 400},
+        "generationConfig": {
+            "temperature": 0.3,
+            "maxOutputTokens": 400,
+            "responseMimeType": "application/json",
+        },
     }
     url = GEMINI_ENDPOINT.format(model=urllib.parse.quote(gemini_model(), safe=".-"))
     req = urllib.request.Request(
@@ -183,7 +185,7 @@ def generate_assist(
     emotion: str = "",
     topic: str = "",
     history: list[dict[str, str]] | None = None,
-) -> dict[str, str]:
+) -> dict[str, Any]:
     user_text = (user_text or "").strip()[:800]
     if not user_text:
         return {"html": "", "classification": CLASS_POSSIBLY, "raw": ""}
@@ -210,11 +212,27 @@ def generate_assist(
     classification = parsed["classification"]
     reply = parsed["reply"]
     if classification == CLASS_NON or reply.strip().upper() == "OUT_OF_SCOPE":
-        return {"html": "", "classification": CLASS_NON, "raw": "OUT_OF_SCOPE"}
+        return {
+            "html": "",
+            "classification": CLASS_NON,
+            "raw": "OUT_OF_SCOPE",
+            "is_healthcare_related": False,
+            "intent": parsed.get("intent") or "non_healthcare",
+            "language": parsed.get("language") or "",
+            "normalized_meaning": parsed.get("normalized_meaning") or "",
+            "urgency": parsed.get("urgency") or "NON_URGENT",
+            "confidence": parsed.get("confidence"),
+        }
     return {
         "html": to_safe_html(reply),
         "classification": classification,
-        "raw": reply,
+        "raw": raw if raw.strip().startswith("{") else reply,
+        "is_healthcare_related": classification != CLASS_NON,
+        "intent": parsed.get("intent") or "",
+        "language": parsed.get("language") or "",
+        "normalized_meaning": parsed.get("normalized_meaning") or "",
+        "urgency": parsed.get("urgency") or "NON_URGENT",
+        "confidence": parsed.get("confidence"),
     }
 
 
@@ -224,18 +242,35 @@ def parse_model_reply(raw: str) -> dict[str, str]:
     text = re.sub(r"\s*```$", "", text).strip()
     if not text:
         return {"classification": CLASS_POSSIBLY, "reply": ""}
-    if text[0] in "{[":
+    json_match = re.search(r"\{[\s\S]*\}", text)
+    if json_match:
         try:
-            decoded = json.loads(text)
+            decoded = json.loads(json_match.group(0))
         except json.JSONDecodeError:
             decoded = None
         if isinstance(decoded, dict):
+            is_health = decoded.get("is_healthcare_related", decoded.get("isHealthcareRelated"))
             classification = _normalize_classification(
                 str(decoded.get("classification") or decoded.get("CLASSIFICATION") or "")
             )
+            if is_health is True or is_health == 1 or str(is_health).lower() == "true":
+                classification = CLASS_HEALTHCARE
+            elif is_health is False or is_health == 0 or str(is_health).lower() == "false":
+                classification = CLASS_NON
             reply = str(decoded.get("reply") or decoded.get("REPLY") or decoded.get("text") or "").strip()
-            if classification:
-                return _normalize_parsed(classification, reply)
+            if classification or reply or is_health is not None:
+                parsed = _normalize_parsed(classification or CLASS_POSSIBLY, reply)
+                parsed["intent"] = str(decoded.get("intent") or "").strip()
+                parsed["language"] = str(decoded.get("language") or "").strip()
+                parsed["normalized_meaning"] = str(
+                    decoded.get("normalized_meaning") or decoded.get("normalizedMeaning") or ""
+                ).strip()
+                parsed["urgency"] = str(decoded.get("urgency") or "NON_URGENT").strip().upper()
+                try:
+                    parsed["confidence"] = float(decoded.get("confidence")) if decoded.get("confidence") is not None else None
+                except (TypeError, ValueError):
+                    parsed["confidence"] = None
+                return parsed
     if re.match(r"^\s*OUT_OF_SCOPE\s*$", text, flags=re.I):
         return {"classification": CLASS_NON, "reply": "OUT_OF_SCOPE"}
     class_match = re.search(
