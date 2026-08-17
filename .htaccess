@@ -22,6 +22,7 @@ RewriteRule ^ https://%{HTTP_HOST}%{REQUEST_URI} [R=301,L]
 <IfModule mod_mime.c>
     AddType video/webm .webm
     AddType video/mp4 .mp4
+    AddType application/vnd.android.package-archive .apk
 </IfModule>
 
 
@@ -32,6 +33,13 @@ RewriteRule ^controllers/(.*)$ app/controllers/$1 [L]
 # ── Static assets (now under public/assets/) ───────────────────
 
 RewriteRule ^assets/(.*)$ public/assets/$1 [L]
+
+# ── Android APK download (public/ is not the Hostinger docroot) ─
+RewriteRule ^download-apk\.php$ public/download-apk.php [L,QSA]
+RewriteRule ^downloads/(.*)$ public/downloads/$1 [L]
+RewriteRule ^manifest\.php$ public/manifest.php [L,QSA]
+RewriteRule ^sw\.js$ public/sw.js [L]
+RewriteRule ^offline\.html$ public/offline.html [L]
 
 
 
