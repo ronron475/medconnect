@@ -50,7 +50,7 @@
 
 .download-app__grid {
   display: grid;
-  grid-template-columns: minmax(260px, 38%) minmax(0, 1fr);
+  grid-template-columns: minmax(280px, 42%) minmax(0, 1fr);
   gap: clamp(28px, 4vw, 56px);
   align-items: center;
 }
@@ -64,284 +64,733 @@
 }
 
 .download-app__device {
-  width: min(300px, 100%);
-  padding: 14px 12px 16px;
-  border-radius: 36px;
-  background: linear-gradient(180deg, #0b3a4a 0%, #012a4a 55%, #011c30 100%);
-  border: 1px solid rgba(94, 234, 212, 0.28);
+  width: min(340px, 100%);
+  padding: 12px 11px 14px;
+  border-radius: 40px;
+  background: linear-gradient(180deg, #12384a 0%, #0b2233 55%, #071722 100%);
+  border: 1px solid rgba(94, 234, 212, 0.32);
   box-shadow:
-    0 24px 50px rgba(0, 0, 0, 0.35),
-    0 0 0 1px rgba(255, 255, 255, 0.04) inset,
-    0 0 40px rgba(6, 147, 150, 0.18);
-  animation: download-app-float 6.5s ease-in-out infinite;
-}
-
-@keyframes download-app-float {
-  0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-7px); }
+    0 28px 56px rgba(0, 0, 0, 0.38),
+    0 0 0 1px rgba(255, 255, 255, 0.05) inset,
+    0 0 48px rgba(6, 147, 150, 0.2);
 }
 
 .download-app__device-notch {
-  width: 86px;
-  height: 9px;
-  margin: 2px auto 10px;
+  width: 92px;
+  height: 10px;
+  margin: 4px auto 10px;
   border-radius: 99px;
-  background: rgba(255, 255, 255, 0.16);
-  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.2) inset;
+  background: rgba(2, 6, 23, 0.72);
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.08) inset;
+  position: relative;
+}
+
+.download-app__device-notch::after {
+  content: "";
+  position: absolute;
+  right: 18px;
+  top: 3px;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: rgba(94, 234, 212, 0.35);
 }
 
 .download-app__viewport {
   position: relative;
   overflow: hidden;
-  height: 430px;
-  border-radius: 24px;
+  height: 540px;
+  border-radius: 28px;
   background: #f4f8fa;
 }
 
+.download-app__preview-note {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
 .download-app__track {
-  display: flex;
+  position: relative;
+  width: 100%;
   height: 100%;
-  will-change: transform;
-  transition: transform 650ms ease-in-out;
 }
 
 .download-app__slide {
-  flex: 0 0 100%;
-  width: 100%;
-  height: 100%;
+  position: absolute;
+  inset: 0;
   box-sizing: border-box;
-  padding: 16px 14px;
+  overflow: hidden;
+  opacity: 0;
+  transform: translate3d(14%, 0, 0) scale(0.97);
+  transition: opacity 720ms ease, transform 720ms ease;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.download-app__slide.is-active {
+  opacity: 1;
+  transform: translate3d(0, 0, 0) scale(1);
+  z-index: 2;
+}
+
+.download-app__slide.is-leaving {
+  opacity: 0;
+  transform: translate3d(-10%, 0, 0) scale(0.98);
+  z-index: 1;
+}
+
+.download-app__slide.is-leaving.is-back,
+.download-app__slide.is-back:not(.is-active) {
+  transform: translate3d(10%, 0, 0) scale(0.98);
+}
+
+.download-app__dots {
+  display: flex;
+  gap: 4px;
+  justify-content: center;
+  align-items: center;
+}
+
+.download-app__dots button {
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+  position: relative;
+}
+
+.download-app__dots button::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 8px;
+  height: 8px;
+  border-radius: 99px;
+  background: rgba(255, 255, 255, 0.28);
+  transform: translate(-50%, -50%);
+  transition: width 0.25s ease, background 0.25s ease, box-shadow 0.25s ease;
+}
+
+.download-app__dots button.is-active::after {
+  width: 20px;
+  background: #5eead4;
+  box-shadow: 0 0 10px rgba(94, 234, 212, 0.55);
+}
+
+/* ---- Slide: Patient dashboard ---- */
+.dap-dash {
+  height: 100%;
+  padding: 12px 11px;
   display: flex;
   flex-direction: column;
   gap: 10px;
+  background: #f4f8fa;
 }
 
-.download-app__slide--welcome {
-  align-items: center;
-  justify-content: center;
-  text-align: center;
-  background: linear-gradient(180deg, #e8f7f7 0%, #f4f8fa 100%);
+.dap-dash__hero {
+  padding: 12px 12px 14px;
+  border-radius: 14px;
+  border: 1px solid #cce8ec;
+  background: linear-gradient(135deg, #f0fdfa 0%, #e6f7f8 45%, #fff 100%);
 }
 
-.download-app__slide--welcome img {
-  width: 56px;
-  height: 56px;
-  object-fit: contain;
-}
-
-.download-app__slide-brand {
-  margin: 0;
-  font-size: 18px;
+.dap-dash__eyebrow {
+  margin: 0 0 4px;
+  font-size: 9px;
   font-weight: 800;
-  color: #012a4a;
-  letter-spacing: -0.4px;
-}
-
-.download-app__slide-brand span { color: #069396; }
-
-.download-app__slide--welcome h3 {
-  margin: 0;
-  font-size: 14px;
-  color: #012a4a;
-}
-
-.download-app__slide--welcome p {
-  margin: 0;
-  font-size: 11px;
-  color: #608395;
-}
-
-.download-app__chip {
-  margin-top: 6px;
-  padding: 5px 10px;
-  border-radius: 99px;
-  background: rgba(6, 147, 150, 0.12);
-  color: #057a7c;
-  font-size: 10px;
-  font-weight: 700;
-}
-
-.download-app__appbar {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-}
-
-.download-app__appbar span {
-  font-size: 10px;
-  color: #608395;
+  letter-spacing: 0.07em;
   text-transform: uppercase;
-  letter-spacing: 0.06em;
+  color: #028090;
 }
 
-.download-app__appbar strong {
+.dap-dash__title {
+  margin: 0 0 4px;
   font-size: 15px;
-  color: #012a4a;
+  font-weight: 800;
+  color: #0f172a;
+  letter-spacing: -0.03em;
 }
 
-.download-app__mini-card {
+.dap-dash__sub {
+  margin: 0 0 8px;
+  font-size: 10px;
+  line-height: 1.4;
+  color: #64748b;
+}
+
+.dap-dash__badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 10px;
+}
+
+.dap-dash__badge {
+  padding: 4px 8px;
+  border-radius: 99px;
+  font-size: 8.5px;
+  font-weight: 700;
   background: #fff;
-  border: 1px solid #e2edf1;
+  border: 1px solid #e2e8f0;
+  color: #475569;
+}
+
+.dap-dash__badge--verified {
+  background: #028090;
+  border-color: #028090;
+  color: #fff;
+}
+
+.dap-dash__actions {
+  display: flex;
+  gap: 6px;
+}
+
+.dap-dash__cta {
+  flex: 1;
+  text-align: center;
+  padding: 8px 6px;
+  border-radius: 8px;
+  background: linear-gradient(135deg, #028090 0%, #056770 100%);
+  color: #fff;
+  font-size: 9.5px;
+  font-weight: 800;
+}
+
+.dap-dash__cta--outline {
+  background: #fff;
+  color: #028090;
+  border: 1px solid #cbd5e1;
+}
+
+.dap-dash__complaint {
+  background: #fff;
+  border: 1px solid #e2e8f0;
   border-radius: 12px;
   padding: 10px 12px;
-  box-shadow: 0 4px 12px rgba(1, 42, 74, 0.04);
 }
 
-.download-app__mini-card--accent {
-  border-color: rgba(6, 147, 150, 0.28);
-  background: rgba(6, 147, 150, 0.08);
-}
-
-.download-app__mini-card em {
+.dap-dash__complaint strong {
   display: block;
-  font-style: normal;
-  font-size: 11px;
-  font-weight: 700;
-  color: #012a4a;
+  font-size: 11.5px;
+  color: #0f172a;
 }
 
-.download-app__mini-card p {
-  margin: 3px 0 0;
-  font-size: 10.5px;
-  color: #608395;
+.dap-dash__complaint p {
+  margin: 3px 0 8px;
+  font-size: 10px;
+  line-height: 1.4;
+  color: #64748b;
 }
 
-.download-app__mini-row {
+.dap-dash__complaint span {
+  display: block;
+  text-align: center;
+  padding: 7px 8px;
+  border-radius: 8px;
+  background: linear-gradient(135deg, #028090 0%, #056770 100%);
+  color: #fff;
+  font-size: 10px;
+  font-weight: 800;
+}
+
+.dap-dash__quick {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 8px;
 }
 
-.download-app__mini-row span {
-  display: block;
+.dap-dash__quick span {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 52px;
+  padding: 10px 8px;
+  border-radius: 12px;
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  color: #334155;
+  font-size: 10.5px;
+  font-weight: 700;
   text-align: center;
-  padding: 10px 6px;
+}
+
+/* ---- Slide: Video consultation ---- */
+.dap-vc {
+  height: 100%;
+  background: #0b1220;
+  color: #f8fafc;
+  position: relative;
+  overflow: hidden;
+}
+
+.dap-vc__header {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 3;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 12px 10px 28px;
+  background: linear-gradient(180deg, rgba(2, 6, 23, 0.82) 0%, rgba(2, 6, 23, 0) 100%);
+}
+
+.dap-vc__who {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.dap-vc__avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: rgba(13, 148, 136, 0.22);
+  color: #5eead4;
+  border: 1px solid rgba(94, 234, 212, 0.35);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+  font-weight: 800;
+  flex-shrink: 0;
+}
+
+.dap-vc__who strong {
+  display: block;
+  font-size: 11px;
+  font-weight: 800;
+  line-height: 1.2;
+}
+
+.dap-vc__who em {
+  display: block;
+  font-style: normal;
+  font-size: 9px;
+  color: #94a3b8;
+  margin-top: 1px;
+}
+
+.dap-vc__timer {
+  flex-shrink: 0;
+  padding: 4px 8px;
+  border-radius: 99px;
+  background: rgba(15, 23, 42, 0.72);
+  border: 1px solid rgba(148, 163, 184, 0.18);
+  font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
+  font-size: 10px;
+  font-weight: 700;
+}
+
+.dap-vc__status {
+  position: absolute;
+  top: 58px;
+  left: 10px;
+  z-index: 3;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 8px;
+  border-radius: 99px;
+  background: rgba(30, 41, 59, 0.88);
+  border: 1px solid rgba(148, 163, 184, 0.28);
+  font-size: 10px;
+  font-weight: 700;
+}
+
+.dap-vc__dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #22c55e;
+  box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.18);
+}
+
+.dap-vc__stage {
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(circle at 50% 38%, rgba(13, 148, 136, 0.22), transparent 48%),
+    #0f172a;
+}
+
+.dap-vc__main-label {
+  position: absolute;
+  left: 10px;
+  bottom: 78px;
+  padding: 3px 8px;
+  border-radius: 8px;
+  background: rgba(0, 0, 0, 0.55);
+  font-size: 10px;
+  font-weight: 700;
+}
+
+.dap-vc__pip {
+  position: absolute;
+  top: 72px;
+  right: 10px;
+  width: 78px;
+  height: 104px;
   border-radius: 10px;
+  overflow: hidden;
+  border: 2px solid rgba(255, 255, 255, 0.22);
+  background: #1e293b;
+  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.4);
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  padding-bottom: 8px;
+  font-size: 9px;
+  font-weight: 700;
+}
+
+.dap-vc__bar {
+  position: absolute;
+  left: 8px;
+  right: 8px;
+  bottom: 12px;
+  z-index: 4;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 8px 8px;
+  border-radius: 999px;
+  background: rgba(15, 23, 42, 0.72);
+  border: 1px solid rgba(148, 163, 184, 0.18);
+}
+
+.dap-vc__btn {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: #334155;
+  color: #fff;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.dap-vc__leave {
+  min-width: 52px;
+  height: 28px;
+  padding: 0 10px;
+  border-radius: 10px;
+  background: #ef4444;
+  color: #fff;
+  font-size: 10px;
+  font-weight: 800;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* ---- Slide: Consultation completed ---- */
+.dap-done {
+  height: 100%;
+  padding: 16px 14px 14px;
+  display: flex;
+  flex-direction: column;
+  background:
+    radial-gradient(ellipse 80% 50% at 50% -10%, rgba(6, 147, 150, 0.12), transparent 55%),
+    #f4f8fa;
+}
+
+.dap-done__brand {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  margin-bottom: 12px;
+  font-size: 12px;
+  font-weight: 800;
+  color: #012a4a;
+}
+
+.dap-done__brand img {
+  width: 22px;
+  height: 22px;
+  border-radius: 6px;
+  object-fit: contain;
+}
+
+.dap-done__check {
+  width: 44px;
+  height: 44px;
+  margin: 0 auto 10px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #069396;
+  background: rgba(6, 147, 150, 0.12);
+  box-shadow: 0 0 0 6px rgba(6, 147, 150, 0.06);
+}
+
+.dap-done h3 {
+  margin: 0 0 6px;
+  text-align: center;
+  font-size: 15px;
+  font-weight: 800;
+  color: #012a4a;
+  letter-spacing: -0.03em;
+}
+
+.dap-done__sub {
+  margin: 0 0 12px;
+  text-align: center;
+  font-size: 10.5px;
+  line-height: 1.45;
+  color: #334155;
+}
+
+.dap-done__meta {
+  margin: 0 0 10px;
+  padding: 8px 10px 4px;
   background: #fff;
   border: 1px solid #e2edf1;
+  border-radius: 12px;
+}
+
+.dap-done__meta div {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 7px 0;
+  border-bottom: 1px solid #e2edf1;
+}
+
+.dap-done__meta div:last-child {
+  border-bottom: 0;
+}
+
+.dap-done__meta dt {
+  margin: 0;
+  font-size: 10px;
+  font-weight: 600;
+  color: #608395;
+}
+
+.dap-done__meta dd {
+  margin: 0;
   font-size: 10.5px;
   font-weight: 700;
   color: #012a4a;
+  text-align: right;
 }
 
-.download-app__slots {
-  display: flex;
-  gap: 6px;
-  flex-wrap: wrap;
+.dap-done__saved {
+  margin: 0 0 10px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: rgba(6, 147, 150, 0.1);
+  border: 1px solid rgba(6, 147, 150, 0.22);
 }
 
-.download-app__slots span {
-  padding: 6px 8px;
-  border-radius: 8px;
-  background: #fff;
-  border: 1px solid #e2edf1;
+.dap-done__saved strong {
+  display: block;
+  font-size: 11px;
+  color: #057a7c;
+}
+
+.dap-done__saved strong::before {
+  content: "✓ ";
+}
+
+.dap-done__saved span {
+  display: block;
+  margin-top: 2px;
   font-size: 10px;
-  color: #012a4a;
+  color: #334155;
 }
 
-.download-app__slots span.is-on {
-  background: #069396;
-  border-color: #069396;
-  color: #fff;
-}
-
-.download-app__fake-cta {
-  margin-top: auto;
-  text-align: center;
-  padding: 10px;
+.dap-done__cta {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 36px;
   border-radius: 10px;
   background: #069396;
   color: #fff;
   font-size: 12px;
-  font-weight: 700;
+  font-weight: 800;
+  margin-top: auto;
 }
 
-.download-app__slide--video {
-  background: #012a4a;
-  color: #f0f9fa;
-  position: relative;
-}
-
-.download-app__video-stage {
-  flex: 1;
-  border-radius: 16px;
-  background:
-    radial-gradient(circle at 50% 30%, rgba(6, 147, 150, 0.35), transparent 55%),
-    linear-gradient(180deg, #034 0%, #012a4a 100%);
+/* ---- Slide: Health summary ---- */
+.dap-health {
+  height: 100%;
+  padding: 12px 11px;
   display: flex;
   flex-direction: column;
-  align-items: center;
-  justify-content: flex-end;
-  padding: 14px;
   gap: 8px;
+  background: #f8fafc;
 }
 
-.download-app__live {
-  align-self: flex-start;
-  padding: 3px 8px;
-  border-radius: 99px;
-  background: #ef4444;
+.dap-health__hero {
+  padding: 12px;
+  border-radius: 14px;
+  border: 1px solid rgba(2, 128, 144, 0.18);
+  background: linear-gradient(145deg, #f0fdfa 0%, #ffffff 42%, #f8fafc 100%);
+}
+
+.dap-health__hero p {
+  margin: 0 0 2px;
   font-size: 9px;
   font-weight: 800;
-  letter-spacing: 0.08em;
+  letter-spacing: 0.07em;
   text-transform: uppercase;
+  color: #0f766e;
 }
 
-.download-app__video-stage p {
+.dap-health__hero h3 {
   margin: 0 0 8px;
-  font-size: 13px;
+  font-size: 14px;
+  font-weight: 800;
+  color: #0f172a;
+  letter-spacing: -0.02em;
+}
+
+.dap-health__chip {
+  display: inline-flex;
+  padding: 3px 8px;
+  border-radius: 99px;
+  border: 1px solid #e2e8f0;
+  background: #fff;
+  font-size: 9px;
   font-weight: 700;
+  color: #475569;
 }
 
-.download-app__video-self {
-  position: absolute;
-  right: 22px;
-  bottom: 72px;
-  width: 64px;
-  height: 84px;
-  border-radius: 10px;
-  background: rgba(255, 255, 255, 0.14);
-  border: 1px solid rgba(255, 255, 255, 0.2);
+.dap-health__card {
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 9px 11px;
+}
+
+.dap-health__card em {
+  display: block;
+  font-style: normal;
+  font-size: 11px;
+  font-weight: 800;
+  color: #0f172a;
+}
+
+.dap-health__card span {
+  display: block;
+  margin-top: 2px;
   font-size: 10px;
+  color: #64748b;
+}
+
+.dap-health__foot {
+  margin: auto 0 0;
+  font-size: 9.5px;
+  color: #608395;
+  text-align: center;
+}
+
+/* ---- Slide: Care tips ---- */
+.dap-care {
+  height: 100%;
+  padding: 12px 11px;
   display: flex;
+  flex-direction: column;
+  gap: 10px;
+  background: #f4f8fa;
+}
+
+.dap-care__hero {
+  padding: 12px;
+  border-radius: 14px;
+  border: 1px solid #cce8ec;
+  background: linear-gradient(135deg, #f0fdfa 0%, #fff 100%);
+}
+
+.dap-care__hero p {
+  margin: 0 0 2px;
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  color: #028090;
+}
+
+.dap-care__hero h3 {
+  margin: 0 0 4px;
+  font-size: 15px;
+  font-weight: 800;
+  color: #0f172a;
+}
+
+.dap-care__hero span {
+  font-size: 10px;
+  color: #64748b;
+}
+
+.dap-care__card {
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 11px 12px;
+}
+
+.dap-care__card--ready {
+  border-color: rgba(6, 147, 150, 0.28);
+  background: rgba(6, 147, 150, 0.06);
+}
+
+.dap-care__card-head {
+  display: flex;
+  justify-content: space-between;
   align-items: center;
-  justify-content: center;
-}
-
-.download-app__video-bar {
-  display: flex;
-  justify-content: center;
-  gap: 12px;
-  padding-top: 4px;
-}
-
-.download-app__video-bar span {
-  width: 36px;
-  height: 36px;
-  border-radius: 50%;
-  background: rgba(255, 255, 255, 0.12);
-  border: 1px solid rgba(255, 255, 255, 0.16);
-}
-
-.download-app__dots {
-  display: flex;
   gap: 8px;
-  justify-content: center;
+  margin-bottom: 6px;
 }
 
-.download-app__dots button {
-  width: 8px;
-  height: 8px;
-  padding: 0;
-  border: 0;
-  border-radius: 50%;
-  background: rgba(255, 255, 255, 0.28);
-  cursor: pointer;
+.dap-care__card-head strong {
+  font-size: 11.5px;
+  color: #0f172a;
 }
 
-.download-app__dots button.is-active {
-  background: #5eead4;
-  box-shadow: 0 0 10px rgba(94, 234, 212, 0.55);
+.dap-care__card-head em {
+  font-style: normal;
+  font-size: 8.5px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  padding: 3px 7px;
+  border-radius: 99px;
+  background: #fef3c7;
+  color: #92400e;
+}
+
+.dap-care__card--ready .dap-care__card-head em {
+  background: #ccfbf1;
+  color: #0f766e;
+}
+
+.dap-care__card p {
+  margin: 0;
+  font-size: 10px;
+  line-height: 1.45;
+  color: #64748b;
 }
 
 .download-app__panel {
@@ -417,6 +866,10 @@
   text-decoration: none;
   border: 1.5px solid transparent;
   transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+}
+
+.download-app__btn[hidden] {
+  display: none !important;
 }
 
 .download-app__btn--primary {
@@ -512,9 +965,7 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .download-app__device,
-  .download-app__track {
-    animation: none !important;
+  .download-app__slide {
     transition: none !important;
   }
 }
@@ -575,6 +1026,16 @@ html[data-theme-resolved='dark'] .landing-page .download-app__btn--ghost {
   border-color: #334155;
 }
 
+@media (max-width: 1100px) {
+  .download-app__device {
+    width: min(300px, 100%);
+  }
+
+  .download-app__viewport {
+    height: 490px;
+  }
+}
+
 @media (max-width: 860px) {
   .download-app-section {
     padding: 64px 20px 72px;
@@ -586,11 +1047,11 @@ html[data-theme-resolved='dark'] .landing-page .download-app__btn--ghost {
   }
 
   .download-app__device {
-    width: min(260px, 86vw);
+    width: min(280px, 78vw);
   }
 
   .download-app__viewport {
-    height: 380px;
+    height: 450px;
   }
 }
 
@@ -604,11 +1065,11 @@ html[data-theme-resolved='dark'] .landing-page .download-app__btn--ghost {
   }
 
   .download-app__device {
-    width: min(240px, 88vw);
+    width: min(250px, 86vw);
   }
 
   .download-app__viewport {
-    height: 340px;
+    height: 400px;
   }
 
   .download-app__btn {
@@ -618,10 +1079,65 @@ html[data-theme-resolved='dark'] .landing-page .download-app__btn--ghost {
   .download-app__status {
     font-size: 19px;
   }
+
+  .dap-vc__bar {
+    gap: 4px;
+    padding: 7px 6px;
+  }
+
+  .dap-vc__btn {
+    width: 26px;
+    height: 26px;
+  }
+}
+
+@media (max-width: 390px) {
+  .download-app__device {
+    width: min(236px, 88vw);
+  }
+
+  .download-app__viewport {
+    height: 372px;
+  }
+
+  .dap-dash {
+    gap: 7px;
+    padding: 10px 9px;
+  }
+
+  .dap-dash__sub {
+    display: none;
+  }
+
+  .dap-dash__quick span {
+    min-height: 44px;
+    font-size: 10px;
+  }
+
+  .dap-done__sub {
+    display: none;
+  }
 }
 
 @media (max-width: 360px) {
+  .download-app-section {
+    padding: 44px 12px 48px;
+  }
+
   .download-app__device {
-    width: min(220px, 90vw);
+    width: min(214px, 90vw);
+    padding: 10px 9px 12px;
+    border-radius: 32px;
+  }
+
+  .download-app__viewport {
+    height: 340px;
+    border-radius: 22px;
+  }
+
+  .dap-dash__title,
+  .dap-done h3,
+  .dap-care__hero h3 {
+    font-size: 13px;
   }
 }

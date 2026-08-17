@@ -25,82 +25,151 @@ $sizeLabel = htmlspecialchars((string) $mobileApp['size_label'], ENT_QUOTES, 'UT
 
     <div class="download-app__grid">
       <div class="download-app__phone-col" data-lsa="fade-up" data-lsa-delay="80">
-        <div class="download-app__device" aria-hidden="true">
+        <div class="download-app__device" id="download-app-device" aria-hidden="true">
           <div class="download-app__device-notch"></div>
           <div class="download-app__viewport" id="download-app-viewport">
+            <p class="download-app__preview-note">App preview — sample layout only, not live patient data.</p>
             <div class="download-app__track" id="download-app-track">
 
-              <article class="download-app__slide download-app__slide--welcome">
-                <img src="<?= $iconUrl ?>" alt="" width="56" height="56" />
-                <p class="download-app__slide-brand">med<span>Connect</span></p>
-                <h3>Welcome to medConnect</h3>
-                <p>City Health Office · Bago City</p>
-                <span class="download-app__chip">Secure video care</span>
-              </article>
-
-              <article class="download-app__slide download-app__slide--dash">
-                <header class="download-app__appbar">
-                  <span>Good morning</span>
-                  <strong>Alex R.</strong>
-                </header>
-                <div class="download-app__mini-card">
-                  <em>Health Summary</em>
-                  <p>All records up to date</p>
-                </div>
-                <div class="download-app__mini-card download-app__mini-card--accent">
-                  <em>Upcoming Consultation</em>
-                  <p>Thu · 10:30 AM</p>
-                </div>
-                <div class="download-app__mini-row">
-                  <span>Complaint</span>
-                  <span>Messages</span>
-                </div>
-              </article>
-
-              <article class="download-app__slide download-app__slide--book">
-                <header class="download-app__appbar">
-                  <span>Book Consultation</span>
-                  <strong>Dr. Elena Cruz</strong>
-                </header>
-                <div class="download-app__mini-card">
-                  <em>Family Medicine</em>
-                  <p>Available this week</p>
-                </div>
-                <div class="download-app__slots">
-                  <span>Wed 9:00</span>
-                  <span class="is-on">Thu 10:30</span>
-                  <span>Fri 2:00</span>
-                </div>
-                <div class="download-app__fake-cta">Continue</div>
-              </article>
-
-              <article class="download-app__slide download-app__slide--video">
-                <div class="download-app__video-stage">
-                  <span class="download-app__live">Live</span>
-                  <p>Dr. Elena Cruz</p>
-                </div>
-                <div class="download-app__video-self">You</div>
-                <div class="download-app__video-bar">
-                  <span></span><span></span><span></span>
+              <article class="download-app__slide is-active" data-preview="dashboard">
+                <div class="dap-dash">
+                  <header class="dap-dash__hero">
+                    <p class="dap-dash__eyebrow">Patient Care Portal</p>
+                    <p class="dap-dash__title">Good morning, Patient</p>
+                    <p class="dap-dash__sub">Appointments, visit history, and health records in one place.</p>
+                    <div class="dap-dash__badges">
+                      <span class="dap-dash__badge dap-dash__badge--verified">Verified Patient</span>
+                      <span class="dap-dash__badge">Patient ID</span>
+                    </div>
+                    <div class="dap-dash__actions">
+                      <span class="dap-dash__cta">Book Consultation</span>
+                      <span class="dap-dash__cta dap-dash__cta--outline">My Sessions</span>
+                    </div>
+                  </header>
+                  <div class="dap-dash__complaint">
+                    <strong>Patient Complaint</strong>
+                    <p>Share your current health concern to start triage.</p>
+                    <span>Submit patient complaint</span>
+                  </div>
+                  <nav class="dap-dash__quick">
+                    <span>Health Summary</span>
+                    <span>My Health</span>
+                    <span>Patient Complaint</span>
+                    <span>Messages</span>
+                  </nav>
                 </div>
               </article>
 
-              <article class="download-app__slide download-app__slide--records">
-                <header class="download-app__appbar">
-                  <span>Health Records</span>
-                  <strong>History</strong>
-                </header>
-                <div class="download-app__mini-card">
-                  <em>Consultation</em>
-                  <p>Follow-up notes on file</p>
+              <article class="download-app__slide" data-preview="video">
+                <div class="dap-vc">
+                  <header class="dap-vc__header">
+                    <div class="dap-vc__who">
+                      <span class="dap-vc__avatar">HP</span>
+                      <div>
+                        <strong>Healthcare Provider</strong>
+                        <em>Video consultation</em>
+                      </div>
+                    </div>
+                    <span class="dap-vc__timer">00:00</span>
+                  </header>
+                  <div class="dap-vc__status">
+                    <span class="dap-vc__dot"></span>
+                    Connected
+                  </div>
+                  <div class="dap-vc__stage">
+                    <span class="dap-vc__main-label">Provider</span>
+                    <div class="dap-vc__pip">You</div>
+                  </div>
+                  <div class="dap-vc__bar">
+                    <span class="dap-vc__btn" title="Microphone">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v1a7 7 0 0 1-14 0v-1M12 18v4M8 22h8"/></svg>
+                    </span>
+                    <span class="dap-vc__btn" title="Camera">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m23 7-7 5 7 5V7z"/><rect x="1" y="5" width="15" height="14" rx="2"/></svg>
+                    </span>
+                    <span class="dap-vc__btn" title="Fullscreen">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/></svg>
+                    </span>
+                    <span class="dap-vc__btn" title="More">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="5" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="12" cy="19" r="1.5"/></svg>
+                    </span>
+                    <span class="dap-vc__leave">Leave</span>
+                  </div>
                 </div>
-                <div class="download-app__mini-card">
-                  <em>Prescription</em>
-                  <p>Ready for pharmacy</p>
+              </article>
+
+              <article class="download-app__slide" data-preview="completed">
+                <div class="dap-done">
+                  <div class="dap-done__brand">
+                    <img src="<?= $iconUrl ?>" alt="" width="22" height="22" />
+                    <span>medConnect</span>
+                  </div>
+                  <div class="dap-done__check" aria-hidden="true">
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M20 6 9 17l-5-5"/></svg>
+                  </div>
+                  <h3>Consultation Completed</h3>
+                  <p class="dap-done__sub">Your video consultation with your healthcare provider has ended successfully.</p>
+                  <dl class="dap-done__meta">
+                    <div><dt>Provider</dt><dd>Healthcare Provider</dd></div>
+                    <div><dt>Status</dt><dd>Completed</dd></div>
+                    <div><dt>Duration</dt><dd>Session time</dd></div>
+                  </dl>
+                  <div class="dap-done__saved">
+                    <strong>Consultation saved successfully</strong>
+                    <span>Saved to My Sessions</span>
+                  </div>
+                  <span class="dap-done__cta">View Session</span>
                 </div>
-                <div class="download-app__mini-card">
-                  <em>Medical record</em>
-                  <p>Encrypted &amp; stored</p>
+              </article>
+
+              <article class="download-app__slide" data-preview="health">
+                <div class="dap-health">
+                  <header class="dap-health__hero">
+                    <p>Health Summary</p>
+                    <h3>Permanent medical profile</h3>
+                    <span class="dap-health__chip">Read-only</span>
+                  </header>
+                  <div class="dap-health__card">
+                    <em>Blood Type</em>
+                    <span>From registration</span>
+                  </div>
+                  <div class="dap-health__card">
+                    <em>Allergies</em>
+                    <span>On file when recorded</span>
+                  </div>
+                  <div class="dap-health__card">
+                    <em>Medical Conditions</em>
+                    <span>Chronic profile details</span>
+                  </div>
+                  <div class="dap-health__card">
+                    <em>Maintenance Meds</em>
+                    <span>Regular medications</span>
+                  </div>
+                  <p class="dap-health__foot">My Health · prescriptions · consultation history</p>
+                </div>
+              </article>
+
+              <article class="download-app__slide" data-preview="care">
+                <div class="dap-care">
+                  <header class="dap-care__hero">
+                    <p>My Health</p>
+                    <h3>Care Tips</h3>
+                    <span>Doctor-approved self-care</span>
+                  </header>
+                  <article class="dap-care__card">
+                    <div class="dap-care__card-head">
+                      <strong>Health concern</strong>
+                      <em>Pending review</em>
+                    </div>
+                    <p>Your provider is reviewing this concern. Approved tips will appear here and in the Care Assistant.</p>
+                  </article>
+                  <article class="dap-care__card dap-care__card--ready">
+                    <div class="dap-care__card-head">
+                      <strong>Approved guidance</strong>
+                      <em>Ready</em>
+                    </div>
+                    <p>Home-care tips are shared only after your healthcare provider approves them. They do not replace a consultation.</p>
+                  </article>
                 </div>
               </article>
 
@@ -108,11 +177,11 @@ $sizeLabel = htmlspecialchars((string) $mobileApp['size_label'], ENT_QUOTES, 'UT
           </div>
         </div>
         <div class="download-app__dots" id="download-app-dots" role="tablist" aria-label="App preview screens">
-          <button type="button" class="is-active" role="tab" aria-selected="true" aria-label="Welcome screen" data-slide="0"></button>
-          <button type="button" role="tab" aria-selected="false" aria-label="Patient dashboard" data-slide="1"></button>
-          <button type="button" role="tab" aria-selected="false" aria-label="Book consultation" data-slide="2"></button>
-          <button type="button" role="tab" aria-selected="false" aria-label="Video consultation" data-slide="3"></button>
-          <button type="button" role="tab" aria-selected="false" aria-label="Health records" data-slide="4"></button>
+          <button type="button" class="is-active" role="tab" aria-selected="true" aria-label="Patient dashboard" data-slide="0"></button>
+          <button type="button" role="tab" aria-selected="false" aria-label="Video consultation" data-slide="1"></button>
+          <button type="button" role="tab" aria-selected="false" aria-label="Consultation completed" data-slide="2"></button>
+          <button type="button" role="tab" aria-selected="false" aria-label="Health summary" data-slide="3"></button>
+          <button type="button" role="tab" aria-selected="false" aria-label="Care tips" data-slide="4"></button>
         </div>
       </div>
 
