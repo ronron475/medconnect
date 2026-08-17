@@ -187,136 +187,75 @@ $logoUrl = ASSET_BASE . '/assets/img/medcon_logo.png';
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>Consultation #<?= (int) $consultationId ?> recording — medConnect</title>
-  <meta name="color-scheme" content="light dark">
+  <meta name="color-scheme" content="dark">
+  <meta name="theme-color" content="#0a0a0a">
   <link rel="icon" type="image/png" href="<?= htmlspecialchars($logoUrl) ?>">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <?php require BASE_PATH . '/resources/views/partials/theme_init.php'; ?>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <style>
     :root {
-      --ice: #f4f8fa;
-      --navy: #012a4a;
-      --aqua: #018a93;
-      --slate: #608395;
-      --line: #e2edf1;
-      --white: #fff;
+      --bg: #0a0a0a;
+      --surface: #141414;
+      --line: #2a2a2a;
+      --text: #f4f4f5;
+      --muted: #a1a1aa;
+      --aqua: #2dd4bf;
+      --aqua-dim: rgba(45, 212, 191, 0.14);
       --safe-top: env(safe-area-inset-top, 0px);
       --safe-bottom: env(safe-area-inset-bottom, 0px);
-    }
-    html[data-theme-resolved='dark'] {
       color-scheme: dark;
-      --ice: #0a0a0a;
-      --navy: #f4f4f5;
-      --aqua: #2dd4bf;
-      --slate: #a1a1aa;
-      --line: #2a2a2a;
-      --white: #1c1c1c;
-    }
-    @media (prefers-color-scheme: dark) {
-      html:not([data-theme-resolved='light']) {
-        color-scheme: dark;
-        --ice: #0a0a0a;
-        --navy: #f4f4f5;
-        --aqua: #2dd4bf;
-        --slate: #a1a1aa;
-        --line: #2a2a2a;
-        --white: #1c1c1c;
-      }
     }
     * { box-sizing: border-box; }
-    body {
+    html, body {
       margin: 0;
-      min-height: 100vh;
+      min-height: 100%;
+      background: var(--bg);
+      color: var(--text);
       font-family: Inter, system-ui, sans-serif;
-      background: var(--ice);
-      color: var(--navy);
     }
     .top {
+      position: sticky;
+      top: 0;
+      z-index: 4;
       display: flex;
       align-items: center;
       justify-content: space-between;
       gap: 12px;
-      padding: calc(14px + var(--safe-top)) 20px 14px;
-      background: var(--white);
+      padding: calc(10px + var(--safe-top)) 16px 10px;
+      background: var(--bg);
       border-bottom: 1px solid var(--line);
     }
     .brand {
       display: flex;
       align-items: center;
-      gap: 10px;
+      gap: 8px;
       font-weight: 700;
-      color: var(--navy);
+      color: var(--text);
       text-decoration: none;
+      font-size: 15px;
     }
-    .brand img { width: 32px; height: 32px; }
+    .brand img { width: 28px; height: 28px; }
     .back {
       display: inline-flex;
       align-items: center;
       min-height: 44px;
-      padding: 8px 12px;
+      padding: 8px 10px;
       border-radius: 10px;
       color: var(--aqua);
       text-decoration: none;
       font-weight: 600;
       font-size: 14px;
     }
-    .back:hover { background: #d8eaee; }
-    html[data-theme-resolved='dark'] .back:hover { background: rgba(45, 212, 191, 0.12); }
+    .back:hover { background: var(--aqua-dim); }
     .page {
-      max-width: 980px;
+      max-width: 960px;
       margin: 0 auto;
-      padding: 24px 16px calc(32px + var(--safe-bottom));
-    }
-    .card {
-      background: var(--white);
-      border: 1px solid var(--line);
-      border-radius: 16px;
-      box-shadow: 0 1px 3px rgba(1, 42, 74, 0.06);
-      overflow: hidden;
-    }
-    html[data-theme-resolved='dark'] .card {
-      box-shadow: none;
-    }
-    .card__head {
-      padding: 20px 20px 16px;
-    }
-    .eyebrow {
-      margin: 0 0 4px;
-      font-size: 12px;
-      font-weight: 700;
-      letter-spacing: 0.04em;
-      text-transform: uppercase;
-      color: var(--aqua);
-    }
-    h1 {
-      margin: 0 0 14px;
-      font-size: 1.35rem;
-      line-height: 1.3;
-    }
-    .meta {
-      display: grid;
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-      gap: 10px 16px;
-      margin: 0;
-    }
-    .meta div { min-width: 0; }
-    .meta dt {
-      margin: 0;
-      font-size: 11px;
-      font-weight: 700;
-      letter-spacing: 0.04em;
-      text-transform: uppercase;
-      color: var(--slate);
-    }
-    .meta dd {
-      margin: 2px 0 0;
-      font-size: 14px;
-      font-weight: 600;
-      word-break: break-word;
+      padding: 0 0 calc(28px + var(--safe-bottom));
     }
     .stage {
-      background: #0b1220;
+      position: relative;
+      background: #05070b;
       aspect-ratio: 16 / 9;
       display: flex;
       align-items: center;
@@ -325,23 +264,84 @@ $logoUrl = ASSET_BASE . '/assets/img/medcon_logo.png';
     video {
       width: 100%;
       height: 100%;
-      max-height: min(70vh, 720px);
+      max-height: min(72vh, 720px);
       object-fit: contain;
-      background: #0b1220;
+      background: #05070b;
       vertical-align: middle;
+    }
+    .play-fab {
+      position: absolute;
+      inset: 0;
+      margin: auto;
+      width: 72px;
+      height: 72px;
+      border: 0;
+      border-radius: 50%;
+      background: var(--aqua);
+      color: #042f2e;
+      cursor: pointer;
+      display: grid;
+      place-items: center;
+      padding: 0;
+    }
+    .play-fab[hidden] { display: none; }
+    .play-fab svg { display: block; }
+    .empty {
+      margin: 0;
+      padding: 36px 20px;
+      text-align: center;
+      color: var(--muted);
+    }
+    .sheet {
+      padding: 16px 16px 0;
+    }
+    .chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin: 0 0 12px;
+    }
+    .chip {
+      display: inline-flex;
+      align-items: center;
+      min-height: 28px;
+      padding: 4px 10px;
+      border-radius: 999px;
+      background: var(--surface);
+      border: 1px solid var(--line);
+      color: var(--aqua);
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+    }
+    h1 {
+      margin: 0 0 6px;
+      font-size: 1.2rem;
+      line-height: 1.3;
+      font-weight: 800;
+    }
+    .people {
+      margin: 0 0 10px;
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--text);
+    }
+    .people span {
+      color: var(--muted);
+      font-weight: 500;
     }
     .hint {
       margin: 0;
-      padding: 12px 20px 18px;
       font-size: 13px;
-      color: var(--slate);
+      color: var(--muted);
       line-height: 1.45;
     }
     .segments {
       display: flex;
       flex-wrap: wrap;
       gap: 8px;
-      padding: 0 20px 16px;
+      margin: 14px 0 0;
     }
     .seg-btn {
       display: inline-flex;
@@ -351,46 +351,34 @@ $logoUrl = ASSET_BASE . '/assets/img/medcon_logo.png';
       padding: 8px 12px;
       border-radius: 10px;
       border: 1px solid var(--line);
-      background: var(--ice);
-      color: var(--navy);
+      background: var(--surface);
+      color: var(--text);
       text-decoration: none;
       font-size: 13px;
       font-weight: 600;
     }
     .seg-btn small {
       font-weight: 500;
-      color: var(--slate);
+      color: var(--muted);
     }
     .seg-btn.is-active {
       border-color: var(--aqua);
-      background: #e7f6f7;
+      background: var(--aqua-dim);
       color: var(--aqua);
     }
-    html[data-theme-resolved='dark'] .seg-btn.is-active {
-      background: rgba(45, 212, 191, 0.12);
-    }
-    html[data-theme-resolved='dark'] .stage .empty {
-      color: #cbd5e1;
-    }
-    html[data-theme-resolved='dark'] video {
-      color-scheme: dark;
-    }
     .seg-btn.is-disabled {
-      opacity: 0.65;
+      opacity: 0.55;
       pointer-events: none;
     }
-    .empty {
-      margin: 0;
-      padding: 28px 20px;
-      text-align: center;
-      color: var(--slate);
-    }
     @media (max-width: 640px) {
-      .meta { grid-template-columns: 1fr; }
-      .page { padding: 16px 12px calc(24px + var(--safe-bottom)); }
-      h1 { font-size: 1.15rem; }
-      .stage { aspect-ratio: auto; min-height: 220px; }
-      video { max-height: 62vh; }
+      .stage { aspect-ratio: auto; min-height: 240px; }
+      video { max-height: 58vh; }
+      h1 { font-size: 1.05rem; }
+    }
+    @media (min-width: 768px) {
+      .page { padding-top: 12px; }
+      .stage { border-radius: 14px; overflow: hidden; margin: 0 16px; }
+      .sheet { padding: 18px 16px 0; }
     }
   </style>
 </head>
@@ -403,23 +391,26 @@ $logoUrl = ASSET_BASE . '/assets/img/medcon_logo.png';
     </a>
   </header>
   <main class="page">
-    <article class="card">
-      <div class="card__head">
-        <p class="eyebrow">Recorded visit</p>
-        <h1>Video consultation recording</h1>
-        <dl class="meta">
-          <div><dt>Consultation</dt><dd>#<?= (int) $consultationId ?></dd></div>
-          <div><dt>Date</dt><dd><?= htmlspecialchars($dateLabel !== '' ? $dateLabel : '—') ?></dd></div>
-          <div><dt>Patient</dt><dd><?= htmlspecialchars($patientName) ?></dd></div>
-          <div><dt>Provider</dt><dd><?= htmlspecialchars($providerName) ?></dd></div>
-          <?php if ($durationLabel !== ''): ?>
-          <div><dt>Duration</dt><dd><?= htmlspecialchars($durationLabel) ?></dd></div>
-          <?php endif; ?>
-          <?php if (count($segments) > 1): ?>
-          <div><dt>Recordings</dt><dd><?= (int) count($segments) ?> segments</dd></div>
-          <?php endif; ?>
-        </dl>
+    <div class="stage">
+      <?php if ($playable && $streamUrl !== ''): ?>
+      <video id="recVideo" controls playsinline preload="metadata" src="<?= htmlspecialchars($streamUrl) ?>">
+        Your browser cannot play this recording.
+      </video>
+      <button type="button" class="play-fab" id="recPlayFab" aria-label="Play recording">
+        <svg width="28" height="28" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5v14l11-7z"/></svg>
+      </button>
+      <?php else: ?>
+      <p class="empty">No playable recording file is available for this consultation.</p>
+      <?php endif; ?>
+    </div>
+    <section class="sheet">
+      <div class="chips">
+        <span class="chip">Consult #<?= (int) $consultationId ?></span>
+        <?php if ($dateLabel !== ''): ?><span class="chip"><?= htmlspecialchars($dateLabel) ?></span><?php endif; ?>
+        <?php if ($durationLabel !== ''): ?><span class="chip"><?= htmlspecialchars($durationLabel) ?></span><?php endif; ?>
       </div>
+      <h1>Video consultation recording</h1>
+      <p class="people"><?= htmlspecialchars($patientName) ?> <span>· <?= htmlspecialchars($providerName) ?></span></p>
       <?php if (count($segments) > 1): ?>
       <div class="segments">
         <?php foreach ($segments as $segment):
@@ -433,33 +424,43 @@ $logoUrl = ASSET_BASE . '/assets/img/medcon_logo.png';
           $statusBit = $canPlay ? ($timeBits !== '' ? $timeBits : 'Ready') : ucfirst((string) ($segment['status'] ?? 'unavailable'));
         ?>
         <?php if ($canPlay): ?>
-        <a class="seg-btn<?= $isActive ? ' is-active' : '' ?>" href="<?= htmlspecialchars($href) ?>">Play Segment <?= $idx ?: 1 ?><small><?= htmlspecialchars($statusBit) ?></small></a>
+        <a class="seg-btn<?= $isActive ? ' is-active' : '' ?>" href="<?= htmlspecialchars($href) ?>">Segment <?= $idx ?: 1 ?><small><?= htmlspecialchars($statusBit) ?></small></a>
         <?php else: ?>
         <span class="seg-btn is-disabled">Segment <?= $idx ?: 1 ?><small><?= htmlspecialchars($statusBit) ?></small></span>
         <?php endif; ?>
         <?php endforeach; ?>
       </div>
       <?php endif; ?>
-      <div class="stage">
-        <?php if ($playable && $streamUrl !== ''): ?>
-        <video controls playsinline preload="metadata" src="<?= htmlspecialchars($streamUrl) ?>">
-          Your browser cannot play this recording.
-        </video>
-        <?php else: ?>
-        <p class="empty">No playable recording file is available for this consultation.</p>
-        <?php endif; ?>
-      </div>
       <p class="hint"><?php
         if (!$playable) {
             echo 'A recording was not saved, or the file is missing from storage.';
         } elseif (count($segments) > 1) {
-            echo 'This consultation has multiple recording segments (for example after a reconnect). Use the buttons above to play each saved segment.';
+            echo 'This visit has more than one saved segment. Choose a segment above, then use the player controls.';
         } else {
-            echo 'This is the saved consultation recording. Use the player controls to play, pause, or enter fullscreen.';
+            echo 'Tap the player to play, pause, or enter fullscreen.';
         }
       ?></p>
-    </article>
+    </section>
   </main>
+  <?php if ($playable && $streamUrl !== ''): ?>
+  <script>
+    (function () {
+      var video = document.getElementById('recVideo');
+      var fab = document.getElementById('recPlayFab');
+      if (!video || !fab) return;
+      function sync() {
+        fab.hidden = !video.paused;
+      }
+      fab.addEventListener('click', function () {
+        video.play().catch(function () {});
+      });
+      video.addEventListener('play', sync);
+      video.addEventListener('pause', sync);
+      video.addEventListener('ended', sync);
+      sync();
+    })();
+  </script>
+  <?php endif; ?>
 </body>
 </html>
 <?php
