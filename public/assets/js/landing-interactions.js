@@ -13,7 +13,7 @@
   const navBackdrop = document.getElementById('landing-nav-backdrop');
   const homeLink = document.getElementById('nav-home');
 
-  const MOBILE_NAV_BREAK = 992;
+  const MOBILE_NAV_BREAK = 1199;
   const USE_INFINITE_CAROUSEL = !prefersReduced;
 
   document.documentElement.classList.add('landing-scroll');
@@ -84,6 +84,7 @@
 
     navMenu.classList.toggle('open', open);
     navToggle.setAttribute('aria-expanded', open ? 'true' : 'false');
+    navToggle.setAttribute('aria-label', open ? 'Close navigation menu' : 'Open navigation menu');
     document.body.classList.toggle('landing-nav-open', open);
 
     if (open) {

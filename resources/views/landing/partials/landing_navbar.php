@@ -40,9 +40,12 @@ $renderNavLinks = static function (string $class = '') use ($navLinkItems): void
 
     <div class="nav-bar__left">
       <a href="<?= htmlspecialchars($homeUrl) ?>" class="nav-logo">
-        <img src="<?= htmlspecialchars($asset) ?>/assets/img/medcon_logo.png" alt="" class="nav-logo__icon" width="42" height="42" />
-        <span class="logo-text"><span class="logo-brand-med">med</span><span class="logo-accent">Connect</span></span>
-        <img src="<?= htmlspecialchars($asset) ?>/assets/img/bcclogo.png" alt="Bago City College" class="nav-logo__partner nav-logo__partner--bcc" width="108" height="30" decoding="async" />
+        <span class="nav-logo__brand">
+          <img src="<?= htmlspecialchars($asset) ?>/assets/img/medcon_logo.png" alt="" class="nav-logo__icon" width="40" height="40" />
+          <span class="logo-text"><span class="logo-brand-med">med</span><span class="logo-accent">Connect</span></span>
+        </span>
+        <span class="nav-logo__divider" aria-hidden="true"></span>
+        <img src="<?= htmlspecialchars($asset) ?>/assets/img/bcclogo.png" alt="Bago City College" class="nav-logo__partner nav-logo__partner--bcc" width="36" height="36" decoding="async" />
       </a>
     </div>
 
@@ -59,7 +62,7 @@ $renderNavLinks = static function (string $class = '') use ($navLinkItems): void
         <span>Sign In</span>
       </button>
 
-      <button class="nav-toggle" id="nav-toggle" type="button" aria-label="Toggle navigation menu" aria-expanded="false" aria-controls="nav-menu">
+      <button class="nav-toggle" id="nav-toggle" type="button" aria-label="Open navigation menu" aria-expanded="false" aria-controls="nav-menu">
         <span></span><span></span><span></span>
       </button>
     </div>

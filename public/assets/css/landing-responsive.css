@@ -19,7 +19,7 @@
   --landing-text-body: clamp(0.9375rem, 0.4vw + 0.85rem, 1.0625rem);
   --landing-text-small: clamp(0.75rem, 0.2vw + 0.7rem, 0.8125rem);
   --landing-text-label: clamp(0.6875rem, 0.15vw + 0.65rem, 0.75rem);
-  --landing-nav-break: 992px;
+  --landing-nav-break: 1199px;
   --landing-touch-min: 44px;
   --landing-container: min(1080px, 100% - clamp(32px, 6vw, 96px));
   --landing-transition: 0.28s cubic-bezier(0.22, 1, 0.36, 1);
@@ -128,8 +128,7 @@ body.landing-page.landing-nav-open {
   }
 
   .landing-page .cta-secondary:hover,
-  .landing-page .hero-cta--outline:hover,
-  .landing-page .btn-nav-signin:hover {
+  .landing-page .hero-cta--outline:hover {
     transform: translateY(-2px);
   }
 
@@ -845,9 +844,9 @@ body.landing-page.landing-nav-open {
 }
 
 /* ── Override generic nav height conflicts on landing ── */
-@media (max-width: 992px) {
+@media (max-width: 1199px) {
   .landing-page .navbar.landing-navbar {
-    height: var(--landing-nav-height, 72px) !important;
+    height: var(--landing-nav-height, 76px);
   }
 
   /* Prevent style.css dropdown rules from breaking slide-in drawer */
