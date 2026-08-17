@@ -234,11 +234,9 @@ html[data-theme-resolved='dark'] body.landing-page::after {
 html[data-theme-resolved='light'] body.landing-page .services-section,
 html[data-theme-resolved='light'] body.landing-page .contact-section,
 html[data-theme-resolved='light'] body.landing-page .about-team-section,
-html[data-theme-resolved='light'] body.landing-page .download-app-section,
 body.landing-page.landing-bg--light .services-section,
 body.landing-page.landing-bg--light .contact-section,
-body.landing-page.landing-bg--light .about-team-section,
-body.landing-page.landing-bg--light .download-app-section {
+body.landing-page.landing-bg--light .about-team-section {
   background: transparent !important;
 }
 
@@ -352,18 +350,15 @@ body.landing-page.landing-bg--light .about-project-milestone__text {
 html[data-theme-resolved='dark'] body.landing-page .services-section,
 html[data-theme-resolved='dark'] body.landing-page .contact-section,
 html[data-theme-resolved='dark'] body.landing-page .about-team-section,
-html[data-theme-resolved='dark'] body.landing-page .download-app-section,
 body.landing-page.landing-bg--dark .services-section,
 body.landing-page.landing-bg--dark .contact-section,
-body.landing-page.landing-bg--dark .about-team-section,
-body.landing-page.landing-bg--dark .download-app-section {
+body.landing-page.landing-bg--dark .about-team-section {
   background: var(--navy) !important;
 }
 
 html[data-theme-resolved='dark'] .landing-page .services-section,
 html[data-theme-resolved='dark'] .landing-page .contact-section,
-html[data-theme-resolved='dark'] .landing-page .about-team-section,
-html[data-theme-resolved='dark'] .landing-page .download-app-section {
+html[data-theme-resolved='dark'] .landing-page .about-team-section {
   background: #1e293b;
   color: #e2e8f0;
 }
