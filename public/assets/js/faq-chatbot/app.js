@@ -674,13 +674,6 @@
       return;
     }
 
-    if (Emotions.isMedicalEmergency(workingText) || Emotions.isMedicalEmergency(nlpText)) {
-      appendUser(trimmed, 'emergency');
-      Understanding.incrementMessageCount();
-      runFlow('emergency', false, { lang: replyLang });
-      return;
-    }
-
     lastPhpAssist = null;
     if (phpChatEnabled && window.McFaqChatApi) {
       const typingEl = showTyping();
@@ -756,6 +749,17 @@
         runFlow(flowFromIntent[lastPhpAssist.intent] || 'distress_support', false, { lang: replyLang });
         return;
       }
+    }
+
+    const healthcareRelated = !Conversation
+      || typeof Conversation.isHealthcareRelated !== 'function'
+      || Conversation.isHealthcareRelated(workingText)
+      || Conversation.isHealthcareRelated(nlpText);
+    if (healthcareRelated && (Emotions.isMedicalEmergency(workingText) || Emotions.isMedicalEmergency(nlpText))) {
+      appendUser(trimmed, 'emergency');
+      Understanding.incrementMessageCount();
+      runFlow('emergency', false, { lang: replyLang });
+      return;
     }
 
     const classification = Intent.classify(nlpText);

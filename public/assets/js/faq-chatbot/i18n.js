@@ -635,15 +635,15 @@
     },
     domain_out_of_scope: {
       en: {
-        html: '<p>Please type a question or concern related to healthcare or your health. I can help with symptoms, health concerns, medicines, self-care, and information about when to seek medical care.</p>',
+        html: '<p>I\'m here to help with healthcare-related concerns only. Please tell me about a symptom, health problem, medication, treatment, appointment, or other medical concern.</p>',
         actions: ['bookAppointment', 'contactCho'],
       },
       fil: {
-        html: '<p>Mag-type po ng tanong o alalahanin na may kinalaman sa healthcare o sa iyong kalusugan. Makakatulong ako sa sintomas, health concerns, gamot, self-care, at kung kailan dapat magpatingin.</p>',
+        html: '<p>Para sa healthcare-related concerns lang ang medConnect Assistant. Pakisulat ang iyong sintomas, sakit, gamot, treatment, appointment, o iba pang health concern.</p>',
         actions: ['bookAppointment', 'contactCho'],
       },
       hil: {
-        html: '<p>Mag-type sang pamangkot ukon concern parte sa healthcare ukon sa imo health. Makabulig ako sa sintomas, health concerns, gamot, self-care, kag kun san-o dapat magpacheckup.</p>',
+        html: '<p>Para sa healthcare-related concerns lang ang medConnect Assistant. Palihog isulat ang imo sintomas, sakit, tambal, treatment, appointment, ukon iban nga health concern.</p>',
         actions: ['bookAppointment', 'contactCho'],
       },
     },

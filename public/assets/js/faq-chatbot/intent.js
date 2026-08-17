@@ -118,6 +118,9 @@
     const Emotions = global.McFaqEmotions;
     const Engine = global.McFaqEngine;
     const Conversation = global.McFaqConversation;
+    const healthcareRelated = !Conversation
+      || typeof Conversation.isHealthcareRelated !== 'function'
+      || Conversation.isHealthcareRelated(raw);
 
     const isQuestion = /\?/.test(raw) || QUESTION_STARTERS.test(raw);
 
@@ -125,11 +128,11 @@
       return { intent: INTENT.CRISIS, urgency: URGENCY.CRITICAL, isQuestion };
     }
 
-    if (Emotions && Emotions.isMedicalEmergency(raw)) {
+    if (healthcareRelated && Emotions && Emotions.isMedicalEmergency(raw)) {
       return { intent: INTENT.MEDICAL_EMERGENCY, urgency: URGENCY.CRITICAL, isQuestion };
     }
 
-    if (Engine && Engine.isEmergency(raw)) {
+    if (healthcareRelated && Engine && Engine.isEmergency(raw)) {
       return { intent: INTENT.MEDICAL_EMERGENCY, urgency: URGENCY.CRITICAL, isQuestion };
     }
 

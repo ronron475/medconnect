@@ -46,7 +46,7 @@ function expect_true(bool $ok, string $label): void
 
 echo "FAQ chatbot domain scope\n";
 
-foreach (['Hello', 'Hi', 'Hey', 'Good morning', 'Kamusta', 'Kumusta', 'Maayong aga', 'Thank you', 'Thanks', 'Goodbye', 'Bye', 'How are you?', 'What can you do?', 'Who are you?', 'Can you help me?'] as $g) {
+foreach (['Hello', 'Hi', 'Hey', 'Good morning', 'Kamusta', 'Kumusta', 'Maayong aga', 'Thank you', 'Thanks', 'Goodbye', 'Bye', 'How are you?', 'What can you do?', 'Can you help me?'] as $g) {
     $scope = FaqChatbotDomainScope::classify($g)['scope'];
     expect_true(
         in_array($scope, [FaqChatbotDomainScope::GREETING, FaqChatbotDomainScope::CONVERSATION], true),
@@ -94,7 +94,7 @@ expect_scope('Make me a business plan.', FaqChatbotDomainScope::OUT_OF_SCOPE);
 
 expect_scope('I need help', FaqChatbotDomainScope::HELP_OPEN);
 expect_scope('Can I ask something?', FaqChatbotDomainScope::HELP_OPEN);
-expect_scope('Something is wrong', FaqChatbotDomainScope::AMBIGUOUS);
+expect_scope('Something is wrong', FaqChatbotDomainScope::OUT_OF_SCOPE);
 expect_scope('I feel strange.', FaqChatbotDomainScope::MEDICAL);
 
 expect_true(FaqChatbotDomainScope::shouldIntercept(FaqChatbotDomainScope::classify('Tell me a joke')), 'intercept joke');
@@ -102,12 +102,12 @@ expect_true(FaqChatbotDomainScope::shouldIntercept(FaqChatbotDomainScope::classi
 expect_true(!FaqChatbotDomainScope::shouldIntercept(FaqChatbotDomainScope::classify('sakit ulo ko')), 'do not intercept headache');
 expect_true(!FaqChatbotDomainScope::shouldIntercept(FaqChatbotDomainScope::classify('Hello')), 'do not intercept hello');
 expect_true(!FaqChatbotDomainScope::shouldIntercept(FaqChatbotDomainScope::classify('Can you help me?')), 'do not intercept can you help me');
-expect_true(!FaqChatbotDomainScope::shouldIntercept(FaqChatbotDomainScope::classify('Something is wrong')), 'do not intercept ambiguous health');
+expect_true(FaqChatbotDomainScope::shouldIntercept(FaqChatbotDomainScope::classify('Something is wrong')), 'intercept unrelated something is wrong');
 expect_true(!FaqChatbotDomainScope::shouldIntercept(FaqChatbotDomainScope::classify("I don't feel right.")), 'do not intercept vague health');
 expect_true(!FaqChatbotDomainScope::shouldIntercept(FaqChatbotDomainScope::classify('I need help')), 'do not intercept help-open');
 
 $html = FaqChatbotDomainScope::replyHtml(FaqChatbotDomainScope::OUT_OF_SCOPE, 'en');
-expect_true(str_contains($html, 'Please type a question or concern related to healthcare'), 'out-of-scope copy');
+expect_true(str_contains($html, 'healthcare-related concerns only'), 'out-of-scope copy');
 
 $focus = FaqChatbotDomainScope::healthcareFocusText("Hello, I've been feeling dizzy. By the way, what's the weather?");
 expect_true(str_contains(mb_strtolower($focus), 'dizzy') && !str_contains(mb_strtolower($focus), 'weather'), 'focus keeps dizzy, drops weather');
@@ -119,6 +119,40 @@ expect_true($intent['intent'] === FaqChatbotIntentRecognizer::SYMPTOMS, 'strippe
 
 $hello = FaqChatbotIntentRecognizer::recognize('Hello');
 expect_true($hello['intent'] === FaqChatbotIntentRecognizer::GREETING, 'hello remains greeting intent');
+
+echo "\nAcceptance matrix\n";
+expect_scope('hello', FaqChatbotDomainScope::GREETING, 'A hello');
+expect_scope('kumusta', FaqChatbotDomainScope::GREETING, 'B kumusta');
+expect_scope('wala kwarta', FaqChatbotDomainScope::OUT_OF_SCOPE, 'C wala kwarta');
+expect_scope('ano oras?', FaqChatbotDomainScope::OUT_OF_SCOPE, 'D ano oras');
+expect_scope('tell me a joke', FaqChatbotDomainScope::OUT_OF_SCOPE, 'E joke');
+expect_scope('what is the weather?', FaqChatbotDomainScope::OUT_OF_SCOPE, 'F weather');
+expect_scope('sakit ulo ko', FaqChatbotDomainScope::MEDICAL, 'G sakit ulo');
+expect_scope('may hilanat ako', FaqChatbotDomainScope::MEDICAL, 'H hilanat');
+expect_scope('masakit akon dughan', FaqChatbotDomainScope::MEDICAL, 'I chest pain healthcare');
+expect_scope('lisod ginhawa', FaqChatbotDomainScope::MEDICAL, 'J breathing healthcare');
+expect_scope('wala kwarta pambili tambal kay may hilanat ako', FaqChatbotDomainScope::MEDICAL, 'K money + medicine');
+expect_scope('diin ang City Health Office?', FaqChatbotDomainScope::MEDICAL, 'L CHO');
+expect_scope('what medicine is used for fever?', FaqChatbotDomainScope::MEDICAL, 'M medicine fever');
+expect_scope('asdfgh random text', FaqChatbotDomainScope::OUT_OF_SCOPE, 'N random');
+expect_scope('sino ka', FaqChatbotDomainScope::OUT_OF_SCOPE, 'sino ka');
+expect_scope('diin ang hospital?', FaqChatbotDomainScope::MEDICAL, 'hospital location is healthcare');
+
+expect_true(FaqChatbotDomainScope::isHealthcareRelated('sakit ulo ko'), 'isHealthcareRelated sakit ulo');
+expect_true(!FaqChatbotDomainScope::isHealthcareRelated('wala kwarta'), 'isHealthcareRelated wala kwarta false');
+expect_true(FaqChatbotDomainScope::isHealthcareRelated('wala kwarta pambili tambal kay may hilanat ako'), 'mixed money+fever is healthcare');
+
+$emWala = FaqChatbotEmergencyDetector::detect('wala kwarta');
+expect_true(empty($emWala['is_emergency']), 'wala kwarta is not emergency');
+$emBreath = FaqChatbotEmergencyDetector::detect('lisod ginhawa');
+expect_true(!empty($emBreath['is_emergency']), 'lisod ginhawa is emergency after healthcare');
+$emChest = FaqChatbotEmergencyDetector::detect('masakit akon dughan');
+expect_true(!empty($emChest['is_emergency']), 'masakit akon dughan is emergency after healthcare');
+$emHospital = FaqChatbotEmergencyDetector::detect('diin ang hospital?');
+expect_true(empty($emHospital['is_emergency']), 'hospital location is not automatic emergency');
+
+$htmlHil = FaqChatbotDomainScope::replyHtml(FaqChatbotDomainScope::OUT_OF_SCOPE, 'hil');
+expect_true(str_contains($htmlHil, 'Palihog isulat ang imo sintomas'), 'hiligaynon out-of-scope copy');
 
 echo "\nDomain scope tests: {$passed} passed, {$failed} failed\n";
 exit($failed > 0 ? 1 : 0);

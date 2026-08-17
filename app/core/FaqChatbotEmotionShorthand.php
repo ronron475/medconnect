@@ -98,7 +98,9 @@ final class FaqChatbotEmotionShorthand
             if ($to === '') {
                 continue;
             }
-            if (str_contains($work, $from)) {
+            if (preg_match('/^[a-z]{2,5}$/', $from)) {
+                $work = preg_replace('/\b' . preg_quote($from, '/') . '\b/u', $to, $work) ?? $work;
+            } elseif (str_contains($work, $from)) {
                 $work = str_replace($from, $to, $work);
             }
         }

@@ -2,10 +2,8 @@
 /**
  * Medical-domain boundary for the FAQ chatbot.
  *
- * Regex scope is a cheap first pass. Dataset matching still runs first.
- * Absence of a dataset match is not out-of-scope — Gemini classifies remaining
- * healthcare vs non-healthcare. This class only intercepts clearly unrelated
- * questions (trivia, poems, programming, weather forecasts, etc.).
+ * Healthcare scope is decided here BEFORE dataset matching, emergency
+ * detection, or Gemini. Gemini never decides whether a message is in-domain.
  */
 final class FaqChatbotDomainScope
 {
@@ -29,65 +27,70 @@ final class FaqChatbotDomainScope
     {
         $raw = trim($text);
         $hay = self::normalize($raw . ' ' . $nlpText);
+        $rawHay = self::normalize($raw);
         $focus = self::healthcareFocusText($raw, $nlpText);
         $focusHay = self::normalize($focus);
 
-        if ($hay === '') {
-            return self::pack(self::AMBIGUOUS, $raw, 0.4);
+        if ($hay === '' && $rawHay === '') {
+            return self::pack(self::OUT_OF_SCOPE, $raw, 0.4);
         }
 
-        if (class_exists('FaqChatbotEmergencyDetector')) {
-            $emergency = FaqChatbotEmergencyDetector::detect($raw . ' ' . $nlpText);
-            if (!empty($emergency['is_emergency'])) {
-                return self::pack(self::MEDICAL, $focus !== '' ? $focus : $raw, 0.99);
-            }
-        }
-
-        if (self::isGreetingOnly($hay) || ($focusHay === '' && self::isGreetingOnly($hay))) {
+        if (self::isGreetingOnly($rawHay) || self::isGreetingOnly($hay) || ($focusHay === '' && self::isGreetingOnly($hay))) {
             return self::pack(self::GREETING, $raw, 0.96);
         }
 
-        if (self::isConversationOnly($hay) && !self::hasMedicalContext($hay)) {
+        if ((self::isHelpOpen($rawHay) || self::isHelpOpen($hay)) && !self::isHealthcareRelated($raw, $nlpText)) {
+            return self::pack(self::HELP_OPEN, $raw, 0.9);
+        }
+
+        if ((self::isConversationOnly($rawHay) || self::isConversationOnly($hay)) && !self::isHealthcareRelated($raw, $nlpText)) {
             return self::pack(self::CONVERSATION, $raw, 0.93);
         }
 
-        $medicalHay = $focusHay !== '' ? $focusHay : $hay;
-        $medicalRaw = $focus !== '' ? $focus : $raw;
-        $medical = self::medicalScore($medicalHay, $medicalRaw);
-        $off = self::offTopicScore($hay, $raw);
-
-        if (self::isFalseMedicalPositive($hay) && $medical < 2.2) {
-            $medical = 0.0;
-            $off += 3.0;
+        if (self::isHealthcareRelated($raw, $nlpText)) {
+            $medicalRaw = $focus !== '' ? $focus : $raw;
+            return self::pack(self::MEDICAL, $medicalRaw, 0.9);
         }
 
-        // Mixed message: a real healthcare portion wins over leftover trivia.
-        if ($medical >= 1.4) {
-            return self::pack(self::MEDICAL, $medicalRaw, min(0.97, 0.55 + $medical / 8));
-        }
-
-        if ($off >= 2.4 && $off > $medical && $medical < 1.2) {
-            return self::pack(self::OUT_OF_SCOPE, $raw, min(0.95, 0.55 + $off / 8));
-        }
-
-        if (self::isHelpOpen($hay) && $medical < 2.2) {
-            return self::pack(self::HELP_OPEN, $raw, 0.86);
-        }
-
-        if ($medical >= 1.2 && $off < 1.8) {
-            return self::pack(self::MEDICAL, $medicalRaw, 0.72);
-        }
-
-        if ($off >= 1.8 && $medical < 1.2) {
-            return self::pack(self::OUT_OF_SCOPE, $raw, 0.8);
-        }
-
-        return self::pack(self::AMBIGUOUS, $raw, 0.5);
+        return self::pack(self::OUT_OF_SCOPE, $raw, 0.92);
     }
 
     /**
-     * Intercept only clearly unrelated questions. Ambiguous / help-open /
-     * vague health language must reach dataset matching and Gemini fallback.
+     * Greetings and short help openings — not out-of-scope, not Gemini work.
+     */
+    public static function isAllowedOpening(string $text): bool
+    {
+        $hay = self::normalize($text);
+        return self::isGreetingOnly($hay) || self::isConversationOnly($hay) || self::isHelpOpen($hay);
+    }
+
+    /**
+     * True when the message has a legitimate healthcare / health-service intent.
+     * Money, time, weather, cooking, trivia, and identity questions stay false
+     * unless a real health cue is also present.
+     */
+    public static function isHealthcareRelated(string $text, string $nlpText = ''): bool
+    {
+        $raw = trim($text);
+        $hay = self::normalize($raw . ' ' . $nlpText);
+        if ($hay === '') {
+            return false;
+        }
+        if (self::isGreetingOnly($hay) || self::isConversationOnly($hay)) {
+            return false;
+        }
+        if (self::isFalseMedicalPositive($hay)) {
+            return false;
+        }
+        $health = self::healthcareEvidence($hay, $raw);
+        if ($health >= 2.0) {
+            return true;
+        }
+        return false;
+    }
+
+    /**
+     * Intercept clearly unrelated questions. Greetings are not intercepted.
      *
      * @param array{scope?: string} $pack
      */
@@ -98,8 +101,10 @@ final class FaqChatbotDomainScope
 
     public static function isClearlyNonHealthcare(string $text, string $nlpText = ''): bool
     {
-        $pack = self::classify($text, $nlpText);
-        return self::shouldIntercept($pack);
+        if (self::isAllowedOpening($text) && !self::isHealthcareRelated($text, $nlpText)) {
+            return false;
+        }
+        return !self::isHealthcareRelated($text, $nlpText);
     }
 
     /**
@@ -123,9 +128,9 @@ final class FaqChatbotDomainScope
         $L = in_array($lang, ['en', 'fil', 'hil'], true) ? $lang : 'en';
         if ($scope === self::OUT_OF_SCOPE) {
             $copy = [
-                'en' => 'Please type a question or concern related to healthcare or your health. I can help with symptoms, health concerns, medicines, self-care, and information about when to seek medical care.',
-                'fil' => 'Mag-type po ng tanong o alalahanin na may kinalaman sa healthcare o sa iyong kalusugan. Makakatulong ako sa sintomas, health concerns, gamot, self-care, at kung kailan dapat magpatingin.',
-                'hil' => 'Mag-type sang pamangkot ukon concern parte sa healthcare ukon sa imo health. Makabulig ako sa sintomas, health concerns, gamot, self-care, kag kun san-o dapat magpacheckup.',
+                'en' => "I'm here to help with healthcare-related concerns only. Please tell me about a symptom, health problem, medication, treatment, appointment, or other medical concern.",
+                'fil' => 'Para sa healthcare-related concerns lang ang medConnect Assistant. Pakisulat ang iyong sintomas, sakit, gamot, treatment, appointment, o iba pang health concern.',
+                'hil' => 'Para sa healthcare-related concerns lang ang medConnect Assistant. Palihog isulat ang imo sintomas, sakit, tambal, treatment, appointment, ukon iban nga health concern.',
             ];
             return '<p>' . htmlspecialchars($copy[$L], ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') . '</p>';
         }
@@ -226,7 +231,7 @@ final class FaqChatbotDomainScope
     private static function isConversationOnly(string $hay): bool
     {
         return (bool) preg_match(
-            '/^(thanks|thank\s+you|thankyou|salamat|maraming\s+salamat|damo\s+nga\s+salamat|ty|tysm|goodbye|bye|see\s+you|paalam|who\s+are\s+you|what\s+are\s+you|what\s+can\s+you\s+do|how\s+are\s+you|kamusta\s+ka|kumusta\s+ka|musta\s+ka|ano\s+ka|sino\s+ka)[\s!.?]*$/u',
+            '/^(thanks|thank\s+you|thankyou|salamat|maraming\s+salamat|damo\s+nga\s+salamat|ty|tysm|goodbye|bye|see\s+you|paalam|what\s+can\s+you\s+do|how\s+are\s+you|kamusta\s+ka|kumusta\s+ka|musta\s+ka)[\s!.?]*$/u',
             $hay
         );
     }
@@ -234,14 +239,81 @@ final class FaqChatbotDomainScope
     private static function isHelpOpen(string $hay): bool
     {
         return (bool) preg_match(
-            '/\b(can\s+you\s+help(\s+me)?|i\s+need\s+help|need\s+help|help\s+me|can\s+i\s+ask(\s+something)?|can\s+you\s+explain(\s+this)?|i\'?m\s+worried(\s+about\s+something)?|buligi\s+ko|tulungan\s+mo\s+ako|pwede\s+ko\s+magpamangkot)\b/u',
+            '/^(can\s+you\s+help(\s+me)?|i\s+need\s+help|need\s+help|help\s+me|can\s+i\s+ask(\s+something)?|can\s+you\s+explain(\s+this)?|i\'?m\s+worried(\s+about\s+something)?|buligi\s+ko|tulungan\s+mo\s+ako|pwede\s+ko\s+magpamangkot)[\s!.?]*$/u',
             $hay
         );
     }
 
     private static function hasMedicalContext(string $hay): bool
     {
-        return self::medicalScore($hay, $hay) >= 2.2;
+        return self::healthcareEvidence($hay, $hay) >= 2.0;
+    }
+
+    /**
+     * Positive healthcare evidence. A single incidental word is not enough
+     * unless it is a strong symptom/service/medication cue.
+     */
+    private static function healthcareEvidence(string $hay, string $raw): float
+    {
+        $score = 0.0;
+        $strong = [
+            '/\b(sakit|masakit|gasakit|ginasakit|nagasakit)\s+(ang\s+)?(ulo|mata|tiyan|dughan|dibdib|lawas|likod|tuhod|throat|tungol)\b/u',
+            '/\b(sakit|masakit)\s+(ulo|mata|tiyan|dughan|lawas|likod)\s*(ko|akon|ako)?\b/u',
+            '/\b(dugo)\s+(ulo|ilong|baka)\s*(ko)?\b/u',
+            '/\b(ginahilanat|hilanat|lagnat|kalintura|ginalagnat|may\s+hilanat|may\s+lagnat)\b/u',
+            '/\b(i\s+have|i\'?ve\s+got|i\s+got)\s+(a\s+)?(fever|cough|headache|cold|flu|rash|diarrhea|vomit)/u',
+            '/\bmy\s+(head|stomach|tummy|chest|eye|eyes|throat|back|skin|ear)\s+(hurts?|ache[sd]?|is\s+swollen|swollen)\b/u',
+            '/\b(chest\s+hurts|chest\s+pain|sakit\s+dughan|masakit\s+akon\s+dughan|budlay\s+ginhawa|lisod\s+ginhawa|lisud\s+ginhawa|hirap\s+huminga|difficulty\s+breathing)\b/u',
+            '/\b(first\s*aid|side\s+effects?|dosage|gamot|medicine|medication|tambal|paracetamol|antibiotics?|prescription|reseta)\b/u',
+            '/\b(appointment|mag-?book|pakonsulta|konsulta|checkup|triage|medical\s+record|clinic|hospital|ospital|health\s+center|city\s+health|health\s+office|bhw|barangay\s+health|login|log\s*in|sign\s*in|register|otp|forgot\s+(my\s+)?password|reset\s+password)\b/u',
+            '/\b(pila\s+ang\s+bayad|consultation\s+(fee|cost)|magkano\s+ang\s+(consult|consultation|checkup))\b/u',
+            '/\b(i\s+don\'?t\s+feel\s+well|not\s+feeling\s+well|masama\s+ang\s+pakiramdam|may\s+sakit\s+ako)\b/u',
+            '/\b(i\s+don\'?t\s+feel\s+right|don\'?t\s+feel\s+right(\s+today)?)\b/u',
+            '/\b(i\s+feel\s+(weak|strange|off|weird)|feel\s+weak\s+and\s+strange|my\s+body\s+feels\s+(very\s+)?weak)\b/u',
+            '/\b(something\s+feels\s+wrong(\s+with\s+(my\s+)?body)?|something\s+is\s+wrong\s+with\s+(me|my\s+body))\b/u',
+            '/\b(i\s+have\s+been\s+feeling\s+sick|feeling\s+sick\s+lately|i\s+feel\s+sick|i\'?m\s+sick)\b/u',
+            '/\b(i\s+feel\s+pain\s+after\s+eating|pain\s+after\s+eating|feel(ing)?\s+dizzy|nahilo|nalipong|hilo)\b/u',
+            '/\b(ginalain|nagasakit|ginakulbaan|ano\s+tambal|ano\s+ubrahon\s+ko\s+sa|what\s+medicine|when\s+should\s+i\s+see\s+a\s+doctor)\b/u',
+            '/\b(diabetes|hypertension|asthma|anemia|dengue|infection|allergy|allergies|pregnant|buntis|mental\s+health)\b/u',
+            '/\b(pagsusuka|vomiting|diarrhea|diarrhoea|samad|wound|bleeding|nagsuka|ubo|sip-?on|sipon|cough|fever|headache)\b/u',
+            '/\b(doctor|doktor|nurse|nars|consultation|medconnect\s+consultation)\b/u',
+        ];
+        foreach ($strong as $re) {
+            if (preg_match($re, $hay) || preg_match($re, $raw)) {
+                $score += 2.6;
+            }
+        }
+
+        $body = '(head|ulo|mata|eye|eyes|tiyan|stomach|tummy|chest|dughan|dibdib|throat|skin|likod|back|ear|ilong|body|lawas)';
+        $person = '(i|my|ako|ko|akon|ang\s+akin)';
+        if (preg_match('/\b' . $person . '\b/u', $hay) && preg_match('/\b' . $body . '\b/u', $hay)
+            && preg_match('/\b(hurt|hurts|pain|ache|sakit|masakit|swollen|swell|dugo|bleed|fever|cough|dizzy|nahilo|nalipong|weak|strange|wrong|sick)\b/u', $hay)) {
+            $score += 2.4;
+        }
+
+        $cues = [
+            'fever', 'cough', 'headache', 'dizzy', 'nausea', 'vomit', 'diarrhea', 'allergy', 'pregnant', 'buntis',
+            'symptom', 'injury', 'wound', 'rash', 'asthma', 'diabetes', 'medicine', 'doctor', 'nurse', 'hospital',
+            'ubo', 'sipon', 'lagnat', 'gamot', 'tambal', 'doktor', 'sakit', 'masakit', 'pamatyag', 'first aid',
+            'self-care', 'nauseous', 'swollen', 'bleeding', 'hilanat', 'dughan', 'ginhawa', 'triage', 'clinic',
+            'appointment', 'prescription', 'reseta', 'checkup', 'konsulta',
+        ];
+        $hits = 0;
+        foreach ($cues as $cue) {
+            if (preg_match('/\b' . preg_quote($cue, '/') . '\b/u', $hay)) {
+                $hits++;
+            }
+        }
+        if ($hits >= 1) {
+            $score += ($hits >= 2) ? 2.0 : 2.2;
+        }
+
+        return $score;
+    }
+
+    private static function medicalScore(string $hay, string $raw): float
+    {
+        return self::healthcareEvidence($hay, $raw);
     }
 
     private static function isFalseMedicalPositive(string $hay): bool
@@ -261,63 +333,6 @@ final class FaqChatbotDomainScope
         return false;
     }
 
-    private static function medicalScore(string $hay, string $raw): float
-    {
-        $score = 0.0;
-
-        $strong = [
-            '/\b(sakit|masakit|gasakit|ginasakit|nagasakit)\s+(ang\s+)?(ulo|mata|tiyan|dughan|dibdib|lawas|likod|tuhod|kalooy|throat|tungol)\b/u',
-            '/\b(sakit|masakit)\s+(ulo|mata|tiyan|dughan|lawas)\s+(ko|akon|ako)\b/u',
-            '/\b(dugo)\s+(ulo|ilong|baka)\s*(ko)?\b/u',
-            '/\b(ginahilanat|hilanat|lagnat|kalintura|ginalagnat)\b/u',
-            '/\b(i\s+have|i\'?ve\s+got|i\s+got)\s+(a\s+)?(fever|cough|headache|cold|flu|rash|diarrhea|vomit)/u',
-            '/\bmy\s+(head|stomach|tummy|chest|eye|eyes|throat|back|skin|ear)\s+(hurts?|ache[sd]?|is\s+swollen|swollen)\b/u',
-            '/\b(chest\s+hurts|chest\s+pain|budlay\s+ginhawa|hirap\s+huminga)\b/u',
-            '/\b(what\s+should\s+i\s+do\s+for|treatment\s+for|first\s*aid|side\s+effects?|dosage|gamot|medicine|medication)\b/u',
-            '/\b(appointment|mag-?book|pakonsulta|konsulta|checkup|triage|prescription|reseta|otp|login|register|medical\s+record)\b/u',
-            '/\b(i\s+don\'?t\s+feel\s+well|not\s+feeling\s+well|masama\s+ang\s+pakiramdam|may\s+sakit\s+ako)\b/u',
-            '/\b(gaulan|baha|bad\s+weather|indi\s+ko\s+makaguwa|wala\s+signal|forgot\s+(my\s+)?password|barangay\s+health|bhw)\b/u',
-            '/\b(i\s+don\'?t\s+feel\s+right|don\'?t\s+feel\s+right(\s+today)?)\b/u',
-            '/\b(i\s+feel\s+(weak|strange|off|weird)|feel\s+weak\s+and\s+strange|my\s+body\s+feels\s+(very\s+)?weak)\b/u',
-            '/\b(something\s+feels\s+wrong(\s+with\s+(my\s+)?body)?|something\s+is\s+wrong\s+with\s+(me|my\s+body))\b/u',
-            '/\b(i\s+have\s+been\s+feeling\s+sick|feeling\s+sick\s+lately|i\s+feel\s+sick|i\'?m\s+sick)\b/u',
-            '/\b(i\s+feel\s+pain\s+after\s+eating|pain\s+after\s+eating|feel(ing)?\s+dizzy|nahilo|nalipong)\b/u',
-            '/\b(hindi\s+(ako\s+)?maganda\s+ang\s+pakiramdam|daw\s+malain(\s+ang)?\s+(pamatyag|lawas))\b/u',
-        ];
-        foreach ($strong as $re) {
-            if (preg_match($re, $hay) || preg_match($re, $raw)) {
-                $score += 2.6;
-            }
-        }
-
-        $body = '(head|ulo|mata|eye|eyes|tiyan|stomach|tummy|chest|dughan|dibdib|throat|skin|likod|back|ear|ilong|body|lawas)';
-        $person = '(i|my|ako|ko|akon|ang\s+akin)';
-        if (preg_match('/\b' . $person . '\b/u', $hay) && preg_match('/\b' . $body . '\b/u', $hay)
-            && preg_match('/\b(hurt|hurts|pain|ache|sakit|masakit|swollen|swell|dugo|bleed|fever|cough|dizzy|nahilo|nalipong|weak|strange|wrong|sick)\b/u', $hay)) {
-            $score += 2.4;
-        }
-
-        $cues = [
-            'fever', 'cough', 'headache', 'dizzy', 'nausea', 'vomit', 'diarrhea', 'allergy', 'pregnant', 'buntis',
-            'symptom', 'injury', 'wound', 'rash', 'asthma', 'diabetes', 'medicine', 'doctor', 'nurse', 'hospital',
-            'ubo', 'sipon', 'lagnat', 'gamot', 'doktor', 'sakit', 'masakit', 'pamatyag', 'first aid', 'self-care',
-            'weak', 'dizzy', 'nauseous', 'swollen', 'bleeding',
-        ];
-        $hits = 0;
-        foreach ($cues as $cue) {
-            if (preg_match('/\b' . preg_quote($cue, '/') . '\b/u', $hay)) {
-                $hits++;
-            }
-        }
-        if ($hits >= 2) {
-            $score += 2.0;
-        } elseif ($hits === 1 && preg_match('/\b(i|my|ako|ko|have|may|feel|feeling)\b/u', $hay)) {
-            $score += 1.8;
-        }
-
-        return $score;
-    }
-
     private static function offTopicScore(string $hay, string $raw): float
     {
         $score = 0.0;
@@ -327,10 +342,12 @@ final class FaqChatbotDomainScope
             '/\btell\s+me\s+a\s+joke\b/u',
             '/\b(who\s+won|basketball\s+game|soccer\s+game|football\s+game|score\s+of\s+the\s+game)\b/u',
             '/\b(how\s+do\s+i\s+(code|program|fix\s+my\s+computer|install\s+windows)|programming\s+tutorial|code\s+php|php\s+tutorial|help\s+me\s+code(\s+php)?)\b/u',
-            '/\b(what\s+is\s+the\s+weather|what\'?s\s+the\s+weather|weather\s+(today|tomorrow|forecast)|weather\s+like)\b/u',
+            '/\b(what\s+is\s+the\s+weather|what\'?s\s+the\s+weather|weather\s+(today|tomorrow|forecast)|weather\s+like|anong\s+weather|ano\s+oras)\b/u',
             '/\b(stock\s+market|cryptocurrency|bitcoin|movie\s+recommend|best\s+restaurant|business\s+plan)\b/u',
             '/\b(how\s+do\s+i\s+fix\s+my\s+(computer|laptop|wifi|printer))\b/u',
             '/\b(explain\s+(cryptocurrency|bitcoin|blockchain)|what\s+is\s+cryptocurrency)\b/u',
+            '/\b(wala\s+kwarta|may\s+kwarta|bigyan\s+mo\s+ako\s+pera|may\s+pera\s+ba|magluto|sino\s+ka|who\s+are\s+you|ano\s+ka)\b/u',
+            '/\b(football|basketball|movie|anime|music|facebook|programming|coding|school\s+assignment)\b/u',
         ];
         foreach ($patterns as $re) {
             if (preg_match($re, $hay) || preg_match($re, $raw)) {

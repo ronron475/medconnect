@@ -69,14 +69,7 @@ final class FaqChatbotIntentRecognizer
         }
 
         $lex = FaqChatbotConversationalIntents::match($text);
-        if ($lex !== null && !empty($lex['emergency'])) {
-            return [
-                'intent'     => self::EMERGENCY,
-                'confidence' => 0.99,
-                'flow_key'   => 'emergency',
-            ];
-        }
-        if ($lex !== null && ($lex['score'] ?? 0) >= 2.2) {
+        if ($lex !== null && empty($lex['emergency']) && ($lex['score'] ?? 0) >= 2.2) {
             return [
                 'intent'     => (string) $lex['intent'],
                 'confidence' => min(0.96, 0.72 + ((float) $lex['score'] / 20)),

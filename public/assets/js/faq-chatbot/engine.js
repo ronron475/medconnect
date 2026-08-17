@@ -22,6 +22,7 @@
     // Hiligaynon
     /\bsakit\s+ang\s+dibdib\b/i, /\bindi\s+makaginhawa\b/i, /\bindi\s+makahinga\b/i,
     /\bindi\s+ko\s+kaginhawa\b/i, /\bindi\s+ko\s+ginhawa\b/i, /\bbudlay\s+mag\s*ginhawa\b/i,
+    /\blisod\s+ginhawa\b/i, /\blisud\s+ginhawa\b/i, /\bmasakit\s+(akon\s+)?dughan\b/i,
     /\bgrabeng\s+dugo\b/i, /\bwala\s+malay\b/i, /\bwala\s+ko\s+malay\b/i, /\bnawad-an\s+malay\b/i,
     /\blason\b/i, /\bnalason\b/i,
   ];
