@@ -153,7 +153,7 @@
     navbar.classList.toggle('nav-scrolled', scrollY > 24);
     navbar.classList.toggle('scrolled', scrollY > 24);
 
-    const lightSections = ['services-section', 'how-it-works', 'about-section', 'download-app', 'contact-section'];
+    const lightSections = ['services-section', 'how-it-works', 'about-section', 'contact-section'];
     const probeY = getNavOffset();
     let onLight = false;
 
