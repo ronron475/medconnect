@@ -19,6 +19,8 @@ RewriteRule ^ https://%{HTTP_HOST}%{REQUEST_URI} [R=301,L]
     Header always set Permissions-Policy "camera=(self), microphone=(self), display-capture=(self)"
 </IfModule>
 
+AddType application/vnd.android.package-archive .apk
+
 # Serve static files and existing PHP scripts directly
 RewriteCond %{REQUEST_FILENAME} -f
 RewriteRule ^ - [L]

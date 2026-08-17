@@ -29,6 +29,7 @@ $hero_search_index = [
     $hero_search_item('Services', 'Page', ['type' => 'scroll', 'id' => 'services-section'], 'service', ['service', 'services', 'platform', 'features'], 'Explore medConnect healthcare services'),
     $hero_search_item('How It Works', 'Page', ['type' => 'scroll', 'id' => 'how-it-works'], 'guide', ['how', 'works', 'process', 'steps', 'guide'], 'Learn the medConnect patient journey'),
     $hero_search_item('About Us', 'Page', ['type' => 'scroll', 'id' => 'about-section'], 'team', ['about', 'team', 'capstone', 'developers', 'mission', 'bcc', 'bsis'], 'Meet the medConnect development team'),
+    $hero_search_item('Download App', 'Page', ['type' => 'scroll', 'id' => 'download-app'], 'service', ['download', 'app', 'android', 'apk', 'mobile', 'install', 'pwa'], 'Install the official medConnect Android app'),
     $hero_search_item('Contact', 'Page', ['type' => 'scroll', 'id' => 'contact-section'], 'contact', ['contact', 'phone', 'email', 'address', 'reach', 'support'], 'Get in touch with medConnect'),
     $hero_search_item('All Announcements', 'Page', ['type' => 'url', 'href' => ASSET_BASE . '/announcements.php'], 'announcement', ['announcements', 'list', 'archive'], 'Browse the full announcements page'),
 

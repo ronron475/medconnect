@@ -21,7 +21,7 @@
   let scrollAnimId = null;
 
   const CAROUSEL_SECTION_IDS = ['services-section', 'how-it-works'];
-  const HEADER_REVEAL_SECTION_IDS = ['services-section', 'how-it-works', 'about-section'];
+  const HEADER_REVEAL_SECTION_IDS = ['services-section', 'how-it-works', 'about-section', 'download-app'];
   const revealedSectionHeaders = new Set();
 
   /* ── Nav helpers ── */
@@ -55,6 +55,7 @@
     { id: 'services-section', link: findNavLinkForSection('services-section') },
     { id: 'how-it-works', link: findNavLinkForSection('how-it-works') },
     { id: 'about-section', link: findNavLinkForSection('about-section') },
+    { id: 'download-app', link: findNavLinkForSection('download-app') },
     { id: 'contact-section', link: findNavLinkForSection('contact-section') },
   ].filter(item => item.link);
 
@@ -152,7 +153,7 @@
     navbar.classList.toggle('nav-scrolled', scrollY > 24);
     navbar.classList.toggle('scrolled', scrollY > 24);
 
-    const lightSections = ['services-section', 'how-it-works', 'about-section', 'contact-section'];
+    const lightSections = ['services-section', 'how-it-works', 'about-section', 'download-app', 'contact-section'];
     const probeY = getNavOffset();
     let onLight = false;
 
@@ -511,6 +512,9 @@
 
     const aboutSection = document.getElementById('about-section');
     if (aboutSection) headerObserver.observe(aboutSection);
+
+    const downloadSection = document.getElementById('download-app');
+    if (downloadSection) headerObserver.observe(downloadSection);
 
   } else {
     HEADER_REVEAL_SECTION_IDS.forEach(id => {

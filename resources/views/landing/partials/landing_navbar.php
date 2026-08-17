@@ -15,6 +15,7 @@ $navLinkItems = [
     ['href' => '#services-section', 'id' => null, 'label' => 'Services', 'dataNav' => 'services-section', 'active' => false],
     ['href' => '#how-it-works', 'id' => null, 'label' => 'How It Works', 'dataNav' => 'how-it-works', 'active' => false],
     ['href' => '#about-section', 'id' => null, 'label' => 'About', 'dataNav' => 'about-section', 'active' => false],
+    ['href' => '#download-app', 'id' => null, 'label' => 'Download App', 'dataNav' => 'download-app', 'active' => false],
     ['href' => '#contact-section', 'id' => null, 'label' => 'Contact', 'dataNav' => 'contact-section', 'active' => false],
 ];
 

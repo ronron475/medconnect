@@ -302,6 +302,7 @@ body.landing-page.signin-active .landing-navbar,
 body.landing-page.signin-active .hero,
 body.landing-page.signin-active .announcements-section,
 body.landing-page.signin-active .services-section,
+body.landing-page.signin-active .download-app-section,
 body.landing-page.signin-active .contact-section,
 body.landing-page.signin-active #landing-fab {
   pointer-events: none;
@@ -1178,6 +1179,7 @@ body.landing-page.landing-bg--light .hero-signin-panel .signin-card .alert.error
   body.landing-page.signin-active .hero,
   body.landing-page.signin-active .announcements-section,
   body.landing-page.signin-active .services-section,
+  body.landing-page.signin-active .download-app-section,
   body.landing-page.signin-active .contact-section,
   body.landing-page.signin-active #landing-fab {
     pointer-events: none;

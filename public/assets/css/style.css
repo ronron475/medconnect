@@ -1554,6 +1554,7 @@ body::after {
 /* Keep hero, services, contact, and all content above the body overlay */
 .hero,
 .services-section,
+.download-app-section,
 .contact-section,
 .bg-canvas {
   position: relative;
@@ -2752,6 +2753,7 @@ body.signin-active .landing-navbar,
 body.signin-active .hero,
 body.signin-active .announcements-section,
 body.signin-active .services-section,
+body.signin-active .download-app-section,
 body.signin-active .contact-section,
 body.signin-active #landing-fab {
   pointer-events: none;

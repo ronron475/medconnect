@@ -22,6 +22,18 @@ $asset = ASSET_BASE;
 
   <link rel="shortcut icon" type="image/png" href="<?= $asset ?>/assets/img/medcon_logo.png" />
 
+  <link rel="apple-touch-icon" href="<?= $asset ?>/assets/img/medcon_logo.png" />
+
+  <link rel="manifest" href="<?= $asset ?>/manifest.php" />
+
+  <meta name="theme-color" content="#012A4A" />
+
+  <meta name="mobile-web-app-capable" content="yes" />
+
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+
+  <meta name="apple-mobile-web-app-title" content="medConnect" />
+
   <?php require_once VIEWS_PATH . '/partials/theme_init.php'; ?>
 
   <link rel="stylesheet" href="<?= $asset ?>/assets/css/style.css?v=20260702b" />
@@ -35,20 +47,22 @@ $asset = ASSET_BASE;
   <link rel="stylesheet" href="<?= $asset ?>/assets/css/announcement-modal.css" />
   <link rel="stylesheet" href="<?= $asset ?>/assets/css/location-modal.css?v=1" />
   <link rel="stylesheet" href="<?= $asset ?>/assets/css/landing-announcements.css?v=24" />
-  <link rel="stylesheet" href="<?= $asset ?>/assets/css/landing-nav.css?v=3.5" />
+  <link rel="stylesheet" href="<?= $asset ?>/assets/css/landing-nav.css?v=3.6" />
   <link rel="stylesheet" href="<?= $asset ?>/assets/css/landing-fab.css?v=13" />
   <link rel="stylesheet" href="<?= $asset ?>/assets/css/landing-fab-modals.css?v=2" />
   <link rel="stylesheet" href="<?= $asset ?>/assets/css/signin-req-drawer.css?v=11" />
   <link rel="stylesheet" href="<?= $asset ?>/assets/css/signin-card-polish.css?v=4" />
-  <link rel="stylesheet" href="<?= $asset ?>/assets/css/hero-signin-panel.css?v=20" />
+  <link rel="stylesheet" href="<?= $asset ?>/assets/css/hero-signin-panel.css?v=21" />
   <?php $forgotPwCssVer = (int) @filemtime(ASSETS_PATH . '/css/forgot-password.css'); ?>
   <link rel="stylesheet" href="<?= $asset ?>/assets/css/forgot-password.css?v=<?= $forgotPwCssVer ?>" />
   <?php $landingScrollAnimCssVer = (int) @filemtime(ASSETS_PATH . '/css/landing-scroll-animations.css'); ?>
   <link rel="stylesheet" href="<?= $asset ?>/assets/css/landing-scroll-animations.css?v=<?= $landingScrollAnimCssVer ?>" />
   <link rel="stylesheet" href="<?= $asset ?>/assets/css/landing-about-team.css?v=7" />
-  <link rel="stylesheet" href="<?= $asset ?>/assets/css/landing-responsive.css?v=7" />
+  <link rel="stylesheet" href="<?= $asset ?>/assets/css/landing-responsive.css?v=8" />
   <?php $landingThemeFabCssVer = (int) @filemtime(ASSETS_PATH . '/css/landing-theme-fab.css'); ?>
   <link rel="stylesheet" href="<?= $asset ?>/assets/css/landing-theme-fab.css?v=<?= $landingThemeFabCssVer ?>" />
+  <?php $landingDownloadCssVer = (int) @filemtime(ASSETS_PATH . '/css/landing-download-app.css'); ?>
+  <link rel="stylesheet" href="<?= $asset ?>/assets/css/landing-download-app.css?v=<?= $landingDownloadCssVer ?>" />
 
   <script>
 
@@ -170,6 +184,16 @@ require __DIR__ . '/partials/landing_navbar.php';
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><polygon points="10 8 16 12 10 16 10 8" fill="currentColor" stroke="none"/></svg>
 
               <span>How It Works</span>
+
+              <svg class="hero-cta__chev" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg>
+
+            </a>
+
+            <a href="#download-app" class="cta-secondary hero-cta hero-cta--outline">
+
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="2" width="14" height="20" rx="2"/><path d="M12 18h.01"/></svg>
+
+              <span>Download App</span>
 
               <svg class="hero-cta__chev" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg>
 
@@ -623,6 +647,11 @@ require __DIR__ . '/partials/landing_navbar.php';
 
 
 
+<!-- DOWNLOAD ANDROID APP -->
+<?php require __DIR__ . '/partials/download_app_section.php'; ?>
+
+
+
 <!-- CONTACT / FOOTER SECTION -->
 
 <?php if (!empty($landing_sections['contact'])): ?>
@@ -721,6 +750,8 @@ require __DIR__ . '/partials/landing_navbar.php';
         <ul class="contact-links">
 
           <li><a href="#about-section">About medConnect</a></li>
+
+          <li><a href="#download-app">Download App</a></li>
 
           <li><a href="#">Patient Registration</a></li>
 
@@ -1194,6 +1225,8 @@ require __DIR__ . '/partials/landing_navbar.php';
 
 <script src="<?= $asset ?>/assets/js/landing-announcements.js?v=5"></script>
 <script src="<?= $asset ?>/assets/js/landing-location.js?v=1"></script>
+<?php $landingDownloadJsVer = (int) @filemtime(ASSETS_PATH . '/js/landing-download-app.js'); ?>
+<script src="<?= $asset ?>/assets/js/landing-download-app.js?v=<?= $landingDownloadJsVer ?>"></script>
 
 </body>
 
