@@ -6,11 +6,13 @@ body.landing-page {
   --bg-light: var(--navy);
   --landing-nav-height: 76px;
   --landing-hero-offset: 76px;
+  --landing-nav-offset: var(--landing-hero-offset);
   --landing-nav-break: 1199px;
 }
 
 body.landing-page:has(.landing-maintenance-banner) {
   --landing-hero-offset: calc(var(--landing-nav-height) + 40px);
+  --landing-nav-offset: var(--landing-hero-offset);
 }
 
 body.landing-page::before,
@@ -421,7 +423,7 @@ body.landing-page .bg-canvas {
 }
 
 html.landing-scroll {
-  scroll-padding-top: var(--landing-nav-height);
+  scroll-padding-top: var(--landing-nav-offset, var(--landing-hero-offset, var(--landing-nav-height)));
   scroll-behavior: auto;
 }
 

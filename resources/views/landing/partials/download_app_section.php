@@ -15,7 +15,7 @@ $sizeLabel = htmlspecialchars((string) $mobileApp['size_label'], ENT_QUOTES, 'UT
 <section id="download-app" class="download-app-section" data-apk-ready="<?= $apkReady ? '1' : '0' ?>">
   <div class="download-app__glow" aria-hidden="true"></div>
   <div class="download-app__container">
-    <div class="services-header download-app__header" data-lsa="fade-up">
+    <div class="services-header download-app__header">
       <p class="download-app__kicker">Android app</p>
       <h2 class="services-title">Download medConnect Mobile App</h2>
       <p class="services-desc">
@@ -24,7 +24,7 @@ $sizeLabel = htmlspecialchars((string) $mobileApp['size_label'], ENT_QUOTES, 'UT
     </div>
 
     <div class="download-app__grid">
-      <div class="download-app__phone-col" data-lsa="fade-up" data-lsa-delay="80">
+      <div class="download-app__phone-col">
         <div class="download-app__device" id="download-app-device" aria-hidden="true">
           <div class="download-app__device-notch"></div>
           <div class="download-app__viewport" id="download-app-viewport">
@@ -185,7 +185,7 @@ $sizeLabel = htmlspecialchars((string) $mobileApp['size_label'], ENT_QUOTES, 'UT
         </div>
       </div>
 
-      <div class="download-app__panel" data-lsa="fade-up" data-lsa-delay="140">
+      <div class="download-app__panel">
         <p class="download-app__panel-kicker">Download the medConnect app</p>
         <?php if ($apkReady): ?>
         <h3 class="download-app__status" id="download-app-status">Take medConnect with you wherever you go.</h3>

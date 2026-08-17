@@ -47,7 +47,7 @@ $asset = ASSET_BASE;
   <link rel="stylesheet" href="<?= $asset ?>/assets/css/announcement-modal.css" />
   <link rel="stylesheet" href="<?= $asset ?>/assets/css/location-modal.css?v=1" />
   <link rel="stylesheet" href="<?= $asset ?>/assets/css/landing-announcements.css?v=24" />
-  <link rel="stylesheet" href="<?= $asset ?>/assets/css/landing-nav.css?v=3.6" />
+  <link rel="stylesheet" href="<?= $asset ?>/assets/css/landing-nav.css?v=3.7" />
   <link rel="stylesheet" href="<?= $asset ?>/assets/css/landing-fab.css?v=13" />
   <link rel="stylesheet" href="<?= $asset ?>/assets/css/landing-fab-modals.css?v=2" />
   <link rel="stylesheet" href="<?= $asset ?>/assets/css/signin-req-drawer.css?v=11" />
@@ -58,7 +58,7 @@ $asset = ASSET_BASE;
   <?php $landingScrollAnimCssVer = (int) @filemtime(ASSETS_PATH . '/css/landing-scroll-animations.css'); ?>
   <link rel="stylesheet" href="<?= $asset ?>/assets/css/landing-scroll-animations.css?v=<?= $landingScrollAnimCssVer ?>" />
   <link rel="stylesheet" href="<?= $asset ?>/assets/css/landing-about-team.css?v=7" />
-  <link rel="stylesheet" href="<?= $asset ?>/assets/css/landing-responsive.css?v=8" />
+  <link rel="stylesheet" href="<?= $asset ?>/assets/css/landing-responsive.css?v=9" />
   <?php $landingThemeFabCssVer = (int) @filemtime(ASSETS_PATH . '/css/landing-theme-fab.css'); ?>
   <link rel="stylesheet" href="<?= $asset ?>/assets/css/landing-theme-fab.css?v=<?= $landingThemeFabCssVer ?>" />
   <?php $landingDownloadCssVer = (int) @filemtime(ASSETS_PATH . '/css/landing-download-app.css'); ?>
@@ -844,7 +844,7 @@ require __DIR__ . '/partials/landing_navbar.php';
 
 <script src="<?= $asset ?>/assets/js/landing-about-project-milestone.js?v=2" defer></script>
   <script src="<?= $asset ?>/assets/js/landing-scroll-animations.js?v=9" defer></script>
-<script src="<?= $asset ?>/assets/js/landing-interactions.js?v=10" defer></script>
+<script src="<?= $asset ?>/assets/js/landing-interactions.js?v=11" defer></script>
 <script src="<?= $asset ?>/assets/js/landing-fab.js" defer></script>
 <script src="<?= $asset ?>/assets/js/draggable-fab.js?v=1" defer></script>
 <script src="<?= $asset ?>/assets/js/signin-req-drawer.js?v=4" defer></script>
