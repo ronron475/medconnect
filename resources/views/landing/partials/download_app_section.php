@@ -24,7 +24,7 @@ $sizeLabel = htmlspecialchars((string) $mobileApp['size_label'], ENT_QUOTES, 'UT
     </div>
 
     <div class="download-app__grid">
-      <div class="download-app__phone-col">
+      <div class="download-app__phone-col" data-interval="4200">
         <div class="download-app__device" id="download-app-device" aria-hidden="true">
           <div class="download-app__device-notch"></div>
           <div class="download-app__viewport" id="download-app-viewport">
