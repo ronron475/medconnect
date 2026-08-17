@@ -1,0 +1,16 @@
+Options -Indexes
+
+<IfModule mod_authz_core.c>
+  Require all denied
+  <Files "medConnect.apk">
+    Require all granted
+  </Files>
+</IfModule>
+
+<IfModule mod_headers.c>
+  <Files "medConnect.apk">
+    Header set Content-Type "application/vnd.android.package-archive"
+    Header set X-Content-Type-Options "nosniff"
+    Header set Content-Disposition "attachment; filename=\"medConnect.apk\""
+  </Files>
+</IfModule>

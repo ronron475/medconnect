@@ -234,9 +234,11 @@ html[data-theme-resolved='dark'] body.landing-page::after {
 html[data-theme-resolved='light'] body.landing-page .services-section,
 html[data-theme-resolved='light'] body.landing-page .contact-section,
 html[data-theme-resolved='light'] body.landing-page .about-team-section,
+html[data-theme-resolved='light'] body.landing-page .download-app-section,
 body.landing-page.landing-bg--light .services-section,
 body.landing-page.landing-bg--light .contact-section,
-body.landing-page.landing-bg--light .about-team-section {
+body.landing-page.landing-bg--light .about-team-section,
+body.landing-page.landing-bg--light .download-app-section {
   background: transparent !important;
 }
 
@@ -350,15 +352,18 @@ body.landing-page.landing-bg--light .about-project-milestone__text {
 html[data-theme-resolved='dark'] body.landing-page .services-section,
 html[data-theme-resolved='dark'] body.landing-page .contact-section,
 html[data-theme-resolved='dark'] body.landing-page .about-team-section,
+html[data-theme-resolved='dark'] body.landing-page .download-app-section,
 body.landing-page.landing-bg--dark .services-section,
 body.landing-page.landing-bg--dark .contact-section,
-body.landing-page.landing-bg--dark .about-team-section {
+body.landing-page.landing-bg--dark .about-team-section,
+body.landing-page.landing-bg--dark .download-app-section {
   background: var(--navy) !important;
 }
 
 html[data-theme-resolved='dark'] .landing-page .services-section,
 html[data-theme-resolved='dark'] .landing-page .contact-section,
-html[data-theme-resolved='dark'] .landing-page .about-team-section {
+html[data-theme-resolved='dark'] .landing-page .about-team-section,
+html[data-theme-resolved='dark'] .landing-page .download-app-section {
   background: #1e293b;
   color: #e2e8f0;
 }
@@ -374,8 +379,24 @@ html[data-theme-resolved='dark'] .landing-page .service-card-desc {
   color: #cbd5e1;
 }
 
-html[data-theme-resolved='dark'] .landing-page .service-card {
+html[data-theme-resolved='dark'] .landing-page .service-card,
+html[data-theme-resolved='dark'] .landing-page .download-app__panel {
   background: #0f172a;
   border-color: #334155;
   color: #e2e8f0;
+}
+
+html[data-theme-resolved='dark'] .landing-page .download-app__status,
+html[data-theme-resolved='dark'] .landing-page .download-app__steps h3 {
+  color: #f8fafc;
+}
+
+html[data-theme-resolved='dark'] .landing-page .download-app__meta,
+html[data-theme-resolved='dark'] .landing-page .download-app__steps ol {
+  color: #cbd5e1;
+}
+
+html[data-theme-resolved='dark'] .landing-page .download-app__btn--ghost {
+  color: #e2e8f0;
+  border-color: #334155;
 }
