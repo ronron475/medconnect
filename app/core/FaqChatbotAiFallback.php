@@ -57,6 +57,36 @@ final class FaqChatbotAiFallback
         return $key !== '' && in_array($key, self::EMOTION_KB_KEYS, true);
     }
 
+    /** Curated healthcare/service cards that may win without token-in-HTML overlap. */
+    private const HEALTHCARE_DATASET_KEYS = [
+        'symptoms_general', 'worry_symptoms', 'common_illness', 'first_aid',
+        'healthy_lifestyle', 'nutrition', 'exercise', 'vaccinations',
+        'womens_health', 'childrens_health', 'senior_health', 'pregnancy',
+        'health_education', 'symptom_and_booking', 'emergency_redirect',
+        'appointment_how', 'appointment_book', 'login_help', 'register_help',
+        'password_reset', 'consultation_join', 'medical_records', 'video_consult',
+        'contact_cho', 'office_hours', 'bhw_help', 'privacy_policy',
+        'consultation_cost', 'multi_access_barriers',
+    ];
+
+    public static function isHealthcareDatasetKey(?string $key): bool
+    {
+        $key = strtolower(trim((string) $key));
+        if ($key === '') {
+            return false;
+        }
+        if (in_array($key, self::HEALTHCARE_DATASET_KEYS, true)) {
+            return true;
+        }
+        foreach (self::HEALTHCARE_DATASET_KEYS as $known) {
+            if (str_contains($key, $known)) {
+                return true;
+            }
+        }
+        return str_starts_with($key, 'multi_')
+            && (str_contains($key, 'symptom') || str_contains($key, 'illness') || str_contains($key, 'appointment') || str_contains($key, 'health'));
+    }
+
     public static function isGenericFallbackHtml(string $html): bool
     {
         $plain = strtolower(trim(preg_replace('/\s+/', ' ', strip_tags($html)) ?? ''));
@@ -189,16 +219,19 @@ final class FaqChatbotAiFallback
         if (self::isGenericFallbackHtml((string) ($kbHit['html'] ?? $html))) {
             return false;
         }
+        $score = (float) ($kbHit['score'] ?? 0);
         $tokens = self::contentTokens($text);
-        if ($tokens === []) {
-            return false;
-        }
         $kbHay = FaqEmotionEngine::normalizeText($kbKey . ' ' . str_replace('_', ' ', $kbKey) . ' ' . strip_tags((string) ($kbHit['html'] ?? '')));
         $hits = 0;
         foreach ($tokens as $tok) {
             if (str_contains($kbHay, $tok)) {
                 $hits++;
             }
+        }
+        // Curated medical KB cards are often in another language than the patient.
+        // A high pattern/keyword score is still a real dataset answer.
+        if ($hits === 0 && $score >= 2.2 && self::isHealthcareDatasetKey($kbKey)) {
+            return true;
         }
         return $hits >= 1;
     }
@@ -305,15 +338,6 @@ final class FaqChatbotAiFallback
 
         $lang = FaqEmotionEngine::normalizeLang($lang);
 
-        $alreadyHealthcare = !empty($context['already_healthcare']);
-        if (
-            !$alreadyHealthcare
-            && class_exists('FaqChatbotDomainScope')
-            && FaqChatbotDomainScope::isClearlyNonHealthcare($userText)
-        ) {
-            return self::outOfScopePack($lang);
-        }
-
         if (!self::isEnabled()) {
             return null;
         }
@@ -334,6 +358,14 @@ final class FaqChatbotAiFallback
                     $raw = (string) ($rail['raw'] ?? '');
                     $classification = (string) ($rail['classification'] ?? '');
                     $html = (string) ($rail['html'] ?? '');
+                    if ($raw !== '') {
+                        $parsed = self::parseModelReply($raw);
+                        $pack = self::packFromParsed($parsed, $lang);
+                        self::rememberTurn('user', $userText);
+                        self::rememberTurn('assistant', strip_tags((string) $pack['html']));
+                        self::markSuccess();
+                        return $pack;
+                    }
                     if ($classification === self::CLASS_NON_HEALTHCARE) {
                         $pack = self::outOfScopePack($lang);
                         self::rememberTurn('user', $userText);
@@ -382,7 +414,7 @@ final class FaqChatbotAiFallback
     /**
      * Parse CLASSIFICATION / REPLY (or JSON / OUT_OF_SCOPE token) from the model.
      *
-     * @return array{classification: string, reply: string}
+     * @return array<string, mixed>
      */
     public static function parseModelReply(string $raw): array
     {
@@ -395,14 +427,12 @@ final class FaqChatbotAiFallback
             return ['classification' => self::CLASS_POSSIBLY_HEALTHCARE, 'reply' => ''];
         }
 
-        $jsonTry = $text;
-        if ($jsonTry !== '' && ($jsonTry[0] === '{' || $jsonTry[0] === '[')) {
-            $decoded = json_decode($jsonTry, true);
+        if (preg_match('/\{[\s\S]*\}/', $text, $jsonMatch)) {
+            $decoded = json_decode($jsonMatch[0], true);
             if (is_array($decoded)) {
-                $class = self::normalizeClassification((string) ($decoded['classification'] ?? $decoded['CLASSIFICATION'] ?? ''));
-                $reply = trim((string) ($decoded['reply'] ?? $decoded['REPLY'] ?? $decoded['text'] ?? ''));
-                if ($class !== '') {
-                    return self::normalizeParsed($class, $reply);
+                $fromJson = self::packFromStructuredJson($decoded);
+                if ($fromJson !== null) {
+                    return $fromJson;
                 }
             }
         }
@@ -440,14 +470,57 @@ final class FaqChatbotAiFallback
     }
 
     /**
-     * @param array{classification: string, reply: string} $parsed
-     * @return array{html: string, classification: string, response_type: string}
+     * @param array<string, mixed> $decoded
+     * @return array<string, mixed>|null
+     */
+    public static function packFromStructuredJson(array $decoded): ?array
+    {
+        $isHealth = $decoded['is_healthcare_related'] ?? $decoded['isHealthcareRelated'] ?? null;
+        $class = self::normalizeClassification((string) ($decoded['classification'] ?? $decoded['CLASSIFICATION'] ?? ''));
+        if ($isHealth === true || $isHealth === 1 || $isHealth === 'true' || $isHealth === '1') {
+            $class = self::CLASS_HEALTHCARE;
+        } elseif ($isHealth === false || $isHealth === 0 || $isHealth === 'false' || $isHealth === '0') {
+            $class = self::CLASS_NON_HEALTHCARE;
+        }
+        $reply = trim((string) ($decoded['reply'] ?? $decoded['REPLY'] ?? $decoded['text'] ?? ''));
+        if ($class === '' && $reply === '' && $isHealth === null) {
+            return null;
+        }
+        if ($class === '') {
+            $class = self::CLASS_POSSIBLY_HEALTHCARE;
+        }
+        $parsed = self::normalizeParsed($class, $reply);
+        $parsed['is_healthcare_related'] = ($class === self::CLASS_HEALTHCARE || $class === self::CLASS_POSSIBLY_HEALTHCARE);
+        $parsed['detected_intent'] = trim((string) ($decoded['intent'] ?? ''));
+        $parsed['language'] = trim((string) ($decoded['language'] ?? ''));
+        $parsed['normalized_meaning'] = trim((string) ($decoded['normalized_meaning'] ?? $decoded['normalizedMeaning'] ?? ''));
+        $parsed['urgency'] = strtoupper(trim((string) ($decoded['urgency'] ?? 'NON_URGENT')));
+        $parsed['model_confidence'] = isset($decoded['confidence']) ? (float) $decoded['confidence'] : null;
+        return $parsed;
+    }
+
+    /**
+     * @param array<string, mixed> $parsed
+     * @return array<string, mixed>
      */
     public static function packFromParsed(array $parsed, string $lang = 'en'): array
     {
         $class = self::normalizeClassification((string) ($parsed['classification'] ?? self::CLASS_HEALTHCARE));
         $reply = trim((string) ($parsed['reply'] ?? ''));
-        return self::mapClassificationToResponse($class, $reply, $lang);
+        $pack = self::mapClassificationToResponse($class, $reply, $lang);
+        if ($class === self::CLASS_POSSIBLY_HEALTHCARE && $reply !== '' && $pack['response_type'] !== FaqChatbotDomainScope::RESPONSE_OUT_OF_SCOPE) {
+            $pack['response_type'] = FaqChatbotDomainScope::RESPONSE_MEDICAL_GEMINI;
+            $pack['classification'] = self::CLASS_HEALTHCARE;
+        }
+        foreach (['is_healthcare_related', 'detected_intent', 'language', 'normalized_meaning', 'urgency', 'model_confidence'] as $key) {
+            if (array_key_exists($key, $parsed)) {
+                $pack[$key] = $parsed[$key];
+            }
+        }
+        if (!array_key_exists('is_healthcare_related', $pack)) {
+            $pack['is_healthcare_related'] = $pack['classification'] !== self::CLASS_NON_HEALTHCARE;
+        }
+        return $pack;
     }
 
     /**
@@ -459,10 +532,26 @@ final class FaqChatbotAiFallback
             ? FaqChatbotDomainScope::replyHtml(FaqChatbotDomainScope::OUT_OF_SCOPE, $lang)
             : '<p>Please type a question or concern related to healthcare or your health.</p>';
         return [
-            'html'             => $html,
-            'classification'   => self::CLASS_NON_HEALTHCARE,
-            'response_type'    => FaqChatbotDomainScope::RESPONSE_OUT_OF_SCOPE,
+            'html'                  => $html,
+            'classification'        => self::CLASS_NON_HEALTHCARE,
+            'response_type'         => FaqChatbotDomainScope::RESPONSE_OUT_OF_SCOPE,
+            'is_healthcare_related' => false,
+            'detected_intent'       => 'non_healthcare',
+            'urgency'               => 'NON_URGENT',
         ];
+    }
+
+    /** Too-short model replies (e.g. "Kabay pa") are not usable healthcare answers. */
+    public static function isInsufficientModelReply(string $html): bool
+    {
+        $plain = trim(preg_replace('/\s+/', ' ', strip_tags($html)) ?? '');
+        if ($plain === '') {
+            return true;
+        }
+        if (preg_match('/^\s*OUT_OF_SCOPE\s*$/i', $plain)) {
+            return true;
+        }
+        return mb_strlen($plain) < 40;
     }
 
     /**
@@ -479,9 +568,9 @@ final class FaqChatbotAiFallback
         $clean = preg_replace('/^\s*REPLY\s*:\s*/i', '', trim($clean)) ?? $clean;
         $looksHtml = str_contains($clean, '<p>') || str_contains($clean, '<br');
         $html = $looksHtml ? $clean : self::toSafeHtml($clean);
-        if ($html === '') {
+        if ($html === '' || self::isInsufficientModelReply($html)) {
             $html = class_exists('FaqChatbotDomainScope')
-                ? FaqChatbotDomainScope::replyHtml(FaqChatbotDomainScope::AMBIGUOUS, $lang)
+                ? FaqChatbotDomainScope::unmatchedHealthcareHtml($lang)
                 : '';
         }
 
@@ -796,8 +885,9 @@ final class FaqChatbotAiFallback
             ],
             'contents' => $contents,
             'generationConfig' => [
-                'temperature'     => 0.4,
-                'maxOutputTokens' => self::MAX_OUTPUT_TOKENS,
+                'temperature'        => 0.3,
+                'maxOutputTokens'    => self::MAX_OUTPUT_TOKENS,
+                'responseMimeType'   => 'application/json',
             ],
         ];
 
@@ -889,27 +979,25 @@ final class FaqChatbotAiFallback
         return <<<'PROMPT'
 You are a healthcare assistant for medConnect.
 
-The user message has already passed the healthcare-scope gate. Answer only the healthcare-related question presented. Do not invent an emergency. Do not classify a patient as emergency unless the existing triage rules or clearly described symptoms support it.
+First classify whether the user message is related to healthcare, medicine, a symptom, illness, injury, treatment, medication, doctor/provider consultation, medical records, appointment, emergency, or another legitimate medConnect healthcare concern.
 
-You may respond to:
-- symptoms, illnesses, and medical conditions
-- medications, side effects, first aid, and self-care
-- preventive health and general health information
-- questions about seeking medical care
-- medConnect care-access topics (appointments, consultation, records, prescriptions, BHW, Sign In / OTP only as access to care)
+Understand English, Filipino/Tagalog, Hiligaynon/Ilonggo, mixed language, slang, abbreviations, misspellings, and short informal sentences. Example: "sakit ulo ko" means the patient has a headache.
 
-Do not invent a diagnosis.
-Do not claim certainty about a medical condition.
-Do not provide unsafe medical instructions.
-Never diagnose, prescribe, or change medicines.
-If the message clearly describes an emergency (cannot breathe, severe chest pain, unconscious, seizure, severe bleeding, self-harm, suicide, indi ko kaginhawa, nahimatay), tell them to call 911 / Hopeline 1553 immediately. Do not treat money problems, time, weather, identity questions, or other non-symptom chat as emergencies.
+If it IS healthcare-related, write a helpful reply in the patient's language:
+- Acknowledge the concern (for "sakit ulo ko", talk about head pain / headache).
+- You may ask relevant follow-up questions and give safe general information.
+- Do not diagnose, prescribe, or invent records.
+- Do not claim to be a doctor.
+- Recommend professional care when appropriate.
+- Do not invent an emergency unless clearly described symptoms support it (cannot breathe, severe chest pain, unconscious, seizure, severe bleeding, self-harm, suicide, indi ko kaginhawa, nahimatay). Then set urgency to EMERGENCY and tell them to call 911 / Hopeline 1553.
 
-Languages: answer in the patient's language. English → English. Filipino → Filipino. Hiligaynon/Ilonggo → Hiligaynon when you reasonably can. Tolerate typos and slang.
+If it is NOT healthcare-related (jokes, weather, sports, trivia, coding, cooking, money-only chat with no health context), set is_healthcare_related to false and leave reply empty.
 
-Always reply in this exact format:
-CLASSIFICATION: HEALTHCARE|POSSIBLY_HEALTHCARE
-REPLY:
-<your reply in 2–4 short sentences, no markdown, no HTML, no code fences>
+Return ONLY this JSON object, no markdown, no extra text:
+{"is_healthcare_related":true,"intent":"symptom","language":"Hiligaynon","normalized_meaning":"headache","urgency":"NON_URGENT","confidence":0.94,"reply":"your 2-4 sentence reply"}
+
+intent must be one of: symptom, medication, appointment, records, consultation, emergency, medconnect, other_healthcare, non_healthcare
+urgency must be one of: EMERGENCY, URGENT, NON_URGENT
 PROMPT;
     }
 

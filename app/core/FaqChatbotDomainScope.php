@@ -2,8 +2,8 @@
 /**
  * Medical-domain boundary for the FAQ chatbot.
  *
- * Healthcare scope is decided here BEFORE dataset matching, emergency
- * detection, or Gemini. Gemini never decides whether a message is in-domain.
+ * Greeting / conversation helpers and last-resort healthcare cues.
+ * Production routing is: greeting → emergency → dataset → Gemini classification.
  */
 final class FaqChatbotDomainScope
 {
@@ -128,9 +128,9 @@ final class FaqChatbotDomainScope
         $L = in_array($lang, ['en', 'fil', 'hil'], true) ? $lang : 'en';
         if ($scope === self::OUT_OF_SCOPE) {
             $copy = [
-                'en' => "I'm here to help with healthcare-related concerns only. Please tell me about a symptom, health problem, medication, treatment, appointment, or other medical concern.",
-                'fil' => 'Para sa healthcare-related concerns lang ang medConnect Assistant. Pakisulat ang iyong sintomas, sakit, gamot, treatment, appointment, o iba pang health concern.',
-                'hil' => 'Para sa healthcare-related concerns lang ang medConnect Assistant. Palihog isulat ang imo sintomas, sakit, tambal, treatment, appointment, ukon iban nga health concern.',
+                'en' => "I'm here to assist with healthcare and medConnect-related concerns. Please ask me about a health concern, symptom, medication, appointment, consultation, or another healthcare-related topic.",
+                'fil' => 'Ako ang medConnect Assistant, kaya healthcare at medConnect-related concerns lang ang matutulungan ko. Magtanong po tungkol sa sintomas, gamot, appointment, konsultasyon, o ibang health concern.',
+                'hil' => 'Ako ang medConnect Assistant, gani healthcare kag medConnect-related concerns lang ang matabangan ko. Palihog pamangkot parte sa sintomas, tambal, appointment, konsultasyon, ukon iban nga health concern.',
             ];
             return '<p>' . htmlspecialchars($copy[$L], ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') . '</p>';
         }
@@ -139,6 +139,21 @@ final class FaqChatbotDomainScope
             'en' => "I'm here to help with health concerns. Could you tell me what symptom, health problem, or medical concern you're experiencing?",
             'fil' => 'Nandito ako para tumulong sa mga alalahanin sa kalusugan. Ano pong sintomas, problema sa katawan, o medical concern ang nais mong itanong?',
             'hil' => 'Diri ako para magbulig sa health concerns. Ano nga sintomas, problema sa lawas, ukon medical concern ang gusto mo pamangkuton?',
+        ];
+        return '<p>' . htmlspecialchars($copy[$L], ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') . '</p>';
+    }
+
+    /**
+     * Safe acknowledgment when a health concern is unmatched and Gemini is unavailable.
+     * Does not diagnose and does not show generic account/navigation menus.
+     */
+    public static function unmatchedHealthcareHtml(string $lang = 'en'): string
+    {
+        $L = in_array($lang, ['en', 'fil', 'hil'], true) ? $lang : 'en';
+        $copy = [
+            'en' => "I understand this sounds like a health concern. I can't diagnose or prescribe, but I can share general guidance and help you book a medConnect consultation. If symptoms are sudden, severe, or include trouble breathing, chest pain, fainting, or heavy bleeding, seek emergency care or call 911.",
+            'fil' => 'Naiintindihan ko na ito ay health concern. Hindi ako nagda-diagnose o nagre-reseta, pero makakapagbigay ako ng pangkalahatang gabay at matutulungan kitang mag-book ng konsultasyon sa medConnect. Kung biglaan, malala, o may hirap sa paghinga, sakit sa dibdib, pagkahimatay, o mabigat na pagdurugo, magpunta sa emergency o tumawag sa 911.',
+            'hil' => 'Naintiendihan ko nga health concern ini. Indi ako nagadiagnose ukon nagareseta, pero makahatag ako sang general nga giya kag matabangan ko ikaw mag-book sang konsultasyon sa medConnect. Kon bigla, grabe, ukon may budlay ginhawa, sakit sa dughan, pagkalipong, ukon grabeng dugo, magpangayo emergency care ukon tawag sa 911.',
         ];
         return '<p>' . htmlspecialchars($copy[$L], ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') . '</p>';
     }
@@ -257,8 +272,9 @@ final class FaqChatbotDomainScope
     {
         $score = 0.0;
         $strong = [
-            '/\b(sakit|masakit|gasakit|ginasakit|nagasakit)\s+(ang\s+)?(ulo|mata|tiyan|dughan|dibdib|lawas|likod|tuhod|throat|tungol)\b/u',
-            '/\b(sakit|masakit)\s+(ulo|mata|tiyan|dughan|lawas|likod)\s*(ko|akon|ako)?\b/u',
+            '/\b(sakit|masakit|gasakit|ginasakit|nagasakit|ga\s+sakit)\s+(gid\s+)?(ang\s+)?(ulo|mata|tiyan|dughan|dibdib|lawas|likod|tuhod|throat|tungol)\b/u',
+            '/\b(sakit|masakit|gasakit)\s+(gid\s+)?(ulo|mata|tiyan|dughan|lawas|likod)\s*(ko|akon|ako|q)?\b/u',
+            '/\b(ginahilo|nahihilo|ginahilo\s+ko|nahihilo\s+ako|gakubo|ga\s+kubo|nagaubo)\b/u',
             '/\b(dugo)\s+(ulo|ilong|baka)\s*(ko)?\b/u',
             '/\b(ginahilanat|hilanat|lagnat|kalintura|ginalagnat|may\s+hilanat|may\s+lagnat)\b/u',
             '/\b(i\s+have|i\'?ve\s+got|i\s+got)\s+(a\s+)?(fever|cough|headache|cold|flu|rash|diarrhea|vomit)/u',

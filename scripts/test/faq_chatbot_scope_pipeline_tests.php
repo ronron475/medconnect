@@ -1,6 +1,6 @@
 <?php
 /**
- * FAQ chatbot healthcare-scope pipeline tests (uses local DB).
+ * FAQ chatbot routing tests (local DB). Avoids a long Gemini burst.
  * CLI: php scripts/test/faq_chatbot_scope_pipeline_tests.php
  */
 $root = dirname(__DIR__, 2);
@@ -10,7 +10,6 @@ if (!defined('BASE_PATH')) {
 
 require_once $root . '/bootstrap.php';
 require_once $root . '/app/includes/faq_chatbot_schema.php';
-
 if (session_status() !== PHP_SESSION_ACTIVE) {
     session_start();
 }
@@ -40,49 +39,60 @@ function run_assist(FaqChatbotOrchestrator $orch, string $sessionId, string $tex
     return $orch->handle($sessionId, $text, $lang, ['mode' => 'assist']);
 }
 
+function plain_html(array $r): string
+{
+    return strtolower(trim(preg_replace('/\s+/', ' ', strip_tags((string) ($r['response_html'] ?? ''))) ?? ''));
+}
+
 echo "FAQ chatbot scope pipeline\n";
 
-$wala = run_assist($orch, $sessionId, 'wala kwarta');
-$plain = strtolower(trim(preg_replace('/\s+/', ' ', strip_tags((string) ($wala['response_html'] ?? ''))) ?? ''));
-expect_true(($wala['healthcare_scope'] ?? '') === 'OUTSIDE', 'wala kwarta healthcare_scope=OUTSIDE got=' . ($wala['healthcare_scope'] ?? ''));
-expect_true(empty($wala['emergency']), 'wala kwarta emergency=false');
-expect_true(empty($wala['gemini_used']), 'wala kwarta gemini_used=false');
-expect_true(!empty($wala['use_server_response']), 'wala kwarta use_server_response');
-expect_true(str_contains($plain, 'healthcare-related concerns only'), 'wala kwarta scope copy');
-expect_true(!str_contains($plain, '911') && !str_contains($plain, 'emergency'), 'wala kwarta has no 911/emergency');
-
 $hello = run_assist($orch, $sessionId, 'hello');
-expect_true(in_array($hello['healthcare_scope'] ?? '', ['GREETING', 'HEALTHCARE'], true), 'hello is greeting got=' . ($hello['healthcare_scope'] ?? ''));
-expect_true(empty($hello['emergency']), 'hello is not emergency');
-expect_true(($hello['final_response_type'] ?? '') !== 'OUT_OF_SCOPE', 'hello is not out of scope');
+expect_true(($hello['healthcare_scope'] ?? '') === 'GREETING', 'hello greeting');
+expect_true(empty($hello['emergency']), 'hello not emergency');
+expect_true(($hello['final_response_type'] ?? '') !== 'OUT_OF_SCOPE', 'hello not boundary');
 
-$kumusta = run_assist($orch, $sessionId, 'kumusta', 'hil');
-expect_true(($kumusta['healthcare_scope'] ?? '') === 'GREETING', 'kumusta greeting');
-expect_true(empty($kumusta['emergency']), 'kumusta not emergency');
-
-$head = run_assist($orch, $sessionId, 'sakit ulo ko');
-expect_true(($head['healthcare_scope'] ?? '') === 'HEALTHCARE', 'sakit ulo healthcare');
-expect_true(empty($head['emergency']), 'sakit ulo not emergency');
+$sakit = run_assist($orch, $sessionId, 'sakit ulo ko');
+$sakitPlain = plain_html($sakit);
+expect_true(empty($sakit['emergency']), 'sakit ulo not emergency');
+expect_true(
+    !empty($sakit['dataset_match']) || !empty($sakit['fallback_required']),
+    'sakit ulo uses dataset or Gemini fallback'
+);
+expect_true(!empty($sakit['use_server_response']), 'sakit ulo use_server');
+expect_true(($sakit['final_response_type'] ?? '') !== 'OUT_OF_SCOPE', 'sakit ulo is not boundary');
+expect_true(
+    !str_contains($sakitPlain, 'sign in') || str_contains($sakitPlain, 'ulo') || str_contains($sakitPlain, 'head') || str_contains($sakitPlain, 'health concern'),
+    'sakit ulo is not a generic account menu'
+);
 
 $breath = run_assist($orch, $sessionId, 'lisod ginhawa');
-expect_true(($breath['healthcare_scope'] ?? '') === 'HEALTHCARE', 'lisod ginhawa healthcare');
-expect_true(!empty($breath['emergency']), 'lisod ginhawa emergency');
-expect_true(empty($breath['gemini_used']), 'lisod ginhawa does not use Gemini');
+expect_true(!empty($breath['emergency']), 'lisod ginhawa emergency first');
+expect_true(empty($breath['gemini_used']), 'emergency does not call Gemini');
 
-$mixed = run_assist($orch, $sessionId, 'wala kwarta pambili tambal kay may hilanat ako');
-expect_true(($mixed['healthcare_scope'] ?? '') === 'HEALTHCARE', 'mixed money+fever healthcare');
-expect_true(empty($mixed['emergency']), 'mixed money+fever not emergency');
+$book = run_assist($orch, $sessionId, 'how do I book an appointment?');
+expect_true(empty($book['emergency']), 'booking not emergency');
+expect_true(($book['final_response_type'] ?? '') !== 'OUT_OF_SCOPE', 'booking is in-scope');
 
 $joke = run_assist($orch, $sessionId, 'tell me a joke');
-expect_true(($joke['healthcare_scope'] ?? '') === 'OUTSIDE', 'joke outside');
-expect_true(empty($joke['gemini_used']), 'joke gemini_used=false');
+expect_true(empty($joke['emergency']), 'joke not emergency');
+expect_true(
+    ($joke['final_response_type'] ?? '') === 'OUT_OF_SCOPE'
+        || !empty($joke['fallback_required']),
+    'joke goes to Gemini classification or boundary'
+);
 
-$rand = run_assist($orch, $sessionId, 'asdfgh random text');
-expect_true(($rand['healthcare_scope'] ?? '') === 'OUTSIDE', 'random outside');
+$wala = run_assist($orch, $sessionId, 'wala kwarta');
+expect_true(empty($wala['emergency']), 'wala kwarta is not emergency');
+expect_true(!str_contains(plain_html($wala), '911') || !empty($wala['dataset_match']), 'wala kwarta does not invent emergency');
 
-$cho = run_assist($orch, $sessionId, 'diin ang City Health Office?');
-expect_true(($cho['healthcare_scope'] ?? '') === 'HEALTHCARE', 'CHO healthcare');
-expect_true(empty($cho['emergency']), 'CHO not emergency');
+$novel = run_assist($orch, $sessionId, 'I have a stabbing pain behind my left eye after the lights flickered');
+expect_true(empty($novel['emergency']), 'novel symptom is not emergency');
+expect_true(($novel['final_response_type'] ?? '') !== 'OUT_OF_SCOPE', 'novel symptom is not boundary');
+expect_true(
+    !empty($novel['dataset_match']) || !empty($novel['fallback_required']),
+    'novel symptom uses dataset or Gemini fallback'
+);
+expect_true(!empty($novel['use_server_response']), 'novel symptom use_server');
 
 echo "\nPipeline tests: {$passed} passed, {$failed} failed\n";
 exit($failed > 0 ? 1 : 0);

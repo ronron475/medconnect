@@ -135,9 +135,9 @@ final class FaqChatbotKbHealthcare
                 'flow_key' => 'pain_sick',
                 'weight' => 1.05,
                 'patterns' => [
-                    '/\b(headache|sakit\s+ulo|ginasakit\s+ulo|fever|hilanat|lagnat|stomach\s+ache|sakit\s+tiyan|symptom|head\s+feels\s+heavy|tummy\s+hurts|feel\s+like\s+fainting|chest\s+feels\s+tight|hard\s+to\s+breathe|body\s+feels\s+weak|eyes\s+hurt|throat\s+hurts)\b/ui',
+                    '/\b(headache|sakit(\s+gid)?\s+ulo|ga\s+sakit(\s+gid)?\s+ulo|ginasakit\s+ulo|gasakit\s+(ulo|tiyan)|fever|hilanat|lagnat|may\s+hilanat|stomach\s+(ache|hurts)|sakit\s+tiyan|ginahilo|nahihilo|gakubo|symptom|head\s+feels\s+heavy|tummy\s+hurts|feel\s+like\s+fainting|chest\s+feels\s+tight|hard\s+to\s+breathe|body\s+feels\s+weak|eyes\s+hurt|throat\s+hurts)\b/ui',
                 ],
-                'keywords' => ['sakit ulo', 'headache', 'symptom', 'masakit', 'hilanat'],
+                'keywords' => ['sakit ulo', 'headache', 'symptom', 'masakit', 'hilanat', 'ginahilo', 'nahihilo'],
             ],
             [
                 'key' => 'health_education',

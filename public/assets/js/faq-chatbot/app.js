@@ -449,17 +449,31 @@
   }
 
   function deliverFromPhp(meta, lang) {
-    const flow = meta.emergency_flow === 'crisis' ? 'crisis' : (meta.emergency ? 'emergency' : 'faq_php');
+    const type = String(meta.final_response_type || '');
+    const isEmergency = !!meta.emergency;
+    const isGreeting = type === 'GREETING';
+    const flow = meta.emergency_flow === 'crisis' ? 'crisis' : (isEmergency ? 'emergency' : 'faq_php');
+    const hideGenericMenu = !isEmergency && !isGreeting;
+    let actions = hideGenericMenu ? [] : undefined;
+    let followUp = hideGenericMenu ? null : undefined;
+    if (isGreeting && Engine && typeof Engine.getFlow === 'function') {
+      const greeting = Engine.getFlow('greeting', lang);
+      actions = greeting.actions;
+      followUp = greeting.followUp;
+    }
+    const skipSuggestions = hideGenericMenu || type === 'OUT_OF_SCOPE' || type === 'MEDICAL_GEMINI' || type === 'MEDICAL_CLARIFICATION';
     deliverBot(flow, {
       html: meta.response_html,
       lang,
       typingMs: meta.typing_ms || TYPING_MS,
       feedbackMessageId: meta.bot_message_id,
-      suggestions: meta.suggestions || [],
+      suggestions: skipSuggestions ? [] : (meta.suggestions || []),
       empathy: true,
       emotion: meta.emotion_detail || meta.emotion,
       confidence: meta.confidence,
       instant: false,
+      actions,
+      followUp,
     });
   }
 
@@ -720,7 +734,7 @@
         }
         return;
       }
-      if (lastPhpAssist && lastPhpAssist.use_server_response && lastPhpAssist.response_html) {
+      if (lastPhpAssist && lastPhpAssist.response_html) {
         appendUser(trimmed);
         Understanding.incrementMessageCount();
         deliverFromPhp(lastPhpAssist, replyLang);
@@ -728,7 +742,7 @@
       }
       if (lastPhpAssist && !lastPhpAssist.use_server_response
         && lastPhpAssist.intent
-        && ['financial', 'appointment', 'login', 'registration', 'consultation', 'symptoms', 'emotional_support', 'bhw', 'technical', 'doctor', 'password_reset', 'capabilities'].includes(lastPhpAssist.intent)
+        && ['financial', 'appointment', 'login', 'registration', 'consultation', 'emotional_support', 'bhw', 'technical', 'doctor', 'password_reset', 'capabilities'].includes(lastPhpAssist.intent)
         && (lastPhpAssist.confidence || 0) >= 0.60) {
         appendUser(trimmed);
         Understanding.incrementMessageCount();
@@ -839,6 +853,7 @@
       INTENT.MEDICAL_INFO,
     ].includes(classification.intent)
       || emotion.standalone
+      || healthcareRelated
       || (Conversation && Conversation.isPainOrSick(nlpText))
       || (Conversation && typeof Conversation.isPossibleHealth === 'function' && Conversation.isPossibleHealth(nlpText))
       || Emotions.isSelfHarmCrisis(nlpText)
@@ -1012,6 +1027,12 @@
 
     if (flowKey === 'welcome' && !Understanding.shouldAllowFullGreeting()) {
       flowKey = 'greeting_return';
+    }
+
+    if (flowKey === 'unknown' && healthcareRelated) {
+      Understanding.incrementMessageCount();
+      runFlow('healthcare_unmatched', false, { lang: replyLang });
+      return;
     }
 
     if (flowKey === 'unknown' && understanding.level !== LEVEL.FULL) {

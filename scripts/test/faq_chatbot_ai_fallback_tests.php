@@ -66,11 +66,42 @@ expect_true($parsedToken['classification'] === FaqChatbotAiFallback::CLASS_NON_H
 
 $oosPack = FaqChatbotAiFallback::packFromParsed($parsedNon, 'en');
 expect_true($oosPack['response_type'] === FaqChatbotDomainScope::RESPONSE_OUT_OF_SCOPE, 'NON maps to OUT_OF_SCOPE');
-expect_true(str_contains($oosPack['html'], 'healthcare-related concerns only'), 'OOS pack uses backend copy');
+expect_true(str_contains($oosPack['html'], 'healthcare and medConnect-related concerns'), 'OOS pack uses backend copy');
 expect_true(!str_contains($oosPack['html'], 'OUT_OF_SCOPE'), 'user never sees OUT_OF_SCOPE token');
 
 $maybePack = FaqChatbotAiFallback::packFromParsed($parsedMaybe, 'en');
-expect_true($maybePack['response_type'] === FaqChatbotDomainScope::RESPONSE_MEDICAL_CLARIFICATION, 'POSSIBLY maps to clarification');
+expect_true($maybePack['response_type'] === FaqChatbotDomainScope::RESPONSE_MEDICAL_GEMINI, 'POSSIBLY with a real reply is treated as healthcare');
+expect_true(FaqChatbotAiFallback::isInsufficientModelReply('Kabay pa'), 'short Kabay pa reply is insufficient');
+$shortPack = FaqChatbotAiFallback::packFromParsed([
+    'classification' => FaqChatbotAiFallback::CLASS_HEALTHCARE,
+    'reply'          => 'Kabay pa',
+], 'hil');
+expect_true($shortPack['response_type'] === FaqChatbotDomainScope::RESPONSE_MEDICAL_GEMINI, 'short healthcare reply stays medical');
+expect_true(!str_contains(strtolower($shortPack['html']), 'kabay pa'), 'short Kabay pa is not shown as the answer');
+expect_true(str_contains(strtolower($shortPack['html']), 'health concern') || str_contains(strtolower($shortPack['html']), 'health'), 'short reply becomes unmatched healthcare copy');
+
+expect_true(FaqChatbotAiFallback::shouldUseDatasetAnswer(
+    'sakit ulo ko',
+    false,
+    null,
+    null,
+    [
+        'key'   => 'symptoms_general',
+        'score' => 4.2,
+        'html'  => '<p>Nasabtan ko nga indi ka maayo. Provider ang makasusi — indi ako nagadiagnose.</p>',
+    ]
+), 'high-score symptoms_general is a dataset answer for sakit ulo ko');
+expect_true(FaqChatbotAiFallback::shouldUseDatasetAnswer(
+    'may hilanat ko',
+    false,
+    null,
+    null,
+    [
+        'key'   => 'multi_symptoms_general_common_illness',
+        'score' => 7.4,
+        'html'  => '<p>Thank you for telling me. Symptoms can have several possible causes — I cannot diagnose.</p>',
+    ]
+), 'combined symptom KB card is a dataset answer');
 
 $healthPack = FaqChatbotAiFallback::packFromParsed($parsedHealth, 'en');
 expect_true($healthPack['response_type'] === FaqChatbotDomainScope::RESPONSE_MEDICAL_GEMINI, 'HEALTHCARE maps to MEDICAL_GEMINI');
@@ -126,9 +157,20 @@ expect_true(str_contains($html, 'Need a doctor?'), 'plain text preserved');
 $empty = FaqChatbotAiFallback::toSafeHtml('   ');
 expect_true($empty === '', 'blank text → empty html');
 
-$blocked = FaqChatbotAiFallback::tryReply('What is the capital of Japan?', 'en');
-expect_true(is_string($blocked) && str_contains((string) $blocked, 'healthcare-related concerns only'), 'capital of Japan is backend OUT_OF_SCOPE');
-expect_true(!preg_match('/tokyo/i', (string) $blocked), 'does not answer the trivia question');
+$jsonNon = '{"is_healthcare_related":false,"intent":"non_healthcare","language":"English","normalized_meaning":"capital of Japan","urgency":"NON_URGENT","confidence":0.99,"reply":""}';
+$parsedJsonNon = FaqChatbotAiFallback::parseModelReply($jsonNon);
+expect_true($parsedJsonNon['classification'] === FaqChatbotAiFallback::CLASS_NON_HEALTHCARE, 'JSON non-healthcare classification');
+$jsonPack = FaqChatbotAiFallback::packFromParsed($parsedJsonNon, 'en');
+expect_true($jsonPack['response_type'] === FaqChatbotDomainScope::RESPONSE_OUT_OF_SCOPE, 'JSON non-healthcare maps to boundary');
+expect_true(!preg_match('/tokyo/i', (string) $jsonPack['html']), 'does not answer the trivia question');
+
+$jsonHead = '{"is_healthcare_related":true,"intent":"symptom","language":"Hiligaynon","normalized_meaning":"headache","urgency":"NON_URGENT","confidence":0.94,"reply":"Nasabtan ko nga nagasakit ang imo ulo. Indi ako makadiagnose, pero para sa mild headache makabulig ang pahulay kag tubig. Kon grabe ukon may iban nga seryoso nga sintomas, magpakonsulta."}';
+$parsedHead = FaqChatbotAiFallback::parseModelReply($jsonHead);
+expect_true($parsedHead['classification'] === FaqChatbotAiFallback::CLASS_HEALTHCARE, 'JSON sakit ulo is healthcare');
+expect_true(($parsedHead['normalized_meaning'] ?? '') === 'headache', 'JSON normalized_meaning headache');
+$headPack = FaqChatbotAiFallback::packFromParsed($parsedHead, 'hil');
+expect_true($headPack['response_type'] === FaqChatbotDomainScope::RESPONSE_MEDICAL_GEMINI, 'JSON headache is MEDICAL_GEMINI');
+expect_true(str_contains(strtolower($headPack['html']), 'ulo') || str_contains(strtolower($headPack['html']), 'head'), 'JSON keeps medical reply');
 
 $vagueHealth = FaqChatbotAiFallback::parseModelReply("CLASSIFICATION: POSSIBLY_HEALTHCARE\nREPLY:\nWhat symptoms are you noticing today?");
 expect_true($vagueHealth['classification'] === FaqChatbotAiFallback::CLASS_POSSIBLY_HEALTHCARE, 'vague health stays possibly healthcare');
@@ -165,52 +207,57 @@ if (!$keyPresent) {
     if ($first === null && FaqChatbotAiFallback::lastError() !== '') {
         echo "  INFO live error: " . FaqChatbotAiFallback::lastError() . "\n";
     }
-    expect_true(is_string($first) && $first !== '' && str_contains($first, '<p>'), 'AI returns HTML for open question');
-    expect_true(!str_contains(strtolower(strip_tags((string) $first)), 'http 429'), 'no raw http error');
+    $quota = str_contains(FaqChatbotAiFallback::lastError(), '429');
+    if ($quota) {
+        echo "  SKIP remaining live API calls (provider quota 429)\n";
+    } else {
+        expect_true(is_string($first) && $first !== '' && str_contains($first, '<p>'), 'AI returns HTML for open question');
+        expect_true(!str_contains(strtolower(strip_tags((string) $first)), 'http 429'), 'no raw http error');
 
-    $follow = FaqChatbotAiFallback::tryReply('what do I need?', 'en', [
-        'intent' => 'appointment',
-        'topic'  => 'appointments',
-        'turns'  => [
-            ['role' => 'user', 'text' => 'I need a doctor'],
-            ['role' => 'bot', 'text' => 'Would you like to book a new appointment?'],
-            ['role' => 'user', 'text' => 'yes'],
-        ],
-    ]);
-    if ($follow === null && FaqChatbotAiFallback::lastError() !== '') {
-        echo "  INFO follow-up error: " . FaqChatbotAiFallback::lastError() . "\n";
-    }
-    expect_true(is_string($follow) && $follow !== '', 'follow-up returns a reply');
+        $follow = FaqChatbotAiFallback::tryReply('what do I need?', 'en', [
+            'intent' => 'appointment',
+            'topic'  => 'appointments',
+            'turns'  => [
+                ['role' => 'user', 'text' => 'I need a doctor'],
+                ['role' => 'bot', 'text' => 'Would you like to book a new appointment?'],
+                ['role' => 'user', 'text' => 'yes'],
+            ],
+        ]);
+        if ($follow === null && FaqChatbotAiFallback::lastError() !== '') {
+            echo "  INFO follow-up error: " . FaqChatbotAiFallback::lastError() . "\n";
+        }
+        expect_true(is_string($follow) && $follow !== '', 'follow-up returns a reply');
 
-    $hil = FaqChatbotAiFallback::tryReply('nahadlok ko kay sakit akon ulo', 'hil', [
-        'emotion' => 'afraid',
-        'topic'   => 'symptoms',
-    ]);
-    if ($hil === null && FaqChatbotAiFallback::lastError() !== '') {
-        echo "  INFO Hiligaynon error: " . FaqChatbotAiFallback::lastError() . "\n";
-    }
-    expect_true(is_string($hil) && $hil !== '', 'Hiligaynon message returns a reply');
+        $hil = FaqChatbotAiFallback::tryReply('nahadlok ko kay sakit akon ulo', 'hil', [
+            'emotion' => 'afraid',
+            'topic'   => 'symptoms',
+        ]);
+        if ($hil === null && FaqChatbotAiFallback::lastError() !== '') {
+            echo "  INFO Hiligaynon error: " . FaqChatbotAiFallback::lastError() . "\n";
+        }
+        expect_true(is_string($hil) && $hil !== '', 'Hiligaynon message returns a reply');
 
-    $fil = FaqChatbotAiFallback::tryReply('paano magbook ng appointment', 'fil', [
-        'intent' => 'appointment',
-    ]);
-    if ($fil === null && FaqChatbotAiFallback::lastError() !== '') {
-        echo "  INFO Filipino error: " . FaqChatbotAiFallback::lastError() . "\n";
-    }
-    expect_true(is_string($fil) && $fil !== '', 'Filipino message returns a reply');
+        $fil = FaqChatbotAiFallback::tryReply('paano magbook ng appointment', 'fil', [
+            'intent' => 'appointment',
+        ]);
+        if ($fil === null && FaqChatbotAiFallback::lastError() !== '') {
+            echo "  INFO Filipino error: " . FaqChatbotAiFallback::lastError() . "\n";
+        }
+        expect_true(is_string($fil) && $fil !== '', 'Filipino message returns a reply');
 
-    $vagueLive = FaqChatbotAiFallback::tryReply("I don't feel right today.", 'en', [
-        'intent' => 'general',
-        'topic'  => 'symptoms',
-    ]);
-    if ($vagueLive === null && FaqChatbotAiFallback::lastError() !== '') {
-        echo "  INFO vague-health error: " . FaqChatbotAiFallback::lastError() . "\n";
+        $vagueLive = FaqChatbotAiFallback::tryReply("I don't feel right today.", 'en', [
+            'intent' => 'general',
+            'topic'  => 'symptoms',
+        ]);
+        if ($vagueLive === null && FaqChatbotAiFallback::lastError() !== '') {
+            echo "  INFO vague-health error: " . FaqChatbotAiFallback::lastError() . "\n";
+        }
+        expect_true(is_string($vagueLive) && $vagueLive !== '', 'vague health concern returns a reply');
+        expect_true(
+            !str_contains((string) $vagueLive, 'healthcare and medConnect-related concerns'),
+            'vague health is not OUT_OF_SCOPE'
+        );
     }
-    expect_true(is_string($vagueLive) && $vagueLive !== '', 'vague health concern returns a reply');
-    expect_true(
-        !str_contains((string) $vagueLive, 'healthcare-related concerns only'),
-        'vague health is not OUT_OF_SCOPE'
-    );
 }
 
 echo "\n{$passed} passed, {$failed} failed\n";
