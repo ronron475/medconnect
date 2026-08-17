@@ -187,10 +187,12 @@ $logoUrl = ASSET_BASE . '/assets/img/medcon_logo.png';
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>Consultation #<?= (int) $consultationId ?> recording — medConnect</title>
+  <meta name="color-scheme" content="light dark">
   <link rel="icon" type="image/png" href="<?= htmlspecialchars($logoUrl) ?>">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <?php require BASE_PATH . '/resources/views/partials/theme_init.php'; ?>
   <style>
     :root {
       --ice: #f4f8fa;
@@ -201,6 +203,26 @@ $logoUrl = ASSET_BASE . '/assets/img/medcon_logo.png';
       --white: #fff;
       --safe-top: env(safe-area-inset-top, 0px);
       --safe-bottom: env(safe-area-inset-bottom, 0px);
+    }
+    html[data-theme-resolved='dark'] {
+      color-scheme: dark;
+      --ice: #0a0a0a;
+      --navy: #f4f4f5;
+      --aqua: #2dd4bf;
+      --slate: #a1a1aa;
+      --line: #2a2a2a;
+      --white: #1c1c1c;
+    }
+    @media (prefers-color-scheme: dark) {
+      html:not([data-theme-resolved='light']) {
+        color-scheme: dark;
+        --ice: #0a0a0a;
+        --navy: #f4f4f5;
+        --aqua: #2dd4bf;
+        --slate: #a1a1aa;
+        --line: #2a2a2a;
+        --white: #1c1c1c;
+      }
     }
     * { box-sizing: border-box; }
     body {
@@ -240,6 +262,7 @@ $logoUrl = ASSET_BASE . '/assets/img/medcon_logo.png';
       font-size: 14px;
     }
     .back:hover { background: #d8eaee; }
+    html[data-theme-resolved='dark'] .back:hover { background: rgba(45, 212, 191, 0.12); }
     .page {
       max-width: 980px;
       margin: 0 auto;
@@ -251,6 +274,9 @@ $logoUrl = ASSET_BASE . '/assets/img/medcon_logo.png';
       border-radius: 16px;
       box-shadow: 0 1px 3px rgba(1, 42, 74, 0.06);
       overflow: hidden;
+    }
+    html[data-theme-resolved='dark'] .card {
+      box-shadow: none;
     }
     .card__head {
       padding: 20px 20px 16px;
@@ -340,6 +366,15 @@ $logoUrl = ASSET_BASE . '/assets/img/medcon_logo.png';
       background: #e7f6f7;
       color: var(--aqua);
     }
+    html[data-theme-resolved='dark'] .seg-btn.is-active {
+      background: rgba(45, 212, 191, 0.12);
+    }
+    html[data-theme-resolved='dark'] .stage .empty {
+      color: #cbd5e1;
+    }
+    html[data-theme-resolved='dark'] video {
+      color-scheme: dark;
+    }
     .seg-btn.is-disabled {
       opacity: 0.65;
       pointer-events: none;
@@ -359,7 +394,7 @@ $logoUrl = ASSET_BASE . '/assets/img/medcon_logo.png';
     }
   </style>
 </head>
-<body>
+<body class="recording-viewer">
   <header class="top">
     <a class="back" href="<?= htmlspecialchars($backUrl) ?>">← Back to consultation</a>
     <a class="brand" href="<?= htmlspecialchars($backUrl) ?>">

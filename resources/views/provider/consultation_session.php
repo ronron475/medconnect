@@ -1608,6 +1608,7 @@ body.consultation-mobile-call-fullscreen .mc-provider-video-dock .mc-session-flo
         content: " · <?= htmlspecialchars($patient['name'], ENT_QUOTES) ?>";
         font-weight: 600;
         color: #64748b;
+        background: transparent;
     }
     .video-shell.is-call-active {
         position: relative;
