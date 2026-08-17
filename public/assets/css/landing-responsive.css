@@ -210,9 +210,8 @@ body.landing-page.landing-nav-open {
 }
 
 .landing-page .download-app-section {
-  padding: clamp(var(--landing-space-lg), 8vw, var(--landing-space-xl))
-           clamp(var(--landing-space-xs), 4vw, var(--landing-space-lg))
-           clamp(var(--landing-space-md), 7vw, var(--landing-space-xl));
+  padding-left: clamp(20px, 4vw, 40px);
+  padding-right: clamp(20px, 4vw, 40px);
 }
 
 .landing-page .contact-section {
@@ -793,6 +792,11 @@ body.landing-page.landing-nav-open {
 }
 
 /* ── FAB dock — align menu + theme toggle (shared inset & size) ── */
+body.landing-page .fcb {
+  left: max(24px, env(safe-area-inset-left, 0px));
+  bottom: max(24px, env(safe-area-inset-bottom, 0px));
+}
+
 /* Prevent full-bleed carousel from causing horizontal scroll */
 .landing-page .services-section:has(.landing-carousel),
 .landing-page .hero--cinematic {
@@ -801,8 +805,8 @@ body.landing-page.landing-nav-open {
 
 @media (max-width: 768px) {
   .landing-page {
-    --landing-fab-edge-x: max(16px, env(safe-area-inset-right, 0px));
-    --landing-fab-edge-y: max(16px, env(safe-area-inset-bottom, 0px));
+    --landing-fab-edge-x: max(20px, env(safe-area-inset-right, 0px));
+    --landing-fab-edge-y: max(20px, env(safe-area-inset-bottom, 0px));
     --landing-fab-size-m: 50px;
     --landing-fab-stack-gap-m: 12px;
   }
@@ -820,12 +824,17 @@ body.landing-page.landing-nav-open {
     --ltf-stack-gap: var(--landing-fab-stack-gap-m);
     bottom: calc(var(--ltf-fab-bottom) + var(--ltf-fab-size) + var(--ltf-stack-gap) + var(--ltf-menu-lift, 0px));
   }
+
+  body.landing-page .fcb {
+    left: max(20px, env(safe-area-inset-left, 0px));
+    bottom: max(20px, env(safe-area-inset-bottom, 0px));
+  }
 }
 
 @media (max-width: 480px) {
   .landing-page {
-    --landing-fab-edge-x: max(12px, env(safe-area-inset-right, 0px));
-    --landing-fab-edge-y: max(12px, env(safe-area-inset-bottom, 0px));
+    --landing-fab-edge-x: max(20px, env(safe-area-inset-right, 0px));
+    --landing-fab-edge-y: max(20px, env(safe-area-inset-bottom, 0px));
     --landing-fab-size-m: 45px;
     --landing-fab-stack-gap-m: 10px;
   }

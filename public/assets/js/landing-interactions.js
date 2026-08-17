@@ -136,8 +136,18 @@
     if (btn) btn.addEventListener('click', closeMobileNav);
   });
 
+  function syncLandingNavOffset() {
+    const navH = navbar ? Math.round(navbar.getBoundingClientRect().height) : 76;
+    const banner = document.querySelector('.landing-maintenance-banner');
+    const bannerH = banner ? Math.round(banner.getBoundingClientRect().height) : 0;
+    document.documentElement.style.setProperty('--landing-nav-offset', (navH + bannerH) + 'px');
+  }
+
   function getNavOffset() {
-    return (navbar?.offsetHeight || 80) + 16;
+    const navH = navbar?.offsetHeight || 76;
+    const banner = document.querySelector('.landing-maintenance-banner');
+    const bannerH = banner ? banner.offsetHeight : 0;
+    return navH + bannerH + 20;
   }
 
   function updateNavbarTheme() {
@@ -475,6 +485,7 @@
   }, { passive: true });
 
   window.addEventListener('resize', () => {
+    syncLandingNavOffset();
     updateNavbarTheme();
     if (window.innerWidth > MOBILE_NAV_BREAK && navMenu?.classList.contains('open')) {
       closeMobileNav();
@@ -492,6 +503,7 @@
 
   initCarousels();
   initCarouselSectionHeaders();
+  syncLandingNavOffset();
 
   if (window.MedConnectLandingAnim) {
     window.MedConnectLandingAnim.refreshDynamic();
