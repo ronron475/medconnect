@@ -88,25 +88,44 @@
 
   registerServiceWorker();
 
-  const viewport = document.getElementById('download-app-viewport');
+  const device = document.getElementById('download-app-device');
   const track = document.getElementById('download-app-track');
+  const slides = track ? Array.from(track.querySelectorAll('.download-app__slide')) : [];
   const dots = Array.from(document.querySelectorAll('#download-app-dots [data-slide]'));
-  const slideCount = track ? track.children.length : 0;
+  const slideCount = slides.length;
   const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   let index = 0;
   let timer = 0;
+  let leaveTimer = 0;
   let visible = false;
+  let hovered = false;
 
   function goTo(next) {
-    if (!track || !viewport || slideCount < 1) return;
+    if (slideCount < 1) return;
+    const prev = index;
     index = ((next % slideCount) + slideCount) % slideCount;
-    const width = viewport.clientWidth;
-    track.style.transform = 'translate3d(' + (-index * width) + 'px, 0, 0)';
+    const goingBack = index === prev - 1 || (prev === 0 && index === slideCount - 1);
+
+    slides.forEach(function (slide, i) {
+      slide.classList.toggle('is-back', goingBack && (i === prev || i === index));
+      slide.classList.toggle('is-leaving', i === prev && i !== index);
+      slide.classList.toggle('is-active', i === index);
+    });
+
     dots.forEach(function (dot, i) {
       const on = i === index;
       dot.classList.toggle('is-active', on);
       dot.setAttribute('aria-selected', on ? 'true' : 'false');
     });
+
+    if (leaveTimer) window.clearTimeout(leaveTimer);
+    leaveTimer = window.setTimeout(function () {
+      slides.forEach(function (slide) {
+        if (!slide.classList.contains('is-active')) {
+          slide.classList.remove('is-leaving', 'is-back');
+        }
+      });
+    }, 760);
   }
 
   function stop() {
@@ -118,17 +137,14 @@
 
   function start() {
     stop();
-    if (reduceMotion || slideCount < 2 || !visible) return;
+    if (reduceMotion || slideCount < 2 || !visible || hovered) return;
     timer = window.setInterval(function () {
       goTo(index + 1);
-    }, 3600);
+    }, 4500);
   }
 
-  if (track && viewport && slideCount > 0) {
+  if (slideCount > 0) {
     goTo(0);
-    window.addEventListener('resize', function () {
-      goTo(index);
-    });
 
     dots.forEach(function (dot) {
       dot.addEventListener('click', function () {
@@ -137,6 +153,17 @@
         start();
       });
     });
+
+    if (device) {
+      device.addEventListener('mouseenter', function () {
+        hovered = true;
+        stop();
+      });
+      device.addEventListener('mouseleave', function () {
+        hovered = false;
+        start();
+      });
+    }
 
     if ('IntersectionObserver' in window) {
       const observer = new IntersectionObserver(function (entries) {
