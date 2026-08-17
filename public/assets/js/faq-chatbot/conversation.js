@@ -44,10 +44,44 @@
     /\bsakit\s+akon\s+ulo\b/i,
     /\bga\s+sakit\s+ulo\b/i,
     /\bnagasakit\s+ulo\b/i,
+    /\bsakit\s+mata(\s+ko)?\b/i,
+    /\bmasakit\s+ang\s+mata\b/i,
+    /\bdugo\s+ulo(\s+ko)?\b/i,
+    /\bginahilanat(\s+ko)?\b/i,
+    /\bginalagnat(\s+ako)?\b/i,
+    /\bmy\s+chest\s+hurts\b/i,
+    /\bmy\s+head\s+hurts\b/i,
+    /\bmy\s+eye\s+swollen\b/i,
+    /\bwhy\s+is\s+my\s+eye\s+swollen\b/i,
+    /\bi\s+have\s+(a\s+)?fever\b/i,
     /\bhead\s+feels\s+heavy\b/i,
     /\btummy\s+hurts\b/i,
     /\bfeel\s+like\s+fainting\b/i,
     /\bmy\s+throat\s+hurts\b/i,
+  ];
+
+  const HELP_OPEN_PATTERNS = [
+    /^(can\s+you\s+help(\s+me)?|i\s+need\s+help|need\s+help|help\s+me|can\s+i\s+ask(\s+something)?|can\s+you\s+explain(\s+this)?|i'?m\s+worried(\s+about\s+something)?)[\s!.?]*$/i,
+    /^(buligi\s+ko|tulungan\s+mo\s+ako|pwede\s+ko\s+magpamangkot)[\s!.?]*$/i,
+  ];
+
+  const AMBIGUOUS_PATTERNS = [
+    /^(something\s+is\s+wrong|i'?m\s+not\s+sure|i\s+don'?t\s+know)[\s!.?]*$/i,
+  ];
+
+  const OFF_TOPIC_PATTERNS = [
+    /\bcapital\s+of\b/i,
+    /\b(write|make|compose)\s+(me\s+)?(a\s+|an\s+)?(poem|story|essay|song|joke)\b/i,
+    /\btell\s+me\s+a\s+joke\b/i,
+    /\b(who\s+won|basketball\s+game|soccer\s+game|football\s+game)\b/i,
+    /\b(how\s+do\s+i\s+(code|program|fix\s+my\s+computer)|programming\s+tutorial|code\s+php|php\s+tutorial)\b/i,
+    /\b(what\s+is\s+the\s+weather|weather\s+(today|tomorrow|forecast))\b/i,
+    /\b(stock\s+market|cryptocurrency|bitcoin)\b/i,
+  ];
+
+  const FALSE_MEDICAL = [
+    /\b(my|the|this|a)\s+(computer|laptop|pc|phone|car|engine)\s+(has|have|got|is|keeps)\b.{0,24}\b(headache|fever|sick|hurt|hurts|pain)\b/i,
+    /\b(studying|study)\s+computer\s+science\b/i,
   ];
 
   const CHEST_EMERGENCY = [
@@ -142,10 +176,32 @@
   function isPainOrSick(text) {
     const raw = String(text || '');
     if (!raw) return false;
+    if (FALSE_MEDICAL.some((re) => re.test(raw))) return false;
     if (CHEST_EMERGENCY.some((re) => re.test(raw))) return false;
     const Emotions = global.McFaqEmotions;
     if (Emotions && Emotions.isMedicalEmergency && Emotions.isMedicalEmergency(raw)) return false;
     return PAIN_SICK_PATTERNS.some((re) => re.test(raw));
+  }
+
+  function isHelpOpen(text) {
+    const raw = String(text || '').trim();
+    if (!raw) return false;
+    if (isPainOrSick(raw) || isGreeting(raw)) return false;
+    return HELP_OPEN_PATTERNS.some((re) => re.test(raw));
+  }
+
+  function isOffTopic(text) {
+    const raw = String(text || '').trim();
+    if (!raw) return false;
+    if (isGreeting(raw) || isPainOrSick(raw) || isHelpOpen(raw)) return false;
+    return OFF_TOPIC_PATTERNS.some((re) => re.test(raw)) || FALSE_MEDICAL.some((re) => re.test(raw));
+  }
+
+  function isAmbiguous(text) {
+    const raw = String(text || '').trim();
+    if (!raw) return false;
+    if (isGreeting(raw) || isPainOrSick(raw) || isHelpOpen(raw) || isOffTopic(raw)) return false;
+    return AMBIGUOUS_PATTERNS.some((re) => re.test(raw));
   }
 
   function getClosing(lang, seed) {
@@ -168,6 +224,9 @@
   global.McFaqConversation = {
     isGreeting,
     isPainOrSick,
+    isHelpOpen,
+    isOffTopic,
+    isAmbiguous,
     getClosing,
     getUnknownHtml,
     getClarifyHtml,

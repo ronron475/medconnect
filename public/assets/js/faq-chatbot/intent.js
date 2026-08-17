@@ -25,6 +25,8 @@
     CRISIS: 'crisis',
     MEDICAL_EMERGENCY: 'medical_emergency',
     OFF_TOPIC: 'off_topic',
+    HELP_OPEN: 'help_open',
+    AMBIGUOUS: 'ambiguous',
   });
 
   const URGENCY = Object.freeze({
@@ -131,12 +133,28 @@
       return { intent: INTENT.MEDICAL_EMERGENCY, urgency: URGENCY.CRITICAL, isQuestion };
     }
 
+    if (Conversation && Conversation.isPainOrSick(raw)) {
+      return { intent: INTENT.MEDICAL_INFO, urgency: URGENCY.LOW, isQuestion };
+    }
+
     if (Conversation && Conversation.isGreeting(raw)) {
       return { intent: INTENT.GREETING, urgency: URGENCY.NONE, isQuestion };
     }
 
     if (isReassuranceQuestion(raw)) {
       return { intent: INTENT.REASSURANCE, urgency: URGENCY.NONE, isQuestion };
+    }
+
+    if (Conversation && Conversation.isHelpOpen(raw)) {
+      return { intent: INTENT.HELP_OPEN, urgency: URGENCY.NONE, isQuestion };
+    }
+
+    if (Conversation && Conversation.isOffTopic(raw)) {
+      return { intent: INTENT.OFF_TOPIC, urgency: URGENCY.NONE, isQuestion };
+    }
+
+    if (Conversation && Conversation.isAmbiguous(raw)) {
+      return { intent: INTENT.AMBIGUOUS, urgency: URGENCY.NONE, isQuestion };
     }
 
     for (const sit of SITUATION_PATTERNS) {
