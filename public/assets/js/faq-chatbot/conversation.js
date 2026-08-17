@@ -11,6 +11,7 @@
     /^(kamusta|kumusta|musta|kumsta)[\s!.?]*$/i,
     /^(maayong\s+aga|maayong\s+hapon|maayong\s+gab[-i]?|maayong\s+adlaw)[\s!.?]*$/i,
     /^(magandang\s+umaga|magandang\s+hapon|magandang\s+gabi)[\s!.?]*$/i,
+    /^(can\s+you\s+help(\s+me)?)[\s!.?]*$/i,
   ];
 
   /** Physical symptoms — not chest emergency (handled separately) */
@@ -58,6 +59,13 @@
     /\btummy\s+hurts\b/i,
     /\bfeel\s+like\s+fainting\b/i,
     /\bmy\s+throat\s+hurts\b/i,
+    /\bdon'?t\s+feel\s+right\b/i,
+    /\bi\s+feel\s+(weak|strange|off|weird)\b/i,
+    /\bsomething\s+feels\s+wrong\b/i,
+    /\bsomething\s+is\s+wrong\s+with\s+(me|my\s+body)\b/i,
+    /\bfeeling\s+sick\b/i,
+    /\bmy\s+body\s+feels\b/i,
+    /\bpain\s+after\s+eating\b/i,
   ];
 
   const HELP_OPEN_PATTERNS = [
@@ -66,17 +74,29 @@
   ];
 
   const AMBIGUOUS_PATTERNS = [
-    /^(something\s+is\s+wrong|i'?m\s+not\s+sure|i\s+don'?t\s+know)[\s!.?]*$/i,
+    /^(something\s+is\s+wrong|i'?m\s+not\s+sure|i\s+don'?t\s+know|i\s+feel\s+strange)[\s!.?]*$/i,
+  ];
+
+  const POSSIBLE_HEALTH_PATTERNS = [
+    /don'?t\s+feel\s+right/i,
+    /feel\s+(weak|strange|off|weird)/i,
+    /something\s+(feels|is)\s+wrong/i,
+    /feeling\s+sick/i,
+    /not\s+(feeling\s+)?myself/i,
+    /body\s+feels/i,
+    /i\s+feel\s+pain/i,
+    /why\s+do\s+i\s+(suddenly\s+)?feel/i,
+    /what\s+could\s+cause\s+this\s+feeling/i,
   ];
 
   const OFF_TOPIC_PATTERNS = [
     /\bcapital\s+of\b/i,
-    /\b(write|make|compose)\s+(me\s+)?(a\s+|an\s+)?(poem|story|essay|song|joke)\b/i,
+    /\b(write|make|compose)\s+(me\s+)?(a\s+|an\s+)?(poem|story|essay|song|joke|business\s+plan)\b/i,
     /\btell\s+me\s+a\s+joke\b/i,
     /\b(who\s+won|basketball\s+game|soccer\s+game|football\s+game)\b/i,
-    /\b(how\s+do\s+i\s+(code|program|fix\s+my\s+computer)|programming\s+tutorial|code\s+php|php\s+tutorial)\b/i,
+    /\b(how\s+do\s+i\s+(code|program|fix\s+my\s+computer)|programming\s+tutorial|code\s+php|php\s+tutorial|help\s+me\s+code(\s+php)?)\b/i,
     /\b(what\s+is\s+the\s+weather|weather\s+(today|tomorrow|forecast))\b/i,
-    /\b(stock\s+market|cryptocurrency|bitcoin)\b/i,
+    /\b(stock\s+market|cryptocurrency|bitcoin|business\s+plan)\b/i,
   ];
 
   const FALSE_MEDICAL = [
@@ -190,17 +210,24 @@
     return HELP_OPEN_PATTERNS.some((re) => re.test(raw));
   }
 
+  function isPossibleHealth(text) {
+    const raw = String(text || '').trim();
+    if (!raw) return false;
+    if (FALSE_MEDICAL.some((re) => re.test(raw))) return false;
+    return POSSIBLE_HEALTH_PATTERNS.some((re) => re.test(raw));
+  }
+
   function isOffTopic(text) {
     const raw = String(text || '').trim();
     if (!raw) return false;
-    if (isGreeting(raw) || isPainOrSick(raw) || isHelpOpen(raw)) return false;
+    if (isGreeting(raw) || isPainOrSick(raw) || isHelpOpen(raw) || isPossibleHealth(raw)) return false;
     return OFF_TOPIC_PATTERNS.some((re) => re.test(raw)) || FALSE_MEDICAL.some((re) => re.test(raw));
   }
 
   function isAmbiguous(text) {
     const raw = String(text || '').trim();
     if (!raw) return false;
-    if (isGreeting(raw) || isPainOrSick(raw) || isHelpOpen(raw) || isOffTopic(raw)) return false;
+    if (isGreeting(raw) || isPainOrSick(raw) || isHelpOpen(raw) || isOffTopic(raw) || isPossibleHealth(raw)) return false;
     return AMBIGUOUS_PATTERNS.some((re) => re.test(raw));
   }
 
@@ -227,6 +254,7 @@
     isHelpOpen,
     isOffTopic,
     isAmbiguous,
+    isPossibleHealth,
     getClosing,
     getUnknownHtml,
     getClarifyHtml,

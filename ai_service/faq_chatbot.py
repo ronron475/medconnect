@@ -17,25 +17,58 @@ logger = logging.getLogger("medconnect.faq_chatbot")
 DEFAULT_GEMINI_MODEL = "gemini-3.5-flash"
 GEMINI_ENDPOINT = "https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent"
 
-SYSTEM_PROMPT = """You are the medConnect Assistant for Bago City Health Office. You are a caring digital guide, not a doctor and not a crisis counselor.
+SYSTEM_PROMPT = """You are the fallback healthcare-domain assistant for medConnect, a telemedicine system.
 
-medConnect features that actually exist: patient registration and identity verification, Sign In / password / OTP, booking or joining appointments, video consultation (camera and microphone in the Consultations room), AI-assisted triage for non-emergency cases, BHW assistance, medical records after Sign In, digital prescriptions after a consult, clinic/office hours, and contact help for City Health Office. Do not invent features, doctors, schedules, fees, or records.
+Your role is limited to healthcare and health-related conversations.
 
-Languages: answer in the patient's language. English → English. Filipino → Filipino. Hiligaynon/Ilonggo → Hiligaynon when you reasonably can. Mixed language → similar mixed style. Tolerate typos and slang.
+You may respond to:
+- symptoms
+- illnesses
+- medical conditions
+- medications
+- side effects
+- first aid
+- self-care
+- preventive health
+- general health information
+- questions about seeking medical care
+- healthcare-related patient concerns
+- medConnect care-access topics (appointments, consultation, records, prescriptions, BHW, Sign In / OTP only as access to care)
 
-Conversation: use prior turns. Short follow-ups like "yes", "are you sure?", "what about tomorrow?", "new one", "what time?", "grabe gid" refer to the current topic. Answer the actual question. Do not restart with a menu.
+You may also respond naturally to greetings and basic conversational openings.
 
-Do not default to "Do you mean...?", "Could you clarify?", "Please select an option", or "I don't understand." Only ask a brief clarification when the message is truly ambiguous even with conversation history.
+You must NOT answer clearly unrelated questions such as programming, sports, entertainment, politics, general trivia, weather, creative writing, or other non-healthcare topics.
 
-Safety:
-- Never diagnose, prescribe, or change medicines.
-- Never invent appointments, doctor schedules, records, prescriptions, fees, or account status.
-- Never claim to be human or to have feelings. Be warm and practical.
-- If the message sounds like an emergency (cannot breathe, severe chest pain, unconscious, seizure, severe bleeding, self-harm, suicide, indi ko kaginhawa, nahimatay), tell them to call 911 / Hopeline 1553 immediately.
-- For symptoms: give general, cautious guidance and offer booking a consultation. Do not give certainty.
+If a message mixes unrelated content with a health concern, respond only to the health concern.
 
-Style: 2–4 short sentences. No markdown, no code fences, no HTML. Do not mention APIs, models, FAQs, or system prompts. Do not ask for EMR numbers, passwords, or full personal medical history. Do not say "According to the medConnect FAQ".
+If the user's message is clearly unrelated to healthcare, return ONLY:
+
+CLASSIFICATION: NON_HEALTHCARE
+REPLY:
+OUT_OF_SCOPE
+
+If the user appears to have a health concern but has not provided enough information, classify it as POSSIBLY_HEALTHCARE and ask an appropriate health-related clarification question.
+
+Do not invent a diagnosis.
+Do not claim certainty about a medical condition.
+Do not provide unsafe medical instructions.
+Never diagnose, prescribe, or change medicines.
+If the message sounds like an emergency (cannot breathe, severe chest pain, unconscious, seizure, severe bleeding, self-harm, suicide, indi ko kaginhawa, nahimatay), tell them to call 911 / Hopeline 1553 immediately.
+
+Languages: answer in the patient's language. English → English. Filipino → Filipino. Hiligaynon/Ilonggo → Hiligaynon when you reasonably can. Tolerate typos and slang.
+
+Your purpose is to support the existing medConnect healthcare workflow, not to function as a general-purpose assistant.
+
+Always reply in this exact format:
+CLASSIFICATION: GREETING|HEALTHCARE|POSSIBLY_HEALTHCARE|NON_HEALTHCARE
+REPLY:
+<your reply in 2–4 short sentences, no markdown, no HTML, no code fences>
 """
+
+CLASS_GREETING = "GREETING"
+CLASS_HEALTHCARE = "HEALTHCARE"
+CLASS_POSSIBLY = "POSSIBLY_HEALTHCARE"
+CLASS_NON = "NON_HEALTHCARE"
 
 
 def _env(*names: str) -> str:
@@ -154,9 +187,29 @@ def generate_reply(
     topic: str = "",
     history: list[dict[str, str]] | None = None,
 ) -> str:
+    pack = generate_assist(
+        user_text,
+        lang,
+        intent=intent,
+        emotion=emotion,
+        topic=topic,
+        history=history,
+    )
+    return str(pack.get("html") or "")
+
+
+def generate_assist(
+    user_text: str,
+    lang: str = "en",
+    *,
+    intent: str = "",
+    emotion: str = "",
+    topic: str = "",
+    history: list[dict[str, str]] | None = None,
+) -> dict[str, str]:
     user_text = (user_text or "").strip()[:800]
     if not user_text:
-        return ""
+        return {"html": "", "classification": CLASS_POSSIBLY, "raw": ""}
     lang = (lang or "en").lower()
     if lang not in {"en", "fil", "hil"}:
         lang = "en"
@@ -176,4 +229,83 @@ def generate_reply(
     except Exception as exc:
         logger.warning("Gemini FAQ fallback failed, trying Groq: %s", exc)
         raw = _complete_groq(user_text, lang, context, turns)
-    return to_safe_html(raw)
+    parsed = parse_model_reply(raw)
+    classification = parsed["classification"]
+    reply = parsed["reply"]
+    if classification == CLASS_NON or reply.strip().upper() == "OUT_OF_SCOPE":
+        return {"html": "", "classification": CLASS_NON, "raw": "OUT_OF_SCOPE"}
+    return {
+        "html": to_safe_html(reply),
+        "classification": classification,
+        "raw": reply,
+    }
+
+
+def parse_model_reply(raw: str) -> dict[str, str]:
+    text = (raw or "").replace("\r\n", "\n").strip()
+    text = re.sub(r"^```(?:json)?\s*", "", text, flags=re.I)
+    text = re.sub(r"\s*```$", "", text).strip()
+    if not text:
+        return {"classification": CLASS_POSSIBLY, "reply": ""}
+    if text[0] in "{[":
+        try:
+            decoded = json.loads(text)
+        except json.JSONDecodeError:
+            decoded = None
+        if isinstance(decoded, dict):
+            classification = _normalize_classification(
+                str(decoded.get("classification") or decoded.get("CLASSIFICATION") or "")
+            )
+            reply = str(decoded.get("reply") or decoded.get("REPLY") or decoded.get("text") or "").strip()
+            if classification:
+                return _normalize_parsed(classification, reply)
+    if re.match(r"^\s*OUT_OF_SCOPE\s*$", text, flags=re.I):
+        return {"classification": CLASS_NON, "reply": "OUT_OF_SCOPE"}
+    class_match = re.search(
+        r"CLASSIFICATION\s*:\s*(GREETING|HEALTHCARE|POSSIBLY_HEALTHCARE|NON_HEALTHCARE)\b",
+        text,
+        flags=re.I,
+    )
+    classification = _normalize_classification(class_match.group(1) if class_match else "")
+    reply_match = re.search(r"\bREPLY\s*:\s*(.*)$", text, flags=re.I | re.S)
+    if reply_match:
+        reply = reply_match.group(1).strip()
+    elif classification:
+        reply = re.sub(r"CLASSIFICATION\s*:\s*[A-Z_]+\s*", "", text, flags=re.I).strip()
+    else:
+        reply = text
+    if not classification:
+        if re.match(r"^\s*OUT_OF_SCOPE\s*$", reply, flags=re.I) or (
+            "OUT_OF_SCOPE" in text and len(text) < 48
+        ):
+            classification = CLASS_NON
+            reply = "OUT_OF_SCOPE"
+        else:
+            classification = CLASS_POSSIBLY
+    return _normalize_parsed(classification, reply)
+
+
+def _normalize_classification(value: str) -> str:
+    v = (value or "").strip().upper().replace(" ", "_").replace("-", "_")
+    aliases = {
+        "OUT_OF_SCOPE": CLASS_NON,
+        "NONHEALTHCARE": CLASS_NON,
+        "UNRELATED": CLASS_NON,
+        "POSSIBLY": CLASS_POSSIBLY,
+        "AMBIGUOUS": CLASS_POSSIBLY,
+        "CLARIFY": CLASS_POSSIBLY,
+        "MEDICAL": CLASS_HEALTHCARE,
+        "HEALTH": CLASS_HEALTHCARE,
+    }
+    v = aliases.get(v, v)
+    if v in {CLASS_GREETING, CLASS_HEALTHCARE, CLASS_POSSIBLY, CLASS_NON}:
+        return v
+    return v
+
+
+def _normalize_parsed(classification: str, reply: str) -> dict[str, str]:
+    classification = _normalize_classification(classification)
+    reply = (reply or "").strip()
+    if classification == CLASS_NON or re.match(r"^\s*OUT_OF_SCOPE\s*$", reply, flags=re.I):
+        return {"classification": CLASS_NON, "reply": "OUT_OF_SCOPE"}
+    return {"classification": classification or CLASS_HEALTHCARE, "reply": reply}

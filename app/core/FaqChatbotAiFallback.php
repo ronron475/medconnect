@@ -17,6 +17,11 @@ final class FaqChatbotAiFallback
     private const MAX_USER_CHARS = 800;
     private const MAX_OUTPUT_TOKENS = 400;
 
+    public const CLASS_GREETING = 'GREETING';
+    public const CLASS_HEALTHCARE = 'HEALTHCARE';
+    public const CLASS_POSSIBLY_HEALTHCARE = 'POSSIBLY_HEALTHCARE';
+    public const CLASS_NON_HEALTHCARE = 'NON_HEALTHCARE';
+
     private static string $lastError = '';
 
     public static function lastError(): string
@@ -87,8 +92,33 @@ final class FaqChatbotAiFallback
     {
         $t = FaqEmotionEngine::normalizeText($text);
         return $t !== ''
-            && mb_strlen($t) <= 40
-            && (bool) preg_match('/^(hi|hello|hey|helo|hola|kumusta|musta|maayong|good\s+(morning|afternoon|evening))(\b|!|\.|,)/ui', $t);
+            && mb_strlen($t) <= 48
+            && (bool) preg_match(
+                '/^(hi|hello|hey|helo|hola|kamusta|kumusta|musta|maayong(\s+(aga|hapon|gab-?i|adlaw))?|magandang(\s+(umaga|hapon|gabi))?|good\s+(morning|afternoon|evening|day)|can\s+you\s+help(\s+me)?)(\s+(po|gid|there|doc|doctor|doktor))*[.!?]*\s*$/ui',
+                $t
+            );
+    }
+
+    /**
+     * Greetings, thanks, goodbye, and short help openings — not Gemini work.
+     */
+    public static function isConversationalOpeningOnly(string $text): bool
+    {
+        if (self::isClearGreeting($text) || self::isClearThanks($text) || self::isClearGoodbye($text)) {
+            return true;
+        }
+        if (!class_exists('FaqChatbotDomainScope')) {
+            return false;
+        }
+        $scope = (string) (FaqChatbotDomainScope::classify($text)['scope'] ?? '');
+        return in_array($scope, [FaqChatbotDomainScope::GREETING, FaqChatbotDomainScope::CONVERSATION], true);
+    }
+
+    public static function isClearGoodbye(string $text): bool
+    {
+        $t = FaqEmotionEngine::normalizeText($text);
+        return (bool) preg_match('/^(goodbye|bye|see\s+you|paalam)(\b|!|\.|$)/ui', $t)
+            && mb_strlen($t) <= 48;
     }
 
     public static function isClearThanks(string $text): bool
@@ -136,6 +166,9 @@ final class FaqChatbotAiFallback
         }
         $kbKey = is_array($kbHit) ? strtolower(trim((string) ($kbHit['key'] ?? ''))) : '';
         if (in_array($kbKey, ['crisis_hopeless', 'emergency_redirect'], true)) {
+            return true;
+        }
+        if (self::isConversationalOpeningOnly($text)) {
             return true;
         }
         if (self::isClearGreeting($text) && $kbKey === 'greeting') {
@@ -249,6 +282,33 @@ final class FaqChatbotAiFallback
      */
     public static function tryReply(string $userText, string $lang, array $context = []): ?string
     {
+        $pack = self::tryAssist($userText, $lang, $context);
+        if ($pack === null) {
+            return null;
+        }
+        $html = trim((string) ($pack['html'] ?? ''));
+        return $html !== '' ? $html : null;
+    }
+
+    /**
+     * Gemini/Groq fallback with a structured healthcare-domain classification.
+     *
+     * @param array<string, mixed> $context
+     * @return array{html: string, classification: string, response_type: string}|null
+     */
+    public static function tryAssist(string $userText, string $lang, array $context = []): ?array
+    {
+        $userText = trim($userText);
+        if ($userText === '') {
+            return null;
+        }
+
+        $lang = FaqEmotionEngine::normalizeLang($lang);
+
+        if (class_exists('FaqChatbotDomainScope') && FaqChatbotDomainScope::isClearlyNonHealthcare($userText)) {
+            return self::outOfScopePack($lang);
+        }
+
         if (!self::isEnabled()) {
             return null;
         }
@@ -256,28 +316,33 @@ final class FaqChatbotAiFallback
             return null;
         }
 
-        $userText = trim($userText);
-        if ($userText === '') {
-            return null;
-        }
-
-        if (class_exists('FaqChatbotDomainScope')) {
-            $scopePack = FaqChatbotDomainScope::classify($userText);
-            if (FaqChatbotDomainScope::shouldIntercept($scopePack)) {
-                return FaqChatbotDomainScope::replyHtml((string) $scopePack['scope'], $lang);
-            }
-        }
-
         $userText = mb_substr($userText, 0, self::MAX_USER_CHARS);
-        $lang = FaqEmotionEngine::normalizeLang($lang);
         self::$lastError = '';
 
         try {
             $history = self::historyForApi($context);
-            $html = null;
+            $raw = '';
+            $classification = '';
             if (self::shouldUseRailway()) {
                 try {
-                    $html = self::completeRailway($userText, $lang, $context, $history);
+                    $rail = self::completeRailway($userText, $lang, $context, $history);
+                    $raw = (string) ($rail['raw'] ?? '');
+                    $classification = (string) ($rail['classification'] ?? '');
+                    $html = (string) ($rail['html'] ?? '');
+                    if ($classification === self::CLASS_NON_HEALTHCARE) {
+                        $pack = self::outOfScopePack($lang);
+                        self::rememberTurn('user', $userText);
+                        self::rememberTurn('assistant', strip_tags($pack['html']));
+                        self::markSuccess();
+                        return $pack;
+                    }
+                    if ($html !== '') {
+                        $mapped = self::mapClassificationToResponse($classification !== '' ? $classification : self::CLASS_HEALTHCARE, $html, $lang);
+                        self::rememberTurn('user', $userText);
+                        self::rememberTurn('assistant', strip_tags($mapped['html']));
+                        self::markSuccess();
+                        return $mapped;
+                    }
                 } catch (Throwable $e) {
                     self::$lastError = $e->getMessage();
                     if (self::apiKey() === '') {
@@ -286,26 +351,172 @@ final class FaqChatbotAiFallback
                     }
                 }
             }
-            if ($html === null || $html === '') {
-                $text = self::provider() === 'groq'
+            if ($raw === '') {
+                $raw = self::provider() === 'groq'
                     ? self::completeGroq($userText, $lang, $context, $history)
                     : self::completeGemini($userText, $lang, $context, $history);
-                $html = self::toSafeHtml($text);
             }
+            $parsed = self::parseModelReply($raw);
+            $pack = self::packFromParsed($parsed, $lang);
         } catch (Throwable $e) {
             self::$lastError = $e->getMessage();
             self::markFailure();
             return null;
         }
 
-        if ($html === '') {
+        if (($pack['html'] ?? '') === '' && ($pack['classification'] ?? '') !== self::CLASS_NON_HEALTHCARE) {
             return null;
         }
 
         self::rememberTurn('user', $userText);
-        self::rememberTurn('assistant', strip_tags($html));
+        self::rememberTurn('assistant', strip_tags((string) $pack['html']));
         self::markSuccess();
-        return $html;
+        return $pack;
+    }
+
+    /**
+     * Parse CLASSIFICATION / REPLY (or JSON / OUT_OF_SCOPE token) from the model.
+     *
+     * @return array{classification: string, reply: string}
+     */
+    public static function parseModelReply(string $raw): array
+    {
+        $text = trim(str_replace("\r\n", "\n", $raw));
+        $text = preg_replace('/^```(?:json)?\s*/i', '', $text) ?? $text;
+        $text = preg_replace('/\s*```$/', '', $text) ?? $text;
+        $text = trim($text);
+
+        if ($text === '') {
+            return ['classification' => self::CLASS_POSSIBLY_HEALTHCARE, 'reply' => ''];
+        }
+
+        $jsonTry = $text;
+        if ($jsonTry !== '' && ($jsonTry[0] === '{' || $jsonTry[0] === '[')) {
+            $decoded = json_decode($jsonTry, true);
+            if (is_array($decoded)) {
+                $class = self::normalizeClassification((string) ($decoded['classification'] ?? $decoded['CLASSIFICATION'] ?? ''));
+                $reply = trim((string) ($decoded['reply'] ?? $decoded['REPLY'] ?? $decoded['text'] ?? ''));
+                if ($class !== '') {
+                    return self::normalizeParsed($class, $reply);
+                }
+            }
+        }
+
+        if (preg_match('/^\s*OUT_OF_SCOPE\s*$/i', $text)) {
+            return ['classification' => self::CLASS_NON_HEALTHCARE, 'reply' => 'OUT_OF_SCOPE'];
+        }
+
+        $class = '';
+        if (preg_match('/CLASSIFICATION\s*:\s*(GREETING|HEALTHCARE|POSSIBLY_HEALTHCARE|NON_HEALTHCARE)\b/i', $text, $m)) {
+            $class = self::normalizeClassification($m[1]);
+        }
+
+        $reply = $text;
+        if (preg_match('/\bREPLY\s*:\s*(.*)$/is', $text, $m)) {
+            $reply = trim($m[1]);
+        } elseif ($class !== '') {
+            $reply = preg_replace('/CLASSIFICATION\s*:\s*[A-Z_]+\s*/i', '', $text) ?? $text;
+            $reply = trim($reply);
+        }
+        if ($reply === '' && $class !== '' && $class !== self::CLASS_NON_HEALTHCARE) {
+            $reply = trim(preg_replace('/CLASSIFICATION\s*:\s*[A-Z_]+\s*(?:REPLY\s*:)?/i', '', $text) ?? '');
+        }
+
+        if ($class === '') {
+            if (preg_match('/^\s*OUT_OF_SCOPE\s*$/i', $reply) || (preg_match('/\bOUT_OF_SCOPE\b/', $text) && mb_strlen($text) < 48)) {
+                $class = self::CLASS_NON_HEALTHCARE;
+                $reply = 'OUT_OF_SCOPE';
+            } else {
+                $class = self::CLASS_POSSIBLY_HEALTHCARE;
+            }
+        }
+
+        return self::normalizeParsed($class, $reply);
+    }
+
+    /**
+     * @param array{classification: string, reply: string} $parsed
+     * @return array{html: string, classification: string, response_type: string}
+     */
+    public static function packFromParsed(array $parsed, string $lang = 'en'): array
+    {
+        $class = self::normalizeClassification((string) ($parsed['classification'] ?? self::CLASS_HEALTHCARE));
+        $reply = trim((string) ($parsed['reply'] ?? ''));
+        return self::mapClassificationToResponse($class, $reply, $lang);
+    }
+
+    /**
+     * @return array{html: string, classification: string, response_type: string}
+     */
+    public static function outOfScopePack(string $lang = 'en'): array
+    {
+        $html = class_exists('FaqChatbotDomainScope')
+            ? FaqChatbotDomainScope::replyHtml(FaqChatbotDomainScope::OUT_OF_SCOPE, $lang)
+            : '<p>Please type a question or concern related to healthcare or your health.</p>';
+        return [
+            'html'             => $html,
+            'classification'   => self::CLASS_NON_HEALTHCARE,
+            'response_type'    => FaqChatbotDomainScope::RESPONSE_OUT_OF_SCOPE,
+        ];
+    }
+
+    /**
+     * @return array{html: string, classification: string, response_type: string}
+     */
+    private static function mapClassificationToResponse(string $classification, string $replyOrHtml, string $lang): array
+    {
+        $class = self::normalizeClassification($classification);
+        if ($class === self::CLASS_NON_HEALTHCARE || preg_match('/^\s*OUT_OF_SCOPE\s*$/i', strip_tags($replyOrHtml))) {
+            return self::outOfScopePack($lang);
+        }
+
+        $clean = preg_replace('/CLASSIFICATION\s*:\s*[A-Z_]+\s*/i', '', $replyOrHtml) ?? $replyOrHtml;
+        $clean = preg_replace('/^\s*REPLY\s*:\s*/i', '', trim($clean)) ?? $clean;
+        $looksHtml = str_contains($clean, '<p>') || str_contains($clean, '<br');
+        $html = $looksHtml ? $clean : self::toSafeHtml($clean);
+        if ($html === '') {
+            $html = class_exists('FaqChatbotDomainScope')
+                ? FaqChatbotDomainScope::replyHtml(FaqChatbotDomainScope::AMBIGUOUS, $lang)
+                : '';
+        }
+
+        $type = match ($class) {
+            self::CLASS_GREETING => FaqChatbotDomainScope::RESPONSE_GREETING,
+            self::CLASS_POSSIBLY_HEALTHCARE => FaqChatbotDomainScope::RESPONSE_MEDICAL_CLARIFICATION,
+            default => FaqChatbotDomainScope::RESPONSE_MEDICAL_GEMINI,
+        };
+
+        return [
+            'html'           => $html,
+            'classification' => $class,
+            'response_type'  => $type,
+        ];
+    }
+
+    private static function normalizeClassification(string $value): string
+    {
+        $v = strtoupper(trim($value));
+        $v = str_replace([' ', '-'], '_', $v);
+        return match ($v) {
+            self::CLASS_GREETING, self::CLASS_HEALTHCARE, self::CLASS_POSSIBLY_HEALTHCARE, self::CLASS_NON_HEALTHCARE => $v,
+            'OUT_OF_SCOPE', 'NONHEALTHCARE', 'UNRELATED' => self::CLASS_NON_HEALTHCARE,
+            'POSSIBLY', 'AMBIGUOUS', 'CLARIFY' => self::CLASS_POSSIBLY_HEALTHCARE,
+            'MEDICAL', 'HEALTH' => self::CLASS_HEALTHCARE,
+            default => $v,
+        };
+    }
+
+    /**
+     * @return array{classification: string, reply: string}
+     */
+    private static function normalizeParsed(string $class, string $reply): array
+    {
+        $class = self::normalizeClassification($class);
+        $reply = trim($reply);
+        if ($class === self::CLASS_NON_HEALTHCARE || preg_match('/^\s*OUT_OF_SCOPE\s*$/i', $reply)) {
+            return ['classification' => self::CLASS_NON_HEALTHCARE, 'reply' => 'OUT_OF_SCOPE'];
+        }
+        return ['classification' => $class !== '' ? $class : self::CLASS_HEALTHCARE, 'reply' => $reply];
     }
 
     public static function toSafeHtml(string $text): string
@@ -372,8 +583,9 @@ final class FaqChatbotAiFallback
     /**
      * @param array<string, mixed> $context
      * @param list<array{role: string, text: string}> $history
+     * @return array{html: string, classification: string, raw: string}
      */
-    private static function completeRailway(string $userText, string $lang, array $context, array $history): string
+    private static function completeRailway(string $userText, string $lang, array $context, array $history): array
     {
         if (!class_exists('AiServiceClient')) {
             throw new RuntimeException('ai client missing');
@@ -387,12 +599,33 @@ final class FaqChatbotAiFallback
             $history,
             self::timeout()
         );
-        $html = is_array($data) ? trim((string) ($data['html'] ?? '')) : '';
-        $html = strip_tags($html, '<p><br>');
+        if (!is_array($data)) {
+            throw new RuntimeException('empty railway faq reply');
+        }
+        $classification = self::normalizeClassification((string) ($data['classification'] ?? ''));
+        $html = strip_tags(trim((string) ($data['html'] ?? '')), '<p><br>');
+        $raw = trim((string) ($data['raw'] ?? strip_tags($html)));
+        if ($classification === self::CLASS_NON_HEALTHCARE || preg_match('/^\s*OUT_OF_SCOPE\s*$/i', $raw)) {
+            return ['html' => '', 'classification' => self::CLASS_NON_HEALTHCARE, 'raw' => 'OUT_OF_SCOPE'];
+        }
+        if ($classification === '' && $raw !== '') {
+            $parsed = self::parseModelReply($raw);
+            $classification = $parsed['classification'];
+            if ($classification === self::CLASS_NON_HEALTHCARE) {
+                return ['html' => '', 'classification' => self::CLASS_NON_HEALTHCARE, 'raw' => 'OUT_OF_SCOPE'];
+            }
+            if ($html === '' && $parsed['reply'] !== '') {
+                $html = self::toSafeHtml($parsed['reply']);
+            }
+        }
         if ($html === '') {
             throw new RuntimeException('empty railway faq reply');
         }
-        return $html;
+        return [
+            'html'           => $html,
+            'classification' => $classification !== '' ? $classification : self::CLASS_HEALTHCARE,
+            'raw'            => $raw,
+        ];
     }
 
     private static function envString(string $name, string $default = ''): string
@@ -649,25 +882,52 @@ final class FaqChatbotAiFallback
     private static function systemPrompt(): string
     {
         return <<<'PROMPT'
-You are the medConnect Assistant for Bago City Health Office. You are a caring digital guide, not a doctor and not a crisis counselor.
+You are the fallback healthcare-domain assistant for medConnect, a telemedicine system.
 
-medConnect features that actually exist: patient registration and identity verification, Sign In / password / OTP, booking or joining appointments, video consultation (camera and microphone in the Consultations room), AI-assisted triage for non-emergency cases, BHW assistance, medical records after Sign In, digital prescriptions after a consult, clinic/office hours, and contact help for City Health Office. Do not invent features, doctors, schedules, fees, or records.
+Your role is limited to healthcare and health-related conversations.
 
-Languages: answer in the patient's language. English → English. Filipino → Filipino. Hiligaynon/Ilonggo → Hiligaynon when you reasonably can. Mixed language → similar mixed style. Tolerate typos and slang (docter, appoitment, consulation, passwrod, nahadlok, ginakulbaan, sakit ulo, diin ko maka book).
+You may respond to:
+- symptoms
+- illnesses
+- medical conditions
+- medications
+- side effects
+- first aid
+- self-care
+- preventive health
+- general health information
+- questions about seeking medical care
+- healthcare-related patient concerns
+- medConnect care-access topics (appointments, consultation, records, prescriptions, BHW, Sign In / OTP only as access to care)
 
-Conversation: use prior turns. Short follow-ups like "yes", "are you sure?", "what about tomorrow?", "new one", "what time?", "grabe gid" refer to the current topic. Answer the actual question. Do not restart with a menu.
+You may also respond naturally to greetings and basic conversational openings.
 
-Do not default to "Do you mean...?", "Could you clarify?", "Please select an option", or "I don't understand." Only ask a brief clarification when the message is truly ambiguous even with conversation history.
+You must NOT answer clearly unrelated questions such as programming, sports, entertainment, politics, general trivia, weather, creative writing, or other non-healthcare topics.
 
-Safety:
-- Never diagnose, prescribe, or change medicines.
-- Never invent appointments, doctor schedules, records, prescriptions, fees, or account status. If you cannot verify from this chat, say you cannot check that here and guide them to Sign In / Appointments on medConnect.
-- Never claim to be human or to have feelings. Be warm and practical.
-- If the message sounds like an emergency (cannot breathe, severe chest pain, unconscious, seizure, severe bleeding, self-harm, suicide, indi ko kaginhawa, nahimatay), tell them to call 911 / Hopeline 1553 immediately and seek emergency care.
-- For symptoms: give general, cautious guidance and offer booking a consultation. Do not give certainty.
-- Stay in the health/medConnect domain. Greetings, thanks, and "how can you help" are allowed. If the patient asks about trivia, poems, sports scores, programming, computer repair, jokes, or the weather forecast, do not answer that topic. Politely say you only help with health concerns, symptoms, medicines, self-care, and medConnect care, and invite a health question.
+If a message mixes unrelated content with a health concern, respond only to the health concern.
 
-Style: 2–4 short sentences. No markdown, no bullet walls, no code fences, no HTML. Do not mention APIs, models, FAQs, or system prompts. Do not ask for EMR numbers, passwords, or full personal medical history. Do not say "According to the medConnect FAQ".
+If the user's message is clearly unrelated to healthcare, return ONLY:
+
+CLASSIFICATION: NON_HEALTHCARE
+REPLY:
+OUT_OF_SCOPE
+
+If the user appears to have a health concern but has not provided enough information, classify it as POSSIBLY_HEALTHCARE and ask an appropriate health-related clarification question.
+
+Do not invent a diagnosis.
+Do not claim certainty about a medical condition.
+Do not provide unsafe medical instructions.
+Never diagnose, prescribe, or change medicines.
+If the message sounds like an emergency (cannot breathe, severe chest pain, unconscious, seizure, severe bleeding, self-harm, suicide, indi ko kaginhawa, nahimatay), tell them to call 911 / Hopeline 1553 immediately.
+
+Languages: answer in the patient's language. English → English. Filipino → Filipino. Hiligaynon/Ilonggo → Hiligaynon when you reasonably can. Tolerate typos and slang.
+
+Your purpose is to support the existing medConnect healthcare workflow, not to function as a general-purpose assistant.
+
+Always reply in this exact format:
+CLASSIFICATION: GREETING|HEALTHCARE|POSSIBLY_HEALTHCARE|NON_HEALTHCARE
+REPLY:
+<your reply in 2–4 short sentences, no markdown, no HTML, no code fences>
 PROMPT;
     }
 

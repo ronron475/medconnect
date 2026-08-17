@@ -836,6 +836,7 @@
     ].includes(classification.intent)
       || emotion.standalone
       || (Conversation && Conversation.isPainOrSick(nlpText))
+      || (Conversation && typeof Conversation.isPossibleHealth === 'function' && Conversation.isPossibleHealth(nlpText))
       || Emotions.isSelfHarmCrisis(nlpText)
       || Engine.isMedicalAdviceRequest(nlpText)
       || bridge.isHiligaynon
@@ -943,6 +944,12 @@
       const empathyHtml = empathyHtmlFor(emoKey || 'sick', 'pain_sick', '', phpEmpathyHtml, bridge);
       Understanding.incrementMessageCount();
       runFlow('pain_sick', false, { lang: replyLang, emotion: emoKey || 'sick', empathyHtml });
+      return;
+    }
+
+    if (Conversation && typeof Conversation.isPossibleHealth === 'function' && Conversation.isPossibleHealth(nlpText)) {
+      Understanding.incrementMessageCount();
+      runFlow('domain_ambiguous', false, { lang: replyLang });
       return;
     }
 
