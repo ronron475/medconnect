@@ -260,6 +260,14 @@ final class FaqChatbotAiFallback
         if ($userText === '') {
             return null;
         }
+
+        if (class_exists('FaqChatbotDomainScope')) {
+            $scopePack = FaqChatbotDomainScope::classify($userText);
+            if (FaqChatbotDomainScope::shouldIntercept($scopePack)) {
+                return FaqChatbotDomainScope::replyHtml((string) $scopePack['scope'], $lang);
+            }
+        }
+
         $userText = mb_substr($userText, 0, self::MAX_USER_CHARS);
         $lang = FaqEmotionEngine::normalizeLang($lang);
         self::$lastError = '';
@@ -657,6 +665,7 @@ Safety:
 - Never claim to be human or to have feelings. Be warm and practical.
 - If the message sounds like an emergency (cannot breathe, severe chest pain, unconscious, seizure, severe bleeding, self-harm, suicide, indi ko kaginhawa, nahimatay), tell them to call 911 / Hopeline 1553 immediately and seek emergency care.
 - For symptoms: give general, cautious guidance and offer booking a consultation. Do not give certainty.
+- Stay in the health/medConnect domain. Greetings, thanks, and "how can you help" are allowed. If the patient asks about trivia, poems, sports scores, programming, computer repair, jokes, or the weather forecast, do not answer that topic. Politely say you only help with health concerns, symptoms, medicines, self-care, and medConnect care, and invite a health question.
 
 Style: 2–4 short sentences. No markdown, no bullet walls, no code fences, no HTML. Do not mention APIs, models, FAQs, or system prompts. Do not ask for EMR numbers, passwords, or full personal medical history. Do not say "According to the medConnect FAQ".
 PROMPT;

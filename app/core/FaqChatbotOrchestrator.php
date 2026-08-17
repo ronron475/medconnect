@@ -107,6 +107,22 @@ final class FaqChatbotOrchestrator
 
         $_SESSION['faq_chatbot_last_intent'] = $intent;
 
+        $scopePack = FaqChatbotDomainScope::classify($effectiveText, $matchText);
+        if (!$emergency['is_emergency'] && ($scopePack['scope'] ?? '') === FaqChatbotDomainScope::MEDICAL) {
+            $stripped = trim((string) ($scopePack['stripped_text'] ?? ''));
+            if ($stripped !== '' && mb_strtolower($stripped) !== mb_strtolower(trim($effectiveText))) {
+                $repack = FaqChatbotIntentRecognizer::recognize($stripped);
+                if (($repack['intent'] ?? '') !== FaqChatbotIntentRecognizer::GREETING) {
+                    $intentPack = $repack;
+                    $intent = (string) $repack['intent'];
+                    $flowKey = $repack['flow_key'] ?? $flowKey;
+                    $matchText = FaqChatbotConversationMemory::contextualMatchText($stripped, $nlpText);
+                    $effectiveText = $stripped;
+                    $_SESSION['faq_chatbot_last_intent'] = $intent;
+                }
+            }
+        }
+
         $userMsgId = 0;
         try {
             $userMsgId = $this->convRepo->insertMessage($conversationId, 'user', $text, $intent, $flowKey, null, null);
@@ -134,7 +150,8 @@ final class FaqChatbotOrchestrator
         $best = null;
         $confidence = (float) ($intentPack['confidence'] ?? 0.35);
         $suggestions = [];
-        $intentStrong = in_array($intent, [
+        $scopeIntercepted = false;
+        $inScopeIntent = in_array($intent, [
             FaqChatbotIntentRecognizer::FINANCIAL,
             FaqChatbotIntentRecognizer::APPOINTMENT,
             FaqChatbotIntentRecognizer::LOGIN,
@@ -155,13 +172,47 @@ final class FaqChatbotOrchestrator
             FaqChatbotIntentRecognizer::CAPABILITIES,
             FaqChatbotIntentRecognizer::GREETING,
             FaqChatbotIntentRecognizer::THANKS,
+            FaqChatbotIntentRecognizer::GOODBYE,
+            FaqChatbotIntentRecognizer::IDENTITY,
+            FaqChatbotIntentRecognizer::SMALL_TALK,
             FaqChatbotIntentRecognizer::OTP,
+            FaqChatbotIntentRecognizer::MEDICINE,
+            FaqChatbotIntentRecognizer::PRESCRIPTION,
+            FaqChatbotIntentRecognizer::HEALTH_ADVICE,
+            FaqChatbotIntentRecognizer::MENTAL_HEALTH,
+            FaqChatbotIntentRecognizer::TRIAGE,
+            FaqChatbotIntentRecognizer::HOSPITAL,
+            FaqChatbotIntentRecognizer::CONTACT,
+            FaqChatbotIntentRecognizer::SCHEDULE,
+            FaqChatbotIntentRecognizer::FOLLOW_UP,
+            FaqChatbotIntentRecognizer::NAVIGATION,
+            FaqChatbotIntentRecognizer::PROFILE,
         ], true) && $confidence >= 0.62;
+        $intentStrong = $inScopeIntent;
 
         if ($emergency['is_emergency']) {
             $flowKey = $emergency['flow'] ?? 'emergency';
             $responseHtml = FaqChatbotResponseGenerator::emergencyHtml($replyLang, $flowKey);
             $confidence = 0.99;
+        } elseif (
+            !$emergency['is_emergency']
+            && (
+                ($scopePack['scope'] ?? '') === FaqChatbotDomainScope::OUT_OF_SCOPE
+                || ($scopePack['scope'] ?? '') === FaqChatbotDomainScope::HELP_OPEN
+                || (
+                    ($scopePack['scope'] ?? '') === FaqChatbotDomainScope::AMBIGUOUS
+                    && !$inScopeIntent
+                )
+            )
+        ) {
+            $responseHtml = FaqChatbotDomainScope::replyHtml((string) $scopePack['scope'], $replyLang);
+            $confidence = max(0.88, (float) ($scopePack['confidence'] ?? 0.88));
+            $flowKey = 'domain_' . (string) $scopePack['scope'];
+            $scopeIntercepted = true;
+            $intent = (string) ($scopePack['scope'] === FaqChatbotDomainScope::OUT_OF_SCOPE
+                ? 'out_of_scope'
+                : ($scopePack['scope'] === FaqChatbotDomainScope::HELP_OPEN ? 'help_open' : 'clarification'));
+            $_SESSION['faq_chatbot_last_intent'] = $intent;
         } else {
             $faqHits = [];
             try {
@@ -284,7 +335,8 @@ final class FaqChatbotOrchestrator
 
         // Assist mode: dataset only when the CURRENT message has a meaningful match.
         // Generic "I'm here to help with medConnect..." cards must not block Gemini.
-        $useDataset = class_exists('FaqChatbotAiFallback')
+        $useDataset = $scopeIntercepted
+            || (class_exists('FaqChatbotAiFallback')
             ? FaqChatbotAiFallback::shouldUseDatasetAnswer(
                 $text,
                 (bool) $emergency['is_emergency'],
@@ -293,10 +345,10 @@ final class FaqChatbotOrchestrator
                 $kbHit,
                 $responseHtml
             )
-            : ((bool) $emergency['is_emergency'] || $faqId !== null);
+            : ((bool) $emergency['is_emergency'] || $faqId !== null));
         $useServer = $mode === 'full' || ($mode === 'assist' && $useDataset);
 
-        if ($mode === 'assist' && !$useDataset && class_exists('FaqChatbotAiFallback')) {
+        if (!$scopeIntercepted && $mode === 'assist' && !$useDataset && class_exists('FaqChatbotAiFallback')) {
             $aiHtml = FaqChatbotAiFallback::tryReply($text, $replyLang, [
                 'intent'  => $intent,
                 'emotion' => $canonical,
@@ -333,7 +385,8 @@ final class FaqChatbotOrchestrator
                     $mode,
                     0,
                     $replyLang,
-                    $nlp
+                    $nlp,
+                    $scopePack['scope'] ?? null
                 );
             }
             // Gemini failed: keep the existing generic reply as last resort.
@@ -385,7 +438,8 @@ final class FaqChatbotOrchestrator
             $mode,
             $typingMs,
             $replyLang,
-            $nlp
+            $nlp,
+            $scopePack['scope'] ?? null
         );
     }
 
@@ -503,7 +557,8 @@ final class FaqChatbotOrchestrator
         string $mode,
         int $typingMs = 900,
         string $lang = 'en',
-        ?array $nlp = null
+        ?array $nlp = null,
+        ?string $domainScope = null
     ): array {
         return [
             'session_id'         => $sessionId,
@@ -527,6 +582,7 @@ final class FaqChatbotOrchestrator
             'detected_lang'      => $nlp['detected_lang'] ?? $lang,
             'english_gloss'      => $nlp['english_text'] ?? '',
             'nlp_pipeline'       => $nlp['pipeline_steps'] ?? [],
+            'domain_scope'       => $domainScope,
         ];
     }
 }

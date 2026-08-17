@@ -633,6 +633,34 @@
         actions: ['signIn', 'bookAppointment', 'contactCho'],
       },
     },
+    domain_out_of_scope: {
+      en: {
+        html: '<p>I\'m designed to assist with health and medical-related concerns in medConnect. I can\'t help with that topic, but you can ask me about symptoms, health concerns, medicines, self-care, or when to seek medical attention.</p>',
+        actions: ['bookAppointment', 'contactCho'],
+      },
+      fil: {
+        html: '<p>Nakalaan ako para tumulong sa mga alalahanin sa kalusugan at medikal sa medConnect. Hindi ko matutulungan ang paksang iyon, pero maaari kang magtanong tungkol sa sintomas, gamot, self-care, o kung kailan dapat magpatingin.</p>',
+        actions: ['bookAppointment', 'contactCho'],
+      },
+      hil: {
+        html: '<p>Ginhanda ako para magbulig sa mga concern sa health kag medical sa medConnect. Indi ko matabangan ina nga topic, pero pwede ka magpamangkot parte sa sintomas, gamot, self-care, ukon kun san-o dapat magpacheckup.</p>',
+        actions: ['bookAppointment', 'contactCho'],
+      },
+    },
+    domain_ambiguous: {
+      en: {
+        html: '<p>I\'m here to help with health concerns. Could you tell me what symptom, health problem, or medical concern you\'re experiencing?</p>',
+        actions: ['bookAppointment', 'contactCho'],
+      },
+      fil: {
+        html: '<p>Nandito ako para tumulong sa mga alalahanin sa kalusugan. Ano pong sintomas, problema sa katawan, o medical concern ang nais mong itanong?</p>',
+        actions: ['bookAppointment', 'contactCho'],
+      },
+      hil: {
+        html: '<p>Diri ako para magbulig sa health concerns. Ano nga sintomas, problema sa lawas, ukon medical concern ang gusto mo pamangkuton?</p>',
+        actions: ['bookAppointment', 'contactCho'],
+      },
+    },
     partial_clarify: {
       en: { followUpKey: 'tryTopics', actions: ['signIn', 'bookAppointment', 'contactSupport'] },
       fil: { followUpKey: 'tryTopics', actions: ['signIn', 'bookAppointment', 'contactSupport'] },

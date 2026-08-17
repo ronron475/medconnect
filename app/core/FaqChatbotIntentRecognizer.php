@@ -87,7 +87,7 @@ final class FaqChatbotIntentRecognizer
         /** @var list<array{0: string, 1: float, 2: string, 3: string}> $rules */
         $rules = [
             [self::GOODBYE, 0.92, '/\b(bye|goodbye|see\s+you|paalam|kita\s+ta|hangtod)\b/ui', 'welcome'],
-            [self::GREETING, 0.93, '/^(hi|hello|hey|good\s+(morning|afternoon|evening)|kumusta|musta|maayong)\b/ui', 'welcome'],
+            [self::GREETING, 0.93, '/^(hi|hello|hey|helo|hola|good\s+(morning|afternoon|evening|day)|kamusta|kumusta|musta|maayong(\s+(aga|hapon|gab-?i|adlaw))?|magandang(\s+(umaga|hapon|gabi))?)(\s+(po|gid|there|doc|doctor|doktor))*[\s!.?]*$/ui', 'welcome'],
             [self::THANKS, 0.92, '/\b(thank\s*you|thanks|salamat|maraming\s+salamat|damo\s+nga\s+salamat)\b/ui', 'gratitude'],
             [self::IDENTITY, 0.9, '/\b(who\s+are\s+you|what\s+are\s+you|are\s+you\s+(a\s+)?(bot|ai|robot)|sino\s+ka|ano\s+ka)\b/ui', 'welcome'],
             [self::CAPABILITIES, 0.9, '/\b(what\s+can\s+you\s+do|how\s+can\s+you\s+help|ano\s+ang\s+kaya\s+mo|your\s+features)\b/ui', 'services'],

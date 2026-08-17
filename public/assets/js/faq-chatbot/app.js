@@ -390,7 +390,7 @@
       || flowKey === 'emergency';
     const emergencyActions = flowKey === 'crisis' || flowKey === 'emergency';
 
-    const noClosing = ['crisis', 'emergency', 'moderation', 'restricted', 'spam', 'partial_clarify', 'not_understood'].includes(flowKey);
+    const noClosing = ['crisis', 'emergency', 'moderation', 'restricted', 'spam', 'partial_clarify', 'not_understood', 'domain_out_of_scope', 'domain_ambiguous'].includes(flowKey);
     if (!noClosing && !followUp && Conversation) {
       followUp = Conversation.getClosing(lang, options.closingSeed || flowKey);
     }
@@ -829,6 +829,10 @@
       INTENT.FAQ,
       INTENT.TECHNICAL,
       INTENT.CONNECTIVITY,
+      INTENT.OFF_TOPIC,
+      INTENT.HELP_OPEN,
+      INTENT.AMBIGUOUS,
+      INTENT.MEDICAL_INFO,
     ].includes(classification.intent)
       || emotion.standalone
       || (Conversation && Conversation.isPainOrSick(nlpText))
@@ -910,7 +914,22 @@
       return;
     }
 
-    if (classification.intent === INTENT.GREETING || Conversation.isGreeting(nlpText)) {
+    if (classification.intent === INTENT.OFF_TOPIC) {
+      Understanding.incrementMessageCount();
+      runFlow('domain_out_of_scope', false, { lang: replyLang });
+      return;
+    }
+
+    if (classification.intent === INTENT.HELP_OPEN || classification.intent === INTENT.AMBIGUOUS) {
+      Understanding.incrementMessageCount();
+      runFlow('domain_ambiguous', false, { lang: replyLang });
+      return;
+    }
+
+    const medicalConcern = (Conversation && Conversation.isPainOrSick(nlpText))
+      || classification.intent === INTENT.MEDICAL_INFO;
+
+    if ((classification.intent === INTENT.GREETING || Conversation.isGreeting(nlpText)) && !medicalConcern) {
       Understanding.incrementMessageCount();
       if (Understanding.shouldAllowFullGreeting() || Understanding.isExplicitRestart(trimmed)) {
         runFlow('greeting', false, { lang: replyLang });
