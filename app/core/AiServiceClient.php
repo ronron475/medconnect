@@ -62,7 +62,7 @@ final class AiServiceClient
      * FAQ chatbot conversational fallback (Gemini/Groq on Railway).
      *
      * @param list<array{role?: string, text?: string}> $history
-     * @return array{html?: string}|null
+     * @return array{html?: string, classification?: string, raw?: string}|null
      */
     public static function faqChatAssist(
         string $text,

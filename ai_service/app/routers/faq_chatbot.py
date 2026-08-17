@@ -33,13 +33,13 @@ class FaqChatAssistRequest(BaseModel):
 
 @router.post("/faq-chatbot/assist", summary="FAQ chatbot conversational fallback")
 async def faq_chatbot_assist(body: FaqChatAssistRequest) -> dict:
-    from faq_chatbot import generate_reply
+    from faq_chatbot import generate_assist
 
     lang = body.lang.lower() if body.lang.lower() in {"en", "fil", "hil"} else "en"
     history = [{"role": turn.role, "text": turn.text} for turn in body.history[:12]]
     try:
-        html = await asyncio.to_thread(
-            generate_reply,
+        pack = await asyncio.to_thread(
+            generate_assist,
             body.text,
             lang,
             intent=body.intent,
@@ -51,8 +51,27 @@ async def faq_chatbot_assist(body: FaqChatAssistRequest) -> dict:
         logger.warning("FAQ chatbot assist failed: %s", exc)
         raise HTTPException(status_code=503, detail="FAQ assistant is temporarily unavailable.") from exc
 
+    classification = str(pack.get("classification") or "")
+    html = str(pack.get("html") or "")
+    if classification == "NON_HEALTHCARE":
+        logger.info("FAQ chatbot assist out-of-scope (%d chars, lang=%s)", len(body.text), lang)
+        return {
+            "success": True,
+            "data": {
+                "html": "",
+                "classification": "NON_HEALTHCARE",
+                "raw": "OUT_OF_SCOPE",
+            },
+        }
     if not html:
         raise HTTPException(status_code=503, detail="FAQ assistant returned an empty reply.")
 
-    logger.info("FAQ chatbot assist ok (%d chars, lang=%s)", len(body.text), lang)
-    return {"success": True, "data": {"html": html}}
+    logger.info("FAQ chatbot assist ok (%d chars, lang=%s, class=%s)", len(body.text), lang, classification)
+    return {
+        "success": True,
+        "data": {
+            "html": html,
+            "classification": classification,
+            "raw": str(pack.get("raw") or ""),
+        },
+    }

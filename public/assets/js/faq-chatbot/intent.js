@@ -137,6 +137,10 @@
       return { intent: INTENT.MEDICAL_INFO, urgency: URGENCY.LOW, isQuestion };
     }
 
+    if (Conversation && typeof Conversation.isPossibleHealth === 'function' && Conversation.isPossibleHealth(raw)) {
+      return { intent: INTENT.MEDICAL_INFO, urgency: URGENCY.LOW, isQuestion };
+    }
+
     if (Conversation && Conversation.isGreeting(raw)) {
       return { intent: INTENT.GREETING, urgency: URGENCY.NONE, isQuestion };
     }

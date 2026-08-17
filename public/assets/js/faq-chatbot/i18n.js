@@ -635,15 +635,15 @@
     },
     domain_out_of_scope: {
       en: {
-        html: '<p>I\'m designed to assist with health and medical-related concerns in medConnect. I can\'t help with that topic, but you can ask me about symptoms, health concerns, medicines, self-care, or when to seek medical attention.</p>',
+        html: '<p>Please type a question or concern related to healthcare or your health. I can help with symptoms, health concerns, medicines, self-care, and information about when to seek medical care.</p>',
         actions: ['bookAppointment', 'contactCho'],
       },
       fil: {
-        html: '<p>Nakalaan ako para tumulong sa mga alalahanin sa kalusugan at medikal sa medConnect. Hindi ko matutulungan ang paksang iyon, pero maaari kang magtanong tungkol sa sintomas, gamot, self-care, o kung kailan dapat magpatingin.</p>',
+        html: '<p>Mag-type po ng tanong o alalahanin na may kinalaman sa healthcare o sa iyong kalusugan. Makakatulong ako sa sintomas, health concerns, gamot, self-care, at kung kailan dapat magpatingin.</p>',
         actions: ['bookAppointment', 'contactCho'],
       },
       hil: {
-        html: '<p>Ginhanda ako para magbulig sa mga concern sa health kag medical sa medConnect. Indi ko matabangan ina nga topic, pero pwede ka magpamangkot parte sa sintomas, gamot, self-care, ukon kun san-o dapat magpacheckup.</p>',
+        html: '<p>Mag-type sang pamangkot ukon concern parte sa healthcare ukon sa imo health. Makabulig ako sa sintomas, health concerns, gamot, self-care, kag kun san-o dapat magpacheckup.</p>',
         actions: ['bookAppointment', 'contactCho'],
       },
     },
