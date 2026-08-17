@@ -66,7 +66,7 @@ expect_true($parsedToken['classification'] === FaqChatbotAiFallback::CLASS_NON_H
 
 $oosPack = FaqChatbotAiFallback::packFromParsed($parsedNon, 'en');
 expect_true($oosPack['response_type'] === FaqChatbotDomainScope::RESPONSE_OUT_OF_SCOPE, 'NON maps to OUT_OF_SCOPE');
-expect_true(str_contains($oosPack['html'], 'Please type a question or concern related to healthcare'), 'OOS pack uses backend copy');
+expect_true(str_contains($oosPack['html'], 'healthcare-related concerns only'), 'OOS pack uses backend copy');
 expect_true(!str_contains($oosPack['html'], 'OUT_OF_SCOPE'), 'user never sees OUT_OF_SCOPE token');
 
 $maybePack = FaqChatbotAiFallback::packFromParsed($parsedMaybe, 'en');
@@ -127,7 +127,7 @@ $empty = FaqChatbotAiFallback::toSafeHtml('   ');
 expect_true($empty === '', 'blank text → empty html');
 
 $blocked = FaqChatbotAiFallback::tryReply('What is the capital of Japan?', 'en');
-expect_true(is_string($blocked) && str_contains((string) $blocked, 'Please type a question or concern related to healthcare'), 'capital of Japan is backend OUT_OF_SCOPE');
+expect_true(is_string($blocked) && str_contains((string) $blocked, 'healthcare-related concerns only'), 'capital of Japan is backend OUT_OF_SCOPE');
 expect_true(!preg_match('/tokyo/i', (string) $blocked), 'does not answer the trivia question');
 
 $vagueHealth = FaqChatbotAiFallback::parseModelReply("CLASSIFICATION: POSSIBLY_HEALTHCARE\nREPLY:\nWhat symptoms are you noticing today?");
@@ -208,7 +208,7 @@ if (!$keyPresent) {
     }
     expect_true(is_string($vagueLive) && $vagueLive !== '', 'vague health concern returns a reply');
     expect_true(
-        !str_contains((string) $vagueLive, 'Please type a question or concern related to healthcare'),
+        !str_contains((string) $vagueLive, 'healthcare-related concerns only'),
         'vague health is not OUT_OF_SCOPE'
     );
 }

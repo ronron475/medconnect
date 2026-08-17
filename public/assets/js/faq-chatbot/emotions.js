@@ -236,6 +236,7 @@
     /\bginabatyag\s+ko\s+sakit\s+sa\s+dughan\b/i, /\bgrabe\s+nga\s+pagdugo\b/i,
     /\bwala\s+siya\s+sang\s+panimuot\b/i, /\bnagakombulsyon\b/i,
     /\bindi\s+makaginhawa\b/i, /\bindi\s+makahinga\b/i, /\bsakit\s+ang\s+dibdib\b/i,
+    /\blisod\s+ginhawa\b/i, /\blisud\s+ginhawa\b/i, /\bmasakit\s+(akon\s+)?dughan\b/i,
   ];
 
   const FLOW_HINTS = [
@@ -355,6 +356,10 @@
 
   function isMedicalEmergency(text) {
     const raw = String(text || '');
+    const Conversation = global.McFaqConversation;
+    if (Conversation && typeof Conversation.isHealthcareRelated === 'function' && !Conversation.isHealthcareRelated(raw)) {
+      return false;
+    }
     if (EMERGENCY_PATTERNS.some((re) => re.test(raw))) return true;
     if (isQuestionLike(raw)) return false;
     const Intent = global.McFaqIntent;

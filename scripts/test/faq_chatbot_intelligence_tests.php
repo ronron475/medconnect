@@ -147,7 +147,7 @@ foreach ($emergencies as $text) {
     expect_true($ok, "\"{$text}\" emergency=" . (!empty($em['is_emergency']) ? 'yes' : 'no') . " intent={$intent['intent']}");
 }
 
-$nonEmergency = ['how to book', 'I am scared', 'masakit ulo ko'];
+$nonEmergency = ['how to book', 'I am scared', 'masakit ulo ko', 'wala kwarta', 'ano oras', 'diin ang hospital?'];
 echo "\nNon-emergency must not override FAQ\n";
 foreach ($nonEmergency as $text) {
     $em = FaqChatbotEmergencyDetector::detect($text);

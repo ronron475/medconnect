@@ -95,8 +95,21 @@
     /\btell\s+me\s+a\s+joke\b/i,
     /\b(who\s+won|basketball\s+game|soccer\s+game|football\s+game)\b/i,
     /\b(how\s+do\s+i\s+(code|program|fix\s+my\s+computer)|programming\s+tutorial|code\s+php|php\s+tutorial|help\s+me\s+code(\s+php)?)\b/i,
-    /\b(what\s+is\s+the\s+weather|weather\s+(today|tomorrow|forecast))\b/i,
+    /\b(what\s+is\s+the\s+weather|weather\s+(today|tomorrow|forecast)|anong\s+weather)\b/i,
     /\b(stock\s+market|cryptocurrency|bitcoin|business\s+plan)\b/i,
+    /\b(wala\s+kwarta|may\s+kwarta|bigyan\s+mo\s+ako\s+pera|may\s+pera\s+ba)\b/i,
+    /\b(ano\s+oras|magluto|sino\s+ka|who\s+are\s+you|ano\s+ka)\b/i,
+    /\b(football|basketball|movie|anime|music|facebook|programming|coding|school\s+assignment|what\s+is\s+php|what\s+is\s+java)\b/i,
+    /\bplay\s+a\s+game\b/i,
+    /\bwho\s+is\s+the\s+president\b/i,
+  ];
+
+  const HEALTHCARE_CUES = [
+    /\b(sakit|masakit|nagasakit|ginasakit|ginahilanat|hilanat|lagnat|ubo|sip-?on|sipon|hilo|nahilo|nalipong|dugo|samad|pagsusuka|nagsuka|ginalain|ginakulbaan)\b/i,
+    /\b(ulo|tiyan|dughan|dibdib|mata|lawas|likod|ginhawa|tambal|gamot|doktor|doctor|nurse|hospital|ospital|clinic|triage|konsulta|appointment|reseta|prescription)\b/i,
+    /\b(fever|cough|headache|dizzy|nausea|vomit|diarrhea|allergy|pregnant|buntis|asthma|diabetes|dengue|infection|medicine|medication|dosage|symptom)\b/i,
+    /\b(chest\s+pain|difficulty\s+breathing|lisod\s+ginhawa|lisud\s+ginhawa|budlay\s+ginhawa|city\s+health|health\s+office|health\s+center|medical\s+record|checkup|bhw)\b/i,
+    /\b(login|sign\s*in|register|otp|forgot\s+(my\s+)?password|reset\s+password|consultation)\b/i,
   ];
 
   const FALSE_MEDICAL = [
@@ -217,11 +230,30 @@
     return POSSIBLE_HEALTH_PATTERNS.some((re) => re.test(raw));
   }
 
+  function isHealthcareRelated(text) {
+    const raw = String(text || '').trim();
+    if (!raw) return false;
+    if (isGreeting(raw)) return false;
+    if (FALSE_MEDICAL.some((re) => re.test(raw))) return false;
+    if (PAIN_SICK_PATTERNS.some((re) => re.test(raw))) return true;
+    if (POSSIBLE_HEALTH_PATTERNS.some((re) => re.test(raw))) return true;
+    if (HEALTHCARE_CUES.some((re) => re.test(raw))) {
+      const moneyOnly = /\b(wala\s+kwarta|may\s+kwarta|may\s+pera\s+ba|bigyan\s+mo\s+ako\s+pera)\b/i.test(raw);
+      const healthExtra = /\b(tambal|gamot|sakit|hilanat|lagnat|ubo|doctor|doktor|medicine|hospital|clinic)\b/i.test(raw);
+      if (moneyOnly && !healthExtra && !PAIN_SICK_PATTERNS.some((re) => re.test(raw))) {
+        return false;
+      }
+      return true;
+    }
+    return false;
+  }
+
   function isOffTopic(text) {
     const raw = String(text || '').trim();
     if (!raw) return false;
-    if (isGreeting(raw) || isPainOrSick(raw) || isHelpOpen(raw) || isPossibleHealth(raw)) return false;
-    return OFF_TOPIC_PATTERNS.some((re) => re.test(raw)) || FALSE_MEDICAL.some((re) => re.test(raw));
+    if (isGreeting(raw) || isHelpOpen(raw) || isHealthcareRelated(raw) || isPossibleHealth(raw)) return false;
+    if (OFF_TOPIC_PATTERNS.some((re) => re.test(raw)) || FALSE_MEDICAL.some((re) => re.test(raw))) return true;
+    return true;
   }
 
   function isAmbiguous(text) {
@@ -255,6 +287,7 @@
     isOffTopic,
     isAmbiguous,
     isPossibleHealth,
+    isHealthcareRelated,
     getClosing,
     getUnknownHtml,
     getClarifyHtml,
