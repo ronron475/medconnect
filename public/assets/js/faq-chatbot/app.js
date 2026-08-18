@@ -448,6 +448,37 @@
     }
   }
 
+  function sanitizePatientHtml(html, lang) {
+    const raw = String(html || '');
+    const plain = raw.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
+    if (!plain) return raw;
+    const looksInternal = /is_healthcare_related|isHealthcareRelated|"intent"\s*:|normalized_meaning|"confidence"\s*:/i.test(plain)
+      && /[\{["]/.test(plain);
+    if (!looksInternal) return raw;
+
+    if (/is_healthcare_related"\s*:\s*false|isHealthcareRelated"\s*:\s*false/i.test(plain)) {
+      return Engine.getFlow('domain_out_of_scope', lang || 'en').html;
+    }
+
+    const match = plain.match(/\{[\s\S]*\}/);
+    if (match) {
+      try {
+        const decoded = JSON.parse(match[0]);
+        if (decoded && typeof decoded === 'object') {
+          const reply = String(decoded.reply || decoded.response || decoded.text || '').trim();
+          if (reply && !/is_healthcare_related|normalized_meaning|"intent"\s*:/i.test(reply)) {
+            return reply.includes('<') ? reply : `<p>${reply.replace(/</g, '&lt;').replace(/>/g, '&gt;')}</p>`;
+          }
+          if (decoded.is_healthcare_related === false || decoded.isHealthcareRelated === false) {
+            return Engine.getFlow('domain_out_of_scope', lang || 'en').html;
+          }
+        }
+      } catch (_) { /* ignore malformed JSON */ }
+    }
+
+    return Engine.getFlow('domain_out_of_scope', lang || 'en').html;
+  }
+
   function deliverFromPhp(meta, lang) {
     const type = String(meta.final_response_type || '');
     const isEmergency = !!meta.emergency;
@@ -462,8 +493,9 @@
       followUp = greeting.followUp;
     }
     const skipSuggestions = hideGenericMenu || type === 'OUT_OF_SCOPE' || type === 'MEDICAL_GEMINI' || type === 'MEDICAL_CLARIFICATION';
+    const safeHtml = sanitizePatientHtml(meta.response_html, lang);
     deliverBot(flow, {
-      html: meta.response_html,
+      html: safeHtml,
       lang,
       typingMs: meta.typing_ms || TYPING_MS,
       feedbackMessageId: meta.bot_message_id,

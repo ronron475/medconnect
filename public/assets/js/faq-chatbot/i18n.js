@@ -649,15 +649,15 @@
     },
     domain_out_of_scope: {
       en: {
-        html: '<p>I\'m here to assist with healthcare and medConnect-related concerns. Please ask me about a health concern, symptom, medication, appointment, consultation, or another healthcare-related topic.</p>',
+        html: '<p>I\'m sorry, I can\'t answer that because it is outside the scope of the medConnect Assistant. I can only assist with healthcare concerns and medConnect-related services.</p>',
         actions: [],
       },
       fil: {
-        html: '<p>Ako ang medConnect Assistant, kaya healthcare at medConnect-related concerns lang ang matutulungan ko. Magtanong po tungkol sa sintomas, gamot, appointment, konsultasyon, o ibang health concern.</p>',
+        html: '<p>Paumanhin, hindi ko masagot iyan dahil wala ito sa saklaw ng medConnect Assistant. Makakatulong lang ako sa mga alalahanin sa kalusugan at mga serbisyong may kaugnayan sa medConnect.</p>',
         actions: [],
       },
       hil: {
-        html: '<p>Ako ang medConnect Assistant, gani healthcare kag medConnect-related concerns lang ang matabangan ko. Palihog pamangkot parte sa sintomas, tambal, appointment, konsultasyon, ukon iban nga health concern.</p>',
+        html: '<p>Pasensya, indi ko masabat sina kay wala ini sa saklaw sang medConnect Assistant. Makatabang lang ako sa mga health concern kag mga serbisyo nga may kaangtan sa medConnect.</p>',
         actions: [],
       },
     },

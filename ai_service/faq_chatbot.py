@@ -65,11 +65,49 @@ def gemini_model() -> str:
     return DEFAULT_GEMINI_MODEL
 
 
+def is_internal_classification_payload(text: str) -> bool:
+    plain = re.sub(r"<[^>]+>", "", (text or "")).strip()
+    if not plain:
+        return False
+    if re.search(r'"is_healthcare_related"\s*:', plain, flags=re.I) or re.search(
+        r'"isHealthcareRelated"\s*:', plain, flags=re.I
+    ):
+        return True
+    return bool(
+        re.match(r"^\s*\{[\s\S]*\}\s*$", plain)
+        and re.search(r'"(intent|classification|normalized_meaning|urgency|confidence)"\s*:', plain, flags=re.I)
+    )
+
+
+def sanitize_patient_html(text: str, lang: str = "en") -> str:
+    plain = re.sub(r"<[^>]+>", "", (text or "")).strip()
+    if not plain or not is_internal_classification_payload(plain):
+        return text or ""
+    match = re.search(r"\{[\s\S]*\}", plain)
+    if match:
+        try:
+            decoded = json.loads(match.group(0))
+        except json.JSONDecodeError:
+            decoded = None
+        if isinstance(decoded, dict):
+            is_health = decoded.get("is_healthcare_related", decoded.get("isHealthcareRelated"))
+            reply = str(decoded.get("reply") or decoded.get("response") or decoded.get("text") or "").strip()
+            if is_health in (False, 0, "false", "0"):
+                return ""
+            if reply and not is_internal_classification_payload(reply):
+                return to_safe_html(reply)
+    if re.search(r'"is_healthcare_related"\s*:\s*false', plain, flags=re.I):
+        return ""
+    return ""
+
+
 def to_safe_html(text: str) -> str:
     text = (text or "").replace("\r\n", "\n").replace("\r", "\n").strip()
     text = re.sub(r"```[\s\S]*?```", "", text).strip()
     text = re.sub(r"<[^>]+>", "", text).strip()
     if not text:
+        return ""
+    if is_internal_classification_payload(text):
         return ""
     text = re.sub(r"\n{3,}", "\n\n", text)
     parts = [p.strip() for p in re.split(r"\n\s*\n", text) if p.strip()]
@@ -242,6 +280,8 @@ def parse_model_reply(raw: str) -> dict[str, str]:
     text = re.sub(r"\s*```$", "", text).strip()
     if not text:
         return {"classification": CLASS_POSSIBLY, "reply": ""}
+    if re.search(r'"is_healthcare_related"\s*:\s*false', text, flags=re.I):
+        return {"classification": CLASS_NON, "reply": "OUT_OF_SCOPE"}
     json_match = re.search(r"\{[\s\S]*\}", text)
     if json_match:
         try:
@@ -258,6 +298,9 @@ def parse_model_reply(raw: str) -> dict[str, str]:
             elif is_health is False or is_health == 0 or str(is_health).lower() == "false":
                 classification = CLASS_NON
             reply = str(decoded.get("reply") or decoded.get("REPLY") or decoded.get("text") or "").strip()
+            intent = str(decoded.get("intent") or "").strip().lower().replace("-", "_")
+            if not classification and intent in {"non_healthcare", "nonhealthcare", "out_of_scope"}:
+                classification = CLASS_NON
             if classification or reply or is_health is not None:
                 parsed = _normalize_parsed(classification or CLASS_POSSIBLY, reply)
                 parsed["intent"] = str(decoded.get("intent") or "").strip()

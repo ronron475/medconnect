@@ -78,6 +78,8 @@ $cases = [
     ['kamusta', 'greeting'],
     ['tell me a joke', 'boundary'],
     ['what is the weather?', 'boundary'],
+    ['happy birthday', 'boundary'],
+    ['who won the basketball game?', 'boundary'],
     ['how do I book an appointment?', 'medconnect'],
 ];
 
@@ -111,7 +113,12 @@ foreach ($cases as [$text, $expect]) {
         . "\n";
 
     expect_true(!empty($r['use_server_response']), "{$text}: use_server");
+    expect_true(!str_contains($plain, 'is_healthcare_related') && !str_contains($plain, '"intent"'), "{$text}: no classification JSON in patient HTML");
     expect_true(!str_contains($plain, 'create account') && !str_contains($plain, 'sign in') || $expect === 'greeting' || $expect === 'medconnect', "{$text}: no generic account menu");
+
+    if ($expect === 'boundary') {
+        expect_true(str_contains($plain, 'outside the scope of the medconnect assistant') || str_contains($plain, 'healthcare concern'), "{$text}: boundary copy visible");
+    }
 
     if ($expect === 'greeting') {
         expect_true($route === 'GREETING', "{$text}: greeting route");
