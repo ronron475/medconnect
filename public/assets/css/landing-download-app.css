@@ -943,6 +943,14 @@ html.lsa-ready .landing-page .download-app-section .lsa:not(.lsa-visible) {
   transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
 }
 
+/* Ensure button labels always render above any layered backgrounds */
+.download-app__btn > span {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 1;
+}
+
 .download-app__btn[hidden] {
   display: none !important;
 }
@@ -1111,6 +1119,13 @@ html[data-theme-resolved='dark'] .landing-page .download-app__btn--ghost {
   border-color: #334155;
 }
 
+/* Extra safety: apply ghost-button contrast regardless of landing-page class */
+html[data-theme-resolved='dark'] .download-app__btn--ghost {
+  color: #e2e8f0;
+  border-color: #334155;
+  background: rgba(6, 147, 150, 0.08);
+}
+
 @media (min-width: 481px) {
   .download-app__actions {
     flex-wrap: nowrap;
@@ -1182,6 +1197,8 @@ html[data-theme-resolved='dark'] .landing-page .download-app__btn--ghost {
     height: auto;
     min-height: 44px;
     padding: 10px 16px;
+    font-size: 15px;
+    line-height: 1.1;
   }
 
   .download-app__status {
