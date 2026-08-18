@@ -66,7 +66,7 @@ expect_true($parsedToken['classification'] === FaqChatbotAiFallback::CLASS_NON_H
 
 $oosPack = FaqChatbotAiFallback::packFromParsed($parsedNon, 'en');
 expect_true($oosPack['response_type'] === FaqChatbotDomainScope::RESPONSE_OUT_OF_SCOPE, 'NON maps to OUT_OF_SCOPE');
-expect_true(str_contains($oosPack['html'], 'healthcare and medConnect-related concerns'), 'OOS pack uses backend copy');
+expect_true(str_contains($oosPack['html'], 'outside the scope of the medConnect Assistant'), 'OOS pack uses backend copy');
 expect_true(!str_contains($oosPack['html'], 'OUT_OF_SCOPE'), 'user never sees OUT_OF_SCOPE token');
 
 $maybePack = FaqChatbotAiFallback::packFromParsed($parsedMaybe, 'en');
@@ -156,6 +156,13 @@ expect_true(str_contains($html, 'Need a doctor?'), 'plain text preserved');
 
 $empty = FaqChatbotAiFallback::toSafeHtml('   ');
 expect_true($empty === '', 'blank text → empty html');
+
+$jsonLeak = '{"is_healthcare_related":false,"intent":"non_healthcare"}';
+expect_true(FaqChatbotAiFallback::isInternalClassificationPayload($jsonLeak), 'detect classification JSON leak');
+$sanitized = FaqChatbotAiFallback::sanitizePatientFacingHtml(FaqChatbotAiFallback::toSafeHtml($jsonLeak) ?: $jsonLeak, 'en');
+expect_true(str_contains($sanitized, 'outside the scope of the medConnect Assistant'), 'sanitize replaces JSON with boundary');
+expect_true(!str_contains($sanitized, 'is_healthcare_related'), 'sanitize strips classification fields');
+expect_true(FaqChatbotAiFallback::toSafeHtml($jsonLeak) === '', 'toSafeHtml rejects classification JSON');
 
 $jsonNon = '{"is_healthcare_related":false,"intent":"non_healthcare","language":"English","normalized_meaning":"capital of Japan","urgency":"NON_URGENT","confidence":0.99,"reply":""}';
 $parsedJsonNon = FaqChatbotAiFallback::parseModelReply($jsonNon);
@@ -254,7 +261,7 @@ if (!$keyPresent) {
         }
         expect_true(is_string($vagueLive) && $vagueLive !== '', 'vague health concern returns a reply');
         expect_true(
-            !str_contains((string) $vagueLive, 'healthcare and medConnect-related concerns'),
+            !str_contains((string) $vagueLive, 'outside the scope of the medConnect Assistant'),
             'vague health is not OUT_OF_SCOPE'
         );
     }

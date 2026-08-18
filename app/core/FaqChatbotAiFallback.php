@@ -427,6 +427,11 @@ final class FaqChatbotAiFallback
             return ['classification' => self::CLASS_POSSIBLY_HEALTHCARE, 'reply' => ''];
         }
 
+        if (preg_match('/"is_healthcare_related"\s*:\s*false/i', $text)
+            || preg_match('/"isHealthcareRelated"\s*:\s*false/i', $text)) {
+            return self::normalizeParsed(self::CLASS_NON_HEALTHCARE, 'OUT_OF_SCOPE');
+        }
+
         if (preg_match('/\{[\s\S]*\}/', $text, $jsonMatch)) {
             $decoded = json_decode($jsonMatch[0], true);
             if (is_array($decoded)) {
@@ -483,6 +488,10 @@ final class FaqChatbotAiFallback
             $class = self::CLASS_NON_HEALTHCARE;
         }
         $reply = trim((string) ($decoded['reply'] ?? $decoded['REPLY'] ?? $decoded['text'] ?? ''));
+        $intent = strtolower(str_replace('-', '_', trim((string) ($decoded['intent'] ?? ''))));
+        if ($class === '' && in_array($intent, ['non_healthcare', 'nonhealthcare', 'out_of_scope'], true)) {
+            $class = self::CLASS_NON_HEALTHCARE;
+        }
         if ($class === '' && $reply === '' && $isHealth === null) {
             return null;
         }
@@ -566,6 +575,18 @@ final class FaqChatbotAiFallback
 
         $clean = preg_replace('/CLASSIFICATION\s*:\s*[A-Z_]+\s*/i', '', $replyOrHtml) ?? $replyOrHtml;
         $clean = preg_replace('/^\s*REPLY\s*:\s*/i', '', trim($clean)) ?? $clean;
+        if (self::isInternalClassificationPayload($clean)) {
+            $parsed = self::parseModelReply($clean);
+            if (($parsed['classification'] ?? '') === self::CLASS_NON_HEALTHCARE) {
+                return self::outOfScopePack($lang);
+            }
+            $extracted = trim((string) ($parsed['reply'] ?? ''));
+            if ($extracted !== '' && !self::isInternalClassificationPayload($extracted)) {
+                $clean = $extracted;
+            } else {
+                return self::outOfScopePack($lang);
+            }
+        }
         $looksHtml = str_contains($clean, '<p>') || str_contains($clean, '<br');
         $html = $looksHtml ? $clean : self::toSafeHtml($clean);
         if ($html === '' || self::isInsufficientModelReply($html)) {
@@ -613,6 +634,62 @@ final class FaqChatbotAiFallback
         return ['classification' => $class !== '' ? $class : self::CLASS_HEALTHCARE, 'reply' => $reply];
     }
 
+    /** Detect Gemini/internal classification JSON that must never be shown to patients. */
+    public static function isInternalClassificationPayload(string $text): bool
+    {
+        $plain = trim(strip_tags($text));
+        if ($plain === '') {
+            return false;
+        }
+        if (preg_match('/"is_healthcare_related"\s*:/i', $plain)
+            || preg_match('/"isHealthcareRelated"\s*:/i', $plain)) {
+            return true;
+        }
+        if (preg_match('/^\s*\{[\s\S]*\}\s*$/', $plain)
+            && preg_match('/"(intent|classification|normalized_meaning|urgency|confidence)"\s*:/i', $plain)) {
+            return true;
+        }
+        return false;
+    }
+
+    /**
+     * Replace leaked model JSON / routing metadata with a safe patient-facing HTML reply.
+     */
+    public static function sanitizePatientFacingHtml(string $html, string $lang = 'en'): string
+    {
+        $plain = trim(strip_tags($html));
+        if ($plain === '' || !self::isInternalClassificationPayload($plain)) {
+            return $html;
+        }
+
+        if (preg_match('/\{[\s\S]*\}/', $plain, $jsonMatch)) {
+            $decoded = json_decode($jsonMatch[0], true);
+            if (is_array($decoded)) {
+                $isHealth = $decoded['is_healthcare_related'] ?? $decoded['isHealthcareRelated'] ?? null;
+                $reply = trim((string) ($decoded['reply'] ?? $decoded['REPLY'] ?? $decoded['text'] ?? $decoded['response'] ?? ''));
+                if ($isHealth === false || $isHealth === 0 || $isHealth === 'false' || $isHealth === '0') {
+                    return class_exists('FaqChatbotDomainScope')
+                        ? FaqChatbotDomainScope::replyHtml(FaqChatbotDomainScope::OUT_OF_SCOPE, $lang)
+                        : '<p>Please ask a healthcare or medConnect-related question.</p>';
+                }
+                if ($reply !== '' && !self::isInternalClassificationPayload($reply)) {
+                    $safe = self::toSafeHtml($reply);
+                    return $safe !== '' ? $safe : FaqChatbotDomainScope::unmatchedHealthcareHtml($lang);
+                }
+                if ($isHealth === true || $isHealth === 1 || $isHealth === 'true' || $isHealth === '1') {
+                    return FaqChatbotDomainScope::unmatchedHealthcareHtml($lang);
+                }
+            }
+        }
+
+        if (preg_match('/"is_healthcare_related"\s*:\s*false/i', $plain)
+            || preg_match('/"isHealthcareRelated"\s*:\s*false/i', $plain)) {
+            return FaqChatbotDomainScope::replyHtml(FaqChatbotDomainScope::OUT_OF_SCOPE, $lang);
+        }
+
+        return FaqChatbotDomainScope::replyHtml(FaqChatbotDomainScope::OUT_OF_SCOPE, $lang);
+    }
+
     public static function toSafeHtml(string $text): string
     {
         $text = str_replace(["\r\n", "\r"], "\n", trim($text));
@@ -620,6 +697,9 @@ final class FaqChatbotAiFallback
         $text = strip_tags($text);
         $text = trim($text);
         if ($text === '') {
+            return '';
+        }
+        if (self::isInternalClassificationPayload($text)) {
             return '';
         }
         $text = preg_replace('/\n{3,}/', "\n\n", $text) ?? $text;

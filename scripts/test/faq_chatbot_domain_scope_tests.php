@@ -107,7 +107,7 @@ expect_true(!FaqChatbotDomainScope::shouldIntercept(FaqChatbotDomainScope::class
 expect_true(!FaqChatbotDomainScope::shouldIntercept(FaqChatbotDomainScope::classify('I need help')), 'do not intercept help-open');
 
 $html = FaqChatbotDomainScope::replyHtml(FaqChatbotDomainScope::OUT_OF_SCOPE, 'en');
-expect_true(str_contains($html, 'healthcare and medConnect-related concerns'), 'out-of-scope copy');
+expect_true(str_contains($html, 'outside the scope of the medConnect Assistant'), 'out-of-scope copy');
 
 $focus = FaqChatbotDomainScope::healthcareFocusText("Hello, I've been feeling dizzy. By the way, what's the weather?");
 expect_true(str_contains(mb_strtolower($focus), 'dizzy') && !str_contains(mb_strtolower($focus), 'weather'), 'focus keeps dizzy, drops weather');
@@ -152,7 +152,7 @@ $emHospital = FaqChatbotEmergencyDetector::detect('diin ang hospital?');
 expect_true(empty($emHospital['is_emergency']), 'hospital location is not automatic emergency');
 
 $htmlHil = FaqChatbotDomainScope::replyHtml(FaqChatbotDomainScope::OUT_OF_SCOPE, 'hil');
-expect_true(str_contains($htmlHil, 'Palihog pamangkot parte sa sintomas'), 'hiligaynon out-of-scope copy');
+expect_true(str_contains($htmlHil, 'wala ini sa saklaw sang medConnect Assistant'), 'hiligaynon out-of-scope copy');
 
 echo "\nDomain scope tests: {$passed} passed, {$failed} failed\n";
 exit($failed > 0 ? 1 : 0);

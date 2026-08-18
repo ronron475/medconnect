@@ -128,9 +128,9 @@ final class FaqChatbotDomainScope
         $L = in_array($lang, ['en', 'fil', 'hil'], true) ? $lang : 'en';
         if ($scope === self::OUT_OF_SCOPE) {
             $copy = [
-                'en' => "I'm here to assist with healthcare and medConnect-related concerns. Please ask me about a health concern, symptom, medication, appointment, consultation, or another healthcare-related topic.",
-                'fil' => 'Ako ang medConnect Assistant, kaya healthcare at medConnect-related concerns lang ang matutulungan ko. Magtanong po tungkol sa sintomas, gamot, appointment, konsultasyon, o ibang health concern.',
-                'hil' => 'Ako ang medConnect Assistant, gani healthcare kag medConnect-related concerns lang ang matabangan ko. Palihog pamangkot parte sa sintomas, tambal, appointment, konsultasyon, ukon iban nga health concern.',
+                'en' => "I'm sorry, I can't answer that because it is outside the scope of the medConnect Assistant. I can only assist with healthcare concerns and medConnect-related services.",
+                'fil' => 'Paumanhin, hindi ko masagot iyan dahil wala ito sa saklaw ng medConnect Assistant. Makakatulong lang ako sa mga alalahanin sa kalusugan at mga serbisyong may kaugnayan sa medConnect.',
+                'hil' => 'Pasensya, indi ko masabat sina kay wala ini sa saklaw sang medConnect Assistant. Makatabang lang ako sa mga health concern kag mga serbisyo nga may kaangtan sa medConnect.',
             ];
             return '<p>' . htmlspecialchars($copy[$L], ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') . '</p>';
         }

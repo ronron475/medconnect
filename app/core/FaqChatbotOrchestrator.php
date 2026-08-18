@@ -788,6 +788,9 @@ final class FaqChatbotOrchestrator
         ?string $domainScope = null,
         array $routing = []
     ): array {
+        if ($responseHtml !== '' && class_exists('FaqChatbotAiFallback')) {
+            $responseHtml = FaqChatbotAiFallback::sanitizePatientFacingHtml($responseHtml, $lang);
+        }
         return [
             'session_id'                   => $sessionId,
             'conversation_id'              => $conversationId,
