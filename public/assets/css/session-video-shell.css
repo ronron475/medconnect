@@ -69,7 +69,7 @@ html[data-theme-resolved='dark'] .mc-session-float-shell.is-ended .mc-session-fl
   position: relative;
   width: 100%;
   height: 100%;
-  min-height: 280px;
+  min-height: 0;
   inset: auto;
   box-shadow: none;
   border-radius: 12px;
@@ -152,8 +152,9 @@ html[data-theme-resolved='dark'] .mc-session-float-shell.is-ended .mc-session-fl
   display: block;
   width: 100%;
   height: 100%;
+  min-height: 0;
   border: 0;
-  background: #000;
+  background: #0b1220;
 }
 
 .mc-session-float-toolbar {
@@ -222,6 +223,22 @@ body.mc-video-shell-fullscreen .patient-mobile-nav {
 
 body.mc-video-shell-pip .mc-messages-fab {
   bottom: calc(96px + 250px + env(safe-area-inset-bottom, 0px));
+}
+
+@media (max-width: 768px) {
+  .mc-session-float-shell.is-docked {
+    min-height: 0;
+    height: 100%;
+  }
+
+  .mc-session-float-shell.is-docked .mc-session-float-body,
+  .mc-session-float-shell.is-docked .mc-session-float-body iframe {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    min-height: 0;
+  }
 }
 
 @media (max-width: 720px) {
