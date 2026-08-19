@@ -10,10 +10,14 @@ html {
 }
 
 img,
-video,
 svg {
   max-width: 100%;
   height: auto;
+}
+
+/* Do not force live <video> to height:auto — consultation tiles must fill their slot. */
+video {
+  max-width: 100%;
 }
 
 /* ── Mobile nav toggle (hidden on desktop) ── */
@@ -1098,14 +1102,12 @@ body.reg-body .reg-security-notice {
     min-height: var(--mc-touch-min, 44px);
   }
 
-  .mc-vc-stage,
   .video-container,
-  .video-shell {
+  .video-shell:not(.is-call-active) {
     min-height: 40vh;
     max-height: 55vh;
   }
 
-  .mc-vc-stage video,
   .video-container video {
     object-fit: cover;
     max-height: 55vh;
@@ -1238,7 +1240,6 @@ table:not(.ch-table) {
     object-position: center top;
   }
 
-  .mc-vc-stage,
   .video-container {
     min-height: 50vh;
     max-height: 70vh;

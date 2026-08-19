@@ -293,7 +293,7 @@ if (session_status() === PHP_SESSION_ACTIVE) {
   <script src="<?= ASSET_BASE ?>/assets/js/video-room-enhancements.js?v=<?= $videoEnhJsVer ?>"></script>
   <style>
     html, body { margin:0; background:#0b1220; color:#fff; height:100%; width:100%; max-width:100%; overflow:hidden; }
-    body { height:100vh; height:100dvh; height:100svh; }
+    body { min-height:100%; min-height:100dvh; height:100%; }
     body.mc-vc-call-ended,
     body.is-ended-consultation {
       background:#f4f8fa !important;
@@ -693,7 +693,7 @@ if (session_status() === PHP_SESSION_ACTIVE) {
       <div class="mc-vc-participant" id="mcVcRemoteParticipant">
         <div class="mc-vc-avatar" aria-hidden="true"><?= $is_patient ? htmlspecialchars($provider_initials) : htmlspecialchars($patient_initials) ?></div>
         <div class="mc-vc-participant-text">
-          <div class="mc-vc-participant-name"><?= htmlspecialchars($is_patient ? $provider_name : $patient_name) ?></div>
+          <div class="mc-vc-participant-name" title="<?= htmlspecialchars($is_patient ? $provider_name : $patient_name) ?>"><?= htmlspecialchars($is_patient ? $provider_name : $patient_name) ?></div>
           <div class="mc-vc-participant-sub"><?= $is_patient ? htmlspecialchars($provider_specialty) : 'Patient' ?></div>
         </div>
       </div>
