@@ -70,7 +70,8 @@ if ($portal_triage_urgency === '') {
     $portal_triage_urgency = (string) ($pending_reg['urgency'] ?? '');
 }
 if ($pdo->query("SHOW TABLES LIKE 'triage_results'")->rowCount()) {
-    $s = $pdo->prepare('SELECT id, level, symptoms, assessed_at, chief_complaint, urgency_label, triage_level, recommendation_status FROM triage_results WHERE patient_id=? ORDER BY assessed_at DESC');
+    triage_assessment_ensure_schema($pdo);
+    $s = $pdo->prepare('SELECT id, level, symptoms, assessed_at, chief_complaint, urgency_label, triage_level, triage_classification, assessment_payload, outcome, recommendation_status FROM triage_results WHERE patient_id=? ORDER BY assessed_at DESC, id DESC');
     $s->execute([$uid]);
     $triage_history = $s->fetchAll(PDO::FETCH_ASSOC);
 }

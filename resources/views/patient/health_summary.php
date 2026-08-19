@@ -14,6 +14,30 @@ if (!defined('BASE_PATH')) {
 }
 require_once BASE_PATH . '/app/includes/patient_portal_bootstrap.php';
 require_once BASE_PATH . '/app/includes/patient_health_summary.php';
+require_once BASE_PATH . '/app/includes/triage_assessment_schema.php';
+require_once VIEWS_PATH . '/patient/partials/triage_helpers.php';
+
+$latest_triage = null;
+$triage_history = [];
+try {
+    triage_assessment_ensure_schema($pdo);
+    if ($pdo->query("SHOW TABLES LIKE 'triage_results'")->rowCount()) {
+        $s = $pdo->prepare("
+            SELECT id, chief_complaint, assessed_at, triage_classification, level, urgency_label,
+                   triage_level, assessment_payload, outcome, recommendation_status
+            FROM triage_results
+            WHERE patient_id = ?
+            ORDER BY assessed_at DESC, id DESC
+            LIMIT 12
+        ");
+        $s->execute([(int) $uid]);
+        $triage_history = $s->fetchAll(PDO::FETCH_ASSOC) ?: [];
+        $latest_triage = $triage_history[0] ?? null;
+    }
+} catch (Throwable $e) {
+    $triage_history = [];
+    $latest_triage = null;
+}
 
 $page_title = 'Health Summary';
 $health_css_ver = (int) @filemtime(ASSETS_PATH . '/css/patient-health-summary.css');

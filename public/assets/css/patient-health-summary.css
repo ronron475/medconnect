@@ -256,6 +256,7 @@ body.patient-portal .phs-card--blood::before { background: #dc2626; }
 body.patient-portal .phs-card--allergy::before { background: #d97706; }
 body.patient-portal .phs-card--conditions::before { background: #028090; }
 body.patient-portal .phs-card--meds::before { background: #7c3aed; }
+body.patient-portal .phs-card--triage::before { background: #0f766e; }
 
 body.patient-portal .phs-card__head {
   display: flex;
@@ -277,6 +278,62 @@ body.patient-portal .phs-card__icon--blood { background: #fef2f2; color: #dc2626
 body.patient-portal .phs-card__icon--allergy { background: #fff7ed; color: #d97706; }
 body.patient-portal .phs-card__icon--conditions { background: #ecfeff; color: #028090; }
 body.patient-portal .phs-card__icon--meds { background: #f5f3ff; color: #7c3aed; }
+body.patient-portal .phs-card__icon--triage { background: #f0fdfa; color: #0f766e; }
+
+body.patient-portal .phs-triage {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+body.patient-portal .phs-card--triage {
+  width: 100%;
+}
+
+body.patient-portal .phs-triage-history {
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 16px;
+  padding: 16px 18px 8px;
+}
+
+body.patient-portal .phs-triage-history__title {
+  margin: 0 0 4px;
+  font-size: 0.95rem;
+  font-weight: 800;
+  color: #0f172a;
+}
+
+body.patient-portal .phs-triage-history__lead {
+  margin: 0 0 12px;
+  font-size: 0.82rem;
+  line-height: 1.45;
+  color: #64748b;
+}
+
+body.patient-portal .phs-triage-history__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+body.patient-portal .phs-triage-history__item {
+  padding: 12px 0;
+  border-top: 1px solid #f1f5f9;
+}
+
+body.patient-portal .phs-triage-history__meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 12px;
+  margin-bottom: 8px;
+  font-size: 0.82rem;
+  color: #475569;
+}
+
+body.patient-portal .phs-triage-history__meta strong {
+  color: #0f172a;
+}
 
 body.patient-portal .phs-card__head-text {
   min-width: 0;

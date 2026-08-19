@@ -394,8 +394,15 @@
   });
 
   window.mcPatientUrgencyModal = {
-    showEmergency: function (message) {
-      open({ kind: 'emergency', mode: 'triage_result', useCustomMessage: !!message, message: message || '' });
+    showEmergency: function (message, extra) {
+      extra = extra || {};
+      open({
+        kind: 'emergency',
+        mode: 'triage_result',
+        useCustomMessage: !!message,
+        message: message || '',
+        title: extra.title || '',
+      });
     },
     showUrgent: function (message, bookUrl, extra) {
       extra = extra || {};

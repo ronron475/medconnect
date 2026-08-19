@@ -9,6 +9,52 @@
   let sinceTs = Math.floor(Date.now() / 1000) - 30;
   let pollTimer = null;
   const seenCompleted = new Set();
+  const seenEmergencyOverrides = new Set();
+
+  function doctorEmergencyStorageKey(id) {
+    return 'medconnect_er_override_shown_' + String(id || '');
+  }
+
+  function alreadyShownDoctorEmergency(id) {
+    const key = String(id || '');
+    if (!key) return true;
+    if (seenEmergencyOverrides.has(key)) return true;
+    try {
+      return sessionStorage.getItem(doctorEmergencyStorageKey(key)) === '1';
+    } catch (_) {
+      return false;
+    }
+  }
+
+  function markDoctorEmergencyShown(id) {
+    const key = String(id || '');
+    if (!key) return;
+    seenEmergencyOverrides.add(key);
+    try {
+      sessionStorage.setItem(doctorEmergencyStorageKey(key), '1');
+      sessionStorage.setItem('medconnect_block_telemedicine', '1');
+    } catch (_) {}
+  }
+
+  function showDoctorEmergencyOverride(item) {
+    if (!item || !item.id || alreadyShownDoctorEmergency(item.id)) return;
+    markDoctorEmergencyShown(item.id);
+
+    const message = item.message
+      || 'Your healthcare provider reviewed your case and determined it is an EMERGENCY. Please go to the nearest hospital or emergency department. Online consultation is not appropriate for this case.';
+
+    if (window.mcPatientUrgencyModal && typeof window.mcPatientUrgencyModal.showEmergency === 'function') {
+      window.mcPatientUrgencyModal.showEmergency(message, {
+        title: 'Healthcare Provider Determined Emergency',
+      });
+    }
+
+    document.dispatchEvent(new CustomEvent('medconnect:doctor-emergency-override', { detail: item }));
+
+    if (typeof global.McNotifications !== 'undefined' && typeof global.McNotifications.poll === 'function') {
+      try { global.McNotifications.poll(); } catch (_) {}
+    }
+  }
 
   function ensureBannerHost() {
     let host = document.getElementById('pmh-record-update-banner');
@@ -80,6 +126,14 @@
       }
 
       (json.completed || []).forEach(showCompletionBanner);
+
+      const overrides = json.emergency_overrides || [];
+      for (let i = 0; i < overrides.length; i++) {
+        if (!alreadyShownDoctorEmergency(overrides[i] && overrides[i].id)) {
+          showDoctorEmergencyOverride(overrides[i]);
+          break;
+        }
+      }
 
       const active = json.active || [];
       active.forEach((item) => {

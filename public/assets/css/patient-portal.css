@@ -1543,6 +1543,96 @@ html[data-theme-resolved='dark'] .booking-today-date {
   line-height: 1.45;
 }
 
+.patient-triage-history__concern {
+  font-weight: 600;
+  color: #0f172a;
+  margin-bottom: 8px;
+}
+
+.pt-assess-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 4px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  border: 1px solid #e2e8f0;
+  background: #f8fafc;
+}
+
+.pt-assess-stack--emergency {
+  border-color: #fecaca;
+  background: #fff1f2;
+}
+
+.pt-assess-stack__title {
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #0f766e;
+  margin-bottom: 2px;
+}
+
+.pt-assess-stack__row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px 12px;
+}
+
+.pt-assess-stack__row--final {
+  padding-top: 6px;
+  margin-top: 2px;
+  border-top: 1px dashed #cbd5e1;
+}
+
+.pt-assess-stack__label {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #64748b;
+}
+
+.pt-assess-chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 9px;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  background: #e2e8f0;
+  color: #334155;
+}
+
+.pt-assess-chip--ai {
+  background: #e0f2fe;
+  color: #075985;
+}
+
+.pt-assess-chip--routine {
+  background: #dcfce7;
+  color: #166534;
+}
+
+.pt-assess-chip--urgent {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+.pt-assess-chip--emergency {
+  background: #fee2e2;
+  color: #991b1b;
+}
+
+.pt-assess-emergency-note {
+  margin: 6px 0 0;
+  font-size: 0.75rem;
+  line-height: 1.45;
+  color: #9f1239;
+}
+
 .patient-triage-care-link {
   display: flex;
   align-items: center;

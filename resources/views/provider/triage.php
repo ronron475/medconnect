@@ -300,11 +300,11 @@ $slot_waiting_count = count(array_filter($display_cases, fn($t) => !empty($t['sl
           <span class="triage-field-label">Provider Decision</span>
           <div class="triage-override-row">
             <select id="overrideLevel" class="triage-override-select" aria-label="Override triage priority level">
-              <option value="1">Urgent (Priority 1)</option>
-              <option value="2">Urgent (Priority 2)</option>
-              <option value="3">Non-Urgent (Priority 3)</option>
-              <option value="4">Routine (Priority 4)</option>
-              <option value="5">Routine (Priority 5)</option>
+              <option value="1">Emergency</option>
+              <option value="2">Urgent</option>
+              <option value="3">Non-Urgent</option>
+              <option value="4">Non-Urgent (Routine)</option>
+              <option value="5">Non-Urgent (Routine)</option>
             </select>
             <button type="button" class="mc-btn mc-btn--outline triage-override-btn" onclick="applyOverride()">Apply override</button>
           </div>
