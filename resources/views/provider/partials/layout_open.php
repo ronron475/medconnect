@@ -1,3 +1,8 @@
+<?php
+if (!headers_sent()) {
+    header('Content-Type: text/html; charset=UTF-8');
+}
+?>
 <!DOCTYPE html>
 <html lang="en">
 <head>

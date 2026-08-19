@@ -313,6 +313,13 @@ ini_set('default_charset', 'UTF-8');
 if (function_exists('mb_internal_encoding')) {
     mb_internal_encoding('UTF-8');
 }
+if (PHP_SAPI !== 'cli' && !headers_sent()) {
+    $reqPath = (string) ($_SERVER['SCRIPT_NAME'] ?? $_SERVER['REQUEST_URI'] ?? '');
+    $isApi = str_contains($reqPath, '/app/api/') || str_contains($reqPath, '/api/');
+    if (!$isApi) {
+        header('Content-Type: text/html; charset=UTF-8');
+    }
+}
 
 require_once CONFIG_PATH . '/db.php';
 
