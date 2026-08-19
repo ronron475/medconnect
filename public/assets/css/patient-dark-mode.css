@@ -279,6 +279,18 @@ html[data-theme-resolved='dark'] body.patient-portal .patient-triage-alert--warn
   color: #fcd34d !important;
 }
 
+html[data-theme-resolved='dark'] body.patient-portal .patient-triage-alert--error {
+  background: rgba(239, 68, 68, 0.12) !important;
+  border-color: rgba(248, 113, 113, 0.4) !important;
+  color: #fca5a5 !important;
+}
+
+html[data-theme-resolved='dark'] body.patient-portal .patient-triage-alert--success {
+  background: rgba(34, 197, 94, 0.12) !important;
+  border-color: rgba(74, 222, 128, 0.35) !important;
+  color: #86efac !important;
+}
+
 /* ── Tables ── */
 html[data-theme-resolved='dark'] body.patient-portal .mc-table,
 html[data-theme-resolved='dark'] body.patient-portal table {
@@ -355,6 +367,49 @@ html[data-theme-resolved='dark'] body.patient-portal .mc-urgency-modal__btn--gho
   background: #141414 !important;
   border-color: #2a2a2a !important;
   color: #d4d4d8 !important;
+}
+
+html[data-theme-resolved='dark'] body.patient-portal .mc-urgency-modal__title,
+html[data-theme-resolved='dark'] body.patient-portal .mc-urgency-modal__eyebrow {
+  color: #f8fafc !important;
+}
+
+html[data-theme-resolved='dark'] body.patient-portal .mc-urgency-modal__message {
+  color: #cbd5e1 !important;
+}
+
+html[data-theme-resolved='dark'] body.patient-portal .mc-urgency-modal__continue {
+  background: #431407 !important;
+  border-color: #fb923c !important;
+  color: #ffedd5 !important;
+}
+
+html[data-theme-resolved='dark'] body.patient-portal .mc-urgency-modal__steps {
+  background: #141414 !important;
+  border-color: #2a2a2a !important;
+  color: #d4d4d8 !important;
+}
+
+html[data-theme-resolved='dark'] body.patient-portal .mc-urgency-lang__label {
+  color: #a1a1aa !important;
+}
+
+html[data-theme-resolved='dark'] body.patient-portal .mc-urgency-lang__select {
+  background: #141414 !important;
+  border-color: #2a2a2a !important;
+  color: #f8fafc !important;
+}
+
+html[data-theme-resolved='dark'] body.patient-portal .mc-urgency-slots__heading,
+html[data-theme-resolved='dark'] body.patient-portal .mc-urgency-slot-card__name,
+html[data-theme-resolved='dark'] body.patient-portal .mc-urgency-slot-card__time {
+  color: #f8fafc !important;
+}
+
+html[data-theme-resolved='dark'] body.patient-portal .mc-urgency-slot-card__meta,
+html[data-theme-resolved='dark'] body.patient-portal .mc-urgency-slot-card__sub,
+html[data-theme-resolved='dark'] body.patient-portal .mc-urgency-slots__status {
+  color: #a1a1aa !important;
 }
 
 /* ── Charts ── */
@@ -912,6 +967,149 @@ html[data-theme-resolved='dark'] body.patient-portal .pdash-care-continue {
   color: #ffedd5 !important;
 }
 
+html[data-theme-resolved='dark'] body.patient-portal .pdash-care-form__hint,
+html[data-theme-resolved='dark'] body.patient-portal .pdash-care-form__label {
+  color: #a1a1aa !important;
+}
+
+html[data-theme-resolved='dark'] body.patient-portal .pdash-care-form__input:focus {
+  border-color: #2dd4bf !important;
+  box-shadow: 0 0 0 3px rgba(45, 212, 191, 0.2) !important;
+}
+
+html[data-theme-resolved='dark'] body.patient-portal .pdash-card--complaint {
+  background: #1c1c1c !important;
+  background-image: none !important;
+  border-color: #2a2a2a !important;
+}
+
+html[data-theme-resolved='dark'] body.patient-portal .pdash-care__status-chip--review,
+html[data-theme-resolved='dark'] body.patient-portal .pdash-care__status-chip--wait {
+  background: rgba(251, 146, 60, 0.15) !important;
+  color: #fdba74 !important;
+  border-color: rgba(251, 146, 60, 0.35) !important;
+}
+
+html[data-theme-resolved='dark'] body.patient-portal .pdash-care__status-chip--scheduled {
+  background: rgba(45, 212, 191, 0.12) !important;
+  color: #5eead4 !important;
+  border-color: rgba(45, 212, 191, 0.35) !important;
+}
+
+html[data-theme-resolved='dark'] body.patient-portal .pdash-care__status-chip--ready {
+  background: rgba(34, 197, 94, 0.12) !important;
+  color: #86efac !important;
+  border-color: rgba(34, 197, 94, 0.35) !important;
+}
+
+html[data-theme-resolved='dark'] body.patient-portal .pdash-care__status-chip--idle {
+  background: #141414 !important;
+  color: #a1a1aa !important;
+  border-color: #2a2a2a !important;
+}
+
+html[data-theme-resolved='dark'] body.patient-portal .pdash-care-steps__item:not(:last-child)::after {
+  background: #3f3f46 !important;
+}
+
+html[data-theme-resolved='dark'] body.patient-portal .pdash-care-steps__item.is-done:not(:last-child)::after {
+  background: #2dd4bf !important;
+}
+
+html[data-theme-resolved='dark'] body.patient-portal .pdash-care-steps__dot {
+  background: #27272a !important;
+  color: #71717a !important;
+  border-color: #3f3f46 !important;
+}
+
+html[data-theme-resolved='dark'] body.patient-portal .pdash-care-steps__item.is-done .pdash-care-steps__dot {
+  background: rgba(45, 212, 191, 0.18) !important;
+  color: #5eead4 !important;
+  border-color: #2dd4bf !important;
+}
+
+html[data-theme-resolved='dark'] body.patient-portal .pdash-care-steps__item.is-current .pdash-care-steps__dot {
+  background: #0d9488 !important;
+  color: #fff !important;
+  border-color: #2dd4bf !important;
+  box-shadow: 0 0 0 4px rgba(45, 212, 191, 0.25) !important;
+}
+
+html[data-theme-resolved='dark'] body.patient-portal .pdash-care-steps__label {
+  color: #a1a1aa !important;
+}
+
+html[data-theme-resolved='dark'] body.patient-portal .pdash-care-steps__item.is-current .pdash-care-steps__label {
+  color: #5eead4 !important;
+}
+
+html[data-theme-resolved='dark'] body.patient-portal .pdash-care-steps__optional {
+  color: #71717a !important;
+}
+
+html[data-theme-resolved='dark'] body.patient-portal .pdash-care-panel {
+  background: #141414 !important;
+  border-color: rgba(45, 212, 191, 0.22) !important;
+}
+
+html[data-theme-resolved='dark'] body.patient-portal .pdash-care-doctor__eyebrow,
+html[data-theme-resolved='dark'] body.patient-portal .pdash-care-doctor__note {
+  color: #a1a1aa !important;
+}
+
+html[data-theme-resolved='dark'] body.patient-portal .pdash-care-doctor__name {
+  color: #f8fafc !important;
+}
+
+html[data-theme-resolved='dark'] body.patient-portal .pdash-care-concern {
+  background: #1c1c1c !important;
+  border-color: #475569 !important;
+}
+
+html[data-theme-resolved='dark'] body.patient-portal .pdash-care-concern__label {
+  color: #a1a1aa !important;
+}
+
+html[data-theme-resolved='dark'] body.patient-portal .pdash-care-concern__text {
+  color: #e2e8f0 !important;
+}
+
+html[data-theme-resolved='dark'] body.patient-portal .pdash-care-hint--success {
+  background: rgba(34, 197, 94, 0.12) !important;
+  color: #86efac !important;
+  border-color: rgba(34, 197, 94, 0.35) !important;
+}
+
+html[data-theme-resolved='dark'] body.patient-portal .pdash-care-hint--warn {
+  background: rgba(245, 158, 11, 0.12) !important;
+  color: #fcd34d !important;
+  border-color: rgba(245, 158, 11, 0.35) !important;
+}
+
+html[data-theme-resolved='dark'] body.patient-portal .pdash-care-hint--muted {
+  background: #141414 !important;
+  color: #a1a1aa !important;
+  border: 1px solid #2a2a2a !important;
+}
+
+html[data-theme-resolved='dark'] body.patient-portal .pdash-care-how {
+  color: #a1a1aa !important;
+}
+
+html[data-theme-resolved='dark'] body.patient-portal .pdash-care-how summary {
+  color: #5eead4 !important;
+}
+
+html[data-theme-resolved='dark'] body.patient-portal .pdash-care-how summary:hover {
+  color: #2dd4bf !important;
+}
+
+html[data-theme-resolved='dark'] body.patient-portal .pdash-review-wait {
+  background: rgba(245, 158, 11, 0.12) !important;
+  border-color: rgba(245, 158, 11, 0.35) !important;
+  color: #fcd34d !important;
+}
+
 html[data-theme-resolved='dark'] body.patient-portal .pdash-hero__title,
 html[data-theme-resolved='dark'] body.patient-portal .pdash-card__title,
 html[data-theme-resolved='dark'] body.patient-portal .pdash-flow__summary,
@@ -1249,6 +1447,27 @@ html[data-theme-resolved='dark'] body.patient-portal .booking-assigned-provider_
 
 html[data-theme-resolved='dark'] body.patient-portal .booking-assigned-provider__hint {
   color: #cbd5e1 !important;
+}
+
+html[data-theme-resolved='dark'] body.patient-portal .booking-assigned-provider.is-pending {
+  background: #141414 !important;
+  border-color: #475569 !important;
+  border-style: dashed !important;
+}
+
+html[data-theme-resolved='dark'] body.patient-portal .booking-today-date {
+  background: rgba(6, 147, 150, 0.18) !important;
+  color: #f8fafc !important;
+  border-color: #334155 !important;
+}
+
+html[data-theme-resolved='dark'] body.patient-portal .patient-triage-lead,
+html[data-theme-resolved='dark'] body.patient-portal .patient-triage-submit-hint {
+  color: #a1a1aa !important;
+}
+
+html[data-theme-resolved='dark'] body.patient-portal .patient-triage-submit-hint strong {
+  color: #e2e8f0 !important;
 }
 
 /* Booking slot picker — keep interactive; blanket button rule hides selected state */
