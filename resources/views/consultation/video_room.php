@@ -3402,6 +3402,7 @@ if (session_status() === PHP_SESSION_ACTIVE) {
       }
     }
   </script>
+  <?php require_once VIEWS_PATH . '/partials/mc_modal_select_assets.php'; ?>
   <?php require_once VIEWS_PATH . '/partials/theme_scripts.php'; ?>
 </body>
 </html>

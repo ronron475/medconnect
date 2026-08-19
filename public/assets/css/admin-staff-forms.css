@@ -282,6 +282,14 @@ body.mc-staff-modal-open {
   box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.1);
 }
 
+.mc-select__toggle.ann-input,
+.mc-select__toggle.form-select,
+.mc-select__toggle.form-control,
+.mc-select__toggle.pd-input,
+.mc-select__toggle.admin-form-input {
+  box-sizing: border-box;
+}
+
 .mc-field__input.is-invalid {
   border-color: #ef4444;
   box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.1);

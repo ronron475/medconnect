@@ -26,5 +26,6 @@ $navBadgesRefreshVer = (int) @filemtime(ASSETS_PATH . '/js/nav-badges-refresh.js
 <script src="<?= ASSET_BASE ?>/assets/js/provider-nav-counts.js?v=<?= $providerNavCountsVer ?>"></script>
 <script src="<?= ASSET_BASE ?>/assets/js/provider-preferences.js?v=<?= $prefsJsVer ?>"></script>
 <script src="<?= ASSET_BASE ?>/assets/js/provider-idle.js?v=<?= $idleJsVer ?>"></script>
+<?php require_once VIEWS_PATH . '/partials/mc_modal_select_assets.php'; ?>
 </body>
 </html>
