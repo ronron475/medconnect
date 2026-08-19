@@ -11,6 +11,7 @@
 
   var API_PATH = '/app/api/admin/queue_live.php';
   var POLL_MS = 8000;
+  var COLSPAN = 7;
   var timer = null;
   var inFlight = false;
   var lastFingerprint = root.getAttribute('data-fingerprint') || '';
@@ -36,15 +37,18 @@
     var tbody = root.querySelector('[data-queue-body]');
     if (!tbody) return;
     if (!rows || !rows.length) {
-      tbody.innerHTML = '<tr><td colspan="4">No consultations for today.</td></tr>';
+      tbody.innerHTML = '<tr><td colspan="' + COLSPAN + '"><div class="mc-table-empty"><p>No consultations for today.</p></div></td></tr>';
       return;
     }
     tbody.innerHTML = rows.map(function (q) {
       return '<tr>' +
-        '<td>' + esc(q.time_label || '') + '</td>' +
-        '<td>' + esc(q.patient_name || '') + '</td>' +
-        '<td>' + esc(q.provider_name || 'Unassigned') + '</td>' +
-        '<td><span class="mc-badge">' + esc(q.status || '') + '</span></td>' +
+        '<td data-label="Queue position">' + esc(q.queue_position || '—') + '</td>' +
+        '<td data-label="Patient">' + esc(q.patient_name || '') + '</td>' +
+        '<td data-label="Priority">' + esc(q.priority_label || '—') + '</td>' +
+        '<td data-label="Waiting time">' + esc(q.waiting_label || '—') + '</td>' +
+        '<td data-label="Time">' + esc(q.time_label || '') + '</td>' +
+        '<td data-label="Assigned provider">' + esc(q.provider_name || 'Unassigned') + '</td>' +
+        '<td data-label="Status"><span class="mc-badge">' + esc(q.status || '') + '</span></td>' +
         '</tr>';
     }).join('');
   }
