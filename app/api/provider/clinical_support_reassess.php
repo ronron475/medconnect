@@ -80,15 +80,37 @@ try {
     }
 
     $original = provider_clinical_support_patient_original($pdo, $consultationId, $patientId);
+    $prior = provider_consultation_clinical_support($pdo, $consultationId, $patientId);
     $assessment = ChiefComplaintNlpService::assess($complaint, $symptoms);
     $support = provider_clinical_support_from_assessment($assessment);
     $support['patient_original_complaint'] = $original['complaint'];
     $support['patient_original_english'] = $original['english'];
-    $support['doctor_override'] = true;
+    $support['doctor_override'] = !empty($prior['manual_urgency']);
     $support['manual_urgency'] = false;
-    $support['manual_override_note'] = '';
-    $support['ai_urgency'] = $support['final_urgency'];
-    $support['ai_urgency_bucket'] = $support['risk_bucket'];
+    $support['manual_override_note'] = (string) ($prior['manual_override_note'] ?? '');
+
+    $originalAi = provider_clinical_support_original_ai($pdo, $consultationId, $patientId);
+    if ($originalAi['bucket'] !== 'unknown') {
+        $support['ai_urgency'] = $originalAi['label'];
+        $support['ai_urgency_bucket'] = $originalAi['bucket'];
+    } elseif (!empty($prior['ai_urgency_bucket'])) {
+        $support['ai_urgency'] = provider_clinical_support_caps_label((string) $prior['ai_urgency_bucket']);
+        $support['ai_urgency_bucket'] = provider_clinical_support_normalize_bucket((string) $prior['ai_urgency_bucket']);
+    } else {
+        $support['ai_urgency'] = provider_clinical_support_caps_label((string) ($support['risk_bucket'] ?? ''));
+        $support['ai_urgency_bucket'] = $support['risk_bucket'];
+    }
+
+    if (!empty($prior['manual_urgency'])) {
+        $support['manual_urgency'] = true;
+        $support['doctor_override'] = true;
+        $support['risk_bucket'] = provider_clinical_support_normalize_bucket((string) ($prior['risk_bucket'] ?? ''));
+        $support['final_urgency'] = provider_clinical_support_caps_label((string) $support['risk_bucket']);
+        $support['doctor_urgency'] = $support['final_urgency'];
+        $support['doctor_urgency_bucket'] = $support['risk_bucket'];
+        $support['finalized_by'] = 'Doctor';
+        $support['risk_level'] = $support['final_urgency'] . ' (doctor override)';
+    }
 
     provider_clinical_support_save_event(
         $pdo,
@@ -100,6 +122,8 @@ try {
         'Doctor finalized chief complaint and requested AI re-assessment.',
         $providerName
     );
+
+    $support = provider_consultation_clinical_support($pdo, $consultationId, $patientId);
 
     audit_log($pdo, [
         'patient_id' => $patientId,
@@ -113,7 +137,7 @@ try {
         'message' => 'Clinical support updated from the finalized chief complaint.',
         'support' => $support,
         'audit' => provider_clinical_support_audit_trail($pdo, $consultationId),
-    ]);
+    ], JSON_UNESCAPED_UNICODE);
 } catch (Throwable $e) {
     error_log('clinical_support_reassess: ' . $e->getMessage());
     http_response_code(500);

@@ -93,6 +93,12 @@ if ($pdo->query("SHOW TABLES LIKE 'consultations'")->rowCount()) {
         );
         $consult['video_history'] = $vh;
         $consult['duration_label'] = (string) ($vh['duration_label'] ?? '');
+        $outcome = patient_consultation_clinical_outcome($pdo, $cid, (int) $uid, false);
+        $consult['ai_case_level'] = (string) ($outcome['ai_case_level'] ?? '');
+        $consult['final_case_level'] = (string) ($outcome['final_case_level'] ?? '');
+        $consult['final_case_bucket'] = (string) ($outcome['final_case_bucket'] ?? '');
+        $consult['finalized_by'] = (string) ($outcome['finalized_by'] ?? '');
+        $consult['is_doctor_override'] = !empty($outcome['is_doctor_override']);
         unset($consult['triage_result_id']);
     }
     unset($consult);

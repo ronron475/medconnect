@@ -46,14 +46,66 @@ if (!function_exists('mc_render_triage_assessment_stack')) {
         <span class="pt-assess-chip <?= htmlspecialchars($chip) ?>"><?= htmlspecialchars($doctor) ?></span>
       </div>
       <div class="pt-assess-stack__row pt-assess-stack__row--final">
-        <span class="pt-assess-stack__label">Final Decision</span>
+        <span class="pt-assess-stack__label">Final Triage Result</span>
         <span class="pt-assess-chip <?= htmlspecialchars($chip) ?>"><?= htmlspecialchars($final) ?></span>
       </div>
+      <?php if ($doctor !== $ai || $final !== $ai): ?>
+      <div class="pt-assess-stack__row">
+        <span class="pt-assess-stack__label">Finalized By</span>
+        <span class="pt-assess-chip">Doctor</span>
+      </div>
+      <?php endif; ?>
       <?php if ($isEmergency): ?>
       <p class="pt-assess-emergency-note">
-        Your healthcare provider determined this case is an emergency. Follow the hospital referral process.
-        Do not wait for an online consultation.
+        Your doctor classified this case as an EMERGENCY. Seek immediate in-person medical attention.
+        You may continue the live consultation while arranging transfer.
       </p>
+      <?php endif; ?>
+    </div>
+        <?php
+    }
+}
+
+/**
+ * Same AI vs Final stack for a consultation outcome (My Sessions, My Health, details).
+ *
+ * @param array<string, mixed>|null $outcome
+ */
+if (!function_exists('mc_render_consultation_outcome_stack')) {
+    function mc_render_consultation_outcome_stack(?array $outcome, int $consultationId = 0): void
+    {
+        if (!is_array($outcome)) {
+            return;
+        }
+        $final = trim((string) ($outcome['final_case_level'] ?? ''));
+        if ($final === '') {
+            return;
+        }
+        $ai = trim((string) ($outcome['ai_case_level'] ?? ''));
+        $bucket = (string) ($outcome['final_case_bucket'] ?? '');
+        $chip = function_exists('patient_case_level_chip_class')
+            ? patient_case_level_chip_class($bucket)
+            : 'pt-assess-chip--routine';
+        $byDoctor = !empty($outcome['is_doctor_override'])
+            || strcasecmp((string) ($outcome['finalized_by'] ?? ''), 'Doctor') === 0;
+        $cid = $consultationId > 0 ? $consultationId : (int) ($outcome['consultation_id'] ?? 0);
+        ?>
+    <div class="pt-assess-stack"<?= $cid > 0 ? ' data-consult-id="' . (int) $cid . '"' : '' ?>>
+      <?php if ($ai !== ''): ?>
+      <div class="pt-assess-stack__row pt-assess-stack__row--ai">
+        <span class="pt-assess-stack__label">Preliminary AI Assessment</span>
+        <span class="pt-assess-chip pt-assess-chip--ai js-consult-ai"><?= htmlspecialchars($ai) ?></span>
+      </div>
+      <?php endif; ?>
+      <div class="pt-assess-stack__row pt-assess-stack__row--final">
+        <span class="pt-assess-stack__label">Final Triage Result</span>
+        <span class="pt-assess-chip <?= htmlspecialchars($chip) ?> js-consult-final"><?= htmlspecialchars($final) ?></span>
+      </div>
+      <?php if ($byDoctor): ?>
+      <div class="pt-assess-stack__row">
+        <span class="pt-assess-stack__label">Finalized By</span>
+        <span class="pt-assess-chip js-consult-finalized">Doctor</span>
+      </div>
       <?php endif; ?>
     </div>
         <?php

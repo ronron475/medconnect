@@ -46,6 +46,20 @@ $bookUrl = $asset . '/views/patient/triage.php';
       <li>Do not wait for online care tips or a video slot</li>
     </ul>
 
+    <div id="mcPatientUrgencyFacility" class="mc-urgency-facility" hidden>
+      <p class="mc-urgency-facility__heading" id="mcPatientUrgencyFacilityHeading">NEAREST HEALTH FACILITY</p>
+      <p class="mc-urgency-facility__status" id="mcPatientUrgencyFacilityStatus" hidden></p>
+      <div id="mcPatientUrgencyFacilityCard" class="mc-urgency-facility__card" hidden>
+        <strong id="mcPatientUrgencyFacilityName"></strong>
+        <span id="mcPatientUrgencyFacilityType" class="mc-urgency-facility__type"></span>
+        <p id="mcPatientUrgencyFacilityAddress"></p>
+        <p id="mcPatientUrgencyFacilityDistance" class="mc-urgency-facility__distance"></p>
+        <p id="mcPatientUrgencyFacilityContact" class="mc-urgency-facility__contact"></p>
+        <p id="mcPatientUrgencyFacilityOpen" class="mc-urgency-facility__open"></p>
+      </div>
+      <ul id="mcPatientUrgencyFacilityDirectory" class="mc-urgency-facility__directory" hidden></ul>
+    </div>
+
     <div id="mcPatientUrgencySlots" class="mc-urgency-slots" hidden>
       <p class="mc-urgency-slots__heading" data-i18n="slots_heading">Soonest available today</p>
       <div id="mcPatientUrgencySlotsList" class="mc-urgency-slots__list" role="list"></div>
@@ -63,6 +77,9 @@ $bookUrl = $asset . '/views/patient/triage.php';
         hidden
         data-i18n="choose_another_time"
       >Choose another time</a>
+      <button type="button" class="mc-urgency-modal__btn mc-urgency-modal__btn--ghost" id="mcPatientUrgencyContinueConsult" data-mc-urgency-close hidden>
+        Continue Consultation
+      </button>
     </div>
   </div>
 </div>

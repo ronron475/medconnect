@@ -116,6 +116,9 @@
       if (global.MedConnectPatientSlotWait && typeof global.MedConnectPatientSlotWait.refresh === 'function') {
         global.MedConnectPatientSlotWait.refresh();
       }
+      if (global.McPatientRecordUpdates && typeof global.McPatientRecordUpdates.poll === 'function') {
+        global.McPatientRecordUpdates.poll();
+      }
     }
 
     if (has('dashboard') || has('queue') || has('triage') || has('appointments')) {

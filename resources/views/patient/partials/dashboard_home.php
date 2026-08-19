@@ -216,6 +216,21 @@ foreach ($upcoming_list as $c) {
                 <h4>Dr. <?= $provider_name ?></h4>
                 <p class="pdash-session__meta"><?= htmlspecialchars($c['consult_type'] ?? 'Video Consultation') ?></p>
                 <p class="pdash-session__datetime"><?= $sched_date ?> · <?= $sched_time ?></p>
+                <?php
+                  $dashOutcome = null;
+                  if (isset($pdo) && $pdo instanceof PDO && !empty($c['id'])) {
+                      if (!function_exists('patient_consultation_clinical_outcome')) {
+                          require_once BASE_PATH . '/app/includes/patient_consultation_records.php';
+                      }
+                      $dashOutcome = patient_consultation_clinical_outcome($pdo, (int) $c['id'], (int) ($_SESSION['user_id'] ?? 0), false);
+                  }
+                  if (!empty($dashOutcome['final_case_level'])):
+                      if (!function_exists('mc_render_consultation_outcome_stack')) {
+                          require_once VIEWS_PATH . '/patient/partials/triage_helpers.php';
+                      }
+                      mc_render_consultation_outcome_stack($dashOutcome, (int) $c['id']);
+                  endif;
+                ?>
               </div>
             </div>
             <div class="pdash-session__action" data-consult-action="<?= (int) ($c['id'] ?? 0) ?>">

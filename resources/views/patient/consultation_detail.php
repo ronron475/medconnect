@@ -139,9 +139,7 @@ $backUrl = $fromSessions
     : ASSET_BASE . '/views/patient/my_health.php?tab=timeline';
 $backLabel = $fromSessions ? '← My Sessions' : '← My Health';
 
-$clinicalOutcome = $isFinalized
-    ? patient_consultation_clinical_outcome($pdo, $consultationId, $uid, false)
-    : null;
+$clinicalOutcome = patient_consultation_clinical_outcome($pdo, $consultationId, $uid, false);
 
 $page_title = 'Consultation Details';
 $pmh_css_ver = (int) @filemtime(ASSETS_PATH . '/css/patient-my-health.css');
@@ -223,28 +221,17 @@ $patient_page_stylesheets = [
     </section>
     <?php endif; ?>
 
-    <?php if (!$isFinalized): ?>
-      <div class="pmh-detail__pending">
-        <p>Provider documentation is still in progress.</p>
-        <p class="text-muted">Released notes, diagnosis, and prescriptions will appear here and in My Health when ready.</p>
-      </div>
-    <?php else: ?>
-      <?php if (!empty($clinicalOutcome['final_case_level'])): ?>
+    <?php if (!empty($clinicalOutcome['final_case_level'])): ?>
       <section class="pmh-detail__section pmh-detail__section--case-level">
-        <h3>Final case level</h3>
-        <p class="pmh-case-level <?= htmlspecialchars(patient_case_level_chip_class((string) ($clinicalOutcome['final_case_bucket'] ?? ''))) ?>">
-          <?= htmlspecialchars((string) $clinicalOutcome['final_case_level']) ?>
-        </p>
-        <?php if (!empty($clinicalOutcome['final_case_display'])): ?>
-        <p class="pmh-detail__case-sub"><?= htmlspecialchars((string) $clinicalOutcome['final_case_display']) ?></p>
-        <?php endif; ?>
-        <?php if (!empty($clinicalOutcome['ai_case_level']) && $clinicalOutcome['ai_case_level'] !== $clinicalOutcome['final_case_level']): ?>
-        <p class="pmh-detail__ai-note">
-          <strong>AI triage (reference):</strong> <?= htmlspecialchars((string) $clinicalOutcome['ai_case_level']) ?>
-          <?php if (!empty($clinicalOutcome['ai_case_display'])): ?>
-            — <?= htmlspecialchars((string) $clinicalOutcome['ai_case_display']) ?>
-          <?php endif; ?>
-        </p>
+        <h3>Triage assessment</h3>
+        <?php
+          if (!function_exists('mc_render_consultation_outcome_stack')) {
+              require_once VIEWS_PATH . '/patient/partials/triage_helpers.php';
+          }
+          mc_render_consultation_outcome_stack($clinicalOutcome, $consultationId);
+        ?>
+        <?php if (!empty($clinicalOutcome['clinical_reason'])): ?>
+        <p class="pmh-detail__case-sub"><strong>Clinical reason:</strong> <?= htmlspecialchars((string) $clinicalOutcome['clinical_reason']) ?></p>
         <?php endif; ?>
         <?php if (!empty($clinicalOutcome['recommended_actions'])): ?>
         <ul class="pmh-detail__actions-list">
@@ -261,11 +248,18 @@ $patient_page_stylesheets = [
             <li><?= htmlspecialchars((string) $sign) ?></li>
             <?php endforeach; ?>
           </ul>
-          <p>Go to the nearest emergency department or call local emergency services if symptoms worsen.</p>
+          <p>Seek immediate in-person care. You may continue the live consultation while arranging transfer.</p>
         </div>
         <?php endif; ?>
       </section>
-      <?php endif; ?>
+    <?php endif; ?>
+
+    <?php if (!$isFinalized): ?>
+      <div class="pmh-detail__pending">
+        <p>Provider documentation is still in progress.</p>
+        <p class="text-muted">Released notes, diagnosis, and prescriptions will appear here and in My Health when ready.</p>
+      </div>
+    <?php else: ?>
 
       <section class="pmh-detail__section">
         <h3>SOAP Note</h3>

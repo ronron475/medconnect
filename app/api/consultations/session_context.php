@@ -137,19 +137,29 @@ try {
 }
 
 $patientNumber = 'MC-' . str_pad((string) $patientId, 6, '0', STR_PAD_LEFT);
-$aiClass = trim((string) ($clinical['ai_urgency'] ?? $clinical['risk_level'] ?? 'Not assessed'));
+$aiClass = trim((string) ($clinical['ai_urgency'] ?? ''));
 $finalClass = trim((string) ($clinical['final_urgency'] ?? ''));
 if ($finalClass === '') {
-    $finalClass = $aiClass;
+    $finalClass = $aiClass !== '' ? $aiClass : 'Not assessed';
 }
+if ($aiClass === '') {
+    $aiClass = 'Not assessed';
+}
+$finalBucket = (string) ($clinical['risk_bucket'] ?? $clinical['doctor_urgency_bucket'] ?? 'unknown');
+$aiBucket = (string) ($clinical['ai_urgency_bucket'] ?? 'unknown');
+$finalizedBy = !empty($clinical['manual_urgency']) ? 'Doctor' : '';
 
 $patientPanel = [
     'doctor_name'       => $waiting['doctor_name'],
     'specialization'    => trim((string) ($row['provider_specialty'] ?? 'General Medicine')) ?: 'General Medicine',
     'appointment_label' => $appointmentLabel,
     'chief_complaint'   => $chiefComplaint,
-    'triage_level'      => $aiClass !== '' ? $aiClass : 'Not assessed',
-    'triage_bucket'     => (string) ($clinical['risk_bucket'] ?? $clinical['ai_urgency_bucket'] ?? 'unknown'),
+    'triage_level'      => $finalClass,
+    'triage_bucket'     => $finalBucket,
+    'ai_triage_level'   => $aiClass,
+    'ai_triage_bucket'  => $aiBucket,
+    'final_triage_level'=> $finalClass,
+    'finalized_by'      => $finalizedBy,
     'consultation_id'   => $consultId,
 ];
 

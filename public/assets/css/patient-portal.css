@@ -523,6 +523,72 @@ body.mc-urgency-modal-open {
   display: none !important;
 }
 
+.mc-urgency-facility {
+  margin: 16px 0 4px;
+  text-align: left;
+  border: 1px solid #fecaca;
+  background: #fef2f2;
+  border-radius: 14px;
+  padding: 14px 14px 12px;
+}
+
+.mc-urgency-facility[hidden] {
+  display: none !important;
+}
+
+.mc-urgency-facility__heading {
+  margin: 0 0 8px;
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  color: #991b1b;
+}
+
+.mc-urgency-facility__status {
+  margin: 0 0 8px;
+  font-size: 0.875rem;
+  color: #7f1d1d;
+}
+
+.mc-urgency-facility__status[hidden],
+.mc-urgency-facility__card[hidden],
+.mc-urgency-facility__directory[hidden] {
+  display: none !important;
+}
+
+.mc-urgency-facility__card strong {
+  display: block;
+  font-size: 1.02rem;
+  color: #0f172a;
+}
+
+.mc-urgency-facility__type,
+.mc-urgency-facility__distance,
+.mc-urgency-facility__contact,
+.mc-urgency-facility__open {
+  display: block;
+  margin-top: 4px;
+  font-size: 0.82rem;
+  color: #475569;
+}
+
+.mc-urgency-facility__card p {
+  margin: 6px 0 0;
+  font-size: 0.875rem;
+  color: #334155;
+}
+
+.mc-urgency-facility__directory {
+  margin: 8px 0 0;
+  padding-left: 18px;
+  color: #334155;
+  font-size: 0.875rem;
+}
+
+.psess-triage-stack {
+  margin: 10px 0 0;
+}
+
 .mc-urgency-modal__actions {
   display: flex;
   flex-wrap: wrap;

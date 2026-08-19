@@ -1080,6 +1080,68 @@ final class NotificationEvents
         ]);
     }
 
+    public static function doctorFinalTriageForPatient(
+        PDO $pdo,
+        int $patientId,
+        int $providerId,
+        int $consultationId,
+        int $triageId,
+        string $finalBucket,
+        string $finalLabel,
+        string $aiLabel = '',
+        string $clinicalReason = '',
+        ?int $senderId = null
+    ): void {
+        $bucket = strtolower(str_replace(['-', ' '], '_', trim($finalBucket)));
+        $aiNote = $aiLabel !== '' ? " Preliminary AI assessment was {$aiLabel}." : '';
+        $reasonNote = $clinicalReason !== '' ? ' Clinical reason: ' . $clinicalReason : '';
+        $relatedId = $consultationId > 0 ? $consultationId : $triageId;
+        $relatedTable = $consultationId > 0 ? 'consultations' : 'triage_results';
+
+        if ($bucket === 'emergency') {
+            NotificationManager::notifyPatient($pdo, $patientId, [
+                'sender_id'     => $senderId ?? $providerId,
+                'type'          => NotificationManager::TYPE_EMERGENCY,
+                'title'         => 'Emergency — seek hospital care now',
+                'message'       => 'Your doctor classified this consultation as an EMERGENCY. Please seek immediate in-person medical attention. You may continue the live consultation while arranging transfer.'
+                    . $aiNote . $reasonNote,
+                'priority'      => 'emergency',
+                'action_url'    => '/views/patient/consultations.php',
+                'related_table' => $relatedTable,
+                'related_id'    => $relatedId,
+                'email'         => true,
+            ]);
+            return;
+        }
+
+        if ($bucket === 'urgent') {
+            NotificationManager::notifyPatient($pdo, $patientId, [
+                'sender_id'     => $senderId ?? $providerId,
+                'type'          => NotificationManager::TYPE_WARNING,
+                'title'         => 'Final triage result: URGENT',
+                'message'       => 'Your doctor finalized this consultation as URGENT. Follow your care plan and seek care promptly if symptoms worsen.'
+                    . $aiNote,
+                'priority'      => 'high',
+                'action_url'    => '/views/patient/consultations.php',
+                'related_table' => $relatedTable,
+                'related_id'    => $relatedId,
+                'email'         => true,
+            ]);
+            return;
+        }
+
+        NotificationManager::notifyPatient($pdo, $patientId, [
+            'sender_id'     => $senderId ?? $providerId,
+            'type'          => NotificationManager::TYPE_INFORMATION,
+            'title'         => 'Final triage result: NON-URGENT',
+            'message'       => 'Your doctor finalized this consultation as NON-URGENT. Continue your consultation and follow-up plan as advised.'
+                . $aiNote,
+            'action_url'    => '/views/patient/consultations.php',
+            'related_table' => $relatedTable,
+            'related_id'    => $relatedId,
+        ]);
+    }
+
     public static function doctorEmergencyOverrideForPatient(
         PDO $pdo,
         int $patientId,
@@ -1088,18 +1150,18 @@ final class NotificationEvents
         string $aiLabel = '',
         ?int $senderId = null
     ): void {
-        $aiNote = $aiLabel !== '' ? " Preliminary AI assessment was {$aiLabel}." : '';
-        NotificationManager::notifyPatient($pdo, $patientId, [
-            'sender_id'     => $senderId ?? $providerId,
-            'type'          => NotificationManager::TYPE_EMERGENCY,
-            'title'         => 'Emergency — seek hospital care now',
-            'message'       => 'Your healthcare provider reviewed your case and determined it is an EMERGENCY. Please go to the nearest hospital or emergency department. Online consultation is not appropriate.' . $aiNote,
-            'priority'      => 'emergency',
-            'action_url'    => '/views/patient/health_summary.php',
-            'related_table' => 'triage_results',
-            'related_id'    => $triageId,
-            'email'         => true,
-        ]);
+        self::doctorFinalTriageForPatient(
+            $pdo,
+            $patientId,
+            $providerId,
+            0,
+            $triageId,
+            'emergency',
+            'EMERGENCY',
+            $aiLabel,
+            '',
+            $senderId
+        );
     }
 
     public static function careTipsReviewUpdatedForPatient(

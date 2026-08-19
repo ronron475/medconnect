@@ -139,18 +139,22 @@ function patient_consultation_clinical_outcome(
     if ($finalLabel === '') {
         $finalLabel = provider_clinical_support_urgency_label($bucket);
     }
+    $finalCaps = patient_case_level_label($bucket);
+    $aiCaps = $aiBucket !== 'unknown' ? patient_case_level_label($aiBucket) : '';
 
     return [
         'consultation_id' => $consultationId,
         'patient_id' => $patientId,
         'provider_id' => (int) ($consult['provider_id'] ?? 0),
         'final_case_bucket' => $bucket,
-        'final_case_level' => patient_case_level_label($bucket),
-        'final_case_display' => $finalLabel,
+        'final_case_level' => $finalCaps !== '' ? $finalCaps : $finalLabel,
+        'final_case_display' => $finalCaps !== '' ? $finalCaps : $finalLabel,
         'ai_case_bucket' => $aiBucket !== 'unknown' ? $aiBucket : '',
-        'ai_case_level' => $aiBucket !== 'unknown' ? patient_case_level_label($aiBucket) : '',
-        'ai_case_display' => trim((string) ($support['ai_urgency'] ?? '')),
+        'ai_case_level' => $aiCaps,
+        'ai_case_display' => $aiCaps !== '' ? $aiCaps : trim((string) ($support['ai_urgency'] ?? '')),
         'is_doctor_override' => !empty($support['manual_urgency']),
+        'finalized_by' => !empty($support['manual_urgency']) ? 'Doctor' : '',
+        'clinical_reason' => trim((string) ($support['manual_override_note'] ?? '')),
         'recommended_actions' => is_array($support['recommended_actions'] ?? null) ? $support['recommended_actions'] : [],
         'emergency_warning_signs' => is_array($support['emergency_warning_signs'] ?? null) ? $support['emergency_warning_signs'] : [],
     ];

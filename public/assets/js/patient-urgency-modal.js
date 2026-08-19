@@ -22,7 +22,18 @@
   var slotsWrap = null;
   var slotsList = null;
   var slotsStatus = null;
-  var continueEl = null;
+  var continueConsultBtn = null;
+  var facilityWrap = null;
+  var facilityHeading = null;
+  var facilityStatus = null;
+  var facilityCard = null;
+  var facilityName = null;
+  var facilityType = null;
+  var facilityAddress = null;
+  var facilityDistance = null;
+  var facilityContact = null;
+  var facilityOpen = null;
+  var facilityDirectory = null;
   var lastOpts = null;
   var langSelect = null;
   var lastFocus = null;
@@ -66,6 +77,18 @@
       slotsList = document.getElementById('mcPatientUrgencySlotsList');
       slotsStatus = document.getElementById('mcPatientUrgencySlotsStatus');
       continueEl = document.getElementById('mcPatientUrgencyContinue');
+      continueConsultBtn = document.getElementById('mcPatientUrgencyContinueConsult');
+      facilityWrap = document.getElementById('mcPatientUrgencyFacility');
+      facilityHeading = document.getElementById('mcPatientUrgencyFacilityHeading');
+      facilityStatus = document.getElementById('mcPatientUrgencyFacilityStatus');
+      facilityCard = document.getElementById('mcPatientUrgencyFacilityCard');
+      facilityName = document.getElementById('mcPatientUrgencyFacilityName');
+      facilityType = document.getElementById('mcPatientUrgencyFacilityType');
+      facilityAddress = document.getElementById('mcPatientUrgencyFacilityAddress');
+      facilityDistance = document.getElementById('mcPatientUrgencyFacilityDistance');
+      facilityContact = document.getElementById('mcPatientUrgencyFacilityContact');
+      facilityOpen = document.getElementById('mcPatientUrgencyFacilityOpen');
+      facilityDirectory = document.getElementById('mcPatientUrgencyFacilityDirectory');
       langSelect = document.getElementById('mcPatientUrgencyLang');
       if (langSelect && window.McPatientTriageI18n && typeof window.McPatientTriageI18n.bindSelector === 'function') {
         window.McPatientTriageI18n.bindSelector(langSelect);
@@ -101,6 +124,89 @@
     if (slotsWrap) slotsWrap.hidden = true;
     if (slotsList) slotsList.innerHTML = '';
     setSlotsStatus('');
+  }
+
+  function hideFacility() {
+    if (facilityWrap) facilityWrap.hidden = true;
+    if (facilityStatus) {
+      facilityStatus.hidden = true;
+      facilityStatus.textContent = '';
+    }
+    if (facilityCard) facilityCard.hidden = true;
+    if (facilityDirectory) {
+      facilityDirectory.hidden = true;
+      facilityDirectory.innerHTML = '';
+    }
+    if (continueConsultBtn) continueConsultBtn.hidden = true;
+  }
+
+  function renderFacility(payload) {
+    if (!facilityWrap) return;
+    payload = payload || {};
+    var nearest = payload.facility || null;
+    var directory = Array.isArray(payload.directory) ? payload.directory : [];
+    var claimed = payload.claimed_nearest === true && nearest && payload.available === true;
+    var locationOk = payload.location_available === true || claimed;
+
+    facilityWrap.hidden = false;
+    if (facilityHeading) {
+      facilityHeading.textContent = claimed ? 'NEAREST HEALTH FACILITY' : 'REGISTERED HEALTH FACILITIES';
+    }
+
+    if (facilityStatus) {
+      if (claimed) {
+        facilityStatus.hidden = true;
+        facilityStatus.textContent = '';
+      } else if (!locationOk) {
+        facilityStatus.hidden = false;
+        facilityStatus.textContent = payload.message || 'Location unavailable';
+      } else {
+        facilityStatus.hidden = false;
+        facilityStatus.textContent = payload.message
+          || 'A registered facility directory is shown. Distance is only shown when coordinates are available.';
+      }
+    }
+
+    if (facilityCard) {
+      if (claimed && nearest) {
+        facilityCard.hidden = false;
+        if (facilityName) facilityName.textContent = nearest.name || '';
+        if (facilityType) facilityType.textContent = nearest.type || '';
+        if (facilityAddress) facilityAddress.textContent = nearest.address || '';
+        if (facilityDistance) {
+          facilityDistance.textContent = nearest.distance_label
+            ? ('Distance: ' + nearest.distance_label)
+            : '';
+        }
+        if (facilityContact) {
+          facilityContact.textContent = nearest.contact ? ('Contact: ' + nearest.contact) : '';
+        }
+        if (facilityOpen) {
+          facilityOpen.textContent = nearest.status ? ('Status: ' + nearest.status) : '';
+        }
+      } else {
+        facilityCard.hidden = true;
+      }
+    }
+
+    if (facilityDirectory) {
+      facilityDirectory.innerHTML = '';
+      if (!claimed && directory.length) {
+        facilityDirectory.hidden = false;
+        directory.slice(0, 8).forEach(function (item) {
+          var li = document.createElement('li');
+          var label = (item && item.name) ? item.name : 'Facility';
+          if (item && item.type) label += ' (' + item.type + ')';
+          if (item && item.address) label += ' — ' + item.address;
+          li.textContent = label;
+          facilityDirectory.appendChild(li);
+        });
+      } else {
+        facilityDirectory.hidden = true;
+      }
+    }
+
+    return claimed && nearest && nearest.maps_url ? nearest.maps_url : '';
   }
 
   function renderSlotOptions(options) {
@@ -275,6 +381,9 @@
     lastOpts = opts;
     lastFocus = document.activeElement;
     bookingInFlight = false;
+    hideFacility();
+    var understandBtn = modal.querySelector('[data-mc-urgency-close]');
+    if (understandBtn) understandBtn.hidden = false;
 
     var kind = normalizeKind(opts.kind);
     var triageResult = opts.mode === 'triage_result';
@@ -325,10 +434,33 @@
 
     if (kind === 'emergency') {
       hideSlots();
-      setSteps([i18n('step_em_1'), i18n('step_em_2'), i18n('step_em_3')]);
-      if (primaryBtn) {
-        primaryBtn.hidden = true;
-        primaryBtn.removeAttribute('href');
+      if (opts.doctorReferral) {
+        setSteps([]);
+        var mapsUrl = renderFacility(opts.facility || {});
+        var understandBtn = modal.querySelector('[data-mc-urgency-close]');
+        if (understandBtn && understandBtn.id !== 'mcPatientUrgencyContinueConsult') {
+          understandBtn.hidden = true;
+        }
+        if (continueConsultBtn) continueConsultBtn.hidden = false;
+        if (primaryBtn) {
+          if (mapsUrl) {
+            primaryBtn.hidden = false;
+            primaryBtn.textContent = 'Get Directions';
+            primaryBtn.href = mapsUrl;
+            primaryBtn.target = '_blank';
+            primaryBtn.rel = 'noopener noreferrer';
+          } else {
+            primaryBtn.hidden = true;
+            primaryBtn.removeAttribute('href');
+          }
+        }
+      } else {
+        hideFacility();
+        setSteps([i18n('step_em_1'), i18n('step_em_2'), i18n('step_em_3')]);
+        if (primaryBtn) {
+          primaryBtn.hidden = true;
+          primaryBtn.removeAttribute('href');
+        }
       }
     } else if (kind === 'non_urgent') {
       hideSlots();
@@ -371,6 +503,7 @@
     modal.hidden = true;
     document.body.classList.remove('mc-urgency-modal-open');
     hideSlots();
+    hideFacility();
     if (continueEl) continueEl.hidden = true;
     if (lastFocus && typeof lastFocus.focus === 'function') {
       try { lastFocus.focus(); } catch (_) { /* ignore */ }
@@ -417,6 +550,21 @@
         useCustomMessage: !!message,
         message: message || '',
         title: extra.title || '',
+        doctorReferral: extra.doctorReferral === true,
+        facility: extra.facility || null,
+      });
+    },
+    showDoctorEmergencyReferral: function (opts) {
+      opts = opts || {};
+      open({
+        kind: 'emergency',
+        mode: 'triage_result',
+        doctorReferral: true,
+        useCustomMessage: true,
+        title: opts.title || 'EMERGENCY — IMMEDIATE MEDICAL ATTENTION REQUIRED',
+        message: opts.message
+          || 'Your doctor has classified your condition as an EMERGENCY. Please seek immediate in-person medical attention.',
+        facility: opts.facility || {},
       });
     },
     showUrgent: function (message, bookUrl, extra) {

@@ -85,17 +85,15 @@ function pmh_note_text(?string $value, string $fallback = ''): string {
           <span class="pmh-status <?= pmh_status_class($status) ?>" data-consult-status="<?= (int) $cid ?>"><?= htmlspecialchars($statusLabel) ?></span>
         </header>
 
-        <?php if ($hasFinalizedNote): ?>
         <?php if (!empty($outcome['final_case_level'])): ?>
-        <p class="pmh-visit__case-level">
-          <span class="pmh-case-level <?= htmlspecialchars(patient_case_level_chip_class((string) ($outcome['final_case_bucket'] ?? ''))) ?>">
-            Final: <?= htmlspecialchars((string) $outcome['final_case_level']) ?>
-          </span>
-          <?php if (!empty($outcome['ai_case_level']) && $outcome['ai_case_level'] !== $outcome['final_case_level']): ?>
-          <span class="pmh-visit__ai-ref">AI reference: <?= htmlspecialchars((string) $outcome['ai_case_level']) ?></span>
-          <?php endif; ?>
-        </p>
+        <?php
+          if (!function_exists('mc_render_consultation_outcome_stack')) {
+              require_once VIEWS_PATH . '/patient/partials/triage_helpers.php';
+          }
+          mc_render_consultation_outcome_stack($outcome, $cid);
+        ?>
         <?php endif; ?>
+        <?php if ($hasFinalizedNote): ?>
         <div class="pmh-visit__grid">
           <?php if ($chiefComplaint !== ''): ?>
           <section class="pmh-visit__block pmh-visit__block--full">
