@@ -8,7 +8,7 @@
   if (global.MedConnectLiveSync) return;
 
   var API_PATH = '/app/api/live/sync.php';
-  var POLL_MS = 6000;
+  var POLL_MS = 3000;
   var MAX_BACKOFF_MS = 30000;
   var timer = null;
   var inFlight = false;
