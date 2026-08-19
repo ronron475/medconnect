@@ -19,19 +19,19 @@ $is_new_consultation_flow = !$chief_complaint_locked
         (function_exists('patient_portal_has_completed_visit') && patient_portal_has_completed_visit($pdo, (int) $uid))
         || (function_exists('patient_portal_has_stale_or_finished_consultation') && patient_portal_has_stale_or_finished_consultation($pdo, (int) $uid))
     );
-$card_title = $is_new_consultation_flow ? 'Start New Consultation' : 'Patient Complaint';
+$card_title = $is_new_consultation_flow ? 'Start New Consultation' : 'Primary Complaint';
 $card_lead = $is_new_consultation_flow
-    ? 'Share your current health concern to start a new consultation.'
+    ? 'Share your primary complaint to start a new consultation.'
     : ($show_care_tips_context
-        ? 'Describe your concern; your doctor can approve self-care tips after you submit.'
-        : 'Share your current health concern to start triage.');
+        ? 'Describe your primary complaint; your doctor can approve self-care tips after you submit.'
+        : 'Share your primary complaint to start triage.');
 $submit_label = $is_new_consultation_flow
-    ? 'Submit patient complaint'
-    : ($show_care_tips_context ? 'Submit for doctor review' : 'Submit patient complaint');
+    ? 'Submit primary complaint'
+    : ($show_care_tips_context ? 'Submit for doctor review' : 'Submit primary complaint');
 $submit_kind = ($show_care_tips_context && !$is_new_consultation_flow) ? 'review' : 'complaint';
 $placeholder = $chief_complaint_locked
-    ? 'Your submitted health concern…'
-    : 'Describe your current health concern...';
+    ? 'Your submitted primary complaint…'
+    : 'Describe your primary complaint...';
 ?>
 <section
   class="pdash-card pdash-card--complaint pdash-care"
@@ -54,7 +54,7 @@ $placeholder = $chief_complaint_locked
   <ol class="pdash-care-steps pdash-care-steps--idle" aria-label="Care tips progress">
     <li class="pdash-care-steps__item is-current" aria-current="step">
       <span class="pdash-care-steps__dot" aria-hidden="true">1</span>
-      <span class="pdash-care-steps__label">Patient complaint</span>
+      <span class="pdash-care-steps__label">Primary complaint</span>
     </li>
     <li class="pdash-care-steps__item">
       <span class="pdash-care-steps__dot" aria-hidden="true">2</span>
@@ -69,7 +69,7 @@ $placeholder = $chief_complaint_locked
 
   <form id="pdashSymptomsReviewForm" class="pdash-review-form" novalidate>
     <label class="form-label pdash-care-form__label" for="pdashSymptomsComplaint">
-      Patient Complaint
+      Primary Complaint
       <?php if ($chief_complaint_locked): ?>
       <span class="pdash-care-form__lock-badge"><?= htmlspecialchars(ucfirst($chief_complaint_source_label)) ?></span>
       <?php endif; ?>
@@ -85,11 +85,11 @@ $placeholder = $chief_complaint_locked
     ><?= htmlspecialchars($registration_chief_complaint) ?></textarea>
     <p class="pdash-care-form__hint">
       <?php if ($chief_complaint_locked): ?>
-      This patient complaint is already on file and will be reviewed by your doctor. It cannot be changed while this consultation is still active.
+      This primary complaint is already on file and will be reviewed by your doctor. It cannot be changed while this consultation is still active.
       <?php elseif ($is_new_consultation_flow): ?>
-      Enter a <strong>new</strong> health concern for this consultation. Previous complaints remain in My Sessions and are not reused.
+      Enter a <strong>new</strong> primary complaint for this consultation. Previous complaints remain in My Sessions and are not reused.
       <?php else: ?>
-      Describe your health concern. At least a short sentence helps your care team understand your case faster.
+      Describe your primary complaint. At least a short sentence helps your care team understand your case faster.
       <?php endif; ?>
     </p>
 
