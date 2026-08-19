@@ -50,9 +50,9 @@ $assigned_display_name = $locked_provider_name !== '' ? $locked_provider_name : 
 </p>
 <?php else: ?>
 <p class="text-sm text-muted patient-triage-lead">
-  Share your patient complaint. The system assigns a doctor from real available schedules — you do not choose the provider.
+  Share your primary complaint. The system assigns a doctor from real available schedules — you do not choose the provider.
   <?php if (!empty($patient_has_completed_visit) || !empty($patient_has_scheduled_followup)): ?>
-  Enter a new patient complaint below for a separate consultation — follow-ups and past visits stay on your record.
+  Enter a new primary complaint below for a separate consultation — follow-ups and past visits stay on your record.
   <?php endif; ?>
 </p>
 <?php endif; ?>
@@ -65,7 +65,7 @@ $assigned_display_name = $locked_provider_name !== '' ? $locked_provider_name : 
   <?php if (!empty($patient_has_scheduled_followup)): ?>
     <?= !empty($future_scheduled_consultation) ? 'Your doctor also scheduled a follow-up.' : 'Your doctor scheduled a follow-up for you.' ?>
   <?php endif; ?>
-  You can still book a <strong>new consultation</strong> here with a different patient complaint — your follow-up appointment will not be changed.
+  You can still book a <strong>new consultation</strong> here with a different primary complaint — your follow-up appointment will not be changed.
 </div>
 <?php elseif (!empty($active_consultation)): ?>
 <div class="patient-triage-alert patient-triage-alert--warning is-visible patient-triage-alert--spaced">
@@ -108,25 +108,25 @@ $assigned_display_name = $locked_provider_name !== '' ? $locked_provider_name : 
     <?php endif; ?>
     <div class="form-group" id="chief-complaint">
       <label class="form-label" for="chief_complaint">
-        Patient Complaint<?= $chief_complaint_locked ? ' <span class="text-muted">(' . htmlspecialchars($chief_complaint_source_label) . ')</span>' : '' ?>
+        Primary Complaint<?= $chief_complaint_locked ? ' <span class="text-muted">(' . htmlspecialchars($chief_complaint_source_label) . ')</span>' : '' ?>
       </label>
       <textarea
         id="chief_complaint"
         name="chief_complaint"
         class="form-control"
         rows="<?= $chief_complaint_locked ? 2 : 3 ?>"
-        placeholder="<?= $chief_complaint_locked ? 'Your submitted health concern…' : 'Describe your current health concern...' ?>"
+        placeholder="<?= $chief_complaint_locked ? 'Your submitted primary complaint…' : 'Describe your primary complaint...' ?>"
         maxlength="500"
         <?= $chief_complaint_locked ? 'readonly aria-readonly="true"' : 'required' ?>
       ><?= htmlspecialchars($registration_chief_complaint) ?></textarea>
       <p class="text-xs text-muted" style="margin-top:6px;">
         <?php if ($chief_complaint_locked): ?>
-        This patient complaint is already on file and will be reviewed by your doctor. It cannot be changed while this consultation is still active.
+        This primary complaint is already on file and will be reviewed by your doctor. It cannot be changed while this consultation is still active.
         <?php if (empty($active_consultation) && empty($force_new_concern)): ?>
-        If this is a different health concern, <a href="<?= htmlspecialchars((defined('ASSET_BASE') ? ASSET_BASE : '') . '/views/patient/triage.php?new_concern=1') ?>">start a new case</a>.
+        If this is a different primary complaint, <a href="<?= htmlspecialchars((defined('ASSET_BASE') ? ASSET_BASE : '') . '/views/patient/triage.php?new_concern=1') ?>">start a new case</a>.
         <?php endif; ?>
         <?php else: ?>
-        Share your current health concern to start a new consultation. Previous complaints stay in My Sessions and are not reused.
+        Describe your primary complaint to start a new consultation. Previous complaints stay in My Sessions and are not reused.
         <?php endif; ?>
       </p>
     </div>
@@ -168,7 +168,7 @@ $assigned_display_name = $locked_provider_name !== '' ? $locked_provider_name : 
           <?php if ($is_provider_locked): ?>
           Provider automatically selected based on your triage result, provider availability, appointment slots, and workload.
           <?php else: ?>
-          Your doctor appears here after you submit your patient complaint twice. You cannot choose a provider manually.
+          Your doctor appears here after you submit your primary complaint twice. You cannot choose a provider manually.
           <?php endif; ?>
         </p>
       </div>
