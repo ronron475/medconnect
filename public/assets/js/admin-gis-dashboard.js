@@ -201,19 +201,12 @@
     brgySort: document.getElementById('gis-brgy-sort'),
     brgyBody: document.getElementById('gis-brgy-body'),
     brgyDetail: document.getElementById('gis-brgy-detail'),
-    hotspotBox: document.getElementById('gis-hotspot-box'),
     status: document.getElementById('gis-filter-status'),
     dateFrom: document.getElementById('gis-filter-from'),
     dateTo: document.getElementById('gis-filter-to'),
     exportCsv: document.getElementById('gis-export-csv'),
     exportExcel: document.getElementById('gis-export-excel'),
     printBtn: document.getElementById('gis-print'),
-    analyticsBarangay: document.getElementById('analytics-barangay'),
-    analyticsEmergency: document.getElementById('analytics-emergency'),
-    analyticsConsultations: document.getElementById('analytics-consultations'),
-    analyticsSymptoms: document.getElementById('analytics-symptoms'),
-    analyticsStatus: document.getElementById('analytics-status'),
-    analyticsQuality: document.getElementById('analytics-quality'),
   };
 
   function escapeHtml(value) {
@@ -251,28 +244,6 @@
       });
     }
     return rows;
-  }
-
-  function topBarangayForLayer(layer) {
-    if (state.triageStats && state.triageStats.top_barangay && state.triageStats.top_barangay[layer]) {
-      return state.triageStats.top_barangay[layer].display || '—';
-    }
-    const rows = patientsForLayer(layer);
-    const counts = {};
-    rows.forEach(function (row) {
-      const name = (row.barangay || '').trim() || 'Unknown';
-      counts[name] = (counts[name] || 0) + 1;
-    });
-    let top = '';
-    let max = 0;
-    Object.keys(counts).forEach(function (name) {
-      if (counts[name] > max) {
-        max = counts[name];
-        top = name;
-      }
-    });
-    if (!top) return '—';
-    return top + ' (' + max.toLocaleString() + ')';
   }
 
   function filtersQuery() {
@@ -332,59 +303,32 @@
     const nonEl = document.getElementById('stat-non_urgent');
     const urgEl = document.getElementById('stat-urgent');
     const emEl = document.getElementById('stat-emergency');
-    const barEl = document.getElementById('stat-top_barangay');
 
     if (nonEl) nonEl.textContent = counts.non_urgent.toLocaleString();
     if (urgEl) urgEl.textContent = counts.urgent.toLocaleString();
     if (emEl) emEl.textContent = counts.emergency.toLocaleString();
-    if (barEl) barEl.textContent = topBarangayForLayer(layer);
     renderInsightStats();
 
     root.querySelectorAll('[data-severity-stat]').forEach(function (card) {
       const key = card.getAttribute('data-severity-stat');
-      const highlight =
-        (layer === 'all' && key === 'barangay') ||
-        (layer !== 'all' && key === layer);
+      const highlight = layer !== 'all' && key === layer;
       card.classList.toggle('is-highlight', highlight);
     });
   }
 
   function renderInsightStats() {
     const monitoring = currentMonitoring();
-    const todayEl = document.getElementById('stat-new_today');
     const unmappedEl = document.getElementById('stat-unmapped');
-    if (todayEl) todayEl.textContent = Number(monitoring.new_cases_today || 0).toLocaleString();
-    if (unmappedEl) unmappedEl.textContent = Number(monitoring.unmapped_cases || 0).toLocaleString();
-
-    if (userRole === 'provider') {
-      let visits = 0;
-      let pending = 0;
-      (state.patients || []).forEach(function (row) {
-        visits += Number(row.visits_today || 0);
-        pending += Number(row.pending_review || 0);
-      });
-      const visitsEl = document.getElementById('stat-visits_today');
-      const pendingEl = document.getElementById('stat-pending_review');
-      if (visitsEl) visitsEl.textContent = visits.toLocaleString();
-      if (pendingEl) pendingEl.textContent = pending.toLocaleString();
-      return;
-    }
-
-    const bhwEl = document.getElementById('stat-unassigned_bhw');
-    const hotEl = document.getElementById('stat-hotspots');
     const brgyCountEl = document.getElementById('stat-barangays_with_cases');
-    const emBrgyEl = document.getElementById('stat-top_emergency_barangay');
-    if (bhwEl) bhwEl.textContent = Number(monitoring.unassigned_bhw || 0).toLocaleString();
-    if (hotEl) hotEl.textContent = Number(displayedHotspots(monitoring).length).toLocaleString();
+    if (unmappedEl) unmappedEl.textContent = Number(monitoring.unmapped_cases || 0).toLocaleString();
     if (brgyCountEl) {
       brgyCountEl.textContent = Number(
         monitoring.barangays_with_cases || (monitoring.barangays || []).length || 0
       ).toLocaleString();
     }
-    if (emBrgyEl) {
-      const topEm = monitoring.highest_emergency_barangay;
-      emBrgyEl.textContent = topEm && topEm.display ? topEm.display : '—';
-    }
+
+    const bhwEl = document.getElementById('stat-unassigned_bhw');
+    if (bhwEl) bhwEl.textContent = Number(monitoring.unassigned_bhw || 0).toLocaleString();
   }
 
   function currentMonitoring() {
@@ -1344,167 +1288,6 @@
     }
   }
 
-  function aggregateByBarangay(rows, predicate) {
-    const counts = {};
-    (rows || []).forEach(function (row) {
-      if (predicate && !predicate(row)) return;
-      const name = (row.barangay || '').trim() || 'Unknown';
-      counts[name] = (counts[name] || 0) + 1;
-    });
-    return Object.keys(counts)
-      .map(function (name) {
-        return { label: name, barangay: name, count: counts[name] };
-      })
-      .sort(function (a, b) {
-        return b.count - a.count;
-      });
-  }
-
-  function buildSymptomsByBarangay(rows) {
-    const map = {};
-    (rows || []).forEach(function (row) {
-      const barangay = (row.barangay || '').trim() || 'Unknown';
-      const symptom = (row.triage_label || 'Not triaged').trim() || 'Not triaged';
-      const key = barangay + '|' + symptom;
-      if (!map[key]) {
-        map[key] = { barangay: barangay, label: symptom, count: 0 };
-      }
-      map[key].count += 1;
-    });
-    return Object.values(map).sort(function (a, b) {
-      return b.count - a.count;
-    });
-  }
-
-  function layerCaption() {
-    const layer = state.heatmapLayer;
-    if (layer === 'non_urgent') return 'Showing Non-Urgent cases';
-    if (layer === 'urgent') return 'Showing Urgent cases';
-    if (layer === 'emergency') return 'Showing Emergency cases';
-    return 'Showing all severity levels';
-  }
-
-  function buildClientAnalytics() {
-    const visible = patientsForLayer(state.heatmapLayer);
-    return {
-      by_barangay: aggregateByBarangay(visible),
-      emergencies: aggregateByBarangay(state.patients, function (row) {
-        return readTriageLevel(row) === SEVERITY.EMERGENCY;
-      }),
-      consultations: aggregateByBarangay(state.patients, function (row) {
-        return Number(row.active_consultations || 0) > 0;
-      }),
-      symptoms: buildSymptomsByBarangay(visible),
-    };
-  }
-
-  function updateAnalyticsCaptions() {
-    const caption = layerCaption();
-    root.querySelectorAll('[data-analytics-caption]').forEach(function (el) {
-      el.textContent = caption;
-    });
-  }
-
-  function renderClientAnalytics() {
-    const analytics = buildClientAnalytics();
-    const monitoring = currentMonitoring();
-    updateAnalyticsCaptions();
-    renderRankList(els.analyticsBarangay, analytics.by_barangay || [], 'label');
-    renderRankList(els.analyticsEmergency, analytics.emergencies || [], 'barangay');
-    renderRankList(els.analyticsConsultations, analytics.consultations || [], 'barangay');
-    renderRankList(
-      els.analyticsSymptoms,
-      (analytics.symptoms || []).map(function (item) {
-        return {
-          label: (item.barangay || '—') + ' · ' + (item.label || '—'),
-          count: item.count,
-        };
-      }),
-      'label'
-    );
-
-    const statusCaption = document.getElementById('analytics-status-caption');
-    if (statusCaption) statusCaption.textContent = monitoring.note || '';
-    renderStatusList(els.analyticsStatus, monitoring.barangays || []);
-
-    const qualityCaption = document.getElementById('analytics-quality-caption');
-    if (qualityCaption) {
-      qualityCaption.textContent = monitoring.population_available
-        ? 'Population-adjusted rates are included where census counts exist.'
-        : 'Population data unavailable. BHW coverage uses existing assignment records only.';
-    }
-    const q = monitoring.location_quality || {};
-    renderRankList(
-      els.analyticsQuality,
-      [
-        { label: 'Exact location', count: q.exact || 0 },
-        { label: 'Geocoded address', count: q.geocoded || 0 },
-        { label: 'Barangay location', count: q.barangay || 0 },
-        { label: 'Missing location', count: q.missing || 0 },
-        { label: 'Invalid coordinates', count: q.invalid || 0 },
-        { label: 'No assigned BHW', count: monitoring.unassigned_bhw || 0 },
-      ],
-      'label'
-    );
-  }
-
-  function renderStatusList(container, rows) {
-    if (!container) return;
-    if (!rows.length) {
-      container.innerHTML = '<li class="gis-rank-list__empty">No barangay data</li>';
-      return;
-    }
-    container.innerHTML = rows
-      .slice(0, 8)
-      .map(function (row, index) {
-        const status = row.status || 'stable';
-        const extra =
-          row.rate_per_1000 !== null && row.rate_per_1000 !== undefined
-            ? ' · ' + row.rate_per_1000 + '/1,000'
-            : '';
-        const hotspot = row.is_hotspot ? ' · Hotspot' : '';
-        return (
-          '<li><span><span class="gis-rank-list__rank">' +
-          (index + 1) +
-          '.</span> ' +
-          '<span class="gis-status-pill gis-status-pill--' +
-          escapeHtml(status) +
-          '">' +
-          escapeHtml(row.status_label || statusLabel(status)) +
-          '</span> ' +
-          escapeHtml(row.name || '—') +
-          hotspot +
-          extra +
-          '</span><strong>' +
-          Number(row.total || 0).toLocaleString() +
-          '</strong></li>'
-        );
-      })
-      .join('');
-  }
-
-  function renderRankList(container, rows, labelKey) {
-    if (!container) return;
-    if (!rows.length) {
-      container.innerHTML = '<li class="gis-rank-list__empty">No records for the current filter.</li>';
-      return;
-    }
-    container.innerHTML = rows
-      .slice(0, 8)
-      .map(function (row, index) {
-        return (
-          '<li><span><span class="gis-rank-list__rank">' +
-          (index + 1) +
-          '.</span> ' +
-          escapeHtml(row[labelKey] || row.label || '—') +
-          '</span><strong>' +
-          Number(row.count || 0).toLocaleString() +
-          '</strong></li>'
-        );
-      })
-      .join('');
-  }
-
   function refreshDashboard() {
     try {
       renderSeverityStats();
@@ -1520,11 +1303,6 @@
       renderMap();
     } catch (mapErr) {
       console.error('GIS map render failed:', mapErr);
-    }
-    try {
-      renderClientAnalytics();
-    } catch (err) {
-      console.error('GIS analytics render failed:', err);
     }
     try {
       renderBarangaySummary();
@@ -1609,41 +1387,6 @@
       bhwLine;
   }
 
-  function displayedHotspots(monitoring) {
-    return ((monitoring && monitoring.hotspots) || []).filter(function (row) {
-      return Number(row.total || 0) >= 2;
-    });
-  }
-
-  function renderHotspotBox(hotspots) {
-    const el = els.hotspotBox;
-    if (!el) return;
-    const rows = displayedHotspots({ hotspots: hotspots });
-    if (!rows.length) {
-      el.hidden = true;
-      el.innerHTML = '';
-      return;
-    }
-    el.hidden = false;
-    el.innerHTML =
-      '<strong>Detected Hotspots: ' +
-      rows.length +
-      '</strong><ol>' +
-      rows
-        .slice(0, 8)
-        .map(function (row, i) {
-          return (
-            '<li>' +
-            escapeHtml(row.name) +
-            ' — ' +
-            Number(row.total || 0).toLocaleString() +
-            ' cases</li>'
-          );
-        })
-        .join('') +
-      '</ol>';
-  }
-
   function renderBarangaySummary() {
     const body = els.brgyBody;
     if (!body) return;
@@ -1674,7 +1417,6 @@
       return String(a.name || '').localeCompare(String(b.name || ''));
     });
 
-    renderHotspotBox(monitoring.hotspots);
     const selected = (monitoring.barangays || []).find(function (row) {
       return row.name === state.selectedBarangay;
     });
@@ -1885,7 +1627,6 @@
           console.error('GIS map render failed:', mapErr);
         }
         renderTable();
-        renderClientAnalytics();
         renderBarangaySummary();
       });
     });
