@@ -16,7 +16,7 @@ return [
         ['user_management.php', 'Patients', '<path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>', 'role=patient'],
     ]],
     ['section' => 'Healthcare Operations', 'items' => [
-        ['live_consultation_monitor.php', 'Consultations', '<circle cx="12" cy="12" r="10"/><polygon points="10 8 16 12 10 16 10 8"/>'],
+        ['live_consultation_monitor.php', 'Consultations', '<circle cx="12" cy="12" r="10"/><polygon points="10 8 16 12 10 16 10 8"/>', null, 'consultation_monitoring'],
         ['ai_review_assignments.php', 'AI Review Assignments', '<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 11h-6"/><path d="M19 8v6"/>'],
         ['case_reports.php', 'Violation Reports', '<path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><line x1="4" y1="22" x2="4" y2="15"/>'],
         ['patient_case_viewer.php', 'Patient Case Viewer', '<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/>'],

@@ -1,4 +1,8 @@
 <?php
+/**
+ * Legacy Admin Queue Monitoring URL.
+ * Queue monitoring is now a tab on Consultation Monitoring.
+ */
 if (!defined('BASE_PATH')) {
     $d = __DIR__;
     while ($d !== dirname($d)) {
@@ -10,16 +14,8 @@ if (!defined('BASE_PATH')) {
     }
 }
 require_once BASE_PATH . '/app/includes/auth_guard.php';
-require_once BASE_PATH . '/app/includes/admin_queue_live.php';
+require_once BASE_PATH . '/app/includes/portal_paths.php';
 require_once __DIR__ . '/_portal_access.php';
 
-$page_title = 'Queue Monitoring';
-
-require_once __DIR__ . '/partials/layout_open.php';
-
-require __DIR__ . '/partials/queue_monitoring_panel.php';
-?>
-<?php $adminQueueLiveVer = (int) @filemtime(ASSETS_PATH . '/js/admin-queue-live.js'); ?>
-<script src="<?= ASSET_BASE ?>/assets/js/admin-queue-live.js?v=<?= $adminQueueLiveVer ?>"></script>
-
-<?php require_once __DIR__ . '/partials/layout_close.php'; ?>
+header('Location: ' . portal_view_url('live_consultation_monitor.php', 'tab=queue'));
+exit;

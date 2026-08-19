@@ -27,9 +27,7 @@ return [
 
     ['section' => 'Operations', 'items' => [
 
-        ['live_consultation_monitor.php', 'Live Consultation Monitoring', '<circle cx="12" cy="12" r="10"/><polygon points="10 8 16 12 10 16 10 8"/>'],
-
-        ['queue_monitoring.php', 'Queue Monitoring', '<line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/>'],
+        ['live_consultation_monitor.php', 'Consultation Monitoring', '<circle cx="12" cy="12" r="10"/><polygon points="10 8 16 12 10 16 10 8"/>', null, 'consultation_monitoring'],
 
         ['ai_review_assignments.php', 'AI Review Assignments', '<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 11h-6"/><path d="M19 8v6"/>'],
 

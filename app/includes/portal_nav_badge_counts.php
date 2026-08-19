@@ -359,7 +359,7 @@ function portal_nav_badge_key_for_item(string $role, string $file, ?string $item
             'doctor_approvals.php'          => 'pending_doctor_apps',
             'bhw_applications.php'          => 'pending_bhw_apps',
             'bhw_approvals.php'             => 'pending_bhw_apps',
-            'live_consultation_monitor.php' => 'active_consultations',
+            'live_consultation_monitor.php' => 'queue_pending',
             'queue_monitoring.php'          => 'queue_pending',
             'notification_center.php'       => 'notifications',
             'ai_review_assignments.php'     => 'ai_review_pending',

@@ -10,54 +10,54 @@ if (!defined('BASE_PATH')) {
     }
 }
 require_once BASE_PATH . '/app/includes/auth_guard.php';
+require_once BASE_PATH . '/app/includes/admin_queue_live.php';
+require_once BASE_PATH . '/app/includes/portal_paths.php';
 require_once __DIR__ . '/_portal_access.php';
 
-$page_title = 'Live Consultation Monitoring';
-$api = ASSET_BASE . '/app/api/admin/monitoring.php?type=live';
+$page_title = 'Consultation Monitoring';
+$liveApi = ASSET_BASE . '/app/api/admin/monitoring.php?type=live';
+$cm_tab = strtolower(trim((string) ($_GET['tab'] ?? 'queue')));
+if (!in_array($cm_tab, ['queue', 'live'], true)) {
+    $cm_tab = 'queue';
+}
+$queue_embedded = true;
+$cm_base = portal_views_base() . '/live_consultation_monitor.php';
+$staffCssVer = (int) @filemtime(ASSETS_PATH . '/css/admin-staff-applications.css');
+$cmJsVer = (int) @filemtime(ASSETS_PATH . '/js/admin-consultation-monitor.js');
+$adminQueueLiveVer = (int) @filemtime(ASSETS_PATH . '/js/admin-queue-live.js');
 
 require_once __DIR__ . '/partials/layout_open.php';
 ?>
 
-<div class="header-row" style="display:flex;justify-content:space-between;align-items:flex-end;flex-wrap:wrap;gap:8px;margin-bottom:24px;">
-  <div>
-    <h2 class="text-h2">Live Consultation Monitoring</h2>
-    <p class="text-muted">Auto-refreshes every 30 seconds from live consultation data.</p>
+<link rel="stylesheet" href="<?= ASSET_BASE ?>/assets/css/admin-staff-applications.css?v=<?= $staffCssVer ?>">
+
+<article class="cm-monitor-page" id="cmMonitor">
+  <div class="header-row" style="margin-bottom:20px;">
+    <h2 class="text-h2">Consultation Monitoring</h2>
+    <p class="text-muted">Monitor waiting patients and active consultations.</p>
   </div>
-  <span id="liveConsultUpdated" class="text-xs text-muted">Loading…</span>
-</div>
 
-<div class="mc-card" style="padding:0;overflow:hidden;" id="liveConsultPanel" data-api="<?= htmlspecialchars($api) ?>">
-  <table class="mc-table">
-    <thead><tr><th>Provider</th><th>Patient</th><th>Start Time</th><th>Status</th></tr></thead>
-    <tbody id="liveConsultBody">
-      <tr><td colspan="4"><div class="mc-table-empty"><p>Loading…</p></div></td></tr>
-    </tbody>
-  </table>
-</div>
+  <nav class="staff-mgmt-tabs" aria-label="Consultation monitoring views">
+    <a href="<?= htmlspecialchars($cm_base . '?tab=queue') ?>"
+       class="staff-mgmt-tabs__item<?= $cm_tab === 'queue' ? ' is-active' : '' ?>"
+       data-cm-tab="queue"
+       <?= $cm_tab === 'queue' ? 'aria-current="page"' : '' ?>>Queue</a>
+    <a href="<?= htmlspecialchars($cm_base . '?tab=live') ?>"
+       class="staff-mgmt-tabs__item<?= $cm_tab === 'live' ? ' is-active' : '' ?>"
+       data-cm-tab="live"
+       <?= $cm_tab === 'live' ? 'aria-current="page"' : '' ?>>Live Consultations</a>
+  </nav>
 
-<script>
-(function () {
-  var api = document.getElementById('liveConsultPanel').getAttribute('data-api');
-  function esc(s) { var d = document.createElement('div'); d.textContent = s == null ? '' : String(s); return d.innerHTML; }
-  function load() {
-    fetch(api, { credentials: 'same-origin' })
-      .then(function (r) { return r.json(); })
-      .then(function (j) {
-        var tb = document.getElementById('liveConsultBody');
-        if (!j.success || !j.rows || !j.rows.length) {
-          tb.innerHTML = '<tr><td colspan="4"><div class="mc-table-empty"><p>No active consultations right now.</p></div></td></tr>';
-        } else {
-          tb.innerHTML = j.rows.map(function (row) {
-            return '<tr><td><strong>' + esc(row.provider_name) + '</strong></td><td>' + esc(row.patient_name) + '</td><td>' + esc(row.started_label) + '</td><td><span class="mc-badge">' + esc(row.status) + '</span></td></tr>';
-          }).join('');
-        }
-        document.getElementById('liveConsultUpdated').textContent = 'Updated ' + new Date().toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' }) + ' · ' + (j.count || 0) + ' active';
-      });
-  }
-  load();
-  setInterval(load, 30000);
-  document.addEventListener('visibilitychange', function () { if (!document.hidden) load(); });
-})();
-</script>
+  <section data-cm-panel="queue"<?= $cm_tab === 'queue' ? '' : ' hidden' ?>>
+    <?php require __DIR__ . '/partials/queue_monitoring_panel.php'; ?>
+  </section>
+
+  <section data-cm-panel="live"<?= $cm_tab === 'live' ? '' : ' hidden' ?>>
+    <?php require __DIR__ . '/partials/live_consultation_panel.php'; ?>
+  </section>
+</article>
+
+<script src="<?= ASSET_BASE ?>/assets/js/admin-queue-live.js?v=<?= $adminQueueLiveVer ?>"></script>
+<script src="<?= ASSET_BASE ?>/assets/js/admin-consultation-monitor.js?v=<?= $cmJsVer ?>"></script>
 
 <?php require_once __DIR__ . '/partials/layout_close.php'; ?>
