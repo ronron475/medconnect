@@ -6,7 +6,7 @@
 
   if (global.MedConnectPortalNavBadges) return;
 
-  const POLL_MS = 5000;
+  const POLL_MS = 3000;
   const CHANNEL = 'mc_portal_nav_badges_v1';
 
   const API_BY_PORTAL = {

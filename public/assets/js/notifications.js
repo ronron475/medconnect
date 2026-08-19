@@ -4,7 +4,7 @@
 (function () {
   'use strict';
 
-  const POLL_INTERVAL = 8000;
+  const POLL_INTERVAL = 3000;
 
   let lastId = 0;
   let pollTimer = null;
