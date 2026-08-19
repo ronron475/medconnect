@@ -1384,6 +1384,51 @@
   max-width: 320px;
 }
 
+.pdash-care-ai-result {
+  display: none;
+  margin: 14px 0 4px;
+  padding: 16px 18px;
+  border-radius: 12px;
+  border: 2px solid #0f766e;
+  background: #ecfdf5;
+  box-shadow: 0 0 0 4px rgba(15, 118, 110, 0.12);
+}
+
+.pdash-care-ai-result.is-visible,
+.pdash-care-ai-result:not([hidden]) {
+  display: block;
+}
+
+.pdash-care-ai-result[hidden] {
+  display: none !important;
+}
+
+.pdash-care-ai-result__label {
+  margin: 0 0 10px;
+  font-size: 1.05rem;
+  font-weight: 800;
+  color: #0f172a;
+  letter-spacing: -0.01em;
+  line-height: 1.35;
+}
+
+.pdash-care-ai-result__label strong {
+  color: #0f766e;
+}
+
+.pdash-care-continue {
+  margin: 0;
+  padding: 12px 14px;
+  border-radius: 10px;
+  background: #fff7ed;
+  border: 2px solid #ea580c;
+  color: #9a3412;
+  font-size: 1rem;
+  font-weight: 800;
+  line-height: 1.45;
+  text-align: center;
+}
+
 .pdash-care-form__optional {
   font-weight: 500;
   color: #94a3b8;

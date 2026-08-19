@@ -25,13 +25,31 @@ $card_lead = $is_new_consultation_flow
     : ($show_care_tips_context
         ? 'Describe your primary complaint; your doctor can approve self-care tips after you submit.'
         : 'Share your primary complaint to start triage.');
-$submit_label = $show_care_tips_context && !$is_new_consultation_flow
-    ? 'Submit for doctor review'
-    : 'Submit patient complaint';
+$submit_label = 'Submit patient complaint';
 $submit_kind = ($show_care_tips_context && !$is_new_consultation_flow) ? 'review' : 'complaint';
 $placeholder = $chief_complaint_locked
     ? 'Your submitted primary complaint…'
     : 'Describe your primary complaint...';
+$preliminary_complaint_triage = is_array($preliminary_complaint_triage ?? null) ? $preliminary_complaint_triage : null;
+$preliminary_payload = null;
+if ($preliminary_complaint_triage && empty($chief_complaint_locked)) {
+    $prelimLevel = (string) ($preliminary_complaint_triage['triage_level'] ?? 'non_urgent');
+    $prelimClass = (string) ($preliminary_complaint_triage['triage_classification'] ?? '');
+    $prelimLabel = function_exists('patient_symptoms_review_classification_label')
+        ? patient_symptoms_review_classification_label($prelimLevel, $prelimClass)
+        : 'NON-URGENT';
+    $prelimComplaint = trim((string) ($preliminary_complaint_triage['chief_complaint'] ?? ''));
+    $preliminary_payload = [
+        'triage_id' => (int) ($preliminary_complaint_triage['id'] ?? 0),
+        'triage_level' => $prelimLevel,
+        'classification_label' => $prelimLabel,
+        'chief_complaint' => $prelimComplaint,
+    ];
+    if ($registration_chief_complaint === '' && $prelimComplaint !== '') {
+        $registration_chief_complaint = $prelimComplaint;
+    }
+}
+$preliminary_json = $preliminary_payload ? json_encode($preliminary_payload, JSON_UNESCAPED_UNICODE) : '';
 ?>
 <section
   class="pdash-card pdash-card--complaint pdash-care"
@@ -67,7 +85,14 @@ $placeholder = $chief_complaint_locked
   </ol>
   <?php endif; ?>
 
-  <form id="pdashSymptomsReviewForm" class="pdash-review-form" novalidate>
+  <form
+    id="pdashSymptomsReviewForm"
+    class="pdash-review-form"
+    novalidate
+    <?php if ($preliminary_json !== ''): ?>
+    data-preliminary="<?= htmlspecialchars($preliminary_json, ENT_QUOTES, 'UTF-8') ?>"
+    <?php endif; ?>
+  >
     <label class="form-label pdash-care-form__label" for="pdashSymptomsComplaint">
       Primary Complaint
       <?php if ($chief_complaint_locked): ?>
@@ -94,9 +119,22 @@ $placeholder = $chief_complaint_locked
     </p>
 
     <div id="pdashSymptomsReviewAlert" class="patient-triage-alert" role="alert" hidden></div>
+    <div
+      id="pdashSymptomsAiResult"
+      class="pdash-care-ai-result<?= $preliminary_payload ? ' is-visible' : '' ?>"
+      <?= $preliminary_payload ? '' : 'hidden' ?>
+    >
+      <p class="pdash-care-ai-result__label">
+        Preliminary AI Assessment:
+        <strong id="pdashSymptomsAiLevel"><?= htmlspecialchars((string) ($preliminary_payload['classification_label'] ?? 'NON-URGENT')) ?></strong>
+      </p>
+      <p id="pdashSymptomsContinueHint" class="pdash-care-continue" role="status">
+        Please click &ldquo;Submit patient complaint&rdquo; again to continue.
+      </p>
+    </div>
     <?php if (!$chief_complaint_locked): ?>
     <button type="submit" class="pdash-btn pdash-btn--primary pdash-care-form__submit" id="pdashSymptomsReviewSubmit" data-submit-kind="<?= htmlspecialchars($submit_kind) ?>">
-      <?= htmlspecialchars($submit_label) ?>
+      Submit patient complaint
     </button>
     <?php endif; ?>
   </form>
@@ -105,8 +143,8 @@ $placeholder = $chief_complaint_locked
   <details class="pdash-care-how">
     <summary>How this works</summary>
     <ul>
-      <li>AI suggests self-care steps; a licensed doctor must approve before you see them.</li>
-      <li>A doctor is assigned automatically—you’ll see their name after you submit.</li>
+      <li>Click <strong>Submit patient complaint</strong> once to see the AI preliminary assessment.</li>
+      <li>Click <strong>Submit patient complaint</strong> again to continue. A doctor is assigned only after that second click, and only if a real slot is available.</li>
       <li>Track progress here and under <strong>My Health → Care tips</strong>.</li>
     </ul>
   </details>

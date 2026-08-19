@@ -37,6 +37,9 @@ $bookUrl = $asset . '/views/patient/triage.php';
       Emergency symptoms were detected. Please go to the nearest hospital or emergency department.
       Online self-care tips and teleconsultation are not appropriate for this case.
     </p>
+    <p id="mcPatientUrgencyContinue" class="mc-urgency-modal__continue" hidden role="status">
+      Please click &ldquo;Submit patient complaint&rdquo; again to continue.
+    </p>
     <ul class="mc-urgency-modal__steps" id="mcPatientUrgencySteps">
       <li>Call local emergency services if needed</li>
       <li>Go to the nearest hospital or ER</li>

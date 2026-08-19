@@ -22,6 +22,7 @@
   var slotsWrap = null;
   var slotsList = null;
   var slotsStatus = null;
+  var continueEl = null;
   var lastOpts = null;
   var langSelect = null;
   var lastFocus = null;
@@ -64,6 +65,7 @@
       slotsWrap = document.getElementById('mcPatientUrgencySlots');
       slotsList = document.getElementById('mcPatientUrgencySlotsList');
       slotsStatus = document.getElementById('mcPatientUrgencySlotsStatus');
+      continueEl = document.getElementById('mcPatientUrgencyContinue');
       langSelect = document.getElementById('mcPatientUrgencyLang');
       if (langSelect && window.McPatientTriageI18n && typeof window.McPatientTriageI18n.bindSelector === 'function') {
         window.McPatientTriageI18n.bindSelector(langSelect);
@@ -306,6 +308,18 @@
       msgEl.textContent = opts.useCustomMessage && opts.message ? opts.message : defaultMsg;
     }
 
+    if (continueEl) {
+      if (triageResult && kind !== 'emergency') {
+        continueEl.hidden = false;
+        var again = i18n('click_again_continue');
+        continueEl.textContent = (!again || again === 'click_again_continue')
+          ? 'Please click "Submit patient complaint" again to continue.'
+          : again;
+      } else {
+        continueEl.hidden = true;
+      }
+    }
+
     var closeBtn = modal.querySelector('[data-mc-urgency-close]');
     if (closeBtn) closeBtn.textContent = i18n('i_understand');
 
@@ -357,6 +371,7 @@
     modal.hidden = true;
     document.body.classList.remove('mc-urgency-modal-open');
     hideSlots();
+    if (continueEl) continueEl.hidden = true;
     if (lastFocus && typeof lastFocus.focus === 'function') {
       try { lastFocus.focus(); } catch (_) { /* ignore */ }
     }

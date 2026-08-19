@@ -490,6 +490,23 @@ body.mc-urgency-modal-open {
   text-align: left;
 }
 
+.mc-urgency-modal__continue {
+  margin: 0 0 16px;
+  padding: 12px 14px;
+  border-radius: 10px;
+  background: #fff7ed;
+  border: 2px solid #ea580c;
+  color: #9a3412;
+  font-size: 1rem;
+  font-weight: 800;
+  line-height: 1.45;
+  text-align: center;
+}
+
+.mc-urgency-modal__continue[hidden] {
+  display: none !important;
+}
+
 .mc-urgency-modal__steps {
   margin: 0 0 20px;
   padding: 12px 12px 12px 32px;
