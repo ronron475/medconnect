@@ -13,7 +13,7 @@ $gisMapNote = $gisIsProvider
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin=""/>
 <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css" crossorigin=""/>
 <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css" crossorigin=""/>
-<link rel="stylesheet" href="<?= htmlspecialchars($assetBase) ?>/assets/css/admin-gis-dashboard.css?v=4.9"/>
+<link rel="stylesheet" href="<?= htmlspecialchars($assetBase) ?>/assets/css/admin-gis-dashboard.css?v=5.0"/>
 
 <div class="gis-page" id="gis-dashboard"
      data-api="<?= htmlspecialchars($apiBase) ?>"
@@ -43,17 +43,6 @@ $gisMapNote = $gisIsProvider
       <div class="gis-stat-label">Barangays with cases</div>
       <div class="gis-stat-value" id="stat-barangays_with_cases">—</div>
     </div>
-    <div class="mc-card gis-stat-card" data-gis-insight="unmapped">
-      <div class="gis-stat-label">Cases without valid location</div>
-      <div class="gis-stat-value" id="stat-unmapped">—</div>
-    </div>
-    <?php if ($gisIsProvider): ?>
-    <?php else: ?>
-    <div class="mc-card gis-stat-card" data-gis-insight="bhw">
-      <div class="gis-stat-label">Cases without assigned BHW</div>
-      <div class="gis-stat-value" id="stat-unassigned_bhw">—</div>
-    </div>
-    <?php endif; ?>
   </div>
 
   <div class="gis-view-bar">
@@ -170,4 +159,4 @@ $gisMapNote = $gisIsProvider
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
 <script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js" crossorigin=""></script>
 <script src="https://unpkg.com/leaflet.heat@0.2.0/dist/leaflet-heat.js" crossorigin=""></script>
-<script src="<?= htmlspecialchars($assetBase) ?>/assets/js/admin-gis-dashboard.js?v=4.9"></script>
+<script src="<?= htmlspecialchars($assetBase) ?>/assets/js/admin-gis-dashboard.js?v=5.0"></script>
