@@ -25,9 +25,9 @@ $card_lead = $is_new_consultation_flow
     : ($show_care_tips_context
         ? 'Describe your primary complaint; your doctor can approve self-care tips after you submit.'
         : 'Share your primary complaint to start triage.');
-$submit_label = $is_new_consultation_flow
-    ? 'Submit primary complaint'
-    : ($show_care_tips_context ? 'Submit for doctor review' : 'Submit primary complaint');
+$submit_label = $show_care_tips_context && !$is_new_consultation_flow
+    ? 'Submit for doctor review'
+    : 'Submit patient complaint';
 $submit_kind = ($show_care_tips_context && !$is_new_consultation_flow) ? 'review' : 'complaint';
 $placeholder = $chief_complaint_locked
     ? 'Your submitted primary complaint…'
