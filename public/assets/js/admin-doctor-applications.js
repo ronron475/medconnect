@@ -12,6 +12,14 @@
   var statsEl = document.getElementById('doctorAppStats');
   var allRows = [];
 
+  if (cfg.showApplications === false) {
+    return;
+  }
+
+  if (statusFilter && cfg.initialStatus) {
+    statusFilter.value = cfg.initialStatus;
+  }
+
   function renderTable(rows) {
     if (!tbody) return;
 

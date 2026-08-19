@@ -27,6 +27,10 @@
   let currentApp = null;
   let allRows = [];
 
+  if (statusFilter && cfg.initialStatus) {
+    statusFilter.value = cfg.initialStatus;
+  }
+
   if (formUtils.wrapPasswordInput && passwordInput) {
     formUtils.wrapPasswordInput(passwordInput, { minLength: 12 });
   }
@@ -317,5 +321,7 @@
   if (statusFilter) statusFilter.addEventListener('change', applyFilters);
   modal?.addEventListener('click', function (e) { if (e.target === modal) closeModal(); });
 
-  loadList();
+  if (cfg.showApplications !== false) {
+    loadList();
+  }
 })();

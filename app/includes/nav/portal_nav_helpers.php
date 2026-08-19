@@ -5,8 +5,12 @@ declare(strict_types=1);
  * Shared portal navigation helpers — active-state detection for sectioned nav menus.
  */
 
-function portal_nav_is_active(string $file, string $current, string $query, ?string $itemQuery): bool
+function portal_nav_is_active(string $file, string $current, string $query, ?string $itemQuery, ?string $navGroup = null): bool
 {
+    if ($navGroup !== null && $navGroup !== '') {
+        return portal_nav_group_is_active($navGroup, $current, $query);
+    }
+
     if ($current !== $file) {
         return false;
     }
@@ -21,6 +25,25 @@ function portal_nav_is_active(string $file, string $current, string $query, ?str
         }
     }
     return true;
+}
+
+/**
+ * Highlight a consolidated management nav item across related routes.
+ */
+function portal_nav_group_is_active(string $group, string $current, string $query): bool
+{
+    parse_str($query, $params);
+
+    return match ($group) {
+        'doctor_management' => $current === 'doctor_applications.php'
+            || ($current === 'staff_management.php' && ($params['role'] ?? '') === 'provider'),
+        'bhw_management' => $current === 'bhw_applications.php'
+            || ($current === 'staff_management.php' && ($params['role'] ?? '') === 'bhw'),
+        'patient_management' => $current === 'user_management.php'
+            && ($params['role'] ?? '') === 'patient',
+        'administrator_management' => $current === 'user_management.php' && ($params['role'] ?? '') === 'admin',
+        default => false,
+    };
 }
 
 function portal_nav_current_basename(): string
