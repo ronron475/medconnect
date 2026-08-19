@@ -1980,6 +1980,27 @@ html[data-theme-resolved='dark'] body.superadmin-body .gis-brgy-table tbody tr.i
   background: #134e4a !important;
 }
 
+html[data-theme-resolved='dark'] body.admin-body .gis-brgy-detail,
+html[data-theme-resolved='dark'] body.superadmin-body .gis-brgy-detail {
+  background: #134e4a !important;
+  border-color: #2dd4bf !important;
+}
+
+html[data-theme-resolved='dark'] body.admin-body .gis-brgy-detail h4,
+html[data-theme-resolved='dark'] body.superadmin-body .gis-brgy-detail h4 {
+  color: #ecfdf5 !important;
+}
+
+html[data-theme-resolved='dark'] body.admin-body .gis-brgy-detail p,
+html[data-theme-resolved='dark'] body.superadmin-body .gis-brgy-detail p {
+  color: #d1fae5 !important;
+}
+
+html[data-theme-resolved='dark'] body.admin-body .gis-brgy-detail__meta,
+html[data-theme-resolved='dark'] body.superadmin-body .gis-brgy-detail__meta {
+  color: #99f6e4 !important;
+}
+
 html[data-theme-resolved='dark'] body.admin-body .gis-title,
 html[data-theme-resolved='dark'] body.superadmin-body .gis-title,
 html[data-theme-resolved='dark'] body.admin-body .gis-stat-value,
