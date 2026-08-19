@@ -115,72 +115,94 @@ try {
 }
 triage_assessment_ensure_schema($pdo);
 
-$patientId = (int) $pdo->query("SELECT id FROM users WHERE role = 'patient' ORDER BY id DESC LIMIT 1")->fetchColumn();
-$providerId = (int) $pdo->query("SELECT id FROM users WHERE role = 'provider' AND is_active = 1 ORDER BY id DESC LIMIT 1")->fetchColumn();
-if ($patientId <= 0 || $providerId <= 0) {
-    fail('Need at least one patient and one provider in the database.');
-}
-
 $pdo->beginTransaction();
 try {
-    $ins = $pdo->prepare("
+    $patientId = (int) $pdo->query("SELECT id FROM users WHERE role = 'patient' ORDER BY id DESC LIMIT 1")->fetchColumn();
+    $providerId = (int) $pdo->query("SELECT id FROM users WHERE role = 'provider' AND is_active = 1 ORDER BY id DESC LIMIT 1")->fetchColumn();
+    if ($patientId <= 0) {
+        $pdo->prepare("
+            INSERT INTO users (first_name, last_name, email, password, role, is_active, is_email_verified)
+            VALUES ('Verify', 'Patient', 'verify-ai-doctor@medconnect.local', 'x', 'patient', 1, 1)
+        ")->execute();
+        $patientId = (int) $pdo->lastInsertId();
+    }
+    if ($providerId <= 0) {
+        fail('Need at least one provider in the database.');
+    }
+
+    $insert = $pdo->prepare("
         INSERT INTO triage_results
             (patient_id, symptoms, chief_complaint, level, urgency_label, status, assessed_at,
              triage_level, triage_classification, recommendation_status)
-        VALUES (?, '[]', 'Verify AI vs doctor', '2', 'Urgent', 'pending', NOW(), 'urgent', 'URGENT', 'hidden')
+        VALUES (?, '[]', ?, ?, ?, 'pending', NOW(), ?, ?, 'hidden')
     ");
-    $ins->execute([$patientId]);
-    $triageId = (int) $pdo->lastInsertId();
-    if ($triageId <= 0) {
-        fail('Could not insert verification triage row.');
+
+    $scenarios = [
+        ['name' => 'DB Test 1 NU→NU', 'ai' => 'NON-URGENT', 'ai_level' => '3', 'ai_gis' => 'non_urgent', 'ai_label' => 'Non-Urgent', 'to' => '3', 'to_label' => 'Non-Urgent', 'to_gis' => 'non_urgent', 'expect_er' => false],
+        ['name' => 'DB Test 2 URGENT→NU', 'ai' => 'URGENT', 'ai_level' => '2', 'ai_gis' => 'urgent', 'ai_label' => 'Urgent', 'to' => '3', 'to_label' => 'Non-Urgent', 'to_gis' => 'non_urgent', 'expect_er' => false],
+        ['name' => 'DB Test 3 URGENT→EMERGENCY', 'ai' => 'URGENT', 'ai_level' => '2', 'ai_gis' => 'urgent', 'ai_label' => 'Urgent', 'to' => '1', 'to_label' => 'Emergency', 'to_gis' => 'emergency', 'expect_er' => true],
+        ['name' => 'DB Test 4 NU→EMERGENCY', 'ai' => 'NON-URGENT', 'ai_level' => '3', 'ai_gis' => 'non_urgent', 'ai_label' => 'Non-Urgent', 'to' => '1', 'to_label' => 'Emergency', 'to_gis' => 'emergency', 'expect_er' => true],
+    ];
+
+    foreach ($scenarios as $sc) {
+        echo "\n{$sc['name']}\n";
+        $insert->execute([$patientId, $sc['name'], $sc['ai_level'], $sc['ai_label'], $sc['ai_gis'], $sc['ai']]);
+        $triageId = (int) $pdo->lastInsertId();
+        if ($triageId <= 0) {
+            fail('Could not insert verification triage row.');
+        }
+
+        $pdo->prepare("UPDATE triage_results SET level = ?, urgency_label = ?, triage_level = ?, assessed_at = NOW() WHERE id = ?")
+            ->execute([$sc['to'], $sc['to_label'], $sc['to_gis'], $triageId]);
+
+        $applied = ['triggered' => false, 'referral_id' => 0];
+        if ($sc['to_gis'] === 'emergency') {
+            $applied = triage_apply_doctor_emergency_referral(
+                $pdo,
+                $triageId,
+                $patientId,
+                $providerId,
+                $sc['name']
+            );
+        }
+
+        $afterStmt = $pdo->prepare('SELECT triage_classification, level, urgency_label, triage_level, outcome FROM triage_results WHERE id = ?');
+        $afterStmt->execute([$triageId]);
+        $rowAfter = $afterStmt->fetch(PDO::FETCH_ASSOC) ?: [];
+
+        assert_same((string) $rowAfter['triage_classification'], $sc['ai'], 'AI preliminary preserved');
+        assert_same((string) $rowAfter['level'], $sc['to'], 'Doctor level');
+        assert_same((string) $rowAfter['urgency_label'], $sc['to_label'], 'Doctor urgency_label');
+        assert_same((string) $rowAfter['triage_level'], $sc['to_gis'], 'Doctor triage_level');
+
+        $labels = [
+            'ai' => triage_ai_preliminary_label($rowAfter),
+            'doctor' => triage_doctor_final_label($rowAfter),
+            'final' => triage_final_decision_label($rowAfter),
+        ];
+        echo "    display AI={$labels['ai']} Doctor={$labels['doctor']} Final={$labels['final']}\n";
+
+        $er = triage_doctor_final_is_emergency($rowAfter);
+        $aiEr = triage_ai_was_emergency($rowAfter);
+        $modal = $er && !$aiEr;
+        if ($sc['expect_er']) {
+            if (!$er || $aiEr || empty($applied['triggered'])) {
+                fail('Expected doctor-final emergency referral + patient modal.');
+            }
+            if ((string) $rowAfter['outcome'] !== 'emergency_referral') {
+                fail('Expected outcome=emergency_referral');
+            }
+            echo "OK  emergency referral triggered, modal would appear, referral_id=" . (int) ($applied['referral_id'] ?? 0) . "\n";
+        } else {
+            if ($modal || !empty($applied['triggered']) || $er) {
+                fail('Did not expect emergency referral/modal.');
+            }
+            echo "OK  no emergency referral / no modal\n";
+        }
     }
-
-    $before = $pdo->prepare('SELECT triage_classification, level, urgency_label, triage_level, outcome FROM triage_results WHERE id = ?');
-    $before->execute([$triageId]);
-    $rowBefore = $before->fetch(PDO::FETCH_ASSOC) ?: [];
-    assert_same((string) $rowBefore['triage_classification'], 'URGENT', 'DB AI before override');
-    assert_same((string) $rowBefore['triage_level'], 'urgent', 'DB GIS before override');
-
-    $pdo->prepare("UPDATE triage_results SET level = ?, urgency_label = ?, triage_level = ?, assessed_at = NOW() WHERE id = ?")
-        ->execute(['1', 'Emergency', TriageLevelService::EMERGENCY, $triageId]);
-
-    $applied = triage_apply_doctor_emergency_referral(
-        $pdo,
-        $triageId,
-        $patientId,
-        $providerId,
-        'Verify AI vs doctor'
-    );
-
-    $after = $pdo->prepare('SELECT triage_classification, level, urgency_label, triage_level, outcome FROM triage_results WHERE id = ?');
-    $after->execute([$triageId]);
-    $rowAfter = $after->fetch(PDO::FETCH_ASSOC) ?: [];
-
-    assert_same((string) $rowAfter['triage_classification'], 'URGENT', 'DB AI after override (must be unchanged)');
-    assert_same((string) $rowAfter['level'], '1', 'DB level after override');
-    assert_same((string) $rowAfter['urgency_label'], 'Emergency', 'DB urgency_label after override');
-    assert_same((string) $rowAfter['triage_level'], 'emergency', 'DB triage_level after override');
-    assert_same((string) $rowAfter['outcome'], 'emergency_referral', 'DB outcome after override');
-
-    if (empty($applied['triggered'])) {
-        fail('Doctor emergency referral was not triggered.');
-    }
-    echo "OK  emergency workflow triggered, referral_id=" . (int) ($applied['referral_id'] ?? 0) . "\n";
-
-    $pollRow = $rowAfter;
-    if (!triage_doctor_final_is_emergency($pollRow)) {
-        fail('Poll would miss doctor-final emergency.');
-    }
-    if (triage_ai_was_emergency($pollRow)) {
-        fail('Poll would treat this as original AI emergency.');
-    }
-    echo "OK  patient poll would show existing emergency modal (doctor final, not AI)\n";
-
-    $countBefore = (int) $pdo->query('SELECT COUNT(*) FROM triage_results WHERE patient_id = ' . $patientId)->fetchColumn();
-    echo "OK  reused single triage row id={$triageId}; no extra insert (count={$countBefore} including this temp row)\n";
 
     $pdo->rollBack();
-    echo "OK  transaction rolled back; no leftover test data\n";
+    echo "\nOK  transaction rolled back; no leftover test data\n";
 } catch (Throwable $e) {
     if ($pdo->inTransaction()) {
         $pdo->rollBack();
