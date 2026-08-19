@@ -3,8 +3,10 @@
  * One-off verifier for AI preliminary vs doctor final triage.
  * Database writes are rolled back when a local connection is available.
  */
+require_once dirname(__DIR__, 2) . '/bootstrap.php';
 require_once dirname(__DIR__, 2) . '/app/includes/triage_assessment_schema.php';
 require_once dirname(__DIR__, 2) . '/app/core/TriageLevelService.php';
+require_once dirname(__DIR__, 2) . '/app/includes/provider_clinical_support.php';
 
 function fail(string $msg): void
 {
@@ -114,6 +116,17 @@ try {
     exit(0);
 }
 triage_assessment_ensure_schema($pdo);
+provider_clinical_support_ensure_schema($pdo);
+require_once dirname(__DIR__, 2) . '/app/includes/patient_slot_waitlist.php';
+patient_slot_waitlist_ensure_schema($pdo);
+
+try {
+    $pdo->prepare("DELETE FROM consultations WHERE provider_name = 'Dr Verify' AND consult_type = 'General Consultation'")->execute();
+    $pdo->prepare("DELETE FROM triage_results WHERE chief_complaint LIKE 'TEST % override%' OR chief_complaint LIKE 'TEST % override OTHER VISIT' OR chief_complaint LIKE 'DB Test %'")->execute();
+    $pdo->prepare("DELETE FROM consultation_clinical_support WHERE provider_name = 'Dr Verify'")->execute();
+} catch (Throwable $e) {
+    // ignore cleanup of leftover verifier rows
+}
 
 $pdo->beginTransaction();
 try {
@@ -201,8 +214,143 @@ try {
         }
     }
 
-    $pdo->rollBack();
-    echo "\nOK  transaction rolled back; no leftover test data\n";
+    echo "\n=== Persist doctor override (authoritative final, same consultation only) ===\n";
+    $consultCols = $pdo->query('SHOW COLUMNS FROM consultations')->fetchAll(PDO::FETCH_COLUMN) ?: [];
+    if (!in_array('triage_result_id', $consultCols, true)) {
+        fail('consultations.triage_result_id is required to verify consultation-scoped persist.');
+    }
+
+    $insertConsult = $pdo->prepare("
+        INSERT INTO consultations (patient_id, provider_id, provider_name, consult_date, consult_time, consult_type, status, triage_result_id)
+        VALUES (?, ?, 'Dr Verify', CURDATE(), CURTIME(), 'General Consultation', 'in_consultation', ?)
+    ");
+
+    $persistCases = [
+        [
+            'name' => 'TEST 1 NON-URGENT override',
+            'ai' => 'EMERGENCY',
+            'ai_level' => '1',
+            'ai_label' => 'Emergency',
+            'ai_gis' => 'emergency',
+            'doctor' => 'non_urgent',
+            'expect_final' => 'NON-URGENT',
+            'expect_emergency' => false,
+            'expect_urgent' => false,
+        ],
+        [
+            'name' => 'TEST 2 URGENT override',
+            'ai' => 'NON-URGENT',
+            'ai_level' => '3',
+            'ai_label' => 'Non-Urgent',
+            'ai_gis' => 'non_urgent',
+            'doctor' => 'urgent',
+            'expect_final' => 'URGENT',
+            'expect_emergency' => false,
+            'expect_urgent' => true,
+        ],
+        [
+            'name' => 'TEST 3 EMERGENCY override',
+            'ai' => 'NON-URGENT',
+            'ai_level' => '3',
+            'ai_label' => 'Non-Urgent',
+            'ai_gis' => 'non_urgent',
+            'doctor' => 'emergency',
+            'expect_final' => 'EMERGENCY',
+            'expect_emergency' => true,
+            'expect_urgent' => false,
+        ],
+    ];
+
+    foreach ($persistCases as $sc) {
+        echo "\n{$sc['name']}\n";
+        $insert->execute([$patientId, $sc['name'], $sc['ai_level'], $sc['ai_label'], $sc['ai_gis'], $sc['ai']]);
+        $triageId = (int) $pdo->lastInsertId();
+        $insert->execute([$patientId, $sc['name'] . ' OTHER VISIT', $sc['ai_level'], $sc['ai_label'], $sc['ai_gis'], $sc['ai']]);
+        $otherTriageId = (int) $pdo->lastInsertId();
+        $insertConsult->execute([$patientId, $providerId, $triageId]);
+        $consultId = (int) $pdo->lastInsertId();
+        $insertConsult->execute([$patientId, $providerId, $otherTriageId]);
+        $otherConsultId = (int) $pdo->lastInsertId();
+
+        $saved = provider_clinical_support_persist_doctor_override(
+            $pdo,
+            $consultId,
+            $providerId,
+            $patientId,
+            $sc['doctor'],
+            'because it is needed',
+            'Dr Verify'
+        );
+
+        $persisted = $saved['persisted'];
+        $workflow = $saved['workflow'];
+
+        if ((int) ($persisted['consultation_id'] ?? 0) !== $consultId) {
+            fail('Persisted consultation_id mismatch.');
+        }
+        assert_same((string) ($persisted['final_label'] ?? ''), $sc['expect_final'], 'Persisted final');
+        assert_same((string) ($persisted['doctor_label'] ?? ''), $sc['expect_final'], 'Persisted doctor');
+        assert_same((string) ($persisted['ai_label'] ?? ''), $sc['ai'], 'Persisted AI unchanged');
+
+        $afterStmt = $pdo->prepare('SELECT triage_classification, level, urgency_label, triage_level FROM triage_results WHERE id = ? AND patient_id = ?');
+        $afterStmt->execute([$triageId, $patientId]);
+        $rowAfter = $afterStmt->fetch(PDO::FETCH_ASSOC) ?: [];
+        assert_same((string) $rowAfter['triage_classification'], $sc['ai'], 'DB AI preliminary preserved');
+        assert_same(triage_final_decision_label($rowAfter), $sc['expect_final'], 'DB final decision');
+
+        $otherStmt = $pdo->prepare('SELECT triage_classification, level, urgency_label, triage_level FROM triage_results WHERE id = ?');
+        $otherStmt->execute([$otherTriageId]);
+        $otherAfter = $otherStmt->fetch(PDO::FETCH_ASSOC) ?: [];
+        assert_same((string) $otherAfter['triage_classification'], $sc['ai'], 'Other visit AI unchanged');
+        assert_same(triage_ai_preliminary_label($otherAfter), $sc['ai'], 'Other visit AI label');
+        assert_same(triage_final_decision_label($otherAfter), $sc['ai'], 'Other visit final still AI');
+
+        $ov = provider_clinical_support_latest_override_row($pdo, $consultId);
+        if (!$ov || (int) ($ov['consultation_id'] ?? 0) !== $consultId) {
+            fail('Override row missing for this consultation.');
+        }
+        assert_same(trim((string) ($ov['audit_note'] ?? '')), 'because it is needed', 'Clinical reason');
+
+        $otherOv = provider_clinical_support_latest_override_row($pdo, $otherConsultId);
+        if ($otherOv) {
+            fail('Override leaked onto the other consultation.');
+        }
+
+        $er = !empty($workflow['emergency_triggered']);
+        $urg = !empty($workflow['urgent_triggered']);
+        if ($er !== $sc['expect_emergency']) {
+            fail('Emergency workflow flag mismatch.');
+        }
+        if ($urg !== $sc['expect_urgent']) {
+            fail('Urgent workflow flag mismatch.');
+        }
+        if ($sc['expect_emergency']) {
+            $facility = $workflow['facility'] ?? [];
+            if (!empty($facility['claimed_nearest']) && empty($facility['facility']['name'])) {
+                fail('Claimed nearest facility without a registered facility name.');
+            }
+            if (empty($facility['claimed_nearest']) && empty($facility['message'])) {
+                fail('Unlocated emergency must report location unavailable rather than a fake nearest facility.');
+            }
+            echo "OK  emergency workflow after DB confirm, facility=" . (string) (($facility['facility']['name'] ?? '') ?: ($facility['message'] ?? 'none')) . "\n";
+        } else {
+            echo "OK  no emergency workflow\n";
+        }
+    }
+
+    if ($pdo->inTransaction()) {
+        $pdo->rollBack();
+        echo "\nOK  transaction rolled back; no leftover test data\n";
+    } else {
+        try {
+            $pdo->prepare("DELETE FROM consultations WHERE provider_name = 'Dr Verify' AND consult_type = 'General Consultation'")->execute();
+            $pdo->prepare("DELETE FROM triage_results WHERE chief_complaint LIKE 'TEST % override%' OR chief_complaint LIKE 'TEST % override OTHER VISIT' OR chief_complaint LIKE 'DB Test %'")->execute();
+            $pdo->prepare("DELETE FROM consultation_clinical_support WHERE provider_name = 'Dr Verify'")->execute();
+        } catch (Throwable $cleanupErr) {
+            echo "WARN leftover cleanup: " . $cleanupErr->getMessage() . "\n";
+        }
+        echo "\nOK  verifier cleanup completed (emergency referral schema ended the test transaction)\n";
+    }
 } catch (Throwable $e) {
     if ($pdo->inTransaction()) {
         $pdo->rollBack();

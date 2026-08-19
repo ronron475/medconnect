@@ -574,28 +574,42 @@ function provider_clinical_support_from_assessment(array $assessment): array
  */
 function provider_clinical_support_ensure_schema(PDO $pdo): void
 {
-    $pdo->exec("
-        CREATE TABLE IF NOT EXISTS consultation_clinical_support (
-            id INT UNSIGNED NOT NULL AUTO_INCREMENT,
-            consultation_id INT UNSIGNED NOT NULL,
-            provider_id INT UNSIGNED NOT NULL,
-            patient_id INT UNSIGNED NOT NULL,
-            event_type VARCHAR(40) NOT NULL DEFAULT 'reassess',
-            chief_complaint TEXT NOT NULL,
-            urgency_bucket VARCHAR(32) NOT NULL DEFAULT 'unknown',
-            urgency_label VARCHAR(120) NOT NULL DEFAULT '',
-            ai_urgency_bucket VARCHAR(32) NULL,
-            doctor_urgency_bucket VARCHAR(32) NULL,
-            audit_note TEXT NULL,
-            provider_name VARCHAR(160) NULL,
-            support_json JSON NOT NULL,
-            created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-            PRIMARY KEY (id),
-            KEY idx_ccs_consult (consultation_id),
-            KEY idx_ccs_provider (provider_id),
-            KEY idx_ccs_event (event_type)
-        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
-    ");
+    static $ready = false;
+    if ($ready) {
+        return;
+    }
+
+    $exists = false;
+    try {
+        $exists = $pdo->query("SHOW TABLES LIKE 'consultation_clinical_support'")->rowCount() > 0;
+    } catch (Throwable $e) {
+        $exists = false;
+    }
+
+    if (!$exists) {
+        $pdo->exec("
+            CREATE TABLE consultation_clinical_support (
+                id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+                consultation_id INT UNSIGNED NOT NULL,
+                provider_id INT UNSIGNED NOT NULL,
+                patient_id INT UNSIGNED NOT NULL,
+                event_type VARCHAR(40) NOT NULL DEFAULT 'reassess',
+                chief_complaint TEXT NOT NULL,
+                urgency_bucket VARCHAR(32) NOT NULL DEFAULT 'unknown',
+                urgency_label VARCHAR(120) NOT NULL DEFAULT '',
+                ai_urgency_bucket VARCHAR(32) NULL,
+                doctor_urgency_bucket VARCHAR(32) NULL,
+                audit_note TEXT NULL,
+                provider_name VARCHAR(160) NULL,
+                support_json JSON NOT NULL,
+                created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                PRIMARY KEY (id),
+                KEY idx_ccs_consult (consultation_id),
+                KEY idx_ccs_provider (provider_id),
+                KEY idx_ccs_event (event_type)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+        ");
+    }
 
     $cols = $pdo->query('SHOW COLUMNS FROM consultation_clinical_support')->fetchAll(PDO::FETCH_COLUMN);
     $alters = [
@@ -614,6 +628,8 @@ function provider_clinical_support_ensure_schema(PDO $pdo): void
             }
         }
     }
+
+    $ready = true;
 }
 
 /**
@@ -1120,6 +1136,9 @@ function provider_clinical_support_persist_doctor_override(
     if (!in_array($urgencyBucket, ['emergency', 'urgent', 'non_urgent'], true)) {
         throw new InvalidArgumentException('Invalid urgency.');
     }
+
+    provider_clinical_support_ensure_schema($pdo);
+    triage_assessment_ensure_schema($pdo);
 
     $support = provider_consultation_clinical_support($pdo, $consultationId, $patientId);
     $linkedTriageId = provider_clinical_support_linked_triage_id($pdo, $consultationId, $patientId);
