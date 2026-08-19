@@ -20,6 +20,17 @@ profile_picture_ensure_schema($pdo);
 
 require_once __DIR__ . '/_portal_access.php';
 
+$show_success = isset($_GET['created']);
+$show_restored = isset($_GET['restored']);
+$is_superadmin = portal_is_superadmin();
+
+$status_filter = $_GET['status'] ?? 'all';
+$role_filter   = $_GET['role'] ?? 'all';
+if (portal_is_superadmin_shell() && $role_filter === 'admin') {
+    header('Location: ' . portal_views_base() . '/administrators.php');
+    exit;
+}
+
 $page_title = 'User Account Management';
 $um_heading = 'User Account Management';
 $um_subtitle = 'Monitor and manage all system accounts including patients and medical staff.';
@@ -42,21 +53,13 @@ if ($role_filter === 'patient') {
     $um_empty_message = 'No administrators matching your criteria.';
     $um_archived_empty = 'No archived administrator accounts found.';
 }
-$show_success = isset($_GET['created']);
-$show_restored = isset($_GET['restored']);
-$is_superadmin = portal_is_superadmin();
 
-$status_filter = $_GET['status'] ?? 'all';
-$role_filter   = $_GET['role'] ?? 'all';
-if (portal_is_superadmin_shell() && $role_filter === 'admin') {
-    header('Location: ' . portal_views_base() . '/administrators.php');
-    exit;
-}
 $search        = trim($_GET['search'] ?? '');
 $sort          = $_GET['sort'] ?? 'archived_at';
 $order         = $_GET['order'] ?? 'desc';
 
 $is_archived_view = ($status_filter === 'archived');
+$show_create_doctor = !$is_archived_view && $role_filter !== 'patient' && $role_filter !== 'admin';
 
 $users = user_account_status_fetch_users($pdo, [
     'status' => $status_filter,
@@ -116,7 +119,7 @@ require_once __DIR__ . '/partials/layout_open.php';
         <h2 class="text-h2"><?= htmlspecialchars($um_heading) ?></h2>
         <p class="text-muted"><?= htmlspecialchars($um_subtitle) ?></p>
     </div>
-    <?php if (!$is_archived_view): ?>
+    <?php if ($show_create_doctor): ?>
     <button type="button" class="mc-btn mc-btn--primary" data-open-create-doctor>
         Create Doctor Account
     </button>
@@ -303,9 +306,11 @@ require_once __DIR__ . '/partials/layout_open.php';
 <?php endif; ?>
 
 <?php
-$create_doctor_api = ASSET_BASE . '/app/api/admin/doctor_applications.php';
-$create_doctor_submit_label = 'Submit Application';
-require __DIR__ . '/partials/create_doctor_modal.php';
+if ($show_create_doctor) {
+    $create_doctor_api = ASSET_BASE . '/app/api/admin/doctor_applications.php';
+    $create_doctor_submit_label = 'Submit Application';
+    require __DIR__ . '/partials/create_doctor_modal.php';
+}
 ?>
 
 <?php
