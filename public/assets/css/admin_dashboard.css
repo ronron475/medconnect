@@ -114,10 +114,21 @@ body.admin-body {
   flex-direction: column;
   gap: 2px;
   overflow-y: auto;
+  overflow-x: hidden;
   overflow-anchor: none;
-  scrollbar-width: none;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.22) transparent;
 }
-.adm-nav::-webkit-scrollbar { display: none; }
+.adm-nav::-webkit-scrollbar {
+  width: 5px;
+}
+.adm-nav::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.22);
+  border-radius: 999px;
+}
+.adm-nav::-webkit-scrollbar-track {
+  background: transparent;
+}
 
 .adm-nav-item {
   display: flex;
