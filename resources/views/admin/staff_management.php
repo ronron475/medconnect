@@ -118,7 +118,7 @@ require_once __DIR__ . '/partials/layout_open.php';
       <?php endif; ?>
     <?php else: ?>
       <?php if ($is_superadmin): ?>
-    <a href="<?= $portalBase ?>/doctor_approvals.php" class="mc-btn mc-btn--primary">Doctor Approval Queue</a>
+    <a href="<?= portal_view_url('doctor_applications.php') ?>?tab=pending" class="mc-btn mc-btn--primary">Doctors · Pending Approval</a>
       <?php else: ?>
     <button type="button" class="mc-btn mc-btn--primary" data-open-create-doctor>
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>

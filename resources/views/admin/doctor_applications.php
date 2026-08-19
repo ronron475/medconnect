@@ -46,6 +46,8 @@ if ($is_superadmin_portal) {
 }
 $show_submitted = isset($_GET['submitted']);
 $show_saved = isset($_GET['saved']);
+$show_approved = isset($_GET['approved']);
+$show_rejected = isset($_GET['rejected']);
 
 require_once __DIR__ . '/partials/layout_open.php';
 ?>
@@ -76,6 +78,30 @@ require_once __DIR__ . '/partials/layout_open.php';
 </div>
 <?php endif; ?>
 
+<?php if ($show_approved): ?>
+<div class="staff-apps-flash staff-apps-flash--success" role="status">
+    <div class="staff-apps-flash__icon" aria-hidden="true">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M20 6L9 17l-5-5"/></svg>
+    </div>
+    <div>
+        <p class="staff-apps-flash__title">Doctor account approved</p>
+        <p class="staff-apps-flash__text">The account is now active and the doctor may log in.</p>
+    </div>
+</div>
+<?php endif; ?>
+
+<?php if ($show_rejected): ?>
+<div class="staff-apps-flash staff-apps-flash--warn" role="status">
+    <div class="staff-apps-flash__icon" aria-hidden="true">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+    </div>
+    <div>
+        <p class="staff-apps-flash__title">Application rejected</p>
+        <p class="staff-apps-flash__text">The submitting administrator has been notified.</p>
+    </div>
+</div>
+<?php endif; ?>
+
 <header class="staff-apps-hero">
     <div class="staff-apps-hero__content">
         <span class="staff-apps-hero__eyebrow"><?= $is_superadmin_portal ? 'User Management · Doctor Operations' : 'User Management · Maker-Checker Workflow' ?></span>
@@ -83,7 +109,7 @@ require_once __DIR__ . '/partials/layout_open.php';
         <p class="staff-apps-hero__desc"><?php if ($show_queue_panel): ?>
             Monitor today's consultation queue — waiting, active, and completed patients across all providers.
         <?php elseif ($is_superadmin_portal): ?>
-            Manage doctor applications, approved accounts, and live queue monitoring from one place.
+            Manage doctor applications, approved accounts, and live queue monitoring. Use the Pending Approval tab to review submissions from administrators.
         <?php else: ?>
             Manage doctor applications, PRC verification, supporting documents, and approved doctor accounts from one place.
         <?php endif; ?></p>
@@ -125,7 +151,11 @@ require __DIR__ . '/partials/staff_hub_tabs.php';
 
 <div class="staff-apps-note" role="note">
     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+    <?php if ($is_superadmin_portal): ?>
+    <span><strong>Maker-Checker separation applies.</strong> You cannot approve applications you personally submitted. Complete the full checklist before activating any Doctor account.</span>
+    <?php else: ?>
     <span><strong>You cannot activate Doctor accounts directly.</strong> After submission, a Super Administrator must review PRC verification, documents, and approve the application before the account becomes active.</span>
+    <?php endif; ?>
 </div>
 
 <div class="staff-apps-card">
@@ -178,6 +208,11 @@ require __DIR__ . '/partials/queue_monitoring_panel.php';
 
 </article>
 
+<?php if ($is_superadmin_portal): ?>
+<?php require __DIR__ . '/partials/doctor_review_modal.php'; ?>
+<?php endif; ?>
+
+<?php if (!$is_superadmin_portal): ?>
 <?php
 $create_doctor_modal_id = 'doctorAppCreateModal';
 $create_doctor_form_id = 'doctorAppCreateForm';
@@ -186,20 +221,32 @@ $create_doctor_show_role = false;
 $create_doctor_submit_label = 'Submit Application';
 require __DIR__ . '/partials/create_doctor_modal.php';
 ?>
+<?php endif; ?>
 
-<link rel="stylesheet" href="<?= ASSET_BASE ?>/assets/css/admin-staff-applications.css?v=1.1">
-<link rel="stylesheet" href="<?= ASSET_BASE ?>/assets/css/admin-bhw-applications.css?v=1.1">
-<script src="<?= ASSET_BASE ?>/assets/js/admin-staff-applications.js?v=1.0"></script>
+<link rel="stylesheet" href="<?= ASSET_BASE ?>/assets/css/admin-staff-applications.css?v=1.3">
+<link rel="stylesheet" href="<?= ASSET_BASE ?>/assets/css/admin-bhw-applications.css?v=1.2">
+<script src="<?= ASSET_BASE ?>/assets/js/admin-staff-applications.js?v=1.1"></script>
 <script>
 window.MC_DOCTOR_APP = {
     api: <?= json_encode(ASSET_BASE . '/app/api/admin/doctor_applications.php') ?>,
     assetBase: <?= json_encode(ASSET_BASE) ?>,
     initialTab: <?= json_encode($hub_tab) ?>,
     initialStatus: <?= json_encode($initial_app_status) ?>,
-    showApplications: <?= $show_applications_panel ? 'true' : 'false' ?>
+    showApplications: <?= $show_applications_panel ? 'true' : 'false' ?>,
+    checkerMode: <?= $is_superadmin_portal ? 'true' : 'false' ?>
 };
 </script>
-<script src="<?= ASSET_BASE ?>/assets/js/admin-doctor-applications.js?v=1.2"></script>
+<script src="<?= ASSET_BASE ?>/assets/js/admin-doctor-applications.js?v=1.3"></script>
+<?php if ($is_superadmin_portal): ?>
+<script>
+window.MC_DOCTOR_APPROVAL = {
+    api: <?= json_encode(ASSET_BASE . '/app/api/superadmin/doctor_approvals.php') ?>,
+    currentUserId: <?= (int) ($_SESSION['user_id'] ?? 0) ?>,
+    hubMode: true
+};
+</script>
+<script src="<?= ASSET_BASE ?>/assets/js/superadmin-doctor-approvals.js?v=1.2"></script>
+<?php endif; ?>
 
 <?php if ($show_queue_panel): ?>
 <?php $adminQueueLiveVer = (int) @filemtime(ASSETS_PATH . '/js/admin-queue-live.js'); ?>

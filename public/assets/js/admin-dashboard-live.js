@@ -148,7 +148,7 @@
       strip.hidden = total <= 0;
       var html = '';
       if (a.doctor > 0) {
-        html += '<a href="' + esc(assetBase()) + '/views/superadmin/doctor_approvals.php" class="superadmin-approval-card">' +
+        html += '<a href="' + esc(assetBase()) + '/views/superadmin/doctor_applications.php?tab=pending" class="superadmin-approval-card">' +
           '<strong>' + a.doctor + '</strong><span>Doctor' + (a.doctor === 1 ? '' : 's') + ' awaiting approval</span></a>';
       }
       if (a.bhw > 0) {

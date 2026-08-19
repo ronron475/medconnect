@@ -3,6 +3,7 @@
 
   var cfg = window.MC_DOCTOR_APP || {};
   var api = cfg.api || '';
+  var checkerMode = !!cfg.checkerMode;
   var utils = window.MCStaffApplications || {};
   var tbody = document.getElementById('doctorAppsBody');
   var openBtn = document.getElementById('doctorOpenCreateBtn');
@@ -20,17 +21,26 @@
     statusFilter.value = cfg.initialStatus;
   }
 
+  function canReview(status) {
+    return status === 'pending_approval' || status === 'requires_documents';
+  }
+
   function renderTable(rows) {
     if (!tbody) return;
 
     if (!allRows.length) {
-      tbody.innerHTML = utils.renderEmptyState(8, {
+      tbody.innerHTML = utils.renderEmptyState(8, checkerMode ? {
+        title: 'No Doctor applications yet',
+        text: 'Pending applications submitted by administrators will appear here for your review.',
+      } : {
         title: 'No Doctor applications yet',
         text: 'Create your first Doctor account application to begin the Maker-Checker approval workflow.',
         ctaId: 'doctorEmptyCreateBtn',
         ctaLabel: 'Create Doctor Application',
       });
-      document.getElementById('doctorEmptyCreateBtn')?.addEventListener('click', openCreate);
+      if (!checkerMode) {
+        document.getElementById('doctorEmptyCreateBtn')?.addEventListener('click', openCreate);
+      }
       return;
     }
 
@@ -41,6 +51,14 @@
 
     tbody.innerHTML = rows.map(function (r) {
       var editable = utils.canEdit(r.status);
+      var actionCell;
+      if (checkerMode && canReview(r.status)) {
+        actionCell = utils.renderReviewBtn(r.id, 'doctor-review-btn', 'Review');
+      } else if (!checkerMode) {
+        actionCell = utils.renderEditBtn(r.id, editable, 'doctor-edit-btn');
+      } else {
+        actionCell = '<span class="staff-apps-meta staff-apps-meta--muted">—</span>';
+      }
       return (
         '<tr>' +
         '<td class="staff-apps-td--applicant" data-label="">' + utils.renderApplicantCell(r) + '</td>' +
@@ -50,10 +68,22 @@
         '<td data-label="Documents">' + utils.renderDocBadge(r.document_count, 2) + '</td>' +
         '<td data-label="Status">' + utils.renderStatusBadge(r) + '</td>' +
         '<td data-label="Submitted"><span class="staff-apps-meta staff-apps-meta--muted">' + utils.esc(utils.formatDate(r.submitted_at)) + '</span></td>' +
-        '<td class="staff-apps-td--actions" data-label="Actions">' + utils.renderEditBtn(r.id, editable, 'doctor-edit-btn') + '</td>' +
+        '<td class="staff-apps-td--actions" data-label="Actions">' + actionCell + '</td>' +
         '</tr>'
       );
     }).join('');
+
+    if (checkerMode) {
+      tbody.querySelectorAll('.doctor-review-btn').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+          var reviewId = parseInt(btn.dataset.id, 10);
+          if (window.MCDoctorApproval && typeof window.MCDoctorApproval.openReview === 'function') {
+            window.MCDoctorApproval.openReview(reviewId);
+          }
+        });
+      });
+      return;
+    }
 
     tbody.querySelectorAll('.doctor-edit-btn').forEach(function (btn) {
       btn.addEventListener('click', function () {

@@ -5,6 +5,7 @@
   const api = cfg.api || '';
   const utils = window.MCStaffApplications || {};
   const currentUserId = cfg.currentUserId || 0;
+  const hubMode = !!cfg.hubMode;
   const tbody = document.getElementById('doctorApprovalBody');
   const modal = document.getElementById('doctorReviewModal');
   const reviewContent = document.getElementById('doctorReviewContent');
@@ -24,10 +25,23 @@
   let currentAppId = 0;
   let currentSubmittedBy = 0;
 
+  if (!modal || !api) {
+    return;
+  }
+
   function showError(message) {
     if (!errorEl) return;
     errorEl.textContent = message || '';
     errorEl.classList.toggle('is-visible', !!message);
+  }
+
+  function redirectWithFlash(flashKey) {
+    const url = new URL(window.location.href);
+    url.searchParams.set('tab', 'pending');
+    url.searchParams.delete('approved');
+    url.searchParams.delete('rejected');
+    url.searchParams.set(flashKey, '1');
+    window.location.href = url.pathname + '?' + url.searchParams.toString();
   }
 
   function computeApprovalStats(rows) {
@@ -58,6 +72,7 @@
   }
 
   function updateApproveState() {
+    if (!approveBtn) return;
     const allRequired = checklistIds.every(function (id) {
       return document.getElementById(id)?.checked;
     });
@@ -75,6 +90,7 @@
   });
 
   async function loadList() {
+    if (!tbody) return;
     try {
       const res = await fetch(api + '?action=list', { credentials: 'same-origin' });
       const json = await res.json();
@@ -83,11 +99,12 @@
       updateStatsDisplay(computeApprovalStats(allRows), json.data.pending_count || 0);
       applyFilters();
     } catch (e) {
-      if (tbody) tbody.innerHTML = '<tr><td colspan="10"><div class="staff-apps-empty"><p class="staff-apps-empty__title">Could not load queue</p></div></td></tr>';
+      tbody.innerHTML = '<tr><td colspan="10"><div class="staff-apps-empty"><p class="staff-apps-empty__title">Could not load queue</p></div></td></tr>';
     }
   }
 
   function applyFilters() {
+    if (!tbody) return;
     const filtered = utils.filterRows(allRows, {
       search: searchInput ? searchInput.value : '',
       status: statusFilter ? statusFilter.value : 'all',
@@ -174,7 +191,8 @@
       (app.documents && app.documents.length ? '' : '<li class="text-muted">No documents uploaded.</li>') +
       '</ul>';
 
-    document.getElementById('doctorReviewTitle').textContent = 'Review: ' + app.display_name;
+    const titleEl = document.getElementById('doctorReviewTitle');
+    if (titleEl) titleEl.textContent = 'Review: ' + app.display_name;
     updateApproveState();
     modal.style.display = 'flex';
     modal.style.pointerEvents = 'auto';
@@ -185,7 +203,7 @@
     modal.style.pointerEvents = 'none';
   }
 
-  approveBtn.addEventListener('click', async function () {
+  approveBtn?.addEventListener('click', async function () {
     const fd = new FormData();
     fd.append('application_id', currentAppId);
     fd.append('check_prc_verified', document.getElementById('check_prc_verified')?.checked ? '1' : '');
@@ -205,6 +223,10 @@
       showError(json.message || 'Approval failed.');
       return;
     }
+    if (hubMode) {
+      redirectWithFlash('approved');
+      return;
+    }
     window.location.href = window.location.pathname + '?approved=1';
   });
 
@@ -216,8 +238,15 @@
     fd.append('reason', reason.trim());
     const res = await fetch(api + '?action=reject', { method: 'POST', body: fd, credentials: 'same-origin' });
     const json = await res.json();
-    if (json.success) window.location.href = window.location.pathname + '?rejected=1';
-    else showError(json.message || 'Rejection failed.');
+    if (!json.success) {
+      showError(json.message || 'Rejection failed.');
+      return;
+    }
+    if (hubMode) {
+      redirectWithFlash('rejected');
+      return;
+    }
+    window.location.href = window.location.pathname + '?rejected=1';
   });
 
   document.getElementById('doctorRequestDocsBtn')?.addEventListener('click', async function () {
@@ -230,6 +259,10 @@
     const json = await res.json();
     if (json.success) {
       closeModal();
+      if (hubMode) {
+        window.location.reload();
+        return;
+      }
       loadList();
       alert(json.message);
     } else {
@@ -240,7 +273,11 @@
   document.getElementById('doctorReviewClose')?.addEventListener('click', closeModal);
   if (searchInput) searchInput.addEventListener('input', applyFilters);
   if (statusFilter) statusFilter.addEventListener('change', applyFilters);
-  modal?.addEventListener('click', function (e) { if (e.target === modal) closeModal(); });
+  modal.addEventListener('click', function (e) { if (e.target === modal) closeModal(); });
 
-  loadList();
+  window.MCDoctorApproval = { openReview: openReview };
+
+  if (tbody) {
+    loadList();
+  }
 })();
