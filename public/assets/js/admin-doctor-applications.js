@@ -54,6 +54,8 @@
       var actionCell;
       if (checkerMode && canReview(r.status)) {
         actionCell = utils.renderReviewBtn(r.id, 'doctor-review-btn', 'Review');
+      } else if (checkerMode && r.status === 'active') {
+        actionCell = '<a href="?tab=active" class="staff-apps-action staff-apps-action--outline">View account</a>';
       } else if (!checkerMode) {
         actionCell = utils.renderEditBtn(r.id, editable, 'doctor-edit-btn');
       } else {

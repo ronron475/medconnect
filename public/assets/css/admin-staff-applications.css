@@ -294,6 +294,7 @@
 
 .staff-apps-table {
   width: 100%;
+  min-width: 920px;
   border-collapse: collapse;
   font-size: 0.8125rem;
 }
@@ -330,6 +331,16 @@
   border-bottom: none;
 }
 
+.staff-apps-table td.staff-apps-td--applicant {
+  min-width: 200px;
+  max-width: 280px;
+}
+
+.staff-apps-applicant > div {
+  min-width: 0;
+  flex: 1;
+}
+
 /* Applicant cell */
 .staff-apps-applicant {
   display: flex;
@@ -356,14 +367,20 @@
 .staff-apps-applicant__name {
   font-weight: 700;
   color: #0f172a;
-  line-height: 1.3;
+  line-height: 1.35;
+  white-space: normal;
+  word-break: break-word;
+  overflow-wrap: anywhere;
 }
 
 .staff-apps-applicant__email {
   font-size: 0.75rem;
   color: #94a3b8;
   margin-top: 2px;
+  line-height: 1.35;
+  white-space: normal;
   word-break: break-all;
+  overflow-wrap: anywhere;
 }
 
 /* Status badges */
@@ -715,6 +732,11 @@
 
 .staff-apps-action--outline {
   background: #fff;
+  text-decoration: none;
+}
+
+a.staff-apps-action {
+  text-decoration: none;
 }
 
 .mc-staff-modal.admin-modal-overlay {
@@ -817,18 +839,22 @@
 /* ── Management hub tabs (Doctor / BHW) ── */
 .staff-mgmt-tabs {
   display: flex;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   gap: 8px;
   margin: 0 0 20px;
   padding: 4px;
   background: #f8fafc;
   border: 1px solid #e2e8f0;
   border-radius: 12px;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: thin;
 }
 
 .staff-mgmt-tabs__item {
   display: inline-flex;
   align-items: center;
+  flex-shrink: 0;
   padding: 9px 14px;
   border-radius: 8px;
   font-size: 0.8125rem;
@@ -889,6 +915,7 @@
 @media (max-width: 640px) {
   .staff-mgmt-tabs {
     margin-bottom: 16px;
+    flex-wrap: wrap;
   }
 
   .staff-mgmt-tabs__item {
