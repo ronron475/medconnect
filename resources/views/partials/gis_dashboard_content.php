@@ -13,7 +13,7 @@ $gisMapNote = $gisIsProvider
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin=""/>
 <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css" crossorigin=""/>
 <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css" crossorigin=""/>
-<link rel="stylesheet" href="<?= htmlspecialchars($assetBase) ?>/assets/css/admin-gis-dashboard.css?v=4.7"/>
+<link rel="stylesheet" href="<?= htmlspecialchars($assetBase) ?>/assets/css/admin-gis-dashboard.css?v=4.9"/>
 
 <div class="gis-page" id="gis-dashboard"
      data-api="<?= htmlspecialchars($apiBase) ?>"
@@ -24,10 +24,6 @@ $gisMapNote = $gisIsProvider
 
   <div class="gis-header">
     <p class="text-muted gis-subtitle"><?= htmlspecialchars($gisSubtitle) ?></p>
-    <div class="gis-view-toggle" role="tablist" aria-label="GIS view mode">
-      <button type="button" class="gis-toggle-btn is-active" data-view="map" role="tab" aria-selected="true">Map View</button>
-      <button type="button" class="gis-toggle-btn" data-view="table" role="tab" aria-selected="false">Table View</button>
-    </div>
   </div>
 
   <div class="gis-summary-grid" id="gis-summary-grid">
@@ -43,45 +39,28 @@ $gisMapNote = $gisIsProvider
       <div class="gis-stat-label">🔴 Emergency Cases</div>
       <div class="gis-stat-value" id="stat-emergency">—</div>
     </div>
-    <div class="mc-card gis-stat-card gis-stat-card--barangay" data-severity-stat="barangay">
-      <div class="gis-stat-label"><?= $gisIsProvider ? '📍 Top barangay on your list' : '📍 Barangay with most cases' ?></div>
-      <div class="gis-stat-value gis-stat-value--text" id="stat-top_barangay">—</div>
-    </div>
-    <div class="mc-card gis-stat-card" data-gis-insight="today">
-      <div class="gis-stat-label"><?= $gisIsProvider ? 'New on your list today' : 'New cases today' ?></div>
-      <div class="gis-stat-value" id="stat-new_today">—</div>
+    <div class="mc-card gis-stat-card" data-gis-insight="barangays">
+      <div class="gis-stat-label">Barangays with cases</div>
+      <div class="gis-stat-value" id="stat-barangays_with_cases">—</div>
     </div>
     <div class="mc-card gis-stat-card" data-gis-insight="unmapped">
       <div class="gis-stat-label">Cases without valid location</div>
       <div class="gis-stat-value" id="stat-unmapped">—</div>
     </div>
     <?php if ($gisIsProvider): ?>
-    <div class="mc-card gis-stat-card" data-gis-insight="visits_today">
-      <div class="gis-stat-label">Visits scheduled today</div>
-      <div class="gis-stat-value" id="stat-visits_today">—</div>
-    </div>
-    <div class="mc-card gis-stat-card" data-gis-insight="pending_review">
-      <div class="gis-stat-label">Awaiting your review</div>
-      <div class="gis-stat-value" id="stat-pending_review">—</div>
-    </div>
     <?php else: ?>
     <div class="mc-card gis-stat-card" data-gis-insight="bhw">
       <div class="gis-stat-label">Cases without assigned BHW</div>
       <div class="gis-stat-value" id="stat-unassigned_bhw">—</div>
     </div>
-    <div class="mc-card gis-stat-card" data-gis-insight="hotspots">
-      <div class="gis-stat-label">Detected hotspots</div>
-      <div class="gis-stat-value" id="stat-hotspots">—</div>
-    </div>
-    <div class="mc-card gis-stat-card" data-gis-insight="barangays">
-      <div class="gis-stat-label">Barangays with cases</div>
-      <div class="gis-stat-value" id="stat-barangays_with_cases">—</div>
-    </div>
-    <div class="mc-card gis-stat-card" data-gis-insight="emergency-brgy">
-      <div class="gis-stat-label">Most emergency cases</div>
-      <div class="gis-stat-value gis-stat-value--text" id="stat-top_emergency_barangay">—</div>
-    </div>
     <?php endif; ?>
+  </div>
+
+  <div class="gis-view-bar">
+    <div class="gis-view-toggle" role="tablist" aria-label="GIS view mode">
+      <button type="button" class="gis-toggle-btn is-active" data-view="map" role="tab" aria-selected="true">Map View</button>
+      <button type="button" class="gis-toggle-btn" data-view="table" role="tab" aria-selected="false">Table View</button>
+    </div>
   </div>
 
   <div class="gis-panel gis-panel--map is-active" id="gis-map-panel" role="tabpanel">
@@ -128,7 +107,7 @@ $gisMapNote = $gisIsProvider
     <aside class="mc-card gis-brgy-panel" aria-label="Barangay summary">
       <div class="gis-brgy-panel__head">
         <h3 class="text-h3">Barangay Summary</h3>
-        <p class="gis-analytics-caption text-xs text-muted">Live counts from each patient’s registered barangay. Click a row to zoom the map.</p>
+        <p class="gis-analytics-caption text-xs text-muted">Sort by total or emergency to find hotspots. Click a row to filter and zoom the map.</p>
       </div>
       <div class="gis-brgy-panel__tools">
         <input type="search" id="gis-brgy-search" class="gis-input" placeholder="Search barangay…" aria-label="Search barangay">
@@ -140,7 +119,6 @@ $gisMapNote = $gisIsProvider
         </select>
       </div>
       <div class="gis-brgy-detail" id="gis-brgy-detail" hidden></div>
-      <div class="gis-hotspot-box" id="gis-hotspot-box" hidden></div>
       <div class="gis-brgy-table-wrap">
         <table class="gis-brgy-table" id="gis-brgy-table">
           <thead>
@@ -158,38 +136,6 @@ $gisMapNote = $gisIsProvider
         </table>
       </div>
     </aside>
-    </div>
-    <div class="gis-analytics-grid" id="gis-analytics-grid">
-      <div class="mc-card gis-analytics-card">
-        <h3 class="text-h3">Cases by Barangay</h3>
-        <p class="gis-analytics-caption text-xs text-muted" data-analytics-caption>Loading…</p>
-        <ul class="gis-rank-list" id="analytics-barangay"><li class="gis-rank-list__loading">Loading…</li></ul>
-      </div>
-      <div class="mc-card gis-analytics-card">
-        <h3 class="text-h3">🔴 Emergency by Barangay</h3>
-        <p class="gis-analytics-caption text-xs text-muted" data-analytics-caption>Loading…</p>
-        <ul class="gis-rank-list" id="analytics-emergency"><li class="gis-rank-list__loading">Loading…</li></ul>
-      </div>
-      <div class="mc-card gis-analytics-card">
-        <h3 class="text-h3">Active Consultations by Area</h3>
-        <p class="gis-analytics-caption text-xs text-muted" data-analytics-caption>Loading…</p>
-        <ul class="gis-rank-list" id="analytics-consultations"><li class="gis-rank-list__loading">Loading…</li></ul>
-      </div>
-      <div class="mc-card gis-analytics-card">
-        <h3 class="text-h3">Triage Levels by Area</h3>
-        <p class="gis-analytics-caption text-xs text-muted" data-analytics-caption>Loading…</p>
-        <ul class="gis-rank-list" id="analytics-symptoms"><li class="gis-rank-list__loading">Loading…</li></ul>
-      </div>
-      <div class="mc-card gis-analytics-card">
-        <h3 class="text-h3">Barangay monitoring status</h3>
-        <p class="gis-analytics-caption text-xs text-muted" id="analytics-status-caption">Spatial monitoring only — does not change medical triage.</p>
-        <ul class="gis-rank-list" id="analytics-status"><li class="gis-rank-list__loading">Loading…</li></ul>
-      </div>
-      <div class="mc-card gis-analytics-card">
-        <h3 class="text-h3">Coverage &amp; location quality</h3>
-        <p class="gis-analytics-caption text-xs text-muted" id="analytics-quality-caption">From registered BHW assignment and validated map locations.</p>
-        <ul class="gis-rank-list" id="analytics-quality"><li class="gis-rank-list__loading">Loading…</li></ul>
-      </div>
     </div>
   </div>
 
@@ -224,4 +170,4 @@ $gisMapNote = $gisIsProvider
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
 <script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js" crossorigin=""></script>
 <script src="https://unpkg.com/leaflet.heat@0.2.0/dist/leaflet-heat.js" crossorigin=""></script>
-<script src="<?= htmlspecialchars($assetBase) ?>/assets/js/admin-gis-dashboard.js?v=4.6"></script>
+<script src="<?= htmlspecialchars($assetBase) ?>/assets/js/admin-gis-dashboard.js?v=4.9"></script>
