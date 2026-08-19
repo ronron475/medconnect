@@ -288,6 +288,12 @@ body.patient-portal .phs-triage {
 
 body.patient-portal .phs-card--triage {
   width: 100%;
+  min-height: 0;
+}
+
+body.patient-portal .phs-card--triage .phs-card__body,
+body.patient-portal .phs-card--triage .pt-assess-stack {
+  width: 100%;
 }
 
 body.patient-portal .phs-triage-history {
@@ -715,6 +721,15 @@ body.patient-portal select.phs-field__input {
     text-align: center;
     line-height: 1.35;
     box-sizing: border-box;
+  }
+
+  body.patient-portal .phs-triage-history {
+    padding: 14px 14px 6px;
+  }
+
+  body.patient-portal .phs-triage-history__meta {
+    flex-direction: column;
+    gap: 2px;
   }
 
   body.patient-portal .phs-card {
