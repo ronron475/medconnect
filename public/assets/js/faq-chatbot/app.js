@@ -200,7 +200,6 @@
     fab.setAttribute('aria-expanded', open ? 'true' : 'false');
     panel.setAttribute('aria-modal', open ? 'true' : 'false');
     document.body.classList.toggle('fcb-open', open);
-    document.body.classList.toggle('landing-fab-open', open);
 
     if (open) {
       panel.hidden = false;
@@ -1266,4 +1265,11 @@
       },
     });
   }
+
+  window.McFaqApp = {
+    open: () => setOpen(true),
+    close: () => setOpen(false),
+    toggle: () => setOpen(!isOpen),
+    isOpen: () => isOpen,
+  };
 })();

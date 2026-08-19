@@ -53,7 +53,8 @@ body.landing-page.nav-search-open .landing-theme-fab,
 body.landing-page.nav-search-open .landing-fab,
 body.landing-page.landing-nav-open #landing-fab,
 body.landing-page.nav-search-open #landing-fab,
-body.landing-page.landing-fab-open .landing-theme-fab {
+body.landing-page.landing-fab-open .landing-theme-fab,
+body.landing-page.fcb-open .landing-theme-fab {
   opacity: 0 !important;
   visibility: hidden !important;
   pointer-events: none !important;

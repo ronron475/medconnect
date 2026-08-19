@@ -41,6 +41,7 @@ body.signin-active .fcb {
    ═══════════════════════════════════════ */
 .fcb-fab-wrap {
   position: relative;
+  z-index: 2;
   display: inline-flex;
   width: var(--fcb-fab-size);
   height: var(--fcb-fab-size);
@@ -117,6 +118,8 @@ body.signin-active .fcb {
   border: none;
   border-radius: 50%;
   cursor: pointer;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
   color: #fff;
   background: linear-gradient(145deg, #1558a8 0%, var(--fcb-accent-2) 48%, #058f91 100%);
   box-shadow:
@@ -155,6 +158,10 @@ body.signin-active .fcb {
 
 .fcb-fab:hover .fcb-fab__icon {
   transform: scale(1.06);
+}
+
+.fcb[data-open="true"] .fcb-fab-wrap {
+  display: none;
 }
 
 .fcb[data-open="true"] .fcb-fab {
@@ -655,8 +662,11 @@ body.signin-active .fcb {
 .fcb-messages {
   position: relative;
   z-index: 1;
+  flex: 1 1 auto;
+  min-height: 0;
   height: 100%;
   overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
   overscroll-behavior: contain;
   padding: var(--fcb-space-2);
   display: flex;
@@ -1907,8 +1917,9 @@ body.signin-active .fcb {
 /* ═══════════════════════════════════════
    MOBILE BACKDROP
    ═══════════════════════════════════════ */
-.fcb-backdrop {
-  display: none;
+.fcb-backdrop,
+.fcb-backdrop[hidden] {
+  display: none !important;
 }
 
 body.fcb-scroll-lock {
@@ -1941,42 +1952,38 @@ body.fcb-scroll-lock {
     transform-origin: left bottom;
   }
 
-  /* Open state — viewport overlay + fixed bottom sheet */
+  /* Open state — viewport overlay + in-overlay sheet (absolute, not nested fixed) */
   .landing-page .fcb[data-open="true"] {
     inset: 0;
     left: 0;
     right: 0;
     top: 0;
     bottom: 0;
-    width: 100%;
-    height: 100%;
-    z-index: 1220;
-    pointer-events: none;
+    width: auto;
+    height: auto;
+    z-index: 1300;
+    pointer-events: auto;
+    opacity: 1 !important;
+    visibility: visible !important;
   }
 
-  .landing-page .fcb-backdrop {
-    display: block;
-    position: fixed;
+  .landing-page .fcb[data-open="true"] .fcb-backdrop:not([hidden]) {
+    display: block !important;
+    position: absolute;
     inset: 0;
     z-index: 0;
     background: rgba(11, 31, 56, 0.42);
     backdrop-filter: blur(2px);
     -webkit-backdrop-filter: blur(2px);
-    opacity: 0;
-    pointer-events: none;
-    transition: opacity 0.28s var(--fcb-ease);
-  }
-
-  .landing-page .fcb[data-open="true"] .fcb-backdrop {
     opacity: 1;
     pointer-events: auto;
   }
 
   .landing-page .fcb[data-open="true"] .fcb-panel {
-    position: fixed;
-    left: max(16px, env(safe-area-inset-left, 0px));
-    right: max(16px, env(safe-area-inset-right, 0px));
-    bottom: max(16px, env(safe-area-inset-bottom, 0px));
+    position: absolute;
+    left: max(12px, env(safe-area-inset-left, 0px));
+    right: max(12px, env(safe-area-inset-right, 0px));
+    bottom: max(12px, env(safe-area-inset-bottom, 0px));
     top: max(12px, env(safe-area-inset-top, 0px));
     width: auto;
     max-width: none;
@@ -1984,8 +1991,16 @@ body.fcb-scroll-lock {
     max-height: none;
     z-index: 1;
     pointer-events: auto;
+    transform: none;
     transform-origin: center bottom;
     border-radius: var(--fcb-radius);
+    display: flex;
+    flex-direction: column;
+  }
+
+  .landing-page .fcb[data-open="true"] .fcb-body {
+    flex: 1 1 auto;
+    min-height: 0;
   }
 
   .fcb-header {

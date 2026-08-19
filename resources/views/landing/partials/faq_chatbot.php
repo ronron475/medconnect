@@ -250,41 +250,64 @@ $faqChatbotAppVer = (int) @filemtime(ASSETS_PATH . '/js/faq-chatbot/app.js');
   </section>
 </div>
 
+<script src="<?= $fcbBase ?>/assets/js/faq-chatbot/language.js?v=<?= $faqChatbotLanguageVer ?>" defer></script>
+<script src="<?= $fcbBase ?>/assets/js/faq-chatbot/i18n.js?v=<?= $faqChatbotI18nVer ?>" defer></script>
+<script src="<?= $fcbBase ?>/assets/js/faq-chatbot/emotions.js?v=<?= $faqChatbotEmotionsVer ?>" defer></script>
+<script src="<?= $fcbBase ?>/assets/js/faq-chatbot/conversation.js?v=<?= $faqChatbotConversationVer ?>" defer></script>
+<script src="<?= $fcbBase ?>/assets/js/faq-chatbot/intent.js?v=<?= $faqChatbotIntentVer ?>" defer></script>
+<script src="<?= $fcbBase ?>/assets/js/faq-chatbot/understanding.js?v=<?= $faqChatbotUnderstandingVer ?>" defer></script>
+<script src="<?= $fcbBase ?>/assets/js/faq-chatbot/moderation.js?v=<?= $faqChatbotModerationVer ?>" defer></script>
+<script src="<?= $fcbBase ?>/assets/js/faq-chatbot/engine.js?v=<?= $faqChatbotEngineVer ?>" defer></script>
+<script src="<?= $fcbBase ?>/assets/js/faq-chatbot/ui.js?v=<?= $faqChatbotUiVer ?>" defer></script>
+<script src="<?= $fcbBase ?>/assets/js/faq-chatbot/voice.js?v=<?= $faqChatbotVoiceVer ?>" defer></script>
+<script src="<?= $fcbBase ?>/assets/js/faq-chatbot/emotion-api.js?v=<?= $faqChatbotEmotionApiVer ?>" defer></script>
+<script src="<?= $fcbBase ?>/assets/js/faq-chatbot/chat-api.js?v=<?= $faqChatbotChatApiVer ?>" defer></script>
+<script src="<?= $fcbBase ?>/assets/js/faq-chatbot/hil-bridge.js?v=<?= $faqChatbotHilBridgeVer ?>" defer></script>
+<script src="<?= $fcbBase ?>/assets/js/faq-chatbot/app.js?v=<?= $faqChatbotAppVer ?>" defer></script>
 <script>
-(function(){
-  var loaded = false;
-  var base = <?= json_encode($fcbBase) ?>;
-  var scripts = [
-    base + '/assets/js/faq-chatbot/language.js?v=<?= $faqChatbotLanguageVer ?>',
-    base + '/assets/js/faq-chatbot/i18n.js?v=<?= $faqChatbotI18nVer ?>',
-    base + '/assets/js/faq-chatbot/emotion_intent_dataset.js?v=<?= $faqChatbotEmotionDatasetVer ?>',
-    base + '/assets/js/faq-chatbot/emotions.js?v=<?= $faqChatbotEmotionsVer ?>',
-    base + '/assets/js/faq-chatbot/conversation.js?v=<?= $faqChatbotConversationVer ?>',
-    base + '/assets/js/faq-chatbot/intent.js?v=<?= $faqChatbotIntentVer ?>',
-    base + '/assets/js/faq-chatbot/understanding.js?v=<?= $faqChatbotUnderstandingVer ?>',
-    base + '/assets/js/faq-chatbot/moderation.js?v=<?= $faqChatbotModerationVer ?>',
-    base + '/assets/js/faq-chatbot/engine.js?v=<?= $faqChatbotEngineVer ?>',
-    base + '/assets/js/faq-chatbot/ui.js?v=<?= $faqChatbotUiVer ?>',
-    base + '/assets/js/faq-chatbot/voice.js?v=<?= $faqChatbotVoiceVer ?>',
-    base + '/assets/js/faq-chatbot/emotion-api.js?v=<?= $faqChatbotEmotionApiVer ?>',
-    base + '/assets/js/faq-chatbot/chat-api.js?v=<?= $faqChatbotChatApiVer ?>',
-    base + '/assets/js/faq-chatbot/hil-bridge.js?v=<?= $faqChatbotHilBridgeVer ?>',
-    base + '/assets/js/faq-chatbot/app.js?v=<?= $faqChatbotAppVer ?>'
-  ];
-  function loadScripts(){
-    if(loaded) return;
-    loaded = true;
-    var i = 0;
-    function next(){
-      if(i >= scripts.length) return;
-      var s = document.createElement('script');
-      s.src = scripts[i++];
-      s.onload = s.onerror = next;
-      document.body.appendChild(s);
-    }
-    next();
-  }
+(function () {
+  var datasetLoaded = false;
+  var queuedOpen = false;
+  var src = <?= json_encode($fcbBase) ?> + '/assets/js/faq-chatbot/emotion_intent_dataset.js?v=<?= $faqChatbotEmotionDatasetVer ?>';
   var fab = document.getElementById('fcb-fab');
-  if(fab) fab.addEventListener('click', loadScripts, {once: true});
+
+  function loadDataset() {
+    if (datasetLoaded) return;
+    datasetLoaded = true;
+    var s = document.createElement('script');
+    s.src = src;
+    s.async = true;
+    document.body.appendChild(s);
+  }
+
+  function openChat() {
+    if (window.McFaqApp && typeof window.McFaqApp.open === 'function') {
+      window.McFaqApp.open();
+      queuedOpen = false;
+      if (fab) fab.removeAttribute('aria-busy');
+      return true;
+    }
+    return false;
+  }
+
+  if (fab) {
+    fab.addEventListener('click', function (e) {
+      loadDataset();
+      if (window.McFaqApp) return;
+      queuedOpen = true;
+      fab.setAttribute('aria-busy', 'true');
+      e.preventDefault();
+      e.stopImmediatePropagation();
+    }, true);
+  }
+
+  var tries = 0;
+  var readyTimer = window.setInterval(function () {
+    if (!queuedOpen) {
+      if (window.McFaqApp) window.clearInterval(readyTimer);
+      return;
+    }
+    if (openChat() || ++tries > 80) window.clearInterval(readyTimer);
+  }, 50);
 })();
 </script>
