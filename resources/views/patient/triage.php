@@ -15,6 +15,7 @@ if (!defined('BASE_PATH')) {
 require_once BASE_PATH . '/app/includes/patient_portal_bootstrap.php';
 require_once BASE_PATH . '/app/includes/triage_assessment_schema.php';
 require_once BASE_PATH . '/app/includes/triage_provider_assignment.php';
+require_once BASE_PATH . '/app/includes/patient_symptoms_review_submit.php';
 require_once BASE_PATH . '/app/includes/patient_chief_complaints.php';
 
 $booking_today_ymd   = date('Y-m-d');
@@ -100,6 +101,9 @@ $review_booking_ctx = triage_patient_review_booking_context($pdo, (int) $uid);
 if ($force_new_concern) {
     $review_booking_ctx = ['locked' => false, 'provider_id' => 0, 'provider_name' => '', 'triage_id' => 0];
 }
+$preliminary_complaint_triage = (empty($review_booking_ctx['locked']) && !$force_new_concern)
+    ? patient_find_preliminary_complaint_triage($pdo, (int) $uid)
+    : null;
 $review_booking_slots = triage_patient_booking_slot_status($pdo, (int) $uid);
 $locked_provider_id = (int) ($review_booking_ctx['provider_id'] ?? 0);
 $locked_provider_name = trim((string) ($review_booking_ctx['provider_name'] ?? ''));

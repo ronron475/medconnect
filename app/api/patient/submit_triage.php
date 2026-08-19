@@ -41,6 +41,8 @@ $submittedComplaint = trim((string) ($_POST['chief_complaint'] ?? ''));
 $forceNewConcern = ($_POST['new_concern'] ?? '') === '1';
 $slot_id    = (int) ($_POST['slot_id'] ?? 0);
 $reuseTriageIdEarly = (int) ($_POST['triage_id'] ?? 0);
+// Never trust a patient-posted doctor. Assignment is server-side from slots + workload.
+unset($_POST['provider_id']);
 
 if (!is_array($symptoms)) {
     $symptoms = [];
@@ -68,7 +70,14 @@ if ($openCareTipsPreview === null && !$forceNewConcern && $reuseTriageIdEarly > 
         FROM triage_results
         WHERE id = ?
           AND patient_id = ?
-          AND COALESCE(recommendation_status, 'hidden') IN ('pending_approval', 'approved')
+          AND (
+                COALESCE(recommendation_status, 'hidden') IN ('pending_approval', 'approved')
+             OR (LOWER(COALESCE(triage_level, '')) = 'urgent' AND assessed_at >= CURDATE())
+             OR (
+                  COALESCE(assigned_provider_id, 0) > 0
+                  AND assessed_at >= DATE_SUB(NOW(), INTERVAL 14 DAY)
+                )
+          )
         LIMIT 1
     ");
     $earlyReuseStmt->execute([$reuseTriageIdEarly, $patient_id]);
@@ -97,6 +106,13 @@ if ($forceNewConcern) {
 
 if (empty($symptoms) && $complaint === '') {
     Api::error('Please provide symptoms or a complaint.');
+}
+
+if (!$reuseExistingForBooking && $complaint !== '') {
+    $prelimGate = patient_find_preliminary_complaint_triage($pdo, $patient_id, $reuseTriageIdEarly, $complaint);
+    if ($prelimGate) {
+        Api::error('Please click "Submit patient complaint" again to continue.');
+    }
 }
 
 $symptomList = array_values(array_filter(array_map(static function ($s) {
@@ -507,34 +523,30 @@ try {
 
     $provider_id   = (int) $slot['provider_id'];
 
-    if ($triageLevel === TriageLevelService::URGENT) {
-        $urgentAssigned = $reviewerBeforeBooking;
-        if ($urgentAssigned <= 0 && is_array($openCareTipsRow)) {
-            $urgentAssigned = (int) ($openCareTipsRow['assigned_provider_id'] ?? 0);
+    $canonicalProvider = $reviewerBeforeBooking;
+    if ($canonicalProvider <= 0 && is_array($openCareTipsRow)) {
+        $canonicalProvider = (int) ($openCareTipsRow['assigned_provider_id'] ?? 0);
+    }
+    if ($canonicalProvider <= 0) {
+        $canonicalProvider = triage_select_provider_for_level($pdo, $patient_id, $triageLevel);
+        if ($canonicalProvider > 0) {
+            triage_bind_assigned_provider($pdo, $triageId, $canonicalProvider);
         }
-        if ($urgentAssigned <= 0) {
-            $urgentAssigned = triage_select_provider_for_level(
-                $pdo,
-                $patient_id,
-                TriageLevelService::URGENT
-            );
-            if ($urgentAssigned > 0) {
-                triage_bind_assigned_provider($pdo, $triageId, $urgentAssigned);
-            }
+    }
+    if ($canonicalProvider <= 0) {
+        throw new RuntimeException(
+            'No suitable doctor schedule is currently available. You are in the waiting queue and will be notified by email when a consultation slot becomes available.'
+        );
+    }
+    if ($canonicalProvider !== $provider_id) {
+        $canonicalName = triage_provider_display_name($pdo, $canonicalProvider);
+        if ($canonicalName === '') {
+            $canonicalName = 'your assigned doctor';
         }
-        if ($urgentAssigned > 0 && $urgentAssigned !== $provider_id) {
-            $urgentName = triage_provider_display_name($pdo, $urgentAssigned);
-            if ($urgentName === '') {
-                $urgentName = 'the doctor who can see you soonest';
-            }
-            throw new RuntimeException(
-                'Please book your urgent consultation with ' . $urgentName
-                . ', who has the earliest available appointment.'
-            );
-        }
-        if ($urgentAssigned <= 0) {
-            triage_bind_assigned_provider($pdo, $triageId, $provider_id);
-        }
+        throw new RuntimeException(
+            'Your doctor is assigned automatically. Please continue with ' . $canonicalName
+            . ', who was selected from doctors with a real available slot.'
+        );
     }
 
     triage_assert_patient_may_book_provider($pdo, $patient_id, $provider_id);

@@ -134,6 +134,46 @@ function patient_symptoms_review_preview_payload(
     ];
 }
 
+/**
+ * Patient-safe assignment summary: doctor name + that doctor's earliest real slot.
+ *
+ * @return array{
+ *   assigned_provider_name:string,
+ *   selected_slot_id:int,
+ *   selected_slot_label:string,
+ *   selected_slot_date:string
+ * }
+ */
+function patient_symptoms_review_assignment_meta(PDO $pdo, int $assignedId): array
+{
+    $empty = [
+        'assigned_provider_name' => '',
+        'selected_slot_id' => 0,
+        'selected_slot_label' => '',
+        'selected_slot_date' => '',
+    ];
+    if ($assignedId <= 0) {
+        return $empty;
+    }
+
+    require_once __DIR__ . '/triage_provider_assignment.php';
+    $name = triage_provider_display_name($pdo, $assignedId);
+    $slot = triage_provider_earliest_bookable_slot_today($pdo, $assignedId);
+    $label = '';
+    if ($slot && !empty($slot['start_time'])) {
+        $start = date('g:i A', strtotime((string) $slot['start_time']));
+        $end = !empty($slot['end_time']) ? date('g:i A', strtotime((string) $slot['end_time'])) : '';
+        $label = $end !== '' ? ($start . '–' . $end) : $start;
+    }
+
+    return [
+        'assigned_provider_name' => $name,
+        'selected_slot_id' => (int) ($slot['id'] ?? 0),
+        'selected_slot_label' => $label,
+        'selected_slot_date' => (string) ($slot['slot_date'] ?? ''),
+    ];
+}
+
 function patient_symptoms_review_mark_preliminary(PDO $pdo, int $triageId): void
 {
     if ($triageId <= 0) {
@@ -464,12 +504,12 @@ function patient_submit_symptoms_for_review(
                 'message' => $assignedId > 0
                     ? 'Your symptoms may need prompt medical attention. Please book an urgent consultation with your assigned doctor.'
                     : 'Your symptoms may need prompt medical attention. Please book an urgent consultation.',
-                'payload' => [
+                'payload' => array_merge([
                     'urgent' => true,
                     'triage_id' => $triageId,
                     'assigned_provider_id' => $assignedId,
                     'book_url' => (defined('ASSET_BASE') ? ASSET_BASE : '') . '/views/patient/triage.php',
-                ],
+                ], patient_symptoms_review_assignment_meta($pdo, $assignedId)),
             ];
         }
 
@@ -549,13 +589,13 @@ function patient_submit_symptoms_for_review(
         return [
             'ok' => true,
             'message' => $msg,
-            'payload' => [
+            'payload' => array_merge([
                 'awaiting_provider_review' => $assignedId > 0,
                 'waiting_for_slot' => $assignedId <= 0 || $waitingForSlot,
                 'waitlist_status' => $waitStatus,
                 'triage_id' => $triageId,
                 'assigned_provider_id' => $assignedId,
-            ],
+            ], patient_symptoms_review_assignment_meta($pdo, $assignedId)),
         ];
     } catch (RuntimeException $e) {
         if ($pdo->inTransaction()) {

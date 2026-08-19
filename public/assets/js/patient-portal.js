@@ -667,7 +667,7 @@
 
     const bookingBlocked = window.BOOKING_BLOCKED_IN_CONSULTATION === true;
     if (bookingBlocked) {
-      providerSelect.disabled = true;
+      providerSelect.value = providerSelect.value || '';
       clearSlots('Booking is unavailable while your consultation is in progress. Finish the visit first.');
       return;
     }
@@ -704,19 +704,7 @@
       if (lockedId) {
         return String(lockedId);
       }
-      if (providerSelect.disabled) {
-        const hiddenProvider = document.querySelector('#patientTriageForm input[type="hidden"][name="provider_id"]');
-        if (hiddenProvider && hiddenProvider.value) {
-          return String(hiddenProvider.value);
-        }
-      }
-      if (providerSelect.value) {
-        return String(providerSelect.value);
-      }
-      if (providerSelect.options.length === 2 && providerSelect.options[1]) {
-        return String(providerSelect.options[1].value || '');
-      }
-      return '';
+      return String(providerSelect.value || '').trim();
     };
 
     slotsWrap.addEventListener('click', (e) => {
@@ -909,7 +897,7 @@
     providerSelect.addEventListener('change', () => {
       const providerId = resolveProviderId();
       if (!providerId) {
-        clearSlots('Select a provider to load today\'s available slots.');
+        clearSlots('Appointment times appear after the system assigns your doctor.');
         return;
       }
       loadTodayBooking(providerId);
@@ -918,12 +906,8 @@
     const initialProviderId = resolveProviderId();
     if (initialProviderId) {
       loadTodayBooking(initialProviderId);
-    } else if (providerSelect.options.length === 2) {
-      providerSelect.selectedIndex = 1;
-      const fallbackId = resolveProviderId();
-      if (fallbackId) {
-        loadTodayBooking(fallbackId);
-      }
+    } else {
+      clearSlots('Appointment times appear after the system assigns your doctor.');
     }
 
     const pollSlots = () => {
@@ -951,11 +935,7 @@
 
     window.refreshBookingPicker = function refreshBookingPicker(silent) {
       const lockedId = window.BOOKING_LOCKED_PROVIDER_ID;
-      let providerId = lockedId ? String(lockedId) : resolveProviderId();
-      if (!providerId && providerSelect.options.length === 2) {
-        providerSelect.selectedIndex = 1;
-        providerId = resolveProviderId();
-      }
+      const providerId = lockedId ? String(lockedId) : resolveProviderId();
       if (!providerId) {
         return;
       }
@@ -974,15 +954,12 @@
     }
 
     const lockedId = window.BOOKING_LOCKED_PROVIDER_ID;
-    let providerId = lockedId ? String(lockedId) : providerSelect.value;
-    if (!providerId && providerSelect.options.length === 2) {
-      providerSelect.selectedIndex = 1;
-      providerId = lockedId ? String(lockedId) : (providerSelect.options[1]?.value || '');
-    }
+    const providerId = lockedId ? String(lockedId) : String(providerSelect.value || '');
     if (!providerId) {
       return;
     }
 
+    providerSelect.value = providerId;
     providerSelect.dispatchEvent(new Event('change'));
   };
 
@@ -1112,6 +1089,87 @@
     });
   }
 
+  const SUBMIT_COMPLAINT_LABEL = 'Submit patient complaint';
+  const CONTINUE_MSG = 'Please click "Submit patient complaint" again to continue.';
+
+  function classificationLabel(level, fallback) {
+    const raw = String(fallback || '').trim().toUpperCase().replace(/_/g, '-');
+    if (level === 'emergency' || raw.indexOf('EMERGENCY') !== -1) return 'EMERGENCY';
+    if (level === 'urgent' || (raw.indexOf('URGENT') !== -1 && raw.indexOf('NON') === -1)) return 'URGENT';
+    return 'NON-URGENT';
+  }
+
+  function urgencyToLevel(urgency) {
+    const raw = String(urgency || '').trim().toUpperCase().replace(/_/g, '-');
+    if (raw === 'EMERGENCY' || raw.indexOf('EMERGENCY') !== -1) return 'emergency';
+    if (raw === 'URGENT' || (raw.indexOf('URGENT') !== -1 && raw.indexOf('NON') === -1)) return 'urgent';
+    if (raw === 'NON-URGENT' || raw.indexOf('NON-URGENT') !== -1) return 'non_urgent';
+    return null;
+  }
+
+  function showBookingContinueUi(level, label) {
+    const box = document.getElementById('triageAiResult');
+    const levelEl = document.getElementById('triageAiLevel');
+    const hint = document.getElementById('triageContinueHint');
+    const shown = classificationLabel(level, label);
+    if (levelEl) levelEl.textContent = shown;
+    if (hint) hint.textContent = CONTINUE_MSG;
+    if (box) {
+      box.hidden = false;
+      box.classList.add('is-visible');
+    }
+  }
+
+  function setAssignedProviderDisplay(providerId, providerName, slotLabel) {
+    const input = document.getElementById('booking_provider');
+    const nameEl = document.getElementById('bookingAssignedProviderName');
+    const wrap = document.getElementById('bookingAssignedProvider');
+    const hint = wrap ? wrap.querySelector('.booking-assigned-provider__hint') : null;
+    if (input) input.value = providerId ? String(providerId) : '';
+    if (providerId) {
+      window.BOOKING_LOCKED_PROVIDER_ID = parseInt(String(providerId), 10) || providerId;
+    }
+    if (nameEl) {
+      if (providerName) {
+        const shown = String(providerName).replace(/^Dr\.?\s+/i, '').trim();
+        nameEl.textContent = shown ? ('Dr. ' + shown) : 'Assigned provider';
+      } else if (!providerId) {
+        nameEl.textContent = 'Waiting for assignment…';
+      }
+    }
+    if (wrap) {
+      wrap.classList.toggle('is-assigned', !!providerId);
+      wrap.classList.toggle('is-pending', !providerId);
+    }
+    if (hint && providerId) {
+      let text = 'Provider automatically selected based on your triage result, provider availability, appointment slots, and workload.';
+      if (slotLabel) {
+        text += ' Next open time: ' + slotLabel + '.';
+      }
+      hint.textContent = text;
+    }
+  }
+
+  async function postSymptomsReview(form, complaint, stage, triageId) {
+    const fd = new FormData(form);
+    fd.set('chief_complaint', complaint);
+    fd.set('stage', stage);
+    fd.set('csrf_token', getCsrfToken());
+    if (triageId > 0) {
+      fd.set('triage_id', String(triageId));
+    } else {
+      fd.delete('triage_id');
+    }
+    const res = await fetch(APP_BASE + '/app/api/patient/submit_symptoms_review.php', {
+      method: 'POST',
+      body: fd,
+      credentials: 'same-origin',
+      headers: { 'X-MC-No-Loader': '1' },
+    });
+    const data = await res.json().catch(() => null);
+    return { res: res, data: data };
+  }
+
   function initTriageForm() {
     const form = document.getElementById('patientTriageForm');
     if (!form) return;
@@ -1122,6 +1180,78 @@
     const alertEl = document.getElementById('triageFormAlert');
     const submitBtn = form.querySelector('button[type="submit"]');
     const changeTimeBtn = document.getElementById('patientTriageChangeTime');
+    const complaintField = form.querySelector('#chief_complaint');
+    const triageIdInput = document.getElementById('booking_triage_id');
+    const skipTwoStep = window.TRIAGE_REVIEW_FIRST_ALLOWED !== true;
+    const twoStep = {
+      awaitingSecond: false,
+      triageId: parseInt(String(triageIdInput && triageIdInput.value ? triageIdInput.value : '0'), 10) || 0,
+      level: '',
+      complaint: '',
+      inFlight: false,
+    };
+
+    function setSubmitLabel(text) {
+      if (!submitBtn) return;
+      submitBtn.textContent = text;
+      submitBtn.dataset.originalText = text;
+    }
+
+    if (!skipTwoStep) {
+      setSubmitLabel(SUBMIT_COMPLAINT_LABEL);
+    }
+
+    function restorePreliminary() {
+      const raw = form.getAttribute('data-preliminary');
+      if (!raw || skipTwoStep) return;
+      let data = null;
+      try {
+        data = JSON.parse(raw);
+      } catch (_) {
+        return;
+      }
+      if (!data || !data.triage_id) return;
+      const level = urgencyToLevel(data.triage_level || data.classification_label);
+      if (level !== 'non_urgent' && level !== 'urgent') return;
+      const stored = String(data.chief_complaint || '').trim();
+      const current = String(complaintField && complaintField.value ? complaintField.value : '').trim();
+      if (stored && current && stored !== current) return;
+      if (stored && !current && complaintField) complaintField.value = stored;
+      twoStep.triageId = parseInt(data.triage_id, 10) || 0;
+      twoStep.level = level;
+      twoStep.complaint = String(complaintField && complaintField.value ? complaintField.value : '').trim();
+      twoStep.awaitingSecond = twoStep.triageId > 0;
+      if (triageIdInput) triageIdInput.value = String(twoStep.triageId);
+      if (twoStep.awaitingSecond) {
+        showBookingContinueUi(level, data.classification_label || '');
+        showTriageAlert(
+          alertEl,
+          'warning',
+          'Preliminary AI Assessment: ' + classificationLabel(level, data.classification_label) + '\n\n' + CONTINUE_MSG
+        );
+      }
+    }
+
+    if (complaintField && !skipTwoStep) {
+      complaintField.addEventListener('input', function () {
+        const text = String(complaintField.value || '').trim();
+        if (twoStep.awaitingSecond && text !== twoStep.complaint) {
+          twoStep.awaitingSecond = false;
+          twoStep.triageId = 0;
+          twoStep.level = '';
+          twoStep.complaint = '';
+          if (triageIdInput) triageIdInput.value = '';
+          const box = document.getElementById('triageAiResult');
+          if (box) {
+            box.hidden = true;
+            box.classList.remove('is-visible');
+          }
+        }
+      });
+    }
+
+    restorePreliminary();
+
     if (changeTimeBtn) {
       changeTimeBtn.addEventListener('click', function () {
         setBookingConfirmed(false);
@@ -1149,17 +1279,14 @@
           'error',
           'Emergency symptoms were flagged. Teleconsultation is not available — please go to the nearest hospital or ER. A hospital referral has been (or will be) recorded for your care team. You do not need to pick a time slot.'
         );
-        const providerSelect = document.getElementById('booking_provider');
-        if (providerSelect) providerSelect.disabled = true;
-        // Keep submit available so a missing referral can still be recorded without a slot.
         if (submitBtn) {
           submitBtn.disabled = false;
-          submitBtn.textContent = 'Confirm Emergency Referral';
+          setSubmitLabel(SUBMIT_COMPLAINT_LABEL);
         }
       }
 
       const preferEarliest = sessionStorage.getItem('medconnect_prefer_earliest_slot') === '1';
-      if (preferEarliest) {
+      if (preferEarliest && skipTwoStep) {
         showTriageAlert(
           alertEl,
           'success',
@@ -1175,15 +1302,13 @@
 
     form.addEventListener('submit', async (e) => {
       e.preventDefault();
+      if (twoStep.inFlight) return;
 
       const complaint = (form.querySelector('#chief_complaint')?.value || '').trim();
-      const slotId = document.getElementById('booking_slot_id')?.value || '';
       const blockTele = sessionStorage.getItem('medconnect_block_telemedicine') === '1'
         || String(window.REGISTRATION_URGENCY || '').toUpperCase() === 'EMERGENCY';
-      const reviewFirstAllowed = window.TRIAGE_REVIEW_FIRST_ALLOWED === true;
 
       if (!complaint) {
-        const complaintField = form.querySelector('#chief_complaint');
         const isLocked = complaintField && complaintField.hasAttribute('readonly');
         showTriageAlert(
           alertEl,
@@ -1195,12 +1320,147 @@
         return;
       }
 
-      if (!slotId && !blockTele && !reviewFirstAllowed) {
-        showTriageAlert(alertEl, 'error', 'Please select an available appointment slot.');
+      if (!skipTwoStep) {
+        twoStep.inFlight = true;
+        try {
+          const readyForAssign = twoStep.awaitingSecond
+            && twoStep.triageId > 0
+            && complaint === twoStep.complaint;
+
+          if (!readyForAssign) {
+            if (submitBtn) {
+              submitBtn.disabled = true;
+              submitBtn.textContent = 'Assessing urgency…';
+            }
+            const result = await postSymptomsReview(form, complaint, 'preview', 0);
+            const json = result.data;
+            if (!json || json.success === false) {
+              showTriageAlert(alertEl, 'error', (json && json.message) || 'Could not analyze your complaint. Please try again.');
+              return;
+            }
+            const payload = json.data || json;
+            const level = urgencyToLevel(payload.triage_level || payload.classification_label);
+            if (payload.emergency || level === 'emergency') {
+              showTriageAlert(alertEl, 'error', json.message || 'Emergency symptoms detected. Seek emergency care.');
+              if (window.mcPatientUrgencyModal && typeof window.mcPatientUrgencyModal.showEmergency === 'function') {
+                window.mcPatientUrgencyModal.showEmergency(json.message || '');
+              }
+              return;
+            }
+            if (!level) {
+              showTriageAlert(alertEl, 'error', 'Could not determine triage level. Please try again.');
+              return;
+            }
+            twoStep.triageId = parseInt(payload.triage_id, 10) || 0;
+            twoStep.level = level;
+            twoStep.complaint = complaint;
+            twoStep.awaitingSecond = twoStep.triageId > 0;
+            if (triageIdInput) triageIdInput.value = String(twoStep.triageId);
+            showBookingContinueUi(level, payload.classification_label || '');
+            showTriageAlert(
+              alertEl,
+              'warning',
+              'Preliminary AI Assessment: ' + classificationLabel(level, payload.classification_label) + '\n\n' + CONTINUE_MSG
+            );
+            if (window.mcPatientUrgencyModal && typeof window.mcPatientUrgencyModal.showTriageResult === 'function') {
+              window.mcPatientUrgencyModal.showTriageResult(level, CONTINUE_MSG);
+            }
+            return;
+          }
+
+          if (submitBtn) {
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'Assigning provider…';
+          }
+          const cont = await postSymptomsReview(form, complaint, 'continue', twoStep.triageId);
+          const contJson = cont.data;
+          if (!contJson || contJson.success === false) {
+            showTriageAlert(alertEl, 'error', (contJson && contJson.message) || 'Could not continue. Please try again.');
+            return;
+          }
+          const payload = contJson.data || contJson;
+          if (payload.preview) {
+            twoStep.awaitingSecond = true;
+            showBookingContinueUi(twoStep.level, payload.classification_label || '');
+            showTriageAlert(alertEl, 'warning', (contJson.message || CONTINUE_MSG));
+            return;
+          }
+          if (payload.emergency) {
+            showTriageAlert(alertEl, 'error', contJson.message || 'Emergency symptoms detected. Seek emergency care.');
+            if (window.mcPatientUrgencyModal && typeof window.mcPatientUrgencyModal.showEmergency === 'function') {
+              window.mcPatientUrgencyModal.showEmergency(contJson.message || '');
+            }
+            return;
+          }
+
+          const assignedId = parseInt(payload.assigned_provider_id, 10) || 0;
+          const selectedSlotId = parseInt(payload.selected_slot_id, 10) || 0;
+          if (triageIdInput && payload.triage_id) {
+            triageIdInput.value = String(payload.triage_id);
+            twoStep.triageId = parseInt(payload.triage_id, 10) || twoStep.triageId;
+          }
+
+          if (assignedId <= 0 || selectedSlotId <= 0) {
+            setAssignedProviderDisplay(0, '', '');
+            showTriageAlert(
+              alertEl,
+              'success',
+              contJson.message ||
+                'No suitable doctor schedule is currently available. You are in the waiting queue and will be notified by email when a consultation slot becomes available.'
+            );
+            setTimeout(function () {
+              window.location.href = APP_BASE + '/views/patient/dashboard.php';
+            }, 1400);
+            return;
+          }
+
+          setAssignedProviderDisplay(assignedId, payload.assigned_provider_name || '', payload.selected_slot_label || '');
+          const slotInput = document.getElementById('booking_slot_id');
+          if (slotInput && selectedSlotId > 0) {
+            slotInput.value = String(selectedSlotId);
+          }
+          if (typeof window.refreshBookingPicker === 'function') {
+            window.refreshBookingPicker();
+          }
+
+          showTriageAlert(
+            alertEl,
+            'success',
+            (payload.assigned_provider_name
+              ? ('Automatically assigned: Dr. ' + String(payload.assigned_provider_name).replace(/^Dr\.?\s+/i, '') +
+                (payload.selected_slot_label ? (' · ' + payload.selected_slot_label) : '') + '. ')
+              : '') +
+              'Booking your real available slot…'
+          );
+        } catch (err) {
+          showTriageAlert(
+            alertEl,
+            'error',
+            err && err.name === 'AbortError'
+              ? 'Analysis timed out. Please try again.'
+              : 'Network error. Please try again.'
+          );
+          return;
+        } finally {
+          twoStep.inFlight = false;
+          if (submitBtn) {
+            submitBtn.disabled = false;
+            setSubmitLabel(SUBMIT_COMPLAINT_LABEL);
+          }
+        }
+      }
+
+      const slotId = document.getElementById('booking_slot_id')?.value || '';
+
+      if (!slotId && !blockTele) {
+        showTriageAlert(alertEl, 'error', skipTwoStep
+          ? 'Please select an available appointment slot.'
+          : CONTINUE_MSG);
         return;
       }
 
       const fd = new FormData(form);
+      fd.delete('provider_id');
       // Slot optional for emergency (server creates hospital referral). Required for normal booking.
       fd.set('slot_id', slotId || '0');
       const csrfToken = getCsrfToken();
