@@ -95,8 +95,14 @@
       pipVideo.setAttribute('playsinline', '');
       pipVideo.setAttribute('webkit-playsinline', '');
 
-      if (els.mainLabel) els.mainLabel.textContent = remoteIsMain() ? remoteName : localName;
-      if (els.pipLabel) els.pipLabel.textContent = remoteIsMain() ? localName : remoteName;
+      if (els.mainLabel) {
+        els.mainLabel.textContent = remoteIsMain() ? remoteName : localName;
+        els.mainLabel.title = els.mainLabel.textContent;
+      }
+      if (els.pipLabel) {
+        els.pipLabel.textContent = remoteIsMain() ? localName : remoteName;
+        els.pipLabel.title = els.pipLabel.textContent;
+      }
 
       const enableBtn = q('enableSoundBtn');
       if (enableBtn && remoteV.parentElement === mainSlot && enableBtn.parentElement !== mainSlot) {
@@ -855,14 +861,20 @@
           const nm = remoteParticipant.querySelector('.mc-vc-participant-name');
           const sub = remoteParticipant.querySelector('.mc-vc-participant-sub');
           if (av) av.textContent = providerInitials;
-          if (nm) nm.textContent = providerName;
+          if (nm) {
+            nm.textContent = providerName;
+            nm.setAttribute('title', providerName);
+          }
           if (sub) sub.textContent = providerSpecialty;
         } else {
           const av = remoteParticipant.querySelector('.mc-vc-avatar');
           const nm = remoteParticipant.querySelector('.mc-vc-participant-name');
           const sub = remoteParticipant.querySelector('.mc-vc-participant-sub');
           if (av) av.textContent = patientInitials;
-          if (nm) nm.textContent = patientName;
+          if (nm) {
+            nm.textContent = patientName;
+            nm.setAttribute('title', patientName);
+          }
           if (sub) sub.textContent = 'Patient';
         }
       }

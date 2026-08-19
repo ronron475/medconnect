@@ -416,10 +416,11 @@ $localhost_app_url = 'http://localhost' . (ASSET_BASE !== '' ? ASSET_BASE : '');
         align-items: stretch;
     }
     .video-shell.is-call-active {
-        min-height: clamp(280px, 38dvh, 360px);
-        height: clamp(320px, calc(100dvh - var(--mc-header-offset, 64px) - 5rem), calc(100dvh - var(--mc-header-offset, 64px) - 3.25rem));
-        max-height: calc(100dvh - var(--mc-header-offset, 64px) - 3.25rem);
-        aspect-ratio: auto;
+        width: 100%;
+        height: auto;
+        min-height: clamp(240px, 32dvh, 320px);
+        max-height: calc(100dvh - var(--mc-header-offset, 64px) - 2.5rem);
+        aspect-ratio: 16 / 9;
     }
     .video-shell.is-call-active .video-shell-tools {
         display: none !important;
@@ -503,8 +504,11 @@ $localhost_app_url = 'http://localhost' . (ASSET_BASE !== '' ? ASSET_BASE : '');
 }
 .video-shell.is-call-active .mc-provider-video-dock,
 .video-shell.is-call-active .mc-provider-video-dock .mc-session-float-shell.is-docked {
-    min-height: 100%;
+    position: absolute;
+    inset: 0;
+    width: 100%;
     height: 100%;
+    min-height: 0;
     max-height: none;
 }
 .mobile-call-expand-btn {
@@ -534,46 +538,69 @@ body.consultation-mobile-call-fullscreen {
 }
 body.consultation-mobile-call-fullscreen .pd-header,
 body.consultation-mobile-call-fullscreen .scroll-ai-btn,
+body.consultation-mobile-call-fullscreen #floatingScrollAiBtn,
 body.consultation-mobile-call-fullscreen .session-side,
-body.consultation-mobile-call-fullscreen .session-left > .session-card {
+body.consultation-mobile-call-fullscreen .session-left > .session-card,
+body.consultation-mobile-call-fullscreen .sb-aqua,
+body.consultation-mobile-call-fullscreen .sidebar,
+body.consultation-mobile-call-fullscreen .portal-mobile-nav,
+body.consultation-mobile-call-fullscreen .mc-messages-fab,
+body.consultation-mobile-call-fullscreen .messages-fab {
     display: none !important;
+}
+body.consultation-mobile-call-fullscreen .provider-page-body,
+body.consultation-mobile-call-fullscreen .main-content.provider-main {
+    padding: 0 !important;
+    margin: 0 !important;
+    width: 100% !important;
+    height: 100dvh;
+    max-height: 100dvh;
+    overflow: hidden;
 }
 body.consultation-mobile-call-fullscreen .session-page {
     display: block;
     padding: 0;
     margin: 0;
     gap: 0;
+    height: 100%;
+    max-height: 100%;
+    overflow: hidden;
 }
-body.consultation-mobile-call-fullscreen .session-left {
+body.consultation-mobile-call-fullscreen .session-left,
+body.consultation-mobile-call-fullscreen .video-panel,
+body.consultation-mobile-call-fullscreen .video-panel.is-call-active {
+    display: flex;
+    flex-direction: column;
     gap: 0;
-}
-body.consultation-mobile-call-fullscreen .video-panel {
-    gap: 0;
+    height: 100%;
+    min-height: 0;
+    max-height: 100%;
 }
 body.consultation-mobile-call-fullscreen .video-shell.is-call-active.is-mobile-fullscreen {
     position: fixed;
     inset: 0;
-    width: 100vw;
-    width: 100dvw;
-    height: 100vh;
-    height: 100dvh;
+    width: 100%;
+    height: auto;
     max-height: none;
     min-height: 0;
     border-radius: 0;
     z-index: 200100;
-    padding-top: env(safe-area-inset-top, 0px);
-    padding-bottom: env(safe-area-inset-bottom, 0px);
-    padding-left: env(safe-area-inset-left, 0px);
-    padding-right: env(safe-area-inset-right, 0px);
+    padding: 0;
     box-sizing: border-box;
+    overflow: hidden;
 }
 body.consultation-mobile-call-fullscreen .video-shell.is-call-active.is-mobile-fullscreen .mobile-call-expand-btn {
     display: none !important;
 }
 body.consultation-mobile-call-fullscreen .mc-provider-video-dock,
 body.consultation-mobile-call-fullscreen .mc-provider-video-dock .mc-session-float-shell.is-docked {
-    min-height: 100%;
+    position: absolute;
+    inset: 0;
+    width: 100%;
     height: 100%;
+    min-height: 0;
+    max-height: none;
+    border-radius: 0;
 }
 .video-size-btn {
     height: 34px;
@@ -1613,10 +1640,10 @@ body.consultation-mobile-call-fullscreen .mc-provider-video-dock .mc-session-flo
     .video-shell.is-call-active {
         position: relative;
         width: 100%;
-        min-height: min(68dvh, 520px);
-        height: min(68dvh, 520px);
-        max-height: none;
-        aspect-ratio: auto;
+        height: auto;
+        min-height: 220px;
+        max-height: min(52dvh, 420px);
+        aspect-ratio: 16 / 9;
         border-radius: 12px;
     }
     .video-shell.is-call-active .mobile-call-expand-btn {
@@ -1624,8 +1651,11 @@ body.consultation-mobile-call-fullscreen .mc-provider-video-dock .mc-session-flo
     }
     .mc-provider-video-dock,
     .mc-provider-video-dock .mc-session-float-shell.is-docked {
-        min-height: 100%;
+        position: absolute;
+        inset: 0;
+        width: 100%;
         height: 100%;
+        min-height: 0;
         max-height: none;
     }
     .session-page {
@@ -2585,10 +2615,8 @@ function enterMobileCallFullscreen() {
     mobileCallFullscreen = true;
     document.body.classList.add('consultation-mobile-call-fullscreen');
     shell.classList.add('is-mobile-fullscreen');
-    const req = shell.requestFullscreen || shell.webkitRequestFullscreen;
-    if (req) {
-        req.call(shell).catch(function () { /* CSS fallback active */ });
-    }
+    /* CSS-only: native Fullscreen API needs a parent user-gesture and exiting
+       OS fullscreen was tearing down the in-app call layout. */
     syncVideoExpandedToFrame(true);
     updateExpandButtons();
 }
@@ -2707,10 +2735,6 @@ document.addEventListener('fullscreenchange', function () {
     const shell = document.getElementById('videoInterface');
     const fsEl = document.fullscreenElement || document.webkitFullscreenElement;
     if (!shell || !shell.classList.contains('is-call-active')) return;
-    if (!fsEl) {
-        if (mobileCallFullscreen) exitMobileCallFullscreen();
-        return;
-    }
     if (fsEl === shell && !mobileCallFullscreen) {
         mobileCallFullscreen = true;
         document.body.classList.add('consultation-mobile-call-fullscreen');
@@ -3360,6 +3384,10 @@ function setVideoShellLive(isLive) {
     if (!isLive) {
         exitMobileCallFullscreen();
         exitDesktopVideoExpanded();
+    } else if (isMobileConsultation() && !mobileCallFullscreen) {
+        window.setTimeout(function () {
+            enterMobileCallFullscreen();
+        }, 50);
     }
     updateExpandButtons();
 }
