@@ -332,12 +332,22 @@ body.provider-body .gis-brgy-panel.mc-card {
 
 .gis-map-wrap {
   position: relative;
+  display: grid;
+  grid-template-columns: 1fr;
+  grid-template-rows: auto auto;
 }
 
 .gis-map {
+  grid-row: 1;
+  grid-column: 1;
   height: 520px;
   width: 100%;
   background: #e2e8f0;
+}
+
+.gis-map .leaflet-bottom.leaflet-right {
+  right: 8px;
+  bottom: 8px;
 }
 
 .gis-map .leaflet-top.leaflet-right {
@@ -359,23 +369,33 @@ body.provider-body .gis-brgy-panel.mc-card {
 }
 
 .gis-map-legend {
-  position: absolute;
-  right: 14px;
-  bottom: 14px;
-  z-index: 450;
+  grid-row: 2;
+  grid-column: 1;
+  position: static;
+  z-index: auto;
   background: rgba(255, 255, 255, 0.96);
   border: 1px solid var(--mc-border-thin, #e2e8f0);
   border-radius: 12px;
-  padding: 12px 14px;
-  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.12);
-  min-width: 140px;
-  backdrop-filter: blur(6px);
+  padding: 10px 14px;
+  margin: 10px 14px 12px;
+  box-shadow: 0 4px 14px rgba(15, 23, 42, 0.06);
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px 20px;
+  align-items: start;
+}
+
+.gis-map-legend__block {
+  min-width: 0;
 }
 
 .gis-map-layer-switch {
-  position: absolute;
-  left: 12px;
-  bottom: 12px;
+  grid-row: 1;
+  grid-column: 1;
+  position: relative;
+  align-self: end;
+  justify-self: start;
+  margin: 0 0 12px 12px;
   z-index: 460;
   width: 72px;
   padding: 0;
@@ -469,9 +489,7 @@ body.provider-body .gis-brgy-panel.mc-card {
 }
 
 .gis-map-legend__divider {
-  height: 1px;
-  margin: 10px 0;
-  background: var(--mc-border-thin, #e2e8f0);
+  display: none;
 }
 
 .gis-popup__badges {
@@ -926,37 +944,9 @@ body.provider-body .gis-brgy-panel.mc-card {
     flex: 1 0 100%;
   }
 
-  .gis-map-wrap {
-    display: grid;
-    grid-template-columns: 1fr;
-    grid-template-rows: auto auto;
-  }
-
-  .gis-map {
-    grid-row: 1;
-    grid-column: 1;
-  }
-
   .gis-map-legend {
-    grid-row: 2;
-    grid-column: 1;
-    position: static;
-    right: auto;
-    bottom: auto;
-    margin: 12px 14px 4px;
-    min-width: 0;
-    width: auto;
-    max-width: none;
-  }
-
-  .gis-map-layer-switch {
-    grid-row: 1;
-    grid-column: 1;
-    position: relative;
-    align-self: end;
-    justify-self: start;
-    left: 12px;
-    bottom: 12px;
+    grid-template-columns: 1fr;
+    margin: 10px 12px 8px;
   }
 
   .gis-map-note {

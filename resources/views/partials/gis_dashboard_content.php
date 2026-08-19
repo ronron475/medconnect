@@ -13,7 +13,7 @@ $gisMapNote = $gisIsProvider
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin=""/>
 <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css" crossorigin=""/>
 <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css" crossorigin=""/>
-<link rel="stylesheet" href="<?= htmlspecialchars($assetBase) ?>/assets/css/admin-gis-dashboard.css?v=4.4"/>
+<link rel="stylesheet" href="<?= htmlspecialchars($assetBase) ?>/assets/css/admin-gis-dashboard.css?v=4.5"/>
 
 <div class="gis-page" id="gis-dashboard"
      data-api="<?= htmlspecialchars($apiBase) ?>"
@@ -108,15 +108,18 @@ $gisMapNote = $gisIsProvider
       <div class="gis-map-wrap">
         <div id="gis-map" class="gis-map" aria-label="Interactive patient severity map"></div>
         <div class="gis-map-legend" id="gis-map-legend" aria-label="Map legend">
-          <div class="gis-map-legend__title">Severity</div>
-          <div class="gis-map-legend__item"><span class="gis-map-legend__dot gis-map-legend__dot--non-urgent"></span> Non-Urgent</div>
-          <div class="gis-map-legend__item"><span class="gis-map-legend__dot gis-map-legend__dot--urgent"></span> Urgent</div>
-          <div class="gis-map-legend__item"><span class="gis-map-legend__dot gis-map-legend__dot--emergency"></span> Emergency</div>
-          <div class="gis-map-legend__divider" aria-hidden="true"></div>
-          <div class="gis-map-legend__title">Pin accuracy</div>
-          <div class="gis-map-legend__item"><span class="gis-map-legend__dot gis-map-legend__dot--gps"></span> GPS (Exact)</div>
-          <div class="gis-map-legend__item"><span class="gis-map-legend__dot gis-map-legend__dot--geocoded"></span> Address (Geocoded)</div>
-          <div class="gis-map-legend__item"><span class="gis-map-legend__dot gis-map-legend__dot--approx"></span> Approximate (Barangay)</div>
+          <div class="gis-map-legend__block">
+            <div class="gis-map-legend__title">Severity</div>
+            <div class="gis-map-legend__item"><span class="gis-map-legend__dot gis-map-legend__dot--non-urgent"></span> Non-Urgent</div>
+            <div class="gis-map-legend__item"><span class="gis-map-legend__dot gis-map-legend__dot--urgent"></span> Urgent</div>
+            <div class="gis-map-legend__item"><span class="gis-map-legend__dot gis-map-legend__dot--emergency"></span> Emergency</div>
+          </div>
+          <div class="gis-map-legend__block">
+            <div class="gis-map-legend__title">Pin accuracy</div>
+            <div class="gis-map-legend__item"><span class="gis-map-legend__dot gis-map-legend__dot--gps"></span> GPS (Exact)</div>
+            <div class="gis-map-legend__item"><span class="gis-map-legend__dot gis-map-legend__dot--geocoded"></span> Address (Geocoded)</div>
+            <div class="gis-map-legend__item"><span class="gis-map-legend__dot gis-map-legend__dot--approx"></span> Approximate (Barangay)</div>
+          </div>
         </div>
         <button type="button" class="gis-map-layer-switch" id="gisMapLayerSwitch" aria-label="Switch map layer">
           <span class="gis-map-layer-switch__thumb" id="gisMapLayerThumb" aria-hidden="true"></span>
