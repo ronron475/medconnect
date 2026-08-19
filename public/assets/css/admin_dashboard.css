@@ -6,11 +6,11 @@
 /* ── Variables ── */
 :root {
   --adm-sb-w:        260px;
-  --adm-navy-900:    #0d1b3e;   /* deepest navy — sidebar bg top */
-  --adm-navy-800:    #112354;   /* sidebar mid */
-  --adm-navy-700:    #1a3068;   /* sidebar bottom */
-  --adm-accent:      #3b82f6;   /* blue accent — active item, avatar */
-  --adm-accent-soft: rgba(59,130,246,0.15);
+  --adm-navy-900:    #0D2137;   /* deepest navy — sidebar bg top */
+  --adm-navy-800:    #0B2B42;   /* sidebar mid */
+  --adm-navy-700:    #103550;   /* sidebar bottom */
+  --adm-accent:      #0097A7;   /* teal accent — matches brand */
+  --adm-accent-soft: rgba(0,151,167,0.15);
   --adm-white:       #ffffff;
   --adm-canvas:      #f8fafc;   /* main content bg */
   --adm-border:      #e2e8f0;
@@ -92,7 +92,7 @@ body.admin-body {
 }
 
 .adm-logo-text span {
-  color: #93c5fd;
+  color: #22D3EE;
 }
 
 .adm-logo-text em {
@@ -163,10 +163,10 @@ body.admin-body {
 }
 
 .adm-nav-item.is-active {
-  background: rgba(255,255,255,0.13);
+  background: rgba(0,151,167,0.20);
   color: #fff;
-  font-weight: 700;
-  border-color: rgba(255,255,255,0.14);
+  font-weight: 600;
+  border-color: rgba(0,151,167,0.22);
 }
 
 .adm-nav-item.is-active::before {
@@ -174,7 +174,7 @@ body.admin-body {
   position: absolute;
   left: 0; top: 22%; bottom: 22%;
   width: 3px;
-  background: #93c5fd;
+  background: #22D3EE;
   border-radius: 0 3px 3px 0;
 }
 

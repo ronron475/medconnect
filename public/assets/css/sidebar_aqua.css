@@ -5,14 +5,14 @@
 
 :root {
   --sba-w:          260px;
-  --sba-bg:         #069396;   /* Deep Teal - updated per branding requirement */
-  --sba-bg-dark:    #057a7c;   /* slightly deeper for logo area */
-  --sba-bg-hover:   rgba(255,255,255,0.12);
-  --sba-bg-active:  rgba(255,255,255,0.18);
-  --sba-border-r:   rgba(255,255,255,0.10); /* right-edge separator */
-  --sba-text:       rgba(255,255,255,0.72);
+  --sba-bg:         #0D2137;   /* Deep navy — matches new design system */
+  --sba-bg-dark:    #091929;
+  --sba-bg-hover:   rgba(255,255,255,0.07);
+  --sba-bg-active:  rgba(0,151,167,0.22);
+  --sba-border-r:   rgba(255,255,255,0.06);
+  --sba-text:       rgba(255,255,255,0.68);
   --sba-text-active:#ffffff;
-  --sba-accent:     #67E8F9;   /* bright cyan — active bar + logo span */
+  --sba-accent:     #22D3EE;   /* bright cyan — active indicator */
   --sba-radius:     10px;
 }
 
@@ -28,7 +28,7 @@
   /* clean right-hand border separating sidebar from workspace */
   border-right: 1px solid var(--sba-border-r);
   /* subtle depth shadow */
-  box-shadow: 2px 0 16px rgba(2,128,144,0.20);
+  box-shadow: 2px 0 20px rgba(13,33,55,0.22);
   pointer-events: all !important;
 }
 
@@ -37,7 +37,7 @@
   display: flex;
   align-items: center;
   gap: 11px;
-  padding: 22px 20px 18px;
+  padding: 17px 16px 16px;
   text-decoration: none;
   background: var(--sba-bg-dark);
   border-bottom: 1px solid rgba(255,255,255,0.08);
@@ -121,8 +121,8 @@
 .sba-item.is-active {
   background: var(--sba-bg-active);
   color: var(--sba-text-active);
-  font-weight: 700;
-  border-color: rgba(255,255,255,0.15);
+  font-weight: 600;
+  border-color: rgba(0,151,167,0.20);
 }
 .sba-item.is-active .sba-icon {
   opacity: 1;

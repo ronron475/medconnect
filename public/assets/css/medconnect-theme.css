@@ -30,36 +30,41 @@ html[data-theme-resolved='light'] {
 }
 
 html[data-theme-resolved='dark'] {
-  --mc-bg: #0f172a;
-  --mc-ice-blue: #0f172a;
-  --mc-white: #1e293b;
-  --mc-surface: #1e293b;
-  --mc-border-thin: #334155;
-  --mc-border: #334155;
-  --mc-navy-dark: #f8fafc;
-  --mc-slate-muted: #cbd5e1;
-  --mc-aqua-soft: #1e293b;
+  --mc-bg: #0B1220;
+  --mc-ice-blue: #0B1220;
+  --mc-white: #151F2E;
+  --mc-surface: #151F2E;
+  --mc-border-thin: #243347;
+  --mc-border: #243347;
+  --mc-navy-dark: #E8F0F7;
+  --mc-slate-muted: #8FAABF;
+  --mc-aqua-soft: #0D1E30;
+  --mc-aqua-light: rgba(0,151,167,0.15);
 
-  --mc-theme-bg: #0f172a;
-  --mc-theme-surface: #1e293b;
-  --mc-theme-card: #1f2937;
-  --mc-theme-surface-2: #1f2937;
-  --mc-theme-text: #f8fafc;
-  --mc-theme-text-secondary: #cbd5e1;
-  --mc-theme-border: #334155;
-  --mc-theme-input-bg: #1f2937;
-  --mc-theme-input-border: #334155;
-  --mc-theme-sidebar: #0f766e;
-  --mc-theme-header: #1e293b;
-  --mc-theme-shadow: 0 1px 3px rgba(0, 0, 0, 0.35);
-  --mc-theme-blue: #2563eb;
-  --mc-theme-green: #16a34a;
-  --mc-theme-orange: #f59e0b;
-  --mc-theme-red: #dc2626;
-  --mc-bubble-patient: #1e3a5f;
-  --mc-bubble-provider: #115e59;
-  --mc-bubble-patient-text: #f8fafc;
-  --mc-bubble-provider-text: #ccfbf1;
+  --mc-theme-bg: #0B1220;
+  --mc-theme-surface: #151F2E;
+  --mc-theme-card: #1A2537;
+  --mc-theme-surface-2: #1A2537;
+  --mc-theme-text: #E8F0F7;
+  --mc-theme-text-secondary: #8FAABF;
+  --mc-theme-border: #243347;
+  --mc-theme-input-bg: #1A2537;
+  --mc-theme-input-border: #2D4160;
+  --mc-theme-sidebar: #0B1220;
+  --mc-theme-header: #151F2E;
+  --mc-theme-shadow: 0 2px 12px rgba(0,0,0,0.40);
+  --mc-theme-blue: #3B82F6;
+  --mc-theme-green: #10B981;
+  --mc-theme-orange: #F59E0B;
+  --mc-theme-red: #EF4444;
+  --mc-bubble-patient: #1a2f4a;
+  --mc-bubble-provider: #0d2e29;
+  --mc-bubble-patient-text: #E8F0F7;
+  --mc-bubble-provider-text: #A7F3D0;
+
+  /* Dark-mode card shadow upgrade */
+  --mc-shadow-card: 0 4px 20px rgba(0,0,0,0.30);
+  --mc-shadow-float: 0 12px 40px rgba(0,0,0,0.45);
 }
 
 html[data-theme-resolved='light'] body,

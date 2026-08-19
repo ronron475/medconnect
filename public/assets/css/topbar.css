@@ -1,23 +1,25 @@
-/* ── medConnect COMPACT Topbar ── */
+/* ── medConnect Topbar v5 — Modern Clinical Header ── */
 
 .topbar {
-  height: var(--header-h); /* Synchronized with sidebar logo area */
+  height: var(--header-h, 68px);
   background: var(--mc-white);
   display: flex;
-  align-items: center; /* Locked onto horizontal center baseline */
+  align-items: center;
   justify-content: space-between;
-  padding: 0 32px; /* Balanced padding */
+  padding: 0 28px;
   position: sticky;
   top: 0;
   z-index: 90;
-  border-bottom: 1px solid var(--mc-border-thin); /* Seamless line extension */
-  box-shadow: none; /* Removed in favor of clean border line */
+  border-bottom: 1px solid var(--mc-border-thin);
+  box-shadow: 0 1px 0 rgba(13,33,55,0.04), 0 2px 12px rgba(13,33,55,0.04);
+  transition: box-shadow 0.2s ease;
 }
 
+/* ── Left ── */
 .topbar-left {
   display: flex;
   align-items: center;
-  gap: 20px;
+  gap: 16px;
   min-width: 0;
   flex: 1 1 auto;
 }
@@ -26,17 +28,21 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 44px;
-  height: 44px;
+  width: 40px;
+  height: 40px;
   border-radius: 12px;
-  background: transparent;
+  background: var(--mc-aqua-light);
   flex-shrink: 0;
   text-decoration: none;
+  transition: background 0.2s ease;
+}
+.topbar-brand:hover {
+  background: rgba(0,151,167,0.15);
 }
 
 .topbar-brand__img {
-  width: 34px;
-  height: 34px;
+  width: 26px;
+  height: 26px;
   object-fit: contain;
   display: block;
 }
@@ -44,146 +50,194 @@
 .topbar-title-block {
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: 1px;
   min-width: 0;
 }
 
 .topbar-eyebrow {
   font-size: 10px;
   font-weight: 700;
-  color: var(--mc-aqua-medium);
+  color: var(--mc-aqua);
   text-transform: uppercase;
-  letter-spacing: 0.08em;
+  letter-spacing: 0.1em;
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 5px;
+  opacity: 0.85;
 }
 
 .topbar-title {
-  font-size: 1.1rem; /* Compact font size */
-  font-weight: 800;
-  color: var(--mc-navy-dark); /* dark navy typography */
-  letter-spacing: -0.01em;
-  line-height: 1.1;
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--mc-navy-dark);
+  letter-spacing: -0.02em;
+  line-height: 1.2;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
+/* ── Right ── */
 .topbar-right {
   display: flex;
-  align-items: center; /* Shared center axis */
-  gap: 20px;
-  flex-shrink: 0; /* keep actions visible */
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
 }
 
+/* Divider */
 .topbar-sep {
   width: 1px;
-  height: 24px;
+  height: 22px;
   background: var(--mc-border-thin);
+  margin: 0 6px;
 }
 
+/* Date / time */
 .topbar-datetime {
-  text-align: right;
   display: flex;
   flex-direction: column;
-  justify-content: center; /* Vertical center */
-  padding-right: 20px;
+  align-items: flex-end;
+  justify-content: center;
+  padding-right: 14px;
   border-right: 1px solid var(--mc-border-thin);
-  height: 32px; /* Fixed height for consistent vertical centering */
+  height: 34px;
+  gap: 1px;
 }
 
 .topbar-date {
-  font-size: 12px;
-  font-weight: 700;
+  font-size: 11.5px;
+  font-weight: 600;
   color: var(--mc-navy-dark);
+  line-height: 1.2;
 }
 
 .topbar-time {
-  font-size: 11px;
-  color: var(--mc-slate-muted); /* muted gray-blue */
+  font-size: 10.5px;
+  color: var(--mc-slate-muted);
   font-weight: 500;
+  line-height: 1.2;
 }
 
+/* Icon buttons (theme, bell, etc.) */
 .topbar-icon-btn {
-  width: 36px; /* Compact sizing */
-  height: 36px;
-  border-radius: 8px; /* micro-rounding */
+  width: 38px;
+  height: 38px;
+  border-radius: 10px;
   border: 1px solid var(--mc-border-thin);
   background: var(--mc-white);
-  color: var(--mc-aqua-medium);
+  color: var(--mc-slate-muted);
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: background 0.18s ease, color 0.18s ease, border-color 0.18s ease, transform 0.18s ease;
+  position: relative;
 }
 
 .topbar-icon-btn:hover {
-  background: var(--mc-ice-blue);
+  background: var(--mc-aqua-light);
+  color: var(--mc-aqua);
+  border-color: rgba(0,151,167,0.22);
   transform: translateY(-1px);
 }
 
-.topbar-user {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-
+/* Avatar button */
 .topbar-avatar {
-  width: 32px;
-  height: 32px;
+  width: 38px;
+  height: 38px;
   border-radius: 50%;
-  background: var(--mc-aqua-medium);
+  background: linear-gradient(135deg, var(--mc-aqua) 0%, var(--mc-aqua-dark) 100%);
   color: #fff;
   display: flex;
   align-items: center;
   justify-content: center;
   font-weight: 800;
-  font-size: 11px;
-  border: none;
+  font-size: 12px;
+  border: 2px solid rgba(255,255,255,0.9);
   padding: 0;
+  cursor: pointer;
+  transition: transform 0.18s ease, box-shadow 0.18s ease;
+  box-shadow: 0 2px 8px rgba(0,151,167,0.24);
+  overflow: hidden;
+}
+
+.topbar-avatar:hover {
+  transform: scale(1.06);
+  box-shadow: 0 4px 14px rgba(0,151,167,0.35);
 }
 
 .topbar-avatar:focus-visible {
-  outline: 3px solid rgba(6, 147, 150, 0.28);
+  outline: 3px solid rgba(0,151,167,0.35);
   outline-offset: 3px;
 }
 
-.topbar-logout {
-  color: var(--mc-slate-muted); /* minimal exit icon */
+/* Hamburger / nav toggle */
+.mc-nav-toggle {
+  width: 38px;
+  height: 38px;
+  border-radius: 10px;
+  background: none;
+  border: 1px solid var(--mc-border-thin);
+  color: var(--mc-slate-muted);
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 6px;
-  border-radius: 8px;
-  transition: all 0.2s ease;
+  cursor: pointer;
+  transition: background 0.18s ease, color 0.18s ease;
+  flex-shrink: 0;
+}
+.mc-nav-toggle:hover {
+  background: var(--mc-ice-blue);
+  color: var(--mc-navy-dark);
 }
 
+/* Logout icon button */
+.topbar-logout {
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 9px;
+  background: none;
+  border: 1px solid transparent;
+  color: var(--mc-slate-muted);
+  cursor: pointer;
+  transition: background 0.18s ease, color 0.18s ease, border-color 0.18s ease;
+  margin-left: 2px;
+}
 .topbar-logout:hover {
-  background: #fee2e2;
-  color: #ef233c;
+  background: #FEE2E2;
+  color: #DC2626;
+  border-color: rgba(220,38,38,0.18);
 }
 
+/* BHW divider variant */
+.topbar-divider {
+  width: 1px;
+  height: 28px;
+  background: var(--mc-border-thin);
+  margin: 0 4px;
+}
+
+/* BHW/time sep variant */
+.topbar-time-sep {
+  color: var(--mc-border-thin);
+  font-size: 13px;
+  margin: 0 2px;
+}
+
+/* ── Responsive ── */
 @media (max-width: 1024px) {
   .topbar {
     height: auto;
-    min-height: 64px;
-    padding: 10px 14px;
-    flex-wrap: wrap;
-    gap: 8px;
+    min-height: 60px;
+    padding: 0 14px;
+    flex-wrap: nowrap;
   }
 
-  .topbar-left {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    flex: 1;
-    min-width: 0;
-  }
-
-  .topbar-datetime {
-    display: none;
-  }
-
-  /* No need to waste horizontal space once the clock is hidden */
+  .topbar-datetime,
   .topbar-sep {
     display: none;
   }
@@ -191,10 +245,11 @@
 
 @media (max-width: 480px) {
   .topbar-right {
-    gap: 10px;
+    gap: 4px;
   }
 
   .topbar-right .topbar-avatar {
-    display: none;
+    width: 34px;
+    height: 34px;
   }
 }

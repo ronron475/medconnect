@@ -1,43 +1,59 @@
 /**
- * medConnect Design System v4.0 — Muted Aqua-Slate Compact Edition
- * A space-efficient, data-dense clinical UI framework.
+ * medConnect Design System v5.0 — Modern Clinical UI
+ * Clean, professional, and accessible for all user roles.
  */
 
 :root {
-    /* --- Palette --- */
-    --mc-ice-blue:      #F4F8FA;    /* Main workspace background (non-glare) */
-    --mc-aqua-medium:   #018A93;    /* Anchored Sidebar (toned down) */
-    --mc-aqua-soft:     #D8EAEE;    /* Secondary background / Greeting card */
-    --mc-navy-dark:     #012A4A;    /* Main text, headers, numbers */
-    --mc-slate-muted:   #608395;    /* Status lines, empty states, placeholders */
-    --mc-border-thin:   #E2EDF1;    /* Subtle borders */
-    --mc-white:         #FFFFFF;    /* Pure white containers */
+    /* --- Core Brand Palette --- */
+    --mc-aqua:          #0097A7;    /* Primary teal-cyan */
+    --mc-aqua-medium:   #0097A7;    /* Alias for compatibility */
+    --mc-aqua-dark:     #006E7B;    /* Hover / pressed states */
+    --mc-aqua-light:    #E0F7FA;    /* Tinted bg, chips */
+    --mc-aqua-soft:     #D8EAEE;    /* Secondary bg / greeting */
+    --mc-navy-dark:     #0D2137;    /* Primary text & headings */
+    --mc-navy-mid:      #1A3A52;    /* Secondary heading */
+    --mc-slate-muted:   #5B7A8D;    /* Placeholder / muted text */
+    --mc-border-thin:   #DDE8EE;    /* Subtle borders */
+    --mc-ice-blue:      #F3F8FB;    /* Page background */
+    --mc-white:         #FFFFFF;    /* Card / surface */
+
+    /* --- Semantic Colours --- */
+    --mc-success:       #10B981;
+    --mc-warning:       #F59E0B;
+    --mc-danger:        #EF4444;
+    --mc-info:          #3B82F6;
 
     /* --- Surfaces --- */
     --mc-bg: var(--mc-ice-blue);
     --mc-surface: var(--mc-white);
     --mc-border: var(--mc-border-thin);
-    
-    /* --- Spacing (Compact) --- */
+
+    /* --- Spacing --- */
     --mc-space-xs: 4px;
     --mc-space-sm: 8px;
-    --mc-space-md: 12px;  /* Tighter padding */
-    --mc-space-lg: 20px;
-    --mc-space-xl: 32px;
-    
-    /* --- Typography (Compact) --- */
+    --mc-space-md: 14px;
+    --mc-space-lg: 22px;
+    --mc-space-xl: 36px;
+
+    /* --- Typography --- */
     --mc-font: 'Inter', system-ui, -apple-system, sans-serif;
-    --mc-fs-h1: 1.5rem;    /* Smaller h1 */
-    --mc-fs-h2: 1.25rem;
+    --mc-fs-h1: 1.625rem;
+    --mc-fs-h2: 1.3rem;
     --mc-fs-h3: 1.1rem;
-    --mc-fs-body: 0.875rem; /* Proportional body font */
+    --mc-fs-body: 0.875rem;
     --mc-fs-sm: 0.8125rem;
-    --mc-fs-xs: 0.75rem;
-    
+    --mc-fs-xs: 0.72rem;
+
+    /* --- Shadows --- */
+    --mc-shadow-micro: 0 1px 4px rgba(13,33,55,0.07);
+    --mc-shadow-card:  0 4px 20px rgba(13,33,55,0.08);
+    --mc-shadow-float: 0 12px 40px rgba(13,33,55,0.14);
+
     /* --- UI Specs --- */
-    --mc-radius: 12px;      /* Strict 12px rounding */
-    --mc-shadow-micro: 0 1px 3px rgba(1, 42, 74, 0.06); /* Soft micro-shadow */
-    --header-h: 120px;      /* Enlarged header height for prominent branding */
+    --mc-radius: 14px;
+    --mc-radius-sm: 8px;
+    --mc-radius-lg: 20px;
+    --header-h: 68px;
     --sidebar-width: 260px;
 
     /* --- Responsive system (canonical breakpoints) --- */
@@ -108,64 +124,83 @@ body {
 .text-h3 { font-size: var(--mc-fs-h3); font-weight: 600; color: var(--mc-navy-dark); }
 .text-muted { color: var(--mc-slate-muted); font-size: var(--mc-fs-sm); }
 
-/* --- Unified Compact Card --- */
+/* --- Unified Card --- */
 .mc-card {
     background: var(--mc-surface);
     border-radius: var(--mc-radius);
     border: 1px solid var(--mc-border);
-    box-shadow: var(--mc-shadow-micro);
+    box-shadow: var(--mc-shadow-card);
     padding: var(--mc-space-lg);
+    transition: box-shadow 0.2s ease;
+}
+.mc-card:hover {
+    box-shadow: var(--mc-shadow-float);
 }
 
-/* --- Buttons (Pill) --- */
+/* --- Buttons --- */
 .mc-btn {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    padding: 8px 18px;
-    border-radius: 99px; /* Styled pill buttons */
-    font-weight: 700;
+    padding: 9px 20px;
+    border-radius: 10px;
+    font-weight: 600;
     font-size: 0.8125rem;
     cursor: pointer;
-    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    transition: all 0.18s cubic-bezier(0.4, 0, 0.2, 1);
     border: 1px solid transparent;
-    gap: 8px;
+    gap: 7px;
     text-decoration: none;
     white-space: nowrap;
+    letter-spacing: 0.01em;
 }
 
 .mc-btn--primary {
-    background: var(--mc-aqua-medium);
+    background: linear-gradient(135deg, var(--mc-aqua) 0%, var(--mc-aqua-dark) 100%);
     color: #fff;
+    box-shadow: 0 2px 8px rgba(0,151,167,0.28);
 }
 .mc-btn--primary:hover {
-    background: var(--mc-navy-dark);
-    transform: translateY(-1px);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 18px rgba(0,151,167,0.36);
+}
+.mc-btn--primary:active {
+    transform: translateY(0);
 }
 
 .mc-btn--outline {
     background: transparent;
     border-color: var(--mc-border-thin);
-    color: var(--mc-aqua-medium);
+    color: var(--mc-aqua);
 }
 .mc-btn--outline:hover {
+    background: var(--mc-aqua-light);
+    border-color: var(--mc-aqua);
+}
+
+.mc-btn--ghost {
+    background: transparent;
+    border-color: transparent;
+    color: var(--mc-slate-muted);
+}
+.mc-btn--ghost:hover {
     background: var(--mc-ice-blue);
-    border-color: var(--mc-aqua-medium);
+    color: var(--mc-navy-dark);
 }
 
 /* --- Badges & Pills --- */
 .mc-badge {
     display: inline-flex;
     align-items: center;
-    padding: 2px 10px;
-    border-radius: 99px; /* Small tightly padded pill badges */
-    font-size: 0.7rem;
+    padding: 3px 10px;
+    border-radius: 99px;
+    font-size: 0.68rem;
     font-weight: 700;
-    background: var(--mc-ice-blue);
-    color: var(--mc-slate-muted);
-    border: 1px solid var(--mc-border-thin);
+    background: var(--mc-aqua-light);
+    color: var(--mc-aqua-dark);
+    border: 1px solid rgba(0,151,167,0.15);
     text-transform: uppercase;
-    letter-spacing: 0.02em;
+    letter-spacing: 0.04em;
 }
 
 /* --- Utility --- */
