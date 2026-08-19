@@ -269,9 +269,9 @@ require __DIR__ . '/partials/staff_hub_tabs.php';
 </div>
 
 <link rel="stylesheet" href="<?= ASSET_BASE ?>/assets/css/admin-staff-applications.css?v=1.1">
-<link rel="stylesheet" href="<?= ASSET_BASE ?>/assets/css/admin-staff-forms.css?v=1.4">
+<link rel="stylesheet" href="<?= ASSET_BASE ?>/assets/css/admin-staff-forms.css?v=1.6">
 <link rel="stylesheet" href="<?= ASSET_BASE ?>/assets/css/admin-bhw-applications.css?v=1.2">
-<script src="<?= ASSET_BASE ?>/assets/js/admin-staff-form-utils.js?v=1.2"></script>
+<script src="<?= ASSET_BASE ?>/assets/js/admin-staff-form-utils.js?v=1.4"></script>
 <script src="<?= ASSET_BASE ?>/assets/js/admin-staff-applications.js?v=1.0"></script>
 <script>
 window.MC_BHW_APP = {
@@ -282,7 +282,7 @@ window.MC_BHW_APP = {
     showApplications: <?= $show_applications_panel ? 'true' : 'false' ?>
 };
 </script>
-<script src="<?= ASSET_BASE ?>/assets/js/admin-bhw-applications.js?v=1.4"></script>
+<script src="<?= ASSET_BASE ?>/assets/js/admin-bhw-applications.js?v=1.5"></script>
 
 <?php
 if ($show_accounts_panel) {

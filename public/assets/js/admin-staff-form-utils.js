@@ -295,6 +295,229 @@
     }
   }
 
+  var openModalSelect = null;
+  var openModalSelectMenu = null;
+
+  function menuForWrap(wrap) {
+    if (!wrap) return null;
+    if (openModalSelect === wrap && openModalSelectMenu) return openModalSelectMenu;
+    return wrap.querySelector('.mc-select__menu');
+  }
+
+  function closeModalSelect(wrap) {
+    if (!wrap) wrap = openModalSelect;
+    if (!wrap) return;
+    wrap.classList.remove('is-open');
+    var field = wrap.closest('.mc-field');
+    if (field) field.classList.remove('is-select-open');
+    var toggle = wrap.querySelector('.mc-select__toggle');
+    var menu = menuForWrap(wrap);
+    if (toggle) toggle.setAttribute('aria-expanded', 'false');
+    if (menu) {
+      menu.hidden = true;
+      menu.style.top = '';
+      menu.style.left = '';
+      menu.style.width = '';
+      menu.style.maxHeight = '';
+      if (menu.parentNode !== wrap) wrap.appendChild(menu);
+    }
+    if (openModalSelect === wrap) {
+      openModalSelect = null;
+      openModalSelectMenu = null;
+    }
+  }
+
+  function positionModalSelectMenu(wrap) {
+    var toggle = wrap.querySelector('.mc-select__toggle');
+    var menu = menuForWrap(wrap);
+    if (!toggle || !menu) return;
+    var rect = toggle.getBoundingClientRect();
+    var gap = 4;
+    var spaceBelow = window.innerHeight - rect.bottom - 12;
+    var maxH = Math.min(240, Math.max(140, spaceBelow));
+    menu.style.position = 'fixed';
+    menu.style.left = Math.round(rect.left) + 'px';
+    menu.style.width = Math.round(rect.width) + 'px';
+    menu.style.top = Math.round(rect.bottom + gap) + 'px';
+    menu.style.maxHeight = maxH + 'px';
+  }
+
+  function enhanceModalSelect(select) {
+    if (!select || select.dataset.mcSelectEnhanced === '1') return;
+    if (select.closest('.mc-select')) {
+      select.dataset.mcSelectEnhanced = '1';
+      return;
+    }
+    select.dataset.mcSelectEnhanced = '1';
+
+    var wrap = document.createElement('div');
+    wrap.className = 'mc-select';
+    select.parentNode.insertBefore(wrap, select);
+    wrap.appendChild(select);
+    select.classList.add('mc-select__native');
+    select.tabIndex = -1;
+
+    var toggle = document.createElement('button');
+    toggle.type = 'button';
+    toggle.className = 'mc-select__toggle mc-field__input';
+    toggle.setAttribute('aria-haspopup', 'listbox');
+    toggle.setAttribute('aria-expanded', 'false');
+    if (select.id) toggle.id = select.id + 'Toggle';
+    if (select.required) toggle.setAttribute('aria-required', 'true');
+
+    var menu = document.createElement('ul');
+    menu.className = 'mc-select__menu';
+    menu.setAttribute('role', 'listbox');
+    menu.hidden = true;
+    if (select.id) menu.id = select.id + 'Menu';
+    toggle.setAttribute('aria-controls', menu.id || '');
+
+    wrap.appendChild(toggle);
+    wrap.appendChild(menu);
+
+    function selectedOption() {
+      return select.options[select.selectedIndex] || select.options[0] || null;
+    }
+
+    function syncToggle() {
+      var opt = selectedOption();
+      var label = opt ? String(opt.textContent || '').trim() : '';
+      toggle.textContent = label || 'Select…';
+      toggle.classList.toggle('is-placeholder', !select.value);
+      toggle.classList.toggle('is-invalid', select.classList.contains('is-invalid'));
+      toggle.disabled = !!select.disabled;
+    }
+
+    function rebuildMenu() {
+      menu.innerHTML = '';
+      Array.prototype.forEach.call(select.options, function (opt) {
+        var li = document.createElement('li');
+        li.className = 'mc-select__option';
+        li.setAttribute('role', 'option');
+        li.dataset.value = opt.value;
+        li.textContent = opt.textContent;
+        if (opt.disabled) li.setAttribute('aria-disabled', 'true');
+        if (opt.value === select.value) li.setAttribute('aria-selected', 'true');
+        if (!opt.value) li.classList.add('is-placeholder');
+        menu.appendChild(li);
+      });
+      syncToggle();
+    }
+
+    function openMenu() {
+      if (select.disabled) return;
+      if (openModalSelect && openModalSelect !== wrap) closeModalSelect(openModalSelect);
+      rebuildMenu();
+      toggle.scrollIntoView({ block: 'center', inline: 'nearest', behavior: 'auto' });
+      wrap.classList.add('is-open');
+      var field = wrap.closest('.mc-field');
+      if (field) field.classList.add('is-select-open');
+      toggle.setAttribute('aria-expanded', 'true');
+      var host = select.closest('.admin-modal-overlay') || document.body;
+      host.appendChild(menu);
+      menu.hidden = false;
+      openModalSelect = wrap;
+      openModalSelectMenu = menu;
+      requestAnimationFrame(function () {
+        positionModalSelectMenu(wrap);
+      });
+      var selected = menu.querySelector('[aria-selected="true"]');
+      if (selected && typeof selected.scrollIntoView === 'function') {
+        selected.scrollIntoView({ block: 'nearest' });
+      }
+    }
+
+    toggle.addEventListener('click', function () {
+      if (wrap.classList.contains('is-open')) closeModalSelect(wrap);
+      else openMenu();
+    });
+
+    toggle.addEventListener('keydown', function (e) {
+      if (e.key === 'ArrowDown' || e.key === 'Enter' || e.key === ' ') {
+        if (!wrap.classList.contains('is-open')) {
+          e.preventDefault();
+          openMenu();
+        }
+      }
+    });
+
+    menu.addEventListener('mousedown', function (e) {
+      e.preventDefault();
+    });
+
+    menu.addEventListener('click', function (e) {
+      var li = e.target.closest('.mc-select__option');
+      if (!li || li.getAttribute('aria-disabled') === 'true') return;
+      select.value = li.dataset.value;
+      select.dispatchEvent(new Event('change', { bubbles: true }));
+      select.dispatchEvent(new Event('input', { bubbles: true }));
+      rebuildMenu();
+      closeModalSelect(wrap);
+      toggle.focus();
+    });
+
+    select.addEventListener('change', syncToggle);
+    select.addEventListener('focus', function () {
+      toggle.focus();
+    });
+    select.addEventListener('invalid', function () {
+      toggle.classList.add('is-invalid');
+    });
+
+    var form = select.closest('form');
+    if (form && !form.dataset.mcSelectResetBound) {
+      form.dataset.mcSelectResetBound = '1';
+      form.addEventListener('reset', function () {
+        window.setTimeout(function () {
+          form.querySelectorAll('select.mc-select__native').forEach(function (el) {
+            el.dispatchEvent(new Event('change', { bubbles: true }));
+          });
+          closeModalSelect();
+        }, 0);
+      });
+    }
+
+    var observer = new MutationObserver(function () {
+      rebuildMenu();
+      if (wrap.classList.contains('is-open')) positionModalSelectMenu(wrap);
+    });
+    observer.observe(select, { childList: true, subtree: true, attributes: true, attributeFilter: ['disabled', 'class'] });
+
+    rebuildMenu();
+  }
+
+  function enhanceModalSelectsIn(root) {
+    if (!root) return;
+    root.querySelectorAll('select.mc-field__input').forEach(enhanceModalSelect);
+  }
+
+  if (!document.documentElement.dataset.mcSelectDocBound) {
+    document.documentElement.dataset.mcSelectDocBound = '1';
+    document.addEventListener('mousedown', function (e) {
+      if (!openModalSelect) return;
+      if (openModalSelect.contains(e.target)) return;
+      if (openModalSelectMenu && openModalSelectMenu.contains(e.target)) return;
+      closeModalSelect(openModalSelect);
+    });
+    document.addEventListener('keydown', function (e) {
+      if (e.key === 'Escape') closeModalSelect();
+    });
+    window.addEventListener('resize', function () {
+      if (openModalSelect) positionModalSelectMenu(openModalSelect);
+    });
+    document.addEventListener('scroll', function (e) {
+      if (!openModalSelect) return;
+      if (e.target === document || !openModalSelect.closest('.admin-modal-body, form.mc-staff-form')) {
+        closeModalSelect();
+        return;
+      }
+      if (openModalSelect.closest('.admin-modal-body, form.mc-staff-form') === e.target ||
+          (e.target.contains && e.target.contains(openModalSelect))) {
+        positionModalSelectMenu(openModalSelect);
+      }
+    }, true);
+  }
+
   global.MCStaffForm = {
     wrapPasswordInput: wrapPasswordInput,
     initPasswordConfirm: initPasswordConfirm,
@@ -311,6 +534,8 @@
     bindFieldErrorClear: bindFieldErrorClear,
     enhanceFileInput: enhanceFileInput,
     enhanceFileInputsIn: enhanceFileInputsIn,
+    enhanceModalSelect: enhanceModalSelect,
+    enhanceModalSelectsIn: enhanceModalSelectsIn,
     syncFileInputDisplay: syncFileInputDisplay,
   };
 
@@ -358,6 +583,7 @@
         var scroller = modal.querySelector('.admin-modal-body, form.mc-staff-form');
         if (scroller) scroller.scrollTop = 0;
       } else if (!open && locked) {
+        closeModalSelect();
         unlockStaffModalScroll();
         locked = false;
       }

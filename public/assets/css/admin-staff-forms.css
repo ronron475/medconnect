@@ -164,6 +164,124 @@ body.mc-staff-modal-open {
   box-shadow: 0 0 0 3px rgba(1, 138, 147, 0.14);
 }
 
+.mc-field.is-select-open {
+  z-index: 40;
+  position: relative;
+}
+
+.mc-select {
+  position: relative;
+  width: 100%;
+}
+
+.mc-select__native {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 46px;
+  margin: 0;
+  opacity: 0;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.mc-select__toggle {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  width: 100%;
+  text-align: left;
+  font-family: inherit;
+  cursor: pointer;
+  padding-right: 40px;
+  appearance: none;
+  -webkit-appearance: none;
+}
+
+.mc-select__toggle.is-placeholder {
+  color: #94a3b8;
+}
+
+.mc-select__toggle::after {
+  content: '';
+  position: absolute;
+  right: 16px;
+  top: 50%;
+  width: 8px;
+  height: 8px;
+  margin-top: -6px;
+  border-right: 2px solid currentColor;
+  border-bottom: 2px solid currentColor;
+  transform: rotate(45deg);
+  opacity: 0.55;
+  pointer-events: none;
+}
+
+.mc-select.is-open .mc-select__toggle::after {
+  margin-top: -2px;
+  transform: rotate(225deg);
+}
+
+.mc-select__toggle:disabled {
+  cursor: not-allowed;
+}
+
+.mc-select__menu {
+  display: block;
+  margin: 0;
+  padding: 6px;
+  list-style: none;
+  z-index: 1200;
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  background: #fff;
+  border: 1px solid #dbe3ec;
+  border-radius: 11px;
+  box-shadow: 0 12px 32px rgba(15, 23, 42, 0.16);
+}
+
+.mc-select__menu[hidden] {
+  display: none;
+}
+
+.mc-select__option {
+  padding: 10px 12px;
+  border-radius: 8px;
+  font-size: 0.9375rem;
+  line-height: 1.35;
+  color: #0f172a;
+  cursor: pointer;
+}
+
+.mc-select__option:hover,
+.mc-select__option:focus {
+  background: rgba(1, 138, 147, 0.1);
+}
+
+.mc-select__option[aria-selected="true"] {
+  background: rgba(1, 138, 147, 0.16);
+  font-weight: 600;
+}
+
+.mc-select__option.is-placeholder {
+  color: #94a3b8;
+  font-weight: 500;
+}
+
+.mc-select__option[aria-disabled="true"] {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.mc-field:has(select.is-invalid) .mc-select__toggle,
+.mc-select__toggle.is-invalid {
+  border-color: #ef4444;
+  box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.1);
+}
+
 .mc-field__input.is-invalid {
   border-color: #ef4444;
   box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.1);
