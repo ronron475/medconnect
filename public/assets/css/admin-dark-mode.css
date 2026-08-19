@@ -761,6 +761,41 @@ html[data-theme-resolved='dark'] body.superadmin-body .staff-apps-empty__text {
   color: #a1a1aa !important;
 }
 
+/* Doctor / BHW management hub tabs */
+html[data-theme-resolved='dark'] body.admin-body .staff-mgmt-tabs,
+html[data-theme-resolved='dark'] body.superadmin-body .staff-mgmt-tabs {
+  background: #141414 !important;
+  border-color: #2a2a2a !important;
+}
+
+html[data-theme-resolved='dark'] body.admin-body .staff-mgmt-tabs__item,
+html[data-theme-resolved='dark'] body.superadmin-body .staff-mgmt-tabs__item {
+  color: #a1a1aa !important;
+}
+
+html[data-theme-resolved='dark'] body.admin-body .staff-mgmt-tabs__item:hover,
+html[data-theme-resolved='dark'] body.superadmin-body .staff-mgmt-tabs__item:hover {
+  color: #5eead4 !important;
+  background: #1c1c1c !important;
+}
+
+html[data-theme-resolved='dark'] body.admin-body .staff-mgmt-tabs__item.is-active,
+html[data-theme-resolved='dark'] body.superadmin-body .staff-mgmt-tabs__item.is-active {
+  color: #ffffff !important;
+  background: var(--mc-aqua-medium, #018a93) !important;
+  box-shadow: 0 2px 8px rgba(1, 138, 147, 0.35) !important;
+}
+
+html[data-theme-resolved='dark'] body.admin-body .staff-mgmt-accounts-panel__title,
+html[data-theme-resolved='dark'] body.superadmin-body .staff-mgmt-accounts-panel__title {
+  color: #ffffff !important;
+}
+
+html[data-theme-resolved='dark'] body.admin-body .staff-mgmt-accounts-panel__desc,
+html[data-theme-resolved='dark'] body.superadmin-body .staff-mgmt-accounts-panel__desc {
+  color: #a1a1aa !important;
+}
+
 /* Status / role badges — dark tints, readable text */
 html[data-theme-resolved='dark'] body.admin-body .staff-app-status,
 html[data-theme-resolved='dark'] body.superadmin-body .staff-app-status,
