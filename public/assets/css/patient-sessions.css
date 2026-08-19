@@ -9,8 +9,8 @@
 
 .psess-lead {
   margin: -4px 0 16px;
-  font-size: 0.925rem;
-  color: #64748b;
+  font-size: 1.02rem;
+  color: #475569;
   line-height: 1.55;
   max-width: 62ch;
 }
@@ -57,11 +57,11 @@
 
 .psess-related__title {
   margin: 0 0 12px;
-  font-size: 0.78rem;
+  font-size: 0.88rem;
   font-weight: 700;
   text-transform: uppercase;
-  letter-spacing: 0.04em;
-  color: #64748b;
+  letter-spacing: 0.03em;
+  color: #475569;
 }
 
 .psess-related__nav {
@@ -115,17 +115,18 @@
 
 .psess-related__link strong {
   display: block;
-  font-size: 0.82rem;
+  font-size: 0.95rem;
   font-weight: 700;
   color: #0f172a;
-  line-height: 1.2;
+  line-height: 1.25;
 }
 
 .psess-related__link small {
   display: block;
-  font-size: 0.72rem;
-  color: #64748b;
-  margin-top: 1px;
+  font-size: 0.85rem;
+  color: #475569;
+  margin-top: 2px;
+  line-height: 1.35;
 }
 
 /* Compare box */
@@ -138,9 +139,9 @@
 
 .psess-compare__title {
   margin: 0 0 10px;
-  font-size: 0.78rem;
+  font-size: 0.9rem;
   font-weight: 700;
-  color: var(--pt-color-text, #475569);
+  color: var(--pt-color-text, #334155);
 }
 
 .psess-compare__list {
@@ -156,7 +157,7 @@
 }
 
 .psess-compare__list dt {
-  font-size: 0.75rem;
+  font-size: 0.88rem;
   font-weight: 700;
   color: var(--pt-color-primary, #028090);
   margin-bottom: 2px;
@@ -165,9 +166,9 @@
 
 .psess-compare__list dd {
   margin: 0;
-  font-size: 0.75rem;
-  color: var(--pt-color-muted, #64748b);
-  line-height: 1.4;
+  font-size: 0.88rem;
+  color: var(--pt-color-muted, #475569);
+  line-height: 1.5;
   background: transparent;
 }
 
@@ -219,12 +220,13 @@
 }
 
 .psess-live-banner__text strong {
-  font-size: 0.9rem;
+  font-size: 1rem;
   color: #0f172a;
 }
 
 .psess-live-banner__text span {
-  color: #64748b;
+  font-size: 0.9rem;
+  color: #475569;
 }
 
 /* Flow guide */
@@ -241,7 +243,7 @@
   gap: 10px;
   padding: 12px 14px;
   font-weight: 700;
-  font-size: 0.82rem;
+  font-size: 0.95rem;
   color: var(--pt-color-text, #0f4c5c);
   cursor: pointer;
   list-style: none;
@@ -272,9 +274,9 @@
   display: flex;
   align-items: flex-start;
   gap: 10px;
-  font-size: 0.8rem;
+  font-size: 0.9rem;
   color: var(--pt-color-muted, #475569);
-  line-height: 1.4;
+  line-height: 1.45;
   background: transparent;
 }
 
@@ -285,7 +287,7 @@
   border-radius: 50%;
   background: var(--pt-color-primary, #028090);
   color: #fff;
-  font-size: 0.7rem;
+  font-size: 0.78rem;
   font-weight: 800;
   display: flex;
   align-items: center;
@@ -299,9 +301,10 @@
 .psess-flow__note {
   margin: 0;
   padding: 0 14px 12px;
-  font-size: 0.72rem;
-  color: var(--pt-color-muted, #64748b);
+  font-size: 0.85rem;
+  color: var(--pt-color-muted, #475569);
   background: transparent;
+  line-height: 1.45;
 }
 
 /* Metrics */
@@ -334,10 +337,10 @@
 
 .psess-metric__label {
   display: block;
-  font-size: 0.72rem;
+  font-size: 0.8rem;
   text-transform: uppercase;
-  letter-spacing: 0.04em;
-  color: #64748b;
+  letter-spacing: 0.03em;
+  color: #475569;
   font-weight: 600;
   margin-top: 4px;
 }
@@ -358,7 +361,7 @@
   border-radius: 10px;
   background: #fff;
   color: #64748b;
-  font-size: 0.875rem;
+  font-size: 0.95rem;
   font-weight: 700;
   font-family: inherit;
   cursor: pointer;
@@ -394,8 +397,8 @@
   flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
-  padding: 12px 14px;
-  gap: 12px;
+  padding: 16px 18px;
+  gap: 14px;
   background: #fff;
   border: 1px solid #e2e8f0;
   border-radius: 14px;
@@ -426,12 +429,12 @@
 }
 
 .psess-card__avatar {
-  width: 48px;
-  height: 48px;
+  width: 52px;
+  height: 52px;
   border-radius: 12px;
   background: linear-gradient(135deg, #028090 0%, #056770 100%);
   color: #fff;
-  font-size: 0.85rem;
+  font-size: 0.95rem;
   font-weight: 800;
   display: flex;
   align-items: center;
@@ -440,21 +443,21 @@
 }
 
 .psess-card__info h3 {
-  margin: 0 0 2px;
-  font-size: 1rem;
+  margin: 0 0 4px;
+  font-size: 1.15rem;
   font-weight: 700;
   color: #0f172a;
 }
 
 .psess-card__type {
   margin: 0 0 4px;
-  font-size: 0.8rem;
-  color: #64748b;
+  font-size: 0.95rem;
+  color: #475569;
 }
 
 .psess-card__datetime {
   margin: 0;
-  font-size: 0.85rem;
+  font-size: 0.98rem;
   font-weight: 600;
   color: #028090;
   display: flex;
@@ -472,12 +475,12 @@
 
 /* Status badges */
 .psess-status {
-  font-size: 0.72rem;
+  font-size: 0.8rem;
   font-weight: 700;
-  padding: 5px 10px;
+  padding: 6px 12px;
   border-radius: 999px;
   text-transform: uppercase;
-  letter-spacing: 0.03em;
+  letter-spacing: 0.02em;
   white-space: nowrap;
 }
 
@@ -512,20 +515,20 @@
 }
 
 .psess-card__meta {
-  margin: 8px 0 0;
-  font-size: 0.82rem;
-  color: #334155;
-  line-height: 1.45;
+  margin: 10px 0 0;
+  font-size: 0.95rem;
+  color: #1e293b;
+  line-height: 1.5;
 }
 
 .psess-card__meta span {
   display: block;
-  font-size: 0.7rem;
+  font-size: 0.8rem;
   font-weight: 700;
   text-transform: uppercase;
-  letter-spacing: 0.04em;
-  color: #64748b;
-  margin-bottom: 1px;
+  letter-spacing: 0.03em;
+  color: #475569;
+  margin-bottom: 2px;
 }
 
 @media (max-width: 720px) {
@@ -550,9 +553,10 @@
   align-items: center;
   justify-content: center;
   gap: 6px;
-  padding: 10px 18px;
+  padding: 11px 20px;
+  min-height: 44px;
   border-radius: 10px;
-  font-size: 0.85rem;
+  font-size: 0.95rem;
   font-weight: 700;
   font-family: inherit;
   text-decoration: none;
@@ -653,7 +657,7 @@
 
 .psess-empty__sub {
   margin: 0 0 16px !important;
-  font-size: 0.85rem !important;
+  font-size: 0.95rem !important;
   font-weight: 400 !important;
   color: #64748b !important;
   max-width: 32ch;
@@ -669,7 +673,7 @@
 }
 
 .psess-empty__link {
-  font-size: 0.82rem;
+  font-size: 0.92rem;
   font-weight: 700;
   color: #028090;
   text-decoration: none;
@@ -681,7 +685,7 @@
 
 .psess-join-hint {
   margin: 12px 0 0;
-  font-size: 0.8rem;
+  font-size: 0.9rem;
   color: #64748b;
   padding: 10px 14px;
   background: #f8fafc;
@@ -900,8 +904,8 @@ body.psess-followup-open {
   border-radius: 10px;
   background: #fffbeb;
   border: 1px solid #fcd34d;
-  font-size: 0.8125rem;
-  line-height: 1.45;
+  font-size: 0.9rem;
+  line-height: 1.5;
 }
 
 .psess-reschedule-banner p {
@@ -917,4 +921,29 @@ body.psess-followup-open {
   flex-wrap: wrap;
   gap: 8px;
   margin-top: 10px;
+}
+
+@media (min-width: 1025px) {
+  .psess-card__info h3 {
+    font-size: 1.2rem;
+  }
+
+  .psess-card__type,
+  .psess-card__datetime,
+  .psess-card__meta,
+  .psess-related__link strong,
+  .psess-btn {
+    font-size: 1rem;
+  }
+
+  .psess-card__meta span,
+  .psess-related__link small,
+  .psess-compare__list dt,
+  .psess-compare__list dd {
+    font-size: 0.9rem;
+  }
+
+  .psess-status {
+    font-size: 0.82rem;
+  }
 }
