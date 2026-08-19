@@ -293,7 +293,14 @@ if (session_status() === PHP_SESSION_ACTIVE) {
   <script src="<?= ASSET_BASE ?>/assets/js/video-room-enhancements.js?v=<?= $videoEnhJsVer ?>"></script>
   <style>
     html, body { margin:0; background:#0b1220; color:#fff; height:100%; width:100%; max-width:100%; overflow:hidden; }
-    body { min-height:100%; min-height:100dvh; height:100%; }
+    body { min-height:100%; height:100%; }
+    html:has(body.embedded-shell),
+    body.embedded-shell {
+      height: 100%;
+      min-height: 0;
+      overflow: hidden;
+      background: #0b1220;
+    }
     body.mc-vc-call-ended,
     body.is-ended-consultation {
       background:#f4f8fa !important;
@@ -437,13 +444,18 @@ if (session_status() === PHP_SESSION_ACTIVE) {
     @media (max-width: 720px) {
       .media-permission-gate {
         padding: calc(16px + env(safe-area-inset-top, 0px)) calc(16px + env(safe-area-inset-right, 0px)) calc(16px + env(safe-area-inset-bottom, 0px)) calc(16px + env(safe-area-inset-left, 0px));
-        align-items: flex-end;
+        align-items: center;
+        justify-content: center;
+        background: #0b1220;
       }
       .media-permission-dialog {
         width: 100%;
-        max-height: 90dvh;
+        max-width: min(440px, 100%);
+        max-height: 100%;
         overflow: auto;
-        border-radius: 16px 16px 0 0;
+        border-radius: 16px;
+        box-shadow: none;
+        box-sizing: border-box;
         -webkit-overflow-scrolling: touch;
       }
       .media-permission-actions button {
@@ -539,8 +551,7 @@ if (session_status() === PHP_SESSION_ACTIVE) {
       align-items: center;
       justify-content: center;
       padding: 20px;
-      background: rgba(2, 6, 23, 0.92);
-      backdrop-filter: blur(8px);
+      background: #0b1220;
     }
     .media-permission-gate.is-hidden { display: none; }
     .media-permission-dialog {

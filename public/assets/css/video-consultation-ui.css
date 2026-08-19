@@ -911,6 +911,12 @@ body.embedded-shell.role-provider .mc-vc-root {
   overflow: hidden;
 }
 
+body.embedded-shell .media-permission-gate {
+  position: absolute;
+  inset: 0;
+  background: #0b1220;
+}
+
 body.embedded-shell.role-provider.mc-workspace-expanded .mc-vc-root {
   border-radius: 0;
 }
@@ -1091,10 +1097,32 @@ body.embedded-shell.role-provider .mc-vc-pip video {
     min-height: 0;
   }
 
-  body.embedded-shell.role-provider .mc-vc-root.is-fullscreen,
   .mc-vc-root.is-fullscreen {
     height: 100dvh;
     min-height: 0;
+  }
+
+  /* Inside the provider session iframe, 100dvh is the device viewport and
+     overflows the dock. Fill the parent dock instead. */
+  body.embedded-shell.role-provider .mc-vc-root,
+  body.embedded-shell.role-provider .mc-vc-root.is-fullscreen {
+    position: absolute;
+    inset: 0;
+    height: 100%;
+    max-height: 100%;
+    min-height: 0;
+    border-radius: 0;
+  }
+
+  body.embedded-shell.role-provider .media-permission-gate {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: calc(12px + var(--mc-vc-safe-top)) 16px calc(12px + var(--mc-vc-safe-bottom));
+  }
+
+  body.embedded-shell.role-provider .mc-vc-controls {
+    padding-bottom: calc(10px + var(--mc-vc-safe-bottom));
   }
 
   .mc-vc-header {
@@ -2281,13 +2309,37 @@ body.role-provider:not(.embedded-shell) .mc-vc-header {
   body.role-provider .mc-vc-controls-secondary {
     flex-wrap: nowrap;
     width: auto;
+    gap: 6px;
   }
 
   body.role-provider .mc-vc-btn--end {
     order: 0;
     flex: 0 0 auto;
-    min-width: 56px;
+    min-width: 52px;
     width: auto;
+  }
+
+  body.role-provider .mc-vc-btn {
+    width: 42px;
+    height: 42px;
+  }
+
+  body.embedded-shell.role-provider .mc-vc-controls-inner {
+    gap: 4px;
+    padding: 6px 8px;
+  }
+
+  body.embedded-shell.role-provider .mc-vc-btn {
+    width: 40px;
+    height: 40px;
+  }
+
+  body.embedded-shell.role-provider .mc-vc-btn--end,
+  body.embedded-shell.role-provider .mc-vc-btn--report {
+    min-width: 52px;
+    height: 40px;
+    padding: 0 10px;
+    font-size: 12px;
   }
 }
 
