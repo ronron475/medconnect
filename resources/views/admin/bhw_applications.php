@@ -196,7 +196,7 @@ require __DIR__ . '/partials/staff_hub_tabs.php';
                     <div class="mc-field">
                         <label class="mc-field__label" for="bhwAppointmentDate">Appointment Date</label>
                         <input type="date" name="appointment_date" id="bhwAppointmentDate" required class="mc-field__input">
-                        <p class="mc-field__hint">Date of barangay health worker appointment or resolution.</p>
+                        <p class="mc-field__hint">Select the BHW appointment date.</p>
                         <p class="mc-field__error"></p>
                     </div>
                 </div>
