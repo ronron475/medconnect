@@ -5,7 +5,9 @@
 (function (global) {
   'use strict';
 
-  const Dataset = global.McFaqEmotionDataset;
+  function getDataset() {
+    return global.McFaqEmotionDataset || null;
+  }
 
   /** Canonical emotion labels (20 supported intents) */
   const EMOTION = Object.freeze({
@@ -139,7 +141,7 @@
     return 'neutral';
   }
 
-  const PRIORITY = (Dataset && Dataset.EMOTION_PRIORITY) || [
+  const PRIORITY = (getDataset() && getDataset().EMOTION_PRIORITY) || [
     'emergency', 'panic', 'hopeless', 'afraid', 'angry', 'frustrated', 'anxious',
     'nervous', 'worried', 'stressed', 'overwhelmed', 'pain', 'sick', 'tired',
     'sad', 'crying', 'lonely', 'disappointed',
@@ -380,6 +382,7 @@
   let phraseIndex = null;
 
   function buildPhraseIndex() {
+    const Dataset = getDataset();
     if (phraseIndex || !Dataset || !Dataset.PHRASES) return;
     const byWord = {};
     const phrases = Dataset.PHRASES;
@@ -430,6 +433,7 @@
    * @returns {Record<string, number>}
    */
   function scoreFromDataset(text) {
+    const Dataset = getDataset();
     const norm = normalize(text);
     const scores = {};
     if (!norm || !Dataset || !Dataset.PHRASES) return scores;

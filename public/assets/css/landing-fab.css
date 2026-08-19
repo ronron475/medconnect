@@ -344,11 +344,19 @@ body.landing-page.landing-fab-open {
     justify-self: center;
   }
 
-  body.landing-page.landing-fab-open .fcb {
+  body.landing-page.landing-fab-open:not(.fcb-open) .fcb {
     opacity: 0 !important;
     visibility: hidden !important;
     pointer-events: none !important;
   }
+}
+
+body.landing-page.fcb-open .landing-fab,
+body.landing-page.fcb-open #landing-fab,
+body.landing-page.fcb-open #fab-modal-root {
+  opacity: 0 !important;
+  visibility: hidden !important;
+  pointer-events: none !important;
 }
 
 @keyframes landing-fab-sheet-in {
