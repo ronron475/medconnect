@@ -617,6 +617,7 @@
 
   function connectionLabelFor(role, statusKey) {
     if (statusKey === STATUS.CONNECTED) return '● Connected';
+    if (statusKey === STATUS.PERMISSION) return '◌ Waiting for camera and microphone';
     if (statusKey === STATUS.RECONNECTING) return '◌ Reconnecting…';
     if (statusKey === STATUS.WAITING_PROVIDER) return '◌ Waiting for Healthcare Provider';
     if (statusKey === STATUS.WAITING_PATIENT) return '◌ Waiting for Patient';

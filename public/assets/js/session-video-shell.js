@@ -309,6 +309,7 @@
     const alreadySame = frameHasToken(frame, token);
     const mode = options.mode || 'fullscreen';
     const alreadyVisible = !shell.hidden && (shell.dataset.mode === 'fullscreen' || shell.dataset.mode === 'docked' || shell.dataset.mode === 'pip');
+    const patientLeftRejoinable = !!prev.patientLeftRejoinable && prev.token === token;
 
     writeState({
       token: token,
@@ -316,6 +317,7 @@
       mode: mode,
       label: options.label || prev.label || 'Video consultation',
       ended: false,
+      patientLeftRejoinable: patientLeftRejoinable,
     });
 
     const label = document.getElementById('mcGlobalVideoHandleLabel');
@@ -324,6 +326,13 @@
     }
 
     initDrag(shell);
+
+    if (alreadySame && alreadyVisible && patientLeftRejoinable) {
+      writeState({ ended: false, patientLeftRejoinable: false });
+      frame.src = roomUrl(token, true);
+      setMode(mode);
+      return true;
+    }
 
     if (alreadySame && alreadyVisible && !options.forceReload && options.skipReload !== false) {
       setMode(mode);
@@ -449,14 +458,19 @@
     }
     if (type === 'medconnect:call-left') {
       if (event.data.rejoinable) {
-        writeState({ ended: false });
+        writeState({ ended: false, patientLeftRejoinable: true });
         syncChrome();
         global.dispatchEvent(new CustomEvent('medconnect:video-shell-left', { detail: event.data }));
         return;
       }
-      writeState({ ended: true });
+      writeState({ ended: true, patientLeftRejoinable: false });
       closeShell();
       global.dispatchEvent(new CustomEvent('medconnect:video-shell-left', { detail: event.data }));
+      return;
+    }
+    if (type === 'medconnect:call-rejoined') {
+      writeState({ ended: false, patientLeftRejoinable: false });
+      syncChrome();
       return;
     }
     if (type === 'medconnect:call-ended') {

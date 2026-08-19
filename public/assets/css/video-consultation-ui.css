@@ -917,6 +917,13 @@ body.embedded-shell .media-permission-gate {
   background: #0b1220;
 }
 
+body.embedded-shell .media-permission-gate.is-hidden,
+body.embedded-shell.role-provider .media-permission-gate.is-hidden {
+  display: none !important;
+  pointer-events: none !important;
+  visibility: hidden !important;
+}
+
 body.embedded-shell.role-provider.mc-workspace-expanded .mc-vc-root {
   border-radius: 0;
 }
@@ -1114,11 +1121,17 @@ body.embedded-shell.role-provider .mc-vc-pip video {
     border-radius: 0;
   }
 
-  body.embedded-shell.role-provider .media-permission-gate {
+  body.embedded-shell.role-provider .media-permission-gate:not(.is-hidden) {
     display: flex;
     align-items: center;
     justify-content: center;
     padding: calc(12px + var(--mc-vc-safe-top)) 16px calc(12px + var(--mc-vc-safe-bottom));
+  }
+
+  body.embedded-shell.role-provider .media-permission-gate.is-hidden {
+    display: none !important;
+    pointer-events: none !important;
+    visibility: hidden !important;
   }
 
   body.embedded-shell.role-provider .mc-vc-controls {

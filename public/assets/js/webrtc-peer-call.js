@@ -569,9 +569,16 @@
 
   function answerCall(call) {
     if (!call || !myStream) return;
-    if (currentCall && currentCall !== call && callHasRemoteStream && currentCall.open) {
+    if (intentionalLeave || global.__mcCallEnded) {
       try { call.close(); } catch (e) {}
       return;
+    }
+    if (currentCall && currentCall !== call && callHasRemoteStream && currentCall.open) {
+      var samePeer = currentCall.peer === call.peer;
+      if (samePeer) {
+        try { call.close(); } catch (e) {}
+        return;
+      }
     }
     if (currentCall && currentCall !== call) {
       try { currentCall.close(); } catch (e) {}
@@ -588,6 +595,10 @@
     if (!peer || peer._mcListening) return;
     peer._mcListening = true;
     peer.on('call', function (call) {
+      if (intentionalLeave || global.__mcCallEnded) {
+        try { call.close(); } catch (e) {}
+        return;
+      }
       emit('incoming-call', { call: call, peer: call.peer });
       if (!myStream) {
         pendingIncomingCall = call;
@@ -600,6 +611,7 @@
 
   /** ZIP: makeCall */
   function makeCall(receiverId) {
+    if (intentionalLeave || global.__mcCallEnded) return null;
     if (!peerReady || !myStream || !peer || !receiverId) return null;
     if (currentCall && callHasRemoteStream && isCallConnected()) return currentCall;
     if (currentCall && (currentCall.open || outboundCallInFlight || isCallNegotiating())) {
@@ -657,6 +669,7 @@
     pendingIncomingCall = null;
     lastRemoteStream = null;
     reconnectAttempts = 0;
+    reconnectInProgress = false;
     if (myStream) {
       myStream.getTracks().forEach(function (t) { try { t.stop(); } catch (e) {} });
       myStream = null;
@@ -679,6 +692,13 @@
     } catch (e) {}
     peer = null;
     peerList = [];
+  }
+
+  function prepareForRejoin() {
+    destroyPeer();
+    intentionalLeave = false;
+    reconnectInProgress = false;
+    reconnectAttempts = 0;
   }
 
   function recreatePeer(reason) {
@@ -914,6 +934,7 @@
     sendData: sendData,
     wireDataConnection: wireDataConnection,
     destroy: destroyPeer,
+    prepareForRejoin: prepareForRejoin,
     recreatePeer: recreatePeer,
     closeCurrentCall: closeCurrentCall,
     resetCallState: resetCallState,
