@@ -453,27 +453,32 @@
 
 /* Consultation Monitoring — stacked stats and wrapping tabs */
 @media (max-width: 1024px) {
-  body.admin-body .cm-monitor-page .staff-mgmt-tabs {
+  body.admin-body .cm-monitor-page .staff-mgmt-tabs,
+  body.superadmin-body .cm-monitor-page .staff-mgmt-tabs {
     margin-bottom: 16px;
   }
 }
 
 @media (max-width: 768px) {
-  body.admin-body .cm-monitor-page .header-row {
+  body.admin-body .cm-monitor-page .header-row,
+  body.superadmin-body .cm-monitor-page .header-row {
     margin-bottom: 16px !important;
   }
 
-  body.admin-body .cm-monitor-page .text-h2 {
+  body.admin-body .cm-monitor-page .text-h2,
+  body.superadmin-body .cm-monitor-page .text-h2 {
     font-size: 1.15rem;
   }
 
-  body.admin-body .cm-monitor-page .stats-grid {
+  body.admin-body .cm-monitor-page .stats-grid,
+  body.superadmin-body .cm-monitor-page .stats-grid {
     gap: 10px !important;
   }
 }
 
 @media (max-width: 540px) {
-  body.admin-body .cm-monitor-page .stats-grid {
+  body.admin-body .cm-monitor-page .stats-grid,
+  body.superadmin-body .cm-monitor-page .stats-grid {
     grid-template-columns: 1fr !important;
   }
 }
