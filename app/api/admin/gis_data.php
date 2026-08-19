@@ -70,6 +70,17 @@ try {
             $payload = ['triage_stats' => $gis->getTriageStats($role, $filters)];
             break;
 
+        case 'light_bundle':
+            $payload = [
+                'summary'      => $gis->getSummary(),
+                'patients'     => [],
+                'analytics'    => $gis->getAnalytics(),
+                'triage_stats' => $gis->getTriageStats($role, $filters),
+                'map_config'   => $gis->getMapConfig(),
+                'server_ts'    => date('c'),
+            ];
+            break;
+
         case 'bundle':
         default:
             $patients = $gis->getPatientRecords($filters, $role);

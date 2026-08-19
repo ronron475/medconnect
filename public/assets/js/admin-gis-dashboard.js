@@ -1480,16 +1480,37 @@
     focusMapOnMarkers(bounds);
   }
 
+  async function fetchLightBundle() {
+    const params = new URLSearchParams(filtersQuery());
+    params.set('action', 'light_bundle');
+    const res = await fetch(apiUrl + '?' + params.toString());
+    const json = await res.json();
+    if (!json.success) throw new Error(json.message || 'Failed to load GIS data');
+    return json.data || {};
+  }
+
+  async function fetchPatients() {
+    const params = new URLSearchParams(filtersQuery());
+    params.set('action', 'patients');
+    const res = await fetch(apiUrl + '?' + params.toString());
+    const json = await res.json();
+    if (!json.success) return [];
+    return (json.data && json.data.patients) || [];
+  }
+
   async function loadAll() {
     try {
-      const data = await fetchBundle();
-      state.patients = data.patients || [];
+      var data = await fetchLightBundle();
       state.analytics = data.analytics || null;
-      state.monitoring = data.monitoring || null;
-      state.populationByBarangay = (data.monitoring && data.monitoring.population_by_barangay) || {};
       state.triageStats = data.triage_stats || data.summary?.triage_stats || null;
       state.mapConfig = data.map_config || DEFAULT_MAP_CONFIG;
       state.lastSync = data.server_ts || new Date().toISOString();
+      state.patients = [];
+      refreshDashboard();
+
+      var patients = await fetchPatients();
+      state.patients = patients;
+      state.monitoring = null;
       fillFilterOptions(state.patients);
       refreshDashboard();
     } catch (err) {

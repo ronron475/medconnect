@@ -169,7 +169,13 @@
   }
 
   if (openBtn) openBtn.addEventListener('click', openCreate);
-  if (searchInput) searchInput.addEventListener('input', applyFilters);
+  if (searchInput) {
+    var _debounceTimer;
+    searchInput.addEventListener('input', function () {
+      clearTimeout(_debounceTimer);
+      _debounceTimer = setTimeout(applyFilters, 250);
+    });
+  }
   if (statusFilter) statusFilter.addEventListener('change', applyFilters);
 
   loadList();

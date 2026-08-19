@@ -11,5 +11,7 @@ $jsVer   = file_exists($jsPath) ? (int) filemtime($jsPath) : 1;
 if (empty($notification_scripts_only)): ?>
 <link rel="stylesheet" href="<?= htmlspecialchars($assetBase) ?>/assets/css/notifications.css?v=<?= $cssVer ?>"/>
 <?php else: ?>
+<script src="<?= htmlspecialchars($assetBase) ?>/assets/js/utils/debounce.js" defer></script>
+<script src="<?= htmlspecialchars($assetBase) ?>/assets/js/utils/submit-guard.js" defer></script>
 <script src="<?= htmlspecialchars($assetBase) ?>/assets/js/notifications.js?v=<?= $jsVer ?>" defer></script>
 <?php endif; ?>
