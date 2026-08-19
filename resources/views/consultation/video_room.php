@@ -793,7 +793,7 @@ if (session_status() === PHP_SESSION_ACTIVE) {
               <button type="button" class="mc-vc-more-item" id="mcVcChatBtn" role="menuitem" title="Chat" aria-label="Open chat">Chat</button>
               <button type="button" class="mc-vc-more-item" id="mcVcTtsBtn" role="menuitem" title="Type a message while muted" aria-label="Open typed voice message">Text</button>
               <?php if (!$is_patient): ?>
-              <button type="button" class="mc-vc-more-item" id="violationReportBtn" role="menuitem" title="Report possible violation" aria-label="Report possible violation">Report case</button>
+              <button type="button" class="mc-vc-more-item" id="violationReportBtn" role="menuitem" title="Report patient during consultation" aria-label="Report patient during consultation">Report Patient</button>
               <?php endif; ?>
               <button type="button" class="mc-vc-more-item mc-vc-more-item--compact" data-mc-proxy="mcVcFlipBtn" role="menuitem">Switch camera</button>
               <button type="button" class="mc-vc-more-item mc-vc-more-item--compact" data-mc-proxy="mcVcSpeakerBtn" role="menuitem">Speaker</button>
@@ -881,9 +881,9 @@ if (session_status() === PHP_SESSION_ACTIVE) {
   <?php if (!$is_patient): ?>
   <div class="violation-modal" id="violationReportModal" role="dialog" aria-modal="true" aria-labelledby="violationModalTitle">
     <div class="violation-dialog">
-      <h2 id="violationModalTitle">Report Possible Violation</h2>
-      <p>Report a possible violation during this consultation. The report will be reviewed by an authorized administrator. This does not automatically suspend the patient's account.</p>
-      <label for="violationReason">Possible violation reason</label>
+      <h2 id="violationModalTitle">Report Patient</h2>
+      <p>Report a possible violation during this video consultation. The report is sent to an authorized administrator for review and does not automatically suspend the patient's account.</p>
+      <label for="violationReason">Report reason</label>
       <select id="violationReason" required>
         <option value="">Select a reason…</option>
         <?php
@@ -892,7 +892,7 @@ if (session_status() === PHP_SESSION_ACTIVE) {
         <option value="<?= htmlspecialchars($vr) ?>"><?= htmlspecialchars(case_report_reason_label($vr)) ?></option>
         <?php endforeach; ?>
       </select>
-      <label for="violationNotes">Describe what happened (optional)</label>
+      <label for="violationNotes" id="violationNotesLabel">Additional details (optional)</label>
       <textarea id="violationNotes" rows="3" placeholder="Optional notes for administrators"></textarea>
       <div class="violation-actions">
         <button type="button" class="ghost" id="violationCancelBtn">Cancel</button>
@@ -3125,11 +3125,58 @@ if (session_status() === PHP_SESSION_ACTIVE) {
       const openBtn = document.getElementById('violationReportBtn');
       if (!modal || !openBtn) return;
 
+      let reportSubmitted = false;
+
       function csrf() {
         return document.body.dataset.csrf || (window.__mcVideoRoomMeta && window.__mcVideoRoomMeta.csrf) || '';
       }
 
+      function setReportUiState(hasActiveReport) {
+        reportSubmitted = !!hasActiveReport;
+        openBtn.disabled = reportSubmitted;
+        openBtn.setAttribute('aria-disabled', reportSubmitted ? 'true' : 'false');
+        if (reportSubmitted) {
+          openBtn.title = 'This consultation has already been reported.';
+        }
+      }
+
+      function syncNotesRequirement() {
+        const reasonEl = document.getElementById('violationReason');
+        const notesLabel = document.getElementById('violationNotesLabel');
+        const notesEl = document.getElementById('violationNotes');
+        const isOther = reasonEl && String(reasonEl.value || '') === 'other';
+        if (notesLabel) {
+          notesLabel.textContent = isOther ? 'Describe what happened (required for Other)' : 'Additional details (optional)';
+        }
+        if (notesEl) {
+          notesEl.required = isOther;
+          notesEl.placeholder = isOther
+            ? 'Describe the violation for administrators'
+            : 'Optional notes for administrators';
+        }
+      }
+
+      async function refreshReportStatus() {
+        try {
+          const res = await fetch(
+            apiBase + '/app/api/provider/consultation_violation_report.php?consultation_id=' + encodeURIComponent(String(consultationId)),
+            { credentials: 'same-origin', headers: { Accept: 'application/json' } }
+          );
+          const data = await res.json();
+          if (data && data.success) {
+            setReportUiState(!!data.has_active_report);
+          }
+        } catch (err) {
+          // Non-blocking — provider can still attempt submit; server enforces duplicates.
+        }
+      }
+
       function openViolationModal() {
+        if (reportSubmitted) {
+          alert('This consultation has already been reported and is pending administrator review.');
+          return;
+        }
+        syncNotesRequirement();
         modal.classList.add('show');
       }
       function closeViolationModal() {
@@ -3153,7 +3200,11 @@ if (session_status() === PHP_SESSION_ACTIVE) {
         const notes = notesEl ? String(notesEl.value || '').trim() : '';
 
         if (!endOnly && !reason) {
-          alert('Please select a possible violation reason.');
+          alert('Please select a report reason.');
+          return;
+        }
+        if (!endOnly && reason === 'other' && notes.length < 10) {
+          alert('Please describe what happened (at least 10 characters) when selecting Other.');
           return;
         }
 
@@ -3177,6 +3228,9 @@ if (session_status() === PHP_SESSION_ACTIVE) {
         }
 
         closeViolationModal();
+        if (!endOnly) {
+          setReportUiState(true);
+        }
         if (endConsultation || endOnly || data.ended) {
           alert(data.message || 'Consultation ended.');
           await leaveCallConfirmed({ skipApi: false });
@@ -3190,6 +3244,7 @@ if (session_status() === PHP_SESSION_ACTIVE) {
         e.stopPropagation();
         openViolationModal();
       });
+      document.getElementById('violationReason')?.addEventListener('change', syncNotesRequirement);
       document.getElementById('violationCancelBtn')?.addEventListener('click', closeViolationModal);
       document.getElementById('violationSubmitBtn')?.addEventListener('click', () => submitViolation(false, false));
       document.getElementById('violationEndOnlyBtn')?.addEventListener('click', () => submitViolation(false, true));
@@ -3197,6 +3252,7 @@ if (session_status() === PHP_SESSION_ACTIVE) {
       modal.addEventListener('click', (e) => {
         if (e.target === modal) closeViolationModal();
       });
+      refreshReportStatus();
     })();
 
     dismissBootLoader();

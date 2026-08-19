@@ -8,6 +8,8 @@
   var isSuperadmin = root.dataset.superadmin === '1';
   var deepLink = Number(root.dataset.deepLink || 0);
   var reports = [];
+  var pollTimer = null;
+  var POLL_INTERVAL_MS = 30000;
 
   function csrfToken() {
     return (document.body && document.body.dataset.csrf) || '';
@@ -21,9 +23,9 @@
       .replace(/"/g, '&quot;');
   }
 
-  function statusBadge(status, type) {
+  function statusBadge(status, statusLabel) {
     var cls = 'cr-badge cr-badge--' + String(status || 'pending').replace(/\s+/g, '_');
-    var label = String(status || '').replace(/_/g, ' ');
+    var label = statusLabel || String(status || 'pending').replace(/_/g, ' ');
     return '<span class="' + cls + '">' + esc(label) + '</span>';
   }
 
@@ -32,6 +34,13 @@
     var d = new Date(value.replace(' ', 'T'));
     if (isNaN(d.getTime())) return esc(value);
     return d.toLocaleString();
+  }
+
+  function consultationRef(report) {
+    if (report.consultation_ref) return report.consultation_ref;
+    if (report.consultation_id) return 'CONS-' + String(report.consultation_id).padStart(6, '0');
+    if (report.triage_id) return 'Case #' + report.triage_id;
+    return '—';
   }
 
   function renderTable() {
@@ -43,8 +52,8 @@
     }
     body.innerHTML = reports.map(function (r) {
       var source = r.source_label || r.source_type || 'Case';
-      var statusLabel = r.status || 'pending';
-      var consultRef = r.consultation_id ? ('#' + r.consultation_id) : (r.triage_id ? ('Case #' + r.triage_id) : '—');
+      var statusLabel = r.status_label || r.status || 'pending';
+      var consultRef = consultationRef(r);
       var entityStatus = r.source_type === 'video_consultation'
         ? (r.consultation_status_display || r.consultation_status || '—')
         : (r.case_terminated ? 'terminated' : (r.triage_status || 'active'));
@@ -55,7 +64,7 @@
         + '<td data-label="Consultation">' + esc(consultRef) + '</td>'
         + '<td data-label="Reason">' + esc(r.reason_label || r.reason) + '</td>'
         + '<td data-label="Date">' + formatDate(r.created_at) + '</td>'
-        + '<td data-label="Status">' + statusBadge(statusLabel, 'report') + '<br><small>' + esc(entityStatus) + '</small></td>'
+        + '<td data-label="Status">' + statusBadge(r.status, statusLabel) + '<br><small>' + esc(entityStatus) + '</small></td>'
         + '<td data-label="Actions"><button type="button" class="mc-btn mc-btn--outline mc-btn--sm" data-cr-view="' + esc(r.id) + '">View Report</button></td>'
         + '</tr>';
     }).join('');
@@ -78,12 +87,24 @@
   }
 
   async function loadReports() {
+    var body = document.getElementById('crReportsBody');
     var filter = document.getElementById('crStatusFilter');
     var status = filter ? filter.value : 'all';
-    var data = await apiGet({ action: 'list', status: status });
-    if (!data || !data.success) return;
-    reports = data.reports || [];
-    renderTable();
+    try {
+      var data = await apiGet({ action: 'list', status: status });
+      if (!data || !data.success) {
+        if (body) {
+          body.innerHTML = '<tr><td colspan="8" class="staff-apps-empty">' + esc((data && data.message) || 'Unable to load violation reports.') + '</td></tr>';
+        }
+        return;
+      }
+      reports = data.reports || [];
+      renderTable();
+    } catch (err) {
+      if (body) {
+        body.innerHTML = '<tr><td colspan="8" class="staff-apps-empty">Unable to load violation reports.</td></tr>';
+      }
+    }
   }
 
   function renderDetail(report) {
@@ -101,10 +122,10 @@
       + '<p class="cr-kv"><strong>Possible violation:</strong> ' + esc(report.reason_label || report.reason) + '</p>'
       + '<p class="cr-kv"><strong>Provider notes:</strong> ' + esc(report.notes || '—') + '</p>'
       + '<p class="cr-kv"><strong>Reported:</strong> ' + formatDate(report.created_at) + '</p>'
-      + '<p class="cr-kv"><strong>Report status:</strong> ' + statusBadge(report.status, 'report') + '</p></section>'
+      + '<p class="cr-kv"><strong>Report status:</strong> ' + statusBadge(report.status, report.status_label) + '</p></section>'
       + (report.source_type === 'video_consultation'
         ? '<section class="cr-section"><h3>Video consultation</h3>'
-          + '<p class="cr-kv"><strong>Consultation ID:</strong> ' + esc(report.consultation_id || '—') + '</p>'
+          + '<p class="cr-kv"><strong>Consultation:</strong> ' + esc(consultationRef(report)) + '</p>'
           + '<p class="cr-kv"><strong>Status at report:</strong> ' + esc(report.consultation_status_at_report || report.consultation_status || '—') + '</p>'
           + (report.appointment_id ? '<p class="cr-kv"><strong>Appointment ID:</strong> ' + esc(report.appointment_id) + '</p>' : '')
           + '</section>'
@@ -233,5 +254,14 @@
 
   loadReports().then(function () {
     if (deepLink > 0) openDetail(deepLink);
+  });
+
+  pollTimer = window.setInterval(function () {
+    if (document.hidden) return;
+    loadReports();
+  }, POLL_INTERVAL_MS);
+
+  document.addEventListener('visibilitychange', function () {
+    if (!document.hidden) loadReports();
   });
 })();
