@@ -205,7 +205,7 @@ $is_patient = ($role === 'patient');
 $consultation_id = (int) ($session['consultation_id'] ?? 0);
 
 // Persist a real CSRF token so mute-TTS / messages APIs work in production.
-// Never invent a page-only token â€” it would fail auth_csrf_validate on send.php.
+// Never invent a page-only token — it would fail auth_csrf_validate on send.php.
 if ($pageCsrfToken === '' && !empty($_SESSION['csrf_token'])) {
     $pageCsrfToken = (string) $_SESSION['csrf_token'];
 }
@@ -242,7 +242,7 @@ if (session_status() === PHP_SESSION_ACTIVE) {
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"/>
   <?php require_once VIEWS_PATH . '/partials/theme_init.php'; ?>
   <meta http-equiv="Permissions-Policy" content="camera=(self), microphone=(self), display-capture=(self)"/>
-  <title>Video Consultation â€” medConnect</title>
+  <title>Video Consultation — medConnect</title>
   <?php require_once __DIR__ . '/../../bootstrap.php'; ?>
   <?php
   require_once VIEWS_PATH . '/components/global-loader.php';
@@ -668,7 +668,7 @@ if (session_status() === PHP_SESSION_ACTIVE) {
   data-csrf="<?= htmlspecialchars($pageCsrfToken, ENT_QUOTES, 'UTF-8') ?>"
   data-asset-base="<?= htmlspecialchars(ASSET_BASE, ENT_QUOTES, 'UTF-8') ?>"
 >
-<?php /* No boot loader overlay â€” dual Chrome tabs must be interactive immediately. */ ?>
+<?php /* No boot loader overlay — dual Chrome tabs must be interactive immediately. */ ?>
 
   <div id="mediaPermissionGate" class="media-permission-gate" role="dialog" aria-modal="true" aria-labelledby="mediaPermissionTitle">
     <div class="media-permission-dialog">
@@ -723,12 +723,12 @@ if (session_status() === PHP_SESSION_ACTIVE) {
 
     <div class="mc-vc-status-bar" aria-live="polite">
       <div class="mc-vc-live-dot live-dot" id="mcVcLiveDot"></div>
-      <span class="mc-vc-call-status" id="callStatus">Connecting to secure serverâ€¦</span>
+      <span class="mc-vc-call-status" id="callStatus">Connecting to secure server…</span>
       <div class="mc-vc-media-status media-status">
-        <span id="mediaStatusMic">ðŸŽ¤ Microphoneâ€¦</span>
-        <span id="mediaStatusCam">ðŸ“· Cameraâ€¦</span>
-        <span id="mediaStatusConn" class="mc-vc-pill--network">â—Œ Connectingâ€¦</span>
-        <span id="ttsTypingBadge" class="tts-typing-badge" hidden>Typing via Text-to-Speechâ€¦</span>
+        <span id="mediaStatusMic">🎤 Microphone…</span>
+        <span id="mediaStatusCam">📷 Camera…</span>
+        <span id="mediaStatusConn" class="mc-vc-pill--network">○ Connecting…</span>
+        <span id="ttsTypingBadge" class="tts-typing-badge" hidden>Typing via Text-to-Speech…</span>
       </div>
     </div>
 
@@ -1052,7 +1052,7 @@ if (session_status() === PHP_SESSION_ACTIVE) {
           remoteDiscoveredId = msg.peerId;
           if (changed) {
             console.log('Demo discovered remote peer:', remoteDiscoveredId, 'as', msg.role);
-            document.getElementById('callStatus').textContent = 'Found other tab â€” connectingâ€¦';
+            document.getElementById('callStatus').textContent = 'Found other tab — connecting…';
           }
           // Answer their hello so both sides know each other even if one started later.
           announceDemoPeer();
@@ -1090,7 +1090,7 @@ if (session_status() === PHP_SESSION_ACTIVE) {
       attachRemoteCallStream(remoteStream).then((ok) => {
         if (!ok) {
           showEnableSoundButton(true);
-          document.getElementById('callStatus').textContent = 'Connected â€” tap to enable sound';
+          document.getElementById('callStatus').textContent = 'Connected — tap to enable sound';
         }
       });
       if (consultUi && typeof consultUi.mountVideos === 'function') consultUi.mountVideos();
@@ -1664,11 +1664,11 @@ if (session_status() === PHP_SESSION_ACTIVE) {
       // Chrome dual-tab demo: local WebRTC over HTTP signaling relay.
       if (demoMode) {
         if (!window.McDemoLocalWebrtc) {
-          document.getElementById('callStatus').textContent = 'Demo script missing â€” hard refresh (Ctrl+F5)';
+          document.getElementById('callStatus').textContent = 'Demo script missing — hard refresh (Ctrl+F5)';
           return;
         }
         if (!demoKey) {
-          document.getElementById('callStatus').textContent = 'Missing demo key â€” reopen from demo launcher';
+          document.getElementById('callStatus').textContent = 'Missing demo key — reopen from demo launcher';
           return;
         }
         const demo = ensureLocalDemoCall();
@@ -1677,8 +1677,8 @@ if (session_status() === PHP_SESSION_ACTIVE) {
           console.log('[medConnect demo] starting local WebRTC as', userRole, 'token', roomToken.slice(0, 8), 'apiBase', apiBase);
           demo.start();
           document.getElementById('callStatus').textContent = userRole === 'provider'
-            ? 'Waiting for Patient tabâ€¦'
-            : 'Waiting for Provider tabâ€¦';
+            ? 'Waiting for Patient tab…'
+            : 'Waiting for Provider tab…';
           if (callInterval) clearInterval(callInterval);
           callInterval = setInterval(() => {
             if (callHasRemoteStream) {
@@ -1788,7 +1788,7 @@ if (session_status() === PHP_SESSION_ACTIVE) {
         const states = await Promise.all(
           names.map((name) => navigator.permissions.query({ name }).then((r) => name + ': ' + r.state).catch(() => name + ': unknown'))
         );
-        setPermissionStatus('Browser permission state â€” ' + states.join(' Â· '));
+        setPermissionStatus('Browser permission state — ' + states.join(' · '));
       } catch (e) {
         setPermissionStatus('Tap a button below, then allow access in the browser prompt.');
       }
@@ -1823,7 +1823,7 @@ if (session_status() === PHP_SESSION_ACTIVE) {
         showPermissionError(
           insecure
             ? '<strong>Camera and microphone need HTTPS.</strong> This page is not in a secure context (<code>' +
-              window.location.protocol + '//' + window.location.host + '</code>). Deploy with SSL or use an HTTPS URL â€” then tap Allow again.'
+              window.location.protocol + '//' + window.location.host + '</code>). Deploy with SSL or use an HTTPS URL — then tap Allow again.'
             : '<strong>Media devices are not available.</strong> Your browser blocked access. Check site permissions and try another browser.'
         );
         document.getElementById('btnAllowBoth').disabled = true;
@@ -1844,7 +1844,7 @@ if (session_status() === PHP_SESSION_ACTIVE) {
       } else if (name === 'NotReadableError' || name === 'TrackStartError') {
         tips += '<li>Another app may be using the camera (Zoom, Messenger, etc.). Close it and retry.</li>';
       } else if (name === 'SecurityError' || name === 'NotSupportedError') {
-        tips += '<li>Use <strong>HTTPS</strong> or <code>localhost</code> â€” HTTP on a phone IP often cannot use camera.</li>';
+        tips += '<li>Use <strong>HTTPS</strong> or <code>localhost</code> — HTTP on a phone IP often cannot use camera.</li>';
       } else {
         tips += '<li>Check browser permissions and close other camera apps.</li>';
       }
@@ -1859,7 +1859,7 @@ if (session_status() === PHP_SESSION_ACTIVE) {
       }
 
       clearPermissionError();
-      setPermissionStatus(videoEnabled ? 'Requesting camera and microphoneâ€¦' : 'Requesting microphoneâ€¦');
+      setPermissionStatus(videoEnabled ? 'Requesting camera and microphone…' : 'Requesting microphone…');
       document.getElementById('btnAllowBoth').disabled = true;
       document.getElementById('btnAllowAudio').disabled = true;
 
@@ -1883,7 +1883,7 @@ if (session_status() === PHP_SESSION_ACTIVE) {
         if (videoEnabled) {
           try {
             localStream = await navigator.mediaDevices.getUserMedia({ video: false, audio: audioConstraints });
-            setPermissionStatus('Camera blocked â€” joined with audio only.');
+            setPermissionStatus('Camera blocked — joined with audio only.');
           } catch (audioErr) {
             // Dual-tab Chrome demo only: a silent track keeps PeerJS connected when
             // the same machine already holds the mic. Real consultations must not
@@ -2588,8 +2588,8 @@ if (session_status() === PHP_SESSION_ACTIVE) {
         syncMediaStatus();
         setCallPhase(window.McVideoCallCore ? window.McVideoCallCore.STATUS.CONNECTING : 'connecting', {
           callStatusText: userRole === 'patient'
-            ? 'Connectingâ€¦'
-            : 'Connectingâ€¦',
+            ? 'Connecting…'
+            : 'Connecting…',
         });
 
         beginConnectionRetries();
@@ -3286,7 +3286,7 @@ if (session_status() === PHP_SESSION_ACTIVE) {
         if (ok) {
           remoteMediaUnlocked = true;
           setCallPhase(window.McVideoCallCore ? window.McVideoCallCore.STATUS.CONNECTED : 'connected', {
-            callStatusText: 'Connected â€” sound on',
+            callStatusText: 'Connected — sound on',
           });
         }
       });
