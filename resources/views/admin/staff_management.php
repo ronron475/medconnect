@@ -19,6 +19,14 @@ provider_verification_ensure_schema($pdo);
 user_account_status_ensure_schema($pdo);
 
 $role_filter = $_GET['role'] ?? 'provider';
+if ($role_filter === 'provider') {
+    header('Location: ' . portal_view_url('doctor_applications.php') . '?tab=active');
+    exit;
+}
+if ($role_filter === 'bhw') {
+    header('Location: ' . portal_view_url('bhw_applications.php') . '?tab=active');
+    exit;
+}
 if (portal_is_superadmin_shell() && $role_filter === 'admin') {
     header('Location: ' . portal_views_base() . '/administrators.php');
     exit;

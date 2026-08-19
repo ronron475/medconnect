@@ -10,11 +10,31 @@ if (!defined('BASE_PATH')) {
     }
 }
 require_once BASE_PATH . '/app/includes/doctor_application_schema.php';
+require_once BASE_PATH . '/app/includes/portal_paths.php';
 require_once __DIR__ . '/_portal_access.php';
 
 doctor_application_ensure_schema($pdo);
 
-$page_title = 'Doctor Applications';
+$hub_kind = 'doctor';
+$hub_base = 'doctor_applications.php';
+$hub_tab = $_GET['tab'] ?? 'all';
+$allowed_tabs = ['all', 'applications', 'pending', 'active', 'rejected', 'archived'];
+if (!in_array($hub_tab, $allowed_tabs, true)) {
+    $hub_tab = 'all';
+}
+
+$show_accounts_panel = in_array($hub_tab, ['active', 'archived'], true);
+$show_applications_panel = !$show_accounts_panel;
+
+$tab_status_map = [
+    'all'          => 'all',
+    'applications' => 'all',
+    'pending'      => 'pending_approval',
+    'rejected'     => 'rejected',
+];
+$initial_app_status = $tab_status_map[$hub_tab] ?? 'all';
+
+$page_title = 'Doctor Management';
 $show_submitted = isset($_GET['submitted']);
 $show_saved = isset($_GET['saved']);
 
@@ -49,9 +69,9 @@ require_once __DIR__ . '/partials/layout_open.php';
 
 <header class="staff-apps-hero">
     <div class="staff-apps-hero__content">
-        <span class="staff-apps-hero__eyebrow">Administration · Maker-Checker Workflow</span>
-        <h1 class="staff-apps-hero__title">Doctor Account Applications</h1>
-        <p class="staff-apps-hero__desc">Prepare Doctor account applications, verify PRC licenses via the official portal, upload supporting documents, and submit for Super Administrator approval.</p>
+        <span class="staff-apps-hero__eyebrow">User Management · Maker-Checker Workflow</span>
+        <h1 class="staff-apps-hero__title">Doctor Management</h1>
+        <p class="staff-apps-hero__desc">Manage doctor applications, PRC verification, supporting documents, and approved doctor accounts from one place.</p>
     </div>
     <div class="staff-apps-hero__actions">
         <button type="button" class="mc-btn mc-btn--primary" id="doctorOpenCreateBtn">
@@ -61,6 +81,12 @@ require_once __DIR__ . '/partials/layout_open.php';
     </div>
 </header>
 
+<?php
+$hub_views_base = portal_views_base();
+require __DIR__ . '/partials/staff_hub_tabs.php';
+?>
+
+<?php if ($show_applications_panel): ?>
 <div class="staff-apps-stats" id="doctorAppStats" aria-live="polite">
     <div class="staff-apps-stat">
         <div class="staff-apps-stat__value" id="statTotal">—</div>
@@ -120,6 +146,12 @@ require_once __DIR__ . '/partials/layout_open.php';
     </div>
 </div>
 
+<?php else: ?>
+
+<?php require __DIR__ . '/partials/staff_accounts_panel.php'; ?>
+
+<?php endif; ?>
+
 </article>
 
 <?php
@@ -131,15 +163,46 @@ $create_doctor_submit_label = 'Submit Application';
 require __DIR__ . '/partials/create_doctor_modal.php';
 ?>
 
-<link rel="stylesheet" href="<?= ASSET_BASE ?>/assets/css/admin-staff-applications.css?v=1.0">
+<link rel="stylesheet" href="<?= ASSET_BASE ?>/assets/css/admin-staff-applications.css?v=1.1">
 <link rel="stylesheet" href="<?= ASSET_BASE ?>/assets/css/admin-bhw-applications.css?v=1.1">
 <script src="<?= ASSET_BASE ?>/assets/js/admin-staff-applications.js?v=1.0"></script>
 <script>
 window.MC_DOCTOR_APP = {
     api: <?= json_encode(ASSET_BASE . '/app/api/admin/doctor_applications.php') ?>,
-    assetBase: <?= json_encode(ASSET_BASE) ?>
+    assetBase: <?= json_encode(ASSET_BASE) ?>,
+    initialTab: <?= json_encode($hub_tab) ?>,
+    initialStatus: <?= json_encode($initial_app_status) ?>,
+    showApplications: <?= $show_applications_panel ? 'true' : 'false' ?>
 };
 </script>
-<script src="<?= ASSET_BASE ?>/assets/js/admin-doctor-applications.js?v=1.1"></script>
+<script src="<?= ASSET_BASE ?>/assets/js/admin-doctor-applications.js?v=1.2"></script>
+
+<?php
+if ($show_accounts_panel) {
+    if (portal_is_superadmin()) {
+        require __DIR__ . '/partials/doctor_verify_modal.php';
+    }
+    $account_status_api = ASSET_BASE . '/app/api/admin/account_status.php';
+    require __DIR__ . '/partials/account_status_modal.php';
+}
+?>
+<script>
+(function () {
+    document.querySelectorAll('.js-verify-doctor').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+            if (typeof openDoctorVerifyModal === 'function') {
+                openDoctorVerifyModal(btn.dataset.userId, btn.dataset.name || '', btn.dataset.prc || '');
+            }
+        });
+    });
+    document.querySelectorAll('.js-reject-doctor').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+            if (typeof openDoctorRejectModal === 'function') {
+                openDoctorRejectModal(btn.dataset.userId, btn.dataset.name || '');
+            }
+        });
+    });
+})();
+</script>
 
 <?php require_once __DIR__ . '/partials/layout_close.php'; ?>

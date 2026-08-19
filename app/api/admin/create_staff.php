@@ -60,7 +60,7 @@ if ($role === 'admin' && !portal_is_superadmin()) {
 if ($role === 'bhw') {
     echo json_encode([
         'success' => false,
-        'message' => 'BHW accounts require Maker-Checker approval. Use the BHW Applications workflow to submit for Super Administrator review.',
+        'message' => 'BHW accounts require Maker-Checker approval. Use BHW Management to submit for Super Administrator review.',
     ]);
     exit;
 }
@@ -68,7 +68,7 @@ if ($role === 'bhw') {
 if ($role === 'provider') {
     echo json_encode([
         'success' => false,
-        'message' => 'Doctor accounts require Maker-Checker approval. Use the Doctor Applications workflow to submit for Super Administrator review.',
+        'message' => 'Doctor accounts require Maker-Checker approval. Use Doctor Management to submit for Super Administrator review.',
     ]);
     exit;
 }

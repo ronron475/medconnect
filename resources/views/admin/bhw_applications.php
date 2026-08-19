@@ -10,11 +10,31 @@ if (!defined('BASE_PATH')) {
     }
 }
 require_once BASE_PATH . '/app/includes/bhw_application_schema.php';
+require_once BASE_PATH . '/app/includes/portal_paths.php';
 require_once __DIR__ . '/_portal_access.php';
 
 bhw_application_ensure_schema($pdo);
 
-$page_title = 'BHW Applications';
+$hub_kind = 'bhw';
+$hub_base = 'bhw_applications.php';
+$hub_tab = $_GET['tab'] ?? 'all';
+$allowed_tabs = ['all', 'drafts', 'pending', 'active', 'rejected', 'archived'];
+if (!in_array($hub_tab, $allowed_tabs, true)) {
+    $hub_tab = 'all';
+}
+
+$show_accounts_panel = in_array($hub_tab, ['active', 'archived'], true);
+$show_applications_panel = !$show_accounts_panel;
+
+$tab_status_map = [
+    'all'      => 'all',
+    'drafts'   => 'draft',
+    'pending'  => 'pending_approval',
+    'rejected' => 'rejected',
+];
+$initial_app_status = $tab_status_map[$hub_tab] ?? 'all';
+
+$page_title = 'BHW Management';
 $show_submitted = isset($_GET['submitted']);
 $show_saved = isset($_GET['saved']);
 
@@ -49,9 +69,9 @@ require_once __DIR__ . '/partials/layout_open.php';
 
 <header class="staff-apps-hero">
     <div class="staff-apps-hero__content">
-        <span class="staff-apps-hero__eyebrow">Administration · Maker-Checker Workflow</span>
-        <h1 class="staff-apps-hero__title">Barangay Health Worker Applications</h1>
-        <p class="staff-apps-hero__desc">Prepare BHW account applications, upload supporting documents, and submit them for Super Administrator approval.</p>
+        <span class="staff-apps-hero__eyebrow">User Management · Maker-Checker Workflow</span>
+        <h1 class="staff-apps-hero__title">BHW Management</h1>
+        <p class="staff-apps-hero__desc">Manage BHW applications, supporting documents, and approved barangay health worker accounts from one place.</p>
     </div>
     <div class="staff-apps-hero__actions">
         <button type="button" class="mc-btn mc-btn--primary" id="bhwOpenCreateBtn">
@@ -61,6 +81,12 @@ require_once __DIR__ . '/partials/layout_open.php';
     </div>
 </header>
 
+<?php
+$hub_views_base = portal_views_base();
+require __DIR__ . '/partials/staff_hub_tabs.php';
+?>
+
+<?php if ($show_applications_panel): ?>
 <div class="staff-apps-stats" id="bhwAppStats" aria-live="polite">
     <div class="staff-apps-stat">
         <div class="staff-apps-stat__value" id="statTotal">—</div>
@@ -118,6 +144,12 @@ require_once __DIR__ . '/partials/layout_open.php';
         </table>
     </div>
 </div>
+
+<?php else: ?>
+
+<?php require __DIR__ . '/partials/staff_accounts_panel.php'; ?>
+
+<?php endif; ?>
 
 </article>
 
@@ -236,7 +268,7 @@ require_once __DIR__ . '/partials/layout_open.php';
     </div>
 </div>
 
-<link rel="stylesheet" href="<?= ASSET_BASE ?>/assets/css/admin-staff-applications.css?v=1.2">
+<link rel="stylesheet" href="<?= ASSET_BASE ?>/assets/css/admin-staff-applications.css?v=1.1">
 <link rel="stylesheet" href="<?= ASSET_BASE ?>/assets/css/admin-staff-forms.css?v=1.4">
 <link rel="stylesheet" href="<?= ASSET_BASE ?>/assets/css/admin-bhw-applications.css?v=1.2">
 <script src="<?= ASSET_BASE ?>/assets/js/admin-staff-form-utils.js?v=1.2"></script>
@@ -244,9 +276,19 @@ require_once __DIR__ . '/partials/layout_open.php';
 <script>
 window.MC_BHW_APP = {
     api: <?= json_encode(ASSET_BASE . '/app/api/admin/bhw_applications.php') ?>,
-    assetBase: <?= json_encode(ASSET_BASE) ?>
+    assetBase: <?= json_encode(ASSET_BASE) ?>,
+    initialTab: <?= json_encode($hub_tab) ?>,
+    initialStatus: <?= json_encode($initial_app_status) ?>,
+    showApplications: <?= $show_applications_panel ? 'true' : 'false' ?>
 };
 </script>
-<script src="<?= ASSET_BASE ?>/assets/js/admin-bhw-applications.js?v=1.3"></script>
+<script src="<?= ASSET_BASE ?>/assets/js/admin-bhw-applications.js?v=1.4"></script>
+
+<?php
+if ($show_accounts_panel) {
+    $account_status_api = ASSET_BASE . '/app/api/admin/account_status.php';
+    require __DIR__ . '/partials/account_status_modal.php';
+}
+?>
 
 <?php require_once __DIR__ . '/partials/layout_close.php'; ?>

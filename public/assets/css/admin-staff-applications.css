@@ -813,3 +813,94 @@
     margin-right: 20px;
   }
 }
+
+/* ── Management hub tabs (Doctor / BHW) ── */
+.staff-mgmt-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 0 0 20px;
+  padding: 4px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+}
+
+.staff-mgmt-tabs__item {
+  display: inline-flex;
+  align-items: center;
+  padding: 9px 14px;
+  border-radius: 8px;
+  font-size: 0.8125rem;
+  font-weight: 700;
+  color: #64748b;
+  text-decoration: none;
+  transition: background 0.15s ease, color 0.15s ease, box-shadow 0.15s ease;
+  white-space: nowrap;
+}
+
+.staff-mgmt-tabs__item:hover {
+  color: var(--mc-aqua-medium, #018a93);
+  background: #fff;
+}
+
+.staff-mgmt-tabs__item.is-active {
+  color: #fff;
+  background: var(--mc-aqua-medium, #018a93);
+  box-shadow: 0 2px 8px rgba(1, 138, 147, 0.25);
+}
+
+.staff-mgmt-accounts-panel__head {
+  padding: 20px 24px 0;
+}
+
+.staff-mgmt-accounts-panel__title {
+  margin: 0 0 6px;
+  font-size: 1.0625rem;
+  font-weight: 800;
+  color: var(--mc-navy-deep, #0f172a);
+}
+
+.staff-mgmt-accounts-panel__desc {
+  margin: 0 0 16px;
+  font-size: 0.8125rem;
+  color: #64748b;
+  line-height: 1.5;
+}
+
+.staff-mgmt-subfilters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 0 24px 16px;
+}
+
+.staff-mgmt-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.mc-btn--sm {
+  padding: 6px 10px;
+  font-size: 11px;
+}
+
+@media (max-width: 640px) {
+  .staff-mgmt-tabs {
+    margin-bottom: 16px;
+  }
+
+  .staff-mgmt-tabs__item {
+    padding: 8px 12px;
+    font-size: 0.75rem;
+  }
+
+  .staff-mgmt-accounts-panel__head {
+    padding: 16px 16px 0;
+  }
+
+  .staff-mgmt-subfilters {
+    padding: 0 16px 12px;
+  }
+}

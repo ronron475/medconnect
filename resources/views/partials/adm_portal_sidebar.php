@@ -85,8 +85,9 @@ if (!empty($_SESSION['user_id']) && isset($pdo) && $pdo instanceof PDO) {
       foreach ($section['items'] as $item):
         [$file, $label, $icon_path] = $item;
         $itemQuery = $item[3] ?? null;
+        $navGroup = $item[4] ?? null;
         $href = $views_base . '/' . $file . ($itemQuery ? '?' . $itemQuery : '');
-        $is_active = portal_nav_is_active($file, $current, $current_query, $itemQuery);
+        $is_active = portal_nav_is_active($file, $current, $current_query, $itemQuery, $navGroup);
         $badgeKey = portal_nav_badge_key_for_item($adm_sidebar_portal, $file, $itemQuery);
         $navAttr = portal_nav_badge_nav_link_attr($badgeKey);
     ?>

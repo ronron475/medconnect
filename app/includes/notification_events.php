@@ -86,7 +86,7 @@ final class NotificationEvents
             'type'          => NotificationManager::TYPE_SUCCESS,
             'title'         => 'BHW Account Approved',
             'message'       => "The BHW account for {$applicantName} has been approved and activated.",
-            'action_url'    => '/views/admin/staff_management.php?role=bhw',
+            'action_url'    => '/views/admin/bhw_applications.php?tab=active',
             'related_table' => 'bhw_applications',
             'related_id'    => $applicationId,
         ]);
@@ -167,7 +167,7 @@ final class NotificationEvents
             'type'          => NotificationManager::TYPE_SUCCESS,
             'title'         => 'Doctor Account Approved',
             'message'       => 'The Doctor Account has been approved and activated.',
-            'action_url'    => '/views/admin/staff_management.php?role=provider',
+            'action_url'    => '/views/admin/doctor_applications.php?tab=active',
             'related_table' => 'doctor_applications',
             'related_id'    => $applicationId,
         ]);

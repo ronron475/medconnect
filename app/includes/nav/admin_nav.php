@@ -1,11 +1,8 @@
 <?php
 
 /**
-
  * Admin portal navigation — single source of truth with sections.
-
- * Format: section label (null = no header) + items [file, label, icon, query?]
-
+ * Format: section label (null = no header) + items [file, label, icon, query?, navGroup?]
  */
 
 return [
@@ -18,15 +15,13 @@ return [
 
     ['section' => 'User Management', 'items' => [
 
-        ['staff_management.php', 'Doctors', '<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 11h-6"/><path d="M19 8v6"/>', 'role=provider'],
-        ['doctor_applications.php', 'Doctor Applications', '<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><path d="M12 18v-6"/><path d="M9 15h6"/>'],
+        ['doctor_applications.php', 'Doctor Management', '<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 11h-6"/><path d="M19 8v6"/>', null, 'doctor_management'],
 
-        ['staff_management.php', 'BHW Accounts', '<path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>', 'role=bhw'],
-        ['bhw_applications.php', 'BHW Applications', '<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/>'],
+        ['bhw_applications.php', 'BHW Management', '<path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>', null, 'bhw_management'],
 
-        ['user_management.php', 'Patient Account Management', '<path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>', 'role=patient'],
+        ['user_management.php', 'Patient Account Management', '<path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>', 'role=patient', 'patient_management'],
 
-        ['user_management.php', 'Administrators', '<path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>', 'role=admin'],
+        ['user_management.php', 'Administrators', '<path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>', 'role=admin', 'administrator_management'],
 
     ]],
 
@@ -79,4 +74,3 @@ return [
     ]],
 
 ];
-
