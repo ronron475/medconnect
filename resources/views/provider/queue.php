@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 /**
  * medConnect Clinical Portal - Consultation Queue
  */
@@ -311,15 +311,15 @@ require_once __DIR__ . '/partials/layout_open.php';
                                     <div class="queue-avatar"><?= htmlspecialchars(queue_initials($ufCase)) ?></div>
                                     <div>
                                         <div class="queue-patient-name"><?= htmlspecialchars($ufName ?: 'Patient') ?></div>
-                                        <div class="queue-meta">Prev. visit: <?= htmlspecialchars(!empty($ufCase['previous_consult_date']) ? date('M j, Y', strtotime((string) $ufCase['previous_consult_date'])) : '—') ?></div>
+                                        <div class="queue-meta">Prev. visit: <?= htmlspecialchars(!empty($ufCase['previous_consult_date']) ? date('M j, Y', strtotime((string) $ufCase['previous_consult_date'])) : 'â€”') ?></div>
                                     </div>
                                 </div>
                             </td>
-                            <td data-label="Previous complaint"><div class="queue-complaint-main"><?= htmlspecialchars((string) ($ufCase['previous_chief_complaint'] ?? '—')) ?></div></td>
-                            <td data-label="Updated complaint"><div class="queue-complaint-main"><?= htmlspecialchars((string) ($ufCase['updated_chief_complaint'] ?? '—')) ?></div></td>
+                            <td data-label="Previous complaint"><div class="queue-complaint-main"><?= htmlspecialchars((string) ($ufCase['previous_chief_complaint'] ?? 'â€”')) ?></div></td>
+                            <td data-label="Updated complaint"><div class="queue-complaint-main"><?= htmlspecialchars((string) ($ufCase['updated_chief_complaint'] ?? 'â€”')) ?></div></td>
                             <td data-label="AI triage">
                                 <span class="queue-badge <?= htmlspecialchars(queue_urgent_followup_badge_class($ufCase)) ?>">
-                                    <?= htmlspecialchars((string) ($ufCase['triage_display'] ?? '—')) ?>
+                                    <?= htmlspecialchars((string) ($ufCase['triage_display'] ?? 'â€”')) ?>
                                 </span>
                                 <div class="queue-meta"><?= htmlspecialchars(number_format((float) ($ufCase['confidence_score'] ?? 0), 0)) ?>% confidence</div>
                             </td>
@@ -365,7 +365,7 @@ require_once __DIR__ . '/partials/layout_open.php';
                     <thead>
                         <tr>
                             <th class="col-patient">Patient</th>
-                            <th class="col-complaint">Patient Complaint</th>
+                            <th class="col-complaint">Primary Complaint</th>
                             <th class="col-triage">Triage</th>
                             <th class="col-schedule">Schedule</th>
                             <th class="col-status">Status</th>
@@ -406,7 +406,7 @@ require_once __DIR__ . '/partials/layout_open.php';
                                         </div>
                                     </div>
                                 </td>
-                                <td data-label="Patient complaint">
+                                <td data-label="Primary Complaint">
                                     <div class="queue-complaint-main"><?= htmlspecialchars($complaint) ?></div>
                                     <?php if ($symptoms): ?>
                                     <div class="queue-chip-list">
@@ -422,8 +422,8 @@ require_once __DIR__ . '/partials/layout_open.php';
                                     </span>
                                 </td>
                                 <td data-label="Schedule">
-                                    <div style="font-weight:700;"><?= htmlspecialchars($display_date !== '' ? date('M j, Y', strtotime($display_date)) : '—') ?></div>
-                                    <div class="queue-meta"><?= htmlspecialchars($display_time !== '' ? date('g:i A', strtotime($display_time)) : '—') ?></div>
+                                    <div style="font-weight:700;"><?= htmlspecialchars($display_date !== '' ? date('M j, Y', strtotime($display_date)) : 'â€”') ?></div>
+                                    <div class="queue-meta"><?= htmlspecialchars($display_time !== '' ? date('g:i A', strtotime($display_time)) : 'â€”') ?></div>
                                 </td>
                                 <td class="col-status" data-label="Status" data-queue-status="<?= (int) $item['id'] ?>">
                                     <span class="queue-badge <?= $status_class ?>"><?= htmlspecialchars(queue_status_label($status)) ?></span>
@@ -541,3 +541,4 @@ require_once __DIR__ . '/partials/layout_open.php';
 <script src="<?= ASSET_BASE ?>/assets/js/provider-queue-live.js?v=<?= $queueLiveJsVer ?>"></script>
 
 <?php require __DIR__ . '/partials/layout_close.php'; ?>
+

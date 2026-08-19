@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 $active_page = 'triage';
 $page_title  = 'Active Triage Review';
 $page_styles = ['provider_triage.css'];
@@ -79,7 +79,7 @@ $slot_waiting_count = count(array_filter($display_cases, fn($t) => !empty($t['sl
 <?php if ($slot_waiting_count > 0 && $module_tab === 'active'): ?>
 <div class="triage-banner" style="margin-top:0;">
   <?= icon_col('alert', '#0f766e') ?>
-  <span><strong><?= (int) $slot_waiting_count ?></strong> non-urgent patient(s) are waiting for a consultation slot. They stay on this case — no duplicate record is created.</span>
+  <span><strong><?= (int) $slot_waiting_count ?></strong> non-urgent patient(s) are waiting for a consultation slot. They stay on this case â€” no duplicate record is created.</span>
 </div>
 <?php endif; ?>
 
@@ -107,7 +107,7 @@ $slot_waiting_count = count(array_filter($display_cases, fn($t) => !empty($t['sl
 <div class="mc-card" style="padding: 0; overflow: hidden;">
   <div class="mc-card-header" style="padding: 16px 20px; border-bottom: 1px solid var(--mc-border-thin);">
     <h3 class="text-h3" style="margin: 0;"><?= icon('activity') ?> AI Triage Case Review</h3>
-    <span class="text-xs text-muted" id="triageTableSummary"><?= count($display_cases) ?> total · <?= $pending_count ?> pending review<?= $tips_pending_count ? ' · ' . (int) $tips_pending_count . ' tips pending' : '' ?></span>
+    <span class="text-xs text-muted" id="triageTableSummary"><?= count($display_cases) ?> total Â· <?= $pending_count ?> pending review<?= $tips_pending_count ? ' Â· ' . (int) $tips_pending_count . ' tips pending' : '' ?></span>
     <span class="text-xs text-muted" id="triageRefreshStatus" style="margin-left: 12px;">Auto-refresh on</span>
   </div>
 
@@ -116,7 +116,7 @@ $slot_waiting_count = count(array_filter($display_cases, fn($t) => !empty($t['sl
       <thead>
         <tr>
           <th>Patient</th>
-          <th>Patient Complaint</th>
+          <th>Primary Complaint</th>
           <th>AI Classification</th>
           <th>Submitted</th>
           <th>Status</th>
@@ -145,9 +145,9 @@ $slot_waiting_count = count(array_filter($display_cases, fn($t) => !empty($t['sl
           <td data-label="Patient" style="font-weight: 700; color: var(--mc-navy-dark);">
             <?= htmlspecialchars($t['name']) ?>
           </td>
-          <td data-label="Patient Complaint">
-            <span class="triage-complaint" title="<?= htmlspecialchars($t['complaint'] ?: '—') ?>">
-              <?= htmlspecialchars($t['complaint'] ?: '—') ?>
+          <td data-label="Primary Complaint">
+            <span class="triage-complaint" title="<?= htmlspecialchars($t['complaint'] ?: 'â€”') ?>">
+              <?= htmlspecialchars($t['complaint'] ?: 'â€”') ?>
             </span>
           </td>
           <td data-label="AI Classification">
@@ -222,7 +222,7 @@ $slot_waiting_count = count(array_filter($display_cases, fn($t) => !empty($t['sl
 
       <section class="triage-review-section" aria-labelledby="triageChiefComplaintHeading">
         <div class="triage-review-section__head">
-          <h3 id="triageChiefComplaintHeading" class="triage-review-section__title">Patient Complaint</h3>
+          <h3 id="triageChiefComplaintHeading" class="triage-review-section__title">Primary Complaint</h3>
         </div>
         <div id="modalComplaint" class="triage-modal-box triage-modal-box--complaint"></div>
       </section>
@@ -343,7 +343,7 @@ $slot_waiting_count = count(array_filter($display_cases, fn($t) => !empty($t['sl
     <div class="triage-modal__body">
       <label class="mc-label" for="triageReportReason">Reason <span aria-hidden="true">*</span></label>
       <select id="triageReportReason" class="mc-input" required>
-        <option value="">Select a reason…</option>
+        <option value="">Select a reasonâ€¦</option>
         <option value="prank_fake">Suspected prank / fake submission</option>
         <option value="spam_irrelevant">Spam / irrelevant submission</option>
         <option value="abusive_inappropriate">Abusive / inappropriate content</option>
@@ -436,7 +436,7 @@ $slot_waiting_count = count(array_filter($display_cases, fn($t) => !empty($t['sl
       <li>The patient will not receive these AI self-care tips.</li>
       <li>This Active Triage Review case will be marked complete.</li>
     </ul>
-    <p class="triage-review-confirm__when">Use this when the guidance is not appropriate for the patient’s case.</p>
+    <p class="triage-review-confirm__when">Use this when the guidance is not appropriate for the patientâ€™s case.</p>
     <div class="triage-review-confirm__actions">
       <button type="button" class="mc-btn mc-btn--ghost" data-triage-withhold-cancel>Cancel</button>
       <button type="button" class="mc-btn mc-btn--danger" data-triage-withhold-confirm data-mc-autofocus>Withhold Guidance</button>
@@ -491,3 +491,4 @@ window.MedConnectTriage = {
 <script src="<?= ASSET_BASE ?>/assets/js/provider-triage-live.js?v=<?= $triageLiveJsVer ?>"></script>
 
 <?php require __DIR__ . '/partials/layout_close.php'; ?>
+
