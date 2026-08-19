@@ -14,7 +14,7 @@ html {
 
     --portal-sidebar-w: 260px;
 
-    --portal-header-h: 64px;
+    --portal-header-h: 68px;
 
     --mc-safe-top: env(safe-area-inset-top, 0px);
 

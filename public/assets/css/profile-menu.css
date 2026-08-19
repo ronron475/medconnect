@@ -1,76 +1,106 @@
 /**
- * medConnect — Profile dropdown card (all roles)
+ * medConnect — Profile Dropdown Card v5 (all roles)
+ * Modern, clean glass-card design.
  */
 
 .mc-profmenu {
   position: fixed;
   z-index: 200200;
-  width: 296px;
-  max-width: calc(100vw - 24px);
-  border-radius: 16px;
+  width: 288px;
+  max-width: calc(100vw - 20px);
+  border-radius: 18px;
   overflow: hidden;
-  border: 1px solid rgba(15, 23, 42, 0.10);
-  box-shadow: 0 18px 48px rgba(15, 23, 42, 0.20);
+  border: 1px solid rgba(13,33,55,0.10);
+  box-shadow: 0 8px 32px rgba(13,33,55,0.16), 0 2px 8px rgba(13,33,55,0.08);
   background: #fff;
+  animation: profmenu-in 0.18s cubic-bezier(0.34,1.56,0.64,1) both;
+}
+
+@keyframes profmenu-in {
+  from { opacity: 0; transform: scale(0.94) translateY(-6px); }
+  to   { opacity: 1; transform: scale(1) translateY(0); }
 }
 
 .mc-profmenu[hidden] { display: none !important; }
 
+/* Caret arrow */
 .mc-profmenu::before {
   content: '';
   position: absolute;
   top: -6px;
-  right: 18px;
+  right: 20px;
   width: 12px;
   height: 12px;
-  background: #0b2f52;
+  background: #0D2137;
   transform: rotate(45deg);
-  border-left: 1px solid rgba(15, 23, 42, 0.08);
-  border-top: 1px solid rgba(15, 23, 42, 0.08);
+  border-left: 1px solid rgba(255,255,255,0.12);
+  border-top: 1px solid rgba(255,255,255,0.12);
+  border-radius: 2px 0 0 0;
+  z-index: 1;
 }
 
+/* ── Hero Header ── */
 .mc-profmenu__hero {
-  padding: 16px 16px 14px;
-  background: linear-gradient(180deg, #0b3b55 0%, #0b2f52 60%, #0a2847 100%);
+  padding: 20px 18px 16px;
+  background: linear-gradient(160deg, #0D2137 0%, #0B3B55 50%, #006E7B 100%);
   color: #fff;
   position: relative;
-}
-
-.mc-profmenu__hero::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(180deg, rgba(255,255,255,0.00) 0%, rgba(255,255,255,0.06) 100%);
-  pointer-events: none;
-}
-
-.mc-profmenu__seal {
-  width: 64px;
-  height: 64px;
-  border-radius: 50%;
-  background: rgba(255,255,255,0.14);
-  border: 2px solid rgba(255,255,255,0.22);
-  display: grid;
-  place-items: center;
-  margin: 0 auto 8px;
   overflow: hidden;
 }
 
+/* Decorative glow */
+.mc-profmenu__hero::before {
+  content: '';
+  position: absolute;
+  top: -40px;
+  right: -30px;
+  width: 120px;
+  height: 120px;
+  background: radial-gradient(circle, rgba(0,151,167,0.4) 0%, transparent 70%);
+  pointer-events: none;
+}
+.mc-profmenu__hero::after {
+  content: '';
+  position: absolute;
+  bottom: -20px;
+  left: -10px;
+  width: 80px;
+  height: 80px;
+  background: radial-gradient(circle, rgba(34,211,238,0.15) 0%, transparent 70%);
+  pointer-events: none;
+}
+
+/* Logo seal */
+.mc-profmenu__seal {
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.12);
+  border: 2px solid rgba(255,255,255,0.20);
+  display: grid;
+  place-items: center;
+  margin: 0 auto 10px;
+  overflow: hidden;
+  position: relative;
+  z-index: 1;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.2);
+}
+
 .mc-profmenu__seal img {
-  width: 46px;
-  height: 46px;
+  width: 40px;
+  height: 40px;
   object-fit: contain;
   display: block;
-  filter: drop-shadow(0 8px 18px rgba(0,0,0,0.25));
 }
 
 .mc-profmenu__name {
   position: relative;
   z-index: 1;
   text-align: center;
-  font-weight: 900;
-  font-size: 17px;
-  line-height: 1.15;
+  font-weight: 800;
+  font-size: 16px;
+  line-height: 1.2;
+  letter-spacing: -0.01em;
 }
 
 .mc-profmenu__meta {
@@ -78,71 +108,108 @@
   z-index: 1;
   margin-top: 4px;
   text-align: center;
-  font-size: 12px;
-  font-weight: 700;
-  color: rgba(255,255,255,0.85);
+  font-size: 11.5px;
+  font-weight: 500;
+  color: rgba(255,255,255,0.70);
+  letter-spacing: 0.01em;
 }
 
+/* Role badge chip */
+.mc-profmenu__role-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin: 8px auto 0;
+  padding: 3px 10px;
+  border-radius: 99px;
+  background: rgba(34,211,238,0.15);
+  border: 1px solid rgba(34,211,238,0.28);
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: rgba(255,255,255,0.90);
+  position: relative;
+  z-index: 1;
+}
+
+/* ── Actions Footer ── */
 .mc-profmenu__actions {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 10px;
-  padding: 12px 14px 14px;
-  background: #0b2f52;
+  gap: 8px;
+  padding: 14px 14px 16px;
+  background: #fff;
 }
 
 .mc-profmenu__btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 8px;
+  gap: 6px;
   min-height: 40px;
-  border-radius: 12px;
-  border: 1px solid rgba(255,255,255,0.18);
-  background: rgba(255,255,255,0.08);
-  color: #fff;
-  font-weight: 800;
+  border-radius: 10px;
+  border: 1px solid var(--mc-border-thin, #DDE8EE);
+  background: var(--mc-ice-blue, #F3F8FB);
+  color: var(--mc-navy-dark, #0D2137);
+  font-weight: 600;
   font-size: 13px;
   text-decoration: none;
   cursor: pointer;
   user-select: none;
-  transition: transform 0.15s ease, background 0.15s ease, border-color 0.15s ease;
-}
-
-/* Put Sign out on its own row */
-.mc-profmenu__btn--danger {
-  grid-column: 1 / -1;
+  transition: background 0.15s ease, transform 0.15s ease, border-color 0.15s ease, color 0.15s ease;
 }
 
 .mc-profmenu__btn:hover {
   transform: translateY(-1px);
-  background: rgba(255,255,255,0.12);
-  border-color: rgba(103, 232, 249, 0.32);
+  background: var(--mc-aqua-light, #E0F7FA);
+  border-color: rgba(0,151,167,0.25);
+  color: var(--mc-aqua-dark, #006E7B);
 }
 
 .mc-profmenu__btn--primary {
-  background: rgba(6, 147, 150, 0.25);
-  border-color: rgba(103, 232, 249, 0.30);
+  background: linear-gradient(135deg, #0097A7 0%, #006E7B 100%);
+  color: #fff;
+  border-color: transparent;
+  box-shadow: 0 2px 8px rgba(0,151,167,0.25);
+}
+.mc-profmenu__btn--primary:hover {
+  background: linear-gradient(135deg, #00ACC1 0%, #0097A7 100%);
+  color: #fff;
+  border-color: transparent;
 }
 
+/* Sign out spans full width */
 .mc-profmenu__btn--danger {
-  background: rgba(239, 68, 68, 0.14);
-  border-color: rgba(239, 68, 68, 0.28);
+  grid-column: 1 / -1;
+  background: transparent;
+  border-color: rgba(239,68,68,0.20);
+  color: #DC2626;
 }
-
 .mc-profmenu__btn--danger:hover {
-  background: rgba(239, 68, 68, 0.18);
-  border-color: rgba(239, 68, 68, 0.40);
+  background: #FEF2F2;
+  border-color: rgba(239,68,68,0.35);
+  color: #B91C1C;
+  transform: translateY(-1px);
 }
 
 .mc-profmenu__btn:focus-visible {
-  outline: 3px solid rgba(103, 232, 249, 0.30);
+  outline: 3px solid rgba(0,151,167,0.30);
   outline-offset: 2px;
+}
+
+/* Separator line between header and actions */
+.mc-profmenu__divider {
+  height: 1px;
+  background: var(--mc-border-thin, #DDE8EE);
+  margin: 0 14px;
 }
 
 @media (max-width: 420px) {
   .mc-profmenu__actions {
     grid-template-columns: 1fr;
   }
+  .mc-profmenu__btn--danger {
+    grid-column: 1;
+  }
 }
-
