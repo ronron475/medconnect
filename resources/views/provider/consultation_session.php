@@ -612,6 +612,62 @@ body.consultation-mobile-call-fullscreen .video-shell.is-call-active.is-mobile-f
 body.consultation-mobile-call-fullscreen .video-shell.is-call-active.is-mobile-fullscreen .mobile-call-expand-btn {
     display: none !important;
 }
+body.consultation-true-fullscreen {
+    overflow: hidden !important;
+    background: #0b1220;
+}
+body.consultation-true-fullscreen .pd-header,
+body.consultation-true-fullscreen .pd-header-page,
+body.consultation-true-fullscreen .portal-mobile-nav {
+    display: none !important;
+}
+body.consultation-true-fullscreen .provider-page-body,
+body.consultation-true-fullscreen .main-content.provider-main,
+body.consultation-true-fullscreen .session-page,
+body.consultation-true-fullscreen .session-left,
+body.consultation-true-fullscreen .video-panel,
+body.consultation-true-fullscreen .video-panel.is-call-active {
+    padding: 0 !important;
+    margin: 0 !important;
+    width: 100% !important;
+    height: 100% !important;
+    max-height: none !important;
+    min-height: 0 !important;
+    overflow: hidden !important;
+    background: #0b1220 !important;
+}
+body.consultation-true-fullscreen .video-shell.is-call-active,
+body.consultation-true-fullscreen .video-shell.is-call-active.is-mobile-fullscreen {
+    position: fixed !important;
+    inset: 0 !important;
+    top: 0 !important;
+    right: 0 !important;
+    bottom: 0 !important;
+    left: 0 !important;
+    width: 100% !important;
+    height: var(--mc-true-fs-height, 100dvh) !important;
+    max-height: none !important;
+    min-height: 0 !important;
+    aspect-ratio: unset !important;
+    border-radius: 0 !important;
+    z-index: 10050 !important;
+    overflow: hidden !important;
+    background: #0b1220 !important;
+}
+body.consultation-true-fullscreen .mc-provider-video-dock,
+body.consultation-true-fullscreen .mc-provider-video-dock .mc-session-float-shell.is-docked,
+body.consultation-true-fullscreen .mc-provider-video-dock .mc-session-float-body,
+body.consultation-true-fullscreen .mc-provider-video-dock iframe,
+body.consultation-true-fullscreen .video-shell.is-call-active iframe {
+    position: absolute !important;
+    inset: 0 !important;
+    width: 100% !important;
+    height: 100% !important;
+    min-height: 0 !important;
+    max-height: none !important;
+    border: 0 !important;
+    border-radius: 0 !important;
+}
 body.consultation-mobile-call-fullscreen .mc-provider-video-dock,
 body.consultation-mobile-call-fullscreen .mc-provider-video-dock .mc-session-float-shell.is-docked,
 body.consultation-mobile-call-fullscreen .mc-provider-video-dock .mc-session-float-body,
@@ -2823,6 +2879,7 @@ let seconds = 0;
 let timerActive = false;
 let mobileCallFullscreen = false;
 let desktopVideoExpanded = false;
+let trueCallFullscreen = false;
 let videoCallClosed = <?= !empty($history_view) ? 'true' : 'false' ?>;
 const MOBILE_CONSULT_BREAK = 768;
 
@@ -2853,6 +2910,11 @@ function enterMobileCallFullscreen() {
 
 function exitMobileCallFullscreen() {
     const shell = document.getElementById('videoInterface');
+    if (trueCallFullscreen) {
+        trueCallFullscreen = false;
+        document.body.classList.remove('consultation-true-fullscreen');
+        syncTrueFullscreenToFrame(false);
+    }
     mobileCallFullscreen = false;
     document.body.classList.remove('consultation-mobile-call-fullscreen');
     if (shell) shell.classList.remove('is-mobile-fullscreen');
@@ -2867,6 +2929,63 @@ function exitMobileCallFullscreen() {
 function toggleMobileCallFullscreen() {
     if (mobileCallFullscreen) exitMobileCallFullscreen();
     else enterMobileCallFullscreen();
+}
+
+function syncTrueFullscreenMetrics() {
+    const vv = window.visualViewport;
+    const h = vv && vv.height ? vv.height : window.innerHeight;
+    document.documentElement.style.setProperty('--mc-true-fs-height', Math.round(h) + 'px');
+}
+
+function syncTrueFullscreenToFrame(expanded) {
+    const win = mcProviderVideoWindow();
+    if (!win) return;
+    try {
+        win.postMessage({
+            type: 'medconnect:true-fullscreen-state',
+            expanded: !!expanded,
+        }, window.location.origin);
+    } catch (e) {}
+}
+
+function enterTrueCallFullscreen() {
+    const shell = document.getElementById('videoInterface');
+    if (!shell || !shell.classList.contains('is-call-active')) return;
+    if (trueCallFullscreen) {
+        syncTrueFullscreenMetrics();
+        syncTrueFullscreenToFrame(true);
+        return;
+    }
+    trueCallFullscreen = true;
+    if (!mobileCallFullscreen) enterMobileCallFullscreen();
+    document.body.classList.add('consultation-true-fullscreen');
+    syncTrueFullscreenMetrics();
+    syncTrueFullscreenToFrame(true);
+    updateExpandButtons();
+}
+
+function exitTrueCallFullscreen() {
+    if (!trueCallFullscreen) return;
+    trueCallFullscreen = false;
+    document.body.classList.remove('consultation-true-fullscreen');
+    if (document.fullscreenElement || document.webkitFullscreenElement) {
+        const exit = document.exitFullscreen || document.webkitExitFullscreen;
+        if (exit) {
+            try { exit.call(document); } catch (e) {}
+        }
+    }
+    syncTrueFullscreenToFrame(false);
+    updateExpandButtons();
+}
+
+function toggleTrueCallFullscreen(expanded) {
+    if (typeof expanded === 'boolean') {
+        if (expanded) enterTrueCallFullscreen();
+        else exitTrueCallFullscreen();
+        return;
+    }
+    if (trueCallFullscreen) exitTrueCallFullscreen();
+    else enterTrueCallFullscreen();
 }
 
 function syncVideoExpandedToFrame(expanded) {
@@ -2949,30 +3068,48 @@ function markVideoCallClosed() {
 }
 
 window.addEventListener('resize', function () {
+    syncTrueFullscreenMetrics();
     if (!document.getElementById('videoInterface') || !document.getElementById('videoInterface').classList.contains('is-call-active')) {
         return;
     }
     if (desktopVideoExpanded && isMobileConsultation()) {
         exitDesktopVideoExpanded();
         enterMobileCallFullscreen();
+        if (trueCallFullscreen) enterTrueCallFullscreen();
     } else if (mobileCallFullscreen && !isMobileConsultation()) {
+        exitTrueCallFullscreen();
         exitMobileCallFullscreen();
         enterDesktopVideoExpanded();
     }
 });
 
-document.addEventListener('fullscreenchange', function () {
+if (window.visualViewport) {
+    window.visualViewport.addEventListener('resize', syncTrueFullscreenMetrics);
+    window.visualViewport.addEventListener('scroll', syncTrueFullscreenMetrics);
+}
+
+window.addEventListener('orientationchange', function () {
+    window.setTimeout(syncTrueFullscreenMetrics, 250);
+});
+
+document.addEventListener('fullscreenchange', onParentNativeFullscreenChange);
+document.addEventListener('webkitfullscreenchange', onParentNativeFullscreenChange);
+
+let parentHadNativeFs = false;
+function onParentNativeFullscreenChange() {
     const shell = document.getElementById('videoInterface');
     const fsEl = document.fullscreenElement || document.webkitFullscreenElement;
     if (!shell || !shell.classList.contains('is-call-active')) return;
-    if (fsEl === shell && !mobileCallFullscreen) {
-        mobileCallFullscreen = true;
-        document.body.classList.add('consultation-mobile-call-fullscreen');
-        shell.classList.add('is-mobile-fullscreen');
-        syncVideoExpandedToFrame(true);
-        updateExpandButtons();
+    if (fsEl) {
+        parentHadNativeFs = true;
+        if (!trueCallFullscreen) enterTrueCallFullscreen();
+        return;
     }
-});
+    if (parentHadNativeFs) {
+        parentHadNativeFs = false;
+        if (trueCallFullscreen) exitTrueCallFullscreen();
+    }
+}
 const sessionMessages = <?= json_encode($session_messages, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_AMP | JSON_HEX_QUOT) ?>;
 const sessionConsultationId = <?= (int)$consultation_id ?>;
 const sessionPatientId = <?= (int)$c['patient_id'] ?>;
@@ -3820,6 +3957,11 @@ window.addEventListener('message', (event) => {
         // message fires, so the follow-up decision comes next rather than
         // throwing the provider straight into SOAP.
         openFollowUpModal({ fromCallEnd: true });
+        return;
+    }
+
+    if (event.data.type === 'medconnect:request-true-fullscreen') {
+        toggleTrueCallFullscreen(!!event.data.expanded);
         return;
     }
 

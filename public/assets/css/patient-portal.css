@@ -341,7 +341,7 @@ body.mc-urgency-modal-open {
 .mc-urgency-modal {
   position: fixed;
   inset: 0;
-  z-index: 12000;
+  z-index: 200400;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -350,6 +350,12 @@ body.mc-urgency-modal-open {
 
 .mc-urgency-modal[hidden] {
   display: none !important;
+}
+
+.mc-urgency-modal:not([hidden]) {
+  display: flex !important;
+  visibility: visible !important;
+  pointer-events: auto !important;
 }
 
 .mc-urgency-modal__backdrop {

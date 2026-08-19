@@ -32,6 +32,9 @@ function clinical_tables_ensure(PDO $pdo): void
         if (is_array($cols) && !in_array('recording_path', $cols, true)) {
             $pdo->exec('ALTER TABLE video_sessions ADD COLUMN recording_path VARCHAR(500) NULL AFTER ended_at');
         }
+        if (is_array($cols) && !in_array('patient_left_at', $cols, true)) {
+            $pdo->exec('ALTER TABLE video_sessions ADD COLUMN patient_left_at DATETIME NULL DEFAULT NULL AFTER ended_at');
+        }
     } catch (PDOException $e) { /* non-fatal */ }
 
     try {

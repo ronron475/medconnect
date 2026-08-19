@@ -9,6 +9,7 @@ header('Content-Type: application/json');
 require_once dirname(dirname(dirname(__DIR__))) . '/bootstrap.php';
 require_once dirname(dirname(dirname(__DIR__))) . '/config/db.php';
 require_once dirname(dirname(dirname(__DIR__))) . '/app/includes/consultation_expiry.php';
+require_once dirname(dirname(dirname(__DIR__))) . '/app/includes/consultation_video_lifecycle.php';
 
 $token = trim((string) ($_GET['token'] ?? ''));
 $userId = (int) ($_SESSION['user_id'] ?? 0);
@@ -21,8 +22,10 @@ if ($token === '' || $userId <= 0) {
 }
 
 try {
+    consultation_video_sessions_ensure_patient_left_column($pdo);
+
     $stmt = $pdo->prepare("
-        SELECT vs.consultation_id, vs.status AS video_status, c.patient_id, c.provider_id,
+        SELECT vs.consultation_id, vs.status AS video_status, vs.patient_left_at, c.patient_id, c.provider_id,
                c.status AS consult_status, c.consult_date, c.consult_time,
                s.slot_date, s.end_time AS slot_end
         FROM video_sessions vs
@@ -69,6 +72,8 @@ try {
         'consultation_status' => $liveStatus,
         'video_status' => (string) ($row['video_status'] ?? ''),
         'consultation_id' => (int) $row['consultation_id'],
+        'patient_temporarily_left' => !empty($row['patient_left_at'])
+            && strtolower(trim((string) ($row['video_status'] ?? ''))) === 'active',
     ]);
 } catch (Exception $e) {
     echo json_encode(['success' => false, 'message' => 'Error: ' . $e->getMessage()]);

@@ -339,8 +339,8 @@
       return true;
     }
 
-    if (!options.skipReload || !alreadySame) {
-      frame.src = roomUrl(token, !alreadySame);
+    if (!options.skipReload || !alreadySame || options.forceReload) {
+      frame.src = roomUrl(token, true);
     }
 
     setMode(mode);
@@ -458,8 +458,11 @@
     }
     if (type === 'medconnect:call-left') {
       if (event.data.rejoinable) {
-        writeState({ ended: false, patientLeftRejoinable: true });
-        syncChrome();
+        closeShell();
+        const dash = assetBase() + '/views/patient/dashboard.php';
+        if (!/\/views\/patient\/dashboard\.php/i.test(global.location.pathname || '')) {
+          global.location.href = dash;
+        }
         global.dispatchEvent(new CustomEvent('medconnect:video-shell-left', { detail: event.data }));
         return;
       }
@@ -514,7 +517,9 @@
       joinConsultation(token, consultId ? parseInt(consultId, 10) : null, {
         mode: 'fullscreen',
         label: label,
-        skipReload: true,
+        skipReload: false,
+        forceReload: true,
+        forceLive: true,
       });
     });
   }

@@ -323,12 +323,15 @@
           ['pending', 'scheduled'].includes(String(c.status || '').toLowerCase());
         let primary = '';
         if (joinAccess.allowed) {
+          const joinLabel = String(c.status || '').toLowerCase() === 'in_consultation'
+            ? 'Rejoin Consultation'
+            : 'Join Video Call';
           primary =
             '<button type="button" class="psess-btn psess-btn--primary" data-mc-video-join data-token="' +
             escapeHtml(c.room_token) +
             '" data-consultation-id="' + escapeHtml(String(c.id || '')) +
             '" data-label="Consultation with ' + escapeHtml(c.provider_name || 'provider') +
-            '">Join Video Call</button>';
+            '">' + joinLabel + '</button>';
         } else if (joinAccess.mode === 'scheduled_wait') {
           primary =
             '<button type="button" class="psess-btn psess-btn--outline" disabled>Opens ' +
@@ -1366,6 +1369,14 @@
             const result = await postSymptomsReview(form, complaint, 'preview', 0);
             const json = result.data;
             if (!json || json.success === false) {
+              const failPayload = (json && json.data) || json || {};
+              if (failPayload.duplicate_pending || (json && json.duplicate_pending)) {
+                const existingLevel = urgencyToLevel(failPayload.triage_level || failPayload.classification_label)
+                  || (failPayload.emergency ? 'emergency' : (failPayload.urgent ? 'urgent' : 'non_urgent'));
+                if (window.mcPatientUrgencyModal && typeof window.mcPatientUrgencyModal.showTriageResult === 'function') {
+                  window.mcPatientUrgencyModal.showTriageResult(existingLevel, CONTINUE_MSG);
+                }
+              }
               showTriageAlert(alertEl, 'error', (json && json.message) || 'Could not analyze your complaint. Please try again.');
               return;
             }
@@ -1374,7 +1385,9 @@
             if (payload.emergency || level === 'emergency') {
               showTriageAlert(alertEl, 'error', json.message || 'Emergency symptoms detected. Seek emergency care.');
               if (window.mcPatientUrgencyModal && typeof window.mcPatientUrgencyModal.showEmergency === 'function') {
-                window.mcPatientUrgencyModal.showEmergency(json.message || '');
+                window.mcPatientUrgencyModal.showEmergency(json.message || '', {
+                  facility: payload.facility || json.facility || null,
+                });
               }
               return;
             }
@@ -1391,6 +1404,12 @@
             if (window.mcPatientUrgencyModal && typeof window.mcPatientUrgencyModal.showTriageResult === 'function') {
               window.mcPatientUrgencyModal.showTriageResult(level, CONTINUE_MSG);
             }
+            var urgencyEl = document.getElementById('mcPatientUrgencyModal');
+            if (urgencyEl) {
+              urgencyEl.hidden = false;
+              urgencyEl.removeAttribute('hidden');
+              document.body.classList.add('mc-urgency-modal-open');
+            }
             return;
           }
 
@@ -1401,6 +1420,14 @@
           const cont = await postSymptomsReview(form, complaint, 'continue', twoStep.triageId);
           const contJson = cont.data;
           if (!contJson || contJson.success === false) {
+            const failPayload = (contJson && contJson.data) || contJson || {};
+            if (failPayload.duplicate_pending || (contJson && contJson.duplicate_pending)) {
+              const existingLevel = urgencyToLevel(failPayload.triage_level || failPayload.classification_label)
+                || (failPayload.emergency ? 'emergency' : (failPayload.urgent ? 'urgent' : 'non_urgent'));
+              if (window.mcPatientUrgencyModal && typeof window.mcPatientUrgencyModal.showTriageResult === 'function') {
+                window.mcPatientUrgencyModal.showTriageResult(existingLevel, CONTINUE_MSG);
+              }
+            }
             showTriageAlert(alertEl, 'error', (contJson && contJson.message) || 'Could not continue. Please try again.');
             return;
           }
@@ -1413,7 +1440,9 @@
           if (payload.emergency) {
             showTriageAlert(alertEl, 'error', contJson.message || 'Emergency symptoms detected. Seek emergency care.');
             if (window.mcPatientUrgencyModal && typeof window.mcPatientUrgencyModal.showEmergency === 'function') {
-              window.mcPatientUrgencyModal.showEmergency(contJson.message || '');
+              window.mcPatientUrgencyModal.showEmergency(contJson.message || '', {
+                facility: payload.facility || contJson.facility || null,
+              });
             }
             return;
           }
@@ -1556,7 +1585,9 @@
               'Emergency symptoms detected. Please seek care at the nearest hospital or emergency department instead of booking an online consultation.';
             showTriageAlert(alertEl, 'error', emMsg);
             if (window.mcPatientUrgencyModal && typeof window.mcPatientUrgencyModal.showEmergency === 'function') {
-              window.mcPatientUrgencyModal.showEmergency(emMsg);
+              window.mcPatientUrgencyModal.showEmergency(emMsg, {
+                facility: data.facility || null,
+              });
             }
             if (submitBtn) submitBtn.disabled = true;
             const providerSelect = document.getElementById('booking_provider');

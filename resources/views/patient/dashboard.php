@@ -421,10 +421,13 @@ $patient_page_stylesheets = [
           if (!item) return;
           if (item.join_allowed && item.room_token) {
             const safeToken = String(item.room_token).replace(/&/g, '&amp;').replace(/"/g, '&quot;');
+            const joinLabel = String(item.status || '').toLowerCase() === 'in_consultation'
+              ? 'Rejoin Consultation'
+              : 'Join Call';
             cell.innerHTML =
               '<button type="button" class="pdash-btn pdash-btn--join pdash-btn--sm" data-mc-video-join data-token="' +
               safeToken + '" data-consultation-id="' + String(item.id || '') +
-              '">Join Call</button>';
+              '">' + joinLabel + '</button>';
           } else if (item.join_mode === 'scheduled_wait') {
             const opens = item.opens_at_label ? ('Opens at ' + item.opens_at_label) : 'Opens at scheduled time';
             cell.innerHTML =

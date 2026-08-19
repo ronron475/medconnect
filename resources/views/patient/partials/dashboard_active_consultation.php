@@ -31,6 +31,7 @@ $joinAccess = function_exists('consultation_patient_join_access')
     : ['allowed' => false, 'mode' => '', 'reason' => ''];
 
 $isLive = $status === 'in_consultation' || (!empty($joinAccess['allowed']));
+$joinLabel = ($status === 'in_consultation') ? 'Rejoin Consultation' : 'Join Consultation';
 $statusLabel = $isLive ? 'Ready to join' : ($status === 'in_consultation' ? 'In progress' : 'Scheduled');
 $title = $isLive ? 'Your consultation is ready' : 'Consultation Scheduled';
 $chipClass = $isLive ? 'pdash-care__status-chip--ready' : 'pdash-care__status-chip--scheduled';
@@ -98,7 +99,7 @@ if ($providerName !== '') {
         data-token="<?= htmlspecialchars((string) $active['room_token'], ENT_QUOTES, 'UTF-8') ?>"
         data-consultation-id="<?= $consultId ?>"
         data-label="Consultation with Dr. <?= htmlspecialchars($providerName !== '' ? $providerName : 'your provider', ENT_QUOTES, 'UTF-8') ?>">
-        Join Consultation
+        <?= htmlspecialchars($joinLabel) ?>
       </button>
       <?php elseif (($joinAccess['mode'] ?? '') === 'scheduled_wait'): ?>
       <span class="pdash-btn pdash-btn--waiting pdash-care-actions__btn" title="<?= htmlspecialchars((string) ($joinAccess['reason'] ?? ''), ENT_QUOTES, 'UTF-8') ?>">

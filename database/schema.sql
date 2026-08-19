@@ -164,6 +164,7 @@ CREATE TABLE IF NOT EXISTS `video_sessions` (
     `status` ENUM('active','ended') NOT NULL DEFAULT 'active',
     `started_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     `ended_at` DATETIME NULL,
+    `patient_left_at` DATETIME NULL,
     `recording_path` VARCHAR(500) NULL,
     PRIMARY KEY (`id`),
     UNIQUE KEY `uq_video_room_token` (`room_token`),

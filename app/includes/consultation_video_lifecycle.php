@@ -208,3 +208,101 @@ function consultation_provider_end_video_session(PDO $pdo, string $roomToken, in
         'newly_completed' => $newlyCompleted,
     ];
 }
+
+function consultation_video_sessions_ensure_patient_left_column(PDO $pdo): void
+{
+    static $done = false;
+    if ($done) {
+        return;
+    }
+    $done = true;
+    try {
+        $cols = $pdo->query('SHOW COLUMNS FROM video_sessions')->fetchAll(PDO::FETCH_COLUMN) ?: [];
+        if (!in_array('patient_left_at', $cols, true)) {
+            $pdo->exec('ALTER TABLE video_sessions ADD COLUMN patient_left_at DATETIME NULL DEFAULT NULL AFTER ended_at');
+        }
+    } catch (Throwable $e) {
+        error_log('consultation_video_sessions_ensure_patient_left_column: ' . $e->getMessage());
+    }
+}
+
+/**
+ * Patient temporarily left the room. Does not end video_sessions or complete the consultation.
+ *
+ * @return array{success:bool,consultation_id:int,marked:bool,video_status:string,consultation_status:string}
+ */
+function consultation_patient_mark_temporarily_left(PDO $pdo, string $roomToken, int $patientId): array
+{
+    $empty = [
+        'success' => true,
+        'consultation_id' => 0,
+        'marked' => false,
+        'video_status' => '',
+        'consultation_status' => '',
+    ];
+    $roomToken = trim($roomToken);
+    if ($roomToken === '' || $patientId <= 0) {
+        return $empty;
+    }
+
+    consultation_video_sessions_ensure_patient_left_column($pdo);
+
+    try {
+        $stmt = $pdo->prepare("
+            SELECT vs.id, vs.consultation_id, vs.status AS video_status, c.status AS consultation_status
+            FROM video_sessions vs
+            JOIN consultations c ON c.id = vs.consultation_id
+            WHERE vs.room_token = ?
+              AND c.patient_id = ?
+            LIMIT 1
+        ");
+        $stmt->execute([$roomToken, $patientId]);
+        $row = $stmt->fetch(PDO::FETCH_ASSOC);
+        if (!$row) {
+            return $empty;
+        }
+
+        $videoStatus = strtolower(trim((string) ($row['video_status'] ?? '')));
+        if ($videoStatus === 'active') {
+            $pdo->prepare("
+                UPDATE video_sessions
+                SET patient_left_at = NOW()
+                WHERE id = ?
+                  AND status = 'active'
+            ")->execute([(int) ($row['id'] ?? 0)]);
+        }
+
+        return [
+            'success' => true,
+            'consultation_id' => (int) ($row['consultation_id'] ?? 0),
+            'marked' => $videoStatus === 'active',
+            'video_status' => $videoStatus,
+            'consultation_status' => (string) ($row['consultation_status'] ?? ''),
+        ];
+    } catch (Throwable $e) {
+        error_log('consultation_patient_mark_temporarily_left: ' . $e->getMessage());
+
+        return $empty;
+    }
+}
+
+function consultation_patient_clear_temporarily_left(PDO $pdo, string $roomToken, int $patientId): void
+{
+    $roomToken = trim($roomToken);
+    if ($roomToken === '' || $patientId <= 0) {
+        return;
+    }
+    try {
+        consultation_video_sessions_ensure_patient_left_column($pdo);
+        $pdo->prepare("
+            UPDATE video_sessions vs
+            INNER JOIN consultations c ON c.id = vs.consultation_id
+            SET vs.patient_left_at = NULL
+            WHERE vs.room_token = ?
+              AND c.patient_id = ?
+              AND vs.status = 'active'
+        ")->execute([$roomToken, $patientId]);
+    } catch (Throwable $e) {
+        error_log('consultation_patient_clear_temporarily_left: ' . $e->getMessage());
+    }
+}

@@ -56,6 +56,7 @@ try {
 
     // Patient (or other non-provider) leave: keep room + consultation active for rejoin.
     if ($role !== 'provider') {
+        $left = consultation_patient_mark_temporarily_left($pdo, $token, $uid);
         ob_end_clean();
         echo json_encode([
             'success' => true,
@@ -63,6 +64,10 @@ try {
             'rejoinable' => true,
             'session_ended' => false,
             'consultation_completed' => false,
+            'patient_temporarily_left' => true,
+            'consultation_id' => (int) ($left['consultation_id'] ?? 0),
+            'video_status' => (string) ($left['video_status'] ?? 'active'),
+            'consultation_status' => (string) ($left['consultation_status'] ?? ''),
         ]);
         exit;
     }
