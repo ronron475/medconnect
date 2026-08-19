@@ -129,6 +129,9 @@
     if (videoEl) {
       if (videoEl.srcObject !== stream) videoEl.srcObject = stream;
       videoEl.playsInline = true;
+      videoEl.setAttribute('playsinline', '');
+      videoEl.setAttribute('webkit-playsinline', '');
+      videoEl.autoplay = true;
       // Start muted so Chrome allows autoplay; unlockRemoteAudio unmutes after gesture / permission.
       videoEl.muted = true;
       if (videoEl.paused) {
@@ -317,20 +320,241 @@
     };
   }
 
+  function isMobileViewport() {
+    try {
+      return !!(global.matchMedia && global.matchMedia('(max-width: 768px)').matches);
+    } catch (e) {
+      return false;
+    }
+  }
+
   function getAudioConstraints() {
     return {
       echoCancellation: true,
       noiseSuppression: true,
       autoGainControl: true,
+      channelCount: 1,
     };
   }
 
-  /** Prefer front camera; `ideal` avoids NotReadableError on phones that reject exact facingMode. */
-  function getVideoConstraints() {
-    return {
+  /**
+   * Telemedicine capture: prefer real-time over 1080p. `ideal` (not exact) avoids
+   * OverconstrainedError on phones that cannot hit a given size/fps.
+   */
+  function getVideoConstraints(overrides) {
+    const mobile = isMobileViewport();
+    const constraints = {
       facingMode: { ideal: 'user' },
-      width: { ideal: 640 },
-      height: { ideal: 480 },
+      width: { max: 1280, ideal: mobile ? 480 : 640 },
+      height: { max: 720, ideal: mobile ? 360 : 480 },
+      frameRate: { max: 24, ideal: mobile ? 15 : 20 },
+    };
+    if (overrides && typeof overrides === 'object') {
+      Object.keys(overrides).forEach((key) => {
+        constraints[key] = overrides[key];
+      });
+    }
+    return constraints;
+  }
+
+  function hintLiveTracks(stream) {
+    if (!stream || !stream.getTracks) return;
+    stream.getTracks().forEach((track) => {
+      try {
+        if (track.kind === 'audio') track.contentHint = 'speech';
+        if (track.kind === 'video') track.contentHint = 'motion';
+      } catch (e) {}
+    });
+  }
+
+  function applyCaptureConstraints(stream) {
+    if (!stream || !stream.getVideoTracks) return Promise.resolve();
+    const track = stream.getVideoTracks()[0];
+    if (!track || typeof track.applyConstraints !== 'function') return Promise.resolve();
+    hintLiveTracks(stream);
+    return track.applyConstraints(getVideoConstraints()).catch(() => {});
+  }
+
+  /** Cap SDP video bandwidth (kbps). PeerJS can apply this via sdpTransform. */
+  function constrainCallSdp(sdp) {
+    if (typeof sdp !== 'string' || sdp.indexOf('m=video') === -1) return sdp;
+    if (/m=video[\s\S]*?b=AS:/i.test(sdp)) return sdp;
+    return sdp.replace(/(m=video[^\r\n]*\r?\n)/, '$1b=AS:750\r\n');
+  }
+
+  function applySenderEncodings(pc, options) {
+    if (!pc || typeof pc.getSenders !== 'function') return Promise.resolve();
+    const opts = options || {};
+    const videoMaxBitrate = opts.videoMaxBitrate || 700000;
+    const videoMaxFramerate = opts.videoMaxFramerate || 20;
+    const scale = opts.scaleResolutionDownBy || 1;
+    const tasks = [];
+
+    pc.getSenders().forEach((sender) => {
+      if (!sender || !sender.track || typeof sender.getParameters !== 'function') return;
+      try {
+        if (sender.track.kind === 'audio') sender.track.contentHint = 'speech';
+        if (sender.track.kind === 'video') sender.track.contentHint = 'motion';
+      } catch (e) {}
+      let params;
+      try {
+        params = sender.getParameters();
+      } catch (e) {
+        return;
+      }
+      if (!params.encodings || !params.encodings.length) params.encodings = [{}];
+      if (sender.track.kind === 'video') {
+        params.encodings[0].maxBitrate = videoMaxBitrate;
+        params.encodings[0].maxFramerate = videoMaxFramerate;
+        params.encodings[0].scaleResolutionDownBy = scale;
+        params.encodings[0].priority = 'medium';
+        params.encodings[0].networkPriority = 'medium';
+        params.degradationPreference = 'maintain-framerate';
+      } else if (sender.track.kind === 'audio') {
+        params.encodings[0].maxBitrate = 48000;
+        params.encodings[0].priority = 'high';
+        params.encodings[0].networkPriority = 'high';
+      }
+      tasks.push(sender.setParameters(params).catch(() => {}));
+    });
+
+    return Promise.all(tasks).then(() => {});
+  }
+
+  function applyReceiverLowLatency(pc) {
+    if (!pc || typeof pc.getReceivers !== 'function') return;
+    pc.getReceivers().forEach((receiver) => {
+      try {
+        if ('playoutDelayHint' in receiver) receiver.playoutDelayHint = 0;
+      } catch (e) {}
+      try {
+        if ('jitterBufferTarget' in receiver) receiver.jitterBufferTarget = 0;
+      } catch (e) {}
+    });
+  }
+
+  function applyRtcPerformance(pc, options) {
+    applyReceiverLowLatency(pc);
+    return applySenderEncodings(pc, options);
+  }
+
+  function qualityFromStats(snapshot, iceState, connState) {
+    const ice = String(iceState || '');
+    const conn = String(connState || '');
+    if (ice === 'failed' || conn === 'failed') {
+      return { level: 'poor', label: '● Poor Connection' };
+    }
+    if (ice === 'disconnected' || conn === 'disconnected' || ice === 'checking') {
+      return { level: 'reconnecting', label: '◌ Reconnecting…' };
+    }
+    const loss = snapshot && typeof snapshot.lossRate === 'number' ? snapshot.lossRate : 0;
+    const jitter = snapshot && typeof snapshot.jitter === 'number' ? snapshot.jitter : 0;
+    const rtt = snapshot && typeof snapshot.rtt === 'number' ? snapshot.rtt : 0;
+    if (loss > 0.08 || jitter > 0.05 || rtt > 0.45) {
+      return { level: 'poor', label: '● Poor Connection' };
+    }
+    if (loss > 0.02 || jitter > 0.03 || rtt > 0.25) {
+      return { level: 'fair', label: '● Fair Connection' };
+    }
+    return { level: 'good', label: '● Good Connection' };
+  }
+
+  function createStatsCollector() {
+    let prev = null;
+    return function collectRtcStats(pc) {
+      if (!pc || typeof pc.getStats !== 'function') return Promise.resolve(null);
+      return pc.getStats().then((report) => {
+        const byId = {};
+        report.forEach((row) => { byId[row.id] = row; });
+        const now = {
+          ts: Date.now(),
+          packetsLost: 0,
+          packetsReceived: 0,
+          packetsSent: 0,
+          bytesReceived: 0,
+          bytesSent: 0,
+          jitter: 0,
+          rtt: 0,
+          framesDecoded: 0,
+          framesDropped: 0,
+          framesReceived: 0,
+          fps: 0,
+          inboundBitrate: 0,
+          outboundBitrate: 0,
+          availableIncomingBitrate: 0,
+          availableOutgoingBitrate: 0,
+          localCandidateType: '',
+          remoteCandidateType: '',
+          usingTurn: false,
+          codec: '',
+          width: 0,
+          height: 0,
+          selectedPairState: '',
+          lossRate: 0,
+          connectionState: pc.connectionState || '',
+          iceConnectionState: pc.iceConnectionState || '',
+          signalingState: pc.signalingState || '',
+        };
+
+        report.forEach((row) => {
+          if (row.type === 'inbound-rtp') {
+            now.packetsLost += row.packetsLost || 0;
+            now.packetsReceived += row.packetsReceived || 0;
+            now.bytesReceived += row.bytesReceived || 0;
+            if (typeof row.jitter === 'number') now.jitter = Math.max(now.jitter, row.jitter);
+            if (row.kind === 'video') {
+              now.framesDecoded = row.framesDecoded || now.framesDecoded;
+              now.framesDropped = row.framesDropped || now.framesDropped;
+              now.framesReceived = row.framesReceived || now.framesReceived;
+              now.fps = row.framesPerSecond || now.fps;
+              const codec = row.codecId && byId[row.codecId];
+              if (codec && codec.mimeType) now.codec = codec.mimeType;
+            }
+          }
+          if (row.type === 'outbound-rtp') {
+            now.packetsSent += row.packetsSent || 0;
+            now.bytesSent += row.bytesSent || 0;
+            if (row.kind === 'video') {
+              now.width = row.frameWidth || now.width;
+              now.height = row.frameHeight || now.height;
+              now.fps = now.fps || row.framesPerSecond || 0;
+            }
+          }
+          if (row.type === 'media-source' && row.kind === 'video') {
+            now.width = now.width || row.width || 0;
+            now.height = now.height || row.height || 0;
+            now.fps = now.fps || row.framesPerSecond || 0;
+          }
+          if (row.type === 'candidate-pair' && (row.nominated || row.selected || row.state === 'succeeded')) {
+            now.rtt = row.currentRoundTripTime || row.roundTripTime || now.rtt;
+            now.availableIncomingBitrate = row.availableIncomingBitrate || now.availableIncomingBitrate;
+            now.availableOutgoingBitrate = row.availableOutgoingBitrate || now.availableOutgoingBitrate;
+            now.selectedPairState = row.state || now.selectedPairState;
+            const local = byId[row.localCandidateId];
+            const remote = byId[row.remoteCandidateId];
+            if (local) now.localCandidateType = local.candidateType || '';
+            if (remote) now.remoteCandidateType = remote.candidateType || '';
+            now.usingTurn = now.localCandidateType === 'relay' || now.remoteCandidateType === 'relay';
+          }
+          if (row.type === 'remote-inbound-rtp' && typeof row.roundTripTime === 'number') {
+            now.rtt = row.roundTripTime;
+          }
+        });
+
+        if (prev && now.ts > prev.ts) {
+          const dt = (now.ts - prev.ts) / 1000;
+          now.inboundBitrate = Math.max(0, Math.round(8 * (now.bytesReceived - prev.bytesReceived) / dt));
+          now.outboundBitrate = Math.max(0, Math.round(8 * (now.bytesSent - prev.bytesSent) / dt));
+          const lostDelta = Math.max(0, now.packetsLost - prev.packetsLost);
+          const recvDelta = Math.max(0, now.packetsReceived - prev.packetsReceived);
+          const sentDelta = Math.max(0, now.packetsSent - prev.packetsSent);
+          const totalDelta = lostDelta + recvDelta + sentDelta;
+          now.lossRate = totalDelta > 0 ? lostDelta / totalDelta : 0;
+        }
+
+        prev = now;
+        return now;
+      }).catch(() => null);
     };
   }
 
@@ -377,8 +601,13 @@
     }
 
     if (connEl && extras.connectionLabel) {
-      connEl.textContent = extras.connectionLabel;
-      connEl.dataset.state = extras.connectionState || '';
+      const liveLevel = connEl.dataset.level;
+      const keepStats = extras.connectionState === 'connected'
+        && (liveLevel === 'good' || liveLevel === 'fair' || liveLevel === 'poor');
+      if (!keepStats) {
+        connEl.textContent = extras.connectionLabel;
+        connEl.dataset.state = extras.connectionState || '';
+      }
     }
 
     if (callStatus && extras.callStatusText) {
@@ -387,7 +616,7 @@
   }
 
   function connectionLabelFor(role, statusKey) {
-    if (statusKey === STATUS.CONNECTED) return '● Good Connection';
+    if (statusKey === STATUS.CONNECTED) return '● Connected';
     if (statusKey === STATUS.RECONNECTING) return '◌ Reconnecting…';
     if (statusKey === STATUS.WAITING_PROVIDER) return '◌ Waiting for Healthcare Provider';
     if (statusKey === STATUS.WAITING_PATIENT) return '◌ Waiting for Patient';
@@ -426,6 +655,14 @@
     unlockRemoteAudio,
     getAudioConstraints,
     getVideoConstraints,
+    applyCaptureConstraints,
+    hintLiveTracks,
+    constrainCallSdp,
+    applySenderEncodings,
+    applyReceiverLowLatency,
+    applyRtcPerformance,
+    createStatsCollector,
+    qualityFromStats,
     micStateFromStream,
     camStateFromStream,
     updateMediaStatusUI,

@@ -427,8 +427,11 @@
 
       facingMode = facingMode === 'user' ? 'environment' : 'user';
       try {
+        const videoConstraints = (window.McVideoCallCore && typeof McVideoCallCore.getVideoConstraints === 'function')
+          ? McVideoCallCore.getVideoConstraints({ facingMode: { ideal: facingMode } })
+          : { facingMode: { ideal: facingMode }, width: { max: 1280, ideal: 640 }, height: { max: 720, ideal: 480 }, frameRate: { max: 24, ideal: 20 } };
         const newStream = await navigator.mediaDevices.getUserMedia({
-          video: { facingMode: { ideal: facingMode } },
+          video: videoConstraints,
           audio: false,
         });
         const newTrack = newStream.getVideoTracks()[0];
@@ -598,6 +601,10 @@
 
     function getPeerConnection() {
       try {
+        if (window.McWebrtcPeerCall && typeof McWebrtcPeerCall.getPeerConnection === 'function') {
+          const fromPeer = McWebrtcPeerCall.getPeerConnection();
+          if (fromPeer) return fromPeer;
+        }
         if (window.__mcCurrentCall && window.__mcCurrentCall.peerConnection) {
           return window.__mcCurrentCall.peerConnection;
         }
@@ -605,8 +612,24 @@
       return null;
     }
 
+    function ensureStatsPanel() {
+      if (!window.McVideoCallCore || !McVideoCallCore.debugEnabled()) return null;
+      let panel = q('mcWebrtcStatsPanel');
+      if (panel) return panel;
+      panel = document.createElement('pre');
+      panel.id = 'mcWebrtcStatsPanel';
+      panel.setAttribute('aria-hidden', 'true');
+      panel.style.cssText = 'position:fixed;right:8px;bottom:8px;z-index:9999;max-width:min(360px,92vw);max-height:40vh;overflow:auto;margin:0;padding:10px 12px;border-radius:10px;background:rgba(2,6,23,0.88);color:#e2e8f0;font:11px/1.4 ui-monospace,Consolas,monospace;pointer-events:none;';
+      document.body.appendChild(panel);
+      return panel;
+    }
+
     function startNetworkMonitor() {
       if (networkInterval) return;
+      const collect = (window.McVideoCallCore && typeof McVideoCallCore.createStatsCollector === 'function')
+        ? McVideoCallCore.createStatsCollector()
+        : null;
+
       networkInterval = setInterval(async () => {
         if (window.__mcCallEnded) return;
         const pc = getPeerConnection();
@@ -632,37 +655,32 @@
         }
 
         try {
-          const stats = await pc.getStats();
-          let packetsLost = 0;
-          let packetsReceived = 0;
-          let jitter = 0;
-
-          stats.forEach((report) => {
-            if (report.type === 'inbound-rtp' && report.kind === 'video') {
-              packetsLost += report.packetsLost || 0;
-              packetsReceived += report.packetsReceived || 0;
-              jitter = report.jitter || 0;
-            }
-          });
-
-          const total = packetsLost + packetsReceived;
-          const lossRate = total > 0 ? packetsLost / total : 0;
-          let level = 'good';
-          let label = '● Good connection';
-
-          if (lossRate > 0.08 || jitter > 0.05) {
-            level = 'poor';
-            label = '● Poor connection — reconnecting…';
-          } else if (lossRate > 0.02 || jitter > 0.02) {
-            level = 'fair';
-            label = '● Fair connection';
+          const snapshot = collect ? await collect(pc) : null;
+          const ice = pc.iceConnectionState || '';
+          const conn = pc.connectionState || '';
+          let quality = { level: 'good', label: '● Good Connection' };
+          if (window.McVideoCallCore && typeof McVideoCallCore.qualityFromStats === 'function' && snapshot) {
+            quality = McVideoCallCore.qualityFromStats(snapshot, ice, conn);
           }
+          netEl.textContent = quality.label;
+          netEl.dataset.state = quality.level;
+          netEl.dataset.level = quality.level;
+          window.__mcWebrtcStats = snapshot;
 
-          netEl.textContent = label;
-          netEl.dataset.state = level;
-          netEl.dataset.level = level;
+          const panel = ensureStatsPanel();
+          if (panel && snapshot) {
+            panel.textContent = [
+              'ICE ' + ice + ' / PC ' + conn,
+              'pair ' + (snapshot.localCandidateType || '?') + ' → ' + (snapshot.remoteCandidateType || '?') + (snapshot.usingTurn ? ' (TURN)' : ''),
+              'RTT ' + Math.round((snapshot.rtt || 0) * 1000) + 'ms  jitter ' + (snapshot.jitter || 0).toFixed(3),
+              'loss ' + ((snapshot.lossRate || 0) * 100).toFixed(1) + '%  fps ' + Math.round(snapshot.fps || 0),
+              (snapshot.width || 0) + '×' + (snapshot.height || 0) + '  ' + Math.round((snapshot.outboundBitrate || 0) / 1000) + ' kbps out',
+              'in ' + Math.round((snapshot.inboundBitrate || 0) / 1000) + ' kbps  dropped ' + (snapshot.framesDropped || 0),
+              snapshot.codec || '',
+            ].filter(Boolean).join('\n');
+          }
         } catch (e) {}
-      }, 5000);
+      }, 4000);
     }
 
     function wireControlButtons() {

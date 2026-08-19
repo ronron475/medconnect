@@ -40,31 +40,38 @@
     if (!input || input.dataset.mcPwWrapped) return;
     options = options || {};
     var minLength = options.minLength || 12;
+    var showStrength = options.showStrength !== false;
+    var showToggle = options.showToggle !== false;
 
     input.dataset.mcPwWrapped = '1';
-    var wrap = document.createElement('div');
-    wrap.className = 'mc-password-wrap';
-    input.parentNode.insertBefore(wrap, input);
-    wrap.appendChild(input);
-
-    var toggle = document.createElement('button');
-    toggle.type = 'button';
-    toggle.className = 'mc-password-toggle';
-    toggle.setAttribute('aria-label', 'Show password');
-    toggle.innerHTML = EYE_OPEN;
-    wrap.appendChild(toggle);
-
-    toggle.addEventListener('click', function () {
-      var show = input.type === 'password';
-      input.type = show ? 'text' : 'password';
-      toggle.innerHTML = show ? EYE_OFF : EYE_OPEN;
-      toggle.setAttribute('aria-label', show ? 'Hide password' : 'Show password');
-    });
-
     var field = input.closest('.mc-field') || input.parentElement;
+
+    if (showToggle) {
+      var wrap = document.createElement('div');
+      wrap.className = 'mc-password-wrap';
+      input.parentNode.insertBefore(wrap, input);
+      wrap.appendChild(input);
+
+      var toggle = document.createElement('button');
+      toggle.type = 'button';
+      toggle.className = 'mc-password-toggle';
+      toggle.setAttribute('aria-label', 'Show password');
+      toggle.innerHTML = EYE_OPEN;
+      wrap.appendChild(toggle);
+
+      toggle.addEventListener('click', function () {
+        var show = input.type === 'password';
+        input.type = show ? 'text' : 'password';
+        toggle.innerHTML = show ? EYE_OFF : EYE_OPEN;
+        toggle.setAttribute('aria-label', show ? 'Hide password' : 'Show password');
+      });
+    }
+
+    if (!showStrength) return;
+
     var strength = document.createElement('div');
     strength.className = 'mc-password-strength';
-    strength.innerHTML = '<span class="mc-password-strength__label">Password strength</span><div class="mc-password-strength__bars"><span class="mc-password-strength__bar"></span><span class="mc-password-strength__bar"></span><span class="mc-password-strength__bar"></span><span class="mc-password-strength__bar"></span><span class="mc-password-strength__bar"></span></div><span class="mc-password-strength__text"></span>';
+    strength.innerHTML = '<span class="mc-password-strength__label">Strength</span><div class="mc-password-strength__bars"><span class="mc-password-strength__bar"></span><span class="mc-password-strength__bar"></span><span class="mc-password-strength__bar"></span><span class="mc-password-strength__bar"></span><span class="mc-password-strength__bar"></span></div><span class="mc-password-strength__text"></span>';
     field.appendChild(strength);
 
     var rulesEl = document.createElement('ul');
@@ -93,6 +100,49 @@
     refreshStrength();
   }
 
+  /** Collect form values including disabled fields (disabled inputs are omitted from FormData). */
+  function buildFormData(form) {
+    var fd = new FormData();
+    if (!form) return fd;
+    form.querySelectorAll('input, select, textarea').forEach(function (el) {
+      if (!el.name || el.type === 'file' || el.type === 'button' || el.type === 'submit') return;
+      if (el.type === 'checkbox') {
+        if (el.checked) fd.append(el.name, el.value || '1');
+        return;
+      }
+      if (el.type === 'radio') {
+        if (el.checked) fd.append(el.name, el.value);
+        return;
+      }
+      fd.append(el.name, el.value);
+    });
+    return fd;
+  }
+
+  function clearFieldErrors(form) {
+    if (!form) return;
+    form.querySelectorAll('.mc-field__input.is-invalid, input.is-invalid, select.is-invalid, textarea.is-invalid').forEach(function (el) {
+      setFieldError(el, '');
+    });
+  }
+
+  function bindFieldErrorClear(form) {
+    if (!form || form.dataset.mcFieldClearBound === '1') return;
+    form.dataset.mcFieldClearBound = '1';
+    form.addEventListener('input', function (e) {
+      var el = e.target;
+      if (el && el.classList && el.classList.contains('is-invalid')) {
+        setFieldError(el, '');
+      }
+    });
+    form.addEventListener('change', function (e) {
+      var el = e.target;
+      if (el && el.classList && el.classList.contains('is-invalid')) {
+        setFieldError(el, '');
+      }
+    });
+  }
+
   function initPasswordConfirm(passwordInput, confirmInput) {
     if (!passwordInput || !confirmInput) return;
 
@@ -102,7 +152,10 @@
     matchEl.setAttribute('aria-live', 'polite');
     if (field) field.appendChild(matchEl);
 
-    wrapPasswordInput(confirmInput, { minLength: parseInt(passwordInput.getAttribute('minlength') || '12', 10) });
+    wrapPasswordInput(confirmInput, {
+      minLength: parseInt(passwordInput.getAttribute('minlength') || '12', 10),
+      showStrength: false,
+    });
 
     function refreshMatch() {
       var p = passwordInput.value;
@@ -253,6 +306,9 @@
     setFieldError: setFieldError,
     setFormLoading: setFormLoading,
     showFormAlert: showFormAlert,
+    buildFormData: buildFormData,
+    clearFieldErrors: clearFieldErrors,
+    bindFieldErrorClear: bindFieldErrorClear,
     enhanceFileInput: enhanceFileInput,
     enhanceFileInputsIn: enhanceFileInputsIn,
     syncFileInputDisplay: syncFileInputDisplay,

@@ -21,6 +21,27 @@ profile_picture_ensure_schema($pdo);
 require_once __DIR__ . '/_portal_access.php';
 
 $page_title = 'User Account Management';
+$um_heading = 'User Account Management';
+$um_subtitle = 'Monitor and manage all system accounts including patients and medical staff.';
+$um_search_placeholder = 'Search by name or email...';
+$um_empty_message = 'No users matching your criteria.';
+$um_archived_empty = 'No archived accounts found.';
+
+if ($role_filter === 'patient') {
+    $page_title = 'Patient Account Management';
+    $um_heading = 'Patient Account Management';
+    $um_subtitle = 'Search, monitor, and manage patient accounts.';
+    $um_search_placeholder = 'Search patients by name or email...';
+    $um_empty_message = 'No patients matching your criteria.';
+    $um_archived_empty = 'No archived patient accounts found.';
+} elseif ($role_filter === 'admin') {
+    $page_title = 'Administrator Account Management';
+    $um_heading = 'Administrator Account Management';
+    $um_subtitle = 'Search, monitor, and manage administrator accounts.';
+    $um_search_placeholder = 'Search administrators by name or email...';
+    $um_empty_message = 'No administrators matching your criteria.';
+    $um_archived_empty = 'No archived administrator accounts found.';
+}
 $show_success = isset($_GET['created']);
 $show_restored = isset($_GET['restored']);
 $is_superadmin = portal_is_superadmin();
@@ -92,8 +113,8 @@ require_once __DIR__ . '/partials/layout_open.php';
 
 <div class="header-row" style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 24px; flex-wrap: wrap; gap: 16px;">
     <div>
-        <h2 class="text-h2">User Account Management</h2>
-        <p class="text-muted">Monitor and manage all system accounts including patients and medical staff.</p>
+        <h2 class="text-h2"><?= htmlspecialchars($um_heading) ?></h2>
+        <p class="text-muted"><?= htmlspecialchars($um_subtitle) ?></p>
     </div>
     <?php if (!$is_archived_view): ?>
     <button type="button" class="mc-btn mc-btn--primary" data-open-create-doctor>
@@ -104,7 +125,7 @@ require_once __DIR__ . '/partials/layout_open.php';
 
 <form method="GET" class="mc-card" style="padding: 16px 20px; margin-bottom: 20px;">
     <div class="um-filter-bar">
-        <input type="text" name="search" value="<?= htmlspecialchars($search) ?>" placeholder="Search by name or email..." class="mc-btn mc-btn--outline um-filter-bar" style="flex:1; min-width:200px;">
+        <input type="text" name="search" value="<?= htmlspecialchars($search) ?>" placeholder="<?= htmlspecialchars($um_search_placeholder) ?>" class="mc-btn mc-btn--outline um-filter-bar" style="flex:1; min-width:200px;">
         <select name="status" class="mc-btn mc-btn--outline" onchange="this.form.submit()">
             <option value="all" <?= $status_filter === 'all' ? 'selected' : '' ?>>All Accounts</option>
             <option value="active" <?= $status_filter === 'active' ? 'selected' : '' ?>>Active</option>
@@ -264,7 +285,7 @@ require_once __DIR__ . '/partials/layout_open.php';
             <tr>
                 <td colspan="<?= $is_archived_view ? 9 : 7 ?>">
                     <div class="mc-table-empty">
-                        <?= $is_archived_view ? 'No archived accounts found.' : 'No users matching your criteria.' ?>
+                        <?= $is_archived_view ? htmlspecialchars($um_archived_empty) : htmlspecialchars($um_empty_message) ?>
                     </div>
                 </td>
             </tr>
@@ -281,7 +302,11 @@ require_once __DIR__ . '/partials/layout_open.php';
 </p>
 <?php endif; ?>
 
-<?php require __DIR__ . '/partials/create_doctor_modal.php'; ?>
+<?php
+$create_doctor_api = ASSET_BASE . '/app/api/admin/doctor_applications.php';
+$create_doctor_submit_label = 'Submit Application';
+require __DIR__ . '/partials/create_doctor_modal.php';
+?>
 
 <?php
 $account_status_api = ASSET_BASE . '/app/api/admin/account_status.php';

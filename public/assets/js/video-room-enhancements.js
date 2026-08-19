@@ -219,18 +219,8 @@
   }
 
   function enhanceNetworkMonitor() {
-    const netEl = q('mediaStatusConn');
-    if (!netEl || netEl.dataset.mcNetEnhanced) return;
-    netEl.dataset.mcNetEnhanced = '1';
-    setInterval(() => {
-      const level = netEl.dataset.level || netEl.dataset.state || '';
-      if (level === 'good') netEl.textContent = mapConnectionLabel('good');
-      else if (level === 'fair') netEl.textContent = mapConnectionLabel('fair');
-      else if (level === 'poor') netEl.textContent = mapConnectionLabel('poor');
-      else if (level === 'connected' || /good/i.test(netEl.textContent)) {
-        netEl.textContent = mapConnectionLabel('excellent');
-      }
-    }, 5000);
+    // Quality labels come from RTCPeerConnection.getStats() in video-consultation-ui.js.
+    // Do not overwrite them with a static "Excellent Connection".
   }
 
   function chatInitials(name) {

@@ -754,8 +754,8 @@ if (session_status() === PHP_SESSION_ACTIVE) {
     </div>
 
     <!-- Hidden video elements (mounted into main/PiP slots by UI module) -->
-    <video id="localVideo" autoplay muted playsinline style="display:none"></video>
-    <video id="remoteVideo" autoplay playsinline style="display:none"></video>
+    <video id="localVideo" autoplay muted playsinline webkit-playsinline disablepictureinpicture style="display:none"></video>
+    <video id="remoteVideo" autoplay playsinline webkit-playsinline disablepictureinpicture style="display:none"></video>
     <button type="button" id="enableSoundBtn" class="mc-vc-enable-sound enable-sound-btn" hidden>🔊 Enable Audio</button>
     <span id="remoteName" hidden><?= htmlspecialchars($other_name) ?></span>
 
@@ -933,7 +933,9 @@ if (session_status() === PHP_SESSION_ACTIVE) {
       config: {
         iceServers: <?= json_encode(medconnect_ice_servers(), JSON_UNESCAPED_SLASHES) ?>,
         iceTransportPolicy: 'all',
-        bundlePolicy: 'max-bundle'
+        bundlePolicy: 'max-bundle',
+        rtcpMuxPolicy: 'require',
+        iceCandidatePoolSize: 2
       }
     };
     const hasTurnServer = <?= medconnect_has_turn_server() ? 'true' : 'false' ?>;
@@ -950,6 +952,7 @@ if (session_status() === PHP_SESSION_ACTIVE) {
     let canvasStream;
     let canvasContext;
     let drawInterval;
+    let recordingRafId = 0;
     let uploadPromise; // To wait for upload before redirecting
     let endingCall = false;
     let recordingAudioContext;
@@ -1088,7 +1091,7 @@ if (session_status() === PHP_SESSION_ACTIVE) {
           callStatusText: 'Connected',
         });
       }
-      syncMediaStatus({ connectionLabel: '● Good Connection', connectionState: 'connected' });
+      syncMediaStatus({ connectionLabel: '● Connected', connectionState: 'connected' });
       const tip = document.getElementById('demoConnectTip');
       if (tip) tip.style.display = 'none';
       connectRemoteAudioToRecording();
@@ -1423,7 +1426,7 @@ if (session_status() === PHP_SESSION_ACTIVE) {
       if (consultUi && typeof consultUi.startDurationTimer === 'function') {
         consultUi.startDurationTimer();
       }
-      syncMediaStatus({ connectionLabel: '● Good Connection', connectionState: 'connected' });
+      syncMediaStatus({ connectionLabel: '● Connected', connectionState: 'connected' });
       const tip = document.getElementById('demoConnectTip');
       if (tip) tip.style.display = 'none';
       connectRemoteAudioToRecording();
@@ -1694,6 +1697,11 @@ if (session_status() === PHP_SESSION_ACTIVE) {
       if (userRole === 'provider') startCall();
       if (callInterval) clearInterval(callInterval);
       callInterval = setInterval(() => {
+        if (endingCall || window.__mcCallEnded) return;
+        if (callHasRemoteStream && isCallConnected()) {
+          openDataChannel();
+          return;
+        }
         openDataChannel();
         flushPendingCall();
         if (userRole === 'provider' || patientMayDial) startCall();
@@ -1856,6 +1864,9 @@ if (session_status() === PHP_SESSION_ACTIVE) {
           video: videoEnabled ? videoConstraints : false,
           audio: audioConstraints
         });
+        if (window.McVideoCallCore && typeof McVideoCallCore.applyCaptureConstraints === 'function') {
+          await McVideoCallCore.applyCaptureConstraints(localStream);
+        }
       } catch (err) {
         console.warn('Media request failed:', err);
         if (videoEnabled) {
@@ -2025,6 +2036,11 @@ if (session_status() === PHP_SESSION_ACTIVE) {
     }
 
     function teardownRecordingPipeline() {
+      canvasContext = null;
+      if (recordingRafId) {
+        cancelAnimationFrame(recordingRafId);
+        recordingRafId = 0;
+      }
       if (drawInterval) {
         clearInterval(drawInterval);
         drawInterval = null;
@@ -2110,11 +2126,14 @@ if (session_status() === PHP_SESSION_ACTIVE) {
       let resolveUpload;
       uploadPromise = new Promise(resolve => { resolveUpload = resolve; });
 
-      // 1. Create a hidden canvas for compositing
+      // Recording must not compete with the live WebRTC encode on the main thread.
+      // Composite at 480p / 10fps (360p on phones) instead of 720p@30 with clip().
+      const lowPower = (navigator.deviceMemory && navigator.deviceMemory <= 4)
+        || (window.matchMedia && window.matchMedia('(max-width: 768px)').matches);
       const canvas = document.createElement('canvas');
-      canvas.width = 1280;
-      canvas.height = 720;
-      canvasContext = canvas.getContext('2d');
+      canvas.width = lowPower ? 640 : 854;
+      canvas.height = lowPower ? 360 : 480;
+      canvasContext = canvas.getContext('2d', { alpha: false, desynchronized: true });
       
       const doctorVideo = document.getElementById('localVideo');
       const patientVideo = document.getElementById('remoteVideo');
@@ -2122,21 +2141,13 @@ if (session_status() === PHP_SESSION_ACTIVE) {
       function drawContainedVideo(video, x, y, w, h) {
         const vw = video.videoWidth || 0;
         const vh = video.videoHeight || 0;
-        if (!vw || !vh) {
-          canvasContext.drawImage(video, x, y, w, h);
-          return;
-        }
+        if (!vw || !vh) return;
         const scale = Math.max(w / vw, h / vh);
-        const dw = vw * scale;
-        const dh = vh * scale;
-        const dx = x + (w - dw) / 2;
-        const dy = y + (h - dh) / 2;
-        canvasContext.save();
-        canvasContext.beginPath();
-        canvasContext.rect(x, y, w, h);
-        canvasContext.clip();
-        canvasContext.drawImage(video, dx, dy, dw, dh);
-        canvasContext.restore();
+        const sw = w / scale;
+        const sh = h / scale;
+        const sx = (vw - sw) / 2;
+        const sy = (vh - sh) / 2;
+        canvasContext.drawImage(video, sx, sy, sw, sh, x, y, w, h);
       }
 
       // 2. Composite Drawing Function (Doctor in Corner, Patient Full Screen)
@@ -2156,9 +2167,9 @@ if (session_status() === PHP_SESSION_ACTIVE) {
         }
 
         if (hasPatientVideo && hasDoctorVideo) {
-          const pipWidth = 320;
-          const pipHeight = 180;
-          const padding = 20;
+          const pipWidth = lowPower ? 160 : 213;
+          const pipHeight = lowPower ? 90 : 120;
+          const padding = 12;
           const pipX = canvas.width - pipWidth - padding;
           const pipY = canvas.height - pipHeight - padding;
           canvasContext.fillStyle = '#020617';
@@ -2167,12 +2178,24 @@ if (session_status() === PHP_SESSION_ACTIVE) {
         }
       }
 
-      // 3. Setup Canvas Stream (30 FPS)
-      drawInterval = setInterval(drawFrame, 1000 / 30);
-      canvasStream = canvas.captureStream(30);
+      const recFps = lowPower ? 8 : 10;
+      const recIntervalMs = 1000 / recFps;
+      let lastRecDraw = 0;
+      function recLoop(ts) {
+        if (!canvasContext) return;
+        recordingRafId = requestAnimationFrame(recLoop);
+        if (ts - lastRecDraw < recIntervalMs) return;
+        lastRecDraw = ts;
+        drawFrame();
+      }
+      recordingRafId = requestAnimationFrame(recLoop);
+      canvasStream = canvas.captureStream(recFps);
 
-      // 4. Mix Audio Tracks (provider local + patient remote into one destination)
-      recordingAudioContext = new AudioContext();
+      try {
+        recordingAudioContext = new AudioContext({ latencyHint: 'playback' });
+      } catch (e) {
+        recordingAudioContext = new AudioContext();
+      }
       recordingAudioDestination = recordingAudioContext.createMediaStreamDestination();
       if (recordingAudioContext.state === 'suspended') {
         recordingAudioContext.resume().catch(function () {});
@@ -2192,11 +2215,14 @@ if (session_status() === PHP_SESSION_ACTIVE) {
       
       const preferredType = 'video/webm;codecs=vp8,opus';
       const fallbackType = 'video/webm';
-      const options = MediaRecorder.isTypeSupported(preferredType)
-        ? { mimeType: preferredType }
-        : (MediaRecorder.isTypeSupported(fallbackType) ? { mimeType: fallbackType } : {});
+      const recorderOpts = {
+        videoBitsPerSecond: lowPower ? 400000 : 700000,
+        audioBitsPerSecond: 48000,
+      };
+      if (MediaRecorder.isTypeSupported(preferredType)) recorderOpts.mimeType = preferredType;
+      else if (MediaRecorder.isTypeSupported(fallbackType)) recorderOpts.mimeType = fallbackType;
 
-      mediaRecorder = new MediaRecorder(combinedStream, options);
+      mediaRecorder = new MediaRecorder(combinedStream, recorderOpts);
       
       mediaRecorder.ondataavailable = (event) => {
         if (event.data.size > 0) recordedChunks.push(event.data);
@@ -2302,7 +2328,7 @@ if (session_status() === PHP_SESSION_ACTIVE) {
       };
 
       if (mediaRecorder.state === 'inactive') {
-        mediaRecorder.start(1000);
+        mediaRecorder.start(2000);
         console.log("PiP Recording started.");
       }
     }
@@ -2651,6 +2677,10 @@ if (session_status() === PHP_SESSION_ACTIVE) {
       if (demoHelloTimer) {
         clearInterval(demoHelloTimer);
         demoHelloTimer = null;
+      }
+      if (recordingRafId) {
+        cancelAnimationFrame(recordingRafId);
+        recordingRafId = 0;
       }
       if (drawInterval) {
         clearInterval(drawInterval);

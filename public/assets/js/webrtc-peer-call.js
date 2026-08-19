@@ -28,9 +28,17 @@
   var intentionalLeave = false;
   var callStartedAt = 0;
   var MAX_RECONNECT_ATTEMPTS = 6;
-  var ICE_DISCONNECT_GRACE_MS = 2800;
+  /** Brief ICE `disconnected` often self-heals. Redialing too soon freezes the live call. */
+  var ICE_DISCONNECT_GRACE_MS = 8000;
   /** Allow ICE/media to settle before a redial tears the call down. */
   var NEGOTIATION_GRACE_MS = 12000;
+  var lastRemoteAttachKey = '';
+  var lastRemoteEmitKey = '';
+  var qualityTimer = null;
+  var poorQualityStreak = 0;
+  var goodQualityStreak = 0;
+  var currentScale = 1;
+  var collectRtcStats = null;
 
   var config = {
     peerOptions: {},
@@ -132,19 +140,29 @@
   }
 
   /** ZIP: addRemoteVideo — attach remote stream via McVideoCallCore or #remoteVideo */
+  function remoteAttachKey(stream) {
+    if (!stream || !stream.getTracks) return '';
+    return stream.id + ':' + stream.getTracks().map(function (t) { return t.id; }).join(',');
+  }
+
   function addRemoteVideo(stream) {
     if (!stream) return;
     ensureRemoteAudioTracks(stream);
     lastRemoteStream = stream;
+    var key = remoteAttachKey(stream);
+    var video = document.getElementById('remoteVideo');
+    if (key && key === lastRemoteAttachKey && video && video.srcObject === stream) {
+      return;
+    }
+    lastRemoteAttachKey = key;
     if (global.McVideoCallCore && typeof global.McVideoCallCore.attachRemoteMedia === 'function') {
       global.McVideoCallCore.attachRemoteMedia(stream).then(function (ok) {
         emit('remote-video-attached', { stream: stream, audioUnlocked: ok });
       });
       return;
     }
-    var video = document.getElementById('remoteVideo');
     if (!video) return;
-    video.srcObject = stream;
+    if (video.srcObject !== stream) video.srcObject = stream;
     video.playsInline = true;
     var playPromise = video.play();
     if (playPromise && typeof playPromise.catch === 'function') {
@@ -192,6 +210,9 @@
         try { audioTrack.enabled = true; } catch (e) {}
       }
       logLocalTrackState(stream, 'setLocalStream');
+      if (global.McVideoCallCore && typeof global.McVideoCallCore.hintLiveTracks === 'function') {
+        global.McVideoCallCore.hintLiveTracks(stream);
+      }
       addLocalVideo(stream);
     }
   }
@@ -254,20 +275,82 @@
     }
   }
 
+  function sdpTransform(sdp) {
+    if (global.McVideoCallCore && typeof global.McVideoCallCore.constrainCallSdp === 'function') {
+      return global.McVideoCallCore.constrainCallSdp(sdp);
+    }
+    return sdp;
+  }
+
+  /**
+   * PeerJS does not send a locally created ICE-restart offer to the remote peer.
+   * setLocalDescription here desyncs SDP and causes freeze/reconnect loops.
+   * Brief ICE disconnects should self-heal; only redial on sustained failure.
+   */
   function attemptIceRestart(call) {
-    var pc = getPeerConnection(call);
-    if (!pc || pc.signalingState === 'closed') return Promise.resolve(false);
-    if (typeof pc.createOffer !== 'function') return Promise.resolve(false);
-    return pc.createOffer({ iceRestart: true })
-      .then(function (offer) { return pc.setLocalDescription(offer); })
-      .then(function () {
-        emit('ice-restart', { call: call || currentCall });
-        return true;
-      })
-      .catch(function (err) {
-        console.warn('[McWebrtcPeerCall] ICE restart failed:', err);
-        return false;
+    return Promise.resolve(false);
+  }
+
+  function stopQualityMonitor() {
+    if (qualityTimer) {
+      clearInterval(qualityTimer);
+      qualityTimer = null;
+    }
+    poorQualityStreak = 0;
+    goodQualityStreak = 0;
+    currentScale = 1;
+  }
+
+  function applyLiveRtcTuning(pc) {
+    if (!pc || pc.signalingState === 'closed') return;
+    if (global.McVideoCallCore && typeof global.McVideoCallCore.applyRtcPerformance === 'function') {
+      global.McVideoCallCore.applyRtcPerformance(pc, {
+        videoMaxBitrate: currentScale > 1 ? 350000 : 700000,
+        videoMaxFramerate: currentScale > 1 ? 15 : 20,
+        scaleResolutionDownBy: currentScale,
       });
+    }
+  }
+
+  function startQualityMonitor(call) {
+    stopQualityMonitor();
+    if (global.McVideoCallCore && typeof global.McVideoCallCore.createStatsCollector === 'function') {
+      collectRtcStats = global.McVideoCallCore.createStatsCollector();
+    }
+    qualityTimer = setInterval(function () {
+      var pc = getPeerConnection(call);
+      if (!pc || pc.signalingState === 'closed') {
+        stopQualityMonitor();
+        return;
+      }
+      if (!collectRtcStats) return;
+      collectRtcStats(pc).then(function (snapshot) {
+        if (!snapshot) return;
+        global.__mcWebrtcStats = snapshot;
+        var ice = pc.iceConnectionState || '';
+        var conn = pc.connectionState || '';
+        var quality = global.McVideoCallCore && typeof global.McVideoCallCore.qualityFromStats === 'function'
+          ? global.McVideoCallCore.qualityFromStats(snapshot, ice, conn)
+          : { level: 'good' };
+        if (quality.level === 'poor') {
+          poorQualityStreak += 1;
+          goodQualityStreak = 0;
+          if (poorQualityStreak >= 2 && currentScale < 2) {
+            currentScale = 2;
+            applyLiveRtcTuning(pc);
+          }
+        } else if (quality.level === 'good') {
+          goodQualityStreak += 1;
+          poorQualityStreak = 0;
+          if (goodQualityStreak >= 3 && currentScale > 1) {
+            currentScale = 1;
+            applyLiveRtcTuning(pc);
+          }
+        } else {
+          poorQualityStreak = 0;
+        }
+      });
+    }, 5000);
   }
 
   function scheduleIceRecovery(reason) {
@@ -340,10 +423,17 @@
       connectionState: connState,
     });
 
-    if (iceState === 'connected' || iceState === 'completed' || connState === 'connected') {
+    if (iceState === 'connected' || iceState === 'completed') {
       clearRecoveryTimers();
       reconnectAttempts = 0;
+      applyLiveRtcTuning(pc);
+      startQualityMonitor(call);
       emit('recovered', { iceConnectionState: iceState, connectionState: connState });
+      return;
+    }
+
+    if (connState === 'connected' && iceState !== 'failed' && iceState !== 'closed' && iceState !== 'disconnected') {
+      applyLiveRtcTuning(pc);
       return;
     }
 
@@ -371,21 +461,30 @@
       return;
     }
     markCallWired(call);
+    applyLiveRtcTuning(pc);
+    setTimeout(function () { applyLiveRtcTuning(pc); }, 800);
+    startQualityMonitor(call);
 
     var onIceChange = function () { handleIceStateChange(call); };
     pc.addEventListener('iceconnectionstatechange', onIceChange);
     pc.addEventListener('connectionstatechange', onIceChange);
 
     pc.addEventListener('track', function (ev) {
-      var stream = (ev.streams && ev.streams[0]) || null;
-      if (!stream && ev.track) {
+      var stream = null;
+      if (ev.track) {
         stream = mergeRemoteTrack(call, ev.track);
-      } else if (stream && ev.track) {
-        mergeRemoteTrack(call, ev.track);
+      } else if (ev.streams && ev.streams[0]) {
+        stream = ev.streams[0];
       }
       if (!stream) return;
       callHasRemoteStream = true;
+      var emitKey = remoteAttachKey(stream);
       addRemoteVideo(stream);
+      if (global.McVideoCallCore && typeof global.McVideoCallCore.applyReceiverLowLatency === 'function') {
+        global.McVideoCallCore.applyReceiverLowLatency(pc);
+      }
+      if (emitKey && emitKey === lastRemoteEmitKey) return;
+      lastRemoteEmitKey = emitKey;
       emit('remote-stream', { stream: stream, call: call, peer: call.peer, track: ev.track });
     });
   }
@@ -400,8 +499,12 @@
       mergeRemoteTrack(call, track);
     });
     var merged = getOrCreateRemoteStream(call);
-    addRemoteVideo(merged || remoteStream);
-    emit('remote-stream', { stream: merged || remoteStream, call: call, peer: call.peer });
+    var stream = merged || remoteStream;
+    addRemoteVideo(stream);
+    var emitKey = remoteAttachKey(stream);
+    if (emitKey && emitKey === lastRemoteEmitKey) return;
+    lastRemoteEmitKey = emitKey;
+    emit('remote-stream', { stream: stream, call: call, peer: call.peer });
   }
 
   function handleCall(call) {
@@ -476,7 +579,7 @@
       outboundCallInFlight = false;
       callHasRemoteStream = false;
     }
-    call.answer(myStream);
+    call.answer(myStream, { sdpTransform: sdpTransform });
     handleCall(call);
   }
 
@@ -511,7 +614,7 @@
     logLocalTrackState(myStream, 'makeCall');
     var call = null;
     try {
-      call = peer.call(receiverId, myStream);
+      call = peer.call(receiverId, myStream, { sdpTransform: sdpTransform });
     } catch (e) {
       console.warn('peer.call failed:', e);
       outboundCallInFlight = false;
@@ -544,6 +647,9 @@
 
   function destroyPeer() {
     clearRecoveryTimers();
+    stopQualityMonitor();
+    lastRemoteAttachKey = '';
+    lastRemoteEmitKey = '';
     peerReady = false;
     myPeerJsId = null;
     outboundCallInFlight = false;
@@ -688,6 +794,7 @@
   function closeCurrentCall(options) {
     options = options || {};
     clearRecoveryTimers();
+    stopQualityMonitor();
     callStartedAt = 0;
     if (currentCall) {
       var pcClose = getPeerConnection(currentCall);
@@ -721,6 +828,8 @@
     outboundCallInFlight = false;
     callHasRemoteStream = false;
     lastRemoteStream = null;
+    lastRemoteAttachKey = '';
+    lastRemoteEmitKey = '';
     clearRecoveryTimers();
     reconnectAttempts = 0;
     peerList = [];
@@ -762,7 +871,10 @@
       }
     }
     if (videoSender && typeof videoSender.replaceTrack === 'function') {
-      return videoSender.replaceTrack(newTrack).then(function () { return true; }).catch(function (err) {
+      return videoSender.replaceTrack(newTrack).then(function () {
+        applyLiveRtcTuning(pc);
+        return true;
+      }).catch(function (err) {
         console.warn('[McWebrtcPeerCall] replaceTrack failed:', err);
         return false;
       });

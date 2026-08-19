@@ -29,7 +29,7 @@ $prc_portal_url = 'https://verification.prc.gov.ph/';
             <input type="hidden" name="application_id" id="<?= htmlspecialchars($create_doctor_form_id) ?>ApplicationId" value="">
 
             <section class="mc-form-section" id="<?= htmlspecialchars($create_doctor_form_id) ?>DoctorSections">
-                <h4 class="mc-form-section__title">Personal Information</h4>
+                <h4 class="mc-form-section__title">Identity Information</h4>
                 <div class="mc-form-grid mc-form-grid--3">
                     <div class="mc-field">
                         <label class="mc-field__label" for="<?= htmlspecialchars($create_doctor_form_id) ?>FirstName">First Name</label>
@@ -55,7 +55,7 @@ $prc_portal_url = 'https://verification.prc.gov.ph/';
                     </div>
                 </div>
 
-                <h4 class="mc-form-section__title" style="margin-top:24px;">Professional Information</h4>
+                <h4 class="mc-form-section__title" style="margin-top:24px;">Professional / PRC Information</h4>
                 <div class="mc-form-grid mc-form-grid--1">
                     <div class="mc-field" id="<?= htmlspecialchars($create_doctor_form_id) ?>PrcGroup">
                         <label class="mc-field__label" for="<?= htmlspecialchars($create_doctor_form_id) ?>PrcInput">PRC License Number</label>
@@ -70,7 +70,6 @@ $prc_portal_url = 'https://verification.prc.gov.ph/';
                     <div class="prc-verification-panel__head">
                         <div>
                             <strong class="prc-verification-panel__title">PRC Verification</strong>
-                            <p class="admin-form-hint" style="margin: 4px 0 0;">Manual verification via the official PRC portal — not automated.</p>
                         </div>
                         <div class="prc-verification-status" id="<?= htmlspecialchars($create_doctor_form_id) ?>PrcStatus" aria-live="polite">
                             <span class="prc-status-dot prc-status-dot--pending"></span>
@@ -78,9 +77,8 @@ $prc_portal_url = 'https://verification.prc.gov.ph/';
                         </div>
                     </div>
                     <button type="button" class="mc-btn mc-btn--outline prc-verify-btn" id="<?= htmlspecialchars($create_doctor_form_id) ?>PrcVerifyBtn">
-                        Verify PRC License
+                        Open PRC Verification Portal
                     </button>
-                    <p class="admin-form-hint">Opens the official PRC Verification Portal in a new tab. MEDCONNECT does not scrape or automate verification.</p>
 
                     <details class="prc-guide-card">
                         <summary>Verification Steps</summary>
@@ -108,8 +106,9 @@ $prc_portal_url = 'https://verification.prc.gov.ph/';
 
                     <label class="prc-confirm-check">
                         <input type="checkbox" name="prc_verification_confirmed" id="<?= htmlspecialchars($create_doctor_form_id) ?>PrcConfirm" value="1">
-                        <span>I have personally verified this doctor's PRC License using the official PRC Verification Portal.</span>
+                        <span>I have personally verified this doctor's PRC license on the official portal.</span>
                     </label>
+                    <p class="mc-field__error" id="<?= htmlspecialchars($create_doctor_form_id) ?>PrcConfirmError"></p>
 
                     <p class="prc-success-note" id="<?= htmlspecialchars($create_doctor_form_id) ?>PrcSuccess" hidden>
                         PRC verification confirmed. Upload documents and submit the application for Super Administrator approval.
@@ -129,7 +128,7 @@ $prc_portal_url = 'https://verification.prc.gov.ph/';
                 </div>
 
                 <h4 class="mc-form-section__title" style="margin-top:24px;">Supporting Documents</h4>
-                <p class="mc-field__hint" style="margin-bottom:14px;">Required before submission: PRC ID and Government-issued ID. Hospital/Clinic ID is optional.</p>
+                <p class="mc-field__hint" style="margin-bottom:14px;">PRC ID and government-issued ID are required before submission. Hospital/clinic ID is optional.</p>
                 <div class="bhw-doc-upload-grid" id="<?= htmlspecialchars($create_doctor_form_id) ?>DocUploads">
                     <div class="mc-field">
                         <label class="mc-field__label" for="<?= htmlspecialchars($create_doctor_form_id) ?>DocPrc">PRC ID <span class="mc-optional">(required)</span></label>
@@ -162,7 +161,7 @@ $prc_portal_url = 'https://verification.prc.gov.ph/';
                 </div>
 
                 <h4 class="mc-form-section__title" style="margin-top:24px;">Account Credentials</h4>
-                <div class="mc-form-grid">
+                <div class="mc-form-grid mc-form-grid--1 mc-credentials-grid">
                     <div class="mc-field">
                         <label class="mc-field__label" for="<?= htmlspecialchars($create_doctor_form_id) ?>Password">Password</label>
                         <input type="password" name="password" id="<?= htmlspecialchars($create_doctor_form_id) ?>Password" required minlength="12" class="mc-field__input doctor-required" autocomplete="new-password" placeholder="Create a strong password">
@@ -202,8 +201,8 @@ $prc_portal_url = 'https://verification.prc.gov.ph/';
     </div>
 </div>
 
-<link rel="stylesheet" href="<?= ASSET_BASE ?>/assets/css/admin-staff-forms.css?v=1.4">
-<script src="<?= ASSET_BASE ?>/assets/js/admin-staff-form-utils.js?v=1.2"></script>
+<link rel="stylesheet" href="<?= ASSET_BASE ?>/assets/css/admin-staff-forms.css?v=1.5">
+<script src="<?= ASSET_BASE ?>/assets/js/admin-staff-form-utils.js?v=1.3"></script>
 
 <script>
 (function () {
@@ -232,6 +231,7 @@ $prc_portal_url = 'https://verification.prc.gov.ph/';
     const prcGroup = document.getElementById(formId + 'PrcGroup');
     const prcInput = document.getElementById(formId + 'PrcInput');
     const prcConfirm = document.getElementById(formId + 'PrcConfirm');
+    const prcConfirmError = document.getElementById(formId + 'PrcConfirmError');
     const prcVerifyBtn = document.getElementById(formId + 'PrcVerifyBtn');
     const prcStatus = document.getElementById(formId + 'PrcStatus');
     const prcStatusText = document.getElementById(formId + 'PrcStatusText');
@@ -241,7 +241,12 @@ $prc_portal_url = 'https://verification.prc.gov.ph/';
     const passwordConfirm = document.getElementById(formId + 'PasswordConfirm');
     const emailInput = document.getElementById(formId + 'Email');
     const phoneInput = document.getElementById(formId + 'Phone');
+    const firstNameInput = document.getElementById(formId + 'FirstName');
+    const lastNameInput = document.getElementById(formId + 'LastName');
+    const specializationInput = document.getElementById(formId + 'Specialization');
     const utils = window.MCStaffForm || {};
+
+    if (utils.bindFieldErrorClear) utils.bindFieldErrorClear(form);
 
     if (utils.wrapPasswordInput && passwordInput) {
         utils.wrapPasswordInput(passwordInput, { minLength: 12 });
@@ -255,11 +260,117 @@ $prc_portal_url = 'https://verification.prc.gov.ph/';
 
     const doctorFields = form.querySelectorAll('.doctor-required');
     const prcIdentityFields = [
-        document.getElementById(formId + 'FirstName'),
-        document.getElementById(formId + 'LastName'),
+        firstNameInput,
+        lastNameInput,
         birthdateInput,
         prcInput
     ].filter(Boolean);
+
+    const fieldByName = {
+        first_name: firstNameInput,
+        last_name: lastNameInput,
+        birthdate: birthdateInput,
+        prc_license_number: prcInput,
+        specialization: specializationInput,
+        email: emailInput,
+        phone: phoneInput,
+        password: passwordInput,
+    };
+
+    function setPrcConfirmError(message) {
+        if (!prcConfirmError) return;
+        prcConfirmError.textContent = message || '';
+        prcConfirmError.classList.toggle('is-visible', !!message);
+    }
+
+    function applyBackendErrors(errors) {
+        if (!errors || typeof errors !== 'object') return false;
+        var keys = Object.keys(errors);
+        if (!keys.length) return false;
+        keys.forEach(function (key) {
+            if (key === 'prc_verification') {
+                setPrcConfirmError(errors[key]);
+                return;
+            }
+            var input = fieldByName[key];
+            if (input) utils.setFieldError(input, errors[key]);
+        });
+        return true;
+    }
+
+    function validateDoctorFormFields() {
+        var valid = true;
+        utils.clearFieldErrors(form);
+        setPrcConfirmError('');
+        utils.showFormAlert(errorEl, '', 'error');
+
+        if (!isDoctorRole()) return true;
+
+        var firstName = firstNameInput ? String(firstNameInput.value || '').trim() : '';
+        if (!firstName) {
+            utils.setFieldError(firstNameInput, 'First name is required.');
+            valid = false;
+        }
+        var lastName = lastNameInput ? String(lastNameInput.value || '').trim() : '';
+        if (!lastName) {
+            utils.setFieldError(lastNameInput, 'Last name is required.');
+            valid = false;
+        }
+        if (birthdateInput && !String(birthdateInput.value || '').trim()) {
+            utils.setFieldError(birthdateInput, 'Birthdate is required for PRC verification.');
+            valid = false;
+        }
+        if (prcInput && !String(prcInput.value || '').trim()) {
+            utils.setFieldError(prcInput, 'PRC license number is required.');
+            valid = false;
+        }
+        if (specializationInput && !String(specializationInput.value || '').trim()) {
+            utils.setFieldError(specializationInput, 'Specialization is required.');
+            valid = false;
+        }
+        if (emailInput) {
+            if (!String(emailInput.value || '').trim()) {
+                utils.setFieldError(emailInput, 'Email address is required.');
+                valid = false;
+            } else if (utils.validateEmail && !utils.validateEmail(emailInput.value)) {
+                utils.setFieldError(emailInput, 'Enter a valid email address.');
+                valid = false;
+            }
+        }
+        if (phoneInput) {
+            if (!String(phoneInput.value || '').trim()) {
+                utils.setFieldError(phoneInput, 'Mobile number is required.');
+                valid = false;
+            } else if (utils.validatePhone && !utils.validatePhone(phoneInput.value)) {
+                utils.setFieldError(phoneInput, 'Use format 09XXXXXXXXX or +639XXXXXXXXX.');
+                valid = false;
+            }
+        }
+        var pwd = passwordInput ? String(passwordInput.value || '') : '';
+        var confirmPwd = passwordConfirm ? String(passwordConfirm.value || '') : '';
+        if (!hasExistingApplication() && !pwd) {
+            utils.setFieldError(passwordInput, 'Password is required.');
+            valid = false;
+        } else if (pwd && utils.validatePasswordStrength && !utils.validatePasswordStrength(pwd, 12)) {
+            utils.setFieldError(passwordInput, 'Password must meet all strength requirements.');
+            valid = false;
+        }
+        if (pwd || confirmPwd) {
+            if (passwordConfirm && passwordInput && !utils.passwordsMatch(passwordInput, passwordConfirm)) {
+                utils.setFieldError(passwordConfirm, 'Passwords do not match.');
+                valid = false;
+            }
+        }
+        if (!prcConfirmed()) {
+            setPrcConfirmError('Confirm PRC verification before submitting.');
+            valid = false;
+        }
+
+        if (!valid && errorEl) {
+            utils.showFormAlert(errorEl, 'Please correct the highlighted fields.', 'error');
+        }
+        return valid;
+    }
 
     function isDoctorRole() {
         return !roleSelect || roleSelect.value === 'provider';
@@ -282,9 +393,16 @@ $prc_portal_url = 'https://verification.prc.gov.ph/';
         setPrcStatus(false);
     }
 
+    function hasExistingApplication() {
+        return applicationIdInput && String(applicationIdInput.value || '').trim() !== '';
+    }
+
     function allDoctorFieldsFilled() {
         if (!isDoctorRole()) return true;
         return Array.from(doctorFields).every(function (el) {
+            if (hasExistingApplication() && (el === passwordInput || el === passwordConfirm)) {
+                return true;
+            }
             return String(el.value || '').trim() !== '';
         });
     }
@@ -296,11 +414,16 @@ $prc_portal_url = 'https://verification.prc.gov.ph/';
     function credentialsValid() {
         if (!isDoctorRole()) return true;
         if (!passwordInput || !passwordConfirm) return false;
+        var pwd = String(passwordInput.value || '');
+        var confirmPwd = String(passwordConfirm.value || '');
+        if (hasExistingApplication() && pwd === '' && confirmPwd === '') {
+            return true;
+        }
         if (!utils.passwordsMatch || !utils.validatePasswordStrength) {
-            return passwordInput.value.length >= 12;
+            return pwd.length >= 12;
         }
         return utils.passwordsMatch(passwordInput, passwordConfirm)
-            && utils.validatePasswordStrength(passwordInput.value, 12);
+            && utils.validatePasswordStrength(pwd, 12);
     }
 
     function updateSubmitState() {
@@ -324,7 +447,7 @@ $prc_portal_url = 'https://verification.prc.gov.ph/';
         if (blockMsg) {
             utils.showFormAlert(
                 blockMsg,
-                ready ? '' : 'Complete PRC verification, all required fields, matching passwords, and supporting documents before submitting.',
+                ready ? '' : 'Complete required fields, PRC verification, and matching passwords before submitting.',
                 'warn'
             );
         }
@@ -348,13 +471,13 @@ $prc_portal_url = 'https://verification.prc.gov.ph/';
 
     if (prcConfirm) {
         prcConfirm.addEventListener('change', function () {
+            setPrcConfirmError('');
             if (prcConfirm.checked && !allDoctorFieldsFilled()) {
                 prcConfirm.checked = false;
-                utils.showFormAlert(errorEl, 'Complete all required fields (including birthdate and PRC license number) before confirming verification.', 'error');
+                setPrcConfirmError('Complete all required identity and PRC fields before confirming verification.');
                 updateSubmitState();
                 return;
             }
-            utils.showFormAlert(errorEl, '', 'error');
             updateSubmitState();
         });
     }
@@ -376,6 +499,8 @@ $prc_portal_url = 'https://verification.prc.gov.ph/';
 
     window.openCreateDoctorModal = function () {
         utils.showFormAlert(errorEl, '', 'error');
+        utils.clearFieldErrors(form);
+        setPrcConfirmError('');
         form.reset();
         if (applicationIdInput) applicationIdInput.value = '';
         if (docList) docList.innerHTML = '';
@@ -408,40 +533,28 @@ $prc_portal_url = 'https://verification.prc.gov.ph/';
     form.addEventListener('submit', async function (e) {
         e.preventDefault();
         utils.showFormAlert(errorEl, '', 'error');
+        setPrcConfirmError('');
 
         if (isDoctorRole()) {
-            if (!prcConfirmed()) {
-                utils.showFormAlert(blockMsg, 'Confirm PRC verification before submitting.', 'warn');
-                return;
-            }
-            if (emailInput && utils.validateEmail && !utils.validateEmail(emailInput.value)) {
-                utils.setFieldError(emailInput, 'Enter a valid email address.');
-                return;
-            }
-            if (phoneInput && utils.validatePhone && !utils.validatePhone(phoneInput.value)) {
-                utils.setFieldError(phoneInput, 'Use format 09XXXXXXXXX or +639XXXXXXXXX.');
-                return;
-            }
-            if (!credentialsValid()) {
-                utils.setFieldError(passwordConfirm, 'Passwords must match and meet all strength requirements.');
-                return;
-            }
+            if (!validateDoctorFormFields()) return;
         }
 
+        var fd = utils.buildFormData ? utils.buildFormData(form) : new FormData(form);
         utils.setFormLoading(form, true, submitBtn, applicationMode ? 'Submitting application...' : 'Creating account...');
 
         try {
             if (applicationMode && isDoctorRole()) {
                 let appId = applicationIdInput ? applicationIdInput.value : '';
                 if (!appId) {
-                    appId = await saveDraft(false, true);
+                    appId = await saveDraft(false, true, fd);
                     if (!appId) return;
                 } else {
-                    const fd = new FormData(form);
                     const saveRes = await fetch(apiUrl + '?action=save_draft', { method: 'POST', body: fd, credentials: 'same-origin' });
                     const saveJson = await saveRes.json();
                     if (!saveJson.success) {
-                        utils.showFormAlert(errorEl, saveJson.message || 'Could not save application.', 'error');
+                        if (!applyBackendErrors(saveJson.errors)) {
+                            utils.showFormAlert(errorEl, saveJson.message || 'Could not save application.', 'error');
+                        }
                         return;
                     }
                     await uploadPendingDocs(appId);
@@ -458,7 +571,7 @@ $prc_portal_url = 'https://verification.prc.gov.ph/';
                     window.location.href = window.location.pathname + qs;
                     return;
                 }
-                if (errorEl) {
+                if (!applyBackendErrors(data.errors)) {
                     utils.showFormAlert(errorEl, data.message || 'Could not submit application.', 'error');
                 }
                 return;
@@ -466,7 +579,7 @@ $prc_portal_url = 'https://verification.prc.gov.ph/';
 
             const res = await fetch(isDoctorRole() ? apiUrl : staffCreateApi, {
                 method: 'POST',
-                body: new FormData(form),
+                body: fd,
                 credentials: 'same-origin'
             });
             const data = await res.json();
@@ -474,7 +587,7 @@ $prc_portal_url = 'https://verification.prc.gov.ph/';
                 window.location.href = window.location.pathname + '?created=1';
                 return;
             }
-            if (errorEl) {
+            if (!applyBackendErrors(data.errors)) {
                 utils.showFormAlert(errorEl, data.message || 'Could not create doctor account.', 'error');
             }
         } catch (err) {
@@ -485,15 +598,17 @@ $prc_portal_url = 'https://verification.prc.gov.ph/';
         }
     });
 
-    async function saveDraft(redirect, quiet) {
+    async function saveDraft(redirect, quiet, prebuiltFd) {
         utils.showFormAlert(errorEl, '', 'error');
-        const fd = new FormData(form);
+        const fd = prebuiltFd || (utils.buildFormData ? utils.buildFormData(form) : new FormData(form));
         if (!quiet) utils.setFormLoading(form, true, saveDraftBtn, 'Saving draft...');
         try {
         const res = await fetch(apiUrl + '?action=save_draft', { method: 'POST', body: fd, credentials: 'same-origin' });
         const json = await res.json();
         if (!json.success) {
-            utils.showFormAlert(errorEl, json.message || 'Could not save draft.', 'error');
+            if (!applyBackendErrors(json.errors)) {
+                utils.showFormAlert(errorEl, json.message || 'Could not save draft.', 'error');
+            }
             return null;
         }
         if (applicationIdInput) applicationIdInput.value = json.application_id;
@@ -528,7 +643,10 @@ $prc_portal_url = 'https://verification.prc.gov.ph/';
     }
 
     if (saveDraftBtn) {
-        saveDraftBtn.addEventListener('click', function () { saveDraft(true); });
+        saveDraftBtn.addEventListener('click', function () {
+            utils.clearFieldErrors(form);
+            saveDraft(true);
+        });
     }
 
     syncPrcField();
@@ -541,6 +659,23 @@ $prc_portal_url = 'https://verification.prc.gov.ph/';
     max-height: min(92dvh, 900px);
     max-height: min(92vh, 900px);
     overflow: hidden;
+    display: flex;
+    flex-direction: column;
+}
+.admin-modal-dialog--doctor .admin-modal-body {
+    overflow-y: auto;
+    flex: 1;
+    min-height: 0;
+    -webkit-overflow-scrolling: touch;
+}
+.mc-credentials-grid {
+    max-width: 100%;
+}
+.prc-confirm-check + .mc-field__error.is-visible {
+    margin-top: 8px;
+    color: #dc2626;
+    font-size: 12px;
+    font-weight: 600;
 }
 .admin-modal-title {
     font-size: 20px;
