@@ -1330,3 +1330,26 @@ html[data-theme-resolved='dark'] body.patient-portal [class*='canvas-wrap'] {
   background-color: transparent !important;
   box-shadow: none !important;
 }
+
+html[data-theme-resolved='dark'] body.patient-portal .mc-select__toggle.is-placeholder {
+  color: #71717a !important;
+}
+
+html[data-theme-resolved='dark'] body.patient-portal .mc-select__menu {
+  background: #0a0a0a !important;
+  border-color: #3f3f46 !important;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.45) !important;
+}
+
+html[data-theme-resolved='dark'] body.patient-portal .mc-select__option {
+  color: #ffffff !important;
+}
+
+html[data-theme-resolved='dark'] body.patient-portal .mc-select__option:hover,
+html[data-theme-resolved='dark'] body.patient-portal .mc-select__option:focus {
+  background: rgba(124, 58, 237, 0.18) !important;
+}
+
+html[data-theme-resolved='dark'] body.patient-portal .mc-select__option[aria-selected="true"] {
+  background: rgba(124, 58, 237, 0.24) !important;
+}

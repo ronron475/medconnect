@@ -4,6 +4,8 @@
 (function (global) {
   'use strict';
 
+  if (global.__MCStaffFormInitialized) return;
+
   var EYE_OPEN = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>';
   var EYE_OFF = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/><path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/><line x1="1" y1="1" x2="23" y2="23"/></svg>';
 
@@ -298,6 +300,63 @@
   var openModalSelect = null;
   var openModalSelectMenu = null;
 
+  var MODAL_HOST_SELECTOR = [
+    '.mc-staff-modal',
+    '.admin-modal-overlay',
+    '.admin-action-modal',
+    '.ann-modal',
+    '.violation-modal',
+    '.mc-modal-overlay',
+    '.fab-modal',
+    '.reg-req-modal',
+    '.reg-outcome-modal',
+    '.phs-modal',
+    '.pts-modal',
+    '.mc-modal',
+    '.mc-urgency-modal',
+  ].join(', ');
+
+  var MODAL_SCROLL_SELECTOR = [
+    '.admin-modal-body',
+    'form.mc-staff-form',
+    '.ann-modal__body',
+    '.ann-modal__panel',
+    '.violation-dialog',
+    '.admin-action-dialog',
+    '.mc-modal',
+    '.mc-modal__body',
+    '.phs-modal__body',
+    '.mc-urgency-modal__card',
+  ].join(', ');
+
+  function isEnhanceableSelect(select) {
+    if (!select || select.tagName !== 'SELECT') return false;
+    if (select.dataset.mcSelectEnhanced === '1') return false;
+    if (select.dataset.mcNativeSelect === '1') return false;
+    if (select.multiple) return false;
+    if (select.size > 1) return false;
+    if (select.closest('.mc-select')) return false;
+    return true;
+  }
+
+  function resolveToggleClasses(select) {
+    var classes = ['mc-select__toggle'];
+    if (select.classList.contains('mc-field__input')) classes.push('mc-field__input');
+    else if (select.classList.contains('ann-input')) classes.push('ann-input');
+    else if (select.classList.contains('admin-form-input')) classes.push('admin-form-input');
+    else if (select.classList.contains('pd-input')) classes.push('pd-input');
+    else if (select.classList.contains('form-select')) classes.push('form-select');
+    else if (select.classList.contains('form-control')) classes.push('form-control');
+    else if (select.classList.contains('phs-field__input')) classes.push('phs-field__input');
+    else if (select.classList.contains('mc-urgency-lang__select')) classes.push('mc-urgency-lang__select');
+    else classes.push('mc-field__input');
+    return classes.join(' ');
+  }
+
+  function menuHostForSelect(select) {
+    return select.closest(MODAL_HOST_SELECTOR) || document.body;
+  }
+
   function menuForWrap(wrap) {
     if (!wrap) return null;
     if (openModalSelect === wrap && openModalSelectMenu) return openModalSelectMenu;
@@ -343,9 +402,8 @@
   }
 
   function enhanceModalSelect(select) {
-    if (!select || select.dataset.mcSelectEnhanced === '1') return;
-    if (select.closest('.mc-select')) {
-      select.dataset.mcSelectEnhanced = '1';
+    if (!isEnhanceableSelect(select)) {
+      if (select && select.closest('.mc-select')) select.dataset.mcSelectEnhanced = '1';
       return;
     }
     select.dataset.mcSelectEnhanced = '1';
@@ -359,7 +417,7 @@
 
     var toggle = document.createElement('button');
     toggle.type = 'button';
-    toggle.className = 'mc-select__toggle mc-field__input';
+    toggle.className = resolveToggleClasses(select);
     toggle.setAttribute('aria-haspopup', 'listbox');
     toggle.setAttribute('aria-expanded', 'false');
     if (select.id) toggle.id = select.id + 'Toggle';
@@ -413,7 +471,7 @@
       var field = wrap.closest('.mc-field');
       if (field) field.classList.add('is-select-open');
       toggle.setAttribute('aria-expanded', 'true');
-      var host = select.closest('.admin-modal-overlay') || document.body;
+      var host = menuHostForSelect(select);
       host.appendChild(menu);
       menu.hidden = false;
       openModalSelect = wrap;
@@ -488,7 +546,16 @@
 
   function enhanceModalSelectsIn(root) {
     if (!root) return;
-    root.querySelectorAll('select.mc-field__input').forEach(enhanceModalSelect);
+    var selects = root.tagName === 'SELECT' ? [root] : root.querySelectorAll('select');
+    Array.prototype.forEach.call(selects, function (select) {
+      if (isEnhanceableSelect(select)) enhanceModalSelect(select);
+    });
+  }
+
+  function initAllModalSelects() {
+    document.querySelectorAll(MODAL_HOST_SELECTOR).forEach(function (host) {
+      enhanceModalSelectsIn(host);
+    });
   }
 
   if (!document.documentElement.dataset.mcSelectDocBound) {
@@ -507,13 +574,14 @@
     });
     document.addEventListener('scroll', function (e) {
       if (!openModalSelect) return;
-      if (e.target === document || !openModalSelect.closest('.admin-modal-body, form.mc-staff-form')) {
-        closeModalSelect();
+      if (openModalSelectMenu && (e.target === openModalSelectMenu || openModalSelectMenu.contains(e.target))) return;
+      var scrollRoot = openModalSelect.closest(MODAL_SCROLL_SELECTOR);
+      if (scrollRoot && (e.target === scrollRoot || (e.target.contains && e.target.contains(openModalSelect)))) {
+        positionModalSelectMenu(openModalSelect);
         return;
       }
-      if (openModalSelect.closest('.admin-modal-body, form.mc-staff-form') === e.target ||
-          (e.target.contains && e.target.contains(openModalSelect))) {
-        positionModalSelectMenu(openModalSelect);
+      if (e.target === document || e.target === document.documentElement || e.target === document.body) {
+        closeModalSelect();
       }
     }, true);
   }
@@ -536,6 +604,7 @@
     enhanceFileInputsIn: enhanceFileInputsIn,
     enhanceModalSelect: enhanceModalSelect,
     enhanceModalSelectsIn: enhanceModalSelectsIn,
+    initAllModalSelects: initAllModalSelects,
     syncFileInputDisplay: syncFileInputDisplay,
   };
 
@@ -582,6 +651,7 @@
         locked = true;
         var scroller = modal.querySelector('.admin-modal-body, form.mc-staff-form');
         if (scroller) scroller.scrollTop = 0;
+        enhanceModalSelectsIn(modal);
       } else if (!open && locked) {
         closeModalSelect();
         unlockStaffModalScroll();
@@ -596,7 +666,10 @@
 
   function bindAllStaffModals() {
     document.querySelectorAll('.mc-staff-modal').forEach(bindStaffModalShell);
+    initAllModalSelects();
   }
+
+  global.__MCStaffFormInitialized = true;
 
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', bindAllStaffModals);

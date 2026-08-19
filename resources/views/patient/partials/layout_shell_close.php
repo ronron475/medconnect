@@ -28,5 +28,6 @@ require_once VIEWS_PATH . '/partials/portal_dark_mode_close.php';
 <script src="<?= ASSET_BASE ?>/assets/js/patient-urgency-modal.js?v=<?= $ptUrgencyJsVer ?>"></script>
 <?php $ptRecJsVer = (int) @filemtime(ASSETS_PATH . '/js/patient-recommendation-popup.js'); ?>
 <script src="<?= ASSET_BASE ?>/assets/js/patient-recommendation-popup.js?v=<?= $ptRecJsVer ?>"></script>
+<?php require_once VIEWS_PATH . '/partials/mc_modal_select_assets.php'; ?>
 </body>
 </html>
