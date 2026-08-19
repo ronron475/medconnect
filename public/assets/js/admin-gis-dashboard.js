@@ -318,17 +318,12 @@
 
   function renderInsightStats() {
     const monitoring = currentMonitoring();
-    const unmappedEl = document.getElementById('stat-unmapped');
     const brgyCountEl = document.getElementById('stat-barangays_with_cases');
-    if (unmappedEl) unmappedEl.textContent = Number(monitoring.unmapped_cases || 0).toLocaleString();
     if (brgyCountEl) {
       brgyCountEl.textContent = Number(
         monitoring.barangays_with_cases || (monitoring.barangays || []).length || 0
       ).toLocaleString();
     }
-
-    const bhwEl = document.getElementById('stat-unassigned_bhw');
-    if (bhwEl) bhwEl.textContent = Number(monitoring.unassigned_bhw || 0).toLocaleString();
   }
 
   function currentMonitoring() {
