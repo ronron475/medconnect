@@ -17,14 +17,20 @@ doctor_application_ensure_schema($pdo);
 
 $hub_kind = 'doctor';
 $hub_base = 'doctor_applications.php';
+$is_superadmin_portal = portal_is_superadmin_shell() || portal_is_superadmin();
+$hub_show_queue_tab = $is_superadmin_portal;
 $hub_tab = $_GET['tab'] ?? 'all';
 $allowed_tabs = ['all', 'applications', 'pending', 'active', 'rejected', 'archived'];
+if ($hub_show_queue_tab) {
+    $allowed_tabs[] = 'queue';
+}
 if (!in_array($hub_tab, $allowed_tabs, true)) {
     $hub_tab = 'all';
 }
 
+$show_queue_panel = ($hub_tab === 'queue');
 $show_accounts_panel = in_array($hub_tab, ['active', 'archived'], true);
-$show_applications_panel = !$show_accounts_panel;
+$show_applications_panel = !$show_accounts_panel && !$show_queue_panel;
 
 $tab_status_map = [
     'all'          => 'all',
@@ -35,6 +41,9 @@ $tab_status_map = [
 $initial_app_status = $tab_status_map[$hub_tab] ?? 'all';
 
 $page_title = 'Doctor Management';
+if ($is_superadmin_portal) {
+    $page_title = $show_queue_panel ? 'Doctors · Queue Monitoring' : 'Doctors';
+}
 $show_submitted = isset($_GET['submitted']);
 $show_saved = isset($_GET['saved']);
 
@@ -69,16 +78,24 @@ require_once __DIR__ . '/partials/layout_open.php';
 
 <header class="staff-apps-hero">
     <div class="staff-apps-hero__content">
-        <span class="staff-apps-hero__eyebrow">User Management · Maker-Checker Workflow</span>
-        <h1 class="staff-apps-hero__title">Doctor Management</h1>
-        <p class="staff-apps-hero__desc">Manage doctor applications, PRC verification, supporting documents, and approved doctor accounts from one place.</p>
+        <span class="staff-apps-hero__eyebrow"><?= $is_superadmin_portal ? 'User Management · Doctor Operations' : 'User Management · Maker-Checker Workflow' ?></span>
+        <h1 class="staff-apps-hero__title"><?= $is_superadmin_portal ? 'Doctors' : 'Doctor Management' ?></h1>
+        <p class="staff-apps-hero__desc"><?php if ($show_queue_panel): ?>
+            Monitor today's consultation queue — waiting, active, and completed patients across all providers.
+        <?php elseif ($is_superadmin_portal): ?>
+            Manage doctor applications, approved accounts, and live queue monitoring from one place.
+        <?php else: ?>
+            Manage doctor applications, PRC verification, supporting documents, and approved doctor accounts from one place.
+        <?php endif; ?></p>
     </div>
+    <?php if (!$is_superadmin_portal): ?>
     <div class="staff-apps-hero__actions">
         <button type="button" class="mc-btn mc-btn--primary" id="doctorOpenCreateBtn">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
             Create Doctor Application
         </button>
     </div>
+    <?php endif; ?>
 </header>
 
 <?php
@@ -146,6 +163,13 @@ require __DIR__ . '/partials/staff_hub_tabs.php';
     </div>
 </div>
 
+<?php elseif ($show_queue_panel): ?>
+
+<?php
+$queue_embedded = true;
+require __DIR__ . '/partials/queue_monitoring_panel.php';
+?>
+
 <?php else: ?>
 
 <?php require __DIR__ . '/partials/staff_accounts_panel.php'; ?>
@@ -176,6 +200,11 @@ window.MC_DOCTOR_APP = {
 };
 </script>
 <script src="<?= ASSET_BASE ?>/assets/js/admin-doctor-applications.js?v=1.2"></script>
+
+<?php if ($show_queue_panel): ?>
+<?php $adminQueueLiveVer = (int) @filemtime(ASSETS_PATH . '/js/admin-queue-live.js'); ?>
+<script src="<?= ASSET_BASE ?>/assets/js/admin-queue-live.js?v=<?= $adminQueueLiveVer ?>"></script>
+<?php endif; ?>
 
 <?php
 if ($show_accounts_panel) {

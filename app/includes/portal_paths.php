@@ -43,9 +43,7 @@ function portal_views_base(): string
 /** @return array<string, string> superadmin filename => target filename */
 function portal_superadmin_redirect_aliases(): array
 {
-    return [
-        'doctor_applications.php' => 'doctor_approvals.php',
-    ];
+    return [];
 }
 
 function portal_superadmin_view_url(string $adminBasename, ?string $query = null): string
