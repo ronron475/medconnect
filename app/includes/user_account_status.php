@@ -754,16 +754,26 @@ function user_account_status_fetch_users(PDO $pdo, array $options = []): array
     $sort = (string) ($options['sort'] ?? '');
     $order = strtolower((string) ($options['order'] ?? 'desc')) === 'asc' ? 'ASC' : 'DESC';
     $archivedOnly = ($statusFilter === 'archived');
+    $includeProviderProfile = array_key_exists('include_provider_profile', $options)
+        ? (bool) $options['include_provider_profile']
+        : in_array($roleFilter, ['provider', 'all', ''], true);
+
+    $providerSelect = $includeProviderProfile
+        ? "pp.verification_status, pp.prc_license_number,"
+        : "NULL AS verification_status, NULL AS prc_license_number,";
+    $providerJoin = $includeProviderProfile
+        ? "LEFT JOIN provider_profiles pp ON pp.user_id = u.id"
+        : "";
 
     $query = "
         SELECT u.id, u.first_name, u.last_name, u.email, u.role, u.is_active, u.account_status,
                u.profile_picture, u.created_at,
                u.archived_at, u.archived_by, u.archive_reason,
                u.restored_at, u.restored_by, u.restore_reason,
-               pp.verification_status, pp.prc_license_number,
+               {$providerSelect}
                ab.first_name AS archiver_first_name, ab.last_name AS archiver_last_name
         FROM users u
-        LEFT JOIN provider_profiles pp ON pp.user_id = u.id
+        {$providerJoin}
         LEFT JOIN users ab ON ab.id = u.archived_by
         WHERE u.role != 'superadmin'
     ";

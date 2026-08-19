@@ -60,6 +60,9 @@ $order         = $_GET['order'] ?? 'desc';
 
 $is_archived_view = ($status_filter === 'archived');
 $show_create_doctor = !$is_archived_view && $role_filter !== 'patient' && $role_filter !== 'admin';
+$is_patient_view = ($role_filter === 'patient');
+$show_prc_column = !$is_archived_view && in_array($role_filter, ['provider', 'all'], true);
+$include_provider_profile = in_array($role_filter, ['provider', 'all'], true);
 
 $users = user_account_status_fetch_users($pdo, [
     'status' => $status_filter,
@@ -67,11 +70,17 @@ $users = user_account_status_fetch_users($pdo, [
     'search' => $search,
     'sort'   => $sort,
     'order'  => $order,
+    'include_provider_profile' => $include_provider_profile,
 ]);
 
 $archived_count = 0;
 if (!$is_archived_view) {
-    $archived_count = count(user_account_status_fetch_users($pdo, ['status' => 'archived', 'role' => $role_filter, 'search' => $search]));
+    $archived_count = count(user_account_status_fetch_users($pdo, [
+        'status' => 'archived',
+        'role'   => $role_filter,
+        'search' => $search,
+        'include_provider_profile' => $include_provider_profile,
+    ]));
 }
 
 function um_sort_url(string $col, string $currentSort, string $currentOrder, array $params): string
@@ -93,7 +102,7 @@ $filter_params = array_filter([
 require_once __DIR__ . '/partials/layout_open.php';
 ?>
 
-<?php if ($show_success): ?>
+<?php if ($show_success && $show_create_doctor): ?>
 <div class="mc-card" style="margin-bottom: 20px; border-left: 4px solid #16a34a; background: #f0fdf4;">
     <strong style="color: #15803d;">Doctor account created.</strong>
     <span class="text-muted" style="font-size: 13px;"> PRC license was manually verified and the account is <strong>active</strong>.</span>
@@ -136,6 +145,9 @@ require_once __DIR__ . '/partials/layout_open.php';
             <option value="suspended" <?= $status_filter === 'suspended' ? 'selected' : '' ?>>Suspended</option>
             <option value="archived" <?= $status_filter === 'archived' ? 'selected' : '' ?>>Archived</option>
         </select>
+        <?php if ($is_patient_view): ?>
+        <input type="hidden" name="role" value="patient">
+        <?php else: ?>
         <select name="role" class="mc-btn mc-btn--outline" onchange="this.form.submit()">
             <option value="all" <?= $role_filter === 'all' ? 'selected' : '' ?>>All Roles</option>
             <option value="patient" <?= $role_filter === 'patient' ? 'selected' : '' ?>>Patients</option>
@@ -143,9 +155,10 @@ require_once __DIR__ . '/partials/layout_open.php';
             <option value="bhw" <?= $role_filter === 'bhw' ? 'selected' : '' ?>>Barangay Health Workers</option>
             <option value="admin" <?= $role_filter === 'admin' ? 'selected' : '' ?>>Administrators</option>
         </select>
+        <?php endif; ?>
         <button type="submit" class="mc-btn mc-btn--outline">Search</button>
         <?php if (!empty($filter_params)): ?>
-        <a href="?" class="mc-btn mc-btn--outline" style="color:#64748b;">Clear</a>
+        <a href="<?= $is_patient_view ? '?role=patient' : '?' ?>" class="mc-btn mc-btn--outline" style="color:#64748b;">Clear</a>
         <?php endif; ?>
     </div>
 </form>
@@ -184,7 +197,9 @@ require_once __DIR__ . '/partials/layout_open.php';
                 <th>Email</th>
                 <th>Role</th>
                 <th>Status</th>
+                <?php if ($show_prc_column): ?>
                 <th>PRC</th>
+                <?php endif; ?>
                 <th>Joined</th>
                 <th>Actions</th>
                 <?php endif; ?>
@@ -251,13 +266,15 @@ require_once __DIR__ . '/partials/layout_open.php';
                     </div>
                 </td>
                 <?php else: ?>
+                <?php if ($show_prc_column): ?>
                 <td data-label="PRC">
-                    <?php if ($is_provider): ?>
-                        <span class="text-xs"><?= $u['prc_license_number'] ? htmlspecialchars($u['prc_license_number']) : '—' ?></span>
+                    <?php if ($is_provider && !empty($u['prc_license_number'])): ?>
+                        <span class="text-xs"><?= htmlspecialchars($u['prc_license_number']) ?></span>
                     <?php else: ?>
                         <span class="text-muted">—</span>
                     <?php endif; ?>
                 </td>
+                <?php endif; ?>
                 <td data-label="Joined"><span class="text-xs text-muted"><?= date('M j, Y', strtotime($u['created_at'])) ?></span></td>
                 <td data-label="Actions">
                     <?php if (!empty($allowed_actions)): ?>
@@ -286,7 +303,7 @@ require_once __DIR__ . '/partials/layout_open.php';
 
             <?php if (empty($users)): ?>
             <tr>
-                <td colspan="<?= $is_archived_view ? 9 : 7 ?>">
+                <td colspan="<?= $is_archived_view ? 9 : ($show_prc_column ? 7 : 6) ?>">
                     <div class="mc-table-empty">
                         <?= $is_archived_view ? htmlspecialchars($um_archived_empty) : htmlspecialchars($um_empty_message) ?>
                     </div>
