@@ -146,6 +146,44 @@ function mc_patient_visit_status_label(array $row, ?PDO $pdo = null, int $patien
     return 'Routine — book when ready';
 }
 
+/**
+ * Stable filter key for Visit History (not shown as a label).
+ *
+ * @param array<string, mixed> $row
+ */
+if (!function_exists('mc_patient_visit_status_filter_key')) {
+    function mc_patient_visit_status_filter_key(array $row): string
+    {
+        $bookingState = (string) ($row['_booking_state'] ?? '');
+        $finalKey = function_exists('triage_doctor_final_key') ? triage_doctor_final_key($row) : '';
+        if ($finalKey === 'emergency') {
+            return 'emergency';
+        }
+        if ($bookingState === 'booked') {
+            return 'booked';
+        }
+        if ($bookingState === 'completed') {
+            return 'completed';
+        }
+
+        $recStatus = strtolower((string) ($row['recommendation_status'] ?? ''));
+        if ($recStatus === 'hidden') {
+            return 'completed';
+        }
+        if ($recStatus === 'pending_approval') {
+            return 'review';
+        }
+        if ($recStatus === 'approved') {
+            return 'approved';
+        }
+        if ($finalKey === 'urgent') {
+            return 'urgent';
+        }
+
+        return 'routine';
+    }
+}
+
 function mc_patient_visit_status_class(array $row): string
 {
     $bookingState = (string) ($row['_booking_state'] ?? '');

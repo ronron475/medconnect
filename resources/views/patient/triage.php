@@ -238,6 +238,8 @@ $patient_has_completed_visit = patient_portal_has_completed_visit($pdo, (int) $u
   </script>
   <?php endif; ?>
   <script src="<?= ASSET_BASE ?>/assets/js/patient-portal.js?v=<?= $patient_portal_ver ?>"></script>
+  <?php $visitHistoryJsVer = (int) @filemtime(ASSETS_PATH . '/js/patient-visit-history.js'); ?>
+  <script src="<?= ASSET_BASE ?>/assets/js/patient-visit-history.js?v=<?= $visitHistoryJsVer ?>"></script>
   <script>
   document.addEventListener('DOMContentLoaded', function () {
     if (typeof window.refreshBookingPicker === 'function') {

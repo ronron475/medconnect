@@ -1543,6 +1543,90 @@ html[data-theme-resolved='dark'] .booking-today-date {
   line-height: 1.45;
 }
 
+.patient-triage-history__filters {
+  display: grid;
+  grid-template-columns: minmax(12rem, 1.5fr) repeat(3, minmax(8.5rem, 1fr));
+  gap: 10px 12px;
+  align-items: end;
+  padding: 14px 16px 12px;
+  border-bottom: 1px solid #e2e8f0;
+  background: #f8fafc;
+}
+
+.patient-triage-history__field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+  margin: 0;
+}
+
+.patient-triage-history__field-label {
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: #64748b;
+}
+
+.patient-triage-history__filters .form-control {
+  width: 100%;
+  min-height: 40px;
+  font-size: 0.85rem;
+}
+
+.patient-triage-history__filter-meta {
+  grid-column: 1 / -1;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.patient-triage-history__count {
+  margin: 0;
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: #64748b;
+}
+
+.patient-triage-history__clear {
+  border: 0;
+  background: none;
+  padding: 0;
+  font: inherit;
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: #028090;
+  cursor: pointer;
+}
+
+.patient-triage-history__clear:hover {
+  text-decoration: underline;
+}
+
+.patient-triage-history .mc-table tbody tr[hidden] {
+  display: none !important;
+}
+
+@media (max-width: 1100px) {
+  .patient-triage-history__filters {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .patient-triage-history__field--search {
+    grid-column: 1 / -1;
+  }
+}
+
+@media (max-width: 640px) {
+  .patient-triage-history__filters {
+    grid-template-columns: 1fr;
+    padding: 12px;
+  }
+}
+
 .patient-triage-history .mc-table-wrap {
   overflow-x: hidden;
   min-width: 0;
@@ -1952,6 +2036,15 @@ html[data-theme-resolved='dark'] .booking-today-date {
   }
 
   .patient-triage-page .patient-triage-history .mc-table tbody td.patient-triage-history__concern-cell {
+    grid-column: 1 / -1;
+  }
+
+  .patient-triage-page .patient-triage-history .mc-table tbody tr.patient-triage-history__none {
+    display: block;
+    padding: 8px 14px 16px;
+  }
+
+  .patient-triage-page .patient-triage-history .mc-table tbody tr.patient-triage-history__none td {
     grid-column: 1 / -1;
   }
 
