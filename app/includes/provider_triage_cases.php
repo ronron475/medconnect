@@ -446,7 +446,7 @@ function provider_triage_workflow_badges(
     }
 
     if ($waitStatus === 'waiting') {
-        $badges[] = ['class' => 'slot-wait', 'label' => 'Waiting for Provider Availability'];
+        $badges[] = ['class' => 'slot-wait', 'label' => 'Waiting for Doctor Availability'];
     } elseif ($waitStatus === 'slot_available') {
         $badges[] = ['class' => 'slot-open', 'label' => 'Consultation Slot Available'];
     }

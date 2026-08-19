@@ -304,15 +304,6 @@ final class BhwWorkflows
             $pdo->prepare('UPDATE triage_results SET recommendation_status = ? WHERE id = ?')
                 ->execute([$recStatus, $triageResultId]);
 
-            if ($recStatus === 'pending_approval' && $triageTier === TriageLevelService::NON_URGENT) {
-                require_once __DIR__ . '/triage_provider_assignment.php';
-                require_once __DIR__ . '/notification_events.php';
-                $assignedId = triage_assign_review_provider($pdo, $patientId);
-                if ($assignedId > 0) {
-                    triage_bind_assigned_provider($pdo, $triageResultId, $assignedId);
-                }
-            }
-
             if ($triageTier === TriageLevelService::EMERGENCY) {
                 $pdo->prepare("UPDATE triage_results SET outcome = 'emergency_referral', status = 'completed' WHERE id = ?")
                     ->execute([$triageResultId]);
@@ -401,9 +392,19 @@ final class BhwWorkflows
             }
 
             $provider_id = (int) $slot['provider_id'];
+            require_once __DIR__ . '/triage_provider_assignment.php';
+            require_once __DIR__ . '/notification_events.php';
             if ($recStatus === 'pending_approval' && $triageTier === TriageLevelService::NON_URGENT) {
                 triage_assert_patient_may_book_provider($pdo, $patientId, $provider_id);
+            }
+            if ($triageTier !== TriageLevelService::EMERGENCY) {
                 triage_bind_assigned_provider($pdo, $triageResultId, $provider_id);
+            }
+            if ($recStatus === 'pending_approval' && $triageTier === TriageLevelService::NON_URGENT && $provider_id > 0) {
+                $pstmt = $pdo->prepare('SELECT CONCAT(first_name, " ", last_name) FROM users WHERE id = ? LIMIT 1');
+                $pstmt->execute([$patientId]);
+                $pName = trim((string) ($pstmt->fetchColumn() ?: 'Patient'));
+                NotificationEvents::aiSelfCareReviewRequired($pdo, $provider_id, $patientId, $pName, $triageResultId, $bhwId);
             }
 
             $consult_date = (string) $slot['slot_date'];

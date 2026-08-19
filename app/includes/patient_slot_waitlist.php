@@ -161,11 +161,53 @@ function patient_slot_waitlist_assigned_availability(array $providers, int $assi
 }
 
 /**
+ * Pick which doctor an offered waiter gets.
+ * Keep the assigned doctor if they still have a real slot; otherwise
+ * use weighted workload among doctors who still have remaining inventory.
+ *
+ * @param array<int,int> $remaining
+ * @param list<int> $order
+ * @param array<int,int> $workloads
+ */
+function patient_slot_waitlist_choose_offer_provider(
+    array $remaining,
+    array $order,
+    array $workloads = [],
+    int $keepProviderId = 0
+): int {
+    if ($keepProviderId > 0 && ($remaining[$keepProviderId] ?? 0) > 0) {
+        return $keepProviderId;
+    }
+
+    $candidates = [];
+    foreach ($order as $pid) {
+        if (($remaining[$pid] ?? 0) > 0) {
+            $candidates[] = (int) $pid;
+        }
+    }
+    if ($candidates === []) {
+        return 0;
+    }
+    if ($workloads !== []) {
+        usort($candidates, static function (int $a, int $b) use ($workloads): int {
+            $cmp = ((int) ($workloads[$a] ?? PHP_INT_MAX)) <=> ((int) ($workloads[$b] ?? PHP_INT_MAX));
+            if ($cmp !== 0) {
+                return $cmp;
+            }
+
+            return $a <=> $b;
+        });
+    }
+
+    return $candidates[0];
+}
+
+/**
  * FIFO plan: oldest waiters first, one offer per REAL open slot across any provider.
  * Does not auto-book. Never offers a provider who currently has 0 slots.
  *
  * @param list<array<string, mixed>> $waiters  Must already be oldest-first
- * @param list<array{provider_id:int,slot_count:int,provider_name?:string}> $providers
+ * @param list<array{provider_id:int,slot_count:int,provider_name?:string,workload?:int}> $providers
  * @return list<array{id:int,action:string,provider_id:int,provider_name:string,wave_key:string}>
  */
 function patient_slot_waitlist_fifo_plan(array $waiters, array $providers): array
@@ -173,6 +215,7 @@ function patient_slot_waitlist_fifo_plan(array $waiters, array $providers): arra
     $remaining = [];
     $names = [];
     $order = [];
+    $workloads = [];
     foreach ($providers as $row) {
         $pid = (int) ($row['provider_id'] ?? 0);
         $count = (int) ($row['slot_count'] ?? 0);
@@ -182,6 +225,9 @@ function patient_slot_waitlist_fifo_plan(array $waiters, array $providers): arra
         $remaining[$pid] = $count;
         $names[$pid] = trim((string) ($row['provider_name'] ?? ''));
         $order[] = $pid;
+        if (array_key_exists('workload', $row)) {
+            $workloads[$pid] = (int) $row['workload'];
+        }
     }
 
     $today = date('Y-m-d');
@@ -192,14 +238,12 @@ function patient_slot_waitlist_fifo_plan(array $waiters, array $providers): arra
             continue;
         }
 
-        $picked = 0;
-        foreach ($order as $pid) {
-            if (($remaining[$pid] ?? 0) > 0) {
-                $remaining[$pid]--;
-                $picked = $pid;
-                break;
-            }
-        }
+        $picked = patient_slot_waitlist_choose_offer_provider(
+            $remaining,
+            $order,
+            $workloads,
+            (int) ($row['assigned_provider_id'] ?? $row['triage_assigned_id'] ?? 0)
+        );
 
         if ($picked <= 0) {
             $plan[] = [
@@ -211,6 +255,8 @@ function patient_slot_waitlist_fifo_plan(array $waiters, array $providers): arra
             ];
             continue;
         }
+
+        $remaining[$picked]--;
 
         $plan[] = [
             'id'            => $id,
@@ -585,6 +631,11 @@ function patient_slot_waitlist_process(PDO $pdo): array
     patient_slot_waitlist_backfill_open_cases($pdo);
 
     $providers = patient_slot_waitlist_bookable_providers($pdo);
+    foreach ($providers as &$providerRow) {
+        $pid = (int) ($providerRow['provider_id'] ?? 0);
+        $providerRow['workload'] = $pid > 0 ? triage_provider_weighted_workload($pdo, $pid) : 0;
+    }
+    unset($providerRow);
 
     try {
         $stmt = $pdo->query("
@@ -660,6 +711,7 @@ function patient_slot_waitlist_process(PDO $pdo): array
         $pdo->prepare("
             UPDATE patient_slot_waitlist
             SET status = 'slot_available',
+                assigned_provider_id = ?,
                 eligible_provider_id = ?,
                 eligible_provider_name = ?,
                 availability_key = ?,
@@ -669,10 +721,37 @@ function patient_slot_waitlist_process(PDO $pdo): array
               AND status IN ('waiting', 'slot_available')
         ")->execute([
             $assignedId > 0 ? $assignedId : null,
+            $assignedId > 0 ? $assignedId : null,
             $providerName !== '' ? $providerName : null,
             $waveKey,
             $id,
         ]);
+
+        $prevAssigned = (int) ($row['triage_assigned_id'] ?? $row['assigned_provider_id'] ?? 0);
+        $triageId = (int) ($row['triage_result_id'] ?? 0);
+        $patientId = (int) ($row['patient_id'] ?? 0);
+        if ($assignedId > 0 && $triageId > 0 && $assignedId !== $prevAssigned) {
+            triage_bind_assigned_provider($pdo, $triageId, $assignedId);
+            $recStatus = (string) ($row['recommendation_status'] ?? '');
+            if ($recStatus === 'pending_approval') {
+                try {
+                    $nameStmt = $pdo->prepare('SELECT CONCAT(first_name, " ", last_name) FROM users WHERE id = ? LIMIT 1');
+                    $nameStmt->execute([$patientId]);
+                    $patientName = trim((string) ($nameStmt->fetchColumn() ?: 'Patient'));
+                    require_once __DIR__ . '/notification_events.php';
+                    NotificationEvents::aiSelfCareReviewRequired(
+                        $pdo,
+                        $assignedId,
+                        $patientId,
+                        $patientName,
+                        $triageId,
+                        $patientId
+                    );
+                } catch (Throwable $e) {
+                    error_log('waitlist assign notify: ' . $e->getMessage());
+                }
+            }
+        }
 
         if ($status !== 'slot_available') {
             $stats['opened']++;
