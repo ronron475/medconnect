@@ -126,9 +126,10 @@ final class PatientLocationResolver
   private function resolveCanonicalBarangay(array $row): string
   {
     $candidates = [
-      (string) ($row['barangay'] ?? ''),
-      (string) ($row['pl_barangay'] ?? ''),
       (string) ($row['pr_barangay'] ?? ''),
+      (string) ($row['barangay'] ?? ''),
+      (string) ($row['canonical_barangay'] ?? ''),
+      (string) ($row['pl_barangay'] ?? ''),
       (string) ($row['address'] ?? ''),
       (string) ($row['full_address'] ?? ''),
     ];
