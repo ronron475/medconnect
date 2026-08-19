@@ -2034,7 +2034,7 @@ body.consultation-mobile-call-fullscreen .mc-provider-video-dock iframe {
             <!-- Active Call UI (hidden initially) -->
             <div id="activeCallUI" class="active-call">
                 <div id="mcProviderVideoDock" class="mc-provider-video-dock" aria-label="Live video consultation"></div>
-                <iframe id="videoFrame" src="" hidden allow="camera *; microphone *; display-capture *; autoplay *; fullscreen *" allowfullscreen></iframe>
+                <iframe id="videoFrame" src="" hidden allow="camera; microphone; display-capture; autoplay; fullscreen" allowfullscreen></iframe>
             </div>
 
             <button type="button" id="mobileCallExpandBtn" class="mobile-call-expand-btn" hidden aria-label="Expand video" onclick="toggleMobileCallFullscreen()">
@@ -3698,9 +3698,7 @@ function setVideoShellLive(isLive) {
         exitMobileCallFullscreen();
         exitDesktopVideoExpanded();
     } else if (isMobileConsultation() && !mobileCallFullscreen) {
-        window.setTimeout(function () {
-            enterMobileCallFullscreen();
-        }, 50);
+        enterMobileCallFullscreen();
     }
     updateExpandButtons();
 }
@@ -3924,12 +3922,6 @@ function mcProviderOpenVideo(urlOrToken, consultationId) {
             legacy.hidden = false;
             legacy.src = joinUrl;
         }
-    }
-
-    if (isMobileConsultation()) {
-        window.setTimeout(function () {
-            enterMobileCallFullscreen();
-        }, 700);
     }
 
     showPatientJoinLink(joinUrl);

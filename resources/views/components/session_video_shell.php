@@ -23,7 +23,8 @@ $shellJsVer  = (int) @filemtime(ASSETS_PATH . '/js/session-video-shell.js');
     <iframe
       id="mcGlobalVideoFrame"
       title="Video consultation"
-      allow="camera; microphone; display-capture; autoplay"
+      allow="camera; microphone; display-capture; autoplay; fullscreen"
+      allowfullscreen
       referrerpolicy="same-origin"
     ></iframe>
   </div>

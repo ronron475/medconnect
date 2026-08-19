@@ -571,9 +571,9 @@
       if (t.indexOf('waiting for healthcare') >= 0 || t.indexOf('waiting for provider') >= 0 || t.indexOf('waiting for doctor') >= 0) {
         setOverlay('Waiting for healthcare provider…', '', true, { showRetry: false });
       } else if (t.indexOf('you left') >= 0) {
-        setOverlay('You left the call', 'The consultation is still open. Rejoin while your doctor is in the room.', true, { showRetry: true });
-      } else if (t.indexOf('patient disconnected') >= 0 || t.indexOf('waiting for patient to reconnect') >= 0) {
-        setOverlay('Patient disconnected', 'Waiting for patient to reconnect…', true, { showRetry: false });
+        setOverlay('You left the consultation', 'This visit is still active. Rejoin to reconnect with your doctor.', true, { showRetry: true });
+      } else if (t.indexOf('patient temporarily left') >= 0 || t.indexOf('patient disconnected') >= 0 || t.indexOf('waiting for patient to reconnect') >= 0) {
+        setOverlay('Patient temporarily left', 'The consultation is still active. Waiting for the patient to rejoin…', true, { showRetry: false });
       } else if (t.indexOf('waiting for patient') >= 0) {
         setOverlay('Waiting for patient…', '', true, { showRetry: false });
       } else if (t.indexOf('connection lost') >= 0 || t.indexOf('trying to reconnect') >= 0) {
