@@ -987,6 +987,13 @@ html.lsa-ready .landing-page .download-app-section .lsa:not(.lsa-visible) {
   line-height: 1.55;
 }
 
+/* Dark mode: ensure the "download file does not appear" helper stays readable */
+html[data-theme-resolved='dark'] .landing-page .download-app__done {
+  color: #e2e8f0;
+  background: rgba(6, 147, 150, 0.16);
+  border: 1px solid rgba(148, 163, 184, 0.28);
+}
+
 .download-app__steps h3 {
   margin: 0 0 8px;
   font-size: 14px;
