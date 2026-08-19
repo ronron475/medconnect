@@ -85,7 +85,7 @@ try {
             break;
     }
 
-    echo json_encode(['success' => true, 'data' => $payload], JSON_UNESCAPED_UNICODE);
+    echo json_encode(['success' => true, 'data' => $payload], JSON_UNESCAPED_UNICODE | JSON_INVALID_UTF8_SUBSTITUTE);
 } catch (Throwable $e) {
     http_response_code(500);
     echo json_encode([

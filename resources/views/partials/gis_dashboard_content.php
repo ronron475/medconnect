@@ -13,7 +13,7 @@ $gisMapNote = $gisIsProvider
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin=""/>
 <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css" crossorigin=""/>
 <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css" crossorigin=""/>
-<link rel="stylesheet" href="<?= htmlspecialchars($assetBase) ?>/assets/css/admin-gis-dashboard.css?v=4.3"/>
+<link rel="stylesheet" href="<?= htmlspecialchars($assetBase) ?>/assets/css/admin-gis-dashboard.css?v=4.4"/>
 
 <div class="gis-page" id="gis-dashboard"
      data-api="<?= htmlspecialchars($apiBase) ?>"
@@ -128,7 +128,7 @@ $gisMapNote = $gisIsProvider
     <aside class="mc-card gis-brgy-panel" aria-label="Barangay summary">
       <div class="gis-brgy-panel__head">
         <h3 class="text-h3">Barangay Summary</h3>
-        <p class="gis-analytics-caption text-xs text-muted">Grouped from each patient’s registered barangay. Live counts update with new cases. The severity layer hides barangays with no matching cases.</p>
+        <p class="gis-analytics-caption text-xs text-muted">Live counts from each patient’s registered barangay. Click a row to zoom the map.</p>
       </div>
       <div class="gis-brgy-panel__tools">
         <input type="search" id="gis-brgy-search" class="gis-input" placeholder="Search barangay…" aria-label="Search barangay">
@@ -224,4 +224,4 @@ $gisMapNote = $gisIsProvider
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
 <script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js" crossorigin=""></script>
 <script src="https://unpkg.com/leaflet.heat@0.2.0/dist/leaflet-heat.js" crossorigin=""></script>
-<script src="<?= htmlspecialchars($assetBase) ?>/assets/js/admin-gis-dashboard.js?v=4.3"></script>
+<script src="<?= htmlspecialchars($assetBase) ?>/assets/js/admin-gis-dashboard.js?v=4.4"></script>

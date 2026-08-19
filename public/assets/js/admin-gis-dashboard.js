@@ -287,9 +287,9 @@
   }
 
   async function fetchBundle() {
-    const qs = filtersQuery();
-    const url = apiUrl + (qs ? '?' + qs : '');
-    const res = await fetch(url);
+    const params = new URLSearchParams(filtersQuery());
+    params.set('action', 'bundle');
+    const res = await fetch(apiUrl + '?' + params.toString());
     const json = await res.json();
     if (!json.success) throw new Error(json.message || 'Failed to load GIS data');
     return json.data || {};
@@ -390,7 +390,25 @@
   }
 
   function currentMonitoring() {
-    return buildClientMonitoring();
+    try {
+      const client = buildClientMonitoring();
+      if ((client.barangays || []).length > 0) {
+        return client;
+      }
+    } catch (err) {
+      console.error('GIS barangay aggregation failed:', err);
+    }
+    if (state.monitoring && Array.isArray(state.monitoring.barangays) && state.monitoring.barangays.length) {
+      return state.monitoring;
+    }
+    return {
+      barangays: [],
+      hotspots: [],
+      new_cases_today: 0,
+      unmapped_cases: 0,
+      unassigned_bhw: 0,
+      barangays_with_cases: 0,
+    };
   }
 
   function rowDateStamp(row) {
@@ -797,6 +815,7 @@
   }
 
   function renderTable() {
+    if (!els.tableBody) return;
     const rows = sortedPatients();
     const totalPages = Math.max(1, Math.ceil(rows.length / PAGE_SIZE));
     if (state.page > totalPages) state.page = totalPages;
@@ -1489,15 +1508,35 @@
   }
 
   function refreshDashboard() {
-    renderSeverityStats();
-    renderTable();
+    try {
+      renderSeverityStats();
+    } catch (err) {
+      console.error('GIS stats render failed:', err);
+    }
+    try {
+      renderTable();
+    } catch (err) {
+      console.error('GIS table render failed:', err);
+    }
     try {
       renderMap();
     } catch (mapErr) {
       console.error('GIS map render failed:', mapErr);
     }
-    renderClientAnalytics();
-    renderBarangaySummary();
+    try {
+      renderClientAnalytics();
+    } catch (err) {
+      console.error('GIS analytics render failed:', err);
+    }
+    try {
+      renderBarangaySummary();
+    } catch (err) {
+      console.error('GIS barangay summary render failed:', err);
+      if (els.brgyBody) {
+        els.brgyBody.innerHTML =
+          '<tr><td colspan="5" class="gis-table-empty">Unable to build barangay summary.</td></tr>';
+      }
+    }
   }
 
   function barangayCenterLookup(name) {
@@ -1723,6 +1762,10 @@
       if (els.tableBody) {
         els.tableBody.innerHTML =
           '<tr><td colspan="7" class="gis-table-empty">Unable to load GIS dashboard data.</td></tr>';
+      }
+      if (els.brgyBody) {
+        els.brgyBody.innerHTML =
+          '<tr><td colspan="5" class="gis-table-empty">Unable to load barangay summary.</td></tr>';
       }
       try {
         renderMap();
