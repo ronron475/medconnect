@@ -355,6 +355,13 @@ final class GisDashboardService
         require_once $this->appBasePath() . '/app/core/BagoBarangayCentroids.php';
         $config = BagoBarangayCentroids::mapConfig();
 
+        $centers = [];
+        try {
+            $centers = BagoBarangayCentroids::barangayRecords();
+        } catch (Throwable $e) {
+            $centers = [];
+        }
+
         return [
             'center'       => $config['center'],
             'bounds'       => $config['bounds'],
@@ -362,7 +369,7 @@ final class GisDashboardService
             'min_zoom'     => 11,
             'city'         => (string) ($config['city'] ?? 'Bago City'),
             'province'     => (string) ($config['province'] ?? 'Negros Occidental'),
-            'barangay_centers' => BagoBarangayCentroids::barangayRecords(),
+            'barangay_centers' => $centers,
         ];
     }
 
