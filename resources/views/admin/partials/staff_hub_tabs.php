@@ -11,16 +11,24 @@ $hub_tab = $hub_tab ?? 'all';
 $hub_base = $hub_base ?? 'doctor_applications.php';
 
 if ($hub_kind === 'doctor') {
-    $hub_tabs = [
-        'all'           => 'All',
-        'applications'  => 'Applications',
-        'pending'       => 'Pending Approval',
-        'active'        => 'Active',
-        'rejected'      => 'Rejected',
-        'archived'      => 'Archived',
-    ];
     if (!empty($hub_show_queue_tab)) {
-        $hub_tabs['queue'] = 'Queue Monitoring';
+        $hub_tabs = [
+            'all'      => 'All Doctors',
+            'pending'  => 'Pending Approval',
+            'active'   => 'Active',
+            'rejected' => 'Rejected',
+            'archived' => 'Archived',
+            'queue'    => 'Queue Monitoring',
+        ];
+    } else {
+        $hub_tabs = [
+            'all'           => 'All',
+            'applications'  => 'Applications',
+            'pending'       => 'Pending Approval',
+            'active'        => 'Active',
+            'rejected'      => 'Rejected',
+            'archived'      => 'Archived',
+        ];
     }
 } else {
     $hub_tabs = [

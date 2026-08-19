@@ -149,6 +149,7 @@ require __DIR__ . '/partials/staff_hub_tabs.php';
     </div>
 </div>
 
+<?php if (!$is_superadmin_portal || $hub_tab === 'pending'): ?>
 <div class="staff-apps-note" role="note">
     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
     <?php if ($is_superadmin_portal): ?>
@@ -157,6 +158,7 @@ require __DIR__ . '/partials/staff_hub_tabs.php';
     <span><strong>You cannot activate Doctor accounts directly.</strong> After submission, a Super Administrator must review PRC verification, documents, and approve the application before the account becomes active.</span>
     <?php endif; ?>
 </div>
+<?php endif; ?>
 
 <div class="staff-apps-card">
     <div class="staff-apps-card__toolbar">
@@ -223,7 +225,7 @@ require __DIR__ . '/partials/create_doctor_modal.php';
 ?>
 <?php endif; ?>
 
-<link rel="stylesheet" href="<?= ASSET_BASE ?>/assets/css/admin-staff-applications.css?v=1.3">
+<link rel="stylesheet" href="<?= ASSET_BASE ?>/assets/css/admin-staff-applications.css?v=1.4">
 <link rel="stylesheet" href="<?= ASSET_BASE ?>/assets/css/admin-bhw-applications.css?v=1.2">
 <script src="<?= ASSET_BASE ?>/assets/js/admin-staff-applications.js?v=1.1"></script>
 <script>
@@ -236,7 +238,7 @@ window.MC_DOCTOR_APP = {
     checkerMode: <?= $is_superadmin_portal ? 'true' : 'false' ?>
 };
 </script>
-<script src="<?= ASSET_BASE ?>/assets/js/admin-doctor-applications.js?v=1.3"></script>
+<script src="<?= ASSET_BASE ?>/assets/js/admin-doctor-applications.js?v=1.4"></script>
 <?php if ($is_superadmin_portal): ?>
 <script>
 window.MC_DOCTOR_APPROVAL = {
