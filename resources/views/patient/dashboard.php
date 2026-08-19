@@ -262,6 +262,7 @@ foreach ($triage_history as $t) {
 
 $symptoms_review_pending = patient_symptoms_review_pending_state($pdo, (int) $uid);
 $care_tips_ready_to_schedule = patient_care_tips_ready_to_schedule_state($pdo, (int) $uid);
+$preliminary_complaint_triage = patient_find_preliminary_complaint_triage($pdo, (int) $uid);
 $symptoms_review_booking = triage_patient_booking_slot_status($pdo, (int) $uid);
 patient_slot_waitlist_process_throttled($pdo);
 $slot_wait_state = patient_slot_waitlist_dashboard_state($pdo, (int) $uid);
