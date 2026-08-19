@@ -66,7 +66,7 @@ final class NotificationEvents
             'title'         => 'BHW Approval Required',
             'message'       => 'New Barangay Health Worker account requires approval.',
             'priority'      => 'high',
-            'action_url'    => '/views/superadmin/bhw_approvals.php',
+            'action_url'    => '/views/superadmin/bhw_applications.php?tab=pending',
             'related_table' => 'bhw_applications',
             'related_id'    => $applicationId,
             'icon'          => 'user-check',

@@ -38,6 +38,7 @@ function portal_nav_group_is_active(string $group, string $current, string $quer
         'doctor_management' => $current === 'doctor_applications.php'
             || ($current === 'staff_management.php' && ($params['role'] ?? '') === 'provider'),
         'bhw_management' => $current === 'bhw_applications.php'
+            || $current === 'bhw_approvals.php'
             || ($current === 'staff_management.php' && ($params['role'] ?? '') === 'bhw'),
         'patient_management' => $current === 'user_management.php'
             && ($params['role'] ?? '') === 'patient',

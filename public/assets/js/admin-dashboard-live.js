@@ -152,7 +152,7 @@
           '<strong>' + a.doctor + '</strong><span>Doctor' + (a.doctor === 1 ? '' : 's') + ' awaiting approval</span></a>';
       }
       if (a.bhw > 0) {
-        html += '<a href="' + esc(assetBase()) + '/views/superadmin/bhw_approvals.php" class="superadmin-approval-card">' +
+        html += '<a href="' + esc(assetBase()) + '/views/superadmin/bhw_applications.php?tab=pending" class="superadmin-approval-card">' +
           '<strong>' + a.bhw + '</strong><span>BHW' + (a.bhw === 1 ? '' : 's') + ' awaiting approval</span></a>';
       }
       strip.innerHTML = html;
