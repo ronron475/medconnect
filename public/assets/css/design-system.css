@@ -211,3 +211,19 @@ body {
 .gap-md { gap: var(--mc-space-md); }
 .mb-sm { margin-bottom: var(--mc-space-sm); }
 .mb-md { margin-bottom: var(--mc-space-md); }
+
+/* Desktop / laptop typography uplift
+   Some desktop widths make the compact font feel too small. */
+@media (min-width: 1025px) {
+    :root {
+        --mc-fs-body: 0.93rem;
+        --mc-fs-sm: 0.86rem;
+        --mc-fs-xs: 0.76rem;
+        --mc-fs-h1: 1.7rem;
+        --mc-fs-h2: 1.34rem;
+    }
+
+    body {
+        line-height: 1.5;
+    }
+}
