@@ -746,11 +746,16 @@
       alert('Please select a report reason.');
       return;
     }
+    var notes = notesEl ? String(notesEl.value || '').trim() : '';
+    if (reason === 'other' && notes.length < 10) {
+      alert('Please describe what happened (at least 10 characters) when selecting Other.');
+      return;
+    }
     try {
       var data = await postCaseAction(cfg.reportApi, {
         triage_id: String(currentTriageId),
         reason: reason,
-        notes: notesEl ? String(notesEl.value || '') : '',
+        notes: notes,
         csrf_token: csrfToken(),
       });
       if (!data || !data.success) {

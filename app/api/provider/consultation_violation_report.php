@@ -16,6 +16,33 @@ if (empty($_SESSION['user_id']) || ($_SESSION['user_role'] ?? '') !== 'provider'
     exit;
 }
 
+if ($_SERVER['REQUEST_METHOD'] === 'GET') {
+    $consultationId = (int) ($_GET['consultation_id'] ?? 0);
+    if ($consultationId <= 0) {
+        echo json_encode(['success' => false, 'message' => 'Consultation ID is required.']);
+        exit;
+    }
+
+    try {
+        $consult = consultation_violation_fetch($pdo, $consultationId);
+        if (!$consult || (int) ($consult['provider_id'] ?? 0) !== (int) $_SESSION['user_id']) {
+            http_response_code(403);
+            echo json_encode(['success' => false, 'message' => 'Access denied.']);
+            exit;
+        }
+
+        echo json_encode([
+            'success' => true,
+            'has_active_report' => case_report_has_active_consultation($pdo, $consultationId),
+        ]);
+    } catch (Throwable $e) {
+        error_log('provider/consultation_violation_report GET: ' . $e->getMessage());
+        http_response_code(500);
+        echo json_encode(['success' => false, 'message' => 'Unable to load report status.']);
+    }
+    exit;
+}
+
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     http_response_code(405);
     echo json_encode(['success' => false, 'message' => 'Method not allowed.']);

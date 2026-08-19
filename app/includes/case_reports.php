@@ -72,6 +72,21 @@ function case_report_has_active_consultation(PDO $pdo, int $consultationId): boo
     return (int) $stmt->fetchColumn() > 0;
 }
 
+function case_report_validate_notes_for_reason(string $reason, string $notes): ?string
+{
+    if (strtolower(trim($reason)) !== 'other') {
+        return null;
+    }
+    $notes = trim($notes);
+    if ($notes === '') {
+        return 'Please describe what happened when selecting Other.';
+    }
+    if (mb_strlen($notes) < 10) {
+        return 'Please provide a description of at least 10 characters for Other.';
+    }
+    return null;
+}
+
 /**
  * @return array{success: bool, message: string, report_id?: int}
  */
@@ -87,6 +102,11 @@ function case_report_submit(
     $reason = strtolower(trim($reason));
     if (!in_array($reason, case_report_valid_case_reasons(), true)) {
         return ['success' => false, 'message' => 'Please select a valid report reason.'];
+    }
+
+    $notesError = case_report_validate_notes_for_reason($reason, $notes);
+    if ($notesError !== null) {
+        return ['success' => false, 'message' => $notesError];
     }
 
     $case = triage_case_fetch($pdo, $triageId);
@@ -184,6 +204,11 @@ function consultation_violation_report_submit(
     $reason = strtolower(trim($reason));
     if (!in_array($reason, case_report_valid_video_reasons(), true)) {
         return ['success' => false, 'message' => 'Please select a valid violation reason.'];
+    }
+
+    $notesError = case_report_validate_notes_for_reason($reason, $notes);
+    if ($notesError !== null) {
+        return ['success' => false, 'message' => $notesError];
     }
 
     $consult = consultation_violation_fetch($pdo, $consultationId);
@@ -509,6 +534,10 @@ function case_reports_admin_list(PDO $pdo, ?string $statusFilter = null): array
         $row['reviewer_name'] = trim(($row['reviewer_first'] ?? '') . ' ' . ($row['reviewer_last'] ?? ''));
         $row['reason_label'] = case_report_reason_label((string) ($row['reason'] ?? ''));
         $row['source_label'] = case_report_source_label((string) ($row['source_type'] ?? 'case'));
+        $row['status_label'] = case_report_status_label((string) ($row['status'] ?? 'pending'));
+        $row['consultation_ref'] = case_report_consultation_ref(
+            !empty($row['consultation_id']) ? (int) $row['consultation_id'] : null
+        );
         $row['case_terminated'] = strtolower((string) ($row['triage_outcome'] ?? '')) === 'terminated';
         $row['consultation_status_display'] = (string) (
             $row['consultation_status_at_report']
@@ -554,6 +583,10 @@ function case_report_admin_detail(PDO $pdo, int $reportId): ?array
     $row['reporter_name'] = trim(($row['reporter_first'] ?? '') . ' ' . ($row['reporter_last'] ?? ''));
     $row['reason_label'] = case_report_reason_label((string) ($row['reason'] ?? ''));
     $row['source_label'] = case_report_source_label((string) ($row['source_type'] ?? 'case'));
+    $row['status_label'] = case_report_status_label((string) ($row['status'] ?? 'pending'));
+    $row['consultation_ref'] = case_report_consultation_ref(
+        !empty($row['consultation_id']) ? (int) $row['consultation_id'] : null
+    );
     $row['case_terminated'] = strtolower((string) ($row['triage_outcome'] ?? '')) === 'terminated';
     $row['consultation_status_display'] = (string) (
         $row['consultation_status_at_report']

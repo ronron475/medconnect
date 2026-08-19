@@ -10,7 +10,6 @@ function case_reports_ensure_schema(PDO $pdo): void
     if ($done) {
         return;
     }
-    $done = true;
 
     try {
         $exists = $pdo->query("SHOW TABLES LIKE 'case_reports'")->rowCount();
@@ -42,6 +41,7 @@ function case_reports_ensure_schema(PDO $pdo): void
                     KEY idx_case_reports_source (source_type, created_at)
                 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
             ");
+            $done = true;
             return;
         }
 
@@ -74,6 +74,7 @@ function case_reports_ensure_schema(PDO $pdo): void
             $pdo->exec('CREATE INDEX idx_case_reports_source ON case_reports (source_type, created_at)');
         } catch (PDOException $e) {
         }
+        $done = true;
     } catch (PDOException $e) {
         error_log('case_reports_ensure_schema: ' . $e->getMessage());
     }
@@ -172,6 +173,27 @@ function case_report_reason_label(string $reason): string
         'other' => 'Other',
         default => ucfirst(str_replace('_', ' ', $reason)),
     };
+}
+
+function case_report_status_label(string $status): string
+{
+    return match (strtolower(trim($status))) {
+        'pending'      => 'Pending Review',
+        'under_review' => 'Under Review',
+        'dismissed'    => 'Dismissed',
+        'confirmed'    => 'Confirmed',
+        'escalated'    => 'Escalated',
+        default        => ucfirst(str_replace('_', ' ', $status)),
+    };
+}
+
+function case_report_consultation_ref(?int $consultationId): string
+{
+    if (!$consultationId || $consultationId <= 0) {
+        return '';
+    }
+
+    return 'CONS-' . str_pad((string) $consultationId, 6, '0', STR_PAD_LEFT);
 }
 
 /** @return list<string> */
