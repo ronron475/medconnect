@@ -87,7 +87,7 @@ $placeholder = $chief_complaint_locked
       <?php if ($chief_complaint_locked): ?>
       This primary complaint is already on file and will be reviewed by your doctor. It cannot be changed while this consultation is still active.
       <?php elseif ($is_new_consultation_flow): ?>
-      Enter a <strong>new</strong> primary complaint for this consultation. Previous complaints remain in My Sessions and are not reused.
+      Enter a <strong>new</strong> primary complaint for this consultation. Your previous complaints stay saved in My Sessions and will not be reused.
       <?php else: ?>
       Describe your primary complaint. At least a short sentence helps your care team understand your case faster.
       <?php endif; ?>
