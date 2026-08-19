@@ -321,9 +321,7 @@
     els.mapPanel.hidden = view !== 'map';
     els.tablePanel.hidden = view !== 'table';
     if (view === 'map' && state.map) {
-      setTimeout(function () {
-        state.map.invalidateSize();
-      }, 120);
+      setTimeout(invalidateMapSize, 120);
     }
   }
 
@@ -1803,6 +1801,15 @@
     }
   }
 
+  function invalidateMapSize() {
+    if (!state.map) return;
+    try {
+      state.map.invalidateSize({ animate: false });
+    } catch (e) {
+      /* ignore */
+    }
+  }
+
   function bindEvents() {
     els.toggleBtns.forEach(function (btn) {
       btn.addEventListener('click', function () {
@@ -1898,6 +1905,29 @@
         setView('table');
         window.print();
       });
+    }
+
+    window.addEventListener(
+      'resize',
+      debounce(function () {
+        if (state.view === 'map') {
+          invalidateMapSize();
+        }
+      }, 150)
+    );
+
+    if (typeof window.matchMedia === 'function') {
+      const layoutQuery = window.matchMedia('(min-width: 1200px)');
+      const onLayoutChange = function () {
+        if (state.view === 'map') {
+          setTimeout(invalidateMapSize, 120);
+        }
+      };
+      if (typeof layoutQuery.addEventListener === 'function') {
+        layoutQuery.addEventListener('change', onLayoutChange);
+      } else if (typeof layoutQuery.addListener === 'function') {
+        layoutQuery.addListener(onLayoutChange);
+      }
     }
   }
 

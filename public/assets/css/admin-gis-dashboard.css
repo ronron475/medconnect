@@ -1,6 +1,9 @@
 /* GIS Dashboard — admin theme extension */
 .gis-page {
   animation: gisFadeIn 0.35s ease;
+  max-width: 100%;
+  overflow-x: clip;
+  box-sizing: border-box;
 }
 
 @keyframes gisFadeIn {
@@ -57,7 +60,7 @@
 
 .gis-summary-grid {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
   gap: 16px;
   margin-bottom: 24px;
 }
@@ -112,6 +115,7 @@
 .gis-map-card {
   padding: 0;
   overflow: hidden;
+  min-width: 0;
 }
 
 .gis-map-toolbar {
@@ -138,9 +142,16 @@
 
 .gis-map-layout {
   display: grid;
-  grid-template-columns: minmax(0, 1.6fr) minmax(280px, 0.9fr);
+  grid-template-columns: minmax(0, 1fr);
   gap: 16px;
   align-items: stretch;
+  min-width: 0;
+}
+
+@media (min-width: 1200px) {
+  .gis-map-layout {
+    grid-template-columns: minmax(0, 1.55fr) minmax(300px, 0.85fr);
+  }
 }
 
 body.admin-body .gis-brgy-panel.mc-card,
@@ -154,6 +165,7 @@ body.provider-body .gis-brgy-panel.mc-card {
   display: flex;
   flex-direction: column;
   min-height: 0;
+  min-width: 0;
   height: 100%;
   max-height: none;
   overflow: hidden;
@@ -258,6 +270,18 @@ body.provider-body .gis-brgy-panel.mc-card {
   font-weight: 800;
 }
 
+.gis-brgy-table th:first-child,
+.gis-brgy-table td:first-child {
+  white-space: normal;
+  min-width: 88px;
+  max-width: 140px;
+}
+
+.gis-brgy-table th:not(:first-child),
+.gis-brgy-table td:not(:first-child) {
+  text-align: center;
+}
+
 .gis-brgy-table tbody tr {
   cursor: pointer;
 }
@@ -340,7 +364,8 @@ body.provider-body .gis-brgy-panel.mc-card {
 .gis-map {
   grid-row: 1;
   grid-column: 1;
-  height: 520px;
+  height: clamp(320px, 42vh, 520px);
+  min-height: 320px;
   width: 100%;
   background: #e2e8f0;
 }
@@ -542,6 +567,13 @@ body.provider-body .gis-brgy-panel.mc-card {
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 16px;
   margin-top: 16px;
+  min-width: 0;
+}
+
+@media (min-width: 1400px) {
+  .gis-analytics-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
 }
 
 .gis-analytics-card {
@@ -858,21 +890,39 @@ body.provider-body .gis-brgy-panel.mc-card {
   z-index: 2;
 }
 
-@media (max-width: 1100px) {
+@media (min-width: 769px) and (max-width: 1199px) {
+  .gis-live-indicator {
+    right: 16px;
+    bottom: 16px;
+    max-width: calc(100vw - var(--portal-sidebar-w, 240px) - 48px);
+  }
+}
+
+@media (max-width: 1199px) {
   .gis-summary-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
+
   .gis-analytics-grid {
     grid-template-columns: 1fr;
   }
-  .gis-map-layout {
-    grid-template-columns: 1fr;
+
+  .gis-map {
+    height: clamp(340px, 44vh, 480px);
   }
+
   .gis-brgy-panel {
     height: auto;
     max-height: none;
     overflow: visible;
   }
+
+  body.admin-body .gis-brgy-panel.mc-card,
+  body.superadmin-body .gis-brgy-panel.mc-card,
+  body.provider-body .gis-brgy-panel.mc-card {
+    overflow: visible;
+  }
+
   .gis-brgy-table-wrap {
     min-height: 220px;
     max-height: 360px;
@@ -918,10 +968,23 @@ body.provider-body .gis-brgy-panel.mc-card {
     font-size: 1.1rem;
   }
 
+  .gis-map-toolbar {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 14px;
+    padding: 14px 16px;
+  }
+
   .gis-heatmap-toggles {
     flex-direction: row;
     flex-wrap: wrap;
     align-items: center;
+    width: 100%;
+  }
+
+  .gis-chip {
+    font-size: 0.78rem;
+    padding: 6px 10px;
   }
 
   .gis-brgy-filter {
@@ -930,18 +993,53 @@ body.provider-body .gis-brgy-panel.mc-card {
   }
 
   .gis-brgy-filter .gis-input {
-    flex: 1 1 160px;
+    flex: 1 1 100%;
     min-width: 0;
+    width: 100%;
+  }
+
+  .gis-brgy-panel__tools {
+    flex-direction: column;
+  }
+
+  .gis-brgy-panel__tools .gis-input,
+  .gis-brgy-panel__tools #gis-brgy-sort {
+    flex: 1 1 100%;
+    width: 100%;
   }
 
   .gis-brgy-table-wrap {
     min-height: 200px;
     max-height: 280px;
-    overflow-x: auto;
+    overflow: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .gis-table-card {
+    padding: 14px;
+  }
+
+  .gis-table-toolbar {
+    grid-template-columns: 1fr;
+  }
+
+  .gis-pagination {
+    flex-direction: column;
+    align-items: stretch;
+    text-align: center;
+  }
+
+  .gis-pagination button {
+    width: 100%;
   }
 
   .gis-toolbar-label {
     flex: 1 0 100%;
+  }
+
+  .gis-map {
+    height: clamp(300px, 38vh, 400px);
+    min-height: 300px;
   }
 
   .gis-map-legend {
@@ -950,7 +1048,18 @@ body.provider-body .gis-brgy-panel.mc-card {
   }
 
   .gis-map-note {
-    padding-bottom: 20px;
+    padding: 10px 14px 16px;
+    font-size: 0.75rem;
+  }
+
+  .gis-analytics-card {
+    padding: 14px 16px;
+  }
+
+  .gis-rank-list li {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
   }
 
   .gis-live-indicator {
@@ -964,12 +1073,32 @@ body.provider-body .gis-brgy-panel.mc-card {
   }
 }
 
-@media (max-width: 640px) {
+@media (max-width: 480px) {
   .gis-summary-grid {
     grid-template-columns: 1fr;
+    gap: 12px;
   }
+
+  .gis-header {
+    margin-bottom: 16px;
+  }
+
+  .gis-toggle-btn {
+    padding: 10px 12px;
+    font-size: 0.8125rem;
+  }
+
+  .gis-map .leaflet-control-zoom a {
+    width: 32px;
+    height: 32px;
+    line-height: 32px;
+    font-size: 16px;
+  }
+}
+
+@media (max-width: 640px) {
   .gis-map {
-    height: 380px;
+    min-height: 280px;
   }
 
   .gis-leaflet-popup .leaflet-popup-content {
