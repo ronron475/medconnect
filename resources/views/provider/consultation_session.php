@@ -3588,14 +3588,28 @@ async function overrideClinicalUrgency() {
             return;
         }
         const persisted = result.persisted || {};
+        const gis = result.gis || persisted.gis || {};
         const finalLabel = persisted.final_label
             || (result.support && result.support.final_urgency)
             || urgency;
+        const gisLabel = gis.label || '';
+        if (gis.bucket && persisted.final_bucket && gis.bucket !== persisted.final_bucket) {
+            if (status) {
+                status.className = 'csp-status is-error';
+                status.textContent = 'Override saved but GIS status did not match the doctor result.';
+            }
+            return;
+        }
         applyClinicalSupport(result.support || {});
         if (result.audit) renderClinicalAudit(result.audit);
+        if (select && persisted.final_bucket) {
+            select.value = persisted.final_bucket;
+        }
         if (status) {
             status.className = 'csp-status is-ok';
-            status.textContent = 'Override saved — ' + finalLabel;
+            status.textContent = gisLabel
+                ? ('Override saved — Final Triage Result ' + finalLabel + ' · GIS ' + gisLabel)
+                : ('Override saved — Final Triage Result ' + finalLabel);
         }
         const workflow = result.workflow || {};
         if (workflow.emergency === true && String(persisted.final_bucket || '') === 'emergency') {

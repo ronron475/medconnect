@@ -2,8 +2,10 @@
 /**
  * GIS Dashboard data layer — patient locations, summaries, and area analytics.
  *
- * Triage severity is read from triage_results.triage_level only (via TriageLevelService).
- * The GIS layer never classifies patients; AI/NLP and manual reassessment write triage_level.
+ * Authoritative GIS urgency:
+ *   doctor override (consultation_clinical_support) when present,
+ *   otherwise the latest AI triage_results.triage_level.
+ * GIS never classifies patients and never overwrites coordinates.
  */
 final class GisDashboardService
 {
@@ -665,7 +667,7 @@ final class GisDashboardService
     /**
      * Event-driven sync payload — returns patients changed since $sinceIso.
      *
-     * Detects registration, location update, triage reassessment, and new consultations.
+     * Detects registration, location update, doctor urgency override, triage reassessment, and new consultations.
      *
      * @param array<string, mixed> $filters
      * @return array{
@@ -904,16 +906,16 @@ final class GisDashboardService
      */
     private function emergenciesByBarangay(): array
     {
-        if (!$this->tableExists('triage_results') || !$this->tableExists('patient_registrations')) {
+        if (!$this->tableExists('users') || !$this->tableExists('patient_registrations')) {
             return [];
         }
 
         $sql = "
             SELECT COALESCE(NULLIF(TRIM(pr.barangay), ''), 'Unknown') AS barangay, COUNT(*) AS count
-            FROM triage_results tr
-            INNER JOIN users u ON u.id = tr.patient_id
+            FROM users u
             INNER JOIN patient_registrations pr ON pr.email = u.email
-            WHERE " . $this->emergencyWhereSql('tr') . "
+            WHERE u.role = 'patient'
+              AND " . $this->triageLevelSelectSql('u.id') . " = 'emergency'
             GROUP BY barangay
             ORDER BY count DESC
             LIMIT 12
@@ -976,30 +978,99 @@ final class GisDashboardService
 
     private function countEmergencyCases(): int
     {
-        if (!$this->tableExists('triage_results')) {
+        if (!$this->tableExists('users')) {
             return 0;
         }
 
-        if ($this->columnExists('triage_results', 'triage_level')) {
-            return (int) $this->scalar(
-                'SELECT COUNT(DISTINCT tr.patient_id) FROM triage_results tr
-                 INNER JOIN (
-                    SELECT patient_id, MAX(assessed_at) AS max_at
-                    FROM triage_results GROUP BY patient_id
-                 ) latest ON latest.patient_id = tr.patient_id AND latest.max_at = tr.assessed_at
-                 WHERE COALESCE(NULLIF(TRIM(tr.triage_level), \'\'), \'non_urgent\') = \'emergency\''
-            );
-        }
-
         return (int) $this->scalar(
-            'SELECT COUNT(DISTINCT tr.patient_id) FROM triage_results tr WHERE ' . $this->emergencyWhereSql('tr')
+            "SELECT COUNT(*) FROM users u WHERE u.role = 'patient' AND "
+            . $this->triageLevelSelectSql('u.id') . " = 'emergency'"
         );
     }
 
-    private function triageLevelSelectSql(string $patientIdExpr): string
+    /**
+     * Authoritative GIS urgency for one patient.
+     * Doctor override wins when present; otherwise the latest AI triage_level.
+     *
+     * @return array{patient_id:int,bucket:string,label:string,source:string,ai_bucket:string}
+     */
+    public function patientGisStatus(int $patientId): array
+    {
+        require_once $this->appBasePath() . '/app/core/TriageLevelService.php';
+        $id = max(0, $patientId);
+        $empty = [
+            'patient_id' => $id,
+            'bucket' => TriageLevelService::NON_URGENT,
+            'label' => 'NON-URGENT',
+            'source' => 'none',
+            'ai_bucket' => TriageLevelService::NON_URGENT,
+        ];
+        if ($id <= 0) {
+            return $empty;
+        }
+
+        $sql = 'SELECT '
+            . $this->triageLevelSelectSql((string) $id) . ' AS triage_level, '
+            . $this->latestDoctorOverrideSelectSql((string) $id) . ' AS override_bucket, '
+            . $this->latestAiTriageLevelSelectSql((string) $id) . ' AS ai_bucket';
+        $stmt = $this->pdo->query($sql);
+        $row = $stmt ? ($stmt->fetch(PDO::FETCH_ASSOC) ?: []) : [];
+        $bucket = $this->normalizeStoredTriageLevel((string) ($row['triage_level'] ?? ''));
+        $override = strtolower(trim((string) ($row['override_bucket'] ?? '')));
+        $source = TriageLevelService::isValid($override) ? 'doctor_override' : 'ai_preliminary';
+
+        return [
+            'patient_id' => $id,
+            'bucket' => $bucket,
+            'label' => match ($bucket) {
+                TriageLevelService::EMERGENCY => 'EMERGENCY',
+                TriageLevelService::URGENT => 'URGENT',
+                default => 'NON-URGENT',
+            },
+            'source' => $source,
+            'ai_bucket' => $this->normalizeStoredTriageLevel((string) ($row['ai_bucket'] ?? '')),
+        ];
+    }
+
+    private function latestDoctorOverrideSelectSql(string $patientIdExpr): string
+    {
+        if (!$this->tableExists('consultation_clinical_support')) {
+            return 'NULL';
+        }
+
+        $bucketExpr = $this->columnExists('consultation_clinical_support', 'doctor_urgency_bucket')
+            ? "LOWER(TRIM(COALESCE(NULLIF(ccs.doctor_urgency_bucket, ''), ccs.urgency_bucket)))"
+            : "LOWER(TRIM(ccs.urgency_bucket))";
+
+        return "(SELECT CASE
+                WHEN {$bucketExpr} IN ('emergency', 'urgent', 'non_urgent') THEN {$bucketExpr}
+                ELSE NULL
+            END
+            FROM consultation_clinical_support ccs
+            WHERE ccs.patient_id = {$patientIdExpr}
+              AND ccs.event_type = 'urgency_override'
+            ORDER BY ccs.id DESC
+            LIMIT 1)";
+    }
+
+    private function latestDoctorOverrideAtSelectSql(string $patientIdExpr): string
+    {
+        if (!$this->tableExists('consultation_clinical_support')) {
+            return 'NULL';
+        }
+
+        return "(SELECT ccs.created_at
+            FROM consultation_clinical_support ccs
+            WHERE ccs.patient_id = {$patientIdExpr}
+              AND ccs.event_type = 'urgency_override'
+            ORDER BY ccs.id DESC
+            LIMIT 1)";
+    }
+
+    private function latestAiTriageLevelSelectSql(string $patientIdExpr): string
     {
         if (!$this->tableExists('triage_results') || !$this->columnExists('triage_results', 'triage_level')) {
-            return '\'non_urgent\'';
+            return "'non_urgent'";
         }
 
         return "(SELECT COALESCE(NULLIF(TRIM(tr.triage_level), ''), 'non_urgent')
@@ -1008,35 +1079,52 @@ final class GisDashboardService
             ORDER BY tr.assessed_at DESC, tr.id DESC LIMIT 1)";
     }
 
-    private function triageUpdatedSelectSql(string $patientIdExpr): string
+    private function triageLevelSelectSql(string $patientIdExpr): string
     {
-        if (!$this->tableExists('triage_results')) {
-            return 'NULL';
+        $override = $this->latestDoctorOverrideSelectSql($patientIdExpr);
+        $ai = $this->latestAiTriageLevelSelectSql($patientIdExpr);
+        if ($override === 'NULL') {
+            $expr = $ai;
+        } else {
+            $expr = "COALESCE({$override}, {$ai}, 'non_urgent')";
         }
 
-        return "(SELECT tr.assessed_at FROM triage_results tr
-            WHERE tr.patient_id = {$patientIdExpr}
-            ORDER BY tr.assessed_at DESC, tr.id DESC LIMIT 1)";
-    }
-
-    private function emergencySelectSql(string $patientIdExpr): string
-    {
-        if (!$this->tableExists('triage_results')) {
-            return '0';
-        }
-
-        return "(SELECT CASE WHEN " . $this->triageLevelSelectSql($patientIdExpr) . " = 'emergency' THEN 1 ELSE 0 END)";
+        return "CONVERT({$expr} USING utf8mb4) COLLATE utf8mb4_unicode_ci";
     }
 
     private function triageLabelSelectSql(string $patientIdExpr): string
     {
-        if (!$this->tableExists('triage_results')) {
-            return "''";
+        $level = $this->triageLevelSelectSql($patientIdExpr);
+
+        return "(CASE {$level}
+            WHEN 'emergency' THEN 'Emergency'
+            WHEN 'urgent' THEN 'Urgent'
+            ELSE 'Non-Urgent'
+        END)";
+    }
+
+    private function triageUpdatedSelectSql(string $patientIdExpr): string
+    {
+        $aiAt = 'NULL';
+        if ($this->tableExists('triage_results')) {
+            $aiAt = "(SELECT tr.assessed_at FROM triage_results tr
+                WHERE tr.patient_id = {$patientIdExpr}
+                ORDER BY tr.assessed_at DESC, tr.id DESC LIMIT 1)";
+        }
+        $overrideAt = $this->latestDoctorOverrideAtSelectSql($patientIdExpr);
+        if ($overrideAt === 'NULL') {
+            return $aiAt;
+        }
+        if ($aiAt === 'NULL') {
+            return $overrideAt;
         }
 
-        return "(SELECT COALESCE(tr.urgency_label, '') FROM triage_results tr
-            WHERE tr.patient_id = {$patientIdExpr}
-            ORDER BY tr.assessed_at DESC, tr.id DESC LIMIT 1)";
+        return "GREATEST(COALESCE({$overrideAt}, '1970-01-01 00:00:00'), COALESCE({$aiAt}, '1970-01-01 00:00:00'))";
+    }
+
+    private function emergencySelectSql(string $patientIdExpr): string
+    {
+        return "(SELECT CASE WHEN " . $this->triageLevelSelectSql($patientIdExpr) . " = 'emergency' THEN 1 ELSE 0 END)";
     }
 
     /**
@@ -1063,6 +1151,16 @@ final class GisDashboardService
             $changeParts[] = 'EXISTS (
                 SELECT 1 FROM triage_results tr
                 WHERE tr.patient_id = u.id AND tr.assessed_at >= ?
+            )';
+            $params[] = $since;
+        }
+
+        if ($this->tableExists('consultation_clinical_support')) {
+            $changeParts[] = 'EXISTS (
+                SELECT 1 FROM consultation_clinical_support ccs
+                WHERE ccs.patient_id = u.id
+                  AND ccs.event_type = \'urgency_override\'
+                  AND ccs.created_at >= ?
             )';
             $params[] = $since;
         }

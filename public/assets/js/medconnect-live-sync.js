@@ -121,6 +121,12 @@
       }
     }
 
+    if (has('triage') || has('dashboard')) {
+      if (global.MedConnectGisDashboard && typeof global.MedConnectGisDashboard.refresh === 'function') {
+        global.MedConnectGisDashboard.refresh();
+      }
+    }
+
     if (has('dashboard') || has('queue') || has('triage') || has('appointments')) {
       if (global.MedConnectAdminDashboardLive && typeof global.MedConnectAdminDashboardLive.refresh === 'function') {
         global.MedConnectAdminDashboardLive.refresh();
