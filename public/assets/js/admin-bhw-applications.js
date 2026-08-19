@@ -3,6 +3,7 @@
 
   const cfg = window.MC_BHW_APP || {};
   const api = cfg.api || '';
+  const checkerMode = !!cfg.checkerMode;
   const utils = window.MCStaffApplications || {};
   const formUtils = window.MCStaffForm || {};
   const tbody = document.getElementById('bhwAppsBody');
@@ -117,17 +118,26 @@
     if (cur) barangaySelect.value = cur;
   }
 
+  function canReview(status) {
+    return status === 'pending_approval' || status === 'requires_documents';
+  }
+
   function renderTable(rows) {
     if (!tbody) return;
 
     if (!allRows.length) {
-      tbody.innerHTML = utils.renderEmptyState(7, {
+      tbody.innerHTML = utils.renderEmptyState(7, checkerMode ? {
+        title: 'No BHW applications yet',
+        text: 'Pending applications submitted by administrators will appear here for your review.',
+      } : {
         title: 'No BHW applications yet',
         text: 'Create your first Barangay Health Worker application to begin the Maker-Checker approval workflow.',
         ctaId: 'bhwEmptyCreateBtn',
         ctaLabel: 'Create BHW Application',
       });
-      document.getElementById('bhwEmptyCreateBtn')?.addEventListener('click', function () { openModal(0); });
+      if (!checkerMode) {
+        document.getElementById('bhwEmptyCreateBtn')?.addEventListener('click', function () { openModal(0); });
+      }
       return;
     }
 
@@ -138,6 +148,14 @@
 
     tbody.innerHTML = rows.map(function (r) {
       const editable = utils.canEdit(r.status);
+      let actionCell;
+      if (checkerMode && canReview(r.status)) {
+        actionCell = utils.renderReviewBtn(r.id, 'bhw-review-btn', 'Review');
+      } else if (!checkerMode) {
+        actionCell = utils.renderEditBtn(r.id, editable, 'bhw-edit-btn');
+      } else {
+        actionCell = '<span class="staff-apps-meta staff-apps-meta--muted">—</span>';
+      }
       return (
         '<tr>' +
         '<td class="staff-apps-td--applicant" data-label="">' + utils.renderApplicantCell(r) + '</td>' +
@@ -146,10 +164,22 @@
         '<td data-label="Documents">' + utils.renderDocBadge(r.document_count, 2) + '</td>' +
         '<td data-label="Status">' + utils.renderStatusBadge(r) + '</td>' +
         '<td data-label="Submitted"><span class="staff-apps-meta staff-apps-meta--muted">' + utils.esc(utils.formatDate(r.submitted_at)) + '</span></td>' +
-        '<td class="staff-apps-td--actions" data-label="Actions">' + utils.renderEditBtn(r.id, editable, 'bhw-edit-btn') + '</td>' +
+        '<td class="staff-apps-td--actions" data-label="Actions">' + actionCell + '</td>' +
         '</tr>'
       );
     }).join('');
+
+    if (checkerMode) {
+      tbody.querySelectorAll('.bhw-review-btn').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+          const reviewId = parseInt(btn.dataset.id, 10);
+          if (window.MCBhwApproval && typeof window.MCBhwApproval.openReview === 'function') {
+            window.MCBhwApproval.openReview(reviewId);
+          }
+        });
+      });
+      return;
+    }
 
     tbody.querySelectorAll('.bhw-edit-btn').forEach(function (btn) {
       btn.addEventListener('click', function () {

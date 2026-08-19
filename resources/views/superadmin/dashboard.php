@@ -61,7 +61,7 @@ $admLiveJsVer = (int) @filemtime(ASSETS_PATH . '/js/admin-dashboard-live.js');
     </a>
     <?php endif; ?>
     <?php if ($pending_bhw_approvals > 0): ?>
-    <a href="<?= ASSET_BASE ?>/views/superadmin/bhw_approvals.php" class="superadmin-approval-card">
+    <a href="<?= ASSET_BASE ?>/views/superadmin/bhw_applications.php?tab=pending" class="superadmin-approval-card">
         <strong><?= $pending_bhw_approvals ?></strong>
         <span>BHW<?= $pending_bhw_approvals === 1 ? '' : 's' ?> awaiting approval</span>
     </a>
@@ -188,8 +188,8 @@ $admLiveJsVer = (int) @filemtime(ASSETS_PATH . '/js/admin-dashboard-live.js');
                     Doctor Approval Queue
                     <span class="adm-pending-badge" data-live-badge-doctor-wrap<?= $pending_doctor_approvals > 0 ? '' : ' hidden' ?>><span data-live-badge-doctor><?= $pending_doctor_approvals ?></span></span>
                 </a>
-                <a href="<?= ASSET_BASE ?>/views/superadmin/bhw_approvals.php" class="adm-action-btn adm-action-btn--outline">
-                    BHW Approval Queue
+                <a href="<?= ASSET_BASE ?>/views/superadmin/bhw_applications.php?tab=pending" class="adm-action-btn adm-action-btn--outline">
+                    Barangay Health Workers
                     <span class="adm-pending-badge" data-live-badge-bhw-wrap<?= $pending_bhw_approvals > 0 ? '' : ' hidden' ?>><span data-live-badge-bhw><?= $pending_bhw_approvals ?></span></span>
                 </a>
                 <a href="<?= ASSET_BASE ?>/views/superadmin/administrators.php" class="adm-action-btn adm-action-btn--outline">Manage Administrators</a>

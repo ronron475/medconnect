@@ -5,6 +5,7 @@
   const api = cfg.api || '';
   const utils = window.MCStaffApplications || {};
   const currentUserId = cfg.currentUserId || 0;
+  const hubMode = !!cfg.hubMode;
   const tbody = document.getElementById('bhwApprovalBody');
   const modal = document.getElementById('bhwReviewModal');
   const reviewContent = document.getElementById('bhwReviewContent');
@@ -20,10 +21,23 @@
   let currentAppId = 0;
   let currentSubmittedBy = 0;
 
+  if (!modal || !api) {
+    return;
+  }
+
   function showError(message) {
     if (!errorEl) return;
     errorEl.textContent = message || '';
     errorEl.classList.toggle('is-visible', !!message);
+  }
+
+  function redirectWithFlash(flashKey) {
+    const url = new URL(window.location.href);
+    url.searchParams.set('tab', 'pending');
+    url.searchParams.delete('approved');
+    url.searchParams.delete('rejected');
+    url.searchParams.set(flashKey, '1');
+    window.location.href = url.pathname + '?' + url.searchParams.toString();
   }
 
   function computeApprovalStats(rows) {
@@ -54,6 +68,7 @@
   }
 
   function updateApproveState() {
+    if (!approveBtn) return;
     const allRequired = checklistIds.every(function (id) {
       return document.getElementById(id)?.checked;
     });
@@ -72,6 +87,7 @@
   document.getElementById('check_cho')?.addEventListener('change', updateApproveState);
 
   async function loadList() {
+    if (!tbody) return;
     try {
       const res = await fetch(api + '?action=list', { credentials: 'same-origin' });
       const json = await res.json();
@@ -80,11 +96,12 @@
       updateStatsDisplay(computeApprovalStats(allRows), json.data.pending_count || 0);
       applyFilters();
     } catch (e) {
-      if (tbody) tbody.innerHTML = '<tr><td colspan="8"><div class="staff-apps-empty"><p class="staff-apps-empty__title">Could not load queue</p></div></td></tr>';
+      tbody.innerHTML = '<tr><td colspan="8"><div class="staff-apps-empty"><p class="staff-apps-empty__title">Could not load queue</p></div></td></tr>';
     }
   }
 
   function applyFilters() {
+    if (!tbody) return;
     const filtered = utils.filterRows(allRows, {
       search: searchInput ? searchInput.value : '',
       status: statusFilter ? statusFilter.value : 'all',
@@ -167,7 +184,8 @@
       (app.documents && app.documents.length ? '' : '<li class="text-muted">No documents uploaded.</li>') +
       '</ul>';
 
-    document.getElementById('bhwReviewTitle').textContent = 'Review: ' + app.display_name;
+    const titleEl = document.getElementById('bhwReviewTitle');
+    if (titleEl) titleEl.textContent = 'Review: ' + app.display_name;
     updateApproveState();
     modal.style.display = 'flex';
     modal.style.pointerEvents = 'auto';
@@ -178,7 +196,7 @@
     modal.style.pointerEvents = 'none';
   }
 
-  approveBtn.addEventListener('click', async function () {
+  approveBtn?.addEventListener('click', async function () {
     const fd = new FormData();
     fd.append('application_id', currentAppId);
     fd.append('check_identity', document.getElementById('check_identity')?.checked ? '1' : '');
@@ -194,6 +212,10 @@
       showError(json.message || 'Approval failed.');
       return;
     }
+    if (hubMode) {
+      redirectWithFlash('approved');
+      return;
+    }
     window.location.href = window.location.pathname + '?approved=1';
   });
 
@@ -205,8 +227,15 @@
     fd.append('reason', reason.trim());
     const res = await fetch(api + '?action=reject', { method: 'POST', body: fd, credentials: 'same-origin' });
     const json = await res.json();
-    if (json.success) window.location.href = window.location.pathname + '?rejected=1';
-    else showError(json.message || 'Rejection failed.');
+    if (!json.success) {
+      showError(json.message || 'Rejection failed.');
+      return;
+    }
+    if (hubMode) {
+      redirectWithFlash('rejected');
+      return;
+    }
+    window.location.href = window.location.pathname + '?rejected=1';
   });
 
   document.getElementById('bhwRequestDocsBtn')?.addEventListener('click', async function () {
@@ -219,6 +248,10 @@
     const json = await res.json();
     if (json.success) {
       closeModal();
+      if (hubMode) {
+        window.location.reload();
+        return;
+      }
       loadList();
       alert(json.message);
     } else {
@@ -229,7 +262,11 @@
   document.getElementById('bhwReviewClose')?.addEventListener('click', closeModal);
   if (searchInput) searchInput.addEventListener('input', applyFilters);
   if (statusFilter) statusFilter.addEventListener('change', applyFilters);
-  modal?.addEventListener('click', function (e) { if (e.target === modal) closeModal(); });
+  modal.addEventListener('click', function (e) { if (e.target === modal) closeModal(); });
 
-  loadList();
+  window.MCBhwApproval = { openReview: openReview };
+
+  if (tbody) {
+    loadList();
+  }
 })();

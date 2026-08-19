@@ -112,7 +112,7 @@ require_once __DIR__ . '/partials/layout_open.php';
     </div>
     <?php if ($role_filter === 'bhw'): ?>
       <?php if ($is_superadmin): ?>
-    <a href="<?= $portalBase ?>/bhw_approvals.php" class="mc-btn mc-btn--primary">BHW Approval Queue</a>
+    <a href="<?= portal_view_url('bhw_applications.php') ?>?tab=pending" class="mc-btn mc-btn--primary">BHW Management</a>
       <?php else: ?>
     <a href="<?= portal_view_url('bhw_applications.php') ?>" class="mc-btn mc-btn--primary">Create BHW Application</a>
       <?php endif; ?>

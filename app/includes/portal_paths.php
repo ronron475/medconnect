@@ -44,8 +44,7 @@ function portal_views_base(): string
 function portal_superadmin_redirect_aliases(): array
 {
     return [
-        'bhw_applications.php'     => 'bhw_approvals.php',
-        'doctor_applications.php'    => 'doctor_approvals.php',
+        'doctor_applications.php' => 'doctor_approvals.php',
     ];
 }
 
