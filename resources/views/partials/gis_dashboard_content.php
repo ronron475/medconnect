@@ -13,7 +13,7 @@ $gisMapNote = $gisIsProvider
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin=""/>
 <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css" crossorigin=""/>
 <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css" crossorigin=""/>
-<link rel="stylesheet" href="<?= htmlspecialchars($assetBase) ?>/assets/css/admin-gis-dashboard.css?v=4.6"/>
+<link rel="stylesheet" href="<?= htmlspecialchars($assetBase) ?>/assets/css/admin-gis-dashboard.css?v=4.7"/>
 
 <div class="gis-page" id="gis-dashboard"
      data-api="<?= htmlspecialchars($apiBase) ?>"
@@ -23,10 +23,7 @@ $gisMapNote = $gisIsProvider
      data-history-url="<?= htmlspecialchars($gisHistoryUrl) ?>">
 
   <div class="gis-header">
-    <div>
-      <h2 class="text-h2 gis-title"><?= $gisIsProvider ? 'My patient map' : 'GIS Dashboard' ?></h2>
-      <p class="text-muted gis-subtitle"><?= htmlspecialchars($gisSubtitle) ?></p>
-    </div>
+    <p class="text-muted gis-subtitle"><?= htmlspecialchars($gisSubtitle) ?></p>
     <div class="gis-view-toggle" role="tablist" aria-label="GIS view mode">
       <button type="button" class="gis-toggle-btn is-active" data-view="map" role="tab" aria-selected="true">Map View</button>
       <button type="button" class="gis-toggle-btn" data-view="table" role="tab" aria-selected="false">Table View</button>

@@ -14,22 +14,19 @@
 .gis-header {
   display: flex;
   flex-wrap: wrap;
-  align-items: flex-start;
+  align-items: center;
   justify-content: space-between;
-  gap: 16px;
-  margin-bottom: 24px;
-}
-
-.gis-title {
-  margin: 0 0 4px;
-  overflow-wrap: anywhere;
+  gap: 12px 16px;
+  margin-bottom: 20px;
 }
 
 .gis-subtitle {
   margin: 0;
+  flex: 1 1 280px;
   max-width: 720px;
   overflow-wrap: anywhere;
   line-height: 1.5;
+  font-size: 0.9375rem;
 }
 
 .gis-view-toggle {
@@ -937,6 +934,7 @@ body.provider-body .gis-brgy-panel.mc-card {
   .gis-header {
     flex-direction: column;
     align-items: stretch;
+    margin-bottom: 16px;
   }
 
   .gis-subtitle {
@@ -962,10 +960,6 @@ body.provider-body .gis-brgy-panel.mc-card {
 
   .gis-stat-value--text {
     font-size: 0.95rem;
-  }
-
-  .gis-title {
-    font-size: 1.1rem;
   }
 
   .gis-map-toolbar {
@@ -1080,7 +1074,7 @@ body.provider-body .gis-brgy-panel.mc-card {
   }
 
   .gis-header {
-    margin-bottom: 16px;
+    margin-bottom: 12px;
   }
 
   .gis-toggle-btn {
@@ -1152,8 +1146,7 @@ html[data-theme-resolved='dark'] .gis-input[type="date"] {
   color-scheme: dark;
 }
 
-html[data-theme-resolved='dark'] .gis-stat-value,
-html[data-theme-resolved='dark'] .gis-title {
+html[data-theme-resolved='dark'] .gis-stat-value {
   color: #f8fafc;
 }
 
