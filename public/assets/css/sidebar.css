@@ -382,3 +382,22 @@ body.patient-portal .sidebar .sb-logout:hover {
     border-top-color: var(--mc-border-thin);
   }
 }
+
+/* Desktop / laptop typography uplift */
+@media (min-width: 1025px) {
+  .sb-item {
+    font-size: 0.92rem;
+  }
+
+  .sb-name {
+    font-size: 12.5px;
+  }
+
+  .sb-role {
+    font-size: 10.5px;
+  }
+
+  .sb-section-label {
+    font-size: 10px;
+  }
+}
