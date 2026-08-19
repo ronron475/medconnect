@@ -183,8 +183,23 @@ function queue_status_class(string $status): string
 
 function queue_is_urgent(?string $level, ?string $label): bool
 {
-    $value = strtolower((string)$level . ' ' . (string)$label);
-    return str_contains($value, '1') || str_contains($value, '2') || str_contains($value, 'emergency') || str_contains($value, 'urgent');
+    $lvl = strtolower(trim((string)$level));
+    $lbl = strtolower(trim((string)$label));
+
+    // Level-based check (numeric ESI or keyword)
+    if (in_array($lvl, ['1', '2', 'emergency', 'high', 'urgent'], true)) {
+        return true;
+    }
+
+    // Label check — "urgent" must not be preceded by "non-"
+    if (str_contains($lbl, 'emergency')) {
+        return true;
+    }
+    if (str_contains($lbl, 'urgent') && !str_contains($lbl, 'non-urgent')) {
+        return true;
+    }
+
+    return false;
 }
 
 function queue_format_symptoms(?string $raw): array
