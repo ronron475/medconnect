@@ -19,6 +19,9 @@ if ($hub_kind === 'doctor') {
         'rejected'      => 'Rejected',
         'archived'      => 'Archived',
     ];
+    if (!empty($hub_show_queue_tab)) {
+        $hub_tabs['queue'] = 'Queue Monitoring';
+    }
 } else {
     $hub_tabs = [
         'all'      => 'All',
