@@ -28,6 +28,39 @@
   let currentApp = null;
   let allRows = [];
 
+  /**
+   * Build the payload we expect BhwApplicationService to validate.
+   * We explicitly read/trim key text fields to avoid relying on HTMLFormElement
+   * serialization quirks (autofill/draft loading can visually populate inputs
+   * while some implementations fail to serialize a given key).
+   */
+  function buildBhwApplicationPayload() {
+    function trimmedVal(name) {
+      const el = form?.elements?.[name];
+      // form.elements[name] can return RadioNodeList in some cases; normalize safely.
+      const raw = el && typeof el.value === 'string' ? el.value : (el?.value ?? '');
+      return String(raw).trim();
+    }
+
+    const appId = String(document.getElementById('bhwApplicationId')?.value || '');
+    const fd = new FormData();
+
+    fd.append('application_id', appId);
+
+    fd.append('first_name', trimmedVal('first_name'));
+    fd.append('middle_name', trimmedVal('middle_name'));
+    fd.append('last_name', trimmedVal('last_name'));
+
+    fd.append('email', trimmedVal('email'));
+    fd.append('phone', trimmedVal('phone'));
+    fd.append('password', trimmedVal('password'));
+
+    fd.append('barangay_id', String(trimmedVal('barangay_id')));
+    fd.append('appointment_date', trimmedVal('appointment_date'));
+
+    return fd;
+  }
+
   if (statusFilter && cfg.initialStatus) {
     statusFilter.value = cfg.initialStatus;
   }
@@ -270,7 +303,7 @@
 
     if (!quiet) formUtils.setFormLoading(form, true, saveDraftBtn, 'Saving draft...');
     try {
-      const fd = new FormData(form);
+      const fd = buildBhwApplicationPayload();
       const res = await fetch(api + '?action=save_draft', { method: 'POST', body: fd, credentials: 'same-origin' });
       const json = await res.json();
       if (!json.success) {
@@ -318,7 +351,7 @@
           appId = await saveDraft(false, true);
           if (!appId) return;
         } else {
-          const fd = new FormData(form);
+          const fd = buildBhwApplicationPayload();
           const saveRes = await fetch(api + '?action=save_draft', { method: 'POST', body: fd, credentials: 'same-origin' });
           const saveJson = await saveRes.json();
           if (!saveJson.success) {
