@@ -237,7 +237,7 @@ $last_name = $provider['last_name'] ?? 'Provider';
           <div class="prov-status-item" data-live-slot-wait-wrap<?= empty($stats['slot_waiting']) ? ' hidden' : '' ?>>
             <span class="prov-status-item__label">
               <span class="prov-status-dot" style="background:#f59e0b;"></span>
-              Waiting for Provider Availability
+              Waiting for Doctor Availability
             </span>
             <strong data-live-status="slot_waiting"><?= (int) ($stats['slot_waiting'] ?? 0) ?></strong>
           </div>

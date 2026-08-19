@@ -364,15 +364,21 @@ try {
 
     if ($awaitingProviderReview && $slot_id <= 0) {
         $assignedId = triage_assign_review_provider($pdo, $patient_id);
-        if ($assignedId <= 0) {
-            throw new RuntimeException('No healthcare provider is available to review your case. Please try again later or contact the health office.');
-        }
-        triage_bind_assigned_provider($pdo, $triageId, $assignedId);
-        try {
-            $pdo->prepare("UPDATE triage_results SET outcome = 'awaiting_provider_review' WHERE id = ?")
-                ->execute([$triageId]);
-        } catch (PDOException $e) {
-            // outcome column optional on legacy schemas
+        if ($assignedId > 0) {
+            triage_bind_assigned_provider($pdo, $triageId, $assignedId);
+            try {
+                $pdo->prepare("UPDATE triage_results SET outcome = 'awaiting_provider_review' WHERE id = ?")
+                    ->execute([$triageId]);
+            } catch (PDOException $e) {
+                // outcome column optional on legacy schemas
+            }
+        } else {
+            try {
+                $pdo->prepare("UPDATE triage_results SET outcome = 'waiting_for_slot' WHERE id = ?")
+                    ->execute([$triageId]);
+            } catch (PDOException $e) {
+                // outcome column optional
+            }
         }
 
         $pdo->commit();
@@ -388,41 +394,76 @@ try {
             $registrationComplaintRef !== '' ? $registrationComplaintRef : null
         );
 
-        NotificationEvents::aiSelfCareReviewRequired(
-            $pdo,
-            $assignedId,
-            $patient_id,
-            $patientName,
-            $triageId,
-            $patient_id
-        );
+        if ($assignedId > 0) {
+            NotificationEvents::aiSelfCareReviewRequired(
+                $pdo,
+                $assignedId,
+                $patient_id,
+                $patientName,
+                $triageId,
+                $patient_id
+            );
+        }
 
-        $waitingForSlot = false;
-        $waitStatus = '';
+        $waitingForSlot = $assignedId <= 0;
+        $waitStatus = $waitingForSlot ? 'waiting' : '';
         try {
             require_once dirname(dirname(dirname(__DIR__))) . '/app/includes/patient_slot_waitlist.php';
-            $queued = patient_slot_waitlist_enqueue_if_no_assigned_slot(
-                $pdo,
-                $patient_id,
-                $triageId,
-                $assignedId,
-                $complaint,
-                $triageLevel
-            );
-            $waitStatus = (string) ($queued['status'] ?? '');
-            $waitingForSlot = in_array($waitStatus, ['waiting', 'slot_available'], true);
+            $queued = $assignedId <= 0
+                ? patient_slot_waitlist_enqueue(
+                    $pdo,
+                    $patient_id,
+                    $triageId,
+                    0,
+                    $complaint,
+                    $triageLevel
+                )
+                : patient_slot_waitlist_enqueue_if_no_assigned_slot(
+                    $pdo,
+                    $patient_id,
+                    $triageId,
+                    $assignedId,
+                    $complaint,
+                    $triageLevel
+                );
+            if ($assignedId <= 0 && !empty($queued['queued'])) {
+                patient_slot_waitlist_process($pdo);
+            }
+            try {
+                $refresh = $pdo->prepare("
+                    SELECT w.status, COALESCE(tr.assigned_provider_id, w.assigned_provider_id, 0) AS assigned_id
+                    FROM patient_slot_waitlist w
+                    LEFT JOIN triage_results tr ON tr.id = w.triage_result_id
+                    WHERE w.triage_result_id = ?
+                    LIMIT 1
+                ");
+                $refresh->execute([$triageId]);
+                $refRow = $refresh->fetch(PDO::FETCH_ASSOC);
+                if ($refRow) {
+                    $waitStatus = (string) ($refRow['status'] ?? $waitStatus);
+                    $refAssigned = (int) ($refRow['assigned_id'] ?? 0);
+                    if ($refAssigned > 0) {
+                        $assignedId = $refAssigned;
+                    }
+                } elseif (!empty($queued['status'])) {
+                    $waitStatus = (string) $queued['status'];
+                }
+            } catch (PDOException $e) {
+                $waitStatus = (string) ($queued['status'] ?? $waitStatus);
+            }
+            $waitingForSlot = $assignedId <= 0 || $waitStatus === 'waiting';
         } catch (Throwable $e) {
             error_log('submit_triage waitlist enqueue: ' . $e->getMessage());
         }
 
-        $successMsg = $waitingForSlot
+        $successMsg = $assignedId <= 0
             ? 'No suitable doctor schedule is currently available. You are in the waiting queue and will be notified by email when a consultation slot becomes available.'
             : 'Your symptoms were submitted. A healthcare provider will review your case and prepare self-care guidance.';
 
         Api::success([
             'booked'                   => false,
-            'awaiting_provider_review' => true,
-            'waiting_for_slot'         => $waitingForSlot,
+            'awaiting_provider_review' => $assignedId > 0,
+            'waiting_for_slot'         => $assignedId <= 0 || $waitingForSlot,
             'waitlist_status'          => $waitStatus,
             'emergency'                => false,
             'triage_id'                => $triageId,
@@ -465,9 +506,40 @@ try {
     }
 
     $provider_id   = (int) $slot['provider_id'];
+
+    if ($triageLevel === TriageLevelService::URGENT) {
+        $urgentAssigned = $reviewerBeforeBooking;
+        if ($urgentAssigned <= 0 && is_array($openCareTipsRow)) {
+            $urgentAssigned = (int) ($openCareTipsRow['assigned_provider_id'] ?? 0);
+        }
+        if ($urgentAssigned <= 0) {
+            $urgentAssigned = triage_select_provider_for_level(
+                $pdo,
+                $patient_id,
+                TriageLevelService::URGENT
+            );
+            if ($urgentAssigned > 0) {
+                triage_bind_assigned_provider($pdo, $triageId, $urgentAssigned);
+            }
+        }
+        if ($urgentAssigned > 0 && $urgentAssigned !== $provider_id) {
+            $urgentName = triage_provider_display_name($pdo, $urgentAssigned);
+            if ($urgentName === '') {
+                $urgentName = 'the doctor who can see you soonest';
+            }
+            throw new RuntimeException(
+                'Please book your urgent consultation with ' . $urgentName
+                . ', who has the earliest available appointment.'
+            );
+        }
+        if ($urgentAssigned <= 0) {
+            triage_bind_assigned_provider($pdo, $triageId, $provider_id);
+        }
+    }
+
     triage_assert_patient_may_book_provider($pdo, $patient_id, $provider_id);
 
-    if ($awaitingProviderReview) {
+    if ($awaitingProviderReview || $triageLevel === TriageLevelService::URGENT) {
         triage_bind_assigned_provider($pdo, $triageId, $provider_id);
     }
 

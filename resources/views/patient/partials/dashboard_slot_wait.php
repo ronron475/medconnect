@@ -43,16 +43,16 @@ $availableLead = $providerName !== ''
         <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
       </span>
       <div>
-        <h2 class="pdash-card__title pdash-care__title" id="pdashSlotWaitTitle"><?= $isAvailable ? 'Consultation Slot Available' : 'Waiting for Provider Availability' ?></h2>
+        <h2 class="pdash-card__title pdash-care__title" id="pdashSlotWaitTitle"><?= $isAvailable ? 'Consultation Slot Available' : 'Waiting for Doctor Availability' ?></h2>
         <p class="pdash-care__lead" id="pdashSlotWaitLead"><?= htmlspecialchars($isAvailable ? $availableLead : $waitingLead) ?></p>
       </div>
     </div>
     <span class="pdash-care__status-chip <?= $isAvailable ? 'pdash-care__status-chip--ready' : 'pdash-care__status-chip--wait' ?>" id="pdashSlotWaitChip">
-      <?= $isAvailable ? 'Consultation Slot Available' : 'Waiting for Provider Availability' ?>
+      <?= $isAvailable ? 'Consultation Slot Available' : 'Waiting for Doctor Availability' ?>
     </span>
   </div>
 
-  <div class="pdash-wait__badge" id="pdashSlotWaitTriageBadge">NON-URGENT — <?= $isAvailable ? 'CONSULTATION SLOT AVAILABLE' : 'WAITING FOR PROVIDER AVAILABILITY' ?></div>
+  <div class="pdash-wait__badge" id="pdashSlotWaitTriageBadge">NON-URGENT — <?= $isAvailable ? 'CONSULTATION SLOT AVAILABLE' : 'WAITING FOR DOCTOR AVAILABILITY' ?></div>
 
   <div class="pdash-care-panel" role="status">
     <div class="pdash-care-panel__grid">
@@ -66,12 +66,12 @@ $availableLead = $providerName !== ''
           <span class="pdash-care-doctor__eyebrow" id="pdashSlotWaitProviderEyebrow"><?= $isAvailable ? 'Available provider' : 'Consultation status' ?></span>
           <strong class="pdash-care-doctor__name" id="pdashSlotWaitProvider"><?= htmlspecialchars($isAvailable
               ? ($providerName !== '' ? $providerName : 'A healthcare provider')
-              : 'Waiting for Provider Availability') ?></strong>
+              : 'Waiting for Doctor Availability') ?></strong>
           <p class="pdash-care-doctor__note" id="pdashSlotWaitMeta">
             <?php if ($waitingSince !== ''): ?>
               Waiting since <?= htmlspecialchars($waitingSince) ?>
             <?php else: ?>
-              Waiting for Provider Availability
+              Waiting for Doctor Availability
             <?php endif; ?>
             <?php if (!$isAvailable && $queuePosition > 0): ?>
               · Queue position <?= (int) $queuePosition ?><?= $waitingCount > 0 ? ' of ' . (int) $waitingCount : '' ?>

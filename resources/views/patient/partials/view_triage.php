@@ -138,8 +138,12 @@ $locked_alternate_available = !empty($locked_alternate_available);
     </div>
     <?php elseif (!empty($review_booking_ctx['locked']) && !$locked_assigned_has_slots && !$locked_alternate_available): ?>
     <div class="patient-triage-alert patient-triage-alert--warning is-visible patient-triage-alert--spaced-sm" role="status">
+      <?php if ($locked_provider_name !== ''): ?>
       <strong><?= htmlspecialchars($locked_provider_name) ?></strong> has no open slots today, and no other doctor has clinic hours right now.
-      You are in the waiting queue. We will notify you by email when a consultation slot becomes available — you do not need to start over.
+      <?php else: ?>
+      No doctor has clinic hours right now.
+      <?php endif; ?>
+      You are in the waiting queue (Waiting for Doctor Availability). We will notify you by email when a consultation slot becomes available — you do not need to start over.
     </div>
     <?php endif; ?>
 
