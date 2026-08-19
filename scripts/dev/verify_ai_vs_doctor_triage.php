@@ -6,6 +6,7 @@
 require_once dirname(__DIR__, 2) . '/bootstrap.php';
 require_once dirname(__DIR__, 2) . '/app/includes/triage_assessment_schema.php';
 require_once dirname(__DIR__, 2) . '/app/core/TriageLevelService.php';
+require_once dirname(__DIR__, 2) . '/app/core/GisDashboardService.php';
 require_once dirname(__DIR__, 2) . '/app/includes/provider_clinical_support.php';
 
 function fail(string $msg): void
@@ -220,6 +221,8 @@ try {
         fail('consultations.triage_result_id is required to verify consultation-scoped persist.');
     }
 
+    $locationBefore = provider_clinical_support_patient_location_snapshot($pdo, $patientId);
+
     $insertConsult = $pdo->prepare("
         INSERT INTO consultations (patient_id, provider_id, provider_name, consult_date, consult_time, consult_type, status, triage_result_id)
         VALUES (?, ?, 'Dr Verify', CURDATE(), CURTIME(), 'General Consultation', 'in_consultation', ?)
@@ -304,6 +307,57 @@ try {
         assert_same((string) $otherAfter['triage_classification'], $sc['ai'], 'Other visit AI unchanged');
         assert_same(triage_ai_preliminary_label($otherAfter), $sc['ai'], 'Other visit AI label');
         assert_same(triage_final_decision_label($otherAfter), $sc['ai'], 'Other visit final still AI');
+
+        $gis = new GisDashboardService($pdo);
+        $gisStatus = $gis->patientGisStatus($patientId);
+        assert_same((string) ($gisStatus['bucket'] ?? ''), $sc['doctor'], 'GIS status');
+        assert_same((string) ($gisStatus['label'] ?? ''), $sc['expect_final'], 'GIS label');
+        assert_same((string) ($gisStatus['source'] ?? ''), 'doctor_override', 'GIS source');
+        assert_same((string) ($persisted['gis']['bucket'] ?? ''), $sc['doctor'], 'Persisted GIS bucket');
+
+        $locAfter = provider_clinical_support_patient_location_snapshot($pdo, $patientId);
+        if ($locationBefore !== null) {
+            if (!provider_clinical_support_location_unchanged($locationBefore, $locAfter)) {
+                fail('GIS location changed after doctor override.');
+            }
+            echo "OK  GIS coordinates unchanged\n";
+        }
+
+        $pdo->prepare('UPDATE triage_results SET assessed_at = DATE_ADD(NOW(), INTERVAL 2 MINUTE) WHERE id = ?')
+            ->execute([$otherTriageId]);
+        $gisAfterNewerAi = $gis->patientGisStatus($patientId);
+        assert_same((string) ($gisAfterNewerAi['bucket'] ?? ''), $sc['doctor'], 'GIS still doctor after newer AI visit');
+
+        foreach (['admin', 'superadmin'] as $viewer) {
+            $rows = $gis->getPatientRecords(['patient_ids' => [$patientId]], $viewer);
+            $match = null;
+            foreach ($rows as $row) {
+                if ((int) ($row['patient_id'] ?? 0) === $patientId) {
+                    $match = $row;
+                    break;
+                }
+            }
+            if (!$match) {
+                fail(ucfirst($viewer) . ' GIS did not return this patient.');
+            }
+            assert_same((string) ($match['triage_level'] ?? ''), $sc['doctor'], ucfirst($viewer) . ' GIS triage_level');
+        }
+
+        $providerRows = $gis->getPatientRecords([
+            'patient_ids' => [$patientId],
+            'provider_id' => $providerId,
+        ], 'provider');
+        $providerMatch = null;
+        foreach ($providerRows as $row) {
+            if ((int) ($row['patient_id'] ?? 0) === $patientId) {
+                $providerMatch = $row;
+                break;
+            }
+        }
+        if (!$providerMatch) {
+            fail('Provider GIS did not return this patient.');
+        }
+        assert_same((string) ($providerMatch['triage_level'] ?? ''), $sc['doctor'], 'Provider GIS triage_level');
 
         $ov = provider_clinical_support_latest_override_row($pdo, $consultId);
         if (!$ov || (int) ($ov['consultation_id'] ?? 0) !== $consultId) {

@@ -100,6 +100,17 @@ try {
         exit;
     }
 
+    $gis = is_array($persisted['gis'] ?? null) ? $persisted['gis'] : [];
+    if (($gis['bucket'] ?? '') !== $finalBucket) {
+        echo json_encode([
+            'success' => false,
+            'message' => 'Override did not update GIS to the saved doctor result.',
+            'persisted' => $persisted,
+            'gis' => $gis,
+        ], JSON_UNESCAPED_UNICODE);
+        exit;
+    }
+
     NotificationEvents::doctorFinalTriageForPatient(
         $pdo,
         $patientId,
@@ -142,6 +153,7 @@ try {
         'message' => 'Urgency override saved.',
         'support' => $saved['support'],
         'persisted' => $persisted,
+        'gis' => $gis,
         'workflow' => [
             'bucket' => $finalBucket,
             'emergency' => $finalBucket === 'emergency',

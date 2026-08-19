@@ -2,8 +2,10 @@
 /**
  * Canonical triage severity for GIS and downstream consumers.
  *
- * AI/NLP engines and manual reassessment write `triage_level` on triage_results.
- * GIS reads this field only — it never infers severity from labels or symptoms.
+ * AI/NLP engines and doctor overrides write stored urgency buckets.
+ * GIS displays the doctor's saved override when present, otherwise
+ * the latest AI `triage_results.triage_level`. It never infers severity
+ * from labels or symptoms.
  */
 final class TriageLevelService
 {

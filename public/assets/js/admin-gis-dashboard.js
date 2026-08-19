@@ -1700,4 +1700,11 @@
   bindEvents();
   loadAll();
   state.pollTimer = setInterval(pollUpdates, POLL_INTERVAL_MS);
+  window.MedConnectGisDashboard = { refresh: pollUpdates };
+  document.addEventListener('medconnect:live-sync', function (ev) {
+    var changed = (ev.detail && ev.detail.changed) || [];
+    if (changed.indexOf('triage') !== -1 || changed.indexOf('dashboard') !== -1) {
+      pollUpdates();
+    }
+  });
 })();

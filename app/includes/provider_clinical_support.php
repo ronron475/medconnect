@@ -1115,7 +1115,52 @@ function provider_clinical_support_apply_authoritative_final(
 }
 
 /**
- * Persist doctor override for THIS consultation, sync linked triage_results, return DB values.
+ * @return array<string, string>|null
+ */
+function provider_clinical_support_patient_location_snapshot(PDO $pdo, int $patientId): ?array
+{
+    if ($patientId <= 0) {
+        return null;
+    }
+    try {
+        $stmt = $pdo->prepare('
+            SELECT latitude, longitude, barangay, city_municipality, province
+            FROM patient_locations
+            WHERE patient_id = ?
+            LIMIT 1
+        ');
+        $stmt->execute([$patientId]);
+        $row = $stmt->fetch(PDO::FETCH_ASSOC);
+
+        return $row ?: null;
+    } catch (Throwable $e) {
+        return null;
+    }
+}
+
+/**
+ * @param array<string, mixed>|null $before
+ * @param array<string, mixed>|null $after
+ */
+function provider_clinical_support_location_unchanged(?array $before, ?array $after): bool
+{
+    if ($before === null && $after === null) {
+        return true;
+    }
+    if ($before === null || $after === null) {
+        return false;
+    }
+    foreach (['latitude', 'longitude', 'barangay', 'city_municipality', 'province'] as $key) {
+        if (trim((string) ($before[$key] ?? '')) !== trim((string) ($after[$key] ?? ''))) {
+            return false;
+        }
+    }
+
+    return true;
+}
+
+/**
+ * Persist doctor override for THIS consultation, sync linked triage_results and GIS status, return DB values.
  *
  * @return array{
  *   support: array<string, mixed>,
@@ -1185,6 +1230,10 @@ function provider_clinical_support_persist_doctor_override(
         'facility' => null,
     ];
 
+    require_once dirname(__DIR__) . '/core/GisDashboardService.php';
+    $gisService = new GisDashboardService($pdo);
+    $locationBefore = provider_clinical_support_patient_location_snapshot($pdo, $patientId);
+
     $nestedTxn = $pdo->inTransaction();
     if ($nestedTxn) {
         $pdo->exec('SAVEPOINT mc_doctor_override_save');
@@ -1210,6 +1259,20 @@ function provider_clinical_support_persist_doctor_override(
                 $patientId,
                 $urgencyBucket
             );
+        }
+
+        $gisStatus = $gisService->patientGisStatus($patientId);
+        if (($gisStatus['bucket'] ?? '') !== $urgencyBucket) {
+            throw new RuntimeException(
+                'GIS status did not update to the saved doctor result ('
+                . provider_clinical_support_caps_label($urgencyBucket)
+                . ').'
+            );
+        }
+
+        $locationAfter = provider_clinical_support_patient_location_snapshot($pdo, $patientId);
+        if (!provider_clinical_support_location_unchanged($locationBefore, $locationAfter)) {
+            throw new RuntimeException('Urgency override must not change the patient GIS location.');
         }
 
         if ($nestedTxn) {
@@ -1283,6 +1346,14 @@ function provider_clinical_support_persist_doctor_override(
     }
 
     $reloaded = provider_consultation_clinical_support($pdo, $consultationId, $patientId);
+    $gisAfterCommit = $gisService->patientGisStatus($patientId);
+    if (($gisAfterCommit['bucket'] ?? '') !== $persistedBucket) {
+        throw new RuntimeException(
+            'GIS status did not match the saved doctor result ('
+            . provider_clinical_support_caps_label($persistedBucket)
+            . ').'
+        );
+    }
 
     return [
         'support' => $reloaded,
@@ -1300,6 +1371,7 @@ function provider_clinical_support_persist_doctor_override(
             'clinical_reason' => $persistedNote,
             'finalized_by' => 'Doctor',
             'finalized_at' => (string) ($persistedRow['created_at'] ?? $reloaded['assessed_at'] ?? ''),
+            'gis' => $gisAfterCommit,
         ],
         'workflow' => $workflow,
     ];
@@ -1334,14 +1406,21 @@ function provider_clinical_support_sync_linked_triage(
     $meta->execute([$triageId, $patientId]);
     $metaRow = $meta->fetch(PDO::FETCH_ASSOC);
     if (!$metaRow) {
-        return;
+        throw new RuntimeException('Linked triage record was not found for this consultation.');
     }
 
     $pdo->prepare('
         UPDATE triage_results
-        SET level = ?, urgency_label = ?, triage_level = ?
+        SET level = ?, urgency_label = ?, triage_level = ?, assessed_at = NOW()
         WHERE id = ? AND patient_id = ?
     ')->execute([$level, $label, $gis, $triageId, $patientId]);
+
+    $verify = $pdo->prepare('SELECT triage_level FROM triage_results WHERE id = ? AND patient_id = ? LIMIT 1');
+    $verify->execute([$triageId, $patientId]);
+    $storedGis = provider_clinical_support_normalize_bucket((string) ($verify->fetchColumn() ?: ''));
+    if ($storedGis !== $urgencyBucket) {
+        throw new RuntimeException('Could not update the linked GIS triage status for this consultation.');
+    }
 
     if ($urgencyBucket !== 'emergency') {
         try {

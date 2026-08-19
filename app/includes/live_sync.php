@@ -422,14 +422,28 @@ function live_sync_admin_queue_fp(PDO $pdo, string $today): string
 
 function live_sync_admin_triage_fp(PDO $pdo): string
 {
-    if (!live_sync_table_exists($pdo, 'triage_results')) {
-        return live_sync_hash('0');
-    }
+    $triage = live_sync_table_exists($pdo, 'triage_results')
+        ? live_sync_row(
+            $pdo,
+            'SELECT COUNT(*), COALESCE(MAX(id),0),
+                    COALESCE(MAX(UNIX_TIMESTAMP(assessed_at)),0),
+                    COALESCE(MAX(CAST(triage_level AS CHAR)),\'\')
+             FROM triage_results'
+        )
+        : '0';
 
-    return live_sync_hash(live_sync_row(
-        $pdo,
-        'SELECT COUNT(*), COALESCE(MAX(id),0) FROM triage_results'
-    ));
+    $overrides = live_sync_table_exists($pdo, 'consultation_clinical_support')
+        ? live_sync_row(
+            $pdo,
+            "SELECT COUNT(*), COALESCE(MAX(id),0),
+                    COALESCE(MAX(UNIX_TIMESTAMP(created_at)),0),
+                    COALESCE(MAX(CAST(urgency_bucket AS CHAR)),'')
+             FROM consultation_clinical_support
+             WHERE event_type = 'urgency_override'"
+        )
+        : '0';
+
+    return live_sync_hash($triage, $overrides);
 }
 
 function live_sync_admin_users_fp(PDO $pdo): string
