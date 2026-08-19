@@ -40,6 +40,9 @@
   if (formUtils.enhanceFileInputsIn && form) {
     formUtils.enhanceFileInputsIn(form);
   }
+  if (formUtils.enhanceModalSelectsIn && form) {
+    formUtils.enhanceModalSelectsIn(form);
+  }
 
   function validateClient() {
     let ok = true;
