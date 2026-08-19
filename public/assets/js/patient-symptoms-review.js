@@ -18,17 +18,44 @@
   }
   var finalSubmitLabel = submitBtn ? (submitBtn.dataset.defaultLabel || 'Submit patient complaint') : 'Submit patient complaint';
 
+  /** Visible copy when i18n module has not loaded yet — never expose internal keys. */
+  var I18N_FALLBACKS = {
+    submit_complaint: 'Submit patient complaint',
+    submit_review: 'Submit for doctor review',
+    submitting: 'Submitting…',
+    assessing: 'Assessing urgency…',
+    err_analyze: 'Could not analyze your complaint. Please try again.',
+    err_timeout: 'Analysis timed out. Please try again.',
+    err_network: 'Network error. Please try again.',
+    err_submit: 'Could not submit. Please try again.',
+    err_triage_level: 'Could not determine triage level. Please try again.',
+    err_min_chars: 'Please provide a bit more detail (at least 10 characters).',
+    err_empty: 'Please describe your symptoms or concern.',
+    err_locked: 'Your patient complaint is not available. Please contact the health office.',
+    ok_submitted: 'Submitted for provider review.',
+    em_submit: 'Emergency symptoms detected. Seek emergency care.',
+    urg_submit: 'Please book an urgent consultation.',
+    msg_emergency: 'Based on the symptoms you entered, your condition may be a medical emergency. Please seek immediate medical attention at the nearest hospital or emergency department. Do not wait for an online consultation if you are experiencing severe or worsening symptoms.',
+    msg_urgent: 'Based on the symptoms you provided, your condition may require prompt medical attention. Triage result: URGENT. After you submit, you can book the earliest available consultation time.',
+    msg_non_urgent: 'Triage result: NON-URGENT. Submit for provider review.',
+  };
+
   function i18n(key) {
     if (window.McPatientTriageI18n && typeof window.McPatientTriageI18n.t === 'function') {
       return window.McPatientTriageI18n.t(key);
     }
-    return key;
+    return I18N_FALLBACKS[key] || key;
+  }
+
+  function resolveSubmitLabel() {
+    if (!submitBtn) return 'Submit patient complaint';
+    var review = submitBtn.getAttribute('data-submit-kind') === 'review';
+    return i18n(review ? 'submit_review' : 'submit_complaint');
   }
 
   function refreshSubmitLabels() {
     if (!submitBtn) return;
-    var review = submitBtn.getAttribute('data-submit-kind') === 'review';
-    finalSubmitLabel = i18n(review ? 'submit_review' : 'submit_complaint');
+    finalSubmitLabel = resolveSubmitLabel();
     submitBtn.dataset.defaultLabel = finalSubmitLabel;
     if (!submitBtn.disabled) submitBtn.textContent = finalSubmitLabel;
   }
@@ -145,6 +172,8 @@
 
   function updateSubmitButtonLabel() {
     if (!submitBtn) return;
+    finalSubmitLabel = resolveSubmitLabel();
+    submitBtn.dataset.defaultLabel = finalSubmitLabel;
     submitBtn.textContent = finalSubmitLabel;
   }
 
@@ -335,6 +364,12 @@
   window.addEventListener('medconnect:patient-ui-lang', function () {
     refreshSubmitLabels();
     updateSubmitButtonLabel();
+  });
+
+  // Deferred i18n loads after this script; re-sync label once translations are available.
+  window.addEventListener('load', function () {
+    refreshSubmitLabels();
+    if (submitBtn && !submitBtn.disabled) updateSubmitButtonLabel();
   });
 
   form.addEventListener('submit', async function (e) {
