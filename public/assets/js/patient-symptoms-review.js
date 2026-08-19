@@ -134,10 +134,7 @@
       aiResultEl.hidden = false;
       aiResultEl.classList.add('is-visible');
     }
-    showAlert(
-      'warning',
-      i18n('ai_preliminary', { level: shown }) + '\n\n' + CONTINUE_MSG
-    );
+    clearAlert();
   }
 
   function clearTriageState() {
@@ -146,6 +143,7 @@
     triageId = 0;
     awaitingSecondClick = false;
     hideContinueUi();
+    clearAlert();
   }
 
   function isReadyForFinalSubmit() {

@@ -1111,12 +1111,17 @@
     const box = document.getElementById('triageAiResult');
     const levelEl = document.getElementById('triageAiLevel');
     const hint = document.getElementById('triageContinueHint');
+    const alertEl = document.getElementById('triageFormAlert');
     const shown = classificationLabel(level, label);
     if (levelEl) levelEl.textContent = shown;
     if (hint) hint.textContent = CONTINUE_MSG;
     if (box) {
       box.hidden = false;
       box.classList.add('is-visible');
+    }
+    if (alertEl) {
+      alertEl.className = 'patient-triage-alert';
+      alertEl.textContent = '';
     }
   }
 
@@ -1224,11 +1229,6 @@
       if (triageIdInput) triageIdInput.value = String(twoStep.triageId);
       if (twoStep.awaitingSecond) {
         showBookingContinueUi(level, data.classification_label || '');
-        showTriageAlert(
-          alertEl,
-          'warning',
-          'Preliminary AI Assessment: ' + classificationLabel(level, data.classification_label) + '\n\n' + CONTINUE_MSG
-        );
       }
     }
 
@@ -1245,6 +1245,10 @@
           if (box) {
             box.hidden = true;
             box.classList.remove('is-visible');
+          }
+          if (alertEl) {
+            alertEl.className = 'patient-triage-alert';
+            alertEl.textContent = '';
           }
         }
       });
@@ -1357,11 +1361,6 @@
             twoStep.awaitingSecond = twoStep.triageId > 0;
             if (triageIdInput) triageIdInput.value = String(twoStep.triageId);
             showBookingContinueUi(level, payload.classification_label || '');
-            showTriageAlert(
-              alertEl,
-              'warning',
-              'Preliminary AI Assessment: ' + classificationLabel(level, payload.classification_label) + '\n\n' + CONTINUE_MSG
-            );
             if (window.mcPatientUrgencyModal && typeof window.mcPatientUrgencyModal.showTriageResult === 'function') {
               window.mcPatientUrgencyModal.showTriageResult(level, CONTINUE_MSG);
             }
@@ -1382,7 +1381,6 @@
           if (payload.preview) {
             twoStep.awaitingSecond = true;
             showBookingContinueUi(twoStep.level, payload.classification_label || '');
-            showTriageAlert(alertEl, 'warning', (contJson.message || CONTINUE_MSG));
             return;
           }
           if (payload.emergency) {
