@@ -21,13 +21,13 @@ require_once VIEWS_PATH . '/partials/portal_dark_mode_close.php';
 <?php require_once VIEWS_PATH . '/components/session_video_shell.php'; ?>
 <script>window.APP_BASE = window.APP_BASE || <?= json_encode(ASSET_BASE) ?>;</script>
 <?php $ptHealthUpdatesVer = (int) @filemtime(ASSETS_PATH . '/js/patient-health-updates.js'); ?>
-<script src="<?= ASSET_BASE ?>/assets/js/patient-health-updates.js?v=<?= $ptHealthUpdatesVer ?>"></script>
+<script src="<?= ASSET_BASE ?>/assets/js/patient-health-updates.js?v=<?= $ptHealthUpdatesVer ?>" defer></script>
 <?php $ptI18nJsVer = (int) @filemtime(ASSETS_PATH . '/js/patient-triage-i18n.js'); ?>
-<script src="<?= ASSET_BASE ?>/assets/js/patient-triage-i18n.js?v=<?= $ptI18nJsVer ?>"></script>
+<script src="<?= ASSET_BASE ?>/assets/js/patient-triage-i18n.js?v=<?= $ptI18nJsVer ?>" defer></script>
 <?php $ptUrgencyJsVer = (int) @filemtime(ASSETS_PATH . '/js/patient-urgency-modal.js'); ?>
-<script src="<?= ASSET_BASE ?>/assets/js/patient-urgency-modal.js?v=<?= $ptUrgencyJsVer ?>"></script>
+<script src="<?= ASSET_BASE ?>/assets/js/patient-urgency-modal.js?v=<?= $ptUrgencyJsVer ?>" defer></script>
 <?php $ptRecJsVer = (int) @filemtime(ASSETS_PATH . '/js/patient-recommendation-popup.js'); ?>
-<script src="<?= ASSET_BASE ?>/assets/js/patient-recommendation-popup.js?v=<?= $ptRecJsVer ?>"></script>
+<script src="<?= ASSET_BASE ?>/assets/js/patient-recommendation-popup.js?v=<?= $ptRecJsVer ?>" defer></script>
 <?php require_once VIEWS_PATH . '/partials/mc_modal_select_assets.php'; ?>
 </body>
 </html>

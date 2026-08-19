@@ -657,6 +657,10 @@
     pendingIncomingCall = null;
     lastRemoteStream = null;
     reconnectAttempts = 0;
+    if (myStream) {
+      myStream.getTracks().forEach(function (t) { try { t.stop(); } catch (e) {} });
+      myStream = null;
+    }
     if (peerRetryTimer) {
       clearTimeout(peerRetryTimer);
       peerRetryTimer = null;

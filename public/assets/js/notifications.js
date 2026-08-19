@@ -4,7 +4,8 @@
 (function () {
   'use strict';
 
-  const POLL_INTERVAL = 3000;
+  const POLL_INTERVAL = 15000;
+  const POLL_INTERVAL_ACTIVE = 5000;
 
   let lastId = 0;
   let pollTimer = null;
@@ -512,7 +513,10 @@
     } catch (e) { /* silent */ }
   }
 
+  let pollInFlight = false;
   async function poll() {
+    if (pollInFlight) return;
+    pollInFlight = true;
     try {
       const url = API_BASE + 'poll.php' + (lastId ? '?since_id=' + lastId + '&_=' + Date.now() : '?_=' + Date.now());
       const data = await fetchJson(url);
@@ -524,6 +528,7 @@
         }
       }
     } catch (e) { /* silent */ }
+    pollInFlight = false;
   }
 
   async function markRead(id) {
@@ -868,16 +873,21 @@
     bindUnreadWidgets();
     function startPoll() {
       if (pollTimer) return;
+      var interval = panelOpen ? POLL_INTERVAL_ACTIVE : POLL_INTERVAL;
       pollTimer = setInterval(function () {
         if (document.hidden) return;
         if (window.MedConnectLiveSync && Date.now() - (window.MedConnectLiveSync.lastHubAt() || 0) < 4000) return;
         poll();
-      }, POLL_INTERVAL);
+      }, interval);
     }
     function stopPoll() {
       if (!pollTimer) return;
       clearInterval(pollTimer);
       pollTimer = null;
+    }
+    function restartPoll() {
+      stopPoll();
+      startPoll();
     }
 
     refreshCount();

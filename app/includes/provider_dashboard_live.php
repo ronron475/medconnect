@@ -74,13 +74,27 @@ function provider_dashboard_consultation_chart(PDO $pdo, int $providerId, string
             break;
 
         case 'month':
-            $cursor = date('Y-m-01');
+            $monthStart = date('Y-m-01');
+            $monthCounts = [];
+            try {
+                $stmt = $pdo->prepare('
+                    SELECT consult_date, COUNT(*) AS cnt
+                    FROM consultations
+                    WHERE provider_id = ? AND consult_date >= ? AND consult_date <= ?
+                    GROUP BY consult_date
+                ');
+                $stmt->execute([$providerId, $monthStart, $today]);
+                foreach ($stmt->fetchAll(PDO::FETCH_ASSOC) as $row) {
+                    $monthCounts[$row['consult_date']] = (int) $row['cnt'];
+                }
+            } catch (Throwable $e) {}
+            $cursor = $monthStart;
+            $dayCount = (int) date('t');
             while ($cursor <= $today) {
-                $dayCount = (int) date('t', strtotime($cursor . ' 00:00:00'));
                 $series[] = [
                     'label'    => $dayCount > 14 ? date('M j', strtotime($cursor)) : date('D', strtotime($cursor)),
                     'date'     => date('M j', strtotime($cursor)),
-                    'count'    => provider_count_consultations_on_date($pdo, $providerId, $cursor),
+                    'count'    => $monthCounts[$cursor] ?? 0,
                     'is_today' => $cursor === $today,
                 ];
                 $cursor = date('Y-m-d', strtotime($cursor . ' +1 day'));
@@ -119,12 +133,26 @@ function provider_dashboard_consultation_chart(PDO $pdo, int $providerId, string
 
         case 'week':
         default:
+            $weekStart = date('Y-m-d', strtotime('-6 days'));
+            $weekCounts = [];
+            try {
+                $stmt = $pdo->prepare('
+                    SELECT consult_date, COUNT(*) AS cnt
+                    FROM consultations
+                    WHERE provider_id = ? AND consult_date >= ? AND consult_date <= ?
+                    GROUP BY consult_date
+                ');
+                $stmt->execute([$providerId, $weekStart, $today]);
+                foreach ($stmt->fetchAll(PDO::FETCH_ASSOC) as $row) {
+                    $weekCounts[$row['consult_date']] = (int) $row['cnt'];
+                }
+            } catch (Throwable $e) {}
             for ($i = 6; $i >= 0; $i--) {
                 $date = date('Y-m-d', strtotime("-{$i} days"));
                 $series[] = [
                     'label'    => date('D', strtotime($date)),
                     'date'     => date('M j', strtotime($date)),
-                    'count'    => provider_count_consultations_on_date($pdo, $providerId, $date),
+                    'count'    => $weekCounts[$date] ?? 0,
                     'is_today' => ($i === 0),
                 ];
             }
