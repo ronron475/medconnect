@@ -141,6 +141,15 @@ $assigned_display_name = $locked_provider_name !== '' ? $locked_provider_name : 
       </p>
     </div>
 
+    <?php if (!$is_provider_locked): ?>
+    <button type="submit" class="mc-btn mc-btn--primary patient-triage-submit" id="patientTriageSubmit">
+      Submit patient complaint
+    </button>
+    <p class="text-xs text-muted patient-triage-submit-hint">
+      Click once for the AI preliminary assessment. Click <strong>Submit patient complaint</strong> again to assign a doctor from real available slots.
+    </p>
+    <?php endif; ?>
+
     <div class="form-group" id="bookingAssignedProviderWrap">
       <label class="form-label" id="bookingAssignedProviderLabel">Automatically Assigned Provider</label>
       <div
@@ -218,13 +227,10 @@ $assigned_display_name = $locked_provider_name !== '' ? $locked_provider_name : 
       <input type="hidden" id="booking_slot_id" name="slot_id" value="">
     </div>
 
+    <?php if ($is_provider_locked): ?>
     <button type="submit" class="mc-btn mc-btn--primary patient-triage-submit" id="patientTriageSubmit">
-      <?= $is_provider_locked ? 'Book Appointment' : 'Submit patient complaint' ?>
+      Book Appointment
     </button>
-    <?php if (!$is_provider_locked): ?>
-    <p class="text-xs text-muted patient-triage-submit-hint">
-      Click once for the AI preliminary assessment. Click <strong>Submit patient complaint</strong> again to assign a doctor from real available slots.
-    </p>
     <?php endif; ?>
   </form>
   <div id="patientTriageBookedPanel" class="patient-triage-booked" hidden>

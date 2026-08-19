@@ -1610,10 +1610,12 @@ html[data-theme-resolved='dark'] .booking-today-date {
   width: 100%;
   max-width: 320px;
   min-height: 44px;
+  margin-top: 4px;
 }
 
 .patient-triage-submit-hint {
   margin-top: 10px;
+  margin-bottom: 18px;
   max-width: 520px;
   line-height: 1.45;
 }
