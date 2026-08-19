@@ -734,6 +734,39 @@ html[data-theme-resolved='dark'] body.superadmin-body .staff-apps-hero__eyebrow 
   color: #a1a1aa !important;
 }
 
+html[data-theme-resolved='dark'] body.admin-body .staff-apps-table th,
+html[data-theme-resolved='dark'] body.superadmin-body .staff-apps-table th {
+  color: #5eead4 !important;
+  background: #141414 !important;
+  border-bottom-color: #2a2a2a !important;
+}
+
+html[data-theme-resolved='dark'] body.admin-body .staff-apps-table td,
+html[data-theme-resolved='dark'] body.superadmin-body .staff-apps-table td {
+  color: #e4e4e7 !important;
+  border-bottom-color: #2a2a2a !important;
+}
+
+html[data-theme-resolved='dark'] body.admin-body .staff-apps-applicant__name,
+html[data-theme-resolved='dark'] body.superadmin-body .staff-apps-applicant__name {
+  color: #ffffff !important;
+}
+
+html[data-theme-resolved='dark'] body.admin-body .staff-apps-applicant__email,
+html[data-theme-resolved='dark'] body.superadmin-body .staff-apps-applicant__email {
+  color: #a1a1aa !important;
+}
+
+html[data-theme-resolved='dark'] body.admin-body .staff-apps-meta,
+html[data-theme-resolved='dark'] body.superadmin-body .staff-apps-meta {
+  color: #d4d4d8 !important;
+}
+
+html[data-theme-resolved='dark'] body.admin-body .staff-apps-meta--muted,
+html[data-theme-resolved='dark'] body.superadmin-body .staff-apps-meta--muted {
+  color: #a1a1aa !important;
+}
+
 html[data-theme-resolved='dark'] body.admin-body .staff-apps-hero__badge,
 html[data-theme-resolved='dark'] body.superadmin-body .staff-apps-hero__badge {
   background: rgba(245, 158, 11, 0.15) !important;
