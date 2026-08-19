@@ -44,24 +44,24 @@ require_once __DIR__ . '/partials/layout_open.php';
   <h3 class="text-h3 mb-md">Broadcast Notification</h3>
   <form id="broadcastForm" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;">
     <label class="text-sm">Target audience
-      <select name="target_role" class="mc-btn mc-btn--outline" style="width:100%;background:#fff;margin-top:6px;">
+      <select name="target_role" class="mc-btn mc-btn--outline" style="width:100%;background:var(--mc-surface, #fff);margin-top:6px;">
         <?php foreach ($roles as $val => $label): ?>
         <option value="<?= $val === 'all' ? 'all' : $val ?>"><?= htmlspecialchars($label) ?></option>
         <?php endforeach; ?>
       </select>
     </label>
     <label class="text-sm">Priority
-      <select name="priority" class="mc-btn mc-btn--outline" style="width:100%;background:#fff;margin-top:6px;">
+      <select name="priority" class="mc-btn mc-btn--outline" style="width:100%;background:var(--mc-surface, #fff);margin-top:6px;">
         <option value="normal">Normal</option>
         <option value="high">High</option>
         <option value="critical">Critical</option>
       </select>
     </label>
     <label class="text-sm" style="grid-column:1/-1;">Title
-      <input type="text" name="title" required class="mc-btn mc-btn--outline" style="width:100%;background:#fff;text-align:left;margin-top:6px;">
+      <input type="text" name="title" required class="mc-btn mc-btn--outline" style="width:100%;background:var(--mc-surface, #fff);text-align:left;margin-top:6px;">
     </label>
     <label class="text-sm" style="grid-column:1/-1;">Message
-      <textarea name="message" required rows="3" class="mc-btn mc-btn--outline" style="width:100%;background:#fff;text-align:left;margin-top:6px;resize:vertical;"></textarea>
+      <textarea name="message" required rows="3" class="mc-btn mc-btn--outline" style="width:100%;background:var(--mc-surface, #fff);text-align:left;margin-top:6px;resize:vertical;"></textarea>
     </label>
     <div style="grid-column:1/-1;">
       <button type="submit" class="mc-btn mc-btn--primary">Send Broadcast</button>
