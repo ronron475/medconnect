@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 $active_page = 'consultation_history';
 $page_title  = 'Consultation History';
 $page_styles = ['provider-consultation-history.css'];
@@ -50,24 +50,24 @@ function pch_filter_url(string $filter): string
       <h2 class="pch-detail-name"><?= htmlspecialchars((string) $patient_detail['patient_name']) ?></h2>
       <div class="pch-detail-meta">
         Patient ID: <?= htmlspecialchars((string) $patient_detail['patient_number']) ?>
-        · Total consultations: <?= count($patient_consultations) ?>
+        Â· Total consultations: <?= count($patient_consultations) ?>
       </div>
       <div class="pch-detail-grid">
         <div>
           <label>Age</label>
-          <span><?= htmlspecialchars((string) ($patient_detail['age'] ?: '—')) ?></span>
+          <span><?= htmlspecialchars((string) ($patient_detail['age'] ?: 'â€”')) ?></span>
         </div>
         <div>
           <label>Sex</label>
-          <span><?= htmlspecialchars((string) ($patient_detail['sex'] ?: '—')) ?></span>
+          <span><?= htmlspecialchars((string) ($patient_detail['sex'] ?: 'â€”')) ?></span>
         </div>
         <div>
           <label>Contact</label>
-          <span><?= htmlspecialchars((string) ($patient_detail['contact'] ?: '—')) ?></span>
+          <span><?= htmlspecialchars((string) ($patient_detail['contact'] ?: 'â€”')) ?></span>
         </div>
         <div>
           <label>Address</label>
-          <span><?= htmlspecialchars((string) ($patient_detail['address'] ?: '—')) ?></span>
+          <span><?= htmlspecialchars((string) ($patient_detail['address'] ?: 'â€”')) ?></span>
         </div>
       </div>
     </div>
@@ -81,26 +81,26 @@ function pch_filter_url(string $filter): string
           $status = (string) ($row['status'] ?? '');
           $dateLabel = !empty($row['consult_date'])
               ? date('M j, Y', strtotime((string) $row['consult_date']))
-              : '—';
+              : 'â€”';
           $timeLabel = !empty($row['consult_time'])
               ? date('g:i A', strtotime((string) $row['consult_time']))
               : '';
           $visitNum = count($patient_consultations) - (int) $idx;
-          $complaint = trim((string) ($row['chief_complaint'] ?? '')) ?: '—';
+          $complaint = trim((string) ($row['chief_complaint'] ?? '')) ?: 'â€”';
           $sessionUrl = ASSET_BASE . '/views/provider/consultation_session.php?id=' . (int) $row['id'];
         ?>
         <article class="pch-consult-card">
           <div class="pch-consult-card__head">
             <div>
               <div class="pch-consult-card__title">Consultation #<?= (int) $row['id'] ?></div>
-              <div class="pch-consult-card__date"><?= htmlspecialchars($dateLabel) ?><?= $timeLabel ? ' · ' . htmlspecialchars($timeLabel) : '' ?></div>
+              <div class="pch-consult-card__date"><?= htmlspecialchars($dateLabel) ?><?= $timeLabel ? ' Â· ' . htmlspecialchars($timeLabel) : '' ?></div>
             </div>
             <span class="pch-chip <?= htmlspecialchars(provider_consultation_status_chip_class($status)) ?>">
               <?= htmlspecialchars(provider_consultation_status_label($status)) ?>
             </span>
           </div>
           <div class="pch-consult-card__row"><strong>Patient complaint:</strong> <?= htmlspecialchars($complaint) ?></div>
-          <div class="pch-consult-card__row"><strong>Doctor:</strong> <?= htmlspecialchars((string) ($row['doctor_name'] ?? '—')) ?></div>
+          <div class="pch-consult-card__row"><strong>Doctor:</strong> <?= htmlspecialchars((string) ($row['doctor_name'] ?? 'â€”')) ?></div>
           <?php if (!empty($row['ai_classification'])): ?>
           <div class="pch-consult-card__row"><strong>AI classification:</strong> <?= htmlspecialchars((string) $row['ai_classification']) ?></div>
           <?php endif; ?>
@@ -119,10 +119,10 @@ function pch_filter_url(string $filter): string
             <div class="pch-video-block__title">VIDEO CONSULTATION</div>
             <?php if ($vhCompleted): ?>
             <div class="pch-video-block__status pch-video-block__status--done">&#10003; Completed</div>
-            <div class="pch-consult-card__row"><strong>Video call date:</strong> <?= htmlspecialchars((string) ($vh['date_label'] ?? '—')) ?></div>
-            <div class="pch-consult-card__row"><strong>Started:</strong> <?= htmlspecialchars((string) ($vh['started_label'] ?? '—')) ?></div>
-            <div class="pch-consult-card__row"><strong>Ended:</strong> <?= htmlspecialchars((string) ($vh['ended_label'] ?? '—')) ?></div>
-            <div class="pch-consult-card__row"><strong>Duration:</strong> <?= htmlspecialchars((string) ($vh['duration_label'] ?? '—')) ?></div>
+            <div class="pch-consult-card__row"><strong>Video call date:</strong> <?= htmlspecialchars((string) ($vh['date_label'] ?? 'â€”')) ?></div>
+            <div class="pch-consult-card__row"><strong>Started:</strong> <?= htmlspecialchars((string) ($vh['started_label'] ?? 'â€”')) ?></div>
+            <div class="pch-consult-card__row"><strong>Ended:</strong> <?= htmlspecialchars((string) ($vh['ended_label'] ?? 'â€”')) ?></div>
+            <div class="pch-consult-card__row"><strong>Duration:</strong> <?= htmlspecialchars((string) ($vh['duration_label'] ?? 'â€”')) ?></div>
             <?php
               $consultation_id = (int) ($row['id'] ?? 0);
               $recUrl = consultation_video_recording_view_url($consultation_id);
@@ -141,14 +141,14 @@ function pch_filter_url(string $filter): string
                 $segUrl = consultation_video_recording_segment_url($consultation_id, (int) ($seg['id'] ?? 0));
                 $timeBits = trim((string) ($seg['started_label'] ?? ''));
                 if ((string) ($seg['ended_label'] ?? '') !== '') {
-                    $timeBits .= ($timeBits !== '' ? '–' : '') . (string) $seg['ended_label'];
+                    $timeBits .= ($timeBits !== '' ? 'â€“' : '') . (string) $seg['ended_label'];
                 }
             ?>
             <div class="pch-consult-card__row">
                 <strong>Segment <?= $segIdx > 0 ? $segIdx : 1 ?>:</strong>
                 <?= htmlspecialchars($timeBits !== '' ? $timeBits : 'Ready') ?>
                 <?php if ($segUrl !== ''): ?>
-                — <a href="<?= htmlspecialchars($segUrl) ?>" target="_blank" rel="noopener">Play</a>
+                â€” <a href="<?= htmlspecialchars($segUrl) ?>" target="_blank" rel="noopener">Play</a>
                 <?php endif; ?>
             </div>
             <?php endforeach; ?>
@@ -185,7 +185,7 @@ function pch_filter_url(string $filter): string
   <div class="pch-toolbar">
     <div>
       <h2 class="pch-toolbar__title">Consultation History</h2>
-      <p class="pch-toolbar__sub">Patients grouped by account — each visit is a separate consultation record.</p>
+      <p class="pch-toolbar__sub">Patients grouped by account â€” each visit is a separate consultation record.</p>
     </div>
     <div class="pch-toolbar__actions">
       <nav class="pch-filters" aria-label="History filters">
@@ -204,7 +204,7 @@ function pch_filter_url(string $filter): string
       </nav>
       <div class="pch-search">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-        <input id="pchSearch" type="search" placeholder="Search name or patient ID…" autocomplete="off" aria-label="Search consultation history">
+        <input id="pchSearch" type="search" placeholder="Search name or patient IDâ€¦" autocomplete="off" aria-label="Search consultation history">
       </div>
     </div>
   </div>
@@ -217,7 +217,7 @@ function pch_filter_url(string $filter): string
             <th>Patient</th>
             <th>Last consultation</th>
             <th>Total visits</th>
-            <th>Last patient complaint</th>
+            <th>Last Primary Complaint</th>
             <th>Status</th>
             <th>Action</th>
           </tr>
@@ -229,8 +229,8 @@ function pch_filter_url(string $filter): string
             $name = trim((string) ($row['patient_name'] ?? ''));
             $pid = (string) ($row['patient_number'] ?? '');
             $status = (string) ($row['latest_status'] ?? '');
-            $lastDate = !empty($row['consult_date']) ? date('M j, Y', strtotime((string) $row['consult_date'])) : '—';
-            $complaint = trim((string) ($row['last_complaint'] ?? '')) ?: '—';
+            $lastDate = !empty($row['consult_date']) ? date('M j, Y', strtotime((string) $row['consult_date'])) : 'â€”';
+            $complaint = trim((string) ($row['last_complaint'] ?? '')) ?: 'â€”';
             $searchBlob = strtolower($name . ' ' . $pid . ' ' . $complaint);
           ?>
           <tr data-pch-row data-search="<?= htmlspecialchars($searchBlob) ?>">
@@ -274,3 +274,4 @@ function pch_filter_url(string $filter): string
 </div>
 
 <?php require __DIR__ . '/partials/layout_close.php'; ?>
+

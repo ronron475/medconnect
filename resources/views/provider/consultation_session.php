@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 $active_page = 'consultation';
 $page_title  = 'Tele-Consultation';
 require __DIR__.'/partials/icons.php';
@@ -101,7 +101,7 @@ $bhw_activity_variant = 'provider';
 $patient = [
     'name' => trim(($c['first_name'] ?? '') . ' ' . ($c['last_name'] ?? '')),
     'initials' => strtoupper(substr($c['first_name'] ?? 'P', 0, 1) . substr($c['last_name'] ?? '', 0, 1)),
-    'age' => $c['age'] ?? '—',
+    'age' => $c['age'] ?? 'â€”',
     'sex' => $profile['sex'],
     'blood_type' => $profile['blood_type'],
     'history' => $profile['history'],
@@ -396,7 +396,7 @@ $localhost_app_url = 'http://localhost' . (ASSET_BASE !== '' ? ASSET_BASE : '');
 .video-shell.is-live .video-shell-tools {
     display: flex;
 }
-/* Active call: single iframe UI only — no duplicate LIVE overlay or shell chrome */
+/* Active call: single iframe UI only â€” no duplicate LIVE overlay or shell chrome */
 .video-shell.is-call-active {
     background: #000;
     min-height: 0;
@@ -528,7 +528,7 @@ $localhost_app_url = 'http://localhost' . (ASSET_BASE !== '' ? ASSET_BASE : '');
     width: 22px;
     height: 22px;
 }
-/* Mobile fullscreen call layer — same iframe, presentation only */
+/* Mobile fullscreen call layer â€” same iframe, presentation only */
 body.consultation-mobile-call-fullscreen {
     overflow: hidden !important;
 }
@@ -1605,7 +1605,7 @@ body.consultation-mobile-call-fullscreen .mc-provider-video-dock .mc-session-flo
         font-size: 0.95rem !important;
     }
     body.provider-body:has(.consultation-session) .pd-header-page::after {
-        content: " · <?= htmlspecialchars($patient['name'], ENT_QUOTES) ?>";
+        content: " Â· <?= htmlspecialchars($patient['name'], ENT_QUOTES) ?>";
         font-weight: 600;
         color: #64748b;
         background: transparent;
@@ -1823,7 +1823,7 @@ body.consultation-mobile-call-fullscreen .mc-provider-video-dock .mc-session-flo
 
             <!-- Session Status (hidden during active call; iframe owns status UI) -->
             <div class="session-status" hidden aria-hidden="true">
-                <span id="callStatusIndicator" style="color: #64748b; margin-right: 5px;">● READY</span> <span id="sessionTimer">00:00:00</span>
+                <span id="callStatusIndicator" style="color: #64748b; margin-right: 5px;">â— READY</span> <span id="sessionTimer">00:00:00</span>
             </div>
         </div>
 
@@ -1836,10 +1836,10 @@ body.consultation-mobile-call-fullscreen .mc-provider-video-dock .mc-session-flo
             </ol>
             <?php if ($show_video_demo_tip): ?>
             <div class="video-demo-tip" id="videoDemoTip" style="margin-top:12px;">
-                <strong>Local demo — 2 tabs on this laptop</strong>
+                <strong>Local demo â€” 2 tabs on this laptop</strong>
                 <ol>
                     <li><strong>Tab 1 (here):</strong> Click <strong>Start Video Consultation</strong>.</li>
-                    <li><strong>Tab 2:</strong> Incognito → log in as <strong>patient</strong> → Dashboard.</li>
+                    <li><strong>Tab 2:</strong> Incognito â†’ log in as <strong>patient</strong> â†’ Dashboard.</li>
                     <li>One webcam: provider uses camera; patient can use <strong>Join with audio only</strong>.</li>
                 </ol>
             </div>
@@ -1865,10 +1865,10 @@ body.consultation-mobile-call-fullscreen .mc-provider-video-dock .mc-session-flo
             <div class="session-card-body">
                 <?php if (!empty($video_history['show_completed_details'])): ?>
                 <div class="info-row"><span class="info-key">Status</span><span class="info-val">Completed</span></div>
-                <div class="info-row"><span class="info-key">Date</span><span class="info-val"><?= htmlspecialchars((string) ($video_history['date_label'] ?? '—')) ?></span></div>
-                <div class="info-row"><span class="info-key">Started</span><span class="info-val"><?= htmlspecialchars((string) ($video_history['started_label'] ?? '—')) ?></span></div>
-                <div class="info-row"><span class="info-key">Ended</span><span class="info-val"><?= htmlspecialchars((string) ($video_history['ended_label'] ?? '—')) ?></span></div>
-                <div class="info-row"><span class="info-key">Duration</span><span class="info-val"><?= htmlspecialchars((string) ($video_history['duration_label'] ?? '—')) ?></span></div>
+                <div class="info-row"><span class="info-key">Date</span><span class="info-val"><?= htmlspecialchars((string) ($video_history['date_label'] ?? 'â€”')) ?></span></div>
+                <div class="info-row"><span class="info-key">Started</span><span class="info-val"><?= htmlspecialchars((string) ($video_history['started_label'] ?? 'â€”')) ?></span></div>
+                <div class="info-row"><span class="info-key">Ended</span><span class="info-val"><?= htmlspecialchars((string) ($video_history['ended_label'] ?? 'â€”')) ?></span></div>
+                <div class="info-row"><span class="info-key">Duration</span><span class="info-val"><?= htmlspecialchars((string) ($video_history['duration_label'] ?? 'â€”')) ?></span></div>
                 <?php if (!empty($video_history['participants_label'])): ?>
                 <div class="info-row"><span class="info-key">Participants</span><span class="info-val"><?= htmlspecialchars((string) $video_history['participants_label']) ?></span></div>
                 <?php endif; ?>
@@ -1878,7 +1878,7 @@ body.consultation-mobile-call-fullscreen .mc-provider-video-dock .mc-session-flo
                     <strong style="font-size:12px;color:#0f766e;">Timeline</strong>
                     <ul style="margin:8px 0 0;padding-left:18px;font-size:12px;color:#334155;line-height:1.6;">
                         <?php foreach ($video_history['timeline'] as $ev): ?>
-                        <li><?= htmlspecialchars((string) ($ev['label'] ?? '')) ?> — <?= htmlspecialchars((string) ($ev['time_label'] ?? '')) ?></li>
+                        <li><?= htmlspecialchars((string) ($ev['label'] ?? '')) ?> â€” <?= htmlspecialchars((string) ($ev['time_label'] ?? '')) ?></li>
                         <?php endforeach; ?>
                     </ul>
                 </div>
@@ -1915,7 +1915,7 @@ body.consultation-mobile-call-fullscreen .mc-provider-video-dock .mc-session-flo
                 <div class="session-card-title"><?= icon('file') ?> Clinical Documentation (SOAP)</div>
                 <div style="display: flex; gap: 8px; flex-wrap: wrap;">
                     <?php if ($consultation_completed): ?>
-                    <span class="session-btn" style="background:#dcfce7;color:#166534;border:1px solid #86efac;cursor:default;">✓ SOAP Finalized</span>
+                    <span class="session-btn" style="background:#dcfce7;color:#166534;border:1px solid #86efac;cursor:default;">âœ“ SOAP Finalized</span>
                     <?php else: ?>
                     <button class="session-btn primary" type="button" onclick="saveSOAP()">Save Draft</button>
                     <button class="session-btn" type="button" onclick="document.getElementById('soapForm').reset()">Clear</button>
@@ -2043,7 +2043,7 @@ body.consultation-mobile-call-fullscreen .mc-provider-video-dock .mc-session-flo
                 <div class="csp-compare" id="cspCompare">
                     <div class="csp-compare__card">
                         <span class="csp-compare__label">Patient original complaint</span>
-                        <p class="csp-compare__text" id="cspOriginalComplaint"><?= htmlspecialchars($csp_original_complaint !== '' ? $csp_original_complaint : '—') ?></p>
+                        <p class="csp-compare__text" id="cspOriginalComplaint"><?= htmlspecialchars($csp_original_complaint !== '' ? $csp_original_complaint : 'â€”') ?></p>
                         <p class="csp-compare__eng" id="cspOriginalEnglish" <?= $csp_original_english === '' || strcasecmp($csp_original_english, $csp_original_complaint) === 0 ? 'hidden' : '' ?>>
                             English: <span id="cspOriginalEnglishText"><?= htmlspecialchars($csp_original_english) ?></span>
                         </p>
@@ -2051,7 +2051,7 @@ body.consultation-mobile-call-fullscreen .mc-provider-video-dock .mc-session-flo
                     <div class="csp-compare__card csp-compare__card--doctor">
                         <span class="csp-compare__label">Doctor-finalized complaint</span>
                         <p class="csp-compare__text" id="cspFinalizedComplaint"><?= htmlspecialchars(
-                            ($clinical_support['chief_complaint'] !== '' ? $clinical_support['chief_complaint'] : ($patient['complaint'] ?? '')) ?: '—'
+                            ($clinical_support['chief_complaint'] !== '' ? $clinical_support['chief_complaint'] : ($patient['complaint'] ?? '')) ?: 'â€”'
                         ) ?></p>
                     </div>
                 </div>
@@ -2062,7 +2062,7 @@ body.consultation-mobile-call-fullscreen .mc-provider-video-dock .mc-session-flo
                         id="cspChiefComplaint"
                         class="pd-textarea csp-complaint-input"
                         rows="3"
-                        placeholder="Type the finalized chief complaint from this consultation…"
+                        placeholder="Type the finalized chief complaint from this consultationâ€¦"
                     ><?= htmlspecialchars($clinical_support['chief_complaint'] !== '' ? $clinical_support['chief_complaint'] : $patient['complaint']) ?></textarea>
                     <div class="csp-override__actions">
                         <button type="button" class="session-btn primary" id="cspReassessBtn">Re-assess with AI</button>
@@ -2153,7 +2153,7 @@ body.consultation-mobile-call-fullscreen .mc-provider-video-dock .mc-session-flo
                             <?php endif; ?>
                         </div>
                         <p id="cspComplaintLine" style="margin: 8px 0 0; font-size: 13px; color: #334155; line-height: 1.45;" <?= $clinical_support['chief_complaint'] === '' ? 'hidden' : '' ?>>
-                            <strong>Patient complaint:</strong> <span id="cspComplaintText"><?= htmlspecialchars($clinical_support['chief_complaint']) ?></span>
+                            <strong>Primary Complaint:</strong> <span id="cspComplaintText"><?= htmlspecialchars($clinical_support['chief_complaint']) ?></span>
                             <span id="cspEnglishWrap" <?= ($clinical_support['english_complaint'] === '' || strcasecmp($clinical_support['english_complaint'], $clinical_support['chief_complaint']) === 0) ? 'hidden' : '' ?>>
                                 <br><span style="color:#64748b;">English: <span id="cspEnglishText"><?= htmlspecialchars($clinical_support['english_complaint']) ?></span></span>
                             </span>
@@ -2179,7 +2179,7 @@ body.consultation-mobile-call-fullscreen .mc-provider-video-dock .mc-session-flo
                                     <span class="csp-chip"><?= htmlspecialchars($condition) ?></span>
                                 <?php endforeach; ?>
                             <?php else: ?>
-                                <p class="csp-empty">No differential suggested — clinical assessment required.</p>
+                                <p class="csp-empty">No differential suggested â€” clinical assessment required.</p>
                             <?php endif; ?>
                         </div>
                     </div>
@@ -2220,9 +2220,9 @@ body.consultation-mobile-call-fullscreen .mc-provider-video-dock .mc-session-flo
                     <div class="csp-meta" id="cspMeta">
                         <?php if (($clinical_support['confidence_display'] ?? '') !== ''): ?>
                             Model confidence: <span id="cspConfidence"><?= htmlspecialchars($clinical_support['confidence_display']) ?></span>
-                            ·
+                            Â·
                         <?php else: ?>
-                            <span id="cspConfidenceWrap" hidden>Model confidence: <span id="cspConfidence"></span> · </span>
+                            <span id="cspConfidenceWrap" hidden>Model confidence: <span id="cspConfidence"></span> Â· </span>
                         <?php endif; ?>
                         <span id="cspAssessedLabel"><?= htmlspecialchars($clinical_support['assessed_label'] !== '' ? ('Assessed ' . $clinical_support['assessed_label']) : 'Awaiting doctor re-assessment') ?></span>
                     </div>
@@ -2243,7 +2243,7 @@ body.consultation-mobile-call-fullscreen .mc-provider-video-dock .mc-session-flo
                                     </div>
                                     <div class="csp-audit__meta">
                                         <?= htmlspecialchars($entry['provider_name']) ?>
-                                        · Urgency: <?= htmlspecialchars($entry['urgency_label'] !== '' ? $entry['urgency_label'] : '—') ?>
+                                        Â· Urgency: <?= htmlspecialchars($entry['urgency_label'] !== '' ? $entry['urgency_label'] : 'â€”') ?>
                                         <?php if ($entry['event_type'] === 'urgency_override' && $entry['ai_urgency'] !== ''): ?>
                                             (AI was <?= htmlspecialchars($entry['ai_urgency']) ?>)
                                         <?php endif; ?>
@@ -2251,7 +2251,7 @@ body.consultation-mobile-call-fullscreen .mc-provider-video-dock .mc-session-flo
                                             <br><?= htmlspecialchars($entry['audit_note']) ?>
                                         <?php endif; ?>
                                         <?php if ($entry['chief_complaint'] !== ''): ?>
-                                            <br>Patient complaint: <?= htmlspecialchars(strlen($entry['chief_complaint']) > 120 ? substr($entry['chief_complaint'], 0, 117) . '…' : $entry['chief_complaint']) ?>
+                                            <br>Primary Complaint: <?= htmlspecialchars(strlen($entry['chief_complaint']) > 120 ? substr($entry['chief_complaint'], 0, 117) . 'â€¦' : $entry['chief_complaint']) ?>
                                         <?php endif; ?>
                                     </div>
                                 </li>
@@ -2305,8 +2305,8 @@ body.consultation-mobile-call-fullscreen .mc-provider-video-dock .mc-session-flo
                         <div class="patient-name"><?= htmlspecialchars($patient['name']) ?></div>
                         <div class="patient-sub">
                             <?= htmlspecialchars((string) $patient['patient_number']) ?>
-                            · <?= htmlspecialchars((string) $patient['age']) ?>y
-                            · <?= htmlspecialchars((string) $patient['sex']) ?>
+                            Â· <?= htmlspecialchars((string) $patient['age']) ?>y
+                            Â· <?= htmlspecialchars((string) $patient['sex']) ?>
                         </div>
                     </div>
                 </div>
@@ -2422,21 +2422,21 @@ body.consultation-mobile-call-fullscreen .mc-provider-video-dock .mc-session-flo
                     </div>
                 </div>
 
-                <div class="info-row"><span class="info-key">Contact</span><span class="info-val"><?= htmlspecialchars($patient_contact !== '' ? $patient_contact : '—') ?></span></div>
-                <div class="info-row"><span class="info-key">Email</span><span class="info-val"><?= htmlspecialchars($patient_email !== '' ? $patient_email : '—') ?></span></div>
+                <div class="info-row"><span class="info-key">Contact</span><span class="info-val"><?= htmlspecialchars($patient_contact !== '' ? $patient_contact : 'â€”') ?></span></div>
+                <div class="info-row"><span class="info-key">Email</span><span class="info-val"><?= htmlspecialchars($patient_email !== '' ? $patient_email : 'â€”') ?></span></div>
                 <?php if (!empty($patient['address'])): ?>
                 <div class="info-row"><span class="info-key">Address</span><span class="info-val"><?= htmlspecialchars($patient['address']) ?></span></div>
                 <?php endif; ?>
 
                 <div class="complaint-box">
-                    <strong>Patient Complaint (this visit)</strong>
+                    <strong>Primary Complaint (this visit)</strong>
                     <?= htmlspecialchars($patient['complaint']) ?>
                 </div>
 
                 <p class="hs-meta">
                     Last updated:
                     <?= htmlspecialchars((string) ($health_summary['metadata']['last_updated_at_label'] ?? 'Not available')) ?>
-                    · <?= htmlspecialchars((string) ($health_summary['metadata']['last_updated_by'] ?? 'Registration')) ?>
+                    Â· <?= htmlspecialchars((string) ($health_summary['metadata']['last_updated_by'] ?? 'Registration')) ?>
                 </p>
             </div>
         </div>
@@ -2497,14 +2497,14 @@ body.consultation-mobile-call-fullscreen .mc-provider-video-dock .mc-session-flo
       <div class="fu-field" id="fuSlotStep" hidden>
         <label for="fuSlotSelect">Available follow-up times</label>
         <select id="fuSlotSelect" class="pd-input" style="width:100%;">
-          <option value="">Loading your available slots…</option>
+          <option value="">Loading your available slotsâ€¦</option>
         </select>
         <p class="fu-hint" id="fuSlotHint">Only real openings from your own schedule are listed.</p>
       </div>
 
       <div class="fu-field" id="fuNotesStep" hidden>
         <label for="fuFollowUpMessage">Notes for the patient (optional)</label>
-        <textarea id="fuFollowUpMessage" class="pd-textarea" rows="3" placeholder="Follow-up instructions for the patient…"></textarea>
+        <textarea id="fuFollowUpMessage" class="pd-textarea" rows="3" placeholder="Follow-up instructions for the patientâ€¦"></textarea>
       </div>
 
       <p id="fuModalStatus" class="fu-status" aria-live="polite"></p>
@@ -2806,7 +2806,7 @@ function renderSessionChat() {
         const row = document.createElement('div');
         row.className = 'chat-row' + (mine ? ' mine' : '');
         const playBtn = (!mine && message.message_kind === 'mute_tts' && !message.is_deleted_for_everyone)
-            ? `<button type="button" class="chat-mute-tts-play" data-play-mute-tts="${Number(message.id)}">▶ Play Audio</button>`
+            ? `<button type="button" class="chat-mute-tts-play" data-play-mute-tts="${Number(message.id)}">â–¶ Play Audio</button>`
             : '';
         row.innerHTML = `
             <div class="chat-avatar">${escapeChatHtml(mine ? sessionProviderInitials : sessionPatientInitials)}</div>
@@ -3035,7 +3035,7 @@ function renderClinicalAudit(audit) {
         const li = document.createElement('li');
         li.className = 'csp-audit__item';
         let meta = escapeHtml(entry.provider_name || 'Provider')
-            + ' · Urgency: ' + escapeHtml(entry.urgency_label || '—');
+            + ' Â· Urgency: ' + escapeHtml(entry.urgency_label || 'â€”');
         if (entry.event_type === 'urgency_override' && entry.ai_urgency) {
             meta += ' (AI was ' + escapeHtml(entry.ai_urgency) + ')';
         }
@@ -3044,9 +3044,9 @@ function renderClinicalAudit(audit) {
         }
         if (entry.chief_complaint) {
             const short = String(entry.chief_complaint).length > 120
-                ? String(entry.chief_complaint).slice(0, 117) + '…'
+                ? String(entry.chief_complaint).slice(0, 117) + 'â€¦'
                 : entry.chief_complaint;
-            meta += '<br>Patient complaint: ' + escapeHtml(short);
+            meta += '<br>Primary Complaint: ' + escapeHtml(short);
         }
         li.innerHTML =
             '<div class="csp-audit__head"><span>' + escapeHtml(entry.event_label || entry.event_type) +
@@ -3090,7 +3090,7 @@ function applyClinicalSupport(support) {
 
     const finalizedEl = document.getElementById('cspFinalizedComplaint');
     if (finalizedEl) {
-        finalizedEl.textContent = support.chief_complaint || '—';
+        finalizedEl.textContent = support.chief_complaint || 'â€”';
     }
     const originalEl = document.getElementById('cspOriginalComplaint');
     if (originalEl && support.patient_original_complaint) {
@@ -3119,7 +3119,7 @@ function applyClinicalSupport(support) {
     }
 
     renderCspChips(document.getElementById('cspSymptoms'), support.symptoms || [], 'No structured symptoms recorded yet.');
-    renderCspChips(document.getElementById('cspConditions'), support.possible_conditions || [], 'No differential suggested — clinical assessment required.');
+    renderCspChips(document.getElementById('cspConditions'), support.possible_conditions || [], 'No differential suggested â€” clinical assessment required.');
     renderCspList(document.getElementById('cspQuestions'), support.suggested_questions || [], 'No clarifying prompts available.');
     renderCspList(document.getElementById('cspActions'), support.recommended_actions || [], 'No AI care actions listed for this assessment.');
 
@@ -3172,8 +3172,8 @@ function copyClinicalSupportToSoap(target) {
         return;
     }
 
-    const symptoms = (support.symptoms || []).join(', ') || '—';
-    const conditions = (support.possible_conditions || []).join('; ') || '—';
+    const symptoms = (support.symptoms || []).join(', ') || 'â€”';
+    const conditions = (support.possible_conditions || []).join('; ') || 'â€”';
     const actions = (support.recommended_actions || []);
     const urgency = support.final_urgency || support.risk_level || 'Not assessed';
     const complaint = support.chief_complaint || '';
@@ -3182,7 +3182,7 @@ function copyClinicalSupportToSoap(target) {
 
     if (target === 'subjective') {
         const block = [
-            'Chief complaint (doctor-finalized): ' + (complaint || '—'),
+            'Chief complaint (doctor-finalized): ' + (complaint || 'â€”'),
             support.english_complaint ? ('English: ' + support.english_complaint) : '',
             'Symptoms: ' + symptoms
         ].filter(Boolean).join('\n');
@@ -3190,15 +3190,15 @@ function copyClinicalSupportToSoap(target) {
         label = 'Subjective';
     } else if (target === 'plan') {
         const block = [
-            'Recommended actions (AI decision support — verify clinically):',
-            ...(actions.length ? actions.map((a, i) => (i + 1) + '. ' + a) : ['—']),
+            'Recommended actions (AI decision support â€” verify clinically):',
+            ...(actions.length ? actions.map((a, i) => (i + 1) + '. ' + a) : ['â€”']),
             'Urgency: ' + urgency
         ].join('\n');
         ok = appendSoapField('plan', block);
         label = 'Plan';
     } else {
         const block = [
-            'Clinical support summary (AI — verify before finalizing):',
+            'Clinical support summary (AI â€” verify before finalizing):',
             'Urgency: ' + urgency,
             'Symptoms: ' + symptoms,
             'Possible conditions: ' + conditions,
@@ -3235,11 +3235,11 @@ async function reassessClinicalSupport() {
 
     if (button) {
         button.disabled = true;
-        button.textContent = 'Re-assessing…';
+        button.textContent = 'Re-assessingâ€¦';
     }
     if (status) {
         status.className = 'csp-status';
-        status.textContent = 'Running AI assessment…';
+        status.textContent = 'Running AI assessmentâ€¦';
     }
 
     try {
@@ -3264,7 +3264,7 @@ async function reassessClinicalSupport() {
         if (result.audit) renderClinicalAudit(result.audit);
         if (status) {
             status.className = 'csp-status is-ok';
-            status.textContent = 'Updated — ' + ((result.support && result.support.final_urgency) || 'assessment ready');
+            status.textContent = 'Updated â€” ' + ((result.support && result.support.final_urgency) || 'assessment ready');
         }
     } catch (e) {
         if (status) {
@@ -3297,11 +3297,11 @@ async function overrideClinicalUrgency() {
 
     if (button) {
         button.disabled = true;
-        button.textContent = 'Saving…';
+        button.textContent = 'Savingâ€¦';
     }
     if (status) {
         status.className = 'csp-status';
-        status.textContent = 'Saving override…';
+        status.textContent = 'Saving overrideâ€¦';
     }
 
     try {
@@ -3327,7 +3327,7 @@ async function overrideClinicalUrgency() {
         if (result.audit) renderClinicalAudit(result.audit);
         if (status) {
             status.className = 'csp-status is-ok';
-            status.textContent = 'Override saved — ' + ((result.support && result.support.final_urgency) || urgency);
+            status.textContent = 'Override saved â€” ' + ((result.support && result.support.final_urgency) || urgency);
         }
     } catch (e) {
         if (status) {
@@ -3475,7 +3475,7 @@ window.addEventListener('message', (event) => {
         document.getElementById('activeCallUI').style.display = 'none';
         markVideoCallClosed();
         document.getElementById('callStatusIndicator').style.color = '#64748b';
-        document.getElementById('callStatusIndicator').textContent = '● ENDED';
+        document.getElementById('callStatusIndicator').textContent = 'â— ENDED';
         setVideoShellLive(false);
         // The consultation is saved server-side by end_video.php before this
         // message fires, so the follow-up decision comes next rather than
@@ -3556,7 +3556,7 @@ function mcProviderOpenVideo(urlOrToken, consultationId) {
     if (preCall) preCall.style.display = 'none';
     document.getElementById('activeCallUI').style.display = 'block';
     document.getElementById('callStatusIndicator').style.color = '#94a3b8';
-    document.getElementById('callStatusIndicator').textContent = '● Connecting…';
+    document.getElementById('callStatusIndicator').textContent = 'â— Connectingâ€¦';
     setVideoShellLive(true);
     timerActive = false;
 
@@ -3764,7 +3764,7 @@ let soapUiReady = false;
 function soapNormalizeName(value) {
     return String(value || '')
         .replace(/^(dr\.?|dra\.?|doctor)\s+/i, '')
-        .replace(/ñ/gi, 'n')
+        .replace(/Ã±/gi, 'n')
         .toLowerCase()
         .replace(/[^a-z\s]/g, '')
         .replace(/\s+/g, ' ')
@@ -4048,7 +4048,7 @@ async function scheduleFollowUp() {
     }
 }
 
-/* ── Post-consultation follow-up decision ──────────────────────────────────
+/* â”€â”€ Post-consultation follow-up decision â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
    The provider answers "follow-up required?" once. Choosing Yes offers only
    real openings from their own schedule; when there are none the follow-up is
    still saved as required-but-unscheduled rather than inventing a time. */
@@ -4121,7 +4121,7 @@ async function fuLoadSlots() {
         }
 
         select.disabled = false;
-        select.innerHTML = '<option value="">Select an available time…</option>'
+        select.innerHTML = '<option value="">Select an available timeâ€¦</option>'
             + slots.map((s) => '<option value="' + Number(s.id) + '">'
                 + escapeChatHtml(String(s.label || '')) + '</option>').join('');
         if (hint) hint.textContent = 'Only real openings from your own schedule are listed.';
@@ -4190,9 +4190,9 @@ async function saveFollowUpFromModal() {
     fuSaveInFlight = true;
     if (saveBtn) {
         saveBtn.disabled = true;
-        saveBtn.textContent = 'Saving…';
+        saveBtn.textContent = 'Savingâ€¦';
     }
-    fuSetStatus('Saving follow-up decision…');
+    fuSetStatus('Saving follow-up decisionâ€¦');
 
     try {
         const fd = new FormData();
@@ -4318,3 +4318,5 @@ async function saveFollowUpFromModal() {
 </script>
 
 <?php require __DIR__.'/partials/layout_close.php'; ?>
+
+
