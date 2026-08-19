@@ -1,6 +1,6 @@
 <?php
 /**
- * Provider: manually override AI urgency for clinical support (with audit note).
+ * Provider: save doctor urgency override as the authoritative final triage result.
  */
 require_once dirname(dirname(dirname(__DIR__))) . '/bootstrap.php';
 header('Content-Type: application/json; charset=utf-8');
@@ -11,6 +11,7 @@ require_once dirname(dirname(dirname(__DIR__))) . '/config/db.php';
 require_once dirname(dirname(dirname(__DIR__))) . '/app/includes/auth_guard.php';
 require_once dirname(dirname(dirname(__DIR__))) . '/app/includes/audit_log.php';
 require_once dirname(dirname(dirname(__DIR__))) . '/app/includes/provider_clinical_support.php';
+require_once dirname(dirname(dirname(__DIR__))) . '/app/includes/notification_events.php';
 
 if (empty($_SESSION['user_id']) || ($_SESSION['user_role'] ?? '') !== 'provider') {
     http_response_code(403);
@@ -44,7 +45,7 @@ if ($note === '') {
 }
 
 try {
-    $stmt = $pdo->prepare('SELECT id, patient_id FROM consultations WHERE id = ? AND provider_id = ? LIMIT 1');
+    $stmt = $pdo->prepare('SELECT id, patient_id, provider_id, status FROM consultations WHERE id = ? AND provider_id = ? LIMIT 1');
     $stmt->execute([$consultationId, (int) $_SESSION['user_id']]);
     $consult = $stmt->fetch(PDO::FETCH_ASSOC);
     if (!$consult) {
@@ -54,6 +55,11 @@ try {
     }
 
     $patientId = (int) $consult['patient_id'];
+    if ($patientId <= 0) {
+        echo json_encode(['success' => false, 'message' => 'This consultation is not linked to a patient.']);
+        exit;
+    }
+
     $providerId = (int) $_SESSION['user_id'];
     $providerName = trim((string) (($_SESSION['first_name'] ?? '') . ' ' . ($_SESSION['last_name'] ?? '')));
     if ($providerName === '') {
@@ -63,52 +69,102 @@ try {
         $providerName = trim((string) (($urow['first_name'] ?? '') . ' ' . ($urow['last_name'] ?? ''))) ?: 'Provider';
     }
 
-    $support = provider_consultation_clinical_support($pdo, $consultationId, $patientId);
-    if (empty($support['available'])) {
-        echo json_encode(['success' => false, 'message' => 'Run AI re-assessment before overriding urgency.']);
-        exit;
-    }
+    $nameStmt = $pdo->prepare('SELECT CONCAT(first_name, " ", last_name) FROM users WHERE id = ? LIMIT 1');
+    $nameStmt->execute([$patientId]);
+    $patientName = trim((string) ($nameStmt->fetchColumn() ?: 'Patient'));
+    $patientNumber = 'MC-' . str_pad((string) $patientId, 6, '0', STR_PAD_LEFT);
 
-    if (empty($support['ai_urgency_bucket'])) {
-        $support['ai_urgency_bucket'] = $support['risk_bucket'] ?? 'unknown';
-    }
-    if (empty($support['ai_urgency'])) {
-        $support['ai_urgency'] = provider_clinical_support_urgency_label((string) $support['ai_urgency_bucket']);
-    }
-
-    $support['risk_bucket'] = $urgencyBucket;
-    $support['final_urgency'] = provider_clinical_support_urgency_label($urgencyBucket);
-    $support['risk_level'] = $support['final_urgency'] . ' (doctor override)';
-    $support['manual_urgency'] = true;
-    $support['manual_override_note'] = $note;
-    $support['doctor_override'] = true;
-    $support['assessed_at'] = date('Y-m-d H:i:s');
-    $support['assessed_label'] = date('M j, Y g:i A');
-
-    provider_clinical_support_save_event(
+    $saved = provider_clinical_support_persist_doctor_override(
         $pdo,
         $consultationId,
         $providerId,
         $patientId,
-        'urgency_override',
-        $support,
+        $urgencyBucket,
         $note,
         $providerName
     );
+
+    $persisted = $saved['persisted'];
+    $workflow = $saved['workflow'];
+    $finalBucket = (string) ($persisted['final_bucket'] ?? '');
+    $finalLabel = (string) ($persisted['final_label'] ?? '');
+    $aiLabel = (string) ($persisted['ai_label'] ?? '');
+    $triageId = (int) ($persisted['triage_id'] ?? 0);
+
+    if ($finalBucket !== $urgencyBucket) {
+        echo json_encode([
+            'success' => false,
+            'message' => 'Override did not persist as the selected urgency. Please try again.',
+            'persisted' => $persisted,
+        ], JSON_UNESCAPED_UNICODE);
+        exit;
+    }
+
+    NotificationEvents::doctorFinalTriageForPatient(
+        $pdo,
+        $patientId,
+        $providerId,
+        $consultationId,
+        $triageId,
+        $finalBucket,
+        $finalLabel,
+        $aiLabel,
+        $note
+    );
+
+    if ($finalBucket === 'emergency') {
+        try {
+            require_once BASE_PATH . '/app/includes/bhw_patient_workflow.php';
+            BhwPatientWorkflow::onPatientPortalEmergency($pdo, $patientId, [
+                'triage_id' => $triageId,
+                'consultation_id' => $consultationId,
+                'referral_id' => (int) ($workflow['referral_id'] ?? 0),
+                'source' => 'provider_override',
+            ]);
+        } catch (Throwable $e) {
+            error_log('clinical_support_override emergency workflow: ' . $e->getMessage());
+        }
+        NotificationEvents::highRiskPatient($pdo, $patientId, $patientName, $finalLabel, $providerId);
+        if ((int) ($workflow['referral_id'] ?? 0) > 0) {
+            NotificationEvents::referralCreated($pdo, (int) $workflow['referral_id'], $patientId, $providerId, $providerId);
+        }
+    }
 
     audit_log($pdo, [
         'patient_id' => $patientId,
         'action_type' => 'CLINICAL_SUPPORT_URGENCY_OVERRIDE',
         'description' => 'Provider overrode urgency for consultation #' . $consultationId
-            . ' to ' . $support['final_urgency'] . ': ' . $note,
+            . ' to ' . $finalLabel . ': ' . $note,
     ]);
 
     echo json_encode([
         'success' => true,
         'message' => 'Urgency override saved.',
-        'support' => $support,
+        'support' => $saved['support'],
+        'persisted' => $persisted,
+        'workflow' => [
+            'bucket' => $finalBucket,
+            'emergency' => $finalBucket === 'emergency',
+            'urgent' => $finalBucket === 'urgent',
+            'non_urgent' => $finalBucket === 'non_urgent',
+            'emergency_triggered' => $finalBucket === 'emergency',
+            'urgent_triggered' => $finalBucket === 'urgent',
+            'referral_id' => (int) ($workflow['referral_id'] ?? 0),
+            'facility' => $workflow['facility'] ?? null,
+            'video_session_active' => provider_clinical_support_video_session_active($pdo, $consultationId),
+        ],
+        'patient' => [
+            'id' => $patientId,
+            'name' => $patientName,
+            'patient_number' => $patientNumber,
+        ],
+        'consultation_id' => $consultationId,
         'audit' => provider_clinical_support_audit_trail($pdo, $consultationId),
-    ]);
+    ], JSON_UNESCAPED_UNICODE);
+} catch (RuntimeException $e) {
+    echo json_encode(['success' => false, 'message' => $e->getMessage()], JSON_UNESCAPED_UNICODE);
+} catch (InvalidArgumentException $e) {
+    echo json_encode(['success' => false, 'message' => $e->getMessage()], JSON_UNESCAPED_UNICODE);
 } catch (Throwable $e) {
     error_log('clinical_support_override: ' . $e->getMessage());
     http_response_code(500);

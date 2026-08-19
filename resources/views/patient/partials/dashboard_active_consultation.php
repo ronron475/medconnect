@@ -35,6 +35,12 @@ $statusLabel = $isLive ? 'Ready to join' : ($status === 'in_consultation' ? 'In 
 $title = $isLive ? 'Your consultation is ready' : 'Consultation Scheduled';
 $chipClass = $isLive ? 'pdash-care__status-chip--ready' : 'pdash-care__status-chip--scheduled';
 
+$consultOutcome = null;
+if (isset($pdo) && $pdo instanceof PDO && $consultId > 0) {
+    require_once BASE_PATH . '/app/includes/patient_consultation_records.php';
+    $consultOutcome = patient_consultation_clinical_outcome($pdo, $consultId, (int) ($active['patient_id'] ?? ($_SESSION['user_id'] ?? 0)), false);
+}
+
 $providerInitials = 'DR';
 if ($providerName !== '') {
     $parts = preg_split('/\s+/', preg_replace('/^dr\.?\s*/i', '', $providerName));
@@ -72,6 +78,16 @@ if ($providerName !== '') {
       <div class="pdash-care-concern">
         <span class="pdash-care-concern__label">Patient complaint</span>
         <p class="pdash-care-concern__text"><?= htmlspecialchars($concern) ?></p>
+      </div>
+      <?php endif; ?>
+      <?php if (!empty($consultOutcome['final_case_level'])): ?>
+      <div class="pdash-care-concern" data-consult-id="<?= $consultId ?>">
+        <?php
+          if (!function_exists('mc_render_consultation_outcome_stack')) {
+              require_once VIEWS_PATH . '/patient/partials/triage_helpers.php';
+          }
+          mc_render_consultation_outcome_stack($consultOutcome, $consultId);
+        ?>
       </div>
       <?php endif; ?>
     </div>

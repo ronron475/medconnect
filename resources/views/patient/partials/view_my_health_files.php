@@ -64,11 +64,12 @@ function pmh_health_file_text(?string $value): bool
         Dr. <?= htmlspecialchars($r['provider_name'] ?? '—') ?>
       </p>
       <?php if (!empty($outcome['final_case_level'])): ?>
-      <p class="pmh-visit__case-level">
-        <span class="pmh-case-level <?= htmlspecialchars(patient_case_level_chip_class((string) ($outcome['final_case_bucket'] ?? ''))) ?>">
-          Final: <?= htmlspecialchars((string) $outcome['final_case_level']) ?>
-        </span>
-      </p>
+        <?php
+          if (!function_exists('mc_render_consultation_outcome_stack')) {
+              require_once VIEWS_PATH . '/patient/partials/triage_helpers.php';
+          }
+          mc_render_consultation_outcome_stack($outcome, $consultId);
+        ?>
       <?php endif; ?>
       <?php if ($type === 'Health File'): ?>
         <dl class="pmh-soap-list pmh-file-card__soap-list">

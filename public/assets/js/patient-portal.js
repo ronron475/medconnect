@@ -141,6 +141,30 @@
       .replace(/"/g, '&quot;');
   }
 
+  function sessionTriageStackHtml(c) {
+    const finalLevel = String(c.final_case_level || '').trim();
+    if (!finalLevel) return '';
+    const aiLevel = String(c.ai_case_level || '').trim();
+    const byDoctor = !!c.is_doctor_override || String(c.finalized_by || '') === 'Doctor';
+    const bucket = String(c.final_case_bucket || '').toLowerCase().replace(/-/g, '_');
+    const chip = bucket === 'emergency'
+      ? 'pt-assess-chip--emergency'
+      : (bucket === 'urgent' ? 'pt-assess-chip--urgent' : 'pt-assess-chip--routine');
+    let html = '<div class="pt-assess-stack psess-triage-stack" data-consult-id="' + escapeHtml(String(c.id || '')) + '">';
+    if (aiLevel) {
+      html += '<div class="pt-assess-stack__row"><span class="pt-assess-stack__label">Preliminary AI Assessment</span>'
+        + '<span class="pt-assess-chip pt-assess-chip--ai js-consult-ai">' + escapeHtml(aiLevel) + '</span></div>';
+    }
+    html += '<div class="pt-assess-stack__row"><span class="pt-assess-stack__label">Final Triage Result</span>'
+      + '<span class="pt-assess-chip ' + chip + ' js-consult-final">' + escapeHtml(finalLevel) + '</span></div>';
+    if (byDoctor) {
+      html += '<div class="pt-assess-stack__row"><span class="pt-assess-stack__label">Finalized By</span>'
+        + '<span class="pt-assess-chip js-consult-finalized">Doctor</span></div>';
+    }
+    html += '</div>';
+    return html;
+  }
+
   function formatConsultWhen(dateStr, timeStr) {
     if (!dateStr) return '—';
     const dateLabel = new Date(String(dateStr) + 'T00:00:00').toLocaleDateString('en-US', {
@@ -411,6 +435,8 @@
         ? '<p class="psess-card__type">Consultation #' + escapeHtml(String(c.id)) + '</p>'
         : '';
 
+      const triageStack = sessionTriageStackHtml(c);
+
       container.innerHTML +=
         '<article class="psess-card' + cardMod + '" data-consult-id="' + (c.id || '') + '">' +
         '<div class="psess-card__main">' +
@@ -423,6 +449,7 @@
         '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/></svg>' +
         dateLabel + (timeLabel ? (type === 'past' ? '</p><p class="psess-card__datetime psess-card__datetime--time">' + timeLabel : ' · ' + timeLabel) : '') +
         '</p>' +
+        triageStack +
         extraMeta +
         rescheduleBanner +
         '</div></div>' +

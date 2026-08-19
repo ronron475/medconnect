@@ -309,6 +309,10 @@ require_once CONFIG_PATH . '/app.php';
 require_once CONFIG_PATH . '/ai_interpreter.php';
 require_once CONFIG_PATH . '/twilio.php';
 date_default_timezone_set(APP_TIMEZONE);
+ini_set('default_charset', 'UTF-8');
+if (function_exists('mb_internal_encoding')) {
+    mb_internal_encoding('UTF-8');
+}
 
 require_once CONFIG_PATH . '/db.php';
 

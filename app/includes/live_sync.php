@@ -264,18 +264,29 @@ function live_sync_provider_triage_fp(PDO $pdo, int $providerId): string
         return live_sync_hash('0');
     }
 
-    return live_sync_hash(live_sync_row(
-        $pdo,
-        "SELECT COUNT(*), COALESCE(SUM(id),0), COALESCE(MAX(id),0)
-         FROM triage_results
-         WHERE assigned_provider_id = ?
-            OR EXISTS (
-                SELECT 1 FROM consultations c
-                WHERE c.patient_id = triage_results.patient_id
-                  AND c.provider_id = ?
-            )",
-        [$providerId, $providerId]
-    ));
+    return live_sync_hash(
+        live_sync_row(
+            $pdo,
+            "SELECT COUNT(*), COALESCE(SUM(id),0), COALESCE(MAX(id),0)
+             FROM triage_results
+             WHERE assigned_provider_id = ?
+                OR EXISTS (
+                    SELECT 1 FROM consultations c
+                    WHERE c.patient_id = triage_results.patient_id
+                      AND c.provider_id = ?
+                )",
+            [$providerId, $providerId]
+        ),
+        live_sync_table_exists($pdo, 'consultation_clinical_support')
+            ? live_sync_row(
+                $pdo,
+                "SELECT COUNT(*), COALESCE(MAX(id),0), COALESCE(MAX(UNIX_TIMESTAMP(created_at)),0)
+                 FROM consultation_clinical_support
+                 WHERE provider_id = ? AND event_type = 'urgency_override'",
+                [$providerId]
+            )
+            : '0'
+    );
 }
 
 function live_sync_patient_triage_fp(PDO $pdo, int $patientId): string
@@ -284,22 +295,35 @@ function live_sync_patient_triage_fp(PDO $pdo, int $patientId): string
         return live_sync_hash('0');
     }
 
-    return live_sync_hash(live_sync_row(
-        $pdo,
-        "SELECT COUNT(*), COALESCE(MAX(id),0),
-                COALESCE(MAX(UNIX_TIMESTAMP(assessed_at)),0),
-                COALESCE(MAX(UNIX_TIMESTAMP(assigned_at)),0),
-                COALESCE(MAX(CAST(triage_level AS CHAR)),''),
-                COALESCE(MAX(CAST(outcome AS CHAR)),''),
-                COALESCE(SUM(CASE COALESCE(recommendation_status,'hidden')
-                    WHEN 'pending_approval' THEN 1
-                    WHEN 'approved' THEN 2
-                    WHEN 'rejected' THEN 4
-                    ELSE 0 END),0)
-         FROM triage_results
-         WHERE patient_id = ?",
-        [$patientId]
-    ));
+    return live_sync_hash(
+        live_sync_row(
+            $pdo,
+            "SELECT COUNT(*), COALESCE(MAX(id),0),
+                    COALESCE(MAX(UNIX_TIMESTAMP(assessed_at)),0),
+                    COALESCE(MAX(UNIX_TIMESTAMP(assigned_at)),0),
+                    COALESCE(MAX(CAST(triage_level AS CHAR)),''),
+                    COALESCE(MAX(CAST(outcome AS CHAR)),''),
+                    COALESCE(SUM(CASE COALESCE(recommendation_status,'hidden')
+                        WHEN 'pending_approval' THEN 1
+                        WHEN 'approved' THEN 2
+                        WHEN 'rejected' THEN 4
+                        ELSE 0 END),0)
+             FROM triage_results
+             WHERE patient_id = ?",
+            [$patientId]
+        ),
+        live_sync_table_exists($pdo, 'consultation_clinical_support')
+            ? live_sync_row(
+                $pdo,
+                "SELECT COUNT(*), COALESCE(MAX(id),0),
+                        COALESCE(MAX(UNIX_TIMESTAMP(created_at)),0),
+                        COALESCE(MAX(CAST(urgency_bucket AS CHAR)),'')
+                 FROM consultation_clinical_support
+                 WHERE patient_id = ? AND event_type = 'urgency_override'",
+                [$patientId]
+            )
+            : '0'
+    );
 }
 
 function live_sync_bhw_barangay_id(PDO $pdo, int $userId): int

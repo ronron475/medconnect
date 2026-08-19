@@ -39,12 +39,18 @@ try {
     ");
     $stmt->execute([$uid]);
     while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
+        $cid = (int) $row['id'];
+        $outcome = patient_consultation_clinical_outcome($pdo, $cid, $uid, false);
         $active[] = [
-            'id'            => (int) $row['id'],
+            'id'            => $cid,
             'status'        => (string) ($row['status'] ?? ''),
             'provider_name' => trim((string) ($row['provider_name'] ?? ''))
                 ?: trim('Dr. ' . ($row['first_name'] ?? '') . ' ' . ($row['last_name'] ?? '')),
             'consult_date'  => (string) ($row['consult_date'] ?? ''),
+            'final_case_bucket' => (string) ($outcome['final_case_bucket'] ?? ''),
+            'final_case_level'  => (string) ($outcome['final_case_level'] ?? ''),
+            'ai_case_level'     => (string) ($outcome['ai_case_level'] ?? ''),
+            'finalized_by'      => !empty($outcome['is_doctor_override']) ? 'Doctor' : '',
         ];
     }
 
@@ -103,39 +109,75 @@ try {
         ];
     }
 
-    $emergencyOverrides = [];
+    $triageUpdates = [];
     try {
-        triage_assessment_ensure_schema($pdo);
-        $erStmt = $pdo->prepare("
-            SELECT id, chief_complaint, assessed_at, triage_classification, level, urgency_label,
-                   triage_level, assessment_payload, outcome
-            FROM triage_results
-            WHERE patient_id = ?
-              AND assessed_at >= DATE_SUB(NOW(), INTERVAL 7 DAY)
-            ORDER BY assessed_at DESC, id DESC
-            LIMIT 20
+        require_once dirname(dirname(dirname(__DIR__))) . '/app/includes/provider_clinical_support.php';
+        provider_clinical_support_ensure_schema($pdo);
+        $ovStmt = $pdo->prepare("
+            SELECT ccs.id AS override_id, ccs.consultation_id, ccs.patient_id, ccs.urgency_bucket,
+                   ccs.doctor_urgency_bucket, ccs.ai_urgency_bucket, ccs.audit_note, ccs.created_at,
+                   c.id AS consult_id, c.triage_result_id, c.status AS consult_status
+            FROM consultation_clinical_support ccs
+            INNER JOIN consultations c ON c.id = ccs.consultation_id AND c.patient_id = ccs.patient_id
+            WHERE ccs.patient_id = ?
+              AND ccs.event_type = 'urgency_override'
+              AND ccs.created_at >= DATE_SUB(NOW(), INTERVAL 7 DAY)
+            ORDER BY ccs.id DESC
+            LIMIT 30
         ");
-        $erStmt->execute([$uid]);
-        while ($row = $erStmt->fetch(PDO::FETCH_ASSOC)) {
-            if (!triage_doctor_final_is_emergency($row)) {
+        $ovStmt->execute([$uid]);
+        $seenConsult = [];
+        while ($row = $ovStmt->fetch(PDO::FETCH_ASSOC)) {
+            $cid = (int) ($row['consultation_id'] ?? $row['consult_id'] ?? 0);
+            if ($cid <= 0 || isset($seenConsult[$cid])) {
                 continue;
             }
-            if (triage_ai_was_emergency($row)) {
+            $seenConsult[$cid] = true;
+            $outcome = patient_consultation_clinical_outcome($pdo, $cid, $uid, false);
+            $finalBucket = provider_clinical_support_normalize_bucket(
+                (string) ($outcome['final_case_bucket'] ?? $row['doctor_urgency_bucket'] ?? $row['urgency_bucket'] ?? '')
+            );
+            if ($finalBucket === 'unknown') {
                 continue;
             }
-            $emergencyOverrides[] = [
-                'id' => (int) ($row['id'] ?? 0),
-                'ai_label' => triage_ai_preliminary_label($row),
-                'doctor_label' => triage_doctor_final_label($row),
-                'final_label' => triage_final_decision_label($row),
-                'complaint' => (string) ($row['chief_complaint'] ?? ''),
-                'assessed_at' => (string) ($row['assessed_at'] ?? ''),
+            $aiLabel = (string) ($outcome['ai_case_level'] ?? '');
+            if ($aiLabel === '') {
+                $aiLabel = provider_clinical_support_caps_label((string) ($row['ai_urgency_bucket'] ?? ''));
+            }
+            $finalLabel = (string) ($outcome['final_case_level'] ?? provider_clinical_support_caps_label($finalBucket));
+            $item = [
+                'id' => (int) ($row['override_id'] ?? 0),
+                'consultation_id' => $cid,
+                'triage_id' => (int) ($row['triage_result_id'] ?? ($outcome['consultation_id'] ?? 0)),
+                'ai_label' => $aiLabel,
+                'doctor_label' => $finalLabel,
+                'final_label' => $finalLabel,
+                'final_bucket' => $finalBucket,
+                'clinical_reason' => (string) ($row['audit_note'] ?? ''),
+                'finalized_by' => 'Doctor',
+                'assessed_at' => (string) ($row['created_at'] ?? ''),
                 'source' => 'provider_override',
-                'message' => 'Your healthcare provider reviewed your case and determined it is an EMERGENCY. Please go to the nearest hospital or emergency department. Online consultation is not appropriate for this case.',
+                'emergency' => $finalBucket === 'emergency',
+                'urgent' => $finalBucket === 'urgent',
+                'facility' => null,
+                'message' => $finalBucket === 'emergency'
+                    ? 'Your doctor has classified your condition as an EMERGENCY. Please seek immediate in-person medical attention.'
+                    : ('Your doctor finalized this consultation as ' . $finalLabel . '.'),
             ];
+            if ($finalBucket === 'emergency') {
+                $item['facility'] = provider_emergency_nearest_facility($pdo, $uid);
+            }
+            $triageUpdates[] = $item;
         }
     } catch (Throwable $e) {
-        $emergencyOverrides = [];
+        $triageUpdates = [];
+    }
+
+    $emergencyOverrides = [];
+    foreach ($triageUpdates as $item) {
+        if (!empty($item['emergency'])) {
+            $emergencyOverrides[] = $item;
+        }
     }
 
     ob_end_clean();
@@ -143,9 +185,10 @@ try {
         'success'   => true,
         'active'    => $active,
         'completed' => $completed,
+        'triage_updates' => $triageUpdates,
         'emergency_overrides' => $emergencyOverrides,
         'server_ts' => time(),
-    ]);
+    ], JSON_UNESCAPED_UNICODE);
 } catch (PDOException $e) {
     ob_end_clean();
     http_response_code(500);
