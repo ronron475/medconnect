@@ -21,15 +21,16 @@ body.provider-body .provider-page-body:has(.pch-page) {
 
 .pch-toolbar__title {
   margin: 0;
-  font-size: 1.15rem;
+  font-size: 1.35rem;
   font-weight: 800;
   color: var(--mc-navy-dark, #0f172a);
 }
 
 .pch-toolbar__sub {
-  margin: 4px 0 0;
-  font-size: 12px;
-  color: #64748b;
+  margin: 6px 0 0;
+  font-size: 0.95rem;
+  line-height: 1.45;
+  color: #475569;
 }
 
 .pch-toolbar__actions {
@@ -46,13 +47,13 @@ body.provider-body .provider-page-body:has(.pch-page) {
 }
 
 .pch-filter {
-  height: 34px;
-  padding: 0 12px;
+  height: 40px;
+  padding: 0 14px;
   border-radius: 999px;
   border: 1px solid #e2e8f0;
   background: #fff;
   color: #475569;
-  font-size: 12px;
+  font-size: 0.9rem;
   font-weight: 700;
   text-decoration: none;
   display: inline-flex;
@@ -75,11 +76,11 @@ body.provider-body .provider-page-body:has(.pch-page) {
 body.provider-body .provider-page-body .pch-search input,
 body.provider-body .provider-page-body .pch-search input[type="search"] {
   width: 100%;
-  height: 36px;
+  height: 44px;
   padding: 0 12px 0 40px;
   border: 1px solid #dbe4ea;
   border-radius: 8px;
-  font-size: 13px;
+  font-size: 16px;
   box-sizing: border-box;
   background: var(--card-bg, #fff);
   color: var(--mc-navy-dark, #0f172a);
@@ -115,43 +116,56 @@ body.provider-body .provider-page-body .pch-search input[type="search"]::-webkit
 .pch-table {
   width: 100%;
   border-collapse: collapse;
-  font-size: 13px;
+  font-size: 0.95rem;
 }
 
 .pch-table th,
 .pch-table td {
-  padding: 12px 14px;
+  padding: 14px 16px;
   text-align: left;
   border-bottom: 1px solid #f1f5f9;
   vertical-align: top;
 }
 
 .pch-table th {
-  font-size: 11px;
+  font-size: 0.8rem;
   text-transform: uppercase;
-  letter-spacing: 0.04em;
-  color: #64748b;
+  letter-spacing: 0.03em;
+  color: #475569;
   background: #f8fafc;
 }
 
 .pch-patient-name {
+  display: block;
+  font-size: 1.02rem;
   font-weight: 800;
   color: #0f172a;
+  line-height: 1.3;
 }
 
 .pch-patient-id {
   display: block;
-  font-size: 11px;
-  color: #64748b;
-  margin-top: 2px;
+  font-size: 0.88rem;
+  color: #475569;
+  margin-top: 3px;
+}
+
+.pch-table__date {
+  white-space: nowrap;
+}
+
+.pch-table__action {
+  padding: 8px 14px;
+  font-size: 0.88rem;
+  white-space: nowrap;
 }
 
 .pch-chip {
   display: inline-flex;
   align-items: center;
-  padding: 3px 10px;
+  padding: 5px 12px;
   border-radius: 999px;
-  font-size: 11px;
+  font-size: 0.8rem;
   font-weight: 700;
 }
 
@@ -171,7 +185,7 @@ body.provider-body .provider-page-body .pch-search input[type="search"]::-webkit
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  font-size: 13px;
+  font-size: 0.95rem;
   font-weight: 700;
   color: #057a7c;
   text-decoration: none;
@@ -204,14 +218,14 @@ body.provider-body .provider-page-body .pch-search input[type="search"]::-webkit
 
 .pch-detail-name {
   margin: 0;
-  font-size: 1.2rem;
+  font-size: 1.3rem;
   font-weight: 800;
 }
 
 .pch-detail-meta {
   margin-top: 6px;
-  font-size: 12px;
-  color: #64748b;
+  font-size: 0.95rem;
+  color: #475569;
   line-height: 1.5;
 }
 
@@ -224,12 +238,16 @@ body.provider-body .provider-page-body .pch-search input[type="search"]::-webkit
 
 .pch-detail-grid label {
   display: block;
-  font-size: 10px;
+  font-size: 0.78rem;
   font-weight: 700;
   text-transform: uppercase;
-  letter-spacing: 0.04em;
-  color: #94a3b8;
+  letter-spacing: 0.03em;
+  color: #64748b;
   margin-bottom: 2px;
+}
+
+.pch-detail-grid span {
+  font-size: 0.95rem;
 }
 
 .pch-consult-list {
@@ -237,6 +255,12 @@ body.provider-body .provider-page-body .pch-search input[type="search"]::-webkit
   display: flex;
   flex-direction: column;
   gap: 12px;
+}
+
+.pch-consult-list__title {
+  margin: 0 0 4px;
+  font-size: 1.05rem;
+  font-weight: 800;
 }
 
 .pch-consult-card {
@@ -255,19 +279,21 @@ body.provider-body .provider-page-body .pch-search input[type="search"]::-webkit
 }
 
 .pch-consult-card__title {
+  font-size: 1.05rem;
   font-weight: 800;
   color: #0f172a;
 }
 
 .pch-consult-card__date {
-  font-size: 12px;
-  color: #64748b;
+  font-size: 0.92rem;
+  color: #475569;
 }
 
 .pch-consult-card__row {
-  font-size: 12px;
+  font-size: 0.95rem;
   color: #334155;
-  margin-top: 4px;
+  margin-top: 6px;
+  line-height: 1.45;
 }
 
 .pch-consult-card__actions {
@@ -283,18 +309,19 @@ body.provider-body .provider-page-body .pch-search input[type="search"]::-webkit
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  height: 32px;
-  padding: 0 12px;
-  font-size: 11px;
-  line-height: 1;
+  min-height: 40px;
+  height: auto;
+  padding: 8px 14px;
+  font-size: 0.88rem;
+  line-height: 1.2;
   box-sizing: border-box;
   white-space: nowrap;
 }
 
 .pch-doc-pending {
   margin: 8px 0 0;
-  font-size: 12px;
-  color: #64748b;
+  font-size: 0.92rem;
+  color: #475569;
   line-height: 1.45;
 }
 
@@ -336,7 +363,7 @@ body.provider-body .provider-page-body .pch-search input[type="search"]::-webkit
   }
 
   .pch-detail-grid label {
-    font-size: 11px;
+    font-size: 0.8rem;
     color: #64748b;
   }
 
@@ -359,7 +386,7 @@ body.provider-body .provider-page-body .pch-search input[type="search"]::-webkit
 
   .pch-consult-card__row {
     display: block;
-    font-size: 13px;
+    font-size: 0.98rem;
     line-height: 1.5;
     margin-top: 6px;
   }
@@ -409,9 +436,92 @@ body.provider-body .provider-page-body .pch-search input[type="search"]::-webkit
 }
 
 @media (max-width: 768px) {
-  .pch-table th:nth-child(4),
-  .pch-table td:nth-child(4) {
+  .pch-table thead {
     display: none;
+  }
+
+  .pch-table,
+  .pch-table tbody,
+  .pch-table tr,
+  .pch-table td {
+    display: block;
+    width: 100%;
+  }
+
+  .pch-table tbody {
+    padding: 10px;
+  }
+
+  .pch-table tr {
+    margin-bottom: 12px;
+    padding: 12px 14px 6px;
+    border: 1px solid var(--mc-border-thin, #e2e8f0);
+    border-radius: 12px;
+    background: var(--card-bg, #fff);
+  }
+
+  .pch-table td {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 8px 0;
+    border-bottom: 1px solid #f1f5f9;
+    font-size: 1rem;
+  }
+
+  .pch-table td:last-child {
+    border-bottom: none;
+    padding-bottom: 8px;
+  }
+
+  .pch-table td::before {
+    content: attr(data-label);
+    flex: 0 0 42%;
+    max-width: 42%;
+    font-size: 0.82rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    color: #64748b;
+    line-height: 1.35;
+  }
+
+  .pch-table td[data-label="Patient"] {
+    flex-wrap: wrap;
+  }
+
+  .pch-table td[data-label="Patient"]::before {
+    flex: 0 0 100%;
+    max-width: none;
+    margin-bottom: 4px;
+  }
+
+  .pch-patient-name {
+    font-size: 1.08rem;
+  }
+
+  .pch-patient-id {
+    font-size: 0.95rem;
+  }
+
+  .pch-table__date {
+    white-space: normal;
+  }
+
+  .pch-table__action {
+    width: 100%;
+    justify-content: center;
+    min-height: 44px;
+    font-size: 0.95rem;
+  }
+
+  .pch-table td[data-label="Action"] {
+    flex-direction: column;
+  }
+
+  .pch-table td[data-label="Action"]::before {
+    margin-bottom: 6px;
   }
 
   .pch-detail-grid {
@@ -426,6 +536,10 @@ body.provider-body .provider-page-body .pch-search input[type="search"]::-webkit
     max-width: none;
     width: 100%;
   }
+
+  .pch-toolbar__title {
+    font-size: 1.25rem;
+  }
 }
 
 
@@ -436,7 +550,7 @@ body.provider-body .provider-page-body .pch-search input[type="search"]::-webkit
 }
 
 .pch-video-block__title {
-  font-size: 11px;
+  font-size: 0.8rem;
   font-weight: 800;
   letter-spacing: 0.04em;
   color: #0f766e;
@@ -444,7 +558,7 @@ body.provider-body .provider-page-body .pch-search input[type="search"]::-webkit
 }
 
 .pch-video-block__status {
-  font-size: 12px;
+  font-size: 0.95rem;
   font-weight: 700;
   color: #334155;
   margin-bottom: 4px;
@@ -452,4 +566,39 @@ body.provider-body .provider-page-body .pch-search input[type="search"]::-webkit
 
 .pch-video-block__status--done {
   color: #047857;
+}
+
+html[data-theme-resolved='dark'] body.provider-body .pch-panel,
+html[data-theme-resolved='dark'] body.provider-body .pch-consult-card {
+  background: var(--card-bg, #1c1c1c);
+  border-color: #2a2a2a;
+}
+
+html[data-theme-resolved='dark'] body.provider-body .pch-patient-name,
+html[data-theme-resolved='dark'] body.provider-body .pch-consult-card__title,
+html[data-theme-resolved='dark'] body.provider-body .pch-detail-name {
+  color: #ffffff !important;
+}
+
+html[data-theme-resolved='dark'] body.provider-body .pch-patient-id,
+html[data-theme-resolved='dark'] body.provider-body .pch-toolbar__sub,
+html[data-theme-resolved='dark'] body.provider-body .pch-detail-meta,
+html[data-theme-resolved='dark'] body.provider-body .pch-consult-card__date,
+html[data-theme-resolved='dark'] body.provider-body .pch-consult-card__row {
+  color: #c4c4cc !important;
+}
+
+@media (max-width: 768px) {
+  html[data-theme-resolved='dark'] body.provider-body .pch-table tr {
+    background: var(--card-bg, #1c1c1c);
+    border-color: #2a2a2a;
+  }
+
+  html[data-theme-resolved='dark'] body.provider-body .pch-table td {
+    border-bottom-color: #2a2a2a;
+  }
+
+  html[data-theme-resolved='dark'] body.provider-body .pch-table td::before {
+    color: #a1a1aa;
+  }
 }
