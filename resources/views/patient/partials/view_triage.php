@@ -208,8 +208,48 @@ mc_render_loader_panel([
   A visit is confirmed only when status shows <strong>Visit booked</strong>.
 </p>
 <div class="mc-card patient-triage-history">
+  <?php if (!empty($triage_history)): ?>
+  <div class="patient-triage-history__filters" id="visitHistoryFilters">
+    <label class="patient-triage-history__field patient-triage-history__field--search">
+      <span class="patient-triage-history__field-label">Search</span>
+      <input type="search" id="visitHistorySearch" class="form-control" placeholder="Health concern…" autocomplete="off">
+    </label>
+    <label class="patient-triage-history__field">
+      <span class="patient-triage-history__field-label">Status</span>
+      <select id="visitHistoryStatus" class="form-control">
+        <option value="all">All statuses</option>
+        <option value="booked">Visit booked</option>
+        <option value="completed">Visit completed</option>
+        <option value="emergency">Emergency</option>
+        <option value="open">Not completed yet</option>
+      </select>
+    </label>
+    <label class="patient-triage-history__field">
+      <span class="patient-triage-history__field-label">Final decision</span>
+      <select id="visitHistoryDecision" class="form-control">
+        <option value="all">All decisions</option>
+        <option value="emergency">Emergency</option>
+        <option value="urgent">Urgent</option>
+        <option value="non_urgent">Non-Urgent</option>
+      </select>
+    </label>
+    <label class="patient-triage-history__field">
+      <span class="patient-triage-history__field-label">Date</span>
+      <select id="visitHistoryDate" class="form-control">
+        <option value="all">All dates</option>
+        <option value="7">Last 7 days</option>
+        <option value="30">Last 30 days</option>
+        <option value="year">This year</option>
+      </select>
+    </label>
+    <div class="patient-triage-history__filter-meta">
+      <p class="patient-triage-history__count" id="visitHistoryCount" aria-live="polite"></p>
+      <button type="button" class="patient-triage-history__clear" id="visitHistoryClear" hidden>Clear filters</button>
+    </div>
+  </div>
+  <?php endif; ?>
   <div class="mc-table-wrap">
-    <table class="mc-table">
+    <table class="mc-table" id="visitHistoryTable">
       <thead>
         <tr>
           <th>Date</th>
@@ -220,9 +260,18 @@ mc_render_loader_panel([
       <tbody>
         <?php if (empty($triage_history)): ?>
           <tr><td colspan="3"><div class="mc-table-empty"><p>No previous visits recorded yet. Book your first consultation above.</p></div></td></tr>
-        <?php else: foreach ($triage_history as $t): ?>
-          <tr>
-            <td data-label="Date" class="patient-triage-history__date"><?= !empty($t['assessed_at']) ? date('M j, Y', strtotime($t['assessed_at'])) : '—' ?></td>
+        <?php else: foreach ($triage_history as $t):
+            $statusKey = mc_patient_visit_status_filter_key($t);
+            $decisionKey = function_exists('triage_doctor_final_key') ? triage_doctor_final_key($t) : '';
+            $assessedYmd = !empty($t['assessed_at']) ? date('Y-m-d', strtotime((string) $t['assessed_at'])) : '';
+          ?>
+          <tr
+            data-concern="<?= htmlspecialchars(strtolower((string) ($t['chief_complaint'] ?? ''))) ?>"
+            data-status="<?= htmlspecialchars($statusKey) ?>"
+            data-decision="<?= htmlspecialchars($decisionKey) ?>"
+            data-date="<?= htmlspecialchars($assessedYmd) ?>"
+          >
+            <td data-label="Date" class="patient-triage-history__date"><?= $assessedYmd !== '' ? date('M j, Y', strtotime($assessedYmd)) : '—' ?></td>
             <td data-label="Health concern" class="triage-symptoms-cell patient-triage-history__concern-cell">
               <div class="patient-triage-history__concern"><?= htmlspecialchars($t['chief_complaint'] ?? '—') ?></div>
               <?php mc_render_triage_assessment_stack($t, false); ?>
@@ -231,7 +280,11 @@ mc_render_loader_panel([
               <span class="badge-risk <?= mc_patient_visit_status_class($t) ?>"><?= mc_patient_visit_status_label($t, $pdo ?? null, (int) ($uid ?? 0)) ?></span>
             </td>
           </tr>
-        <?php endforeach; endif; ?>
+        <?php endforeach; ?>
+          <tr class="patient-triage-history__none" id="visitHistoryNone" hidden>
+            <td colspan="3"><div class="mc-table-empty"><p>No visits match these filters.</p></div></td>
+          </tr>
+        <?php endif; ?>
       </tbody>
     </table>
   </div>
