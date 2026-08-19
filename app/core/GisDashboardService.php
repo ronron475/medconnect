@@ -362,6 +362,7 @@ final class GisDashboardService
             'min_zoom'     => 11,
             'city'         => (string) ($config['city'] ?? 'Bago City'),
             'province'     => (string) ($config['province'] ?? 'Negros Occidental'),
+            'barangay_centers' => BagoBarangayCentroids::barangayRecords(),
         ];
     }
 
@@ -516,7 +517,7 @@ final class GisDashboardService
                 CONCAT(u.first_name, ' ', u.last_name) AS patient_name,
                 pl.barangay AS pl_barangay,
                 pr.barangay AS pr_barangay,
-                COALESCE(pl.canonical_barangay, pl.barangay, pr.barangay, '') AS barangay,
+                COALESCE(NULLIF(TRIM(pr.barangay), ''), NULLIF(TRIM(pl.canonical_barangay), ''), NULLIF(TRIM(pl.barangay), ''), '') AS barangay,
                 COALESCE(pl.city_municipality, pr.city_municipality, '') AS municipality,
                 COALESCE(pl.city_municipality, pr.city_municipality, '') AS city_municipality,
                 COALESCE(pl.province, pr.province, 'Negros Occidental') AS province,

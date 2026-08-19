@@ -48,6 +48,13 @@ final class GisMonitoringInsights
                     'recent_7d' => 0,
                     'unassigned_bhw' => 0,
                     'unmapped' => 0,
+                    'mapped' => 0,
+                    'gps' => 0,
+                    'assigned_bhw_names' => [],
+                    'lat_min' => null,
+                    'lat_max' => null,
+                    'lng_min' => null,
+                    'lng_max' => null,
                 ];
             }
 
@@ -76,11 +83,18 @@ final class GisMonitoringInsights
             if ($bhw === '' || strcasecmp($bhw, 'Not assigned') === 0) {
                 $unassignedBhw++;
                 $barangays[$barangay]['unassigned_bhw']++;
+            } else {
+                $barangays[$barangay]['assigned_bhw_names'][$bhw] = true;
             }
 
             $quality = strtoupper((string) ($row['location_quality'] ?? ''));
             $accuracy = strtolower((string) ($row['location_accuracy'] ?? ''));
+            $source = strtolower((string) ($row['location_source'] ?? ''));
             $hasMarker = !empty($row['has_map_marker']);
+
+            if ($source === 'gps' || $source === 'manual' || $source === 'imported' || $accuracy === 'exact') {
+                $barangays[$barangay]['gps']++;
+            }
 
             if ($quality === 'INVALID_LOCATION' || $accuracy === 'invalid') {
                 $invalid++;
@@ -88,12 +102,25 @@ final class GisMonitoringInsights
             if (!$hasMarker || $quality === 'MISSING_LOCATION' || $accuracy === 'unavailable') {
                 $unmapped++;
                 $barangays[$barangay]['unmapped']++;
-            } elseif ($quality === 'EXACT_LOCATION' || $accuracy === 'exact') {
-                $exact++;
-            } elseif ($quality === 'GEOCODED_LOCATION' || $accuracy === 'geocoded') {
-                $geocoded++;
             } else {
-                $barangayLevel++;
+                $barangays[$barangay]['mapped']++;
+                $lat = isset($row['latitude']) ? (float) $row['latitude'] : null;
+                $lng = isset($row['longitude']) ? (float) $row['longitude'] : null;
+                if ($lat !== null && $lng !== null && $lat >= -90 && $lat <= 90 && $lng >= -180 && $lng <= 180 && !($lat == 0.0 && $lng == 0.0)) {
+                    $stats = &$barangays[$barangay];
+                    $stats['lat_min'] = $stats['lat_min'] === null ? $lat : min($stats['lat_min'], $lat);
+                    $stats['lat_max'] = $stats['lat_max'] === null ? $lat : max($stats['lat_max'], $lat);
+                    $stats['lng_min'] = $stats['lng_min'] === null ? $lng : min($stats['lng_min'], $lng);
+                    $stats['lng_max'] = $stats['lng_max'] === null ? $lng : max($stats['lng_max'], $lng);
+                    unset($stats);
+                }
+                if ($quality === 'EXACT_LOCATION' || $accuracy === 'exact') {
+                    $exact++;
+                } elseif ($quality === 'GEOCODED_LOCATION' || $accuracy === 'geocoded') {
+                    $geocoded++;
+                } else {
+                    $barangayLevel++;
+                }
             }
         }
 
@@ -113,6 +140,19 @@ final class GisMonitoringInsights
             $stats['status'] = self::statusForBarangay($stats);
             $stats['status_label'] = self::statusLabel($stats['status']);
             $stats['is_hotspot'] = false;
+            $stats['assigned_bhw_count'] = count($stats['assigned_bhw_names'] ?? []);
+            unset($stats['assigned_bhw_names']);
+            if ($stats['lat_min'] !== null && $stats['lng_min'] !== null) {
+                $stats['bounds'] = [
+                    'south' => $stats['lat_min'],
+                    'west'  => $stats['lng_min'],
+                    'north' => $stats['lat_max'],
+                    'east'  => $stats['lng_max'],
+                ];
+            } else {
+                $stats['bounds'] = null;
+            }
+            unset($stats['lat_min'], $stats['lat_max'], $stats['lng_min'], $stats['lng_max']);
         }
         unset($stats);
 
@@ -161,6 +201,7 @@ final class GisMonitoringInsights
             ],
             'highest_case_barangay' => self::topBy($list, 'total'),
             'highest_emergency_barangay' => self::topBy($list, 'emergency'),
+            'barangays_with_cases' => count($list),
             'highest_rate_barangay' => $populationAvailable ? self::topByRate($list) : null,
             'hotspots' => $hotspots,
             'barangays' => $list,

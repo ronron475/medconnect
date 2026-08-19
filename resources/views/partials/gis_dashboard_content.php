@@ -13,7 +13,7 @@ $gisMapNote = $gisIsProvider
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin=""/>
 <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css" crossorigin=""/>
 <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css" crossorigin=""/>
-<link rel="stylesheet" href="<?= htmlspecialchars($assetBase) ?>/assets/css/admin-gis-dashboard.css?v=4.1"/>
+<link rel="stylesheet" href="<?= htmlspecialchars($assetBase) ?>/assets/css/admin-gis-dashboard.css?v=4.3"/>
 
 <div class="gis-page" id="gis-dashboard"
      data-api="<?= htmlspecialchars($apiBase) ?>"
@@ -47,7 +47,7 @@ $gisMapNote = $gisIsProvider
       <div class="gis-stat-value" id="stat-emergency">—</div>
     </div>
     <div class="mc-card gis-stat-card gis-stat-card--barangay" data-severity-stat="barangay">
-      <div class="gis-stat-label"><?= $gisIsProvider ? '📍 Top barangay on your list' : '📍 Most Login Barangay' ?></div>
+      <div class="gis-stat-label"><?= $gisIsProvider ? '📍 Top barangay on your list' : '📍 Barangay with most cases' ?></div>
       <div class="gis-stat-value gis-stat-value--text" id="stat-top_barangay">—</div>
     </div>
     <div class="mc-card gis-stat-card" data-gis-insight="today">
@@ -76,10 +76,19 @@ $gisMapNote = $gisIsProvider
       <div class="gis-stat-label">Detected hotspots</div>
       <div class="gis-stat-value" id="stat-hotspots">—</div>
     </div>
+    <div class="mc-card gis-stat-card" data-gis-insight="barangays">
+      <div class="gis-stat-label">Barangays with cases</div>
+      <div class="gis-stat-value" id="stat-barangays_with_cases">—</div>
+    </div>
+    <div class="mc-card gis-stat-card" data-gis-insight="emergency-brgy">
+      <div class="gis-stat-label">Most emergency cases</div>
+      <div class="gis-stat-value gis-stat-value--text" id="stat-top_emergency_barangay">—</div>
+    </div>
     <?php endif; ?>
   </div>
 
   <div class="gis-panel gis-panel--map is-active" id="gis-map-panel" role="tabpanel">
+    <div class="gis-map-layout">
     <div class="mc-card gis-map-card">
       <div class="gis-map-toolbar">
         <div class="gis-heatmap-toggles">
@@ -89,6 +98,12 @@ $gisMapNote = $gisIsProvider
           <label class="gis-chip gis-chip--urgent"><input type="radio" name="heatmap-layer" value="urgent"> 🟡 Urgent</label>
           <label class="gis-chip gis-chip--emergency"><input type="radio" name="heatmap-layer" value="emergency"> 🔴 Emergency</label>
         </div>
+        <label class="gis-brgy-filter">
+          <span class="gis-toolbar-label">Barangay</span>
+          <select id="gis-map-barangay" class="gis-input" aria-label="Filter map by barangay">
+            <option value="">All Barangays</option>
+          </select>
+        </label>
       </div>
       <div class="gis-map-wrap">
         <div id="gis-map" class="gis-map" aria-label="Interactive patient severity map"></div>
@@ -109,6 +124,40 @@ $gisMapNote = $gisIsProvider
         </button>
       </div>
       <p class="gis-map-note text-xs text-muted"><?= $gisMapNote ?></p>
+    </div>
+    <aside class="mc-card gis-brgy-panel" aria-label="Barangay summary">
+      <div class="gis-brgy-panel__head">
+        <h3 class="text-h3">Barangay Summary</h3>
+        <p class="gis-analytics-caption text-xs text-muted">Grouped from each patient’s registered barangay. Live counts update with new cases. The severity layer hides barangays with no matching cases.</p>
+      </div>
+      <div class="gis-brgy-panel__tools">
+        <input type="search" id="gis-brgy-search" class="gis-input" placeholder="Search barangay…" aria-label="Search barangay">
+        <select id="gis-brgy-sort" class="gis-input" aria-label="Sort barangays">
+          <option value="total">Highest total cases</option>
+          <option value="emergency">Highest emergency</option>
+          <option value="urgent">Highest urgent</option>
+          <option value="name">Barangay name</option>
+        </select>
+      </div>
+      <div class="gis-brgy-detail" id="gis-brgy-detail" hidden></div>
+      <div class="gis-hotspot-box" id="gis-hotspot-box" hidden></div>
+      <div class="gis-brgy-table-wrap">
+        <table class="gis-brgy-table" id="gis-brgy-table">
+          <thead>
+            <tr>
+              <th>Barangay</th>
+              <th>Cases</th>
+              <th>Non-Urgent</th>
+              <th>Urgent</th>
+              <th>Emergency</th>
+            </tr>
+          </thead>
+          <tbody id="gis-brgy-body">
+            <tr><td colspan="5" class="gis-table-empty">Loading…</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </aside>
     </div>
     <div class="gis-analytics-grid" id="gis-analytics-grid">
       <div class="mc-card gis-analytics-card">
@@ -175,4 +224,4 @@ $gisMapNote = $gisIsProvider
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
 <script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js" crossorigin=""></script>
 <script src="https://unpkg.com/leaflet.heat@0.2.0/dist/leaflet-heat.js" crossorigin=""></script>
-<script src="<?= htmlspecialchars($assetBase) ?>/assets/js/admin-gis-dashboard.js?v=4.1"></script>
+<script src="<?= htmlspecialchars($assetBase) ?>/assets/js/admin-gis-dashboard.js?v=4.3"></script>
