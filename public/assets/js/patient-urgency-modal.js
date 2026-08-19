@@ -23,6 +23,7 @@
   var slotsList = null;
   var slotsStatus = null;
   var continueConsultBtn = null;
+  var continueEl = null;
   var facilityWrap = null;
   var facilityHeading = null;
   var facilityStatus = null;
@@ -38,11 +39,47 @@
   var langSelect = null;
   var lastFocus = null;
 
+  var I18N_FALLBACKS = {
+    i_understand: 'I understand',
+    choose_another_time: 'Choose another time',
+    eyebrow_non_urgent: 'NON-URGENT',
+    eyebrow_urgent: 'URGENT',
+    eyebrow_emergency: 'EMERGENCY',
+    title_non_urgent: 'Routine Care Recommended',
+    title_urgent: 'Urgent Medical Attention Recommended',
+    title_emergency: 'Emergency Symptoms Detected',
+    msg_non_urgent: 'Preliminary AI Assessment: NON-URGENT. Please click "Submit patient complaint" again to continue.',
+    msg_urgent: 'Preliminary AI Assessment: URGENT. Please click "Submit patient complaint" again to continue.',
+    msg_emergency: 'Based on the symptoms you entered, your condition may be a medical emergency. Please seek immediate medical attention at the nearest hospital or emergency department.',
+    step_nu_1: 'Your AI preliminary assessment is shown below',
+    step_nu_2: 'Please click "Submit patient complaint" again to continue',
+    step_nu_3: 'Seek urgent or emergency care if symptoms worsen',
+    step_urg_triage_1: 'Your AI preliminary assessment is shown below',
+    step_urg_triage_2: 'Please click "Submit patient complaint" again to continue',
+    step_urg_triage_3: 'Seek ER care if symptoms suddenly worsen',
+    step_urg_book_1: 'Pick a doctor’s earliest open time today',
+    step_urg_book_2: 'Confirm to book the video visit',
+    step_urg_book_3: 'Seek ER care if symptoms suddenly worsen',
+    step_em_1: 'Call local emergency services if needed',
+    step_em_2: 'Go to the nearest hospital or ER',
+    step_em_3: 'Do not wait for online care tips or a video slot',
+    click_again_continue: 'Please click "Submit patient complaint" again to continue.',
+  };
+
   function i18n(key, vars) {
+    var text = '';
     if (window.McPatientTriageI18n && typeof window.McPatientTriageI18n.t === 'function') {
-      return window.McPatientTriageI18n.t(key, vars);
+      text = window.McPatientTriageI18n.t(key, vars);
     }
-    return key;
+    if (!text || text === key) {
+      text = I18N_FALLBACKS[key] || key;
+      if (vars && typeof vars === 'object') {
+        Object.keys(vars).forEach(function (name) {
+          text = text.replace(new RegExp('\\{' + name + '\\}', 'g'), String(vars[name] == null ? '' : vars[name]));
+        });
+      }
+    }
+    return text;
   }
   var urgentCtx = { complaint: '', triageId: 0, bookUrl: '' };
   var bookingInFlight = false;
@@ -207,6 +244,15 @@
     }
 
     return claimed && nearest && nearest.maps_url ? nearest.maps_url : '';
+  }
+
+  function hasFacilityPayload(payload) {
+    if (!payload || typeof payload !== 'object') return false;
+    if (payload.claimed_nearest === true || payload.available === true) return true;
+    if (payload.location_available === true) return true;
+    if (payload.facility && typeof payload.facility === 'object') return true;
+    if (Array.isArray(payload.directory) && payload.directory.length) return true;
+    return Object.prototype.hasOwnProperty.call(payload, 'message');
   }
 
   function renderSlotOptions(options) {
@@ -376,7 +422,12 @@
   }
 
   function open(opts) {
-    if (!els()) return;
+    try {
+      if (!els()) return;
+    } catch (err) {
+      console.warn('Urgency modal failed to initialize', err);
+      return;
+    }
     opts = opts || {};
     lastOpts = opts;
     lastFocus = document.activeElement;
@@ -434,14 +485,19 @@
 
     if (kind === 'emergency') {
       hideSlots();
-      if (opts.doctorReferral) {
-        setSteps([]);
-        var mapsUrl = renderFacility(opts.facility || {});
-        var understandBtn = modal.querySelector('[data-mc-urgency-close]');
-        if (understandBtn && understandBtn.id !== 'mcPatientUrgencyContinueConsult') {
-          understandBtn.hidden = true;
+      var facilityPayload = opts.facility || null;
+      var showNearestHospital = opts.doctorReferral === true || hasFacilityPayload(facilityPayload);
+      if (showNearestHospital) {
+        if (opts.doctorReferral) {
+          setSteps([]);
+        } else {
+          setSteps([i18n('step_em_1'), i18n('step_em_2'), i18n('step_em_3')]);
         }
-        if (continueConsultBtn) continueConsultBtn.hidden = false;
+        var mapsUrl = renderFacility(facilityPayload || {});
+        if (closeBtn && closeBtn.id !== 'mcPatientUrgencyContinueConsult') {
+          closeBtn.hidden = opts.doctorReferral === true;
+        }
+        if (continueConsultBtn) continueConsultBtn.hidden = opts.doctorReferral !== true;
         if (primaryBtn) {
           if (mapsUrl) {
             primaryBtn.hidden = false;
@@ -457,6 +513,7 @@
       } else {
         hideFacility();
         setSteps([i18n('step_em_1'), i18n('step_em_2'), i18n('step_em_3')]);
+        if (continueConsultBtn) continueConsultBtn.hidden = true;
         if (primaryBtn) {
           primaryBtn.hidden = true;
           primaryBtn.removeAttribute('href');
@@ -493,6 +550,7 @@
     }
 
     modal.hidden = false;
+    modal.removeAttribute('hidden');
     document.body.classList.add('mc-urgency-modal-open');
     if (closeBtn) closeBtn.focus();
   }
@@ -581,14 +639,22 @@
     showNonUrgent: function (message) {
       open({ kind: 'non_urgent', mode: 'triage_result', useCustomMessage: false, message: message || '' });
     },
-    showTriageResult: function (urgency, message) {
+    showTriageResult: function (urgency, message, extra) {
+      extra = extra || {};
       var kind = normalizeKind(urgency);
       open({
         kind: kind,
         mode: 'triage_result',
-        useCustomMessage: false,
+        useCustomMessage: !!message,
         message: message || '',
+        doctorReferral: extra.doctorReferral === true,
+        facility: extra.facility || null,
       });
+      if (modal) {
+        modal.hidden = false;
+        modal.removeAttribute('hidden');
+        document.body.classList.add('mc-urgency-modal-open');
+      }
     },
     close: close,
   };

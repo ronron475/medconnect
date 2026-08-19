@@ -87,6 +87,22 @@
   transform: none;
 }
 
+.mc-vc-root:fullscreen,
+.mc-vc-root:-webkit-full-screen {
+  width: 100%;
+  height: 100%;
+  max-height: none;
+  background: #0b1220;
+}
+
+body.mc-true-fullscreen,
+html:has(body.mc-true-fullscreen) {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background: #0b1220;
+}
+
 .mc-vc-root.is-floating .mc-vc-header {
   min-height: 36px;
   padding: 8px 10px;
@@ -1039,13 +1055,57 @@ body.embedded-shell.role-provider .mc-vc-pip video {
     font-size: 13px;
   }
 
-  body.embedded-shell.role-provider .mc-vc-root.is-fullscreen {
+  body.embedded-shell.role-provider .mc-vc-root.is-fullscreen,
+  body.embedded-shell.role-provider .mc-vc-root:fullscreen,
+  body.embedded-shell.role-provider .mc-vc-root:-webkit-full-screen {
     position: absolute;
     inset: 0;
     width: 100%;
     height: 100%;
     min-height: 0;
+    max-height: none;
     border-radius: 0;
+  }
+
+  body.embedded-shell.role-provider.mc-true-fullscreen .mc-vc-controls,
+  body.embedded-shell.role-provider .mc-vc-root.is-fullscreen .mc-vc-controls,
+  body.embedded-shell.role-provider .mc-vc-root.is-fullscreen.controls-hidden .mc-vc-controls {
+    opacity: 1 !important;
+    pointer-events: auto !important;
+    transform: none !important;
+    display: flex !important;
+    padding-bottom: calc(10px + var(--mc-vc-safe-bottom, env(safe-area-inset-bottom, 0px)));
+  }
+
+  body.embedded-shell.role-provider #mcVcFullscreenBtn {
+    display: flex !important;
+  }
+}
+
+@media (max-width: 768px) and (orientation: landscape) {
+  body.embedded-shell.role-provider .mc-vc-controls {
+    padding-bottom: calc(6px + var(--mc-vc-safe-bottom, env(safe-area-inset-bottom, 0px)));
+  }
+
+  body.embedded-shell.role-provider .mc-vc-controls-inner {
+    gap: 8px;
+    padding: 6px 10px;
+  }
+
+  body.embedded-shell.role-provider .mc-vc-btn {
+    width: 42px;
+    height: 42px;
+  }
+
+  body.embedded-shell.role-provider .mc-vc-btn--end,
+  body.embedded-shell.role-provider .mc-vc-btn--report {
+    min-width: 72px;
+    height: 42px;
+  }
+
+  body.embedded-shell.role-provider .mc-vc-root.is-fullscreen .mc-vc-stage,
+  body.mc-true-fullscreen.embedded-shell.role-provider .mc-vc-stage {
+    inset: 0;
   }
 }
 

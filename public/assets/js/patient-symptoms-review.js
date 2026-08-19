@@ -205,9 +205,50 @@
     if (window.McPatientTriageI18n && typeof window.McPatientTriageI18n.resolveForComplaint === 'function') {
       window.McPatientTriageI18n.resolveForComplaint(complaint || '', apiPayload || {});
     }
-    var modal = window.mcPatientUrgencyModal;
-    if (!modal || typeof modal.showTriageResult !== 'function') return;
-    modal.showTriageResult(level, buildTriageOutcomeMessage(level));
+    var message = buildTriageOutcomeMessage(level);
+    function isVisible(el) {
+      return !!(el && !el.hidden && el.getAttribute('hidden') === null);
+    }
+    function show() {
+      var api = window.mcPatientUrgencyModal;
+      var el = document.getElementById('mcPatientUrgencyModal');
+      var extra = {
+        facility: (apiPayload && apiPayload.facility) ? apiPayload.facility : null,
+      };
+      if (api && level === 'emergency' && typeof api.showEmergency === 'function') {
+        try { api.showEmergency(message, extra); } catch (_) {}
+      } else if (api && typeof api.showTriageResult === 'function') {
+        try { api.showTriageResult(level, message, extra); } catch (_) {}
+      }
+      if (el) {
+        el.hidden = false;
+        el.removeAttribute('hidden');
+        document.body.classList.add('mc-urgency-modal-open');
+      }
+      return isVisible(el);
+    }
+    if (show()) return;
+    var tries = 0;
+    var timer = window.setInterval(function () {
+      tries += 1;
+      if (show() || tries >= 20) window.clearInterval(timer);
+    }, 100);
+  }
+
+  function payloadFromResponse(json) {
+    if (!json || typeof json !== 'object') return {};
+    if (json.data && typeof json.data === 'object') return json.data;
+    return json;
+  }
+
+  function presentExistingClassification(json, complaint) {
+    var payload = payloadFromResponse(json);
+    var level = urgencyToLevel(payload.triage_level || payload.classification_label || extractUrgency(payload));
+    if (payload.emergency) level = 'emergency';
+    else if (payload.urgent && level !== 'emergency') level = 'urgent';
+    if (!level) level = 'non_urgent';
+    presentTriageOutcome(level, complaint, payload);
+    return level;
   }
 
   function showAlert(type, message) {
@@ -308,6 +349,10 @@
       var result = await submitSymptoms(complaint, 'continue');
       var data = result.data;
       if (!data || !data.success) {
+        var failPayload = payloadFromResponse(data);
+        if (failPayload.duplicate_pending || (data && data.duplicate_pending)) {
+          presentExistingClassification(data, complaint);
+        }
         showAlert('error', (data && data.message) || i18n('err_submit'));
         return false;
       }
@@ -326,7 +371,7 @@
         if (!options.skipOutcomeModal) {
           showAlert('error', emMsg);
           if (window.mcPatientUrgencyModal && typeof window.mcPatientUrgencyModal.showEmergency === 'function') {
-            window.mcPatientUrgencyModal.showEmergency(emMsg);
+            window.mcPatientUrgencyModal.showEmergency(emMsg, { facility: payload.facility || null });
           }
         }
         return true;
@@ -392,8 +437,11 @@
         return false;
       }
 
-      var payload = (json && (json.data || json)) || {};
+      var payload = payloadFromResponse(json);
       if (!result.res.ok || json.success === false) {
+        if (payload.duplicate_pending || json.duplicate_pending) {
+          presentExistingClassification(json, complaint);
+        }
         showAlert('error', json.message || i18n('err_analyze'));
         return false;
       }
@@ -411,19 +459,10 @@
       if (level === 'emergency' || payload.emergency) {
         awaitingSecondClick = false;
         hideContinueUi();
-        if (!payload.emergency) {
-          var emergencySubmitted = await submitForReview(complaint, { skipOutcomeModal: true });
-          if (emergencySubmitted) {
-            presentTriageOutcome(level, complaint, payload);
-          } else {
-            clearTriageState();
-          }
-          return emergencySubmitted;
-        }
         presentTriageOutcome(level, complaint, payload);
         showAlert('error', i18n('em_submit'));
-        if (window.mcPatientUrgencyModal && typeof window.mcPatientUrgencyModal.showEmergency === 'function') {
-          window.mcPatientUrgencyModal.showEmergency(i18n('em_submit'));
+        if (!payload.emergency) {
+          submitForReview(complaint, { skipOutcomeModal: true }).catch(function () {});
         }
         return true;
       }

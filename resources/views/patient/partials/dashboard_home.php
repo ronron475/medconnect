@@ -85,7 +85,7 @@ foreach ($upcoming_list as $c) {
     <button type="button" class="pdash-btn pdash-btn--join pdash-btn--sm" data-mc-video-join
       data-token="<?= htmlspecialchars($dash_live_session['room_token'], ENT_QUOTES, 'UTF-8') ?>"
       data-consultation-id="<?= (int) ($dash_live_session['id'] ?? 0) ?>"
-      data-label="Consultation with Dr. <?= htmlspecialchars($dash_live_session['provider_name'] ?? 'your provider', ENT_QUOTES, 'UTF-8') ?>">Join Call</button>
+      data-label="Consultation with Dr. <?= htmlspecialchars($dash_live_session['provider_name'] ?? 'your provider', ENT_QUOTES, 'UTF-8') ?>"><?= !empty($dash_live_session['status']) && strtolower((string) $dash_live_session['status']) === 'in_consultation' ? 'Rejoin Consultation' : 'Join Call' ?></button>
     <?php endif; ?>
   </div>
   <?php endif; ?>
@@ -238,7 +238,7 @@ foreach ($upcoming_list as $c) {
               <button type="button" class="pdash-btn pdash-btn--join pdash-btn--sm" data-mc-video-join
                 data-token="<?= htmlspecialchars($c['room_token'], ENT_QUOTES, 'UTF-8') ?>"
                 data-consultation-id="<?= (int) ($c['id'] ?? 0) ?>"
-                data-label="Consultation with Dr. <?= htmlspecialchars($provider_name, ENT_QUOTES, 'UTF-8') ?>">Join Call</button>
+                data-label="Consultation with Dr. <?= htmlspecialchars($provider_name, ENT_QUOTES, 'UTF-8') ?>"><?= strtolower((string) ($c['status'] ?? '')) === 'in_consultation' ? 'Rejoin Consultation' : 'Join Call' ?></button>
               <?php elseif ($join_access['mode'] === 'scheduled_wait'): ?>
               <span class="pdash-btn pdash-btn--waiting pdash-btn--sm" title="<?= htmlspecialchars($join_access['reason'], ENT_QUOTES, 'UTF-8') ?>">
                 Opens at <?= htmlspecialchars(queue_session_context($c)['opens_at_label'] ?: 'scheduled time') ?>

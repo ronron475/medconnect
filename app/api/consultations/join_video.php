@@ -93,6 +93,13 @@ try {
         exit;
     }
 
+    try {
+        require_once dirname(dirname(dirname(__DIR__))) . '/app/includes/consultation_video_lifecycle.php';
+        consultation_patient_clear_temporarily_left($pdo, $token, $uid);
+    } catch (Throwable $e) {
+        error_log('join_video clear patient left: ' . $e->getMessage());
+    }
+
     ob_end_clean();
     echo json_encode([
         'success' => true,

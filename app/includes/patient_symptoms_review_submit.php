@@ -135,6 +135,44 @@ function patient_symptoms_review_preview_payload(
 }
 
 /**
+ * Nearest registered emergency-capable facility for the AI emergency popup.
+ *
+ * @return array<string, mixed>
+ */
+function patient_emergency_nearest_facility_payload(PDO $pdo, int $patientId): array
+{
+    $empty = [
+        'available' => false,
+        'location_available' => false,
+        'claimed_nearest' => false,
+        'message' => 'Location unavailable',
+        'facility' => null,
+        'directory' => [],
+        'patient' => [
+            'latitude' => null,
+            'longitude' => null,
+            'source' => 'unavailable',
+            'address' => '',
+        ],
+    ];
+    if ($patientId <= 0) {
+        return $empty;
+    }
+    try {
+        if (!function_exists('provider_emergency_nearest_facility')) {
+            require_once __DIR__ . '/provider_clinical_support.php';
+        }
+        $payload = provider_emergency_nearest_facility($pdo, $patientId);
+
+        return is_array($payload) ? $payload : $empty;
+    } catch (Throwable $e) {
+        error_log('patient emergency nearest facility: ' . $e->getMessage());
+
+        return $empty;
+    }
+}
+
+/**
  * Patient-safe assignment summary: doctor name + that doctor's earliest real slot.
  *
  * @return array{
@@ -279,7 +317,8 @@ function patient_submit_symptoms_for_review(
     }
 
     $dup = $pdo->prepare("
-        SELECT id FROM triage_results tr
+        SELECT id, triage_level, triage_classification, outcome, recommendation_status
+        FROM triage_results tr
         WHERE tr.patient_id = ?
           AND tr.recommendation_status = 'pending_approval'
           AND tr.assessed_at >= DATE_SUB(NOW(), INTERVAL 14 DAY)
@@ -287,12 +326,36 @@ function patient_submit_symptoms_for_review(
         LIMIT 1
     ");
     $dup->execute([$patientId]);
-    $dupId = (int) ($dup->fetchColumn() ?: 0);
-    if ($dupId > 0 && !($stage === 'continue' && $reuseTriageId === $dupId)) {
+    $dupRow = $dup->fetch(PDO::FETCH_ASSOC) ?: null;
+    $dupId = (int) ($dupRow['id'] ?? 0);
+    // First click (preview) must always run AI and return a triage popup result.
+    // Duplicate pending only blocks the second-click continue, not the analysis.
+    if ($dupId > 0 && $stage !== 'preview' && !($stage === 'continue' && $reuseTriageId === $dupId)) {
+        $dupLevel = (string) ($dupRow['triage_level'] ?? TriageLevelService::NON_URGENT);
+        $dupClass = (string) ($dupRow['triage_classification'] ?? '');
+        $dupLabel = patient_symptoms_review_classification_label($dupLevel, $dupClass);
+        $dupOutcome = strtolower(trim((string) ($dupRow['outcome'] ?? '')));
+        $isEmergency = $dupLevel === TriageLevelService::EMERGENCY || $dupOutcome === 'emergency_referral';
+        $isUrgent = !$isEmergency && $dupLevel === TriageLevelService::URGENT;
+
+        $dupPayload = [
+            'duplicate_pending' => true,
+            'awaiting_provider_review' => true,
+            'triage_id' => $dupId,
+            'triage_level' => $dupLevel,
+            'triage_classification' => $dupClass !== '' ? $dupClass : $dupLabel,
+            'classification_label' => $dupLabel,
+            'emergency' => $isEmergency,
+            'urgent' => $isUrgent,
+        ];
+        if ($isEmergency) {
+            $dupPayload['facility'] = patient_emergency_nearest_facility_payload($pdo, $patientId);
+        }
+
         return [
             'ok' => false,
             'message' => 'You already have a case awaiting provider review. Open Care tips or wait for your doctor to finish the review.',
-            'payload' => ['duplicate_pending' => true],
+            'payload' => $dupPayload,
         ];
     }
 
@@ -318,6 +381,7 @@ function patient_submit_symptoms_for_review(
                     'payload' => [
                         'emergency' => true,
                         'triage_id' => (int) ($owned['id'] ?? 0),
+                        'facility' => patient_emergency_nearest_facility_payload($pdo, $patientId),
                     ],
                 ];
             }
@@ -488,6 +552,7 @@ function patient_submit_symptoms_for_review(
                     'emergency' => true,
                     'triage_id' => $triageId,
                     'referral_id' => $referralId,
+                    'facility' => patient_emergency_nearest_facility_payload($pdo, $patientId),
                 ],
             ];
         }

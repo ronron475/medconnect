@@ -372,6 +372,7 @@ try {
             'referral_id'  => $referralId,
             'level'        => $level,
             'label'        => $label,
+            'facility'     => patient_emergency_nearest_facility_payload($pdo, $patient_id),
         ], $msg);
     }
 

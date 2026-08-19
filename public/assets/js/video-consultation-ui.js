@@ -262,80 +262,114 @@
         : (inApp ? 'maximize' : 'fullscreen'));
     }
 
+    function nativeFullscreenElement() {
+      return document.fullscreenElement
+        || document.webkitFullscreenElement
+        || document.mozFullScreenElement
+        || document.msFullscreenElement
+        || null;
+    }
+
+    function requestNativeFullscreen(el) {
+      if (!el) return Promise.reject(new Error('no-target'));
+      const req = el.requestFullscreen
+        || el.webkitRequestFullscreen
+        || el.webkitRequestFullScreen
+        || el.mozRequestFullScreen
+        || el.msRequestFullscreen;
+      if (!req) return Promise.reject(new Error('unsupported'));
+      try {
+        const out = req.call(el);
+        return (out && typeof out.then === 'function') ? out : Promise.resolve();
+      } catch (err) {
+        return Promise.reject(err);
+      }
+    }
+
+    function exitNativeFullscreen() {
+      const exit = document.exitFullscreen
+        || document.webkitExitFullscreen
+        || document.mozCancelFullScreen
+        || document.msExitFullscreen;
+      if (!exit || !nativeFullscreenElement()) return Promise.resolve();
+      try {
+        const out = exit.call(document);
+        return (out && typeof out.then === 'function') ? out : Promise.resolve();
+      } catch (err) {
+        return Promise.resolve();
+      }
+    }
+
+    function notifyParentTrueFullscreen(expanded) {
+      if (!embedded || window.parent === window) return;
+      try {
+        window.parent.postMessage({
+          type: 'medconnect:request-true-fullscreen',
+          expanded: !!expanded,
+        }, window.location.origin);
+      } catch (err) {}
+    }
+
+    function applyTrueFullscreenUi(expanded) {
+      isFullscreen = !!expanded;
+      if (els.root) {
+        els.root.classList.toggle('is-fullscreen', isFullscreen);
+        if (!isFullscreen) {
+          els.root.classList.remove('controls-hidden');
+        }
+      }
+      document.body.classList.toggle('mc-true-fullscreen', isFullscreen);
+      updateFullscreenBtn();
+      showControlsTemporarily();
+    }
+
     function toggleFullscreen() {
       const target = els.root;
       if (!target) return;
 
-      if (embedded) {
-        const entering = !isFullscreen;
-        isFullscreen = entering;
-        if (isProvider) {
-          target.classList.remove('is-fullscreen');
-        } else {
-          target.classList.toggle('is-fullscreen', entering);
-        }
-        if (entering) {
-          if (onMaximize) onMaximize();
-        } else if (onMinimize) {
-          onMinimize();
-        }
-        updateFullscreenBtn();
-        showControlsTemporarily();
+      if (nativeFullscreenElement()) {
+        exitNativeFullscreen().then(function () {
+          applyTrueFullscreenUi(false);
+          notifyParentTrueFullscreen(false);
+        });
         return;
       }
 
-      if (!document.fullscreenElement && !isFullscreen) {
-        const req = target.requestFullscreen || target.webkitRequestFullscreen;
-        if (req) {
-          req.call(target).then(() => {
-            isFullscreen = true;
-            target.classList.add('is-fullscreen');
-            updateFullscreenBtn();
-            showControlsTemporarily();
-          }).catch(() => {
-            isFullscreen = true;
-            target.classList.add('is-fullscreen');
-            updateFullscreenBtn();
-            showControlsTemporarily();
-          });
-        } else {
-          isFullscreen = true;
-          target.classList.add('is-fullscreen');
-          updateFullscreenBtn();
-          showControlsTemporarily();
-        }
-      } else {
-        const exit = document.exitFullscreen || document.webkitExitFullscreen;
-        if (document.fullscreenElement && exit) {
-          exit.call(document);
-        }
-        isFullscreen = false;
-        target.classList.remove('is-fullscreen', 'controls-hidden');
-        target.classList.remove('controls-visible');
-        updateFullscreenBtn();
+      if (isFullscreen) {
+        applyTrueFullscreenUi(false);
+        notifyParentTrueFullscreen(false);
+        return;
+      }
+
+      requestNativeFullscreen(target).catch(function () {
+        return requestNativeFullscreen(document.documentElement);
+      }).then(function () {
+        applyTrueFullscreenUi(true);
+        notifyParentTrueFullscreen(true);
+      }).catch(function () {
+        applyTrueFullscreenUi(true);
+        notifyParentTrueFullscreen(true);
+      });
+    }
+
+    function onNativeFullscreenChange() {
+      if (!els.root) return;
+      const nativeOn = !!nativeFullscreenElement();
+      if (nativeOn) {
+        applyTrueFullscreenUi(true);
+        return;
+      }
+      if (isFullscreen) {
+        applyTrueFullscreenUi(false);
+        notifyParentTrueFullscreen(false);
       }
     }
 
-    document.addEventListener('fullscreenchange', () => {
-      if (!els.root) return;
-      isFullscreen = !!document.fullscreenElement;
-      els.root.classList.toggle('is-fullscreen', isFullscreen);
-      if (!isFullscreen) {
-        els.root.classList.remove('controls-hidden');
-      }
-      updateFullscreenBtn();
-    });
+    document.addEventListener('fullscreenchange', onNativeFullscreenChange);
+    document.addEventListener('webkitfullscreenchange', onNativeFullscreenChange);
 
     function setMobileFullscreen(expanded) {
-      isFullscreen = !!expanded;
-      if (els.root) {
-        if (embedded && isProvider) {
-          els.root.classList.remove('is-fullscreen');
-        } else {
-          els.root.classList.toggle('is-fullscreen', isFullscreen);
-        }
-      }
-      updateFullscreenBtn();
+      applyTrueFullscreenUi(!!expanded);
     }
 
     function toggleFloating() {

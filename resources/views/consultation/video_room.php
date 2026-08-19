@@ -137,6 +137,15 @@ if (!$authorized) {
     die('You are not authorized to join this consultation.');
 }
 
+if ($role === 'patient') {
+    try {
+        require_once BASE_PATH . '/app/includes/consultation_video_lifecycle.php';
+        consultation_patient_clear_temporarily_left($pdo, (string) $token, (int) $uid);
+    } catch (Throwable $e) {
+        error_log('video_room clear patient left: ' . $e->getMessage());
+    }
+}
+
 require_once dirname(__DIR__) . '/provider/partials/queue_helpers.php';
 $video_access = consultation_video_room_access([
     'status'       => $session['consult_status'] ?? '',
@@ -2643,6 +2652,8 @@ if (session_status() === PHP_SESSION_ACTIVE) {
               document.getElementById('callStatus').textContent = 'This consultation has ended.';
               leaveCallFast();
             }
+          } else if (!isPatient && data.patient_temporarily_left && !patientWaitMode && !callHasRemoteStream) {
+            showProviderWaitingForPatient();
           }
         })
         .catch(() => {});
@@ -2840,8 +2851,32 @@ if (session_status() === PHP_SESSION_ACTIVE) {
           body: 'token=' + encodeURIComponent(roomToken)
             + '&csrf_token=' + encodeURIComponent(document.body.dataset.csrf || ''),
           credentials: 'same-origin',
+          keepalive: true,
         });
       } catch (e) {}
+    }
+
+    function patientDashboardUrl() {
+      return apiBase + '/views/patient/dashboard.php';
+    }
+
+    function clearVideoShellStorage() {
+      try { sessionStorage.removeItem('mc_video_shell_v1'); } catch (e) {}
+    }
+
+    function navigatePatientDashboard() {
+      const dest = patientDashboardUrl();
+      clearVideoShellStorage();
+      try {
+        const topWin = window.top || window;
+        const path = String(topWin.location.pathname || '');
+        if (/\/views\/patient\/dashboard\.php/i.test(path)) {
+          return;
+        }
+        topWin.location.href = dest;
+        return;
+      } catch (e) {}
+      window.location.href = dest;
     }
 
     /**
@@ -2854,12 +2889,22 @@ if (session_status() === PHP_SESSION_ACTIVE) {
       if (navigationIssued) return;
       navigationIssued = true;
       if (window.parent && window.parent !== window) {
-        window.parent.postMessage({
-          type: options.parentMessageType || 'medconnect:call-left',
-          role: userRole,
-          token: roomToken,
-          reason: options.reason || '',
-        }, window.location.origin);
+        try {
+          window.parent.postMessage({
+            type: options.parentMessageType || 'medconnect:call-left',
+            role: userRole,
+            token: roomToken,
+            consultationId: consultationId,
+            reason: options.reason || '',
+            rejoinable: options.rejoinable === true,
+          }, window.location.origin);
+        } catch (e) {}
+      }
+      if (options.rejoinable && isPatient) {
+        navigatePatientDashboard();
+        return;
+      }
+      if (window.parent && window.parent !== window) {
         return;
       }
       if (options.redirectUrl) {
@@ -2867,7 +2912,7 @@ if (session_status() === PHP_SESSION_ACTIVE) {
         return;
       }
       if (isPatient) {
-        window.location.href = apiBase + '/views/patient/consultations.php?tab=active';
+        window.location.href = patientDashboardUrl();
         return;
       }
       if (consultationId) {
@@ -2888,9 +2933,10 @@ if (session_status() === PHP_SESSION_ACTIVE) {
       document.getElementById('endCallModal').classList.add('show');
     }
 
-    function closeEndModal() {
-      if (endingCall) return;
-      document.getElementById('endCallModal').classList.remove('show');
+    function closeEndModal(force) {
+      if (endingCall && !force) return;
+      const modal = document.getElementById('endCallModal');
+      if (modal) modal.classList.remove('show');
     }
 
     function showSavingModal(title, copy) {
@@ -2965,8 +3011,18 @@ if (session_status() === PHP_SESSION_ACTIVE) {
 
     async function leaveCallConfirmed(options) {
       options = options || {};
+      const rejoinable = isPatient
+        && options.reason !== 'provider_left'
+        && options.reason !== 'session_ended';
+
       if (endingCall) {
-        if (isPatient && patientLeftRejoinable) {
+        if (rejoinable) {
+          redirectAfterLeave({
+            parentMessageType: 'medconnect:call-left',
+            reason: options.reason || 'patient_left',
+            rejoinable: true,
+            redirectUrl: patientDashboardUrl(),
+          });
           return;
         }
         if (isPatient) {
@@ -2976,16 +3032,12 @@ if (session_status() === PHP_SESSION_ACTIVE) {
         return;
       }
 
-      const rejoinable = isPatient
-        && options.reason !== 'provider_left'
-        && options.reason !== 'session_ended';
-
       endingCall = true;
       if (!rejoinable) {
         window.__mcCallEnded = true;
       }
       setLeaveButtonsDisabled(true);
-      closeEndModal();
+      closeEndModal(true);
 
       if (window.McWebrtcPeerCall) {
         McWebrtcPeerCall.setIntentionalLeave(true);
@@ -2994,11 +3046,17 @@ if (session_status() === PHP_SESSION_ACTIVE) {
       notifyPeerLeft();
 
       if (!options.skipApi) {
-        await postLeaveApi();
+        if (rejoinable) {
+          postLeaveApi();
+        } else {
+          await postLeaveApi();
+        }
       }
 
-      hideMediaPermissionGate();
-      disconnectLocalCall({ endedUi: !rejoinable });
+      try {
+        hideMediaPermissionGate();
+        disconnectLocalCall({ endedUi: !rejoinable });
+      } catch (e) {}
 
       if (window.MedConnectLoader && typeof window.MedConnectLoader.forceHide === 'function') {
         window.MedConnectLoader.forceHide();
@@ -3006,37 +3064,12 @@ if (session_status() === PHP_SESSION_ACTIVE) {
 
       if (rejoinable) {
         patientLeftRejoinable = true;
-        const retryBtn = document.getElementById('retryConnectBtn');
-        if (retryBtn) {
-          retryBtn.textContent = 'Rejoin consultation';
-          retryBtn.hidden = false;
-        }
-        setCallPhase(window.McVideoCallCore ? window.McVideoCallCore.STATUS.WAITING_PROVIDER : 'waiting_provider', {
-          callStatusText: 'You left — consultation still active',
+        redirectAfterLeave({
+          parentMessageType: 'medconnect:call-left',
+          reason: options.reason || 'patient_left',
+          rejoinable: true,
+          redirectUrl: patientDashboardUrl(),
         });
-        if (consultUi && typeof consultUi.setOverlay === 'function') {
-          consultUi.setOverlay(
-            'You left the consultation',
-            'This visit is still active. Rejoin to reconnect with your doctor.',
-            true,
-            { showRetry: true }
-          );
-        }
-        if (syncTimerInterval) clearInterval(syncTimerInterval);
-        syncTimerInterval = setInterval(syncTimerFromServer, 20000);
-        if (keepAliveInterval) clearInterval(keepAliveInterval);
-        keepAliveInterval = setInterval(pingSessionKeepAlive, 45000);
-        pingSessionKeepAlive();
-        if (window.parent && window.parent !== window) {
-          window.parent.postMessage({
-            type: 'medconnect:call-left',
-            role: userRole,
-            token: roomToken,
-            consultationId: consultationId,
-            rejoinable: true,
-            reason: options.reason || 'patient_left',
-          }, window.location.origin);
-        }
         return;
       }
 
@@ -3292,13 +3325,17 @@ if (session_status() === PHP_SESSION_ACTIVE) {
         if (isPatient) rejoinConsultation();
         return;
       }
-      if (event.data.type === 'medconnect:mobile-fullscreen-state' && consultUi && typeof consultUi.setMobileFullscreen === 'function') {
+      if (event.data.type === 'medconnect:true-fullscreen-state' && consultUi && typeof consultUi.setMobileFullscreen === 'function') {
         consultUi.setMobileFullscreen(!!event.data.expanded);
+        document.body.classList.toggle('mc-true-fullscreen', !!event.data.expanded);
         document.body.classList.toggle('mc-workspace-expanded', !!event.data.expanded);
         return;
       }
-      if (event.data.type === 'medconnect:workspace-expanded-state' && consultUi && typeof consultUi.setMobileFullscreen === 'function') {
-        consultUi.setMobileFullscreen(!!event.data.expanded);
+      if (event.data.type === 'medconnect:mobile-fullscreen-state') {
+        document.body.classList.toggle('mc-workspace-expanded', !!event.data.expanded);
+        return;
+      }
+      if (event.data.type === 'medconnect:workspace-expanded-state') {
         document.body.classList.toggle('mc-workspace-expanded', !!event.data.expanded);
         return;
       }

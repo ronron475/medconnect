@@ -12,28 +12,47 @@
   const seenCompleted = new Set();
   const seenEmergencyConsults = new Set();
 
+  function doctorFinalStorageKey(consultationId, bucket) {
+    return 'medconnect_final_shown_' + String(consultationId || '') + '_' + String(bucket || '');
+  }
+
+  function alreadyShownDoctorFinal(consultationId, bucket) {
+    const key = String(consultationId || '');
+    const level = String(bucket || '');
+    if (!key || !level) return true;
+    const storageKey = doctorFinalStorageKey(key, level);
+    if (seenEmergencyConsults.has(storageKey) || seenEmergencyConsults.has(key)) return true;
+    try {
+      if (sessionStorage.getItem(storageKey) === '1') return true;
+      if (level === 'emergency' && sessionStorage.getItem('medconnect_er_final_shown_' + key) === '1') return true;
+    } catch (_) {}
+    return false;
+  }
+
+  function markDoctorFinalShown(consultationId, bucket) {
+    const key = String(consultationId || '');
+    const level = String(bucket || '');
+    if (!key || !level) return;
+    const storageKey = doctorFinalStorageKey(key, level);
+    seenEmergencyConsults.add(storageKey);
+    try {
+      sessionStorage.setItem(storageKey, '1');
+      if (level === 'emergency') {
+        sessionStorage.setItem('medconnect_er_final_shown_' + key, '1');
+      }
+    } catch (_) {}
+  }
+
   function doctorEmergencyStorageKey(consultationId) {
-    return 'medconnect_er_final_shown_' + String(consultationId || '');
+    return doctorFinalStorageKey(consultationId, 'emergency');
   }
 
   function alreadyShownDoctorEmergency(consultationId) {
-    const key = String(consultationId || '');
-    if (!key) return true;
-    if (seenEmergencyConsults.has(key)) return true;
-    try {
-      return sessionStorage.getItem(doctorEmergencyStorageKey(key)) === '1';
-    } catch (_) {
-      return false;
-    }
+    return alreadyShownDoctorFinal(consultationId, 'emergency');
   }
 
   function markDoctorEmergencyShown(consultationId) {
-    const key = String(consultationId || '');
-    if (!key) return;
-    seenEmergencyConsults.add(key);
-    try {
-      sessionStorage.setItem(doctorEmergencyStorageKey(key), '1');
-    } catch (_) {}
+    markDoctorFinalShown(consultationId, 'emergency');
   }
 
   function applyOnPageTriage(item) {
@@ -81,6 +100,27 @@
     }
   }
 
+  function showDoctorFinalOverride(item) {
+    const consultationId = item && (item.consultation_id || item.consult_id);
+    if (!consultationId) return;
+    const bucket = String(item.final_bucket || '').toLowerCase().replace(/-/g, '_');
+    if (bucket === 'emergency') {
+      showDoctorEmergencyOverride(item);
+      return;
+    }
+    if (bucket !== 'urgent' && bucket !== 'non_urgent') return;
+    if (alreadyShownDoctorFinal(consultationId, bucket)) return;
+    markDoctorFinalShown(consultationId, bucket);
+
+    const label = String(item.final_label || (bucket === 'urgent' ? 'URGENT' : 'NON-URGENT')).toUpperCase();
+    const message = item.message
+      || ('Your doctor has classified your condition as ' + label + '.');
+    const modal = window.mcPatientUrgencyModal;
+    if (modal && typeof modal.showTriageResult === 'function') {
+      modal.showTriageResult(bucket, message);
+    }
+  }
+
   function ensureBannerHost() {
     let host = document.getElementById('pmh-record-update-banner');
     if (host) return host;
@@ -115,7 +155,7 @@
 
     host.appendChild(banner);
 
-    const bucket = String(item.final_case_bucket || '').toLowerCase();
+    const bucket = String(item.final_case_bucket || '').toLowerCase().replace(/-/g, '_');
     if (bucket === 'emergency') {
       showDoctorEmergencyOverride({
         consultation_id: item.id,
@@ -125,11 +165,15 @@
         facility: item.facility || {},
         message: 'Your doctor has classified your condition as an EMERGENCY. Please seek immediate in-person medical attention.',
       });
-    } else if (bucket === 'urgent' && window.mcPatientUrgencyModal && typeof window.mcPatientUrgencyModal.showUrgent === 'function') {
-      window.mcPatientUrgencyModal.showUrgent(
-        'Your doctor has finalized this consultation as URGENT. Follow your care plan and seek care promptly if symptoms worsen.',
-        item.detail_url || ''
-      );
+    } else if (bucket === 'urgent' || bucket === 'non_urgent') {
+      showDoctorFinalOverride({
+        consultation_id: item.id,
+        final_bucket: bucket,
+        final_label: item.final_case_level || (bucket === 'urgent' ? 'URGENT' : 'NON-URGENT'),
+        message: bucket === 'urgent'
+          ? 'Your doctor has finalized this consultation as URGENT. Follow your care plan and seek care promptly if symptoms worsen.'
+          : 'Your doctor has finalized this consultation as NON-URGENT.',
+      });
     }
 
     document.dispatchEvent(new CustomEvent('medconnect:consultation-completed', { detail: item }));
@@ -158,9 +202,7 @@
       const triageUpdates = json.triage_updates || [];
       triageUpdates.forEach((item) => {
         applyOnPageTriage(item);
-        if (item && item.emergency) {
-          showDoctorEmergencyOverride(item);
-        }
+        showDoctorFinalOverride(item);
       });
 
       const overrides = json.emergency_overrides || [];
