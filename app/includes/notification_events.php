@@ -147,7 +147,7 @@ final class NotificationEvents
             'title'         => 'Doctor Approval Required',
             'message'       => 'New Doctor Account requires approval.',
             'priority'      => 'high',
-            'action_url'    => '/views/superadmin/doctor_approvals.php',
+            'action_url'    => '/views/superadmin/doctor_applications.php?tab=pending',
             'related_table' => 'doctor_applications',
             'related_id'    => $applicationId,
             'icon'          => 'user-check',

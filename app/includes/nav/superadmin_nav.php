@@ -12,7 +12,6 @@ return [
     ['section' => 'User Management', 'items' => [
         ['administrators.php', 'Administrators', '<path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>'],
         ['doctor_applications.php', 'Doctors', '<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 11h-6"/><path d="M19 8v6"/>', null, 'doctor_management'],
-        ['doctor_approvals.php', 'Doctor Approval Queue', '<path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/><path d="M12 11v6"/><path d="M9 14h6"/>'],
         ['bhw_applications.php', 'Barangay Health Workers', '<path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>', null, 'bhw_management'],
         ['user_management.php', 'Patients', '<path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>', 'role=patient'],
     ]],

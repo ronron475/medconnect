@@ -46,7 +46,7 @@ $admLiveJsVer = (int) @filemtime(ASSETS_PATH . '/js/admin-dashboard-live.js');
     <div class="superadmin-banner-actions">
         <span class="mc-badge mc-badge--super">Super Administrator</span>
         <span class="superadmin-health-pill superadmin-health-pill--<?= htmlspecialchars($healthClass) ?>" data-live-system-health>System <?= htmlspecialchars(strtoupper($stats['system_health'])) ?></span>
-        <a href="<?= ASSET_BASE ?>/views/superadmin/doctor_approvals.php" class="adm-card-head-action superadmin-urgent-pill" data-live-pending-pill<?= $pending_checker_total > 0 ? '' : ' hidden' ?>>
+        <a href="<?= ASSET_BASE ?>/views/superadmin/doctor_applications.php?tab=pending" class="adm-card-head-action superadmin-urgent-pill" data-live-pending-pill<?= $pending_checker_total > 0 ? '' : ' hidden' ?>>
             <?= $pending_checker_total ?> approval<?= $pending_checker_total === 1 ? '' : 's' ?> pending
         </a>
         <span class="text-xs text-muted" data-live-sync aria-live="polite">Live</span>
@@ -55,7 +55,7 @@ $admLiveJsVer = (int) @filemtime(ASSETS_PATH . '/js/admin-dashboard-live.js');
 
 <section class="superadmin-approval-strip" data-live-approval-strip aria-label="Pending approvals"<?= $pending_checker_total > 0 ? '' : ' hidden' ?>>
     <?php if ($pending_doctor_approvals > 0): ?>
-    <a href="<?= ASSET_BASE ?>/views/superadmin/doctor_approvals.php" class="superadmin-approval-card">
+    <a href="<?= ASSET_BASE ?>/views/superadmin/doctor_applications.php?tab=pending" class="superadmin-approval-card">
         <strong><?= $pending_doctor_approvals ?></strong>
         <span>Doctor<?= $pending_doctor_approvals === 1 ? '' : 's' ?> awaiting approval</span>
     </a>
@@ -184,8 +184,8 @@ $admLiveJsVer = (int) @filemtime(ASSETS_PATH . '/js/admin-dashboard-live.js');
                 </div>
             </div>
             <div class="adm-actions-body">
-                <a href="<?= ASSET_BASE ?>/views/superadmin/doctor_approvals.php" class="adm-action-btn adm-action-btn--primary">
-                    Doctor Approval Queue
+                <a href="<?= ASSET_BASE ?>/views/superadmin/doctor_applications.php?tab=pending" class="adm-action-btn adm-action-btn--primary">
+                    Doctors · Pending Approval
                     <span class="adm-pending-badge" data-live-badge-doctor-wrap<?= $pending_doctor_approvals > 0 ? '' : ' hidden' ?>><span data-live-badge-doctor><?= $pending_doctor_approvals ?></span></span>
                 </a>
                 <a href="<?= ASSET_BASE ?>/views/superadmin/bhw_applications.php?tab=pending" class="adm-action-btn adm-action-btn--outline">

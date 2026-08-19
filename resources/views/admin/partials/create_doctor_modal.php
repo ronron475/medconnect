@@ -612,7 +612,7 @@ $prc_portal_url = 'https://verification.prc.gov.ph/';
         await uploadPendingDocs(json.application_id);
         if (redirect) {
             var appsUrl = (document.body.dataset.portal === 'superadmin')
-                ? (assetBase + '/views/superadmin/doctor_approvals.php?saved=1')
+                ? (assetBase + '/views/superadmin/doctor_applications.php?saved=1')
                 : (assetBase + '/views/admin/doctor_applications.php?saved=1');
             window.location.href = appsUrl;
         }
