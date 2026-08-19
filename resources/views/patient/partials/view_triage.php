@@ -19,6 +19,28 @@ $locked_provider_id = (int) ($locked_provider_id ?? 0);
 $locked_provider_name = trim((string) ($locked_provider_name ?? ''));
 $locked_assigned_has_slots = !empty($locked_assigned_has_slots);
 $locked_alternate_available = !empty($locked_alternate_available);
+$is_provider_locked = !empty($review_booking_ctx['locked']) && $locked_provider_id > 0;
+$preliminary_complaint_triage = is_array($preliminary_complaint_triage ?? null) ? $preliminary_complaint_triage : null;
+$preliminary_payload = null;
+if ($preliminary_complaint_triage && !$is_provider_locked && !$chief_complaint_locked) {
+    $prelimLevel = (string) ($preliminary_complaint_triage['triage_level'] ?? 'non_urgent');
+    $prelimClass = (string) ($preliminary_complaint_triage['triage_classification'] ?? '');
+    $prelimLabel = function_exists('patient_symptoms_review_classification_label')
+        ? patient_symptoms_review_classification_label($prelimLevel, $prelimClass)
+        : 'NON-URGENT';
+    $prelimComplaint = trim((string) ($preliminary_complaint_triage['chief_complaint'] ?? ''));
+    $preliminary_payload = [
+        'triage_id' => (int) ($preliminary_complaint_triage['id'] ?? 0),
+        'triage_level' => $prelimLevel,
+        'classification_label' => $prelimLabel,
+        'chief_complaint' => $prelimComplaint,
+    ];
+    if ($registration_chief_complaint === '' && $prelimComplaint !== '') {
+        $registration_chief_complaint = $prelimComplaint;
+    }
+}
+$preliminary_json = $preliminary_payload ? json_encode($preliminary_payload, JSON_UNESCAPED_UNICODE) : '';
+$assigned_display_name = $locked_provider_name !== '' ? $locked_provider_name : '';
 ?>
 <h2 class="text-h2 mb-md patient-triage-page__title">Book Consultation</h2>
 <?php if (!empty($review_booking_ctx['locked']) && $locked_provider_name !== ''): ?>
@@ -28,7 +50,7 @@ $locked_alternate_available = !empty($locked_alternate_available);
 </p>
 <?php else: ?>
 <p class="text-sm text-muted patient-triage-lead">
-  Choose a doctor and an available time slot for your video visit.
+  Share your patient complaint. The system assigns a doctor from real available schedules — you do not choose the provider.
   <?php if (!empty($patient_has_completed_visit) || !empty($patient_has_scheduled_followup)): ?>
   Enter a new patient complaint below for a separate consultation — follow-ups and past visits stay on your record.
   <?php endif; ?>
@@ -63,7 +85,7 @@ $locked_alternate_available = !empty($locked_alternate_available);
 </div>
 <?php endif; ?>
 
-<?php if (empty($booking_providers)): ?>
+<?php if (!empty($review_booking_ctx['locked']) && $locked_provider_id <= 0 && empty($booking_providers)): ?>
 <div class="patient-triage-alert patient-triage-alert--error is-visible patient-triage-alert--spaced">
   No providers are available for booking right now. Please contact the health office.
 </div>
@@ -72,11 +94,15 @@ $locked_alternate_available = !empty($locked_alternate_available);
 <div class="mc-card patient-triage-form">
   <h3 class="text-h3 mb-md">Schedule Your Visit</h3>
   <div id="triageFormAlert" class="patient-triage-alert" role="alert"></div>
-  <form id="patientTriageForm" novalidate>
-    <input type="hidden" name="csrf_token" value="<?= htmlspecialchars((string) ($_SESSION['csrf_token'] ?? ''), ENT_QUOTES, 'UTF-8') ?>">
-    <?php if ($active_chief_complaint_triage_id > 0): ?>
-    <input type="hidden" name="triage_id" value="<?= (int) $active_chief_complaint_triage_id ?>">
+  <form
+    id="patientTriageForm"
+    novalidate
+    <?php if ($preliminary_json !== ''): ?>
+    data-preliminary="<?= htmlspecialchars($preliminary_json, ENT_QUOTES, 'UTF-8') ?>"
     <?php endif; ?>
+  >
+    <input type="hidden" name="csrf_token" value="<?= htmlspecialchars((string) ($_SESSION['csrf_token'] ?? ''), ENT_QUOTES, 'UTF-8') ?>">
+    <input type="hidden" id="booking_triage_id" name="triage_id" value="<?= (int) ($active_chief_complaint_triage_id > 0 ? $active_chief_complaint_triage_id : ($preliminary_payload['triage_id'] ?? 0)) ?>">
     <?php if (!empty($force_new_concern)): ?>
     <input type="hidden" name="new_concern" value="1">
     <?php endif; ?>
@@ -105,20 +131,39 @@ $locked_alternate_available = !empty($locked_alternate_available);
       </p>
     </div>
 
-    <div class="form-group">
-      <label class="form-label" for="booking_provider"><?= !empty($review_booking_ctx['locked']) ? 'Your assigned doctor' : 'Choose provider' ?></label>
-      <select id="booking_provider" name="provider_id" class="form-control" <?= !empty($review_booking_ctx['locked']) ? 'disabled aria-readonly="true"' : 'required' ?>>
-        <option value="">Select a provider…</option>
-        <?php foreach ($booking_providers as $provider): ?>
-        <option value="<?= (int) $provider['id'] ?>"<?= !empty($review_booking_ctx['locked']) && (int) $provider['id'] === $locked_provider_id ? ' selected' : '' ?>><?= htmlspecialchars($provider['name']) ?></option>
-        <?php endforeach; ?>
-      </select>
-      <?php if (!empty($review_booking_ctx['locked']) && $locked_provider_id > 0): ?>
-      <input type="hidden" name="provider_id" value="<?= (int) $locked_provider_id ?>" />
-      <?php endif; ?>
-      <?php if (!empty($review_booking_ctx['locked'])): ?>
-      <p class="text-xs text-muted" style="margin-top:6px;">Same doctor as your care tips review<?= $locked_assigned_has_slots ? ' — open slots today below.' : '.' ?></p>
-      <?php endif; ?>
+    <div id="triageAiResult" class="pdash-care-ai-result<?= $preliminary_payload ? ' is-visible' : '' ?>" <?= $preliminary_payload ? '' : 'hidden' ?>>
+      <p class="pdash-care-ai-result__label">
+        Preliminary AI Assessment:
+        <strong id="triageAiLevel"><?= htmlspecialchars((string) ($preliminary_payload['classification_label'] ?? 'NON-URGENT')) ?></strong>
+      </p>
+      <p id="triageContinueHint" class="pdash-care-continue" role="status">
+        Please click &ldquo;Submit patient complaint&rdquo; again to continue.
+      </p>
+    </div>
+
+    <div class="form-group" id="bookingAssignedProviderWrap">
+      <label class="form-label" id="bookingAssignedProviderLabel">Automatically Assigned Provider</label>
+      <div
+        id="bookingAssignedProvider"
+        class="booking-assigned-provider<?= $is_provider_locked ? ' is-assigned' : ' is-pending' ?>"
+        role="status"
+      >
+        <p id="bookingAssignedProviderName" class="booking-assigned-provider__name">
+          <?php if ($is_provider_locked && $assigned_display_name !== ''): ?>
+          Dr. <?= htmlspecialchars($assigned_display_name) ?>
+          <?php else: ?>
+          Waiting for assignment…
+          <?php endif; ?>
+        </p>
+        <p class="booking-assigned-provider__hint">
+          <?php if ($is_provider_locked): ?>
+          Provider automatically selected based on your triage result, provider availability, appointment slots, and workload.
+          <?php else: ?>
+          Your doctor appears here after you submit your patient complaint twice. You cannot choose a provider manually.
+          <?php endif; ?>
+        </p>
+      </div>
+      <input type="hidden" id="booking_provider" name="provider_id" value="<?= $is_provider_locked ? (int) $locked_provider_id : '' ?>" autocomplete="off">
     </div>
 
     <?php if (!empty($review_booking_ctx['locked']) && $locked_provider_name !== '' && $locked_assigned_has_slots): ?>
@@ -168,18 +213,17 @@ $locked_alternate_available = !empty($locked_alternate_available);
     <div class="form-group">
       <label class="form-label">Available time slots (today)</label>
       <div id="bookingSlotsWrap" class="booking-slots-wrap">
-        <p class="text-xs text-muted">Select a provider to load today&apos;s available slots.</p>
+        <p class="text-xs text-muted"><?= $is_provider_locked ? 'Available times for your assigned doctor today.' : 'Appointment times appear after the system assigns your doctor.' ?></p>
       </div>
       <input type="hidden" id="booking_slot_id" name="slot_id" value="">
     </div>
 
     <button type="submit" class="mc-btn mc-btn--primary patient-triage-submit" id="patientTriageSubmit">
-      <?= !empty($review_booking_ctx['locked']) ? 'Book Appointment' : 'Submit / Book Appointment' ?>
+      <?= $is_provider_locked ? 'Book Appointment' : 'Submit patient complaint' ?>
     </button>
-    <?php if (empty($review_booking_ctx['locked'])): ?>
+    <?php if (!$is_provider_locked): ?>
     <p class="text-xs text-muted patient-triage-submit-hint">
-      For non-urgent cases, you may submit without choosing a time slot to request provider-reviewed self-care guidance first.
-      Select a slot only when you are ready to book a consultation.
+      Click once for the AI preliminary assessment. Click <strong>Submit patient complaint</strong> again to assign a doctor from real available slots.
     </p>
     <?php endif; ?>
   </form>

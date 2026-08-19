@@ -1403,6 +1403,81 @@ body.mc-tips-ready-modal-open {
   }
 }
 
+.booking-assigned-provider {
+  padding: 14px 16px;
+  border-radius: 12px;
+  border: 1px solid #c8eef2;
+  background: #f8fcfd;
+}
+
+.booking-assigned-provider.is-pending {
+  border-style: dashed;
+  background: #f8fafc;
+}
+
+.booking-assigned-provider.is-assigned {
+  border: 2px solid #0f766e;
+  background: #ecfdf5;
+}
+
+.booking-assigned-provider__name {
+  margin: 0 0 6px;
+  font-size: 1.05rem;
+  font-weight: 800;
+  color: #0f172a;
+}
+
+.booking-assigned-provider__hint {
+  margin: 0;
+  font-size: 0.8rem;
+  line-height: 1.45;
+  color: #475569;
+}
+
+.pdash-care-ai-result {
+  display: none;
+  margin: 0 0 16px;
+  padding: 16px 18px;
+  border-radius: 12px;
+  border: 2px solid #0f766e;
+  background: #ecfdf5;
+  box-shadow: 0 0 0 4px rgba(15, 118, 110, 0.12);
+}
+
+.pdash-care-ai-result.is-visible,
+.pdash-care-ai-result:not([hidden]) {
+  display: block;
+}
+
+.pdash-care-ai-result[hidden] {
+  display: none !important;
+}
+
+.pdash-care-ai-result__label {
+  margin: 0 0 10px;
+  font-size: 1.05rem;
+  font-weight: 800;
+  color: #0f172a;
+  line-height: 1.35;
+}
+
+.pdash-care-ai-result__label strong {
+  color: #0f766e;
+}
+
+.pdash-care-continue {
+  margin: 0;
+  padding: 12px 14px;
+  border-radius: 10px;
+  background: #fff7ed;
+  border: 2px solid #ea580c;
+  color: #9a3412;
+  font-size: 1rem;
+  font-weight: 800;
+  line-height: 1.45;
+  text-align: center;
+}
+
 /* Schedule-based appointment slot picker (triage form) */
 .booking-today-date {
   display: flex;

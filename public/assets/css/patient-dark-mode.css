@@ -1233,6 +1233,24 @@ html[data-theme-resolved='dark'] body.patient-portal [role='button'] {
   color: #ffffff !important;
 }
 
+html[data-theme-resolved='dark'] body.patient-portal .booking-assigned-provider {
+  background: #141414 !important;
+  border-color: #2a2a2a !important;
+}
+
+html[data-theme-resolved='dark'] body.patient-portal .booking-assigned-provider.is-assigned {
+  background: #0f2f2b !important;
+  border-color: #2dd4bf !important;
+}
+
+html[data-theme-resolved='dark'] body.patient-portal .booking-assigned-provider__name {
+  color: #f8fafc !important;
+}
+
+html[data-theme-resolved='dark'] body.patient-portal .booking-assigned-provider__hint {
+  color: #cbd5e1 !important;
+}
+
 /* Booking slot picker — keep interactive; blanket button rule hides selected state */
 html[data-theme-resolved='dark'] body.patient-portal .booking-slots-wrap,
 html[data-theme-resolved='dark'] body.patient-portal .booking-slots-grid {
