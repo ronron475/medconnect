@@ -113,7 +113,7 @@ if ($reuseExistingForBooking) {
     $level = (string) ($openCareTipsPreview['level'] ?? '3');
     $label = (string) ($openCareTipsPreview['urgency_label'] ?? 'Routine');
     $triageLevel = (string) ($openCareTipsPreview['triage_level'] ?? TriageLevelService::NON_URGENT);
-    $isEmergency = false;
+    $isEmergency = triage_doctor_final_is_emergency($openCareTipsPreview);
 } else {
     try {
         $assessment = ChiefComplaintNlpService::assessWithFallback($complaint, $symptomList);
@@ -146,6 +146,10 @@ try {
     $reviewerBeforeBooking = 0;
     $reuseTriageId = $reuseTriageIdEarly;
     $reusedExistingTriage = false;
+
+    if ($isEmergency && $reuseExistingForBooking && is_array($openCareTipsPreview)) {
+        $openCareTipsRow = $openCareTipsPreview;
+    }
 
     if (!$isEmergency && !$forceNewConcern) {
         $openCareTipsRow = patient_find_open_care_tips_triage($pdo, $patient_id, true);
@@ -244,6 +248,9 @@ try {
         $level = (string) ($openCareTipsRow['level'] ?? $level);
         $label = (string) ($openCareTipsRow['urgency_label'] ?? $label);
         $triageLevel = (string) ($openCareTipsRow['triage_level'] ?? $triageLevel);
+        if (triage_doctor_final_is_emergency($openCareTipsRow)) {
+            $isEmergency = true;
+        }
         $consult_type = $complaint !== ''
             ? $complaint
             : ($symptomList !== [] ? implode(', ', $symptomList) : 'General Consultation');
@@ -335,7 +342,9 @@ try {
             error_log('submit_triage emergency notify: ' . $e->getMessage());
         }
 
-        $msg = 'Emergency symptoms detected. Teleconsultation is not available — please go to the nearest hospital or emergency department.';
+        $msg = ($reuseExistingForBooking && $isEmergency)
+            ? 'Your healthcare provider determined this case is an EMERGENCY. Teleconsultation is not available — please go to the nearest hospital or emergency department.'
+            : 'Emergency symptoms detected. Teleconsultation is not available — please go to the nearest hospital or emergency department.';
         if ($referralId > 0) {
             $msg .= ' A hospital referral has been recorded for your care team.';
         }

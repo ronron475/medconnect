@@ -8,7 +8,8 @@
     <p class="phs-hero__eyebrow">Health Summary</p>
     <h2 class="phs-hero__title">Permanent medical profile</h2>
     <p class="phs-hero__sub">
-      Verified registration data for quick reference. This is not consultation records or visit history.
+      Verified registration data for quick reference, plus your latest triage assessment
+      (preliminary AI result, doctor final assessment, and official decision).
     </p>
     <div class="phs-hero__chips" aria-label="Profile status">
       <span class="phs-chip phs-chip--verified">
@@ -24,6 +25,48 @@
     </button>
   </div>
 </section>
+
+<?php if (!empty($latest_triage)): ?>
+<section class="phs-triage" aria-label="Latest triage assessment">
+  <article class="phs-card phs-card--triage">
+    <header class="phs-card__head">
+      <span class="phs-card__icon phs-card__icon--triage" aria-hidden="true">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
+      </span>
+      <div class="phs-card__head-text">
+        <h3 class="phs-card__title">Latest Triage Assessment</h3>
+        <p class="phs-card__hint">
+          <?= !empty($latest_triage['assessed_at']) ? htmlspecialchars(date('M j, Y g:i A', strtotime((string) $latest_triage['assessed_at']))) : 'Most recent case' ?>
+          <?php if (trim((string) ($latest_triage['chief_complaint'] ?? '')) !== ''): ?>
+            · <?= htmlspecialchars((string) $latest_triage['chief_complaint']) ?>
+          <?php endif; ?>
+        </p>
+      </div>
+    </header>
+    <div class="phs-card__body">
+      <?php mc_render_triage_assessment_stack($latest_triage, false); ?>
+    </div>
+  </article>
+
+  <?php if (count($triage_history) > 1): ?>
+  <div class="phs-triage-history">
+    <h3 class="phs-triage-history__title">Earlier assessments</h3>
+    <p class="phs-triage-history__lead">Original AI results stay on file after a doctor override. The doctor’s assessment is the official decision.</p>
+    <ul class="phs-triage-history__list">
+      <?php foreach (array_slice($triage_history, 1) as $histRow): ?>
+      <li class="phs-triage-history__item">
+        <div class="phs-triage-history__meta">
+          <strong><?= !empty($histRow['assessed_at']) ? htmlspecialchars(date('M j, Y', strtotime((string) $histRow['assessed_at']))) : '—' ?></strong>
+          <span><?= htmlspecialchars(trim((string) ($histRow['chief_complaint'] ?? '')) !== '' ? (string) $histRow['chief_complaint'] : 'Health concern on file') ?></span>
+        </div>
+        <?php mc_render_triage_assessment_stack($histRow, false); ?>
+      </li>
+      <?php endforeach; ?>
+    </ul>
+  </div>
+  <?php endif; ?>
+</section>
+<?php endif; ?>
 
 <div id="phsAlert" class="phs-alert" role="alert" hidden></div>
 

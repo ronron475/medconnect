@@ -698,6 +698,9 @@
         closeTriageModal();
         refreshTriage(true);
         if (window.MedConnectNavBadgesRefresh) window.MedConnectNavBadgesRefresh();
+        if (data.message) {
+          alert(data.message);
+        }
       } else {
         alert(data.message || 'Could not update priority.');
       }

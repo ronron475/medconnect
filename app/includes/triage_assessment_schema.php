@@ -682,3 +682,227 @@ function patient_create_emergency_triage_record(
         'assessment'  => $assessment,
     ];
 }
+
+/**
+ * Canonical urgency key: emergency | urgent | non_urgent | unknown
+ */
+function triage_urgency_key_from_fields(
+    ?string $classification = null,
+    ?string $triageLevel = null,
+    ?string $urgencyLabel = null,
+    ?string $level = null
+): string {
+    require_once dirname(__DIR__) . '/core/TriageLevelService.php';
+
+    $class = strtoupper(str_replace(['-', ' '], '_', trim((string) $classification)));
+    if ($class === 'EMERGENCY') {
+        return TriageLevelService::EMERGENCY;
+    }
+    if ($class === 'URGENT') {
+        return TriageLevelService::URGENT;
+    }
+    if (in_array($class, ['NON_URGENT', 'NONURGENT', 'ROUTINE'], true)) {
+        return TriageLevelService::NON_URGENT;
+    }
+
+    $gis = strtolower(trim((string) $triageLevel));
+    if (TriageLevelService::isValid($gis)) {
+        return $gis;
+    }
+
+    $num = strtolower(trim((string) $level));
+    if ($num !== '') {
+        return TriageLevelService::fromDbLevel($num);
+    }
+
+    $label = strtolower(trim((string) $urgencyLabel));
+    if ($label !== '') {
+        if (str_contains($label, 'emergency')) {
+            return TriageLevelService::EMERGENCY;
+        }
+        if (str_contains($label, 'non-urgent') || str_contains($label, 'non_urgent') || str_contains($label, 'routine')) {
+            return TriageLevelService::NON_URGENT;
+        }
+        if (str_contains($label, 'urgent')) {
+            return TriageLevelService::URGENT;
+        }
+    }
+
+    return 'unknown';
+}
+
+function triage_urgency_display_label(string $key): string
+{
+    require_once dirname(__DIR__) . '/core/TriageLevelService.php';
+
+    return match ($key) {
+        TriageLevelService::EMERGENCY => 'EMERGENCY',
+        TriageLevelService::URGENT => 'URGENT',
+        TriageLevelService::NON_URGENT => 'NON-URGENT',
+        default => 'Not recorded',
+    };
+}
+
+/**
+ * Original AI preliminary classification. Never use doctor-overwritten fields.
+ *
+ * @param array<string, mixed> $row
+ */
+function triage_ai_preliminary_key(array $row): string
+{
+    $class = trim((string) ($row['triage_classification'] ?? ''));
+    if ($class !== '') {
+        return triage_urgency_key_from_fields($class, null, null, null);
+    }
+
+    $payload = $row['assessment_payload'] ?? null;
+    if (is_string($payload) && $payload !== '') {
+        $decoded = json_decode($payload, true);
+        if (is_array($decoded)) {
+            $fromPayload = (string) ($decoded['triage']['triage_classification'] ?? $decoded['triage_classification'] ?? '');
+            if ($fromPayload !== '') {
+                return triage_urgency_key_from_fields($fromPayload, null, null, null);
+            }
+        }
+    }
+
+    return 'unknown';
+}
+
+/**
+ * Doctor / current official result from level, urgency_label, triage_level.
+ *
+ * @param array<string, mixed> $row
+ */
+function triage_doctor_final_key(array $row): string
+{
+    return triage_urgency_key_from_fields(
+        null,
+        (string) ($row['triage_level'] ?? ''),
+        (string) ($row['urgency_label'] ?? ''),
+        (string) ($row['level'] ?? '')
+    );
+}
+
+/**
+ * @param array<string, mixed> $row
+ */
+function triage_ai_preliminary_label(array $row): string
+{
+    return triage_urgency_display_label(triage_ai_preliminary_key($row));
+}
+
+/**
+ * @param array<string, mixed> $row
+ */
+function triage_doctor_final_label(array $row): string
+{
+    $key = triage_doctor_final_key($row);
+    if ($key === 'unknown') {
+        $key = triage_ai_preliminary_key($row);
+    }
+
+    return triage_urgency_display_label($key);
+}
+
+/**
+ * @param array<string, mixed> $row
+ */
+function triage_final_decision_label(array $row): string
+{
+    return triage_doctor_final_label($row);
+}
+
+/**
+ * @param array<string, mixed> $row
+ */
+function triage_doctor_final_is_emergency(array $row): bool
+{
+    require_once dirname(__DIR__) . '/core/TriageLevelService.php';
+
+    return triage_doctor_final_key($row) === TriageLevelService::EMERGENCY;
+}
+
+/**
+ * True when AI originally classified emergency (not doctor override).
+ *
+ * @param array<string, mixed> $row
+ */
+function triage_ai_was_emergency(array $row): bool
+{
+    require_once dirname(__DIR__) . '/core/TriageLevelService.php';
+
+    return triage_ai_preliminary_key($row) === TriageLevelService::EMERGENCY;
+}
+
+/**
+ * Apply the existing emergency-referral workflow after a doctor override to EMERGENCY.
+ * Does not create a second referral if this case is already an emergency_referral.
+ *
+ * @return array{triggered: bool, referral_id: int}
+ */
+function triage_apply_doctor_emergency_referral(
+    PDO $pdo,
+    int $triageId,
+    int $patientId,
+    int $providerId,
+    string $complaint
+): array {
+    if ($triageId <= 0 || $patientId <= 0) {
+        return ['triggered' => false, 'referral_id' => 0];
+    }
+
+    $rowStmt = $pdo->prepare('SELECT outcome, chief_complaint FROM triage_results WHERE id = ? AND patient_id = ? LIMIT 1');
+    $rowStmt->execute([$triageId, $patientId]);
+    $row = $rowStmt->fetch(PDO::FETCH_ASSOC) ?: [];
+    $outcome = strtolower(trim((string) ($row['outcome'] ?? '')));
+    if ($outcome === 'emergency_referral') {
+        return ['triggered' => false, 'referral_id' => 0];
+    }
+
+    try {
+        $pdo->prepare("UPDATE triage_results SET outcome = 'emergency_referral', status = 'completed', recommendation_status = 'hidden' WHERE id = ?")
+            ->execute([$triageId]);
+    } catch (PDOException $e) {
+        $pdo->prepare("UPDATE triage_results SET status = 'completed' WHERE id = ?")->execute([$triageId]);
+    }
+
+    $reason = trim($complaint);
+    if ($reason === '') {
+        $reason = trim((string) ($row['chief_complaint'] ?? ''));
+    }
+    if ($reason === '') {
+        $reason = 'Provider override: emergency — seek hospital / ER care.';
+    } else {
+        $reason = 'Provider override: emergency. ' . $reason;
+    }
+
+    $referralId = 0;
+    if ($providerId > 0) {
+        $recent = $pdo->prepare("
+            SELECT id FROM digital_referrals
+            WHERE patient_id = ? AND provider_id = ? AND referral_type = 'Hospital'
+              AND created_at >= DATE_SUB(NOW(), INTERVAL 1 DAY)
+            ORDER BY id DESC
+            LIMIT 1
+        ");
+        try {
+            $recent->execute([$patientId, $providerId]);
+            $referralId = (int) ($recent->fetchColumn() ?: 0);
+        } catch (PDOException $e) {
+            $referralId = 0;
+        }
+        if ($referralId <= 0) {
+            $referralId = patient_create_emergency_hospital_referral($pdo, $patientId, $providerId, $reason);
+        }
+    }
+
+    try {
+        require_once __DIR__ . '/patient_slot_waitlist.php';
+        patient_slot_waitlist_cancel_for_triage($pdo, $triageId);
+    } catch (Throwable $e) {
+        // optional
+    }
+
+    return ['triggered' => true, 'referral_id' => $referralId];
+}

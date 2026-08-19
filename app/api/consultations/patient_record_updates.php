@@ -12,6 +12,7 @@ require_once dirname(dirname(dirname(__DIR__))) . '/bootstrap.php';
 require_once dirname(dirname(dirname(__DIR__))) . '/config/db.php';
 require_once dirname(dirname(dirname(__DIR__))) . '/app/includes/patient_settings.php';
 require_once dirname(dirname(dirname(__DIR__))) . '/app/includes/patient_consultation_records.php';
+require_once dirname(dirname(dirname(__DIR__))) . '/app/includes/triage_assessment_schema.php';
 
 header('Content-Type: application/json; charset=utf-8');
 header('X-Content-Type-Options: nosniff');
@@ -102,11 +103,47 @@ try {
         ];
     }
 
+    $emergencyOverrides = [];
+    try {
+        triage_assessment_ensure_schema($pdo);
+        $erStmt = $pdo->prepare("
+            SELECT id, chief_complaint, assessed_at, triage_classification, level, urgency_label,
+                   triage_level, assessment_payload, outcome
+            FROM triage_results
+            WHERE patient_id = ?
+              AND assessed_at >= DATE_SUB(NOW(), INTERVAL 7 DAY)
+            ORDER BY assessed_at DESC, id DESC
+            LIMIT 20
+        ");
+        $erStmt->execute([$uid]);
+        while ($row = $erStmt->fetch(PDO::FETCH_ASSOC)) {
+            if (!triage_doctor_final_is_emergency($row)) {
+                continue;
+            }
+            if (triage_ai_was_emergency($row)) {
+                continue;
+            }
+            $emergencyOverrides[] = [
+                'id' => (int) ($row['id'] ?? 0),
+                'ai_label' => triage_ai_preliminary_label($row),
+                'doctor_label' => triage_doctor_final_label($row),
+                'final_label' => triage_final_decision_label($row),
+                'complaint' => (string) ($row['chief_complaint'] ?? ''),
+                'assessed_at' => (string) ($row['assessed_at'] ?? ''),
+                'source' => 'provider_override',
+                'message' => 'Your healthcare provider reviewed your case and determined it is an EMERGENCY. Please go to the nearest hospital or emergency department. Online consultation is not appropriate for this case.',
+            ];
+        }
+    } catch (Throwable $e) {
+        $emergencyOverrides = [];
+    }
+
     ob_end_clean();
     echo json_encode([
         'success'   => true,
         'active'    => $active,
         'completed' => $completed,
+        'emergency_overrides' => $emergencyOverrides,
         'server_ts' => time(),
     ]);
 } catch (PDOException $e) {

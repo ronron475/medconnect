@@ -229,7 +229,7 @@ final class NotificationEvents
             'type'          => NotificationManager::TYPE_APPOINTMENT,
             'title'         => 'New Appointment Created',
             'message'       => "Appointment scheduled for {$date}.",
-            'action_url'    => '/views/admin/queue_monitoring.php',
+            'action_url'    => '/views/admin/live_consultation_monitor.php?tab=queue',
             'related_table' => 'consultations',
             'related_id'    => $consultationId,
         ]);
@@ -261,7 +261,7 @@ final class NotificationEvents
             'type'          => NotificationManager::TYPE_APPOINTMENT,
             'title'         => 'Appointment Cancelled',
             'message'       => 'An appointment has been cancelled.',
-            'action_url'    => '/views/admin/queue_monitoring.php',
+            'action_url'    => '/views/admin/live_consultation_monitor.php?tab=queue',
             'related_table' => 'consultations',
             'related_id'    => $consultationId,
         ]);
@@ -402,7 +402,7 @@ final class NotificationEvents
             'type'          => NotificationManager::TYPE_REFERRAL,
             'title'         => 'Referral Created',
             'message'       => 'A new patient referral has been submitted.',
-            'action_url'    => '/views/admin/queue_monitoring.php',
+            'action_url'    => '/views/admin/live_consultation_monitor.php?tab=queue',
             'related_table' => 'digital_referrals',
             'related_id'    => $referralId,
         ]);
@@ -577,7 +577,7 @@ final class NotificationEvents
             'title'         => 'High-Risk Patient Detected',
             'message'       => "{$patientName}: {$reason}",
             'priority'      => 'emergency',
-            'action_url'    => '/views/admin/queue_monitoring.php',
+            'action_url'    => '/views/admin/live_consultation_monitor.php?tab=queue',
             'related_table' => 'triage_results',
             'related_id'    => $patientId,
         ]);
@@ -600,7 +600,7 @@ final class NotificationEvents
             'type'          => NotificationManager::TYPE_MEDICAL,
             'title'         => 'AI Triage Completed',
             'message'       => "Triage assessment completed. Urgency: {$urgency}.",
-            'action_url'    => '/views/admin/queue_monitoring.php',
+            'action_url'    => '/views/admin/live_consultation_monitor.php?tab=queue',
             'related_table' => 'triage_results',
             'related_id'    => $patientId,
         ]);
@@ -616,7 +616,7 @@ final class NotificationEvents
             'type'          => NotificationManager::TYPE_MEDICAL,
             'title'         => 'Medical Record Updated',
             'message'       => 'A patient medical record has been updated.',
-            'action_url'    => '/views/admin/queue_monitoring.php',
+            'action_url'    => '/views/admin/live_consultation_monitor.php?tab=queue',
             'related_table' => 'patient_registrations',
             'related_id'    => $patientId,
         ]);
@@ -857,7 +857,7 @@ final class NotificationEvents
             'title'         => 'Emergency Consultation Requested',
             'message'       => 'An emergency consultation has been requested.',
             'priority'      => 'emergency',
-            'action_url'    => '/views/admin/queue_monitoring.php',
+            'action_url'    => '/views/admin/live_consultation_monitor.php?tab=queue',
             'related_table' => 'consultations',
             'related_id'    => $consultationId,
         ]);
@@ -1076,6 +1076,28 @@ final class NotificationEvents
             'related_table' => 'triage_results',
             'related_id'    => $triageId,
             'icon'          => 'heart',
+            'email'         => true,
+        ]);
+    }
+
+    public static function doctorEmergencyOverrideForPatient(
+        PDO $pdo,
+        int $patientId,
+        int $providerId,
+        int $triageId,
+        string $aiLabel = '',
+        ?int $senderId = null
+    ): void {
+        $aiNote = $aiLabel !== '' ? " Preliminary AI assessment was {$aiLabel}." : '';
+        NotificationManager::notifyPatient($pdo, $patientId, [
+            'sender_id'     => $senderId ?? $providerId,
+            'type'          => NotificationManager::TYPE_EMERGENCY,
+            'title'         => 'Emergency — seek hospital care now',
+            'message'       => 'Your healthcare provider reviewed your case and determined it is an EMERGENCY. Please go to the nearest hospital or emergency department. Online consultation is not appropriate.' . $aiNote,
+            'priority'      => 'emergency',
+            'action_url'    => '/views/patient/health_summary.php',
+            'related_table' => 'triage_results',
+            'related_id'    => $triageId,
             'email'         => true,
         ]);
     }

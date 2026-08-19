@@ -37,7 +37,7 @@ if (!$id) {
 
 try {
     // IDOR protection: triage must belong to a patient this provider is allowed to act on.
-    $t = $pdo->prepare('SELECT patient_id, assessed_at, status, outcome, triage_level, urgency_label FROM triage_results WHERE id = ? LIMIT 1');
+    $t = $pdo->prepare('SELECT patient_id, assessed_at, status, outcome, triage_level, urgency_label, triage_classification, chief_complaint, level FROM triage_results WHERE id = ? LIMIT 1');
     $t->execute([$id]);
     $triageRow = $t->fetch(PDO::FETCH_ASSOC);
     if (!$triageRow) {
@@ -91,19 +91,19 @@ try {
             exit;
         }
         $label = match($level) {
-            '1' => 'Urgent (Priority 1)',
-            '2' => 'Urgent (Priority 2)',
-            '3' => 'Non-Urgent (Priority 3)',
-            '4' => 'Routine (Priority 4)',
-            '5' => 'Routine (Priority 5)',
-            default => 'Routine'
+            '1' => 'Emergency',
+            '2' => 'Urgent',
+            '3' => 'Non-Urgent',
+            '4' => 'Non-Urgent (Routine)',
+            '5' => 'Non-Urgent (Routine)',
+            default => 'Non-Urgent'
         };
         $triageLevel = TriageLevelService::fromDbLevel((string) $level);
 
+        // Keep triage_classification as the original AI preliminary result.
         $stmt = $pdo->prepare("UPDATE triage_results SET level = ?, urgency_label = ?, triage_level = ?, assessed_at = NOW() WHERE id = ?");
         $stmt->execute([$level, $label, $triageLevel, $id]);
 
-        // Keep patient remedy gate in sync with clinical override.
         $meta = $pdo->prepare('SELECT chief_complaint, recommendations, triage_classification FROM triage_results WHERE id = ? LIMIT 1');
         $meta->execute([$id]);
         $metaRow = $meta->fetch(PDO::FETCH_ASSOC) ?: [];
@@ -122,13 +122,71 @@ try {
             WHERE id = ?
         ")->execute([$recStatus, $id]);
 
+        $emergencyTriggered = false;
+        $referralId = 0;
+        if ($triageLevel === TriageLevelService::EMERGENCY) {
+            $emergency = triage_apply_doctor_emergency_referral(
+                $pdo,
+                $id,
+                $patientId,
+                (int) $_SESSION['user_id'],
+                (string) ($metaRow['chief_complaint'] ?? '')
+            );
+            $emergencyTriggered = !empty($emergency['triggered']);
+            $referralId = (int) ($emergency['referral_id'] ?? 0);
+
+            if ($emergencyTriggered) {
+                $nameStmt = $pdo->prepare('SELECT CONCAT(first_name, " ", last_name) FROM users WHERE id = ? LIMIT 1');
+                $nameStmt->execute([$patientId]);
+                $patientName = trim((string) ($nameStmt->fetchColumn() ?: 'Patient'));
+                $aiLabel = triage_ai_preliminary_label([
+                    'triage_classification' => (string) ($metaRow['triage_classification'] ?? $triageRow['triage_classification'] ?? ''),
+                ]);
+
+                try {
+                    require_once BASE_PATH . '/app/includes/bhw_patient_workflow.php';
+                    BhwPatientWorkflow::onPatientPortalEmergency($pdo, $patientId, [
+                        'triage_id' => $id,
+                        'referral_id' => $referralId,
+                        'source' => 'provider_override',
+                    ]);
+                } catch (Throwable $e) {
+                    error_log('update_triage emergency workflow: ' . $e->getMessage());
+                }
+
+                NotificationEvents::highRiskPatient($pdo, $patientId, $patientName, $label, (int) $_SESSION['user_id']);
+                if ($referralId > 0) {
+                    NotificationEvents::referralCreated($pdo, $referralId, $patientId, (int) $_SESSION['user_id'], (int) $_SESSION['user_id']);
+                }
+                NotificationEvents::doctorEmergencyOverrideForPatient(
+                    $pdo,
+                    $patientId,
+                    (int) $_SESSION['user_id'],
+                    $id,
+                    $aiLabel
+                );
+            }
+        }
+
         audit_log($pdo, [
             'patient_id'  => $patientId,
             'action_type' => 'TRIAGE_OVERRIDE',
             'description' => "Provider manually overrode triage ID: $id to Level $level ($label)"
+                . ($emergencyTriggered ? ' — emergency referral workflow started' : '')
         ]);
 
-        echo json_encode(['success' => true, 'message' => 'Priority level updated.']);
+        echo json_encode([
+            'success' => true,
+            'message' => $emergencyTriggered
+                ? 'Priority updated to Emergency. The patient will be directed to the hospital referral process.'
+                : 'Priority level updated.',
+            'data' => [
+                'triage_level' => $triageLevel,
+                'urgency_label' => $label,
+                'emergency_referral' => $emergencyTriggered,
+                'referral_id' => $referralId,
+            ],
+        ]);
     }
     else if ($action === 'approve_recommendations' || $action === 'reject_recommendations') {
         $meta = $pdo->prepare("

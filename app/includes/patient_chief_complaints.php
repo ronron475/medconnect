@@ -118,9 +118,10 @@ function patient_chief_complaint_registration_reference(PDO $pdo, int $patientId
  */
 function patient_portal_normalize_urgency(?string $triageLevel, ?string $classification, ?string $registrationUrgency = ''): string
 {
-    $raw = strtoupper(str_replace('_', '-', trim((string) ($classification ?? ''))));
-    if ($raw === '' && $triageLevel !== null) {
-        $raw = strtoupper(str_replace('_', '-', trim((string) $triageLevel)));
+    // Doctor final (triage_level) takes precedence over original AI classification.
+    $raw = strtoupper(str_replace('_', '-', trim((string) ($triageLevel ?? ''))));
+    if ($raw === '' && $classification !== null) {
+        $raw = strtoupper(str_replace('_', '-', trim((string) $classification)));
     }
     if ($raw === '' && $registrationUrgency !== null) {
         $raw = strtoupper(str_replace('_', '-', trim((string) $registrationUrgency)));

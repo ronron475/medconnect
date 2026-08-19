@@ -11,6 +11,54 @@ if (!function_exists('patient_triage_row_booking_state')) {
         require_once $bookingStatusPath;
     }
 }
+$triageSchemaPath = defined('BASE_PATH')
+    ? BASE_PATH . '/app/includes/triage_assessment_schema.php'
+    : dirname(__DIR__, 4) . '/app/includes/triage_assessment_schema.php';
+if (is_file($triageSchemaPath)) {
+    require_once $triageSchemaPath;
+}
+
+/**
+ * @param array<string, mixed> $row
+ */
+if (!function_exists('mc_render_triage_assessment_stack')) {
+    function mc_render_triage_assessment_stack(array $row, bool $showTitle = false): void
+    {
+        $ai = triage_ai_preliminary_label($row);
+        $doctor = triage_doctor_final_label($row);
+        $final = triage_final_decision_label($row);
+        $finalKey = triage_doctor_final_key($row);
+        $chip = $finalKey === 'emergency'
+            ? 'pt-assess-chip--emergency'
+            : ($finalKey === 'urgent' ? 'pt-assess-chip--urgent' : 'pt-assess-chip--routine');
+        $isEmergency = $finalKey === 'emergency';
+        ?>
+    <div class="pt-assess-stack<?= $isEmergency ? ' pt-assess-stack--emergency' : '' ?>">
+      <?php if ($showTitle): ?>
+      <div class="pt-assess-stack__title">Latest Triage Assessment</div>
+      <?php endif; ?>
+      <div class="pt-assess-stack__row">
+        <span class="pt-assess-stack__label">Preliminary AI Assessment</span>
+        <span class="pt-assess-chip pt-assess-chip--ai"><?= htmlspecialchars($ai) ?></span>
+      </div>
+      <div class="pt-assess-stack__row">
+        <span class="pt-assess-stack__label">Final Doctor Assessment</span>
+        <span class="pt-assess-chip <?= htmlspecialchars($chip) ?>"><?= htmlspecialchars($doctor) ?></span>
+      </div>
+      <div class="pt-assess-stack__row pt-assess-stack__row--final">
+        <span class="pt-assess-stack__label">Final Decision</span>
+        <span class="pt-assess-chip <?= htmlspecialchars($chip) ?>"><?= htmlspecialchars($final) ?></span>
+      </div>
+      <?php if ($isEmergency): ?>
+      <p class="pt-assess-emergency-note">
+        Your healthcare provider determined this case is an emergency. Follow the hospital referral process.
+        Do not wait for an online consultation.
+      </p>
+      <?php endif; ?>
+    </div>
+        <?php
+    }
+}
 function mc_format_triage_symptoms(?string $raw): string
 {
     if ($raw === null || $raw === '') {
@@ -69,6 +117,11 @@ function mc_patient_visit_status_label(array $row, ?PDO $pdo = null, int $patien
         );
     }
 
+    $finalKey = function_exists('triage_doctor_final_key') ? triage_doctor_final_key($row) : '';
+    if ($finalKey === 'emergency') {
+        return 'Emergency — seek care promptly';
+    }
+
     if ($bookingState === 'booked') {
         return 'Visit booked';
     }
@@ -87,14 +140,7 @@ function mc_patient_visit_status_label(array $row, ?PDO $pdo = null, int $patien
         return 'Approved — book a visit';
     }
 
-    $level = strtoupper((string) ($row['level'] ?? ''));
-    $label = strtolower((string) ($row['urgency_label'] ?? ''));
-    $triageLevel = strtolower((string) ($row['triage_level'] ?? ''));
-
-    if ($level === '1' || str_contains($label, 'emergency') || $triageLevel === 'emergency') {
-        return 'Emergency — seek care promptly';
-    }
-    if ($level === '2' || str_contains($label, 'urgent') || $triageLevel === 'urgent') {
+    if ($finalKey === 'urgent') {
         return 'Urgent — book a time slot';
     }
     return 'Routine — book when ready';
@@ -103,6 +149,10 @@ function mc_patient_visit_status_label(array $row, ?PDO $pdo = null, int $patien
 function mc_patient_visit_status_class(array $row): string
 {
     $bookingState = (string) ($row['_booking_state'] ?? '');
+    $finalKey = function_exists('triage_doctor_final_key') ? triage_doctor_final_key($row) : '';
+    if ($finalKey === 'emergency') {
+        return 'badge-risk--high';
+    }
     if ($bookingState === 'booked') {
         return 'badge-risk--low';
     }
@@ -121,14 +171,7 @@ function mc_patient_visit_status_class(array $row): string
         return 'badge-risk--moderate';
     }
 
-    $level = strtoupper((string) ($row['level'] ?? ''));
-    $label = strtolower((string) ($row['urgency_label'] ?? ''));
-    $triageLevel = strtolower((string) ($row['triage_level'] ?? ''));
-
-    if ($level === '1' || str_contains($label, 'emergency') || $triageLevel === 'emergency') {
-        return 'badge-risk--high';
-    }
-    if ($level === '2' || str_contains($label, 'urgent') || $triageLevel === 'urgent') {
+    if ($finalKey === 'urgent') {
         return 'badge-risk--moderate';
     }
     return 'badge-risk--low';

@@ -289,6 +289,8 @@ function live_sync_patient_triage_fp(PDO $pdo, int $patientId): string
         "SELECT COUNT(*), COALESCE(MAX(id),0),
                 COALESCE(MAX(UNIX_TIMESTAMP(assessed_at)),0),
                 COALESCE(MAX(UNIX_TIMESTAMP(assigned_at)),0),
+                COALESCE(MAX(CAST(triage_level AS CHAR)),''),
+                COALESCE(MAX(CAST(outcome AS CHAR)),''),
                 COALESCE(SUM(CASE COALESCE(recommendation_status,'hidden')
                     WHEN 'pending_approval' THEN 1
                     WHEN 'approved' THEN 2
