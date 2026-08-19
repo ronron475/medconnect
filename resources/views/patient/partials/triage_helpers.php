@@ -37,11 +37,11 @@ if (!function_exists('mc_render_triage_assessment_stack')) {
       <?php if ($showTitle): ?>
       <div class="pt-assess-stack__title">Latest Triage Assessment</div>
       <?php endif; ?>
-      <div class="pt-assess-stack__row">
+      <div class="pt-assess-stack__row pt-assess-stack__row--ai">
         <span class="pt-assess-stack__label">Preliminary AI Assessment</span>
         <span class="pt-assess-chip pt-assess-chip--ai"><?= htmlspecialchars($ai) ?></span>
       </div>
-      <div class="pt-assess-stack__row">
+      <div class="pt-assess-stack__row pt-assess-stack__row--doctor">
         <span class="pt-assess-stack__label">Final Doctor Assessment</span>
         <span class="pt-assess-chip <?= htmlspecialchars($chip) ?>"><?= htmlspecialchars($doctor) ?></span>
       </div>

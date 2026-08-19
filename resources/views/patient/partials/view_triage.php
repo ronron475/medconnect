@@ -222,12 +222,12 @@ mc_render_loader_panel([
           <tr><td colspan="3"><div class="mc-table-empty"><p>No previous visits recorded yet. Book your first consultation above.</p></div></td></tr>
         <?php else: foreach ($triage_history as $t): ?>
           <tr>
-            <td data-label="Date" style="font-weight: 700; color: var(--mc-navy-dark);"><?= !empty($t['assessed_at']) ? date('M j, Y', strtotime($t['assessed_at'])) : '—' ?></td>
-            <td data-label="Concern" class="triage-symptoms-cell">
+            <td data-label="Date" class="patient-triage-history__date"><?= !empty($t['assessed_at']) ? date('M j, Y', strtotime($t['assessed_at'])) : '—' ?></td>
+            <td data-label="Health concern" class="triage-symptoms-cell patient-triage-history__concern-cell">
               <div class="patient-triage-history__concern"><?= htmlspecialchars($t['chief_complaint'] ?? '—') ?></div>
               <?php mc_render_triage_assessment_stack($t, false); ?>
             </td>
-            <td data-label="Status">
+            <td data-label="Status" class="patient-triage-history__status">
               <span class="badge-risk <?= mc_patient_visit_status_class($t) ?>"><?= mc_patient_visit_status_label($t, $pdo ?? null, (int) ($uid ?? 0)) ?></span>
             </td>
           </tr>

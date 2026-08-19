@@ -1353,3 +1353,33 @@ html[data-theme-resolved='dark'] body.patient-portal .mc-select__option:focus {
 html[data-theme-resolved='dark'] body.patient-portal .mc-select__option[aria-selected="true"] {
   background: rgba(124, 58, 237, 0.24) !important;
 }
+
+html[data-theme-resolved='dark'] body.patient-portal .pt-assess-stack {
+  background: #141414;
+  border-color: #2a2a2a;
+}
+
+html[data-theme-resolved='dark'] body.patient-portal .pt-assess-stack__row {
+  background: #1c1c1c;
+  border-color: #2a2a2a;
+}
+
+html[data-theme-resolved='dark'] body.patient-portal .pt-assess-stack__row--final {
+  background: #102422;
+  border-color: #134e4a;
+}
+
+html[data-theme-resolved='dark'] body.patient-portal .pt-assess-stack__label,
+html[data-theme-resolved='dark'] body.patient-portal .patient-triage-history-lead {
+  color: #a1a1aa;
+}
+
+html[data-theme-resolved='dark'] body.patient-portal .patient-triage-history__concern,
+html[data-theme-resolved='dark'] body.patient-portal .patient-triage-history__date {
+  color: #ffffff;
+}
+
+html[data-theme-resolved='dark'] body.patient-portal .phs-triage-history {
+  background: #1c1c1c;
+  border-color: #2a2a2a;
+}
