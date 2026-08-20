@@ -36,6 +36,7 @@ function triage_assessment_ensure_schema(PDO $pdo): void
         'assessment_payload'      => 'JSON NULL',
         'engine'                  => 'VARCHAR(50) NULL',
         'outcome'                 => "VARCHAR(40) NULL COMMENT 'emergency_referral|consultation_booked|…'",
+        'assessment_status'       => "VARCHAR(20) NULL COMMENT 'IN_PROGRESS|COMPLETED'",
     ];
 
     $existing = [];
@@ -85,10 +86,17 @@ function triage_assessment_backfill_triage_level(PDO $pdo): void
 
     require_once dirname(__DIR__) . '/core/TriageLevelService.php';
 
+    $statusFilter = '';
+    $statusCol = $pdo->query("SHOW COLUMNS FROM triage_results LIKE 'assessment_status'");
+    if ($statusCol && $statusCol->rowCount() > 0) {
+        $statusFilter = " AND (assessment_status IS NULL OR UPPER(assessment_status) <> 'IN_PROGRESS')";
+    }
+
     $stmt = $pdo->query("
         SELECT id, triage_level, triage_classification, level
         FROM triage_results
-        WHERE triage_level IS NULL OR TRIM(triage_level) = ''
+        WHERE (triage_level IS NULL OR TRIM(triage_level) = '')
+        {$statusFilter}
         LIMIT 2000
     ");
     if (!$stmt) {

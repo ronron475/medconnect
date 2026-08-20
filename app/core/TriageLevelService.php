@@ -79,6 +79,11 @@ final class TriageLevelService
      */
     public static function fromAssessment(array $assessment): string
     {
+        $status = strtoupper((string) ($assessment['assessment_status'] ?? ($assessment['triage']['assessment_status'] ?? '')));
+        if ($status === 'IN_PROGRESS') {
+            return '';
+        }
+
         $triage = is_array($assessment['triage'] ?? null) ? $assessment['triage'] : [];
 
         if (!empty($triage['gis_triage_level']) && self::isValid((string) $triage['gis_triage_level'])) {

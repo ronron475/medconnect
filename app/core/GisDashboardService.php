@@ -1073,9 +1073,16 @@ final class GisDashboardService
             return "'non_urgent'";
         }
 
+        $statusFilter = '';
+        if ($this->columnExists('triage_results', 'assessment_status')) {
+            $statusFilter = " AND COALESCE(tr.assessment_status, 'COMPLETED') <> 'IN_PROGRESS'";
+        }
+
         return "(SELECT COALESCE(NULLIF(TRIM(tr.triage_level), ''), 'non_urgent')
             FROM triage_results tr
             WHERE tr.patient_id = {$patientIdExpr}
+              AND TRIM(COALESCE(tr.triage_classification, '')) <> ''
+              {$statusFilter}
             ORDER BY tr.assessed_at DESC, tr.id DESC LIMIT 1)";
     }
 

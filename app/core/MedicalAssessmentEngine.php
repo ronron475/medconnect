@@ -282,6 +282,15 @@ final class MedicalAssessmentEngine
      */
     private static function runMlLayer(string $text, array $symptoms, array $nlpResult): array
     {
+        $skip = filter_var(getenv('MEDCONNECT_SKIP_ML_LAYER') ?: '0', FILTER_VALIDATE_BOOLEAN);
+        if ($skip) {
+            return [
+                'available'     => false,
+                'predictions'   => [],
+                'triage_level'  => '',
+                'triage_label'  => '',
+            ];
+        }
         $english = (string) ($nlpResult['english_translation'] ?? $text);
         $urgentFlags = [];
         if (mb_strtoupper((string) ($nlpResult['triage_level'] ?? '')) === 'EMERGENCY') {

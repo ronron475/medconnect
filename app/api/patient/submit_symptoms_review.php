@@ -32,20 +32,24 @@ $symptomList = array_values(array_filter(array_map(static function ($s) {
 $stage = strtolower(trim((string) ($_POST['stage'] ?? 'continue')));
 $reuseTriageId = (int) ($_POST['triage_id'] ?? 0);
 
+$followupAnswer = trim((string) ($_POST['followup_answer'] ?? ''));
+
 $result = patient_submit_symptoms_for_review(
     $pdo,
     $patientId,
     $complaint,
     $symptomList,
     $stage,
-    $reuseTriageId
+    $reuseTriageId,
+    $followupAnswer
 );
 
 if ($result['ok']) {
     $triageId = (int) ($result['payload']['triage_id'] ?? 0);
     $isPreview = !empty($result['payload']['preview']);
     $isEmergency = !empty($result['payload']['emergency']);
-    if ($triageId > 0 && (!$isPreview || $isEmergency)) {
+    $isInterview = !empty($result['payload']['assessment_in_progress']);
+    if ($triageId > 0 && (!$isPreview || $isEmergency) && !$isInterview) {
         $registrationRef = patient_chief_complaint_registration_reference($pdo, $patientId);
         patient_chief_complaint_record(
             $pdo,

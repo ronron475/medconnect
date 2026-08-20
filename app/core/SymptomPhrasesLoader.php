@@ -16,7 +16,6 @@ final class SymptomPhrasesLoader
         '/data/nlp/symptom_phrases.csv',
         '/data/nlp/hiligaynon_wv_expansion.csv',
         '/data/nlp/hiligaynon_reproductive_expansion.csv',
-        '/data/nlp/hiligaynon_combinatorial_phrases.csv',
         '/data/nlp/hiligaynon_conditions_combinatorial.csv',
         '/data/nlp/hiligaynon_conditions.csv',
         '/data/nlp/hiligaynon_symptoms.csv',
@@ -129,6 +128,9 @@ final class SymptomPhrasesLoader
         $occupied = array_fill(0, strlen($working), false);
         $matches = [];
         foreach (self::phrasesByLength() as $phrase) {
+            if ($phrase === '' || strlen($phrase) > strlen($working) || !str_contains($working, $phrase)) {
+                continue;
+            }
             if (!preg_match_all('/(?<!\w)' . preg_quote($phrase, '/') . '(?!\w)/iu', $working, $m, PREG_OFFSET_CAPTURE)) {
                 continue;
             }

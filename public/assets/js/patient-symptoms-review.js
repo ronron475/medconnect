@@ -5,7 +5,7 @@
 (function () {
   'use strict';
 
-  var MIN_CHARS = 10;
+  var MIN_CHARS = 2;
   var ANALYZE_TIMEOUT_MS = 120000;
   var SUBMIT_LABEL = 'Submit patient complaint';
   var CONTINUE_MSG = 'Please click "Submit patient complaint" again to continue.';
@@ -33,15 +33,15 @@
     err_network: 'Network error. Please try again.',
     err_submit: 'Could not submit. Please try again.',
     err_triage_level: 'Could not determine triage level. Please try again.',
-    err_min_chars: 'Please provide a bit more detail (at least 10 characters).',
+    err_min_chars: 'Please describe your symptoms.',
     err_empty: 'Please describe your symptoms or concern.',
     err_locked: 'Your patient complaint is not available. Please contact the health office.',
     ok_submitted: 'Submitted for provider review.',
     em_submit: 'Emergency symptoms detected. Seek emergency care.',
     urg_submit: 'Please book an urgent consultation.',
-    msg_emergency: 'Based on the symptoms you entered, your condition may be a medical emergency. Please seek immediate medical attention at the nearest hospital or emergency department. Do not wait for an online consultation if you are experiencing severe or worsening symptoms.',
-    msg_urgent: 'Based on the symptoms you provided, your condition may require prompt medical attention. Triage result: URGENT. After you submit, you can book the earliest available consultation time.',
-    msg_non_urgent: 'Preliminary AI Assessment: NON-URGENT. Please click "Submit patient complaint" again to continue.',
+    msg_emergency: 'Your reported symptoms may require immediate medical attention. Please seek emergency care immediately.',
+    msg_urgent: 'Your symptoms should be assessed by a healthcare professional promptly.',
+    msg_non_urgent: 'Based on the information provided, your symptoms do not currently show signs requiring emergency attention. Routine consultation is appropriate.',
     click_again_continue: CONTINUE_MSG,
     ai_preliminary: 'Preliminary AI Assessment: {level}',
   };
@@ -75,12 +75,16 @@
   refreshSubmitLabels();
 
   var complaintEl = document.getElementById('pdashSymptomsComplaint');
+  var followupWrap = document.getElementById('pdashFollowupWrap');
+  var followupQuestionEl = document.getElementById('pdashFollowupQuestion');
+  var followupAnswerEl = document.getElementById('pdashFollowupAnswer');
 
   /** @type {null|'non_urgent'|'urgent'|'emergency'} */
   var triageLevel = null;
   var triageComplaint = '';
   var triageId = 0;
   var awaitingSecondClick = false;
+  var assessmentInProgress = false;
   var submitInFlight = false;
 
   function base() {
@@ -110,6 +114,32 @@
 
   function shouldRunTriage(text) {
     return String(text || '').trim().length >= MIN_CHARS;
+  }
+
+  function hideFollowupUi() {
+    if (followupWrap) {
+      followupWrap.hidden = true;
+    }
+    if (followupAnswerEl) {
+      followupAnswerEl.value = '';
+    }
+  }
+
+  function showFollowupUi(question) {
+    hideContinueUi();
+    if (followupQuestionEl) {
+      followupQuestionEl.textContent = String(question || '').trim();
+    }
+    if (followupWrap) {
+      followupWrap.hidden = false;
+    }
+    if (followupAnswerEl) {
+      followupAnswerEl.focus();
+    }
+  }
+
+  function followupAnswerText() {
+    return String(followupAnswerEl && followupAnswerEl.value ? followupAnswerEl.value : '').trim();
   }
 
   function hideContinueUi() {
@@ -142,6 +172,8 @@
     triageComplaint = '';
     triageId = 0;
     awaitingSecondClick = false;
+    assessmentInProgress = false;
+    hideFollowupUi();
     hideContinueUi();
     clearAlert();
   }
@@ -288,8 +320,6 @@
       return;
     }
     if (!data || !data.triage_id) return;
-    var level = urgencyToLevel(data.triage_level || data.classification_label);
-    if (level !== 'non_urgent' && level !== 'urgent') return;
     var storedComplaint = String(data.chief_complaint || '').trim();
     if (storedComplaint && complaintText() && storedComplaint !== complaintText()) {
       return;
@@ -298,8 +328,16 @@
       complaintEl.value = storedComplaint;
     }
     triageId = parseInt(data.triage_id, 10) || 0;
-    triageLevel = level;
     triageComplaint = complaintText();
+    if (data.assessment_in_progress) {
+      assessmentInProgress = true;
+      awaitingSecondClick = false;
+      showFollowupUi(data.followup_question || '');
+      return;
+    }
+    var level = urgencyToLevel(data.triage_level || data.classification_label);
+    if (level !== 'non_urgent' && level !== 'urgent') return;
+    triageLevel = level;
     awaitingSecondClick = triageId > 0;
     if (awaitingSecondClick) {
       showContinueUi(level, data.classification_label || '');
@@ -313,6 +351,10 @@
     fd.set('stage', stage);
     if (triageId > 0) {
       fd.set('triage_id', String(triageId));
+    }
+    var answer = followupAnswerText();
+    if (answer) {
+      fd.set('followup_answer', answer);
     }
 
     var controller = new AbortController();
@@ -358,6 +400,13 @@
       }
 
       var payload = data.data || data;
+      if (payload.assessment_in_progress) {
+        assessmentInProgress = true;
+        awaitingSecondClick = false;
+        triageId = parseInt(payload.triage_id, 10) || triageId;
+        showFollowupUi(payload.followup_question || data.message || '');
+        return false;
+      }
       if (payload.preview) {
         // Server refused to assign — keep the patient on step 1.
         awaitingSecondClick = true;
@@ -446,6 +495,16 @@
         return false;
       }
 
+      if (payload.assessment_in_progress) {
+        assessmentInProgress = true;
+        awaitingSecondClick = false;
+        triageComplaint = complaint;
+        triageId = parseInt(payload.triage_id, 10) || triageId;
+        hideContinueUi();
+        showFollowupUi(payload.followup_question || json.message || '');
+        return true;
+      }
+
       var level = urgencyToLevel(payload.triage_level || payload.classification_label || extractUrgency(payload));
       if (!level) {
         showAlert('error', i18n('err_triage_level'));
@@ -458,6 +517,8 @@
 
       if (level === 'emergency' || payload.emergency) {
         awaitingSecondClick = false;
+        assessmentInProgress = false;
+        hideFollowupUi();
         hideContinueUi();
         presentTriageOutcome(level, complaint, payload);
         showAlert('error', i18n('em_submit'));
@@ -474,6 +535,8 @@
       }
 
       awaitingSecondClick = true;
+      assessmentInProgress = false;
+      hideFollowupUi();
       showContinueUi(level, payload.classification_label || '');
       presentTriageOutcome(level, complaint, payload);
       updateSubmitButtonLabel();
@@ -536,6 +599,12 @@
         showAlert('error', locked
           ? i18n('err_locked')
           : i18n('err_empty'));
+        return;
+      }
+
+      if (assessmentInProgress && !followupAnswerText()) {
+        showAlert('error', 'Please answer the follow-up question.');
+        if (followupAnswerEl) followupAnswerEl.focus();
         return;
       }
 

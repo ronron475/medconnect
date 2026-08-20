@@ -1306,8 +1306,40 @@ body.consultation-mobile-call-fullscreen .mc-provider-video-dock iframe {
     margin: 0 0 16px;
     font-size: 13px;
 }
-.csp-emergency-modal__dl dt { color: #64748b; font-weight: 700; }
-.csp-emergency-modal__dl dd { margin: 0; color: #0f172a; font-weight: 700; }
+.csp-emergency-modal__lead {
+    margin: 0 0 14px;
+    font-size: 14px;
+    line-height: 1.5;
+    color: #334155;
+    font-weight: 600;
+}
+.csp-emergency-modal__facility {
+    margin: 0 0 14px;
+    padding: 12px;
+    border-radius: 10px;
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+}
+.csp-emergency-modal__facility[hidden] { display: none !important; }
+.csp-emergency-modal__facility-heading {
+    margin: 0 0 6px;
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: #64748b;
+}
+.csp-emergency-modal__facility-name {
+    display: block;
+    font-size: 15px;
+    font-weight: 800;
+    color: #0f172a;
+}
+.csp-emergency-modal__facility-meta {
+    margin: 4px 0 0;
+    font-size: 13px;
+    color: #475569;
+}
 .csp-emergency-modal__status {
     margin: 0 0 16px;
     padding: 10px 12px;
@@ -2405,6 +2437,28 @@ body.consultation-mobile-call-fullscreen .mc-provider-video-dock iframe {
                             Based on pre-consult triage (save an override above to update the final result)
                         <?php endif; ?>
                     </p>
+                    <div class="csp-section" id="cspAiPreliminaryBlock">
+                        <h4 class="csp-section__title">AI Preliminary Triage</h4>
+                        <p class="csp-empty" style="font-style:normal;margin:0 0 8px;">
+                            Classification:
+                            <strong><?= htmlspecialchars((string) ($clinical_support['ai_urgency'] ?? 'Not assessed')) ?></strong>
+                            <?php if (!empty($clinical_support['assessed_label'])): ?>
+                            <span style="color:#64748b;font-weight:400;"> · Assessment time: <?= htmlspecialchars((string) $clinical_support['assessed_label']) ?></span>
+                            <?php endif; ?>
+                        </p>
+                        <?php if (!empty($clinical_support['detected_complaints'])): ?>
+                        <p style="margin:0 0 6px;font-size:13px;"><strong>Detected complaints:</strong> <?= htmlspecialchars(implode(', ', (array) $clinical_support['detected_complaints'])) ?></p>
+                        <?php endif; ?>
+                        <?php if (isset($clinical_support['pain_score']) && $clinical_support['pain_score'] !== null && $clinical_support['pain_score'] !== ''): ?>
+                        <p style="margin:0 0 6px;font-size:13px;"><strong>Pain score:</strong> <?= htmlspecialchars((string) $clinical_support['pain_score']) ?>/10</p>
+                        <?php endif; ?>
+                        <?php if (!empty($clinical_support['associated_symptoms'])): ?>
+                        <p style="margin:0 0 6px;font-size:13px;"><strong>Associated symptoms:</strong> <?= htmlspecialchars(implode(', ', (array) $clinical_support['associated_symptoms'])) ?></p>
+                        <?php endif; ?>
+                        <?php if (!empty($clinical_support['relevant_red_flags'])): ?>
+                        <p style="margin:0;font-size:13px;"><strong>Relevant red flags:</strong> <?= htmlspecialchars(implode(', ', (array) $clinical_support['relevant_red_flags'])) ?></p>
+                        <?php endif; ?>
+                    </div>
 
                     <div class="csp-manual">
                         <h4 class="csp-section__title">Manual urgency override</h4>
@@ -2767,6 +2821,7 @@ body.consultation-mobile-call-fullscreen .mc-provider-video-dock iframe {
     <div class="csp-emergency-modal__card">
         <p class="csp-emergency-modal__eyebrow">Final triage confirmed</p>
         <h2 class="csp-emergency-modal__title" id="cspEmergencyTitle">EMERGENCY CASE</h2>
+        <p class="csp-emergency-modal__lead" id="cspEmergencyLead">This is not a video visit. The patient must go to the nearest hospital or emergency department now. A hospital referral has been recorded, and the patient is being shown where to go.</p>
         <dl class="csp-emergency-modal__dl">
             <dt>Patient name</dt>
             <dd id="cspEmergencyPatientName"><?= htmlspecialchars($patient['name']) ?></dd>
@@ -2779,9 +2834,14 @@ body.consultation-mobile-call-fullscreen .mc-provider-video-dock iframe {
             <dt>Clinical reason</dt>
             <dd id="cspEmergencyReason">—</dd>
         </dl>
-        <p class="csp-emergency-modal__status" id="cspEmergencyConnStatus">Waiting for patient to connect…</p>
+        <div class="csp-emergency-modal__facility" id="cspEmergencyFacility" hidden>
+            <p class="csp-emergency-modal__facility-heading">Nearest facility shown to patient</p>
+            <strong class="csp-emergency-modal__facility-name" id="cspEmergencyFacilityName"></strong>
+            <p class="csp-emergency-modal__facility-meta" id="cspEmergencyFacilityMeta"></p>
+        </div>
+        <p class="csp-emergency-modal__status" id="cspEmergencyConnStatus">Patient notified to seek emergency in-person care.</p>
         <div class="csp-emergency-modal__actions">
-            <button type="button" class="session-btn primary" id="cspEmergencyConnectBtn">Connect to Patient</button>
+            <button type="button" class="session-btn primary" id="cspEmergencyConnectBtn" hidden>Return to live call</button>
             <button type="button" class="session-btn" data-csp-emergency-close>Close</button>
         </div>
     </div>
@@ -2881,6 +2941,7 @@ let mobileCallFullscreen = false;
 let desktopVideoExpanded = false;
 let trueCallFullscreen = false;
 let videoCallClosed = <?= !empty($history_view) ? 'true' : 'false' ?>;
+let lastEmergencyVideoSessionActive = false;
 const MOBILE_CONSULT_BREAK = 768;
 
 function isMobileConsultation() {
@@ -3749,7 +3810,8 @@ async function overrideClinicalUrgency() {
                 : ('Override saved — Final Triage Result ' + finalLabel);
         }
         const workflow = result.workflow || {};
-        if (workflow.emergency === true && String(persisted.final_bucket || '') === 'emergency') {
+        if ((workflow.emergency === true || workflow.emergency_triggered === true)
+            && String(persisted.final_bucket || '') === 'emergency') {
             openProviderEmergencyModal(result);
         }
     } catch (e) {
@@ -3765,17 +3827,39 @@ async function overrideClinicalUrgency() {
     }
 }
 
+function providerVideoUiIsOpen() {
+    const activeUi = document.getElementById('activeCallUI');
+    return !!(activeUi && window.getComputedStyle(activeUi).display !== 'none');
+}
+
+function emergencyVideoIsLive() {
+    if (videoCallClosed) return false;
+    return providerVideoUiIsOpen() || lastEmergencyVideoSessionActive === true;
+}
+
+function currentFinalBucketIsEmergency() {
+    const el = document.getElementById('cspFinalUrgency');
+    return String(el && el.textContent ? el.textContent : '').toUpperCase().indexOf('EMERGENCY') !== -1;
+}
+
 function updateEmergencyConnectionStatus() {
     const el = document.getElementById('cspEmergencyConnStatus');
-    if (!el) return;
-    const connected = window.mcWebrtcPatientConnected === true;
-    el.classList.toggle('is-live', connected);
-    el.textContent = connected
-        ? 'Patient available — Connect Now'
-        : 'Waiting for patient to connect…';
     const btn = document.getElementById('cspEmergencyConnectBtn');
+    const live = emergencyVideoIsLive();
+    const patientOnCall = window.mcWebrtcPatientConnected === true;
+    if (el) {
+        el.classList.toggle('is-live', live && patientOnCall);
+        if (live && patientOnCall) {
+            el.textContent = 'A live video call is still open. Use it only to tell the patient to go to the ER, then end the visit.';
+        } else if (live) {
+            el.textContent = 'A video room is still open. Close this notice to return to it. Do not start a new video visit.';
+        } else {
+            el.textContent = 'Patient notified to seek emergency in-person care. Do not start a new video consultation.';
+        }
+    }
     if (btn) {
-        btn.textContent = connected ? 'Connect to Patient' : 'Connect to Patient';
+        btn.hidden = !live;
+        btn.textContent = 'Return to live call';
     }
 }
 
@@ -3784,6 +3868,8 @@ function openProviderEmergencyModal(result) {
     if (!modal) return;
     const persisted = (result && result.persisted) || {};
     const patient = (result && result.patient) || {};
+    const workflow = (result && result.workflow) || {};
+    lastEmergencyVideoSessionActive = workflow.video_session_active === true;
     const nameEl = document.getElementById('cspEmergencyPatientName');
     const idEl = document.getElementById('cspEmergencyPatientId');
     const consultEl = document.getElementById('cspEmergencyConsultId');
@@ -3794,6 +3880,33 @@ function openProviderEmergencyModal(result) {
     if (consultEl) consultEl.textContent = String(persisted.consultation_id || sessionConsultationId || '');
     if (finalEl) finalEl.textContent = persisted.final_label || 'EMERGENCY';
     if (reasonEl) reasonEl.textContent = persisted.clinical_reason || '—';
+
+    const facilityWrap = document.getElementById('cspEmergencyFacility');
+    const facilityName = document.getElementById('cspEmergencyFacilityName');
+    const facilityMeta = document.getElementById('cspEmergencyFacilityMeta');
+    const facilityPayload = workflow.facility && typeof workflow.facility === 'object' ? workflow.facility : {};
+    const nearest = facilityPayload.facility || null;
+    if (facilityWrap) {
+        if (nearest && nearest.name) {
+            facilityWrap.hidden = false;
+            if (facilityName) facilityName.textContent = nearest.name;
+            if (facilityMeta) {
+                const bits = [nearest.type, nearest.distance_label, nearest.address].filter(Boolean);
+                facilityMeta.textContent = bits.join(' · ');
+            }
+        } else {
+            facilityWrap.hidden = true;
+            if (facilityName) facilityName.textContent = '';
+            if (facilityMeta) {
+                facilityMeta.textContent = facilityPayload.message || '';
+            }
+            if (facilityPayload.message) {
+                facilityWrap.hidden = false;
+                if (facilityName) facilityName.textContent = 'Facility directory unavailable';
+            }
+        }
+    }
+
     updateEmergencyConnectionStatus();
     modal.hidden = false;
 }
@@ -3808,7 +3921,6 @@ document.addEventListener('click', function (e) {
     if (!t || !t.closest) return;
     if (t.closest('#cspEmergencyConnectBtn')) {
         closeProviderEmergencyModal();
-        startVideoCall();
         return;
     }
     if (t.closest('[data-csp-emergency-close]')) {
@@ -4077,6 +4189,10 @@ async function startVideoCall() {
     <?php endif; ?>
     if (videoCallClosed) {
         alert('This consultation has already ended. You can only view its historical record.');
+        return;
+    }
+    if (currentFinalBucketIsEmergency() && !emergencyVideoIsLive()) {
+        alert('This case is an emergency. Send the patient to the nearest hospital instead of starting a new video visit.');
         return;
     }
     try {

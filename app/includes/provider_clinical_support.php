@@ -311,6 +311,32 @@ function provider_consultation_clinical_support(PDO $pdo, int $consultationId, i
         $registrationReference = patient_chief_complaint_registration_reference($pdo, $patientId);
     }
 
+    $interview = is_array($payload['interview'] ?? null) ? $payload['interview'] : [];
+    $painScore = $interview['pain_score'] ?? ($payload['triage']['pain_scale']['score'] ?? null);
+    $detectedComplaints = [];
+    foreach ((array) ($interview['normalized_complaints'] ?? $interview['chief_complaints'] ?? []) as $item) {
+        if (is_string($item) && trim($item) !== '') {
+            $detectedComplaints[] = trim($item);
+        } elseif (is_array($item)) {
+            $label = trim((string) ($item['name'] ?? $item['id'] ?? ''));
+            if ($label !== '') {
+                $detectedComplaints[] = $label;
+            }
+        }
+    }
+    $redFlagLabels = [];
+    foreach ((array) ($payload['triage']['red_flags'] ?? $interview['red_flags'] ?? []) as $flag) {
+        if (is_string($flag) && trim($flag) !== '') {
+            $redFlagLabels[] = trim($flag);
+        } elseif (is_array($flag)) {
+            $label = trim((string) ($flag['flag_name'] ?? $flag['name'] ?? ''));
+            if ($label !== '') {
+                $redFlagLabels[] = $label;
+            }
+        }
+    }
+    $redFlagLabels = array_values(array_unique($redFlagLabels));
+
     $fromTriage = [
         'available' => true,
         'triage_id' => (int) $row['id'],
@@ -323,6 +349,12 @@ function provider_consultation_clinical_support(PDO $pdo, int $consultationId, i
             ? $original['english']
             : trim((string) ($row['english_complaint'] ?? '')),
         'symptoms' => $symptoms,
+        'detected_complaints' => $detectedComplaints !== [] ? $detectedComplaints : $symptoms,
+        'pain_score' => $painScore !== null && $painScore !== '' ? (int) $painScore : null,
+        'associated_symptoms' => is_array($interview['associated_symptoms'] ?? null)
+            ? $interview['associated_symptoms']
+            : $symptoms,
+        'relevant_red_flags' => $redFlagLabels !== [] ? $redFlagLabels : $warnings,
         'risk_level' => $riskLabel,
         'risk_bucket' => $bucket,
         'triage_level' => (string) ($row['triage_level'] ?? ''),

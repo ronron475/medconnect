@@ -1,0 +1,176 @@
+{
+  "version": "1.0",
+  "description": "Language-aware follow-up questions for the existing clinical triage interview. Clinical rules stay in ClinicalTriageEngine and datasets; this file only stores patient-facing question text.",
+  "questions": [
+    {
+      "question_id": "PAIN_LOCATION",
+      "clinical_purpose": "Locate unspecified pain or discomfort",
+      "required_when": ["pain_unspecified", "pain_no_location"],
+      "priority": 10,
+      "red_flag_related": false,
+      "english": "Where do you feel the pain or discomfort?",
+      "tagalog": "Saan mo nararamdaman ang sakit o hindi komportableng pakiramdam?",
+      "hiligaynon": "Diin mo nabatyagan ang sakit ukon discomfort?"
+    },
+    {
+      "question_id": "UNWELL_WHAT",
+      "clinical_purpose": "Clarify a vague unwell complaint",
+      "required_when": ["general_unwell"],
+      "priority": 11,
+      "red_flag_related": false,
+      "english": "What symptoms are you feeling, and where in your body?",
+      "tagalog": "Anong mga sintomas ang nararamdaman mo, at saan sa katawan?",
+      "hiligaynon": "Ano nga mga sintomas ang imo nabatyagan, kag diin sa imo lawas?"
+    },
+    {
+      "question_id": "BREATHING_SEVERITY",
+      "clinical_purpose": "Assess airway or breathing danger",
+      "required_when": ["breathing", "chest_pain"],
+      "priority": 20,
+      "red_flag_related": true,
+      "english": "Are you having difficulty breathing, or is it hard to speak because you are breathless?",
+      "tagalog": "Nahihirapan ka ba huminga, o mahirap bang magsalita dahil sa hirap ng paghinga?",
+      "hiligaynon": "Budlay bala ang imo ginhawa, ukon mabudlay bala maghambal tungod sa kakulang sang ginhawa?"
+    },
+    {
+      "question_id": "NEURO_WEAKNESS",
+      "clinical_purpose": "Detect one-sided neurological weakness",
+      "required_when": ["headache", "neuro"],
+      "priority": 21,
+      "red_flag_related": true,
+      "english": "Do you have weakness or numbness in one arm or leg?",
+      "tagalog": "May panghihina o pamamanhid ba sa isang braso o binti mo?",
+      "hiligaynon": "May kaluya ukon pamamanhid bala sa isa ka kamot ukon tiil mo?"
+    },
+    {
+      "question_id": "NEURO_SPEECH",
+      "clinical_purpose": "Detect speech difficulty",
+      "required_when": ["headache", "neuro"],
+      "priority": 22,
+      "red_flag_related": true,
+      "english": "Are you having difficulty speaking or is your speech slurred?",
+      "tagalog": "Nahihirapan ka ba magsalita o malabo ba ang iyong pananalita?",
+      "hiligaynon": "Budlay bala maghambal ukon daw indi maathag ang imo hambal?"
+    },
+    {
+      "question_id": "NEURO_VISION",
+      "clinical_purpose": "Detect sudden vision change",
+      "required_when": ["headache"],
+      "priority": 23,
+      "red_flag_related": true,
+      "english": "Have you had sudden vision changes, such as loss of vision or double vision?",
+      "tagalog": "May biglaang pagbabago ba sa paningin, tulad ng pagkawala ng paningin o dobleng paningin?",
+      "hiligaynon": "May gulpi nga pagbag-o bala sa imo panulok, pareho sang pagkadula sang panulok?"
+    },
+    {
+      "question_id": "BLEEDING_CONTINUING",
+      "clinical_purpose": "Determine if bleeding is ongoing",
+      "required_when": ["bleeding"],
+      "priority": 24,
+      "red_flag_related": true,
+      "english": "Is the bleeding still continuing?",
+      "tagalog": "Patuloy pa rin ba ang pagdurugo?",
+      "hiligaynon": "Nagapadayon pa bala ang pagdugo?"
+    },
+    {
+      "question_id": "BLEEDING_HEAVY",
+      "clinical_purpose": "Determine if bleeding is heavy or uncontrolled",
+      "required_when": ["bleeding"],
+      "priority": 25,
+      "red_flag_related": true,
+      "english": "Is the bleeding heavy or does it continue despite applying pressure?",
+      "tagalog": "Malakas ba ang pagdurugo at hindi ito tumitigil kahit dinidiinan?",
+      "hiligaynon": "Madamo bala ang dugo kag indi ini mag-untat bisan ginapugngan?"
+    },
+    {
+      "question_id": "BLEEDING_DIZZY",
+      "clinical_purpose": "Detect bleeding with faintness",
+      "required_when": ["bleeding"],
+      "priority": 26,
+      "red_flag_related": true,
+      "english": "Do you feel dizzy, weak, or like you might faint?",
+      "tagalog": "Nahihilo ka ba, nanghihina, o para kang mahimatay?",
+      "hiligaynon": "Nalilipong bala ikaw, nagakaluya, ukon daw magapunaw?"
+    },
+    {
+      "question_id": "CHEST_RADIATION",
+      "clinical_purpose": "Detect chest pain radiation",
+      "required_when": ["chest_pain"],
+      "priority": 27,
+      "red_flag_related": true,
+      "english": "Does the chest pain spread to your arm, back, neck, or jaw?",
+      "tagalog": "Kumakalat ba ang sakit sa dibdib papunta sa braso, likod, leeg, o panga?",
+      "hiligaynon": "Nagalapta bala ang sakit sang dughan paadto sa kamot, likod, liog, ukon panga?"
+    },
+    {
+      "question_id": "CHEST_SWEATING",
+      "clinical_purpose": "Detect associated sweating or faintness with chest pain",
+      "required_when": ["chest_pain"],
+      "priority": 28,
+      "red_flag_related": true,
+      "english": "Are you sweating a lot, or feeling dizzy or like you might faint?",
+      "tagalog": "Pinagpapawisan ka ba nang malakas, o nahihilo / para kang mahimatay?",
+      "hiligaynon": "Naga singot bala gid ikaw, ukon nalilipong / daw magapunaw?"
+    },
+    {
+      "question_id": "NOSE_PAIN_WHERE",
+      "clinical_purpose": "Localize nose pain",
+      "required_when": ["nose_pain"],
+      "priority": 35,
+      "red_flag_related": false,
+      "english": "Where exactly do you feel the pain in your nose?",
+      "tagalog": "Saan mo nararamdaman ang sakit sa ilong?",
+      "hiligaynon": "Diin gid ang sakit sa imo ilong?"
+    },
+    {
+      "question_id": "PAIN_SEVERITY",
+      "clinical_purpose": "Collect numeric pain score as supporting information",
+      "required_when": ["pain", "headache", "chest_pain", "abdominal_pain", "nose_pain"],
+      "priority": 40,
+      "red_flag_related": false,
+      "english": "On a scale of 1–10, where 1 is the least painful and 10 is the most painful, how severe is your pain?",
+      "tagalog": "Sa scale na 1 hanggang 10, kung saan ang 1 ay pinakamahinang sakit at ang 10 ay pinakamalalang sakit, gaano kasakit ang nararamdaman mo?",
+      "hiligaynon": "Sa scale nga 1 tubtob 10, diin ang 1 amo ang pinakagamay nga kasakit kag ang 10 amo ang pinakagrabe, ano ka grabe ang imo sakit?"
+    },
+    {
+      "question_id": "ONSET",
+      "clinical_purpose": "Determine sudden versus gradual onset",
+      "required_when": ["pain", "headache", "chest_pain", "abdominal_pain", "bleeding"],
+      "priority": 50,
+      "red_flag_related": false,
+      "english": "When did this start, and did it begin suddenly or gradually?",
+      "tagalog": "Kailan ito nagsimula, at biglaan ba o unti-unti?",
+      "hiligaynon": "San-o ini nagsugod, kag gulpi bala ukon hinay-hinay?"
+    },
+    {
+      "question_id": "DURATION",
+      "clinical_purpose": "Determine how long symptoms have lasted",
+      "required_when": ["pain", "headache", "chest_pain", "abdominal_pain", "general_unwell"],
+      "priority": 55,
+      "red_flag_related": false,
+      "english": "How long have you had these symptoms?",
+      "tagalog": "Gaano na katagal ang mga sintomas na ito?",
+      "hiligaynon": "Makadugay na bala ini nga mga sintomas?"
+    },
+    {
+      "question_id": "ABDOMINAL_ASSOCIATED",
+      "clinical_purpose": "Abdominal associated danger signs",
+      "required_when": ["abdominal_pain"],
+      "priority": 30,
+      "red_flag_related": true,
+      "english": "Do you have vomiting, fever, or any bleeding with the abdominal pain?",
+      "tagalog": "May pagsusuka, lagnat, o pagdurugo ba kasama ng sakit sa tiyan?",
+      "hiligaynon": "May suka, hilanat, ukon pagdugo bala upod sa sakit sang tiyan?"
+    },
+    {
+      "question_id": "ASSOCIATED_SYMPTOMS",
+      "clinical_purpose": "Identify other associated symptoms without assuming negatives",
+      "required_when": ["headache", "chest_pain", "pain", "dizziness"],
+      "priority": 70,
+      "red_flag_related": false,
+      "english": "Do you have any other symptoms besides what you already described?",
+      "tagalog": "May iba pa ba kayong sintomas maliban sa naisabi na?",
+      "hiligaynon": "May iban pa bala nga sintomas luwas sa imo nagsiling?"
+    }
+  ]
+}

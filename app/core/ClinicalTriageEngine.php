@@ -133,6 +133,7 @@ final class ClinicalTriageEngine
             $english
         );
         $redFlags = array_merge($redFlags, self::scanBreathingEmergencyPatterns($original, $english));
+        $redFlags = array_merge($redFlags, self::scanNeuroEmergencyPatterns($original, $english));
         $redFlags = array_merge($redFlags, self::scanTraumaEmergencyPatterns($original, $english, $normalizedBase));
         $redFlags = ClinicalContextReasoningEngine::filterContextGatedRedFlags($redFlags, $original, $english, $kbSymptoms);
 
@@ -590,10 +591,16 @@ final class ClinicalTriageEngine
         $patterns = [
             'indi ko kaginhawa'     => 'Unable to breathe (Hiligaynon)',
             'indi ko makaginhawa'   => 'Unable to breathe (Hiligaynon)',
+            'indi ko makahinga'     => 'Unable to breathe (Hiligaynon)',
             'indi makaginhawa'      => 'Difficulty breathing (Hiligaynon)',
+            'indi makahinga'        => 'Difficulty breathing (Hiligaynon)',
             'cannot breathe'        => 'Cannot breathe',
+            'can\'t breathe'        => 'Cannot breathe',
+            'cant breathe'          => 'Cannot breathe',
             'difficulty breathing'  => 'Difficulty breathing',
             'i can\'t breathe'      => 'Cannot breathe',
+            'hindi ako makahinga'   => 'Cannot breathe (Filipino)',
+            'hindi makahinga'       => 'Cannot breathe (Filipino)',
         ];
 
         $matched = [];
@@ -615,7 +622,7 @@ final class ClinicalTriageEngine
             }
         }
 
-        if ($matched === [] && preg_match('/\b(indi|dili|wala).{0,25}(kaginhawa|makaginhawa|ginhawa)\b/u', $hay)) {
+        if ($matched === [] && preg_match('/\b(indi|dili|wala|hindi).{0,25}(kaginhawa|makaginhawa|makahinga|ginhawa|hinga)\b/u', $hay)) {
             $matched[] = [
                 'flag_id'            => 'BREATH_CONTEXT',
                 'flag_name'          => 'Respiratory distress (contextual)',
@@ -624,10 +631,49 @@ final class ClinicalTriageEngine
                 'severity_points'    => 15,
                 'clinical_rationale' => 'Negated breathing capacity in local language indicates emergency respiratory distress.',
                 'matched_on'         => $hay,
-                'matched_pattern'    => '(indi|dili|wala) + breathing',
+                'matched_pattern'    => '(indi|dili|wala|hindi) + breathing',
                 'english_pattern'    => 'cannot breathe',
                 'source'             => 'breathing_pattern_scan',
             ];
+        }
+
+        return $matched;
+    }
+
+    /** @return list<array<string, mixed>> */
+    private static function scanNeuroEmergencyPatterns(string $original, string $english): array
+    {
+        $hay = strtolower(trim($original . ' ' . $english));
+        if ($hay === '') {
+            return [];
+        }
+
+        $patterns = [
+            '/nangaluya.{0,40}(kamot|kamay|tiil|braso|arm|leg|paa)/u' => 'One-sided weakness',
+            '/kaluya.{0,30}(isa ka|one|wala|left|right).{0,20}(kamot|kamay|tiil|arm|leg)/u' => 'One-sided weakness',
+            '/\b(one[- ]sided weakness|left arm.{0,20}weak|weakness in one)\b/u' => 'One-sided weakness',
+            '/\b(pamamanhid|naga\s*numb).{0,30}(kamot|kamay|tiil|arm|leg|wala)\b/u' => 'Focal numbness',
+            '/\b(facial droop|naparalysis ang atubang|nakasimangot)\b/u' => 'Facial droop',
+        ];
+
+        $matched = [];
+        foreach ($patterns as $pattern => $label) {
+            if (!preg_match($pattern, $hay)) {
+                continue;
+            }
+            $matched[] = [
+                'flag_id'            => 'NEURO_' . strtoupper(substr(md5($pattern), 0, 8)),
+                'flag_name'          => $label,
+                'category'           => 'neurological',
+                'auto_triage'        => 'EMERGENCY',
+                'severity_points'    => 15,
+                'clinical_rationale' => 'Focal neurological deficit requires emergency stroke evaluation.',
+                'matched_on'         => $hay,
+                'matched_pattern'    => $pattern,
+                'english_pattern'    => $label,
+                'source'             => 'neuro_pattern_scan',
+            ];
+            break;
         }
 
         return $matched;
@@ -721,29 +767,27 @@ final class ClinicalTriageEngine
         return ($rank[$b] ?? 0) >= ($rank[$a] ?? 0) ? $b : $a;
     }
 
+    /** @var list<array<string, string>>|null */
+    private static ?array $emergencyRedFlagRows = null;
+
+    /** @var list<array<string, string>>|null */
+    private static ?array $symptomCombinationRows = null;
+
     /** @return list<array<string, mixed>> */
     private static function scanEmergencyRedFlagsCsv(string $original, string $english): array
     {
-        $path = BASE_PATH . '/data/nlp/emergency_red_flags.csv';
-        if (!is_readable($path)) {
+        $hay = strtolower(trim($original . ' ' . $english));
+        if ($hay === '') {
             return [];
         }
-        $hay = strtolower(trim($original . ' ' . $english));
+        if (self::$emergencyRedFlagRows === null) {
+            self::$emergencyRedFlagRows = self::loadEmergencyRedFlagRows();
+        }
         $matched = [];
         $seen = [];
-        $handle = fopen($path, 'r');
-        if ($handle === false) {
-            return [];
-        }
-        $header = fgetcsv($handle);
-        while (($row = fgetcsv($handle)) !== false) {
-            $data = array_combine(
-                array_map(static fn ($h) => strtolower(trim((string) $h)), $header ?: []),
-                array_map(static fn ($v) => trim((string) $v), $row)
-            ) ?: [];
+        foreach (self::$emergencyRedFlagRows as $data) {
             $hil = strtolower((string) ($data['pattern_hiligaynon'] ?? ''));
             $eng = strtolower((string) ($data['pattern_english'] ?? ''));
-            // Ignore generator padding variants
             if (str_contains($hil, 'case') || str_contains($eng, 'case') || str_contains($eng, '#')) {
                 $hil = preg_replace('/\s+case\d+/', '', $hil) ?? $hil;
                 $eng = preg_replace('/\s*(case\d+|#\d+)/', '', $eng) ?? $eng;
@@ -777,9 +821,66 @@ final class ClinicalTriageEngine
                 'source'             => 'emergency_red_flags.csv',
             ];
         }
-        fclose($handle);
 
         return $matched;
+    }
+
+    /** @return list<array<string, string>> */
+    private static function loadEmergencyRedFlagRows(): array
+    {
+        $path = BASE_PATH . '/data/nlp/emergency_red_flags.csv';
+        if (!is_readable($path)) {
+            return [];
+        }
+        $handle = fopen($path, 'r');
+        if ($handle === false) {
+            return [];
+        }
+        $header = fgetcsv($handle);
+        $rows = [];
+        while (($row = fgetcsv($handle)) !== false) {
+            $data = array_combine(
+                array_map(static fn ($h) => strtolower(trim((string) $h)), $header ?: []),
+                array_map(static fn ($v) => trim((string) $v), $row)
+            ) ?: [];
+            if ($data !== []) {
+                $rows[] = $data;
+            }
+        }
+        fclose($handle);
+
+        return $rows;
+    }
+
+    /** @return list<array<string, string>> */
+    private static function symptomCombinationRows(): array
+    {
+        if (self::$symptomCombinationRows !== null) {
+            return self::$symptomCombinationRows;
+        }
+        self::$symptomCombinationRows = [];
+        $path = BASE_PATH . '/data/nlp/symptom_combinations.csv';
+        if (!is_readable($path)) {
+            return self::$symptomCombinationRows;
+        }
+        $handle = fopen($path, 'r');
+        if ($handle === false) {
+            return self::$symptomCombinationRows;
+        }
+        $header = fgetcsv($handle);
+        while (($row = fgetcsv($handle)) !== false) {
+            $data = array_combine(
+                array_map(static fn ($h) => strtolower(trim((string) $h)), $header ?: []),
+                array_map(static fn ($v) => trim((string) $v), $row)
+            ) ?: [];
+            if (($data['symptom_a'] ?? '') === '' || ($data['symptom_b'] ?? '') === '') {
+                continue;
+            }
+            self::$symptomCombinationRows[] = $data;
+        }
+        fclose($handle);
+
+        return self::$symptomCombinationRows;
     }
 
     /**
@@ -821,16 +922,10 @@ final class ClinicalTriageEngine
         }
         $ids = array_values(array_unique(array_filter($ids)));
 
-        $path = BASE_PATH . '/data/nlp/symptom_combinations.csv';
-        if (!is_readable($path) || $ids === []) {
+        if ($ids === []) {
             return [$score, $factors];
         }
 
-        $handle = fopen($path, 'r');
-        if ($handle === false) {
-            return [$score, $factors];
-        }
-        $header = fgetcsv($handle);
         $bestPts = 0;
         $bestClass = '';
         $emergencyIds = [
@@ -839,11 +934,7 @@ final class ClinicalTriageEngine
             'head_injury', 'major_trauma', 'angina', 'cardiac_arrest_symptoms', 'anaphylaxis',
         ];
         $seenPair = [];
-        while (($row = fgetcsv($handle)) !== false) {
-            $data = array_combine(
-                array_map(static fn ($h) => strtolower(trim((string) $h)), $header ?: []),
-                array_map(static fn ($v) => trim((string) $v), $row)
-            ) ?: [];
+        foreach (self::symptomCombinationRows() as $data) {
             $a = strtolower((string) ($data['symptom_a'] ?? ''));
             $b = strtolower((string) ($data['symptom_b'] ?? ''));
             if ($a === '' || $b === '') {
@@ -886,7 +977,6 @@ final class ClinicalTriageEngine
                 $factors['symptom_combination'] = $a . ' + ' . $b;
             }
         }
-        fclose($handle);
 
         if ($bestPts > 0 && $bestClass !== '') {
             $score = min(999, max($score, $bestPts));

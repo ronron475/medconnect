@@ -61,7 +61,7 @@ final class ClinicalFeatureExtractors
         if (preg_match('/\b(dugay na|matagal na|for a long time)\b/u', $low, $m)) {
             return ['raw' => $m[0], 'label' => 'For a long time', 'bucket' => 'chronic_weeks', 'days' => 14, 'hours' => null];
         }
-        if (preg_match('/\b(bag-o lang|just now|just started)\b/u', $low, $m)) {
+        if (preg_match('/\b(bag-o lang|just now|just started|gulpi lang|kalit lang|bigla lang)\b/u', $low, $m)) {
             return ['raw' => $m[0], 'label' => 'Just started', 'bucket' => 'acute_hours', 'days' => null, 'hours' => 1];
         }
 
@@ -101,23 +101,15 @@ final class ClinicalFeatureExtractors
             }
         }
 
-        if ($score === null && preg_match('/\b(pain|sakit|hapdi|masakit)\b/u', $low)) {
-            if (preg_match('/\b(grabe|severe|unbearable|worst)\b/u', $low) || preg_match('/\b(sakit|hapdi|masakit).{0,12}\bgid\b/u', $low)) {
-                $score = 8;
-            } elseif (preg_match('/\b(moderate|medyo|tunga-tunga)\b/u', $low)) {
-                $score = 5;
-            } elseif (preg_match('/\b(mild|gamay|slight)\b/u', $low)) {
-                $score = 2;
-            }
-        }
-
+        // Numeric pain scores only. Qualitative words (grabe/mild) must not invent a score.
         if ($score === null) {
             foreach (NlpFeaturePatternsLoader::patterns()['pain_scale'] ?? [] as $row) {
                 $pattern = (string) ($row['pattern'] ?? '');
-                if ($pattern !== '' && str_contains($low, $pattern)) {
-                    $score = (int) ($row['pain_score'] ?? 0);
-                    break;
+                if ($pattern === '' || !str_contains($low, $pattern) || !preg_match('/\d/', $pattern)) {
+                    continue;
                 }
+                $score = (int) ($row['pain_score'] ?? 0);
+                break;
             }
         }
 
@@ -289,21 +281,196 @@ final class ClinicalFeatureExtractors
         return 'Unknown';
     }
 
-    public static function isVagueComplaint(string $text): bool
+    public static function extractOnset(string $text): string
+    {
+        $low = strtolower($text);
+        if ($low === '') {
+            return '';
+        }
+        if (preg_match('/\b(gulpi|kalit|sudden|suddenly|bigla|all of a sudden)\b/u', $low)) {
+            return 'sudden';
+        }
+        if (preg_match('/\b(hinay-hinay|hinay|gradual|gradually|slowly|unti-unti|paunti-unti)\b/u', $low)) {
+            return 'gradual';
+        }
+
+        return '';
+    }
+
+    public static function extractPainQualifier(string $text): string
+    {
+        $low = strtolower($text);
+        if (preg_match('/\b(grabe|severe|unbearable|worst)\b/u', $low) || preg_match('/\b(sakit|hapdi|masakit).{0,12}\bgid\b/u', $low)) {
+            return 'severe';
+        }
+        if (preg_match('/\b(moderate|medyo|tunga-tunga)\b/u', $low)) {
+            return 'moderate';
+        }
+        if (preg_match('/\b(mild|gamay|slight)\b/u', $low)) {
+            return 'mild';
+        }
+
+        return '';
+    }
+
+    public static function extractStandalonePainScore(string $text, bool $awaitingPainQuestion): ?int
     {
         $low = strtolower(trim($text));
         if ($low === '') {
+            return null;
+        }
+        if (preg_match('/\b(\d{1,2})\s*\/\s*10\b/u', $low, $m) || preg_match('/\b(\d{1,2})\s*out of\s*10\b/u', $low, $m)) {
+            $val = (int) $m[1];
+
+            return ($val >= 0 && $val <= 10) ? $val : null;
+        }
+        if (!$awaitingPainQuestion) {
+            return null;
+        }
+        if (preg_match('/^\s*(\d{1,2})\s*(?:\/\s*10)?(?:\s|$)/u', $low, $m)) {
+            $val = (int) $m[1];
+
+            return ($val >= 0 && $val <= 10) ? $val : null;
+        }
+
+        return null;
+    }
+
+    /** @return list<string> */
+    public static function extractBodyLocations(string $text): array
+    {
+        $low = strtolower($text);
+        if ($low === '') {
+            return [];
+        }
+        $map = [
+            'ulo' => 'head', 'head' => 'head', 'headache' => 'head',
+            'dughan' => 'chest', 'dibdib' => 'chest', 'chest' => 'chest',
+            'tiyan' => 'abdomen', 'abdomen' => 'abdomen', 'stomach' => 'abdomen', 'belly' => 'abdomen',
+            'ilong' => 'nose', 'nose' => 'nose',
+            'kamot' => 'hand', 'kamay' => 'hand', 'hand' => 'hand',
+            'tiil' => 'leg', 'paa' => 'leg', 'leg' => 'leg',
+            'likod' => 'back', 'back' => 'back',
+            'liog' => 'neck', 'leeg' => 'neck', 'neck' => 'neck',
+            'mata' => 'eye', 'eye' => 'eye',
+        ];
+        $found = [];
+        foreach ($map as $term => $canonical) {
+            if (preg_match('/\b' . preg_quote($term, '/') . '\b/u', $low) && !in_array($canonical, $found, true)) {
+                $found[] = $canonical;
+            }
+        }
+
+        return $found;
+    }
+
+    public static function deniedAssociatedSymptoms(string $text): bool
+    {
+        $low = strtolower($text);
+
+        return (bool) preg_match(
+            '/wala iban nga sintomas|wala na iban|no other symptoms|nothing else|walang ibang sintomas|wala nang iba|no weakness|no numbness|without weakness|without numbness/u',
+            $low
+        );
+    }
+
+    public static function extractYesNo(string $text): ?bool
+    {
+        $low = strtolower(trim($text));
+        if ($low === '') {
+            return null;
+        }
+        if (preg_match('/\b(yes|oo|opo|hoo|hu-o|huo|tama|correct|gid)\b/u', $low)
+            && !preg_match('/\b(no|wala|hindi|indi|none)\b/u', $low)
+        ) {
             return true;
         }
-        if (preg_match('/\bi don\'t feel well\b|\bnot feeling well\b|\bindi maayo pamatyag\b|\bhindi maganda (ang )?pakiramdam\b|\bsomething is wrong\b/u', $low)) {
+        if (preg_match('/\b(no|wala|hindi|indi|none|not really)\b/u', $low)) {
+            return false;
+        }
+
+        return null;
+    }
+
+    public static function isVagueComplaint(string $text): bool
+    {
+        $low = strtolower(trim($text));
+        $low = trim((string) preg_replace('/[^\p{L}\p{N}\s]+/u', ' ', $low));
+        $low = trim((string) preg_replace('/\s+/u', ' ', $low));
+        if ($low === '') {
             return true;
         }
-        if (preg_match('/(fever|lagnat|hilanat|pain|sakit|hapdi|gapalanakit|masakit|cough|ubo|sip-?on|chest|dughan|dibdib|breath|ginhawa|blood|dugo|suka|vomit|kulba|ginakulba|headache|ulo|tiyan|abdomen|nause)/u', $low)) {
+        $genericExact = [
+            'sakit', 'masakit', 'pain', 'hurts', 'hurt', 'it hurts', 'something hurts',
+            'may sakit ako', 'indi ko maayo', 'indi ko maayo ang lawas ko',
+            'masama pakiramdam ko', 'i dont feel well', 'i don t feel well',
+            'not feeling well', 'lain lawas ko', 'may nararamdaman ako',
+            'masakit gid', 'something is wrong',
+        ];
+        if (in_array($low, $genericExact, true)) {
+            return true;
+        }
+        if (preg_match('/^(sakit|masakit|pain|hurts?|discomfort)( gid| lang| ko| ako)?$/u', $low)) {
+            return true;
+        }
+        if (preg_match('/\bi don\'t feel well\b|\bnot feeling well\b|\bindi maayo\b|\bhindi maganda (ang )?pakiramdam\b|\bsomething is wrong\b|\blain lawas\b/u', $low)
+            && !preg_match('/(ulo|dughan|dibdib|tiyan|ilong|chest|head|fever|lagnat|dugo|ginhawa|breath)/u', $low)
+        ) {
+            return true;
+        }
+        if (preg_match('/(fever|lagnat|hilanat|cough|ubo|sip-?on|chest|dughan|dibdib|breath|ginhawa|hinga|blood|dugo|suka|vomit|headache|ulo|tiyan|abdomen|ilong|nose|nause)/u', $low)) {
             return false;
         }
         $words = preg_split('/\s+/u', $low) ?: [];
 
         return count($words) <= 3;
+    }
+
+    /** Complaint text NLP cannot parse into a safe clinical picture. */
+    public static function isUnintelligibleComplaint(string $text): bool
+    {
+        $low = strtolower(trim($text));
+        $low = trim((string) preg_replace('/[^\p{L}\p{N}\s]+/u', ' ', $low));
+        $low = trim((string) preg_replace('/\s+/u', ' ', $low));
+        if ($low === '') {
+            return true;
+        }
+        if (preg_match('/\b(asdf|qwerty|zxcv|hjkl|xxxx|xzy|xyz|qwe|asd)\b/u', $low)) {
+            return true;
+        }
+
+        $words = preg_split('/\s+/u', $low) ?: [];
+        $realWords = 0;
+        foreach ($words as $word) {
+            $word = preg_replace('/[^a-z]/u', '', $word) ?? '';
+            if ($word === '' || strlen($word) < 3) {
+                continue;
+            }
+            if (preg_match('/[aeiouy]/u', $word)) {
+                $realWords++;
+            }
+        }
+
+        return count($words) >= 2 && $realWords <= 1 && preg_match('/\b(sakit|masakit|pain|hurt)\b/u', $low);
+    }
+
+    /** Patient reply that does not answer the pending clinical question. */
+    public static function isUnclearAnswer(string $text): bool
+    {
+        $low = strtolower(trim($text));
+        $low = trim((string) preg_replace('/[^\p{L}\p{N}\s]+/u', ' ', $low));
+        $low = trim((string) preg_replace('/\s+/u', ' ', $low));
+        if ($low === '') {
+            return true;
+        }
+        if (preg_match('/^(ambot|ewan|dunno|don t know|dont know|maybe|basta|hindi ko alam|indi ko mahibaluan|uh+h|um+)$/u', $low)) {
+            return true;
+        }
+        if (preg_match('/^(yes|no|oo|hindi|indi|wala|meron|oo po|hindi po)$/u', $low)) {
+            return false;
+        }
+
+        return mb_strlen($low) <= 2;
     }
 
     /**
@@ -324,11 +491,15 @@ final class ClinicalFeatureExtractors
         return [
             'duration'          => self::extractDuration($combined),
             'pain_scale'        => self::extractPainScale($combined),
+            'pain_qualifier'    => self::extractPainQualifier($combined),
+            'onset'             => self::extractOnset($combined),
+            'body_locations'    => self::extractBodyLocations($combined),
             'temperature'       => $temperature,
             'risk_factors'      => $risks,
             'age_group'         => self::extractAgeGroup($combined, $risks),
             'vague_complaint'   => self::isVagueComplaint($original !== '' ? $original : $english),
             'negated_concepts'  => array_values($neg),
+            'denied_associated' => self::deniedAssociatedSymptoms($combined),
         ];
     }
 }
