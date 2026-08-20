@@ -1506,6 +1506,35 @@ body.mc-tips-ready-modal-open {
   color: #475569;
 }
 
+.pdash-followup {
+  margin: 0 0 16px;
+  padding: 16px 18px;
+  border-radius: 12px;
+  border: 2px solid #0369a1;
+  background: #f0f9ff;
+}
+
+.pdash-followup[hidden] {
+  display: none !important;
+}
+
+.pdash-followup__label {
+  margin: 0 0 6px;
+  font-size: 0.75rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: #0369a1;
+}
+
+.pdash-followup__question {
+  margin: 0 0 12px;
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: #0f172a;
+  line-height: 1.4;
+}
+
 .pdash-care-ai-result {
   display: none;
   margin: 0 0 16px;

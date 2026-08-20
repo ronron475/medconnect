@@ -1,0 +1,113 @@
+{
+  "version": "1.0",
+  "description": "Dataset-driven complaint and follow-up family signals for the universal clinical interview gate. Expand rows here without PHP changes.",
+  "complaints": [
+    {
+      "complaint_id": "HEADACHE",
+      "label": "Headache",
+      "family_key": "headache",
+      "symptom_name_contains": ["headache", "head pain"],
+      "symptom_ids": ["headache"],
+      "body_parts": ["head"],
+      "text_regex": ["headache", "sakit ulo", "masakit ulo", "sakit sang ulo", "\\bulo\\b"]
+    },
+    {
+      "complaint_id": "CHEST_PAIN",
+      "label": "Chest pain",
+      "family_key": "chest_pain",
+      "symptom_name_contains": ["chest pain", "chest discomfort"],
+      "symptom_ids": ["chest_pain"],
+      "body_parts": ["chest"],
+      "text_regex": ["chest pain", "sakit dughan", "masakit dughan", "sakit sa dibdib", "masakit.{0,12}dibdib", "\\bdughan\\b", "\\bdibdib\\b", "\\bchest\\b"]
+    },
+    {
+      "complaint_id": "ABDOMINAL_PAIN",
+      "label": "Abdominal pain",
+      "family_key": "abdominal_pain",
+      "symptom_name_contains": ["abdominal", "stomach pain"],
+      "symptom_ids": ["abdominal_pain", "acute_abdomen"],
+      "body_parts": ["abdomen", "stomach"],
+      "text_regex": ["abdominal", "sakit tiyan", "masakit tiyan", "\\btiyan\\b", "stomach", "belly"]
+    },
+    {
+      "complaint_id": "BLEEDING",
+      "label": "Bleeding",
+      "family_key": "bleeding",
+      "symptom_name_contains": ["bleeding", "hemorrhage"],
+      "symptom_ids": ["bleeding"],
+      "text_regex": ["\\bgadugo\\b", "nagadugo", "nagdugo", "dumudugo", "bleeding", "\\bdugo\\b"]
+    },
+    {
+      "complaint_id": "NOSE_PAIN",
+      "label": "Nose pain",
+      "family_key": "nose_pain",
+      "symptom_name_contains": ["nose pain", "nasal pain"],
+      "body_parts": ["nose"],
+      "text_regex": ["sakit ilong", "masakit.{0,12}ilong", "nose pain", "\\bilong\\b", "\\bnose\\b"]
+    },
+    {
+      "complaint_id": "DIFFICULTY_BREATHING",
+      "label": "Difficulty breathing",
+      "family_key": "breathing",
+      "symptom_name_contains": ["difficulty breathing", "shortness of breath", "dyspnea"],
+      "symptom_ids": ["difficulty_breathing"],
+      "text_regex": ["difficulty breathing", "cannot breathe", "can't breathe", "makahinga", "makaginhawa", "budlay.{0,16}ginhawa", "hirap huminga", "shortness of breath"]
+    },
+    {
+      "complaint_id": "DIZZINESS",
+      "label": "Dizziness",
+      "family_key": "dizziness",
+      "symptom_name_contains": ["dizziness", "vertigo", "lightheaded"],
+      "symptom_ids": ["dizziness"],
+      "text_regex": ["\\bhilo\\b", "nahilo", "nahihilo", "dizzy", "dizziness", "malipong", "nalipong", "lingin"]
+    },
+    {
+      "complaint_id": "NEURO",
+      "label": "Neurological symptoms",
+      "family_key": "neuro",
+      "symptom_name_contains": ["weakness", "numbness", "neurological"],
+      "symptom_ids": ["stroke_symptoms", "weakness"],
+      "text_regex": ["weakness", "nangaluya", "kaluya", "numb", "pamamanhid"],
+      "text_regex_exclude": ["\\b(no|wala|hindi|indi|without)\\s+(weakness|numbness|pamamanhid|numb)\\b"]
+    }
+  ],
+  "fallback_complaints": [
+    {
+      "complaint_id": "PAIN_UNSPECIFIED",
+      "label": "Pain / discomfort",
+      "family_key": "pain_unspecified",
+      "requires_pain_token": true,
+      "requires_no_matched_complaint": true,
+      "requires_no_body_location": true
+    },
+    {
+      "complaint_id": "GENERAL_UNWELL",
+      "label": "Unwell",
+      "family_key": "general_unwell",
+      "requires_vague_complaint": true,
+      "requires_no_pain_token": true,
+      "requires_no_matched_complaint": true
+    },
+    {
+      "complaint_id": "PAIN",
+      "label": "Pain",
+      "family_key": "pain",
+      "requires_pain_token": true,
+      "requires_body_location": true,
+      "requires_no_matched_complaint": true
+    }
+  ],
+  "derived_families": [
+    {
+      "key": "pain",
+      "add_when_family_any": ["headache", "chest_pain", "abdominal_pain", "nose_pain", "pain", "pain_unspecified"]
+    },
+    {
+      "key": "pain_no_location",
+      "add_when_no_body_location": true,
+      "add_when_family_any": ["pain_unspecified", "pain"],
+      "add_when_vague_or_unlocated_pain": true
+    }
+  ],
+  "low_priority_threshold": 40
+}

@@ -17,6 +17,9 @@ final class PhraseCombinatorialEngine
   /** @var array<string, string>|null */
   private static ?array $misspellingMap = null;
 
+  /** @var array<string, string>|null */
+  private static ?array $sortedMisspellingMap = null;
+
   /** @var array{0: array<string, array<string, mixed>>, 1: array<string, array<string, mixed>>, 2: array<string, array<string, mixed>>}|null */
   private static ?array $classificationIndex = null;
 
@@ -34,10 +37,12 @@ final class PhraseCombinatorialEngine
     if ($working === '') {
       return '';
     }
-    $map = self::misspellingMap();
-    uksort($map, static fn (string $a, string $b): int => strlen($b) <=> strlen($a));
-    foreach ($map as $wrong => $correct) {
-      $working = preg_replace('/(?<!\w)' . preg_quote($wrong, '/') . '(?!\w)/u', $correct, $working) ?? $working;
+    foreach (self::sortedMisspellingMap() as $wrong => $correct) {
+      $wrong = (string) $wrong;
+      if ($wrong === '' || strlen($wrong) > strlen($working) || !str_contains($working, $wrong)) {
+        continue;
+      }
+      $working = preg_replace('/(?<!\w)' . preg_quote($wrong, '/') . '(?!\w)/u', (string) $correct, $working) ?? $working;
     }
 
     return trim($working);
@@ -199,6 +204,19 @@ final class PhraseCombinatorialEngine
     return self::$misspellingMap;
   }
 
+  /** @return array<string, string> */
+  private static function sortedMisspellingMap(): array
+  {
+    if (self::$sortedMisspellingMap !== null) {
+      return self::$sortedMisspellingMap;
+    }
+    $map = self::misspellingMap();
+    uksort($map, static fn (string $a, string $b): int => strlen($b) <=> strlen($a));
+    self::$sortedMisspellingMap = $map;
+
+    return self::$sortedMisspellingMap;
+  }
+
   /** @return array<string, mixed> */
   private static function loadJson(string $name): array
   {
@@ -223,7 +241,7 @@ final class PhraseCombinatorialEngine
     foreach (self::symptomRoots() as $root) {
       foreach ($root['terms_sorted'] ?? [] as $term) {
         $termN = self::normalize((string) $term);
-        if ($termN === '') {
+        if ($termN === '' || strlen($termN) > strlen($text) || !str_contains($text, $termN)) {
           continue;
         }
         if (!preg_match_all('/(?<!\w)' . preg_quote($termN, '/') . '(?!\w)/u', $text, $m, PREG_OFFSET_CAPTURE)) {
@@ -260,7 +278,7 @@ final class PhraseCombinatorialEngine
     $occupied = array_fill(0, max(strlen($text), 1), false);
     foreach (self::bodyParts() as $part) {
       $hil = self::normalize((string) ($part['hil'] ?? ''));
-      if ($hil === '') {
+      if ($hil === '' || strlen($hil) > strlen($text) || !str_contains($text, $hil)) {
         continue;
       }
       if (!preg_match_all('/(?<!\w)' . preg_quote($hil, '/') . '(?!\w)/u', $text, $m, PREG_OFFSET_CAPTURE)) {

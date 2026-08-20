@@ -30,35 +30,8 @@ final class MedicalEntityExtractor
             return $entities;
         }
 
-        foreach (HiligaynonNlpDataset::termsByLength() as $term) {
-            if (!preg_match('/(?<!\w)' . preg_quote($term, '/') . '(?!\w)/iu', $normalized)) {
-                continue;
-            }
-            $entry = HiligaynonNlpDataset::lookup($term);
-            if ($entry === null) {
-                continue;
-            }
-            $key = strtolower($term);
-            if (isset($seen[$key])) {
-                continue;
-            }
-            $seen[$key] = true;
-            $english = (string) ($entry['english_translation'] ?? '');
-            $entities[] = [
-                'hiligaynon_term' => (string) ($entry['hiligaynon_term'] ?? $term),
-                'english_term'    => $english,
-                'symptom'         => self::symptomFromEnglish($english),
-                'condition'       => str_contains(strtolower($english), 'infection') ? $english : '',
-                'body_part'       => self::bodyPartFromText($term, $english),
-                'severity'        => self::normalizeSeverity((string) ($entry['severity'] ?? '')),
-                'duration'        => self::extractDuration($text),
-                'type'            => str_contains(strtolower($english), 'infection') ? 'condition' : 'symptom',
-                'category'        => (string) ($entry['medical_category'] ?? 'symptom'),
-                'confidence'      => 92,
-                'source'          => 'hiligaynon_nlp_dataset',
-            ];
-        }
-
+        // Phrase + combinatorial datasets already ran. Do not brute-force
+        // hiligaynon_medical_nlp_dataset.csv (13MB+) with per-term Unicode regex.
         return $entities;
     }
 

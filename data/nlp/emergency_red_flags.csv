@@ -637,3 +637,8 @@ RF074,Alcohol Withdrawal Seizure,withdrawal seizure,,EMERGENCY,Emergency warning
 RF075,Blue Lips,,cyanosis lips,EMERGENCY,Emergency warning sign: Blue Lips.,active
 RF075,Blue Lips,,asul ang labi,EMERGENCY,Emergency warning sign: Blue Lips.,active
 RF075,Blue Lips,asul bibig,,EMERGENCY,Emergency warning sign: Blue Lips.,active
+EF200,Respiratory Distress,indi ko makahinga,cannot breathe,EMERGENCY,Severe respiratory distress — inability to breathe,active
+EF201,Respiratory Distress,indi makahinga,cannot breathe,EMERGENCY,Inability to breathe (Hiligaynon),active
+EF202,Stroke Symptoms,nangaluya akon wala nga kamot,one sided arm weakness,EMERGENCY,Focal neurological deficit — stroke alert,active
+EF203,Stroke Symptoms,nangaluya akon kamot,arm weakness,EMERGENCY,Arm weakness with possible stroke,active
+EF205,Respiratory Distress,daw indi ko makahinga,difficulty breathing,EMERGENCY,Reported inability to breathe,active

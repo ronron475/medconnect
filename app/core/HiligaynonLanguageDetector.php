@@ -19,10 +19,11 @@ final class HiligaynonLanguageDetector
     /** @var list<string> */
     private const TAGALOG_MARKERS = [
         'po', 'naman', 'talaga', 'kasi', 'lang', 'din', 'rin', 'yung', 'yun', 'yan',
-        'ito', 'mga', 'ng', 'siya', 'niya', 'kanya', 'tayo', 'natin', 'kami', 'namin',
+        'ito', 'mga', 'ng', 'siya', 'niya', 'kanya',         'tayo', 'natin', 'kami', 'namin',
         'sila', 'nila', 'hindi', 'wala', 'meron', 'mayroon', 'parang', 'siguro', 'ba',
         'ho', 'opo', 'sakit', 'masakit', 'ubo', 'sipon', 'lagnat', 'hilo', 'nahihilo',
         'tiyan', 'dibdib', 'ulo', 'mata', 'kamay', 'paa', 'pagod', 'hingal', 'suka',
+        'at', 'ang', 'ako', 'ko',
     ];
 
     /** @var list<string> */
@@ -33,7 +34,7 @@ final class HiligaynonLanguageDetector
     ];
 
     /**
-     * @return array{primary:string, tags:list<string>, is_local:bool}
+     * @return array{primary:string, tags:list<string>, is_local:bool, dominant?:string}
      */
     public static function detect(string $text): array
     {
@@ -57,20 +58,44 @@ final class HiligaynonLanguageDetector
             $tags[] = 'english';
         }
 
-        if (count($tags) >= 2) {
-            return ['primary' => 'mixed', 'tags' => $tags, 'is_local' => true];
+        $compact = trim((string) preg_replace('/[^\p{L}\p{N}\s]+/u', '', $normalized));
+        if ($compact === 'sakit') {
+            return ['primary' => 'hiligaynon', 'tags' => ['hiligaynon'], 'is_local' => true, 'dominant' => 'hiligaynon'];
         }
-        if ($hil > 0) {
-            return ['primary' => 'hiligaynon', 'tags' => $tags, 'is_local' => true];
+        if ($compact === 'masakit') {
+            return ['primary' => 'tagalog', 'tags' => ['tagalog'], 'is_local' => true, 'dominant' => 'tagalog'];
         }
-        if ($tag > 0) {
-            return ['primary' => 'tagalog', 'tags' => $tags, 'is_local' => true];
-        }
-        if ($eng > 0 || MedicalDictionary::isLikelyEnglish($normalized)) {
-            return ['primary' => 'english', 'tags' => $tags ?: ['english'], 'is_local' => false];
+        if (in_array($compact, ['it hurts', 'it hurt', 'hurts', 'hurt', 'pain', 'something hurts'], true)) {
+            return ['primary' => 'english', 'tags' => ['english'], 'is_local' => false, 'dominant' => 'english'];
         }
 
-        return ['primary' => 'hiligaynon', 'tags' => ['hiligaynon'], 'is_local' => true];
+        $dominant = 'hiligaynon';
+        $hasKag = (bool) preg_match('/\bkag\b/u', $normalized);
+        $hasAt = (bool) preg_match('/\bat\b/u', $normalized);
+        if ($hasAt && !$hasKag && $tag > 0) {
+            $dominant = 'tagalog';
+        } elseif ($hil >= $tag && $hil >= $eng && $hil > 0) {
+            $dominant = 'hiligaynon';
+        } elseif ($tag >= $eng && $tag > 0) {
+            $dominant = 'tagalog';
+        } elseif ($eng > 0) {
+            $dominant = 'english';
+        }
+
+        if (count($tags) >= 2) {
+            return ['primary' => 'mixed', 'tags' => $tags, 'is_local' => true, 'dominant' => $dominant];
+        }
+        if ($hil > 0) {
+            return ['primary' => 'hiligaynon', 'tags' => $tags, 'is_local' => true, 'dominant' => 'hiligaynon'];
+        }
+        if ($tag > 0) {
+            return ['primary' => 'tagalog', 'tags' => $tags, 'is_local' => true, 'dominant' => 'tagalog'];
+        }
+        if ($eng > 0 || MedicalDictionary::isLikelyEnglish($normalized)) {
+            return ['primary' => 'english', 'tags' => $tags ?: ['english'], 'is_local' => false, 'dominant' => 'english'];
+        }
+
+        return ['primary' => 'hiligaynon', 'tags' => ['hiligaynon'], 'is_local' => true, 'dominant' => 'hiligaynon'];
     }
 
     public static function primaryLanguage(string $text): string

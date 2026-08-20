@@ -23,6 +23,34 @@ final class ChiefComplaintNlpService
     }
 
     /**
+     * Adaptive interview on top of the existing NLP engine.
+     * Final completed assessments resolve to NON-URGENT, URGENT, or EMERGENCY only.
+     *
+     * @param list<string> $checkboxSymptoms
+     * @param array<string, mixed> $priorContext
+     * @return array<string, mixed>
+     */
+    public static function assessInterview(string $utterance, array $priorContext = [], array $checkboxSymptoms = []): array
+    {
+        try {
+            return ClinicalInterviewEngine::assess($utterance, $priorContext, $checkboxSymptoms);
+        } catch (Throwable $e) {
+            error_log('ChiefComplaintNlpService interview fallback: ' . $e->getMessage());
+            $base = self::assessWithFallback($utterance, $checkboxSymptoms);
+            $base['assessment_status'] = ClinicalInterviewEngine::STATUS_COMPLETED;
+            $display = strtoupper(str_replace('_', '-', (string) ($base['triage']['triage_display'] ?? 'NON-URGENT')));
+            if (!in_array($display, ['NON-URGENT', 'URGENT', 'EMERGENCY'], true)) {
+                $display = 'NON-URGENT';
+                $base['triage']['triage_display'] = $display;
+                $base['triage']['triage_classification'] = 'NON_URGENT';
+            }
+            $base['patient_message'] = ClinicalInterviewEngine::patientMessage($display);
+
+            return $base;
+        }
+    }
+
+    /**
      * CDS demo / API summary block (explainable output).
      *
      * @return array<string, mixed>

@@ -66,7 +66,7 @@ function patient_find_preliminary_complaint_triage(
           AND TRIM(COALESCE(chief_complaint, '')) <> ''
           AND COALESCE(assigned_provider_id, 0) = 0
           AND COALESCE(recommendation_status, 'hidden') NOT IN ('pending_approval', 'approved')
-          AND LOWER(COALESCE(outcome, '')) IN ('', 'preliminary_assessment')
+          AND LOWER(COALESCE(outcome, '')) IN ('', 'preliminary_assessment', 'assessment_in_progress')
           AND LOWER(COALESCE(status, 'pending')) NOT IN ('completed', 'cancelled', 'canceled')
           AND assessed_at >= DATE_SUB(NOW(), INTERVAL 14 DAY)
     ";
@@ -109,6 +109,28 @@ function patient_symptoms_review_assessment_from_row(array $row): array
     $decoded = json_decode((string) $raw, true);
 
     return is_array($decoded) ? $decoded : [];
+}
+
+/**
+ * @return array<string, mixed>
+ */
+function patient_symptoms_review_interview_payload(int $triageId, array $assessment): array
+{
+    $question = is_array($assessment['followup_question'] ?? null) ? $assessment['followup_question'] : [];
+    $interview = is_array($assessment['interview'] ?? null) ? $assessment['interview'] : [];
+
+    return [
+        'assessment_in_progress' => true,
+        'assessment_status' => ClinicalInterviewEngine::STATUS_IN_PROGRESS,
+        'triage_id' => $triageId,
+        'followup_question' => (string) ($question['text'] ?? $assessment['patient_message'] ?? ''),
+        'followup_question_id' => (string) ($question['question_id'] ?? ''),
+        'question_language' => (string) ($question['language'] ?? $interview['question_language'] ?? ''),
+        'detected_complaints' => is_array($interview['normalized_complaints'] ?? null)
+            ? $interview['normalized_complaints']
+            : [],
+        'assigned_provider_id' => 0,
+    ];
 }
 
 /**
@@ -240,10 +262,26 @@ function patient_symptoms_review_bind_assessment_row(
     array $symptomList,
     array $assessment
 ): int {
-    $level = (string) ($assessment['triage']['db_level'] ?? $assessment['db_level'] ?? '3');
-    $label = (string) ($assessment['triage']['urgency_label'] ?? $assessment['urgency_label'] ?? 'Routine');
-    $triageLevel = TriageLevelService::fromAssessment($assessment);
-    $classification = (string) ($assessment['triage']['triage_classification'] ?? '');
+    $inProgress = class_exists('ClinicalInterviewEngine') && ClinicalInterviewEngine::isInProgress($assessment);
+    $level = $inProgress
+        ? 'pending'
+        : (string) ($assessment['triage']['db_level'] ?? $assessment['db_level'] ?? '3');
+    $label = $inProgress
+        ? 'Assessment in progress'
+        : (string) ($assessment['triage']['urgency_label'] ?? $assessment['urgency_label'] ?? 'Routine');
+    $triageLevel = $inProgress ? null : TriageLevelService::fromAssessment($assessment);
+    if ($triageLevel === '') {
+        $triageLevel = null;
+    }
+    $classification = $inProgress
+        ? null
+        : (string) ($assessment['triage']['triage_classification'] ?? '');
+    if ($classification === '') {
+        $classification = null;
+    }
+    $assessmentStatus = $inProgress
+        ? ClinicalInterviewEngine::STATUS_IN_PROGRESS
+        : ClinicalInterviewEngine::STATUS_COMPLETED;
     $recText = implode("\n", $assessment['recommendations'] ?? []);
     $engine = (string) ($assessment['engine'] ?? MedicalAssessmentEngine::VERSION);
     $params = [
@@ -261,6 +299,7 @@ function patient_symptoms_review_bind_assessment_row(
         $recText,
         json_encode($assessment, JSON_UNESCAPED_UNICODE),
         $engine,
+        $assessmentStatus,
     ];
 
     if ($existingId > 0) {
@@ -272,7 +311,7 @@ function patient_symptoms_review_bind_assessment_row(
                 status = 'pending', assessed_at = NOW(),
                 confidence_score = ?, severity = ?, triage_level = ?, triage_classification = ?,
                 english_complaint = ?, detected_symptoms_json = ?, possible_conditions_json = ?,
-                recommendations = ?, assessment_payload = ?, engine = ?
+                recommendations = ?, assessment_payload = ?, engine = ?, assessment_status = ?
             WHERE id = ? AND patient_id = ?
         ")->execute($params);
 
@@ -286,8 +325,8 @@ function patient_symptoms_review_bind_assessment_row(
             (patient_id, symptoms, chief_complaint, level, urgency_label, status, assessed_at,
              confidence_score, severity, triage_level, triage_classification, english_complaint,
              detected_symptoms_json, possible_conditions_json, recommendations,
-             assessment_payload, engine)
-        VALUES (?, ?, ?, ?, ?, 'pending', NOW(), ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+             assessment_payload, engine, assessment_status)
+        VALUES (?, ?, ?, ?, ?, 'pending', NOW(), ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     ")->execute($insert);
 
     return (int) $pdo->lastInsertId();
@@ -303,16 +342,18 @@ function patient_submit_symptoms_for_review(
     string $complaint,
     array $symptomList,
     string $stage = 'continue',
-    int $reuseTriageId = 0
+    int $reuseTriageId = 0,
+    string $followupAnswer = ''
 ): array {
     triage_assessment_ensure_schema($pdo);
     BhwPatientWorkflow::ensure_schema($pdo);
     consultations_auto_expire($pdo, $patientId);
 
     $complaint = trim($complaint);
+    $followupAnswer = trim($followupAnswer);
     $stage = strtolower(trim($stage)) === 'preview' ? 'preview' : 'continue';
     $reuseTriageId = max(0, $reuseTriageId);
-    if ($complaint === '' && $symptomList === []) {
+    if ($complaint === '' && $symptomList === [] && $followupAnswer === '') {
         return ['ok' => false, 'message' => 'Please describe your symptoms or health concern.', 'payload' => []];
     }
 
@@ -409,9 +450,16 @@ function patient_submit_symptoms_for_review(
         }
     }
     $samePrelim = $prelim
+        && $complaint !== ''
         && patient_symptoms_review_same_complaint($complaint, (string) ($prelim['chief_complaint'] ?? ''));
+    $prelimInterview = $prelim ? patient_symptoms_review_assessment_from_row($prelim) : [];
+    $prelimInProgress = $prelim && (
+        strtoupper((string) ($prelimInterview['assessment_status'] ?? '')) === 'IN_PROGRESS'
+        || strtolower((string) ($prelim['outcome'] ?? '')) === 'assessment_in_progress'
+        || trim((string) ($prelim['triage_classification'] ?? '')) === ''
+    );
 
-    if ($stage === 'preview' && $samePrelim && $prelim) {
+    if ($stage === 'preview' && $samePrelim && $prelim && $followupAnswer === '' && !$prelimInProgress) {
         $triageLevel = (string) ($prelim['triage_level'] ?? TriageLevelService::NON_URGENT);
         $classification = (string) ($prelim['triage_classification'] ?? '');
         if ($triageLevel === TriageLevelService::EMERGENCY) {
@@ -431,14 +479,14 @@ function patient_submit_symptoms_for_review(
         }
     }
 
-    $reuseExisting = $stage === 'continue' && $prelim && (
+    $reuseExisting = $stage === 'continue' && $followupAnswer === '' && !$prelimInProgress && $prelim && (
         ($reuseTriageId > 0 && $reuseTriageId === (int) ($prelim['id'] ?? 0))
         || ($reuseTriageId === 0 && $samePrelim)
     );
 
     $assessment = [];
     if ($reuseExisting && $prelim) {
-        $assessment = patient_symptoms_review_assessment_from_row($prelim);
+        $assessment = $prelimInterview !== [] ? $prelimInterview : patient_symptoms_review_assessment_from_row($prelim);
         if ($symptomList === []) {
             $storedSymptoms = json_decode((string) ($prelim['symptoms'] ?? ''), true);
             if (is_array($storedSymptoms)) {
@@ -448,7 +496,20 @@ function patient_submit_symptoms_for_review(
     }
 
     if ($assessment === []) {
-        $assessment = ChiefComplaintNlpService::assessWithFallback($complaint, $symptomList);
+        $priorContext = [];
+        $storedComplaint = $prelim ? trim((string) ($prelim['chief_complaint'] ?? '')) : '';
+        if ($prelim && ($followupAnswer !== '' || $prelimInProgress || $reuseTriageId > 0)) {
+            $priorContext = $prelimInterview !== [] ? $prelimInterview : patient_symptoms_review_assessment_from_row($prelim);
+        }
+        $utterance = $followupAnswer !== '' ? $followupAnswer : $complaint;
+        if ($utterance === '' && $storedComplaint !== '') {
+            $utterance = $storedComplaint;
+        }
+        $assessment = ChiefComplaintNlpService::assessInterview($utterance, $priorContext, $symptomList);
+        if ($storedComplaint !== '') {
+            $assessment['chief_complaint'] = $storedComplaint;
+            $assessment['original_chief_complaint'] = $storedComplaint;
+        }
     }
 
     $label = (string) ($assessment['triage']['urgency_label'] ?? $assessment['urgency_label'] ?? 'Routine');
@@ -462,6 +523,15 @@ function patient_submit_symptoms_for_review(
 
     $isEmergency = $triageLevel === TriageLevelService::EMERGENCY
         || strtoupper((string) ($assessment['triage']['triage_classification'] ?? '')) === 'EMERGENCY';
+    $interviewInProgress = ClinicalInterviewEngine::isInProgress($assessment);
+    if ($interviewInProgress) {
+        $isEmergency = false;
+        $triageLevel = '';
+    }
+    $persistComplaint = trim((string) ($assessment['chief_complaint'] ?? ''));
+    if ($persistComplaint === '') {
+        $persistComplaint = $complaint !== '' ? $complaint : trim((string) (($prelim ?? [])['chief_complaint'] ?? ''));
+    }
 
     $nameStmt = $pdo->prepare('SELECT CONCAT(first_name, " ", last_name) FROM users WHERE id = ? LIMIT 1');
     $nameStmt->execute([$patientId]);
@@ -479,10 +549,26 @@ function patient_submit_symptoms_for_review(
                 $pdo,
                 $patientId,
                 $existingId,
-                $complaint,
+                $persistComplaint,
                 $symptomList,
                 $assessment
             );
+        }
+
+        if ($interviewInProgress) {
+            try {
+                $pdo->prepare("UPDATE triage_results SET outcome = 'assessment_in_progress', recommendation_status = 'hidden', assigned_provider_id = NULL, assigned_at = NULL WHERE id = ?")
+                    ->execute([$triageId]);
+            } catch (PDOException $e) {
+                // optional columns
+            }
+            $pdo->commit();
+
+            return [
+                'ok' => true,
+                'message' => (string) ($assessment['patient_message'] ?? 'Please answer the follow-up question.'),
+                'payload' => patient_symptoms_review_interview_payload($triageId, $assessment),
+            ];
         }
 
         $recText = implode("\n", $assessment['recommendations'] ?? []);

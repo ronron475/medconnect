@@ -109,6 +109,22 @@ final class MedicalMisspellingsLoader
         return self::$map;
     }
 
+    /** @var array<string, string>|null */
+    private static ?array $sortedMap = null;
+
+    /** @return array<string, string> */
+    public static function sortedMap(): array
+    {
+        if (self::$sortedMap !== null) {
+            return self::$sortedMap;
+        }
+        $map = self::map();
+        uksort($map, static fn (string $a, string $b): int => strlen($b) <=> strlen($a));
+        self::$sortedMap = $map;
+
+        return self::$sortedMap;
+    }
+
     public static function applyCorrections(string $text): string
     {
         return self::applyCorrectionsWithLog($text)['text'];
@@ -124,16 +140,30 @@ final class MedicalMisspellingsLoader
             return ['text' => '', 'corrections' => []];
         }
 
-        $map = self::map();
-        uksort($map, static fn (string $a, string $b): int => strlen($b) <=> strlen($a));
         $corrections = [];
-        foreach ($map as $wrong => $correct) {
+        $tokens = preg_split('/\s+/u', $working, -1, PREG_SPLIT_NO_EMPTY) ?: [];
+        $tokenSet = array_fill_keys($tokens, true);
+        foreach (self::sortedMap() as $wrong => $correct) {
+            $wrong = (string) $wrong;
+            $correct = (string) $correct;
+            if (strlen($wrong) < 4 || strlen($wrong) > strlen($working)) {
+                continue;
+            }
+            if (str_contains($wrong, ' ')) {
+                if (!str_contains($working, $wrong)) {
+                    continue;
+                }
+            } elseif (!isset($tokenSet[$wrong])) {
+                continue;
+            }
             $pattern = '/(?<!\w)' . preg_quote($wrong, '/') . '(?!\w)/u';
             if (!preg_match($pattern, $working)) {
                 continue;
             }
             $corrections[] = ['from' => $wrong, 'to' => $correct];
             $working = preg_replace($pattern, $correct, $working) ?? $working;
+            $tokens = preg_split('/\s+/u', $working, -1, PREG_SPLIT_NO_EMPTY) ?: [];
+            $tokenSet = array_fill_keys($tokens, true);
         }
 
         return [
