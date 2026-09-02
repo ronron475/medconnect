@@ -55,8 +55,8 @@ require_once __DIR__ . '/partials/layout_open.php';
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M20 6L9 17l-5-5"/></svg>
     </div>
     <div>
-        <p class="staff-apps-flash__title">Application submitted successfully</p>
-        <p class="staff-apps-flash__text">A Super Administrator will review the application before the BHW account is activated.</p>
+        <p class="staff-apps-flash__title">Invitation sent</p>
+        <p class="staff-apps-flash__text">The BHW must activate their account, set a password, and complete their profile before Super Administrator review.</p>
     </div>
 </div>
 <?php endif; ?>
@@ -102,14 +102,14 @@ require_once __DIR__ . '/partials/layout_open.php';
         <span class="staff-apps-hero__eyebrow"><?= $is_superadmin_checker ? 'Super Administration · Maker-Checker Review' : 'User Management · Maker-Checker Workflow' ?></span>
         <h1 class="staff-apps-hero__title"><?= $is_superadmin_checker ? 'Barangay Health Workers' : 'BHW Management' ?></h1>
         <p class="staff-apps-hero__desc"><?= $is_superadmin_checker
-            ? 'Review Barangay Health Worker applications and manage approved accounts. Use the Pending Approval tab to review submissions from administrators.'
-            : 'Manage BHW applications, supporting documents, and approved barangay health worker accounts from one place.' ?></p>
+            ? 'Review Barangay Health Worker applications completed by invitees and manage approved accounts. Use the Pending Approval tab for Super Administrator review.'
+            : 'Invite Barangay Health Workers, attach institutional documents, and track activation until Super Administrator approval.' ?></p>
     </div>
     <?php if (!$is_superadmin_checker): ?>
     <div class="staff-apps-hero__actions">
         <button type="button" class="mc-btn mc-btn--primary" id="bhwOpenCreateBtn">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-            Create BHW Application
+            Create BHW Invite
         </button>
     </div>
     <?php endif; ?>
@@ -145,7 +145,7 @@ require __DIR__ . '/partials/staff_hub_tabs.php';
     <?php if ($is_superadmin_checker): ?>
     <span><strong>Maker-Checker separation applies.</strong> You cannot approve applications you personally submitted. Verify barangay assignment and supporting documents before activation.</span>
     <?php else: ?>
-    <span><strong>You cannot activate BHW accounts directly.</strong> After submission, a Super Administrator must review documents and approve the application before the account becomes active.</span>
+    <span><strong>You invite — the BHW completes.</strong> Enter assignment details and the appointment letter, then send an invite. The BHW creates their own password and uploads their Government ID. A Super Administrator gives final approval.</span>
     <?php endif; ?>
 </div>
 
@@ -158,6 +158,8 @@ require __DIR__ . '/partials/staff_hub_tabs.php';
         <select id="bhwAppStatusFilter" class="staff-apps-filter" aria-label="Filter by status">
             <option value="all">All statuses</option>
             <option value="draft">Draft</option>
+            <option value="invited">Invited</option>
+            <option value="onboarding">Onboarding</option>
             <option value="pending_approval">Pending Approval</option>
             <option value="requires_documents">Requires Documents</option>
             <option value="rejected">Rejected</option>
@@ -195,8 +197,8 @@ require __DIR__ . '/partials/staff_hub_tabs.php';
     <div class="mc-card admin-modal-dialog admin-modal-dialog--wide">
         <div class="admin-modal-header">
             <div>
-                <h3 class="admin-modal-title" id="bhwModalTitle">Create BHW Application</h3>
-                <p class="admin-modal-subtitle">Complete the form and upload supporting documents. Submit for Super Administrator approval.</p>
+                <h3 class="admin-modal-title" id="bhwModalTitle">Invite Barangay Health Worker</h3>
+                <p class="admin-modal-subtitle">Enter basic assignment details and upload the appointment letter. The BHW will set their own password and upload personal documents.</p>
             </div>
             <button type="button" class="admin-modal-close" id="bhwModalClose" aria-label="Close">&times;</button>
         </div>
@@ -204,7 +206,7 @@ require __DIR__ . '/partials/staff_hub_tabs.php';
             <input type="hidden" name="application_id" id="bhwApplicationId" value="">
 
             <section class="mc-form-section">
-                <h4 class="mc-form-section__title">Personal Information</h4>
+                <h4 class="mc-form-section__title">Invite Contact</h4>
                 <div class="mc-form-grid mc-form-grid--3">
                     <div class="mc-field">
                         <label class="mc-field__label" for="bhwFirstName">First Name</label>
@@ -246,7 +248,7 @@ require __DIR__ . '/partials/staff_hub_tabs.php';
                     <div class="mc-field">
                         <label class="mc-field__label" for="bhwEmail">Email Address</label>
                         <input type="email" name="email" id="bhwEmail" required class="mc-field__input" autocomplete="email" placeholder="bhw@medconnect.local">
-                        <p class="mc-field__hint">Used as the login username.</p>
+                        <p class="mc-field__hint">Invite and login email. The BHW sets their own password.</p>
                         <p class="mc-field__error"></p>
                     </div>
                     <div class="mc-field">
@@ -258,32 +260,12 @@ require __DIR__ . '/partials/staff_hub_tabs.php';
             </section>
 
             <section class="mc-form-section">
-                <h4 class="mc-form-section__title">Account Credentials</h4>
-                <div class="mc-form-grid">
-                    <div class="mc-field">
-                        <label class="mc-field__label" for="bhwPassword">Password</label>
-                        <input type="password" name="password" id="bhwPassword" class="mc-field__input" minlength="12" autocomplete="new-password" placeholder="Create a strong password">
-                        <p class="mc-field__error"></p>
-                    </div>
-                    <div class="mc-field">
-                        <label class="mc-field__label" for="bhwPasswordConfirm">Confirm Password</label>
-                        <input type="password" id="bhwPasswordConfirm" class="mc-field__input" minlength="12" autocomplete="new-password" placeholder="Re-enter password">
-                        <p class="mc-field__error"></p>
-                    </div>
-                </div>
-            </section>
-
-            <section class="mc-form-section">
-                <h4 class="mc-form-section__title">Supporting Documents</h4>
-                <p class="mc-field__hint" style="margin-bottom:14px;">Required before submission: Barangay Appointment Letter / Resolution and Government-issued ID. CHO Endorsement is optional.</p>
+                <h4 class="mc-form-section__title">Institutional Documents</h4>
+                <p class="mc-field__hint" style="margin-bottom:14px;">Required before invite: Barangay Appointment Letter / Resolution. CHO Endorsement is optional. Government ID is uploaded by the BHW during onboarding.</p>
                 <div class="bhw-doc-upload-grid">
                     <div class="mc-field">
                         <label class="mc-field__label" for="bhwDocAppointment">Appointment Letter / Resolution</label>
                         <input type="file" id="bhwDocAppointment" accept=".pdf,.jpg,.jpeg,.png,.webp" class="mc-field__input">
-                    </div>
-                    <div class="mc-field">
-                        <label class="mc-field__label" for="bhwDocGovId">Government-issued ID</label>
-                        <input type="file" id="bhwDocGovId" accept=".pdf,.jpg,.jpeg,.png,.webp" class="mc-field__input">
                     </div>
                     <div class="mc-field">
                         <label class="mc-field__label" for="bhwDocCho">CHO Endorsement <span class="mc-optional">(optional)</span></label>
@@ -300,7 +282,8 @@ require __DIR__ . '/partials/staff_hub_tabs.php';
             <div class="admin-modal-actions">
                 <button type="button" class="mc-btn mc-btn--outline" id="bhwModalCancel">Cancel</button>
                 <button type="button" class="mc-btn mc-btn--outline" id="bhwSaveDraftBtn">Save Draft</button>
-                <button type="submit" class="mc-btn mc-btn--primary" id="bhwSubmitBtn">Submit for Approval</button>
+                <button type="button" class="mc-btn mc-btn--outline" id="bhwResendInviteBtn" style="display:none;">Resend Invite</button>
+                <button type="submit" class="mc-btn mc-btn--primary" id="bhwSubmitBtn">Send Invite</button>
             </div>
         </form>
     </div>
@@ -312,7 +295,7 @@ require __DIR__ . '/partials/staff_hub_tabs.php';
 
 <link rel="stylesheet" href="<?= ASSET_BASE ?>/assets/css/admin-staff-applications.css?v=1.4">
 <link rel="stylesheet" href="<?= ASSET_BASE ?>/assets/css/admin-bhw-applications.css?v=1.2">
-<script src="<?= ASSET_BASE ?>/assets/js/admin-staff-applications.js?v=1.1"></script>
+<script src="<?= ASSET_BASE ?>/assets/js/admin-staff-applications.js?v=1.2"></script>
 <script>
 window.MC_BHW_APP = {
     api: <?= json_encode(ASSET_BASE . '/app/api/admin/bhw_applications.php') ?>,
@@ -323,7 +306,7 @@ window.MC_BHW_APP = {
     checkerMode: <?= $is_superadmin_checker ? 'true' : 'false' ?>
 };
 </script>
-<script src="<?= ASSET_BASE ?>/assets/js/admin-bhw-applications.js?v=1.6"></script>
+<script src="<?= ASSET_BASE ?>/assets/js/admin-bhw-applications.js?v=2.0"></script>
 <?php if ($is_superadmin_checker): ?>
 <script>
 window.MC_BHW_APPROVAL = {

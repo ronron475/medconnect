@@ -126,6 +126,104 @@ function sendPatientWelcomeEmail(string $to, string $fullName, string $patientCo
 }
 
 /**
+ * Invite email for BHW account activation / onboarding.
+ *
+ * @return array{success: bool, message: string}
+ */
+function sendBhwInviteEmail(
+    string $to,
+    string $fullName,
+    string $inviteToken,
+    string $barangay = '',
+    bool $isReminder = false
+): array {
+    $mail = initMailer();
+    if (!$mail) {
+        return ['success' => false, 'message' => 'Failed to initialize mailer.'];
+    }
+
+    $activateUrl = BASE_URL . '/public/bhw_activate.php?token=' . urlencode($inviteToken);
+    $onboardingUrl = BASE_URL . '/public/bhw_onboarding.php?token=' . urlencode($inviteToken);
+    $loginUrl = BASE_URL . '/index.php';
+    $safeName = htmlspecialchars($fullName, ENT_QUOTES, 'UTF-8');
+    $safeBarangay = htmlspecialchars($barangay, ENT_QUOTES, 'UTF-8');
+    $subject = $isReminder
+        ? 'MedConnect — Continue your BHW account setup'
+        : 'MedConnect — Activate your Barangay Health Worker account';
+    $intro = $isReminder
+        ? 'Here is a new link to continue setting up your Barangay Health Worker account.'
+        : 'An administrator has invited you to join <strong>MedConnect Bago City</strong> as a Barangay Health Worker.';
+
+    try {
+        $mail->addAddress($to);
+        $mail->Subject = $subject;
+        $mail->Body = "
+            <div style=\"font-family:Arial,sans-serif;max-width:560px;margin:0 auto;color:#1e293b;\">
+                <h2 style=\"color:#0d9488;\">MedConnect BHW Invitation</h2>
+                <p>Dear {$safeName},</p>
+                <p>{$intro}</p>
+                " . ($safeBarangay !== '' ? "<p><strong>Assigned barangay:</strong> {$safeBarangay}</p>" : '') . "
+                <p>Create your password to activate the invite, then complete your personal information and upload your Government-issued ID.</p>
+                <p style=\"margin:28px 0;\">
+                    <a href=\"{$activateUrl}\" style=\"background:#0d9488;color:#fff;padding:12px 24px;border-radius:8px;text-decoration:none;font-weight:600;display:inline-block;\">Activate My Account</a>
+                </p>
+                <p style=\"font-size:13px;color:#64748b;\">If you already set a password, continue onboarding:<br><a href=\"{$onboardingUrl}\">{$onboardingUrl}</a></p>
+                <p style=\"font-size:13px;color:#64748b;\">Activation link: {$activateUrl}</p>
+                <p style=\"font-size:13px;color:#64748b;margin-top:24px;\">After approval you can sign in at <a href=\"{$loginUrl}\">{$loginUrl}</a>.</p>
+                <hr style=\"border:none;border-top:1px solid #e2e8f0;margin:24px 0;\">
+                <p style=\"font-size:12px;color:#94a3b8;\">If you did not expect this invitation, contact your City Health Office.</p>
+            </div>
+        ";
+        $mail->AltBody = "MedConnect BHW Invitation\n\nDear {$fullName},\n\nActivate: {$activateUrl}\nOnboarding: {$onboardingUrl}\n";
+        $mail->send();
+        return ['success' => true, 'message' => 'Invite email sent.'];
+    } catch (Exception $e) {
+        error_log('BHW invite email failed: ' . $e->getMessage());
+        return ['success' => false, 'message' => 'Failed to send invite email.'];
+    }
+}
+
+/**
+ * Correction / additional documents email for BHW applicants.
+ *
+ * @return array{success: bool, message: string}
+ */
+function sendBhwCorrectionEmail(string $to, string $fullName, string $token, string $note): array
+{
+    $mail = initMailer();
+    if (!$mail) {
+        return ['success' => false, 'message' => 'Failed to initialize mailer.'];
+    }
+
+    $url = BASE_URL . '/public/bhw_onboarding.php?token=' . urlencode($token);
+    $safeName = htmlspecialchars($fullName, ENT_QUOTES, 'UTF-8');
+    $safeNote = htmlspecialchars($note, ENT_QUOTES, 'UTF-8');
+
+    try {
+        $mail->addAddress($to);
+        $mail->Subject = 'MedConnect — Additional documents required for your BHW application';
+        $mail->Body = "
+            <div style=\"font-family:Arial,sans-serif;max-width:560px;margin:0 auto;color:#1e293b;\">
+                <h2 style=\"color:#0d9488;\">Additional documents needed</h2>
+                <p>Dear {$safeName},</p>
+                <p>A Super Administrator reviewed your BHW application and needs more information or documents:</p>
+                <p style=\"background:#fff7ed;border:1px solid #fed7aa;padding:12px 14px;border-radius:8px;\">{$safeNote}</p>
+                <p style=\"margin:28px 0;\">
+                    <a href=\"{$url}\" style=\"background:#0d9488;color:#fff;padding:12px 24px;border-radius:8px;text-decoration:none;font-weight:600;display:inline-block;\">Update My Application</a>
+                </p>
+                <p style=\"font-size:13px;color:#64748b;\">Or open: {$url}</p>
+            </div>
+        ";
+        $mail->AltBody = "Additional documents needed\n\n{$note}\n\nUpdate: {$url}";
+        $mail->send();
+        return ['success' => true, 'message' => 'Correction email sent.'];
+    } catch (Exception $e) {
+        error_log('BHW correction email failed: ' . $e->getMessage());
+        return ['success' => false, 'message' => 'Failed to send correction email.'];
+    }
+}
+
+/**
  * Follow-up reminder email after video consultation.
  *
  * @return array{success: bool, message: string}

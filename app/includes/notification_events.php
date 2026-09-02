@@ -126,17 +126,29 @@ final class NotificationEvents
         string $applicantName,
         int $makerId,
         int $checkerId,
-        string $note
+        string $note,
+        ?int $bhwUserId = null
     ): void {
         NotificationManager::create($pdo, $makerId, [
             'sender_id'     => $checkerId,
             'type'          => NotificationManager::TYPE_INFORMATION,
-            'title'         => 'Additional BHW Documents Required',
-            'message'       => "Additional documents are required for {$applicantName}. {$note}",
+            'title'         => 'BHW Documents Requested',
+            'message'       => "Additional documents were requested from {$applicantName}. {$note}",
             'action_url'    => '/views/admin/bhw_applications.php',
             'related_table' => 'bhw_applications',
             'related_id'    => $applicationId,
         ]);
+        if ($bhwUserId && $bhwUserId > 0) {
+            NotificationManager::notifyBhw($pdo, $bhwUserId, [
+                'sender_id'     => $checkerId,
+                'type'          => NotificationManager::TYPE_WARNING,
+                'title'         => 'Additional Documents Required',
+                'message'       => "Please update your BHW application. {$note}",
+                'action_url'    => '/views/bhw/dashboard.php',
+                'related_table' => 'bhw_applications',
+                'related_id'    => $applicationId,
+            ]);
+        }
     }
 
     public static function doctorApplicationSubmitted(PDO $pdo, int $applicationId, string $doctorName, int $submittedBy): void

@@ -1,6 +1,6 @@
 <?php
 /**
- * API: BHW application workflow (Maker — Administrator).
+ * API: BHW application workflow (Administrator — invite + institutional docs).
  */
 session_start();
 header('Content-Type: application/json; charset=utf-8');
@@ -55,6 +55,7 @@ try {
             echo json_encode($result);
             break;
 
+        case 'send_invite':
         case 'submit':
             if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
                 http_response_code(405);
@@ -66,7 +67,16 @@ try {
                 echo json_encode(['success' => false, 'message' => 'Application ID is required.']);
                 break;
             }
-            echo json_encode($service->submit($adminId, $appId));
+            echo json_encode($service->sendInvite($adminId, $appId));
+            break;
+
+        case 'resend_invite':
+            if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+                http_response_code(405);
+                echo json_encode(['success' => false, 'message' => 'Method not allowed.']);
+                break;
+            }
+            echo json_encode($service->resendInvite($adminId, (int) ($_POST['application_id'] ?? 0)));
             break;
 
         case 'upload_document':
@@ -77,7 +87,7 @@ try {
             }
             $appId = (int) ($_POST['application_id'] ?? 0);
             $docType = (string) ($_POST['document_type'] ?? '');
-            echo json_encode($service->handleDocumentUpload($adminId, $appId, $docType, $_FILES['document'] ?? []));
+            echo json_encode($service->handleDocumentUpload($adminId, $appId, $docType, $_FILES['document'] ?? [], 'admin'));
             break;
 
         default:

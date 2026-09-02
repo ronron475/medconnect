@@ -6,6 +6,8 @@
 
   var STATUS_CLASS = {
     draft: 'staff-app-status--draft',
+    invited: 'staff-app-status--pending',
+    onboarding: 'staff-app-status--docs',
     pending_approval: 'staff-app-status--pending',
     active: 'staff-app-status--active',
     approved: 'staff-app-status--active',
@@ -26,6 +28,8 @@
   }
 
   function canEdit(status) {
+    // Doctor Maker-Checker still allows admin edits on requires_documents.
+    // BHW invite flow uses its own canAdminEditStatus in admin-bhw-applications.js.
     return ['draft', 'rejected', 'requires_documents'].indexOf(status) >= 0;
   }
 
@@ -54,7 +58,7 @@
     rows.forEach(function (r) {
       var s = r.status;
       if (s === 'draft') stats.draft++;
-      else if (s === 'pending_approval') stats.pending++;
+      else if (s === 'pending_approval' || s === 'invited' || s === 'onboarding' || s === 'requires_documents') stats.pending++;
       else if (s === 'active' || s === 'approved') stats.active++;
     });
     return stats;
