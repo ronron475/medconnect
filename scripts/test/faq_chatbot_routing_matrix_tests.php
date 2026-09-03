@@ -47,7 +47,7 @@ function route_of(array $r): string
     if ($type === 'GREETING') {
         return 'GREETING';
     }
-    if ($type === 'OUT_OF_SCOPE') {
+    if ($type === 'OUT_OF_SCOPE' || $type === 'NON_HEALTH' || $type === 'UNCLEAR') {
         return 'BOUNDARY';
     }
     if (!empty($r['dataset_match']) && $type === 'MEDICAL_DATASET') {
@@ -117,7 +117,14 @@ foreach ($cases as [$text, $expect]) {
     expect_true(!str_contains($plain, 'create account') && !str_contains($plain, 'sign in') || $expect === 'greeting' || $expect === 'medconnect', "{$text}: no generic account menu");
 
     if ($expect === 'boundary') {
-        expect_true(str_contains($plain, 'outside the scope of the medconnect assistant') || str_contains($plain, 'healthcare concern'), "{$text}: boundary copy visible");
+        expect_true(
+            str_contains($plain, 'outside the scope of the medconnect assistant')
+            || str_contains($plain, 'city health office')
+            || str_contains($plain, 'rephrase')
+            || str_contains($plain, 'not sure i understood')
+            || str_contains($plain, 'healthcare concern'),
+            "{$text}: boundary/non-health/unclear copy visible"
+        );
     }
 
     if ($expect === 'greeting') {
@@ -132,10 +139,10 @@ foreach ($cases as [$text, $expect]) {
         expect_true(($r['final_response_type'] ?? '') !== 'GREETING', "{$text}: not greeting");
     } elseif ($expect === 'medconnect') {
         expect_true(empty($r['emergency']), "{$text}: not emergency");
-        expect_true(($r['final_response_type'] ?? '') !== 'OUT_OF_SCOPE', "{$text}: in-scope");
+        expect_true(!in_array(($r['final_response_type'] ?? ''), ['OUT_OF_SCOPE', 'NON_HEALTH', 'UNCLEAR'], true), "{$text}: in-scope");
     } else {
         expect_true(empty($r['emergency']), "{$text}: not emergency");
-        expect_true(($r['final_response_type'] ?? '') !== 'OUT_OF_SCOPE', "{$text}: not boundary");
+        expect_true(!in_array(($r['final_response_type'] ?? ''), ['OUT_OF_SCOPE', 'NON_HEALTH'], true), "{$text}: not boundary");
         expect_true(
             in_array($route, ['DATASET', 'GEMINI_HEALTHCARE', 'HEALTHCARE_FALLBACK', 'MEDICAL_DATASET', 'MEDICAL_GEMINI'], true),
             "{$text}: healthcare route ({$route})"

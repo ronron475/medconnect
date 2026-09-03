@@ -22,6 +22,8 @@
   --mc-vc-safe-right: env(safe-area-inset-right, 0px);
   --mc-vc-controls-height: 76px;
   --mc-vc-header-height: 64px;
+  --mc-vc-desktop-stage-max-w: 780px;
+  --mc-vc-desktop-stage-max-h: min(50dvh, 440px);
 }
 
 .mc-vc-root {
@@ -43,11 +45,11 @@
 }
 
 .mc-vc-root.is-floating {
-  width: min(360px, calc(100vw - 24px));
+  width: min(340px, calc(100vw - 24px));
   /* Floating root must stay viewport-aware to avoid "extra blank" below the stage. */
   height: min(
     calc(100dvh - 32px - var(--mc-vc-safe-top) - var(--mc-vc-safe-bottom)),
-    520px
+    460px
   );
   top: calc(16px + var(--mc-vc-safe-top));
   left: calc(16px + var(--mc-vc-safe-left));
@@ -410,10 +412,10 @@ html:has(body.mc-true-fullscreen) {
   position: absolute;
   display: flex;
   flex-direction: column;
-  width: min(28vw, 200px);
-  height: min(22vh, 148px);
-  min-width: 128px;
-  min-height: 104px;
+  width: min(26vw, 180px);
+  height: min(20vh, 132px);
+  min-width: 112px;
+  min-height: 96px;
   border-radius: 12px;
   overflow: hidden;
   border: 2px solid rgba(255, 255, 255, 0.22);
@@ -870,8 +872,11 @@ body.role-patient .mc-vc-status-bar {
 /* Compact mode only when the provider explicitly chooses it (not auto-embedded). */
 body.compact-mode:not(.embedded-shell) .mc-vc-root {
   position: relative;
-  height: 38vh;
-  min-height: 280px;
+  height: 32vh;
+  min-height: 240px;
+  max-height: min(42vh, 420px);
+  max-width: min(100%, var(--mc-vc-desktop-stage-max-w));
+  margin-inline: auto;
   border-radius: 12px;
 }
 
@@ -1157,11 +1162,30 @@ body.embedded-shell.role-provider .mc-vc-pip video {
     --mc-vc-header-height: 56px;
   }
 
+  html:has(body.role-patient),
+  html:has(body.role-provider),
+  body.role-patient,
+  body.role-provider {
+    overflow-x: hidden;
+    max-width: 100%;
+  }
+
   .mc-vc-root {
     display: flex;
     flex-direction: column;
+    width: 100%;
+    max-width: 100%;
     height: 100%;
     min-height: 0;
+    overflow-x: hidden;
+  }
+
+  .mc-vc-stage,
+  .mc-vc-main,
+  #mcVcMainSlot {
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
   }
 
   .mc-vc-root.is-fullscreen {
@@ -1580,6 +1604,7 @@ body.role-patient .mc-vc-root {
   height: 100%;
   min-height: 0;
   overflow: hidden;
+  overflow-x: hidden;
   background: #0b1220;
 }
 
@@ -1590,6 +1615,9 @@ body.role-patient:not(.embedded-shell) .mc-vc-root {
   height: auto;
   max-height: none;
 }
+
+/* Laptop/desktop compact stage is applied at the end of this file so it wins
+   over fill-tile rules. Patient overlay + provider full-tab share the same size. */
 
 body.role-patient .mc-vc-header {
   position: relative;
@@ -1681,11 +1709,11 @@ body.role-patient .mc-vc-pip video {
 body.role-patient .mc-vc-pip {
   display: flex;
   flex-direction: column;
-  width: min(44vw, 168px);
-  height: min(40vw, 156px);
-  min-width: 132px;
-  min-height: 118px;
-  max-width: min(46vw, 180px);
+  width: min(40vw, 156px);
+  height: min(36vw, 144px);
+  min-width: 120px;
+  min-height: 108px;
+  max-width: min(44vw, 168px);
   border-radius: 12px;
   border: 2px solid rgba(255, 255, 255, 0.28);
   box-sizing: border-box;
@@ -2453,8 +2481,7 @@ body.role-provider:not(.embedded-shell) .mc-vc-header {
   }
 }
 
-/* Keep live video filling its tile even if a later global rule sets max-height. */
-.mc-vc-root .mc-vc-stage,
+/* Inner tiles fill the stage; the stage itself may be size-capped on desktop. */
 .mc-vc-root .mc-vc-main,
 .mc-vc-root #mcVcMainSlot {
   max-height: none;
@@ -2464,6 +2491,91 @@ body.role-provider:not(.embedded-shell) .mc-vc-header {
 .mc-vc-root video#remoteVideo {
   max-width: none;
   max-height: none;
+  object-fit: cover;
+  object-position: center center;
+}
+
+/* ── Compact laptop/desktop stage (patient overlay + doctor full-tab) ─────
+   Slightly smaller 16:9 tile, centered. Does not apply to the doctor session
+   iframe dock (parent already sizes it) or true fullscreen. */
+@media (min-width: 769px) and (max-height: 900px) {
+  :root {
+    --mc-vc-desktop-stage-max-w: 680px;
+    --mc-vc-desktop-stage-max-h: min(44dvh, 380px);
+  }
+}
+
+@media (min-width: 769px) {
+  body.role-patient:not(.mc-vc-call-ended):not(.mc-true-fullscreen) .mc-vc-root:not(.is-fullscreen),
+  body.role-provider:not(.embedded-shell):not(.mc-vc-call-ended):not(.mc-true-fullscreen) .mc-vc-root:not(.is-fullscreen) {
+    display: flex;
+    flex-direction: column;
+  }
+
+  body.role-patient:not(.mc-vc-call-ended):not(.mc-true-fullscreen) .mc-vc-root:not(.is-fullscreen) .mc-vc-header,
+  body.role-provider:not(.embedded-shell):not(.mc-vc-call-ended):not(.mc-true-fullscreen) .mc-vc-root:not(.is-fullscreen) .mc-vc-header {
+    position: relative;
+    top: auto;
+    left: auto;
+    right: auto;
+    flex: 0 0 auto;
+  }
+
+  body.role-patient:not(.mc-vc-call-ended):not(.mc-true-fullscreen) .mc-vc-root:not(.is-fullscreen) .mc-vc-stage,
+  body.role-provider:not(.embedded-shell):not(.mc-vc-call-ended):not(.mc-true-fullscreen) .mc-vc-root:not(.is-fullscreen) .mc-vc-stage {
+    position: relative;
+    inset: auto;
+    flex: 0 1 auto;
+    width: min(
+      calc(100% - 2.5rem),
+      var(--mc-vc-desktop-stage-max-w),
+      calc(var(--mc-vc-desktop-stage-max-h) * 16 / 9)
+    );
+    max-width: 100%;
+    height: auto;
+    max-height: var(--mc-vc-desktop-stage-max-h);
+    aspect-ratio: 16 / 9;
+    margin: auto;
+    border-radius: 14px;
+    overflow: hidden;
+  }
+
+  body.role-patient:not(.mc-vc-call-ended):not(.mc-true-fullscreen) .mc-vc-root:not(.is-fullscreen) .mc-vc-controls,
+  body.role-provider:not(.embedded-shell):not(.mc-vc-call-ended):not(.mc-true-fullscreen) .mc-vc-root:not(.is-fullscreen) .mc-vc-controls {
+    position: relative;
+    inset: auto;
+    bottom: auto;
+    left: auto;
+    right: auto;
+    flex: 0 0 auto;
+    width: 100%;
+    max-width: 100%;
+  }
+
+  body.role-patient:not(.mc-vc-call-ended):not(.mc-true-fullscreen) .mc-vc-root:not(.is-fullscreen) .mc-vc-main,
+  body.role-provider:not(.embedded-shell):not(.mc-vc-call-ended):not(.mc-true-fullscreen) .mc-vc-root:not(.is-fullscreen) .mc-vc-main {
+    border-radius: inherit;
+  }
+}
+
+@media (max-width: 768px) {
+  .mc-vc-root,
+  .mc-vc-stage,
+  .mc-vc-main,
+  #mcVcMainSlot,
+  .mc-vc-controls {
+    max-width: 100%;
+    min-width: 0;
+    box-sizing: border-box;
+  }
+
+  .mc-vc-main video,
+  .mc-vc-pip video,
+  #mcVcMainSlot video,
+  #mcVcPipSlot video {
+    object-fit: cover;
+    object-position: center center;
+  }
 }
 
 /* ── Ended consultation: isolate from live-call layout ─────────────────────── */

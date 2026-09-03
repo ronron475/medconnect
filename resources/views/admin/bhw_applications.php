@@ -294,7 +294,7 @@ require __DIR__ . '/partials/staff_hub_tabs.php';
 <?php endif; ?>
 
 <link rel="stylesheet" href="<?= ASSET_BASE ?>/assets/css/admin-staff-applications.css?v=1.4">
-<link rel="stylesheet" href="<?= ASSET_BASE ?>/assets/css/admin-bhw-applications.css?v=1.2">
+<link rel="stylesheet" href="<?= ASSET_BASE ?>/assets/css/admin-bhw-applications.css?v=1.3">
 <script src="<?= ASSET_BASE ?>/assets/js/admin-staff-applications.js?v=1.2"></script>
 <script>
 window.MC_BHW_APP = {
@@ -315,7 +315,7 @@ window.MC_BHW_APPROVAL = {
     hubMode: true
 };
 </script>
-<script src="<?= ASSET_BASE ?>/assets/js/superadmin-bhw-approvals.js?v=1.2"></script>
+<script src="<?= ASSET_BASE ?>/assets/js/superadmin-bhw-approvals.js?v=1.3"></script>
 <?php endif; ?>
 
 <?php

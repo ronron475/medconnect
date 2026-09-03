@@ -474,7 +474,17 @@ body.mc-nav-opening .topbar-brand {
   }
 
   .video-shell {
-    min-height: 220px !important;
+    width: 100%;
+    max-width: min(100%, 760px);
+    margin-inline: auto;
+  }
+
+  .video-shell:not(.is-call-active) {
+    min-height: 180px !important;
+  }
+
+  .video-shell.is-call-active {
+    min-height: 0 !important;
   }
 }
 
@@ -1104,13 +1114,17 @@ body.reg-body .reg-security-notice {
 
   .video-container,
   .video-shell:not(.is-call-active) {
-    min-height: 40vh;
-    max-height: 55vh;
+    width: 100%;
+    max-width: 100%;
+    min-height: 0;
+    max-height: min(42dvh, 280px);
   }
 
   .video-container video {
     object-fit: cover;
-    max-height: 55vh;
+    object-position: center center;
+    max-width: 100%;
+    max-height: min(42dvh, 280px);
   }
 }
 

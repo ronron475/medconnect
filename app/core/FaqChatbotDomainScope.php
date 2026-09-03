@@ -19,6 +19,8 @@ final class FaqChatbotDomainScope
     public const RESPONSE_MEDICAL_GEMINI = 'MEDICAL_GEMINI';
     public const RESPONSE_MEDICAL_CLARIFICATION = 'MEDICAL_CLARIFICATION';
     public const RESPONSE_OUT_OF_SCOPE = 'OUT_OF_SCOPE';
+    public const RESPONSE_UNCLEAR = 'UNCLEAR';
+    public const RESPONSE_NON_HEALTH = 'NON_HEALTH';
 
     /**
      * @return array{scope: string, stripped_text: string, confidence: float}
@@ -144,8 +146,88 @@ final class FaqChatbotDomainScope
     }
 
     /**
+     * Unknown / gibberish input — do not treat as a health concern.
+     */
+    public static function unclearHtml(string $lang = 'en'): string
+    {
+        $L = in_array($lang, ['en', 'fil', 'hil'], true) ? $lang : 'en';
+        $copy = [
+            'en' => "I'm not sure I understood your message. Could you please rephrase it? I can help with health concerns, appointments, consultations, and City Health Office services.",
+            'fil' => 'Hindi ko naintindihan ang iyong mensahe. Pakiulit o i-rephrase po? Makakatulong ako sa health concerns, appointments, consultations, at serbisyo ng City Health Office.',
+            'hil' => 'Indi ko maintindihan ang imo mensahe. Palihog i-rephrase? Makabulig ako sa health concerns, appointments, consultations, kag serbisyo sang City Health Office.',
+        ];
+        return '<p>' . htmlspecialchars($copy[$L], ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') . '</p>';
+    }
+
+    /**
+     * Non-health conversation — do not use the health-concern disclaimer.
+     */
+    public static function nonHealthHtml(string $lang = 'en'): string
+    {
+        $L = in_array($lang, ['en', 'fil', 'hil'], true) ? $lang : 'en';
+        $copy = [
+            'en' => "I'm here to help with City Health Office and medConnect services. Could you tell me what you need help with?",
+            'fil' => 'Nandito ako para tumulong sa City Health Office at medConnect. Ano po ang maitutulong ko?',
+            'hil' => 'Diri ako para magbulig sa City Health Office kag medConnect. Ano ang imo kinahanglan?',
+        ];
+        return '<p>' . htmlspecialchars($copy[$L], ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') . '</p>';
+    }
+
+    /**
+     * True when the text looks like gibberish, keyboard smash, or meaningless filler
+     * rather than a real health or service request.
+     */
+    public static function looksUnclear(string $text, string $nlpText = ''): bool
+    {
+        $raw = trim($text);
+        if ($raw === '') {
+            return true;
+        }
+        if (self::isHealthcareRelated($raw, $nlpText) || self::isAllowedOpening($raw)) {
+            return false;
+        }
+        $hay = self::normalize($raw . ' ' . $nlpText);
+        $compact = preg_replace('/\s+/u', '', $hay) ?? $hay;
+        if ($compact === '') {
+            return true;
+        }
+        if (preg_match('/^(asdf+|qwer+|zxcv+|abcdefghijklmnopqrstuvwxyz|qwerty(uiop)?(asdf)?(ghjkl)?|1234567890*)[0-9]*$/u', $compact)) {
+            return true;
+        }
+        if (preg_match('/^(ha|he|hi|ho|ah|uh|hm|lol|lmao|wow)+[a-z]{0,8}$/u', $compact) && mb_strlen($compact) >= 6) {
+            return true;
+        }
+
+        $words = preg_split('/\s+/u', $hay, -1, PREG_SPLIT_NO_EMPTY) ?: [];
+        $suspicious = 0;
+        foreach ($words as $w) {
+            $len = mb_strlen($w);
+            if ($len < 4) {
+                continue;
+            }
+            $haCount = preg_match_all('/[ha]/iu', $w);
+            if ($len >= 6 && $haCount / $len >= 0.85) {
+                $suspicious++;
+                continue;
+            }
+            if ($len < 6) {
+                continue;
+            }
+            $vowelCount = preg_match_all('/[aeiouàáéíóú]/iu', $w);
+            $vowelRatio = $len > 0 ? ($vowelCount / $len) : 0;
+            $hasRepeat = (bool) preg_match('/(.)\1{2,}/u', $w);
+            $consonantRun = (bool) preg_match('/[bcdfghjklmnpqrstvwxyz]{5,}/i', $w);
+            if ($hasRepeat || $consonantRun || ($len >= 10 && $vowelRatio < 0.22)) {
+                $suspicious++;
+            }
+        }
+        return $suspicious > 0;
+    }
+
+    /**
      * Safe acknowledgment when a health concern is unmatched and Gemini is unavailable.
      * Does not diagnose and does not show generic account/navigation menus.
+     * Use ONLY when there is reasonable evidence the user is discussing a health concern.
      */
     public static function unmatchedHealthcareHtml(string $lang = 'en'): string
     {

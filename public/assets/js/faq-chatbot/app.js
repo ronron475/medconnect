@@ -389,7 +389,7 @@
       || flowKey === 'emergency';
     const emergencyActions = flowKey === 'crisis' || flowKey === 'emergency';
 
-    const noClosing = ['crisis', 'emergency', 'moderation', 'restricted', 'spam', 'partial_clarify', 'not_understood', 'domain_out_of_scope', 'domain_ambiguous'].includes(flowKey);
+    const noClosing = ['crisis', 'emergency', 'moderation', 'restricted', 'spam', 'partial_clarify', 'not_understood', 'message_unclear', 'domain_out_of_scope', 'domain_non_health', 'domain_ambiguous', 'healthcare_unmatched'].includes(flowKey);
     if (!noClosing && !followUp && Conversation) {
       followUp = Conversation.getClosing(lang, options.closingSeed || flowKey);
     }
@@ -455,8 +455,12 @@
       && /[\{["]/.test(plain);
     if (!looksInternal) return raw;
 
-    if (/is_healthcare_related"\s*:\s*false|isHealthcareRelated"\s*:\s*false/i.test(plain)) {
-      return Engine.getFlow('domain_out_of_scope', lang || 'en').html;
+    if (/is_healthcare_related"\s*:\s*false|isHealthcareRelated"\s*:\s*false|"classification"\s*:\s*"NON_HEALTH/i.test(plain)) {
+      if (/"classification"\s*:\s*"UNCLEAR"/i.test(plain)) {
+        return Engine.getFlow('message_unclear', lang || 'en').html;
+      }
+      return Engine.getFlow('domain_non_health', lang || 'en').html
+        || Engine.getFlow('domain_out_of_scope', lang || 'en').html;
     }
 
     const match = plain.match(/\{[\s\S]*\}/);
@@ -468,14 +472,23 @@
           if (reply && !/is_healthcare_related|normalized_meaning|"intent"\s*:/i.test(reply)) {
             return reply.includes('<') ? reply : `<p>${reply.replace(/</g, '&lt;').replace(/>/g, '&gt;')}</p>`;
           }
-          if (decoded.is_healthcare_related === false || decoded.isHealthcareRelated === false) {
-            return Engine.getFlow('domain_out_of_scope', lang || 'en').html;
+          if (decoded.is_healthcare_related === false || decoded.isHealthcareRelated === false
+            || decoded.classification === 'NON_HEALTH_RELATED' || decoded.classification === 'NON_HEALTHCARE') {
+            return Engine.getFlow('domain_non_health', lang || 'en').html
+              || Engine.getFlow('domain_out_of_scope', lang || 'en').html;
+          }
+          if (decoded.classification === 'UNCLEAR') {
+            return Engine.getFlow('message_unclear', lang || 'en').html;
+          }
+          if (decoded.classification === 'HEALTH_RELATED' || decoded.classification === 'HEALTHCARE'
+            || decoded.is_healthcare_related === true || decoded.isHealthcareRelated === true) {
+            return Engine.getFlow('healthcare_unmatched', lang || 'en').html;
           }
         }
       } catch (_) { /* ignore malformed JSON */ }
     }
 
-    return Engine.getFlow('domain_out_of_scope', lang || 'en').html;
+    return Engine.getFlow('message_unclear', lang || 'en').html;
   }
 
   function deliverFromPhp(meta, lang) {
@@ -491,7 +504,7 @@
       actions = greeting.actions;
       followUp = greeting.followUp;
     }
-    const skipSuggestions = hideGenericMenu || type === 'OUT_OF_SCOPE' || type === 'MEDICAL_GEMINI' || type === 'MEDICAL_CLARIFICATION';
+    const skipSuggestions = hideGenericMenu || type === 'OUT_OF_SCOPE' || type === 'NON_HEALTH' || type === 'UNCLEAR' || type === 'MEDICAL_GEMINI' || type === 'MEDICAL_CLARIFICATION';
     const safeHtml = sanitizePatientHtml(meta.response_html, lang);
     deliverBot(flow, {
       html: safeHtml,
@@ -1060,7 +1073,7 @@
       flowKey = 'greeting_return';
     }
 
-    if (flowKey === 'unknown' && healthcareRelated) {
+    if (flowKey === 'unknown' && (Conversation.isPainOrSick(nlpText) || (typeof Conversation.isPossibleHealth === 'function' && Conversation.isPossibleHealth(nlpText)))) {
       Understanding.incrementMessageCount();
       runFlow('healthcare_unmatched', false, { lang: replyLang });
       return;
@@ -1069,7 +1082,7 @@
     if (flowKey === 'unknown' && understanding.level !== LEVEL.FULL) {
       Understanding.setPending({ originalText: workingText, keywords: understanding.keywords });
       Understanding.incrementMessageCount();
-      runFlow(understanding.level === LEVEL.PARTIAL ? 'partial_clarify' : 'not_understood', false, { lang: replyLang, closingSeed: trimmed });
+      runFlow(understanding.level === LEVEL.PARTIAL ? 'partial_clarify' : 'message_unclear', false, { lang: replyLang, closingSeed: trimmed });
       return;
     }
 

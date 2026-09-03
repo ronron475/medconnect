@@ -157,6 +157,91 @@
 .bhw-review-meta dt { font-weight: 700; color: #64748b; font-size: 11px; text-transform: uppercase; margin-top: 8px; }
 .bhw-review-meta dd { margin: 2px 0 0; }
 .bhw-btn-reject { color: #b91c1c; border-color: #fecaca; }
+.bhw-doc-list__actions {
+  display: flex;
+  gap: 6px;
+  flex-shrink: 0;
+  align-items: center;
+}
+.bhw-doc-preview-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 12000;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  background: rgba(15, 23, 42, 0.72);
+  box-sizing: border-box;
+}
+.bhw-doc-preview-overlay.is-open {
+  display: flex;
+}
+.bhw-doc-preview-dialog {
+  width: min(960px, 100%);
+  max-height: min(92vh, 900px);
+  display: flex;
+  flex-direction: column;
+  background: #fff;
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 24px 64px rgba(15, 23, 42, 0.35);
+}
+.bhw-doc-preview-header {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  align-items: flex-start;
+  padding: 16px 18px;
+  border-bottom: 1px solid #e2e8f0;
+}
+.bhw-doc-preview-title {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 750;
+  color: #0f172a;
+}
+.bhw-doc-preview-sub {
+  margin: 4px 0 0;
+  font-size: 13px;
+  color: #64748b;
+}
+.bhw-doc-preview-actions {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  flex-shrink: 0;
+}
+.bhw-doc-preview-body {
+  flex: 1;
+  min-height: 360px;
+  background: #0f172a;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: auto;
+}
+.bhw-doc-preview-body img {
+  max-width: 100%;
+  max-height: min(78vh, 760px);
+  object-fit: contain;
+  display: block;
+}
+.bhw-doc-preview-body iframe {
+  width: 100%;
+  height: min(78vh, 760px);
+  border: 0;
+  background: #fff;
+}
+.bhw-doc-preview-fallback {
+  color: #e2e8f0;
+  font-size: 14px;
+  text-align: center;
+  padding: 32px 24px;
+  line-height: 1.5;
+}
 @media (max-width: 640px) {
   .admin-form-grid, .admin-form-grid--3 { grid-template-columns: 1fr; }
+  .bhw-doc-preview-header { flex-direction: column; }
+  .bhw-doc-list li { flex-direction: column; align-items: flex-start; }
 }

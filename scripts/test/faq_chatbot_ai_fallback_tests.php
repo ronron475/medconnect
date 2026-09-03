@@ -51,34 +51,57 @@ expect_true(FaqChatbotAiFallback::isConversationalOpeningOnly('Goodbye'), 'goodb
 expect_true(!FaqChatbotAiFallback::isConversationalOpeningOnly("I don't feel right today."), 'vague health is not opening-only');
 
 $parsedNon = FaqChatbotAiFallback::parseModelReply("CLASSIFICATION: NON_HEALTHCARE\nREPLY:\nOUT_OF_SCOPE");
-expect_true($parsedNon['classification'] === FaqChatbotAiFallback::CLASS_NON_HEALTHCARE, 'parse NON_HEALTHCARE');
-expect_true($parsedNon['reply'] === 'OUT_OF_SCOPE', 'parse OUT_OF_SCOPE token');
+expect_true($parsedNon['classification'] === FaqChatbotAiFallback::CLASS_NON_HEALTH_RELATED, 'parse NON_HEALTHCARE');
 
 $parsedHealth = FaqChatbotAiFallback::parseModelReply("CLASSIFICATION: HEALTHCARE\nREPLY:\nRest, sip water, and book a consult if this continues.");
-expect_true($parsedHealth['classification'] === FaqChatbotAiFallback::CLASS_HEALTHCARE, 'parse HEALTHCARE');
-expect_true(str_contains(strtolower($parsedHealth['reply']), 'rest'), 'parse keeps medical reply');
+expect_true($parsedHealth['classification'] === FaqChatbotAiFallback::CLASS_HEALTH_RELATED, 'parse HEALTHCARE');
 
 $parsedMaybe = FaqChatbotAiFallback::parseModelReply("CLASSIFICATION: POSSIBLY_HEALTHCARE\nREPLY:\nWhat symptoms are you feeling?");
-expect_true($parsedMaybe['classification'] === FaqChatbotAiFallback::CLASS_POSSIBLY_HEALTHCARE, 'parse POSSIBLY_HEALTHCARE');
+expect_true($parsedMaybe['classification'] === FaqChatbotAiFallback::CLASS_UNCLEAR, 'parse POSSIBLY_HEALTHCARE as UNCLEAR');
+
+$parsedRelated = FaqChatbotAiFallback::parseModelReply('{"classification":"HEALTH_RELATED","confidence":0.92}');
+expect_true($parsedRelated['classification'] === FaqChatbotAiFallback::CLASS_HEALTH_RELATED, 'parse HEALTH_RELATED JSON');
+
+$parsedUnclear = FaqChatbotAiFallback::parseModelReply('{"classification":"UNCLEAR","confidence":0.41}');
+expect_true($parsedUnclear['classification'] === FaqChatbotAiFallback::CLASS_UNCLEAR, 'parse UNCLEAR JSON');
 
 $parsedToken = FaqChatbotAiFallback::parseModelReply('OUT_OF_SCOPE');
-expect_true($parsedToken['classification'] === FaqChatbotAiFallback::CLASS_NON_HEALTHCARE, 'bare OUT_OF_SCOPE token');
+expect_true($parsedToken['classification'] === FaqChatbotAiFallback::CLASS_NON_HEALTH_RELATED, 'bare OUT_OF_SCOPE token');
 
 $oosPack = FaqChatbotAiFallback::packFromParsed($parsedNon, 'en');
-expect_true($oosPack['response_type'] === FaqChatbotDomainScope::RESPONSE_OUT_OF_SCOPE, 'NON maps to OUT_OF_SCOPE');
-expect_true(str_contains($oosPack['html'], 'outside the scope of the medConnect Assistant'), 'OOS pack uses backend copy');
+expect_true($oosPack['response_type'] === FaqChatbotDomainScope::RESPONSE_NON_HEALTH, 'NON maps to NON_HEALTH');
+expect_true(str_contains(strtolower($oosPack['html']), 'city health office'), 'non-health pack uses conversational copy');
 expect_true(!str_contains($oosPack['html'], 'OUT_OF_SCOPE'), 'user never sees OUT_OF_SCOPE token');
+expect_true(!str_contains(strtolower($oosPack['html']), 'i understand this sounds like a health concern'), 'non-health is not the health disclaimer');
 
 $maybePack = FaqChatbotAiFallback::packFromParsed($parsedMaybe, 'en');
-expect_true($maybePack['response_type'] === FaqChatbotDomainScope::RESPONSE_MEDICAL_GEMINI, 'POSSIBLY with a real reply is treated as healthcare');
+expect_true($maybePack['response_type'] === FaqChatbotDomainScope::RESPONSE_UNCLEAR, 'POSSIBLY maps to UNCLEAR, not healthcare');
+expect_true(str_contains(strtolower($maybePack['html']), 'rephrase') || str_contains(strtolower($maybePack['html']), 'understood'), 'UNCLEAR asks the user to rephrase');
+expect_true(!str_contains(strtolower($maybePack['html']), 'i understand this sounds like a health concern'), 'UNCLEAR is not the health disclaimer');
+
 expect_true(FaqChatbotAiFallback::isInsufficientModelReply('Kabay pa'), 'short Kabay pa reply is insufficient');
 $shortPack = FaqChatbotAiFallback::packFromParsed([
-    'classification' => FaqChatbotAiFallback::CLASS_HEALTHCARE,
+    'classification' => FaqChatbotAiFallback::CLASS_HEALTH_RELATED,
     'reply'          => 'Kabay pa',
+    'model_confidence' => 0.91,
 ], 'hil');
-expect_true($shortPack['response_type'] === FaqChatbotDomainScope::RESPONSE_MEDICAL_GEMINI, 'short healthcare reply stays medical');
+expect_true($shortPack['response_type'] === FaqChatbotDomainScope::RESPONSE_MEDICAL_GEMINI, 'high-confidence health stays medical');
 expect_true(!str_contains(strtolower($shortPack['html']), 'kabay pa'), 'short Kabay pa is not shown as the answer');
-expect_true(str_contains(strtolower($shortPack['html']), 'health concern') || str_contains(strtolower($shortPack['html']), 'health'), 'short reply becomes unmatched healthcare copy');
+expect_true(str_contains(strtolower($shortPack['html']), 'health concern') || str_contains(strtolower($shortPack['html']), 'health'), 'confirmed health uses unmatched healthcare copy');
+
+$lowConf = FaqChatbotAiFallback::packFromParsed([
+    'classification'   => FaqChatbotAiFallback::CLASS_HEALTH_RELATED,
+    'model_confidence' => 0.42,
+], 'en');
+expect_true($lowConf['classification'] === FaqChatbotAiFallback::CLASS_UNCLEAR, 'low confidence health is UNCLEAR');
+expect_true($lowConf['response_type'] === FaqChatbotDomainScope::RESPONSE_UNCLEAR, 'low confidence does not force health');
+expect_true(!str_contains(strtolower($lowConf['html']), 'i understand this sounds like a health concern'), 'low confidence is not the health disclaimer');
+
+$gibberishPack = FaqChatbotAiFallback::packFromParsed([
+    'classification'   => FaqChatbotAiFallback::CLASS_UNCLEAR,
+    'model_confidence' => 0.88,
+], 'en');
+expect_true(!str_contains(strtolower($gibberishPack['html']), 'i understand this sounds like a health concern'), 'gibberish is not treated as a health concern');
 
 expect_true(FaqChatbotAiFallback::shouldUseDatasetAnswer(
     'sakit ulo ko',
@@ -160,27 +183,31 @@ expect_true($empty === '', 'blank text → empty html');
 $jsonLeak = '{"is_healthcare_related":false,"intent":"non_healthcare"}';
 expect_true(FaqChatbotAiFallback::isInternalClassificationPayload($jsonLeak), 'detect classification JSON leak');
 $sanitized = FaqChatbotAiFallback::sanitizePatientFacingHtml(FaqChatbotAiFallback::toSafeHtml($jsonLeak) ?: $jsonLeak, 'en');
-expect_true(str_contains($sanitized, 'outside the scope of the medConnect Assistant'), 'sanitize replaces JSON with boundary');
+expect_true(str_contains(strtolower($sanitized), 'city health office') || str_contains(strtolower($sanitized), 'rephrase'), 'sanitize replaces JSON with non-health/unclear copy');
 expect_true(!str_contains($sanitized, 'is_healthcare_related'), 'sanitize strips classification fields');
 expect_true(FaqChatbotAiFallback::toSafeHtml($jsonLeak) === '', 'toSafeHtml rejects classification JSON');
 
 $jsonNon = '{"is_healthcare_related":false,"intent":"non_healthcare","language":"English","normalized_meaning":"capital of Japan","urgency":"NON_URGENT","confidence":0.99,"reply":""}';
 $parsedJsonNon = FaqChatbotAiFallback::parseModelReply($jsonNon);
-expect_true($parsedJsonNon['classification'] === FaqChatbotAiFallback::CLASS_NON_HEALTHCARE, 'JSON non-healthcare classification');
+expect_true($parsedJsonNon['classification'] === FaqChatbotAiFallback::CLASS_NON_HEALTH_RELATED, 'JSON non-healthcare classification');
 $jsonPack = FaqChatbotAiFallback::packFromParsed($parsedJsonNon, 'en');
-expect_true($jsonPack['response_type'] === FaqChatbotDomainScope::RESPONSE_OUT_OF_SCOPE, 'JSON non-healthcare maps to boundary');
+expect_true($jsonPack['response_type'] === FaqChatbotDomainScope::RESPONSE_NON_HEALTH, 'JSON non-healthcare maps to non-health');
 expect_true(!preg_match('/tokyo/i', (string) $jsonPack['html']), 'does not answer the trivia question');
+expect_true(!str_contains(strtolower($jsonPack['html']), 'i understand this sounds like a health concern'), 'trivia is not a health concern');
 
-$jsonHead = '{"is_healthcare_related":true,"intent":"symptom","language":"Hiligaynon","normalized_meaning":"headache","urgency":"NON_URGENT","confidence":0.94,"reply":"Nasabtan ko nga nagasakit ang imo ulo. Indi ako makadiagnose, pero para sa mild headache makabulig ang pahulay kag tubig. Kon grabe ukon may iban nga seryoso nga sintomas, magpakonsulta."}';
+$jsonHead = '{"classification":"HEALTH_RELATED","confidence":0.94}';
 $parsedHead = FaqChatbotAiFallback::parseModelReply($jsonHead);
-expect_true($parsedHead['classification'] === FaqChatbotAiFallback::CLASS_HEALTHCARE, 'JSON sakit ulo is healthcare');
-expect_true(($parsedHead['normalized_meaning'] ?? '') === 'headache', 'JSON normalized_meaning headache');
+expect_true($parsedHead['classification'] === FaqChatbotAiFallback::CLASS_HEALTH_RELATED, 'JSON sakit ulo is healthcare');
 $headPack = FaqChatbotAiFallback::packFromParsed($parsedHead, 'hil');
 expect_true($headPack['response_type'] === FaqChatbotDomainScope::RESPONSE_MEDICAL_GEMINI, 'JSON headache is MEDICAL_GEMINI');
-expect_true(str_contains(strtolower($headPack['html']), 'ulo') || str_contains(strtolower($headPack['html']), 'head'), 'JSON keeps medical reply');
+expect_true(str_contains(strtolower($headPack['html']), 'health concern') || str_contains(strtolower($headPack['html']), 'konsulta') || str_contains(strtolower($headPack['html']), 'consultation'), 'confirmed health uses medical handling copy');
+
+$legacyHead = '{"is_healthcare_related":true,"intent":"symptom","language":"Hiligaynon","normalized_meaning":"headache","urgency":"NON_URGENT","confidence":0.94,"reply":"Nasabtan ko nga nagasakit ang imo ulo."}';
+$parsedLegacyHead = FaqChatbotAiFallback::parseModelReply($legacyHead);
+expect_true($parsedLegacyHead['classification'] === FaqChatbotAiFallback::CLASS_HEALTH_RELATED, 'legacy JSON sakit ulo is healthcare');
 
 $vagueHealth = FaqChatbotAiFallback::parseModelReply("CLASSIFICATION: POSSIBLY_HEALTHCARE\nREPLY:\nWhat symptoms are you noticing today?");
-expect_true($vagueHealth['classification'] === FaqChatbotAiFallback::CLASS_POSSIBLY_HEALTHCARE, 'vague health stays possibly healthcare');
+expect_true($vagueHealth['classification'] === FaqChatbotAiFallback::CLASS_UNCLEAR, 'vague possibly-healthcare is UNCLEAR, not forced health');
 
 $_SESSION = [];
 expect_true(FaqChatbotAiFallback::provider() === 'gemini' || FaqChatbotAiFallback::provider() === 'groq', 'provider is gemini or groq');
