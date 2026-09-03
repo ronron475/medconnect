@@ -416,7 +416,7 @@ final class FaqChatbotOrchestrator
                 if (is_array($aiPack)) {
                     $geminiClassification = (string) ($aiPack['classification'] ?? '');
                     $geminiMeta = [
-                        'is_healthcare_related' => $aiPack['is_healthcare_related'] ?? ($geminiClassification === FaqChatbotAiFallback::CLASS_HEALTHCARE || $geminiClassification === FaqChatbotAiFallback::CLASS_POSSIBLY_HEALTHCARE),
+                        'is_healthcare_related' => $aiPack['is_healthcare_related'] ?? ($geminiClassification === FaqChatbotAiFallback::CLASS_HEALTH_RELATED),
                         'intent'                => $aiPack['detected_intent'] ?? $aiPack['intent'] ?? null,
                         'language'              => $aiPack['language'] ?? $detectedLang,
                         'normalized_meaning'    => $aiPack['normalized_meaning'] ?? null,
@@ -424,7 +424,23 @@ final class FaqChatbotOrchestrator
                         'confidence'            => $aiPack['model_confidence'] ?? $aiPack['confidence'] ?? null,
                     ];
                     $urgency = strtoupper((string) ($geminiMeta['urgency'] ?? ''));
-                    if ($urgency === 'EMERGENCY') {
+                    $isHealthClass = $geminiClassification === FaqChatbotAiFallback::CLASS_HEALTH_RELATED
+                        || $geminiClassification === 'HEALTHCARE';
+                    $isNonHealthClass = $geminiClassification === FaqChatbotAiFallback::CLASS_NON_HEALTH_RELATED
+                        || $geminiClassification === 'NON_HEALTHCARE';
+                    $isUnclearClass = $geminiClassification === FaqChatbotAiFallback::CLASS_UNCLEAR
+                        || $geminiClassification === 'POSSIBLY_HEALTHCARE'
+                        || $geminiClassification === '';
+                    if ($isHealthClass
+                        && FaqChatbotDomainScope::looksUnclear($aiText, $matchText)
+                        && !FaqChatbotDomainScope::isHealthcareRelated($aiText, $matchText)
+                    ) {
+                        $isHealthClass = false;
+                        $isUnclearClass = true;
+                        $geminiClassification = FaqChatbotAiFallback::CLASS_UNCLEAR;
+                        $geminiMeta['is_healthcare_related'] = false;
+                    }
+                    if ($isHealthClass && $urgency === 'EMERGENCY') {
                         $emergency = [
                             'is_emergency' => true,
                             'type'         => 'medical',
@@ -436,27 +452,28 @@ final class FaqChatbotOrchestrator
                         $healthcareScopeLabel = 'HEALTHCARE';
                         $flowKey = 'emergency';
                         $intent = FaqChatbotIntentRecognizer::EMERGENCY;
-                    } elseif (($geminiMeta['is_healthcare_related'] ?? null) === false
-                        || $geminiClassification === FaqChatbotAiFallback::CLASS_NON_HEALTHCARE) {
-                        $responseHtml = FaqChatbotDomainScope::replyHtml(FaqChatbotDomainScope::OUT_OF_SCOPE, $replyLang);
-                        $finalResponseType = FaqChatbotDomainScope::RESPONSE_OUT_OF_SCOPE;
+                    } elseif ($isNonHealthClass || (($geminiMeta['is_healthcare_related'] ?? null) === false && !$isHealthClass && !$isUnclearClass)) {
+                        $responseHtml = FaqChatbotDomainScope::nonHealthHtml($replyLang);
+                        $finalResponseType = FaqChatbotDomainScope::RESPONSE_NON_HEALTH;
                         $healthcareScopeLabel = 'OUTSIDE';
-                        $flowKey = 'domain_out_of_scope';
-                        $intent = 'out_of_scope';
+                        $flowKey = 'domain_non_health';
+                        $intent = 'non_health';
                         $suggestions = [];
-                    } else {
+                    } elseif ($isHealthClass) {
                         $html = trim((string) ($aiPack['html'] ?? ''));
-                        if (
-                            $html === ''
-                            || $html === FaqChatbotDomainScope::replyHtml(FaqChatbotDomainScope::AMBIGUOUS, $replyLang)
-                            || FaqChatbotAiFallback::isInsufficientModelReply($html)
-                        ) {
-                            $html = FaqChatbotDomainScope::unmatchedHealthcareHtml($replyLang);
-                        }
-                        $responseHtml = $html;
+                        $responseHtml = $html !== ''
+                            ? $html
+                            : FaqChatbotDomainScope::unmatchedHealthcareHtml($replyLang);
                         $finalResponseType = FaqChatbotDomainScope::RESPONSE_MEDICAL_GEMINI;
                         $healthcareScopeLabel = 'HEALTHCARE';
                         $flowKey = 'ai_conversation';
+                        $suggestions = [];
+                    } else {
+                        $responseHtml = FaqChatbotDomainScope::unclearHtml($replyLang);
+                        $finalResponseType = FaqChatbotDomainScope::RESPONSE_UNCLEAR;
+                        $healthcareScopeLabel = 'UNCLEAR';
+                        $flowKey = 'message_unclear';
+                        $intent = 'unclear';
                         $suggestions = [];
                     }
                     $useServer = true;
@@ -474,12 +491,19 @@ final class FaqChatbotOrchestrator
                         $healthcareScopeLabel = 'HEALTHCARE';
                         $flowKey = 'ai_conversation';
                         $suggestions = [];
+                    } elseif (FaqChatbotDomainScope::looksUnclear($text, $matchText)) {
+                        $responseHtml = FaqChatbotDomainScope::unclearHtml($replyLang);
+                        $finalResponseType = FaqChatbotDomainScope::RESPONSE_UNCLEAR;
+                        $healthcareScopeLabel = 'UNCLEAR';
+                        $flowKey = 'message_unclear';
+                        $intent = 'unclear';
+                        $suggestions = [];
                     } else {
-                        $responseHtml = FaqChatbotDomainScope::replyHtml(FaqChatbotDomainScope::OUT_OF_SCOPE, $replyLang);
-                        $finalResponseType = FaqChatbotDomainScope::RESPONSE_OUT_OF_SCOPE;
+                        $responseHtml = FaqChatbotDomainScope::nonHealthHtml($replyLang);
+                        $finalResponseType = FaqChatbotDomainScope::RESPONSE_NON_HEALTH;
                         $healthcareScopeLabel = 'OUTSIDE';
-                        $flowKey = 'domain_out_of_scope';
-                        $intent = 'out_of_scope';
+                        $flowKey = 'domain_non_health';
+                        $intent = 'non_health';
                         $suggestions = [];
                     }
                     $useServer = true;
@@ -491,11 +515,18 @@ final class FaqChatbotOrchestrator
                     ]);
                 }
             } else {
-                $responseHtml = FaqChatbotDomainScope::replyHtml(FaqChatbotDomainScope::OUT_OF_SCOPE, $replyLang);
-                $finalResponseType = FaqChatbotDomainScope::RESPONSE_OUT_OF_SCOPE;
-                $healthcareScopeLabel = 'OUTSIDE';
+                if (FaqChatbotDomainScope::looksUnclear($text, $matchText)) {
+                    $responseHtml = FaqChatbotDomainScope::unclearHtml($replyLang);
+                    $finalResponseType = FaqChatbotDomainScope::RESPONSE_UNCLEAR;
+                    $healthcareScopeLabel = 'UNCLEAR';
+                    $flowKey = 'message_unclear';
+                } else {
+                    $responseHtml = FaqChatbotDomainScope::nonHealthHtml($replyLang);
+                    $finalResponseType = FaqChatbotDomainScope::RESPONSE_NON_HEALTH;
+                    $healthcareScopeLabel = 'OUTSIDE';
+                    $flowKey = 'domain_non_health';
+                }
                 $useServer = true;
-                $flowKey = 'domain_out_of_scope';
             }
         }
 

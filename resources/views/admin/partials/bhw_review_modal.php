@@ -33,3 +33,19 @@
         </div>
     </div>
 </div>
+
+<div id="bhwDocPreviewModal" class="bhw-doc-preview-overlay" style="display:none;" role="dialog" aria-modal="true" aria-labelledby="bhwDocPreviewTitle">
+    <div class="bhw-doc-preview-dialog">
+        <div class="bhw-doc-preview-header">
+            <div>
+                <h3 class="bhw-doc-preview-title" id="bhwDocPreviewTitle">Document preview</h3>
+                <p class="bhw-doc-preview-sub" id="bhwDocPreviewSub"></p>
+            </div>
+            <div class="bhw-doc-preview-actions">
+                <a id="bhwDocPreviewDownload" class="mc-btn mc-btn--outline" href="#">Download</a>
+                <button type="button" class="admin-modal-close" id="bhwDocPreviewClose" aria-label="Close preview">&times;</button>
+            </div>
+        </div>
+        <div class="bhw-doc-preview-body" id="bhwDocPreviewBody"></div>
+    </div>
+</div>

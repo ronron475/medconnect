@@ -76,9 +76,9 @@ expect_true(($book['final_response_type'] ?? '') !== 'OUT_OF_SCOPE', 'booking is
 $joke = run_assist($orch, $sessionId, 'tell me a joke');
 expect_true(empty($joke['emergency']), 'joke not emergency');
 expect_true(
-    ($joke['final_response_type'] ?? '') === 'OUT_OF_SCOPE'
+    in_array(($joke['final_response_type'] ?? ''), ['OUT_OF_SCOPE', 'NON_HEALTH', 'UNCLEAR'], true)
         || !empty($joke['fallback_required']),
-    'joke goes to Gemini classification or boundary'
+    'joke goes to Gemini classification or non-health/unclear'
 );
 
 $wala = run_assist($orch, $sessionId, 'wala kwarta');

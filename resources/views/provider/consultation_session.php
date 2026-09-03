@@ -202,7 +202,7 @@ $localhost_app_url = 'http://localhost' . (ASSET_BASE !== '' ? ASSET_BASE : '');
 <style>
 .session-page {
     display: grid;
-    grid-template-columns: minmax(0, 1fr) minmax(280px, 360px);
+    grid-template-columns: minmax(0, 1fr) minmax(320px, 400px);
     gap: 22px;
     align-items: start;
     overflow-x: hidden;
@@ -213,6 +213,7 @@ $localhost_app_url = 'http://localhost' . (ASSET_BASE !== '' ? ASSET_BASE : '');
     flex-direction: column;
     gap: 22px;
     min-width: 0;
+    max-width: 100%;
 }
 .session-side {
     display: flex;
@@ -249,7 +250,10 @@ $localhost_app_url = 'http://localhost' . (ASSET_BASE !== '' ? ASSET_BASE : '');
 }
 .video-shell {
     position: relative;
-    min-height: 430px;
+    width: 100%;
+    max-width: min(100%, 760px);
+    margin-inline: auto;
+    min-height: 0;
     aspect-ratio: 16 / 9;
     background: radial-gradient(circle at 50% 40%, #13243a 0%, #05070b 52%, #000 100%);
     border-radius: 14px;
@@ -260,7 +264,11 @@ $localhost_app_url = 'http://localhost' . (ASSET_BASE !== '' ? ASSET_BASE : '');
 .video-panel {
     display: flex;
     flex-direction: column;
+    align-items: stretch;
     gap: 12px;
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
 }
 .video-pre-call {
     position: absolute;
@@ -367,8 +375,8 @@ $localhost_app_url = 'http://localhost' . (ASSET_BASE !== '' ? ASSET_BASE : '');
 }
 .video-shell.is-floating {
     position: fixed;
-    width: min(380px, calc(100vw - 24px));
-    height: 240px;
+    width: min(340px, calc(100vw - 24px));
+    height: 220px;
     min-height: 0;
     aspect-ratio: auto;
     z-index: 2000;
@@ -417,13 +425,32 @@ $localhost_app_url = 'http://localhost' . (ASSET_BASE !== '' ? ASSET_BASE : '');
     }
     .video-shell.is-call-active {
         width: 100%;
+        max-width: min(100%, 760px);
+        margin-inline: auto;
         height: auto;
-        min-height: clamp(240px, 32dvh, 320px);
-        max-height: calc(100dvh - var(--mc-header-offset, 64px) - 2.5rem);
+        min-height: clamp(200px, 24dvh, 260px);
+        max-height: min(48dvh, calc(100dvh - var(--mc-header-offset, 64px) - 10rem));
         aspect-ratio: 16 / 9;
+    }
+}
+@media (min-width: 769px) and (max-height: 900px) {
+    .video-shell.is-call-active {
+        max-width: min(100%, 680px);
+        max-height: min(44dvh, 380px);
     }
     .video-shell.is-call-active .video-shell-tools {
         display: none !important;
+    }
+}
+
+@media (max-width: 768px) {
+    .video-panel,
+    .video-shell {
+        width: 100%;
+        max-width: 100%;
+        min-width: 0;
+        overflow-x: hidden;
+        box-sizing: border-box;
     }
 }
 
@@ -483,9 +510,12 @@ $localhost_app_url = 'http://localhost' . (ASSET_BASE !== '' ? ASSET_BASE : '');
         flex: 1 1 auto;
         position: relative;
         width: 100%;
+        max-width: none;
+        margin-inline: 0;
         height: 100%;
         min-height: 0;
         max-height: none;
+        aspect-ratio: auto;
         border-radius: 0;
         box-shadow: none;
     }
@@ -645,6 +675,8 @@ body.consultation-true-fullscreen .video-shell.is-call-active.is-mobile-fullscre
     bottom: 0 !important;
     left: 0 !important;
     width: 100% !important;
+    max-width: none !important;
+    margin: 0 !important;
     height: var(--mc-true-fs-height, 100dvh) !important;
     max-height: none !important;
     min-height: 0 !important;
@@ -1878,6 +1910,7 @@ body.consultation-mobile-call-fullscreen .mc-provider-video-dock iframe {
         left: 0;
         bottom: auto;
         width: 100%;
+        max-width: 100%;
         height: calc(100vh - var(--mc-header-offset, var(--provider-header-h, 64px)));
         height: calc(100dvh - var(--mc-header-offset, var(--provider-header-h, 64px)));
         min-height: 0;

@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import asyncio
+import json
 import logging
 
 from fastapi import APIRouter, HTTPException
@@ -52,26 +53,15 @@ async def faq_chatbot_assist(body: FaqChatAssistRequest) -> dict:
         raise HTTPException(status_code=503, detail="FAQ assistant is temporarily unavailable.") from exc
 
     classification = str(pack.get("classification") or "")
-    html = str(pack.get("html") or "")
-    if classification == "NON_HEALTHCARE":
-        logger.info("FAQ chatbot assist out-of-scope (%d chars, lang=%s)", len(body.text), lang)
-        return {
-            "success": True,
-            "data": {
-                "html": "",
-                "classification": "NON_HEALTHCARE",
-                "raw": "OUT_OF_SCOPE",
-            },
-        }
-    if not html:
-        raise HTTPException(status_code=503, detail="FAQ assistant returned an empty reply.")
-
-    logger.info("FAQ chatbot assist ok (%d chars, lang=%s, class=%s)", len(body.text), lang, classification)
+    confidence = pack.get("confidence")
+    raw = str(pack.get("raw") or "")
+    logger.info("FAQ chatbot classify ok (%d chars, lang=%s, class=%s)", len(body.text), lang, classification)
     return {
         "success": True,
         "data": {
-            "html": html,
-            "classification": classification,
-            "raw": str(pack.get("raw") or ""),
+            "html": "",
+            "classification": classification or "UNCLEAR",
+            "raw": raw or json.dumps({"classification": classification or "UNCLEAR", "confidence": confidence}),
+            "confidence": confidence,
         },
     }

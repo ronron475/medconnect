@@ -141,6 +141,20 @@ expect_scope('diin ang hospital?', FaqChatbotDomainScope::MEDICAL, 'hospital loc
 expect_true(FaqChatbotDomainScope::isHealthcareRelated('sakit ulo ko'), 'isHealthcareRelated sakit ulo');
 expect_true(!FaqChatbotDomainScope::isHealthcareRelated('wala kwarta'), 'isHealthcareRelated wala kwarta false');
 expect_true(FaqChatbotDomainScope::isHealthcareRelated('wala kwarta pambili tambal kay may hilanat ako'), 'mixed money+fever is healthcare');
+expect_true(!FaqChatbotDomainScope::isHealthcareRelated('sakitgbgjgbvd'), 'gibberish sakitgbgjgbvd is not healthcare');
+expect_true(!FaqChatbotDomainScope::isHealthcareRelated('hahhahahaaa buli'), 'laughter filler is not healthcare');
+expect_true(FaqChatbotDomainScope::looksUnclear('sakitgbgjgbvd'), 'sakitgbgjgbvd looks unclear');
+expect_true(FaqChatbotDomainScope::looksUnclear('asdfghjkl'), 'asdfghjkl looks unclear');
+expect_true(FaqChatbotDomainScope::looksUnclear('hahhahahaaa buli'), 'hahhahahaaa buli looks unclear');
+expect_true(!FaqChatbotDomainScope::looksUnclear('masakit akon tiyan'), 'real hiligaynon symptom is not unclear');
+expect_true(!FaqChatbotDomainScope::looksUnclear('I have a fever'), 'fever is not unclear');
+
+$unclearHtml = strtolower(strip_tags(FaqChatbotDomainScope::unclearHtml('en')));
+expect_true(str_contains($unclearHtml, 'rephrase') || str_contains($unclearHtml, 'understood'), 'unclear copy asks to rephrase');
+expect_true(!str_contains($unclearHtml, 'i understand this sounds like a health concern'), 'unclear copy is not the health disclaimer');
+$nonHealthHtml = strtolower(strip_tags(FaqChatbotDomainScope::nonHealthHtml('en')));
+expect_true(str_contains($nonHealthHtml, 'city health office'), 'non-health copy offers CHO help');
+expect_true(!str_contains($nonHealthHtml, 'i understand this sounds like a health concern'), 'non-health copy is not the health disclaimer');
 
 $emWala = FaqChatbotEmergencyDetector::detect('wala kwarta');
 expect_true(empty($emWala['is_emergency']), 'wala kwarta is not emergency');

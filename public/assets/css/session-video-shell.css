@@ -19,8 +19,8 @@
 }
 
 .mc-session-float-shell.is-pip {
-  width: min(380px, calc(100vw - 24px));
-  height: 240px;
+  width: min(340px, calc(100vw - 24px));
+  height: 220px;
   right: 16px;
   bottom: 96px;
   left: auto;
@@ -221,8 +221,8 @@ body.mc-video-shell-fullscreen .patient-mobile-nav {
   display: none !important;
 }
 
-body.mc-video-shell-pip .mc-messages-fab {
-  bottom: calc(96px + 250px + env(safe-area-inset-bottom, 0px));
+  body.mc-video-shell-pip .mc-messages-fab {
+  bottom: calc(96px + 230px + env(safe-area-inset-bottom, 0px));
 }
 
 @media (max-width: 768px) {

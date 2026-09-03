@@ -633,6 +633,34 @@
         actions: ['signIn', 'bookAppointment', 'contactCho'],
       },
     },
+    message_unclear: {
+      en: {
+        html: '<p>I\'m not sure I understood your message. Could you please rephrase it? I can help with health concerns, appointments, consultations, and City Health Office services.</p>',
+        actions: [],
+      },
+      fil: {
+        html: '<p>Hindi ko naintindihan ang iyong mensahe. Pakiulit o i-rephrase po? Makakatulong ako sa health concerns, appointments, consultations, at serbisyo ng City Health Office.</p>',
+        actions: [],
+      },
+      hil: {
+        html: '<p>Indi ko maintindihan ang imo mensahe. Palihog i-rephrase? Makabulig ako sa health concerns, appointments, consultations, kag serbisyo sang City Health Office.</p>',
+        actions: [],
+      },
+    },
+    domain_non_health: {
+      en: {
+        html: '<p>I\'m here to help with City Health Office and medConnect services. Could you tell me what you need help with?</p>',
+        actions: [],
+      },
+      fil: {
+        html: '<p>Nandito ako para tumulong sa City Health Office at medConnect. Ano po ang maitutulong ko?</p>',
+        actions: [],
+      },
+      hil: {
+        html: '<p>Diri ako para magbulig sa City Health Office kag medConnect. Ano ang imo kinahanglan?</p>',
+        actions: [],
+      },
+    },
     healthcare_unmatched: {
       en: {
         html: '<p>I understand this sounds like a health concern. I can\'t diagnose or prescribe, but I can share general guidance and help you book a medConnect consultation. If symptoms are sudden, severe, or include trouble breathing, chest pain, fainting, or heavy bleeding, seek emergency care or call 911.</p>',

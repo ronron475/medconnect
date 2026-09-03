@@ -17,33 +17,38 @@ logger = logging.getLogger("medconnect.faq_chatbot")
 DEFAULT_GEMINI_MODEL = "gemini-3.5-flash"
 GEMINI_ENDPOINT = "https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent"
 
-SYSTEM_PROMPT = """You are a healthcare assistant for medConnect.
+SYSTEM_PROMPT = """You are a domain classifier for the medConnect Assistant used by a City Health Office.
 
-First classify whether the user message is related to healthcare, medicine, a symptom, illness, injury, treatment, medication, doctor/provider consultation, medical records, appointment, emergency, or another legitimate medConnect healthcare concern.
+Your only job is to classify the CURRENT user message. Do not write a patient-facing reply. Do not diagnose.
 
-Understand English, Filipino/Tagalog, Hiligaynon/Ilonggo, mixed language, slang, abbreviations, misspellings, and short informal sentences. Example: "sakit ulo ko" means the patient has a headache.
+Understand English, Filipino/Tagalog, Hiligaynon/Ilonggo, Taglish, mixed languages, slang, and common misspellings of real words.
 
-If it IS healthcare-related, write a helpful reply in the patient's language:
-- Acknowledge the concern (for "sakit ulo ko", talk about head pain / headache).
-- You may ask relevant follow-up questions and give safe general information.
-- Do not diagnose, prescribe, or invent records.
-- Do not claim to be a doctor.
-- Recommend professional care when appropriate.
-- Do not invent an emergency unless clearly described symptoms support it (cannot breathe, severe chest pain, unconscious, seizure, severe bleeding, self-harm, suicide, indi ko kaginhawa, nahimatay). Then set urgency to EMERGENCY and tell them to call 911 / Hopeline 1553.
+Allowed classifications:
+- HEALTH_RELATED: a real health or medConnect/City Health Office request. This includes symptoms, diseases, medicines, vaccination, maternal/child health, appointments, consultation, BHW services, medical records, and other existing chatbot health/service intents. Examples: "I have a fever", "my stomach hurts", "diarrhea since yesterday", "masakit akon tiyan", "gakirot akon ulo", "may hilanat ko", "what services does the city health office offer".
+- NON_HEALTH_RELATED: conversation that is not a health or City Health Office request, such as jokes, laughing, casual chat, sports, weather, trivia, coding, or identity questions with no health meaning. Examples: "hello", "hahhahahaaa buli", "tell me a joke".
+- UNCLEAR: random characters, keyboard smash, gibberish, incomplete nonsense, or text you cannot reasonably interpret as a real health or service request. Examples: "sakitgbgjgbvd", "asdfghjkl", "qwerty123", "hahhahahaaa".
 
-If it is NOT healthcare-related (jokes, weather, sports, trivia, coding, cooking, money-only chat with no health context), set is_healthcare_related to false and leave reply empty.
+Critical rules:
+- Do NOT classify a message as HEALTH_RELATED only because the existing chatbot did not recognize it.
+- Do NOT treat gibberish as a medical concern just because it contains letters that look like "sakit", "ulo", "fever", or other medical roots without forming a real word or phrase.
+- Laughing, teasing, or random filler without a described symptom is NON_HEALTH_RELATED or UNCLEAR, never HEALTH_RELATED.
+- If you are not sure, use UNCLEAR and a lower confidence.
 
-Return ONLY this JSON object, no markdown, no extra text:
-{"is_healthcare_related":true,"intent":"symptom","language":"Hiligaynon","normalized_meaning":"headache","urgency":"NON_URGENT","confidence":0.94,"reply":"your 2-4 sentence reply"}
+Return ONLY this JSON object, no markdown, no extra keys, no reply text:
+{"classification":"HEALTH_RELATED","confidence":0.92}
 
-intent must be one of: symptom, medication, appointment, records, consultation, emergency, medconnect, other_healthcare, non_healthcare
-urgency must be one of: EMERGENCY, URGENT, NON_URGENT
+classification must be one of: HEALTH_RELATED, NON_HEALTH_RELATED, UNCLEAR
+confidence must be a number from 0.0 to 1.0
 """
 
-CLASS_GREETING = "GREETING"
-CLASS_HEALTHCARE = "HEALTHCARE"
-CLASS_POSSIBLY = "POSSIBLY_HEALTHCARE"
-CLASS_NON = "NON_HEALTHCARE"
+CLASS_HEALTH_RELATED = "HEALTH_RELATED"
+CLASS_NON_HEALTH_RELATED = "NON_HEALTH_RELATED"
+CLASS_UNCLEAR = "UNCLEAR"
+CLASS_GREETING = CLASS_UNCLEAR
+CLASS_HEALTHCARE = CLASS_HEALTH_RELATED
+CLASS_POSSIBLY = CLASS_UNCLEAR
+CLASS_NON = CLASS_NON_HEALTH_RELATED
+CLASSIFY_CONFIDENCE_THRESHOLD = 0.80
 
 
 def _env(*names: str) -> str:
@@ -120,34 +125,27 @@ def to_safe_html(text: str) -> str:
 
 def _user_payload(user_text: str, lang: str, context: dict[str, Any]) -> str:
     lang_name = {"fil": "Filipino", "hil": "Hiligaynon/Ilonggo"}.get(lang, "English")
-    meta = f"Reply language: {lang_name}."
-    topic = str(context.get("topic") or "").strip()
-    intent = str(context.get("intent") or "").strip()
-    emotion = str(context.get("emotion") or "").strip()
-    if topic:
-        meta += f" Current topic: {topic}."
-    if intent:
-        meta += f" Existing intent hint: {intent}."
-    if emotion and emotion != "neutral":
-        meta += f" Patient tone hint: {emotion}."
-    return f"{meta}\nPatient message:\n{user_text}"
+    return (
+        "Classify this single user message. Do not write a chatbot reply. Preferred UI language: "
+        + lang_name
+        + ".\nUser message:\n"
+        + user_text
+    )
 
 
 def _complete_gemini(user_text: str, lang: str, context: dict[str, Any], history: list[dict[str, str]]) -> str:
     key = gemini_key()
     if not key:
         raise RuntimeError("gemini key missing")
-    contents: list[dict[str, Any]] = []
-    for turn in history:
-        role = "user" if turn.get("role") == "user" else "model"
-        contents.append({"role": role, "parts": [{"text": turn.get("text") or ""}]})
-    contents.append({"role": "user", "parts": [{"text": _user_payload(user_text, lang, context)}]})
+    contents: list[dict[str, Any]] = [
+        {"role": "user", "parts": [{"text": _user_payload(user_text, lang, context)}]}
+    ]
     payload = {
         "systemInstruction": {"parts": [{"text": SYSTEM_PROMPT}]},
         "contents": contents,
         "generationConfig": {
-            "temperature": 0.3,
-            "maxOutputTokens": 400,
+            "temperature": 0.1,
+            "maxOutputTokens": 120,
             "responseMimeType": "application/json",
         },
     }
@@ -185,11 +183,8 @@ def _complete_groq(user_text: str, lang: str, context: dict[str, Any], history: 
     from groq_client import groq_chat_completion
 
     messages = [{"role": "system", "content": SYSTEM_PROMPT}]
-    for turn in history:
-        role = "user" if turn.get("role") == "user" else "assistant"
-        messages.append({"role": role, "content": turn.get("text") or ""})
     messages.append({"role": "user", "content": _user_payload(user_text, lang, context)})
-    content, _model = groq_chat_completion(messages, json_mode=False, temperature=0.4)
+    content, _model = groq_chat_completion(messages, json_mode=False, temperature=0.1)
     if not content:
         raise RuntimeError("empty groq response")
     return content
@@ -226,46 +221,29 @@ def generate_assist(
 ) -> dict[str, Any]:
     user_text = (user_text or "").strip()[:800]
     if not user_text:
-        return {"html": "", "classification": CLASS_POSSIBLY, "raw": ""}
+        return {"html": "", "classification": CLASS_UNCLEAR, "raw": "", "confidence": None}
     lang = (lang or "en").lower()
     if lang not in {"en", "fil", "hil"}:
         lang = "en"
     context = {"intent": intent, "emotion": emotion, "topic": topic}
-    turns = []
-    for item in (history or [])[-12:]:
-        if not isinstance(item, dict):
-            continue
-        role = str(item.get("role") or "")
-        text = str(item.get("text") or "").strip()[:280]
-        if not text:
-            continue
-        if role in {"user", "assistant", "bot", "model"}:
-            turns.append({"role": "user" if role == "user" else "assistant", "text": text})
     try:
-        raw = _complete_gemini(user_text, lang, context, turns)
+        raw = _complete_gemini(user_text, lang, context, [])
     except Exception as exc:
         logger.warning("Gemini FAQ fallback failed, trying Groq: %s", exc)
-        raw = _complete_groq(user_text, lang, context, turns)
+        raw = _complete_groq(user_text, lang, context, [])
     parsed = parse_model_reply(raw)
-    classification = parsed["classification"]
-    reply = parsed["reply"]
-    if classification == CLASS_NON or reply.strip().upper() == "OUT_OF_SCOPE":
-        return {
-            "html": "",
-            "classification": CLASS_NON,
-            "raw": "OUT_OF_SCOPE",
-            "is_healthcare_related": False,
-            "intent": parsed.get("intent") or "non_healthcare",
-            "language": parsed.get("language") or "",
-            "normalized_meaning": parsed.get("normalized_meaning") or "",
-            "urgency": parsed.get("urgency") or "NON_URGENT",
-            "confidence": parsed.get("confidence"),
-        }
+    classification = _apply_confidence_gate(
+        str(parsed.get("classification") or CLASS_UNCLEAR),
+        parsed.get("confidence"),
+    )
     return {
-        "html": to_safe_html(reply),
+        "html": "",
         "classification": classification,
-        "raw": raw if raw.strip().startswith("{") else reply,
-        "is_healthcare_related": classification != CLASS_NON,
+        "raw": raw if str(raw).strip().startswith("{") else json.dumps(
+            {"classification": classification, "confidence": parsed.get("confidence")},
+            ensure_ascii=False,
+        ),
+        "is_healthcare_related": classification == CLASS_HEALTH_RELATED,
         "intent": parsed.get("intent") or "",
         "language": parsed.get("language") or "",
         "normalized_meaning": parsed.get("normalized_meaning") or "",
@@ -274,14 +252,12 @@ def generate_assist(
     }
 
 
-def parse_model_reply(raw: str) -> dict[str, str]:
+def parse_model_reply(raw: str) -> dict[str, Any]:
     text = (raw or "").replace("\r\n", "\n").strip()
     text = re.sub(r"^```(?:json)?\s*", "", text, flags=re.I)
     text = re.sub(r"\s*```$", "", text).strip()
     if not text:
-        return {"classification": CLASS_POSSIBLY, "reply": ""}
-    if re.search(r'"is_healthcare_related"\s*:\s*false', text, flags=re.I):
-        return {"classification": CLASS_NON, "reply": "OUT_OF_SCOPE"}
+        return {"classification": CLASS_UNCLEAR, "reply": ""}
     json_match = re.search(r"\{[\s\S]*\}", text)
     if json_match:
         try:
@@ -289,20 +265,23 @@ def parse_model_reply(raw: str) -> dict[str, str]:
         except json.JSONDecodeError:
             decoded = None
         if isinstance(decoded, dict):
+            class_raw = str(decoded.get("classification") or decoded.get("CLASSIFICATION") or "").strip()
+            classification = _normalize_classification(class_raw)
             is_health = decoded.get("is_healthcare_related", decoded.get("isHealthcareRelated"))
-            classification = _normalize_classification(
-                str(decoded.get("classification") or decoded.get("CLASSIFICATION") or "")
-            )
-            if is_health is True or is_health == 1 or str(is_health).lower() == "true":
-                classification = CLASS_HEALTHCARE
-            elif is_health is False or is_health == 0 or str(is_health).lower() == "false":
-                classification = CLASS_NON
-            reply = str(decoded.get("reply") or decoded.get("REPLY") or decoded.get("text") or "").strip()
+            if class_raw == "" and is_health in (True, 1, "true", "1"):
+                classification = CLASS_HEALTH_RELATED
+            elif class_raw == "" and is_health in (False, 0, "false", "0"):
+                classification = CLASS_NON_HEALTH_RELATED
             intent = str(decoded.get("intent") or "").strip().lower().replace("-", "_")
-            if not classification and intent in {"non_healthcare", "nonhealthcare", "out_of_scope"}:
-                classification = CLASS_NON
-            if classification or reply or is_health is not None:
-                parsed = _normalize_parsed(classification or CLASS_POSSIBLY, reply)
+            if classification == CLASS_UNCLEAR and class_raw == "" and intent in {
+                "non_healthcare",
+                "nonhealthcare",
+                "out_of_scope",
+                "non_health_related",
+            }:
+                classification = CLASS_NON_HEALTH_RELATED
+            if classification or class_raw or is_health is not None:
+                parsed = _normalize_parsed(classification or CLASS_UNCLEAR, "")
                 parsed["intent"] = str(decoded.get("intent") or "").strip()
                 parsed["language"] = str(decoded.get("language") or "").strip()
                 parsed["normalized_meaning"] = str(
@@ -315,52 +294,52 @@ def parse_model_reply(raw: str) -> dict[str, str]:
                     parsed["confidence"] = None
                 return parsed
     if re.match(r"^\s*OUT_OF_SCOPE\s*$", text, flags=re.I):
-        return {"classification": CLASS_NON, "reply": "OUT_OF_SCOPE"}
+        return {"classification": CLASS_NON_HEALTH_RELATED, "reply": ""}
     class_match = re.search(
-        r"CLASSIFICATION\s*:\s*(GREETING|HEALTHCARE|POSSIBLY_HEALTHCARE|NON_HEALTHCARE)\b",
+        r"CLASSIFICATION\s*:\s*(HEALTH_RELATED|NON_HEALTH_RELATED|UNCLEAR|GREETING|HEALTHCARE|POSSIBLY_HEALTHCARE|NON_HEALTHCARE)\b",
         text,
         flags=re.I,
     )
     classification = _normalize_classification(class_match.group(1) if class_match else "")
-    reply_match = re.search(r"\bREPLY\s*:\s*(.*)$", text, flags=re.I | re.S)
-    if reply_match:
-        reply = reply_match.group(1).strip()
-    elif classification:
-        reply = re.sub(r"CLASSIFICATION\s*:\s*[A-Z_]+\s*", "", text, flags=re.I).strip()
-    else:
-        reply = text
     if not classification:
-        if re.match(r"^\s*OUT_OF_SCOPE\s*$", reply, flags=re.I) or (
-            "OUT_OF_SCOPE" in text and len(text) < 48
-        ):
-            classification = CLASS_NON
-            reply = "OUT_OF_SCOPE"
-        else:
-            classification = CLASS_POSSIBLY
-    return _normalize_parsed(classification, reply)
+        classification = CLASS_UNCLEAR
+    return _normalize_parsed(classification, "")
 
 
 def _normalize_classification(value: str) -> str:
     v = (value or "").strip().upper().replace(" ", "_").replace("-", "_")
     aliases = {
-        "OUT_OF_SCOPE": CLASS_NON,
-        "NONHEALTHCARE": CLASS_NON,
-        "UNRELATED": CLASS_NON,
-        "POSSIBLY": CLASS_POSSIBLY,
-        "AMBIGUOUS": CLASS_POSSIBLY,
-        "CLARIFY": CLASS_POSSIBLY,
-        "MEDICAL": CLASS_HEALTHCARE,
-        "HEALTH": CLASS_HEALTHCARE,
+        "OUT_OF_SCOPE": CLASS_NON_HEALTH_RELATED,
+        "NONHEALTHCARE": CLASS_NON_HEALTH_RELATED,
+        "NON_HEALTHCARE": CLASS_NON_HEALTH_RELATED,
+        "UNRELATED": CLASS_NON_HEALTH_RELATED,
+        "POSSIBLY": CLASS_UNCLEAR,
+        "POSSIBLY_HEALTHCARE": CLASS_UNCLEAR,
+        "AMBIGUOUS": CLASS_UNCLEAR,
+        "CLARIFY": CLASS_UNCLEAR,
+        "GREETING": CLASS_UNCLEAR,
+        "MEDICAL": CLASS_HEALTH_RELATED,
+        "HEALTH": CLASS_HEALTH_RELATED,
+        "HEALTHCARE": CLASS_HEALTH_RELATED,
     }
     v = aliases.get(v, v)
-    if v in {CLASS_GREETING, CLASS_HEALTHCARE, CLASS_POSSIBLY, CLASS_NON}:
+    if v in {CLASS_HEALTH_RELATED, CLASS_NON_HEALTH_RELATED, CLASS_UNCLEAR}:
         return v
-    return v
+    return CLASS_UNCLEAR
 
 
-def _normalize_parsed(classification: str, reply: str) -> dict[str, str]:
+def _apply_confidence_gate(classification: str, confidence: Any) -> str:
     classification = _normalize_classification(classification)
-    reply = (reply or "").strip()
-    if classification == CLASS_NON or re.match(r"^\s*OUT_OF_SCOPE\s*$", reply, flags=re.I):
-        return {"classification": CLASS_NON, "reply": "OUT_OF_SCOPE"}
-    return {"classification": classification or CLASS_HEALTHCARE, "reply": reply}
+    if classification == CLASS_UNCLEAR:
+        return CLASS_UNCLEAR
+    try:
+        if confidence is not None and float(confidence) < CLASSIFY_CONFIDENCE_THRESHOLD:
+            return CLASS_UNCLEAR
+    except (TypeError, ValueError):
+        return classification
+    return classification
+
+
+def _normalize_parsed(classification: str, reply: str) -> dict[str, Any]:
+    classification = _normalize_classification(classification)
+    return {"classification": classification or CLASS_UNCLEAR, "reply": ""}
