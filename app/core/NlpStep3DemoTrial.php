@@ -86,7 +86,7 @@ final class NlpStep3DemoTrial
 
         $assessment = ChiefComplaintNlpService::assessInterview($normalizedTurn, $prior);
         $assessment = self::enrichDemoAssessmentFacts($assessment);
-        $assessment = self::applyDemoPainQuestionOrder($assessment);
+        $assessment = self::applyDemoAdaptiveFollowUp($assessment, $prior);
         $assessment = self::maybeFinalizeDemoWhenSufficient($assessment);
 
         $status = strtoupper((string) ($assessment['assessment_status'] ?? ''));
@@ -112,8 +112,19 @@ final class NlpStep3DemoTrial
             ? $assessment['followup_question']
             : null;
 
+        $completeness = is_array($assessment['demo_completeness'] ?? null)
+            ? $assessment['demo_completeness']
+            : NlpStep3DemoClinicalState::evaluateCompleteness(
+                $facts,
+                (string) ($assessment['clinical_transcript'] ?? $turn),
+                $assessment
+            );
+
         $healthRelated = true;
-        $information = $inProgress ? 'INCOMPLETE' : 'SUFFICIENT';
+        $information = (string) ($completeness['status'] ?? ($inProgress ? 'INSUFFICIENT' : 'SUFFICIENT'));
+        if ($information === NlpStep3DemoClinicalState::STATUS_SUFFICIENT && $inProgress) {
+            $information = 'INSUFFICIENT';
+        }
         $clinicalStatus = $inProgress ? 'NEEDS_FOLLOW_UP' : 'COMPLETED';
         $clinicalReasoning = trim((string) (
             $assessment['triage']['clinical_reasoning']
@@ -141,6 +152,11 @@ final class NlpStep3DemoTrial
             $geminiMeta['fallback'] = 'none';
         }
 
+        $summary = NlpStep3DemoClinicalState::toDisplaySummary(
+            $facts,
+            (string) ($assessment['clinical_transcript'] ?? $turn)
+        );
+
         return [
             'demo_mode' => self::MODE,
             'trial_only' => true,
@@ -150,6 +166,7 @@ final class NlpStep3DemoTrial
             'health_related' => $healthRelated,
             'domain_class' => 'HEALTH_RELATED',
             'information' => $information,
+            'information_status' => $information,
             'clinical_status' => $clinicalStatus,
             'clinical_reasoning' => $clinicalReasoning,
             'diagnosis' => $diagnosis,
@@ -165,10 +182,13 @@ final class NlpStep3DemoTrial
                 ?? $assessment['interview']['demo_followup_skip_reason']
                 ?? ''
             ),
+            'completeness' => $completeness,
+            'missing_fields' => is_array($completeness['missing'] ?? null) ? $completeness['missing'] : [],
             'patient_message' => (string) ($assessment['patient_message'] ?? ''),
             'clinical_transcript' => (string) ($assessment['clinical_transcript'] ?? ''),
             'facts' => $facts,
-            'complaint_summary' => self::complaintSummary($facts, (string) ($assessment['clinical_transcript'] ?? $turn)),
+            'clinical_state' => is_array($facts['clinical_state'] ?? null) ? $facts['clinical_state'] : [],
+            'complaint_summary' => $summary,
             'detected_symptoms' => is_array($assessment['detected_symptoms'] ?? null) ? $assessment['detected_symptoms'] : [],
             'possible_conditions' => is_array($assessment['possible_conditions'] ?? null)
                 ? $assessment['possible_conditions']
@@ -177,7 +197,7 @@ final class NlpStep3DemoTrial
             'detected_language' => (string) ($assessment['detected_language'] ?? ($assessment['interview']['detected_language'] ?? '')),
             'interview_context' => $assessment['interview'] ?? ClinicalInterviewEngine::normalizeContext($assessment),
             'engine' => (string) ($assessment['engine'] ?? 'clinical-interview'),
-            'engine_chain' => ChiefComplaintNlpService::ENGINE_CHAIN . ' + ClinicalInterviewEngine (demo trial pain order)',
+            'engine_chain' => ChiefComplaintNlpService::ENGINE_CHAIN . ' + ClinicalInterviewEngine (demo adaptive completeness)',
             'gemini_called' => $geminiUsed,
             'gemini_why' => $geminiWhy,
             'gemini' => $geminiMeta,
@@ -386,6 +406,11 @@ final class NlpStep3DemoTrial
             $question = self::heldQuestion($awaiting, self::lastAskedQuestionText($prior, $awaiting), $message);
         }
 
+        $counts = is_array($prior['clarification_counts'] ?? null) ? $prior['clarification_counts'] : [];
+        if ($awaiting !== '') {
+            $counts[$awaiting] = (int) ($counts[$awaiting] ?? 0) + 1;
+        }
+        $prior['clarification_counts'] = $counts;
         $prior['assessment_status'] = ClinicalInterviewEngine::STATUS_IN_PROGRESS;
         $prior['awaiting_question_id'] = $awaiting;
 
@@ -397,7 +422,8 @@ final class NlpStep3DemoTrial
             'normalized_input' => $turn,
             'health_related' => true,
             'domain_class' => 'HEALTH_RELATED',
-            'information' => 'INCOMPLETE',
+            'information' => 'INSUFFICIENT',
+            'information_status' => 'INSUFFICIENT',
             'clinical_status' => 'NEEDS_FOLLOW_UP',
             'clinical_reasoning' => 'Follow-up answer needs clarification before the interview can advance.',
             'diagnosis' => 'NOT determined',
@@ -406,6 +432,8 @@ final class NlpStep3DemoTrial
             'triage_final' => null,
             'followup_required' => true,
             'followup_question' => $question,
+            'followup_skipped' => false,
+            'followup_skip_reason' => '',
             'patient_message' => $message,
             'clinical_transcript' => trim(implode('. ', array_map('strval', (array) ($prior['patient_turns'] ?? [])))),
             'facts' => $facts,
@@ -498,8 +526,7 @@ final class NlpStep3DemoTrial
 
     /**
      * Demo-only: enrich facts from the full transcript so already-answered
-     * clinical details (hilo, denied fever/vomit, pulsing, etc.) are visible
-     * before deciding whether another bank question is necessary.
+     * clinical details are visible before deciding whether another question is necessary.
      *
      * @param array<string, mixed> $assessment
      * @return array<string, mixed>
@@ -516,131 +543,89 @@ final class NlpStep3DemoTrial
         $facts = is_array($assessment['interview']['facts'] ?? null)
             ? $assessment['interview']['facts']
             : [];
-        $facts = self::enrichDemoFacts($facts, $transcript);
+        $facts = NlpStep3DemoClinicalState::enrichInterviewFacts($facts, $transcript);
         $assessment['interview']['facts'] = $facts;
+        $assessment['demo_completeness'] = NlpStep3DemoClinicalState::evaluateCompleteness(
+            $facts,
+            $transcript,
+            $assessment
+        );
 
         return $assessment;
     }
 
     /**
-     * @param array<string, mixed> $facts
+     * Adaptive follow-up: ask only the single highest-priority missing clinically necessary field.
+     * Question bank is a resource, not a mandatory sequence.
+     *
+     * @param array<string, mixed> $assessment
+     * @param array<string, mixed> $prior
      * @return array<string, mixed>
      */
-    private static function enrichDemoFacts(array $facts, string $transcript): array
+    private static function applyDemoAdaptiveFollowUp(array $assessment, array $prior = []): array
     {
-        $low = mb_strtolower($transcript);
-
-        if (($facts['dizziness'] ?? null) === null
-            && preg_match('/\b(hilo|nahilo|nahihilo|dizzy|dizziness|malipong|nalipong|nalilipong)\b/u', $low)
-            && !preg_match('/\b(wala|indi|hindi|no|without)\b.{0,24}\b(hilo|dizzy|dizziness|malipong|nalipong)\b/u', $low)
-        ) {
-            $facts['dizziness'] = true;
+        $facts = is_array($assessment['interview']['facts'] ?? null)
+            ? $assessment['interview']['facts']
+            : [];
+        $transcript = (string) ($assessment['clinical_transcript'] ?? $assessment['chief_complaint'] ?? '');
+        $status = strtoupper((string) ($assessment['assessment_status'] ?? ''));
+        $display = strtoupper(str_replace('_', '-', (string) ($assessment['triage']['triage_display'] ?? '')));
+        if ($display === 'NON URGENT') {
+            $display = 'NON-URGENT';
         }
 
-        $deniedVomiting = (bool) preg_match(
-            '/\b(wala|indi|hindi|no|without)\b.{0,24}\b(nagsuka|ginasuka|suka|vomit|vomiting)\b/u',
-            $low
-        );
-        $deniedFever = (bool) preg_match(
-            '/\b(wala|indi|hindi|no|without)\b.{0,24}\b(hilanat|lagnat|fever)\b/u',
-            $low
-        );
-        $hasPositiveAssociated = ($facts['dizziness'] ?? null) === true
-            || ($facts['abdominal_associated'] ?? null) === true
-            || ($facts['weakness'] ?? null) === true
-            || (bool) preg_match('/\b(may|with|plus)\b.{0,16}\b(hilo|suka|hilanat|fever|dizzy)\b/u', $low)
-            || (bool) preg_match('/\b(nagsuka|ginasuka|ginahilanat)\b/u', $low);
-
-        if (($facts['has_other_symptoms'] ?? null) === null
-            && ($hasPositiveAssociated || $deniedVomiting || $deniedFever)
-        ) {
-            $facts['has_other_symptoms'] = $hasPositiveAssociated;
+        if ($status === ClinicalInterviewEngine::STATUS_COMPLETED && $display === 'EMERGENCY') {
+            return $assessment;
         }
 
-        if (empty($facts['denied_associated'])
-            && $deniedVomiting
-            && $deniedFever
-            && ($facts['dizziness'] ?? null) !== true
-            && ($facts['weakness'] ?? null) !== true
-        ) {
-            // Only mark global denial when the patient clearly reports no extras and no positives.
-            $facts['denied_associated'] = true;
-            $facts['has_other_symptoms'] = false;
-        }
+        $completeness = is_array($assessment['demo_completeness'] ?? null)
+            ? $assessment['demo_completeness']
+            : NlpStep3DemoClinicalState::evaluateCompleteness($facts, $transcript, $assessment);
+        $assessment['demo_completeness'] = $completeness;
 
-        if (trim((string) ($facts['pain_qualifier'] ?? '')) === ''
-            && preg_match('/\b(pulsing|pulsating|throb|throbbing|tumutibok|tumitibok|kurot|stabbing|sharp)\b/u', $low)
-        ) {
-            if (preg_match('/\b(pulsing|pulsating|throb|throbbing|tumutibok|tumitibok)\b/u', $low)) {
-                $facts['pain_qualifier'] = 'pulsating';
-            } elseif (preg_match('/\b(stabbing|sharp|kurot)\b/u', $low)) {
-                $facts['pain_qualifier'] = 'sharp';
+        // Prevent infinite clarification loops on the same slot.
+        $awaiting = strtoupper((string) ($prior['awaiting_question_id'] ?? $assessment['interview']['awaiting_question_id'] ?? ''));
+        $clarifyCounts = is_array($prior['clarification_counts'] ?? null) ? $prior['clarification_counts'] : [];
+        if ($awaiting !== '' && isset($clarifyCounts[$awaiting]) && (int) $clarifyCounts[$awaiting] >= 2) {
+            $unknown = is_array($facts['unknown_fields'] ?? null) ? $facts['unknown_fields'] : [];
+            $slotKey = match ($awaiting) {
+                'PAIN_SEVERITY' => 'severity',
+                'PAIN_LOCATION' => 'location',
+                'ONSET', 'DURATION' => 'onset',
+                'EYE_VISION' => 'eye_red_flags',
+                'ASSOCIATED_SYMPTOMS', 'ABDOMINAL_ASSOCIATED' => 'associated_symptoms',
+                default => strtolower($awaiting),
+            };
+            if (!in_array($slotKey, $unknown, true)) {
+                $unknown[] = $slotKey;
             }
+            $facts['unknown_fields'] = $unknown;
+            $facts = NlpStep3DemoClinicalState::enrichInterviewFacts($facts, $transcript);
+            $assessment['interview']['facts'] = $facts;
+            $completeness = NlpStep3DemoClinicalState::evaluateCompleteness($facts, $transcript, $assessment);
+            $assessment['demo_completeness'] = $completeness;
         }
 
-        if (trim((string) ($facts['progression'] ?? '')) === ''
-            && preg_match('/\b(nagagrabe|naga\s*grabe|worse|worsen|aggravat|maglihok|movement|lihok)\b/u', $low)
+        if (($completeness['status'] ?? '') === NlpStep3DemoClinicalState::STATUS_SUFFICIENT
+            || !empty($completeness['red_flag_priority'])
         ) {
-            $facts['progression'] = 'aggravated by movement';
+            $assessment['followup_required'] = false;
+            $assessment['followup_question'] = null;
+            if (isset($assessment['interview']) && is_array($assessment['interview'])) {
+                $assessment['interview']['awaiting_question_id'] = '';
+            }
+
+            return $assessment;
         }
 
-        return $facts;
-    }
-
-    /**
-     * Core pain fields already known from the patient message / prior turns.
-     *
-     * @param array<string, mixed> $facts
-     */
-    private static function demoHasCorePainContext(array $facts): bool
-    {
-        return ($facts['pain_score'] ?? null) !== null
-            && ($facts['body_locations'] ?? []) !== []
-            && (
-                trim((string) ($facts['onset'] ?? '')) !== ''
-                || trim((string) ($facts['duration_label'] ?? '')) !== ''
-            );
-    }
-
-    /**
-     * Associated / character / aggravating detail already volunteered — bank questions not required.
-     *
-     * @param array<string, mixed> $facts
-     */
-    private static function demoAssociatedContextAddressed(array $facts, string $transcript): bool
-    {
-        if (($facts['has_other_symptoms'] ?? null) !== null
-            || !empty($facts['denied_associated'])
-            || ($facts['dizziness'] ?? null) !== null
-            || ($facts['abdominal_associated'] ?? null) !== null
-            || ($facts['weakness'] ?? null) !== null
-            || ($facts['speech_difficulty'] ?? null) !== null
-            || ($facts['vision_change'] ?? null) !== null
-        ) {
-            return true;
+        $nextId = strtoupper((string) ($completeness['next_question_id'] ?? ''));
+        $lang = self::questionLanguage($assessment);
+        if ($nextId === '') {
+            return self::applyDemoQuestionWording($assessment);
         }
 
-        $low = mb_strtolower($transcript);
-        if (preg_match(
-            '/\b(hilo|dizzy|dizziness|suka|vomit|hilanat|lagnat|fever|kaluya|weakness|pamamanhid|numbness|panulok|vision|pulsing|pulsating|throb|nagagrabe|aggravat|maglihok)\b/u',
-            $low
-        )) {
-            return true;
-        }
-
-        return trim((string) ($facts['pain_qualifier'] ?? '')) !== ''
-            || trim((string) ($facts['progression'] ?? '')) !== '';
-    }
-
-    /**
-     * Question bank is a resource — stop when clinically relevant pain context is already present.
-     *
-     * @param array<string, mixed> $facts
-     */
-    private static function demoPainInformationSufficient(array $facts, string $transcript): bool
-    {
-        return self::demoHasCorePainContext($facts)
-            && self::demoAssociatedContextAddressed($facts, $transcript);
+        // Prefer demo wording for the single missing clinically necessary question.
+        return self::forceDemoQuestion($assessment, $nextId, $lang);
     }
 
     /**
@@ -654,6 +639,20 @@ final class NlpStep3DemoTrial
     {
         $status = strtoupper((string) ($assessment['assessment_status'] ?? ''));
         if ($status === ClinicalInterviewEngine::STATUS_COMPLETED) {
+            $facts = is_array($assessment['interview']['facts'] ?? null) ? $assessment['interview']['facts'] : [];
+            $transcript = (string) ($assessment['clinical_transcript'] ?? '');
+            $display = (string) ($assessment['triage']['triage_display'] ?? '');
+            $soft = NlpStep3DemoClinicalState::softTriageDisplay($display, $facts, $transcript);
+            if ($soft !== $display && isset($assessment['triage']) && is_array($assessment['triage'])) {
+                return self::finalizeDemoWithTriageEngine(
+                    array_merge($assessment, ['triage' => array_merge($assessment['triage'], [
+                        'provisional_engine_classification' => $soft,
+                    ])]),
+                    $transcript,
+                    $facts
+                );
+            }
+
             return $assessment;
         }
 
@@ -661,11 +660,13 @@ final class NlpStep3DemoTrial
             ? $assessment['interview']['facts']
             : [];
         $transcript = (string) ($assessment['clinical_transcript'] ?? $assessment['chief_complaint'] ?? '');
+        $completeness = is_array($assessment['demo_completeness'] ?? null)
+            ? $assessment['demo_completeness']
+            : NlpStep3DemoClinicalState::evaluateCompleteness($facts, $transcript, $assessment);
 
-        if (!self::isPainComplaint($assessment, $transcript, $facts)) {
-            return $assessment;
-        }
-        if (!self::demoPainInformationSufficient($facts, $transcript)) {
+        if (($completeness['status'] ?? '') !== NlpStep3DemoClinicalState::STATUS_SUFFICIENT
+            && empty($completeness['red_flag_priority'])
+        ) {
             return $assessment;
         }
 
@@ -704,6 +705,8 @@ final class NlpStep3DemoTrial
                 }
             }
         }
+
+        $display = NlpStep3DemoClinicalState::softTriageDisplay($display, $facts, $transcript);
 
         $classification = $display === 'NON-URGENT' ? 'NON_URGENT' : $display;
         $gis = match ($display) {
@@ -752,77 +755,6 @@ final class NlpStep3DemoTrial
         $assessment['urgency_label'] = $assessment['triage']['urgency_label'];
 
         return $assessment;
-    }
-
-    /**
-     * Demo-only preferred pain order: severity → location → onset.
-     * Does not change shared ClinicalFollowUpQuestionBank priorities.
-     * Never forces a bank question when that field is already known.
-     *
-     * @param array<string, mixed> $assessment
-     * @return array<string, mixed>
-     */
-    private static function applyDemoPainQuestionOrder(array $assessment): array
-    {
-        $facts = is_array($assessment['interview']['facts'] ?? null)
-            ? $assessment['interview']['facts']
-            : [];
-        $transcript = (string) ($assessment['clinical_transcript'] ?? $assessment['chief_complaint'] ?? '');
-        $status = strtoupper((string) ($assessment['assessment_status'] ?? ''));
-        $display = strtoupper(str_replace('_', '-', (string) ($assessment['triage']['triage_display'] ?? '')));
-        if ($display === 'NON URGENT') {
-            $display = 'NON-URGENT';
-        }
-
-        // Red-flag emergencies stay final — do not force the generic pain quiz.
-        if ($status === ClinicalInterviewEngine::STATUS_COMPLETED && $display === 'EMERGENCY') {
-            return $assessment;
-        }
-
-        if (!self::isPainComplaint($assessment, $transcript, $facts)) {
-            if ($status === ClinicalInterviewEngine::STATUS_COMPLETED) {
-                return $assessment;
-            }
-
-            return self::applyDemoQuestionWording($assessment);
-        }
-
-        $hasSeverity = ($facts['pain_score'] ?? null) !== null;
-        $hasLocation = ($facts['body_locations'] ?? []) !== [];
-        $hasOnset = trim((string) ($facts['onset'] ?? '')) !== ''
-            || trim((string) ($facts['duration_label'] ?? '')) !== '';
-        $lang = self::questionLanguage($assessment);
-
-        // Incomplete pain must stay in follow-up even if the engine prematurely finalized NON-URGENT.
-        // Only ask what is still missing — never re-ask answered slots.
-        if (!$hasSeverity) {
-            return self::forceDemoQuestion($assessment, 'PAIN_SEVERITY', $lang);
-        }
-        if (!$hasLocation) {
-            return self::forceDemoQuestion($assessment, 'PAIN_LOCATION', $lang);
-        }
-        if (!$hasOnset) {
-            return self::forceDemoQuestion($assessment, 'ONSET', $lang);
-        }
-
-        // Core pain context already present — do not force further bank questions here.
-        // maybeFinalizeDemoWhenSufficient decides whether to stop or keep one engine follow-up.
-        if ($status === ClinicalInterviewEngine::STATUS_COMPLETED) {
-            return $assessment;
-        }
-
-        // If associated context is also already present, clear any forced follow-up so finalize can run.
-        if (self::demoPainInformationSufficient($facts, $transcript)) {
-            $assessment['followup_required'] = false;
-            $assessment['followup_question'] = null;
-            if (isset($assessment['interview']) && is_array($assessment['interview'])) {
-                $assessment['interview']['awaiting_question_id'] = '';
-            }
-
-            return $assessment;
-        }
-
-        return self::applyDemoQuestionWording($assessment);
     }
 
     /**
@@ -875,7 +807,7 @@ final class NlpStep3DemoTrial
         $question = [
             'question_id' => $qid,
             'clinical_purpose' => $pack['purpose'],
-            'red_flag_related' => false,
+            'red_flag_related' => in_array(strtoupper($qid), ['BREATHING_SEVERITY', 'NEURO_WEAKNESS', 'EYE_VISION', 'ABDOMINAL_ASSOCIATED'], true),
             'priority' => $pack['priority'],
             'text' => $pack['text'],
             'helper_text' => $pack['helper'],
@@ -896,9 +828,9 @@ final class NlpStep3DemoTrial
         $asked = array_values(array_filter(array_map('strval', (array) ($assessment['interview']['questions_asked'] ?? []))));
         // Keep later slots available: if we skip ahead to severity, do not permanently consume location/onset.
         $deferred = match ($qid) {
-            'PAIN_SEVERITY' => ['PAIN_LOCATION', 'ONSET', 'DURATION', 'ABDOMINAL_ASSOCIATED'],
-            'PAIN_LOCATION' => ['ONSET', 'DURATION', 'ABDOMINAL_ASSOCIATED'],
-            'ONSET' => ['ABDOMINAL_ASSOCIATED', 'DURATION'],
+            'PAIN_SEVERITY' => ['PAIN_LOCATION', 'ONSET', 'DURATION', 'ABDOMINAL_ASSOCIATED', 'ASSOCIATED_SYMPTOMS', 'EYE_VISION'],
+            'PAIN_LOCATION' => ['ONSET', 'DURATION', 'ABDOMINAL_ASSOCIATED', 'ASSOCIATED_SYMPTOMS'],
+            'ONSET' => ['ABDOMINAL_ASSOCIATED', 'DURATION', 'ASSOCIATED_SYMPTOMS', 'EYE_VISION'],
             default => [],
         };
         $asked = array_values(array_filter($asked, static function (string $id) use ($deferred): bool {
@@ -920,7 +852,6 @@ final class NlpStep3DemoTrial
         $assessment['triage']['triage_display'] = '';
         $assessment['triage']['db_level'] = 'pending';
         $assessment['triage']['urgency_label'] = 'Needs follow-up';
-        // Keep engine reasoning for UI, but never treat provisional class as final.
         if (empty($assessment['triage']['clinical_reasoning'])) {
             $assessment['triage']['clinical_reasoning'] =
                 'Insufficient information for a reliable triage classification.';
@@ -934,73 +865,7 @@ final class NlpStep3DemoTrial
      */
     private static function demoQuestionPack(string $qid, string $lang): array
     {
-        if ($qid === 'PAIN_SEVERITY') {
-            return match ($lang) {
-                'ENGLISH' => [
-                    'text' => 'I understand that you are experiencing pain. How would you rate your pain right now on a scale of 1–10?',
-                    'helper' => "1 = mildest pain\n10 = worst pain imaginable",
-                    'purpose' => 'Collect numeric pain score as supporting information',
-                    'priority' => 5,
-                ],
-                'TAGALOG' => [
-                    'text' => 'Naiintindihan ko na may sakit ka. Para ma-assess nang mas mabuti, gaano kasakit ngayon sa scale na 1–10?',
-                    'helper' => "1 = pinakamahinang sakit\n10 = pinakamalalang sakit na maisip",
-                    'purpose' => 'Collect numeric pain score as supporting information',
-                    'priority' => 5,
-                ],
-                default => [
-                    'text' => 'Naintindihan ko nga may kasakit ka. Para ma-assess ini sing mas maayo, pila ang imo pain level subong sa scale nga 1–10?',
-                    'helper' => "1 = pinakamahinay nga kasakit\n10 = pinakagrabe nga kasakit nga ma-imagine",
-                    'purpose' => 'Collect numeric pain score as supporting information',
-                    'priority' => 5,
-                ],
-            };
-        }
-
-        if ($qid === 'PAIN_LOCATION') {
-            return match ($lang) {
-                'ENGLISH' => [
-                    'text' => 'Where exactly is the pain?',
-                    'helper' => '',
-                    'purpose' => 'Locate unspecified pain or discomfort',
-                    'priority' => 10,
-                ],
-                'TAGALOG' => [
-                    'text' => 'Saan exactamente ang masakit sa iyo?',
-                    'helper' => '',
-                    'purpose' => 'Locate unspecified pain or discomfort',
-                    'priority' => 10,
-                ],
-                default => [
-                    'text' => 'Diin ang masakit sa imo?',
-                    'helper' => '',
-                    'purpose' => 'Locate unspecified pain or discomfort',
-                    'priority' => 10,
-                ],
-            };
-        }
-
-        // ONSET
-        return match ($lang) {
-            'ENGLISH' => [
-                'text' => 'When did the pain start?',
-                'helper' => '',
-                'purpose' => 'Determine onset / how long ago pain began',
-                'priority' => 50,
-            ],
-            'TAGALOG' => [
-                'text' => 'Kailan pa nagsimula ang sakit?',
-                'helper' => '',
-                'purpose' => 'Determine onset / how long ago pain began',
-                'priority' => 50,
-            ],
-            default => [
-                'text' => 'San-o pa nagsugod ang kasakit?',
-                'helper' => '',
-                'purpose' => 'Determine onset / how long ago pain began',
-                'priority' => 50,
-            ],
-        };
+        return NlpStep3DemoClinicalState::questionPack($qid, $lang);
     }
 
     /**
@@ -1017,7 +882,7 @@ final class NlpStep3DemoTrial
         }
         $qid = strtoupper((string) ($q['question_id'] ?? ''));
         $lang = strtoupper((string) ($q['language'] ?? 'HILIGAYNON'));
-        if (!in_array($qid, ['PAIN_LOCATION', 'PAIN_SEVERITY', 'ONSET'], true)) {
+        if ($qid === '') {
             return $assessment;
         }
 
@@ -1037,67 +902,7 @@ final class NlpStep3DemoTrial
      */
     private static function complaintSummary(array $facts, string $transcript): array
     {
-        $locations = is_array($facts['body_locations'] ?? null) ? $facts['body_locations'] : [];
-        $score = $facts['pain_score'] ?? null;
-        $hasPain = (bool) preg_match('/\b(sakit|masakit|pain|hurts?|hapdi)\b/ui', $transcript)
-            || $locations !== []
-            || $score !== null;
-
-        $duration = trim((string) ($facts['duration_label'] ?? ''));
-        $onset = trim((string) ($facts['onset'] ?? ''));
-        if ($duration === '' && $onset !== '') {
-            $duration = $onset;
-        }
-
-        $character = trim((string) ($facts['pain_qualifier'] ?? ''));
-        $associated = [];
-        $hay = mb_strtolower($transcript);
-        $assocMap = [
-            'vomiting' => '/\b(suka|nagsuka|ginasuka|vomit|vomiting)\b/u',
-            'fever' => '/\b(hilanat|ginahilanat|lagnat|fever)\b/u',
-            'diarrhea' => '/\b(diarrhea|kalibang|libang|tae)\b/u',
-            'dizziness' => '/\b(dizzy|dizziness|malipong|nalipong|nahihilo|nahilo|hilo)\b/u',
-            'breathing difficulty' => '/\b(budlay|ginhawa|breath|hinga|dyspnea)\b/u',
-            'bleeding' => '/\b(dugo|bleeding|nagdugo)\b/u',
-        ];
-        foreach ($assocMap as $label => $pattern) {
-            if (!preg_match($pattern, $hay, $m, PREG_OFFSET_CAPTURE)) {
-                continue;
-            }
-            $pos = (int) ($m[0][1] ?? 0);
-            $before = mb_substr($hay, max(0, $pos - 24), min(24, $pos));
-            if (preg_match('/\b(wala|indi|hindi|no|without)\b/u', $before)) {
-                $associated[] = $label . ' denied';
-                continue;
-            }
-            $associated[] = $label;
-        }
-        if (($facts['dizziness'] ?? null) === true && !preg_match('/\bdizziness\b/u', implode(' ', $associated))) {
-            $associated[] = 'dizziness';
-        }
-        if (($facts['abdominal_associated'] ?? null) === true && $associated === []) {
-            $associated[] = 'abdominal associated symptoms';
-        }
-        if (($facts['has_other_symptoms'] ?? null) === true && $associated === []) {
-            $associated[] = 'other symptoms present';
-        }
-        if (($facts['has_other_symptoms'] ?? null) === false && $associated === []) {
-            $associated[] = 'none reported';
-        }
-        if (($facts['denied_associated'] ?? false) === true && $associated === []) {
-            $associated = ['none reported'];
-        }
-
-        return [
-            'complaint' => $hasPain ? 'pain' : '',
-            'location' => $locations !== [] ? implode(', ', $locations) : '',
-            'pain_severity' => $score !== null ? ((int) $score) . '/10' : '',
-            'onset' => $onset,
-            'duration' => $duration,
-            'character' => $character,
-            'aggravating_factor' => trim((string) ($facts['progression'] ?? '')),
-            'associated_symptoms' => $associated !== [] ? implode(', ', $associated) : '',
-        ];
+        return NlpStep3DemoClinicalState::toDisplaySummary($facts, $transcript);
     }
 
     /**
