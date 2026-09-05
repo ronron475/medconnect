@@ -58,6 +58,22 @@ final class NlpStep3DemoTrial
 
         $normalizedTurn = self::normalizeDemoTurn($turn, $prior);
 
+        // Universal typo / misspelling tolerance (demo only) before NLP + Gemini.
+        $fuzzyPrep = NlpStep3DemoAnswerFuzzy::prepare(
+            $normalizedTurn,
+            strtoupper((string) ($prior['awaiting_question_id'] ?? ''))
+        );
+        $fuzzyMeta = [
+            'status' => (string) ($fuzzyPrep['fuzzy_status'] ?? 'NONE'),
+            'confidence' => (float) ($fuzzyPrep['confidence'] ?? 1),
+            'corrections' => is_array($fuzzyPrep['corrections'] ?? null) ? $fuzzyPrep['corrections'] : [],
+            'original' => (string) ($fuzzyPrep['original'] ?? $normalizedTurn),
+            'corrected' => (string) ($fuzzyPrep['corrected'] ?? $normalizedTurn),
+        ];
+        if (!empty($fuzzyPrep['changed']) && ($fuzzyPrep['corrected'] ?? '') !== '') {
+            $normalizedTurn = (string) $fuzzyPrep['corrected'];
+        }
+
         $geminiMeta = [
             'called' => false,
             'available' => NlpStep3DemoGeminiAnswerInterpreter::enabled(),
@@ -65,12 +81,20 @@ final class NlpStep3DemoTrial
             'reason' => 'Existing NLP primary — Gemini not needed yet',
             'interpretation' => null,
             'min_confidence' => NlpStep3DemoGeminiAnswerInterpreter::minConfidence(),
+            'fuzzy' => $fuzzyMeta,
         ];
 
         $awaiting = strtoupper((string) ($prior['awaiting_question_id'] ?? ''));
         if ($hadTurns && $awaiting !== '') {
-            $geminiPack = self::maybeInterpretFollowUpWithGemini($normalizedTurn, $prior, $awaiting);
-            $geminiMeta = $geminiPack['meta'];
+            // Pass original patient text for Gemini context; corrected text for NLP retry.
+            $geminiPack = self::maybeInterpretFollowUpWithGemini(
+                (string) ($fuzzyPrep['original'] ?? $turn),
+                $prior,
+                $awaiting,
+                $fuzzyPrep
+            );
+            $geminiMeta = array_merge($geminiMeta, $geminiPack['meta'] ?? []);
+            $geminiMeta['fuzzy'] = $fuzzyMeta;
             if (!empty($geminiPack['block_advance'])) {
                 return self::packClarificationHold(
                     $turn,
@@ -214,13 +238,18 @@ final class NlpStep3DemoTrial
     }
 
     /**
-     * Demo-only: call Gemini when existing NLP cannot confidently understand a follow-up answer.
+     * Demo-only: primary NLP → fuzzy → Gemini fallback for follow-up answers.
      *
      * @param array<string, mixed> $prior
+     * @param array<string, mixed> $fuzzyPrep
      * @return array<string, mixed>
      */
-    private static function maybeInterpretFollowUpWithGemini(string $turn, array $prior, string $awaiting): array
-    {
+    private static function maybeInterpretFollowUpWithGemini(
+        string $turn,
+        array $prior,
+        string $awaiting,
+        array $fuzzyPrep = []
+    ): array {
         $meta = [
             'called' => false,
             'available' => NlpStep3DemoGeminiAnswerInterpreter::enabled(),
@@ -228,12 +257,22 @@ final class NlpStep3DemoTrial
             'reason' => 'Existing NLP understood the follow-up answer',
             'interpretation' => null,
             'min_confidence' => NlpStep3DemoGeminiAnswerInterpreter::minConfidence(),
+            'primary_nlp' => 'PENDING',
+            'fallback' => 'none',
+            'fuzzy_status' => (string) ($fuzzyPrep['fuzzy_status'] ?? 'NONE'),
         ];
 
+        $corrected = trim((string) ($fuzzyPrep['corrected'] ?? $turn));
+        if ($corrected === '') {
+            $corrected = $turn;
+        }
+
+        // 1) Existing NLP on original answer
         if (NlpStep3DemoGeminiAnswerInterpreter::nlpUnderstandsAnswer($turn, $awaiting, $prior)) {
             $meta['primary_nlp'] = 'SUCCESS';
             $meta['fallback'] = 'none';
             $meta['reason'] = 'NOT CALLED — PRIMARY NLP SUFFICIENT';
+            $meta['status'] = 'NOT_CALLED';
 
             return [
                 'meta' => $meta,
@@ -243,7 +282,37 @@ final class NlpStep3DemoTrial
             ];
         }
 
-        $meta['primary_nlp'] = 'LOW_CONFIDENCE';
+        // 2) Existing NLP on fuzzy-corrected answer
+        if ($corrected !== $turn
+            && NlpStep3DemoGeminiAnswerInterpreter::nlpUnderstandsAnswer($corrected, $awaiting, $prior)
+        ) {
+            $meta['primary_nlp'] = 'LOW_CONFIDENCE';
+            $meta['fallback'] = 'demo_fuzzy';
+            $meta['fuzzy_status'] = 'SUCCESS';
+            $meta['reason'] = 'NOT CALLED — FUZZY MATCH ENABLED PRIMARY NLP';
+            $meta['status'] = 'DEMO_FUZZY';
+            $meta['interpretation'] = [
+                'relevant' => true,
+                'understood' => true,
+                'answer_type' => self::expectedAnswerType($awaiting),
+                'normalized_value' => $corrected,
+                'confidence' => (float) ($fuzzyPrep['confidence'] ?? 0.85),
+                'needs_clarification' => false,
+                'clarification_reason' => null,
+                'source' => 'demo_fuzzy',
+                'corrections' => $fuzzyPrep['corrections'] ?? [],
+            ];
+
+            return [
+                'meta' => $meta,
+                'block_advance' => false,
+                'turn' => $corrected,
+                'prior' => $prior,
+            ];
+        }
+
+        // 3) Primary NLP did not confidently understand → Gemini fallback (then lexicon/fuzzy inside interpret)
+        $meta['primary_nlp'] = 'FAILED';
         $expected = self::expectedAnswerType($awaiting);
         $questionText = self::lastAskedQuestionText($prior, $awaiting);
         $result = NlpStep3DemoGeminiAnswerInterpreter::interpret(
@@ -251,7 +320,8 @@ final class NlpStep3DemoTrial
             $questionText,
             $awaiting,
             $expected,
-            $prior
+            $prior,
+            $corrected
         );
 
         $meta = array_merge($meta, [
@@ -260,13 +330,30 @@ final class NlpStep3DemoTrial
             'status' => (string) ($result['status'] ?? 'ERROR'),
             'reason' => (string) ($result['reason'] ?? ''),
             'interpretation' => is_array($result['interpretation'] ?? null) ? $result['interpretation'] : null,
-            'primary_nlp' => (string) ($result['primary_nlp'] ?? 'LOW_CONFIDENCE'),
+            'primary_nlp' => (string) ($result['primary_nlp'] ?? 'FAILED'),
             'fallback' => (string) ($result['fallback'] ?? 'none'),
+            'fuzzy_status' => (string) ($result['fuzzy_status'] ?? $meta['fuzzy_status']),
         ]);
+
+        // Accurate reason when Gemini was required
+        if (!empty($result['called'])) {
+            $meta['reason'] = 'CALLED — PRIMARY NLP INSUFFICIENT';
+            if (($result['status'] ?? '') === 'OK' && is_array($result['interpretation'] ?? null)) {
+                $nv = (string) ($result['interpretation']['normalized_value'] ?? '');
+                if ($nv !== '') {
+                    $meta['reason'] = 'CALLED — PRIMARY NLP INSUFFICIENT; understood: ' . $nv;
+                }
+            }
+        } elseif (($result['fallback'] ?? '') === 'demo_fuzzy') {
+            $meta['reason'] = 'NOT CALLED — DEMO FUZZY FALLBACK (Gemini unavailable or unused)';
+        } elseif (($result['fallback'] ?? '') === 'demo_semantic_lexicon') {
+            $meta['reason'] = 'NOT CALLED — DEMO SEMANTIC LEXICON (after primary NLP failure)';
+        } elseif (($result['status'] ?? '') === 'UNAVAILABLE') {
+            $meta['reason'] = 'PRIMARY NLP FAILED; Gemini unavailable — continuing cautiously';
+        }
 
         $interp = is_array($meta['interpretation']) ? $meta['interpretation'] : null;
 
-        // Usable structured interpretation from Gemini or demo semantic lexicon.
         if (is_array($interp)) {
             $needsClarification = !empty($interp['needs_clarification'])
                 || empty($interp['relevant'])
@@ -286,26 +373,26 @@ final class NlpStep3DemoTrial
                 ];
             }
 
-            $applied = NlpStep3DemoGeminiAnswerInterpreter::applyToPrior($prior, $turn, $interp, $awaiting);
+            $applied = NlpStep3DemoGeminiAnswerInterpreter::applyToPrior(
+                $prior,
+                $corrected !== '' ? $corrected : $turn,
+                $interp,
+                $awaiting
+            );
 
             return [
                 'meta' => $meta,
                 'block_advance' => false,
-                'turn' => (string) ($applied['turn'] ?? $turn),
+                'turn' => (string) ($applied['turn'] ?? $corrected),
                 'prior' => is_array($applied['prior'] ?? null) ? $applied['prior'] : $prior,
             ];
         }
 
-        // Nothing structured from Gemini/lexicon — let ClinicalInterviewEngine try the raw answer.
-        // (Do not hard-block; only explicit UNRELATED/clarification interpretations hold the turn.)
-        if ($meta['status'] === 'UNAVAILABLE') {
-            $meta['reason'] = 'Existing NLP low confidence; Gemini unavailable — continuing with ClinicalInterviewEngine';
-        }
-
+        // Last resort: continue with fuzzy-corrected text if any, else original.
         return [
             'meta' => $meta,
             'block_advance' => false,
-            'turn' => $turn,
+            'turn' => $corrected !== '' ? $corrected : $turn,
             'prior' => $prior,
         ];
     }

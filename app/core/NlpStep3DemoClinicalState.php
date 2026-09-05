@@ -333,7 +333,9 @@ final class NlpStep3DemoClinicalState
         if ($deniedVomit) {
             $state['vomiting'] = false;
             $state['pertinent_negatives'][] = 'no vomiting';
-        } elseif (preg_match('/\b(nagsuka|ginasuka|nagasuka|vomiting|vomited)\b/u', $low)) {
+        } elseif (preg_match('/\b(nagsuka|ginasuka|nagasuka|vomiting|vomited)\b/u', $low)
+            || (preg_match('/\bsuka\b/u', $low) && !self::isDenied($low, ['suka', 'nagsuka', 'vomit', 'vomiting']))
+        ) {
             $state['vomiting'] = true;
             $state['associated_symptoms'][] = 'vomiting';
             if (preg_match('/\b(duha|two|2)\s*(ka\s*)?(beses|times)\b/u', $low)) {

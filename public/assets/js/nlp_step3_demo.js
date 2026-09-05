@@ -2160,20 +2160,33 @@
         '<li>Primary NLP: <strong>' +
         escapeHtml(
           (trial.gemini && trial.gemini.primary_nlp) ||
-            (trial.gemini_called || (trial.gemini && trial.gemini.fallback && trial.gemini.fallback !== 'none')
-              ? 'LOW_CONFIDENCE'
-              : 'SUCCESS')
+            (trial.gemini && (trial.gemini.called || trial.gemini.fallback === 'demo_fuzzy' || trial.gemini.fallback === 'demo_semantic_lexicon' || trial.gemini.fallback === 'gemini')
+              ? 'FAILED'
+              : trial.gemini && trial.gemini.status === 'NOT_CALLED'
+                ? 'SUCCESS'
+                : 'N/A')
+        ) +
+        '</strong></li>' +
+        '<li>Fuzzy match: <strong>' +
+        escapeHtml(
+          (trial.gemini && trial.gemini.fuzzy && trial.gemini.fuzzy.status) ||
+            (trial.gemini && trial.gemini.fuzzy_status) ||
+            'NONE'
         ) +
         '</strong></li>' +
         '<li>Gemini: <strong>' +
         escapeHtml(
           trial.gemini && trial.gemini.called
-            ? 'CALLED — FALLBACK'
-            : trial.gemini && trial.gemini.fallback === 'demo_semantic_lexicon'
-              ? 'NOT CALLED — DEMO SEMANTIC FALLBACK'
-              : trial.gemini_called
-                ? 'CALLED'
-                : 'NOT CALLED — PRIMARY NLP SUFFICIENT'
+            ? 'CALLED — PRIMARY NLP INSUFFICIENT'
+            : trial.gemini && trial.gemini.fallback === 'demo_fuzzy'
+              ? 'NOT CALLED — DEMO FUZZY FALLBACK'
+              : trial.gemini && trial.gemini.fallback === 'demo_semantic_lexicon'
+                ? 'NOT CALLED — DEMO SEMANTIC FALLBACK'
+                : trial.gemini && trial.gemini.primary_nlp === 'SUCCESS'
+                  ? 'NOT CALLED — PRIMARY NLP SUFFICIENT'
+                  : trial.gemini && (trial.gemini.primary_nlp === 'FAILED' || trial.gemini.primary_nlp === 'LOW_CONFIDENCE')
+                    ? 'NOT CALLED — PRIMARY NLP FAILED (Gemini unavailable)'
+                    : 'NOT CALLED'
         ) +
         '</strong></li>' +
         '<li>Fallback: <strong>' +
