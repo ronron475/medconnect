@@ -1777,6 +1777,7 @@
   document.addEventListener('click', function (e) {
     const btn = e.target.closest('.nlp-wv-chip');
     if (!btn || !conditionsEl) return;
+    if (btn.hasAttribute('data-trial-text')) return;
     const text = btn.getAttribute('data-text') || '';
     if (!text) return;
     conditionsEl.value = text;
@@ -1787,4 +1788,204 @@
       if (el !== btn) el.classList.remove('nlp-wv-chip--selected');
     });
   });
+
+  /* ── TRIAL ONLY: adaptive chief-complaint interview ── */
+  (function initTrialInterview() {
+    const trialForm = document.getElementById('nlp-trial-form');
+    const trialInput = document.getElementById('nlp-trial-input');
+    const trialBtn = document.getElementById('nlp-trial-analyze');
+    const trialReset = document.getElementById('nlp-trial-reset');
+    const trialFeedback = document.getElementById('nlp-trial-feedback');
+    const trialResults = document.getElementById('nlp-trial-results');
+    const trialMeta = document.getElementById('nlp-trial-meta');
+    const trialApi = base + '/app/api/ai/nlp_step3_demo_interview.php';
+    let interviewContext = null;
+
+    if (!trialForm || !trialInput || !trialBtn || !trialResults) return;
+
+    function showTrialFeedback(message, type) {
+      if (!trialFeedback) return;
+      trialFeedback.hidden = false;
+      trialFeedback.textContent = message;
+      trialFeedback.className = 'nlp-feedback ' + (type || 'ok');
+    }
+
+    function updateMeta() {
+      if (!trialMeta) return;
+      if (!interviewContext) {
+        trialMeta.textContent = 'New conversation';
+        return;
+      }
+      const turns = (interviewContext.patient_turns || []).length;
+      const status = interviewContext.assessment_status || 'IN_PROGRESS';
+      trialMeta.textContent = turns + ' turn(s) · ' + status;
+    }
+
+    function badge(label, cls) {
+      return '<span class="nlp-badge ' + cls + '">' + escapeHtml(label) + '</span>';
+    }
+
+    function renderTrial(trial) {
+      const triage = trial.triage_final || trial.triage_display || '';
+      const status = trial.assessment_status || '';
+      const domain = trial.domain_class || '';
+      const health = trial.health_related ? 'YES' : 'NO';
+      const summary = trial.complaint_summary || {};
+      const q = trial.followup_question;
+      const facts = trial.facts || {};
+
+      let triageHtml = badge('not determined yet', 'nlp-badge--muted');
+      if (status === 'IN_PROGRESS' || !triage) {
+        triageHtml = badge('not determined yet', 'nlp-badge--muted');
+      } else if (triage === 'EMERGENCY') {
+        triageHtml = badge('EMERGENCY', 'nlp-badge--bad');
+      } else if (triage === 'URGENT') {
+        triageHtml = badge('URGENT', 'nlp-badge--warn');
+      } else if (triage === 'NON-URGENT') {
+        triageHtml = badge('NON-URGENT', 'nlp-badge--ok');
+      }
+
+      let domainCls = 'nlp-badge--muted';
+      if (domain === 'HEALTH_RELATED') domainCls = 'nlp-badge--ok';
+      if (domain === 'UNCLEAR') domainCls = 'nlp-badge--warn';
+      if (domain === 'NON_HEALTH_RELATED') domainCls = 'nlp-badge--muted';
+
+      const followHtml = q
+        ? '<div class="nlp-trial-followup"><strong>Next question</strong><p>' +
+          escapeHtml(q.text || trial.patient_message || '') +
+          '</p><p class="nlp-trial-followup__meta">' +
+          escapeHtml((q.question_id || '') + (q.language ? ' · ' + q.language : '') + (q.source ? ' · ' + q.source : '')) +
+          '</p></div>'
+        : trial.patient_message
+          ? '<div class="nlp-trial-followup"><p>' + escapeHtml(trial.patient_message) + '</p></div>'
+          : '';
+
+      trialResults.hidden = false;
+      trialResults.innerHTML =
+        '<div class="nlp-trial-grid">' +
+        '<div><dt>Health-related</dt><dd>' +
+        badge(health, health === 'YES' ? 'nlp-badge--ok' : 'nlp-badge--muted') +
+        '</dd></div>' +
+        '<div><dt>Domain</dt><dd>' +
+        badge(domain || '—', domainCls) +
+        '</dd></div>' +
+        '<div><dt>Information</dt><dd>' +
+        escapeHtml(trial.information || '—') +
+        '</dd></div>' +
+        '<div><dt>Diagnosis</dt><dd>' +
+        escapeHtml(trial.diagnosis || 'NOT determined') +
+        '</dd></div>' +
+        '<div><dt>Final triage</dt><dd>' +
+        triageHtml +
+        '</dd></div>' +
+        '<div><dt>Status</dt><dd>' +
+        escapeHtml(status || '—') +
+        '</dd></div>' +
+        '</div>' +
+        '<div class="nlp-trial-block"><h3>Accumulated meaning</h3><ul>' +
+        '<li>complaint = <strong>' +
+        escapeHtml(summary.complaint || '—') +
+        '</strong></li>' +
+        '<li>location = <strong>' +
+        escapeHtml(summary.location || '—') +
+        '</strong></li>' +
+        '<li>pain severity = <strong>' +
+        escapeHtml(summary.pain_severity || '—') +
+        '</strong></li>' +
+        '<li>transcript = <strong>' +
+        escapeHtml(trial.clinical_transcript || trial.input || '—') +
+        '</strong></li>' +
+        '</ul></div>' +
+        followHtml +
+        '<div class="nlp-trial-block"><h3>Engine</h3><p>' +
+        escapeHtml(trial.engine_chain || trial.engine || '') +
+        '<br>Gemini: ' +
+        escapeHtml(trial.gemini_called ? 'called — ' + (trial.gemini_why || '') : 'not called — ' + (trial.gemini_why || '')) +
+        '</p></div>';
+    }
+
+    async function runTrial(text) {
+      const utterance = String(text || '').trim();
+      if (!utterance) {
+        showTrialFeedback('Enter a complaint or follow-up answer.', 'error');
+        return;
+      }
+
+      trialBtn.disabled = true;
+      const prev = trialBtn.textContent;
+      trialBtn.textContent = 'Analyzing…';
+      showTrialFeedback('Running demo interview (existing NLP + context)…', 'ok');
+
+      try {
+        const body = new FormData();
+        body.append('utterance', utterance);
+        if (interviewContext) {
+          body.append('interview_context', JSON.stringify(interviewContext));
+        }
+
+        const res = await fetch(trialApi, {
+          method: 'POST',
+          body: body,
+          credentials: 'same-origin',
+        });
+        const json = await res.json();
+        const data = (json && (json.data || json)) || {};
+        const trial = data.trial || data;
+
+        if (!res.ok || json.success === false) {
+          showTrialFeedback(json.message || 'Interview request failed.', 'error');
+          return;
+        }
+
+        if (data.interview_context) {
+          interviewContext = data.interview_context;
+        } else if (trial.assessment_status === 'SKIPPED') {
+          interviewContext = null;
+        }
+        updateMeta();
+        renderTrial(trial);
+
+        if (trial.followup_required) {
+          showTrialFeedback('More information needed — answer the follow-up below.', 'ok');
+          trialInput.value = '';
+          trialInput.focus();
+        } else if (trial.domain_class === 'UNCLEAR' || trial.domain_class === 'NON_HEALTH_RELATED') {
+          showTrialFeedback(trial.patient_message || trial.next_action || 'No medical assessment.', 'ok');
+        } else {
+          showTrialFeedback('Assessment complete: ' + (trial.triage_final || 'done'), 'ok');
+        }
+      } catch (err) {
+        showTrialFeedback('Trial request failed: ' + (err && err.message ? err.message : String(err)), 'error');
+      } finally {
+        trialBtn.disabled = false;
+        trialBtn.textContent = prev;
+      }
+    }
+
+    trialForm.addEventListener('submit', function (e) {
+      e.preventDefault();
+      runTrial(trialInput.value);
+    });
+
+    trialReset.addEventListener('click', function () {
+      interviewContext = null;
+      trialInput.value = '';
+      trialResults.hidden = true;
+      trialResults.innerHTML = '';
+      if (trialFeedback) trialFeedback.hidden = true;
+      updateMeta();
+      trialInput.focus();
+      showTrialFeedback('Conversation reset.', 'ok');
+    });
+
+    document.querySelectorAll('[data-trial-text]').forEach(function (chip) {
+      chip.addEventListener('click', function () {
+        const text = chip.getAttribute('data-trial-text') || '';
+        trialInput.value = text;
+        runTrial(text);
+      });
+    });
+
+    updateMeta();
+  })();
 })();

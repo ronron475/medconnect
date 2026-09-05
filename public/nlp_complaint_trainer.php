@@ -3,7 +3,8 @@
  * Dummy chief-complaint NLP trainer (sandbox).
  * Does not save to patient records.
  *
- * Open: http://localhost/medconnect/public/nlp_complaint_trainer.php
+ * Local:  http://localhost/medconnect/public/nlp_complaint_trainer.php
+ * Online: https://medconnect.bccbsis.com/public/nlp_complaint_trainer.php
  */
 require_once dirname(__DIR__) . '/bootstrap.php';
 $assetBase = ASSET_BASE;

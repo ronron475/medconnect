@@ -1473,3 +1473,139 @@
     padding: 18px 16px 16px;
   }
 }
+
+/* TRIAL interview panel */
+.nlp-trial-kicker {
+  margin: 0 0 6px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #0f766e;
+}
+
+.nlp-trial-card {
+  background: #fff;
+  border: 1px solid #99f6e4;
+  border-radius: 14px;
+  padding: 20px 20px 18px;
+  margin-bottom: 18px;
+  box-shadow: 0 8px 28px rgba(15, 118, 110, 0.08);
+}
+
+.nlp-trial-title {
+  margin: 0 0 6px;
+  font-size: 1.05rem;
+  font-weight: 750;
+  color: #012a4a;
+}
+
+.nlp-trial-hint {
+  margin: 0 0 14px;
+  font-size: 0.85rem;
+  color: #64748b;
+}
+
+.nlp-trial-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  margin-top: 12px;
+}
+
+.nlp-btn-secondary {
+  appearance: none;
+  border: 1px solid #cbd5e1;
+  background: #fff;
+  color: #334155;
+  border-radius: 10px;
+  padding: 0.55rem 0.95rem;
+  font: inherit;
+  font-size: 0.875rem;
+  font-weight: 650;
+  cursor: pointer;
+}
+
+.nlp-btn-secondary:hover {
+  background: #f8fafc;
+}
+
+.nlp-trial-meta {
+  font-size: 0.78rem;
+  color: #64748b;
+}
+
+.nlp-trial-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+  margin-top: 14px;
+}
+
+.nlp-trial-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.nlp-trial-grid dt {
+  margin: 0;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: #64748b;
+}
+
+.nlp-trial-grid dd {
+  margin: 4px 0 0;
+}
+
+.nlp-trial-block {
+  margin-top: 12px;
+}
+
+.nlp-trial-block h3 {
+  margin: 0 0 6px;
+  font-size: 0.8rem;
+  color: #475569;
+}
+
+.nlp-trial-block ul {
+  margin: 0;
+  padding-left: 1.1rem;
+}
+
+.nlp-trial-followup {
+  margin-top: 12px;
+  padding: 12px 14px;
+  border-radius: 10px;
+  background: #ecfdf5;
+  border: 1px solid #99f6e4;
+}
+
+.nlp-trial-followup p {
+  margin: 6px 0 0;
+}
+
+.nlp-trial-followup__meta {
+  font-size: 0.75rem;
+  color: #0f766e;
+}
+
+.nlp-legacy-details {
+  margin-top: 8px;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 10px 14px 14px;
+  background: #f8fafc;
+}
+
+.nlp-legacy-details > summary {
+  cursor: pointer;
+  font-weight: 700;
+  color: #475569;
+  margin-bottom: 10px;
+}
