@@ -132,6 +132,12 @@ final class NlpStep3DemoTrial
             $geminiMeta['status'] = 'QUESTION_PHRASE_ONLY';
             $geminiMeta['reason'] = $geminiWhy;
         }
+        if (!isset($geminiMeta['primary_nlp'])) {
+            $geminiMeta['primary_nlp'] = $hadTurns && $awaiting !== '' ? 'LOW_CONFIDENCE' : 'N/A';
+        }
+        if (!isset($geminiMeta['fallback'])) {
+            $geminiMeta['fallback'] = 'none';
+        }
 
         return [
             'demo_mode' => self::MODE,
@@ -192,6 +198,10 @@ final class NlpStep3DemoTrial
         ];
 
         if (NlpStep3DemoGeminiAnswerInterpreter::nlpUnderstandsAnswer($turn, $awaiting, $prior)) {
+            $meta['primary_nlp'] = 'SUCCESS';
+            $meta['fallback'] = 'none';
+            $meta['reason'] = 'NOT CALLED — PRIMARY NLP SUFFICIENT';
+
             return [
                 'meta' => $meta,
                 'block_advance' => false,
@@ -200,6 +210,7 @@ final class NlpStep3DemoTrial
             ];
         }
 
+        $meta['primary_nlp'] = 'LOW_CONFIDENCE';
         $expected = self::expectedAnswerType($awaiting);
         $questionText = self::lastAskedQuestionText($prior, $awaiting);
         $result = NlpStep3DemoGeminiAnswerInterpreter::interpret(
@@ -216,48 +227,53 @@ final class NlpStep3DemoTrial
             'status' => (string) ($result['status'] ?? 'ERROR'),
             'reason' => (string) ($result['reason'] ?? ''),
             'interpretation' => is_array($result['interpretation'] ?? null) ? $result['interpretation'] : null,
+            'primary_nlp' => (string) ($result['primary_nlp'] ?? 'LOW_CONFIDENCE'),
+            'fallback' => (string) ($result['fallback'] ?? 'none'),
         ]);
 
-        // Gemini unavailable / failed → continue with existing NLP + clarification path (no crash).
-        if (in_array($meta['status'], ['UNAVAILABLE', 'ERROR', 'INVALID_JSON'], true) || empty($meta['called'])) {
-            if ($meta['status'] === 'UNAVAILABLE') {
-                $meta['reason'] = 'Gemini fallback unavailable — continuing with existing NLP';
+        $interp = is_array($meta['interpretation']) ? $meta['interpretation'] : null;
+
+        // Usable structured interpretation from Gemini or demo semantic lexicon.
+        if (is_array($interp)) {
+            $needsClarification = !empty($interp['needs_clarification'])
+                || empty($interp['relevant'])
+                || (isset($interp['understood']) && $interp['understood'] === false)
+                || in_array($meta['status'], ['UNRELATED', 'NEEDS_CLARIFICATION', 'LOW_CONFIDENCE'], true);
+
+            if ($needsClarification) {
+                $msg = self::clarificationMessage($awaiting, $interp, $questionText);
+
+                return [
+                    'meta' => $meta,
+                    'block_advance' => true,
+                    'message' => $msg,
+                    'question' => self::heldQuestion($awaiting, $questionText, $msg),
+                    'turn' => $turn,
+                    'prior' => $prior,
+                ];
             }
+
+            $applied = NlpStep3DemoGeminiAnswerInterpreter::applyToPrior($prior, $turn, $interp, $awaiting);
 
             return [
                 'meta' => $meta,
                 'block_advance' => false,
-                'turn' => $turn,
-                'prior' => $prior,
+                'turn' => (string) ($applied['turn'] ?? $turn),
+                'prior' => is_array($applied['prior'] ?? null) ? $applied['prior'] : $prior,
             ];
         }
 
-        $interp = is_array($meta['interpretation']) ? $meta['interpretation'] : [];
-        $needsClarification = !empty($interp['needs_clarification'])
-            || empty($interp['relevant'])
-            || empty($interp['understood'])
-            || in_array($meta['status'], ['UNRELATED', 'NEEDS_CLARIFICATION', 'LOW_CONFIDENCE'], true);
-
-        if ($needsClarification) {
-            $msg = self::clarificationMessage($awaiting, $interp, $questionText);
-
-            return [
-                'meta' => $meta,
-                'block_advance' => true,
-                'message' => $msg,
-                'question' => self::heldQuestion($awaiting, $questionText, $msg),
-                'turn' => $turn,
-                'prior' => $prior,
-            ];
+        // Nothing structured from Gemini/lexicon — let ClinicalInterviewEngine try the raw answer.
+        // (Do not hard-block; only explicit UNRELATED/clarification interpretations hold the turn.)
+        if ($meta['status'] === 'UNAVAILABLE') {
+            $meta['reason'] = 'Existing NLP low confidence; Gemini unavailable — continuing with ClinicalInterviewEngine';
         }
-
-        $applied = NlpStep3DemoGeminiAnswerInterpreter::applyToPrior($prior, $turn, $interp, $awaiting);
 
         return [
             'meta' => $meta,
             'block_advance' => false,
-            'turn' => (string) ($applied['turn'] ?? $turn),
-            'prior' => is_array($applied['prior'] ?? null) ? $applied['prior'] : $prior,
+            'turn' => $turn,
+            'prior' => $prior,
         ];
     }
 

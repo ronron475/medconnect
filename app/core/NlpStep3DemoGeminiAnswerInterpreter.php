@@ -110,13 +110,150 @@ final class NlpStep3DemoGeminiAnswerInterpreter
     }
 
     /**
+     * Demo-only Hiligaynon/English semantic bridge used when Gemini is unavailable
+     * or returns nothing usable. Does not invent exact durations.
+     *
+     * @return array<string, mixed>|null
+     */
+    public static function tryLocalSemanticInterpretation(string $turn, string $awaiting): ?array
+    {
+        $awaiting = strtoupper(trim($awaiting));
+        $low = mb_strtolower(trim($turn));
+        $low = trim((string) preg_replace('/[^\p{L}\p{N}\s\-]+/u', ' ', $low));
+        $low = trim((string) preg_replace('/\s+/u', ' ', $low));
+        if ($low === '') {
+            return null;
+        }
+
+        // Clearly unrelated to a clinical follow-up.
+        if (self::looksUnrelatedAnswer($low, $awaiting)) {
+            return [
+                'relevant' => false,
+                'understood' => true,
+                'answer_type' => 'UNRELATED',
+                'normalized_value' => null,
+                'confidence' => 0.95,
+                'needs_clarification' => true,
+                'clarification_reason' => 'The response does not answer the current clinical question.',
+                'source' => 'demo_semantic_lexicon',
+            ];
+        }
+
+        if (in_array($awaiting, ['ONSET', 'DURATION'], true)) {
+            $map = [
+                'ligad pa' => ['started earlier', false],
+                'ligad pa gid' => ['started earlier', false],
+                'ligad-ligad pa' => ['started earlier', false],
+                'sang ligad pa' => ['started earlier', false],
+                'halin pa sang una' => ['started some time ago', true],
+                'sang una pa' => ['started some time ago', true],
+                'sang una pa gid' => ['started some time ago', true],
+                'daw sang una pa' => ['started some time ago', true],
+                'daw sang una pa gid' => ['started some time ago', true],
+                'daw sang una pa gid to' => ['started some time ago', true],
+                'kanina pa' => ['earlier today', false],
+                'kanina pa gid' => ['earlier today', false],
+                'dugay-dugay na' => ['for a long time', false],
+                'dugay dugay na' => ['for a long time', false],
+                'matagal na' => ['for a long time', false],
+                'for a while' => ['for a while', false],
+                'some time ago' => ['some time ago', false],
+                'started earlier' => ['started earlier', false],
+                'kagapon' => ['Since yesterday', false],
+                'halin kagapon' => ['Since yesterday', false],
+                'yesterday pa' => ['Since yesterday', false],
+                'halin pa yesterday' => ['Since yesterday', false],
+                'since yesterday' => ['Since yesterday', false],
+            ];
+            if (isset($map[$low])) {
+                [$value, $needsClarify] = $map[$low];
+
+                return [
+                    'relevant' => true,
+                    'understood' => !$needsClarify,
+                    'answer_type' => 'ONSET_DURATION',
+                    'normalized_value' => $value,
+                    'confidence' => $needsClarify ? 0.72 : 0.90,
+                    'needs_clarification' => $needsClarify,
+                    'clarification_reason' => $needsClarify
+                        ? 'The patient indicates the pain started earlier but does not provide a clear timeframe.'
+                        : null,
+                    'source' => 'demo_semantic_lexicon',
+                ];
+            }
+
+            // Fuzzy contains for common stems without inventing exact day counts.
+            if (preg_match('/\bligad\b/u', $low)) {
+                return [
+                    'relevant' => true,
+                    'understood' => true,
+                    'answer_type' => 'ONSET_DURATION',
+                    'normalized_value' => 'started earlier',
+                    'confidence' => 0.86,
+                    'needs_clarification' => false,
+                    'clarification_reason' => null,
+                    'source' => 'demo_semantic_lexicon',
+                ];
+            }
+            if (preg_match('/\b(sang una|una pa)\b/u', $low) && !preg_match('/\b(\d+|duha|tatlo|apat|lima)\s*(ka\s*)?(adlaw|oras|hours?|days?)\b/u', $low)) {
+                return [
+                    'relevant' => true,
+                    'understood' => false,
+                    'answer_type' => 'ONSET_DURATION',
+                    'normalized_value' => 'started some time ago',
+                    'confidence' => 0.74,
+                    'needs_clarification' => true,
+                    'clarification_reason' => 'The patient indicates the pain started earlier but does not provide a clear timeframe.',
+                    'source' => 'demo_semantic_lexicon',
+                ];
+            }
+        }
+
+        if ($awaiting === 'PAIN_LOCATION') {
+            $locs = ClinicalFeatureExtractors::extractBodyLocations($low);
+            if ($locs !== []) {
+                return [
+                    'relevant' => true,
+                    'understood' => true,
+                    'answer_type' => 'PAIN_LOCATION',
+                    'normalized_value' => $locs[0],
+                    'confidence' => 0.92,
+                    'needs_clarification' => false,
+                    'clarification_reason' => null,
+                    'source' => 'demo_semantic_lexicon',
+                ];
+            }
+        }
+
+        return null;
+    }
+
+    private static function looksUnrelatedAnswer(string $low, string $awaiting): bool
+    {
+        unset($awaiting);
+        if (preg_match('/\b(sakit|masakit|pain|oras|adlaw|gahapon|kahapon|ligad|dugay|subong|kanina|ulo|tiyan|dughan|yes|no|oo|indi|wala)\b/u', $low)) {
+            return false;
+        }
+        if (preg_match('/\b(basketball|football|soccer|blue|red|green|yellow|pink|mahilig|maglaro|hobby|movie|youtube)\b/u', $low)) {
+            return true;
+        }
+        if (preg_match('/^(blue|red|green|yellow|ok|lol|haha+)$/u', $low)) {
+            return true;
+        }
+
+        return false;
+    }
+
+    /**
      * @param array<string, mixed> $context
      * @return array{
      *   called: bool,
      *   available: bool,
      *   status: string,
      *   reason: string,
-     *   interpretation: ?array<string, mixed>
+     *   interpretation: ?array<string, mixed>,
+     *   primary_nlp: string,
+     *   fallback: string
      * }
      */
     public static function interpret(
@@ -133,58 +270,87 @@ final class NlpStep3DemoGeminiAnswerInterpreter
             'status' => 'NOT_CALLED',
             'reason' => '',
             'interpretation' => null,
+            'primary_nlp' => 'LOW_CONFIDENCE',
+            'fallback' => 'none',
         ];
 
-        if (!self::enabled()) {
+        // 1) Gemini when configured
+        if (self::enabled()) {
+            $base['called'] = true;
+            $base['reason'] = 'Existing NLP confidence below threshold for this follow-up answer';
+            $base['fallback'] = 'gemini';
+
+            try {
+                $raw = self::complete(self::userPrompt($patientAnswer, $questionText, $questionId, $expectedType, $context));
+                $parsed = self::parseAndValidate($raw);
+                if ($parsed === null) {
+                    $base['status'] = 'INVALID_JSON';
+                    $base['reason'] = 'Gemini returned invalid JSON';
+                    self::$lastError = $base['reason'] . ': ' . mb_substr($raw, 0, 160);
+                } else {
+                    $conf = (float) ($parsed['confidence'] ?? 0);
+                    if ($conf < self::minConfidence()) {
+                        $parsed['needs_clarification'] = true;
+                        if (empty($parsed['clarification_reason'])) {
+                            $parsed['clarification_reason'] = 'Gemini confidence below threshold; ask the patient to clarify.';
+                        }
+                        $base['status'] = 'LOW_CONFIDENCE';
+                    } elseif (!empty($parsed['needs_clarification']) || empty($parsed['understood']) || empty($parsed['relevant'])) {
+                        $base['status'] = !empty($parsed['relevant']) ? 'NEEDS_CLARIFICATION' : 'UNRELATED';
+                    } else {
+                        $base['status'] = 'OK';
+                    }
+                    unset($parsed['triage'], $parsed['triage_display'], $parsed['urgency'], $parsed['classification']);
+                    $parsed['source'] = 'gemini';
+                    $base['interpretation'] = $parsed;
+                    self::$lastError = '';
+
+                    // Accept usable Gemini result (including clarification/unrelated holds).
+                    if ($base['status'] !== 'INVALID_JSON') {
+                        return $base;
+                    }
+                }
+            } catch (Throwable $e) {
+                $base['status'] = 'ERROR';
+                $base['reason'] = 'Gemini fallback error: ' . $e->getMessage();
+                self::$lastError = $base['reason'];
+                error_log('NlpStep3DemoGeminiAnswerInterpreter: ' . $e->getMessage());
+            }
+        } else {
             $base['status'] = 'UNAVAILABLE';
             $base['reason'] = 'Gemini fallback unavailable (no API key or disabled)';
             self::$lastError = $base['reason'];
-
-            return $base;
         }
 
-        $base['called'] = true;
-        $base['reason'] = 'Existing NLP confidence below threshold for this follow-up answer';
-
-        try {
-            $raw = self::complete(self::userPrompt($patientAnswer, $questionText, $questionId, $expectedType, $context));
-            $parsed = self::parseAndValidate($raw);
-            if ($parsed === null) {
-                $base['status'] = 'INVALID_JSON';
-                $base['reason'] = 'Gemini returned invalid JSON';
-                self::$lastError = $base['reason'] . ': ' . mb_substr($raw, 0, 160);
-
-                return $base;
-            }
-
-            $conf = (float) ($parsed['confidence'] ?? 0);
-            if ($conf < self::minConfidence()) {
-                $parsed['needs_clarification'] = true;
-                if (empty($parsed['clarification_reason'])) {
-                    $parsed['clarification_reason'] = 'Gemini confidence below threshold; ask the patient to clarify.';
-                }
-                $base['status'] = 'LOW_CONFIDENCE';
-            } elseif (!empty($parsed['needs_clarification']) || empty($parsed['understood']) || empty($parsed['relevant'])) {
-                $base['status'] = !empty($parsed['relevant']) ? 'NEEDS_CLARIFICATION' : 'UNRELATED';
+        // 2) Demo semantic lexicon bridge (keeps interview moving when Gemini is down)
+        $local = self::tryLocalSemanticInterpretation($patientAnswer, $questionId);
+        if (is_array($local)) {
+            $base['fallback'] = 'demo_semantic_lexicon';
+            $base['interpretation'] = $local;
+            if (empty($local['relevant'])) {
+                $base['status'] = 'UNRELATED';
+                $base['reason'] = 'Existing NLP low confidence; semantic lexicon marked answer unrelated'
+                    . (!self::enabled() ? ' (Gemini unavailable)' : ' (after Gemini failure)');
+            } elseif (!empty($local['needs_clarification'])) {
+                $base['status'] = 'NEEDS_CLARIFICATION';
+                $base['reason'] = 'Existing NLP low confidence; semantic lexicon needs clarification'
+                    . (!self::enabled() ? ' (Gemini unavailable)' : '');
             } else {
-                $base['status'] = 'OK';
+                $base['status'] = 'DEMO_SEMANTIC_FALLBACK';
+                $base['reason'] = 'Existing NLP low confidence; '
+                    . (!self::enabled()
+                        ? 'Gemini unavailable — demo Hiligaynon semantic lexicon applied'
+                        : 'Gemini failed — demo Hiligaynon semantic lexicon applied');
             }
-
-            // Strip any accidental triage fields — Gemini must never control triage.
-            unset($parsed['triage'], $parsed['triage_display'], $parsed['urgency'], $parsed['classification']);
-
-            $base['interpretation'] = $parsed;
-            self::$lastError = '';
-
-            return $base;
-        } catch (Throwable $e) {
-            $base['status'] = 'ERROR';
-            $base['reason'] = 'Gemini fallback error: ' . $e->getMessage();
-            self::$lastError = $base['reason'];
-            error_log('NlpStep3DemoGeminiAnswerInterpreter: ' . $e->getMessage());
 
             return $base;
         }
+
+        if ($base['status'] === 'UNAVAILABLE') {
+            return $base;
+        }
+
+        return $base;
     }
 
     /**

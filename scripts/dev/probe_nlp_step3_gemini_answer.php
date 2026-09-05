@@ -45,8 +45,17 @@ $r = NlpStep3DemoGeminiAnswerInterpreter::interpret(
     'ONSET_DURATION',
     ['facts' => ['pain_score' => 7, 'body_locations' => ['head']]]
 );
-ok(($r['status'] ?? '') === 'UNAVAILABLE', 'Gemini unavailable under PHP_NLP_ONLY', (string) ($r['status'] ?? ''));
-ok(empty($r['called']), 'Gemini not called when unavailable');
+ok(($r['status'] ?? '') === 'DEMO_SEMANTIC_FALLBACK' || ($r['status'] ?? '') === 'UNAVAILABLE', 'interpret uses semantic or unavailable', (string) ($r['status'] ?? ''));
+// With PHP_NLP_ONLY Gemini is disabled; lexicon should still interpret ligad pa.
+$r2 = NlpStep3DemoGeminiAnswerInterpreter::interpret(
+    'ligad pa gid',
+    'San-o pa nagsugod ang kasakit?',
+    'ONSET',
+    'ONSET_DURATION',
+    ['facts' => ['pain_score' => 7, 'body_locations' => ['head']]]
+);
+ok(($r2['status'] ?? '') === 'DEMO_SEMANTIC_FALLBACK', 'ligad pa semantic fallback', (string) ($r2['status'] ?? ''));
+ok(($r2['interpretation']['normalized_value'] ?? '') === 'started earlier', 'ligad pa normalized');
 
 $applied = NlpStep3DemoGeminiAnswerInterpreter::applyToPrior(
     ['facts' => ['pain_score' => 7, 'body_locations' => ['head'], 'onset' => '', 'duration_label' => '']],

@@ -2121,27 +2121,39 @@
           : '') +
         '<div class="nlp-trial-block"><h3>NLP / Gemini</h3>' +
         '<ul>' +
-        '<li>NLP: <strong>PRIMARY — existing NLP</strong></li>' +
+        '<li>Primary NLP: <strong>' +
+        escapeHtml(
+          (trial.gemini && trial.gemini.primary_nlp) ||
+            (trial.gemini_called || (trial.gemini && trial.gemini.fallback && trial.gemini.fallback !== 'none')
+              ? 'LOW_CONFIDENCE'
+              : 'SUCCESS')
+        ) +
+        '</strong></li>' +
         '<li>Gemini: <strong>' +
         escapeHtml(
           trial.gemini && trial.gemini.called
-            ? 'CALLED'
-            : trial.gemini_called
-              ? 'CALLED'
-              : 'NOT CALLED'
+            ? 'CALLED — FALLBACK'
+            : trial.gemini && trial.gemini.fallback === 'demo_semantic_lexicon'
+              ? 'NOT CALLED — DEMO SEMANTIC FALLBACK'
+              : trial.gemini_called
+                ? 'CALLED'
+                : 'NOT CALLED — PRIMARY NLP SUFFICIENT'
         ) +
         '</strong></li>' +
-        '<li>Gemini reason: <strong>' +
+        '<li>Fallback: <strong>' +
+        escapeHtml((trial.gemini && trial.gemini.fallback) || 'none') +
+        '</strong></li>' +
+        '<li>Reason: <strong>' +
         escapeHtml((trial.gemini && trial.gemini.reason) || trial.gemini_why || '—') +
         '</strong></li>' +
         (trial.gemini && trial.gemini.interpretation
-          ? '<li>Gemini interpretation: <strong>' +
+          ? '<li>Interpretation: <strong>' +
             escapeHtml(String(trial.gemini.interpretation.answer_type || '—')) +
             '</strong></li>' +
-            '<li>Gemini confidence: <strong>' +
+            '<li>Confidence: <strong>' +
             escapeHtml(
               trial.gemini.interpretation.confidence != null
-                ? String(trial.gemini.interpretation.confidence)
+                ? String(Math.round(Number(trial.gemini.interpretation.confidence) * 100)) + '%'
                 : '—'
             ) +
             '</strong></li>' +
