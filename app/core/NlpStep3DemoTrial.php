@@ -6,7 +6,8 @@
  * Reuses ClinicalInterviewEngine + ChiefComplaintNlpService::assessInterview.
  *
  * Demo-only pain follow-up order for vague pain:
- *   1) PAIN_SEVERITY (0–10) → 2) PAIN_LOCATION → 3) ONSET → existing bank
+ *   1) PAIN_SEVERITY (1–10) → 2) PAIN_LOCATION → 3) ONSET → existing bank
+ * Incomplete pain never finalizes as NON-URGENT; clinical_status = NEEDS_FOLLOW_UP.
  */
 final class NlpStep3DemoTrial
 {
@@ -67,6 +68,12 @@ final class NlpStep3DemoTrial
         }
         if ($inProgress) {
             $display = '';
+            // Never leak a premature engine class into the demo response.
+            if (isset($assessment['triage']) && is_array($assessment['triage'])) {
+                $assessment['triage']['triage_display'] = '';
+                $assessment['triage']['triage_classification'] = '';
+                $assessment['triage']['assessment_status'] = ClinicalInterviewEngine::STATUS_IN_PROGRESS;
+            }
         }
 
         $facts = is_array($assessment['interview']['facts'] ?? null)
@@ -78,6 +85,16 @@ final class NlpStep3DemoTrial
 
         $healthRelated = true;
         $information = $inProgress ? 'INCOMPLETE' : 'SUFFICIENT';
+        $clinicalStatus = $inProgress ? 'NEEDS_FOLLOW_UP' : 'COMPLETED';
+        $clinicalReasoning = trim((string) (
+            $assessment['triage']['clinical_reasoning']
+            ?? $assessment['clinical_reasoning']
+            ?? $assessment['reason']
+            ?? ''
+        ));
+        if ($inProgress && $clinicalReasoning === '') {
+            $clinicalReasoning = 'Insufficient information for a reliable triage classification.';
+        }
         $diagnosis = 'NOT determined';
         $geminiUsed = false;
         $geminiWhy = 'not called (demo reuses existing ClinicalInterviewEngine / question bank)';
@@ -95,6 +112,8 @@ final class NlpStep3DemoTrial
             'health_related' => $healthRelated,
             'domain_class' => 'HEALTH_RELATED',
             'information' => $information,
+            'clinical_status' => $clinicalStatus,
+            'clinical_reasoning' => $clinicalReasoning,
             'diagnosis' => $diagnosis,
             'assessment_status' => $status !== '' ? $status : ($inProgress ? 'IN_PROGRESS' : 'COMPLETED'),
             'triage_display' => $display,
@@ -106,6 +125,9 @@ final class NlpStep3DemoTrial
             'facts' => $facts,
             'complaint_summary' => self::complaintSummary($facts, (string) ($assessment['clinical_transcript'] ?? $turn)),
             'detected_symptoms' => is_array($assessment['detected_symptoms'] ?? null) ? $assessment['detected_symptoms'] : [],
+            'possible_conditions' => is_array($assessment['possible_conditions'] ?? null)
+                ? $assessment['possible_conditions']
+                : (is_array($assessment['detected_conditions'] ?? null) ? $assessment['detected_conditions'] : []),
             'english_translation' => (string) ($assessment['english_translation'] ?? ''),
             'detected_language' => (string) ($assessment['detected_language'] ?? ($assessment['interview']['detected_language'] ?? '')),
             'interview_context' => $assessment['interview'] ?? ClinicalInterviewEngine::normalizeContext($assessment),
@@ -194,16 +216,26 @@ final class NlpStep3DemoTrial
      */
     private static function applyDemoPainQuestionOrder(array $assessment): array
     {
-        $status = strtoupper((string) ($assessment['assessment_status'] ?? ''));
-        if ($status === ClinicalInterviewEngine::STATUS_COMPLETED) {
-            return $assessment;
-        }
-
         $facts = is_array($assessment['interview']['facts'] ?? null)
             ? $assessment['interview']['facts']
             : [];
         $transcript = (string) ($assessment['clinical_transcript'] ?? $assessment['chief_complaint'] ?? '');
+        $status = strtoupper((string) ($assessment['assessment_status'] ?? ''));
+        $display = strtoupper(str_replace('_', '-', (string) ($assessment['triage']['triage_display'] ?? '')));
+        if ($display === 'NON URGENT') {
+            $display = 'NON-URGENT';
+        }
+
+        // Red-flag emergencies stay final — do not force the generic pain quiz.
+        if ($status === ClinicalInterviewEngine::STATUS_COMPLETED && $display === 'EMERGENCY') {
+            return $assessment;
+        }
+
         if (!self::isPainComplaint($assessment, $transcript, $facts)) {
+            if ($status === ClinicalInterviewEngine::STATUS_COMPLETED) {
+                return $assessment;
+            }
+
             return self::applyDemoQuestionWording($assessment);
         }
 
@@ -213,6 +245,7 @@ final class NlpStep3DemoTrial
             || trim((string) ($facts['duration_label'] ?? '')) !== '';
         $lang = self::questionLanguage($assessment);
 
+        // Incomplete pain must stay in follow-up even if the engine prematurely finalized NON-URGENT.
         if (!$hasSeverity) {
             return self::forceDemoQuestion($assessment, 'PAIN_SEVERITY', $lang);
         }
@@ -221,6 +254,10 @@ final class NlpStep3DemoTrial
         }
         if (!$hasOnset) {
             return self::forceDemoQuestion($assessment, 'ONSET', $lang);
+        }
+
+        if ($status === ClinicalInterviewEngine::STATUS_COMPLETED) {
+            return $assessment;
         }
 
         return self::applyDemoQuestionWording($assessment);
@@ -319,6 +356,13 @@ final class NlpStep3DemoTrial
         $assessment['triage']['assessment_status'] = ClinicalInterviewEngine::STATUS_IN_PROGRESS;
         $assessment['triage']['triage_classification'] = '';
         $assessment['triage']['triage_display'] = '';
+        $assessment['triage']['db_level'] = 'pending';
+        $assessment['triage']['urgency_label'] = 'Needs follow-up';
+        // Keep engine reasoning for UI, but never treat provisional class as final.
+        if (empty($assessment['triage']['clinical_reasoning'])) {
+            $assessment['triage']['clinical_reasoning'] =
+                'Insufficient information for a reliable triage classification.';
+        }
 
         return $assessment;
     }
@@ -331,20 +375,20 @@ final class NlpStep3DemoTrial
         if ($qid === 'PAIN_SEVERITY') {
             return match ($lang) {
                 'ENGLISH' => [
-                    'text' => 'How would you rate your pain right now from 0–10?',
-                    'helper' => '0 = no pain, 10 = worst pain imaginable.',
+                    'text' => 'I understand that you are experiencing pain. How would you rate your pain right now on a scale of 1–10?',
+                    'helper' => "1 = mildest pain\n10 = worst pain imaginable",
                     'purpose' => 'Collect numeric pain score as supporting information',
                     'priority' => 5,
                 ],
                 'TAGALOG' => [
-                    'text' => 'Kung 0–10 ang pain scale, gaano kasakit ngayon?',
-                    'helper' => '0 = walang sakit, 10 = pinakamalalang sakit na maisip.',
+                    'text' => 'Naiintindihan ko na may sakit ka. Para ma-assess nang mas mabuti, gaano kasakit ngayon sa scale na 1–10?',
+                    'helper' => "1 = pinakamahinang sakit\n10 = pinakamalalang sakit na maisip",
                     'purpose' => 'Collect numeric pain score as supporting information',
                     'priority' => 5,
                 ],
                 default => [
-                    'text' => 'Kung 0–10 ang pain scale, pila ang imo kasakit subong?',
-                    'helper' => '0 = wala sang kasakit, 10 = pinakagrabe nga kasakit nga ma-imagine.',
+                    'text' => 'Naintindihan ko nga may kasakit ka. Para ma-assess ini sing mas maayo, pila ang imo pain level subong sa scale nga 1–10?',
+                    'helper' => "1 = pinakamahinay nga kasakit\n10 = pinakagrabe nga kasakit nga ma-imagine",
                     'purpose' => 'Collect numeric pain score as supporting information',
                     'priority' => 5,
                 ],
@@ -354,13 +398,13 @@ final class NlpStep3DemoTrial
         if ($qid === 'PAIN_LOCATION') {
             return match ($lang) {
                 'ENGLISH' => [
-                    'text' => 'Where does it hurt?',
+                    'text' => 'Where exactly is the pain?',
                     'helper' => '',
                     'purpose' => 'Locate unspecified pain or discomfort',
                     'priority' => 10,
                 ],
                 'TAGALOG' => [
-                    'text' => 'Saan ang masakit sa iyo?',
+                    'text' => 'Saan exactamente ang masakit sa iyo?',
                     'helper' => '',
                     'purpose' => 'Locate unspecified pain or discomfort',
                     'priority' => 10,
@@ -501,6 +545,8 @@ final class NlpStep3DemoTrial
             'health_related' => $healthRelated,
             'domain_class' => $domainClass,
             'information' => 'N/A',
+            'clinical_status' => 'SKIPPED',
+            'clinical_reasoning' => $message,
             'diagnosis' => 'NOT determined',
             'assessment_status' => 'SKIPPED',
             'triage_display' => '',
