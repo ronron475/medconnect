@@ -1853,8 +1853,12 @@
       const followHtml = q
         ? '<div class="nlp-trial-followup"><strong>Next question</strong><p>' +
           escapeHtml(q.text || trial.patient_message || '') +
-          '</p><p class="nlp-trial-followup__meta">' +
-          escapeHtml((q.question_id || '') + (q.language ? ' · ' + q.language : '') + (q.source ? ' · ' + q.source : '')) +
+          '</p>' +
+          (q.helper_text
+            ? '<p class="nlp-trial-followup__helper">' + escapeHtml(q.helper_text) + '</p>'
+            : '') +
+          '<p class="nlp-trial-followup__meta">' +
+          escapeHtml((q.question_id || '') + (q.language ? ' · ' + q.language : '') + (q.source ? ' · ' + q.source : '') + (q.demo_order ? ' · demo_order' : '')) +
           '</p></div>'
         : trial.patient_message
           ? '<div class="nlp-trial-followup"><p>' + escapeHtml(trial.patient_message) + '</p></div>'
@@ -1886,11 +1890,14 @@
         '<li>complaint = <strong>' +
         escapeHtml(summary.complaint || '—') +
         '</strong></li>' +
+        '<li>pain severity = <strong>' +
+        escapeHtml(summary.pain_severity || '—') +
+        '</strong></li>' +
         '<li>location = <strong>' +
         escapeHtml(summary.location || '—') +
         '</strong></li>' +
-        '<li>pain severity = <strong>' +
-        escapeHtml(summary.pain_severity || '—') +
+        '<li>duration / onset = <strong>' +
+        escapeHtml(summary.duration || summary.onset || '—') +
         '</strong></li>' +
         '<li>transcript = <strong>' +
         escapeHtml(trial.clinical_transcript || trial.input || '—') +
