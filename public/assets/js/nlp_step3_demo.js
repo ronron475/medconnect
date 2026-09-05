@@ -2169,9 +2169,16 @@
         '</strong></li>' +
         '<li>Fuzzy match: <strong>' +
         escapeHtml(
-          (trial.gemini && trial.gemini.fuzzy && trial.gemini.fuzzy.status) ||
-            (trial.gemini && trial.gemini.fuzzy_status) ||
-            'NONE'
+          (function () {
+            const fz =
+              (trial.gemini && trial.gemini.fuzzy && trial.gemini.fuzzy.status) ||
+              (trial.gemini && trial.gemini.fuzzy_status) ||
+              'NONE';
+            if (fz === 'SUCCESS') return 'SUCCESS';
+            if (fz === 'SYNONYM') return 'SYNONYM';
+            if (fz === 'NO_CORRECTION' || fz === 'NONE') return 'NO RELIABLE MATCH / NONE';
+            return String(fz);
+          })()
         ) +
         '</strong></li>' +
         '<li>Gemini: <strong>' +
@@ -2179,13 +2186,15 @@
           trial.gemini && trial.gemini.called
             ? 'CALLED — PRIMARY NLP INSUFFICIENT'
             : trial.gemini && trial.gemini.fallback === 'demo_fuzzy'
-              ? 'NOT CALLED — DEMO FUZZY FALLBACK'
+              ? 'NOT CALLED — FUZZY MATCH RESOLVED'
               : trial.gemini && trial.gemini.fallback === 'demo_semantic_lexicon'
                 ? 'NOT CALLED — DEMO SEMANTIC FALLBACK'
                 : trial.gemini && trial.gemini.primary_nlp === 'SUCCESS'
                   ? 'NOT CALLED — PRIMARY NLP SUFFICIENT'
                   : trial.gemini && (trial.gemini.primary_nlp === 'FAILED' || trial.gemini.primary_nlp === 'LOW_CONFIDENCE')
-                    ? 'NOT CALLED — PRIMARY NLP FAILED (Gemini unavailable)'
+                    ? trial.gemini.available
+                      ? 'ELIGIBLE — PRIMARY NLP INSUFFICIENT'
+                      : 'NOT CALLED — PRIMARY NLP FAILED (Gemini unavailable)'
                     : 'NOT CALLED'
         ) +
         '</strong></li>' +
