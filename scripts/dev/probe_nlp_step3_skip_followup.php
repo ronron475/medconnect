@@ -30,7 +30,9 @@ ok(($r['complaint_summary']['location'] ?? '') === 'head', 'rich location');
 ok(str_contains((string) ($r['complaint_summary']['duration'] ?? ''), 'yesterday'), 'rich duration', (string) ($r['complaint_summary']['duration'] ?? ''));
 ok(($r['complaint_summary']['character'] ?? '') === 'pulsating', 'rich character', (string) ($r['complaint_summary']['character'] ?? ''));
 ok(str_contains((string) ($r['complaint_summary']['associated_symptoms'] ?? ''), 'dizziness'), 'rich dizziness', (string) ($r['complaint_summary']['associated_symptoms'] ?? ''));
-ok(str_contains((string) ($r['complaint_summary']['associated_symptoms'] ?? ''), 'denied'), 'rich denials noted', (string) ($r['complaint_summary']['associated_symptoms'] ?? ''));
+ok(str_contains((string) ($r['complaint_summary']['pertinent_negatives'] ?? ''), 'vomit')
+    || str_contains((string) ($r['complaint_summary']['pertinent_negatives'] ?? ''), 'fever')
+    || str_contains((string) ($r['complaint_summary']['associated_symptoms'] ?? ''), 'denied'), 'rich denials noted', (string) (($r['complaint_summary']['pertinent_negatives'] ?? '') . '|' . ($r['complaint_summary']['associated_symptoms'] ?? '')));
 ok(!str_contains((string) ($r['followup_question']['text'] ?? ''), 'Pila ang pain'), 'does not re-ask pain score');
 
 $mid = NlpStep3DemoTrial::assess('Masakit akon ulo 7/10 halin gahapon, pulsing, may hilo, wala nagsuka, wala hilanat.');

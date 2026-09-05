@@ -1880,21 +1880,29 @@
 
     function validateFollowUpAnswer(raw, questionId) {
       const qid = String(questionId || '').toUpperCase();
+      const text = String(raw || '').trim();
       if (qid !== 'PAIN_SEVERITY') {
-        return { ok: true, value: String(raw || '').trim() };
+        return { ok: true, value: text };
       }
-      const score = parsePainScore(raw);
-      if (score == null || score < 1 || score > 10) {
-        return { ok: false, error: 'Please enter a pain level from 1–10.' };
+      const score = parsePainScore(text);
+      // Allow rich multi-fact answers that already include a score.
+      if (/\b(sakit|masakit|ulo|tiyan|dughan|mata|gahapon|halin|kagab-i|pulsing|hilo)\b/i.test(text)) {
+        if (score == null || score < 0 || score > 10) {
+          return { ok: false, error: 'Include a pain level from 0–10 in your answer (or enter 0–10 alone).' };
+        }
+        return { ok: true, value: text };
+      }
+      if (score == null || score < 0 || score > 10) {
+        return { ok: false, error: 'Please enter a pain level from 0–10.' };
       }
       return { ok: true, value: String(score) };
     }
 
     function answerPlaceholder(qid) {
       const id = String(qid || '').toUpperCase();
-      if (id === 'PAIN_SEVERITY') return 'Pain level (1–10), e.g. 7 or 7/10';
+      if (id === 'PAIN_SEVERITY') return 'Pain level (0–10), e.g. 7 or 7/10 — or a full clinical answer';
       if (id === 'PAIN_LOCATION') return 'Where does it hurt? e.g. tiyan, ulo, dughan';
-      if (id === 'ONSET' || id === 'DURATION') return 'When did the pain start? e.g. gahapon';
+      if (id === 'ONSET' || id === 'DURATION') return 'When did it start? e.g. gahapon — or a full clinical answer';
       return 'Type your answer…';
     }
 
@@ -2071,8 +2079,8 @@
         '<div><dt>Clinical status</dt><dd>' +
         clinicalStatusHtml +
         '</dd></div>' +
-        '<div><dt>Information</dt><dd>' +
-        escapeHtml(trial.information || '—') +
+        '<div><dt>Information status</dt><dd>' +
+        escapeHtml(trial.information_status || trial.information || '—') +
         '</dd></div>' +
         '<div><dt>Final triage</dt><dd>' +
         triageHtml +
@@ -2090,35 +2098,55 @@
         '<div class="nlp-trial-block"><h3>Clinical reasoning</h3><p>' +
         escapeHtml(reasoning || '—') +
         '</p></div>' +
-        '<div class="nlp-trial-block"><h3>Accumulated meaning</h3><ul>' +
-        '<li>complaint = <strong>' +
-        escapeHtml(summary.complaint || '—') +
+        '<div class="nlp-trial-block"><h3>Accumulated clinical information</h3><ul>' +
+        '<li>Chief complaint = <strong>' +
+        escapeHtml(summary.chief_complaint || summary.complaint || '—') +
         '</strong></li>' +
-        '<li>pain severity = <strong>' +
-        escapeHtml(summary.pain_severity || '—') +
-        '</strong></li>' +
-        '<li>location = <strong>' +
+        '<li>Location = <strong>' +
         escapeHtml(summary.location || '—') +
         '</strong></li>' +
-        '<li>onset/duration = <strong>' +
+        '<li>Laterality = <strong>' +
+        escapeHtml(summary.laterality || '—') +
+        '</strong></li>' +
+        '<li>Severity = <strong>' +
+        escapeHtml(summary.pain_severity || summary.severity || '—') +
+        '</strong></li>' +
+        '<li>Onset/duration = <strong>' +
         escapeHtml(summary.duration || summary.onset || '—') +
         '</strong></li>' +
-        '<li>character = <strong>' +
+        '<li>Character = <strong>' +
         escapeHtml(summary.character || '—') +
         '</strong></li>' +
-        '<li>aggravating factor = <strong>' +
+        '<li>Aggravating factor = <strong>' +
         escapeHtml(summary.aggravating_factor || '—') +
         '</strong></li>' +
-        '<li>associated symptoms = <strong>' +
+        '<li>Relieving factor = <strong>' +
+        escapeHtml(summary.relieving_factor || '—') +
+        '</strong></li>' +
+        '<li>Associated symptoms = <strong>' +
         escapeHtml(summary.associated_symptoms || '—') +
+        '</strong></li>' +
+        '<li>Pertinent negatives = <strong>' +
+        escapeHtml(summary.pertinent_negatives || '—') +
+        '</strong></li>' +
+        '<li>Vital signs = <strong>' +
+        escapeHtml(summary.vital_signs || summary.temperature || '—') +
+        '</strong></li>' +
+        '<li>Complaint family = <strong>' +
+        escapeHtml(summary.family || '—') +
         '</strong></li>' +
         '<li>transcript = <strong>' +
         escapeHtml(trial.clinical_transcript || trial.input || '—') +
         '</strong></li>' +
         '</ul></div>' +
+        (Array.isArray(trial.missing_fields) && trial.missing_fields.length
+          ? '<div class="nlp-trial-block"><h3>Still missing (clinically relevant)</h3><p>' +
+            escapeHtml(trial.missing_fields.join(', ')) +
+            '</p></div>'
+          : '') +
         (trial.followup_skipped
-          ? '<div class="nlp-trial-block"><h3>Follow-up</h3><p><strong>SKIPPED — SUFFICIENT INFORMATION</strong></p><p>' +
-            escapeHtml(trial.followup_skip_reason || 'Already-answered questions were not re-asked.') +
+          ? '<div class="nlp-trial-block"><h3>Follow-up</h3><p><strong>NO FURTHER ROUTINE FOLLOW-UP REQUIRED</strong></p><p>' +
+            escapeHtml(trial.followup_skip_reason || 'Proceeding to clinical assessment.') +
             '</p></div>'
           : '') +
         followHtml +

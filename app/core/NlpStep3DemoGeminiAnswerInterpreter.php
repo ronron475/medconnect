@@ -366,7 +366,9 @@ final class NlpStep3DemoGeminiAnswerInterpreter
         $value = trim((string) ($interp['normalized_value'] ?? ''));
         $type = strtoupper((string) ($interp['answer_type'] ?? ''));
         $awaiting = strtoupper($awaiting);
+        // Keep the full patient utterance so out-of-order multi-facts are not discarded.
         $enrichedTurn = $turn;
+        $isRich = str_contains($turn, ' ') || mb_strlen(trim($turn)) > 24;
 
         if ($value !== '') {
             // Prefer mapping through existing extractors when possible; never invent exact durations.
@@ -374,10 +376,14 @@ final class NlpStep3DemoGeminiAnswerInterpreter
                 $dur = ClinicalFeatureExtractors::extractDuration($value . ' ' . $turn);
                 if (trim((string) ($dur['label'] ?? '')) !== '') {
                     $facts['duration_label'] = (string) $dur['label'];
-                    $enrichedTurn = (string) $dur['label'];
+                    if (!$isRich) {
+                        $enrichedTurn = (string) $dur['label'];
+                    }
                 } else {
                     $facts['duration_label'] = $value;
-                    $enrichedTurn = $value;
+                    if (!$isRich) {
+                        $enrichedTurn = $value;
+                    }
                 }
                 $onset = ClinicalFeatureExtractors::extractOnset($value . ' ' . $turn);
                 if ($onset !== '' && ($facts['onset'] ?? '') === '') {
@@ -386,12 +392,11 @@ final class NlpStep3DemoGeminiAnswerInterpreter
             } elseif ($type === 'PAIN_LOCATION' || $awaiting === 'PAIN_LOCATION') {
                 $locs = ClinicalFeatureExtractors::extractBodyLocations($value . ' ' . $turn);
                 if ($locs === []) {
-                    // Soft-map common English normals without inventing anatomy beyond the text.
                     $map = [
                         'head' => 'head', 'ulo' => 'head',
                         'chest' => 'chest', 'dughan' => 'chest',
                         'abdomen' => 'abdomen', 'stomach' => 'abdomen', 'tiyan' => 'abdomen',
-                        'back' => 'back', 'neck' => 'neck',
+                        'back' => 'back', 'neck' => 'neck', 'eye' => 'eye', 'mata' => 'eye',
                     ];
                     $low = mb_strtolower($value);
                     foreach ($map as $term => $canonical) {
@@ -405,30 +410,40 @@ final class NlpStep3DemoGeminiAnswerInterpreter
                         $facts['body_locations'][] = $loc;
                     }
                 }
-                if ($locs !== []) {
+                if ($locs !== [] && !$isRich) {
                     $enrichedTurn = $locs[0];
                 }
             } elseif ($type === 'PAIN_SEVERITY' || $awaiting === 'PAIN_SEVERITY') {
                 $score = ClinicalFeatureExtractors::extractStandalonePainScore($value, true)
-                    ?? (ClinicalFeatureExtractors::extractPainScale($value)['score'] ?? null);
+                    ?? (ClinicalFeatureExtractors::extractPainScale($value . ' ' . $turn)['score'] ?? null);
                 if ($score !== null) {
                     $facts['pain_score'] = (int) $score;
-                    $enrichedTurn = ((int) $score) . '/10';
+                    if (!$isRich) {
+                        $enrichedTurn = ((int) $score) . '/10';
+                    }
                 }
             } elseif ($type === 'YES_NO' || $type === 'ASSOCIATED_SYMPTOMS') {
                 $yn = ClinicalFeatureExtractors::extractYesNo($value . ' ' . $turn);
                 if ($yn === true) {
-                    $enrichedTurn = 'yes';
+                    if (!$isRich) {
+                        $enrichedTurn = 'yes';
+                    }
+                    $facts['has_other_symptoms'] = true;
                 } elseif ($yn === false) {
-                    $enrichedTurn = 'no';
+                    if (!$isRich) {
+                        $enrichedTurn = 'no';
+                    }
                     $facts['denied_associated'] = true;
                     $facts['has_other_symptoms'] = false;
-                } else {
-                    $enrichedTurn = $value;
                 }
-            } else {
-                $enrichedTurn = $value;
+            } elseif ($type === 'CHARACTER' && $value !== '') {
+                $facts['pain_qualifier'] = $value;
             }
+        }
+
+        // Sweep all clinically supported facts from the original answer text.
+        if (class_exists('NlpStep3DemoClinicalState')) {
+            $facts = NlpStep3DemoClinicalState::enrichInterviewFacts($facts, $turn . ($value !== '' ? ' ' . $value : ''));
         }
 
         $prior['facts'] = $facts;
@@ -464,16 +479,17 @@ final class NlpStep3DemoGeminiAnswerInterpreter
         }
 
         $schema = <<<'JSON'
-{"relevant":true,"understood":true,"answer_type":"ONSET_DURATION","normalized_value":"started earlier","confidence":0.9,"needs_clarification":false,"clarification_reason":null}
+{"relevant":true,"understood":true,"answer_type":"ONSET_DURATION","normalized_value":"started earlier","confidence":0.9,"needs_clarification":false,"clarification_reason":null,"extracted_facts":{"location":"head","severity":"7/10","onset":"yesterday","character":"pulsating"}}
 JSON;
 
         return "CURRENT QUESTION:\n" . trim($questionText) . "\n\n"
             . "QUESTION TYPE:\n" . strtoupper($questionId) . "\n\n"
             . "EXPECTED INFORMATION:\n" . strtoupper($expectedType) . "\n\n"
-            . "CURRENT CLINICAL CONTEXT:\n" . ($known !== [] ? implode('; ', $known) : 'complaint in progress') . "\n\n"
-            . "PATIENT ANSWER:\n" . mb_substr(trim($patientAnswer), 0, 500) . "\n\n"
+            . "ACCUMULATED CLINICAL INFORMATION:\n" . ($known !== [] ? implode('; ', $known) : 'complaint in progress') . "\n\n"
+            . "PATIENT'S LATEST ANSWER:\n" . mb_substr(trim($patientAnswer), 0, 700) . "\n\n"
             . "Return ONLY valid JSON matching this schema example:\n{$schema}\n"
             . "answer_type must be one of: " . implode(', ', self::ALLOWED_TYPES) . "\n"
+            . "If the answer contains multiple clinically supported facts, include them in extracted_facts.\n"
             . "Do not invent exact durations, symptoms, diagnoses, or triage classes.\n"
             . "confidence must be a number from 0 to 1.";
     }
@@ -481,9 +497,12 @@ JSON;
     private static function systemPrompt(): string
     {
         return <<<'PROMPT'
-You are a clinical interview response interpretation assistant for medConnect DEMO only.
+You are a clinical interview response comprehension assistant for medConnect DEMO only.
 
-Your ONLY task is to interpret the patient's latest response in the context of the current clinical question.
+Your task is ONLY to determine whether the patient's latest answer answers the CURRENT QUESTION,
+and to extract any additional clinically supported facts from that answer.
+
+Interpret Hiligaynon, English, and mixed Hiligaynon-English naturally.
 
 Do not diagnose.
 Do not recommend treatment.
@@ -491,11 +510,10 @@ Do not prescribe medication.
 Do not determine triage.
 Do not determine emergency, urgent, or non-urgent classification.
 Do not invent information not supported by the patient's words.
+If the patient gives a vague but clinically meaningful answer, preserve uncertainty rather than inventing an exact value.
 
-Determine whether the patient's response answers the current question.
-If it does, extract only information explicitly supported by the patient's response.
-If it is unclear, mark needs_clarification true.
-If it is unrelated, set relevant false and answer_type UNRELATED.
+If the answer is ambiguous, mark it ambiguous.
+If the answer is unrelated, mark it unrelated.
 
 Return ONLY valid JSON. No markdown. No prose outside JSON.
 PROMPT;
