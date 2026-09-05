@@ -118,9 +118,11 @@ final class NlpStep3DemoGeminiAnswerInterpreter
     public static function tryLocalSemanticInterpretation(string $turn, string $awaiting): ?array
     {
         $awaiting = strtoupper(trim($awaiting));
-        $low = mb_strtolower(trim($turn));
+        $prep = NlpStep3DemoAnswerFuzzy::prepare($turn, $awaiting);
+        $low = mb_strtolower(trim((string) ($prep['corrected'] ?? $turn)));
         $low = trim((string) preg_replace('/[^\p{L}\p{N}\s\-]+/u', ' ', $low));
         $low = trim((string) preg_replace('/\s+/u', ' ', $low));
+        $fuzzySource = !empty($prep['corrections']) ? 'demo_fuzzy_lexicon' : 'demo_semantic_lexicon';
         if ($low === '') {
             return null;
         }
@@ -160,10 +162,17 @@ final class NlpStep3DemoGeminiAnswerInterpreter
                 'some time ago' => ['some time ago', false],
                 'started earlier' => ['started earlier', false],
                 'kagapon' => ['Since yesterday', false],
+                'gahapon' => ['Since yesterday', false],
+                'kahapon' => ['Since yesterday', false],
                 'halin kagapon' => ['Since yesterday', false],
+                'halin gahapon' => ['Since yesterday', false],
                 'yesterday pa' => ['Since yesterday', false],
                 'halin pa yesterday' => ['Since yesterday', false],
                 'since yesterday' => ['Since yesterday', false],
+                'yesterday' => ['Since yesterday', false],
+                'subong lang' => ['just now', false],
+                'bag-o lang' => ['just now', false],
+                'dugay na' => ['for a long time', false],
             ];
             if (isset($map[$low])) {
                 [$value, $needsClarify] = $map[$low];
@@ -178,7 +187,7 @@ final class NlpStep3DemoGeminiAnswerInterpreter
                     'clarification_reason' => $needsClarify
                         ? 'The patient indicates the pain started earlier but does not provide a clear timeframe.'
                         : null,
-                    'source' => 'demo_semantic_lexicon',
+                    'source' => $fuzzySource,
                 ];
             }
 
@@ -204,7 +213,20 @@ final class NlpStep3DemoGeminiAnswerInterpreter
                     'confidence' => 0.74,
                     'needs_clarification' => true,
                     'clarification_reason' => 'The patient indicates the pain started earlier but does not provide a clear timeframe.',
-                    'source' => 'demo_semantic_lexicon',
+                    'source' => $fuzzySource,
+                ];
+            }
+            $dur = ClinicalFeatureExtractors::extractDuration($low);
+            if (trim((string) ($dur['label'] ?? '')) !== '') {
+                return [
+                    'relevant' => true,
+                    'understood' => true,
+                    'answer_type' => 'ONSET_DURATION',
+                    'normalized_value' => (string) $dur['label'],
+                    'confidence' => 0.90,
+                    'needs_clarification' => false,
+                    'clarification_reason' => null,
+                    'source' => $fuzzySource,
                 ];
             }
         }
@@ -220,7 +242,33 @@ final class NlpStep3DemoGeminiAnswerInterpreter
                     'confidence' => 0.92,
                     'needs_clarification' => false,
                     'clarification_reason' => null,
-                    'source' => 'demo_semantic_lexicon',
+                    'source' => $fuzzySource,
+                ];
+            }
+        }
+
+        if ($awaiting === 'PAIN_SEVERITY') {
+            $score = ClinicalFeatureExtractors::extractStandalonePainScore($low, true)
+                ?? (ClinicalFeatureExtractors::extractPainScale($low)['score'] ?? null);
+            $wordMap = [
+                'isa' => 1, 'one' => 1, 'duha' => 2, 'two' => 2, 'tatlo' => 3, 'three' => 3,
+                'apat' => 4, 'four' => 4, 'lima' => 5, 'five' => 5, 'anom' => 6, 'six' => 6,
+                'pito' => 7, 'seven' => 7, 'walo' => 8, 'eight' => 8, 'siyam' => 9, 'nine' => 9,
+                'napulo' => 10, 'ten' => 10,
+            ];
+            if ($score === null && isset($wordMap[$low])) {
+                $score = $wordMap[$low];
+            }
+            if ($score !== null) {
+                return [
+                    'relevant' => true,
+                    'understood' => true,
+                    'answer_type' => 'PAIN_SEVERITY',
+                    'normalized_value' => ((int) $score) . '/10',
+                    'confidence' => 0.93,
+                    'needs_clarification' => false,
+                    'clarification_reason' => null,
+                    'source' => $fuzzySource,
                 ];
             }
         }
@@ -231,7 +279,7 @@ final class NlpStep3DemoGeminiAnswerInterpreter
     private static function looksUnrelatedAnswer(string $low, string $awaiting): bool
     {
         unset($awaiting);
-        if (preg_match('/\b(sakit|masakit|pain|oras|adlaw|gahapon|kahapon|ligad|dugay|subong|kanina|ulo|tiyan|dughan|yes|no|oo|indi|wala)\b/u', $low)) {
+        if (preg_match('/\b(sakit|masakit|pain|oras|adlaw|gahapon|kahapon|kagapon|ligad|dugay|subong|kanina|ulo|olo|tiyan|dughan|mata|hilo|hilanat|suka|yes|no|oo|indi|wala|pito|lima)\b/u', $low)) {
             return false;
         }
         if (preg_match('/\b(basketball|football|soccer|blue|red|green|yellow|pink|mahilig|maglaro|hobby|movie|youtube)\b/u', $low)) {
@@ -261,7 +309,8 @@ final class NlpStep3DemoGeminiAnswerInterpreter
         string $questionText,
         string $questionId,
         string $expectedType,
-        array $context
+        array $context,
+        string $fuzzyCorrected = ''
     ): array {
         self::$lastError = '';
         $base = [
@@ -270,18 +319,55 @@ final class NlpStep3DemoGeminiAnswerInterpreter
             'status' => 'NOT_CALLED',
             'reason' => '',
             'interpretation' => null,
-            'primary_nlp' => 'LOW_CONFIDENCE',
+            'primary_nlp' => 'FAILED',
             'fallback' => 'none',
+            'fuzzy_status' => 'NONE',
         ];
 
-        // 1) Gemini when configured
+        $corrected = trim($fuzzyCorrected);
+        if ($corrected === '') {
+            $prep = NlpStep3DemoAnswerFuzzy::prepare($patientAnswer, $questionId);
+            $corrected = (string) ($prep['corrected'] ?? $patientAnswer);
+            $base['fuzzy_status'] = (string) ($prep['fuzzy_status'] ?? 'NONE');
+        }
+
+        // 0) Fuzzy-corrected text understood by existing extractors
+        if ($corrected !== '' && $corrected !== trim($patientAnswer)
+            && self::nlpUnderstandsAnswer($corrected, $questionId, $context)
+        ) {
+            $base['fallback'] = 'demo_fuzzy';
+            $base['fuzzy_status'] = 'SUCCESS';
+            $base['status'] = 'DEMO_FUZZY';
+            $base['reason'] = 'Primary NLP failed on raw text; fuzzy correction enabled existing NLP';
+            $base['interpretation'] = [
+                'relevant' => true,
+                'understood' => true,
+                'answer_type' => strtoupper($expectedType) !== '' ? strtoupper($expectedType) : 'OTHER_CLINICAL',
+                'normalized_value' => $corrected,
+                'confidence' => 0.88,
+                'needs_clarification' => false,
+                'clarification_reason' => null,
+                'source' => 'demo_fuzzy',
+            ];
+
+            return $base;
+        }
+
+        // 1) Gemini when configured — primary NLP already failed
         if (self::enabled()) {
             $base['called'] = true;
-            $base['reason'] = 'Existing NLP confidence below threshold for this follow-up answer';
+            $base['reason'] = 'CALLED — PRIMARY NLP INSUFFICIENT';
             $base['fallback'] = 'gemini';
 
             try {
-                $raw = self::complete(self::userPrompt($patientAnswer, $questionText, $questionId, $expectedType, $context));
+                $raw = self::complete(self::userPrompt(
+                    $patientAnswer,
+                    $questionText,
+                    $questionId,
+                    $expectedType,
+                    $context,
+                    $corrected
+                ));
                 $parsed = self::parseAndValidate($raw);
                 if ($parsed === null) {
                     $base['status'] = 'INVALID_JSON';
@@ -305,7 +391,6 @@ final class NlpStep3DemoGeminiAnswerInterpreter
                     $base['interpretation'] = $parsed;
                     self::$lastError = '';
 
-                    // Accept usable Gemini result (including clarification/unrelated holds).
                     if ($base['status'] !== 'INVALID_JSON') {
                         return $base;
                     }
@@ -318,36 +403,43 @@ final class NlpStep3DemoGeminiAnswerInterpreter
             }
         } else {
             $base['status'] = 'UNAVAILABLE';
-            $base['reason'] = 'Gemini fallback unavailable (no API key or disabled)';
+            $base['reason'] = 'PRIMARY NLP FAILED; Gemini unavailable (no API key or disabled)';
             self::$lastError = $base['reason'];
         }
 
-        // 2) Demo semantic lexicon bridge (keeps interview moving when Gemini is down)
+        // 2) Demo semantic lexicon on original + fuzzy-corrected forms
         $local = self::tryLocalSemanticInterpretation($patientAnswer, $questionId);
+        if ($local === null && $corrected !== '' && $corrected !== $patientAnswer) {
+            $local = self::tryLocalSemanticInterpretation($corrected, $questionId);
+            if (is_array($local)) {
+                $local['source'] = 'demo_fuzzy_lexicon';
+                $base['fuzzy_status'] = 'SUCCESS';
+            }
+        }
         if (is_array($local)) {
-            $base['fallback'] = 'demo_semantic_lexicon';
+            $base['fallback'] = str_contains((string) ($local['source'] ?? ''), 'fuzzy')
+                ? 'demo_fuzzy'
+                : 'demo_semantic_lexicon';
             $base['interpretation'] = $local;
             if (empty($local['relevant'])) {
                 $base['status'] = 'UNRELATED';
-                $base['reason'] = 'Existing NLP low confidence; semantic lexicon marked answer unrelated'
-                    . (!self::enabled() ? ' (Gemini unavailable)' : ' (after Gemini failure)');
+                $base['reason'] = 'Primary NLP failed; semantic/fuzzy lexicon marked answer unrelated';
             } elseif (!empty($local['needs_clarification'])) {
                 $base['status'] = 'NEEDS_CLARIFICATION';
-                $base['reason'] = 'Existing NLP low confidence; semantic lexicon needs clarification'
-                    . (!self::enabled() ? ' (Gemini unavailable)' : '');
+                $base['reason'] = 'Primary NLP failed; lexicon needs clarification';
             } else {
-                $base['status'] = 'DEMO_SEMANTIC_FALLBACK';
-                $base['reason'] = 'Existing NLP low confidence; '
+                $base['status'] = $base['fallback'] === 'demo_fuzzy' ? 'DEMO_FUZZY' : 'DEMO_SEMANTIC_FALLBACK';
+                $base['reason'] = 'Primary NLP failed; '
                     . (!self::enabled()
-                        ? 'Gemini unavailable — demo Hiligaynon semantic lexicon applied'
-                        : 'Gemini failed — demo Hiligaynon semantic lexicon applied');
+                        ? 'Gemini unavailable — demo fuzzy/semantic lexicon applied'
+                        : 'Gemini failed — demo fuzzy/semantic lexicon applied');
             }
 
             return $base;
         }
 
         if ($base['status'] === 'UNAVAILABLE') {
-            return $base;
+            $base['reason'] = 'PRIMARY NLP FAILED; Gemini unavailable; no fuzzy/lexicon match';
         }
 
         return $base;
@@ -459,7 +551,8 @@ final class NlpStep3DemoGeminiAnswerInterpreter
         string $questionText,
         string $questionId,
         string $expectedType,
-        array $context
+        array $context,
+        string $fuzzyCorrected = ''
     ): string {
         $facts = is_array($context['facts'] ?? null) ? $context['facts'] : [];
         $known = [];
@@ -479,17 +572,24 @@ final class NlpStep3DemoGeminiAnswerInterpreter
         }
 
         $schema = <<<'JSON'
-{"relevant":true,"understood":true,"answer_type":"ONSET_DURATION","normalized_value":"started earlier","confidence":0.9,"needs_clarification":false,"clarification_reason":null,"extracted_facts":{"location":"head","severity":"7/10","onset":"yesterday","character":"pulsating"}}
+{"relevant":true,"understood":true,"answer_type":"ONSET_DURATION","normalized_value":"yesterday","confidence":0.95,"needs_clarification":false,"clarification_reason":null,"extractions":[{"field":"onset","value":"yesterday"}]}
 JSON;
+
+        $fuzzyNote = trim($fuzzyCorrected) !== '' && trim($fuzzyCorrected) !== trim($patientAnswer)
+            ? "\nFUZZY SUGGESTION (optional hint only):\n" . trim($fuzzyCorrected) . "\n"
+            : '';
 
         return "CURRENT QUESTION:\n" . trim($questionText) . "\n\n"
             . "QUESTION TYPE:\n" . strtoupper($questionId) . "\n\n"
             . "EXPECTED INFORMATION:\n" . strtoupper($expectedType) . "\n\n"
             . "ACCUMULATED CLINICAL INFORMATION:\n" . ($known !== [] ? implode('; ', $known) : 'complaint in progress') . "\n\n"
-            . "PATIENT'S LATEST ANSWER:\n" . mb_substr(trim($patientAnswer), 0, 700) . "\n\n"
+            . "PATIENT'S LATEST ANSWER (may contain typos / informal spelling):\n"
+            . mb_substr(trim($patientAnswer), 0, 700) . "\n"
+            . $fuzzyNote . "\n"
+            . "Interpret Hiligaynon/English misspellings in context of the current question.\n"
             . "Return ONLY valid JSON matching this schema example:\n{$schema}\n"
             . "answer_type must be one of: " . implode(', ', self::ALLOWED_TYPES) . "\n"
-            . "If the answer contains multiple clinically supported facts, include them in extracted_facts.\n"
+            . "If multiple clinically supported facts appear, list them in extractions.\n"
             . "Do not invent exact durations, symptoms, diagnoses, or triage classes.\n"
             . "confidence must be a number from 0 to 1.";
     }
