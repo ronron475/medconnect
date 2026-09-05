@@ -25,7 +25,7 @@ $assetBase = ASSET_BASE;
     <header class="nlp-demo-header">
       <p class="nlp-trial-kicker">TRIAL ONLY · demo page · production chatbot untouched</p>
       <h1 class="nlp-demo-title">Registration Step 3 — NLP Demo</h1>
-      <p class="nlp-demo-sub">Adaptive chief-complaint interview trial on top of the existing Hiligaynon → English → triage NLP. Vague pain asks severity (0–10) before location. Final classes remain EMERGENCY / URGENT / NON-URGENT only.</p>
+      <p class="nlp-demo-sub">Adaptive chief-complaint interview trial on top of the existing Hiligaynon → English → triage NLP. Vague pain asks severity (1–10) before location. Incomplete information shows NEEDS FOLLOW-UP — never a premature NON-URGENT. Final classes remain EMERGENCY / URGENT / NON-URGENT only.</p>
     </header>
 
     <section class="nlp-trial-card" aria-labelledby="nlp-trial-title">
@@ -203,6 +203,6 @@ $assetBase = ASSET_BASE;
   </main>
 
   <script>window.APP_BASE = <?= json_encode($assetBase) ?>;</script>
-  <script src="<?= htmlspecialchars($assetBase) ?>/assets/js/nlp_step3_demo.js?v=3.4"></script>
+  <script src="<?= htmlspecialchars($assetBase) ?>/assets/js/nlp_step3_demo.js?v=3.5"></script>
 </body>
 </html>

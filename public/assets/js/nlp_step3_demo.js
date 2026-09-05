@@ -1826,16 +1826,25 @@
     }
 
     function renderTrial(trial) {
-      const triage = trial.triage_final || trial.triage_display || '';
+      const triage = trial.triage_final || '';
       const status = trial.assessment_status || '';
+      const clinicalStatus = trial.clinical_status || (status === 'IN_PROGRESS' ? 'NEEDS_FOLLOW_UP' : status);
       const domain = trial.domain_class || '';
       const health = trial.health_related ? 'YES' : 'NO';
       const summary = trial.complaint_summary || {};
       const q = trial.followup_question;
       const facts = trial.facts || {};
+      const symptoms = Array.isArray(trial.detected_symptoms) ? trial.detected_symptoms : [];
+      const conditions = Array.isArray(trial.possible_conditions) ? trial.possible_conditions : [];
+      const reasoning =
+        trial.clinical_reasoning ||
+        (trial.assessment && trial.assessment.triage && trial.assessment.triage.clinical_reasoning) ||
+        '';
+
+      const needsFollowUp = clinicalStatus === 'NEEDS_FOLLOW_UP' || status === 'IN_PROGRESS' || !!trial.followup_required;
 
       let triageHtml = badge('not determined yet', 'nlp-badge--muted');
-      if (status === 'IN_PROGRESS' || !triage) {
+      if (needsFollowUp || !triage) {
         triageHtml = badge('not determined yet', 'nlp-badge--muted');
       } else if (triage === 'EMERGENCY') {
         triageHtml = badge('EMERGENCY', 'nlp-badge--bad');
@@ -1845,15 +1854,39 @@
         triageHtml = badge('NON-URGENT', 'nlp-badge--ok');
       }
 
+      let clinicalStatusHtml = badge(clinicalStatus || '—', 'nlp-badge--muted');
+      if (needsFollowUp) {
+        clinicalStatusHtml = badge('NEEDS FOLLOW-UP', 'nlp-badge--warn');
+      } else if (status === 'COMPLETED' && triage) {
+        clinicalStatusHtml = badge('COMPLETED', 'nlp-badge--ok');
+      } else if (status === 'SKIPPED') {
+        clinicalStatusHtml = badge('SKIPPED', 'nlp-badge--muted');
+      }
+
       let domainCls = 'nlp-badge--muted';
       if (domain === 'HEALTH_RELATED') domainCls = 'nlp-badge--ok';
       if (domain === 'UNCLEAR') domainCls = 'nlp-badge--warn';
       if (domain === 'NON_HEALTH_RELATED') domainCls = 'nlp-badge--muted';
 
+      function pills(items) {
+        if (!items || !items.length) return '<span class="nlp-muted">None</span>';
+        return (
+          '<div class="nlp-trial-chips">' +
+          items
+            .map(function (item) {
+              const label = typeof item === 'string' ? item : item.label || item.name || JSON.stringify(item);
+              return '<span class="nlp-wv-chip">' + escapeHtml(String(label)) + '</span>';
+            })
+            .join('') +
+          '</div>'
+        );
+      }
+
       const scaleHtml =
         q && String(q.question_id || '').toUpperCase() === 'PAIN_SEVERITY'
-          ? '<div class="nlp-trial-scale" role="group" aria-label="Pain scale 0 to 10">' +
-            Array.from({ length: 11 }, function (_, n) {
+          ? '<div class="nlp-trial-scale" role="group" aria-label="Pain scale 1 to 10">' +
+            Array.from({ length: 10 }, function (_, i) {
+              const n = i + 1;
               return (
                 '<button type="button" class="nlp-trial-scale__btn" data-pain-score="' +
                 n +
@@ -1889,19 +1922,28 @@
         '<div><dt>Domain</dt><dd>' +
         badge(domain || '—', domainCls) +
         '</dd></div>' +
+        '<div><dt>Clinical status</dt><dd>' +
+        clinicalStatusHtml +
+        '</dd></div>' +
         '<div><dt>Information</dt><dd>' +
         escapeHtml(trial.information || '—') +
-        '</dd></div>' +
-        '<div><dt>Diagnosis</dt><dd>' +
-        escapeHtml(trial.diagnosis || 'NOT determined') +
         '</dd></div>' +
         '<div><dt>Final triage</dt><dd>' +
         triageHtml +
         '</dd></div>' +
-        '<div><dt>Status</dt><dd>' +
-        escapeHtml(status || '—') +
+        '<div><dt>Diagnosis</dt><dd>' +
+        escapeHtml(trial.diagnosis || 'NOT determined') +
         '</dd></div>' +
         '</div>' +
+        '<div class="nlp-trial-block"><h3>Detected symptoms</h3>' +
+        pills(symptoms.length ? symptoms : summary.complaint ? [summary.complaint] : []) +
+        '</div>' +
+        '<div class="nlp-trial-block"><h3>Possible conditions</h3>' +
+        pills(conditions) +
+        '</div>' +
+        '<div class="nlp-trial-block"><h3>Clinical reasoning</h3><p>' +
+        escapeHtml(reasoning || '—') +
+        '</p></div>' +
         '<div class="nlp-trial-block"><h3>Accumulated meaning</h3><ul>' +
         '<li>complaint = <strong>' +
         escapeHtml(summary.complaint || '—') +
