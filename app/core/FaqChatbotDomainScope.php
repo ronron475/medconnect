@@ -21,6 +21,7 @@ final class FaqChatbotDomainScope
     public const RESPONSE_OUT_OF_SCOPE = 'OUT_OF_SCOPE';
     public const RESPONSE_UNCLEAR = 'UNCLEAR';
     public const RESPONSE_NON_HEALTH = 'NON_HEALTH';
+    public const RESPONSE_NONSENSE = 'NONSENSE_OR_PRANK';
 
     /**
      * @return array{scope: string, stripped_text: string, confidence: float}
@@ -152,9 +153,36 @@ final class FaqChatbotDomainScope
     {
         $L = in_array($lang, ['en', 'fil', 'hil'], true) ? $lang : 'en';
         $copy = [
-            'en' => "I'm not sure I understood your message. Could you please rephrase it? I can help with health concerns, appointments, consultations, and City Health Office services.",
-            'fil' => 'Hindi ko naintindihan ang iyong mensahe. Pakiulit o i-rephrase po? Makakatulong ako sa health concerns, appointments, consultations, at serbisyo ng City Health Office.',
-            'hil' => 'Indi ko maintindihan ang imo mensahe. Palihog i-rephrase? Makabulig ako sa health concerns, appointments, consultations, kag serbisyo sang City Health Office.',
+            'en' => "I couldn't understand your answer. Please retype it or answer the question again.",
+            'fil' => 'Hindi ko naintindihan ang iyong sagot. Paki-type ulit o sagutin muli ang tanong.',
+            'hil' => 'Indi ko naintindihan ang imo sabat. Palihog i-type liwat ang imo ginabatyag ukon sabata ang pamangkot.',
+        ];
+        return '<p>' . htmlspecialchars($copy[$L], ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') . '</p>';
+    }
+
+    /**
+     * Neutral clarification when Gemini (or local heuristics) flag nonsense / prank / test input.
+     * Never accuse the patient of pranking.
+     */
+    public static function nonsenseClarificationHtml(string $lang = 'en'): string
+    {
+        $L = in_array($lang, ['en', 'fil', 'hil'], true) ? $lang : 'en';
+        $copy = [
+            'en' => "I couldn't understand your message yet. Please retype your concern or symptoms.",
+            'fil' => 'Hindi ko pa naintindihan ang iyong mensahe. Paki-type ulit ang iyong concern o sintomas.',
+            'hil' => 'Indi ko pa naintindihan ang imo mensahe. Palihog i-type liwat ang imo concern ukon sintomas.',
+        ];
+        return '<p>' . htmlspecialchars($copy[$L], ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') . '</p>';
+    }
+
+    /** Short greeting when Gemini secondary check classifies a missed greeting. */
+    public static function greetingFallbackHtml(string $lang = 'en'): string
+    {
+        $L = in_array($lang, ['en', 'fil', 'hil'], true) ? $lang : 'en';
+        $copy = [
+            'en' => 'Hello! How can I help with your health concern or City Health Office / medConnect services today?',
+            'fil' => 'Kumusta! Ano ang maitutulong ko sa health concern o serbisyo ng City Health Office / medConnect?',
+            'hil' => 'Kamusta! Ano ang matabangan ko sa imo health concern ukon serbisyo sang City Health Office / medConnect?',
         ];
         return '<p>' . htmlspecialchars($copy[$L], ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') . '</p>';
     }
@@ -217,11 +245,51 @@ final class FaqChatbotDomainScope
             $vowelRatio = $len > 0 ? ($vowelCount / $len) : 0;
             $hasRepeat = (bool) preg_match('/(.)\1{2,}/u', $w);
             $consonantRun = (bool) preg_match('/[bcdfghjklmnpqrstvwxyz]{5,}/i', $w);
-            if ($hasRepeat || $consonantRun || ($len >= 10 && $vowelRatio < 0.22)) {
+            if ($hasRepeat || $consonantRun || ($len >= 8 && $vowelRatio < 0.22) || ($len >= 10 && $vowelRatio < 0.28)) {
                 $suspicious++;
             }
         }
+        // Single short token that is almost all consonants (e.g. keyboard smash).
+        if (count($words) === 1) {
+            $w = $words[0];
+            $len = mb_strlen($w);
+            if ($len >= 6) {
+                $vowelCount = preg_match_all('/[aeiouàáéíóú]/iu', $w);
+                if (($vowelCount / $len) < 0.18) {
+                    return true;
+                }
+            }
+        }
         return $suspicious > 0;
+    }
+
+    /**
+     * Universal nonsense / prank / test-input heuristic (not an allowlist of examples).
+     * Misspellings of real clinical words should still return false when healthcare cues exist.
+     */
+    public static function isLikelyNonsenseOrPrank(string $text, string $nlpText = ''): bool
+    {
+        $raw = trim($text);
+        if ($raw === '') {
+            return true;
+        }
+        if (self::isHealthcareRelated($raw, $nlpText) || self::isAllowedOpening($raw)) {
+            return false;
+        }
+        if (self::looksUnclear($raw, $nlpText)) {
+            return true;
+        }
+        $hay = self::normalize($raw . ' ' . $nlpText);
+        if (preg_match('/\b(just\s+testing|test(\s+test)+|testing\s+lang|haha(\s+haha)+|lol(\s+lol)+|lololol+)\b/u', $hay)) {
+            return true;
+        }
+        if (preg_match('/^(ha(ha)+|he(he)+|lol+|lmao+|test+|asdf+|qwerty+|zxcv+|bla(bla)+)[\s!.]*$/u', $hay)) {
+            return true;
+        }
+        if (preg_match('/^(?:[0-9]{2,}\s*){2,}$/u', $hay) || preg_match('/^([0-9])\1{4,}$/u', preg_replace('/\s+/u', '', $hay) ?? '')) {
+            return true;
+        }
+        return false;
     }
 
     /**

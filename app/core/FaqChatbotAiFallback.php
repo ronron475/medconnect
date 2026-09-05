@@ -15,15 +15,21 @@ final class FaqChatbotAiFallback
     private const GEMINI_ENDPOINT = 'https://generativelanguage.googleapis.com/v1beta/models/%s:generateContent';
     private const GROQ_ENDPOINT = 'https://api.groq.com/openai/v1/chat/completions';
     private const MAX_USER_CHARS = 800;
-    private const MAX_OUTPUT_TOKENS = 120;
+    private const MAX_OUTPUT_TOKENS = 220;
     public const CLASSIFY_CONFIDENCE_THRESHOLD = 0.80;
 
     public const CLASS_HEALTH_RELATED = 'HEALTH_RELATED';
     public const CLASS_NON_HEALTH_RELATED = 'NON_HEALTH_RELATED';
     public const CLASS_UNCLEAR = 'UNCLEAR';
+    public const CLASS_NONSENSE_OR_PRANK = 'NONSENSE_OR_PRANK';
+    public const CLASS_UNKNOWN = 'UNKNOWN';
+    public const CLASS_GREETING_OPEN = 'GREETING';
+    public const CLASS_MEDICAL_SYMPTOM = 'MEDICAL_SYMPTOM';
+    public const CLASS_MEDICAL_FOLLOWUP = 'MEDICAL_FOLLOWUP_ANSWER';
+    public const CLASS_MEDCONNECT_SERVICE = 'MEDCONNECT_SERVICE';
 
-    /** @deprecated Use CLASS_HEALTH_RELATED */
-    public const CLASS_GREETING = 'UNCLEAR';
+    /** @deprecated Use CLASS_GREETING_OPEN */
+    public const CLASS_GREETING = 'GREETING';
     /** @deprecated Use CLASS_HEALTH_RELATED */
     public const CLASS_HEALTHCARE = 'HEALTH_RELATED';
     /** @deprecated Use CLASS_UNCLEAR */
@@ -454,7 +460,7 @@ final class FaqChatbotAiFallback
         }
 
         $class = '';
-        if (preg_match('/CLASSIFICATION\s*:\s*(HEALTH_RELATED|NON_HEALTH_RELATED|UNCLEAR|GREETING|HEALTHCARE|POSSIBLY_HEALTHCARE|NON_HEALTHCARE)\b/i', $text, $m)) {
+        if (preg_match('/CLASSIFICATION\s*:\s*(HEALTH_RELATED|NON_HEALTH_RELATED|UNCLEAR|UNKNOWN|NONSENSE_OR_PRANK|NONSENSE|GREETING|HEALTHCARE|POSSIBLY_HEALTHCARE|NON_HEALTHCARE|MEDICAL_SYMPTOM|MEDICAL_FOLLOWUP_ANSWER|MEDCONNECT_SERVICE)\b/i', $text, $m)) {
             $class = self::normalizeClassification($m[1]);
         }
 
@@ -499,10 +505,21 @@ final class FaqChatbotAiFallback
             $class = self::CLASS_UNCLEAR;
         }
         $parsed = self::normalizeParsed($class, '');
-        $parsed['is_healthcare_related'] = ($class === self::CLASS_HEALTH_RELATED);
+        $parsed['is_healthcare_related'] = in_array($class, [
+            self::CLASS_HEALTH_RELATED,
+            self::CLASS_MEDICAL_SYMPTOM,
+            self::CLASS_MEDICAL_FOLLOWUP,
+            self::CLASS_MEDCONNECT_SERVICE,
+        ], true);
         $parsed['detected_intent'] = trim((string) ($decoded['intent'] ?? ''));
         $parsed['language'] = trim((string) ($decoded['language'] ?? ''));
-        $parsed['normalized_meaning'] = trim((string) ($decoded['normalized_meaning'] ?? $decoded['normalizedMeaning'] ?? ''));
+        $meaning = trim((string) ($decoded['meaning'] ?? $decoded['normalized_meaning'] ?? $decoded['normalizedMeaning'] ?? ''));
+        $normalizedText = trim((string) ($decoded['normalized_text'] ?? $decoded['normalizedText'] ?? ''));
+        $parsed['normalized_meaning'] = $meaning !== '' ? $meaning : $normalizedText;
+        $parsed['meaning'] = $meaning;
+        $parsed['understood'] = $decoded['understood'] ?? null;
+        $entities = $decoded['clinical_entities'] ?? $decoded['clinicalEntities'] ?? null;
+        $parsed['clinical_entities'] = is_array($entities) ? $entities : [];
         $parsed['urgency'] = strtoupper(trim((string) ($decoded['urgency'] ?? 'NON_URGENT')));
         $parsed['model_confidence'] = isset($decoded['confidence']) ? (float) $decoded['confidence'] : null;
         return $parsed;
@@ -523,24 +540,34 @@ final class FaqChatbotAiFallback
         }
         $class = self::applyConfidenceGate($class, $confidence);
         $pack = self::mapClassificationToResponse($class, '', $lang);
-        foreach (['detected_intent', 'language', 'normalized_meaning', 'urgency'] as $key) {
-            if (array_key_exists($key, $parsed)) {
+        foreach (['detected_intent', 'language', 'normalized_meaning', 'urgency', 'meaning', 'clinical_entities', 'understood'] as $key) {
+            if (array_key_exists($key, $parsed) && !array_key_exists($key, $pack)) {
+                $pack[$key] = $parsed[$key];
+            } elseif (array_key_exists($key, $parsed) && in_array($key, ['normalized_meaning', 'meaning', 'clinical_entities', 'understood', 'language', 'urgency'], true)) {
                 $pack[$key] = $parsed[$key];
             }
         }
+        if (!empty($parsed['detected_intent']) && empty($pack['detected_intent'])) {
+            $pack['detected_intent'] = $parsed['detected_intent'];
+        }
         $pack['model_confidence'] = $confidence;
-        $pack['is_healthcare_related'] = ($pack['classification'] === self::CLASS_HEALTH_RELATED);
+        $pack['is_healthcare_related'] = in_array(
+            (string) ($pack['classification'] ?? ''),
+            [self::CLASS_HEALTH_RELATED, self::CLASS_MEDICAL_SYMPTOM, self::CLASS_MEDICAL_FOLLOWUP, self::CLASS_MEDCONNECT_SERVICE],
+            true
+        );
         return $pack;
     }
 
     public static function applyConfidenceGate(string $classification, ?float $confidence): string
     {
         $class = self::normalizeClassification($classification);
-        if ($class === self::CLASS_UNCLEAR || $class === '') {
-            return self::CLASS_UNCLEAR;
+        if ($class === self::CLASS_UNCLEAR || $class === self::CLASS_UNKNOWN || $class === '') {
+            return $class === self::CLASS_UNKNOWN ? self::CLASS_UNKNOWN : self::CLASS_UNCLEAR;
         }
         if ($confidence !== null && $confidence < self::CLASSIFY_CONFIDENCE_THRESHOLD) {
-            return self::CLASS_UNCLEAR;
+            // Do not force a medical/service guess when the model is unsure.
+            return self::CLASS_UNKNOWN;
         }
         return $class;
     }
@@ -602,21 +629,68 @@ final class FaqChatbotAiFallback
     private static function mapClassificationToResponse(string $classification, string $replyOrHtml, string $lang): array
     {
         $class = self::normalizeClassification($classification);
-        if ($class === self::CLASS_HEALTH_RELATED) {
+        if ($class === self::CLASS_HEALTH_RELATED
+            || $class === self::CLASS_MEDICAL_SYMPTOM
+            || $class === self::CLASS_MEDICAL_FOLLOWUP
+            || $class === self::CLASS_MEDCONNECT_SERVICE
+        ) {
             $html = class_exists('FaqChatbotDomainScope')
                 ? FaqChatbotDomainScope::unmatchedHealthcareHtml($lang)
                 : '';
+            $routeClass = self::CLASS_HEALTH_RELATED;
+            $intent = match ($class) {
+                self::CLASS_MEDICAL_FOLLOWUP => 'medical_followup_answer',
+                self::CLASS_MEDCONNECT_SERVICE => 'medconnect_service',
+                self::CLASS_MEDICAL_SYMPTOM => 'medical_symptom',
+                default => 'healthcare',
+            };
             return [
                 'html'                  => $html,
-                'classification'        => self::CLASS_HEALTH_RELATED,
+                'classification'        => $routeClass,
+                'fine_classification'   => $class === self::CLASS_HEALTH_RELATED ? self::CLASS_MEDICAL_SYMPTOM : $class,
                 'response_type'         => FaqChatbotDomainScope::RESPONSE_MEDICAL_GEMINI,
                 'is_healthcare_related' => true,
+                'detected_intent'       => $intent,
+            ];
+        }
+        if ($class === self::CLASS_GREETING_OPEN) {
+            $html = class_exists('FaqChatbotDomainScope')
+                ? FaqChatbotDomainScope::greetingFallbackHtml($lang)
+                : '<p>Hello! How can I help you today?</p>';
+            return [
+                'html'                  => $html,
+                'classification'        => self::CLASS_GREETING_OPEN,
+                'fine_classification'   => self::CLASS_GREETING_OPEN,
+                'response_type'         => FaqChatbotDomainScope::RESPONSE_GREETING,
+                'is_healthcare_related' => false,
+                'detected_intent'       => 'greeting',
             ];
         }
         if ($class === self::CLASS_NON_HEALTH_RELATED) {
             return self::outOfScopePack($lang);
         }
-        return self::unclearPack($lang);
+        if ($class === self::CLASS_NONSENSE_OR_PRANK) {
+            $html = class_exists('FaqChatbotDomainScope')
+                ? FaqChatbotDomainScope::nonsenseClarificationHtml($lang)
+                : '<p>I couldn\'t understand your message yet. Please retype your concern or symptoms.</p>';
+            return [
+                'html'                  => $html,
+                'classification'        => self::CLASS_NONSENSE_OR_PRANK,
+                'fine_classification'   => self::CLASS_NONSENSE_OR_PRANK,
+                'response_type'         => FaqChatbotDomainScope::RESPONSE_NONSENSE,
+                'is_healthcare_related' => false,
+                'detected_intent'       => 'nonsense_or_prank',
+                'urgency'               => 'NON_URGENT',
+            ];
+        }
+        // UNKNOWN / UNCLEAR
+        $pack = self::unclearPack($lang);
+        $pack['fine_classification'] = $class === self::CLASS_UNKNOWN ? self::CLASS_UNKNOWN : self::CLASS_UNCLEAR;
+        if ($class === self::CLASS_UNKNOWN) {
+            $pack['classification'] = self::CLASS_UNKNOWN;
+            $pack['detected_intent'] = 'unknown';
+        }
+        return $pack;
     }
 
     private static function normalizeClassification(string $value): string
@@ -625,8 +699,14 @@ final class FaqChatbotAiFallback
         $v = str_replace([' ', '-'], '_', $v);
         return match ($v) {
             self::CLASS_HEALTH_RELATED, 'HEALTHCARE', 'MEDICAL', 'HEALTH' => self::CLASS_HEALTH_RELATED,
+            self::CLASS_MEDICAL_SYMPTOM, 'SYMPTOM', 'SYMPTOMS' => self::CLASS_MEDICAL_SYMPTOM,
+            self::CLASS_MEDICAL_FOLLOWUP, 'FOLLOWUP', 'FOLLOW_UP', 'FOLLOW_UP_ANSWER', 'ANSWER' => self::CLASS_MEDICAL_FOLLOWUP,
+            self::CLASS_MEDCONNECT_SERVICE, 'SERVICE', 'SERVICES', 'APPOINTMENT', 'SUPPORT' => self::CLASS_MEDCONNECT_SERVICE,
             self::CLASS_NON_HEALTH_RELATED, 'NON_HEALTHCARE', 'OUT_OF_SCOPE', 'NONHEALTHCARE', 'UNRELATED' => self::CLASS_NON_HEALTH_RELATED,
-            self::CLASS_UNCLEAR, 'POSSIBLY_HEALTHCARE', 'POSSIBLY', 'AMBIGUOUS', 'CLARIFY', 'GREETING' => self::CLASS_UNCLEAR,
+            self::CLASS_NONSENSE_OR_PRANK, 'NONSENSE', 'PRANK', 'GIBBERISH', 'TEST_INPUT', 'KEYBOARD_SMASH' => self::CLASS_NONSENSE_OR_PRANK,
+            self::CLASS_GREETING_OPEN, 'HI', 'HELLO' => self::CLASS_GREETING_OPEN,
+            self::CLASS_UNKNOWN => self::CLASS_UNKNOWN,
+            self::CLASS_UNCLEAR, 'POSSIBLY_HEALTHCARE', 'POSSIBLY', 'AMBIGUOUS', 'CLARIFY' => self::CLASS_UNCLEAR,
             default => $v === '' ? self::CLASS_UNCLEAR : self::CLASS_UNCLEAR,
         };
     }
@@ -1046,34 +1126,85 @@ final class FaqChatbotAiFallback
             'hil' => 'Hiligaynon/Ilonggo',
             default => 'English',
         };
-        return 'Classify this single user message. Do not write a chatbot reply. Preferred UI language: '
-            . $langName . ".\nUser message:\n" . $userText;
+        $parts = [];
+        $parts[] = 'Classify this single user message as a SECONDARY comprehension check. Do not write a chatbot reply. Do not diagnose or prescribe.';
+        $parts[] = 'Preferred UI language: ' . $langName . '.';
+
+        $currentQuestion = trim((string) ($context['current_question'] ?? $context['pending_prompt'] ?? ''));
+        if ($currentQuestion !== '') {
+            $parts[] = "CURRENT CHATBOT QUESTION:\n" . mb_substr($currentQuestion, 0, 400);
+        }
+        $expected = trim((string) ($context['expected_answer_type'] ?? ''));
+        if ($expected !== '') {
+            $parts[] = 'Expected answer type: ' . mb_substr($expected, 0, 120);
+        }
+        $medical = trim((string) ($context['accumulated_medical'] ?? ''));
+        if ($medical !== '') {
+            $parts[] = "Accumulated medical information so far:\n" . mb_substr($medical, 0, 400);
+        }
+        $prev = trim((string) ($context['previous_relevant'] ?? ''));
+        if ($prev === '') {
+            $snippets = [];
+            foreach (array_slice((array) ($context['turns'] ?? []), -4) as $turn) {
+                if (!is_array($turn)) {
+                    continue;
+                }
+                $role = (string) ($turn['role'] ?? '');
+                $t = trim(strip_tags((string) ($turn['text'] ?? '')));
+                if ($t === '') {
+                    continue;
+                }
+                $label = in_array($role, ['bot', 'assistant', 'model'], true) ? 'BOT' : 'PATIENT';
+                $snippets[] = $label . ': ' . mb_substr($t, 0, 180);
+            }
+            if ($snippets !== []) {
+                $prev = implode("\n", $snippets);
+            }
+        }
+        if ($prev !== '') {
+            $parts[] = "Previous relevant conversation:\n" . mb_substr($prev, 0, 700);
+        }
+        $parts[] = "CURRENT PATIENT MESSAGE:\n" . $userText;
+        return implode("\n\n", $parts);
     }
 
     private static function systemPrompt(): string
     {
         return <<<'PROMPT'
-You are a domain classifier for the medConnect Assistant used by a City Health Office.
+You are a SECONDARY comprehension classifier for the medConnect Assistant (City Health Office).
 
-Your only job is to classify the CURRENT user message. Do not write a patient-facing reply. Do not diagnose.
+Primary NLP already failed or had low confidence. Your job is to decide what the patient message means.
+Do NOT write a patient-facing reply. Do NOT diagnose. Do NOT prescribe. Do NOT assign a final triage level.
 
-Understand English, Filipino/Tagalog, Hiligaynon/Ilonggo, Taglish, mixed languages, slang, and common misspellings of real words.
+Understand English, Filipino/Tagalog, Hiligaynon/Ilonggo, Taglish, mixed languages, slang, and common misspellings.
 
 Allowed classifications:
-- HEALTH_RELATED: a real health or medConnect/City Health Office request. This includes symptoms, diseases, medicines, vaccination, maternal/child health, appointments, consultation, BHW services, medical records, and other existing chatbot health/service intents. Examples: "I have a fever", "my stomach hurts", "diarrhea since yesterday", "masakit akon tiyan", "gakirot akon ulo", "may hilanat ko", "what services does the city health office offer".
-- NON_HEALTH_RELATED: conversation that is not a health or City Health Office request, such as jokes, laughing, casual chat, sports, weather, trivia, coding, or identity questions with no health meaning. Examples: "hello", "hahhahahaaa buli", "tell me a joke".
-- UNCLEAR: random characters, keyboard smash, gibberish, incomplete nonsense, or text you cannot reasonably interpret as a real health or service request. Examples: "sakitgbgjgbvd", "asdfghjkl", "qwerty123", "hahhahahaaa".
+- MEDICAL_SYMPTOM: a real symptom/illness complaint (including informal wording and reasonable misspellings). Examples: "masakit akon ulo", "masakit akon olo", "I have a fever".
+- MEDICAL_FOLLOWUP_ANSWER: answering the CURRENT CHATBOT QUESTION (location, onset, severity, etc.), including misspellings that map to a reasonable clinical answer. Example: question "Diin ang masakit sa imo?" + patient "olo" → head (ulo). Example: question about onset + "kagapong" → yesterday.
+- MEDCONNECT_SERVICE: appointments, video consult, records, login/account, BHW, City Health Office services. Example: "How do I book an appointment?"
+- GREETING: hello/hi/good morning style openings with no other content.
+- NONSENSE_OR_PRANK: keyboard smash, gibberish, meaningless filler, joking/test spam with no recoverable meaning. Examples of STYLE (not an exhaustive list): random letter strings, "asdfgh", repeated "haha"/"lol"/"test", digit spam.
+- UNKNOWN: potentially meaningful text you cannot reliably interpret — do not guess.
+- HEALTH_RELATED: legacy alias for MEDICAL_SYMPTOM or MEDCONNECT_SERVICE when you cannot split them.
+- NON_HEALTH_RELATED: real non-health chat (sports, weather, coding) that is NOT gibberish.
+- UNCLEAR: legacy alias for UNKNOWN when unsure.
 
 Critical rules:
-- Do NOT classify a message as HEALTH_RELATED only because the existing chatbot did not recognize it.
-- Do NOT treat gibberish as a medical concern just because it contains letters that look like "sakit", "ulo", "fever", or other medical roots without forming a real word or phrase.
-- Laughing, teasing, or random filler without a described symptom is NON_HEALTH_RELATED or UNCLEAR, never HEALTH_RELATED.
-- If you are not sure, use UNCLEAR and a lower confidence.
+- MISSPELLING ≠ NONSENSE. If a reasonable intended meaning exists in context, classify that meaning (medical / follow-up / service / greeting).
+- Never treat gibberish as MEDICAL_* or MEDCONNECT_SERVICE just because letters resemble "sakit", "ulo", "fever", etc.
+- Laughing / "test lang" / keyboard smash without a real concern → NONSENSE_OR_PRANK (not MEDCONNECT_SERVICE, not MEDICAL_*).
+- If unsure between nonsense and meaning, prefer UNKNOWN with lower confidence — do not force a guess.
+- When CURRENT CHATBOT QUESTION is present, prefer MEDICAL_FOLLOWUP_ANSWER for short answers that plausibly answer it.
 
-Return ONLY this JSON object, no markdown, no extra keys, no reply text:
-{"classification":"HEALTH_RELATED","confidence":0.92}
+Return ONLY this JSON object (no markdown, no extra keys, no reply text):
+{"understood":true,"confidence":0.95,"classification":"MEDICAL_SYMPTOM","normalized_text":"masakit akon ulo","meaning":"head pain","clinical_entities":{"symptom":"headache","body_location":"head"}}
 
-classification must be one of: HEALTH_RELATED, NON_HEALTH_RELATED, UNCLEAR
+For nonsense:
+{"understood":false,"confidence":0.97,"classification":"NONSENSE_OR_PRANK","normalized_text":null,"meaning":null,"clinical_entities":{}}
+
+For unknown:
+{"understood":false,"confidence":0.60,"classification":"UNKNOWN","normalized_text":null,"meaning":null,"clinical_entities":{}}
+
 confidence must be a number from 0.0 to 1.0
 PROMPT;
     }
