@@ -1601,6 +1601,30 @@
   color: #334155;
 }
 
+.nlp-trial-scale {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 10px;
+}
+
+.nlp-trial-scale__btn {
+  min-width: 2.1rem;
+  height: 2.1rem;
+  border: 1px solid #99f6e4;
+  border-radius: 8px;
+  background: #fff;
+  color: #0f766e;
+  font: inherit;
+  font-size: 0.85rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.nlp-trial-scale__btn:hover {
+  background: #ccfbf1;
+}
+
 .nlp-legacy-details {
   margin-top: 8px;
   border: 1px solid #e2e8f0;
