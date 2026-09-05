@@ -1595,10 +1595,9 @@
   color: #0f766e;
 }
 
-.nlp-trial-followup__helper {
-  margin: 6px 0 0;
-  font-size: 0.85rem;
-  color: #334155;
+.nlp-trial-followup--done {
+  background: #eff6ff;
+  border-color: #93c5fd;
 }
 
 .nlp-trial-scale {

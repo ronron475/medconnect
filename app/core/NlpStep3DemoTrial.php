@@ -443,12 +443,40 @@ final class NlpStep3DemoTrial
             $duration = $onset;
         }
 
+        $character = trim((string) ($facts['pain_qualifier'] ?? ''));
+        $associated = [];
+        $hay = mb_strtolower($transcript);
+        $assocMap = [
+            'vomiting' => '/\b(suka|nagasuka|ginasuka|vomit|vomiting|nahilo)\b/u',
+            'fever' => '/\b(hilanat|ginahilanat|lagnat|fever)\b/u',
+            'diarrhea' => '/\b(diarrhea|kalibang|libang|tae)\b/u',
+            'dizziness' => '/\b(dizzy|malipong|nalipong|nahihilo)\b/u',
+            'breathing difficulty' => '/\b(budlay|ginhawa|breath|hinga|dyspnea)\b/u',
+            'bleeding' => '/\b(dugo|bleeding|nagdugo)\b/u',
+        ];
+        foreach ($assocMap as $label => $pattern) {
+            if (preg_match($pattern, $hay)) {
+                $associated[] = $label;
+            }
+        }
+        if (($facts['abdominal_associated'] ?? null) === true && $associated === []) {
+            $associated[] = 'abdominal associated symptoms';
+        }
+        if (($facts['has_other_symptoms'] ?? null) === true && $associated === []) {
+            $associated[] = 'other symptoms present';
+        }
+        if (($facts['denied_associated'] ?? false) === true) {
+            $associated = ['none reported'];
+        }
+
         return [
             'complaint' => $hasPain ? 'pain' : '',
             'location' => $locations !== [] ? implode(', ', $locations) : '',
             'pain_severity' => $score !== null ? ((int) $score) . '/10' : '',
             'onset' => $onset,
             'duration' => $duration,
+            'character' => $character,
+            'associated_symptoms' => $associated !== [] ? implode(', ', $associated) : '',
         ];
     }
 
@@ -488,6 +516,8 @@ final class NlpStep3DemoTrial
                 'pain_severity' => '',
                 'onset' => '',
                 'duration' => '',
+                'character' => '',
+                'associated_symptoms' => '',
             ],
             'detected_symptoms' => [],
             'english_translation' => '',

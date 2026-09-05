@@ -1,72 +1,46 @@
 <?php
 require __DIR__ . '/nlp_cli_bootstrap.php';
 
-function line(string $label, mixed $value): void
+function ok(bool $cond, string $label, string $detail = ''): void
 {
-    echo $label . ': ' . (is_string($value) || is_numeric($value) || is_bool($value)
-        ? (is_bool($value) ? ($value ? 'YES' : 'NO') : $value)
-        : json_encode($value, JSON_UNESCAPED_UNICODE)) . "\n";
+    echo ($cond ? 'PASS  ' : 'FAIL  ') . $label . ($detail !== '' ? " — {$detail}" : '') . "\n";
 }
 
-function qid(array $t): string
-{
-    return (string) ($t['followup_question']['question_id'] ?? '');
-}
+echo "=== Demo clinical interview tests ===\n";
 
-function qtext(array $t): string
-{
-    return (string) ($t['followup_question']['text'] ?? '');
-}
-
-echo "==== TEST 1 sakit ====\n";
 $t1 = NlpStep3DemoTrial::assess('sakit');
-line('health', !empty($t1['health_related']));
-line('info', $t1['information']);
-line('triage', $t1['triage_final'] ?? 'null');
-line('summary', $t1['complaint_summary']);
-line('qid', qid($t1));
-line('q', qtext($t1));
-line('helper', $t1['followup_question']['helper_text'] ?? '');
+ok(($t1['followup_question']['question_id'] ?? '') === 'PAIN_SEVERITY', 'T1 severity first', (string) ($t1['followup_question']['question_id'] ?? ''));
+ok(($t1['triage_final'] ?? null) === null, 'T1 no triage yet');
 
-echo "\n==== TEST 2 sakit -> 7 ====\n";
-$c1 = NlpStep3DemoTrial::assess('sakit');
-$c2 = NlpStep3DemoTrial::assess('7', $c1['interview_context'] ?? []);
-line('severity', $c2['complaint_summary']['pain_severity'] ?? '');
-line('qid', qid($c2));
-line('q', qtext($c2));
+$t2a = NlpStep3DemoTrial::assess('sakit');
+$t2 = NlpStep3DemoTrial::assess('7', $t2a['interview_context'] ?? []);
+ok(($t2['complaint_summary']['pain_severity'] ?? '') === '7/10', 'T2 severity stored', (string) ($t2['complaint_summary']['pain_severity'] ?? ''));
+ok(($t2['followup_question']['question_id'] ?? '') === 'PAIN_LOCATION', 'T2 asks location', (string) ($t2['followup_question']['question_id'] ?? ''));
 
-echo "\n==== TEST 3 sakit -> 7 -> tiyan ====\n";
-$c3 = NlpStep3DemoTrial::assess('tiyan', $c2['interview_context'] ?? []);
-line('summary', $c3['complaint_summary']);
-line('qid', qid($c3));
-line('q', qtext($c3));
+$t3 = NlpStep3DemoTrial::assess('tiyan', $t2['interview_context'] ?? []);
+$t3b = NlpStep3DemoTrial::assess('gahapon', $t3['interview_context'] ?? []);
+ok(($t3b['complaint_summary']['location'] ?? '') === 'abdomen', 'T3 location', (string) ($t3b['complaint_summary']['location'] ?? ''));
+ok(str_contains((string) ($t3b['complaint_summary']['duration'] ?? ''), 'yesterday'), 'T3 duration', (string) ($t3b['complaint_summary']['duration'] ?? ''));
+ok(($t3b['followup_question']['question_id'] ?? '') !== 'PAIN_SEVERITY', 'T3 not re-asking severity');
+ok(($t3b['followup_question']['question_id'] ?? '') !== 'PAIN_LOCATION', 'T3 not re-asking location');
+ok(($t3b['followup_question']['question_id'] ?? '') !== 'ONSET', 'T3 not re-asking onset');
 
-echo "\n==== TEST 4 sakit akon tiyan ====\n";
-$t4 = NlpStep3DemoTrial::assess('sakit akon tiyan');
-line('summary', $t4['complaint_summary']);
-line('qid', qid($t4));
-line('asks_location', qid($t4) === 'PAIN_LOCATION' ? 'YES (bad)' : 'NO (good)');
+$t4 = NlpStep3DemoTrial::assess('sakit akon tiyan 7/10 halin gahapon');
+ok(($t4['complaint_summary']['location'] ?? '') === 'abdomen', 'T4 extracted location');
+ok(($t4['complaint_summary']['pain_severity'] ?? '') === '7/10', 'T4 extracted severity');
+ok(str_contains((string) ($t4['complaint_summary']['duration'] ?? ''), 'yesterday'), 'T4 extracted duration');
+ok(!in_array(($t4['followup_question']['question_id'] ?? ''), ['PAIN_SEVERITY', 'PAIN_LOCATION', 'ONSET'], true), 'T4 skips known questions', (string) ($t4['followup_question']['question_id'] ?? ''));
 
-echo "\n==== TEST 5 sakit akon tiyan 7/10 ====\n";
-$t5 = NlpStep3DemoTrial::assess('sakit akon tiyan 7/10');
-line('summary', $t5['complaint_summary']);
-line('qid', qid($t5));
-line('asks_sev_or_loc', in_array(qid($t5), ['PAIN_SEVERITY', 'PAIN_LOCATION'], true) ? 'YES (bad)' : 'NO (good)');
+$t5 = NlpStep3DemoTrial::assess('Masakit gid akon dughan kag budlay magginhawa.');
+ok(($t5['assessment_status'] ?? '') === 'COMPLETED', 'T5 completed');
+ok(($t5['triage_final'] ?? '') === 'EMERGENCY', 'T5 emergency', (string) ($t5['triage_final'] ?? ''));
 
-echo "\n==== TEST 6 serious ====\n";
-$t6 = NlpStep3DemoTrial::assess('Masakit gid akon dughan kag budlay magginhawa.');
-line('status', $t6['assessment_status']);
-line('triage', $t6['triage_final'] ?? 'null');
-line('qid', qid($t6) !== '' ? qid($t6) : '(none)');
+$t6 = NlpStep3DemoTrial::assess('sakitgbgjgbvd');
+ok(($t6['domain_class'] ?? '') === 'UNCLEAR', 'T6 unclear', (string) ($t6['domain_class'] ?? ''));
 
-echo "\n==== TEST 7 gibberish ====\n";
-$t7 = NlpStep3DemoTrial::assess('sakitgbgjgbvd');
-line('domain', $t7['domain_class']);
-line('health', !empty($t7['health_related']));
-line('msg', $t7['patient_message']);
+$t7 = NlpStep3DemoTrial::assess('hello');
+ok(($t7['domain_class'] ?? '') === 'NON_HEALTH_RELATED', 'T7 non-health', (string) ($t7['domain_class'] ?? ''));
 
-echo "\n==== TEST 8 hello ====\n";
-$t8 = NlpStep3DemoTrial::assess('hello');
-line('domain', $t8['domain_class']);
-line('health', !empty($t8['health_related']));
-line('msg', $t8['patient_message']);
+$t8 = NlpStep3DemoTrial::assess('nagasuka ko', $t3b['interview_context'] ?? []);
+ok(($t8['assessment_status'] ?? '') === 'COMPLETED', 'T8 completes after enough info', (string) ($t8['assessment_status'] ?? ''));
+ok(in_array(($t8['triage_final'] ?? ''), ['EMERGENCY', 'URGENT', 'NON-URGENT'], true), 'T8 final class only 3', (string) ($t8['triage_final'] ?? ''));
