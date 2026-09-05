@@ -1798,10 +1798,37 @@
     const trialFeedback = document.getElementById('nlp-trial-feedback');
     const trialResults = document.getElementById('nlp-trial-results');
     const trialMeta = document.getElementById('nlp-trial-meta');
+    const trialStartField = document.getElementById('nlp-trial-start-field');
     const trialApi = base + '/app/api/ai/nlp_step3_demo_interview.php';
     let interviewContext = null;
+    let conversationLog = [];
+    let awaitingQuestionId = '';
+    let busy = false;
 
     if (!trialForm || !trialInput || !trialBtn || !trialResults) return;
+
+    const WORD_TO_SCORE = {
+      one: 1,
+      two: 2,
+      three: 3,
+      four: 4,
+      five: 5,
+      six: 6,
+      seven: 7,
+      eight: 8,
+      nine: 9,
+      ten: 10,
+      isa: 1,
+      duha: 2,
+      tatlo: 3,
+      apat: 4,
+      lima: 5,
+      anom: 6,
+      pito: 7,
+      walo: 8,
+      siyam: 9,
+      napulo: 10,
+    };
 
     function showTrialFeedback(message, type) {
       if (!trialFeedback) return;
@@ -1821,8 +1848,94 @@
       trialMeta.textContent = turns + ' turn(s) · ' + status;
     }
 
+    function setStartFormMode(inFollowUp) {
+      if (trialStartField) {
+        trialStartField.hidden = !!inFollowUp;
+      }
+      trialBtn.hidden = !!inFollowUp;
+      if (trialInput) {
+        trialInput.disabled = !!inFollowUp;
+      }
+    }
+
     function badge(label, cls) {
       return '<span class="nlp-badge ' + cls + '">' + escapeHtml(label) + '</span>';
+    }
+
+    function parsePainScore(raw) {
+      const text = String(raw || '').trim().toLowerCase();
+      if (!text) return null;
+      let m = text.match(/^\s*(10|[1-9])\s*(?:\/\s*10|sa\s*10|over\s*10|out\s*of\s*10)?\s*$/i);
+      if (m) return parseInt(m[1], 10);
+      m = text.match(/\b(10|[1-9])\s*(?:\/\s*10|sa\s*10|over\s*10|out\s*of\s*10)\b/i);
+      if (m) return parseInt(m[1], 10);
+      m = text.match(
+        /\b(one|two|three|four|five|six|seven|eight|nine|ten|isa|duha|tatlo|apat|lima|anom|pito|walo|siyam|napulo)\b(?:\s+(?:out\s+of|sa)\s+(?:ten|10|napulo))?/i
+      );
+      if (m && WORD_TO_SCORE[m[1].toLowerCase()] != null) {
+        return WORD_TO_SCORE[m[1].toLowerCase()];
+      }
+      return null;
+    }
+
+    function validateFollowUpAnswer(raw, questionId) {
+      const qid = String(questionId || '').toUpperCase();
+      if (qid !== 'PAIN_SEVERITY') {
+        return { ok: true, value: String(raw || '').trim() };
+      }
+      const score = parsePainScore(raw);
+      if (score == null || score < 1 || score > 10) {
+        return { ok: false, error: 'Please enter a pain level from 1–10.' };
+      }
+      return { ok: true, value: String(score) };
+    }
+
+    function answerPlaceholder(qid) {
+      const id = String(qid || '').toUpperCase();
+      if (id === 'PAIN_SEVERITY') return 'Pain level (1–10), e.g. 7 or 7/10';
+      if (id === 'PAIN_LOCATION') return 'Where does it hurt? e.g. tiyan, ulo, dughan';
+      if (id === 'ONSET' || id === 'DURATION') return 'When did the pain start? e.g. gahapon';
+      return 'Type your answer…';
+    }
+
+    function pushLog(role, text) {
+      const t = String(text || '').trim();
+      if (!t) return;
+      conversationLog.push({ role: role, text: t });
+    }
+
+    function renderConversation() {
+      if (!conversationLog.length) return '';
+      return (
+        '<div class="nlp-trial-block nlp-trial-conversation"><h3>Conversation</h3><ul class="nlp-trial-chat">' +
+        conversationLog
+          .map(function (row) {
+            const cls = row.role === 'user' ? 'nlp-trial-chat__user' : 'nlp-trial-chat__system';
+            const who = row.role === 'user' ? 'User' : 'System';
+            return (
+              '<li class="' +
+              cls +
+              '"><span class="nlp-trial-chat__who">' +
+              who +
+              '</span><p>' +
+              escapeHtml(row.text) +
+              '</p></li>'
+            );
+          })
+          .join('') +
+        '</ul></div>'
+      );
+    }
+
+    function focusAnswerInput() {
+      const el = document.getElementById('nlp-trial-answer');
+      if (!el) return;
+      el.focus();
+      try {
+        el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      } catch (e) {
+        /* ignore */
+      }
     }
 
     function renderTrial(trial) {
@@ -1833,7 +1946,6 @@
       const health = trial.health_related ? 'YES' : 'NO';
       const summary = trial.complaint_summary || {};
       const q = trial.followup_question;
-      const facts = trial.facts || {};
       const symptoms = Array.isArray(trial.detected_symptoms) ? trial.detected_symptoms : [];
       const conditions = Array.isArray(trial.possible_conditions) ? trial.possible_conditions : [];
       const reasoning =
@@ -1841,7 +1953,10 @@
         (trial.assessment && trial.assessment.triage && trial.assessment.triage.clinical_reasoning) ||
         '';
 
-      const needsFollowUp = clinicalStatus === 'NEEDS_FOLLOW_UP' || status === 'IN_PROGRESS' || !!trial.followup_required;
+      const needsFollowUp =
+        !!(q && (clinicalStatus === 'NEEDS_FOLLOW_UP' || status === 'IN_PROGRESS' || trial.followup_required));
+      awaitingQuestionId = needsFollowUp ? String(q.question_id || '') : '';
+      setStartFormMode(needsFollowUp);
 
       let triageHtml = badge('not determined yet', 'nlp-badge--muted');
       if (needsFollowUp || !triage) {
@@ -1882,32 +1997,62 @@
         );
       }
 
-      const scaleHtml =
-        q && String(q.question_id || '').toUpperCase() === 'PAIN_SEVERITY'
-          ? '<div class="nlp-trial-scale" role="group" aria-label="Pain scale 1 to 10">' +
-            Array.from({ length: 10 }, function (_, i) {
-              const n = i + 1;
-              return (
-                '<button type="button" class="nlp-trial-scale__btn" data-pain-score="' +
-                n +
-                '">' +
-                n +
-                '</button>'
-              );
-            }).join('') +
-            '</div>'
-          : '';
+      const qid = q ? String(q.question_id || '').toUpperCase() : '';
+      const isSeverity = qid === 'PAIN_SEVERITY';
+      const scaleHtml = isSeverity
+        ? '<div class="nlp-trial-scale" role="group" aria-label="Pain scale 1 to 10">' +
+          Array.from({ length: 10 }, function (_, i) {
+            const n = i + 1;
+            return (
+              '<button type="button" class="nlp-trial-scale__btn" data-pain-score="' +
+              n +
+              '">' +
+              n +
+              '</button>'
+            );
+          }).join('') +
+          '</div>'
+        : '';
+      const answerHtml = needsFollowUp
+        ? '<form id="nlp-trial-answer-form" class="nlp-trial-answer-form" novalidate>' +
+          '<label class="nlp-label" for="nlp-trial-answer">' +
+          (isSeverity ? 'Your pain level (1–10)' : 'Your answer') +
+          '</label>' +
+          '<div class="nlp-trial-answer-row">' +
+          '<input id="nlp-trial-answer" class="nlp-input nlp-trial-answer-input" type="text" inputmode="' +
+          (isSeverity ? 'numeric' : 'text') +
+          '" autocomplete="off" maxlength="500" placeholder="' +
+          escapeHtml(answerPlaceholder(qid)) +
+          '"' +
+          (isSeverity ? ' aria-describedby="nlp-trial-answer-hint"' : '') +
+          ' />' +
+          '<button type="submit" class="nlp-btn-validate" id="nlp-trial-answer-submit">Submit Answer</button>' +
+          '</div>' +
+          (isSeverity
+            ? '<p id="nlp-trial-answer-hint" class="nlp-trial-followup__helper">Enter 1–10, or tap a number above. Also accepts 7/10, seven, 7 sa 10.</p>'
+            : '') +
+          '<p class="nlp-trial-answer-error" id="nlp-trial-answer-error" hidden role="alert"></p>' +
+          '</form>'
+        : '';
 
       const followHtml = q
-        ? '<div class="nlp-trial-followup"><strong>Next question</strong><p>' +
+        ? '<div class="nlp-trial-followup nlp-trial-followup--interactive" id="nlp-trial-next-question">' +
+          '<strong>Next question</strong>' +
+          '<p class="nlp-trial-followup__q">' +
           escapeHtml(q.text || trial.patient_message || '') +
           '</p>' +
           (q.helper_text
             ? '<p class="nlp-trial-followup__helper">' + escapeHtml(q.helper_text) + '</p>'
             : '') +
           scaleHtml +
+          answerHtml +
           '<p class="nlp-trial-followup__meta">' +
-          escapeHtml((q.question_id || '') + (q.language ? ' · ' + q.language : '') + (q.source ? ' · ' + q.source : '') + (q.demo_order ? ' · demo_order' : '')) +
+          escapeHtml(
+            (q.question_id || '') +
+              (q.language ? ' · ' + q.language : '') +
+              (q.source ? ' · ' + q.source : '') +
+              (q.demo_order ? ' · demo_order' : '')
+          ) +
           '</p></div>'
         : trial.patient_message
           ? '<div class="nlp-trial-followup"><p>' + escapeHtml(trial.patient_message) + '</p></div>'
@@ -1915,6 +2060,7 @@
 
       trialResults.hidden = false;
       trialResults.innerHTML =
+        renderConversation() +
         '<div class="nlp-trial-grid">' +
         '<div><dt>Health-related</dt><dd>' +
         badge(health, health === 'YES' ? 'nlp-badge--ok' : 'nlp-badge--muted') +
@@ -1978,16 +2124,55 @@
         '<br>Gemini: ' +
         escapeHtml(trial.gemini_called ? 'called — ' + (trial.gemini_why || '') : 'not called — ' + (trial.gemini_why || '')) +
         '</p></div>';
+
+      if (needsFollowUp) {
+        window.setTimeout(focusAnswerInput, 30);
+      }
     }
 
-    // Pain-score chip clicks inside results
+    function showAnswerError(message) {
+      const err = document.getElementById('nlp-trial-answer-error');
+      if (err) {
+        err.hidden = !message;
+        err.textContent = message || '';
+      }
+      if (message) showTrialFeedback(message, 'error');
+    }
+
+    function submitFollowUpAnswer(raw) {
+      const checked = validateFollowUpAnswer(raw, awaitingQuestionId);
+      if (!checked.ok) {
+        showAnswerError(checked.error);
+        focusAnswerInput();
+        return;
+      }
+      showAnswerError('');
+      runTrial(checked.value);
+    }
+
     trialResults.addEventListener('click', function (e) {
       const btn = e.target.closest('[data-pain-score]');
       if (!btn) return;
+      e.preventDefault();
       const score = btn.getAttribute('data-pain-score');
       if (score == null || score === '') return;
-      trialInput.value = String(score);
-      runTrial(String(score));
+      submitFollowUpAnswer(String(score));
+    });
+
+    trialResults.addEventListener('submit', function (e) {
+      const form = e.target.closest('#nlp-trial-answer-form');
+      if (!form) return;
+      e.preventDefault();
+      const input = document.getElementById('nlp-trial-answer');
+      submitFollowUpAnswer(input ? input.value : '');
+    });
+
+    trialResults.addEventListener('keydown', function (e) {
+      if (e.key !== 'Enter') return;
+      const input = e.target.closest('#nlp-trial-answer');
+      if (!input) return;
+      e.preventDefault();
+      submitFollowUpAnswer(input.value);
     });
 
     async function runTrial(text) {
@@ -1996,11 +2181,19 @@
         showTrialFeedback('Enter a complaint or follow-up answer.', 'error');
         return;
       }
+      if (busy) return;
+      busy = true;
 
       trialBtn.disabled = true;
       const prev = trialBtn.textContent;
       trialBtn.textContent = 'Analyzing…';
+      const answerSubmit = document.getElementById('nlp-trial-answer-submit');
+      const answerInput = document.getElementById('nlp-trial-answer');
+      if (answerSubmit) answerSubmit.disabled = true;
+      if (answerInput) answerInput.disabled = true;
       showTrialFeedback('Running demo interview (existing NLP + context)…', 'ok');
+
+      pushLog('user', utterance);
 
       try {
         const body = new FormData();
@@ -2019,6 +2212,7 @@
         const trial = data.trial || data;
 
         if (!res.ok || json.success === false) {
+          conversationLog.pop();
           showTrialFeedback(json.message || 'Interview request failed.', 'error');
           return;
         }
@@ -2029,35 +2223,61 @@
           interviewContext = null;
         }
         updateMeta();
+
+        const systemMsg =
+          (trial.followup_question && trial.followup_question.text) ||
+          trial.patient_message ||
+          (trial.triage_final ? 'Final triage: ' + trial.triage_final : '');
+        if (systemMsg) {
+          pushLog('system', systemMsg);
+        }
+
         renderTrial(trial);
 
         if (trial.followup_required) {
-          showTrialFeedback('More information needed — answer the follow-up below.', 'ok');
+          showTrialFeedback('More information needed — type your answer in the box under Next question.', 'ok');
           trialInput.value = '';
-          trialInput.focus();
         } else if (trial.domain_class === 'UNCLEAR' || trial.domain_class === 'NON_HEALTH_RELATED') {
+          setStartFormMode(false);
           showTrialFeedback(trial.patient_message || trial.next_action || 'No medical assessment.', 'ok');
         } else {
+          setStartFormMode(false);
           showTrialFeedback('Assessment complete: ' + (trial.triage_final || 'done'), 'ok');
         }
       } catch (err) {
+        conversationLog.pop();
         showTrialFeedback('Trial request failed: ' + (err && err.message ? err.message : String(err)), 'error');
       } finally {
+        busy = false;
         trialBtn.disabled = false;
         trialBtn.textContent = prev;
+        const as2 = document.getElementById('nlp-trial-answer-submit');
+        const ai2 = document.getElementById('nlp-trial-answer');
+        if (as2) as2.disabled = false;
+        if (ai2) ai2.disabled = false;
       }
     }
 
     trialForm.addEventListener('submit', function (e) {
       e.preventDefault();
+      if (interviewContext && awaitingQuestionId) {
+        const ans = document.getElementById('nlp-trial-answer');
+        if (ans) {
+          submitFollowUpAnswer(ans.value);
+          return;
+        }
+      }
       runTrial(trialInput.value);
     });
 
     trialReset.addEventListener('click', function () {
       interviewContext = null;
+      conversationLog = [];
+      awaitingQuestionId = '';
       trialInput.value = '';
       trialResults.hidden = true;
       trialResults.innerHTML = '';
+      setStartFormMode(false);
       if (trialFeedback) trialFeedback.hidden = true;
       updateMeta();
       trialInput.focus();
@@ -2067,11 +2287,20 @@
     document.querySelectorAll('[data-trial-text]').forEach(function (chip) {
       chip.addEventListener('click', function () {
         const text = chip.getAttribute('data-trial-text') || '';
+        if (interviewContext && awaitingQuestionId) {
+          submitFollowUpAnswer(text);
+          return;
+        }
+        if (interviewContext && String(interviewContext.assessment_status || '') === 'COMPLETED') {
+          interviewContext = null;
+          conversationLog = [];
+        }
         trialInput.value = text;
         runTrial(text);
       });
     });
 
     updateMeta();
+    setStartFormMode(false);
   })();
 })();

@@ -1583,24 +1583,122 @@
 
 .nlp-trial-followup {
   margin-top: 12px;
-  padding: 12px 14px;
-  border-radius: 10px;
+  padding: 14px 16px 16px;
+  border-radius: 12px;
   background: #ecfdf5;
   border: 1px solid #99f6e4;
+}
+
+.nlp-trial-followup--interactive {
+  box-shadow: 0 8px 24px rgba(15, 118, 110, 0.1);
+}
+
+.nlp-trial-followup__q {
+  margin: 8px 0 0;
+  font-size: 1rem;
+  font-weight: 650;
+  color: #0f172a;
+  line-height: 1.45;
+  white-space: pre-wrap;
 }
 
 .nlp-trial-followup p {
   margin: 6px 0 0;
 }
 
+.nlp-trial-followup__helper {
+  font-size: 0.85rem;
+  color: #0f766e;
+  white-space: pre-wrap;
+}
+
 .nlp-trial-followup__meta {
   font-size: 0.75rem;
   color: #0f766e;
+  margin-top: 10px;
 }
 
 .nlp-trial-followup--done {
   background: #eff6ff;
   border-color: #93c5fd;
+}
+
+.nlp-trial-answer-form {
+  margin-top: 14px;
+  padding-top: 12px;
+  border-top: 1px dashed #99f6e4;
+}
+
+.nlp-trial-answer-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: stretch;
+  margin-top: 6px;
+}
+
+.nlp-trial-answer-input {
+  flex: 1 1 220px;
+  min-width: 0;
+  width: 100%;
+  max-width: 100%;
+  min-height: 48px;
+  box-sizing: border-box;
+}
+
+.nlp-trial-answer-row .nlp-btn-validate {
+  flex: 0 0 auto;
+  min-height: 48px;
+  white-space: nowrap;
+}
+
+.nlp-trial-answer-error {
+  margin: 8px 0 0;
+  color: #b91c1c;
+  font-size: 0.875rem;
+  font-weight: 600;
+}
+
+.nlp-trial-chat {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.nlp-trial-chat li {
+  border-radius: 10px;
+  padding: 10px 12px;
+  border: 1px solid #e2e8f0;
+  background: #fff;
+}
+
+.nlp-trial-chat__user {
+  border-color: #99f6e4;
+  background: #f0fdfa;
+}
+
+.nlp-trial-chat__system {
+  border-color: #cbd5e1;
+  background: #f8fafc;
+}
+
+.nlp-trial-chat__who {
+  display: block;
+  font-size: 0.7rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: #64748b;
+  margin-bottom: 4px;
+}
+
+.nlp-trial-chat li p {
+  margin: 0;
+  white-space: pre-wrap;
+  word-break: break-word;
 }
 
 .nlp-trial-scale {
@@ -1661,6 +1759,14 @@
   .nlp-trial-scale__btn {
     min-width: 2.4rem;
     min-height: 2.4rem;
+  }
+
+  .nlp-trial-answer-row {
+    flex-direction: column;
+  }
+
+  .nlp-trial-answer-row .nlp-btn-validate {
+    width: 100%;
   }
 }
 
