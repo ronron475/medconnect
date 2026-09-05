@@ -16,7 +16,7 @@ $assetBase = ASSET_BASE;
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>medConnect — NLP Demo (Step 3)</title>
-  <link rel="stylesheet" href="<?= htmlspecialchars($assetBase) ?>/assets/css/nlp_step3_demo.css?v=3.3" />
+  <link rel="stylesheet" href="<?= htmlspecialchars($assetBase) ?>/assets/css/nlp_step3_demo.css?v=3.4" />
   <link rel="stylesheet" href="<?= htmlspecialchars($assetBase) ?>/assets/css/nlp_medical_recognition.css" />
 </head>
 <body class="nlp-demo-body">
@@ -30,11 +30,11 @@ $assetBase = ASSET_BASE;
 
     <section class="nlp-trial-card" aria-labelledby="nlp-trial-title">
       <h2 id="nlp-trial-title" class="nlp-trial-title">Chief complaint interview (trial)</h2>
-      <p class="nlp-trial-hint">Type a complaint or click a chip. Follow-up answers stay in the same conversation until you reset.</p>
+      <p class="nlp-trial-hint">Type a complaint to start. When a follow-up appears, answer in the box under <strong>Next question</strong> (same conversation — do not restart).</p>
 
       <form id="nlp-trial-form" class="nlp-demo-form nlp-trial-form" novalidate>
-        <div class="nlp-field">
-          <label class="nlp-label" for="nlp-trial-input">Patient complaint / follow-up answer</label>
+        <div class="nlp-field" id="nlp-trial-start-field">
+          <label class="nlp-label" for="nlp-trial-input">Patient complaint (start of interview)</label>
           <textarea
             id="nlp-trial-input"
             name="utterance"
@@ -203,6 +203,6 @@ $assetBase = ASSET_BASE;
   </main>
 
   <script>window.APP_BASE = <?= json_encode($assetBase) ?>;</script>
-  <script src="<?= htmlspecialchars($assetBase) ?>/assets/js/nlp_step3_demo.js?v=3.5"></script>
+  <script src="<?= htmlspecialchars($assetBase) ?>/assets/js/nlp_step3_demo.js?v=3.6"></script>
 </body>
 </html>
