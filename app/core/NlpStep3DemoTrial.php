@@ -266,6 +266,10 @@ final class NlpStep3DemoTrial
         if ($corrected === '') {
             $corrected = $turn;
         }
+        $synonym = trim((string) ($fuzzyPrep['synonym'] ?? NlpStep3DemoAnswerFuzzy::synonymNormalize($turn)));
+        if ($synonym === '') {
+            $synonym = $turn;
+        }
 
         // 1) Existing NLP on original answer
         if (NlpStep3DemoGeminiAnswerInterpreter::nlpUnderstandsAnswer($turn, $awaiting, $prior)) {
@@ -282,14 +286,33 @@ final class NlpStep3DemoTrial
             ];
         }
 
-        // 2) Existing NLP on fuzzy-corrected answer
-        if ($corrected !== $turn
+        // 1b) Exact synonym variant (kagapon→gahapon) — still primary NLP success, not a typo path
+        if ($synonym !== $turn
+            && NlpStep3DemoGeminiAnswerInterpreter::nlpUnderstandsAnswer($synonym, $awaiting, $prior)
+        ) {
+            $meta['primary_nlp'] = 'SUCCESS';
+            $meta['fallback'] = 'none';
+            $meta['fuzzy_status'] = 'SYNONYM';
+            $meta['reason'] = 'NOT CALLED — PRIMARY NLP SUFFICIENT';
+            $meta['status'] = 'NOT_CALLED';
+
+            return [
+                'meta' => $meta,
+                'block_advance' => false,
+                'turn' => $synonym,
+                'prior' => $prior,
+            ];
+        }
+
+        // 2) Existing NLP on fuzzy-corrected answer (true typo distance)
+        $isTrueFuzzy = $corrected !== $turn && $corrected !== $synonym;
+        if (($isTrueFuzzy || ($corrected !== $turn && $synonym === $turn))
             && NlpStep3DemoGeminiAnswerInterpreter::nlpUnderstandsAnswer($corrected, $awaiting, $prior)
         ) {
             $meta['primary_nlp'] = 'LOW_CONFIDENCE';
             $meta['fallback'] = 'demo_fuzzy';
             $meta['fuzzy_status'] = 'SUCCESS';
-            $meta['reason'] = 'NOT CALLED — FUZZY MATCH ENABLED PRIMARY NLP';
+            $meta['reason'] = 'NOT CALLED — FUZZY MATCH RESOLVED (Gemini not required)';
             $meta['status'] = 'DEMO_FUZZY';
             $meta['interpretation'] = [
                 'relevant' => true,

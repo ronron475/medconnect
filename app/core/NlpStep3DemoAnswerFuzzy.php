@@ -139,9 +139,37 @@ final class NlpStep3DemoAnswerFuzzy
     }
 
     /**
+     * Exact lexicon synonym expansion only (no typo distance).
+     * e.g. kagapon → gahapon so existing extractors can match.
+     */
+    public static function synonymNormalize(string $text): string
+    {
+        $normalized = self::normalize($text);
+        $lex = self::lexicon();
+        $tokens = preg_split('/(\s+)/u', $normalized, -1, PREG_SPLIT_DELIM_CAPTURE) ?: [];
+        $out = [];
+        foreach ($tokens as $tok) {
+            if ($tok === '' || preg_match('/^\s+$/u', $tok)) {
+                $out[] = $tok;
+                continue;
+            }
+            $clean = (string) preg_replace('/^[^\p{L}\p{N}]+|[^\p{L}\p{N}]+$/u', '', $tok);
+            $key = mb_strtolower($clean);
+            if ($clean !== '' && isset($lex[$key]) && $lex[$key] !== $key) {
+                $out[] = str_replace($clean, $lex[$key], $tok);
+            } else {
+                $out[] = $tok;
+            }
+        }
+
+        return trim(implode('', $out));
+    }
+
+    /**
      * @return array{
      *   original: string,
      *   normalized: string,
+     *   synonym: string,
      *   corrected: string,
      *   changed: bool,
      *   corrections: list<array{from:string,to:string,score:float}>,
@@ -154,6 +182,7 @@ final class NlpStep3DemoAnswerFuzzy
         unset($awaiting);
         $original = trim($text);
         $normalized = self::normalize($original);
+        $synonym = self::synonymNormalize($original);
         $corrections = [];
         $tokens = preg_split('/(\s+)/u', $normalized, -1, PREG_SPLIT_DELIM_CAPTURE) ?: [];
         $out = [];
@@ -188,7 +217,7 @@ final class NlpStep3DemoAnswerFuzzy
 
         $corrected = trim(implode('', $out));
         if ($corrected === '') {
-            $corrected = $normalized !== '' ? $normalized : $original;
+            $corrected = $synonym !== '' ? $synonym : ($normalized !== '' ? $normalized : $original);
         }
 
         $status = 'NONE';
@@ -196,6 +225,8 @@ final class NlpStep3DemoAnswerFuzzy
             $status = 'SUCCESS';
         } elseif ($any) {
             $status = 'SUCCESS';
+        } elseif ($synonym !== $normalized && $synonym !== $original) {
+            $status = 'SYNONYM';
         } else {
             $status = 'NO_CORRECTION';
         }
@@ -203,9 +234,11 @@ final class NlpStep3DemoAnswerFuzzy
         return [
             'original' => $original,
             'normalized' => $normalized,
+            'synonym' => $synonym,
             'corrected' => $corrected,
-            'changed' => $corrected !== $original && $corrected !== $normalized
-                || ($corrections !== [] && $corrected !== $original),
+            'changed' => ($corrected !== $original && $corrected !== $normalized)
+                || ($corrections !== [] && $corrected !== $original)
+                || ($synonym !== $original && $synonym !== $normalized),
             'corrections' => $corrections,
             'fuzzy_status' => $status,
             'confidence' => $corrections === [] ? 1.0 : $minConf,
