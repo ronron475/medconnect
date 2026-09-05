@@ -151,10 +151,10 @@ Or connect a GitHub mirror of this repo; Railway builds `ai_service/Dockerfile` 
 git push origin main
 ```
 
-GitLab CI redeploys PHP to Hostinger. Railway is connected to the GitHub mirror and
-redeploys the AI service on **every** push to `main` (`watchPatterns = ["**"]` in
-`railway.toml`). That does **not** move PHP to Railway — only rebuilds FastAPI so
-the Railway Deployments list stays on the latest commit.
+GitLab CI redeploys PHP to Hostinger. Railway is connected to the GitHub mirror.
+Leave **Watch Paths empty** (do not use `**` in `railway.toml`) so every push to
+`main` can trigger a rebuild. That still only rebuilds FastAPI — PHP stays on Hostinger.
 
-If a push does not appear: Railway → medconnect → Settings → Build → Watch Paths —
-remove any path filter (or set to `**`), then Redeploy.
+If a push does not appear: Railway → medconnect → press **Ctrl+K** (Cmd+K) →
+**Deploy Latest Commit**. Also open Deployments → **Show Skipped**. If needed,
+Settings → Source → disconnect/reconnect `ronron475/medconnect` on branch `main`.

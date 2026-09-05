@@ -1,3 +1,4 @@
+# medConnect FastAPI AI — Railway image (auto-deploy from GitHub main)
 FROM python:3.11-slim
 
 WORKDIR /app
