@@ -14,7 +14,7 @@ if (!defined('APP_TIMEZONE')) {
 if (!defined('MEDCONNECT_PRODUCTION_AI_SERVICE_URL')) {
     define(
         'MEDCONNECT_PRODUCTION_AI_SERVICE_URL',
-        'https://medconnect-production-a654.up.railway.app'
+        'https://medconnect-production-f2b7.up.railway.app'
     );
 }
 
