@@ -2106,6 +2106,9 @@
         '<li>character = <strong>' +
         escapeHtml(summary.character || '—') +
         '</strong></li>' +
+        '<li>aggravating factor = <strong>' +
+        escapeHtml(summary.aggravating_factor || '—') +
+        '</strong></li>' +
         '<li>associated symptoms = <strong>' +
         escapeHtml(summary.associated_symptoms || '—') +
         '</strong></li>' +
@@ -2113,6 +2116,11 @@
         escapeHtml(trial.clinical_transcript || trial.input || '—') +
         '</strong></li>' +
         '</ul></div>' +
+        (trial.followup_skipped
+          ? '<div class="nlp-trial-block"><h3>Follow-up</h3><p><strong>SKIPPED — SUFFICIENT INFORMATION</strong></p><p>' +
+            escapeHtml(trial.followup_skip_reason || 'Already-answered questions were not re-asked.') +
+            '</p></div>'
+          : '') +
         followHtml +
         (status === 'COMPLETED' && triage
           ? '<div class="nlp-trial-followup nlp-trial-followup--done"><strong>Next step</strong><p>Clinical assessment complete. Final triage: <strong>' +
