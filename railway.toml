@@ -1,6 +1,15 @@
+# Railway hosts the Python FastAPI AI only (ai_service/Dockerfile).
+# PHP/UI still deploys to Hostinger via GitLab CI.
+#
+# watchPatterns = all repo paths so every push to the connected GitHub
+# branch triggers a Railway rebuild (deployment history tracks latest commit).
+# Clear any narrower "Watch Paths" in the Railway service Settings UI
+# (Settings → Build → Watch Paths) or they can override this file.
+
 [build]
 builder = "DOCKERFILE"
 dockerfilePath = "ai_service/Dockerfile"
+watchPatterns = ["**"]
 
 [deploy]
 healthcheckPath = "/health"
