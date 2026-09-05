@@ -17,38 +17,64 @@ logger = logging.getLogger("medconnect.faq_chatbot")
 DEFAULT_GEMINI_MODEL = "gemini-3.5-flash"
 GEMINI_ENDPOINT = "https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent"
 
-SYSTEM_PROMPT = """You are a domain classifier for the medConnect Assistant used by a City Health Office.
+SYSTEM_PROMPT = """You are a SECONDARY comprehension classifier for the medConnect Assistant (City Health Office).
 
-Your only job is to classify the CURRENT user message. Do not write a patient-facing reply. Do not diagnose.
+Primary NLP already failed or had low confidence. Your job is to decide what the patient message means.
+Do NOT write a patient-facing reply. Do NOT diagnose. Do NOT prescribe. Do NOT assign a final triage level.
 
-Understand English, Filipino/Tagalog, Hiligaynon/Ilonggo, Taglish, mixed languages, slang, and common misspellings of real words.
+Understand English, Filipino/Tagalog, Hiligaynon/Ilonggo, Taglish, mixed languages, slang, and common misspellings.
 
 Allowed classifications:
-- HEALTH_RELATED: a real health or medConnect/City Health Office request. This includes symptoms, diseases, medicines, vaccination, maternal/child health, appointments, consultation, BHW services, medical records, and other existing chatbot health/service intents. Examples: "I have a fever", "my stomach hurts", "diarrhea since yesterday", "masakit akon tiyan", "gakirot akon ulo", "may hilanat ko", "what services does the city health office offer".
-- NON_HEALTH_RELATED: conversation that is not a health or City Health Office request, such as jokes, laughing, casual chat, sports, weather, trivia, coding, or identity questions with no health meaning. Examples: "hello", "hahhahahaaa buli", "tell me a joke".
-- UNCLEAR: random characters, keyboard smash, gibberish, incomplete nonsense, or text you cannot reasonably interpret as a real health or service request. Examples: "sakitgbgjgbvd", "asdfghjkl", "qwerty123", "hahhahahaaa".
+- MEDICAL_SYMPTOM: a real symptom/illness complaint (including informal wording and reasonable misspellings).
+- MEDICAL_FOLLOWUP_ANSWER: answering the CURRENT CHATBOT QUESTION, including misspellings that map to a reasonable clinical answer (e.g. "olo" → ulo/head when asked where it hurts).
+- MEDCONNECT_SERVICE: appointments, video consult, records, login/account, BHW, City Health Office services.
+- GREETING: hello/hi/good morning style openings with no other content.
+- NONSENSE_OR_PRANK: keyboard smash, gibberish, meaningless filler, joking/test spam with no recoverable meaning.
+- UNKNOWN: potentially meaningful text you cannot reliably interpret — do not guess.
+- HEALTH_RELATED: legacy alias for MEDICAL_SYMPTOM or MEDCONNECT_SERVICE.
+- NON_HEALTH_RELATED: real non-health chat that is NOT gibberish.
+- UNCLEAR: legacy alias for UNKNOWN when unsure.
 
 Critical rules:
-- Do NOT classify a message as HEALTH_RELATED only because the existing chatbot did not recognize it.
-- Do NOT treat gibberish as a medical concern just because it contains letters that look like "sakit", "ulo", "fever", or other medical roots without forming a real word or phrase.
-- Laughing, teasing, or random filler without a described symptom is NON_HEALTH_RELATED or UNCLEAR, never HEALTH_RELATED.
-- If you are not sure, use UNCLEAR and a lower confidence.
+- MISSPELLING ≠ NONSENSE. If a reasonable intended meaning exists in context, classify that meaning.
+- Never treat gibberish as MEDICAL_* or MEDCONNECT_SERVICE just because letters resemble medical roots.
+- Laughing / "test lang" / keyboard smash without a real concern → NONSENSE_OR_PRANK.
+- If unsure, prefer UNKNOWN with lower confidence — do not force a guess.
 
-Return ONLY this JSON object, no markdown, no extra keys, no reply text:
-{"classification":"HEALTH_RELATED","confidence":0.92}
+Return ONLY this JSON object (no markdown, no extra keys, no reply text):
+{"understood":true,"confidence":0.95,"classification":"MEDICAL_SYMPTOM","normalized_text":"masakit akon ulo","meaning":"head pain","clinical_entities":{"symptom":"headache","body_location":"head"}}
 
-classification must be one of: HEALTH_RELATED, NON_HEALTH_RELATED, UNCLEAR
+For nonsense:
+{"understood":false,"confidence":0.97,"classification":"NONSENSE_OR_PRANK","normalized_text":null,"meaning":null,"clinical_entities":{}}
+
 confidence must be a number from 0.0 to 1.0
 """
 
 CLASS_HEALTH_RELATED = "HEALTH_RELATED"
 CLASS_NON_HEALTH_RELATED = "NON_HEALTH_RELATED"
 CLASS_UNCLEAR = "UNCLEAR"
-CLASS_GREETING = CLASS_UNCLEAR
+CLASS_NONSENSE_OR_PRANK = "NONSENSE_OR_PRANK"
+CLASS_UNKNOWN = "UNKNOWN"
+CLASS_GREETING = "GREETING"
+CLASS_MEDICAL_SYMPTOM = "MEDICAL_SYMPTOM"
+CLASS_MEDICAL_FOLLOWUP = "MEDICAL_FOLLOWUP_ANSWER"
+CLASS_MEDCONNECT_SERVICE = "MEDCONNECT_SERVICE"
 CLASS_HEALTHCARE = CLASS_HEALTH_RELATED
 CLASS_POSSIBLY = CLASS_UNCLEAR
 CLASS_NON = CLASS_NON_HEALTH_RELATED
 CLASSIFY_CONFIDENCE_THRESHOLD = 0.80
+
+_HEALTH_CLASSES = {
+    CLASS_HEALTH_RELATED,
+    CLASS_MEDICAL_SYMPTOM,
+    CLASS_MEDICAL_FOLLOWUP,
+    CLASS_MEDCONNECT_SERVICE,
+}
+_CLARIFY_CLASSES = {
+    CLASS_UNCLEAR,
+    CLASS_UNKNOWN,
+    CLASS_NONSENSE_OR_PRANK,
+}
 
 
 def _env(*names: str) -> str:
@@ -125,12 +151,22 @@ def to_safe_html(text: str) -> str:
 
 def _user_payload(user_text: str, lang: str, context: dict[str, Any]) -> str:
     lang_name = {"fil": "Filipino", "hil": "Hiligaynon/Ilonggo"}.get(lang, "English")
-    return (
-        "Classify this single user message. Do not write a chatbot reply. Preferred UI language: "
-        + lang_name
-        + ".\nUser message:\n"
-        + user_text
-    )
+    parts = [
+        "Classify this single user message as a SECONDARY comprehension check. "
+        "Do not write a chatbot reply. Do not diagnose or prescribe.",
+        f"Preferred UI language: {lang_name}.",
+    ]
+    current_q = str(context.get("current_question") or context.get("pending_prompt") or "").strip()
+    if current_q:
+        parts.append("CURRENT CHATBOT QUESTION:\n" + current_q[:400])
+    expected = str(context.get("expected_answer_type") or "").strip()
+    if expected:
+        parts.append("Expected answer type: " + expected[:120])
+    medical = str(context.get("accumulated_medical") or "").strip()
+    if medical:
+        parts.append("Accumulated medical information so far:\n" + medical[:400])
+    parts.append("CURRENT PATIENT MESSAGE:\n" + user_text)
+    return "\n\n".join(parts)
 
 
 def _complete_gemini(user_text: str, lang: str, context: dict[str, Any], history: list[dict[str, str]]) -> str:
@@ -145,7 +181,7 @@ def _complete_gemini(user_text: str, lang: str, context: dict[str, Any], history
         "contents": contents,
         "generationConfig": {
             "temperature": 0.1,
-            "maxOutputTokens": 120,
+            "maxOutputTokens": 220,
             "responseMimeType": "application/json",
         },
     }
@@ -225,12 +261,17 @@ def generate_assist(
     lang = (lang or "en").lower()
     if lang not in {"en", "fil", "hil"}:
         lang = "en"
-    context = {"intent": intent, "emotion": emotion, "topic": topic}
+    context = {
+        "intent": intent,
+        "emotion": emotion,
+        "topic": topic,
+        "current_question": str((history and len(history) and history[-1].get("text")) or ""),
+    }
     try:
-        raw = _complete_gemini(user_text, lang, context, [])
+        raw = _complete_gemini(user_text, lang, context, history or [])
     except Exception as exc:
         logger.warning("Gemini FAQ fallback failed, trying Groq: %s", exc)
-        raw = _complete_groq(user_text, lang, context, [])
+        raw = _complete_groq(user_text, lang, context, history or [])
     parsed = parse_model_reply(raw)
     classification = _apply_confidence_gate(
         str(parsed.get("classification") or CLASS_UNCLEAR),
@@ -281,12 +322,32 @@ def parse_model_reply(raw: str) -> dict[str, Any]:
             }:
                 classification = CLASS_NON_HEALTH_RELATED
             if classification or class_raw or is_health is not None:
+                # Collapse fine medical/service classes to HEALTH_RELATED for PHP routing
+                # while preserving fine label in intent when useful.
+                fine = classification
+                if classification in {
+                    CLASS_MEDICAL_SYMPTOM,
+                    CLASS_MEDICAL_FOLLOWUP,
+                    CLASS_MEDCONNECT_SERVICE,
+                }:
+                    classification = CLASS_HEALTH_RELATED
+                elif classification == CLASS_GREETING:
+                    classification = CLASS_GREETING
+                elif classification in {CLASS_NONSENSE_OR_PRANK, CLASS_UNKNOWN}:
+                    pass
                 parsed = _normalize_parsed(classification or CLASS_UNCLEAR, "")
-                parsed["intent"] = str(decoded.get("intent") or "").strip()
+                parsed["intent"] = str(decoded.get("intent") or fine or "").strip()
                 parsed["language"] = str(decoded.get("language") or "").strip()
-                parsed["normalized_meaning"] = str(
-                    decoded.get("normalized_meaning") or decoded.get("normalizedMeaning") or ""
+                meaning = str(
+                    decoded.get("meaning")
+                    or decoded.get("normalized_meaning")
+                    or decoded.get("normalizedMeaning")
+                    or ""
                 ).strip()
+                normalized_text = str(
+                    decoded.get("normalized_text") or decoded.get("normalizedText") or ""
+                ).strip()
+                parsed["normalized_meaning"] = meaning or normalized_text
                 parsed["urgency"] = str(decoded.get("urgency") or "NON_URGENT").strip().upper()
                 try:
                     parsed["confidence"] = float(decoded.get("confidence")) if decoded.get("confidence") is not None else None
@@ -296,7 +357,7 @@ def parse_model_reply(raw: str) -> dict[str, Any]:
     if re.match(r"^\s*OUT_OF_SCOPE\s*$", text, flags=re.I):
         return {"classification": CLASS_NON_HEALTH_RELATED, "reply": ""}
     class_match = re.search(
-        r"CLASSIFICATION\s*:\s*(HEALTH_RELATED|NON_HEALTH_RELATED|UNCLEAR|GREETING|HEALTHCARE|POSSIBLY_HEALTHCARE|NON_HEALTHCARE)\b",
+        r"CLASSIFICATION\s*:\s*(HEALTH_RELATED|NON_HEALTH_RELATED|UNCLEAR|UNKNOWN|NONSENSE_OR_PRANK|NONSENSE|GREETING|HEALTHCARE|POSSIBLY_HEALTHCARE|NON_HEALTHCARE|MEDICAL_SYMPTOM|MEDICAL_FOLLOWUP_ANSWER|MEDCONNECT_SERVICE)\b",
         text,
         flags=re.I,
     )
@@ -317,29 +378,63 @@ def _normalize_classification(value: str) -> str:
         "POSSIBLY_HEALTHCARE": CLASS_UNCLEAR,
         "AMBIGUOUS": CLASS_UNCLEAR,
         "CLARIFY": CLASS_UNCLEAR,
-        "GREETING": CLASS_UNCLEAR,
+        "GREETING": CLASS_GREETING,
+        "HI": CLASS_GREETING,
+        "HELLO": CLASS_GREETING,
         "MEDICAL": CLASS_HEALTH_RELATED,
         "HEALTH": CLASS_HEALTH_RELATED,
         "HEALTHCARE": CLASS_HEALTH_RELATED,
+        "MEDICAL_SYMPTOM": CLASS_MEDICAL_SYMPTOM,
+        "SYMPTOM": CLASS_MEDICAL_SYMPTOM,
+        "SYMPTOMS": CLASS_MEDICAL_SYMPTOM,
+        "MEDICAL_FOLLOWUP_ANSWER": CLASS_MEDICAL_FOLLOWUP,
+        "FOLLOWUP": CLASS_MEDICAL_FOLLOWUP,
+        "FOLLOW_UP": CLASS_MEDICAL_FOLLOWUP,
+        "MEDCONNECT_SERVICE": CLASS_MEDCONNECT_SERVICE,
+        "SERVICE": CLASS_MEDCONNECT_SERVICE,
+        "SERVICES": CLASS_MEDCONNECT_SERVICE,
+        "NONSENSE_OR_PRANK": CLASS_NONSENSE_OR_PRANK,
+        "NONSENSE": CLASS_NONSENSE_OR_PRANK,
+        "PRANK": CLASS_NONSENSE_OR_PRANK,
+        "GIBBERISH": CLASS_NONSENSE_OR_PRANK,
+        "TEST_INPUT": CLASS_NONSENSE_OR_PRANK,
+        "UNKNOWN": CLASS_UNKNOWN,
     }
     v = aliases.get(v, v)
-    if v in {CLASS_HEALTH_RELATED, CLASS_NON_HEALTH_RELATED, CLASS_UNCLEAR}:
+    if v in {
+        CLASS_HEALTH_RELATED,
+        CLASS_NON_HEALTH_RELATED,
+        CLASS_UNCLEAR,
+        CLASS_NONSENSE_OR_PRANK,
+        CLASS_UNKNOWN,
+        CLASS_GREETING,
+        CLASS_MEDICAL_SYMPTOM,
+        CLASS_MEDICAL_FOLLOWUP,
+        CLASS_MEDCONNECT_SERVICE,
+    }:
         return v
     return CLASS_UNCLEAR
 
 
 def _apply_confidence_gate(classification: str, confidence: Any) -> str:
     classification = _normalize_classification(classification)
-    if classification == CLASS_UNCLEAR:
-        return CLASS_UNCLEAR
+    if classification in _CLARIFY_CLASSES or classification == "":
+        return CLASS_UNKNOWN if classification == CLASS_UNKNOWN else (
+            CLASS_NONSENSE_OR_PRANK if classification == CLASS_NONSENSE_OR_PRANK else CLASS_UNCLEAR
+        )
     try:
         if confidence is not None and float(confidence) < CLASSIFY_CONFIDENCE_THRESHOLD:
-            return CLASS_UNCLEAR
+            return CLASS_UNKNOWN
     except (TypeError, ValueError):
         return classification
+    # PHP maps fine medical classes to HEALTH_RELATED for routing
+    if classification in {CLASS_MEDICAL_SYMPTOM, CLASS_MEDICAL_FOLLOWUP, CLASS_MEDCONNECT_SERVICE}:
+        return CLASS_HEALTH_RELATED
     return classification
 
 
 def _normalize_parsed(classification: str, reply: str) -> dict[str, Any]:
     classification = _normalize_classification(classification)
+    if classification in {CLASS_MEDICAL_SYMPTOM, CLASS_MEDICAL_FOLLOWUP, CLASS_MEDCONNECT_SERVICE}:
+        classification = CLASS_HEALTH_RELATED
     return {"classification": classification or CLASS_UNCLEAR, "reply": ""}
