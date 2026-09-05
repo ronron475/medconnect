@@ -203,6 +203,6 @@ $assetBase = ASSET_BASE;
   </main>
 
   <script>window.APP_BASE = <?= json_encode($assetBase) ?>;</script>
-  <script src="<?= htmlspecialchars($assetBase) ?>/assets/js/nlp_step3_demo.js?v=3.7"></script>
+  <script src="<?= htmlspecialchars($assetBase) ?>/assets/js/nlp_step3_demo.js?v=3.8"></script>
 </body>
 </html>
