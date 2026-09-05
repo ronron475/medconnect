@@ -1850,6 +1850,21 @@
       if (domain === 'UNCLEAR') domainCls = 'nlp-badge--warn';
       if (domain === 'NON_HEALTH_RELATED') domainCls = 'nlp-badge--muted';
 
+      const scaleHtml =
+        q && String(q.question_id || '').toUpperCase() === 'PAIN_SEVERITY'
+          ? '<div class="nlp-trial-scale" role="group" aria-label="Pain scale 0 to 10">' +
+            Array.from({ length: 11 }, function (_, n) {
+              return (
+                '<button type="button" class="nlp-trial-scale__btn" data-pain-score="' +
+                n +
+                '">' +
+                n +
+                '</button>'
+              );
+            }).join('') +
+            '</div>'
+          : '';
+
       const followHtml = q
         ? '<div class="nlp-trial-followup"><strong>Next question</strong><p>' +
           escapeHtml(q.text || trial.patient_message || '') +
@@ -1857,6 +1872,7 @@
           (q.helper_text
             ? '<p class="nlp-trial-followup__helper">' + escapeHtml(q.helper_text) + '</p>'
             : '') +
+          scaleHtml +
           '<p class="nlp-trial-followup__meta">' +
           escapeHtml((q.question_id || '') + (q.language ? ' · ' + q.language : '') + (q.source ? ' · ' + q.source : '') + (q.demo_order ? ' · demo_order' : '')) +
           '</p></div>'
@@ -1910,6 +1926,16 @@
         escapeHtml(trial.gemini_called ? 'called — ' + (trial.gemini_why || '') : 'not called — ' + (trial.gemini_why || '')) +
         '</p></div>';
     }
+
+    // Pain-score chip clicks inside results
+    trialResults.addEventListener('click', function (e) {
+      const btn = e.target.closest('[data-pain-score]');
+      if (!btn) return;
+      const score = btn.getAttribute('data-pain-score');
+      if (score == null || score === '') return;
+      trialInput.value = String(score);
+      runTrial(String(score));
+    });
 
     async function runTrial(text) {
       const utterance = String(text || '').trim();
