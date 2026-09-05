@@ -4,6 +4,9 @@
  *
  * Does not write to triage_results or change production chatbot / registration flows.
  * Reuses ClinicalInterviewEngine + ChiefComplaintNlpService::assessInterview.
+ *
+ * Demo-only pain follow-up order for vague pain:
+ *   1) PAIN_SEVERITY (0–10) → 2) PAIN_LOCATION → 3) ONSET → existing bank
  */
 final class NlpStep3DemoTrial
 {
@@ -54,7 +57,7 @@ final class NlpStep3DemoTrial
 
         $normalizedTurn = self::normalizeDemoTurn($turn, $prior);
         $assessment = ChiefComplaintNlpService::assessInterview($normalizedTurn, $prior);
-        $assessment = self::applyDemoQuestionWording($assessment);
+        $assessment = self::applyDemoPainQuestionOrder($assessment);
 
         $status = strtoupper((string) ($assessment['assessment_status'] ?? ''));
         $inProgress = $status === ClinicalInterviewEngine::STATUS_IN_PROGRESS;
@@ -107,7 +110,7 @@ final class NlpStep3DemoTrial
             'detected_language' => (string) ($assessment['detected_language'] ?? ($assessment['interview']['detected_language'] ?? '')),
             'interview_context' => $assessment['interview'] ?? ClinicalInterviewEngine::normalizeContext($assessment),
             'engine' => (string) ($assessment['engine'] ?? 'clinical-interview'),
-            'engine_chain' => ChiefComplaintNlpService::ENGINE_CHAIN . ' + ClinicalInterviewEngine (demo trial)',
+            'engine_chain' => ChiefComplaintNlpService::ENGINE_CHAIN . ' + ClinicalInterviewEngine (demo trial pain order)',
             'gemini_called' => $geminiUsed,
             'gemini_why' => $geminiWhy,
             'assessment' => $assessment,
@@ -147,26 +150,255 @@ final class NlpStep3DemoTrial
      */
     private static function normalizeDemoTurn(string $turn, array &$prior): string
     {
-        if (!preg_match('/^\s*([1-9]|10)\s*$/u', $turn, $m)) {
-            return $turn;
-        }
+        // Bare 0–10 numeric reply while pain severity is still missing.
+        if (preg_match('/^\s*(10|[0-9])\s*$/u', $turn, $m)) {
+            $score = (int) $m[1];
+            $facts = is_array($prior['facts'] ?? null) ? $prior['facts'] : [];
+            $noScore = ($facts['pain_score'] ?? null) === null;
+            $awaiting = strtoupper((string) ($prior['awaiting_question_id'] ?? ''));
 
-        $score = (int) $m[1];
-        $facts = is_array($prior['facts'] ?? null) ? $prior['facts'] : [];
-        $hasLocation = ($facts['body_locations'] ?? []) !== [];
-        $noScore = ($facts['pain_score'] ?? null) === null;
-        $awaiting = strtoupper((string) ($prior['awaiting_question_id'] ?? ''));
-
-        if ($awaiting === 'PAIN_SEVERITY' || ($hasLocation && $noScore)) {
-            $prior['awaiting_question_id'] = 'PAIN_SEVERITY';
-            return $score . '/10';
+            if ($noScore && (
+                $awaiting === 'PAIN_SEVERITY'
+                || $awaiting === 'PAIN_LOCATION'
+                || $awaiting === ''
+                || self::priorLooksLikePain($prior)
+            )) {
+                $prior['awaiting_question_id'] = 'PAIN_SEVERITY';
+                return $score . '/10';
+            }
         }
 
         return $turn;
     }
 
     /**
-     * Trial wording preferred by product owner; does not change shared question bank.
+     * @param array<string, mixed> $prior
+     */
+    private static function priorLooksLikePain(array $prior): bool
+    {
+        $transcript = trim(implode('. ', array_map('strval', (array) ($prior['patient_turns'] ?? []))));
+        if ($transcript === '') {
+            $transcript = (string) ($prior['chief_complaint'] ?? '');
+        }
+
+        return (bool) preg_match('/\b(sakit|masakit|pain|hurts?|hapdi)\b/ui', $transcript)
+            || (($prior['facts']['body_locations'] ?? []) !== []);
+    }
+
+    /**
+     * Demo-only preferred pain order: severity → location → onset.
+     * Does not change shared ClinicalFollowUpQuestionBank priorities.
+     *
+     * @param array<string, mixed> $assessment
+     * @return array<string, mixed>
+     */
+    private static function applyDemoPainQuestionOrder(array $assessment): array
+    {
+        $status = strtoupper((string) ($assessment['assessment_status'] ?? ''));
+        if ($status === ClinicalInterviewEngine::STATUS_COMPLETED) {
+            return $assessment;
+        }
+
+        $facts = is_array($assessment['interview']['facts'] ?? null)
+            ? $assessment['interview']['facts']
+            : [];
+        $transcript = (string) ($assessment['clinical_transcript'] ?? $assessment['chief_complaint'] ?? '');
+        if (!self::isPainComplaint($assessment, $transcript, $facts)) {
+            return self::applyDemoQuestionWording($assessment);
+        }
+
+        $hasSeverity = ($facts['pain_score'] ?? null) !== null;
+        $hasLocation = ($facts['body_locations'] ?? []) !== [];
+        $hasOnset = trim((string) ($facts['onset'] ?? '')) !== ''
+            || trim((string) ($facts['duration_label'] ?? '')) !== '';
+        $lang = self::questionLanguage($assessment);
+
+        if (!$hasSeverity) {
+            return self::forceDemoQuestion($assessment, 'PAIN_SEVERITY', $lang);
+        }
+        if (!$hasLocation) {
+            return self::forceDemoQuestion($assessment, 'PAIN_LOCATION', $lang);
+        }
+        if (!$hasOnset) {
+            return self::forceDemoQuestion($assessment, 'ONSET', $lang);
+        }
+
+        return self::applyDemoQuestionWording($assessment);
+    }
+
+    /**
+     * @param array<string, mixed> $assessment
+     * @param array<string, mixed> $facts
+     */
+    private static function isPainComplaint(array $assessment, string $transcript, array $facts): bool
+    {
+        if (($facts['pain_score'] ?? null) !== null || ($facts['body_locations'] ?? []) !== []) {
+            if (preg_match('/\b(sakit|masakit|pain|hurts?|hapdi)\b/ui', $transcript)) {
+                return true;
+            }
+        }
+        foreach ((array) ($assessment['interview']['chief_complaints'] ?? []) as $row) {
+            $family = strtolower((string) (is_array($row) ? ($row['family_key'] ?? $row['id'] ?? '') : $row));
+            if (str_contains($family, 'pain') || $family === 'headache' || $family === 'abdominal_pain' || $family === 'chest_pain') {
+                return true;
+            }
+        }
+
+        return ClinicalFeatureExtractors::isVagueComplaint($transcript)
+            || (bool) preg_match('/\b(sakit|masakit|pain|hurts?|hapdi)\b/ui', $transcript);
+    }
+
+    /**
+     * @param array<string, mixed> $assessment
+     */
+    private static function questionLanguage(array $assessment): string
+    {
+        $fromQ = strtoupper((string) ($assessment['followup_question']['language'] ?? ''));
+        if (in_array($fromQ, ['HILIGAYNON', 'TAGALOG', 'ENGLISH'], true)) {
+            return $fromQ;
+        }
+        $ql = strtolower((string) ($assessment['interview']['question_language'] ?? 'hiligaynon'));
+
+        return match ($ql) {
+            'english', 'en' => 'ENGLISH',
+            'tagalog', 'filipino', 'fil' => 'TAGALOG',
+            default => 'HILIGAYNON',
+        };
+    }
+
+    /**
+     * @param array<string, mixed> $assessment
+     * @return array<string, mixed>
+     */
+    private static function forceDemoQuestion(array $assessment, string $qid, string $lang): array
+    {
+        $pack = self::demoQuestionPack($qid, $lang);
+        $question = [
+            'question_id' => $qid,
+            'clinical_purpose' => $pack['purpose'],
+            'red_flag_related' => false,
+            'priority' => $pack['priority'],
+            'text' => $pack['text'],
+            'helper_text' => $pack['helper'],
+            'language' => $lang,
+            'source' => 'question_bank',
+            'demo_wording' => true,
+            'demo_order' => true,
+        ];
+
+        $assessment['assessment_status'] = ClinicalInterviewEngine::STATUS_IN_PROGRESS;
+        $assessment['followup_required'] = true;
+        $assessment['followup_question'] = $question;
+        $assessment['patient_message'] = $pack['text'] . ($pack['helper'] !== '' ? "\n\n" . $pack['helper'] : '');
+
+        if (!isset($assessment['interview']) || !is_array($assessment['interview'])) {
+            $assessment['interview'] = [];
+        }
+        $asked = array_values(array_filter(array_map('strval', (array) ($assessment['interview']['questions_asked'] ?? []))));
+        // Keep later slots available: if we skip ahead to severity, do not permanently consume location/onset.
+        $deferred = match ($qid) {
+            'PAIN_SEVERITY' => ['PAIN_LOCATION', 'ONSET', 'DURATION', 'ABDOMINAL_ASSOCIATED'],
+            'PAIN_LOCATION' => ['ONSET', 'DURATION', 'ABDOMINAL_ASSOCIATED'],
+            'ONSET' => ['ABDOMINAL_ASSOCIATED', 'DURATION'],
+            default => [],
+        };
+        $asked = array_values(array_filter($asked, static function (string $id) use ($deferred): bool {
+            return !in_array(strtoupper($id), $deferred, true);
+        }));
+        if (!in_array($qid, array_map('strtoupper', $asked), true)) {
+            $asked[] = $qid;
+        }
+        $assessment['interview']['questions_asked'] = $asked;
+        $assessment['interview']['questions_already_asked'] = $asked;
+        $assessment['interview']['awaiting_question_id'] = $qid;
+        $assessment['interview']['assessment_status'] = ClinicalInterviewEngine::STATUS_IN_PROGRESS;
+
+        if (!isset($assessment['triage']) || !is_array($assessment['triage'])) {
+            $assessment['triage'] = [];
+        }
+        $assessment['triage']['assessment_status'] = ClinicalInterviewEngine::STATUS_IN_PROGRESS;
+        $assessment['triage']['triage_classification'] = '';
+        $assessment['triage']['triage_display'] = '';
+
+        return $assessment;
+    }
+
+    /**
+     * @return array{text:string,helper:string,purpose:string,priority:int}
+     */
+    private static function demoQuestionPack(string $qid, string $lang): array
+    {
+        if ($qid === 'PAIN_SEVERITY') {
+            return match ($lang) {
+                'ENGLISH' => [
+                    'text' => 'How would you rate your pain right now from 0–10?',
+                    'helper' => '0 = no pain, 10 = worst pain imaginable.',
+                    'purpose' => 'Collect numeric pain score as supporting information',
+                    'priority' => 5,
+                ],
+                'TAGALOG' => [
+                    'text' => 'Kung 0–10 ang pain scale, gaano kasakit ngayon?',
+                    'helper' => '0 = walang sakit, 10 = pinakamalalang sakit na maisip.',
+                    'purpose' => 'Collect numeric pain score as supporting information',
+                    'priority' => 5,
+                ],
+                default => [
+                    'text' => 'Kung 0–10 ang pain scale, pila ang imo kasakit subong?',
+                    'helper' => '0 = wala sang kasakit, 10 = pinakagrabe nga kasakit nga ma-imagine.',
+                    'purpose' => 'Collect numeric pain score as supporting information',
+                    'priority' => 5,
+                ],
+            };
+        }
+
+        if ($qid === 'PAIN_LOCATION') {
+            return match ($lang) {
+                'ENGLISH' => [
+                    'text' => 'Where does it hurt?',
+                    'helper' => '',
+                    'purpose' => 'Locate unspecified pain or discomfort',
+                    'priority' => 10,
+                ],
+                'TAGALOG' => [
+                    'text' => 'Saan ang masakit sa iyo?',
+                    'helper' => '',
+                    'purpose' => 'Locate unspecified pain or discomfort',
+                    'priority' => 10,
+                ],
+                default => [
+                    'text' => 'Diin ang masakit sa imo?',
+                    'helper' => '',
+                    'purpose' => 'Locate unspecified pain or discomfort',
+                    'priority' => 10,
+                ],
+            };
+        }
+
+        // ONSET
+        return match ($lang) {
+            'ENGLISH' => [
+                'text' => 'When did the pain start?',
+                'helper' => '',
+                'purpose' => 'Determine onset / how long ago pain began',
+                'priority' => 50,
+            ],
+            'TAGALOG' => [
+                'text' => 'Kailan pa nagsimula ang sakit?',
+                'helper' => '',
+                'purpose' => 'Determine onset / how long ago pain began',
+                'priority' => 50,
+            ],
+            default => [
+                'text' => 'San-o pa nagsugod ang kasakit?',
+                'helper' => '',
+                'purpose' => 'Determine onset / how long ago pain began',
+                'priority' => 50,
+            ],
+        };
+    }
+
+    /**
+     * Fallback wording when demo order does not override.
      *
      * @param array<string, mixed> $assessment
      * @return array<string, mixed>
@@ -178,20 +410,17 @@ final class NlpStep3DemoTrial
             return $assessment;
         }
         $qid = strtoupper((string) ($q['question_id'] ?? ''));
-        $lang = strtoupper((string) ($q['language'] ?? ''));
-        if ($qid !== 'PAIN_LOCATION') {
+        $lang = strtoupper((string) ($q['language'] ?? 'HILIGAYNON'));
+        if (!in_array($qid, ['PAIN_LOCATION', 'PAIN_SEVERITY', 'ONSET'], true)) {
             return $assessment;
         }
 
-        $text = match ($lang) {
-            'ENGLISH' => 'Where does it hurt?',
-            'TAGALOG' => 'Saan ang masakit sa iyo?',
-            default => 'Diin ang masakit sa imo?',
-        };
-        $q['text'] = $text;
+        $pack = self::demoQuestionPack($qid, $lang);
+        $q['text'] = $pack['text'];
+        $q['helper_text'] = $pack['helper'];
         $q['demo_wording'] = true;
         $assessment['followup_question'] = $q;
-        $assessment['patient_message'] = $text;
+        $assessment['patient_message'] = $pack['text'] . ($pack['helper'] !== '' ? "\n\n" . $pack['helper'] : '');
 
         return $assessment;
     }
@@ -208,12 +437,18 @@ final class NlpStep3DemoTrial
             || $locations !== []
             || $score !== null;
 
+        $duration = trim((string) ($facts['duration_label'] ?? ''));
+        $onset = trim((string) ($facts['onset'] ?? ''));
+        if ($duration === '' && $onset !== '') {
+            $duration = $onset;
+        }
+
         return [
             'complaint' => $hasPain ? 'pain' : '',
             'location' => $locations !== [] ? implode(', ', $locations) : '',
             'pain_severity' => $score !== null ? ((int) $score) . '/10' : '',
-            'onset' => (string) ($facts['onset'] ?? ''),
-            'duration' => (string) ($facts['duration_label'] ?? ''),
+            'onset' => $onset,
+            'duration' => $duration,
         ];
     }
 

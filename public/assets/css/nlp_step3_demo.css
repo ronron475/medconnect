@@ -1595,6 +1595,12 @@
   color: #0f766e;
 }
 
+.nlp-trial-followup__helper {
+  margin: 6px 0 0;
+  font-size: 0.85rem;
+  color: #334155;
+}
+
 .nlp-legacy-details {
   margin-top: 8px;
   border: 1px solid #e2e8f0;
