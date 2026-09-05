@@ -83,7 +83,7 @@ Optional Hostinger `.env` override (FTP deploy does **not** overwrite `.env`):
 ```env
 MEDCONNECT_APP_URL=https://medconnect.bccbsis.com
 MEDCONNECT_AI_SERVICE_ENABLED=true
-MEDCONNECT_AI_SERVICE_URL=https://medconnect-production-a654.up.railway.app
+MEDCONNECT_AI_SERVICE_URL=https://medconnect-production-f2b7.up.railway.app
 MEDCONNECT_AI_AUTO_START=false
 MEDCONNECT_AI_REQUIRE_PYTHON=true
 GROQ_API_KEY=your_groq_key
