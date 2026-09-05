@@ -1912,14 +1912,25 @@
         '<li>location = <strong>' +
         escapeHtml(summary.location || '—') +
         '</strong></li>' +
-        '<li>duration / onset = <strong>' +
+        '<li>onset/duration = <strong>' +
         escapeHtml(summary.duration || summary.onset || '—') +
+        '</strong></li>' +
+        '<li>character = <strong>' +
+        escapeHtml(summary.character || '—') +
+        '</strong></li>' +
+        '<li>associated symptoms = <strong>' +
+        escapeHtml(summary.associated_symptoms || '—') +
         '</strong></li>' +
         '<li>transcript = <strong>' +
         escapeHtml(trial.clinical_transcript || trial.input || '—') +
         '</strong></li>' +
         '</ul></div>' +
         followHtml +
+        (status === 'COMPLETED' && triage
+          ? '<div class="nlp-trial-followup nlp-trial-followup--done"><strong>Next step</strong><p>Clinical assessment complete. Final triage: <strong>' +
+            escapeHtml(triage) +
+            '</strong></p><p class="nlp-trial-followup__helper">This is decision support only — not a medical diagnosis.</p></div>'
+          : '') +
         '<div class="nlp-trial-block"><h3>Engine</h3><p>' +
         escapeHtml(trial.engine_chain || trial.engine || '') +
         '<br>Gemini: ' +
