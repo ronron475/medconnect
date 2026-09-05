@@ -57,6 +57,33 @@ final class NlpStep3DemoTrial
         }
 
         $normalizedTurn = self::normalizeDemoTurn($turn, $prior);
+
+        $geminiMeta = [
+            'called' => false,
+            'available' => NlpStep3DemoGeminiAnswerInterpreter::enabled(),
+            'status' => 'NOT_CALLED',
+            'reason' => 'Existing NLP primary — Gemini not needed yet',
+            'interpretation' => null,
+            'min_confidence' => NlpStep3DemoGeminiAnswerInterpreter::minConfidence(),
+        ];
+
+        $awaiting = strtoupper((string) ($prior['awaiting_question_id'] ?? ''));
+        if ($hadTurns && $awaiting !== '') {
+            $geminiPack = self::maybeInterpretFollowUpWithGemini($normalizedTurn, $prior, $awaiting);
+            $geminiMeta = $geminiPack['meta'];
+            if (!empty($geminiPack['block_advance'])) {
+                return self::packClarificationHold(
+                    $turn,
+                    $prior,
+                    (string) $geminiPack['message'],
+                    $geminiMeta,
+                    is_array($geminiPack['question'] ?? null) ? $geminiPack['question'] : null
+                );
+            }
+            $normalizedTurn = (string) ($geminiPack['turn'] ?? $normalizedTurn);
+            $prior = is_array($geminiPack['prior'] ?? null) ? $geminiPack['prior'] : $prior;
+        }
+
         $assessment = ChiefComplaintNlpService::assessInterview($normalizedTurn, $prior);
         $assessment = self::applyDemoPainQuestionOrder($assessment);
 
@@ -96,11 +123,14 @@ final class NlpStep3DemoTrial
             $clinicalReasoning = 'Insufficient information for a reliable triage classification.';
         }
         $diagnosis = 'NOT determined';
-        $geminiUsed = false;
-        $geminiWhy = 'not called (demo reuses existing ClinicalInterviewEngine / question bank)';
-        if (is_array($question) && (($question['source'] ?? '') === 'gemini')) {
+        $geminiUsed = !empty($geminiMeta['called']);
+        $geminiWhy = (string) ($geminiMeta['reason'] ?? 'not called');
+        if (!$geminiUsed && is_array($question) && (($question['source'] ?? '') === 'gemini')) {
             $geminiUsed = true;
             $geminiWhy = 'Gemini phrased a follow-up question only; it did not set triage class';
+            $geminiMeta['called'] = true;
+            $geminiMeta['status'] = 'QUESTION_PHRASE_ONLY';
+            $geminiMeta['reason'] = $geminiWhy;
         }
 
         return [
@@ -135,10 +165,240 @@ final class NlpStep3DemoTrial
             'engine_chain' => ChiefComplaintNlpService::ENGINE_CHAIN . ' + ClinicalInterviewEngine (demo trial pain order)',
             'gemini_called' => $geminiUsed,
             'gemini_why' => $geminiWhy,
+            'gemini' => $geminiMeta,
+            'nlp_primary' => true,
             'assessment' => $assessment,
             'next_action' => $inProgress
                 ? 'Answer the follow-up question to continue accumulating context.'
                 : 'Final triage ready (EMERGENCY / URGENT / NON-URGENT only).',
+        ];
+    }
+
+    /**
+     * Demo-only: call Gemini when existing NLP cannot confidently understand a follow-up answer.
+     *
+     * @param array<string, mixed> $prior
+     * @return array<string, mixed>
+     */
+    private static function maybeInterpretFollowUpWithGemini(string $turn, array $prior, string $awaiting): array
+    {
+        $meta = [
+            'called' => false,
+            'available' => NlpStep3DemoGeminiAnswerInterpreter::enabled(),
+            'status' => 'NOT_CALLED',
+            'reason' => 'Existing NLP understood the follow-up answer',
+            'interpretation' => null,
+            'min_confidence' => NlpStep3DemoGeminiAnswerInterpreter::minConfidence(),
+        ];
+
+        if (NlpStep3DemoGeminiAnswerInterpreter::nlpUnderstandsAnswer($turn, $awaiting, $prior)) {
+            return [
+                'meta' => $meta,
+                'block_advance' => false,
+                'turn' => $turn,
+                'prior' => $prior,
+            ];
+        }
+
+        $expected = self::expectedAnswerType($awaiting);
+        $questionText = self::lastAskedQuestionText($prior, $awaiting);
+        $result = NlpStep3DemoGeminiAnswerInterpreter::interpret(
+            $turn,
+            $questionText,
+            $awaiting,
+            $expected,
+            $prior
+        );
+
+        $meta = array_merge($meta, [
+            'called' => !empty($result['called']),
+            'available' => !empty($result['available']),
+            'status' => (string) ($result['status'] ?? 'ERROR'),
+            'reason' => (string) ($result['reason'] ?? ''),
+            'interpretation' => is_array($result['interpretation'] ?? null) ? $result['interpretation'] : null,
+        ]);
+
+        // Gemini unavailable / failed → continue with existing NLP + clarification path (no crash).
+        if (in_array($meta['status'], ['UNAVAILABLE', 'ERROR', 'INVALID_JSON'], true) || empty($meta['called'])) {
+            if ($meta['status'] === 'UNAVAILABLE') {
+                $meta['reason'] = 'Gemini fallback unavailable — continuing with existing NLP';
+            }
+
+            return [
+                'meta' => $meta,
+                'block_advance' => false,
+                'turn' => $turn,
+                'prior' => $prior,
+            ];
+        }
+
+        $interp = is_array($meta['interpretation']) ? $meta['interpretation'] : [];
+        $needsClarification = !empty($interp['needs_clarification'])
+            || empty($interp['relevant'])
+            || empty($interp['understood'])
+            || in_array($meta['status'], ['UNRELATED', 'NEEDS_CLARIFICATION', 'LOW_CONFIDENCE'], true);
+
+        if ($needsClarification) {
+            $msg = self::clarificationMessage($awaiting, $interp, $questionText);
+
+            return [
+                'meta' => $meta,
+                'block_advance' => true,
+                'message' => $msg,
+                'question' => self::heldQuestion($awaiting, $questionText, $msg),
+                'turn' => $turn,
+                'prior' => $prior,
+            ];
+        }
+
+        $applied = NlpStep3DemoGeminiAnswerInterpreter::applyToPrior($prior, $turn, $interp, $awaiting);
+
+        return [
+            'meta' => $meta,
+            'block_advance' => false,
+            'turn' => (string) ($applied['turn'] ?? $turn),
+            'prior' => is_array($applied['prior'] ?? null) ? $applied['prior'] : $prior,
+        ];
+    }
+
+    private static function expectedAnswerType(string $awaiting): string
+    {
+        return match (strtoupper($awaiting)) {
+            'PAIN_SEVERITY' => 'PAIN_SEVERITY',
+            'PAIN_LOCATION' => 'PAIN_LOCATION',
+            'ONSET', 'DURATION' => 'ONSET_DURATION',
+            'ASSOCIATED_SYMPTOMS', 'ABDOMINAL_ASSOCIATED' => 'ASSOCIATED_SYMPTOMS',
+            default => 'OTHER_CLINICAL',
+        };
+    }
+
+    /**
+     * @param array<string, mixed> $prior
+     */
+    private static function lastAskedQuestionText(array $prior, string $awaiting): string
+    {
+        $pack = self::demoQuestionPack($awaiting, 'HILIGAYNON');
+        if (($pack['text'] ?? '') !== '' && in_array($awaiting, ['PAIN_SEVERITY', 'PAIN_LOCATION', 'ONSET'], true)) {
+            return (string) $pack['text'];
+        }
+
+        return match ($awaiting) {
+            'DURATION' => 'San-o pa / pila ka adlaw na ang kasakit?',
+            'ASSOCIATED_SYMPTOMS', 'ABDOMINAL_ASSOCIATED' => 'May iban pa bala nga sintomas?',
+            default => 'Palihog klaroha ang imo sabat sa clinical question.',
+        };
+    }
+
+    /**
+     * @param array<string, mixed> $interp
+     */
+    private static function clarificationMessage(string $awaiting, array $interp, string $questionText): string
+    {
+        $reason = trim((string) ($interp['clarification_reason'] ?? ''));
+        $awaiting = strtoupper($awaiting);
+
+        if (empty($interp['relevant']) || strtoupper((string) ($interp['answer_type'] ?? '')) === 'UNRELATED') {
+            return match ($awaiting) {
+                'ONSET', 'DURATION' => 'Para ma-assess ang imo kasakit, gusto ko lang mahibaluan kung san-o ini nagsugod. Halimbawa: subong lang, gahapon, halin gahapon, ukon dugay na.',
+                'PAIN_LOCATION' => 'Diin ang masakit sa imo? Halimbawa: ulo, tiyan, dughan, likod.',
+                'PAIN_SEVERITY' => 'Palihog i-rate ang imo kasakit sa scale nga 1–10.',
+                default => 'Palihog sabta ang clinical question: ' . $questionText,
+            };
+        }
+
+        if ($awaiting === 'ONSET' || $awaiting === 'DURATION') {
+            return 'Mga san-o ini nagsugod? Halimbawa, subong lang, gahapon, pila ka adlaw na, ukon dugay na?'
+                . ($reason !== '' ? "\n\n(" . $reason . ')' : '');
+        }
+
+        return ($reason !== '' ? $reason . "\n\n" : '') . 'Palihog i-klaro ang imo sabat: ' . $questionText;
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private static function heldQuestion(string $awaiting, string $questionText, string $clarification): array
+    {
+        $lang = 'HILIGAYNON';
+        $pack = in_array($awaiting, ['PAIN_SEVERITY', 'PAIN_LOCATION', 'ONSET'], true)
+            ? self::demoQuestionPack($awaiting, $lang)
+            : ['text' => $questionText, 'helper' => '', 'purpose' => 'clarification', 'priority' => 50];
+
+        return [
+            'question_id' => $awaiting !== '' ? $awaiting : 'CLARIFY',
+            'clinical_purpose' => (string) ($pack['purpose'] ?? 'Clarify patient answer'),
+            'red_flag_related' => false,
+            'priority' => (int) ($pack['priority'] ?? 50),
+            'text' => $clarification,
+            'helper_text' => (string) ($pack['helper'] ?? ''),
+            'language' => $lang,
+            'source' => 'demo_gemini_clarification',
+            'demo_wording' => true,
+            'demo_order' => true,
+        ];
+    }
+
+    /**
+     * @param array<string, mixed> $prior
+     * @param array<string, mixed> $geminiMeta
+     * @param array<string, mixed>|null $question
+     * @return array<string, mixed>
+     */
+    private static function packClarificationHold(
+        string $turn,
+        array $prior,
+        string $message,
+        array $geminiMeta,
+        ?array $question
+    ): array {
+        $awaiting = strtoupper((string) ($prior['awaiting_question_id'] ?? ''));
+        $facts = is_array($prior['facts'] ?? null) ? $prior['facts'] : [];
+        if ($question === null) {
+            $question = self::heldQuestion($awaiting, self::lastAskedQuestionText($prior, $awaiting), $message);
+        }
+
+        $prior['assessment_status'] = ClinicalInterviewEngine::STATUS_IN_PROGRESS;
+        $prior['awaiting_question_id'] = $awaiting;
+
+        return [
+            'demo_mode' => self::MODE,
+            'trial_only' => true,
+            'production_untouched' => true,
+            'input' => $turn,
+            'normalized_input' => $turn,
+            'health_related' => true,
+            'domain_class' => 'HEALTH_RELATED',
+            'information' => 'INCOMPLETE',
+            'clinical_status' => 'NEEDS_FOLLOW_UP',
+            'clinical_reasoning' => 'Follow-up answer needs clarification before the interview can advance.',
+            'diagnosis' => 'NOT determined',
+            'assessment_status' => ClinicalInterviewEngine::STATUS_IN_PROGRESS,
+            'triage_display' => '',
+            'triage_final' => null,
+            'followup_required' => true,
+            'followup_question' => $question,
+            'patient_message' => $message,
+            'clinical_transcript' => trim(implode('. ', array_map('strval', (array) ($prior['patient_turns'] ?? [])))),
+            'facts' => $facts,
+            'complaint_summary' => self::complaintSummary($facts, (string) ($prior['chief_complaint'] ?? $turn)),
+            'detected_symptoms' => [],
+            'possible_conditions' => [],
+            'english_translation' => '',
+            'detected_language' => (string) ($prior['detected_language'] ?? ''),
+            'interview_context' => $prior,
+            'engine' => 'nlp-step3-demo-gemini-clarify',
+            'engine_chain' => 'Existing NLP primary + Gemini answer fallback (clarification hold)',
+            'gemini_called' => !empty($geminiMeta['called']),
+            'gemini_why' => (string) ($geminiMeta['reason'] ?? ''),
+            'gemini' => $geminiMeta,
+            'nlp_primary' => true,
+            'assessment' => [
+                'assessment_status' => ClinicalInterviewEngine::STATUS_IN_PROGRESS,
+                'triage' => ['triage_display' => '', 'assessment_status' => ClinicalInterviewEngine::STATUS_IN_PROGRESS],
+                'interview' => $prior,
+                'followup_question' => $question,
+            ],
+            'next_action' => 'Answer the clarification — interview has not advanced.',
         ];
     }
 
@@ -573,6 +833,14 @@ final class NlpStep3DemoTrial
             'engine_chain' => 'demo gate only (no triage)',
             'gemini_called' => $geminiCalled,
             'gemini_why' => $geminiCalled ? 'domain fallback' : 'not called',
+            'gemini' => [
+                'called' => $geminiCalled,
+                'available' => NlpStep3DemoGeminiAnswerInterpreter::enabled(),
+                'status' => 'NOT_CALLED',
+                'reason' => $geminiCalled ? 'domain fallback' : 'gate — Gemini answer interpreter not used',
+                'interpretation' => null,
+            ],
+            'nlp_primary' => true,
             'assessment' => null,
             'next_action' => $message,
         ];

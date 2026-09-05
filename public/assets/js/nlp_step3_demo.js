@@ -2119,10 +2119,42 @@
             escapeHtml(triage) +
             '</strong></p><p class="nlp-trial-followup__helper">This is decision support only — not a medical diagnosis.</p></div>'
           : '') +
-        '<div class="nlp-trial-block"><h3>Engine</h3><p>' +
+        '<div class="nlp-trial-block"><h3>NLP / Gemini</h3>' +
+        '<ul>' +
+        '<li>NLP: <strong>PRIMARY — existing NLP</strong></li>' +
+        '<li>Gemini: <strong>' +
+        escapeHtml(
+          trial.gemini && trial.gemini.called
+            ? 'CALLED'
+            : trial.gemini_called
+              ? 'CALLED'
+              : 'NOT CALLED'
+        ) +
+        '</strong></li>' +
+        '<li>Gemini reason: <strong>' +
+        escapeHtml((trial.gemini && trial.gemini.reason) || trial.gemini_why || '—') +
+        '</strong></li>' +
+        (trial.gemini && trial.gemini.interpretation
+          ? '<li>Gemini interpretation: <strong>' +
+            escapeHtml(String(trial.gemini.interpretation.answer_type || '—')) +
+            '</strong></li>' +
+            '<li>Gemini confidence: <strong>' +
+            escapeHtml(
+              trial.gemini.interpretation.confidence != null
+                ? String(trial.gemini.interpretation.confidence)
+                : '—'
+            ) +
+            '</strong></li>' +
+            '<li>Normalized: <strong>' +
+            escapeHtml(String(trial.gemini.interpretation.normalized_value || '—')) +
+            '</strong></li>'
+          : '') +
+        '<li>Status: <strong>' +
+        escapeHtml((trial.gemini && trial.gemini.status) || '—') +
+        '</strong></li>' +
+        '</ul>' +
+        '<p class="nlp-muted">' +
         escapeHtml(trial.engine_chain || trial.engine || '') +
-        '<br>Gemini: ' +
-        escapeHtml(trial.gemini_called ? 'called — ' + (trial.gemini_why || '') : 'not called — ' + (trial.gemini_why || '')) +
         '</p></div>';
 
       if (needsFollowUp) {
