@@ -1333,3 +1333,238 @@ table:not(.ch-table) {
     padding-right: max(0px, var(--mc-safe-right));
   }
 }
+
+/* ═══════════════════════════════════════════════════════════════
+   System-wide responsive hardening (all portals)
+   Scoped to known shells — avoids * { } breakage.
+   ═══════════════════════════════════════════════════════════════ */
+
+html,
+body {
+  max-width: 100%;
+}
+
+body.patient-portal,
+body.provider-body,
+body.bhw-body,
+body.admin-body,
+body.superadmin-body,
+body.adm-body,
+body.nlp-demo-body,
+body.nct-body,
+body.landing-page,
+body.reg-body,
+body.setup-page,
+body.setup-page-body,
+body.login-page,
+body.role-patient,
+body.role-provider,
+body.mc-ended-page {
+  overflow-x: clip;
+}
+
+.portal-main,
+.main.portal-main,
+.main-content,
+.provider-main,
+.has-aqua-sidebar,
+.adm-content,
+.pd-content,
+.content,
+.nlp-demo-main,
+.provider-page-body,
+.portal-page-body {
+  max-width: 100%;
+  min-width: 0;
+}
+
+img,
+svg,
+canvas,
+iframe,
+embed,
+object,
+video {
+  max-width: 100%;
+}
+
+/* Forms: never spill past parent */
+.portal-main input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="color"]),
+.portal-main select,
+.portal-main textarea,
+.provider-main input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="color"]),
+.provider-main select,
+.provider-main textarea,
+.adm-content input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="color"]),
+.adm-content select,
+.adm-content textarea,
+.nlp-demo-main input:not([type="checkbox"]):not([type="radio"]),
+.nlp-demo-main select,
+.nlp-demo-main textarea,
+.reg-body input:not([type="checkbox"]):not([type="radio"]),
+.reg-body select,
+.reg-body textarea {
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+/* Tables: scroll only inside wrappers, not the whole page */
+.mc-table-wrap,
+.table-responsive,
+.adm-table-wrap,
+.pd-table-wrap,
+.bhw-pl-table-scroll,
+.gis-table-wrap,
+.table-scroll,
+[data-table-scroll],
+.overflow-x-auto {
+  max-width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+@media (max-width: 768px) {
+  /* Keep readable columns; scroll stays inside .*-wrap only */
+  .bhw-pl-table {
+    min-width: 640px;
+  }
+
+  .gis-table {
+    min-width: 560px;
+  }
+
+  /* Stack common dashboard grids */
+  .stat-grid,
+  .stats-grid,
+  .dash-stats,
+  .adm-stat-grid,
+  .prov-stat-grid,
+  .pdash-stats,
+  .card-grid {
+    grid-template-columns: 1fr !important;
+  }
+
+  /* Chat message wrap (do not cap open FAQ/remedy sheets with !important) */
+  .faq-chatbot-messages,
+  .fcb-messages,
+  .pt-remedy__bubble,
+  .pt-remedy__thread {
+    overflow-wrap: anywhere;
+    word-break: break-word;
+  }
+
+  /* Video consultation shells */
+  .session-video-shell,
+  .vcs-shell,
+  .video-room,
+  .mc-vc-shell,
+  .mc-vc-layout {
+    max-width: 100%;
+  }
+
+  .session-controls,
+  .vcs-controls,
+  .video-controls,
+  .mc-vc-controls {
+    justify-content: center;
+    gap: 8px;
+  }
+
+  .mc-vc-controls-inner {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    max-width: 100%;
+  }
+
+  /* GIS map: leave room for toolbar + legend on phones */
+  .gis-map {
+    height: clamp(220px, 32vh, 320px) !important;
+    min-height: 220px !important;
+  }
+
+  /* Modal body scroll before footer is pushed off-screen */
+  .mc-modal__body,
+  .modal-body {
+    max-height: min(60dvh, 480px);
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+}
+
+@media (max-width: 480px) {
+  .bhw-pl-table {
+    min-width: 520px;
+  }
+
+  .gis-table {
+    min-width: 480px;
+  }
+
+  /* Touch-friendly primary actions */
+  .mc-btn,
+  .h-btn,
+  .pd-btn,
+  .adm-btn,
+  .prov-btn,
+  button.btn,
+  .btn-primary,
+  .btn-secondary {
+    min-height: 44px;
+  }
+
+  /* Modals stay in viewport */
+  .mc-modal__dialog,
+  .mc-modal,
+  .modal-dialog,
+  .reg-req-modal__dialog {
+    width: calc(100vw - 20px) !important;
+    max-width: calc(100vw - 20px) !important;
+    max-height: calc(100vh - 24px);
+    margin: 10px auto !important;
+  }
+
+  .mc-modal__body,
+  .modal-body {
+    max-height: min(70vh, 520px);
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+}
+
+/* NLP Step 3 demo (standalone public page) */
+@media (max-width: 768px) {
+  .nlp-demo-main {
+    padding: 18px 12px 40px !important;
+  }
+
+  .nlp-trial-actions {
+    flex-direction: column;
+    align-items: stretch !important;
+  }
+
+  .nlp-trial-actions .nlp-btn-validate,
+  .nlp-trial-actions .nlp-btn-secondary {
+    width: 100%;
+  }
+
+  .nlp-trial-scale {
+    justify-content: flex-start;
+  }
+
+  .nlp-trial-grid {
+    grid-template-columns: 1fr 1fr !important;
+  }
+}
+
+@media (max-width: 480px) {
+  .nlp-trial-grid {
+    grid-template-columns: 1fr !important;
+  }
+
+  .nlp-wv-chip,
+  .nlp-trial-chips .nlp-wv-chip {
+    font-size: 0.75rem;
+  }
+}
+

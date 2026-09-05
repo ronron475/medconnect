@@ -17,6 +17,7 @@ $providerLabel = $endedProvider !== '' ? $endedProvider : 'your doctor';
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="<?= htmlspecialchars(ASSET_BASE) ?>/assets/css/video-room-enhancements.css?v=<?= (int) $endedCssVer ?>">
+  <link rel="stylesheet" href="<?= htmlspecialchars(ASSET_BASE) ?>/assets/css/responsive.css">
 </head>
 <body class="mc-ended-page is-ended-consultation<?= $isPatientEnded ? ' role-patient' : ' role-provider' ?>">
   <main class="mc-vc-postcall mc-ended-page__shell" role="main">

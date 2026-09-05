@@ -341,10 +341,30 @@ html[data-theme-resolved='dark'] .pt-remedy__choice--outline {
     max-height: min(78vh, 620px);
   }
 
+  .pt-remedy[data-open="true"] {
+    inset: 0;
+    right: 0;
+    left: 0;
+    bottom: 0;
+    z-index: 12040;
+  }
+
   .pt-remedy[data-open="true"] .pt-remedy__panel {
-    right: 12px;
-    bottom: calc(12px + env(safe-area-inset-bottom, 0px));
-    width: min(380px, calc(100vw - 24px));
+    position: fixed;
+    left: max(12px, env(safe-area-inset-left, 0px));
+    right: max(12px, env(safe-area-inset-right, 0px));
+    top: max(12px, env(safe-area-inset-top, 0px));
+    bottom: max(12px, env(safe-area-inset-bottom, 0px));
+    width: auto;
+    max-width: none;
+    max-height: none;
+    border-radius: 16px;
+  }
+
+  .pt-remedy__thread {
+    min-height: 0;
+    max-height: none;
+    flex: 1 1 auto;
   }
 
   .pt-remedy__fab {

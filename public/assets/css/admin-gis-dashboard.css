@@ -963,8 +963,8 @@ body.provider-body .gis-brgy-panel.mc-card {
   }
 
   .gis-map {
-    height: clamp(300px, 38vh, 400px);
-    min-height: 300px;
+    height: clamp(220px, 32vh, 320px);
+    min-height: 220px;
   }
 
   .gis-map-legend {

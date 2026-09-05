@@ -41,6 +41,7 @@ $userName = htmlspecialchars(trim(($_SESSION['first_name'] ?? '') . ' ' . ($_SES
   <title>Account Setup — medConnect</title>
   <link rel="stylesheet" href="<?= $asset ?>/assets/css/style.css"/>
   <link rel="stylesheet" href="<?= $asset ?>/assets/css/register.css"/>
+  <link rel="stylesheet" href="<?= $asset ?>/assets/css/responsive.css"/>
   <style>
     .setup-page { min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 90px 24px 60px; position: relative; z-index: 1; }
     .setup-wrapper { width: 100%; max-width: 560px; }
@@ -65,9 +66,14 @@ $userName = htmlspecialchars(trim(($_SESSION['first_name'] ?? '') . ' ' . ($_SES
     .setup-alert.error { background: #fef2f2; color: #dc2626; border: 1px solid #fca5a5; }
     .setup-alert.success { background: #f0fdf4; color: #16a34a; border: 1px solid #86efac; }
     .setup-note { font-size: 12px; color: #94a3b8; margin-top: 16px; text-align: center; }
+    @media (max-width: 480px) {
+      .setup-page { padding: 72px 14px 40px; }
+      .setup-card { padding: 24px 18px; border-radius: 16px; }
+      .setup-title { font-size: 1.15rem; }
+    }
   </style>
 </head>
-<body>
+<body class="setup-page-body">
 <div class="setup-page">
   <div class="setup-wrapper">
     <div class="setup-card">
