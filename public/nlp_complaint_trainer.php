@@ -89,6 +89,7 @@ $groupMeta = [
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>medConnect — Complaint NLP Trainer</title>
   <link rel="stylesheet" href="<?= htmlspecialchars($assetBase) ?>/assets/css/nlp_complaint_trainer.css?v=1.0" />
+  <link rel="stylesheet" href="<?= htmlspecialchars($assetBase) ?>/assets/css/responsive.css" />
 </head>
 <body class="nct-body">
   <main class="nct-main">

@@ -21,7 +21,7 @@
   <link rel="stylesheet" href="<?= $asset ?>/assets/css/responsive.css?v=20260808r" />
   <?php require_once dirname(__DIR__) . '/components/loader.php'; mc_loader_assets(); ?>
 </head>
-<body>
+<body class="login-page">
 
 <?php mc_render_loader_boot(['status' => 'Loading sign in…']); ?>
 

@@ -29,6 +29,7 @@ foreach ($docs as $d) {
   <title>Complete BHW Profile — medConnect</title>
   <link rel="stylesheet" href="<?= htmlspecialchars($asset) ?>/assets/css/style.css"/>
   <link rel="stylesheet" href="<?= htmlspecialchars($asset) ?>/assets/css/register.css"/>
+  <link rel="stylesheet" href="<?= htmlspecialchars($asset) ?>/assets/css/responsive.css"/>
   <style>
     .setup-page { min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 90px 24px 60px; position: relative; z-index: 1; }
     .setup-wrapper { width: 100%; max-width: 640px; }
@@ -39,7 +40,11 @@ foreach ($docs as $d) {
     .setup-group label { display: block; font-size: 13px; font-weight: 600; margin-bottom: 6px; }
     .setup-group input, .setup-group select { width: 100%; height: 48px; padding: 0 14px; border: 1.5px solid #d0e4f7; border-radius: 12px; font-size: 14px; box-sizing: border-box; }
     .setup-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-    @media (max-width: 640px) { .setup-grid { grid-template-columns: 1fr; } }
+    @media (max-width: 640px) {
+      .setup-grid { grid-template-columns: 1fr; }
+      .setup-page { padding: 72px 14px 40px; }
+      .setup-card { padding: 24px 16px 28px; }
+    }
     .setup-btn { width: 100%; height: 52px; border: none; border-radius: 12px; background: linear-gradient(135deg, #0d9488, #14b8a6); color: #fff; font-weight: 700; font-size: 15px; cursor: pointer; margin-top: 8px; }
     .setup-btn.secondary { background: #fff; color: #0f766e; border: 1.5px solid #99f6e4; margin-top: 10px; }
     .setup-btn:disabled { opacity: .55; cursor: not-allowed; }
