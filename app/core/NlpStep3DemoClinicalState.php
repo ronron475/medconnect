@@ -19,6 +19,8 @@ final class NlpStep3DemoClinicalState
             'chief_complaint' => '',
             'symptoms' => [],
             'anatomical_location' => [],
+            'location_detail' => '',
+            'location_is_specific' => false,
             'laterality' => '',
             'severity' => null,
             'onset' => '',
@@ -74,7 +76,9 @@ final class NlpStep3DemoClinicalState
         $state = is_array($facts['clinical_state'] ?? null)
             ? $facts['clinical_state']
             : self::extractState($facts, $transcript);
-        $family = self::detectFamily($state, $transcript, $assessment);
+
+        $selection = self::selectAdaptiveMissing($state, $facts, $transcript, $assessment);
+        $family = (string) ($selection['primary_concept'] ?? self::detectFamily($state, $transcript, $assessment));
         $state['family'] = $family;
 
         $redFlagPriority = self::hasImmediateRedFlagPriority($state, $transcript, $assessment);
@@ -82,6 +86,7 @@ final class NlpStep3DemoClinicalState
             return [
                 'status' => self::STATUS_SUFFICIENT,
                 'family' => $family,
+                'active_concepts' => $selection['concepts'] ?? [],
                 'missing' => [],
                 'next_question_id' => '',
                 'next_purpose' => '',
@@ -90,9 +95,32 @@ final class NlpStep3DemoClinicalState
             ];
         }
 
-        [$missing, $nextId, $purpose] = self::missingForFamily($family, $state, $facts);
+        $missing = is_array($selection['missing'] ?? null) ? $selection['missing'] : [];
         $unknown = is_array($facts['unknown_fields'] ?? null) ? $facts['unknown_fields'] : [];
         $missing = array_values(array_filter($missing, static fn (string $m): bool => !in_array($m, $unknown, true)));
+        $nextId = (string) ($selection['next_question_id'] ?? '');
+        $purpose = (string) ($selection['next_purpose'] ?? '');
+        if ($missing === [] || ($nextId !== '' && in_array(self::slotKeyForQuestion($nextId), $unknown, true))) {
+            // Recompute next after unknown filtering.
+            $nextId = '';
+            $purpose = '';
+            foreach ((array) ($selection['missing_queue'] ?? []) as $row) {
+                if (!is_array($row)) {
+                    continue;
+                }
+                $slot = (string) ($row['slot'] ?? '');
+                if ($slot !== '' && in_array($slot, $unknown, true)) {
+                    continue;
+                }
+                $nextId = (string) ($row['question_id'] ?? '');
+                $purpose = (string) ($row['purpose'] ?? '');
+                break;
+            }
+            $missing = array_values(array_filter(
+                $missing,
+                static fn (string $m): bool => !in_array($m, $unknown, true)
+            ));
+        }
 
         if ($missing === []) {
             $status = self::STATUS_SUFFICIENT;
@@ -105,6 +133,7 @@ final class NlpStep3DemoClinicalState
         return [
             'status' => $status,
             'family' => $family,
+            'active_concepts' => $selection['concepts'] ?? [],
             'missing' => $missing,
             'next_question_id' => $status === self::STATUS_SUFFICIENT ? '' : $nextId,
             'next_purpose' => $status === self::STATUS_SUFFICIENT ? '' : $purpose,
@@ -141,10 +170,18 @@ final class NlpStep3DemoClinicalState
             $onset = (string) $facts['onset'];
         }
 
+        $locDetail = trim((string) ($state['location_detail'] ?? ''));
+        $locLabel = $locs !== [] ? implode(', ', $locs) : '';
+        if ($locDetail !== '') {
+            $locLabel = $locLabel !== '' ? ($locLabel . ' (' . $locDetail . ')') : $locDetail;
+        }
+
         return [
             'chief_complaint' => (string) ($state['chief_complaint'] ?? ''),
             'complaint' => (string) ($state['chief_complaint'] ?? ''),
-            'location' => $locs !== [] ? implode(', ', $locs) : '',
+            'location' => $locLabel,
+            'location_detail' => $locDetail,
+            'location_is_specific' => !empty($state['location_is_specific']),
             'laterality' => (string) ($state['laterality'] ?? ''),
             'pain_severity' => $severity !== null ? ((int) $severity) . '/10' : '',
             'severity' => $severity !== null ? ((int) $severity) . '/10' : '',
@@ -274,6 +311,14 @@ final class NlpStep3DemoClinicalState
         } elseif (preg_match('/\b(duha\s+ka\s+bahin|both\s+sides|bilateral)\b/u', $low)) {
             $state['laterality'] = 'bilateral';
         }
+
+        $state['location_detail'] = self::extractLocationDetail($transcript);
+        if ($state['location_detail'] === '' && trim((string) ($facts['location_detail'] ?? '')) !== '') {
+            $state['location_detail'] = trim((string) $facts['location_detail']);
+        }
+        // Family is needed for specificity; provisional detect, then finalize after associated symptoms.
+        $provisionalFamily = self::detectFamily($state, $transcript, []);
+        $state['location_is_specific'] = self::isLocationSpecific($state, $provisionalFamily, $transcript);
 
         $char = '';
         if (preg_match('/\b(pulsing|pulsating|pitik-pitik|naga-pitik|throb|throbbing|tumutibok|tumitibok)\b/u', $low)) {
@@ -411,6 +456,7 @@ final class NlpStep3DemoClinicalState
             : [];
 
         $state['family'] = self::detectFamily($state, $transcript, []);
+        $state['location_is_specific'] = self::isLocationSpecific($state, (string) $state['family'], $transcript);
         $state['chief_complaint'] = self::chiefComplaintLabel($state, $transcript);
         if ($state['chief_complaint'] !== '') {
             $state['symptoms'] = array_values(array_unique(array_merge(
@@ -420,6 +466,523 @@ final class NlpStep3DemoClinicalState
         }
 
         return $state;
+    }
+
+    /**
+     * Extract a free-text specific site (quadrant, eye side, head region, etc.).
+     */
+    private static function extractLocationDetail(string $transcript): string
+    {
+        $low = mb_strtolower($transcript);
+
+        if (preg_match(
+            '/\b((?:sa\s+)?(?:tuo|wala|right|left|kaliwa)(?:\s+nga)?\s+(?:idalom|taas|ibabaw|lower|upper)(?:\s+sang)?\s+(?:tiyan|abdomen|stomach|belly))\b/u',
+            $low,
+            $m
+        )) {
+            return trim($m[1]);
+        }
+        if (preg_match(
+            '/\b((?:idalom|taas|ibabaw|lower|upper)(?:\s+sang)?\s+(?:tiyan|abdomen|stomach))\b/u',
+            $low,
+            $m
+        )) {
+            return trim($m[1]);
+        }
+        if (preg_match(
+            '/\b((?:right|left)\s+(?:lower|upper)\s+(?:quadrant|abdomen)|(?:rlq|llq|ruq|luq)|epigastric|umbilical|hypochondrium|flank)\b/u',
+            $low,
+            $m
+        )) {
+            return trim($m[1]);
+        }
+        if (preg_match('/\b(pusod|pus-od|around\s+the\s+navel|near\s+the\s+navel)\b/u', $low, $m)) {
+            return trim($m[1]);
+        }
+        if (preg_match(
+            '/\b((?:sa\s+)?(?:tuo|wala|right|left|kaliwa)(?:\s+nga)?\s+(?:mata|eye)|(?:both|duha)(?:\s+ka)?\s+(?:mata|eyes)|bilateral\s+eyes?)\b/u',
+            $low,
+            $m
+        )) {
+            return trim($m[1]);
+        }
+        if (preg_match(
+            '/\b((?:forehead|frontal|temple|temporal|occipital|vertex|buo|likod\s+(?:sang\s+)?ulo|(?:sa\s+)?(?:tuo|wala|right|left)(?:\s+nga)?\s+ulo))\b/u',
+            $low,
+            $m
+        )) {
+            return trim($m[1]);
+        }
+        if (preg_match(
+            '/\b((?:sa\s+)?(?:tuo|wala|right|left|kaliwa)(?:\s+nga)?\s+(?:dughan|dibdib|chest)|substernal|center\s+of\s+(?:the\s+)?chest|tunga\s+(?:sang\s+)?dughan)\b/u',
+            $low,
+            $m
+        )) {
+            return trim($m[1]);
+        }
+
+        return '';
+    }
+
+    /**
+     * True when the site is specific enough that we should not re-ask location
+     * for the active body region(s). Driven by dataset location_specificity rules.
+     *
+     * @param array<string, mixed> $state
+     */
+    private static function isLocationSpecific(array $state, string $family, string $transcript = ''): bool
+    {
+        unset($family); // Kept for call-site compatibility; specificity is region-driven.
+        return self::hasSpecificLocationForActiveRegions($state, $transcript);
+    }
+
+    /**
+     * @param array<string, mixed> $state
+     */
+    private static function hasSpecificLocationForActiveRegions(array $state, string $transcript = ''): bool
+    {
+        $detail = trim((string) ($state['location_detail'] ?? ''));
+        if ($detail !== '') {
+            return true;
+        }
+
+        $laterality = trim((string) ($state['laterality'] ?? ''));
+        $low = mb_strtolower($transcript);
+        $rules = ClinicalInterviewContextResolver::locationSpecificityRules();
+        $regions = is_array($rules['regions'] ?? null) ? $rules['regions'] : [];
+        $locs = self::normalizedLocations($state);
+        if ($locs === []) {
+            return false;
+        }
+
+        foreach ($locs as $loc) {
+            $rule = is_array($regions[$loc] ?? null) ? $regions[$loc] : [];
+            if ($rule === []) {
+                // Unknown region with a named site is treated as specific enough.
+                return true;
+            }
+            foreach ((array) ($rule['detail_regex'] ?? []) as $pattern) {
+                $pattern = trim((string) $pattern);
+                if ($pattern !== '' && preg_match('/' . $pattern . '/iu', $low)) {
+                    return true;
+                }
+            }
+            if ($laterality !== '' && !empty($rule['accepts_laterality_as_specific'])) {
+                return true;
+            }
+            if (!empty($rule['needs_laterality']) && $laterality !== '') {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * @param array<string, mixed> $state
+     * @return list<string>
+     */
+    private static function normalizedLocations(array $state): array
+    {
+        $locs = is_array($state['anatomical_location'] ?? null) ? $state['anatomical_location'] : [];
+        $out = [];
+        foreach ($locs as $loc) {
+            $l = mb_strtolower(trim((string) $loc));
+            if ($l !== '') {
+                $out[] = $l;
+            }
+        }
+
+        return array_values(array_unique($out));
+    }
+
+    /**
+     * @param array<string, mixed> $state
+     */
+    private static function regionNeedsSpecificLocation(array $state, string $transcript = ''): bool
+    {
+        $rules = ClinicalInterviewContextResolver::locationSpecificityRules();
+        $regions = is_array($rules['regions'] ?? null) ? $rules['regions'] : [];
+        foreach (self::normalizedLocations($state) as $loc) {
+            $rule = is_array($regions[$loc] ?? null) ? $regions[$loc] : [];
+            if (!empty($rule['needs_specificity']) && !self::hasSpecificLocationForActiveRegions($state, $transcript)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * @param array<string, mixed> $state
+     */
+    private static function regionNeedsLaterality(array $state, string $transcript = ''): bool
+    {
+        if (trim((string) ($state['laterality'] ?? '')) !== '') {
+            return false;
+        }
+        $rules = ClinicalInterviewContextResolver::locationSpecificityRules();
+        $regions = is_array($rules['regions'] ?? null) ? $rules['regions'] : [];
+        $low = mb_strtolower($transcript);
+        foreach (self::normalizedLocations($state) as $loc) {
+            $rule = is_array($regions[$loc] ?? null) ? $regions[$loc] : [];
+            if (empty($rule['needs_laterality'])) {
+                continue;
+            }
+            foreach ((array) ($rule['detail_regex'] ?? []) as $pattern) {
+                $pattern = trim((string) $pattern);
+                if ($pattern !== '' && preg_match('/' . $pattern . '/iu', $low)) {
+                    return false;
+                }
+            }
+
+            return true;
+        }
+
+        return false;
+    }
+
+    /**
+     * Region mentioned at organ-system level (used for display / wording only).
+     *
+     * @param array<string, mixed> $state
+     */
+    private static function hasGeneralRegion(array $state, string $family): bool
+    {
+        unset($family);
+        return self::normalizedLocations($state) !== [];
+    }
+
+    /**
+     * Universal adaptive selection:
+     * detect concepts (dataset + extractors) → relevant bank questions → skip known → highest priority missing.
+     *
+     * @param array<string, mixed> $state
+     * @param array<string, mixed> $facts
+     * @param array<string, mixed> $assessment
+     * @return array{
+     *   missing: list<string>,
+     *   next_question_id: string,
+     *   next_purpose: string,
+     *   concepts: list<string>,
+     *   primary_concept: string,
+     *   missing_queue: list<array{slot:string,question_id:string,purpose:string,priority:int}>
+     * }
+     */
+    private static function selectAdaptiveMissing(
+        array $state,
+        array $facts,
+        string $transcript,
+        array $assessment
+    ): array {
+        // Ensure body locations from state are visible to the shared family resolver.
+        if (($facts['body_locations'] ?? []) === [] && self::normalizedLocations($state) !== []) {
+            $facts['body_locations'] = self::normalizedLocations($state);
+        } else {
+            foreach (self::normalizedLocations($state) as $loc) {
+                $existing = is_array($facts['body_locations'] ?? null) ? $facts['body_locations'] : [];
+                if (!in_array($loc, $existing, true)) {
+                    $existing[] = $loc;
+                }
+                $facts['body_locations'] = $existing;
+            }
+        }
+
+        $complaints = ClinicalInterviewContextResolver::deriveComplaints($assessment, $transcript, $facts);
+        $concepts = ClinicalInterviewContextResolver::deriveFamilies($complaints, $transcript, $facts);
+        $concepts = self::enrichConceptsFromState($concepts, $state, $transcript);
+
+        if (self::regionNeedsSpecificLocation($state, $transcript)) {
+            $concepts[] = 'needs_specific_location';
+        }
+        if (self::regionNeedsLaterality($state, $transcript)) {
+            $concepts[] = 'needs_laterality';
+        }
+        $concepts = array_values(array_unique(array_filter(array_map(
+            static fn ($c): string => strtolower(trim((string) $c)),
+            $concepts
+        ))));
+
+        $queue = [];
+        foreach (ClinicalFollowUpQuestionBank::questions() as $question) {
+            if (!is_array($question)) {
+                continue;
+            }
+            $qid = strtoupper(trim((string) ($question['question_id'] ?? '')));
+            if ($qid === '') {
+                continue;
+            }
+            $when = array_map('strtolower', (array) ($question['required_when'] ?? []));
+            if ($when !== [] && array_intersect($when, $concepts) === []) {
+                continue;
+            }
+            if (!self::shouldConsiderQuestion($question, $concepts, $state, $facts)) {
+                continue;
+            }
+            if (self::demoQuestionAlreadyAnswered($qid, $state, $facts, $transcript, $concepts)) {
+                continue;
+            }
+            $queue[] = [
+                'slot' => self::slotKeyForQuestion($qid),
+                'question_id' => $qid,
+                'purpose' => (string) ($question['clinical_purpose'] ?? ''),
+                'priority' => (int) ($question['priority'] ?? 99),
+            ];
+        }
+
+        usort($queue, static fn (array $a, array $b): int => ($a['priority'] <=> $b['priority']));
+
+        $missing = [];
+        foreach ($queue as $row) {
+            $slot = (string) $row['slot'];
+            if ($slot !== '' && !in_array($slot, $missing, true)) {
+                $missing[] = $slot;
+            }
+        }
+
+        $primary = self::primaryConceptLabel($concepts, $complaints, $state, $transcript);
+
+        return [
+            'missing' => $missing,
+            'next_question_id' => (string) ($queue[0]['question_id'] ?? ''),
+            'next_purpose' => (string) ($queue[0]['purpose'] ?? ''),
+            'concepts' => $concepts,
+            'primary_concept' => $primary,
+            'missing_queue' => $queue,
+        ];
+    }
+
+    /**
+     * @param list<string> $concepts
+     * @param array<string, mixed> $state
+     * @return list<string>
+     */
+    private static function enrichConceptsFromState(array $concepts, array $state, string $transcript): array
+    {
+        $low = mb_strtolower($transcript);
+        if (($state['fever'] ?? null) === true || ($state['temperature_c'] ?? null) !== null) {
+            $concepts[] = 'fever';
+        }
+        if (($state['dyspnea'] ?? null) === true) {
+            $concepts[] = 'breathing';
+            $concepts[] = 'respiratory';
+        }
+        if (trim((string) ($state['cough_type'] ?? '')) !== ''
+            || preg_match('/\b(ginaubo|ginauubo|nagaubo|nagauubo|cough|ubo)\b/u', $low)
+        ) {
+            $concepts[] = 'cough';
+            $concepts[] = 'respiratory';
+        }
+
+        $concepts = array_values(array_unique(array_filter(array_map(
+            static fn ($c): string => strtolower(trim((string) $c)),
+            $concepts
+        ))));
+
+        $meta = ['pain', 'pain_unspecified', 'pain_no_location', 'respiratory', 'needs_specific_location', 'needs_laterality'];
+        $specific = array_values(array_filter(
+            $concepts,
+            static fn (string $c): bool => !in_array($c, $meta, true)
+        ));
+        $painLike = ['headache', 'chest_pain', 'abdominal_pain', 'nose_pain', 'eye', 'eye_pain', 'pain'];
+        $hasPainSignal = ($state['severity'] ?? null) !== null
+            || preg_match('/\b(sakit|masakit|pain|hurts?|hapdi|kasakit)\b/u', $low);
+
+        // Only attach generic pain tags when the complaint is pain-centered (or unknown).
+        // Do not force PAIN_LOCATION onto cough/skin/urinary/fever pathways.
+        if ($hasPainSignal) {
+            if ($specific === []) {
+                $locs = self::normalizedLocations($state);
+                $concepts[] = $locs === [] ? 'pain_unspecified' : 'pain';
+                if ($locs === []) {
+                    $concepts[] = 'pain_no_location';
+                }
+            } elseif (array_intersect($specific, $painLike) !== []) {
+                $concepts[] = 'pain';
+            }
+        }
+
+        return array_values(array_unique($concepts));
+    }
+
+    /**
+     * Universal acuity gate for red-flag bank items (not a per-complaint flow).
+     *
+     * @param array<string, mixed> $question
+     * @param list<string> $concepts
+     * @param array<string, mixed> $state
+     * @param array<string, mixed> $facts
+     */
+    private static function shouldConsiderQuestion(
+        array $question,
+        array $concepts,
+        array $state,
+        array $facts
+    ): bool {
+        if (empty($question['red_flag_related'])) {
+            return true;
+        }
+        $qid = strtoupper((string) ($question['question_id'] ?? ''));
+        // Breathing check stays relevant for any active respiratory concept tag.
+        if ($qid === 'BREATHING_SEVERITY'
+            && array_intersect($concepts, ['breathing', 'cough', 'respiratory', 'chest_pain']) !== []
+        ) {
+            return true;
+        }
+        $always = ClinicalInterviewContextResolver::acuityRedFlagFamilies();
+        if (array_intersect($concepts, $always) !== []) {
+            return true;
+        }
+        $sev = $state['severity'] ?? ($facts['pain_score'] ?? null);
+        if ($sev !== null && (int) $sev >= 7) {
+            return true;
+        }
+        $onset = mb_strtolower(trim((string) ($state['onset'] ?? $facts['onset'] ?? '')));
+        if ($onset !== '' && preg_match('/\b(sudden|gulpi|bigla)\b/u', $onset)) {
+            return true;
+        }
+
+        return false;
+    }
+
+    /**
+     * @param array<string, mixed> $state
+     * @param array<string, mixed> $facts
+     * @param list<string> $concepts
+     */
+    private static function demoQuestionAlreadyAnswered(
+        string $qid,
+        array $state,
+        array $facts,
+        string $transcript,
+        array $concepts
+    ): bool {
+        $qid = strtoupper($qid);
+        $low = mb_strtolower($transcript);
+        $hasTiming = trim((string) ($state['onset'] ?? '')) !== ''
+            || trim((string) ($state['duration'] ?? '')) !== ''
+            || trim((string) ($facts['duration_label'] ?? '')) !== ''
+            || trim((string) ($facts['onset'] ?? '')) !== '';
+        $hasSeverity = ($state['severity'] ?? null) !== null || ($facts['pain_score'] ?? null) !== null;
+        $assocDone = ($state['associated_symptoms'] ?? []) !== []
+            || ($state['pertinent_negatives'] ?? []) !== []
+            || ($facts['has_other_symptoms'] ?? null) !== null
+            || !empty($facts['denied_associated']);
+        $hasAnyLocation = self::normalizedLocations($state) !== []
+            || (is_array($facts['body_locations'] ?? null) && $facts['body_locations'] !== []);
+
+        return match ($qid) {
+            'SPECIFIC_LOCATION' => self::hasSpecificLocationForActiveRegions($state, $transcript),
+            'EYE_LATERALITY' => trim((string) ($state['laterality'] ?? '')) !== ''
+                || self::hasSpecificLocationForActiveRegions($state, $transcript),
+            'PAIN_LOCATION', 'UNWELL_WHAT' => $hasAnyLocation
+                || (
+                    !in_array('pain_unspecified', $concepts, true)
+                    && !in_array('general_unwell', $concepts, true)
+                    && !in_array('pain_no_location', $concepts, true)
+                ),
+            'NOSE_PAIN_WHERE' => (bool) preg_match('/\b(bridge|tip|nostril|tuod|pungos)\b/u', $low),
+            'SKIN_SITE' => $hasAnyLocation || trim((string) ($state['location_detail'] ?? '')) !== '',
+            'PAIN_SEVERITY' => $hasSeverity
+                || (trim((string) ($facts['pain_qualifier'] ?? '')) !== ''
+                    && in_array(mb_strtolower((string) $facts['pain_qualifier']), ['mild', 'moderate', 'severe'], true)),
+            'ONSET', 'DURATION' => $hasTiming,
+            'COUGH_TYPE' => trim((string) ($state['cough_type'] ?? '')) !== '',
+            'FEVER_CONFIRM' => ($state['fever'] ?? null) !== null || ($state['temperature_c'] ?? null) !== null,
+            'DIZZINESS_TYPE' => trim((string) ($state['dizziness_type'] ?? '')) !== ''
+                || ($facts['dizziness'] ?? null) !== null
+                || in_array('dizziness', (array) ($state['associated_symptoms'] ?? []), true),
+            'URINARY_DETAIL' => $assocDone || (bool) preg_match('/\b(burning|hapdi|dugo|blood|fever|hilanat|lagnat)\b/u', $low),
+            'NEURO_WEAKNESS' => ($facts['weakness'] ?? null) !== null || $assocDone,
+            'NEURO_SPEECH' => ($facts['speech_difficulty'] ?? null) !== null || $assocDone || ($facts['weakness'] ?? null) !== null,
+            'NEURO_VISION', 'EYE_VISION' => ($facts['vision_change'] ?? null) !== null
+                || ($state['eye_symptoms'] ?? []) !== []
+                || $assocDone
+                || ($facts['weakness'] ?? null) !== null,
+            'BREATHING_SEVERITY' => ($state['dyspnea'] ?? null) !== null
+                || ($facts['breathing_difficulty'] ?? null) !== null
+                || !empty($facts['denied_associated']),
+            'BLEEDING_CONTINUING' => ($facts['bleeding_continuing'] ?? null) !== null,
+            'BLEEDING_HEAVY' => ($facts['bleeding_heavy'] ?? null) !== null || !empty($facts['denied_associated']),
+            'BLEEDING_DIZZY' => ($facts['dizziness'] ?? null) !== null || !empty($facts['denied_associated']),
+            'CHEST_RADIATION' => ($facts['chest_radiation'] ?? null) !== null
+                || !empty($facts['denied_associated'])
+                || ($facts['breathing_difficulty'] ?? null) !== null,
+            'CHEST_SWEATING' => ($facts['sweating'] ?? null) !== null
+                || !empty($facts['denied_associated'])
+                || ($facts['breathing_difficulty'] ?? null) !== null,
+            'ABDOMINAL_ASSOCIATED' => ($facts['abdominal_associated'] ?? null) !== null
+                || ($state['vomiting'] ?? null) !== null
+                || $assocDone,
+            'ASSOCIATED_SYMPTOMS' => $assocDone
+                || ($facts['weakness'] ?? null) !== null
+                || ($facts['breathing_difficulty'] ?? null) !== null,
+            default => false,
+        };
+    }
+
+    public static function slotKeyForQuestion(string $qid): string
+    {
+        return match (strtoupper($qid)) {
+            'PAIN_SEVERITY' => 'severity',
+            'PAIN_LOCATION', 'UNWELL_WHAT', 'NOSE_PAIN_WHERE', 'SKIN_SITE' => 'location',
+            'SPECIFIC_LOCATION' => 'specific_location',
+            'EYE_LATERALITY' => 'laterality',
+            'ONSET', 'DURATION' => 'onset',
+            'EYE_VISION', 'NEURO_VISION' => 'eye_red_flags',
+            'ASSOCIATED_SYMPTOMS', 'ABDOMINAL_ASSOCIATED' => 'associated_symptoms',
+            'FEVER_CONFIRM' => 'fever',
+            'COUGH_TYPE' => 'cough_type',
+            'BREATHING_SEVERITY' => 'dyspnea',
+            'DIZZINESS_TYPE' => 'dizziness_type',
+            'URINARY_DETAIL' => 'urinary_detail',
+            'NEURO_WEAKNESS', 'NEURO_SPEECH' => 'neuro_associated',
+            'CHEST_RADIATION', 'CHEST_SWEATING' => 'chest_associated',
+            'BLEEDING_CONTINUING', 'BLEEDING_HEAVY', 'BLEEDING_DIZZY' => 'bleeding_detail',
+            default => strtolower($qid),
+        };
+    }
+
+    /**
+     * @param list<string> $concepts
+     * @param list<array{id?:string,name?:string,family_key?:string}> $complaints
+     * @param array<string, mixed> $state
+     */
+    private static function primaryConceptLabel(
+        array $concepts,
+        array $complaints,
+        array $state,
+        string $transcript
+    ): string {
+        foreach ($complaints as $row) {
+            $key = strtolower((string) ($row['family_key'] ?? ''));
+            if ($key !== '' && !in_array($key, ['pain', 'pain_unspecified', 'pain_no_location', 'respiratory'], true)) {
+                return $key;
+            }
+        }
+        foreach ($concepts as $c) {
+            if (!in_array($c, ['pain', 'pain_unspecified', 'pain_no_location', 'needs_specific_location', 'needs_laterality', 'respiratory'], true)) {
+                return $c;
+            }
+        }
+        if (in_array('pain', $concepts, true) || in_array('pain_unspecified', $concepts, true)) {
+            return 'pain';
+        }
+
+        return 'general';
+    }
+
+    /** @deprecated Use selectAdaptiveMissing via evaluateCompleteness. */
+    private static function missingForFamily(string $family, array $state, array $facts, string $transcript = ''): array
+    {
+        unset($family);
+        $selection = self::selectAdaptiveMissing($state, $facts, $transcript, []);
+
+        return [
+            $selection['missing'],
+            $selection['next_question_id'],
+            $selection['next_purpose'],
+        ];
     }
 
     /**
@@ -442,6 +1005,14 @@ final class NlpStep3DemoClinicalState
             }
         }
         $facts['body_locations'] = $locs;
+
+        if (trim((string) ($state['location_detail'] ?? '')) !== '') {
+            $facts['location_detail'] = (string) $state['location_detail'];
+        }
+        $facts['location_is_specific'] = !empty($state['location_is_specific']);
+        if (trim((string) ($state['laterality'] ?? '')) !== '') {
+            $facts['laterality'] = (string) $state['laterality'];
+        }
 
         if (trim((string) ($facts['onset'] ?? '')) === '' && trim((string) ($state['onset'] ?? '')) !== '') {
             $facts['onset'] = (string) $state['onset'];
@@ -492,59 +1063,47 @@ final class NlpStep3DemoClinicalState
      */
     public static function detectFamily(array $state, string $transcript, array $assessment): string
     {
+        $facts = [
+            'body_locations' => self::normalizedLocations($state),
+        ];
+        $complaints = ClinicalInterviewContextResolver::deriveComplaints($assessment, $transcript, $facts);
+        $concepts = ClinicalInterviewContextResolver::deriveFamilies($complaints, $transcript, $facts);
+        $concepts = self::enrichConceptsFromState($concepts, $state, $transcript);
+        $primary = self::primaryConceptLabel($concepts, $complaints, $state, $transcript);
+        if ($primary !== '' && $primary !== 'general') {
+            // Normalize legacy display aliases.
+            return match ($primary) {
+                'eye' => 'eye_pain',
+                'breathing' => 'dyspnea',
+                default => $primary,
+            };
+        }
+
         $low = mb_strtolower($transcript);
         $locs = is_array($state['anatomical_location'] ?? null) ? $state['anatomical_location'] : [];
-
-        foreach ((array) ($assessment['interview']['chief_complaints'] ?? []) as $row) {
-            $family = strtolower((string) (is_array($row) ? ($row['family_key'] ?? $row['id'] ?? '') : $row));
-            if ($family !== '') {
-                if (str_contains($family, 'chest')) {
-                    return 'chest_pain';
-                }
-                if (str_contains($family, 'abdom')) {
-                    return 'abdominal_pain';
-                }
-                if (str_contains($family, 'head')) {
-                    return 'headache';
-                }
-                if (str_contains($family, 'eye')) {
-                    return 'eye_pain';
-                }
-                if (str_contains($family, 'breath') || str_contains($family, 'dyspnea')) {
-                    return 'dyspnea';
-                }
-                if (str_contains($family, 'fever')) {
-                    return 'fever';
-                }
-                if (str_contains($family, 'cough')) {
-                    return 'cough';
-                }
-                if (str_contains($family, 'dizz')) {
-                    return 'dizziness';
-                }
-            }
-        }
 
         if (($state['dyspnea'] ?? null) === true && (in_array('chest', $locs, true) || preg_match('/\b(dughan|dibdib|chest)\b/u', $low))) {
             return 'chest_pain';
         }
+        if (preg_match('/\b(ginaubo|ginauubo|nagaubo|nagauubo|ga\s*ubo|cough(?:ing)?|ubo)\b/u', $low)
+            || preg_match('/\b(cought|couph|ubo\s*ko)\b/u', $low)
+        ) {
+            return 'cough';
+        }
         if (in_array('chest', $locs, true) || preg_match('/\b(dughan|dibdib|chest pain)\b/u', $low)) {
             return 'chest_pain';
         }
-        if (in_array('eye', $locs, true) || preg_match('/\b(mata|eye pain|sakit.*mata)\b/u', $low)) {
+        if (in_array('eye', $locs, true) || preg_match('/\b(mata|eye pain|sakit.*mata|masakit.*mata)\b/u', $low)) {
             return 'eye_pain';
         }
-        if (in_array('abdomen', $locs, true) || preg_match('/\b(tiyan|abdomen|stomach)\b/u', $low)) {
+        if (in_array('abdomen', $locs, true) || preg_match('/\b(tiyan|abdomen|stomach|belly)\b/u', $low)) {
             return 'abdominal_pain';
         }
-        if (in_array('head', $locs, true) || preg_match('/\b(ulo|headache|sakit.*ulo)\b/u', $low)) {
+        if (in_array('head', $locs, true) || preg_match('/\b(ulo|headache|headech|sakit.*ulo|kasakit\s+ulo)\b/u', $low)) {
             return 'headache';
         }
         if (($state['fever'] ?? null) === true || preg_match('/\b(hilanat|lagnat|fever)\b/u', $low)) {
             return 'fever';
-        }
-        if (preg_match('/\b(ubo|cough)\b/u', $low)) {
-            return 'cough';
         }
         if (($state['dyspnea'] ?? null) === true || preg_match('/\b(budlay.*ginhawa|shortness of breath|dyspnea)\b/u', $low)) {
             return 'dyspnea';
@@ -606,212 +1165,6 @@ final class NlpStep3DemoClinicalState
             && in_array('chest', $state['anatomical_location'] ?? [], true);
     }
 
-    /**
-     * @param array<string, mixed> $state
-     * @param array<string, mixed> $facts
-     * @return array{0: list<string>, 1: string, 2: string}
-     */
-    private static function missingForFamily(string $family, array $state, array $facts): array
-    {
-        $missing = [];
-        $next = '';
-        $purpose = '';
-
-        $hasSeverity = ($state['severity'] ?? null) !== null || ($facts['pain_score'] ?? null) !== null;
-        $hasLocation = ($state['anatomical_location'] ?? []) !== [] || ($facts['body_locations'] ?? []) !== [];
-        $hasTiming = trim((string) ($state['onset'] ?? '')) !== ''
-            || trim((string) ($state['duration'] ?? '')) !== ''
-            || trim((string) ($facts['duration_label'] ?? '')) !== ''
-            || trim((string) ($facts['onset'] ?? '')) !== '';
-        $assocDone = ($state['associated_symptoms'] ?? []) !== []
-            || ($state['pertinent_negatives'] ?? []) !== []
-            || ($facts['has_other_symptoms'] ?? null) !== null
-            || !empty($facts['denied_associated']);
-        $hasCharacter = trim((string) ($state['character'] ?? '')) !== ''
-            && !in_array((string) ($state['character'] ?? ''), ['mild', 'moderate', 'severe'], true);
-
-        switch ($family) {
-            case 'fever':
-                if (($state['fever'] ?? null) !== true && ($state['temperature_c'] ?? null) === null) {
-                    $missing[] = 'fever_confirmation';
-                    $next = 'FEVER_CONFIRM';
-                    $purpose = 'Confirm fever / temperature';
-                }
-                if (!$hasTiming) {
-                    $missing[] = 'onset';
-                    if ($next === '') {
-                        $next = 'ONSET';
-                        $purpose = 'Determine fever onset';
-                    }
-                }
-                break;
-
-            case 'cough':
-                if (!$hasTiming) {
-                    $missing[] = 'onset';
-                    $next = 'ONSET';
-                    $purpose = 'Cough onset / duration';
-                }
-                if (trim((string) ($state['cough_type'] ?? '')) === '') {
-                    $missing[] = 'cough_type';
-                    if ($next === '') {
-                        $next = 'COUGH_TYPE';
-                        $purpose = 'Dry vs productive cough';
-                    }
-                }
-                if (($state['dyspnea'] ?? null) === null && !$assocDone) {
-                    $missing[] = 'dyspnea';
-                    if ($next === '') {
-                        $next = 'BREATHING_SEVERITY';
-                        $purpose = 'Breathing difficulty with cough';
-                    }
-                }
-                break;
-
-            case 'dyspnea':
-                if (!$hasTiming) {
-                    $missing[] = 'onset';
-                    $next = 'ONSET';
-                    $purpose = 'Dyspnea onset';
-                }
-                if (!$assocDone) {
-                    $missing[] = 'associated_symptoms';
-                    if ($next === '') {
-                        $next = 'ASSOCIATED_SYMPTOMS';
-                        $purpose = 'Associated symptoms with dyspnea';
-                    }
-                }
-                break;
-
-            case 'dizziness':
-                if (trim((string) ($state['dizziness_type'] ?? '')) === '') {
-                    $missing[] = 'dizziness_type';
-                    $next = 'DIZZINESS_TYPE';
-                    $purpose = 'Clarify dizziness type';
-                }
-                if (!$assocDone) {
-                    $missing[] = 'neuro_associated';
-                    if ($next === '') {
-                        $next = 'NEURO_WEAKNESS';
-                        $purpose = 'Neurologic associated symptoms';
-                    }
-                }
-                break;
-
-            case 'eye_pain':
-                if (!$hasSeverity) {
-                    $missing[] = 'severity';
-                    $next = 'PAIN_SEVERITY';
-                    $purpose = 'Eye pain severity 0–10';
-                }
-                if (!$hasTiming) {
-                    $missing[] = 'onset';
-                    if ($next === '') {
-                        $next = 'ONSET';
-                        $purpose = 'Eye pain onset';
-                    }
-                }
-                if (($state['eye_symptoms'] ?? []) === [] && !$assocDone) {
-                    $missing[] = 'eye_red_flags';
-                    if ($next === '') {
-                        $next = 'EYE_VISION';
-                        $purpose = 'Vision change / eye red flags';
-                    }
-                }
-                break;
-
-            case 'chest_pain':
-                if (!$hasSeverity) {
-                    $missing[] = 'severity';
-                    $next = 'PAIN_SEVERITY';
-                    $purpose = 'Chest pain severity 0–10';
-                }
-                if (($state['dyspnea'] ?? null) === null) {
-                    $missing[] = 'dyspnea';
-                    if ($next === '') {
-                        $next = 'BREATHING_SEVERITY';
-                        $purpose = 'Breathing with chest pain';
-                    }
-                }
-                if (!$hasTiming) {
-                    $missing[] = 'onset';
-                    if ($next === '') {
-                        $next = 'ONSET';
-                        $purpose = 'Chest pain onset';
-                    }
-                }
-                break;
-
-            case 'abdominal_pain':
-                if (!$hasSeverity) {
-                    $missing[] = 'severity';
-                    $next = 'PAIN_SEVERITY';
-                    $purpose = 'Abdominal pain severity 0–10';
-                }
-                if (!$hasLocation) {
-                    $missing[] = 'location';
-                    if ($next === '') {
-                        $next = 'PAIN_LOCATION';
-                        $purpose = 'Abdominal pain location';
-                    }
-                }
-                if (!$hasTiming) {
-                    $missing[] = 'onset';
-                    if ($next === '') {
-                        $next = 'ONSET';
-                        $purpose = 'Abdominal pain onset';
-                    }
-                }
-                if (($state['vomiting'] ?? null) === null && !$assocDone) {
-                    $missing[] = 'associated_symptoms';
-                    if ($next === '') {
-                        $next = 'ABDOMINAL_ASSOCIATED';
-                        $purpose = 'Vomiting / fever with abdominal pain';
-                    }
-                }
-                break;
-
-            case 'headache':
-            case 'pain':
-            default:
-                if (!$hasSeverity) {
-                    $missing[] = 'severity';
-                    $next = 'PAIN_SEVERITY';
-                    $purpose = 'Pain severity 0–10';
-                }
-                if (!$hasLocation) {
-                    $missing[] = 'location';
-                    if ($next === '') {
-                        $next = 'PAIN_LOCATION';
-                        $purpose = 'Pain location';
-                    }
-                }
-                if (!$hasTiming) {
-                    $missing[] = 'onset';
-                    if ($next === '') {
-                        $next = 'ONSET';
-                        $purpose = 'Pain onset / duration';
-                    }
-                }
-                if ($hasSeverity && $hasLocation && $hasTiming && !$assocDone && !$hasCharacter) {
-                    $missing[] = 'associated_or_character';
-                    if ($next === '') {
-                        $next = 'ASSOCIATED_SYMPTOMS';
-                        $purpose = 'Associated symptoms / character';
-                    }
-                } elseif ($hasSeverity && $hasLocation && $hasTiming && $hasCharacter && !$assocDone) {
-                    $missing[] = 'associated_symptoms';
-                    if ($next === '') {
-                        $next = 'ASSOCIATED_SYMPTOMS';
-                        $purpose = 'Associated symptoms';
-                    }
-                }
-                break;
-        }
-
-        return [$missing, $next, $purpose];
-    }
-
     private static function isAmbiguousOnly(string $transcript): bool
     {
         $low = mb_strtolower(trim($transcript));
@@ -836,12 +1189,124 @@ final class NlpStep3DemoClinicalState
     }
 
     /**
+     * @param array<string, mixed> $ctx Optional: family, anatomical_location (list|string)
      * @return array{text:string,helper:string,purpose:string,priority:int}
      */
-    public static function questionPack(string $qid, string $lang = 'HILIGAYNON'): array
+    public static function questionPack(string $qid, string $lang = 'HILIGAYNON', array $ctx = []): array
     {
         $qid = strtoupper($qid);
         $lang = strtoupper($lang);
+        $family = strtolower((string) ($ctx['family'] ?? ''));
+        $region = '';
+        $locs = $ctx['anatomical_location'] ?? ($ctx['body_locations'] ?? []);
+        if (is_string($locs)) {
+            $region = mb_strtolower(trim($locs));
+        } elseif (is_array($locs) && $locs !== []) {
+            $region = mb_strtolower(trim((string) $locs[0]));
+        }
+        if ($region === '' && str_contains($family, 'abdom')) {
+            $region = 'abdomen';
+        } elseif ($region === '' && str_contains($family, 'chest')) {
+            $region = 'chest';
+        } elseif ($region === '' && str_contains($family, 'eye')) {
+            $region = 'eye';
+        }
+
+        // Prefer shared question-bank phrasing when available; region-aware overrides for specificity.
+        $bank = ClinicalFollowUpQuestionBank::byId($qid);
+        $bankLang = match ($lang) {
+            'ENGLISH' => 'english',
+            'TAGALOG' => 'tagalog',
+            default => 'hiligaynon',
+        };
+
+        $specificLocation = match ($region) {
+            'abdomen', 'stomach', 'belly' => match ($lang) {
+                'ENGLISH' => [
+                    'text' => 'Where exactly in your abdomen is the problem? (for example: right or left, upper or lower, around the navel)',
+                    'helper' => '',
+                    'purpose' => 'Exact site within a general body region',
+                    'priority' => 8,
+                ],
+                'TAGALOG' => [
+                    'text' => 'Saan exactamente sa tiyan ang problema? (kanan/kaliwa, taas/ibaba, malapit sa pusod)',
+                    'helper' => '',
+                    'purpose' => 'Exact site within a general body region',
+                    'priority' => 8,
+                ],
+                default => [
+                    'text' => 'Diin gid nga parte sang imo tiyan ang masakit? (tuo/wala, idalom/taas, malapit sa pusod)',
+                    'helper' => '',
+                    'purpose' => 'Exact site within a general body region',
+                    'priority' => 8,
+                ],
+            },
+            'chest' => match ($lang) {
+                'ENGLISH' => [
+                    'text' => 'Where exactly in your chest is the problem? (left, right, or center)',
+                    'helper' => '',
+                    'purpose' => 'Exact site within a general body region',
+                    'priority' => 8,
+                ],
+                default => [
+                    'text' => 'Diin gid nga parte sang imo dughan ang masakit? (tuo, wala, ukon tunga)',
+                    'helper' => '',
+                    'purpose' => 'Exact site within a general body region',
+                    'priority' => 8,
+                ],
+            },
+            'eye' => match ($lang) {
+                'ENGLISH' => [
+                    'text' => 'Which eye is affected — left, right, or both?',
+                    'helper' => '',
+                    'purpose' => 'Laterality for paired body parts',
+                    'priority' => 8,
+                ],
+                default => [
+                    'text' => 'Diin nga mata ang masakit — tuo, wala, ukon duha?',
+                    'helper' => '',
+                    'purpose' => 'Laterality for paired body parts',
+                    'priority' => 8,
+                ],
+            },
+            default => [
+                'text' => $bank
+                    ? (ClinicalFollowUpQuestionBank::textForLanguage($bank, $bankLang) ?: ($lang === 'ENGLISH'
+                        ? 'Where exactly is the problem located in that area of your body?'
+                        : 'Diin gid nga parte sang sina nga bahin sang imo lawas ang problema?'))
+                    : ($lang === 'ENGLISH'
+                        ? 'Where exactly is the problem located in that area of your body?'
+                        : ($lang === 'TAGALOG'
+                            ? 'Saan exactamente sa bahaging iyon ng katawan ang problema?'
+                            : 'Diin gid nga parte sang sina nga bahin sang imo lawas ang problema?')),
+                'helper' => '',
+                'purpose' => (string) ($bank['clinical_purpose'] ?? 'Exact site within a general body region'),
+                'priority' => (int) ($bank['priority'] ?? 8),
+            ],
+        };
+
+        if (in_array($qid, ['SPECIFIC_LOCATION', 'PAIN_LOCATION'], true) && $region !== '') {
+            if ($qid === 'SPECIFIC_LOCATION' || in_array($region, ['abdomen', 'stomach', 'belly', 'chest'], true)) {
+                if ($qid === 'PAIN_LOCATION' && in_array($region, ['abdomen', 'stomach', 'belly', 'chest'], true)) {
+                    return $specificLocation;
+                }
+                if ($qid === 'SPECIFIC_LOCATION') {
+                    return $specificLocation;
+                }
+            }
+        }
+
+        if ($bank !== null) {
+            $text = ClinicalFollowUpQuestionBank::textForLanguage($bank, $bankLang);
+            if ($text !== '') {
+                return [
+                    'text' => $text,
+                    'helper' => '',
+                    'purpose' => (string) ($bank['clinical_purpose'] ?? ''),
+                    'priority' => (int) ($bank['priority'] ?? 99),
+                ];
+            }
+        }
 
         return match ($qid) {
             'PAIN_SEVERITY' => match ($lang) {
@@ -864,76 +1329,25 @@ final class NlpStep3DemoClinicalState
                     'priority' => 5,
                 ],
             },
-            'PAIN_LOCATION' => [
-                'text' => $lang === 'ENGLISH' ? 'Where exactly is the pain?' : ($lang === 'TAGALOG' ? 'Saan exactamente ang masakit?' : 'Diin ang masakit sa imo?'),
-                'helper' => '',
-                'purpose' => 'Locate pain',
-                'priority' => 10,
-            ],
-            'ONSET', 'DURATION' => [
-                'text' => $lang === 'ENGLISH' ? 'When did this start?' : ($lang === 'TAGALOG' ? 'Kailan pa ito nagsimula?' : 'San-o pa nagsugod ang kasakit?'),
-                'helper' => '',
-                'purpose' => 'Determine onset / duration',
-                'priority' => 50,
-            ],
-            'ASSOCIATED_SYMPTOMS', 'ABDOMINAL_ASSOCIATED' => [
-                'text' => $lang === 'ENGLISH'
-                    ? 'Do you have other symptoms such as dizziness, vomiting, fever, or breathing difficulty?'
-                    : ($lang === 'TAGALOG'
-                        ? 'May iba pa bang sintomas tulad ng pagkahilo, pagsusuka, lagnat, o hirap sa paghinga?'
-                        : 'May iban ka pa nga sintomas pareho sang hilo, pagsuka, hilanat, ukon budlay nga pagginhawa?'),
-                'helper' => '',
-                'purpose' => 'Associated symptoms',
-                'priority' => 70,
-            ],
-            'BREATHING_SEVERITY' => [
-                'text' => $lang === 'ENGLISH'
-                    ? 'Are you having difficulty breathing, or does it feel like you cannot get enough air?'
-                    : 'Budlay bala ang imo pagginhawa ukon daw kulang ang imo ginhawa?',
-                'helper' => '',
-                'purpose' => 'Assess breathing difficulty',
-                'priority' => 20,
-            ],
-            'EYE_VISION' => [
-                'text' => $lang === 'ENGLISH'
-                    ? 'Have you noticed any vision loss, blurry vision, or sensitivity to light?'
-                    : 'May pagbag-o bala sa imo panulok, malabo, ukon masakit kung makakita ka sang suga/hayag?',
-                'helper' => '',
-                'purpose' => 'Eye red-flag screening',
-                'priority' => 25,
-            ],
-            'COUGH_TYPE' => [
-                'text' => $lang === 'ENGLISH'
-                    ? 'Is your cough dry, or do you bring up phlegm?'
-                    : 'Uga bala ang imo ubo, ukon may plema?',
-                'helper' => '',
-                'purpose' => 'Cough character',
-                'priority' => 55,
-            ],
-            'DIZZINESS_TYPE' => [
-                'text' => $lang === 'ENGLISH'
-                    ? 'When you say dizzy, does the room spin, do you feel lightheaded, or unsteady?'
-                    : 'Ang imo hilo, daw naga-tuyok bala ang palibot, gaan ang ulo, ukon indi ka stabile magtindog?',
-                'helper' => '',
-                'purpose' => 'Clarify dizziness type',
-                'priority' => 40,
-            ],
-            'FEVER_CONFIRM' => [
-                'text' => $lang === 'ENGLISH'
-                    ? 'Do you have a fever, and if measured, what was the temperature?'
-                    : 'May hilanat bala ikaw, kag kung ginsukot, pila ang temperatura?',
-                'helper' => '',
-                'purpose' => 'Confirm fever / temperature',
-                'priority' => 30,
-            ],
-            'NEURO_WEAKNESS' => [
-                'text' => 'May kaluya ukon pamamanhid bala sa isa ka kamot ukon tiil mo?',
-                'helper' => '',
-                'purpose' => 'Neurologic weakness screen',
-                'priority' => 21,
-            ],
+            'SPECIFIC_LOCATION', 'PAIN_LOCATION' => $specificLocation,
+            'EYE_LATERALITY' => $specificLocation['text'] !== '' && $region === 'eye' ? $specificLocation : match ($lang) {
+                'ENGLISH' => [
+                    'text' => 'Which eye is affected — left, right, or both?',
+                    'helper' => '',
+                    'purpose' => 'Laterality for paired body parts',
+                    'priority' => 9,
+                ],
+                default => [
+                    'text' => 'Diin nga mata ang masakit — tuo, wala, ukon duha?',
+                    'helper' => '',
+                    'purpose' => 'Laterality for paired body parts',
+                    'priority' => 9,
+                ],
+            },
             default => [
-                'text' => $lang === 'ENGLISH' ? 'Can you tell me a bit more about your symptoms?' : 'Palihog isugid pa ang iban nga detalye sang imo sintomas.',
+                'text' => $lang === 'ENGLISH'
+                    ? 'Can you tell me a bit more about your symptoms?'
+                    : 'Palihog isugid pa ang iban nga detalye sang imo sintomas.',
                 'helper' => '',
                 'purpose' => 'Clarify clinically relevant detail',
                 'priority' => 80,

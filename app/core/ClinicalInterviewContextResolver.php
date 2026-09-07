@@ -127,6 +127,36 @@ final class ClinicalInterviewContextResolver
     }
 
     /**
+     * Generic body-region specificity rules (general location ≠ specific site).
+     *
+     * @return array<string, mixed>
+     */
+    public static function locationSpecificityRules(): array
+    {
+        return is_array(self::config()['location_specificity'] ?? null)
+            ? self::config()['location_specificity']
+            : [];
+    }
+
+    /**
+     * Concept tags where red-flag bank questions remain clinically indicated
+     * even when acuity is low/uncertain.
+     *
+     * @return list<string>
+     */
+    public static function acuityRedFlagFamilies(): array
+    {
+        $rows = (array) (self::config()['acuity_red_flag_families'] ?? [
+            'chest_pain', 'breathing', 'bleeding', 'neuro', 'abdominal_pain', 'eye',
+        ]);
+
+        return array_values(array_filter(array_map(
+            static fn ($v): string => strtolower(trim((string) $v)),
+            $rows
+        )));
+    }
+
+    /**
      * @param array<string, mixed> $assessment
      */
     private static function buildHaystack(array $assessment, string $transcript): string
