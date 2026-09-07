@@ -916,7 +916,7 @@ final class NlpStep3DemoTrial
             $facts = is_array($assessment['interview']['facts'] ?? null) ? $assessment['interview']['facts'] : [];
             $transcript = (string) ($assessment['clinical_transcript'] ?? '');
             $display = (string) ($assessment['triage']['triage_display'] ?? '');
-            $soft = NlpStep3DemoClinicalState::softTriageDisplay($display, $facts, $transcript);
+            $soft = NlpStep3DemoClinicalState::softTriageDisplay($display, $facts, $transcript, $assessment);
             if ($soft !== $display && isset($assessment['triage']) && is_array($assessment['triage'])) {
                 return self::finalizeDemoWithTriageEngine(
                     array_merge($assessment, ['triage' => array_merge($assessment['triage'], [
@@ -954,33 +954,51 @@ final class NlpStep3DemoTrial
      */
     private static function finalizeDemoWithTriageEngine(array $assessment, string $transcript, array $facts): array
     {
-        $display = strtoupper(str_replace(
-            '_',
-            '-',
-            (string) ($assessment['triage']['provisional_engine_classification'] ?? '')
-        ));
-        if ($display === 'NON URGENT') {
-            $display = 'NON-URGENT';
+        // Always obtain engine classification as supporting input (not Gemini; not final alone).
+        $raw = ClinicalTriageEngine::assess($transcript, $transcript);
+        $engineDisplay = strtoupper(str_replace('_', '-', (string) ($raw['triage_display'] ?? 'NON-URGENT')));
+        if ($engineDisplay === 'NON URGENT') {
+            $engineDisplay = 'NON-URGENT';
         }
-        if (!in_array($display, ['EMERGENCY', 'URGENT', 'NON-URGENT'], true)) {
-            $raw = ClinicalTriageEngine::assess($transcript, $transcript);
-            $display = strtoupper(str_replace('_', '-', (string) ($raw['triage_display'] ?? 'NON-URGENT')));
-            if ($display === 'NON URGENT') {
-                $display = 'NON-URGENT';
-            }
-            if (!in_array($display, ['EMERGENCY', 'URGENT', 'NON-URGENT'], true)) {
-                $display = 'NON-URGENT';
-            }
-            if (is_array($raw) && isset($assessment['triage']) && is_array($assessment['triage'])) {
-                foreach (['clinical_reasoning', 'confidence', 'confidence_score', 'detected_symptoms', 'assessment_factors'] as $key) {
-                    if (isset($raw[$key]) && empty($assessment['triage'][$key])) {
-                        $assessment['triage'][$key] = $raw[$key];
-                    }
-                }
-            }
+        if (!in_array($engineDisplay, ['EMERGENCY', 'URGENT', 'NON-URGENT'], true)) {
+            $engineDisplay = 'NON-URGENT';
         }
 
-        $display = NlpStep3DemoClinicalState::softTriageDisplay($display, $facts, $transcript);
+        if (!isset($assessment['triage']) || !is_array($assessment['triage'])) {
+            $assessment['triage'] = [];
+        }
+        if (is_array($raw)) {
+            foreach ([
+                'clinical_reasoning', 'confidence', 'confidence_score', 'detected_symptoms',
+                'assessment_factors', 'emergency_red_flags', 'needs_provider_review',
+            ] as $key) {
+                if (isset($raw[$key])) {
+                    $assessment['triage'][$key] = $raw[$key];
+                }
+            }
+            $assessment['triage']['provisional_engine_classification'] = $engineDisplay;
+        }
+
+        $display = NlpStep3DemoClinicalState::softTriageDisplay(
+            $engineDisplay,
+            $facts,
+            $transcript,
+            $assessment
+        );
+        $evidence = NlpStep3DemoClinicalState::collectTriageEvidence(
+            is_array($facts['clinical_state'] ?? null)
+                ? $facts['clinical_state']
+                : NlpStep3DemoClinicalState::extractState($facts, $transcript),
+            $facts,
+            $transcript,
+            $assessment
+        );
+        $assessment['triage']['demo_triage_evidence'] = [
+            'emergency' => !empty($evidence['emergency']),
+            'urgent' => !empty($evidence['urgent']),
+            'notes' => $evidence['notes'] ?? [],
+            'engine_provisional' => $engineDisplay,
+        ];
 
         $classification = $display === 'NON-URGENT' ? 'NON_URGENT' : $display;
         $gis = match ($display) {
@@ -989,9 +1007,6 @@ final class NlpStep3DemoTrial
             default => 'non_urgent',
         };
 
-        if (!isset($assessment['triage']) || !is_array($assessment['triage'])) {
-            $assessment['triage'] = [];
-        }
         $assessment['assessment_status'] = ClinicalInterviewEngine::STATUS_COMPLETED;
         $assessment['followup_required'] = false;
         $assessment['followup_question'] = null;
@@ -1017,6 +1032,13 @@ final class NlpStep3DemoTrial
         $assessment['triage']['demo_followup_skipped'] = true;
         $assessment['triage']['demo_followup_skip_reason'] =
             'Patient message already contained sufficient clinically relevant information; remaining question-bank items were skipped.';
+        if (empty($assessment['triage']['clinical_reasoning'])) {
+            $assessment['triage']['clinical_reasoning'] = match ($display) {
+                'EMERGENCY' => 'Emergency criteria supported by clinical red-flag evidence in the conversation.',
+                'URGENT' => 'Urgent criteria supported by combined clinical factors (not severity alone).',
+                default => 'No emergency or urgent criteria met based on the information provided.',
+            };
+        }
 
         if (!isset($assessment['interview']) || !is_array($assessment['interview'])) {
             $assessment['interview'] = [];
