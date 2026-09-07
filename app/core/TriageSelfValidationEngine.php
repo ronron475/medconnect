@@ -263,7 +263,11 @@ final class TriageSelfValidationEngine
         if ($temp !== '' && preg_match('/high fever|39|40/u', strtolower($temp))) {
             return 'temperature';
         }
-        if ($pain !== '' && preg_match('/\b(7|8|9|10)\b|severe/u', strtolower($pain))) {
+        // Match true high pain scores (7–10/10), not the "10" denominator inside "5/10".
+        if ($pain !== '' && (
+            preg_match('/\b(10|[7-9])\s*\/\s*10\b/u', strtolower($pain))
+            || preg_match('/\bsevere\b/u', strtolower($pain))
+        )) {
             return 'pain_scale';
         }
         if (self::isAdminOnly($hay)) {
@@ -291,8 +295,13 @@ final class TriageSelfValidationEngine
         if ($rule === 'clinical_context') {
             return $current;
         }
-        if (in_array($rule, ['duration', 'temperature', 'pain_scale', 'high_risk_patient', 'symptom_combination', 'clinical_context'], true)) {
-            return $current === 'EMERGENCY' ? 'EMERGENCY' : 'URGENT';
+        // Duration / temperature / pain modifiers inform scoring but must NOT force
+        // escalation by themselves (e.g. "5/10" or "pila ka adlaw" alone ≠ URGENT).
+        if (in_array($rule, ['duration', 'temperature', 'pain_scale'], true)) {
+            return $current;
+        }
+        if (in_array($rule, ['high_risk_patient', 'symptom_combination'], true)) {
+            return $current === 'EMERGENCY' ? 'EMERGENCY' : ($current === 'NON-URGENT' ? 'URGENT' : $current);
         }
         if (self::isMildOnly($hay) && $redFlags === []) {
             return 'NON-URGENT';

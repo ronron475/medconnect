@@ -203,42 +203,221 @@ final class NlpStep3DemoClinicalState
         ];
     }
 
-    public static function softTriageDisplay(string $display, array $facts, string $transcript): string
-    {
+    /**
+     * Demo-only final triage overlay: EMERGENCY > URGENT > NON-URGENT with supporting evidence.
+     * Does not diagnose. Severity alone never forces URGENT/EMERGENCY.
+     *
+     * @param array<string, mixed> $facts
+     * @param array<string, mixed> $assessment
+     */
+    public static function softTriageDisplay(
+        string $display,
+        array $facts,
+        string $transcript,
+        array $assessment = []
+    ): string {
         $display = strtoupper(str_replace('_', '-', $display));
         if ($display === 'NON URGENT') {
             $display = 'NON-URGENT';
         }
         if (!in_array($display, ['EMERGENCY', 'URGENT', 'NON-URGENT'], true)) {
-            return 'NON-URGENT';
-        }
-        if ($display === 'EMERGENCY') {
-            return $display;
+            $display = 'NON-URGENT';
         }
 
         $state = is_array($facts['clinical_state'] ?? null)
             ? $facts['clinical_state']
             : self::extractState($facts, $transcript);
-        $family = self::detectFamily($state, $transcript, []);
-        if ($family !== 'eye_pain') {
-            return $display;
+
+        $evidence = self::collectTriageEvidence($state, $facts, $transcript, $assessment);
+
+        // Decision order: emergency → urgent → non-urgent.
+        if ($evidence['emergency']) {
+            return 'EMERGENCY';
+        }
+        if ($evidence['urgent']) {
+            return 'URGENT';
         }
 
+        return 'NON-URGENT';
+    }
+
+    /**
+     * Universal evidence collector (concept-aware, not a per-complaint flow).
+     *
+     * @param array<string, mixed> $state
+     * @param array<string, mixed> $facts
+     * @param array<string, mixed> $assessment
+     * @return array{emergency:bool,urgent:bool,notes:list<string>}
+     */
+    public static function collectTriageEvidence(
+        array $state,
+        array $facts,
+        string $transcript,
+        array $assessment = []
+    ): array {
         $low = mb_strtolower($transcript);
-        $eyeRed = (bool) preg_match(
-            '/\b(vision loss|nawala\s+panulok|double vision|chemical|trauma|nasaktan|naga\s*dugo|sudden blindness|photophobia|grabe\s+gid)\b/u',
+        $notes = [];
+        $concepts = [];
+        if (is_array($assessment['demo_completeness']['active_concepts'] ?? null)) {
+            $concepts = $assessment['demo_completeness']['active_concepts'];
+        } elseif (is_array($assessment['completeness']['active_concepts'] ?? null)) {
+            $concepts = $assessment['completeness']['active_concepts'];
+        } else {
+            $concepts = ClinicalInterviewContextResolver::deriveFamilies(
+                ClinicalInterviewContextResolver::deriveComplaints($assessment, $transcript, $facts),
+                $transcript,
+                $facts
+            );
+            $concepts = self::enrichConceptsFromState($concepts, $state, $transcript);
+        }
+        $concepts = array_values(array_unique(array_map(
+            static fn ($c): string => strtolower(trim((string) $c)),
+            $concepts
+        )));
+
+        $severity = $state['severity'] ?? ($facts['pain_score'] ?? null);
+        $severity = $severity !== null ? (int) $severity : null;
+        $onset = mb_strtolower(trim((string) ($state['onset'] ?? $facts['onset'] ?? '')));
+        $duration = mb_strtolower(trim((string) ($state['duration'] ?? $facts['duration_label'] ?? '')));
+        $sudden = (bool) preg_match('/\b(sudden|gulpi|bigla|abrupt)\b/u', $onset . ' ' . $low);
+        $gradual = (bool) preg_match('/\b(gradual|hinay-hinay|unti-unti|slow)\b/u', $onset . ' ' . $low);
+        $worsening = trim((string) ($state['aggravating_factors'] ?? $facts['progression'] ?? '')) !== ''
+            || (bool) preg_match('/\b(nagagrabe|naga\s*grabe|worse|worsen|aggravat)\b/u', $low);
+        $assoc = is_array($state['associated_symptoms'] ?? null) ? $state['associated_symptoms'] : [];
+        $neg = is_array($state['pertinent_negatives'] ?? null) ? $state['pertinent_negatives'] : [];
+        $hasAssocPositive = $assoc !== [];
+        $hasAssocDenial = $neg !== [] || !empty($facts['denied_associated'])
+            || ($facts['has_other_symptoms'] ?? null) === false;
+
+        $engineRed = [];
+        foreach ((array) ($assessment['triage']['emergency_red_flags'] ?? []) as $flag) {
+            if (is_string($flag) && trim($flag) !== '') {
+                $engineRed[] = $flag;
+            } elseif (is_array($flag)) {
+                $name = trim((string) ($flag['flag_name'] ?? $flag['name'] ?? ''));
+                if ($name !== '') {
+                    $engineRed[] = $name;
+                }
+            }
+        }
+        $stateRed = is_array($state['red_flags'] ?? null) ? $state['red_flags'] : [];
+
+        // --- EMERGENCY evidence (must be clinically supporting, not a word alone) ---
+        $emergency = false;
+        if ($engineRed !== [] || $stateRed !== []) {
+            $emergency = true;
+            $notes[] = 'red_flag';
+        }
+        if (self::hasImmediateRedFlagPriority($state, $transcript, $assessment)) {
+            $emergency = true;
+            $notes[] = 'immediate_red_flag_priority';
+        }
+        if (($state['dyspnea'] ?? null) === true || ($facts['breathing_difficulty'] ?? null) === true) {
+            if (in_array('chest', self::normalizedLocations($state), true)
+                || array_intersect($concepts, ['chest_pain', 'breathing']) !== []
+                || preg_match('/\b(dughan|dibdib|chest)\b/u', $low)
+            ) {
+                $emergency = true;
+                $notes[] = 'chest_with_dyspnea';
+            }
+        }
+        if (preg_match(
+            '/\b(cannot breathe|can\'t breathe|indi\s+makaginhawa|indi\s+ko\s+kaginhawa|choking|airway|unconscious|nadulaan\s+malay|seizure|convulsion|stroke|one-sided\s+weakness|slurred\s+speech|vomiting\s+blood|nagasuka\s+sang\s+dugo|severe\s+bleeding|nagadugo\s+gid)\b/u',
             $low
-        );
-        if ($eyeRed) {
-            return $display;
+        )) {
+            $emergency = true;
+            $notes[] = 'life_threat_pattern';
         }
 
-        $score = $state['severity'] ?? ($facts['pain_score'] ?? null);
-        if ($display === 'URGENT' && $score !== null && (int) $score <= 6) {
-            return 'NON-URGENT';
+        // --- URGENT evidence (combination; severity alone is never enough) ---
+        $urgent = false;
+        $concerningAssoc = false;
+        foreach ($assoc as $a) {
+            $al = mb_strtolower((string) $a);
+            if (preg_match('/\b(dizziness|fever|vomiting|dyspnea|breath|weakness|vision|bleeding|rash\s+spread)\b/u', $al)) {
+                $concerningAssoc = true;
+                break;
+            }
+        }
+        if (($facts['weakness'] ?? null) === true
+            || ($facts['speech_difficulty'] ?? null) === true
+            || ($facts['vision_change'] ?? null) === true
+            || ($state['eye_symptoms'] ?? []) !== []
+        ) {
+            $concerningAssoc = true;
+        }
+        if (($state['fever'] ?? null) === true || ($state['temperature_c'] ?? null) !== null) {
+            $tempC = $state['temperature_c'] ?? null;
+            if ($tempC !== null && (float) $tempC >= 39.0) {
+                $concerningAssoc = true;
+                $notes[] = 'high_fever';
+            } elseif (($state['fever'] ?? null) === true
+                && array_intersect($concepts, ['headache', 'cough', 'respiratory', 'urinary', 'abdominal_pain']) !== []
+            ) {
+                $concerningAssoc = true;
+            }
         }
 
-        return $display;
+        // High pain only becomes urgent when paired with acuity or concerning features.
+        if ($severity !== null && $severity >= 8 && ($sudden || $worsening || $concerningAssoc)) {
+            $urgent = true;
+            $notes[] = 'high_pain_with_acuity_or_assoc';
+        } elseif ($severity !== null && $severity >= 7 && $concerningAssoc) {
+            $urgent = true;
+            $notes[] = 'pain_with_concerning_associated';
+        } elseif ($severity !== null && $severity >= 7 && $sudden && !$gradual) {
+            $urgent = true;
+            $notes[] = 'sudden_high_pain';
+        }
+
+        // Concept-relevant urgency without relying on a fixed complaint switch.
+        if (($facts['breathing_difficulty'] ?? null) === true || ($state['dyspnea'] ?? null) === true) {
+            $urgent = true;
+            $notes[] = 'dyspnea';
+        }
+        if (($facts['bleeding_heavy'] ?? null) === true || ($facts['bleeding_continuing'] ?? null) === true) {
+            $urgent = true;
+            $notes[] = 'bleeding_active';
+        }
+        if (array_intersect($concepts, ['neuro']) !== [] && $concerningAssoc) {
+            $urgent = true;
+            $notes[] = 'neuro_with_assoc';
+        }
+        if (in_array('abdominal_pain', $concepts, true)
+            && (($state['vomiting'] ?? null) === true || $concerningAssoc)
+            && (($severity !== null && $severity >= 6) || $sudden)
+        ) {
+            $urgent = true;
+            $notes[] = 'abdominal_with_systemic';
+        }
+
+        // Isolated moderate/mild pain, gradual/unknown onset, no concerning assoc → not urgent.
+        if ($severity !== null && $severity <= 6 && !$sudden && !$concerningAssoc
+            && ($hasAssocDenial || !$hasAssocPositive)
+        ) {
+            $urgent = false;
+            $notes[] = 'isolated_mild_moderate_presentation';
+        }
+
+        // Never let emergency false-positive from severity words alone.
+        if ($emergency && $engineRed === [] && $stateRed === []
+            && !in_array('chest_with_dyspnea', $notes, true)
+            && !in_array('life_threat_pattern', $notes, true)
+            && !in_array('immediate_red_flag_priority', $notes, true)
+        ) {
+            $emergency = false;
+        }
+
+        return [
+            'emergency' => $emergency,
+            'urgent' => $urgent && !$emergency,
+            'notes' => $notes,
+            'concepts' => $concepts,
+            'severity' => $severity,
+            'sudden' => $sudden,
+            'gradual' => $gradual,
+            'duration' => $duration,
+        ];
     }
 
     /**
