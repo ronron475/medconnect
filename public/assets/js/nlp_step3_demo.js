@@ -1993,6 +1993,53 @@
       if (domain === 'UNCLEAR' || domain === 'NONSENSE_OR_UNKNOWN') domainCls = 'nlp-badge--warn';
       if (domain === 'NON_HEALTH_RELATED' || domain === 'OUT_OF_SCOPE') domainCls = 'nlp-badge--muted';
 
+      const det = trial.domain_detection || null;
+      let domainDebugHtml = '';
+      if (det && typeof det === 'object') {
+        const signals = Array.isArray(det.signals) ? det.signals : [];
+        const rels = Array.isArray(det.relationships) ? det.relationships : [];
+        const signalLines = signals.length
+          ? signals
+              .map(function (s) {
+                const t = (s && s.type) || 'signal';
+                const v = (s && s.value) || '';
+                return '<li><strong>' + escapeHtml(String(t)) + ':</strong> ' + escapeHtml(String(v)) + '</li>';
+              })
+              .join('')
+          : '<li class="nlp-muted">None</li>';
+        domainDebugHtml =
+          '<div class="nlp-trial-block nlp-trial-block--debug" id="nlp-domain-debug">' +
+          '<h3>Domain detection (demo debug)</h3>' +
+          '<ul>' +
+          '<li>DOMAIN = <strong>' +
+          escapeHtml(String(det.domain || domain || '—')) +
+          '</strong></li>' +
+          '<li>CONFIDENCE = <strong>' +
+          escapeHtml(String(det.confidence || '—')) +
+          '</strong> <span class="nlp-muted">(score ' +
+          escapeHtml(String(det.score != null ? det.score : '—')) +
+          ')</span></li>' +
+          '<li>ROUTING = <strong>' +
+          escapeHtml(String(det.routing || '—')) +
+          '</strong></li>' +
+          '<li>REASON = ' +
+          escapeHtml(String(det.reason || '—')) +
+          '</li>' +
+          '</ul>' +
+          '<p class="nlp-muted" style="margin:0.4rem 0 0.2rem">Detected signals</p>' +
+          '<ul>' +
+          signalLines +
+          '</ul>' +
+          (rels.length
+            ? '<p class="nlp-muted" style="margin:0.4rem 0 0.2rem">Relationships</p><ul>' +
+              rels.map(function (r) {
+                return '<li>' + escapeHtml(String(r)) + '</li>';
+              }).join('') +
+              '</ul>'
+            : '') +
+          '</div>';
+      }
+
       function pills(items) {
         if (!items || !items.length) return '<span class="nlp-muted">None</span>';
         return (
@@ -2091,6 +2138,7 @@
         escapeHtml(trial.diagnosis || 'NOT determined') +
         '</dd></div>' +
         '</div>' +
+        domainDebugHtml +
         '<div class="nlp-trial-block"><h3>Detected symptoms</h3>' +
         pills(symptoms.length ? symptoms : summary.complaint ? [summary.complaint] : []) +
         '</div>' +
