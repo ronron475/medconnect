@@ -218,6 +218,6 @@ $assetBase = ASSET_BASE;
     window.NLP_DEMO_CSRF = <?= json_encode($csrfToken) ?>;
     window.NLP_DEMO_TOKEN = <?= json_encode($demoToken) ?>;
   </script>
-  <script src="<?= htmlspecialchars($assetBase) ?>/assets/js/nlp_step3_demo.js?v=4.4"></script>
+  <script src="<?= htmlspecialchars($assetBase) ?>/assets/js/nlp_step3_demo.js?v=4.5"></script>
 </body>
 </html>

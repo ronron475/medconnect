@@ -28,53 +28,77 @@ final class NlpStep3DemoTrial
             || trim((string) ($prior['chief_complaint'] ?? '')) !== '';
 
         if ($turn === '') {
-            return self::packGate('UNCLEAR', $turn, $prior, "Please enter a complaint to analyze.", false, false);
+            $emptyDet = NlpStep3DemoHealthComplaintDetector::detect('');
+            $pack = self::packGate('UNCLEAR', $turn, $prior, "Please enter a complaint to analyze.", false, false);
+            $pack['domain_detection'] = $emptyDet;
+            return $pack;
         }
 
-        // Opening gates only on a fresh conversation (demo-side; do not change production NLP).
-        // Local health detection is primary; Gemini is fallback for uncertain domain only.
-        // Nonsense / clear out-of-scope must never enter ClinicalInterviewEngine or ClinicalTriageEngine.
-        $locallyHealth = FaqChatbotDomainScope::isHealthcareRelated($turn);
+        // Universal local health-complaint detector (demo) — meaning/signals, not English-only keywords.
+        // Gemini is fallback ONLY when confidence is medium/uncertain. Existing NLP stays primary.
+        $domainDet = NlpStep3DemoHealthComplaintDetector::detect($turn);
+        $locallyHealth = !empty($domainDet['health_related'])
+            || (($domainDet['domain'] ?? '') === NlpStep3DemoHealthComplaintDetector::DOMAIN_HEALTH)
+            || FaqChatbotDomainScope::isHealthcareRelated($turn);
+        $isGreeting = ($domainDet['domain'] ?? '') === NlpStep3DemoHealthComplaintDetector::DOMAIN_GREETING
+            || (($domainDet['routing'] ?? '') === NlpStep3DemoHealthComplaintDetector::ROUTE_GREETING);
         $isNonsenseOrUnknown = !$locallyHealth && self::isMalformedOrUnclear($turn);
         $isOutOfScopeOnly = !$locallyHealth
             && !$isNonsenseOrUnknown
-            && FaqChatbotDomainScope::isMeaningfulOutOfScope($turn)
-            && !FaqChatbotDomainScope::isAllowedOpening($turn);
-        // Ambiguous: not health, not nonsense, not clear OOS, not greeting — Gemini may classify.
+            && !$isGreeting
+            && !FaqChatbotDomainScope::isAllowedOpening($turn)
+            && (
+                ($domainDet['routing'] ?? '') === NlpStep3DemoHealthComplaintDetector::ROUTE_OOS
+                || (($domainDet['domain'] ?? '') === NlpStep3DemoHealthComplaintDetector::DOMAIN_OOS)
+                || FaqChatbotDomainScope::isMeaningfulOutOfScope($turn)
+            );
         $isDomainUncertain = !$hadTurns
             && !$locallyHealth
             && !$isNonsenseOrUnknown
             && !$isOutOfScopeOnly
-            && !FaqChatbotDomainScope::isAllowedOpening($turn)
-            && !FaqChatbotDomainScope::isHealthcareRelated($turn);
+            && !$isGreeting
+            && (
+                ($domainDet['routing'] ?? '') === NlpStep3DemoHealthComplaintDetector::ROUTE_GEMINI
+                || ($domainDet['confidence'] ?? '') === NlpStep3DemoHealthComplaintDetector::CONF_MEDIUM
+                || ($domainDet['domain'] ?? '') === NlpStep3DemoHealthComplaintDetector::DOMAIN_UNCLEAR
+            );
 
-        // Clearly health-related → always continue to original NLP (never OUT_OF_SCOPE).
-        if ($locallyHealth) {
+        // Domain gate applies to opening turns only. Follow-ups continue the existing NLP interview.
+        $applyDomainGate = !$hadTurns;
+
+        // Clearly health-related (HIGH local confidence) → always continue to original NLP.
+        if ($locallyHealth && ($domainDet['confidence'] ?? '') === NlpStep3DemoHealthComplaintDetector::CONF_HIGH
+            && ($domainDet['routing'] ?? '') === NlpStep3DemoHealthComplaintDetector::ROUTE_NLP
+        ) {
             // Fall through to clinical interview below.
-        } elseif ($isNonsenseOrUnknown || $isOutOfScopeOnly || $isDomainUncertain) {
-            if (!$hadTurns && FaqChatbotDomainScope::isAllowedOpening($turn)
-                && !FaqChatbotDomainScope::isHealthcareRelated($turn)
-            ) {
-                return self::packGate(
-                    'NON_HEALTH_RELATED',
-                    $turn,
-                    $prior,
-                    "I'm here to help with health concerns. This does not trigger medical assessment.",
-                    false,
-                    false
-                );
-            }
-
+        } elseif ($locallyHealth && ($domainDet['routing'] ?? '') !== NlpStep3DemoHealthComplaintDetector::ROUTE_GEMINI) {
+            // Medium/high health without needing Gemini — original NLP.
+            // Fall through.
+        } elseif ($applyDomainGate && ($isGreeting || (FaqChatbotDomainScope::isAllowedOpening($turn)
+            && !FaqChatbotDomainScope::isHealthcareRelated($turn)
+        ))) {
+            $pack = self::packGate(
+                'NON_HEALTH_RELATED',
+                $turn,
+                $prior,
+                "I'm here to help with health concerns. This does not trigger medical assessment.",
+                false,
+                false
+            );
+            $pack['domain_detection'] = $domainDet;
+            return $pack;
+        } elseif ($applyDomainGate && ($isNonsenseOrUnknown || $isOutOfScopeOnly || $isDomainUncertain
+            || (($domainDet['routing'] ?? '') === NlpStep3DemoHealthComplaintDetector::ROUTE_GEMINI && !$locallyHealth)
+        )) {
             $geminiCalled = false;
             $geminiClass = $isNonsenseOrUnknown
                 ? 'NONSENSE_OR_UNKNOWN'
                 : ($isOutOfScopeOnly ? 'OUT_OF_SCOPE' : 'UNCLEAR');
             $geminiStatus = 'NOT_CALLED';
             $primaryNlp = 'LOW_CONFIDENCE';
-            // Gemini fallback ONLY when local domain is uncertain or needs secondary check.
-            // Clear local OOS / nonsense still may use Gemini as secondary, but local health never reaches here.
             $shouldAskGemini = $allowGemini
-                && ($isDomainUncertain || $isNonsenseOrUnknown || $isOutOfScopeOnly)
+                && ($isDomainUncertain || $isNonsenseOrUnknown || $isOutOfScopeOnly
+                    || ($domainDet['routing'] ?? '') === NlpStep3DemoHealthComplaintDetector::ROUTE_GEMINI)
                 && class_exists('FaqChatbotAiFallback')
                 && FaqChatbotAiFallback::isEnabled();
             if ($shouldAskGemini) {
@@ -87,31 +111,41 @@ final class NlpStep3DemoTrial
                         $geminiCalled = true;
                         $geminiStatus = 'CALLED — SECONDARY DOMAIN CHECK';
                         $fine = (string) ($aiPack['fine_classification'] ?? $aiPack['classification'] ?? '');
-                        if ($fine !== '') {
+                        $validated = NlpStep3DemoHealthComplaintDetector::validateGeminiDomain(
+                            $fine !== '' ? ['domain' => $fine] : ($aiPack['classification'] ?? null)
+                        );
+                        if ($validated !== null) {
+                            $geminiClass = $validated;
+                        } elseif ($fine !== '') {
                             $geminiClass = $fine === 'NONSENSE_OR_PRANK' ? 'NONSENSE_OR_UNKNOWN' : $fine;
                         }
-                        // Absolute veto: never accept medical/emergency from nonsense smash.
                         if ($isNonsenseOrUnknown
                             && in_array($geminiClass, ['HEALTH_RELATED', 'MEDICAL_SYMPTOM', 'MEDICAL_FOLLOWUP_ANSWER', 'MEDICAL'], true)
                         ) {
                             $geminiClass = 'NONSENSE_OR_UNKNOWN';
                         }
+                        $domainDet['gemini_domain'] = $geminiClass;
+                        $domainDet['gemini_validated'] = $validated;
                     }
                 } catch (Throwable) {
-                    // Local gate still applies when Gemini is unavailable.
+                    // Local detector stands when Gemini fails.
                 }
             }
 
             $geminiSaysHealth = in_array($geminiClass, [
-                'HEALTH_RELATED', 'MEDICAL_SYMPTOM', 'MEDICAL_FOLLOWUP_ANSWER', 'MEDICAL', 'MEDCONNECT_SERVICE',
+                'HEALTH_RELATED', 'MEDICAL_SYMPTOM', 'MEDICAL_FOLLOWUP_ANSWER', 'MEDICAL', 'MEDCONNECT_SERVICE', 'MEDCONNECT_RELATED',
             ], true);
 
-            // If Gemini (or uncertain path with health signal) finds medical meaning → original NLP.
             if ($geminiCalled && $geminiSaysHealth && !$isNonsenseOrUnknown) {
-                // Fall through to clinical interview with original turn.
-            } elseif ($isDomainUncertain && !$geminiCalled) {
-                // Gemini unavailable on ambiguous input: continue to original NLP cautiously
-                // rather than hard-rejecting a possible health complaint.
+                $domainDet['routing'] = NlpStep3DemoHealthComplaintDetector::ROUTE_NLP;
+                $domainDet['domain'] = NlpStep3DemoHealthComplaintDetector::DOMAIN_HEALTH;
+                $domainDet['reason'] = 'Gemini fallback classified HEALTH_RELATED → original NLP';
+                // Fall through.
+            } elseif ($locallyHealth) {
+                // Local medium-confidence health with Gemini unavailable → original NLP.
+                // Fall through.
+            } elseif ($isDomainUncertain && !$geminiCalled && !$isOutOfScopeOnly) {
+                // Ambiguous + Gemini down: do not hard-reject possible health — continue cautiously.
                 // Fall through.
             } else {
                 if ($geminiClass === 'OUT_OF_SCOPE'
@@ -126,6 +160,7 @@ final class NlpStep3DemoTrial
                 }
 
                 $pack = self::packGate($domainClass, $turn, $prior, $msg, false, $geminiCalled);
+                $pack['domain_detection'] = $domainDet;
                 $pack['gemini'] = array_merge((array) ($pack['gemini'] ?? []), [
                     'called' => $geminiCalled,
                     'status' => $geminiStatus,
@@ -135,8 +170,8 @@ final class NlpStep3DemoTrial
                     'reason' => $geminiCalled
                         ? 'Gemini secondary domain check — no clinical triage'
                         : ($allowGemini
-                            ? 'Primary local domain gate (no triage)'
-                            : 'Gemini secondary disabled/rate-limited; local gate only (no triage)'),
+                            ? 'Primary local domain detector (no triage)'
+                            : 'Gemini secondary disabled/rate-limited; local detector only'),
                 ]);
                 $pack['gemini_called'] = $geminiCalled;
                 $pack['gemini_why'] = (string) ($pack['gemini']['reason'] ?? '');
@@ -150,8 +185,9 @@ final class NlpStep3DemoTrial
         if (!$hadTurns) {
             if (FaqChatbotDomainScope::isAllowedOpening($turn)
                 && !FaqChatbotDomainScope::isHealthcareRelated($turn)
+                && !$locallyHealth
             ) {
-                return self::packGate(
+                $pack = self::packGate(
                     'NON_HEALTH_RELATED',
                     $turn,
                     $prior,
@@ -159,6 +195,8 @@ final class NlpStep3DemoTrial
                     false,
                     false
                 );
+                $pack['domain_detection'] = $domainDet;
+                return $pack;
             }
         }
 
@@ -288,6 +326,14 @@ final class NlpStep3DemoTrial
             (string) ($assessment['clinical_transcript'] ?? $turn)
         );
 
+        if (($domainDet['routing'] ?? '') !== NlpStep3DemoHealthComplaintDetector::ROUTE_NLP) {
+            $domainDet['routing'] = NlpStep3DemoHealthComplaintDetector::ROUTE_NLP;
+        }
+        if (($domainDet['domain'] ?? '') !== NlpStep3DemoHealthComplaintDetector::DOMAIN_HEALTH) {
+            $domainDet['domain'] = NlpStep3DemoHealthComplaintDetector::DOMAIN_HEALTH;
+            $domainDet['health_related'] = true;
+        }
+
         return [
             'demo_mode' => self::MODE,
             'trial_only' => true,
@@ -296,6 +342,7 @@ final class NlpStep3DemoTrial
             'normalized_input' => $normalizedTurn,
             'health_related' => $healthRelated,
             'domain_class' => 'HEALTH_RELATED',
+            'domain_detection' => $domainDet,
             'information' => $information,
             'information_status' => $information,
             'clinical_status' => $clinicalStatus,
@@ -1199,6 +1246,7 @@ final class NlpStep3DemoTrial
             'nlp_primary' => true,
             'assessment' => null,
             'next_action' => $message,
+            'domain_detection' => null,
         ];
     }
 }
