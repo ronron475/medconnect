@@ -131,9 +131,9 @@ final class FaqChatbotDomainScope
         $L = in_array($lang, ['en', 'fil', 'hil'], true) ? $lang : 'en';
         if ($scope === self::OUT_OF_SCOPE) {
             $copy = [
-                'en' => "I'm sorry, I can't answer that because it is outside the scope of the medConnect Assistant. I can only assist with healthcare concerns and medConnect-related services.",
-                'fil' => 'Paumanhin, hindi ko masagot iyan dahil wala ito sa saklaw ng medConnect Assistant. Makakatulong lang ako sa mga alalahanin sa kalusugan at mga serbisyong may kaugnayan sa medConnect.',
-                'hil' => 'Pasensya, indi ko masabat sina kay wala ini sa saklaw sang medConnect Assistant. Makatabang lang ako sa mga health concern kag mga serbisyo nga may kaangtan sa medConnect.',
+                'en' => 'Sorry, I can only assist with medConnect, City Health Office services, and health-related concerns.',
+                'fil' => 'Pasensya, makakatulong lang ako sa medConnect, serbisyo ng City Health Office, at mga health-related concerns.',
+                'hil' => 'Pasensya, makatabang lang ako sa medConnect, serbisyo sang City Health Office, kag mga health-related concerns.',
             ];
             return '<p>' . htmlspecialchars($copy[$L], ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') . '</p>';
         }
@@ -153,9 +153,9 @@ final class FaqChatbotDomainScope
     {
         $L = in_array($lang, ['en', 'fil', 'hil'], true) ? $lang : 'en';
         $copy = [
-            'en' => "I couldn't understand your answer. Please retype it or answer the question again.",
-            'fil' => 'Hindi ko naintindihan ang iyong sagot. Paki-type ulit o sagutin muli ang tanong.',
-            'hil' => 'Indi ko naintindihan ang imo sabat. Palihog i-type liwat ang imo ginabatyag ukon sabata ang pamangkot.',
+            'en' => "I couldn't understand your answer. Please rephrase it or type your concern again.",
+            'fil' => 'Hindi ko naintindihan ang iyong sagot. Paki-rephrase o i-type ulit ang iyong concern.',
+            'hil' => 'Indi ko naintindihan ang imo sabat. Palihog i-rephrase ukon i-type liwat ang imo concern.',
         ];
         return '<p>' . htmlspecialchars($copy[$L], ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') . '</p>';
     }
@@ -168,9 +168,9 @@ final class FaqChatbotDomainScope
     {
         $L = in_array($lang, ['en', 'fil', 'hil'], true) ? $lang : 'en';
         $copy = [
-            'en' => "I couldn't understand your message yet. Please retype your concern or symptoms.",
-            'fil' => 'Hindi ko pa naintindihan ang iyong mensahe. Paki-type ulit ang iyong concern o sintomas.',
-            'hil' => 'Indi ko pa naintindihan ang imo mensahe. Palihog i-type liwat ang imo concern ukon sintomas.',
+            'en' => "I couldn't understand your message. Please retype your concern or symptom.",
+            'fil' => 'Hindi ko naintindihan ang iyong mensahe. Paki-type ulit ang iyong concern o sintomas.',
+            'hil' => 'Indi ko naintindihan ang imo mensahe. Palihog i-type liwat ang imo concern ukon sintomas.',
         ];
         return '<p>' . htmlspecialchars($copy[$L], ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') . '</p>';
     }
@@ -194,9 +194,9 @@ final class FaqChatbotDomainScope
     {
         $L = in_array($lang, ['en', 'fil', 'hil'], true) ? $lang : 'en';
         $copy = [
-            'en' => "I'm here to help with City Health Office and medConnect services. Could you tell me what you need help with?",
-            'fil' => 'Nandito ako para tumulong sa City Health Office at medConnect. Ano po ang maitutulong ko?',
-            'hil' => 'Diri ako para magbulig sa City Health Office kag medConnect. Ano ang imo kinahanglan?',
+            'en' => 'Sorry, I can only assist with medConnect, City Health Office services, and health-related concerns.',
+            'fil' => 'Pasensya, makakatulong lang ako sa medConnect, serbisyo ng City Health Office, at mga health-related concerns.',
+            'hil' => 'Pasensya, makatabang lang ako sa medConnect, serbisyo sang City Health Office, kag mga health-related concerns.',
         ];
         return '<p>' . htmlspecialchars($copy[$L], ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') . '</p>';
     }
@@ -249,18 +249,70 @@ final class FaqChatbotDomainScope
                 $suspicious++;
             }
         }
-        // Single short token that is almost all consonants (e.g. keyboard smash).
+        // Single short/medium token with no recoverable language (e.g. FFF, asdf, lkfdlkgrl).
         if (count($words) === 1) {
             $w = $words[0];
             $len = mb_strlen($w);
-            if ($len >= 6) {
-                $vowelCount = preg_match_all('/[aeiouàáéíóú]/iu', $w);
-                if (($vowelCount / $len) < 0.18) {
+            if ($len >= 2 && preg_match('/^[a-z0-9]+$/iu', $w)) {
+                // Same character repeated (FFF, 1111, aaaa).
+                if (preg_match('/^(.)\1+$/u', $w)) {
+                    return true;
+                }
+                $vowelCount = preg_match_all('/[aeiouàáéíóúy]/iu', $w);
+                // All-consonant letter smash (FFF, bcdfg) — misspellings like "olo"/"ulo" keep vowels.
+                if ($vowelCount === 0 && preg_match('/^[a-z]+$/iu', $w)) {
+                    return true;
+                }
+                if ($len >= 6 && ($vowelCount / $len) < 0.18) {
                     return true;
                 }
             }
         }
         return $suspicious > 0;
+    }
+
+    /**
+     * Raw utterance has no clinically meaningful content for emergency/triage elevation.
+     * Use the raw patient message only — never memory-enriched match text.
+     */
+    public static function lacksClinicalMeaning(string $text, string $nlpText = ''): bool
+    {
+        $raw = trim($text);
+        if ($raw === '') {
+            return true;
+        }
+        if (self::isHealthcareRelated($raw, $nlpText) || self::isAllowedOpening($raw)) {
+            return false;
+        }
+        if (self::isLikelyNonsenseOrPrank($raw, $nlpText) || self::looksUnclear($raw, $nlpText)) {
+            return true;
+        }
+        if (self::isMeaningfulOutOfScope($raw, $nlpText)) {
+            return true;
+        }
+        // Very short ambiguous tokens (e.g. FFF already caught; leftover smash) — never emergency.
+        $compact = preg_replace('/\s+/u', '', self::normalize($raw)) ?? '';
+        return $compact !== '' && mb_strlen($compact) <= 3 && !preg_match('/[aeiouàáéíóúy]/iu', $compact);
+    }
+
+    /**
+     * Meaningful language that is clearly outside medConnect / health scope (trivia, jokes, etc.).
+     */
+    public static function isMeaningfulOutOfScope(string $text, string $nlpText = ''): bool
+    {
+        $raw = trim($text);
+        if ($raw === '' || self::isHealthcareRelated($raw, $nlpText) || self::isAllowedOpening($raw)) {
+            return false;
+        }
+        if (self::isLikelyNonsenseOrPrank($raw, $nlpText) || self::looksUnclear($raw, $nlpText)) {
+            return false;
+        }
+        $hay = self::normalize($raw . ' ' . $nlpText);
+        if (preg_match('/\b(who|what|where|when|why|how|tell me|write|play|joke|poem|story|president|election|capital|weather|football|basketball|movie|song|game)\b/u', $hay)) {
+            return true;
+        }
+        $words = preg_split('/\s+/u', $hay, -1, PREG_SPLIT_NO_EMPTY) ?: [];
+        return count($words) >= 4 && self::shouldIntercept(self::classify($raw, $nlpText));
     }
 
     /**

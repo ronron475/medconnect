@@ -15,10 +15,12 @@ final class NlpStep3DemoTrial
 
     /**
      * @param array<string, mixed> $priorContext
+     * @param array{allow_gemini?: bool} $options
      * @return array<string, mixed>
      */
-    public static function assess(string $utterance, array $priorContext = []): array
+    public static function assess(string $utterance, array $priorContext = [], array $options = []): array
     {
+        $allowGemini = !array_key_exists('allow_gemini', $options) || !empty($options['allow_gemini']);
         $turn = trim($utterance);
         $prior = ClinicalInterviewEngine::normalizeContext($priorContext);
         // normalizeContext defaults assessment_status to IN_PROGRESS — use turns/complaint only.
@@ -30,8 +32,16 @@ final class NlpStep3DemoTrial
         }
 
         // Opening gates only on a fresh conversation (demo-side; do not change production NLP).
-        if (!$hadTurns) {
-            if (FaqChatbotDomainScope::isAllowedOpening($turn)
+        // Nonsense / unknown / out-of-scope must never enter ClinicalInterviewEngine or ClinicalTriageEngine.
+        $isNonsenseOrUnknown = self::isMalformedOrUnclear($turn)
+            && !FaqChatbotDomainScope::isHealthcareRelated($turn);
+        $isOutOfScopeOnly = !$isNonsenseOrUnknown
+            && FaqChatbotDomainScope::isMeaningfulOutOfScope($turn)
+            && !FaqChatbotDomainScope::isHealthcareRelated($turn)
+            && !FaqChatbotDomainScope::isAllowedOpening($turn);
+
+        if ($isNonsenseOrUnknown || (!$hadTurns && $isOutOfScopeOnly)) {
+            if (!$hadTurns && FaqChatbotDomainScope::isAllowedOpening($turn)
                 && !FaqChatbotDomainScope::isHealthcareRelated($turn)
             ) {
                 return self::packGate(
@@ -44,12 +54,84 @@ final class NlpStep3DemoTrial
                 );
             }
 
-            if (self::isMalformedOrUnclear($turn)) {
+            $geminiCalled = false;
+            $geminiClass = $isNonsenseOrUnknown ? 'NONSENSE_OR_UNKNOWN' : 'OUT_OF_SCOPE';
+            $geminiStatus = 'NOT_CALLED';
+            $primaryNlp = 'LOW_CONFIDENCE';
+            if ($allowGemini && class_exists('FaqChatbotAiFallback') && FaqChatbotAiFallback::isEnabled()) {
+                try {
+                    $aiPack = FaqChatbotAiFallback::tryAssist($turn, 'en', [
+                        'current_question' => (string) ($prior['awaiting_question_id'] ?? ''),
+                        'turns' => [],
+                    ]);
+                    if (is_array($aiPack)) {
+                        $geminiCalled = true;
+                        $geminiStatus = 'CALLED — SECONDARY CHECK';
+                        $fine = (string) ($aiPack['fine_classification'] ?? $aiPack['classification'] ?? '');
+                        if ($fine !== '') {
+                            $geminiClass = $fine === 'NONSENSE_OR_PRANK' ? 'NONSENSE_OR_UNKNOWN' : $fine;
+                        }
+                        // Absolute veto: never accept medical/emergency from nonsense smash.
+                        if ($isNonsenseOrUnknown
+                            && in_array($geminiClass, ['HEALTH_RELATED', 'MEDICAL_SYMPTOM', 'MEDICAL_FOLLOWUP_ANSWER', 'MEDICAL'], true)
+                        ) {
+                            $geminiClass = 'NONSENSE_OR_UNKNOWN';
+                        }
+                    }
+                } catch (Throwable) {
+                    // Local gate still applies when Gemini is unavailable.
+                }
+            }
+
+            if ($geminiClass === 'OUT_OF_SCOPE'
+                || $geminiClass === 'NON_HEALTH_RELATED'
+                || (!$isNonsenseOrUnknown && $isOutOfScopeOnly)
+            ) {
+                $msg = "Sorry, I can only assist with medConnect, City Health Office services, and health-related concerns.";
+                $domainClass = 'OUT_OF_SCOPE';
+            } else {
+                $msg = "Indi ko naintindihan ang imo mensahe. Palihog i-type liwat ang imo concern ukon sintomas.";
+                $domainClass = 'NONSENSE_OR_UNKNOWN';
+            }
+
+            // If Gemini confidently found medical meaning for a misspelling, continue clinical flow.
+            if ($geminiCalled
+                && !$isNonsenseOrUnknown
+                && in_array($geminiClass, ['HEALTH_RELATED', 'MEDICAL_SYMPTOM', 'MEDICAL_FOLLOWUP_ANSWER', 'MEDICAL', 'MEDCONNECT_SERVICE'], true)
+            ) {
+                // Fall through to clinical interview with original turn (existing NLP/fuzzy handle meaning).
+            } else {
+                $pack = self::packGate($domainClass, $turn, $prior, $msg, false, $geminiCalled);
+                $pack['gemini'] = array_merge((array) ($pack['gemini'] ?? []), [
+                    'called' => $geminiCalled,
+                    'status' => $geminiStatus,
+                    'classification' => $geminiClass,
+                    'primary_nlp' => $primaryNlp,
+                    'final_routing' => 'CLARIFICATION',
+                    'reason' => $geminiCalled
+                        ? 'Gemini secondary check — no clinical triage'
+                        : ($allowGemini
+                            ? 'Primary NLP low confidence; local nonsense/out-of-scope gate (no triage)'
+                            : 'Gemini secondary disabled/rate-limited; local gate only (no triage)'),
+                ]);
+                $pack['gemini_called'] = $geminiCalled;
+                $pack['gemini_why'] = (string) ($pack['gemini']['reason'] ?? '');
+                $pack['engine_chain'] = 'demo gate only (no ClinicalTriageEngine)';
+                $pack['triage_display'] = '';
+                $pack['triage_final'] = null;
+                return $pack;
+            }
+        }
+
+        if (!$hadTurns) {
+            if (FaqChatbotDomainScope::isAllowedOpening($turn)
+                && !FaqChatbotDomainScope::isHealthcareRelated($turn)
+            ) {
                 return self::packGate(
-                    'UNCLEAR',
+                    'NON_HEALTH_RELATED',
                     $turn,
                     $prior,
-                    "I'm not sure I understood your message. Could you please rephrase it?",
+                    "I'm here to help with health concerns. This does not trigger medical assessment.",
                     false,
                     false
                 );
@@ -91,7 +173,8 @@ final class NlpStep3DemoTrial
                 (string) ($fuzzyPrep['original'] ?? $turn),
                 $prior,
                 $awaiting,
-                $fuzzyPrep
+                $fuzzyPrep,
+                $allowGemini
             );
             $geminiMeta = array_merge($geminiMeta, $geminiPack['meta'] ?? []);
             $geminiMeta['fuzzy'] = $fuzzyMeta;
@@ -248,7 +331,8 @@ final class NlpStep3DemoTrial
         string $turn,
         array $prior,
         string $awaiting,
-        array $fuzzyPrep = []
+        array $fuzzyPrep = [],
+        bool $allowGemini = true
     ): array {
         $meta = [
             'called' => false,
@@ -336,6 +420,18 @@ final class NlpStep3DemoTrial
 
         // 3) Primary NLP did not confidently understand → Gemini fallback (then lexicon/fuzzy inside interpret)
         $meta['primary_nlp'] = 'FAILED';
+        if (!$allowGemini) {
+            $meta['reason'] = 'NOT CALLED — Gemini rate-limited/disabled; continuing with local NLP/fuzzy';
+            $meta['status'] = 'NOT_CALLED';
+            $meta['fallback'] = 'rate_limited';
+
+            return [
+                'meta' => $meta,
+                'block_advance' => false,
+                'turn' => $corrected !== '' ? $corrected : $turn,
+                'prior' => $prior,
+            ];
+        }
         $expected = self::expectedAnswerType($awaiting);
         $questionText = self::lastAskedQuestionText($prior, $awaiting);
         $result = NlpStep3DemoGeminiAnswerInterpreter::interpret(
@@ -571,7 +667,9 @@ final class NlpStep3DemoTrial
 
     private static function isMalformedOrUnclear(string $turn): bool
     {
-        if (FaqChatbotDomainScope::looksUnclear($turn)) {
+        if (FaqChatbotDomainScope::isLikelyNonsenseOrPrank($turn)
+            || FaqChatbotDomainScope::looksUnclear($turn)
+        ) {
             return true;
         }
 

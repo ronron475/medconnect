@@ -100,18 +100,35 @@ final class FaqChatbotOrchestrator
         }
 
         $emergency = ['is_emergency' => false, 'type' => null, 'flow' => null, 'reason' => ''];
-        if (!$isOpening) {
+        $rawLacksClinical = FaqChatbotDomainScope::lacksClinicalMeaning($text)
+            || FaqChatbotDomainScope::lacksClinicalMeaning($effectiveText);
+        // UNKNOWN / nonsense / out-of-scope must NEVER elevate via memory-enriched matchText.
+        if (!$isOpening && !$rawLacksClinical) {
             $emergency = FaqChatbotEmergencyDetector::detect($effectiveText);
-            if (
-                empty($emergency['is_emergency'])
+            // Memory-enriched matchText may only reinforce emergency when the raw turn
+            // already carries healthcare meaning or is a short follow-up affirmative.
+            $allowMemoryEmergency = empty($emergency['is_emergency'])
                 && $matchText !== ''
                 && strcasecmp(trim($matchText), trim($effectiveText)) !== 0
-            ) {
+                && (
+                    FaqChatbotDomainScope::isHealthcareRelated($effectiveText, $nlpText)
+                    || (
+                        FaqChatbotConversationMemory::isFollowUpUtterance($effectiveText)
+                        && mb_strlen(trim($effectiveText)) <= 28
+                        && !FaqChatbotDomainScope::looksUnclear($effectiveText)
+                        && !FaqChatbotDomainScope::isLikelyNonsenseOrPrank($effectiveText)
+                    )
+                );
+            if ($allowMemoryEmergency) {
                 $second = FaqChatbotEmergencyDetector::detect($matchText);
                 if (!empty($second['is_emergency'])) {
                     $emergency = $second;
                 }
             }
+        }
+        // Absolute veto: nonsense/unknown never becomes emergency.
+        if ($rawLacksClinical && !FaqChatbotDomainScope::isHealthcareRelated($text, $nlpText)) {
+            $emergency = ['is_emergency' => false, 'type' => null, 'flow' => null, 'reason' => ''];
         }
 
         $intentPack = FaqChatbotIntentRecognizer::recognize($matchText);
@@ -328,6 +345,18 @@ final class FaqChatbotOrchestrator
                 }
 
                 if ($kbHit !== null) {
+                    // Reject emergency/crisis cards for nonsense or non-clinical raw turns.
+                    $kbKey = (string) ($kbHit['key'] ?? '');
+                    if (in_array($kbKey, ['emergency_redirect', 'crisis_hopeless'], true)
+                        && $rawLacksClinical
+                        && !FaqChatbotDomainScope::isHealthcareRelated($text, $matchText)
+                    ) {
+                        $kbHit = null;
+                        $responseHtml = '';
+                    }
+                }
+
+                if ($kbHit !== null) {
                     $lead = $empathyWrap ?? FaqChatbotResponseGenerator::wrapAnswer($empathy, '');
                     // Crisis / emergency KB cards already carry strong framing — light empathy only
                     if (in_array($kbHit['key'], ['crisis_hopeless', 'emergency_redirect'], true)) {
@@ -477,14 +506,26 @@ final class FaqChatbotOrchestrator
                         || FaqChatbotDomainScope::looksUnclear($aiText, $matchText);
                     $hasHealthCue = FaqChatbotDomainScope::isHealthcareRelated($aiText, $matchText);
 
-                    // Gibberish/prank must never become medical guidance or MedConnect service copy.
-                    if ($localNonsense && !$hasHealthCue) {
+                    // Gibberish/prank/out-of-scope must never become medical guidance or MedConnect service copy.
+                    if (($localNonsense || $rawLacksClinical) && !$hasHealthCue) {
                         $isHealthClass = false;
-                        $isNonHealthClass = false;
                         $isGreetingClass = false;
-                        $isNonsenseClass = true;
-                        $geminiClassification = FaqChatbotAiFallback::CLASS_NONSENSE_OR_PRANK;
-                        $fineClass = FaqChatbotAiFallback::CLASS_NONSENSE_OR_PRANK;
+                        $meaningfulOos = FaqChatbotDomainScope::isMeaningfulOutOfScope($aiText, $matchText)
+                            || (
+                                FaqChatbotDomainScope::shouldIntercept(FaqChatbotDomainScope::classify($aiText, $matchText))
+                                && !FaqChatbotDomainScope::isLikelyNonsenseOrPrank($aiText, $matchText)
+                                && !FaqChatbotDomainScope::looksUnclear($aiText, $matchText)
+                                && mb_strlen(trim($aiText)) >= 12
+                            );
+                        $isNonHealthClass = $meaningfulOos;
+                        $isNonsenseClass = !$meaningfulOos;
+                        if ($isNonsenseClass) {
+                            $geminiClassification = FaqChatbotAiFallback::CLASS_NONSENSE_OR_PRANK;
+                            $fineClass = FaqChatbotAiFallback::CLASS_NONSENSE_OR_PRANK;
+                        } else {
+                            $geminiClassification = FaqChatbotAiFallback::CLASS_NON_HEALTH_RELATED;
+                            $fineClass = FaqChatbotAiFallback::CLASS_NON_HEALTH_RELATED;
+                        }
                         $geminiMeta['is_healthcare_related'] = false;
                         $geminiMeta['fine_classification'] = $fineClass;
                     } elseif ($isHealthClass && $localNonsense && !$hasHealthCue) {
@@ -494,7 +535,7 @@ final class FaqChatbotOrchestrator
                         $geminiMeta['is_healthcare_related'] = false;
                     }
 
-                    if ($isHealthClass && $urgency === 'EMERGENCY') {
+                    if ($isHealthClass && $urgency === 'EMERGENCY' && $hasHealthCue && !$localNonsense && !$rawLacksClinical) {
                         $emergency = [
                             'is_emergency' => true,
                             'type'         => 'medical',

@@ -8,6 +8,17 @@
  * Trial interview is DEMO-ONLY (does not modify production chatbot / triage persistence).
  */
 require_once dirname(__DIR__) . '/bootstrap.php';
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
+if (empty($_SESSION['csrf_token']) || !is_string($_SESSION['csrf_token'])) {
+    $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
+}
+if (empty($_SESSION['nlp_demo_interview_token']) || !is_string($_SESSION['nlp_demo_interview_token'])) {
+    $_SESSION['nlp_demo_interview_token'] = bin2hex(random_bytes(24));
+}
+$csrfToken = (string) $_SESSION['csrf_token'];
+$demoToken = (string) $_SESSION['nlp_demo_interview_token'];
 $assetBase = ASSET_BASE;
 ?>
 <!DOCTYPE html>
@@ -19,7 +30,7 @@ $assetBase = ASSET_BASE;
   <link rel="stylesheet" href="<?= htmlspecialchars($assetBase) ?>/assets/css/nlp_step3_demo.css?v=3.4" />
   <link rel="stylesheet" href="<?= htmlspecialchars($assetBase) ?>/assets/css/nlp_medical_recognition.css" />
 </head>
-<body class="nlp-demo-body">
+<body class="nlp-demo-body" data-csrf="<?= htmlspecialchars($csrfToken, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>">
 
   <main class="nlp-demo-main">
     <header class="nlp-demo-header">
@@ -202,7 +213,11 @@ $assetBase = ASSET_BASE;
     </details>
   </main>
 
-  <script>window.APP_BASE = <?= json_encode($assetBase) ?>;</script>
-  <script src="<?= htmlspecialchars($assetBase) ?>/assets/js/nlp_step3_demo.js?v=4.2"></script>
+  <script>
+    window.APP_BASE = <?= json_encode($assetBase) ?>;
+    window.NLP_DEMO_CSRF = <?= json_encode($csrfToken) ?>;
+    window.NLP_DEMO_TOKEN = <?= json_encode($demoToken) ?>;
+  </script>
+  <script src="<?= htmlspecialchars($assetBase) ?>/assets/js/nlp_step3_demo.js?v=4.4"></script>
 </body>
 </html>

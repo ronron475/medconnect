@@ -566,8 +566,8 @@ final class FaqChatbotAiFallback
             return $class === self::CLASS_UNKNOWN ? self::CLASS_UNKNOWN : self::CLASS_UNCLEAR;
         }
         if ($confidence !== null && $confidence < self::CLASSIFY_CONFIDENCE_THRESHOLD) {
-            // Do not force a medical/service guess when the model is unsure.
-            return self::CLASS_UNKNOWN;
+            // Do not force a medical/service guess when the model is unsure — ask to rephrase.
+            return self::CLASS_UNCLEAR;
         }
         return $class;
     }
@@ -703,7 +703,7 @@ final class FaqChatbotAiFallback
             self::CLASS_MEDICAL_FOLLOWUP, 'FOLLOWUP', 'FOLLOW_UP', 'FOLLOW_UP_ANSWER', 'ANSWER' => self::CLASS_MEDICAL_FOLLOWUP,
             self::CLASS_MEDCONNECT_SERVICE, 'SERVICE', 'SERVICES', 'APPOINTMENT', 'SUPPORT' => self::CLASS_MEDCONNECT_SERVICE,
             self::CLASS_NON_HEALTH_RELATED, 'NON_HEALTHCARE', 'OUT_OF_SCOPE', 'NONHEALTHCARE', 'UNRELATED' => self::CLASS_NON_HEALTH_RELATED,
-            self::CLASS_NONSENSE_OR_PRANK, 'NONSENSE', 'PRANK', 'GIBBERISH', 'TEST_INPUT', 'KEYBOARD_SMASH' => self::CLASS_NONSENSE_OR_PRANK,
+            self::CLASS_NONSENSE_OR_PRANK, 'NONSENSE', 'PRANK', 'GIBBERISH', 'TEST_INPUT', 'KEYBOARD_SMASH', 'NONSENSE_OR_UNKNOWN' => self::CLASS_NONSENSE_OR_PRANK,
             self::CLASS_GREETING_OPEN, 'HI', 'HELLO' => self::CLASS_GREETING_OPEN,
             self::CLASS_UNKNOWN => self::CLASS_UNKNOWN,
             self::CLASS_UNCLEAR, 'POSSIBLY_HEALTHCARE', 'POSSIBLY', 'AMBIGUOUS', 'CLARIFY' => self::CLASS_UNCLEAR,

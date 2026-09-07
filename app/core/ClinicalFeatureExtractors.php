@@ -421,9 +421,19 @@ final class ClinicalFeatureExtractors
         if (preg_match('/(fever|lagnat|hilanat|cough|ubo|sip-?on|chest|dughan|dibdib|breath|ginhawa|hinga|blood|dugo|suka|vomit|headache|ulo|tiyan|abdomen|ilong|nose|nause)/u', $low)) {
             return false;
         }
+        // Random letters / nonsense are NOT "vague pain" — they must not enter triage.
+        if (class_exists('FaqChatbotDomainScope')
+            && (FaqChatbotDomainScope::looksUnclear($text) || FaqChatbotDomainScope::isLikelyNonsenseOrPrank($text))
+            && !FaqChatbotDomainScope::isHealthcareRelated($text)
+        ) {
+            return false;
+        }
         $words = preg_split('/\s+/u', $low) ?: [];
-
-        return count($words) <= 3;
+        if (count($words) > 3) {
+            return false;
+        }
+        // Short text is "vague" only when it has a minimal health cue (pain/illness language).
+        return (bool) preg_match('/\b(sakit|masakit|pain|hurt|discomfort|lain|feel|bati|symptom|masakit)\b/u', $low);
     }
 
     /** Complaint text NLP cannot parse into a safe clinical picture. */
