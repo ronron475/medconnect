@@ -1,7 +1,27 @@
 {
-  "version": "1.0",
-  "description": "Language-aware follow-up questions for the existing clinical triage interview. Clinical rules stay in ClinicalTriageEngine and datasets; this file only stores patient-facing question text.",
+  "version": "1.1",
+  "description": "Language-aware follow-up questions for the existing clinical triage interview. Clinical rules stay in ClinicalTriageEngine and datasets; this file only stores patient-facing question text. Selection is driven by required_when concept tags — expand tags/rows rather than hardcoding PHP flows.",
   "questions": [
+    {
+      "question_id": "SPECIFIC_LOCATION",
+      "clinical_purpose": "Clarify exact site when only a general body region is known",
+      "required_when": ["needs_specific_location"],
+      "priority": 8,
+      "red_flag_related": false,
+      "english": "Where exactly is the problem located in that area of your body?",
+      "tagalog": "Saan exactamente sa bahaging iyon ng katawan ang problema?",
+      "hiligaynon": "Diin gid nga parte sang sina nga bahin sang imo lawas ang problema?"
+    },
+    {
+      "question_id": "EYE_LATERALITY",
+      "clinical_purpose": "Determine which eye is affected",
+      "required_when": ["needs_laterality", "eye"],
+      "priority": 9,
+      "red_flag_related": false,
+      "english": "Which eye is affected — left, right, or both?",
+      "tagalog": "Aling mata ang apektado — kaliwa, kanan, o pareho?",
+      "hiligaynon": "Diin nga mata ang apektado — tuo, wala, ukon duha?"
+    },
     {
       "question_id": "PAIN_LOCATION",
       "clinical_purpose": "Locate unspecified pain or discomfort",
@@ -25,7 +45,7 @@
     {
       "question_id": "BREATHING_SEVERITY",
       "clinical_purpose": "Assess airway or breathing danger",
-      "required_when": ["breathing", "chest_pain"],
+      "required_when": ["breathing", "chest_pain", "cough", "respiratory"],
       "priority": 20,
       "red_flag_related": true,
       "english": "Are you having difficulty breathing, or is it hard to speak because you are breathless?",
@@ -50,7 +70,7 @@
       "red_flag_related": true,
       "english": "Are you having difficulty speaking or is your speech slurred?",
       "tagalog": "Nahihirapan ka ba magsalita o malabo ba ang iyong pananalita?",
-      "hiligaynon": "Budlay bala maghambal ukon daw indi maathag ang imo hambal?"
+      "hiligaynon": "Budlay bala maghambal ukon indi maathag ang imo hambal?"
     },
     {
       "question_id": "NEURO_VISION",
@@ -61,6 +81,16 @@
       "english": "Have you had sudden vision changes, such as loss of vision or double vision?",
       "tagalog": "May biglaang pagbabago ba sa paningin, tulad ng pagkawala ng paningin o dobleng paningin?",
       "hiligaynon": "May gulpi nga pagbag-o bala sa imo panulok, pareho sang pagkadula sang panulok?"
+    },
+    {
+      "question_id": "EYE_VISION",
+      "clinical_purpose": "Screen vision change / eye danger signs",
+      "required_when": ["eye"],
+      "priority": 23,
+      "red_flag_related": true,
+      "english": "Have you noticed any vision loss, blurry vision, or sensitivity to light?",
+      "tagalog": "May pagbabago ba sa paningin, malabo, o masakit sa liwanag?",
+      "hiligaynon": "May pagbag-o bala sa imo panulok, malabo, ukon masakit kung makakita ka sang suga/hayag?"
     },
     {
       "question_id": "BLEEDING_CONTINUING",
@@ -113,46 +143,6 @@
       "hiligaynon": "Naga singot bala gid ikaw, ukon nalilipong / daw magapunaw?"
     },
     {
-      "question_id": "NOSE_PAIN_WHERE",
-      "clinical_purpose": "Localize nose pain",
-      "required_when": ["nose_pain"],
-      "priority": 35,
-      "red_flag_related": false,
-      "english": "Where exactly do you feel the pain in your nose?",
-      "tagalog": "Saan mo nararamdaman ang sakit sa ilong?",
-      "hiligaynon": "Diin gid ang sakit sa imo ilong?"
-    },
-    {
-      "question_id": "PAIN_SEVERITY",
-      "clinical_purpose": "Collect numeric pain score as supporting information",
-      "required_when": ["pain", "headache", "chest_pain", "abdominal_pain", "nose_pain"],
-      "priority": 40,
-      "red_flag_related": false,
-      "english": "On a scale of 1–10, where 1 is the least painful and 10 is the most painful, how severe is your pain?",
-      "tagalog": "Sa scale na 1 hanggang 10, kung saan ang 1 ay pinakamahinang sakit at ang 10 ay pinakamalalang sakit, gaano kasakit ang nararamdaman mo?",
-      "hiligaynon": "Sa scale nga 1 tubtob 10, diin ang 1 amo ang pinakagamay nga kasakit kag ang 10 amo ang pinakagrabe, ano ka grabe ang imo sakit?"
-    },
-    {
-      "question_id": "ONSET",
-      "clinical_purpose": "Determine sudden versus gradual onset",
-      "required_when": ["pain", "headache", "chest_pain", "abdominal_pain", "bleeding"],
-      "priority": 50,
-      "red_flag_related": false,
-      "english": "When did this start, and did it begin suddenly or gradually?",
-      "tagalog": "Kailan ito nagsimula, at biglaan ba o unti-unti?",
-      "hiligaynon": "San-o ini nagsugod, kag gulpi bala ukon hinay-hinay?"
-    },
-    {
-      "question_id": "DURATION",
-      "clinical_purpose": "Determine how long symptoms have lasted",
-      "required_when": ["pain", "headache", "chest_pain", "abdominal_pain", "general_unwell"],
-      "priority": 55,
-      "red_flag_related": false,
-      "english": "How long have you had these symptoms?",
-      "tagalog": "Gaano na katagal ang mga sintomas na ito?",
-      "hiligaynon": "Makadugay na bala ini nga mga sintomas?"
-    },
-    {
       "question_id": "ABDOMINAL_ASSOCIATED",
       "clinical_purpose": "Abdominal associated danger signs",
       "required_when": ["abdominal_pain"],
@@ -163,9 +153,99 @@
       "hiligaynon": "May suka, hilanat, ukon pagdugo bala upod sa sakit sang tiyan?"
     },
     {
+      "question_id": "FEVER_CONFIRM",
+      "clinical_purpose": "Confirm fever / temperature",
+      "required_when": ["fever", "cough", "respiratory"],
+      "priority": 52,
+      "red_flag_related": false,
+      "english": "Do you have a fever, and if measured, what was the temperature?",
+      "tagalog": "May lagnat ka ba, at kung sinukat, magkano ang temperatura?",
+      "hiligaynon": "May hilanat bala ikaw, kag kung ginsukot, pila ang temperatura?"
+    },
+    {
+      "question_id": "NOSE_PAIN_WHERE",
+      "clinical_purpose": "Localize nose pain",
+      "required_when": ["nose_pain"],
+      "priority": 35,
+      "red_flag_related": false,
+      "english": "Where exactly do you feel the pain in your nose?",
+      "tagalog": "Saan mo nararamdaman ang sakit sa ilong?",
+      "hiligaynon": "Diin gid ang sakit sa imo ilong?"
+    },
+    {
+      "question_id": "SKIN_SITE",
+      "clinical_purpose": "Locate skin findings",
+      "required_when": ["skin"],
+      "priority": 36,
+      "red_flag_related": false,
+      "english": "Where on your skin is the problem, and is it spreading?",
+      "tagalog": "Saan sa balat ang problema, at kumakalat ba ito?",
+      "hiligaynon": "Diin sa imo panit ang problema, kag nagalapta bala ini?"
+    },
+    {
+      "question_id": "URINARY_DETAIL",
+      "clinical_purpose": "Clarify urinary symptom details",
+      "required_when": ["urinary"],
+      "priority": 37,
+      "red_flag_related": false,
+      "english": "Is there pain or burning when you urinate, and is there blood or fever?",
+      "tagalog": "May sakit o hapdi ba kapag umiihi, at may dugo o lagnat?",
+      "hiligaynon": "May sakit ukon hapdi bala kung mag-ihi, kag may dugo ukon hilanat?"
+    },
+    {
+      "question_id": "PAIN_SEVERITY",
+      "clinical_purpose": "Collect numeric pain score as supporting information",
+      "required_when": ["pain", "headache", "chest_pain", "abdominal_pain", "nose_pain", "eye"],
+      "priority": 40,
+      "red_flag_related": false,
+      "english": "On a scale of 1–10, where 1 is the least painful and 10 is the most painful, how severe is your pain?",
+      "tagalog": "Sa scale na 1 hanggang 10, kung saan ang 1 ay pinakamahinang sakit at ang 10 ay pinakamalalang sakit, gaano kasakit ang nararamdaman mo?",
+      "hiligaynon": "Sa scale nga 1 tubtob 10, diin ang 1 amo ang pinakagamay nga kasakit kag ang 10 amo ang pinakagrabe, ano ka grabe ang imo sakit?"
+    },
+    {
+      "question_id": "DIZZINESS_TYPE",
+      "clinical_purpose": "Clarify dizziness character",
+      "required_when": ["dizziness"],
+      "priority": 45,
+      "red_flag_related": false,
+      "english": "When you say dizzy, does the room spin, do you feel lightheaded, or unsteady?",
+      "tagalog": "Kapag sinasabi mong nahihilo, umiikot ba ang paligid, gaan ang ulo, o hindi ka matatag?",
+      "hiligaynon": "Ang imo hilo, daw naga-tuyok bala ang palibot, gaan ang ulo, ukon indi ka stabile magtindog?"
+    },
+    {
+      "question_id": "ONSET",
+      "clinical_purpose": "Determine sudden versus gradual onset / timing",
+      "required_when": ["pain", "headache", "chest_pain", "abdominal_pain", "bleeding", "cough", "fever", "eye", "skin", "urinary", "breathing", "dizziness", "respiratory"],
+      "priority": 50,
+      "red_flag_related": false,
+      "english": "When did this start, and did it begin suddenly or gradually?",
+      "tagalog": "Kailan ito nagsimula, at biglaan ba o unti-unti?",
+      "hiligaynon": "San-o ini nagsugod, kag gulpi bala ukon hinay-hinay?"
+    },
+    {
+      "question_id": "DURATION",
+      "clinical_purpose": "Determine how long symptoms have lasted",
+      "required_when": ["pain", "headache", "chest_pain", "abdominal_pain", "general_unwell", "cough", "fever", "eye", "skin", "urinary"],
+      "priority": 55,
+      "red_flag_related": false,
+      "english": "How long have you had these symptoms?",
+      "tagalog": "Gaano na katagal ang mga sintomas na ito?",
+      "hiligaynon": "Makadugay na bala ini nga mga sintomas?"
+    },
+    {
+      "question_id": "COUGH_TYPE",
+      "clinical_purpose": "Cough character (dry vs productive)",
+      "required_when": ["cough"],
+      "priority": 56,
+      "red_flag_related": false,
+      "english": "Is your cough dry, or do you bring up phlegm?",
+      "tagalog": "Tuyong ubo ba, o may plema?",
+      "hiligaynon": "Uga bala ang imo ubo, ukon may plema?"
+    },
+    {
       "question_id": "ASSOCIATED_SYMPTOMS",
       "clinical_purpose": "Identify other associated symptoms without assuming negatives",
-      "required_when": ["headache", "chest_pain", "pain", "dizziness"],
+      "required_when": ["headache", "chest_pain", "pain", "dizziness", "fever", "skin", "urinary", "eye", "cough"],
       "priority": 70,
       "red_flag_related": false,
       "english": "Do you have any other symptoms besides what you already described?",

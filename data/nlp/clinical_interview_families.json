@@ -1,15 +1,15 @@
 {
-  "version": "1.0",
-  "description": "Dataset-driven complaint and follow-up family signals for the universal clinical interview gate. Expand rows here without PHP changes.",
+  "version": "1.1",
+  "description": "Dataset-driven complaint and follow-up family signals for the universal clinical interview gate. Expand rows here without PHP interview-flow changes.",
   "complaints": [
     {
       "complaint_id": "HEADACHE",
       "label": "Headache",
       "family_key": "headache",
-      "symptom_name_contains": ["headache", "head pain"],
+      "symptom_name_contains": ["headache", "head pain", "headech"],
       "symptom_ids": ["headache"],
       "body_parts": ["head"],
-      "text_regex": ["headache", "sakit ulo", "masakit ulo", "sakit sang ulo", "\\bulo\\b"]
+      "text_regex": ["headache", "headech", "sakit ulo", "masakit ulo", "kasakit ulo", "sakit sang ulo", "\\bulo\\b"]
     },
     {
       "complaint_id": "CHEST_PAIN",
@@ -52,6 +52,48 @@
       "symptom_name_contains": ["difficulty breathing", "shortness of breath", "dyspnea"],
       "symptom_ids": ["difficulty_breathing"],
       "text_regex": ["difficulty breathing", "cannot breathe", "can't breathe", "makahinga", "makaginhawa", "budlay.{0,16}ginhawa", "hirap huminga", "shortness of breath"]
+    },
+    {
+      "complaint_id": "COUGH",
+      "label": "Cough",
+      "family_key": "cough",
+      "symptom_name_contains": ["cough", "ubo"],
+      "symptom_ids": ["cough"],
+      "text_regex": ["\\bginaubo\\b", "\\bginauubo\\b", "\\bnagaubo\\b", "\\bnagauubo\\b", "\\bcough(?:ing)?\\b", "\\bcought\\b", "\\bcouph\\b", "\\bubo\\b"]
+    },
+    {
+      "complaint_id": "FEVER",
+      "label": "Fever",
+      "family_key": "fever",
+      "symptom_name_contains": ["fever", "lagnat", "hilanat"],
+      "symptom_ids": ["fever"],
+      "text_regex": ["\\bhilanat\\b", "\\blagnat\\b", "\\bfever\\b", "\\bpyrexia\\b"],
+      "text_regex_exclude": ["\\b(wala|indi|hindi|no|without|walang)\\s+(?:ko\\s+)?(?:sang\\s+)?(hilanat|lagnat|fever)\\b"]
+    },
+    {
+      "complaint_id": "EYE",
+      "label": "Eye complaint",
+      "family_key": "eye",
+      "symptom_name_contains": ["eye pain", "eye", "mata"],
+      "symptom_ids": ["eye_pain", "eye_redness"],
+      "body_parts": ["eye"],
+      "text_regex": ["eye pain", "sakit.{0,12}mata", "masakit.{0,12}mata", "\\bmata\\b", "\\beye\\b"]
+    },
+    {
+      "complaint_id": "SKIN",
+      "label": "Skin complaint",
+      "family_key": "skin",
+      "symptom_name_contains": ["rash", "itch", "skin"],
+      "symptom_ids": ["rash", "pruritus"],
+      "text_regex": ["\\brash\\b", "\\bitch(?:y|ing)?\\b", "\\bkati\\b", "\\bkatal\\b", "\\bpamaga\\b", "\\bswelling\\b", "\\blesion\\b", "\\bhives\\b", "\\burticaria\\b", "\\bskin\\b", "\\bpanit\\b"]
+    },
+    {
+      "complaint_id": "URINARY",
+      "label": "Urinary symptoms",
+      "family_key": "urinary",
+      "symptom_name_contains": ["dysuria", "urinary", "uti"],
+      "symptom_ids": ["dysuria", "urinary_frequency"],
+      "text_regex": ["\\bdysuria\\b", "\\burinat(?:e|ion)?\\b", "\\bihi\\b", "\\bpag-ihi\\b", "\\bmag-ihi\\b", "\\bburning\\s+urin", "\\bfrequency\\b", "\\buti\\b", "masakit.{0,20}ihi"]
     },
     {
       "complaint_id": "DIZZINESS",
@@ -100,7 +142,11 @@
   "derived_families": [
     {
       "key": "pain",
-      "add_when_family_any": ["headache", "chest_pain", "abdominal_pain", "nose_pain", "pain", "pain_unspecified"]
+      "add_when_family_any": ["headache", "chest_pain", "abdominal_pain", "nose_pain", "eye", "pain", "pain_unspecified"]
+    },
+    {
+      "key": "respiratory",
+      "add_when_family_any": ["cough", "breathing", "chest_pain"]
     },
     {
       "key": "pain_no_location",
@@ -109,5 +155,40 @@
       "add_when_vague_or_unlocated_pain": true
     }
   ],
+  "location_specificity": {
+    "description": "Generic body-region rules: general region ≠ specific site when needs_specificity/needs_laterality is true.",
+    "regions": {
+      "abdomen": {
+        "needs_specificity": true,
+        "accepts_laterality_as_specific": true,
+        "detail_regex": ["idalom", "taas", "ibabaw", "quadrant", "epigastric", "umbilical", "flank", "pusod", "rlq", "llq", "ruq", "luq", "lower\\s+abdomen", "upper\\s+abdomen"]
+      },
+      "stomach": {
+        "needs_specificity": true,
+        "accepts_laterality_as_specific": true,
+        "detail_regex": ["idalom", "taas", "ibabaw", "quadrant", "epigastric", "umbilical", "flank", "pusod"]
+      },
+      "chest": {
+        "needs_specificity": true,
+        "accepts_laterality_as_specific": true,
+        "detail_regex": ["substernal", "tunga", "center", "idalom\\s+sang\\s+dughan"]
+      },
+      "eye": {
+        "needs_laterality": true,
+        "accepts_laterality_as_specific": true,
+        "detail_regex": ["duha\\s+ka\\s+mata", "both\\s+eyes", "bilateral"]
+      },
+      "head": {
+        "needs_specificity": false,
+        "accepts_laterality_as_specific": true,
+        "detail_regex": ["forehead", "frontal", "temple", "temporal", "occipital", "vertex", "buo", "likod\\s+(?:sang\\s+)?ulo"]
+      },
+      "nose": {
+        "needs_specificity": false,
+        "detail_regex": ["bridge", "tip", "nostril", "tuod", "pungos"]
+      }
+    }
+  },
+  "acuity_red_flag_families": ["chest_pain", "breathing", "bleeding", "neuro", "abdominal_pain", "eye"],
   "low_priority_threshold": 40
 }

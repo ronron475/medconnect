@@ -361,7 +361,9 @@ final class NlpStep3DemoTrial
                 ?? ''
             ),
             'completeness' => $completeness,
+            'demo_completeness' => $completeness,
             'missing_fields' => is_array($completeness['missing'] ?? null) ? $completeness['missing'] : [],
+            'active_concepts' => is_array($completeness['active_concepts'] ?? null) ? $completeness['active_concepts'] : [],
             'patient_message' => (string) ($assessment['patient_message'] ?? ''),
             'clinical_transcript' => (string) ($assessment['clinical_transcript'] ?? ''),
             'facts' => $facts,
@@ -867,14 +869,7 @@ final class NlpStep3DemoTrial
         $clarifyCounts = is_array($prior['clarification_counts'] ?? null) ? $prior['clarification_counts'] : [];
         if ($awaiting !== '' && isset($clarifyCounts[$awaiting]) && (int) $clarifyCounts[$awaiting] >= 2) {
             $unknown = is_array($facts['unknown_fields'] ?? null) ? $facts['unknown_fields'] : [];
-            $slotKey = match ($awaiting) {
-                'PAIN_SEVERITY' => 'severity',
-                'PAIN_LOCATION' => 'location',
-                'ONSET', 'DURATION' => 'onset',
-                'EYE_VISION' => 'eye_red_flags',
-                'ASSOCIATED_SYMPTOMS', 'ABDOMINAL_ASSOCIATED' => 'associated_symptoms',
-                default => strtolower($awaiting),
-            };
+            $slotKey = NlpStep3DemoClinicalState::slotKeyForQuestion($awaiting);
             if (!in_array($slotKey, $unknown, true)) {
                 $unknown[] = $slotKey;
             }
@@ -1082,18 +1077,29 @@ final class NlpStep3DemoTrial
      */
     private static function forceDemoQuestion(array $assessment, string $qid, string $lang): array
     {
-        $pack = self::demoQuestionPack($qid, $lang);
+        $family = strtolower((string) ($assessment['demo_completeness']['family'] ?? ''));
+        $locs = [];
+        $facts = is_array($assessment['interview']['facts'] ?? null) ? $assessment['interview']['facts'] : [];
+        if (is_array($facts['body_locations'] ?? null)) {
+            $locs = $facts['body_locations'];
+        }
+        $pack = self::demoQuestionPack($qid, $lang, [
+            'family' => $family,
+            'anatomical_location' => $locs,
+            'body_locations' => $locs,
+        ]);
         $question = [
             'question_id' => $qid,
             'clinical_purpose' => $pack['purpose'],
-            'red_flag_related' => in_array(strtoupper($qid), ['BREATHING_SEVERITY', 'NEURO_WEAKNESS', 'EYE_VISION', 'ABDOMINAL_ASSOCIATED'], true),
+            'red_flag_related' => in_array(strtoupper($qid), ['BREATHING_SEVERITY', 'NEURO_WEAKNESS', 'EYE_VISION', 'ABDOMINAL_ASSOCIATED', 'NEURO_SPEECH', 'NEURO_VISION'], true),
             'priority' => $pack['priority'],
             'text' => $pack['text'],
             'helper_text' => $pack['helper'],
             'language' => $lang,
             'source' => 'question_bank',
             'demo_wording' => true,
-            'demo_order' => true,
+            'demo_adaptive' => true,
+            'demo_order' => false,
         ];
 
         $assessment['assessment_status'] = ClinicalInterviewEngine::STATUS_IN_PROGRESS;
@@ -1107,8 +1113,8 @@ final class NlpStep3DemoTrial
         $asked = array_values(array_filter(array_map('strval', (array) ($assessment['interview']['questions_asked'] ?? []))));
         // Keep later slots available: if we skip ahead to severity, do not permanently consume location/onset.
         $deferred = match ($qid) {
-            'PAIN_SEVERITY' => ['PAIN_LOCATION', 'ONSET', 'DURATION', 'ABDOMINAL_ASSOCIATED', 'ASSOCIATED_SYMPTOMS', 'EYE_VISION'],
-            'PAIN_LOCATION' => ['ONSET', 'DURATION', 'ABDOMINAL_ASSOCIATED', 'ASSOCIATED_SYMPTOMS'],
+            'PAIN_SEVERITY' => ['PAIN_LOCATION', 'SPECIFIC_LOCATION', 'EYE_LATERALITY', 'ONSET', 'DURATION', 'ABDOMINAL_ASSOCIATED', 'ASSOCIATED_SYMPTOMS', 'EYE_VISION'],
+            'PAIN_LOCATION', 'SPECIFIC_LOCATION', 'EYE_LATERALITY' => ['ONSET', 'DURATION', 'ABDOMINAL_ASSOCIATED', 'ASSOCIATED_SYMPTOMS', 'PAIN_SEVERITY'],
             'ONSET' => ['ABDOMINAL_ASSOCIATED', 'DURATION', 'ASSOCIATED_SYMPTOMS', 'EYE_VISION'],
             default => [],
         };
@@ -1140,11 +1146,12 @@ final class NlpStep3DemoTrial
     }
 
     /**
+     * @param array<string, mixed> $ctx
      * @return array{text:string,helper:string,purpose:string,priority:int}
      */
-    private static function demoQuestionPack(string $qid, string $lang): array
+    private static function demoQuestionPack(string $qid, string $lang, array $ctx = []): array
     {
-        return NlpStep3DemoClinicalState::questionPack($qid, $lang);
+        return NlpStep3DemoClinicalState::questionPack($qid, $lang, $ctx);
     }
 
     /**
@@ -1165,7 +1172,14 @@ final class NlpStep3DemoTrial
             return $assessment;
         }
 
-        $pack = self::demoQuestionPack($qid, $lang);
+        $family = strtolower((string) ($assessment['demo_completeness']['family'] ?? ''));
+        $facts = is_array($assessment['interview']['facts'] ?? null) ? $assessment['interview']['facts'] : [];
+        $locs = is_array($facts['body_locations'] ?? null) ? $facts['body_locations'] : [];
+        $pack = self::demoQuestionPack($qid, $lang, [
+            'family' => $family,
+            'anatomical_location' => $locs,
+            'body_locations' => $locs,
+        ]);
         $q['text'] = $pack['text'];
         $q['helper_text'] = $pack['helper'];
         $q['demo_wording'] = true;

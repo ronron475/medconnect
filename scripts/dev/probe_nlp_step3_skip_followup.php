@@ -9,7 +9,7 @@ function ok(bool $cond, string $label, string $detail = ''): void
 echo "=== Skip follow-up when sufficient ===\n";
 
 $vague = NlpStep3DemoTrial::assess('sakit');
-ok(($vague['followup_question']['question_id'] ?? '') === 'PAIN_SEVERITY', 'vague still asks severity');
+ok(in_array(($vague['followup_question']['question_id'] ?? ''), ['PAIN_LOCATION', 'PAIN_SEVERITY'], true), 'vague still asks a core pain slot', (string) ($vague['followup_question']['question_id'] ?? ''));
 ok(($vague['assessment_status'] ?? '') === 'IN_PROGRESS', 'vague stays in progress');
 
 $partial = NlpStep3DemoTrial::assess('Masakit akon ulo 7/10 halin gahapon.');
