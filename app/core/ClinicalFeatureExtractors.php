@@ -9,12 +9,22 @@ final class ClinicalFeatureExtractors
     private const WORD_NUM = [
         'one' => 1, 'two' => 2, 'three' => 3, 'four' => 4, 'five' => 5,
         'six' => 6, 'seven' => 7, 'eight' => 8, 'nine' => 9, 'ten' => 10,
-        'isa' => 1, 'duha' => 2, 'tatlo' => 3, 'apat' => 4, 'lima' => 5,
+        'isa' => 1, 'isang' => 1,
+        'duha' => 2, 'dalawa' => 2, 'dalawang' => 2,
+        'tatlo' => 3, 'tatlong' => 3, 'tulo' => 3,
+        'apat' => 4, 'apat na' => 4,
+        'lima' => 5, 'limang' => 5,
+        'anom' => 6, 'anim' => 6, 'anim na' => 6,
+        'pito' => 7, 'pitong' => 7,
+        'walo' => 8, 'walong' => 8,
+        'siyam' => 9, 'siyam na' => 9,
+        'napulo' => 10, 'sampu' => 10, 'sampung' => 10,
     ];
 
     private static function toInt(string $token): ?int
     {
         $t = strtolower(trim($token));
+        $t = preg_replace('/\s+/u', ' ', $t) ?? $t;
         if ($t !== '' && ctype_digit($t)) {
             return (int) $t;
         }
@@ -22,43 +32,81 @@ final class ClinicalFeatureExtractors
         return self::WORD_NUM[$t] ?? null;
     }
 
+    /** Word/digit number alternative for duration regexes. */
+    private static function numAlt(): string
+    {
+        return '\d+|one|two|three|four|five|six|seven|eight|nine|ten|'
+            . 'isa|isang|duha|dalawa|dalawang|tatlo|tatlong|tulo|apat|lima|limang|'
+            . 'anom|anim|pito|pitong|walo|walong|siyam|napulo|sampu|sampung';
+    }
+
     /** @return array{raw:string,label:string,bucket:string,days:?int,hours:?int} */
     public static function extractDuration(string $text): array
     {
-        $low = strtolower(trim($text));
+        $low = mb_strtolower(trim($text), 'UTF-8');
+        $low = preg_replace('/\s+/u', ' ', $low) ?? $low;
         if ($low === '') {
             return ['raw' => '', 'label' => '', 'bucket' => 'unknown', 'days' => null, 'hours' => null];
         }
 
-        if (preg_match('/(?:for|since|over|about|around)?\s*(\d+|one|two|three|four|five|six|seven|eight|nine|ten)\s*(hours?|hrs?)/u', $low, $m)) {
-            $n = self::toInt($m[1]) ?? 0;
+        $num = self::numAlt();
 
-            return ['raw' => $m[0], 'label' => $n . ' hour' . ($n === 1 ? '' : 's'), 'bucket' => 'acute_hours', 'days' => null, 'hours' => $n];
+        // Hours
+        if (preg_match('/(?:for|since|over|about|around|nang|durante)?\s*(' . $num . ')\s*(?:na\s+)?(?:ka\s+)?(hours?|hrs?|oras)\b/u', $low, $m)) {
+            $n = self::toInt($m[1]) ?? 0;
+            if ($n > 0) {
+                return ['raw' => $m[0], 'label' => $n . ' hour' . ($n === 1 ? '' : 's'), 'bucket' => 'acute_hours', 'days' => null, 'hours' => $n];
+            }
         }
-        if (preg_match('/(?:for|since|over|nang|durante)?\s*(\d+|one|two|three|four|five|six|seven|eight|nine|ten)\s*(days?|adlaw|araw)/u', $low, $m)
-            || preg_match('/(\d+|one|two|three|four|five)\s*ka\s*adlaw/u', $low, $m)
-            || preg_match('/(\d+)\s*araw/u', $low, $m)
+
+        // Days — English / Hiligaynon / Tagalog (including "tatlo na ka adlaw", "3 araw", "tatlong araw")
+        if (preg_match('/(?:for|since|over|about|around|nang|durante)?\s*(' . $num . ')\s*(?:na\s+)?(?:ka\s+)?(days?|adlaw|araw)\b/u', $low, $m)
+            || preg_match('/(' . $num . ')\s*(?:na\s+)?ka\s*adlaw\b/u', $low, $m)
+            || preg_match('/(' . $num . ')\s*araw\b/u', $low, $m)
         ) {
             $n = self::toInt($m[1]) ?? 0;
-            $bucket = $n <= 2 ? '1_to_2_days' : ($n <= 4 ? '3_to_4_days' : '5_plus_days');
+            if ($n > 0) {
+                $bucket = $n <= 2 ? '1_to_2_days' : ($n <= 4 ? '3_to_4_days' : '5_plus_days');
 
-            return ['raw' => $m[0], 'label' => $n . ' day' . ($n === 1 ? '' : 's'), 'bucket' => $bucket, 'days' => $n, 'hours' => null];
+                return ['raw' => $m[0], 'label' => $n . ' day' . ($n === 1 ? '' : 's'), 'bucket' => $bucket, 'days' => $n, 'hours' => null];
+            }
         }
-        if (preg_match('/(?:for|since|over)?\s*(\d+|one|two)\s*(weeks?|semana)|one week|1 week|isa ka semana|isang linggo/u', $low, $m)) {
-            $n = isset($m[1]) ? (self::toInt($m[1]) ?? 1) : 1;
 
-            return ['raw' => $m[0], 'label' => $n . ' week' . ($n === 1 ? '' : 's'), 'bucket' => 'chronic_weeks', 'days' => $n * 7, 'hours' => null];
+        // Weeks — "tatlo na ka semana", "3 weeks", "three weeks", "tatlong linggo", "duha ka semana"
+        if (preg_match('/(?:for|since|over|about|around|nang|durante)?\s*(' . $num . ')\s*(?:na\s+)?(?:ka\s+)?(weeks?|semana|linggo)\b/u', $low, $m)
+            || preg_match('/(' . $num . ')\s*(?:na\s+)?ka\s*semana\b/u', $low, $m)
+            || preg_match('/\b(one week|1 week|isa ka semana|isang linggo)\b/u', $low, $m)
+        ) {
+            if (isset($m[1]) && preg_match('/^(one week|1 week|isa ka semana|isang linggo)$/u', trim($m[0]))) {
+                $n = 1;
+            } else {
+                $n = self::toInt($m[1] ?? '1') ?? 1;
+            }
+            if ($n > 0) {
+                return ['raw' => $m[0], 'label' => $n . ' week' . ($n === 1 ? '' : 's'), 'bucket' => 'chronic_weeks', 'days' => $n * 7, 'hours' => null];
+            }
         }
+
+        // Months — "tatlo na ka bulan", "for three months", "tatlong buwan", "3 months"
+        if (preg_match('/(?:for|since|over|about|around|nang|durante)?\s*(' . $num . ')\s*(?:na\s+)?(?:ka\s+)?(months?|bulan|buwan)\b/u', $low, $m)
+            || preg_match('/(' . $num . ')\s*(?:na\s+)?ka\s*bulan\b/u', $low, $m)
+        ) {
+            $n = self::toInt($m[1]) ?? 0;
+            if ($n > 0) {
+                return ['raw' => $m[0], 'label' => $n . ' month' . ($n === 1 ? '' : 's'), 'bucket' => 'chronic_weeks', 'days' => $n * 30, 'hours' => null];
+            }
+        }
+
         if (preg_match('/\b(today|kanan|subong|ngayon)\b/u', $low, $m)) {
             return ['raw' => $m[0], 'label' => 'Today', 'bucket' => 'same_day', 'days' => 0, 'hours' => null];
         }
-        if (preg_match('/\b(yesterday|gahapon|kahapon|since yesterday)\b/u', $low, $m)) {
+        if (preg_match('/\b(yesterday|gahapon|kahapon|kagapon|since yesterday|halin gahapon)\b/u', $low, $m)) {
             return ['raw' => $m[0], 'label' => 'Since yesterday', 'bucket' => '1_to_2_days', 'days' => 1, 'hours' => null];
         }
         if (preg_match('/\b(this morning|kanina|kanina sang aga)\b/u', $low, $m)) {
             return ['raw' => $m[0], 'label' => 'This morning', 'bucket' => 'acute_hours', 'days' => null, 'hours' => 6];
         }
-        if (preg_match('/\b(dugay na|matagal na|for a long time)\b/u', $low, $m)) {
+        if (preg_match('/\b(dugay na|matagal na|for a long time|matagal nang|dugay na gid)\b/u', $low, $m)) {
             return ['raw' => $m[0], 'label' => 'For a long time', 'bucket' => 'chronic_weeks', 'days' => 14, 'hours' => null];
         }
         if (preg_match('/\b(bag-o lang|just now|just started|gulpi lang|kalit lang|bigla lang)\b/u', $low, $m)) {
@@ -82,6 +130,30 @@ final class ClinicalFeatureExtractors
         }
 
         return ['raw' => '', 'label' => '', 'bucket' => 'unknown', 'days' => null, 'hours' => null];
+    }
+
+    /**
+     * Human-readable onset timing derived from a duration phrase already stated by the patient.
+     * Does not invent a disease timeline beyond the stated duration.
+     */
+    public static function onsetFromDuration(array $duration): string
+    {
+        $label = trim((string) ($duration['label'] ?? ''));
+        if ($label === '') {
+            return '';
+        }
+        $lower = mb_strtolower($label, 'UTF-8');
+        if (in_array($lower, ['today', 'this morning', 'just started'], true)) {
+            return $label;
+        }
+        if (str_starts_with($lower, 'since ')) {
+            return $label;
+        }
+        if ($lower === 'for a long time') {
+            return 'For a long time (onset not precisely dated)';
+        }
+
+        return 'Approximately ' . $label . ' ago';
     }
 
     /** @return array{score:?int,band:string,label:string,modifier_key:string} */

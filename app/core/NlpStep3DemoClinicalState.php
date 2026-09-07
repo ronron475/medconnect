@@ -251,6 +251,12 @@ final class NlpStep3DemoClinicalState
         if (preg_match('/\b(halin\s+)?(kagab-i|kagabi|last\s+night)\b/u', $low)) {
             $durLabel = $durLabel !== '' ? $durLabel : 'Since last night';
         }
+        // If the patient already gave duration/timing, treat onset as known (do not re-ask ONSET).
+        if ($onset === '' && $durLabel !== '') {
+            $onset = ClinicalFeatureExtractors::onsetFromDuration(
+                $duration['label'] !== '' ? $duration : ['label' => $durLabel]
+            );
+        }
         $state['onset'] = $onset;
         $state['duration'] = $durLabel;
 
@@ -442,6 +448,12 @@ final class NlpStep3DemoClinicalState
         }
         if (trim((string) ($facts['duration_label'] ?? '')) === '' && trim((string) ($state['duration'] ?? '')) !== '') {
             $facts['duration_label'] = (string) $state['duration'];
+        }
+        // Duration already stated ⇒ timing is complete; keep onset fact filled for question-skipping.
+        if (trim((string) ($facts['duration_label'] ?? '')) !== '' && trim((string) ($facts['onset'] ?? '')) === '') {
+            $facts['onset'] = ClinicalFeatureExtractors::onsetFromDuration([
+                'label' => (string) $facts['duration_label'],
+            ]);
         }
         if (trim((string) ($facts['pain_qualifier'] ?? '')) === '' && trim((string) ($state['character'] ?? '')) !== '') {
             $facts['pain_qualifier'] = (string) $state['character'];
