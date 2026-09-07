@@ -31,6 +31,7 @@ $cases = [
     'gshdhdhdhd' => ['expect_nonsense' => true, 'expect_health' => false],
 ];
 $cases['123123123'] = ['expect_nonsense' => true, 'expect_health' => false];
+$cases['FFF'] = ['expect_nonsense' => true, 'expect_health' => false];
 
 echo "=== Local heuristics ===\n";
 $fail = 0;

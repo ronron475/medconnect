@@ -56,6 +56,25 @@ final class FaqChatbotKnowledgeBase
             return null;
         }
 
+        // Emergency cards must be justified by the CURRENT raw message — never by memory boost alone.
+        if (($best['key'] ?? '') === 'emergency_redirect') {
+            $rawOnly = FaqEmotionEngine::normalizeText(trim($rawText));
+            $rawScore = $rawOnly !== '' ? self::scoreScenario($rawOnly, $best, array_merge($ctx, ['_skip_memory_boost' => true])) : 0.0;
+            $rawIsEmergency = class_exists('FaqChatbotEmergencyDetector')
+                && !empty(FaqChatbotEmergencyDetector::detect($rawText)['is_emergency']);
+            $rawHasHealth = class_exists('FaqChatbotDomainScope')
+                && FaqChatbotDomainScope::isHealthcareRelated($rawText, $nlpText);
+            if (!$rawIsEmergency && $rawScore < 2.2) {
+                return null;
+            }
+            if (class_exists('FaqChatbotDomainScope')
+                && FaqChatbotDomainScope::lacksClinicalMeaning($rawText)
+                && !$rawHasHealth
+            ) {
+                return null;
+            }
+        }
+
         $sessionId = (string) ($ctx['session_id'] ?? ($_SESSION['faq_chatbot_session_id'] ?? ''));
         $html = self::pickResponse($best['key'], $lang, $sessionId);
 
@@ -265,13 +284,22 @@ final class FaqChatbotKnowledgeBase
             if ($kw === '') {
                 continue;
             }
+            $kwLen = mb_strlen($kw);
+            // Short keywords (e.g. "er") must match as whole words — never as substrings of "fever"/"services".
+            if ($kwLen <= 3) {
+                if (preg_match('/(?:^|[^\p{L}\p{N}])' . preg_quote($kw, '/') . '(?:[^\p{L}\p{N}]|$)/u', $hay)) {
+                    $kwHits++;
+                    $score += 1.15;
+                }
+                continue;
+            }
             if (mb_strpos($hay, $kw) !== false) {
                 $kwHits++;
                 $score += 1.15;
                 continue;
             }
-            // Light fuzzy match for typos / slang fragments (3+ chars)
-            if (mb_strlen($kw) >= 4) {
+            // Light fuzzy match for typos / slang fragments (4+ chars)
+            if ($kwLen >= 4) {
                 $fuzzy = self::fuzzyContains($hay, $kw);
                 if ($fuzzy >= 0.86) {
                     $kwHits++;
@@ -283,14 +311,16 @@ final class FaqChatbotKnowledgeBase
             $score += 0.8;
         }
 
-        // Conversation memory: boost continuing topic
-        $memTopic = (string) (FaqChatbotConversationMemory::get()['current_topic'] ?? '');
-        $memKey = (string) (FaqChatbotConversationMemory::get()['last_kb_key'] ?? '');
-        if ($memKey !== '' && ($scenario['key'] ?? '') === $memKey) {
-            $score += 0.55;
-        }
-        if ($memTopic !== '' && ($scenario['category'] ?? '') === $memTopic) {
-            $score += 0.35;
+        // Conversation memory: boost continuing topic (disabled for emergency raw-score checks).
+        if (empty($ctx['_skip_memory_boost'])) {
+            $memTopic = (string) (FaqChatbotConversationMemory::get()['current_topic'] ?? '');
+            $memKey = (string) (FaqChatbotConversationMemory::get()['last_kb_key'] ?? '');
+            if ($memKey !== '' && ($scenario['key'] ?? '') === $memKey) {
+                $score += 0.55;
+            }
+            if ($memTopic !== '' && ($scenario['category'] ?? '') === $memTopic) {
+                $score += 0.35;
+            }
         }
 
         $intent = (string) ($ctx['intent'] ?? '');

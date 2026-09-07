@@ -1800,6 +1800,8 @@
     const trialMeta = document.getElementById('nlp-trial-meta');
     const trialStartField = document.getElementById('nlp-trial-start-field');
     const trialApi = base + '/app/api/ai/nlp_step3_demo_interview.php';
+    const demoCsrf = String(window.NLP_DEMO_CSRF || document.body.getAttribute('data-csrf') || '');
+    const demoToken = String(window.NLP_DEMO_TOKEN || '');
     let interviewContext = null;
     let conversationLog = [];
     let awaitingQuestionId = '';
@@ -1988,8 +1990,8 @@
 
       let domainCls = 'nlp-badge--muted';
       if (domain === 'HEALTH_RELATED') domainCls = 'nlp-badge--ok';
-      if (domain === 'UNCLEAR') domainCls = 'nlp-badge--warn';
-      if (domain === 'NON_HEALTH_RELATED') domainCls = 'nlp-badge--muted';
+      if (domain === 'UNCLEAR' || domain === 'NONSENSE_OR_UNKNOWN') domainCls = 'nlp-badge--warn';
+      if (domain === 'NON_HEALTH_RELATED' || domain === 'OUT_OF_SCOPE') domainCls = 'nlp-badge--muted';
 
       function pills(items) {
         if (!items || !items.length) return '<span class="nlp-muted">None</span>';
@@ -2183,7 +2185,9 @@
         '</strong></li>' +
         '<li>Gemini: <strong>' +
         escapeHtml(
-          trial.gemini && trial.gemini.called
+          trial.gemini && trial.gemini.status && String(trial.gemini.status).indexOf('SECONDARY') !== -1
+            ? String(trial.gemini.status)
+            : trial.gemini && trial.gemini.called
             ? 'CALLED — PRIMARY NLP INSUFFICIENT'
             : trial.gemini && trial.gemini.fallback === 'demo_fuzzy'
               ? 'NOT CALLED — FUZZY MATCH RESOLVED'
@@ -2222,6 +2226,16 @@
         '<li>Status: <strong>' +
         escapeHtml((trial.gemini && trial.gemini.status) || '—') +
         '</strong></li>' +
+        (trial.gemini && trial.gemini.classification
+          ? '<li>Gemini classification: <strong>' +
+            escapeHtml(String(trial.gemini.classification)) +
+            '</strong></li>'
+          : '') +
+        (trial.gemini && trial.gemini.final_routing
+          ? '<li>Final routing: <strong>' +
+            escapeHtml(String(trial.gemini.final_routing)) +
+            '</strong></li>'
+          : '') +
         '</ul>' +
         '<p class="nlp-muted">' +
         escapeHtml(trial.engine_chain || trial.engine || '') +
@@ -2300,6 +2314,8 @@
       try {
         const body = new FormData();
         body.append('utterance', utterance);
+        body.append('csrf_token', demoCsrf);
+        body.append('demo_token', demoToken);
         if (interviewContext) {
           body.append('interview_context', JSON.stringify(interviewContext));
         }
@@ -2308,6 +2324,10 @@
           method: 'POST',
           body: body,
           credentials: 'same-origin',
+          headers: {
+            'X-CSRF-TOKEN': demoCsrf,
+            'X-NLP-DEMO-TOKEN': demoToken,
+          },
         });
         const json = await res.json();
         const data = (json && (json.data || json)) || {};
@@ -2339,7 +2359,12 @@
         if (trial.followup_required) {
           showTrialFeedback('More information needed — type your answer in the box under Next question.', 'ok');
           trialInput.value = '';
-        } else if (trial.domain_class === 'UNCLEAR' || trial.domain_class === 'NON_HEALTH_RELATED') {
+        } else if (
+          trial.domain_class === 'UNCLEAR' ||
+          trial.domain_class === 'NONSENSE_OR_UNKNOWN' ||
+          trial.domain_class === 'NON_HEALTH_RELATED' ||
+          trial.domain_class === 'OUT_OF_SCOPE'
+        ) {
           setStartFormMode(false);
           showTrialFeedback(trial.patient_message || trial.next_action || 'No medical assessment.', 'ok');
         } else {

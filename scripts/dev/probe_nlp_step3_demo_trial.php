@@ -38,11 +38,17 @@ $t5 = NlpStep3DemoTrial::assess('Masakit gid akon dughan kag budlay magginhawa.'
 ok(($t5['assessment_status'] ?? '') === 'COMPLETED', 'T5 completed');
 ok(($t5['triage_final'] ?? '') === 'EMERGENCY', 'T5 emergency', (string) ($t5['triage_final'] ?? ''));
 
-$t6 = NlpStep3DemoTrial::assess('sakitgbgjgbvd');
-ok(($t6['domain_class'] ?? '') === 'UNCLEAR', 'T6 unclear', (string) ($t6['domain_class'] ?? ''));
+$t6 = NlpStep3DemoTrial::assess('sakitgbgjgbvd', [], ['allow_gemini' => false]);
+$t6Class = (string) ($t6['domain_class'] ?? '');
+ok(in_array($t6Class, ['NONSENSE_OR_UNKNOWN', 'UNCLEAR'], true), 'T6 nonsense/unclear gate', $t6Class);
+ok(($t6['triage_final'] ?? null) === null, 'T6 no triage');
 
-$t7 = NlpStep3DemoTrial::assess('hello');
+$t7 = NlpStep3DemoTrial::assess('hello', [], ['allow_gemini' => false]);
 ok(($t7['domain_class'] ?? '') === 'NON_HEALTH_RELATED', 'T7 non-health', (string) ($t7['domain_class'] ?? ''));
+
+$t7b = NlpStep3DemoTrial::assess('What is the capital of France?', [], ['allow_gemini' => false]);
+ok(($t7b['domain_class'] ?? '') === 'OUT_OF_SCOPE', 'T7b out-of-scope', (string) ($t7b['domain_class'] ?? ''));
+ok(($t7b['triage_final'] ?? null) === null, 'T7b no triage');
 
 $t8 = NlpStep3DemoTrial::assess('nagasuka ko', $t3b['interview_context'] ?? []);
 ok(($t8['assessment_status'] ?? '') === 'COMPLETED', 'T8 completes after enough info', (string) ($t8['assessment_status'] ?? ''));
