@@ -32,15 +32,26 @@ final class NlpStep3DemoTrial
         }
 
         // Opening gates only on a fresh conversation (demo-side; do not change production NLP).
-        // Nonsense / unknown / out-of-scope must never enter ClinicalInterviewEngine or ClinicalTriageEngine.
-        $isNonsenseOrUnknown = self::isMalformedOrUnclear($turn)
-            && !FaqChatbotDomainScope::isHealthcareRelated($turn);
-        $isOutOfScopeOnly = !$isNonsenseOrUnknown
+        // Local health detection is primary; Gemini is fallback for uncertain domain only.
+        // Nonsense / clear out-of-scope must never enter ClinicalInterviewEngine or ClinicalTriageEngine.
+        $locallyHealth = FaqChatbotDomainScope::isHealthcareRelated($turn);
+        $isNonsenseOrUnknown = !$locallyHealth && self::isMalformedOrUnclear($turn);
+        $isOutOfScopeOnly = !$locallyHealth
+            && !$isNonsenseOrUnknown
             && FaqChatbotDomainScope::isMeaningfulOutOfScope($turn)
-            && !FaqChatbotDomainScope::isHealthcareRelated($turn)
             && !FaqChatbotDomainScope::isAllowedOpening($turn);
+        // Ambiguous: not health, not nonsense, not clear OOS, not greeting — Gemini may classify.
+        $isDomainUncertain = !$hadTurns
+            && !$locallyHealth
+            && !$isNonsenseOrUnknown
+            && !$isOutOfScopeOnly
+            && !FaqChatbotDomainScope::isAllowedOpening($turn)
+            && !FaqChatbotDomainScope::isHealthcareRelated($turn);
 
-        if ($isNonsenseOrUnknown || (!$hadTurns && $isOutOfScopeOnly)) {
+        // Clearly health-related → always continue to original NLP (never OUT_OF_SCOPE).
+        if ($locallyHealth) {
+            // Fall through to clinical interview below.
+        } elseif ($isNonsenseOrUnknown || $isOutOfScopeOnly || $isDomainUncertain) {
             if (!$hadTurns && FaqChatbotDomainScope::isAllowedOpening($turn)
                 && !FaqChatbotDomainScope::isHealthcareRelated($turn)
             ) {
@@ -55,10 +66,18 @@ final class NlpStep3DemoTrial
             }
 
             $geminiCalled = false;
-            $geminiClass = $isNonsenseOrUnknown ? 'NONSENSE_OR_UNKNOWN' : 'OUT_OF_SCOPE';
+            $geminiClass = $isNonsenseOrUnknown
+                ? 'NONSENSE_OR_UNKNOWN'
+                : ($isOutOfScopeOnly ? 'OUT_OF_SCOPE' : 'UNCLEAR');
             $geminiStatus = 'NOT_CALLED';
             $primaryNlp = 'LOW_CONFIDENCE';
-            if ($allowGemini && class_exists('FaqChatbotAiFallback') && FaqChatbotAiFallback::isEnabled()) {
+            // Gemini fallback ONLY when local domain is uncertain or needs secondary check.
+            // Clear local OOS / nonsense still may use Gemini as secondary, but local health never reaches here.
+            $shouldAskGemini = $allowGemini
+                && ($isDomainUncertain || $isNonsenseOrUnknown || $isOutOfScopeOnly)
+                && class_exists('FaqChatbotAiFallback')
+                && FaqChatbotAiFallback::isEnabled();
+            if ($shouldAskGemini) {
                 try {
                     $aiPack = FaqChatbotAiFallback::tryAssist($turn, 'en', [
                         'current_question' => (string) ($prior['awaiting_question_id'] ?? ''),
@@ -66,7 +85,7 @@ final class NlpStep3DemoTrial
                     ]);
                     if (is_array($aiPack)) {
                         $geminiCalled = true;
-                        $geminiStatus = 'CALLED — SECONDARY CHECK';
+                        $geminiStatus = 'CALLED — SECONDARY DOMAIN CHECK';
                         $fine = (string) ($aiPack['fine_classification'] ?? $aiPack['classification'] ?? '');
                         if ($fine !== '') {
                             $geminiClass = $fine === 'NONSENSE_OR_PRANK' ? 'NONSENSE_OR_UNKNOWN' : $fine;
@@ -83,24 +102,29 @@ final class NlpStep3DemoTrial
                 }
             }
 
-            if ($geminiClass === 'OUT_OF_SCOPE'
-                || $geminiClass === 'NON_HEALTH_RELATED'
-                || (!$isNonsenseOrUnknown && $isOutOfScopeOnly)
-            ) {
-                $msg = "Sorry, I can only assist with medConnect, City Health Office services, and health-related concerns.";
-                $domainClass = 'OUT_OF_SCOPE';
-            } else {
-                $msg = "Indi ko naintindihan ang imo mensahe. Palihog i-type liwat ang imo concern ukon sintomas.";
-                $domainClass = 'NONSENSE_OR_UNKNOWN';
-            }
+            $geminiSaysHealth = in_array($geminiClass, [
+                'HEALTH_RELATED', 'MEDICAL_SYMPTOM', 'MEDICAL_FOLLOWUP_ANSWER', 'MEDICAL', 'MEDCONNECT_SERVICE',
+            ], true);
 
-            // If Gemini confidently found medical meaning for a misspelling, continue clinical flow.
-            if ($geminiCalled
-                && !$isNonsenseOrUnknown
-                && in_array($geminiClass, ['HEALTH_RELATED', 'MEDICAL_SYMPTOM', 'MEDICAL_FOLLOWUP_ANSWER', 'MEDICAL', 'MEDCONNECT_SERVICE'], true)
-            ) {
-                // Fall through to clinical interview with original turn (existing NLP/fuzzy handle meaning).
+            // If Gemini (or uncertain path with health signal) finds medical meaning → original NLP.
+            if ($geminiCalled && $geminiSaysHealth && !$isNonsenseOrUnknown) {
+                // Fall through to clinical interview with original turn.
+            } elseif ($isDomainUncertain && !$geminiCalled) {
+                // Gemini unavailable on ambiguous input: continue to original NLP cautiously
+                // rather than hard-rejecting a possible health complaint.
+                // Fall through.
             } else {
+                if ($geminiClass === 'OUT_OF_SCOPE'
+                    || $geminiClass === 'NON_HEALTH_RELATED'
+                    || ($isOutOfScopeOnly && !$geminiSaysHealth)
+                ) {
+                    $msg = "Sorry, I can only assist with medConnect, City Health Office services, and health-related concerns.";
+                    $domainClass = 'OUT_OF_SCOPE';
+                } else {
+                    $msg = "Indi ko naintindihan ang imo mensahe. Palihog i-type liwat ang imo concern ukon sintomas.";
+                    $domainClass = 'NONSENSE_OR_UNKNOWN';
+                }
+
                 $pack = self::packGate($domainClass, $turn, $prior, $msg, false, $geminiCalled);
                 $pack['gemini'] = array_merge((array) ($pack['gemini'] ?? []), [
                     'called' => $geminiCalled,
@@ -109,9 +133,9 @@ final class NlpStep3DemoTrial
                     'primary_nlp' => $primaryNlp,
                     'final_routing' => 'CLARIFICATION',
                     'reason' => $geminiCalled
-                        ? 'Gemini secondary check — no clinical triage'
+                        ? 'Gemini secondary domain check — no clinical triage'
                         : ($allowGemini
-                            ? 'Primary NLP low confidence; local nonsense/out-of-scope gate (no triage)'
+                            ? 'Primary local domain gate (no triage)'
                             : 'Gemini secondary disabled/rate-limited; local gate only (no triage)'),
                 ]);
                 $pack['gemini_called'] = $geminiCalled;
