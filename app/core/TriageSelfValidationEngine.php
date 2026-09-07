@@ -9,6 +9,7 @@ final class TriageSelfValidationEngine
     /** Rule conflict priority (highest first). */
     public const RULE_PRIORITY = [
         'emergency_red_flags',
+        'who_iitt',
         'airway',
         'breathing',
         'circulation',
@@ -53,6 +54,8 @@ final class TriageSelfValidationEngine
         '/\b(i can\'?t breathe|cannot breathe|unable to breathe)\b/u',
         '/\b(hirap huminga|hirap akong huminga|nagsusuka ng dugo|nawalan ng malay)\b/u',
         '/\b(swollen tongue|throat swelling|lip swelling|cannot swallow|airway)\b/u',
+        // WHO IITT RED meningism cluster: any two of AMS / stiff neck / fever / headache
+        '/\b((headache|sakit\s+ulo|kasakit\s+ulo).{0,80}(fever|lagnat|hilanat|stiff\s+neck|neck\s+stiff|confused|confusion)|(fever|lagnat|hilanat).{0,80}(headache|sakit\s+ulo|kasakit\s+ulo|stiff\s+neck|confused))\b/u',
     ];
 
     /**
@@ -219,6 +222,9 @@ final class TriageSelfValidationEngine
         if ($redFlags !== []) {
             return 'emergency_red_flags';
         }
+        if (!empty($factors['who_iitt']['triage_level'])) {
+            return 'who_iitt';
+        }
         if (preg_match('/\b(choking|airway|cannot breathe|indi makaginhawa|indi ko kaginhawa|indi ko makaginhawa)\b/u', $hay)) {
             return 'airway';
         }
@@ -284,9 +290,13 @@ final class TriageSelfValidationEngine
     private static function classificationFromWinningRule(string $rule, string $current, array $redFlags, string $hay): string
     {
         if (in_array($rule, [
-            'emergency_red_flags', 'airway', 'breathing', 'circulation', 'neurological',
+            'emergency_red_flags', 'who_iitt', 'airway', 'breathing', 'circulation', 'neurological',
             'severe_bleeding', 'pregnancy_emergency', 'poisoning', 'burns', 'trauma',
         ], true)) {
+            if ($rule === 'who_iitt') {
+                // Preserve WHO level already selected by ClinicalTriageEngine.
+                return in_array($current, ['EMERGENCY', 'URGENT', 'NON-URGENT'], true) ? $current : 'EMERGENCY';
+            }
             return 'EMERGENCY';
         }
         if ($rule === 'administrative_request') {
@@ -457,10 +467,16 @@ final class TriageSelfValidationEngine
         if (self::hasLifeThreat($hay)) {
             return false;
         }
+        // Fever + headache (or other meningism partners) is never "mild only".
+        if (preg_match('/\b(fever|lagnat|hilanat)\b/u', $hay)
+            && preg_match('/\b(headache|sakit\s+ulo|kasakit\s+ulo|stiff\s+neck|confused|confusion)\b/u', $hay)
+        ) {
+            return false;
+        }
         foreach (self::MILD_ONLY_PATTERNS as $pat) {
             if (preg_match($pat, $hay)) {
                 // mild if no severity escalators
-                if (!preg_match('/\b(5 days|one week|severe|grabe|blood|dugo|chest|dughan|breath|ginhawa)\b/u', $hay)) {
+                if (!preg_match('/\b(5 days|one week|severe|grabe|blood|dugo|chest|dughan|breath|ginhawa|headache|sakit\s+ulo|kasakit\s+ulo)\b/u', $hay)) {
                     return true;
                 }
             }

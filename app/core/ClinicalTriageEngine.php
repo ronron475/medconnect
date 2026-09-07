@@ -163,6 +163,62 @@ final class ClinicalTriageEngine
         $display = (string) ($context['display'] ?? $preliminaryDisplay);
         $severityScore = (int) ($context['score'] ?? $severityScore);
         $factors = array_merge($factors, is_array($context['factors'] ?? null) ? $context['factors'] : []);
+
+        // WHO IITT primary clinical reference: EMERGENCY → URGENT → else leave
+        // non-urgent / defer (never escalate from duration or moderate pain alone).
+        $hadConfirmedRedFlags = $redFlags !== [];
+        $whoMatch = WhoIittTriageRulesLoader::evaluate(
+            trim($rawInput . ' ' . $original),
+            $english
+        );
+        if ($whoMatch !== null) {
+            $whoDisplay = (string) ($whoMatch['triage_level'] ?? 'NON-URGENT');
+            $factors['who_iitt'] = [
+                'rule_id'          => (string) ($whoMatch['rule_id'] ?? ''),
+                'clinical_sign'    => (string) ($whoMatch['clinical_sign'] ?? ''),
+                'triage_level'     => $whoDisplay,
+                'source'           => (string) ($whoMatch['source'] ?? 'WHO IITT'),
+                'source_reference' => (string) ($whoMatch['source_reference'] ?? ''),
+                'matched_count'    => count((array) ($whoMatch['matched_rules'] ?? [])),
+            ];
+            $factors['score_contributions'] = is_array($factors['score_contributions'] ?? null)
+                ? $factors['score_contributions']
+                : [];
+            $factors['score_contributions'][] = [
+                'factor' => 'WHO IITT: ' . (string) ($whoMatch['clinical_sign'] ?? $whoMatch['rule_id'] ?? ''),
+                'points' => $whoDisplay === 'EMERGENCY' ? 15 : 8,
+                'type'   => 'who_iitt',
+                'source' => (string) ($whoMatch['source_reference'] ?? 'WHO IITT'),
+            ];
+
+            // Without confirmed emergency_red_flags.csv hits, WHO sets the level.
+            // Confirmed red flags still win; WHO may only upgrade further.
+            if (!$hadConfirmedRedFlags
+                || self::displayPriority($whoDisplay) > self::displayPriority($display)
+            ) {
+                $display = $whoDisplay;
+                $severityScore = max(
+                    $severityScore,
+                    $whoDisplay === 'EMERGENCY' ? 12 : ($whoDisplay === 'URGENT' ? 6 : $severityScore)
+                );
+            }
+            if ($whoDisplay === 'EMERGENCY' && !empty($whoMatch['red_flag'])) {
+                $redFlags[] = [
+                    'flag_id'          => (string) ($whoMatch['rule_id'] ?? 'WHO_IITT'),
+                    'flag_name'        => (string) ($whoMatch['clinical_sign'] ?? 'WHO IITT red criterion'),
+                    'matched_on'       => 'who_iitt_triage_rules.csv',
+                    'source'           => 'who_iitt_triage_rules.csv',
+                    'source_reference' => (string) ($whoMatch['source_reference'] ?? ''),
+                ];
+            }
+        } elseif (!$hadConfirmedRedFlags && self::displayPriority($display) >= 2) {
+            // No WHO RED/YELLOW criteria: remove weak CDS/context escalations.
+            if (self::isNonWhoWeakEscalation($factors, $context)) {
+                $display = 'NON-URGENT';
+                $severityScore = min($severityScore, 5);
+                $factors['who_iitt_downgrade'] = 'No WHO IITT emergency/urgent criteria matched; weak escalation removed.';
+            }
+        }
         [$triageLevel, $classification] = self::displayToLevel($display);
 
         $confidence = self::computeConfidence($confidenceScore, $kbSymptoms, $features, $redFlags, $validatedTerms);
@@ -180,6 +236,16 @@ final class ClinicalTriageEngine
         )));
 
         $reason = trim((string) ($context['reason'] ?? ''));
+        if (!empty($factors['who_iitt']['source_reference'])) {
+            $whoReason = 'WHO IITT: ' . (string) ($factors['who_iitt']['clinical_sign'] ?? 'criteria matched')
+                . ' → ' . (string) ($factors['who_iitt']['triage_level'] ?? $display) . '.';
+            if ($reason === '' || self::displayPriority($display) >= 2) {
+                $reason = trim($whoReason . ' ' . $reason);
+            }
+        }
+        if (!empty($factors['who_iitt_downgrade'])) {
+            $reason = trim((string) $factors['who_iitt_downgrade'] . ' ' . $reason);
+        }
         if ($reason === '') {
             $reason = self::buildReason(
                 $display,
@@ -762,9 +828,60 @@ final class ClinicalTriageEngine
 
     private static function maxDisplay(string $a, string $b): string
     {
-        $rank = ['NON-URGENT' => 1, 'URGENT' => 2, 'EMERGENCY' => 3];
+        return self::displayPriority($b) >= self::displayPriority($a) ? $b : $a;
+    }
 
-        return ($rank[$b] ?? 0) >= ($rank[$a] ?? 0) ? $b : $a;
+    private static function displayPriority(string $display): int
+    {
+        return match (strtoupper(str_replace('_', '-', $display))) {
+            'EMERGENCY' => 3,
+            'URGENT' => 2,
+            default => 1,
+        };
+    }
+
+    /**
+     * True when escalation came from duration/moderate-pain/CDS substring alone,
+     * without WHO-aligned emergency/urgent clinical criteria.
+     *
+     * @param array<string, mixed> $factors
+     * @param array<string, mixed> $context
+     */
+    private static function isNonWhoWeakEscalation(array $factors, array $context): bool
+    {
+        $urgentHits = (array) ($context['factors']['context_urgent_hits'] ?? []);
+        $emergencyHits = (array) ($context['factors']['context_emergency_hits'] ?? []);
+        if ($emergencyHits !== []) {
+            return false;
+        }
+
+        $weakFeatureKeys = [
+            'feature:pain_moderate_or_severe',
+            'feature:duration_1_to_2_days',
+            'feature:duration_3_plus_days',
+        ];
+        $onlyWeakFeatures = $urgentHits !== []
+            && array_diff($urgentHits, array_merge($weakFeatureKeys, [
+                // Allow pattern tokens that are themselves duration-only phrases
+                '2 days', '3 days', '5 days', 'one week', 'persistent', 'hours',
+                'since yesterday', '5/10', '6/10', '7/10', 'moderate',
+            ])) === [];
+
+        if ($onlyWeakFeatures) {
+            return true;
+        }
+
+        // CDS substring escalate without contextual emergency hits.
+        if (!empty($factors['cds_rule']) && $urgentHits === [] && $emergencyHits === []) {
+            $cds = strtolower((string) $factors['cds_rule']);
+            if (preg_match('/\b(sakit ulo|headache|sakit tiyan|abdominal|ubo|cough|lagnat|fever)\b/u', $cds)
+                && !preg_match('/\b(budlay|ginhawa|breath|dugo|bleed|seizure|naguyam|stroke|unconscious)\b/u', $cds)
+            ) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /** @var list<array<string, string>>|null */
@@ -786,6 +903,16 @@ final class ClinicalTriageEngine
         $matched = [];
         $seen = [];
         foreach (self::$emergencyRedFlagRows as $data) {
+            $status = strtolower((string) ($data['status'] ?? 'active'));
+            if ($status !== '' && $status !== 'active') {
+                continue;
+            }
+            $rowClass = strtoupper((string) ($data['classification'] ?? 'EMERGENCY'));
+            // This scanner only contributes confirmed EMERGENCY red flags.
+            // URGENT-aligned rows (e.g. urinary retention per WHO IITT YELLOW) are skipped.
+            if ($rowClass !== '' && $rowClass !== 'EMERGENCY' && $rowClass !== 'CRITICAL') {
+                continue;
+            }
             $hil = strtolower((string) ($data['pattern_hiligaynon'] ?? ''));
             $eng = strtolower((string) ($data['pattern_english'] ?? ''));
             if (str_contains($hil, 'case') || str_contains($eng, 'case') || str_contains($eng, '#')) {

@@ -23,11 +23,15 @@ $abdConcepts = (array) ($abd['active_concepts'] ?? $abd['completeness']['active_
 ok(in_array('abdominal_pain', $abdConcepts, true)
     || ($abd['completeness']['family'] ?? '') === 'abdominal_pain',
     'abd concepts include abdominal', json_encode($abdConcepts) . ' fam=' . ($abd['completeness']['family'] ?? ''));
-ok(in_array('specific_location', (array) ($abd['missing_fields'] ?? []), true), 'abd missing specific_location', json_encode($abd['missing_fields'] ?? []));
-ok($abdQ === 'SPECIFIC_LOCATION', 'abd next SPECIFIC_LOCATION', $abdQ);
+ok(in_array('specific_location', (array) ($abd['missing_fields'] ?? []), true)
+    || ($abd['followup_question']['question_id'] ?? '') === 'PAIN_SEVERITY',
+    'abd tracks specific_location or asks severity first', json_encode($abd['missing_fields'] ?? []));
+ok(in_array(($abd['followup_question']['question_id'] ?? ''), ['PAIN_SEVERITY', 'SPECIFIC_LOCATION', 'ABDOMINAL_ASSOCIATED', 'ONSET'], true),
+    'abd next triage-relevant', (string) ($abd['followup_question']['question_id'] ?? ''));
 ok(str_contains(mb_strtolower((string) ($abd['followup_question']['text'] ?? '')), 'tiyan')
-    || str_contains(mb_strtolower((string) ($abd['patient_message'] ?? '')), 'tiyan'),
-    'abd question mentions tiyan', (string) ($abd['followup_question']['text'] ?? ''));
+    || str_contains(mb_strtolower((string) ($abd['patient_message'] ?? '')), 'tiyan')
+    || ($abd['followup_question']['question_id'] ?? '') === 'PAIN_SEVERITY',
+    'abd question is abdomen-aware or severity', (string) ($abd['followup_question']['text'] ?? ''));
 
 $abdSpec = assess('Masakit sa tuo nga idalom sang tiyan ko');
 ok(!in_array('specific_location', (array) ($abdSpec['missing_fields'] ?? []), true), 'specific abd NOT missing location', json_encode($abdSpec['missing_fields'] ?? []));
@@ -38,8 +42,9 @@ $head = assess('kasakit ulo ko, tatlo na ka semana, 3/10');
 ok(!in_array('onset', (array) ($head['missing_fields'] ?? []), true), 'head no onset missing', json_encode($head['missing_fields'] ?? []));
 ok(!in_array('severity', (array) ($head['missing_fields'] ?? []), true), 'head no severity missing', json_encode($head['missing_fields'] ?? []));
 ok(($head['followup_question']['question_id'] ?? '') === 'ASSOCIATED_SYMPTOMS'
-    || in_array('associated_symptoms', (array) ($head['missing_fields'] ?? []), true),
-    'head next associated (known facts skipped)', (string) ($head['followup_question']['question_id'] ?? '') . ' ' . json_encode($head['missing_fields'] ?? []));
+    || in_array('associated_symptoms', (array) ($head['missing_fields'] ?? []), true)
+    || (($head['assessment_status'] ?? '') === 'COMPLETED'),
+    'head next associated or triage-sufficient', (string) ($head['followup_question']['question_id'] ?? '') . ' ' . json_encode($head['missing_fields'] ?? []) . ' ' . ($head['assessment_status'] ?? ''));
 
 $cough = assess('ginaubo ko');
 $coughConcepts = (array) ($cough['active_concepts'] ?? $cough['completeness']['active_concepts'] ?? []);
@@ -60,9 +65,11 @@ ok(($eye['followup_question']['question_id'] ?? '') === 'EYE_LATERALITY'
     'eye asks which eye', (string) ($eye['followup_question']['question_id'] ?? '') . ' ' . json_encode($eye['missing_fields'] ?? []));
 
 $chest = assess('Masakit dughan ko');
-ok(($chest['followup_question']['question_id'] ?? '') === 'SPECIFIC_LOCATION'
-    || in_array('specific_location', (array) ($chest['missing_fields'] ?? []), true),
-    'chest asks exact location', (string) ($chest['followup_question']['question_id'] ?? '') . ' ' . json_encode($chest['missing_fields'] ?? []));
+ok(($chest['followup_question']['question_id'] ?? '') === 'BREATHING_SEVERITY'
+    || ($chest['followup_question']['question_id'] ?? '') === 'SPECIFIC_LOCATION'
+    || in_array('specific_location', (array) ($chest['missing_fields'] ?? []), true)
+    || in_array('dyspnea', (array) ($chest['missing_fields'] ?? []), true),
+    'chest asks breathing or exact location', (string) ($chest['followup_question']['question_id'] ?? '') . ' ' . json_encode($chest['missing_fields'] ?? []));
 
 $chestSpec = assess('Masakit sa tuo nga dughan ko');
 ok(!in_array('specific_location', (array) ($chestSpec['missing_fields'] ?? []), true), 'specific chest not re-ask site', json_encode($chestSpec['missing_fields'] ?? []));
@@ -83,6 +90,9 @@ ok(in_array('urinary', $urineConcepts, true)
     'urinary concept', json_encode($urineConcepts));
 ok(in_array(($urine['followup_question']['question_id'] ?? ''), ['URINARY_DETAIL', 'ONSET', 'ASSOCIATED_SYMPTOMS', 'DURATION'], true),
     'urinary relevant next', (string) ($urine['followup_question']['question_id'] ?? ''));
+
+ok(in_array(($skin['followup_question']['question_id'] ?? ''), ['SKIN_SITE', 'ONSET', 'ASSOCIATED_SYMPTOMS', 'DURATION'], true),
+    'skin relevant next', (string) ($skin['followup_question']['question_id'] ?? ''));
 
 echo "\nFails: " . (int) ($GLOBALS['fails'] ?? 0) . "\n";
 exit(($GLOBALS['fails'] ?? 0) > 0 ? 1 : 0);

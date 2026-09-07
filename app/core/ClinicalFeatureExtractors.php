@@ -72,6 +72,14 @@ final class ClinicalFeatureExtractors
             }
         }
 
+        // "pila na ka adlaw/semana" = several days/weeks (timing known enough to skip ONSET).
+        if (preg_match('/\bpila\s+na(?:\s+ka)?\s+(adlaw|araw|days?)\b/u', $low, $m)) {
+            return ['raw' => $m[0], 'label' => 'Several days', 'bucket' => '3_to_4_days', 'days' => 3, 'hours' => null];
+        }
+        if (preg_match('/\bpila\s+na(?:\s+ka)?\s+(semana|linggo|weeks?)\b/u', $low, $m)) {
+            return ['raw' => $m[0], 'label' => 'Several weeks', 'bucket' => 'chronic_weeks', 'days' => 21, 'hours' => null];
+        }
+
         // Weeks — "tatlo na ka semana", "3 weeks", "three weeks", "tatlong linggo", "duha ka semana"
         if (preg_match('/(?:for|since|over|about|around|nang|durante)?\s*(' . $num . ')\s*(?:na\s+)?(?:ka\s+)?(weeks?|semana|linggo)\b/u', $low, $m)
             || preg_match('/(' . $num . ')\s*(?:na\s+)?ka\s*semana\b/u', $low, $m)
