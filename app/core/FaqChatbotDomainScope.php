@@ -297,6 +297,7 @@ final class FaqChatbotDomainScope
 
     /**
      * Meaningful language that is clearly outside medConnect / health scope (trivia, jokes, etc.).
+     * Do NOT treat unrecognized multi-word health slang as out-of-scope — that blocks original NLP.
      */
     public static function isMeaningfulOutOfScope(string $text, string $nlpText = ''): bool
     {
@@ -309,10 +310,11 @@ final class FaqChatbotDomainScope
         }
         $hay = self::normalize($raw . ' ' . $nlpText);
         if (preg_match('/\b(who|what|where|when|why|how|tell me|write|play|joke|poem|story|president|election|capital|weather|football|basketball|movie|song|game)\b/u', $hay)) {
+            // "when should I see a doctor" / "what medicine" stay healthcare via isHealthcareRelated above.
             return true;
         }
-        $words = preg_split('/\s+/u', $hay, -1, PREG_SPLIT_NO_EMPTY) ?: [];
-        return count($words) >= 4 && self::shouldIntercept(self::classify($raw, $nlpText));
+        // Require explicit off-topic evidence — never OOS solely because word count ≥ 4.
+        return self::offTopicScore($hay, $raw) >= 2.4;
     }
 
     /**
@@ -473,9 +475,26 @@ final class FaqChatbotDomainScope
     private static function healthcareEvidence(string $hay, string $raw): float
     {
         $score = 0.0;
+        // Aspect / slang pain forms used in Hiligaynon & Tagalog (kasakit, sumasakit, gasakit…).
+        $pain = '(sakit|masakit|kasakit|gasakit|ginasakit|nagasakit|sumasakit|ginakasakit|ga\s*sakit|naga\s*sakit|nag\s*sakit|kirot|hapdi|pain|hurt|hurts|ache|aching)';
+        $body = '(ulo|olo|mata|eye|eyes|tiyan|stomach|tummy|dughan|dibdib|chest|lawas|body|likod|back|tuhod|throat|tungol|ilong|nose|tenga|ear|kamot|kamay|hand|tiil|paa|foot|feet|dila|tongue|ngipon|tooth|tudlo|finger|itlog|skin|balat)';
+        $person = '(ko|aku|ako|akon|aku|my|i|ang\s+akin|q)';
+        $symptomVerb = '(gapula|gakatol|kakatol|katol|gahabok|gahubag|hubag|ginaubo|ginauubo|nagaubo|ga\s*ubo|ginasuka|nagsuka|gasuka|nahilo|ginahilo|nalipong|ginahilanat|ginalagnat|gahika|budlay\s+ginhawa|lisod\s+ginhawa)';
+
         $strong = [
-            '/\b(sakit|masakit|gasakit|ginasakit|nagasakit|ga\s+sakit)\s+(gid\s+)?(ang\s+)?(ulo|mata|tiyan|dughan|dibdib|lawas|likod|tuhod|throat|tungol)\b/u',
-            '/\b(sakit|masakit|gasakit)\s+(gid\s+)?(ulo|mata|tiyan|dughan|lawas|likod)\s*(ko|akon|ako|q)?\b/u',
+            // Pain + body (either order; optional possessive).
+            '/\b' . $pain . '\s+(gid\s+)?(ang\s+)?' . $body . '(\s+' . $person . ')?\b/u',
+            '/\b' . $body . '(\s+' . $person . ')?\s+(gid\s+)?' . $pain . '\b/u',
+            '/\b' . $pain . '\s+(gid\s+)?' . $person . '\s+' . $body . '\b/u',
+            '/\b' . $pain . '\s+(gid\s+)?(ang\s+)?' . $body . '\b/u',
+            // Symptom verbs + body (gapula mata, gahabok mata ko, mata ko gahabok).
+            '/\b' . $symptomVerb . '\s+(gid\s+)?(ang\s+)?' . $body . '(\s+' . $person . ')?\b/u',
+            '/\b' . $body . '(\s+' . $person . ')?\s+(gid\s+)?' . $symptomVerb . '\b/u',
+            // Bare strong symptom tokens with person marker (ginasuka ko, ginahilanat ko, nahilo ko).
+            '/\b(ginasuka|nagsuka|gasuka|ginaubo|ginauubo|nagaubo|ginahilanat|ginalagnat|nahilo|ginahilo|nalipong|gahika)(\s+' . $person . ')?\b/u',
+            // Duration + pain/symptom (tatlo na ka bulan kasakit…, dugay na ko ginaubo).
+            '/\b(dugay\s+na|matagal\s+na|for\s+a\s+long\s+time|pila\s+ka\s+(adlaw|bulan|oras)|[0-9]+\s*(ka\s+)?(adlaw|bulan|oras|days?|weeks?|months?)|(isa|duha|tatlo|apat|lima|anom|pito|walo|siyam|napulo|one|two|three)\s+na\s+ka\s+(adlaw|bulan|oras))\b.{0,48}\b(' . $pain . '|' . $symptomVerb . '|' . $body . ')\b/u',
+            '/\b(dugay\s+na\s+ko|matagal\s+na\s+(ako|ko))\s+' . $symptomVerb . '\b/u',
             '/\b(ginahilo|nahihilo|ginahilo\s+ko|nahihilo\s+ako|gakubo|ga\s+kubo|nagaubo)\b/u',
             '/\b(dugo)\s+(ulo|ilong|baka)\s*(ko)?\b/u',
             '/\b(ginahilanat|hilanat|lagnat|kalintura|ginalagnat|may\s+hilanat|may\s+lagnat)\b/u',
@@ -502,19 +521,25 @@ final class FaqChatbotDomainScope
             }
         }
 
-        $body = '(head|ulo|mata|eye|eyes|tiyan|stomach|tummy|chest|dughan|dibdib|throat|skin|likod|back|ear|ilong|body|lawas)';
-        $person = '(i|my|ako|ko|akon|ang\s+akin)';
+        // Person + body + pain/symptom cue (covers informal word order).
         if (preg_match('/\b' . $person . '\b/u', $hay) && preg_match('/\b' . $body . '\b/u', $hay)
-            && preg_match('/\b(hurt|hurts|pain|ache|sakit|masakit|swollen|swell|dugo|bleed|fever|cough|dizzy|nahilo|nalipong|weak|strange|wrong|sick)\b/u', $hay)) {
+            && preg_match('/\b(' . $pain . '|' . $symptomVerb . '|swollen|swell|dugo|bleed|fever|cough|dizzy|weak|strange|wrong|sick|pula|katol|hubag|habok)\b/u', $hay)) {
+            $score += 2.4;
+        }
+
+        // Body + symptom verb without explicit person (gapula mata, gahabok mata).
+        if (preg_match('/\b' . $body . '\b/u', $hay)
+            && preg_match('/\b(' . $pain . '|' . $symptomVerb . ')\b/u', $hay)) {
             $score += 2.4;
         }
 
         $cues = [
             'fever', 'cough', 'headache', 'dizzy', 'nausea', 'vomit', 'diarrhea', 'allergy', 'pregnant', 'buntis',
             'symptom', 'injury', 'wound', 'rash', 'asthma', 'diabetes', 'medicine', 'doctor', 'nurse', 'hospital',
-            'ubo', 'sipon', 'lagnat', 'gamot', 'tambal', 'doktor', 'sakit', 'masakit', 'pamatyag', 'first aid',
-            'self-care', 'nauseous', 'swollen', 'bleeding', 'hilanat', 'dughan', 'ginhawa', 'triage', 'clinic',
-            'appointment', 'prescription', 'reseta', 'checkup', 'konsulta',
+            'ubo', 'sipon', 'lagnat', 'gamot', 'tambal', 'doktor', 'sakit', 'masakit', 'kasakit', 'sumasakit',
+            'pamatyag', 'first aid', 'self-care', 'nauseous', 'swollen', 'bleeding', 'hilanat', 'dughan', 'ginhawa',
+            'triage', 'clinic', 'appointment', 'prescription', 'reseta', 'checkup', 'konsulta',
+            'gapula', 'gakatol', 'gahabok', 'gahubag', 'ginaubo', 'ginasuka', 'hubag', 'katol', 'habok',
         ];
         $hits = 0;
         foreach ($cues as $cue) {
