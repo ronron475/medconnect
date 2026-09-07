@@ -59,10 +59,32 @@ final class ClinicalContextReasoningEngine
         foreach ($redFlags as $flag) {
             $flagName = strtolower((string) (($flag['flag_name'] ?? '') ?: ($flag['english_pattern'] ?? '')));
             $flagId = strtoupper((string) ($flag['flag_id'] ?? ''));
-            $isGated = $flagId === 'RF001' || str_contains($flagName, 'chest pain');
+            $matchedOn = strtolower((string) (($flag['matched_on'] ?? '') ?: ($flag['hiligaynon_pattern'] ?? '') . ' ' . ($flag['english_pattern'] ?? '')));
+
+            // Isolated chest-pain phrases are WHO YELLOW (urgent assessment), not RED,
+            // unless associated RED airway/circulation/disability signs are present.
+            $isChestPainOnly = $flagId === 'RF001'
+                || str_contains($flagName, 'chest pain')
+                || str_contains($flagName, 'chest tightness')
+                || (
+                    (bool) preg_match('/\b(dughan|dibdib|chest)\b/u', $flagName . ' ' . $matchedOn)
+                    && !(bool) preg_match('/\b(breath|ginhawa|dyspnea|bleed|dugo|sweat|collapse|radiat|seizure|unconscious)\b/u', $flagName . ' ' . $matchedOn)
+                );
+
+            // WHO IITT lists "unable to pass urine" as YELLOW, not RED.
+            $isUrinaryRetentionOnly = str_contains($flagName, 'urinary retention')
+                || str_contains($flagName, 'unable to pass urine')
+                || (bool) preg_match('/\b(wala\s+ko\s+maka-?ihi|indi\s+ko\s+gid\s+makaihi)\b/u', $matchedOn);
+
+            $isGated = $isChestPainOnly || $isUrinaryRetentionOnly;
 
             if (!$isGated) {
                 $filtered[] = $flag;
+                continue;
+            }
+
+            if ($isUrinaryRetentionOnly) {
+                // Defer to WHO YELLOW rule evaluation — do not keep as emergency red flag.
                 continue;
             }
 
@@ -443,6 +465,7 @@ final class ClinicalContextReasoningEngine
             'has_fever'                 => $hasFever || $tempKey !== '',
             'has_high_fever'            => $tempKey === 'high_fever' || preg_match('/\b(39|40|high fever|mataas na lagnat)\b/u', (string) ($features['duration']['raw'] ?? '')),
             'pain_moderate_or_severe'   => in_array($painKey, ['moderate', 'severe'], true),
+            'pain_severe'               => $painKey === 'severe',
             'duration_1_to_2_days'      => in_array($bucket, ['1_to_2_days', '3_to_4_days'], true),
             'duration_3_plus_days'      => in_array($bucket, ['3_to_4_days', '5_plus_days'], true),
             'has_pediatric_risk'        => in_array('pediatric', $riskIds, true) || in_array('child', $riskIds, true),

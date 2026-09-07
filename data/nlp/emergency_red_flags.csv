@@ -20,7 +20,7 @@ EF018,Amputation,nautod tudlo ko,amputated finger,EMERGENCY,Traumatic amputation
 EF019,Electrical Injury,nakuryente ko kag nadulaan ko malay,electrical injury with altered consciousness,EMERGENCY,Electrical injury with neurological compromise,active
 EF020,Electrical Injury,nakuryente gid ko,electrical injury,EMERGENCY,Electrical injury — cardiac arrhythmia risk,active
 EF021,Severe Burns,nasunog lawas ko,body burn,EMERGENCY,Major burn — fluid resuscitation may be required,active
-EF022,Urinary Retention,wala ko maka-ihi,urinary retention,EMERGENCY,Acute urinary retention,active
+EF022,Urinary Retention,wala ko maka-ihi,urinary retention,URGENT,WHO IITT Age ≥12 YELLOW Other: Unable to pass urine (not RED),inactive
 EF023,Severe Head Injury,nagdugo ulo ko pagkatapos natumba,head bleeding after fall,EMERGENCY,Head injury with bleeding post fall,active
 EF024,Choking,wala ko maka-ginhawa tungod sa pagkaon,choking,EMERGENCY,Airway obstruction,active
 EF025,Poisoning,naka-inom ko sang lason,poisoning,EMERGENCY,Toxic ingestion,active
@@ -58,7 +58,7 @@ EF056,Amputation,nautod ang kamot ko,hand amputation,EMERGENCY,Major traumatic a
 EF057,Electrical Injury,nakuryente ko kag nagkulba dughan,electrical injury with chest discomfort,EMERGENCY,Electrical injury — cardiac risk,active
 EF058,Severe Burns,nasunog dughan kag likod ko,chest and back burns,EMERGENCY,Extensive burns of trunk,active
 EF059,Severe Burns,nasunog sang asido,chemical burn,EMERGENCY,Chemical burn injury,active
-EF060,Urinary Retention,indi ko gid makaihi,complete inability to urinate,EMERGENCY,Complete urinary retention,active
+EF060,Urinary Retention,indi ko gid makaihi,complete inability to urinate,URGENT,WHO IITT Age ≥12 YELLOW Other: Unable to pass urine (not RED),inactive
 EF061,Severe Head Injury,nabun-og ulo pagkatapos nabangga,head bruise after collision,EMERGENCY,Head trauma after impact,active
 EF062,Severe Head Injury,nagsuka pagkatapos napukol ulo,vomiting after head blow,EMERGENCY,Post-traumatic vomiting,active
 EF063,Choking,naipit sang bukog sa tutunlan,bone stuck in throat,EMERGENCY,Foreign body airway obstruction,active

@@ -122,8 +122,21 @@ final class NlpStep3DemoClinicalState
             ));
         }
 
-        if ($missing === []) {
+        // Minimum sufficient for safe triage — do not exhaust the question bank.
+        $triageReady = self::isTriageSufficient(
+            $state,
+            $facts,
+            $transcript,
+            is_array($selection['concepts'] ?? null) ? $selection['concepts'] : []
+        );
+
+        if ($missing === [] || $triageReady) {
             $status = self::STATUS_SUFFICIENT;
+            if ($triageReady) {
+                $missing = [];
+                $nextId = '';
+                $purpose = '';
+            }
         } elseif (self::isAmbiguousOnly($transcript)) {
             $status = self::STATUS_NOT_DETERMINED;
         } else {
@@ -139,6 +152,7 @@ final class NlpStep3DemoClinicalState
             'next_purpose' => $status === self::STATUS_SUFFICIENT ? '' : $purpose,
             'clinical_summary' => self::toDisplaySummary($facts, $transcript),
             'red_flag_priority' => false,
+            'triage_sufficient' => $triageReady,
         ];
     }
 
@@ -229,6 +243,29 @@ final class NlpStep3DemoClinicalState
             : self::extractState($facts, $transcript);
 
         $evidence = self::collectTriageEvidence($state, $facts, $transcript, $assessment);
+
+        // Prefer WHO IITT match from the clinical engine when present.
+        $whoLevel = null;
+        $who = $assessment['triage']['assessment_factors']['who_iitt']
+            ?? $assessment['assessment_factors']['who_iitt']
+            ?? $assessment['triage']['who_iitt']
+            ?? null;
+        if (is_array($who) && isset($who['triage_level'])) {
+            $whoLevel = strtoupper(str_replace('_', '-', (string) $who['triage_level']));
+            if ($whoLevel === 'NON URGENT') {
+                $whoLevel = 'NON-URGENT';
+            }
+        }
+        if (in_array($whoLevel, ['EMERGENCY', 'URGENT', 'NON-URGENT'], true)) {
+            if ($whoLevel === 'EMERGENCY' || $evidence['emergency']) {
+                return 'EMERGENCY';
+            }
+            if ($whoLevel === 'URGENT' || $evidence['urgent']) {
+                return 'URGENT';
+            }
+
+            return 'NON-URGENT';
+        }
 
         // Decision order: emergency → urgent → non-urgent.
         if ($evidence['emergency']) {
@@ -358,10 +395,10 @@ final class NlpStep3DemoClinicalState
             }
         }
 
-        // High pain only becomes urgent when paired with acuity or concerning features.
-        if ($severity !== null && $severity >= 8 && ($sudden || $worsening || $concerningAssoc)) {
+        // High pain aligned with WHO YELLOW "Severe pain (no red criteria)".
+        if ($severity !== null && $severity >= 8) {
             $urgent = true;
-            $notes[] = 'high_pain_with_acuity_or_assoc';
+            $notes[] = 'who_yellow_severe_pain';
         } elseif ($severity !== null && $severity >= 7 && $concerningAssoc) {
             $urgent = true;
             $notes[] = 'pain_with_concerning_associated';
@@ -834,7 +871,7 @@ final class NlpStep3DemoClinicalState
 
     /**
      * Universal adaptive selection:
-     * detect concepts (dataset + extractors) → relevant bank questions → skip known → highest priority missing.
+     * detect concepts → keep ONLY triage-impacting unanswered questions → ask highest priority one.
      *
      * @param array<string, mixed> $state
      * @param array<string, mixed> $facts
@@ -901,15 +938,35 @@ final class NlpStep3DemoClinicalState
             if (self::demoQuestionAlreadyAnswered($qid, $state, $facts, $transcript, $concepts)) {
                 continue;
             }
+            $impact = self::triageRelevantPriority($qid, $concepts, $state, $facts, $transcript);
+            if ($impact === null) {
+                // Not clinically necessary for THIS presentation / would not change triage.
+                continue;
+            }
             $queue[] = [
                 'slot' => self::slotKeyForQuestion($qid),
                 'question_id' => $qid,
                 'purpose' => (string) ($question['clinical_purpose'] ?? ''),
-                'priority' => (int) ($question['priority'] ?? 99),
+                'priority' => $impact,
             ];
         }
 
         usort($queue, static fn (array $a, array $b): int => ($a['priority'] <=> $b['priority']));
+
+        // Deduplicate by slot — one question per clinical dimension.
+        $seenSlots = [];
+        $deduped = [];
+        foreach ($queue as $row) {
+            $slot = (string) ($row['slot'] ?? '');
+            if ($slot !== '' && isset($seenSlots[$slot])) {
+                continue;
+            }
+            if ($slot !== '') {
+                $seenSlots[$slot] = true;
+            }
+            $deduped[] = $row;
+        }
+        $queue = $deduped;
 
         $missing = [];
         foreach ($queue as $row) {
@@ -929,6 +986,210 @@ final class NlpStep3DemoClinicalState
             'primary_concept' => $primary,
             'missing_queue' => $queue,
         ];
+    }
+
+    /**
+     * Lower number = ask sooner. null = do not ask (not triage-relevant for this case).
+     *
+     * @param list<string> $concepts
+     * @param array<string, mixed> $state
+     * @param array<string, mixed> $facts
+     */
+    private static function triageRelevantPriority(
+        string $qid,
+        array $concepts,
+        array $state,
+        array $facts,
+        string $transcript
+    ): ?int {
+        $qid = strtoupper($qid);
+        $sev = $state['severity'] ?? ($facts['pain_score'] ?? null);
+        $sev = $sev !== null ? (int) $sev : null;
+        $onset = mb_strtolower(trim((string) ($state['onset'] ?? $facts['onset'] ?? '')));
+        $sudden = (bool) preg_match('/\b(sudden|gulpi|bigla|abrupt)\b/u', $onset . ' ' . mb_strtolower($transcript));
+        $hasTiming = trim((string) ($state['onset'] ?? '')) !== ''
+            || trim((string) ($state['duration'] ?? '')) !== ''
+            || trim((string) ($facts['duration_label'] ?? '')) !== ''
+            || trim((string) ($facts['onset'] ?? '')) !== '';
+        $assocDone = ($state['associated_symptoms'] ?? []) !== []
+            || ($state['pertinent_negatives'] ?? []) !== []
+            || ($facts['has_other_symptoms'] ?? null) !== null
+            || !empty($facts['denied_associated']);
+        $multiSite = count(self::normalizedLocations($state)) >= 2
+            || (
+                count(array_intersect($concepts, ['headache', 'abdominal_pain', 'chest_pain', 'eye', 'nose_pain'])) >= 2
+            );
+        $painLike = array_intersect($concepts, ['pain', 'headache', 'chest_pain', 'abdominal_pain', 'nose_pain', 'eye', 'eye_pain', 'pain_unspecified']) !== [];
+        $highRisk = array_intersect($concepts, ['chest_pain', 'breathing', 'bleeding', 'neuro']) !== [];
+        $acuity = $sudden || ($sev !== null && $sev >= 7) || $highRisk;
+
+        return match ($qid) {
+            'BREATHING_SEVERITY' => array_intersect($concepts, ['chest_pain', 'breathing', 'cough', 'respiratory']) !== []
+                ? 1
+                : null,
+            'EYE_LATERALITY' => array_intersect($concepts, ['eye', 'eye_pain', 'needs_laterality']) !== [] ? 2 : null,
+            'EYE_VISION' => array_intersect($concepts, ['eye', 'eye_pain']) !== [] ? 4 : null,
+            'PAIN_SEVERITY' => $painLike && $sev === null ? 3 : null,
+            'PAIN_LOCATION', 'UNWELL_WHAT' => (
+                array_intersect($concepts, ['pain_unspecified', 'pain_no_location', 'general_unwell']) !== []
+                && self::normalizedLocations($state) === []
+            ) ? 2 : null,
+            'ONSET', 'DURATION' => !$hasTiming ? 5 : null,
+            'SPECIFIC_LOCATION' => self::shouldAskSpecificLocationNow($concepts, $state, $sev, $sudden, $multiSite),
+            'ABDOMINAL_ASSOCIATED' => in_array('abdominal_pain', $concepts, true) && !$assocDone ? 7 : null,
+            'CHEST_RADIATION', 'CHEST_SWEATING' => in_array('chest_pain', $concepts, true) && !$assocDone
+                ? 8
+                : null,
+            'NEURO_WEAKNESS', 'NEURO_SPEECH', 'NEURO_VISION' => (
+                array_intersect($concepts, ['headache', 'neuro']) !== [] && $acuity && !$assocDone
+            ) ? 9 : null,
+            'FEVER_CONFIRM' => array_intersect($concepts, ['fever', 'cough', 'respiratory']) !== []
+                && ($state['fever'] ?? null) === null
+                && ($state['temperature_c'] ?? null) === null
+                ? 10
+                : null,
+            'ASSOCIATED_SYMPTOMS' => self::shouldAskAssociatedNow($concepts, $assocDone, $acuity, $sev, $multiSite),
+            'COUGH_TYPE' => null, // character rarely changes EMERGENCY/URGENT/NON-URGENT once breathing/fever known
+            'DIZZINESS_TYPE' => in_array('dizziness', $concepts, true)
+                && trim((string) ($state['dizziness_type'] ?? '')) === ''
+                && ($facts['dizziness'] ?? null) === null
+                ? 11
+                : null,
+            'SKIN_SITE' => in_array('skin', $concepts, true) ? 6 : null,
+            'URINARY_DETAIL' => in_array('urinary', $concepts, true) ? 6 : null,
+            'BLEEDING_CONTINUING', 'BLEEDING_HEAVY', 'BLEEDING_DIZZY' => in_array('bleeding', $concepts, true) ? 2 : null,
+            'NOSE_PAIN_WHERE' => in_array('nose_pain', $concepts, true) ? 8 : null,
+            default => null,
+        };
+    }
+
+    /**
+     * @param list<string> $concepts
+     * @param array<string, mixed> $state
+     */
+    private static function shouldAskSpecificLocationNow(
+        array $concepts,
+        array $state,
+        ?int $sev,
+        bool $sudden,
+        bool $multiSite
+    ): ?int {
+        if (!in_array('needs_specific_location', $concepts, true)) {
+            return null;
+        }
+        // Chest: site can matter, but after breathing/severity.
+        if (in_array('chest_pain', $concepts, true)) {
+            return $sev === null ? 12 : 6;
+        }
+        // Abdomen: severity first for multi-complaint; site mainly when acuity high.
+        if (in_array('abdominal_pain', $concepts, true)) {
+            if ($sev === null) {
+                return 12;
+            }
+            if ($sev >= 7 || $sudden) {
+                return 6;
+            }
+            // Mild/moderate known severity — site less likely to change triage.
+            return $multiSite ? null : 12;
+        }
+
+        return 12;
+    }
+
+    /**
+     * @param list<string> $concepts
+     */
+    private static function shouldAskAssociatedNow(
+        array $concepts,
+        bool $assocDone,
+        bool $acuity,
+        ?int $sev,
+        bool $multiSite
+    ): ?int {
+        if ($assocDone) {
+            return null;
+        }
+        // Abdominal / chest have more specific associated screens.
+        if (in_array('abdominal_pain', $concepts, true) || in_array('chest_pain', $concepts, true)) {
+            return null;
+        }
+        if (array_intersect($concepts, ['headache', 'pain', 'eye', 'dizziness', 'fever', 'skin', 'urinary', 'cough']) === []) {
+            return null;
+        }
+        if ($acuity || $multiSite || $sev === null || ($sev !== null && $sev >= 5)) {
+            return 10;
+        }
+
+        return null;
+    }
+
+    /**
+     * Enough information to run EMERGENCY / URGENT / NON-URGENT safely without more bank questions.
+     *
+     * @param array<string, mixed> $state
+     * @param array<string, mixed> $facts
+     * @param list<string> $concepts
+     */
+    private static function isTriageSufficient(
+        array $state,
+        array $facts,
+        string $transcript,
+        array $concepts
+    ): bool {
+        $sev = $state['severity'] ?? ($facts['pain_score'] ?? null);
+        $sev = $sev !== null ? (int) $sev : null;
+        $hasTiming = trim((string) ($state['onset'] ?? '')) !== ''
+            || trim((string) ($state['duration'] ?? '')) !== ''
+            || trim((string) ($facts['duration_label'] ?? '')) !== ''
+            || trim((string) ($facts['onset'] ?? '')) !== '';
+        $assocDone = ($state['associated_symptoms'] ?? []) !== []
+            || ($state['pertinent_negatives'] ?? []) !== []
+            || ($facts['has_other_symptoms'] ?? null) !== null
+            || !empty($facts['denied_associated']);
+        $onset = mb_strtolower(trim((string) ($state['onset'] ?? $facts['onset'] ?? '')));
+        $sudden = (bool) preg_match('/\b(sudden|gulpi|bigla|abrupt)\b/u', $onset . ' ' . mb_strtolower($transcript));
+        $painLike = array_intersect($concepts, ['pain', 'headache', 'chest_pain', 'abdominal_pain', 'nose_pain', 'eye', 'eye_pain', 'pain_unspecified']) !== [];
+
+        if (array_intersect($concepts, ['chest_pain', 'breathing', 'cough', 'respiratory']) !== []) {
+            if (($state['dyspnea'] ?? null) === null && ($facts['breathing_difficulty'] ?? null) === null
+                && empty($facts['denied_associated'])
+            ) {
+                return false;
+            }
+        }
+        if (array_intersect($concepts, ['eye', 'eye_pain']) !== []) {
+            if (trim((string) ($state['laterality'] ?? '')) === ''
+                && ($state['eye_symptoms'] ?? []) === []
+                && !$assocDone
+            ) {
+                return false;
+            }
+        }
+        if (in_array('bleeding', $concepts, true)) {
+            if (($facts['bleeding_continuing'] ?? null) === null && ($facts['bleeding_heavy'] ?? null) === null) {
+                return false;
+            }
+        }
+        if ($painLike && $sev === null) {
+            return false;
+        }
+        if (!$hasTiming && array_intersect($concepts, ['general_unwell', 'pain_unspecified']) === []) {
+            if ($painLike || array_intersect($concepts, ['cough', 'fever', 'urinary', 'skin', 'dizziness']) !== []) {
+                return false;
+            }
+        }
+        $needsAssoc = $sudden || ($sev !== null && $sev >= 7)
+            || in_array('abdominal_pain', $concepts, true)
+            || in_array('chest_pain', $concepts, true)
+            || count(array_intersect($concepts, ['headache', 'abdominal_pain', 'chest_pain', 'eye'])) >= 2;
+        if ($needsAssoc && !$assocDone
+            && ($state['vomiting'] ?? null) === null
+            && ($state['dyspnea'] ?? null) === null
+        ) {
+            return false;
+        }
+
+        return true;
     }
 
     /**

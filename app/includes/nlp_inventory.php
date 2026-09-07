@@ -207,6 +207,7 @@ function nlp_inventory_summary(array $catalog): array
 function nlp_inventory_mysql_stats(PDO $pdo): array
 {
     require_once BASE_PATH . '/app/core/TriageRulesLoader.php';
+    require_once BASE_PATH . '/app/core/WhoIittTriageRulesLoader.php';
 
     $stats = [
         'translation_dictionary' => 0,
@@ -214,6 +215,7 @@ function nlp_inventory_mysql_stats(PDO $pdo): array
         'conversation_history' => 0,
         'triage_rules_db' => 0,
         'csv_triage_rules' => count(TriageRulesLoader::rules()),
+        'who_iitt_triage_rules' => count(WhoIittTriageRulesLoader::rules()),
     ];
 
     try {
