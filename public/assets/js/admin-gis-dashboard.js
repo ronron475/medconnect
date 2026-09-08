@@ -845,7 +845,12 @@
   }
 
   function canShowCoordinates() {
-    return userRole === 'admin' || userRole === 'superadmin';
+    return userRole === 'admin' || userRole === 'superadmin' || userRole === 'provider';
+  }
+
+  /** Display coords with enough precision; does not alter stored marker values. */
+  function formatLocationCoords(lat, lng) {
+    return Number(lat).toFixed(6) + ', ' + Number(lng).toFixed(6);
   }
 
   function consultationStatusLabel(row) {
@@ -893,52 +898,36 @@
       locationSourceBadgeHtml(row) +
       '</p>';
 
+    html +=
+      '<p><strong>Address:</strong> ' +
+      escapeHtml(address) +
+      '</p>';
+
     if (locKey === 'unavailable') {
       html +=
         '<p class="gis-popup__loc-hint text-xs text-muted">No verified patient location is available for mapping.</p>' +
-        '<p><strong>Address:</strong> ' +
-        escapeHtml(address) +
+        '<p><strong>Location accuracy:</strong> ' +
+        escapeHtml(locMeta.label) +
         '</p>';
-    } else if (locKey === 'gps') {
-      html +=
-        '<p class="gis-popup__loc-hint text-xs text-muted">' +
-        escapeHtml(locMeta.hint) +
-        '</p>' +
-        '<p><strong>Address:</strong> ' +
-        escapeHtml(address) +
-        '</p>';
-      if (canShowCoordinates() && isValidCoord(lat, lng)) {
-        html +=
-          '<p><strong>Coordinates:</strong> ' +
-          escapeHtml(lat.toFixed(6) + ', ' + lng.toFixed(6)) +
-          '</p>';
-      }
-    } else if (locKey === 'address_geocoded') {
-      html +=
-        '<p class="gis-popup__loc-hint text-xs text-muted">' +
-        escapeHtml(locMeta.hint) +
-        '</p>' +
-        '<p><strong>Address:</strong> ' +
-        escapeHtml(address) +
-        '</p>';
-      if (canShowCoordinates() && isValidCoord(lat, lng)) {
-        html +=
-          '<p><strong>Coordinates:</strong> ' +
-          escapeHtml(lat.toFixed(6) + ', ' + lng.toFixed(6)) +
-          '</p>';
-      }
     } else {
       html +=
         '<p class="gis-popup__loc-hint text-xs text-muted">' +
         escapeHtml(row.location_note || locMeta.hint) +
-        '</p>' +
-        '<p><strong>Address:</strong> ' +
-        escapeHtml(address) +
-        '</p>' +
-        '<p><strong>Location:</strong> ' +
-        escapeHtml(row.barangay_center_label || ('Barangay ' + (row.barangay || '—') + ' center')) +
-        '</p>' +
-        '<p class="text-xs text-muted"><em>Note: Exact patient location is unavailable.</em></p>';
+        '</p>';
+      if (canShowCoordinates() && isValidCoord(lat, lng)) {
+        html +=
+          '<p><strong>Location:</strong> ' +
+          escapeHtml(formatLocationCoords(lat, lng)) +
+          '</p>';
+      }
+      html +=
+        '<p><strong>Location accuracy:</strong> ' +
+        escapeHtml(locMeta.label) +
+        '</p>';
+      if (locKey === 'barangay_center' || locKey === 'barangay_centroid') {
+        html +=
+          '<p class="text-xs text-muted"><em>Note: Marker shows the verified barangay center — not the exact patient address.</em></p>';
+      }
     }
 
     html +=

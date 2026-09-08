@@ -808,7 +808,9 @@ final class GisDashboardService
     private function applyViewerPrivacy(array $row, string $viewerRole): array
     {
         $role = strtolower(trim($viewerRole));
-        if (in_array($role, ['admin', 'superadmin'], true)) {
+        // Doctors (provider) and admins need the most precise verified pin for clinical GIS.
+        // Do not replace GPS/geocoded coordinates with barangay centers for these roles.
+        if (in_array($role, ['admin', 'superadmin', 'provider'], true)) {
             $row['can_view_exact_location'] = true;
 
             return $row;
