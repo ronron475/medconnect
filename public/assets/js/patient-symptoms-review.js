@@ -134,6 +134,7 @@
       followupWrap.hidden = false;
     }
     if (followupAnswerEl) {
+      followupAnswerEl.value = '';
       followupAnswerEl.focus();
     }
   }
@@ -353,7 +354,9 @@
       fd.set('triage_id', String(triageId));
     }
     var answer = followupAnswerText();
-    if (answer) {
+    if (assessmentInProgress) {
+      fd.set('followup_answer', answer);
+    } else if (answer) {
       fd.set('followup_answer', answer);
     }
 
@@ -404,7 +407,10 @@
         assessmentInProgress = true;
         awaitingSecondClick = false;
         triageId = parseInt(payload.triage_id, 10) || triageId;
-        showFollowupUi(payload.followup_question || data.message || '');
+        showFollowupUi(payload.followup_question || '');
+        if (payload.retry_current_question || payload.answer_rejected) {
+          showAlert('error', payload.patient_message || data.message || 'Please provide an answer related to your current symptom and the question above. You can try again.');
+        }
         return false;
       }
       if (payload.preview) {
@@ -501,7 +507,10 @@
         triageComplaint = complaint;
         triageId = parseInt(payload.triage_id, 10) || triageId;
         hideContinueUi();
-        showFollowupUi(payload.followup_question || json.message || '');
+        showFollowupUi(payload.followup_question || '');
+        if (payload.retry_current_question || payload.answer_rejected) {
+          showAlert('error', payload.patient_message || json.message || 'Please provide an answer related to your current symptom and the question above. You can try again.');
+        }
         return true;
       }
 
@@ -599,12 +608,6 @@
         showAlert('error', locked
           ? i18n('err_locked')
           : i18n('err_empty'));
-        return;
-      }
-
-      if (assessmentInProgress && !followupAnswerText()) {
-        showAlert('error', 'Please answer the follow-up question.');
-        if (followupAnswerEl) followupAnswerEl.focus();
         return;
       }
 

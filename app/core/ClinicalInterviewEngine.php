@@ -77,6 +77,20 @@ final class ClinicalInterviewEngine
 
         $awaiting = (string) ($context['awaiting_question_id'] ?? '');
 
+        // Follow-up answers must be relevant to the current question before they become clinical facts.
+        if (!$isOpeningTurn && $awaiting !== '' && class_exists('ClinicalFollowUpAnswerValidator')) {
+            try {
+                $validation = ClinicalFollowUpAnswerValidator::validate($originalTurnForLanguage, $awaiting, $context);
+                self::logFollowUpValidation($context, $awaiting, $originalTurnForLanguage, $validation);
+                if (empty($validation['accept'])) {
+                    return self::wrapRetryCurrentQuestion($context, $validation);
+                }
+                $context['last_followup_validation'] = $validation;
+            } catch (Throwable $e) {
+                error_log('ClinicalFollowUpAnswerValidator fallback: ' . $e->getMessage());
+            }
+        }
+
         // Opening turn already dropped non-essential tokens; follow-up answers still get cleaned.
         if (!$isOpeningTurn && $turn !== '' && class_exists('ComplaintTriageTextCleaner')) {
             try {
@@ -312,6 +326,7 @@ final class ClinicalInterviewEngine
             'questions_asked' => self::stringList($raw['questions_asked'] ?? $raw['questions_already_asked'] ?? []),
             'questions_answered' => is_array($raw['questions_answered'] ?? null) ? $raw['questions_answered'] : [],
             'awaiting_question_id' => strtoupper((string) ($raw['awaiting_question_id'] ?? '')),
+            'last_followup_question' => self::questionSnapshot($raw['last_followup_question'] ?? $raw['next_question'] ?? null),
             'chief_complaints' => is_array($raw['chief_complaints'] ?? null) ? $raw['chief_complaints'] : [],
             'matched_dataset_entries' => self::stringList($raw['matched_dataset_entries'] ?? []),
             'facts' => self::blankFacts($facts),
@@ -989,6 +1004,7 @@ final class ClinicalInterviewEngine
     private static function wrapInProgress(array $assessment, array $context, array $question, string $transcript): array
     {
         $context['assessment_status'] = self::STATUS_IN_PROGRESS;
+        $context['last_followup_question'] = self::questionSnapshot($question);
         $interview = self::publicInterview($context, $question, null);
 
         $engineDisplay = self::finalDisplayFromAssessment($assessment);
@@ -1029,6 +1045,131 @@ final class ClinicalInterviewEngine
         }
 
         return $assessment;
+    }
+
+    /**
+     * Invalid follow-up: keep the same question, do not append the answer or update facts.
+     *
+     * @param array<string, mixed> $context
+     * @param array<string, mixed> $validation
+     * @return array<string, mixed>
+     */
+    private static function wrapRetryCurrentQuestion(array $context, array $validation): array
+    {
+        $question = self::heldFollowUpQuestion($context);
+        $transcript = self::transcript($context);
+        $assessment = [
+            'detected_symptoms' => is_array($context['matched_dataset_entries'] ?? null)
+                ? $context['matched_dataset_entries']
+                : [],
+            'triage' => [
+                'assessment_status' => self::STATUS_IN_PROGRESS,
+                'triage_display' => '',
+                'triage_classification' => '',
+            ],
+        ];
+        $wrapped = self::wrapInProgress($assessment, $context, $question, $transcript);
+        $wrapped['patient_message'] = (string) ($validation['message'] ?? ClinicalFollowUpAnswerValidator::retryMessage(
+            (string) ($context['question_language'] ?? 'english')
+        ));
+        $wrapped['answer_rejected'] = true;
+        $wrapped['retry_current_question'] = true;
+        $wrapped['followup_answer_validation'] = [
+            'accept' => false,
+            'reason' => (string) ($validation['reason'] ?? 'unrelated'),
+            'expected_field' => (string) ($validation['expected_field'] ?? ''),
+            'corrected_answer' => (string) ($validation['corrected_answer'] ?? ''),
+            'empty' => !empty($validation['empty']),
+        ];
+        $wrapped['interview']['answer_rejected'] = true;
+        $wrapped['interview']['retry_current_question'] = true;
+        $wrapped['interview']['last_followup_question'] = self::questionSnapshot($question);
+
+        return $wrapped;
+    }
+
+    /**
+     * @param array<string, mixed> $context
+     * @return array<string, mixed>
+     */
+    private static function heldFollowUpQuestion(array $context): array
+    {
+        $held = self::questionSnapshot($context['last_followup_question'] ?? null);
+        if (($held['question_id'] ?? '') !== '' && ($held['text'] ?? '') !== '') {
+            return $held;
+        }
+
+        $qid = strtoupper(trim((string) ($context['awaiting_question_id'] ?? '')));
+        $lang = $context['question_language'] !== '' ? $context['question_language'] : 'english';
+        $language = strtoupper($lang === 'tagalog' ? 'TAGALOG' : ($lang === 'hiligaynon' ? 'HILIGAYNON' : 'ENGLISH'));
+        $text = '';
+        if ($qid !== '' && class_exists('ClinicalFollowUpQuestionBank')) {
+            $row = ClinicalFollowUpQuestionBank::byId($qid);
+            if (is_array($row)) {
+                $text = ClinicalFollowUpQuestionBank::textForLanguage($row, $lang);
+            }
+        }
+        if ($text === '') {
+            $text = 'Please answer the follow-up question.';
+        }
+
+        return [
+            'question_id' => $qid,
+            'text' => $text,
+            'language' => $language,
+            'clinical_purpose' => '',
+            'source' => 'held',
+        ];
+    }
+
+    /** @param mixed $raw */
+    private static function questionSnapshot($raw): array
+    {
+        if (!is_array($raw)) {
+            return [];
+        }
+
+        $qid = strtoupper(trim((string) ($raw['question_id'] ?? '')));
+        $text = trim((string) ($raw['text'] ?? ''));
+        if ($qid === '' && $text === '') {
+            return [];
+        }
+
+        return [
+            'question_id' => $qid,
+            'text' => $text,
+            'language' => (string) ($raw['language'] ?? ''),
+            'clinical_purpose' => (string) ($raw['clinical_purpose'] ?? ''),
+            'source' => (string) ($raw['source'] ?? ''),
+            'red_flag_related' => (bool) ($raw['red_flag_related'] ?? false),
+            'priority' => (int) ($raw['priority'] ?? 0),
+        ];
+    }
+
+    /**
+     * @param array<string, mixed> $context
+     * @param array<string, mixed> $validation
+     */
+    private static function logFollowUpValidation(array $context, string $qid, string $answer, array $validation): void
+    {
+        if (getenv('NLP_DEBUG') !== '1' && empty($_ENV['NLP_DEBUG'])) {
+            return;
+        }
+        error_log('[NLP_DEBUG] FOLLOWUP_ANSWER '
+            . json_encode([
+                'primary_complaint' => (string) ($context['chief_complaint'] ?? ''),
+                'normalized_complaint' => $context['chief_complaints'] ?? [],
+                'current_question' => (string) (($context['last_followup_question']['text'] ?? '') ?: $qid),
+                'expected_field' => (string) ($validation['expected_field'] ?? ''),
+                'patient_answer' => $answer,
+                'detected_language' => (string) ($context['question_language'] ?? $context['detected_language'] ?? ''),
+                'corrected_answer' => (string) ($validation['corrected_answer'] ?? ''),
+                'relevance_result' => !empty($validation['accept']),
+                'question_answered' => !empty($validation['accept']),
+                'extracted_information' => $validation['extracted'] ?? [],
+                'validation_reason' => (string) ($validation['reason'] ?? ''),
+                'workflow_action' => !empty($validation['accept']) ? 'ADVANCE_TO_NEXT_REQUIRED_QUESTION' : 'RETRY_CURRENT_QUESTION',
+            ], JSON_UNESCAPED_UNICODE));
     }
 
     /**
@@ -1115,6 +1256,7 @@ final class ClinicalInterviewEngine
             'questions_already_asked' => $context['questions_asked'],
             'questions_answered' => $context['questions_answered'],
             'awaiting_question_id' => $context['awaiting_question_id'],
+            'last_followup_question' => self::questionSnapshot($context['last_followup_question'] ?? $question),
             'matched_dataset_entries' => $context['matched_dataset_entries'],
             'next_question' => $question,
             'final_classification' => $finalDisplay,

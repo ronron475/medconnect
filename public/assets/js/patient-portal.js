@@ -1197,7 +1197,11 @@
     }
     const followupEl = document.getElementById('triage_followup_answer');
     const followupAnswer = followupEl ? String(followupEl.value || '').trim() : '';
-    if (followupAnswer) {
+    const followupWrap = document.getElementById('triageFollowup');
+    const followupVisible = followupWrap && !followupWrap.hidden;
+    if (followupVisible) {
+      fd.set('followup_answer', followupAnswer);
+    } else if (followupAnswer) {
       fd.set('followup_answer', followupAnswer);
     } else {
       fd.delete('followup_answer');
@@ -1413,14 +1417,6 @@
       if (!skipTwoStep) {
         twoStep.inFlight = true;
         try {
-          const followupEl = document.getElementById('triage_followup_answer');
-          const followupAnswer = followupEl ? String(followupEl.value || '').trim() : '';
-          if (twoStep.interviewInProgress && !followupAnswer) {
-            showTriageAlert(alertEl, 'error', 'Please answer the follow-up question to continue.');
-            if (followupEl) followupEl.focus();
-            return;
-          }
-
           const readyForAssign = twoStep.awaitingSecond
             && !twoStep.interviewInProgress
             && twoStep.triageId > 0
@@ -1442,9 +1438,16 @@
                 twoStep.triageId = parseInt(failPayload.triage_id, 10) || twoStep.triageId;
                 twoStep.complaint = complaint;
                 if (triageIdInput) triageIdInput.value = String(twoStep.triageId);
-                showBookingFollowupUi(failPayload.followup_question || json.message || '');
+                showBookingFollowupUi(failPayload.followup_question || '');
                 setSubmitLabel('Submit answer');
-                showTriageAlert(alertEl, 'success', 'Please answer the follow-up question below.');
+                const retry = !!(failPayload.retry_current_question || failPayload.answer_rejected);
+                showTriageAlert(
+                  alertEl,
+                  retry ? 'error' : 'success',
+                  retry
+                    ? (failPayload.patient_message || json.message || 'Please provide an answer related to your current symptom and the question above. You can try again.')
+                    : 'Please answer the follow-up question below.'
+                );
                 return;
               }
               if (failPayload.duplicate_pending || (json && json.duplicate_pending)) {
@@ -1488,9 +1491,16 @@
               twoStep.triageId = parseInt(payload.triage_id, 10) || twoStep.triageId;
               twoStep.complaint = complaint;
               if (triageIdInput) triageIdInput.value = String(twoStep.triageId);
-              showBookingFollowupUi(payload.followup_question || json.message || '');
+              showBookingFollowupUi(payload.followup_question || '');
               setSubmitLabel('Submit answer');
-              showTriageAlert(alertEl, 'success', 'Please answer the follow-up question below.');
+              const retry = !!(payload.retry_current_question || payload.answer_rejected);
+              showTriageAlert(
+                alertEl,
+                retry ? 'error' : 'success',
+                retry
+                  ? (payload.patient_message || json.message || 'Please provide an answer related to your current symptom and the question above. You can try again.')
+                  : 'Please answer the follow-up question below.'
+              );
               return;
             }
 

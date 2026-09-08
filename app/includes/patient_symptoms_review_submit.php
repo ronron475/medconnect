@@ -118,14 +118,18 @@ function patient_symptoms_review_interview_payload(int $triageId, array $assessm
 {
     $question = is_array($assessment['followup_question'] ?? null) ? $assessment['followup_question'] : [];
     $interview = is_array($assessment['interview'] ?? null) ? $assessment['interview'] : [];
+    $held = is_array($interview['last_followup_question'] ?? null) ? $interview['last_followup_question'] : [];
 
     return [
         'assessment_in_progress' => true,
         'assessment_status' => ClinicalInterviewEngine::STATUS_IN_PROGRESS,
         'triage_id' => $triageId,
-        'followup_question' => (string) ($question['text'] ?? $assessment['patient_message'] ?? ''),
-        'followup_question_id' => (string) ($question['question_id'] ?? ''),
+        'followup_question' => (string) ($question['text'] ?? $held['text'] ?? ''),
+        'followup_question_id' => (string) ($question['question_id'] ?? $interview['awaiting_question_id'] ?? ''),
         'question_language' => (string) ($question['language'] ?? $interview['question_language'] ?? ''),
+        'patient_message' => (string) ($assessment['patient_message'] ?? ''),
+        'retry_current_question' => !empty($assessment['retry_current_question']) || !empty($interview['retry_current_question']),
+        'answer_rejected' => !empty($assessment['answer_rejected']) || !empty($interview['answer_rejected']),
         'detected_complaints' => is_array($interview['normalized_complaints'] ?? null)
             ? $interview['normalized_complaints']
             : [],
@@ -533,6 +537,11 @@ function patient_submit_symptoms_for_review(
             $priorContext = $prelimInterview !== [] ? $prelimInterview : patient_symptoms_review_assessment_from_row($prelim);
         }
         $utterance = $followupAnswer !== '' ? $followupAnswer : $complaint;
+        if ($prelimInProgress) {
+            // Empty or unrelated follow-up must be validated against the current question,
+            // never re-submitted as a new primary complaint.
+            $utterance = $followupAnswer;
+        }
         if ($utterance === '' && $storedComplaint !== '') {
             $utterance = $storedComplaint;
         }
