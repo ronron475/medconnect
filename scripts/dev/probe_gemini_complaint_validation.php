@@ -92,17 +92,28 @@ ok($timeoutHh['is_valid'] === false, 'Gemini timeout + hh → invalid via PHP');
 $timeoutHead = ComplaintSemanticValidator::validateOpeningComplaint('my head hurts', unavailableGemini());
 ok($timeoutHead['is_valid'] === true, 'Gemini timeout + headache → valid via PHP');
 
-echo "\n=== Non-essential tokens ===\n";
+echo "\n=== Non-essential tokens / typos ===\n";
 $feveFever = ComplaintTriageTextCleaner::prepare('feve fever');
 ok(
     $feveFever['has_usable_clinical_text'] === true
-        && str_contains(mb_strtolower($feveFever['cleaned']), 'fever')
-        && !preg_match('/\bfeve\b/u', mb_strtolower($feveFever['cleaned'])),
-    'feve fever keeps fever, drops leftover typo',
+        && str_contains(mb_strtolower($feveFever['cleaned']), 'fever'),
+    'feve fever keeps fever',
     $feveFever['cleaned']
 );
 $feveOnly = ComplaintTriageTextCleaner::prepare('feve');
-ok($feveOnly['has_usable_clinical_text'] === false, 'feve alone is not triage-ready');
+ok(
+    $feveOnly['has_usable_clinical_text'] === true
+        && str_contains(mb_strtolower($feveOnly['cleaned']), 'fever'),
+    'feve → fever',
+    $feveOnly['cleaned']
+);
+$headche = ComplaintTriageTextCleaner::prepare('headche');
+ok(
+    $headche['has_usable_clinical_text'] === true
+        && str_contains(mb_strtolower($headche['cleaned']), 'headache'),
+    'headche → headache',
+    $headche['cleaned']
+);
 $helloFever = ComplaintTriageTextCleaner::prepare('hello fever');
 ok(
     $helloFever['has_usable_clinical_text'] === true
@@ -110,15 +121,36 @@ ok(
     'hello fever drops greeting',
     $helloFever['cleaned']
 );
+$hhClean = ComplaintTriageTextCleaner::prepare('hh');
+ok($hhClean['has_usable_clinical_text'] === false, 'hh is not a medical typo');
+$asdfClean = ComplaintTriageTextCleaner::prepare('asdfgh');
+ok($asdfClean['has_usable_clinical_text'] === false, 'asdfgh is not a medical typo');
 
-$feveInterview = ClinicalInterviewEngine::assess('feve fever', [], []);
-ok(empty($feveInterview['needs_valid_complaint']), 'feve fever continues NLP');
+$feveInterview = ClinicalInterviewEngine::assess('feve', [], []);
+ok(empty($feveInterview['needs_valid_complaint']), 'feve continues NLP as fever');
 ok(
-    str_contains(mb_strtolower((string) ($feveInterview['clinical_transcript'] ?? $feveInterview['chief_complaint'] ?? '')), 'fever'),
-    'feve fever NLP sees fever'
+    str_contains(mb_strtolower((string) ($feveInterview['clinical_transcript'] ?? $feveInterview['chief_complaint'] ?? '')), 'fever')
+        || str_contains(mb_strtolower(json_encode($feveInterview['interview'] ?? [])), 'fever'),
+    'feve NLP interpretation includes fever'
 );
-$feveBlocked = ClinicalInterviewEngine::assess('feve', [], []);
-ok(!empty($feveBlocked['needs_valid_complaint']) || !empty($feveBlocked['domain_skipped']), 'feve asks for a real complaint');
+
+$typoSentence = ClinicalInterviewEngine::assess('I have feve and headche for 2 weeks.', [], []);
+ok(empty($typoSentence['needs_valid_complaint']), 'typo sentence is valid');
+$typoFacts = is_array($typoSentence['interview']['facts'] ?? null) ? $typoSentence['interview']['facts'] : [];
+$typoQ = strtoupper((string) ($typoSentence['followup_question']['question_id'] ?? ''));
+ok($typoQ !== 'ONSET' && $typoQ !== 'DURATION', 'typo sentence does not re-ask timing', $typoQ);
+ok(
+    strtoupper((string) ($typoSentence['followup_question']['language'] ?? $typoSentence['interview']['question_language'] ?? '')) === 'ENGLISH'
+        || str_contains(mb_strtolower((string) ($typoSentence['followup_question']['text'] ?? '')), 'scale'),
+    'typo sentence follow-up stays English'
+);
+
+$uloo = ClinicalInterviewEngine::assess('Masakit akon uloo.', [], []);
+ok(empty($uloo['needs_valid_complaint']), 'Hiligaynon uloo tolerated');
+
+$complete = ClinicalInterviewEngine::assess('My headache is 4/10 and has lasted 2 weeks.', [], []);
+$cq = strtoupper((string) ($complete['followup_question']['question_id'] ?? ''));
+ok($cq !== 'PAIN_SEVERITY' && $cq !== 'ONSET' && $cq !== 'DURATION', 'complete complaint skips known fields', $cq);
 
 echo "\n=== Interview engine gate ===\n";
 

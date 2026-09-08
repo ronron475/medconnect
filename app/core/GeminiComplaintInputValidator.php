@@ -131,7 +131,17 @@ final class GeminiComplaintInputValidator
             $confidence = max(0.0, min(1.0, $confidence));
         }
 
-        return self::pack(true, $isMedical, $class, $confidence, '');
+        $corrected = trim((string) ($decoded['corrected'] ?? $decoded['corrected_text'] ?? ''));
+        $corrected = trim((string) preg_replace('/\s+/u', ' ', $corrected));
+        if (mb_strlen($corrected) > 240 || preg_match('/\b(EMERGENCY|URGENT|NON-URGENT|diagnos)/u', $corrected)) {
+            $corrected = '';
+        }
+        $concept = trim((string) ($decoded['medical_concept'] ?? ''));
+        if (mb_strlen($concept) > 80) {
+            $concept = '';
+        }
+
+        return self::pack(true, $isMedical, $class, $confidence, '', $corrected, $concept);
     }
 
     private static function complete(string $complaintText): string
@@ -208,6 +218,8 @@ Do not determine urgency.
 Do not determine triage.
 Do not provide medical advice.
 
+Can this reasonably be interpreted as a medical term or health concern despite spelling errors?
+
 Accept legitimate symptoms even when they are:
 - short
 - misspelled
@@ -228,9 +240,12 @@ Reject obvious:
 - non-medical statements
 
 Return ONLY JSON with this shape:
-{"is_medical_complaint":true,"classification":"VALID_MEDICAL_COMPLAINT","confidence":0.95}
+{"is_medical_complaint":true,"classification":"VALID_MEDICAL_COMPLAINT","confidence":0.95,"corrected":"fever","medical_concept":"fever"}
 or
-{"is_medical_complaint":false,"classification":"INVALID_MEDICAL_INPUT","confidence":0.98}
+{"is_medical_complaint":false,"classification":"INVALID_MEDICAL_INPUT","confidence":0.98,"corrected":"","medical_concept":""}
+
+If the text is a misspelled medical term, correct spelling only (never change severity, duration, or location).
+Do not map keyboard smash or greetings (hh, asdfgh, qwerty, hello, test) to medical terms.
 
 Allowed classification values ONLY:
 VALID_MEDICAL_COMPLAINT
@@ -244,7 +259,9 @@ PROMPT;
      *   is_medical_complaint: bool|null,
      *   classification: string|null,
      *   confidence: float|null,
-     *   error: string
+     *   error: string,
+     *   corrected_text: string,
+     *   medical_concept: string
      * }
      */
     private static function pack(
@@ -252,7 +269,9 @@ PROMPT;
         ?bool $isMedical,
         ?string $classification,
         ?float $confidence,
-        string $error
+        string $error,
+        string $corrected = '',
+        string $concept = ''
     ): array {
         return [
             'available' => $available,
@@ -260,6 +279,8 @@ PROMPT;
             'classification' => $classification,
             'confidence' => $confidence,
             'error' => $error,
+            'corrected_text' => $corrected,
+            'medical_concept' => $concept,
         ];
     }
 
