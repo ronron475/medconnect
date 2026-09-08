@@ -26,6 +26,7 @@ final class ClinicalInterviewEngine
     {
         $context = self::normalizeContext($priorContext);
         $turn = trim($utterance);
+        $originalTurnForLanguage = $turn;
 
         // Opening-turn domain gate (promoted from demo). Fail-open to existing NLP.
         try {
@@ -83,11 +84,14 @@ final class ClinicalInterviewEngine
         }
 
         if ($context['question_language'] === '') {
-            $detected = HiligaynonLanguageDetector::detect($turn !== '' ? $turn : $transcript);
-            $context['detected_language'] = strtoupper(self::languageLabel((string) ($detected['primary'] ?? 'hiligaynon')));
-            $context['question_language'] = self::questionLanguageFromDetection($detected, $turn !== '' ? $turn : $transcript);
+            // Detect from the patient's original wording — not post-normalization text —
+            // so dataset/synonym rewrites cannot force Hiligaynon/Tagalog replies.
+            $langSource = $originalTurnForLanguage !== '' ? $originalTurnForLanguage : $transcript;
+            $detected = HiligaynonLanguageDetector::detect($langSource);
+            $context['detected_language'] = strtoupper(self::languageLabel((string) ($detected['primary'] ?? 'english')));
+            $context['question_language'] = self::questionLanguageFromDetection($detected, $langSource);
         } else {
-            $latest = HiligaynonLanguageDetector::detect($turn);
+            $latest = HiligaynonLanguageDetector::detect($originalTurnForLanguage !== '' ? $originalTurnForLanguage : $turn);
             if (($latest['primary'] ?? '') !== '' && ($latest['primary'] ?? 'unknown') !== 'unknown') {
                 $context['detected_language'] = strtoupper(self::languageLabel((string) $latest['primary']));
             }
@@ -600,12 +604,14 @@ final class ClinicalInterviewEngine
             return false;
         }
 
-        // Adaptive early-complete only when triage-critical facts are known
-        // AND no remaining high-impact adaptive question is queued.
+        // Adaptive policy is the authority for "enough for triage?".
+        // Never finalize via confidence shortcuts while adaptive says incomplete.
         try {
-            if (class_exists('ClinicalInterviewAdaptivePolicy')
-                && ClinicalInterviewAdaptivePolicy::isTriageSufficient($context, $transcript, $assessment)
-            ) {
+            if (class_exists('ClinicalInterviewAdaptivePolicy')) {
+                $adaptiveReady = ClinicalInterviewAdaptivePolicy::isTriageSufficient($context, $transcript, $assessment);
+                if (!$adaptiveReady) {
+                    return false;
+                }
                 $stillNeeded = ClinicalInterviewAdaptivePolicy::selectNextSlot($context, $transcript, $assessment);
                 if ($stillNeeded === null) {
                     return true;
@@ -799,8 +805,8 @@ final class ClinicalInterviewEngine
             return null;
         }
 
-        $lang = $context['question_language'] !== '' ? $context['question_language'] : 'hiligaynon';
-        $language = strtoupper($lang === 'tagalog' ? 'TAGALOG' : ($lang === 'english' ? 'ENGLISH' : 'HILIGAYNON'));
+        $lang = $context['question_language'] !== '' ? $context['question_language'] : 'english';
+        $language = strtoupper($lang === 'tagalog' ? 'TAGALOG' : ($lang === 'hiligaynon' ? 'HILIGAYNON' : 'ENGLISH'));
         $slot['language'] = $language;
 
         $bankText = '';
@@ -972,6 +978,19 @@ final class ClinicalInterviewEngine
         $assessment['triage']['urgency_label'] = 'Assessment in progress';
         $assessment['db_level'] = 'pending';
         $assessment['urgency_label'] = 'Assessment in progress';
+
+        if (getenv('NLP_DEBUG') === '1' || (!empty($_ENV['NLP_DEBUG']) && $_ENV['NLP_DEBUG'] === '1')) {
+            error_log('[NLP_DEBUG] IN_PROGRESS '
+                . json_encode([
+                    'complaint' => (string) ($context['chief_complaint'] ?? ''),
+                    'question_language' => (string) ($context['question_language'] ?? ''),
+                    'detected_language' => (string) ($context['detected_language'] ?? ''),
+                    'awaiting' => (string) ($question['question_id'] ?? ''),
+                    'pain_score' => $context['facts']['pain_score'] ?? null,
+                    'duration' => $context['facts']['duration_label'] ?? null,
+                    'onset' => $context['facts']['onset'] ?? null,
+                ], JSON_UNESCAPED_UNICODE));
+        }
 
         return $assessment;
     }

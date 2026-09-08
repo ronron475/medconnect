@@ -31,6 +31,7 @@ final class HiligaynonLanguageDetector
         'the', 'and', 'with', 'have', 'has', 'had', 'pain', 'fever', 'cough', 'headache',
         'dizziness', 'breathing', 'chest', 'stomach', 'doctor', 'feel', 'feeling', 'my',
         'body', 'ache', 'hurts', 'hurt', 'symptom', 'symptoms', 'medical', 'help',
+        'head', 'weeks', 'week', 'days', 'day', 'severe', 'mild', 'since', 'been', 'for',
     ];
 
     /**
