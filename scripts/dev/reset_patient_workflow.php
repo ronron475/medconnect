@@ -127,8 +127,8 @@ $steps[] = [
     "UPDATE appointment_slots SET status = 'available', patient_id = NULL, consultation_id = NULL WHERE patient_id = {$uid}",
 ];
 $steps[] = [
-    'patient_registrations.workflow_status',
-    "UPDATE patient_registrations SET workflow_status = 'registered' WHERE user_id = {$uid}",
+    'patient_registrations (new-patient clean)',
+    "UPDATE patient_registrations SET workflow_status = 'registered', pending_chief_complaint = NULL, pending_nlp_json = NULL, registration_urgency = NULL WHERE user_id = {$uid}",
 ];
 
 $ran = 0;

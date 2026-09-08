@@ -13,6 +13,7 @@ final class ClinicalInterviewEngine
 {
     public const STATUS_IN_PROGRESS = 'IN_PROGRESS';
     public const STATUS_COMPLETED = 'COMPLETED';
+    public const STATUS_NEEDS_VALID_COMPLAINT = 'NEEDS_VALID_COMPLAINT';
     public const MAX_QUESTIONS = 6;
 
     private const FINAL_CLASSES = ['NON-URGENT', 'URGENT', 'EMERGENCY'];
@@ -28,13 +29,24 @@ final class ClinicalInterviewEngine
         $turn = trim($utterance);
         $originalTurnForLanguage = $turn;
 
-        // Opening-turn domain gate (promoted from demo). Fail-open to existing NLP.
+        // Opening-turn semantic gate: PHP domain NLP + optional Gemini validation.
+        // Invalid / non-medical input must not enter clinical follow-ups or triage.
         try {
             if ($turn !== ''
                 && ($context['patient_turns'] ?? []) === []
                 && ($context['questions_asked'] ?? []) === []
+                && class_exists('ComplaintSemanticValidator')
+            ) {
+                $semantic = ComplaintSemanticValidator::validateOpeningComplaint($turn);
+                if (!empty($semantic['needs_valid_complaint'])) {
+                    return self::wrapNeedsValidComplaint($semantic, $turn);
+                }
+            } elseif ($turn !== ''
+                && ($context['patient_turns'] ?? []) === []
+                && ($context['questions_asked'] ?? []) === []
                 && class_exists('HealthComplaintDomainDetector')
             ) {
+                // Fallback if semantic validator class is missing.
                 $domain = HealthComplaintDomainDetector::detect($turn);
                 $routing = (string) ($domain['routing'] ?? '');
                 $health = !empty($domain['health_related']);
@@ -50,7 +62,7 @@ final class ClinicalInterviewEngine
                 }
             }
         } catch (Throwable $e) {
-            error_log('HealthComplaintDomainDetector interview gate fallback: ' . $e->getMessage());
+            error_log('Complaint semantic / domain interview gate fallback: ' . $e->getMessage());
         }
 
         $awaiting = (string) ($context['awaiting_question_id'] ?? '');
@@ -1127,33 +1139,79 @@ final class ClinicalInterviewEngine
      */
     private static function wrapDomainSkip(array $domain, string $utterance): array
     {
-        $routing = (string) ($domain['routing'] ?? HealthComplaintDomainDetector::ROUTE_OOS);
-        $message = $routing === HealthComplaintDomainDetector::ROUTE_GREETING
-            ? 'Hello! Please describe your health concern or symptoms so we can help triage safely.'
-            : 'That message does not look like a health complaint. Please describe your symptoms (for example pain, fever, cough, or difficulty breathing).';
+        $lang = 'english';
+        if (class_exists('HiligaynonLanguageDetector')) {
+            try {
+                $detected = HiligaynonLanguageDetector::detect($utterance);
+                $primary = strtolower((string) ($detected['primary'] ?? 'english'));
+                $lang = match ($primary) {
+                    'hiligaynon', 'ilonggo' => 'hiligaynon',
+                    'tagalog', 'filipino' => 'tagalog',
+                    default => 'english',
+                };
+            } catch (Throwable) {
+                $lang = 'english';
+            }
+        }
+        $message = class_exists('ComplaintSemanticValidator')
+            ? ComplaintSemanticValidator::clarificationMessage($lang)
+            : 'Please describe a health concern or symptom you are experiencing so we can continue.';
+
+        return self::wrapNeedsValidComplaint([
+            'patient_message' => $message,
+            'detected_language' => $lang,
+            'php_domain' => $domain,
+            'classification' => ComplaintSemanticValidator::CLASS_INVALID,
+            'final_validation_result' => ComplaintSemanticValidator::CLASS_INVALID,
+            'gemini_validation_result' => 'UNAVAILABLE',
+            'combine_reason' => (string) ($domain['reason'] ?? 'legacy domain skip'),
+        ], $utterance);
+    }
+
+    /**
+     * Pre-triage state: ask for a real health concern. Not a fourth triage class.
+     *
+     * @param array<string, mixed> $semantic
+     * @return array<string, mixed>
+     */
+    private static function wrapNeedsValidComplaint(array $semantic, string $utterance): array
+    {
+        $message = trim((string) ($semantic['patient_message'] ?? ''));
+        if ($message === '') {
+            $message = class_exists('ComplaintSemanticValidator')
+                ? ComplaintSemanticValidator::clarificationMessage((string) ($semantic['detected_language'] ?? 'english'))
+                : 'Please describe a health concern or symptom you are experiencing so we can continue.';
+        }
 
         return [
-            'assessment_status' => self::STATUS_COMPLETED,
+            'assessment_status' => self::STATUS_NEEDS_VALID_COMPLAINT,
             'followup_required' => false,
             'followup_question' => null,
             'patient_message' => $message,
-            'domain_detection' => $domain,
+            'needs_valid_complaint' => true,
             'domain_skipped' => true,
+            'domain_detection' => is_array($semantic['php_domain'] ?? null) ? $semantic['php_domain'] : ($semantic['domain_detection'] ?? []),
+            'semantic_validation' => $semantic,
             'chief_complaint' => $utterance,
             'original_chief_complaint' => $utterance,
             'detected_symptoms' => [],
+            'detected_language' => (string) ($semantic['detected_language'] ?? ''),
             'triage' => [
                 'triage_classification' => '',
                 'triage_display' => '',
-                'assessment_status' => self::STATUS_COMPLETED,
-                'reason' => (string) ($domain['reason'] ?? 'Non-health domain'),
-                'clinical_reasoning' => 'No clinical triage — message was outside health-complaint scope.',
-            ],
-            'interview' => [
-                'assessment_status' => self::STATUS_COMPLETED,
+                'triage_status' => 'NOT_READY',
+                'assessment_status' => self::STATUS_NEEDS_VALID_COMPLAINT,
+                'reason' => (string) ($semantic['combine_reason'] ?? 'Invalid medical input'),
+                'clinical_reasoning' => 'No clinical triage — input failed semantic medical-complaint validation.',
+                'needs_valid_complaint' => true,
                 'domain_skipped' => true,
             ],
-            'engine' => 'clinical-interview-domain-gate',
+            'interview' => [
+                'assessment_status' => self::STATUS_NEEDS_VALID_COMPLAINT,
+                'needs_valid_complaint' => true,
+                'domain_skipped' => true,
+            ],
+            'engine' => 'clinical-interview-semantic-gate',
             'engine_version' => MedicalAssessmentEngine::VERSION,
         ];
     }

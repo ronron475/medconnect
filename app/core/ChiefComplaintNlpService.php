@@ -21,9 +21,17 @@ final class ChiefComplaintNlpService
     {
         $complaint = trim($complaint);
 
-        // Registration / one-shot domain gate (fail-open to existing CDS).
+        // Registration / one-shot semantic gate (PHP domain + optional Gemini).
         try {
             if ($complaint !== ''
+                && $checkboxSymptoms === []
+                && class_exists('ComplaintSemanticValidator')
+            ) {
+                $semantic = ComplaintSemanticValidator::validateOpeningComplaint($complaint);
+                if (!empty($semantic['needs_valid_complaint'])) {
+                    return self::needsValidComplaintAssessment($semantic, $complaint);
+                }
+            } elseif ($complaint !== ''
                 && $checkboxSymptoms === []
                 && class_exists('HealthComplaintDomainDetector')
             ) {
@@ -42,10 +50,70 @@ final class ChiefComplaintNlpService
                 }
             }
         } catch (Throwable $e) {
-            error_log('ChiefComplaintNlpService domain gate fallback: ' . $e->getMessage());
+            error_log('ChiefComplaintNlpService semantic/domain gate fallback: ' . $e->getMessage());
         }
 
         return MedicalAssessmentEngine::assess($complaint, $checkboxSymptoms);
+    }
+
+    /**
+     * Pre-triage invalid input — never invent EMERGENCY/URGENT/NON-URGENT.
+     *
+     * @param array<string, mixed> $semantic
+     * @return array<string, mixed>
+     */
+    private static function needsValidComplaintAssessment(array $semantic, string $complaint): array
+    {
+        $reason = (string) ($semantic['combine_reason'] ?? 'Invalid medical input');
+        $message = trim((string) ($semantic['patient_message'] ?? ''));
+        if ($message === '') {
+            $message = ComplaintSemanticValidator::clarificationMessage((string) ($semantic['detected_language'] ?? 'english'));
+        }
+
+        return [
+            'engine_version' => MedicalAssessmentEngine::VERSION,
+            'engine' => 'chief-complaint-semantic-gate',
+            'engine_chain' => self::ENGINE_CHAIN,
+            'service_used' => false,
+            'assessment_status' => ClinicalInterviewEngine::STATUS_NEEDS_VALID_COMPLAINT,
+            'chief_complaint' => $complaint,
+            'original_chief_complaint' => $complaint,
+            'english_translation' => '',
+            'detected_symptoms' => [],
+            'possible_conditions' => [],
+            'domain_detection' => is_array($semantic['php_domain'] ?? null) ? $semantic['php_domain'] : [],
+            'semantic_validation' => $semantic,
+            'domain_skipped' => true,
+            'needs_valid_complaint' => true,
+            'patient_message' => $message,
+            'confidence' => [
+                'score' => 0,
+                'score_display' => '—',
+                'level' => 'not_ready',
+                'level_label' => 'Needs valid complaint',
+            ],
+            'severity' => [
+                'severity' => '',
+                'severity_score' => 0,
+            ],
+            'triage' => [
+                'triage_display' => '',
+                'triage_classification' => '',
+                'triage_status' => 'NOT_READY',
+                'triage_level' => '',
+                'recommended_action' => $message,
+                'clinical_reasoning' => $reason,
+                'reason' => $reason,
+                'needs_provider_review' => false,
+                'confidence_accepted' => false,
+                'red_flags' => [],
+                'domain_skipped' => true,
+                'needs_valid_complaint' => true,
+                'assessment_status' => ClinicalInterviewEngine::STATUS_NEEDS_VALID_COMPLAINT,
+            ],
+            'recommended_action' => $message,
+            'recommendations' => [],
+        ];
     }
 
     /**
@@ -57,48 +125,29 @@ final class ChiefComplaintNlpService
      */
     private static function nonHealthAssessment(array $domain, string $complaint): array
     {
-        $reason = (string) ($domain['reason'] ?? 'Message is outside health-complaint scope.');
-        $display = 'NON-URGENT';
+        $lang = 'english';
+        if (class_exists('HiligaynonLanguageDetector')) {
+            try {
+                $primary = strtolower((string) (HiligaynonLanguageDetector::detect($complaint)['primary'] ?? 'english'));
+                $lang = match ($primary) {
+                    'hiligaynon', 'ilonggo' => 'hiligaynon',
+                    'tagalog', 'filipino' => 'tagalog',
+                    default => 'english',
+                };
+            } catch (Throwable) {
+                $lang = 'english';
+            }
+        }
+        $message = class_exists('ComplaintSemanticValidator')
+            ? ComplaintSemanticValidator::clarificationMessage($lang)
+            : 'Please describe a health concern or symptom you are experiencing so we can continue.';
 
-        return [
-            'engine_version' => MedicalAssessmentEngine::VERSION,
-            'engine' => 'chief-complaint-domain-gate',
-            'engine_chain' => self::ENGINE_CHAIN,
-            'service_used' => false,
-            'chief_complaint' => $complaint,
-            'original_chief_complaint' => $complaint,
-            'english_translation' => '',
-            'detected_symptoms' => [],
-            'possible_conditions' => [],
-            'domain_detection' => $domain,
-            'domain_skipped' => true,
-            'confidence' => [
-                'score' => 20,
-                'score_display' => '20%',
-                'level' => 'review_needed',
-                'level_label' => 'Review Needed',
-            ],
-            'severity' => [
-                'severity' => 'mild',
-                'severity_score' => 0,
-            ],
-            'triage' => [
-                'triage_display' => $display,
-                'triage_classification' => 'NON_URGENT',
-                'triage_level' => 'LOW',
-                'triage_icon' => '🟢',
-                'priority' => 'Normal',
-                'recommended_action' => 'Please enter a health-related chief complaint (symptoms) for triage.',
-                'clinical_reasoning' => $reason,
-                'reason' => $reason,
-                'needs_provider_review' => true,
-                'confidence_accepted' => false,
-                'red_flags' => [],
-                'domain_skipped' => true,
-            ],
-            'recommended_action' => 'Please enter a health-related chief complaint (symptoms) for triage.',
-            'recommendations' => [],
-        ];
+        return self::needsValidComplaintAssessment([
+            'patient_message' => $message,
+            'detected_language' => $lang,
+            'php_domain' => $domain,
+            'combine_reason' => (string) ($domain['reason'] ?? 'Non-health domain'),
+        ], $complaint);
     }
 
     /**

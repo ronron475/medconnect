@@ -1463,6 +1463,23 @@
             }
             const payload = json.data || json;
 
+            // Nonsense / greeting / non-medical — clarify only; never show triage or clinical follow-ups.
+            if (payload.needs_valid_complaint || payload.domain_skipped) {
+              twoStep.interviewInProgress = false;
+              twoStep.awaitingSecond = false;
+              twoStep.level = '';
+              twoStep.triageId = 0;
+              if (triageIdInput) triageIdInput.value = '';
+              hideBookingFollowupUi();
+              setSubmitLabel('Submit patient complaint');
+              showTriageAlert(
+                alertEl,
+                'error',
+                payload.patient_message || json.message || 'Please describe a health concern or symptom you are experiencing so we can continue.'
+              );
+              return;
+            }
+
             // NLP interview still collecting clinically necessary facts — never show final triage yet.
             if (payload.assessment_in_progress) {
               twoStep.interviewInProgress = true;
