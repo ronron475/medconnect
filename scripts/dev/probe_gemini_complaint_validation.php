@@ -92,6 +92,34 @@ ok($timeoutHh['is_valid'] === false, 'Gemini timeout + hh → invalid via PHP');
 $timeoutHead = ComplaintSemanticValidator::validateOpeningComplaint('my head hurts', unavailableGemini());
 ok($timeoutHead['is_valid'] === true, 'Gemini timeout + headache → valid via PHP');
 
+echo "\n=== Non-essential tokens ===\n";
+$feveFever = ComplaintTriageTextCleaner::prepare('feve fever');
+ok(
+    $feveFever['has_usable_clinical_text'] === true
+        && str_contains(mb_strtolower($feveFever['cleaned']), 'fever')
+        && !preg_match('/\bfeve\b/u', mb_strtolower($feveFever['cleaned'])),
+    'feve fever keeps fever, drops leftover typo',
+    $feveFever['cleaned']
+);
+$feveOnly = ComplaintTriageTextCleaner::prepare('feve');
+ok($feveOnly['has_usable_clinical_text'] === false, 'feve alone is not triage-ready');
+$helloFever = ComplaintTriageTextCleaner::prepare('hello fever');
+ok(
+    $helloFever['has_usable_clinical_text'] === true
+        && !str_contains(mb_strtolower($helloFever['cleaned']), 'hello'),
+    'hello fever drops greeting',
+    $helloFever['cleaned']
+);
+
+$feveInterview = ClinicalInterviewEngine::assess('feve fever', [], []);
+ok(empty($feveInterview['needs_valid_complaint']), 'feve fever continues NLP');
+ok(
+    str_contains(mb_strtolower((string) ($feveInterview['clinical_transcript'] ?? $feveInterview['chief_complaint'] ?? '')), 'fever'),
+    'feve fever NLP sees fever'
+);
+$feveBlocked = ClinicalInterviewEngine::assess('feve', [], []);
+ok(!empty($feveBlocked['needs_valid_complaint']) || !empty($feveBlocked['domain_skipped']), 'feve asks for a real complaint');
+
 echo "\n=== Interview engine gate ===\n";
 
 $hh = ClinicalInterviewEngine::assess('hh', [], []);

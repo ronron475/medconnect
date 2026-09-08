@@ -20,8 +20,20 @@ final class ComplaintSemanticValidator
     public static function validateOpeningComplaint(string $text, ?array $geminiOverride = null): array
     {
         $raw = trim($text);
+        $cleanedPack = class_exists('ComplaintTriageTextCleaner')
+            ? ComplaintTriageTextCleaner::prepare($raw)
+            : [
+                'original' => $raw,
+                'cleaned' => $raw,
+                'discarded' => [],
+                'kept' => $raw !== '' ? [$raw] : [],
+                'has_usable_clinical_text' => $raw !== '',
+            ];
+        $nlpText = trim((string) ($cleanedPack['cleaned'] ?? ''));
+        $usable = !empty($cleanedPack['has_usable_clinical_text']);
+        $phpSource = $usable && $nlpText !== '' ? $nlpText : $raw;
         $php = class_exists('HealthComplaintDomainDetector')
-            ? HealthComplaintDomainDetector::detect($raw)
+            ? HealthComplaintDomainDetector::detect($phpSource)
             : [
                 'domain' => 'UNCLEAR',
                 'confidence' => 'LOW',
@@ -34,17 +46,29 @@ final class ComplaintSemanticValidator
                 'reason' => 'Domain detector unavailable',
             ];
 
-        $phpEvidence = self::phpEvidenceStrength($php, $raw);
+        $phpEvidence = self::phpEvidenceStrength($php, $phpSource);
+        $incompleteJunk = !$usable && self::looksLikeIncompleteJunk($raw);
+        if ($incompleteJunk) {
+            $phpEvidence = 'none';
+        }
         $gemini = $geminiOverride ?? (
-            class_exists('GeminiComplaintInputValidator')
-                ? GeminiComplaintInputValidator::validate($raw)
-                : [
+            ($incompleteJunk)
+                ? [
                     'available' => false,
                     'is_medical_complaint' => null,
                     'classification' => null,
                     'confidence' => null,
-                    'error' => 'class_missing',
+                    'error' => 'skipped_incomplete_junk',
                 ]
+                : (class_exists('GeminiComplaintInputValidator')
+                    ? GeminiComplaintInputValidator::validate($nlpText !== '' ? $nlpText : $raw)
+                    : [
+                        'available' => false,
+                        'is_medical_complaint' => null,
+                        'classification' => null,
+                        'confidence' => null,
+                        'error' => 'class_missing',
+                    ])
         );
 
         $decision = self::combine($phpEvidence, $php, $gemini);
@@ -73,6 +97,9 @@ final class ComplaintSemanticValidator
             'fuzzy_matches' => self::fuzzyLabels($php),
             'final_validation_result' => $decision['classification'],
             'combine_reason' => $decision['reason'],
+            'nlp_text' => $nlpText,
+            'discarded_tokens' => is_array($cleanedPack['discarded'] ?? null) ? $cleanedPack['discarded'] : [],
+            'kept_tokens' => is_array($cleanedPack['kept'] ?? null) ? $cleanedPack['kept'] : [],
         ];
 
         if (self::debugEnabled()) {
@@ -185,6 +212,24 @@ final class ComplaintSemanticValidator
             'classification' => self::CLASS_INVALID,
             'reason' => 'No reliable medical input evidence',
         ];
+    }
+
+    private static function looksLikeIncompleteJunk(string $text): bool
+    {
+        $tokens = preg_split('/[^\p{L}\p{N}\-]+/u', mb_strtolower(trim($text)), -1, PREG_SPLIT_NO_EMPTY) ?: [];
+        if ($tokens === []) {
+            return true;
+        }
+        if (count($tokens) > 2) {
+            return false;
+        }
+        foreach ($tokens as $token) {
+            if (mb_strlen($token) >= 5 && preg_match('/[aeiouàáéíóú]/iu', $token)) {
+                return false;
+            }
+        }
+
+        return true;
     }
 
     /**
