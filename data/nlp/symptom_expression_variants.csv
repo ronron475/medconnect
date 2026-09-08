@@ -1,0 +1,124 @@
+variant_id,variant,canonical_phrase,concept_id,canonical_name,language,status
+SEV0001,headache,"sakit ulo",headache,Headache,mixed,active
+SEV0002,"head pain","sakit ulo",headache,Headache,mixed,active
+SEV0003,"sakit ulo","sakit ulo",headache,Headache,mixed,active
+SEV0004,"kasakit ulo","sakit ulo",headache,Headache,mixed,active
+SEV0005,"sakit sang ulo","sakit ulo",headache,Headache,mixed,active
+SEV0006,"ga sakit ulo","sakit ulo",headache,Headache,mixed,active
+SEV0007,"ulo ko masakit","sakit ulo",headache,Headache,mixed,active
+SEV0008,"masakit ulo","sakit ulo",headache,Headache,mixed,active
+SEV0009,"masakit ulo ko","sakit ulo",headache,Headache,mixed,active
+SEV0010,"masakit ang ulo ko","sakit ulo",headache,Headache,mixed,active
+SEV0011,"sakit gid akon ulo","sakit ulo",headache,Headache,mixed,active
+SEV0012,"ga sakit akon ulo","sakit ulo",headache,Headache,mixed,active
+SEV0013,"nagakasakit ulo ko","sakit ulo",headache,Headache,mixed,active
+SEV0014,"kasakit ulo ko","sakit ulo",headache,Headache,mixed,active
+SEV0015,"sumasakit ang ulo ko","sakit ulo",headache,Headache,mixed,active
+SEV0016,"bug-at ulo","sakit ulo",headache,Headache,mixed,active
+SEV0017,"daw ginapislit ulo","sakit ulo",headache,Headache,mixed,active
+SEV0018,"daw nagapukpok ang ulo","sakit ulo",headache,Headache,mixed,active
+SEV0019,headech,"sakit ulo",headache,Headache,mixed,active
+SEV0020,"msk ulo","sakit ulo",headache,Headache,mixed,active
+SEV0021,"saket olo","sakit ulo",headache,Headache,mixed,active
+SEV0022,"my head hurts","sakit ulo",headache,Headache,mixed,active
+SEV0023,"pain in my head","sakit ulo",headache,Headache,mixed,active
+SEV0024,"sakit ng ulo","sakit ulo",headache,Headache,mixed,active
+SEV0025,"chest pain","masakit dughan",chest_pain,"Chest Pain",mixed,active
+SEV0026,"sakit dughan","masakit dughan",chest_pain,"Chest Pain",mixed,active
+SEV0027,"masakit dughan","masakit dughan",chest_pain,"Chest Pain",mixed,active
+SEV0028,"masakit dughan ko","masakit dughan",chest_pain,"Chest Pain",mixed,active
+SEV0029,"sakit sa dibdib","masakit dughan",chest_pain,"Chest Pain",mixed,active
+SEV0030,"masakit dibdib","masakit dughan",chest_pain,"Chest Pain",mixed,active
+SEV0031,"masakit ang dibdib ko","masakit dughan",chest_pain,"Chest Pain",mixed,active
+SEV0032,"hapdi dughan","masakit dughan",chest_pain,"Chest Pain",mixed,active
+SEV0033,"msk dughan","masakit dughan",chest_pain,"Chest Pain",mixed,active
+SEV0034,"msk dibdib","masakit dughan",chest_pain,"Chest Pain",mixed,active
+SEV0035,"pain in chest","masakit dughan",chest_pain,"Chest Pain",mixed,active
+SEV0036,"my chest hurts","masakit dughan",chest_pain,"Chest Pain",mixed,active
+SEV0037,"sumasakit ang dibdib","masakit dughan",chest_pain,"Chest Pain",mixed,active
+SEV0038,"abdominal pain","masakit tiyan",abdominal_pain,"Abdominal Pain",mixed,active
+SEV0039,"stomach pain","masakit tiyan",abdominal_pain,"Abdominal Pain",mixed,active
+SEV0040,"sakit tiyan","masakit tiyan",abdominal_pain,"Abdominal Pain",mixed,active
+SEV0041,"masakit tiyan","masakit tiyan",abdominal_pain,"Abdominal Pain",mixed,active
+SEV0042,"kasakit tiyan","masakit tiyan",abdominal_pain,"Abdominal Pain",mixed,active
+SEV0043,"msk tiyan","masakit tiyan",abdominal_pain,"Abdominal Pain",mixed,active
+SEV0044,"saket tyan","masakit tiyan",abdominal_pain,"Abdominal Pain",mixed,active
+SEV0045,"tiyan ko masakit","masakit tiyan",abdominal_pain,"Abdominal Pain",mixed,active
+SEV0046,"ga sakit tiyan","masakit tiyan",abdominal_pain,"Abdominal Pain",mixed,active
+SEV0047,"belly pain","masakit tiyan",abdominal_pain,"Abdominal Pain",mixed,active
+SEV0048,"masakit ang tiyan ko","masakit tiyan",abdominal_pain,"Abdominal Pain",mixed,active
+SEV0049,"sakit sa tiyan","masakit tiyan",abdominal_pain,"Abdominal Pain",mixed,active
+SEV0050,"difficulty breathing","budlay ginhawa",difficulty_breathing,"Difficulty Breathing",mixed,active
+SEV0051,"shortness of breath","budlay ginhawa",difficulty_breathing,"Difficulty Breathing",mixed,active
+SEV0052,"cannot breathe","budlay ginhawa",difficulty_breathing,"Difficulty Breathing",mixed,active
+SEV0053,"can't breathe","budlay ginhawa",difficulty_breathing,"Difficulty Breathing",mixed,active
+SEV0054,"budlay ginhawa","budlay ginhawa",difficulty_breathing,"Difficulty Breathing",mixed,active
+SEV0055,"budlay gid ginhawa","budlay ginhawa",difficulty_breathing,"Difficulty Breathing",mixed,active
+SEV0056,"indi ko makaginhawa","budlay ginhawa",difficulty_breathing,"Difficulty Breathing",mixed,active
+SEV0057,"di ako makahinga","budlay ginhawa",difficulty_breathing,"Difficulty Breathing",mixed,active
+SEV0058,"hirap huminga","budlay ginhawa",difficulty_breathing,"Difficulty Breathing",mixed,active
+SEV0059,"hirap na ako huminga","budlay ginhawa",difficulty_breathing,"Difficulty Breathing",mixed,active
+SEV0060,sob,"budlay ginhawa",difficulty_breathing,"Difficulty Breathing",mixed,active
+SEV0061,"kapos ginhawa","budlay ginhawa",difficulty_breathing,"Difficulty Breathing",mixed,active
+SEV0062,cough,ubo,cough,Cough,mixed,active
+SEV0063,ubo,ubo,cough,Cough,mixed,active
+SEV0064,ginaubo,ubo,cough,Cough,mixed,active
+SEV0065,nagauubo,ubo,cough,Cough,mixed,active
+SEV0066,umuubo,ubo,cough,Cough,mixed,active
+SEV0067,cought,ubo,cough,Cough,mixed,active
+SEV0068,couph,ubo,cough,Cough,mixed,active
+SEV0069,"may ubo ako",ubo,cough,Cough,mixed,active
+SEV0070,fever,hilanat,fever,Fever,mixed,active
+SEV0071,lagnat,hilanat,fever,Fever,mixed,active
+SEV0072,hilanat,hilanat,fever,Fever,mixed,active
+SEV0073,nilalagnat,hilanat,fever,Fever,mixed,active
+SEV0074,"may lagnat",hilanat,fever,Fever,mixed,active
+SEV0075,"may hilanat",hilanat,fever,Fever,mixed,active
+SEV0076,lgnt,hilanat,fever,Fever,mixed,active
+SEV0077,pyrexia,hilanat,fever,Fever,mixed,active
+SEV0078,dizziness,nalipong,dizziness,Dizziness,mixed,active
+SEV0079,dizzy,nalipong,dizziness,Dizziness,mixed,active
+SEV0080,nalipong,nalipong,dizziness,Dizziness,mixed,active
+SEV0081,malipong,nalipong,dizziness,Dizziness,mixed,active
+SEV0082,nahilo,nalipong,dizziness,Dizziness,mixed,active
+SEV0083,nahihilo,nalipong,dizziness,Dizziness,mixed,active
+SEV0084,lingin,nalipong,dizziness,Dizziness,mixed,active
+SEV0085,hilo,nalipong,dizziness,Dizziness,mixed,active
+SEV0086,vomiting,suka,vomiting,Vomiting,mixed,active
+SEV0087,vomit,suka,vomiting,Vomiting,mixed,active
+SEV0088,suka,suka,vomiting,Vomiting,mixed,active
+SEV0089,gasuka,suka,vomiting,Vomiting,mixed,active
+SEV0090,nagsusuka,suka,vomiting,Vomiting,mixed,active
+SEV0091,pagsuka,suka,vomiting,Vomiting,mixed,active
+SEV0092,"throwing up",suka,vomiting,Vomiting,mixed,active
+SEV0093,diarrhea,libang,diarrhea,Diarrhea,mixed,active
+SEV0094,diarrhoea,libang,diarrhea,Diarrhea,mixed,active
+SEV0095,libang,libang,diarrhea,Diarrhea,mixed,active
+SEV0096,nagtatae,libang,diarrhea,Diarrhea,mixed,active
+SEV0097,nagdudumi,libang,diarrhea,Diarrhea,mixed,active
+SEV0098,kalibanga,libang,diarrhea,Diarrhea,mixed,active
+SEV0099,"loose stool",libang,diarrhea,Diarrhea,mixed,active
+SEV0100,"eye pain","sakit mata",eye_pain,"Eye Pain",mixed,active
+SEV0101,"sakit mata","sakit mata",eye_pain,"Eye Pain",mixed,active
+SEV0102,"masakit mata","sakit mata",eye_pain,"Eye Pain",mixed,active
+SEV0103,"kasakit mata","sakit mata",eye_pain,"Eye Pain",mixed,active
+SEV0104,"mata ko masakit","sakit mata",eye_pain,"Eye Pain",mixed,active
+SEV0105,"sakit sa mata","sakit mata",eye_pain,"Eye Pain",mixed,active
+SEV0106,bleeding,nagadugo,bleeding,Bleeding,mixed,active
+SEV0107,nagadugo,nagadugo,bleeding,Bleeding,mixed,active
+SEV0108,nagdugo,nagadugo,bleeding,Bleeding,mixed,active
+SEV0109,dumudugo,nagadugo,bleeding,Bleeding,mixed,active
+SEV0110,"may dugo",nagadugo,bleeding,Bleeding,mixed,active
+SEV0111,gadugo,nagadugo,bleeding,Bleeding,mixed,active
+SEV0112,weakness,kaluya,weakness,Weakness,mixed,active
+SEV0113,kaluya,kaluya,weakness,Weakness,mixed,active
+SEV0114,nangaluya,kaluya,weakness,Weakness,mixed,active
+SEV0115,nanlalata,kaluya,weakness,Weakness,mixed,active
+SEV0116,weak,kaluya,weakness,Weakness,mixed,active
+SEV0117,panghihina,kaluya,weakness,Weakness,mixed,active
+SEV0118,burn,nasunog,burn,Burn,mixed,active
+SEV0119,burns,nasunog,burn,Burn,mixed,active
+SEV0120,nasunog,nasunog,burn,Burn,mixed,active
+SEV0121,napaso,nasunog,burn,Burn,mixed,active
+SEV0122,nasunugan,nasunog,burn,Burn,mixed,active
+SEV0123,paso,nasunog,burn,Burn,mixed,active

@@ -1,0 +1,8 @@
+example,expected_concepts,language,status
+"kasakit ulo ko kag tiyan ko",headache|abdominal_pain,hiligaynon,active
+"masakit ulo ko kag daw nalipong ko",headache|dizziness,hiligaynon,active
+"ubo kag hilanat ko",cough|fever,hiligaynon,active
+"masakit tiyan ko, ga suka kag ga diarrhea",abdominal_pain|vomiting|diarrhea,hiligaynon,active
+"headache and fever",headache|fever,english,active
+"cough with shortness of breath",cough|difficulty_breathing,english,active
+"sumasakit ang ulo at tiyan ko",headache|abdominal_pain,filipino,active

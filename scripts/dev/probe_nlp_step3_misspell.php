@@ -28,20 +28,17 @@ ok(($g['gemini']['primary_nlp'] ?? '') === 'SUCCESS', 'gahapon primary SUCCESS',
 ok(empty($g['gemini']['called']), 'gahapon Gemini not called');
 ok(str_contains((string) ($g['complaint_summary']['duration'] ?? ''), 'yesterday'), 'gahapon onset');
 
-// Typo kagapong — primary fails, fuzzy enables NLP or lexicon
+// Typo kagapong — misspellings/fuzzy map to gahapon (primary may now succeed)
 $b = NlpStep3DemoTrial::assess('sakit');
 $b = NlpStep3DemoTrial::assess('4', $b['interview_context'] ?? []);
 $b = NlpStep3DemoTrial::assess('mata', $b['interview_context'] ?? []);
 $k = NlpStep3DemoTrial::assess('kagapong', $b['interview_context'] ?? []);
-ok(($k['gemini']['primary_nlp'] ?? '') !== 'SUCCESS', 'kagapong primary not SUCCESS', (string) ($k['gemini']['primary_nlp'] ?? ''));
-ok(
-    in_array(($k['gemini']['fallback'] ?? ''), ['demo_fuzzy', 'demo_semantic_lexicon', 'gemini'], true)
+$kagPrimary = ($k['gemini']['primary_nlp'] ?? '') === 'SUCCESS';
+$kagFallback = in_array(($k['gemini']['fallback'] ?? ''), ['demo_fuzzy', 'demo_semantic_lexicon', 'gemini'], true)
     || ($k['gemini']['fuzzy']['status'] ?? '') === 'SUCCESS'
-    || ($k['gemini']['status'] ?? '') === 'DEMO_FUZZY',
-    'kagapong uses fuzzy/lexicon/gemini fallback',
-    (string) (($k['gemini']['fallback'] ?? '') . '/' . ($k['gemini']['status'] ?? '') . '/' . ($k['gemini']['fuzzy']['status'] ?? ''))
-);
-ok(empty($k['gemini']['called']) || ($k['gemini']['reason'] ?? '') !== 'NOT CALLED — PRIMARY NLP SUFFICIENT', 'UI reason not falsely sufficient');
+    || ($k['gemini']['status'] ?? '') === 'DEMO_FUZZY';
+ok($kagPrimary || $kagFallback, 'kagapong resolved via primary or fuzzy', (string) (($k['gemini']['primary_nlp'] ?? '') . '/' . ($k['gemini']['fallback'] ?? '') . '/' . ($k['gemini']['fuzzy']['status'] ?? '')));
+ok(empty($k['gemini']['called']) || ($k['gemini']['reason'] ?? '') !== 'NOT CALLED — PRIMARY NLP SUFFICIENT' || $kagPrimary, 'UI reason not falsely sufficient');
 ok(
     str_contains((string) (($k['complaint_summary']['duration'] ?? '') . ($k['facts']['duration_label'] ?? '')), 'yesterday')
     || str_contains((string) ($k['facts']['duration_label'] ?? ''), 'yesterday'),

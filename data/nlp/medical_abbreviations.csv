@@ -19,3 +19,11 @@ hx,history,active
 sx,symptoms,active
 dx,diagnosis,active
 rx,prescription,active
+n&v,"nausea and vomiting",active
+doe,"dyspnea on exertion",active
+ams,"altered mental status",active
+abd,abdomen,active
+c/o,"complains of",active
+pmh,"past medical history",active
+nkda,"no known drug allergies",active
+rom,"range of motion",active

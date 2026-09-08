@@ -41,3 +41,23 @@ severe pain,8,severe,4,mixed,active
 sakit gid,8,severe,4,mixed,active
 unbearable pain,10,severe,4,mixed,active
 matinding sakit,9,severe,4,mixed,active
+"masakit gid",8,severe,4,hiligaynon,active
+"grabe kasakit",9,severe,4,hiligaynon,active
+"grabe gid sakit",9,severe,4,hiligaynon,active
+"indi na maagwanta",10,severe,4,hiligaynon,active
+"indi ko na maagwanta",10,severe,4,hiligaynon,active
+"daw kaya pa",3,mild,0,hiligaynon,active
+"gamay lang",2,mild,0,hiligaynon,active
+"gamay lang sakit",2,mild,0,hiligaynon,active
+"medyo masakit",5,moderate,2,filipino,active
+"masakit na masakit",8,severe,4,filipino,active
+"sobrang sakit",9,severe,4,filipino,active
+"hindi na matiis",10,severe,4,filipino,active
+"very painful",8,severe,4,english,active
+"extremely painful",9,severe,4,english,active
+"worst pain",10,severe,4,english,active
+"pain is mild",2,mild,0,english,active
+"pain is moderate",5,moderate,2,english,active
+"pain is severe",8,severe,4,english,active
+"kaya pa",3,mild,0,mixed,active
+"tolerable pain",4,moderate,2,english,active
