@@ -47,3 +47,115 @@ blood in urine,hematuria,Blood in Urine,english,active
 blood in stool,hematochezia,Blood in Stool,english,active
 dysuria,urinary_symptoms,Painful Urination,english,active
 painful urination,urinary_symptoms,Painful Urination,english,active
+msk ulo,headache,Headache,hiligaynon,active
+saket olo,headache,Headache,hiligaynon,active
+sumasakit ulo,headache,Headache,filipino,active
+msk dughan,chest_pain,Chest Pain,hiligaynon,active
+msk dibdib,chest_pain,Chest Pain,filipino,active
+di ako makahinga,difficulty_breathing,Difficulty Breathing,filipino,active
+indi ko makaginhawa,difficulty_breathing,Difficulty Breathing,hiligaynon,active
+budlay ginhwa,difficulty_breathing,Difficulty Breathing,hiligaynon,active
+nahimatay,fainting,Fainting,filipino,active
+kombulsiyon,seizure,Seizure,filipino,active
+nanlalata,weakness,Weakness,filipino,active
+napaso,burn,Burn,filipino,active
+nagtatae,diarrhea,Diarrhea,filipino,active
+hindi makaihi,urinary_symptoms,Unable to Urinate,filipino,active
+headache,headache,Headache,mixed,active
+"kasakit ulo",headache,Headache,mixed,active
+"sakit sang ulo",headache,Headache,mixed,active
+"ga sakit ulo",headache,Headache,mixed,active
+"ulo ko masakit",headache,Headache,mixed,active
+"masakit ulo",headache,Headache,mixed,active
+"masakit ulo ko",headache,Headache,mixed,active
+"masakit ang ulo ko",headache,Headache,mixed,active
+"sakit gid akon ulo",headache,Headache,mixed,active
+"ga sakit akon ulo",headache,Headache,mixed,active
+"nagakasakit ulo ko",headache,Headache,mixed,active
+"kasakit ulo ko",headache,Headache,mixed,active
+"sumasakit ang ulo ko",headache,Headache,mixed,active
+"bug-at ulo",headache,Headache,mixed,active
+"daw ginapislit ulo",headache,Headache,mixed,active
+"daw nagapukpok ang ulo",headache,Headache,mixed,active
+headech,headache,Headache,mixed,active
+"my head hurts",headache,Headache,mixed,active
+"pain in my head",headache,Headache,mixed,active
+"sakit ng ulo",headache,Headache,mixed,active
+"chest pain",chest_pain,"Chest Pain",mixed,active
+"masakit dughan ko",chest_pain,"Chest Pain",mixed,active
+"sakit sa dibdib",chest_pain,"Chest Pain",mixed,active
+"hapdi dughan",chest_pain,"Chest Pain",mixed,active
+"my chest hurts",chest_pain,"Chest Pain",mixed,active
+"sumasakit ang dibdib",chest_pain,"Chest Pain",mixed,active
+"abdominal pain",abdominal_pain,"Abdominal Pain",mixed,active
+"stomach pain",abdominal_pain,"Abdominal Pain",mixed,active
+"sakit tiyan",abdominal_pain,"Abdominal Pain",mixed,active
+"masakit tiyan",abdominal_pain,"Abdominal Pain",mixed,active
+"kasakit tiyan",abdominal_pain,"Abdominal Pain",mixed,active
+"msk tiyan",abdominal_pain,"Abdominal Pain",mixed,active
+"saket tyan",abdominal_pain,"Abdominal Pain",mixed,active
+"tiyan ko masakit",abdominal_pain,"Abdominal Pain",mixed,active
+"ga sakit tiyan",abdominal_pain,"Abdominal Pain",mixed,active
+"belly pain",abdominal_pain,"Abdominal Pain",mixed,active
+"masakit ang tiyan ko",abdominal_pain,"Abdominal Pain",mixed,active
+"sakit sa tiyan",abdominal_pain,"Abdominal Pain",mixed,active
+"difficulty breathing",difficulty_breathing,"Difficulty Breathing",mixed,active
+"cannot breathe",difficulty_breathing,"Difficulty Breathing",mixed,active
+"can't breathe",difficulty_breathing,"Difficulty Breathing",mixed,active
+"hirap na ako huminga",difficulty_breathing,"Difficulty Breathing",mixed,active
+"kapos ginhawa",difficulty_breathing,"Difficulty Breathing",mixed,active
+cough,cough,Cough,mixed,active
+ubo,cough,Cough,mixed,active
+ginaubo,cough,Cough,mixed,active
+nagauubo,cough,Cough,mixed,active
+umuubo,cough,Cough,mixed,active
+cought,cough,Cough,mixed,active
+couph,cough,Cough,mixed,active
+"may ubo ako",cough,Cough,mixed,active
+fever,fever,Fever,mixed,active
+"may lagnat",fever,Fever,mixed,active
+"may hilanat",fever,Fever,mixed,active
+lgnt,fever,Fever,mixed,active
+pyrexia,fever,Fever,mixed,active
+dizziness,dizziness,Dizziness,mixed,active
+dizzy,dizziness,Dizziness,mixed,active
+nalipong,dizziness,Dizziness,mixed,active
+malipong,dizziness,Dizziness,mixed,active
+nahilo,dizziness,Dizziness,mixed,active
+nahihilo,dizziness,Dizziness,mixed,active
+lingin,dizziness,Dizziness,mixed,active
+hilo,dizziness,Dizziness,mixed,active
+vomiting,vomiting,Vomiting,mixed,active
+vomit,vomiting,Vomiting,mixed,active
+suka,vomiting,Vomiting,mixed,active
+gasuka,vomiting,Vomiting,mixed,active
+nagsusuka,vomiting,Vomiting,mixed,active
+pagsuka,vomiting,Vomiting,mixed,active
+diarrhea,diarrhea,Diarrhea,mixed,active
+diarrhoea,diarrhea,Diarrhea,mixed,active
+libang,diarrhea,Diarrhea,mixed,active
+nagdudumi,diarrhea,Diarrhea,mixed,active
+kalibanga,diarrhea,Diarrhea,mixed,active
+"loose stool",diarrhea,Diarrhea,mixed,active
+"eye pain",eye_pain,"Eye Pain",mixed,active
+"sakit mata",eye_pain,"Eye Pain",mixed,active
+"masakit mata",eye_pain,"Eye Pain",mixed,active
+"kasakit mata",eye_pain,"Eye Pain",mixed,active
+"mata ko masakit",eye_pain,"Eye Pain",mixed,active
+"sakit sa mata",eye_pain,"Eye Pain",mixed,active
+bleeding,bleeding,Bleeding,mixed,active
+nagadugo,bleeding,Bleeding,mixed,active
+nagdugo,bleeding,Bleeding,mixed,active
+dumudugo,bleeding,Bleeding,mixed,active
+"may dugo",bleeding,Bleeding,mixed,active
+gadugo,bleeding,Bleeding,mixed,active
+weakness,weakness,Weakness,mixed,active
+kaluya,weakness,Weakness,mixed,active
+nangaluya,weakness,Weakness,mixed,active
+weak,weakness,Weakness,mixed,active
+panghihina,weakness,Weakness,mixed,active
+burn,burn,Burn,mixed,active
+burns,burn,Burn,mixed,active
+nasunog,burn,Burn,mixed,active
+nasunugan,burn,Burn,mixed,active
+paso,burn,Burn,mixed,active

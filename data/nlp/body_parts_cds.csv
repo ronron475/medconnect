@@ -203,3 +203,36 @@ akon ulo,head,neurological,head,active
 sa ulo ko,head,neurological,head,active
 sang ulo,head,neurological,head,active
 ko sa ulo,head,neurological,head,active
+dibdib,chest,cardiovascular,cardiovascular,active
+"dibdib ko",chest,cardiovascular,cardiovascular,active
+"sa dibdib",chest,cardiovascular,cardiovascular,active
+utok,head,neurological,head,active
+olo,head,neurological,head,active
+tenga,ear,ent,ent,active
+"tenga ko",ear,ent,ent,active
+ear,ear,ent,ent,active
+nose,nose,ent,ent,active
+leeg,neck,musculoskeletal,musculoskeletal,active
+"leeg ko",neck,musculoskeletal,musculoskeletal,active
+braso,arm,musculoskeletal,musculoskeletal,active
+"braso ko",arm,musculoskeletal,musculoskeletal,active
+arm,arm,musculoskeletal,musculoskeletal,active
+paa,leg,musculoskeletal,musculoskeletal,active
+"paa ko",leg,musculoskeletal,musculoskeletal,active
+leg,leg,musculoskeletal,musculoskeletal,active
+legs,leg,musculoskeletal,musculoskeletal,active
+pusod,abdomen,gastrointestinal,gastrointestinal,active
+tiyanan,abdomen,gastrointestinal,gastrointestinal,active
+tyan,abdomen,gastrointestinal,gastrointestinal,active
+tian,abdomen,gastrointestinal,gastrointestinal,active
+belly,abdomen,gastrointestinal,gastrointestinal,active
+stomach,abdomen,gastrointestinal,gastrointestinal,active
+back,back,musculoskeletal,musculoskeletal,active
+dug-an,chest,cardiovascular,cardiovascular,active
+hand,hand,musculoskeletal,musculoskeletal,active
+foot,foot,musculoskeletal,musculoskeletal,active
+eye,eye,ophthalmologic,eye,active
+eyes,eye,ophthalmologic,eye,active
+"right lower abdomen",abdomen,gastrointestinal,gastrointestinal,active
+"tuo nga idalom tiyan",abdomen,gastrointestinal,gastrointestinal,active
+"kaliwa nga idalom tiyan",abdomen,gastrointestinal,gastrointestinal,active

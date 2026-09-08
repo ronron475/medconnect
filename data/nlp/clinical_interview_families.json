@@ -9,7 +9,7 @@
       "symptom_name_contains": ["headache", "head pain", "headech"],
       "symptom_ids": ["headache"],
       "body_parts": ["head"],
-      "text_regex": ["headache", "headech", "sakit ulo", "masakit ulo", "kasakit ulo", "sakit sang ulo", "\\bulo\\b"]
+      "text_regex": ["headache", "headech", "hedache", "sakit ulo", "masakit ulo", "kasakit ulo", "sakit sang ulo", "saket olo", "msk ulo", "sumasakit.{0,12}ulo", "sakit ng ulo", "\\bulo\\b", "\\bolo\\b"]
     },
     {
       "complaint_id": "CHEST_PAIN",
@@ -18,7 +18,7 @@
       "symptom_name_contains": ["chest pain", "chest discomfort"],
       "symptom_ids": ["chest_pain"],
       "body_parts": ["chest"],
-      "text_regex": ["chest pain", "sakit dughan", "masakit dughan", "sakit sa dibdib", "masakit.{0,12}dibdib", "\\bdughan\\b", "\\bdibdib\\b", "\\bchest\\b"]
+      "text_regex": ["chest pain", "sakit dughan", "masakit dughan", "sakit sa dibdib", "masakit.{0,12}dibdib", "msk dughan", "msk dibdib", "sumasakit.{0,12}dibdib", "\\bdughan\\b", "\\bdibdib\\b", "\\bchest\\b"]
     },
     {
       "complaint_id": "ABDOMINAL_PAIN",
@@ -27,7 +27,7 @@
       "symptom_name_contains": ["abdominal", "stomach pain"],
       "symptom_ids": ["abdominal_pain", "acute_abdomen"],
       "body_parts": ["abdomen", "stomach"],
-      "text_regex": ["abdominal", "sakit tiyan", "masakit tiyan", "\\btiyan\\b", "stomach", "belly"]
+      "text_regex": ["abdominal", "sakit tiyan", "masakit tiyan", "saket tyan", "msk tiyan", "\\btiyan\\b", "\\btyan\\b", "\\btian\\b", "stomach", "belly"]
     },
     {
       "complaint_id": "BLEEDING",
@@ -35,7 +35,7 @@
       "family_key": "bleeding",
       "symptom_name_contains": ["bleeding", "hemorrhage"],
       "symptom_ids": ["bleeding"],
-      "text_regex": ["\\bgadugo\\b", "nagadugo", "nagdugo", "dumudugo", "bleeding", "\\bdugo\\b"]
+      "text_regex": ["\\bgadugo\\b", "nagadugo", "nagdugo", "dumudugo", "nagdudugo", "bleeding", "\\bdugo\\b"]
     },
     {
       "complaint_id": "NOSE_PAIN",
@@ -51,7 +51,7 @@
       "family_key": "breathing",
       "symptom_name_contains": ["difficulty breathing", "shortness of breath", "dyspnea"],
       "symptom_ids": ["difficulty_breathing"],
-      "text_regex": ["difficulty breathing", "cannot breathe", "can't breathe", "makahinga", "makaginhawa", "budlay.{0,16}ginhawa", "hirap huminga", "shortness of breath"]
+      "text_regex": ["difficulty breathing", "cannot breathe", "can't breathe", "makahinga", "makaginhawa", "budlay.{0,16}ginhawa", "hirap.{0,20}huminga", "hirap huminga", "di ako makahinga", "shortness of breath", "ginhwa"]
     },
     {
       "complaint_id": "COUGH",
@@ -67,7 +67,7 @@
       "family_key": "fever",
       "symptom_name_contains": ["fever", "lagnat", "hilanat"],
       "symptom_ids": ["fever"],
-      "text_regex": ["\\bhilanat\\b", "\\blagnat\\b", "\\bfever\\b", "\\bpyrexia\\b"],
+      "text_regex": ["\\bhilanat\\b", "\\blagnat\\b", "\\bfever\\b", "\\bpyrexia\\b", "\\bnilalagnat\\b", "\\blgnt\\b", "\\bhlnt\\b"],
       "text_regex_exclude": ["\\b(wala|indi|hindi|no|without|walang)\\s+(?:ko\\s+)?(?:sang\\s+)?(hilanat|lagnat|fever)\\b"]
     },
     {
@@ -85,7 +85,7 @@
       "family_key": "skin",
       "symptom_name_contains": ["rash", "itch", "skin"],
       "symptom_ids": ["rash", "pruritus"],
-      "text_regex": ["\\brash\\b", "\\bitch(?:y|ing)?\\b", "\\bkati\\b", "\\bkatal\\b", "\\bpamaga\\b", "\\bswelling\\b", "\\blesion\\b", "\\bhives\\b", "\\burticaria\\b", "\\bskin\\b", "\\bpanit\\b"]
+      "text_regex": ["\\brash\\b", "\\bitch(?:y|ing)?\\b", "\\bkati\\b", "\\bkatal\\b", "\\bpamaga\\b", "\\bswelling\\b", "\\blesion\\b", "\\bhives\\b", "\\burticaria\\b", "\\bskin\\b", "\\bpanit\\b", "\\bnasunog\\b", "\\bburn(?:s|ed)?\\b", "\\bpaso\\b"]
     },
     {
       "complaint_id": "URINARY",
@@ -93,7 +93,7 @@
       "family_key": "urinary",
       "symptom_name_contains": ["dysuria", "urinary", "uti"],
       "symptom_ids": ["dysuria", "urinary_frequency"],
-      "text_regex": ["\\bdysuria\\b", "\\burinat(?:e|ion)?\\b", "\\bihi\\b", "\\bpag-ihi\\b", "\\bmag-ihi\\b", "\\bburning\\s+urin", "\\bfrequency\\b", "\\buti\\b", "masakit.{0,20}ihi"]
+      "text_regex": ["\\bdysuria\\b", "\\burinat(?:e|ion)?\\b", "\\bihi\\b", "\\bpag-ihi\\b", "\\bmag-ihi\\b", "\\bburning\\s+urin", "\\bfrequency\\b", "\\buti\\b", "masakit.{0,20}ihi", "di makaihi", "hindi makaihi"]
     },
     {
       "complaint_id": "DIZZINESS",
@@ -109,7 +109,7 @@
       "family_key": "neuro",
       "symptom_name_contains": ["weakness", "numbness", "neurological"],
       "symptom_ids": ["stroke_symptoms", "weakness"],
-      "text_regex": ["weakness", "nangaluya", "kaluya", "numb", "pamamanhid"],
+      "text_regex": ["weakness", "nangaluya", "kaluya", "numb", "pamamanhid", "nanlalata", "kombulsiyon", "seizure", "slurred"],
       "text_regex_exclude": ["\\b(no|wala|hindi|indi|without)\\s+(weakness|numbness|pamamanhid|numb)\\b"]
     }
   ],

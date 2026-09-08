@@ -176,7 +176,7 @@ final class WhoIittTriageRulesLoader
                 if ($part === '') {
                     continue;
                 }
-                if (@preg_match('/' . $part . '/u', $hay) === 1) {
+                if (@preg_match('~' . $part . '~u', $hay) === 1) {
                     $hits++;
                 }
             }
@@ -184,7 +184,8 @@ final class WhoIittTriageRulesLoader
             return $hits >= 2;
         }
 
-        $ok = @preg_match('/' . $pattern . '/u', $hay);
+        // Use ~ delimiter so clinical patterns with pain scores like 9/10 remain valid.
+        $ok = @preg_match('~' . $pattern . '~u', $hay);
 
         return $ok === 1;
     }

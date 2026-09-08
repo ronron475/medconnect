@@ -499,3 +499,44 @@ DUR0359,nearly 1 araw,1_to_2_days,1,mixed,active
 DUR0360,around 1 adlaw,1_to_2_days,1,mixed,active
 DUR0361,about 9 hours,5_plus_days,9,mixed,active
 DUR0362,around 3 oras,1_to_2_days,3,mixed,active
+DURX9001,"pila na ka adlaw",5_plus_days,5,hiligaynon,active
+DURX9002,"tatlo na ka adlaw",3_to_4_days,3,hiligaynon,active
+DURX9003,"duha na ka adlaw",1_to_2_days,2,hiligaynon,active
+DURX9004,"isa na ka adlaw",1_to_2_days,1,hiligaynon,active
+DURX9005,"duha na ka semana",chronic_weeks,14,hiligaynon,active
+DURX9006,"tatlo na ka semana",chronic_weeks,21,hiligaynon,active
+DURX9007,"isa na ka semana",chronic_weeks,7,hiligaynon,active
+DURX9008,"isa na ka bulan",chronic_months,30,hiligaynon,active
+DURX9009,"duha na ka bulan",chronic_months,60,hiligaynon,active
+DURX9010,"tatlo na ka bulan",chronic_months,90,hiligaynon,active
+DURX9011,"upat na ka bulan",chronic_months,120,hiligaynon,active
+DURX9012,"lima na ka bulan",chronic_months,150,hiligaynon,active
+DURX9013,"halos isa ka bulan",chronic_months,30,hiligaynon,active
+DURX9014,"mga tatlo ka bulan",chronic_months,90,hiligaynon,active
+DURX9015,"for three weeks",chronic_weeks,21,english,active
+DURX9016,"for 3 weeks",chronic_weeks,21,english,active
+DURX9017,"three weeks",chronic_weeks,21,english,active
+DURX9018,"for one month",chronic_months,30,english,active
+DURX9019,"for 1 month",chronic_months,30,english,active
+DURX9020,"for three months",chronic_months,90,english,active
+DURX9021,"for 3 months",chronic_months,90,english,active
+DURX9022,"several months",chronic_months,90,english,active
+DURX9023,"several weeks",chronic_weeks,21,english,active
+DURX9024,"several days",5_plus_days,5,english,active
+DURX9025,"ilang araw na",5_plus_days,5,filipino,active
+DURX9026,"tatlong araw na",3_to_4_days,3,filipino,active
+DURX9027,"dalawang araw na",1_to_2_days,2,filipino,active
+DURX9028,"isang linggo na",chronic_weeks,7,filipino,active
+DURX9029,"dalawang linggo na",chronic_weeks,14,filipino,active
+DURX9030,"tatlong linggo na",chronic_weeks,21,filipino,active
+DURX9031,"isang buwan na",chronic_months,30,filipino,active
+DURX9032,"dalawang buwan na",chronic_months,60,filipino,active
+DURX9033,"tatlong buwan na",chronic_months,90,filipino,active
+DURX9034,"mga tatlong buwan",chronic_months,90,filipino,active
+DURX9035,"since this morning",acute_hours,0,english,active
+DURX9036,"kangina pa",acute_hours,0,hiligaynon,active
+DURX9037,"kagapon pa",1_to_2_days,1,hiligaynon,active
+DURX9038,"gahapon pa",1_to_2_days,1,hiligaynon,active
+DURX9039,"kahapon pa",1_to_2_days,1,filipino,active
+DURX9040,"since last week",chronic_weeks,7,english,active
+DURX9041,"since last month",chronic_months,30,english,active

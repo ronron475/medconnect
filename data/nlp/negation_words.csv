@@ -499,3 +499,25 @@ NEG0377,negative for chest pain,chest pain,mixed,active
 NEG0378,absent dizziness,dizziness,mixed,active
 NEG0379,absent diarrhea,diarrhea,mixed,active
 NEG0380,no signs of bleeding,bleeding,mixed,active
+NEGX8001,"wala ko hilanat",fever,hiligaynon,active
+NEGX8002,"wala ako hilanat",fever,hiligaynon,active
+NEGX8003,"indi ko may hilanat",fever,hiligaynon,active
+NEGX8004,"wala suka",vomiting,hiligaynon,active
+NEGX8005,"wala ko suka",vomiting,hiligaynon,active
+NEGX8006,"indi ko gasuka",vomiting,hiligaynon,active
+NEGX8007,"indi ko ginaubo",cough,hiligaynon,active
+NEGX8008,"wala ko ubo",cough,hiligaynon,active
+NEGX8009,"wala dugo",bleeding,hiligaynon,active
+NEGX8010,"wala ko dugo",bleeding,hiligaynon,active
+NEGX8011,"indi nalipong",dizziness,hiligaynon,active
+NEGX8012,"wala ko nalipong",dizziness,hiligaynon,active
+NEGX8015,"walang lagnat",fever,filipino,active
+NEGX8017,"walang ubo",cough,filipino,active
+NEGX8019,"walang suka",vomiting,filipino,active
+NEGX8020,"hindi nagsusuka",vomiting,filipino,active
+NEGX8021,"walang hilo",dizziness,filipino,active
+NEGX8027,"without shortness of breath","difficulty breathing",english,active
+NEGX8029,"wala iban","associated symptoms",hiligaynon,active
+NEGX8030,"wala sang iban","associated symptoms",hiligaynon,active
+NEGX8031,"no other symptoms","associated symptoms",english,active
+NEGX8032,"walang ibang sintomas","associated symptoms",filipino,active

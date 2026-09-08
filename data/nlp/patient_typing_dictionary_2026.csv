@@ -1,1 +1,71 @@
 dictionary_id,local_term,english_term,category
+PT001,saket olo ko,headache,symptom
+PT002,msk ulo,headache,symptom
+PT003,sumasakit ang ulo ko,headache,symptom
+PT004,headech,headache,symptom
+PT005,msk dughan,chest pain,symptom
+PT006,masakit dibdib ko,chest pain,symptom
+PT007,sakit sa dibdib,chest pain,symptom
+PT008,hirap na ako huminga,difficulty breathing,symptom
+PT009,di ako makahinga,cannot breathe,symptom
+PT010,d nko makaginhawa,cannot breathe,symptom
+PT011,budlay ginhwa,difficulty breathing,symptom
+PT012,msk tiyan,abdominal pain,symptom
+PT013,saket tyan,abdominal pain,symptom
+PT014,may cought ako,cough,symptom
+PT015,ginaubo ko,cough,symptom
+PT016,may lgnt ako,fever,symptom
+PT017,nilalagnat ako,fever,symptom
+PT018,hilanat ko,fever,symptom
+PT019,nagtatae ako permi,diarrhea,symptom
+PT020,nagsusuka ako lagi,vomiting,symptom
+PT021,nahimatay ako,fainting,symptom
+PT022,nalipong ako,dizziness,symptom
+PT023,may kombulsiyon,seizure,symptom
+PT024,nanlalata kaliwa,one sided weakness,symptom
+PT025,nakagat ako ng ahas,snake bite,symptom
+PT026,nasunog kamot ko,burn,symptom
+PT027,grabe gid sakit,severe pain,symptom
+PT028,kagapong pa,since yesterday,timing
+PT029,kangina pa,since earlier,timing
+PT030,bigla lang,sudden onset,timing
+PT031,wla ko,i do not have,negation
+PT032,dli ko,i do not,negation
+PT033,indi ko gid,i really cannot,negation
+PT034,buntis ako may dugo,pregnant with bleeding,pregnancy
+PT035,walang malay,unresponsive,emergency
+PT036,asul ang labi,cyanosis,emergency
+PT037,hindi mapigil ang dugo,heavy bleeding,emergency
+PT038,di makaihi,unable to urinate,symptom
+PT039,malabo paningin,visual disturbance,symptom
+PT040,nasaksak ako,stab wound,trauma
+PT041,budlay gid ginhwa,difficulty breathing,symptom
+PT042,dli ko makaginhawa,cannot breathe,symptom
+PT043,gasakit olo 9/10,severe headache,symptom
+PT044,sobrang sakit ng tiyan,severe abdominal pain,symptom
+PT045,hindi ako makakain,unable to eat,symptom
+PT046,msk ulo kag lgnt,headache and fever,symptom
+PT047,namamaga ang leeg,neck swelling,symptom
+PT048,hubak ako,wheezing,symptom
+PT049,tuloy pa ang dugo,ongoing bleeding,symptom
+PT050,nakagat ako ng aso,dog bite,symptom
+PT051,blue lips,cyanosis,emergency
+PT052,open fracture,open fracture,trauma
+PT053,swollen throat,throat swelling,symptom
+PT054,still bleeding,ongoing bleeding,symptom
+PT055,cannot eat or drink,unable to feed or drink,symptom
+PT101,"kasakit ulo ko",headache,symptom
+PT102,"sakit gid akon ulo",headache,symptom
+PT103,"ga sakit akon ulo",headache,symptom
+PT104,"nagakasakit ulo ko",headache,symptom
+PT105,"bug-at ulo",headache,symptom
+PT106,"daw ginapislit ulo",headache,symptom
+PT107,"tatlo na ka bulan kasakit mata ko","eye pain for three months",symptom
+PT108,"kasakit ulo ko kag tiyan ko","headache and abdominal pain",multi
+PT109,"ubo kag hilanat ko","cough and fever",multi
+PT110,"wala ko hilanat","no fever",negation
+PT111,"indi ko ginaubo","no cough",negation
+PT112,"indi na maagwanta","unbearable pain",severity
+PT113,"pila na ka adlaw","several days",timing
+PT114,"tatlo na ka bulan","three months",timing
+PT115,"duha na ka semana","two weeks",timing

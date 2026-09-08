@@ -1,0 +1,15 @@
+example,expected_domain,note,language,status
+"tatlo na ka bulan kasakit mata ko",HEALTH_RELATED,duration+symptom+body,hiligaynon,active
+"kasakit ulo ko",HEALTH_RELATED,symptom+body,hiligaynon,active
+"masakit tiyan ko, ga suka kag ga diarrhea",HEALTH_RELATED,multi_symptom,hiligaynon,active
+"ubo kag hilanat ko",HEALTH_RELATED,multi_symptom,hiligaynon,active
+"my head hurts since yesterday",HEALTH_RELATED,english,english,active
+"sumasakit ang ulo ko",HEALTH_RELATED,tagalog,filipino,active
+"what is the weather",OUT_OF_SCOPE,unrelated,english,active
+"tell me a joke",OUT_OF_SCOPE,unrelated,english,active
+"who won the game",OUT_OF_SCOPE,unrelated,english,active
+"good morning",GREETING,greeting,english,active
+"asdfghjkl qwerty",OUT_OF_SCOPE,nonsense,english,active
+sakitgbgjgbvd,OUT_OF_SCOPE,nonsense,mixed,active
+"how do i book an appointment",MEDCONNECT_RELATED,platform,english,active
+"wala ko hilanat",HEALTH_RELATED,negation_still_clinical,hiligaynon,active

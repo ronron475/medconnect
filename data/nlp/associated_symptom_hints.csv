@@ -1,0 +1,26 @@
+hint_id,primary_concept,associated_concept,relation,status
+ASH0001,headache,dizziness,common_associated,active
+ASH0002,headache,vomiting,common_associated,active
+ASH0003,headache,"vision changes",common_associated,active
+ASH0004,headache,weakness,common_associated,active
+ASH0005,headache,confusion,common_associated,active
+ASH0006,headache,fever,common_associated,active
+ASH0007,abdominal_pain,vomiting,common_associated,active
+ASH0008,abdominal_pain,diarrhea,common_associated,active
+ASH0009,abdominal_pain,fever,common_associated,active
+ASH0010,abdominal_pain,bleeding,common_associated,active
+ASH0011,abdominal_pain,"urinary symptoms",common_associated,active
+ASH0012,cough,fever,common_associated,active
+ASH0013,cough,phlegm,common_associated,active
+ASH0014,cough,"difficulty breathing",common_associated,active
+ASH0015,cough,"chest pain",common_associated,active
+ASH0016,eye_pain,redness,common_associated,active
+ASH0017,eye_pain,"blurred vision",common_associated,active
+ASH0018,eye_pain,discharge,common_associated,active
+ASH0019,eye_pain,swelling,common_associated,active
+ASH0020,chest_pain,"difficulty breathing",common_associated,active
+ASH0021,chest_pain,sweating,common_associated,active
+ASH0022,dizziness,weakness,common_associated,active
+ASH0023,dizziness,vomiting,common_associated,active
+ASH0024,fever,cough,common_associated,active
+ASH0025,fever,headache,common_associated,active
