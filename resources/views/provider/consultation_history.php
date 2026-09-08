@@ -77,7 +77,7 @@ function pch_filter_url(string $filter): string
       <?php if (empty($patient_consultations)): ?>
       <div class="pch-empty"><p>No consultations found for this patient.</p></div>
       <?php else: ?>
-        <?php foreach ($patient_consultations as $idx => $row):
+        <?php foreach ($patient_consultations as $row):
           $status = (string) ($row['status'] ?? '');
           $dateLabel = !empty($row['consult_date'])
               ? date('M j, Y', strtotime((string) $row['consult_date']))
@@ -85,15 +85,14 @@ function pch_filter_url(string $filter): string
           $timeLabel = !empty($row['consult_time'])
               ? date('g:i A', strtotime((string) $row['consult_time']))
               : '';
-          $visitNum = count($patient_consultations) - (int) $idx;
           $complaint = trim((string) ($row['chief_complaint'] ?? '')) ?: '-';
           $sessionUrl = ASSET_BASE . '/views/provider/consultation_session.php?id=' . (int) $row['id'];
         ?>
         <article class="pch-consult-card">
           <div class="pch-consult-card__head">
             <div>
-              <div class="pch-consult-card__title">Consultation #<?= (int) $row['id'] ?></div>
-              <div class="pch-consult-card__date"><?= htmlspecialchars($dateLabel) ?><?= $timeLabel ? ' | ' . htmlspecialchars($timeLabel) : '' ?></div>
+              <div class="pch-consult-card__title">Visit · <?= htmlspecialchars($dateLabel) ?></div>
+              <div class="pch-consult-card__date">Consultation #<?= (int) $row['id'] ?><?= $timeLabel ? ' · ' . htmlspecialchars($timeLabel) : '' ?></div>
             </div>
             <span class="pch-chip <?= htmlspecialchars(provider_consultation_status_chip_class($status)) ?>">
               <?= htmlspecialchars(provider_consultation_status_label($status)) ?>
@@ -180,12 +179,20 @@ function pch_filter_url(string $filter): string
     </div>
   </div>
 
-  <?php else: ?>
+  <?php else:
+    $historyCount = count($history_patients);
+  ?>
 
-  <div class="pch-toolbar">
-    <div>
-      <h2 class="pch-toolbar__title">Consultation History</h2>
-      <p class="pch-toolbar__sub">Patients grouped by account - each visit is a separate consultation record.</p>
+  <header class="pch-hero">
+    <div class="pch-hero__copy">
+      <p class="pch-hero__eyebrow">Clinical workflow</p>
+      <div class="pch-hero__title-row">
+        <h2 class="pch-toolbar__title">Consultation History</h2>
+        <span class="pch-count" id="pchCount" data-total="<?= (int) $historyCount ?>">
+          <?= (int) $historyCount ?> patient<?= $historyCount === 1 ? '' : 's' ?>
+        </span>
+      </div>
+      <p class="pch-toolbar__sub">Grouped by patient account. Open a row to review each visit separately.</p>
     </div>
     <div class="pch-toolbar__actions">
       <nav class="pch-filters" aria-label="History filters">
@@ -204,49 +211,54 @@ function pch_filter_url(string $filter): string
       </nav>
       <div class="pch-search">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-        <input id="pchSearch" type="search" placeholder="Search name or patient ID..." autocomplete="off" aria-label="Search consultation history">
+        <input id="pchSearch" type="search" placeholder="Search name or patient ID…" autocomplete="off" aria-label="Search consultation history">
       </div>
     </div>
-  </div>
+  </header>
 
   <div class="pch-panel">
     <div class="pch-table-wrap">
       <table class="pch-table">
         <thead>
           <tr>
-            <th>Patient</th>
-            <th>Last consultation</th>
-            <th>Total visits</th>
-            <th>Last Primary Complaint</th>
-            <th>Status</th>
-            <th>Action</th>
+            <th class="pch-col-patient">Patient</th>
+            <th class="pch-col-date">Last consultation</th>
+            <th class="pch-col-visits">Visits</th>
+            <th class="pch-col-complaint">Last primary complaint</th>
+            <th class="pch-col-status">Status</th>
+            <th class="pch-col-action">Action</th>
           </tr>
         </thead>
         <tbody id="pchHistoryBody">
           <?php if (empty($history_patients)): ?>
-          <tr><td colspan="6"><div class="pch-empty"><p>No patients match this history filter.</p></div></td></tr>
+          <tr class="pch-empty-row"><td colspan="6"><div class="pch-empty"><p>No patients match this history filter.</p></div></td></tr>
           <?php else: foreach ($history_patients as $row):
             $name = trim((string) ($row['patient_name'] ?? ''));
             $pid = (string) ($row['patient_number'] ?? '');
             $status = (string) ($row['latest_status'] ?? '');
             $lastDate = !empty($row['consult_date']) ? date('M j, Y', strtotime((string) $row['consult_date'])) : '-';
+            $visits = (int) ($row['total_visits'] ?? 0);
             $complaint = trim((string) ($row['last_complaint'] ?? '')) ?: '-';
             $searchBlob = strtolower($name . ' ' . $pid . ' ' . $complaint);
           ?>
           <tr data-pch-row data-search="<?= htmlspecialchars($searchBlob) ?>">
-            <td data-label="Patient">
+            <td data-label="Patient" class="pch-col-patient">
               <span class="pch-patient-name"><?= htmlspecialchars($name) ?></span>
               <span class="pch-patient-id"><?= htmlspecialchars($pid) ?></span>
             </td>
-            <td data-label="Last consultation" class="pch-table__date"><?= htmlspecialchars($lastDate) ?></td>
-            <td data-label="Total visits"><?= (int) ($row['total_visits'] ?? 0) ?> visit<?= (int) ($row['total_visits'] ?? 0) === 1 ? '' : 's' ?></td>
-            <td data-label="Last primary complaint"><?= htmlspecialchars($complaint) ?></td>
-            <td data-label="Status">
+            <td data-label="Last consultation" class="pch-table__date pch-col-date"><?= htmlspecialchars($lastDate) ?></td>
+            <td data-label="Visits" class="pch-col-visits">
+              <span class="pch-visits"><?= $visits ?></span>
+            </td>
+            <td data-label="Last primary complaint" class="pch-col-complaint">
+              <span class="pch-complaint" title="<?= htmlspecialchars($complaint) ?>"><?= htmlspecialchars($complaint) ?></span>
+            </td>
+            <td data-label="Status" class="pch-col-status">
               <span class="pch-chip <?= htmlspecialchars(provider_consultation_status_chip_class($status)) ?>">
                 <?= htmlspecialchars(provider_consultation_status_label($status)) ?>
               </span>
             </td>
-            <td data-label="Action">
+            <td data-label="Action" class="pch-col-action">
               <a href="?patient_id=<?= (int) $row['patient_id'] ?>&amp;filter=<?= urlencode($filter) ?>" class="mc-btn mc-btn--outline pch-table__action">View history</a>
             </td>
           </tr>
@@ -254,18 +266,37 @@ function pch_filter_url(string $filter): string
         </tbody>
       </table>
     </div>
+    <div class="pch-empty pch-empty--search" id="pchSearchEmpty" hidden>
+      <p>No patients match your search.</p>
+    </div>
   </div>
 
   <script>
   (function () {
     var input = document.getElementById('pchSearch');
-    if (!input) return;
+    var body = document.getElementById('pchHistoryBody');
+    var empty = document.getElementById('pchSearchEmpty');
+    var countEl = document.getElementById('pchCount');
+    if (!input || !body) return;
+    var total = countEl ? Number(countEl.getAttribute('data-total') || 0) : 0;
+
+    function updateCount(visible) {
+      if (!countEl) return;
+      var n = visible;
+      countEl.textContent = n + ' patient' + (n === 1 ? '' : 's');
+    }
+
     input.addEventListener('input', function () {
       var q = (input.value || '').toLowerCase().trim();
-      document.querySelectorAll('#pchHistoryBody [data-pch-row]').forEach(function (row) {
+      var visible = 0;
+      body.querySelectorAll('[data-pch-row]').forEach(function (row) {
         var blob = row.getAttribute('data-search') || '';
-        row.style.display = !q || blob.indexOf(q) >= 0 ? '' : 'none';
+        var show = !q || blob.indexOf(q) >= 0;
+        row.hidden = !show;
+        if (show) visible += 1;
       });
+      if (empty) empty.hidden = !(q && visible === 0 && total > 0);
+      updateCount(q ? visible : total);
     });
   })();
   </script>

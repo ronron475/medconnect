@@ -69,7 +69,8 @@ body.provider-body .provider-page-body .ps-page,
 body.provider-body .provider-page-body .schedule-page,
 body.provider-body .provider-page-body .triage-page,
 body.provider-body .provider-page-body .pd-content,
-body.provider-body .provider-page-body .messages-page {
+body.provider-body .provider-page-body .messages-page,
+body.provider-body .provider-page-body .pch-page {
   max-width: 100%;
   width: 100%;
   margin: 0;
@@ -125,7 +126,9 @@ body.provider-body .provider-page-body .ps-stat,
 body.provider-body .provider-page-body .mc-card,
 body.provider-body .provider-page-body .adm-card,
 body.provider-body .provider-page-body .schedule-day,
-body.provider-body .provider-page-body .schedule-slot-card {
+body.provider-body .provider-page-body .schedule-slot-card,
+body.provider-body .provider-page-body .pch-panel,
+body.provider-body .provider-page-body .pch-hero {
   background: var(--card-bg);
   border: 1px solid var(--pv-border);
   border-radius: var(--pv-card-radius);
