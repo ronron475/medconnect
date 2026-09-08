@@ -80,7 +80,13 @@ final class TriageLevelService
     public static function fromAssessment(array $assessment): string
     {
         $status = strtoupper((string) ($assessment['assessment_status'] ?? ($assessment['triage']['assessment_status'] ?? '')));
-        if ($status === 'IN_PROGRESS') {
+        if ($status === 'IN_PROGRESS' || $status === 'NEEDS_VALID_COMPLAINT') {
+            return '';
+        }
+        if (!empty($assessment['needs_valid_complaint']) || !empty($assessment['domain_skipped'])) {
+            return '';
+        }
+        if (!empty($assessment['triage']['needs_valid_complaint']) || !empty($assessment['triage']['domain_skipped'])) {
             return '';
         }
 

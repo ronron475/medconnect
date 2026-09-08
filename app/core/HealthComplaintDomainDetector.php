@@ -150,6 +150,12 @@ final class HealthComplaintDomainDetector
         $looksLikeNoise = class_exists('FaqChatbotDomainScope')
             && (FaqChatbotDomainScope::isLikelyNonsenseOrPrank($raw) || FaqChatbotDomainScope::looksUnclear($raw));
 
+        // Fuzzy may invent a symptom from nonsense — do not treat fuzzy-only recovery as clinical.
+        if ($looksLikeNoise && $hasClinical && self::clinicalSignalsAreFuzzyOnly($signals) && !self::hasStrongRelationship($relationships)) {
+            $hasClinical = false;
+            $score = min($score, 0.8);
+        }
+
         // Nonsense only AFTER fuzzy/dictionary recovery failed to find health meaning.
         if ($looksLikeNoise && !$hasClinical && $score < 1.2
             && !(class_exists('FaqChatbotDomainScope') && FaqChatbotDomainScope::isHealthcareRelated($raw))
@@ -300,6 +306,56 @@ final class HealthComplaintDomainDetector
             }
         }
         return false;
+    }
+
+    /**
+     * True when the only clinical tokens were introduced via fuzzy_correction
+     * (no independent symptom/body/duration signals from the raw wording).
+     *
+     * @param list<array{type:string,value:string}> $signals
+     */
+    private static function clinicalSignalsAreFuzzyOnly(array $signals): bool
+    {
+        $hasFuzzy = false;
+        $hasIndependentClinical = false;
+        $fuzzyTargets = [];
+        foreach ($signals as $s) {
+            $type = (string) ($s['type'] ?? '');
+            $value = mb_strtolower(trim((string) ($s['value'] ?? '')));
+            if ($type === 'fuzzy_correction') {
+                $hasFuzzy = true;
+                if (str_contains($value, '→')) {
+                    $parts = explode('→', $value, 2);
+                    $fuzzyTargets[] = mb_strtolower(trim((string) ($parts[1] ?? '')));
+                }
+            }
+        }
+        if (!$hasFuzzy) {
+            return false;
+        }
+        foreach ($signals as $s) {
+            $type = (string) ($s['type'] ?? '');
+            if (!in_array($type, [
+                'symptom', 'body_part', 'duration', 'physical_change', 'injury',
+                'bleeding', 'breathing', 'malaise', 'medication',
+            ], true)) {
+                continue;
+            }
+            $value = mb_strtolower(trim((string) ($s['value'] ?? '')));
+            $fromFuzzyTarget = false;
+            foreach ($fuzzyTargets as $target) {
+                if ($target !== '' && ($value === $target || str_contains($value, $target) || str_contains($target, $value))) {
+                    $fromFuzzyTarget = true;
+                    break;
+                }
+            }
+            if (!$fromFuzzyTarget) {
+                $hasIndependentClinical = true;
+                break;
+            }
+        }
+
+        return !$hasIndependentClinical;
     }
 
     /** @param list<string> $relationships */

@@ -134,6 +134,37 @@ function patient_symptoms_review_interview_payload(int $triageId, array $assessm
 }
 
 /**
+ * Invalid / non-medical opening input — clarification only, no triage class.
+ *
+ * @return array<string, mixed>
+ */
+function patient_symptoms_review_needs_valid_payload(array $assessment): array
+{
+    $message = trim((string) ($assessment['patient_message'] ?? ''));
+    if ($message === '' && class_exists('ComplaintSemanticValidator')) {
+        $message = ComplaintSemanticValidator::clarificationMessage(
+            (string) ($assessment['detected_language'] ?? 'english')
+        );
+    }
+    if ($message === '') {
+        $message = 'Please describe a health concern or symptom you are experiencing so we can continue.';
+    }
+
+    return [
+        'needs_valid_complaint' => true,
+        'domain_skipped' => true,
+        'assessment_status' => ClinicalInterviewEngine::STATUS_NEEDS_VALID_COMPLAINT,
+        'triage_status' => 'NOT_READY',
+        'triage_level' => '',
+        'classification_label' => '',
+        'patient_message' => $message,
+        'followup_question' => '',
+        'assessment_in_progress' => false,
+        'assigned_provider_id' => 0,
+    ];
+}
+
+/**
  * @return array<string, mixed>
  */
 function patient_symptoms_review_preview_payload(
@@ -513,8 +544,14 @@ function patient_submit_symptoms_for_review(
     }
 
     $label = (string) ($assessment['triage']['urgency_label'] ?? $assessment['urgency_label'] ?? 'Routine');
+    $needsValidComplaint = !empty($assessment['needs_valid_complaint'])
+        || !empty($assessment['domain_skipped'])
+        || strtoupper((string) ($assessment['assessment_status'] ?? '')) === ClinicalInterviewEngine::STATUS_NEEDS_VALID_COMPLAINT;
     $triageLevel = TriageLevelService::fromAssessment($assessment);
-    if ($reuseExisting && $prelim) {
+    if ($needsValidComplaint) {
+        $triageLevel = '';
+    }
+    if ($reuseExisting && $prelim && !$needsValidComplaint) {
         $storedLevel = (string) ($prelim['triage_level'] ?? '');
         if (TriageLevelService::isValid($storedLevel)) {
             $triageLevel = $storedLevel;
@@ -524,7 +561,7 @@ function patient_submit_symptoms_for_review(
     $isEmergency = $triageLevel === TriageLevelService::EMERGENCY
         || strtoupper((string) ($assessment['triage']['triage_classification'] ?? '')) === 'EMERGENCY';
     $interviewInProgress = ClinicalInterviewEngine::isInProgress($assessment);
-    if ($interviewInProgress) {
+    if ($interviewInProgress || $needsValidComplaint) {
         $isEmergency = false;
         $triageLevel = '';
     }
@@ -568,6 +605,19 @@ function patient_submit_symptoms_for_review(
                 'ok' => true,
                 'message' => (string) ($assessment['patient_message'] ?? 'Please answer the follow-up question.'),
                 'payload' => patient_symptoms_review_interview_payload($triageId, $assessment),
+            ];
+        }
+
+        if ($needsValidComplaint) {
+            // Do not persist a fake NON-URGENT preliminary assessment for nonsense / greetings.
+            if ($pdo->inTransaction()) {
+                $pdo->rollBack();
+            }
+
+            return [
+                'ok' => true,
+                'message' => (string) ($assessment['patient_message'] ?? 'Please describe a health concern or symptom you are experiencing so we can continue.'),
+                'payload' => patient_symptoms_review_needs_valid_payload($assessment),
             ];
         }
 

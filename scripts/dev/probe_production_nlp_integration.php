@@ -78,8 +78,12 @@ ok(!empty($o['domain_skipped']) || display($o) === '', '6 hello skipped triage',
 $o2 = interview('what is the weather');
 ok(!empty($o2['domain_skipped']) || ($o2['domain_detection']['health_related'] ?? true) === false, '6 weather not health');
 $o3 = ChiefComplaintNlpService::assess('hello', []);
-ok(!empty($o3['domain_skipped']), '6 one-shot assess domain gate', (string) ($o3['domain_skipped'] ?? '0'));
-ok(display($o3) === 'NON-URGENT', '6 one-shot non-health stays NON-URGENT', display($o3));
+ok(!empty($o3['domain_skipped']) || !empty($o3['needs_valid_complaint']), '6 one-shot assess domain gate', (string) ($o3['domain_skipped'] ?? '0'));
+ok(
+    display($o3) === '' && !empty($o3['needs_valid_complaint']),
+    '6 one-shot non-health has no triage class',
+    display($o3) . '/' . (string) ($o3['assessment_status'] ?? '')
+);
 
 // Fast PHP path: MedicalAssessmentEngine must not hang on ML
 $t0 = microtime(true);
