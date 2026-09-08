@@ -206,6 +206,199 @@ final class GeminiComplaintInputValidator
         return $out;
     }
 
+    /**
+     * Semantic check only: does this follow-up answer the current clinical question?
+     * Does not diagnose or triage.
+     *
+     * @param array<string, mixed> $input
+     * @return array{
+     *   available: bool,
+     *   is_meaningful: bool|null,
+     *   is_relevant: bool|null,
+     *   answers_question: bool|null,
+     *   corrected_answer: string|null,
+     *   extracted_information: array<string, mixed>,
+     *   reason: string
+     * }
+     */
+    public static function validateFollowUpAnswer(array $input): array
+    {
+        self::$lastError = '';
+        $answer = trim((string) ($input['answer'] ?? ''));
+        if ($answer === '') {
+            return [
+                'available' => true,
+                'is_meaningful' => false,
+                'is_relevant' => false,
+                'answers_question' => false,
+                'corrected_answer' => null,
+                'extracted_information' => [],
+                'reason' => 'empty',
+            ];
+        }
+        if (!self::enabled()) {
+            return [
+                'available' => false,
+                'is_meaningful' => null,
+                'is_relevant' => null,
+                'answers_question' => null,
+                'corrected_answer' => null,
+                'extracted_information' => [],
+                'reason' => 'disabled',
+            ];
+        }
+
+        try {
+            $raw = self::completeFollowUp($input);
+            $parsed = self::parseFollowUpStructured($raw);
+            if ($parsed === null) {
+                self::$lastError = 'unparseable follow-up: ' . mb_substr($raw, 0, 160);
+
+                return [
+                    'available' => false,
+                    'is_meaningful' => null,
+                    'is_relevant' => null,
+                    'answers_question' => null,
+                    'corrected_answer' => null,
+                    'extracted_information' => [],
+                    'reason' => self::$lastError,
+                ];
+            }
+
+            return $parsed;
+        } catch (Throwable $e) {
+            self::$lastError = $e->getMessage();
+            error_log('GeminiComplaintInputValidator follow-up: ' . $e->getMessage());
+
+            return [
+                'available' => false,
+                'is_meaningful' => null,
+                'is_relevant' => null,
+                'answers_question' => null,
+                'corrected_answer' => null,
+                'extracted_information' => [],
+                'reason' => self::$lastError,
+            ];
+        }
+    }
+
+    /** @param array<string, mixed> $input */
+    private static function completeFollowUp(array $input): string
+    {
+        $payload = self::followUpRequestPayload($input, true);
+        try {
+            return self::generateFromPayload($payload);
+        } catch (RuntimeException $e) {
+            if (!str_contains($e->getMessage(), 'Gemini HTTP 400')) {
+                throw $e;
+            }
+
+            return self::generateFromPayload(self::followUpRequestPayload($input, false));
+        }
+    }
+
+    /**
+     * @param array<string, mixed> $input
+     * @return array<string, mixed>
+     */
+    private static function followUpRequestPayload(array $input, bool $withThinkingConfig): array
+    {
+        $config = [
+            'temperature' => 0.1,
+            'maxOutputTokens' => 320,
+            'responseMimeType' => 'application/json',
+        ];
+        if ($withThinkingConfig) {
+            $config['thinkingConfig'] = ['thinkingBudget' => 0];
+        }
+
+        $user = "Primary complaint:\n" . mb_substr((string) ($input['primary_complaint'] ?? ''), 0, 400)
+            . "\nNormalized concepts:\n" . mb_substr((string) ($input['normalized_complaint'] ?? ''), 0, 300)
+            . "\nPatient language:\n" . mb_substr((string) ($input['language'] ?? ''), 0, 40)
+            . "\nCurrent follow-up question:\n" . mb_substr((string) ($input['question'] ?? ''), 0, 400)
+            . "\nExpected clinical field:\n" . mb_substr((string) ($input['expected_field'] ?? ''), 0, 80)
+            . "\nKnown valid clinical information:\n" . mb_substr(json_encode($input['known_facts'] ?? [], JSON_UNESCAPED_UNICODE) ?: '', 0, 400)
+            . "\nPatient answer:\n" . mb_substr((string) ($input['answer'] ?? ''), 0, 400)
+            . "\nTypo-corrected answer:\n" . mb_substr((string) ($input['corrected_answer'] ?? ''), 0, 400);
+
+        return [
+            'systemInstruction' => [
+                'parts' => [['text' => self::followUpSystemPrompt()]],
+            ],
+            'contents' => [[
+                'role' => 'user',
+                'parts' => [['text' => $user]],
+            ]],
+            'generationConfig' => $config,
+        ];
+    }
+
+    /** @return array<string, mixed>|null */
+    private static function parseFollowUpStructured(string $raw): ?array
+    {
+        $raw = trim(str_replace("\r\n", "\n", $raw));
+        $raw = preg_replace('/^```(?:json)?\s*/i', '', $raw) ?? $raw;
+        $raw = preg_replace('/\s*```$/', '', $raw) ?? $raw;
+        $raw = trim($raw);
+
+        $decoded = json_decode($raw, true);
+        if (!is_array($decoded) && preg_match('/\{[\s\S]*\}/', $raw, $m)) {
+            $decoded = json_decode($m[0], true);
+        }
+        if (!is_array($decoded)) {
+            return null;
+        }
+
+        $extracted = $decoded['extracted_information'] ?? [];
+        if (!is_array($extracted)) {
+            $extracted = [];
+        }
+        $corrected = trim((string) ($decoded['corrected_answer'] ?? ''));
+        if ($corrected === '' || preg_match('/\b(EMERGENCY|URGENT|NON-URGENT|diagnos)/u', $corrected)) {
+            $corrected = '';
+        }
+
+        return [
+            'available' => true,
+            'is_meaningful' => !empty($decoded['is_meaningful']),
+            'is_relevant' => !empty($decoded['is_relevant']),
+            'answers_question' => !empty($decoded['answers_question']),
+            'corrected_answer' => $corrected !== '' ? $corrected : null,
+            'extracted_information' => $extracted,
+            'reason' => mb_substr(trim((string) ($decoded['reason'] ?? '')), 0, 240),
+        ];
+    }
+
+    private static function followUpSystemPrompt(): string
+    {
+        return <<<'PROMPT'
+You are a follow-up answer relevance validator for a medical consultation system.
+
+Determine ONLY:
+1. Is the answer meaningful (not nonsense)?
+2. Is it relevant to the primary complaint?
+3. Does it answer the current follow-up question / expected clinical field?
+4. Can minor spelling mistakes be corrected?
+5. What clinical information can safely be extracted from what the patient actually stated?
+
+Do not diagnose.
+Do not determine urgency.
+Do not determine triage (EMERGENCY / URGENT / NON-URGENT).
+Do not invent symptoms or clinical information.
+
+A grammatically meaningful sentence can still be clinically irrelevant.
+Yes/no may be valid only when the question expects that (e.g. other symptoms).
+A bare 0-10 number may be valid for pain severity, but "my dog is 5 years old" is not.
+
+Accept English, Hiligaynon/Ilonggo, Tagalog/Filipino, mixed language, and minor typos.
+
+Return ONLY JSON:
+{"is_meaningful":true,"is_relevant":true,"answers_question":true,"corrected_answer":"Yesterday","extracted_information":{"duration":"1 day"},"reason":"..."}
+or
+{"is_meaningful":true,"is_relevant":false,"answers_question":false,"corrected_answer":null,"extracted_information":{},"reason":"..."}
+PROMPT;
+    }
+
     private static function systemPrompt(): string
     {
         return <<<'PROMPT'
