@@ -78,6 +78,10 @@
   var followupWrap = document.getElementById('pdashFollowupWrap');
   var followupQuestionEl = document.getElementById('pdashFollowupQuestion');
   var followupAnswerEl = document.getElementById('pdashFollowupAnswer');
+  var followupScaleEl = document.getElementById('pdashFollowupScale');
+  var followupHelperEl = document.getElementById('pdashFollowupHelper');
+  var followupNoticeEl = document.getElementById('pdashFollowupNotice');
+  var ANSWER_LABEL = 'Submit answer';
 
   /** @type {null|'non_urgent'|'urgent'|'emergency'} */
   var triageLevel = null;
@@ -116,22 +120,82 @@
     return String(text || '').trim().length >= MIN_CHARS;
   }
 
+  function isPainScaleQuestion(text) {
+    var q = String(text || '');
+    return /0\s*(tubtob|to|hanggang|-|–|—)\s*10/i.test(q)
+      || /scale\s*(of|nga)?\s*0/i.test(q)
+      || /0\s*(out of|\/)\s*10/i.test(q)
+      || /pinakagrabe|worst pain|pain level|kagrabe/i.test(q);
+  }
+
+  function setFollowupExtras(question) {
+    var showScale = isPainScaleQuestion(question);
+    if (followupScaleEl) {
+      followupScaleEl.hidden = !showScale;
+      Array.prototype.forEach.call(followupScaleEl.querySelectorAll('.pdash-followup__scale-btn'), function (btn) {
+        btn.classList.remove('is-selected');
+      });
+    }
+    if (followupHelperEl) {
+      if (showScale) {
+        followupHelperEl.hidden = false;
+        followupHelperEl.textContent = 'Tap a number below, or type your answer (for example: 5, 7/10, or “grabe”).';
+      } else {
+        followupHelperEl.hidden = true;
+        followupHelperEl.textContent = '';
+      }
+    }
+  }
+
+  function clearFollowupNotice() {
+    if (!followupNoticeEl) return;
+    followupNoticeEl.hidden = true;
+    followupNoticeEl.textContent = '';
+  }
+
+  function showFollowupNotice(message) {
+    if (!followupNoticeEl) return;
+    var text = String(message || '').trim();
+    if (!text) {
+      clearFollowupNotice();
+      return;
+    }
+    followupNoticeEl.hidden = false;
+    followupNoticeEl.textContent = text;
+  }
+
   function hideFollowupUi() {
     if (followupWrap) {
       followupWrap.hidden = true;
     }
+    if (form) {
+      form.classList.remove('is-followup-active');
+    }
     if (followupAnswerEl) {
       followupAnswerEl.value = '';
     }
+    clearFollowupNotice();
+    setFollowupExtras('');
   }
 
-  function showFollowupUi(question) {
+  function showFollowupUi(question, options) {
+    options = options || {};
     hideContinueUi();
+    var q = String(question || '').trim();
     if (followupQuestionEl) {
-      followupQuestionEl.textContent = String(question || '').trim();
+      followupQuestionEl.textContent = q;
+    }
+    setFollowupExtras(q);
+    if (options.notice) {
+      showFollowupNotice(options.notice);
+    } else {
+      clearFollowupNotice();
     }
     if (followupWrap) {
       followupWrap.hidden = false;
+    }
+    if (form) {
+      form.classList.add('is-followup-active');
     }
     if (followupAnswerEl) {
       followupAnswerEl.value = '';
@@ -141,6 +205,21 @@
 
   function followupAnswerText() {
     return String(followupAnswerEl && followupAnswerEl.value ? followupAnswerEl.value : '').trim();
+  }
+
+  if (followupScaleEl) {
+    followupScaleEl.addEventListener('click', function (ev) {
+      var btn = ev.target && ev.target.closest ? ev.target.closest('.pdash-followup__scale-btn') : null;
+      if (!btn || !followupAnswerEl) return;
+      var score = String(btn.getAttribute('data-score') || '').trim();
+      if (!score) return;
+      followupAnswerEl.value = score;
+      Array.prototype.forEach.call(followupScaleEl.querySelectorAll('.pdash-followup__scale-btn'), function (el) {
+        el.classList.toggle('is-selected', el === btn);
+      });
+      clearFollowupNotice();
+      followupAnswerEl.focus();
+    });
   }
 
   function hideContinueUi() {
@@ -300,8 +379,9 @@
 
   function updateSubmitButtonLabel() {
     if (!submitBtn) return;
-    submitBtn.dataset.defaultLabel = SUBMIT_LABEL;
-    submitBtn.textContent = SUBMIT_LABEL;
+    var label = assessmentInProgress ? ANSWER_LABEL : SUBMIT_LABEL;
+    submitBtn.dataset.defaultLabel = label;
+    if (!submitBtn.disabled) submitBtn.textContent = label;
   }
 
   function onComplaintChanged() {
@@ -334,6 +414,7 @@
       assessmentInProgress = true;
       awaitingSecondClick = false;
       showFollowupUi(data.followup_question || '');
+      updateSubmitButtonLabel();
       return;
     }
     var level = urgencyToLevel(data.triage_level || data.classification_label);
@@ -407,9 +488,14 @@
         assessmentInProgress = true;
         awaitingSecondClick = false;
         triageId = parseInt(payload.triage_id, 10) || triageId;
-        showFollowupUi(payload.followup_question || '');
+        showFollowupUi(payload.followup_question || '', {
+          notice: (payload.retry_current_question || payload.answer_rejected)
+            ? (payload.patient_message || data.message || '')
+            : '',
+        });
+        updateSubmitButtonLabel();
         if (payload.retry_current_question || payload.answer_rejected) {
-          showAlert('error', payload.patient_message || data.message || 'Please provide an answer related to your current symptom and the question above. You can try again.');
+          clearAlert();
         }
         return false;
       }
@@ -507,9 +593,14 @@
         triageComplaint = complaint;
         triageId = parseInt(payload.triage_id, 10) || triageId;
         hideContinueUi();
-        showFollowupUi(payload.followup_question || '');
+        showFollowupUi(payload.followup_question || '', {
+          notice: (payload.retry_current_question || payload.answer_rejected)
+            ? (payload.patient_message || json.message || '')
+            : '',
+        });
+        updateSubmitButtonLabel();
         if (payload.retry_current_question || payload.answer_rejected) {
-          showAlert('error', payload.patient_message || json.message || 'Please provide an answer related to your current symptom and the question above. You can try again.');
+          clearAlert();
         }
         return true;
       }
@@ -576,6 +667,11 @@
 
   updateSubmitButtonLabel();
   restorePreliminaryState();
+  if (followupWrap && !followupWrap.hidden && followupQuestionEl) {
+    setFollowupExtras(followupQuestionEl.textContent || '');
+    form.classList.add('is-followup-active');
+    if (assessmentInProgress) updateSubmitButtonLabel();
+  }
 
   window.addEventListener('medconnect:patient-ui-lang', function () {
     refreshSubmitLabels();

@@ -45,12 +45,13 @@ if ($preliminary_complaint_triage && empty($chief_complaint_locked)) {
     $prelimComplaint = trim((string) ($preliminary_complaint_triage['chief_complaint'] ?? ''));
     if ($prelimInProgress) {
         $question = is_array($prelimInterview['followup_question'] ?? null) ? $prelimInterview['followup_question'] : [];
+        $held = is_array($prelimInterview['last_followup_question'] ?? null) ? $prelimInterview['last_followup_question'] : [];
         $preliminary_payload = [
             'triage_id' => (int) ($preliminary_complaint_triage['id'] ?? 0),
             'chief_complaint' => $prelimComplaint,
             'assessment_in_progress' => true,
-            'followup_question' => (string) ($question['text'] ?? $prelimInterview['patient_message'] ?? ''),
-            'followup_question_id' => (string) ($question['question_id'] ?? ''),
+            'followup_question' => (string) ($question['text'] ?? $held['text'] ?? $prelimInterview['patient_message'] ?? ''),
+            'followup_question_id' => (string) ($question['question_id'] ?? $held['question_id'] ?? $prelimInterview['awaiting_question_id'] ?? ''),
         ];
     } else {
         $prelimLabel = function_exists('patient_symptoms_review_classification_label')
@@ -68,6 +69,11 @@ if ($preliminary_complaint_triage && empty($chief_complaint_locked)) {
     }
 }
 $preliminary_json = $preliminary_payload ? json_encode($preliminary_payload, JSON_UNESCAPED_UNICODE) : '';
+$followup_q_text = (string) ($preliminary_payload['followup_question'] ?? '');
+$followup_is_pain_scale = (bool) preg_match(
+    '/0\s*(tubtob|to|hanggang|-|–|—)\s*10|scale\s*(of|nga)?\s*0|0\s*(out of|\/)\s*10|pinakagrabe|worst pain|pain level|kagrabe/iu',
+    $followup_q_text
+);
 ?>
 <section
   class="pdash-card pdash-card--complaint pdash-care"
@@ -105,7 +111,7 @@ $preliminary_json = $preliminary_payload ? json_encode($preliminary_payload, JSO
 
   <form
     id="pdashSymptomsReviewForm"
-    class="pdash-review-form"
+    class="pdash-review-form<?= !empty($preliminary_payload['assessment_in_progress'] ?? false) ? ' is-followup-active' : '' ?>"
     novalidate
     <?php if ($preliminary_json !== ''): ?>
     data-preliminary="<?= htmlspecialchars($preliminary_json, ENT_QUOTES, 'UTF-8') ?>"
@@ -142,17 +148,37 @@ $preliminary_json = $preliminary_payload ? json_encode($preliminary_payload, JSO
       class="pdash-followup"
       <?= empty($preliminary_payload['assessment_in_progress'] ?? false) ? 'hidden' : '' ?>
     >
-      <p class="pdash-followup__label">Follow-up question</p>
-      <p id="pdashFollowupQuestion" class="pdash-followup__question"><?= htmlspecialchars((string) ($preliminary_payload['followup_question'] ?? '')) ?></p>
-      <label class="form-label pdash-care-form__label" for="pdashFollowupAnswer">Your answer</label>
-      <textarea
-        id="pdashFollowupAnswer"
-        name="followup_answer"
-        class="form-control pdash-care-form__input"
-        rows="2"
-        maxlength="500"
-        placeholder="Answer the question above…"
-      ></textarea>
+      <div class="pdash-followup__head">
+        <span class="pdash-followup__badge">Next step</span>
+        <p class="pdash-followup__eyebrow">Follow-up question</p>
+      </div>
+      <div class="pdash-followup__panel">
+        <p id="pdashFollowupQuestion" class="pdash-followup__question"><?= htmlspecialchars((string) ($preliminary_payload['followup_question'] ?? '')) ?></p>
+        <div id="pdashFollowupScale" class="pdash-followup__scale"<?= $followup_is_pain_scale ? '' : ' hidden' ?>>
+          <span class="pdash-followup__scale-label">0 = no pain</span>
+          <div class="pdash-followup__scale-track" role="group" aria-label="Pain scale 0 to 10">
+            <?php for ($i = 0; $i <= 10; $i++): ?>
+            <button type="button" class="pdash-followup__scale-btn" data-score="<?= $i ?>"><?= $i ?></button>
+            <?php endfor; ?>
+          </div>
+          <span class="pdash-followup__scale-label pdash-followup__scale-label--end">10 = worst pain</span>
+        </div>
+        <p id="pdashFollowupHelper" class="pdash-followup__helper"<?= $followup_is_pain_scale ? '' : ' hidden' ?>><?= $followup_is_pain_scale ? 'Tap a number below, or type your answer (for example: 5, 7/10, or “grabe”).' : '' ?></p>
+      </div>
+      <div id="pdashFollowupNotice" class="pdash-followup__notice" role="status" hidden></div>
+      <div class="pdash-followup__answer">
+        <label class="form-label pdash-care-form__label" for="pdashFollowupAnswer">Your answer</label>
+        <textarea
+          id="pdashFollowupAnswer"
+          name="followup_answer"
+          class="form-control pdash-care-form__input pdash-followup__input"
+          rows="3"
+          maxlength="500"
+          placeholder="Type your answer here…"
+          autocomplete="off"
+        ></textarea>
+        <p class="pdash-followup__hint">Short answers are fine. Use your own words.</p>
+      </div>
     </div>
     <div
       id="pdashSymptomsAiResult"
@@ -169,7 +195,7 @@ $preliminary_json = $preliminary_payload ? json_encode($preliminary_payload, JSO
     </div>
     <?php if (!$chief_complaint_locked): ?>
     <button type="submit" class="pdash-btn pdash-btn--primary pdash-care-form__submit" id="pdashSymptomsReviewSubmit" data-submit-kind="<?= htmlspecialchars($submit_kind) ?>">
-      Submit patient complaint
+      <?= !empty($preliminary_payload['assessment_in_progress'] ?? false) ? 'Submit answer' : 'Submit patient complaint' ?>
     </button>
     <?php endif; ?>
   </form>
