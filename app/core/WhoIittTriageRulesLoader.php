@@ -93,14 +93,26 @@ final class WhoIittTriageRulesLoader
      */
     public static function evaluate(string $original, string $english = ''): ?array
     {
-        $chunks = [strtolower(trim($original)), strtolower(trim($english))];
+        $hay = strtolower(trim($original . ' ' . $english));
+        if (class_exists('ClinicalAnswerNormalizer')) {
+            try {
+                $prep = ClinicalAnswerNormalizer::prepare($hay);
+                $extra = strtolower(trim((string) ($prep['corrected'] ?? '')));
+                if ($extra !== '') {
+                    $hay = trim($hay . ' ' . $extra);
+                }
+            } catch (Throwable) {
+                // keep hay
+            }
+        }
         if (class_exists('HiligaynonTextNormalizer')) {
+            $chunks = [strtolower(trim($original)), strtolower(trim($english))];
             $chunks[] = strtolower(trim((string) HiligaynonTextNormalizer::normalize($original)));
             if ($english !== '' && $english !== $original) {
                 $chunks[] = strtolower(trim((string) HiligaynonTextNormalizer::normalize($english)));
             }
+            $hay = trim(implode(' ', array_values(array_unique(array_filter(array_merge([$hay], $chunks))))));
         }
-        $hay = trim(implode(' ', array_values(array_unique(array_filter($chunks)))));
         if ($hay === '') {
             return null;
         }
