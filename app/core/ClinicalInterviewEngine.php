@@ -26,6 +26,32 @@ final class ClinicalInterviewEngine
     {
         $context = self::normalizeContext($priorContext);
         $turn = trim($utterance);
+
+        // Opening-turn domain gate (promoted from demo). Fail-open to existing NLP.
+        try {
+            if ($turn !== ''
+                && ($context['patient_turns'] ?? []) === []
+                && ($context['questions_asked'] ?? []) === []
+                && class_exists('HealthComplaintDomainDetector')
+            ) {
+                $domain = HealthComplaintDomainDetector::detect($turn);
+                $routing = (string) ($domain['routing'] ?? '');
+                $health = !empty($domain['health_related']);
+                $conf = (string) ($domain['confidence'] ?? '');
+                if (!$health
+                    && in_array($routing, [
+                        HealthComplaintDomainDetector::ROUTE_OOS,
+                        HealthComplaintDomainDetector::ROUTE_GREETING,
+                    ], true)
+                    && $conf === HealthComplaintDomainDetector::CONF_HIGH
+                ) {
+                    return self::wrapDomainSkip($domain, $turn);
+                }
+            }
+        } catch (Throwable $e) {
+            error_log('HealthComplaintDomainDetector interview gate fallback: ' . $e->getMessage());
+        }
+
         if ($turn !== '') {
             $context = self::appendPatientTurn($context, $turn);
         }
@@ -553,6 +579,28 @@ final class ClinicalInterviewEngine
             return false;
         }
 
+        // Adaptive early-complete only when triage-critical facts are known
+        // AND no remaining high-impact adaptive question is queued.
+        try {
+            if (class_exists('ClinicalInterviewAdaptivePolicy')
+                && ClinicalInterviewAdaptivePolicy::isTriageSufficient($context, $transcript, $assessment)
+            ) {
+                $stillNeeded = ClinicalInterviewAdaptivePolicy::selectNextSlot($context, $transcript, $assessment);
+                if ($stillNeeded === null) {
+                    return true;
+                }
+                // Still ask when the next slot is red-flag related or top-priority.
+                $pri = (int) ($stillNeeded['priority'] ?? 99);
+                if (!empty($stillNeeded['red_flag_related']) || $pri <= 3) {
+                    return false;
+                }
+                // Lower-priority leftover slots do not block safe classification.
+                return true;
+            }
+        } catch (Throwable $e) {
+            error_log('ClinicalInterviewAdaptivePolicy isTriageSufficient fallback: ' . $e->getMessage());
+        }
+
         if (self::nextBlockingQuestionSlot($context, $transcript, $assessment) !== null) {
             return false;
         }
@@ -668,6 +716,26 @@ final class ClinicalInterviewEngine
      */
     private static function nextQuestionSlot(array $context, string $transcript): ?array
     {
+        // Prefer triage-relevant adaptive selection (promoted from demo policy).
+        // On any failure, fall back to legacy bank-order selection below.
+        try {
+            if (class_exists('ClinicalInterviewAdaptivePolicy')) {
+                $adaptive = ClinicalInterviewAdaptivePolicy::selectNextSlot($context, $transcript);
+                if (is_array($adaptive) && ($adaptive['question_id'] ?? '') !== '') {
+                    return [
+                        'question_id' => (string) $adaptive['question_id'],
+                        'clinical_purpose' => (string) ($adaptive['clinical_purpose'] ?? ''),
+                        'red_flag_related' => (bool) ($adaptive['red_flag_related'] ?? false),
+                        'priority' => (int) ($adaptive['priority'] ?? 99),
+                    ];
+                }
+                // Adaptive policy found no triage-relevant question → do not keep asking.
+                return null;
+            }
+        } catch (Throwable $e) {
+            error_log('ClinicalInterviewAdaptivePolicy selectNextSlot fallback: ' . $e->getMessage());
+        }
+
         $families = self::familyKeys($context['chief_complaints'], $transcript, $context['facts']);
         if ($families === []) {
             $families = ['pain_unspecified'];
@@ -1007,6 +1075,45 @@ final class ClinicalInterviewEngine
             'interview' => [
                 'assessment_status' => self::STATUS_IN_PROGRESS,
             ],
+        ];
+    }
+
+    /**
+     * Non-health opening turn: do not run triage classification.
+     *
+     * @param array<string, mixed> $domain
+     * @return array<string, mixed>
+     */
+    private static function wrapDomainSkip(array $domain, string $utterance): array
+    {
+        $routing = (string) ($domain['routing'] ?? HealthComplaintDomainDetector::ROUTE_OOS);
+        $message = $routing === HealthComplaintDomainDetector::ROUTE_GREETING
+            ? 'Hello! Please describe your health concern or symptoms so we can help triage safely.'
+            : 'That message does not look like a health complaint. Please describe your symptoms (for example pain, fever, cough, or difficulty breathing).';
+
+        return [
+            'assessment_status' => self::STATUS_COMPLETED,
+            'followup_required' => false,
+            'followup_question' => null,
+            'patient_message' => $message,
+            'domain_detection' => $domain,
+            'domain_skipped' => true,
+            'chief_complaint' => $utterance,
+            'original_chief_complaint' => $utterance,
+            'detected_symptoms' => [],
+            'triage' => [
+                'triage_classification' => '',
+                'triage_display' => '',
+                'assessment_status' => self::STATUS_COMPLETED,
+                'reason' => (string) ($domain['reason'] ?? 'Non-health domain'),
+                'clinical_reasoning' => 'No clinical triage — message was outside health-complaint scope.',
+            ],
+            'interview' => [
+                'assessment_status' => self::STATUS_COMPLETED,
+                'domain_skipped' => true,
+            ],
+            'engine' => 'clinical-interview-domain-gate',
+            'engine_version' => MedicalAssessmentEngine::VERSION,
         ];
     }
 }
