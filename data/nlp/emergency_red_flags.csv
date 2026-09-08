@@ -326,7 +326,7 @@ RF013,Burns,,large burn,EMERGENCY,Major burns may require fluid resuscitation an
 RF013,Burns,,burned face,EMERGENCY,Major burns may require fluid resuscitation and airway protection.,active
 RF013,Burns,,airway burn,EMERGENCY,Major burns may require fluid resuscitation and airway protection.,active
 RF013,Burns,nasunog lawas,,EMERGENCY,Major burns may require fluid resuscitation and airway protection.,active
-RF013,Burns,nasunog,,EMERGENCY,Major burns may require fluid resuscitation and airway protection.,active
+RF013,Burns,nasunog,,EMERGENCY,Major burns may require fluid resuscitation and airway protection.,inactive
 RF014,Suicidal Thoughts,,suicidal,EMERGENCY,Active suicidal ideation requires immediate safety intervention.,active
 RF014,Suicidal Thoughts,,suicide,EMERGENCY,Active suicidal ideation requires immediate safety intervention.,active
 RF014,Suicidal Thoughts,,want to die,EMERGENCY,Active suicidal ideation requires immediate safety intervention.,active

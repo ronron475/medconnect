@@ -52,6 +52,27 @@ final class ClinicalInterviewEngine
             error_log('HealthComplaintDomainDetector interview gate fallback: ' . $e->getMessage());
         }
 
+        $awaiting = (string) ($context['awaiting_question_id'] ?? '');
+
+        // Accuracy: normalize misspellings / slang / mixed tokens before extraction.
+        $turnPrep = null;
+        try {
+            if ($turn !== '' && class_exists('ClinicalAnswerNormalizer')) {
+                $turnPrep = ClinicalAnswerNormalizer::prepare($turn, $awaiting);
+                $correctedTurn = trim((string) ($turnPrep['corrected'] ?? ''));
+                if ($correctedTurn !== '') {
+                    $turn = $correctedTurn;
+                }
+            }
+        } catch (Throwable $e) {
+            error_log('ClinicalAnswerNormalizer interview fallback: ' . $e->getMessage());
+            $turnPrep = null;
+        }
+
+        if (is_array($turnPrep)) {
+            $context['last_answer_normalization'] = $turnPrep;
+        }
+
         if ($turn !== '') {
             $context = self::appendPatientTurn($context, $turn);
         }

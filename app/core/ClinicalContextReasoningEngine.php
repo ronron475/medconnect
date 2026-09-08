@@ -76,14 +76,25 @@ final class ClinicalContextReasoningEngine
                 || str_contains($flagName, 'unable to pass urine')
                 || (bool) preg_match('/\b(wala\s+ko\s+maka-?ihi|indi\s+ko\s+gid\s+makaihi)\b/u', $matchedOn);
 
-            $isGated = $isChestPainOnly || $isUrinaryRetentionOnly;
+            // WHO IITT: burns without red criteria are YELLOW (URGENT), not RED.
+            // Keep emergency only when major-burn / airway / chemical / electrical markers are present.
+            $isBurnFlag = $flagId === 'RF013'
+                || str_contains($flagName, 'burn')
+                || str_contains($flagName, 'nasunog');
+            $hasMajorBurnCriteria = (bool) preg_match(
+                '/\b(lawas|madamo|guya|nawong|face|facial|airway|asido|acid|chemical|electric|kuryente|electrocution|extensive|severe\s+burns?|body\s+burn|burned\s+face|smoke|inhalation|bata|child|infant)\b/u',
+                $hay
+            ) || (bool) preg_match('/\b(dughan|chest).{0,40}\b(likod|back)\b|\b(likod|back).{0,40}\b(dughan|chest)\b/u', $hay);
+            $isBurnWithoutRedCriteria = $isBurnFlag && !$hasMajorBurnCriteria;
+
+            $isGated = $isChestPainOnly || $isUrinaryRetentionOnly || $isBurnWithoutRedCriteria;
 
             if (!$isGated) {
                 $filtered[] = $flag;
                 continue;
             }
 
-            if ($isUrinaryRetentionOnly) {
+            if ($isUrinaryRetentionOnly || $isBurnWithoutRedCriteria) {
                 // Defer to WHO YELLOW rule evaluation — do not keep as emergency red flag.
                 continue;
             }

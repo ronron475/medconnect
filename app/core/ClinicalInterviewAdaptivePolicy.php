@@ -175,6 +175,10 @@ final class ClinicalInterviewAdaptivePolicy
             $concepts[] = 'eye';
             $concepts[] = 'needs_laterality';
         }
+        // Burns / thermal injury: ask site (+ associated) so WHO red vs yellow can be distinguished.
+        if ((bool) preg_match('/\b(burn|burns|nasunog|paso|scald|quemadura)\b/u', $low)) {
+            $concepts[] = 'skin';
+        }
         if (in_array('abdomen', $locs, true) || in_array('chest', $locs, true)) {
             $concepts[] = 'needs_specific_location';
         }
