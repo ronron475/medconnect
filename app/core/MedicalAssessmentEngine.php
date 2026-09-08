@@ -25,6 +25,19 @@ final class MedicalAssessmentEngine
             return self::emptyAssessment();
         }
 
+        // Fast CDS path: ClinicalTriageEngine (+ WHO IITT) without the slow full
+        // Hiligaynon pipeline / optional Python service. Default on when PHP NLP-only.
+        $phpOnly = filter_var(getenv('MEDCONNECT_PHP_NLP_ONLY') ?: '1', FILTER_VALIDATE_BOOLEAN);
+        $fastCds = filter_var(getenv('MEDCONNECT_CDS_FAST_PATH') ?: ($phpOnly ? '1' : '0'), FILTER_VALIDATE_BOOLEAN);
+        if ($phpOnly && $fastCds) {
+            try {
+                return self::assessFastCds($chiefComplaint, $checkboxSymptoms, $combinedText);
+            } catch (Throwable $e) {
+                error_log('MedicalAssessmentEngine fast CDS fallback: ' . $e->getMessage());
+                // Fall through to full pipeline.
+            }
+        }
+
         $nlpPipeline = self::runNlpPipeline($combinedText);
         $nlpResult = is_array($nlpPipeline['nlp_result'] ?? null) ? $nlpPipeline['nlp_result'] : [];
         $clinicalRec = is_array($nlpPipeline['clinical_recommendation'] ?? null)
@@ -239,6 +252,145 @@ final class MedicalAssessmentEngine
         ];
     }
 
+    /**
+     * Fast production CDS: ClinicalTriageEngine is primary (WHO IITT included).
+     * Preserves assess() payload shape for registration / booking / provider APIs.
+     *
+     * @param list<string> $checkboxSymptoms
+     * @return array<string, mixed>
+     */
+    private static function assessFastCds(string $chiefComplaint, array $checkboxSymptoms, string $combinedText): array
+    {
+        $raw = ClinicalTriageEngine::assess($combinedText, $combinedText, [], $checkboxSymptoms, 0);
+        $display = (string) ($raw['triage_display'] ?? 'NON-URGENT');
+        if (!in_array($display, ['NON-URGENT', 'URGENT', 'EMERGENCY'], true)) {
+            $display = 'NON-URGENT';
+        }
+
+        $detectedSymptoms = is_array($raw['detected_symptoms'] ?? null) ? $raw['detected_symptoms'] : [];
+        $confidenceScore = (int) ($raw['confidence_score'] ?? $raw['confidence'] ?? 0);
+        $needsReview = $confidenceScore < self::CONFIDENCE_REVIEW_THRESHOLD
+            || !empty($raw['needs_provider_review']);
+
+        $triageMeta = MedicalRecommendationEngine::classify([
+            'nlp_triage_level' => (string) ($raw['triage_level'] ?? 'LOW'),
+            'severity' => (string) ($raw['severity'] ?? 'mild'),
+            'ml_triage_level' => '',
+        ]);
+        $triageMeta['triage_display'] = $display;
+        $triageMeta['triage_classification'] = (string) ($raw['triage_classification'] ?? $triageMeta['triage_classification']);
+        $triageMeta['triage_level'] = (string) ($raw['triage_level'] ?? $triageMeta['triage_level']);
+        $triageMeta['triage_icon'] = (string) ($raw['triage_icon'] ?? $triageMeta['triage_icon']);
+        $triageMeta['recommended_action'] = (string) ($raw['recommended_action'] ?? $triageMeta['recommended_action']);
+        $triageMeta['db_level'] = match ($display) {
+            'EMERGENCY' => '1',
+            'URGENT' => '2',
+            default => '3',
+        };
+        $triageMeta['urgency_label'] = match ($display) {
+            'EMERGENCY' => 'Emergency (Immediate)',
+            'URGENT' => 'Urgent (Priority)',
+            default => 'Non-Urgent (Routine)',
+        };
+        $triageMeta['gis_triage_level'] = match ($display) {
+            'EMERGENCY' => 'emergency',
+            'URGENT' => 'urgent',
+            default => 'non_urgent',
+        };
+        if ($needsReview) {
+            $triageMeta['recommended_action'] = ClinicalTriageEngine::REVIEW_RECOMMENDATION;
+            $triageMeta['needs_provider_review'] = true;
+        }
+
+        $confidence = [
+            'score' => $confidenceScore,
+            'score_display' => $confidenceScore . '%',
+            'level' => $confidenceScore >= 90 ? 'very_high' : ($confidenceScore >= 75 ? 'high' : ($confidenceScore >= self::CONFIDENCE_REVIEW_THRESHOLD ? 'moderate' : 'review_needed')),
+            'level_label' => $confidenceScore >= 90 ? 'Very High' : ($confidenceScore >= 75 ? 'High' : ($confidenceScore >= self::CONFIDENCE_REVIEW_THRESHOLD ? 'Moderate' : 'Review Needed')),
+        ];
+
+        $recommendations = MedicalRecommendationEngine::buildRecommendations(
+            $triageMeta,
+            [],
+            trim($chiefComplaint),
+            (string) ($raw['english_translation'] ?? $combinedText),
+            $detectedSymptoms
+        );
+        if ($needsReview) {
+            array_unshift($recommendations, ClinicalTriageEngine::REVIEW_RECOMMENDATION);
+            $recommendations = array_values(array_unique($recommendations));
+        }
+
+        return [
+            'engine_version' => self::VERSION,
+            'engine' => 'clinical-triage-engine-fast-cds',
+            'service_used' => false,
+            'workflow_steps' => ['clinical_triage_engine', 'who_iitt', 'finalize_recommendation'],
+            'original_input' => $combinedText,
+            'chief_complaint' => trim($chiefComplaint),
+            'original_chief_complaint' => trim($chiefComplaint),
+            'checkbox_symptoms' => $checkboxSymptoms,
+            'detected_language' => (string) ($raw['detected_language'] ?? 'unknown'),
+            'normalized_text' => (string) ($raw['normalized_text'] ?? ''),
+            'corrected_text' => (string) ($raw['normalized_text'] ?? ''),
+            'corrected_words' => is_array($raw['corrected_words'] ?? null) ? $raw['corrected_words'] : [],
+            'english_translation' => (string) ($raw['english_translation'] ?? $combinedText),
+            'standardized_medical_concepts' => [],
+            'associated_symptoms' => is_array($raw['associated_symptoms'] ?? null) ? $raw['associated_symptoms'] : [],
+            'pipeline_stages' => [],
+            'detected_symptoms' => $detectedSymptoms,
+            'symptom_evidence' => is_array($raw['symptom_evidence'] ?? null) ? $raw['symptom_evidence'] : [],
+            'possible_conditions' => [],
+            'confidence' => $confidence,
+            'severity' => [
+                'severity' => (string) ($raw['severity'] ?? 'mild'),
+                'severity_score' => (int) ($raw['severity_score'] ?? 0),
+            ],
+            'triage' => array_merge($triageMeta, [
+                'severity_score' => (int) ($raw['severity_score'] ?? 0),
+                'priority' => (string) ($raw['priority'] ?? 'Normal'),
+                'reason' => (string) ($raw['reason'] ?? ''),
+                'red_flags' => $raw['red_flags'] ?? [],
+                'risk_factors' => $raw['risk_factors'] ?? [],
+                'duration' => $raw['duration'] ?? null,
+                'pain_scale' => $raw['pain_scale'] ?? null,
+                'temperature' => $raw['temperature'] ?? null,
+                'age_group' => $raw['age_group'] ?? 'Unknown',
+                'needs_provider_review' => $needsReview,
+                'clinical_reasoning' => (string) ($raw['clinical_reasoning'] ?? ($raw['reason'] ?? '')),
+                'clinical_context' => $raw['clinical_context'] ?? [],
+                'validation' => $raw['validation'] ?? [],
+                'assessment_factors' => $raw['assessment_factors'] ?? [],
+                'matched_rules' => $raw['matched_rules'] ?? [],
+            ]),
+            'clinical_context' => $raw['clinical_context'] ?? [],
+            'clinical_recommendation' => is_array($raw['recommendation_payload'] ?? null)
+                ? $raw['recommendation_payload']
+                : [],
+            'recommendations' => $recommendations,
+            'recommended_action' => (string) ($triageMeta['recommended_action'] ?? ''),
+            'disclaimer' => MedicalRecommendationEngine::DISCLAIMER,
+            'db_level' => (string) ($triageMeta['db_level'] ?? '3'),
+            'urgency_label' => (string) ($triageMeta['urgency_label'] ?? 'Routine'),
+            'match_methods' => [],
+            'nlp_pipeline' => [
+                'nlp_result' => [],
+                'term_results' => [],
+                'translated_english' => (string) ($raw['english_translation'] ?? ''),
+                'valid_count' => 0,
+                'total_count' => 0,
+            ],
+            'ml_layer' => [
+                'available' => false,
+                'predictions' => [],
+                'role' => 'provider_reference_only',
+                'note' => 'Skipped on fast CDS path.',
+            ],
+            'assessed_at' => date('c'),
+            'cds_fast_path' => true,
+        ];
+    }
+
     /** @param list<string> $symptoms */
     private static function buildCombinedText(string $complaint, array $symptoms): string
     {
@@ -282,8 +434,10 @@ final class MedicalAssessmentEngine
      */
     private static function runMlLayer(string $text, array $symptoms, array $nlpResult): array
     {
-        $skip = filter_var(getenv('MEDCONNECT_SKIP_ML_LAYER') ?: '0', FILTER_VALIDATE_BOOLEAN);
-        if ($skip) {
+        // When PHP NLP-only mode is on, skip Python ML entirely (avoids 30–120s hangs).
+        $phpOnly = filter_var(getenv('MEDCONNECT_PHP_NLP_ONLY') ?: '1', FILTER_VALIDATE_BOOLEAN);
+        $skip = filter_var(getenv('MEDCONNECT_SKIP_ML_LAYER') ?: ($phpOnly ? '1' : '0'), FILTER_VALIDATE_BOOLEAN);
+        if ($skip || $phpOnly) {
             return [
                 'available'     => false,
                 'predictions'   => [],

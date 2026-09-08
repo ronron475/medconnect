@@ -19,7 +19,86 @@ final class ChiefComplaintNlpService
      */
     public static function assess(string $complaint, array $checkboxSymptoms = []): array
     {
+        $complaint = trim($complaint);
+
+        // Registration / one-shot domain gate (fail-open to existing CDS).
+        try {
+            if ($complaint !== ''
+                && $checkboxSymptoms === []
+                && class_exists('HealthComplaintDomainDetector')
+            ) {
+                $domain = HealthComplaintDomainDetector::detect($complaint);
+                $routing = (string) ($domain['routing'] ?? '');
+                $health = !empty($domain['health_related']);
+                $conf = (string) ($domain['confidence'] ?? '');
+                if (!$health
+                    && in_array($routing, [
+                        HealthComplaintDomainDetector::ROUTE_OOS,
+                        HealthComplaintDomainDetector::ROUTE_GREETING,
+                    ], true)
+                    && $conf === HealthComplaintDomainDetector::CONF_HIGH
+                ) {
+                    return self::nonHealthAssessment($domain, $complaint);
+                }
+            }
+        } catch (Throwable $e) {
+            error_log('ChiefComplaintNlpService domain gate fallback: ' . $e->getMessage());
+        }
+
         return MedicalAssessmentEngine::assess($complaint, $checkboxSymptoms);
+    }
+
+    /**
+     * Non-health one-shot result — does not invent EMERGENCY/URGENT.
+     * Keeps registration/API payload shape compatible.
+     *
+     * @param array<string, mixed> $domain
+     * @return array<string, mixed>
+     */
+    private static function nonHealthAssessment(array $domain, string $complaint): array
+    {
+        $reason = (string) ($domain['reason'] ?? 'Message is outside health-complaint scope.');
+        $display = 'NON-URGENT';
+
+        return [
+            'engine_version' => MedicalAssessmentEngine::VERSION,
+            'engine' => 'chief-complaint-domain-gate',
+            'engine_chain' => self::ENGINE_CHAIN,
+            'service_used' => false,
+            'chief_complaint' => $complaint,
+            'original_chief_complaint' => $complaint,
+            'english_translation' => '',
+            'detected_symptoms' => [],
+            'possible_conditions' => [],
+            'domain_detection' => $domain,
+            'domain_skipped' => true,
+            'confidence' => [
+                'score' => 20,
+                'score_display' => '20%',
+                'level' => 'review_needed',
+                'level_label' => 'Review Needed',
+            ],
+            'severity' => [
+                'severity' => 'mild',
+                'severity_score' => 0,
+            ],
+            'triage' => [
+                'triage_display' => $display,
+                'triage_classification' => 'NON_URGENT',
+                'triage_level' => 'LOW',
+                'triage_icon' => '🟢',
+                'priority' => 'Normal',
+                'recommended_action' => 'Please enter a health-related chief complaint (symptoms) for triage.',
+                'clinical_reasoning' => $reason,
+                'reason' => $reason,
+                'needs_provider_review' => true,
+                'confidence_accepted' => false,
+                'red_flags' => [],
+                'domain_skipped' => true,
+            ],
+            'recommended_action' => 'Please enter a health-related chief complaint (symptoms) for triage.',
+            'recommendations' => [],
+        ];
     }
 
     /**
