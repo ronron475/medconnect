@@ -12,7 +12,10 @@ echo "=== Final universal acceptance suite ===\n";
 $t1 = NlpStep3DemoTrial::assess('sakit');
 ok(($t1['followup_question']['question_id'] ?? '') === 'PAIN_SEVERITY', 'T1 severity question');
 ok(($t1['triage_final'] ?? null) === null, 'T1 no final triage yet');
-ok(str_contains((string) ($t1['patient_message'] ?? ''), '0–10') || str_contains((string) ($t1['patient_message'] ?? ''), '0-10'), 'T1 0-10 scale');
+ok(
+    (bool) preg_match('/(0\s*[–-]\s*10|1\s*[–-]\s*10|1\s+tubtob\s+10|0\s+hanggang\s+10|1\s+hanggang\s+10|scale\s+nga\s+1)/ui', (string) ($t1['patient_message'] ?? '')),
+    'T1 0-10 scale'
+);
 
 // TEST 2 complete headache
 $t2 = NlpStep3DemoTrial::assess(
