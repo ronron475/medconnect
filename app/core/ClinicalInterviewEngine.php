@@ -28,6 +28,7 @@ final class ClinicalInterviewEngine
         $context = self::normalizeContext($priorContext);
         $turn = trim($utterance);
         $originalTurnForLanguage = $turn;
+        $isOpeningTurn = ($context['patient_turns'] ?? []) === [] && ($context['questions_asked'] ?? []) === [];
 
         // Opening-turn semantic gate: PHP domain NLP + optional Gemini validation.
         // Invalid / non-medical input must not enter clinical follow-ups or triage.
@@ -40,6 +41,15 @@ final class ClinicalInterviewEngine
                 $semantic = ComplaintSemanticValidator::validateOpeningComplaint($turn);
                 if (!empty($semantic['needs_valid_complaint'])) {
                     return self::wrapNeedsValidComplaint($semantic, $turn);
+                }
+                $nlpText = trim((string) ($semantic['nlp_text'] ?? ''));
+                if ($nlpText !== '') {
+                    $turn = $nlpText;
+                    $context['complaint_text_cleaner'] = [
+                        'original' => $originalTurnForLanguage,
+                        'cleaned' => $nlpText,
+                        'discarded' => is_array($semantic['discarded_tokens'] ?? null) ? $semantic['discarded_tokens'] : [],
+                    ];
                 }
             } elseif ($turn !== ''
                 && ($context['patient_turns'] ?? []) === []
@@ -66,6 +76,19 @@ final class ClinicalInterviewEngine
         }
 
         $awaiting = (string) ($context['awaiting_question_id'] ?? '');
+
+        // Opening turn already dropped non-essential tokens; follow-up answers still get cleaned.
+        if (!$isOpeningTurn && $turn !== '' && class_exists('ComplaintTriageTextCleaner')) {
+            try {
+                $clean = ComplaintTriageTextCleaner::prepare($turn);
+                $nlpText = trim((string) ($clean['cleaned'] ?? ''));
+                if ($nlpText !== '') {
+                    $turn = $nlpText;
+                }
+            } catch (Throwable $e) {
+                error_log('ComplaintTriageTextCleaner follow-up fallback: ' . $e->getMessage());
+            }
+        }
 
         // Accuracy: normalize misspellings / slang / mixed tokens before extraction.
         $turnPrep = null;
@@ -303,7 +326,8 @@ final class ClinicalInterviewEngine
     private static function appendPatientTurn(array $context, string $turn): array
     {
         if ($context['chief_complaint'] === '') {
-            $context['chief_complaint'] = $turn;
+            $original = trim((string) (($context['complaint_text_cleaner']['original'] ?? '') ?: $turn));
+            $context['chief_complaint'] = $original !== '' ? $original : $turn;
         }
         $context['patient_turns'][] = $turn;
         $awaiting = (string) ($context['awaiting_question_id'] ?? '');

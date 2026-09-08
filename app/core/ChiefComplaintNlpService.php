@@ -20,6 +20,7 @@ final class ChiefComplaintNlpService
     public static function assess(string $complaint, array $checkboxSymptoms = []): array
     {
         $complaint = trim($complaint);
+        $originalComplaint = $complaint;
 
         // Registration / one-shot semantic gate (PHP domain + optional Gemini).
         try {
@@ -29,7 +30,11 @@ final class ChiefComplaintNlpService
             ) {
                 $semantic = ComplaintSemanticValidator::validateOpeningComplaint($complaint);
                 if (!empty($semantic['needs_valid_complaint'])) {
-                    return self::needsValidComplaintAssessment($semantic, $complaint);
+                    return self::needsValidComplaintAssessment($semantic, $originalComplaint);
+                }
+                $nlpText = trim((string) ($semantic['nlp_text'] ?? ''));
+                if ($nlpText !== '') {
+                    $complaint = $nlpText;
                 }
             } elseif ($complaint !== ''
                 && $checkboxSymptoms === []
@@ -46,14 +51,21 @@ final class ChiefComplaintNlpService
                     ], true)
                     && $conf === HealthComplaintDomainDetector::CONF_HIGH
                 ) {
-                    return self::nonHealthAssessment($domain, $complaint);
+                    return self::nonHealthAssessment($domain, $originalComplaint);
                 }
             }
         } catch (Throwable $e) {
             error_log('ChiefComplaintNlpService semantic/domain gate fallback: ' . $e->getMessage());
         }
 
-        return MedicalAssessmentEngine::assess($complaint, $checkboxSymptoms);
+        $assessment = MedicalAssessmentEngine::assess($complaint, $checkboxSymptoms);
+        if ($originalComplaint !== '' && $originalComplaint !== $complaint) {
+            $assessment['original_chief_complaint'] = $originalComplaint;
+            $assessment['chief_complaint'] = $originalComplaint;
+            $assessment['nlp_complaint_text'] = $complaint;
+        }
+
+        return $assessment;
     }
 
     /**
