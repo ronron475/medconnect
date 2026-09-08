@@ -198,9 +198,9 @@
       "required_when": ["pain", "headache", "chest_pain", "abdominal_pain", "nose_pain", "eye"],
       "priority": 40,
       "red_flag_related": false,
-      "english": "On a scale of 1–10, where 1 is the least painful and 10 is the most painful, how severe is your pain?",
-      "tagalog": "Sa scale na 1 hanggang 10, kung saan ang 1 ay pinakamahinang sakit at ang 10 ay pinakamalalang sakit, gaano kasakit ang nararamdaman mo?",
-      "hiligaynon": "Sa scale nga 1 tubtob 10, diin ang 1 amo ang pinakagamay nga kasakit kag ang 10 amo ang pinakagrabe, ano ka grabe ang imo sakit?"
+      "english": "On a scale of 0 to 10, where 0 means no pain and 10 means the worst pain you can imagine, how severe is your pain?",
+      "tagalog": "Sa sukat na 0 hanggang 10, kung saan ang 0 ay walang sakit at ang 10 ay pinakamalalang sakit na maiisip mo, gaano kasakit ang nararamdaman mo?",
+      "hiligaynon": "Sa sukod nga 0 tubtob 10, diin ang 0 wala sang kasakit kag ang 10 amo ang pinakagrabe nga kasakit nga imo mahunahuna, daw ano kagrabe ang imo kasakit?"
     },
     {
       "question_id": "DIZZINESS_TYPE",

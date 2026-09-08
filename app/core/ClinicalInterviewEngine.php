@@ -856,7 +856,8 @@ final class ClinicalInterviewEngine
                     && !in_array('pain_no_location', $families, true)
                 ),
             'NOSE_PAIN_WHERE' => (bool) preg_match('/\b(bridge|tip|nostril|tuod|pungos)\b/u', $low),
-            'PAIN_SEVERITY' => $facts['pain_score'] !== null || ($facts['pain_qualifier'] ?? '') !== '',
+            // Numeric 0–10 only — qualitative intensifiers must not skip the pain scale.
+            'PAIN_SEVERITY' => $facts['pain_score'] !== null,
             'ONSET' => $facts['onset'] !== '' || $facts['duration_label'] !== '',
             'DURATION' => $facts['duration_label'] !== '' || $facts['onset'] !== '',
             'NEURO_WEAKNESS' => $facts['weakness'] !== null || $facts['denied_associated'],

@@ -318,8 +318,8 @@ final class ClinicalInterviewAdaptivePolicy
         $low = mb_strtolower($transcript);
         $hasTiming = trim((string) ($facts['onset'] ?? '')) !== ''
             || trim((string) ($facts['duration_label'] ?? '')) !== '';
-        $hasSeverity = ($facts['pain_score'] ?? null) !== null
-            || trim((string) ($facts['pain_qualifier'] ?? '')) !== '';
+        // Numeric 0–10 only — language intensifiers must not complete this clinical slot.
+        $hasSeverity = ($facts['pain_score'] ?? null) !== null;
         $assocDone = ($facts['has_other_symptoms'] ?? null) !== null
             || !empty($facts['denied_associated']);
         $locs = self::bodyLocations($facts);

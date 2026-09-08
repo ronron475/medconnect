@@ -123,19 +123,34 @@ final class NlpStep3DemoClinicalState
         }
 
         // Minimum sufficient for safe triage — do not exhaust the question bank.
+        // Require triageReady to finalize; empty missing alone must NOT skip numeric pain severity.
+        $concepts = is_array($selection['concepts'] ?? null) ? $selection['concepts'] : [];
         $triageReady = self::isTriageSufficient(
             $state,
             $facts,
             $transcript,
-            is_array($selection['concepts'] ?? null) ? $selection['concepts'] : []
+            $concepts
         );
 
-        if ($missing === [] || $triageReady) {
+        if ($triageReady) {
             $status = self::STATUS_SUFFICIENT;
-            if ($triageReady) {
-                $missing = [];
-                $nextId = '';
-                $purpose = '';
+            $missing = [];
+            $nextId = '';
+            $purpose = '';
+        } elseif ($missing === []) {
+            // Slots were incorrectly marked answered while triage is still incomplete.
+            $status = self::STATUS_INSUFFICIENT;
+            $sev = $state['severity'] ?? ($facts['pain_score'] ?? null);
+            $painLike = array_intersect(
+                $concepts,
+                ['pain', 'headache', 'chest_pain', 'abdominal_pain', 'nose_pain', 'eye', 'eye_pain', 'pain_unspecified']
+            ) !== [];
+            if ($painLike && $sev === null) {
+                $nextId = 'PAIN_SEVERITY';
+                $purpose = 'Collect numeric pain score as supporting information';
+                $missing = ['severity'];
+            } elseif (self::isAmbiguousOnly($transcript)) {
+                $status = self::STATUS_NOT_DETERMINED;
             }
         } elseif (self::isAmbiguousOnly($transcript)) {
             $status = self::STATUS_NOT_DETERMINED;
@@ -1324,9 +1339,8 @@ final class NlpStep3DemoClinicalState
                 ),
             'NOSE_PAIN_WHERE' => (bool) preg_match('/\b(bridge|tip|nostril|tuod|pungos)\b/u', $low),
             'SKIN_SITE' => $hasAnyLocation || trim((string) ($state['location_detail'] ?? '')) !== '',
-            'PAIN_SEVERITY' => $hasSeverity
-                || (trim((string) ($facts['pain_qualifier'] ?? '')) !== ''
-                    && in_array(mb_strtolower((string) $facts['pain_qualifier']), ['mild', 'moderate', 'severe'], true)),
+            // Numeric 0–10 only — qualitative intensifiers (gid/grabe/severe) must NOT skip the scale.
+            'PAIN_SEVERITY' => $hasSeverity,
             'ONSET', 'DURATION' => $hasTiming,
             'COUGH_TYPE' => trim((string) ($state['cough_type'] ?? '')) !== '',
             'FEVER_CONFIRM' => ($state['fever'] ?? null) !== null || ($state['temperature_c'] ?? null) !== null,
@@ -1752,19 +1766,19 @@ final class NlpStep3DemoClinicalState
         return match ($qid) {
             'PAIN_SEVERITY' => match ($lang) {
                 'ENGLISH' => [
-                    'text' => 'On a pain scale of 0–10, how severe is your pain right now?',
+                    'text' => 'On a scale of 0 to 10, where 0 means no pain and 10 means the worst pain you can imagine, how severe is your pain?',
                     'helper' => "0 = no pain\n10 = worst pain imaginable",
                     'purpose' => 'Collect numeric pain score as supporting information',
                     'priority' => 5,
                 ],
                 'TAGALOG' => [
-                    'text' => 'Kung 0–10 ang pain scale, gaano kasakit ngayon?',
+                    'text' => 'Sa sukat na 0 hanggang 10, kung saan ang 0 ay walang sakit at ang 10 ay pinakamalalang sakit na maiisip mo, gaano kasakit ang nararamdaman mo?',
                     'helper' => "0 = walang sakit\n10 = pinakamalalang sakit na maisip",
                     'purpose' => 'Collect numeric pain score as supporting information',
                     'priority' => 5,
                 ],
                 default => [
-                    'text' => 'Kung 0–10 ang pain scale, pila ang imo kasakit subong?',
+                    'text' => 'Sa sukod nga 0 tubtob 10, diin ang 0 wala sang kasakit kag ang 10 amo ang pinakagrabe nga kasakit nga imo mahunahuna, daw ano kagrabe ang imo kasakit?',
                     'helper' => "0 = wala sang kasakit\n10 = pinakagrabe nga kasakit nga ma-imagine",
                     'purpose' => 'Collect numeric pain score as supporting information',
                     'priority' => 5,
