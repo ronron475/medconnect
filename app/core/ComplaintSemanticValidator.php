@@ -73,6 +73,33 @@ final class ComplaintSemanticValidator
 
         $decision = self::combine($phpEvidence, $php, $gemini);
         $lang = self::detectLanguageKey($raw);
+
+        $geminiCorrected = trim((string) ($gemini['corrected_text'] ?? ''));
+        if (!$usable && !$incompleteJunk && $geminiCorrected !== '' && $geminiCorrected !== $raw) {
+            $retry = class_exists('ComplaintTriageTextCleaner')
+                ? ComplaintTriageTextCleaner::prepare($geminiCorrected)
+                : $cleanedPack;
+            if (!empty($retry['has_usable_clinical_text'])) {
+                $cleanedPack = $retry;
+                $nlpText = trim((string) ($retry['cleaned'] ?? $geminiCorrected));
+                $usable = true;
+                $phpSource = $nlpText !== '' ? $nlpText : $raw;
+                if (class_exists('HealthComplaintDomainDetector')) {
+                    $php = HealthComplaintDomainDetector::detect($phpSource);
+                    $phpEvidence = self::phpEvidenceStrength($php, $phpSource);
+                }
+                $decision = self::combine($phpEvidence, $php, $gemini);
+            } elseif (!empty($gemini['is_medical_complaint'])) {
+                $nlpText = $geminiCorrected;
+                $usable = true;
+                $decision = [
+                    'is_valid' => true,
+                    'classification' => self::CLASS_VALID,
+                    'reason' => 'Gemini semantic typo correction',
+                ];
+            }
+        }
+
         $message = $decision['is_valid']
             ? ''
             : self::clarificationMessage($lang);
@@ -97,19 +124,24 @@ final class ComplaintSemanticValidator
             'fuzzy_matches' => self::fuzzyLabels($php),
             'final_validation_result' => $decision['classification'],
             'combine_reason' => $decision['reason'],
+            'original_patient_input' => $raw,
             'nlp_text' => $nlpText,
+            'typo_corrections' => is_array($cleanedPack['corrections'] ?? null) ? $cleanedPack['corrections'] : [],
             'discarded_tokens' => is_array($cleanedPack['discarded'] ?? null) ? $cleanedPack['discarded'] : [],
             'kept_tokens' => is_array($cleanedPack['kept'] ?? null) ? $cleanedPack['kept'] : [],
         ];
 
         if (self::debugEnabled()) {
             error_log('ComplaintSemanticValidator: ' . json_encode([
-                'patient_input' => mb_substr($raw, 0, 120),
+                'original_input' => mb_substr($raw, 0, 120),
+                'normalized_input' => $nlpText,
                 'php_validation_result' => $out['php_validation_result'],
                 'gemini_validation_result' => $out['gemini_validation_result'],
                 'gemini_confidence' => $out['gemini_confidence'],
+                'gemini_correction' => $gemini['corrected_text'] ?? '',
                 'medical_concepts_found' => $out['medical_concepts_found'],
                 'fuzzy_matches' => $out['fuzzy_matches'],
+                'typo_corrections' => $out['typo_corrections'],
                 'final_validation_result' => $out['final_validation_result'],
                 'detected_language' => $out['detected_language'],
                 'clinical_status' => $out['workflow_state'],
@@ -216,20 +248,29 @@ final class ComplaintSemanticValidator
 
     private static function looksLikeIncompleteJunk(string $text): bool
     {
-        $tokens = preg_split('/[^\p{L}\p{N}\-]+/u', mb_strtolower(trim($text)), -1, PREG_SPLIT_NO_EMPTY) ?: [];
+        $low = mb_strtolower(trim($text));
+        if ($low === '') {
+            return true;
+        }
+        if (preg_match('/^(hh+|aa+|zz+|asdf+|qwer+|zxcv+|qwerty+|test+|testing+|hello|hi|hey|yo|haha+|lol+|lmao+|ok|okay)$/u', $low)) {
+            return true;
+        }
+        $tokens = preg_split('/[^\p{L}\p{N}\-]+/u', $low, -1, PREG_SPLIT_NO_EMPTY) ?: [];
         if ($tokens === []) {
             return true;
         }
-        if (count($tokens) > 2) {
-            return false;
-        }
-        foreach ($tokens as $token) {
-            if (mb_strlen($token) >= 5 && preg_match('/[aeiouàáéíóú]/iu', $token)) {
-                return false;
+        if (count($tokens) === 1) {
+            $t = $tokens[0];
+            $len = mb_strlen($t);
+            if ($len <= 2) {
+                return true;
+            }
+            if ($len <= 3 && !preg_match('/[aeiouàáéíóú]/iu', $t)) {
+                return true;
             }
         }
 
-        return true;
+        return false;
     }
 
     /**

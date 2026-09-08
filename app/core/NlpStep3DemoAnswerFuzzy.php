@@ -10,6 +10,7 @@ final class NlpStep3DemoAnswerFuzzy
 {
     private const MIN_SCORE = 72.0;
     private const MAX_LEV = 2;
+    private const MIN_TOKEN_LEN = 3;
 
     /**
      * Canonical vocabulary. Values are engine-ready forms understood by
@@ -96,8 +97,12 @@ final class NlpStep3DemoAnswerFuzzy
             'ginasuka' => 'nagsuka',
             'vomit' => 'vomit',
             'vomiting' => 'vomiting',
+            'nausea' => 'nausea',
+            'diarrhea' => 'diarrhea',
+            'diarrhoea' => 'diarrhea',
             'hilo' => 'hilo',
             'nahilo' => 'nahilo',
+            'nahihilo' => 'nahilo',
             'dizzy' => 'dizzy',
             'dizziness' => 'dizziness',
             'malipong' => 'malipong',
@@ -319,7 +324,7 @@ final class NlpStep3DemoAnswerFuzzy
                 continue;
             }
             $clean = (string) preg_replace('/^[^\p{L}\p{N}]+|[^\p{L}\p{N}]+$/u', '', $tok);
-            if ($clean === '' || mb_strlen($clean) < 3) {
+            if ($clean === '' || mb_strlen($clean) < self::MIN_TOKEN_LEN) {
                 $out[] = $tok;
                 continue;
             }
@@ -370,7 +375,8 @@ final class NlpStep3DemoAnswerFuzzy
     public static function bestMatch(string $token): ?array
     {
         $t = mb_strtolower(trim($token));
-        if ($t === '' || mb_strlen($t) < 3) {
+        $tLen = mb_strlen($t);
+        if ($t === '' || $tLen < self::MIN_TOKEN_LEN) {
             return null;
         }
         $lex = self::lexicon();
@@ -382,42 +388,62 @@ final class NlpStep3DemoAnswerFuzzy
                 : ['from' => $t, 'to' => $to, 'score' => 100.0];
         }
 
+        $maxLev = self::maxLevForLength($tLen);
+        $minScore = self::minScoreForLength($tLen);
         $best = null;
         $bestScore = 0.0;
-        $tLen = mb_strlen($t);
         foreach ($lex as $candidate => $engineForm) {
             $cLen = mb_strlen($candidate);
-            if (abs($cLen - $tLen) > self::MAX_LEV) {
+            if (abs($cLen - $tLen) > $maxLev) {
                 continue;
             }
-            // ASCII levenshtein for speed; skip if non-ascii length mismatch already handled
+            // Refuse matching a stub onto a much longer clinical word (hh ↛ headache).
+            if ($cLen >= ($tLen * 2) && $tLen <= 4) {
+                continue;
+            }
             $a = self::toAsciiFold($t);
             $b = self::toAsciiFold($candidate);
             if ($a === '' || $b === '') {
                 continue;
             }
             $lev = levenshtein($a, $b);
-            if ($lev > self::MAX_LEV) {
+            if ($lev < 0 || $lev > $maxLev) {
                 continue;
             }
             similar_text($a, $b, $pct);
             $score = $pct - ($lev * 8);
-            // Prefer slightly longer clinical roots when tied.
             if ($score > $bestScore) {
                 $bestScore = $score;
                 $best = ['from' => $t, 'to' => $engineForm, 'score' => $score];
             }
         }
 
-        if ($best === null || $bestScore < self::MIN_SCORE) {
-            return null;
-        }
-        // Avoid over-correction: very short tokens need higher similarity.
-        if ($tLen <= 3 && $bestScore < 85) {
+        if ($best === null || $bestScore < $minScore) {
             return null;
         }
 
         return $best;
+    }
+
+    private static function maxLevForLength(int $len): int
+    {
+        if ($len <= 5) {
+            return 1;
+        }
+
+        return self::MAX_LEV;
+    }
+
+    private static function minScoreForLength(int $len): float
+    {
+        if ($len <= 3) {
+            return 88.0;
+        }
+        if ($len === 4) {
+            return 76.0;
+        }
+
+        return self::MIN_SCORE;
     }
 
     private static function toAsciiFold(string $s): string
