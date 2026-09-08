@@ -4,10 +4,10 @@ $gisIsProvider = $gisUserRole === 'provider';
 $gisRecordsUrl = $gisIsProvider ? (rtrim((string) $assetBase, '/') . '/views/provider/medical_records.php') : '';
 $gisHistoryUrl = $gisIsProvider ? (rtrim((string) $assetBase, '/') . '/views/provider/consultation_history.php') : '';
 $gisSubtitle = $gisIsProvider
-    ? 'Your assigned patients across Bago City — Non-Urgent, Urgent, and Emergency cases on your caseload. Pins show barangay location, not exact home GPS.'
+    ? 'Your assigned patients across Bago City — Non-Urgent, Urgent, and Emergency cases on your caseload. Pins use the most precise verified location available (GPS, geocoded address, or barangay center).'
     : 'Monitor patient severity geography across Bago City — identify Non-Urgent, Urgent, and Emergency cases at a glance.';
 $gisMapNote = $gisIsProvider
-    ? 'This map lists only patients already assigned to you (consultations, booked visits, Care tips review, or pending Health Summary requests). Severity follows the doctor\'s saved urgency override when present, otherwise the latest AI triage level. Exact home GPS is hidden; pins use the verified barangay center.'
+    ? 'This map lists only patients already assigned to you (consultations, booked visits, Care tips review, or pending Health Summary requests). Severity follows the doctor\'s saved urgency override when present, otherwise the latest AI triage level. Pin badges reflect GPS (Exact), Address (Geocoded), or Approximate (Barangay). Patients without a verified location are listed but not mapped.'
     : 'Severity follows the doctor\'s saved urgency override when present, otherwise the latest AI triage level. Pin badges reflect GPS, geocoded address, or verified barangay-center accuracy. Patients without a verified location are listed but not mapped.';
 ?>
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin=""/>
@@ -159,4 +159,4 @@ $gisMapNote = $gisIsProvider
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
 <script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js" crossorigin=""></script>
 <script src="https://unpkg.com/leaflet.heat@0.2.0/dist/leaflet-heat.js" crossorigin=""></script>
-<script src="<?= htmlspecialchars($assetBase) ?>/assets/js/admin-gis-dashboard.js?v=5.1"></script>
+<script src="<?= htmlspecialchars($assetBase) ?>/assets/js/admin-gis-dashboard.js?v=5.2"></script>
