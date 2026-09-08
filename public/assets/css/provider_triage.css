@@ -374,10 +374,10 @@
 }
 
 .triage-modal__dialog--review {
-    max-width: min(760px, calc(100vw - 32px));
+    max-width: min(720px, calc(100vw - 24px));
     width: 100%;
     height: fit-content;
-    max-height: min(88dvh, 820px);
+    max-height: min(86dvh, 760px);
     display: flex;
     flex-direction: column;
     min-height: 0;
@@ -409,7 +409,7 @@
 
 .triage-modal__body {
     flex: 1 1 auto;
-    min-height: 12rem;
+    min-height: 0;
     overflow-x: hidden;
     overflow-y: auto;
     overscroll-behavior: contain;
@@ -602,12 +602,244 @@
 }
 
 .triage-modal__dialog--review .triage-modal__title {
-    font-size: clamp(1.125rem, 3.2vw, 1.5rem);
-    line-height: 1.2;
+    font-size: 1.125rem;
+    line-height: 1.25;
 }
 
 .triage-modal__dialog--review .triage-review-section__title {
-    font-size: clamp(1rem, 3.2vw, 1.25rem);
+    font-size: 0.9375rem;
+    line-height: 1.3;
+    font-weight: 700;
+}
+
+.triage-modal__dialog--review .triage-modal__eyebrow {
+    font-size: 0.6875rem;
+    margin-bottom: 1px;
+    letter-spacing: 0.06em;
+}
+
+.triage-modal__dialog--review .triage-modal__lead {
+    margin-top: 2px;
+    font-size: 0.8125rem;
+    line-height: 1.35;
+}
+
+.triage-modal__dialog--review .triage-modal__header,
+.triage-modal__dialog--review .triage-modal__footer--review {
+    padding: 8px 14px;
+}
+
+.triage-modal__dialog--review .triage-modal__scroll {
+    padding: 10px 14px 12px;
+}
+
+.triage-modal__dialog--review .triage-field-label {
+    font-size: 0.6875rem;
+    letter-spacing: 0.04em;
+    margin-bottom: 3px;
+    line-height: 1.2;
+}
+
+.triage-modal__dialog--review .triage-review-section {
+    padding-bottom: 8px;
+}
+
+.triage-modal__dialog--review .triage-review-section__head {
+    margin-bottom: 4px;
+    gap: 1px;
+}
+
+.triage-modal__dialog--review .triage-review-identity {
+    padding-bottom: 6px;
+}
+
+.triage-modal__dialog--review .triage-review-hero {
+    padding: 8px 10px;
+    gap: 6px;
+    border-radius: 10px;
+}
+
+.triage-modal__dialog--review .triage-review-hero__name {
+    font-size: 0.9375rem;
+    line-height: 1.25;
+}
+
+.triage-modal__dialog--review .triage-review-hero__meta {
+    font-size: 0.75rem;
+    line-height: 1.35;
+    margin-top: 2px;
+    overflow-wrap: anywhere;
+    word-break: break-word;
+}
+
+.triage-modal__dialog--review .triage-modal-box {
+    padding: 6px 9px;
+    font-size: 0.875rem;
+    line-height: 1.4;
+    border-radius: 8px;
+}
+
+.triage-modal__dialog--review .triage-modal-box--complaint {
+    font-size: 0.9375rem;
+    line-height: 1.4;
+    font-weight: 600;
+}
+
+.triage-modal__dialog--review .triage-assess-panel {
+    padding: 8px 10px;
+    border-radius: 10px;
+}
+
+.triage-modal__dialog--review .triage-assess-summary {
+    gap: 8px 12px;
+    margin-bottom: 8px;
+    padding-bottom: 8px;
+}
+
+.triage-modal__dialog--review .triage-assess-class .triage-badge {
+    font-size: 0.75rem;
+    padding: 5px 10px;
+    letter-spacing: 0.03em;
+}
+
+.triage-modal__dialog--review .triage-assess-grid {
+    gap: 8px 10px;
+}
+
+.triage-modal__dialog--review .triage-assess-value {
+    font-size: 0.8125rem;
+    line-height: 1.4;
+}
+
+.triage-modal__dialog--review .triage-metric-value {
+    font-size: 0.9375rem;
+    line-height: 1.2;
+}
+
+.triage-modal__dialog--review .triage-assess-item .triage-metric-value {
+    font-size: 0.9375rem;
+}
+
+.triage-modal__dialog--review .triage-modal-box--metric {
+    gap: 5px;
+}
+
+.triage-modal__dialog--review .triage-metric-bar {
+    height: 5px;
+}
+
+.triage-modal__dialog--review .triage-metric-hint {
+    font-size: 0.6875rem;
+    line-height: 1.3;
+}
+
+.triage-modal__dialog--review .triage-interp-list {
+    gap: 6px;
+}
+
+.triage-modal__dialog--review .triage-interp-note {
+    padding: 7px 9px;
+    border-radius: 8px;
+    font-size: 0.8125rem;
+    line-height: 1.4;
+    white-space: normal;
+    overflow-wrap: anywhere;
+    word-break: break-word;
+    hyphens: auto;
+}
+
+.triage-modal__dialog--review .triage-interp-chip {
+    margin: 0 4px 4px 0;
+    padding: 3px 8px;
+    font-size: 0.75rem;
+}
+
+.triage-modal__dialog--review .triage-review-questions {
+    gap: 6px;
+}
+
+.triage-modal__dialog--review .triage-review-questions li {
+    padding: 7px 10px 7px 2rem;
+    font-size: 0.8125rem;
+    line-height: 1.4;
+    border-radius: 8px;
+}
+
+.triage-modal__dialog--review .triage-review-questions li::before {
+    top: 7px;
+    left: 8px;
+    width: 1.2rem;
+    height: 1.2rem;
+    font-size: 0.6875rem;
+}
+
+.triage-modal__dialog--review .triage-rec-panel {
+    max-height: min(28vh, 14rem);
+    padding: 7px 9px;
+    border-radius: 8px;
+}
+
+.triage-modal__dialog--review .triage-rec-panel__item {
+    font-size: 0.8125rem;
+    line-height: 1.4;
+}
+
+.triage-modal__dialog--review .triage-rec-panel__item + .triage-rec-panel__item {
+    margin-top: 6px;
+    padding-top: 6px;
+}
+
+.triage-modal__dialog--review .triage-rec-panel__hint,
+.triage-modal__dialog--review .triage-gate-hint {
+    margin-top: 4px;
+    font-size: 0.75rem;
+    line-height: 1.35;
+}
+
+.triage-modal__dialog--review .triage-review-safety {
+    margin: 0 0 8px;
+    padding: 6px 8px;
+    font-size: 0.75rem;
+    line-height: 1.35;
+    border-radius: 8px;
+}
+
+.triage-modal__dialog--review .triage-override-box__body {
+    gap: 6px;
+}
+
+.triage-modal__dialog--review .triage-modal__review-note {
+    font-size: 0.75rem;
+    line-height: 1.35;
+    padding: 5px 8px;
+    overflow-wrap: anywhere;
+    word-break: break-word;
+}
+
+.triage-modal__dialog--review .triage-case-actions {
+    margin-top: 8px;
+}
+
+.triage-modal__dialog--review .triage-case-actions__title {
+    font-size: 0.875rem;
+}
+
+.triage-modal__dialog--review .triage-case-actions__note,
+.triage-modal__dialog--review .triage-case-actions__warn {
+    font-size: 0.75rem;
+    line-height: 1.35;
+}
+
+#modalPossibleConditions,
+#modalPossibleConditions * {
+    max-width: 100%;
+    overflow-wrap: anywhere;
+    word-break: break-word;
+    white-space: normal;
+}
+
+#modalPossibleConditions.triage-interp-list {
+    min-width: 0;
 }
 
 .triage-modal__close {
@@ -1106,8 +1338,8 @@
 
     .triage-modal__dialog--review .triage-modal__title,
     .triage-modal__title {
-        font-size: 1.05rem;
-        line-height: 1.2;
+        font-size: 1rem;
+        line-height: 1.25;
     }
 
     .triage-modal__lead {
@@ -1152,42 +1384,47 @@
 
     .triage-modal__dialog--review .triage-review-section__title,
     .triage-review-section__title {
-        font-size: 0.95rem;
+        font-size: 0.875rem;
     }
 
     .triage-field-label {
-        font-size: 0.65rem;
+        font-size: 0.625rem;
         letter-spacing: 0.03em;
         margin-bottom: 2px;
     }
 
     .triage-review-hero__name {
-        font-size: 0.95rem;
+        font-size: 0.875rem;
     }
 
     .triage-review-hero__meta,
     .triage-modal-box,
     .triage-assess-value,
     .triage-rec-panel__item,
-    .triage-review-questions li {
+    .triage-review-questions li,
+    .triage-interp-note {
         font-size: 0.8125rem;
-        line-height: 1.4;
+        line-height: 1.35;
+    }
+
+    .triage-modal__dialog--review .triage-modal-box--complaint {
+        font-size: 0.875rem;
     }
 
     .triage-assess-item .triage-metric-value {
-        font-size: 0.95rem;
+        font-size: 0.875rem;
     }
 
     .triage-assess-summary {
         grid-template-columns: 1fr;
-        gap: 10px;
-        margin-bottom: 10px;
-        padding-bottom: 10px;
+        gap: 8px;
+        margin-bottom: 8px;
+        padding-bottom: 8px;
     }
 
     .triage-assess-grid {
         grid-template-columns: 1fr 1fr;
-        gap: 8px 10px;
+        gap: 6px 8px;
     }
 
     .triage-assess-item--wide {
@@ -1202,13 +1439,24 @@
 
     .triage-assess-panel,
     .triage-care-tips-block {
-        padding: 10px;
+        padding: 8px;
     }
 
     .triage-rec-panel {
-        max-height: clamp(180px, 28vh, 260px);
+        max-height: clamp(140px, 24vh, 220px);
         min-height: 0;
-        padding: 8px;
+        padding: 7px;
+    }
+
+    .triage-modal__dialog--review .triage-interp-note {
+        padding: 6px 8px;
+        font-size: 0.8125rem;
+        line-height: 1.35;
+    }
+
+    .triage-modal__dialog--review .triage-review-questions li {
+        padding: 6px 8px 6px 1.85rem;
+        font-size: 0.8125rem;
     }
 
     .triage-override-row {
