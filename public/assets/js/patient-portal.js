@@ -1195,6 +1195,13 @@
     } else {
       fd.delete('triage_id');
     }
+    const followupEl = document.getElementById('triage_followup_answer');
+    const followupAnswer = followupEl ? String(followupEl.value || '').trim() : '';
+    if (followupAnswer) {
+      fd.set('followup_answer', followupAnswer);
+    } else {
+      fd.delete('followup_answer');
+    }
     const res = await fetch(APP_BASE + '/app/api/patient/submit_symptoms_review.php', {
       method: 'POST',
       body: fd,
@@ -1203,6 +1210,39 @@
     });
     const data = await res.json().catch(() => null);
     return { res: res, data: data };
+  }
+
+  function showBookingFollowupUi(question) {
+    const wrap = document.getElementById('triageFollowup');
+    const qEl = document.getElementById('triageFollowupQuestion');
+    const ans = document.getElementById('triage_followup_answer');
+    const box = document.getElementById('triageAiResult');
+    if (qEl) {
+      if (typeof question === 'string') {
+        qEl.textContent = question;
+      } else if (question && typeof question === 'object') {
+        qEl.textContent = String(question.text || question.question || '');
+      }
+    }
+    if (wrap) wrap.hidden = false;
+    if (box) {
+      box.hidden = true;
+      box.classList.remove('is-visible');
+    }
+    if (ans) {
+      ans.value = '';
+      ans.focus();
+    }
+    if (window.mcPatientUrgencyModal && typeof window.mcPatientUrgencyModal.close === 'function') {
+      window.mcPatientUrgencyModal.close();
+    }
+  }
+
+  function hideBookingFollowupUi() {
+    const wrap = document.getElementById('triageFollowup');
+    const ans = document.getElementById('triage_followup_answer');
+    if (wrap) wrap.hidden = true;
+    if (ans) ans.value = '';
   }
 
   function initTriageForm() {
@@ -1220,6 +1260,7 @@
     const skipTwoStep = window.TRIAGE_REVIEW_FIRST_ALLOWED !== true;
     const twoStep = {
       awaitingSecond: false,
+      interviewInProgress: false,
       triageId: parseInt(String(triageIdInput && triageIdInput.value ? triageIdInput.value : '0'), 10) || 0,
       level: '',
       complaint: '',
@@ -1246,17 +1287,29 @@
         return;
       }
       if (!data || !data.triage_id) return;
-      const level = urgencyToLevel(data.triage_level || data.classification_label);
-      if (level !== 'non_urgent' && level !== 'urgent') return;
       const stored = String(data.chief_complaint || '').trim();
       const current = String(complaintField && complaintField.value ? complaintField.value : '').trim();
       if (stored && current && stored !== current) return;
       if (stored && !current && complaintField) complaintField.value = stored;
       twoStep.triageId = parseInt(data.triage_id, 10) || 0;
-      twoStep.level = level;
       twoStep.complaint = String(complaintField && complaintField.value ? complaintField.value : '').trim();
-      twoStep.awaitingSecond = twoStep.triageId > 0;
       if (triageIdInput) triageIdInput.value = String(twoStep.triageId);
+
+      if (data.assessment_in_progress) {
+        twoStep.interviewInProgress = true;
+        twoStep.awaitingSecond = false;
+        twoStep.level = '';
+        showBookingFollowupUi(data.followup_question || '');
+        setSubmitLabel('Submit answer');
+        return;
+      }
+
+      const level = urgencyToLevel(data.triage_level || data.classification_label);
+      if (level !== 'non_urgent' && level !== 'urgent') return;
+      twoStep.level = level;
+      twoStep.awaitingSecond = twoStep.triageId > 0;
+      twoStep.interviewInProgress = false;
+      hideBookingFollowupUi();
       if (twoStep.awaitingSecond) {
         showBookingContinueUi(level, data.classification_label || '');
       }
@@ -1265,12 +1318,14 @@
     if (complaintField && !skipTwoStep) {
       complaintField.addEventListener('input', function () {
         const text = String(complaintField.value || '').trim();
-        if (twoStep.awaitingSecond && text !== twoStep.complaint) {
+        if ((twoStep.awaitingSecond || twoStep.interviewInProgress) && text !== twoStep.complaint) {
           twoStep.awaitingSecond = false;
+          twoStep.interviewInProgress = false;
           twoStep.triageId = 0;
           twoStep.level = '';
           twoStep.complaint = '';
           if (triageIdInput) triageIdInput.value = '';
+          hideBookingFollowupUi();
           const box = document.getElementById('triageAiResult');
           if (box) {
             box.hidden = true;
@@ -1280,6 +1335,7 @@
             alertEl.className = 'patient-triage-alert';
             alertEl.textContent = '';
           }
+          setSubmitLabel(SUBMIT_COMPLAINT_LABEL);
         }
       });
     }
@@ -1357,20 +1413,45 @@
       if (!skipTwoStep) {
         twoStep.inFlight = true;
         try {
+          const followupEl = document.getElementById('triage_followup_answer');
+          const followupAnswer = followupEl ? String(followupEl.value || '').trim() : '';
+          if (twoStep.interviewInProgress && !followupAnswer) {
+            showTriageAlert(alertEl, 'error', 'Please answer the follow-up question to continue.');
+            if (followupEl) followupEl.focus();
+            return;
+          }
+
           const readyForAssign = twoStep.awaitingSecond
+            && !twoStep.interviewInProgress
             && twoStep.triageId > 0
             && complaint === twoStep.complaint;
 
           if (!readyForAssign) {
             if (submitBtn) {
               submitBtn.disabled = true;
-              submitBtn.textContent = 'Assessing urgency…';
+              submitBtn.textContent = twoStep.interviewInProgress ? 'Updating assessment…' : 'Assessing urgency…';
             }
-            const result = await postSymptomsReview(form, complaint, 'preview', 0);
+            const previewTriageId = twoStep.interviewInProgress ? twoStep.triageId : 0;
+            const result = await postSymptomsReview(form, complaint, 'preview', previewTriageId);
             const json = result.data;
             if (!json || json.success === false) {
               const failPayload = (json && json.data) || json || {};
+              if (failPayload.assessment_in_progress) {
+                twoStep.interviewInProgress = true;
+                twoStep.awaitingSecond = false;
+                twoStep.triageId = parseInt(failPayload.triage_id, 10) || twoStep.triageId;
+                twoStep.complaint = complaint;
+                if (triageIdInput) triageIdInput.value = String(twoStep.triageId);
+                showBookingFollowupUi(failPayload.followup_question || json.message || '');
+                setSubmitLabel('Submit answer');
+                showTriageAlert(alertEl, 'success', 'Please answer the follow-up question below.');
+                return;
+              }
               if (failPayload.duplicate_pending || (json && json.duplicate_pending)) {
+                if (failPayload.assessment_in_progress) {
+                  showBookingFollowupUi(failPayload.followup_question || '');
+                  return;
+                }
                 const existingLevel = urgencyToLevel(failPayload.triage_level || failPayload.classification_label)
                   || (failPayload.emergency ? 'emergency' : (failPayload.urgent ? 'urgent' : 'non_urgent'));
                 if (window.mcPatientUrgencyModal && typeof window.mcPatientUrgencyModal.showTriageResult === 'function') {
@@ -1381,8 +1462,25 @@
               return;
             }
             const payload = json.data || json;
+
+            // NLP interview still collecting clinically necessary facts — never show final triage yet.
+            if (payload.assessment_in_progress) {
+              twoStep.interviewInProgress = true;
+              twoStep.awaitingSecond = false;
+              twoStep.level = '';
+              twoStep.triageId = parseInt(payload.triage_id, 10) || twoStep.triageId;
+              twoStep.complaint = complaint;
+              if (triageIdInput) triageIdInput.value = String(twoStep.triageId);
+              showBookingFollowupUi(payload.followup_question || json.message || '');
+              setSubmitLabel('Submit answer');
+              showTriageAlert(alertEl, 'success', 'Please answer the follow-up question below.');
+              return;
+            }
+
             const level = urgencyToLevel(payload.triage_level || payload.classification_label);
             if (payload.emergency || level === 'emergency') {
+              twoStep.interviewInProgress = false;
+              hideBookingFollowupUi();
               showTriageAlert(alertEl, 'error', json.message || 'Emergency symptoms detected. Seek emergency care.');
               if (window.mcPatientUrgencyModal && typeof window.mcPatientUrgencyModal.showEmergency === 'function') {
                 window.mcPatientUrgencyModal.showEmergency(json.message || '', {
@@ -1395,11 +1493,14 @@
               showTriageAlert(alertEl, 'error', 'Could not determine triage level. Please try again.');
               return;
             }
+            twoStep.interviewInProgress = false;
+            hideBookingFollowupUi();
             twoStep.triageId = parseInt(payload.triage_id, 10) || 0;
             twoStep.level = level;
             twoStep.complaint = complaint;
             twoStep.awaitingSecond = twoStep.triageId > 0;
             if (triageIdInput) triageIdInput.value = String(twoStep.triageId);
+            setSubmitLabel(SUBMIT_COMPLAINT_LABEL);
             showBookingContinueUi(level, payload.classification_label || '');
             if (window.mcPatientUrgencyModal && typeof window.mcPatientUrgencyModal.showTriageResult === 'function') {
               window.mcPatientUrgencyModal.showTriageResult(level, CONTINUE_MSG);
@@ -1499,7 +1600,7 @@
           twoStep.inFlight = false;
           if (submitBtn) {
             submitBtn.disabled = false;
-            setSubmitLabel(SUBMIT_COMPLAINT_LABEL);
+            setSubmitLabel(twoStep.interviewInProgress ? 'Submit answer' : SUBMIT_COMPLAINT_LABEL);
           }
         }
       }

@@ -23,18 +23,36 @@ $is_provider_locked = !empty($review_booking_ctx['locked']) && $locked_provider_
 $preliminary_complaint_triage = is_array($preliminary_complaint_triage ?? null) ? $preliminary_complaint_triage : null;
 $preliminary_payload = null;
 if ($preliminary_complaint_triage && !$is_provider_locked && !$chief_complaint_locked) {
-    $prelimLevel = (string) ($preliminary_complaint_triage['triage_level'] ?? 'non_urgent');
+    $prelimLevel = (string) ($preliminary_complaint_triage['triage_level'] ?? '');
     $prelimClass = (string) ($preliminary_complaint_triage['triage_classification'] ?? '');
-    $prelimLabel = function_exists('patient_symptoms_review_classification_label')
-        ? patient_symptoms_review_classification_label($prelimLevel, $prelimClass)
-        : 'NON-URGENT';
+    $prelimOutcome = strtolower((string) ($preliminary_complaint_triage['outcome'] ?? ''));
+    $prelimInterview = function_exists('patient_symptoms_review_assessment_from_row')
+        ? patient_symptoms_review_assessment_from_row($preliminary_complaint_triage)
+        : [];
+    $prelimInProgress = $prelimOutcome === 'assessment_in_progress'
+        || strtoupper((string) ($prelimInterview['assessment_status'] ?? '')) === 'IN_PROGRESS'
+        || ($prelimClass === '' && $prelimLevel === '');
     $prelimComplaint = trim((string) ($preliminary_complaint_triage['chief_complaint'] ?? ''));
-    $preliminary_payload = [
-        'triage_id' => (int) ($preliminary_complaint_triage['id'] ?? 0),
-        'triage_level' => $prelimLevel,
-        'classification_label' => $prelimLabel,
-        'chief_complaint' => $prelimComplaint,
-    ];
+    if ($prelimInProgress) {
+        $question = is_array($prelimInterview['followup_question'] ?? null) ? $prelimInterview['followup_question'] : [];
+        $preliminary_payload = [
+            'triage_id' => (int) ($preliminary_complaint_triage['id'] ?? 0),
+            'chief_complaint' => $prelimComplaint,
+            'assessment_in_progress' => true,
+            'followup_question' => (string) ($question['text'] ?? $prelimInterview['patient_message'] ?? ''),
+            'followup_question_id' => (string) ($question['question_id'] ?? ''),
+        ];
+    } else {
+        $prelimLabel = function_exists('patient_symptoms_review_classification_label')
+            ? patient_symptoms_review_classification_label($prelimLevel !== '' ? $prelimLevel : 'non_urgent', $prelimClass)
+            : 'NON-URGENT';
+        $preliminary_payload = [
+            'triage_id' => (int) ($preliminary_complaint_triage['id'] ?? 0),
+            'triage_level' => $prelimLevel !== '' ? $prelimLevel : 'non_urgent',
+            'classification_label' => $prelimLabel,
+            'chief_complaint' => $prelimComplaint,
+        ];
+    }
     if ($registration_chief_complaint === '' && $prelimComplaint !== '') {
         $registration_chief_complaint = $prelimComplaint;
     }
@@ -131,7 +149,26 @@ $assigned_display_name = $locked_provider_name !== '' ? $locked_provider_name : 
       </p>
     </div>
 
-    <div id="triageAiResult" class="pdash-care-ai-result<?= $preliminary_payload ? ' is-visible' : '' ?>" <?= $preliminary_payload ? '' : 'hidden' ?>>
+    <div
+      id="triageFollowup"
+      class="pdash-followup"
+      <?= empty($preliminary_payload['assessment_in_progress'] ?? false) ? 'hidden' : '' ?>
+    >
+      <p class="pdash-followup__label">Follow-up question</p>
+      <p id="triageFollowupQuestion" class="pdash-followup__question"><?= htmlspecialchars((string) ($preliminary_payload['followup_question'] ?? '')) ?></p>
+      <label class="form-label" for="triage_followup_answer">Your answer</label>
+      <textarea
+        id="triage_followup_answer"
+        name="followup_answer"
+        class="form-control"
+        rows="2"
+        maxlength="500"
+        placeholder="Type your answer here…"
+        autocomplete="off"
+      ></textarea>
+    </div>
+
+    <div id="triageAiResult" class="pdash-care-ai-result<?= ($preliminary_payload && empty($preliminary_payload['assessment_in_progress'])) ? ' is-visible' : '' ?>" <?= ($preliminary_payload && empty($preliminary_payload['assessment_in_progress'])) ? '' : 'hidden' ?>>
       <p class="pdash-care-ai-result__label">
         Preliminary AI Assessment:
         <strong id="triageAiLevel"><?= htmlspecialchars((string) ($preliminary_payload['classification_label'] ?? 'NON-URGENT')) ?></strong>
