@@ -291,15 +291,22 @@
     }
 
     var urgencyEl = document.getElementById('modalUrgency');
-    var triageLevel = String(t.triage_level || t.triage_classification || '').toUpperCase();
-    var isEmergency = triageLevel === 'EMERGENCY' || /emergency/i.test(String(t.label || ''));
+    var triageLevel = String(t.triage_level || t.triage_classification || '').toUpperCase().replace(/_/g, '-');
+    var isEmergency = triageLevel === 'EMERGENCY'
+      || /emergency/i.test(String(t.label || ''))
+      || /emergency/i.test(String(t.urgency || ''));
+    var isUrgent = !isEmergency && (
+      triageLevel === 'URGENT'
+      || t.urgency === 'Urgent'
+      || /urgent/i.test(String(t.label || ''))
+    );
     if (urgencyEl) {
       if (isEmergency) {
-        urgencyEl.innerHTML = '<span class="triage-badge triage-badge--emergency">Emergency</span>';
-      } else if (t.urgency === 'Urgent') {
-        urgencyEl.innerHTML = '<span class="triage-badge triage-badge--urgent">Urgent</span>';
+        urgencyEl.innerHTML = '<span class="triage-badge triage-badge--emergency">EMERGENCY</span>';
+      } else if (isUrgent) {
+        urgencyEl.innerHTML = '<span class="triage-badge triage-badge--urgent">URGENT</span>';
       } else {
-        urgencyEl.innerHTML = '<span class="triage-badge triage-badge--routine">Non-Urgent</span>';
+        urgencyEl.innerHTML = '<span class="triage-badge triage-badge--routine">NON-URGENT</span>';
       }
     }
 
@@ -337,7 +344,9 @@
     setItemHidden('modalAssessConditionsWrap', conditions.length === 0);
     if (condEl) {
       condEl.innerHTML = conditions.map(function (c) {
-        return '<span class="triage-interp-chip">' + esc(String(c)) + '</span>';
+        var text = String(c);
+        var isPending = /differential pending|insufficient data|clinical review/i.test(text);
+        return '<p class="triage-interp-note' + (isPending ? ' triage-interp-note--pending' : '') + '">' + esc(text) + '</p>';
       }).join('');
     }
 
@@ -351,10 +360,16 @@
       if (confText.indexOf('%') < 0) {
         confText = String(Math.round(confNum)) + '%';
       }
+      var confTone = confNum < 50 ? ' is-low' : (confNum < 75 ? ' is-mid' : ' is-high');
+      var confHint = confNum < 50
+        ? '<span class="triage-metric-hint">Low confidence — review carefully</span>'
+        : '';
+      confEl.className = 'triage-modal-box--metric' + confTone;
       confEl.innerHTML =
         '<span class="triage-metric-value">' + esc(confText) + '</span>' +
         '<span class="triage-metric-bar" aria-hidden="true"><span style="width:' +
-        Math.max(0, Math.min(100, confNum)) + '%"></span></span>';
+        Math.max(0, Math.min(100, confNum)) + '%"></span></span>' +
+        confHint;
     }
 
     var priorityDetail = String(t.classification_detail || '').trim();
@@ -362,10 +377,15 @@
     var priorityText = [priorityDetail, levelLabel].filter(Boolean).join(' · ');
     if (!priorityText) {
       priorityText = String(t.label || '').trim();
-      var badge = isEmergency ? 'Emergency' : (t.urgency === 'Urgent' ? 'Urgent' : 'Non-Urgent');
+      var badge = isEmergency ? 'Emergency' : (isUrgent ? 'Urgent' : 'Non-Urgent');
       if (priorityText && priorityText.toLowerCase().indexOf(badge.toLowerCase()) === 0) {
         priorityText = priorityText.slice(badge.length).replace(/^\s*[·\-–:]?\s*/, '').trim();
       }
+    }
+    // Hide interview-state / redundant priority copy under the classification badge.
+    if (/assessment\s+in\s+progress|needs?\s+more\s+information|pending\s+interview/i.test(priorityText)
+      || /^(emergency|urgent|non-urgent|non urgent)$/i.test(priorityText.replace(/[()]/g, '').trim())) {
+      priorityText = '';
     }
     setItemHidden('modalAssessPriorityWrap', priorityText === '');
     var levelEl = document.getElementById('modalTriageLevel');
@@ -390,7 +410,7 @@
         gateHint.textContent = 'Review complete. Self-care guidance was withheld from the patient.';
       } else if (canDecideTips) {
         gateHint.textContent = 'Choose Approve for Patient or Withhold Guidance to complete this review.';
-      } else if (t.urgency === 'Urgent') {
+      } else if (isUrgent || isEmergency) {
         gateHint.textContent = 'Urgent case — use the existing urgent booking workflow. Self-care approval does not apply.';
       } else {
         gateHint.textContent = 'Patient-facing NLP recommendations are only released for non-urgent cases after provider approval.';
@@ -407,6 +427,7 @@
       recEdit.classList.add('is-readonly');
     }
     if (reviewNote) {
+      reviewNote.classList.remove('is-expired', 'is-reviewed', 'is-terminated');
       if (isReviewed) {
         var note = recStatus === 'approved'
           ? 'Status: Tips approved · Reviewed'
@@ -415,12 +436,15 @@
             : 'Status: Reviewed';
         if (t.is_booked) note += ' · Booked';
         reviewNote.textContent = note;
+        reviewNote.classList.add('is-reviewed');
         reviewNote.hidden = false;
       } else if (t.is_terminated) {
         reviewNote.textContent = 'Status: Case terminated';
+        reviewNote.classList.add('is-terminated');
         reviewNote.hidden = false;
       } else if (t.expired) {
         reviewNote.textContent = 'This same-day case has expired.';
+        reviewNote.classList.add('is-expired');
         reviewNote.hidden = false;
       } else {
         reviewNote.hidden = true;

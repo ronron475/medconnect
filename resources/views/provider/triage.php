@@ -238,18 +238,24 @@ $slot_waiting_count = count(array_filter($display_cases, fn($t) => !empty($t['sl
         <div class="triage-review-section__head">
           <h3 id="triageNlpHeading" class="triage-review-section__title">AI Assessment</h3>
         </div>
-        <div class="triage-assess-grid">
-          <div class="triage-assess-item" id="modalAssessClassWrap">
+        <div class="triage-assess-summary" aria-label="Triage summary">
+          <div class="triage-assess-summary__class" id="modalAssessClassWrap">
             <span class="triage-field-label">Classification</span>
-            <div id="modalUrgency"></div>
+            <div id="modalUrgency" class="triage-assess-class"></div>
           </div>
-          <div class="triage-assess-item" id="modalAssessPriorityWrap" hidden>
-            <span class="triage-field-label">Priority</span>
-            <div id="modalTriageLevel" class="triage-assess-value"></div>
-          </div>
-          <div class="triage-assess-item" id="modalAssessConfidenceWrap" hidden>
+          <div class="triage-assess-summary__confidence" id="modalAssessConfidenceWrap" hidden>
             <span class="triage-field-label">Confidence</span>
             <div id="modalConfidence" class="triage-modal-box--metric"></div>
+          </div>
+        </div>
+        <div class="triage-assess-grid">
+          <div class="triage-assess-item" id="modalAssessPriorityWrap" hidden>
+            <span class="triage-field-label">Priority detail</span>
+            <div id="modalTriageLevel" class="triage-assess-value"></div>
+          </div>
+          <div class="triage-assess-item" id="modalAssessedAtWrap" hidden>
+            <span class="triage-field-label">Assessed</span>
+            <div id="modalAssessedAt" class="triage-assess-value"></div>
           </div>
           <div class="triage-assess-item triage-assess-item--wide" id="modalAssessEnglishWrap" hidden>
             <span class="triage-field-label">English translation</span>
@@ -261,11 +267,7 @@ $slot_waiting_count = count(array_filter($display_cases, fn($t) => !empty($t['sl
           </div>
           <div class="triage-assess-item triage-assess-item--wide" id="modalAssessConditionsWrap" hidden>
             <span class="triage-field-label">Clinical interpretation</span>
-            <div id="modalPossibleConditions"></div>
-          </div>
-          <div class="triage-assess-item" id="modalAssessedAtWrap" hidden>
-            <span class="triage-field-label">Assessed</span>
-            <div id="modalAssessedAt" class="triage-assess-value"></div>
+            <div id="modalPossibleConditions" class="triage-interp-list"></div>
           </div>
         </div>
         <div id="modalSymptoms" hidden></div>

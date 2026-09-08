@@ -16,6 +16,11 @@ function provider_triage_classification_detail(string $badge, string $label): st
         return '';
     }
 
+    // Interview / process state is not a triage priority qualifier.
+    if (preg_match('/assessment\s+in\s+progress|needs?\s+more\s+information|pending\s+interview/i', $label)) {
+        return '';
+    }
+
     if ($badge !== '' && preg_match('/^' . preg_quote($badge, '/') . '\s*(\(.*\))\s*$/i', $label, $m)) {
         return $m[1];
     }
@@ -23,6 +28,10 @@ function provider_triage_classification_detail(string $badge, string $label): st
     if ($badge !== '') {
         $stripped = trim((string) preg_replace('/^' . preg_quote($badge, '/') . '\s*/i', '', $label));
         if ($stripped !== '' && strcasecmp($stripped, $label) !== 0) {
+            if (preg_match('/assessment\s+in\s+progress|needs?\s+more\s+information|pending\s+interview/i', $stripped)) {
+                return '';
+            }
+
             return $stripped;
         }
     }
