@@ -139,7 +139,6 @@ if ($is_bhw_portal) {
       <div class="mc-profmenu__actions">
         <a class="mc-profmenu__btn mc-profmenu__btn--primary" href="<?= $profile_menu_href ?>">My Profile</a>
         <a class="mc-profmenu__btn" href="<?= $settings_menu_href ?>">Settings</a>
-        <button type="button" class="mc-profmenu__btn mc-profmenu__btn--danger" data-profmenu-logout>Sign out</button>
       </div>
     </div>
 

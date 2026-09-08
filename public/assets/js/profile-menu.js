@@ -57,23 +57,6 @@
         trigger.setAttribute('aria-expanded', 'true');
       }
     });
-
-    // Menu action: sign out button can reuse existing logout trigger behavior
-    qsa('[data-profmenu-logout]', menu).forEach((btn) => {
-      btn.addEventListener('click', (e) => {
-        e.preventDefault();
-        closeAll();
-        // Prefer existing modal/handler if present
-        const anyLogout = qs('[data-logout-trigger]');
-        if (anyLogout) {
-          anyLogout.click();
-        } else if (typeof window.showLogoutModal === 'function') {
-          window.showLogoutModal();
-        } else {
-          window.location.href = (document.body.dataset.assetBase || '') + '/logout.php';
-        }
-      });
-    });
   }
 
   function init() {
