@@ -13,7 +13,10 @@ ok(($t1['followup_question']['question_id'] ?? '') === 'PAIN_SEVERITY', 'T1 seve
 ok(($t1['triage_final'] ?? null) === null, 'T1 no triage yet');
 ok(($t1['clinical_status'] ?? '') === 'NEEDS_FOLLOW_UP', 'T1 clinical status NEEDS_FOLLOW_UP', (string) ($t1['clinical_status'] ?? ''));
 ok(($t1['triage_display'] ?? '') === '', 'T1 empty triage_display');
-ok(str_contains((string) ($t1['patient_message'] ?? ''), '0–10') || str_contains((string) ($t1['patient_message'] ?? ''), '1–10') || str_contains((string) ($t1['patient_message'] ?? ''), '0-10') || str_contains((string) ($t1['patient_message'] ?? ''), '1-10'), 'T1 asks 0–10 or 1–10 scale');
+ok(
+    (bool) preg_match('/(0\s*[–-]\s*10|1\s*[–-]\s*10|1\s+tubtob\s+10|0\s+hanggang\s+10|1\s+hanggang\s+10|scale\s+nga\s+1)/ui', (string) ($t1['patient_message'] ?? '')),
+    'T1 asks 0–10 or 1–10 scale'
+);
 
 $t2a = NlpStep3DemoTrial::assess('sakit');
 $t2 = NlpStep3DemoTrial::assess('7', $t2a['interview_context'] ?? []);

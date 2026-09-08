@@ -1029,11 +1029,12 @@ final class NlpStep3DemoClinicalState
                 : null,
             'EYE_LATERALITY' => array_intersect($concepts, ['eye', 'eye_pain', 'needs_laterality']) !== [] ? 2 : null,
             'EYE_VISION' => array_intersect($concepts, ['eye', 'eye_pain']) !== [] ? 4 : null,
-            'PAIN_SEVERITY' => $painLike && $sev === null ? 3 : null,
+            // Vague pain: severity before location (demo contract + acceptance T1).
+            'PAIN_SEVERITY' => $painLike && $sev === null ? 2 : null,
             'PAIN_LOCATION', 'UNWELL_WHAT' => (
                 array_intersect($concepts, ['pain_unspecified', 'pain_no_location', 'general_unwell']) !== []
                 && self::normalizedLocations($state) === []
-            ) ? 2 : null,
+            ) ? 3 : null,
             'ONSET', 'DURATION' => !$hasTiming ? 5 : null,
             'SPECIFIC_LOCATION' => self::shouldAskSpecificLocationNow($concepts, $state, $sev, $sudden, $multiSite),
             'ABDOMINAL_ASSOCIATED' => in_array('abdominal_pain', $concepts, true) && !$assocDone ? 7 : null,
