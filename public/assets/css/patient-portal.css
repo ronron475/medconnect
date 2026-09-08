@@ -1507,32 +1507,179 @@ body.mc-tips-ready-modal-open {
 }
 
 .pdash-followup {
-  margin: 0 0 16px;
-  padding: 16px 18px;
-  border-radius: 12px;
-  border: 2px solid #0369a1;
-  background: #f0f9ff;
+  margin: 14px 0 16px;
+  padding: 0;
+  border-radius: 14px;
+  border: 1px solid #99f6e4;
+  background: linear-gradient(180deg, #f0fdfa 0%, #ffffff 42%);
+  box-shadow: 0 10px 28px rgba(15, 118, 110, 0.08);
+  overflow: hidden;
 }
 
 .pdash-followup[hidden] {
   display: none !important;
 }
 
-.pdash-followup__label {
-  margin: 0 0 6px;
-  font-size: 0.75rem;
+.pdash-followup__head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 16px;
+  border-bottom: 1px solid #ccfbf1;
+  background: rgba(240, 253, 250, 0.9);
+}
+
+.pdash-followup__badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: #0f766e;
+  color: #fff;
+  font-size: 0.68rem;
   font-weight: 800;
   letter-spacing: 0.04em;
   text-transform: uppercase;
-  color: #0369a1;
+  white-space: nowrap;
+}
+
+.pdash-followup__eyebrow,
+.pdash-followup__label {
+  margin: 0;
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  color: #0f766e;
+}
+
+.pdash-followup__panel {
+  padding: 14px 16px 8px;
 }
 
 .pdash-followup__question {
-  margin: 0 0 12px;
-  font-size: 1.05rem;
-  font-weight: 700;
+  margin: 0;
+  font-size: 1.02rem;
+  font-weight: 600;
   color: #0f172a;
+  line-height: 1.55;
+  letter-spacing: -0.01em;
+}
+
+.pdash-followup__helper {
+  margin: 10px 0 0;
+  font-size: 0.84rem;
+  line-height: 1.45;
+  color: #475569;
+}
+
+.pdash-followup__helper[hidden],
+.pdash-followup__scale[hidden],
+.pdash-followup__notice[hidden] {
+  display: none !important;
+}
+
+.pdash-followup__scale {
+  margin-top: 14px;
+  display: grid;
+  gap: 8px;
+}
+
+.pdash-followup__scale-label {
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: #64748b;
+  letter-spacing: 0.02em;
+}
+
+.pdash-followup__scale-label--end {
+  text-align: right;
+}
+
+.pdash-followup__scale-track {
+  display: grid;
+  grid-template-columns: repeat(11, minmax(0, 1fr));
+  gap: 4px;
+}
+
+.pdash-followup__scale-btn {
+  appearance: none;
+  border: 1px solid #99f6e4;
+  background: #fff;
+  color: #0f766e;
+  border-radius: 8px;
+  min-height: 36px;
+  padding: 0;
+  font-size: 0.78rem;
+  font-weight: 800;
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease, transform 0.12s ease;
+}
+
+.pdash-followup__scale-btn:hover,
+.pdash-followup__scale-btn:focus-visible {
+  background: #0f766e;
+  border-color: #0f766e;
+  color: #fff;
+  outline: none;
+  transform: translateY(-1px);
+}
+
+.pdash-followup__scale-btn.is-selected {
+  background: #0f766e;
+  border-color: #0f766e;
+  color: #fff;
+  box-shadow: 0 0 0 3px rgba(15, 118, 110, 0.18);
+}
+
+.pdash-followup__notice {
+  margin: 0 16px 12px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1px solid #fecaca;
+  background: #fef2f2;
+  color: #b91c1c;
+  font-size: 0.86rem;
+  font-weight: 600;
+  line-height: 1.45;
+}
+
+.pdash-followup__answer {
+  padding: 0 16px 16px;
+}
+
+.pdash-followup__input {
+  min-height: 88px;
+  resize: vertical;
+}
+
+.pdash-followup__hint {
+  margin: 8px 0 0;
+  font-size: 0.75rem;
+  color: #64748b;
   line-height: 1.4;
+}
+
+.pdash-review-form.is-followup-active #pdashSymptomsComplaint,
+.patient-triage-form.is-followup-active #chief_complaint {
+  opacity: 0.72;
+}
+
+@media (max-width: 640px) {
+  .pdash-followup__scale-track {
+    gap: 3px;
+  }
+
+  .pdash-followup__scale-btn {
+    min-height: 34px;
+    font-size: 0.72rem;
+    border-radius: 7px;
+  }
+
+  .pdash-followup__question {
+    font-size: 0.98rem;
+  }
 }
 
 .pdash-care-ai-result {

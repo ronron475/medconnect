@@ -1216,19 +1216,75 @@
     return { res: res, data: data };
   }
 
-  function showBookingFollowupUi(question) {
+  function isPainScaleQuestion(text) {
+    const q = String(text || '');
+    return /0\s*(tubtob|to|hanggang|-|–|—)\s*10/i.test(q)
+      || /scale\s*(of|nga)?\s*0/i.test(q)
+      || /0\s*(out of|\/)\s*10/i.test(q)
+      || /pinakagrabe|worst pain|pain level|kagrabe/i.test(q);
+  }
+
+  function setBookingFollowupExtras(question) {
+    const scale = document.getElementById('triageFollowupScale');
+    const helper = document.getElementById('triageFollowupHelper');
+    const showScale = isPainScaleQuestion(question);
+    if (scale) {
+      scale.hidden = !showScale;
+      scale.querySelectorAll('.pdash-followup__scale-btn').forEach((btn) => {
+        btn.classList.remove('is-selected');
+      });
+    }
+    if (helper) {
+      if (showScale) {
+        helper.hidden = false;
+        helper.textContent = 'Tap a number below, or type your answer (for example: 5, 7/10, or “grabe”).';
+      } else {
+        helper.hidden = true;
+        helper.textContent = '';
+      }
+    }
+  }
+
+  function clearBookingFollowupNotice() {
+    const notice = document.getElementById('triageFollowupNotice');
+    if (!notice) return;
+    notice.hidden = true;
+    notice.textContent = '';
+  }
+
+  function showBookingFollowupNotice(message) {
+    const notice = document.getElementById('triageFollowupNotice');
+    if (!notice) return;
+    const text = String(message || '').trim();
+    if (!text) {
+      clearBookingFollowupNotice();
+      return;
+    }
+    notice.hidden = false;
+    notice.textContent = text;
+  }
+
+  function showBookingFollowupUi(question, options = {}) {
     const wrap = document.getElementById('triageFollowup');
+    const form = document.getElementById('patientTriageForm');
     const qEl = document.getElementById('triageFollowupQuestion');
     const ans = document.getElementById('triage_followup_answer');
     const box = document.getElementById('triageAiResult');
-    if (qEl) {
-      if (typeof question === 'string') {
-        qEl.textContent = question;
-      } else if (question && typeof question === 'object') {
-        qEl.textContent = String(question.text || question.question || '');
-      }
+    let qText = '';
+    if (typeof question === 'string') {
+      qText = question;
+    } else if (question && typeof question === 'object') {
+      qText = String(question.text || question.question || '');
+    }
+    if (qEl) qEl.textContent = qText;
+    setBookingFollowupExtras(qText);
+    if (options.notice) {
+      showBookingFollowupNotice(options.notice);
+    } else {
+      clearBookingFollowupNotice();
     }
     if (wrap) wrap.hidden = false;
+    if (form) form.classList.add('is-followup-active');
     if (box) {
       box.hidden = true;
       box.classList.remove('is-visible');
@@ -1244,10 +1300,32 @@
 
   function hideBookingFollowupUi() {
     const wrap = document.getElementById('triageFollowup');
+    const form = document.getElementById('patientTriageForm');
     const ans = document.getElementById('triage_followup_answer');
     if (wrap) wrap.hidden = true;
+    if (form) form.classList.remove('is-followup-active');
     if (ans) ans.value = '';
+    clearBookingFollowupNotice();
+    setBookingFollowupExtras('');
   }
+
+  (function bindBookingFollowupScale() {
+    const scale = document.getElementById('triageFollowupScale');
+    const ans = document.getElementById('triage_followup_answer');
+    if (!scale || !ans) return;
+    scale.addEventListener('click', (ev) => {
+      const btn = ev.target && ev.target.closest ? ev.target.closest('.pdash-followup__scale-btn') : null;
+      if (!btn) return;
+      const score = String(btn.getAttribute('data-score') || '').trim();
+      if (!score) return;
+      ans.value = score;
+      scale.querySelectorAll('.pdash-followup__scale-btn').forEach((el) => {
+        el.classList.toggle('is-selected', el === btn);
+      });
+      clearBookingFollowupNotice();
+      ans.focus();
+    });
+  })();
 
   function initTriageForm() {
     const form = document.getElementById('patientTriageForm');
@@ -1438,16 +1516,22 @@
                 twoStep.triageId = parseInt(failPayload.triage_id, 10) || twoStep.triageId;
                 twoStep.complaint = complaint;
                 if (triageIdInput) triageIdInput.value = String(twoStep.triageId);
-                showBookingFollowupUi(failPayload.followup_question || '');
-                setSubmitLabel('Submit answer');
                 const retry = !!(failPayload.retry_current_question || failPayload.answer_rejected);
-                showTriageAlert(
-                  alertEl,
-                  retry ? 'error' : 'success',
-                  retry
+                showBookingFollowupUi(failPayload.followup_question || '', {
+                  notice: retry
                     ? (failPayload.patient_message || json.message || 'Please provide an answer related to your current symptom and the question above. You can try again.')
-                    : 'Please answer the follow-up question below.'
-                );
+                    : '',
+                });
+                setSubmitLabel('Submit answer');
+                if (retry) {
+                  if (alertEl) {
+                    alertEl.hidden = true;
+                    alertEl.className = 'patient-triage-alert';
+                    alertEl.textContent = '';
+                  }
+                } else {
+                  showTriageAlert(alertEl, 'success', 'Please answer the follow-up question below.');
+                }
                 return;
               }
               if (failPayload.duplicate_pending || (json && json.duplicate_pending)) {
@@ -1491,16 +1575,22 @@
               twoStep.triageId = parseInt(payload.triage_id, 10) || twoStep.triageId;
               twoStep.complaint = complaint;
               if (triageIdInput) triageIdInput.value = String(twoStep.triageId);
-              showBookingFollowupUi(payload.followup_question || '');
-              setSubmitLabel('Submit answer');
               const retry = !!(payload.retry_current_question || payload.answer_rejected);
-              showTriageAlert(
-                alertEl,
-                retry ? 'error' : 'success',
-                retry
+              showBookingFollowupUi(payload.followup_question || '', {
+                notice: retry
                   ? (payload.patient_message || json.message || 'Please provide an answer related to your current symptom and the question above. You can try again.')
-                  : 'Please answer the follow-up question below.'
-              );
+                  : '',
+              });
+              setSubmitLabel('Submit answer');
+              if (retry) {
+                if (alertEl) {
+                  alertEl.hidden = true;
+                  alertEl.className = 'patient-triage-alert';
+                  alertEl.textContent = '';
+                }
+              } else {
+                showTriageAlert(alertEl, 'success', 'Please answer the follow-up question below.');
+              }
               return;
             }
 
