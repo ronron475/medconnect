@@ -98,11 +98,11 @@
   background: #fff;
   border: 1px solid #e2e8f0;
   border-radius: 8px;
-  padding: 12px 14px;
+  padding: 10px 12px;
   margin-bottom: 12px;
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
+  gap: 6px 8px;
   align-items: center;
   box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04);
 }
@@ -115,7 +115,8 @@
 
 .bhw-pl-toolbar-search input {
   width: 100%;
-  padding: 8px 12px 8px 36px;
+  min-height: 34px;
+  padding: 6px 12px 6px 36px;
   border: 1px solid #e2e8f0;
   border-radius: 6px;
   font-size: 13px;
@@ -137,7 +138,8 @@
 }
 
 .bhw-pl-toolbar select {
-  padding: 8px 10px;
+  min-height: 34px;
+  padding: 6px 10px;
   border: 1px solid #e2e8f0;
   border-radius: 6px;
   font-size: 12px;
@@ -170,7 +172,7 @@
 
 .bhw-pl-table {
   width: 100%;
-  min-width: 860px;
+  min-width: 1020px;
   table-layout: fixed;
   border-collapse: collapse;
   margin: 0;
@@ -213,6 +215,21 @@
   overflow: visible;
 }
 
+.bhw-pl-table tbody td.bhw-pl-col-status {
+  overflow: visible;
+  white-space: nowrap;
+  text-overflow: clip;
+}
+
+.bhw-pl-table tbody td.bhw-pl-col-workflow {
+  white-space: normal;
+}
+
+.bhw-pl-table tbody td.bhw-pl-col-patient {
+  white-space: normal;
+  overflow: hidden;
+}
+
 .bhw-pl-table tbody tr:nth-child(even) {
   background: #fafbfc;
 }
@@ -251,7 +268,8 @@
 }
 
 .bhw-pl-col-actions {
-  width: 14%;
+  width: 16%;
+  min-width: 150px;
   white-space: nowrap;
   text-align: right;
   overflow: visible;
@@ -264,10 +282,16 @@
 .bhw-pl-table td:nth-child(4) { width: 8%; }
 
 .bhw-pl-table th:nth-child(6),
-.bhw-pl-table td:nth-child(6) { width: 9%; }
+.bhw-pl-table td:nth-child(6) { width: 8%; }
 
-.bhw-pl-table th:nth-child(7),
-.bhw-pl-table td:nth-child(7) { width: 9%; }
+.bhw-pl-table th.bhw-pl-col-workflow,
+.bhw-pl-table td.bhw-pl-col-workflow {
+  width: 15%;
+  min-width: 148px;
+}
+
+.bhw-pl-table th:nth-child(8),
+.bhw-pl-table td:nth-child(8) { width: 8%; }
 
 .bhw-pl-name {
   font-weight: 600;
@@ -289,15 +313,22 @@
 .bhw-pl-badge {
   display: inline-flex;
   align-items: center;
-  padding: 2px 6px;
-  border-radius: 4px;
-  font-size: 9px;
+  max-width: 100%;
+  padding: 3px 8px;
+  border-radius: 999px;
+  font-size: 10px;
   font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
+  text-transform: none;
+  letter-spacing: 0.01em;
   white-space: nowrap;
   border: 1px solid transparent;
-  line-height: 1.2;
+  line-height: 1.25;
+}
+
+.bhw-pl-col-workflow .bhw-pl-badge {
+  white-space: normal;
+  text-align: left;
+  line-height: 1.3;
 }
 
 .bhw-pl-badge--active { background: #f0fdf4; color: #166534; border-color: #bbf7d0; }
@@ -343,13 +374,18 @@
   min-height: 28px;
   padding: 4px 10px;
   border-radius: 5px;
-  border: 1px solid #e2e8f0;
+  border: 1px solid #cbd5e1;
   background: #fff;
-  color: #475569;
+  color: #334155;
   font-size: 11px;
   font-weight: 600;
   cursor: pointer;
   transition: background 0.12s ease, border-color 0.12s ease;
+}
+
+.bhw-pl-menu-trigger:hover {
+  background: #f8fafc;
+  border-color: #94a3b8;
 }
 
 .bhw-pl-menu-caret {
