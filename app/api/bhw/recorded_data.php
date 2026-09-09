@@ -1,6 +1,6 @@
 <?php
 /**
- * BHW API: record vitals / observations for an open consultation (not doctor SOAP).
+ * BHW API: record vitals / observations for a consultation OR as pending pre-consultation data.
  */
 require_once dirname(dirname(dirname(__DIR__))) . '/bootstrap.php';
 require_once dirname(dirname(dirname(__DIR__))) . '/config/db.php';
@@ -29,6 +29,8 @@ try {
             Api::success([
                 'consultations' => $open,
                 'latest_by_consultation' => $latestByConsult,
+                'pending' => consultation_recorded_data_pending_for_bhw($pdo, $patientId),
+                'can_save_without_consultation' => true,
             ]);
             break;
 
@@ -36,12 +38,20 @@ try {
             $patientId = (int) ($_GET['patient_id'] ?? 0);
             $consultationId = (int) ($_GET['consultation_id'] ?? 0);
             bhw_api_require_patient_in_sector($pdo, $ctx, $patientId);
-            if (!consultation_recorded_data_assert_patient_consultation($pdo, $patientId, $consultationId)) {
-                Api::error('Consultation does not belong to this patient.', 403);
+            if ($consultationId > 0) {
+                if (!consultation_recorded_data_assert_patient_consultation($pdo, $patientId, $consultationId)) {
+                    Api::error('Consultation does not belong to this patient.', 403);
+                }
+                Api::success([
+                    'recorded' => consultation_recorded_data_for_doctor($pdo, $consultationId, $patientId),
+                    'history'  => consultation_recorded_data_history($pdo, $consultationId, $patientId),
+                    'pending'  => consultation_recorded_data_pending_for_bhw($pdo, $patientId),
+                ]);
             }
             Api::success([
-                'recorded' => consultation_recorded_data_for_doctor($pdo, $consultationId, $patientId),
-                'history'  => consultation_recorded_data_history($pdo, $consultationId, $patientId),
+                'recorded' => consultation_recorded_data_pending_for_bhw($pdo, $patientId),
+                'history'  => consultation_recorded_data_pending_history($pdo, $patientId),
+                'pending'  => consultation_recorded_data_pending_for_bhw($pdo, $patientId),
             ]);
             break;
 
@@ -55,9 +65,15 @@ try {
             if ($bhwId <= 0) {
                 Api::error('BHW session required.', 401);
             }
-            if (!consultation_recorded_data_assert_patient_consultation($pdo, $patientId, $consultationId)) {
-                Api::error('Consultation does not belong to this patient.', 403);
+
+            // If an open consult exists and BHW selected one, attach directly.
+            // If no consultation_id, save as PENDING pre-consultation data.
+            if ($consultationId > 0) {
+                if (!consultation_recorded_data_assert_patient_consultation($pdo, $patientId, $consultationId)) {
+                    Api::error('Consultation does not belong to this patient.', 403);
+                }
             }
+
             $result = consultation_recorded_data_save(
                 $pdo,
                 $patientId,
@@ -66,18 +82,32 @@ try {
                 'bhw',
                 $_POST,
                 !empty($_POST['triage_result_id']) ? (int) $_POST['triage_result_id'] : null,
-                true
+                $consultationId > 0
             );
             if (!$result['success']) {
                 Api::error($result['message'] ?? 'Could not save recorded data.', 400);
             }
-            bhw_audit($pdo, $patientId, 'bhw_consultation_recorded_data', 'BHW saved patient recorded data for consultation.', [
-                'consultation_id' => $consultationId,
+
+            $mode = (string) ($result['mode'] ?? ($consultationId > 0 ? 'consultation' : 'pre_consultation'));
+            bhw_audit($pdo, $patientId, 'bhw_consultation_recorded_data', $mode === 'pre_consultation'
+                ? 'BHW saved pending pre-consultation recorded data.'
+                : 'BHW saved patient recorded data for consultation.', [
+                'consultation_id' => $consultationId > 0 ? $consultationId : null,
                 'recorded_data_id' => $result['id'] ?? null,
+                'mode' => $mode,
+                'status' => $result['status'] ?? null,
             ]);
+
+            $recorded = $consultationId > 0
+                ? consultation_recorded_data_for_doctor($pdo, $consultationId, $patientId)
+                : consultation_recorded_data_pending_for_bhw($pdo, $patientId);
+
             Api::success([
                 'id'       => $result['id'] ?? null,
-                'recorded' => consultation_recorded_data_for_doctor($pdo, $consultationId, $patientId),
+                'mode'     => $mode,
+                'status'   => $result['status'] ?? null,
+                'recorded' => $recorded,
+                'pending'  => consultation_recorded_data_pending_for_bhw($pdo, $patientId),
             ], $result['message'] ?? 'Saved.');
             break;
 
