@@ -560,6 +560,73 @@ body.provider-body .gis-brgy-panel.mc-card {
   margin-bottom: 4px !important;
 }
 
+.gis-popup__kicker {
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #64748b;
+  margin: 0 0 2px;
+}
+
+.gis-popup__name {
+  display: block;
+  margin: 0 0 8px !important;
+  font-size: 1rem;
+  line-height: 1.25;
+  color: #0f172a;
+}
+
+.gis-popup__meta {
+  display: grid;
+  gap: 4px;
+  margin: 0 0 8px;
+}
+
+.gis-popup__field {
+  display: grid;
+  grid-template-columns: minmax(72px, 38%) 1fr;
+  gap: 6px;
+  align-items: start;
+  font-size: 0.82rem;
+  line-height: 1.35;
+}
+
+.gis-popup__field-label {
+  color: #64748b;
+  font-weight: 600;
+}
+
+.gis-popup__field-value {
+  color: #0f172a;
+  font-weight: 600;
+  word-break: break-word;
+}
+
+.gis-popup__section {
+  margin: 0 0 8px;
+}
+
+.gis-popup__section-label {
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: #64748b;
+  margin: 0 0 2px;
+}
+
+.gis-popup__section-value {
+  font-size: 0.86rem;
+  font-weight: 700;
+  color: #0f172a;
+  line-height: 1.35;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: center;
+}
+
 .gis-popup__loc-hint {
   margin: 0 0 8px !important;
   line-height: 1.4;
@@ -590,6 +657,33 @@ body.provider-body .gis-brgy-panel.mc-card {
 .gis-popup__link:hover {
   border-color: #0f766e;
   background: #ccfbf1;
+}
+
+.gis-popup__btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  min-height: 40px;
+  padding: 10px 14px;
+  border-radius: 10px;
+  border: 1px solid #0f766e;
+  background: #0f766e;
+  color: #fff !important;
+  font-size: 0.88rem;
+  font-weight: 800;
+  text-decoration: none;
+  line-height: 1.2;
+  text-align: center;
+  box-sizing: border-box;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.gis-popup__btn:hover,
+.gis-popup__btn:focus {
+  background: #0d9488;
+  border-color: #0d9488;
+  color: #fff !important;
 }
 
 .gis-map-note {
@@ -777,8 +871,30 @@ body.provider-body .gis-brgy-panel.mc-card {
 }
 
 .gis-severity-marker {
-  background: transparent;
-  border: 0;
+  background: transparent !important;
+  border: 0 !important;
+  display: flex !important;
+  align-items: center;
+  justify-content: center;
+  pointer-events: auto !important;
+  cursor: pointer;
+}
+
+.gis-severity-marker__dot {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  pointer-events: none;
+}
+
+.gis-map .leaflet-heatmap-layer,
+.gis-map .leaflet-overlay-pane canvas {
+  pointer-events: none !important;
+}
+
+.gis-map .leaflet-popup-pane {
+  z-index: 700;
+  pointer-events: auto;
 }
 
 .gis-pagination {
@@ -891,27 +1007,35 @@ body.provider-body .gis-map-stage {
 }
 
 body.provider-body .gis-map-stage .gis-map {
-  height: 100%;
-  min-height: 100%;
+  height: clamp(420px, 48vh, 500px);
+  min-height: 420px;
 }
 
 body.provider-body .gis-map.leaflet-container {
   overflow: hidden;
+  background: #e2e8f0;
+}
+
+body.provider-body .gis-map .leaflet-tile-pane,
+body.provider-body .gis-map .leaflet-layer,
+body.provider-body .gis-map .leaflet-tile {
+  visibility: visible !important;
+  opacity: 1 !important;
 }
 
 body.provider-body .gis-leaflet-popup--provider {
-  max-width: min(320px, calc(100% - 24px));
+  max-width: min(340px, calc(100vw - 24px));
 }
 
 body.provider-body .gis-leaflet-popup--provider .leaflet-popup-content-wrapper {
-  max-width: min(320px, 100%);
+  max-width: min(340px, 100%);
   box-sizing: border-box;
 }
 
 body.provider-body .gis-leaflet-popup--provider .leaflet-popup-content {
-  margin: 8px 10px 8px 11px;
+  margin: 10px 12px 12px 12px;
   max-width: 100%;
-  max-height: 220px;
+  max-height: min(360px, calc(100vh - 140px));
   overflow-x: hidden;
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
@@ -925,8 +1049,9 @@ body.provider-body .gis-leaflet-popup--provider .gis-popup {
   overflow-wrap: anywhere;
 }
 
-body.provider-body .gis-leaflet-popup--provider .gis-popup strong {
-  margin-bottom: 4px;
+body.provider-body .gis-leaflet-popup--provider .gis-popup strong,
+body.provider-body .gis-leaflet-popup--provider .gis-popup__name {
+  margin-bottom: 6px;
 }
 
 body.provider-body .gis-leaflet-popup--provider .gis-popup p {
@@ -938,33 +1063,66 @@ body.provider-body .gis-map-legend {
   background: rgba(255, 255, 255, 0.98);
 }
 
-/* Maximized map — fills available viewport beside sidebar / under header */
-body.provider-body.gis-map-is-expanded {
+/* Maximized map — stage is moved to document.body so Leaflet is not clipped */
+body.gis-map-is-expanded {
   overflow: hidden;
 }
 
-body.provider-body.gis-map-is-expanded .gis-map-stage {
-  position: fixed;
-  top: var(--mc-header-offset, var(--provider-header-h, 64px));
-  left: var(--portal-sidebar-w, 240px);
-  right: 0;
-  bottom: 0;
-  z-index: 1100;
+.gis-map-stage-placeholder {
+  display: block;
+  width: 100%;
+  height: clamp(320px, 42vh, 520px);
+  min-height: 320px;
+  background: #e2e8f0;
+  border-radius: 0;
+}
+
+body.provider-body .gis-map-stage-placeholder {
+  height: clamp(420px, 48vh, 500px);
+  min-height: 420px;
+}
+
+body.gis-map-is-expanded > .gis-map-stage,
+body.gis-map-is-expanded .gis-map-stage {
+  position: fixed !important;
+  top: var(--mc-header-offset, var(--provider-header-h, 64px)) !important;
+  left: var(--portal-sidebar-w, 240px) !important;
+  right: 0 !important;
+  bottom: 0 !important;
+  z-index: 1200 !important;
+  width: auto !important;
   height: auto !important;
   min-height: 0 !important;
-  border: 0;
-  box-shadow: none;
-  background: #0f172a;
+  margin: 0 !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  background: #0f172a !important;
+  overflow: hidden !important;
 }
 
-body.provider-body.gis-map-is-expanded .gis-map-stage .gis-map {
+body.gis-map-is-expanded > .gis-map-stage .gis-map,
+body.gis-map-is-expanded .gis-map-stage .gis-map {
+  position: absolute !important;
+  inset: 0 !important;
+  width: 100% !important;
   height: 100% !important;
-  min-height: 100% !important;
+  min-height: 0 !important;
+  max-height: none !important;
 }
 
-body.provider-body.gis-map-is-expanded .gis-map-expand {
+body.gis-map-is-expanded .gis-map-expand {
   top: 16px;
   left: 16px;
+  z-index: 1210;
+}
+
+body.gis-map-is-expanded .gis-map-layer-switch {
+  z-index: 1210;
+}
+
+body.gis-map-is-expanded .gis-brgy-panel {
+  visibility: hidden;
 }
 
 @media (max-width: 1199px) {
@@ -973,8 +1131,18 @@ body.provider-body.gis-map-is-expanded .gis-map-expand {
     min-height: 380px;
   }
 
+  body.provider-body .gis-map-stage .gis-map {
+    height: clamp(380px, 46vh, 450px);
+    min-height: 380px;
+  }
+
+  body.provider-body .gis-map-stage-placeholder {
+    height: clamp(380px, 46vh, 450px);
+    min-height: 380px;
+  }
+
   body.provider-body .gis-leaflet-popup--provider .leaflet-popup-content {
-    max-height: 200px;
+    max-height: min(320px, calc(100vh - 160px));
   }
 }
 
@@ -984,24 +1152,30 @@ body.provider-body.gis-map-is-expanded .gis-map-expand {
     min-height: 300px;
   }
 
-  body.provider-body.gis-map-is-expanded .gis-map-stage {
-    left: 0;
-    top: var(--mc-header-offset, var(--provider-header-h, 56px));
+  body.provider-body .gis-map-stage-placeholder {
+    height: clamp(300px, 42vh, 400px);
+    min-height: 300px;
+  }
+
+  body.gis-map-is-expanded > .gis-map-stage,
+  body.gis-map-is-expanded .gis-map-stage {
+    left: 0 !important;
+    top: var(--mc-header-offset, var(--provider-header-h, 56px)) !important;
   }
 
   body.provider-body .gis-leaflet-popup--provider {
-    max-width: calc(100vw - 40px);
+    max-width: min(320px, calc(100vw - 32px));
   }
 
   body.provider-body .gis-leaflet-popup--provider .leaflet-popup-content {
-    max-height: 190px;
+    max-height: min(300px, calc(100vh - 140px));
   }
 
-  body.provider-body .gis-map-expand__label {
+  .gis-map-expand__label {
     display: none;
   }
 
-  body.provider-body .gis-map-expand {
+  .gis-map-expand {
     padding: 8px 10px;
   }
 }
@@ -1012,9 +1186,14 @@ body.provider-body.gis-map-is-expanded .gis-map-expand {
     min-height: 300px;
   }
 
+  body.provider-body .gis-map-stage-placeholder {
+    height: clamp(300px, 40vh, 380px);
+    min-height: 300px;
+  }
+
   body.provider-body .gis-leaflet-popup--provider .leaflet-popup-content {
-    max-height: 180px;
-    margin: 6px 8px 6px 9px;
+    max-height: min(280px, calc(100vh - 120px));
+    margin: 8px 10px 10px;
   }
 }
 

@@ -185,6 +185,8 @@
     monitoring: null,
     populationByBarangay: {},
     mapExpanded: false,
+    mapStageHome: null,
+    mapStagePlaceholder: null,
   };
 
   const els = {
@@ -782,8 +784,8 @@
             '<tr>' +
             '<td><strong>' +
             escapeHtml(row.patient_name) +
-            '</strong><br><span class="text-xs text-muted">ID ' +
-            escapeHtml(row.patient_id) +
+            '</strong><br><span class="text-xs text-muted">' +
+            escapeHtml(formatPatientNumber(row)) +
             '</span>' +
             severityBadge +
             '</td>' +
@@ -800,12 +802,14 @@
             escapeHtml(row.registration_date_display || row.registration_date) +
             '</td>' +
             '<td>' +
-            locationSourceBadgeHtml(row) +
+            (hasMapMarker(row)
+              ? locationSourceBadgeHtml(row)
+              : '<span class="gis-loc-badge gis-loc-badge--unavailable">Location unavailable</span>') +
             '</td>' +
             '<td><span class="gis-badge ' +
             statusClass +
             '">' +
-            escapeHtml(row.patient_status) +
+            escapeHtml(row.gis_status_label || row.patient_status) +
             '</span></td>' +
             '</tr>'
           );
@@ -865,112 +869,162 @@
     return 'No active consultation';
   }
 
-  function popupHtml(row) {
+  function findPatientById(patientId) {
+    const id = String(patientId || '');
+    if (!id) return null;
+    return (
+      state.patients.find(function (p) {
+        return String(p.patient_id) === id;
+      }) || null
+    );
+  }
+
+  function formatPatientNumber(row) {
+    const raw = String(row.patient_number || '').trim();
+    if (raw) return raw;
+    const id = parseInt(String(row.patient_id || ''), 10);
+    if (!Number.isFinite(id) || id <= 0) return '—';
+    return 'MC-' + String(id).padStart(6, '0');
+  }
+
+  function formatSex(row) {
+    const sex = String(row.sex || row.gender || '').trim();
+    if (!sex) return '—';
+    const key = sex.toLowerCase();
+    if (key === 'm' || key === 'male') return 'Male';
+    if (key === 'f' || key === 'female') return 'Female';
+    return sex.charAt(0).toUpperCase() + sex.slice(1);
+  }
+
+  function formatAge(row) {
+    const age = String(row.age || '').trim();
+    if (!age || !/^\d+$/.test(age)) return '—';
+    return age;
+  }
+
+  function formatProviderName(row) {
+    const name = String(row.assigned_doctor || '').trim();
+    if (!name) return 'Not assigned';
+    if (/^dr\.?\s/i.test(name)) return name;
+    return 'Dr. ' + name;
+  }
+
+  function triageDisplayLabel(row) {
+    const fromApi = String(row.triage_label || '').trim();
+    if (fromApi) return fromApi.toUpperCase();
     const severity = readTriageLevel(row);
-    const severityLabel = SEVERITY_LABELS[severity];
+    if (severity === SEVERITY.EMERGENCY) return 'EMERGENCY';
+    if (severity === SEVERITY.URGENT) return 'URGENT';
+    return 'NON-URGENT';
+  }
+
+  function patientStatusDisplay(row) {
+    const label = String(row.gis_status_label || '').trim();
+    if (label) return label;
+    return consultationStatusLabel(row);
+  }
+
+  function popupField(label, value) {
+    return (
+      '<div class="gis-popup__field">' +
+      '<span class="gis-popup__field-label">' +
+      escapeHtml(label) +
+      '</span>' +
+      '<span class="gis-popup__field-value">' +
+      escapeHtml(value || '—') +
+      '</span>' +
+      '</div>'
+    );
+  }
+
+  function popupHtml(row) {
+    if (!row || !(parseInt(String(row.patient_id || ''), 10) > 0)) {
+      return '<div class="gis-popup"><strong>Patient unavailable</strong><p>Invalid or unauthorized patient.</p></div>';
+    }
+
+    const severity = readTriageLevel(row);
+    const severityLabel = triageDisplayLabel(row);
     const lat = Number(row.latitude);
     const lng = Number(row.longitude);
     const locKey = normalizeLocationSource(row);
     const locMeta = locationSourceMeta(row);
-    const address = displayAddress(row) || '—';
-    let html = '<div class="gis-popup">';
+    const patientName = canShowPatientName()
+      ? String(row.patient_name || '').trim() || 'Unknown patient'
+      : 'Patient ' + formatPatientNumber(row);
+    const purok = String(row.purok || '').trim() || '—';
+    let html = '<div class="gis-popup" data-patient-id="' + escapeHtml(String(row.patient_id)) + '">';
 
-    if (canShowPatientName()) {
-      html += '<strong>' + escapeHtml(row.patient_name) + '</strong>';
-      html += '<p class="text-xs text-muted">Patient #' + escapeHtml(row.patient_id) + '</p>';
-    } else {
-      html += '<strong>Patient #' + escapeHtml(row.patient_id) + '</strong>';
-    }
-    html +=
-      '<p><strong>Barangay:</strong> ' +
-      escapeHtml(row.barangay || '—') +
-      '</p>';
-    if ((row.purok || row.street || '').toString().trim()) {
-      html +=
-        '<p><strong>Purok/Street:</strong> ' +
-        escapeHtml((row.purok || row.street || '').toString().trim()) +
-        '</p>';
-    }
+    html += '<div class="gis-popup__kicker">PATIENT</div>';
+    html += '<strong class="gis-popup__name">' + escapeHtml(patientName) + '</strong>';
+
+    html += '<div class="gis-popup__meta">';
+    html += popupField('Patient ID', formatPatientNumber(row));
+    html += popupField('Barangay', row.barangay || '—');
+    html += popupField('Purok', purok);
+    html += popupField('Age', formatAge(row));
+    html += popupField('Sex', formatSex(row));
+    html += '</div>';
 
     html +=
-      '<p class="gis-popup__badges">' +
+      '<div class="gis-popup__section">' +
+      '<div class="gis-popup__section-label">Triage</div>' +
+      '<div class="gis-popup__section-value">' +
       '<span class="gis-badge ' +
       severityBadgeClass(severity) +
       '">' +
       escapeHtml(severityLabel) +
       '</span> ' +
       locationSourceBadgeHtml(row) +
-      '</p>';
+      '</div></div>';
 
     html +=
-      '<p><strong>Address:</strong> ' +
-      escapeHtml(address) +
-      '</p>';
+      '<div class="gis-popup__section">' +
+      '<div class="gis-popup__section-label">Status</div>' +
+      '<div class="gis-popup__section-value">' +
+      escapeHtml(patientStatusDisplay(row)) +
+      '</div></div>';
+
+    html +=
+      '<div class="gis-popup__section">' +
+      '<div class="gis-popup__section-label">Provider</div>' +
+      '<div class="gis-popup__section-value">' +
+      escapeHtml(formatProviderName(row)) +
+      '</div></div>';
+
+    html +=
+      '<div class="gis-popup__section">' +
+      '<div class="gis-popup__section-label">Latest consultation</div>' +
+      '<div class="gis-popup__section-value">' +
+      escapeHtml(row.latest_consultation_date_display || row.latest_consultation_date || '—') +
+      '</div></div>';
 
     if (locKey === 'unavailable') {
       html +=
-        '<p class="gis-popup__loc-hint text-xs text-muted">No verified patient location is available for mapping.</p>' +
-        '<p><strong>Location accuracy:</strong> ' +
-        escapeHtml(locMeta.label) +
-        '</p>';
-    } else {
+        '<p class="gis-popup__loc-hint text-xs text-muted">Location unavailable — patient is listed but not mapped.</p>';
+    } else if (canShowCoordinates() && isValidCoord(lat, lng)) {
       html +=
         '<p class="gis-popup__loc-hint text-xs text-muted">' +
-        escapeHtml(row.location_note || locMeta.hint) +
-        '</p>';
-      if (canShowCoordinates() && isValidCoord(lat, lng)) {
-        html +=
-          '<p><strong>Location:</strong> ' +
-          escapeHtml(formatLocationCoords(lat, lng)) +
-          '</p>';
-      }
-      html +=
-        '<p><strong>Location accuracy:</strong> ' +
         escapeHtml(locMeta.label) +
+        (locKey === 'barangay_center' || locKey === 'barangay_centroid'
+          ? ' · Barangay center (not exact address)'
+          : '') +
         '</p>';
-      if (locKey === 'barangay_center' || locKey === 'barangay_centroid') {
-        html +=
-          '<p class="text-xs text-muted"><em>Note: Marker shows the verified barangay center — not the exact patient address.</em></p>';
-      }
     }
-
-    html +=
-      '<p><strong>Consultation status:</strong> ' +
-      escapeHtml(consultationStatusLabel(row)) +
-      '</p>' +
-      '<p><strong>Date created:</strong> ' +
-      escapeHtml(row.registration_date_display || row.registration_date || '—') +
-      '</p>' +
-      '<p><strong>Assigned BHW:</strong> ' +
-      escapeHtml(row.assigned_bhw || 'Not assigned') +
-      '</p>' +
-      '<p><strong>Assigned doctor:</strong> ' +
-      escapeHtml(row.assigned_doctor || 'Not assigned') +
-      '</p>';
 
     if (userRole === 'provider') {
       const recordsUrl = String(root.dataset.recordsUrl || '').trim();
-      const historyUrl = String(root.dataset.historyUrl || '').trim();
-      const pid = encodeURIComponent(String(row.patient_id || ''));
-      if (recordsUrl || historyUrl) {
-        html += '<p class="gis-popup__actions">';
-        if (recordsUrl) {
-          html +=
-            '<a class="gis-popup__link" href="' +
-            escapeHtml(recordsUrl) +
-            '?view=patients&amp;patient_id=' +
-            pid +
-            '">Open records</a>';
-        }
-        if (historyUrl) {
-          html +=
-            '<a class="gis-popup__link" href="' +
-            escapeHtml(historyUrl) +
-            '?patient_id=' +
-            pid +
-            '">Visit history</a>';
-        }
-        html += '</p>';
+      const pid = parseInt(String(row.patient_id || ''), 10);
+      if (recordsUrl && Number.isFinite(pid) && pid > 0) {
+        const href =
+          recordsUrl +
+          '?view=patients&patient_id=' +
+          encodeURIComponent(String(pid));
+        html +=
+          '<p class="gis-popup__actions">' +
+          '<a class="gis-popup__btn" href="' +
+          escapeHtml(href) +
+          '">View Patient</a>' +
+          '</p>';
       }
     }
 
@@ -984,29 +1038,29 @@
       : { x: 640, y: 520 };
     const isNarrow = size.x < 640;
     const isProvider = userRole === 'provider';
-    const widthCap = isProvider ? 320 : 280;
-    const heightCap = isProvider ? 220 : isNarrow ? Math.floor(size.y * 0.48) : 320;
-    const edgePad = isProvider ? 60 : 72;
-    const maxWidth = Math.max(180, Math.min(widthCap, size.x - edgePad));
+    const widthCap = isProvider ? 340 : 300;
+    const heightCap = isProvider ? 360 : isNarrow ? Math.floor(size.y * 0.55) : 340;
+    const edgePad = isProvider ? 48 : 72;
+    const maxWidth = Math.max(200, Math.min(widthCap, size.x - edgePad));
     const maxHeight = Math.max(
-      140,
-      Math.min(heightCap, size.y - (isProvider ? 120 : 88))
+      180,
+      Math.min(heightCap, size.y - (isProvider ? 96 : 88))
     );
-    const pad = isProvider ? 30 : isNarrow ? 12 : 16;
+    const pad = isProvider ? 28 : isNarrow ? 12 : 16;
     const padTL = isProvider
-      ? L.point(pad, Math.max(pad, 48))
+      ? L.point(pad, Math.max(pad, 44))
       : L.point(isNarrow ? 10 : 16, isNarrow ? 12 : 20);
     const padBR = isProvider
-      ? L.point(Math.max(pad, 52), Math.max(pad, 56))
+      ? L.point(Math.max(pad, 48), Math.max(pad, 52))
       : L.point(isNarrow ? 50 : 56, isNarrow ? 36 : 44);
     return {
       className: 'gis-leaflet-popup' + (isProvider ? ' gis-leaflet-popup--provider' : ''),
       autoPan: true,
-      autoPanPadding: isProvider ? L.point(30, 30) : undefined,
+      autoPanPadding: isProvider ? L.point(28, 28) : undefined,
       autoPanPaddingTopLeft: padTL,
       autoPanPaddingBottomRight: padBR,
       maxWidth: maxWidth,
-      minWidth: Math.min(isProvider ? 220 : 200, maxWidth),
+      minWidth: Math.min(isProvider ? 240 : 200, maxWidth),
       maxHeight: maxHeight,
       closeOnClick: true,
       keepInView: isProvider,
@@ -1046,50 +1100,54 @@
 
   function ensureProviderPopupVisible(popup) {
     if (!state.map || !popup || userRole !== 'provider') return;
-    applyPopupOptions(popup);
-    if (typeof popup.update === 'function') {
-      popup.update();
-    }
+    try {
+      applyPopupOptions(popup);
+      if (typeof popup.update === 'function') {
+        popup.update();
+      }
 
-    withSoftMapBounds(function () {
-      const map = state.map;
-      const latlng = typeof popup.getLatLng === 'function' ? popup.getLatLng() : null;
-      const el = typeof popup.getElement === 'function' ? popup.getElement() : null;
-      if (latlng && el) {
-        const size = map.getSize();
-        const padTop = 30;
-        const padSide = 30;
-        const padBottom = 56;
-        const popupH = Math.max(el.offsetHeight || 0, 120);
-        const popupW = Math.max(el.offsetWidth || 0, 200);
-        const tip = 16;
-        const current = map.latLngToContainerPoint(latlng);
-        // Default Leaflet popup opens above the marker.
-        const popupTop = current.y - popupH - tip;
-        const popupLeft = current.x - popupW / 2;
-        const popupRight = current.x + popupW / 2;
-        let dx = 0;
-        let dy = 0;
-        if (popupTop < padTop) {
-          dy = popupTop - padTop;
+      withSoftMapBounds(function () {
+        const map = state.map;
+        const latlng = typeof popup.getLatLng === 'function' ? popup.getLatLng() : null;
+        const el = typeof popup.getElement === 'function' ? popup.getElement() : null;
+        if (latlng && el) {
+          const size = map.getSize();
+          const padTop = 30;
+          const padSide = 30;
+          const padBottom = 56;
+          const popupH = Math.max(el.offsetHeight || 0, 120);
+          const popupW = Math.max(el.offsetWidth || 0, 200);
+          const tip = 16;
+          const current = map.latLngToContainerPoint(latlng);
+          // Default Leaflet popup opens above the marker.
+          const popupTop = current.y - popupH - tip;
+          const popupLeft = current.x - popupW / 2;
+          const popupRight = current.x + popupW / 2;
+          let dx = 0;
+          let dy = 0;
+          if (popupTop < padTop) {
+            dy = popupTop - padTop;
+          }
+          if (current.y + tip > size.y - padBottom) {
+            dy = current.y + tip - (size.y - padBottom);
+          }
+          if (popupLeft < padSide) {
+            dx = popupLeft - padSide;
+          }
+          if (popupRight > size.x - padSide) {
+            dx = popupRight - (size.x - padSide);
+          }
+          if (Math.abs(dx) > 4 || Math.abs(dy) > 4) {
+            map.panBy([dx, dy], { animate: false });
+          }
         }
-        if (current.y + tip > size.y - padBottom) {
-          dy = current.y + tip - (size.y - padBottom);
+        if (typeof popup._adjustPan === 'function') {
+          popup._adjustPan();
         }
-        if (popupLeft < padSide) {
-          dx = popupLeft - padSide;
-        }
-        if (popupRight > size.x - padSide) {
-          dx = popupRight - (size.x - padSide);
-        }
-        if (Math.abs(dx) > 4 || Math.abs(dy) > 4) {
-          map.panBy([dx, dy], { animate: false });
-        }
-      }
-      if (typeof popup._adjustPan === 'function') {
-        popup._adjustPan();
-      }
-    });
+      });
+    } catch (err) {
+      console.warn('GIS popup layout adjust failed:', err);
+    }
   }
 
   function syncOpenPopupLayout(popup) {
@@ -1107,10 +1165,76 @@
     }
   }
 
+  function scheduleMapResize(afterPopup) {
+    const run = function () {
+      invalidateMapSize();
+      if (state.map && state.streetLayer && state.satelliteLayer) {
+        // Re-attach base tiles after container size changes (prevents blank/white map).
+        applyBaseLayer(state.baseLayer || 'street');
+      }
+      if (state.map && typeof state.map.eachLayer === 'function') {
+        state.map.eachLayer(function (layer) {
+          if (layer && typeof layer.redraw === 'function') {
+            try {
+              layer.redraw();
+            } catch (e) {
+              /* ignore */
+            }
+          }
+        });
+      }
+      if (afterPopup !== false) {
+        const popup = state.map && state.map._popup;
+        if (userRole === 'provider' && popup && state.map.hasLayer(popup)) {
+          ensureProviderPopupVisible(popup);
+        }
+      }
+    };
+    requestAnimationFrame(function () {
+      run();
+      setTimeout(run, 50);
+      setTimeout(run, 200);
+      setTimeout(run, 450);
+    });
+  }
+
   function setMapExpanded(expanded) {
-    if (userRole !== 'provider') return;
-    state.mapExpanded = !!expanded;
+    const stage = document.getElementById('gis-map-stage');
+    if (!stage) return;
+
+    const next = !!expanded;
+    if (next === state.mapExpanded && document.body.classList.contains('gis-map-is-expanded') === next) {
+      scheduleMapResize();
+      return;
+    }
+
+    state.mapExpanded = next;
     document.body.classList.toggle('gis-map-is-expanded', state.mapExpanded);
+
+    if (state.mapExpanded) {
+      if (!state.mapStageHome) {
+        state.mapStageHome = stage.parentElement;
+      }
+      if (state.mapStageHome && stage.parentElement === state.mapStageHome) {
+        if (!state.mapStagePlaceholder) {
+          state.mapStagePlaceholder = document.createElement('div');
+          state.mapStagePlaceholder.className = 'gis-map-stage-placeholder';
+          state.mapStagePlaceholder.setAttribute('aria-hidden', 'true');
+        }
+        state.mapStageHome.insertBefore(state.mapStagePlaceholder, stage);
+        document.body.appendChild(stage);
+      } else if (stage.parentElement !== document.body) {
+        document.body.appendChild(stage);
+      }
+    } else if (state.mapStageHome) {
+      if (state.mapStagePlaceholder && state.mapStagePlaceholder.parentNode === state.mapStageHome) {
+        state.mapStageHome.insertBefore(stage, state.mapStagePlaceholder);
+        state.mapStagePlaceholder.remove();
+      } else {
+        state.mapStageHome.appendChild(stage);
+      }
+    }
+
     const btn = document.getElementById('gisMapExpandBtn');
     if (btn) {
       btn.setAttribute('aria-pressed', state.mapExpanded ? 'true' : 'false');
@@ -1120,16 +1244,8 @@
       if (label) label.textContent = state.mapExpanded ? 'Minimize' : 'Maximize';
       if (icon) icon.textContent = state.mapExpanded ? '−' : '⛶';
     }
-    requestAnimationFrame(function () {
-      invalidateMapSize();
-      setTimeout(function () {
-        invalidateMapSize();
-        const popup = state.map && state.map._popup;
-        if (popup && state.map.hasLayer(popup)) {
-          ensureProviderPopupVisible(popup);
-        }
-      }, 180);
-    });
+
+    scheduleMapResize();
   }
 
   function toggleMapExpanded() {
@@ -1160,7 +1276,7 @@
         tile.x
       );
     }
-    return 'https://tile.openstreetmap.org/' + tile.z + '/' + tile.x + '/' + tile.y + '.png';
+    return 'https://a.tile.openstreetmap.org/' + tile.z + '/' + tile.x + '/' + tile.y + '.png';
   }
 
   function updateLayerSwitchPreview() {
@@ -1207,8 +1323,16 @@
   }
 
   function ensureOverlayOrder() {
+    // Keep heatmap behind markers and never steal clicks.
     if (state.heat && state.map.hasLayer(state.heat)) {
-      state.heat.bringToFront();
+      if (state.heat._canvas) {
+        state.heat._canvas.style.pointerEvents = 'none';
+      }
+      try {
+        state.heat.bringToBack();
+      } catch (e) {
+        /* ignore */
+      }
     }
     if (state.cluster) {
       state.cluster.bringToFront();
@@ -1238,22 +1362,24 @@
       : isGeocoded
         ? 'Geocoded address pin'
         : 'Approximate barangay pin';
+    // Larger icon box so the visible ring/glow remains clickable.
     return L.divIcon({
       className:
         'gis-severity-marker' +
         (isExact ? '' : isGeocoded ? ' gis-severity-marker--geocoded' : ' gis-severity-marker--approx'),
       html:
-        '<div style="background:' +
+        '<div class="gis-severity-marker__dot" style="background:' +
         color +
-        ';width:14px;height:14px;border-radius:50%;border:' +
+        ';border:' +
         border +
         ';' +
         ring +
         '" title="' +
         title +
         '"></div>',
-      iconSize: [14, 14],
-      iconAnchor: [7, 7],
+      iconSize: [28, 28],
+      iconAnchor: [14, 14],
+      popupAnchor: [0, -12],
     });
   }
 
@@ -1274,8 +1400,9 @@
 
     L.control.zoom({ position: 'topright' }).addTo(state.map);
 
-    state.streetLayer = L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    state.streetLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
       maxZoom: 19,
+      subdomains: 'abc',
       attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
     });
 
@@ -1328,7 +1455,6 @@
   }
 
   function initMapExpandControl() {
-    if (userRole !== 'provider') return;
     const btn = document.getElementById('gisMapExpandBtn');
     if (!btn || btn.dataset.bound === '1') return;
     btn.dataset.bound = '1';
@@ -1408,12 +1534,33 @@
       const lat = Number(row.latitude);
       const lng = Number(row.longitude);
       if (!isValidCoord(lat, lng)) return;
+      const patientId = parseInt(String(row.patient_id || ''), 10);
+      if (!Number.isFinite(patientId) || patientId <= 0) {
+        return;
+      }
       bounds.push([lat, lng]);
       const severity = readTriageLevel(row);
       const marker = L.marker([lat, lng], {
         icon: severityMarkerIcon(severity, normalizeLocationSource(row)),
+        keyboard: true,
+        riseOnHover: true,
+        bubblingMouseEvents: false,
+        patientId: patientId,
+        title: String(row.patient_name || formatPatientNumber(row)),
       });
-      marker.bindPopup(popupHtml(row), popupOptions());
+      // Resolve popup content from current state by DB patient id (never by array index).
+      marker.bindPopup(function (layer) {
+        const id = layer && layer.options ? layer.options.patientId : patientId;
+        const fresh = findPatientById(id);
+        return popupHtml(fresh || row);
+      }, popupOptions());
+      marker.on('click', function (ev) {
+        if (ev && ev.originalEvent) {
+          L.DomEvent.stopPropagation(ev.originalEvent);
+          L.DomEvent.preventDefault(ev.originalEvent);
+        }
+        this.openPopup();
+      });
       state.cluster.addLayer(marker);
     });
 
@@ -1432,6 +1579,9 @@
         gradient: gradient,
       });
       state.map.addLayer(state.heat);
+      if (state.heat._canvas) {
+        state.heat._canvas.style.pointerEvents = 'none';
+      }
     }
 
     ensureOverlayOrder();

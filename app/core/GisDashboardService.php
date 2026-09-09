@@ -228,6 +228,11 @@ final class GisDashboardService
         while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
             $resolved = $this->resolvePatientRow($row, false);
             if (empty($resolved['has_map_marker'])) {
+                error_log(
+                    'GIS: location unavailable for patient_id='
+                    . (int) ($row['patient_id'] ?? 0)
+                    . ' during missing-location sync'
+                );
                 continue;
             }
 
@@ -520,9 +525,21 @@ final class GisDashboardService
         }
         $params = array_merge($selectParams, $params);
 
+        $latestConsultDateSql = $this->tableExists('consultations')
+            ? "(SELECT c.consult_date FROM consultations c
+                WHERE c.patient_id = u.id
+                ORDER BY c.consult_date DESC, c.id DESC LIMIT 1)"
+            : 'NULL';
+        $latestConsultStatusSql = $this->tableExists('consultations')
+            ? "(SELECT c.status FROM consultations c
+                WHERE c.patient_id = u.id
+                ORDER BY c.consult_date DESC, c.id DESC LIMIT 1)"
+            : "''";
+
         $sql = "
             SELECT
                 u.id AS patient_id,
+                CONCAT('MC-', LPAD(u.id, 6, '0')) AS patient_number,
                 CONCAT(u.first_name, ' ', u.last_name) AS patient_name,
                 pl.barangay AS pl_barangay,
                 pr.barangay AS pr_barangay,
@@ -536,6 +553,8 @@ final class GisDashboardService
                 " . $this->registrationColumnExpr('sitio') . " AS sitio,
                 " . $this->registrationColumnExpr('house_number') . " AS house_number,
                 " . $this->registrationColumnExpr('street') . " AS street,
+                " . $this->registrationColumnExpr('age') . " AS age,
+                " . $this->registrationColumnExpr('gender') . " AS sex,
                 pl.latitude,
                 pl.longitude,
                 pl.location_source,
@@ -551,6 +570,8 @@ final class GisDashboardService
                 " . $this->emergencySelectSql('u.id') . " AS is_emergency,
                 " . $this->assignedBhwSelectSql() . " AS assigned_bhw,
                 " . $this->assignedDoctorSelectSql() . " AS assigned_doctor,
+                {$latestConsultDateSql} AS latest_consultation_date,
+                {$latestConsultStatusSql} AS latest_consultation_status,
                 (SELECT COUNT(*) FROM consultations c WHERE c.patient_id = u.id
                     AND c.status IN ('scheduled','in_consultation','pending')) AS active_consultations,
                 {$visitsTodaySql} AS visits_today,
@@ -571,11 +592,22 @@ final class GisDashboardService
             $resolved = $this->resolvePatientRow($row);
             $row = array_merge($row, $resolved);
             $row = $this->applyViewerPrivacy($row, $viewerRole);
+            $row['patient_id'] = (int) ($row['patient_id'] ?? 0);
+            $row['patient_number'] = trim((string) ($row['patient_number'] ?? ''));
+            if ($row['patient_number'] === '' && $row['patient_id'] > 0) {
+                $row['patient_number'] = 'MC-' . str_pad((string) $row['patient_id'], 6, '0', STR_PAD_LEFT);
+            }
             $row['triage_level'] = $this->normalizeStoredTriageLevel((string) ($row['triage_level'] ?? ''));
             $row['is_emergency'] = $row['triage_level'] === 'emergency';
+            $row['age'] = $this->normalizeAgeDisplay((string) ($row['age'] ?? ''));
+            $row['sex'] = $this->normalizeSexDisplay((string) ($row['sex'] ?? ''));
             $row['registration_date_display'] = !empty($row['registration_date'])
                 ? date('M j, Y', strtotime((string) $row['registration_date']))
                 : '';
+            $row['latest_consultation_date_display'] = !empty($row['latest_consultation_date'])
+                ? date('M j, Y', strtotime((string) $row['latest_consultation_date']))
+                : '';
+            $row['gis_status_label'] = $this->resolveGisStatusLabel($row);
             $row['data_version'] = $this->patientDataVersion($row);
         }
         unset($row);
@@ -1266,6 +1298,10 @@ final class GisDashboardService
             (string) ($row['longitude'] ?? ''),
             (string) ($row['barangay'] ?? ''),
             (string) ($row['active_consultations'] ?? ''),
+            (string) ($row['latest_consultation_date'] ?? ''),
+            (string) ($row['latest_consultation_status'] ?? ''),
+            (string) ($row['gis_status_label'] ?? ''),
+            (string) ($row['assigned_doctor'] ?? ''),
         ];
 
         return sha1(implode('|', $parts));
@@ -1386,6 +1422,62 @@ final class GisDashboardService
             INNER JOIN users d ON d.id = c.provider_id
             WHERE c.patient_id = u.id AND c.provider_id IS NOT NULL AND c.provider_id > 0
             ORDER BY c.consult_date DESC, c.id DESC LIMIT 1)";
+    }
+
+    private function normalizeAgeDisplay(string $age): string
+    {
+        $age = trim($age);
+        if ($age === '' || !is_numeric($age)) {
+            return '';
+        }
+
+        return (string) max(0, (int) $age);
+    }
+
+    private function normalizeSexDisplay(string $sex): string
+    {
+        $key = strtolower(trim($sex));
+        return match ($key) {
+            'm', 'male' => 'Male',
+            'f', 'female' => 'Female',
+            'other' => 'Other',
+            default => $sex !== '' ? ucfirst($key) : '',
+        };
+    }
+
+    /**
+     * Human-readable operational status for GIS popups (not a new triage class).
+     *
+     * @param array<string, mixed> $row
+     */
+    private function resolveGisStatusLabel(array $row): string
+    {
+        $consultStatus = strtolower(trim((string) ($row['latest_consultation_status'] ?? '')));
+        if ($consultStatus === 'in_consultation') {
+            return 'In consultation';
+        }
+        if ($consultStatus === 'scheduled') {
+            return 'Scheduled';
+        }
+        if ($consultStatus === 'pending') {
+            return 'Ready for Doctor';
+        }
+        if ((int) ($row['pending_review'] ?? 0) > 0) {
+            return 'Pending Care tips review';
+        }
+        if ((int) ($row['active_consultations'] ?? 0) > 0) {
+            return 'Active consultation';
+        }
+        if ($consultStatus === 'completed') {
+            return 'Consultation completed';
+        }
+        if ($consultStatus === 'cancelled') {
+            return 'Consultation cancelled';
+        }
+
+        $account = trim((string) ($row['patient_status'] ?? ''));
+
+        return $account !== '' ? $account : '—';
     }
 
     private function columnExists(string $table, string $column): bool
