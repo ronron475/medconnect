@@ -839,6 +839,7 @@ try {
             $snapshotInput,
             $triageId
         );
+        consultation_recorded_data_attach_pending_to_consultation($pdo, $patient_id, $consultation_id);
     } catch (Throwable $e) {
         error_log('submit_triage recorded_data: ' . $e->getMessage());
     }

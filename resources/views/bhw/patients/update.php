@@ -271,20 +271,40 @@ ob_start();
     var emptyEl = document.getElementById('bhwRecordedEmpty');
     var form = document.getElementById('bhwRecordedForm');
     var select = document.getElementById('rd_consultation_id');
+    var consultWrap = document.getElementById('rd_consultation_wrap');
+    var statusEl = document.getElementById('bhwRecordedStatus');
     recordedAlert('');
     renderLatestRecorded(null);
     if (!patientId || !select) return;
     document.getElementById('rd_patient_id').value = String(patientId);
+    if (form) form.style.display = 'block';
     BhwPortal.get('recorded_data.php', { action: 'list_open', patient_id: patientId }).then(function (r) {
       var list = (r.success && r.consultations) ? r.consultations : [];
       select.innerHTML = '';
       if (!list.length) {
-        if (emptyEl) emptyEl.style.display = 'block';
-        if (form) form.style.display = 'none';
+        if (emptyEl) {
+          emptyEl.style.display = 'block';
+          emptyEl.innerHTML =
+            '<strong>No active consultation yet.</strong><br>' +
+            'Patient information can still be recorded and will be saved as <strong>pre-consultation data</strong>. ' +
+            'Once a consultation is created and a doctor is assigned, the appropriate information will be available to the assigned doctor.';
+        }
+        if (consultWrap) consultWrap.style.display = 'none';
+        select.removeAttribute('required');
+        var opt = document.createElement('option');
+        opt.value = '';
+        opt.textContent = 'Pre-consultation (no consult yet)';
+        select.appendChild(opt);
+        renderLatestRecorded(r.pending || null);
+        if (statusEl) {
+          statusEl.style.display = 'block';
+          statusEl.textContent = 'Status: Pre-Consultation';
+        }
         return;
       }
       if (emptyEl) emptyEl.style.display = 'none';
-      if (form) form.style.display = 'block';
+      if (consultWrap) consultWrap.style.display = 'block';
+      select.setAttribute('required', 'required');
       list.forEach(function (c) {
         var opt = document.createElement('option');
         opt.value = c.id;
@@ -296,6 +316,10 @@ ob_start();
       function showSelectedLatest() {
         var cid = select.value;
         renderLatestRecorded(latestMap[cid] || null);
+        if (statusEl) {
+          statusEl.style.display = 'block';
+          statusEl.textContent = 'Status: Linked to consultation #' + cid;
+        }
       }
       select.onchange = showSelectedLatest;
       showSelectedLatest();
@@ -321,9 +345,10 @@ ob_start();
     var rows = (dto.fields || []).map(function (f) {
       return '<div><strong>' + escHtml(f.label) + ':</strong> ' + escHtml(f.value) + '</div>';
     }).join('');
+    var statusLabel = dto.status_label || (dto.status === 'pending' ? 'Pre-Consultation' : 'Consultation');
     box.style.display = 'block';
     box.innerHTML =
-      '<div class="bhw-field-hint" style="margin-bottom:6px;">Latest saved for doctor</div>' +
+      '<div class="bhw-field-hint" style="margin-bottom:6px;">Latest saved · Status: <strong>' + escHtml(statusLabel) + '</strong></div>' +
       '<div style="padding:10px 12px;border:1px solid #bbf7d0;background:#f0fdf4;border-radius:8px;font-size:13px;line-height:1.5;">' +
       rows +
       '<div style="margin-top:6px;color:#64748b;">Recorded by ' + escHtml(dto.recorded_by_label || dto.recorder_role_label || 'BHW') +
@@ -402,12 +427,12 @@ ob_start();
       BhwPortal.post('recorded_data.php', fd).then(function (r) {
         if (btn) {
           btn.disabled = false;
-          btn.textContent = 'Save for Doctor';
+          btn.textContent = 'Save Patient Information';
         }
         recordedAlert(r.message || (r.success ? 'Saved.' : 'Save failed.'), !!r.success);
-        BhwPortal.toast(r.message, r.success, { title: r.success ? 'Recorded for Doctor' : 'Save Failed' });
+        BhwPortal.toast(r.message, r.success, { title: r.success ? (r.mode === 'pre_consultation' ? 'Saved as Pre-Consultation' : 'Recorded for Doctor') : 'Save Failed' });
         if (r.success) {
-          renderLatestRecorded(r.recorded || null);
+          renderLatestRecorded(r.recorded || r.pending || null);
           if (currentPatient) loadRecordedDataPanel(currentPatient.id);
         }
       });
@@ -567,16 +592,17 @@ $update_css_ver = (int) @filemtime(ASSETS_PATH . '/css/bhw-update-patient.css');
           <span class="bhw-card-icon" aria-hidden="true">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
           </span>
-          Record Vitals for Consultation
+          Record Patient / Pre-Consultation Information
         </h3>
-        <p class="bhw-form-card-sub">Save observations for a <strong>specific open consultation</strong>. Only the doctor assigned to that consultation can see them — not other doctors from prior visits. This stays separate from the doctor&rsquo;s SOAP assessment.</p>
-        <div id="bhwRecordedEmpty" class="bhw-field-hint" style="margin-bottom:12px;">No open consultation found for this patient. Book a consult first, then record vitals here.</div>
+        <p class="bhw-form-card-sub">Record vitals and observations anytime. If a consultation is open, data is saved to that visit. If not, it is saved as <strong>pre-consultation data</strong> and linked when a doctor is assigned. This stays separate from the doctor&rsquo;s SOAP assessment.</p>
+        <div id="bhwRecordedEmpty" class="bhw-field-hint" style="margin-bottom:12px;display:none;"></div>
+        <div id="bhwRecordedStatus" class="bhw-field-hint" style="margin-bottom:10px;display:none;"></div>
         <form id="bhwRecordedForm" style="display:none;" novalidate>
           <input type="hidden" name="patient_id" id="rd_patient_id" value="">
           <div class="bhw-form-grid">
-            <div class="bhw-field span-2">
-              <label class="form-label" for="rd_consultation_id">Consultation <span class="bhw-req">*</span></label>
-              <select class="form-select" id="rd_consultation_id" name="consultation_id" required></select>
+            <div class="bhw-field span-2" id="rd_consultation_wrap">
+              <label class="form-label" for="rd_consultation_id">Consultation</label>
+              <select class="form-select" id="rd_consultation_id" name="consultation_id"></select>
             </div>
             <div class="bhw-field span-2">
               <label class="form-label" for="rd_chief_complaint">Chief Complaint</label>
@@ -621,7 +647,7 @@ $update_css_ver = (int) @filemtime(ASSETS_PATH . '/css/bhw-update-patient.css');
           </div>
           <p id="bhwRecordedAlert" class="mc-form-alert" style="display:none;margin-top:10px;" role="alert"></p>
           <div class="bhw-form-actions" style="margin-top:12px;">
-            <button type="submit" class="bhw-btn-teal" id="bhwRecordedSaveBtn">Save for Doctor</button>
+            <button type="submit" class="bhw-btn-teal" id="bhwRecordedSaveBtn">Save Patient Information</button>
           </div>
         </form>
         <div id="bhwRecordedLatest" style="display:none;margin-top:14px;"></div>

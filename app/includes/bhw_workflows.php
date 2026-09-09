@@ -458,6 +458,7 @@ final class BhwWorkflows
 
             try {
                 require_once __DIR__ . '/consultation_recorded_data.php';
+                consultation_recorded_data_attach_pending_to_consultation($pdo, $patientId, $consultation_id);
                 consultation_recorded_data_snapshot_from_triage(
                     $pdo,
                     $patientId,

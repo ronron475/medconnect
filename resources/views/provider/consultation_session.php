@@ -2757,7 +2757,7 @@ body.consultation-mobile-call-fullscreen .mc-provider-video-dock iframe {
             <div class="session-card-header">
                 <div>
                     <p class="csp-eyebrow" style="margin:0 0 2px;">Pre-consult intake for this visit only</p>
-                    <div class="session-card-title"><?= icon('file') ?> BHW/Patient Recorded Data</div>
+                    <div class="session-card-title"><?= icon('file') ?> BHW/Patient Pre-Consultation Information</div>
                 </div>
             </div>
             <div class="session-card-body" id="consultationRecordedDataBody">
@@ -2765,6 +2765,9 @@ body.consultation-mobile-call-fullscreen .mc-provider-video-dock iframe {
                 <div id="consultationRecordedDataContent">
                 <?php if (!empty($recorded_data['available'])): ?>
                 <div class="prd-meta">
+                    <?php if (!empty($recorded_data['status_label'])): ?>
+                    <span>Status: <strong><?= htmlspecialchars((string) $recorded_data['status_label']) ?></strong></span>
+                    <?php endif; ?>
                     <span>Recorded by: <strong><?= htmlspecialchars((string) ($recorded_data['recorded_by_label'] ?: $recorded_data['recorder_role_label'])) ?></strong></span>
                     <?php if (!empty($recorded_data['recorded_at_label'])): ?>
                     <span>Recorded at: <strong><?= htmlspecialchars((string) $recorded_data['recorded_at_label']) ?></strong></span>
@@ -3387,6 +3390,9 @@ function renderConsultationRecordedData(payload) {
     }
     const fields = Array.isArray(recorded.fields) ? recorded.fields : [];
     let html = '<div class="prd-meta">';
+    if (recorded.status_label) {
+        html += '<span>Status: <strong>' + escapePrdHtml(recorded.status_label) + '</strong></span>';
+    }
     html += '<span>Recorded by: <strong>' + escapePrdHtml(recorded.recorded_by_label || recorded.recorder_role_label || '') + '</strong></span>';
     if (recorded.recorded_at_label) {
         html += '<span>Recorded at: <strong>' + escapePrdHtml(recorded.recorded_at_label) + '</strong></span>';

@@ -15,7 +15,7 @@ function consultation_recorded_data_ensure_schema(PDO $pdo): void
         CREATE TABLE IF NOT EXISTS consultation_recorded_data (
             id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
             patient_id INT UNSIGNED NOT NULL,
-            consultation_id INT UNSIGNED NOT NULL,
+            consultation_id INT UNSIGNED NULL,
             triage_result_id BIGINT UNSIGNED NULL,
             recorded_by INT UNSIGNED NOT NULL,
             recorder_role ENUM('patient','bhw') NOT NULL,
@@ -29,12 +29,42 @@ function consultation_recorded_data_ensure_schema(PDO $pdo): void
             weight_kg DECIMAL(6,2) NULL,
             height_cm DECIMAL(6,2) NULL,
             notes TEXT NULL,
+            status ENUM('pending','attached') NOT NULL DEFAULT 'pending',
+            origin ENUM('consultation','pre_consultation') NOT NULL DEFAULT 'pre_consultation',
+            attached_at DATETIME NULL,
             recorded_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
             INDEX idx_crd_consultation (consultation_id),
             INDEX idx_crd_patient (patient_id),
+            INDEX idx_crd_patient_status (patient_id, status),
             INDEX idx_crd_recorded_at (recorded_at)
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
     ");
+
+    try {
+        $cols = $pdo->query('SHOW COLUMNS FROM consultation_recorded_data')->fetchAll(PDO::FETCH_ASSOC) ?: [];
+        $byName = [];
+        foreach ($cols as $col) {
+            $byName[(string) ($col['Field'] ?? '')] = $col;
+        }
+
+        if (isset($byName['consultation_id']) && strtoupper((string) ($byName['consultation_id']['Null'] ?? '')) === 'NO') {
+            $pdo->exec('ALTER TABLE consultation_recorded_data MODIFY consultation_id INT UNSIGNED NULL');
+        }
+        if (!isset($byName['status'])) {
+            $pdo->exec("ALTER TABLE consultation_recorded_data ADD COLUMN status ENUM('pending','attached') NOT NULL DEFAULT 'pending' AFTER notes");
+            $pdo->exec("UPDATE consultation_recorded_data SET status = 'attached' WHERE consultation_id IS NOT NULL");
+        }
+        if (!isset($byName['origin'])) {
+            $pdo->exec("ALTER TABLE consultation_recorded_data ADD COLUMN origin ENUM('consultation','pre_consultation') NOT NULL DEFAULT 'pre_consultation' AFTER status");
+            $pdo->exec("UPDATE consultation_recorded_data SET origin = 'consultation' WHERE consultation_id IS NOT NULL");
+        }
+        if (!isset($byName['attached_at'])) {
+            $pdo->exec('ALTER TABLE consultation_recorded_data ADD COLUMN attached_at DATETIME NULL AFTER origin');
+            $pdo->exec('UPDATE consultation_recorded_data SET attached_at = COALESCE(recorded_at, NOW()) WHERE consultation_id IS NOT NULL AND attached_at IS NULL');
+        }
+    } catch (Throwable $e) {
+        error_log('consultation_recorded_data schema migrate: ' . $e->getMessage());
+    }
 
     $ready = true;
 }
@@ -66,7 +96,7 @@ function consultation_recorded_data_status_is_open(string $status): bool
 
 /**
  * @param array<string, mixed> $input
- * @return array{success: bool, message?: string, id?: int, errors?: array<string, string>}
+ * @return array{success: bool, message?: string, id?: int, errors?: array<string, string>, mode?: string, status?: string}
  */
 function consultation_recorded_data_save(
     PDO $pdo,
@@ -85,11 +115,57 @@ function consultation_recorded_data_save(
         return ['success' => false, 'message' => 'Invalid recorder role.'];
     }
 
-    if ($patientId <= 0 || $consultationId <= 0 || $recordedBy <= 0) {
-        return ['success' => false, 'message' => 'Patient, consultation, and recorder are required.'];
+    if ($patientId <= 0 || $recordedBy <= 0) {
+        return ['success' => false, 'message' => 'Patient and recorder are required.'];
     }
 
-    // Always bind to this consultation + patient — never patient_id alone.
+    $parsed = consultation_recorded_data_parse_input($input);
+    if (!$parsed['ok']) {
+        return ['success' => false, 'message' => $parsed['message'], 'errors' => $parsed['errors']];
+    }
+    $n = $parsed['data'];
+
+    if (!consultation_recorded_data_has_content($n)) {
+        return ['success' => false, 'message' => 'Enter at least one vital sign, complaint, or observation.'];
+    }
+
+    // CASE 2 — no consultation yet: save as pending pre-consultation data.
+    if ($consultationId <= 0) {
+        $stmt = $pdo->prepare("
+            INSERT INTO consultation_recorded_data (
+                patient_id, consultation_id, triage_result_id, recorded_by, recorder_role,
+                chief_complaint, symptoms, temperature_c, blood_pressure, pulse_bpm,
+                respiratory_rate, spo2_percent, weight_kg, height_cm, notes,
+                status, origin, attached_at, recorded_at
+            ) VALUES (?, NULL, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending', 'pre_consultation', NULL, NOW())
+        ");
+        $stmt->execute([
+            $patientId,
+            $triageResultId && $triageResultId > 0 ? $triageResultId : null,
+            $recordedBy,
+            $role,
+            $n['chief_complaint'],
+            $n['symptoms'],
+            $n['temperature_c'],
+            $n['blood_pressure'],
+            $n['pulse_bpm'],
+            $n['respiratory_rate'],
+            $n['spo2_percent'],
+            $n['weight_kg'],
+            $n['height_cm'],
+            $n['notes'],
+        ]);
+
+        return [
+            'success' => true,
+            'message' => 'Saved as pre-consultation data. It will be linked when a consultation is booked.',
+            'id'      => (int) $pdo->lastInsertId(),
+            'mode'    => 'pre_consultation',
+            'status'  => 'pending',
+        ];
+    }
+
+    // CASE 1 — bind to this consultation + patient (never patient_id alone for doctor visibility).
     $consult = $pdo->prepare('SELECT id, patient_id, provider_id, status, triage_result_id FROM consultations WHERE id = ? AND patient_id = ? LIMIT 1');
     $consult->execute([$consultationId, $patientId]);
     $cRow = $consult->fetch(PDO::FETCH_ASSOC);
@@ -105,22 +181,13 @@ function consultation_recorded_data_save(
         $triageResultId = !empty($cRow['triage_result_id']) ? (int) $cRow['triage_result_id'] : null;
     }
 
-    $parsed = consultation_recorded_data_parse_input($input);
-    if (!$parsed['ok']) {
-        return ['success' => false, 'message' => $parsed['message'], 'errors' => $parsed['errors']];
-    }
-    $n = $parsed['data'];
-
-    if (!consultation_recorded_data_has_content($n)) {
-        return ['success' => false, 'message' => 'Enter at least one vital sign, complaint, or observation.'];
-    }
-
     $stmt = $pdo->prepare("
         INSERT INTO consultation_recorded_data (
             patient_id, consultation_id, triage_result_id, recorded_by, recorder_role,
             chief_complaint, symptoms, temperature_c, blood_pressure, pulse_bpm,
-            respiratory_rate, spo2_percent, weight_kg, height_cm, notes, recorded_at
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())
+            respiratory_rate, spo2_percent, weight_kg, height_cm, notes,
+            status, origin, attached_at, recorded_at
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'attached', 'consultation', NOW(), NOW())
     ");
     $stmt->execute([
         $patientId,
@@ -144,7 +211,75 @@ function consultation_recorded_data_save(
         'success' => true,
         'message' => 'Recorded data saved for this consultation.',
         'id'      => (int) $pdo->lastInsertId(),
+        'mode'    => 'consultation',
+        'status'  => 'attached',
     ];
+}
+
+/**
+ * Attach pending pre-consultation rows to a newly created consultation.
+ * Only rows recorded at/before the consultation was created are linked (once).
+ * Preserves original recorded_at / recorder / values.
+ *
+ * @return array{attached: int, ids: list<int>}
+ */
+function consultation_recorded_data_attach_pending_to_consultation(
+    PDO $pdo,
+    int $patientId,
+    int $consultationId
+): array {
+    consultation_recorded_data_ensure_schema($pdo);
+
+    $out = ['attached' => 0, 'ids' => []];
+    if ($patientId <= 0 || $consultationId <= 0) {
+        return $out;
+    }
+
+    $consult = $pdo->prepare('SELECT id, patient_id, created_at FROM consultations WHERE id = ? AND patient_id = ? LIMIT 1');
+    $consult->execute([$consultationId, $patientId]);
+    $cRow = $consult->fetch(PDO::FETCH_ASSOC);
+    if (!$cRow) {
+        return $out;
+    }
+
+    $createdAt = (string) ($cRow['created_at'] ?? '');
+    if ($createdAt === '') {
+        $createdAt = date('Y-m-d H:i:s');
+    }
+
+    // Link only unused pending rows for this patient that predate (or equal) consult creation.
+    $select = $pdo->prepare("
+        SELECT id
+        FROM consultation_recorded_data
+        WHERE patient_id = ?
+          AND status = 'pending'
+          AND consultation_id IS NULL
+          AND recorded_at <= ?
+        ORDER BY recorded_at ASC, id ASC
+    ");
+    $select->execute([$patientId, $createdAt]);
+    $ids = array_map('intval', $select->fetchAll(PDO::FETCH_COLUMN) ?: []);
+    if ($ids === []) {
+        return $out;
+    }
+
+    $placeholders = implode(',', array_fill(0, count($ids), '?'));
+    $params = array_merge([$consultationId], $ids);
+    $upd = $pdo->prepare("
+        UPDATE consultation_recorded_data
+        SET consultation_id = ?,
+            status = 'attached',
+            attached_at = NOW()
+        WHERE id IN ({$placeholders})
+          AND status = 'pending'
+          AND consultation_id IS NULL
+    ");
+    $upd->execute($params);
+
+    $out['attached'] = $upd->rowCount();
+    $out['ids'] = $ids;
+
+    return $out;
 }
 
 /**
@@ -193,6 +328,145 @@ function consultation_recorded_data_snapshot_from_triage(
         'chief_complaint' => $complaint,
         'symptoms'        => $symptoms,
     ], $triageResultId);
+}
+
+/**
+ * Latest pending pre-consultation row for a patient (not yet linked to any consult).
+ *
+ * @return array<string, mixed>|null
+ */
+function consultation_recorded_data_pending_latest(PDO $pdo, int $patientId): ?array
+{
+    consultation_recorded_data_ensure_schema($pdo);
+    if ($patientId <= 0) {
+        return null;
+    }
+
+    $stmt = $pdo->prepare("
+        SELECT d.*,
+               TRIM(CONCAT(COALESCE(u.first_name, ''), ' ', COALESCE(u.last_name, ''))) AS recorder_name
+        FROM consultation_recorded_data d
+        LEFT JOIN users u ON u.id = d.recorded_by
+        WHERE d.patient_id = ?
+          AND d.status = 'pending'
+          AND d.consultation_id IS NULL
+        ORDER BY d.recorded_at DESC, d.id DESC
+        LIMIT 1
+    ");
+    $stmt->execute([$patientId]);
+    $row = $stmt->fetch(PDO::FETCH_ASSOC);
+
+    return $row ?: null;
+}
+
+/**
+ * Pending history for BHW UI (newest first).
+ *
+ * @return list<array<string, mixed>>
+ */
+function consultation_recorded_data_pending_history(PDO $pdo, int $patientId, int $limit = 8): array
+{
+    consultation_recorded_data_ensure_schema($pdo);
+    if ($patientId <= 0) {
+        return [];
+    }
+    $limit = max(1, min(50, $limit));
+
+    $stmt = $pdo->prepare("
+        SELECT d.*,
+               TRIM(CONCAT(COALESCE(u.first_name, ''), ' ', COALESCE(u.last_name, ''))) AS recorder_name
+        FROM consultation_recorded_data d
+        LEFT JOIN users u ON u.id = d.recorded_by
+        WHERE d.patient_id = ?
+          AND d.status = 'pending'
+          AND d.consultation_id IS NULL
+        ORDER BY d.recorded_at DESC, d.id DESC
+        LIMIT {$limit}
+    ");
+    $stmt->execute([$patientId]);
+
+    return $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
+}
+
+/**
+ * DTO for pending or consult-scoped recorded data (shared shape for BHW/doctor panels).
+ *
+ * @param array<string, mixed>|null $latest
+ * @param list<array<string, mixed>> $history
+ * @return array<string, mixed>
+ */
+function consultation_recorded_data_dto_from_rows(
+    ?array $latest,
+    array $history,
+    int $consultationId,
+    int $patientId,
+    string $source
+): array {
+    $empty = [
+        'available'            => false,
+        'consultation_id'      => $consultationId,
+        'patient_id'           => $patientId,
+        'recorded_by_label'    => '',
+        'recorder_role'        => '',
+        'recorder_role_label'  => '',
+        'recorded_at'          => null,
+        'recorded_at_label'    => '',
+        'fields'               => [],
+        'history_count'        => 0,
+        'source'               => 'none',
+        'status'               => '',
+        'origin'               => '',
+        'status_label'         => '',
+        'panel_title'          => 'BHW/Patient Pre-Consultation Information',
+    ];
+
+    if (!$latest) {
+        return $empty;
+    }
+
+    $fields = consultation_recorded_data_field_list($latest);
+    if ($fields === []) {
+        return $empty;
+    }
+
+    $role = strtolower((string) ($latest['recorder_role'] ?? 'patient'));
+    $roleLabel = $role === 'bhw' ? 'BHW' : 'Patient';
+    $name = trim((string) ($latest['recorder_name'] ?? ''));
+    $byLabel = $name !== '' ? ($roleLabel . ' (' . $name . ')') : $roleLabel;
+    $status = strtolower((string) ($latest['status'] ?? ''));
+    $origin = strtolower((string) ($latest['origin'] ?? ''));
+    $isPre = ($status === 'pending') || ($origin === 'pre_consultation');
+
+    return [
+        'available'           => true,
+        'consultation_id'     => $consultationId,
+        'patient_id'          => $patientId,
+        'recorded_by_label'   => $byLabel,
+        'recorder_role'       => $role,
+        'recorder_role_label' => $roleLabel,
+        'recorded_at'         => $latest['recorded_at'] ?? null,
+        'recorded_at_label'   => consultation_recorded_data_format_datetime($latest['recorded_at'] ?? null),
+        'fields'              => $fields,
+        'history_count'       => count($history),
+        'source'              => $source,
+        'status'              => $status !== '' ? $status : ($consultationId > 0 ? 'attached' : 'pending'),
+        'origin'              => $origin !== '' ? $origin : ($consultationId > 0 ? 'consultation' : 'pre_consultation'),
+        'status_label'        => $status === 'pending' ? 'Pre-Consultation' : ($isPre ? 'Linked from pre-consultation' : 'Consultation'),
+        'panel_title'         => 'BHW/Patient Pre-Consultation Information',
+    ];
+}
+
+/**
+ * BHW helper: pending DTO for a patient with no open consult selected.
+ *
+ * @return array<string, mixed>
+ */
+function consultation_recorded_data_pending_for_bhw(PDO $pdo, int $patientId): array
+{
+    $history = consultation_recorded_data_pending_history($pdo, $patientId);
+    $latest = $history[0] ?? null;
+
+    return consultation_recorded_data_dto_from_rows($latest, $history, 0, $patientId, $latest ? 'pending_table' : 'none');
 }
 
 /**
@@ -309,62 +583,26 @@ function consultation_recorded_data_for_doctor(PDO $pdo, int $consultationId, in
 {
     consultation_recorded_data_ensure_schema($pdo);
 
-    $empty = [
-        'available'            => false,
-        'consultation_id'      => $consultationId,
-        'patient_id'           => $patientId,
-        'recorded_by_label'    => '',
-        'recorder_role'        => '',
-        'recorder_role_label'  => '',
-        'recorded_at'          => null,
-        'recorded_at_label'    => '',
-        'fields'               => [],
-        'history_count'        => 0,
-        'source'               => 'none',
-    ];
-
     if ($consultationId <= 0 || $patientId <= 0) {
-        return $empty;
+        return consultation_recorded_data_dto_from_rows(null, [], $consultationId, $patientId, 'none');
     }
 
     $history = consultation_recorded_data_history($pdo, $consultationId, $patientId);
     $latest = $history[0] ?? null;
+    $source = 'recorded_table';
 
     if (!$latest) {
         $latest = consultation_recorded_data_synthesize_from_consult($pdo, $consultationId, $patientId);
         if (!$latest) {
-            return $empty;
+            return consultation_recorded_data_dto_from_rows(null, [], $consultationId, $patientId, 'none');
         }
-        $historyCount = 0;
+        $history = [];
         $source = 'triage_fallback';
-    } else {
-        $historyCount = count($history);
-        $source = 'recorded_table';
+        $latest['status'] = 'attached';
+        $latest['origin'] = 'consultation';
     }
 
-    $fields = consultation_recorded_data_field_list($latest);
-    if ($fields === []) {
-        return $empty;
-    }
-
-    $role = strtolower((string) ($latest['recorder_role'] ?? 'patient'));
-    $roleLabel = $role === 'bhw' ? 'BHW' : 'Patient';
-    $name = trim((string) ($latest['recorder_name'] ?? ''));
-    $byLabel = $name !== '' ? ($roleLabel . ' (' . $name . ')') : $roleLabel;
-
-    return [
-        'available'           => true,
-        'consultation_id'     => $consultationId,
-        'patient_id'          => $patientId,
-        'recorded_by_label'   => $byLabel,
-        'recorder_role'       => $role,
-        'recorder_role_label' => $roleLabel,
-        'recorded_at'         => $latest['recorded_at'] ?? null,
-        'recorded_at_label'   => consultation_recorded_data_format_datetime($latest['recorded_at'] ?? null),
-        'fields'              => $fields,
-        'history_count'       => $historyCount,
-        'source'              => $source,
-    ];
+    return consultation_recorded_data_dto_from_rows($latest, $history, $consultationId, $patientId, $source);
 }
 
 /**
