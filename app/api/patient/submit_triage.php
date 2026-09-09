@@ -802,6 +802,48 @@ try {
     );
 
     try {
+        require_once dirname(dirname(dirname(__DIR__))) . '/app/includes/consultation_recorded_data.php';
+        $symptomText = '';
+        if (!empty($symptomList) && is_array($symptomList)) {
+            $symptomText = implode(', ', array_values(array_filter(array_map('strval', $symptomList))));
+        }
+        if ($symptomText === '' && !empty($assessment['detected_symptoms']) && is_array($assessment['detected_symptoms'])) {
+            $labels = [];
+            foreach ($assessment['detected_symptoms'] as $item) {
+                if (is_string($item) && trim($item) !== '') {
+                    $labels[] = trim($item);
+                } elseif (is_array($item) && !empty($item['label'])) {
+                    $labels[] = trim((string) $item['label']);
+                }
+            }
+            $symptomText = implode(', ', array_values(array_unique($labels)));
+        }
+        $snapshotInput = [
+            'chief_complaint'   => $complaint,
+            'symptoms'          => $symptomText,
+            'temperature_c'     => $_POST['temperature_c'] ?? $_POST['temperature'] ?? null,
+            'blood_pressure'    => $_POST['blood_pressure'] ?? $_POST['bp'] ?? null,
+            'pulse_bpm'         => $_POST['pulse_bpm'] ?? $_POST['pulse'] ?? null,
+            'respiratory_rate'  => $_POST['respiratory_rate'] ?? $_POST['rr'] ?? null,
+            'spo2_percent'      => $_POST['spo2_percent'] ?? $_POST['spo2'] ?? null,
+            'weight_kg'         => $_POST['weight_kg'] ?? $_POST['weight'] ?? null,
+            'height_cm'         => $_POST['height_cm'] ?? $_POST['height'] ?? null,
+            'notes'             => $_POST['recorded_notes'] ?? $_POST['observation_notes'] ?? null,
+        ];
+        consultation_recorded_data_save(
+            $pdo,
+            $patient_id,
+            $consultation_id,
+            $patient_id,
+            'patient',
+            $snapshotInput,
+            $triageId
+        );
+    } catch (Throwable $e) {
+        error_log('submit_triage recorded_data: ' . $e->getMessage());
+    }
+
+    try {
         BhwPatientWorkflow::onPatientPortalBooking($pdo, $patient_id, $triageLevel);
     } catch (Throwable $e) {
         // Booking already committed — do not fail the patient response.

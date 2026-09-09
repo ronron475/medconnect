@@ -234,6 +234,7 @@ ob_start();
       currentPatient = null;
       if (pageEl) pageEl.classList.remove('is-patient-loaded');
       showWorkspace(false);
+      loadRecordedDataPanel(0);
       return;
     }
     BhwPortal.get('patients.php', { action: 'get', patient_id: pid }).then(function (r) {
@@ -246,10 +247,88 @@ ob_start();
       currentPatient = r.patient;
       fillForm(currentPatient);
       fillSummary(currentPatient);
+      loadRecordedDataPanel(currentPatient.id);
       if (pageEl) pageEl.classList.add('is-patient-loaded');
       showWorkspace(true);
       switchTab('personal');
     });
+  }
+
+  function recordedAlert(msg, ok) {
+    var el = document.getElementById('bhwRecordedAlert');
+    if (!el) return;
+    if (!msg) {
+      el.style.display = 'none';
+      el.textContent = '';
+      return;
+    }
+    el.style.display = 'block';
+    el.textContent = msg;
+    el.className = 'mc-form-alert ' + (ok ? 'mc-form-alert--success' : 'mc-form-alert--error');
+  }
+
+  function loadRecordedDataPanel(patientId) {
+    var emptyEl = document.getElementById('bhwRecordedEmpty');
+    var form = document.getElementById('bhwRecordedForm');
+    var select = document.getElementById('rd_consultation_id');
+    recordedAlert('');
+    renderLatestRecorded(null);
+    if (!patientId || !select) return;
+    document.getElementById('rd_patient_id').value = String(patientId);
+    BhwPortal.get('recorded_data.php', { action: 'list_open', patient_id: patientId }).then(function (r) {
+      var list = (r.success && r.consultations) ? r.consultations : [];
+      select.innerHTML = '';
+      if (!list.length) {
+        if (emptyEl) emptyEl.style.display = 'block';
+        if (form) form.style.display = 'none';
+        return;
+      }
+      if (emptyEl) emptyEl.style.display = 'none';
+      if (form) form.style.display = 'block';
+      list.forEach(function (c) {
+        var opt = document.createElement('option');
+        opt.value = c.id;
+        var when = (c.consult_date || '') + (c.consult_time ? (' ' + String(c.consult_time).slice(0, 5)) : '');
+        opt.textContent = '#' + c.id + ' · ' + (c.status || 'scheduled') + (when ? (' · ' + when) : '') + (c.provider_name ? (' · ' + c.provider_name) : '');
+        select.appendChild(opt);
+      });
+      var latestMap = r.latest_by_consultation || {};
+      function showSelectedLatest() {
+        var cid = select.value;
+        renderLatestRecorded(latestMap[cid] || null);
+      }
+      select.onchange = showSelectedLatest;
+      showSelectedLatest();
+    });
+  }
+
+  function escHtml(s) {
+    return String(s == null ? '' : s)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;');
+  }
+
+  function renderLatestRecorded(dto) {
+    var box = document.getElementById('bhwRecordedLatest');
+    if (!box) return;
+    if (!dto || !dto.available) {
+      box.style.display = 'none';
+      box.innerHTML = '';
+      return;
+    }
+    var rows = (dto.fields || []).map(function (f) {
+      return '<div><strong>' + escHtml(f.label) + ':</strong> ' + escHtml(f.value) + '</div>';
+    }).join('');
+    box.style.display = 'block';
+    box.innerHTML =
+      '<div class="bhw-field-hint" style="margin-bottom:6px;">Latest saved for doctor</div>' +
+      '<div style="padding:10px 12px;border:1px solid #bbf7d0;background:#f0fdf4;border-radius:8px;font-size:13px;line-height:1.5;">' +
+      rows +
+      '<div style="margin-top:6px;color:#64748b;">Recorded by ' + escHtml(dto.recorded_by_label || dto.recorder_role_label || 'BHW') +
+      (dto.recorded_at_label ? (' · ' + escHtml(dto.recorded_at_label)) : '') +
+      '</div></div>';
   }
 
   ['f_email', 'f_contact', 'f_blood', 'f_conditions', 'f_allergies', 'f_medications'].forEach(function (id) {
@@ -307,6 +386,33 @@ ob_start();
       }
     });
   });
+
+  var recordedForm = document.getElementById('bhwRecordedForm');
+  if (recordedForm) {
+    recordedForm.addEventListener('submit', function (e) {
+      e.preventDefault();
+      recordedAlert('');
+      var fd = new FormData(recordedForm);
+      fd.append('action', 'save');
+      var btn = document.getElementById('bhwRecordedSaveBtn');
+      if (btn) {
+        btn.disabled = true;
+        btn.textContent = 'Saving…';
+      }
+      BhwPortal.post('recorded_data.php', fd).then(function (r) {
+        if (btn) {
+          btn.disabled = false;
+          btn.textContent = 'Save for Doctor';
+        }
+        recordedAlert(r.message || (r.success ? 'Saved.' : 'Save failed.'), !!r.success);
+        BhwPortal.toast(r.message, r.success, { title: r.success ? 'Recorded for Doctor' : 'Save Failed' });
+        if (r.success) {
+          renderLatestRecorded(r.recorded || null);
+          if (currentPatient) loadRecordedDataPanel(currentPatient.id);
+        }
+      });
+    });
+  }
 })();
 <?php
 $bhw_inline_script = ob_get_clean();
@@ -454,6 +560,71 @@ $update_css_ver = (int) @filemtime(ASSETS_PATH . '/css/bhw-update-patient.css');
           <button type="button" class="bhw-btn-outline" id="bhwResetBtn" form="bhwUpdateForm">Reset</button>
           <button type="submit" class="bhw-btn-teal" id="bhwSaveBtn" form="bhwUpdateForm">Save Changes</button>
         </div>
+      </section>
+
+      <section class="bhw-card bhw-form-card" id="bhwRecordedDataCard" aria-labelledby="recorded_data_title">
+        <h3 class="bhw-form-card-title" id="recorded_data_title">
+          <span class="bhw-card-icon" aria-hidden="true">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
+          </span>
+          Record Vitals for Consultation
+        </h3>
+        <p class="bhw-form-card-sub">Save observations for a <strong>specific open consultation</strong>. Only the doctor assigned to that consultation can see them — not other doctors from prior visits. This stays separate from the doctor&rsquo;s SOAP assessment.</p>
+        <div id="bhwRecordedEmpty" class="bhw-field-hint" style="margin-bottom:12px;">No open consultation found for this patient. Book a consult first, then record vitals here.</div>
+        <form id="bhwRecordedForm" style="display:none;" novalidate>
+          <input type="hidden" name="patient_id" id="rd_patient_id" value="">
+          <div class="bhw-form-grid">
+            <div class="bhw-field span-2">
+              <label class="form-label" for="rd_consultation_id">Consultation <span class="bhw-req">*</span></label>
+              <select class="form-select" id="rd_consultation_id" name="consultation_id" required></select>
+            </div>
+            <div class="bhw-field span-2">
+              <label class="form-label" for="rd_chief_complaint">Chief Complaint</label>
+              <input type="text" class="form-control" id="rd_chief_complaint" name="chief_complaint" placeholder="Fever and headache">
+            </div>
+            <div class="bhw-field span-2">
+              <label class="form-label" for="rd_symptoms">Symptoms</label>
+              <input type="text" class="form-control" id="rd_symptoms" name="symptoms" placeholder="Headache, body weakness">
+            </div>
+            <div class="bhw-field">
+              <label class="form-label" for="rd_temperature">Temperature (°C)</label>
+              <input type="number" step="0.1" min="30" max="45" class="form-control" id="rd_temperature" name="temperature_c" placeholder="38.5">
+            </div>
+            <div class="bhw-field">
+              <label class="form-label" for="rd_bp">Blood Pressure</label>
+              <input type="text" class="form-control" id="rd_bp" name="blood_pressure" placeholder="120/80" pattern="^\d{2,3}\s*/\s*\d{2,3}$">
+            </div>
+            <div class="bhw-field">
+              <label class="form-label" for="rd_pulse">Pulse Rate (bpm)</label>
+              <input type="number" min="20" max="250" class="form-control" id="rd_pulse" name="pulse_bpm" placeholder="80">
+            </div>
+            <div class="bhw-field">
+              <label class="form-label" for="rd_rr">Respiratory Rate</label>
+              <input type="number" min="5" max="80" class="form-control" id="rd_rr" name="respiratory_rate" placeholder="18">
+            </div>
+            <div class="bhw-field">
+              <label class="form-label" for="rd_spo2">SpO2 (%)</label>
+              <input type="number" step="0.1" min="50" max="100" class="form-control" id="rd_spo2" name="spo2_percent" placeholder="98">
+            </div>
+            <div class="bhw-field">
+              <label class="form-label" for="rd_weight">Weight (kg)</label>
+              <input type="number" step="0.1" min="1" max="400" class="form-control" id="rd_weight" name="weight_kg" placeholder="60">
+            </div>
+            <div class="bhw-field">
+              <label class="form-label" for="rd_height">Height (cm)</label>
+              <input type="number" step="0.1" min="30" max="250" class="form-control" id="rd_height" name="height_cm" placeholder="160">
+            </div>
+            <div class="bhw-field span-2">
+              <label class="form-label" for="rd_notes">Other observations</label>
+              <textarea class="form-control" id="rd_notes" name="notes" rows="2" placeholder="Optional notes for the doctor"></textarea>
+            </div>
+          </div>
+          <p id="bhwRecordedAlert" class="mc-form-alert" style="display:none;margin-top:10px;" role="alert"></p>
+          <div class="bhw-form-actions" style="margin-top:12px;">
+            <button type="submit" class="bhw-btn-teal" id="bhwRecordedSaveBtn">Save for Doctor</button>
+          </div>
+        </form>
+        <div id="bhwRecordedLatest" style="display:none;margin-top:14px;"></div>
       </section>
 
       <section class="bhw-card bhw-update-tabs-card" aria-label="Read-only patient profile">

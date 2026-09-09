@@ -456,6 +456,20 @@ final class BhwWorkflows
 
             $pdo->commit();
 
+            try {
+                require_once __DIR__ . '/consultation_recorded_data.php';
+                consultation_recorded_data_snapshot_from_triage(
+                    $pdo,
+                    $patientId,
+                    $consultation_id,
+                    $triageResultId,
+                    $bhwId,
+                    'bhw'
+                );
+            } catch (Throwable $e) {
+                error_log('bhw recorded_data snapshot: ' . $e->getMessage());
+            }
+
             BhwPatientWorkflow::setStatus($pdo, $patientId, BhwPatientWorkflow::APPOINTMENT_SCHEDULED, [
                 'consultation_id' => $consultation_id,
                 'triage_id'       => $triageResultId,
