@@ -822,6 +822,128 @@ body.provider-body .gis-brgy-panel.mc-card {
   z-index: 2;
 }
 
+/* Doctor GIS: keep marker popups inside the map column only */
+body.provider-body .gis-map-layout {
+  isolation: isolate;
+  align-items: start;
+}
+
+body.provider-body .gis-map-card {
+  position: relative;
+  z-index: 0;
+  overflow: hidden;
+  min-width: 0;
+}
+
+body.provider-body .gis-brgy-panel {
+  position: relative;
+  z-index: 1;
+  min-width: 0;
+}
+
+body.provider-body .gis-map-wrap {
+  position: relative;
+  overflow: hidden;
+  min-width: 0;
+}
+
+body.provider-body .gis-map.leaflet-container,
+body.provider-body .gis-map {
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
+}
+
+body.provider-body .gis-map .leaflet-pane,
+body.provider-body .gis-map .leaflet-map-pane,
+body.provider-body .gis-map .leaflet-overlay-pane,
+body.provider-body .gis-map .leaflet-marker-pane,
+body.provider-body .gis-map .leaflet-tooltip-pane,
+body.provider-body .gis-map .leaflet-popup-pane {
+  /* Stay within Leaflet map stacking — do not escalate above page chrome */
+  max-width: 100%;
+}
+
+body.provider-body .gis-map .leaflet-popup-pane {
+  z-index: 700;
+}
+
+body.provider-body .gis-map .leaflet-control-container .leaflet-top.leaflet-right {
+  z-index: 850;
+}
+
+body.provider-body .gis-map-layer-switch {
+  z-index: 840;
+}
+
+body.provider-body .gis-leaflet-popup--provider {
+  max-width: min(320px, calc(100% - 24px));
+}
+
+body.provider-body .gis-leaflet-popup--provider .leaflet-popup-content-wrapper {
+  max-width: min(320px, 100%);
+  box-sizing: border-box;
+}
+
+body.provider-body .gis-leaflet-popup--provider .leaflet-popup-content {
+  margin: 8px 10px 8px 11px;
+  max-width: 100%;
+  max-height: min(240px, 46vh);
+  overflow-x: hidden;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  word-break: break-word;
+  overflow-wrap: anywhere;
+}
+
+body.provider-body .gis-leaflet-popup--provider .gis-popup {
+  max-width: 100%;
+  word-break: break-word;
+  overflow-wrap: anywhere;
+}
+
+body.provider-body .gis-leaflet-popup--provider .gis-popup strong {
+  margin-bottom: 4px;
+}
+
+body.provider-body .gis-leaflet-popup--provider .gis-popup p {
+  margin: 0 0 3px;
+  line-height: 1.35;
+}
+
+body.provider-body .gis-map-legend {
+  position: relative;
+  z-index: 2;
+  background: rgba(255, 255, 255, 0.98);
+}
+
+@media (max-width: 1199px) {
+  body.provider-body .gis-leaflet-popup--provider .leaflet-popup-content {
+    max-height: min(220px, 42vh);
+  }
+}
+
+@media (max-width: 768px) {
+  body.provider-body .gis-leaflet-popup--provider {
+    max-width: min(300px, calc(100vw - 48px));
+  }
+
+  body.provider-body .gis-leaflet-popup--provider .leaflet-popup-content {
+    max-height: min(200px, 40vh);
+  }
+}
+
+@media (max-width: 425px) {
+  body.provider-body .gis-leaflet-popup--provider {
+    max-width: calc(100vw - 40px);
+  }
+
+  body.provider-body .gis-leaflet-popup--provider .leaflet-popup-content {
+    max-height: min(190px, 38vh);
+    margin: 6px 8px 6px 9px;
+  }
+}
+
 @media (min-width: 769px) and (max-width: 1199px) {
   .gis-live-indicator {
     right: 16px;

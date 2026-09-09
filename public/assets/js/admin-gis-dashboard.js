@@ -979,23 +979,56 @@
       ? state.map.getSize()
       : { x: 640, y: 520 };
     const isNarrow = size.x < 640;
-    const maxWidth = Math.max(180, Math.min(280, size.x - 72));
+    const isProvider = userRole === 'provider';
+    // Doctor map: keep popup compact inside the map (never cover summary/legend).
+    const widthCap = isProvider ? 320 : 280;
+    const heightCap = isProvider ? 240 : isNarrow ? Math.floor(size.y * 0.48) : 320;
+    const edgePad = isProvider ? 48 : 72;
+    const maxWidth = Math.max(180, Math.min(widthCap, size.x - edgePad));
     const maxHeight = Math.max(
-      150,
-      Math.min(isNarrow ? Math.floor(size.y * 0.48) : 320, size.y - 88)
+      140,
+      Math.min(heightCap, size.y - (isProvider ? 100 : 88))
     );
+    const padTL = isProvider
+      ? L.point(isNarrow ? 16 : 20, isNarrow ? 48 : 56)
+      : L.point(isNarrow ? 10 : 16, isNarrow ? 12 : 20);
+    const padBR = isProvider
+      ? L.point(isNarrow ? 52 : 56, isNarrow ? 56 : 64)
+      : L.point(isNarrow ? 50 : 56, isNarrow ? 36 : 44);
     return {
-      className: 'gis-leaflet-popup',
+      className: 'gis-leaflet-popup' + (isProvider ? ' gis-leaflet-popup--provider' : ''),
       autoPan: true,
-      autoPanPaddingTopLeft: L.point(isNarrow ? 10 : 16, isNarrow ? 12 : 20),
-      autoPanPaddingBottomRight: L.point(isNarrow ? 50 : 56, isNarrow ? 36 : 44),
+      autoPanPadding: isProvider ? L.point(20, 20) : undefined,
+      autoPanPaddingTopLeft: padTL,
+      autoPanPaddingBottomRight: padBR,
       maxWidth: maxWidth,
-      minWidth: Math.min(200, maxWidth),
+      minWidth: Math.min(isProvider ? 220 : 200, maxWidth),
       maxHeight: maxHeight,
       closeOnClick: true,
-      keepInView: false,
+      keepInView: isProvider,
       autoClose: true,
     };
+  }
+
+  function syncOpenPopupLayout(popup) {
+    if (!popup || !state.map) return;
+    const opts = popupOptions();
+    popup.options.maxWidth = opts.maxWidth;
+    popup.options.minWidth = opts.minWidth;
+    popup.options.maxHeight = opts.maxHeight;
+    popup.options.autoPan = true;
+    popup.options.keepInView = opts.keepInView;
+    popup.options.autoPanPaddingTopLeft = opts.autoPanPaddingTopLeft;
+    popup.options.autoPanPaddingBottomRight = opts.autoPanPaddingBottomRight;
+    if (opts.autoPanPadding) {
+      popup.options.autoPanPadding = opts.autoPanPadding;
+    }
+    if (typeof popup.update === 'function') {
+      popup.update();
+    }
+    if (typeof popup._adjustPan === 'function') {
+      popup._adjustPan();
+    }
   }
 
   function latLngToTile(lat, lng, zoom) {
@@ -1168,6 +1201,18 @@
       disableClusteringAtZoom: 16,
     });
     state.map.addLayer(state.cluster);
+    state.map.on('popupopen', function (e) {
+      if (userRole === 'provider') {
+        syncOpenPopupLayout(e && e.popup);
+      }
+    });
+    state.map.on('resize', function () {
+      if (userRole !== 'provider' || !state.map) return;
+      const popup = state.map._popup;
+      if (popup && state.map.hasLayer(popup)) {
+        syncOpenPopupLayout(popup);
+      }
+    });
     initLayerSwitch();
   }
 
