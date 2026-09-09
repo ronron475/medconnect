@@ -140,7 +140,8 @@ if (!function_exists('medconnect_send_security_headers')) {
             // Maps embeds.
             "frame-src 'self' https://maps.google.com https://www.google.com",
             // Leaflet tiles (OSM/Esri) + CDN assets used in GIS dashboards.
-            "img-src 'self' data: blob: https://*.tile.openstreetmap.org https://server.arcgisonline.com https://unpkg.com",
+            // Note: *.tile.openstreetmap.org does NOT match tile.openstreetmap.org itself.
+            "img-src 'self' data: blob: https://tile.openstreetmap.org https://*.tile.openstreetmap.org https://server.arcgisonline.com https://services.arcgisonline.com https://*.arcgisonline.com https://unpkg.com",
             "font-src 'self' data: https://fonts.gstatic.com",
             "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://unpkg.com",
             // Chart.js + Leaflet CDN.
