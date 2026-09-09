@@ -235,6 +235,7 @@ ob_start();
       if (pageEl) pageEl.classList.remove('is-patient-loaded');
       showWorkspace(false);
       loadRecordedDataPanel(0);
+      loadExternalVisits(0);
       return;
     }
     BhwPortal.get('patients.php', { action: 'get', patient_id: pid }).then(function (r) {
@@ -248,6 +249,7 @@ ob_start();
       fillForm(currentPatient);
       fillSummary(currentPatient);
       loadRecordedDataPanel(currentPatient.id);
+      loadExternalVisits(currentPatient.id);
       if (pageEl) pageEl.classList.add('is-patient-loaded');
       showWorkspace(true);
       switchTab('personal');
@@ -434,6 +436,103 @@ ob_start();
         if (r.success) {
           renderLatestRecorded(r.recorded || r.pending || null);
           if (currentPatient) loadRecordedDataPanel(currentPatient.id);
+        }
+      });
+    });
+  }
+
+  function externalAlert(msg, ok) {
+    var el = document.getElementById('bhwExternalAlert');
+    if (!el) return;
+    if (!msg) {
+      el.style.display = 'none';
+      el.textContent = '';
+      return;
+    }
+    el.style.display = 'block';
+    el.textContent = msg;
+    el.className = 'mc-form-alert ' + (ok ? 'mc-form-alert--success' : 'mc-form-alert--error');
+  }
+
+  function resetExternalForm() {
+    var form = document.getElementById('bhwExternalForm');
+    if (!form) return;
+    form.reset();
+    var src = document.getElementById('ev_information_source');
+    if (src) src.value = 'patient_reported';
+    externalAlert('');
+  }
+
+  function renderExternalVisits(list) {
+    var box = document.getElementById('bhwExternalList');
+    if (!box) return;
+    if (!list || !list.length) {
+      box.innerHTML = '<p class="bhw-field-hint">No external healthcare visits recorded yet.</p>';
+      return;
+    }
+    box.innerHTML = list.map(function (v) {
+      return (
+        '<article class="bhw-external-item" style="padding:12px 14px;border:1px solid #e2e8f0;border-radius:10px;margin-bottom:10px;background:#fff;">' +
+          '<div style="font-size:11px;letter-spacing:.04em;text-transform:uppercase;color:#64748b;font-weight:700;margin-bottom:4px;">External Healthcare Visit</div>' +
+          '<div style="font-weight:700;color:#0f172a;">' + escHtml(v.facility_name || 'Facility') + '</div>' +
+          '<div style="font-size:13px;color:#334155;margin-top:4px;">' +
+            escHtml(v.facility_type_label || '') +
+            (v.visit_date_label ? (' · ' + escHtml(v.visit_date_label)) : '') +
+          '</div>' +
+          (v.reason ? ('<div style="font-size:13px;margin-top:6px;"><strong>Reason:</strong> ' + escHtml(v.reason) + '</div>') : '') +
+          (v.reported_diagnosis ? ('<div style="font-size:13px;"><strong>Reported diagnosis:</strong> ' + escHtml(v.reported_diagnosis) + '</div>') : '') +
+          (v.reported_treatment ? ('<div style="font-size:13px;"><strong>Reported treatment:</strong> ' + escHtml(v.reported_treatment) + '</div>') : '') +
+          '<div style="font-size:12px;color:#64748b;margin-top:8px;">Source: ' + escHtml(v.information_source_label || '') +
+            ' · Recorded by ' + escHtml(v.recorded_by_label || 'BHW') +
+            (v.recorded_at_label ? (' · ' + escHtml(v.recorded_at_label)) : '') +
+          '</div>' +
+        '</article>'
+      );
+    }).join('');
+  }
+
+  function loadExternalVisits(patientId) {
+    var form = document.getElementById('bhwExternalForm');
+    var wrap = document.getElementById('bhwExternalCard');
+    if (!patientId) {
+      if (form) form.style.display = 'none';
+      renderExternalVisits([]);
+      return;
+    }
+    document.getElementById('ev_patient_id').value = String(patientId);
+    if (form) form.style.display = 'block';
+    BhwPortal.get('external_visits.php', { action: 'list', patient_id: patientId }).then(function (r) {
+      renderExternalVisits((r.success && r.visits) ? r.visits : []);
+    });
+  }
+
+  var externalForm = document.getElementById('bhwExternalForm');
+  if (externalForm) {
+    var cancelBtn = document.getElementById('bhwExternalCancelBtn');
+    if (cancelBtn) {
+      cancelBtn.addEventListener('click', function () { resetExternalForm(); });
+    }
+    externalForm.addEventListener('submit', function (e) {
+      e.preventDefault();
+      externalAlert('');
+      var fd = new FormData(externalForm);
+      fd.append('action', 'save');
+      var btn = document.getElementById('bhwExternalSaveBtn');
+      if (btn) {
+        btn.disabled = true;
+        btn.textContent = 'Saving…';
+      }
+      BhwPortal.post('external_visits.php', fd).then(function (r) {
+        if (btn) {
+          btn.disabled = false;
+          btn.textContent = 'Save External Visit';
+        }
+        externalAlert(r.message || (r.success ? 'Saved.' : 'Save failed.'), !!r.success);
+        BhwPortal.toast(r.message, r.success, { title: r.success ? 'External Visit Saved' : 'Save Failed' });
+        if (r.success) {
+          renderExternalVisits(r.visits || []);
+          resetExternalForm();
+          if (currentPatient) document.getElementById('ev_patient_id').value = String(currentPatient.id);
         }
       });
     });
@@ -651,6 +750,72 @@ $update_css_ver = (int) @filemtime(ASSETS_PATH . '/css/bhw-update-patient.css');
           </div>
         </form>
         <div id="bhwRecordedLatest" style="display:none;margin-top:14px;"></div>
+      </section>
+
+      <section class="bhw-card bhw-form-card" id="bhwExternalCard" aria-labelledby="external_visits_title">
+        <h3 class="bhw-form-card-title" id="external_visits_title">
+          <span class="bhw-card-icon" aria-hidden="true">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 21h18"/><path d="M5 21V7l8-4v18"/><path d="M19 21V11l-6-4"/><path d="M9 9v.01"/><path d="M9 12v.01"/><path d="M9 15v.01"/><path d="M9 18v.01"/></svg>
+          </span>
+          External Healthcare Visits
+        </h3>
+        <p class="bhw-form-card-sub">Record hospital, clinic, or health-center visits that happened <strong>outside MedConnect</strong>. This is patient medical history — not a MedConnect consultation and not a doctor assessment. No open consultation is required.</p>
+        <form id="bhwExternalForm" style="display:none;" novalidate>
+          <input type="hidden" name="patient_id" id="ev_patient_id" value="">
+          <div class="bhw-form-grid">
+            <div class="bhw-field">
+              <label class="form-label" for="ev_facility_type">Facility Type <span class="bhw-req">*</span></label>
+              <select class="form-select" id="ev_facility_type" name="facility_type" required>
+                <option value="">Select type…</option>
+                <option value="hospital">Hospital</option>
+                <option value="private_clinic">Private Clinic</option>
+                <option value="health_center">Health Center</option>
+                <option value="government_health_facility">Government Health Facility</option>
+                <option value="emergency_facility">Emergency Facility</option>
+                <option value="other">Other</option>
+              </select>
+            </div>
+            <div class="bhw-field">
+              <label class="form-label" for="ev_facility_name">Facility Name <span class="bhw-req">*</span></label>
+              <input type="text" class="form-control" id="ev_facility_name" name="facility_name" maxlength="200" placeholder="ABC Hospital" required>
+            </div>
+            <div class="bhw-field">
+              <label class="form-label" for="ev_visit_date">Visit Date <span class="bhw-req">*</span></label>
+              <input type="date" class="form-control" id="ev_visit_date" name="visit_date" required>
+            </div>
+            <div class="bhw-field">
+              <label class="form-label" for="ev_information_source">Information Source <span class="bhw-req">*</span></label>
+              <select class="form-select" id="ev_information_source" name="information_source" required>
+                <option value="patient_reported">Patient Reported</option>
+                <option value="bhw_recorded">BHW Recorded</option>
+                <option value="medical_document">Medical Document Provided</option>
+                <option value="other">Other</option>
+              </select>
+            </div>
+            <div class="bhw-field span-2">
+              <label class="form-label" for="ev_reason">Reason for Visit</label>
+              <input type="text" class="form-control" id="ev_reason" name="reason" placeholder="Fever">
+            </div>
+            <div class="bhw-field span-2">
+              <label class="form-label" for="ev_diagnosis">Diagnosis (if patient/BHW reported)</label>
+              <input type="text" class="form-control" id="ev_diagnosis" name="reported_diagnosis" placeholder="Optional — not a MedConnect doctor diagnosis">
+            </div>
+            <div class="bhw-field span-2">
+              <label class="form-label" for="ev_treatment">Treatment / Medication (if reported)</label>
+              <input type="text" class="form-control" id="ev_treatment" name="reported_treatment" placeholder="Optional">
+            </div>
+            <div class="bhw-field span-2">
+              <label class="form-label" for="ev_notes">Additional Notes</label>
+              <textarea class="form-control" id="ev_notes" name="notes" rows="2" placeholder="Optional notes"></textarea>
+            </div>
+          </div>
+          <p id="bhwExternalAlert" class="mc-form-alert" style="display:none;margin-top:10px;" role="alert"></p>
+          <div class="bhw-form-actions" style="margin-top:12px;">
+            <button type="button" class="bhw-btn-outline" id="bhwExternalCancelBtn">Cancel</button>
+            <button type="submit" class="bhw-btn-teal" id="bhwExternalSaveBtn">Save External Visit</button>
+          </div>
+        </form>
+        <div id="bhwExternalList" style="margin-top:14px;"></div>
       </section>
 
       <section class="bhw-card bhw-update-tabs-card" aria-label="Read-only patient profile">
