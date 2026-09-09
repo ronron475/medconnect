@@ -871,7 +871,7 @@ final class BhwApplicationService
     }
 
     /**
-     * @return array{path: string, name: string, mime: string}|null
+     * @return array{path: string, name: string, mime: string, application_id: int}|null
      */
     public function getDocumentFile(int $documentId): ?array
     {
@@ -882,16 +882,40 @@ final class BhwApplicationService
             return null;
         }
 
-        $path = $this->uploadDir((int) $doc['application_id']) . DIRECTORY_SEPARATOR . $doc['stored_name'];
+        $applicationId = (int) $doc['application_id'];
+        $path = $this->uploadDir($applicationId) . DIRECTORY_SEPARATOR . $doc['stored_name'];
         if (!is_file($path)) {
             return null;
         }
 
         return [
-            'path' => $path,
-            'name' => (string) $doc['original_name'],
-            'mime' => (string) ($doc['mime_type'] ?: 'application/octet-stream'),
+            'path'           => $path,
+            'name'           => (string) $doc['original_name'],
+            'mime'           => (string) ($doc['mime_type'] ?: 'application/octet-stream'),
+            'application_id' => $applicationId,
         ];
+    }
+
+    /**
+     * Admin (owner) or Superadmin may preview/download application documents.
+     */
+    public function canAccessDocument(int $userId, bool $isSuperAdmin, int $documentId): bool
+    {
+        $file = $this->getDocumentFile($documentId);
+        if (!$file) {
+            return false;
+        }
+        if ($isSuperAdmin) {
+            return true;
+        }
+
+        $app = $this->getApplication((int) $file['application_id']);
+        if (!$app) {
+            return false;
+        }
+
+        return (int) ($app['created_by'] ?? 0) === $userId
+            || (int) ($app['submitted_by'] ?? 0) === $userId;
     }
 
     /**
