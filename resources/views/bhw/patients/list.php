@@ -105,7 +105,7 @@ ob_start();
     else if (key === 'emergency' || key === 'urgent') cls = 'bhw-pl-badge--high';
     else if (key === 'appointment_scheduled' || key === 'referral_generated') cls = 'bhw-pl-badge--low';
     else if (key === 'consultation_completed' || key === 'follow_up_monitoring') cls = 'bhw-pl-badge--active';
-    return '<span class="bhw-pl-badge ' + cls + '">' + esc(label) + '</span>';
+    return '<span class="bhw-pl-badge ' + cls + '" title="' + esc(label) + '">' + esc(label) + '</span>';
   }
 
   function fmtGender(g) {
@@ -221,9 +221,9 @@ ob_start();
         '<td>' + esc(dash(p.age)) + '</td>' +
         '<td>' + esc(fmtGender(p.gender)) + '</td>' +
         '<td class="bhw-pl-col-contact">' + esc(dash(p.contact_number)) + '</td>' +
-        '<td>' + riskBadge(p.risk_level) + '</td>' +
-        '<td>' + workflowBadge(p.workflow_status) + '</td>' +
-        '<td>' + statusBadge(p.is_active) + '</td>' +
+        '<td class="bhw-pl-col-status">' + riskBadge(p.risk_level) + '</td>' +
+        '<td class="bhw-pl-col-status bhw-pl-col-workflow">' + workflowBadge(p.workflow_status) + '</td>' +
+        '<td class="bhw-pl-col-status">' + statusBadge(p.is_active) + '</td>' +
         '<td class="bhw-pl-col-date">' + esc(fmtDate(p.created_at)) + '</td>' +
         '<td class="bhw-pl-col-actions">' + actionLinks(p.id, true) + '</td></tr>';
     }).join('');
@@ -641,7 +641,7 @@ $bhw_inline_script = ob_get_clean();
             <th scope="col">Gender</th>
             <th scope="col">Contact</th>
             <th scope="col">Risk</th>
-            <th scope="col">Workflow</th>
+            <th scope="col" class="bhw-pl-col-workflow">Workflow</th>
             <th scope="col">Account</th>
             <th scope="col">Registered</th>
             <th scope="col" class="bhw-pl-col-actions">Actions</th>
