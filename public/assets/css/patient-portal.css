@@ -1664,6 +1664,15 @@ body.mc-tips-ready-modal-open {
 .pdash-review-form.is-followup-active #pdashSymptomsComplaint,
 .patient-triage-form.is-followup-active #chief_complaint {
   opacity: 0.72;
+  cursor: default;
+}
+
+#startNewConsultationWrap {
+  margin-top: 10px;
+}
+
+#btnStartNewConsultation {
+  font-weight: 600;
 }
 
 @media (max-width: 640px) {

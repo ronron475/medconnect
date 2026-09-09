@@ -65,6 +65,9 @@ $followup_is_pain_scale = (bool) preg_match(
     '/0\s*(tubtob|to|hanggang|-|–|—)\s*10|scale\s*(of|nga)?\s*0|0\s*(out of|\/)\s*10|pinakagrabe|worst pain|pain level|kagrabe/iu',
     $followup_q_text
 );
+$interview_complaint_locked = $chief_complaint_locked
+    || ($preliminary_payload !== null && trim((string) ($preliminary_payload['chief_complaint'] ?? '')) !== '');
+$show_start_new_consultation_btn = !$is_provider_locked && empty($force_new_concern);
 ?>
 <h2 class="text-h2 mb-md patient-triage-page__title">Book Consultation</h2>
 <?php if (!empty($review_booking_ctx['locked']) && $locked_provider_name !== ''): ?>
@@ -138,11 +141,11 @@ $followup_is_pain_scale = (bool) preg_match(
       <textarea
         id="chief_complaint"
         name="chief_complaint"
-        class="form-control"
-        rows="<?= $chief_complaint_locked ? 2 : 3 ?>"
-        placeholder="<?= $chief_complaint_locked ? 'Your submitted primary complaint…' : 'Describe your primary complaint...' ?>"
+        class="form-control<?= $interview_complaint_locked ? ' pdash-care-form__input--locked' : '' ?>"
+        rows="<?= $interview_complaint_locked ? 2 : 3 ?>"
+        placeholder="<?= $interview_complaint_locked ? 'Your submitted primary complaint…' : 'Describe your primary complaint...' ?>"
         maxlength="500"
-        <?= $chief_complaint_locked ? 'readonly aria-readonly="true"' : 'required' ?>
+        <?= $interview_complaint_locked ? 'readonly aria-readonly="true"' : 'required' ?>
       ><?= htmlspecialchars($registration_chief_complaint) ?></textarea>
       <p class="text-xs text-muted" style="margin-top:6px;">
         <?php if ($chief_complaint_locked): ?>
@@ -150,10 +153,24 @@ $followup_is_pain_scale = (bool) preg_match(
         <?php if (empty($active_consultation) && empty($force_new_concern)): ?>
         If this is a different primary complaint, <a href="<?= htmlspecialchars((defined('ASSET_BASE') ? ASSET_BASE : '') . '/views/patient/triage.php?new_concern=1') ?>">start a new case</a>.
         <?php endif; ?>
+        <?php elseif ($preliminary_payload !== null): ?>
+        This primary complaint is locked for the current triage session. To describe a different concern, click <strong>Start New Consultation</strong>.
         <?php else: ?>
         Describe your primary complaint to start a new consultation. Previous complaints stay in My Sessions and are not reused.
         <?php endif; ?>
       </p>
+      <?php if ($show_start_new_consultation_btn): ?>
+      <div class="patient-triage-new-consult" style="margin-top:12px;" id="startNewConsultationWrap"<?= $preliminary_payload ? '' : ' hidden' ?>>
+        <button
+          type="button"
+          class="mc-btn mc-btn--outline"
+          id="btnStartNewConsultation"
+          data-triage-id="<?= (int) ($preliminary_payload['triage_id'] ?? 0) ?>"
+        >
+          Start New Consultation
+        </button>
+      </div>
+      <?php endif; ?>
     </div>
 
     <div

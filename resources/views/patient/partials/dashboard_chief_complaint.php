@@ -74,6 +74,12 @@ $followup_is_pain_scale = (bool) preg_match(
     '/0\s*(tubtob|to|hanggang|-|–|—)\s*10|scale\s*(of|nga)?\s*0|0\s*(out of|\/)\s*10|pinakagrabe|worst pain|pain level|kagrabe/iu',
     $followup_q_text
 );
+$interview_complaint_locked = $chief_complaint_locked
+    || ($preliminary_payload !== null && trim((string) ($preliminary_payload['chief_complaint'] ?? '')) !== '');
+$show_start_new_consultation_btn = !$chief_complaint_locked;
+$placeholder = $interview_complaint_locked
+    ? 'Your submitted primary complaint…'
+    : 'Describe your primary complaint...';
 ?>
 <section
   class="pdash-card pdash-card--complaint pdash-care"
@@ -126,21 +132,35 @@ $followup_is_pain_scale = (bool) preg_match(
     <textarea
       id="pdashSymptomsComplaint"
       name="chief_complaint"
-      class="form-control pdash-care-form__input<?= $chief_complaint_locked ? ' pdash-care-form__input--locked' : '' ?>"
+      class="form-control pdash-care-form__input<?= $interview_complaint_locked ? ' pdash-care-form__input--locked' : '' ?>"
       rows="3"
       maxlength="500"
       placeholder="<?= htmlspecialchars($placeholder) ?>"
-      <?= $chief_complaint_locked ? 'readonly aria-readonly="true"' : 'required' ?>
+      <?= $interview_complaint_locked ? 'readonly aria-readonly="true"' : 'required' ?>
     ><?= htmlspecialchars($registration_chief_complaint) ?></textarea>
     <p class="pdash-care-form__hint">
       <?php if ($chief_complaint_locked): ?>
       This primary complaint is already on file and will be reviewed by your doctor. It cannot be changed while this consultation is still active.
+      <?php elseif ($preliminary_payload !== null): ?>
+      This primary complaint is locked for the current triage session. To describe a different concern, click <strong>Start New Consultation</strong>.
       <?php elseif ($is_new_consultation_flow): ?>
       Enter a <strong>new</strong> primary complaint for this consultation. Your previous complaints stay saved in My Sessions and will not be reused.
       <?php else: ?>
       Describe your primary complaint. At least a short sentence helps your care team understand your case faster.
       <?php endif; ?>
     </p>
+    <?php if ($show_start_new_consultation_btn): ?>
+    <div class="pdash-care-form__new-consult" style="margin: 10px 0 4px;" id="startNewConsultationWrap"<?= $preliminary_payload ? '' : ' hidden' ?>>
+      <button
+        type="button"
+        class="pdash-btn pdash-btn--outline"
+        id="btnStartNewConsultation"
+        data-triage-id="<?= (int) ($preliminary_payload['triage_id'] ?? 0) ?>"
+      >
+        Start New Consultation
+      </button>
+    </div>
+    <?php endif; ?>
 
     <div id="pdashSymptomsReviewAlert" class="patient-triage-alert" role="alert" hidden></div>
     <div

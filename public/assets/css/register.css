@@ -548,7 +548,7 @@ body.reg-body {
   transition: opacity 0.18s ease, transform 0.18s ease;
 }
 .field-error.success {
-  color: #1e293b;
+  color: var(--green);
   font-weight: 600;
 }
 .field-error.has-msg {
@@ -3275,8 +3275,12 @@ html[data-theme-resolved='dark'] body.reg-body .reg-card .input-icon.is-invalid 
   color: #ef4444 !important;
 }
 
-html[data-theme-resolved='dark'] body.reg-body .reg-card .field-error {
+html[data-theme-resolved='dark'] body.reg-body .reg-card .field-error:not(.success) {
   color: var(--red) !important;
+}
+
+html[data-theme-resolved='dark'] body.reg-body .reg-card .field-error.success {
+  color: var(--green) !important;
 }
 
 html[data-theme-resolved='dark'] body.reg-body .step-indicator .step-label {

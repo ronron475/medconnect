@@ -182,6 +182,16 @@ function mc_patient_visit_status_label(array $row, ?PDO $pdo = null, int $patien
     }
 
     $recStatus = strtolower((string) ($row['recommendation_status'] ?? ''));
+    $rowStatus = strtolower((string) ($row['status'] ?? ''));
+    $outcome = strtolower((string) ($row['outcome'] ?? ''));
+    $assessmentStatus = strtoupper((string) ($row['assessment_status'] ?? ''));
+    if (
+        $rowStatus === 'cancelled' || $rowStatus === 'canceled'
+        || $outcome === 'cancelled' || $outcome === 'canceled'
+        || $assessmentStatus === 'CANCELLED' || $assessmentStatus === 'CANCELED'
+    ) {
+        return 'Consultation cancelled';
+    }
     if ($recStatus === 'hidden') {
         return 'Visit completed';
     }
