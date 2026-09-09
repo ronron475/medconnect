@@ -13,7 +13,7 @@ $gisMapNote = $gisIsProvider
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin=""/>
 <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css" crossorigin=""/>
 <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css" crossorigin=""/>
-<link rel="stylesheet" href="<?= htmlspecialchars($assetBase) ?>/assets/css/admin-gis-dashboard.css?v=5.1"/>
+<link rel="stylesheet" href="<?= htmlspecialchars($assetBase) ?>/assets/css/admin-gis-dashboard.css?v=5.2"/>
 
 <div class="gis-page" id="gis-dashboard"
      data-api="<?= htmlspecialchars($apiBase) ?>"
@@ -71,7 +71,19 @@ $gisMapNote = $gisIsProvider
         </label>
       </div>
       <div class="gis-map-wrap">
-        <div id="gis-map" class="gis-map" aria-label="Interactive patient severity map"></div>
+        <div class="gis-map-stage" id="gis-map-stage">
+          <?php if ($gisIsProvider): ?>
+          <button type="button" class="gis-map-expand" id="gisMapExpandBtn" aria-pressed="false" aria-label="Maximize map">
+            <span class="gis-map-expand__icon" aria-hidden="true">⛶</span>
+            <span class="gis-map-expand__label">Maximize</span>
+          </button>
+          <?php endif; ?>
+          <div id="gis-map" class="gis-map" aria-label="Interactive patient severity map"></div>
+          <button type="button" class="gis-map-layer-switch" id="gisMapLayerSwitch" aria-label="Switch map layer">
+            <span class="gis-map-layer-switch__thumb" id="gisMapLayerThumb" aria-hidden="true"></span>
+            <span class="gis-map-layer-switch__label" id="gisMapLayerLabel">Satellite</span>
+          </button>
+        </div>
         <div class="gis-map-legend" id="gis-map-legend" aria-label="Map legend">
           <div class="gis-map-legend__block">
             <div class="gis-map-legend__title">Severity</div>
@@ -86,10 +98,6 @@ $gisMapNote = $gisIsProvider
             <div class="gis-map-legend__item"><span class="gis-map-legend__dot gis-map-legend__dot--approx"></span> Approximate (Barangay)</div>
           </div>
         </div>
-        <button type="button" class="gis-map-layer-switch" id="gisMapLayerSwitch" aria-label="Switch map layer">
-          <span class="gis-map-layer-switch__thumb" id="gisMapLayerThumb" aria-hidden="true"></span>
-          <span class="gis-map-layer-switch__label" id="gisMapLayerLabel">Satellite</span>
-        </button>
       </div>
       <p class="gis-map-note text-xs text-muted"><?= $gisMapNote ?></p>
     </div>
@@ -159,4 +167,4 @@ $gisMapNote = $gisIsProvider
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
 <script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js" crossorigin=""></script>
 <script src="https://unpkg.com/leaflet.heat@0.2.0/dist/leaflet-heat.js" crossorigin=""></script>
-<script src="<?= htmlspecialchars($assetBase) ?>/assets/js/admin-gis-dashboard.js?v=5.3"></script>
+<script src="<?= htmlspecialchars($assetBase) ?>/assets/js/admin-gis-dashboard.js?v=5.4"></script>

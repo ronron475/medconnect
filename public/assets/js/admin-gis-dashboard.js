@@ -184,6 +184,7 @@
     satelliteTileErrors: 0,
     monitoring: null,
     populationByBarangay: {},
+    mapExpanded: false,
   };
 
   const els = {
@@ -291,6 +292,9 @@
     els.tablePanel.classList.toggle('is-active', view === 'table');
     els.mapPanel.hidden = view !== 'map';
     els.tablePanel.hidden = view !== 'table';
+    if (view !== 'map' && state.mapExpanded) {
+      setMapExpanded(false);
+    }
     if (view === 'map' && state.map) {
       setTimeout(invalidateMapSize, 120);
     }
@@ -980,25 +984,25 @@
       : { x: 640, y: 520 };
     const isNarrow = size.x < 640;
     const isProvider = userRole === 'provider';
-    // Doctor map: keep popup compact inside the map (never cover summary/legend).
     const widthCap = isProvider ? 320 : 280;
-    const heightCap = isProvider ? 240 : isNarrow ? Math.floor(size.y * 0.48) : 320;
-    const edgePad = isProvider ? 48 : 72;
+    const heightCap = isProvider ? 220 : isNarrow ? Math.floor(size.y * 0.48) : 320;
+    const edgePad = isProvider ? 60 : 72;
     const maxWidth = Math.max(180, Math.min(widthCap, size.x - edgePad));
     const maxHeight = Math.max(
       140,
-      Math.min(heightCap, size.y - (isProvider ? 100 : 88))
+      Math.min(heightCap, size.y - (isProvider ? 120 : 88))
     );
+    const pad = isProvider ? 30 : isNarrow ? 12 : 16;
     const padTL = isProvider
-      ? L.point(isNarrow ? 16 : 20, isNarrow ? 48 : 56)
+      ? L.point(pad, Math.max(pad, 48))
       : L.point(isNarrow ? 10 : 16, isNarrow ? 12 : 20);
     const padBR = isProvider
-      ? L.point(isNarrow ? 52 : 56, isNarrow ? 56 : 64)
+      ? L.point(Math.max(pad, 52), Math.max(pad, 56))
       : L.point(isNarrow ? 50 : 56, isNarrow ? 36 : 44);
     return {
       className: 'gis-leaflet-popup' + (isProvider ? ' gis-leaflet-popup--provider' : ''),
       autoPan: true,
-      autoPanPadding: isProvider ? L.point(20, 20) : undefined,
+      autoPanPadding: isProvider ? L.point(30, 30) : undefined,
       autoPanPaddingTopLeft: padTL,
       autoPanPaddingBottomRight: padBR,
       maxWidth: maxWidth,
@@ -1010,8 +1014,23 @@
     };
   }
 
-  function syncOpenPopupLayout(popup) {
-    if (!popup || !state.map) return;
+  function withSoftMapBounds(fn) {
+    if (!state.map || typeof fn !== 'function') {
+      if (typeof fn === 'function') fn();
+      return;
+    }
+    const map = state.map;
+    const prevViscosity = map.options.maxBoundsViscosity;
+    map.options.maxBoundsViscosity = 0;
+    try {
+      fn();
+    } finally {
+      map.options.maxBoundsViscosity = prevViscosity;
+    }
+  }
+
+  function applyPopupOptions(popup) {
+    if (!popup) return;
     const opts = popupOptions();
     popup.options.maxWidth = opts.maxWidth;
     popup.options.minWidth = opts.minWidth;
@@ -1023,12 +1042,98 @@
     if (opts.autoPanPadding) {
       popup.options.autoPanPadding = opts.autoPanPadding;
     }
+  }
+
+  function ensureProviderPopupVisible(popup) {
+    if (!state.map || !popup || userRole !== 'provider') return;
+    applyPopupOptions(popup);
+    if (typeof popup.update === 'function') {
+      popup.update();
+    }
+
+    withSoftMapBounds(function () {
+      const map = state.map;
+      const latlng = typeof popup.getLatLng === 'function' ? popup.getLatLng() : null;
+      const el = typeof popup.getElement === 'function' ? popup.getElement() : null;
+      if (latlng && el) {
+        const size = map.getSize();
+        const padTop = 30;
+        const padSide = 30;
+        const padBottom = 56;
+        const popupH = Math.max(el.offsetHeight || 0, 120);
+        const popupW = Math.max(el.offsetWidth || 0, 200);
+        const tip = 16;
+        const current = map.latLngToContainerPoint(latlng);
+        // Default Leaflet popup opens above the marker.
+        const popupTop = current.y - popupH - tip;
+        const popupLeft = current.x - popupW / 2;
+        const popupRight = current.x + popupW / 2;
+        let dx = 0;
+        let dy = 0;
+        if (popupTop < padTop) {
+          dy = popupTop - padTop;
+        }
+        if (current.y + tip > size.y - padBottom) {
+          dy = current.y + tip - (size.y - padBottom);
+        }
+        if (popupLeft < padSide) {
+          dx = popupLeft - padSide;
+        }
+        if (popupRight > size.x - padSide) {
+          dx = popupRight - (size.x - padSide);
+        }
+        if (Math.abs(dx) > 4 || Math.abs(dy) > 4) {
+          map.panBy([dx, dy], { animate: false });
+        }
+      }
+      if (typeof popup._adjustPan === 'function') {
+        popup._adjustPan();
+      }
+    });
+  }
+
+  function syncOpenPopupLayout(popup) {
+    if (!popup || !state.map) return;
+    if (userRole === 'provider') {
+      ensureProviderPopupVisible(popup);
+      return;
+    }
+    applyPopupOptions(popup);
     if (typeof popup.update === 'function') {
       popup.update();
     }
     if (typeof popup._adjustPan === 'function') {
       popup._adjustPan();
     }
+  }
+
+  function setMapExpanded(expanded) {
+    if (userRole !== 'provider') return;
+    state.mapExpanded = !!expanded;
+    document.body.classList.toggle('gis-map-is-expanded', state.mapExpanded);
+    const btn = document.getElementById('gisMapExpandBtn');
+    if (btn) {
+      btn.setAttribute('aria-pressed', state.mapExpanded ? 'true' : 'false');
+      btn.setAttribute('aria-label', state.mapExpanded ? 'Minimize map' : 'Maximize map');
+      const label = btn.querySelector('.gis-map-expand__label');
+      const icon = btn.querySelector('.gis-map-expand__icon');
+      if (label) label.textContent = state.mapExpanded ? 'Minimize' : 'Maximize';
+      if (icon) icon.textContent = state.mapExpanded ? '−' : '⛶';
+    }
+    requestAnimationFrame(function () {
+      invalidateMapSize();
+      setTimeout(function () {
+        invalidateMapSize();
+        const popup = state.map && state.map._popup;
+        if (popup && state.map.hasLayer(popup)) {
+          ensureProviderPopupVisible(popup);
+        }
+      }, 180);
+    });
+  }
+
+  function toggleMapExpanded() {
+    setMapExpanded(!state.mapExpanded);
   }
 
   function latLngToTile(lat, lng, zoom) {
@@ -1202,18 +1307,41 @@
     });
     state.map.addLayer(state.cluster);
     state.map.on('popupopen', function (e) {
-      if (userRole === 'provider') {
-        syncOpenPopupLayout(e && e.popup);
-      }
+      if (userRole !== 'provider') return;
+      const popup = e && e.popup;
+      requestAnimationFrame(function () {
+        ensureProviderPopupVisible(popup);
+        setTimeout(function () {
+          ensureProviderPopupVisible(popup);
+        }, 60);
+      });
     });
     state.map.on('resize', function () {
       if (userRole !== 'provider' || !state.map) return;
       const popup = state.map._popup;
       if (popup && state.map.hasLayer(popup)) {
-        syncOpenPopupLayout(popup);
+        ensureProviderPopupVisible(popup);
       }
     });
     initLayerSwitch();
+    initMapExpandControl();
+  }
+
+  function initMapExpandControl() {
+    if (userRole !== 'provider') return;
+    const btn = document.getElementById('gisMapExpandBtn');
+    if (!btn || btn.dataset.bound === '1') return;
+    btn.dataset.bound = '1';
+    btn.addEventListener('click', function (ev) {
+      ev.preventDefault();
+      ev.stopPropagation();
+      toggleMapExpanded();
+    });
+    document.addEventListener('keydown', function (ev) {
+      if (ev.key === 'Escape' && state.mapExpanded) {
+        setMapExpanded(false);
+      }
+    });
   }
 
   function isValidCoord(lat, lng) {
@@ -1703,6 +1831,10 @@
       debounce(function () {
         if (state.view === 'map') {
           invalidateMapSize();
+          const popup = state.map && state.map._popup;
+          if (userRole === 'provider' && popup && state.map.hasLayer(popup)) {
+            ensureProviderPopupVisible(popup);
+          }
         }
       }, 150)
     );
