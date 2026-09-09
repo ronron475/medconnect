@@ -68,6 +68,7 @@ function patient_find_preliminary_complaint_triage(
           AND COALESCE(recommendation_status, 'hidden') NOT IN ('pending_approval', 'approved')
           AND LOWER(COALESCE(outcome, '')) IN ('', 'preliminary_assessment', 'assessment_in_progress')
           AND LOWER(COALESCE(status, 'pending')) NOT IN ('completed', 'cancelled', 'canceled')
+          AND UPPER(COALESCE(assessment_status, '')) NOT IN ('CANCELLED', 'CANCELED')
           AND assessed_at >= DATE_SUB(NOW(), INTERVAL 14 DAY)
     ";
     $params = [$patientId];
@@ -91,9 +92,159 @@ function patient_find_preliminary_complaint_triage(
                 return $row;
             }
         }
+        // Different complaint must not attach to another unfinished session.
+        return null;
     }
 
     return $rows[0];
+}
+
+/**
+ * Cancel the patient's unfinished preliminary / interview triage session(s).
+ * Does not delete historical rows or finalized medical records.
+ *
+ * @return array{ok:bool,message:string,cancelled_ids:list<int>}
+ */
+function patient_cancel_active_triage_session(PDO $pdo, int $patientId, int $triageId = 0): array
+{
+    $empty = ['ok' => false, 'message' => 'Nothing to cancel.', 'cancelled_ids' => []];
+    if ($patientId <= 0) {
+        return ['ok' => false, 'message' => 'Invalid patient.', 'cancelled_ids' => []];
+    }
+
+    triage_assessment_ensure_schema($pdo);
+    patient_triage_results_ensure_cancelled_status($pdo);
+
+    $targets = [];
+    if ($triageId > 0) {
+        $row = patient_find_preliminary_complaint_triage($pdo, $patientId, $triageId);
+        if ($row) {
+            $targets[] = $row;
+        } else {
+            // Ownership check: session exists but is not cancellable as unfinished.
+            $chk = $pdo->prepare('SELECT id, patient_id, status, outcome, recommendation_status FROM triage_results WHERE id = ? LIMIT 1');
+            $chk->execute([$triageId]);
+            $owned = $chk->fetch(PDO::FETCH_ASSOC);
+            if (!$owned || (int) ($owned['patient_id'] ?? 0) !== $patientId) {
+                return ['ok' => false, 'message' => 'Triage session not found.', 'cancelled_ids' => []];
+            }
+
+            return [
+                'ok' => false,
+                'message' => 'This triage session is no longer unfinished and cannot be cancelled here.',
+                'cancelled_ids' => [],
+            ];
+        }
+    } else {
+        // Cancel all current unfinished preliminary/interview rows for this patient.
+        $sql = "
+            SELECT id, patient_id, chief_complaint, status, outcome, assessment_status, recommendation_status
+            FROM triage_results
+            WHERE patient_id = ?
+              AND TRIM(COALESCE(chief_complaint, '')) <> ''
+              AND COALESCE(assigned_provider_id, 0) = 0
+              AND COALESCE(recommendation_status, 'hidden') NOT IN ('pending_approval', 'approved')
+              AND LOWER(COALESCE(outcome, '')) IN ('', 'preliminary_assessment', 'assessment_in_progress')
+              AND LOWER(COALESCE(status, 'pending')) NOT IN ('completed', 'cancelled', 'canceled')
+              AND UPPER(COALESCE(assessment_status, '')) NOT IN ('CANCELLED', 'CANCELED')
+              AND assessed_at >= DATE_SUB(NOW(), INTERVAL 14 DAY)
+            ORDER BY assessed_at DESC, id DESC
+            LIMIT 20
+        ";
+        $stmt = $pdo->prepare($sql);
+        $stmt->execute([$patientId]);
+        $targets = $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
+    }
+
+    if ($targets === []) {
+        return ['ok' => true, 'message' => 'No unfinished triage session to cancel.', 'cancelled_ids' => []];
+    }
+
+    $cancelledIds = [];
+    $upd = $pdo->prepare("
+        UPDATE triage_results
+        SET status = 'cancelled',
+            outcome = 'cancelled',
+            assessment_status = 'CANCELLED',
+            recommendation_status = 'hidden',
+            assigned_provider_id = 0
+        WHERE id = ?
+          AND patient_id = ?
+          AND COALESCE(recommendation_status, 'hidden') NOT IN ('pending_approval', 'approved')
+          AND LOWER(COALESCE(status, 'pending')) NOT IN ('completed', 'cancelled', 'canceled')
+    ");
+
+    foreach ($targets as $row) {
+        $id = (int) ($row['id'] ?? 0);
+        if ($id <= 0) {
+            continue;
+        }
+        try {
+            $upd->execute([$id, $patientId]);
+            if ($upd->rowCount() > 0) {
+                $cancelledIds[] = $id;
+            }
+        } catch (Throwable $e) {
+            // Fallback if ENUM still rejects 'cancelled': mark completed + outcome cancelled.
+            try {
+                $fallback = $pdo->prepare("
+                    UPDATE triage_results
+                    SET status = 'completed',
+                        outcome = 'cancelled',
+                        assessment_status = 'CANCELLED',
+                        recommendation_status = 'hidden',
+                        assigned_provider_id = 0
+                    WHERE id = ?
+                      AND patient_id = ?
+                      AND COALESCE(recommendation_status, 'hidden') NOT IN ('pending_approval', 'approved')
+                      AND LOWER(COALESCE(status, 'pending')) NOT IN ('completed', 'cancelled', 'canceled')
+                ");
+                $fallback->execute([$id, $patientId]);
+                if ($fallback->rowCount() > 0) {
+                    $cancelledIds[] = $id;
+                }
+            } catch (Throwable $e2) {
+                error_log('patient_cancel_active_triage_session: ' . $e2->getMessage());
+            }
+        }
+    }
+
+    if ($cancelledIds === []) {
+        return $empty;
+    }
+
+    return [
+        'ok' => true,
+        'message' => 'Unfinished triage cancelled. You can start a new consultation.',
+        'cancelled_ids' => $cancelledIds,
+    ];
+}
+
+/**
+ * Ensure triage_results.status accepts cancelled (legacy installs used pending|reviewed|completed only).
+ */
+function patient_triage_results_ensure_cancelled_status(PDO $pdo): void
+{
+    static $done = false;
+    if ($done) {
+        return;
+    }
+    $done = true;
+
+    try {
+        $col = $pdo->query("SHOW COLUMNS FROM triage_results LIKE 'status'");
+        $info = $col ? $col->fetch(PDO::FETCH_ASSOC) : null;
+        $type = strtolower((string) ($info['Type'] ?? ''));
+        if ($type !== '' && str_contains($type, 'enum') && !str_contains($type, 'cancelled')) {
+            $pdo->exec("
+                ALTER TABLE triage_results
+                MODIFY COLUMN status ENUM('pending','reviewed','completed','cancelled')
+                NULL DEFAULT 'pending'
+            ");
+        }
+    } catch (Throwable $e) {
+        error_log('patient_triage_results_ensure_cancelled_status: ' . $e->getMessage());
+    }
 }
 
 /**
@@ -436,6 +587,19 @@ function patient_submit_symptoms_for_review(
     }
 
     $prelim = patient_find_preliminary_complaint_triage($pdo, $patientId, $reuseTriageId, $complaint);
+
+    // New primary complaint (no matching unfinished session): cancel any other unfinished
+    // interview first so a prior complaint cannot revive on refresh.
+    if (
+        !$prelim
+        && $stage === 'preview'
+        && $followupAnswer === ''
+        && $complaint !== ''
+        && $reuseTriageId <= 0
+    ) {
+        patient_cancel_active_triage_session($pdo, $patientId, 0);
+    }
+
     if ($stage === 'continue' && $reuseTriageId > 0 && !$prelim) {
         $ownedStmt = $pdo->prepare("
             SELECT id, chief_complaint, triage_level, triage_classification, outcome,

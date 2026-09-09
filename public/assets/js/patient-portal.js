@@ -1153,6 +1153,11 @@
       alertEl.className = 'patient-triage-alert';
       alertEl.textContent = '';
     }
+    setBookingComplaintLocked(true);
+    setStartNewConsultationVisible(true, (function () {
+      const el = document.getElementById('booking_triage_id');
+      return parseInt(String(el && el.value ? el.value : '0'), 10) || 0;
+    })());
   }
 
   function setAssignedProviderDisplay(providerId, providerName, slotLabel) {
@@ -1296,6 +1301,11 @@
     if (window.mcPatientUrgencyModal && typeof window.mcPatientUrgencyModal.close === 'function') {
       window.mcPatientUrgencyModal.close();
     }
+    setBookingComplaintLocked(true);
+    setStartNewConsultationVisible(true, (function () {
+      const el = document.getElementById('booking_triage_id');
+      return parseInt(String(el && el.value ? el.value : '0'), 10) || 0;
+    })());
   }
 
   function hideBookingFollowupUi() {
@@ -1308,6 +1318,100 @@
     clearBookingFollowupNotice();
     setBookingFollowupExtras('');
   }
+
+  function setBookingComplaintLocked(locked) {
+    const field = document.getElementById('chief_complaint');
+    if (!field) return;
+    field.readOnly = !!locked;
+    if (locked) {
+      field.setAttribute('aria-readonly', 'true');
+      field.classList.add('pdash-care-form__input--locked');
+    } else {
+      field.removeAttribute('aria-readonly');
+      field.classList.remove('pdash-care-form__input--locked');
+    }
+  }
+
+  function setStartNewConsultationVisible(visible, triageId) {
+    const wrap = document.getElementById('startNewConsultationWrap');
+    const btn = document.getElementById('btnStartNewConsultation');
+    if (wrap) wrap.hidden = !visible;
+    if (btn && triageId != null && Number(triageId) > 0) {
+      btn.setAttribute('data-triage-id', String(triageId));
+    }
+  }
+
+  async function confirmStartNewConsultation() {
+    const title = 'Start a new consultation?';
+    const message = 'Your current unfinished triage will be cancelled. Your previous medical records will not be deleted.';
+    if (window.McModal && typeof window.McModal.confirm === 'function') {
+      return window.McModal.confirm({
+        title: title,
+        message: message,
+        confirmLabel: 'Start New Consultation',
+        cancelLabel: 'Cancel',
+        danger: true,
+      });
+    }
+    return window.confirm(title + '\n\n' + message);
+  }
+
+  async function cancelActiveTriageSession(triageId) {
+    const csrf = getCsrfToken();
+    if (!csrf) {
+      window.alert('Security token missing. Please refresh the page and try again.');
+      return false;
+    }
+    const fd = new FormData();
+    fd.set('csrf_token', csrf);
+    const id = parseInt(String(triageId || '0'), 10) || 0;
+    if (id > 0) {
+      fd.set('triage_id', String(id));
+    }
+    const res = await fetch(APP_BASE + '/app/api/patient/cancel_active_triage.php', {
+      method: 'POST',
+      body: fd,
+      credentials: 'same-origin',
+      headers: { 'X-MC-No-Loader': '1' },
+    });
+    const data = await res.json().catch(() => null);
+    if (!res.ok || !data || data.success === false) {
+      window.alert((data && data.message) || 'Could not cancel the unfinished triage. Please try again.');
+      return false;
+    }
+    return true;
+  }
+
+  function bindStartNewConsultation() {
+    const btn = document.getElementById('btnStartNewConsultation');
+    if (!btn || btn.dataset.boundStartNew === '1') return;
+    btn.dataset.boundStartNew = '1';
+    btn.addEventListener('click', async function () {
+      const confirmed = await confirmStartNewConsultation();
+      if (!confirmed) return;
+      btn.disabled = true;
+      try {
+        const triageId = parseInt(String(btn.getAttribute('data-triage-id') || '0'), 10) || 0;
+        const ok = await cancelActiveTriageSession(triageId);
+        if (!ok) return;
+        const onDashboard = !!document.getElementById('pdashSymptomsReviewForm');
+        if (onDashboard) {
+          window.location.href = APP_BASE + '/views/patient/dashboard.php?new_concern=1';
+        } else {
+          window.location.href = APP_BASE + '/views/patient/triage.php?new_concern=1';
+        }
+      } finally {
+        btn.disabled = false;
+      }
+    });
+  }
+
+  window.mcPatientTriageSession = {
+    confirmStartNew: confirmStartNewConsultation,
+    cancelActive: cancelActiveTriageSession,
+    setComplaintLocked: setBookingComplaintLocked,
+    setStartNewVisible: setStartNewConsultationVisible,
+  };
 
   (function bindBookingFollowupScale() {
     const scale = document.getElementById('triageFollowupScale');
@@ -1376,6 +1480,8 @@
       twoStep.triageId = parseInt(data.triage_id, 10) || 0;
       twoStep.complaint = String(complaintField && complaintField.value ? complaintField.value : '').trim();
       if (triageIdInput) triageIdInput.value = String(twoStep.triageId);
+      setBookingComplaintLocked(true);
+      setStartNewConsultationVisible(true, twoStep.triageId);
 
       if (data.assessment_in_progress) {
         twoStep.interviewInProgress = true;
@@ -1399,30 +1505,16 @@
 
     if (complaintField && !skipTwoStep) {
       complaintField.addEventListener('input', function () {
-        const text = String(complaintField.value || '').trim();
-        if ((twoStep.awaitingSecond || twoStep.interviewInProgress) && text !== twoStep.complaint) {
-          twoStep.awaitingSecond = false;
-          twoStep.interviewInProgress = false;
-          twoStep.triageId = 0;
-          twoStep.level = '';
-          twoStep.complaint = '';
-          if (triageIdInput) triageIdInput.value = '';
-          hideBookingFollowupUi();
-          const box = document.getElementById('triageAiResult');
-          if (box) {
-            box.hidden = true;
-            box.classList.remove('is-visible');
-          }
-          if (alertEl) {
-            alertEl.className = 'patient-triage-alert';
-            alertEl.textContent = '';
-          }
-          setSubmitLabel(SUBMIT_COMPLAINT_LABEL);
+        if (!(twoStep.awaitingSecond || twoStep.interviewInProgress)) return;
+        // Primary complaint is locked for this session — revert accidental edits.
+        if (String(complaintField.value || '').trim() !== twoStep.complaint) {
+          complaintField.value = twoStep.complaint;
         }
       });
     }
 
     restorePreliminary();
+    bindStartNewConsultation();
 
     if (changeTimeBtn) {
       changeTimeBtn.addEventListener('click', function () {
@@ -1895,6 +1987,7 @@
   document.addEventListener('DOMContentLoaded', () => {
     syncSidebarFromRoute();
     initTriageForm();
+    bindStartNewConsultation();
     scrollToDashboardAnchor();
     window.addEventListener('hashchange', scrollToDashboardAnchor);
   });

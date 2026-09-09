@@ -31,6 +31,8 @@ $active_chief_complaint_triage_id = (int) ($active_chief_complaint['triage_id'] 
 $force_new_concern = (string) ($_GET['new_concern'] ?? '') === '1';
 $requested_triage_id = (int) ($_GET['triage_id'] ?? 0);
 if ($force_new_concern) {
+    // Persist cancel so a browser refresh cannot restore the unfinished session.
+    patient_cancel_active_triage_session($pdo, (int) $uid, 0);
     $chief_complaint_locked = false;
     $registration_chief_complaint = '';
     $chief_complaint_source = '';
@@ -72,7 +74,7 @@ if ($portal_triage_urgency === '') {
 }
 if ($pdo->query("SHOW TABLES LIKE 'triage_results'")->rowCount()) {
     triage_assessment_ensure_schema($pdo);
-    $s = $pdo->prepare('SELECT id, level, symptoms, assessed_at, chief_complaint, urgency_label, triage_level, triage_classification, assessment_payload, outcome, recommendation_status FROM triage_results WHERE patient_id=? ORDER BY assessed_at DESC, id DESC');
+    $s = $pdo->prepare('SELECT id, level, symptoms, assessed_at, chief_complaint, urgency_label, triage_level, triage_classification, assessment_payload, outcome, recommendation_status, status, assessment_status FROM triage_results WHERE patient_id=? ORDER BY assessed_at DESC, id DESC');
     $s->execute([$uid]);
     $triage_history = $s->fetchAll(PDO::FETCH_ASSOC);
 }

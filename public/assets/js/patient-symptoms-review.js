@@ -164,6 +164,27 @@
     followupNoticeEl.textContent = text;
   }
 
+  function setComplaintLocked(locked) {
+    if (!complaintEl) return;
+    complaintEl.readOnly = !!locked;
+    if (locked) {
+      complaintEl.setAttribute('aria-readonly', 'true');
+      complaintEl.classList.add('pdash-care-form__input--locked');
+    } else {
+      complaintEl.removeAttribute('aria-readonly');
+      complaintEl.classList.remove('pdash-care-form__input--locked');
+    }
+  }
+
+  function setStartNewVisible(visible, id) {
+    var wrap = document.getElementById('startNewConsultationWrap');
+    var btn = document.getElementById('btnStartNewConsultation');
+    if (wrap) wrap.hidden = !visible;
+    if (btn && id != null && Number(id) > 0) {
+      btn.setAttribute('data-triage-id', String(id));
+    }
+  }
+
   function hideFollowupUi() {
     if (followupWrap) {
       followupWrap.hidden = true;
@@ -201,6 +222,8 @@
       followupAnswerEl.value = '';
       followupAnswerEl.focus();
     }
+    setComplaintLocked(true);
+    setStartNewVisible(true, triageId);
   }
 
   function followupAnswerText() {
@@ -245,6 +268,8 @@
       aiResultEl.classList.add('is-visible');
     }
     clearAlert();
+    setComplaintLocked(true);
+    setStartNewVisible(true, triageId);
   }
 
   function clearTriageState() {
@@ -385,8 +410,13 @@
   }
 
   function onComplaintChanged() {
-    if (complaintText() !== triageComplaint) {
-      clearTriageState();
+    if (!(awaitingSecondClick || assessmentInProgress)) {
+      updateSubmitButtonLabel();
+      return;
+    }
+    // Locked for this active triage session — do not abandon interview by editing.
+    if (complaintText() !== triageComplaint && complaintEl) {
+      complaintEl.value = triageComplaint;
     }
     updateSubmitButtonLabel();
   }
@@ -410,6 +440,8 @@
     }
     triageId = parseInt(data.triage_id, 10) || 0;
     triageComplaint = complaintText();
+    setComplaintLocked(true);
+    setStartNewVisible(true, triageId);
     if (data.assessment_in_progress) {
       assessmentInProgress = true;
       awaitingSecondClick = false;
