@@ -130,6 +130,65 @@
     return status === 'invited' || status === 'onboarding';
   }
 
+  /** After invite, admin may only view (or resend invite) — never edit assignment fields. */
+  function canAdminViewStatus(status) {
+    return status === 'invited'
+      || status === 'onboarding'
+      || status === 'pending_approval'
+      || status === 'requires_documents'
+      || status === 'active'
+      || status === 'approved';
+  }
+
+  function renderViewBtn(id, label) {
+    return (
+      '<button type="button" class="staff-apps-action bhw-edit-btn" data-id="' + utils.esc(String(id)) + '">' +
+      '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">' +
+      '<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>' +
+      utils.esc(label || 'View') +
+      '</button>'
+    );
+  }
+
+  function setInviteFieldsEnabled(enabled) {
+    ['first_name', 'middle_name', 'last_name', 'email', 'phone', 'barangay_id', 'appointment_date'].forEach(function (name) {
+      if (form?.elements?.[name]) form.elements[name].disabled = !enabled;
+    });
+    ['bhwDocAppointment', 'bhwDocCho'].forEach(function (id) {
+      const el = document.getElementById(id);
+      if (el) el.disabled = !enabled;
+    });
+  }
+
+  function setModalCopy(editable, status) {
+    const titleEl = document.getElementById('bhwModalTitle');
+    const subtitle = modal?.querySelector('.admin-modal-subtitle');
+    if (!titleEl || !subtitle) return;
+
+    if (editable) {
+      titleEl.textContent = 'BHW Invite';
+      subtitle.textContent = 'Enter basic assignment details and upload the appointment letter. The BHW will set their own password and upload personal documents.';
+      return;
+    }
+
+    if (status === 'pending_approval') {
+      titleEl.textContent = 'BHW Application (Pending Approval)';
+      subtitle.textContent = 'Assignment details are locked. Waiting for Super Administrator final approval before the BHW can log in.';
+    } else if (status === 'requires_documents') {
+      titleEl.textContent = 'BHW Application (Documents Requested)';
+      subtitle.textContent = 'Assignment details are locked. The BHW must upload the requested personal documents, then Superadmin reviews again.';
+    } else if (status === 'active' || status === 'approved') {
+      titleEl.textContent = 'BHW Application (Active)';
+      subtitle.textContent = 'This BHW is approved and active. Assignment details stay locked.';
+    } else if (canResend(status)) {
+      titleEl.textContent = 'BHW Invite (Locked)';
+      subtitle.textContent = 'Invite already sent — assignment details are locked. The BHW sets password and personal info. You can only resend the invite email.';
+    } else {
+      titleEl.textContent = 'BHW Application';
+      subtitle.textContent = 'Assignment details are locked after invite. The BHW manages personal info; Superadmin gives final approval.';
+    }
+  }
+
   function renderTable(rows) {
     if (!tbody) return;
 
@@ -155,12 +214,13 @@
     }
 
     tbody.innerHTML = rows.map(function (r) {
-      const editable = canAdminEditStatus(r.status) || canResend(r.status);
       let actionCell;
       if (checkerMode && canReview(r.status)) {
         actionCell = utils.renderReviewBtn(r.id, 'bhw-review-btn', 'Review');
-      } else if (!checkerMode) {
-        actionCell = utils.renderEditBtn(r.id, editable, 'bhw-edit-btn');
+      } else if (!checkerMode && canAdminEditStatus(r.status)) {
+        actionCell = utils.renderEditBtn(r.id, true, 'bhw-edit-btn');
+      } else if (!checkerMode && canAdminViewStatus(r.status)) {
+        actionCell = renderViewBtn(r.id, canResend(r.status) ? 'View / Resend' : 'View');
       } else {
         actionCell = '<span class="staff-apps-meta staff-apps-meta--muted">—</span>';
       }
@@ -218,6 +278,7 @@
     form.reset();
     ensureBarangays();
     document.getElementById('bhwApplicationId').value = id ? String(id) : '';
+    setModalCopy(true, 'draft');
     document.getElementById('bhwModalTitle').textContent = id ? 'BHW Invite' : 'Invite Barangay Health Worker';
     formUtils.showFormAlert(rejectionNote, '', 'warn');
     formUtils.showFormAlert(docsRequestNote, '', 'warn');
@@ -235,11 +296,16 @@
           populateForm(json.data);
         });
     } else {
+      setInviteFieldsEnabled(true);
       if (submitBtn) {
+        submitBtn.style.display = '';
         submitBtn.disabled = false;
         submitBtn.textContent = 'Send Invite';
       }
-      if (saveDraftBtn) saveDraftBtn.disabled = false;
+      if (saveDraftBtn) {
+        saveDraftBtn.style.display = '';
+        saveDraftBtn.disabled = false;
+      }
     }
 
     modal.style.display = 'flex';
@@ -269,29 +335,22 @@
 
     const editable = canAdminEditStatus(app.status);
     const resendable = canResend(app.status);
+    setModalCopy(editable, app.status);
+    setInviteFieldsEnabled(editable);
+
     if (submitBtn) {
-      submitBtn.disabled = !(editable || app.status === 'invited');
-      submitBtn.textContent = app.status === 'invited' ? 'Resend Invite' : 'Send Invite';
+      // Primary send only while draft/rejected. After invite, use Resend only.
+      submitBtn.style.display = editable ? '' : 'none';
+      submitBtn.disabled = !editable;
+      submitBtn.textContent = 'Send Invite';
     }
-    if (saveDraftBtn) saveDraftBtn.disabled = !editable;
+    if (saveDraftBtn) {
+      saveDraftBtn.style.display = editable ? '' : 'none';
+      saveDraftBtn.disabled = !editable;
+    }
     if (resendBtn) {
       resendBtn.style.display = resendable ? '' : 'none';
       resendBtn.disabled = !resendable;
-    }
-
-    ['first_name', 'middle_name', 'last_name', 'email', 'phone', 'barangay_id', 'appointment_date'].forEach(function (name) {
-      if (form.elements[name]) form.elements[name].disabled = !editable && !resendable;
-    });
-    if (!editable) {
-      ['bhwDocAppointment', 'bhwDocCho'].forEach(function (id) {
-        const el = document.getElementById(id);
-        if (el) el.disabled = true;
-      });
-    } else {
-      ['bhwDocAppointment', 'bhwDocCho'].forEach(function (id) {
-        const el = document.getElementById(id);
-        if (el) el.disabled = false;
-      });
     }
   }
 
@@ -383,8 +442,14 @@
     form.addEventListener('submit', async function (e) {
       e.preventDefault();
       const status = currentApp?.status || 'draft';
-      const action = (status === 'invited' || status === 'onboarding') ? 'resend_invite' : 'send_invite';
-      await sendOrResendInvite(action);
+      if (canResend(status)) {
+        await sendOrResendInvite('resend_invite');
+        return;
+      }
+      if (!canAdminEditStatus(status)) {
+        return;
+      }
+      await sendOrResendInvite('send_invite');
     });
   }
 
