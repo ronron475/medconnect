@@ -200,7 +200,13 @@ final class ComplaintTriageTextCleaner
     private static function isClinicalFunctionWord(string $low): bool
     {
         return (bool) preg_match(
-            '/^(hurts?|hurt|aching|ache|painful|masakit|sakit|gasakit|ginasakit|nagasakit|sumasakit|kirot|hapdi|grabe|gid|na|ka|adlaw|semana|oras|bulan|days?|weeks?|months?|hours?|since|for|my|ko|akon|ang|ulo|head|tiyan|chest|dughan|mata|eye)$/u',
+            '/^(hurts?|hurt|aching|ache|painful|masakit|sakit|gasakit|ginasakit|nagasakit|sumasakit|kirot|hapdi|'
+            . 'grabe|gid|na|ka|pa|ya|lang|man|kay|nga|sang|'
+            . 'adlaw|araw|semana|linggo|oras|bulan|buwan|days?|weeks?|months?|hours?|'
+            . 'since|for|about|almost|ago|earlier|while|last|night|morning|today|yesterday|tonight|'
+            . 'ligad|dugay|matagal|gahapon|kahapon|kagapon|kanina|subong|ngayon|bag-o|halin|una|'
+            . 'monday|tuesday|wednesday|thursday|friday|saturday|sunday|'
+            . 'my|ko|akon|ang|ulo|olo|head|tiyan|chest|dughan|mata|eye|left|right|wala|tuo)$/u',
             $low
         );
     }
@@ -208,7 +214,10 @@ final class ComplaintTriageTextCleaner
     private static function looksExactClinicalToken(string $low): bool
     {
         return (bool) preg_match(
-            '/^(fever|hilanat|lagnat|cough|cought|ubo|sipon|headache|pain|sakit|masakit|dizzy|dizziness|hilo|nahilo|nahihilo|lingin|vomit|vomiting|suka|nausea|diarrhea|diarrhoea|breath|breathing|ginhawa|dyspnea|chest|dughan|dibdib|tiyan|stomach|abdomen|ulo|head|rash|bleed|bleeding|dugo|swell|swollen|hubag|weak|weakness|sick|unwell)$/u',
+            '/^(fever|hilanat|lagnat|cough|cought|ubo|sipon|headache|pain|sakit|masakit|dizzy|dizziness|hilo|nahilo|nahihilo|lingin|'
+            . 'vomit|vomiting|suka|nausea|diarrhea|diarrhoea|breath|breathing|ginhawa|dyspnea|chest|dughan|dibdib|tiyan|'
+            . 'stomach|abdomen|ulo|olo|head|rash|bleed|bleeding|dugo|swell|swollen|hubag|weak|weakness|sick|unwell|'
+            . 'ligad|dugay|gahapon|kahapon|kagapon|kanina|subong)$/u',
             $low
         );
     }

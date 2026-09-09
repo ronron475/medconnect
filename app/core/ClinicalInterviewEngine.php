@@ -128,6 +128,7 @@ final class ClinicalInterviewEngine
         }
 
         $transcript = self::transcript($context);
+        $clinicalText = self::clinicalContextText($context, $transcript);
         if ($transcript === '') {
             return self::wrapEmpty();
         }
@@ -149,15 +150,17 @@ final class ClinicalInterviewEngine
         $awaiting = (string) ($context['awaiting_question_id'] ?? '');
         $context = self::mergeExtractedFacts($context, $turn, $awaiting);
 
-        $raw = ClinicalTriageEngine::assess($transcript, $transcript);
+        $raw = ClinicalTriageEngine::assess($clinicalText, $clinicalText);
         $assessment = self::assessmentFromEngine($raw, $transcript, (string) ($raw['english_translation'] ?? $transcript), $checkboxSymptoms);
-        $nlpFacts = self::factsFromAssessment($assessment, $transcript);
+        $nlpFacts = self::factsFromAssessment($assessment, $clinicalText);
         $context['facts'] = self::mergeFacts($context['facts'], $nlpFacts);
-        $context['chief_complaints'] = ClinicalInterviewContextResolver::deriveComplaints($assessment, $transcript, $context['facts']);
+        $context['chief_complaints'] = ClinicalInterviewContextResolver::deriveComplaints($assessment, $clinicalText, $context['facts']);
         $context['matched_dataset_entries'] = array_values(array_filter(array_map(
             'strval',
             is_array($assessment['detected_symptoms'] ?? null) ? $assessment['detected_symptoms'] : []
         )));
+
+        $clinicalText = self::clinicalContextText($context, $transcript);
 
         $redFlags = self::redFlagNames($assessment);
         $trueEmergency = $redFlags !== [];
@@ -167,8 +170,8 @@ final class ClinicalInterviewEngine
         }
 
         $missing = null;
-        if (self::needsFollowUpQuestion($assessment, $context, $transcript, $raw)) {
-            $missing = self::nextQuestion($context, $transcript);
+        if (self::needsFollowUpQuestion($assessment, $context, $clinicalText, $raw)) {
+            $missing = self::nextQuestion($context, $clinicalText);
         }
         $askedCount = count($context['questions_asked']);
         $sufficient = $missing === null || $askedCount >= self::MAX_QUESTIONS;
@@ -367,6 +370,31 @@ final class ClinicalInterviewEngine
     }
 
     /**
+     * Primary complaint + patient turns for missing-slot / timing detection.
+     * Cleaned NLP turns alone can drop soft timing phrases; original complaint must remain.
+     *
+     * @param array<string, mixed> $context
+     */
+    private static function clinicalContextText(array $context, string $transcript = ''): string
+    {
+        $parts = [];
+        $complaint = trim((string) ($context['chief_complaint'] ?? ''));
+        if ($complaint !== '') {
+            $parts[] = $complaint;
+        }
+        $originalCleaner = trim((string) (($context['complaint_text_cleaner']['original'] ?? '') ?: ''));
+        if ($originalCleaner !== '' && mb_strtolower($originalCleaner) !== mb_strtolower($complaint)) {
+            $parts[] = $originalCleaner;
+        }
+        $turns = trim($transcript !== '' ? $transcript : self::transcript($context));
+        if ($turns !== '') {
+            $parts[] = $turns;
+        }
+
+        return trim(implode('. ', array_values(array_unique($parts))));
+    }
+
+    /**
      * @param array<string, mixed> $seed
      * @return array<string, mixed>
      */
@@ -446,15 +474,55 @@ final class ClinicalInterviewEngine
     {
         $facts = $context['facts'];
         $low = mb_strtolower($turn);
-        $combined = self::transcript($context);
+        // Always include original primary complaint — cleaners may drop soft timing tokens
+        // from the NLP turn, but they must still count as known clinical context.
+        $originalComplaint = trim((string) ($context['chief_complaint'] ?? ''));
+        $combined = trim(implode('. ', array_filter([
+            $originalComplaint,
+            $turn,
+            self::transcript($context),
+        ], static fn ($v): bool => trim((string) $v) !== '')));
 
-        $onset = ClinicalFeatureExtractors::extractOnset($turn . ' ' . $combined);
+        $onset = ClinicalFeatureExtractors::extractOnset($combined);
         if ($onset !== '' && $facts['onset'] === '') {
             $facts['onset'] = $onset;
         }
         $duration = ClinicalFeatureExtractors::extractDuration($combined);
         if (($duration['label'] ?? '') !== '' && $facts['duration_label'] === '') {
             $facts['duration_label'] = (string) $duration['label'];
+        }
+        // Soft timing phrases ("ligad pa") count as known onset — do not re-ask ONSET.
+        if ($facts['onset'] === '' && $facts['duration_label'] !== '') {
+            $derived = ClinicalFeatureExtractors::onsetFromDuration([
+                'label' => $facts['duration_label'],
+            ]);
+            if ($derived !== '') {
+                $facts['onset'] = $derived;
+            }
+        }
+        // Lexicon fallback for ambiguous timing answers when extractors still miss.
+        if ($facts['duration_label'] === ''
+            && class_exists('NlpStep3DemoGeminiAnswerInterpreter')
+            && in_array(strtoupper($awaiting), ['ONSET', 'DURATION', ''], true)
+        ) {
+            try {
+                $slot = $awaiting !== '' ? strtoupper($awaiting) : 'DURATION';
+                $interp = NlpStep3DemoGeminiAnswerInterpreter::tryLocalSemanticInterpretation($turn, $slot);
+                if (is_array($interp)
+                    && !empty($interp['relevant'])
+                    && strtoupper((string) ($interp['answer_type'] ?? '')) !== 'UNRELATED'
+                ) {
+                    $value = trim((string) ($interp['normalized_value'] ?? ''));
+                    if ($value !== '') {
+                        $facts['duration_label'] = $value;
+                        if ($facts['onset'] === '') {
+                            $facts['onset'] = ClinicalFeatureExtractors::onsetFromDuration(['label' => $value]) ?: $value;
+                        }
+                    }
+                }
+            } catch (Throwable) {
+                // keep extractor-only facts
+            }
         }
         $pain = ClinicalFeatureExtractors::extractPainScale($turn);
         if ($pain['score'] !== null && $facts['pain_score'] === null) {
@@ -469,7 +537,7 @@ final class ClinicalInterviewEngine
         if ($qualifier !== '' && $facts['pain_qualifier'] === '') {
             $facts['pain_qualifier'] = $qualifier;
         }
-        foreach (ClinicalFeatureExtractors::extractBodyLocations($turn) as $loc) {
+        foreach (ClinicalFeatureExtractors::extractBodyLocations($combined) as $loc) {
             if (!in_array($loc, $facts['body_locations'], true)) {
                 $facts['body_locations'][] = $loc;
             }
@@ -572,15 +640,22 @@ final class ClinicalInterviewEngine
     {
         $triage = is_array($assessment['triage'] ?? null) ? $assessment['triage'] : [];
         $pain = is_array($triage['pain_scale'] ?? null) ? $triage['pain_scale'] : [];
-        $duration = (string) ($triage['duration'] ?? '');
+        $duration = trim((string) ($triage['duration'] ?? ''));
+        if ($duration === '') {
+            $duration = trim((string) (ClinicalFeatureExtractors::extractDuration($transcript)['label'] ?? ''));
+        }
         $body = self::stringList($triage['detected_body_parts'] ?? []);
         $body = array_merge($body, ClinicalFeatureExtractors::extractBodyLocations($transcript));
+        $onset = ClinicalFeatureExtractors::extractOnset($transcript);
+        if ($onset === '' && $duration !== '') {
+            $onset = ClinicalFeatureExtractors::onsetFromDuration(['label' => $duration]);
+        }
 
         return self::blankFacts([
             'body_locations' => $body,
             'pain_score' => $pain['score'] ?? null,
             'pain_qualifier' => ClinicalFeatureExtractors::extractPainQualifier($transcript),
-            'onset' => ClinicalFeatureExtractors::extractOnset($transcript),
+            'onset' => $onset,
             'duration_label' => $duration,
             'denied_associated' => ClinicalFeatureExtractors::deniedAssociatedSymptoms($transcript),
         ]);
@@ -915,8 +990,7 @@ final class ClinicalInterviewEngine
             'NOSE_PAIN_WHERE' => (bool) preg_match('/\b(bridge|tip|nostril|tuod|pungos)\b/u', $low),
             // Numeric 0–10 only — qualitative intensifiers must not skip the pain scale.
             'PAIN_SEVERITY' => $facts['pain_score'] !== null,
-            'ONSET' => $facts['onset'] !== '' || $facts['duration_label'] !== '',
-            'DURATION' => $facts['duration_label'] !== '' || $facts['onset'] !== '',
+            'ONSET', 'DURATION' => ClinicalFeatureExtractors::hasTimingInformation($transcript, $facts),
             'NEURO_WEAKNESS' => $facts['weakness'] !== null || $facts['denied_associated'],
             'NEURO_SPEECH' => $facts['speech_difficulty'] !== null || $facts['denied_associated'] || $facts['weakness'] !== null,
             'NEURO_VISION' => $facts['vision_change'] !== null || $facts['denied_associated'] || $facts['weakness'] !== null,

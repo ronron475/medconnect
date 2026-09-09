@@ -108,17 +108,39 @@ final class ClinicalFeatureExtractors
         if (preg_match('/\b(today|kanan|subong|ngayon)\b/u', $low, $m)) {
             return ['raw' => $m[0], 'label' => 'Today', 'bucket' => 'same_day', 'days' => 0, 'hours' => null];
         }
-        if (preg_match('/\b(yesterday|gahapon|kahapon|kagapon|since yesterday|halin gahapon)\b/u', $low, $m)) {
+        if (preg_match('/\b(yesterday|yesturday|gahapon|kahapon|kagapon|since yesterday|halin gahapon|halin kagapon)\b/u', $low, $m)) {
             return ['raw' => $m[0], 'label' => 'Since yesterday', 'bucket' => '1_to_2_days', 'days' => 1, 'hours' => null];
         }
-        if (preg_match('/\b(this morning|kanina|kanina sang aga)\b/u', $low, $m)) {
+        if (preg_match('/\b(last\s+night|tonight|kagab-i|kagabi|since last night)\b/u', $low, $m)) {
+            return ['raw' => $m[0], 'label' => 'Since last night', 'bucket' => 'acute_hours', 'days' => null, 'hours' => 12];
+        }
+        if (preg_match('/\b(this morning|kanina sang aga|kaninang umaga)\b/u', $low, $m)) {
             return ['raw' => $m[0], 'label' => 'This morning', 'bucket' => 'acute_hours', 'days' => null, 'hours' => 6];
         }
-        if (preg_match('/\b(dugay na|matagal na|for a long time|matagal nang|dugay na gid)\b/u', $low, $m)) {
+        if (preg_match('/\b(kanina pa|kanina|earlier today)\b/u', $low, $m)) {
+            return ['raw' => $m[0], 'label' => 'Earlier today', 'bucket' => 'acute_hours', 'days' => null, 'hours' => 6];
+        }
+        // Soft / approximate timing — clinically known enough to skip re-asking ONSET/DURATION.
+        if (preg_match(
+            '/\b(ligad\s*-?\s*ligad\s+pa(?:\s+gid)?|sang\s+ligad\s+pa|ligad\s+pa(?:\s+gid)?|'
+            . 'started\s+earlier|some\s+time\s+ago|a\s+while\s+ago|for\s+a\s+while|'
+            . 'halin\s+pa\s+sang\s+una|sang\s+una\s+pa(?:\s+gid)?)\b/u',
+            $low,
+            $m
+        )) {
+            return ['raw' => $m[0], 'label' => 'Started earlier', 'bucket' => 'unknown', 'days' => null, 'hours' => null];
+        }
+        if (preg_match('/\bligad\b/u', $low, $m)) {
+            return ['raw' => $m[0], 'label' => 'Started earlier', 'bucket' => 'unknown', 'days' => null, 'hours' => null];
+        }
+        if (preg_match('/\b(dugay\s*-?\s*dugay\s+na|dugay\s+na(?:\s+gid)?|matagal\s+na(?:ng)?|for a long time)\b/u', $low, $m)) {
             return ['raw' => $m[0], 'label' => 'For a long time', 'bucket' => 'chronic_weeks', 'days' => 14, 'hours' => null];
         }
-        if (preg_match('/\b(bag-o lang|just now|just started|gulpi lang|kalit lang|bigla lang)\b/u', $low, $m)) {
+        if (preg_match('/\b(bag-o\s+lang|bagong\s+lang|just now|just started|gulpi lang|kalit lang|bigla lang|recently)\b/u', $low, $m)) {
             return ['raw' => $m[0], 'label' => 'Just started', 'bucket' => 'acute_hours', 'days' => null, 'hours' => 1];
+        }
+        if (preg_match('/\b(last\s+week|nigay\s+semana|miaging\s+semana|noong\s+nakaraang\s+linggo)\b/u', $low, $m)) {
+            return ['raw' => $m[0], 'label' => '1 week', 'bucket' => 'chronic_weeks', 'days' => 7, 'hours' => null];
         }
 
         foreach (NlpFeaturePatternsLoader::patterns()['duration'] ?? [] as $row) {
@@ -141,6 +163,31 @@ final class ClinicalFeatureExtractors
     }
 
     /**
+     * True when the patient already gave clinically usable timing (onset and/or duration).
+     * Soft phrases like "ligad pa" / "started earlier" count as known timing.
+     */
+    public static function hasTimingInformation(string $text, array $facts = []): bool
+    {
+        if (trim((string) ($facts['onset'] ?? '')) !== ''
+            || trim((string) ($facts['duration_label'] ?? '')) !== ''
+        ) {
+            return true;
+        }
+        $text = trim($text);
+        if ($text === '') {
+            return false;
+        }
+        if (self::extractOnset($text) !== '') {
+            return true;
+        }
+        if (trim((string) (self::extractDuration($text)['label'] ?? '')) !== '') {
+            return true;
+        }
+
+        return false;
+    }
+
+    /**
      * Human-readable onset timing derived from a duration phrase already stated by the patient.
      * Does not invent a disease timeline beyond the stated duration.
      */
@@ -151,11 +198,14 @@ final class ClinicalFeatureExtractors
             return '';
         }
         $lower = mb_strtolower($label, 'UTF-8');
-        if (in_array($lower, ['today', 'this morning', 'just started'], true)) {
+        if (in_array($lower, ['today', 'this morning', 'just started', 'earlier today', 'since last night'], true)) {
             return $label;
         }
         if (str_starts_with($lower, 'since ')) {
             return $label;
+        }
+        if ($lower === 'started earlier' || $lower === 'for a while' || $lower === 'some time ago') {
+            return 'Started earlier';
         }
         if ($lower === 'for a long time') {
             return 'For a long time (onset not precisely dated)';
