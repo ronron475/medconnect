@@ -449,9 +449,10 @@ function patient_create_emergency_hospital_referral(PDO $pdo, int $patientId, in
         ? 'facility_name'
         : 'destination_facility';
 
+    // Auto emergency referral is issued immediately (go to ER) — not awaiting acceptance.
     $pdo->prepare("
         INSERT INTO digital_referrals (patient_id, provider_id, referral_type, reason, {$destCol}, status, created_at)
-        VALUES (?, ?, 'Hospital', ?, 'Nearest hospital / ER — emergency triage', 'pending', NOW())
+        VALUES (?, ?, 'Hospital', ?, 'Nearest hospital / ER — emergency triage', 'completed', NOW())
     ")->execute([$patientId, $providerId, $reason]);
 
     return (int) $pdo->lastInsertId();

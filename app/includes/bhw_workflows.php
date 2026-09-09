@@ -313,9 +313,10 @@ final class BhwWorkflows
                 $referralId = 0;
                 if ($providerId > 0) {
                     $destCol = self::referralDestColumn($pdo);
+                    // Auto emergency referral is issued immediately — not awaiting acceptance.
                     $pdo->prepare("
                         INSERT INTO digital_referrals (patient_id, provider_id, referral_type, reason, {$destCol}, status, created_at)
-                        VALUES (?, ?, 'Hospital', ?, 'Nearest hospital / ER — emergency triage', 'pending', NOW())
+                        VALUES (?, ?, 'Hospital', ?, 'Nearest hospital / ER — emergency triage', 'completed', NOW())
                     ")->execute([$patientId, $providerId, $reason]);
                     $referralId = (int) $pdo->lastInsertId();
                 }
