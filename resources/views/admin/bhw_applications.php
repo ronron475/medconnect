@@ -306,7 +306,7 @@ window.MC_BHW_APP = {
     checkerMode: <?= $is_superadmin_checker ? 'true' : 'false' ?>
 };
 </script>
-<script src="<?= ASSET_BASE ?>/assets/js/admin-bhw-applications.js?v=2.0"></script>
+<script src="<?= ASSET_BASE ?>/assets/js/admin-bhw-applications.js?v=2.1"></script>
 <?php if ($is_superadmin_checker): ?>
 <script>
 window.MC_BHW_APPROVAL = {
