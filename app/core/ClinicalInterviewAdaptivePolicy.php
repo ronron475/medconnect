@@ -92,8 +92,7 @@ final class ClinicalInterviewAdaptivePolicy
 
         $sev = $facts['pain_score'] ?? null;
         $sev = $sev !== null ? (int) $sev : null;
-        $hasTiming = trim((string) ($facts['onset'] ?? '')) !== ''
-            || trim((string) ($facts['duration_label'] ?? '')) !== '';
+        $hasTiming = ClinicalFeatureExtractors::hasTimingInformation($transcript, $facts);
         $assocDone = ($facts['has_other_symptoms'] ?? null) !== null
             || !empty($facts['denied_associated']);
         $onset = mb_strtolower(trim((string) ($facts['onset'] ?? '')));
@@ -201,11 +200,13 @@ final class ClinicalInterviewAdaptivePolicy
         $sev = $sev !== null ? (int) $sev : null;
         $onset = mb_strtolower(trim((string) ($facts['onset'] ?? '')));
         $sudden = (bool) preg_match('/\b(sudden|gulpi|bigla|abrupt)\b/u', $onset . ' ' . mb_strtolower($transcript));
-        $hasTiming = trim((string) ($facts['onset'] ?? '')) !== ''
-            || trim((string) ($facts['duration_label'] ?? '')) !== '';
+        $hasTiming = ClinicalFeatureExtractors::hasTimingInformation($transcript, $facts);
         $assocDone = ($facts['has_other_symptoms'] ?? null) !== null
             || !empty($facts['denied_associated']);
         $locs = self::bodyLocations($facts);
+        if ($locs === []) {
+            $locs = ClinicalFeatureExtractors::extractBodyLocations($transcript);
+        }
         $multiSite = count($locs) >= 2
             || count(array_intersect($concepts, ['headache', 'abdominal_pain', 'chest_pain', 'eye', 'nose_pain'])) >= 2;
         $painLike = array_intersect($concepts, ['pain', 'headache', 'chest_pain', 'abdominal_pain', 'nose_pain', 'eye', 'eye_pain', 'pain_unspecified']) !== [];
@@ -316,13 +317,15 @@ final class ClinicalInterviewAdaptivePolicy
     {
         $qid = strtoupper($qid);
         $low = mb_strtolower($transcript);
-        $hasTiming = trim((string) ($facts['onset'] ?? '')) !== ''
-            || trim((string) ($facts['duration_label'] ?? '')) !== '';
+        $hasTiming = ClinicalFeatureExtractors::hasTimingInformation($transcript, $facts);
         // Numeric 0–10 only — language intensifiers must not complete this clinical slot.
         $hasSeverity = ($facts['pain_score'] ?? null) !== null;
         $assocDone = ($facts['has_other_symptoms'] ?? null) !== null
             || !empty($facts['denied_associated']);
         $locs = self::bodyLocations($facts);
+        if ($locs === []) {
+            $locs = ClinicalFeatureExtractors::extractBodyLocations($transcript);
+        }
 
         return match ($qid) {
             'PAIN_LOCATION', 'UNWELL_WHAT' => $locs !== []
@@ -344,7 +347,7 @@ final class ClinicalInterviewAdaptivePolicy
             'CHEST_SWEATING' => ($facts['sweating'] ?? null) !== null || !empty($facts['denied_associated']) || ($facts['breathing_difficulty'] ?? null) !== null,
             'ABDOMINAL_ASSOCIATED' => ($facts['abdominal_associated'] ?? null) !== null || $assocDone,
             'ASSOCIATED_SYMPTOMS' => $assocDone || ($facts['weakness'] ?? null) !== null || ($facts['breathing_difficulty'] ?? null) !== null,
-            'EYE_LATERALITY' => (bool) preg_match('/\b(left|right|tuo|wala|both|duha)\b/u', $low) || $locs !== [],
+            'EYE_LATERALITY' => (bool) preg_match('/\b(left|right|tuo|wala|both|duha|kaliwa|kanan)\b/u', $low) || $locs !== [],
             'SPECIFIC_LOCATION' => (bool) preg_match('/\b(upper|lower|tuo|wala|left|right|pusod|center|tunga)\b/u', $low),
             'NOSE_PAIN_WHERE' => (bool) preg_match('/\b(bridge|tip|nostril|tuod|pungos)\b/u', $low),
             'SKIN_SITE' => $locs !== [],
