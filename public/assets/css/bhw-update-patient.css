@@ -324,3 +324,149 @@
     text-align: center;
   }
 }
+
+/* ---- Work tabs: Profile / Visit Intake / External Visits ---- */
+.bhw-work-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 0 0 14px;
+  padding: 6px;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  background: #f8fafc;
+}
+
+.bhw-work-tab {
+  appearance: none;
+  border: 0;
+  background: transparent;
+  color: #475569;
+  font-size: 13px;
+  font-weight: 650;
+  padding: 9px 14px;
+  border-radius: 8px;
+  cursor: pointer;
+  line-height: 1.2;
+}
+
+.bhw-work-tab:hover {
+  color: #0f172a;
+  background: #fff;
+}
+
+.bhw-work-tab.is-active {
+  color: #0f172a;
+  background: #fff;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.08);
+}
+
+.bhw-work-panel {
+  display: none;
+}
+
+.bhw-work-panel.is-active {
+  display: block;
+}
+
+.bhw-work-panel > .bhw-card + .bhw-card {
+  margin-top: 14px;
+}
+
+.bhw-form-grid--compact {
+  gap: 12px 14px;
+}
+
+.bhw-form-grid--compact .form-label {
+  font-size: 11px;
+  margin-bottom: 5px;
+}
+
+.bhw-form-grid--compact .form-control,
+.bhw-form-grid--compact .form-select {
+  min-height: 40px;
+  font-size: 13px;
+}
+
+.bhw-form-grid--compact textarea.form-control {
+  min-height: 64px;
+}
+
+.bhw-form-card-sub {
+  max-width: 70ch;
+}
+
+.bhw-inline-notice {
+  margin: 0 0 12px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  background: #f0f9ff;
+  border: 1px solid #bae6fd;
+  color: #0c4a6e;
+  line-height: 1.45;
+}
+
+.bhw-external-list {
+  margin: 0 0 14px;
+}
+
+.bhw-external-item {
+  padding: 12px 14px;
+  border: 1px solid #e2e8f0;
+  border-left: 3px solid #94a3b8;
+  border-radius: 8px;
+  margin-bottom: 8px;
+  background: #fff;
+}
+
+.bhw-add-panel {
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  background: #f8fafc;
+  padding: 0;
+}
+
+.bhw-add-panel__summary {
+  cursor: pointer;
+  list-style: none;
+  padding: 12px 14px;
+  font-size: 13px;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.bhw-add-panel__summary::-webkit-details-marker {
+  display: none;
+}
+
+.bhw-add-panel__body {
+  padding: 0 14px 14px;
+  border-top: 1px solid #e2e8f0;
+  background: #fff;
+  border-radius: 0 0 10px 10px;
+}
+
+.bhw-update-dl--compact {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0;
+}
+
+.bhw-update-dl--compact .bhw-update-dl-row {
+  padding: 8px 0;
+}
+
+@media (max-width: 640px) {
+  .bhw-work-tabs {
+    flex-direction: column;
+  }
+
+  .bhw-work-tab {
+    width: 100%;
+    text-align: left;
+  }
+
+  .bhw-update-dl--compact {
+    grid-template-columns: 1fr;
+  }
+}

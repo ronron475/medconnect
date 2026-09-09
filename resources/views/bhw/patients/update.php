@@ -131,8 +131,24 @@ ob_start();
     });
   }
 
+  function switchWorkTab(tabId) {
+    document.querySelectorAll('.bhw-work-tab').forEach(function (btn) {
+      var active = btn.dataset.workTab === tabId;
+      btn.classList.toggle('is-active', active);
+      btn.setAttribute('aria-selected', active ? 'true' : 'false');
+    });
+    document.querySelectorAll('.bhw-work-panel').forEach(function (panel) {
+      var active = panel.id === 'work_' + tabId;
+      panel.classList.toggle('is-active', active);
+      panel.hidden = !active;
+    });
+  }
+
   document.querySelectorAll('.bhw-update-tab').forEach(function (btn) {
     btn.addEventListener('click', function () { switchTab(btn.dataset.tab); });
+  });
+  document.querySelectorAll('.bhw-work-tab').forEach(function (btn) {
+    btn.addEventListener('click', function () { switchWorkTab(btn.dataset.workTab); });
   });
 
   function fillSummary(p) {
@@ -253,6 +269,7 @@ ob_start();
       if (pageEl) pageEl.classList.add('is-patient-loaded');
       showWorkspace(true);
       switchTab('personal');
+      switchWorkTab('profile');
     });
   }
 
@@ -429,7 +446,7 @@ ob_start();
       BhwPortal.post('recorded_data.php', fd).then(function (r) {
         if (btn) {
           btn.disabled = false;
-          btn.textContent = 'Save Patient Information';
+          btn.textContent = 'Save Visit Intake';
         }
         recordedAlert(r.message || (r.success ? 'Saved.' : 'Save failed.'), !!r.success);
         BhwPortal.toast(r.message, r.success, { title: r.success ? (r.mode === 'pre_consultation' ? 'Saved as Pre-Consultation' : 'Recorded for Doctor') : 'Save Failed' });
@@ -467,12 +484,12 @@ ob_start();
     var box = document.getElementById('bhwExternalList');
     if (!box) return;
     if (!list || !list.length) {
-      box.innerHTML = '<p class="bhw-field-hint">No external healthcare visits recorded yet.</p>';
+      box.innerHTML = '<p class="bhw-field-hint">No external visits yet. Use the form below to add one.</p>';
       return;
     }
     box.innerHTML = list.map(function (v) {
       return (
-        '<article class="bhw-external-item" style="padding:12px 14px;border:1px solid #e2e8f0;border-radius:10px;margin-bottom:10px;background:#fff;">' +
+        '<article class="bhw-external-item">' +
           '<div style="font-size:11px;letter-spacing:.04em;text-transform:uppercase;color:#64748b;font-weight:700;margin-bottom:4px;">External Healthcare Visit</div>' +
           '<div style="font-weight:700;color:#0f172a;">' + escHtml(v.facility_name || 'Facility') + '</div>' +
           '<div style="font-size:13px;color:#334155;margin-top:4px;">' +
@@ -593,6 +610,14 @@ $update_css_ver = (int) @filemtime(ASSETS_PATH . '/css/bhw-update-patient.css');
 
     <div class="bhw-update-main">
 
+      <nav class="bhw-work-tabs" role="tablist" aria-label="Patient update sections">
+        <button type="button" class="bhw-work-tab is-active" role="tab" data-work-tab="profile" aria-selected="true" aria-controls="work_profile" id="worktab_profile">Profile</button>
+        <button type="button" class="bhw-work-tab" role="tab" data-work-tab="intake" aria-selected="false" aria-controls="work_intake" id="worktab_intake">Visit Intake</button>
+        <button type="button" class="bhw-work-tab" role="tab" data-work-tab="external" aria-selected="false" aria-controls="work_external" id="worktab_external">External Visits</button>
+      </nav>
+
+      <div class="bhw-work-panel is-active" id="work_profile" role="tabpanel" aria-labelledby="worktab_profile">
+
       <section class="bhw-card bhw-form-card bhw-update-contact-card" aria-labelledby="update_contact_title">
         <div class="bhw-update-contact-head">
           <div>
@@ -602,23 +627,21 @@ $update_css_ver = (int) @filemtime(ASSETS_PATH . '/css/bhw-update-patient.css');
               </span>
               Contact Information
             </h3>
-            <p class="bhw-form-card-sub">Update how this patient can be reached for appointments and follow-ups.</p>
+            <p class="bhw-form-card-sub">How this patient can be reached for appointments and follow-ups.</p>
           </div>
           <span class="bhw-update-dirty-badge" id="bhwDirtyBadge" hidden>Unsaved changes</span>
         </div>
         <form id="bhwUpdateForm" novalidate>
           <input type="hidden" name="patient_id" id="f_patient_id" value="">
-          <div class="bhw-form-grid">
-            <div class="bhw-field span-2">
+          <div class="bhw-form-grid bhw-form-grid--compact">
+            <div class="bhw-field">
               <label class="form-label" for="f_email">Email Address <span class="bhw-req" aria-hidden="true">*</span></label>
               <input type="email" class="form-control" name="email" id="f_email" required autocomplete="email" placeholder="patient@email.com" aria-required="true">
-              <span class="bhw-field-hint">Used for patient sign-in and password setup notifications.</span>
               <span class="bhw-field-error" role="alert"></span>
             </div>
-            <div class="bhw-field span-2">
+            <div class="bhw-field">
               <label class="form-label" for="f_contact">Mobile Number <span class="bhw-req" aria-hidden="true">*</span></label>
               <input type="tel" class="form-control" name="contact_number" id="f_contact" required autocomplete="tel" placeholder="09XXXXXXXXX" inputmode="numeric" aria-required="true">
-              <span class="bhw-field-hint">Philippine format: 09XXXXXXXXX</span>
               <span class="bhw-field-error" role="alert"></span>
             </div>
           </div>
@@ -632,8 +655,8 @@ $update_css_ver = (int) @filemtime(ASSETS_PATH . '/css/bhw-update-patient.css');
           </span>
           Medical Information
         </h3>
-        <p class="bhw-form-card-sub">Baseline clinical data to support triage and care coordination.</p>
-        <div class="bhw-form-grid" form="bhwUpdateForm">
+        <p class="bhw-form-card-sub">Baseline clinical profile for triage and care coordination.</p>
+        <div class="bhw-form-grid bhw-form-grid--compact" form="bhwUpdateForm">
           <div class="bhw-field">
             <label class="form-label" for="f_blood">Blood Type</label>
             <select class="form-select" id="f_blood" name="blood_type" form="bhwUpdateForm">
@@ -650,33 +673,28 @@ $update_css_ver = (int) @filemtime(ASSETS_PATH . '/css/bhw-update-patient.css');
           </div>
           <div class="bhw-field" id="f_pregnancy_wrap" hidden>
             <label class="form-label" for="f_pregnancy">Pregnancy Status</label>
-            <select class="form-select" id="f_pregnancy" aria-describedby="f_pregnancy_hint">
+            <select class="form-select" id="f_pregnancy">
               <option value="">Not applicable / Unknown</option>
               <option value="Not pregnant">Not pregnant</option>
               <option value="Pregnant">Pregnant</option>
               <option value="Postpartum">Postpartum</option>
             </select>
-            <span class="bhw-field-hint" id="f_pregnancy_hint">Shown when gender is Female</span>
           </div>
           <div class="bhw-field span-2">
             <label class="form-label" for="f_conditions">Existing Conditions</label>
-            <textarea class="form-control" id="f_conditions" name="existing_conditions" form="bhwUpdateForm" rows="3" placeholder="Hypertension, diabetes, asthma…" aria-describedby="f_conditions_hint"></textarea>
-            <span class="bhw-field-hint" id="f_conditions_hint">Optional — for BHW reference</span>
+            <textarea class="form-control" id="f_conditions" name="existing_conditions" form="bhwUpdateForm" rows="2" placeholder="Hypertension, diabetes, asthma…"></textarea>
           </div>
-          <div class="bhw-field span-2">
+          <div class="bhw-field">
             <label class="form-label" for="f_allergies">Allergies</label>
-            <textarea class="form-control" id="f_allergies" name="allergies" form="bhwUpdateForm" rows="2" placeholder="Drug, food, or environmental allergies" aria-describedby="f_allergies_hint"></textarea>
-            <span class="bhw-field-hint" id="f_allergies_hint">Optional — for BHW reference</span>
+            <textarea class="form-control" id="f_allergies" name="allergies" form="bhwUpdateForm" rows="2" placeholder="Drug, food, or environmental"></textarea>
           </div>
-          <div class="bhw-field span-2">
+          <div class="bhw-field">
             <label class="form-label" for="f_medications">Current Medications</label>
-            <textarea class="form-control" id="f_medications" name="medications" form="bhwUpdateForm" rows="2" placeholder="List ongoing prescriptions or supplements" aria-describedby="f_meds_hint"></textarea>
-            <span class="bhw-field-hint" id="f_meds_hint">Optional — for BHW reference</span>
+            <textarea class="form-control" id="f_medications" name="medications" form="bhwUpdateForm" rows="2" placeholder="Ongoing prescriptions"></textarea>
           </div>
           <div class="bhw-field span-2">
             <label class="form-label" for="f_disabilities">Disabilities</label>
-            <textarea class="form-control" id="f_disabilities" rows="2" placeholder="Mobility, sensory, or other considerations" aria-describedby="f_dis_hint"></textarea>
-            <span class="bhw-field-hint" id="f_dis_hint">Optional — for BHW reference</span>
+            <textarea class="form-control" id="f_disabilities" rows="2" placeholder="Mobility, sensory, or other considerations"></textarea>
           </div>
         </div>
         <div class="bhw-form-actions bhw-update-form-actions">
@@ -686,19 +704,54 @@ $update_css_ver = (int) @filemtime(ASSETS_PATH . '/css/bhw-update-patient.css');
         </div>
       </section>
 
+      <section class="bhw-card bhw-update-tabs-card" aria-label="Read-only patient profile">
+        <div class="bhw-update-tabs" role="tablist" aria-label="Profile sections">
+          <button type="button" class="bhw-update-tab is-active" role="tab" data-tab="personal" aria-selected="true" aria-controls="tab_personal" id="tabbtn_personal">Personal</button>
+          <button type="button" class="bhw-update-tab" role="tab" data-tab="account" aria-selected="false" aria-controls="tab_account" id="tabbtn_account">Account</button>
+        </div>
+        <div class="bhw-update-tab-panels">
+          <div class="bhw-update-tab-panel is-active" id="tab_personal" role="tabpanel" aria-labelledby="tabbtn_personal">
+            <dl class="bhw-update-dl bhw-update-dl--compact">
+              <div class="bhw-update-dl-row"><dt>Full name</dt><dd id="info_name">—</dd></div>
+              <div class="bhw-update-dl-row"><dt>Gender</dt><dd id="info_gender">—</dd></div>
+              <div class="bhw-update-dl-row"><dt>Date of birth</dt><dd id="info_dob">—</dd></div>
+              <div class="bhw-update-dl-row"><dt>Age</dt><dd id="info_age">—</dd></div>
+              <div class="bhw-update-dl-row"><dt>Address</dt><dd id="info_address">—</dd></div>
+              <div class="bhw-update-dl-row"><dt>Barangay</dt><dd id="info_barangay">—</dd></div>
+              <div class="bhw-update-dl-row"><dt>Blood type</dt><dd id="info_blood">—</dd></div>
+              <div class="bhw-update-dl-row"><dt>Conditions</dt><dd id="info_conditions">—</dd></div>
+              <div class="bhw-update-dl-row"><dt>Allergies</dt><dd id="info_allergies">—</dd></div>
+              <div class="bhw-update-dl-row"><dt>Medications</dt><dd id="info_meds">—</dd></div>
+            </dl>
+          </div>
+          <div class="bhw-update-tab-panel" id="tab_account" role="tabpanel" aria-labelledby="tabbtn_account" hidden>
+            <dl class="bhw-update-dl bhw-update-dl--compact">
+              <div class="bhw-update-dl-row"><dt>Patient ID</dt><dd id="info_id">—</dd></div>
+              <div class="bhw-update-dl-row"><dt>Registered</dt><dd id="info_registered">—</dd></div>
+              <div class="bhw-update-dl-row"><dt>Status</dt><dd id="info_status">—</dd></div>
+            </dl>
+            <p class="bhw-update-readonly-note">Account credentials are managed by the patient.</p>
+          </div>
+        </div>
+      </section>
+
+      </div>
+
+      <div class="bhw-work-panel" id="work_intake" role="tabpanel" aria-labelledby="worktab_intake" hidden>
+
       <section class="bhw-card bhw-form-card" id="bhwRecordedDataCard" aria-labelledby="recorded_data_title">
         <h3 class="bhw-form-card-title" id="recorded_data_title">
           <span class="bhw-card-icon" aria-hidden="true">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
           </span>
-          Record Patient / Pre-Consultation Information
+          Visit Intake (Pre-Consultation)
         </h3>
-        <p class="bhw-form-card-sub">Record vitals and observations anytime. If a consultation is open, data is saved to that visit. If not, it is saved as <strong>pre-consultation data</strong> and linked when a doctor is assigned. This stays separate from the doctor&rsquo;s SOAP assessment.</p>
-        <div id="bhwRecordedEmpty" class="bhw-field-hint" style="margin-bottom:12px;display:none;"></div>
-        <div id="bhwRecordedStatus" class="bhw-field-hint" style="margin-bottom:10px;display:none;"></div>
+        <p class="bhw-form-card-sub">Vitals and observations for a MedConnect visit. If no consult is open yet, this is saved as pre-consultation data for the assigned doctor later.</p>
+        <div id="bhwRecordedEmpty" class="bhw-field-hint bhw-inline-notice" style="display:none;"></div>
+        <div id="bhwRecordedStatus" class="bhw-field-hint" style="display:none;"></div>
         <form id="bhwRecordedForm" style="display:none;" novalidate>
           <input type="hidden" name="patient_id" id="rd_patient_id" value="">
-          <div class="bhw-form-grid">
+          <div class="bhw-form-grid bhw-form-grid--compact">
             <div class="bhw-field span-2" id="rd_consultation_wrap">
               <label class="form-label" for="rd_consultation_id">Consultation</label>
               <select class="form-select" id="rd_consultation_id" name="consultation_id"></select>
@@ -720,11 +773,11 @@ $update_css_ver = (int) @filemtime(ASSETS_PATH . '/css/bhw-update-patient.css');
               <input type="text" class="form-control" id="rd_bp" name="blood_pressure" placeholder="120/80" pattern="^\d{2,3}\s*/\s*\d{2,3}$">
             </div>
             <div class="bhw-field">
-              <label class="form-label" for="rd_pulse">Pulse Rate (bpm)</label>
+              <label class="form-label" for="rd_pulse">Pulse (bpm)</label>
               <input type="number" min="20" max="250" class="form-control" id="rd_pulse" name="pulse_bpm" placeholder="80">
             </div>
             <div class="bhw-field">
-              <label class="form-label" for="rd_rr">Respiratory Rate</label>
+              <label class="form-label" for="rd_rr">Resp. Rate</label>
               <input type="number" min="5" max="80" class="form-control" id="rd_rr" name="respiratory_rate" placeholder="18">
             </div>
             <div class="bhw-field">
@@ -746,118 +799,92 @@ $update_css_ver = (int) @filemtime(ASSETS_PATH . '/css/bhw-update-patient.css');
           </div>
           <p id="bhwRecordedAlert" class="mc-form-alert" style="display:none;margin-top:10px;" role="alert"></p>
           <div class="bhw-form-actions" style="margin-top:12px;">
-            <button type="submit" class="bhw-btn-teal" id="bhwRecordedSaveBtn">Save Patient Information</button>
+            <button type="submit" class="bhw-btn-teal" id="bhwRecordedSaveBtn">Save Visit Intake</button>
           </div>
         </form>
         <div id="bhwRecordedLatest" style="display:none;margin-top:14px;"></div>
       </section>
 
+      </div>
+
+      <div class="bhw-work-panel" id="work_external" role="tabpanel" aria-labelledby="worktab_external" hidden>
+
       <section class="bhw-card bhw-form-card" id="bhwExternalCard" aria-labelledby="external_visits_title">
-        <h3 class="bhw-form-card-title" id="external_visits_title">
-          <span class="bhw-card-icon" aria-hidden="true">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 21h18"/><path d="M5 21V7l8-4v18"/><path d="M19 21V11l-6-4"/><path d="M9 9v.01"/><path d="M9 12v.01"/><path d="M9 15v.01"/><path d="M9 18v.01"/></svg>
-          </span>
-          External Healthcare Visits
-        </h3>
-        <p class="bhw-form-card-sub">Record hospital, clinic, or health-center visits that happened <strong>outside MedConnect</strong>. This is patient medical history — not a MedConnect consultation and not a doctor assessment. No open consultation is required.</p>
-        <form id="bhwExternalForm" style="display:none;" novalidate>
-          <input type="hidden" name="patient_id" id="ev_patient_id" value="">
-          <div class="bhw-form-grid">
-            <div class="bhw-field">
-              <label class="form-label" for="ev_facility_type">Facility Type <span class="bhw-req">*</span></label>
-              <select class="form-select" id="ev_facility_type" name="facility_type" required>
-                <option value="">Select type…</option>
-                <option value="hospital">Hospital</option>
-                <option value="private_clinic">Private Clinic</option>
-                <option value="health_center">Health Center</option>
-                <option value="government_health_facility">Government Health Facility</option>
-                <option value="emergency_facility">Emergency Facility</option>
-                <option value="other">Other</option>
-              </select>
-            </div>
-            <div class="bhw-field">
-              <label class="form-label" for="ev_facility_name">Facility Name <span class="bhw-req">*</span></label>
-              <input type="text" class="form-control" id="ev_facility_name" name="facility_name" maxlength="200" placeholder="ABC Hospital" required>
-            </div>
-            <div class="bhw-field">
-              <label class="form-label" for="ev_visit_date">Visit Date <span class="bhw-req">*</span></label>
-              <input type="date" class="form-control" id="ev_visit_date" name="visit_date" required>
-            </div>
-            <div class="bhw-field">
-              <label class="form-label" for="ev_information_source">Information Source <span class="bhw-req">*</span></label>
-              <select class="form-select" id="ev_information_source" name="information_source" required>
-                <option value="patient_reported">Patient Reported</option>
-                <option value="bhw_recorded">BHW Recorded</option>
-                <option value="medical_document">Medical Document Provided</option>
-                <option value="other">Other</option>
-              </select>
-            </div>
-            <div class="bhw-field span-2">
-              <label class="form-label" for="ev_reason">Reason for Visit</label>
-              <input type="text" class="form-control" id="ev_reason" name="reason" placeholder="Fever">
-            </div>
-            <div class="bhw-field span-2">
-              <label class="form-label" for="ev_diagnosis">Diagnosis (if patient/BHW reported)</label>
-              <input type="text" class="form-control" id="ev_diagnosis" name="reported_diagnosis" placeholder="Optional — not a MedConnect doctor diagnosis">
-            </div>
-            <div class="bhw-field span-2">
-              <label class="form-label" for="ev_treatment">Treatment / Medication (if reported)</label>
-              <input type="text" class="form-control" id="ev_treatment" name="reported_treatment" placeholder="Optional">
-            </div>
-            <div class="bhw-field span-2">
-              <label class="form-label" for="ev_notes">Additional Notes</label>
-              <textarea class="form-control" id="ev_notes" name="notes" rows="2" placeholder="Optional notes"></textarea>
-            </div>
-          </div>
-          <p id="bhwExternalAlert" class="mc-form-alert" style="display:none;margin-top:10px;" role="alert"></p>
-          <div class="bhw-form-actions" style="margin-top:12px;">
-            <button type="button" class="bhw-btn-outline" id="bhwExternalCancelBtn">Cancel</button>
-            <button type="submit" class="bhw-btn-teal" id="bhwExternalSaveBtn">Save External Visit</button>
-          </div>
-        </form>
-        <div id="bhwExternalList" style="margin-top:14px;"></div>
-      </section>
-
-      <section class="bhw-card bhw-update-tabs-card" aria-label="Read-only patient profile">
-        <div class="bhw-update-tabs" role="tablist" aria-label="Profile sections">
-          <button type="button" class="bhw-update-tab is-active" role="tab" data-tab="personal" aria-selected="true" aria-controls="tab_personal" id="tabbtn_personal">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-            Personal
-          </button>
-          <button type="button" class="bhw-update-tab" role="tab" data-tab="account" aria-selected="false" aria-controls="tab_account" id="tabbtn_account">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
-            Account
-          </button>
-        </div>
-
-        <div class="bhw-update-tab-panels">
-          <div class="bhw-update-tab-panel is-active" id="tab_personal" role="tabpanel" aria-labelledby="tabbtn_personal">
-            <dl class="bhw-update-dl">
-              <div class="bhw-update-dl-row"><dt>Full name</dt><dd id="info_name">—</dd></div>
-              <div class="bhw-update-dl-row"><dt>Gender</dt><dd id="info_gender">—</dd></div>
-              <div class="bhw-update-dl-row"><dt>Date of birth</dt><dd id="info_dob">—</dd></div>
-              <div class="bhw-update-dl-row"><dt>Age</dt><dd id="info_age">—</dd></div>
-              <div class="bhw-update-dl-row"><dt>Address</dt><dd id="info_address">—</dd></div>
-              <div class="bhw-update-dl-row"><dt>Barangay</dt><dd id="info_barangay">—</dd></div>
-              <div class="bhw-update-dl-row"><dt>Blood type</dt><dd id="info_blood">—</dd></div>
-              <div class="bhw-update-dl-row"><dt>Conditions</dt><dd id="info_conditions">—</dd></div>
-              <div class="bhw-update-dl-row"><dt>Allergies</dt><dd id="info_allergies">—</dd></div>
-              <div class="bhw-update-dl-row"><dt>Medications</dt><dd id="info_meds">—</dd></div>
-            </dl>
-          </div>
-          <div class="bhw-update-tab-panel" id="tab_account" role="tabpanel" aria-labelledby="tabbtn_account" hidden>
-            <dl class="bhw-update-dl">
-              <div class="bhw-update-dl-row"><dt>Patient ID</dt><dd id="info_id">—</dd></div>
-              <div class="bhw-update-dl-row"><dt>Registered</dt><dd id="info_registered">—</dd></div>
-              <div class="bhw-update-dl-row"><dt>Status</dt><dd id="info_status">—</dd></div>
-            </dl>
-            <p class="bhw-update-readonly-note">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
-              Account credentials and verification are managed by the patient.
-            </p>
+        <div class="bhw-update-contact-head">
+          <div>
+            <h3 class="bhw-form-card-title" id="external_visits_title">
+              <span class="bhw-card-icon" aria-hidden="true">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 21h18"/><path d="M5 21V7l8-4v18"/><path d="M19 21V11l-6-4"/></svg>
+              </span>
+              External Healthcare Visits
+            </h3>
+            <p class="bhw-form-card-sub">Hospital/clinic visits <strong>outside MedConnect</strong> — patient history only, not a consultation.</p>
           </div>
         </div>
+
+        <div id="bhwExternalList" class="bhw-external-list"></div>
+
+        <details class="bhw-add-panel" id="bhwExternalAddPanel" open>
+          <summary class="bhw-add-panel__summary">+ Add External Healthcare Visit</summary>
+          <form id="bhwExternalForm" class="bhw-add-panel__body" style="display:none;" novalidate>
+            <input type="hidden" name="patient_id" id="ev_patient_id" value="">
+            <div class="bhw-form-grid bhw-form-grid--compact">
+              <div class="bhw-field">
+                <label class="form-label" for="ev_facility_type">Facility Type <span class="bhw-req">*</span></label>
+                <select class="form-select" id="ev_facility_type" name="facility_type" required>
+                  <option value="">Select type…</option>
+                  <option value="hospital">Hospital</option>
+                  <option value="private_clinic">Private Clinic</option>
+                  <option value="health_center">Health Center</option>
+                  <option value="government_health_facility">Government Health Facility</option>
+                  <option value="emergency_facility">Emergency Facility</option>
+                  <option value="other">Other</option>
+                </select>
+              </div>
+              <div class="bhw-field">
+                <label class="form-label" for="ev_facility_name">Facility Name <span class="bhw-req">*</span></label>
+                <input type="text" class="form-control" id="ev_facility_name" name="facility_name" maxlength="200" placeholder="ABC Hospital" required>
+              </div>
+              <div class="bhw-field">
+                <label class="form-label" for="ev_visit_date">Visit Date <span class="bhw-req">*</span></label>
+                <input type="date" class="form-control" id="ev_visit_date" name="visit_date" required>
+              </div>
+              <div class="bhw-field">
+                <label class="form-label" for="ev_information_source">Information Source <span class="bhw-req">*</span></label>
+                <select class="form-select" id="ev_information_source" name="information_source" required>
+                  <option value="patient_reported">Patient Reported</option>
+                  <option value="bhw_recorded">BHW Recorded</option>
+                  <option value="medical_document">Medical Document Provided</option>
+                  <option value="other">Other</option>
+                </select>
+              </div>
+              <div class="bhw-field span-2">
+                <label class="form-label" for="ev_reason">Reason for Visit</label>
+                <input type="text" class="form-control" id="ev_reason" name="reason" placeholder="Fever">
+              </div>
+              <div class="bhw-field">
+                <label class="form-label" for="ev_diagnosis">Reported Diagnosis</label>
+                <input type="text" class="form-control" id="ev_diagnosis" name="reported_diagnosis" placeholder="Optional">
+              </div>
+              <div class="bhw-field">
+                <label class="form-label" for="ev_treatment">Reported Treatment</label>
+                <input type="text" class="form-control" id="ev_treatment" name="reported_treatment" placeholder="Optional">
+              </div>
+              <div class="bhw-field span-2">
+                <label class="form-label" for="ev_notes">Additional Notes</label>
+                <textarea class="form-control" id="ev_notes" name="notes" rows="2" placeholder="Optional notes"></textarea>
+              </div>
+            </div>
+            <p id="bhwExternalAlert" class="mc-form-alert" style="display:none;margin-top:10px;" role="alert"></p>
+            <div class="bhw-form-actions" style="margin-top:12px;">
+              <button type="button" class="bhw-btn-outline" id="bhwExternalCancelBtn">Cancel</button>
+              <button type="submit" class="bhw-btn-teal" id="bhwExternalSaveBtn">Save External Visit</button>
+            </div>
+          </form>
+        </details>
       </section>
+
+      </div>
 
     </div>
 
@@ -874,10 +901,10 @@ $update_css_ver = (int) @filemtime(ASSETS_PATH . '/css/bhw-update-patient.css');
       <div class="bhw-register-guidance bhw-update-guidance">
         <h4>Update Guidance</h4>
         <ul>
-          <li>Confirm contact and medical changes with the patient before saving.</li>
-          <li>Changing email affects their login credentials.</li>
-          <li>Medical fields match the registration form layout for consistency.</li>
-          <li>Personal and demographic fields cannot be edited here.</li>
+          <li><strong>Profile</strong> — contact and medical information.</li>
+          <li><strong>Visit Intake</strong> — vitals for the current/pre-consultation.</li>
+          <li><strong>External Visits</strong> — hospital/clinic history outside MedConnect.</li>
+          <li>Personal/demographic fields are read-only.</li>
         </ul>
       </div>
 
