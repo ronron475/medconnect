@@ -48,38 +48,40 @@ require_once __DIR__ . '/partials/layout_open.php';
   </div>
 </header>
 
-<div class="staff-apps-toolbar">
-  <label class="staff-apps-toolbar__field">
-    <span class="staff-apps-toolbar__label">Filter</span>
-    <select id="crStatusFilter" class="mc-input">
-      <option value="all">All reports</option>
-      <option value="pending">Pending</option>
-      <option value="under_review">Under review</option>
-      <option value="escalated">Escalated</option>
-      <option value="confirmed">Confirmed</option>
-      <option value="dismissed">Dismissed</option>
-    </select>
-  </label>
-</div>
+<div class="staff-apps-card">
+  <div class="staff-apps-toolbar">
+    <label class="staff-apps-toolbar__field" for="crStatusFilter">
+      <span class="staff-apps-toolbar__label">Filter</span>
+      <select id="crStatusFilter" class="mc-input staff-apps-toolbar__select">
+        <option value="all">All reports</option>
+        <option value="pending">Pending</option>
+        <option value="under_review">Under review</option>
+        <option value="escalated">Escalated</option>
+        <option value="confirmed">Confirmed</option>
+        <option value="dismissed">Dismissed</option>
+      </select>
+    </label>
+  </div>
 
-<div class="staff-apps-table-wrap">
-  <table class="staff-apps-table" id="crReportsTable">
-    <thead>
-      <tr>
-        <th>Patient</th>
-        <th>Provider</th>
-        <th>Source</th>
-        <th>Consultation</th>
-        <th>Reason</th>
-        <th>Date</th>
-        <th>Status</th>
-        <th>Actions</th>
-      </tr>
-    </thead>
-    <tbody id="crReportsBody">
-      <tr><td colspan="8" class="staff-apps-empty">Loading reports…</td></tr>
-    </tbody>
-  </table>
+  <div class="staff-apps-table-wrap">
+    <table class="staff-apps-table" id="crReportsTable">
+      <thead>
+        <tr>
+          <th>Patient</th>
+          <th>Provider</th>
+          <th>Source</th>
+          <th>Consultation</th>
+          <th>Reason</th>
+          <th>Date</th>
+          <th>Status</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody id="crReportsBody">
+        <tr><td colspan="8" class="staff-apps-empty">Loading reports…</td></tr>
+      </tbody>
+    </table>
+  </div>
 </div>
 </article>
 

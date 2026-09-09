@@ -1,5 +1,64 @@
 .cr-page .staff-apps-table td { vertical-align: top; }
 
+.cr-page .staff-apps-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 12px 16px;
+  padding: 16px 20px;
+  border-bottom: 1px solid #e2e8f0;
+  background: #f8fafc;
+}
+
+.cr-page .staff-apps-toolbar__field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin: 0;
+  min-width: min(220px, 100%);
+}
+
+.cr-page .staff-apps-toolbar__label {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: #64748b;
+  line-height: 1.2;
+}
+
+.cr-page .staff-apps-toolbar__select,
+.cr-page .staff-apps-toolbar .mc-input {
+  min-height: 40px;
+  width: 100%;
+  max-width: 280px;
+  margin: 0;
+  padding: 8px 12px;
+  font-size: 13px;
+  border-radius: 8px;
+  border: 1px solid #cbd5e1;
+  background: #fff;
+  color: #0f172a;
+}
+
+.cr-page .staff-apps-toolbar__select:focus,
+.cr-page .staff-apps-toolbar .mc-input:focus {
+  outline: none;
+  border-color: #018a93;
+  box-shadow: 0 0 0 3px rgba(1, 138, 147, 0.12);
+}
+
+.cr-page .staff-apps-table-wrap {
+  margin: 0;
+  padding: 0;
+  overflow-x: auto;
+}
+
+.cr-page .staff-apps-table th {
+  padding-top: 14px;
+  padding-bottom: 14px;
+}
+
 .cr-badge {
   display: inline-flex;
   align-items: center;
