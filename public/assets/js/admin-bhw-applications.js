@@ -330,8 +330,30 @@
     }
 
     docList.innerHTML = (app.documents || []).map(function (d) {
-      return '<li><span>' + utils.esc(d.document_type.replace(/_/g, ' ')) + ': ' + utils.esc(d.original_name) + '</span></li>';
-    }).join('');
+      const typeLabel = utils.esc(String(d.document_type || '').replace(/_/g, ' '));
+      const name = utils.esc(d.original_name || 'Document');
+      const mime = utils.esc(d.mime_type || '');
+      return '<li><span>' + typeLabel + ': ' + name + '</span>' +
+        '<span class="bhw-doc-list__actions">' +
+        '<button type="button" class="mc-btn mc-btn--outline bhw-app-doc-view-btn" style="padding:4px 8px;font-size:11px;"' +
+        ' data-doc-id="' + d.id + '"' +
+        ' data-doc-name="' + name + '"' +
+        ' data-doc-type="' + typeLabel + '"' +
+        ' data-doc-mime="' + mime + '">View</button>' +
+        '<a class="mc-btn mc-btn--outline" style="padding:4px 8px;font-size:11px;" href="' + api + '?action=download&document_id=' + d.id + '">Download</a>' +
+        '</span></li>';
+    }).join('') || '<li class="text-muted">No documents uploaded.</li>';
+
+    docList.querySelectorAll('.bhw-app-doc-view-btn').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        openDocPreview({
+          id: btn.getAttribute('data-doc-id'),
+          name: btn.getAttribute('data-doc-name') || 'Document',
+          type: btn.getAttribute('data-doc-type') || '',
+          mime: btn.getAttribute('data-doc-mime') || '',
+        });
+      });
+    });
 
     const editable = canAdminEditStatus(app.status);
     const resendable = canResend(app.status);
@@ -354,7 +376,68 @@
     }
   }
 
+  function isImageMime(mime, name) {
+    const m = String(mime || '').toLowerCase();
+    if (m.indexOf('image/') === 0) return true;
+    return /\.(jpe?g|png|webp|gif)$/i.test(String(name || ''));
+  }
+
+  function isPdfMime(mime, name) {
+    const m = String(mime || '').toLowerCase();
+    if (m === 'application/pdf' || m.indexOf('pdf') >= 0) return true;
+    return /\.pdf$/i.test(String(name || ''));
+  }
+
+  function openDocPreview(doc) {
+    const preview = document.getElementById('bhwDocPreviewModal');
+    const body = document.getElementById('bhwDocPreviewBody');
+    const title = document.getElementById('bhwDocPreviewTitle');
+    const sub = document.getElementById('bhwDocPreviewSub');
+    const download = document.getElementById('bhwDocPreviewDownload');
+    if (!preview || !body) return;
+
+    const viewUrl = api + '?action=view&document_id=' + encodeURIComponent(doc.id);
+    const downloadUrl = api + '?action=download&document_id=' + encodeURIComponent(doc.id);
+
+    if (title) title.textContent = doc.type ? (doc.type + ' preview') : 'Document preview';
+    if (sub) sub.textContent = doc.name || '';
+    if (download) download.href = downloadUrl;
+
+    body.innerHTML = '';
+    if (isImageMime(doc.mime, doc.name)) {
+      const img = document.createElement('img');
+      img.src = viewUrl;
+      img.alt = doc.name || 'Document image';
+      body.appendChild(img);
+    } else if (isPdfMime(doc.mime, doc.name)) {
+      const frame = document.createElement('iframe');
+      frame.src = viewUrl;
+      frame.title = doc.name || 'PDF document';
+      body.appendChild(frame);
+    } else {
+      body.innerHTML =
+        '<div class="bhw-doc-preview-fallback">' +
+        '<p>This file type cannot be previewed in the browser.</p>' +
+        '<p><a class="mc-btn mc-btn--outline" href="' + downloadUrl + '">Download to inspect</a></p>' +
+        '</div>';
+    }
+
+    preview.style.display = 'flex';
+    preview.classList.add('is-open');
+  }
+
+  function closeDocPreview() {
+    const preview = document.getElementById('bhwDocPreviewModal');
+    const body = document.getElementById('bhwDocPreviewBody');
+    if (body) body.innerHTML = '';
+    if (preview) {
+      preview.style.display = 'none';
+      preview.classList.remove('is-open');
+    }
+  }
+
   function closeModal() {
+    closeDocPreview();
     if (modal) {
       modal.style.display = 'none';
       modal.style.pointerEvents = 'none';
@@ -456,6 +539,10 @@
   document.getElementById('bhwOpenCreateBtn')?.addEventListener('click', function () { openModal(0); });
   document.getElementById('bhwModalClose')?.addEventListener('click', closeModal);
   document.getElementById('bhwModalCancel')?.addEventListener('click', closeModal);
+  document.getElementById('bhwDocPreviewClose')?.addEventListener('click', closeDocPreview);
+  document.getElementById('bhwDocPreviewModal')?.addEventListener('click', function (e) {
+    if (e.target === e.currentTarget) closeDocPreview();
+  });
   document.getElementById('bhwSaveDraftBtn')?.addEventListener('click', function () { saveDraft(true); });
   resendBtn?.addEventListener('click', function () { sendOrResendInvite('resend_invite'); });
   if (searchInput) searchInput.addEventListener('input', applyFilters);

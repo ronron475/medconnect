@@ -289,12 +289,28 @@ require __DIR__ . '/partials/staff_hub_tabs.php';
     </div>
 </div>
 
+<div id="bhwDocPreviewModal" class="bhw-doc-preview-overlay" style="display:none;" role="dialog" aria-modal="true" aria-labelledby="bhwDocPreviewTitle">
+    <div class="bhw-doc-preview-dialog">
+        <div class="bhw-doc-preview-header">
+            <div>
+                <h3 class="bhw-doc-preview-title" id="bhwDocPreviewTitle">Document preview</h3>
+                <p class="bhw-doc-preview-sub" id="bhwDocPreviewSub"></p>
+            </div>
+            <div class="bhw-doc-preview-actions">
+                <a id="bhwDocPreviewDownload" class="mc-btn mc-btn--outline" href="#">Download</a>
+                <button type="button" class="admin-modal-close" id="bhwDocPreviewClose" aria-label="Close preview">&times;</button>
+            </div>
+        </div>
+        <div class="bhw-doc-preview-body" id="bhwDocPreviewBody"></div>
+    </div>
+</div>
+
 <?php if ($is_superadmin_checker): ?>
 <?php require __DIR__ . '/partials/bhw_review_modal.php'; ?>
 <?php endif; ?>
 
 <link rel="stylesheet" href="<?= ASSET_BASE ?>/assets/css/admin-staff-applications.css?v=1.4">
-<link rel="stylesheet" href="<?= ASSET_BASE ?>/assets/css/admin-bhw-applications.css?v=1.3">
+<link rel="stylesheet" href="<?= ASSET_BASE ?>/assets/css/admin-bhw-applications.css?v=1.4">
 <script src="<?= ASSET_BASE ?>/assets/js/admin-staff-applications.js?v=1.2"></script>
 <script>
 window.MC_BHW_APP = {
@@ -306,7 +322,7 @@ window.MC_BHW_APP = {
     checkerMode: <?= $is_superadmin_checker ? 'true' : 'false' ?>
 };
 </script>
-<script src="<?= ASSET_BASE ?>/assets/js/admin-bhw-applications.js?v=2.1"></script>
+<script src="<?= ASSET_BASE ?>/assets/js/admin-bhw-applications.js?v=2.2"></script>
 <?php if ($is_superadmin_checker): ?>
 <script>
 window.MC_BHW_APPROVAL = {
