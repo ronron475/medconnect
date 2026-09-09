@@ -181,6 +181,25 @@ $providerPanel = [
     'possible_conditions'  => $clinical['possible_conditions'] ?? [],
 ];
 
+$recordedData = [
+    'available' => false,
+    'fields' => [],
+];
+try {
+    require_once dirname(dirname(dirname(__DIR__))) . '/app/includes/consultation_recorded_data.php';
+    // Providers only see recorded data for the consultation they own (already gated above).
+    // Always scoped by consultation_id + patient_id — never patient history alone.
+    $recordedData = consultation_recorded_data_for_doctor($pdo, $consultId, $patientId);
+    if ($isProvider) {
+        $auth = consultation_recorded_data_for_authorized_provider($pdo, $providerId, $consultId, $patientId);
+        $recordedData = $auth['allowed']
+            ? ($auth['recorded'] ?? $recordedData)
+            : ['available' => false, 'fields' => [], 'consultation_id' => $consultId, 'patient_id' => $patientId];
+    }
+} catch (Throwable $e) {
+    error_log('session_context recorded_data: ' . $e->getMessage());
+}
+
 Api::success([
     'consultation_id' => $consultId,
     'role'            => $isPatient ? 'patient' : 'provider',
@@ -188,4 +207,5 @@ Api::success([
     'patient_panel'   => $patientPanel,
     'provider_panel'  => $providerPanel,
     'clinical'        => $clinical,
+    'recorded_data'   => $recordedData,
 ]);

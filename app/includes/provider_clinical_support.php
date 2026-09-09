@@ -114,8 +114,8 @@ function provider_consultation_clinical_support(PDO $pdo, int $consultationId, i
     try {
         $cols = $pdo->query('SHOW COLUMNS FROM consultations')->fetchAll(PDO::FETCH_COLUMN);
         if (in_array('triage_result_id', $cols, true)) {
-            $link = $pdo->prepare('SELECT triage_result_id FROM consultations WHERE id = ? LIMIT 1');
-            $link->execute([$consultationId]);
+            $link = $pdo->prepare('SELECT triage_result_id FROM consultations WHERE id = ? AND patient_id = ? LIMIT 1');
+            $link->execute([$consultationId, $patientId]);
             $triageId = (int) ($link->fetchColumn() ?: 0);
         }
     } catch (Throwable $e) {
@@ -398,33 +398,19 @@ function provider_consultation_clinical_support(PDO $pdo, int $consultationId, i
  */
 function provider_clinical_support_resolve_triage_id(PDO $pdo, int $consultationId, int $patientId): int
 {
+    // Never fall back to "latest triage for patient" — that leaks other consultations.
     try {
         $cols = $pdo->query('SHOW COLUMNS FROM consultations')->fetchAll(PDO::FETCH_COLUMN);
         if (in_array('triage_result_id', $cols, true)) {
-            $link = $pdo->prepare('SELECT triage_result_id FROM consultations WHERE id = ? LIMIT 1');
-            $link->execute([$consultationId]);
-            $triageId = (int) ($link->fetchColumn() ?: 0);
-            if ($triageId > 0) {
-                return $triageId;
-            }
+            $link = $pdo->prepare('SELECT triage_result_id FROM consultations WHERE id = ? AND patient_id = ? LIMIT 1');
+            $link->execute([$consultationId, $patientId]);
+            return (int) ($link->fetchColumn() ?: 0);
         }
     } catch (Throwable $e) {
         // ignore
     }
 
-    try {
-        $stmt = $pdo->prepare('
-            SELECT id
-            FROM triage_results
-            WHERE patient_id = ?
-            ORDER BY assessed_at DESC
-            LIMIT 1
-        ');
-        $stmt->execute([$patientId]);
-        return (int) ($stmt->fetchColumn() ?: 0);
-    } catch (Throwable $e) {
-        return 0;
-    }
+    return 0;
 }
 
 /**
@@ -671,24 +657,28 @@ function provider_clinical_support_patient_original(PDO $pdo, int $consultationI
 {
     $out = ['complaint' => '', 'english' => ''];
     try {
+        // Only this consultation's linked triage — never another visit via patient_id alone.
         $triageId = 0;
         $cols = $pdo->query('SHOW COLUMNS FROM consultations')->fetchAll(PDO::FETCH_COLUMN);
         if (in_array('triage_result_id', $cols, true)) {
-            $link = $pdo->prepare('SELECT triage_result_id FROM consultations WHERE id = ? LIMIT 1');
-            $link->execute([$consultationId]);
+            $link = $pdo->prepare('SELECT triage_result_id FROM consultations WHERE id = ? AND patient_id = ? LIMIT 1');
+            $link->execute([$consultationId, $patientId]);
             $triageId = (int) ($link->fetchColumn() ?: 0);
         }
         if ($triageId > 0) {
             $stmt = $pdo->prepare('SELECT chief_complaint, english_complaint FROM triage_results WHERE id = ? AND patient_id = ? LIMIT 1');
             $stmt->execute([$triageId, $patientId]);
-        } else {
-            $stmt = $pdo->prepare('SELECT chief_complaint, english_complaint FROM triage_results WHERE patient_id = ? ORDER BY assessed_at ASC LIMIT 1');
-            $stmt->execute([$patientId]);
+            $row = $stmt->fetch(PDO::FETCH_ASSOC);
+            if ($row) {
+                $out['complaint'] = trim((string) ($row['chief_complaint'] ?? ''));
+                $out['english'] = trim((string) ($row['english_complaint'] ?? ''));
+            }
         }
-        $row = $stmt->fetch(PDO::FETCH_ASSOC);
-        if ($row) {
-            $out['complaint'] = trim((string) ($row['chief_complaint'] ?? ''));
-            $out['english'] = trim((string) ($row['english_complaint'] ?? ''));
+        if ($out['complaint'] === '') {
+            $pcc = patient_chief_complaint_for_consultation($pdo, $consultationId);
+            if ($pcc !== null && $pcc['complaint'] !== '') {
+                $out['complaint'] = $pcc['complaint'];
+            }
         }
     } catch (Throwable $e) {
         return $out;

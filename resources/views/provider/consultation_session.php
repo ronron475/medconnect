@@ -11,11 +11,13 @@ require_once BASE_PATH . '/app/includes/patient_consultation_records.php';
 require_once BASE_PATH . '/app/includes/clinical_note_signature.php';
 require_once BASE_PATH . '/app/includes/consultation_video_history.php';
 require_once BASE_PATH . '/app/includes/community_bhw_activity.php';
+require_once BASE_PATH . '/app/includes/consultation_recorded_data.php';
 require __DIR__ . '/partials/queue_helpers.php';
 
 clinical_tables_ensure($pdo);
 patient_consultation_records_schema_ensure($pdo);
 clinical_note_signature_schema_ensure($pdo);
+consultation_recorded_data_ensure_schema($pdo);
 $GLOBALS['pdo'] = $pdo;
 
 $consultation_id = (int)($_GET['id'] ?? 0);
@@ -97,6 +99,10 @@ $profile = patient_registration_profile_fields($pdo, (int) $c['patient_id']);
 $health_summary = patient_health_summary_load($pdo, (int) $c['patient_id']);
 $bhw_activity = community_bhw_activity_load($pdo, (int) $c['patient_id']);
 $bhw_activity_variant = 'provider';
+$recorded_data = consultation_recorded_data_for_doctor($pdo, $consultation_id, (int) $c['patient_id']);
+$recorded_data_history = !empty($recorded_data['available'])
+    ? consultation_recorded_data_history($pdo, $consultation_id, (int) $c['patient_id'], 8)
+    : [];
 
 $patient = [
     'name' => trim(($c['first_name'] ?? '') . ' ' . ($c['last_name'] ?? '')),
@@ -1693,6 +1699,82 @@ body.consultation-mobile-call-fullscreen .mc-provider-video-dock iframe {
 
 /* Provider Health Summary card */
 .hs-card .session-card-header { background: #f1f5f9; }
+.prd-card .session-card-header { background: #ecfdf5; }
+.prd-note {
+    margin: 0 0 12px;
+    padding: 8px 10px;
+    border-radius: 8px;
+    border: 1px solid #a7f3d0;
+    background: #f0fdf4;
+    color: #065f46;
+    font-size: 12px;
+    line-height: 1.45;
+}
+.prd-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px 14px;
+    margin: 0 0 12px;
+    font-size: 12px;
+    color: #475569;
+}
+.prd-meta strong { color: #0f172a; }
+.prd-fields {
+    display: grid;
+    gap: 8px;
+    margin: 0;
+}
+.prd-fields > div {
+    display: grid;
+    grid-template-columns: minmax(110px, 38%) 1fr;
+    gap: 8px;
+    padding: 8px 10px;
+    border-radius: 8px;
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    font-size: 13px;
+}
+.prd-fields dt {
+    margin: 0;
+    color: #64748b;
+    font-weight: 600;
+}
+.prd-fields dd {
+    margin: 0;
+    color: #0f172a;
+    font-weight: 600;
+    word-break: break-word;
+}
+.prd-empty {
+    margin: 0;
+    font-size: 13px;
+    color: #64748b;
+}
+.prd-history {
+    margin-top: 12px;
+    padding-top: 10px;
+    border-top: 1px solid #e2e8f0;
+}
+.prd-history summary {
+    cursor: pointer;
+    font-size: 12px;
+    font-weight: 600;
+    color: #0369a1;
+}
+.prd-history-list {
+    margin: 8px 0 0;
+    padding: 0;
+    list-style: none;
+    display: grid;
+    gap: 6px;
+}
+.prd-history-list li {
+    font-size: 12px;
+    color: #475569;
+    padding: 6px 8px;
+    background: #f8fafc;
+    border-radius: 6px;
+}
 .hs-pending {
     margin: 0 0 12px;
     padding: 8px 10px;
@@ -2253,7 +2335,7 @@ body.consultation-mobile-call-fullscreen .mc-provider-video-dock iframe {
         <!-- SOAP ENCODING FORM -->
         <div class="session-card" id="soapDocumentation">
             <div class="session-card-header">
-                <div class="session-card-title"><?= icon('file') ?> Clinical Documentation (SOAP)</div>
+                <div class="session-card-title"><?= icon('file') ?> Doctor Assessment (SOAP)</div>
                 <div style="display: flex; gap: 8px; flex-wrap: wrap;">
                     <?php if ($consultation_completed): ?>
                     <span class="session-btn" style="background:#dcfce7;color:#166534;border:1px solid #86efac;cursor:default;">âœ“ SOAP Finalized</span>
@@ -2665,6 +2747,66 @@ body.consultation-mobile-call-fullscreen .mc-provider-video-dock iframe {
                     Extend Session (+15 min)
                 </button>
                 <p id="extensionMsg" class="text-xs" style="margin-top: 8px; display: none;"></p>
+            </div>
+        </div>
+
+        <!-- BHW / PATIENT RECORDED DATA (not doctor assessment) -->
+        <div class="session-card prd-card" id="consultationRecordedDataCard"
+             data-consultation-id="<?= (int) $consultation_id ?>"
+             data-patient-id="<?= (int) $c['patient_id'] ?>">
+            <div class="session-card-header">
+                <div>
+                    <p class="csp-eyebrow" style="margin:0 0 2px;">Pre-consult intake for this visit only</p>
+                    <div class="session-card-title"><?= icon('file') ?> BHW/Patient Recorded Data</div>
+                </div>
+            </div>
+            <div class="session-card-body" id="consultationRecordedDataBody">
+                <p class="prd-note">Raw information recorded by the patient or BHW for <strong>this consultation</strong>. It is not the doctor&rsquo;s assessment, diagnosis, or treatment plan. SOAP notes below remain separate.</p>
+                <div id="consultationRecordedDataContent">
+                <?php if (!empty($recorded_data['available'])): ?>
+                <div class="prd-meta">
+                    <span>Recorded by: <strong><?= htmlspecialchars((string) ($recorded_data['recorded_by_label'] ?: $recorded_data['recorder_role_label'])) ?></strong></span>
+                    <?php if (!empty($recorded_data['recorded_at_label'])): ?>
+                    <span>Recorded at: <strong><?= htmlspecialchars((string) $recorded_data['recorded_at_label']) ?></strong></span>
+                    <?php endif; ?>
+                </div>
+                <dl class="prd-fields">
+                    <?php foreach (($recorded_data['fields'] ?? []) as $field): ?>
+                    <div>
+                        <dt><?= htmlspecialchars((string) ($field['label'] ?? '')) ?></dt>
+                        <dd><?= htmlspecialchars((string) ($field['value'] ?? '')) ?></dd>
+                    </div>
+                    <?php endforeach; ?>
+                </dl>
+                <?php if (count($recorded_data_history) > 1): ?>
+                <details class="prd-history">
+                    <summary>Show earlier recordings for this consultation (<?= (int) count($recorded_data_history) - 1 ?> prior)</summary>
+                    <ul class="prd-history-list">
+                        <?php foreach (array_slice($recorded_data_history, 1) as $hist): ?>
+                        <?php
+                            $histFields = consultation_recorded_data_field_list($hist);
+                            $histBits = [];
+                            foreach ($histFields as $hf) {
+                                $histBits[] = $hf['label'] . ': ' . $hf['value'];
+                            }
+                            $histRole = strtolower((string) ($hist['recorder_role'] ?? 'patient')) === 'bhw' ? 'BHW' : 'Patient';
+                            $histWhen = consultation_recorded_data_format_datetime($hist['recorded_at'] ?? null);
+                        ?>
+                        <li>
+                            <strong><?= htmlspecialchars($histRole) ?></strong>
+                            · <?= htmlspecialchars($histWhen !== '' ? $histWhen : '—') ?>
+                            <?php if ($histBits !== []): ?>
+                            <br><?= htmlspecialchars(implode(' · ', $histBits)) ?>
+                            <?php endif; ?>
+                        </li>
+                        <?php endforeach; ?>
+                    </ul>
+                </details>
+                <?php endif; ?>
+                <?php else: ?>
+                <p class="prd-empty">No patient/BHW recorded vitals or complaint snapshot is linked to this consultation yet. When the patient books or the BHW saves vitals for this visit, they will appear here automatically.</p>
+                <?php endif; ?>
+                </div>
             </div>
         </div>
 
@@ -3222,6 +3364,87 @@ let sessionChatRefreshTimer = null;
 let sessionChatRefreshInFlight = false;
 let sessionLastEventId = 0;
 let sessionRealtimePoller = null;
+let sessionRecordedDataTimer = null;
+let sessionRecordedDataInFlight = false;
+let sessionRecordedDataFingerprint = '';
+
+function escapePrdHtml(s) {
+    return String(s == null ? '' : s)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;');
+}
+
+function renderConsultationRecordedData(payload) {
+    const mount = document.getElementById('consultationRecordedDataContent');
+    if (!mount || !payload) return;
+    const recorded = payload.recorded || {};
+    const history = Array.isArray(payload.history) ? payload.history : [];
+    if (!recorded.available) {
+        mount.innerHTML = '<p class="prd-empty">No patient/BHW recorded vitals or complaint snapshot is linked to this consultation yet. When the patient books or the BHW saves vitals for this visit, they will appear here automatically.</p>';
+        return;
+    }
+    const fields = Array.isArray(recorded.fields) ? recorded.fields : [];
+    let html = '<div class="prd-meta">';
+    html += '<span>Recorded by: <strong>' + escapePrdHtml(recorded.recorded_by_label || recorded.recorder_role_label || '') + '</strong></span>';
+    if (recorded.recorded_at_label) {
+        html += '<span>Recorded at: <strong>' + escapePrdHtml(recorded.recorded_at_label) + '</strong></span>';
+    }
+    html += '</div><dl class="prd-fields">';
+    fields.forEach(function (field) {
+        html += '<div><dt>' + escapePrdHtml(field.label || '') + '</dt><dd>' + escapePrdHtml(field.value || '') + '</dd></div>';
+    });
+    html += '</dl>';
+    if (history.length > 1) {
+        html += '<details class="prd-history"><summary>Show earlier recordings for this consultation (' + (history.length - 1) + ' prior)</summary><ul class="prd-history-list">';
+        history.slice(1).forEach(function (hist) {
+            const role = String(hist.recorder_role || 'patient').toLowerCase() === 'bhw' ? 'BHW' : 'Patient';
+            const bits = [];
+            if (hist.chief_complaint) bits.push('Chief Complaint: ' + hist.chief_complaint);
+            if (hist.symptoms) bits.push('Symptoms: ' + hist.symptoms);
+            if (hist.temperature_c != null && hist.temperature_c !== '') bits.push('Temperature: ' + hist.temperature_c + '°C');
+            if (hist.blood_pressure) bits.push('Blood Pressure: ' + hist.blood_pressure);
+            if (hist.pulse_bpm != null && hist.pulse_bpm !== '') bits.push('Pulse Rate: ' + hist.pulse_bpm + ' bpm');
+            if (hist.notes) bits.push('Other observations: ' + hist.notes);
+            html += '<li><strong>' + escapePrdHtml(role) + '</strong> · ' + escapePrdHtml(hist.recorded_at || '—');
+            if (bits.length) html += '<br>' + escapePrdHtml(bits.join(' · '));
+            html += '</li>';
+        });
+        html += '</ul></details>';
+    }
+    mount.innerHTML = html;
+}
+
+async function refreshConsultationRecordedData() {
+    if (sessionRecordedDataInFlight || !sessionConsultationId) return;
+    sessionRecordedDataInFlight = true;
+    try {
+        const url = sessionAssetBase + '/app/api/provider/recorded_data.php?consultation_id='
+            + encodeURIComponent(sessionConsultationId)
+            + '&patient_id=' + encodeURIComponent(sessionPatientId)
+            + '&_=' + Date.now();
+        const res = await fetch(url, { credentials: 'same-origin', cache: 'no-store', headers: { Accept: 'application/json', 'X-MC-No-Loader': '1' } });
+        const data = await res.json();
+        if (!data || !data.success) return;
+        const fp = JSON.stringify({
+            recorded: data.recorded || null,
+            history_ids: (data.history || []).map(function (h) { return h.id || h.recorded_at; })
+        });
+        if (fp === sessionRecordedDataFingerprint) return;
+        sessionRecordedDataFingerprint = fp;
+        renderConsultationRecordedData(data);
+    } catch (e) {
+        /* keep last rendered panel */
+    } finally {
+        sessionRecordedDataInFlight = false;
+    }
+}
+
+if (document.getElementById('consultationRecordedDataCard')) {
+    refreshConsultationRecordedData();
+    sessionRecordedDataTimer = setInterval(refreshConsultationRecordedData, 8000);
+}
 
 /**
  * The video room iframe runs its own speech queue. While it is open this page must
