@@ -12,6 +12,7 @@ require_once BASE_PATH . '/app/includes/clinical_note_signature.php';
 require_once BASE_PATH . '/app/includes/consultation_video_history.php';
 require_once BASE_PATH . '/app/includes/community_bhw_activity.php';
 require_once BASE_PATH . '/app/includes/consultation_recorded_data.php';
+require_once BASE_PATH . '/app/includes/patient_external_healthcare_visits.php';
 require __DIR__ . '/partials/queue_helpers.php';
 
 clinical_tables_ensure($pdo);
@@ -99,6 +100,7 @@ $profile = patient_registration_profile_fields($pdo, (int) $c['patient_id']);
 $health_summary = patient_health_summary_load($pdo, (int) $c['patient_id']);
 $bhw_activity = community_bhw_activity_load($pdo, (int) $c['patient_id']);
 $bhw_activity_variant = 'provider';
+$external_healthcare_visits = patient_external_healthcare_visits_for_display($pdo, (int) $c['patient_id'], 30);
 $recorded_data = consultation_recorded_data_for_doctor($pdo, $consultation_id, (int) $c['patient_id']);
 $recorded_data_history = !empty($recorded_data['available'])
     ? consultation_recorded_data_history($pdo, $consultation_id, (int) $c['patient_id'], 8)
@@ -1750,6 +1752,43 @@ body.consultation-mobile-call-fullscreen .mc-provider-video-dock iframe {
     font-size: 13px;
     color: #64748b;
 }
+.exh-card .session-card-header { background: #f8fafc; }
+.exh-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    gap: 10px;
+}
+.exh-item {
+    border: 1px solid #e2e8f0;
+    border-left: 3px solid #94a3b8;
+    border-radius: 10px;
+    padding: 12px 14px;
+    background: #f8fafc;
+}
+.exh-item__kind {
+    font-size: 11px;
+    letter-spacing: .04em;
+    text-transform: uppercase;
+    color: #64748b;
+    font-weight: 700;
+    margin-bottom: 4px;
+}
+.exh-item__name {
+    font-weight: 700;
+    color: #0f172a;
+    font-size: 14px;
+}
+.exh-item__meta,
+.exh-item__line,
+.exh-item__source {
+    font-size: 13px;
+    color: #334155;
+    margin-top: 4px;
+    line-height: 1.45;
+}
+.exh-item__source { color: #64748b; font-size: 12px; margin-top: 8px; }
 .prd-history {
     margin-top: 12px;
     padding-top: 10px;
@@ -2965,6 +3004,53 @@ body.consultation-mobile-call-fullscreen .mc-provider-video-dock iframe {
         </div>
 
         <?php require VIEWS_PATH . '/partials/bhw_activity_panel.php'; ?>
+
+        <!-- PREVIOUS / EXTERNAL HEALTHCARE INFORMATION (patient history — not this consult) -->
+        <div class="session-card exh-card" id="externalHealthcareVisitsCard">
+            <div class="session-card-header">
+                <div>
+                    <p class="csp-eyebrow" style="margin:0 0 2px;">Patient medical history</p>
+                    <div class="session-card-title"><?= icon('pin') ?> Previous / External Healthcare Information</div>
+                </div>
+            </div>
+            <div class="session-card-body">
+                <p class="prd-note">Visits to hospitals, clinics, or other facilities <strong>outside MedConnect</strong>. This is patient/BHW-reported history — not a MedConnect consultation and not your assessment, diagnosis, or treatment plan.</p>
+                <?php if (!empty($external_healthcare_visits)): ?>
+                <ul class="exh-list">
+                    <?php foreach ($external_healthcare_visits as $ev): ?>
+                    <li class="exh-item">
+                        <div class="exh-item__kind">External Healthcare Visit · <?= htmlspecialchars((string) ($ev['facility_type_label'] ?? '')) ?></div>
+                        <div class="exh-item__name"><?= htmlspecialchars((string) ($ev['facility_name'] ?? '')) ?></div>
+                        <div class="exh-item__meta">
+                            <?= htmlspecialchars((string) ($ev['visit_date_label'] ?? '')) ?>
+                            <?php if (!empty($ev['reason'])): ?>
+                            · Reason: <?= htmlspecialchars((string) $ev['reason']) ?>
+                            <?php endif; ?>
+                        </div>
+                        <?php if (!empty($ev['reported_diagnosis'])): ?>
+                        <div class="exh-item__line"><strong>Reported diagnosis:</strong> <?= htmlspecialchars((string) $ev['reported_diagnosis']) ?></div>
+                        <?php endif; ?>
+                        <?php if (!empty($ev['reported_treatment'])): ?>
+                        <div class="exh-item__line"><strong>Reported treatment:</strong> <?= htmlspecialchars((string) $ev['reported_treatment']) ?></div>
+                        <?php endif; ?>
+                        <?php if (!empty($ev['notes'])): ?>
+                        <div class="exh-item__line"><strong>Notes:</strong> <?= htmlspecialchars((string) $ev['notes']) ?></div>
+                        <?php endif; ?>
+                        <div class="exh-item__source">
+                            Source: <?= htmlspecialchars((string) ($ev['information_source_label'] ?? 'Patient/BHW Reported')) ?>
+                            · Recorded by <?= htmlspecialchars((string) ($ev['recorded_by_label'] ?? 'BHW')) ?>
+                            <?php if (!empty($ev['recorded_at_label'])): ?>
+                            · <?= htmlspecialchars((string) $ev['recorded_at_label']) ?>
+                            <?php endif; ?>
+                        </div>
+                    </li>
+                    <?php endforeach; ?>
+                </ul>
+                <?php else: ?>
+                <p class="prd-empty">No external healthcare visits on file for this patient.</p>
+                <?php endif; ?>
+            </div>
+        </div>
 
         <!-- WORKFLOW ACTIONS -->
         <div class="session-card">
