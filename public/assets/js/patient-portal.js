@@ -1250,11 +1250,28 @@
     }
   }
 
+  function setBookingFollowupAnswerInvalid(invalid) {
+    const ans = document.getElementById('triage_followup_answer');
+    const notice = document.getElementById('triageFollowupNotice');
+    if (!ans) return;
+    ans.classList.toggle('is-invalid', !!invalid);
+    if (invalid) {
+      ans.setAttribute('aria-invalid', 'true');
+      if (notice && notice.id) {
+        ans.setAttribute('aria-describedby', notice.id);
+      }
+    } else {
+      ans.removeAttribute('aria-invalid');
+      ans.removeAttribute('aria-describedby');
+    }
+  }
+
   function clearBookingFollowupNotice() {
     const notice = document.getElementById('triageFollowupNotice');
     if (!notice) return;
     notice.hidden = true;
     notice.textContent = '';
+    setBookingFollowupAnswerInvalid(false);
   }
 
   function showBookingFollowupNotice(message) {
@@ -1267,6 +1284,7 @@
     }
     notice.hidden = false;
     notice.textContent = text;
+    setBookingFollowupAnswerInvalid(true);
   }
 
   function showBookingFollowupUi(question, options = {}) {
@@ -1295,7 +1313,10 @@
       box.classList.remove('is-visible');
     }
     if (ans) {
-      ans.value = '';
+      // Keep the rejected answer so the patient can edit it; clear only for a fresh question.
+      if (!options.notice) {
+        ans.value = '';
+      }
       ans.focus();
     }
     if (window.mcPatientUrgencyModal && typeof window.mcPatientUrgencyModal.close === 'function') {
@@ -1416,18 +1437,26 @@
   (function bindBookingFollowupScale() {
     const scale = document.getElementById('triageFollowupScale');
     const ans = document.getElementById('triage_followup_answer');
-    if (!scale || !ans) return;
-    scale.addEventListener('click', (ev) => {
-      const btn = ev.target && ev.target.closest ? ev.target.closest('.pdash-followup__scale-btn') : null;
-      if (!btn) return;
-      const score = String(btn.getAttribute('data-score') || '').trim();
-      if (!score) return;
-      ans.value = score;
-      scale.querySelectorAll('.pdash-followup__scale-btn').forEach((el) => {
-        el.classList.toggle('is-selected', el === btn);
+    if (!ans) return;
+    if (scale) {
+      scale.addEventListener('click', (ev) => {
+        const btn = ev.target && ev.target.closest ? ev.target.closest('.pdash-followup__scale-btn') : null;
+        if (!btn) return;
+        const score = String(btn.getAttribute('data-score') || '').trim();
+        if (!score) return;
+        ans.value = score;
+        scale.querySelectorAll('.pdash-followup__scale-btn').forEach((el) => {
+          el.classList.toggle('is-selected', el === btn);
+        });
+        clearBookingFollowupNotice();
+        ans.focus();
       });
-      clearBookingFollowupNotice();
-      ans.focus();
+    }
+    ans.addEventListener('input', () => {
+      const notice = document.getElementById('triageFollowupNotice');
+      if (notice && !notice.hidden) {
+        clearBookingFollowupNotice();
+      }
     });
   })();
 

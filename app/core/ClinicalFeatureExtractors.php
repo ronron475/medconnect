@@ -417,10 +417,16 @@ final class ClinicalFeatureExtractors
         if ($low === '') {
             return '';
         }
+        // PH texting reduplication: hinay2 / unti2 → treat as repeated form.
+        $low = (string) preg_replace_callback(
+            '/\b([a-z]{2,})2\b/u',
+            static fn (array $m): string => $m[1] . '-' . $m[1],
+            $low
+        );
         if (preg_match('/\b(gulpi|kalit|sudden|suddenly|bigla|all of a sudden)\b/u', $low)) {
             return 'sudden';
         }
-        if (preg_match('/\b(hinay-hinay|hinay|gradual|gradually|slowly|unti-unti|paunti-unti)\b/u', $low)) {
+        if (preg_match('/\b(hinay-hinay|hinay|gradual|gradually|slowly|unti-unti|paunti-unti|unti)\b/u', $low)) {
             return 'gradual';
         }
 
@@ -627,7 +633,11 @@ final class ClinicalFeatureExtractors
         if ($low === '') {
             return true;
         }
-        if (preg_match('/^(ambot|ewan|dunno|don t know|dont know|maybe|basta|hindi ko alam|indi ko mahibaluan|uh+h|um+)$/u', $low)) {
+        // Uncertainty ("ambot", "not sure") is a valid clinical response, not an unclear non-answer.
+        if (self::looksPatientUncertain($low)) {
+            return false;
+        }
+        if (preg_match('/^(maybe|basta|uh+h|um+)$/u', $low)) {
             return true;
         }
         if (preg_match('/^(yes|no|oo|hindi|indi|wala|meron|oo po|hindi po)$/u', $low)) {
@@ -635,6 +645,67 @@ final class ClinicalFeatureExtractors
         }
 
         return mb_strlen($low) <= 2;
+    }
+
+    /**
+     * True when the utterance means the patient does not know / is unsure.
+     * Pattern-based meaning class (not a fixed answer dictionary).
+     */
+    public static function looksPatientUncertain(string $text): bool
+    {
+        $low = strtolower(trim($text));
+        $low = trim((string) preg_replace('/[^\p{L}\p{N}\s\'\-]+/u', ' ', $low));
+        $low = trim((string) preg_replace('/\s+/u', ' ', $low));
+        // Compact contractions: dikosure / diko sure / indikosure
+        $low = (string) preg_replace('/\bdi\s*ko\b/u', 'di ko', $low);
+        $low = (string) preg_replace('/\bindi\s*ko\b/u', 'indi ko', $low);
+        $low = (string) preg_replace('/\bhindi\s*ko\b/u', 'hindi ko', $low);
+        if ($low === '') {
+            return false;
+        }
+        if (preg_match('/\b(ambot|ewan|dunno|unsure|uncertain)\b/u', $low)) {
+            return true;
+        }
+        if (preg_match('/\b(not\s+sure|not\s+certain|no\s+idea|i\s+don\'?t\s+know|dont\s+know|do\s+not\s+know)\b/u', $low)) {
+            return true;
+        }
+        // "di/indi/hindi/dili/wala ko ..." + know/sure/remember family
+        if (preg_match(
+            '/\b((di|indi|hindi|dili|wala)\s*(ko|ako)?|(i\s+)?(don\'?t|dont|do\s+not))\s*'
+            . '(sure|kabalo|kibaluan|alam|matandaan|mahinumduman|hinumduman|tandaan|know|remember|certain)\b/u',
+            $low
+        )) {
+            return true;
+        }
+        if (preg_match('/\bdaw\b.+\b(sure|kabalo|alam)\b/u', $low) && preg_match('/\b(indi|hindi|di|dili|wala)\b/u', $low)) {
+            return true;
+        }
+
+        return false;
+    }
+
+    /**
+     * Conditional / hedged answers that still respond to the question (not unrelated).
+     * Pattern class for meaning — not a fixed exception dictionary.
+     */
+    public static function looksConditionalPartial(string $text): bool
+    {
+        $low = strtolower(trim($text));
+        $low = trim((string) preg_replace('/[^\p{L}\p{N}\s\'\-]+/u', ' ', $low));
+        $low = trim((string) preg_replace('/\s+/u', ' ', $low));
+        if ($low === '') {
+            return false;
+        }
+        // "it depends" / depende / minsan / sometimes — partial clinical response
+        if (preg_match('/\b(depende|depends|it\s+depends|minsan|usahay|sometimes|occasionally)\b/u', $low)) {
+            return true;
+        }
+        // Soft hedges that still engage the question without full denial/affirmation alone
+        if (preg_match('/^(medyo|konti|konting|a\s+bit|kinda|kind\s+of|sort\s+of|daw)$/u', $low)) {
+            return true;
+        }
+
+        return false;
     }
 
     /**

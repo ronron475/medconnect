@@ -51,6 +51,8 @@ final class ComplaintSemanticValidator
         if ($incompleteJunk) {
             $phpEvidence = 'none';
         }
+        // Always send ORIGINAL patient wording to Gemini. The cleaner may drop unknown
+        // Hiligaynon/Visayan symptom words that are still health-related (dataset miss ≠ junk).
         $gemini = $geminiOverride ?? (
             ($incompleteJunk)
                 ? [
@@ -61,7 +63,7 @@ final class ComplaintSemanticValidator
                     'error' => 'skipped_incomplete_junk',
                 ]
                 : (class_exists('GeminiComplaintInputValidator')
-                    ? GeminiComplaintInputValidator::validate($nlpText !== '' ? $nlpText : $raw)
+                    ? GeminiComplaintInputValidator::validate($raw)
                     : [
                         'available' => false,
                         'is_medical_complaint' => null,
@@ -295,7 +297,24 @@ final class ComplaintSemanticValidator
         }
 
         $geminiClass = strtoupper(str_replace([' ', '-'], '_', (string) ($gemini['classification'] ?? '')));
+        $normForCandidate = trim((string) ($php['normalized'] ?? ''));
+        $isPrankClass = in_array($geminiClass, [
+            'PRANK_OR_NON_MEDICAL',
+            'NONSENSE_OR_PRANK',
+            'PRANK',
+            'NONSENSE',
+        ], true);
+
+        // UNCLEAR ≠ reject when utterance still looks like an unknown local health complaint.
         if ($geminiAvailable && ($geminiClass === 'UNCLEAR' || ($gemini['is_medical_complaint'] === null && !$geminiInvalid))) {
+            if (self::shouldAcceptUnknownHealthCandidate($php, $normForCandidate)) {
+                return [
+                    'is_valid' => true,
+                    'classification' => self::CLASS_VALID,
+                    'reason' => 'Gemini UNCLEAR but plausible unknown health wording — continue clinical interview',
+                ];
+            }
+
             return [
                 'is_valid' => false,
                 'classification' => self::CLASS_INVALID,
@@ -304,12 +323,28 @@ final class ComplaintSemanticValidator
         }
 
         if ($geminiInvalid || self::phpLooksHardNonMedical($php)) {
+            // Low-confidence NON_HEALTH on a plausible local health phrase: prefer interview over reject.
+            // High-confidence / explicit prank classifications still reject.
+            if ($geminiInvalid
+                && !$isPrankClass
+                && !$geminiHigh
+                && self::shouldAcceptUnknownHealthCandidate($php, $normForCandidate)
+            ) {
+                return [
+                    'is_valid' => true,
+                    'classification' => self::CLASS_VALID,
+                    'reason' => 'Gemini low-confidence NON_HEALTH on plausible local health wording — continue interview',
+                ];
+            }
+
             return [
                 'is_valid' => false,
                 'classification' => self::CLASS_INVALID,
-                'reason' => $geminiInvalid
-                    ? 'PHP no medical concept + Gemini NON_HEALTH_RELATED / INVALID'
-                    : 'PHP hard non-medical (greeting/out-of-scope)',
+                'reason' => $isPrankClass
+                    ? 'Gemini PRANK_OR_NON_MEDICAL'
+                    : ($geminiInvalid
+                        ? 'PHP no medical concept + Gemini NON_HEALTH_RELATED / INVALID'
+                        : 'PHP hard non-medical (greeting/out-of-scope)'),
             ];
         }
 
@@ -360,6 +395,17 @@ final class ComplaintSemanticValidator
         $norm = trim($normalized);
         if ($norm === '' || self::looksLikeIncompleteJunk($norm)) {
             return false;
+        }
+
+        // Laugh/joke spam without clinical tokens is not an "unknown health" candidate.
+        if (preg_match('/\b(?:(?:ha){2,}|(?:he){2,}|lol+|lmao+|jk)\b/u', mb_strtolower($norm))) {
+            $hasClinicalCue = (bool) preg_match(
+                '/\b(sakit|masakit|tiyan|ulo|fever|hilanat|lagnat|cough|ubo|pain|head|chest|dughan|suka|hilo|lawas|body)\b/u',
+                mb_strtolower($norm)
+            );
+            if (!$hasClinicalCue) {
+                return false;
+            }
         }
 
         if ($routing === HealthComplaintDomainDetector::ROUTE_GEMINI) {

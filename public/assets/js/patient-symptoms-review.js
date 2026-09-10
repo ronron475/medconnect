@@ -147,10 +147,25 @@
     }
   }
 
+  function setFollowupAnswerInvalid(invalid) {
+    if (!followupAnswerEl) return;
+    followupAnswerEl.classList.toggle('is-invalid', !!invalid);
+    if (invalid) {
+      followupAnswerEl.setAttribute('aria-invalid', 'true');
+      if (followupNoticeEl && followupNoticeEl.id) {
+        followupAnswerEl.setAttribute('aria-describedby', followupNoticeEl.id);
+      }
+    } else {
+      followupAnswerEl.removeAttribute('aria-invalid');
+      followupAnswerEl.removeAttribute('aria-describedby');
+    }
+  }
+
   function clearFollowupNotice() {
     if (!followupNoticeEl) return;
     followupNoticeEl.hidden = true;
     followupNoticeEl.textContent = '';
+    setFollowupAnswerInvalid(false);
   }
 
   function showFollowupNotice(message) {
@@ -162,6 +177,7 @@
     }
     followupNoticeEl.hidden = false;
     followupNoticeEl.textContent = text;
+    setFollowupAnswerInvalid(true);
   }
 
   function setComplaintLocked(locked) {
@@ -219,7 +235,10 @@
       form.classList.add('is-followup-active');
     }
     if (followupAnswerEl) {
-      followupAnswerEl.value = '';
+      // Keep the rejected answer so the patient can edit it; clear only for a fresh question.
+      if (!options.notice) {
+        followupAnswerEl.value = '';
+      }
       followupAnswerEl.focus();
     }
     setComplaintLocked(true);
@@ -242,6 +261,14 @@
       });
       clearFollowupNotice();
       followupAnswerEl.focus();
+    });
+  }
+
+  if (followupAnswerEl) {
+    followupAnswerEl.addEventListener('input', function () {
+      if (followupNoticeEl && !followupNoticeEl.hidden) {
+        clearFollowupNotice();
+      }
     });
   }
 

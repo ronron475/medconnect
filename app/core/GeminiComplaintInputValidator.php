@@ -105,6 +105,18 @@ final class GeminiComplaintInputValidator
         if (in_array($class, ['VALID', 'VALID_MEDICAL', 'HEALTH_RELATED', 'HEALTH', 'MEDICAL'], true)) {
             $class = self::CLASS_VALID;
         }
+        if (in_array($class, ['PRANK_OR_NON_MEDICAL', 'NONSENSE_OR_PRANK', 'PRANK', 'NONSENSE', 'JOKE', 'SPAM'], true)) {
+            $confidence = null;
+            if (isset($decoded['confidence']) && is_numeric($decoded['confidence'])) {
+                $confidence = (float) $decoded['confidence'];
+                if ($confidence > 1.0 && $confidence <= 100.0) {
+                    $confidence /= 100.0;
+                }
+                $confidence = max(0.0, min(1.0, $confidence));
+            }
+
+            return self::pack(true, false, 'PRANK_OR_NON_MEDICAL', $confidence, '');
+        }
         if (in_array($class, ['INVALID', 'NON_MEDICAL', 'OUT_OF_SCOPE', 'NON_HEALTH_RELATED', 'NON_HEALTH'], true)) {
             $class = self::CLASS_INVALID;
         }
@@ -382,7 +394,11 @@ final class GeminiComplaintInputValidator
         }
 
         $answerClass = strtoupper(trim((string) ($decoded['answer_class'] ?? '')));
-        if (!in_array($answerClass, ['VALID_POSITIVE', 'VALID_NEGATIVE', 'VALID_PARTIAL', 'UNCLEAR', 'UNRELATED'], true)) {
+        $answerClass = str_replace([' ', '-'], '_', $answerClass);
+        if (in_array($answerClass, ['PRANK_OR_NON_MEDICAL', 'NONSENSE_OR_PRANK', 'PRANK', 'NONSENSE', 'JOKE'], true)) {
+            $answerClass = 'PRANK_OR_NON_MEDICAL';
+        }
+        if (!in_array($answerClass, ['VALID_POSITIVE', 'VALID_NEGATIVE', 'VALID_PARTIAL', 'VALID_UNCERTAIN', 'VALID_UNKNOWN', 'UNCLEAR', 'UNRELATED', 'PRANK_OR_NON_MEDICAL'], true)) {
             if (!empty($decoded['answers_question']) && !empty($decoded['is_relevant'])) {
                 $answerClass = 'VALID_PARTIAL';
             } elseif (!empty($decoded['is_meaningful'])) {
@@ -392,22 +408,25 @@ final class GeminiComplaintInputValidator
             }
         }
         $polarity = strtolower(trim((string) ($decoded['polarity'] ?? '')));
-        if (!in_array($polarity, ['positive', 'negative', 'partial'], true)) {
+        if (!in_array($polarity, ['positive', 'negative', 'partial', 'uncertain', 'unknown'], true)) {
             $polarity = match ($answerClass) {
                 'VALID_POSITIVE' => 'positive',
                 'VALID_NEGATIVE' => 'negative',
                 'VALID_PARTIAL' => 'partial',
+                'VALID_UNCERTAIN', 'VALID_UNKNOWN', 'UNCLEAR' => 'uncertain',
                 default => null,
             };
         }
 
+        $isPrank = $answerClass === 'PRANK_OR_NON_MEDICAL';
+
         return [
             'available' => true,
-            'is_meaningful' => !empty($decoded['is_meaningful']),
-            'is_relevant' => !empty($decoded['is_relevant']),
-            'answers_question' => !empty($decoded['answers_question']),
+            'is_meaningful' => $isPrank ? false : !empty($decoded['is_meaningful']),
+            'is_relevant' => $isPrank ? false : !empty($decoded['is_relevant']),
+            'answers_question' => $isPrank ? false : !empty($decoded['answers_question']),
             'corrected_answer' => $corrected !== '' ? $corrected : null,
-            'extracted_information' => $extracted,
+            'extracted_information' => $isPrank ? [] : $extracted,
             'answer_class' => $answerClass,
             'polarity' => $polarity,
             'reason' => mb_substr(trim((string) ($decoded['reason'] ?? '')), 0, 240),
@@ -420,24 +439,28 @@ final class GeminiComplaintInputValidator
 You are a follow-up answer relevance validator for a medical consultation system.
 
 Interpret MEANING and CONTEXT of the patient answer relative to the CURRENT follow-up question.
-Do not rely on a fixed keyword list. Understand positive, negative, partial, uncertain, clarifying,
-short, long, informal, misspelled, phonetic, Hiligaynon/Ilonggo, Visayan, Tagalog, English,
-Taglish, and mixed-language answers.
+Do not rely on a fixed keyword list. Understand positive, negative, partial, uncertain, unknown,
+clarifying, short, long, informal, misspelled, phonetic, abbreviations (e.g. reduplication like word2),
+Hiligaynon/Ilonggo, Visayan, Tagalog, English, Taglish, and mixed-language answers.
 
 Determine ONLY:
 1. Is the answer meaningful (not nonsense)?
 2. Is it relevant to the primary complaint and current question?
 3. Does it answer the current follow-up question / expected clinical field?
-4. answer_class: VALID_POSITIVE | VALID_NEGATIVE | VALID_PARTIAL | UNCLEAR | UNRELATED
-5. polarity: positive | negative | partial | null
-6. Can minor spelling mistakes be corrected?
+4. answer_class: VALID_POSITIVE | VALID_NEGATIVE | VALID_PARTIAL | VALID_UNCERTAIN | VALID_UNKNOWN | UNRELATED | PRANK_OR_NON_MEDICAL
+5. polarity: positive | negative | partial | uncertain | unknown | null
+6. Can minor spelling mistakes / texting shorthand be corrected?
 7. What clinical information can safely be extracted from what the patient actually stated?
-   Include negations as real clinical facts (example: blood_in_stool=false, vision_change=false).
+   Include negations and uncertainty as real clinical facts
+   (example: vision_change=false, patient_uncertain=true, onset="gradual").
 
-Mark UNRELATED only when the answer genuinely does not address the current question.
-A short conversational denial (meaning "no") is VALID_NEGATIVE when the question asks yes/no or associated findings.
-A short affirmation is VALID_POSITIVE.
-Do not reject merely because wording differs from the question keywords.
+Mark UNRELATED only when the answer genuinely does not address the current question
+(e.g. asking about shoe prices during a fever question).
+Mark PRANK_OR_NON_MEDICAL only for joking/spam/random nonsense with no clinical meaning
+(e.g. laugh spam plus unrelated game/food chatter). Short or informal clinical answers are NOT pranks.
+If the patient says they do not know / are not sure, that is VALID_UNCERTAIN (or VALID_UNKNOWN), NOT UNRELATED.
+Conditional answers like "depende" / "depends" / "minsan" are VALID_PARTIAL or VALID_UNCERTAIN, NOT UNRELATED.
+A gradual/sudden onset reply answers an onset-style question even if wording differs from the question text.
 
 Do not diagnose.
 Do not determine urgency.
@@ -446,9 +469,13 @@ Do not invent symptoms or clinical information.
 Do not prescribe.
 
 Return ONLY JSON:
-{"is_meaningful":true,"is_relevant":true,"answers_question":true,"answer_class":"VALID_NEGATIVE","polarity":"negative","corrected_answer":"No","extracted_information":{"yes_no":false},"reason":"..."}
+{"is_meaningful":true,"is_relevant":true,"answers_question":true,"answer_class":"VALID_UNCERTAIN","polarity":"uncertain","corrected_answer":"not sure","extracted_information":{"patient_uncertain":true},"reason":"..."}
+or
+{"is_meaningful":true,"is_relevant":true,"answers_question":true,"answer_class":"VALID_PARTIAL","polarity":"partial","corrected_answer":"gradual","extracted_information":{"onset":"gradual"},"reason":"..."}
 or
 {"is_meaningful":true,"is_relevant":false,"answers_question":false,"answer_class":"UNRELATED","polarity":null,"corrected_answer":null,"extracted_information":{},"reason":"..."}
+or
+{"is_meaningful":false,"is_relevant":false,"answers_question":false,"answer_class":"PRANK_OR_NON_MEDICAL","polarity":null,"corrected_answer":null,"extracted_information":{},"reason":"..."}
 PROMPT;
     }
 
@@ -459,8 +486,9 @@ You are a semantic input validator for a medical consultation system.
 
 Determine ONLY whether the patient's text is:
 1. HEALTH_RELATED — a meaningful health concern, symptom, injury, body feeling, or reason for seeking care
-2. NON_HEALTH_RELATED — greeting, joke, test input, casual chat, or clearly non-medical
+2. NON_HEALTH_RELATED — greeting, casual chat, or clearly non-medical with no health intent
 3. UNCLEAR — cannot tell; patient should rephrase
+4. PRANK_OR_NON_MEDICAL — joke, spam, random unrelated nonsense, intentional prank with no health meaning
 
 Do not diagnose the patient.
 Do not invent disease names the patient did not imply.
@@ -472,6 +500,9 @@ CRITICAL:
 Dataset miss ≠ invalid. Unknown Hiligaynon / Visayan / Tagalog / English / mixed informal words
 that still sound like a bodily complaint or health feeling MUST be classified HEALTH_RELATED.
 
+Short, informal, misspelled, slang, or mixed-language health complaints are still HEALTH_RELATED.
+Do NOT reject merely because a word is absent from any dataset.
+
 When HEALTH_RELATED and you recognize the lexical meaning of a local/informal health expression,
 put a short English medical concept in medical_concept and a plain English restatement in corrected.
 This is language understanding for the existing NLP bridge only — not a patient diagnosis.
@@ -480,17 +511,22 @@ Apply this dynamically to whatever local expression the patient used; do not rel
 If you are unsure of the exact meaning but it is clearly health-related:
 classification HEALTH_RELATED with empty medical_concept/corrected is OK.
 
-Reject as NON_HEALTH_RELATED:
+Use PRANK_OR_NON_MEDICAL for:
 - nonsense / keyboard smashing
 - random characters
-- testing / prank input
-- greetings (hello, hi)
+- testing / prank input with no health meaning
+- joke spam with no recoverable health concern
+
+Use NON_HEALTH_RELATED for:
+- greetings (hello, hi, kumusta) with no health request
 - casual conversation with no health intent
 
 Return ONLY JSON:
 {"is_medical_complaint":true,"classification":"HEALTH_RELATED","confidence":0.9,"corrected":"<english restatement if known>","medical_concept":"<short english concept if known>"}
 or
 {"is_medical_complaint":false,"classification":"NON_HEALTH_RELATED","confidence":0.95,"corrected":"","medical_concept":""}
+or
+{"is_medical_complaint":false,"classification":"PRANK_OR_NON_MEDICAL","confidence":0.95,"corrected":"","medical_concept":""}
 or
 {"is_medical_complaint":false,"classification":"UNCLEAR","confidence":0.4,"corrected":"","medical_concept":""}
 
@@ -501,6 +537,7 @@ Allowed classification values:
 HEALTH_RELATED
 NON_HEALTH_RELATED
 UNCLEAR
+PRANK_OR_NON_MEDICAL
 VALID_MEDICAL_COMPLAINT
 INVALID_MEDICAL_INPUT
 PROMPT;

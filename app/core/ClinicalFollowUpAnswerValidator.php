@@ -40,7 +40,45 @@ final class ClinicalFollowUpAnswerValidator
         $low = mb_strtolower($corrected);
 
         if (self::isSmash($low)) {
-            return self::reject($qid, $kind, $corrected, false, 'nonsense', self::retryMessage($lang), 'UNRELATED');
+            return self::reject($qid, $kind, $corrected, false, 'nonsense', self::retryMessage($lang), 'PRANK_OR_NON_MEDICAL');
+        }
+
+        if (self::looksPrankOrNonMedical($low)) {
+            return self::reject($qid, $kind, $corrected, false, 'prank', self::retryMessage($lang), 'PRANK_OR_NON_MEDICAL');
+        }
+
+        // Uncertainty itself answers the question ("I don't know") — never reject as unrelated.
+        if (class_exists('ClinicalFeatureExtractors') && ClinicalFeatureExtractors::looksPatientUncertain($corrected)) {
+            return self::accept(
+                $qid,
+                $kind,
+                $corrected,
+                'patient_uncertain',
+                [
+                    'patient_uncertain' => true,
+                    'onset' => ClinicalFeatureExtractors::extractOnset($corrected),
+                    'duration' => (string) (ClinicalFeatureExtractors::extractDuration($corrected)['label'] ?? ''),
+                ],
+                'VALID_UNCERTAIN',
+                'uncertain'
+            );
+        }
+
+        // Conditional / hedged replies ("depende", "minsan") are valid partial answers.
+        if (class_exists('ClinicalFeatureExtractors') && ClinicalFeatureExtractors::looksConditionalPartial($corrected)) {
+            return self::accept(
+                $qid,
+                $kind,
+                $corrected,
+                'conditional_partial',
+                [
+                    'patient_conditional' => true,
+                    'onset' => ClinicalFeatureExtractors::extractOnset($corrected),
+                    'duration' => (string) (ClinicalFeatureExtractors::extractDuration($corrected)['label'] ?? ''),
+                ],
+                'VALID_PARTIAL',
+                'partial'
+            );
         }
 
         $decision = self::phpFieldDecision($kind, $qid, $low, $corrected, $context);
@@ -70,19 +108,43 @@ final class ClinicalFollowUpAnswerValidator
                 : self::extractPayload($kind, $use !== '' ? $use : $corrected);
             $class = strtoupper(trim((string) ($gemini['answer_class'] ?? '')));
             $polarity = isset($gemini['polarity']) ? strtolower(trim((string) $gemini['polarity'])) : null;
-            if (!in_array($class, ['VALID_POSITIVE', 'VALID_NEGATIVE', 'VALID_PARTIAL', 'UNCLEAR', 'UNRELATED'], true)) {
+            $validClasses = ['VALID_POSITIVE', 'VALID_NEGATIVE', 'VALID_PARTIAL', 'VALID_UNCERTAIN', 'VALID_UNKNOWN', 'UNCLEAR', 'UNRELATED', 'PRANK_OR_NON_MEDICAL'];
+            if (!in_array($class, $validClasses, true)) {
                 $classMeta = self::classifyAnswer($kind, $use !== '' ? $use : $corrected, $extracted);
                 $class = $classMeta['answer_class'];
                 $polarity = $polarity ?: $classMeta['polarity'];
             }
-            if ($relevant && $class !== 'UNRELATED') {
+            if ($class === 'PRANK_OR_NON_MEDICAL') {
+                return self::reject(
+                    $qid,
+                    $kind,
+                    $corrected,
+                    false,
+                    (string) ($gemini['reason'] ?? 'gemini_prank'),
+                    self::retryMessage($lang),
+                    'PRANK_OR_NON_MEDICAL'
+                );
+            }
+            // Uncertainty / unknown / partial answers are valid even when Gemini is hesitant on answers_question.
+            $acceptClass = in_array($class, ['VALID_POSITIVE', 'VALID_NEGATIVE', 'VALID_PARTIAL', 'VALID_UNCERTAIN', 'VALID_UNKNOWN'], true);
+            if (($relevant || $acceptClass) && $class !== 'UNRELATED') {
+                if ($class === 'UNCLEAR') {
+                    $class = 'VALID_UNCERTAIN';
+                    $polarity = $polarity ?: 'uncertain';
+                    $extracted['patient_uncertain'] = true;
+                }
+                if (in_array($class, ['VALID_UNCERTAIN', 'VALID_UNKNOWN'], true)) {
+                    $extracted['patient_uncertain'] = true;
+                    $polarity = $polarity ?: 'uncertain';
+                }
+
                 return self::accept(
                     $qid,
                     $kind,
                     $use !== '' ? $use : $corrected,
                     'gemini_relevant',
                     $extracted,
-                    $class === 'UNCLEAR' ? 'VALID_PARTIAL' : $class,
+                    $class,
                     $polarity
                 );
             }
@@ -94,11 +156,11 @@ final class ClinicalFollowUpAnswerValidator
                 false,
                 (string) ($gemini['reason'] ?? 'gemini_unrelated'),
                 self::retryMessage($lang),
-                $class === 'UNCLEAR' ? 'UNCLEAR' : 'UNRELATED'
+                'UNRELATED'
             );
         }
 
-        // Gemini unavailable: accept only when leftover text still has expected-field evidence.
+        // Gemini unavailable: accept local field evidence, onset-style replies, or fail-open partials.
         if (self::hasExpectedFieldEvidence($kind, $low, $corrected)) {
             $extracted = self::extractPayload($kind, $corrected);
             $classMeta = self::classifyAnswer($kind, $corrected, $extracted);
@@ -113,7 +175,24 @@ final class ClinicalFollowUpAnswerValidator
             );
         }
 
-        return self::reject($qid, $kind, $corrected, false, 'uncertain_unrelated', self::retryMessage($lang), 'UNCLEAR');
+        // Plausible short clinical reply that local rules didn't classify — do not reject.
+        if (!self::looksOffTopic($low) && mb_strlen(trim($low)) >= 2) {
+            $extracted = self::extractPayload($kind, $corrected);
+            $classMeta = self::classifyAnswer($kind, $corrected, $extracted);
+            $class = $classMeta['answer_class'] === 'UNCLEAR' ? 'VALID_PARTIAL' : $classMeta['answer_class'];
+
+            return self::accept(
+                $qid,
+                $kind,
+                $corrected,
+                'local_failopen_partial',
+                $extracted,
+                $class,
+                $classMeta['polarity'] ?: 'partial'
+            );
+        }
+
+        return self::reject($qid, $kind, $corrected, false, 'uncertain_unrelated', self::retryMessage($lang), 'UNRELATED');
     }
 
     public static function retryMessage(string $langKey): string
@@ -186,7 +265,7 @@ final class ClinicalFollowUpAnswerValidator
         }
 
         if ($kind === 'SYMPTOM_DURATION') {
-            if ($extracts || $local || self::looksTiming($low)) {
+            if ($extracts || $local || self::looksTiming($low) || self::looksOnsetStyle($low)) {
                 return 'accept';
             }
             if ($wrongField || $offTopic) {
@@ -361,7 +440,7 @@ final class ClinicalFollowUpAnswerValidator
     {
         return match ($kind) {
             'PAIN_SEVERITY' => self::looksPainSeverity($low) || self::extractorUnderstands($kind, $corrected),
-            'SYMPTOM_DURATION' => self::looksTiming($low) || self::extractorUnderstands($kind, $corrected),
+            'SYMPTOM_DURATION' => self::looksTiming($low) || self::looksOnsetStyle($low) || self::extractorUnderstands($kind, $corrected),
             'PAIN_LOCATION' => self::looksLocation($low) || self::extractorUnderstands($kind, $corrected),
             'ASSOCIATED_SYMPTOMS' => self::looksYesNo($low) || self::looksAssociated($low) || self::extractorUnderstands($kind, $corrected),
             default => self::looksYesNo($low) || self::extractorUnderstands($kind, $corrected),
@@ -427,6 +506,11 @@ final class ClinicalFollowUpAnswerValidator
         }
         if ($yn === false || !empty($extracted['denied']) || !empty($extracted['denied_associated'])) {
             return ['answer_class' => 'VALID_NEGATIVE', 'polarity' => 'negative'];
+        }
+        if (!empty($extracted['patient_uncertain'])
+            || (class_exists('ClinicalFeatureExtractors') && ClinicalFeatureExtractors::looksPatientUncertain($text))
+        ) {
+            return ['answer_class' => 'VALID_UNCERTAIN', 'polarity' => 'uncertain'];
         }
 
         $hasFact = false;
@@ -509,14 +593,34 @@ final class ClinicalFollowUpAnswerValidator
             && !preg_match('/\b(out of\s*10|\/\s*10)\b/u', $low);
     }
 
+    private static function looksOnsetStyle(string $low): bool
+    {
+        $expanded = (string) preg_replace_callback(
+            '/\b([a-z]{2,})2\b/u',
+            static fn (array $m): string => $m[1] . '-' . $m[1],
+            $low
+        );
+        if (class_exists('ClinicalFeatureExtractors') && ClinicalFeatureExtractors::extractOnset($expanded) !== '') {
+            return true;
+        }
+
+        return (bool) preg_match(
+            '/\b(gulpi|kalit|sudden|suddenly|bigla|hinay-hinay|hinay|gradual|gradually|slowly|unti-unti|unti)\b/u',
+            $expanded
+        );
+    }
+
     private static function looksTiming(string $low): bool
     {
+        if (self::looksOnsetStyle($low)) {
+            return true;
+        }
         if (preg_match(
             '/\b(yesterday|yesturday|today|tonight|last\s+night|this\s+morning|this\s+afternoon|this\s+evening|'
             . 'kanina|gahapon|kahapon|kagapon|kagab-i|kagabi|subong|ngayon|halin|since|'
             . 'ligad|dugay|matagal|bag-o\s+lang|just\s+(now|started)|last\s+week|last\s+month|'
             . 'a\s+few\s+days|couple\s+of\s+days|almost\s+a\s+week|about\s+a\s+week|for\s+a\s+week|'
-            . 'about\s+\d+|for\s+\d+|'
+            . 'about\s+\d+|for\s+\d+|mga\s+\d+|mga\s+(isa|duha|tatlo|apat|lima)|'
             . 'monday|tuesday|wednesday|thursday|friday|saturday|sunday)\b/u',
             $low
         )) {
@@ -563,6 +667,10 @@ final class ClinicalFollowUpAnswerValidator
         if (preg_match('/^(blue|red|green|yellow|pink|ok|lol|haha+|idk)$/u', $low)) {
             return true;
         }
+        // Shopping / price questions during clinical interview are unrelated (not a symptom dictionary).
+        if (preg_match('/\b(presyo|magkano|how\s+much|price\s+of|sapatos|shopping)\b/u', $low)) {
+            return true;
+        }
 
         return (bool) preg_match(
             '/\b(basketball|football|soccer|pizza|burger|phone|cellphone|wifi|facebook|color|kulay|'
@@ -570,6 +678,42 @@ final class ClinicalFollowUpAnswerValidator
             . 'broken|sira|utod naga-?eskwela|what time is it|i like|mahilig|maglaro)\b/u',
             $low
         );
+    }
+
+    /**
+     * Genuine joke/spam with no recoverable clinical meaning — not short clinical replies.
+     */
+    private static function looksPrankOrNonMedical(string $low): bool
+    {
+        $t = trim($low);
+        if ($t === '') {
+            return false;
+        }
+        // Laugh runs: haha / hehe / hihi (repeated "ha"/"he"/"hi" syllables), lol, lmao, jk.
+        if (preg_match('/^(?:(?:ha){2,}|(?:he){2,}|(?:hi){2,}|lol+|lmao+|whee+|jk)+$/u', $t)) {
+            return true;
+        }
+        $hasLaugh = (bool) preg_match('/\b(?:(?:ha){2,}|(?:he){2,}|(?:hi){2,}|lol+|lmao+|jk)\b/u', $t);
+        if (!$hasLaugh) {
+            return false;
+        }
+        // Laugh spam mixed with no yes/no, timing, body, or uncertainty language → prank.
+        if (self::looksYesNo($t)
+            || self::looksTiming($t)
+            || self::looksOnsetStyle($t)
+            || self::looksLocation($t)
+            || self::looksAssociated($t)
+            || self::looksPainSeverity($t)
+            || (class_exists('ClinicalFeatureExtractors') && (
+                ClinicalFeatureExtractors::looksPatientUncertain($t)
+                || ClinicalFeatureExtractors::looksConditionalPartial($t)
+            ))
+        ) {
+            return false;
+        }
+
+        // Multiple tokens of laugh + unrelated chatter
+        return mb_strlen($t) >= 10;
     }
 
     private static function isSmash(string $low): bool
@@ -602,6 +746,16 @@ final class ClinicalFollowUpAnswerValidator
         foreach ($repl as $from => $to) {
             $out = preg_replace('/\b' . preg_quote($from, '/') . '\b/ui', $to, $out) ?? $out;
         }
+        // Compact "diko" / "indiko" spacing (uncertainty / negation clitics).
+        $out = preg_replace('/\bdi\s*ko\b/ui', 'di ko', $out) ?? $out;
+        $out = preg_replace('/\bindi\s*ko\b/ui', 'indi ko', $out) ?? $out;
+        $out = preg_replace('/\bhindi\s*ko\b/ui', 'hindi ko', $out) ?? $out;
+        // PH texting reduplication: word2 → word-word (hinay2, unti2, etc.).
+        $out = preg_replace_callback(
+            '/\b([A-Za-zÀ-ÿ]{2,})2\b/u',
+            static fn (array $m): string => $m[1] . '-' . $m[1],
+            $out
+        ) ?? $out;
 
         return $out;
     }

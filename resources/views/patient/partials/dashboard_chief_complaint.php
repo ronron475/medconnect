@@ -191,7 +191,6 @@ $placeholder = $interview_complaint_locked
         </div>
         <p id="pdashFollowupHelper" class="pdash-followup__helper"<?= $followup_is_pain_scale ? '' : ' hidden' ?>><?= $followup_is_pain_scale ? 'Tap a number below, or type your answer (for example: 5, 7/10, or “grabe”).' : '' ?></p>
       </div>
-      <div id="pdashFollowupNotice" class="pdash-followup__notice" role="status" hidden></div>
       <div class="pdash-followup__answer">
         <label class="form-label pdash-care-form__label" for="pdashFollowupAnswer">Your answer</label>
         <textarea
@@ -203,6 +202,7 @@ $placeholder = $interview_complaint_locked
           placeholder="Type your answer here…"
           autocomplete="off"
         ></textarea>
+        <div id="pdashFollowupNotice" class="pdash-followup__notice" role="alert" hidden></div>
         <p class="pdash-followup__hint">Short answers are fine. Use your own words.</p>
       </div>
     </div>
