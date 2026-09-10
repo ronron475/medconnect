@@ -466,6 +466,7 @@ final class ClinicalInterviewEngine
             'sweating' => $yesNo($seed['sweating'] ?? null),
             'abdominal_associated' => $yesNo($seed['abdominal_associated'] ?? null),
             'has_other_symptoms' => $yesNo($seed['has_other_symptoms'] ?? null),
+            'patient_uncertain' => (bool) ($seed['patient_uncertain'] ?? false),
         ];
     }
 
@@ -637,6 +638,25 @@ final class ClinicalInterviewEngine
         ))) {
             $facts['denied_associated'] = true;
             $facts['has_other_symptoms'] = false;
+        }
+
+        if (!empty($extracted['patient_uncertain'])
+            || in_array($class, ['VALID_UNCERTAIN', 'VALID_UNKNOWN'], true)
+            || $polarity === 'uncertain'
+            || $polarity === 'unknown'
+        ) {
+            $facts['patient_uncertain'] = true;
+            // Mark timing slot resolved when the patient cannot answer onset/duration.
+            if (($awaiting === 'ONSET' || $awaiting === 'DURATION' || str_contains($awaiting, 'ONSET') || str_contains($awaiting, 'DURATION'))
+                && trim((string) ($facts['onset'] ?? '')) === ''
+                && trim((string) ($facts['duration_label'] ?? '')) === ''
+            ) {
+                $facts['onset'] = 'uncertain';
+            }
+        }
+
+        if (!empty($extracted['patient_conditional']) || ($class === 'VALID_PARTIAL' && $polarity === 'partial')) {
+            $facts['patient_conditional'] = true;
         }
 
         if (array_key_exists('yes_no', $extracted) || $polarity === 'positive' || $polarity === 'negative') {

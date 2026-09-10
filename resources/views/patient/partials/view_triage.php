@@ -201,7 +201,6 @@ $show_start_new_consultation_btn = !$is_provider_locked && empty($force_new_conc
         </div>
         <p id="triageFollowupHelper" class="pdash-followup__helper"<?= $followup_is_pain_scale ? '' : ' hidden' ?>><?= $followup_is_pain_scale ? 'Tap a number below, or type your answer (for example: 5, 7/10, or “grabe”).' : '' ?></p>
       </div>
-      <div id="triageFollowupNotice" class="pdash-followup__notice" role="status" hidden></div>
       <div class="pdash-followup__answer">
         <label class="form-label" for="triage_followup_answer">Your answer</label>
         <textarea
@@ -213,6 +212,7 @@ $show_start_new_consultation_btn = !$is_provider_locked && empty($force_new_conc
           placeholder="Type your answer here…"
           autocomplete="off"
         ></textarea>
+        <div id="triageFollowupNotice" class="pdash-followup__notice" role="alert" hidden></div>
         <p class="pdash-followup__hint">Short answers are fine. Use your own words.</p>
       </div>
     </div>

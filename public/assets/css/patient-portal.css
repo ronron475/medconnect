@@ -1555,7 +1555,7 @@ body.mc-tips-ready-modal-open {
 }
 
 .pdash-followup__panel {
-  padding: 14px 16px 8px;
+  padding: 14px 16px 10px;
 }
 
 .pdash-followup__question {
@@ -1634,19 +1634,21 @@ body.mc-tips-ready-modal-open {
 }
 
 .pdash-followup__notice {
-  margin: 0 16px 12px;
-  padding: 10px 12px;
-  border-radius: 10px;
-  border: 1px solid #fecaca;
+  margin: 10px 0 0;
+  padding: 12px 14px;
+  border-radius: 8px;
+  border: 1px solid #fca5a5;
   background: #fef2f2;
-  color: #b91c1c;
-  font-size: 0.86rem;
+  color: #dc2626;
+  font-size: 13px;
   font-weight: 600;
   line-height: 1.45;
+  overflow-wrap: anywhere;
+  word-break: break-word;
 }
 
 .pdash-followup__answer {
-  padding: 0 16px 16px;
+  padding: 4px 16px 16px;
 }
 
 .pdash-followup__input {
@@ -1654,11 +1656,28 @@ body.mc-tips-ready-modal-open {
   resize: vertical;
 }
 
+.pdash-followup__input.is-invalid,
+.pdash-followup__input[aria-invalid='true'] {
+  border-color: #f87171;
+  box-shadow: 0 0 0 3px rgba(248, 113, 113, 0.18);
+}
+
+.pdash-followup__input.is-invalid:focus,
+.pdash-followup__input[aria-invalid='true']:focus {
+  border-color: #ef4444;
+  box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.22);
+  outline: none;
+}
+
 .pdash-followup__hint {
   margin: 8px 0 0;
   font-size: 0.75rem;
   color: #64748b;
   line-height: 1.4;
+}
+
+.pdash-followup__answer:has(.pdash-followup__notice:not([hidden])) .pdash-followup__hint {
+  margin-top: 10px;
 }
 
 .pdash-review-form.is-followup-active #pdashSymptomsComplaint,
