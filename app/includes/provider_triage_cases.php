@@ -88,6 +88,8 @@ function provider_triage_cases_load(PDO $pdo, int $providerId): array
           OR (
             tr.assigned_provider_id = ?
             AND tr.recommendation_status IN ('pending_approval', 'approved', 'rejected')
+            AND UPPER(COALESCE(tr.assessment_status, '')) NOT IN ('CANCELLED', 'CANCELED')
+            AND LOWER(COALESCE(tr.outcome, '')) <> 'cancelled'
             AND tr.assessed_at >= DATE_SUB(NOW(), INTERVAL 30 DAY)
           )
         ORDER BY

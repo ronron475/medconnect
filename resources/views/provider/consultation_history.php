@@ -19,12 +19,15 @@ if (!in_array($filter, provider_consultation_history_allowed_filters(), true)) {
 $detail_patient_id = isset($_GET['patient_id']) ? (int) $_GET['patient_id'] : 0;
 $patient_detail = null;
 $patient_consultations = [];
+$pch_access_denied = false;
 
 if ($detail_patient_id > 0) {
     $detail = provider_consultation_history_patient_detail($pdo, $provider_id, $detail_patient_id);
     $patient_detail = $detail['patient'];
     $patient_consultations = $detail['consultations'];
     if (!$patient_detail) {
+        $access = provider_patient_assert_access($pdo, $provider_id, $detail_patient_id, 0);
+        $pch_access_denied = empty($access['allowed']);
         $detail_patient_id = 0;
     }
 }
@@ -38,6 +41,13 @@ function pch_filter_url(string $filter): string
 ?>
 
 <div class="pch-page">
+
+  <?php if (!empty($pch_access_denied)): ?>
+  <div class="pch-panel" role="alert" style="padding:12px 16px;">
+    <strong>Patient not available</strong>
+    <p class="pch-toolbar__sub" style="margin:6px 0 0;">This patient is not on your consultation history caseload right now.</p>
+  </div>
+  <?php endif; ?>
 
   <?php if ($detail_patient_id > 0 && $patient_detail): ?>
 

@@ -245,6 +245,8 @@ final class GeminiComplaintInputValidator
                 'answers_question' => false,
                 'corrected_answer' => null,
                 'extracted_information' => [],
+                'answer_class' => 'UNCLEAR',
+                'polarity' => null,
                 'reason' => 'empty',
             ];
         }
@@ -256,6 +258,8 @@ final class GeminiComplaintInputValidator
                 'answers_question' => null,
                 'corrected_answer' => null,
                 'extracted_information' => [],
+                'answer_class' => null,
+                'polarity' => null,
                 'reason' => 'disabled',
             ];
         }
@@ -273,6 +277,8 @@ final class GeminiComplaintInputValidator
                     'answers_question' => null,
                     'corrected_answer' => null,
                     'extracted_information' => [],
+                    'answer_class' => null,
+                    'polarity' => null,
                     'reason' => self::$lastError,
                 ];
             }
@@ -289,6 +295,8 @@ final class GeminiComplaintInputValidator
                 'answers_question' => null,
                 'corrected_answer' => null,
                 'extracted_information' => [],
+                'answer_class' => null,
+                'polarity' => null,
                 'reason' => self::$lastError,
             ];
         }
@@ -328,8 +336,11 @@ final class GeminiComplaintInputValidator
             . "\nNormalized concepts:\n" . mb_substr((string) ($input['normalized_complaint'] ?? ''), 0, 300)
             . "\nPatient language:\n" . mb_substr((string) ($input['language'] ?? ''), 0, 40)
             . "\nCurrent follow-up question:\n" . mb_substr((string) ($input['question'] ?? ''), 0, 400)
+            . "\nQuestion id:\n" . mb_substr((string) ($input['question_id'] ?? ''), 0, 80)
             . "\nExpected clinical field:\n" . mb_substr((string) ($input['expected_field'] ?? ''), 0, 80)
-            . "\nKnown valid clinical information:\n" . mb_substr(json_encode($input['known_facts'] ?? [], JSON_UNESCAPED_UNICODE) ?: '', 0, 400)
+            . "\nPrevious questions and answers:\n" . mb_substr(json_encode($input['previous_qa'] ?? [], JSON_UNESCAPED_UNICODE) ?: '[]', 0, 700)
+            . "\nRecent patient turns:\n" . mb_substr(json_encode($input['patient_turns'] ?? [], JSON_UNESCAPED_UNICODE) ?: '[]', 0, 500)
+            . "\nKnown valid clinical information:\n" . mb_substr(json_encode($input['known_facts'] ?? [], JSON_UNESCAPED_UNICODE) ?: '', 0, 500)
             . "\nPatient answer:\n" . mb_substr((string) ($input['answer'] ?? ''), 0, 400)
             . "\nTypo-corrected answer:\n" . mb_substr((string) ($input['corrected_answer'] ?? ''), 0, 400);
 
@@ -370,6 +381,26 @@ final class GeminiComplaintInputValidator
             $corrected = '';
         }
 
+        $answerClass = strtoupper(trim((string) ($decoded['answer_class'] ?? '')));
+        if (!in_array($answerClass, ['VALID_POSITIVE', 'VALID_NEGATIVE', 'VALID_PARTIAL', 'UNCLEAR', 'UNRELATED'], true)) {
+            if (!empty($decoded['answers_question']) && !empty($decoded['is_relevant'])) {
+                $answerClass = 'VALID_PARTIAL';
+            } elseif (!empty($decoded['is_meaningful'])) {
+                $answerClass = 'UNCLEAR';
+            } else {
+                $answerClass = 'UNRELATED';
+            }
+        }
+        $polarity = strtolower(trim((string) ($decoded['polarity'] ?? '')));
+        if (!in_array($polarity, ['positive', 'negative', 'partial'], true)) {
+            $polarity = match ($answerClass) {
+                'VALID_POSITIVE' => 'positive',
+                'VALID_NEGATIVE' => 'negative',
+                'VALID_PARTIAL' => 'partial',
+                default => null,
+            };
+        }
+
         return [
             'available' => true,
             'is_meaningful' => !empty($decoded['is_meaningful']),
@@ -377,6 +408,8 @@ final class GeminiComplaintInputValidator
             'answers_question' => !empty($decoded['answers_question']),
             'corrected_answer' => $corrected !== '' ? $corrected : null,
             'extracted_information' => $extracted,
+            'answer_class' => $answerClass,
+            'polarity' => $polarity,
             'reason' => mb_substr(trim((string) ($decoded['reason'] ?? '')), 0, 240),
         ];
     }
@@ -386,28 +419,36 @@ final class GeminiComplaintInputValidator
         return <<<'PROMPT'
 You are a follow-up answer relevance validator for a medical consultation system.
 
+Interpret MEANING and CONTEXT of the patient answer relative to the CURRENT follow-up question.
+Do not rely on a fixed keyword list. Understand positive, negative, partial, uncertain, clarifying,
+short, long, informal, misspelled, phonetic, Hiligaynon/Ilonggo, Visayan, Tagalog, English,
+Taglish, and mixed-language answers.
+
 Determine ONLY:
 1. Is the answer meaningful (not nonsense)?
-2. Is it relevant to the primary complaint?
+2. Is it relevant to the primary complaint and current question?
 3. Does it answer the current follow-up question / expected clinical field?
-4. Can minor spelling mistakes be corrected?
-5. What clinical information can safely be extracted from what the patient actually stated?
+4. answer_class: VALID_POSITIVE | VALID_NEGATIVE | VALID_PARTIAL | UNCLEAR | UNRELATED
+5. polarity: positive | negative | partial | null
+6. Can minor spelling mistakes be corrected?
+7. What clinical information can safely be extracted from what the patient actually stated?
+   Include negations as real clinical facts (example: blood_in_stool=false, vision_change=false).
+
+Mark UNRELATED only when the answer genuinely does not address the current question.
+A short conversational denial (meaning "no") is VALID_NEGATIVE when the question asks yes/no or associated findings.
+A short affirmation is VALID_POSITIVE.
+Do not reject merely because wording differs from the question keywords.
 
 Do not diagnose.
 Do not determine urgency.
 Do not determine triage (EMERGENCY / URGENT / NON-URGENT).
 Do not invent symptoms or clinical information.
-
-A grammatically meaningful sentence can still be clinically irrelevant.
-Yes/no may be valid only when the question expects that (e.g. other symptoms).
-A bare 0-10 number may be valid for pain severity, but "my dog is 5 years old" is not.
-
-Accept English, Hiligaynon/Ilonggo, Tagalog/Filipino, mixed language, and minor typos.
+Do not prescribe.
 
 Return ONLY JSON:
-{"is_meaningful":true,"is_relevant":true,"answers_question":true,"corrected_answer":"Yesterday","extracted_information":{"duration":"1 day"},"reason":"..."}
+{"is_meaningful":true,"is_relevant":true,"answers_question":true,"answer_class":"VALID_NEGATIVE","polarity":"negative","corrected_answer":"No","extracted_information":{"yes_no":false},"reason":"..."}
 or
-{"is_meaningful":true,"is_relevant":false,"answers_question":false,"corrected_answer":null,"extracted_information":{},"reason":"..."}
+{"is_meaningful":true,"is_relevant":false,"answers_question":false,"answer_class":"UNRELATED","polarity":null,"corrected_answer":null,"extracted_information":{},"reason":"..."}
 PROMPT;
     }
 

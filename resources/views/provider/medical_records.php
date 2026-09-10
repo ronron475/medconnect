@@ -18,12 +18,13 @@ if ($view === 'history') {
 }
 
 $selected = null;
+$mr_access_denied = false;
 
 function mr_fetch_patient(PDO $pdo, int $id): ?array {
     $s = $pdo->prepare("
         SELECT u.id, u.first_name, u.last_name,
-            CONCAT(u.first_name,' ',u.last_name) AS name,
-            CONCAT(UPPER(LEFT(u.first_name,1)),UPPER(LEFT(u.last_name,1))) AS initials,
+            TRIM(CONCAT(COALESCE(u.first_name,''), ' ', COALESCE(u.last_name,''))) AS name,
+            CONCAT(UPPER(LEFT(COALESCE(NULLIF(u.first_name,''),'?'),1)),UPPER(LEFT(COALESCE(NULLIF(u.last_name,''),''),1))) AS initials,
             COALESCE(pr.age,'') AS age, COALESCE(pr.gender,'') AS sex,
             COALESCE(pr.contact_number,'') AS contact,
             COALESCE(CONCAT_WS(', ',NULLIF(pr.barangay,''),NULLIF(pr.city_municipality,''),NULLIF(pr.province,'')),'') AS address,
@@ -35,22 +36,50 @@ function mr_fetch_patient(PDO $pdo, int $id): ?array {
             CASE WHEN u.is_active=1 THEN 'Active' ELSE 'Inactive' END AS status,
             CONCAT('MC-',LPAD(u.id,6,'0')) AS patient_number
         FROM users u
-        LEFT JOIN patient_registrations pr ON pr.user_id = u.id
+        LEFT JOIN patient_registrations pr ON pr.user_id = u.id OR pr.email = u.email
         WHERE u.id=? AND u.role='patient' LIMIT 1
     ");
     $s->execute([$id]);
-    return $s->fetch(PDO::FETCH_ASSOC) ?: null;
+    $row = $s->fetch(PDO::FETCH_ASSOC) ?: null;
+    if ($row) {
+        $name = trim((string) ($row['name'] ?? ''));
+        if ($name === '') {
+            $row['name'] = 'Patient ' . (string) ($row['patient_number'] ?? ('MC-' . str_pad((string) $id, 6, '0', STR_PAD_LEFT)));
+        }
+    }
+    return $row;
 }
 
 if ($requested_id > 0) {
     $access = provider_patient_assert_access($pdo, (int) ($_SESSION['user_id'] ?? 0), $requested_id, 0);
     if ($access['allowed']) {
         $selected = mr_fetch_patient($pdo, $requested_id);
+        if ($selected) {
+            // Ensure GIS / triage-assigned patients appear in the left directory.
+            $exists = false;
+            foreach ($patients as $pRow) {
+                if ((int) ($pRow['id'] ?? 0) === $requested_id) {
+                    $exists = true;
+                    break;
+                }
+            }
+            if (!$exists) {
+                array_unshift($patients, [
+                    'id' => (int) $selected['id'],
+                    'name' => (string) $selected['name'],
+                    'initials' => (string) ($selected['initials'] ?: 'P'),
+                    'contact' => (string) ($selected['contact'] ?? ''),
+                    'last_consult' => (string) ($selected['last_consult'] ?? ''),
+                ]);
+                $patient_count = count($patients);
+            }
+        }
     } else {
+        $mr_access_denied = true;
         $requested_id = 0;
     }
 }
-if (!$selected && !empty($patients) && $view === 'patients') {
+if (!$selected && !$mr_access_denied && !empty($patients) && $view === 'patients') {
     foreach ($patients as $pRow) {
         $candidateId = (int) ($pRow['id'] ?? 0);
         if ($candidateId <= 0) {
@@ -121,8 +150,8 @@ try {
     patient_settings_ensure_schema($pdo);
     $apStmt = $pdo->prepare("
         SELECT u.id, u.first_name, u.last_name,
-               CONCAT(u.first_name, ' ', u.last_name) AS name,
-               CONCAT(UPPER(LEFT(u.first_name,1)), UPPER(LEFT(u.last_name,1))) AS initials,
+               TRIM(CONCAT(COALESCE(u.first_name, ''), ' ', COALESCE(u.last_name, ''))) AS name,
+               CONCAT(UPPER(LEFT(COALESCE(NULLIF(u.first_name,''),'?'),1)), UPPER(LEFT(COALESCE(NULLIF(u.last_name,''),''),1))) AS initials,
                COALESCE(pr.contact_number, '') AS contact,
                r.id AS request_id, r.created_at AS request_created_at
         FROM patient_medical_update_requests r
@@ -133,9 +162,19 @@ try {
     ");
     $apStmt->execute([$provider_id]);
     $provider_assigned_pending = $apStmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
-    foreach ($provider_assigned_pending as $apRow) {
+    foreach ($provider_assigned_pending as &$apRow) {
         $apId = (int) ($apRow['id'] ?? 0);
-        if ($apId <= 0) continue;
+        $apName = trim((string) ($apRow['name'] ?? ''));
+        if ($apName === '') {
+            $apRow['name'] = provider_patient_display_name(
+                (string) ($apRow['first_name'] ?? ''),
+                (string) ($apRow['last_name'] ?? ''),
+                $apId
+            );
+        }
+        if ($apId <= 0) {
+            continue;
+        }
         $exists = false;
         foreach ($patients as $pRow) {
             if ((int) ($pRow['id'] ?? 0) === $apId) {
@@ -147,13 +186,14 @@ try {
             $patients[] = [
                 'id' => $apId,
                 'name' => (string) ($apRow['name'] ?? ''),
-                'initials' => (string) ($apRow['initials'] ?? '?'),
+                'initials' => (string) ($apRow['initials'] ?? 'P'),
                 'contact' => (string) ($apRow['contact'] ?? ''),
                 'last_consult' => '',
             ];
         }
         $pending_requests_by_patient[$apId] = ['id' => (int) ($apRow['request_id'] ?? 0)];
     }
+    unset($apRow);
     $patient_count = count($patients);
 } catch (PDOException $e) {
     $provider_assigned_pending = [];
@@ -177,6 +217,13 @@ $tabs_list = ['overview' => 'Overview', 'consultations' => 'Consultations', 'cli
       <input id="mrSearch" type="search" placeholder="Search patients…" oninput="mrFilterPatients(this.value)" autocomplete="off">
     </div>
   </div>
+
+  <?php if (!empty($mr_access_denied)): ?>
+  <div class="mr-assigned-pending" role="alert">
+    <strong>Patient not available</strong>
+    <p class="text-sm" style="margin:6px 0 0;">This map patient is not on your current Medical Records caseload (no active consult, booking, Care tips assignment, referral, or Health Summary request).</p>
+  </div>
+  <?php endif; ?>
 
   <?php if (!empty($provider_assigned_pending)): ?>
   <div class="mr-assigned-pending" role="status">
@@ -299,15 +346,15 @@ $tabs_list = ['overview' => 'Overview', 'consultations' => 'Consultations', 'cli
           </div>
           <div class="mr-info-item">
             <label>Allergies</label>
-            <span><?= htmlspecialchars($selected['allergies'] ?: 'None recorded') ?></span>
+            <span><?= htmlspecialchars($selected['allergies'] ?: 'No allergies recorded') ?></span>
           </div>
           <div class="mr-info-item">
             <label>Medications</label>
-            <span><?= htmlspecialchars($selected['medications'] ?: 'None recorded') ?></span>
+            <span><?= htmlspecialchars($selected['medications'] ?: 'No medications recorded') ?></span>
           </div>
           <div class="mr-info-item" style="grid-column:1/-1;">
             <label>Medical history</label>
-            <span><?= htmlspecialchars($selected['history'] ?: 'None recorded') ?></span>
+            <span><?= htmlspecialchars($selected['history'] ?: 'No medical history recorded') ?></span>
           </div>
         </div>
         <?php else:

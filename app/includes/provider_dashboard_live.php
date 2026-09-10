@@ -7,6 +7,7 @@ declare(strict_types=1);
 
 require_once __DIR__ . '/provider_activity.php';
 require_once __DIR__ . '/provider_triage_cases.php';
+require_once __DIR__ . '/provider_patient_access.php';
 
 function provider_parse_dashboard_period(string $input): string
 {
@@ -205,21 +206,9 @@ function provider_dashboard_live_payload(PDO $pdo, int $providerId, string $peri
             SELECT COUNT(*)
             FROM triage_results tr
             WHERE tr.status = 'pending'
-              AND (
-                EXISTS (
-                    SELECT 1 FROM consultations c
-                    WHERE c.patient_id = tr.patient_id AND c.provider_id = ?
-                    ORDER BY c.id DESC LIMIT 1
-                )
-                OR EXISTS (
-                    SELECT 1 FROM appointment_slots s
-                    WHERE s.patient_id = tr.patient_id AND s.provider_id = ? AND s.status = 'booked'
-                      AND s.slot_date >= DATE_SUB(CURDATE(), INTERVAL 30 DAY)
-                    ORDER BY s.id DESC LIMIT 1
-                )
-              )
+              AND " . provider_triage_row_visibility_sql('tr') . "
         ");
-        $s->execute([$providerId, $providerId]);
+        $s->execute([$providerId, $providerId, $providerId, $providerId]);
         $stats['pending'] = (int) $s->fetchColumn();
 
         $s = $pdo->prepare("
@@ -227,21 +216,9 @@ function provider_dashboard_live_payload(PDO $pdo, int $providerId, string $peri
             FROM triage_results tr
             WHERE (tr.level = '1' OR tr.level = '2' OR tr.level = 'Emergency')
               AND tr.status = 'pending'
-              AND (
-                EXISTS (
-                    SELECT 1 FROM consultations c
-                    WHERE c.patient_id = tr.patient_id AND c.provider_id = ?
-                    ORDER BY c.id DESC LIMIT 1
-                )
-                OR EXISTS (
-                    SELECT 1 FROM appointment_slots s
-                    WHERE s.patient_id = tr.patient_id AND s.provider_id = ? AND s.status = 'booked'
-                      AND s.slot_date >= DATE_SUB(CURDATE(), INTERVAL 30 DAY)
-                    ORDER BY s.id DESC LIMIT 1
-                )
-              )
+              AND " . provider_triage_row_visibility_sql('tr') . "
         ");
-        $s->execute([$providerId, $providerId]);
+        $s->execute([$providerId, $providerId, $providerId, $providerId]);
         $stats['urgent'] = (int) $s->fetchColumn();
 
         $s = $pdo->prepare("

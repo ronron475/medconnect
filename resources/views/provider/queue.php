@@ -98,16 +98,7 @@ try {
             u.last_name
         FROM triage_results tr
         JOIN users u ON u.id = tr.patient_id
-        WHERE
-          EXISTS (
-            SELECT 1 FROM consultations c
-            WHERE c.patient_id = tr.patient_id AND c.provider_id = ?
-          )
-          OR EXISTS (
-            SELECT 1 FROM appointment_slots s
-            WHERE s.patient_id = tr.patient_id AND s.provider_id = ? AND s.status = 'booked'
-              AND s.slot_date >= DATE_SUB(CURDATE(), INTERVAL 30 DAY)
-          )
+        WHERE " . provider_triage_row_visibility_sql('tr') . "
         ORDER BY
             CASE
                 WHEN tr.level IN ('1', '2', 'Emergency', 'high') THEN 1
@@ -116,7 +107,7 @@ try {
             tr.assessed_at DESC
         LIMIT 8
     ");
-    $stmt->execute([$provider_id, $provider_id]);
+    $stmt->execute([$provider_id, $provider_id, $provider_id, $provider_id]);
     $triage_feed = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
     $urgent_followup_queue = urgent_followup_queue_load($pdo, $provider_id);
@@ -314,7 +305,7 @@ require_once __DIR__ . '/partials/layout_open.php';
                     </thead>
                     <tbody>
                         <?php foreach ($urgent_followup_queue as $ufCase):
-                            $ufName = trim(($ufCase['first_name'] ?? '') . ' ' . ($ufCase['last_name'] ?? ''));
+                            $ufName = trim(($ufCase['first_name'] ?? '') . ' ' . ($ufCase['last_name'] ?? '')) ?: 'Patient';
                             $isEmergency = strtoupper((string) ($ufCase['triage_classification'] ?? '')) === 'EMERGENCY'
                                 || ($ufCase['status'] ?? '') === 'emergency_referral';
                             $canAccept = !$isEmergency && in_array((string) ($ufCase['status'] ?? ''), ['waiting', 'accepted'], true);
@@ -392,7 +383,7 @@ require_once __DIR__ . '/partials/layout_open.php';
                             <tr><td colspan="6"><div class="queue-empty">No assigned consultations yet.</div></td></tr>
                         <?php else: ?>
                             <?php foreach ($queue_items as $item):
-                                $name = trim(($item['first_name'] ?? '') . ' ' . ($item['last_name'] ?? ''));
+                                $name = trim(($item['first_name'] ?? '') . ' ' . ($item['last_name'] ?? '')) ?: 'Patient';
                                 $status = (string)($item['status'] ?? 'pending');
                                 $status_class = queue_status_class($status);
                                 $is_urgent = queue_is_urgent($item['level'] ?? '', $item['urgency_label'] ?? '');
@@ -489,7 +480,7 @@ require_once __DIR__ . '/partials/layout_open.php';
                     <?php else: ?>
                         <?php foreach ($triage_feed as $case):
                             $urgent = queue_is_urgent($case['level'] ?? '', $case['urgency_label'] ?? '');
-                            $case_name = trim(($case['first_name'] ?? '') . ' ' . ($case['last_name'] ?? ''));
+                            $case_name = trim(($case['first_name'] ?? '') . ' ' . ($case['last_name'] ?? '')) ?: 'Patient';
                             $feed_complaint = trim((string) ($case['chief_complaint'] ?? ''));
                             $feed_symptoms = queue_symptoms_distinct_from_complaint(
                                 queue_format_symptoms($case['symptoms'] ?? ''),

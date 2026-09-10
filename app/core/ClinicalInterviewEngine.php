@@ -100,6 +100,11 @@ final class ClinicalInterviewEngine
                     return self::wrapRetryCurrentQuestion($context, $validation);
                 }
                 $context['last_followup_validation'] = $validation;
+                $context = self::applyFollowUpValidationFacts($context, $validation, $awaiting);
+                $correctedFromValidation = trim((string) ($validation['corrected_answer'] ?? ''));
+                if ($correctedFromValidation !== '') {
+                    $turn = $correctedFromValidation;
+                }
             } catch (Throwable $e) {
                 error_log('ClinicalFollowUpAnswerValidator fallback: ' . $e->getMessage());
             }
@@ -583,14 +588,119 @@ final class ClinicalInterviewEngine
                 'CHEST_SWEATING' => 'sweating',
                 'ABDOMINAL_ASSOCIATED' => 'abdominal_associated',
                 'ASSOCIATED_SYMPTOMS' => 'has_other_symptoms',
+                'FEVER_CONFIRM' => 'fever_confirmed',
+                'VISION_CHANGE' => 'vision_change',
             ];
             if (isset($map[$awaiting]) && $facts[$map[$awaiting]] === null) {
                 $facts[$map[$awaiting]] = $yesNo;
+            }
+            // Negative reply to associated/yes-no clinical probes is stored as a denial.
+            if ($yesNo === false && (
+                $awaiting === 'ASSOCIATED_SYMPTOMS'
+                || str_contains($awaiting, 'ASSOCIATED')
+                || str_contains($awaiting, 'NEURO')
+                || str_contains($awaiting, 'BLEEDING')
+                || str_contains($awaiting, 'VISION')
+                || str_contains($awaiting, 'BREATHING')
+                || str_contains($awaiting, 'CHEST')
+            )) {
+                if ($awaiting === 'ASSOCIATED_SYMPTOMS' || str_contains($awaiting, 'ASSOCIATED')) {
+                    $facts['denied_associated'] = true;
+                    $facts['has_other_symptoms'] = false;
+                }
             }
         }
 
         $facts = self::absorbImplicitRedFlags($facts, $low);
         $context['facts'] = $facts;
+
+        return $context;
+    }
+
+    /**
+     * Apply validated follow-up answer polarity / extracted facts before triage re-run.
+     *
+     * @param array<string, mixed> $context
+     * @param array<string, mixed> $validation
+     * @return array<string, mixed>
+     */
+    private static function applyFollowUpValidationFacts(array $context, array $validation, string $awaiting): array
+    {
+        $facts = is_array($context['facts'] ?? null) ? $context['facts'] : [];
+        $extracted = is_array($validation['extracted'] ?? null) ? $validation['extracted'] : [];
+        $class = strtoupper((string) ($validation['answer_class'] ?? ''));
+        $polarity = strtolower((string) ($validation['polarity'] ?? ''));
+        $awaiting = strtoupper(trim($awaiting));
+
+        if (!empty($extracted['denied_associated']) || ($class === 'VALID_NEGATIVE' && (
+            $awaiting === 'ASSOCIATED_SYMPTOMS' || str_contains($awaiting, 'ASSOCIATED')
+        ))) {
+            $facts['denied_associated'] = true;
+            $facts['has_other_symptoms'] = false;
+        }
+
+        if (array_key_exists('yes_no', $extracted) || $polarity === 'positive' || $polarity === 'negative') {
+            $yn = array_key_exists('yes_no', $extracted)
+                ? (bool) $extracted['yes_no']
+                : ($polarity === 'positive' ? true : ($polarity === 'negative' ? false : null));
+            $map = [
+                'NEURO_WEAKNESS' => 'weakness',
+                'NEURO_SPEECH' => 'speech_difficulty',
+                'NEURO_VISION' => 'vision_change',
+                'BREATHING_SEVERITY' => 'breathing_difficulty',
+                'BLEEDING_CONTINUING' => 'bleeding_continuing',
+                'BLEEDING_HEAVY' => 'bleeding_heavy',
+                'BLEEDING_DIZZY' => 'dizziness',
+                'CHEST_RADIATION' => 'chest_radiation',
+                'CHEST_SWEATING' => 'sweating',
+                'ABDOMINAL_ASSOCIATED' => 'abdominal_associated',
+                'ASSOCIATED_SYMPTOMS' => 'has_other_symptoms',
+                'FEVER_CONFIRM' => 'fever_confirmed',
+                'VISION_CHANGE' => 'vision_change',
+            ];
+            if ($yn !== null && isset($map[$awaiting]) && ($facts[$map[$awaiting]] ?? null) === null) {
+                $facts[$map[$awaiting]] = $yn;
+            }
+        }
+
+        if (($extracted['pain_severity'] ?? null) !== null && ($facts['pain_score'] ?? null) === null) {
+            $facts['pain_score'] = (int) $extracted['pain_severity'];
+        }
+        if (trim((string) ($extracted['pain_qualifier'] ?? '')) !== '' && ($facts['pain_qualifier'] ?? '') === '') {
+            $facts['pain_qualifier'] = (string) $extracted['pain_qualifier'];
+        }
+        if (trim((string) ($extracted['duration'] ?? '')) !== '' && ($facts['duration_label'] ?? '') === '') {
+            $facts['duration_label'] = (string) $extracted['duration'];
+        }
+        if (trim((string) ($extracted['onset'] ?? '')) !== '' && ($facts['onset'] ?? '') === '') {
+            $facts['onset'] = (string) $extracted['onset'];
+        }
+        if (!empty($extracted['body_locations']) && is_array($extracted['body_locations'])) {
+            $locs = is_array($facts['body_locations'] ?? null) ? $facts['body_locations'] : [];
+            foreach ($extracted['body_locations'] as $loc) {
+                $loc = trim((string) $loc);
+                if ($loc !== '' && !in_array($loc, $locs, true)) {
+                    $locs[] = $loc;
+                }
+            }
+            $facts['body_locations'] = $locs;
+        }
+
+        // Gemini may return named clinical booleans (negations included).
+        foreach ([
+            'vision_change', 'weakness', 'speech_difficulty', 'breathing_difficulty',
+            'bleeding_continuing', 'bleeding_heavy', 'dizziness', 'chest_radiation',
+            'sweating', 'abdominal_associated', 'has_other_symptoms', 'fever_confirmed',
+            'blood_in_stool',
+        ] as $key) {
+            if (array_key_exists($key, $extracted) && ($facts[$key] ?? null) === null) {
+                $facts[$key] = (bool) $extracted[$key];
+            }
+        }
+
+        $context['facts'] = $facts;
+        $context['last_answer_class'] = $class;
+        $context['last_answer_polarity'] = $polarity;
 
         return $context;
     }
@@ -1176,6 +1286,8 @@ final class ClinicalInterviewEngine
             'expected_field' => (string) ($validation['expected_field'] ?? ''),
             'corrected_answer' => (string) ($validation['corrected_answer'] ?? ''),
             'empty' => !empty($validation['empty']),
+            'answer_class' => (string) ($validation['answer_class'] ?? 'UNRELATED'),
+            'polarity' => $validation['polarity'] ?? null,
         ];
         $wrapped['interview']['answer_rejected'] = true;
         $wrapped['interview']['retry_current_question'] = true;

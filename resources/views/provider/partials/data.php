@@ -76,21 +76,9 @@ try {
         SELECT COUNT(*)
         FROM triage_results tr
         WHERE tr.status = 'pending'
-          AND (
-            EXISTS (
-                SELECT 1 FROM consultations c
-                WHERE c.patient_id = tr.patient_id AND c.provider_id = ?
-                ORDER BY c.id DESC LIMIT 1
-            )
-            OR EXISTS (
-                SELECT 1 FROM appointment_slots s
-                WHERE s.patient_id = tr.patient_id AND s.provider_id = ? AND s.status = 'booked'
-                  AND s.slot_date >= DATE_SUB(CURDATE(), INTERVAL 30 DAY)
-                ORDER BY s.id DESC LIMIT 1
-            )
-          )
+          AND " . provider_triage_row_visibility_sql('tr') . "
     ");
-    $s->execute([$providerId, $providerId]);
+    $s->execute([$providerId, $providerId, $providerId, $providerId]);
     $stats['pending'] = (int) $s->fetchColumn();
 
     // 3. Urgent (Priority Level 1 or 2)
@@ -99,21 +87,9 @@ try {
         FROM triage_results tr
         WHERE (tr.level = '1' OR tr.level = '2' OR tr.level = 'Emergency')
           AND tr.status = 'pending'
-          AND (
-            EXISTS (
-                SELECT 1 FROM consultations c
-                WHERE c.patient_id = tr.patient_id AND c.provider_id = ?
-                ORDER BY c.id DESC LIMIT 1
-            )
-            OR EXISTS (
-                SELECT 1 FROM appointment_slots s
-                WHERE s.patient_id = tr.patient_id AND s.provider_id = ? AND s.status = 'booked'
-                  AND s.slot_date >= DATE_SUB(CURDATE(), INTERVAL 30 DAY)
-                ORDER BY s.id DESC LIMIT 1
-            )
-          )
+          AND " . provider_triage_row_visibility_sql('tr') . "
     ");
-    $s->execute([$providerId, $providerId]);
+    $s->execute([$providerId, $providerId, $providerId, $providerId]);
     $stats['urgent'] = (int) $s->fetchColumn();
 
     // 4. Ongoing (In Consultation)
@@ -297,54 +273,13 @@ try {
 require_once BASE_PATH . '/app/includes/provider_activity.php';
 $activity = provider_load_recent_activity($pdo, $providerId, 8);
 
-// ── Live Patient List (patients this provider has consulted or booked) ───────
+// ── Live Patient List (provider caseload: consults, slots, triage, referrals, HS) ──
 $patients = [];
 $providerId = (int) ($_SESSION['user_id'] ?? 0);
 try {
-    $p_stmt = $pdo->prepare("
-        SELECT DISTINCT
-            u.id,
-            u.first_name,
-            u.last_name,
-            CONCAT(u.first_name, ' ', u.last_name)  AS name,
-            CONCAT(UPPER(LEFT(u.first_name,1)), UPPER(LEFT(u.last_name,1))) AS initials,
-            COALESCE(pr.age, '')                     AS age,
-            COALESCE(pr.gender, '')                  AS sex,
-            COALESCE(pr.contact_number, '')          AS contact,
-            COALESCE(CONCAT_WS(', ',
-                NULLIF(pr.barangay,''),
-                NULLIF(pr.city_municipality,'')
-            ), '')                                   AS address,
-            COALESCE(pr.blood_type, '')              AS blood_type,
-            COALESCE(pr.existing_conditions, '')     AS history,
-            COALESCE(pr.allergies, '')               AS allergies,
-            COALESCE(pr.current_medications, '')     AS medications,
-            COALESCE(rel.last_consult, '')           AS last_consult,
-            CASE WHEN u.is_active = 1 THEN 'Active' ELSE 'Inactive' END AS status
-        FROM users u
-        INNER JOIN (
-            SELECT patient_id, MAX(last_consult) AS last_consult
-            FROM (
-                SELECT patient_id, MAX(consult_date) AS last_consult
-                FROM consultations
-                WHERE provider_id = ?
-                GROUP BY patient_id
-                UNION ALL
-                SELECT patient_id, MAX(slot_date) AS last_consult
-                FROM appointment_slots
-                WHERE provider_id = ? AND status = 'booked'
-                GROUP BY patient_id
-            ) combined
-            GROUP BY patient_id
-        ) rel ON rel.patient_id = u.id
-        LEFT JOIN patient_registrations pr ON pr.user_id = u.id
-        WHERE u.role = 'patient'
-        ORDER BY rel.last_consult DESC, u.last_name ASC
-    ");
-    $p_stmt->execute([$providerId, $providerId]);
-    $patients = $p_stmt->fetchAll();
-} catch (Exception $e) {
-    error_log("Patients query error: " . $e->getMessage());
+    $patients = provider_patient_caseload_directory($pdo, $providerId);
+} catch (Throwable $e) {
+    error_log('Patients query error: ' . $e->getMessage());
     $patients = [];
 }
 

@@ -70,7 +70,8 @@ body.provider-body .provider-page-body .schedule-page,
 body.provider-body .provider-page-body .triage-page,
 body.provider-body .provider-page-body .pd-content,
 body.provider-body .provider-page-body .messages-page,
-body.provider-body .provider-page-body .pch-page {
+body.provider-body .provider-page-body .pch-page,
+body.provider-body .provider-page-body .fu-page {
   max-width: 100%;
   width: 100%;
   margin: 0;

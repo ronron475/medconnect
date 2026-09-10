@@ -70,7 +70,7 @@ $patient_options = $patients ?? [];
       <?php else: foreach ($prescriptions as $rx): ?>
       <tr>
         <td><?= date('M j, Y', strtotime($rx['created_at'])) ?></td>
-        <td><?= htmlspecialchars($rx['first_name'].' '.$rx['last_name']) ?></td>
+        <td><?= htmlspecialchars(trim(($rx['first_name'] ?? '') . ' ' . ($rx['last_name'] ?? '')) ?: 'Patient') ?></td>
         <td><strong><?= htmlspecialchars($rx['medication_name']) ?></strong></td>
         <td><?= htmlspecialchars($rx['dosage']) ?></td>
         <td><?= htmlspecialchars($rx['frequency']) ?></td>
