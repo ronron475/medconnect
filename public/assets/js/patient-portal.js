@@ -1274,10 +1274,24 @@
     setBookingFollowupAnswerInvalid(false);
   }
 
+  function normalizeBookingFollowupRetryMessage(message) {
+    const text = String(message || '').trim();
+    if (!text) return '';
+    const legacy = [
+      'Palihog maghatag sang sabat nga may kaangtanan sa imo ginabatyag kag sa pamangkot sa ibabaw. Pwede mo liwat sulayan.',
+      'Palihog sabta kag sabta ang pamangkot sa ibabaw kag magsabat nga may kaangtanan sa imo ginabatyag. Pwede mo liwat sulayan.',
+    ];
+    const fresh = 'Palihog sabta ang pamangkot sa ibabaw kag magsabat nga may kaangtanan sa imo ginabatyag. Pwede mo liwaton.';
+    for (let i = 0; i < legacy.length; i++) {
+      if (text.toLowerCase() === legacy[i].toLowerCase()) return fresh;
+    }
+    return text;
+  }
+
   function showBookingFollowupNotice(message) {
     const notice = document.getElementById('triageFollowupNotice');
     if (!notice) return;
-    const text = String(message || '').trim();
+    const text = normalizeBookingFollowupRetryMessage(message);
     if (!text) {
       clearBookingFollowupNotice();
       return;

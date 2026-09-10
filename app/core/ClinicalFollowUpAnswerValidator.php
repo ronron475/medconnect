@@ -198,10 +198,34 @@ final class ClinicalFollowUpAnswerValidator
     public static function retryMessage(string $langKey): string
     {
         return match (strtolower($langKey)) {
+            // Patient-visible Hiligaynon retry copy (keep exact wording).
             'hiligaynon', 'ilonggo' => 'Palihog sabta ang pamangkot sa ibabaw kag magsabat nga may kaangtanan sa imo ginabatyag. Pwede mo liwaton.',
             'tagalog', 'filipino' => 'Pakibigay ang sagot na may kaugnayan sa iyong nararamdaman at sa tanong sa itaas. Maaari mong subukan muli.',
             default => 'Please provide an answer related to your current symptom and the question above. You can try again.',
         };
+    }
+
+    /**
+     * Normalize any persisted/legacy Hiligaynon retry wording to the current patient-facing copy.
+     */
+    public static function normalizeRetryMessage(string $message, string $langKey = 'hiligaynon'): string
+    {
+        $text = trim($message);
+        if ($text === '') {
+            return self::retryMessage($langKey);
+        }
+
+        $legacy = [
+            'Palihog maghatag sang sabat nga may kaangtanan sa imo ginabatyag kag sa pamangkot sa ibabaw. Pwede mo liwat sulayan.',
+            'Palihog sabta kag sabta ang pamangkot sa ibabaw kag magsabat nga may kaangtanan sa imo ginabatyag. Pwede mo liwat sulayan.',
+        ];
+        foreach ($legacy as $old) {
+            if (strcasecmp($text, $old) === 0) {
+                return self::retryMessage($langKey);
+            }
+        }
+
+        return $text;
     }
 
     public static function emptyMessage(string $langKey): string

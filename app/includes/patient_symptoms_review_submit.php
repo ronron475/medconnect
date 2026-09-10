@@ -287,6 +287,11 @@ function patient_symptoms_review_interview_payload(int $triageId, array $assessm
     $question = is_array($assessment['followup_question'] ?? null) ? $assessment['followup_question'] : [];
     $interview = is_array($assessment['interview'] ?? null) ? $assessment['interview'] : [];
     $held = is_array($interview['last_followup_question'] ?? null) ? $interview['last_followup_question'] : [];
+    $langKey = (string) ($question['language'] ?? $interview['question_language'] ?? 'english');
+    $patientMessage = (string) ($assessment['patient_message'] ?? '');
+    if ($patientMessage !== '' && class_exists('ClinicalFollowUpAnswerValidator')) {
+        $patientMessage = ClinicalFollowUpAnswerValidator::normalizeRetryMessage($patientMessage, $langKey);
+    }
 
     return [
         'assessment_in_progress' => true,
@@ -294,8 +299,8 @@ function patient_symptoms_review_interview_payload(int $triageId, array $assessm
         'triage_id' => $triageId,
         'followup_question' => (string) ($question['text'] ?? $held['text'] ?? ''),
         'followup_question_id' => (string) ($question['question_id'] ?? $interview['awaiting_question_id'] ?? ''),
-        'question_language' => (string) ($question['language'] ?? $interview['question_language'] ?? ''),
-        'patient_message' => (string) ($assessment['patient_message'] ?? ''),
+        'question_language' => $langKey,
+        'patient_message' => $patientMessage,
         'retry_current_question' => !empty($assessment['retry_current_question']) || !empty($interview['retry_current_question']),
         'answer_rejected' => !empty($assessment['answer_rejected']) || !empty($interview['answer_rejected']),
         'detected_complaints' => is_array($interview['normalized_complaints'] ?? null)
