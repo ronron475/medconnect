@@ -198,7 +198,7 @@ final class ClinicalFollowUpAnswerValidator
     public static function retryMessage(string $langKey): string
     {
         return match (strtolower($langKey)) {
-            'hiligaynon', 'ilonggo' => 'Palihog maghatag sang sabat nga may kaangtanan sa imo ginabatyag kag sa pamangkot sa ibabaw. Pwede mo liwat sulayan.',
+            'hiligaynon', 'ilonggo' => 'Palihog sabta ang pamangkot sa ibabaw kag magsabat nga may kaangtanan sa imo ginabatyag. Pwede mo liwaton.',
             'tagalog', 'filipino' => 'Pakibigay ang sagot na may kaugnayan sa iyong nararamdaman at sa tanong sa itaas. Maaari mong subukan muli.',
             default => 'Please provide an answer related to your current symptom and the question above. You can try again.',
         };
