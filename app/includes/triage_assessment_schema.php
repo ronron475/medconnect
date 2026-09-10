@@ -60,6 +60,7 @@ function triage_assessment_ensure_schema(PDO $pdo): void
 
     triage_assessment_backfill_triage_level($pdo);
     triage_assessment_backfill_recommendation_gates($pdo);
+    triage_assessment_repair_preliminary_session_gates($pdo);
 
     $done = true;
 }
@@ -358,7 +359,8 @@ function triage_assessment_backfill_recommendation_gates(PDO $pdo): void
 
     $stmt = $pdo->query("
         SELECT id, chief_complaint, english_complaint, recommendations, detected_symptoms_json,
-               possible_conditions_json, recommendation_status, triage_level, triage_classification
+               possible_conditions_json, recommendation_status, triage_level, triage_classification,
+               outcome
         FROM triage_results
         WHERE TRIM(COALESCE(chief_complaint, '')) <> ''
           AND (
@@ -366,6 +368,14 @@ function triage_assessment_backfill_recommendation_gates(PDO $pdo): void
              OR UPPER(REPLACE(REPLACE(COALESCE(triage_classification, ''), '-', '_'), ' ', '_')) IN ('NON_URGENT', 'NONURGENT')
           )
           AND COALESCE(recommendation_status, 'hidden') IN ('hidden', 'pending_approval')
+          -- Do not promote first-click preliminary or active interview rows into doctor review.
+          AND LOWER(COALESCE(outcome, '')) NOT IN (
+                'preliminary_assessment',
+                'assessment_in_progress',
+                'cancelled',
+                'canceled',
+                'emergency_referral'
+          )
         ORDER BY id DESC
         LIMIT 500
     ");
@@ -380,6 +390,13 @@ function triage_assessment_backfill_recommendation_gates(PDO $pdo): void
         SET recommendation_status = 'pending_approval'
         WHERE id = ?
           AND recommendation_status = 'hidden'
+          AND LOWER(COALESCE(outcome, '')) NOT IN (
+                'preliminary_assessment',
+                'assessment_in_progress',
+                'cancelled',
+                'canceled',
+                'emergency_referral'
+          )
     ");
 
     while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
@@ -418,6 +435,124 @@ function triage_assessment_backfill_recommendation_gates(PDO $pdo): void
     }
 
     $backfilled = true;
+}
+
+/**
+ * Repair rows wrongly promoted to care-tip review while still first-click preliminary,
+ * and cancel orphan interview rows that were spawned after a completed preliminary.
+ */
+function triage_assessment_repair_preliminary_session_gates(PDO $pdo, int $patientId = 0): void
+{
+    static $doneGlobal = false;
+    if ($patientId <= 0 && $doneGlobal) {
+        return;
+    }
+
+    try {
+        $col = $pdo->query("SHOW COLUMNS FROM triage_results LIKE 'outcome'");
+        if (!$col || $col->rowCount() === 0) {
+            if ($patientId <= 0) {
+                $doneGlobal = true;
+            }
+            return;
+        }
+
+        // Undo premature pending_approval on preliminary first-click rows.
+        if ($patientId > 0) {
+            $pdo->prepare("
+                UPDATE triage_results
+                SET recommendation_status = 'hidden',
+                    assigned_provider_id = 0
+                WHERE patient_id = ?
+                  AND LOWER(COALESCE(outcome, '')) = 'preliminary_assessment'
+                  AND COALESCE(recommendation_status, 'hidden') = 'pending_approval'
+                  AND COALESCE(assigned_provider_id, 0) = 0
+            ")->execute([$patientId]);
+        } else {
+            $pdo->exec("
+                UPDATE triage_results
+                SET recommendation_status = 'hidden',
+                    assigned_provider_id = 0
+                WHERE LOWER(COALESCE(outcome, '')) = 'preliminary_assessment'
+                  AND COALESCE(recommendation_status, 'hidden') = 'pending_approval'
+                  AND COALESCE(assigned_provider_id, 0) = 0
+                  AND assessed_at >= DATE_SUB(NOW(), INTERVAL 14 DAY)
+            ");
+        }
+
+        // Cancel orphan IN_PROGRESS interviews when a COMPLETED preliminary already exists
+        // for the same patient + complaint (prevents follow-up restore after NON-URGENT).
+        $params = [];
+        $patientSql = '';
+        if ($patientId > 0) {
+            $patientSql = ' AND p.patient_id = ? ';
+            $params[] = $patientId;
+        }
+        $sql = "
+            SELECT i.id AS in_progress_id, i.patient_id
+            FROM triage_results i
+            INNER JOIN triage_results p
+              ON p.patient_id = i.patient_id
+             AND LOWER(COALESCE(p.outcome, '')) = 'preliminary_assessment'
+             AND UPPER(COALESCE(p.assessment_status, '')) = 'COMPLETED'
+             AND TRIM(COALESCE(p.triage_level, '')) <> ''
+             AND LOWER(COALESCE(p.status, 'pending')) NOT IN ('cancelled', 'canceled')
+             AND p.assessed_at >= DATE_SUB(NOW(), INTERVAL 14 DAY)
+            WHERE LOWER(COALESCE(i.outcome, '')) = 'assessment_in_progress'
+              AND LOWER(COALESCE(i.status, 'pending')) NOT IN ('completed', 'cancelled', 'canceled')
+              AND COALESCE(i.recommendation_status, 'hidden') NOT IN ('pending_approval', 'approved')
+              AND i.assessed_at >= DATE_SUB(NOW(), INTERVAL 14 DAY)
+              {$patientSql}
+              AND LOWER(TRIM(COALESCE(i.chief_complaint, ''))) = LOWER(TRIM(COALESCE(p.chief_complaint, '')))
+        ";
+        $stmt = $pdo->prepare($sql);
+        $stmt->execute($params);
+        $orphans = $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
+        if ($orphans !== []) {
+            foreach ($orphans as $row) {
+                $oid = (int) ($row['in_progress_id'] ?? 0);
+                $pid = (int) ($row['patient_id'] ?? 0);
+                if ($oid <= 0 || $pid <= 0) {
+                    continue;
+                }
+                try {
+                    $pdo->prepare("
+                        UPDATE triage_results
+                        SET status = 'cancelled',
+                            outcome = 'cancelled',
+                            assessment_status = 'CANCELLED',
+                            recommendation_status = 'hidden',
+                            assigned_provider_id = 0
+                        WHERE id = ?
+                          AND patient_id = ?
+                          AND LOWER(COALESCE(outcome, '')) = 'assessment_in_progress'
+                    ")->execute([$oid, $pid]);
+                } catch (Throwable $e) {
+                    try {
+                        $pdo->prepare("
+                            UPDATE triage_results
+                            SET status = 'completed',
+                                outcome = 'cancelled',
+                                assessment_status = 'CANCELLED',
+                                recommendation_status = 'hidden',
+                                assigned_provider_id = 0
+                            WHERE id = ?
+                              AND patient_id = ?
+                              AND LOWER(COALESCE(outcome, '')) = 'assessment_in_progress'
+                        ")->execute([$oid, $pid]);
+                    } catch (Throwable $e2) {
+                        // non-fatal
+                    }
+                }
+            }
+        }
+    } catch (Throwable $e) {
+        error_log('triage_assessment_repair_preliminary_session_gates: ' . $e->getMessage());
+    }
+
+    if ($patientId <= 0) {
+        $doneGlobal = true;
+    }
 }
 
 /**
