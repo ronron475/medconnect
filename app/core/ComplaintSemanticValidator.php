@@ -75,7 +75,58 @@ final class ComplaintSemanticValidator
         $lang = self::detectLanguageKey($raw);
 
         $geminiCorrected = trim((string) ($gemini['corrected_text'] ?? ''));
-        if (!$usable && !$incompleteJunk && $geminiCorrected !== '' && $geminiCorrected !== $raw) {
+        $geminiConcept = trim((string) ($gemini['medical_concept'] ?? ''));
+        if (!$usable && !$incompleteJunk && !empty($gemini['is_medical_complaint'])) {
+            $bridgeSource = $geminiCorrected !== '' && $geminiCorrected !== $raw
+                ? $geminiCorrected
+                : ($geminiConcept !== '' ? $geminiConcept : '');
+            if ($bridgeSource !== '') {
+                $retry = class_exists('ComplaintTriageTextCleaner')
+                    ? ComplaintTriageTextCleaner::prepare($bridgeSource)
+                    : [
+                        'cleaned' => $bridgeSource,
+                        'has_usable_clinical_text' => true,
+                        'discarded' => [],
+                        'kept' => [$bridgeSource],
+                        'corrections' => [],
+                    ];
+                if (!empty($retry['has_usable_clinical_text']) || $bridgeSource !== '') {
+                    $cleanedPack = is_array($retry) ? $retry : $cleanedPack;
+                    $nlpText = trim((string) ($retry['cleaned'] ?? $bridgeSource));
+                    if ($nlpText === '') {
+                        $nlpText = $bridgeSource;
+                    }
+                    // Prefer original + concept so existing NLP can match without losing local wording.
+                    if ($geminiConcept !== '' && $geminiCorrected === '') {
+                        $nlpText = trim($raw . '. ' . $geminiConcept);
+                    }
+                    $usable = true;
+                    $phpSource = $nlpText !== '' ? $nlpText : $raw;
+                    if (class_exists('HealthComplaintDomainDetector')) {
+                        $php = HealthComplaintDomainDetector::detect($phpSource);
+                        $phpEvidence = self::phpEvidenceStrength($php, $phpSource);
+                    }
+                    $decision = self::combine($phpEvidence, $php, $gemini);
+                    if (empty($decision['is_valid']) && !empty($gemini['is_medical_complaint'])) {
+                        $decision = [
+                            'is_valid' => true,
+                            'classification' => self::CLASS_VALID,
+                            'reason' => 'Gemini HEALTH_RELATED lexical bridge for unknown local wording',
+                        ];
+                    }
+                }
+            } elseif (!empty($gemini['is_medical_complaint'])) {
+                // Health-related but no lexical bridge yet — keep original for interview.
+                $nlpText = $raw;
+                $usable = true;
+                $decision = [
+                    'is_valid' => true,
+                    'classification' => self::CLASS_VALID,
+                    'reason' => 'Gemini HEALTH_RELATED — continue interview with original wording',
+                ];
+            }
+        } elseif (!$usable && !$incompleteJunk && $geminiCorrected !== '' && $geminiCorrected !== $raw) {
+            // Legacy path kept for non-boolean medical flag payloads.
             $retry = class_exists('ComplaintTriageTextCleaner')
                 ? ComplaintTriageTextCleaner::prepare($geminiCorrected)
                 : $cleanedPack;
@@ -89,20 +140,33 @@ final class ComplaintSemanticValidator
                     $phpEvidence = self::phpEvidenceStrength($php, $phpSource);
                 }
                 $decision = self::combine($phpEvidence, $php, $gemini);
-            } elseif (!empty($gemini['is_medical_complaint'])) {
-                $nlpText = $geminiCorrected;
-                $usable = true;
-                $decision = [
-                    'is_valid' => true,
-                    'classification' => self::CLASS_VALID,
-                    'reason' => 'Gemini semantic typo correction',
-                ];
             }
         }
 
         $message = $decision['is_valid']
             ? ''
             : self::clarificationMessage($lang);
+
+        // ADDITIVE NLP bridge: when PHP dataset has no confident match but Gemini
+        // understood a local health expression, enrich nlp_text for existing engines.
+        // Patient-facing original wording is preserved separately by the interview engine.
+        if (!empty($decision['is_valid'])) {
+            if (trim($nlpText) === '') {
+                $nlpText = $raw;
+            }
+            $nlpText = self::enrichNlpTextForExistingEngine(
+                $raw,
+                $nlpText,
+                $phpEvidence,
+                $gemini
+            );
+        }
+
+        $concept = trim((string) ($gemini['medical_concept'] ?? ''));
+        $medicalConcepts = self::conceptLabels($php);
+        if ($concept !== '' && !in_array('gemini_bridge:' . $concept, $medicalConcepts, true)) {
+            $medicalConcepts[] = 'gemini_bridge:' . $concept;
+        }
 
         $out = [
             'is_valid' => $decision['is_valid'],
@@ -120,7 +184,8 @@ final class ComplaintSemanticValidator
                 : 'UNAVAILABLE',
             'gemini_confidence' => $gemini['confidence'] ?? null,
             'gemini' => $gemini,
-            'medical_concepts_found' => self::conceptLabels($php),
+            'gemini_medical_concept' => $concept,
+            'medical_concepts_found' => $medicalConcepts,
             'fuzzy_matches' => self::fuzzyLabels($php),
             'final_validation_result' => $decision['classification'],
             'combine_reason' => $decision['reason'],
@@ -225,17 +290,45 @@ final class ComplaintSemanticValidator
             return [
                 'is_valid' => true,
                 'classification' => self::CLASS_VALID,
-                'reason' => 'Gemini VALID — PHP found no concept; continue NLP for unknown wording',
+                'reason' => 'Gemini HEALTH_RELATED / VALID — PHP dataset miss; continue NLP for unknown wording',
             ];
         }
 
-        if ($geminiInvalid || self::phpLooksHardNonMedical($php) || !$geminiAvailable) {
+        $geminiClass = strtoupper(str_replace([' ', '-'], '_', (string) ($gemini['classification'] ?? '')));
+        if ($geminiAvailable && ($geminiClass === 'UNCLEAR' || ($gemini['is_medical_complaint'] === null && !$geminiInvalid))) {
             return [
                 'is_valid' => false,
                 'classification' => self::CLASS_INVALID,
-                'reason' => !$geminiAvailable
-                    ? 'PHP no medical concept (Gemini unavailable)'
-                    : 'PHP no medical concept + Gemini INVALID',
+                'reason' => 'Gemini UNCLEAR — ask patient to clarify health concern',
+            ];
+        }
+
+        if ($geminiInvalid || self::phpLooksHardNonMedical($php)) {
+            return [
+                'is_valid' => false,
+                'classification' => self::CLASS_INVALID,
+                'reason' => $geminiInvalid
+                    ? 'PHP no medical concept + Gemini NON_HEALTH_RELATED / INVALID'
+                    : 'PHP hard non-medical (greeting/out-of-scope)',
+            ];
+        }
+
+        if (!$geminiAvailable) {
+            // ADDITIVE: dataset miss ≠ invalid. If domain already routed to Gemini fallback
+            // (or text looks like an unknown local health utterance), continue the interview
+            // instead of rejecting as "invalid medical term".
+            if (self::shouldAcceptUnknownHealthCandidate($php, (string) ($php['normalized'] ?? ''))) {
+                return [
+                    'is_valid' => true,
+                    'classification' => self::CLASS_VALID,
+                    'reason' => 'Unknown wording (dataset miss) — Gemini unavailable; continue clinical interview',
+                ];
+            }
+
+            return [
+                'is_valid' => false,
+                'classification' => self::CLASS_INVALID,
+                'reason' => 'PHP no medical concept (Gemini unavailable)',
             ];
         }
 
@@ -244,6 +337,108 @@ final class ComplaintSemanticValidator
             'classification' => self::CLASS_INVALID,
             'reason' => 'No reliable medical input evidence',
         ];
+    }
+
+    /**
+     * True when PHP found no dataset concept but the utterance still looks like a
+     * plausible local/informal health complaint (not a greeting / keyboard smash).
+     *
+     * @param array<string, mixed> $php
+     */
+    private static function shouldAcceptUnknownHealthCandidate(array $php, string $normalized): bool
+    {
+        $routing = (string) ($php['routing'] ?? '');
+        if ($routing === HealthComplaintDomainDetector::ROUTE_GREETING
+            || $routing === HealthComplaintDomainDetector::ROUTE_OOS
+        ) {
+            return false;
+        }
+        if (self::phpLooksHardNonMedical($php)) {
+            return false;
+        }
+
+        $norm = trim($normalized);
+        if ($norm === '' || self::looksLikeIncompleteJunk($norm)) {
+            return false;
+        }
+
+        if ($routing === HealthComplaintDomainDetector::ROUTE_GEMINI) {
+            return true;
+        }
+
+        $signals = is_array($php['signals'] ?? null) ? $php['signals'] : [];
+        $hasPatientRef = false;
+        foreach ($signals as $s) {
+            if (is_array($s) && (string) ($s['type'] ?? '') === 'patient_reference') {
+                $hasPatientRef = true;
+                break;
+            }
+        }
+
+        $tokens = preg_split('/[^\p{L}\p{N}\-]+/u', mb_strtolower($norm), -1, PREG_SPLIT_NO_EMPTY) ?: [];
+        if (count($tokens) >= 2 && $hasPatientRef) {
+            return true;
+        }
+        // Multi-token informal utterance with enough length to be a real complaint phrase.
+        if (count($tokens) >= 2 && mb_strlen($norm) >= 6) {
+            return true;
+        }
+
+        return false;
+    }
+
+    /**
+     * Bridge unknown local wording into text the existing NLP datasets can match.
+     * Does not diagnose; only applies Gemini lexical understanding when PHP is weak/none.
+     *
+     * @param array<string, mixed> $gemini
+     */
+    private static function enrichNlpTextForExistingEngine(
+        string $raw,
+        string $nlpText,
+        string $phpEvidence,
+        array $gemini
+    ): string {
+        $base = trim($nlpText !== '' ? $nlpText : $raw);
+        if (!in_array($phpEvidence, ['none', 'weak'], true)) {
+            return $base;
+        }
+        if (empty($gemini['available']) || empty($gemini['is_medical_complaint'])) {
+            return $base;
+        }
+
+        $corrected = trim((string) ($gemini['corrected_text'] ?? ''));
+        $concept = trim((string) ($gemini['medical_concept'] ?? ''));
+        $corrected = trim((string) preg_replace('/\s+/u', ' ', $corrected));
+        $concept = trim((string) preg_replace('/\s+/u', ' ', $concept));
+
+        // Reject unsafe bridge content (triage labels / long essays).
+        if ($corrected !== '' && (
+            mb_strlen($corrected) > 180
+            || preg_match('/\b(EMERGENCY|URGENT|NON-URGENT|diagnos|prescription)\b/iu', $corrected)
+        )) {
+            $corrected = '';
+        }
+        if ($concept !== '' && (
+            mb_strlen($concept) > 80
+            || preg_match('/\b(EMERGENCY|URGENT|NON-URGENT|diagnos|prescription)\b/iu', $concept)
+        )) {
+            $concept = '';
+        }
+
+        if ($corrected !== '' && mb_strtolower($corrected) !== mb_strtolower($raw)) {
+            return $corrected;
+        }
+        if ($concept !== '') {
+            // Keep original tokens + English concept so existing NLP/fuzzy can fire.
+            if (mb_stripos($base, $concept) !== false) {
+                return $base;
+            }
+
+            return trim($base . '. ' . $concept);
+        }
+
+        return $base;
     }
 
     private static function looksLikeIncompleteJunk(string $text): bool

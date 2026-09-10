@@ -56,11 +56,13 @@ function patient_find_preliminary_complaint_triage(
     }
 
     triage_assessment_ensure_schema($pdo);
+    triage_assessment_repair_preliminary_session_gates($pdo, $patientId);
 
     $sql = "
         SELECT id, patient_id, symptoms, chief_complaint, level, urgency_label, status,
                triage_level, triage_classification, recommendation_status, outcome,
-               assigned_provider_id, assessment_payload, recommendations, assessed_at
+               assigned_provider_id, assessment_payload, recommendations, assessed_at,
+               assessment_status
         FROM triage_results
         WHERE patient_id = ?
           AND TRIM(COALESCE(chief_complaint, '')) <> ''
@@ -87,13 +89,28 @@ function patient_find_preliminary_complaint_triage(
 
     $complaint = trim($complaint);
     if ($complaint !== '') {
+        $matched = [];
         foreach ($rows as $row) {
             if (patient_symptoms_review_same_complaint($complaint, (string) ($row['chief_complaint'] ?? ''))) {
-                return $row;
+                $matched[] = $row;
             }
         }
-        // Different complaint must not attach to another unfinished session.
-        return null;
+        if ($matched === []) {
+            // Different complaint must not attach to another unfinished session.
+            return null;
+        }
+        $rows = $matched;
+    }
+
+    // Prefer a finalized preliminary result over a leftover interview row.
+    foreach ($rows as $row) {
+        $outcome = strtolower((string) ($row['outcome'] ?? ''));
+        $assessmentStatus = strtoupper((string) ($row['assessment_status'] ?? ''));
+        $hasLevel = trim((string) ($row['triage_level'] ?? '')) !== ''
+            || trim((string) ($row['triage_classification'] ?? '')) !== '';
+        if ($outcome === 'preliminary_assessment' || ($assessmentStatus === 'COMPLETED' && $hasLevel)) {
+            return $row;
+        }
     }
 
     return $rows[0];
@@ -425,15 +442,43 @@ function patient_symptoms_review_mark_preliminary(PDO $pdo, int $triageId): void
     if ($triageId <= 0) {
         return;
     }
-    $pdo->prepare("
-        UPDATE triage_results
-        SET recommendation_status = 'hidden',
-            outcome = 'preliminary_assessment',
-            assigned_provider_id = NULL,
-            assigned_at = NULL,
-            recommendation_patient_ack_at = NULL
-        WHERE id = ?
-    ")->execute([$triageId]);
+    try {
+        $pdo->prepare("
+            UPDATE triage_results
+            SET recommendation_status = 'hidden',
+                outcome = 'preliminary_assessment',
+                assessment_status = 'COMPLETED',
+                assigned_provider_id = NULL,
+                assigned_at = NULL,
+                recommendation_patient_ack_at = NULL
+            WHERE id = ?
+        ")->execute([$triageId]);
+    } catch (PDOException $e) {
+        $pdo->prepare("
+            UPDATE triage_results
+            SET recommendation_status = 'hidden',
+                outcome = 'preliminary_assessment',
+                assigned_provider_id = NULL,
+                assigned_at = NULL,
+                recommendation_patient_ack_at = NULL
+            WHERE id = ?
+        ")->execute([$triageId]);
+    }
+
+    // Cancel any sibling interview rows for the same patient/complaint so refresh
+    // cannot restore an old follow-up after this preliminary result.
+    try {
+        $rowStmt = $pdo->prepare('SELECT patient_id, chief_complaint FROM triage_results WHERE id = ? LIMIT 1');
+        $rowStmt->execute([$triageId]);
+        $row = $rowStmt->fetch(PDO::FETCH_ASSOC) ?: null;
+        $patientId = (int) ($row['patient_id'] ?? 0);
+        $complaint = trim((string) ($row['chief_complaint'] ?? ''));
+        if ($patientId > 0 && $complaint !== '') {
+            triage_assessment_repair_preliminary_session_gates($pdo, $patientId);
+        }
+    } catch (Throwable $e) {
+        // non-fatal
+    }
 }
 
 /**
@@ -600,10 +645,12 @@ function patient_submit_symptoms_for_review(
         patient_cancel_active_triage_session($pdo, $patientId, 0);
     }
 
-    if ($stage === 'continue' && $reuseTriageId > 0 && !$prelim) {
+    if ($reuseTriageId > 0 && !$prelim) {
         $ownedStmt = $pdo->prepare("
-            SELECT id, chief_complaint, triage_level, triage_classification, outcome,
-                   assigned_provider_id, recommendation_status, assessment_payload, symptoms
+            SELECT id, patient_id, symptoms, chief_complaint, level, urgency_label, status,
+                   triage_level, triage_classification, recommendation_status, outcome,
+                   assigned_provider_id, assessment_payload, recommendations, assessed_at,
+                   assessment_status
             FROM triage_results
             WHERE id = ? AND patient_id = ?
             LIMIT 1
@@ -614,6 +661,11 @@ function patient_submit_symptoms_for_review(
             $ownedAssigned = (int) ($owned['assigned_provider_id'] ?? 0);
             $ownedOutcome = strtolower(trim((string) ($owned['outcome'] ?? '')));
             $ownedLevel = (string) ($owned['triage_level'] ?? '');
+            $ownedRec = strtolower((string) ($owned['recommendation_status'] ?? 'hidden'));
+            $ownedAssessment = patient_symptoms_review_assessment_from_row($owned);
+            $ownedCompleted = strtoupper((string) ($ownedAssessment['assessment_status'] ?? ($owned['assessment_status'] ?? ''))) === 'COMPLETED'
+                || $ownedOutcome === 'preliminary_assessment';
+
             if ($ownedOutcome === 'emergency_referral' || $ownedLevel === TriageLevelService::EMERGENCY) {
                 return [
                     'ok' => true,
@@ -625,7 +677,7 @@ function patient_submit_symptoms_for_review(
                     ],
                 ];
             }
-            if ($ownedAssigned > 0 || $ownedOutcome === 'waiting_for_slot') {
+            if ($ownedAssigned > 0 || $ownedOutcome === 'waiting_for_slot' || $ownedOutcome === 'awaiting_provider_review') {
                 $isUrgent = $ownedLevel === TriageLevelService::URGENT;
                 $waitOutcome = $ownedOutcome === 'waiting_for_slot' || $ownedAssigned <= 0;
 
@@ -646,24 +698,53 @@ function patient_submit_symptoms_for_review(
                     ],
                 ];
             }
+
+            // Completed preliminary that was wrongly promoted to pending_approval: restore
+            // it as the active preliminary session instead of starting a new interview.
+            if (
+                $ownedCompleted
+                && in_array($ownedOutcome, ['preliminary_assessment', '', 'assessment_in_progress'], true)
+                && !in_array($ownedRec, ['approved'], true)
+            ) {
+                if ($ownedRec === 'pending_approval' && $ownedOutcome === 'preliminary_assessment') {
+                    patient_symptoms_review_mark_preliminary($pdo, $reuseTriageId);
+                    $owned['recommendation_status'] = 'hidden';
+                    $owned['outcome'] = 'preliminary_assessment';
+                }
+                $prelim = $owned;
+            }
         }
     }
+
     $samePrelim = $prelim
         && $complaint !== ''
         && patient_symptoms_review_same_complaint($complaint, (string) ($prelim['chief_complaint'] ?? ''));
     $prelimInterview = $prelim ? patient_symptoms_review_assessment_from_row($prelim) : [];
-    $prelimInProgress = $prelim && (
-        strtoupper((string) ($prelimInterview['assessment_status'] ?? '')) === 'IN_PROGRESS'
-        || strtolower((string) ($prelim['outcome'] ?? '')) === 'assessment_in_progress'
-        || trim((string) ($prelim['triage_classification'] ?? '')) === ''
+    $prelimAssessmentStatus = strtoupper((string) ($prelimInterview['assessment_status'] ?? ($prelim['assessment_status'] ?? '')));
+    $prelimOutcome = strtolower((string) ($prelim['outcome'] ?? ''));
+    $prelimHasFinal = $prelimAssessmentStatus === 'COMPLETED'
+        || $prelimOutcome === 'preliminary_assessment'
+        || (
+            trim((string) ($prelim['triage_level'] ?? '')) !== ''
+            && trim((string) ($prelim['triage_classification'] ?? '')) !== ''
+            && $prelimOutcome !== 'assessment_in_progress'
+        );
+    $prelimInProgress = $prelim && !$prelimHasFinal && (
+        $prelimAssessmentStatus === 'IN_PROGRESS'
+        || $prelimOutcome === 'assessment_in_progress'
+        || (
+            trim((string) ($prelim['triage_classification'] ?? '')) === ''
+            && trim((string) ($prelim['triage_level'] ?? '')) === ''
+        )
     );
 
-    if ($stage === 'preview' && $samePrelim && $prelim && $followupAnswer === '' && !$prelimInProgress) {
+    if ($stage === 'preview' && $samePrelim && $prelim && !$prelimInProgress) {
         $triageLevel = (string) ($prelim['triage_level'] ?? TriageLevelService::NON_URGENT);
         $classification = (string) ($prelim['triage_classification'] ?? '');
         if ($triageLevel === TriageLevelService::EMERGENCY) {
             // Emergency already persisted — do not wait for a second click.
         } else {
+            // Already finalized preliminary: never restart the follow-up interview.
             return [
                 'ok' => true,
                 'message' => 'Preliminary AI Assessment: '
@@ -754,7 +835,13 @@ function patient_submit_symptoms_for_review(
         if ($reuseExisting && $prelim) {
             $triageId = (int) ($prelim['id'] ?? 0);
         } else {
-            $existingId = ($stage === 'preview' && $prelim) ? (int) ($prelim['id'] ?? 0) : 0;
+            $existingId = 0;
+            if ($prelim) {
+                $existingId = (int) ($prelim['id'] ?? 0);
+            } elseif ($reuseTriageId > 0) {
+                // Keep answers on the same owned session instead of inserting a new interview row.
+                $existingId = $reuseTriageId;
+            }
             $triageId = patient_symptoms_review_bind_assessment_row(
                 $pdo,
                 $patientId,

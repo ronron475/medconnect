@@ -102,11 +102,23 @@ final class GeminiComplaintInputValidator
 
         $class = strtoupper(trim((string) ($decoded['classification'] ?? '')));
         $class = str_replace([' ', '-'], '_', $class);
-        if ($class === 'VALID' || $class === 'VALID_MEDICAL' || $class === 'HEALTH_RELATED') {
+        if (in_array($class, ['VALID', 'VALID_MEDICAL', 'HEALTH_RELATED', 'HEALTH', 'MEDICAL'], true)) {
             $class = self::CLASS_VALID;
         }
-        if ($class === 'INVALID' || $class === 'NON_MEDICAL' || $class === 'OUT_OF_SCOPE') {
+        if (in_array($class, ['INVALID', 'NON_MEDICAL', 'OUT_OF_SCOPE', 'NON_HEALTH_RELATED', 'NON_HEALTH'], true)) {
             $class = self::CLASS_INVALID;
+        }
+        if ($class === 'UNCLEAR' || $class === 'AMBIGUOUS' || $class === 'UNCERTAIN') {
+            $confidence = null;
+            if (isset($decoded['confidence']) && is_numeric($decoded['confidence'])) {
+                $confidence = (float) $decoded['confidence'];
+                if ($confidence > 1.0 && $confidence <= 100.0) {
+                    $confidence /= 100.0;
+                }
+                $confidence = max(0.0, min(1.0, $confidence));
+            }
+
+            return self::pack(true, null, 'UNCLEAR', $confidence, '');
         }
         if (!in_array($class, [self::CLASS_VALID, self::CLASS_INVALID], true)) {
             if (array_key_exists('is_medical_complaint', $decoded)) {
@@ -404,43 +416,50 @@ PROMPT;
         return <<<'PROMPT'
 You are a semantic input validator for a medical consultation system.
 
-Determine ONLY whether the patient's text represents a meaningful health concern, symptom, injury, or reason for seeking medical care.
+Determine ONLY whether the patient's text is:
+1. HEALTH_RELATED — a meaningful health concern, symptom, injury, body feeling, or reason for seeking care
+2. NON_HEALTH_RELATED — greeting, joke, test input, casual chat, or clearly non-medical
+3. UNCLEAR — cannot tell; patient should rephrase
 
-Do not diagnose.
+Do not diagnose the patient.
+Do not invent disease names the patient did not imply.
 Do not determine urgency.
-Do not determine triage.
+Do not determine triage (EMERGENCY / URGENT / NON-URGENT).
 Do not provide medical advice.
 
-Can this reasonably be interpreted as a medical term or health concern despite spelling errors?
+CRITICAL:
+Dataset miss ≠ invalid. Unknown Hiligaynon / Visayan / Tagalog / English / mixed informal words
+that still sound like a bodily complaint or health feeling MUST be classified HEALTH_RELATED.
 
-Accept legitimate symptoms even when they are:
-- short
-- misspelled
-- slang
-- colloquial
-- English
-- Hiligaynon/Ilonggo
-- Tagalog/Filipino
-- mixed language
+When HEALTH_RELATED and you recognize the lexical meaning of a local/informal health expression,
+put a short English medical concept in medical_concept and a plain English restatement in corrected.
+This is language understanding for the existing NLP bridge only — not a patient diagnosis.
+Apply this dynamically to whatever local expression the patient used; do not rely on a fixed word list.
 
-Reject obvious:
-- nonsense
-- keyboard smashing
+If you are unsure of the exact meaning but it is clearly health-related:
+classification HEALTH_RELATED with empty medical_concept/corrected is OK.
+
+Reject as NON_HEALTH_RELATED:
+- nonsense / keyboard smashing
 - random characters
 - testing / prank input
-- greetings
-- casual conversation
-- non-medical statements
+- greetings (hello, hi)
+- casual conversation with no health intent
 
-Return ONLY JSON with this shape:
-{"is_medical_complaint":true,"classification":"VALID_MEDICAL_COMPLAINT","confidence":0.95,"corrected":"fever","medical_concept":"fever"}
+Return ONLY JSON:
+{"is_medical_complaint":true,"classification":"HEALTH_RELATED","confidence":0.9,"corrected":"<english restatement if known>","medical_concept":"<short english concept if known>"}
 or
-{"is_medical_complaint":false,"classification":"INVALID_MEDICAL_INPUT","confidence":0.98,"corrected":"","medical_concept":""}
+{"is_medical_complaint":false,"classification":"NON_HEALTH_RELATED","confidence":0.95,"corrected":"","medical_concept":""}
+or
+{"is_medical_complaint":false,"classification":"UNCLEAR","confidence":0.4,"corrected":"","medical_concept":""}
 
-If the text is a misspelled medical term, correct spelling only (never change severity, duration, or location).
-Do not map keyboard smash or greetings (hh, asdfgh, qwerty, hello, test) to medical terms.
+Never map greetings or keyboard smash to medical terms.
+Never put EMERGENCY / URGENT / NON-URGENT in any field.
 
-Allowed classification values ONLY:
+Allowed classification values:
+HEALTH_RELATED
+NON_HEALTH_RELATED
+UNCLEAR
 VALID_MEDICAL_COMPLAINT
 INVALID_MEDICAL_INPUT
 PROMPT;

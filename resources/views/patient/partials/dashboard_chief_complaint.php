@@ -39,9 +39,15 @@ if ($preliminary_complaint_triage && empty($chief_complaint_locked)) {
     $prelimInterview = function_exists('patient_symptoms_review_assessment_from_row')
         ? patient_symptoms_review_assessment_from_row($preliminary_complaint_triage)
         : [];
-    $prelimInProgress = $prelimOutcome === 'assessment_in_progress'
-        || strtoupper((string) ($prelimInterview['assessment_status'] ?? '')) === 'IN_PROGRESS'
-        || ($prelimClass === '' && $prelimLevel === '');
+    $prelimAssessmentStatus = strtoupper((string) ($prelimInterview['assessment_status'] ?? ($preliminary_complaint_triage['assessment_status'] ?? '')));
+    $prelimHasFinal = $prelimAssessmentStatus === 'COMPLETED'
+        || $prelimOutcome === 'preliminary_assessment'
+        || ($prelimClass !== '' && $prelimLevel !== '' && $prelimOutcome !== 'assessment_in_progress');
+    $prelimInProgress = !$prelimHasFinal && (
+        $prelimOutcome === 'assessment_in_progress'
+        || $prelimAssessmentStatus === 'IN_PROGRESS'
+        || ($prelimClass === '' && $prelimLevel === '')
+    );
     $prelimComplaint = trim((string) ($preliminary_complaint_triage['chief_complaint'] ?? ''));
     if ($prelimInProgress) {
         $question = is_array($prelimInterview['followup_question'] ?? null) ? $prelimInterview['followup_question'] : [];

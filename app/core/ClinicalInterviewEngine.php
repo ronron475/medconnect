@@ -43,13 +43,27 @@ final class ClinicalInterviewEngine
                     return self::wrapNeedsValidComplaint($semantic, $turn);
                 }
                 $nlpText = trim((string) ($semantic['nlp_text'] ?? ''));
+                $originalForDisplay = trim((string) ($semantic['original_patient_input'] ?? $originalTurnForLanguage));
+                if ($originalForDisplay === '') {
+                    $originalForDisplay = $originalTurnForLanguage;
+                }
                 if ($nlpText !== '') {
                     $turn = $nlpText;
                     $context['complaint_text_cleaner'] = [
-                        'original' => $originalTurnForLanguage,
+                        'original' => $originalForDisplay,
                         'cleaned' => $nlpText,
                         'discarded' => is_array($semantic['discarded_tokens'] ?? null) ? $semantic['discarded_tokens'] : [],
                     ];
+                    // Additive bridge metadata only — triage still owned by ClinicalTriageEngine.
+                    $context['semantic_bridge'] = [
+                        'source' => (string) ($semantic['combine_reason'] ?? ''),
+                        'gemini_concept' => (string) ($semantic['gemini_medical_concept'] ?? ''),
+                        'nlp_text' => $nlpText,
+                        'original' => $originalForDisplay,
+                    ];
+                    if ($context['chief_complaint'] === '' && $originalForDisplay !== '') {
+                        $context['chief_complaint'] = $originalForDisplay;
+                    }
                 }
             } elseif ($turn !== ''
                 && ($context['patient_turns'] ?? []) === []
@@ -334,6 +348,8 @@ final class ClinicalInterviewEngine
             'matched_dataset_entries' => self::stringList($raw['matched_dataset_entries'] ?? []),
             'facts' => self::blankFacts($facts),
             'assessment_status' => strtoupper((string) ($raw['assessment_status'] ?? self::STATUS_IN_PROGRESS)),
+            'semantic_bridge' => is_array($raw['semantic_bridge'] ?? null) ? $raw['semantic_bridge'] : [],
+            'complaint_text_cleaner' => is_array($raw['complaint_text_cleaner'] ?? null) ? $raw['complaint_text_cleaner'] : [],
         ];
     }
 
@@ -389,6 +405,12 @@ final class ClinicalInterviewEngine
         $turns = trim($transcript !== '' ? $transcript : self::transcript($context));
         if ($turns !== '') {
             $parts[] = $turns;
+        }
+        // Include Gemini lexical bridge concept so existing dataset NLP can match
+        // without replacing the patient's original complaint wording.
+        $bridgeConcept = trim((string) (($context['semantic_bridge']['gemini_concept'] ?? '') ?: ''));
+        if ($bridgeConcept !== '') {
+            $parts[] = $bridgeConcept;
         }
 
         return trim(implode('. ', array_values(array_unique($parts))));

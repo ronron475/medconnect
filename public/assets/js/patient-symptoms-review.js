@@ -637,6 +637,22 @@
         return true;
       }
 
+      // Non-medical / unclear opening input — clarify only; do not invent a triage level.
+      if (payload.needs_valid_complaint || payload.domain_skipped) {
+        assessmentInProgress = false;
+        awaitingSecondClick = false;
+        triageLevel = null;
+        triageId = 0;
+        hideFollowupUi();
+        hideContinueUi();
+        updateSubmitButtonLabel();
+        showAlert(
+          'error',
+          payload.patient_message || json.message || i18n('err_empty')
+        );
+        return false;
+      }
+
       var level = urgencyToLevel(payload.triage_level || payload.classification_label || extractUrgency(payload));
       if (!level) {
         showAlert('error', i18n('err_triage_level'));
