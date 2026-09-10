@@ -540,7 +540,7 @@ final class GisDashboardService
             SELECT
                 u.id AS patient_id,
                 CONCAT('MC-', LPAD(u.id, 6, '0')) AS patient_number,
-                CONCAT(u.first_name, ' ', u.last_name) AS patient_name,
+                TRIM(CONCAT(COALESCE(u.first_name, ''), ' ', COALESCE(u.last_name, ''))) AS patient_name,
                 pl.barangay AS pl_barangay,
                 pr.barangay AS pr_barangay,
                 COALESCE(NULLIF(TRIM(pr.barangay), ''), NULLIF(TRIM(pl.canonical_barangay), ''), NULLIF(TRIM(pl.barangay), ''), '') AS barangay,
@@ -596,6 +596,10 @@ final class GisDashboardService
             $row['patient_number'] = trim((string) ($row['patient_number'] ?? ''));
             if ($row['patient_number'] === '' && $row['patient_id'] > 0) {
                 $row['patient_number'] = 'MC-' . str_pad((string) $row['patient_id'], 6, '0', STR_PAD_LEFT);
+            }
+            $row['patient_name'] = trim((string) ($row['patient_name'] ?? ''));
+            if ($row['patient_name'] === '') {
+                $row['patient_name'] = 'Patient ' . $row['patient_number'];
             }
             $row['triage_level'] = $this->normalizeStoredTriageLevel((string) ($row['triage_level'] ?? ''));
             $row['is_emergency'] = $row['triage_level'] === 'emergency';
@@ -1370,9 +1374,13 @@ final class GisDashboardService
             $params[] = $providerId;
         }
         if ($this->tableExists('triage_results') && $this->columnExists('triage_results', 'assigned_provider_id')) {
+            // Match provider_patient_assert_access: only active Care tips review assignments.
             $parts[] = "EXISTS (
                 SELECT 1 FROM triage_results tr
                 WHERE tr.patient_id = u.id AND tr.assigned_provider_id = ?
+                  AND tr.recommendation_status IN ('pending_approval', 'approved', 'rejected')
+                  AND UPPER(COALESCE(tr.assessment_status, '')) NOT IN ('CANCELLED', 'CANCELED')
+                  AND LOWER(COALESCE(tr.outcome, '')) <> 'cancelled'
                   AND tr.assessed_at >= DATE_SUB(NOW(), INTERVAL 30 DAY)
             )";
             $params[] = $providerId;

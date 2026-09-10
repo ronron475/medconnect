@@ -499,7 +499,9 @@ final class ClinicalFeatureExtractors
         $low = strtolower($text);
 
         return (bool) preg_match(
-            '/wala iban nga sintomas|wala na iban|no other symptoms|nothing else|walang ibang sintomas|wala nang iba|no weakness|no numbness|without weakness|without numbness/u',
+            '/wala iban nga sintomas|wala na iban|no other symptoms|nothing else|walang ibang sintomas|wala nang iba|'
+            . 'no weakness|no numbness|without weakness|without numbness|'
+            . 'wala\s+(na\s+)?(iban|iba)|walay\s+iban|nothing\s+else|no\s+other\b/u',
             $low
         );
     }
@@ -510,12 +512,34 @@ final class ClinicalFeatureExtractors
         if ($low === '') {
             return null;
         }
-        if (preg_match('/\b(yes|oo|opo|hoo|hu-o|huo|tama|correct|gid)\b/u', $low)
-            && !preg_match('/\b(no|wala|hindi|indi|none)\b/u', $low)
-        ) {
+        // Strip discourse particles so "wala man", "oo gid", "hindi naman" keep polarity.
+        $norm = (string) preg_replace(
+            '/\b(man|gid|lang|naman|po|ba|ya|ra|kay|kasi|talaga|gyud|jud|lagi|pls|please)\b/u',
+            ' ',
+            $low
+        );
+        $norm = trim((string) preg_replace('/\s+/u', ' ', $norm));
+        if ($norm === '') {
+            $norm = $low;
+        }
+
+        $hasPos = (bool) preg_match(
+            '/\b(yes|yeah|yep|oo|opo|hoo|hu-o|huo|tama|correct|meron|may|mayroon|naa|positive)\b/u',
+            $norm
+        );
+        $hasNeg = (bool) preg_match(
+            '/\b(no|nope|none|wala|walay|hindi|indi|dili|nothing|never|negative|not really|walaay)\b/u',
+            $norm
+        );
+
+        if ($hasPos && !$hasNeg) {
             return true;
         }
-        if (preg_match('/\b(no|wala|hindi|indi|none|not really)\b/u', $low)) {
+        if ($hasNeg && !$hasPos) {
+            return false;
+        }
+        // "wala ... oo" style mixed → prefer explicit negation of the asked symptom.
+        if ($hasNeg) {
             return false;
         }
 

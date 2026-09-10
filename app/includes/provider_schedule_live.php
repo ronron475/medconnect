@@ -15,7 +15,7 @@ function provider_schedule_fetch_today_slot_rows(PDO $pdo, int $providerId, stri
 {
     $stmt = $pdo->prepare("
         SELECT s.id, s.start_time, s.end_time, s.status, s.consultation_id,
-               COALESCE(CONCAT(u.first_name, ' ', u.last_name), '') AS patient_name,
+               TRIM(CONCAT(COALESCE(u.first_name, ''), ' ', COALESCE(u.last_name, ''))) AS patient_name,
                COALESCE(c.reschedule_status, 'none') AS reschedule_status,
                c.status AS consultation_status,
                r.reason AS reschedule_reason,

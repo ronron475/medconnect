@@ -50,7 +50,7 @@ function provider_consultation_history_patients(PDO $pdo, int $providerId, array
             agg.latest_consultation_id,
             u.first_name,
             u.last_name,
-            CONCAT(u.first_name, ' ', u.last_name) AS patient_name,
+            TRIM(CONCAT(COALESCE(u.first_name, ''), ' ', COALESCE(u.last_name, ''))) AS patient_name,
             CONCAT('MC-', LPAD(u.id, 6, '0')) AS patient_number,
             COALESCE(pr.age, '') AS age,
             COALESCE(pr.gender, '') AS sex,
@@ -100,7 +100,18 @@ function provider_consultation_history_patients(PDO $pdo, int $providerId, array
     try {
         $stmt = $pdo->prepare($sql);
         $stmt->execute($params);
-        return $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
+        $rows = $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
+        foreach ($rows as &$row) {
+            if (trim((string) ($row['patient_name'] ?? '')) === '') {
+                $row['patient_name'] = provider_patient_display_name(
+                    (string) ($row['first_name'] ?? ''),
+                    (string) ($row['last_name'] ?? ''),
+                    (int) ($row['patient_id'] ?? 0)
+                );
+            }
+        }
+        unset($row);
+        return $rows;
     } catch (PDOException $e) {
         error_log('provider_consultation_history_patients: ' . $e->getMessage());
         return [];
@@ -130,7 +141,7 @@ function provider_consultation_history_patient_detail(PDO $pdo, int $providerId,
                 u.id,
                 u.first_name,
                 u.last_name,
-                CONCAT(u.first_name, ' ', u.last_name) AS patient_name,
+                TRIM(CONCAT(COALESCE(u.first_name, ''), ' ', COALESCE(u.last_name, ''))) AS patient_name,
                 CONCAT('MC-', LPAD(u.id, 6, '0')) AS patient_number,
                 COALESCE(pr.age, '') AS age,
                 COALESCE(pr.gender, '') AS sex,
@@ -149,6 +160,13 @@ function provider_consultation_history_patient_detail(PDO $pdo, int $providerId,
         $patient = $pStmt->fetch(PDO::FETCH_ASSOC) ?: null;
         if (!$patient) {
             return $empty;
+        }
+        if (trim((string) ($patient['patient_name'] ?? '')) === '') {
+            $patient['patient_name'] = provider_patient_display_name(
+                (string) ($patient['first_name'] ?? ''),
+                (string) ($patient['last_name'] ?? ''),
+                (int) ($patient['id'] ?? $patientId)
+            );
         }
 
         $hasCompletedAt = false;

@@ -45,7 +45,7 @@ try {
       ?>
       <tr>
         <td><?= date('M j, Y', strtotime($r['created_at'])) ?></td>
-        <td><strong><?= htmlspecialchars($r['first_name'].' '.$r['last_name']) ?></strong></td>
+        <td><strong><?= htmlspecialchars(trim(($r['first_name'] ?? '') . ' ' . ($r['last_name'] ?? '')) ?: 'Patient') ?></strong></td>
         <td><span class="mc-badge"><?= htmlspecialchars($r['referral_type']) ?></span></td>
         <td><?= htmlspecialchars($r['facility_name'] ?? $r['destination_facility'] ?? '—') ?></td>
         <td class="text-sm"><?= htmlspecialchars(mb_strimwidth($r['reason'], 0, 80, '…')) ?></td>

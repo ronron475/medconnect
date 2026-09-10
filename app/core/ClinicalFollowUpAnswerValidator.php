@@ -20,7 +20,9 @@ final class ClinicalFollowUpAnswerValidator
      *   reason: string,
      *   expected_field: string,
      *   message: string,
-     *   extracted: array<string, mixed>
+     *   extracted: array<string, mixed>,
+     *   answer_class: string,
+     *   polarity: string|null
      * }
      */
     public static function validate(string $answer, string $questionId, array $context): array
@@ -31,22 +33,32 @@ final class ClinicalFollowUpAnswerValidator
         $kind = self::expectedKind($qid);
 
         if ($raw === '') {
-            return self::reject($qid, $kind, '', true, 'empty', self::emptyMessage($lang));
+            return self::reject($qid, $kind, '', true, 'empty', self::emptyMessage($lang), 'UNCLEAR');
         }
 
         $corrected = self::correctTypos($raw, $qid);
         $low = mb_strtolower($corrected);
 
         if (self::isSmash($low)) {
-            return self::reject($qid, $kind, $corrected, false, 'nonsense', self::retryMessage($lang));
+            return self::reject($qid, $kind, $corrected, false, 'nonsense', self::retryMessage($lang), 'UNRELATED');
         }
 
         $decision = self::phpFieldDecision($kind, $qid, $low, $corrected, $context);
         if ($decision === 'accept') {
-            return self::accept($qid, $kind, $corrected, 'php_field_match', self::extractPayload($kind, $corrected));
+            $extracted = self::extractPayload($kind, $corrected);
+            $classMeta = self::classifyAnswer($kind, $corrected, $extracted);
+            return self::accept(
+                $qid,
+                $kind,
+                $corrected,
+                'php_field_match',
+                $extracted,
+                $classMeta['answer_class'],
+                $classMeta['polarity']
+            );
         }
         if ($decision === 'reject') {
-            return self::reject($qid, $kind, $corrected, false, 'unrelated', self::retryMessage($lang));
+            return self::reject($qid, $kind, $corrected, false, 'unrelated', self::retryMessage($lang), 'UNRELATED');
         }
 
         $gemini = self::askGemini($raw, $corrected, $qid, $kind, $context);
@@ -56,8 +68,23 @@ final class ClinicalFollowUpAnswerValidator
             $extracted = is_array($gemini['extracted_information'] ?? null)
                 ? $gemini['extracted_information']
                 : self::extractPayload($kind, $use !== '' ? $use : $corrected);
-            if ($relevant) {
-                return self::accept($qid, $kind, $use !== '' ? $use : $corrected, 'gemini_relevant', $extracted);
+            $class = strtoupper(trim((string) ($gemini['answer_class'] ?? '')));
+            $polarity = isset($gemini['polarity']) ? strtolower(trim((string) $gemini['polarity'])) : null;
+            if (!in_array($class, ['VALID_POSITIVE', 'VALID_NEGATIVE', 'VALID_PARTIAL', 'UNCLEAR', 'UNRELATED'], true)) {
+                $classMeta = self::classifyAnswer($kind, $use !== '' ? $use : $corrected, $extracted);
+                $class = $classMeta['answer_class'];
+                $polarity = $polarity ?: $classMeta['polarity'];
+            }
+            if ($relevant && $class !== 'UNRELATED') {
+                return self::accept(
+                    $qid,
+                    $kind,
+                    $use !== '' ? $use : $corrected,
+                    'gemini_relevant',
+                    $extracted,
+                    $class === 'UNCLEAR' ? 'VALID_PARTIAL' : $class,
+                    $polarity
+                );
             }
 
             return self::reject(
@@ -66,16 +93,27 @@ final class ClinicalFollowUpAnswerValidator
                 $corrected,
                 false,
                 (string) ($gemini['reason'] ?? 'gemini_unrelated'),
-                self::retryMessage($lang)
+                self::retryMessage($lang),
+                $class === 'UNCLEAR' ? 'UNCLEAR' : 'UNRELATED'
             );
         }
 
         // Gemini unavailable: accept only when leftover text still has expected-field evidence.
         if (self::hasExpectedFieldEvidence($kind, $low, $corrected)) {
-            return self::accept($qid, $kind, $corrected, 'local_field_evidence', self::extractPayload($kind, $corrected));
+            $extracted = self::extractPayload($kind, $corrected);
+            $classMeta = self::classifyAnswer($kind, $corrected, $extracted);
+            return self::accept(
+                $qid,
+                $kind,
+                $corrected,
+                'local_field_evidence',
+                $extracted,
+                $classMeta['answer_class'],
+                $classMeta['polarity']
+            );
         }
 
-        return self::reject($qid, $kind, $corrected, false, 'uncertain_unrelated', self::retryMessage($lang));
+        return self::reject($qid, $kind, $corrected, false, 'uncertain_unrelated', self::retryMessage($lang), 'UNCLEAR');
     }
 
     public static function retryMessage(string $langKey): string
@@ -210,9 +248,9 @@ final class ClinicalFollowUpAnswerValidator
                 'PAIN_LOCATION' => ClinicalFeatureExtractors::extractBodyLocations($text) !== [],
                 'ASSOCIATED_SYMPTOMS' => (
                     ClinicalFeatureExtractors::deniedAssociatedSymptoms($text)
-                    || self::looksYesNo(mb_strtolower($text))
+                    || ClinicalFeatureExtractors::extractYesNo($text) !== null
                 ),
-                default => false,
+                default => ClinicalFeatureExtractors::extractYesNo($text) !== null,
             };
         } catch (Throwable) {
             return false;
@@ -325,19 +363,20 @@ final class ClinicalFollowUpAnswerValidator
             'PAIN_SEVERITY' => self::looksPainSeverity($low) || self::extractorUnderstands($kind, $corrected),
             'SYMPTOM_DURATION' => self::looksTiming($low) || self::extractorUnderstands($kind, $corrected),
             'PAIN_LOCATION' => self::looksLocation($low) || self::extractorUnderstands($kind, $corrected),
-            'ASSOCIATED_SYMPTOMS' => self::looksYesNo($low) || self::looksAssociated($low),
-            default => false,
+            'ASSOCIATED_SYMPTOMS' => self::looksYesNo($low) || self::looksAssociated($low) || self::extractorUnderstands($kind, $corrected),
+            default => self::looksYesNo($low) || self::extractorUnderstands($kind, $corrected),
         };
     }
 
     /** @return array<string, mixed> */
     private static function extractPayload(string $kind, string $text): array
     {
+        $payload = [];
         if (!class_exists('ClinicalFeatureExtractors')) {
-            return [];
+            return $payload;
         }
         try {
-            return match ($kind) {
+            $payload = match ($kind) {
                 'PAIN_SEVERITY' => [
                     'pain_severity' => ClinicalFeatureExtractors::extractStandalonePainScore($text, true)
                         ?? (ClinicalFeatureExtractors::extractPainScale($text)['score'] ?? null),
@@ -352,9 +391,84 @@ final class ClinicalFollowUpAnswerValidator
                 ],
                 default => [],
             };
+            $yn = ClinicalFeatureExtractors::extractYesNo($text);
+            if ($yn !== null) {
+                $payload['yes_no'] = $yn;
+                if ($yn === false) {
+                    $payload['denied'] = true;
+                }
+            }
+            if ($kind === 'ASSOCIATED_SYMPTOMS' && ClinicalFeatureExtractors::deniedAssociatedSymptoms($text)) {
+                $payload['denied_associated'] = true;
+                $payload['has_other_symptoms'] = false;
+            }
         } catch (Throwable) {
-            return [];
+            return $payload;
         }
+
+        return $payload;
+    }
+
+    /**
+     * @param array<string, mixed> $extracted
+     * @return array{answer_class: string, polarity: string|null}
+     */
+    private static function classifyAnswer(string $kind, string $text, array $extracted): array
+    {
+        $yn = null;
+        if (array_key_exists('yes_no', $extracted)) {
+            $yn = (bool) $extracted['yes_no'];
+        } elseif (class_exists('ClinicalFeatureExtractors')) {
+            $yn = ClinicalFeatureExtractors::extractYesNo($text);
+        }
+
+        if ($yn === true) {
+            return ['answer_class' => 'VALID_POSITIVE', 'polarity' => 'positive'];
+        }
+        if ($yn === false || !empty($extracted['denied']) || !empty($extracted['denied_associated'])) {
+            return ['answer_class' => 'VALID_NEGATIVE', 'polarity' => 'negative'];
+        }
+
+        $hasFact = false;
+        foreach ($extracted as $key => $value) {
+            if ($key === 'yes_no' || $key === 'denied' || $key === 'denied_associated') {
+                continue;
+            }
+            if ($value === null || $value === '' || $value === []) {
+                continue;
+            }
+            $hasFact = true;
+            break;
+        }
+
+        if ($kind === 'PAIN_SEVERITY' && $hasFact) {
+            $score = $extracted['pain_severity'] ?? null;
+            $qual = trim((string) ($extracted['pain_qualifier'] ?? ''));
+            if ($score === null && $qual !== '') {
+                return ['answer_class' => 'VALID_PARTIAL', 'polarity' => 'partial'];
+            }
+
+            return ['answer_class' => 'VALID_POSITIVE', 'polarity' => 'positive'];
+        }
+
+        if ($hasFact) {
+            return ['answer_class' => 'VALID_POSITIVE', 'polarity' => 'positive'];
+        }
+
+        if (trim($text) !== '') {
+            return ['answer_class' => 'VALID_PARTIAL', 'polarity' => 'partial'];
+        }
+
+        return ['answer_class' => 'UNCLEAR', 'polarity' => null];
+    }
+
+    private static function looksYesNo(string $low): bool
+    {
+        if (!class_exists('ClinicalFeatureExtractors')) {
+            return false;
+        }
+
+        return ClinicalFeatureExtractors::extractYesNo($low) !== null;
     }
 
     private static function looksPainSeverity(string $low): bool
@@ -444,14 +558,6 @@ final class ClinicalFollowUpAnswerValidator
         ) || self::looksYesNo($low);
     }
 
-    private static function looksYesNo(string $low): bool
-    {
-        return (bool) preg_match(
-            '/^(yes|no|yeah|yep|nope|none|not really|huo|hu-o|wala|indi|dili|oo|opo|hindi|hindi naman|oo po|wala na|wala gid)([.!]*)?$/u',
-            $low
-        );
-    }
-
     private static function looksOffTopic(string $low): bool
     {
         if (preg_match('/^(blue|red|green|yellow|pink|ok|lol|haha+|idk)$/u', $low)) {
@@ -530,16 +636,29 @@ final class ClinicalFollowUpAnswerValidator
 
         $held = is_array($context['last_followup_question'] ?? null) ? $context['last_followup_question'] : [];
         $facts = is_array($context['facts'] ?? null) ? $context['facts'] : [];
+        $priorQa = [];
+        foreach ((array) ($context['questions_answered'] ?? []) as $row) {
+            if (!is_array($row)) {
+                continue;
+            }
+            $priorQa[] = [
+                'question_id' => (string) ($row['question_id'] ?? ''),
+                'answer' => (string) ($row['answer'] ?? ''),
+            ];
+        }
         try {
             return GeminiComplaintInputValidator::validateFollowUpAnswer([
                 'primary_complaint' => (string) ($context['chief_complaint'] ?? ''),
                 'normalized_complaint' => json_encode($context['chief_complaints'] ?? [], JSON_UNESCAPED_UNICODE),
                 'question' => (string) ($held['text'] ?? $qid),
                 'expected_field' => $kind,
+                'question_id' => $qid,
                 'answer' => $raw,
                 'corrected_answer' => $corrected,
                 'language' => self::langKey($context),
                 'known_facts' => $facts,
+                'previous_qa' => $priorQa,
+                'patient_turns' => array_slice((array) ($context['patient_turns'] ?? []), -6),
             ]);
         } catch (Throwable $e) {
             error_log('ClinicalFollowUpAnswerValidator Gemini fallback: ' . $e->getMessage());
@@ -569,8 +688,15 @@ final class ClinicalFollowUpAnswerValidator
      * @param array<string, mixed> $extracted
      * @return array<string, mixed>
      */
-    private static function accept(string $qid, string $kind, string $corrected, string $reason, array $extracted = []): array
-    {
+    private static function accept(
+        string $qid,
+        string $kind,
+        string $corrected,
+        string $reason,
+        array $extracted = [],
+        string $answerClass = 'VALID_POSITIVE',
+        ?string $polarity = 'positive'
+    ): array {
         return [
             'accept' => true,
             'retry' => false,
@@ -580,6 +706,8 @@ final class ClinicalFollowUpAnswerValidator
             'expected_field' => $kind !== '' ? $kind : $qid,
             'message' => '',
             'extracted' => $extracted,
+            'answer_class' => $answerClass,
+            'polarity' => $polarity,
         ];
     }
 
@@ -592,7 +720,8 @@ final class ClinicalFollowUpAnswerValidator
         string $corrected,
         bool $empty,
         string $reason,
-        string $message
+        string $message,
+        string $answerClass = 'UNRELATED'
     ): array {
         return [
             'accept' => false,
@@ -603,6 +732,8 @@ final class ClinicalFollowUpAnswerValidator
             'expected_field' => $kind !== '' ? $kind : $qid,
             'message' => $message,
             'extracted' => [],
+            'answer_class' => $answerClass,
+            'polarity' => null,
         ];
     }
 }
