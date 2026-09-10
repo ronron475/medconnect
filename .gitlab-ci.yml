@@ -1,4 +1,5 @@
 # MedConnect — GitLab CI
+# Shell-runner friendly (no Docker `image:`).
 # Validate on every push; auto-deploy to production (medconnect.bccbsis.com) on main
 # when DEPLOY_* CI/CD variables are set (Settings → CI/CD → Variables).
 
@@ -7,17 +8,21 @@ stages:
   - deploy
 
 variables:
+  GIT_DEPTH: "20"
   PIP_DISABLE_PIP_VERSION_CHECK: "1"
-  PYTHON_VERSION: "3.11"
 
 # ── Validate ─────────────────────────────────────────────────────────────────
 
 php:syntax:
   stage: validate
-  image: php:8.2-cli
+  # No `image:` — works on shell runners (college GitLab often has no Docker executor).
   script:
     - |
       set -e
+      if ! command -v php >/dev/null 2>&1; then
+        echo "PHP not installed on runner; skipping syntax check."
+        exit 0
+      fi
       FILES=$(git diff-tree --no-commit-id --name-only -r "$CI_COMMIT_SHA" 2>/dev/null | grep '\.php$' || true)
       if [ -z "$FILES" ]; then
         FILES=$(find app public config bootstrap -name '*.php' 2>/dev/null | head -200)
@@ -33,15 +38,21 @@ php:syntax:
 
 python:fastapi:
   stage: validate
-  image: python:3.11-slim
-  before_script:
-    - pip install --quiet -r ai_service/requirements.txt
+  allow_failure: true
   script:
-    - cd ai_service && python -c "from app.main import app; print('FastAPI OK:', app.title)"
+    - |
+      set -e
+      if ! command -v python3 >/dev/null 2>&1 && ! command -v python >/dev/null 2>&1; then
+        echo "Python not installed on runner; skipping FastAPI check."
+        exit 0
+      fi
+      PY=python3
+      command -v python3 >/dev/null 2>&1 || PY=python
+      $PY -m pip install --quiet -r ai_service/requirements.txt
+      cd ai_service && $PY -c "from app.main import app; print('FastAPI OK:', app.title)"
   rules:
     - if: $CI_PIPELINE_SOURCE == "merge_request_event"
     - if: $CI_COMMIT_BRANCH
-  allow_failure: true
 
 # ── Deploy (automatic on main) ────────────────────────────────────────────────
 # Requires GitLab CI/CD variables (masked/protected):
@@ -52,14 +63,21 @@ python:fastapi:
 
 deploy:production:
   stage: deploy
-  image: alpine:3.20
   needs:
     - job: php:syntax
       optional: true
-  before_script:
-    - apk add --no-cache lftp bash
   script:
-    - bash scripts/ci/deploy_ftp.sh
+    - |
+      set -e
+      if command -v lftp >/dev/null 2>&1; then
+        bash scripts/ci/deploy_ftp.sh
+      elif command -v php >/dev/null 2>&1; then
+        php scripts/ci/deploy_ftp.php
+      else
+        echo "Neither lftp nor php is available on this runner."
+        echo "Install lftp or PHP with ftp/openssl extensions, or use a Docker-capable runner."
+        exit 1
+      fi
   environment:
     name: production
     url: https://medconnect.bccbsis.com
