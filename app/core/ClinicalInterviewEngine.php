@@ -1295,9 +1295,14 @@ final class ClinicalInterviewEngine
             ],
         ];
         $wrapped = self::wrapInProgress($assessment, $context, $question, $transcript);
-        $wrapped['patient_message'] = (string) ($validation['message'] ?? ClinicalFollowUpAnswerValidator::retryMessage(
-            (string) ($context['question_language'] ?? 'english')
-        ));
+        $langKey = (string) ($context['question_language'] ?? 'english');
+        $rawMessage = (string) ($validation['message'] ?? '');
+        $wrapped['patient_message'] = class_exists('ClinicalFollowUpAnswerValidator')
+            ? ClinicalFollowUpAnswerValidator::normalizeRetryMessage($rawMessage, $langKey)
+            : $rawMessage;
+        if ($wrapped['patient_message'] === '' && class_exists('ClinicalFollowUpAnswerValidator')) {
+            $wrapped['patient_message'] = ClinicalFollowUpAnswerValidator::retryMessage($langKey);
+        }
         $wrapped['answer_rejected'] = true;
         $wrapped['retry_current_question'] = true;
         $wrapped['followup_answer_validation'] = [

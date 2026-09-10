@@ -168,9 +168,23 @@
     setFollowupAnswerInvalid(false);
   }
 
+  function normalizeFollowupRetryMessage(message) {
+    var text = String(message || '').trim();
+    if (!text) return '';
+    var legacy = [
+      'Palihog maghatag sang sabat nga may kaangtanan sa imo ginabatyag kag sa pamangkot sa ibabaw. Pwede mo liwat sulayan.',
+      'Palihog sabta kag sabta ang pamangkot sa ibabaw kag magsabat nga may kaangtanan sa imo ginabatyag. Pwede mo liwat sulayan.'
+    ];
+    var fresh = 'Palihog sabta ang pamangkot sa ibabaw kag magsabat nga may kaangtanan sa imo ginabatyag. Pwede mo liwaton.';
+    for (var i = 0; i < legacy.length; i++) {
+      if (text.toLowerCase() === legacy[i].toLowerCase()) return fresh;
+    }
+    return text;
+  }
+
   function showFollowupNotice(message) {
     if (!followupNoticeEl) return;
-    var text = String(message || '').trim();
+    var text = normalizeFollowupRetryMessage(message);
     if (!text) {
       clearFollowupNotice();
       return;
