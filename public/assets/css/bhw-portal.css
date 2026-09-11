@@ -147,6 +147,142 @@ body.bhw-body .bhw-profile-page > .bhw-update-header:not(:has(.bhw-update-header
   line-height: 1.55;
 }
 
+/* Follow-Up Monitoring */
+.bhw-followup-page {
+  width: 100%;
+  animation: bhwFadeIn 0.35s ease;
+}
+
+.bhw-followup-header {
+  margin-bottom: 8px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.bhw-followup-header h2,
+.bhw-followup-header .text-h2 {
+  font-weight: 700;
+  color: #0f172a;
+  margin: 0 0 6px;
+  font-size: 1.35rem;
+  letter-spacing: -0.02em;
+}
+
+.bhw-followup-header p {
+  color: #64748b;
+  font-size: 13px;
+  margin: 0;
+  line-height: 1.55;
+  max-width: 56ch;
+}
+
+.bhw-followup-page .bhw-module-nav {
+  margin-top: 4px;
+}
+
+.bhw-followup-card {
+  padding: 0;
+  overflow: hidden;
+}
+
+.bhw-followup-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 16px;
+  border-bottom: 1px solid #e2e8f0;
+  background: #fff;
+}
+
+.bhw-followup-filter-label {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #64748b;
+  margin: 0;
+}
+
+.bhw-followup-filter {
+  max-width: 200px;
+  min-height: 38px;
+  font-size: 13px;
+  border-radius: 8px;
+}
+
+.bhw-followup-table-wrap {
+  margin: 0;
+}
+
+.bhw-followup-table {
+  width: 100%;
+  margin-bottom: 0;
+  border-collapse: separate;
+  border-spacing: 0;
+}
+
+.bhw-followup-table thead th,
+body.bhw-body .bhw-followup-table thead th {
+  background: #f8fafc !important;
+  padding: 10px 14px !important;
+  font-size: 10px !important;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: #64748b !important;
+  border: none !important;
+  border-bottom: 1px solid #e2e8f0 !important;
+  box-shadow: none !important;
+  white-space: nowrap;
+}
+
+.bhw-followup-table tbody td,
+body.bhw-body .bhw-followup-table tbody td {
+  padding: 12px 14px !important;
+  font-size: 13px;
+  color: #334155;
+  vertical-align: middle;
+  border: none !important;
+  border-bottom: 1px solid #f1f5f9 !important;
+  box-shadow: none !important;
+}
+
+.bhw-followup-table tbody tr:last-child td {
+  border-bottom: none !important;
+}
+
+.bhw-followup-empty {
+  margin: 0;
+  padding: 28px 16px;
+  text-align: center;
+  font-size: 13px;
+  color: #64748b;
+}
+
+.bhw-followup-empty--error {
+  color: #dc2626;
+}
+
+td.bhw-followup-empty {
+  text-align: center;
+}
+
+/* Shared data tables — remove Bootstrap cell “boxes” */
+body.bhw-body .bhw-table {
+  border-collapse: separate;
+  border-spacing: 0;
+}
+
+body.bhw-body .bhw-table > :not(caption) > * > * {
+  box-shadow: none;
+}
+
+body.bhw-body .bhw-table th,
+body.bhw-body .bhw-table td {
+  border-left: none;
+  border-right: none;
+}
+
 /* In-page tabs for merged BHW modules */
 .bhw-module-nav {
   display: flex;

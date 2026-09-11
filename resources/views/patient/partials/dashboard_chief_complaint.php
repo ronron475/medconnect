@@ -19,7 +19,7 @@ $is_new_consultation_flow = !$chief_complaint_locked
         (function_exists('patient_portal_has_completed_visit') && patient_portal_has_completed_visit($pdo, (int) $uid))
         || (function_exists('patient_portal_has_stale_or_finished_consultation') && patient_portal_has_stale_or_finished_consultation($pdo, (int) $uid))
     );
-$card_title = $is_new_consultation_flow ? 'Start New Consultation' : 'Primary Complaint';
+$card_title = $is_new_consultation_flow ? 'Start New Complaint' : 'Primary Complaint';
 $card_lead = $is_new_consultation_flow
     ? 'Share your primary complaint to start a new consultation.'
     : ($show_care_tips_context
@@ -148,7 +148,7 @@ $placeholder = $interview_complaint_locked
       <?php if ($chief_complaint_locked): ?>
       This primary complaint is already on file and will be reviewed by your doctor. It cannot be changed while this consultation is still active.
       <?php elseif ($preliminary_payload !== null): ?>
-      This primary complaint is locked for the current triage session. To describe a different concern, click <strong>Start New Consultation</strong>.
+      This primary complaint is locked for the current triage session. To describe a different concern, click <strong>Start New Complaint</strong>.
       <?php elseif ($is_new_consultation_flow): ?>
       Enter a <strong>new</strong> primary complaint for this consultation. Your previous complaints stay saved in My Sessions and will not be reused.
       <?php else: ?>
@@ -163,7 +163,7 @@ $placeholder = $interview_complaint_locked
         id="btnStartNewConsultation"
         data-triage-id="<?= (int) ($preliminary_payload['triage_id'] ?? 0) ?>"
       >
-        Start New Consultation
+        Start New Complaint
       </button>
     </div>
     <?php endif; ?>

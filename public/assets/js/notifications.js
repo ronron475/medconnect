@@ -10,6 +10,11 @@
   let lastId = 0;
   let pollTimer = null;
   let panelOpen = false;
+  /** @type {Set<number>} */
+  const markedReadIds = new Set();
+  /** @type {Set<number>} */
+  const markReadInFlight = new Set();
+  let markAllInFlight = false;
 
   const IS_TOUCH = ('ontouchstart' in window) || (navigator.maxTouchPoints && navigator.maxTouchPoints > 0);
 
@@ -235,6 +240,15 @@
     updateBadge(count);
   }
 
+  function isItemUnreadInDom(id) {
+    if (!id) return false;
+    const rows = document.querySelectorAll('.mc-notif-item[data-id="' + id + '"]');
+    for (let i = 0; i < rows.length; i++) {
+      if (rows[i].classList.contains('is-unread')) return true;
+    }
+    return false;
+  }
+
   function markItemReadInDom(id) {
     if (!id) return;
     document.querySelectorAll('.mc-notif-item[data-id="' + id + '"]').forEach(function (row) {
@@ -242,7 +256,37 @@
       row.querySelectorAll('.mc-notif-meta span').forEach(function (span) {
         if ((span.textContent || '').trim() === 'Unread') span.remove();
       });
+      row.querySelectorAll('[data-action="read"]').forEach(function (btn) {
+        btn.dataset.action = 'unread';
+        btn.setAttribute('title', 'Mark unread');
+        btn.setAttribute('aria-label', 'Mark as unread');
+        if ((btn.textContent || '').trim() === '✓') btn.textContent = '○';
+      });
     });
+  }
+
+  function markItemUnreadInDom(id) {
+    if (!id) return;
+    markedReadIds.delete(id);
+    document.querySelectorAll('.mc-notif-item[data-id="' + id + '"]').forEach(function (row) {
+      row.classList.add('is-unread');
+      row.querySelectorAll('[data-action="unread"]').forEach(function (btn) {
+        btn.dataset.action = 'read';
+        btn.setAttribute('title', 'Mark read');
+        btn.setAttribute('aria-label', 'Mark as read');
+        if ((btn.textContent || '').trim() === '○') btn.textContent = '✓';
+      });
+    });
+  }
+
+  /**
+   * Authoritative badge sync — never use local badge-- / unreadCount--.
+   */
+  async function syncUnreadBadge() {
+    try {
+      const data = await fetchJson(API_BASE + 'count.php?_=' + Date.now());
+      if (data.success) applyUnreadFromResponse(data);
+    } catch (e) { /* silent */ }
   }
 
   function updateBadge(count) {
@@ -445,13 +489,14 @@
   }
 
   async function handleItemAction(id, action) {
+    id = parseInt(id, 10) || 0;
     if (!id || !action) return;
     try {
       const fd = new FormData();
       fd.append('csrf_token', csrf());
       fd.append('notification_id', String(id));
-      if (action === 'delete') {
-        fd.append('action', 'delete');
+      if (action === 'delete' || action === 'archive') {
+        fd.append('action', action === 'delete' ? 'delete' : 'archive');
         const res = await fetch(API_BASE + 'manage.php', {
           method: 'POST',
           body: fd,
@@ -461,24 +506,29 @@
         });
         const data = await res.json();
         if (data.success) applyUnreadFromResponse(data);
-      } else {
-        if (action === 'read') {
-          markItemReadInDom(id);
-          updateBadge(Math.max(0, currentBadgeCount() - 1));
-        } else if (action === 'unread') {
-          updateBadge(currentBadgeCount() + 1);
+        else await syncUnreadBadge();
+      } else if (action === 'read') {
+        await markRead(id);
+      } else if (action === 'unread') {
+        if (markReadInFlight.has(id)) return;
+        markReadInFlight.add(id);
+        markItemUnreadInDom(id);
+        try {
+          fd.append('action', 'unread');
+          const res = await fetch(API_BASE + 'mark_read.php', {
+            method: 'POST',
+            body: fd,
+            credentials: 'same-origin',
+            cache: 'no-store',
+            keepalive: true,
+            headers: { Accept: 'application/json' },
+          });
+          const data = await res.json();
+          if (data.success) applyUnreadFromResponse(data);
+          else await syncUnreadBadge();
+        } finally {
+          markReadInFlight.delete(id);
         }
-        fd.append('action', action);
-        const res = await fetch(API_BASE + 'mark_read.php', {
-          method: 'POST',
-          body: fd,
-          credentials: 'same-origin',
-          cache: 'no-store',
-          keepalive: true,
-          headers: { Accept: 'application/json' },
-        });
-        const data = await res.json();
-        if (data.success) applyUnreadFromResponse(data);
       }
       loadDropdown();
     } catch (e) { /* silent */ }
@@ -494,10 +544,7 @@
   }
 
   async function refreshCount() {
-    try {
-      const data = await fetchJson(API_BASE + 'count.php?_=' + Date.now());
-      if (data.success) applyUnreadFromResponse(data);
-    } catch (e) { /* silent */ }
+    await syncUnreadBadge();
   }
 
   async function loadDropdown() {
@@ -506,8 +553,11 @@
       if (data.success) {
         renderList(data.notifications);
         applyUnreadFromResponse(data);
-        if (data.notifications.length) {
+        if (data.notifications && data.notifications.length) {
           lastId = Math.max(lastId, ...data.notifications.map(function (n) { return n.notification_id; }));
+          data.notifications.forEach(function (n) {
+            if (n.is_read) markedReadIds.add(parseInt(n.notification_id, 10) || 0);
+          });
         }
       }
     } catch (e) { /* silent */ }
@@ -532,13 +582,22 @@
   }
 
   async function markRead(id) {
+    id = parseInt(id, 10) || 0;
     if (!id) return;
-    const row = document.querySelector('.mc-notif-item[data-id="' + id + '"]');
-    const wasUnread = !!(row && row.classList.contains('is-unread'));
-    if (wasUnread) {
-      markItemReadInDom(id);
-      updateBadge(Math.max(0, currentBadgeCount() - 1));
+
+    // Already read or request in flight — do not touch badge or fire duplicate POSTs.
+    if (markedReadIds.has(id) || markReadInFlight.has(id)) {
+      return;
     }
+    if (!isItemUnreadInDom(id)) {
+      markedReadIds.add(id);
+      return;
+    }
+
+    markReadInFlight.add(id);
+    markedReadIds.add(id);
+    markItemReadInDom(id);
+
     try {
       const fd = new FormData();
       fd.append('csrf_token', csrf());
@@ -552,14 +611,29 @@
         headers: { Accept: 'application/json' },
       });
       const data = await res.json();
-      if (data.success) applyUnreadFromResponse(data);
-    } catch (e) { /* silent */ }
+      if (data.success) {
+        applyUnreadFromResponse(data);
+      } else {
+        markedReadIds.delete(id);
+        await syncUnreadBadge();
+      }
+    } catch (e) {
+      markedReadIds.delete(id);
+      await syncUnreadBadge();
+    } finally {
+      markReadInFlight.delete(id);
+    }
   }
 
   async function markAllRead() {
-    updateBadge(0);
+    if (markAllInFlight) return;
+    markAllInFlight = true;
     document.querySelectorAll('.mc-notif-item.is-unread').forEach(function (row) {
-      markItemReadInDom(itemId(row));
+      const id = itemId(row);
+      if (id) {
+        markedReadIds.add(id);
+        markItemReadInDom(id);
+      }
     });
     try {
       const fd = new FormData();
@@ -576,9 +650,16 @@
       const data = await res.json();
       if (data.success) {
         applyUnreadFromResponse(data);
+        updateBadge(0);
         loadDropdown();
+      } else {
+        await syncUnreadBadge();
       }
-    } catch (e) { /* silent */ }
+    } catch (e) {
+      await syncUnreadBadge();
+    } finally {
+      markAllInFlight = false;
+    }
   }
 
   function eventInsideNotifUi(e, wrap, panel, btn) {
@@ -722,6 +803,7 @@
         listEl.innerHTML = '<div class="mc-notif-empty">No notifications found</div>';
       } else {
         listEl.innerHTML = data.notifications.map(function (n) {
+          if (n.is_read) markedReadIds.add(parseInt(n.notification_id, 10) || 0);
           return (
             '<div class="mc-notif-item' + (!n.is_read ? ' is-unread' : '') + '" data-id="' + n.notification_id + '">' +
               '<a class="mc-notif-item-link" href="' + escapeAttr(n.action_url || n.link || '#') + '">' +
@@ -757,31 +839,17 @@
       if (actionBtn) {
         const row = actionBtn.closest('[data-id]');
         if (!row) return;
-        const id = row.dataset.id;
+        const id = parseInt(row.dataset.id, 10) || 0;
         const action = actionBtn.dataset.action;
-        const fd = new FormData();
-        fd.append('csrf_token', csrf());
-        if (action === 'read' || action === 'unread') {
-          fd.append('notification_id', id);
-          fd.append('action', action);
-          if (action === 'read') {
-            markItemReadInDom(parseInt(id, 10));
-            updateBadge(Math.max(0, currentBadgeCount() - 1));
-          } else {
-            updateBadge(currentBadgeCount() + 1);
-          }
-          const res = await fetch(API_BASE + 'mark_read.php', {
-            method: 'POST',
-            body: fd,
-            credentials: 'same-origin',
-            cache: 'no-store',
-            keepalive: true,
-            headers: { Accept: 'application/json' },
-          });
-          const data = await res.json();
-          if (data.success) applyUnreadFromResponse(data);
+        if (!id) return;
+        if (action === 'read') {
+          await markRead(id);
+        } else if (action === 'unread') {
+          await handleItemAction(id, 'unread');
         } else {
-          fd.append('notification_id', id);
+          const fd = new FormData();
+          fd.append('csrf_token', csrf());
+          fd.append('notification_id', String(id));
           fd.append('action', action === 'delete' ? 'delete' : 'archive');
           const res = await fetch(API_BASE + 'manage.php', {
             method: 'POST',
@@ -793,8 +861,10 @@
           });
           const data = await res.json();
           if (data.success) applyUnreadFromResponse(data);
+          else await syncUnreadBadge();
         }
         loadPage(currentPage);
+        return;
       }
       const item = e.target.closest('.mc-notif-item[data-id]');
       if (item && !e.target.closest('[data-action]')) {

@@ -10,29 +10,38 @@ $bhw_subnav_items = [
 ];
 $bhw_subnav_active = 'followup/track.php';
 ?>
-<div class="bhw-card">
-  <h2 class="text-h2">Follow-Up Monitoring</h2>
-  <p class="text-muted">Monitor scheduled follow-ups and log home visits after seeing the patient in person.</p>
+<div class="bhw-followup-page">
+  <header class="bhw-followup-header">
+    <h2 class="text-h2">Follow-Up Monitoring</h2>
+    <p>Monitor scheduled follow-ups and log home visits after seeing the patient in person.</p>
+  </header>
+
   <?php require __DIR__ . '/../partials/bhw_module_subnav.php'; ?>
-  <select id="bhwFuFilter" class="form-select mb-3" style="max-width:220px;" aria-label="Filter follow-ups">
-    <option value="">All</option>
-    <option value="upcoming">Upcoming</option>
-    <option value="missed">Missed</option>
-    <option value="completed">Completed</option>
-  </select>
-  <div class="table-responsive">
-    <table class="table bhw-table">
-      <thead>
-        <tr>
-          <th>Date</th>
-          <th>Patient</th>
-          <th>Status</th>
-          <th>Home visits</th>
-          <th>Actions</th>
-        </tr>
-      </thead>
-      <tbody id="bhwFuBody"></tbody>
-    </table>
+
+  <div class="bhw-card bhw-followup-card">
+    <div class="bhw-followup-toolbar">
+      <label class="bhw-followup-filter-label" for="bhwFuFilter">Status</label>
+      <select id="bhwFuFilter" class="form-select bhw-followup-filter" aria-label="Filter follow-ups">
+        <option value="">All</option>
+        <option value="upcoming">Upcoming</option>
+        <option value="missed">Missed</option>
+        <option value="completed">Completed</option>
+      </select>
+    </div>
+    <div class="table-responsive bhw-followup-table-wrap">
+      <table class="table bhw-table bhw-followup-table mb-0">
+        <thead>
+          <tr>
+            <th>Date</th>
+            <th>Patient</th>
+            <th>Status</th>
+            <th>Home visits</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody id="bhwFuBody"></tbody>
+      </table>
+    </div>
   </div>
 </div>
 
@@ -102,7 +111,7 @@ $bhw_subnav_active = 'followup/track.php';
       var tb = document.getElementById('bhwFuBody');
       var rows = r.followups || [];
       if (!rows.length) {
-        tb.innerHTML = '<tr><td colspan="5">No follow-ups.</td></tr>';
+        tb.innerHTML = '<tr><td colspan="5" class="bhw-followup-empty">No follow-ups match this filter.</td></tr>';
         return;
       }
       tb.innerHTML = rows.map(function (f) {
