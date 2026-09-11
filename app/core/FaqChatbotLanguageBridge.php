@@ -408,9 +408,14 @@ final class FaqChatbotLanguageBridge
         $isHil = $lang === 'hil' || self::looksHiligaynon($original);
 
         if (!$isHil && $lang !== 'fil') {
+            $matchKey = class_exists('FaqChatbotTextNormalizer')
+                ? FaqChatbotTextNormalizer::forMatch($original)
+                : mb_strtolower($original, 'UTF-8');
+
             return [
                 'reply_lang'     => $lang,
-                'nlp_text'       => $original,
+                // Matching only — original casing is preserved by the caller for display/logs.
+                'nlp_text'       => $matchKey !== '' ? $matchKey : $original,
                 'english_gloss'  => '',
                 'input_lang'     => $lang,
                 'is_hiligaynon'  => false,
@@ -419,6 +424,12 @@ final class FaqChatbotLanguageBridge
 
         $gloss = $isHil ? self::hilToEnglish($original) : self::filToEnglish($original);
         $nlp = $gloss !== '' ? $gloss : $original;
+        if (class_exists('FaqChatbotTextNormalizer')) {
+            $matchKey = FaqChatbotTextNormalizer::forMatch($nlp);
+            if ($matchKey !== '') {
+                $nlp = $matchKey;
+            }
+        }
 
         return [
             'reply_lang'     => $isHil ? 'hil' : ($lang === 'fil' ? 'fil' : 'hil'),

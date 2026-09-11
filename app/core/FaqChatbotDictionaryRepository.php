@@ -96,14 +96,19 @@ final class FaqChatbotDictionaryRepository
              ORDER BY is_phrase DESC, priority DESC, CHAR_LENGTH(source_text) DESC'
         );
         $rows = $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
-        self::$phraseCache = $rows;
+        self::$phraseCache = [];
         self::$tokenCache = [];
         foreach ($rows as $row) {
+            $src = FaqChatbotTextNormalizer::forMatch((string) ($row['source_text'] ?? ''));
+            if ($src === '') {
+                continue;
+            }
+            $row['source_text'] = $src;
+            self::$phraseCache[] = $row;
             if ((int) ($row['is_phrase'] ?? 0) === 1) {
                 continue;
             }
-            $k = (string) $row['source_text'];
-            self::$tokenCache[$k] = (string) $row['target_text'];
+            self::$tokenCache[$src] = (string) $row['target_text'];
         }
     }
 

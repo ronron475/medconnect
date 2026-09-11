@@ -124,6 +124,7 @@ final class ClinicalInterviewEngine
         }
 
         // Accuracy: normalize misspellings / slang / mixed tokens before extraction.
+        // Opening and follow-up working text is case-folded via centralized forMatch().
         $turnPrep = null;
         try {
             if ($turn !== '' && class_exists('ClinicalAnswerNormalizer')) {
@@ -136,6 +137,21 @@ final class ClinicalInterviewEngine
         } catch (Throwable $e) {
             error_log('ClinicalAnswerNormalizer interview fallback: ' . $e->getMessage());
             $turnPrep = null;
+        }
+
+        if ($turn !== '' && class_exists('HiligaynonTextNormalizer')) {
+            if ($isOpeningTurn) {
+                $matchTurn = HiligaynonTextNormalizer::forMatch($turn);
+                if ($matchTurn !== '') {
+                    $turn = $matchTurn;
+                }
+            } else {
+                // Follow-ups: case-fold only so values like 7/10 stay extractor-safe.
+                $folded = HiligaynonTextNormalizer::caseFold($turn);
+                if ($folded !== '') {
+                    $turn = $folded;
+                }
+            }
         }
 
         if (is_array($turnPrep)) {

@@ -28,7 +28,9 @@ final class FaqChatbotScenarioIndex
             return null;
         }
 
-        $hay = FaqEmotionEngine::normalizeText(trim($rawText . ' ' . $nlpText . ' ' . (string) ($ctx['context_boost'] ?? '')));
+        $hay = class_exists('FaqChatbotTextNormalizer')
+            ? FaqChatbotTextNormalizer::forMatch(trim($rawText . ' ' . $nlpText . ' ' . (string) ($ctx['context_boost'] ?? '')))
+            : FaqEmotionEngine::normalizeText(trim($rawText . ' ' . $nlpText . ' ' . (string) ($ctx['context_boost'] ?? '')));
         if ($hay === '') {
             return null;
         }
@@ -70,7 +72,9 @@ final class FaqChatbotScenarioIndex
             if (!is_array($row)) {
                 continue;
             }
-            $phrase = FaqEmotionEngine::normalizeText((string) ($row['phrase'] ?? ''));
+            $phrase = class_exists('FaqChatbotTextNormalizer')
+                ? FaqChatbotTextNormalizer::forMatch((string) ($row['phrase'] ?? ''))
+                : FaqEmotionEngine::normalizeText((string) ($row['phrase'] ?? ''));
             if ($phrase === '') {
                 continue;
             }
@@ -143,13 +147,17 @@ final class FaqChatbotScenarioIndex
                 if (!is_array($row)) {
                     continue;
                 }
-                $norm = FaqEmotionEngine::normalizeText((string) ($row['phrase'] ?? ''));
+                $norm = class_exists('FaqChatbotTextNormalizer')
+                    ? FaqChatbotTextNormalizer::forMatch((string) ($row['phrase'] ?? ''))
+                    : FaqEmotionEngine::normalizeText((string) ($row['phrase'] ?? ''));
                 if ($norm !== '') {
                     self::$exactIndex[$norm] = $row;
                 }
                 $tokenSet = [];
                 foreach ((array) ($row['keywords'] ?? []) as $kw) {
-                    $kw = FaqEmotionEngine::normalizeText((string) $kw);
+                    $kw = class_exists('FaqChatbotTextNormalizer')
+                        ? FaqChatbotTextNormalizer::forMatch((string) $kw)
+                        : FaqEmotionEngine::normalizeText((string) $kw);
                     if (mb_strlen($kw) >= 3) {
                         $tokenSet[$kw] = true;
                     }

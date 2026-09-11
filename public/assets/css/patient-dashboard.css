@@ -1349,17 +1349,34 @@
   border: 1px solid rgba(13, 148, 136, 0.22);
 }
 
-.pdash-care-form__input {
+.pdash-care-form__input,
+#chief_complaint,
+#pdashSymptomsComplaint {
   min-height: 96px;
   border-radius: 10px;
   border-color: #cbd5e1;
+  color: #0f172a;
+  -webkit-text-fill-color: #0f172a;
+  caret-color: #0f172a;
+  opacity: 1;
+}
+
+.pdash-care-form__input::placeholder,
+#chief_complaint::placeholder,
+#pdashSymptomsComplaint::placeholder {
+  color: #94a3b8;
+  -webkit-text-fill-color: #94a3b8;
+  opacity: 1;
 }
 
 .pdash-care-form__input--locked {
   background: #f8fafc;
-  color: #334155;
+  color: #0f172a;
+  -webkit-text-fill-color: #0f172a;
+  caret-color: #0f172a;
   cursor: not-allowed;
   resize: none;
+  opacity: 1;
 }
 
 .pdash-care-form__input--locked:focus {

@@ -151,6 +151,10 @@ final class FaqEmotionEngine
     public static function normalizeText(string $text): string
     {
         $t = FaqChatbotEmotionShorthand::expand($text);
+        // Centralized case-insensitive fold for all chatbot emotion / intent haystacks.
+        if (class_exists('FaqChatbotTextNormalizer')) {
+            return FaqChatbotTextNormalizer::caseFold($t);
+        }
         $t = mb_strtolower(trim($t), 'UTF-8');
         $t = preg_replace('/\s+/u', ' ', $t) ?? $t;
         return $t;

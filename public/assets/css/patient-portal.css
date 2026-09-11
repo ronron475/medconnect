@@ -1682,8 +1682,12 @@ body.mc-tips-ready-modal-open {
 
 .pdash-review-form.is-followup-active #pdashSymptomsComplaint,
 .patient-triage-form.is-followup-active #chief_complaint {
-  opacity: 0.72;
+  /* Keep typed text fully readable — dim chrome, not the complaint text. */
+  opacity: 1;
   cursor: default;
+  background: #f1f5f9;
+  color: #0f172a;
+  -webkit-text-fill-color: #0f172a;
 }
 
 #startNewConsultationWrap {
