@@ -9,6 +9,7 @@ require_once __DIR__ . '/consultation_expiry.php';
 require_once __DIR__ . '/triage_assessment_schema.php';
 require_once __DIR__ . '/patient_account_security.php';
 require_once __DIR__ . '/bhw_patient_workflow.php';
+require_once __DIR__ . '/referral_community_followups.php';
 require_once dirname(__DIR__) . '/core/TriageLevelService.php';
 require_once dirname(__DIR__) . '/core/MedicalAssessmentEngine.php';
 
@@ -565,56 +566,75 @@ final class BhwWorkflows
 
     public static function listReferrals(PDO $pdo, array $ctx): array
     {
+        referral_community_followups_ensure_schema($pdo);
         [$clause, $params] = bhw_patient_sector_clause($pdo, $ctx, 'pr');
         $dest = self::referralDestColumn($pdo);
+        $join = bhw_pr_user_join('pr', 'p');
         $sql = "
             SELECT dr.*, CONCAT(p.first_name,' ',p.last_name) AS patient_name,
-                   COALESCE(dr.{$dest}, '') AS facility_display
+                   COALESCE(dr.{$dest}, '') AS facility_display,
+                   TRIM(CONCAT(COALESCE(prov.first_name, ''), ' ', COALESCE(prov.last_name, ''))) AS provider_name
             FROM digital_referrals dr
             JOIN users p ON p.id = dr.patient_id
-            JOIN patient_registrations pr ON pr.email = p.email
+            JOIN patient_registrations pr ON {$join}
+            LEFT JOIN users prov ON prov.id = dr.provider_id
             WHERE {$clause}
             ORDER BY dr.created_at DESC LIMIT 200
         ";
         $stmt = $pdo->prepare($sql);
         $stmt->execute($params);
-        return $stmt->fetchAll(PDO::FETCH_ASSOC);
-    }
+        $rows = $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
+        if ($rows === []) {
+            return [];
+        }
 
-    public static function createReferral(PDO $pdo, array $ctx, int $patientId, string $type, string $reason, ?int $facilityId, ?string $facilityName): int
-    {
-        if (!bhw_assert_patient_in_sector($pdo, $ctx, $patientId)) {
-            throw new InvalidArgumentException('Patient not in your barangay.');
+        $latest = referral_community_followups_latest_by_referral(
+            $pdo,
+            array_map(static fn(array $r): int => (int) ($r['id'] ?? 0), $rows)
+        );
+
+        foreach ($rows as &$row) {
+            $id = (int) ($row['id'] ?? 0);
+            $fu = $latest[$id] ?? null;
+            $row['latest_followup'] = $fu;
+            $row['followup_summary'] = $fu ? referral_community_followup_summary_label($fu) : '';
+            $row['followup_notes'] = $fu ? trim((string) ($fu['notes'] ?? '')) : '';
+            $row['followup_at'] = $fu ? (string) ($fu['created_at'] ?? '') : '';
+            $row['has_followup'] = $fu !== null;
         }
-        $providerId = self::resolveProviderForPatient($pdo, $patientId);
-        $destCol = self::referralDestColumn($pdo);
-        if ($facilityId > 0) {
-            $fs = $pdo->prepare('SELECT facility_name FROM facilities WHERE id = ? AND status = \'active\' LIMIT 1');
-            $fs->execute([$facilityId]);
-            $facilityName = (string) ($fs->fetchColumn() ?: $facilityName);
-        }
-        $sql = "INSERT INTO digital_referrals (patient_id, provider_id, referral_type, reason, {$destCol}, status, created_at) VALUES (?, ?, ?, ?, ?, 'pending', NOW())";
-        $pdo->prepare($sql)->execute([$patientId, $providerId, $type, $reason, $facilityName ?: null]);
-        $id = (int) $pdo->lastInsertId();
-        bhw_audit($pdo, $patientId, 'bhw_referral_created', "BHW created referral #{$id}.", ['type' => $type]);
-        require_once __DIR__ . '/notification_events.php';
-        NotificationEvents::referralCreated($pdo, $id, $patientId, $providerId > 0 ? $providerId : null, (int) ($_SESSION['user_id'] ?? 0));
-        return $id;
+        unset($row);
+
+        return $rows;
     }
 
     /**
-     * BHW confirms how a referral was carried out (e.g. the patient went face-to-face).
-     *
-     * Only the fulfilment status moves; the clinical urgency recorded by the
-     * provider is never touched here. Patient and referring provider are both
-     * notified so the three sides stay in sync without manual follow-up.
+     * @deprecated BHW must not create clinical referrals. Doctors own digital_referrals.
+     */
+    public static function createReferral(PDO $pdo, array $ctx, int $patientId, string $type, string $reason, ?int $facilityId, ?string $facilityName): int
+    {
+        throw new InvalidArgumentException('BHW cannot create clinical referrals. Record community follow-up on an existing doctor referral instead.');
+    }
+
+    /**
+     * @deprecated BHW must not mutate digital_referrals.status. Use recordCommunityFollowup().
      */
     public static function updateReferralStatus(PDO $pdo, array $ctx, int $referralId, string $status, string $note = ''): void
     {
-        $allowed = ['pending', 'completed'];
-        if (!in_array($status, $allowed, true)) {
-            throw new InvalidArgumentException('Unsupported referral status.');
-        }
+        throw new InvalidArgumentException('BHW cannot change referral status. Record community follow-up instead.');
+    }
+
+    /**
+     * Record BHW community follow-up without changing the doctor's referral.
+     */
+    public static function recordCommunityFollowup(
+        PDO $pdo,
+        array $ctx,
+        int $referralId,
+        bool $patientContacted,
+        bool $actedOnReferral,
+        string $notes = ''
+    ): int {
+        referral_community_followups_ensure_schema($pdo);
 
         $stmt = $pdo->prepare('SELECT id, patient_id, provider_id, referral_type, status FROM digital_referrals WHERE id = ? LIMIT 1');
         $stmt->execute([$referralId]);
@@ -628,18 +648,43 @@ final class BhwWorkflows
             throw new InvalidArgumentException('ACCESS DENIED');
         }
 
-        $pdo->prepare('UPDATE digital_referrals SET status = ? WHERE id = ?')->execute([$status, $referralId]);
-
-        $faceToFace = $status === 'completed';
-        $headline = $faceToFace ? 'Face-to-Face Referral Confirmed' : 'Referral Reopened';
-        $detail = $faceToFace
-            ? 'Your BHW confirmed you are proceeding with a face-to-face visit for this referral.'
-            : 'Your BHW reopened this referral for follow-up.';
-        if ($note !== '') {
-            $detail .= ' Note: ' . $note;
+        $bhwId = (int) ($ctx['bhw_id'] ?? $_SESSION['user_id'] ?? 0);
+        if ($bhwId <= 0) {
+            throw new InvalidArgumentException('Unauthorized.');
         }
 
-        bhw_notify($pdo, $patientId, 'referral', $headline, $detail, ASSET_BASE . '/views/patient/dashboard.php#action-items');
+        $notes = trim($notes);
+        $pdo->prepare("
+            INSERT INTO referral_community_followups
+                (referral_id, patient_id, bhw_id, patient_contacted, acted_on_referral, notes, created_at)
+            VALUES (?, ?, ?, ?, ?, ?, NOW())
+        ")->execute([
+            $referralId,
+            $patientId,
+            $bhwId,
+            $patientContacted ? 1 : 0,
+            $actedOnReferral ? 1 : 0,
+            $notes !== '' ? $notes : null,
+        ]);
+        $followupId = (int) $pdo->lastInsertId();
+
+        $summary = referral_community_followup_summary_label([
+            'patient_contacted' => $patientContacted ? 1 : 0,
+            'acted_on_referral' => $actedOnReferral ? 1 : 0,
+        ]);
+        $detail = 'Barangay follow-up recorded: ' . $summary . '.';
+        if ($notes !== '') {
+            $detail .= ' Note: ' . $notes;
+        }
+
+        bhw_notify(
+            $pdo,
+            $patientId,
+            'referral',
+            'Referral Follow-Up Recorded',
+            $detail,
+            ASSET_BASE . '/views/patient/my_health.php?tab=files'
+        );
 
         $providerId = (int) $referral['provider_id'];
         if ($providerId > 0) {
@@ -650,19 +695,41 @@ final class BhwWorkflows
                 $pdo,
                 $providerId,
                 'referral',
-                $headline,
-                $patientName . ' — referral #' . $referralId . ' marked ' . $status . ' by the barangay health worker.'
-                    . ($note !== '' ? ' Note: ' . $note : ''),
+                'BHW Referral Follow-Up',
+                $patientName . ' — referral #' . $referralId . ': ' . $summary
+                    . ($notes !== '' ? ' Note: ' . $notes : ''),
                 ASSET_BASE . '/views/provider/referrals.php'
             );
         }
 
-        bhw_audit($pdo, $patientId, 'bhw_referral_status_updated', "BHW updated referral #{$referralId} to {$status}.", [
-            'referral_id' => $referralId,
-            'from'        => (string) $referral['status'],
-            'to'          => $status,
-            'note'        => $note,
+        bhw_audit($pdo, $patientId, 'bhw_referral_community_followup', "BHW recorded community follow-up #{$followupId} for referral #{$referralId}.", [
+            'referral_id'         => $referralId,
+            'followup_id'         => $followupId,
+            'patient_contacted'   => $patientContacted ? 1 : 0,
+            'acted_on_referral'   => $actedOnReferral ? 1 : 0,
+            'note'                => $notes,
+            'bhw_id'              => $bhwId,
+            'clinical_status'     => (string) ($referral['status'] ?? ''),
         ]);
+
+        return $followupId;
+    }
+
+    /**
+     * @return list<array<string, mixed>>
+     */
+    public static function listCommunityFollowups(PDO $pdo, array $ctx, int $referralId): array
+    {
+        $stmt = $pdo->prepare('SELECT id, patient_id FROM digital_referrals WHERE id = ? LIMIT 1');
+        $stmt->execute([$referralId]);
+        $referral = $stmt->fetch(PDO::FETCH_ASSOC);
+        if (!$referral) {
+            throw new InvalidArgumentException('Referral not found.');
+        }
+        if (!bhw_assert_patient_in_sector($pdo, $ctx, (int) $referral['patient_id'])) {
+            throw new InvalidArgumentException('ACCESS DENIED');
+        }
+        return referral_community_followups_for_referral($pdo, $referralId);
     }
 
     public static function listFollowups(PDO $pdo, array $ctx, ?string $status = null): array
@@ -972,7 +1039,7 @@ final class BhwWorkflows
         $rq = $pdo->prepare("
             SELECT COUNT(*) FROM digital_referrals dr
             JOIN users u ON u.id = dr.patient_id
-            JOIN patient_registrations pr ON pr.email = u.email
+            JOIN patient_registrations pr ON " . bhw_pr_user_join('pr', 'u') . "
             WHERE {$clause} AND dr.status = 'pending'
         ");
         $rq->execute($params);

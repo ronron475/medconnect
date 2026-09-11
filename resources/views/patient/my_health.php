@@ -139,14 +139,17 @@ try {
 } catch (PDOException $e) { /* optional */ }
 
 try {
+    $destCol = $pdo->query("SHOW COLUMNS FROM digital_referrals LIKE 'facility_name'")->fetch()
+        ? 'facility_name'
+        : 'destination_facility';
     $s = $pdo->prepare("
         SELECT CONCAT(dr.referral_type, ' Referral') AS record_name, dr.reason AS frequency,
-               COALESCE(dr.destination_facility, '') AS duration, dr.status AS detail,
+               COALESCE(dr.{$destCol}, '') AS duration, dr.status AS detail,
                DATE(dr.created_at) AS record_date, CONCAT(u.first_name, ' ', u.last_name) AS provider_name
         FROM digital_referrals dr
-        JOIN consultations c ON c.id = dr.consultation_id
+        LEFT JOIN consultations c ON c.id = dr.consultation_id
         JOIN users u ON u.id = dr.provider_id
-        WHERE dr.patient_id = ? AND c.status = 'completed'
+        WHERE dr.patient_id = ?
         ORDER BY dr.created_at DESC
     ");
     $s->execute([$uid]);

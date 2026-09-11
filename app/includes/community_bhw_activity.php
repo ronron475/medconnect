@@ -399,15 +399,12 @@ function community_bhw_activity_visits(PDO $pdo, int $patientId, string $baranga
 }
 
 /**
+ * All clinical referrals for the patient (doctor-owned), with optional BHW community follow-up.
+ *
  * @return list<array<string, mixed>>
  */
 function community_bhw_activity_referrals(PDO $pdo, int $patientId, string $barangay = ''): array
 {
-    $bhwReferralIds = community_bhw_activity_referral_ids($pdo, $patientId);
-    if ($bhwReferralIds === []) {
-        return [];
-    }
-
     try {
         if ($pdo->query("SHOW TABLES LIKE 'digital_referrals'")->rowCount() === 0) {
             return [];
@@ -415,44 +412,68 @@ function community_bhw_activity_referrals(PDO $pdo, int $patientId, string $bara
         $destCol = $pdo->query("SHOW COLUMNS FROM digital_referrals LIKE 'facility_name'")->fetch()
             ? 'facility_name'
             : 'destination_facility';
-        $placeholders = implode(',', array_fill(0, count($bhwReferralIds), '?'));
         $stmt = $pdo->prepare("
-            SELECT dr.id, dr.referral_type, dr.reason, dr.status, dr.created_at,
-                   COALESCE(dr.{$destCol}, '') AS facility_display
+            SELECT dr.id, dr.referral_type, dr.reason, dr.status, dr.created_at, dr.provider_id,
+                   COALESCE(dr.{$destCol}, '') AS facility_display,
+                   TRIM(CONCAT(COALESCE(u.first_name, ''), ' ', COALESCE(u.last_name, ''))) AS provider_name
             FROM digital_referrals dr
+            LEFT JOIN users u ON u.id = dr.provider_id
             WHERE dr.patient_id = ?
-              AND dr.id IN ({$placeholders})
             ORDER BY dr.created_at DESC
             LIMIT 30
         ");
-        $stmt->execute(array_merge([$patientId], $bhwReferralIds));
+        $stmt->execute([$patientId]);
         $rows = $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
     } catch (PDOException $e) {
         return [];
     }
 
-    $namesById = community_bhw_activity_referral_bhw_names($pdo, $patientId);
+    if ($rows === []) {
+        return [];
+    }
+
+    $bhwNamesById = community_bhw_activity_referral_bhw_names($pdo, $patientId);
+    $bhwCreatedIds = array_fill_keys(community_bhw_activity_referral_ids($pdo, $patientId), true);
+
+    require_once __DIR__ . '/referral_community_followups.php';
+    $latestFu = referral_community_followups_latest_by_referral(
+        $pdo,
+        array_map(static fn(array $r): int => (int) ($r['id'] ?? 0), $rows)
+    );
 
     $out = [];
     foreach ($rows as $row) {
         $id = (int) ($row['id'] ?? 0);
         $createdAt = (string) ($row['created_at'] ?? '');
+        $isBhwCreated = isset($bhwCreatedIds[$id]);
+        $who = $isBhwCreated
+            ? (string) ($bhwNamesById[$id] ?? '')
+            : trim((string) ($row['provider_name'] ?? ''));
+        $role = $isBhwCreated ? 'bhw' : 'provider';
         $attr = community_bhw_activity_attribution(
-            (string) ($namesById[$id] ?? ''),
-            'bhw',
+            $who,
+            $role,
             $createdAt !== '' ? $createdAt : null,
             $barangay
         );
+
+        $fu = $latestFu[$id] ?? null;
+        $fuSummary = $fu ? referral_community_followup_summary_label($fu) : '';
+        $fuNotes = $fu ? trim((string) ($fu['notes'] ?? '')) : '';
+
         $out[] = array_merge($attr, [
-            'id'         => $id,
-            'type'       => trim((string) ($row['referral_type'] ?? '')) ?: 'Referral',
-            'reason'     => trim((string) ($row['reason'] ?? '')),
-            'facility'   => trim((string) ($row['facility_display'] ?? '')),
-            'status'     => ucfirst(trim((string) ($row['status'] ?? 'pending'))),
-            'date_label' => $attr['date_label'],
-            'bhw_name'   => $attr['added_by'] !== 'Unknown' ? $attr['added_by'] : '',
-            'time_label' => $attr['time_label'],
-            'role_label' => $attr['role_label'],
+            'id'               => $id,
+            'type'             => trim((string) ($row['referral_type'] ?? '')) ?: 'Referral',
+            'reason'           => trim((string) ($row['reason'] ?? '')),
+            'facility'         => trim((string) ($row['facility_display'] ?? '')),
+            'status'           => ucfirst(trim((string) ($row['status'] ?? 'pending'))),
+            'date_label'       => $attr['date_label'],
+            'bhw_name'         => $role === 'bhw' && $attr['added_by'] !== 'Unknown' ? $attr['added_by'] : '',
+            'time_label'       => $attr['time_label'],
+            'role_label'       => $attr['role_label'],
+            'followup_summary' => $fuSummary,
+            'followup_notes'   => $fuNotes,
+            'followup_at'      => $fu ? (string) ($fu['created_at'] ?? '') : '',
         ]);
     }
     return $out;

@@ -371,13 +371,14 @@ function pmh_timeline_initials(string $name, string $fallback = 'HX'): string {
       $entry = $row;
       $who = trim((string) ($entry['added_by'] ?? $entry['bhw_name'] ?? ''));
       $title = trim((string) ($entry['type'] ?? 'Referral'));
+      $initialsFallback = (($entry['role'] ?? '') === 'provider') ? 'DR' : 'BH';
     ?>
     <article class="pmh-visit pmh-visit--record">
       <div class="pmh-visit__rail" aria-hidden="true"><span class="pmh-visit__dot"></span></div>
       <div class="pmh-visit__body">
         <header class="pmh-visit__head">
           <div class="pmh-visit__provider">
-            <span class="pmh-visit__avatar"><?= htmlspecialchars(pmh_timeline_initials($who, 'BH')) ?></span>
+            <span class="pmh-visit__avatar"><?= htmlspecialchars(pmh_timeline_initials($who, $initialsFallback)) ?></span>
             <div>
               <h3 class="pmh-visit__title"><?= htmlspecialchars($title) ?></h3>
               <p class="pmh-visit__meta">
@@ -401,6 +402,12 @@ function pmh_timeline_initials(string $name, string $fallback = 'HX'): string {
           <section class="pmh-visit__block pmh-visit__block--full">
             <h4 class="pmh-visit__label">Reason</h4>
             <p><?= htmlspecialchars((string) $entry['reason']) ?></p>
+          </section>
+          <?php endif; ?>
+          <?php if (!empty($entry['followup_summary'])): ?>
+          <section class="pmh-visit__block pmh-visit__block--full">
+            <h4 class="pmh-visit__label">BHW follow-up</h4>
+            <p><?= htmlspecialchars((string) $entry['followup_summary']) ?><?php if (!empty($entry['followup_notes'])): ?> — <?= htmlspecialchars((string) $entry['followup_notes']) ?><?php endif; ?></p>
           </section>
           <?php endif; ?>
         </div>

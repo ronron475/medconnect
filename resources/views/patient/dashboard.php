@@ -163,6 +163,9 @@ try {
     }
 
     // Referrals issued to this patient
+    $destCol = $pdo->query("SHOW COLUMNS FROM digital_referrals LIKE 'facility_name'")->fetch()
+        ? 'facility_name'
+        : 'destination_facility';
     $s = $pdo->prepare("
         SELECT
             CONCAT(dr.referral_type, ' Referral') AS name,
@@ -170,7 +173,7 @@ try {
             CONCAT(u.first_name, ' ', u.last_name) AS doctor,
             'Referral'                             AS record_type,
             dr.reason                              AS frequency,
-            dr.destination_facility                AS duration,
+            COALESCE(dr.{$destCol}, '')            AS duration,
             dr.status                              AS detail
         FROM digital_referrals dr
         JOIN users u ON u.id = dr.provider_id
