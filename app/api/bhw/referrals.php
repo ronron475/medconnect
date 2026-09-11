@@ -9,26 +9,23 @@ $action = $_GET['action'] ?? $_POST['action'] ?? 'list';
 try {
     if ($action === 'list') {
         Api::success(['referrals' => BhwWorkflows::listReferrals($pdo, $ctx)]);
-    } elseif ($action === 'create') {
-        bhw_api_require_patient_in_sector($pdo, $ctx, (int) ($_POST['patient_id'] ?? 0));
-        $id = BhwWorkflows::createReferral(
-            $pdo, $ctx,
-            (int) ($_POST['patient_id'] ?? 0),
-            trim($_POST['referral_type'] ?? 'Other'),
-            trim($_POST['reason'] ?? ''),
-            (int) ($_POST['facility_id'] ?? 0),
-            trim($_POST['facility_name'] ?? '')
-        );
-        Api::success(['referral_id' => $id], 'Referral created.');
-    } elseif ($action === 'update_status') {
-        BhwWorkflows::updateReferralStatus(
+    } elseif ($action === 'followups') {
+        $referralId = (int) ($_GET['referral_id'] ?? $_POST['referral_id'] ?? 0);
+        Api::success([
+            'followups' => BhwWorkflows::listCommunityFollowups($pdo, $ctx, $referralId),
+        ]);
+    } elseif ($action === 'record_followup') {
+        $id = BhwWorkflows::recordCommunityFollowup(
             $pdo,
             $ctx,
             (int) ($_POST['referral_id'] ?? 0),
-            trim($_POST['status'] ?? ''),
-            trim($_POST['note'] ?? '')
+            !empty($_POST['patient_contacted']) && (string) $_POST['patient_contacted'] !== '0',
+            !empty($_POST['acted_on_referral']) && (string) $_POST['acted_on_referral'] !== '0',
+            trim((string) ($_POST['notes'] ?? ''))
         );
-        Api::success([], 'Referral updated. The patient and provider have been notified.');
+        Api::success(['followup_id' => $id], 'Follow-up recorded. Clinical referral was not changed.');
+    } elseif ($action === 'create' || $action === 'update_status') {
+        Api::error('BHW cannot create or change clinical referrals. Use record_followup instead.', 403);
     } else {
         Api::error('Unknown action.', 400);
     }

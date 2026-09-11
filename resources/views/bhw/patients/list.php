@@ -126,7 +126,7 @@ ob_start();
       '<a role="menuitem" href="../records/index.php?patient_id=' + id + '">Medical records</a>' +
       '<a role="menuitem" href="../consultations/index.php">Consultation center</a>' +
       '<a role="menuitem" href="../consultations/index.php?filter=active">Assist video call</a>' +
-      '<a role="menuitem" href="../referral/create.php' + q + '">Create referral</a>' +
+      '<a role="menuitem" href="../referral/status.php">Referral follow-up</a>' +
       '<button type="button" role="menuitem" class="bhw-pl-menu-print" data-print="' + id + '">Print profile</button>' +
       '</div></div></div>';
   }
@@ -430,7 +430,7 @@ ob_start();
         row('Medications', p.current_medications) + '</dl></div>' +
         '<div class="bhw-pl-drawer-section bhw-pl-drawer-actions no-print"><h4>Quick Actions</h4><div class="d-flex flex-wrap gap-2">' +
         '<a class="bhw-pl-btn bhw-pl-btn--outline" href="update.php?patient_id=' + id + '">Update</a>' +
-        '<a class="bhw-pl-btn bhw-pl-btn--outline" href="../referral/create.php?patient_id=' + id + '">Refer</a>' +
+        '<a class="bhw-pl-btn bhw-pl-btn--outline" href="../referral/status.php">Referral follow-up</a>' +
         '</div></div>';
       els.drawer.classList.add('is-open');
       els.drawerOverlay.classList.add('is-open');

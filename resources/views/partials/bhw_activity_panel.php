@@ -155,7 +155,7 @@ if ($bhwTotal === 0) {
                 <section class="bhw-act-section">
                     <h4 class="<?= htmlspecialchars($bhwLabelClass) ?>">Referrals (<?= count($bhwRefs) ?>)</h4>
                     <?php if ($bhwRefs === []): ?>
-                    <p class="<?= htmlspecialchars($bhwEmptyClass) ?>">No BHW referrals on file.</p>
+                    <p class="<?= htmlspecialchars($bhwEmptyClass) ?>">No referrals on file.</p>
                     <?php else: ?>
                     <ul class="bhw-act-list">
                         <?php foreach ($bhwRefs as $ref): ?>
@@ -167,6 +167,9 @@ if ($bhwTotal === 0) {
                             <?php endif; ?>
                             <?php if (!empty($ref['reason'])): ?>
                             <p class="bhw-act-item__note"><?= htmlspecialchars((string) $ref['reason']) ?></p>
+                            <?php endif; ?>
+                            <?php if (!empty($ref['followup_summary'])): ?>
+                            <p class="bhw-act-item__note"><strong>BHW follow-up:</strong> <?= htmlspecialchars((string) $ref['followup_summary']) ?><?php if (!empty($ref['followup_notes'])): ?> — <?= htmlspecialchars((string) $ref['followup_notes']) ?><?php endif; ?></p>
                             <?php endif; ?>
                             <?php require VIEWS_PATH . '/partials/bhw_activity_attribution.php'; ?>
                         </li>
