@@ -413,28 +413,31 @@ function pmh_timeline_initials(string $name, string $fallback = 'HX'): string {
       $complaint = trim((string) ($assess['chief_complaint'] ?? ''));
       $when = !empty($assess['assessed_at']) ? date('M j, Y g:i A', strtotime((string) $assess['assessed_at'])) : '—';
     ?>
-    <article class="pmh-visit pmh-visit--record">
-      <div class="pmh-visit__rail" aria-hidden="true"><span class="pmh-visit__dot"></span></div>
+    <article class="pmh-visit pmh-visit--record pmh-visit--assessment">
+      <div class="pmh-visit__rail" aria-hidden="true"><span class="pmh-visit__dot pmh-visit__dot--assess"></span></div>
       <div class="pmh-visit__body">
         <header class="pmh-visit__head">
           <div class="pmh-visit__provider">
-            <span class="pmh-visit__avatar">TA</span>
+            <span class="pmh-visit__avatar pmh-visit__avatar--assess">TA</span>
             <div>
               <h3 class="pmh-visit__title">Triage assessment</h3>
-              <p class="pmh-visit__meta">
-                <?= htmlspecialchars($when) ?>
-                <?php if ($complaint !== ''): ?> · <?= htmlspecialchars($complaint) ?><?php endif; ?>
-              </p>
+              <p class="pmh-visit__meta"><?= htmlspecialchars($when) ?></p>
             </div>
           </div>
-          <span class="pmh-status pmh-status--default">Assessment</span>
+          <span class="pmh-status pmh-status--scheduled">Assessment</span>
         </header>
-        <div class="pmh-visit__pending">
-          <p>Full assessment details are kept in your Health Summary overview.</p>
+        <?php if ($complaint !== ''): ?>
+        <div class="pmh-visit__grid">
+          <section class="pmh-visit__block pmh-visit__block--full">
+            <h4 class="pmh-visit__label">Chief complaint</h4>
+            <p><?= htmlspecialchars($complaint) ?></p>
+          </section>
         </div>
-        <p class="pmh-visit__actions">
-          <a href="<?= ASSET_BASE ?>/views/patient/health_summary.php" class="pmh-btn pmh-btn--outline pmh-btn--sm">Open Health Summary</a>
-        </p>
+        <?php endif; ?>
+        <div class="pmh-visit__note">
+          <p>Full assessment details are in your Health Summary overview.</p>
+          <a href="<?= ASSET_BASE ?>/views/patient/health_summary.php" class="pmh-visit__note-link">Open Health Summary →</a>
+        </div>
       </div>
     </article>
     <?php endif; ?>

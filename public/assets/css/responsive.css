@@ -1305,7 +1305,6 @@ table:not(.ch-table) {
 
 /* ── Patient My Health page ── */
 @media (max-width: 768px) {
-  .pmh-hero,
   .pmh-hero__top,
   .pmh-grid,
   .pmh-card-grid,
@@ -1316,7 +1315,10 @@ table:not(.ch-table) {
   }
 
   .pmh-hero {
-    padding: 16px 14px;
+    padding: 4px 2px !important;
+    background: transparent !important;
+    border: 0 !important;
+    box-shadow: none !important;
   }
 }
 @supports (padding: max(0px)) {
