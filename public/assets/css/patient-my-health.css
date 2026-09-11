@@ -2189,9 +2189,66 @@ body.pmh-care-modal-open .pt-remedy__fab {
   white-space: pre-wrap;
 }
 
+.pmh-bhw .bhw-act-field {
+  margin: 0 0 8px;
+}
+
+.pmh-bhw .bhw-act-field__label {
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  color: #64748b;
+}
+
+.pmh-bhw .bhw-act-field__value {
+  margin-top: 2px;
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--pt-color-text, #0f172a);
+}
+
+.pmh-bhw__attr,
+.pmh-bhw .bhw-act-attr {
+  margin: 10px 0 0;
+  padding-top: 8px;
+  border-top: 1px solid var(--pt-border, #e2e8f0);
+  display: grid;
+  gap: 4px;
+}
+
+.pmh-bhw__attr > div,
+.pmh-bhw .bhw-act-attr > div {
+  display: grid;
+  grid-template-columns: 5.5rem 1fr;
+  gap: 8px;
+  font-size: 0.78rem;
+  line-height: 1.4;
+}
+
+.pmh-bhw__attr dt,
+.pmh-bhw .bhw-act-attr dt {
+  margin: 0;
+  font-weight: 700;
+  color: #64748b;
+}
+
+.pmh-bhw__attr dd,
+.pmh-bhw .bhw-act-attr dd {
+  margin: 0;
+  color: var(--pt-color-text, #0f172a);
+  font-weight: 600;
+}
+
 @media (max-width: 640px) {
   .pmh-session-kv div {
     grid-template-columns: 1fr;
     gap: 2px;
+  }
+
+  .pmh-bhw__attr > div,
+  .pmh-bhw .bhw-act-attr > div {
+    grid-template-columns: 1fr;
+    gap: 1px;
   }
 }

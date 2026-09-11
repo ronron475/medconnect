@@ -49,6 +49,7 @@ function bhw_residency_doc_display_name(array $doc): string
 function bhw_residency_upload_stats(PDO $pdo, array $ctx): array
 {
     [$clause, $params] = bhw_patient_sector_clause($pdo, $ctx, 'pr');
+    $join = bhw_pr_user_join('pr', 'u');
     $sql = "
         SELECT
             SUM(CASE WHEN rd.status IN ('pending', 'needs_review') THEN 1 ELSE 0 END) AS pending,
@@ -57,7 +58,7 @@ function bhw_residency_upload_stats(PDO $pdo, array $ctx): array
             SUM(CASE WHEN DATE(rd.uploaded_at) = CURDATE() THEN 1 ELSE 0 END) AS today
         FROM residency_documents rd
         INNER JOIN users u ON u.id = rd.patient_id
-        INNER JOIN patient_registrations pr ON pr.email = u.email
+        INNER JOIN patient_registrations pr ON {$join}
         WHERE u.role = 'patient' AND {$clause}
     ";
     $stmt = $pdo->prepare($sql);
@@ -79,9 +80,7 @@ $action = $_GET['action'] ?? $_POST['action'] ?? 'list';
 try {
     if ($action === 'list') {
         $patientId = (int) ($_GET['patient_id'] ?? 0);
-        if (!bhw_assert_patient_in_sector($pdo, $ctx, $patientId)) {
-            Api::error('ACCESS DENIED', 403);
-        }
+        bhw_api_require_patient_in_sector($pdo, $ctx, $patientId);
         $records = [];
         $metaCols = bhw_residency_doc_columns($pdo);
         $select = 'id, original_name, status, uploaded_at, file_size';
@@ -107,9 +106,7 @@ try {
     } elseif ($action === 'upload') {
         bhw_residency_doc_ensure_metadata($pdo);
         $patientId = (int) ($_POST['patient_id'] ?? 0);
-        if (!bhw_assert_patient_in_sector($pdo, $ctx, $patientId)) {
-            Api::error('ACCESS DENIED', 403);
-        }
+        bhw_api_require_patient_in_sector($pdo, $ctx, $patientId);
         $documentType = trim((string) ($_POST['document_type'] ?? ''));
         $documentTitle = trim((string) ($_POST['document_title'] ?? ''));
         $description = trim((string) ($_POST['description'] ?? ''));
@@ -182,9 +179,7 @@ try {
         if (!$doc) {
             Api::error('Document not found.', 404);
         }
-        if (!bhw_assert_patient_in_sector($pdo, $ctx, (int) $doc['patient_id'])) {
-            Api::error('ACCESS DENIED', 403);
-        }
+        bhw_api_require_patient_in_sector($pdo, $ctx, (int) $doc['patient_id']);
         $path = BASE_PATH . '/storage/residency/' . $doc['file_name'];
         if (!is_file($path)) {
             Api::error('File missing on server.', 404);

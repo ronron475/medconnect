@@ -360,6 +360,34 @@ function consultation_recorded_data_pending_latest(PDO $pdo, int $patientId): ?a
 }
 
 /**
+ * Full patient recorded-data history (pending + attached) for My Health / BHW activity.
+ * Append-only rows; never mixes patients.
+ *
+ * @return list<array<string, mixed>>
+ */
+function consultation_recorded_data_history_for_patient(PDO $pdo, int $patientId, int $limit = 40): array
+{
+    consultation_recorded_data_ensure_schema($pdo);
+    if ($patientId <= 0) {
+        return [];
+    }
+    $limit = max(1, min(80, $limit));
+
+    $stmt = $pdo->prepare("
+        SELECT d.*,
+               TRIM(CONCAT(COALESCE(u.first_name, ''), ' ', COALESCE(u.last_name, ''))) AS recorder_name
+        FROM consultation_recorded_data d
+        LEFT JOIN users u ON u.id = d.recorded_by
+        WHERE d.patient_id = ?
+        ORDER BY d.recorded_at DESC, d.id DESC
+        LIMIT {$limit}
+    ");
+    $stmt->execute([$patientId]);
+
+    return $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
+}
+
+/**
  * Pending history for BHW UI (newest first).
  *
  * @return list<array<string, mixed>>
@@ -409,6 +437,7 @@ function consultation_recorded_data_dto_from_rows(
         'recorded_by_label'    => '',
         'recorder_role'        => '',
         'recorder_role_label'  => '',
+        'patient_barangay'     => '',
         'recorded_at'          => null,
         'recorded_at_label'    => '',
         'fields'               => [],
@@ -430,12 +459,13 @@ function consultation_recorded_data_dto_from_rows(
     }
 
     $role = strtolower((string) ($latest['recorder_role'] ?? 'patient'));
-    $roleLabel = $role === 'bhw' ? 'BHW' : 'Patient';
+    $roleLabel = $role === 'bhw' ? 'Barangay Health Worker (BHW)' : 'Patient';
     $name = trim((string) ($latest['recorder_name'] ?? ''));
-    $byLabel = $name !== '' ? ($roleLabel . ' (' . $name . ')') : $roleLabel;
+    $byLabel = $name !== '' ? $name : $roleLabel;
     $status = strtolower((string) ($latest['status'] ?? ''));
     $origin = strtolower((string) ($latest['origin'] ?? ''));
     $isPre = ($status === 'pending') || ($origin === 'pre_consultation');
+    $barangay = trim((string) ($latest['patient_barangay'] ?? ''));
 
     return [
         'available'           => true,
@@ -444,6 +474,7 @@ function consultation_recorded_data_dto_from_rows(
         'recorded_by_label'   => $byLabel,
         'recorder_role'       => $role,
         'recorder_role_label' => $roleLabel,
+        'patient_barangay'    => $barangay,
         'recorded_at'         => $latest['recorded_at'] ?? null,
         'recorded_at_label'   => consultation_recorded_data_format_datetime($latest['recorded_at'] ?? null),
         'fields'              => $fields,
@@ -465,6 +496,9 @@ function consultation_recorded_data_pending_for_bhw(PDO $pdo, int $patientId): a
 {
     $history = consultation_recorded_data_pending_history($pdo, $patientId);
     $latest = $history[0] ?? null;
+    if (is_array($latest)) {
+        $latest = consultation_recorded_data_attach_patient_barangay($pdo, $patientId, $latest);
+    }
 
     return consultation_recorded_data_dto_from_rows($latest, $history, 0, $patientId, $latest ? 'pending_table' : 'none');
 }
@@ -602,7 +636,30 @@ function consultation_recorded_data_for_doctor(PDO $pdo, int $consultationId, in
         $latest['origin'] = 'consultation';
     }
 
+    $latest = consultation_recorded_data_attach_patient_barangay($pdo, $patientId, $latest);
+
     return consultation_recorded_data_dto_from_rows($latest, $history, $consultationId, $patientId, $source);
+}
+
+/**
+ * Attach the patient's registered barangay label for display attribution.
+ *
+ * @param array<string, mixed> $row
+ * @return array<string, mixed>
+ */
+function consultation_recorded_data_attach_patient_barangay(PDO $pdo, int $patientId, array $row): array
+{
+    if ($patientId <= 0) {
+        return $row;
+    }
+    try {
+        require_once __DIR__ . '/bhw_scope.php';
+        $row['patient_barangay'] = bhw_patient_registered_barangay($pdo, $patientId);
+    } catch (Throwable $e) {
+        $row['patient_barangay'] = (string) ($row['patient_barangay'] ?? '');
+    }
+
+    return $row;
 }
 
 /**

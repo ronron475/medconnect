@@ -109,15 +109,23 @@ final class BhwWorkflows
             }
         }
 
+        $bhwId = (int) ($_SESSION['user_id'] ?? 0);
+        if ($bhwId <= 0) {
+            throw new InvalidArgumentException('BHW session required.');
+        }
+
+        require_once __DIR__ . '/patient_settings.php';
+        patient_settings_ensure_schema($pdo);
+
         $pdo->beginTransaction();
         try {
             if (strcasecmp($email, $oldEmail) !== 0) {
                 $pdo->prepare('UPDATE users SET email = ? WHERE id = ?')->execute([$email, $patientId]);
-                $pdo->prepare('UPDATE patient_registrations SET email = ?, contact_number = ?, blood_type = ?, existing_conditions = ?, allergies = ?, current_medications = ? WHERE email = ?')
-                    ->execute([$email, $contact, $blood ?: 'Unknown', $conditions ?: null, $allergies ?: null, $medications ?: null, $oldEmail]);
+                $pdo->prepare('UPDATE patient_registrations SET email = ?, contact_number = ?, blood_type = ?, existing_conditions = ?, allergies = ?, current_medications = ?, medical_profile_updated_at = NOW(), medical_profile_updated_by = ? WHERE email = ? OR user_id = ?')
+                    ->execute([$email, $contact, $blood ?: 'Unknown', $conditions ?: null, $allergies ?: null, $medications ?: null, $bhwId, $oldEmail, $patientId]);
             } else {
-                $pdo->prepare('UPDATE patient_registrations SET contact_number = ?, blood_type = ?, existing_conditions = ?, allergies = ?, current_medications = ? WHERE email = ?')
-                    ->execute([$contact, $blood ?: 'Unknown', $conditions ?: null, $allergies ?: null, $medications ?: null, $oldEmail]);
+                $pdo->prepare('UPDATE patient_registrations SET contact_number = ?, blood_type = ?, existing_conditions = ?, allergies = ?, current_medications = ?, medical_profile_updated_at = NOW(), medical_profile_updated_by = ? WHERE email = ? OR user_id = ?')
+                    ->execute([$contact, $blood ?: 'Unknown', $conditions ?: null, $allergies ?: null, $medications ?: null, $bhwId, $oldEmail, $patientId]);
             }
             $pdo->commit();
         } catch (Throwable $e) {
@@ -131,6 +139,7 @@ final class BhwWorkflows
             'email' => $email,
             'contact' => $contact,
             'blood_type' => $blood,
+            'bhw_id' => $bhwId,
         ]);
         bhw_notify($pdo, $patientId, 'system', 'Profile Updated', 'Your contact or medical information was updated by your BHW.', ASSET_BASE . '/views/patient/profile.php');
     }

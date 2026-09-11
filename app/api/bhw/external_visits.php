@@ -33,6 +33,9 @@ try {
             if ($bhwId <= 0) {
                 Api::error('BHW session required.', 401);
             }
+            if (!bhw_assert_patient_in_sector($pdo, $ctx, $patientId)) {
+                Api::error('ACCESS DENIED: Patient is not registered in your assigned barangay.', 403);
+            }
 
             $result = patient_external_healthcare_visits_save(
                 $pdo,
@@ -51,6 +54,9 @@ try {
                 'facility_name' => $_POST['facility_name'] ?? null,
                 'visit_date' => $_POST['visit_date'] ?? null,
                 'information_source' => $_POST['information_source'] ?? null,
+                'bhw_barangay_id' => (int) ($ctx['barangay_id'] ?? 0),
+                'bhw_barangay' => (string) ($ctx['barangay_name'] ?? ''),
+                'patient_barangay' => bhw_patient_registered_barangay($pdo, $patientId),
             ]);
 
             Api::success([
