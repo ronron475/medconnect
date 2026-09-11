@@ -145,7 +145,8 @@
     const finalLevel = String(c.final_case_level || '').trim();
     if (!finalLevel) return '';
     const aiLevel = String(c.ai_case_level || '').trim();
-    const byDoctor = !!c.is_doctor_override || String(c.finalized_by || '') === 'Doctor';
+    const finalizedBy = String(c.finalized_by || '').trim();
+    const byDoctor = !!c.is_doctor_override || finalizedBy !== '';
     const bucket = String(c.final_case_bucket || '').toLowerCase().replace(/-/g, '_');
     const chip = bucket === 'emergency'
       ? 'pt-assess-chip--emergency'
@@ -159,7 +160,7 @@
       + '<span class="pt-assess-chip ' + chip + ' js-consult-final">' + escapeHtml(finalLevel) + '</span></div>';
     if (byDoctor) {
       html += '<div class="pt-assess-stack__row"><span class="pt-assess-stack__label">Finalized By</span>'
-        + '<span class="pt-assess-chip js-consult-finalized">Doctor</span></div>';
+        + '<span class="pt-assess-chip js-consult-finalized">' + escapeHtml(finalizedBy || 'Doctor') + '</span></div>';
     }
     html += '</div>';
     return html;

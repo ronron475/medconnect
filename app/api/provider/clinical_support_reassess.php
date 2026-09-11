@@ -108,7 +108,12 @@ try {
         $support['final_urgency'] = provider_clinical_support_caps_label((string) $support['risk_bucket']);
         $support['doctor_urgency'] = $support['final_urgency'];
         $support['doctor_urgency_bucket'] = $support['risk_bucket'];
-        $support['finalized_by'] = 'Doctor';
+        $support['finalized_by'] = provider_clinical_support_finalized_by_label(
+            $pdo,
+            $consultationId,
+            $providerId,
+            $providerName
+        );
         $support['risk_level'] = $support['final_urgency'] . ' (doctor override)';
     }
 

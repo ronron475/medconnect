@@ -1,12 +1,28 @@
 <?php
 /**
  * My Health — Care timeline tab.
- * Expects: $history, $rx_by_consult, $notes_by_consult, $outcomes_by_consult (optional)
+ * Expects: $care_timeline (unified), $history (legacy fallback),
+ *          $rx_by_consult, $notes_by_consult, $outcomes_by_consult,
+ *          $care_tips_history (optional), $bhw_activity (optional)
  */
 $rx_by_consult = $rx_by_consult ?? [];
 $notes_by_consult = $notes_by_consult ?? [];
 $outcomes_by_consult = $outcomes_by_consult ?? [];
+$care_timeline = $care_timeline ?? [];
+$care_tips_history = $care_tips_history ?? [];
+$bhwAttrClass = 'pmh-bhw__attr';
 
+if ($care_timeline === [] && !empty($history)) {
+    // Backward-compatible fallback if builder was not run.
+    foreach ($history as $h) {
+        $care_timeline[] = ['type' => 'consultation', 'sort_at' => '', 'data' => $h];
+    }
+}
+
+$hasTimeline = $care_timeline !== [];
+$hasCareTips = !empty($care_tips_history);
+
+if (!function_exists('pmh_status_class')) {
 function pmh_status_class(string $status): string {
     $s = strtolower(trim($status));
     if ($s === 'completed') return 'pmh-status--completed';
@@ -15,27 +31,62 @@ function pmh_status_class(string $status): string {
     if (in_array($s, ['scheduled', 'pending'], true)) return 'pmh-status--scheduled';
     return 'pmh-status--default';
 }
+}
 
+if (!function_exists('pmh_provider_initials')) {
 function pmh_provider_initials(?string $first, ?string $last): string {
     $f = mb_substr(trim((string) $first), 0, 1);
     $l = mb_substr(trim((string) $last), 0, 1);
     return strtoupper($f . $l) ?: 'DR';
 }
+}
 
+if (!function_exists('pmh_note_text')) {
 function pmh_note_text(?string $value, string $fallback = ''): string {
     $v = trim((string) $value);
     return $v !== '' ? $v : $fallback;
 }
+}
+
+if (!function_exists('pmh_timeline_initials')) {
+function pmh_timeline_initials(string $name, string $fallback = 'HX'): string {
+    $parts = preg_split('/\s+/', trim($name)) ?: [];
+    $letters = '';
+    foreach (array_slice($parts, 0, 2) as $part) {
+        $letters .= mb_substr($part, 0, 1);
+    }
+    return strtoupper($letters !== '' ? $letters : $fallback);
+}
+}
 ?>
-<?php if (empty($history)): ?>
+<?php if (!$hasTimeline): ?>
   <div class="pmh-empty pmh-empty--minimal">
-    <h3>No visit history yet</h3>
-    <p>Your care timeline will show here after your first consultation.</p>
+    <?php if ($hasCareTips): ?>
+    <h3>No care visits on this timeline yet</h3>
+    <p>
+      Related activity is available under
+      <a href="<?= ASSET_BASE ?>/views/patient/my_health.php?tab=care-tips">Care tips</a>
+      and
+      <a href="<?= ASSET_BASE ?>/views/patient/health_summary.php">Health Summary</a>.
+    </p>
     <a href="<?= ASSET_BASE ?>/views/patient/triage.php" class="pmh-btn pmh-btn--primary">Book Consultation</a>
+    <?php else: ?>
+    <h3>No visit history yet</h3>
+    <p>Your care timeline will show consultations and health measurements after your first recorded visit.</p>
+    <a href="<?= ASSET_BASE ?>/views/patient/triage.php" class="pmh-btn pmh-btn--primary">Book Consultation</a>
+    <?php endif; ?>
   </div>
 <?php else: ?>
   <div class="pmh-feed pmh-feed--timeline">
-    <?php foreach ($history as $h):
+    <?php foreach ($care_timeline as $item):
+      $type = (string) ($item['type'] ?? '');
+      $row = $item['data'] ?? [];
+      if (!is_array($row)) {
+          continue;
+      }
+
+      if ($type === 'consultation'):
+      $h = $row;
       $cid = (int) ($h['id'] ?? 0);
       $p_list = $rx_by_consult[$cid] ?? [];
       $note = $notes_by_consult[$cid] ?? null;
@@ -170,6 +221,223 @@ function pmh_note_text(?string $value, string $fallback = ''): string {
         <?php endif; ?>
       </div>
     </article>
+
+    <?php elseif ($type === 'health_entry'):
+      $entry = $row;
+      $who = trim((string) ($entry['added_by'] ?? ''));
+      $roleKey = strtolower((string) ($entry['role'] ?? 'patient'));
+      $title = $roleKey === 'bhw' ? ($who !== '' && $who !== 'Unknown' ? $who : 'Barangay Health Worker') : 'Patient health record';
+      $avatar = $roleKey === 'bhw' ? pmh_timeline_initials($who, 'BH') : 'PT';
+      $statusLabel = trim((string) ($entry['status_label'] ?? 'On record'));
+    ?>
+    <article class="pmh-visit pmh-visit--record">
+      <div class="pmh-visit__rail" aria-hidden="true"><span class="pmh-visit__dot"></span></div>
+      <div class="pmh-visit__body">
+        <header class="pmh-visit__head">
+          <div class="pmh-visit__provider">
+            <span class="pmh-visit__avatar"><?= htmlspecialchars($avatar) ?></span>
+            <div>
+              <h3 class="pmh-visit__title"><?= htmlspecialchars($title) ?></h3>
+              <p class="pmh-visit__meta">
+                Health measurements
+                <?php if (!empty($entry['date_label']) && $entry['date_label'] !== '—'): ?>
+                  · <?= htmlspecialchars((string) $entry['date_label']) ?>
+                <?php endif; ?>
+                <?php if (!empty($entry['time_label']) && $entry['time_label'] !== '—'): ?>
+                  · <?= htmlspecialchars((string) $entry['time_label']) ?>
+                <?php endif; ?>
+              </p>
+            </div>
+          </div>
+          <span class="pmh-status pmh-status--default"><?= htmlspecialchars($statusLabel) ?></span>
+        </header>
+        <div class="pmh-visit__grid">
+          <?php foreach (($entry['fields'] ?? []) as $field): ?>
+          <section class="pmh-visit__block">
+            <h4 class="pmh-visit__label"><?= htmlspecialchars((string) ($field['label'] ?? '')) ?></h4>
+            <p><?= htmlspecialchars((string) ($field['value'] ?? '')) ?></p>
+          </section>
+          <?php endforeach; ?>
+        </div>
+        <?php require VIEWS_PATH . '/partials/bhw_activity_attribution.php'; ?>
+      </div>
+    </article>
+
+    <?php elseif ($type === 'external_visit'):
+      $entry = $row;
+      $who = trim((string) ($entry['added_by'] ?? ''));
+      $roleKey = strtolower((string) ($entry['role'] ?? 'bhw'));
+      $title = $who !== '' && $who !== 'Unknown' ? $who : 'External healthcare visit';
+    ?>
+    <article class="pmh-visit pmh-visit--record">
+      <div class="pmh-visit__rail" aria-hidden="true"><span class="pmh-visit__dot"></span></div>
+      <div class="pmh-visit__body">
+        <header class="pmh-visit__head">
+          <div class="pmh-visit__provider">
+            <span class="pmh-visit__avatar"><?= htmlspecialchars(pmh_timeline_initials($who, $roleKey === 'patient' ? 'PT' : 'BH')) ?></span>
+            <div>
+              <h3 class="pmh-visit__title"><?= htmlspecialchars($title) ?></h3>
+              <p class="pmh-visit__meta">
+                External healthcare visit
+                <?php if (!empty($entry['date_label']) && $entry['date_label'] !== '—'): ?>
+                  · <?= htmlspecialchars((string) $entry['date_label']) ?>
+                <?php endif; ?>
+                <?php if (!empty($entry['time_label']) && $entry['time_label'] !== '—'): ?>
+                  · <?= htmlspecialchars((string) $entry['time_label']) ?>
+                <?php endif; ?>
+              </p>
+            </div>
+          </div>
+          <span class="pmh-status pmh-status--default">On record</span>
+        </header>
+        <div class="pmh-visit__grid">
+          <?php foreach (($entry['fields'] ?? []) as $field): ?>
+          <section class="pmh-visit__block pmh-visit__block--full">
+            <h4 class="pmh-visit__label"><?= htmlspecialchars((string) ($field['label'] ?? '')) ?></h4>
+            <p><?= htmlspecialchars((string) ($field['value'] ?? '')) ?></p>
+          </section>
+          <?php endforeach; ?>
+        </div>
+        <?php require VIEWS_PATH . '/partials/bhw_activity_attribution.php'; ?>
+      </div>
+    </article>
+
+    <?php elseif ($type === 'home_visit'):
+      $entry = $row;
+      $who = trim((string) ($entry['added_by'] ?? $entry['bhw_name'] ?? ''));
+      $title = $who !== '' && $who !== 'Unknown' ? $who : 'Barangay Health Worker';
+    ?>
+    <article class="pmh-visit pmh-visit--record">
+      <div class="pmh-visit__rail" aria-hidden="true"><span class="pmh-visit__dot"></span></div>
+      <div class="pmh-visit__body">
+        <header class="pmh-visit__head">
+          <div class="pmh-visit__provider">
+            <span class="pmh-visit__avatar"><?= htmlspecialchars(pmh_timeline_initials($who, 'BH')) ?></span>
+            <div>
+              <h3 class="pmh-visit__title"><?= htmlspecialchars($title) ?></h3>
+              <p class="pmh-visit__meta">
+                Home visit<?= !empty($entry['type_label']) ? ' · ' . htmlspecialchars((string) $entry['type_label']) : '' ?>
+                <?php if (!empty($entry['date_label']) && $entry['date_label'] !== '—'): ?>
+                  · <?= htmlspecialchars((string) $entry['date_label']) ?>
+                <?php endif; ?>
+              </p>
+            </div>
+          </div>
+          <span class="pmh-status pmh-status--default"><?= htmlspecialchars((string) ($entry['status'] ?? 'Logged')) ?></span>
+        </header>
+        <?php if (!empty($entry['notes'])): ?>
+        <div class="pmh-visit__grid">
+          <section class="pmh-visit__block pmh-visit__block--full">
+            <h4 class="pmh-visit__label">Notes</h4>
+            <p><?= htmlspecialchars((string) $entry['notes']) ?></p>
+          </section>
+        </div>
+        <?php endif; ?>
+        <?php require VIEWS_PATH . '/partials/bhw_activity_attribution.php'; ?>
+      </div>
+    </article>
+
+    <?php elseif ($type === 'document'):
+      $entry = $row;
+      $who = trim((string) ($entry['added_by'] ?? $entry['bhw_name'] ?? ''));
+      $title = trim((string) ($entry['title'] ?? 'Document'));
+    ?>
+    <article class="pmh-visit pmh-visit--record">
+      <div class="pmh-visit__rail" aria-hidden="true"><span class="pmh-visit__dot"></span></div>
+      <div class="pmh-visit__body">
+        <header class="pmh-visit__head">
+          <div class="pmh-visit__provider">
+            <span class="pmh-visit__avatar"><?= htmlspecialchars(pmh_timeline_initials($who, 'BH')) ?></span>
+            <div>
+              <h3 class="pmh-visit__title"><?= htmlspecialchars($title) ?></h3>
+              <p class="pmh-visit__meta">
+                Document<?= !empty($entry['type']) ? ' · ' . htmlspecialchars((string) $entry['type']) : '' ?>
+                <?php if (!empty($entry['date_label']) && $entry['date_label'] !== '—'): ?>
+                  · <?= htmlspecialchars((string) $entry['date_label']) ?>
+                <?php endif; ?>
+              </p>
+            </div>
+          </div>
+          <span class="pmh-status pmh-status--default">On file</span>
+        </header>
+        <?php if (!empty($entry['description'])): ?>
+        <div class="pmh-visit__pending"><p><?= htmlspecialchars((string) $entry['description']) ?></p></div>
+        <?php endif; ?>
+        <?php require VIEWS_PATH . '/partials/bhw_activity_attribution.php'; ?>
+      </div>
+    </article>
+
+    <?php elseif ($type === 'referral'):
+      $entry = $row;
+      $who = trim((string) ($entry['added_by'] ?? $entry['bhw_name'] ?? ''));
+      $title = trim((string) ($entry['type'] ?? 'Referral'));
+    ?>
+    <article class="pmh-visit pmh-visit--record">
+      <div class="pmh-visit__rail" aria-hidden="true"><span class="pmh-visit__dot"></span></div>
+      <div class="pmh-visit__body">
+        <header class="pmh-visit__head">
+          <div class="pmh-visit__provider">
+            <span class="pmh-visit__avatar"><?= htmlspecialchars(pmh_timeline_initials($who, 'BH')) ?></span>
+            <div>
+              <h3 class="pmh-visit__title"><?= htmlspecialchars($title) ?></h3>
+              <p class="pmh-visit__meta">
+                Referral
+                <?php if (!empty($entry['date_label']) && $entry['date_label'] !== '—'): ?>
+                  · <?= htmlspecialchars((string) $entry['date_label']) ?>
+                <?php endif; ?>
+              </p>
+            </div>
+          </div>
+          <span class="pmh-status pmh-status--default"><?= htmlspecialchars((string) ($entry['status'] ?? 'Pending')) ?></span>
+        </header>
+        <div class="pmh-visit__grid">
+          <?php if (!empty($entry['facility'])): ?>
+          <section class="pmh-visit__block pmh-visit__block--full">
+            <h4 class="pmh-visit__label">Facility</h4>
+            <p><?= htmlspecialchars((string) $entry['facility']) ?></p>
+          </section>
+          <?php endif; ?>
+          <?php if (!empty($entry['reason'])): ?>
+          <section class="pmh-visit__block pmh-visit__block--full">
+            <h4 class="pmh-visit__label">Reason</h4>
+            <p><?= htmlspecialchars((string) $entry['reason']) ?></p>
+          </section>
+          <?php endif; ?>
+        </div>
+        <?php require VIEWS_PATH . '/partials/bhw_activity_attribution.php'; ?>
+      </div>
+    </article>
+
+    <?php elseif ($type === 'assessment'):
+      $assess = $row;
+      $complaint = trim((string) ($assess['chief_complaint'] ?? ''));
+      $when = !empty($assess['assessed_at']) ? date('M j, Y g:i A', strtotime((string) $assess['assessed_at'])) : '—';
+    ?>
+    <article class="pmh-visit pmh-visit--record">
+      <div class="pmh-visit__rail" aria-hidden="true"><span class="pmh-visit__dot"></span></div>
+      <div class="pmh-visit__body">
+        <header class="pmh-visit__head">
+          <div class="pmh-visit__provider">
+            <span class="pmh-visit__avatar">TA</span>
+            <div>
+              <h3 class="pmh-visit__title">Triage assessment</h3>
+              <p class="pmh-visit__meta">
+                <?= htmlspecialchars($when) ?>
+                <?php if ($complaint !== ''): ?> · <?= htmlspecialchars($complaint) ?><?php endif; ?>
+              </p>
+            </div>
+          </div>
+          <span class="pmh-status pmh-status--default">Assessment</span>
+        </header>
+        <div class="pmh-visit__pending">
+          <p>Full assessment details are kept in your Health Summary overview.</p>
+        </div>
+        <p class="pmh-visit__actions">
+          <a href="<?= ASSET_BASE ?>/views/patient/health_summary.php" class="pmh-btn pmh-btn--outline pmh-btn--sm">Open Health Summary</a>
+        </p>
+      </div>
+    </article>
+    <?php endif; ?>
     <?php endforeach; ?>
   </div>
 <?php endif; ?>

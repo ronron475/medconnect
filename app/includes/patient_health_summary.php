@@ -217,7 +217,7 @@ function patient_health_summary_load(PDO $pdo, int $userId): array
             $updatedByRole = $role;
             $updatedByName = match ($role) {
                 'provider' => ($full !== '' ? 'Dr. ' . $full : 'Provider'),
-                'bhw' => ($full !== '' ? $full . ' (Barangay Health Worker)' : 'Barangay Health Worker (BHW)'),
+                'bhw' => ($full !== '' ? $full . ' (Barangay Health Worker)' : 'Barangay Health Worker'),
                 'patient' => ($full !== '' ? $full . ' (Patient)' : 'Patient'),
                 default => ($full !== '' ? $full : 'Unknown'),
             };

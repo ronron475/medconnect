@@ -223,6 +223,26 @@ foreach ($care_tips_history as $ctRow) {
 $bhw_activity = community_bhw_activity_load($pdo, $uid);
 $bhw_activity_variant = 'patient';
 
+$timeline_assessments = [];
+try {
+    if ($pdo->query("SHOW TABLES LIKE 'triage_results'")->rowCount()) {
+        $ta = $pdo->prepare("
+            SELECT id, chief_complaint, assessed_at, triage_classification, level, urgency_label,
+                   triage_level, outcome, recommendation_status
+            FROM triage_results
+            WHERE patient_id = ?
+            ORDER BY assessed_at DESC, id DESC
+            LIMIT 20
+        ");
+        $ta->execute([$uid]);
+        $timeline_assessments = $ta->fetchAll(PDO::FETCH_ASSOC) ?: [];
+    }
+} catch (Throwable $e) {
+    $timeline_assessments = [];
+}
+
+$care_timeline = patient_care_timeline_build($history, $bhw_activity, $timeline_assessments);
+
 $page_title = 'My Health';
 $pmh_css_ver = (int) @filemtime(ASSETS_PATH . '/css/patient-my-health.css');
 $patient_page_stylesheets = [
@@ -267,7 +287,6 @@ $patient_page_stylesheets = [
 
   <div class="pmh-surface pmh-surface--minimal" role="tabpanel">
     <?php if ($active_tab === 'timeline'): ?>
-      <?php require VIEWS_PATH . '/partials/bhw_activity_panel.php'; ?>
       <?php require VIEWS_PATH . '/patient/partials/view_my_health_timeline.php'; ?>
     <?php elseif ($active_tab === 'files'): ?>
       <?php require VIEWS_PATH . '/patient/partials/view_my_health_files.php'; ?>

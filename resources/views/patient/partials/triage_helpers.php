@@ -50,9 +50,15 @@ if (!function_exists('mc_render_triage_assessment_stack')) {
         <span class="pt-assess-chip <?= htmlspecialchars($chip) ?>"><?= htmlspecialchars($final) ?></span>
       </div>
       <?php if ($doctor !== $ai || $final !== $ai): ?>
+      <?php
+        $finalizedByName = trim((string) ($row['finalized_by_name'] ?? $row['finalized_by'] ?? ''));
+        if ($finalizedByName === '') {
+            $finalizedByName = 'Doctor';
+        }
+      ?>
       <div class="pt-assess-stack__row">
         <span class="pt-assess-stack__label">Finalized By</span>
-        <span class="pt-assess-chip">Doctor</span>
+        <span class="pt-assess-chip"><?= htmlspecialchars($finalizedByName) ?></span>
       </div>
       <?php endif; ?>
       <?php if ($isEmergency): ?>
@@ -87,7 +93,11 @@ if (!function_exists('mc_render_consultation_outcome_stack')) {
             ? patient_case_level_chip_class($bucket)
             : 'pt-assess-chip--routine';
         $byDoctor = !empty($outcome['is_doctor_override'])
-            || strcasecmp((string) ($outcome['finalized_by'] ?? ''), 'Doctor') === 0;
+            || trim((string) ($outcome['finalized_by'] ?? '')) !== '';
+        $finalizedLabel = trim((string) ($outcome['finalized_by'] ?? ''));
+        if ($finalizedLabel === '') {
+            $finalizedLabel = 'Doctor';
+        }
         $cid = $consultationId > 0 ? $consultationId : (int) ($outcome['consultation_id'] ?? 0);
         ?>
     <div class="pt-assess-stack"<?= $cid > 0 ? ' data-consult-id="' . (int) $cid . '"' : '' ?>>
@@ -104,7 +114,7 @@ if (!function_exists('mc_render_consultation_outcome_stack')) {
       <?php if ($byDoctor): ?>
       <div class="pt-assess-stack__row">
         <span class="pt-assess-stack__label">Finalized By</span>
-        <span class="pt-assess-chip js-consult-finalized">Doctor</span>
+        <span class="pt-assess-chip js-consult-finalized"><?= htmlspecialchars($finalizedLabel) ?></span>
       </div>
       <?php endif; ?>
     </div>
