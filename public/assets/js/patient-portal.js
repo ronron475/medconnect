@@ -1377,13 +1377,13 @@
   }
 
   async function confirmStartNewConsultation() {
-    const title = 'Start a new consultation?';
+    const title = 'Start a new complaint?';
     const message = 'Your current unfinished triage will be cancelled. Your previous medical records will not be deleted.';
     if (window.McModal && typeof window.McModal.confirm === 'function') {
       return window.McModal.confirm({
         title: title,
         message: message,
-        confirmLabel: 'Start New Consultation',
+        confirmLabel: 'Start New Complaint',
         cancelLabel: 'Cancel',
         danger: true,
       });

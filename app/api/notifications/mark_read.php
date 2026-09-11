@@ -39,8 +39,12 @@ try {
     }
 
     NotificationManager::markRead($pdo, $userId, $notificationId);
+    // Re-query after mark so badge always reflects true unread total (idempotent on re-click).
+    $unread = NotificationManager::getUnreadCount($pdo, $userId);
     Api::success([
-        'unread_count' => NotificationManager::getUnreadCount($pdo, $userId),
+        'unread_count' => $unread,
+        'notification_id' => $notificationId,
+        'is_read' => true,
     ], 'Notification marked as read.');
 } catch (Exception $e) {
     Api::error('Could not update notification.', 500);

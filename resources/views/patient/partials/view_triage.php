@@ -160,7 +160,7 @@ $show_start_new_consultation_btn = !$is_provider_locked && empty($force_new_conc
         If this is a different primary complaint, <a href="<?= htmlspecialchars((defined('ASSET_BASE') ? ASSET_BASE : '') . '/views/patient/triage.php?new_concern=1') ?>">start a new case</a>.
         <?php endif; ?>
         <?php elseif ($preliminary_payload !== null): ?>
-        This primary complaint is locked for the current triage session. To describe a different concern, click <strong>Start New Consultation</strong>.
+        This primary complaint is locked for the current triage session. To describe a different concern, click <strong>Start New Complaint</strong>.
         <?php else: ?>
         Describe your primary complaint to start a new consultation. Previous complaints stay in My Sessions and are not reused.
         <?php endif; ?>
@@ -173,7 +173,7 @@ $show_start_new_consultation_btn = !$is_provider_locked && empty($force_new_conc
           id="btnStartNewConsultation"
           data-triage-id="<?= (int) ($preliminary_payload['triage_id'] ?? 0) ?>"
         >
-          Start New Consultation
+          Start New Complaint
         </button>
       </div>
       <?php endif; ?>

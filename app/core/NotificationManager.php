@@ -390,8 +390,15 @@ final class NotificationManager
     public static function markRead(PDO $pdo, int $userId, int $notificationId): bool
     {
         self::ensureSchema($pdo);
-        $stmt = $pdo->prepare("UPDATE notifications SET is_read = 1, updated_at = NOW() WHERE id = ? AND user_id = ?");
-        return $stmt->execute([$notificationId, $userId]);
+        // Only transition unread → read so repeat clicks are idempotent.
+        $stmt = $pdo->prepare(
+            "UPDATE notifications
+             SET is_read = 1, updated_at = NOW()
+             WHERE id = ? AND user_id = ? AND is_read = 0 AND status = 'active'"
+        );
+        $stmt->execute([$notificationId, $userId]);
+
+        return $stmt->rowCount() > 0;
     }
 
     public static function markUnread(PDO $pdo, int $userId, int $notificationId): bool

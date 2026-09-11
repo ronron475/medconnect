@@ -17,6 +17,83 @@
   box-shadow: var(--pt-shadow-card, 0 10px 28px rgba(2, 128, 144, 0.07));
 }
 
+.pmh-hero--minimal {
+  margin-bottom: 14px;
+  padding: 16px 18px;
+  border-radius: 14px;
+  box-shadow: none;
+}
+
+.pmh-hero--minimal .pmh-hero__top {
+  margin-bottom: 0;
+  gap: 12px 16px;
+  align-items: center;
+}
+
+.pmh-hero--minimal .pmh-hero__title {
+  margin: 0 0 4px;
+  font-size: clamp(1.2rem, 2.2vw, 1.4rem);
+}
+
+.pmh-hero--minimal .pmh-hero__text {
+  font-size: 0.84rem;
+  line-height: 1.4;
+  max-width: none;
+}
+
+.pmh-hero--minimal .pmh-hero__metrics {
+  margin-top: 14px;
+  gap: 8px;
+}
+
+.pmh-hero--minimal .pmh-metric-pill {
+  padding: 10px 12px;
+  border-radius: 12px;
+}
+
+.pmh-hero--minimal .pmh-metric-pill__value {
+  font-size: 1.2rem;
+}
+
+.pmh-page--minimal .pmh-tabs--segment {
+  margin-bottom: 14px;
+  padding: 4px;
+  border-radius: 12px;
+}
+
+.pmh-page--minimal .pmh-tabs--segment .pmh-tab {
+  padding: 8px 12px;
+  font-size: 0.82rem;
+  gap: 6px;
+}
+
+.pmh-surface--minimal {
+  padding: 14px 16px 16px;
+  border-radius: 14px;
+  box-shadow: none;
+}
+
+.pmh-surface__head--compact {
+  margin-bottom: 12px;
+  padding-bottom: 10px;
+}
+
+.pmh-empty--minimal {
+  padding: 28px 16px;
+  background: transparent;
+  border-style: solid;
+  border-color: var(--pt-border, #e2e8f0);
+}
+
+.pmh-empty--minimal h3 {
+  font-size: 1rem;
+}
+
+.pmh-empty--minimal p {
+  margin-bottom: 14px;
+  font-size: 0.84rem;
+}
+
 .pmh-hero__top {
   display: flex;
   flex-wrap: wrap;

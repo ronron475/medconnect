@@ -28,12 +28,9 @@ function pmh_note_text(?string $value, string $fallback = ''): string {
 }
 ?>
 <?php if (empty($history)): ?>
-  <div class="pmh-empty">
-    <div class="pmh-empty__icon" aria-hidden="true">
-      <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-    </div>
+  <div class="pmh-empty pmh-empty--minimal">
     <h3>No visit history yet</h3>
-    <p>After your first consultation, your care timeline will appear here with diagnosis notes and prescriptions.</p>
+    <p>Your care timeline will show here after your first consultation.</p>
     <a href="<?= ASSET_BASE ?>/views/patient/triage.php" class="pmh-btn pmh-btn--primary">Book Consultation</a>
   </div>
 <?php else: ?>

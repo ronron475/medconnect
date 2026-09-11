@@ -237,7 +237,7 @@ $patient_page_stylesheets = [
 <body class="patient-portal">
 <?php require_once VIEWS_PATH . '/patient/partials/layout_shell_open.php'; ?>
 
-<div class="patient-page pmh-page pmh-page--<?= htmlspecialchars($active_tab) ?>">
+<div class="patient-page pmh-page pmh-page--minimal pmh-page--<?= htmlspecialchars($active_tab) ?>">
 
   <?php require VIEWS_PATH . '/patient/partials/view_my_health_header.php'; ?>
 
@@ -245,13 +245,11 @@ $patient_page_stylesheets = [
     <a href="<?= ASSET_BASE ?>/views/patient/my_health.php?tab=timeline"
        class="pmh-tab <?= $active_tab === 'timeline' ? 'is-active' : '' ?>"
        role="tab" aria-selected="<?= $active_tab === 'timeline' ? 'true' : 'false' ?>">
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
       Care Timeline
     </a>
     <a href="<?= ASSET_BASE ?>/views/patient/my_health.php?tab=files"
        class="pmh-tab <?= $active_tab === 'files' ? 'is-active' : '' ?>"
        role="tab" aria-selected="<?= $active_tab === 'files' ? 'true' : 'false' ?>">
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
       Health Files
       <?php if ($counts['all'] > 0): ?>
       <span class="pmh-tab__count"><?= (int) $counts['all'] ?></span>
@@ -260,7 +258,6 @@ $patient_page_stylesheets = [
     <a href="<?= ASSET_BASE ?>/views/patient/my_health.php?tab=care-tips"
        class="pmh-tab <?= $active_tab === 'care-tips' ? 'is-active' : '' ?>"
        role="tab" aria-selected="<?= $active_tab === 'care-tips' ? 'true' : 'false' ?>">
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
       Care tips
       <?php if ($care_tips_active_count > 0): ?>
       <span class="pmh-tab__count"><?= (int) $care_tips_active_count ?></span>
@@ -268,31 +265,18 @@ $patient_page_stylesheets = [
     </a>
   </nav>
 
-  <div class="pmh-surface" role="tabpanel">
+  <div class="pmh-surface pmh-surface--minimal" role="tabpanel">
     <?php if ($active_tab === 'timeline'): ?>
-      <div class="pmh-surface__head">
-        <div>
-          <h3 class="pmh-surface__title">Care timeline</h3>
-          <p class="pmh-surface__desc">Consultation visits with diagnosis, plans, and prescriptions from your doctors.</p>
-        </div>
-      </div>
       <?php require VIEWS_PATH . '/partials/bhw_activity_panel.php'; ?>
       <?php require VIEWS_PATH . '/patient/partials/view_my_health_timeline.php'; ?>
     <?php elseif ($active_tab === 'files'): ?>
-      <div class="pmh-surface__head">
-        <div>
-          <h3 class="pmh-surface__title">Health files</h3>
-          <p class="pmh-surface__desc">Prescriptions, consultation health files, and referrals from your doctors.</p>
-        </div>
-      </div>
       <?php require VIEWS_PATH . '/patient/partials/view_my_health_files.php'; ?>
     <?php else: ?>
-      <div class="pmh-surface__head pmh-surface__head--split">
+      <?php if ($care_tips_active_count > 0): ?>
+      <div class="pmh-surface__head pmh-surface__head--split pmh-surface__head--compact">
         <div>
           <h3 class="pmh-surface__title">Self-care guidance</h3>
-          <p class="pmh-surface__desc">Provider-approved home care tips from your symptom checks.</p>
         </div>
-        <?php if ($care_tips_active_count > 0): ?>
         <button
           type="button"
           class="pmh-btn pmh-btn--primary"
@@ -300,8 +284,8 @@ $patient_page_stylesheets = [
         >
           Open Care Assistant
         </button>
-        <?php endif; ?>
       </div>
+      <?php endif; ?>
       <?php require VIEWS_PATH . '/patient/partials/view_my_health_care_tips.php'; ?>
     <?php endif; ?>
   </div>
