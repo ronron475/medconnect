@@ -257,57 +257,71 @@ $patient_page_stylesheets = [
 <body class="patient-portal">
 <?php require_once VIEWS_PATH . '/patient/partials/layout_shell_open.php'; ?>
 
-<div class="patient-page pmh-page pmh-page--minimal pmh-page--<?= htmlspecialchars($active_tab) ?>">
+<div class="patient-page pmh-page pmh-page--<?= htmlspecialchars($active_tab) ?>">
 
   <?php require VIEWS_PATH . '/patient/partials/view_my_health_header.php'; ?>
 
-  <nav class="pmh-tabs pmh-tabs--segment" role="tablist" aria-label="My Health sections">
-    <a href="<?= ASSET_BASE ?>/views/patient/my_health.php?tab=timeline"
-       class="pmh-tab <?= $active_tab === 'timeline' ? 'is-active' : '' ?>"
-       role="tab" aria-selected="<?= $active_tab === 'timeline' ? 'true' : 'false' ?>">
-      Care Timeline
-    </a>
-    <a href="<?= ASSET_BASE ?>/views/patient/my_health.php?tab=files"
-       class="pmh-tab <?= $active_tab === 'files' ? 'is-active' : '' ?>"
-       role="tab" aria-selected="<?= $active_tab === 'files' ? 'true' : 'false' ?>">
-      Health Files
-      <?php if ($counts['all'] > 0): ?>
-      <span class="pmh-tab__count"><?= (int) $counts['all'] ?></span>
-      <?php endif; ?>
-    </a>
-    <a href="<?= ASSET_BASE ?>/views/patient/my_health.php?tab=care-tips"
-       class="pmh-tab <?= $active_tab === 'care-tips' ? 'is-active' : '' ?>"
-       role="tab" aria-selected="<?= $active_tab === 'care-tips' ? 'true' : 'false' ?>">
-      Care tips
-      <?php if ($care_tips_active_count > 0): ?>
-      <span class="pmh-tab__count"><?= (int) $care_tips_active_count ?></span>
-      <?php endif; ?>
-    </a>
-  </nav>
+  <section class="pmh-panel" aria-label="My Health records">
+    <nav class="pmh-tabs pmh-tabs--segment" role="tablist" aria-label="My Health sections">
+      <a href="<?= ASSET_BASE ?>/views/patient/my_health.php?tab=timeline"
+         class="pmh-tab <?= $active_tab === 'timeline' ? 'is-active' : '' ?>"
+         role="tab" aria-selected="<?= $active_tab === 'timeline' ? 'true' : 'false' ?>">
+        Care Timeline
+        <?php if (!empty($care_timeline)): ?>
+        <span class="pmh-tab__count"><?= count($care_timeline) ?></span>
+        <?php endif; ?>
+      </a>
+      <a href="<?= ASSET_BASE ?>/views/patient/my_health.php?tab=files"
+         class="pmh-tab <?= $active_tab === 'files' ? 'is-active' : '' ?>"
+         role="tab" aria-selected="<?= $active_tab === 'files' ? 'true' : 'false' ?>">
+        Health Files
+        <?php if ($counts['all'] > 0): ?>
+        <span class="pmh-tab__count"><?= (int) $counts['all'] ?></span>
+        <?php endif; ?>
+      </a>
+      <a href="<?= ASSET_BASE ?>/views/patient/my_health.php?tab=care-tips"
+         class="pmh-tab <?= $active_tab === 'care-tips' ? 'is-active' : '' ?>"
+         role="tab" aria-selected="<?= $active_tab === 'care-tips' ? 'true' : 'false' ?>">
+        Care tips
+        <?php if ($care_tips_active_count > 0): ?>
+        <span class="pmh-tab__count"><?= (int) $care_tips_active_count ?></span>
+        <?php endif; ?>
+      </a>
+    </nav>
 
-  <div class="pmh-surface pmh-surface--minimal" role="tabpanel">
-    <?php if ($active_tab === 'timeline'): ?>
-      <?php require VIEWS_PATH . '/patient/partials/view_my_health_timeline.php'; ?>
-    <?php elseif ($active_tab === 'files'): ?>
-      <?php require VIEWS_PATH . '/patient/partials/view_my_health_files.php'; ?>
-    <?php else: ?>
-      <?php if ($care_tips_active_count > 0): ?>
-      <div class="pmh-surface__head pmh-surface__head--split pmh-surface__head--compact">
-        <div>
-          <h3 class="pmh-surface__title">Self-care guidance</h3>
+    <div class="pmh-surface" role="tabpanel">
+      <?php if ($active_tab === 'timeline'): ?>
+        <header class="pmh-surface__head pmh-surface__head--compact">
+          <h3 class="pmh-surface__title">Care timeline</h3>
+          <p class="pmh-surface__desc">Consultations, assessments, and recorded health activity.</p>
+        </header>
+        <?php require VIEWS_PATH . '/patient/partials/view_my_health_timeline.php'; ?>
+      <?php elseif ($active_tab === 'files'): ?>
+        <header class="pmh-surface__head pmh-surface__head--compact">
+          <h3 class="pmh-surface__title">Health files</h3>
+          <p class="pmh-surface__desc">Finalized consultation records signed by your provider.</p>
+        </header>
+        <?php require VIEWS_PATH . '/patient/partials/view_my_health_files.php'; ?>
+      <?php else: ?>
+        <div class="pmh-surface__head pmh-surface__head--split pmh-surface__head--compact">
+          <div>
+            <h3 class="pmh-surface__title">Self-care guidance</h3>
+            <p class="pmh-surface__desc">Provider-approved tips from your triage assessments.</p>
+          </div>
+          <?php if ($care_tips_active_count > 0): ?>
+          <button
+            type="button"
+            class="pmh-btn pmh-btn--primary pmh-btn--sm"
+            onclick="if(window.MedConnectPtRemedy&amp;&amp;window.MedConnectPtRemedy.open){window.MedConnectPtRemedy.open();}"
+          >
+            Open Care Assistant
+          </button>
+          <?php endif; ?>
         </div>
-        <button
-          type="button"
-          class="pmh-btn pmh-btn--primary"
-          onclick="if(window.MedConnectPtRemedy&amp;&amp;window.MedConnectPtRemedy.open){window.MedConnectPtRemedy.open();}"
-        >
-          Open Care Assistant
-        </button>
-      </div>
+        <?php require VIEWS_PATH . '/patient/partials/view_my_health_care_tips.php'; ?>
       <?php endif; ?>
-      <?php require VIEWS_PATH . '/patient/partials/view_my_health_care_tips.php'; ?>
-    <?php endif; ?>
-  </div>
+    </div>
+  </section>
 </div>
 
 <?php require_once VIEWS_PATH . '/patient/partials/layout_shell_close.php'; ?>

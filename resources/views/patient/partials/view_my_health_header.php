@@ -1,7 +1,7 @@
 <?php
 /**
- * Unified My Health page header (minimal).
- * Expects: $pt, $history, $completed_visits, $counts, $care_tips_active_count, $active_tab
+ * Unified My Health page header (calm overview).
+ * Expects: $pt, $history, $completed_visits, $counts, $care_tips_active_count, $active_tab, $care_timeline
  */
 $firstName = trim((string) ($pt['first_name'] ?? ''));
 $patientNumber = (string) ($pt['patient_number'] ?? '');
@@ -13,57 +13,84 @@ $totalVisits = count($history ?? []);
 $healthFiles = (int) ($counts['all'] ?? 0);
 $activeTips = (int) $care_tips_active_count;
 $timelineCount = count($care_timeline ?? []);
-$showMetrics = ($totalVisits + (int) $completed_visits + $healthFiles + $activeTips + $timelineCount) > 0;
+
+$metrics = [];
+if ($totalVisits > 0) {
+    $metrics[] = [
+        'tab' => 'timeline',
+        'value' => $totalVisits,
+        'label' => 'Visits',
+        'hint' => $scheduled_visits > 0 ? $scheduled_visits . ' upcoming' : '',
+    ];
+}
+if ((int) $completed_visits > 0) {
+    $metrics[] = [
+        'tab' => 'timeline',
+        'value' => (int) $completed_visits,
+        'label' => 'Completed',
+        'hint' => '',
+    ];
+}
+if ($healthFiles > 0) {
+    $metrics[] = [
+        'tab' => 'files',
+        'value' => $healthFiles,
+        'label' => 'Files',
+        'hint' => '',
+    ];
+}
+if ($activeTips > 0) {
+    $metrics[] = [
+        'tab' => 'care-tips',
+        'value' => $activeTips,
+        'label' => 'Care tips',
+        'hint' => '',
+    ];
+}
+if ($metrics === [] && $timelineCount > 0) {
+    $metrics[] = [
+        'tab' => 'timeline',
+        'value' => $timelineCount,
+        'label' => 'On timeline',
+        'hint' => 'Assessments & records',
+    ];
+}
+$showMetrics = $metrics !== [];
 ?>
-<header class="pmh-hero pmh-hero--minimal">
+<header class="pmh-hero" aria-label="My Health overview">
   <div class="pmh-hero__top">
     <div class="pmh-hero__intro">
+      <p class="pmh-hero__eyebrow">My Health</p>
       <h2 class="pmh-hero__title">
-        <?= $firstName !== '' ? 'Hi, ' . htmlspecialchars($firstName) : 'My Health' ?>
+        <?= $firstName !== '' ? 'Hi, ' . htmlspecialchars($firstName) : 'Your care history' ?>
       </h2>
       <p class="pmh-hero__text">
         <?php if ($patientNumber !== ''): ?>
           <span class="pmh-hero__id"><?= htmlspecialchars($patientNumber) ?></span>
           <span class="pmh-hero__sep" aria-hidden="true">·</span>
         <?php endif; ?>
-        Visits, records, and care tips.
-        <a href="<?= ASSET_BASE ?>/views/patient/health_summary.php">Health Summary</a>
+        Visits, health files, and care tips in one place.
       </p>
     </div>
     <div class="pmh-hero__actions">
+      <a href="<?= ASSET_BASE ?>/views/patient/health_summary.php" class="pmh-btn pmh-btn--outline">Health Summary</a>
       <a href="<?= ASSET_BASE ?>/views/patient/triage.php" class="pmh-btn pmh-btn--primary">Book consultation</a>
     </div>
   </div>
 
   <?php if ($showMetrics): ?>
   <div class="pmh-hero__metrics" role="list" aria-label="Health overview">
-    <a href="<?= ASSET_BASE ?>/views/patient/my_health.php?tab=timeline"
-       class="pmh-metric-pill<?= $active_tab === 'timeline' ? ' is-active' : '' ?>"
+    <?php foreach ($metrics as $metric): ?>
+    <a href="<?= ASSET_BASE ?>/views/patient/my_health.php?tab=<?= htmlspecialchars($metric['tab']) ?>"
+       class="pmh-metric-pill<?= $active_tab === $metric['tab'] ? ' is-active' : '' ?>"
        role="listitem">
-      <span class="pmh-metric-pill__value"><?= $totalVisits ?></span>
-      <span class="pmh-metric-pill__label">Visits</span>
-      <?php if ($scheduled_visits > 0): ?>
-        <span class="pmh-metric-pill__hint"><?= (int) $scheduled_visits ?> upcoming</span>
+      <span class="pmh-metric-pill__value"><?= (int) $metric['value'] ?></span>
+      <span class="pmh-metric-pill__label"><?= htmlspecialchars($metric['label']) ?></span>
+      <?php if ($metric['hint'] !== ''): ?>
+        <span class="pmh-metric-pill__hint"><?= htmlspecialchars($metric['hint']) ?></span>
       <?php endif; ?>
     </a>
-    <a href="<?= ASSET_BASE ?>/views/patient/my_health.php?tab=timeline"
-       class="pmh-metric-pill<?= $active_tab === 'timeline' ? ' is-active' : '' ?>"
-       role="listitem">
-      <span class="pmh-metric-pill__value"><?= (int) $completed_visits ?></span>
-      <span class="pmh-metric-pill__label">Completed</span>
-    </a>
-    <a href="<?= ASSET_BASE ?>/views/patient/my_health.php?tab=files"
-       class="pmh-metric-pill<?= $active_tab === 'files' ? ' is-active' : '' ?>"
-       role="listitem">
-      <span class="pmh-metric-pill__value"><?= $healthFiles ?></span>
-      <span class="pmh-metric-pill__label">Files</span>
-    </a>
-    <a href="<?= ASSET_BASE ?>/views/patient/my_health.php?tab=care-tips"
-       class="pmh-metric-pill<?= $active_tab === 'care-tips' ? ' is-active' : '' ?>"
-       role="listitem">
-      <span class="pmh-metric-pill__value"><?= $activeTips ?></span>
-      <span class="pmh-metric-pill__label">Care tips</span>
-    </a>
+    <?php endforeach; ?>
   </div>
   <?php endif; ?>
 </header>
