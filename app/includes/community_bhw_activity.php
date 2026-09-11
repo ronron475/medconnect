@@ -7,24 +7,69 @@
 function community_bhw_activity_load(PDO $pdo, int $patientId): array
 {
     $empty = [
-        'documents' => [],
-        'visits'    => [],
-        'referrals' => [],
-        'total'     => 0,
+        'documents'       => [],
+        'visits'          => [],
+        'referrals'       => [],
+        'health_entries'  => [],
+        'external_visits' => [],
+        'barangay'        => '',
+        'total'           => 0,
     ];
     if ($patientId <= 0) {
         return $empty;
     }
 
-    $documents = community_bhw_activity_documents($pdo, $patientId);
-    $visits = community_bhw_activity_visits($pdo, $patientId);
-    $referrals = community_bhw_activity_referrals($pdo, $patientId);
+    $barangay = '';
+    try {
+        require_once __DIR__ . '/bhw_scope.php';
+        $barangay = bhw_patient_registered_barangay($pdo, $patientId);
+    } catch (Throwable $e) {
+        $barangay = '';
+    }
+
+    $documents = community_bhw_activity_documents($pdo, $patientId, $barangay);
+    $visits = community_bhw_activity_visits($pdo, $patientId, $barangay);
+    $referrals = community_bhw_activity_referrals($pdo, $patientId, $barangay);
+    $healthEntries = community_bhw_activity_health_entries($pdo, $patientId, $barangay);
+    $externalVisits = community_bhw_activity_external_visits($pdo, $patientId, $barangay);
 
     return [
-        'documents' => $documents,
-        'visits'    => $visits,
-        'referrals' => $referrals,
-        'total'     => count($documents) + count($visits) + count($referrals),
+        'documents'       => $documents,
+        'visits'          => $visits,
+        'referrals'       => $referrals,
+        'health_entries'  => $healthEntries,
+        'external_visits' => $externalVisits,
+        'barangay'        => $barangay,
+        'total'           => count($documents) + count($visits) + count($referrals)
+            + count($healthEntries) + count($externalVisits),
+    ];
+}
+
+/**
+ * Shared attribution block for patient/provider health activity UI.
+ *
+ * @return array{added_by: string, role: string, role_label: string, date_label: string, time_label: string, barangay_label: string, recorded_at: ?string}
+ */
+function community_bhw_activity_attribution(string $name, string $role, ?string $recordedAt, string $barangay = ''): array
+{
+    $roleKey = strtolower(trim($role));
+    $roleLabel = match ($roleKey) {
+        'bhw' => 'Barangay Health Worker (BHW)',
+        'provider' => 'Provider',
+        'patient' => 'Patient',
+        default => $roleKey !== '' ? ucwords(str_replace('_', ' ', $roleKey)) : 'Unknown',
+    };
+    $ts = ($recordedAt !== null && trim($recordedAt) !== '') ? strtotime($recordedAt) : false;
+    $barangayLabel = trim($barangay);
+
+    return [
+        'added_by'       => trim($name) !== '' ? trim($name) : 'Unknown',
+        'role'           => $roleKey,
+        'role_label'     => $roleLabel,
+        'date_label'     => $ts ? date('F j, Y', $ts) : '—',
+        'time_label'     => $ts ? date('g:i A', $ts) : '—',
+        'barangay_label' => $barangayLabel !== '' ? $barangayLabel : '—',
+        'recorded_at'    => $recordedAt,
     ];
 }
 
@@ -62,9 +107,131 @@ function community_bhw_activity_date_label(?string $value, string $format = 'M j
 }
 
 /**
+ * Vitals / visit-intake rows from consultation_recorded_data (patient + BHW).
+ *
  * @return list<array<string, mixed>>
  */
-function community_bhw_activity_documents(PDO $pdo, int $patientId): array
+function community_bhw_activity_health_entries(PDO $pdo, int $patientId, string $barangay = ''): array
+{
+    try {
+        require_once __DIR__ . '/consultation_recorded_data.php';
+        consultation_recorded_data_ensure_schema($pdo);
+        $rows = consultation_recorded_data_history_for_patient($pdo, $patientId, 40);
+    } catch (Throwable $e) {
+        return [];
+    }
+
+    $out = [];
+    foreach ($rows as $row) {
+        $fields = consultation_recorded_data_field_list($row);
+        if ($fields === []) {
+            continue;
+        }
+        foreach ($fields as &$field) {
+            if (($field['key'] ?? '') === 'temperature_c') {
+                $field['value'] = preg_replace('/°C\s*$/u', ' °C', (string) ($field['value'] ?? '')) ?? (string) ($field['value'] ?? '');
+            }
+        }
+        unset($field);
+
+        $role = strtolower((string) ($row['recorder_role'] ?? 'patient'));
+        $attr = community_bhw_activity_attribution(
+            (string) ($row['recorder_name'] ?? ''),
+            $role,
+            isset($row['recorded_at']) ? (string) $row['recorded_at'] : null,
+            $barangay
+        );
+        $status = strtolower((string) ($row['status'] ?? ''));
+        $out[] = array_merge($attr, [
+            'id'              => (int) ($row['id'] ?? 0),
+            'category'        => 'Health measurements',
+            'fields'          => $fields,
+            'status'          => $status,
+            'status_label'    => $status === 'pending' ? 'Pre-consultation' : 'On record',
+            'consultation_id' => (int) ($row['consultation_id'] ?? 0),
+            'source'          => 'consultation_recorded_data',
+        ]);
+    }
+
+    return $out;
+}
+
+/**
+ * External facility visits from the existing patient_external_healthcare_visits table.
+ *
+ * @return list<array<string, mixed>>
+ */
+function community_bhw_activity_external_visits(PDO $pdo, int $patientId, string $barangay = ''): array
+{
+    try {
+        require_once __DIR__ . '/patient_external_healthcare_visits.php';
+        $visits = patient_external_healthcare_visits_for_display($pdo, $patientId, 30);
+    } catch (Throwable $e) {
+        return [];
+    }
+
+    $out = [];
+    foreach ($visits as $visit) {
+        $role = strtolower((string) ($visit['recorder_role'] ?? 'bhw'));
+        $name = (string) ($visit['recorded_by_label'] ?? '');
+        if (preg_match('/\((.+)\)\s*$/u', $name, $m)) {
+            $name = trim($m[1]);
+        } elseif (str_starts_with($name, 'BHW ')) {
+            $name = trim(substr($name, 4));
+        } elseif (str_starts_with($name, 'Provider ')) {
+            $name = trim(substr($name, 9));
+        } elseif (str_starts_with($name, 'Patient ')) {
+            $name = trim(substr($name, 8));
+        }
+        $attr = community_bhw_activity_attribution(
+            $name,
+            $role,
+            isset($visit['recorded_at']) ? (string) $visit['recorded_at'] : null,
+            $barangay
+        );
+        $fields = [];
+        if (!empty($visit['facility_type_label']) || !empty($visit['facility_name'])) {
+            $facility = trim((string) ($visit['facility_type_label'] ?? ''));
+            if (!empty($visit['facility_name'])) {
+                $facility = trim($facility . ($facility !== '' ? ' — ' : '') . (string) $visit['facility_name']);
+            }
+            if ($facility !== '') {
+                $fields[] = ['label' => 'Facility', 'value' => $facility, 'key' => 'facility'];
+            }
+        }
+        if (!empty($visit['visit_date_label'])) {
+            $fields[] = ['label' => 'Visit date', 'value' => (string) $visit['visit_date_label'], 'key' => 'visit_date'];
+        }
+        if (!empty($visit['reason'])) {
+            $fields[] = ['label' => 'Reason', 'value' => (string) $visit['reason'], 'key' => 'reason'];
+        }
+        if (!empty($visit['reported_diagnosis'])) {
+            $fields[] = ['label' => 'Reported diagnosis', 'value' => (string) $visit['reported_diagnosis'], 'key' => 'diagnosis'];
+        }
+        if (!empty($visit['reported_treatment'])) {
+            $fields[] = ['label' => 'Reported treatment', 'value' => (string) $visit['reported_treatment'], 'key' => 'treatment'];
+        }
+        if (!empty($visit['notes'])) {
+            $fields[] = ['label' => 'Notes', 'value' => (string) $visit['notes'], 'key' => 'notes'];
+        }
+        if ($fields === []) {
+            continue;
+        }
+        $out[] = array_merge($attr, [
+            'id'       => (int) ($visit['id'] ?? 0),
+            'category' => 'External healthcare visit',
+            'fields'   => $fields,
+            'source'   => 'patient_external_healthcare_visits',
+        ]);
+    }
+
+    return $out;
+}
+
+/**
+ * @return list<array<string, mixed>>
+ */
+function community_bhw_activity_documents(PDO $pdo, int $patientId, string $barangay = ''): array
 {
     try {
         if ($pdo->query("SHOW TABLES LIKE 'residency_documents'")->rowCount() === 0) {
@@ -99,15 +266,20 @@ function community_bhw_activity_documents(PDO $pdo, int $patientId): array
             $title = trim((string) ($row['original_name'] ?? '')) ?: 'Document';
         }
         $uploadedAt = (string) ($row['uploaded_at'] ?? '');
-        $out[] = [
+        $bhwName = community_bhw_activity_match_uploader($bhwNames, $uploadedAt, (string) ($row['original_name'] ?? ''));
+        $attr = community_bhw_activity_attribution($bhwName, 'bhw', $uploadedAt !== '' ? $uploadedAt : null, $barangay);
+        $out[] = array_merge($attr, [
             'id'          => (int) ($row['id'] ?? 0),
             'title'       => $title,
             'type'        => trim((string) ($row['document_type'] ?? '')) ?: 'Document',
             'description' => trim((string) ($row['description'] ?? '')),
             'status'      => trim((string) ($row['status'] ?? '')),
-            'date_label'  => community_bhw_activity_date_label($uploadedAt),
-            'bhw_name'    => community_bhw_activity_match_uploader($bhwNames, $uploadedAt, (string) ($row['original_name'] ?? '')),
-        ];
+            'date_label'  => $attr['date_label'],
+            'bhw_name'    => $attr['added_by'] !== 'Unknown' ? $attr['added_by'] : '',
+            'time_label'  => $attr['time_label'],
+            'role_label'  => $attr['role_label'],
+            'barangay_label' => $attr['barangay_label'],
+        ]);
     }
     return $out;
 }
@@ -177,14 +349,14 @@ function community_bhw_activity_match_uploader(array $uploaders, string $uploade
 /**
  * @return list<array<string, mixed>>
  */
-function community_bhw_activity_visits(PDO $pdo, int $patientId): array
+function community_bhw_activity_visits(PDO $pdo, int $patientId, string $barangay = ''): array
 {
     try {
         if ($pdo->query("SHOW TABLES LIKE 'bhw_home_visits'")->rowCount() === 0) {
             return [];
         }
         $stmt = $pdo->prepare("
-            SELECT hv.visit_date, hv.visit_type, hv.patient_status, hv.notes,
+            SELECT hv.visit_date, hv.visit_type, hv.patient_status, hv.notes, hv.created_at,
                    TRIM(CONCAT(COALESCE(b.first_name, ''), ' ', COALESCE(b.last_name, ''))) AS bhw_name
             FROM bhw_home_visits hv
             LEFT JOIN users b ON b.id = hv.bhw_id
@@ -200,13 +372,28 @@ function community_bhw_activity_visits(PDO $pdo, int $patientId): array
 
     $out = [];
     foreach ($rows as $row) {
-        $out[] = [
-            'date_label' => community_bhw_activity_date_label((string) ($row['visit_date'] ?? '')),
+        $when = (string) ($row['created_at'] ?? '');
+        if ($when === '' || str_starts_with($when, '0000-00-00')) {
+            $when = (string) ($row['visit_date'] ?? '');
+        }
+        $attr = community_bhw_activity_attribution(
+            (string) ($row['bhw_name'] ?? ''),
+            'bhw',
+            $when !== '' ? $when : null,
+            $barangay
+        );
+        if (!empty($row['visit_date'])) {
+            $attr['date_label'] = community_bhw_activity_date_label((string) $row['visit_date'], 'F j, Y');
+        }
+        $out[] = array_merge($attr, [
+            'date_label' => $attr['date_label'],
             'type_label' => community_bhw_visit_type_label((string) ($row['visit_type'] ?? '')),
             'status'     => community_bhw_patient_status_label((string) ($row['patient_status'] ?? '')),
             'notes'      => trim((string) ($row['notes'] ?? '')),
-            'bhw_name'   => trim((string) ($row['bhw_name'] ?? '')),
-        ];
+            'bhw_name'   => $attr['added_by'] !== 'Unknown' ? $attr['added_by'] : '',
+            'time_label' => $attr['time_label'],
+            'role_label' => $attr['role_label'],
+        ]);
     }
     return $out;
 }
@@ -214,7 +401,7 @@ function community_bhw_activity_visits(PDO $pdo, int $patientId): array
 /**
  * @return list<array<string, mixed>>
  */
-function community_bhw_activity_referrals(PDO $pdo, int $patientId): array
+function community_bhw_activity_referrals(PDO $pdo, int $patientId, string $barangay = ''): array
 {
     $bhwReferralIds = community_bhw_activity_referral_ids($pdo, $patientId);
     if ($bhwReferralIds === []) {
@@ -249,15 +436,24 @@ function community_bhw_activity_referrals(PDO $pdo, int $patientId): array
     $out = [];
     foreach ($rows as $row) {
         $id = (int) ($row['id'] ?? 0);
-        $out[] = [
+        $createdAt = (string) ($row['created_at'] ?? '');
+        $attr = community_bhw_activity_attribution(
+            (string) ($namesById[$id] ?? ''),
+            'bhw',
+            $createdAt !== '' ? $createdAt : null,
+            $barangay
+        );
+        $out[] = array_merge($attr, [
             'id'         => $id,
             'type'       => trim((string) ($row['referral_type'] ?? '')) ?: 'Referral',
             'reason'     => trim((string) ($row['reason'] ?? '')),
             'facility'   => trim((string) ($row['facility_display'] ?? '')),
             'status'     => ucfirst(trim((string) ($row['status'] ?? 'pending'))),
-            'date_label' => community_bhw_activity_date_label((string) ($row['created_at'] ?? '')),
-            'bhw_name'   => $namesById[$id] ?? '',
-        ];
+            'date_label' => $attr['date_label'],
+            'bhw_name'   => $attr['added_by'] !== 'Unknown' ? $attr['added_by'] : '',
+            'time_label' => $attr['time_label'],
+            'role_label' => $attr['role_label'],
+        ]);
     }
     return $out;
 }

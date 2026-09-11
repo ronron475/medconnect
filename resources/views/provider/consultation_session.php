@@ -1960,6 +1960,46 @@ body.consultation-mobile-call-fullscreen .mc-provider-video-dock iframe {
     color: #64748b;
     line-height: 1.4;
 }
+.bhw-act-field {
+    margin: 0 0 8px;
+}
+.bhw-act-field__label {
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+    color: #64748b;
+}
+.bhw-act-field__value {
+    margin-top: 2px;
+    font-size: 1rem;
+    font-weight: 700;
+    color: #0f172a;
+}
+.bhw-act-attr {
+    margin: 10px 0 0;
+    padding-top: 8px;
+    border-top: 1px solid rgba(148, 163, 184, 0.35);
+    display: grid;
+    gap: 4px;
+}
+.bhw-act-attr > div {
+    display: grid;
+    grid-template-columns: 5.5rem 1fr;
+    gap: 8px;
+    font-size: 0.78rem;
+    line-height: 1.4;
+}
+.bhw-act-attr dt {
+    margin: 0;
+    font-weight: 700;
+    color: #64748b;
+}
+.bhw-act-attr dd {
+    margin: 0;
+    color: #0f172a;
+    font-weight: 600;
+}
 .bhw-act-item__note {
     margin: 6px 0 0;
     font-size: 12px;
@@ -2807,7 +2847,13 @@ body.consultation-mobile-call-fullscreen .mc-provider-video-dock iframe {
                     <?php if (!empty($recorded_data['status_label'])): ?>
                     <span>Status: <strong><?= htmlspecialchars((string) $recorded_data['status_label']) ?></strong></span>
                     <?php endif; ?>
-                    <span>Recorded by: <strong><?= htmlspecialchars((string) ($recorded_data['recorded_by_label'] ?: $recorded_data['recorder_role_label'])) ?></strong></span>
+                    <span>Added by: <strong><?= htmlspecialchars((string) ($recorded_data['recorded_by_label'] ?: 'Unknown')) ?></strong></span>
+                    <?php if (!empty($recorded_data['recorder_role_label'])): ?>
+                    <span>Role: <strong><?= htmlspecialchars((string) $recorded_data['recorder_role_label']) ?></strong></span>
+                    <?php endif; ?>
+                    <?php if (!empty($recorded_data['patient_barangay'])): ?>
+                    <span>Barangay: <strong><?= htmlspecialchars((string) $recorded_data['patient_barangay']) ?></strong></span>
+                    <?php endif; ?>
                     <?php if (!empty($recorded_data['recorded_at_label'])): ?>
                     <span>Recorded at: <strong><?= htmlspecialchars((string) $recorded_data['recorded_at_label']) ?></strong></span>
                     <?php endif; ?>
@@ -2831,11 +2877,15 @@ body.consultation-mobile-call-fullscreen .mc-provider-video-dock iframe {
                             foreach ($histFields as $hf) {
                                 $histBits[] = $hf['label'] . ': ' . $hf['value'];
                             }
-                            $histRole = strtolower((string) ($hist['recorder_role'] ?? 'patient')) === 'bhw' ? 'BHW' : 'Patient';
+                            $histRole = strtolower((string) ($hist['recorder_role'] ?? 'patient')) === 'bhw'
+                                ? 'Barangay Health Worker (BHW)'
+                                : 'Patient';
+                            $histName = trim((string) ($hist['recorder_name'] ?? ''));
                             $histWhen = consultation_recorded_data_format_datetime($hist['recorded_at'] ?? null);
                         ?>
                         <li>
-                            <strong><?= htmlspecialchars($histRole) ?></strong>
+                            <strong><?= htmlspecialchars($histName !== '' ? $histName : $histRole) ?></strong>
+                            · <?= htmlspecialchars($histRole) ?>
                             · <?= htmlspecialchars($histWhen !== '' ? $histWhen : '—') ?>
                             <?php if ($histBits !== []): ?>
                             <br><?= htmlspecialchars(implode(' · ', $histBits)) ?>
@@ -3479,7 +3529,13 @@ function renderConsultationRecordedData(payload) {
     if (recorded.status_label) {
         html += '<span>Status: <strong>' + escapePrdHtml(recorded.status_label) + '</strong></span>';
     }
-    html += '<span>Recorded by: <strong>' + escapePrdHtml(recorded.recorded_by_label || recorded.recorder_role_label || '') + '</strong></span>';
+    html += '<span>Added by: <strong>' + escapePrdHtml(recorded.recorded_by_label || 'Unknown') + '</strong></span>';
+    if (recorded.recorder_role_label) {
+        html += '<span>Role: <strong>' + escapePrdHtml(recorded.recorder_role_label) + '</strong></span>';
+    }
+    if (recorded.patient_barangay) {
+        html += '<span>Barangay: <strong>' + escapePrdHtml(recorded.patient_barangay) + '</strong></span>';
+    }
     if (recorded.recorded_at_label) {
         html += '<span>Recorded at: <strong>' + escapePrdHtml(recorded.recorded_at_label) + '</strong></span>';
     }
@@ -3491,7 +3547,10 @@ function renderConsultationRecordedData(payload) {
     if (history.length > 1) {
         html += '<details class="prd-history"><summary>Show earlier recordings for this consultation (' + (history.length - 1) + ' prior)</summary><ul class="prd-history-list">';
         history.slice(1).forEach(function (hist) {
-            const role = String(hist.recorder_role || 'patient').toLowerCase() === 'bhw' ? 'BHW' : 'Patient';
+            const role = String(hist.recorder_role || 'patient').toLowerCase() === 'bhw'
+                ? 'Barangay Health Worker (BHW)'
+                : 'Patient';
+            const histName = String(hist.recorder_name || '').trim();
             const bits = [];
             if (hist.chief_complaint) bits.push('Chief Complaint: ' + hist.chief_complaint);
             if (hist.symptoms) bits.push('Symptoms: ' + hist.symptoms);
@@ -3499,7 +3558,7 @@ function renderConsultationRecordedData(payload) {
             if (hist.blood_pressure) bits.push('Blood Pressure: ' + hist.blood_pressure);
             if (hist.pulse_bpm != null && hist.pulse_bpm !== '') bits.push('Pulse Rate: ' + hist.pulse_bpm + ' bpm');
             if (hist.notes) bits.push('Other observations: ' + hist.notes);
-            html += '<li><strong>' + escapePrdHtml(role) + '</strong> · ' + escapePrdHtml(hist.recorded_at || '—');
+            html += '<li><strong>' + escapePrdHtml(histName || role) + '</strong> · ' + escapePrdHtml(role) + ' · ' + escapePrdHtml(hist.recorded_at || '—');
             if (bits.length) html += '<br>' + escapePrdHtml(bits.join(' · '));
             html += '</li>';
         });

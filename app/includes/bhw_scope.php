@@ -175,6 +175,40 @@ function bhw_assert_patient_in_sector(PDO $pdo, array $ctx, int $patientId): boo
     return (bool) $stmt->fetchColumn();
 }
 
+/**
+ * Patient's registered barangay name from the existing patient_registrations row.
+ */
+function bhw_patient_registered_barangay(PDO $pdo, int $patientId): string
+{
+    if ($patientId <= 0) {
+        return '';
+    }
+    patient_registrations_ensure_barangay_id($pdo);
+    $join = bhw_pr_user_join('pr', 'u');
+    try {
+        $cols = bhw_pr_columns($pdo);
+        $hasId = in_array('barangay_id', $cols, true);
+        $sql = "
+            SELECT pr.barangay" . ($hasId ? ', pr.barangay_id, b.name AS barangay_name' : '') . "
+            FROM users u
+            INNER JOIN patient_registrations pr ON {$join}
+            " . ($hasId ? 'LEFT JOIN barangays b ON b.id = pr.barangay_id' : '') . "
+            WHERE u.id = ? AND u.role = 'patient'
+            LIMIT 1
+        ";
+        $stmt = $pdo->prepare($sql);
+        $stmt->execute([$patientId]);
+        $row = $stmt->fetch(PDO::FETCH_ASSOC) ?: [];
+        $fromJoin = trim((string) ($row['barangay_name'] ?? ''));
+        if ($fromJoin !== '') {
+            return $fromJoin;
+        }
+        return trim((string) ($row['barangay'] ?? ''));
+    } catch (Throwable $e) {
+        return '';
+    }
+}
+
 function bhw_patient_account_exists(PDO $pdo, int $patientId): bool
 {
     if ($patientId <= 0) {
@@ -187,6 +221,7 @@ function bhw_patient_account_exists(PDO $pdo, int $patientId): bool
 
 /**
  * API gate: 403 when the patient is outside the BHW barangay (or BHW has no barangay).
+ * Enforced server-side for GET/POST/AJAX — never rely on UI alone.
  */
 function bhw_api_require_patient_in_sector(PDO $pdo, array $ctx, int $patientId): void
 {
@@ -194,13 +229,13 @@ function bhw_api_require_patient_in_sector(PDO $pdo, array $ctx, int $patientId)
         Api::error('Patient is required.', 400);
     }
     if ((int) ($ctx['barangay_id'] ?? 0) <= 0) {
-        Api::error('NO PATIENT ACCESS', 403);
+        Api::error('ACCESS DENIED: BHW barangay is not assigned.', 403);
     }
     if (!bhw_patient_account_exists($pdo, $patientId)) {
         Api::error('Patient not found.', 404);
     }
     if (!bhw_assert_patient_in_sector($pdo, $ctx, $patientId)) {
-        Api::error('ACCESS DENIED', 403);
+        Api::error('ACCESS DENIED: Patient is not registered in your assigned barangay.', 403);
     }
 }
 

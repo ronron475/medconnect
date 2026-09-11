@@ -205,17 +205,27 @@ function patient_health_summary_load(PDO $pdo, int $userId): array
     }
 
     $updatedByName = null;
+    $updatedByRole = null;
     $updatedById = (int) ($row['medical_profile_updated_by'] ?? 0);
     if ($updatedById > 0) {
-        $pstmt = $pdo->prepare("SELECT first_name, last_name FROM users WHERE id = ? AND role = 'provider' LIMIT 1");
+        $pstmt = $pdo->prepare('SELECT first_name, last_name, role FROM users WHERE id = ? LIMIT 1');
         $pstmt->execute([$updatedById]);
-        $prov = $pstmt->fetch(PDO::FETCH_ASSOC);
-        if ($prov) {
-            $updatedByName = 'Dr. ' . trim(($prov['first_name'] ?? '') . ' ' . ($prov['last_name'] ?? ''));
+        $updater = $pstmt->fetch(PDO::FETCH_ASSOC) ?: null;
+        if ($updater) {
+            $full = trim((string) (($updater['first_name'] ?? '') . ' ' . ($updater['last_name'] ?? '')));
+            $role = strtolower(trim((string) ($updater['role'] ?? '')));
+            $updatedByRole = $role;
+            $updatedByName = match ($role) {
+                'provider' => ($full !== '' ? 'Dr. ' . $full : 'Provider'),
+                'bhw' => ($full !== '' ? $full . ' (Barangay Health Worker)' : 'Barangay Health Worker (BHW)'),
+                'patient' => ($full !== '' ? $full . ' (Patient)' : 'Patient'),
+                default => ($full !== '' ? $full : 'Unknown'),
+            };
         }
     }
-    if ($updatedByName === null || $updatedByName === 'Dr. ') {
+    if ($updatedByName === null || $updatedByName === '' || $updatedByName === 'Dr. ') {
         $updatedByName = 'Registration intake (pending provider verification)';
+        $updatedByRole = null;
     }
 
     $pendingRequest = null;
@@ -265,6 +275,7 @@ function patient_health_summary_load(PDO $pdo, int $userId): array
             'last_updated_at_label' => $updatedAt ? date('M j, Y \a\t g:i A', strtotime((string) $updatedAt)) : 'Not available',
             'last_updated_by' => $updatedByName,
             'last_updated_by_id' => $updatedById > 0 ? $updatedById : null,
+            'last_updated_by_role' => $updatedByRole,
         ],
         'pending_request' => $pendingRequest,
         'last_rejected_request' => $lastRejected,

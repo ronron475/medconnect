@@ -66,6 +66,11 @@ try {
                 Api::error('BHW session required.', 401);
             }
 
+            // Defense-in-depth: never trust a client-supplied barangay or out-of-sector patient_id.
+            if (!bhw_assert_patient_in_sector($pdo, $ctx, $patientId)) {
+                Api::error('ACCESS DENIED: Patient is not registered in your assigned barangay.', 403);
+            }
+
             // If an open consult exists and BHW selected one, attach directly.
             // If no consultation_id, save as PENDING pre-consultation data.
             if ($consultationId > 0) {
@@ -96,6 +101,9 @@ try {
                 'recorded_data_id' => $result['id'] ?? null,
                 'mode' => $mode,
                 'status' => $result['status'] ?? null,
+                'bhw_barangay_id' => (int) ($ctx['barangay_id'] ?? 0),
+                'bhw_barangay' => (string) ($ctx['barangay_name'] ?? ''),
+                'patient_barangay' => bhw_patient_registered_barangay($pdo, $patientId),
             ]);
 
             $recorded = $consultationId > 0
