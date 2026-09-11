@@ -720,7 +720,7 @@ html[data-theme-resolved='dark'] body.patient-portal .pts-card,
 html[data-theme-resolved='dark'] body.patient-portal .pts-nav,
 html[data-theme-resolved='dark'] body.patient-portal .pts-stat,
 html[data-theme-resolved='dark'] body.patient-portal .phs-card,
-html[data-theme-resolved='dark'] body.patient-portal .phs-hero,
+html[data-theme-resolved='dark'] body.patient-portal .phs-panel,
 html[data-theme-resolved='dark'] body.patient-portal .phs-metric,
 html[data-theme-resolved='dark'] body.patient-portal .pt-dash-card,
 html[data-theme-resolved='dark'] body.patient-portal .pt-dash-stat,
@@ -1710,9 +1710,38 @@ html[data-theme-resolved='dark'] body.patient-portal .patient-triage-history__da
   color: #ffffff;
 }
 
-html[data-theme-resolved='dark'] body.patient-portal .phs-triage-history {
-  background: #1c1c1c;
+html[data-theme-resolved='dark'] body.patient-portal .phs-triage-history,
+html[data-theme-resolved='dark'] body.patient-portal .phs-history,
+html[data-theme-resolved='dark'] body.patient-portal .phs-panel__head,
+html[data-theme-resolved='dark'] body.patient-portal .phs-fields__row,
+html[data-theme-resolved='dark'] body.patient-portal .phs-meta {
+  background: transparent;
   border-color: #2a2a2a;
+}
+
+html[data-theme-resolved='dark'] body.patient-portal .patient-health-summary-page .pt-assess-stack__row {
+  border-color: #2a2a2a;
+  background: transparent;
+}
+
+html[data-theme-resolved='dark'] body.patient-portal .patient-health-summary-page .pt-assess-chip {
+  background: #141414;
+  border-color: #2a2a2a;
+  color: #ffffff;
+}
+
+html[data-theme-resolved='dark'] body.patient-portal .phs-chip-list .phs-chip,
+html[data-theme-resolved='dark'] body.patient-portal .phs-chip {
+  background: #141414;
+  border-color: #2a2a2a;
+  color: #e4e4e7;
+}
+
+html[data-theme-resolved='dark'] body.patient-portal .phs-panel__meta,
+html[data-theme-resolved='dark'] body.patient-portal .phs-empty,
+html[data-theme-resolved='dark'] body.patient-portal .phs-meta__note,
+html[data-theme-resolved='dark'] body.patient-portal .phs-fields__row dt {
+  color: #a1a1aa;
 }
 
 html[data-theme-resolved='dark'] body.patient-portal .patient-triage-history__filters {

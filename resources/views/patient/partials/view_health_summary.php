@@ -6,56 +6,42 @@
 <section class="phs-hero" aria-label="Health Summary overview">
   <div class="phs-hero__content">
     <p class="phs-hero__eyebrow">Health Summary</p>
-    <h2 class="phs-hero__title">Permanent medical profile</h2>
+    <h2 class="phs-hero__title">Your medical overview</h2>
     <p class="phs-hero__sub">
-      Verified registration data for quick reference, plus your latest triage assessment
-      (preliminary AI result, doctor final assessment, and official decision).
+      Verified registration details and your latest triage result for quick reference.
     </p>
-    <div class="phs-hero__chips" aria-label="Profile status">
-      <span class="phs-chip phs-chip--verified">
-        <span class="phs-chip__dot" aria-hidden="true"></span>
-        Verified profile
-      </span>
-      <span class="phs-chip">Read-only</span>
-    </div>
   </div>
   <div class="phs-hero__actions">
     <button type="button" class="pdash-btn pdash-btn--outline" id="phsRequestUpdateBtn" hidden>
-      Request Health Information Update
+      Request update
     </button>
   </div>
 </section>
 
 <?php if (!empty($latest_triage)): ?>
-<section class="phs-triage" aria-label="Latest triage assessment">
-  <article class="phs-card phs-card--triage">
-    <header class="phs-card__head">
-      <span class="phs-card__icon phs-card__icon--triage" aria-hidden="true">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
-      </span>
-      <div class="phs-card__head-text">
-        <h3 class="phs-card__title">Latest Triage Assessment</h3>
-        <p class="phs-card__hint">
-          <?= !empty($latest_triage['assessed_at']) ? htmlspecialchars(date('M j, Y g:i A', strtotime((string) $latest_triage['assessed_at']))) : 'Most recent case' ?>
-          <?php if (trim((string) ($latest_triage['chief_complaint'] ?? '')) !== ''): ?>
-            · <?= htmlspecialchars((string) $latest_triage['chief_complaint']) ?>
-          <?php endif; ?>
-        </p>
-      </div>
-    </header>
-    <div class="phs-card__body">
-      <?php mc_render_triage_assessment_stack($latest_triage, false); ?>
+<section class="phs-panel" aria-label="Latest triage assessment">
+  <header class="phs-panel__head">
+    <div>
+      <h3 class="phs-panel__title">Latest triage assessment</h3>
+      <p class="phs-panel__meta">
+        <?= !empty($latest_triage['assessed_at']) ? htmlspecialchars(date('M j, Y g:i A', strtotime((string) $latest_triage['assessed_at']))) : 'Most recent case' ?>
+        <?php if (trim((string) ($latest_triage['chief_complaint'] ?? '')) !== ''): ?>
+          · <?= htmlspecialchars((string) $latest_triage['chief_complaint']) ?>
+        <?php endif; ?>
+      </p>
     </div>
-  </article>
+  </header>
+  <div class="phs-panel__body">
+    <?php mc_render_triage_assessment_stack($latest_triage, false); ?>
+  </div>
 
   <?php if (count($triage_history) > 1): ?>
-  <div class="phs-triage-history">
-    <h3 class="phs-triage-history__title">Earlier assessments</h3>
-    <p class="phs-triage-history__lead">Original AI results stay on file after a doctor override. The doctor’s assessment is the official decision.</p>
-    <ul class="phs-triage-history__list">
+  <div class="phs-history">
+    <h4 class="phs-history__title">Earlier assessments</h4>
+    <ul class="phs-history__list">
       <?php foreach (array_slice($triage_history, 1) as $histRow): ?>
-      <li class="phs-triage-history__item">
-        <div class="phs-triage-history__meta">
+      <li class="phs-history__item">
+        <div class="phs-history__meta">
           <strong><?= !empty($histRow['assessed_at']) ? htmlspecialchars(date('M j, Y', strtotime((string) $histRow['assessed_at']))) : '—' ?></strong>
           <span><?= htmlspecialchars(trim((string) ($histRow['chief_complaint'] ?? '')) !== '' ? (string) $histRow['chief_complaint'] : 'Health concern on file') ?></span>
         </div>
@@ -71,9 +57,6 @@
 <div id="phsAlert" class="phs-alert" role="alert" hidden></div>
 
 <div id="phsPendingBanner" class="phs-banner phs-banner--pending" hidden role="status">
-  <span class="phs-banner__icon" aria-hidden="true">
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
-  </span>
   <div class="phs-banner__text">
     <strong>Update request pending</strong>
     <p id="phsPendingMessage">Your request is awaiting doctor review. Your official Health Summary will not change until approved.</p>
@@ -81,108 +64,74 @@
 </div>
 
 <div id="phsRejectedBanner" class="phs-banner phs-banner--rejected" hidden role="status">
-  <span class="phs-banner__icon" aria-hidden="true">!</span>
   <div class="phs-banner__text">
     <strong>Last update request was not approved</strong>
     <p id="phsRejectedMessage">You may submit a new request with corrected information.</p>
   </div>
 </div>
 
-<div id="phsSkeleton" class="phs-skeleton-grid" aria-busy="true" aria-label="Loading health summary">
-  <?php for ($i = 0; $i < 4; $i++): ?>
-  <div class="phs-skeleton-card">
-    <div class="phs-skeleton-line phs-skeleton-line--short"></div>
-    <div class="phs-skeleton-line"></div>
-    <div class="phs-skeleton-line phs-skeleton-line--medium"></div>
-  </div>
-  <?php endfor; ?>
+<div id="phsSkeleton" class="phs-skeleton" aria-busy="true" aria-label="Loading health summary">
+  <div class="phs-skeleton-line phs-skeleton-line--short"></div>
+  <div class="phs-skeleton-line"></div>
+  <div class="phs-skeleton-line phs-skeleton-line--medium"></div>
+  <div class="phs-skeleton-line"></div>
 </div>
 
-<div id="phsContent" class="phs-content" hidden>
-  <div class="phs-grid">
-    <article class="phs-card phs-card--blood" aria-labelledby="phs-blood-title">
-      <header class="phs-card__head">
-        <span class="phs-card__icon phs-card__icon--blood" aria-hidden="true">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z"/></svg>
-        </span>
-        <div class="phs-card__head-text">
-          <h3 class="phs-card__title" id="phs-blood-title">Blood Type</h3>
-          <p class="phs-card__hint">From registration profile</p>
-        </div>
-      </header>
-      <div class="phs-card__body">
-        <div class="phs-value phs-value--blood" id="phsBloodType">—</div>
-      </div>
-    </article>
+<section id="phsContent" class="phs-panel phs-content" hidden aria-label="Medical profile">
+  <header class="phs-panel__head">
+    <div>
+      <h3 class="phs-panel__title">Medical profile</h3>
+      <p class="phs-panel__meta">Verified registration data · read-only</p>
+    </div>
+  </header>
 
-    <article class="phs-card phs-card--allergy" aria-labelledby="phs-allergy-title">
-      <header class="phs-card__head">
-        <span class="phs-card__icon phs-card__icon--allergy" aria-hidden="true">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
-        </span>
-        <div class="phs-card__head-text">
-          <h3 class="phs-card__title" id="phs-allergy-title">Allergies</h3>
-          <p class="phs-card__hint">Known drug &amp; substance allergies</p>
-        </div>
-      </header>
-      <div class="phs-card__body">
+  <dl class="phs-fields">
+    <div class="phs-fields__row">
+      <dt id="phs-blood-title">Blood type</dt>
+      <dd>
+        <div class="phs-value" id="phsBloodType">—</div>
+      </dd>
+    </div>
+    <div class="phs-fields__row">
+      <dt id="phs-allergy-title">Allergies</dt>
+      <dd>
         <ul id="phsAllergies" class="phs-chip-list"></ul>
         <p id="phsAllergiesEmpty" class="phs-empty" hidden>No known allergies</p>
-      </div>
-    </article>
-
-    <article class="phs-card phs-card--conditions" aria-labelledby="phs-conditions-title">
-      <header class="phs-card__head">
-        <span class="phs-card__icon phs-card__icon--conditions" aria-hidden="true">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
-        </span>
-        <div class="phs-card__head-text">
-          <h3 class="phs-card__title" id="phs-conditions-title">Medical Conditions</h3>
-          <p class="phs-card__hint">Chronic or permanent conditions</p>
-        </div>
-      </header>
-      <div class="phs-card__body">
+      </dd>
+    </div>
+    <div class="phs-fields__row">
+      <dt id="phs-conditions-title">Medical conditions</dt>
+      <dd>
         <ul id="phsConditions" class="phs-chip-list"></ul>
         <p id="phsConditionsEmpty" class="phs-empty" hidden>None recorded</p>
-      </div>
-    </article>
-
-    <article class="phs-card phs-card--meds" aria-labelledby="phs-meds-title">
-      <header class="phs-card__head">
-        <span class="phs-card__icon phs-card__icon--meds" aria-hidden="true">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m10.5 20.5 10-10a4.95 4.95 0 1 0-7-7l-10 10a4.95 4.95 0 1 0 7 7Z"/><line x1="8.5" y1="8.5" x2="15.5" y2="15.5"/></svg>
-        </span>
-        <div class="phs-card__head-text">
-          <h3 class="phs-card__title" id="phs-meds-title">Maintenance Meds</h3>
-          <p class="phs-card__hint">Medications taken regularly</p>
-        </div>
-      </header>
-      <div class="phs-card__body">
-        <ul id="phsMedications" class="phs-chip-list phs-chip-list--meds"></ul>
-        <p id="phsMedicationsEmpty" class="phs-empty" hidden>No maintenance medications</p>
-      </div>
-    </article>
-  </div>
-
-  <footer class="phs-meta-card" aria-labelledby="phs-meta-title">
-    <div class="phs-meta-card__head">
-      <h3 class="phs-meta-card__title" id="phs-meta-title">Profile metadata</h3>
-      <p class="phs-meta-card__note">
-        Verified health information cannot be edited directly. Use <strong>Request Health Information Update</strong> if information needs correction.
-      </p>
+      </dd>
     </div>
-    <div class="phs-meta-card__grid">
-      <div class="phs-meta-item">
-        <span class="phs-meta-item__label">Last updated</span>
-        <strong class="phs-meta-item__value" id="phsLastUpdated">—</strong>
+    <div class="phs-fields__row">
+      <dt id="phs-meds-title">Maintenance medications</dt>
+      <dd>
+        <ul id="phsMedications" class="phs-chip-list"></ul>
+        <p id="phsMedicationsEmpty" class="phs-empty" hidden>No maintenance medications</p>
+      </dd>
+    </div>
+  </dl>
+
+  <footer class="phs-meta" aria-labelledby="phs-meta-title">
+    <h4 class="phs-meta__title" id="phs-meta-title">Profile metadata</h4>
+    <p class="phs-meta__note">
+      Verified information cannot be edited directly. Use <strong>Request update</strong> if something needs correction.
+    </p>
+    <div class="phs-meta__grid">
+      <div class="phs-meta__item">
+        <span class="phs-meta__label">Last updated</span>
+        <strong class="phs-meta__value" id="phsLastUpdated">—</strong>
       </div>
-      <div class="phs-meta-item">
-        <span class="phs-meta-item__label">Updated by</span>
-        <strong class="phs-meta-item__value" id="phsLastProvider">—</strong>
+      <div class="phs-meta__item">
+        <span class="phs-meta__label">Updated by</span>
+        <strong class="phs-meta__value" id="phsLastProvider">—</strong>
       </div>
     </div>
   </footer>
-</div>
+</section>
 
 <div id="phsRequestModal" class="phs-modal" hidden role="dialog" aria-modal="true" aria-labelledby="phsRequestModalTitle">
   <div class="phs-modal__backdrop" data-phs-close-modal></div>
