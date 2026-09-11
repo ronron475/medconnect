@@ -58,6 +58,7 @@ final class HiligaynonTextNormalizer
 
     /**
      * Full normalization pipeline for patient consultation text.
+     * Always case-folds first so "SaKiT UlO" and "sakit ulo" match identically.
      */
     public static function normalize(string $text): string
     {
@@ -77,6 +78,40 @@ final class HiligaynonTextNormalizer
         $text = self::collapseFillers($text);
 
         return trim(preg_replace('/\s+/u', ' ', $text) ?? $text);
+    }
+
+    /**
+     * Central match key for complaint / symptom comparison across the NLP pipeline.
+     * Use for dataset, fuzzy, synonym, and triage matching — never for display or DB storage.
+     */
+    public static function forMatch(string $text): string
+    {
+        return self::normalize($text);
+    }
+
+    /**
+     * Lightweight case + whitespace fold (no spelling rewrite).
+     * Prefer forMatch() for NLP; use caseFold() for identity / dedup only.
+     */
+    public static function caseFold(string $text): string
+    {
+        $text = mb_strtolower(trim($text));
+        if ($text === '') {
+            return '';
+        }
+
+        return trim(preg_replace('/\s+/u', ' ', $text) ?? $text);
+    }
+
+    /**
+     * Case-insensitive (and NLP-normalized) equality for complaint comparison.
+     */
+    public static function equals(string $a, string $b): bool
+    {
+        $left = self::forMatch($a);
+        $right = self::forMatch($b);
+
+        return $left !== '' && $left === $right;
     }
 
     /**

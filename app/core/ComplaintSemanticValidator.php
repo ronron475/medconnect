@@ -42,7 +42,9 @@ final class ComplaintSemanticValidator
                 'routing' => 'OUT_OF_SCOPE',
                 'signals' => [],
                 'relationships' => [],
-                'normalized' => mb_strtolower($raw),
+                'normalized' => class_exists('HiligaynonTextNormalizer')
+                    ? HiligaynonTextNormalizer::forMatch($raw)
+                    : mb_strtolower($raw),
                 'reason' => 'Domain detector unavailable',
             ];
 

@@ -74,7 +74,7 @@ final class ClinicalTriageEngine
         [$entitySymptoms, $conditions, $bodyParts] = self::collectFromEntities($entities);
         foreach ($validatedTerms as $term) {
             $t = trim($term);
-            if ($t !== '' && !in_array($t, $entitySymptoms, true) && !in_array($t, $conditions, true)) {
+            if ($t !== '' && !self::listHasCaseInsensitive($entitySymptoms, $t) && !self::listHasCaseInsensitive($conditions, $t)) {
                 $entitySymptoms[] = $t;
             }
         }
@@ -105,7 +105,7 @@ final class ClinicalTriageEngine
             if ($pretty === strtolower($pretty)) {
                 $pretty = ucwords($pretty);
             }
-            if (!in_array($pretty, $detectedNames, true)) {
+            if (!self::listHasCaseInsensitive($detectedNames, $pretty)) {
                 $kbSymptoms[] = [
                     'id'                 => 'entity_' . strtolower(str_replace(' ', '_', $pretty)),
                     'symptom_name'       => $pretty,
@@ -445,6 +445,31 @@ final class ClinicalTriageEngine
         NlpPipelineDebug::attach($result);
 
         return $result;
+    }
+
+    /**
+     * Case-insensitive membership via HiligaynonTextNormalizer::caseFold.
+     *
+     * @param list<string> $haystack
+     */
+    private static function listHasCaseInsensitive(array $haystack, string $needle): bool
+    {
+        $needleKey = class_exists('HiligaynonTextNormalizer')
+            ? HiligaynonTextNormalizer::caseFold($needle)
+            : mb_strtolower(trim($needle));
+        if ($needleKey === '') {
+            return false;
+        }
+        foreach ($haystack as $item) {
+            $itemKey = class_exists('HiligaynonTextNormalizer')
+                ? HiligaynonTextNormalizer::caseFold((string) $item)
+                : mb_strtolower(trim((string) $item));
+            if ($itemKey === $needleKey) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /** @param list<array<string, mixed>> $entities

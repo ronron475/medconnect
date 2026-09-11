@@ -175,7 +175,10 @@ final class FaqChatbotConversationalIntents
 
     public static function normalize(string $text): string
     {
-        $t = mb_strtolower(trim($text), 'UTF-8');
+        // Case-insensitive entry point shared with FaqChatbotTextNormalizer.
+        $t = class_exists('FaqChatbotTextNormalizer')
+            ? FaqChatbotTextNormalizer::caseFold($text)
+            : mb_strtolower(trim($text), 'UTF-8');
         $t = preg_replace('/(.)\1{2,}/u', '$1$1', $t) ?? $t;
         $t = strtr($t, [
             'appoinment' => 'appointment', 'appointmnt' => 'appointment', 'apointment' => 'appointment',

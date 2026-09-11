@@ -27,9 +27,10 @@ final class FaqChatbotNlpPipeline
         $synonyms = new FaqChatbotSynonymEngine($pdo);
 
         $tr = $translator->translate($original, $langHint);
-        $english = $tr['english'];
-        $expanded = $synonyms->expandToString($english, 'en');
-        $normalized = FaqChatbotTextNormalizer::normalize($english);
+        // Matching keys are always case-insensitive; $original stays for display/logs upstream.
+        $english = FaqChatbotTextNormalizer::forMatch($tr['english']);
+        $expanded = FaqChatbotTextNormalizer::forMatch($synonyms->expandToString($english, 'en'));
+        $normalized = $english;
 
         $steps = $tr['steps'];
         if ($expanded !== $english) {

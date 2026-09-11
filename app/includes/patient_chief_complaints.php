@@ -417,6 +417,12 @@ function patient_portal_complaint_source_label(string $source): string
  */
 function patient_complaints_are_same(string $a, string $b): bool
 {
+    if (class_exists('HiligaynonTextNormalizer')) {
+        $left = HiligaynonTextNormalizer::caseFold($a);
+        $right = HiligaynonTextNormalizer::caseFold($b);
+
+        return $left !== '' && $left === $right;
+    }
     $norm = static function (string $s): string {
         $s = mb_strtolower(trim($s));
         $s = preg_replace('/\s+/u', ' ', $s) ?? $s;

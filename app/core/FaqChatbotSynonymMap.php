@@ -125,9 +125,16 @@ final class FaqChatbotSynonymMap
     public static function expand(array $tokens): array
     {
         $map = self::groups();
-        $out = $tokens;
+        $out = [];
         foreach ($tokens as $tok) {
-            foreach ($map[$tok] ?? [] as $extra) {
+            $key = class_exists('FaqChatbotTextNormalizer')
+                ? FaqChatbotTextNormalizer::caseFold((string) $tok)
+                : mb_strtolower(trim((string) $tok), 'UTF-8');
+            if ($key === '') {
+                continue;
+            }
+            $out[] = $key;
+            foreach ($map[$key] ?? [] as $extra) {
                 $out[] = $extra;
             }
         }

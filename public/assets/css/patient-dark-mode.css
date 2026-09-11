@@ -1226,15 +1226,41 @@ html[data-theme-resolved='dark'] body.patient-portal .pdash-care-form__lock-badg
   border-color: rgba(94, 234, 212, 0.28) !important;
 }
 
+html[data-theme-resolved='dark'] body.patient-portal .pdash-care-form__input,
+html[data-theme-resolved='dark'] body.patient-portal #chief_complaint,
+html[data-theme-resolved='dark'] body.patient-portal #pdashSymptomsComplaint {
+  color: #ffffff !important;
+  -webkit-text-fill-color: #ffffff !important;
+  caret-color: #ffffff !important;
+  opacity: 1 !important;
+}
+
+html[data-theme-resolved='dark'] body.patient-portal .pdash-care-form__input::placeholder,
+html[data-theme-resolved='dark'] body.patient-portal #chief_complaint::placeholder,
+html[data-theme-resolved='dark'] body.patient-portal #pdashSymptomsComplaint::placeholder {
+  color: #71717a !important;
+  -webkit-text-fill-color: #71717a !important;
+}
+
 html[data-theme-resolved='dark'] body.patient-portal .pdash-care-form__input--locked {
   background: #141414 !important;
   border-color: #3f3f46 !important;
-  color: #d4d4d8 !important;
+  color: #ffffff !important;
+  -webkit-text-fill-color: #ffffff !important;
+  opacity: 1 !important;
 }
 
 html[data-theme-resolved='dark'] body.patient-portal .pdash-care-form__input--locked:focus {
   border-color: #3f3f46 !important;
   box-shadow: none !important;
+}
+
+html[data-theme-resolved='dark'] body.patient-portal .pdash-review-form.is-followup-active #pdashSymptomsComplaint,
+html[data-theme-resolved='dark'] body.patient-portal .patient-triage-form.is-followup-active #chief_complaint {
+  background: #141414 !important;
+  color: #ffffff !important;
+  -webkit-text-fill-color: #ffffff !important;
+  opacity: 1 !important;
 }
 
 /* ═══════════════════════════════════════════════════════════

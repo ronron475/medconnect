@@ -430,6 +430,9 @@ final class FaqChatbotDomainScope
 
     private static function normalize(string $text): string
     {
+        if (class_exists('FaqChatbotTextNormalizer')) {
+            return FaqChatbotTextNormalizer::forMatch($text);
+        }
         if (class_exists('FaqEmotionEngine')) {
             $t = FaqEmotionEngine::normalizeText($text);
         } else {

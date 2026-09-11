@@ -18,7 +18,9 @@ final class FaqChatbotKnowledgeBase
     {
         $lang = FaqEmotionEngine::normalizeLang($lang);
         $boost = trim((string) ($ctx['context_boost'] ?? FaqChatbotConversationMemory::contextBoostText()));
-        $hay = FaqEmotionEngine::normalizeText(trim($rawText . ' ' . $nlpText . ' ' . $boost));
+        $hay = class_exists('FaqChatbotTextNormalizer')
+            ? FaqChatbotTextNormalizer::forMatch(trim($rawText . ' ' . $nlpText . ' ' . $boost))
+            : FaqEmotionEngine::normalizeText(trim($rawText . ' ' . $nlpText . ' ' . $boost));
         if ($hay === '') {
             return null;
         }

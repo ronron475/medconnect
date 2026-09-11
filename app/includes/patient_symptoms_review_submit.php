@@ -15,6 +15,12 @@ require_once dirname(__DIR__) . '/core/TriageLevelService.php';
 
 function patient_symptoms_review_same_complaint(string $a, string $b): bool
 {
+    if (class_exists('HiligaynonTextNormalizer')) {
+        $left = HiligaynonTextNormalizer::caseFold($a);
+        $right = HiligaynonTextNormalizer::caseFold($b);
+
+        return $left !== '' && $left === $right;
+    }
     $norm = static function (string $s): string {
         $s = mb_strtolower(trim($s));
         $s = preg_replace('/\s+/u', ' ', $s) ?? $s;

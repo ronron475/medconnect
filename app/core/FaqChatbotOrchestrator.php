@@ -20,6 +20,7 @@ final class FaqChatbotOrchestrator
     public function handle(string $sessionId, string $text, string $lang = 'en', array $options = []): array
     {
         $text = trim($text);
+        $originalText = $text;
         $lang = FaqEmotionEngine::normalizeLang($lang);
         $mode = (string) ($options['mode'] ?? 'full');
         $userId = isset($_SESSION['user_id']) ? (int) $_SESSION['user_id'] : null;
@@ -36,8 +37,11 @@ final class FaqChatbotOrchestrator
 
         $conversationId = $this->convRepo->ensureConversation($sessionId, $lang, $userId);
 
+        // Internal NLP / match keys are case-insensitive via FaqChatbotTextNormalizer::forMatch().
+        // Stored user messages keep the exact original casing.
         $nlp = FaqChatbotNlpPipeline::process($this->pdo, $text, $lang);
         $nlpText = $nlp['expanded_english'] ?: $nlp['english_text'];
+        $nlpText = FaqChatbotTextNormalizer::forMatch($nlpText);
         $replyLang = $nlp['reply_lang'];
         $detectedLang = $nlp['detected_lang'];
         $bridge = [
@@ -77,12 +81,15 @@ final class FaqChatbotOrchestrator
         $resolvedShort = FaqChatbotConversationMemory::resolveShortUtterance($text);
         $effectiveText = $resolvedShort ?? $text;
         if ($resolvedShort !== null && $resolvedShort !== $text) {
-            $nlpText = trim($nlpText . ' ' . $resolvedShort);
+            $nlpText = trim($nlpText . ' ' . FaqChatbotTextNormalizer::forMatch($resolvedShort));
+            $nlpText = FaqChatbotTextNormalizer::forMatch($nlpText);
         }
         $matchText = FaqChatbotConversationMemory::contextualMatchText($effectiveText, $nlpText);
+        $matchText = FaqChatbotTextNormalizer::forMatch($matchText);
+        $effectiveMatch = FaqChatbotTextNormalizer::forMatch($effectiveText);
 
         // Greeting → emergency → dataset → Gemini classification.
-        $scopePack = FaqChatbotDomainScope::classify($effectiveText, $matchText);
+        $scopePack = FaqChatbotDomainScope::classify($effectiveMatch !== '' ? $effectiveMatch : $effectiveText, $matchText);
         $scope = (string) ($scopePack['scope'] ?? '');
         $isOpening = in_array($scope, [
             FaqChatbotDomainScope::GREETING,
@@ -92,31 +99,38 @@ final class FaqChatbotOrchestrator
             || (class_exists('FaqChatbotAiFallback') && FaqChatbotAiFallback::isConversationalOpeningOnly($text));
 
         if (!$isOpening) {
-            $focusText = FaqChatbotDomainScope::healthcareFocusText($effectiveText, $matchText);
-            if ($focusText !== '' && mb_strtolower($focusText) !== mb_strtolower(trim($effectiveText))) {
+            $focusText = FaqChatbotDomainScope::healthcareFocusText(
+                $effectiveMatch !== '' ? $effectiveMatch : $effectiveText,
+                $matchText
+            );
+            if ($focusText !== '' && !FaqChatbotTextNormalizer::equals($focusText, $effectiveText)) {
                 $effectiveText = $focusText;
-                $matchText = FaqChatbotConversationMemory::contextualMatchText($focusText, $nlpText);
+                $effectiveMatch = FaqChatbotTextNormalizer::forMatch($focusText);
+                $matchText = FaqChatbotTextNormalizer::forMatch(
+                    FaqChatbotConversationMemory::contextualMatchText($focusText, $nlpText)
+                );
             }
         }
 
         $emergency = ['is_emergency' => false, 'type' => null, 'flow' => null, 'reason' => ''];
-        $rawLacksClinical = FaqChatbotDomainScope::lacksClinicalMeaning($text)
-            || FaqChatbotDomainScope::lacksClinicalMeaning($effectiveText);
+        $rawLacksClinical = FaqChatbotDomainScope::lacksClinicalMeaning($originalText)
+            || FaqChatbotDomainScope::lacksClinicalMeaning($effectiveMatch !== '' ? $effectiveMatch : $effectiveText);
         // UNKNOWN / nonsense / out-of-scope must NEVER elevate via memory-enriched matchText.
         if (!$isOpening && !$rawLacksClinical) {
-            $emergency = FaqChatbotEmergencyDetector::detect($effectiveText);
+            $detectText = $effectiveMatch !== '' ? $effectiveMatch : $effectiveText;
+            $emergency = FaqChatbotEmergencyDetector::detect($detectText);
             // Memory-enriched matchText may only reinforce emergency when the raw turn
             // already carries healthcare meaning or is a short follow-up affirmative.
             $allowMemoryEmergency = empty($emergency['is_emergency'])
                 && $matchText !== ''
-                && strcasecmp(trim($matchText), trim($effectiveText)) !== 0
+                && !FaqChatbotTextNormalizer::equals($matchText, $detectText)
                 && (
-                    FaqChatbotDomainScope::isHealthcareRelated($effectiveText, $nlpText)
+                    FaqChatbotDomainScope::isHealthcareRelated($detectText, $nlpText)
                     || (
-                        FaqChatbotConversationMemory::isFollowUpUtterance($effectiveText)
-                        && mb_strlen(trim($effectiveText)) <= 28
-                        && !FaqChatbotDomainScope::looksUnclear($effectiveText)
-                        && !FaqChatbotDomainScope::isLikelyNonsenseOrPrank($effectiveText)
+                        FaqChatbotConversationMemory::isFollowUpUtterance($detectText)
+                        && mb_strlen(trim($detectText)) <= 28
+                        && !FaqChatbotDomainScope::looksUnclear($detectText)
+                        && !FaqChatbotDomainScope::isLikelyNonsenseOrPrank($detectText)
                     )
                 );
             if ($allowMemoryEmergency) {
@@ -127,7 +141,7 @@ final class FaqChatbotOrchestrator
             }
         }
         // Absolute veto: nonsense/unknown never becomes emergency.
-        if ($rawLacksClinical && !FaqChatbotDomainScope::isHealthcareRelated($text, $nlpText)) {
+        if ($rawLacksClinical && !FaqChatbotDomainScope::isHealthcareRelated($originalText, $nlpText)) {
             $emergency = ['is_emergency' => false, 'type' => null, 'flow' => null, 'reason' => ''];
         }
 
@@ -163,7 +177,7 @@ final class FaqChatbotOrchestrator
 
         $userMsgId = 0;
         try {
-            $userMsgId = $this->convRepo->insertMessage($conversationId, 'user', $text, $intent, $flowKey, null, null);
+            $userMsgId = $this->convRepo->insertMessage($conversationId, 'user', $originalText, $intent, $flowKey, null, null);
             $this->convRepo->insertEmotion(
                 $userMsgId,
                 $emotionResult['emotion'] ?? null,

@@ -19,10 +19,11 @@ final class ChiefComplaintNlpService
      */
     public static function assess(string $complaint, array $checkboxSymptoms = []): array
     {
-        $complaint = trim($complaint);
-        $originalComplaint = $complaint;
+        $originalComplaint = trim($complaint);
+        $complaint = $originalComplaint;
 
         // Registration / one-shot semantic gate (PHP domain + optional Gemini).
+        // Gemini / domain checks receive the patient's original wording.
         try {
             if ($complaint !== ''
                 && $checkboxSymptoms === []
@@ -58,11 +59,28 @@ final class ChiefComplaintNlpService
             error_log('ChiefComplaintNlpService semantic/domain gate fallback: ' . $e->getMessage());
         }
 
-        $assessment = MedicalAssessmentEngine::assess($complaint, $checkboxSymptoms);
-        if ($originalComplaint !== '' && $originalComplaint !== $complaint) {
+        // Internal NLP copy is always case-insensitive via centralized forMatch().
+        // Patient-facing / stored chief_complaint stays the exact original casing.
+        $nlpComplaint = $complaint;
+        if ($nlpComplaint !== '' && class_exists('HiligaynonTextNormalizer')) {
+            $matchKey = HiligaynonTextNormalizer::forMatch($nlpComplaint);
+            if ($matchKey !== '') {
+                $nlpComplaint = $matchKey;
+            }
+        }
+
+        $assessment = MedicalAssessmentEngine::assess($nlpComplaint, $checkboxSymptoms);
+        if ($originalComplaint !== '') {
             $assessment['original_chief_complaint'] = $originalComplaint;
             $assessment['chief_complaint'] = $originalComplaint;
-            $assessment['nlp_complaint_text'] = $complaint;
+            if ($nlpComplaint !== ''
+                && class_exists('HiligaynonTextNormalizer')
+                && HiligaynonTextNormalizer::caseFold($nlpComplaint) !== HiligaynonTextNormalizer::caseFold($originalComplaint)
+            ) {
+                $assessment['nlp_complaint_text'] = $nlpComplaint;
+            } elseif ($nlpComplaint !== '' && $nlpComplaint !== $originalComplaint) {
+                $assessment['nlp_complaint_text'] = $nlpComplaint;
+            }
         }
 
         return $assessment;
