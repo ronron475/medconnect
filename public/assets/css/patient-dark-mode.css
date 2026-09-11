@@ -1744,6 +1744,67 @@ html[data-theme-resolved='dark'] body.patient-portal .phs-fields__row dt {
   color: #a1a1aa;
 }
 
+/* Health Summary — Request update modal (dark contrast fix) */
+html[data-theme-resolved='dark'] body.patient-portal .phs-modal__card,
+html[data-theme-resolved='dark'] body.patient-portal .phs-modal__head,
+html[data-theme-resolved='dark'] body.patient-portal .phs-modal__body,
+html[data-theme-resolved='dark'] body.patient-portal .phs-modal__actions {
+  background: #1c1c1c !important;
+  background-color: #1c1c1c !important;
+  border-color: #2a2a2a !important;
+  color: #ffffff !important;
+  box-shadow: 0 20px 48px rgba(0, 0, 0, 0.55) !important;
+}
+
+html[data-theme-resolved='dark'] body.patient-portal .phs-modal__title,
+html[data-theme-resolved='dark'] body.patient-portal .phs-request-col__title,
+html[data-theme-resolved='dark'] body.patient-portal .phs-field__label,
+html[data-theme-resolved='dark'] body.patient-portal .phs-request-readonly__label {
+  color: #ffffff !important;
+}
+
+html[data-theme-resolved='dark'] body.patient-portal .phs-modal__lead {
+  color: #a1a1aa !important;
+}
+
+html[data-theme-resolved='dark'] body.patient-portal .phs-request-readonly__value {
+  background: #141414 !important;
+  background-color: #141414 !important;
+  border-color: #2a2a2a !important;
+  color: #e4e4e7 !important;
+}
+
+html[data-theme-resolved='dark'] body.patient-portal .phs-field__input,
+html[data-theme-resolved='dark'] body.patient-portal select.phs-field__input,
+html[data-theme-resolved='dark'] body.patient-portal textarea.phs-field__input {
+  background: #141414 !important;
+  background-color: #141414 !important;
+  border-color: #2a2a2a !important;
+  color: #ffffff !important;
+}
+
+html[data-theme-resolved='dark'] body.patient-portal .phs-field__input::placeholder,
+html[data-theme-resolved='dark'] body.patient-portal textarea.phs-field__input::placeholder {
+  color: #71717a !important;
+}
+
+html[data-theme-resolved='dark'] body.patient-portal .phs-field__input:focus {
+  border-color: rgba(45, 212, 191, 0.55) !important;
+  box-shadow: 0 0 0 3px rgba(45, 212, 191, 0.12) !important;
+}
+
+html[data-theme-resolved='dark'] body.patient-portal .phs-modal__actions .pdash-btn--outline {
+  background: #141414 !important;
+  border-color: #2a2a2a !important;
+  color: #ffffff !important;
+}
+
+html[data-theme-resolved='dark'] body.patient-portal .phs-modal__actions .pdash-btn--primary {
+  background: #0f766e !important;
+  border-color: #0f766e !important;
+  color: #ffffff !important;
+}
+
 html[data-theme-resolved='dark'] body.patient-portal .patient-triage-history__filters {
   background: #141414;
   border-bottom-color: #2a2a2a;
