@@ -142,6 +142,19 @@ function patient_consultation_clinical_outcome(
     $finalCaps = patient_case_level_label($bucket);
     $aiCaps = $aiBucket !== 'unknown' ? patient_case_level_label($aiBucket) : '';
 
+    $finalizedBy = '';
+    if (!empty($support['manual_urgency'])) {
+        $finalizedBy = trim((string) ($support['finalized_by'] ?? ''));
+        if ($finalizedBy === '' || strcasecmp($finalizedBy, 'Doctor') === 0) {
+            $finalizedBy = provider_clinical_support_finalized_by_label(
+                $pdo,
+                $consultationId,
+                (int) ($consult['provider_id'] ?? 0),
+                ''
+            );
+        }
+    }
+
     return [
         'consultation_id' => $consultationId,
         'patient_id' => $patientId,
@@ -153,7 +166,7 @@ function patient_consultation_clinical_outcome(
         'ai_case_level' => $aiCaps,
         'ai_case_display' => $aiCaps !== '' ? $aiCaps : trim((string) ($support['ai_urgency'] ?? '')),
         'is_doctor_override' => !empty($support['manual_urgency']),
-        'finalized_by' => !empty($support['manual_urgency']) ? 'Doctor' : '',
+        'finalized_by' => $finalizedBy,
         'clinical_reason' => trim((string) ($support['manual_override_note'] ?? '')),
         'recommended_actions' => is_array($support['recommended_actions'] ?? null) ? $support['recommended_actions'] : [],
         'emergency_warning_signs' => is_array($support['emergency_warning_signs'] ?? null) ? $support['emergency_warning_signs'] : [],

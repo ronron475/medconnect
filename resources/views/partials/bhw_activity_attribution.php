@@ -7,14 +7,14 @@ $addedBy = trim((string) ($entry['added_by'] ?? $entry['bhw_name'] ?? ''));
 $roleLabel = trim((string) ($entry['role_label'] ?? ''));
 if ($roleLabel === '' && !empty($entry['role'])) {
     $roleLabel = match (strtolower((string) $entry['role'])) {
-        'bhw' => 'Barangay Health Worker (BHW)',
+        'bhw' => 'Barangay Health Worker',
         'patient' => 'Patient',
         'provider' => 'Provider',
         default => '',
     };
 }
 if ($roleLabel === '' && $addedBy !== '' && $addedBy !== 'Unknown') {
-    $roleLabel = 'Barangay Health Worker (BHW)';
+    $roleLabel = 'Barangay Health Worker';
 }
 $dateLabel = trim((string) ($entry['date_label'] ?? ''));
 $timeLabel = trim((string) ($entry['time_label'] ?? ''));

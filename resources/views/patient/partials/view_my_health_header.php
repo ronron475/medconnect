@@ -12,7 +12,8 @@ $scheduled_visits = count(array_filter($history ?? [], static function ($h) {
 $totalVisits = count($history ?? []);
 $healthFiles = (int) ($counts['all'] ?? 0);
 $activeTips = (int) $care_tips_active_count;
-$showMetrics = ($totalVisits + (int) $completed_visits + $healthFiles + $activeTips) > 0;
+$timelineCount = count($care_timeline ?? []);
+$showMetrics = ($totalVisits + (int) $completed_visits + $healthFiles + $activeTips + $timelineCount) > 0;
 ?>
 <header class="pmh-hero pmh-hero--minimal">
   <div class="pmh-hero__top">

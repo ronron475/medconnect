@@ -50,7 +50,9 @@ try {
             'final_case_bucket' => (string) ($outcome['final_case_bucket'] ?? ''),
             'final_case_level'  => (string) ($outcome['final_case_level'] ?? ''),
             'ai_case_level'     => (string) ($outcome['ai_case_level'] ?? ''),
-            'finalized_by'      => !empty($outcome['is_doctor_override']) ? 'Doctor' : '',
+            'finalized_by'      => !empty($outcome['is_doctor_override'])
+                ? (trim((string) ($outcome['finalized_by'] ?? '')) ?: 'Doctor')
+                : '',
         ];
     }
 
@@ -154,7 +156,8 @@ try {
                 'final_label' => $finalLabel,
                 'final_bucket' => $finalBucket,
                 'clinical_reason' => (string) ($row['audit_note'] ?? ''),
-                'finalized_by' => 'Doctor',
+                'finalized_by' => trim((string) ($outcome['finalized_by'] ?? ''))
+                    ?: provider_clinical_support_finalized_by_label($pdo, $cid, 0, ''),
                 'assessed_at' => (string) ($row['created_at'] ?? ''),
                 'source' => 'provider_override',
                 'emergency' => $finalBucket === 'emergency',

@@ -2878,7 +2878,7 @@ body.consultation-mobile-call-fullscreen .mc-provider-video-dock iframe {
                                 $histBits[] = $hf['label'] . ': ' . $hf['value'];
                             }
                             $histRole = strtolower((string) ($hist['recorder_role'] ?? 'patient')) === 'bhw'
-                                ? 'Barangay Health Worker (BHW)'
+                                ? 'Barangay Health Worker'
                                 : 'Patient';
                             $histName = trim((string) ($hist['recorder_name'] ?? ''));
                             $histWhen = consultation_recorded_data_format_datetime($hist['recorded_at'] ?? null);
@@ -3548,7 +3548,7 @@ function renderConsultationRecordedData(payload) {
         html += '<details class="prd-history"><summary>Show earlier recordings for this consultation (' + (history.length - 1) + ' prior)</summary><ul class="prd-history-list">';
         history.slice(1).forEach(function (hist) {
             const role = String(hist.recorder_role || 'patient').toLowerCase() === 'bhw'
-                ? 'Barangay Health Worker (BHW)'
+                ? 'Barangay Health Worker'
                 : 'Patient';
             const histName = String(hist.recorder_name || '').trim();
             const bits = [];

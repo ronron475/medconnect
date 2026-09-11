@@ -147,7 +147,14 @@ if ($aiClass === '') {
 }
 $finalBucket = (string) ($clinical['risk_bucket'] ?? $clinical['doctor_urgency_bucket'] ?? 'unknown');
 $aiBucket = (string) ($clinical['ai_urgency_bucket'] ?? 'unknown');
-$finalizedBy = !empty($clinical['manual_urgency']) ? 'Doctor' : '';
+$finalizedBy = !empty($clinical['manual_urgency'])
+    ? provider_clinical_support_finalized_by_label(
+        $pdo,
+        $consultId,
+        (int) ($row['provider_id'] ?? 0),
+        (string) ($clinical['finalized_by'] ?? $waiting['doctor_name'] ?? '')
+    )
+    : '';
 
 $patientPanel = [
     'doctor_name'       => $waiting['doctor_name'],

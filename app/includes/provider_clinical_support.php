@@ -1013,8 +1013,9 @@ function provider_clinical_support_latest_override_row(PDO $pdo, int $consultati
     try {
         provider_clinical_support_ensure_schema($pdo);
         $stmt = $pdo->prepare("
-            SELECT id, consultation_id, patient_id, urgency_bucket, urgency_label,
-                   ai_urgency_bucket, doctor_urgency_bucket, audit_note, support_json, created_at
+            SELECT id, consultation_id, patient_id, provider_id, urgency_bucket, urgency_label,
+                   ai_urgency_bucket, doctor_urgency_bucket, audit_note, provider_name,
+                   support_json, created_at
             FROM consultation_clinical_support
             WHERE consultation_id = ?
               AND event_type = 'urgency_override'
@@ -1026,8 +1027,111 @@ function provider_clinical_support_latest_override_row(PDO $pdo, int $consultati
 
         return $row ?: null;
     } catch (Throwable $e) {
-        return null;
+        // Older schemas may lack provider_id / provider_name — fall back to core columns.
+        try {
+            $stmt = $pdo->prepare("
+                SELECT id, consultation_id, patient_id, urgency_bucket, urgency_label,
+                       ai_urgency_bucket, doctor_urgency_bucket, audit_note, support_json, created_at
+                FROM consultation_clinical_support
+                WHERE consultation_id = ?
+                  AND event_type = 'urgency_override'
+                ORDER BY id DESC
+                LIMIT 1
+            ");
+            $stmt->execute([$consultationId]);
+            $row = $stmt->fetch(PDO::FETCH_ASSOC);
+
+            return $row ?: null;
+        } catch (Throwable $e2) {
+            return null;
+        }
     }
+}
+
+/**
+ * Resolve the doctor display name who finalized an override (e.g. "Dr. Maria Santos").
+ * Never invents a person — falls back to "Doctor" only when no name is on file.
+ */
+function provider_clinical_support_finalized_by_label(
+    PDO $pdo,
+    int $consultationId = 0,
+    int $providerId = 0,
+    string $storedName = ''
+): string {
+    $name = trim($storedName);
+
+    if ($name === '' && $consultationId > 0) {
+        try {
+            provider_clinical_support_ensure_schema($pdo);
+            $stmt = $pdo->prepare("
+                SELECT provider_name, provider_id
+                FROM consultation_clinical_support
+                WHERE consultation_id = ?
+                  AND event_type = 'urgency_override'
+                ORDER BY id DESC
+                LIMIT 1
+            ");
+            $stmt->execute([$consultationId]);
+            $row = $stmt->fetch(PDO::FETCH_ASSOC) ?: [];
+            $name = trim((string) ($row['provider_name'] ?? ''));
+            if ($providerId <= 0) {
+                $providerId = (int) ($row['provider_id'] ?? 0);
+            }
+        } catch (Throwable $e) {
+            // ignore
+        }
+    }
+
+    if ($name === '' && $consultationId > 0) {
+        try {
+            $stmt = $pdo->prepare("
+                SELECT COALESCE(NULLIF(TRIM(c.provider_name), ''),
+                       TRIM(CONCAT(COALESCE(u.first_name, ''), ' ', COALESCE(u.last_name, '')))) AS nm,
+                       c.provider_id
+                FROM consultations c
+                LEFT JOIN users u ON u.id = c.provider_id
+                WHERE c.id = ?
+                LIMIT 1
+            ");
+            $stmt->execute([$consultationId]);
+            $row = $stmt->fetch(PDO::FETCH_ASSOC) ?: [];
+            $name = trim((string) ($row['nm'] ?? ''));
+            if ($providerId <= 0) {
+                $providerId = (int) ($row['provider_id'] ?? 0);
+            }
+        } catch (Throwable $e) {
+            // ignore
+        }
+    }
+
+    if ($name === '' && $providerId > 0) {
+        try {
+            $stmt = $pdo->prepare("
+                SELECT TRIM(CONCAT(COALESCE(first_name, ''), ' ', COALESCE(last_name, ''))) AS nm
+                FROM users
+                WHERE id = ?
+                LIMIT 1
+            ");
+            $stmt->execute([$providerId]);
+            $name = trim((string) ($stmt->fetchColumn() ?: ''));
+        } catch (Throwable $e) {
+            // ignore
+        }
+    }
+
+    if ($name === '') {
+        return 'Doctor';
+    }
+
+    if (function_exists('patient_provider_display_name')) {
+        return patient_provider_display_name($name);
+    }
+
+    if (!preg_match('/^dr\.?\s+/i', $name)) {
+        return 'Dr. ' . $name;
+    }
+
+    return $name;
 }
 
 /**
@@ -1083,7 +1187,12 @@ function provider_clinical_support_apply_authoritative_final(
             $support['doctor_urgency_bucket'] = $doctorBucket;
             $support['manual_urgency'] = true;
             $support['doctor_override'] = true;
-            $support['finalized_by'] = 'Doctor';
+            $support['finalized_by'] = provider_clinical_support_finalized_by_label(
+                $pdo,
+                $consultationId,
+                (int) ($override['provider_id'] ?? 0),
+                (string) ($override['provider_name'] ?? '')
+            );
             $note = trim((string) ($override['audit_note'] ?? ''));
             if ($note !== '') {
                 $support['manual_override_note'] = $note;
@@ -1115,7 +1224,7 @@ function provider_clinical_support_apply_authoritative_final(
         $support['doctor_urgency_bucket'] = $doctorFromTriage;
         $support['manual_urgency'] = true;
         $support['doctor_override'] = true;
-        $support['finalized_by'] = 'Doctor';
+        $support['finalized_by'] = provider_clinical_support_finalized_by_label($pdo, $consultationId, 0, '');
         $support['risk_level'] = $caps . ' (doctor override)';
 
         return $support;
@@ -1234,7 +1343,12 @@ function provider_clinical_support_persist_doctor_override(
     $support['manual_urgency'] = true;
     $support['manual_override_note'] = $note;
     $support['doctor_override'] = true;
-    $support['finalized_by'] = 'Doctor';
+    $support['finalized_by'] = provider_clinical_support_finalized_by_label(
+        $pdo,
+        $consultationId,
+        $providerId,
+        $providerName
+    );
     $support['available'] = true;
     $support['assessed_at'] = date('Y-m-d H:i:s');
     $support['assessed_label'] = date('M j, Y g:i A');
@@ -1391,7 +1505,12 @@ function provider_clinical_support_persist_doctor_override(
             'final_bucket' => $persistedBucket,
             'final_label' => $persistedFinal,
             'clinical_reason' => $persistedNote,
-            'finalized_by' => 'Doctor',
+            'finalized_by' => provider_clinical_support_finalized_by_label(
+                $pdo,
+                $consultationId,
+                $providerId,
+                $providerName
+            ),
             'finalized_at' => (string) ($persistedRow['created_at'] ?? $reloaded['assessed_at'] ?? ''),
             'gis' => $gisAfterCommit,
         ],

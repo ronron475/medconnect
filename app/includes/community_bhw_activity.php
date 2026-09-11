@@ -54,7 +54,7 @@ function community_bhw_activity_attribution(string $name, string $role, ?string 
 {
     $roleKey = strtolower(trim($role));
     $roleLabel = match ($roleKey) {
-        'bhw' => 'Barangay Health Worker (BHW)',
+        'bhw' => 'Barangay Health Worker',
         'provider' => 'Provider',
         'patient' => 'Patient',
         default => $roleKey !== '' ? ucwords(str_replace('_', ' ', $roleKey)) : 'Unknown',
@@ -536,4 +536,106 @@ function community_bhw_activity_referral_bhw_names(PDO $pdo, int $patientId): ar
         }
     }
     return $map;
+}
+
+/**
+ * Unified My Health → Care Timeline feed (consultations + existing BHW/patient records).
+ * Read-only; does not create duplicate rows.
+ *
+ * @param list<array<string, mixed>> $consultations
+ * @param array<string, mixed> $bhwActivity from community_bhw_activity_load()
+ * @param list<array<string, mixed>> $triageAssessments optional triage_results rows
+ * @return list<array{type: string, sort_at: string, data: array<string, mixed>}>
+ */
+function patient_care_timeline_build(
+    array $consultations,
+    array $bhwActivity,
+    array $triageAssessments = []
+): array {
+    $items = [];
+
+    foreach ($consultations as $row) {
+        $date = trim((string) ($row['consult_date'] ?? ''));
+        $time = trim((string) ($row['consult_time'] ?? ''));
+        $sortAt = '';
+        if ($date !== '') {
+            $sortAt = $date . ' ' . ($time !== '' ? $time : '00:00:00');
+        } elseif (!empty($row['created_at'])) {
+            $sortAt = (string) $row['created_at'];
+        }
+        $items[] = [
+            'type'    => 'consultation',
+            'sort_at' => $sortAt,
+            'data'    => $row,
+        ];
+    }
+
+    foreach (($bhwActivity['health_entries'] ?? []) as $row) {
+        $items[] = [
+            'type'    => 'health_entry',
+            'sort_at' => (string) ($row['recorded_at'] ?? ''),
+            'data'    => $row,
+        ];
+    }
+
+    foreach (($bhwActivity['external_visits'] ?? []) as $row) {
+        $items[] = [
+            'type'    => 'external_visit',
+            'sort_at' => (string) ($row['recorded_at'] ?? ''),
+            'data'    => $row,
+        ];
+    }
+
+    foreach (($bhwActivity['visits'] ?? []) as $row) {
+        $items[] = [
+            'type'    => 'home_visit',
+            'sort_at' => (string) ($row['recorded_at'] ?? ''),
+            'data'    => $row,
+        ];
+    }
+
+    foreach (($bhwActivity['documents'] ?? []) as $row) {
+        $items[] = [
+            'type'    => 'document',
+            'sort_at' => (string) ($row['recorded_at'] ?? ''),
+            'data'    => $row,
+        ];
+    }
+
+    foreach (($bhwActivity['referrals'] ?? []) as $row) {
+        $items[] = [
+            'type'    => 'referral',
+            'sort_at' => (string) ($row['recorded_at'] ?? ''),
+            'data'    => $row,
+        ];
+    }
+
+    foreach ($triageAssessments as $row) {
+        $assessed = trim((string) ($row['assessed_at'] ?? ''));
+        if ($assessed === '') {
+            continue;
+        }
+        // Skip empty complaint-less shells that add no useful history signal.
+        if (trim((string) ($row['chief_complaint'] ?? '')) === ''
+            && trim((string) ($row['urgency_label'] ?? $row['triage_classification'] ?? $row['level'] ?? '')) === ''
+        ) {
+            continue;
+        }
+        $items[] = [
+            'type'    => 'assessment',
+            'sort_at' => $assessed,
+            'data'    => $row,
+        ];
+    }
+
+    usort($items, static function (array $a, array $b): int {
+        $ta = strtotime((string) ($a['sort_at'] ?? '')) ?: 0;
+        $tb = strtotime((string) ($b['sort_at'] ?? '')) ?: 0;
+        if ($ta === $tb) {
+            return strcmp((string) ($b['type'] ?? ''), (string) ($a['type'] ?? ''));
+        }
+        return $tb <=> $ta;
+    });
+
+    return $items;
 }

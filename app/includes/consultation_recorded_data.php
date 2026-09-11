@@ -459,7 +459,7 @@ function consultation_recorded_data_dto_from_rows(
     }
 
     $role = strtolower((string) ($latest['recorder_role'] ?? 'patient'));
-    $roleLabel = $role === 'bhw' ? 'Barangay Health Worker (BHW)' : 'Patient';
+    $roleLabel = $role === 'bhw' ? 'Barangay Health Worker' : 'Patient';
     $name = trim((string) ($latest['recorder_name'] ?? ''));
     $byLabel = $name !== '' ? $name : $roleLabel;
     $status = strtolower((string) ($latest['status'] ?? ''));
