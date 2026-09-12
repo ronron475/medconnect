@@ -113,7 +113,10 @@ final class BagoBarangayCentroids
     {
         $records = [];
         foreach (self::barangayNames() as $name) {
-            $coords = self::resolve($name);
+            $coords = self::resolveBarangayCenter($name);
+            if ($coords === null) {
+                continue;
+            }
             $records[] = [
                 'name' => $name,
                 'lat'  => $coords['lat'],
@@ -169,15 +172,57 @@ final class BagoBarangayCentroids
     }
 
     /**
-     * @return array{lat: float, lng: float}
+     * Resolve verified barangay center only. Does NOT fall back to city center
+     * (city center must never be used as a substitute for an unmatched barangay).
+     *
+     * @return array{lat: float, lng: float}|null
      */
-    public static function resolve(string $barangay, string $city = 'Bago City'): array
+    public static function resolve(string $barangay, string $city = 'Bago City'): ?array
     {
         unset($city);
 
-        $center = self::resolveBarangayCenter($barangay);
+        return self::resolveBarangayCenter($barangay);
+    }
 
-        return $center ?? self::cityCenter();
+    /**
+     * Haversine distance in kilometers.
+     */
+    public static function distanceKm(float $lat1, float $lng1, float $lat2, float $lng2): float
+    {
+        $earth = 6371.0;
+        $dLat = deg2rad($lat2 - $lat1);
+        $dLng = deg2rad($lng2 - $lng1);
+        $a = sin($dLat / 2) ** 2
+            + cos(deg2rad($lat1)) * cos(deg2rad($lat2)) * sin($dLng / 2) ** 2;
+
+        return 2 * $earth * asin(min(1.0, sqrt($a)));
+    }
+
+    /**
+     * Nearest official barangay centroid — for mismatch detection only.
+     * Never use this to invent a patient's registered barangay.
+     *
+     * @return array{name: string, lat: float, lng: float, distance_km: float}|null
+     */
+    public static function nearestBarangay(float $lat, float $lng): ?array
+    {
+        $best = null;
+        $bestKm = PHP_FLOAT_MAX;
+
+        foreach (self::barangayMap() as $name => $coords) {
+            $km = self::distanceKm($lat, $lng, $coords['lat'], $coords['lng']);
+            if ($km < $bestKm) {
+                $bestKm = $km;
+                $best = [
+                    'name' => $name,
+                    'lat' => $coords['lat'],
+                    'lng' => $coords['lng'],
+                    'distance_km' => $km,
+                ];
+            }
+        }
+
+        return $best;
     }
 
     /**

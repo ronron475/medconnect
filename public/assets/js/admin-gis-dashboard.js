@@ -45,37 +45,55 @@
 
   const LOCATION_SOURCE = {
     gps: {
-      label: 'GPS (Exact)',
+      label: 'Exact Location — Verified Coordinates',
       hint: 'Verified device GPS coordinates',
       badgeClass: 'gis-loc-badge--gps',
       markerStyle: 'exact',
     },
     address_geocoded: {
-      label: 'Address (Geocoded)',
+      label: 'Barangay Location — Approximate',
       hint: 'Derived from the registered address — not GPS',
       badgeClass: 'gis-loc-badge--geocoded',
       markerStyle: 'geocoded',
     },
+    purok_center: {
+      label: 'Purok Location — Approximate',
+      hint: 'Registered purok under verified barangay — not exact GPS',
+      badgeClass: 'gis-loc-badge--purok',
+      markerStyle: 'approx',
+    },
+    purok_centroid: {
+      label: 'Purok Location — Approximate',
+      hint: 'Registered purok under verified barangay — not exact GPS',
+      badgeClass: 'gis-loc-badge--purok',
+      markerStyle: 'approx',
+    },
     barangay_center: {
-      label: 'Approximate (Barangay)',
+      label: 'Barangay Location — Approximate',
       hint: 'Verified barangay center — not the exact patient address',
       badgeClass: 'gis-loc-badge--approx',
       markerStyle: 'approx',
     },
     barangay_centroid: {
-      label: 'Approximate (Barangay)',
+      label: 'Barangay Location — Approximate',
       hint: 'Verified barangay center — not the exact patient address',
       badgeClass: 'gis-loc-badge--approx',
       markerStyle: 'approx',
     },
+    needs_verification: {
+      label: 'Location Needs Verification',
+      hint: 'Coordinates conflict with registered barangay/purok',
+      badgeClass: 'gis-loc-badge--verify',
+      markerStyle: 'approx',
+    },
     manual: {
-      label: 'GPS (Exact)',
+      label: 'Exact Location — Verified Coordinates',
       hint: 'Manually verified coordinates',
       badgeClass: 'gis-loc-badge--gps',
       markerStyle: 'exact',
     },
     imported: {
-      label: 'GPS (Exact)',
+      label: 'Exact Location — Verified Coordinates',
       hint: 'Imported verified coordinates',
       badgeClass: 'gis-loc-badge--gps',
       markerStyle: 'exact',
@@ -638,14 +656,21 @@
   }
 
   function normalizeLocationSource(row) {
+    const quality = String(row?.location_quality || '').toUpperCase();
     const source = String(row?.location_source || '').toLowerCase();
     const accuracy = String(row?.location_accuracy || '').toLowerCase();
 
+    if (quality === 'NEEDS_VERIFICATION' || source === 'needs_verification' || accuracy === 'needs_verification') {
+      return 'needs_verification';
+    }
     if (source === 'unavailable' || accuracy === 'unavailable') {
       return 'unavailable';
     }
-    if (source === 'gps' || source === 'manual' || source === 'imported' || accuracy === 'exact') {
+    if (source === 'gps' || source === 'manual' || source === 'imported' || accuracy === 'exact' || quality === 'EXACT_LOCATION') {
       return 'gps';
+    }
+    if (quality === 'PUROK_LOCATION' || source === 'purok_center' || source === 'purok_centroid') {
+      return 'purok_center';
     }
     if (source === 'address_geocoded' || accuracy === 'geocoded') {
       return 'address_geocoded';
@@ -741,7 +766,13 @@
   }
 
   function locationSourceMeta(row) {
-    return LOCATION_SOURCE[normalizeLocationSource(row)] || LOCATION_SOURCE.barangay_center;
+    const key = normalizeLocationSource(row);
+    const meta = LOCATION_SOURCE[key] || LOCATION_SOURCE.barangay_center;
+    const apiLabel = String(row?.location_accuracy_label || '').trim();
+    if (apiLabel) {
+      return Object.assign({}, meta, { label: apiLabel });
+    }
+    return meta;
   }
 
   function locationSourceBadgeHtml(row) {
@@ -961,6 +992,10 @@
     html += popupField('Patient ID', formatPatientNumber(row));
     html += popupField('Barangay', row.barangay || '—');
     html += popupField('Purok', purok);
+    const addr = displayAddress(row);
+    if (addr) {
+      html += popupField('Address', addr);
+    }
     html += popupField('Age', formatAge(row));
     html += popupField('Sex', formatSex(row));
     html += '</div>';
@@ -1001,14 +1036,27 @@
     if (locKey === 'unavailable') {
       html +=
         '<p class="gis-popup__loc-hint text-xs text-muted">Location unavailable — patient is listed but not mapped.</p>';
-    } else if (canShowCoordinates() && isValidCoord(lat, lng)) {
+    } else if (isValidCoord(lat, lng) || locKey === 'needs_verification') {
+      const accuracyText = String(row.location_accuracy_label || locMeta.label || '').trim();
+      const note = String(row.location_note || '').trim();
       html +=
         '<p class="gis-popup__loc-hint text-xs text-muted">' +
-        escapeHtml(locMeta.label) +
-        (locKey === 'barangay_center' || locKey === 'barangay_centroid'
-          ? ' · Barangay center (not exact address)'
-          : '') +
+        escapeHtml(accuracyText) +
+        (locKey === 'purok_center'
+          ? ' · Registered purok / barangay reference'
+          : locKey === 'barangay_center' || locKey === 'barangay_centroid'
+            ? ' · Barangay center (not exact address)'
+            : locKey === 'needs_verification'
+              ? ' · Registered barangay preserved'
+              : '') +
+        (note ? '<br>' + escapeHtml(note) : '') +
         '</p>';
+      if (canShowCoordinates() && isValidCoord(lat, lng) && locKey === 'gps') {
+        html +=
+          '<p class="gis-popup__loc-hint text-xs text-muted">' +
+          escapeHtml(lat.toFixed(6) + ', ' + lng.toFixed(6)) +
+          '</p>';
+      }
     }
 
     if (userRole === 'provider') {

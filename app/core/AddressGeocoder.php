@@ -39,25 +39,76 @@ final class AddressGeocoder
   }
 
   /**
+   * Forward-geocode an address. When $expectedBarangay is provided, reject results
+   * that clearly map nearer to a different official Bago barangay.
+   *
    * @return array{lat: float, lng: float}|null
    */
-  public function geocode(string $query, string $confidence = 'MEDIUM'): ?array
+  public function geocode(string $query, string $confidence = 'MEDIUM', ?string $expectedBarangay = null): ?array
   {
     $query = trim($query);
     if ($query === '' || !in_array($confidence, ['HIGH', 'MEDIUM'], true)) {
       return null;
     }
 
-    $hash = hash('sha256', strtolower($query));
-    $cached = $this->readCache($hash);
-    if ($cached !== null) {
-      return $cached;
+    require_once dirname(__DIR__) . '/core/BagoBarangayCentroids.php';
+    $canonical = $expectedBarangay !== null && $expectedBarangay !== ''
+      ? (BagoBarangayCentroids::canonicalName($expectedBarangay) ?? trim($expectedBarangay))
+      : null;
+
+    // Bias the query toward the registered barangay so Nominatim does not
+    // silently return a nearer wrong barangay / city-center hit.
+    $biasedQuery = $query;
+    if ($canonical !== null && stripos($query, $canonical) === false) {
+      $biasedQuery = 'Barangay ' . $canonical . ', ' . $query;
     }
 
-    $result = $this->requestNominatim($query);
-    $this->writeCache($hash, $query, $result, $confidence);
+    $hash = hash('sha256', strtolower($biasedQuery) . '|' . strtolower((string) $canonical));
+    $cached = $this->readCache($hash);
+    if ($cached !== null) {
+      return $this->acceptIfMatchesBarangay($cached, $canonical);
+    }
 
-    return $result;
+    $result = $this->requestNominatim($biasedQuery);
+    $accepted = $this->acceptIfMatchesBarangay($result, $canonical);
+    $this->writeCache($hash, $biasedQuery, $accepted, $confidence);
+
+    return $accepted;
+  }
+
+  /**
+   * @param array{lat: float, lng: float}|null $coords
+   * @return array{lat: float, lng: float}|null
+   */
+  private function acceptIfMatchesBarangay(?array $coords, ?string $canonicalBarangay): ?array
+  {
+    if ($coords === null) {
+      return null;
+    }
+    if ($canonicalBarangay === null || $canonicalBarangay === '') {
+      return $coords;
+    }
+
+    $registered = BagoBarangayCentroids::resolveBarangayCenter($canonicalBarangay);
+    if ($registered === null) {
+      return null;
+    }
+
+    $nearest = BagoBarangayCentroids::nearestBarangay($coords['lat'], $coords['lng']);
+    if ($nearest !== null && strcasecmp($nearest['name'], $canonicalBarangay) !== 0) {
+      $toRegistered = BagoBarangayCentroids::distanceKm(
+        $coords['lat'],
+        $coords['lng'],
+        $registered['lat'],
+        $registered['lng']
+      );
+      // Reject when another barangay is clearly closer and registered center is far.
+      if ($nearest['distance_km'] + 0.35 < $toRegistered && $toRegistered > 3.5) {
+        return null;
+      }
+    }
+
+    return $coords;
   }
 
   /**

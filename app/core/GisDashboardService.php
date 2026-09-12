@@ -383,8 +383,15 @@ final class GisDashboardService
     private function normalizeLocationSource(?string $source): string
     {
         $source = strtolower(trim((string) $source));
-        if (in_array($source, ['gps', 'manual', 'imported', 'address_geocoded', 'barangay_centroid', 'barangay_center', 'unavailable'], true)) {
-            return $source === 'barangay_centroid' ? 'barangay_center' : $source;
+        if (in_array($source, [
+            'gps', 'manual', 'imported', 'address_geocoded', 'barangay_centroid', 'barangay_center',
+            'purok_center', 'purok_centroid', 'needs_verification', 'unavailable',
+        ], true)) {
+            return match ($source) {
+                'barangay_centroid' => 'barangay_center',
+                'purok_centroid' => 'purok_center',
+                default => $source,
+            };
         }
 
         return 'barangay_center';
@@ -854,7 +861,8 @@ final class GisDashboardService
 
         $row['can_view_exact_location'] = false;
         $accuracy = (string) ($row['location_accuracy'] ?? '');
-        if (!in_array($accuracy, ['exact', 'geocoded'], true)) {
+        $quality = strtoupper((string) ($row['location_quality'] ?? ''));
+        if (!in_array($accuracy, ['exact', 'geocoded'], true) && $quality !== 'EXACT_LOCATION') {
             return $row;
         }
 
@@ -864,24 +872,37 @@ final class GisDashboardService
             (string) ($row['municipality'] ?? 'Bago City')
         );
 
+        $purok = trim((string) ($row['purok'] ?? ''));
         if ($fallback['lat'] !== null && $fallback['lng'] !== null) {
             $row['latitude'] = $fallback['lat'];
             $row['longitude'] = $fallback['lng'];
-            $row['location_source'] = 'barangay_center';
-            $row['location_accuracy'] = 'approximate';
-            $row['location_quality'] = 'BARANGAY_LOCATION';
-            $row['location_note'] = 'Exact patient location is restricted. Showing verified barangay center.';
-            $row['barangay_center_label'] = 'Barangay ' . ($row['canonical_barangay'] ?: $row['barangay']) . ' center';
+            if ($purok !== '') {
+                $row['location_source'] = 'purok_center';
+                $row['location_accuracy'] = 'approximate';
+                $row['location_quality'] = 'PUROK_LOCATION';
+                $row['location_accuracy_label'] = 'Purok Location — Approximate';
+                $row['location_note'] = 'Exact patient location is restricted. Showing registered purok / barangay reference.';
+                $row['barangay_center_label'] = $purok . ', Barangay ' . ($row['canonical_barangay'] ?: $row['barangay']);
+            } else {
+                $row['location_source'] = 'barangay_center';
+                $row['location_accuracy'] = 'approximate';
+                $row['location_quality'] = 'BARANGAY_LOCATION';
+                $row['location_accuracy_label'] = 'Barangay Location — Approximate';
+                $row['location_note'] = 'Exact patient location is restricted. Showing verified barangay center.';
+                $row['barangay_center_label'] = 'Barangay ' . ($row['canonical_barangay'] ?: $row['barangay']) . ' center';
+            }
         } else {
             $row['latitude'] = null;
             $row['longitude'] = null;
             $row['location_source'] = 'unavailable';
             $row['location_accuracy'] = 'unavailable';
             $row['location_quality'] = 'MISSING_LOCATION';
+            $row['location_accuracy_label'] = 'Location unavailable';
             $row['has_map_marker'] = false;
         }
 
         $parts = array_filter([
+            $purok !== '' ? $purok : '',
             !empty($row['canonical_barangay']) ? 'Barangay ' . $row['canonical_barangay'] : '',
             (string) ($row['municipality'] ?? 'Bago City'),
             (string) ($row['province'] ?? 'Negros Occidental'),

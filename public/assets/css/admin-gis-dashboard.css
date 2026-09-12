@@ -864,6 +864,18 @@ body.provider-body .gis-brgy-panel.mc-card {
   border: 1px dotted #7dd3fc;
 }
 
+.gis-loc-badge--purok {
+  background: #ecfdf5;
+  color: #047857;
+  border: 1px dashed #6ee7b7;
+}
+
+.gis-loc-badge--verify {
+  background: #fff7ed;
+  color: #c2410c;
+  border: 1px solid #fdba74;
+}
+
 .gis-loc-badge--unavailable {
   background: #f8fafc;
   color: #64748b;
