@@ -3,13 +3,11 @@ $active_page = 'referrals';
 $page_title  = 'Digital Referrals';
 require __DIR__.'/partials/icons.php';
 require __DIR__.'/partials/data.php';
-require_once BASE_PATH . '/app/includes/referral_community_followups.php';
 require __DIR__.'/partials/layout_open.php';
 
 $provider_id = (int)$_SESSION['user_id'];
 $referrals = [];
 $facilities = [];
-$followupsByReferral = [];
 
 try {
     $s = $pdo->prepare("
@@ -22,12 +20,6 @@ try {
     $s->execute([$provider_id]);
     $referrals = $s->fetchAll(PDO::FETCH_ASSOC);
     $facilities = $pdo->query("SELECT id, facility_name, facility_type FROM facilities WHERE status = 'active' ORDER BY facility_name")->fetchAll(PDO::FETCH_ASSOC);
-    if ($referrals) {
-        $followupsByReferral = referral_community_followups_latest_by_referral(
-            $pdo,
-            array_map(static fn(array $r): int => (int) ($r['id'] ?? 0), $referrals)
-        );
-    }
 } catch (PDOException $e) {
     try {
         $facilities = $pdo->query("SELECT DISTINCT facility_name AS facility_name, referral_type AS facility_type FROM digital_referrals WHERE facility_name IS NOT NULL")->fetchAll(PDO::FETCH_ASSOC);
@@ -36,25 +28,20 @@ try {
 ?>
 
 <div class="greeting-banner" style="margin-bottom:20px;">
-  <div><h2 class="text-h2">Digital Referrals</h2><p class="text-muted text-sm">Track referral status, destinations, and barangay follow-up outcomes.</p></div>
+  <div><h2 class="text-h2">Digital Referrals</h2><p class="text-muted text-sm">Track referral status, destinations, and history.</p></div>
   <a href="<?= ASSET_BASE ?>/views/provider/queue.php" class="mc-btn mc-btn--primary">+ New Referral from Queue</a>
 </div>
 
 <div class="mc-card" style="padding:0;overflow:hidden;">
   <table class="mc-table">
-    <thead><tr><th>Date</th><th>Patient</th><th>Type</th><th>Destination</th><th>Reason</th><th>Status</th><th>BHW follow-up</th></tr></thead>
+    <thead><tr><th>Date</th><th>Patient</th><th>Type</th><th>Destination</th><th>Reason</th><th>Status</th></tr></thead>
     <tbody>
       <?php if (empty($referrals)): ?>
-      <tr><td colspan="7"><div class="mc-table-empty"><p>No referrals created yet. Start from the Live Queue during a consultation.</p></div></td></tr>
+      <tr><td colspan="6"><div class="mc-table-empty"><p>No referrals created yet. Start from the Live Queue during a consultation.</p></div></td></tr>
       <?php else: foreach ($referrals as $r):
         $badge = 'background:#fef3c7;color:#92400e';
         if ($r['status'] === 'completed') $badge = 'background:#dcfce7;color:#16a34a';
         elseif ($r['status'] === 'cancelled') $badge = 'background:#fee2e2;color:#991b1b';
-        $fu = $followupsByReferral[(int) $r['id']] ?? null;
-        $fuLabel = $fu ? referral_community_followup_summary_label($fu) : '—';
-        if ($fu && trim((string) ($fu['notes'] ?? '')) !== '') {
-            $fuLabel .= ' · ' . mb_strimwidth(trim((string) $fu['notes']), 0, 60, '…');
-        }
       ?>
       <tr>
         <td><?= date('M j, Y', strtotime($r['created_at'])) ?></td>
@@ -63,7 +50,6 @@ try {
         <td><?= htmlspecialchars($r['facility_name'] ?? $r['destination_facility'] ?? '—') ?></td>
         <td class="text-sm"><?= htmlspecialchars(mb_strimwidth($r['reason'], 0, 80, '…')) ?></td>
         <td><span class="mc-badge" style="<?= $badge ?>"><?= htmlspecialchars($r['status']) ?></span></td>
-        <td class="text-sm"><?= htmlspecialchars($fuLabel) ?></td>
       </tr>
       <?php endforeach; endif; ?>
     </tbody>

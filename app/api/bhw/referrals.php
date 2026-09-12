@@ -9,23 +9,8 @@ $action = $_GET['action'] ?? $_POST['action'] ?? 'list';
 try {
     if ($action === 'list') {
         Api::success(['referrals' => BhwWorkflows::listReferrals($pdo, $ctx)]);
-    } elseif ($action === 'followups') {
-        $referralId = (int) ($_GET['referral_id'] ?? $_POST['referral_id'] ?? 0);
-        Api::success([
-            'followups' => BhwWorkflows::listCommunityFollowups($pdo, $ctx, $referralId),
-        ]);
-    } elseif ($action === 'record_followup') {
-        $id = BhwWorkflows::recordCommunityFollowup(
-            $pdo,
-            $ctx,
-            (int) ($_POST['referral_id'] ?? 0),
-            !empty($_POST['patient_contacted']) && (string) $_POST['patient_contacted'] !== '0',
-            !empty($_POST['acted_on_referral']) && (string) $_POST['acted_on_referral'] !== '0',
-            trim((string) ($_POST['notes'] ?? ''))
-        );
-        Api::success(['followup_id' => $id], 'Follow-up recorded. Clinical referral was not changed.');
-    } elseif ($action === 'create' || $action === 'update_status') {
-        Api::error('BHW cannot create or change clinical referrals. Use record_followup instead.', 403);
+    } elseif (in_array($action, ['create', 'update_status', 'record_followup', 'followups'], true)) {
+        Api::error('BHW can only view referrals for their barangay. Creating, changing, or following up on clinical referrals is not allowed.', 403);
     } else {
         Api::error('Unknown action.', 400);
     }
