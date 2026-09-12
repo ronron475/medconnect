@@ -1,6 +1,6 @@
 <?php
 /**
- * BHW no longer creates clinical referrals. Redirect to community follow-up.
+ * BHW cannot create clinical referrals — view-only list.
  */
 header('Location: status.php', true, 302);
 exit;

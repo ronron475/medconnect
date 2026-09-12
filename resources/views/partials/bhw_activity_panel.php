@@ -168,9 +168,6 @@ if ($bhwTotal === 0) {
                             <?php if (!empty($ref['reason'])): ?>
                             <p class="bhw-act-item__note"><?= htmlspecialchars((string) $ref['reason']) ?></p>
                             <?php endif; ?>
-                            <?php if (!empty($ref['followup_summary'])): ?>
-                            <p class="bhw-act-item__note"><strong>BHW follow-up:</strong> <?= htmlspecialchars((string) $ref['followup_summary']) ?><?php if (!empty($ref['followup_notes'])): ?> — <?= htmlspecialchars((string) $ref['followup_notes']) ?><?php endif; ?></p>
-                            <?php endif; ?>
                             <?php require VIEWS_PATH . '/partials/bhw_activity_attribution.php'; ?>
                         </li>
                         <?php endforeach; ?>

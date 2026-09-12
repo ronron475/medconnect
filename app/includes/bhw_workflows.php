@@ -9,7 +9,6 @@ require_once __DIR__ . '/consultation_expiry.php';
 require_once __DIR__ . '/triage_assessment_schema.php';
 require_once __DIR__ . '/patient_account_security.php';
 require_once __DIR__ . '/bhw_patient_workflow.php';
-require_once __DIR__ . '/referral_community_followups.php';
 require_once dirname(__DIR__) . '/core/TriageLevelService.php';
 require_once dirname(__DIR__) . '/core/MedicalAssessmentEngine.php';
 
@@ -564,9 +563,12 @@ final class BhwWorkflows
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
+    /**
+     * Barangay-scoped read-only list of doctor clinical referrals.
+     * BHW may view only — never create, edit, or follow up on referrals here.
+     */
     public static function listReferrals(PDO $pdo, array $ctx): array
     {
-        referral_community_followups_ensure_schema($pdo);
         [$clause, $params] = bhw_patient_sector_clause($pdo, $ctx, 'pr');
         $dest = self::referralDestColumn($pdo);
         $join = bhw_pr_user_join('pr', 'p');
@@ -583,28 +585,7 @@ final class BhwWorkflows
         ";
         $stmt = $pdo->prepare($sql);
         $stmt->execute($params);
-        $rows = $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
-        if ($rows === []) {
-            return [];
-        }
-
-        $latest = referral_community_followups_latest_by_referral(
-            $pdo,
-            array_map(static fn(array $r): int => (int) ($r['id'] ?? 0), $rows)
-        );
-
-        foreach ($rows as &$row) {
-            $id = (int) ($row['id'] ?? 0);
-            $fu = $latest[$id] ?? null;
-            $row['latest_followup'] = $fu;
-            $row['followup_summary'] = $fu ? referral_community_followup_summary_label($fu) : '';
-            $row['followup_notes'] = $fu ? trim((string) ($fu['notes'] ?? '')) : '';
-            $row['followup_at'] = $fu ? (string) ($fu['created_at'] ?? '') : '';
-            $row['has_followup'] = $fu !== null;
-        }
-        unset($row);
-
-        return $rows;
+        return $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
     }
 
     /**
@@ -612,124 +593,15 @@ final class BhwWorkflows
      */
     public static function createReferral(PDO $pdo, array $ctx, int $patientId, string $type, string $reason, ?int $facilityId, ?string $facilityName): int
     {
-        throw new InvalidArgumentException('BHW cannot create clinical referrals. Record community follow-up on an existing doctor referral instead.');
+        throw new InvalidArgumentException('BHW cannot create clinical referrals. View barangay referrals only.');
     }
 
     /**
-     * @deprecated BHW must not mutate digital_referrals.status. Use recordCommunityFollowup().
+     * @deprecated BHW must not mutate digital_referrals.status.
      */
     public static function updateReferralStatus(PDO $pdo, array $ctx, int $referralId, string $status, string $note = ''): void
     {
-        throw new InvalidArgumentException('BHW cannot change referral status. Record community follow-up instead.');
-    }
-
-    /**
-     * Record BHW community follow-up without changing the doctor's referral.
-     */
-    public static function recordCommunityFollowup(
-        PDO $pdo,
-        array $ctx,
-        int $referralId,
-        bool $patientContacted,
-        bool $actedOnReferral,
-        string $notes = ''
-    ): int {
-        referral_community_followups_ensure_schema($pdo);
-
-        $stmt = $pdo->prepare('SELECT id, patient_id, provider_id, referral_type, status FROM digital_referrals WHERE id = ? LIMIT 1');
-        $stmt->execute([$referralId]);
-        $referral = $stmt->fetch(PDO::FETCH_ASSOC);
-        if (!$referral) {
-            throw new InvalidArgumentException('Referral not found.');
-        }
-
-        $patientId = (int) $referral['patient_id'];
-        if (!bhw_assert_patient_in_sector($pdo, $ctx, $patientId)) {
-            throw new InvalidArgumentException('ACCESS DENIED');
-        }
-
-        $bhwId = (int) ($ctx['bhw_id'] ?? $_SESSION['user_id'] ?? 0);
-        if ($bhwId <= 0) {
-            throw new InvalidArgumentException('Unauthorized.');
-        }
-
-        $notes = trim($notes);
-        $pdo->prepare("
-            INSERT INTO referral_community_followups
-                (referral_id, patient_id, bhw_id, patient_contacted, acted_on_referral, notes, created_at)
-            VALUES (?, ?, ?, ?, ?, ?, NOW())
-        ")->execute([
-            $referralId,
-            $patientId,
-            $bhwId,
-            $patientContacted ? 1 : 0,
-            $actedOnReferral ? 1 : 0,
-            $notes !== '' ? $notes : null,
-        ]);
-        $followupId = (int) $pdo->lastInsertId();
-
-        $summary = referral_community_followup_summary_label([
-            'patient_contacted' => $patientContacted ? 1 : 0,
-            'acted_on_referral' => $actedOnReferral ? 1 : 0,
-        ]);
-        $detail = 'Barangay follow-up recorded: ' . $summary . '.';
-        if ($notes !== '') {
-            $detail .= ' Note: ' . $notes;
-        }
-
-        bhw_notify(
-            $pdo,
-            $patientId,
-            'referral',
-            'Referral Follow-Up Recorded',
-            $detail,
-            ASSET_BASE . '/views/patient/my_health.php?tab=files'
-        );
-
-        $providerId = (int) $referral['provider_id'];
-        if ($providerId > 0) {
-            $name = $pdo->prepare("SELECT CONCAT(first_name,' ',last_name) FROM users WHERE id = ? LIMIT 1");
-            $name->execute([$patientId]);
-            $patientName = (string) ($name->fetchColumn() ?: 'Patient');
-            bhw_notify(
-                $pdo,
-                $providerId,
-                'referral',
-                'BHW Referral Follow-Up',
-                $patientName . ' — referral #' . $referralId . ': ' . $summary
-                    . ($notes !== '' ? ' Note: ' . $notes : ''),
-                ASSET_BASE . '/views/provider/referrals.php'
-            );
-        }
-
-        bhw_audit($pdo, $patientId, 'bhw_referral_community_followup', "BHW recorded community follow-up #{$followupId} for referral #{$referralId}.", [
-            'referral_id'         => $referralId,
-            'followup_id'         => $followupId,
-            'patient_contacted'   => $patientContacted ? 1 : 0,
-            'acted_on_referral'   => $actedOnReferral ? 1 : 0,
-            'note'                => $notes,
-            'bhw_id'              => $bhwId,
-            'clinical_status'     => (string) ($referral['status'] ?? ''),
-        ]);
-
-        return $followupId;
-    }
-
-    /**
-     * @return list<array<string, mixed>>
-     */
-    public static function listCommunityFollowups(PDO $pdo, array $ctx, int $referralId): array
-    {
-        $stmt = $pdo->prepare('SELECT id, patient_id FROM digital_referrals WHERE id = ? LIMIT 1');
-        $stmt->execute([$referralId]);
-        $referral = $stmt->fetch(PDO::FETCH_ASSOC);
-        if (!$referral) {
-            throw new InvalidArgumentException('Referral not found.');
-        }
-        if (!bhw_assert_patient_in_sector($pdo, $ctx, (int) $referral['patient_id'])) {
-            throw new InvalidArgumentException('ACCESS DENIED');
-        }
-        return referral_community_followups_for_referral($pdo, $referralId);
+        throw new InvalidArgumentException('BHW cannot change referral status. View only.');
     }
 
     public static function listFollowups(PDO $pdo, array $ctx, ?string $status = null): array

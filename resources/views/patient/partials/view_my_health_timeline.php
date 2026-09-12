@@ -404,12 +404,6 @@ function pmh_timeline_initials(string $name, string $fallback = 'HX'): string {
             <p><?= htmlspecialchars((string) $entry['reason']) ?></p>
           </section>
           <?php endif; ?>
-          <?php if (!empty($entry['followup_summary'])): ?>
-          <section class="pmh-visit__block pmh-visit__block--full">
-            <h4 class="pmh-visit__label">BHW follow-up</h4>
-            <p><?= htmlspecialchars((string) $entry['followup_summary']) ?><?php if (!empty($entry['followup_notes'])): ?> — <?= htmlspecialchars((string) $entry['followup_notes']) ?><?php endif; ?></p>
-          </section>
-          <?php endif; ?>
         </div>
         <?php require VIEWS_PATH . '/partials/bhw_activity_attribution.php'; ?>
       </div>
