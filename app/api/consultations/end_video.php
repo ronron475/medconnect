@@ -3,7 +3,8 @@
  * End / leave video room.
  *
  * Patient leave  → rejoinable; consultation stays active (NOT completed).
- * Provider end   → ends video_sessions, auto-completes consultation (SOAP stays separate).
+ * Provider end   → ends video_sessions only. Consultation stays open until the
+ *                  doctor submits Final Assessment (SOAP finalize + final urgency).
  * Idempotent for provider retries on the same room token.
  */
 ob_start();

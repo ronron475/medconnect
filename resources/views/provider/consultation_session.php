@@ -203,6 +203,15 @@ $video_history = consultation_video_history_summary(
 );
 $show_video_demo_tip = function_exists('medconnect_is_local_dev_host') && medconnect_is_local_dev_host();
 $localhost_app_url = 'http://localhost' . (ASSET_BASE !== '' ? ASSET_BASE : '');
+$consultStatusLower = strtolower(trim((string) ($c['status'] ?? '')));
+$videoEndedPendingFinal = !$soap_finalized
+    && !in_array($consultStatusLower, ['completed', 'cancelled', 'canceled', 'ended', 'closed'], true)
+    && (
+        !empty($video_history['show_completed_details'])
+        || strtolower((string) ($video_history['video_status'] ?? '')) === 'ended'
+        || (isset($_GET['soap']) && (string) $_GET['soap'] === '1')
+        || (isset($_GET['final_assessment']) && (string) $_GET['final_assessment'] === '1')
+    );
 ?>
 
 <?php $soapSigCssVer = (int) @filemtime(ASSETS_PATH . '/css/soap-signature.css'); ?>
@@ -2420,7 +2429,97 @@ body.consultation-mobile-call-fullscreen .mc-provider-video-dock iframe {
     color: #e2e8f0;
     font-size: 11px;
 }
+.final-assessment-banner {
+    display: none;
+    margin: 0 0 16px;
+    padding: 14px 16px;
+    border-radius: 12px;
+    border: 1px solid #fcd34d;
+    background: #fffbeb;
+    color: #92400e;
+    box-sizing: border-box;
+}
+.final-assessment-banner.is-visible {
+    display: block;
+}
+.final-assessment-banner__title {
+    margin: 0 0 4px;
+    font-size: 15px;
+    font-weight: 800;
+    color: #78350f;
+}
+.final-assessment-banner__text {
+    margin: 0 0 10px;
+    font-size: 13px;
+    line-height: 1.5;
+}
+.final-assessment-banner__actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+.final-assessment-required-modal {
+    position: fixed;
+    inset: 0;
+    z-index: 100120;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    background: rgba(2, 6, 23, 0.55);
+}
+.final-assessment-required-modal.is-open {
+    display: flex;
+}
+.final-assessment-required-modal__dialog {
+    width: min(460px, 100%);
+    background: #fff;
+    border-radius: 14px;
+    border: 1px solid #e2e8f0;
+    box-shadow: 0 24px 60px rgba(2, 6, 23, 0.28);
+    overflow: hidden;
+}
+.final-assessment-required-modal__body {
+    padding: 22px 20px 8px;
+}
+.final-assessment-required-modal__title {
+    margin: 0 0 8px;
+    font-size: 1.15rem;
+    font-weight: 800;
+    color: #0f172a;
+}
+.final-assessment-required-modal__text {
+    margin: 0 0 10px;
+    font-size: 14px;
+    line-height: 1.55;
+    color: #334155;
+}
+.final-assessment-required-modal__footer {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    justify-content: flex-end;
+    padding: 12px 16px 16px;
+}
+#soapDocumentation.is-highlight-final {
+    outline: 2px solid #f59e0b;
+    outline-offset: 3px;
+    border-radius: 12px;
+}
 </style>
+
+<?php if (!$consultation_completed): ?>
+<div id="finalAssessmentBanner" class="final-assessment-banner<?= !empty($videoEndedPendingFinal) ? ' is-visible' : '' ?>" role="status"<?= empty($videoEndedPendingFinal) ? ' hidden' : '' ?>>
+  <p class="final-assessment-banner__title">Final Assessment required</p>
+  <p class="final-assessment-banner__text">
+    The video call has ended. This consultation is not completed until you submit the patient’s Final Assessment
+    (SOAP note + final case urgency). The patient will not see a doctor final result before you submit.
+  </p>
+  <div class="final-assessment-banner__actions">
+    <button type="button" class="session-btn primary" id="finalAssessmentGoBtn">Complete Final Assessment</button>
+  </div>
+</div>
+<?php endif; ?>
 
 <div class="session-page consultation-session<?= !empty($history_view) || !empty($video_history['show_completed_details']) ? ' is-post-call' : '' ?>" id="providerSessionPage">
     
@@ -2509,7 +2608,11 @@ body.consultation-mobile-call-fullscreen .mc-provider-video-dock iframe {
             </div>
             <div class="session-card-body">
                 <?php if (!empty($video_history['show_completed_details'])): ?>
-                <div class="info-row"><span class="info-key">Status</span><span class="info-val">Completed</span></div>
+                <div class="info-row"><span class="info-key">Status</span><span class="info-val"><?= htmlspecialchars(
+                    $consultation_completed
+                        ? 'Completed'
+                        : (string) ($video_history['video_status_label'] ?? 'Ended')
+                ) ?></span></div>
                 <div class="info-row"><span class="info-key">Date</span><span class="info-val"><?= htmlspecialchars((string) ($video_history['date_label'] ?? '—')) ?></span></div>
                 <div class="info-row"><span class="info-key">Started</span><span class="info-val"><?= htmlspecialchars((string) ($video_history['started_label'] ?? '—')) ?></span></div>
                 <div class="info-row"><span class="info-key">Ended</span><span class="info-val"><?= htmlspecialchars((string) ($video_history['ended_label'] ?? '—')) ?></span></div>
@@ -2517,7 +2620,7 @@ body.consultation-mobile-call-fullscreen .mc-provider-video-dock iframe {
                 <?php if (!empty($video_history['participants_label'])): ?>
                 <div class="info-row"><span class="info-key">Participants</span><span class="info-val"><?= htmlspecialchars((string) $video_history['participants_label']) ?></span></div>
                 <?php endif; ?>
-                <div class="info-row"><span class="info-key">Session status</span><span class="info-val"><?= htmlspecialchars((string) ($video_history['session_outcome_label'] ?? 'Successfully completed')) ?></span></div>
+                <div class="info-row"><span class="info-key">Session status</span><span class="info-val"><?= htmlspecialchars((string) ($video_history['session_outcome_label'] ?? ($consultation_completed ? 'Successfully completed' : 'Final Assessment required'))) ?></span></div>
                 <?php if (!empty($video_history['timeline']) && is_array($video_history['timeline'])): ?>
                 <div style="margin-top:12px;">
                     <strong style="font-size:12px;color:#0f766e;">Timeline</strong>
@@ -3360,32 +3463,47 @@ body.consultation-mobile-call-fullscreen .mc-provider-video-dock iframe {
   </div>
 </div>
 
+<div id="finalAssessmentRequiredModal" class="final-assessment-required-modal" aria-hidden="true">
+  <div class="final-assessment-required-modal__dialog" role="dialog" aria-modal="true" aria-labelledby="finalAssessmentRequiredTitle">
+    <div class="final-assessment-required-modal__body">
+      <h2 id="finalAssessmentRequiredTitle" class="final-assessment-required-modal__title">Final Assessment required</h2>
+      <p class="final-assessment-required-modal__text">
+        The video consultation has ended. Complete and submit the patient’s <strong>Final Assessment</strong>
+        (SOAP documentation and final case urgency) before this visit is marked completed.
+      </p>
+      <p class="final-assessment-required-modal__text">
+        The AI result remains preliminary only. The patient will not see a doctor final assessment until you submit it.
+      </p>
+    </div>
+    <div class="final-assessment-required-modal__footer">
+      <button type="button" class="session-btn" id="finalAssessmentLaterBtn">Continue later</button>
+      <button type="button" class="session-btn primary" id="finalAssessmentNowBtn">Complete Final Assessment</button>
+    </div>
+  </div>
+</div>
+
 <div id="soapFinalizeModal" class="soap-finalize-modal" aria-hidden="true">
   <div class="soap-finalize-modal__dialog" role="dialog" aria-modal="true" aria-labelledby="soapFinalizeTitle">
     <div class="soap-finalize-modal__body">
       <h2 id="soapFinalizeTitle" class="soap-finalize-modal__title">Finalize SOAP Note?</h2>
       <p class="soap-finalize-modal__text">You are about to electronically sign and finalize this clinical record. After finalization, the SOAP note will become available to the patient and ordinary editing will be disabled.</p>
       <div class="soap-finalize-urgency" style="margin-top:14px;padding-top:12px;border-top:1px solid #e2e8f0;">
-        <p class="soap-finalize-modal__text" style="margin-bottom:8px;"><strong>Confirm final case urgency</strong> (authoritative for this visit)</p>
+        <p class="soap-finalize-modal__text" style="margin-bottom:8px;"><strong>Final Assessment — case urgency</strong> (required)</p>
         <p class="soap-finalize-modal__text" style="margin-bottom:8px;font-size:13px;color:#64748b;">
-          AI preliminary:
-          <strong id="soapFinalizeAiLabel"><?= htmlspecialchars((string) ($clinical_support['ai_urgency'] ?? $clinical_support['risk_level'] ?? 'Not assessed')) ?></strong>
+          Preliminary AI Assessment:
+          <strong id="soapFinalizeAiLabel"><?= htmlspecialchars((string) ($clinical_support['ai_urgency'] ?? 'Not assessed')) ?></strong>
+          <span style="display:block;margin-top:4px;">Do not use the AI result as your final assessment unless you explicitly confirm it below.</span>
         </p>
-        <label for="soapFinalUrgency" style="display:block;font-size:13px;font-weight:600;margin-bottom:4px;">Final case urgency</label>
-        <select id="soapFinalUrgency" class="pd-input" style="width:100%;">
-          <?php
-            $finalizeBucket = provider_clinical_support_normalize_bucket((string) ($clinical_support['risk_bucket'] ?? 'non_urgent'));
-            if (!in_array($finalizeBucket, ['emergency', 'urgent', 'non_urgent'], true)) {
-                $finalizeBucket = 'non_urgent';
-            }
-          ?>
-          <option value="emergency" <?= $finalizeBucket === 'emergency' ? 'selected' : '' ?>>Emergency</option>
-          <option value="urgent" <?= $finalizeBucket === 'urgent' ? 'selected' : '' ?>>Urgent</option>
-          <option value="non_urgent" <?= $finalizeBucket === 'non_urgent' ? 'selected' : '' ?>>Non-Urgent</option>
+        <label for="soapFinalUrgency" style="display:block;font-size:13px;font-weight:600;margin-bottom:4px;">Final Doctor Assessment</label>
+        <select id="soapFinalUrgency" class="pd-input" style="width:100%;" required>
+          <option value="">Select final case urgency…</option>
+          <option value="emergency">Emergency</option>
+          <option value="urgent">Urgent</option>
+          <option value="non_urgent">Non-Urgent</option>
         </select>
         <label for="soapFinalUrgencyNote" style="display:block;font-size:13px;font-weight:600;margin:10px 0 4px;">Clinical reason</label>
-        <textarea id="soapFinalUrgencyNote" class="pd-textarea" rows="2" style="width:100%;" placeholder="Required when final urgency differs from AI; otherwise you may confirm the AI result."><?= htmlspecialchars((string) ($clinical_support['manual_override_note'] ?? '')) ?></textarea>
-        <p id="soapFinalUrgencyHint" class="soap-finalize-modal__text" style="margin:8px 0 0;font-size:12px;color:#64748b;"></p>
+        <textarea id="soapFinalUrgencyNote" class="pd-textarea" rows="2" style="width:100%;" placeholder="Required when final urgency differs from AI; otherwise confirm why you accept this final level."><?= htmlspecialchars((string) ($clinical_support['manual_override_note'] ?? '')) ?></textarea>
+        <p id="soapFinalUrgencyHint" class="soap-finalize-modal__text" style="margin:8px 0 0;font-size:12px;color:#64748b;">You must select and submit a Final Assessment before this consultation is marked completed.</p>
       </div>
     </div>
     <div class="soap-finalize-modal__footer">
@@ -3405,8 +3523,8 @@ body.consultation-mobile-call-fullscreen .mc-provider-video-dock iframe {
         </svg>
       </div>
       <p class="soap-success-modal__eyebrow">Consultation #<?= (int) $consultation_id ?></p>
-      <h2 id="soapSuccessTitle" class="soap-finalize-modal__title">SOAP note finalized</h2>
-      <p id="soapSuccessText" class="soap-finalize-modal__text">This clinical record is now saved. The patient can view it in My Health, and it appears in your Consultation History.</p>
+      <h2 id="soapSuccessTitle" class="soap-finalize-modal__title">Final Assessment submitted</h2>
+      <p id="soapSuccessText" class="soap-finalize-modal__text">This consultation is now completed. The patient can view the Final Assessment in My Health / My Sessions.</p>
       <ul class="soap-success-modal__list">
         <li>Record is read-only</li>
         <li>Available in patient My Health</li>
@@ -3430,7 +3548,7 @@ let timerActive = false;
 let mobileCallFullscreen = false;
 let desktopVideoExpanded = false;
 let trueCallFullscreen = false;
-let videoCallClosed = <?= !empty($history_view) ? 'true' : 'false' ?>;
+let videoCallClosed = <?= (!empty($history_view) || !empty($videoEndedPendingFinal)) ? 'true' : 'false' ?>;
 let lastEmergencyVideoSessionActive = false;
 const MOBILE_CONSULT_BREAK = 768;
 
@@ -3612,13 +3730,60 @@ function markVideoCallClosed() {
     const prompt = document.querySelector('.video-pre-call__prompt');
     const startBtn = document.querySelector('.video-pre-call__start');
     if (title) title.textContent = 'Consultation ended';
-    if (prompt) prompt.textContent = 'The video call has ended. Complete SOAP documentation below. This session cannot be restarted.';
+    if (prompt) prompt.textContent = 'The video call has ended. Submit the Final Assessment (SOAP + final case urgency) below. This consultation is not completed until you submit it.';
     if (startBtn) startBtn.hidden = true;
     const help = document.getElementById('videoPreCallHelp');
     if (help) help.hidden = true;
     document.body.classList.add('consultation-call-ended');
     const sessionPage = document.getElementById('providerSessionPage') || document.querySelector('.session-page');
     if (sessionPage) sessionPage.classList.add('is-post-call');
+    showFinalAssessmentBanner();
+}
+
+function showFinalAssessmentBanner() {
+    const banner = document.getElementById('finalAssessmentBanner');
+    if (!banner) return;
+    banner.hidden = false;
+    banner.classList.add('is-visible');
+}
+
+function scrollToFinalAssessment() {
+    const soapCard = document.getElementById('soapDocumentation');
+    if (soapCard) {
+        soapCard.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        soapCard.classList.add('is-highlight-final');
+        window.setTimeout(function () { soapCard.classList.remove('is-highlight-final'); }, 2400);
+    }
+    const finalizeBtn = document.getElementById('soapFinalizeBtn');
+    if (finalizeBtn && typeof finalizeBtn.focus === 'function') {
+        window.setTimeout(function () { finalizeBtn.focus(); }, 280);
+    }
+}
+
+function openFinalAssessmentRequiredModal() {
+    const modal = document.getElementById('finalAssessmentRequiredModal');
+    if (!modal) {
+        scrollToFinalAssessment();
+        return;
+    }
+    modal.classList.add('is-open');
+    modal.setAttribute('aria-hidden', 'false');
+    const nowBtn = document.getElementById('finalAssessmentNowBtn');
+    if (nowBtn && typeof nowBtn.focus === 'function') {
+        window.setTimeout(function () { nowBtn.focus(); }, 40);
+    }
+}
+
+function closeFinalAssessmentRequiredModal() {
+    const modal = document.getElementById('finalAssessmentRequiredModal');
+    if (!modal) return;
+    modal.classList.remove('is-open');
+    modal.setAttribute('aria-hidden', 'true');
+}
+
+function promptFinalAssessmentRequired() {
+    showFinalAssessmentBanner();
+    openFinalAssessmentRequiredModal();
 }
 
 window.addEventListener('resize', function () {
@@ -4008,12 +4173,17 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
     const params = new URLSearchParams(window.location.search);
-    if (params.get('soap') === '1' || window.location.hash === '#soapDocumentation') {
+    if (params.get('soap') === '1' || params.get('final_assessment') === '1' || window.location.hash === '#soapDocumentation') {
         const soapCard = document.getElementById('soapDocumentation');
         if (soapCard) {
             window.setTimeout(() => soapCard.scrollIntoView({ behavior: 'smooth', block: 'start' }), 200);
         }
+        showFinalAssessmentBanner();
+        if (params.get('final_assessment') === '1') {
+            window.setTimeout(openFinalAssessmentRequiredModal, 350);
+        }
         params.delete('soap');
+        params.delete('final_assessment');
         const next = window.location.pathname + (params.toString() ? '?' + params.toString() : '') + (window.location.hash || '#soapDocumentation');
         window.history.replaceState({}, '', next);
     } else if (params.get('followup') === '1') {
@@ -4021,6 +4191,41 @@ document.addEventListener('DOMContentLoaded', () => {
         params.delete('followup');
         const next = window.location.pathname + (params.toString() ? '?' + params.toString() : '') + window.location.hash;
         window.history.replaceState({}, '', next);
+    } else if (videoCallClosed && !<?= $consultation_completed ? 'true' : 'false' ?>) {
+        showFinalAssessmentBanner();
+        const title = document.querySelector('.video-pre-call__title');
+        const prompt = document.querySelector('.video-pre-call__prompt');
+        const startBtn = document.querySelector('.video-pre-call__start');
+        if (title && <?= !empty($videoEndedPendingFinal) ? 'true' : 'false' ?>) title.textContent = 'Consultation ended';
+        if (prompt && <?= !empty($videoEndedPendingFinal) ? 'true' : 'false' ?>) {
+            prompt.textContent = 'The video call has ended. Submit the Final Assessment (SOAP + final case urgency) below. This consultation is not completed until you submit it.';
+        }
+        if (startBtn && <?= !empty($videoEndedPendingFinal) ? 'true' : 'false' ?>) startBtn.hidden = true;
+    }
+
+    const goFinalBtn = document.getElementById('finalAssessmentGoBtn');
+    if (goFinalBtn) {
+        goFinalBtn.addEventListener('click', function () {
+            closeFinalAssessmentRequiredModal();
+            scrollToFinalAssessment();
+        });
+    }
+    const nowFinalBtn = document.getElementById('finalAssessmentNowBtn');
+    if (nowFinalBtn) {
+        nowFinalBtn.addEventListener('click', function () {
+            closeFinalAssessmentRequiredModal();
+            scrollToFinalAssessment();
+        });
+    }
+    const laterFinalBtn = document.getElementById('finalAssessmentLaterBtn');
+    if (laterFinalBtn) {
+        laterFinalBtn.addEventListener('click', closeFinalAssessmentRequiredModal);
+    }
+    const finalModal = document.getElementById('finalAssessmentRequiredModal');
+    if (finalModal) {
+        finalModal.addEventListener('click', function (e) {
+            if (e.target === finalModal) closeFinalAssessmentRequiredModal();
+        });
     }
 });
 
@@ -4659,10 +4864,8 @@ window.addEventListener('message', (event) => {
         document.body.classList.remove('consultation-mobile-call-fullscreen', 'consultation-true-fullscreen', 'consultation-desktop-video-expanded');
         const sessionPage = document.getElementById('providerSessionPage') || document.querySelector('.session-page');
         if (sessionPage) sessionPage.classList.add('is-post-call');
-        // The consultation is saved server-side by end_video.php before this
-        // message fires, so the follow-up decision comes next rather than
-        // throwing the provider straight into SOAP.
-        openFollowUpModal({ fromCallEnd: true });
+        // Video ended only — consultation stays open until Final Assessment is submitted.
+        promptFinalAssessmentRequired();
         return;
     }
 
@@ -5070,7 +5273,7 @@ function soapFinalizeUrgencyValidationMessage() {
     const noteEl = document.getElementById('soapFinalUrgencyNote');
     const bucket = urgencyEl ? String(urgencyEl.value || '').trim() : '';
     if (['emergency', 'urgent', 'non_urgent'].indexOf(bucket) === -1) {
-        return 'Select the final case urgency before finalizing.';
+        return 'Final Assessment required: select Emergency, Urgent, or Non-Urgent before completing this consultation.';
     }
     const note = noteEl ? String(noteEl.value || '').trim() : '';
     const aiBucket = soapFinalizeAiBucket();
@@ -5401,7 +5604,12 @@ function openFollowUpModal(opts) {
         if (el) el.setAttribute('aria-pressed', 'false');
     });
 
-    fuSetStatus(opts && opts.fromCallEnd ? 'Consultation completed.' : '', opts && opts.fromCallEnd ? 'ok' : '');
+    fuSetStatus(
+        opts && opts.fromCallEnd
+            ? 'Video ended. Submit Final Assessment to complete this consultation.'
+            : '',
+        opts && opts.fromCallEnd ? 'ok' : ''
+    );
 
     modal.classList.add('is-open');
     modal.setAttribute('aria-hidden', 'false');
@@ -5415,12 +5623,11 @@ function closeFollowUpModal() {
     modal.classList.remove('is-open');
     modal.setAttribute('aria-hidden', 'true');
 
-    // Ending the call is the only path that navigates, and only once the
-    // provider has answered or explicitly deferred the follow-up question.
+    // After follow-up from call end, return to Final Assessment (SOAP), not a completed state.
     if (fuOpenedFromCallEnd) {
         fuOpenedFromCallEnd = false;
         window.location.replace(
-            <?= json_encode(ASSET_BASE . '/views/provider/consultation_session.php?id=' . (int) $consultation_id . '&soap=1#soapDocumentation') ?>
+            <?= json_encode(ASSET_BASE . '/views/provider/consultation_session.php?id=' . (int) $consultation_id . '&soap=1&final_assessment=1#soapDocumentation') ?>
         );
     }
 }

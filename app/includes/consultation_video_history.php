@@ -265,14 +265,20 @@ function consultation_video_history_summary(
         $summary['participants_label'] = implode(' + ', $parts);
     }
 
-    if ($status === 'completed' && $startedAt !== '' && $endedAt !== '' && $duration !== '') {
+    if ($startedAt !== '' && $endedAt !== '' && $duration !== '') {
         $summary['show_completed_details'] = true;
-        $summary['video_status_label'] = 'Completed';
         $summary['duration_label'] = $duration;
         $summary['date_label'] = date('M j, Y', strtotime($startedAt) ?: time());
         $summary['started_label'] = date('g:i A', strtotime($startedAt));
         $summary['ended_label'] = date('g:i A', strtotime($endedAt));
-        $summary['session_outcome_label'] = 'Successfully completed';
+
+        if ($status === 'completed') {
+            $summary['video_status_label'] = 'Completed';
+            $summary['session_outcome_label'] = 'Successfully completed';
+        } else {
+            $summary['video_status_label'] = 'Ended';
+            $summary['session_outcome_label'] = 'Final Assessment required';
+        }
 
         $timeline = [];
         $timeline[] = [
@@ -284,14 +290,19 @@ function consultation_video_history_summary(
             'time_label' => $summary['ended_label'],
         ];
         $completedAt = trim((string) ($consultationCompletedAt ?? ''));
-        if ($completedAt !== '' && strtotime($completedAt)) {
+        if ($status === 'completed' && $completedAt !== '' && strtotime($completedAt)) {
             $timeline[] = [
                 'label' => 'Session completed',
                 'time_label' => date('g:i A', strtotime($completedAt)),
             ];
-        } else {
+        } elseif ($status === 'completed') {
             $timeline[] = [
                 'label' => 'Session completed',
+                'time_label' => $summary['ended_label'],
+            ];
+        } else {
+            $timeline[] = [
+                'label' => 'Awaiting doctor Final Assessment',
                 'time_label' => $summary['ended_label'],
             ];
         }
