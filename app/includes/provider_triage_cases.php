@@ -474,12 +474,24 @@ function provider_triage_workflow_badges(
 
 /**
  * Active queue: pending review, tips awaiting decision, or open booked visit.
+ * Expired same-day cases cannot be accepted — they belong in History, not the badge.
  */
 function provider_triage_case_is_active(array $t): bool
 {
     if (!empty($t['is_terminated'])) {
         return false;
     }
+
+    // Past calendar-day triage cannot be accepted/reviewed; keep only if a live booking remains.
+    if (!empty($t['expired'])) {
+        if (!empty($t['is_booked'])) {
+            $consultStatus = (string) ($t['consultation_status'] ?? '');
+            return !in_array($consultStatus, ['completed', 'cancelled'], true);
+        }
+
+        return false;
+    }
+
     if (empty($t['reviewed'])) {
         return true;
     }
@@ -511,6 +523,7 @@ function provider_triage_cases_stats(array $cases): array
     $needsReview = array_values(array_filter(
         $cases,
         static fn($t) => empty($t['is_terminated'])
+            && empty($t['expired'])
             && (empty($t['reviewed']) || !empty($t['needs_tips_approval']))
     ));
 
@@ -519,7 +532,10 @@ function provider_triage_cases_stats(array $cases): array
         'urgent'              => $urgent,
         'non_urgent'          => $non_urgent,
         'reviewed'            => $reviewed,
-        'pending'             => count(array_filter($cases, fn($t) => empty($t['reviewed']))),
+        'pending'             => count(array_filter(
+            $cases,
+            static fn($t) => empty($t['reviewed']) && empty($t['expired']) && empty($t['is_terminated'])
+        )),
         'tips_pending'        => $tipsPending,
         'needs_review'        => count($needsReview),
         'needs_review_urgent' => count(array_filter($needsReview, fn($t) => ($t['urgency'] ?? '') === 'Urgent')),
