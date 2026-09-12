@@ -163,53 +163,88 @@ $patient_page_stylesheets = [
     <p class="pmh-detail__meta"><?= htmlspecialchars($dateLabel) ?> · <span class="pmh-status pmh-status--<?= htmlspecialchars($statusChip) ?>"><?= htmlspecialchars($statusLabel) ?></span></p>
   </header>
 
-  <div class="pmh-surface pmh-detail">
-    <section class="pmh-detail__section">
-      <h3>Session</h3>
-      <dl class="pmh-session-kv">
-        <div><dt>Consultation ID</dt><dd>#<?= (int) $consultationId ?></dd></div>
-        <div><dt>Doctor</dt><dd><?= htmlspecialchars($providerName) ?></dd></div>
-        <div><dt>Date</dt><dd><?= htmlspecialchars($dateLabel) ?></dd></div>
+  <div class="pmh-detail-stack">
+    <section class="pmh-panel pmh-detail-card" aria-label="Session">
+      <h3 class="pmh-detail-card__title">Session</h3>
+      <dl class="pmh-session-kv pmh-session-kv--grid">
+        <div>
+          <dt>Consultation ID</dt>
+          <dd>#<?= (int) $consultationId ?></dd>
+        </div>
+        <div>
+          <dt>Doctor</dt>
+          <dd><?= htmlspecialchars($providerName) ?></dd>
+        </div>
+        <div>
+          <dt>Date</dt>
+          <dd><?= htmlspecialchars($dateLabel) ?></dd>
+        </div>
+        <div>
+          <dt>Status</dt>
+          <dd><?= htmlspecialchars($statusLabel) ?></dd>
+        </div>
         <?php if ($startLabel !== ''): ?>
-        <div><dt>Start</dt><dd><?= htmlspecialchars($startLabel) ?></dd></div>
+        <div>
+          <dt>Start</dt>
+          <dd><?= htmlspecialchars($startLabel) ?></dd>
+        </div>
         <?php endif; ?>
         <?php if ($endLabel !== ''): ?>
-        <div><dt>End</dt><dd><?= htmlspecialchars($endLabel) ?></dd></div>
+        <div>
+          <dt>End</dt>
+          <dd><?= htmlspecialchars($endLabel) ?></dd>
+        </div>
         <?php endif; ?>
         <?php if ($durationLabel !== ''): ?>
-        <div><dt>Duration</dt><dd><?= htmlspecialchars($durationLabel) ?></dd></div>
+        <div>
+          <dt>Duration</dt>
+          <dd><?= htmlspecialchars($durationLabel) ?></dd>
+        </div>
         <?php endif; ?>
-        <div><dt>Status</dt><dd><?= htmlspecialchars($statusLabel) ?></dd></div>
-        <div><dt>Patient Complaint</dt><dd><?= htmlspecialchars($chiefComplaint !== '' ? $chiefComplaint : 'Not recorded.') ?></dd></div>
+        <div class="pmh-session-kv__wide">
+          <dt>Patient Complaint</dt>
+          <dd><?= htmlspecialchars($chiefComplaint !== '' ? $chiefComplaint : 'Not recorded.') ?></dd>
+        </div>
       </dl>
     </section>
 
-    <section class="pmh-detail__section">
-      <h3>Video consultation</h3>
-      <dl class="pmh-session-kv">
-        <?php if (!empty($videoHistory['date_label'])): ?>
-        <div><dt>Date</dt><dd><?= htmlspecialchars((string) $videoHistory['date_label']) ?></dd></div>
-        <?php endif; ?>
-        <?php if (!empty($videoHistory['duration_label'])): ?>
-        <div><dt>Duration</dt><dd><?= htmlspecialchars((string) $videoHistory['duration_label']) ?></dd></div>
-        <?php endif; ?>
-        <div><dt>Provider</dt><dd><?= htmlspecialchars($providerName) ?></dd></div>
-      </dl>
-      <?php if (!empty($videoHistory['has_recording'])): ?>
-      <p class="pmh-file-card__link">
-        <a class="pmh-btn pmh-btn--outline pmh-btn--sm" href="<?= htmlspecialchars(consultation_video_recording_view_url((int) $consultationId)) ?>" target="_blank" rel="noopener">View Recording</a>
-      </p>
-      <?php if (!empty($videoHistory['recording_segment_count']) && (int) $videoHistory['recording_segment_count'] > 1): ?>
-      <p class="text-muted"><?= (int) $videoHistory['recording_segment_count'] ?> recording segments</p>
-      <?php endif; ?>
-      <?php else: ?>
-      <p class="text-muted">Video recording not available for this consultation.</p>
-      <?php endif; ?>
+    <section class="pmh-panel pmh-detail-card" aria-label="Video consultation">
+      <h3 class="pmh-detail-card__title">Video consultation</h3>
+      <div class="pmh-video-row">
+        <dl class="pmh-session-kv pmh-session-kv--compact">
+          <?php if (!empty($videoHistory['date_label'])): ?>
+          <div>
+            <dt>Date</dt>
+            <dd><?= htmlspecialchars((string) $videoHistory['date_label']) ?></dd>
+          </div>
+          <?php endif; ?>
+          <?php if (!empty($videoHistory['duration_label'])): ?>
+          <div>
+            <dt>Duration</dt>
+            <dd><?= htmlspecialchars((string) $videoHistory['duration_label']) ?></dd>
+          </div>
+          <?php endif; ?>
+          <div>
+            <dt>Provider</dt>
+            <dd><?= htmlspecialchars($providerName) ?></dd>
+          </div>
+        </dl>
+        <div class="pmh-video-row__actions">
+          <?php if (!empty($videoHistory['has_recording'])): ?>
+          <a class="pmh-btn pmh-btn--primary pmh-btn--sm" href="<?= htmlspecialchars(consultation_video_recording_view_url((int) $consultationId)) ?>" target="_blank" rel="noopener">View Recording</a>
+          <?php if (!empty($videoHistory['recording_segment_count']) && (int) $videoHistory['recording_segment_count'] > 1): ?>
+          <p class="pmh-detail-card__hint"><?= (int) $videoHistory['recording_segment_count'] ?> recording segments</p>
+          <?php endif; ?>
+          <?php else: ?>
+          <p class="pmh-detail-card__hint">Video recording not available for this consultation.</p>
+          <?php endif; ?>
+        </div>
+      </div>
     </section>
 
     <?php if ($timeline !== []): ?>
-    <section class="pmh-detail__section">
-      <h3>Session timeline</h3>
+    <section class="pmh-panel pmh-detail-card" aria-label="Session timeline">
+      <h3 class="pmh-detail-card__title">Session timeline</h3>
       <ol class="pmh-session-timeline">
         <?php foreach ($timeline as $event): ?>
         <li>
@@ -222,127 +257,132 @@ $patient_page_stylesheets = [
     <?php endif; ?>
 
     <?php if (!empty($clinicalOutcome['final_case_level'])): ?>
-      <section class="pmh-detail__section pmh-detail__section--case-level">
-        <h3>Triage assessment</h3>
-        <?php
-          if (!function_exists('mc_render_consultation_outcome_stack')) {
-              require_once VIEWS_PATH . '/patient/partials/triage_helpers.php';
-          }
-          mc_render_consultation_outcome_stack($clinicalOutcome, $consultationId);
-        ?>
-        <?php if (!empty($clinicalOutcome['clinical_reason'])): ?>
-        <p class="pmh-detail__case-sub"><strong>Clinical reason:</strong> <?= htmlspecialchars((string) $clinicalOutcome['clinical_reason']) ?></p>
-        <?php endif; ?>
-        <?php if (!empty($clinicalOutcome['recommended_actions'])): ?>
-        <ul class="pmh-detail__actions-list">
-          <?php foreach ($clinicalOutcome['recommended_actions'] as $action): ?>
-          <li><?= htmlspecialchars((string) $action) ?></li>
+    <section class="pmh-panel pmh-detail-card pmh-detail-card--case-level" aria-label="Triage assessment">
+      <h3 class="pmh-detail-card__title">Triage assessment</h3>
+      <?php
+        if (!function_exists('mc_render_consultation_outcome_stack')) {
+            require_once VIEWS_PATH . '/patient/partials/triage_helpers.php';
+        }
+        mc_render_consultation_outcome_stack($clinicalOutcome, $consultationId);
+      ?>
+      <?php if (!empty($clinicalOutcome['clinical_reason'])): ?>
+      <p class="pmh-detail__case-sub"><strong>Clinical reason:</strong> <?= htmlspecialchars((string) $clinicalOutcome['clinical_reason']) ?></p>
+      <?php endif; ?>
+      <?php if (!empty($clinicalOutcome['recommended_actions'])): ?>
+      <ul class="pmh-detail__actions-list">
+        <?php foreach ($clinicalOutcome['recommended_actions'] as $action): ?>
+        <li><?= htmlspecialchars((string) $action) ?></li>
+        <?php endforeach; ?>
+      </ul>
+      <?php endif; ?>
+      <?php if (($clinicalOutcome['final_case_bucket'] ?? '') === 'emergency' && !empty($clinicalOutcome['emergency_warning_signs'])): ?>
+      <div class="pmh-detail__emergency">
+        <strong>Emergency guidance</strong>
+        <ul>
+          <?php foreach ($clinicalOutcome['emergency_warning_signs'] as $sign): ?>
+          <li><?= htmlspecialchars((string) $sign) ?></li>
           <?php endforeach; ?>
         </ul>
-        <?php endif; ?>
-        <?php if (($clinicalOutcome['final_case_bucket'] ?? '') === 'emergency' && !empty($clinicalOutcome['emergency_warning_signs'])): ?>
-        <div class="pmh-detail__emergency">
-          <strong>Emergency guidance</strong>
-          <ul>
-            <?php foreach ($clinicalOutcome['emergency_warning_signs'] as $sign): ?>
-            <li><?= htmlspecialchars((string) $sign) ?></li>
-            <?php endforeach; ?>
-          </ul>
-          <p>Seek immediate in-person care. You may continue the live consultation while arranging transfer.</p>
-        </div>
-        <?php endif; ?>
-      </section>
+        <p>Seek immediate in-person care. You may continue the live consultation while arranging transfer.</p>
+      </div>
+      <?php endif; ?>
+    </section>
     <?php endif; ?>
 
-    <?php if (!$isFinalized): ?>
+    <section class="pmh-panel pmh-detail-card<?= !$isFinalized ? ' pmh-detail-card--pending' : '' ?>" aria-label="Provider documentation">
+      <h3 class="pmh-detail-card__title">Provider documentation</h3>
+      <?php if (!$isFinalized): ?>
       <div class="pmh-detail__pending">
         <p>Provider documentation is still in progress.</p>
         <p class="text-muted">Released notes, diagnosis, and prescriptions will appear here and in My Health when ready.</p>
       </div>
-    <?php else: ?>
+      <?php else: ?>
 
-      <section class="pmh-detail__section">
-        <h3>SOAP Note</h3>
-        <dl class="pmh-soap-list">
-          <div><dt>Subjective</dt><dd><?= nl2br(htmlspecialchars(trim((string) ($note['subjective'] ?? '')) ?: '—')) ?></dd></div>
-          <div><dt>Objective</dt><dd><?= nl2br(htmlspecialchars(trim((string) ($note['objective'] ?? '')) ?: '—')) ?></dd></div>
-          <div><dt>Assessment</dt><dd><?= nl2br(htmlspecialchars(trim((string) ($note['assessment'] ?? '')) ?: '—')) ?></dd></div>
-          <div><dt>Plan</dt><dd><?= nl2br(htmlspecialchars(trim((string) ($note['plan'] ?? '')) ?: '—')) ?></dd></div>
-        </dl>
-        <?php
-          $signedBy = clinical_note_signed_by_label($note ?: [], $providerName);
-          $signedAt = clinical_note_signed_at_label($note ?: []);
-        ?>
-        <?php if ($signedBy !== '' || $signedAt !== ''): ?>
-        <p class="pmh-soap-signed">
-          <?php if ($signedBy !== ''): ?><?= htmlspecialchars($signedBy) ?><?php endif; ?>
-          <?php if ($signedAt !== ''): ?><?php if ($signedBy !== ''): ?><br><?php endif; ?><?= htmlspecialchars($signedAt) ?><?php endif; ?>
-        </p>
+      <div class="pmh-detail-docs">
+        <div class="pmh-detail-docs__block">
+          <h4 class="pmh-detail-docs__heading">SOAP Note</h4>
+          <dl class="pmh-soap-list">
+            <div><dt>Subjective</dt><dd><?= nl2br(htmlspecialchars(trim((string) ($note['subjective'] ?? '')) ?: '—')) ?></dd></div>
+            <div><dt>Objective</dt><dd><?= nl2br(htmlspecialchars(trim((string) ($note['objective'] ?? '')) ?: '—')) ?></dd></div>
+            <div><dt>Assessment</dt><dd><?= nl2br(htmlspecialchars(trim((string) ($note['assessment'] ?? '')) ?: '—')) ?></dd></div>
+            <div><dt>Plan</dt><dd><?= nl2br(htmlspecialchars(trim((string) ($note['plan'] ?? '')) ?: '—')) ?></dd></div>
+          </dl>
+          <?php
+            $signedBy = clinical_note_signed_by_label($note ?: [], $providerName);
+            $signedAt = clinical_note_signed_at_label($note ?: []);
+          ?>
+          <?php if ($signedBy !== '' || $signedAt !== ''): ?>
+          <p class="pmh-soap-signed">
+            <?php if ($signedBy !== ''): ?><?= htmlspecialchars($signedBy) ?><?php endif; ?>
+            <?php if ($signedAt !== ''): ?><?php if ($signedBy !== ''): ?><br><?php endif; ?><?= htmlspecialchars($signedAt) ?><?php endif; ?>
+          </p>
+          <?php endif; ?>
+          <?php if (trim((string) ($note['diagnosis'] ?? '')) !== ''): ?>
+          <p class="pmh-detail__diag"><strong>Diagnosis:</strong> <?= htmlspecialchars($note['diagnosis']) ?></p>
+          <?php endif; ?>
+        </div>
+
+        <?php if (!empty($prescriptions)): ?>
+        <div class="pmh-detail-docs__block">
+          <h4 class="pmh-detail-docs__heading">Prescription</h4>
+          <ul class="pmh-rx-list">
+            <?php foreach ($prescriptions as $rx): ?>
+            <li>
+              <strong><?= htmlspecialchars($rx['medication_name'] ?? '') ?></strong>
+              <span><?= htmlspecialchars(trim(($rx['dosage'] ?? '') . ' · ' . ($rx['frequency'] ?? '') . ' · ' . ($rx['duration'] ?? ''))) ?></span>
+              <?php if (!empty($rx['notes'])): ?><p><?= nl2br(htmlspecialchars($rx['notes'])) ?></p><?php endif; ?>
+            </li>
+            <?php endforeach; ?>
+          </ul>
+          <?php if (trim((string) ($note['prescription'] ?? '')) !== '' && empty($prescriptions[0]['notes'])): ?>
+          <p><?= nl2br(htmlspecialchars($note['prescription'])) ?></p>
+          <?php endif; ?>
+        </div>
+        <?php elseif (trim((string) ($note['prescription'] ?? '')) !== ''): ?>
+        <div class="pmh-detail-docs__block">
+          <h4 class="pmh-detail-docs__heading">Prescription</h4>
+          <p><?= nl2br(htmlspecialchars($note['prescription'])) ?></p>
+        </div>
         <?php endif; ?>
-        <?php if (trim((string) ($note['diagnosis'] ?? '')) !== ''): ?>
-        <p class="pmh-detail__diag"><strong>Diagnosis:</strong> <?= htmlspecialchars($note['diagnosis']) ?></p>
+
+        <?php if (!empty($followups)): ?>
+        <div class="pmh-detail-docs__block">
+          <h4 class="pmh-detail-docs__heading">Follow-up</h4>
+          <ul class="pmh-rx-list">
+            <?php foreach ($followups as $fu): ?>
+            <li>
+              <strong><?= !empty($fu['followup_date']) ? date('M j, Y', strtotime($fu['followup_date'])) : 'Follow-up' ?></strong>
+              <?php if (!empty($fu['message'])): ?><p><?= nl2br(htmlspecialchars($fu['message'])) ?></p><?php endif; ?>
+              <?php if (!empty($fu['notes'])): ?><p><?= nl2br(htmlspecialchars($fu['notes'])) ?></p><?php endif; ?>
+            </li>
+            <?php endforeach; ?>
+          </ul>
+        </div>
         <?php endif; ?>
-      </section>
 
-      <?php if (!empty($prescriptions)): ?>
-      <section class="pmh-detail__section">
-        <h3>Prescription</h3>
-        <ul class="pmh-rx-list">
-          <?php foreach ($prescriptions as $rx): ?>
-          <li>
-            <strong><?= htmlspecialchars($rx['medication_name'] ?? '') ?></strong>
-            <span><?= htmlspecialchars(trim(($rx['dosage'] ?? '') . ' · ' . ($rx['frequency'] ?? '') . ' · ' . ($rx['duration'] ?? ''))) ?></span>
-            <?php if (!empty($rx['notes'])): ?><p><?= nl2br(htmlspecialchars($rx['notes'])) ?></p><?php endif; ?>
-          </li>
-          <?php endforeach; ?>
-        </ul>
-        <?php if (trim((string) ($note['prescription'] ?? '')) !== '' && empty($prescriptions[0]['notes'])): ?>
-        <p><?= nl2br(htmlspecialchars($note['prescription'])) ?></p>
+        <?php if (!empty($referrals)): ?>
+        <div class="pmh-detail-docs__block">
+          <h4 class="pmh-detail-docs__heading">Referrals</h4>
+          <ul class="pmh-rx-list">
+            <?php foreach ($referrals as $ref): ?>
+            <li>
+              <strong><?= htmlspecialchars($ref['referral_type'] ?? 'Referral') ?></strong>
+              <?php if (!empty($ref['reason'])): ?><p><?= nl2br(htmlspecialchars($ref['reason'])) ?></p><?php endif; ?>
+            </li>
+            <?php endforeach; ?>
+          </ul>
+        </div>
         <?php endif; ?>
-      </section>
-      <?php elseif (trim((string) ($note['prescription'] ?? '')) !== ''): ?>
-      <section class="pmh-detail__section">
-        <h3>Prescription</h3>
-        <p><?= nl2br(htmlspecialchars($note['prescription'])) ?></p>
-      </section>
-      <?php endif; ?>
 
-      <?php if (!empty($followups)): ?>
-      <section class="pmh-detail__section">
-        <h3>Follow-up</h3>
-        <ul class="pmh-rx-list">
-          <?php foreach ($followups as $fu): ?>
-          <li>
-            <strong><?= !empty($fu['followup_date']) ? date('M j, Y', strtotime($fu['followup_date'])) : 'Follow-up' ?></strong>
-            <?php if (!empty($fu['message'])): ?><p><?= nl2br(htmlspecialchars($fu['message'])) ?></p><?php endif; ?>
-            <?php if (!empty($fu['notes'])): ?><p><?= nl2br(htmlspecialchars($fu['notes'])) ?></p><?php endif; ?>
-          </li>
-          <?php endforeach; ?>
-        </ul>
-      </section>
+        <?php if (trim((string) ($note['treatment_plan'] ?? '')) !== ''): ?>
+        <div class="pmh-detail-docs__block">
+          <h4 class="pmh-detail-docs__heading">Care plan</h4>
+          <p><?= nl2br(htmlspecialchars($note['treatment_plan'])) ?></p>
+        </div>
+        <?php endif; ?>
+      </div>
       <?php endif; ?>
-
-      <?php if (!empty($referrals)): ?>
-      <section class="pmh-detail__section">
-        <h3>Referrals</h3>
-        <ul class="pmh-rx-list">
-          <?php foreach ($referrals as $ref): ?>
-          <li>
-            <strong><?= htmlspecialchars($ref['referral_type'] ?? 'Referral') ?></strong>
-            <?php if (!empty($ref['reason'])): ?><p><?= nl2br(htmlspecialchars($ref['reason'])) ?></p><?php endif; ?>
-          </li>
-          <?php endforeach; ?>
-        </ul>
-      </section>
-      <?php endif; ?>
-
-      <?php if (trim((string) ($note['treatment_plan'] ?? '')) !== ''): ?>
-      <section class="pmh-detail__section">
-        <h3>Care plan</h3>
-        <p><?= nl2br(htmlspecialchars($note['treatment_plan'])) ?></p>
-      </section>
-      <?php endif; ?>
-    <?php endif; ?>
+    </section>
   </div>
 </div>
 
