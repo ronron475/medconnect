@@ -224,7 +224,7 @@ foreach ($upcoming_list as $c) {
                       }
                       $dashOutcome = patient_consultation_clinical_outcome($pdo, (int) $c['id'], (int) ($_SESSION['user_id'] ?? 0), false);
                   }
-                  if (!empty($dashOutcome['final_case_level'])):
+                  if (!empty($dashOutcome['ai_case_level']) || !empty($dashOutcome['ai_case_display']) || !empty($dashOutcome['final_case_level'])):
                       if (!function_exists('mc_render_consultation_outcome_stack')) {
                           require_once VIEWS_PATH . '/patient/partials/triage_helpers.php';
                       }

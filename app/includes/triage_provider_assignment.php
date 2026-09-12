@@ -84,9 +84,59 @@ function triage_patient_review_booking_context(PDO $pdo, int $patientId): array
         'locked' => false,
         'triage_id' => 0,
         'triage_level' => '',
+        'consultation_id' => 0,
+        'source' => '',
     ];
     if ($patientId <= 0) {
         return $empty;
+    }
+
+    // 1) Prefer open consultation assignment (same source of truth as Patient Dashboard).
+    // Once a visit exists, patient_triage_sql_active_only excludes the triage row — without
+    // this fallback Book Consultation incorrectly shows "Waiting for assignment…".
+    try {
+        $cStmt = $pdo->prepare("
+            SELECT c.id, c.provider_id, c.provider_name, c.triage_result_id, c.status,
+                   c.consult_date, c.consult_time, s.slot_date, s.start_time AS slot_start,
+                   tr.assigned_provider_id AS triage_assigned_id, tr.triage_level
+            FROM consultations c
+            LEFT JOIN appointment_slots s
+              ON s.consultation_id = c.id AND s.status = 'booked'
+            LEFT JOIN triage_results tr ON tr.id = c.triage_result_id
+            WHERE c.patient_id = ?
+              AND LOWER(COALESCE(c.status, '')) IN (
+                'pending', 'scheduled', 'waiting', 'in_consultation'
+              )
+            ORDER BY c.id DESC
+            LIMIT 20
+        ");
+        $cStmt->execute([$patientId]);
+        $openRows = $cStmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
+        $activeConsult = patient_portal_select_active_consultation($openRows);
+        if ($activeConsult) {
+            $pid = (int) ($activeConsult['provider_id'] ?? 0);
+            if ($pid <= 0) {
+                $pid = (int) ($activeConsult['triage_assigned_id'] ?? 0);
+            }
+            if ($pid > 0) {
+                $displayName = triage_provider_display_name($pdo, $pid);
+                if ($displayName === '') {
+                    $displayName = trim((string) ($activeConsult['provider_name'] ?? ''));
+                }
+
+                return [
+                    'provider_id'      => $pid,
+                    'provider_name'    => $displayName,
+                    'locked'           => true,
+                    'triage_id'        => (int) ($activeConsult['triage_result_id'] ?? 0),
+                    'triage_level'     => triage_normalize_assignment_level((string) ($activeConsult['triage_level'] ?? '')),
+                    'consultation_id'  => (int) ($activeConsult['id'] ?? 0),
+                    'source'           => 'active_consultation',
+                ];
+            }
+        }
+    } catch (Throwable $e) {
+        // Fall through to triage / waitlist paths.
     }
 
     $stmt = $pdo->prepare("
@@ -134,11 +184,13 @@ function triage_patient_review_booking_context(PDO $pdo, int $patientId): array
             }
 
             return [
-                'provider_id'   => $pid,
-                'provider_name' => $displayName,
-                'locked'        => true,
-                'triage_id'     => (int) ($row['id'] ?? 0),
-                'triage_level'  => triage_normalize_assignment_level((string) ($row['triage_level'] ?? '')),
+                'provider_id'      => $pid,
+                'provider_name'    => $displayName,
+                'locked'           => true,
+                'triage_id'        => (int) ($row['id'] ?? 0),
+                'triage_level'     => triage_normalize_assignment_level((string) ($row['triage_level'] ?? '')),
+                'consultation_id'  => 0,
+                'source'           => 'active_triage',
             ];
         }
     }
@@ -191,11 +243,13 @@ function triage_patient_waitlist_booking_lock(PDO $pdo, int $patientId, array $e
     }
 
     return [
-        'provider_id'   => $pid,
-        'provider_name' => $pid > 0 ? triage_provider_display_name($pdo, $pid) : '',
-        'locked'        => true,
-        'triage_id'     => $triageId,
-        'triage_level'  => triage_normalize_assignment_level((string) ($row['triage_level'] ?? 'non_urgent')),
+        'provider_id'      => $pid,
+        'provider_name'    => $pid > 0 ? triage_provider_display_name($pdo, $pid) : '',
+        'locked'           => true,
+        'triage_id'        => $triageId,
+        'triage_level'     => triage_normalize_assignment_level((string) ($row['triage_level'] ?? 'non_urgent')),
+        'consultation_id'  => 0,
+        'source'           => 'slot_waitlist',
     ];
 }
 

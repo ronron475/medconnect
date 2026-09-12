@@ -12,8 +12,9 @@ $scheduled_visits = count(array_filter($history ?? [], static function ($h) {
 $totalVisits = count($history ?? []);
 $healthFiles = (int) ($counts['all'] ?? 0);
 $activeTips = (int) $care_tips_active_count;
-$timelineCount = count($care_timeline ?? []);
 
+// Only show real counts (visits / files / tips). Timeline activity is already
+// reflected in the Care Timeline tab badge — avoid a vague "On timeline" chip.
 $metrics = [];
 if ($totalVisits > 0) {
     $metrics[] = [
@@ -47,14 +48,6 @@ if ($activeTips > 0) {
         'hint' => '',
     ];
 }
-if ($metrics === [] && $timelineCount > 0) {
-    $metrics[] = [
-        'tab' => 'timeline',
-        'value' => $timelineCount,
-        'label' => 'On timeline',
-        'hint' => 'Assessments & records',
-    ];
-}
 $showMetrics = $metrics !== [];
 ?>
 <header class="pmh-hero" aria-label="My Health overview">
@@ -85,10 +78,12 @@ $showMetrics = $metrics !== [];
        class="pmh-metric-pill<?= $active_tab === $metric['tab'] ? ' is-active' : '' ?>"
        role="listitem">
       <span class="pmh-metric-pill__value"><?= (int) $metric['value'] ?></span>
-      <span class="pmh-metric-pill__label"><?= htmlspecialchars($metric['label']) ?></span>
-      <?php if ($metric['hint'] !== ''): ?>
-        <span class="pmh-metric-pill__hint"><?= htmlspecialchars($metric['hint']) ?></span>
-      <?php endif; ?>
+      <span class="pmh-metric-pill__copy">
+        <span class="pmh-metric-pill__label"><?= htmlspecialchars($metric['label']) ?></span>
+        <?php if ($metric['hint'] !== ''): ?>
+          <span class="pmh-metric-pill__hint"><?= htmlspecialchars($metric['hint']) ?></span>
+        <?php endif; ?>
+      </span>
     </a>
     <?php endforeach; ?>
   </div>

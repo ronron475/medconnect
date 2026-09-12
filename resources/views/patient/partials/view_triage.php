@@ -20,6 +20,13 @@ $locked_provider_name = trim((string) ($locked_provider_name ?? ''));
 $locked_assigned_has_slots = !empty($locked_assigned_has_slots);
 $locked_alternate_available = !empty($locked_alternate_available);
 $is_provider_locked = !empty($review_booking_ctx['locked']) && $locked_provider_id > 0;
+$has_assigned_provider = $locked_provider_id > 0;
+// Complaint already on file + doctor assigned / consultation open → do not re-submit.
+$consultation_already_assigned = $chief_complaint_locked && (
+    $has_assigned_provider
+    || !empty($active_consultation)
+    || (int) ($review_booking_ctx['consultation_id'] ?? 0) > 0
+);
 $preliminary_complaint_triage = is_array($preliminary_complaint_triage ?? null) ? $preliminary_complaint_triage : null;
 $preliminary_payload = null;
 if ($preliminary_complaint_triage && !$is_provider_locked && !$chief_complaint_locked) {
@@ -66,6 +73,45 @@ if ($preliminary_complaint_triage && !$is_provider_locked && !$chief_complaint_l
 }
 $preliminary_json = $preliminary_payload ? json_encode($preliminary_payload, JSON_UNESCAPED_UNICODE) : '';
 $assigned_display_name = $locked_provider_name !== '' ? $locked_provider_name : '';
+if ($assigned_display_name === '' && !empty($active_consultation['provider_name'])) {
+    $assigned_display_name = trim((string) $active_consultation['provider_name']);
+}
+if ($locked_provider_id <= 0 && !empty($active_consultation['provider_id'])) {
+    $locked_provider_id = (int) $active_consultation['provider_id'];
+}
+if ($locked_provider_id > 0) {
+    $has_assigned_provider = true;
+    $is_provider_locked = true;
+    $review_booking_ctx['locked'] = true;
+    $review_booking_ctx['provider_id'] = $locked_provider_id;
+    if ((int) ($review_booking_ctx['consultation_id'] ?? 0) <= 0 && !empty($active_consultation['id'])) {
+        $review_booking_ctx['consultation_id'] = (int) $active_consultation['id'];
+        $review_booking_ctx['source'] = (string) ($review_booking_ctx['source'] ?? 'active_consultation');
+    }
+    if ($locked_provider_name === '' && $assigned_display_name !== '') {
+        $locked_provider_name = $assigned_display_name;
+        $review_booking_ctx['provider_name'] = $assigned_display_name;
+    }
+}
+$consultation_already_assigned = $chief_complaint_locked && (
+    $has_assigned_provider
+    || !empty($active_consultation)
+    || (int) ($review_booking_ctx['consultation_id'] ?? 0) > 0
+);
+$assigned_display_name = trim(preg_replace('/^dr\.?\s+/i', '', $assigned_display_name) ?? $assigned_display_name);
+$portal_triage_urgency = trim((string) ($portal_triage_urgency ?? ''));
+if ($portal_triage_urgency === '' && !empty($review_booking_ctx['triage_level'])) {
+    $portal_triage_urgency = strtoupper(str_replace('_', '-', (string) $review_booking_ctx['triage_level']));
+}
+$ai_assessment_label = (string) ($preliminary_payload['classification_label'] ?? '');
+if ($ai_assessment_label === '' && $portal_triage_urgency !== '') {
+    $ai_assessment_label = strtoupper(str_replace('_', '-', $portal_triage_urgency));
+}
+if ($ai_assessment_label === '') {
+    $ai_assessment_label = 'NON-URGENT';
+}
+$show_ai_result_box = ($preliminary_payload && empty($preliminary_payload['assessment_in_progress']))
+    || ($consultation_already_assigned && $portal_triage_urgency !== '');
 $followup_q_text = (string) ($preliminary_payload['followup_question'] ?? '');
 $followup_is_pain_scale = (bool) preg_match(
     '/0\s*(tubtob|to|hanggang|-|–|—)\s*10|scale\s*(of|nga)?\s*0|0\s*(out of|\/)\s*10|pinakagrabe|worst pain|pain level|kagrabe/iu',
@@ -73,13 +119,20 @@ $followup_is_pain_scale = (bool) preg_match(
 );
 $interview_complaint_locked = $chief_complaint_locked
     || ($preliminary_payload !== null && trim((string) ($preliminary_payload['chief_complaint'] ?? '')) !== '');
-$show_start_new_consultation_btn = !$is_provider_locked && empty($force_new_concern);
+$show_start_new_consultation_btn = empty($force_new_concern) && (
+    $consultation_already_assigned
+    || (!$is_provider_locked && ($chief_complaint_locked || $interview_complaint_locked || $preliminary_payload !== null))
+);
 ?>
 <h2 class="text-h2 mb-md patient-triage-page__title">Book Consultation</h2>
-<?php if (!empty($review_booking_ctx['locked']) && $locked_provider_name !== ''): ?>
+<?php if (($is_provider_locked || $consultation_already_assigned) && $assigned_display_name !== ''): ?>
 <p class="text-sm text-muted patient-triage-lead">
-  Your care tips doctor is <strong><?= htmlspecialchars($locked_provider_name) ?></strong>.
+  Your care tips doctor is <strong>Dr. <?= htmlspecialchars($assigned_display_name) ?></strong>.
+  <?php if (!empty($active_consultation)): ?>
+  Your consultation is already assigned — you do not need to submit the complaint again.
+  <?php else: ?>
   Choose an available time below to book your video visit.
+  <?php endif; ?>
 </p>
 <?php else: ?>
 <p class="text-sm text-muted patient-triage-lead">
@@ -111,9 +164,9 @@ $show_start_new_consultation_btn = !$is_provider_locked && empty($force_new_conc
 </div>
 <?php endif; ?>
 
-<?php if (!empty($review_booking_ctx['locked']) && $locked_provider_name !== ''): ?>
+<?php if (!empty($review_booking_ctx['locked']) && $assigned_display_name !== '' && ($review_booking_ctx['source'] ?? '') !== 'active_consultation'): ?>
 <div class="patient-triage-alert patient-triage-alert--warning is-visible patient-triage-alert--spaced">
-  Your self-care guidance was reviewed by <strong><?= htmlspecialchars($locked_provider_name) ?></strong>.
+  Your self-care guidance was reviewed by <strong>Dr. <?= htmlspecialchars($assigned_display_name) ?></strong>.
   Please book your online consultation with the same doctor unless an administrator changes your assignment.
 </div>
 <?php endif; ?>
@@ -166,12 +219,12 @@ $show_start_new_consultation_btn = !$is_provider_locked && empty($force_new_conc
         <?php endif; ?>
       </p>
       <?php if ($show_start_new_consultation_btn): ?>
-      <div class="patient-triage-new-consult" style="margin-top:12px;" id="startNewConsultationWrap"<?= $preliminary_payload ? '' : ' hidden' ?>>
+      <div class="patient-triage-new-consult" style="margin-top:12px;" id="startNewConsultationWrap"<?= ($preliminary_payload || $consultation_already_assigned || $chief_complaint_locked) ? '' : ' hidden' ?>>
         <button
           type="button"
           class="mc-btn mc-btn--outline"
           id="btnStartNewConsultation"
-          data-triage-id="<?= (int) ($preliminary_payload['triage_id'] ?? 0) ?>"
+          data-triage-id="<?= (int) ($preliminary_payload['triage_id'] ?? ($review_booking_ctx['triage_id'] ?? $active_chief_complaint_triage_id ?? 0)) ?>"
         >
           Start New Complaint
         </button>
@@ -217,17 +270,31 @@ $show_start_new_consultation_btn = !$is_provider_locked && empty($force_new_conc
       </div>
     </div>
 
-    <div id="triageAiResult" class="pdash-care-ai-result<?= ($preliminary_payload && empty($preliminary_payload['assessment_in_progress'])) ? ' is-visible' : '' ?>" <?= ($preliminary_payload && empty($preliminary_payload['assessment_in_progress'])) ? '' : 'hidden' ?>>
+    <div id="triageAiResult" class="pdash-care-ai-result<?= $show_ai_result_box ? ' is-visible' : '' ?>" <?= $show_ai_result_box ? '' : 'hidden' ?>>
       <p class="pdash-care-ai-result__label">
         Preliminary AI Assessment:
-        <strong id="triageAiLevel"><?= htmlspecialchars((string) ($preliminary_payload['classification_label'] ?? 'NON-URGENT')) ?></strong>
+        <strong id="triageAiLevel"><?= htmlspecialchars($ai_assessment_label) ?></strong>
       </p>
+      <?php if (!$consultation_already_assigned): ?>
       <p id="triageContinueHint" class="pdash-care-continue" role="status">
         Please click &ldquo;Submit patient complaint&rdquo; again to continue.
       </p>
+      <?php else: ?>
+      <p id="triageContinueHint" class="pdash-care-continue" role="status" hidden></p>
+      <?php endif; ?>
     </div>
 
-    <?php if (!$is_provider_locked): ?>
+    <?php if ($consultation_already_assigned): ?>
+    <button type="button" class="mc-btn mc-btn--outline patient-triage-submit" id="patientTriageSubmit" disabled aria-disabled="true">
+      Consultation Already Assigned
+    </button>
+    <p class="text-xs text-muted patient-triage-submit-hint">
+      Your complaint is on file and a doctor is already assigned. This consultation will not be submitted again.
+      <?php if (empty($force_new_concern)): ?>
+      To describe a different health concern, use <strong>Start New Complaint</strong>.
+      <?php endif; ?>
+    </p>
+    <?php elseif (!$is_provider_locked): ?>
     <button type="submit" class="mc-btn mc-btn--primary patient-triage-submit" id="patientTriageSubmit">
       <?= !empty($preliminary_payload['assessment_in_progress'] ?? false) ? 'Submit answer' : 'Submit patient complaint' ?>
     </button>
@@ -240,25 +307,25 @@ $show_start_new_consultation_btn = !$is_provider_locked && empty($force_new_conc
       <label class="form-label" id="bookingAssignedProviderLabel">Automatically Assigned Provider</label>
       <div
         id="bookingAssignedProvider"
-        class="booking-assigned-provider<?= $is_provider_locked ? ' is-assigned' : ' is-pending' ?>"
+        class="booking-assigned-provider<?= ($has_assigned_provider || ($consultation_already_assigned && $assigned_display_name !== '')) ? ' is-assigned' : ' is-pending' ?>"
         role="status"
       >
         <p id="bookingAssignedProviderName" class="booking-assigned-provider__name">
-          <?php if ($is_provider_locked && $assigned_display_name !== ''): ?>
+          <?php if ($assigned_display_name !== ''): ?>
           Dr. <?= htmlspecialchars($assigned_display_name) ?>
           <?php else: ?>
           Waiting for assignment…
           <?php endif; ?>
         </p>
         <p class="booking-assigned-provider__hint">
-          <?php if ($is_provider_locked): ?>
+          <?php if ($assigned_display_name !== ''): ?>
           Provider automatically selected based on your triage result, provider availability, appointment slots, and workload.
           <?php else: ?>
-          Your doctor appears here after you submit your primary complaint twice. You cannot choose a provider manually.
+          Your doctor appears here after automatic assignment. You cannot choose a provider manually.
           <?php endif; ?>
         </p>
       </div>
-      <input type="hidden" id="booking_provider" name="provider_id" value="<?= $is_provider_locked ? (int) $locked_provider_id : '' ?>" autocomplete="off">
+      <input type="hidden" id="booking_provider" name="provider_id" value="<?= $locked_provider_id > 0 ? (int) $locked_provider_id : '' ?>" autocomplete="off">
     </div>
 
     <?php if (!empty($review_booking_ctx['locked']) && $locked_provider_name !== '' && $locked_assigned_has_slots): ?>

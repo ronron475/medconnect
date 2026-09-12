@@ -81,7 +81,7 @@ if ($providerName !== '') {
         <p class="pdash-care-concern__text"><?= htmlspecialchars($concern) ?></p>
       </div>
       <?php endif; ?>
-      <?php if (!empty($consultOutcome['final_case_level'])): ?>
+      <?php if (!empty($consultOutcome['ai_case_level']) || !empty($consultOutcome['ai_case_display']) || !empty($consultOutcome['final_case_level'])): ?>
       <div class="pdash-care-concern" data-consult-id="<?= $consultId ?>">
         <?php
           if (!function_exists('mc_render_consultation_outcome_stack')) {

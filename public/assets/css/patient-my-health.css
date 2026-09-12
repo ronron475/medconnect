@@ -99,7 +99,7 @@
 .pmh-metric-pill {
   display: inline-flex;
   flex-direction: row;
-  align-items: baseline;
+  align-items: center;
   gap: 8px;
   padding: 8px 14px;
   border-radius: 999px;
@@ -130,19 +130,28 @@
   color: var(--pt-color-primary, #028090);
 }
 
+.pmh-metric-pill__copy {
+  display: inline-flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+}
+
 .pmh-metric-pill__label {
   font-size: 0.78rem;
   font-weight: 700;
   text-transform: none;
   letter-spacing: 0;
   color: var(--pt-color-muted, #64748b);
+  line-height: 1.2;
 }
 
 .pmh-metric-pill__hint {
   margin-top: 0;
-  font-size: 0.72rem;
+  font-size: 0.68rem;
   font-weight: 600;
   color: #0f766e;
+  line-height: 1.2;
 }
 
 /* Outer panel wrapping tabs + surface */

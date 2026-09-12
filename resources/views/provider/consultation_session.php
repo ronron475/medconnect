@@ -2136,6 +2136,149 @@ body.consultation-mobile-call-fullscreen .mc-provider-video-dock iframe {
     .video-pre-call-help {
         font-size: 11px;
     }
+
+    /* After video ends: restore scroll, shrink ended shell, logical section order. */
+    body.provider-body.consultation-call-ended,
+    body.provider-body:has(.session-page.is-post-call) {
+        overflow-x: hidden !important;
+        overflow-y: auto !important;
+        overscroll-behavior: auto;
+        background: #f4f8fa;
+        height: auto !important;
+        max-height: none !important;
+    }
+    body.provider-body.consultation-call-ended .provider-page-body,
+    body.provider-body:has(.session-page.is-post-call) .provider-page-body,
+    body.provider-body.consultation-call-ended .main-content.provider-main,
+    body.provider-body:has(.session-page.is-post-call) .main-content.provider-main {
+        height: auto !important;
+        max-height: none !important;
+        overflow: visible !important;
+        overflow-x: hidden !important;
+        padding-left: 10px !important;
+        padding-right: 10px !important;
+        padding-bottom: calc(16px + env(safe-area-inset-bottom, 0px)) !important;
+        background: transparent !important;
+    }
+    .session-page.is-post-call {
+        display: flex;
+        flex-direction: column;
+        gap: 14px;
+        width: 100%;
+        max-width: 100%;
+        min-width: 0;
+        height: auto !important;
+        max-height: none !important;
+        overflow: visible !important;
+        overflow-x: hidden;
+        background: transparent !important;
+    }
+    .session-page.is-post-call .session-left,
+    .session-page.is-post-call .session-side {
+        display: contents;
+    }
+    .session-page.is-post-call .video-panel {
+        order: 1;
+        width: 100%;
+        max-width: 100%;
+        min-width: 0;
+    }
+    .session-page.is-post-call #videoConsultationSessionCard {
+        order: 2;
+        width: 100%;
+        max-width: 100%;
+        min-width: 0;
+    }
+    .session-page.is-post-call .hs-card {
+        order: 3;
+        width: 100%;
+        max-width: 100%;
+        min-width: 0;
+    }
+    .session-page.is-post-call .prd-card {
+        order: 4;
+        width: 100%;
+        max-width: 100%;
+        min-width: 0;
+    }
+    .session-page.is-post-call .exh-card {
+        order: 5;
+        width: 100%;
+        max-width: 100%;
+        min-width: 0;
+    }
+    .session-page.is-post-call .csp-card {
+        order: 6;
+        width: 100%;
+        max-width: 100%;
+        min-width: 0;
+    }
+    .session-page.is-post-call #soapDocumentation {
+        order: 7;
+        width: 100%;
+        max-width: 100%;
+        min-width: 0;
+    }
+    .session-page.is-post-call #referralFollowupCard {
+        order: 8;
+        width: 100%;
+        max-width: 100%;
+        min-width: 0;
+    }
+    .session-page.is-post-call .session-side > .session-card:not(.csp-card):not(.prd-card):not(.hs-card):not(.exh-card):not(#referralFollowupCard) {
+        order: 9;
+        width: 100%;
+        max-width: 100%;
+        min-width: 0;
+    }
+    .session-page.is-post-call .video-shell:not(.is-call-active) {
+        position: relative !important;
+        inset: auto !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        height: auto !important;
+        min-height: 160px;
+        max-height: 220px;
+        aspect-ratio: auto;
+        border-radius: 12px;
+        z-index: 1;
+        overflow: hidden;
+    }
+    .session-page.is-post-call .video-shell:not(.is-call-active) .video-pre-call {
+        position: relative;
+        min-height: 160px;
+        padding: 16px 14px;
+    }
+    .session-page.is-post-call .video-pre-call-help,
+    .session-page.is-post-call .video-demo-link,
+    .session-page.is-post-call .video-shell-tools,
+    .session-page.is-post-call .mobile-call-expand-btn {
+        display: none !important;
+    }
+    .session-page.is-post-call .session-card,
+    .session-page.is-post-call .session-card-body,
+    .session-page.is-post-call .csp-compare,
+    .session-page.is-post-call .soap-grid,
+    .session-page.is-post-call .csp-manual,
+    .session-page.is-post-call .pd-textarea,
+    .session-page.is-post-call .pd-input,
+    .session-page.is-post-call .session-btn {
+        max-width: 100%;
+        min-width: 0;
+        box-sizing: border-box;
+    }
+    .session-page.is-post-call .session-card-body {
+        overflow-x: hidden;
+        overflow-wrap: anywhere;
+        word-break: break-word;
+    }
+    .session-page.is-post-call .csp-compare {
+        grid-template-columns: 1fr;
+    }
+    .session-page.is-post-call .portal-mobile-nav,
+    body.provider-body.consultation-call-ended .portal-mobile-nav {
+        display: flex !important;
+    }
 }
 @media (max-width: 1180px) {
     .session-page {
@@ -2279,7 +2422,7 @@ body.consultation-mobile-call-fullscreen .mc-provider-video-dock iframe {
 }
 </style>
 
-<div class="session-page consultation-session">
+<div class="session-page consultation-session<?= !empty($history_view) || !empty($video_history['show_completed_details']) ? ' is-post-call' : '' ?>" id="providerSessionPage">
     
     <!-- LEFT: Video Panel & SOAP Notes -->
     <div class="session-left">
@@ -2583,7 +2726,7 @@ body.consultation-mobile-call-fullscreen .mc-provider-video-dock iframe {
                     <?php
                     $riskBucket = preg_replace('/[^a-z_]/', '', strtolower((string) ($clinical_support['risk_bucket'] ?? 'unknown'))) ?: 'unknown';
                     $finalUrgency = (string) ($clinical_support['final_urgency'] ?? '');
-                    if ($finalUrgency === '') {
+                    if ($finalUrgency === '' && !empty($clinical_support['manual_urgency'])) {
                         $finalUrgency = match ($riskBucket) {
                             'emergency' => 'EMERGENCY',
                             'urgent' => 'URGENT',
@@ -2591,9 +2734,18 @@ body.consultation-mobile-call-fullscreen .mc-provider-video-dock iframe {
                             default => (string) ($clinical_support['risk_level'] ?? 'Not assessed'),
                         };
                     }
+                    if ($finalUrgency === '') {
+                        $finalUrgency = 'Pending doctor final';
+                    }
                     $aiUrgency = (string) ($clinical_support['ai_urgency'] ?? '');
                     if ($aiUrgency === '') {
-                        $aiUrgency = !empty($clinical_support['manual_urgency']) ? 'Not assessed' : $finalUrgency;
+                        $aiCapsFromRisk = match ($riskBucket) {
+                            'emergency' => 'EMERGENCY',
+                            'urgent' => 'URGENT',
+                            'non_urgent', 'routine' => 'NON-URGENT',
+                            default => '',
+                        };
+                        $aiUrgency = $aiCapsFromRisk !== '' ? $aiCapsFromRisk : 'Not assessed';
                     }
                     $aiBucket = preg_replace('/[^a-z_]/', '', strtolower((string) ($clinical_support['ai_urgency_bucket'] ?? 'unknown'))) ?: 'unknown';
                     $doctorOverrideLabel = !empty($clinical_support['manual_urgency'])
@@ -2628,7 +2780,7 @@ body.consultation-mobile-call-fullscreen .mc-provider-video-dock iframe {
                         <?php elseif (!empty($clinical_support['doctor_override'])): ?>
                             Based on doctor-finalized chief complaint
                         <?php else: ?>
-                            Based on pre-consult triage (save an override above to update the final result)
+                            Based on pre-consult triage (confirm final urgency when finalizing SOAP)
                         <?php endif; ?>
                     </p>
                     <div class="csp-section" id="cspAiPreliminaryBlock">
@@ -2655,8 +2807,10 @@ body.consultation-mobile-call-fullscreen .mc-provider-video-dock iframe {
                     </div>
 
                     <div class="csp-manual">
-                        <h4 class="csp-section__title">Manual urgency override</h4>
-                        <p class="csp-empty" style="font-style:normal;margin-bottom:8px;">Disagree with AI? Set the clinical urgency and record a reason.</p>
+                        <h4 class="csp-section__title">Adjust urgency during visit</h4>
+                        <p class="csp-empty" style="font-style:normal;margin-bottom:8px;">
+                            Use this if AI urgency is wrong mid-consultation. You will confirm the <strong>final</strong> case urgency again when finalizing the SOAP note.
+                        </p>
                         <label class="csp-section__title" for="cspManualUrgency">Doctor urgency</label>
                         <select id="cspManualUrgency" class="pd-input">
                             <option value="emergency" <?= $riskBucket === 'emergency' ? 'selected' : '' ?>>Emergency</option>
@@ -2664,7 +2818,7 @@ body.consultation-mobile-call-fullscreen .mc-provider-video-dock iframe {
                             <option value="non_urgent" <?= in_array($riskBucket, ['non_urgent', 'routine'], true) ? 'selected' : '' ?>>Non-Urgent</option>
                         </select>
                         <label class="csp-section__title" for="cspManualNote" style="margin-top:8px;display:block;">Clinical reason (required)</label>
-                        <textarea id="cspManualNote" class="pd-textarea" rows="2" placeholder="Why are you overriding the AI urgency?"><?= htmlspecialchars((string) ($clinical_support['manual_override_note'] ?? '')) ?></textarea>
+                        <textarea id="cspManualNote" class="pd-textarea" rows="2" placeholder="Why are you adjusting the AI urgency?"><?= htmlspecialchars((string) ($clinical_support['manual_override_note'] ?? '')) ?></textarea>
                         <div class="csp-manual__row">
                             <button type="button" class="session-btn" id="cspOverrideUrgencyBtn">Save urgency override</button>
                             <span id="cspOverrideStatus" class="csp-status" aria-live="polite"></span>
@@ -3103,7 +3257,7 @@ body.consultation-mobile-call-fullscreen .mc-provider-video-dock iframe {
         </div>
 
         <!-- WORKFLOW ACTIONS -->
-        <div class="session-card">
+        <div class="session-card" id="referralFollowupCard">
             <div class="session-card-header"><div class="session-card-title"><?= icon('arrow') ?> Referral & Follow-up</div></div>
             <div class="session-card-body">
                 <div class="side-stack">
@@ -3211,6 +3365,28 @@ body.consultation-mobile-call-fullscreen .mc-provider-video-dock iframe {
     <div class="soap-finalize-modal__body">
       <h2 id="soapFinalizeTitle" class="soap-finalize-modal__title">Finalize SOAP Note?</h2>
       <p class="soap-finalize-modal__text">You are about to electronically sign and finalize this clinical record. After finalization, the SOAP note will become available to the patient and ordinary editing will be disabled.</p>
+      <div class="soap-finalize-urgency" style="margin-top:14px;padding-top:12px;border-top:1px solid #e2e8f0;">
+        <p class="soap-finalize-modal__text" style="margin-bottom:8px;"><strong>Confirm final case urgency</strong> (authoritative for this visit)</p>
+        <p class="soap-finalize-modal__text" style="margin-bottom:8px;font-size:13px;color:#64748b;">
+          AI preliminary:
+          <strong id="soapFinalizeAiLabel"><?= htmlspecialchars((string) ($clinical_support['ai_urgency'] ?? $clinical_support['risk_level'] ?? 'Not assessed')) ?></strong>
+        </p>
+        <label for="soapFinalUrgency" style="display:block;font-size:13px;font-weight:600;margin-bottom:4px;">Final case urgency</label>
+        <select id="soapFinalUrgency" class="pd-input" style="width:100%;">
+          <?php
+            $finalizeBucket = provider_clinical_support_normalize_bucket((string) ($clinical_support['risk_bucket'] ?? 'non_urgent'));
+            if (!in_array($finalizeBucket, ['emergency', 'urgent', 'non_urgent'], true)) {
+                $finalizeBucket = 'non_urgent';
+            }
+          ?>
+          <option value="emergency" <?= $finalizeBucket === 'emergency' ? 'selected' : '' ?>>Emergency</option>
+          <option value="urgent" <?= $finalizeBucket === 'urgent' ? 'selected' : '' ?>>Urgent</option>
+          <option value="non_urgent" <?= $finalizeBucket === 'non_urgent' ? 'selected' : '' ?>>Non-Urgent</option>
+        </select>
+        <label for="soapFinalUrgencyNote" style="display:block;font-size:13px;font-weight:600;margin:10px 0 4px;">Clinical reason</label>
+        <textarea id="soapFinalUrgencyNote" class="pd-textarea" rows="2" style="width:100%;" placeholder="Required when final urgency differs from AI; otherwise you may confirm the AI result."><?= htmlspecialchars((string) ($clinical_support['manual_override_note'] ?? '')) ?></textarea>
+        <p id="soapFinalUrgencyHint" class="soap-finalize-modal__text" style="margin:8px 0 0;font-size:12px;color:#64748b;"></p>
+      </div>
     </div>
     <div class="soap-finalize-modal__footer">
       <button type="button" class="session-btn" id="soapFinalizeCancel">Cancel</button>
@@ -3440,6 +3616,9 @@ function markVideoCallClosed() {
     if (startBtn) startBtn.hidden = true;
     const help = document.getElementById('videoPreCallHelp');
     if (help) help.hidden = true;
+    document.body.classList.add('consultation-call-ended');
+    const sessionPage = document.getElementById('providerSessionPage') || document.querySelector('.session-page');
+    if (sessionPage) sessionPage.classList.add('is-post-call');
 }
 
 window.addEventListener('resize', function () {
@@ -3929,8 +4108,12 @@ function applyClinicalSupport(support) {
     const overrideNote = document.getElementById('cspOverrideNote');
     const bucket = String(support.risk_bucket || 'unknown').replace(/[^a-z_]/g, '') || 'unknown';
     const aiBucket = String(support.ai_urgency_bucket || 'unknown').replace(/[^a-z_]/g, '') || 'unknown';
-    const finalUrgency = support.final_urgency || support.risk_level || 'Not assessed';
-    const aiUrgency = support.ai_urgency || 'Not assessed';
+    const finalUrgency = support.manual_urgency
+        ? (support.final_urgency || support.doctor_urgency || 'Not assessed')
+        : (support.final_urgency || 'Pending doctor final');
+    const aiUrgency = support.ai_urgency
+        || (String(support.risk_level || '').replace(/\s*\(preliminary AI\)\s*$/i, '').trim())
+        || 'Not assessed';
     const doctorOverride = support.manual_urgency
         ? (support.doctor_urgency || finalUrgency)
         : 'Not saved';
@@ -4472,6 +4655,10 @@ window.addEventListener('message', (event) => {
         document.getElementById('callStatusIndicator').style.color = '#64748b';
         document.getElementById('callStatusIndicator').textContent = '● ENDED';
         setVideoShellLive(false);
+        document.body.classList.add('consultation-call-ended');
+        document.body.classList.remove('consultation-mobile-call-fullscreen', 'consultation-true-fullscreen', 'consultation-desktop-video-expanded');
+        const sessionPage = document.getElementById('providerSessionPage') || document.querySelector('.session-page');
+        if (sessionPage) sessionPage.classList.add('is-post-call');
         // The consultation is saved server-side by end_video.php before this
         // message fires, so the follow-up decision comes next rather than
         // throwing the provider straight into SOAP.
@@ -4735,6 +4922,10 @@ async function saveSOAP(finalize = false) {
     if (finalize) {
         fd.append('finalize', '1');
         fd.append('soap_confirm', document.getElementById('soapConfirm') && document.getElementById('soapConfirm').checked ? '1' : '0');
+        const urgencyEl = document.getElementById('soapFinalUrgency');
+        const noteEl = document.getElementById('soapFinalUrgencyNote');
+        fd.append('final_urgency_bucket', urgencyEl ? String(urgencyEl.value || '') : '');
+        fd.append('final_urgency_note', noteEl ? String(noteEl.value || '').trim() : '');
     }
     try {
         const res = await fetch('<?= ASSET_BASE ?>/app/api/provider/save_clinical_notes.php', {
@@ -4854,6 +5045,7 @@ function setSoapMethod(method) {
 function openSoapFinalizeModal() {
     const modal = document.getElementById('soapFinalizeModal');
     if (!modal) return;
+    syncSoapFinalizeUrgencyHint();
     modal.classList.add('is-open');
     modal.setAttribute('aria-hidden', 'false');
 }
@@ -4863,6 +5055,42 @@ function closeSoapFinalizeModal() {
     if (!modal) return;
     modal.classList.remove('is-open');
     modal.setAttribute('aria-hidden', 'true');
+}
+
+function soapFinalizeAiBucket() {
+    const label = String((document.getElementById('soapFinalizeAiLabel') || {}).textContent || '').toLowerCase();
+    if (label.indexOf('emergency') !== -1) return 'emergency';
+    if (label.indexOf('urgent') !== -1 && label.indexOf('non') === -1) return 'urgent';
+    if (label.indexOf('non') !== -1) return 'non_urgent';
+    return '';
+}
+
+function soapFinalizeUrgencyValidationMessage() {
+    const urgencyEl = document.getElementById('soapFinalUrgency');
+    const noteEl = document.getElementById('soapFinalUrgencyNote');
+    const bucket = urgencyEl ? String(urgencyEl.value || '').trim() : '';
+    if (['emergency', 'urgent', 'non_urgent'].indexOf(bucket) === -1) {
+        return 'Select the final case urgency before finalizing.';
+    }
+    const note = noteEl ? String(noteEl.value || '').trim() : '';
+    const aiBucket = soapFinalizeAiBucket();
+    if (aiBucket && bucket !== aiBucket && note.length < 3) {
+        return 'Add a brief clinical reason when final urgency differs from the AI preliminary result.';
+    }
+    return '';
+}
+
+function syncSoapFinalizeUrgencyHint() {
+    const hint = document.getElementById('soapFinalUrgencyHint');
+    const urgencyEl = document.getElementById('soapFinalUrgency');
+    if (!hint || !urgencyEl) return;
+    const bucket = String(urgencyEl.value || '');
+    const aiBucket = soapFinalizeAiBucket();
+    if (aiBucket && bucket !== aiBucket) {
+        hint.textContent = 'Final urgency differs from AI — a clinical reason is required.';
+    } else {
+        hint.textContent = 'Confirming this urgency as the authoritative final result for this visit.';
+    }
 }
 
 function openSoapSuccessModal(message) {
@@ -4951,9 +5179,24 @@ function initSoapSignatureUi() {
     const confirmBtn = document.getElementById('soapFinalizeConfirm');
     if (confirmBtn) {
         confirmBtn.addEventListener('click', function () {
+            const urgencyMsg = soapFinalizeUrgencyValidationMessage();
+            if (urgencyMsg) {
+                const hint = document.getElementById('soapFinalUrgencyHint');
+                if (hint) hint.textContent = urgencyMsg;
+                return;
+            }
             closeSoapFinalizeModal();
             finalizeConsultation();
         });
+    }
+
+    const urgencySelect = document.getElementById('soapFinalUrgency');
+    if (urgencySelect) {
+        urgencySelect.addEventListener('change', syncSoapFinalizeUrgencyHint);
+    }
+    const urgencyNote = document.getElementById('soapFinalUrgencyNote');
+    if (urgencyNote) {
+        urgencyNote.addEventListener('input', syncSoapFinalizeUrgencyHint);
     }
 
     const modal = document.getElementById('soapFinalizeModal');
@@ -4979,6 +5222,13 @@ async function finalizeConsultation() {
     const msg = soapClientValidationMessage();
     if (msg) {
         if (err) err.textContent = msg;
+        return;
+    }
+    const urgencyMsg = soapFinalizeUrgencyValidationMessage();
+    if (urgencyMsg) {
+        const hint = document.getElementById('soapFinalUrgencyHint');
+        if (hint) hint.textContent = urgencyMsg;
+        if (err) err.textContent = urgencyMsg;
         return;
     }
     const confirmBtn = document.getElementById('soapFinalizeConfirm');

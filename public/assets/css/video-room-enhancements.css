@@ -1056,13 +1056,27 @@ html[data-theme-resolved='dark'] body.role-patient.is-ended-consultation .mc-vc-
 @media (min-width: 768px) {
   .mc-vc-postcall,
   .mc-ended-page__shell {
+    position: relative;
+    inset: auto;
     align-items: center;
-    padding-top: 32px;
-    padding-bottom: 40px;
+    justify-content: center;
+    padding: 40px 24px 48px;
+    min-height: 100%;
+    min-height: 100dvh;
+    overflow: visible;
   }
 
   .mc-vc-postcall__card {
     max-width: 520px;
+    width: 100%;
+    margin: 0 auto;
     padding: 1.5rem 1.4rem 1.35rem;
+  }
+
+  body.role-patient.mc-vc-call-ended .mc-vc-postcall,
+  body.role-patient.is-ended-consultation .mc-vc-postcall,
+  body.mc-ended-page .mc-vc-postcall {
+    position: relative;
+    inset: auto;
   }
 }

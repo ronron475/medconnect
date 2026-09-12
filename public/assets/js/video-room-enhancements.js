@@ -151,6 +151,11 @@
 
     if (IS_PATIENT) {
       const p = data.patient_panel || fallbackContext().patient_panel;
+      const showFinal = !!(p.show_final_triage && (p.final_triage_level || '').trim());
+      const finalRow = showFinal
+        ? ('<div><dt>Final Triage Result</dt><dd><span class="mc-vc-triage mc-vc-triage--' + escapeHtml(p.triage_bucket || 'unknown') + '">' + escapeHtml(p.final_triage_level) + '</span></dd></div>' +
+          (p.finalized_by ? '<div><dt>Finalized By</dt><dd>' + escapeHtml(p.finalized_by) + '</dd></div>' : ''))
+        : '';
       pane.innerHTML =
         '<div class="mc-vc-info-card">' +
         '<h3 class="mc-vc-info-card__title">' + escapeHtml(p.doctor_name || 'Your healthcare provider') + '</h3>' +
@@ -160,8 +165,7 @@
         '<div><dt>Appointment</dt><dd>' + escapeHtml(p.appointment_label || '—') + '</dd></div>' +
         '<div><dt>Chief complaint</dt><dd>' + escapeHtml(p.chief_complaint || '—') + '</dd></div>' +
         '<div><dt>Preliminary AI Assessment</dt><dd><span class="mc-vc-triage mc-vc-triage--' + escapeHtml(p.ai_triage_bucket || 'unknown') + '">' + escapeHtml(p.ai_triage_level || 'Not assessed') + '</span></dd></div>' +
-        '<div><dt>Final Triage Result</dt><dd><span class="mc-vc-triage mc-vc-triage--' + escapeHtml(p.triage_bucket || 'unknown') + '">' + escapeHtml(p.final_triage_level || p.triage_level || 'Not assessed') + '</span></dd></div>' +
-        (p.finalized_by ? '<div><dt>Finalized By</dt><dd>' + escapeHtml(p.finalized_by) + '</dd></div>' : '') +
+        finalRow +
         '</dl></div>';
       return;
     }

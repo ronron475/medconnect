@@ -159,6 +159,35 @@ if ($finalize) {
         }
         $data['signature_name'] = $signatureName;
     }
+
+    require_once dirname(dirname(dirname(__DIR__))) . '/app/includes/provider_clinical_support.php';
+    $finalUrgencyBucket = provider_clinical_support_normalize_bucket((string) ($_POST['final_urgency_bucket'] ?? ''));
+    if (!in_array($finalUrgencyBucket, ['emergency', 'urgent', 'non_urgent'], true)) {
+        echo json_encode([
+            'success' => false,
+            'message' => 'Select the final case urgency before finalizing the SOAP note.',
+        ]);
+        exit;
+    }
+    $finalUrgencyNote = trim((string) ($_POST['final_urgency_note'] ?? ''));
+    $aiSupport = provider_consultation_clinical_support(
+        $pdo,
+        (int) $data['consultation_id'],
+        (int) $data['patient_id']
+    );
+    $aiBucket = provider_clinical_support_normalize_bucket((string) ($aiSupport['ai_urgency_bucket'] ?? ''));
+    if ($aiBucket !== 'unknown' && $finalUrgencyBucket !== $aiBucket && strlen($finalUrgencyNote) < 3) {
+        echo json_encode([
+            'success' => false,
+            'message' => 'Add a brief clinical reason when final urgency differs from the AI preliminary result.',
+        ]);
+        exit;
+    }
+    if ($finalUrgencyNote === '') {
+        $finalUrgencyNote = 'Confirmed final case urgency at SOAP finalize.';
+    }
+    $data['final_urgency_bucket'] = $finalUrgencyBucket;
+    $data['final_urgency_note'] = $finalUrgencyNote;
 }
 
 try {
@@ -287,6 +316,38 @@ try {
         (int) $data['consultation_id'],
         (int) $data['patient_id']
     );
+
+    $finalUrgencyPersisted = null;
+    $finalBucket = provider_clinical_support_normalize_bucket((string) ($data['final_urgency_bucket'] ?? ''));
+    if (in_array($finalBucket, ['emergency', 'urgent', 'non_urgent'], true)) {
+        try {
+            $providerNameForOverride = $providerName;
+            $savedOverride = provider_clinical_support_persist_doctor_override(
+                $pdo,
+                (int) $data['consultation_id'],
+                (int) $data['provider_id'],
+                (int) $data['patient_id'],
+                $finalBucket,
+                (string) ($data['final_urgency_note'] ?? 'Confirmed final case urgency at SOAP finalize.'),
+                $providerNameForOverride
+            );
+            $finalUrgencyPersisted = $savedOverride['persisted'] ?? null;
+            $clinicalSupport = $savedOverride['support'] ?? provider_consultation_clinical_support(
+                $pdo,
+                (int) $data['consultation_id'],
+                (int) $data['patient_id']
+            );
+        } catch (Throwable $e) {
+            // Do not block SOAP finalize if CDS/GIS cannot accept an override (e.g. no triage link).
+            error_log('save_clinical_notes final urgency: ' . $e->getMessage());
+            $clinicalSupport = provider_consultation_clinical_support(
+                $pdo,
+                (int) $data['consultation_id'],
+                (int) $data['patient_id']
+            );
+        }
+    }
+
     if (!empty($clinicalSupport['available'])) {
         provider_clinical_support_save_event(
             $pdo,

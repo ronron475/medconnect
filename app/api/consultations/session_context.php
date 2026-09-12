@@ -138,16 +138,48 @@ try {
 
 $patientNumber = 'MC-' . str_pad((string) $patientId, 6, '0', STR_PAD_LEFT);
 $aiClass = trim((string) ($clinical['ai_urgency'] ?? ''));
-$finalClass = trim((string) ($clinical['final_urgency'] ?? ''));
-if ($finalClass === '') {
-    $finalClass = $aiClass !== '' ? $aiClass : 'Not assessed';
-}
 if ($aiClass === '') {
     $aiClass = 'Not assessed';
 }
-$finalBucket = (string) ($clinical['risk_bucket'] ?? $clinical['doctor_urgency_bucket'] ?? 'unknown');
 $aiBucket = (string) ($clinical['ai_urgency_bucket'] ?? 'unknown');
-$finalizedBy = !empty($clinical['manual_urgency'])
+
+$consultStatus = strtolower(trim((string) ($row['consult_status'] ?? $row['status'] ?? '')));
+$hasDoctorFinal = !empty($clinical['manual_urgency'])
+    && provider_clinical_support_normalize_bucket((string) ($clinical['doctor_urgency_bucket'] ?? '')) !== 'unknown';
+
+// Patient: Final Triage Result only after a real doctor decision — never mirror AI.
+// Provider panel may still show provisional classification from risk_bucket.
+$doctorFinalClass = '';
+$doctorFinalBucket = 'unknown';
+if ($hasDoctorFinal) {
+    $doctorFinalClass = trim((string) ($clinical['doctor_urgency'] ?? $clinical['final_urgency'] ?? ''));
+    $doctorFinalBucket = provider_clinical_support_normalize_bucket((string) ($clinical['doctor_urgency_bucket'] ?? ''));
+    if ($doctorFinalClass === '') {
+        $doctorFinalClass = provider_clinical_support_caps_label($doctorFinalBucket);
+    }
+}
+
+$finalClass = $doctorFinalClass;
+$finalBucket = $doctorFinalBucket !== 'unknown'
+    ? $doctorFinalBucket
+    : 'unknown';
+
+if (!$isPatient) {
+    // Provider workspace: provisional risk from AI when doctor has not overridden yet.
+    if ($finalClass === '') {
+        $finalClass = trim((string) ($clinical['final_urgency'] ?? ''));
+    }
+    if ($finalClass === '') {
+        $riskBucket = provider_clinical_support_normalize_bucket((string) ($clinical['risk_bucket'] ?? $aiBucket));
+        $finalClass = $riskBucket !== 'unknown'
+            ? provider_clinical_support_caps_label($riskBucket)
+            : ($aiClass !== '' ? $aiClass : 'Not assessed');
+        $finalBucket = $riskBucket !== 'unknown' ? $riskBucket : $aiBucket;
+    }
+}
+
+$patientSeesFinal = $isPatient && $hasDoctorFinal && $consultStatus === 'completed' && $doctorFinalClass !== '';
+$finalizedBy = $hasDoctorFinal
     ? provider_clinical_support_finalized_by_label(
         $pdo,
         $consultId,
@@ -161,12 +193,13 @@ $patientPanel = [
     'specialization'    => trim((string) ($row['provider_specialty'] ?? 'General Medicine')) ?: 'General Medicine',
     'appointment_label' => $appointmentLabel,
     'chief_complaint'   => $chiefComplaint,
-    'triage_level'      => $finalClass,
-    'triage_bucket'     => $finalBucket,
+    'triage_level'      => $patientSeesFinal ? $doctorFinalClass : $aiClass,
+    'triage_bucket'     => $patientSeesFinal ? $doctorFinalBucket : $aiBucket,
     'ai_triage_level'   => $aiClass,
     'ai_triage_bucket'  => $aiBucket,
-    'final_triage_level'=> $finalClass,
-    'finalized_by'      => $finalizedBy,
+    'final_triage_level'=> $patientSeesFinal ? $doctorFinalClass : '',
+    'show_final_triage' => $patientSeesFinal,
+    'finalized_by'      => $patientSeesFinal ? $finalizedBy : '',
     'consultation_id'   => $consultId,
 ];
 
@@ -177,7 +210,11 @@ $providerPanel = [
     'sex'                  => (string) ($row['patient_sex'] ?? '—'),
     'chief_complaint'      => $chiefComplaint,
     'ai_classification'    => $aiClass !== '' ? $aiClass : 'Not assessed',
-    'final_classification' => $finalClass !== '' ? $finalClass : '—',
+    'final_classification' => $hasDoctorFinal
+        ? $doctorFinalClass
+        : (trim((string) ($clinical['final_urgency'] ?? '')) !== ''
+            ? trim((string) $clinical['final_urgency'])
+            : '—'),
     'confidence'           => (string) ($clinical['confidence_display'] ?? ''),
     'appointment_label'    => $appointmentLabel,
     'consultation_id'      => $consultId,
