@@ -101,94 +101,94 @@ if ($alreadyFinalized) {
     exit;
 }
 
-if ($finalize) {
-    foreach (['subjective', 'objective', 'assessment', 'plan'] as $soapField) {
-        if (trim((string) ($data[$soapField] ?? '')) === '') {
+    if ($finalize) {
+        foreach (['subjective', 'objective', 'assessment', 'plan'] as $soapField) {
+            if (trim((string) ($data[$soapField] ?? '')) === '') {
+                echo json_encode([
+                    'success' => false,
+                    'message' => 'Please complete all SOAP sections (Subjective, Objective, Assessment, and Plan) before finalizing.',
+                ]);
+                exit;
+            }
+        }
+
+        $confirmed = in_array(strtolower(trim((string) ($_POST['soap_confirm'] ?? ''))), ['1', 'true', 'yes', 'on'], true);
+        if (!$confirmed) {
             echo json_encode([
                 'success' => false,
-                'message' => 'Please complete all SOAP sections (Subjective, Objective, Assessment, and Plan) before finalizing.',
+                'message' => 'Please confirm that you reviewed and completed this SOAP note.',
             ]);
             exit;
         }
-    }
 
-    $confirmed = in_array(strtolower(trim((string) ($_POST['soap_confirm'] ?? ''))), ['1', 'true', 'yes', 'on'], true);
-    if (!$confirmed) {
-        echo json_encode([
-            'success' => false,
-            'message' => 'Please confirm that you reviewed and completed this SOAP note.',
-        ]);
-        exit;
-    }
-
-    $method = $data['signature_method'];
-    if ($method !== 'typed' && $method !== 'drawn') {
-        echo json_encode([
-            'success' => false,
-            'message' => 'Please provide your electronic signature before finalizing the SOAP note.',
-        ]);
-        exit;
-    }
-
-    $identity = clinical_note_provider_identity($pdo, (int) $data['provider_id']);
-    $signatureName = $identity['legal_name'] !== '' ? $identity['legal_name'] : $identity['full_name'];
-    if ($signatureName === '') {
-        echo json_encode(['success' => false, 'message' => 'Provider identity could not be verified.']);
-        exit;
-    }
-
-    if ($method === 'typed') {
-        $typed = trim((string) ($_POST['signature_name'] ?? $data['signature']));
-        if ($typed === '' || !clinical_note_typed_name_matches($typed, $identity)) {
+        $method = $data['signature_method'];
+        if ($method !== 'typed' && $method !== 'drawn') {
             echo json_encode([
                 'success' => false,
-                'message' => 'The typed name must match your authenticated provider account.',
+                'message' => 'Please provide your electronic signature before finalizing the SOAP note.',
             ]);
             exit;
         }
-        $data['signature'] = $typed;
-        $data['signature_name'] = $signatureName;
-    } else {
-        $drawn = clinical_note_drawn_signature_valid((string) $data['signature']);
-        if (!$drawn['ok']) {
+
+        $identity = clinical_note_provider_identity($pdo, (int) $data['provider_id']);
+        $signatureName = $identity['legal_name'] !== '' ? $identity['legal_name'] : $identity['full_name'];
+        if ($signatureName === '') {
+            echo json_encode(['success' => false, 'message' => 'Provider identity could not be verified.']);
+            exit;
+        }
+
+        if ($method === 'typed') {
+            $typed = trim((string) ($_POST['signature_name'] ?? $data['signature']));
+            if ($typed === '' || !clinical_note_typed_name_matches($typed, $identity)) {
+                echo json_encode([
+                    'success' => false,
+                    'message' => 'The typed name must match your authenticated provider account.',
+                ]);
+                exit;
+            }
+            $data['signature'] = $typed;
+            $data['signature_name'] = $signatureName;
+        } else {
+            $drawn = clinical_note_drawn_signature_valid((string) $data['signature']);
+            if (!$drawn['ok']) {
+                echo json_encode([
+                    'success' => false,
+                    'message' => $drawn['message'],
+                ]);
+                exit;
+            }
+            $data['signature_name'] = $signatureName;
+        }
+
+        require_once dirname(dirname(dirname(__DIR__))) . '/app/includes/provider_clinical_support.php';
+        $finalUrgencyBucket = provider_clinical_support_normalize_bucket((string) ($_POST['final_urgency_bucket'] ?? ''));
+        if (!in_array($finalUrgencyBucket, ['emergency', 'urgent', 'non_urgent'], true)) {
             echo json_encode([
                 'success' => false,
-                'message' => $drawn['message'],
+                'message' => 'Final Assessment required: select the final case urgency (Emergency, Urgent, or Non-Urgent) before completing this consultation.',
             ]);
             exit;
         }
-        $data['signature_name'] = $signatureName;
+        $finalUrgencyNote = trim((string) ($_POST['final_urgency_note'] ?? ''));
+        $aiSupport = provider_consultation_clinical_support(
+            $pdo,
+            (int) $data['consultation_id'],
+            (int) $data['patient_id']
+        );
+        $aiBucket = provider_clinical_support_normalize_bucket((string) ($aiSupport['ai_urgency_bucket'] ?? ''));
+        if ($aiBucket !== 'unknown' && $finalUrgencyBucket !== $aiBucket && strlen($finalUrgencyNote) < 3) {
+            echo json_encode([
+                'success' => false,
+                'message' => 'Add a brief clinical reason when final urgency differs from the AI preliminary result.',
+            ]);
+            exit;
+        }
+        if ($finalUrgencyNote === '') {
+            $finalUrgencyNote = 'Doctor-confirmed Final Assessment at consultation finalize.';
+        }
+        $data['final_urgency_bucket'] = $finalUrgencyBucket;
+        $data['final_urgency_note'] = $finalUrgencyNote;
     }
-
-    require_once dirname(dirname(dirname(__DIR__))) . '/app/includes/provider_clinical_support.php';
-    $finalUrgencyBucket = provider_clinical_support_normalize_bucket((string) ($_POST['final_urgency_bucket'] ?? ''));
-    if (!in_array($finalUrgencyBucket, ['emergency', 'urgent', 'non_urgent'], true)) {
-        echo json_encode([
-            'success' => false,
-            'message' => 'Select the final case urgency before finalizing the SOAP note.',
-        ]);
-        exit;
-    }
-    $finalUrgencyNote = trim((string) ($_POST['final_urgency_note'] ?? ''));
-    $aiSupport = provider_consultation_clinical_support(
-        $pdo,
-        (int) $data['consultation_id'],
-        (int) $data['patient_id']
-    );
-    $aiBucket = provider_clinical_support_normalize_bucket((string) ($aiSupport['ai_urgency_bucket'] ?? ''));
-    if ($aiBucket !== 'unknown' && $finalUrgencyBucket !== $aiBucket && strlen($finalUrgencyNote) < 3) {
-        echo json_encode([
-            'success' => false,
-            'message' => 'Add a brief clinical reason when final urgency differs from the AI preliminary result.',
-        ]);
-        exit;
-    }
-    if ($finalUrgencyNote === '') {
-        $finalUrgencyNote = 'Confirmed final case urgency at SOAP finalize.';
-    }
-    $data['final_urgency_bucket'] = $finalUrgencyBucket;
-    $data['final_urgency_note'] = $finalUrgencyNote;
-}
 
 try {
     if (!$finalize) {
@@ -392,7 +392,7 @@ try {
     require_once dirname(dirname(dirname(__DIR__))) . '/app/includes/patient_booking_status.php';
     patient_triage_close_cases_for_consultation($pdo, (int) $data['consultation_id']);
 
-    $msg = 'SOAP note finalized successfully. The patient can now view this record in My Health.';
+    $msg = 'Final Assessment submitted. Consultation completed. The patient can now view this record in My Health.';
     if ($rxIssued) {
         $msg .= ' Prescription saved to the patient record.';
     }

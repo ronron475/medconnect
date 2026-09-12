@@ -1,12 +1,15 @@
 <?php
 /**
  * Video consultation lifecycle helpers.
- * Ends the WebRTC room and persists consultation completion without finalizing SOAP.
+ * Ends the WebRTC room. Consultation completion requires doctor Final Assessment
+ * (SOAP finalize + explicit final urgency) via save_clinical_notes.php.
  */
 declare(strict_types=1);
 
 /**
- * Provider ends an active (or already-ended) video room and auto-completes the consultation.
+ * Provider ends an active (or already-ended) video room.
+ * Does NOT mark the consultation completed — that happens only after the doctor
+ * submits the Final Assessment (SOAP finalize with final_urgency_bucket).
  * Idempotent: safe if called multiple times for the same room token.
  *
  * @return array{
@@ -80,7 +83,6 @@ function consultation_provider_end_video_session(PDO $pdo, string $roomToken, in
     $videoStatus = strtolower(trim((string) ($row['video_status'] ?? '')));
     $consultStatus = strtolower(trim((string) ($row['consultation_status'] ?? '')));
     $newlyEnded = false;
-    $newlyCompleted = false;
 
     try {
         $pdo->beginTransaction();
@@ -118,36 +120,8 @@ function consultation_provider_end_video_session(PDO $pdo, string $roomToken, in
               AND status = 'active'
         ")->execute([$consultationId]);
 
-        if (in_array($consultStatus, ['in_consultation', 'scheduled', 'pending'], true)) {
-            $hasCompletedAt = false;
-            try {
-                $col = $pdo->query("SHOW COLUMNS FROM consultations LIKE 'completed_at'");
-                $hasCompletedAt = (bool) ($col && $col->fetch(PDO::FETCH_ASSOC));
-            } catch (Throwable $e) {
-                $hasCompletedAt = false;
-            }
-
-            if ($hasCompletedAt) {
-                $complete = $pdo->prepare("
-                    UPDATE consultations
-                    SET status = 'completed',
-                        completed_at = COALESCE(completed_at, NOW())
-                    WHERE id = ?
-                      AND provider_id = ?
-                      AND status IN ('in_consultation', 'scheduled', 'pending')
-                ");
-            } else {
-                $complete = $pdo->prepare("
-                    UPDATE consultations
-                    SET status = 'completed'
-                    WHERE id = ?
-                      AND provider_id = ?
-                      AND status IN ('in_consultation', 'scheduled', 'pending')
-                ");
-            }
-            $complete->execute([$consultationId, $providerId]);
-            $newlyCompleted = $complete->rowCount() > 0;
-        }
+        // Keep consultation open until the doctor submits Final Assessment
+        // (SOAP finalize + final_urgency_bucket). Do not set status=completed here.
 
         $pdo->commit();
     } catch (Throwable $e) {
@@ -156,31 +130,6 @@ function consultation_provider_end_video_session(PDO $pdo, string $roomToken, in
         }
         error_log('consultation_provider_end_video_session: ' . $e->getMessage());
         return $fail('Could not end video session.');
-    }
-
-    if ($newlyCompleted) {
-        try {
-            require_once __DIR__ . '/appointment_slots.php';
-            appointment_slot_set_consultation_status($pdo, $consultationId, 'completed');
-        } catch (Throwable $e) {
-            error_log('appointment_slot_set_consultation_status after video end: ' . $e->getMessage());
-        }
-
-        try {
-            require_once __DIR__ . '/bhw_patient_workflow.php';
-            if ($patientId > 0) {
-                BhwPatientWorkflow::onConsultationCompleted($pdo, $patientId, 'video_session_ended');
-            }
-        } catch (Throwable $e) {
-            error_log('BhwPatientWorkflow after video end: ' . $e->getMessage());
-        }
-
-        try {
-            require_once __DIR__ . '/patient_booking_status.php';
-            patient_triage_close_cases_for_consultation($pdo, $consultationId);
-        } catch (Throwable $e) {
-            error_log('patient_triage_close_cases_for_consultation after video end: ' . $e->getMessage());
-        }
     }
 
     $fresh = $pdo->prepare("
@@ -195,9 +144,9 @@ function consultation_provider_end_video_session(PDO $pdo, string $roomToken, in
 
     return [
         'success' => true,
-        'message' => $newlyCompleted
-            ? 'Consultation ended and saved to history.'
-            : 'Video session closed.',
+        'message' => $newlyEnded
+            ? 'Video call ended. Submit the Final Assessment to complete this consultation.'
+            : 'Video session closed. Final Assessment is still required if not yet submitted.',
         'consultation_id' => $consultationId,
         'patient_id' => $patientId,
         'video_status' => (string) ($live['video_status'] ?? 'ended'),
@@ -205,7 +154,7 @@ function consultation_provider_end_video_session(PDO $pdo, string $roomToken, in
         'started_at' => $live['started_at'] ?? $row['started_at'] ?? null,
         'ended_at' => $live['ended_at'] ?? $row['ended_at'] ?? null,
         'newly_ended' => $newlyEnded,
-        'newly_completed' => $newlyCompleted,
+        'newly_completed' => false,
     ];
 }
 

@@ -187,232 +187,309 @@ $logoUrl = ASSET_BASE . '/assets/img/medcon_logo.png';
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>Consultation #<?= (int) $consultationId ?> recording — medConnect</title>
-  <meta name="color-scheme" content="dark">
-  <meta name="theme-color" content="#0a0a0a">
+  <meta name="color-scheme" content="light">
+  <meta name="theme-color" content="#0097A7">
   <link rel="icon" type="image/png" href="<?= htmlspecialchars($logoUrl) ?>">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="<?= ASSET_BASE ?>/assets/css/design-system.css">
   <style>
-    :root {
-      --bg: #0a0a0a;
-      --surface: #141414;
-      --line: #2a2a2a;
-      --text: #f4f4f5;
-      --muted: #a1a1aa;
-      --aqua: #2dd4bf;
-      --aqua-dim: rgba(45, 212, 191, 0.14);
-      --safe-top: env(safe-area-inset-top, 0px);
-      --safe-bottom: env(safe-area-inset-bottom, 0px);
-      color-scheme: dark;
-    }
+    /* Recording viewer — MedConnect theme (layout/visual only) */
     * { box-sizing: border-box; }
     html, body {
       margin: 0;
       min-height: 100%;
-      background: var(--bg);
-      color: var(--text);
-      font-family: Inter, system-ui, sans-serif;
     }
-    .top {
+    body.recording-viewer {
+      background: var(--mc-ice-blue, #F3F8FB);
+      color: var(--mc-navy-dark, #0D2137);
+      font-family: var(--mc-font, Inter, system-ui, -apple-system, sans-serif);
+      font-size: var(--mc-fs-body, 0.875rem);
+      line-height: 1.5;
+      -webkit-font-smoothing: antialiased;
+    }
+    .rv-top {
       position: sticky;
       top: 0;
-      z-index: 4;
+      z-index: 40;
       display: flex;
       align-items: center;
       justify-content: space-between;
       gap: 12px;
-      padding: calc(10px + var(--safe-top)) 16px 10px;
-      background: var(--bg);
-      border-bottom: 1px solid var(--line);
+      min-height: 56px;
+      padding: calc(10px + var(--mc-safe-top, env(safe-area-inset-top, 0px))) 20px 10px;
+      background: var(--mc-white, #fff);
+      border-bottom: 1px solid var(--mc-border-thin, #DDE8EE);
+      box-shadow: 0 1px 0 rgba(13, 33, 55, 0.04), 0 2px 12px rgba(13, 33, 55, 0.04);
     }
-    .brand {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      font-weight: 700;
-      color: var(--text);
-      text-decoration: none;
-      font-size: 15px;
-    }
-    .brand img { width: 28px; height: 28px; }
-    .back {
+    .rv-brand {
       display: inline-flex;
       align-items: center;
-      min-height: 44px;
-      padding: 8px 10px;
-      border-radius: 10px;
-      color: var(--aqua);
+      gap: 10px;
+      text-decoration: none;
+      color: var(--mc-navy-dark, #0D2137);
+      font-weight: 700;
+      font-size: 15px;
+      letter-spacing: -0.01em;
+    }
+    .rv-brand__mark {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 36px;
+      height: 36px;
+      border-radius: 12px;
+      background: var(--mc-aqua-light, #E0F7FA);
+      flex-shrink: 0;
+    }
+    .rv-brand__mark img {
+      width: 22px;
+      height: 22px;
+      object-fit: contain;
+      display: block;
+    }
+    .rv-brand__name span {
+      color: var(--mc-aqua, #0097A7);
+    }
+    .rv-back {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      min-height: 40px;
+      padding: 8px 12px;
+      border-radius: var(--mc-radius-sm, 8px);
+      color: var(--mc-aqua, #0097A7);
       text-decoration: none;
       font-weight: 600;
       font-size: 14px;
+      border: 1px solid transparent;
+      transition: background 0.15s ease, border-color 0.15s ease;
     }
-    .back:hover { background: var(--aqua-dim); }
-    .page {
-      max-width: 960px;
+    .rv-back:hover {
+      background: var(--mc-aqua-light, #E0F7FA);
+      border-color: rgba(0, 151, 167, 0.25);
+    }
+    .rv-page {
+      width: 100%;
+      max-width: 1120px;
       margin: 0 auto;
-      padding: 0 0 calc(28px + var(--safe-bottom));
+      padding: 18px 20px calc(28px + var(--mc-safe-bottom, env(safe-area-inset-bottom, 0px)));
     }
-    .stage {
+    .rv-card {
+      background: var(--mc-white, #fff);
+      border: 1px solid var(--mc-border-thin, #DDE8EE);
+      border-radius: var(--mc-radius, 14px);
+      box-shadow: var(--mc-shadow-card, 0 4px 20px rgba(13, 33, 55, 0.08));
+      overflow: hidden;
+    }
+    .rv-card + .rv-card {
+      margin-top: 16px;
+    }
+    .rv-stage {
       position: relative;
-      background: #05070b;
-      aspect-ratio: 16 / 9;
+      background: #0B1220;
       display: flex;
       align-items: center;
       justify-content: center;
+      width: 100%;
+      aspect-ratio: 16 / 9;
+      max-height: min(70vh, 680px);
     }
-    video {
+    .rv-stage video {
+      display: block;
       width: 100%;
       height: 100%;
-      max-height: min(72vh, 720px);
+      max-height: min(70vh, 680px);
       object-fit: contain;
-      background: #05070b;
+      background: #0B1220;
       vertical-align: middle;
     }
-    .play-fab {
+    .rv-play-fab {
       position: absolute;
       inset: 0;
       margin: auto;
-      width: 72px;
-      height: 72px;
+      width: 68px;
+      height: 68px;
       border: 0;
       border-radius: 50%;
-      background: var(--aqua);
-      color: #042f2e;
+      background: var(--mc-aqua, #0097A7);
+      color: #fff;
       cursor: pointer;
       display: grid;
       place-items: center;
       padding: 0;
+      box-shadow: 0 8px 24px rgba(0, 110, 123, 0.35);
+      transition: background 0.15s ease, transform 0.15s ease;
     }
-    .play-fab[hidden] { display: none; }
-    .play-fab svg { display: block; }
-    .empty {
+    .rv-play-fab:hover {
+      background: var(--mc-aqua-dark, #006E7B);
+      transform: scale(1.04);
+    }
+    .rv-play-fab[hidden] { display: none; }
+    .rv-play-fab svg { display: block; margin-left: 3px; }
+    .rv-empty {
       margin: 0;
-      padding: 36px 20px;
+      padding: 48px 24px;
       text-align: center;
-      color: var(--muted);
+      color: #94a3b8;
+      font-size: 14px;
     }
-    .sheet {
-      padding: 16px 16px 0;
+    .rv-sheet {
+      padding: 18px 20px 20px;
     }
-    .chips {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 8px;
-      margin: 0 0 12px;
-    }
-    .chip {
-      display: inline-flex;
-      align-items: center;
-      min-height: 28px;
-      padding: 4px 10px;
-      border-radius: 999px;
-      background: var(--surface);
-      border: 1px solid var(--line);
-      color: var(--aqua);
-      font-size: 11px;
+    .rv-eyebrow {
+      margin: 0 0 8px;
+      font-size: 11.5px;
       font-weight: 700;
-      letter-spacing: 0.04em;
+      letter-spacing: 0.06em;
       text-transform: uppercase;
+      color: var(--mc-aqua, #0097A7);
     }
-    h1 {
+    .rv-title {
       margin: 0 0 6px;
       font-size: 1.2rem;
       line-height: 1.3;
       font-weight: 800;
+      color: var(--mc-navy-dark, #0D2137);
+      letter-spacing: -0.02em;
     }
-    .people {
-      margin: 0 0 10px;
+    .rv-people {
+      margin: 0 0 14px;
       font-size: 14px;
       font-weight: 600;
-      color: var(--text);
+      color: var(--mc-navy-dark, #0D2137);
     }
-    .people span {
-      color: var(--muted);
+    .rv-people span {
+      color: var(--mc-slate-muted, #5B7A8D);
       font-weight: 500;
     }
-    .hint {
-      margin: 0;
-      font-size: 13px;
-      color: var(--muted);
-      line-height: 1.45;
-    }
-    .segments {
+    .rv-chips {
       display: flex;
       flex-wrap: wrap;
       gap: 8px;
-      margin: 14px 0 0;
+      margin: 0 0 14px;
     }
-    .seg-btn {
+    .rv-chip {
+      display: inline-flex;
+      align-items: center;
+      min-height: 28px;
+      padding: 4px 11px;
+      border-radius: 999px;
+      background: var(--mc-aqua-light, #E0F7FA);
+      border: 1px solid rgba(0, 151, 167, 0.22);
+      color: var(--mc-aqua-dark, #006E7B);
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 0.01em;
+    }
+    .rv-chip--muted {
+      background: var(--mc-ice-blue, #F3F8FB);
+      border-color: var(--mc-border-thin, #DDE8EE);
+      color: var(--mc-slate-muted, #5B7A8D);
+    }
+    .rv-hint {
+      margin: 0;
+      font-size: 13px;
+      color: var(--mc-slate-muted, #5B7A8D);
+      line-height: 1.45;
+    }
+    .rv-segments {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin: 0 0 14px;
+    }
+    .rv-seg {
       display: inline-flex;
       flex-direction: column;
       align-items: flex-start;
       min-height: 44px;
       padding: 8px 12px;
-      border-radius: 10px;
-      border: 1px solid var(--line);
-      background: var(--surface);
-      color: var(--text);
+      border-radius: var(--mc-radius-sm, 8px);
+      border: 1px solid var(--mc-border-thin, #DDE8EE);
+      background: var(--mc-ice-blue, #F3F8FB);
+      color: var(--mc-navy-dark, #0D2137);
       text-decoration: none;
       font-size: 13px;
       font-weight: 600;
+      transition: border-color 0.15s ease, background 0.15s ease;
     }
-    .seg-btn small {
+    .rv-seg small {
       font-weight: 500;
-      color: var(--muted);
+      color: var(--mc-slate-muted, #5B7A8D);
     }
-    .seg-btn.is-active {
-      border-color: var(--aqua);
-      background: var(--aqua-dim);
-      color: var(--aqua);
+    .rv-seg:hover {
+      border-color: rgba(0, 151, 167, 0.45);
+      background: var(--mc-aqua-light, #E0F7FA);
     }
-    .seg-btn.is-disabled {
+    .rv-seg.is-active {
+      border-color: var(--mc-aqua, #0097A7);
+      background: var(--mc-aqua-light, #E0F7FA);
+      color: var(--mc-aqua-dark, #006E7B);
+      box-shadow: 0 0 0 2px rgba(0, 151, 167, 0.12);
+    }
+    .rv-seg.is-disabled {
       opacity: 0.55;
       pointer-events: none;
     }
     @media (max-width: 640px) {
-      .stage { aspect-ratio: auto; min-height: 240px; }
-      video { max-height: 58vh; }
-      h1 { font-size: 1.05rem; }
+      .rv-top { padding-left: 14px; padding-right: 14px; }
+      .rv-page { padding: 12px 12px calc(20px + var(--mc-safe-bottom, env(safe-area-inset-bottom, 0px))); }
+      .rv-stage {
+        aspect-ratio: auto;
+        min-height: 220px;
+        max-height: 58vh;
+      }
+      .rv-stage video { max-height: 58vh; }
+      .rv-sheet { padding: 14px 14px 16px; }
+      .rv-title { font-size: 1.05rem; }
+      .rv-brand__name { font-size: 14px; }
     }
     @media (min-width: 768px) {
-      .page { padding-top: 12px; }
-      .stage { border-radius: 14px; overflow: hidden; margin: 0 16px; }
-      .sheet { padding: 18px 16px 0; }
+      .rv-page { padding-top: 22px; }
+      .rv-sheet { padding: 20px 22px 22px; }
+    }
+    @media (min-width: 1100px) {
+      .rv-page { max-width: 1180px; }
     }
   </style>
 </head>
 <body class="recording-viewer">
-  <header class="top">
-    <a class="back" href="<?= htmlspecialchars($backUrl) ?>">← Back to consultation</a>
-    <a class="brand" href="<?= htmlspecialchars($backUrl) ?>">
-      <img src="<?= htmlspecialchars($logoUrl) ?>" alt="">
-      medConnect
+  <header class="rv-top">
+    <a class="rv-back" href="<?= htmlspecialchars($backUrl) ?>">← Back to consultation</a>
+    <a class="rv-brand" href="<?= htmlspecialchars($backUrl) ?>">
+      <span class="rv-brand__mark"><img src="<?= htmlspecialchars($logoUrl) ?>" alt=""></span>
+      <span class="rv-brand__name">med<span>Connect</span></span>
     </a>
   </header>
-  <main class="page">
-    <div class="stage">
-      <?php if ($playable && $streamUrl !== ''): ?>
-      <video id="recVideo" controls playsinline preload="metadata" src="<?= htmlspecialchars($streamUrl) ?>">
-        Your browser cannot play this recording.
-      </video>
-      <button type="button" class="play-fab" id="recPlayFab" aria-label="Play recording">
-        <svg width="28" height="28" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5v14l11-7z"/></svg>
-      </button>
-      <?php else: ?>
-      <p class="empty">No playable recording file is available for this consultation.</p>
-      <?php endif; ?>
-    </div>
-    <section class="sheet">
-      <div class="chips">
-        <span class="chip">Consult #<?= (int) $consultationId ?></span>
-        <?php if ($dateLabel !== ''): ?><span class="chip"><?= htmlspecialchars($dateLabel) ?></span><?php endif; ?>
-        <?php if ($durationLabel !== ''): ?><span class="chip"><?= htmlspecialchars($durationLabel) ?></span><?php endif; ?>
+  <main class="rv-page">
+    <section class="rv-card" aria-label="Video recording">
+      <div class="rv-stage">
+        <?php if ($playable && $streamUrl !== ''): ?>
+        <video id="recVideo" controls playsinline preload="metadata" src="<?= htmlspecialchars($streamUrl) ?>">
+          Your browser cannot play this recording.
+        </video>
+        <button type="button" class="rv-play-fab" id="recPlayFab" aria-label="Play recording">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5v14l11-7z"/></svg>
+        </button>
+        <?php else: ?>
+        <p class="rv-empty">No playable recording file is available for this consultation.</p>
+        <?php endif; ?>
       </div>
-      <h1>Video consultation recording</h1>
-      <p class="people"><?= htmlspecialchars($patientName) ?> <span>· <?= htmlspecialchars($providerName) ?></span></p>
+    </section>
+
+    <section class="rv-card rv-sheet" aria-label="Consultation information">
+      <p class="rv-eyebrow">Consultation Information</p>
+      <h1 class="rv-title">Video consultation recording</h1>
+      <p class="rv-people"><?= htmlspecialchars($patientName) ?> <span>· <?= htmlspecialchars($providerName) ?></span></p>
+      <div class="rv-chips">
+        <span class="rv-chip">Consult #<?= (int) $consultationId ?></span>
+        <?php if ($dateLabel !== ''): ?><span class="rv-chip rv-chip--muted"><?= htmlspecialchars($dateLabel) ?></span><?php endif; ?>
+        <?php if ($durationLabel !== ''): ?><span class="rv-chip rv-chip--muted"><?= htmlspecialchars($durationLabel) ?></span><?php endif; ?>
+      </div>
       <?php if (count($segments) > 1): ?>
-      <div class="segments">
+      <div class="rv-segments">
         <?php foreach ($segments as $segment):
           $sid = (int) ($segment['id'] ?? 0);
           $idx = (int) ($segment['segment_index'] ?? 0);
@@ -424,14 +501,14 @@ $logoUrl = ASSET_BASE . '/assets/img/medcon_logo.png';
           $statusBit = $canPlay ? ($timeBits !== '' ? $timeBits : 'Ready') : ucfirst((string) ($segment['status'] ?? 'unavailable'));
         ?>
         <?php if ($canPlay): ?>
-        <a class="seg-btn<?= $isActive ? ' is-active' : '' ?>" href="<?= htmlspecialchars($href) ?>">Segment <?= $idx ?: 1 ?><small><?= htmlspecialchars($statusBit) ?></small></a>
+        <a class="rv-seg<?= $isActive ? ' is-active' : '' ?>" href="<?= htmlspecialchars($href) ?>">Segment <?= $idx ?: 1 ?><small><?= htmlspecialchars($statusBit) ?></small></a>
         <?php else: ?>
-        <span class="seg-btn is-disabled">Segment <?= $idx ?: 1 ?><small><?= htmlspecialchars($statusBit) ?></small></span>
+        <span class="rv-seg is-disabled">Segment <?= $idx ?: 1 ?><small><?= htmlspecialchars($statusBit) ?></small></span>
         <?php endif; ?>
         <?php endforeach; ?>
       </div>
       <?php endif; ?>
-      <p class="hint"><?php
+      <p class="rv-hint"><?php
         if (!$playable) {
             echo 'A recording was not saved, or the file is missing from storage.';
         } elseif (count($segments) > 1) {
