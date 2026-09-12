@@ -201,7 +201,20 @@
 
       const triageUpdates = json.triage_updates || [];
       triageUpdates.forEach((item) => {
-        applyOnPageTriage(item);
+        // Mid-call emergency/urgent notifications may still show modals,
+        // but on-page Final Assessment chips only update after completion.
+        const completed = String(item.consult_status || item.status || '').toLowerCase() === 'completed'
+          || !!item.record_available;
+        if (completed) {
+          applyOnPageTriage(item);
+        } else {
+          applyOnPageTriage({
+            consultation_id: item.consultation_id,
+            ai_label: item.ai_label,
+            final_label: '',
+            finalized_by: '',
+          });
+        }
         showDoctorFinalOverride(item);
       });
 
@@ -217,11 +230,12 @@
           el.textContent = item.status.replace(/_/g, ' ');
           el.dataset.status = item.status;
         }
+        // Active consultations: update AI only — never inject a final row before completion.
         applyOnPageTriage({
           consultation_id: item.id,
           ai_label: item.ai_case_level,
-          final_label: item.final_case_level,
-          finalized_by: item.finalized_by,
+          final_label: '',
+          finalized_by: '',
         });
       });
     } catch (_) {

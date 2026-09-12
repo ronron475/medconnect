@@ -22,12 +22,27 @@ if (is_file($triageSchemaPath)) {
  * @param array<string, mixed> $row
  */
 if (!function_exists('mc_render_triage_assessment_stack')) {
-    function mc_render_triage_assessment_stack(array $row, bool $showTitle = false): void
+    function mc_render_triage_assessment_stack(array $row, bool $showTitle = false, bool $showDoctorFinal = false): void
     {
         $ai = triage_ai_preliminary_label($row);
-        $doctor = triage_doctor_final_label($row);
-        $final = triage_final_decision_label($row);
-        $finalKey = triage_doctor_final_key($row);
+        $aiKey = triage_ai_preliminary_key($row);
+        $bookingState = strtolower((string) ($row['_booking_state'] ?? ''));
+        // Doctor final only after a completed visit — never mirror AI as "final".
+        $showDoctorFinal = $showDoctorFinal || $bookingState === 'completed';
+        $finalKey = $showDoctorFinal ? triage_doctor_final_key($row) : 'unknown';
+        // Require an explicit doctor key that differs from AI, or a finalized_by marker.
+        $hasExplicitDoctorFinal = $finalKey !== 'unknown'
+            && (
+                $finalKey !== $aiKey
+                || trim((string) ($row['finalized_by_name'] ?? $row['finalized_by'] ?? '')) !== ''
+                || !empty($row['doctor_override'])
+                || !empty($row['manual_urgency'])
+            );
+        if (!$hasExplicitDoctorFinal) {
+            $finalKey = 'unknown';
+            $showDoctorFinal = false;
+        }
+        $final = $showDoctorFinal ? triage_urgency_display_label($finalKey) : '';
         $chip = $finalKey === 'emergency'
             ? 'pt-assess-chip--emergency'
             : ($finalKey === 'urgent' ? 'pt-assess-chip--urgent' : 'pt-assess-chip--routine');
@@ -41,15 +56,11 @@ if (!function_exists('mc_render_triage_assessment_stack')) {
         <span class="pt-assess-stack__label">Preliminary AI Assessment</span>
         <span class="pt-assess-chip pt-assess-chip--ai"><?= htmlspecialchars($ai) ?></span>
       </div>
-      <div class="pt-assess-stack__row pt-assess-stack__row--doctor">
-        <span class="pt-assess-stack__label">Final Doctor Assessment</span>
-        <span class="pt-assess-chip <?= htmlspecialchars($chip) ?>"><?= htmlspecialchars($doctor) ?></span>
-      </div>
+      <?php if ($showDoctorFinal && $final !== '' && $final !== 'Not recorded'): ?>
       <div class="pt-assess-stack__row pt-assess-stack__row--final">
-        <span class="pt-assess-stack__label">Final Triage Result</span>
+        <span class="pt-assess-stack__label">Final Doctor Assessment</span>
         <span class="pt-assess-chip <?= htmlspecialchars($chip) ?>"><?= htmlspecialchars($final) ?></span>
       </div>
-      <?php if ($doctor !== $ai || $final !== $ai): ?>
       <?php
         $finalizedByName = trim((string) ($row['finalized_by_name'] ?? $row['finalized_by'] ?? ''));
         if ($finalizedByName === '') {
@@ -60,12 +71,12 @@ if (!function_exists('mc_render_triage_assessment_stack')) {
         <span class="pt-assess-stack__label">Finalized By</span>
         <span class="pt-assess-chip"><?= htmlspecialchars($finalizedByName) ?></span>
       </div>
-      <?php endif; ?>
       <?php if ($isEmergency): ?>
       <p class="pt-assess-emergency-note">
         Your doctor classified this case as an EMERGENCY. Seek immediate in-person medical attention.
         You may continue the live consultation while arranging transfer.
       </p>
+      <?php endif; ?>
       <?php endif; ?>
     </div>
         <?php
@@ -84,10 +95,14 @@ if (!function_exists('mc_render_consultation_outcome_stack')) {
             return;
         }
         $final = trim((string) ($outcome['final_case_level'] ?? ''));
-        if ($final === '') {
+        $ai = trim((string) ($outcome['ai_case_level'] ?? $outcome['ai_case_display'] ?? ''));
+        if ($final === '' && $ai === '') {
             return;
         }
-        $ai = trim((string) ($outcome['ai_case_level'] ?? ''));
+        // Never surface a "final" row for preliminary-only outcomes (active visits).
+        if (!empty($outcome['preliminary_only'])) {
+            $final = '';
+        }
         $bucket = (string) ($outcome['final_case_bucket'] ?? '');
         $chip = function_exists('patient_case_level_chip_class')
             ? patient_case_level_chip_class($bucket)
@@ -107,8 +122,9 @@ if (!function_exists('mc_render_consultation_outcome_stack')) {
         <span class="pt-assess-chip pt-assess-chip--ai js-consult-ai"><?= htmlspecialchars($ai) ?></span>
       </div>
       <?php endif; ?>
+      <?php if ($final !== ''): ?>
       <div class="pt-assess-stack__row pt-assess-stack__row--final">
-        <span class="pt-assess-stack__label">Final Triage Result</span>
+        <span class="pt-assess-stack__label">Final Doctor Assessment</span>
         <span class="pt-assess-chip <?= htmlspecialchars($chip) ?> js-consult-final"><?= htmlspecialchars($final) ?></span>
       </div>
       <?php if ($byDoctor): ?>
@@ -116,6 +132,7 @@ if (!function_exists('mc_render_consultation_outcome_stack')) {
         <span class="pt-assess-stack__label">Finalized By</span>
         <span class="pt-assess-chip js-consult-finalized"><?= htmlspecialchars($finalizedLabel) ?></span>
       </div>
+      <?php endif; ?>
       <?php endif; ?>
     </div>
         <?php

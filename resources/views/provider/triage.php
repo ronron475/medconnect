@@ -294,23 +294,14 @@ $slot_waiting_count = count(array_filter($display_cases, fn($t) => !empty($t['sl
 
       <p class="triage-review-safety">Review the AI-generated assessment and recommendations carefully before approving. The provider remains responsible for the final clinical decision.</p>
 
-      <section class="triage-override-box triage-review-section triage-review-section--last" aria-labelledby="triageDecisionHeading">
+      <section class="triage-review-section triage-review-section--last" aria-labelledby="triageDecisionHeading">
         <div class="triage-review-section__head">
-          <h3 id="triageDecisionHeading" class="triage-review-section__title">Doctor Review &amp; Decision</h3>
+          <h3 id="triageDecisionHeading" class="triage-review-section__title">Doctor Review</h3>
         </div>
-        <div class="triage-override-box__body">
-          <span class="triage-field-label">Provider Decision</span>
-          <div class="triage-override-row">
-            <select id="overrideLevel" class="triage-override-select" aria-label="Override triage priority level">
-              <option value="1">Emergency</option>
-              <option value="2">Urgent</option>
-              <option value="3">Non-Urgent</option>
-              <option value="4">Non-Urgent (Routine)</option>
-              <option value="5">Non-Urgent (Routine)</option>
-            </select>
-            <button type="button" class="mc-btn mc-btn--outline triage-override-btn" onclick="applyOverride()">Apply override</button>
-          </div>
-        </div>
+        <p class="triage-gate-hint" style="margin:0;">
+          Use <strong>Approve for Patient</strong> or <strong>Withhold Guidance</strong> to complete this Active Triage Review.
+          Final case urgency is confirmed during the consultation (Clinical Support) and again when you finalize the SOAP note — not from this pre-consult screen.
+        </p>
       </section>
 
       <div class="triage-case-actions" id="triageCaseActions" hidden>

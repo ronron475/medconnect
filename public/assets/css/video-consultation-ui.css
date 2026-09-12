@@ -1616,8 +1616,8 @@ body.role-patient:not(.embedded-shell) .mc-vc-root {
   max-height: none;
 }
 
-/* Laptop/desktop compact stage is applied at the end of this file so it wins
-   over fill-tile rules. Patient overlay + provider full-tab share the same size. */
+/* Patient desktop/laptop fills the viewport via the min-width:769px block
+   at the end of this file. Mobile (≤768px) keeps the flex column layout. */
 
 body.role-patient .mc-vc-header {
   position: relative;
@@ -2495,9 +2495,9 @@ body.role-provider:not(.embedded-shell) .mc-vc-header {
   object-position: center center;
 }
 
-/* ── Compact laptop/desktop stage (patient overlay + doctor full-tab) ─────
-   Slightly smaller 16:9 tile, centered. Does not apply to the doctor session
-   iframe dock (parent already sizes it) or true fullscreen. */
+/* ── Compact laptop/desktop stage (provider full-tab only) ────────────────
+   Patient desktop/laptop uses a full-viewport stage (rules below). Do not
+   apply this compact tile to role-patient — it left large empty dark bands. */
 @media (min-width: 769px) and (max-height: 900px) {
   :root {
     --mc-vc-desktop-stage-max-w: 680px;
@@ -2506,13 +2506,11 @@ body.role-provider:not(.embedded-shell) .mc-vc-header {
 }
 
 @media (min-width: 769px) {
-  body.role-patient:not(.mc-vc-call-ended):not(.mc-true-fullscreen) .mc-vc-root:not(.is-fullscreen),
   body.role-provider:not(.embedded-shell):not(.mc-vc-call-ended):not(.mc-true-fullscreen) .mc-vc-root:not(.is-fullscreen) {
     display: flex;
     flex-direction: column;
   }
 
-  body.role-patient:not(.mc-vc-call-ended):not(.mc-true-fullscreen) .mc-vc-root:not(.is-fullscreen) .mc-vc-header,
   body.role-provider:not(.embedded-shell):not(.mc-vc-call-ended):not(.mc-true-fullscreen) .mc-vc-root:not(.is-fullscreen) .mc-vc-header {
     position: relative;
     top: auto;
@@ -2521,7 +2519,6 @@ body.role-provider:not(.embedded-shell) .mc-vc-header {
     flex: 0 0 auto;
   }
 
-  body.role-patient:not(.mc-vc-call-ended):not(.mc-true-fullscreen) .mc-vc-root:not(.is-fullscreen) .mc-vc-stage,
   body.role-provider:not(.embedded-shell):not(.mc-vc-call-ended):not(.mc-true-fullscreen) .mc-vc-root:not(.is-fullscreen) .mc-vc-stage {
     position: relative;
     inset: auto;
@@ -2540,7 +2537,6 @@ body.role-provider:not(.embedded-shell) .mc-vc-header {
     overflow: hidden;
   }
 
-  body.role-patient:not(.mc-vc-call-ended):not(.mc-true-fullscreen) .mc-vc-root:not(.is-fullscreen) .mc-vc-controls,
   body.role-provider:not(.embedded-shell):not(.mc-vc-call-ended):not(.mc-true-fullscreen) .mc-vc-root:not(.is-fullscreen) .mc-vc-controls {
     position: relative;
     inset: auto;
@@ -2552,9 +2548,92 @@ body.role-provider:not(.embedded-shell) .mc-vc-header {
     max-width: 100%;
   }
 
-  body.role-patient:not(.mc-vc-call-ended):not(.mc-true-fullscreen) .mc-vc-root:not(.is-fullscreen) .mc-vc-main,
   body.role-provider:not(.embedded-shell):not(.mc-vc-call-ended):not(.mc-true-fullscreen) .mc-vc-root:not(.is-fullscreen) .mc-vc-main {
     border-radius: inherit;
+  }
+
+  /* Patient desktop/laptop — fill the available viewport (shell or full tab).
+     Keeps PiP + bottom controls; does not affect mobile (≤768px). */
+  body.role-patient:not(.mc-vc-call-ended) .mc-vc-root {
+    display: block;
+    width: 100%;
+    height: 100%;
+    max-height: none;
+    overflow: hidden;
+  }
+
+  body.role-patient:not(.embedded-shell):not(.mc-vc-call-ended) .mc-vc-root {
+    position: fixed;
+    inset: 0;
+    height: 100%;
+    height: 100dvh;
+  }
+
+  body.role-patient.embedded-shell:not(.mc-vc-call-ended) .mc-vc-root {
+    position: absolute;
+    inset: 0;
+    height: 100%;
+  }
+
+  body.role-patient:not(.mc-vc-call-ended) .mc-vc-header {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    flex: none;
+    z-index: 20;
+  }
+
+  body.role-patient:not(.mc-vc-call-ended) .mc-vc-stage {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    max-width: none;
+    height: 100%;
+    max-height: none;
+    min-height: 0;
+    aspect-ratio: auto;
+    margin: 0;
+    border-radius: 0;
+    flex: none;
+    overflow: hidden;
+  }
+
+  body.role-patient:not(.mc-vc-call-ended) .mc-vc-main,
+  body.role-patient:not(.mc-vc-call-ended) #mcVcMainSlot {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    max-height: none;
+    border-radius: 0;
+  }
+
+  body.role-patient:not(.mc-vc-call-ended) .mc-vc-main video,
+  body.role-patient:not(.mc-vc-call-ended) #mcVcMainSlot video {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    max-width: none;
+    max-height: none;
+    object-fit: cover;
+    object-position: center center;
+  }
+
+  body.role-patient:not(.mc-vc-call-ended) .mc-vc-controls {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    width: 100%;
+    max-width: 100%;
+    flex: none;
+    z-index: 50;
+  }
+
+  body.role-patient:not(.mc-vc-call-ended) .mc-vc-pip {
+    z-index: 30;
   }
 }
 

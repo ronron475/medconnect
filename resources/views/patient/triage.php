@@ -101,7 +101,15 @@ if ($pdo->query("SHOW TABLES LIKE 'users'")->rowCount()) {
 
 $review_booking_ctx = triage_patient_review_booking_context($pdo, (int) $uid);
 if ($force_new_concern) {
-    $review_booking_ctx = ['locked' => false, 'provider_id' => 0, 'provider_name' => '', 'triage_id' => 0];
+    $review_booking_ctx = [
+        'locked' => false,
+        'provider_id' => 0,
+        'provider_name' => '',
+        'triage_id' => 0,
+        'triage_level' => '',
+        'consultation_id' => 0,
+        'source' => '',
+    ];
 }
 $preliminary_complaint_triage = (empty($review_booking_ctx['locked']) && !$force_new_concern)
     ? patient_find_preliminary_complaint_triage($pdo, (int) $uid)
@@ -139,7 +147,7 @@ unset($bpRow);
 $all_consults = [];
 if ($pdo->query("SHOW TABLES LIKE 'consultations'")->rowCount()) {
     $s = $pdo->prepare("
-        SELECT c.id, c.consult_date, c.consult_time, c.provider_name, c.consult_type, c.status
+        SELECT c.id, c.consult_date, c.consult_time, c.provider_id, c.provider_name, c.consult_type, c.status
         FROM consultations c
         WHERE c.patient_id = ?
         ORDER BY c.consult_date DESC, c.consult_time DESC

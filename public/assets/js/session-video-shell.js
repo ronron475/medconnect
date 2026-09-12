@@ -243,6 +243,131 @@
     handle.addEventListener('pointercancel', up);
   }
 
+  function isPatientPortalPath(pathname) {
+    return /\/views\/patient\//i.test(String(pathname || ''));
+  }
+
+  function shouldSoftNavigate(href) {
+    if (!isPatientPortalPath(global.location.pathname)) return false;
+    let url;
+    try {
+      url = new URL(href, global.location.href);
+    } catch (_) {
+      return false;
+    }
+    if (url.origin !== global.location.origin) return false;
+    if (!isPatientPortalPath(url.pathname)) return false;
+    if (/\/(logout|login|account_setup)\.php/i.test(url.pathname)) return false;
+    if (url.pathname === global.location.pathname && url.search === global.location.search) {
+      return false;
+    }
+    return true;
+  }
+
+  function syncSidebarActive(doc) {
+    try {
+      const nextLinks = doc.querySelectorAll('.sidebar a[href], .portal-mobile-nav a[href], nav a[href]');
+      const curLinks = document.querySelectorAll('.sidebar a[href], .portal-mobile-nav a[href], nav a[href]');
+      const activeHrefs = new Set();
+      nextLinks.forEach((a) => {
+        if (a.classList.contains('active') || a.getAttribute('aria-current') === 'page') {
+          activeHrefs.add(a.getAttribute('href') || '');
+        }
+      });
+      curLinks.forEach((a) => {
+        const href = a.getAttribute('href') || '';
+        const on = activeHrefs.has(href)
+          || (href && global.location.pathname.indexOf(href.replace(/\?.*$/, '')) >= 0);
+        a.classList.toggle('active', !!on);
+        if (on) a.setAttribute('aria-current', 'page');
+        else a.removeAttribute('aria-current');
+      });
+    } catch (_) { /* non-fatal */ }
+  }
+
+  function runFetchedScripts(doc) {
+    const skipSrc = /session-video-shell|portal_dark_mode|theme_scripts|live_sync|responsive|notification|patient-health-updates|patient-urgency|patient-triage-i18n|patient-recommendation|auth_transition|mc_modal_select/i;
+    const scripts = Array.from(doc.querySelectorAll('script'));
+    scripts.forEach((old) => {
+      const src = old.getAttribute('src') || '';
+      if (src && skipSrc.test(src)) return;
+      // Layout shell scripts are already on the live page.
+      if (src && /assets\/js\/(patient-portal|patient-followup)/i.test(src)) {
+        // Re-init if a boot helper exists; inline payload scripts below set data first.
+        return;
+      }
+      const s = document.createElement('script');
+      if (src) {
+        s.src = src;
+        s.async = false;
+      } else {
+        const code = String(old.textContent || '');
+        if (!code.trim()) return;
+        // Skip shell/theme bootstraps that already ran on first load.
+        if (/McSessionVideoShell|medconnectThemeRoot|portal_dark_mode/i.test(code) && !/consultations|filterSessions|APP_BASE/i.test(code)) {
+          return;
+        }
+        s.textContent = code;
+      }
+      document.body.appendChild(s);
+    });
+    // Re-render My Sessions if data was refreshed by inline scripts.
+    try {
+      if (typeof global.filterSessions === 'function' && Array.isArray(global.consultations)) {
+        global.filterSessions(global.SESSIONS_DEFAULT_TAB || 'upcoming');
+      }
+    } catch (_) { /* ignore */ }
+  }
+
+  let softNavBusy = false;
+  async function softNavigate(href, options) {
+    options = options || {};
+    if (softNavBusy) return;
+    softNavBusy = true;
+    const shell = shellEl();
+    try {
+      if (shell && shell.parentElement !== document.body) {
+        document.body.appendChild(shell);
+      }
+      if (!options.skipMinimize) minimize();
+
+      const url = new URL(href, global.location.href);
+      const res = await fetch(url.href, {
+        credentials: 'same-origin',
+        cache: 'no-store',
+        headers: {
+          'X-Requested-With': 'MC-SoftNav',
+          'X-MC-No-Loader': '1',
+        },
+      });
+      if (!res.ok) throw new Error('soft-nav ' + res.status);
+      const html = await res.text();
+      const doc = new DOMParser().parseFromString(html, 'text/html');
+      const newBody = doc.querySelector('.portal-page-body');
+      const curBody = document.querySelector('.portal-page-body');
+      if (!newBody || !curBody) throw new Error('missing portal-page-body');
+
+      // Keep the live WebRTC iframe — only swap portal content.
+      if (shell && shell.parentElement !== document.body) {
+        document.body.appendChild(shell);
+      }
+      curBody.innerHTML = newBody.innerHTML;
+      document.title = doc.title || document.title;
+      syncSidebarActive(doc);
+      if (!options.replace) {
+        global.history.pushState({ mcSoftNav: true }, '', url.href);
+      } else {
+        global.history.replaceState({ mcSoftNav: true }, '', url.href);
+      }
+      runFetchedScripts(doc);
+      global.dispatchEvent(new CustomEvent('medconnect:soft-nav', { detail: { href: url.href } }));
+    } catch (_) {
+      global.location.href = href;
+    } finally {
+      softNavBusy = false;
+    }
+  }
+
   function bindNavigationPreserve() {
     document.addEventListener('click', (e) => {
       const link = e.target.closest('a[href]');
@@ -250,16 +375,32 @@
       const href = String(link.getAttribute('href') || '');
       if (!href || href.charAt(0) === '#' || href.indexOf('javascript:') === 0) return;
       const st = readState();
-      if (!st || !st.token) return;
+      if (!st || !st.token || st.ended) return;
       const shell = shellEl();
       if (!shell || shell.hidden) return;
+
       if (shell.parentElement && shell.parentElement !== document.body) {
         document.body.appendChild(shell);
-        minimize();
-      } else if (shell.dataset.mode === 'fullscreen') {
+      }
+
+      if (shouldSoftNavigate(href)) {
+        e.preventDefault();
+        e.stopPropagation();
+        softNavigate(href);
+        return;
+      }
+
+      if (shell.dataset.mode === 'fullscreen' || shell.dataset.mode === 'docked') {
         minimize();
       }
     }, true);
+
+    global.addEventListener('popstate', () => {
+      const st = readState();
+      if (!st || !st.token || st.ended) return;
+      if (!isPatientPortalPath(global.location.pathname)) return;
+      softNavigate(global.location.href, { replace: true, skipMinimize: false });
+    });
   }
 
   let chromeBound = false;
@@ -280,6 +421,26 @@
     }
     if (minBtn) {
       minBtn.addEventListener('click', () => minimize());
+    }
+
+    // Clicking the minimized call chrome returns to the same full consultation.
+    const handle = document.getElementById('mcGlobalVideoHandle');
+    if (handle && !handle.dataset.expandBound) {
+      handle.dataset.expandBound = '1';
+      handle.addEventListener('dblclick', () => {
+        const shell = shellEl();
+        if (shell && shell.classList.contains('is-pip')) maximize();
+      });
+    }
+    const body = document.querySelector('#' + SHELL_ID + ' .mc-session-float-body');
+    if (body && !body.dataset.expandBound) {
+      body.dataset.expandBound = '1';
+      body.addEventListener('click', () => {
+        const shell = shellEl();
+        if (shell && shell.classList.contains('is-pip') && !isEndedState()) {
+          maximize();
+        }
+      });
     }
 
     document.querySelectorAll('[data-shell-action]').forEach((btn) => {
@@ -453,6 +614,12 @@
     if (type === 'medconnect:call-completed') {
       writeState({ ended: true });
       syncChrome();
+      // Allow the completed UI inside the iframe to scroll on desktop/laptop.
+      const shell = shellEl();
+      if (shell) {
+        shell.classList.add('is-ended');
+        setMode('fullscreen');
+      }
       global.dispatchEvent(new CustomEvent('medconnect:video-shell-completed', { detail: event.data }));
       return;
     }
@@ -532,12 +699,13 @@
     undock: undock,
     close: closeShell,
     join: joinConsultation,
+    softNavigate: softNavigate,
     extractToken: extractToken,
     postToFrame: postToShellFrame,
     getState: readState,
     isActive: function () {
       const st = readState();
-      return !!(st && st.token && st.mode && st.mode !== 'hidden');
+      return !!(st && st.token && st.mode && st.mode !== 'hidden' && !st.ended);
     },
     joinUrl: function (token) { return roomUrl(token, false); },
   };

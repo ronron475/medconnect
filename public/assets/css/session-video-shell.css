@@ -49,10 +49,23 @@
 
 .mc-session-float-shell.is-ended {
   background: #f4f8fa;
+  overflow: auto;
 }
 
 .mc-session-float-shell.is-ended .mc-session-float-body {
   background: #f4f8fa;
+  overflow: auto;
+  -webkit-overflow-scrolling: touch;
+  min-height: 100%;
+  height: auto;
+  flex: 1 1 auto;
+}
+
+.mc-session-float-shell.is-ended.is-fullscreen .mc-session-float-body,
+.mc-session-float-shell.is-ended.is-fullscreen .mc-session-float-body iframe {
+  height: auto;
+  min-height: 100%;
+  min-height: 100dvh;
 }
 
 html[data-theme-resolved='dark'] .mc-session-float-shell.is-ended,

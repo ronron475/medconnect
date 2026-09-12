@@ -1233,13 +1233,16 @@ function provider_clinical_support_apply_authoritative_final(
     if ($aiBucket !== 'unknown') {
         $caps = provider_clinical_support_caps_label($aiBucket);
         $support['risk_bucket'] = $aiBucket;
-        $support['final_urgency'] = $caps;
+        // Provisional risk for doctor workspace only — do NOT treat AI as a doctor final.
+        // Keep final_urgency empty so patient surfaces never mirror AI as "Final Triage Result".
+        $support['final_urgency'] = '';
         $support['doctor_urgency'] = '';
         $support['doctor_urgency_bucket'] = '';
         $support['manual_urgency'] = false;
         $support['doctor_override'] = false;
         $support['finalized_by'] = '';
-        $support['risk_level'] = $caps;
+        $support['risk_level'] = $caps . ' (preliminary AI)';
+        $support['preliminary_only'] = true;
     }
 
     return $support;

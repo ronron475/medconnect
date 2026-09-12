@@ -142,9 +142,12 @@
   }
 
   function sessionTriageStackHtml(c) {
-    const finalLevel = String(c.final_case_level || '').trim();
-    if (!finalLevel) return '';
-    const aiLevel = String(c.ai_case_level || '').trim();
+    const status = String(c.status || '').toLowerCase().replace(/\s+/g, '_');
+    const finalLevel = status === 'completed'
+      ? String(c.final_case_level || '').trim()
+      : '';
+    const aiLevel = String(c.ai_case_level || c.ai_case_display || '').trim();
+    if (!finalLevel && !aiLevel) return '';
     const finalizedBy = String(c.finalized_by || '').trim();
     const byDoctor = !!c.is_doctor_override || finalizedBy !== '';
     const bucket = String(c.final_case_bucket || '').toLowerCase().replace(/-/g, '_');
@@ -156,11 +159,13 @@
       html += '<div class="pt-assess-stack__row"><span class="pt-assess-stack__label">Preliminary AI Assessment</span>'
         + '<span class="pt-assess-chip pt-assess-chip--ai js-consult-ai">' + escapeHtml(aiLevel) + '</span></div>';
     }
-    html += '<div class="pt-assess-stack__row"><span class="pt-assess-stack__label">Final Triage Result</span>'
-      + '<span class="pt-assess-chip ' + chip + ' js-consult-final">' + escapeHtml(finalLevel) + '</span></div>';
-    if (byDoctor) {
-      html += '<div class="pt-assess-stack__row"><span class="pt-assess-stack__label">Finalized By</span>'
-        + '<span class="pt-assess-chip js-consult-finalized">' + escapeHtml(finalizedBy || 'Doctor') + '</span></div>';
+    if (finalLevel) {
+      html += '<div class="pt-assess-stack__row"><span class="pt-assess-stack__label">Final Doctor Assessment</span>'
+        + '<span class="pt-assess-chip ' + chip + ' js-consult-final">' + escapeHtml(finalLevel) + '</span></div>';
+      if (byDoctor) {
+        html += '<div class="pt-assess-stack__row"><span class="pt-assess-stack__label">Finalized By</span>'
+          + '<span class="pt-assess-chip js-consult-finalized">' + escapeHtml(finalizedBy || 'Doctor') + '</span></div>';
+      }
     }
     html += '</div>';
     return html;

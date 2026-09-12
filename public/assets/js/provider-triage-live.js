@@ -270,7 +270,6 @@
 
     var complaintText = String(t.complaint || '').trim();
     document.getElementById('modalComplaint').textContent = complaintText || 'No detailed complaint provided.';
-    document.getElementById('overrideLevel').value = t.level || '3';
 
     var waitSection = document.getElementById('modalWaitlistSection');
     var waitBody = document.getElementById('modalWaitlistBody');
@@ -702,37 +701,6 @@
     }
   }
 
-  async function applyOverride() {
-    var level = document.getElementById('overrideLevel').value;
-    if (!currentTriageId) return;
-    if (!confirm('Are you sure you want to manually override the AI priority level?')) return;
-    try {
-      var res = await fetch(cfg.updateApi, {
-        method: 'POST',
-        credentials: 'same-origin',
-        body: new URLSearchParams({
-          id: String(currentTriageId),
-          action: 'override',
-          level: level,
-          csrf_token: csrfToken(),
-        }),
-      });
-      var data = await res.json();
-      if (data.success) {
-        closeTriageModal();
-        refreshTriage(true);
-        if (window.MedConnectNavBadgesRefresh) window.MedConnectNavBadgesRefresh();
-        if (data.message) {
-          alert(data.message);
-        }
-      } else {
-        alert(data.message || 'Could not update priority.');
-      }
-    } catch (e) {
-      alert('Error updating priority.');
-    }
-  }
-
   async function postCaseAction(url, body) {
     var res = await fetch(url, {
       method: 'POST',
@@ -923,7 +891,6 @@
   }
 
   window.closeTriageModal = closeTriageModal;
-  window.applyOverride = applyOverride;
   window.approveRecommendationsFromModal = approveRecommendationsFromModal;
   window.rejectRecommendationsFromModal = rejectRecommendationsFromModal;
 
