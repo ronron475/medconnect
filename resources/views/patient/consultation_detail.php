@@ -201,7 +201,7 @@ $patient_page_stylesheets = [
           <dd><?= htmlspecialchars($durationLabel) ?></dd>
         </div>
         <?php endif; ?>
-        <div class="pmh-session-kv__wide">
+        <div>
           <dt>Patient Complaint</dt>
           <dd><?= htmlspecialchars($chiefComplaint !== '' ? $chiefComplaint : 'Not recorded.') ?></dd>
         </div>
@@ -210,35 +210,33 @@ $patient_page_stylesheets = [
 
     <section class="pmh-panel pmh-detail-card" aria-label="Video consultation">
       <h3 class="pmh-detail-card__title">Video consultation</h3>
-      <div class="pmh-video-row">
-        <dl class="pmh-session-kv pmh-session-kv--compact">
-          <?php if (!empty($videoHistory['date_label'])): ?>
-          <div>
-            <dt>Date</dt>
-            <dd><?= htmlspecialchars((string) $videoHistory['date_label']) ?></dd>
-          </div>
-          <?php endif; ?>
-          <?php if (!empty($videoHistory['duration_label'])): ?>
-          <div>
-            <dt>Duration</dt>
-            <dd><?= htmlspecialchars((string) $videoHistory['duration_label']) ?></dd>
-          </div>
-          <?php endif; ?>
-          <div>
-            <dt>Provider</dt>
-            <dd><?= htmlspecialchars($providerName) ?></dd>
-          </div>
-        </dl>
-        <div class="pmh-video-row__actions">
-          <?php if (!empty($videoHistory['has_recording'])): ?>
-          <a class="pmh-btn pmh-btn--primary pmh-btn--sm" href="<?= htmlspecialchars(consultation_video_recording_view_url((int) $consultationId)) ?>" target="_blank" rel="noopener">View Recording</a>
-          <?php if (!empty($videoHistory['recording_segment_count']) && (int) $videoHistory['recording_segment_count'] > 1): ?>
-          <p class="pmh-detail-card__hint"><?= (int) $videoHistory['recording_segment_count'] ?> recording segments</p>
-          <?php endif; ?>
-          <?php else: ?>
-          <p class="pmh-detail-card__hint">Video recording not available for this consultation.</p>
-          <?php endif; ?>
+      <dl class="pmh-session-kv pmh-session-kv--grid pmh-session-kv--video">
+        <?php if (!empty($videoHistory['date_label'])): ?>
+        <div>
+          <dt>Date</dt>
+          <dd><?= htmlspecialchars((string) $videoHistory['date_label']) ?></dd>
         </div>
+        <?php endif; ?>
+        <?php if (!empty($videoHistory['duration_label'])): ?>
+        <div>
+          <dt>Duration</dt>
+          <dd><?= htmlspecialchars((string) $videoHistory['duration_label']) ?></dd>
+        </div>
+        <?php endif; ?>
+        <div>
+          <dt>Provider</dt>
+          <dd><?= htmlspecialchars($providerName) ?></dd>
+        </div>
+      </dl>
+      <div class="pmh-detail-card__footer">
+        <?php if (!empty($videoHistory['has_recording'])): ?>
+        <a class="pmh-btn pmh-btn--primary pmh-btn--sm" href="<?= htmlspecialchars(consultation_video_recording_view_url((int) $consultationId)) ?>" target="_blank" rel="noopener">View Recording</a>
+        <?php if (!empty($videoHistory['recording_segment_count']) && (int) $videoHistory['recording_segment_count'] > 1): ?>
+        <p class="pmh-detail-card__hint"><?= (int) $videoHistory['recording_segment_count'] ?> recording segments</p>
+        <?php endif; ?>
+        <?php else: ?>
+        <p class="pmh-detail-card__hint">Video recording not available for this consultation.</p>
+        <?php endif; ?>
       </div>
     </section>
 
