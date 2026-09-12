@@ -26,6 +26,7 @@
     "Busay": { "lat": 10.5234, "lng": 122.8567 },
     "Calumangan": { "lat": 10.5489, "lng": 122.8023 },
     "Caridad": { "lat": 10.5156, "lng": 122.8312 },
+    "Don Jorge L. Araneta": { "lat": 10.5502, "lng": 122.8201 },
     "Dulao": { "lat": 10.5678, "lng": 122.8489 },
     "Ilijan": { "lat": 10.5389, "lng": 122.8678 },
     "Lag-Asan": { "lat": 10.5123, "lng": 122.8198 },
@@ -51,6 +52,10 @@
     "tabaao": "Taba-ao",
     "taba ao": "Taba-ao",
     "bacong montilla": "Bacong-Montilla",
-    "bacongmontilla": "Bacong-Montilla"
+    "bacongmontilla": "Bacong-Montilla",
+    "don jorge l araneta": "Don Jorge L. Araneta",
+    "don jorge araneta": "Don Jorge L. Araneta",
+    "don jorge": "Don Jorge L. Araneta",
+    "araneta": "Don Jorge L. Araneta"
   }
 }

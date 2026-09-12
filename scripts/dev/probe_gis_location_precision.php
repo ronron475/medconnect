@@ -1,6 +1,6 @@
 <?php
 /**
- * Offline probe: Doctor GIS location priority, privacy, and validation.
+ * Offline probe: Doctor GIS location priority, privacy, purok/barangay accuracy.
  * Does not require MySQL (uses in-memory PDO + Reflection).
  * Usage: php scripts/dev/probe_gis_location_precision.php
  */
@@ -47,10 +47,13 @@ $gpsRow = $resolver->resolve([
     'latitude' => $gpsLat,
     'longitude' => $gpsLng,
     'location_source' => 'gps',
-    'purok' => 'Sample',
+    'purok' => '3',
 ]);
 assertTrue(($gpsRow['location_source'] ?? '') === 'gps', 'GPS source preserved');
 assertTrue(($gpsRow['location_accuracy'] ?? '') === 'exact', 'GPS accuracy exact');
+assertTrue(($gpsRow['location_accuracy_label'] ?? '') === 'Exact Location — Verified Coordinates', 'GPS accuracy label');
+assertTrue(($gpsRow['barangay'] ?? '') === 'Poblacion', 'GPS keeps registered Poblacion');
+assertTrue(stripos((string) ($gpsRow['purok'] ?? ''), '3') !== false, 'GPS preserves purok');
 assertTrue(abs((float) $gpsRow['latitude'] - $gpsLat) < 1e-12, 'GPS lat not replaced/rounded');
 assertTrue(abs((float) $gpsRow['longitude'] - $gpsLng) < 1e-12, 'GPS lng not replaced/rounded');
 
@@ -65,7 +68,10 @@ assertTrue(($adminGps['location_source'] ?? '') === 'gps', 'Admin keeps GPS sour
 
 $maskedOther = $privacy->invoke($gis, $gpsRow, 'bhw');
 assertTrue(!empty($maskedOther['location_privacy_masked']), 'Non-doctor role still privacy-masked');
-assertTrue(($maskedOther['location_source'] ?? '') === 'barangay_center', 'Masked role falls back to barangay');
+assertTrue(
+    in_array(($maskedOther['location_source'] ?? ''), ['barangay_center', 'purok_center'], true),
+    'Masked role falls back to barangay/purok'
+);
 assertTrue(abs((float) $maskedOther['latitude'] - $gpsLat) > 1e-6, 'Masked role does not keep GPS pin');
 
 $geoLat = 10.540111;
@@ -94,11 +100,66 @@ $brgyOnly = $resolver->resolve([
 ]);
 assertTrue(($brgyOnly['location_source'] ?? '') === 'barangay_center', 'Barangay-only uses barangay_center');
 assertTrue(($brgyOnly['location_accuracy'] ?? '') === 'approximate', 'Barangay-only is approximate');
+assertTrue(($brgyOnly['location_accuracy_label'] ?? '') === 'Barangay Location — Approximate', 'Barangay accuracy label');
 assertTrue(!empty($brgyOnly['has_map_marker']), 'Barangay-only still has marker');
 assertTrue(
     stripos((string) ($brgyOnly['location_note'] ?? ''), 'barangay') !== false,
     'Barangay-only note discloses approximation'
 );
+
+$purokOnly = $resolver->resolve([
+    'barangay' => 'Poblacion',
+    'purok' => '3',
+    'city_municipality' => 'Bago City',
+    'latitude' => null,
+    'longitude' => null,
+]);
+assertTrue(($purokOnly['location_source'] ?? '') === 'purok_center', 'Purok+barangay uses purok_center');
+assertTrue(($purokOnly['location_quality'] ?? '') === 'PUROK_LOCATION', 'Purok quality flag');
+assertTrue(($purokOnly['location_accuracy_label'] ?? '') === 'Purok Location — Approximate', 'Purok accuracy label');
+assertTrue(stripos((string) ($purokOnly['display_address'] ?? ''), 'Purok') !== false, 'Display address keeps purok');
+assertTrue(stripos((string) ($purokOnly['display_address'] ?? ''), 'Poblacion') !== false, 'Display address keeps barangay');
+assertTrue(($purokOnly['barangay'] ?? '') === 'Poblacion', 'Registered barangay is Poblacion');
+
+$mailum = $resolver->resolve([
+    'barangay' => 'Mailum',
+    'purok' => 'Balatong',
+    'city_municipality' => 'Bago City',
+]);
+$city = BagoBarangayCentroids::cityCenter();
+assertTrue(($mailum['barangay'] ?? '') === 'Mailum', 'Upland barangay stays Mailum');
+assertTrue(!empty($mailum['has_map_marker']), 'Mailum has barangay/purok marker');
+assertTrue(
+    abs((float) $mailum['latitude'] - $city['lat']) > 0.001
+    || abs((float) $mailum['longitude'] - $city['lng']) > 0.001,
+    'Mailum does not plot at city center'
+);
+assertTrue(($mailum['location_source'] ?? '') === 'purok_center', 'Mailum with purok → purok_center');
+
+// Coordinates near Mailum while registered as Poblacion → needs verification
+$mismatch = $resolver->resolve([
+    'barangay' => 'Poblacion',
+    'city_municipality' => 'Bago City',
+    'latitude' => 10.5267,
+    'longitude' => 122.8745,
+    'location_source' => 'gps',
+]);
+assertTrue(($mismatch['location_quality'] ?? '') === 'NEEDS_VERIFICATION', 'Coord/barangay mismatch flagged');
+assertTrue(($mismatch['location_source'] ?? '') === 'needs_verification', 'Mismatch source needs_verification');
+assertTrue(($mismatch['barangay'] ?? '') === 'Poblacion', 'Mismatch still displays registered Poblacion');
+assertTrue(
+    ($mismatch['location_accuracy_label'] ?? '') === 'Location Needs Verification',
+    'Mismatch accuracy label'
+);
+if (!empty($mismatch['has_map_marker'])) {
+    $pob = BagoBarangayCentroids::resolveBarangayCenter('Poblacion');
+    assertTrue(
+        $pob !== null
+        && abs((float) $mismatch['latitude'] - $pob['lat']) < 1e-6
+        && abs((float) $mismatch['longitude'] - $pob['lng']) < 1e-6,
+        'Mismatch pin uses registered barangay center, not wrong GPS'
+    );
+}
 
 $missing = $resolver->resolve([
     'barangay' => '',
@@ -122,7 +183,9 @@ assertTrue(
 );
 assertTrue(
     ($invalidZero['latitude'] === null && ($invalidZero['location_source'] ?? '') === 'unavailable')
-    || ($invalidZero['location_accuracy'] ?? '') === 'approximate',
+    || ($invalidZero['location_accuracy'] ?? '') === 'approximate'
+    || ($invalidZero['location_source'] ?? '') === 'barangay_center'
+    || ($invalidZero['location_source'] ?? '') === 'purok_center',
     '0,0 does not plot as exact GPS'
 );
 
@@ -151,6 +214,12 @@ assertTrue(
     && abs((float) $sameA['longitude'] - (float) $sameB['longitude']) < 1e-12,
     'Same barangay patients share identical center (no random jitter)'
 );
+
+$canonicalPob = BagoBarangayCentroids::canonicalName('Brgy. Poblacion');
+assertTrue($canonicalPob === 'Poblacion', 'Canonical Poblacion from Brgy. Poblacion');
+
+$donJorge = BagoBarangayCentroids::canonicalName('Don Jorge Araneta');
+assertTrue($donJorge === 'Don Jorge L. Araneta', 'Don Jorge L. Araneta alias resolves');
 
 echo "\n{$pass} passed, {$fail} failed\n";
 exit($fail > 0 ? 1 : 0);
