@@ -274,7 +274,7 @@ $logoUrl = ASSET_BASE . '/assets/img/medcon_logo.png';
       width: 100%;
       max-width: 1120px;
       margin: 0 auto;
-      padding: 18px 20px calc(28px + var(--mc-safe-bottom, env(safe-area-inset-bottom, 0px)));
+      padding: 14px 20px calc(20px + var(--mc-safe-bottom, env(safe-area-inset-bottom, 0px)));
     }
     .rv-card {
       background: var(--mc-white, #fff);
@@ -284,8 +284,9 @@ $logoUrl = ASSET_BASE . '/assets/img/medcon_logo.png';
       overflow: hidden;
     }
     .rv-card + .rv-card {
-      margin-top: 16px;
+      margin-top: 12px;
     }
+    /* Cap height so video + consultation card fit a laptop viewport */
     .rv-stage {
       position: relative;
       background: #0B1220;
@@ -294,13 +295,13 @@ $logoUrl = ASSET_BASE . '/assets/img/medcon_logo.png';
       justify-content: center;
       width: 100%;
       aspect-ratio: 16 / 9;
-      max-height: min(70vh, 680px);
+      max-height: min(520px, calc(100dvh - 270px));
     }
     .rv-stage video {
       display: block;
       width: 100%;
       height: 100%;
-      max-height: min(70vh, 680px);
+      max-height: 100%;
       object-fit: contain;
       background: #0B1220;
       vertical-align: middle;
@@ -336,10 +337,10 @@ $logoUrl = ASSET_BASE . '/assets/img/medcon_logo.png';
       font-size: 14px;
     }
     .rv-sheet {
-      padding: 18px 20px 20px;
+      padding: 16px 20px 18px;
     }
     .rv-eyebrow {
-      margin: 0 0 8px;
+      margin: 0 0 6px;
       font-size: 11.5px;
       font-weight: 700;
       letter-spacing: 0.06em;
@@ -347,15 +348,15 @@ $logoUrl = ASSET_BASE . '/assets/img/medcon_logo.png';
       color: var(--mc-aqua, #0097A7);
     }
     .rv-title {
-      margin: 0 0 6px;
-      font-size: 1.2rem;
+      margin: 0 0 4px;
+      font-size: 1.15rem;
       line-height: 1.3;
       font-weight: 800;
       color: var(--mc-navy-dark, #0D2137);
       letter-spacing: -0.02em;
     }
     .rv-people {
-      margin: 0 0 14px;
+      margin: 0 0 12px;
       font-size: 14px;
       font-weight: 600;
       color: var(--mc-navy-dark, #0D2137);
@@ -368,7 +369,7 @@ $logoUrl = ASSET_BASE . '/assets/img/medcon_logo.png';
       display: flex;
       flex-wrap: wrap;
       gap: 8px;
-      margin: 0 0 14px;
+      margin: 0 0 12px;
     }
     .rv-chip {
       display: inline-flex;
@@ -398,7 +399,7 @@ $logoUrl = ASSET_BASE . '/assets/img/medcon_logo.png';
       display: flex;
       flex-wrap: wrap;
       gap: 8px;
-      margin: 0 0 14px;
+      margin: 0 0 12px;
     }
     .rv-seg {
       display: inline-flex;
@@ -436,22 +437,37 @@ $logoUrl = ASSET_BASE . '/assets/img/medcon_logo.png';
     @media (max-width: 640px) {
       .rv-top { padding-left: 14px; padding-right: 14px; }
       .rv-page { padding: 12px 12px calc(20px + var(--mc-safe-bottom, env(safe-area-inset-bottom, 0px))); }
+      .rv-card + .rv-card { margin-top: 10px; }
       .rv-stage {
         aspect-ratio: auto;
-        min-height: 220px;
-        max-height: 58vh;
+        min-height: 200px;
+        max-height: min(48dvh, 360px);
       }
-      .rv-stage video { max-height: 58vh; }
+      .rv-stage video { max-height: 100%; }
       .rv-sheet { padding: 14px 14px 16px; }
       .rv-title { font-size: 1.05rem; }
       .rv-brand__name { font-size: 14px; }
     }
     @media (min-width: 768px) {
-      .rv-page { padding-top: 22px; }
-      .rv-sheet { padding: 20px 22px 22px; }
+      .rv-page { padding-top: 16px; }
+      .rv-sheet { padding: 16px 22px 18px; }
+      .rv-stage {
+        max-height: min(500px, calc(100dvh - 260px));
+      }
     }
     @media (min-width: 1100px) {
       .rv-page { max-width: 1180px; }
+      .rv-stage {
+        max-height: min(520px, calc(100dvh - 250px));
+      }
+    }
+    /* Short laptop viewports: keep consultation info in view */
+    @media (min-width: 641px) and (max-height: 800px) {
+      .rv-page { padding-top: 12px; padding-bottom: calc(14px + var(--mc-safe-bottom, env(safe-area-inset-bottom, 0px))); }
+      .rv-stage {
+        max-height: min(420px, calc(100dvh - 240px));
+      }
+      .rv-sheet { padding-top: 14px; padding-bottom: 14px; }
     }
   </style>
 </head>
