@@ -306,29 +306,25 @@ $logoUrl = ASSET_BASE . '/assets/img/medcon_logo.png';
       background: #0B1220;
       vertical-align: middle;
     }
-    .rv-play-fab {
+    /* Subtle loader — only while buffering; never a permanent play badge */
+    .rv-loading {
       position: absolute;
       inset: 0;
       margin: auto;
-      width: 68px;
-      height: 68px;
-      border: 0;
+      width: 36px;
+      height: 36px;
       border-radius: 50%;
-      background: var(--mc-aqua, #0097A7);
-      color: #fff;
-      cursor: pointer;
-      display: grid;
-      place-items: center;
-      padding: 0;
-      box-shadow: 0 8px 24px rgba(0, 110, 123, 0.35);
-      transition: background 0.15s ease, transform 0.15s ease;
+      border: 3px solid rgba(255, 255, 255, 0.22);
+      border-top-color: rgba(255, 255, 255, 0.85);
+      background: transparent;
+      box-shadow: none;
+      pointer-events: none;
+      animation: rv-spin 0.75s linear infinite;
     }
-    .rv-play-fab:hover {
-      background: var(--mc-aqua-dark, #006E7B);
-      transform: scale(1.04);
+    .rv-loading[hidden] { display: none; }
+    @keyframes rv-spin {
+      to { transform: rotate(360deg); }
     }
-    .rv-play-fab[hidden] { display: none; }
-    .rv-play-fab svg { display: block; margin-left: 3px; }
     .rv-empty {
       margin: 0;
       padding: 48px 24px;
@@ -486,9 +482,7 @@ $logoUrl = ASSET_BASE . '/assets/img/medcon_logo.png';
         <video id="recVideo" controls playsinline preload="metadata" src="<?= htmlspecialchars($streamUrl) ?>">
           Your browser cannot play this recording.
         </video>
-        <button type="button" class="rv-play-fab" id="recPlayFab" aria-label="Play recording">
-          <svg width="28" height="28" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5v14l11-7z"/></svg>
-        </button>
+        <div class="rv-loading" id="recLoading" role="status" aria-live="polite" aria-label="Loading recording"></div>
         <?php else: ?>
         <p class="rv-empty">No playable recording file is available for this consultation.</p>
         <?php endif; ?>
@@ -539,18 +533,32 @@ $logoUrl = ASSET_BASE . '/assets/img/medcon_logo.png';
   <script>
     (function () {
       var video = document.getElementById('recVideo');
-      var fab = document.getElementById('recPlayFab');
-      if (!video || !fab) return;
-      function sync() {
-        fab.hidden = !video.paused;
+      var loading = document.getElementById('recLoading');
+      if (!video || !loading) return;
+
+      function setLoading(on) {
+        loading.hidden = !on;
       }
-      fab.addEventListener('click', function () {
-        video.play().catch(function () {});
+
+      function hideIfReady() {
+        if (video.readyState >= 2) setLoading(false);
+      }
+
+      // Show only while the media is actually loading/buffering
+      video.addEventListener('loadstart', function () { setLoading(true); });
+      video.addEventListener('waiting', function () { setLoading(true); });
+      video.addEventListener('stalled', function () {
+        if (video.readyState < 2) setLoading(true);
       });
-      video.addEventListener('play', sync);
-      video.addEventListener('pause', sync);
-      video.addEventListener('ended', sync);
-      sync();
+      video.addEventListener('loadeddata', function () { setLoading(false); });
+      video.addEventListener('canplay', function () { setLoading(false); });
+      video.addEventListener('canplaythrough', function () { setLoading(false); });
+      video.addEventListener('playing', function () { setLoading(false); });
+      video.addEventListener('seeked', hideIfReady);
+      video.addEventListener('error', function () { setLoading(false); });
+
+      // Initial: spinner only until a frame is available
+      setLoading(video.readyState < 2);
     })();
   </script>
   <?php endif; ?>
