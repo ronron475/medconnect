@@ -235,7 +235,7 @@
 }
 
 .audit-logs-role--superadmin { background: #fef3c7; color: #b45309; }
-.audit-logs-role--admin { background: #eef2ff; color: #4338ca; }
+.audit-logs-role--admin { background: #f0fdfa; color: #0f766e; }
 .audit-logs-role--provider { background: #f0fdfa; color: #0f766e; }
 .audit-logs-role--bhw { background: #e0f2fe; color: #0369a1; }
 .audit-logs-role--patient { background: #f8fafc; color: #64748b; }

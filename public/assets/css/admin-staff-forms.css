@@ -233,7 +233,7 @@ body.mc-staff-modal-open {
   margin: 0;
   padding: 6px;
   list-style: none;
-  z-index: 1200;
+  z-index: 20050;
   overflow-x: hidden;
   overflow-y: auto;
   overscroll-behavior: contain;

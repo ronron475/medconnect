@@ -13,9 +13,9 @@
     '#14b8a6', // teal
     '#f59e0b', // amber
     '#ef4444', // red
-    '#8b5cf6', // purple
+    '#0d9488', // medconnect teal
     '#06b6d4', // cyan
-    '#ec4899', // pink
+    '#60a5fa', // light blue
     '#64748b', // slate
   ];
 
@@ -24,7 +24,7 @@
     teal: '#14b8a6',
     amber: '#f59e0b',
     red: '#ef4444',
-    purple: '#8b5cf6',
+    purple: '#0d9488', // brand teal (legacy key kept for callers)
     cyan: '#06b6d4',
     grid: '#f1f5f9',
     text: '#64748b',
@@ -35,18 +35,18 @@
   };
 
   var COLORS_DARK = {
-    blue: '#3b82f6',
-    teal: '#06b6d4',
+    blue: '#60a5fa',
+    teal: '#2dd4bf',
     amber: '#f59e0b',
     red: '#ef4444',
-    purple: '#8b5cf6',
+    purple: '#14b8a6', // brand teal (legacy key kept for callers)
     cyan: '#22d3ee',
-    grid: '#2a2a2a',
-    text: '#a1a1aa',
-    title: '#ffffff',
-    tooltipBg: '#1c1c1c',
-    tooltipBody: '#a1a1aa',
-    pointBorder: '#1c1c1c',
+    grid: '#243347',
+    text: '#8FAABF',
+    title: '#E8F0F7',
+    tooltipBg: '#151F2E',
+    tooltipBody: '#8FAABF',
+    pointBorder: '#151F2E',
   };
 
   var COLORS = COLORS_LIGHT;
@@ -238,7 +238,7 @@
 
   function barDataset(series, color, todayColor) {
     var def = color || COLORS.blue;
-    var today = todayColor || (isDarkMode() ? COLORS.purple : COLORS.teal);
+    var today = todayColor || COLORS.teal;
     var muted = isDarkMode() ? 'rgba(59, 130, 246, 0.35)' : hexToRgba(def, 0.85);
     return {
       label: 'Count',
@@ -296,7 +296,7 @@
           var props = bar.getProps(['x', 'width', 'base'], true);
           var isToday = !!(series[index] && series[index].is_today);
           ctx.fillStyle = isToday
-            ? (dark ? 'rgba(139, 92, 246, 0.5)' : 'rgba(20, 184, 166, 0.4)')
+            ? (dark ? 'rgba(20, 184, 166, 0.5)' : 'rgba(20, 184, 166, 0.4)')
             : (dark ? 'rgba(59, 130, 246, 0.28)' : 'rgba(59, 130, 246, 0.2)');
           fillRoundRect(
             ctx,
@@ -332,7 +332,7 @@
       type: 'bar',
       data: {
         labels: labelsFromSeries(normalized),
-        datasets: [barDataset(normalized, COLORS.blue, isDarkMode() ? COLORS.purple : COLORS.teal)],
+        datasets: [barDataset(normalized, COLORS.blue, COLORS.teal)],
       },
       options: cartesianOptions(null, yMax),
     });
@@ -374,7 +374,7 @@
     }
     var yMax = suggestedMaxForSeries(normalized);
     chart.data.labels = labelsFromSeries(normalized);
-    chart.data.datasets = [barDataset(normalized, COLORS.blue, isDarkMode() ? COLORS.purple : COLORS.teal)];
+    chart.data.datasets = [barDataset(normalized, COLORS.blue, COLORS.teal)];
     chart.$mcWeekSeries = normalized;
     applyChartTheme(chart, yMax);
     chart.update('none');

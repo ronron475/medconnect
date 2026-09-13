@@ -231,6 +231,7 @@ require __DIR__ . '/partials/staff_hub_tabs.php';
                     <div class="mc-field">
                         <label class="mc-field__label" for="bhwBarangaySelect">Assigned Barangay</label>
                         <select name="barangay_id" id="bhwBarangaySelect" required class="mc-field__input"><option value="">Select barangay…</option></select>
+                        <p id="bhwBarangayStatus" class="mc-field__hint" aria-live="polite">Loading barangays…</p>
                         <p class="mc-field__error"></p>
                     </div>
                     <div class="mc-field">
@@ -310,7 +311,7 @@ require __DIR__ . '/partials/staff_hub_tabs.php';
 <?php endif; ?>
 
 <link rel="stylesheet" href="<?= ASSET_BASE ?>/assets/css/admin-staff-applications.css?v=1.4">
-<link rel="stylesheet" href="<?= ASSET_BASE ?>/assets/css/admin-bhw-applications.css?v=1.4">
+<link rel="stylesheet" href="<?= ASSET_BASE ?>/assets/css/admin-bhw-applications.css?v=1.5">
 <script src="<?= ASSET_BASE ?>/assets/js/admin-staff-applications.js?v=1.2"></script>
 <script>
 window.MC_BHW_APP = {
@@ -322,7 +323,7 @@ window.MC_BHW_APP = {
     checkerMode: <?= $is_superadmin_checker ? 'true' : 'false' ?>
 };
 </script>
-<script src="<?= ASSET_BASE ?>/assets/js/admin-bhw-applications.js?v=2.2"></script>
+<script src="<?= ASSET_BASE ?>/assets/js/admin-bhw-applications.js?v=2.3"></script>
 <?php if ($is_superadmin_checker): ?>
 <script>
 window.MC_BHW_APPROVAL = {

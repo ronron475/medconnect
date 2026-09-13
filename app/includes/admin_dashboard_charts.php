@@ -183,8 +183,8 @@ function admin_chart_user_roles(PDO $pdo): array
     $palette = [
         'patient'    => '#0d9488',
         'provider'   => '#2563eb',
-        'bhw'        => '#4f46e5',
-        'admin'      => '#7c3aed',
+        'bhw'        => '#0284c7',
+        'admin'      => '#0f766e',
         'superadmin' => '#b45309',
     ];
     $labels = [

@@ -487,34 +487,34 @@ body.provider-body .mc-notif-recent-panel__body {
   }
 }
 
-/* ── Dark theme (WorkflowAI-style flat dark UI) ── */
+/* ── Dark theme (MedConnect dark navy) ── */
 html[data-theme-resolved='dark'] body.provider-body {
-  --bg-primary: #0a0a0a;
-  --bg-secondary: #0f0f0f;
-  --card-bg: #1c1c1c;
-  --card-bg-elevated: #222222;
+  --bg-primary: #0B1220;
+  --bg-secondary: #0D1E30;
+  --card-bg: #151F2E;
+  --card-bg-elevated: #1A2537;
   --text-primary: #ffffff;
-  --text-secondary: #a1a1aa;
-  --text-muted: #888888;
-  --border-color: #2a2a2a;
-  --border-subtle: #1f1f1f;
+  --text-secondary: #8FAABF;
+  --text-muted: #64748B;
+  --border-color: #243347;
+  --border-subtle: #1A2537;
   --shadow-card: 0 1px 0 rgba(255, 255, 255, 0.04), 0 4px 20px rgba(0, 0, 0, 0.5);
   --shadow-elevated: 0 1px 0 rgba(255, 255, 255, 0.06), 0 8px 28px rgba(0, 0, 0, 0.55);
   --shadow-inset: none;
   --hover-overlay: rgba(255, 255, 255, 0.04);
   --active-overlay: rgba(255, 255, 255, 0.07);
   --radius-card: 12px;
-  --accent-primary: #7c3aed;
+  --accent-primary: #0D9488;
   --accent-cyan: #06b6d4;
   --accent-blue: #3b82f6;
-  --accent-purple: #8b5cf6;
+  --accent-purple: #14B8A6;
   --accent-green: #22c55e;
   --accent-orange: #f59e0b;
   --accent-red: #ef4444;
   --accent-teal: #069396;
-  --scrollbar-track: #0a0a0a;
-  --scrollbar-thumb: #3f3f46;
-  --scrollbar-thumb-hover: #52525b;
+  --scrollbar-track: #0B1220;
+  --scrollbar-thumb: #2D4160;
+  --scrollbar-thumb-hover: #3B5478;
 
   --mc-border-thin: var(--border-color);
   --pt-dash-surface: var(--card-bg);

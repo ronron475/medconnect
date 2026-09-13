@@ -78,6 +78,18 @@ try {
             ]);
             break;
 
+        case 'barangays':
+            header('Content-Type: application/json; charset=utf-8');
+            $barangays = $service->getBarangays();
+            echo json_encode([
+                'success' => true,
+                'data'    => [
+                    'barangays' => $barangays,
+                    'count'     => count($barangays),
+                ],
+            ]);
+            break;
+
         case 'get':
             header('Content-Type: application/json; charset=utf-8');
             $id = (int) ($_GET['id'] ?? 0);

@@ -10,6 +10,7 @@
   const modal = document.getElementById('bhwAppModal');
   const form = document.getElementById('bhwAppForm');
   const barangaySelect = document.getElementById('bhwBarangaySelect');
+  const barangayStatus = document.getElementById('bhwBarangayStatus');
   const docList = document.getElementById('bhwDocList');
   const errorEl = document.getElementById('bhwFormError');
   const rejectionNote = document.getElementById('bhwRejectionNote');
@@ -24,8 +25,21 @@
   const countEl = document.getElementById('bhwAppCount');
   const statsEl = document.getElementById('bhwAppStats');
   let barangays = [];
+  let barangaysLoading = false;
+  let barangaysLoaded = false;
   let currentApp = null;
   let allRows = [];
+
+  function setBarangayStatus(kind, message) {
+    if (!barangayStatus) return;
+    barangayStatus.textContent = message || '';
+    barangayStatus.hidden = !message;
+    barangayStatus.className = 'mc-field__hint' + (kind === 'error' ? ' bhw-barangay-status--error' : '');
+    if (kind === 'error') {
+      barangayStatus.classList.add('mc-form-alert', 'mc-form-alert--error', 'is-visible');
+      barangayStatus.classList.remove('mc-field__hint');
+    }
+  }
 
   function buildBhwApplicationPayload() {
     function trimmedVal(name) {
@@ -81,10 +95,14 @@
         return;
       }
       barangays = json.data.barangays || [];
+      barangaysLoaded = barangays.length > 0;
       fillBarangays();
       allRows = json.data.applications || [];
       utils.updateStats(statsEl, utils.computeStats(allRows));
       applyFilters();
+      if (!barangaysLoaded) {
+        ensureBarangays(true);
+      }
     } catch (e) {
       if (tbody) tbody.innerHTML = '<tr><td colspan="7"><div class="staff-apps-empty"><p class="staff-apps-empty__title">Could not load applications</p></div></td></tr>';
     }
@@ -110,12 +128,26 @@
     const cur = barangaySelect.value;
     barangaySelect.innerHTML = '<option value="">Select barangay…</option>';
     barangays.forEach(function (b) {
+      const id = String(b.id ?? '');
+      const name = String(b.name || '').trim();
+      if (!id || !name) return;
       const opt = document.createElement('option');
-      opt.value = b.id;
-      opt.textContent = b.name;
+      opt.value = id;
+      opt.textContent = name;
       barangaySelect.appendChild(opt);
     });
     if (cur) barangaySelect.value = cur;
+    barangaySelect.dispatchEvent(new Event('change', { bubbles: true }));
+
+    if (barangays.length) {
+      setBarangayStatus('', '');
+      const locked = currentApp && !canAdminEditStatus(String(currentApp.status || ''));
+      if (!locked) barangaySelect.disabled = false;
+    } else if (barangaysLoading) {
+      setBarangayStatus('loading', 'Loading barangays…');
+    } else {
+      setBarangayStatus('error', 'Could not load barangays. Close and reopen the invite, or refresh the page.');
+    }
   }
 
   function canReview(status) {
@@ -256,27 +288,47 @@
     });
   }
 
-  async function ensureBarangays() {
-    if (barangays.length) {
+  async function ensureBarangays(force) {
+    if (!force && barangaysLoaded && barangays.length) {
       fillBarangays();
-      return;
+      return true;
     }
+    if (barangaysLoading) return false;
+    barangaysLoading = true;
+    if (barangaySelect) barangaySelect.disabled = true;
+    setBarangayStatus('loading', 'Loading barangays…');
     try {
-      const res = await fetch(api + '?action=list', { credentials: 'same-origin' });
+      const res = await fetch(api + '?action=barangays', { credentials: 'same-origin' });
       const json = await res.json();
-      if (json.success) {
-        barangays = json.data.barangays || [];
-        fillBarangays();
+      if (!json.success) {
+        throw new Error(json.message || 'Failed to load barangays');
       }
+      barangays = json.data.barangays || [];
+      barangaysLoaded = barangays.length > 0;
+      fillBarangays();
+      if (!barangaysLoaded) {
+        setBarangayStatus('error', 'No barangays were returned. Check barangay records and try again.');
+        return false;
+      }
+      return true;
     } catch (e) {
-      /* dropdown stays on placeholder */
+      barangaysLoaded = false;
+      fillBarangays();
+      setBarangayStatus('error', 'Could not load barangays. Please refresh and try again.');
+      return false;
+    } finally {
+      barangaysLoading = false;
+      if (barangaySelect && barangays.length) {
+        const locked = currentApp && !canAdminEditStatus(String(currentApp.status || ''));
+        if (!locked) barangaySelect.disabled = false;
+      }
     }
   }
 
   function openModal(id) {
     if (!modal) return;
     form.reset();
-    ensureBarangays();
+    ensureBarangays(!barangaysLoaded);
     document.getElementById('bhwApplicationId').value = id ? String(id) : '';
     setModalCopy(true, 'draft');
     document.getElementById('bhwModalTitle').textContent = id ? 'BHW Invite' : 'Invite Barangay Health Worker';
@@ -293,7 +345,9 @@
         .then(function (json) {
           if (!json.success) return;
           currentApp = json.data;
-          populateForm(json.data);
+          ensureBarangays().then(function () {
+            populateForm(json.data);
+          });
         });
     } else {
       setInviteFieldsEnabled(true);

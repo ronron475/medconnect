@@ -44,8 +44,8 @@
 }
 
 .portal-profile-card__icon--indigo {
-  background: #eef2ff;
-  color: #4f46e5;
+  background: #f0fdfa;
+  color: #0d9488;
 }
 
 .portal-profile-card__title {
@@ -143,8 +143,8 @@
   font-weight: 700;
   letter-spacing: 0.03em;
   text-transform: uppercase;
-  background: #eef2ff;
-  color: #4338ca;
+  background: #f0fdfa;
+  color: #0f766e;
 }
 
 .portal-profile-role-badge--super {
