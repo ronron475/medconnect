@@ -142,6 +142,8 @@
   window.ASSET_BASE = <?= json_encode(ASSET_BASE) ?>;
   window.APP_BASE = window.ASSET_BASE;
 </script>
+<?php $sessionSyncJsVer = (int) @filemtime(ASSETS_PATH . '/js/session-sync.js'); ?>
+<script src="<?= $asset ?>/assets/js/session-sync.js?v=<?= $sessionSyncJsVer ?>"></script>
 <script src="<?= $asset ?>/assets/js/login-lockout.js?v=1"></script>
 <script src="<?= $asset ?>/assets/js/login.js"></script>
 </body>

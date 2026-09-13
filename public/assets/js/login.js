@@ -127,6 +127,11 @@ form.addEventListener('submit', async (e) => {
     const data = await res.json();
     if (data.success) {
       setLoading(false);
+      try {
+        if (window.MedConnectAuthSync && typeof window.MedConnectAuthSync.notifyLogin === 'function') {
+          window.MedConnectAuthSync.notifyLogin();
+        }
+      } catch (_) { /* ignore */ }
       if (window.MedConnectLoginLoading && typeof MedConnectLoginLoading.show === 'function') {
         MedConnectLoginLoading.show(data.redirect);
       } else {

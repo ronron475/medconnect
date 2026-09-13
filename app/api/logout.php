@@ -5,6 +5,9 @@
  */
 require_once dirname(__DIR__, 2) . '/bootstrap.php';
 require_once dirname(__DIR__, 2) . '/app/includes/remember_me.php';
+require_once dirname(__DIR__, 2) . '/app/includes/auth_guard.php';
+
+auth_prevent_back_cache();
 
 // ── Audit Log ───────────────────────────────────────────────
 if (!empty($_SESSION['user_id'])) {
@@ -35,18 +38,10 @@ try {
 
 $_SESSION = [];
 session_unset();
-if (ini_get('session.use_cookies')) {
-    $params = session_get_cookie_params();
-    setcookie(
-        session_name(),
-        '',
-        time() - 42000,
-        $params['path'] ?? '/',
-        $params['domain'] ?? '',
-        (bool) ($params['secure'] ?? false),
-        true
-    );
+if (!function_exists('medconnect_expire_session_cookie')) {
+    require_once dirname(__DIR__, 2) . '/app/includes/session_cookie.php';
 }
+medconnect_expire_session_cookie();
 session_destroy();
 
 $wantsJson = (
@@ -61,7 +56,7 @@ if ($wantsJson) {
     header('Content-Type: application/json; charset=utf-8');
     header('X-Content-Type-Options: nosniff');
     header('Cache-Control: no-store');
-    echo json_encode(['success' => true, 'redirect' => $redirect]);
+    echo json_encode(['success' => true, 'authenticated' => false, 'redirect' => $redirect]);
     exit;
 }
 

@@ -239,16 +239,14 @@ if ($user['role'] === 'provider') {
 
 // Prevent session fixation after authentication
 session_regenerate_id(true);
-$_SESSION['last_activity'] = time();
-$_SESSION['login_time'] = time();
-
-$_SESSION['user_id']    = $user['id'];
-$_SESSION['user_name']  = $user['first_name'] . ' ' . $user['last_name'];
-$_SESSION['user_email'] = $user['email'];
-$_SESSION['user_role']  = $user['role'];
-$_SESSION['first_name'] = $user['first_name'];
-$_SESSION['last_name']  = $user['last_name'];
-$_SESSION['profile_picture'] = !empty($user['profile_picture']) ? (string) $user['profile_picture'] : null;
+medconnect_session_set_identity([
+    'id' => (int) $user['id'],
+    'first_name' => (string) $user['first_name'],
+    'last_name' => (string) $user['last_name'],
+    'email' => (string) $user['email'],
+    'role' => (string) $user['role'],
+    'profile_picture' => $user['profile_picture'] ?? null,
+]);
 
 try {
     require_once dirname(dirname(__DIR__)) . '/app/includes/theme_preferences.php';

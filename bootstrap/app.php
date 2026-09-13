@@ -176,32 +176,25 @@ if ($medconnectOnVercel) {
 }
 
 // ── Secure session defaults (must be set before session_start) ────────────────
+require_once dirname(__DIR__) . '/app/includes/session_cookie.php';
 if (session_status() === PHP_SESSION_NONE) {
     ini_set('session.use_only_cookies', '1');
     ini_set('session.use_strict_mode', '1');
+    ini_set('session.use_trans_sid', '0');
     ini_set('session.cookie_httponly', '1');
-    $sameSite = (string) (getenv('MEDCONNECT_SESSION_SAMESITE') ?: 'Lax');
-    $sameSite = ucfirst(strtolower(trim($sameSite)));
-    if (!in_array($sameSite, ['Lax', 'Strict', 'None'], true)) {
-        $sameSite = 'Lax';
-    }
-    ini_set('session.cookie_samesite', $sameSite);
+    ini_set('session.cookie_samesite', medconnect_session_samesite());
 
     $isHttps = medconnect_request_is_https();
     if ($isHttps) {
         ini_set('session.cookie_secure', '1');
     }
 
-    $cookieParams = session_get_cookie_params();
-    session_set_cookie_params([
-        'lifetime' => 0,
-        'path'     => $cookieParams['path'] ?? '/',
-        // Host-only cookie so it works for localhost, LAN IP, ngrok, and production.
-        'domain'   => '',
-        'secure'   => $isHttps,
-        'httponly' => true,
-        'samesite' => $sameSite,
-    ]);
+    // Isolate MedConnect from other PHP apps on the same host (default PHPSESSID).
+    if (session_name() !== MEDCONNECT_SESSION_NAME) {
+        session_name(MEDCONNECT_SESSION_NAME);
+    }
+
+    session_set_cookie_params(medconnect_session_cookie_params());
 
     // read_and_close: used by video_room so Chrome can open provider+patient tabs without session lock deadlock.
     if (defined('MEDCONNECT_SESSION_READ_AND_CLOSE') && MEDCONNECT_SESSION_READ_AND_CLOSE) {

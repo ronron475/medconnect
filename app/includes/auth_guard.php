@@ -43,18 +43,10 @@ function auth_destroy_session_and_redirect(string $reason = 'signin'): void
     }
 
     $_SESSION = [];
-    if (ini_get('session.use_cookies')) {
-        $params = session_get_cookie_params();
-        setcookie(
-            session_name(),
-            '',
-            time() - 42000,
-            $params['path'],
-            $params['domain'],
-            (bool) $params['secure'],
-            (bool) $params['httponly']
-        );
+    if (!function_exists('medconnect_expire_session_cookie')) {
+        require_once __DIR__ . '/session_cookie.php';
     }
+    medconnect_expire_session_cookie();
     if (session_status() === PHP_SESSION_ACTIVE) {
         session_destroy();
     }
@@ -70,12 +62,13 @@ function auth_destroy_session_and_redirect(string $reason = 'signin'): void
         header('X-Content-Type-Options: nosniff');
         header('Cache-Control: no-store');
         http_response_code(401);
-        echo json_encode([
-            'success' => false,
-            'message' => 'Your session is no longer valid. Please sign in again.',
-            'code' => 'session_invalid',
-            'redirect' => $redirect,
-        ], JSON_UNESCAPED_UNICODE);
+            echo json_encode([
+                'success' => false,
+                'authenticated' => false,
+                'message' => 'Your session is no longer valid. Please sign in again.',
+                'code' => 'session_invalid',
+                'redirect' => $redirect,
+            ], JSON_UNESCAPED_UNICODE);
         exit;
     }
 
@@ -200,7 +193,8 @@ function auth_require_login(): void
             http_response_code(401);
             echo json_encode([
                 'success' => false,
-                'message' => 'Unauthorized.',
+                'authenticated' => false,
+                'message' => 'Session expired. Please log in again.',
                 'code' => 'unauthorized',
                 'redirect' => $redirect,
             ], JSON_UNESCAPED_UNICODE);
@@ -208,6 +202,9 @@ function auth_require_login(): void
         }
         header('Location: ' . $redirect);
         exit;
+    }
+    if (empty($_SESSION['authenticated'])) {
+        $_SESSION['authenticated'] = true;
     }
 
     global $pdo;

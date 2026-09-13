@@ -848,6 +848,11 @@ form.addEventListener('submit', async e => {
       } catch (_) { /* ignore */ }
 
       setLoading(false);
+      try {
+        if (window.MedConnectAuthSync && typeof window.MedConnectAuthSync.notifyLogin === 'function') {
+          window.MedConnectAuthSync.notifyLogin();
+        }
+      } catch (_) { /* ignore */ }
       if (window.MedConnectLoginLoading && typeof window.MedConnectLoginLoading.show === 'function') {
         window.MedConnectLoginLoading.show(redirectUrl);
       } else {

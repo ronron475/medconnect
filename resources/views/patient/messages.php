@@ -13,12 +13,15 @@ if (!defined('BASE_PATH')) {
     }
 }
 require_once BASE_PATH . '/app/includes/message_deletion.php';
+require_once BASE_PATH . '/app/includes/auth_guard.php';
 
-if (empty($_SESSION['user_id']) || $_SESSION['user_role'] !== 'patient') {
-    require_once BASE_PATH . '/app/includes/auth_guard.php';
+if (empty($_SESSION['user_id']) || ($_SESSION['user_role'] ?? '') !== 'patient') {
     header('Location: ' . auth_signin_required_url());
     exit;
 }
+
+auth_prevent_back_cache();
+auth_ensure_session_user_valid($pdo);
 
 if (empty($_SESSION['csrf_token'])) {
     $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
