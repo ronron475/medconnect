@@ -48,9 +48,12 @@ function remember_me_cookie_params(): array
         ? medconnect_request_is_https()
         : ((!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off')
             || (isset($_SERVER['SERVER_PORT']) && (int) $_SERVER['SERVER_PORT'] === 443));
+    $path = function_exists('medconnect_session_cookie_path')
+        ? medconnect_session_cookie_path()
+        : '/';
     return [
         'expires'  => time() + (REMEMBER_ME_DAYS * 86400),
-        'path'     => '/',
+        'path'     => $path,
         'domain'   => '',
         'secure'   => $isHttps,
         'httponly' => true,
@@ -208,14 +211,13 @@ function remember_me_restore_session(PDO $pdo): void
     }
 
     session_regenerate_id(true);
-    $_SESSION['user_id'] = (int) $row['user_id'];
-    $_SESSION['user_name'] = trim(((string) $row['first_name']) . ' ' . ((string) $row['last_name']));
-    $_SESSION['user_email'] = (string) ($row['email'] ?? '');
-    $_SESSION['user_role'] = (string) ($row['role'] ?? '');
-    $_SESSION['first_name'] = (string) ($row['first_name'] ?? '');
-    $_SESSION['last_name'] = (string) ($row['last_name'] ?? '');
-    $_SESSION['last_activity'] = time();
-    $_SESSION['login_time'] = time();
+    medconnect_session_set_identity([
+        'id' => (int) $row['user_id'],
+        'first_name' => (string) ($row['first_name'] ?? ''),
+        'last_name' => (string) ($row['last_name'] ?? ''),
+        'email' => (string) ($row['email'] ?? ''),
+        'role' => (string) ($row['role'] ?? ''),
+    ]);
     $_SESSION['remember_me_extended'] = true;
 }
 

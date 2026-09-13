@@ -30,12 +30,26 @@ function portal_api_require_admin_portal(): void
     if (session_status() === PHP_SESSION_NONE) {
         session_start();
     }
-    if (!portal_is_admin_portal()) {
+    require_once __DIR__ . '/auth_guard.php';
+    if (empty($_SESSION['user_id']) || !portal_is_admin_portal()) {
         header('Content-Type: application/json; charset=utf-8');
-        http_response_code(403);
-        echo json_encode(['success' => false, 'message' => 'Unauthorized.']);
+        header('Cache-Control: no-store');
+        http_response_code(empty($_SESSION['user_id']) ? 401 : 403);
+        echo json_encode([
+            'success' => false,
+            'authenticated' => !empty($_SESSION['user_id']),
+            'message' => empty($_SESSION['user_id'])
+                ? 'Session expired. Please log in again.'
+                : 'Unauthorized.',
+            'code' => empty($_SESSION['user_id']) ? 'unauthorized' : 'forbidden',
+        ], JSON_UNESCAPED_UNICODE);
         exit;
     }
+    global $pdo;
+    if (!isset($pdo) || !($pdo instanceof PDO)) {
+        require_once dirname(__DIR__, 2) . '/config/db.php';
+    }
+    auth_ensure_session_user_valid($pdo);
 }
 
 function portal_api_require_superadmin(): void
@@ -43,12 +57,26 @@ function portal_api_require_superadmin(): void
     if (session_status() === PHP_SESSION_NONE) {
         session_start();
     }
-    if (!portal_is_superadmin()) {
+    require_once __DIR__ . '/auth_guard.php';
+    if (empty($_SESSION['user_id']) || !portal_is_superadmin()) {
         header('Content-Type: application/json; charset=utf-8');
-        http_response_code(403);
-        echo json_encode(['success' => false, 'message' => 'Super Admin access required.']);
+        header('Cache-Control: no-store');
+        http_response_code(empty($_SESSION['user_id']) ? 401 : 403);
+        echo json_encode([
+            'success' => false,
+            'authenticated' => !empty($_SESSION['user_id']),
+            'message' => empty($_SESSION['user_id'])
+                ? 'Session expired. Please log in again.'
+                : 'Super Admin access required.',
+            'code' => empty($_SESSION['user_id']) ? 'unauthorized' : 'forbidden',
+        ], JSON_UNESCAPED_UNICODE);
         exit;
     }
+    global $pdo;
+    if (!isset($pdo) || !($pdo instanceof PDO)) {
+        require_once dirname(__DIR__, 2) . '/config/db.php';
+    }
+    auth_ensure_session_user_valid($pdo);
 }
 
 /** Super Administrators may perform all account status actions. */

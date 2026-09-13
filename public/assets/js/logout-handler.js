@@ -14,7 +14,38 @@
       global.MedConnectLoginLoading.performLogout();
       return;
     }
-    global.location.href = assetBase() + '/app/api/logout.php';
+    if (global.MedConnectGlobalLoader && typeof global.MedConnectGlobalLoader.performLogout === 'function') {
+      global.MedConnectGlobalLoader.performLogout();
+      return;
+    }
+    var base = assetBase();
+    fetch(base + '/app/api/logout.php', {
+      method: 'GET',
+      credentials: 'same-origin',
+      headers: {
+        'X-Requested-With': 'XMLHttpRequest',
+        Accept: 'application/json',
+        'X-MC-No-Loader': '1',
+      },
+    })
+      .then(function (res) { return res.json().catch(function () { return null; }); })
+      .then(function (data) {
+        try {
+          if (global.MedConnectAuthSync && typeof global.MedConnectAuthSync.notifyLogout === 'function') {
+            global.MedConnectAuthSync.notifyLogout();
+          }
+        } catch (_) { /* ignore */ }
+        var next = (data && data.redirect) ? data.redirect : (base + '/index.php');
+        global.location.replace(next);
+      })
+      .catch(function () {
+        try {
+          if (global.MedConnectAuthSync && typeof global.MedConnectAuthSync.notifyLogout === 'function') {
+            global.MedConnectAuthSync.notifyLogout();
+          }
+        } catch (_) { /* ignore */ }
+        global.location.href = base + '/app/api/logout.php';
+      });
   }
 
   function isLogoutHref(href) {

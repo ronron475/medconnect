@@ -87,8 +87,15 @@ final class Api
 
     public static function requireAuth(): void
     {
+        // Upgrade legacy sessions that predate the authenticated flag.
+        if (!empty($_SESSION['user_id']) && empty($_SESSION['authenticated'])) {
+            $_SESSION['authenticated'] = true;
+        }
         if (empty($_SESSION['user_id'])) {
-            self::error('Unauthorized.', 401);
+            self::error('Session expired. Please log in again.', 401, [
+                'authenticated' => false,
+                'code' => 'unauthorized',
+            ]);
         }
     }
 

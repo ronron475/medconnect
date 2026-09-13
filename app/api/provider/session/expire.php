@@ -27,6 +27,10 @@ try {
 } catch (Throwable $e) { /* non-fatal */ }
 
 $_SESSION = [];
+if (!function_exists('medconnect_expire_session_cookie')) {
+    require_once dirname(__DIR__, 3) . '/app/includes/session_cookie.php';
+}
+medconnect_expire_session_cookie();
 if (session_status() === PHP_SESSION_ACTIVE) {
     session_unset();
     session_destroy();

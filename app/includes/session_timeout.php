@@ -47,6 +47,10 @@ function session_timeout_force_logout(): void
     }
 
     $_SESSION = [];
+    if (!function_exists('medconnect_expire_session_cookie')) {
+        require_once __DIR__ . '/session_cookie.php';
+    }
+    medconnect_expire_session_cookie();
     if (session_status() === PHP_SESSION_ACTIVE) {
         session_unset();
         session_destroy();
@@ -61,7 +65,8 @@ function session_timeout_force_logout(): void
         http_response_code(401);
         echo json_encode([
             'success' => false,
-            'message' => 'Session expired. Please sign in again.',
+            'authenticated' => false,
+            'message' => 'Session expired. Please log in again.',
             'code' => 'session_expired',
             'redirect' => $redirect,
         ], JSON_UNESCAPED_UNICODE);

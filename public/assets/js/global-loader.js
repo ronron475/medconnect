@@ -322,6 +322,11 @@
       })
         .then(function (res) { return res.json(); })
         .then(function (data) {
+          try {
+            if (global.MedConnectAuthSync && typeof global.MedConnectAuthSync.notifyLogout === 'function') {
+              global.MedConnectAuthSync.notifyLogout();
+            }
+          } catch (_) { /* ignore */ }
           if (data && data.success && data.redirect) return data.redirect;
           return base + '/index.php';
         }),
