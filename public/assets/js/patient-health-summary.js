@@ -41,7 +41,15 @@
     return v === '' || v === 'no' || v === 'none' || v === 'n/a' || v === 'na' || v === 'wala';
   }
 
-  function renderChipList(el, emptyEl, items, medClass) {
+  function setCardHint(hintId, text, populated) {
+    const hint = document.getElementById(hintId);
+    if (!hint) return;
+    hint.textContent = text;
+    const card = hint.closest('.phs-info-card');
+    if (card) card.classList.toggle('is-populated', !!populated);
+  }
+
+  function renderChipList(el, emptyEl, items, medClass, hintId, emptyHint, filledHint) {
     if (!el) return;
     el.innerHTML = '';
     const filtered = (items || []).filter(function (item) {
@@ -49,6 +57,7 @@
     });
     if (!filtered.length) {
       if (emptyEl) emptyEl.hidden = false;
+      setCardHint(hintId, emptyHint, false);
       return;
     }
     if (emptyEl) emptyEl.hidden = true;
@@ -58,6 +67,7 @@
       li.textContent = item;
       el.appendChild(li);
     });
+    setCardHint(hintId, filledHint, true);
   }
 
   function renderBloodType(el, value) {
@@ -67,19 +77,45 @@
     if (!raw || isEmptyMedicalValue(raw) || lower === 'unknown') {
       el.textContent = lower === 'unknown' ? 'Unknown' : 'Not recorded';
       el.classList.add('phs-value--empty');
+      setCardHint('phsBloodHint', 'Not yet recorded', false);
       return;
     }
     el.classList.remove('phs-value--empty');
     el.textContent = raw;
+    setCardHint('phsBloodHint', 'On file from registration', true);
   }
 
   function renderSummary(data) {
     const s = data.summary || data;
     summaryCache = s;
     renderBloodType(document.getElementById('phsBloodType'), s.blood_type);
-    renderChipList(document.getElementById('phsAllergies'), document.getElementById('phsAllergiesEmpty'), s.allergies);
-    renderChipList(document.getElementById('phsConditions'), document.getElementById('phsConditionsEmpty'), s.conditions);
-    renderChipList(document.getElementById('phsMedications'), document.getElementById('phsMedicationsEmpty'), s.medications, true);
+    renderChipList(
+      document.getElementById('phsAllergies'),
+      document.getElementById('phsAllergiesEmpty'),
+      s.allergies,
+      false,
+      'phsAllergiesHint',
+      'No recorded allergies',
+      'Recorded from your medical profile'
+    );
+    renderChipList(
+      document.getElementById('phsConditions'),
+      document.getElementById('phsConditionsEmpty'),
+      s.conditions,
+      false,
+      'phsConditionsHint',
+      'No existing medical conditions',
+      'Recorded from your medical profile'
+    );
+    renderChipList(
+      document.getElementById('phsMedications'),
+      document.getElementById('phsMedicationsEmpty'),
+      s.medications,
+      true,
+      'phsMedicationsHint',
+      'You are not currently taking any maintenance medications',
+      'Current maintenance medications on file'
+    );
 
     const meta = s.metadata || {};
     document.getElementById('phsLastUpdated').textContent = meta.last_updated_at_label || 'Not available';
