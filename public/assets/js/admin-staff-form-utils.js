@@ -393,6 +393,21 @@
     }
   }
 
+  function getSelectBoundsEl(wrap) {
+    return wrap.closest(MODAL_SCROLL_SELECTOR)
+      || wrap.closest('.admin-modal-dialog, .mc-card.admin-modal-dialog, .ann-modal__panel, .violation-dialog, .admin-action-dialog, .mc-modal__card, .mc-urgency-modal__card');
+  }
+
+  function ensureSelectRoomBelow(toggle, neededPx) {
+    var scroller = toggle.closest(MODAL_SCROLL_SELECTOR);
+    if (!scroller) return;
+    var scrollerRect = scroller.getBoundingClientRect();
+    var rect = toggle.getBoundingClientRect();
+    var spaceBelow = scrollerRect.bottom - rect.bottom - 8;
+    if (spaceBelow >= neededPx) return;
+    scroller.scrollTop += Math.ceil(neededPx - spaceBelow);
+  }
+
   function positionModalSelectMenu(wrap) {
     var toggle = wrap.querySelector('.mc-select__toggle');
     var menu = menuForWrap(wrap);
@@ -400,11 +415,12 @@
 
     var rect = toggle.getBoundingClientRect();
     var gap = 4;
-    var edgePad = 12;
-    var dialog = wrap.closest('.admin-modal-dialog, .mc-card.admin-modal-dialog, .ann-modal__panel, .violation-dialog, .admin-action-dialog, .mc-modal__card, .mc-urgency-modal__card');
-    var bounds = dialog ? dialog.getBoundingClientRect() : null;
+    var edgePad = 8;
+    var boundsEl = getSelectBoundsEl(wrap);
+    var bounds = boundsEl ? boundsEl.getBoundingClientRect() : null;
 
-    // Prefer staying inside the modal card so the list does not spill over the rounded shell.
+    // Clamp to the scrollable modal body (not the header) so the list never
+    // covers the title/subtitle, and never spills past the card shell.
     var topLimit = Math.max(edgePad, bounds ? bounds.top + edgePad : edgePad);
     var bottomLimit = Math.min(
       window.innerHeight - edgePad,
@@ -418,10 +434,10 @@
 
     var spaceBelow = Math.max(0, bottomLimit - rect.bottom - gap);
     var spaceAbove = Math.max(0, rect.top - topLimit - gap);
-    // Flip upward when below-space is tight relative to the modal/viewport.
-    var preferBelow = spaceBelow >= 180 && spaceBelow >= spaceAbove;
+    // Prefer opening downward inside the form body; flip up only when below is unusable.
+    var preferBelow = spaceBelow >= 140 || spaceBelow >= spaceAbove;
     var available = preferBelow ? spaceBelow : spaceAbove;
-    var maxH = Math.min(280, Math.max(120, available));
+    var maxH = Math.min(200, Math.max(112, available));
 
     var width = Math.round(rect.width);
     var left = Math.round(rect.left);
@@ -437,12 +453,17 @@
     menu.style.right = 'auto';
 
     if (preferBelow) {
-      menu.style.top = Math.round(rect.bottom + gap) + 'px';
+      var topBelow = Math.round(rect.bottom + gap);
+      if (topBelow + maxH > bottomLimit) {
+        maxH = Math.max(112, bottomLimit - topBelow);
+        menu.style.maxHeight = maxH + 'px';
+      }
+      menu.style.top = topBelow + 'px';
       menu.style.bottom = 'auto';
     } else {
       var top = Math.round(rect.top - gap - maxH);
       if (top < topLimit) {
-        maxH = Math.max(120, rect.top - gap - topLimit);
+        maxH = Math.max(112, rect.top - gap - topLimit);
         top = topLimit;
         menu.style.maxHeight = maxH + 'px';
       }
@@ -516,8 +537,9 @@
       if (select.disabled) return;
       if (openModalSelect && openModalSelect !== wrap) closeModalSelect(openModalSelect);
       rebuildMenu();
-      // Keep the field in view without centering it (centering forces the menu to spill
-      // past the modal card bottom).
+      // Scroll the field up inside the modal body so the menu can open downward
+      // without covering the header subtitle or spilling past the card.
+      ensureSelectRoomBelow(toggle, 208);
       toggle.scrollIntoView({ block: 'nearest', inline: 'nearest', behavior: 'auto' });
       wrap.classList.add('is-open');
       var field = wrap.closest('.mc-field');
