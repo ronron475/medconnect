@@ -1741,6 +1741,58 @@ html[data-theme-resolved='dark'] body.patient-portal .phs-meta {
   border-color: #2a2a2a;
 }
 
+html[data-theme-resolved='dark'] body.patient-portal .phs-panel,
+html[data-theme-resolved='dark'] body.patient-portal .phs-skeleton,
+html[data-theme-resolved='dark'] body.patient-portal .phs-assess-card,
+html[data-theme-resolved='dark'] body.patient-portal .phs-info-card,
+html[data-theme-resolved='dark'] body.patient-portal .phs-history__card,
+html[data-theme-resolved='dark'] body.patient-portal .phs-meta__item {
+  background: #141414 !important;
+  background-image: none !important;
+  border-color: #2a2a2a !important;
+  box-shadow: none !important;
+}
+
+html[data-theme-resolved='dark'] body.patient-portal .phs-panel__head-icon,
+html[data-theme-resolved='dark'] body.patient-portal .phs-info-card__icon {
+  background: #1c1c1c !important;
+  border-color: #2a2a2a !important;
+  color: #2dd4bf !important;
+}
+
+html[data-theme-resolved='dark'] body.patient-portal .phs-status--routine {
+  background: rgba(45, 212, 191, 0.12) !important;
+  border-color: rgba(45, 212, 191, 0.35) !important;
+  color: #5eead4 !important;
+}
+
+html[data-theme-resolved='dark'] body.patient-portal .phs-status--urgent {
+  background: rgba(251, 191, 36, 0.12) !important;
+  border-color: rgba(251, 191, 36, 0.35) !important;
+  color: #fbbf24 !important;
+}
+
+html[data-theme-resolved='dark'] body.patient-portal .phs-status--emergency {
+  background: rgba(248, 113, 113, 0.12) !important;
+  border-color: rgba(248, 113, 113, 0.35) !important;
+  color: #f87171 !important;
+}
+
+html[data-theme-resolved='dark'] body.patient-portal .phs-status--muted {
+  background: #1c1c1c !important;
+  border-color: #2a2a2a !important;
+  color: #a1a1aa !important;
+}
+
+html[data-theme-resolved='dark'] body.patient-portal .phs-history__rail::before {
+  background: #2a2a2a;
+}
+
+html[data-theme-resolved='dark'] body.patient-portal .phs-history__rail::after {
+  background: #141414;
+  border-color: #2dd4bf;
+}
+
 html[data-theme-resolved='dark'] body.patient-portal .patient-health-summary-page .pt-assess-stack__row {
   border-color: #2a2a2a;
   background: transparent;
@@ -1754,7 +1806,7 @@ html[data-theme-resolved='dark'] body.patient-portal .patient-health-summary-pag
 
 html[data-theme-resolved='dark'] body.patient-portal .phs-chip-list .phs-chip,
 html[data-theme-resolved='dark'] body.patient-portal .phs-chip {
-  background: #141414;
+  background: #1c1c1c;
   border-color: #2a2a2a;
   color: #e4e4e7;
 }
@@ -1762,7 +1814,11 @@ html[data-theme-resolved='dark'] body.patient-portal .phs-chip {
 html[data-theme-resolved='dark'] body.patient-portal .phs-panel__meta,
 html[data-theme-resolved='dark'] body.patient-portal .phs-empty,
 html[data-theme-resolved='dark'] body.patient-portal .phs-meta__note,
-html[data-theme-resolved='dark'] body.patient-portal .phs-fields__row dt {
+html[data-theme-resolved='dark'] body.patient-portal .phs-fields__row dt,
+html[data-theme-resolved='dark'] body.patient-portal .phs-info-card__hint,
+html[data-theme-resolved='dark'] body.patient-portal .phs-assess-card__hint,
+html[data-theme-resolved='dark'] body.patient-portal .phs-assess-card__meta,
+html[data-theme-resolved='dark'] body.patient-portal .phs-history__complaint {
   color: #a1a1aa;
 }
 
