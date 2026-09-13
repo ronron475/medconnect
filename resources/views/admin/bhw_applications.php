@@ -10,6 +10,7 @@ if (!defined('BASE_PATH')) {
     }
 }
 require_once BASE_PATH . '/app/includes/bhw_application_schema.php';
+require_once BASE_PATH . '/app/includes/barangays_bago.php';
 require_once BASE_PATH . '/app/includes/portal_paths.php';
 require_once __DIR__ . '/_portal_access.php';
 
@@ -33,6 +34,26 @@ $tab_status_map = [
     'rejected' => 'rejected',
 ];
 $initial_app_status = $tab_status_map[$hub_tab] ?? 'all';
+
+/** @var list<array{id: int, name: string, city?: string}> */
+$bhw_invite_barangays = [];
+try {
+    foreach (barangays_list_bago_city($pdo) as $row) {
+        $id = (int) ($row['id'] ?? 0);
+        $name = trim((string) ($row['name'] ?? ''));
+        if ($id <= 0 || $name === '') {
+            continue;
+        }
+        $bhw_invite_barangays[] = [
+            'id'   => $id,
+            'name' => $name,
+            'city' => (string) ($row['city'] ?? 'Bago City'),
+        ];
+    }
+} catch (Throwable $e) {
+    error_log('bhw_applications.php barangay preload failed: ' . $e->getMessage());
+    $bhw_invite_barangays = [];
+}
 
 $page_title = 'BHW Management';
 $show_submitted = isset($_GET['submitted']);
@@ -230,8 +251,13 @@ require __DIR__ . '/partials/staff_hub_tabs.php';
                 <div class="mc-form-grid">
                     <div class="mc-field">
                         <label class="mc-field__label" for="bhwBarangaySelect">Assigned Barangay</label>
-                        <select name="barangay_id" id="bhwBarangaySelect" required class="mc-field__input"><option value="">Select barangay…</option></select>
-                        <p id="bhwBarangayStatus" class="mc-field__hint" aria-live="polite">Loading barangays…</p>
+                        <select name="barangay_id" id="bhwBarangaySelect" required class="mc-field__input">
+                            <option value="">Select barangay…</option>
+                            <?php foreach ($bhw_invite_barangays as $brgy): ?>
+                            <option value="<?= (int) $brgy['id'] ?>"><?= htmlspecialchars($brgy['name'], ENT_QUOTES, 'UTF-8') ?></option>
+                            <?php endforeach; ?>
+                        </select>
+                        <p id="bhwBarangayStatus" class="mc-field__hint" aria-live="polite"<?= $bhw_invite_barangays === [] ? '' : ' hidden' ?>><?= $bhw_invite_barangays === [] ? 'Loading barangays…' : '' ?></p>
                         <p class="mc-field__error"></p>
                     </div>
                     <div class="mc-field">
@@ -320,10 +346,11 @@ window.MC_BHW_APP = {
     initialTab: <?= json_encode($hub_tab) ?>,
     initialStatus: <?= json_encode($initial_app_status) ?>,
     showApplications: <?= $show_applications_panel ? 'true' : 'false' ?>,
-    checkerMode: <?= $is_superadmin_checker ? 'true' : 'false' ?>
+    checkerMode: <?= $is_superadmin_checker ? 'true' : 'false' ?>,
+    barangays: <?= json_encode($bhw_invite_barangays, JSON_UNESCAPED_UNICODE) ?>
 };
 </script>
-<script src="<?= ASSET_BASE ?>/assets/js/admin-bhw-applications.js?v=2.3"></script>
+<script src="<?= ASSET_BASE ?>/assets/js/admin-bhw-applications.js?v=2.4"></script>
 <?php if ($is_superadmin_checker): ?>
 <script>
 window.MC_BHW_APPROVAL = {

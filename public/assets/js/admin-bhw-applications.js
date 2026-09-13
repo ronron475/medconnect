@@ -24,9 +24,10 @@
   const statusFilter = document.getElementById('bhwAppStatusFilter');
   const countEl = document.getElementById('bhwAppCount');
   const statsEl = document.getElementById('bhwAppStats');
-  let barangays = [];
+  let barangays = Array.isArray(cfg.barangays) ? cfg.barangays.slice() : [];
   let barangaysLoading = false;
-  let barangaysLoaded = false;
+  let barangaysLoaded = barangays.length > 0;
+  let barangaysLoadPromise = null;
   let currentApp = null;
   let allRows = [];
 
@@ -39,6 +40,21 @@
       barangayStatus.classList.add('mc-form-alert', 'mc-form-alert--error', 'is-visible');
       barangayStatus.classList.remove('mc-field__hint');
     }
+  }
+
+  function normalizeBarangays(rows) {
+    const out = [];
+    (Array.isArray(rows) ? rows : []).forEach(function (b) {
+      const id = parseInt(String(b && b.id != null ? b.id : ''), 10);
+      const name = String(b && b.name != null ? b.name : '').trim();
+      if (!id || !name) return;
+      out.push({
+        id: id,
+        name: name,
+        city: String(b && b.city != null ? b.city : 'Bago City'),
+      });
+    });
+    return out;
   }
 
   function buildBhwApplicationPayload() {
@@ -94,8 +110,11 @@
         if (tbody) tbody.innerHTML = '<tr><td colspan="7"><div class="staff-apps-empty"><p class="staff-apps-empty__title">Could not load applications</p></div></td></tr>';
         return;
       }
-      barangays = json.data.barangays || [];
-      barangaysLoaded = barangays.length > 0;
+      const nextBarangays = normalizeBarangays(json.data && json.data.barangays);
+      if (nextBarangays.length) {
+        barangays = nextBarangays;
+        barangaysLoaded = true;
+      }
       fillBarangays();
       allRows = json.data.applications || [];
       utils.updateStats(statsEl, utils.computeStats(allRows));
@@ -293,42 +312,90 @@
       fillBarangays();
       return true;
     }
-    if (barangaysLoading) return false;
-    barangaysLoading = true;
-    if (barangaySelect) barangaySelect.disabled = true;
-    setBarangayStatus('loading', 'Loading barangays…');
-    try {
-      const res = await fetch(api + '?action=barangays', { credentials: 'same-origin' });
-      const json = await res.json();
-      if (!json.success) {
-        throw new Error(json.message || 'Failed to load barangays');
-      }
-      barangays = json.data.barangays || [];
+    if (!force && !barangaysLoaded && barangays.length) {
+      barangays = normalizeBarangays(barangays);
       barangaysLoaded = barangays.length > 0;
       fillBarangays();
-      if (!barangaysLoaded) {
-        setBarangayStatus('error', 'No barangays were returned. Check barangay records and try again.');
-        return false;
+      if (barangaysLoaded) return true;
+    }
+    if (barangaysLoadPromise) {
+      return barangaysLoadPromise;
+    }
+    if (!api) {
+      if (barangays.length) {
+        barangaysLoaded = true;
+        fillBarangays();
+        return true;
       }
-      return true;
-    } catch (e) {
-      barangaysLoaded = false;
-      fillBarangays();
       setBarangayStatus('error', 'Could not load barangays. Please refresh and try again.');
       return false;
-    } finally {
-      barangaysLoading = false;
-      if (barangaySelect && barangays.length) {
-        const locked = currentApp && !canAdminEditStatus(String(currentApp.status || ''));
-        if (!locked) barangaySelect.disabled = false;
-      }
     }
+
+    barangaysLoading = true;
+    if (barangaySelect) barangaySelect.disabled = true;
+    if (!barangays.length) {
+      setBarangayStatus('loading', 'Loading barangays…');
+    }
+
+    barangaysLoadPromise = (async function () {
+      try {
+        const res = await fetch(api + '?action=barangays', {
+          credentials: 'same-origin',
+          headers: { Accept: 'application/json' },
+        });
+        const text = await res.text();
+        let json = null;
+        try {
+          json = text ? JSON.parse(text) : null;
+        } catch (parseErr) {
+          throw new Error('Invalid barangay response');
+        }
+        if (!res.ok || !json || !json.success) {
+          throw new Error((json && json.message) || 'Failed to load barangays');
+        }
+        const next = normalizeBarangays(json.data && json.data.barangays);
+        if (next.length) {
+          barangays = next;
+        }
+        barangaysLoaded = barangays.length > 0;
+        fillBarangays();
+        if (!barangaysLoaded) {
+          setBarangayStatus('error', 'No barangays were returned. Check barangay records and try again.');
+          return false;
+        }
+        return true;
+      } catch (e) {
+        // Keep any server-rendered / previously loaded options usable.
+        if (barangays.length) {
+          barangaysLoaded = true;
+          fillBarangays();
+          return true;
+        }
+        barangaysLoaded = false;
+        fillBarangays();
+        setBarangayStatus('error', 'Could not load barangays. Please refresh and try again.');
+        return false;
+      } finally {
+        barangaysLoading = false;
+        barangaysLoadPromise = null;
+        if (barangaySelect && barangays.length) {
+          const locked = currentApp && !canAdminEditStatus(String(currentApp.status || ''));
+          if (!locked) barangaySelect.disabled = false;
+        }
+      }
+    })();
+
+    return barangaysLoadPromise;
   }
 
   function openModal(id) {
     if (!modal) return;
     form.reset();
-    ensureBarangays(!barangaysLoaded);
+    if (barangaysLoaded && barangays.length) {
+      fillBarangays();
+    } else {
+      ensureBarangays(true);
+    }
     document.getElementById('bhwApplicationId').value = id ? String(id) : '';
     setModalCopy(true, 'draft');
     document.getElementById('bhwModalTitle').textContent = id ? 'BHW Invite' : 'Invite Barangay Health Worker';
@@ -605,5 +672,9 @@
 
   if (cfg.showApplications !== false) {
     loadList();
+  } else if (barangaysLoaded) {
+    fillBarangays();
+  } else {
+    ensureBarangays(true);
   }
 })();
