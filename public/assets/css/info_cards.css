@@ -42,7 +42,7 @@
 .ic-icon-wrap--teal   { background: #f0fdfa; color: #0d9488; }
 .ic-icon-wrap--navy   { background: #eff6ff; color: #0f2d50; }
 .ic-icon-wrap--cyan   { background: #f0f9ff; color: #0ea5e9; }
-.ic-icon-wrap--purple { background: #faf5ff; color: #7c3aed; }
+.ic-icon-wrap--purple { background: #f0fdfa; color: #0d9488; }
 .ic-icon-wrap--slate  { background: #f8fafc; color: #475569; }
 
 /* ── Body text ── */
@@ -133,7 +133,7 @@
 .ic-corner-badge--teal   { background: #ccfbf1; color: #0f766e; }
 .ic-corner-badge--navy   { background: #dbeafe; color: #1e40af; }
 .ic-corner-badge--cyan   { background: #e0f2fe; color: #0369a1; }
-.ic-corner-badge--purple { background: #ede9fe; color: #6d28d9; }
+.ic-corner-badge--purple { background: #ccfbf1; color: #0f766e; }
 .ic-corner-badge--slate  { background: #f1f5f9; color: #475569; }
 
 /* ── Left accent stripe per card type ── */
@@ -141,7 +141,7 @@
 .info-card-item--teal   { border-left: 3px solid #0d9488; }
 .info-card-item--navy   { border-left: 3px solid #0f2d50; }
 .info-card-item--cyan   { border-left: 3px solid #0ea5e9; }
-.info-card-item--purple { border-left: 3px solid #7c3aed; }
+.info-card-item--purple { border-left: 3px solid #0d9488; }
 .info-card-item--slate  { border-left: 3px solid #94a3b8; }
 
 /* ── Responsive ── */

@@ -280,8 +280,8 @@
 }
 
 .pt-dash .mc-notif-widget[data-widget="upcoming_consultations"]::before {
-  background-color: rgba(139, 92, 246, 0.12);
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='18' height='18' viewBox='0 0 24 24' fill='none' stroke='%237c3aed' stroke-width='2'%3E%3Cpath d='M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z'/%3E%3C/svg%3E");
+  background-color: rgba(20, 184, 166, 0.12);
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='18' height='18' viewBox='0 0 24 24' fill='none' stroke='%230d9488' stroke-width='2'%3E%3Cpath d='M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z'/%3E%3C/svg%3E");
 }
 
 .pt-dash .mc-notif-widget[data-widget="pending_referrals"]::before {
@@ -572,7 +572,7 @@
   box-shadow: 0 0 0 3px rgba(6, 147, 150, 0.2);
 }
 
-.pt-timeline__item--triage .pt-timeline__dot { background: #8b5cf6; box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.2); }
+.pt-timeline__item--triage .pt-timeline__dot { background: #14B8A6; box-shadow: 0 0 0 3px rgba(20, 184, 166, 0.2); }
 
 .pt-timeline__date {
   font-size: 10px;

@@ -20,6 +20,13 @@ $dateLabel = trim((string) ($entry['date_label'] ?? ''));
 $timeLabel = trim((string) ($entry['time_label'] ?? ''));
 $barangayLabel = trim((string) ($entry['barangay_label'] ?? ''));
 $attrClass = $bhwAttrClass ?? 'pmh-bhw__attr';
+$combineDateTime = str_contains((string) $attrClass, 'pmh-event-meta');
+$recordedLabel = trim($dateLabel);
+if ($combineDateTime && $timeLabel !== '' && $timeLabel !== '—') {
+    $recordedLabel = $recordedLabel !== '' && $recordedLabel !== '—'
+        ? $recordedLabel . ' · ' . $timeLabel
+        : $timeLabel;
+}
 ?>
 <dl class="<?= htmlspecialchars((string) $attrClass) ?>">
   <?php if ($addedBy !== '' && $addedBy !== 'Unknown'): ?>
@@ -31,10 +38,16 @@ $attrClass = $bhwAttrClass ?? 'pmh-bhw__attr';
   <?php if ($barangayLabel !== '' && $barangayLabel !== '—'): ?>
   <div><dt>Barangay</dt><dd><?= htmlspecialchars($barangayLabel) ?></dd></div>
   <?php endif; ?>
-  <?php if ($dateLabel !== '' && $dateLabel !== '—'): ?>
-  <div><dt>Date</dt><dd><?= htmlspecialchars($dateLabel) ?></dd></div>
-  <?php endif; ?>
-  <?php if ($timeLabel !== '' && $timeLabel !== '—'): ?>
-  <div><dt>Time</dt><dd><?= htmlspecialchars($timeLabel) ?></dd></div>
+  <?php if ($combineDateTime): ?>
+    <?php if ($recordedLabel !== '' && $recordedLabel !== '—'): ?>
+    <div><dt>Date recorded</dt><dd><?= htmlspecialchars($recordedLabel) ?></dd></div>
+    <?php endif; ?>
+  <?php else: ?>
+    <?php if ($dateLabel !== '' && $dateLabel !== '—'): ?>
+    <div><dt>Date</dt><dd><?= htmlspecialchars($dateLabel) ?></dd></div>
+    <?php endif; ?>
+    <?php if ($timeLabel !== '' && $timeLabel !== '—'): ?>
+    <div><dt>Time</dt><dd><?= htmlspecialchars($timeLabel) ?></dd></div>
+    <?php endif; ?>
   <?php endif; ?>
 </dl>

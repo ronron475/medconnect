@@ -354,7 +354,12 @@
   }
 
   function menuHostForSelect(select) {
-    return select.closest(MODAL_HOST_SELECTOR) || document.body;
+    // Always portal to document.body. Modal shells use overflow:hidden which
+    // clips position:fixed menus when they are descendants of the overlay.
+    if (select && select.closest(MODAL_HOST_SELECTOR)) {
+      return document.body;
+    }
+    return document.body;
   }
 
   function menuForWrap(wrap) {
@@ -378,6 +383,7 @@
       menu.style.left = '';
       menu.style.width = '';
       menu.style.maxHeight = '';
+      menu.style.bottom = '';
       if (menu.parentNode !== wrap) wrap.appendChild(menu);
     }
     if (openModalSelect === wrap) {
@@ -393,12 +399,22 @@
     var rect = toggle.getBoundingClientRect();
     var gap = 4;
     var spaceBelow = window.innerHeight - rect.bottom - 12;
-    var maxH = Math.min(240, Math.max(140, spaceBelow));
+    var spaceAbove = rect.top - 12;
+    var preferBelow = spaceBelow >= 160 || spaceBelow >= spaceAbove;
+    var available = preferBelow ? spaceBelow : spaceAbove;
+    var maxH = Math.min(320, Math.max(160, available));
     menu.style.position = 'fixed';
     menu.style.left = Math.round(rect.left) + 'px';
     menu.style.width = Math.round(rect.width) + 'px';
-    menu.style.top = Math.round(rect.bottom + gap) + 'px';
     menu.style.maxHeight = maxH + 'px';
+    menu.style.zIndex = '20050';
+    if (preferBelow) {
+      menu.style.top = Math.round(rect.bottom + gap) + 'px';
+      menu.style.bottom = '';
+    } else {
+      menu.style.top = '';
+      menu.style.bottom = Math.round(window.innerHeight - rect.top + gap) + 'px';
+    }
   }
 
   function enhanceModalSelect(select) {

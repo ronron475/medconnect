@@ -95,19 +95,19 @@ body.superadmin-body {
 }
 
 html[data-theme-resolved='dark'] body.patient-portal {
-  background-color: #0a0a0a;
+  background-color: #0B1220;
   color: #ffffff;
 }
 
 html[data-theme-resolved='dark'] body.admin-body,
 html[data-theme-resolved='dark'] body.bhw-body,
 html[data-theme-resolved='dark'] body.superadmin-body {
-  background-color: #0a0a0a;
+  background-color: #0B1220;
   color: #ffffff;
 }
 
 html[data-theme-resolved='dark'] body.provider-body {
-  background-color: #0a0a0a;
+  background-color: #0B1220;
   color: #ffffff;
 }
 
@@ -225,16 +225,16 @@ html[data-theme-resolved='dark'] .pd-hamburger {
 
 /* ── Sidebars ── */
 html[data-theme-resolved='dark'] .sb-aqua {
-  --sba-bg: #141414;
-  --sba-bg-dark: #0a0a0a;
-  --sba-border-r: #2a2a2a;
-  background: #141414 !important;
+  --sba-bg: #0D1E30;
+  --sba-bg-dark: #0B1220;
+  --sba-border-r: #243347;
+  background: #0D1E30 !important;
   background-image: none !important;
 }
 
 html[data-theme-resolved='dark'] .sidebar:not(.sb-aqua),
 html[data-theme-resolved='dark'] .adm-sidebar {
-  background: #141414 !important;
+  background: #0D1E30 !important;
   background-image: none !important;
 }
 
@@ -424,7 +424,7 @@ html[data-theme-resolved='dark'] .ps-toast.error {
 /* ── Provider dashboard widgets ── */
 html[data-theme-resolved='dark'] body.provider-body,
 html[data-theme-resolved='dark'] body.provider-body .provider-main {
-  background-color: #0a0a0a !important;
+  background-color: #0B1220 !important;
   color: #ffffff;
 }
 
@@ -436,8 +436,8 @@ html[data-theme-resolved='dark'] body.provider-body .pd-notif-item,
 html[data-theme-resolved='dark'] body.provider-body .pd-activity-item,
 html[data-theme-resolved='dark'] body.provider-body .triage-card,
 html[data-theme-resolved='dark'] body.provider-body .queue-card {
-  background: #1c1c1c !important;
-  border-color: #2a2a2a !important;
+  background: #151F2E !important;
+  border-color: #243347 !important;
   color: #ffffff;
   box-shadow: 0 1px 0 rgba(255, 255, 255, 0.04), 0 4px 20px rgba(0, 0, 0, 0.5);
 }

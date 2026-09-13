@@ -722,14 +722,14 @@ body.patient-portal .bubble.mine {
 
 /* ── Dark mode tokens (full styling in patient-dark-mode.css) ── */
 html[data-theme-resolved='dark'] body.patient-portal {
-  --landing-bg: #0a0a0a;
-  --landing-surface: #1c1c1c;
-  --mc-aqua-medium: #7c3aed;
+  --landing-bg: #0B1220;
+  --landing-surface: #151F2E;
+  --mc-aqua-medium: #0D9488;
   --mc-navy-dark: #ffffff;
-  --mc-ice-blue: #0a0a0a;
-  --mc-white: #1c1c1c;
-  --mc-border-thin: #2a2a2a;
-  background: #0a0a0a;
+  --mc-ice-blue: #0B1220;
+  --mc-white: #151F2E;
+  --mc-border-thin: #243347;
+  background: #0B1220;
   color: #ffffff;
 }
 

@@ -240,6 +240,21 @@
   padding: 32px 24px;
   line-height: 1.5;
 }
+.bhw-barangay-status--error,
+#bhwBarangayStatus.mc-form-alert {
+  margin: 0;
+  padding: 8px 10px;
+  font-size: 0.8125rem;
+  font-weight: 600;
+}
+
+#bhwBarangaySelectToggle:disabled,
+#bhwBarangaySelect:disabled + .mc-select__toggle,
+.mc-select:has(#bhwBarangaySelect:disabled) .mc-select__toggle {
+  opacity: 0.65;
+  cursor: not-allowed;
+}
+
 @media (max-width: 640px) {
   .admin-form-grid, .admin-form-grid--3 { grid-template-columns: 1fr; }
   .bhw-doc-preview-header { flex-direction: column; }

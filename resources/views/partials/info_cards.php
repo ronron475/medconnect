@@ -71,9 +71,9 @@ $ph_active = strtolower($card_philhealth) === 'active';
   </div>
 
   <!-- Date of Birth -->
-  <div class="info-card-item mc-card" style="border-top: 3px solid #8b5cf6; padding: 16px;">
+  <div class="info-card-item mc-card" style="border-top: 3px solid #0d9488; padding: 16px;">
     <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 8px;">
-      <div class="ic-icon-wrap" style="background: #f5f3ff; color: #8b5cf6; width: 32px; height: 32px;">
+      <div class="ic-icon-wrap" style="background: #f0fdfa; color: #0d9488; width: 32px; height: 32px;">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
           <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
           <line x1="16" y1="2" x2="16" y2="6"/>

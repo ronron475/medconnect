@@ -259,7 +259,7 @@
 }
 
 .pts-stat__icon--teal { background: #f0fdfa; color: #028090; }
-.pts-stat__icon--violet { background: #f5f3ff; color: #7c3aed; }
+.pts-stat__icon--violet { background: #f0fdfa; color: #0d9488; }
 .pts-stat__icon--blue { background: #eff6ff; color: #2563eb; }
 
 .pts-stat__label {
@@ -346,7 +346,7 @@
 .pts-card__head-icon--lock { background: #fef3c7; color: #b45309; }
 .pts-card__head-icon--shield { background: #ecfdf5; color: #047857; }
 .pts-card__head-icon--bell { background: #eff6ff; color: #2563eb; }
-.pts-card__head-icon--monitor { background: #f5f3ff; color: #6d28d9; }
+.pts-card__head-icon--monitor { background: #f0fdfa; color: #0f766e; }
 
 .pts-card__title {
   margin: 0 0 4px;
@@ -960,7 +960,7 @@
 }
 
 .pts-session-item__icon--mobile { background: #eff6ff; color: #2563eb; }
-.pts-session-item__icon--tablet { background: #f5f3ff; color: #7c3aed; }
+.pts-session-item__icon--tablet { background: #f0fdfa; color: #0d9488; }
 .pts-session-item__icon--desktop { background: #f0fdfa; color: #028090; }
 
 .pts-session-item__body {

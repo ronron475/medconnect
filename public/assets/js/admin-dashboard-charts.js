@@ -64,7 +64,7 @@
         is_today: !!p.is_today,
       };
     });
-    var today = todayColor || (T().isDarkMode() ? T().colors.purple : T().colors.teal);
+    var today = todayColor || T().colors.teal;
     charts[canvasId] = new Chart(el, {
       type: 'bar',
       data: {
@@ -203,7 +203,7 @@
     }
 
     makeBarChart('admChartConsult', consult.series || [], T().colors.blue, T().colors.teal);
-    makeLineChart('admChartReg', reg.series || [], T().colors.purple);
+    makeLineChart('admChartReg', reg.series || [], T().colors.teal);
     makeHBarChart('admChartRoles', roles);
 
     setUpdated(data.generated_at);

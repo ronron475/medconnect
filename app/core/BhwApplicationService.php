@@ -926,8 +926,24 @@ final class BhwApplicationService
         require_once dirname(__DIR__) . '/includes/barangays_bago.php';
 
         try {
-            return barangays_list_bago_city($this->pdo);
+            $rows = barangays_list_bago_city($this->pdo);
+            $out = [];
+            foreach ($rows as $row) {
+                $id = (int) ($row['id'] ?? 0);
+                $name = trim((string) ($row['name'] ?? ''));
+                if ($id <= 0 || $name === '') {
+                    continue;
+                }
+                $out[] = [
+                    'id'   => $id,
+                    'name' => $name,
+                    'city' => (string) ($row['city'] ?? 'Bago City'),
+                ];
+            }
+
+            return $out;
         } catch (Throwable $e) {
+            error_log('BhwApplicationService::getBarangays failed: ' . $e->getMessage());
             return [];
         }
     }

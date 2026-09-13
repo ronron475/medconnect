@@ -1,55 +1,56 @@
 /**
  * medConnect — Patient Portal Dark Mode
- * WorkflowAI-style: near-black #0a0a0a canvas, flat #1c1c1c cards, #2a2a2a borders, purple accents.
+ * MedConnect dark navy: #0B1220 canvas, #151F2E cards, #243347 borders, teal accents.
  */
 
 /* ── Design tokens ── */
 html[data-theme-resolved='dark'] body.patient-portal {
-  --pt-color-surface: #1c1c1c;
+  --pt-color-surface: #151F2E;
   --pt-color-text: #ffffff;
-  --pt-color-muted: #a1a1aa;
-  --pt-color-primary: #a78bfa;
-  --pt-border: #2a2a2a;
-  --pt-border-soft: #2a2a2a;
+  --pt-color-muted: #8FAABF;
+  --pt-color-primary: #5EEAD4;
+  --pt-border: #243347;
+  --pt-border-soft: #243347;
   --pt-shadow-card: 0 1px 0 rgba(255, 255, 255, 0.04), 0 4px 20px rgba(0, 0, 0, 0.5);
-  --mc-theme-bg: #0a0a0a;
-  --mc-theme-surface: #1c1c1c;
-  --mc-theme-surface-2: #141414;
-  --mc-theme-text: #ffffff;
-  --mc-theme-text-secondary: #a1a1aa;
-  --mc-theme-border: #2a2a2a;
-  --mc-theme-input-bg: #141414;
-  --mc-theme-input-border: #2a2a2a;
-  --mc-theme-header: #1c1c1c;
-  --mc-navy-dark: #ffffff;
-  --mc-white: #1c1c1c;
-  --mc-border-thin: #2a2a2a;
-  --mc-ice-blue: #0a0a0a;
-  --mc-surface: #1c1c1c;
-  --mc-bg: #0a0a0a;
-  --landing-bg: #0a0a0a;
-  --landing-surface: #1c1c1c;
-  --pt-color-text: #ffffff;
-  --pt-color-muted: #a1a1aa;
-  --pt-color-surface: #1c1c1c;
-  --pt-border: #2a2a2a;
-  --pt-border-soft: #2a2a2a;
-  background: #0a0a0a !important;
-  color: #ffffff;
+  --mc-theme-bg: #0B1220;
+  --mc-theme-surface: #151F2E;
+  --mc-theme-surface-2: #1A2537;
+  --mc-theme-text: #E8F0F7;
+  --mc-theme-text-secondary: #8FAABF;
+  --mc-theme-border: #243347;
+  --mc-theme-input-bg: #1A2537;
+  --mc-theme-input-border: #2D4160;
+  --mc-theme-header: #151F2E;
+  --mc-navy-dark: #E8F0F7;
+  --mc-white: #151F2E;
+  --mc-border-thin: #243347;
+  --mc-ice-blue: #0B1220;
+  --mc-surface: #151F2E;
+  --mc-bg: #0B1220;
+  --landing-bg: #0B1220;
+  --landing-surface: #151F2E;
+  --mc-aqua-medium: #0D9488;
+  --pt-color-text: #E8F0F7;
+  --pt-color-muted: #8FAABF;
+  --pt-color-surface: #151F2E;
+  --pt-border: #243347;
+  --pt-border-soft: #243347;
+  background: #0B1220 !important;
+  color: #E8F0F7;
 }
 
 html[data-theme-resolved='dark'] body.patient-portal .main-content,
 html[data-theme-resolved='dark'] body.patient-portal .portal-main,
 html[data-theme-resolved='dark'] body.patient-portal .portal-page-body,
 html[data-theme-resolved='dark'] body.patient-portal .view-container {
-  background: #0a0a0a !important;
+  background: #0B1220 !important;
   color: #ffffff;
 }
 
 /* ── Sidebar ── */
 html[data-theme-resolved='dark'] body.patient-portal .sidebar {
-  background: #141414 !important;
-  border-right-color: #2a2a2a !important;
+  background: #0D1E30 !important;
+  border-right-color: #243347 !important;
   box-shadow: none !important;
   color: #ffffff !important;
 }
@@ -88,20 +89,20 @@ html[data-theme-resolved='dark'] body.patient-portal .sb-item.active svg {
 
 html[data-theme-resolved='dark'] body.patient-portal .sb-footer,
 html[data-theme-resolved='dark'] body.patient-portal .sb-profile {
-  border-color: #2a2a2a !important;
+  border-color: #243347 !important;
 }
 
 html[data-theme-resolved='dark'] body.patient-portal .sb-logout {
-  background: #1c1c1c !important;
-  border-color: #2a2a2a !important;
-  color: #a1a1aa !important;
+  background: #151F2E !important;
+  border-color: #243347 !important;
+  color: #8FAABF !important;
 }
 
 /* ── Topbar ── */
 html[data-theme-resolved='dark'] body.patient-portal .topbar,
 html[data-theme-resolved='dark'] body.patient-portal .topbar--clinical {
-  background: #1c1c1c !important;
-  border-bottom-color: #2a2a2a !important;
+  background: #151F2E !important;
+  border-bottom-color: #243347 !important;
   box-shadow: none !important;
 }
 
@@ -113,7 +114,7 @@ html[data-theme-resolved='dark'] body.patient-portal .topbar-user-name {
 }
 
 html[data-theme-resolved='dark'] body.patient-portal .topbar-eyebrow {
-  color: #a78bfa !important;
+  color: #5EEAD4 !important;
 }
 
 html[data-theme-resolved='dark'] body.patient-portal .topbar-icon-btn,
@@ -121,14 +122,14 @@ html[data-theme-resolved='dark'] body.patient-portal .mc-nav-toggle,
 html[data-theme-resolved='dark'] body.patient-portal .mc-notif-btn,
 html[data-theme-resolved='dark'] body.patient-portal .mc-theme-toggle__btn,
 html[data-theme-resolved='dark'] body.patient-portal .topbar-logout {
-  background: #1c1c1c !important;
-  border: 1px solid #2a2a2a !important;
-  color: #a1a1aa !important;
+  background: #151F2E !important;
+  border: 1px solid #243347 !important;
+  color: #8FAABF !important;
 }
 
 html[data-theme-resolved='dark'] body.patient-portal .mc-theme-toggle__option.is-active {
-  background: rgba(124, 58, 237, 0.2) !important;
-  color: #c4b5fd !important;
+  background: rgba(13, 148, 136, 0.2) !important;
+  color: #99F6E4 !important;
 }
 
 /* ── Cards & panels (patient UI system) ── */
@@ -163,8 +164,8 @@ html[data-theme-resolved='dark'] body.patient-portal .pt-dash-action,
 html[data-theme-resolved='dark'] body.patient-portal .folder-card,
 html[data-theme-resolved='dark'] body.patient-portal .patient-consult-row,
 html[data-theme-resolved='dark'] body.patient-portal .adm-banner.patient-dash-banner {
-  background: #1c1c1c !important;
-  border-color: #2a2a2a !important;
+  background: #151F2E !important;
+  border-color: #243347 !important;
   color: #ffffff;
   box-shadow: 0 1px 0 rgba(255, 255, 255, 0.04), 0 4px 20px rgba(0, 0, 0, 0.5);
 }
@@ -172,8 +173,8 @@ html[data-theme-resolved='dark'] body.patient-portal .adm-banner.patient-dash-ba
 html[data-theme-resolved='dark'] body.patient-portal .pdash-card__head,
 html[data-theme-resolved='dark'] body.patient-portal .pts-card__head,
 html[data-theme-resolved='dark'] body.patient-portal .prov-dash-card__head {
-  background: #141414 !important;
-  border-bottom-color: #2a2a2a !important;
+  background: #0D1E30 !important;
+  border-bottom-color: #243347 !important;
 }
 
 html[data-theme-resolved='dark'] body.patient-portal .pdash-card__title,
@@ -202,7 +203,7 @@ html[data-theme-resolved='dark'] body.patient-portal .pts-lead,
 html[data-theme-resolved='dark'] body.patient-portal .phs-hero__sub,
 html[data-theme-resolved='dark'] body.patient-portal .pdash-metric__label,
 html[data-theme-resolved='dark'] body.patient-portal .adm-banner-sub {
-  color: #a1a1aa !important;
+  color: #8FAABF !important;
 }
 
 html[data-theme-resolved='dark'] body.patient-portal .pdash-metric__value,
@@ -214,8 +215,8 @@ html[data-theme-resolved='dark'] body.patient-portal .pt-dash-stat strong {
 }
 
 html[data-theme-resolved='dark'] body.patient-portal .greeting-banner.patient-greeting {
-  background: linear-gradient(135deg, #141414 0%, #1c1c1c 55%, rgba(124, 58, 237, 0.22) 100%) !important;
-  border-color: #2a2a2a !important;
+  background: linear-gradient(135deg, #0D1E30 0%, #151F2E 55%, rgba(13, 148, 136, 0.22) 100%) !important;
+  border-color: #243347 !important;
 }
 
 /* ── Tabs & filters ── */
@@ -224,18 +225,18 @@ html[data-theme-resolved='dark'] body.patient-portal .pmh-tab,
 html[data-theme-resolved='dark'] body.patient-portal .psess-tab,
 html[data-theme-resolved='dark'] body.patient-portal .tab-btn,
 html[data-theme-resolved='dark'] body.patient-portal .patient-portal .tab-filters {
-  background: #141414 !important;
-  border-color: #2a2a2a !important;
-  color: #a1a1aa !important;
+  background: #0D1E30 !important;
+  border-color: #243347 !important;
+  color: #8FAABF !important;
 }
 
 html[data-theme-resolved='dark'] body.patient-portal .pdash-tab.is-active,
 html[data-theme-resolved='dark'] body.patient-portal .pmh-tab.is-active,
 html[data-theme-resolved='dark'] body.patient-portal .psess-tab.is-active,
 html[data-theme-resolved='dark'] body.patient-portal .tab-btn.active {
-  background: rgba(124, 58, 237, 0.2) !important;
-  border-color: #7c3aed !important;
-  color: #c4b5fd !important;
+  background: rgba(13, 148, 136, 0.2) !important;
+  border-color: #0D9488 !important;
+  color: #99F6E4 !important;
 }
 
 /* ── Forms & inputs ── */
@@ -250,26 +251,26 @@ html[data-theme-resolved='dark'] body.patient-portal select,
 html[data-theme-resolved='dark'] body.patient-portal textarea,
 html[data-theme-resolved='dark'] body.patient-portal .pts-input,
 html[data-theme-resolved='dark'] body.patient-portal .form-control {
-  background: #141414 !important;
-  border-color: #2a2a2a !important;
+  background: #0D1E30 !important;
+  border-color: #243347 !important;
   color: #ffffff !important;
 }
 
 html[data-theme-resolved='dark'] body.patient-portal input::placeholder,
 html[data-theme-resolved='dark'] body.patient-portal textarea::placeholder {
-  color: #71717a !important;
+  color: #64748B !important;
 }
 
 html[data-theme-resolved='dark'] body.patient-portal .form-label,
 html[data-theme-resolved='dark'] body.patient-portal .pts-field label {
-  color: #a1a1aa !important;
+  color: #8FAABF !important;
 }
 
 /* ── Triage & symptom chips ── */
 html[data-theme-resolved='dark'] body.patient-portal .patient-triage-form .symptom-chip,
 html[data-theme-resolved='dark'] body.patient-portal .patient-consult-row__icon {
-  background: #141414 !important;
-  border-color: #2a2a2a !important;
+  background: #0D1E30 !important;
+  border-color: #243347 !important;
   color: #d4d4d8 !important;
 }
 
@@ -294,26 +295,26 @@ html[data-theme-resolved='dark'] body.patient-portal .patient-triage-alert--succ
 /* ── Tables ── */
 html[data-theme-resolved='dark'] body.patient-portal .mc-table,
 html[data-theme-resolved='dark'] body.patient-portal table {
-  background: #1c1c1c !important;
-  border-color: #2a2a2a !important;
+  background: #151F2E !important;
+  border-color: #243347 !important;
 }
 
 html[data-theme-resolved='dark'] body.patient-portal .mc-table thead th,
 html[data-theme-resolved='dark'] body.patient-portal table th {
-  background: #141414 !important;
-  color: #a1a1aa !important;
-  border-color: #2a2a2a !important;
+  background: #0D1E30 !important;
+  color: #8FAABF !important;
+  border-color: #243347 !important;
 }
 
 html[data-theme-resolved='dark'] body.patient-portal .mc-table tbody td,
 html[data-theme-resolved='dark'] body.patient-portal table td {
-  background: #1c1c1c !important;
+  background: #151F2E !important;
   color: #d4d4d8 !important;
-  border-color: #2a2a2a !important;
+  border-color: #243347 !important;
 }
 
 html[data-theme-resolved='dark'] body.patient-portal .mc-table-empty {
-  color: #a1a1aa !important;
+  color: #8FAABF !important;
 }
 
 /* ── Buttons ── */
@@ -321,8 +322,8 @@ html[data-theme-resolved='dark'] body.patient-portal .mc-btn--primary,
 html[data-theme-resolved='dark'] body.patient-portal .pdash-btn--primary,
 html[data-theme-resolved='dark'] body.patient-portal .psess-btn--primary,
 html[data-theme-resolved='dark'] body.patient-portal .pts-btn--primary {
-  background: #7c3aed !important;
-  border-color: #7c3aed !important;
+  background: #0D9488 !important;
+  border-color: #0D9488 !important;
   color: #ffffff !important;
 }
 
@@ -330,7 +331,7 @@ html[data-theme-resolved='dark'] body.patient-portal .mc-btn--outline,
 html[data-theme-resolved='dark'] body.patient-portal .pdash-btn--outline,
 html[data-theme-resolved='dark'] body.patient-portal .psess-btn--outline {
   background: transparent !important;
-  border-color: #2a2a2a !important;
+  border-color: #243347 !important;
   color: #d4d4d8 !important;
 }
 
@@ -340,12 +341,12 @@ html[data-theme-resolved='dark'] body.patient-portal .msg-sidebar,
 html[data-theme-resolved='dark'] body.patient-portal .msg-panel,
 html[data-theme-resolved='dark'] body.patient-portal .msg-composer,
 html[data-theme-resolved='dark'] body.patient-portal .composer {
-  background: #1c1c1c !important;
-  border-color: #2a2a2a !important;
+  background: #151F2E !important;
+  border-color: #243347 !important;
 }
 
 html[data-theme-resolved='dark'] body.patient-portal .thread-body {
-  background: #0a0a0a !important;
+  background: #0B1220 !important;
 }
 
 html[data-theme-resolved='dark'] body.patient-portal .msg-item:hover,
@@ -358,14 +359,14 @@ html[data-theme-resolved='dark'] body.patient-portal .mc-urgency-modal__card,
 html[data-theme-resolved='dark'] body.patient-portal .mc-urgency-slot-card,
 html[data-theme-resolved='dark'] body.patient-portal .modal-content,
 html[data-theme-resolved='dark'] body.patient-portal .dropdown-menu {
-  background: #1c1c1c !important;
-  border-color: #2a2a2a !important;
+  background: #151F2E !important;
+  border-color: #243347 !important;
   color: #ffffff !important;
 }
 
 html[data-theme-resolved='dark'] body.patient-portal .mc-urgency-modal__btn--ghost {
-  background: #141414 !important;
-  border-color: #2a2a2a !important;
+  background: #0D1E30 !important;
+  border-color: #243347 !important;
   color: #d4d4d8 !important;
 }
 
@@ -385,18 +386,18 @@ html[data-theme-resolved='dark'] body.patient-portal .mc-urgency-modal__continue
 }
 
 html[data-theme-resolved='dark'] body.patient-portal .mc-urgency-modal__steps {
-  background: #141414 !important;
-  border-color: #2a2a2a !important;
+  background: #0D1E30 !important;
+  border-color: #243347 !important;
   color: #d4d4d8 !important;
 }
 
 html[data-theme-resolved='dark'] body.patient-portal .mc-urgency-lang__label {
-  color: #a1a1aa !important;
+  color: #8FAABF !important;
 }
 
 html[data-theme-resolved='dark'] body.patient-portal .mc-urgency-lang__select {
-  background: #141414 !important;
-  border-color: #2a2a2a !important;
+  background: #0D1E30 !important;
+  border-color: #243347 !important;
   color: #f8fafc !important;
 }
 
@@ -409,7 +410,7 @@ html[data-theme-resolved='dark'] body.patient-portal .mc-urgency-slot-card__time
 html[data-theme-resolved='dark'] body.patient-portal .mc-urgency-slot-card__meta,
 html[data-theme-resolved='dark'] body.patient-portal .mc-urgency-slot-card__sub,
 html[data-theme-resolved='dark'] body.patient-portal .mc-urgency-slots__status {
-  color: #a1a1aa !important;
+  color: #8FAABF !important;
 }
 
 /* ── Charts ── */
@@ -424,8 +425,8 @@ html[data-theme-resolved='dark'] body.patient-portal .psess-related__link,
 html[data-theme-resolved='dark'] body.patient-portal .pdash-quick__link,
 html[data-theme-resolved='dark'] body.patient-portal .patient-triage-care-link,
 html[data-theme-resolved='dark'] body.patient-portal .pts-nav__item {
-  background: #141414 !important;
-  border-color: #2a2a2a !important;
+  background: #0D1E30 !important;
+  border-color: #243347 !important;
   color: #d4d4d8 !important;
 }
 
@@ -433,9 +434,9 @@ html[data-theme-resolved='dark'] body.patient-portal .psess-related__link:hover,
 html[data-theme-resolved='dark'] body.patient-portal .pdash-quick__link:hover,
 html[data-theme-resolved='dark'] body.patient-portal .patient-triage-care-link:hover,
 html[data-theme-resolved='dark'] body.patient-portal .pts-nav__item.is-active {
-  background: rgba(124, 58, 237, 0.14) !important;
-  border-color: #7c3aed !important;
-  color: #c4b5fd !important;
+  background: rgba(13, 148, 136, 0.14) !important;
+  border-color: #0D9488 !important;
+  color: #99F6E4 !important;
 }
 
 /* ── Strict pass — remove white / light-gray strips ── */
@@ -443,8 +444,8 @@ html[data-theme-resolved='dark'] body.patient-portal .table-responsive,
 html[data-theme-resolved='dark'] body.patient-portal .pdash-session,
 html[data-theme-resolved='dark'] body.patient-portal .patient-dash-pill,
 html[data-theme-resolved='dark'] body.patient-portal .patient-dash-pill--id {
-  background: #1c1c1c !important;
-  border-color: #2a2a2a !important;
+  background: #151F2E !important;
+  border-color: #243347 !important;
   color: #d4d4d8 !important;
 }
 
@@ -458,9 +459,9 @@ html[data-theme-resolved='dark'] body.patient-portal .pdash-flow__summary {
 /* Sessions sidebar — keep compare/flow panels unified in dark mode */
 html[data-theme-resolved='dark'] body.patient-portal .psess-compare,
 html[data-theme-resolved='dark'] body.patient-portal .psess-flow {
-  background: #1c1c1c !important;
+  background: #151F2E !important;
   background-image: none !important;
-  border-color: #2a2a2a !important;
+  border-color: #243347 !important;
   color: #ffffff !important;
 }
 
@@ -485,13 +486,13 @@ html[data-theme-resolved='dark'] body.patient-portal .pdash-flow__steps li {
 }
 
 html[data-theme-resolved='dark'] body.patient-portal .psess-compare__list dt {
-  color: #a78bfa !important;
+  color: #5EEAD4 !important;
 }
 
 html[data-theme-resolved='dark'] body.patient-portal .psess-compare__list dd,
 html[data-theme-resolved='dark'] body.patient-portal .psess-flow__steps li,
 html[data-theme-resolved='dark'] body.patient-portal .psess-flow__note {
-  color: #a1a1aa !important;
+  color: #8FAABF !important;
 }
 
 html[data-theme-resolved='dark'] body.patient-portal .psess-flow__steps strong {
@@ -499,7 +500,7 @@ html[data-theme-resolved='dark'] body.patient-portal .psess-flow__steps strong {
 }
 
 html[data-theme-resolved='dark'] body.patient-portal .psess-flow__summary-icon {
-  color: #a78bfa !important;
+  color: #5EEAD4 !important;
 }
 
 /* My Health — hero, panel, surface, timeline, and tabs */
@@ -519,9 +520,9 @@ html[data-theme-resolved='dark'] body.patient-portal .pmh-feed,
 html[data-theme-resolved='dark'] body.patient-portal .pmh-visit__body,
 html[data-theme-resolved='dark'] body.patient-portal .pmh-bhw,
 html[data-theme-resolved='dark'] body.patient-portal .pmh-bhw__item {
-  background: #1c1c1c !important;
+  background: #151F2E !important;
   background-image: none !important;
-  border-color: #2a2a2a !important;
+  border-color: #243347 !important;
   color: #ffffff !important;
   box-shadow: 0 1px 0 rgba(255, 255, 255, 0.04), 0 4px 20px rgba(0, 0, 0, 0.5) !important;
 }
@@ -540,8 +541,8 @@ html[data-theme-resolved='dark'] body.patient-portal .pmh-visit__note-link {
 }
 
 html[data-theme-resolved='dark'] body.patient-portal .pmh-metric-pill.is-active {
-  border-color: #7c3aed !important;
-  box-shadow: 0 0 0 1px rgba(124, 58, 237, 0.35) !important;
+  border-color: #0D9488 !important;
+  box-shadow: 0 0 0 1px rgba(13, 148, 136, 0.35) !important;
 }
 
 html[data-theme-resolved='dark'] body.patient-portal .pmh-hero__title,
@@ -554,36 +555,36 @@ html[data-theme-resolved='dark'] body.patient-portal .pmh-hero__text,
 html[data-theme-resolved='dark'] body.patient-portal .pmh-surface__desc,
 html[data-theme-resolved='dark'] body.patient-portal .pmh-empty p,
 html[data-theme-resolved='dark'] body.patient-portal .pmh-metric-pill__label {
-  color: #a1a1aa !important;
+  color: #8FAABF !important;
 }
 
 html[data-theme-resolved='dark'] body.patient-portal .pmh-hero__eyebrow,
 html[data-theme-resolved='dark'] body.patient-portal .pmh-metric-pill__value,
 html[data-theme-resolved='dark'] body.patient-portal .pmh-hero__id,
 html[data-theme-resolved='dark'] body.patient-portal .pmh-metric-pill__hint {
-  color: #a78bfa !important;
+  color: #5EEAD4 !important;
 }
 
 html[data-theme-resolved='dark'] body.patient-portal .pmh-surface__head {
-  border-bottom-color: #2a2a2a !important;
+  border-bottom-color: #243347 !important;
   background: transparent !important;
 }
 
 html[data-theme-resolved='dark'] body.patient-portal .pmh-surface .pmh-empty,
 html[data-theme-resolved='dark'] body.patient-portal .pmh-empty--care {
-  background: #141414 !important;
+  background: #0D1E30 !important;
   border-color: #333333 !important;
   box-shadow: none !important;
 }
 
 html[data-theme-resolved='dark'] body.patient-portal .pmh-empty__icon {
-  background: rgba(124, 58, 237, 0.15) !important;
-  color: #a78bfa !important;
+  background: rgba(13, 148, 136, 0.15) !important;
+  color: #5EEAD4 !important;
 }
 
 html[data-theme-resolved='dark'] body.patient-portal .pmh-care-card__tips-trigger {
-  background: #141414 !important;
-  border-color: #2a2a2a !important;
+  background: #0D1E30 !important;
+  border-color: #243347 !important;
   color: #5eead4 !important;
 }
 
@@ -593,13 +594,13 @@ html[data-theme-resolved='dark'] body.patient-portal .pmh-care-card__tips-trigge
 }
 
 html[data-theme-resolved='dark'] body.patient-portal .pmh-care-modal__dialog {
-  background: #1c1c1c !important;
-  border-color: #2a2a2a !important;
+  background: #151F2E !important;
+  border-color: #243347 !important;
 }
 
 html[data-theme-resolved='dark'] body.patient-portal .pmh-care-modal__header {
-  background: linear-gradient(180deg, rgba(15, 118, 110, 0.18) 0%, #1c1c1c 100%) !important;
-  border-bottom-color: #2a2a2a !important;
+  background: linear-gradient(180deg, rgba(15, 118, 110, 0.18) 0%, #151F2E 100%) !important;
+  border-bottom-color: #243347 !important;
 }
 
 html[data-theme-resolved='dark'] body.patient-portal .pmh-care-modal__title {
@@ -607,9 +608,9 @@ html[data-theme-resolved='dark'] body.patient-portal .pmh-care-modal__title {
 }
 
 html[data-theme-resolved='dark'] body.patient-portal .pmh-care-modal__close {
-  background: #141414 !important;
+  background: #0D1E30 !important;
   border-color: #333333 !important;
-  color: #a1a1aa !important;
+  color: #8FAABF !important;
 }
 
 html[data-theme-resolved='dark'] body.patient-portal .pmh-care-modal__approval {
@@ -619,8 +620,8 @@ html[data-theme-resolved='dark'] body.patient-portal .pmh-care-modal__approval {
 }
 
 html[data-theme-resolved='dark'] body.patient-portal .pmh-care-modal__item {
-  background: #141414 !important;
-  border-color: #2a2a2a !important;
+  background: #0D1E30 !important;
+  border-color: #243347 !important;
   color: #d4d4d8 !important;
 }
 
@@ -636,13 +637,13 @@ html[data-theme-resolved='dark'] body.patient-portal .pmh-tabs--segment .pmh-tab
 }
 
 html[data-theme-resolved='dark'] body.patient-portal .pmh-tabs--segment .pmh-tab.is-active {
-  background: rgba(124, 58, 237, 0.2) !important;
-  color: #c4b5fd !important;
+  background: rgba(13, 148, 136, 0.2) !important;
+  color: #99F6E4 !important;
   box-shadow: none !important;
 }
 
 html[data-theme-resolved='dark'] body.patient-portal .pmh-tabs--segment .pmh-tab.is-active svg {
-  stroke: #c4b5fd !important;
+  stroke: #99F6E4 !important;
 }
 
 html[data-theme-resolved='dark'] body.patient-portal .pmh-soap-list,
@@ -657,18 +658,58 @@ html[data-theme-resolved='dark'] body.patient-portal .pmh-visit__soap-summary {
 }
 
 html[data-theme-resolved='dark'] body.patient-portal .pmh-visit__soap-details {
-  background: #141414 !important;
-  border-color: #2a2a2a !important;
+  background: #0D1E30 !important;
+  border-color: #243347 !important;
+}
+
+html[data-theme-resolved='dark'] body.patient-portal .pmh-visit__highlight,
+html[data-theme-resolved='dark'] body.patient-portal .pmh-event-meta {
+  background: transparent !important;
+  border-color: transparent !important;
+}
+
+html[data-theme-resolved='dark'] body.patient-portal .pmh-visit__status-block {
+  background: #0D1E30 !important;
+  border-color: #243347 !important;
+}
+
+html[data-theme-resolved='dark'] body.patient-portal .pmh-visit__status-block p {
+  color: #d4d4d8 !important;
+}
+
+html[data-theme-resolved='dark'] body.patient-portal .pmh-visit__details {
+  border-top-color: #243347 !important;
+}
+
+html[data-theme-resolved='dark'] body.patient-portal .pmh-visit__title--event {
+  color: #2dd4bf !important;
+}
+
+html[data-theme-resolved='dark'] body.patient-portal .pmh-visit__eyebrow {
+  color: #2dd4bf !important;
+}
+
+html[data-theme-resolved='dark'] body.patient-portal .pmh-visit__highlight-value,
+html[data-theme-resolved='dark'] body.patient-portal .pmh-event-meta dd {
+  color: #ffffff !important;
+}
+
+html[data-theme-resolved='dark'] body.patient-portal .pmh-event-meta dt {
+  color: #8FAABF !important;
+}
+
+html[data-theme-resolved='dark'] body.patient-portal .pmh-visit__head {
+  border-color: #243347 !important;
 }
 
 html[data-theme-resolved='dark'] body.patient-portal .pmh-btn--outline {
-  background: #141414 !important;
-  border-color: #2a2a2a !important;
-  color: #c4b5fd !important;
+  background: #0D1E30 !important;
+  border-color: #243347 !important;
+  color: #99F6E4 !important;
 }
 
 html[data-theme-resolved='dark'] body.patient-portal .pt-dash-consult {
-  background: linear-gradient(135deg, rgba(124, 58, 237, 0.08) 0%, #1c1c1c 100%) !important;
+  background: linear-gradient(135deg, rgba(13, 148, 136, 0.08) 0%, #151F2E 100%) !important;
 }
 
 /* ═══════════════════════════════════════════════════════════
@@ -677,7 +718,7 @@ html[data-theme-resolved='dark'] body.patient-portal .pt-dash-consult {
 
 html[data-theme-resolved='dark'],
 html[data-theme-resolved='dark'] body.patient-portal {
-  background: #0a0a0a !important;
+  background: #0B1220 !important;
   color: #ffffff !important;
 }
 
@@ -693,19 +734,19 @@ html[data-theme-resolved='dark'] body.patient-portal .psess-page,
 html[data-theme-resolved='dark'] body.patient-portal .pmh-page,
 html[data-theme-resolved='dark'] body.patient-portal .pts-page,
 html[data-theme-resolved='dark'] body.patient-portal .phs-page {
-  background: #0a0a0a !important;
+  background: #0B1220 !important;
   color: #ffffff !important;
 }
 
 /* Kill patient-landing-theme slate canvas */
 html[data-theme-resolved='dark'] body.patient-portal .sidebar {
-  background: #141414 !important;
+  background: #0D1E30 !important;
 }
 
 html[data-theme-resolved='dark'] body.patient-portal .topbar,
 html[data-theme-resolved='dark'] body.patient-portal .topbar--clinical {
-  background: #1c1c1c !important;
-  border-bottom-color: #2a2a2a !important;
+  background: #151F2E !important;
+  border-bottom-color: #243347 !important;
   box-shadow: none !important;
 }
 
@@ -752,9 +793,9 @@ html[data-theme-resolved='dark'] body.patient-portal .symptoms-review-panel,
 html[data-theme-resolved='dark'] body.patient-portal .data-card,
 html[data-theme-resolved='dark'] body.patient-portal .stat-card,
 html[data-theme-resolved='dark'] body.patient-portal .placeholder-section {
-  background: #1c1c1c !important;
+  background: #151F2E !important;
   background-image: none !important;
-  border-color: #2a2a2a !important;
+  border-color: #243347 !important;
   color: #ffffff !important;
   box-shadow: 0 1px 0 rgba(255, 255, 255, 0.04), 0 4px 20px rgba(0, 0, 0, 0.5) !important;
 }
@@ -763,8 +804,8 @@ html[data-theme-resolved='dark'] body.patient-portal .pdash-card__head,
 html[data-theme-resolved='dark'] body.patient-portal .pdash-card__foot,
 html[data-theme-resolved='dark'] body.patient-portal .psess-related__link,
 html[data-theme-resolved='dark'] body.patient-portal .pdash-session__avatar {
-  background: #141414 !important;
-  border-color: #2a2a2a !important;
+  background: #0D1E30 !important;
+  border-color: #243347 !important;
 }
 
 /* Text — white headings, muted secondary */
@@ -792,7 +833,7 @@ html[data-theme-resolved='dark'] body.patient-portal .pdash-empty p,
 html[data-theme-resolved='dark'] body.patient-portal .text-muted,
 html[data-theme-resolved='dark'] body.patient-portal .pdash-card__sub,
 html[data-theme-resolved='dark'] body.patient-portal .pdash-followups__lead {
-  color: #a1a1aa !important;
+  color: #8FAABF !important;
 }
 
 html[data-theme-resolved='dark'] body.patient-portal .pdash-followup {
@@ -850,30 +891,30 @@ html[data-theme-resolved='dark'] body.patient-portal .pdash-followup__input[aria
 html[data-theme-resolved='dark'] body.patient-portal .main,
 html[data-theme-resolved='dark'] body.patient-portal .content,
 html[data-theme-resolved='dark'] body.patient-portal .profile-content {
-  background: #0a0a0a !important;
+  background: #0B1220 !important;
 }
 
 html[data-theme-resolved='dark'] body.patient-portal .pdash-badge--id {
-  background: #141414 !important;
-  border-color: #2a2a2a !important;
+  background: #0D1E30 !important;
+  border-color: #243347 !important;
   color: #d4d4d8 !important;
 }
 
 html[data-theme-resolved='dark'] body.patient-portal .pdash-badge--id strong {
-  color: #c4b5fd !important;
+  color: #99F6E4 !important;
 }
 
 html[data-theme-resolved='dark'] body.patient-portal .pdash-btn--outline,
 html[data-theme-resolved='dark'] body.patient-portal .pdash-btn--ghost {
-  background: #141414 !important;
-  border-color: #2a2a2a !important;
+  background: #0D1E30 !important;
+  border-color: #243347 !important;
   color: #ffffff !important;
 }
 
 html[data-theme-resolved='dark'] body.patient-portal .pdash-btn--primary,
 html[data-theme-resolved='dark'] body.patient-portal .pdash-btn--join {
-  background: #7c3aed !important;
-  border-color: #7c3aed !important;
+  background: #0D9488 !important;
+  border-color: #0D9488 !important;
   color: #ffffff !important;
 }
 
@@ -884,15 +925,15 @@ html[data-theme-resolved='dark'] body.patient-portal .msg-thread-header,
 html[data-theme-resolved='dark'] body.patient-portal .msg-composer-wrap,
 html[data-theme-resolved='dark'] body.patient-portal .mc-confirm,
 html[data-theme-resolved='dark'] body.patient-portal .mc-threadmenu {
-  background: #1c1c1c !important;
-  border-color: #2a2a2a !important;
+  background: #151F2E !important;
+  border-color: #243347 !important;
   color: #ffffff !important;
 }
 
 html[data-theme-resolved='dark'] body.patient-portal .msg-list-item,
 html[data-theme-resolved='dark'] body.patient-portal .msg-search-wrap {
-  background: #141414 !important;
-  border-color: #2a2a2a !important;
+  background: #0D1E30 !important;
+  border-color: #243347 !important;
 }
 
 /* Settings */
@@ -901,7 +942,7 @@ html[data-theme-resolved='dark'] body.patient-portal .pts-layout,
 html[data-theme-resolved='dark'] body.patient-portal .pts-panel,
 html[data-theme-resolved='dark'] body.patient-portal .pts-section,
 html[data-theme-resolved='dark'] body.patient-portal .pts-device-row {
-  background: #0a0a0a !important;
+  background: #0B1220 !important;
   color: #ffffff !important;
 }
 
@@ -910,12 +951,12 @@ html[data-theme-resolved='dark'] body.patient-portal .patient-triage-form,
 html[data-theme-resolved='dark'] body.patient-portal .booking-panel,
 html[data-theme-resolved='dark'] body.patient-portal .booking-slots-grid,
 html[data-theme-resolved='dark'] body.patient-portal .booking-provider-card {
-  background: #1c1c1c !important;
-  border-color: #2a2a2a !important;
+  background: #151F2E !important;
+  border-color: #243347 !important;
 }
 
 html[data-theme-resolved='dark'] body.patient-portal .patient-triage-booked__hint {
-  color: #a1a1aa !important;
+  color: #8FAABF !important;
 }
 
 /* Remedy chatbot */
@@ -923,30 +964,30 @@ html[data-theme-resolved='dark'] body.patient-portal .remedy-chatbot__panel,
 html[data-theme-resolved='dark'] body.patient-portal .remedy-chatbot__header,
 html[data-theme-resolved='dark'] body.patient-portal .remedy-chatbot__body,
 html[data-theme-resolved='dark'] body.patient-portal .remedy-chatbot__composer {
-  background: #1c1c1c !important;
-  border-color: #2a2a2a !important;
+  background: #151F2E !important;
+  border-color: #243347 !important;
   color: #ffffff !important;
 }
 
 html[data-theme-resolved='dark'] body.patient-portal .remedy-chatbot__bubble--bot {
-  background: #141414 !important;
+  background: #0D1E30 !important;
   color: #ffffff !important;
 }
 
 /* Charts & empty states */
 html[data-theme-resolved='dark'] body.patient-portal .pdash-chart-bar {
-  background: #7c3aed !important;
+  background: #0D9488 !important;
 }
 
 html[data-theme-resolved='dark'] body.patient-portal .pdash-chart-label,
 html[data-theme-resolved='dark'] body.patient-portal .pdash-chart-val,
 html[data-theme-resolved='dark'] body.patient-portal .pdash-chart-legend {
-  color: #a1a1aa !important;
+  color: #8FAABF !important;
 }
 
 html[data-theme-resolved='dark'] body.patient-portal .mc-table-empty,
 html[data-theme-resolved='dark'] body.patient-portal .pdash-empty__icon {
-  color: #71717a !important;
+  color: #64748B !important;
 }
 
 /* Notification page */
@@ -957,7 +998,7 @@ html[data-theme-resolved='dark'] body.patient-portal .mc-notif-item {
 }
 
 html[data-theme-resolved='dark'] body.patient-portal .mc-notif-page-header .text-muted {
-  color: #a1a1aa !important;
+  color: #8FAABF !important;
 }
 
 /* ═══════════════════════════════════════════════════════════
@@ -969,8 +1010,8 @@ html[data-theme-resolved='dark'] body.patient-portal .root-wrapper,
 html[data-theme-resolved='dark'] body.patient-portal .portal-shell,
 html[data-theme-resolved='dark'] body.patient-portal .main-content,
 html[data-theme-resolved='dark'] body.patient-portal .portal-main {
-  background: #0a0a0a !important;
-  background-color: #0a0a0a !important;
+  background: #0B1220 !important;
+  background-color: #0B1220 !important;
   color: #ffffff !important;
 }
 
@@ -978,15 +1019,15 @@ html[data-theme-resolved='dark'] body.patient-portal .sidebar,
 html[data-theme-resolved='dark'] body.patient-portal .sb-logo,
 html[data-theme-resolved='dark'] body.patient-portal .sb-profile,
 html[data-theme-resolved='dark'] body.patient-portal .sb-footer {
-  background: #141414 !important;
-  background-color: #141414 !important;
-  border-color: #2a2a2a !important;
+  background: #0D1E30 !important;
+  background-color: #0D1E30 !important;
+  border-color: #243347 !important;
 }
 
 html[data-theme-resolved='dark'] body.patient-portal .sb-item,
 html[data-theme-resolved='dark'] body.patient-portal .sb-role,
 html[data-theme-resolved='dark'] body.patient-portal .sb-patient-id {
-  color: #a1a1aa !important;
+  color: #8FAABF !important;
 }
 
 html[data-theme-resolved='dark'] body.patient-portal .portal-page-body,
@@ -1014,9 +1055,9 @@ html[data-theme-resolved='dark'] body.patient-portal .pt-dash-card,
 html[data-theme-resolved='dark'] body.patient-portal .pt-dash-stat,
 html[data-theme-resolved='dark'] body.patient-portal .pt-dash-action,
 html[data-theme-resolved='dark'] body.patient-portal .pt-dash-consult {
-  background: #1c1c1c !important;
+  background: #151F2E !important;
   background-image: none !important;
-  border-color: #2a2a2a !important;
+  border-color: #243347 !important;
   color: #ffffff !important;
   box-shadow: 0 1px 0 rgba(255, 255, 255, 0.04), 0 4px 20px rgba(0, 0, 0, 0.5) !important;
 }
@@ -1043,7 +1084,7 @@ html[data-theme-resolved='dark'] body.patient-portal .pdash-care-continue {
 
 html[data-theme-resolved='dark'] body.patient-portal .pdash-care-form__hint,
 html[data-theme-resolved='dark'] body.patient-portal .pdash-care-form__label {
-  color: #a1a1aa !important;
+  color: #8FAABF !important;
 }
 
 html[data-theme-resolved='dark'] body.patient-portal .pdash-care-form__input:focus {
@@ -1052,9 +1093,9 @@ html[data-theme-resolved='dark'] body.patient-portal .pdash-care-form__input:foc
 }
 
 html[data-theme-resolved='dark'] body.patient-portal .pdash-card--complaint {
-  background: #1c1c1c !important;
+  background: #151F2E !important;
   background-image: none !important;
-  border-color: #2a2a2a !important;
+  border-color: #243347 !important;
 }
 
 html[data-theme-resolved='dark'] body.patient-portal .pdash-care__status-chip--review,
@@ -1077,9 +1118,9 @@ html[data-theme-resolved='dark'] body.patient-portal .pdash-care__status-chip--r
 }
 
 html[data-theme-resolved='dark'] body.patient-portal .pdash-care__status-chip--idle {
-  background: #141414 !important;
-  color: #a1a1aa !important;
-  border-color: #2a2a2a !important;
+  background: #0D1E30 !important;
+  color: #8FAABF !important;
+  border-color: #243347 !important;
 }
 
 html[data-theme-resolved='dark'] body.patient-portal .pdash-care-steps__item:not(:last-child)::after {
@@ -1092,7 +1133,7 @@ html[data-theme-resolved='dark'] body.patient-portal .pdash-care-steps__item.is-
 
 html[data-theme-resolved='dark'] body.patient-portal .pdash-care-steps__dot {
   background: #27272a !important;
-  color: #71717a !important;
+  color: #64748B !important;
   border-color: #3f3f46 !important;
 }
 
@@ -1110,7 +1151,7 @@ html[data-theme-resolved='dark'] body.patient-portal .pdash-care-steps__item.is-
 }
 
 html[data-theme-resolved='dark'] body.patient-portal .pdash-care-steps__label {
-  color: #a1a1aa !important;
+  color: #8FAABF !important;
 }
 
 html[data-theme-resolved='dark'] body.patient-portal .pdash-care-steps__item.is-current .pdash-care-steps__label {
@@ -1118,17 +1159,17 @@ html[data-theme-resolved='dark'] body.patient-portal .pdash-care-steps__item.is-
 }
 
 html[data-theme-resolved='dark'] body.patient-portal .pdash-care-steps__optional {
-  color: #71717a !important;
+  color: #64748B !important;
 }
 
 html[data-theme-resolved='dark'] body.patient-portal .pdash-care-panel {
-  background: #141414 !important;
+  background: #0D1E30 !important;
   border-color: rgba(45, 212, 191, 0.22) !important;
 }
 
 html[data-theme-resolved='dark'] body.patient-portal .pdash-care-doctor__eyebrow,
 html[data-theme-resolved='dark'] body.patient-portal .pdash-care-doctor__note {
-  color: #a1a1aa !important;
+  color: #8FAABF !important;
 }
 
 html[data-theme-resolved='dark'] body.patient-portal .pdash-care-doctor__name {
@@ -1136,12 +1177,12 @@ html[data-theme-resolved='dark'] body.patient-portal .pdash-care-doctor__name {
 }
 
 html[data-theme-resolved='dark'] body.patient-portal .pdash-care-concern {
-  background: #1c1c1c !important;
+  background: #151F2E !important;
   border-color: #475569 !important;
 }
 
 html[data-theme-resolved='dark'] body.patient-portal .pdash-care-concern__label {
-  color: #a1a1aa !important;
+  color: #8FAABF !important;
 }
 
 html[data-theme-resolved='dark'] body.patient-portal .pdash-care-concern__text {
@@ -1161,13 +1202,13 @@ html[data-theme-resolved='dark'] body.patient-portal .pdash-care-hint--warn {
 }
 
 html[data-theme-resolved='dark'] body.patient-portal .pdash-care-hint--muted {
-  background: #141414 !important;
-  color: #a1a1aa !important;
-  border: 1px solid #2a2a2a !important;
+  background: #0D1E30 !important;
+  color: #8FAABF !important;
+  border: 1px solid #243347 !important;
 }
 
 html[data-theme-resolved='dark'] body.patient-portal .pdash-care-how {
-  color: #a1a1aa !important;
+  color: #8FAABF !important;
 }
 
 html[data-theme-resolved='dark'] body.patient-portal .pdash-care-how summary {
@@ -1211,18 +1252,18 @@ html[data-theme-resolved='dark'] body.patient-portal .pt-dash-stat strong {
 html[data-theme-resolved='dark'] body.patient-portal .pdash-metric__value,
 html[data-theme-resolved='dark'] body.patient-portal .pdash-alert-widget__value,
 html[data-theme-resolved='dark'] body.patient-portal .pdash-card__badge {
-  color: #c4b5fd !important;
+  color: #99F6E4 !important;
 }
 
 html[data-theme-resolved='dark'] body.patient-portal .pdash-quick__icon {
-  background: #141414 !important;
-  color: #c4b5fd !important;
-  border: 1px solid #2a2a2a !important;
+  background: #0D1E30 !important;
+  color: #99F6E4 !important;
+  border: 1px solid #243347 !important;
 }
 
 html[data-theme-resolved='dark'] body.patient-portal .pdash-metric--accent,
 html[data-theme-resolved='dark'] body.patient-portal .pdash-metric--warn {
-  background: #1c1c1c !important;
+  background: #151F2E !important;
   background-image: none !important;
 }
 
@@ -1235,11 +1276,11 @@ html[data-theme-resolved='dark'] body.patient-portal .mc-chart-card__sub,
 html[data-theme-resolved='dark'] body.patient-portal .pdash-care__lead,
 html[data-theme-resolved='dark'] body.patient-portal .pdash-action__meta,
 html[data-theme-resolved='dark'] body.patient-portal .pdash-card__foot a {
-  color: #a1a1aa !important;
+  color: #8FAABF !important;
 }
 
 html[data-theme-resolved='dark'] body.patient-portal .pdash-card__foot a:hover {
-  color: #c4b5fd !important;
+  color: #99F6E4 !important;
 }
 
 html[data-theme-resolved='dark'] body.patient-portal .pdash-care-form__lock-badge {
@@ -1260,12 +1301,12 @@ html[data-theme-resolved='dark'] body.patient-portal #pdashSymptomsComplaint {
 html[data-theme-resolved='dark'] body.patient-portal .pdash-care-form__input::placeholder,
 html[data-theme-resolved='dark'] body.patient-portal #chief_complaint::placeholder,
 html[data-theme-resolved='dark'] body.patient-portal #pdashSymptomsComplaint::placeholder {
-  color: #71717a !important;
-  -webkit-text-fill-color: #71717a !important;
+  color: #64748B !important;
+  -webkit-text-fill-color: #64748B !important;
 }
 
 html[data-theme-resolved='dark'] body.patient-portal .pdash-care-form__input--locked {
-  background: #141414 !important;
+  background: #0D1E30 !important;
   border-color: #3f3f46 !important;
   color: #ffffff !important;
   -webkit-text-fill-color: #ffffff !important;
@@ -1279,7 +1320,7 @@ html[data-theme-resolved='dark'] body.patient-portal .pdash-care-form__input--lo
 
 html[data-theme-resolved='dark'] body.patient-portal .pdash-review-form.is-followup-active #pdashSymptomsComplaint,
 html[data-theme-resolved='dark'] body.patient-portal .patient-triage-form.is-followup-active #chief_complaint {
-  background: #141414 !important;
+  background: #0D1E30 !important;
   color: #ffffff !important;
   -webkit-text-fill-color: #ffffff !important;
   opacity: 1 !important;
@@ -1303,8 +1344,8 @@ html[data-theme-resolved='dark'] body.patient-portal .patient-page,
 html[data-theme-resolved='dark'] body.patient-portal [class*='-page'],
 html[data-theme-resolved='dark'] body.patient-portal [class*='-layout'],
 html[data-theme-resolved='dark'] body.patient-portal [class*='-shell'] {
-  background: #0a0a0a !important;
-  background-color: #0a0a0a !important;
+  background: #0B1220 !important;
+  background-color: #0B1220 !important;
   background-image: none !important;
   color: #ffffff !important;
 }
@@ -1400,9 +1441,9 @@ html[data-theme-resolved='dark'] body.patient-portal li:not(.sb-item),
 html[data-theme-resolved='dark'] body.patient-portal dl,
 html[data-theme-resolved='dark'] body.patient-portal dt,
 html[data-theme-resolved='dark'] body.patient-portal dd {
-  background-color: #1c1c1c !important;
+  background-color: #151F2E !important;
   background-image: none !important;
-  border-color: #2a2a2a !important;
+  border-color: #243347 !important;
   color: #ffffff !important;
   box-shadow: none !important;
 }
@@ -1435,8 +1476,8 @@ html[data-theme-resolved='dark'] body.patient-portal .psess-main,
 html[data-theme-resolved='dark'] body.patient-portal .psess-side,
 html[data-theme-resolved='dark'] body.patient-portal .messages-layout,
 html[data-theme-resolved='dark'] body.patient-portal .thread-body {
-  background: #0a0a0a !important;
-  background-color: #0a0a0a !important;
+  background: #0B1220 !important;
+  background-color: #0B1220 !important;
   background-image: none !important;
 }
 
@@ -1446,18 +1487,18 @@ html[data-theme-resolved='dark'] body.patient-portal .sb-logo,
 html[data-theme-resolved='dark'] body.patient-portal .sb-profile,
 html[data-theme-resolved='dark'] body.patient-portal .sb-footer,
 html[data-theme-resolved='dark'] body.patient-portal .sb-nav {
-  background: #141414 !important;
-  background-color: #141414 !important;
-  border-color: #2a2a2a !important;
+  background: #0D1E30 !important;
+  background-color: #0D1E30 !important;
+  border-color: #243347 !important;
 }
 
 html[data-theme-resolved='dark'] body.patient-portal .topbar,
 html[data-theme-resolved='dark'] body.patient-portal .topbar--clinical,
 html[data-theme-resolved='dark'] body.patient-portal .topbar-left,
 html[data-theme-resolved='dark'] body.patient-portal .topbar-right {
-  background: #1c1c1c !important;
-  background-color: #1c1c1c !important;
-  border-color: #2a2a2a !important;
+  background: #151F2E !important;
+  background-color: #151F2E !important;
+  border-color: #243347 !important;
   color: #ffffff !important;
 }
 
@@ -1502,7 +1543,7 @@ html[data-theme-resolved='dark'] body.patient-portal [class*='caption'],
 html[data-theme-resolved='dark'] body.patient-portal [class*='lead'],
 html[data-theme-resolved='dark'] body.patient-portal [class*='desc'],
 html[data-theme-resolved='dark'] body.patient-portal .text-muted {
-  color: #a1a1aa !important;
+  color: #8FAABF !important;
 }
 
 /* Forms */
@@ -1510,30 +1551,30 @@ html[data-theme-resolved='dark'] body.patient-portal input,
 html[data-theme-resolved='dark'] body.patient-portal select,
 html[data-theme-resolved='dark'] body.patient-portal textarea,
 html[data-theme-resolved='dark'] body.patient-portal option {
-  background: #141414 !important;
-  background-color: #141414 !important;
-  border-color: #2a2a2a !important;
+  background: #0D1E30 !important;
+  background-color: #0D1E30 !important;
+  border-color: #243347 !important;
   color: #ffffff !important;
   color-scheme: dark;
 }
 
 html[data-theme-resolved='dark'] body.patient-portal input::placeholder,
 html[data-theme-resolved='dark'] body.patient-portal textarea::placeholder {
-  color: #71717a !important;
+  color: #64748B !important;
 }
 
-/* Buttons — outline / ghost stay dark; primary keep purple */
+/* Buttons — outline / ghost stay dark; primary keep teal */
 html[data-theme-resolved='dark'] body.patient-portal button,
 html[data-theme-resolved='dark'] body.patient-portal [class*='btn'],
 html[data-theme-resolved='dark'] body.patient-portal [role='button'] {
-  background-color: #141414 !important;
-  border-color: #2a2a2a !important;
+  background-color: #0D1E30 !important;
+  border-color: #243347 !important;
   color: #ffffff !important;
 }
 
 html[data-theme-resolved='dark'] body.patient-portal .booking-assigned-provider {
-  background: #141414 !important;
-  border-color: #2a2a2a !important;
+  background: #0D1E30 !important;
+  border-color: #243347 !important;
 }
 
 html[data-theme-resolved='dark'] body.patient-portal .booking-assigned-provider.is-assigned {
@@ -1550,7 +1591,7 @@ html[data-theme-resolved='dark'] body.patient-portal .booking-assigned-provider_
 }
 
 html[data-theme-resolved='dark'] body.patient-portal .booking-assigned-provider.is-pending {
-  background: #141414 !important;
+  background: #0D1E30 !important;
   border-color: #475569 !important;
   border-style: dashed !important;
 }
@@ -1563,7 +1604,7 @@ html[data-theme-resolved='dark'] body.patient-portal .booking-today-date {
 
 html[data-theme-resolved='dark'] body.patient-portal .patient-triage-lead,
 html[data-theme-resolved='dark'] body.patient-portal .patient-triage-submit-hint {
-  color: #a1a1aa !important;
+  color: #8FAABF !important;
 }
 
 html[data-theme-resolved='dark'] body.patient-portal .patient-triage-submit-hint strong {
@@ -1616,9 +1657,9 @@ html[data-theme-resolved='dark'] body.patient-portal .pdash-btn--primary,
 html[data-theme-resolved='dark'] body.patient-portal .pdash-btn--join,
 html[data-theme-resolved='dark'] body.patient-portal .psess-btn--primary,
 html[data-theme-resolved='dark'] body.patient-portal .pts-btn--primary {
-  background: #7c3aed !important;
-  background-color: #7c3aed !important;
-  border-color: #7c3aed !important;
+  background: #0D9488 !important;
+  background-color: #0D9488 !important;
+  border-color: #0D9488 !important;
   color: #ffffff !important;
 }
 
@@ -1661,9 +1702,9 @@ html[data-theme-resolved='dark'] body.patient-portal .sidebar .sb-item svg {
 html[data-theme-resolved='dark'] body.patient-portal [class*='tab'].is-active,
 html[data-theme-resolved='dark'] body.patient-portal [class*='tab'].active,
 html[data-theme-resolved='dark'] body.patient-portal .pts-nav__item.is-active {
-  background: rgba(124, 58, 237, 0.2) !important;
-  color: #c4b5fd !important;
-  border-color: #7c3aed !important;
+  background: rgba(13, 148, 136, 0.2) !important;
+  color: #99F6E4 !important;
+  border-color: #0D9488 !important;
 }
 
 /* Transparent overlays stay transparent */
@@ -1685,11 +1726,11 @@ html[data-theme-resolved='dark'] body.patient-portal [class*='canvas-wrap'] {
 }
 
 html[data-theme-resolved='dark'] body.patient-portal .mc-select__toggle.is-placeholder {
-  color: #71717a !important;
+  color: #64748B !important;
 }
 
 html[data-theme-resolved='dark'] body.patient-portal .mc-select__menu {
-  background: #0a0a0a !important;
+  background: #0B1220 !important;
   border-color: #3f3f46 !important;
   box-shadow: 0 12px 32px rgba(0, 0, 0, 0.45) !important;
 }
@@ -1700,21 +1741,21 @@ html[data-theme-resolved='dark'] body.patient-portal .mc-select__option {
 
 html[data-theme-resolved='dark'] body.patient-portal .mc-select__option:hover,
 html[data-theme-resolved='dark'] body.patient-portal .mc-select__option:focus {
-  background: rgba(124, 58, 237, 0.18) !important;
+  background: rgba(13, 148, 136, 0.18) !important;
 }
 
 html[data-theme-resolved='dark'] body.patient-portal .mc-select__option[aria-selected="true"] {
-  background: rgba(124, 58, 237, 0.24) !important;
+  background: rgba(13, 148, 136, 0.24) !important;
 }
 
 html[data-theme-resolved='dark'] body.patient-portal .pt-assess-stack {
-  background: #141414;
-  border-color: #2a2a2a;
+  background: #0D1E30;
+  border-color: #243347;
 }
 
 html[data-theme-resolved='dark'] body.patient-portal .pt-assess-stack__row {
-  background: #1c1c1c;
-  border-color: #2a2a2a;
+  background: #151F2E;
+  border-color: #243347;
 }
 
 html[data-theme-resolved='dark'] body.patient-portal .pt-assess-stack__row--final {
@@ -1724,7 +1765,7 @@ html[data-theme-resolved='dark'] body.patient-portal .pt-assess-stack__row--fina
 
 html[data-theme-resolved='dark'] body.patient-portal .pt-assess-stack__label,
 html[data-theme-resolved='dark'] body.patient-portal .patient-triage-history-lead {
-  color: #a1a1aa;
+  color: #8FAABF;
 }
 
 html[data-theme-resolved='dark'] body.patient-portal .patient-triage-history__concern,
@@ -1738,7 +1779,7 @@ html[data-theme-resolved='dark'] body.patient-portal .phs-panel__head,
 html[data-theme-resolved='dark'] body.patient-portal .phs-fields__row,
 html[data-theme-resolved='dark'] body.patient-portal .phs-meta {
   background: transparent;
-  border-color: #2a2a2a;
+  border-color: #243347;
 }
 
 html[data-theme-resolved='dark'] body.patient-portal .phs-panel,
@@ -1747,16 +1788,16 @@ html[data-theme-resolved='dark'] body.patient-portal .phs-assess-card,
 html[data-theme-resolved='dark'] body.patient-portal .phs-info-card,
 html[data-theme-resolved='dark'] body.patient-portal .phs-history__card,
 html[data-theme-resolved='dark'] body.patient-portal .phs-meta__item {
-  background: #141414 !important;
+  background: #0D1E30 !important;
   background-image: none !important;
-  border-color: #2a2a2a !important;
+  border-color: #243347 !important;
   box-shadow: none !important;
 }
 
 html[data-theme-resolved='dark'] body.patient-portal .phs-panel__head-icon,
 html[data-theme-resolved='dark'] body.patient-portal .phs-info-card__icon {
-  background: #1c1c1c !important;
-  border-color: #2a2a2a !important;
+  background: #151F2E !important;
+  border-color: #243347 !important;
   color: #2dd4bf !important;
 }
 
@@ -1779,35 +1820,35 @@ html[data-theme-resolved='dark'] body.patient-portal .phs-status--emergency {
 }
 
 html[data-theme-resolved='dark'] body.patient-portal .phs-status--muted {
-  background: #1c1c1c !important;
-  border-color: #2a2a2a !important;
-  color: #a1a1aa !important;
+  background: #151F2E !important;
+  border-color: #243347 !important;
+  color: #8FAABF !important;
 }
 
 html[data-theme-resolved='dark'] body.patient-portal .phs-history__rail::before {
-  background: #2a2a2a;
+  background: #243347;
 }
 
 html[data-theme-resolved='dark'] body.patient-portal .phs-history__rail::after {
-  background: #141414;
+  background: #0D1E30;
   border-color: #2dd4bf;
 }
 
 html[data-theme-resolved='dark'] body.patient-portal .patient-health-summary-page .pt-assess-stack__row {
-  border-color: #2a2a2a;
+  border-color: #243347;
   background: transparent;
 }
 
 html[data-theme-resolved='dark'] body.patient-portal .patient-health-summary-page .pt-assess-chip {
-  background: #141414;
-  border-color: #2a2a2a;
+  background: #0D1E30;
+  border-color: #243347;
   color: #ffffff;
 }
 
 html[data-theme-resolved='dark'] body.patient-portal .phs-chip-list .phs-chip,
 html[data-theme-resolved='dark'] body.patient-portal .phs-chip {
-  background: #1c1c1c;
-  border-color: #2a2a2a;
+  background: #151F2E;
+  border-color: #243347;
   color: #e4e4e7;
 }
 
@@ -1819,7 +1860,7 @@ html[data-theme-resolved='dark'] body.patient-portal .phs-info-card__hint,
 html[data-theme-resolved='dark'] body.patient-portal .phs-assess-card__hint,
 html[data-theme-resolved='dark'] body.patient-portal .phs-assess-card__meta,
 html[data-theme-resolved='dark'] body.patient-portal .phs-history__complaint {
-  color: #a1a1aa;
+  color: #8FAABF;
 }
 
 /* Health Summary — Request update modal (dark contrast fix) */
@@ -1827,9 +1868,9 @@ html[data-theme-resolved='dark'] body.patient-portal .phs-modal__card,
 html[data-theme-resolved='dark'] body.patient-portal .phs-modal__head,
 html[data-theme-resolved='dark'] body.patient-portal .phs-modal__body,
 html[data-theme-resolved='dark'] body.patient-portal .phs-modal__actions {
-  background: #1c1c1c !important;
-  background-color: #1c1c1c !important;
-  border-color: #2a2a2a !important;
+  background: #151F2E !important;
+  background-color: #151F2E !important;
+  border-color: #243347 !important;
   color: #ffffff !important;
   box-shadow: 0 20px 48px rgba(0, 0, 0, 0.55) !important;
 }
@@ -1842,28 +1883,28 @@ html[data-theme-resolved='dark'] body.patient-portal .phs-request-readonly__labe
 }
 
 html[data-theme-resolved='dark'] body.patient-portal .phs-modal__lead {
-  color: #a1a1aa !important;
+  color: #8FAABF !important;
 }
 
 html[data-theme-resolved='dark'] body.patient-portal .phs-request-readonly__value {
-  background: #141414 !important;
-  background-color: #141414 !important;
-  border-color: #2a2a2a !important;
+  background: #0D1E30 !important;
+  background-color: #0D1E30 !important;
+  border-color: #243347 !important;
   color: #e4e4e7 !important;
 }
 
 html[data-theme-resolved='dark'] body.patient-portal .phs-field__input,
 html[data-theme-resolved='dark'] body.patient-portal select.phs-field__input,
 html[data-theme-resolved='dark'] body.patient-portal textarea.phs-field__input {
-  background: #141414 !important;
-  background-color: #141414 !important;
-  border-color: #2a2a2a !important;
+  background: #0D1E30 !important;
+  background-color: #0D1E30 !important;
+  border-color: #243347 !important;
   color: #ffffff !important;
 }
 
 html[data-theme-resolved='dark'] body.patient-portal .phs-field__input::placeholder,
 html[data-theme-resolved='dark'] body.patient-portal textarea.phs-field__input::placeholder {
-  color: #71717a !important;
+  color: #64748B !important;
 }
 
 html[data-theme-resolved='dark'] body.patient-portal .phs-field__input:focus {
@@ -1872,8 +1913,8 @@ html[data-theme-resolved='dark'] body.patient-portal .phs-field__input:focus {
 }
 
 html[data-theme-resolved='dark'] body.patient-portal .phs-modal__actions .pdash-btn--outline {
-  background: #141414 !important;
-  border-color: #2a2a2a !important;
+  background: #0D1E30 !important;
+  border-color: #243347 !important;
   color: #ffffff !important;
 }
 
@@ -1884,13 +1925,13 @@ html[data-theme-resolved='dark'] body.patient-portal .phs-modal__actions .pdash-
 }
 
 html[data-theme-resolved='dark'] body.patient-portal .patient-triage-history__filters {
-  background: #141414;
-  border-bottom-color: #2a2a2a;
+  background: #0D1E30;
+  border-bottom-color: #243347;
 }
 
 html[data-theme-resolved='dark'] body.patient-portal .patient-triage-history__field-label,
 html[data-theme-resolved='dark'] body.patient-portal .patient-triage-history__count {
-  color: #a1a1aa;
+  color: #8FAABF;
 }
 
 html[data-theme-resolved='dark'] body.patient-portal .patient-triage-history__clear {

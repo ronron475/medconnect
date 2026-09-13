@@ -436,14 +436,14 @@
 }
 
 .fcb[data-theme="dark"] .fcb-robot__glow {
-  background: radial-gradient(circle, rgba(99, 102, 241, 0.42) 0%, transparent 68%);
+  background: radial-gradient(circle, rgba(13, 148, 136, 0.42) 0%, transparent 68%);
 }
 
 /* Dark mode — moving robot background */
 .fcb[data-theme="dark"] .fcb-bg__mesh {
   background:
     radial-gradient(ellipse 55% 45% at 15% 20%, rgba(59, 130, 246, 0.18) 0%, transparent 55%),
-    radial-gradient(ellipse 50% 40% at 85% 75%, rgba(99, 102, 241, 0.16) 0%, transparent 50%),
+    radial-gradient(ellipse 50% 40% at 85% 75%, rgba(13, 148, 136, 0.16) 0%, transparent 50%),
     radial-gradient(ellipse 40% 35% at 50% 50%, rgba(37, 99, 235, 0.1) 0%, transparent 60%);
 }
 

@@ -349,7 +349,7 @@
   font-weight: 500;
 }
 .ref-stat.distance .ref-stat-value { color: var(--blue); }
-.ref-stat.time     .ref-stat-value { color: #7c3aed; }
+.ref-stat.time     .ref-stat-value { color: #0d9488; }
 
 /* ── Leaflet map ─────────────────────────────────────────────────────────────── */
 .ref-map-wrapper {
