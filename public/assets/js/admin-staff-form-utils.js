@@ -381,6 +381,7 @@
       menu.hidden = true;
       menu.style.top = '';
       menu.style.left = '';
+      menu.style.right = '';
       menu.style.width = '';
       menu.style.maxHeight = '';
       menu.style.bottom = '';
@@ -396,24 +397,57 @@
     var toggle = wrap.querySelector('.mc-select__toggle');
     var menu = menuForWrap(wrap);
     if (!toggle || !menu) return;
+
     var rect = toggle.getBoundingClientRect();
     var gap = 4;
-    var spaceBelow = window.innerHeight - rect.bottom - 12;
-    var spaceAbove = rect.top - 12;
-    var preferBelow = spaceBelow >= 160 || spaceBelow >= spaceAbove;
+    var edgePad = 12;
+    var dialog = wrap.closest('.admin-modal-dialog, .mc-card.admin-modal-dialog, .ann-modal__panel, .violation-dialog, .admin-action-dialog, .mc-modal__card, .mc-urgency-modal__card');
+    var bounds = dialog ? dialog.getBoundingClientRect() : null;
+
+    // Prefer staying inside the modal card so the list does not spill over the rounded shell.
+    var topLimit = Math.max(edgePad, bounds ? bounds.top + edgePad : edgePad);
+    var bottomLimit = Math.min(
+      window.innerHeight - edgePad,
+      bounds ? bounds.bottom - edgePad : window.innerHeight - edgePad
+    );
+    var leftLimit = Math.max(edgePad, bounds ? bounds.left + edgePad : edgePad);
+    var rightLimit = Math.min(
+      window.innerWidth - edgePad,
+      bounds ? bounds.right - edgePad : window.innerWidth - edgePad
+    );
+
+    var spaceBelow = Math.max(0, bottomLimit - rect.bottom - gap);
+    var spaceAbove = Math.max(0, rect.top - topLimit - gap);
+    // Flip upward when below-space is tight relative to the modal/viewport.
+    var preferBelow = spaceBelow >= 180 && spaceBelow >= spaceAbove;
     var available = preferBelow ? spaceBelow : spaceAbove;
-    var maxH = Math.min(320, Math.max(160, available));
+    var maxH = Math.min(280, Math.max(120, available));
+
+    var width = Math.round(rect.width);
+    var left = Math.round(rect.left);
+    if (left + width > rightLimit) left = Math.max(leftLimit, rightLimit - width);
+    if (left < leftLimit) left = leftLimit;
+    width = Math.min(width, Math.max(120, rightLimit - left));
+
     menu.style.position = 'fixed';
-    menu.style.left = Math.round(rect.left) + 'px';
-    menu.style.width = Math.round(rect.width) + 'px';
+    menu.style.left = left + 'px';
+    menu.style.width = width + 'px';
     menu.style.maxHeight = maxH + 'px';
     menu.style.zIndex = '20050';
+    menu.style.right = 'auto';
+
     if (preferBelow) {
       menu.style.top = Math.round(rect.bottom + gap) + 'px';
-      menu.style.bottom = '';
+      menu.style.bottom = 'auto';
     } else {
-      menu.style.top = '';
-      menu.style.bottom = Math.round(window.innerHeight - rect.top + gap) + 'px';
+      var top = Math.round(rect.top - gap - maxH);
+      if (top < topLimit) {
+        maxH = Math.max(120, rect.top - gap - topLimit);
+        top = topLimit;
+        menu.style.maxHeight = maxH + 'px';
+      }
+      menu.style.top = top + 'px';
+      menu.style.bottom = 'auto';
     }
   }
 
@@ -482,7 +516,9 @@
       if (select.disabled) return;
       if (openModalSelect && openModalSelect !== wrap) closeModalSelect(openModalSelect);
       rebuildMenu();
-      toggle.scrollIntoView({ block: 'center', inline: 'nearest', behavior: 'auto' });
+      // Keep the field in view without centering it (centering forces the menu to spill
+      // past the modal card bottom).
+      toggle.scrollIntoView({ block: 'nearest', inline: 'nearest', behavior: 'auto' });
       wrap.classList.add('is-open');
       var field = wrap.closest('.mc-field');
       if (field) field.classList.add('is-select-open');
@@ -494,6 +530,9 @@
       openModalSelectMenu = menu;
       requestAnimationFrame(function () {
         positionModalSelectMenu(wrap);
+        requestAnimationFrame(function () {
+          positionModalSelectMenu(wrap);
+        });
       });
       var selected = menu.querySelector('[aria-selected="true"]');
       if (selected && typeof selected.scrollIntoView === 'function') {
