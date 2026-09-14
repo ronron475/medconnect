@@ -56,59 +56,88 @@ $prc_portal_url = 'https://verification.prc.gov.ph/';
                 </div>
 
                 <h4 class="mc-form-section__title" style="margin-top:24px;">Professional / PRC Information</h4>
-                <div class="mc-form-grid mc-form-grid--1">
-                    <div class="mc-field" id="<?= htmlspecialchars($create_doctor_form_id) ?>PrcGroup">
-                        <label class="mc-field__label" for="<?= htmlspecialchars($create_doctor_form_id) ?>PrcInput">PRC License Number</label>
-                        <input type="text" name="prc_license_number" id="<?= htmlspecialchars($create_doctor_form_id) ?>PrcInput"
-                               class="mc-field__input doctor-required" autocomplete="off" placeholder="e.g. 0123456"
-                               pattern="[A-Za-z0-9\-]{5,20}" title="5–20 letters, numbers, or hyphens">
-                        <p class="mc-field__error"></p>
-                    </div>
-                </div>
 
                 <div class="prc-verification-panel" id="<?= htmlspecialchars($create_doctor_form_id) ?>PrcPanel">
                     <div class="prc-verification-panel__head">
-                        <div>
-                            <strong class="prc-verification-panel__title">PRC Verification</strong>
-                        </div>
+                        <p class="prc-verification-panel__eyebrow">Credential check</p>
+                        <strong class="prc-verification-panel__title" id="<?= htmlspecialchars($create_doctor_form_id) ?>PrcPanelTitle">PRC Verification</strong>
                         <div class="prc-verification-status" id="<?= htmlspecialchars($create_doctor_form_id) ?>PrcStatus" aria-live="polite">
-                            <span class="prc-status-dot prc-status-dot--pending"></span>
-                            <span id="<?= htmlspecialchars($create_doctor_form_id) ?>PrcStatusText">Not Verified</span>
+                            <span class="prc-status-dot prc-status-dot--pending" aria-hidden="true"></span>
+                            <span class="prc-verification-status__label" id="<?= htmlspecialchars($create_doctor_form_id) ?>PrcStatusText">Not Verified</span>
                         </div>
                     </div>
-                    <button type="button" class="mc-btn mc-btn--outline prc-verify-btn" id="<?= htmlspecialchars($create_doctor_form_id) ?>PrcVerifyBtn">
-                        Open PRC Verification Portal
+
+                    <div class="mc-field prc-license-field" id="<?= htmlspecialchars($create_doctor_form_id) ?>PrcGroup">
+                        <label class="mc-field__label" for="<?= htmlspecialchars($create_doctor_form_id) ?>PrcInput">PRC License Number</label>
+                        <input type="text" name="prc_license_number" id="<?= htmlspecialchars($create_doctor_form_id) ?>PrcInput"
+                               class="mc-field__input doctor-required prc-license-field__input" autocomplete="off" placeholder="e.g. 0123456"
+                               pattern="[A-Za-z0-9\-]{5,20}" title="5–20 letters, numbers, or hyphens"
+                               inputmode="text" spellcheck="false">
+                        <p class="mc-field__hint">Enter the license number exactly as shown on the PRC ID.</p>
+                        <p class="mc-field__error"></p>
+                    </div>
+
+                    <button type="button" class="mc-btn mc-btn--primary prc-verify-btn" id="<?= htmlspecialchars($create_doctor_form_id) ?>PrcVerifyBtn">
+                        <svg class="prc-verify-btn__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                            <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>
+                            <polyline points="15 3 21 3 21 9"/>
+                            <line x1="10" y1="14" x2="21" y2="3"/>
+                        </svg>
+                        <span class="prc-verify-btn__text">Open PRC Verification Portal</span>
                     </button>
+                    <p class="prc-verify-btn__hint">Opens the official PRC Verification Portal in a new tab.</p>
 
-                    <details class="prc-guide-card">
-                        <summary>Verification Steps</summary>
-                        <ol class="prc-guide-list">
-                            <li>Open the official <a href="<?= htmlspecialchars($prc_portal_url) ?>" target="_blank" rel="noopener noreferrer">PRC Verification Portal</a>.</li>
-                            <li>Enter the doctor's:
-                                <ul>
-                                    <li>First Name</li>
-                                    <li>Last Name</li>
-                                    <li>Birthdate</li>
-                                    <li>PRC License Number</li>
-                                </ul>
+                    <div class="prc-guide-card">
+                        <h5 class="prc-guide-card__title">Verification Steps</h5>
+                        <ol class="prc-steps">
+                            <li class="prc-step">
+                                <span class="prc-step__num" aria-hidden="true">01</span>
+                                <div class="prc-step__body">
+                                    <p class="prc-step__heading">Open the official PRC Verification Portal</p>
+                                    <p class="prc-step__text">Use the button above to open <a href="<?= htmlspecialchars($prc_portal_url) ?>" target="_blank" rel="noopener noreferrer">verification.prc.gov.ph</a>.</p>
+                                </div>
                             </li>
-                            <li>Confirm on the portal:
-                                <ul class="prc-checklist">
-                                    <li>Name matches</li>
-                                    <li>Profession = Physician</li>
-                                    <li>License Status = Active</li>
-                                    <li>License is not expired</li>
-                                </ul>
+                            <li class="prc-step">
+                                <span class="prc-step__num" aria-hidden="true">02</span>
+                                <div class="prc-step__body">
+                                    <p class="prc-step__heading">Enter the doctor's information</p>
+                                    <ul class="prc-step__bullets">
+                                        <li>First Name</li>
+                                        <li>Last Name</li>
+                                        <li>Birthdate</li>
+                                        <li>PRC License Number</li>
+                                    </ul>
+                                </div>
                             </li>
-                            <li>Return to MEDCONNECT and confirm verification below.</li>
+                            <li class="prc-step">
+                                <span class="prc-step__num" aria-hidden="true">03</span>
+                                <div class="prc-step__body">
+                                    <p class="prc-step__heading">Confirm the information</p>
+                                    <ul class="prc-step__checks">
+                                        <li>Name matches</li>
+                                        <li>Profession = Physician</li>
+                                        <li>License Status = Active</li>
+                                        <li>License is not expired</li>
+                                    </ul>
+                                </div>
+                            </li>
+                            <li class="prc-step">
+                                <span class="prc-step__num" aria-hidden="true">04</span>
+                                <div class="prc-step__body">
+                                    <p class="prc-step__heading">Return to MEDCONNECT</p>
+                                    <p class="prc-step__text">Confirm the verification below once you have checked the portal.</p>
+                                </div>
+                            </li>
                         </ol>
-                    </details>
+                    </div>
 
-                    <label class="prc-confirm-check">
-                        <input type="checkbox" name="prc_verification_confirmed" id="<?= htmlspecialchars($create_doctor_form_id) ?>PrcConfirm" value="1">
-                        <span>I have personally verified this doctor's PRC license on the official portal.</span>
-                    </label>
-                    <p class="mc-field__error" id="<?= htmlspecialchars($create_doctor_form_id) ?>PrcConfirmError"></p>
+                    <div class="prc-confirm-block">
+                        <label class="prc-confirm-check" for="<?= htmlspecialchars($create_doctor_form_id) ?>PrcConfirm">
+                            <input type="checkbox" name="prc_verification_confirmed" id="<?= htmlspecialchars($create_doctor_form_id) ?>PrcConfirm" value="1">
+                            <span class="prc-confirm-check__text">I have personally verified this doctor's PRC license on the official portal.</span>
+                        </label>
+                        <p class="mc-field__error" id="<?= htmlspecialchars($create_doctor_form_id) ?>PrcConfirmError"></p>
+                    </div>
 
                     <p class="prc-success-note" id="<?= htmlspecialchars($create_doctor_form_id) ?>PrcSuccess" hidden>
                         PRC verification confirmed. Upload documents and submit the application for Super Administrator approval.
@@ -376,7 +405,7 @@ $prc_portal_url = 'https://verification.prc.gov.ph/';
     function setPrcStatus(verified) {
         if (!prcStatus || !prcStatusText) return;
         prcStatus.classList.toggle('is-verified', verified);
-        prcStatusText.textContent = verified ? 'PRC VERIFIED' : 'Not Verified';
+        prcStatusText.textContent = verified ? 'Verified' : 'Not Verified';
         const dot = prcStatus.querySelector('.prc-status-dot');
         if (dot) {
             dot.classList.toggle('prc-status-dot--verified', verified);
@@ -668,12 +697,6 @@ $prc_portal_url = 'https://verification.prc.gov.ph/';
 .mc-credentials-grid {
     max-width: 100%;
 }
-.prc-confirm-check + .mc-field__error.is-visible {
-    margin-top: 8px;
-    color: #dc2626;
-    font-size: 12px;
-    font-weight: 600;
-}
 .admin-modal-title {
     font-size: 20px;
     font-weight: 800;
@@ -703,98 +726,350 @@ $prc_portal_url = 'https://verification.prc.gov.ph/';
     color: #64748b;
     margin: 6px 0 0;
 }
+
+/* ── PRC Verification panel ── */
 .prc-verification-panel {
-    background: linear-gradient(180deg, #f8fafc 0%, #f1f5f9 100%);
+    background: #f8fafc;
     border: 1px solid #e2e8f0;
-    border-radius: 14px;
-    padding: 16px;
-    margin-bottom: 16px;
+    border-radius: 16px;
+    padding: 18px 16px 16px;
+    margin: 4px 0 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    max-width: 100%;
+    box-sizing: border-box;
 }
 .prc-verification-panel__head {
     display: flex;
-    justify-content: space-between;
+    flex-direction: column;
     align-items: flex-start;
-    gap: 12px;
-    margin-bottom: 12px;
-    flex-wrap: wrap;
+    gap: 10px;
+    padding-bottom: 14px;
+    border-bottom: 1px solid #e2e8f0;
+}
+.prc-verification-panel__eyebrow {
+    margin: 0;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--mc-aqua-medium, #0891b2);
 }
 .prc-verification-panel__title {
-    font-size: 14px;
+    display: block;
+    font-size: 20px;
+    font-weight: 800;
+    line-height: 1.25;
     color: var(--mc-navy-deep, #0f172a);
+    letter-spacing: -0.01em;
 }
 .prc-verification-status {
     display: inline-flex;
     align-items: center;
     gap: 8px;
-    font-size: 12px;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 0.04em;
-    color: #64748b;
-    padding: 6px 10px;
+    min-height: 34px;
+    padding: 7px 12px;
     border-radius: 999px;
-    background: #fff;
-    border: 1px solid #e2e8f0;
+    background: #fff7ed;
+    border: 1px solid #fed7aa;
+    color: #9a3412;
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
 }
 .prc-verification-status.is-verified {
-    color: #15803d;
-    border-color: #bbf7d0;
     background: #f0fdf4;
+    border-color: #bbf7d0;
+    color: #15803d;
 }
 .prc-status-dot {
-    width: 10px;
-    height: 10px;
+    width: 9px;
+    height: 9px;
     border-radius: 50%;
     flex-shrink: 0;
 }
-.prc-status-dot--pending { background: #94a3b8; }
-.prc-status-dot--verified { background: #22c55e; box-shadow: 0 0 0 3px rgba(34,197,94,.25); }
-.prc-verify-btn { width: 100%; justify-content: center; margin-bottom: 8px; }
-.prc-guide-card {
-    margin: 12px 0;
-    border: 1px solid #e2e8f0;
-    border-radius: 10px;
+.prc-status-dot--pending {
+    background: #f59e0b;
+    box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.2);
+}
+.prc-status-dot--verified {
+    background: #22c55e;
+    box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.22);
+}
+.prc-verification-status__label {
+    line-height: 1.2;
+}
+
+/* Credential input */
+.prc-license-field {
+    margin: 0;
+}
+.prc-license-field .mc-field__label {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--mc-navy-deep, #0f172a);
+    margin-bottom: 8px;
+}
+.prc-license-field__input {
+    min-height: 48px;
+    font-size: 16px;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    font-variant-numeric: tabular-nums;
+    border-radius: 12px;
+    border: 1.5px solid #cbd5e1;
     background: #fff;
+    padding: 12px 14px;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+.prc-license-field__input::placeholder {
+    font-weight: 500;
+    letter-spacing: 0;
+    color: #94a3b8;
+    opacity: 1;
+}
+.prc-license-field__input:hover {
+    border-color: #94a3b8;
+}
+.prc-license-field__input:focus {
+    outline: none;
+    border-color: var(--mc-aqua-medium, #0891b2);
+    box-shadow: 0 0 0 3px rgba(8, 145, 178, 0.18);
+}
+.prc-license-field .mc-field__hint {
+    margin-top: 8px;
+    font-size: 12px;
+    color: #64748b;
+}
+
+/* Primary portal action */
+.prc-verify-btn {
+    width: 100%;
+    min-height: 48px;
+    justify-content: center;
+    gap: 10px;
+    margin: 0;
+    font-size: 15px;
+    font-weight: 700;
+    border-radius: 12px;
+    padding: 12px 16px;
+}
+.prc-verify-btn__icon {
+    width: 18px;
+    height: 18px;
+    flex-shrink: 0;
+}
+.prc-verify-btn__text {
+    text-align: center;
+    line-height: 1.3;
+}
+.prc-verify-btn:focus-visible {
+    outline: 2px solid var(--mc-aqua-medium, #0891b2);
+    outline-offset: 2px;
+}
+.prc-verify-btn__hint {
+    margin: -8px 0 0;
+    font-size: 12px;
+    color: #64748b;
+    line-height: 1.4;
+}
+
+/* Numbered verification steps */
+.prc-guide-card {
+    margin: 0;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    background: #fff;
+    padding: 14px 14px 6px;
     overflow: hidden;
 }
-.prc-guide-card summary {
-    cursor: pointer;
-    padding: 12px 14px;
-    font-weight: 700;
+.prc-guide-card__title {
+    margin: 0 0 12px;
     font-size: 13px;
+    font-weight: 800;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
     color: var(--mc-navy-deep, #0f172a);
+}
+.prc-steps {
     list-style: none;
-}
-.prc-guide-card summary::-webkit-details-marker { display: none; }
-.prc-guide-list {
     margin: 0;
-    padding: 0 14px 14px 32px;
-    font-size: 13px;
-    color: #475569;
-    line-height: 1.55;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0;
 }
-.prc-guide-list ul { margin: 6px 0; padding-left: 18px; }
-.prc-checklist li { list-style: none; position: relative; padding-left: 18px; }
-.prc-checklist li::before { content: '✓'; position: absolute; left: 0; color: #16a34a; font-weight: 700; }
+.prc-step {
+    display: grid;
+    grid-template-columns: 36px minmax(0, 1fr);
+    gap: 12px;
+    padding: 12px 0;
+    border-top: 1px solid #f1f5f9;
+}
+.prc-step:first-of-type {
+    border-top: none;
+    padding-top: 4px;
+}
+.prc-step__num {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    border-radius: 10px;
+    background: #ecfeff;
+    border: 1px solid #a5f3fc;
+    color: var(--mc-aqua-medium, #0e7490);
+    font-size: 12px;
+    font-weight: 800;
+    letter-spacing: 0.02em;
+    line-height: 1;
+}
+.prc-step__body {
+    min-width: 0;
+}
+.prc-step__heading {
+    margin: 0 0 4px;
+    font-size: 15px;
+    font-weight: 700;
+    line-height: 1.35;
+    color: var(--mc-navy-deep, #0f172a);
+}
+.prc-step__text {
+    margin: 0;
+    font-size: 13px;
+    line-height: 1.5;
+    color: #475569;
+}
+.prc-step__text a {
+    color: var(--mc-aqua-medium, #0891b2);
+    font-weight: 600;
+    text-decoration: underline;
+    text-underline-offset: 2px;
+    word-break: break-word;
+}
+.prc-step__bullets,
+.prc-step__checks {
+    list-style: none;
+    margin: 6px 0 0;
+    padding: 0;
+    display: grid;
+    gap: 4px;
+}
+.prc-step__bullets li,
+.prc-step__checks li {
+    position: relative;
+    padding-left: 16px;
+    font-size: 13px;
+    line-height: 1.45;
+    color: #475569;
+}
+.prc-step__bullets li::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0.55em;
+    width: 5px;
+    height: 5px;
+    border-radius: 50%;
+    background: #94a3b8;
+}
+.prc-step__checks li {
+    padding-left: 20px;
+}
+.prc-step__checks li::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0.35em;
+    width: 12px;
+    height: 7px;
+    border-left: 2px solid #16a34a;
+    border-bottom: 2px solid #16a34a;
+    transform: rotate(-45deg);
+}
+
+/* Confirmation */
+.prc-confirm-block {
+    margin: 0;
+    padding: 12px;
+    border-radius: 12px;
+    background: #fff;
+    border: 1px solid #e2e8f0;
+}
 .prc-confirm-check {
     display: flex;
     align-items: flex-start;
-    gap: 10px;
-    font-size: 13px;
-    color: #334155;
+    gap: 12px;
+    margin: 0;
     cursor: pointer;
-    margin-top: 12px;
+    -webkit-tap-highlight-color: transparent;
 }
-.prc-confirm-check input { margin-top: 3px; flex-shrink: 0; }
+.prc-confirm-check input[type="checkbox"] {
+    appearance: none;
+    -webkit-appearance: none;
+    width: 22px;
+    height: 22px;
+    margin: 1px 0 0;
+    flex-shrink: 0;
+    border: 2px solid #94a3b8;
+    border-radius: 6px;
+    background: #fff;
+    cursor: pointer;
+    position: relative;
+    transition: border-color 0.15s ease, background-color 0.15s ease, box-shadow 0.15s ease;
+}
+.prc-confirm-check input[type="checkbox"]:hover {
+    border-color: var(--mc-aqua-medium, #0891b2);
+}
+.prc-confirm-check input[type="checkbox"]:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(8, 145, 178, 0.25);
+    border-color: var(--mc-aqua-medium, #0891b2);
+}
+.prc-confirm-check input[type="checkbox"]:checked {
+    background: var(--mc-aqua-medium, #0891b2);
+    border-color: var(--mc-aqua-medium, #0891b2);
+}
+.prc-confirm-check input[type="checkbox"]:checked::after {
+    content: '';
+    position: absolute;
+    left: 5px;
+    top: 1px;
+    width: 6px;
+    height: 11px;
+    border: solid #fff;
+    border-width: 0 2px 2px 0;
+    transform: rotate(45deg);
+}
+.prc-confirm-check__text {
+    flex: 1;
+    min-width: 0;
+    font-size: 14px;
+    line-height: 1.45;
+    color: #334155;
+    font-weight: 500;
+}
+.prc-confirm-block .mc-field__error {
+    margin: 8px 0 0;
+}
+.prc-confirm-block .mc-field__error.is-visible {
+    color: #dc2626;
+    font-size: 12px;
+    font-weight: 600;
+}
 .prc-success-note {
-    margin: 12px 0 0;
-    padding: 10px 12px;
+    margin: 0;
+    padding: 12px 14px;
     border-radius: 10px;
     background: #f0fdf4;
     border: 1px solid #bbf7d0;
     color: #15803d;
     font-size: 13px;
     font-weight: 600;
+    line-height: 1.45;
 }
 .admin-form-warning {
     color: #b45309;
@@ -804,9 +1079,6 @@ $prc_portal_url = 'https://verification.prc.gov.ph/';
     padding: 10px 12px;
     font-size: 13px;
     margin-bottom: 12px;
-}
-@media (max-width: 640px) {
-    .admin-form-grid--3 { grid-template-columns: 1fr; }
 }
 .bhw-doc-upload-grid {
     display: grid;
@@ -824,6 +1096,105 @@ $prc_portal_url = 'https://verification.prc.gov.ph/';
 .bhw-doc-list li {
     padding: 6px 0;
     border-bottom: 1px solid #f1f5f9;
+}
+
+@media (min-width: 641px) {
+    .prc-verification-panel {
+        padding: 20px;
+        gap: 18px;
+    }
+    .prc-verification-panel__head {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) auto;
+        grid-template-areas:
+            "eyebrow status"
+            "title status";
+        align-items: start;
+        column-gap: 16px;
+        row-gap: 6px;
+    }
+    .prc-verification-panel__eyebrow { grid-area: eyebrow; }
+    .prc-verification-panel__title { grid-area: title; font-size: 22px; }
+    .prc-verification-status {
+        grid-area: status;
+        align-self: center;
+        font-size: 12px;
+    }
+    .prc-verify-btn {
+        width: 100%;
+    }
+    .prc-guide-card {
+        padding: 16px 16px 8px;
+    }
+    .prc-step__heading { font-size: 16px; }
+    .prc-step__text,
+    .prc-step__bullets li,
+    .prc-step__checks li { font-size: 14px; }
+    .prc-confirm-check__text { font-size: 15px; }
+}
+
+@media (max-width: 640px) {
+    .admin-form-grid--3 { grid-template-columns: 1fr; }
+    .prc-verification-panel {
+        padding: 16px 14px;
+        border-radius: 14px;
+        gap: 14px;
+    }
+    .prc-verification-panel__title {
+        font-size: 20px;
+    }
+    .prc-verification-status {
+        font-size: 12px;
+        max-width: 100%;
+    }
+    .prc-license-field__input {
+        font-size: 16px; /* avoid iOS zoom */
+    }
+    .prc-verify-btn {
+        width: 100%;
+        font-size: 15px;
+    }
+    .prc-step {
+        grid-template-columns: 32px minmax(0, 1fr);
+        gap: 10px;
+        padding: 11px 0;
+    }
+    .prc-step__num {
+        width: 32px;
+        height: 32px;
+        font-size: 11px;
+        border-radius: 8px;
+    }
+    .prc-step__heading {
+        font-size: 15px;
+    }
+    .prc-step__text,
+    .prc-step__bullets li,
+    .prc-step__checks li {
+        font-size: 13px;
+    }
+    .prc-confirm-block {
+        padding: 12px 10px;
+    }
+    .prc-confirm-check {
+        gap: 12px;
+        min-height: 44px;
+    }
+    .prc-confirm-check__text {
+        font-size: 14px;
+    }
+}
+
+@media (max-width: 360px) {
+    .prc-verification-panel {
+        padding: 14px 12px;
+    }
+    .prc-verification-panel__title {
+        font-size: 18px;
+    }
+    .prc-step__heading {
+        font-size: 14px;
+    }
 }
 </style>
 <?php if ($create_doctor_application_mode): ?>

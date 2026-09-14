@@ -1,8 +1,12 @@
 <?php
 /**
- * Active / rejected / archived staff accounts panel for Doctor & BHW Management hubs.
+ * Doctor / BHW account list panel for Management hub tabs.
  *
- * Expects: $hub_kind ('doctor'|'bhw'), $hub_tab ('active'|'archived')
+ * Expects: $hub_kind ('doctor'|'bhw'), $hub_tab ('all'|'active'|'rejected'|'archived'|…)
+ *
+ * Doctor account tabs filter by users.account_status only.
+ * PRC verification (provider_profiles.verification_status) stays a separate sub-filter
+ * and must not drive which account-status tab a doctor appears on.
  */
 declare(strict_types=1);
 
@@ -17,73 +21,153 @@ $hub_tab = $hub_tab ?? 'active';
 $hub_role = $hub_kind === 'doctor' ? 'provider' : 'bhw';
 $is_superadmin = portal_is_superadmin();
 $verify_filter = $_GET['verify'] ?? 'all';
+$allowed_verify = ['all', 'verified', 'pending', 'rejected'];
+if (!in_array($verify_filter, $allowed_verify, true)) {
+    $verify_filter = 'all';
+}
+$search = trim((string) ($_GET['search'] ?? ''));
 
-if ($hub_tab === 'archived') {
-    $staff = user_account_status_fetch_users($pdo, [
-        'status' => 'archived',
-        'role'   => $hub_role,
-        'search' => trim($_GET['search'] ?? ''),
-    ]);
-} else {
-    $query = "
-        SELECT u.id, u.first_name, u.last_name, u.email, u.phone, u.role, u.is_active, u.account_status, u.created_at,
-               pp.prc_license_number, pp.verification_status, pp.rejection_note, pp.verified_at
-        FROM users u
-        LEFT JOIN provider_profiles pp ON pp.user_id = u.id
-        WHERE u.role = ?
-          AND u.account_status != 'archived'
-    ";
-    $params = [$hub_role];
+/**
+ * Map hub tab → account_status filter.
+ * null means no status WHERE (All Doctors / All).
+ */
+$doctor_tab_status = [
+    'all'      => null,
+    'active'   => AccountStatus::ACTIVE,
+    'rejected' => AccountStatus::REJECTED,
+    'archived' => AccountStatus::ARCHIVED,
+    'pending'  => AccountStatus::PENDING_APPROVAL,
+];
 
-    if ($hub_kind === 'doctor') {
-        if ($hub_tab === 'active') {
-            $query .= " AND u.account_status IN ('active', 'pending')";
-        }
-        if ($verify_filter !== 'all' && $hub_tab === 'active') {
-            $query .= ' AND pp.verification_status = ?';
-            $params[] = $verify_filter;
-        }
-    } else {
-        if ($hub_tab === 'active') {
-            $query .= " AND u.account_status = 'active'";
+$query = "
+    SELECT u.id, u.first_name, u.last_name, u.email, u.phone, u.role, u.is_active, u.account_status, u.created_at,
+           u.archived_at, u.archived_by, u.archive_reason,
+           pp.prc_license_number, pp.verification_status, pp.rejection_note, pp.verified_at,
+           ab.first_name AS archiver_first_name, ab.last_name AS archiver_last_name
+    FROM users u
+    LEFT JOIN provider_profiles pp ON pp.user_id = u.id
+    LEFT JOIN users ab ON ab.id = u.archived_by
+    WHERE u.role = ?
+";
+$params = [$hub_role];
+
+if ($hub_kind === 'doctor') {
+    $statusFilter = array_key_exists($hub_tab, $doctor_tab_status)
+        ? $doctor_tab_status[$hub_tab]
+        : AccountStatus::ACTIVE;
+
+    // All Doctors: no account-status filter. Other tabs: exact account_status match.
+    if ($statusFilter !== null) {
+        if ($statusFilter === AccountStatus::PENDING_APPROVAL) {
+            $query .= " AND u.account_status IN ('pending_approval', 'pending')";
+        } else {
+            $query .= ' AND u.account_status = ?';
+            $params[] = $statusFilter;
         }
     }
 
-    $query .= ' ORDER BY u.created_at DESC';
-    $stmt = $pdo->prepare($query);
-    $stmt->execute($params);
-    $staff = $stmt->fetchAll(PDO::FETCH_ASSOC);
+    // PRC sub-filter is independent of account status (available on All + Active).
+    if ($verify_filter !== 'all' && in_array($hub_tab, ['all', 'active'], true)) {
+        $query .= ' AND pp.verification_status = ?';
+        $params[] = $verify_filter;
+    }
+} else {
+    // BHW: preserve prior behavior (active excludes archived; archived tab only archived).
+    if ($hub_tab === 'archived') {
+        $query .= " AND u.account_status = 'archived'";
+    } elseif ($hub_tab === 'active') {
+        $query .= " AND u.account_status = 'active'";
+    } elseif ($hub_tab === 'rejected') {
+        $query .= " AND u.account_status = 'rejected'";
+    } else {
+        $query .= " AND u.account_status != 'archived'";
+    }
 }
 
+if ($search !== '') {
+    $query .= ' AND (u.first_name LIKE ? OR u.last_name LIKE ? OR u.email LIKE ? OR CONCAT(u.first_name, \' \', u.last_name) LIKE ?';
+    if ($hub_kind === 'doctor') {
+        $query .= ' OR pp.prc_license_number LIKE ?';
+    }
+    $query .= ')';
+    $s = '%' . $search . '%';
+    array_push($params, $s, $s, $s, $s);
+    if ($hub_kind === 'doctor') {
+        $params[] = $s;
+    }
+}
+
+if ($hub_tab === 'archived') {
+    $query .= ' ORDER BY u.archived_at DESC, u.created_at DESC';
+} else {
+    $query .= ' ORDER BY u.created_at DESC';
+}
+
+$stmt = $pdo->prepare($query);
+$stmt->execute($params);
+$staff = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
 $role_label = $hub_kind === 'doctor' ? 'doctor' : 'BHW';
+$kind_title = $hub_kind === 'doctor' ? 'Doctor' : 'BHW';
 $empty_messages = [
+    'all'      => 'No ' . $role_label . ' accounts found.',
     'active'   => 'No active ' . $role_label . ' accounts found.',
+    'rejected' => 'No rejected ' . $role_label . ' accounts found.',
     'archived' => 'No archived ' . $role_label . ' accounts found.',
+    'pending'  => 'No pending ' . $role_label . ' accounts found.',
 ];
 $empty_message = $empty_messages[$hub_tab] ?? 'No accounts found.';
+
+$panel_titles = [
+    'all'      => 'All ' . $kind_title . ' Accounts',
+    'active'   => 'Active ' . $kind_title . ' Accounts',
+    'rejected' => 'Rejected ' . $kind_title . ' Accounts',
+    'archived' => 'Archived ' . $kind_title . ' Accounts',
+    'pending'  => 'Pending ' . $kind_title . ' Accounts',
+];
+$panel_title = $panel_titles[$hub_tab] ?? ($kind_title . ' Accounts');
+
+$show_prc_subfilters = ($hub_kind === 'doctor' && in_array($hub_tab, ['all', 'active'], true));
+$show_archived_col = ($hub_tab === 'archived');
+$col_count = $hub_kind === 'doctor'
+    ? ($show_archived_col ? 7 : 6)
+    : ($show_archived_col ? 5 : 4);
+
+if (!isset($hub_views_base)) {
+    require_once BASE_PATH . '/app/includes/portal_paths.php';
+    $hub_views_base = portal_views_base();
+}
+$hub_base = $hub_base ?? ($hub_kind === 'doctor' ? 'doctor_applications.php' : 'bhw_applications.php');
+$tab_query = $hub_tab === 'all' ? '' : ('?tab=' . urlencode($hub_tab));
+$base_tab_url = $hub_views_base . '/' . $hub_base . $tab_query;
 ?>
 
 <div class="staff-apps-card staff-mgmt-accounts-panel">
     <div class="staff-mgmt-accounts-panel__head">
         <h2 class="staff-mgmt-accounts-panel__title">
-            <?php if ($hub_tab === 'archived'): ?>
-                Archived <?= $hub_kind === 'doctor' ? 'Doctor' : 'BHW' ?> Accounts
-            <?php else: ?>
-                Active <?= $hub_kind === 'doctor' ? 'Doctor' : 'BHW' ?> Accounts
-            <?php endif; ?>
+            <?= htmlspecialchars($panel_title) ?>
         </h2>
         <p class="staff-mgmt-accounts-panel__desc">
-            Approved accounts and account status actions. New registrations go through the application workflow.
+            <?php if ($hub_tab === 'all'): ?>
+                Every doctor account in the system, regardless of account status. PRC verification is listed separately.
+            <?php elseif ($hub_tab === 'rejected'): ?>
+                Doctor accounts with rejected account status. PRC verification remains a separate field.
+            <?php elseif ($hub_tab === 'archived'): ?>
+                Archived accounts. Restore is available to Super Administrators only.
+            <?php else: ?>
+                Approved accounts and account status actions. New registrations go through the application workflow.
+            <?php endif; ?>
         </p>
     </div>
 
-    <?php if ($hub_kind === 'doctor' && $hub_tab === 'active'): ?>
+    <?php if ($show_prc_subfilters): ?>
     <div class="staff-mgmt-subfilters">
         <?php
-        $baseTab = $hub_views_base . '/' . ($hub_base ?? 'doctor_applications.php') . '?tab=active';
         foreach (['all' => 'All PRC Status', 'verified' => 'Verified', 'pending' => 'Pending', 'rejected' => 'Rejected'] as $vf => $vfLabel):
+            $sep = str_contains($base_tab_url, '?') ? '&' : '?';
+            $href = $base_tab_url . ($vf !== 'all' ? $sep . 'verify=' . urlencode($vf) : '');
         ?>
-        <a href="<?= htmlspecialchars($baseTab . ($vf !== 'all' ? '&verify=' . urlencode($vf) : '')) ?>"
+        <a href="<?= htmlspecialchars($href) ?>"
            class="mc-btn mc-btn--sm <?= $verify_filter === $vf ? 'mc-btn--primary' : 'mc-btn--outline' ?>">
             <?= htmlspecialchars($vfLabel) ?>
         </a>
@@ -102,7 +186,7 @@ $empty_message = $empty_messages[$hub_tab] ?? 'No accounts found.';
                     <th>Verification</th>
                     <?php endif; ?>
                     <th>Account</th>
-                    <?php if ($hub_tab === 'archived'): ?>
+                    <?php if ($show_archived_col): ?>
                     <th>Archived</th>
                     <?php endif; ?>
                     <th>Actions</th>
@@ -110,15 +194,22 @@ $empty_message = $empty_messages[$hub_tab] ?? 'No accounts found.';
             </thead>
             <tbody>
                 <?php foreach ($staff as $s):
-                    $effective = user_account_status_effective($s);
-                    $acctBadge = AccountStatus::badge($effective);
+                    // Account column / actions use stored account_status (not PRC).
+                    $storedStatus = AccountStatus::normalize((string) ($s['account_status'] ?? AccountStatus::ACTIVE));
+                    if ($storedStatus === AccountStatus::ACTIVE && empty($s['is_active'])) {
+                        $storedStatus = AccountStatus::DEACTIVATED;
+                    }
+                    $acctBadge = AccountStatus::badge($storedStatus);
                     $staff_name = htmlspecialchars($s['first_name'] . ' ' . $s['last_name'], ENT_QUOTES);
                     $staff_actions = user_account_status_allowed_actions_for_role(
-                        $effective,
+                        $storedStatus,
                         $is_superadmin,
                         (string) ($s['role'] ?? '')
                     );
-                    $archiver_name = trim(($s['archiver_first_name'] ?? '') . ' ' . ($s['archiver_last_name'] ?? ''));
+                    $show_prc_actions = $hub_kind === 'doctor'
+                        && !empty($s['prc_license_number'])
+                        && $is_superadmin
+                        && in_array($hub_tab, ['all', 'active'], true);
                 ?>
                 <tr>
                     <td data-label="Name">
@@ -150,7 +241,7 @@ $empty_message = $empty_messages[$hub_tab] ?? 'No accounts found.';
                             <?= htmlspecialchars($acctBadge['label']) ?>
                         </span>
                     </td>
-                    <?php if ($hub_tab === 'archived'): ?>
+                    <?php if ($show_archived_col): ?>
                     <td data-label="Archived">
                         <span class="staff-apps-meta staff-apps-meta--muted">
                             <?= !empty($s['archived_at']) ? date('M j, Y', strtotime((string) $s['archived_at'])) : '—' ?>
@@ -158,7 +249,7 @@ $empty_message = $empty_messages[$hub_tab] ?? 'No accounts found.';
                     </td>
                     <?php endif; ?>
                     <td data-label="Actions" class="staff-apps-td--actions">
-                        <?php if ($hub_kind === 'doctor' && !empty($s['prc_license_number']) && $is_superadmin && $hub_tab === 'active'): ?>
+                        <?php if ($show_prc_actions): ?>
                         <div class="staff-mgmt-actions">
                             <?php if (($s['verification_status'] ?? '') !== 'verified'): ?>
                             <button type="button" class="mc-btn mc-btn--primary mc-btn--sm js-verify-doctor"
@@ -201,7 +292,7 @@ $empty_message = $empty_messages[$hub_tab] ?? 'No accounts found.';
                 <?php endforeach; ?>
                 <?php if (empty($staff)): ?>
                 <tr>
-                    <td colspan="<?= $hub_kind === 'doctor' ? ($hub_tab === 'archived' ? 7 : 6) : ($hub_tab === 'archived' ? 5 : 4) ?>">
+                    <td colspan="<?= (int) $col_count ?>">
                         <div class="staff-apps-empty">
                             <p class="staff-apps-empty__title"><?= htmlspecialchars($empty_message) ?></p>
                         </div>

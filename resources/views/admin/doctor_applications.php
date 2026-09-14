@@ -29,16 +29,16 @@ if (!in_array($hub_tab, $allowed_tabs, true)) {
     $hub_tab = 'all';
 }
 
-$show_accounts_panel = in_array($hub_tab, ['active', 'archived'], true);
+// Account-status tabs list doctor user accounts. Pending Approval keeps the
+// application review queue (maker-checker). Admin "Applications" stays applications.
+$show_accounts_panel = in_array($hub_tab, ['all', 'active', 'rejected', 'archived'], true);
 $show_applications_panel = !$show_accounts_panel;
 
 $tab_status_map = [
-    'all'          => 'all',
     'applications' => 'all',
     'pending'      => 'pending_approval',
-    'rejected'     => 'rejected',
 ];
-$initial_app_status = $tab_status_map[$hub_tab] ?? 'all';
+$initial_app_status = $tab_status_map[$hub_tab] ?? 'pending_approval';
 
 $page_title = 'Doctor Management';
 if ($is_superadmin_portal) {
