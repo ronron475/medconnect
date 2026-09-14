@@ -27,6 +27,13 @@
     const header = getHeaderEl();
     if (!header) return;
 
+    // Floating view puts the header in normal flow — do not push content down.
+    if (document.documentElement.classList.contains('mc-floating-view')
+      || (document.body && document.body.classList.contains('mc-floating-view'))) {
+      setOffsetPx(0);
+      return;
+    }
+
     // getBoundingClientRect is resilient even when position:fixed.
     const rect = header.getBoundingClientRect();
     // height already includes padding-top safe-area applied in CSS.
