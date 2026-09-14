@@ -6,8 +6,10 @@
 @media (max-width: 768px) {
   body.admin-body {
     --mob-adm-pad: 16px;
-    --mob-adm-gap: 12px;
+    --mob-adm-gap: 20px;
     --mob-adm-radius: 12px;
+    --mob-adm-card-gap: 12px;
+    --mob-adm-section-gap: 24px;
   }
 
   /* ── Header grid (overrides portal_shell flex-wrap) ── */
@@ -166,10 +168,24 @@
     margin: 0;
   }
 
+  /*
+   * System Overview wraps all blocks in [data-live-dashboard], so the page-body
+   * flex gap never spaces banner → Live Operations → Analytics. Restore that
+   * rhythm here without changing desktop or PHP structure.
+   */
+  body.admin-body [data-live-dashboard] {
+    display: flex;
+    flex-direction: column;
+    gap: var(--mob-adm-section-gap);
+    width: 100%;
+    min-width: 0;
+  }
+
   /* ── Welcome banner ── */
   body.admin-body .adm-banner {
     padding: 18px 16px;
     border-radius: var(--mob-adm-radius);
+    margin: 0;
   }
 
   body.admin-body .adm-banner-eyebrow {
@@ -187,44 +203,86 @@
     line-height: 1.45;
   }
 
-  /* ── Section headings ── */
+  /* ── Section headings (Live Operations, Platform Snapshot, Analytics) ── */
   body.admin-body .adm-section-head {
-    margin-bottom: 10px;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 6px;
+    margin: 0 0 16px;
   }
 
   body.admin-body .adm-section-title {
     font-size: 14px;
+    margin: 0;
   }
 
   body.admin-body .adm-section-sub {
     font-size: 11.5px;
+    line-height: 1.45;
+    margin: 0;
   }
 
-  /* ── Metrics + notification strip ── */
+  /* Analytics head keeps period controls — stack comfortably on phones */
+  body.admin-body .adm-charts-section > .adm-section-head {
+    flex-direction: column;
+    align-items: stretch;
+    justify-content: flex-start;
+    gap: 12px;
+    margin-bottom: 4px;
+  }
+
+  body.admin-body .adm-charts-section {
+    gap: 16px;
+  }
+
+  body.admin-body .adm-charts-filters {
+    width: 100%;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px 12px;
+  }
+
+  body.admin-body .adm-charts-filters .mc-chart-filters__status {
+    margin-left: 0;
+  }
+
+  body.admin-body .adm-charts-grid {
+    grid-template-columns: 1fr;
+    gap: 14px;
+  }
+
+  /* ── Metrics + Live Operations notification strip ── */
   body.admin-body .adm-metrics {
     grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 10px;
+    gap: var(--mob-adm-card-gap);
   }
 
   body.admin-body .adm-metric {
-    padding: 14px 12px;
+    padding: 16px 14px;
   }
 
   body.admin-body .mc-notif-widgets--dashboard {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 10px;
+    gap: var(--mob-adm-card-gap);
+    margin: 0;
   }
 
   body.admin-body .mc-notif-widget {
-    min-height: 72px;
-    padding: 10px;
+    min-height: 84px;
+    padding: 14px 14px;
     border-radius: var(--mob-adm-radius);
+    box-sizing: border-box;
   }
 
-  body.admin-body .adm-charts-grid {
-    grid-template-columns: 1fr;
-    gap: 12px;
+  body.admin-body .mc-notif-widget-value {
+    line-height: 1.15;
+  }
+
+  body.admin-body .mc-notif-widget-label {
+    margin-top: 6px;
+    line-height: 1.35;
   }
 
   /* ── Page headers + primary actions ── */
@@ -413,12 +471,19 @@
 @media (max-width: 480px) {
   body.admin-body {
     --mob-adm-pad: 14px;
+    --mob-adm-card-gap: 12px;
+    --mob-adm-section-gap: 22px;
   }
 
   body.admin-body .adm-metrics,
   body.admin-body .mc-notif-widgets--dashboard {
     grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 8px;
+    gap: var(--mob-adm-card-gap);
+  }
+
+  body.admin-body .mc-notif-widget {
+    min-height: 80px;
+    padding: 13px 12px;
   }
 
   body.admin-body .adm-metric-value,
