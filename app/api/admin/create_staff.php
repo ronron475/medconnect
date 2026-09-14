@@ -37,9 +37,19 @@ if (!$first_name || !$last_name || !$email || !$password) {
     exit;
 }
 
-if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
-    echo json_encode(['success' => false, 'message' => 'Invalid email address.']);
+require_once dirname(dirname(dirname(__DIR__))) . '/app/includes/contact_validation.php';
+$email = mc_normalize_email($email);
+if ($emailErr = mc_email_validation_error($email, true)) {
+    echo json_encode(['success' => false, 'message' => $emailErr]);
     exit;
+}
+
+if ($phone !== '') {
+    if ($phoneErr = mc_phone_validation_error($phone, true)) {
+        echo json_encode(['success' => false, 'message' => $phoneErr]);
+        exit;
+    }
+    $phone = mc_canonical_ph_mobile($phone);
 }
 
 if (!in_array($role, ['provider', 'admin', 'bhw'], true)) {
@@ -79,7 +89,12 @@ try {
     $stmt = $pdo->prepare('SELECT id FROM users WHERE email = ? LIMIT 1');
     $stmt->execute([$email]);
     if ($stmt->fetch()) {
-        echo json_encode(['success' => false, 'message' => 'An account with this email already exists.']);
+        echo json_encode(['success' => false, 'message' => MC_MSG_EMAIL_DUP]);
+        exit;
+    }
+
+    if ($phone !== '' && mc_users_phone_exists($pdo, $phone)) {
+        echo json_encode(['success' => false, 'message' => MC_MSG_PHONE_DUP]);
         exit;
     }
 

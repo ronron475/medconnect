@@ -190,22 +190,35 @@
   }
 
   function validateEmail(value) {
+    if (global.MCContactValidation && typeof global.MCContactValidation.isValidEmail === 'function') {
+      return global.MCContactValidation.isValidEmail(value);
+    }
     return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(value || '').trim());
   }
 
   function validatePhone(value) {
-    var digits = String(value || '').replace(/\D/g, '');
-    if (!digits) return false;
-    if (digits.length !== 11) return false;
-    return /^09\d{9}$/.test(digits);
+    if (global.MCContactValidation && typeof global.MCContactValidation.isValidPhone === 'function') {
+      return global.MCContactValidation.isValidPhone(value);
+    }
+    var canonical = String(value || '').replace(/\D/g, '');
+    if (/^639\d{9}$/.test(canonical)) canonical = '0' + canonical.slice(2);
+    if (/^9\d{9}$/.test(canonical) && canonical.length === 10) canonical = '0' + canonical;
+    if (!canonical) return false;
+    if (canonical.length !== 11) return false;
+    return /^09\d{9}$/.test(canonical);
   }
 
   function phoneErrorMessage(value) {
+    if (global.MCContactValidation && typeof global.MCContactValidation.validatePhone === 'function') {
+      return global.MCContactValidation.validatePhone(value, true);
+    }
     var digits = String(value || '').replace(/\D/g, '');
+    if (/^639\d{9}$/.test(digits)) digits = '0' + digits.slice(2);
+    if (/^9\d{9}$/.test(digits) && digits.length === 10) digits = '0' + digits;
     if (!digits) return 'Contact number is required.';
     if (!/^\d+$/.test(digits)) return 'Phone number must contain digits only.';
     if (digits.length !== 11) return 'Phone number must be exactly 11 digits (e.g. 09171234567).';
-    if (!/^09\d{9}$/.test(digits)) return 'Enter a valid Philippine mobile number starting with 09.';
+    if (!/^09\d{9}$/.test(digits)) return 'Please enter a valid Philippine mobile number.';
     return '';
   }
 
@@ -705,6 +718,7 @@
     validatePasswordStrength: validatePasswordStrength,
     validateEmail: validateEmail,
     validatePhone: validatePhone,
+    phoneErrorMessage: phoneErrorMessage,
     analyzePassword: analyzePassword,
     setFieldError: setFieldError,
     setFormLoading: setFormLoading,

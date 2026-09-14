@@ -295,6 +295,16 @@ $profile_role_label = 'Barangay Health Worker';
 
   document.getElementById('bhwProfileForm').addEventListener('submit', function (e) {
     e.preventDefault();
+    var phoneEl = document.getElementById('pf_phone');
+    if (phoneEl && String(phoneEl.value || '').trim()) {
+      if (window.MCContactValidation && !window.MCContactValidation.isValidPhone(phoneEl.value)) {
+        BhwPortal.toast(window.MCContactValidation.validatePhone(phoneEl.value) || 'Please enter a valid Philippine mobile number.', false);
+        return;
+      }
+      if (window.MCContactValidation) {
+        phoneEl.value = window.MCContactValidation.canonicalPhone(phoneEl.value);
+      }
+    }
     var saveBtn = document.getElementById('pf_save_btn');
     saveBtn.disabled = true;
     saveBtn.textContent = 'Saving…';

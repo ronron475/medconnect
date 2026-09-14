@@ -10,13 +10,11 @@ if (empty($csrf) || !hash_equals((string) ($_SESSION['csrf_token'] ?? ''), $csrf
 
 $email = strtolower(trim((string) ($_POST['email'] ?? '')));
 
-// Gmail-only validation (shared with OTP send endpoint)
-if ($email === '' || preg_match('/\s/', $email) || !filter_var($email, FILTER_VALIDATE_EMAIL)) {
-    Api::error('Please enter a valid Gmail address.', 422);
+require_once dirname(__DIR__, 2) . '/includes/contact_validation.php';
+if ($err = mc_gmail_validation_error($email, true)) {
+    Api::error($err, 422);
 }
-if (!preg_match('/^[A-Za-z0-9._%+\-]+@gmail\.com$/i', $email)) {
-    Api::error('Please enter a valid Gmail address.', 422);
-}
+$email = mc_normalize_email($email);
 
 // Check if email already exists (global uniqueness starts with users table)
 try {

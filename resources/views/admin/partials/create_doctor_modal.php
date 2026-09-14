@@ -359,7 +359,7 @@ $prc_portal_url = 'https://verification.prc.gov.ph/';
                 utils.setFieldError(emailInput, 'Email address is required.');
                 valid = false;
             } else if (utils.validateEmail && !utils.validateEmail(emailInput.value)) {
-                utils.setFieldError(emailInput, 'Enter a valid email address.');
+                utils.setFieldError(emailInput, 'Please enter a valid email address.');
                 valid = false;
             }
         }
@@ -368,8 +368,10 @@ $prc_portal_url = 'https://verification.prc.gov.ph/';
                 utils.setFieldError(phoneInput, 'Mobile number is required.');
                 valid = false;
             } else if (utils.validatePhone && !utils.validatePhone(phoneInput.value)) {
-                utils.setFieldError(phoneInput, 'Use format 09XXXXXXXXX or +639XXXXXXXXX.');
+                utils.setFieldError(phoneInput, (utils.phoneErrorMessage && utils.phoneErrorMessage(phoneInput.value)) || 'Please enter a valid Philippine mobile number.');
                 valid = false;
+            } else if (window.MCContactValidation) {
+                phoneInput.value = window.MCContactValidation.canonicalPhone(phoneInput.value);
             }
         }
         var pwd = passwordInput ? String(passwordInput.value || '') : '';

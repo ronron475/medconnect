@@ -91,14 +91,15 @@ if ($form_type === 'emergency') {
     $barangay       = trim($_POST['barangay']       ?? '');
     $errors         = [];
 
-    if ($email === '' || !filter_var($email, FILTER_VALIDATE_EMAIL)) {
-        $errors['email'] = 'Enter a valid email address.';
+    if ($email === '') {
+        $errors['email'] = 'Email address is required.';
     } else {
-        // Check not taken by another account
-        $chk = $pdo->prepare("SELECT id FROM users WHERE email = ? AND id != ? LIMIT 1");
-        $chk->execute([$email, $user_id]);
-        if ($chk->fetch()) {
-            $errors['email'] = 'This email is already in use by another account.';
+        require_once BASE_PATH . '/app/includes/contact_validation.php';
+        $email = mc_normalize_email($email);
+        if ($emailErr = mc_email_validation_error($email, true)) {
+            $errors['email'] = $emailErr;
+        } elseif ($dup = mc_email_duplicate_error($pdo, $email, $user_id)) {
+            $errors['email'] = $dup;
         }
     }
 

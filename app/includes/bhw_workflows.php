@@ -93,19 +93,20 @@ final class BhwWorkflows
         $allergies = trim($data['allergies'] ?? '');
         $medications = trim($data['medications'] ?? $data['current_medications'] ?? '');
 
-        if ($email === '' || !filter_var($email, FILTER_VALIDATE_EMAIL)) {
-            throw new InvalidArgumentException('A valid email address is required.');
+        require_once __DIR__ . '/contact_validation.php';
+        $email = mc_normalize_email($email);
+        if ($emailErr = mc_email_validation_error($email, true)) {
+            throw new InvalidArgumentException($emailErr);
         }
-        if ($contact === '') {
-            throw new InvalidArgumentException('Contact number is required.');
+        if ($phoneErr = mc_phone_validation_error($contact, true)) {
+            throw new InvalidArgumentException($phoneErr);
         }
+        $contact = mc_canonical_ph_mobile($contact);
 
         $oldEmail = (string) $patient['email'];
         if (strcasecmp($email, $oldEmail) !== 0) {
-            $dup = $pdo->prepare('SELECT id FROM users WHERE email = ? AND id != ? LIMIT 1');
-            $dup->execute([$email, $patientId]);
-            if ($dup->fetch()) {
-                throw new InvalidArgumentException('That email is already registered to another account.');
+            if (mc_users_email_exists($pdo, $email, $patientId)) {
+                throw new InvalidArgumentException(MC_MSG_EMAIL_DUP);
             }
         }
 

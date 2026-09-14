@@ -137,6 +137,7 @@ foreach ($docs as $d) {
 </div>
 
 <script>window.APP_BASE = <?= json_encode($asset) ?>;</script>
+<script src="<?= htmlspecialchars($asset) ?>/assets/js/phone-validation.js?v=<?= (int) @filemtime(ASSETS_PATH . '/js/phone-validation.js') ?>"></script>
 <script src="<?= htmlspecialchars($asset) ?>/assets/js/register.js"></script>
 <?php if ($valid): ?>
 <script>
@@ -153,7 +154,16 @@ foreach ($docs as $d) {
     alertEl.textContent = msg;
   }
 
+  function validateContacts() {
+    if (window.MCContactValidation && !window.MCContactValidation.validateForm(form)) {
+      showAlert('Please enter a valid Philippine mobile number.', false);
+      return false;
+    }
+    return true;
+  }
+
   async function saveProfile() {
+    if (!validateContacts()) return { success: false, message: 'Please enter a valid Philippine mobile number.' };
     var fd = new FormData(form);
     var res = await fetch(api + '?action=save', { method: 'POST', body: fd });
     return res.json();

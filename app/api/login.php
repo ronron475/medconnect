@@ -40,9 +40,11 @@ if (empty($email) || empty($password)) {
     echo json_encode(['success' => false, 'message' => 'Email and password are required.']);
     exit;
 }
-if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+require_once dirname(dirname(__DIR__)) . '/app/includes/contact_validation.php';
+$email = mc_normalize_email($email);
+if ($emailErr = mc_email_validation_error($email, true)) {
     ob_clean();
-    echo json_encode(['success' => false, 'message' => 'Invalid email address.']);
+    echo json_encode(['success' => false, 'message' => $emailErr]);
     exit;
 }
 

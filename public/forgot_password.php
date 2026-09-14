@@ -13,10 +13,12 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 
 $email = strtolower(trim($_POST['email'] ?? ''));
 
-if (empty($email) || !filter_var($email, FILTER_VALIDATE_EMAIL)) {
-    echo json_encode(['success' => false, 'message' => 'Please enter a valid email address.']);
+require_once __DIR__ . '/../app/includes/contact_validation.php';
+if ($emailErr = mc_email_validation_error($email, true)) {
+    echo json_encode(['success' => false, 'message' => $emailErr]);
     exit;
 }
+$email = mc_normalize_email($email);
 
 // Always return success to prevent email enumeration
 $stmt = $pdo->prepare("SELECT id, first_name, last_name FROM users WHERE email = ? AND role = 'patient' LIMIT 1");
