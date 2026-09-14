@@ -48,7 +48,13 @@ const USER_AGENT       = 'BagoCityHealthReferral/1.0 (contact@bagocity.gov.ph)';
 
 // ── Session init ──────────────────────────────────────────────────────────────
 if (session_status() === PHP_SESSION_NONE) {
-    session_start();
+    $sessionCookie = dirname(__DIR__, 3) . '/app/includes/session_cookie.php';
+    if (is_file($sessionCookie)) {
+        require_once $sessionCookie;
+        medconnect_session_start();
+    } else {
+        session_start();
+    }
 }
 
 // ── Simple rate limiting ──────────────────────────────────────────────────────

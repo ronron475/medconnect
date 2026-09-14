@@ -26,7 +26,10 @@ final class Api
             ob_start();
         }
         if (session_status() === PHP_SESSION_NONE) {
-            session_start();
+            if (!function_exists('medconnect_session_start')) {
+                require_once dirname(__DIR__) . '/includes/session_cookie.php';
+            }
+            medconnect_session_start();
         }
         header('Content-Type: application/json; charset=utf-8');
         header('X-Content-Type-Options: nosniff');
@@ -92,10 +95,12 @@ final class Api
             $_SESSION['authenticated'] = true;
         }
         if (empty($_SESSION['user_id'])) {
-            self::error('Session expired. Please log in again.', 401, [
-                'authenticated' => false,
-                'code' => 'unauthorized',
-            ]);
+            require_once dirname(__DIR__) . '/includes/auth_guard.php';
+            self::error(
+                'Your session has expired. Please log in again.',
+                401,
+                auth_session_expired_payload()
+            );
         }
     }
 

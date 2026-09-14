@@ -28,20 +28,26 @@ function portal_is_admin_portal(): bool
 function portal_api_require_admin_portal(): void
 {
     if (session_status() === PHP_SESSION_NONE) {
-        session_start();
+        if (!function_exists('medconnect_session_start')) {
+            require_once __DIR__ . '/session_cookie.php';
+        }
+        medconnect_session_start();
     }
     require_once __DIR__ . '/auth_guard.php';
-    if (empty($_SESSION['user_id']) || !portal_is_admin_portal()) {
+    require_once __DIR__ . '/session_timeout.php';
+    session_timeout_check();
+    if (empty($_SESSION['user_id'])) {
+        auth_respond_session_expired();
+    }
+    if (!portal_is_admin_portal()) {
         header('Content-Type: application/json; charset=utf-8');
         header('Cache-Control: no-store');
-        http_response_code(empty($_SESSION['user_id']) ? 401 : 403);
+        http_response_code(403);
         echo json_encode([
             'success' => false,
-            'authenticated' => !empty($_SESSION['user_id']),
-            'message' => empty($_SESSION['user_id'])
-                ? 'Session expired. Please log in again.'
-                : 'Unauthorized.',
-            'code' => empty($_SESSION['user_id']) ? 'unauthorized' : 'forbidden',
+            'authenticated' => true,
+            'message' => 'Unauthorized.',
+            'code' => 'forbidden',
         ], JSON_UNESCAPED_UNICODE);
         exit;
     }
@@ -55,20 +61,26 @@ function portal_api_require_admin_portal(): void
 function portal_api_require_superadmin(): void
 {
     if (session_status() === PHP_SESSION_NONE) {
-        session_start();
+        if (!function_exists('medconnect_session_start')) {
+            require_once __DIR__ . '/session_cookie.php';
+        }
+        medconnect_session_start();
     }
     require_once __DIR__ . '/auth_guard.php';
-    if (empty($_SESSION['user_id']) || !portal_is_superadmin()) {
+    require_once __DIR__ . '/session_timeout.php';
+    session_timeout_check();
+    if (empty($_SESSION['user_id'])) {
+        auth_respond_session_expired();
+    }
+    if (!portal_is_superadmin()) {
         header('Content-Type: application/json; charset=utf-8');
         header('Cache-Control: no-store');
-        http_response_code(empty($_SESSION['user_id']) ? 401 : 403);
+        http_response_code(403);
         echo json_encode([
             'success' => false,
-            'authenticated' => !empty($_SESSION['user_id']),
-            'message' => empty($_SESSION['user_id'])
-                ? 'Session expired. Please log in again.'
-                : 'Super Admin access required.',
-            'code' => empty($_SESSION['user_id']) ? 'unauthorized' : 'forbidden',
+            'authenticated' => true,
+            'message' => 'Super Admin access required.',
+            'code' => 'forbidden',
         ], JSON_UNESCAPED_UNICODE);
         exit;
     }

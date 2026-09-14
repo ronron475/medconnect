@@ -2,9 +2,6 @@
 /**
  * Super Admin view bootstrap — session, auth, session tracking.
  */
-if (session_status() === PHP_SESSION_NONE) {
-    session_start();
-}
 if (!defined('BASE_PATH')) {
     $d = __DIR__;
     while ($d !== dirname($d)) {

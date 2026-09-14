@@ -5,7 +5,6 @@
  *   (default) — updates email, contact_number, barangay on users + patient_registrations
  *   "emergency" — updates emergency_contact_name/phone/relation on patient_registrations
  */
-session_start();
 require_once dirname(dirname(dirname(__DIR__))) . '/bootstrap.php';
 require_once dirname(dirname(dirname(__DIR__))) . '/config/db.php';
 

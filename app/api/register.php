@@ -4,7 +4,6 @@
  * Moved from root/register.php
  * URL: /app/api/register.php
  */
-session_start();
 header('Content-Type: application/json');
 
 require_once dirname(dirname(__DIR__)) . '/bootstrap.php';

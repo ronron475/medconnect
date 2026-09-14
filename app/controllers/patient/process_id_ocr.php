@@ -1,6 +1,7 @@
 <?php
 ob_start(); // buffer all output — prevents PHP notices from corrupting JSON
-session_start();
+require_once dirname(__DIR__, 3) . '/app/includes/session_cookie.php';
+medconnect_session_start();
 header('Content-Type: application/json');
 require_once dirname(__DIR__, 3) . '/config/db.php';
 require_once dirname(__DIR__, 3) . '/config/ocr_config.php';

@@ -11,6 +11,7 @@ header('Pragma: no-cache');
 header('X-Content-Type-Options: nosniff');
 
 require_once dirname(__DIR__, 3) . '/bootstrap.php';
+require_once BASE_PATH . '/app/includes/auth_guard.php';
 
 $uid = (int) ($_SESSION['user_id'] ?? 0);
 $authenticated = $uid > 0;
@@ -27,8 +28,12 @@ if ($authenticated) {
     $payload['user_id'] = $uid;
     $payload['role'] = (string) ($_SESSION['user_role'] ?? '');
 } else {
-    $payload['message'] = 'Session expired. Please log in again.';
-    $payload['redirect'] = (defined('BASE_URL') ? BASE_URL : '') . '/index.php?signin=1';
+    $expired = auth_session_expired_payload();
+    $payload['success'] = false;
+    $payload['error'] = $expired['error'];
+    $payload['message'] = $expired['message'];
+    $payload['code'] = $expired['code'];
+    $payload['redirect'] = $expired['redirect'];
 }
 
 echo json_encode($payload, JSON_UNESCAPED_UNICODE);

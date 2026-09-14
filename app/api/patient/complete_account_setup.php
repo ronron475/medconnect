@@ -4,7 +4,6 @@
  * URL: /app/api/patient/complete_account_setup.php
  */
 ob_start();
-session_start();
 header('Content-Type: application/json; charset=utf-8');
 header('X-Content-Type-Options: nosniff');
 header('Cache-Control: no-store');

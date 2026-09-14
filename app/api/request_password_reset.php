@@ -4,7 +4,6 @@
  * Moved from root/request_password_reset.php
  * URL: /app/api/request_password_reset.php
  */
-session_start();
 header('Content-Type: application/json');
 
 require_once dirname(dirname(__DIR__)) . '/bootstrap.php';

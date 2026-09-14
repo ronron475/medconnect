@@ -3,7 +3,6 @@
  * API: Export operational reports as CSV
  * URL: /app/api/admin/export_report.php
  */
-session_start();
 
 require_once dirname(dirname(dirname(__DIR__))) . '/bootstrap.php';
 require_once dirname(dirname(dirname(__DIR__))) . '/config/db.php';

@@ -5,12 +5,6 @@ if (!defined('MEDCONNECT_SESSION_READ_AND_CLOSE')) {
     define('MEDCONNECT_SESSION_READ_AND_CLOSE', true);
 }
 
-if (session_status() === PHP_SESSION_NONE) {
-    session_start([
-        'read_and_close' => true,
-    ]);
-}
-
 if (!defined('BASE_PATH')) {
     $d = __DIR__;
     while ($d !== dirname($d)) {
@@ -222,7 +216,10 @@ if ($pageCsrfToken === '' || empty($_SESSION['csrf_token'])
     || !hash_equals((string) ($_SESSION['csrf_token'] ?? ''), $pageCsrfToken)) {
     $hadActiveSession = session_status() === PHP_SESSION_ACTIVE;
     if (!$hadActiveSession && session_status() === PHP_SESSION_NONE) {
-        @session_start();
+        if (!function_exists('medconnect_session_start')) {
+            require_once BASE_PATH . '/app/includes/session_cookie.php';
+        }
+        medconnect_session_start();
     }
     if (session_status() === PHP_SESSION_ACTIVE || !empty($_SESSION)) {
         if (empty($_SESSION['csrf_token'])) {

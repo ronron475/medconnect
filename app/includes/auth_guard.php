@@ -34,12 +34,56 @@ function auth_session_expired_url(): string
 }
 
 /**
+ * Canonical JSON payload for expired/invalid authenticated sessions.
+ * Keep `code` for existing clients; `error` mirrors the same signal.
+ *
+ * @return array{success:bool,authenticated:bool,error:string,message:string,code:string,redirect:string}
+ */
+function auth_session_expired_payload(?string $redirect = null): array
+{
+    $redirect = $redirect ?: auth_session_expired_url();
+    return [
+        'success' => false,
+        'authenticated' => false,
+        'error' => 'SESSION_EXPIRED',
+        'message' => 'Your session has expired. Please log in again.',
+        'code' => 'session_expired',
+        'redirect' => $redirect,
+    ];
+}
+
+/**
+ * Emit 401 JSON or HTML redirect for an expired/invalid session.
+ * Does not clear the session by itself — callers clear first when needed.
+ */
+function auth_respond_session_expired(?string $redirect = null): void
+{
+    $redirect = $redirect ?: auth_session_expired_url();
+    require_once BASE_PATH . '/app/includes/request_helpers.php';
+    if (request_wants_json()) {
+        if (!headers_sent()) {
+            header('Content-Type: application/json; charset=utf-8');
+            header('X-Content-Type-Options: nosniff');
+            header('Cache-Control: no-store');
+        }
+        http_response_code(401);
+        echo json_encode(auth_session_expired_payload($redirect), JSON_UNESCAPED_UNICODE);
+        exit;
+    }
+    header('Location: ' . $redirect);
+    exit;
+}
+
+/**
  * Clear session and return visitor to the public landing / sign-in flow.
  */
 function auth_destroy_session_and_redirect(string $reason = 'signin'): void
 {
     if (session_status() === PHP_SESSION_NONE) {
-        session_start();
+        if (!function_exists('medconnect_session_start')) {
+            require_once __DIR__ . '/session_cookie.php';
+        }
+        medconnect_session_start();
     }
 
     $_SESSION = [];
@@ -51,25 +95,15 @@ function auth_destroy_session_and_redirect(string $reason = 'signin'): void
         session_destroy();
     }
 
-    $redirect = match ($reason) {
-        'session_expired' => auth_session_expired_url(),
-        default => auth_signin_required_url(),
-    };
+    if ($reason === 'session_expired' || $reason === 'session_invalid') {
+        auth_respond_session_expired(auth_session_expired_url());
+    }
 
+    $redirect = auth_signin_required_url();
     require_once BASE_PATH . '/app/includes/request_helpers.php';
     if (request_wants_json()) {
-        header('Content-Type: application/json; charset=utf-8');
-        header('X-Content-Type-Options: nosniff');
-        header('Cache-Control: no-store');
-        http_response_code(401);
-            echo json_encode([
-                'success' => false,
-                'authenticated' => false,
-                'message' => 'Your session is no longer valid. Please sign in again.',
-                'code' => 'session_invalid',
-                'redirect' => $redirect,
-            ], JSON_UNESCAPED_UNICODE);
-        exit;
+        // Still use the canonical session-expired contract for API clients.
+        auth_respond_session_expired($redirect);
     }
 
     header('Location: ' . $redirect);
@@ -92,16 +126,16 @@ function auth_ensure_session_user_valid(PDO $pdo): void
     $row = $stmt->fetch(PDO::FETCH_ASSOC);
 
     if (!$row) {
-        auth_destroy_session_and_redirect();
+        auth_destroy_session_and_redirect('session_invalid');
     }
 
     if ($role !== '' && (string) ($row['role'] ?? '') !== $role) {
-        auth_destroy_session_and_redirect();
+        auth_destroy_session_and_redirect('session_invalid');
     }
 
     $status = strtolower((string) ($row['account_status'] ?? 'active'));
     if ($status !== '' && $status !== 'active') {
-        auth_destroy_session_and_redirect();
+        auth_destroy_session_and_redirect('session_invalid');
     }
 }
 
@@ -125,7 +159,10 @@ function auth_redirect_if_logged_in(): void
 {
     auth_prevent_back_cache();
     if (session_status() === PHP_SESSION_NONE) {
-        session_start();
+        if (!function_exists('medconnect_session_start')) {
+            require_once __DIR__ . '/session_cookie.php';
+        }
+        medconnect_session_start();
     }
     if (empty($_SESSION['user_id'])) {
         return;
@@ -179,28 +216,19 @@ function auth_require_login(): void
 {
     auth_prevent_back_cache();
     if (session_status() === PHP_SESSION_NONE) {
-        session_start();
+        if (!function_exists('medconnect_session_start')) {
+            require_once __DIR__ . '/session_cookie.php';
+        }
+        medconnect_session_start();
     }
     require_once BASE_PATH . '/app/includes/session_timeout.php';
     session_timeout_check();
     if (empty($_SESSION['user_id'])) {
         require_once BASE_PATH . '/app/includes/request_helpers.php';
-        $redirect = auth_signin_required_url();
         if (request_wants_json()) {
-            header('Content-Type: application/json; charset=utf-8');
-            header('X-Content-Type-Options: nosniff');
-            header('Cache-Control: no-store');
-            http_response_code(401);
-            echo json_encode([
-                'success' => false,
-                'authenticated' => false,
-                'message' => 'Session expired. Please log in again.',
-                'code' => 'unauthorized',
-                'redirect' => $redirect,
-            ], JSON_UNESCAPED_UNICODE);
-            exit;
+            auth_respond_session_expired();
         }
-        header('Location: ' . $redirect);
+        header('Location: ' . auth_signin_required_url());
         exit;
     }
     if (empty($_SESSION['authenticated'])) {

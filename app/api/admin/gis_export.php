@@ -2,19 +2,17 @@
 /**
  * API: Export GIS patient location records (CSV).
  */
-session_start();
+require_once dirname(dirname(dirname(__DIR__))) . '/bootstrap.php';
+require_once dirname(dirname(dirname(__DIR__))) . '/config/db.php';
+require_once dirname(dirname(dirname(__DIR__))) . '/app/core/BagoBarangayCentroids.php';
+require_once dirname(dirname(dirname(__DIR__))) . '/app/core/GisDashboardService.php';
+require_once BASE_PATH . '/app/includes/audit_log.php';
 
 $role = (string) ($_SESSION['user_role'] ?? '');
 if (!in_array($role, ['admin', 'provider', 'superadmin'], true)) {
     http_response_code(403);
     die('Unauthorized.');
 }
-
-require_once dirname(dirname(dirname(__DIR__))) . '/bootstrap.php';
-require_once dirname(dirname(dirname(__DIR__))) . '/config/db.php';
-require_once dirname(dirname(dirname(__DIR__))) . '/app/core/BagoBarangayCentroids.php';
-require_once dirname(dirname(dirname(__DIR__))) . '/app/core/GisDashboardService.php';
-require_once BASE_PATH . '/app/includes/audit_log.php';
 
 $format = strtolower((string) ($_GET['format'] ?? 'csv'));
 $gis = new GisDashboardService($pdo);

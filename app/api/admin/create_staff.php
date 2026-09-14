@@ -3,7 +3,6 @@
  * API: Create staff account (admin)
  * URL: /app/api/admin/create_staff.php
  */
-session_start();
 header('Content-Type: application/json');
 
 require_once dirname(dirname(dirname(__DIR__))) . '/bootstrap.php';
@@ -11,10 +10,6 @@ require_once dirname(dirname(dirname(__DIR__))) . '/config/db.php';
 require_once dirname(dirname(dirname(__DIR__))) . '/app/includes/provider_verification.php';
 require_once dirname(dirname(dirname(__DIR__))) . '/app/includes/portal_auth.php';
 require_once dirname(dirname(dirname(__DIR__))) . '/app/core/PRCVerificationService.php';
-
-if (session_status() === PHP_SESSION_NONE) {
-    session_start();
-}
 portal_api_require_admin_portal();
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {

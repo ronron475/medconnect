@@ -3,7 +3,6 @@
  * API: Toggle user account status (deprecated path — Super Administrator only).
  * URL: /app/api/admin/toggle_user_status.php
  */
-session_start();
 header('Content-Type: application/json');
 
 require_once dirname(dirname(dirname(__DIR__))) . '/bootstrap.php';

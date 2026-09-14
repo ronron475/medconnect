@@ -6,7 +6,6 @@
  * GET (no since)      → active in-consultation + recently completed (24h)
  */
 ob_start();
-session_start();
 
 require_once dirname(dirname(dirname(__DIR__))) . '/bootstrap.php';
 require_once dirname(dirname(dirname(__DIR__))) . '/config/db.php';

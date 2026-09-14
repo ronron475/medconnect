@@ -3,7 +3,6 @@
  * API: Verify or reject doctor PRC credentials (Super Administrator only).
  * URL: /app/api/admin/verify_doctor.php
  */
-session_start();
 header('Content-Type: application/json');
 
 require_once dirname(dirname(dirname(__DIR__))) . '/bootstrap.php';

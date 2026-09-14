@@ -2,7 +2,6 @@
 /**
  * API: GIS Dashboard data (admin + healthcare provider only).
  */
-session_start();
 header('Content-Type: application/json; charset=utf-8');
 
 require_once dirname(dirname(dirname(__DIR__))) . '/bootstrap.php';

@@ -211,6 +211,10 @@
 
   function setFormLoading(form, loading, submitBtn, loadingText) {
     if (!form) return;
+    // Never re-enable controls after a confirmed session expiration.
+    if (!loading && global.__mcSessionExpired) {
+      return;
+    }
     form.classList.toggle('is-loading', loading);
     form.querySelectorAll('input, select, textarea, button').forEach(function (el) {
       if (el.type === 'hidden') return;

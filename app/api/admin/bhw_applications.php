@@ -2,7 +2,6 @@
 /**
  * API: BHW application workflow (Administrator — invite + institutional docs).
  */
-session_start();
 
 require_once dirname(dirname(dirname(__DIR__))) . '/bootstrap.php';
 require_once dirname(dirname(dirname(__DIR__))) . '/config/db.php';

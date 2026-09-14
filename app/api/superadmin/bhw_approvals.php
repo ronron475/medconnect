@@ -2,7 +2,6 @@
 /**
  * API: BHW application approvals (Checker — Super Administrator only).
  */
-session_start();
 
 require_once dirname(dirname(dirname(__DIR__))) . '/bootstrap.php';
 require_once dirname(dirname(dirname(__DIR__))) . '/config/db.php';

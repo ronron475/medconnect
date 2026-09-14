@@ -7,7 +7,6 @@
  * - Patient only joins after the room exists (via video_room.php?token=...).
  */
 ob_start();
-session_start();
 
 require_once dirname(dirname(dirname(__DIR__))) . '/bootstrap.php';
 require_once dirname(dirname(dirname(__DIR__))) . '/config/db.php';

@@ -9,7 +9,10 @@
 <?php require_once VIEWS_PATH . '/partials/auth_transition_boot.php'; ?>
 <?php
 if (session_status() === PHP_SESSION_NONE) {
-    session_start();
+    if (!function_exists('medconnect_session_start')) {
+        require_once BASE_PATH . '/app/includes/session_cookie.php';
+    }
+    medconnect_session_start();
 }
 global $pdo;
 if (!isset($pdo) || !($pdo instanceof PDO)) {

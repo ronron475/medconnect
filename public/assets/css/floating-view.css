@@ -1,0 +1,200 @@
+/**
+ * medConnect — Mobile Floating View (web in-page panel)
+ * Activated by the shared navbar ⛶ control on viewports ≤1024px.
+ * Desktop continues to use the browser Fullscreen API (no styles here).
+ *
+ * This is NOT Android system Pop-up View — browsers cannot force that.
+ */
+
+html.mc-floating-view,
+html.mc-floating-view body.mc-floating-view {
+  height: 100%;
+  height: 100dvh;
+  overflow: hidden;
+}
+
+/* Soft “desktop behind the window” backdrop (decorative only) */
+html.mc-floating-view body.mc-floating-view {
+  background:
+    radial-gradient(120% 80% at 10% 0%, rgba(0, 151, 167, 0.18), transparent 55%),
+    radial-gradient(90% 70% at 90% 100%, rgba(15, 23, 42, 0.16), transparent 50%),
+    linear-gradient(160deg, #0f172a 0%, #1e293b 45%, #0b1220 100%) !important;
+}
+
+html.mc-floating-view body.mc-floating-view::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background-image:
+    linear-gradient(rgba(255, 255, 255, 0.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.04) 1px, transparent 1px);
+  background-size: 48px 48px;
+  opacity: 0.35;
+}
+
+/* Floating app chrome — contain fixed topbars/navs inside the panel */
+html.mc-floating-view body.mc-floating-view .portal-shell,
+html.mc-floating-view body.mc-floating-view .root-wrapper,
+html.mc-floating-view body.mc-floating-view .provider-shell {
+  position: fixed !important;
+  z-index: 1000;
+  left: max(12px, env(safe-area-inset-left, 0px));
+  right: max(12px, env(safe-area-inset-right, 0px));
+  top: max(12px, env(safe-area-inset-top, 0px));
+  bottom: max(12px, env(safe-area-inset-bottom, 0px));
+  width: auto !important;
+  max-width: none;
+  height: auto !important;
+  max-height: none;
+  margin: 0 !important;
+  border-radius: 18px;
+  overflow: hidden;
+  display: flex !important;
+  flex-direction: column;
+  background: var(--mc-bg, #ffffff);
+  box-shadow:
+    0 18px 48px rgba(0, 0, 0, 0.38),
+    0 2px 8px rgba(0, 0, 0, 0.22),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.08);
+  /* Creates a containing block so position:fixed topbars stay inside the panel */
+  transform: translateZ(0);
+  isolation: isolate;
+}
+
+/* Phone portrait — tighter margins, still usable */
+@media (max-width: 480px) and (orientation: portrait) {
+  html.mc-floating-view body.mc-floating-view .portal-shell,
+  html.mc-floating-view body.mc-floating-view .root-wrapper,
+  html.mc-floating-view body.mc-floating-view .provider-shell {
+    left: max(10px, env(safe-area-inset-left, 0px));
+    right: max(10px, env(safe-area-inset-right, 0px));
+    top: max(10px, env(safe-area-inset-top, 0px));
+    bottom: max(10px, env(safe-area-inset-bottom, 0px));
+    border-radius: 16px;
+  }
+}
+
+/* Phone landscape — use width better, keep vertical breathing room */
+@media (max-width: 900px) and (orientation: landscape) {
+  html.mc-floating-view body.mc-floating-view .portal-shell,
+  html.mc-floating-view body.mc-floating-view .root-wrapper,
+  html.mc-floating-view body.mc-floating-view .provider-shell {
+    left: max(4vw, env(safe-area-inset-left, 0px));
+    right: max(4vw, env(safe-area-inset-right, 0px));
+    top: max(6px, env(safe-area-inset-top, 0px));
+    bottom: max(6px, env(safe-area-inset-bottom, 0px));
+    border-radius: 14px;
+  }
+}
+
+/* Tablet — larger floating panel with more margin */
+@media (min-width: 641px) and (max-width: 1024px) {
+  html.mc-floating-view body.mc-floating-view .portal-shell,
+  html.mc-floating-view body.mc-floating-view .root-wrapper,
+  html.mc-floating-view body.mc-floating-view .provider-shell {
+    left: max(5vw, env(safe-area-inset-left, 0px));
+    right: max(5vw, env(safe-area-inset-right, 0px));
+    top: max(4vh, env(safe-area-inset-top, 0px));
+    bottom: max(4vh, env(safe-area-inset-bottom, 0px));
+    border-radius: 20px;
+  }
+}
+
+html.mc-floating-view body.mc-floating-view .topbar,
+html.mc-floating-view body.mc-floating-view .pd-header,
+html.mc-floating-view body.mc-floating-view header.topbar {
+  position: relative !important;
+  top: 0 !important;
+  left: 0 !important;
+  right: auto !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  z-index: 30;
+  border-top-left-radius: inherit;
+  border-top-right-radius: inherit;
+  flex-shrink: 0;
+}
+
+html.mc-floating-view body.mc-floating-view .main.portal-main,
+html.mc-floating-view body.mc-floating-view .main-content.portal-main,
+html.mc-floating-view body.mc-floating-view .main-content.provider-main,
+html.mc-floating-view body.mc-floating-view .portal-main,
+html.mc-floating-view body.mc-floating-view .provider-main {
+  flex: 1 1 auto;
+  min-height: 0 !important;
+  height: auto !important;
+  overflow: auto !important;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
+  width: 100% !important;
+  max-width: 100% !important;
+  margin-left: 0 !important;
+  /* Sticky topbar replaces fixed header offset */
+  padding-top: 0 !important;
+}
+
+/* Keep page content clear of sticky header when portals still inject offset padding */
+html.mc-floating-view body.mc-floating-view .portal-page-body,
+html.mc-floating-view body.mc-floating-view .provider-page-body {
+  min-height: 0;
+  padding-top: 0.5rem;
+}
+
+/* Keep drawer sidebars usable above the floating panel */
+html.mc-floating-view body.mc-floating-view .sidebar,
+html.mc-floating-view body.mc-floating-view .sb-aqua,
+html.mc-floating-view body.mc-floating-view .adm-sidebar,
+html.mc-floating-view body.mc-floating-view .adm-sidebar--bhw {
+  z-index: 1100;
+}
+
+/* Bottom mobile navs stay inside the floating chrome */
+html.mc-floating-view body.mc-floating-view .portal-mobile-nav,
+html.mc-floating-view body.mc-floating-view .patient-mobile-nav {
+  position: absolute !important;
+  left: 0 !important;
+  right: 0 !important;
+  bottom: 0 !important;
+  width: 100% !important;
+  border-bottom-left-radius: inherit;
+  border-bottom-right-radius: inherit;
+}
+
+/* Active toggle affordance (reuse aqua accent; do not redesign navbar) */
+.mc-fullscreen-btn.is-floating {
+  color: var(--mc-aqua, #0097a7);
+  border-color: rgba(0, 151, 167, 0.28);
+  background: var(--mc-aqua-light, #e0f7fa);
+}
+
+html[data-theme-resolved='dark'] .mc-fullscreen-btn.is-floating {
+  background: rgba(0, 151, 167, 0.18);
+  border-color: rgba(0, 151, 167, 0.4);
+}
+
+html.mc-floating-view[data-theme-resolved='dark'] body.mc-floating-view .portal-shell,
+html.mc-floating-view[data-theme-resolved='dark'] body.mc-floating-view .root-wrapper,
+html.mc-floating-view[data-theme-resolved='dark'] body.mc-floating-view .provider-shell {
+  background: var(--mc-bg, #0f172a);
+  box-shadow:
+    0 18px 48px rgba(0, 0, 0, 0.55),
+    0 2px 8px rgba(0, 0, 0, 0.35),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.06);
+}
+
+/* Never apply floating chrome on desktop widths */
+@media (min-width: 1025px) {
+  html.mc-floating-view body.mc-floating-view .portal-shell,
+  html.mc-floating-view body.mc-floating-view .root-wrapper,
+  html.mc-floating-view body.mc-floating-view .provider-shell {
+    position: static !important;
+    inset: auto !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+    transform: none !important;
+    overflow: visible !important;
+    height: auto !important;
+  }
+}

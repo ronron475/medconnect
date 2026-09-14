@@ -1,5 +1,4 @@
 <?php
-session_start();
 require_once dirname(__DIR__, 4) . '/bootstrap.php';
 require_once dirname(__DIR__, 4) . '/config/db.php';
 require_once CONTROLLERS_PATH . '/provider/SettingsController.php';

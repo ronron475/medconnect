@@ -267,7 +267,7 @@ require __DIR__ . '/partials/landing_navbar.php';
 
               <?php if (!empty($_GET['session_expired'])): ?>
               <div class="alert alert--warning signin-context-alert" style="display:block;" role="alert">
-                Your session expired due to inactivity.
+                Your session has expired. Please log in again.
               </div>
               <?php endif; ?>
 

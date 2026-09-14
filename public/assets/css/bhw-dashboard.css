@@ -274,6 +274,7 @@
   text-transform: uppercase;
   color: #64748b;
   line-height: 1.35;
+  text-align: left;
 }
 
 .bhw-dash-stat__val {
@@ -283,6 +284,9 @@
   line-height: 1;
   color: #0f172a;
   font-variant-numeric: tabular-nums;
+  align-self: stretch;
+  width: 100%;
+  text-align: center;
 }
 
 .bhw-dash-stat--alert .bhw-dash-stat__val {
