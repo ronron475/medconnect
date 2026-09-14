@@ -142,6 +142,31 @@
   transform: translateY(-1px);
 }
 
+/* Shared fullscreen toggle (all portal roles) */
+.mc-fullscreen-btn {
+  flex-shrink: 0;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+}
+
+.mc-fullscreen-btn svg {
+  width: 18px;
+  height: 18px;
+  display: block;
+  pointer-events: none;
+}
+
+.mc-fullscreen-btn:focus-visible {
+  outline: 3px solid rgba(0, 151, 167, 0.35);
+  outline-offset: 2px;
+}
+
+.mc-fullscreen-btn.is-fullscreen {
+  color: var(--mc-aqua, #0097a7);
+  border-color: rgba(0, 151, 167, 0.28);
+  background: var(--mc-aqua-light, #e0f7fa);
+}
+
 /* Avatar button */
 .topbar-avatar {
   width: 38px;

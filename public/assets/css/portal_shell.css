@@ -418,7 +418,9 @@ body.patient-portal .portal-page-body {
 
     body.patient-portal .topbar--clinical .mc-notif-btn,
 
-    body.patient-portal .topbar--clinical .topbar-icon-btn {
+    body.patient-portal .topbar--clinical .topbar-icon-btn,
+
+    body.patient-portal .topbar--clinical .mc-fullscreen-btn {
 
         width: 44px;
 
@@ -571,6 +573,8 @@ body.patient-portal .portal-page-body {
     body.patient-portal .topbar--clinical .mc-notif-btn,
 
     body.patient-portal .topbar--clinical .topbar-icon-btn,
+
+    body.patient-portal .topbar--clinical .mc-fullscreen-btn,
 
     body.patient-portal .topbar--clinical .topbar-logout {
 

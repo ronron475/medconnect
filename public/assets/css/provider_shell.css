@@ -179,7 +179,8 @@ body.provider-body .provider-page-body {
     }
 
     body.provider-body .pd-notif-btn,
-    body.provider-body .mc-notif-btn {
+    body.provider-body .mc-notif-btn,
+    body.provider-body .mc-fullscreen-btn {
         width: 44px;
         height: 44px;
         min-width: 44px;
