@@ -36,7 +36,7 @@ $asset = ASSET_BASE;
 
   <?php require_once VIEWS_PATH . '/partials/theme_init.php'; ?>
 
-  <link rel="stylesheet" href="<?= $asset ?>/assets/css/style.css?v=20260702b" />
+  <link rel="stylesheet" href="<?= $asset ?>/assets/css/style.css?v=20260915a" />
 
   <link rel="stylesheet" href="<?= $asset ?>/assets/css/responsive.css?v=20260808r" />
 
@@ -52,13 +52,13 @@ $asset = ASSET_BASE;
   <link rel="stylesheet" href="<?= $asset ?>/assets/css/landing-fab-modals.css?v=2" />
   <link rel="stylesheet" href="<?= $asset ?>/assets/css/signin-req-drawer.css?v=11" />
   <link rel="stylesheet" href="<?= $asset ?>/assets/css/signin-card-polish.css?v=4" />
-  <link rel="stylesheet" href="<?= $asset ?>/assets/css/hero-signin-panel.css?v=21" />
+  <link rel="stylesheet" href="<?= $asset ?>/assets/css/hero-signin-panel.css?v=22" />
   <?php $forgotPwCssVer = (int) @filemtime(ASSETS_PATH . '/css/forgot-password.css'); ?>
   <link rel="stylesheet" href="<?= $asset ?>/assets/css/forgot-password.css?v=<?= $forgotPwCssVer ?>" />
   <?php $landingScrollAnimCssVer = (int) @filemtime(ASSETS_PATH . '/css/landing-scroll-animations.css'); ?>
   <link rel="stylesheet" href="<?= $asset ?>/assets/css/landing-scroll-animations.css?v=<?= $landingScrollAnimCssVer ?>" />
   <link rel="stylesheet" href="<?= $asset ?>/assets/css/landing-about-team.css?v=7" />
-  <link rel="stylesheet" href="<?= $asset ?>/assets/css/landing-responsive.css?v=9" />
+  <link rel="stylesheet" href="<?= $asset ?>/assets/css/landing-responsive.css?v=10" />
   <?php $landingThemeFabCssVer = (int) @filemtime(ASSETS_PATH . '/css/landing-theme-fab.css'); ?>
   <link rel="stylesheet" href="<?= $asset ?>/assets/css/landing-theme-fab.css?v=<?= $landingThemeFabCssVer ?>" />
   <?php $landingDownloadCssVer = (int) @filemtime(ASSETS_PATH . '/css/landing-download-app.css'); ?>

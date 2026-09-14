@@ -25,18 +25,22 @@
   --landing-transition: 0.28s cubic-bezier(0.22, 1, 0.36, 1);
 }
 
-/* ── Allow intentional scroll; soft page width containment ── */
+/* ── Allow intentional vertical scroll; contain page width after root fixes ── */
 html:has(body.landing-page) {
-  overflow-x: auto;
+  overflow-x: hidden;
+  overflow-x: clip;
   overflow-y: auto;
   max-width: 100%;
   scroll-behavior: smooth;
 }
 
 body.landing-page {
-  overflow-x: auto;
+  overflow-x: hidden;
+  overflow-x: clip;
   overflow-y: auto;
   max-width: 100%;
+  min-height: 100svh;
+  width: 100%;
 }
 
 .landing-page *,
@@ -411,12 +415,173 @@ body.landing-page.landing-nav-open {
   }
 }
 
-@media (min-width: 768px) and (max-width: 991px) {
+/* ── Hero viewport safety (desktop → phone) ── */
+.landing-page .hero--cinematic {
+  min-height: 100svh;
+  height: auto;
+  max-height: none;
+  align-items: flex-start;
+  overflow-x: clip;
+  overflow-y: visible;
+}
+
+.landing-page .hero--cinematic .hero-inner {
+  width: 100%;
+  max-width: 1320px;
+  min-height: calc(100svh - var(--landing-hero-offset, 80px));
+  height: auto;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  box-sizing: border-box;
+}
+
+.landing-page .hero--cinematic .hero-stage {
+  width: 100%;
+  min-width: 0;
+  min-height: 0;
+}
+
+.landing-page .hero--cinematic .hero-copy-shift,
+.landing-page .hero--cinematic .hero-left,
+.landing-page .hero--cinematic .hero-title,
+.landing-page .hero--cinematic .hero-desc,
+.landing-page .hero--cinematic .hero-trust-chips,
+.landing-page .hero--cinematic .hero-ctas {
+  max-width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+}
+
+.landing-page .hero--cinematic .hero-ctas {
+  flex-wrap: wrap;
+}
+
+.landing-page .hero-media {
+  background-size: cover;
+  background-position: left top;
+  background-repeat: no-repeat;
+  max-width: 100%;
+}
+
+/* Short laptop / desktop height — grow with content, never clip */
+@media (max-height: 820px) {
+  .landing-page .hero--cinematic {
+    min-height: auto;
+  }
+
   .landing-page .hero--cinematic .hero-inner {
-    min-height: calc(85svh - var(--landing-hero-offset, 72px));
-    padding-bottom: var(--landing-space-sm);
+    min-height: auto;
+    justify-content: flex-start;
+    padding-top: clamp(20px, 3vh, 40px);
+    padding-bottom: clamp(36px, 5vh, 64px);
   }
 }
+
+/* Laptop widths — keep copy + Sign In side-by-side without overlap */
+@media (min-width: 961px) and (max-width: 1280px) {
+  .landing-page .hero--cinematic .hero-copy-shift {
+    max-width: min(520px, calc(100% - min(360px, 36vw) - 28px));
+  }
+
+  .landing-page .hero--cinematic .hero-left {
+    max-width: 100% !important;
+  }
+
+  .landing-page .hero-signin-panel,
+  .landing-page .hero-signin-panel.is-open:not(.is-viewport-pinned),
+  .landing-page .hero-signin-panel.is-closing:not(.is-viewport-pinned) {
+    width: min(360px, 38vw);
+    max-width: min(360px, calc(100% - 32px));
+    right: 0;
+  }
+
+  .landing-page.signin-active .hero--cinematic .hero-copy-shift,
+  .landing-page .hero--cinematic.is-signin-open .hero-copy-shift {
+    transform: translateX(clamp(-72px, -5vw, -32px));
+  }
+}
+
+@media (min-width: 1281px) and (max-width: 1440px) {
+  .landing-page .hero--cinematic .hero-copy-shift {
+    max-width: min(600px, calc(100% - 420px));
+  }
+}
+
+@media (min-width: 768px) and (max-width: 991px) {
+  .landing-page .hero--cinematic .hero-inner {
+    min-height: auto;
+    padding-bottom: var(--landing-space-md);
+    justify-content: flex-start;
+  }
+
+  .landing-page .hero--cinematic .hero-copy-shift {
+    max-width: 100%;
+  }
+
+  .landing-page .hero--cinematic .hero-ctas {
+    flex-wrap: wrap;
+  }
+
+  .landing-page .hero--cinematic .hero-cta {
+    flex: 1 1 auto;
+    min-width: min(100%, 200px);
+  }
+}
+
+@media (max-width: 960px) {
+  .landing-page .hero--cinematic {
+    min-height: auto;
+  }
+
+  .landing-page .hero--cinematic .hero-inner {
+    min-height: auto;
+    justify-content: flex-start;
+  }
+
+  .landing-page .hero-signin-panel,
+  .landing-page .hero-signin-panel.is-open:not(.is-viewport-pinned) {
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
+  }
+}
+
+@media (max-width: 768px) {
+  .landing-page .hero--cinematic .hero-inner {
+    min-height: auto;
+    padding-left: max(16px, env(safe-area-inset-left, 0px));
+    padding-right: max(16px, env(safe-area-inset-right, 0px));
+  }
+
+  .landing-page .hero--cinematic .hero-trust-chips {
+    width: 100%;
+    max-width: 100%;
+  }
+
+  .landing-page .hero--cinematic .hero-cta {
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
+  }
+
+  .landing-page .hero-signin-panel .signin-card--hero-inline,
+  .landing-page .hero-signin-panel .signin-modal-wrap,
+  .landing-page .hero-signin-panel .signin-modal-inner {
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    box-sizing: border-box;
+  }
+}
+
+/* Prevent full-bleed carousel / hero from causing horizontal scroll */
+.landing-page .services-section:has(.landing-carousel),
+.landing-page .hero--cinematic {
+  overflow-x: clip;
+  overflow-y: visible;
+}
+
 
 /* ── Services grid — equal-height cards ── */
 .landing-page .services-grid {
@@ -798,12 +963,6 @@ body.landing-page.landing-nav-open {
 body.landing-page .fcb {
   left: max(24px, env(safe-area-inset-left, 0px));
   bottom: max(24px, env(safe-area-inset-bottom, 0px));
-}
-
-/* Prevent full-bleed carousel from causing horizontal scroll */
-.landing-page .services-section:has(.landing-carousel),
-.landing-page .hero--cinematic {
-  overflow-x: clip;
 }
 
 @media (max-width: 768px) {

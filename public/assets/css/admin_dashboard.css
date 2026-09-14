@@ -1020,13 +1020,26 @@ body.admin-body {
 [data-live-dashboard] {
   display: flex;
   flex-direction: column;
-  gap: 28px;
+  gap: 36px;
   width: 100%;
   min-width: 0;
 }
 
+[data-live-dashboard] > section,
+[data-live-dashboard] > .adm-charts-section,
+[data-live-dashboard] > .adm-grid {
+  margin: 0;
+}
+
+/* Live Operations / Platform Snapshot: stack heading then cards with clear gap */
+[data-live-dashboard] > section {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
 [data-live-dashboard] .adm-section-head {
-  margin-bottom: 18px;
+  margin-bottom: 0;
 }
 
 [data-live-dashboard] .adm-section-title {
@@ -1065,20 +1078,30 @@ body.admin-body {
 }
 
 [data-live-dashboard] .adm-charts-section {
-  gap: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
 }
 
 [data-live-dashboard] .adm-charts-section > .adm-section-head {
-  margin-bottom: 4px;
+  margin-bottom: 0;
 }
 
 @media (min-width: 769px) and (max-width: 1200px) {
   [data-live-dashboard] {
-    gap: 24px;
+    gap: 32px;
+  }
+
+  [data-live-dashboard] > section {
+    gap: 18px;
   }
 
   [data-live-dashboard] .mc-notif-widgets--dashboard {
     gap: 14px;
+  }
+
+  [data-live-dashboard] .adm-charts-section {
+    gap: 18px;
   }
 }
 

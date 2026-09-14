@@ -73,7 +73,7 @@
 }
 
 .landing-page .nav-search-wrap.is-expanded .nav-search-panel {
-  width: min(340px, calc(100vw - 420px));
+  width: min(340px, calc(100% - 24px), calc(100vw - 48px));
   max-width: 380px;
   opacity: 1;
   pointer-events: auto;
