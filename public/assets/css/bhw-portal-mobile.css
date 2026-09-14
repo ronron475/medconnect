@@ -6,12 +6,12 @@
 
 @media (max-width: 768px) {
   body.bhw-body {
-    --mob-bhw-page-title: clamp(1.1rem, 4.5vw, 1.35rem);
-    --mob-bhw-section: 0.875rem;
-    --mob-bhw-body: 0.8125rem;
-    --mob-bhw-label: 0.6875rem;
-    --mob-bhw-sub: 0.75rem;
-    --mob-bhw-btn: 0.8125rem;
+    --mob-bhw-page-title: clamp(1.2rem, 4.8vw, 1.4rem);
+    --mob-bhw-section: 0.9375rem;
+    --mob-bhw-body: 0.875rem;
+    --mob-bhw-label: 0.75rem;
+    --mob-bhw-sub: 0.8125rem;
+    --mob-bhw-btn: 0.875rem;
     --mob-bhw-stat: 1.5rem;
   }
 
@@ -50,7 +50,7 @@
   body.bhw-body .bhw-register-header p,
   body.bhw-body .portal-page-body .text-muted,
   body.bhw-body .portal-page-body .text-sm {
-    font-size: 12px;
+    font-size: 13px;
     line-height: 1.45;
     overflow-wrap: anywhere;
   }
