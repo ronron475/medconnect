@@ -1,5 +1,6 @@
 /* ═══════════════════════════════════════════════════════════
-   BHW Sidebar — formal admin design system bridge
+   BHW Sidebar — bridge only (visuals come from admin_dashboard.css)
+   Keep BHW on the same adm-sidebar design system as Admin/SuperAdmin.
 ═══════════════════════════════════════════════════════════ */
 
 body.bhw-body {
@@ -16,55 +17,19 @@ body.bhw-body {
   }
 }
 
-body.bhw-body .adm-sidebar--bhw .adm-nav-item {
-  font-size: 13px;
-  font-weight: 500;
-  min-height: 40px;
-  padding: 9px 13px;
-}
-
-body.bhw-body .adm-sidebar--bhw .adm-nav-section {
-  padding: 14px 16px 6px !important;
-  margin-top: 4px;
-  border-top: 1px solid rgba(255, 255, 255, 0.06);
-  font-size: 9.5px !important;
-  font-weight: 700 !important;
-  letter-spacing: 0.1em !important;
-  color: rgba(255, 255, 255, 0.38) !important;
-}
-
-body.bhw-body .adm-sidebar--bhw .adm-nav > .adm-nav-section:first-of-type {
-  border-top: none;
-  margin-top: 0;
-}
-
-body.bhw-body .adm-sidebar--bhw .adm-nav-item.is-active {
-  background: rgba(255, 255, 255, 0.11);
-  border-color: rgba(147, 197, 253, 0.2);
-}
-
-body.bhw-body .adm-sidebar--bhw .adm-profile {
-  margin-top: auto;
-}
-
-body.bhw-body .adm-sidebar--bhw .adm-profile-role {
-  font-size: 10px;
-  letter-spacing: 0.02em;
-}
-
-body.bhw-body .adm-sidebar {
+/* Ensure profile sits at the bottom like Admin/SuperAdmin */
+body.bhw-body .adm-sidebar--bhw {
   overflow: hidden;
 }
 
-body.bhw-body .adm-nav {
+body.bhw-body .adm-sidebar--bhw .adm-nav {
   flex: 1;
   min-height: 0;
   overflow-y: auto;
 }
 
-body.bhw-body .adm-logo:hover {
-  background: rgba(0, 0, 0, 0.24);
-  transition: background 0.14s ease;
+body.bhw-body .adm-sidebar--bhw .adm-profile {
+  margin-top: auto;
 }
 
 /* Mobile drawer — match global overlay layering */
