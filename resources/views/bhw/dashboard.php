@@ -275,6 +275,17 @@ ob_start();
     });
   }
 
+  var lastQueueFp = '';
+  var lastChartsFp = '';
+
+  function stableFp(value) {
+    try {
+      return JSON.stringify(value || null);
+    } catch (e) {
+      return '';
+    }
+  }
+
   function refreshDashboard() {
     if (document.hidden) return;
     BhwPortal.get('dashboard.php', dashFilters()).then(function (res) {
@@ -284,10 +295,23 @@ ob_start();
         var k = el.dataset.metric;
         if (m[k] !== undefined) el.textContent = m[k];
       });
-      renderQueue(res.queue || []);
+
+      // Rebuild queue only when rows change — avoids layout churn below the charts.
+      var queue = res.queue || [];
+      var queueFp = stableFp(queue);
+      if (queueFp !== lastQueueFp) {
+        lastQueueFp = queueFp;
+        renderQueue(queue);
+      }
+
       if (res.charts && window.BhwDashboardCharts) {
-        BhwDashboardCharts.update(res.charts);
+        var chartsFp = stableFp(res.charts);
         updateChartNote(res.charts);
+        // Chart module updates Chart.js data in place (no destroy/remount).
+        if (chartsFp !== lastChartsFp || !lastChartsFp) {
+          lastChartsFp = chartsFp;
+          BhwDashboardCharts.update(res.charts);
+        }
       }
       if (lastSync) {
         lastSync.textContent = new Date().toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true });
@@ -295,16 +319,30 @@ ob_start();
     });
   }
 
-  document.getElementById('bhw_dash_apply')?.addEventListener('click', refreshDashboard);
-  document.getElementById('bhw_dash_reset')?.addEventListener('click', function () {
-    if (dashDays) dashDays.value = '7';
+  document.getElementById('bhw_dash_apply')?.addEventListener('click', function () {
+    lastChartsFp = '';
+    lastQueueFp = '';
     refreshDashboard();
   });
-  dashDays?.addEventListener('change', refreshDashboard);
+  document.getElementById('bhw_dash_reset')?.addEventListener('click', function () {
+    if (dashDays) dashDays.value = '7';
+    lastChartsFp = '';
+    lastQueueFp = '';
+    refreshDashboard();
+  });
+  dashDays?.addEventListener('change', function () {
+    lastChartsFp = '';
+    lastQueueFp = '';
+    refreshDashboard();
+  });
 
   searchInput.addEventListener('input', filterRows);
-  if (initialQueue.length) renderQueue(initialQueue);
+  if (initialQueue.length) {
+    lastQueueFp = stableFp(initialQueue);
+    renderQueue(initialQueue);
+  }
   updateChartNote(<?= json_encode($dashboardCharts) ?>);
+  lastChartsFp = stableFp(<?= json_encode($dashboardCharts) ?>);
   window.refreshBhwDashboard = refreshDashboard;
 
   var dashTimer = setInterval(function () {
