@@ -1012,6 +1012,77 @@ body.admin-body {
   margin-bottom: 0;
 }
 
+/*
+ * System Overview (Admin + Super Admin) — desktop/laptop section rhythm.
+ * All major blocks live inside [data-live-dashboard], so page-body gap never
+ * separates them. Apply consistent spacing without changing other admin pages.
+ */
+[data-live-dashboard] {
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+  width: 100%;
+  min-width: 0;
+}
+
+[data-live-dashboard] .adm-section-head {
+  margin-bottom: 18px;
+}
+
+[data-live-dashboard] .adm-section-title {
+  margin: 0 0 6px;
+}
+
+[data-live-dashboard] .adm-section-sub {
+  margin: 0;
+  line-height: 1.5;
+}
+
+[data-live-dashboard] .mc-notif-widgets--dashboard {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 16px;
+  margin: 0;
+}
+
+[data-live-dashboard] .mc-notif-widget {
+  padding: 18px;
+  min-height: 88px;
+  box-sizing: border-box;
+}
+
+[data-live-dashboard] .mc-notif-widget-value {
+  line-height: 1.15;
+}
+
+[data-live-dashboard] .mc-notif-widget-label {
+  margin-top: 6px;
+  line-height: 1.35;
+}
+
+[data-live-dashboard] .adm-metrics {
+  gap: 18px;
+}
+
+[data-live-dashboard] .adm-charts-section {
+  gap: 18px;
+}
+
+[data-live-dashboard] .adm-charts-section > .adm-section-head {
+  margin-bottom: 4px;
+}
+
+@media (min-width: 769px) and (max-width: 1200px) {
+  [data-live-dashboard] {
+    gap: 24px;
+  }
+
+  [data-live-dashboard] .mc-notif-widgets--dashboard {
+    gap: 14px;
+  }
+}
+
+
 .adm-notif-recent {
   margin-bottom: 0;
 }
