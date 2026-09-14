@@ -40,7 +40,7 @@
 
 .bhw-dash-header__eyebrow {
   margin: 0 0 4px;
-  font-size: 10px;
+  font-size: 11px;
   font-weight: 700;
   letter-spacing: 0.1em;
   text-transform: uppercase;
@@ -49,19 +49,21 @@
 
 .bhw-dash-header__title {
   margin: 0 0 6px;
-  font-size: 1.25rem;
+  font-size: clamp(1.3rem, 1.4vw + 1rem, 1.45rem);
   font-weight: 700;
   letter-spacing: -0.02em;
   color: #0f172a;
   line-height: 1.25;
+  overflow-wrap: anywhere;
 }
 
 .bhw-dash-header__desc {
   margin: 0;
-  font-size: 13px;
+  font-size: 14px;
   font-weight: 500;
   color: #64748b;
   line-height: 1.45;
+  overflow-wrap: anywhere;
 }
 
 .bhw-dash-header__meta {
@@ -74,13 +76,16 @@
   align-items: center;
   gap: 6px;
   padding: 6px 10px;
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 600;
   color: #64748b;
   background: #f8fafc;
   border: 1px solid #e2e8f0;
   border-radius: 4px;
   font-variant-numeric: tabular-nums;
+  line-height: 1.35;
+  white-space: normal;
+  max-width: 100%;
 }
 
 /* ── Panel shell ── */
@@ -105,19 +110,23 @@
 
 .bhw-dash-panel__head h3 {
   margin: 0;
-  font-size: 12px;
+  font-size: 13px;
   font-weight: 700;
-  letter-spacing: 0.08em;
+  letter-spacing: 0.06em;
   text-transform: uppercase;
   color: #0f172a;
+  line-height: 1.35;
+  overflow-wrap: anywhere;
 }
 
 .bhw-dash-panel__note {
-  font-size: 10px;
+  font-size: 11px;
   font-weight: 600;
   letter-spacing: 0.04em;
   text-transform: uppercase;
   color: #94a3b8;
+  line-height: 1.35;
+  overflow-wrap: anywhere;
 }
 
 .bhw-dash-panel__body {
@@ -157,7 +166,7 @@
   padding: 9px 12px 9px 38px;
   border: 1px solid #cbd5e1;
   border-radius: 6px;
-  font-size: 13px;
+  font-size: 14px;
   font-weight: 500;
   min-height: 40px;
   background: #fff;
@@ -181,19 +190,34 @@
 }
 
 .bhw-dash-compliance {
-  font-size: 10px;
+  font-size: 11px;
   font-weight: 700;
-  letter-spacing: 0.06em;
+  letter-spacing: 0.05em;
   text-transform: uppercase;
   color: #94a3b8;
+  line-height: 1.35;
+  overflow-wrap: anywhere;
 }
 
 /* ── Dashboard charts ── */
+.bhw-dash-chart-filters .mc-chart-filters__label {
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.35;
+}
+
+.bhw-dash-chart-filters .mc-chart-filters__control {
+  font-size: 14px;
+  min-height: 40px;
+}
+
 .bhw-dash-chart-filters .bhw-dash-station-name {
   margin: 0;
   font-weight: 600;
-  font-size: 0.95rem;
+  font-size: 1rem;
+  line-height: 1.35;
   color: var(--bhw-teal, #0d6e6e);
+  overflow-wrap: anywhere;
 }
 
 .bhw-dash-charts .bhw-dash-panel__head {
@@ -239,12 +263,14 @@
 
 .bhw-dash-charts .bhw-chart-card h4 {
   margin: 0 0 12px;
-  font-size: 13px;
+  font-size: 14px;
   font-weight: 700;
   color: #0f172a;
   letter-spacing: -0.01em;
+  line-height: 1.35;
   flex: 0 0 auto;
   min-height: 1.25em;
+  overflow-wrap: anywhere;
 }
 
 .bhw-dash-charts .bhw-chart-wrap {
@@ -303,9 +329,9 @@
   justify-content: flex-start;
   gap: 0;
   min-width: 0;
-  min-height: 72px;
-  padding: 10px 12px;
-  overflow: hidden;
+  min-height: 78px;
+  padding: 10px 12px 12px;
+  overflow: visible;
   background: #fff;
   border: 1px solid #e2e8f0;
   border-top: 3px solid #069396;
@@ -342,13 +368,16 @@
   width: 100%;
   margin: 0;
   padding: 0 28px 0 0;
-  font-size: 10px;
+  font-size: 11px;
   font-weight: 600;
-  letter-spacing: 0.04em;
+  letter-spacing: 0.03em;
   text-transform: uppercase;
   color: #64748b;
-  line-height: 1.3;
+  line-height: 1.35;
   text-align: left;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  hyphens: auto;
 }
 
 .bhw-dash-stat__val {
@@ -357,7 +386,7 @@
   width: 100%;
   margin: 8px 0 0;
   padding: 0;
-  font-size: 1.35rem;
+  font-size: clamp(1.45rem, 1.2vw + 1rem, 1.65rem);
   font-weight: 800;
   line-height: 1.1;
   color: #0f172a;
@@ -405,13 +434,14 @@
   flex-direction: column;
   justify-content: center;
   gap: 4px;
-  min-height: 72px;
+  min-height: 78px;
   padding: 12px 14px;
   margin: 0;
   border: none;
   border-radius: 0;
   background: #fff;
   box-shadow: none;
+  min-width: 0;
 }
 
 .bhw-dash .mc-notif-widget::before {
@@ -419,20 +449,22 @@
 }
 
 .bhw-dash .mc-notif-widget-value {
-  font-size: 1.35rem;
-  font-weight: 700;
-  line-height: 1;
+  font-size: clamp(1.4rem, 1vw + 1rem, 1.55rem);
+  font-weight: 800;
+  line-height: 1.1;
   color: #0f172a;
   font-variant-numeric: tabular-nums;
 }
 
 .bhw-dash .mc-notif-widget-label {
-  font-size: 9px;
+  font-size: 11px;
   font-weight: 700;
-  letter-spacing: 0.05em;
+  letter-spacing: 0.04em;
   text-transform: uppercase;
   color: #64748b;
-  line-height: 1.3;
+  line-height: 1.35;
+  white-space: normal;
+  overflow-wrap: anywhere;
 }
 
 .bhw-dash .mc-notif-widget--alert .mc-notif-widget-value {
@@ -448,14 +480,14 @@
   width: 100%;
   margin: 0;
   border-collapse: collapse;
-  font-size: 13px;
+  font-size: 14px;
 }
 
 .bhw-dash-queue-table thead th {
   padding: 11px 20px;
-  font-size: 10px;
+  font-size: 11px;
   font-weight: 700;
-  letter-spacing: 0.06em;
+  letter-spacing: 0.05em;
   text-transform: uppercase;
   color: #64748b;
   background: #f8fafc;
@@ -486,22 +518,27 @@
 .bhw-dash-resident-name {
   font-weight: 600;
   color: #0f172a;
-  line-height: 1.3;
+  line-height: 1.35;
+  font-size: 14px;
+  overflow-wrap: anywhere;
 }
 
 .bhw-dash-resident-meta {
   margin-top: 2px;
-  font-size: 10px;
+  font-size: 11px;
   font-weight: 600;
   letter-spacing: 0.04em;
   text-transform: uppercase;
   color: #94a3b8;
+  line-height: 1.35;
+  overflow-wrap: anywhere;
 }
 
 .bhw-dash-queue-empty {
   padding: 28px 20px;
   text-align: center;
-  font-size: 13px;
+  font-size: 14px;
+  line-height: 1.45;
   color: #64748b;
   background: #fff;
 }
@@ -518,18 +555,24 @@
 
 .bhw-dash .bhw-badge {
   border-radius: 4px;
-  padding: 4px 8px;
-  font-size: 10px;
+  padding: 5px 9px;
+  font-size: 11px;
   font-weight: 700;
-  letter-spacing: 0.04em;
+  letter-spacing: 0.03em;
+  line-height: 1.3;
+  white-space: normal;
 }
 
-.bhw-dash .bhw-btn-teal {
+.bhw-dash .bhw-btn-teal,
+.bhw-dash .bhw-btn-outline {
   border-radius: 4px;
-  font-size: 11px;
+  font-size: 13px;
   font-weight: 600;
-  letter-spacing: 0.02em;
-  padding: 7px 14px;
+  letter-spacing: 0.01em;
+  padding: 8px 14px;
+  line-height: 1.3;
+  white-space: normal;
+  text-align: center;
 }
 
 /* ── Recent notifications ── */
@@ -548,15 +591,19 @@
 }
 
 .bhw-dash-recent .adm-card-head-title {
-  font-size: 12px;
+  font-size: 13px;
   font-weight: 700;
-  letter-spacing: 0.06em;
+  letter-spacing: 0.05em;
   text-transform: uppercase;
+  line-height: 1.35;
+  overflow-wrap: anywhere;
 }
 
 .bhw-dash-recent .adm-card-head-sub {
-  font-size: 12px;
+  font-size: 13px;
   color: #64748b;
+  line-height: 1.4;
+  overflow-wrap: anywhere;
 }
 
 /* ── Responsive ── */
@@ -637,12 +684,13 @@
 
   .bhw-dash-queue-table tbody td::before {
     content: attr(data-label);
-    font-size: 10px;
+    font-size: 11px;
     font-weight: 700;
-    letter-spacing: 0.05em;
+    letter-spacing: 0.04em;
     text-transform: uppercase;
     color: #94a3b8;
     flex-shrink: 0;
+    line-height: 1.35;
   }
 
   .bhw-dash-queue-table tbody td:first-child {
@@ -672,12 +720,12 @@
   }
 
   .bhw-dash-stat {
-    min-height: 74px;
+    min-height: 80px;
     padding: 10px;
   }
 
   .bhw-dash-stat__val {
-    font-size: 1.3rem;
+    font-size: clamp(1.4rem, 5vw, 1.55rem);
     text-align: center;
     margin-top: 8px;
   }
