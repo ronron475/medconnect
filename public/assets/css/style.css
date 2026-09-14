@@ -30,7 +30,9 @@ body {
   background: var(--bg-light);
   color: var(--text-body);
   min-height: 100vh;
-  overflow-x: hidden;
+  overflow-x: auto;
+  overflow-y: auto;
+  max-width: 100%;
 }
 
 /* ===== BACKGROUND — canvas bubbles only ===== */

@@ -4,7 +4,9 @@
 
 body.patient-portal {
   background: var(--mc-ice-blue, #f4f8fa);
-  overflow-x: hidden;
+  overflow-x: auto;
+  overflow-y: auto;
+  max-width: 100%;
 }
 
 .patient-portal .main-content {
@@ -2002,8 +2004,10 @@ html[data-theme-resolved='dark'] .booking-today-date {
 }
 
 .patient-triage-history .mc-table-wrap {
-  overflow-x: hidden;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
   min-width: 0;
+  max-width: 100%;
 }
 
 .patient-triage-history .mc-table {

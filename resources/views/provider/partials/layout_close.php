@@ -20,6 +20,7 @@ $providerNavCountsVer = (int) @filemtime(ASSETS_PATH . '/js/provider-nav-counts.
 $navBadgesRefreshVer = (int) @filemtime(ASSETS_PATH . '/js/nav-badges-refresh.js');
 ?>
 <?php require_once VIEWS_PATH . '/partials/theme_scripts.php'; ?>
+<?php require_once VIEWS_PATH . '/components/medconnect_multitask.php'; ?>
 <?php require_once VIEWS_PATH . '/components/session_video_shell.php'; ?>
 <script src="<?= ASSET_BASE ?>/assets/js/nav-badges-refresh.js?v=<?= $navBadgesRefreshVer ?>"></script>
 <?php require_once VIEWS_PATH . '/partials/live_sync_assets.php'; ?>

@@ -64,6 +64,7 @@ if (!headers_sent()) {
   ?>
   <link rel="stylesheet" href="<?= ASSET_BASE ?>/assets/css/provider-mobile.css?v=<?= $providerMobileVer ?>"/>
   <?php $portal_nav_badges_skip_js = true; require_once VIEWS_PATH . '/partials/portal_nav_badge_assets.php'; ?>
+  <?php require_once VIEWS_PATH . '/partials/mobile_scroll_assets.php'; ?>
 </head>
 <body
   class="provider-body"

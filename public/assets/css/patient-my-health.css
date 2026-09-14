@@ -1586,7 +1586,7 @@ body.pmh-care-modal-open .pt-remedy__fab {
 .pmh-care-modal__content {
   flex: 1 1 auto;
   min-height: 0;
-  overflow-x: hidden;
+  overflow-x: auto;
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
   overscroll-behavior: contain;

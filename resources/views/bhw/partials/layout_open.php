@@ -249,6 +249,7 @@
   ?>
   <link rel="stylesheet" href="<?= ASSET_BASE ?>/assets/css/bhw-dark-mode.css?v=<?= $bhwDarkVer ?>"/>
   <?php require_once VIEWS_PATH . '/partials/portal_nav_badge_assets.php'; ?>
+  <?php require_once VIEWS_PATH . '/partials/mobile_scroll_assets.php'; ?>
 </head>
 <body
   class="bhw-body"

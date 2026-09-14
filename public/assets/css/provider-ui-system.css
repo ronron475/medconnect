@@ -54,8 +54,10 @@ body.provider-body .provider-page-body:has(.mr-page),
 body.provider-body .provider-page-body:has(.ps-page) {
   width: 100%;
   max-width: 100%;
+  min-width: 0;
   box-sizing: border-box;
-  overflow-x: hidden;
+  overflow-x: visible;
+  overflow-y: visible;
   padding: calc(var(--mc-header-offset, var(--provider-header-h, 64px)) + var(--pv-space-sm))
            var(--pv-space-lg)
            var(--pv-space-lg);

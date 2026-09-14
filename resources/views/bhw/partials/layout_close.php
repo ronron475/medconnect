@@ -35,5 +35,6 @@
 <?php require_once VIEWS_PATH . '/partials/live_sync_assets.php'; ?>
 <?php require_once VIEWS_PATH . '/partials/mc_modal_select_assets.php'; ?>
 <?php require_once VIEWS_PATH . '/partials/logout_modal.php'; ?>
+<?php require_once VIEWS_PATH . '/components/medconnect_multitask.php'; ?>
 </body>
 </html>
