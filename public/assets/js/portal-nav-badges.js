@@ -24,6 +24,8 @@
     consultations: ['consultations'],
     referrals: ['referrals'],
     followups: ['followups'],
+    my_health: ['my_health'],
+    health_summary: ['health_summary'],
     bhw_triage: ['bhw_triage'],
     bhw_consultations: ['bhw_consultations'],
     bhw_referrals: ['bhw_referrals'],
@@ -39,6 +41,7 @@
     announcement_drafts: ['announcement_drafts'],
     pending_referrals: ['pending_referrals'],
     patient_triage: ['patient_triage'],
+    case_reports_pending: ['case_reports_pending'],
   };
 
   let timer = null;
@@ -77,7 +80,7 @@
 
   function formatBadge(n) {
     if (n <= 0) return '';
-    return n > 99 ? '99+' : String(n);
+    return n > 9 ? '9+' : String(n);
   }
 
   function resolveCount(data, key) {

@@ -296,7 +296,8 @@
     width: 100%;
   }
 
-  body.mc-sidebar-mini .sidebar .mc-nav-messages-badge {
+  body.mc-sidebar-mini .sidebar .mc-nav-messages-badge,
+  body.mc-sidebar-mini .sidebar .mc-nav-count-badge {
     position: absolute;
     top: 4px;
     right: 4px;
