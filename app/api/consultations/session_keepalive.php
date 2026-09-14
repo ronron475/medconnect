@@ -10,6 +10,7 @@ header('Cache-Control: no-store');
 
 require_once dirname(__DIR__, 3) . '/bootstrap.php';
 require_once dirname(__DIR__, 3) . '/app/includes/session_timeout.php';
+require_once dirname(__DIR__, 3) . '/app/includes/auth_guard.php';
 
 if (($_SERVER['REQUEST_METHOD'] ?? 'GET') !== 'GET' && ($_SERVER['REQUEST_METHOD'] ?? '') !== 'POST') {
     http_response_code(405);
@@ -19,9 +20,7 @@ if (($_SERVER['REQUEST_METHOD'] ?? 'GET') !== 'GET' && ($_SERVER['REQUEST_METHOD
 
 $userId = (int) ($_SESSION['user_id'] ?? 0);
 if ($userId <= 0) {
-    http_response_code(401);
-    echo json_encode(['success' => false, 'message' => 'Unauthorized.', 'code' => 'session_expired']);
-    exit;
+    auth_respond_session_expired();
 }
 
 // Touch activity while the call is open so provider idle + global timeout stay open.

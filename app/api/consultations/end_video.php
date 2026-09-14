@@ -8,7 +8,6 @@
  * Idempotent for provider retries on the same room token.
  */
 ob_start();
-session_start();
 
 require_once dirname(dirname(dirname(__DIR__))) . '/bootstrap.php';
 require_once dirname(dirname(dirname(__DIR__))) . '/config/db.php';

@@ -159,6 +159,14 @@
       });
       if (res.status === 401 || res.status === 403) {
         stop();
+        if (res.status === 401 && global.MedConnectSession && typeof global.MedConnectSession.handleExpired === 'function') {
+          global.MedConnectSession.handleExpired({
+            message: 'Your session has expired. Please log in again.',
+            redirect: (assetBase() || '') + '/index.php?session_expired=1',
+            code: 'session_expired',
+            error: 'SESSION_EXPIRED',
+          });
+        }
         return;
       }
       if (!res.ok) throw new Error('sync');

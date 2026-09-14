@@ -100,6 +100,56 @@ function medconnect_session_cookie_params(): array
     ];
 }
 
+/**
+ * Start the canonical MedConnect session (name + cookie path/params).
+ * Safe to call if a wrong/default session was already opened — that session is closed first.
+ *
+ * @param array{read_and_close?:bool} $options
+ */
+function medconnect_session_start(array $options = []): void
+{
+    $readAndClose = !empty($options['read_and_close']);
+
+    if (session_status() === PHP_SESSION_ACTIVE) {
+        if (session_name() === MEDCONNECT_SESSION_NAME) {
+            return;
+        }
+        // Premature session_start() before bootstrap used PHPSESSID / wrong path.
+        session_write_close();
+        $_SESSION = [];
+    }
+
+    if (session_status() !== PHP_SESSION_NONE) {
+        return;
+    }
+
+    ini_set('session.use_only_cookies', '1');
+    ini_set('session.use_strict_mode', '1');
+    ini_set('session.use_trans_sid', '0');
+    ini_set('session.cookie_httponly', '1');
+    ini_set('session.cookie_samesite', medconnect_session_samesite());
+
+    $isHttps = function_exists('medconnect_request_is_https')
+        ? medconnect_request_is_https()
+        : ((!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off')
+            || (isset($_SERVER['SERVER_PORT']) && (int) $_SERVER['SERVER_PORT'] === 443));
+    if ($isHttps) {
+        ini_set('session.cookie_secure', '1');
+    }
+
+    if (session_name() !== MEDCONNECT_SESSION_NAME) {
+        session_name(MEDCONNECT_SESSION_NAME);
+    }
+
+    session_set_cookie_params(medconnect_session_cookie_params());
+
+    if ($readAndClose) {
+        session_start(['read_and_close' => true]);
+    } else {
+        session_start();
+    }
+}
+
 /** Expire the MedConnect session cookie (call after clearing $_SESSION). */
 function medconnect_expire_session_cookie(): void
 {

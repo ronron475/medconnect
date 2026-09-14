@@ -1,6 +1,7 @@
 <?php
 /**
- * Shared navbar fullscreen toggle — used by Admin, Superadmin, BHW, Patient, Provider.
+ * Shared navbar fullscreen / floating-view toggle — Admin, Superadmin, BHW, Patient, Provider.
+ * Desktop: browser Fullscreen API. Mobile/tablet: in-page Floating View.
  * Optional: $fullscreen_btn_class (defaults to topbar-icon-btn).
  */
 $fsBtnClass = trim((string) ($fullscreen_btn_class ?? 'topbar-icon-btn'));

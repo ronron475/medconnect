@@ -177,34 +177,11 @@ if ($medconnectOnVercel) {
 
 // ── Secure session defaults (must be set before session_start) ────────────────
 require_once dirname(__DIR__) . '/app/includes/session_cookie.php';
-if (session_status() === PHP_SESSION_NONE) {
-    ini_set('session.use_only_cookies', '1');
-    ini_set('session.use_strict_mode', '1');
-    ini_set('session.use_trans_sid', '0');
-    ini_set('session.cookie_httponly', '1');
-    ini_set('session.cookie_samesite', medconnect_session_samesite());
-
-    $isHttps = medconnect_request_is_https();
-    if ($isHttps) {
-        ini_set('session.cookie_secure', '1');
-    }
-
-    // Isolate MedConnect from other PHP apps on the same host (default PHPSESSID).
-    if (session_name() !== MEDCONNECT_SESSION_NAME) {
-        session_name(MEDCONNECT_SESSION_NAME);
-    }
-
-    session_set_cookie_params(medconnect_session_cookie_params());
-
-    // read_and_close: used by video_room so Chrome can open provider+patient tabs without session lock deadlock.
-    if (defined('MEDCONNECT_SESSION_READ_AND_CLOSE') && MEDCONNECT_SESSION_READ_AND_CLOSE) {
-        session_start([
-            'read_and_close' => true,
-        ]);
-    } else {
-        session_start();
-    }
-}
+// Always go through medconnect_session_start(): recovers from premature
+// session_start() on API endpoints that still call it before bootstrap.
+medconnect_session_start([
+    'read_and_close' => defined('MEDCONNECT_SESSION_READ_AND_CLOSE') && MEDCONNECT_SESSION_READ_AND_CLOSE,
+]);
 
 medconnect_send_security_headers();
 

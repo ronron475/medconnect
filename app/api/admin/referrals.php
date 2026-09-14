@@ -2,7 +2,6 @@
 /**
  * Digital referrals — list and status updates (Admin + Super Admin).
  */
-session_start();
 header('Content-Type: application/json; charset=utf-8');
 
 require_once dirname(dirname(dirname(__DIR__))) . '/bootstrap.php';
@@ -26,17 +25,25 @@ if ($method === 'GET') {
             exit;
         }
         $cols = $pdo->query('SHOW COLUMNS FROM digital_referrals')->fetchAll(PDO::FETCH_COLUMN);
-        $destExpr = in_array('facility_name', $cols, true)
-            ? 'COALESCE(dr.facility_name, dr.destination_facility, "")'
-            : (in_array('destination_facility', $cols, true) ? 'COALESCE(dr.destination_facility, "")' : '""');
+        $hasFacilityName = in_array('facility_name', $cols, true);
+        $hasDestination = in_array('destination_facility', $cols, true);
+        if ($hasFacilityName && $hasDestination) {
+            $destExpr = 'COALESCE(NULLIF(TRIM(dr.facility_name), ""), NULLIF(TRIM(dr.destination_facility), ""), "")';
+        } elseif ($hasFacilityName) {
+            $destExpr = 'COALESCE(dr.facility_name, "")';
+        } elseif ($hasDestination) {
+            $destExpr = 'COALESCE(dr.destination_facility, "")';
+        } else {
+            $destExpr = '""';
+        }
         $stmt = $pdo->prepare("
             SELECT dr.id, dr.referral_type, dr.reason, dr.status, dr.created_at,
                    {$destExpr} AS facility_name,
-                   CONCAT(p.first_name,' ',p.last_name) AS patient_name,
-                   CONCAT(pr.first_name,' ',pr.last_name) AS provider_name
+                   TRIM(CONCAT(COALESCE(p.first_name, ''), ' ', COALESCE(p.last_name, ''))) AS patient_name,
+                   TRIM(CONCAT(COALESCE(pr.first_name, ''), ' ', COALESCE(pr.last_name, ''))) AS provider_name
             FROM digital_referrals dr
-            JOIN users p ON p.id = dr.patient_id
-            JOIN users pr ON pr.id = dr.provider_id
+            LEFT JOIN users p ON p.id = dr.patient_id
+            LEFT JOIN users pr ON pr.id = dr.provider_id
             WHERE {$where}
             ORDER BY dr.created_at DESC
             LIMIT 200

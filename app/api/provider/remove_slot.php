@@ -2,9 +2,6 @@
 /**
  * API: Remove a single available appointment slot (provider).
  */
-if (session_status() === PHP_SESSION_NONE) {
-    session_start();
-}
 
 header('Content-Type: application/json; charset=utf-8');
 header('X-Content-Type-Options: nosniff');

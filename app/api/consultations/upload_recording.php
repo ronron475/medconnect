@@ -1,20 +1,19 @@
 <?php
 ob_start();
-session_start();
-
-if (empty($_SESSION['user_id']) || $_SESSION['user_role'] !== 'provider') {
-    ob_end_clean();
-    header('Content-Type: application/json');
-    http_response_code(403);
-    echo json_encode(['success' => false, 'message' => 'Unauthorized.']);
-    exit;
-}
 
 require_once dirname(dirname(dirname(__DIR__))) . '/bootstrap.php';
 require_once dirname(dirname(dirname(__DIR__))) . '/config/db.php';
 require_once dirname(dirname(dirname(__DIR__))) . '/app/includes/auth_guard.php';
 require_once dirname(dirname(dirname(__DIR__))) . '/app/includes/clinical_tables.php';
 require_once dirname(dirname(dirname(__DIR__))) . '/app/includes/consultation_recording_segments.php';
+
+if (empty($_SESSION['user_id']) || ($_SESSION['user_role'] ?? '') !== 'provider') {
+    ob_end_clean();
+    header('Content-Type: application/json');
+    http_response_code(403);
+    echo json_encode(['success' => false, 'message' => 'Unauthorized.']);
+    exit;
+}
 
 clinical_tables_ensure($pdo);
 

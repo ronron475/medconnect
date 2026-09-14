@@ -8,9 +8,6 @@
  * Trial interview is DEMO-ONLY (does not modify production chatbot / triage persistence).
  */
 require_once dirname(__DIR__) . '/bootstrap.php';
-if (session_status() === PHP_SESSION_NONE) {
-    session_start();
-}
 if (empty($_SESSION['csrf_token']) || !is_string($_SESSION['csrf_token'])) {
     $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
 }

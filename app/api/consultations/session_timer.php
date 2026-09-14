@@ -3,7 +3,6 @@
  * API: Remaining consultation time for active video session
  * URL: /app/api/consultations/session_timer.php?token=...
  */
-session_start();
 header('Content-Type: application/json');
 
 require_once dirname(dirname(dirname(__DIR__))) . '/bootstrap.php';

@@ -3,7 +3,6 @@
  * Live monitoring data for admin/superadmin dashboards.
  * GET ?type=live — active consultations / WebRTC sessions
  */
-session_start();
 header('Content-Type: application/json; charset=utf-8');
 
 require_once dirname(dirname(dirname(__DIR__))) . '/bootstrap.php';

@@ -4,7 +4,6 @@
  * Super Admin: all actions. Administrator: archive only.
  * URL: /app/api/admin/account_status.php
  */
-session_start();
 header('Content-Type: application/json; charset=utf-8');
 
 require_once dirname(dirname(dirname(__DIR__))) . '/bootstrap.php';
@@ -54,9 +53,7 @@ if (portal_is_superadmin() && !portal_can_manage_user($pdo, $userId)) {
 
 $performedBy = (int) ($_SESSION['user_id'] ?? 0);
 if ($performedBy <= 0) {
-    http_response_code(401);
-    echo json_encode(['success' => false, 'message' => 'Session expired. Please sign in again.']);
-    exit;
+    auth_respond_session_expired();
 }
 
 try {

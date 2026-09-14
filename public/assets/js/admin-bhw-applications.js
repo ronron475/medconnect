@@ -574,6 +574,10 @@
       const fd = buildBhwApplicationPayload();
       const res = await fetch(api + '?action=save_draft', { method: 'POST', body: fd, credentials: 'same-origin' });
       const json = await res.json();
+      if (window.MedConnectSession && window.MedConnectSession.isExpiredPayload(json, res.status)) {
+        window.MedConnectSession.handleExpired(json);
+        return null;
+      }
       if (!json.success) {
         formUtils.showFormAlert(errorEl, json.message || 'Could not save draft.', 'error');
         return null;
@@ -620,6 +624,10 @@
           const fd = buildBhwApplicationPayload();
           const saveRes = await fetch(api + '?action=save_draft', { method: 'POST', body: fd, credentials: 'same-origin' });
           const saveJson = await saveRes.json();
+          if (window.MedConnectSession && window.MedConnectSession.isExpiredPayload(saveJson, saveRes.status)) {
+            window.MedConnectSession.handleExpired(saveJson);
+            return;
+          }
           if (!saveJson.success) {
             formUtils.showFormAlert(errorEl, saveJson.message || 'Could not save application.', 'error');
             return;
@@ -632,6 +640,10 @@
       submitFd.append('application_id', appId);
       const res = await fetch(api + '?action=' + action, { method: 'POST', body: submitFd, credentials: 'same-origin' });
       const json = await res.json();
+      if (window.MedConnectSession && window.MedConnectSession.isExpiredPayload(json, res.status)) {
+        window.MedConnectSession.handleExpired(json);
+        return;
+      }
       if (!json.success) {
         formUtils.showFormAlert(errorEl, json.message || 'Invite failed.', 'error');
         return;

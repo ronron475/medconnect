@@ -1,5 +1,6 @@
 <?php
-session_start();
+require_once __DIR__ . '/../app/includes/session_cookie.php';
+medconnect_session_start();
 require_once __DIR__ . '/../config/db.php';
 
 $token = trim($_GET['token'] ?? '');

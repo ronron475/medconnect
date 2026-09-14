@@ -1,6 +1,7 @@
 <?php
 if (session_status() === PHP_SESSION_NONE) {
-    session_start();
+    require_once dirname(__DIR__, 2) . '/includes/session_cookie.php';
+    medconnect_session_start();
 }
 header('Content-Type: application/json');
 require_once dirname(__DIR__, 3) . '/config/db.php';

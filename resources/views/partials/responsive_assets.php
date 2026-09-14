@@ -19,6 +19,11 @@ $dashMobileVer = ($dashMobileCss && file_exists($dashMobileCss)) ? (int) filemti
 ?>
 <link rel="stylesheet" href="<?= htmlspecialchars($assetBase, ENT_QUOTES) ?>/assets/css/dashboard-card-float.css?v=<?= $dashFloatVer ?>"/>
 <link rel="stylesheet" href="<?= htmlspecialchars($assetBase, ENT_QUOTES) ?>/assets/css/dashboard-mobile.css?v=<?= $dashMobileVer ?>"/>
+<?php
+$floatingViewCss = defined('ASSETS_PATH') ? ASSETS_PATH . '/css/floating-view.css' : '';
+$floatingViewVer = ($floatingViewCss && file_exists($floatingViewCss)) ? (int) filemtime($floatingViewCss) : time();
+?>
+<link rel="stylesheet" href="<?= htmlspecialchars($assetBase, ENT_QUOTES) ?>/assets/css/floating-view.css?v=<?= $floatingViewVer ?>"/>
 <?php require_once __DIR__ . '/mobile_scroll_assets.php'; ?>
 <?php else: ?>
 <?php $mobileNavJsVer = (int) @filemtime(defined('ASSETS_PATH') ? ASSETS_PATH . '/js/mobile-nav.js' : ''); ?>

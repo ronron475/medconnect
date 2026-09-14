@@ -91,19 +91,30 @@ require_once __DIR__ . '/partials/layout_open.php';
 (function () {
   var api = <?= json_encode($refApi) ?>;
   function esc(s) { var d = document.createElement('div'); d.textContent = s == null ? '' : String(s); return d.innerHTML; }
+  function stampUpdated() {
+    document.getElementById('refUpdated').textContent = 'Updated ' + new Date().toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+  }
   function load() {
     var st = document.getElementById('refFilter').value;
     fetch(api + '?status=' + encodeURIComponent(st), { credentials: 'same-origin' })
       .then(function (r) { return r.json(); })
       .then(function (j) {
         var tb = document.getElementById('refTableBody');
-        if (!j.success || !j.rows || !j.rows.length) {
+        if (!j.success) {
+          tb.innerHTML = '<tr><td colspan="8"><div class="mc-table-empty"><p>' + esc(j.message || 'Could not load referrals.') + '</p></div></td></tr>';
+          stampUpdated();
+          return;
+        }
+        if (!j.rows || !j.rows.length) {
           tb.innerHTML = '<tr><td colspan="8"><div class="mc-table-empty"><p>No referrals found.</p></div></td></tr>';
+          stampUpdated();
           return;
         }
         tb.innerHTML = j.rows.map(function (row) {
           var dt = row.created_at ? new Date(row.created_at.replace(' ', 'T')).toLocaleString() : '—';
-          return '<tr><td><strong>' + esc(row.patient_name) + '</strong></td><td>' + esc(row.provider_name) + '</td><td>' + esc(row.referral_type) + '</td><td>' + esc(row.facility_name || '—') + '</td><td class="text-sm">' + esc(row.reason) + '</td><td><span class="mc-badge">' + esc(row.status) + '</span></td><td class="text-xs text-muted">' + esc(dt) + '</td><td><select class="mc-btn mc-btn--outline ref-status" data-id="' + row.id + '" style="padding:2px 6px;font-size:10px;background:#fff;"><option value="pending"' + (row.status==='pending'?' selected':'') + '>Pending</option><option value="accepted"' + (row.status==='accepted'?' selected':'') + '>Accepted</option><option value="completed"' + (row.status==='completed'?' selected':'') + '>Completed</option><option value="cancelled"' + (row.status==='cancelled'?' selected':'') + '>Cancelled</option></select></td></tr>';
+          var patient = (row.patient_name || '').trim() || 'Unknown patient';
+          var provider = (row.provider_name || '').trim() || '—';
+          return '<tr><td><strong>' + esc(patient) + '</strong></td><td>' + esc(provider) + '</td><td>' + esc(row.referral_type) + '</td><td>' + esc(row.facility_name || '—') + '</td><td class="text-sm">' + esc(row.reason) + '</td><td><span class="mc-badge">' + esc(row.status) + '</span></td><td class="text-xs text-muted">' + esc(dt) + '</td><td><select class="mc-btn mc-btn--outline ref-status" data-id="' + row.id + '" style="padding:2px 6px;font-size:10px;background:#fff;"><option value="pending"' + (row.status==='pending'?' selected':'') + '>Pending</option><option value="accepted"' + (row.status==='accepted'?' selected':'') + '>Accepted</option><option value="completed"' + (row.status==='completed'?' selected':'') + '>Completed</option><option value="cancelled"' + (row.status==='cancelled'?' selected':'') + '>Cancelled</option></select></td></tr>';
         }).join('');
         document.querySelectorAll('.ref-status').forEach(function (sel) {
           sel.onchange = function () {
@@ -113,7 +124,11 @@ require_once __DIR__ . '/partials/layout_open.php';
             fetch(api, { method: 'POST', body: fd }).then(function (r) { return r.json(); }).then(function (res) { if (!res.success) alert(res.message); else load(); });
           };
         });
-        document.getElementById('refUpdated').textContent = 'Updated ' + new Date().toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+        stampUpdated();
+      })
+      .catch(function () {
+        document.getElementById('refTableBody').innerHTML = '<tr><td colspan="8"><div class="mc-table-empty"><p>Could not load referrals.</p></div></td></tr>';
+        stampUpdated();
       });
   }
   document.getElementById('refFilter').onchange = load;

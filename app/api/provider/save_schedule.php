@@ -14,9 +14,6 @@
  *   is_active        — 1|0 alias
  *   sessions         — JSON array [{id?, start_time, end_time, duration, is_active?}]
  */
-if (session_status() === PHP_SESSION_NONE) {
-    session_start();
-}
 
 header('Content-Type: application/json; charset=utf-8');
 header('X-Content-Type-Options: nosniff');

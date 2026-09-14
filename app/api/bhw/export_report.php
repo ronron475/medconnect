@@ -2,18 +2,16 @@
 /**
  * BHW barangay-scoped report export (CSV / Excel-compatible).
  */
-session_start();
-
-if (empty($_SESSION['user_id']) || ($_SESSION['user_role'] ?? '') !== 'bhw') {
-    http_response_code(403);
-    exit('Unauthorized.');
-}
-
 require_once dirname(dirname(dirname(__DIR__))) . '/bootstrap.php';
 require_once dirname(dirname(dirname(__DIR__))) . '/config/db.php';
 require_once dirname(dirname(dirname(__DIR__))) . '/app/includes/bhw_scope.php';
 require_once dirname(dirname(dirname(__DIR__))) . '/app/includes/bhw_reports.php';
 require_once dirname(dirname(dirname(__DIR__))) . '/app/includes/bhw_activity.php';
+
+if (empty($_SESSION['user_id']) || ($_SESSION['user_role'] ?? '') !== 'bhw') {
+    http_response_code(403);
+    exit('Unauthorized.');
+}
 
 $ctx = bhw_resolve_context($pdo);
 if (!$ctx['allowed']) {

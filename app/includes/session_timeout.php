@@ -56,25 +56,10 @@ function session_timeout_force_logout(): void
         session_destroy();
     }
 
-    $redirect = BASE_URL . '/index.php?session_expired=1';
-
-    if (request_wants_json()) {
-        header('Content-Type: application/json; charset=utf-8');
-        header('X-Content-Type-Options: nosniff');
-        header('Cache-Control: no-store');
-        http_response_code(401);
-        echo json_encode([
-            'success' => false,
-            'authenticated' => false,
-            'message' => 'Session expired. Please log in again.',
-            'code' => 'session_expired',
-            'redirect' => $redirect,
-        ], JSON_UNESCAPED_UNICODE);
-        exit;
+    if (!function_exists('auth_respond_session_expired')) {
+        require_once __DIR__ . '/auth_guard.php';
     }
-
-    header('Location: ' . $redirect);
-    exit;
+    auth_respond_session_expired();
 }
 
 function session_timeout_check(): void
@@ -124,7 +109,10 @@ function session_timeout_touch(): void
 {
     $openedHere = false;
     if (session_status() !== PHP_SESSION_ACTIVE) {
-        @session_start();
+        if (!function_exists('medconnect_session_start')) {
+            require_once __DIR__ . '/session_cookie.php';
+        }
+        medconnect_session_start();
         $openedHere = true;
     }
 

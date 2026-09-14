@@ -3,7 +3,6 @@
  * API: Archived accounts — details, audit history, restore (Super Admin only for restore).
  * URL: /app/api/admin/archived_accounts.php
  */
-session_start();
 header('Content-Type: application/json; charset=utf-8');
 
 require_once dirname(dirname(dirname(__DIR__))) . '/bootstrap.php';

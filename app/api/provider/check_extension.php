@@ -3,7 +3,6 @@
  * API: Extend active consultation session
  * URL: /app/api/provider/check_extension.php
  */
-session_start();
 header('Content-Type: application/json');
 
 require_once dirname(dirname(dirname(__DIR__))) . '/bootstrap.php';
