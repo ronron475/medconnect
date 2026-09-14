@@ -1,6 +1,9 @@
 /**
  * medConnect — Dashboard card float animation
  * Smooth, lightweight hover-paused float for all portal dashboards.
+ *
+ * Sector analytics chart cards (.bhw-chart-card / .bhw-dash-charts) are
+ * intentionally excluded so live chart refresh stays visually stable.
  */
 
 /* Sidebar nav/profile must never float or lift */
@@ -10,6 +13,23 @@
   animation: none !important;
   transform: none !important;
   will-change: auto;
+}
+
+/* Chart surfaces must remain fixed (no float / hover lift). */
+.bhw-dash .bhw-dash-panel.bhw-dash-charts,
+.bhw-dash .bhw-dash-charts .bhw-chart-card,
+.bhw-dash .bhw-chart-card {
+  animation: none !important;
+  transform: none !important;
+  will-change: auto;
+  transition: box-shadow 0.2s ease;
+}
+
+.bhw-dash .bhw-dash-panel.bhw-dash-charts:hover,
+.bhw-dash .bhw-dash-charts .bhw-chart-card:hover,
+.bhw-dash .bhw-chart-card:hover {
+  animation: none !important;
+  transform: none !important;
 }
 
 @keyframes mc-dash-card-float {
@@ -23,7 +43,7 @@
   }
 }
 
-/* Dashboard scopes only — banners/headers excluded */
+/* Dashboard scopes only — banners/headers/chart cards excluded */
 [data-live-dashboard] :is(
     .adm-metric,
     .adm-card,
@@ -36,16 +56,14 @@
     .prov-dash-stat,
     .prov-dash-card,
     .bhw-dash-stat,
-    .bhw-dash-panel,
-    .bhw-chart-card,
+    .bhw-dash-panel:not(.bhw-dash-charts),
     .pdash-metric,
     .pdash-card,
     .pdash-quick__link
   ),
 .bhw-dash :is(
     .bhw-dash-stat,
-    .bhw-dash-panel,
-    .bhw-chart-card,
+    .bhw-dash-panel:not(.bhw-dash-charts),
     .adm-notif-recent,
     .mc-chart-card
   ),
@@ -75,7 +93,7 @@
     .prov-dash-stat,
     .prov-dash-card
   ):nth-child(8n + 1),
-.bhw-dash :is(.bhw-dash-stat, .bhw-dash-panel, .bhw-chart-card, .adm-notif-recent, .mc-chart-card):nth-child(8n + 1),
+.bhw-dash :is(.bhw-dash-stat, .bhw-dash-panel:not(.bhw-dash-charts), .adm-notif-recent, .mc-chart-card):nth-child(8n + 1),
 .pdash-page :is(.pdash-metric, .pdash-card, .pdash-quick__link):nth-child(8n + 1) {
   animation-delay: 0s;
 }
@@ -92,7 +110,7 @@
     .prov-dash-stat,
     .prov-dash-card
   ):nth-child(8n + 2),
-.bhw-dash :is(.bhw-dash-stat, .bhw-dash-panel, .bhw-chart-card, .adm-notif-recent, .mc-chart-card):nth-child(8n + 2),
+.bhw-dash :is(.bhw-dash-stat, .bhw-dash-panel:not(.bhw-dash-charts), .adm-notif-recent, .mc-chart-card):nth-child(8n + 2),
 .pdash-page :is(.pdash-metric, .pdash-card, .pdash-quick__link):nth-child(8n + 2) {
   animation-delay: 0.45s;
 }
@@ -109,7 +127,7 @@
     .prov-dash-stat,
     .prov-dash-card
   ):nth-child(8n + 3),
-.bhw-dash :is(.bhw-dash-stat, .bhw-dash-panel, .bhw-chart-card, .adm-notif-recent, .mc-chart-card):nth-child(8n + 3),
+.bhw-dash :is(.bhw-dash-stat, .bhw-dash-panel:not(.bhw-dash-charts), .adm-notif-recent, .mc-chart-card):nth-child(8n + 3),
 .pdash-page :is(.pdash-metric, .pdash-card, .pdash-quick__link):nth-child(8n + 3) {
   animation-delay: 0.9s;
 }
@@ -126,7 +144,7 @@
     .prov-dash-stat,
     .prov-dash-card
   ):nth-child(8n + 4),
-.bhw-dash :is(.bhw-dash-stat, .bhw-dash-panel, .bhw-chart-card, .adm-notif-recent, .mc-chart-card):nth-child(8n + 4),
+.bhw-dash :is(.bhw-dash-stat, .bhw-dash-panel:not(.bhw-dash-charts), .adm-notif-recent, .mc-chart-card):nth-child(8n + 4),
 .pdash-page :is(.pdash-metric, .pdash-card, .pdash-quick__link):nth-child(8n + 4) {
   animation-delay: 1.35s;
 }
@@ -143,7 +161,7 @@
     .prov-dash-stat,
     .prov-dash-card
   ):nth-child(8n + 5),
-.bhw-dash :is(.bhw-dash-stat, .bhw-dash-panel, .bhw-chart-card, .adm-notif-recent, .mc-chart-card):nth-child(8n + 5),
+.bhw-dash :is(.bhw-dash-stat, .bhw-dash-panel:not(.bhw-dash-charts), .adm-notif-recent, .mc-chart-card):nth-child(8n + 5),
 .pdash-page :is(.pdash-metric, .pdash-card, .pdash-quick__link):nth-child(8n + 5) {
   animation-delay: 1.8s;
 }
@@ -160,7 +178,7 @@
     .prov-dash-stat,
     .prov-dash-card
   ):nth-child(8n + 6),
-.bhw-dash :is(.bhw-dash-stat, .bhw-dash-panel, .bhw-chart-card, .adm-notif-recent, .mc-chart-card):nth-child(8n + 6),
+.bhw-dash :is(.bhw-dash-stat, .bhw-dash-panel:not(.bhw-dash-charts), .adm-notif-recent, .mc-chart-card):nth-child(8n + 6),
 .pdash-page :is(.pdash-metric, .pdash-card, .pdash-quick__link):nth-child(8n + 6) {
   animation-delay: 2.25s;
 }
@@ -177,7 +195,7 @@
     .prov-dash-stat,
     .prov-dash-card
   ):nth-child(8n + 7),
-.bhw-dash :is(.bhw-dash-stat, .bhw-dash-panel, .bhw-chart-card, .adm-notif-recent, .mc-chart-card):nth-child(8n + 7),
+.bhw-dash :is(.bhw-dash-stat, .bhw-dash-panel:not(.bhw-dash-charts), .adm-notif-recent, .mc-chart-card):nth-child(8n + 7),
 .pdash-page :is(.pdash-metric, .pdash-card, .pdash-quick__link):nth-child(8n + 7) {
   animation-delay: 2.7s;
 }
@@ -194,7 +212,7 @@
     .prov-dash-stat,
     .prov-dash-card
   ):nth-child(8n + 8),
-.bhw-dash :is(.bhw-dash-stat, .bhw-dash-panel, .bhw-chart-card, .adm-notif-recent, .mc-chart-card):nth-child(8n + 8),
+.bhw-dash :is(.bhw-dash-stat, .bhw-dash-panel:not(.bhw-dash-charts), .adm-notif-recent, .mc-chart-card):nth-child(8n + 8),
 .pdash-page :is(.pdash-metric, .pdash-card, .pdash-quick__link):nth-child(8n + 8) {
   animation-delay: 3.15s;
 }
@@ -212,13 +230,12 @@
     .prov-dash-stat,
     .prov-dash-card,
     .bhw-dash-stat,
-    .bhw-dash-panel,
-    .bhw-chart-card,
+    .bhw-dash-panel:not(.bhw-dash-charts),
     .pdash-metric,
     .pdash-card,
     .pdash-quick__link
   ):hover,
-.bhw-dash :is(.bhw-dash-stat, .bhw-dash-panel, .bhw-chart-card, .adm-notif-recent, .mc-chart-card):hover,
+.bhw-dash :is(.bhw-dash-stat, .bhw-dash-panel:not(.bhw-dash-charts), .adm-notif-recent, .mc-chart-card):hover,
 .pdash-page :is(.pdash-metric, .pdash-card, .pdash-quick__link):hover {
   animation-play-state: paused;
   transform: translate3d(0, -6px, 0);
@@ -239,13 +256,12 @@ html[data-theme-resolved='dark'] [data-live-dashboard] :is(
     .prov-dash-stat,
     .prov-dash-card,
     .bhw-dash-stat,
-    .bhw-dash-panel,
-    .bhw-chart-card,
+    .bhw-dash-panel:not(.bhw-dash-charts),
     .pdash-metric,
     .pdash-card,
     .pdash-quick__link
   ):hover,
-html[data-theme-resolved='dark'] .bhw-dash :is(.bhw-dash-stat, .bhw-dash-panel, .bhw-chart-card, .adm-notif-recent, .mc-chart-card):hover,
+html[data-theme-resolved='dark'] .bhw-dash :is(.bhw-dash-stat, .bhw-dash-panel:not(.bhw-dash-charts), .adm-notif-recent, .mc-chart-card):hover,
 html[data-theme-resolved='dark'] .pdash-page :is(.pdash-metric, .pdash-card, .pdash-quick__link):hover {
   box-shadow:
     0 14px 32px rgba(0, 0, 0, 0.42),

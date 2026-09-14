@@ -205,6 +205,23 @@
   border: 1px solid #e2e8f0;
   border-radius: 4px;
   box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+  /* Keep chart cards still during live refresh (override dashboard float). */
+  animation: none !important;
+  transform: none !important;
+  will-change: auto;
+  transition: box-shadow 0.2s ease;
+}
+
+.bhw-dash-charts .bhw-chart-card:hover {
+  animation: none !important;
+  transform: none !important;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+}
+
+.bhw-dash-panel.bhw-dash-charts {
+  animation: none !important;
+  transform: none !important;
+  will-change: auto;
 }
 
 .bhw-dash-charts .bhw-chart-card h4 {
@@ -213,32 +230,38 @@
   font-weight: 700;
   color: #0f172a;
   letter-spacing: -0.01em;
+  flex: 0 0 auto;
+  min-height: 1.25em;
 }
 
 .bhw-dash-charts .bhw-chart-wrap {
   position: relative;
   width: 100%;
-  flex: 1 1 auto;
-  min-height: 0;
+  flex: 0 0 auto;
+  overflow: hidden;
 }
 
 .bhw-dash-charts .bhw-chart-wrap--ring {
   height: 220px;
+  min-height: 220px;
   max-height: 220px;
 }
 
 .bhw-dash-charts .bhw-chart-wrap--line,
 .bhw-dash-charts .bhw-chart-wrap--bar {
   height: 220px;
+  min-height: 220px;
   max-height: 220px;
 }
 
 .bhw-dash-charts .bhw-chart-wrap--bar-tall {
   height: 260px;
+  min-height: 260px;
   max-height: 260px;
 }
 
 .bhw-dash-charts .bhw-chart-wrap canvas {
+  display: block;
   width: 100% !important;
   height: 100% !important;
   max-height: 100%;
@@ -591,6 +614,12 @@ html[data-theme-resolved='dark'] body.bhw-body .bhw-dash-queue-table tbody td {
 html[data-theme-resolved='dark'] body.bhw-body .bhw-dash-charts .bhw-chart-card {
   background: #1c1c1c;
   border-color: #2a2a2a;
+  box-shadow: none;
+}
+
+html[data-theme-resolved='dark'] body.bhw-body .bhw-dash-charts .bhw-chart-card:hover {
+  box-shadow: none;
+  transform: none !important;
 }
 
 html[data-theme-resolved='dark'] body.bhw-body .bhw-dash-charts .bhw-chart-card h4 {
