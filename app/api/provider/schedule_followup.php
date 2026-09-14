@@ -126,7 +126,16 @@ try {
 
     require_once dirname(dirname(dirname(__DIR__))) . '/app/includes/notification_events.php';
     // In-app reminder always; avoid duplicate short email when rich Gmail reminder is sent.
-    NotificationEvents::followUpScheduled($pdo, $patient_id, $followup_date, $provider_id, $provider_id, !$send_email);
+    NotificationEvents::followUpScheduled(
+        $pdo,
+        $patient_id,
+        $followup_date,
+        $provider_id,
+        $provider_id,
+        !$send_email,
+        $followupId,
+        $consultation_id > 0 ? $consultation_id : null
+    );
     require_once BASE_PATH . '/app/includes/audit_log.php';
     audit_log($pdo, [
         'patient_id' => $patient_id,

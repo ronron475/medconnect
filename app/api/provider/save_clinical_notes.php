@@ -367,6 +367,12 @@ try {
     }
 
     require_once dirname(dirname(dirname(__DIR__))) . '/app/includes/notification_events.php';
+    NotificationEvents::soapNotesFinalized(
+        $pdo,
+        (int) $data['consultation_id'],
+        (int) $data['patient_id'],
+        (int) $data['provider_id']
+    );
     NotificationEvents::consultationCompleted(
         $pdo,
         (int) $data['consultation_id'],

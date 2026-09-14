@@ -421,11 +421,12 @@ final class NotificationEvents
         NotificationManager::notifyPatient($pdo, $patientId, [
             'sender_id'     => $senderId,
             'type'          => NotificationManager::TYPE_REFERRAL,
-            'title'         => 'Referral Created',
-            'message'       => 'A referral has been created for your care.',
-            'action_url'    => '/views/patient/dashboard.php#action-items',
+            'title'         => 'New referral',
+            'message'       => 'Your doctor has created a referral for you.',
+            'action_url'    => '/views/patient/my_health.php?tab=files',
             'related_table' => 'digital_referrals',
             'related_id'    => $referralId,
+            'once'          => true,
         ]);
         if ($providerId) {
             NotificationManager::notifyProvider($pdo, $providerId, [
@@ -510,28 +511,42 @@ final class NotificationEvents
         ]);
     }
 
+    /**
+     * Patient notification when SOAP notes are finalized (not draft saves/edits).
+     */
+    public static function soapNotesFinalized(
+        PDO $pdo,
+        int $consultationId,
+        int $patientId,
+        ?int $senderId = null
+    ): void {
+        require_once __DIR__ . '/patient_consultation_records.php';
+        NotificationManager::notifyPatient($pdo, $patientId, [
+            'sender_id'     => $senderId,
+            'type'          => NotificationManager::TYPE_MEDICAL,
+            'title'         => 'Medical record updated',
+            'message'       => 'Your doctor has finalized your consultation notes.',
+            'action_url'    => patient_health_files_url($consultationId),
+            'related_table' => 'consultations',
+            'related_id'    => $consultationId,
+            'once'          => true,
+        ]);
+    }
+
     public static function consultationCompleted(PDO $pdo, int $consultationId, int $patientId, int $providerId, ?int $senderId = null, ?string $providerName = null, ?string $finalCaseLevel = null): void
     {
         require_once __DIR__ . '/patient_consultation_records.php';
-        $name = trim((string) ($providerName ?? 'your healthcare provider'));
-        if ($name !== '' && stripos($name, 'dr.') !== 0) {
-            $name = 'Dr. ' . $name;
-        }
         $detailUrl = patient_health_files_url($consultationId);
-        $level = trim((string) ($finalCaseLevel ?? ''));
-        $message = "Your consultation with {$name} has been completed. Your health file and care plan are now available in My Health.";
-        if ($level !== '') {
-            $message = "Your consultation with {$name} has been completed. Final case level: {$level}. View your health file in My Health.";
-        }
 
         NotificationManager::notifyPatient($pdo, $patientId, [
             'sender_id'     => $senderId,
             'type'          => NotificationManager::TYPE_SUCCESS,
             'title'         => 'Consultation completed',
-            'message'       => $message,
+            'message'       => 'Your consultation has been completed by your doctor.',
             'action_url'    => $detailUrl,
             'related_table' => 'consultations',
             'related_id'    => $consultationId,
+            'once'          => true,
         ]);
         NotificationManager::notifyProvider($pdo, $providerId, [
             'sender_id'     => $senderId,
@@ -664,11 +679,12 @@ final class NotificationEvents
         NotificationManager::notifyPatient($pdo, $patientId, [
             'sender_id'     => $senderId,
             'type'          => NotificationManager::TYPE_MEDICAL,
-            'title'         => 'Prescription Available',
-            'message'       => 'A new prescription is available for you.',
+            'title'         => 'Prescription updated',
+            'message'       => 'Your doctor has updated your prescription.',
             'action_url'    => $actionUrl,
             'related_table' => $consultationId ? 'consultations' : null,
             'related_id'    => $consultationId,
+            'once'          => true,
         ]);
         NotificationManager::notifyProvider($pdo, $providerId, [
             'sender_id'  => $senderId,
@@ -829,16 +845,42 @@ final class NotificationEvents
         ]);
     }
 
-    public static function followUpScheduled(PDO $pdo, int $patientId, string $date, ?int $providerId = null, ?int $senderId = null, bool $email = true): void
-    {
-        NotificationManager::notifyPatient($pdo, $patientId, [
+    public static function followUpScheduled(
+        PDO $pdo,
+        int $patientId,
+        string $date,
+        ?int $providerId = null,
+        ?int $senderId = null,
+        bool $email = true,
+        ?int $followupId = null,
+        ?int $consultationId = null
+    ): void {
+        $relatedTable = null;
+        $relatedId = null;
+        if ($followupId !== null && $followupId > 0) {
+            $relatedTable = 'followups';
+            $relatedId = $followupId;
+        }
+        $actionUrl = '/views/patient/my_health.php?tab=files';
+        if ($consultationId !== null && $consultationId > 0) {
+            require_once __DIR__ . '/patient_consultation_records.php';
+            $actionUrl = patient_health_files_url($consultationId);
+        }
+
+        $patientOpts = [
             'sender_id'  => $senderId,
             'type'       => NotificationManager::TYPE_REMINDER,
-            'title'      => 'Follow-Up Scheduled',
-            'message'    => "Your follow-up is scheduled for {$date}.",
-            'action_url' => '/views/patient/dashboard.php#action-items',
+            'title'      => 'Follow-up instructions available',
+            'message'    => 'Your doctor added follow-up instructions for your consultation.',
+            'action_url' => $actionUrl,
             'email'      => $email,
-        ]);
+            'once'       => true,
+        ];
+        if ($relatedTable !== null && $relatedId !== null) {
+            $patientOpts['related_table'] = $relatedTable;
+            $patientOpts['related_id'] = $relatedId;
+        }
+        NotificationManager::notifyPatient($pdo, $patientId, $patientOpts);
         if ($providerId) {
             NotificationManager::notifyProvider($pdo, $providerId, [
                 'sender_id'  => $senderId,
@@ -1040,55 +1082,17 @@ final class NotificationEvents
         int $triageId,
         ?int $senderId = null
     ): void {
-        $providerName = trim($providerName) !== '' ? trim($providerName) : 'your healthcare provider';
-        $complaint = '';
-        if ($triageId > 0) {
-            try {
-                $st = $pdo->prepare('SELECT chief_complaint FROM triage_results WHERE id = ? AND patient_id = ? LIMIT 1');
-                $st->execute([$triageId, $patientId]);
-                $complaint = trim((string) ($st->fetchColumn() ?: ''));
-            } catch (PDOException $e) {
-                $complaint = '';
-            }
-        }
-        $message = "Your patient complaint has been reviewed by {$providerName}. Your provider has also reviewed your care guidance.";
-        if ($complaint !== '') {
-            $message .= ' Patient Complaint: ' . $complaint . '.';
-        }
-        $message .= ' Triage Classification: Non-Urgent. Reviewed By: ' . $providerName . '. Status: Reviewed. Please log in to your medConnect account to view the reviewed information and continue with your consultation if applicable.';
-
-        try {
-            $dedupe = $pdo->prepare("
-                SELECT id FROM notifications
-                WHERE user_id = ?
-                  AND related_table = 'triage_results'
-                  AND related_id = ?
-                  AND title = ?
-                  AND created_at > DATE_SUB(NOW(), INTERVAL 10 MINUTE)
-                LIMIT 1
-            ");
-            $dedupe->execute([
-                $patientId,
-                $triageId,
-                'Your Patient Complaint Has Been Reviewed',
-            ]);
-            if ((int) ($dedupe->fetchColumn() ?: 0) > 0) {
-                return;
-            }
-        } catch (PDOException $e) {
-            error_log('careTipsApprovedForPatient dedupe: ' . $e->getMessage());
-        }
-
         NotificationManager::notifyPatient($pdo, $patientId, [
             'sender_id'     => $senderId ?? $providerId,
             'type'          => NotificationManager::TYPE_SUCCESS,
-            'title'         => 'Your Patient Complaint Has Been Reviewed',
-            'message'       => $message,
+            'title'         => 'New care tips available',
+            'message'       => 'Your doctor has added care tips for you.',
             'action_url'    => '/views/patient/my_health.php?tab=care-tips',
             'related_table' => 'triage_results',
             'related_id'    => $triageId,
             'icon'          => 'heart',
             'email'         => true,
+            'once'          => true,
         ]);
     }
 

@@ -123,7 +123,16 @@ try {
             $dateStmt->execute([(int) $result['followup_id']]);
             $followupDate = (string) ($dateStmt->fetchColumn() ?: '');
             if ($followupDate !== '') {
-                NotificationEvents::followUpScheduled($pdo, $patientId, $followupDate, $providerId, $providerId, true);
+                NotificationEvents::followUpScheduled(
+                    $pdo,
+                    $patientId,
+                    $followupDate,
+                    $providerId,
+                    $providerId,
+                    true,
+                    (int) $result['followup_id'],
+                    $consultationId
+                );
             }
         } catch (Throwable $e) {
             error_log('followup_decision notify: ' . $e->getMessage());

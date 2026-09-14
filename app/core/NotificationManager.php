@@ -156,11 +156,49 @@ final class NotificationManager
      *   icon?: string|null,
      *   expires_at?: string|null,
      *   email?: bool,
-     *   audit?: bool
+     *   audit?: bool,
+     *   once?: bool
      * } $options
      */
+    public static function createOnce(PDO $pdo, int $receiverId, array $options): ?int
+    {
+        self::ensureSchema($pdo);
+
+        $title = trim((string) ($options['title'] ?? ''));
+        $relatedTable = isset($options['related_table']) ? trim((string) $options['related_table']) : '';
+        $relatedId = isset($options['related_id']) ? (int) $options['related_id'] : 0;
+
+        if ($title !== '' && $relatedTable !== '' && $relatedId > 0) {
+            try {
+                $stmt = $pdo->prepare("
+                    SELECT id
+                    FROM notifications
+                    WHERE user_id = ?
+                      AND title = ?
+                      AND related_table = ?
+                      AND related_id = ?
+                      AND status = 'active'
+                    LIMIT 1
+                ");
+                $stmt->execute([$receiverId, $title, $relatedTable, $relatedId]);
+                if ((int) ($stmt->fetchColumn() ?: 0) > 0) {
+                    return null;
+                }
+            } catch (PDOException $e) {
+                error_log('Notification createOnce check: ' . $e->getMessage());
+            }
+        }
+
+        unset($options['once']);
+        return self::create($pdo, $receiverId, $options);
+    }
+
     public static function create(PDO $pdo, int $receiverId, array $options): ?int
     {
+        if (!empty($options['once'])) {
+            return self::createOnce($pdo, $receiverId, $options);
+        }
+
         self::ensureSchema($pdo);
 
         $title   = trim($options['title'] ?? '');

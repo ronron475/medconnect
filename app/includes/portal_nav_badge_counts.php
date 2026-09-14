@@ -55,9 +55,86 @@ function portal_nav_provider_counts(PDO $pdo, int $providerId): array
 function portal_nav_patient_counts(PDO $pdo, int $patientId): array
 {
     return [
-        'consultations'  => max(0, portal_nav_patient_sessions_attention_count($pdo, $patientId)),
-        'patient_triage' => max(0, portal_nav_patient_booking_actions_count($pdo, $patientId)),
+        'consultations'   => max(0, portal_nav_patient_sessions_attention_count($pdo, $patientId)),
+        'patient_triage'  => max(0, portal_nav_patient_booking_actions_count($pdo, $patientId)),
+        'my_health'       => max(0, portal_nav_patient_section_unread_count($pdo, $patientId, 'my_health')),
+        'health_summary'  => max(0, portal_nav_patient_section_unread_count($pdo, $patientId, 'health_summary')),
     ];
+}
+
+/**
+ * Unread patient notifications belonging to a sidebar section (not the bell total).
+ */
+function portal_nav_patient_section_unread_count(PDO $pdo, int $patientId, string $section): int
+{
+    if ($patientId <= 0) {
+        return 0;
+    }
+
+    $section = strtolower(trim($section));
+    if (!in_array($section, ['my_health', 'health_summary'], true)) {
+        return 0;
+    }
+
+    try {
+        if (!$pdo->query("SHOW TABLES LIKE 'notifications'")->rowCount()) {
+            return 0;
+        }
+
+        if ($section === 'health_summary') {
+            $stmt = $pdo->prepare("
+                SELECT COUNT(*)
+                FROM notifications
+                WHERE user_id = ?
+                  AND is_read = 0
+                  AND status = 'active'
+                  AND (expires_at IS NULL OR expires_at > NOW())
+                  AND (
+                    link LIKE '%/health_summary.php%'
+                    OR title IN (
+                      'Health Summary Update Approved',
+                      'Health Summary Update Rejected'
+                    )
+                  )
+            ");
+            $stmt->execute([$patientId]);
+            return (int) $stmt->fetchColumn();
+        }
+
+        $stmt = $pdo->prepare("
+            SELECT COUNT(*)
+            FROM notifications
+            WHERE user_id = ?
+              AND is_read = 0
+              AND status = 'active'
+              AND (expires_at IS NULL OR expires_at > NOW())
+              AND (
+                link LIKE '%/my_health.php%'
+                OR link LIKE '%/consultation_detail.php%'
+                OR title IN (
+                  'Medical record updated',
+                  'Medical Record Updated',
+                  'Consultation completed',
+                  'Follow-up instructions available',
+                  'New referral',
+                  'Referral Created',
+                  'Prescription updated',
+                  'Prescription Available',
+                  'New care tips available',
+                  'Your Patient Complaint Has Been Reviewed'
+                )
+              )
+              AND (
+                link IS NULL
+                OR link = ''
+                OR link NOT LIKE '%/health_summary.php%'
+              )
+        ");
+        $stmt->execute([$patientId]);
+        return (int) $stmt->fetchColumn();
+    } catch (Throwable $e) {
+        return 0;
+    }
 }
 
 /**
@@ -321,10 +398,12 @@ function portal_nav_badge_key_for_item(string $role, string $file, ?string $item
 
     if ($role === 'patient') {
         return match ($file) {
-            'messages.php'      => 'messages',
-            'consultations.php' => 'consultations',
-            'triage.php'        => 'patient_triage',
-            default             => null,
+            'messages.php'        => 'messages',
+            'consultations.php'   => 'consultations',
+            'triage.php'          => 'patient_triage',
+            'my_health.php'       => 'my_health',
+            'health_summary.php'  => 'health_summary',
+            default               => null,
         };
     }
 
@@ -408,5 +487,5 @@ function portal_nav_badge_format(int $count): string
     if ($count <= 0) {
         return '';
     }
-    return $count > 99 ? '99+' : (string) $count;
+    return $count > 9 ? '9+' : (string) $count;
 }

@@ -240,6 +240,12 @@
     updateBadge(count);
   }
 
+  function refreshSidebarNavBadges() {
+    if (window.MedConnectNavBadgesRefresh) {
+      window.MedConnectNavBadgesRefresh();
+    }
+  }
+
   function isItemUnreadInDom(id) {
     if (!id) return false;
     const rows = document.querySelectorAll('.mc-notif-item[data-id="' + id + '"]');
@@ -505,8 +511,10 @@
           keepalive: true,
         });
         const data = await res.json();
-        if (data.success) applyUnreadFromResponse(data);
-        else await syncUnreadBadge();
+        if (data.success) {
+          applyUnreadFromResponse(data);
+          refreshSidebarNavBadges();
+        } else await syncUnreadBadge();
       } else if (action === 'read') {
         await markRead(id);
       } else if (action === 'unread') {
@@ -524,8 +532,10 @@
             headers: { Accept: 'application/json' },
           });
           const data = await res.json();
-          if (data.success) applyUnreadFromResponse(data);
-          else await syncUnreadBadge();
+          if (data.success) {
+            applyUnreadFromResponse(data);
+            refreshSidebarNavBadges();
+          } else await syncUnreadBadge();
         } finally {
           markReadInFlight.delete(id);
         }
@@ -613,6 +623,7 @@
       const data = await res.json();
       if (data.success) {
         applyUnreadFromResponse(data);
+        refreshSidebarNavBadges();
       } else {
         markedReadIds.delete(id);
         await syncUnreadBadge();
@@ -651,6 +662,7 @@
       if (data.success) {
         applyUnreadFromResponse(data);
         updateBadge(0);
+        refreshSidebarNavBadges();
         loadDropdown();
       } else {
         await syncUnreadBadge();
