@@ -26,8 +26,8 @@ $config = LandingPageConfig::all($pdo);
 $stats = LandingPageConfig::dashboardStats($pdo);
 
 require_once __DIR__ . '/partials/layout_open.php';
-?>
-
+// Sidebar (layout_open) uses $config for portal chrome — keep landing settings separate.
+$lpConfig = $config = LandingPageConfig::all($pdo);
 <link rel="stylesheet" href="<?= ASSET_BASE ?>/assets/css/admin-landing-page.css?v=3">
 
 <div class="lp-mgmt" id="lpMgmt">
