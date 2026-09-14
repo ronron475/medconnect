@@ -106,6 +106,9 @@
     document.body.classList.toggle('mc-video-shell-fullscreen', mode === 'fullscreen');
     writeState({ mode: mode });
     syncChrome();
+    if (global.MedConnectMultitask && typeof global.MedConnectMultitask.syncWebrtc === 'function') {
+      global.MedConnectMultitask.syncWebrtc();
+    }
   }
 
   function postToFrame(message) {
@@ -243,12 +246,12 @@
     handle.addEventListener('pointercancel', up);
   }
 
-  function isPatientPortalPath(pathname) {
-    return /\/views\/patient\//i.test(String(pathname || ''));
+  function isPortalPath(pathname) {
+    return /\/views\/(patient|provider|bhw|admin|superadmin)\//i.test(String(pathname || ''));
   }
 
   function shouldSoftNavigate(href) {
-    if (!isPatientPortalPath(global.location.pathname)) return false;
+    if (!isPortalPath(global.location.pathname)) return false;
     let url;
     try {
       url = new URL(href, global.location.href);
@@ -256,9 +259,15 @@
       return false;
     }
     if (url.origin !== global.location.origin) return false;
-    if (!isPatientPortalPath(url.pathname)) return false;
+    if (!isPortalPath(url.pathname)) return false;
     if (/\/(logout|login|account_setup)\.php/i.test(url.pathname)) return false;
     if (url.pathname === global.location.pathname && url.search === global.location.search) {
+      return false;
+    }
+    // Keep soft-nav within the same portal role so shells stay mounted.
+    const curRole = (String(global.location.pathname).match(/\/views\/([^/]+)\//i) || [])[1] || '';
+    const nextRole = (String(url.pathname).match(/\/views\/([^/]+)\//i) || [])[1] || '';
+    if (curRole && nextRole && curRole.toLowerCase() !== nextRole.toLowerCase()) {
       return false;
     }
     return true;
@@ -286,7 +295,7 @@
   }
 
   function runFetchedScripts(doc) {
-    const skipSrc = /session-video-shell|portal_dark_mode|theme_scripts|live_sync|responsive|notification|patient-health-updates|patient-urgency|patient-triage-i18n|patient-recommendation|auth_transition|mc_modal_select/i;
+    const skipSrc = /session-video-shell|medconnect-multitask|portal_dark_mode|theme_scripts|live_sync|responsive|notification|patient-health-updates|patient-urgency|patient-triage-i18n|patient-recommendation|auth_transition|mc_modal_select/i;
     const scripts = Array.from(doc.querySelectorAll('script'));
     scripts.forEach((old) => {
       const src = old.getAttribute('src') || '';
@@ -343,8 +352,8 @@
       if (!res.ok) throw new Error('soft-nav ' + res.status);
       const html = await res.text();
       const doc = new DOMParser().parseFromString(html, 'text/html');
-      const newBody = doc.querySelector('.portal-page-body');
-      const curBody = document.querySelector('.portal-page-body');
+      const newBody = doc.querySelector('.portal-page-body, .provider-page-body');
+      const curBody = document.querySelector('.portal-page-body, .provider-page-body');
       if (!newBody || !curBody) throw new Error('missing portal-page-body');
 
       // Keep the live WebRTC iframe — only swap portal content.
@@ -360,6 +369,17 @@
         global.history.replaceState({ mcSoftNav: true }, '', url.href);
       }
       runFetchedScripts(doc);
+      if (global.MedConnectMultitask) {
+        if (typeof global.MedConnectMultitask.saveDrafts === 'function') {
+          // drafts already saved on leaving previous page via input handlers
+        }
+        if (typeof global.MedConnectMultitask.syncContext === 'function') {
+          global.MedConnectMultitask.syncContext();
+        }
+        if (typeof global.MedConnectMultitask.syncWebrtc === 'function') {
+          global.MedConnectMultitask.syncWebrtc();
+        }
+      }
       global.dispatchEvent(new CustomEvent('medconnect:soft-nav', { detail: { href: url.href } }));
     } catch (_) {
       global.location.href = href;
@@ -398,7 +418,7 @@
     global.addEventListener('popstate', () => {
       const st = readState();
       if (!st || !st.token || st.ended) return;
-      if (!isPatientPortalPath(global.location.pathname)) return;
+      if (!isPortalPath(global.location.pathname)) return;
       softNavigate(global.location.href, { replace: true, skipMinimize: false });
     });
   }
@@ -566,6 +586,9 @@
     if (frame) frame.src = 'about:blank';
     setMode('hidden');
     clearState();
+    if (global.MedConnectMultitask && typeof global.MedConnectMultitask.unregister === 'function') {
+      global.MedConnectMultitask.unregister('webrtc-active');
+    }
   }
 
   function restoreFromStorage() {

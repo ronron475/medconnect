@@ -1,0 +1,372 @@
+/**
+ * medConnect — Mobile scroll policy (all roles)
+ *
+ * Vertical scrolling: always allowed for long pages.
+ * Horizontal scrolling: allowed inside wide components (tables, charts, controls).
+ * Prefer component-level overflow-x:auto — do not rely on body/html overflow:hidden.
+ *
+ * Load LAST (after portal_shell / provider_shell / page CSS).
+ */
+
+/* ── Document: both axes scroll when needed; no global clip hack ── */
+html {
+  overflow-x: auto;
+  overflow-y: auto;
+  max-width: 100%;
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+
+body {
+  overflow-x: auto;
+  overflow-y: auto;
+  max-width: 100%;
+}
+
+/* Drawer open still locks background scroll (intentional UX) */
+body.mc-nav-open {
+  overflow: hidden;
+  overscroll-behavior: none;
+  touch-action: none;
+}
+
+/* ── Portal content shells: size-contain, do not clip scroll children ── */
+body.patient-portal,
+body.provider-body,
+body.bhw-body,
+body.admin-body,
+body.superadmin-body,
+body.adm-body {
+  overflow-x: auto;
+  overflow-y: auto;
+}
+
+.portal-main,
+.main.portal-main,
+.main-content.portal-main,
+.main-content.provider-main,
+.provider-main,
+.has-aqua-sidebar,
+.adm-main,
+.adm-content,
+.pd-content,
+.content,
+.portal-page-body,
+.provider-page-body,
+.main-workspace,
+.root-wrapper > .main-content {
+  max-width: 100%;
+  min-width: 0;
+  overflow-x: visible;
+  overflow-y: visible;
+  box-sizing: border-box;
+}
+
+/* Flex/grid children can shrink instead of blowing page width */
+.portal-page-body > *,
+.provider-page-body > *,
+.adm-content > *,
+.pd-content > * {
+  min-width: 0;
+  max-width: 100%;
+}
+
+/* Normal media / text should fit when possible */
+.portal-page-body img,
+.provider-page-body img,
+.adm-content img,
+.pd-content img,
+.portal-page-body video:not(.mc-vc-remote):not(.mc-vc-local):not([data-mc-live-video]),
+.provider-page-body video:not(.mc-vc-remote):not(.mc-vc-local):not([data-mc-live-video]) {
+  max-width: 100%;
+  height: auto;
+}
+
+.portal-page-body h1,
+.portal-page-body h2,
+.portal-page-body h3,
+.provider-page-body h1,
+.provider-page-body h2,
+.provider-page-body h3,
+.adm-content h1,
+.adm-content h2,
+.adm-content h3 {
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+/* Forms stay inside viewport */
+.portal-page-body input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="color"]),
+.portal-page-body select,
+.portal-page-body textarea,
+.provider-page-body input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="color"]),
+.provider-page-body select,
+.provider-page-body textarea,
+.adm-content input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="color"]),
+.adm-content select,
+.adm-content textarea,
+.pd-content input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="color"]),
+.pd-content select,
+.pd-content textarea {
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+/* ── Intentional horizontal scroll regions ── */
+.mc-hscroll,
+.mc-table-wrap,
+.table-responsive,
+.adm-table-wrap,
+.pd-table-wrap,
+.bhw-pl-table-scroll,
+.gis-table-wrap,
+.mr-table-wrap,
+.queue-table-wrap,
+.table-scroll,
+.overflow-x-auto,
+[data-table-scroll],
+[data-hscroll],
+.audit-table-wrap,
+.case-reports-table-wrap,
+.staff-apps-table-wrap,
+.pmh-tabs,
+.pmh-files-table-wrap,
+.pch-table-wrap,
+.fu-table-wrap,
+.schedule-grid-scroll,
+.chart-scroll,
+.mc-chart-wrap,
+.tabs-scroll,
+.chip-row-scroll,
+.mc-vc-controls-inner {
+  max-width: 100%;
+  overflow-x: auto;
+  overflow-y: visible;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior-x: contain;
+  touch-action: pan-x pan-y;
+}
+
+/* Cards/panels that directly contain a wide table can scroll internally */
+.mc-card:has(> table),
+.adm-card:has(> table),
+.pd-card:has(> table),
+.pd-panel:has(> table),
+.queue-panel:has(> table),
+.triage-panel:has(> table),
+.mr-card:has(> table),
+.ps-card:has(> table),
+.bhw-card:has(> table),
+.patient-card:has(> table) {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior-x: contain;
+}
+
+/* Readable table minimums — swipe inside wrapper, not the whole site */
+@media (max-width: 1024px) {
+  .mc-table-wrap > table,
+  .table-responsive > table,
+  .adm-table-wrap > table,
+  .pd-table-wrap > table,
+  .bhw-pl-table-scroll > table,
+  .gis-table-wrap > table,
+  .mr-table-wrap > table,
+  .queue-table-wrap > table,
+  .table-scroll > table,
+  [data-table-scroll] > table {
+    min-width: min(640px, 100%);
+  }
+
+  .bhw-pl-table {
+    min-width: 640px;
+  }
+
+  .gis-table {
+    min-width: 560px;
+  }
+}
+
+@media (max-width: 480px) {
+  .mc-table-wrap > table,
+  .table-responsive > table,
+  .adm-table-wrap > table,
+  .pd-table-wrap > table,
+  .mr-table-wrap > table,
+  .queue-table-wrap > table {
+    min-width: 520px;
+  }
+
+  .bhw-pl-table {
+    min-width: 520px;
+  }
+
+  .gis-table {
+    min-width: 480px;
+  }
+}
+
+/* Pre/code and wide timelines */
+.portal-page-body pre,
+.provider-page-body pre,
+.adm-content pre,
+.portal-page-body .code-block,
+.provider-page-body .timeline-track,
+.portal-page-body .timeline-track {
+  max-width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* ── Modals: fit width, vertical scroll; h-scroll only inside wide children ── */
+@media (max-width: 768px) {
+  .mc-modal,
+  .mc-modal__dialog,
+  .modal-dialog,
+  .reg-req-modal__dialog,
+  .signin-modal-wrap .signin-card,
+  .ann-box,
+  #logout-modal-overlay .mc-modal {
+    width: min(100vw - 20px, 100%) !important;
+    max-width: calc(100vw - 20px) !important;
+    max-height: min(92dvh, calc(100vh - 24px));
+    box-sizing: border-box;
+  }
+
+  .mc-modal__body,
+  .modal-body,
+  .bhw-invite-scroll,
+  .staff-form-scroll {
+    overflow-x: visible;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior: contain;
+  }
+
+  .mc-modal__body .mc-table-wrap,
+  .mc-modal__body .table-responsive,
+  .mc-modal__body [data-table-scroll],
+  .modal-body .mc-table-wrap,
+  .modal-body .table-responsive {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .mc-modal__footer,
+  .modal-footer,
+  .bhw-invite-footer,
+  .staff-form-footer {
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+}
+
+/* ── Video consultation layout only (not WebRTC) ── */
+@media (max-width: 900px) {
+  .mc-vc-shell,
+  .session-video-shell,
+  .video-room-root {
+    max-width: 100%;
+    min-width: 0;
+  }
+
+  .mc-vc-side,
+  .mc-vc-panel,
+  .session-video-side,
+  .video-room-sidebar {
+    max-width: 100%;
+    overflow-x: visible;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .mc-vc-controls,
+  .video-controls,
+  .controls {
+    max-width: 100%;
+  }
+
+  .mc-vc-controls-inner,
+  .video-controls-row {
+    display: flex;
+    flex-wrap: nowrap;
+    gap: 8px;
+    max-width: 100%;
+    overflow-x: auto;
+    overflow-y: hidden;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior-x: contain;
+  }
+}
+
+/* ── Small phones: stack ordinary grids; keep wide tables swipeable ── */
+@media (max-width: 414px) {
+  .portal-page-body,
+  .provider-page-body {
+    padding-left: max(12px, env(safe-area-inset-left, 0px));
+    padding-right: max(12px, env(safe-area-inset-right, 0px));
+  }
+
+  .stat-grid,
+  .adm-metrics,
+  .pd-stats,
+  .prov-dash-stats,
+  .mc-notif-widgets--dashboard {
+    grid-template-columns: 1fr 1fr !important;
+  }
+}
+
+@media (max-width: 360px) {
+  .stat-grid,
+  .adm-metrics:not(.adm-metrics--keep-cols),
+  .pd-stats,
+  .prov-dash-stats {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+/* ── Topbar / chrome: stay within viewport without killing page scroll ── */
+.topbar,
+.pd-header,
+.adm-topbar {
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+@media (max-width: 768px) {
+  .topbar-title,
+  .pd-header-page,
+  .adm-topbar-title {
+    overflow-wrap: anywhere;
+    word-break: break-word;
+  }
+}
+
+/* ── Video room: keep stage contained; allow panel + control scrolling ── */
+@media (max-width: 900px) {
+  body.role-patient .mc-vc-panel,
+  body.role-provider .mc-vc-panel,
+  body.role-patient .mc-vc-drawer,
+  body.role-provider .mc-vc-drawer,
+  body.role-patient .mc-vc-chat,
+  body.role-provider .mc-vc-chat,
+  body.role-patient .mc-vc-notes,
+  body.role-provider .mc-vc-notes {
+    overflow-x: visible;
+    overflow-y: auto !important;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior: contain;
+    max-width: 100%;
+  }
+
+  body.role-patient .mc-vc-controls-inner,
+  body.role-provider .mc-vc-controls-inner,
+  .mc-vc-controls-inner,
+  .video-controls-row {
+    overflow-x: auto !important;
+    overflow-y: hidden;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior-x: contain;
+    max-width: 100%;
+  }
+}

@@ -275,6 +275,7 @@ if (session_status() === PHP_SESSION_ACTIVE) {
   <link rel="stylesheet" href="<?= ASSET_BASE ?>/assets/css/video-mute-tts.css?v=<?= $muteTtsCssVer ?>"/>
   <link rel="stylesheet" href="<?= ASSET_BASE ?>/assets/css/video-consultation-ui.css?v=<?= $videoUiCssVer ?>"/>
   <link rel="stylesheet" href="<?= ASSET_BASE ?>/assets/css/video-room-enhancements.css?v=<?= $videoEnhCssVer ?>"/>
+  <?php require_once VIEWS_PATH . '/partials/mobile_scroll_assets.php'; ?>
   <script src="<?= ASSET_BASE ?>/assets/js/video-call-core.js?v=<?= $videoCoreJsVer ?>"></script>
   <script src="<?= ASSET_BASE ?>/assets/js/webrtc-peer-call.js?v=<?= $webrtcPeerJsVer ?>"></script>
   <script src="<?= ASSET_BASE ?>/assets/js/video-consultation-ui.js?v=<?= $videoUiJsVer ?>"></script>

@@ -663,6 +663,12 @@
         if (typeof global.leaveCallFast === 'function') global.leaveCallFast();
         else if (typeof global.endCall === 'function') global.endCall(true);
       }
+      if (type === 'medconnect:request-native-pip') {
+        tryEnterNativePip();
+      }
+      if (type === 'medconnect:exit-native-pip') {
+        tryExitNativePip();
+      }
     });
 
     const embedded = window.parent && window.parent !== window;
@@ -678,6 +684,27 @@
     } else if (global.McSessionVideoShell && !IS_PATIENT) {
       // Standalone provider: offer browse portal via shell if active elsewhere
     }
+  }
+
+  function tryEnterNativePip() {
+    try {
+      if (!document.pictureInPictureEnabled) return;
+      if (document.pictureInPictureElement) return;
+      const remote = q('remoteVideo');
+      const local = q('localVideo');
+      const video = (remote && remote.srcObject) ? remote : local;
+      if (!video || typeof video.requestPictureInPicture !== 'function') return;
+      if (!video.srcObject) return;
+      video.requestPictureInPicture().catch(function () { /* unsupported / gesture */ });
+    } catch (_) { /* ignore */ }
+  }
+
+  function tryExitNativePip() {
+    try {
+      if (document.pictureInPictureElement && typeof document.exitPictureInPicture === 'function') {
+        document.exitPictureInPicture().catch(function () { /* ignore */ });
+      }
+    } catch (_) { /* ignore */ }
   }
 
   function bindWaitingRetry() {

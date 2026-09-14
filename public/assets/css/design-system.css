@@ -114,7 +114,8 @@ body {
     line-height: 1.4; /* Compact line height */
     -webkit-font-smoothing: antialiased;
     font-size: var(--mc-fs-body);
-    overflow-x: clip;
+    overflow-x: auto;
+    overflow-y: auto;
     max-width: 100%;
 }
 

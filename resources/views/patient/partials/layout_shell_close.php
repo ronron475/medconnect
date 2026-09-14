@@ -18,6 +18,7 @@ require_once VIEWS_PATH . '/partials/portal_dark_mode_close.php';
 <?php require_once VIEWS_PATH . '/partials/theme_scripts.php'; ?>
 <?php require_once VIEWS_PATH . '/partials/portal_nav_badge_scripts.php'; ?>
 <?php require_once VIEWS_PATH . '/partials/live_sync_assets.php'; ?>
+<?php require_once VIEWS_PATH . '/components/medconnect_multitask.php'; ?>
 <?php require_once VIEWS_PATH . '/components/session_video_shell.php'; ?>
 <script>window.APP_BASE = window.APP_BASE || <?= json_encode(ASSET_BASE) ?>;</script>
 <?php $ptI18nJsVer = (int) @filemtime(ASSETS_PATH . '/js/patient-triage-i18n.js'); ?>

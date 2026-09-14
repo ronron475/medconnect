@@ -66,3 +66,4 @@ if (!empty($_SESSION['user_id']) && $pdo instanceof PDO) {
   ?>
   <link rel="stylesheet" href="<?= ASSET_BASE ?>/assets/css/patient-dark-mode.css?v=<?= $patientDarkCssVer ?>"/>
   <?php require_once VIEWS_PATH . '/partials/portal_nav_badge_assets.php'; ?>
+  <?php require_once VIEWS_PATH . '/partials/mobile_scroll_assets.php'; ?>

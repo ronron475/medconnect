@@ -44,6 +44,7 @@
   <link rel="stylesheet" href="<?= ASSET_BASE ?>/assets/css/admin-dark-mode.css?v=<?= $adminDarkVer ?>"/>
   <?php require_once VIEWS_PATH . '/partials/portal_nav_badge_assets.php'; ?>
   <?php require_once VIEWS_PATH . '/partials/mc_modal_select_assets.php'; ?>
+  <?php require_once VIEWS_PATH . '/partials/mobile_scroll_assets.php'; ?>
 </head>
 <body
   class="admin-body superadmin-body"

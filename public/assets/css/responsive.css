@@ -545,12 +545,13 @@ body.mc-nav-opening .topbar-brand {
 
 /* ── Modals ── */
 @media (max-width: 640px) {
-  /* Patient pages: prevent header text clipping/overflow in cards/titles */
+  /* Patient pages: fit width; allow intentional component-level h-scroll */
   body.patient-portal .topbar,
   body.patient-portal .portal-page-body,
   body.patient-portal .patient-page {
     max-width: 100%;
-    overflow-x: hidden;
+    min-width: 0;
+    overflow-x: visible;
   }
 
   body.patient-portal .mc-card,
@@ -640,12 +641,14 @@ body.mc-nav-opening .topbar-brand {
    ============================================================================= */
 
 html {
-  overflow-x: clip;
+  overflow-x: auto;
+  overflow-y: auto;
   max-width: 100%;
 }
 
 body {
-  overflow-x: clip;
+  overflow-x: auto;
+  overflow-y: auto;
   max-width: 100%;
 }
 
@@ -671,7 +674,8 @@ body {
 .reg-shell {
   max-width: 100%;
   min-width: 0;
-  overflow-x: clip;
+  overflow-x: visible;
+  overflow-y: visible;
 }
 
 /* Prevent flex/grid children from forcing horizontal scroll */
@@ -1362,7 +1366,9 @@ body.login-page,
 body.role-patient,
 body.role-provider,
 body.mc-ended-page {
-  overflow-x: clip;
+  overflow-x: auto;
+  overflow-y: auto;
+  max-width: 100%;
 }
 
 .portal-main,

@@ -25,14 +25,17 @@
   --landing-transition: 0.28s cubic-bezier(0.22, 1, 0.36, 1);
 }
 
-/* ── Prevent horizontal scroll ── */
+/* ── Allow intentional scroll; soft page width containment ── */
 html:has(body.landing-page) {
-  overflow-x: clip;
+  overflow-x: auto;
+  overflow-y: auto;
+  max-width: 100%;
   scroll-behavior: smooth;
 }
 
 body.landing-page {
-  overflow-x: clip;
+  overflow-x: auto;
+  overflow-y: auto;
   max-width: 100%;
 }
 
