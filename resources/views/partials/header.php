@@ -109,6 +109,11 @@ if ($is_bhw_portal) {
     <?php require_once VIEWS_PATH . '/partials/theme_toggle.php'; ?>
 
     <?php
+    $fullscreen_btn_class = 'topbar-icon-btn';
+    require_once VIEWS_PATH . '/partials/fullscreen_toggle.php';
+    ?>
+
+    <?php
     $bell_class = 'topbar-icon-btn mc-notif-btn';
     require_once VIEWS_PATH . '/partials/notification_bell.php';
     ?>

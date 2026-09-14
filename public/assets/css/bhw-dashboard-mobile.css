@@ -98,7 +98,8 @@
 
   body.bhw-body .mc-theme-toggle__btn,
   body.bhw-body .mc-notif-btn,
-  body.bhw-body .topbar-icon-btn {
+  body.bhw-body .topbar-icon-btn,
+  body.bhw-body .mc-fullscreen-btn {
     width: 44px;
     height: 44px;
     min-width: 44px;

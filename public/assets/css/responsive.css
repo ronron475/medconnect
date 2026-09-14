@@ -228,6 +228,13 @@ body.mc-nav-opening .topbar-brand {
   .pd-header-right {
     flex-shrink: 0;
   }
+
+  .mc-fullscreen-btn {
+    width: 44px;
+    height: 44px;
+    min-width: 44px;
+    min-height: 44px;
+  }
 }
 
 /* ── Sidebar drawer: tablet & mobile ── */

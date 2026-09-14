@@ -26,4 +26,6 @@ $dashMobileVer = ($dashMobileCss && file_exists($dashMobileCss)) ? (int) filemti
 <script src="<?= htmlspecialchars($assetBase, ENT_QUOTES) ?>/assets/js/header-offset.js" defer></script>
 <script src="<?= htmlspecialchars($assetBase, ENT_QUOTES) ?>/assets/js/draggable-fab.js" defer></script>
 <script src="<?= htmlspecialchars($assetBase, ENT_QUOTES) ?>/assets/js/profile-menu.js" defer></script>
+<?php $fullscreenToggleJsVer = (int) @filemtime(defined('ASSETS_PATH') ? ASSETS_PATH . '/js/fullscreen-toggle.js' : ''); ?>
+<script src="<?= htmlspecialchars($assetBase, ENT_QUOTES) ?>/assets/js/fullscreen-toggle.js?v=<?= $fullscreenToggleJsVer ?: time() ?>" defer></script>
 <?php endif; ?>

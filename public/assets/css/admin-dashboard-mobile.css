@@ -136,7 +136,8 @@
 
   body.admin-body .mc-theme-toggle__btn,
   body.admin-body .mc-notif-btn,
-  body.admin-body .topbar-icon-btn {
+  body.admin-body .topbar-icon-btn,
+  body.admin-body .mc-fullscreen-btn {
     width: 44px;
     height: 44px;
     min-width: 44px;
