@@ -84,14 +84,15 @@
   color: var(--bhw-navy, #012a4a);
   font-weight: 700;
   margin: 0 0 6px;
-  font-size: 1.35rem;
+  font-size: clamp(1.4rem, 1.2vw + 1.1rem, 1.55rem);
   letter-spacing: -0.01em;
+  line-height: 1.25;
 }
 
 .bhw-triage-page-header p {
   margin: 0;
   max-width: 62ch;
-  font-size: 13px;
+  font-size: 14px;
   line-height: 1.55;
   color: #52525b;
 }
@@ -99,13 +100,13 @@
 .bhw-triage-link-btn {
   display: inline-flex;
   align-items: center;
-  min-height: 38px;
-  padding: 7px 14px;
+  min-height: 40px;
+  padding: 8px 14px;
   border-radius: 0;
   border: 1px solid #94a3b8;
   background: #fff;
   color: #012a4a;
-  font-size: 12px;
+  font-size: 13px;
   font-weight: 600;
   text-decoration: none;
 }

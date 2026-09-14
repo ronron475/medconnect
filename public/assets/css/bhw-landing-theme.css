@@ -46,14 +46,14 @@ body.bhw-body .topbar--bhw-formal .topbar-eyebrow {
   align-items: center;
   gap: 5px;
   color: #3b82f6;
-  font-size: 10px;
+  font-size: 11px;
   font-weight: 700;
   letter-spacing: 0.08em;
 }
 
 body.bhw-body .topbar--bhw-formal .topbar-title {
   color: #0f172a;
-  font-size: 18px;
+  font-size: 19px;
   font-weight: 700;
   letter-spacing: -0.02em;
 }
@@ -70,13 +70,13 @@ body.bhw-body .topbar--bhw-formal .topbar-datetime {
 
 body.bhw-body .topbar--bhw-formal .topbar-date {
   color: #64748b;
-  font-size: 12px;
+  font-size: 13px;
   font-weight: 600;
 }
 
 body.bhw-body .topbar--bhw-formal .topbar-time {
   color: #94a3b8;
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 500;
   font-variant-numeric: tabular-nums;
 }

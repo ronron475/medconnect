@@ -129,8 +129,10 @@
       padding: 8px 16px;
       border-radius: 6px;
       font-weight: 600;
-      font-size: 12px;
+      font-size: 13px;
       letter-spacing: 0.01em;
+      line-height: 1.3;
+      white-space: normal;
       transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
     }
 
@@ -141,10 +143,10 @@
     }
     
     .bhw-metric-val {
-      font-size: 24px;
-      font-weight: 700;
+      font-size: clamp(1.5rem, 1vw + 1.1rem, 1.75rem);
+      font-weight: 800;
       color: var(--bhw-navy);
-      line-height: 1.2;
+      line-height: 1.15;
     }
     
     .bhw-btn-blue {
@@ -154,7 +156,9 @@
       padding: 8px 16px;
       border-radius: 6px;
       font-weight: 600;
-      font-size: 12px;
+      font-size: 13px;
+      line-height: 1.3;
+      white-space: normal;
       transition: background 0.15s ease, border-color 0.15s ease;
     }
     
@@ -164,30 +168,33 @@
     }
     
     .bhw-metric-label {
-      font-size: 11px;
+      font-size: 12px;
       font-weight: 700;
       color: var(--mc-slate-muted);
       text-transform: uppercase;
-      letter-spacing: 0.05em;
+      letter-spacing: 0.04em;
+      line-height: 1.35;
     }
     
     .bhw-table th {
       background: #f8fafc;
-      font-size: 10px;
+      font-size: 11px;
       font-weight: 700;
       text-transform: uppercase;
-      letter-spacing: 0.06em;
+      letter-spacing: 0.05em;
       color: #64748b;
       padding: 12px 14px;
       border-bottom: 1px solid #e2e8f0;
+      line-height: 1.3;
     }
     
     .bhw-table td {
       padding: 14px;
       vertical-align: middle;
-      font-size: 13px;
+      font-size: 14px;
       color: #334155;
       border-bottom: 1px solid #f1f5f9;
+      line-height: 1.4;
     }
     
     .bhw-btn-teal {
@@ -197,8 +204,10 @@
       padding: 9px 18px;
       border-radius: 6px;
       font-weight: 600;
-      font-size: 12px;
+      font-size: 13px;
       letter-spacing: 0.01em;
+      line-height: 1.3;
+      white-space: normal;
       text-decoration: none;
       display: inline-flex;
       align-items: center;
@@ -212,26 +221,29 @@
     }
     
     .bhw-vitals-form label {
-      font-size: 11px;
+      font-size: 12px;
       font-weight: 700;
       color: var(--mc-slate-muted);
       margin-bottom: 4px;
+      line-height: 1.35;
     }
     
     .bhw-vitals-form .form-control {
       border-radius: 8px;
       border: 1px solid var(--mc-border-thin);
       padding: 8px 12px;
-      font-size: 13px;
+      font-size: 14px;
     }
     
     .bhw-badge {
-      padding: 4px 10px;
+      padding: 5px 10px;
       border-radius: 4px;
-      font-size: 10px;
+      font-size: 11px;
       font-weight: 700;
       text-transform: uppercase;
-      letter-spacing: 0.04em;
+      letter-spacing: 0.03em;
+      line-height: 1.3;
+      white-space: normal;
     }
     
     .urgency-high { background: #fee2e2; color: #dc2626; }
