@@ -1,8 +1,9 @@
 <?php
 /**
- * Unified admin-style portal sidebar — Admin & Super Admin.
+ * Unified admin-style portal sidebar — Admin, Super Admin, and BHW.
  *
- * Set $adm_sidebar_portal to 'admin' or 'superadmin' before including.
+ * Set $adm_sidebar_portal to 'admin', 'superadmin', or 'bhw' before including.
+ * Navigation content is portal-specific; visual design is shared.
  */
 declare(strict_types=1);
 
@@ -25,6 +26,7 @@ $portal_configs = [
         'sidebar_class' => 'adm-sidebar',
         'default_name' => 'Admin',
         'default_initials' => ['A', ''],
+        'aria_label' => 'System Administrator navigation',
     ],
     'superadmin' => [
         'nav_file' => 'superadmin_nav.php',
@@ -36,27 +38,57 @@ $portal_configs = [
         'sidebar_class' => 'adm-sidebar adm-sidebar--superadmin',
         'default_name' => 'Super Admin',
         'default_initials' => ['S', 'A'],
+        'aria_label' => 'Super Administrator navigation',
+    ],
+    'bhw' => [
+        'nav_file' => null,
+        'views_segment' => 'bhw',
+        'logo_em' => 'BHW',
+        'profile_href' => ASSET_BASE . '/views/bhw/settings/profile.php',
+        'profile_title' => 'BHW profile settings',
+        'profile_role' => 'BHW',
+        'sidebar_class' => 'adm-sidebar adm-sidebar--bhw',
+        'default_name' => 'Barangay Health Worker',
+        'default_initials' => ['B', 'H'],
+        'aria_label' => 'BHW panel navigation',
     ],
 ];
 
 $config = $portal_configs[$adm_sidebar_portal] ?? $portal_configs['admin'];
-$current = portal_nav_current_basename();
-$current_query = portal_nav_current_query();
+$views_base = ASSET_BASE . '/views/' . $config['views_segment'];
+$dashboard_href = $views_base . '/dashboard.php';
 
-$admin_name = trim(($_SESSION['first_name'] ?? '') . ' ' . ($_SESSION['last_name'] ?? ''));
-if ($admin_name === '') {
-    $admin_name = $_SESSION['user_name'] ?? $config['default_name'];
+$display_name = trim(($_SESSION['first_name'] ?? '') . ' ' . ($_SESSION['last_name'] ?? ''));
+if ($display_name === '') {
+    $display_name = $_SESSION['user_name'] ?? $config['default_name'];
 }
-$admin_initials = profile_picture_initials(
+$display_initials = profile_picture_initials(
     $_SESSION['first_name'] ?? $config['default_initials'][0],
     $_SESSION['last_name'] ?? $config['default_initials'][1]
 );
-$admin_picture_url = profile_picture_public_url($_SESSION['profile_picture'] ?? null);
+$display_picture_url = profile_picture_public_url($_SESSION['profile_picture'] ?? null);
 
-$nav_sections = require BASE_PATH . '/app/includes/nav/' . $config['nav_file'];
-$views_base = ASSET_BASE . '/views/' . $config['views_segment'];
-$dashboard_href = $views_base . '/dashboard.php';
-$is_profile_page = ($current === 'profile.php');
+$profile_role = $config['profile_role'];
+if ($adm_sidebar_portal === 'bhw') {
+    $barangay_name = trim((string) ($_SESSION['user_barangay_name'] ?? ''));
+    if ($barangay_name === '') {
+        $barangay_name = 'Unassigned';
+    }
+    $profile_role = 'BHW · Brgy. ' . $barangay_name;
+}
+
+if ($adm_sidebar_portal === 'bhw') {
+    require_once BASE_PATH . '/app/includes/nav/bhw_nav.php';
+    $nav_sections = bhw_nav_sections();
+    $current = portal_nav_current_portal_path('bhw');
+    $current_query = '';
+    $is_profile_page = portal_nav_bhw_is_active('settings/profile.php', $current);
+} else {
+    $nav_sections = require BASE_PATH . '/app/includes/nav/' . $config['nav_file'];
+    $current = portal_nav_current_basename();
+    $current_query = portal_nav_current_query();
+    $is_profile_page = ($current === 'profile.php');
+}
 
 require_once BASE_PATH . '/app/includes/portal_nav_badge_counts.php';
 $portal_nav_badge_counts_data = [];
@@ -68,14 +100,14 @@ if (!empty($_SESSION['user_id']) && isset($pdo) && $pdo instanceof PDO) {
     }
 }
 ?>
-<aside class="<?= htmlspecialchars($config['sidebar_class']) ?>">
+<aside class="<?= htmlspecialchars($config['sidebar_class']) ?>"<?= $adm_sidebar_portal === 'bhw' ? ' id="bhw-sidebar"' : '' ?> aria-label="<?= htmlspecialchars($config['aria_label']) ?>">
 
   <a href="<?= htmlspecialchars($dashboard_href) ?>" class="adm-logo">
     <img src="<?= ASSET_BASE ?>/assets/img/medcon_logo.png" alt="medConnect" style="height: 35px; width: auto; object-fit: contain; margin-right: 10px;">
     <div class="adm-logo-text">med<span>Connect</span><em><?= htmlspecialchars($config['logo_em']) ?></em></div>
   </a>
 
-  <nav class="adm-nav" data-portal-nav="<?= htmlspecialchars($adm_sidebar_portal) ?>" aria-label="<?= htmlspecialchars($config['profile_role']) ?> navigation">
+  <nav class="adm-nav" data-portal-nav="<?= htmlspecialchars($adm_sidebar_portal) ?>" aria-label="<?= htmlspecialchars($config['aria_label']) ?>">
     <?php foreach ($nav_sections as $section):
       if (!empty($section['section'])): ?>
     <div class="adm-nav-section" style="padding: 12px 16px 4px; font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.06em; color: rgba(255,255,255,0.45);">
@@ -87,7 +119,11 @@ if (!empty($_SESSION['user_id']) && isset($pdo) && $pdo instanceof PDO) {
         $itemQuery = $item[3] ?? null;
         $navGroup = $item[4] ?? null;
         $href = $views_base . '/' . $file . ($itemQuery ? '?' . $itemQuery : '');
-        $is_active = portal_nav_is_active($file, $current, $current_query, $itemQuery, $navGroup);
+        if ($adm_sidebar_portal === 'bhw') {
+            $is_active = portal_nav_bhw_is_active((string) $file, $current);
+        } else {
+            $is_active = portal_nav_is_active($file, $current, $current_query, $itemQuery, $navGroup);
+        }
         $badgeKey = portal_nav_badge_key_for_item($adm_sidebar_portal, $file, $itemQuery);
         $navAttr = portal_nav_badge_nav_link_attr($badgeKey);
     ?>
@@ -112,11 +148,11 @@ if (!empty($_SESSION['user_id']) && isset($pdo) && $pdo instanceof PDO) {
      class="adm-profile <?= $is_profile_page ? 'is-active' : '' ?>"
      title="<?= htmlspecialchars($config['profile_title']) ?>">
     <div class="adm-profile-avatar" data-profile-avatar-wrap>
-      <?= profile_picture_render($admin_initials, $admin_picture_url, '', 'sm') ?>
+      <?= profile_picture_render($display_initials, $display_picture_url, '', 'sm') ?>
     </div>
     <div class="adm-profile-info">
-      <div class="adm-profile-name"><?= htmlspecialchars($admin_name) ?></div>
-      <div class="adm-profile-role"><?= htmlspecialchars($config['profile_role']) ?></div>
+      <div class="adm-profile-name"><?= htmlspecialchars($display_name) ?></div>
+      <div class="adm-profile-role"><?= htmlspecialchars($profile_role) ?></div>
     </div>
   </a>
 

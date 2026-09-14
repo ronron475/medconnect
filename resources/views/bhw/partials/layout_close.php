@@ -34,5 +34,6 @@
 <?php require_once VIEWS_PATH . '/partials/portal_nav_badge_scripts.php'; ?>
 <?php require_once VIEWS_PATH . '/partials/live_sync_assets.php'; ?>
 <?php require_once VIEWS_PATH . '/partials/mc_modal_select_assets.php'; ?>
+<?php require_once VIEWS_PATH . '/partials/logout_modal.php'; ?>
 </body>
 </html>

@@ -384,8 +384,30 @@ html[data-theme-resolved='dark'] body.bhw-body .adm-profile {
   border-color: #243347 !important;
 }
 
+html[data-theme-resolved='dark'] body.bhw-body .adm-profile:hover,
+html[data-theme-resolved='dark'] body.bhw-body .adm-profile.is-active {
+  background: #242424 !important;
+  border-color: #333333 !important;
+}
+
 html[data-theme-resolved='dark'] body.bhw-body .adm-profile-name {
   color: #ffffff;
+}
+
+html[data-theme-resolved='dark'] body.bhw-body .adm-profile-role {
+  color: #64748B;
+}
+
+html[data-theme-resolved='dark'] body.bhw-body .adm-logout {
+  background: #151F2E !important;
+  border-color: #243347 !important;
+  color: #8FAABF !important;
+}
+
+html[data-theme-resolved='dark'] body.bhw-body .adm-logout:hover {
+  background: rgba(220, 38, 38, 0.15) !important;
+  border-color: rgba(220, 38, 38, 0.35) !important;
+  color: #fca5a5 !important;
 }
 
 html[data-theme-resolved='dark'] body.bhw-body .topbar {
