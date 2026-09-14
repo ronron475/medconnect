@@ -72,6 +72,34 @@ html[data-theme-resolved='dark'] body.bhw-body .bhw-dash .mc-notif-widget {
   box-shadow: none;
 }
 
+html[data-theme-resolved='dark'] body.bhw-body .bhw-dash-stat {
+  border-top-color: #14b8a6 !important;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.28) !important;
+}
+
+html[data-theme-resolved='dark'] body.bhw-body .bhw-dash-stat__icon {
+  background: rgba(20, 184, 166, 0.16) !important;
+  color: #2dd4bf !important;
+}
+
+html[data-theme-resolved='dark'] body.bhw-body .bhw-dash-stat--warn {
+  border-top-color: #f59e0b !important;
+}
+
+html[data-theme-resolved='dark'] body.bhw-body .bhw-dash-stat--warn .bhw-dash-stat__icon {
+  background: rgba(245, 158, 11, 0.16) !important;
+  color: #fbbf24 !important;
+}
+
+html[data-theme-resolved='dark'] body.bhw-body .bhw-dash-stat--alert {
+  border-top-color: #ef4444 !important;
+}
+
+html[data-theme-resolved='dark'] body.bhw-body .bhw-dash-stat--alert .bhw-dash-stat__icon {
+  background: rgba(239, 68, 68, 0.16) !important;
+  color: #f87171 !important;
+}
+
 html[data-theme-resolved='dark'] body.bhw-body .bhw-dash-header {
   border-left-color: #0D9488 !important;
 }
@@ -85,7 +113,7 @@ html[data-theme-resolved='dark'] body.bhw-body .bhw-dash-panel__toolbar {
 
 html[data-theme-resolved='dark'] body.bhw-body .bhw-dash-stats,
 html[data-theme-resolved='dark'] body.bhw-body .bhw-dash-ops {
-  background: #243347 !important;
+  background: transparent !important;
 }
 
 /* ── Sector analytics charts (fix white chart boxes) ── */
