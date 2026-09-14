@@ -10,6 +10,19 @@
   max-width: 100%;
 }
 
+/* Hard-stop any float/transform on BHW dashboard cards during live refresh. */
+.bhw-dash .bhw-dash-panel,
+.bhw-dash .bhw-dash-stat,
+.bhw-dash .bhw-chart-card,
+.bhw-dash .adm-notif-recent,
+.bhw-dash .mc-chart-card,
+.bhw-dash .mc-notif-widget,
+.bhw-dash .mc-notif-recent-panel {
+  animation: none !important;
+  transform: none !important;
+  will-change: auto;
+}
+
 /* ── Page header ── */
 .bhw-dash-header {
   display: flex;
