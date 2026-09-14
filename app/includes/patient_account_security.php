@@ -308,7 +308,8 @@ function patient_validate_password_policy(string $password): ?string
 
 function patient_normalize_phone(string $phone): string
 {
-    return preg_replace('/\D+/', '', $phone) ?? '';
+    require_once __DIR__ . '/contact_validation.php';
+    return mc_normalize_phone_digits($phone);
 }
 
 /**
@@ -316,14 +317,8 @@ function patient_normalize_phone(string $phone): string
  */
 function patient_canonical_ph_mobile(string $phone): string
 {
-    $digits = patient_normalize_phone($phone);
-    if (preg_match('/^639\d{9}$/', $digits)) {
-        return '0' . substr($digits, 2);
-    }
-    if (preg_match('/^9\d{9}$/', $digits)) {
-        return '0' . $digits;
-    }
-    return $digits;
+    require_once __DIR__ . '/contact_validation.php';
+    return mc_canonical_ph_mobile($phone);
 }
 
 /**
@@ -405,7 +400,8 @@ function patient_registration_contact_exists(PDO $pdo, string $phone): bool
 
 function patient_is_valid_ph_mobile(string $phone): bool
 {
-    return (bool) preg_match('/^09\d{9}$/', patient_canonical_ph_mobile($phone));
+    require_once __DIR__ . '/contact_validation.php';
+    return mc_is_valid_ph_mobile($phone);
 }
 
 /**
@@ -413,20 +409,8 @@ function patient_is_valid_ph_mobile(string $phone): bool
  */
 function patient_phone_validation_error(string $phone): ?string
 {
-    $digits = patient_normalize_phone($phone);
-    if ($digits === '') {
-        return 'Contact number is required.';
-    }
-    if (!preg_match('/^\d+$/', $digits)) {
-        return 'Phone number must contain digits only.';
-    }
-    if (strlen($digits) !== 11) {
-        return 'Phone number must be exactly 11 digits (e.g. 09171234567).';
-    }
-    if (!preg_match('/^09\d{9}$/', patient_canonical_ph_mobile($phone))) {
-        return 'Enter a valid Philippine mobile number starting with 09.';
-    }
-    return null;
+    require_once __DIR__ . '/contact_validation.php';
+    return mc_phone_validation_error($phone, true);
 }
 
 /**

@@ -38,8 +38,11 @@ function clearAlert() {
 }
 
 function validateEmail(value) {
-  if (!value) return 'Email is required.';
-  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) return 'Enter a valid email address.';
+  if (window.MCContactValidation) {
+    return window.MCContactValidation.validateEmail(value, true);
+  }
+  if (!value) return 'Email address is required.';
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) return 'Please enter a valid email address.';
   return '';
 }
 

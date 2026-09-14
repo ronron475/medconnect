@@ -22,25 +22,20 @@ if (empty($csrf) || !hash_equals((string) ($_SESSION['csrf_token'] ?? ''), $csrf
 
 $email = strtolower(trim($_POST['email'] ?? ''));
 
-if (empty($email) || preg_match('/\s/', $email) || !filter_var($email, FILTER_VALIDATE_EMAIL)) {
+require_once dirname(__DIR__, 2) . '/includes/contact_validation.php';
+if ($err = mc_gmail_validation_error($email, true)) {
     http_response_code(422);
-    echo json_encode(['success' => false, 'message' => 'Please enter a valid Gmail address (example@gmail.com). Only Gmail accounts are accepted for registration.']);
+    echo json_encode(['success' => false, 'message' => $err]);
     exit;
 }
-
-// Gmail-only allowlist (do not rely on client validation)
-if (!preg_match('/^[A-Za-z0-9._%+\-]+@gmail\.com$/i', $email)) {
-    http_response_code(422);
-    echo json_encode(['success' => false, 'message' => 'Please enter a valid Gmail address (example@gmail.com). Only Gmail accounts are accepted for registration.']);
-    exit;
-}
+$email = mc_normalize_email($email);
 
 // Check if email already registered
 $stmt = $pdo->prepare("SELECT id FROM users WHERE email = ? LIMIT 1");
 $stmt->execute([$email]);
 if ($stmt->fetch()) {
     http_response_code(409);
-    echo json_encode(['success' => false, 'message' => 'This Gmail address is already registered. Please try another email address.']);
+    echo json_encode(['success' => false, 'message' => MC_MSG_EMAIL_DUP]);
     exit;
 }
 

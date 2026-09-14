@@ -84,19 +84,17 @@ final class BhwApplicationService
         if ($normalized['last_name'] === '') {
             $errors['last_name'] = 'Last name is required.';
         }
-        if (!filter_var($normalized['email'], FILTER_VALIDATE_EMAIL)) {
-            $errors['email'] = 'A valid email address is required.';
+        require_once dirname(__DIR__) . '/includes/contact_validation.php';
+        $normalized['email'] = mc_normalize_email($normalized['email']);
+        if ($emailErr = mc_email_validation_error($normalized['email'], true)) {
+            $errors['email'] = $emailErr;
         }
         if ($normalized['phone'] === '') {
-            $errors['phone'] = 'Mobile number is required.';
-        } elseif (!preg_match('/^09\d{9}$/', preg_replace('/\D+/', '', $normalized['phone']))) {
-            $errors['phone'] = 'Enter a valid Philippine mobile number (e.g. 09171234567).';
+            $errors['phone'] = MC_MSG_PHONE_REQUIRED;
+        } elseif ($phoneErr = mc_phone_validation_error($normalized['phone'], true)) {
+            $errors['phone'] = $phoneErr;
         } else {
-            $digits = preg_replace('/\D+/', '', $normalized['phone']);
-            if (str_starts_with($digits, '639')) {
-                $digits = '0' . substr($digits, 2);
-            }
-            $normalized['phone'] = $digits;
+            $normalized['phone'] = mc_canonical_ph_mobile($normalized['phone']);
         }
         if ($normalized['barangay_id'] <= 0) {
             $errors['barangay_id'] = 'Assigned barangay is required.';
@@ -142,15 +140,14 @@ final class BhwApplicationService
             $errors['last_name'] = 'Last name is required.';
         }
         if ($normalized['phone'] === '') {
-            $errors['phone'] = 'Mobile number is required.';
-        } elseif (!preg_match('/^09\d{9}$/', preg_replace('/\D+/', '', $normalized['phone']))) {
-            $errors['phone'] = 'Enter a valid Philippine mobile number (e.g. 09171234567).';
+            $errors['phone'] = MC_MSG_PHONE_REQUIRED;
         } else {
-            $digits = preg_replace('/\D+/', '', $normalized['phone']);
-            if (str_starts_with($digits, '639')) {
-                $digits = '0' . substr($digits, 2);
+            require_once dirname(__DIR__) . '/includes/contact_validation.php';
+            if ($phoneErr = mc_phone_validation_error($normalized['phone'], true)) {
+                $errors['phone'] = $phoneErr;
+            } else {
+                $normalized['phone'] = mc_canonical_ph_mobile($normalized['phone']);
             }
-            $normalized['phone'] = $digits;
         }
 
         return ['valid' => $errors === [], 'errors' => $errors, 'normalized' => $normalized];
@@ -1158,10 +1155,11 @@ final class BhwApplicationService
 
     private function assertNoDuplicateEmail(string $email, ?int $excludeAppId = null): ?string
     {
+        require_once dirname(__DIR__) . '/includes/contact_validation.php';
         $stmt = $this->pdo->prepare('SELECT id FROM users WHERE LOWER(email) = LOWER(?) LIMIT 1');
-        $stmt->execute([trim($email)]);
+        $stmt->execute([mc_normalize_email($email)]);
         if ($stmt->fetch()) {
-            return 'An account with this email already exists.';
+            return MC_MSG_EMAIL_DUP;
         }
 
         $sql = "
@@ -1186,15 +1184,11 @@ final class BhwApplicationService
 
     private function assertNoDuplicatePhone(string $phone, ?int $excludeAppId = null): ?string
     {
-        $columns = $this->pdo->query('SHOW COLUMNS FROM users')->fetchAll(PDO::FETCH_COLUMN);
-        $digits = preg_replace('/\D+/', '', $phone);
+        require_once dirname(__DIR__) . '/includes/contact_validation.php';
+        $canonical = mc_canonical_ph_mobile($phone);
 
-        if (in_array('phone', $columns, true)) {
-            $stmt = $this->pdo->prepare('SELECT id FROM users WHERE phone = ? LIMIT 1');
-            $stmt->execute([$digits]);
-            if ($stmt->fetch()) {
-                return 'An account with this mobile number already exists.';
-            }
+        if (mc_users_phone_exists($this->pdo, $canonical)) {
+            return MC_MSG_PHONE_DUP;
         }
 
         $sql = "
@@ -1202,7 +1196,7 @@ final class BhwApplicationService
             WHERE phone = ?
               AND status IN ('invited', 'onboarding', 'pending_approval', 'requires_documents', 'active', 'approved')
         ";
-        $params = [$digits];
+        $params = [$canonical];
         if ($excludeAppId) {
             $sql .= ' AND id <> ?';
             $params[] = $excludeAppId;

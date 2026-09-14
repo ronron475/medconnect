@@ -84,6 +84,9 @@ final class PRCVerificationService
 
         if (!filter_var($normalized['email'], FILTER_VALIDATE_EMAIL)) {
             $errors['email'] = 'A valid email address is required.';
+        } else {
+            require_once dirname(__DIR__) . '/includes/contact_validation.php';
+            $normalized['email'] = mc_normalize_email($normalized['email']);
         }
 
         if ($err = self::validateMobileRequired($normalized['phone'])) {
@@ -151,30 +154,14 @@ final class PRCVerificationService
 
     public static function validateMobileRequired(string $phone): ?string
     {
-        $phone = trim($phone);
-        if ($phone === '') {
-            return 'Mobile number is required.';
-        }
-
-        $digits = preg_replace('/\D+/', '', $phone);
-        if (preg_match('/^639\d{9}$/', $digits)) {
-            $digits = '0' . substr($digits, 2);
-        }
-        if (!preg_match('/^09\d{9}$/', $digits)) {
-            return 'Enter a valid Philippine mobile number (e.g. 09171234567).';
-        }
-
-        return null;
+        require_once dirname(__DIR__) . '/includes/contact_validation.php';
+        return mc_phone_validation_error($phone, true);
     }
 
     public static function normalizeMobile(string $phone): string
     {
-        $digits = preg_replace('/\D+/', '', trim($phone));
-        if (str_starts_with($digits, '639') && strlen($digits) === 12) {
-            return '0' . substr($digits, 2);
-        }
-
-        return $digits;
+        require_once dirname(__DIR__) . '/includes/contact_validation.php';
+        return mc_canonical_ph_mobile($phone);
     }
 
     public static function validatePasswordStrength(string $password): ?string
@@ -200,34 +187,14 @@ final class PRCVerificationService
 
     public static function assertNoDuplicateEmail(PDO $pdo, string $email): ?string
     {
-        $stmt = $pdo->prepare('SELECT id FROM users WHERE LOWER(email) = LOWER(?) LIMIT 1');
-        $stmt->execute([trim($email)]);
-
-        return $stmt->fetch() ? 'An account with this email address already exists.' : null;
+        require_once dirname(__DIR__) . '/includes/contact_validation.php';
+        return mc_email_duplicate_error($pdo, $email);
     }
 
     public static function assertNoDuplicatePhone(PDO $pdo, string $phone): ?string
     {
-        $columns = $pdo->query('SHOW COLUMNS FROM users')->fetchAll(PDO::FETCH_COLUMN);
-        if (!in_array('phone', $columns, true)) {
-            return null;
-        }
-
-        $normalized = self::normalizeMobile($phone);
-        $stmt = $pdo->prepare('SELECT id FROM users WHERE phone = ? LIMIT 1');
-        $stmt->execute([$normalized]);
-        if ($stmt->fetch()) {
-            return 'An account with this mobile number already exists.';
-        }
-
-        $stmt = $pdo->prepare("
-            SELECT id FROM users
-            WHERE REPLACE(REPLACE(REPLACE(COALESCE(phone, ''), ' ', ''), '-', ''), '+', '') LIKE ?
-            LIMIT 1
-        ");
-        $stmt->execute(['%' . substr($normalized, -10)]);
-
-        return $stmt->fetch() ? 'An account with this mobile number already exists.' : null;
+        require_once dirname(__DIR__) . '/includes/contact_validation.php';
+        return mc_phone_duplicate_error($pdo, $phone);
     }
 
     public static function assertNoDuplicatePrc(PDO $pdo, string $prc): ?string

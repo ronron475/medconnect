@@ -31,6 +31,18 @@ $phone = trim($_POST['phone'] ?? '');
 if ($first === '' || $last === '') {
     Api::error('Name required.');
 }
+require_once dirname(dirname(dirname(__DIR__))) . '/app/includes/contact_validation.php';
+if ($phone !== '') {
+    if ($phoneErr = mc_phone_validation_error($phone, true)) {
+        Api::error($phoneErr);
+    }
+    $phone = mc_canonical_ph_mobile($phone);
+    if (mc_users_phone_exists($pdo, $phone, $userId)) {
+        Api::error(MC_MSG_PHONE_DUP);
+    }
+} else {
+    $phone = null;
+}
 $pdo->prepare('UPDATE users SET first_name = ?, last_name = ?, phone = ? WHERE id = ?')->execute([$first, $last, $phone, $userId]);
 $_SESSION['first_name'] = $first;
 $_SESSION['last_name'] = $last;

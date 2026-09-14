@@ -18,10 +18,12 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     exit;
 }
 
-$email = strtolower(trim($_POST['email'] ?? ''));
+require_once dirname(dirname(__DIR__)) . '/app/includes/contact_validation.php';
 
-if (empty($email) || !filter_var($email, FILTER_VALIDATE_EMAIL)) {
-    echo json_encode(['success' => false, 'message' => 'Please enter a valid email address.']);
+$email = mc_normalize_email($_POST['email'] ?? '');
+
+if ($emailErr = mc_email_validation_error($email, true)) {
+    echo json_encode(['success' => false, 'message' => $emailErr]);
     exit;
 }
 

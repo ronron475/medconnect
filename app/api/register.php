@@ -136,8 +136,12 @@ if (empty($civil_status)) $errors[] = 'Civil status is required.';
 
 if (empty($email)) {
     $errors[] = 'Email address is required.';
-} elseif (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
-    $errors[] = 'Enter a valid email address.';
+} else {
+    require_once dirname(dirname(__DIR__)) . '/app/includes/contact_validation.php';
+    $email = mc_normalize_email($email);
+    if ($gmailErr = mc_gmail_validation_error($email, true)) {
+        $errors[] = $gmailErr;
+    }
 }
 
 if (empty($reg_password)) {

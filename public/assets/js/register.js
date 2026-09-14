@@ -68,19 +68,24 @@ if (navbar) {
   const emailErrEl = document.getElementById('otp-email-error');
   const GMAIL_REGEX = /^[A-Za-z0-9._%+-]+@gmail\.com$/i;
   const UX_GMAIL_ERROR =
-    'Please enter a valid Gmail address (example@gmail.com). Only Gmail accounts are accepted for registration.';
+    'Please enter a valid Gmail address.';
   const UX_EXISTS_ERROR =
-    'This Gmail address is already registered. Please try another email address.';
+    'This email address is already registered.';
 
   function setLoading(btn, textEl, spinnerEl, on) {
     btn.disabled = on; textEl.hidden = on; spinnerEl.hidden = !on;
   }
 
   function validateGmailEmail(raw) {
+    if (window.MCContactValidation) {
+      const email = window.MCContactValidation.normalizeEmail(raw);
+      const message = window.MCContactValidation.validateGmail(email, true);
+      if (message) return { ok: false, email, message };
+      return { ok: true, email, message: '✓ Valid Gmail address.' };
+    }
     const email = (raw || '').trim();
-    if (!email) return { ok: false, email, message: 'Email is required.' };
+    if (!email) return { ok: false, email, message: 'Email address is required.' };
     if (/\s/.test(email)) return { ok: false, email, message: UX_GMAIL_ERROR };
-    // Basic email sanity, then strict Gmail allowlist
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return { ok: false, email, message: UX_GMAIL_ERROR };
     if (!GMAIL_REGEX.test(email)) return { ok: false, email, message: UX_GMAIL_ERROR };
     return { ok: true, email, message: '✓ Valid Gmail address.' };

@@ -46,16 +46,27 @@ ob_start();
   }
 
   function normalizePhone(v) {
-    return String(v || '').replace(/\D/g, '');
+    if (window.MCContactValidation) {
+      return window.MCContactValidation.canonicalPhone(v);
+    }
+    var d = String(v || '').replace(/\D/g, '');
+    if (/^639\d{9}$/.test(d)) d = '0' + d.slice(2);
+    if (/^9\d{9}$/.test(d) && d.length === 10) d = '0' + d;
+    return d;
   }
 
   function isValidPhMobile(v) {
+    if (window.MCContactValidation) {
+      return window.MCContactValidation.isValidPhone(v);
+    }
     var n = normalizePhone(v);
-    if (n.length !== 11) return false;
     return /^09\d{9}$/.test(n);
   }
 
   function isValidEmail(v) {
+    if (window.MCContactValidation) {
+      return window.MCContactValidation.isValidEmail(v);
+    }
     return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(v || '').trim());
   }
 
@@ -235,12 +246,14 @@ ob_start();
     var email = document.getElementById('f_email').value.trim();
     var contact = document.getElementById('f_contact').value.trim();
     if (!isValidEmail(email)) {
-      setFieldError('f_email', 'Enter a valid email address.');
+      setFieldError('f_email', 'Please enter a valid email address.');
       ok = false;
     }
     if (!isValidPhMobile(contact)) {
-      setFieldError('f_contact', 'Use a valid PH mobile number (09XXXXXXXXX).');
+      setFieldError('f_contact', 'Please enter a valid Philippine mobile number.');
       ok = false;
+    } else {
+      document.getElementById('f_contact').value = normalizePhone(contact);
     }
     return ok;
   }

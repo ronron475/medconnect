@@ -88,16 +88,19 @@
   function validateClient() {
     let ok = true;
     if (emailInput && formUtils.validateEmail && !formUtils.validateEmail(emailInput.value)) {
-      formUtils.setFieldError(emailInput, 'Enter a valid email address.');
+      formUtils.setFieldError(emailInput, 'Please enter a valid email address.');
       ok = false;
     } else if (emailInput) {
       formUtils.setFieldError(emailInput, '');
     }
     if (phoneInput && formUtils.validatePhone && !formUtils.validatePhone(phoneInput.value)) {
-      formUtils.setFieldError(phoneInput, 'Use format 09XXXXXXXXX or +639XXXXXXXXX.');
+      formUtils.setFieldError(phoneInput, (formUtils.phoneErrorMessage && formUtils.phoneErrorMessage(phoneInput.value)) || 'Please enter a valid Philippine mobile number.');
       ok = false;
     } else if (phoneInput) {
       formUtils.setFieldError(phoneInput, '');
+      if (window.MCContactValidation) {
+        phoneInput.value = window.MCContactValidation.canonicalPhone(phoneInput.value);
+      }
     }
     return ok;
   }

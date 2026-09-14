@@ -34,14 +34,18 @@ switch ($action) {
             echo json_encode(['success' => false, 'message' => 'All fields are required.']);
             exit;
         }
+        require_once dirname(dirname(dirname(__DIR__))) . '/app/includes/contact_validation.php';
+        $email = mc_normalize_email($email);
+        if ($emailErr = mc_email_validation_error($email, true)) {
+            echo json_encode(['success' => false, 'message' => $emailErr]);
+            exit;
+        }
         if (strlen($password) < 8) {
             echo json_encode(['success' => false, 'message' => 'Password must be at least 8 characters.']);
             exit;
         }
-        $dup = $pdo->prepare('SELECT id FROM users WHERE email = ? LIMIT 1');
-        $dup->execute([$email]);
-        if ($dup->fetch()) {
-            echo json_encode(['success' => false, 'message' => 'Email already exists.']);
+        if (mc_users_email_exists($pdo, $email)) {
+            echo json_encode(['success' => false, 'message' => MC_MSG_EMAIL_DUP]);
             exit;
         }
         $hash = password_hash($password, PASSWORD_BCRYPT, ['cost' => 12]);
@@ -63,8 +67,18 @@ switch ($action) {
             echo json_encode(['success' => false, 'message' => 'Invalid data.']);
             exit;
         }
+        require_once dirname(dirname(dirname(__DIR__))) . '/app/includes/contact_validation.php';
+        $email = mc_normalize_email($email);
+        if ($emailErr = mc_email_validation_error($email, true)) {
+            echo json_encode(['success' => false, 'message' => $emailErr]);
+            exit;
+        }
         if (!portal_can_manage_user($pdo, $userId)) {
             echo json_encode(['success' => false, 'message' => 'Cannot modify this account.']);
+            exit;
+        }
+        if (mc_users_email_exists($pdo, $email, $userId)) {
+            echo json_encode(['success' => false, 'message' => MC_MSG_EMAIL_DUP]);
             exit;
         }
         $pdo->prepare('UPDATE users SET first_name=?, last_name=?, email=?, updated_at=NOW() WHERE id=? AND role IN (\'admin\', \'superadmin\')')

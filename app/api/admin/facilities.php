@@ -30,6 +30,19 @@ if ($name === '') {
     exit;
 }
 
+if ($contact !== '') {
+    require_once dirname(dirname(dirname(__DIR__))) . '/app/includes/contact_validation.php';
+    // Prefer PH mobile when the value looks like a mobile; otherwise keep trimmed free-text.
+    $digits = mc_normalize_phone_digits($contact);
+    if ($digits !== '' && (str_starts_with($digits, '09') || str_starts_with($digits, '639') || (strlen($digits) === 10 && str_starts_with($digits, '9')))) {
+        if ($phoneErr = mc_phone_validation_error($contact, true)) {
+            echo json_encode(['success' => false, 'message' => $phoneErr]);
+            exit;
+        }
+        $contact = mc_canonical_ph_mobile($contact);
+    }
+}
+
 if ($id > 0) {
     $pdo->prepare('UPDATE facilities SET facility_name=?, facility_type=?, address=?, contact_number=?, latitude=?, longitude=? WHERE id=?')
         ->execute([$name, $type, $address, $contact, $lat, $lng, $id]);
