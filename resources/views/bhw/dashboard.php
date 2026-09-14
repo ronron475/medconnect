@@ -25,14 +25,25 @@ $dashboardCharts = BhwWorkflows::getDashboardCharts($pdo, $bhwCtx, $dashFilters)
 $queueRaw = BhwWorkflows::getTriageQueue($pdo, $bhwCtx, 15, $dashFilters);
 
 $metrics = [
-    ['label' => "Today's Patients", 'val' => (int) ($metricsRaw['todays_patients'] ?? 0), 'key' => 'todays_patients', 'tone' => ''],
-    ['label' => 'Awaiting Complaint', 'val' => (int) ($metricsRaw['pending_registrations'] ?? 0), 'key' => 'pending_registrations', 'tone' => 'warn'],
-    ['label' => 'Waiting AI Triage', 'val' => (int) ($metricsRaw['waiting_ai_triage'] ?? 0), 'key' => 'waiting_ai_triage', 'tone' => 'warn'],
-    ['label' => 'Emergency Cases', 'val' => (int) ($metricsRaw['emergency_cases'] ?? 0), 'key' => 'emergency_cases', 'tone' => 'alert'],
-    ['label' => 'Urgent Cases', 'val' => (int) ($metricsRaw['urgent_cases'] ?? 0), 'key' => 'urgent_cases', 'tone' => 'alert'],
-    ['label' => 'Non-Urgent', 'val' => (int) ($metricsRaw['non_urgent_cases'] ?? 0), 'key' => 'non_urgent_cases', 'tone' => ''],
-    ['label' => 'Upcoming Consults', 'val' => (int) ($metricsRaw['upcoming_consultations'] ?? 0), 'key' => 'upcoming_consultations', 'tone' => ''],
-    ['label' => 'Referrals', 'val' => (int) ($metricsRaw['referrals'] ?? 0), 'key' => 'referrals', 'tone' => ''],
+    ['label' => "Today's Patients", 'val' => (int) ($metricsRaw['todays_patients'] ?? 0), 'key' => 'todays_patients', 'tone' => '', 'icon' => 'users'],
+    ['label' => 'Awaiting Complaint', 'val' => (int) ($metricsRaw['pending_registrations'] ?? 0), 'key' => 'pending_registrations', 'tone' => 'warn', 'icon' => 'clipboard'],
+    ['label' => 'Waiting AI Triage', 'val' => (int) ($metricsRaw['waiting_ai_triage'] ?? 0), 'key' => 'waiting_ai_triage', 'tone' => 'warn', 'icon' => 'activity'],
+    ['label' => 'Emergency Cases', 'val' => (int) ($metricsRaw['emergency_cases'] ?? 0), 'key' => 'emergency_cases', 'tone' => 'alert', 'icon' => 'alert'],
+    ['label' => 'Urgent Cases', 'val' => (int) ($metricsRaw['urgent_cases'] ?? 0), 'key' => 'urgent_cases', 'tone' => 'alert', 'icon' => 'zap'],
+    ['label' => 'Non-Urgent', 'val' => (int) ($metricsRaw['non_urgent_cases'] ?? 0), 'key' => 'non_urgent_cases', 'tone' => '', 'icon' => 'check'],
+    ['label' => 'Upcoming Consults', 'val' => (int) ($metricsRaw['upcoming_consultations'] ?? 0), 'key' => 'upcoming_consultations', 'tone' => '', 'icon' => 'calendar'],
+    ['label' => 'Referrals', 'val' => (int) ($metricsRaw['referrals'] ?? 0), 'key' => 'referrals', 'tone' => '', 'icon' => 'share'],
+];
+
+$bhw_metric_icons = [
+    'users' => '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>',
+    'clipboard' => '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><rect x="8" y="2" width="8" height="4" rx="1"/></svg>',
+    'activity' => '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>',
+    'alert' => '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>',
+    'zap' => '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>',
+    'check' => '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>',
+    'calendar' => '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>',
+    'share' => '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>',
 ];
 
 $bhwDashCss = ASSETS_PATH . '/css/bhw-dashboard.css';
@@ -69,10 +80,13 @@ require __DIR__ . '/partials/layout_open.php';
     <div class="bhw-dash-stats" id="bhwMetricsRow">
       <?php foreach ($metrics as $m):
         $toneClass = $m['tone'] !== '' ? ' bhw-dash-stat--' . $m['tone'] : '';
+        $iconKey = $m['icon'] ?? 'users';
+        $iconSvg = $bhw_metric_icons[$iconKey] ?? $bhw_metric_icons['users'];
       ?>
       <article class="bhw-dash-stat<?= $toneClass ?>">
-        <span class="bhw-dash-stat__label"><?= htmlspecialchars($m['label']) ?></span>
+        <span class="bhw-dash-stat__icon" aria-hidden="true"><?= $iconSvg ?></span>
         <strong class="bhw-dash-stat__val" data-metric="<?= htmlspecialchars($m['key']) ?>"><?= $m['val'] ?></strong>
+        <span class="bhw-dash-stat__label"><?= htmlspecialchars($m['label']) ?></span>
       </article>
       <?php endforeach; ?>
     </div>
