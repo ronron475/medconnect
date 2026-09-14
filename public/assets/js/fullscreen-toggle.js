@@ -132,6 +132,15 @@
     if (document.body) {
       document.body.classList.toggle('mc-floating-view', !!on);
     }
+    // Fixed-header offset must not reserve blank space once the navbar is in-flow.
+    try {
+      if (on) {
+        document.documentElement.style.setProperty('--mc-header-offset', '0px');
+      } else {
+        document.documentElement.style.removeProperty('--mc-header-offset');
+        global.dispatchEvent(new Event('resize'));
+      }
+    } catch (_) { /* ignore */ }
     writePersistedFloating(!!on);
     syncAll();
     try {
