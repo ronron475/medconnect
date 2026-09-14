@@ -233,7 +233,7 @@ body.mc-staff-modal-open {
   margin: 0;
   padding: 6px;
   list-style: none;
-  z-index: 20050;
+  z-index: 30;
   overflow-x: hidden;
   overflow-y: auto;
   overscroll-behavior: contain;
@@ -241,9 +241,7 @@ body.mc-staff-modal-open {
   border: 1px solid #dbe3ec;
   border-radius: 11px;
   box-shadow: 0 12px 32px rgba(15, 23, 42, 0.16);
-  /* Avoid layout spill / horizontal scrollbars while the menu is portaled. */
   box-sizing: border-box;
-  max-width: calc(100vw - 24px);
 }
 
 .mc-select__menu[hidden] {

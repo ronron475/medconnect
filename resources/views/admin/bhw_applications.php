@@ -215,98 +215,96 @@ require __DIR__ . '/partials/staff_hub_tabs.php';
 </article>
 
 <div id="bhwAppModal" class="admin-modal-overlay mc-staff-modal" style="display:none;" role="dialog" aria-modal="true" aria-labelledby="bhwModalTitle">
-    <div class="mc-card admin-modal-dialog admin-modal-dialog--wide">
-        <div class="admin-modal-header">
-            <div>
+    <div class="mc-card admin-modal-dialog admin-modal-dialog--wide bhw-invite-dialog">
+        <div class="admin-modal-header bhw-invite-header">
+            <div class="bhw-invite-header__text">
                 <h3 class="admin-modal-title" id="bhwModalTitle">Invite Barangay Health Worker</h3>
                 <p class="admin-modal-subtitle">Enter basic assignment details and upload the appointment letter. The BHW will set their own password and upload personal documents.</p>
             </div>
             <button type="button" class="admin-modal-close" id="bhwModalClose" aria-label="Close">&times;</button>
         </div>
-        <form id="bhwAppForm" class="mc-staff-form admin-modal-body" novalidate>
-            <input type="hidden" name="application_id" id="bhwApplicationId" value="">
+        <form id="bhwAppForm" class="mc-staff-form bhw-invite-form" novalidate>
+            <div class="admin-modal-body bhw-invite-scroll">
+                <input type="hidden" name="application_id" id="bhwApplicationId" value="">
 
-            <section class="mc-form-section">
-                <h4 class="mc-form-section__title">Invite Contact</h4>
-                <div class="mc-form-grid mc-form-grid--3">
-                    <div class="mc-field">
-                        <label class="mc-field__label" for="bhwFirstName">First Name</label>
-                        <input type="text" name="first_name" id="bhwFirstName" required class="mc-field__input" autocomplete="given-name" placeholder="Maria">
-                        <p class="mc-field__error"></p>
+                <section class="mc-form-section">
+                    <h4 class="mc-form-section__title">BHW Information</h4>
+                    <div class="mc-form-grid mc-form-grid--3">
+                        <div class="mc-field">
+                            <label class="mc-field__label" for="bhwFirstName">First Name</label>
+                            <input type="text" name="first_name" id="bhwFirstName" required class="mc-field__input" autocomplete="given-name" placeholder="Maria">
+                            <p class="mc-field__error"></p>
+                        </div>
+                        <div class="mc-field">
+                            <label class="mc-field__label" for="bhwMiddleName">Middle Name <span class="mc-optional">(optional)</span></label>
+                            <input type="text" name="middle_name" id="bhwMiddleName" class="mc-field__input" autocomplete="additional-name">
+                        </div>
+                        <div class="mc-field">
+                            <label class="mc-field__label" for="bhwLastName">Last Name</label>
+                            <input type="text" name="last_name" id="bhwLastName" required class="mc-field__input" autocomplete="family-name" placeholder="Santos">
+                            <p class="mc-field__error"></p>
+                        </div>
                     </div>
-                    <div class="mc-field">
-                        <label class="mc-field__label" for="bhwMiddleName">Middle Name <span class="mc-optional">(optional)</span></label>
-                        <input type="text" name="middle_name" id="bhwMiddleName" class="mc-field__input" autocomplete="additional-name">
+                    <div class="mc-form-grid bhw-invite-assign-grid">
+                        <div class="mc-field mc-field--barangay">
+                            <label class="mc-field__label" for="bhwBarangaySelect">Assigned Barangay</label>
+                            <select name="barangay_id" id="bhwBarangaySelect" required class="mc-field__input" data-mc-select-anchored="1">
+                                <option value="">Select barangay…</option>
+                                <?php foreach ($bhw_invite_barangays as $brgy): ?>
+                                <option value="<?= (int) $brgy['id'] ?>"><?= htmlspecialchars($brgy['name'], ENT_QUOTES, 'UTF-8') ?></option>
+                                <?php endforeach; ?>
+                            </select>
+                            <p id="bhwBarangayStatus" class="mc-field__hint" aria-live="polite"<?= $bhw_invite_barangays === [] ? '' : ' hidden' ?>><?= $bhw_invite_barangays === [] ? 'Loading barangays…' : '' ?></p>
+                            <p class="mc-field__error"></p>
+                        </div>
+                        <div class="mc-field">
+                            <label class="mc-field__label" for="bhwAppointmentDate">Appointment Date</label>
+                            <input type="date" name="appointment_date" id="bhwAppointmentDate" required class="mc-field__input">
+                            <p class="mc-field__hint">Select the BHW appointment date.</p>
+                            <p class="mc-field__error"></p>
+                        </div>
                     </div>
-                    <div class="mc-field">
-                        <label class="mc-field__label" for="bhwLastName">Last Name</label>
-                        <input type="text" name="last_name" id="bhwLastName" required class="mc-field__input" autocomplete="family-name" placeholder="Santos">
-                        <p class="mc-field__error"></p>
-                    </div>
-                </div>
-            </section>
+                </section>
 
-            <section class="mc-form-section">
-                <h4 class="mc-form-section__title">Assignment Information</h4>
-                <div class="mc-form-grid">
-                    <div class="mc-field">
-                        <label class="mc-field__label" for="bhwBarangaySelect">Assigned Barangay</label>
-                        <select name="barangay_id" id="bhwBarangaySelect" required class="mc-field__input">
-                            <option value="">Select barangay…</option>
-                            <?php foreach ($bhw_invite_barangays as $brgy): ?>
-                            <option value="<?= (int) $brgy['id'] ?>"><?= htmlspecialchars($brgy['name'], ENT_QUOTES, 'UTF-8') ?></option>
-                            <?php endforeach; ?>
-                        </select>
-                        <p id="bhwBarangayStatus" class="mc-field__hint" aria-live="polite"<?= $bhw_invite_barangays === [] ? '' : ' hidden' ?>><?= $bhw_invite_barangays === [] ? 'Loading barangays…' : '' ?></p>
-                        <p class="mc-field__error"></p>
+                <section class="mc-form-section">
+                    <h4 class="mc-form-section__title">Contact Information</h4>
+                    <div class="mc-form-grid">
+                        <div class="mc-field">
+                            <label class="mc-field__label" for="bhwEmail">Email Address</label>
+                            <input type="email" name="email" id="bhwEmail" required class="mc-field__input" autocomplete="email" placeholder="bhw@medconnect.local">
+                            <p class="mc-field__hint">Invite and login email. The BHW sets their own password.</p>
+                            <p class="mc-field__error"></p>
+                        </div>
+                        <div class="mc-field">
+                            <label class="mc-field__label" for="bhwPhone">Mobile Number</label>
+                            <input type="tel" name="phone" id="bhwPhone" required class="mc-field__input" autocomplete="tel" placeholder="09171234567" pattern="^(09|\+639)\d{9}$">
+                            <p class="mc-field__error"></p>
+                        </div>
                     </div>
-                    <div class="mc-field">
-                        <label class="mc-field__label" for="bhwAppointmentDate">Appointment Date</label>
-                        <input type="date" name="appointment_date" id="bhwAppointmentDate" required class="mc-field__input">
-                        <p class="mc-field__hint">Select the BHW appointment date.</p>
-                        <p class="mc-field__error"></p>
-                    </div>
-                </div>
-            </section>
+                </section>
 
-            <section class="mc-form-section">
-                <h4 class="mc-form-section__title">Contact Information</h4>
-                <div class="mc-form-grid">
-                    <div class="mc-field">
-                        <label class="mc-field__label" for="bhwEmail">Email Address</label>
-                        <input type="email" name="email" id="bhwEmail" required class="mc-field__input" autocomplete="email" placeholder="bhw@medconnect.local">
-                        <p class="mc-field__hint">Invite and login email. The BHW sets their own password.</p>
-                        <p class="mc-field__error"></p>
+                <section class="mc-form-section">
+                    <h4 class="mc-form-section__title">Institutional Documents</h4>
+                    <p class="bhw-docs-lead">Required before invite: Barangay Appointment Letter / Resolution. CHO Endorsement is optional. Government ID is uploaded by the BHW during onboarding.</p>
+                    <div class="bhw-doc-upload-grid">
+                        <div class="mc-field">
+                            <label class="mc-field__label" for="bhwDocAppointment">Appointment Letter / Resolution</label>
+                            <input type="file" id="bhwDocAppointment" accept=".pdf,.jpg,.jpeg,.png,.webp" class="mc-field__input">
+                        </div>
+                        <div class="mc-field">
+                            <label class="mc-field__label" for="bhwDocCho">CHO Endorsement <span class="mc-optional">(optional)</span></label>
+                            <input type="file" id="bhwDocCho" accept=".pdf,.jpg,.jpeg,.png,.webp" class="mc-field__input">
+                        </div>
                     </div>
-                    <div class="mc-field">
-                        <label class="mc-field__label" for="bhwPhone">Mobile Number</label>
-                        <input type="tel" name="phone" id="bhwPhone" required class="mc-field__input" autocomplete="tel" placeholder="09171234567" pattern="^(09|\+639)\d{9}$">
-                        <p class="mc-field__error"></p>
-                    </div>
-                </div>
-            </section>
+                    <ul id="bhwDocList" class="bhw-doc-list"></ul>
+                </section>
 
-            <section class="mc-form-section">
-                <h4 class="mc-form-section__title">Institutional Documents</h4>
-                <p class="mc-field__hint" style="margin-bottom:14px;">Required before invite: Barangay Appointment Letter / Resolution. CHO Endorsement is optional. Government ID is uploaded by the BHW during onboarding.</p>
-                <div class="bhw-doc-upload-grid">
-                    <div class="mc-field">
-                        <label class="mc-field__label" for="bhwDocAppointment">Appointment Letter / Resolution</label>
-                        <input type="file" id="bhwDocAppointment" accept=".pdf,.jpg,.jpeg,.png,.webp" class="mc-field__input">
-                    </div>
-                    <div class="mc-field">
-                        <label class="mc-field__label" for="bhwDocCho">CHO Endorsement <span class="mc-optional">(optional)</span></label>
-                        <input type="file" id="bhwDocCho" accept=".pdf,.jpg,.jpeg,.png,.webp" class="mc-field__input">
-                    </div>
-                </div>
-                <ul id="bhwDocList" class="bhw-doc-list"></ul>
-            </section>
+                <p id="bhwRejectionNote" class="mc-form-alert mc-form-alert--warn"></p>
+                <p id="bhwDocsRequestNote" class="mc-form-alert mc-form-alert--warn"></p>
+                <p id="bhwFormError" class="mc-form-alert mc-form-alert--error"></p>
+            </div>
 
-            <p id="bhwRejectionNote" class="mc-form-alert mc-form-alert--warn"></p>
-            <p id="bhwDocsRequestNote" class="mc-form-alert mc-form-alert--warn"></p>
-            <p id="bhwFormError" class="mc-form-alert mc-form-alert--error"></p>
-
-            <div class="admin-modal-actions">
+            <div class="admin-modal-actions bhw-invite-footer">
                 <button type="button" class="mc-btn mc-btn--outline" id="bhwModalCancel">Cancel</button>
                 <button type="button" class="mc-btn mc-btn--outline" id="bhwSaveDraftBtn">Save Draft</button>
                 <button type="button" class="mc-btn mc-btn--outline" id="bhwResendInviteBtn" style="display:none;">Resend Invite</button>
@@ -337,7 +335,7 @@ require __DIR__ . '/partials/staff_hub_tabs.php';
 <?php endif; ?>
 
 <link rel="stylesheet" href="<?= ASSET_BASE ?>/assets/css/admin-staff-applications.css?v=1.4">
-<link rel="stylesheet" href="<?= ASSET_BASE ?>/assets/css/admin-bhw-applications.css?v=1.5">
+<link rel="stylesheet" href="<?= ASSET_BASE ?>/assets/css/admin-bhw-applications.css?v=1.7">
 <script src="<?= ASSET_BASE ?>/assets/js/admin-staff-applications.js?v=1.2"></script>
 <script>
 window.MC_BHW_APP = {
