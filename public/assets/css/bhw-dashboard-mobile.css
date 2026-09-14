@@ -12,16 +12,16 @@
     --mob-dash-card-pad: 12px;
     --mob-dash-strip-pad: 10px;
     --mob-dash-radius: 12px;
-    --mob-dash-stat-min-h: 78px;
+    --mob-dash-stat-min-h: 84px;
     --mob-dash-shadow: 0 1px 6px rgba(1, 42, 74, 0.05);
-    /* Typography tokens (match Admin mobile hierarchy) */
-    --mob-bhw-title: 0.95rem;
-    --mob-bhw-section: 0.875rem;
-    --mob-bhw-body: 0.8125rem;
-    --mob-bhw-label: 0.6875rem;
-    --mob-bhw-sub: 0.75rem;
-    --mob-bhw-btn: 0.8125rem;
-    --mob-bhw-stat: 1.5rem;
+    /* Readable dashboard typography (slightly above prior Admin-aligned tokens) */
+    --mob-bhw-title: 1.05rem;
+    --mob-bhw-section: 0.9375rem;
+    --mob-bhw-body: 0.875rem;
+    --mob-bhw-label: 0.75rem;
+    --mob-bhw-sub: 0.8125rem;
+    --mob-bhw-btn: 0.875rem;
+    --mob-bhw-stat: 1.65rem;
   }
 
   /* ── Mobile header (Admin-style grid + readable wrap) ── */
@@ -68,14 +68,16 @@
   }
 
   body.bhw-body .topbar-eyebrow {
-    font-size: 9px;
+    font-size: 10px;
     font-weight: 700;
     letter-spacing: 0.06em;
-    line-height: 1.2;
+    line-height: 1.25;
     margin-bottom: 1px;
-    white-space: nowrap;
+    white-space: normal;
     overflow: hidden;
-    text-overflow: ellipsis;
+    display: -webkit-box;
+    -webkit-line-clamp: 1;
+    -webkit-box-orient: vertical;
   }
 
   body.bhw-body .topbar-title {
@@ -171,27 +173,28 @@
   }
 
   body.bhw-body .bhw-dash-header__eyebrow {
-    font-size: 10px;
+    font-size: 11px;
     margin-bottom: 4px;
   }
 
   body.bhw-body .bhw-dash-header__title {
-    font-size: clamp(1.1rem, 4.5vw, 1.35rem);
+    font-size: clamp(1.2rem, 5vw, 1.4rem);
     line-height: 1.25;
     overflow-wrap: anywhere;
   }
 
   body.bhw-body .bhw-dash-header__desc {
-    font-size: 12px;
+    font-size: 13px;
     line-height: 1.45;
     margin-top: 4px;
   }
 
   body.bhw-body .bhw-dash-sync {
-    font-size: 11px;
+    font-size: 12px;
+    line-height: 1.4;
   }
 
-  /* Section heads — Admin-like section title size */
+  /* Section heads */
   body.bhw-body .bhw-dash-panel__head {
     padding: 12px 14px;
     gap: 6px;
@@ -200,16 +203,18 @@
   body.bhw-body .bhw-dash-panel__head h3 {
     font-size: var(--mob-bhw-section);
     letter-spacing: 0.04em;
-    line-height: 1.3;
+    line-height: 1.35;
     overflow-wrap: anywhere;
   }
 
-  body.bhw-body .bhw-dash-panel__note {
-    font-size: 10px;
+  body.bhw-body .bhw-dash-panel__note,
+  body.bhw-body .bhw-dash-compliance {
+    font-size: 11px;
     line-height: 1.35;
+    overflow-wrap: anywhere;
   }
 
-  /* KPI cards — tighter pad, large centered numbers */
+  /* KPI cards — readable labels + large centered numbers */
   body.bhw-body .bhw-dash-stats {
     gap: 10px;
     padding: 12px;
@@ -218,37 +223,40 @@
   body.bhw-body .bhw-dash-stat {
     min-height: var(--mob-dash-stat-min-h);
     padding: 10px 12px 12px;
+    overflow: visible;
   }
 
   body.bhw-body .bhw-dash-stat__label {
     font-size: var(--mob-bhw-label);
     line-height: 1.35;
     padding-right: 30px;
+    white-space: normal;
     overflow-wrap: anywhere;
   }
 
   body.bhw-body .bhw-dash-stat__val {
-    font-size: var(--mob-bhw-stat);
+    font-size: clamp(1.45rem, 6vw, var(--mob-bhw-stat));
     margin-top: 10px;
     text-align: center;
     width: 100%;
   }
 
   body.bhw-body .bhw-dash .mc-notif-widget {
-    min-height: 78px;
+    min-height: 84px;
     padding: 12px;
   }
 
   body.bhw-body .bhw-dash .mc-notif-widget-value {
-    font-size: 1.35rem;
+    font-size: clamp(1.4rem, 5.5vw, 1.55rem);
     font-weight: 800;
     line-height: 1.15;
   }
 
   body.bhw-body .bhw-dash .mc-notif-widget-label {
-    font-size: 10px;
+    font-size: 11px;
     line-height: 1.35;
     margin-top: 4px;
+    white-space: normal;
     overflow-wrap: anywhere;
   }
 
@@ -257,20 +265,49 @@
     gap: 8px;
   }
 
+  body.bhw-body .bhw-dash-search input {
+    font-size: 14px;
+    min-height: 44px;
+  }
+
   body.bhw-body .bhw-dash-chart-filters {
     gap: 10px;
   }
 
-  body.bhw-body .bhw-btn-teal,
-  body.bhw-body .bhw-btn-outline {
+  body.bhw-body .bhw-dash-chart-filters .mc-chart-filters__label {
+    font-size: 12px;
+  }
+
+  body.bhw-body .bhw-dash-chart-filters .mc-chart-filters__control {
+    font-size: 14px;
+    min-height: 44px;
+  }
+
+  body.bhw-body .bhw-dash-station-name {
+    font-size: 1rem;
+    line-height: 1.35;
+    overflow-wrap: anywhere;
+  }
+
+  body.bhw-body .bhw-dash .bhw-btn-teal,
+  body.bhw-body .bhw-dash .bhw-btn-outline,
+  body.bhw-body .bhw-dash-chart-filters .bhw-btn-teal,
+  body.bhw-body .bhw-dash-chart-filters .bhw-btn-outline {
     min-height: 44px;
     font-size: var(--mob-bhw-btn);
     padding: 10px 14px;
+    white-space: normal;
   }
 
   body.bhw-body .bhw-dash-charts .bhw-chart-card h4 {
-    font-size: 13px;
+    font-size: 14px;
     line-height: 1.35;
+    overflow-wrap: anywhere;
+  }
+
+  body.bhw-body .bhw-dash .bhw-badge {
+    font-size: 11px;
+    line-height: 1.3;
   }
 
   body.bhw-body .bhw-dash-recent .adm-card-head {
@@ -283,17 +320,29 @@
   }
 
   body.bhw-body .bhw-dash-recent .adm-card-head-sub {
-    font-size: 12px;
+    font-size: 13px;
     line-height: 1.4;
   }
 
   body.bhw-body .bhw-dash-queue-table td,
   body.bhw-body .bhw-dash-queue-table th {
-    font-size: 13px;
+    font-size: 14px;
   }
 
-  body.bhw-body .adm-nav-item {
-    font-size: 13px;
+  body.bhw-body .bhw-dash-resident-name {
+    font-size: 14px;
+  }
+
+  body.bhw-body .bhw-dash-resident-meta {
+    font-size: 11px;
+  }
+
+  body.bhw-body .bhw-dash-queue-empty {
+    font-size: 14px;
+  }
+
+  body.bhw-body:has(.bhw-dash) .adm-nav-item {
+    font-size: 14px;
   }
 }
 
@@ -307,13 +356,13 @@
   }
 }
 
-/* Narrow phones */
+/* Narrow phones — keep type readable; only trim spacing */
 @media (max-width: 480px) {
   body.bhw-body {
     --mob-dash-pad: 14px;
     --mob-dash-gap: 12px;
-    --mob-bhw-stat: 1.4rem;
-    --mob-dash-stat-min-h: 74px;
+    --mob-bhw-stat: 1.55rem;
+    --mob-dash-stat-min-h: 80px;
   }
 
   body.bhw-body .bhw-dash-stats {
@@ -326,19 +375,20 @@
   }
 
   body.bhw-body .bhw-dash-stat__val {
-    font-size: var(--mob-bhw-stat);
+    font-size: clamp(1.4rem, 6.5vw, var(--mob-bhw-stat));
     margin-top: 8px;
   }
 
   body.bhw-body .topbar-title {
-    font-size: 0.88rem !important;
+    font-size: 1rem !important;
   }
 }
 
 @media (max-width: 360px) {
   body.bhw-body {
     --mob-dash-pad: 12px;
-    --mob-bhw-stat: 1.3rem;
+    --mob-bhw-stat: 1.45rem;
+    --mob-bhw-label: 0.7rem;
   }
 
   body.bhw-body .topbar-right {
@@ -346,6 +396,6 @@
   }
 
   body.bhw-body .bhw-dash-stat__label {
-    font-size: 0.625rem;
+    font-size: var(--mob-bhw-label);
   }
 }
