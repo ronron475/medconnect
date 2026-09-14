@@ -2,6 +2,67 @@
  * BHW Portal — shared layout, forms, and page shells
  */
 
+/* ── Portal-wide readable typography (all BHW modules) ── */
+body.bhw-body {
+  --bhw-type-page: clamp(1.4rem, 1.2vw + 1.1rem, 1.55rem);
+  --bhw-type-body: 14px;
+  --bhw-type-sub: 14px;
+  --bhw-type-label: 12px;
+  --bhw-type-th: 11px;
+  --bhw-type-btn: 13px;
+  --bhw-type-badge: 11px;
+  font-size: var(--bhw-type-body);
+  line-height: 1.45;
+}
+
+body.bhw-body .portal-page-body h2,
+body.bhw-body .portal-page-body .text-h2,
+body.bhw-body .bhw-cons-hero__title,
+body.bhw-body .bhw-reports-header h2,
+body.bhw-body .bhw-records-header h2,
+body.bhw-body .bhw-triage-page-header h2,
+body.bhw-body .bhw-update-header-text h2,
+body.bhw-body .bhw-referral-header h2,
+body.bhw-body .bhw-followup-header h2 {
+  font-size: var(--bhw-type-page);
+  line-height: 1.25;
+  overflow-wrap: anywhere;
+}
+
+body.bhw-body .portal-page-body > p,
+body.bhw-body .bhw-cons-hero__sub,
+body.bhw-body .bhw-reports-sub,
+body.bhw-body .bhw-records-sub,
+body.bhw-body .bhw-triage-page-header p,
+body.bhw-body .bhw-update-header-text p,
+body.bhw-body .bhw-referral-header p,
+body.bhw-body .bhw-followup-header p {
+  font-size: var(--bhw-type-sub);
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+
+body.bhw-body .form-label,
+body.bhw-body .bhw-portal-form .form-label,
+body.bhw-body .bhw-form-card .form-label,
+body.bhw-body .bhw-update-search-strip .form-label,
+body.bhw-body .bhw-records-picker-mount .form-label,
+body.bhw-body .bhw-reports-filters .form-label {
+  font-size: var(--bhw-type-label);
+  line-height: 1.35;
+}
+
+body.bhw-body .form-control,
+body.bhw-body .form-select {
+  font-size: 14px;
+}
+
+body.bhw-body .adm-nav-item,
+body.bhw-body .bhw-sidebar .adm-nav-item {
+  font-size: 14px;
+  line-height: 1.35;
+}
+
 /* Cards should not stretch to full viewport unless in an equal-height grid */
 body.bhw-body .portal-page-body > .bhw-card,
 body.bhw-body .bhw-referral-page .bhw-card,
@@ -17,10 +78,10 @@ body.bhw-body .bhw-card.h-100 {
 /* ── Simple portal forms (referral, stubs) ── */
 body.bhw-body .bhw-portal-form .form-label {
   display: block;
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 700;
   text-transform: uppercase;
-  letter-spacing: 0.05em;
+  letter-spacing: 0.04em;
   color: #64748b;
   margin-bottom: 8px;
 }
@@ -96,13 +157,13 @@ body.bhw-body .bhw-portal-form-actions .bhw-btn-outline {
   font-weight: 700;
   color: #0f172a;
   margin: 0 0 6px;
-  font-size: 1.35rem;
+  font-size: clamp(1.4rem, 1.2vw + 1.1rem, 1.55rem);
   letter-spacing: -0.02em;
 }
 
 .bhw-referral-header p {
   color: #64748b;
-  font-size: 13px;
+  font-size: 14px;
   margin: 0;
   line-height: 1.55;
   max-width: 56ch;
@@ -164,13 +225,13 @@ body.bhw-body .bhw-profile-page > .bhw-update-header:not(:has(.bhw-update-header
   font-weight: 700;
   color: #0f172a;
   margin: 0 0 6px;
-  font-size: 1.35rem;
+  font-size: clamp(1.4rem, 1.2vw + 1.1rem, 1.55rem);
   letter-spacing: -0.02em;
 }
 
 .bhw-followup-header p {
   color: #64748b;
-  font-size: 13px;
+  font-size: 14px;
   margin: 0;
   line-height: 1.55;
   max-width: 56ch;
@@ -195,18 +256,18 @@ body.bhw-body .bhw-profile-page > .bhw-update-header:not(:has(.bhw-update-header
 }
 
 .bhw-followup-filter-label {
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 700;
   text-transform: uppercase;
-  letter-spacing: 0.05em;
+  letter-spacing: 0.04em;
   color: #64748b;
   margin: 0;
 }
 
 .bhw-followup-filter {
   max-width: 200px;
-  min-height: 38px;
-  font-size: 13px;
+  min-height: 40px;
+  font-size: 14px;
   border-radius: 8px;
 }
 
@@ -224,11 +285,11 @@ body.bhw-body .bhw-profile-page > .bhw-update-header:not(:has(.bhw-update-header
 .bhw-followup-table thead th,
 body.bhw-body .bhw-followup-table thead th {
   background: #f8fafc !important;
-  padding: 10px 14px !important;
-  font-size: 10px !important;
+  padding: 11px 14px !important;
+  font-size: 11px !important;
   font-weight: 700;
   text-transform: uppercase;
-  letter-spacing: 0.06em;
+  letter-spacing: 0.05em;
   color: #64748b !important;
   border: none !important;
   border-bottom: 1px solid #e2e8f0 !important;
@@ -239,12 +300,13 @@ body.bhw-body .bhw-followup-table thead th {
 .bhw-followup-table tbody td,
 body.bhw-body .bhw-followup-table tbody td {
   padding: 12px 14px !important;
-  font-size: 13px;
+  font-size: 14px;
   color: #334155;
   vertical-align: middle;
   border: none !important;
   border-bottom: 1px solid #f1f5f9 !important;
   box-shadow: none !important;
+  line-height: 1.4;
 }
 
 .bhw-followup-table tbody tr:last-child td {

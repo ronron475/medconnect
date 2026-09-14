@@ -94,7 +94,7 @@
 
   body.bhw-body .adm-nav-item,
   body.bhw-body .bhw-sidebar .adm-nav-item {
-    font-size: 13px;
+    font-size: 14px;
     line-height: 1.35;
   }
 
@@ -231,12 +231,60 @@
 
   /* ── Tables ── */
   body.bhw-body .portal-page-body:not(:has(#bhwMetricsRow)) .bhw-table,
-  body.bhw-body .portal-page-body:not(:has(#bhwMetricsRow)) .table {
-    font-size: 13px;
+  body.bhw-body .portal-page-body:not(:has(#bhwMetricsRow)) .table,
+  body.bhw-body .bhw-cons-table,
+  body.bhw-body .bhw-followup-table,
+  body.bhw-body .bhw-activity-table {
+    font-size: 14px;
   }
 
-  body.bhw-body .portal-page-body:not(:has(#bhwMetricsRow)) .bhw-table th {
+  body.bhw-body .portal-page-body:not(:has(#bhwMetricsRow)) .bhw-table th,
+  body.bhw-body .bhw-cons-table thead th,
+  body.bhw-body .bhw-followup-table thead th,
+  body.bhw-body .bhw-activity-table thead th {
+    font-size: 11px !important;
+  }
+
+  body.bhw-body .bhw-cons-metric__label,
+  body.bhw-body .bhw-report-metric-label,
+  body.bhw-body .bhw-report-group-title {
     font-size: 11px;
+  }
+
+  body.bhw-body .bhw-cons-metric__val,
+  body.bhw-body .bhw-report-metric-val {
+    font-size: clamp(1.35rem, 5vw, 1.55rem);
+  }
+
+  body.bhw-body .bhw-badge,
+  body.bhw-body .bhw-vitals-form label,
+  body.bhw-body .bhw-cons-table .bhw-badge {
+    font-size: 11px;
+  }
+
+  body.bhw-body .adm-nav-item,
+  body.bhw-body .bhw-sidebar .adm-nav-item {
+    font-size: 14px;
+    line-height: 1.35;
+  }
+
+  body.bhw-body .bhw-followup-header h2,
+  body.bhw-body .bhw-referral-header h2,
+  body.bhw-body .bhw-records-header h2,
+  body.bhw-body .bhw-triage-page-header h2,
+  body.bhw-body .bhw-reports-header h2,
+  body.bhw-body .bhw-cons-hero__title,
+  body.bhw-body .bhw-update-header-text h2 {
+    font-size: var(--mob-bhw-page-title);
+  }
+
+  body.bhw-body .bhw-followup-header p,
+  body.bhw-body .bhw-referral-header p,
+  body.bhw-body .bhw-records-sub,
+  body.bhw-body .bhw-triage-page-header p,
+  body.bhw-body .bhw-reports-sub,
+  body.bhw-body .bhw-cons-hero__sub {
+    font-size: 13px;
   }
 
   body.bhw-body .portal-page-body:not(:has(#bhwMetricsRow)) .table-responsive {
