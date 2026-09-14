@@ -317,6 +317,7 @@
   ].join(', ');
 
   var MODAL_SCROLL_SELECTOR = [
+    '.bhw-invite-scroll',
     '.admin-modal-body',
     'form.mc-staff-form',
     '.ann-modal__body',
@@ -339,6 +340,13 @@
     return true;
   }
 
+  function isAnchoredSelect(select) {
+    return !!(select && (
+      select.getAttribute('data-mc-select-anchored') === '1'
+      || select.closest('#bhwAppModal')
+    ));
+  }
+
   function resolveToggleClasses(select) {
     var classes = ['mc-select__toggle'];
     if (select.classList.contains('mc-field__input')) classes.push('mc-field__input');
@@ -354,10 +362,10 @@
   }
 
   function menuHostForSelect(select) {
-    // Always portal to document.body. Modal shells use overflow:hidden which
-    // clips position:fixed menus when they are descendants of the overlay.
-    if (select && select.closest(MODAL_HOST_SELECTOR)) {
-      return document.body;
+    // Anchored selects (BHW invite) keep the menu under the field.
+    // Other modal selects still portal to body to avoid overflow clipping.
+    if (isAnchoredSelect(select)) {
+      return null;
     }
     return document.body;
   }
@@ -372,6 +380,9 @@
     if (!wrap) wrap = openModalSelect;
     if (!wrap) return;
     wrap.classList.remove('is-open');
+    wrap.classList.remove('is-open-up');
+    wrap.style.marginBottom = '';
+    wrap.style.marginTop = '';
     var field = wrap.closest('.mc-field');
     if (field) field.classList.remove('is-select-open');
     var toggle = wrap.querySelector('.mc-select__toggle');
@@ -385,6 +396,8 @@
       menu.style.width = '';
       menu.style.maxHeight = '';
       menu.style.bottom = '';
+      menu.style.position = '';
+      menu.style.zIndex = '';
       if (menu.parentNode !== wrap) wrap.appendChild(menu);
     }
     if (openModalSelect === wrap) {
@@ -411,34 +424,50 @@
   function positionModalSelectMenu(wrap) {
     var toggle = wrap.querySelector('.mc-select__toggle');
     var menu = menuForWrap(wrap);
+    var select = wrap.querySelector('select');
     if (!toggle || !menu) return;
 
+    var anchored = isAnchoredSelect(select);
     var rect = toggle.getBoundingClientRect();
     var gap = 4;
     var edgePad = 8;
     var boundsEl = getSelectBoundsEl(wrap);
     var bounds = boundsEl ? boundsEl.getBoundingClientRect() : null;
-
-    // Clamp to the scrollable modal body (not the header) so the list never
-    // covers the title/subtitle, and never spills past the card shell.
     var topLimit = Math.max(edgePad, bounds ? bounds.top + edgePad : edgePad);
     var bottomLimit = Math.min(
       window.innerHeight - edgePad,
       bounds ? bounds.bottom - edgePad : window.innerHeight - edgePad
     );
+    var spaceBelow = Math.max(0, bottomLimit - rect.bottom - gap);
+    var spaceAbove = Math.max(0, rect.top - topLimit - gap);
+    var preferBelow = spaceBelow >= 140 || spaceBelow >= spaceAbove;
+    var available = preferBelow ? spaceBelow : spaceAbove;
+    var maxH = Math.min(220, Math.max(112, available));
+
+    if (anchored) {
+      // Always open below the field for BHW invite — scroll makes room first.
+      preferBelow = true;
+      available = Math.max(0, bottomLimit - rect.bottom - gap);
+      maxH = Math.min(220, Math.max(140, available || 180));
+      wrap.classList.remove('is-open-up');
+      wrap.style.marginTop = '';
+      wrap.style.marginBottom = (maxH + 8) + 'px';
+      menu.style.position = 'absolute';
+      menu.style.left = '0';
+      menu.style.right = '0';
+      menu.style.width = '100%';
+      menu.style.maxHeight = maxH + 'px';
+      menu.style.zIndex = '26';
+      menu.style.top = 'calc(100% + 4px)';
+      menu.style.bottom = 'auto';
+      return;
+    }
+
     var leftLimit = Math.max(edgePad, bounds ? bounds.left + edgePad : edgePad);
     var rightLimit = Math.min(
       window.innerWidth - edgePad,
       bounds ? bounds.right - edgePad : window.innerWidth - edgePad
     );
-
-    var spaceBelow = Math.max(0, bottomLimit - rect.bottom - gap);
-    var spaceAbove = Math.max(0, rect.top - topLimit - gap);
-    // Prefer opening downward inside the form body; flip up only when below is unusable.
-    var preferBelow = spaceBelow >= 140 || spaceBelow >= spaceAbove;
-    var available = preferBelow ? spaceBelow : spaceAbove;
-    var maxH = Math.min(200, Math.max(112, available));
-
     var width = Math.round(rect.width);
     var left = Math.round(rect.left);
     if (left + width > rightLimit) left = Math.max(leftLimit, rightLimit - width);
@@ -537,16 +566,18 @@
       if (select.disabled) return;
       if (openModalSelect && openModalSelect !== wrap) closeModalSelect(openModalSelect);
       rebuildMenu();
-      // Scroll the field up inside the modal body so the menu can open downward
-      // without covering the header subtitle or spilling past the card.
-      ensureSelectRoomBelow(toggle, 208);
+      ensureSelectRoomBelow(toggle, 200);
       toggle.scrollIntoView({ block: 'nearest', inline: 'nearest', behavior: 'auto' });
       wrap.classList.add('is-open');
       var field = wrap.closest('.mc-field');
       if (field) field.classList.add('is-select-open');
       toggle.setAttribute('aria-expanded', 'true');
       var host = menuHostForSelect(select);
-      host.appendChild(menu);
+      if (host) {
+        host.appendChild(menu);
+      } else if (menu.parentNode !== wrap) {
+        wrap.appendChild(menu);
+      }
       menu.hidden = false;
       openModalSelect = wrap;
       openModalSelectMenu = menu;
@@ -726,7 +757,7 @@
       if (open && !locked) {
         lockStaffModalScroll();
         locked = true;
-        var scroller = modal.querySelector('.admin-modal-body, form.mc-staff-form');
+        var scroller = modal.querySelector('.bhw-invite-scroll, .admin-modal-body');
         if (scroller) scroller.scrollTop = 0;
         enhanceModalSelectsIn(modal);
       } else if (!open && locked) {

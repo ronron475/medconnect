@@ -27,11 +27,166 @@
   inset: 0;
   background: rgba(7, 20, 40, 0.6);
   backdrop-filter: blur(4px);
+  display: none;
   align-items: center;
   justify-content: center;
   z-index: 1000;
   padding: 20px;
+  box-sizing: border-box;
 }
+
+/* BHW invite modal — fixed header/footer, one scroll region */
+#bhwAppModal.mc-staff-modal {
+  z-index: 1100;
+}
+
+#bhwAppModal .bhw-invite-dialog {
+  display: flex;
+  flex-direction: column;
+  width: min(720px, calc(100vw - 32px));
+  max-height: min(90dvh, 880px);
+  max-height: min(90vh, 880px);
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+  border-radius: 18px;
+  background: #fff;
+  box-shadow: 0 24px 64px rgba(15, 23, 42, 0.22);
+}
+
+#bhwAppModal .bhw-invite-header {
+  flex: 0 0 auto;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 16px;
+  margin: 0;
+  padding: 22px 24px 16px;
+  border-bottom: 1px solid #e2e8f0;
+  background: linear-gradient(180deg, #f8fafc 0%, #fff 100%);
+  border-radius: 18px 18px 0 0;
+  z-index: 3;
+}
+
+#bhwAppModal .bhw-invite-header__text {
+  min-width: 0;
+  flex: 1 1 auto;
+}
+
+#bhwAppModal .bhw-invite-header .admin-modal-subtitle {
+  max-width: none;
+}
+
+#bhwAppModal .bhw-invite-form {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: hidden;
+  padding: 0;
+  margin: 0;
+}
+
+#bhwAppModal .bhw-invite-scroll {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-x: hidden;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
+  padding: 8px 24px 20px;
+}
+
+#bhwAppModal .bhw-invite-scroll > .mc-form-section:first-of-type {
+  margin-top: 12px;
+}
+
+#bhwAppModal .bhw-invite-assign-grid {
+  margin-top: 18px;
+}
+
+#bhwAppModal .mc-field--barangay {
+  position: relative;
+  z-index: 1;
+}
+
+#bhwAppModal .mc-field--barangay.is-select-open {
+  z-index: 20;
+}
+
+#bhwAppModal .mc-form-section:has(.is-select-open) {
+  position: relative;
+  z-index: 15;
+  overflow: visible;
+}
+
+#bhwAppModal .bhw-docs-lead {
+  margin: 0 0 16px;
+  font-size: 0.8125rem;
+  line-height: 1.5;
+  color: #64748b;
+}
+
+#bhwAppModal .bhw-doc-upload-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 16px;
+  margin-bottom: 12px;
+}
+
+#bhwAppModal .bhw-doc-upload-grid .mc-file-upload,
+#bhwAppModal .bhw-doc-upload-grid .mc-file-upload__control {
+  max-width: 100%;
+}
+
+#bhwAppModal .bhw-invite-footer {
+  flex: 0 0 auto;
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  margin: 0;
+  padding: 14px 24px calc(14px + env(safe-area-inset-bottom, 0px));
+  border-top: 1px solid #e2e8f0;
+  background: #fff;
+  z-index: 3;
+}
+
+#bhwAppModal .bhw-invite-footer .mc-btn {
+  min-height: 42px;
+}
+
+/* Anchored barangay menu — stays under the field, scrolls inside itself */
+#bhwAppModal .mc-select {
+  position: relative;
+  z-index: 1;
+}
+
+#bhwAppModal .mc-select.is-open {
+  z-index: 25;
+}
+
+#bhwAppModal .mc-select__menu {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  right: 0;
+  width: 100%;
+  max-width: 100%;
+  max-height: 220px;
+  margin: 0;
+  z-index: 26;
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  box-sizing: border-box;
+}
+
+#bhwAppModal .mc-select.is-open-up .mc-select__menu {
+  top: auto;
+  bottom: calc(100% + 4px);
+}
+
 .admin-modal-dialog--wide {
   width: min(720px, 100%);
   max-height: min(92dvh, 920px);
@@ -52,8 +207,14 @@
   background: none;
   border: none;
   font-size: 28px;
+  line-height: 1;
   cursor: pointer;
   color: #94a3b8;
+  flex-shrink: 0;
+  padding: 0 4px;
+}
+.admin-modal-close:hover {
+  color: #0f172a;
 }
 .admin-modal-title {
   font-size: 20px;
@@ -61,7 +222,7 @@
   color: var(--mc-navy-deep, #0f172a);
   margin: 0;
 }
-.admin-modal-subtitle { font-size: 13px; margin: 6px 0 0; }
+.admin-modal-subtitle { font-size: 13px; margin: 6px 0 0; color: #64748b; }
 .admin-form-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -120,7 +281,7 @@
   gap: 16px;
   margin-bottom: 12px;
 }
-.bhw-doc-list { list-style: none; padding: 0; margin: 0 0 16px; }
+.bhw-doc-list { list-style: none; padding: 0; margin: 0 0 8px; }
 .bhw-doc-list li {
   display: flex;
   justify-content: space-between;
@@ -257,6 +418,38 @@
 }
 
 @media (max-width: 640px) {
+  #bhwAppModal.mc-staff-modal {
+    padding: 0;
+    align-items: flex-end;
+  }
+
+  #bhwAppModal .bhw-invite-dialog {
+    width: 100%;
+    max-width: 100%;
+    max-height: 100dvh;
+    max-height: 100vh;
+    border-radius: 16px 16px 0 0;
+  }
+
+  #bhwAppModal .bhw-invite-header {
+    border-radius: 16px 16px 0 0;
+    padding: 18px 18px 14px;
+  }
+
+  #bhwAppModal .bhw-invite-scroll {
+    padding: 4px 18px 16px;
+  }
+
+  #bhwAppModal .bhw-invite-footer {
+    flex-direction: column-reverse;
+    padding: 12px 18px calc(12px + env(safe-area-inset-bottom, 0px));
+  }
+
+  #bhwAppModal .bhw-invite-footer .mc-btn {
+    width: 100%;
+    justify-content: center;
+  }
+
   .admin-form-grid, .admin-form-grid--3 { grid-template-columns: 1fr; }
   .bhw-doc-preview-header { flex-direction: column; }
   .bhw-doc-list li { flex-direction: column; align-items: flex-start; }
