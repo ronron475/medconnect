@@ -14,11 +14,13 @@ html.signin-skip-motion #signin-modal.hero-signin-panel {
 }
 
 .landing-page .hero--cinematic {
-  overflow: visible;
+  overflow-x: clip;
+  overflow-y: visible;
 }
 
 .landing-page.signin-active .hero--cinematic {
-  overflow: visible;
+  overflow-x: clip;
+  overflow-y: visible;
 }
 
 .landing-page .hero--cinematic .hero-stage {
@@ -132,7 +134,7 @@ body.landing-page.signin-scroll-locked {
 
 .landing-page.signin-active .hero--cinematic .hero-copy-shift,
 .landing-page .hero--cinematic.is-signin-open .hero-copy-shift {
-  transform: translateX(clamp(-140px, -10vw, -56px));
+  transform: translateX(clamp(-120px, -8vw, -48px));
 }
 
 .landing-page .hero-signin-panel .signin-modal-wrap {
@@ -842,8 +844,8 @@ html[data-theme-resolved='dark'] .landing-page .hero-signin-panel .signin-modal-
   body.landing-page.signin-active #signin-modal.hero-signin-panel.is-viewport-pinned.is-open {
     position: fixed !important;
     top: calc(var(--hero-signin-nav-offset) + var(--hero-signin-gap) - var(--hero-signin-lift)) !important;
-    right: max(14px, env(safe-area-inset-right, 14px)) !important;
-    left: max(14px, env(safe-area-inset-left, 14px)) !important;
+    right: max(16px, env(safe-area-inset-right, 16px)) !important;
+    left: max(16px, env(safe-area-inset-left, 16px)) !important;
     bottom: auto !important;
     width: auto !important;
     max-width: none !important;
@@ -856,6 +858,7 @@ html[data-theme-resolved='dark'] .landing-page .hero-signin-panel .signin-modal-
     align-items: stretch !important;
     overflow: hidden !important;
     z-index: 1200;
+    box-sizing: border-box !important;
   }
 
   body.landing-page.signin-active > #signin-modal.hero-signin-panel.is-open .signin-modal-wrap,

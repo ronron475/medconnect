@@ -9,7 +9,7 @@
     --mob-adm-gap: 20px;
     --mob-adm-radius: 12px;
     --mob-adm-card-gap: 12px;
-    --mob-adm-section-gap: 24px;
+    --mob-adm-section-gap: 28px;
   }
 
   /* ── Header grid (overrides portal_shell flex-wrap) ── */
@@ -181,6 +181,18 @@
     min-width: 0;
   }
 
+  body.admin-body [data-live-dashboard] > section {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  body.admin-body [data-live-dashboard] .adm-charts-section {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+
   /* ── Welcome banner ── */
   body.admin-body .adm-banner {
     padding: 18px 16px;
@@ -209,7 +221,7 @@
     flex-direction: column;
     align-items: flex-start;
     gap: 6px;
-    margin: 0 0 16px;
+    margin: 0;
   }
 
   body.admin-body .adm-section-title {
@@ -229,7 +241,7 @@
     align-items: stretch;
     justify-content: flex-start;
     gap: 12px;
-    margin-bottom: 4px;
+    margin-bottom: 0;
   }
 
   body.admin-body .adm-charts-section {
@@ -472,7 +484,7 @@
   body.admin-body {
     --mob-adm-pad: 14px;
     --mob-adm-card-gap: 12px;
-    --mob-adm-section-gap: 22px;
+    --mob-adm-section-gap: 26px;
   }
 
   body.admin-body .adm-metrics,

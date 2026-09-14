@@ -29,8 +29,9 @@ body {
   font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
   background: var(--bg-light);
   color: var(--text-body);
-  min-height: 100vh;
-  overflow-x: auto;
+  min-height: 100svh;
+  overflow-x: hidden;
+  overflow-x: clip;
   overflow-y: auto;
   max-width: 100%;
 }
@@ -194,11 +195,13 @@ body::before {
 .hero--cinematic {
   position: relative;
   z-index: 1;
-  min-height: 88vh;
+  min-height: 100svh;
+  height: auto;
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   padding-top: 80px;
-  overflow: hidden;
+  overflow-x: clip;
+  overflow-y: visible;
   background: var(--navy);
 }
 
@@ -440,10 +443,13 @@ body.landing-page:has(.landing-maintenance-banner) .hero--cinematic {
 .hero {
   position: relative;
   z-index: 1;
-  min-height: 85vh;
+  min-height: 100svh;
+  height: auto;
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   padding-top: 80px;
+  overflow-x: clip;
+  overflow-y: visible;
   background: var(--bg-light) !important;
 }
 
@@ -651,7 +657,7 @@ body.landing-page:has(.landing-maintenance-banner) .hero--cinematic {
   box-shadow: 0 10px 40px rgba(1, 42, 74, 0.08);
   border: 1px solid var(--border);
   position: relative;
-  max-height: calc(100vh - 110px);
+  max-height: calc(100dvh - 110px);
   overflow-y: auto;
   scrollbar-width: none;
 }
