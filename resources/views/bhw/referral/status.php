@@ -14,7 +14,7 @@ $bhw_subnav_active = 'referral/status.php';
   <header class="bhw-referral-header">
     <div>
       <h2 class="text-h2">Referrals</h2>
-      <p>View doctor-created referrals for residents in <strong>Brgy. <?= $barangay_label ?></strong>. This list is read-only — you cannot create, edit, or follow up on clinical referrals here.</p>
+      <p>View doctor-issued referrals for residents in <strong>Brgy. <?= $barangay_label ?></strong>. This list is read-only — you cannot create, edit, approve, or change the doctor’s clinical referral decision.</p>
     </div>
   </header>
 
@@ -58,6 +58,16 @@ $bhw_subnav_active = 'referral/status.php';
     return s.length > n ? s.slice(0, n - 1) + '…' : s;
   }
 
+  function statusLabel(status) {
+    var s = String(status || '').toLowerCase();
+    if (s === 'pending') return 'Issued / Open';
+    if (s === 'accepted') return 'In progress';
+    if (s === 'completed') return 'Completed';
+    if (s === 'cancelled' || s === 'rejected') return 'Cancelled';
+    if (s === 'expired') return 'Expired';
+    return status || '—';
+  }
+
   BhwPortal.get('referrals.php', { action: 'list' }).then(function (r) {
     var rows = r.referrals || [];
     if (!rows.length) {
@@ -72,7 +82,7 @@ $bhw_subnav_active = 'referral/status.php';
         '<td>' + esc(short(x.reason, 80)) + '</td>' +
         '<td>' + esc(x.facility_display || '—') + '</td>' +
         '<td>' + esc(x.provider_name || '—') + '</td>' +
-        '<td>' + esc(x.status || '') + '</td>' +
+        '<td>' + esc(statusLabel(x.status)) + '</td>' +
         '</tr>';
     }).join('');
   }).catch(function () {

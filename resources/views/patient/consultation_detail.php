@@ -359,10 +359,31 @@ $patient_page_stylesheets = [
         <div class="pmh-detail-docs__block">
           <h4 class="pmh-detail-docs__heading">Referrals</h4>
           <ul class="pmh-rx-list">
-            <?php foreach ($referrals as $ref): ?>
+            <?php foreach ($referrals as $ref):
+              $refStatus = strtolower(trim((string) ($ref['status'] ?? 'pending')));
+              $refStatusLabel = match ($refStatus) {
+                  'pending' => 'Issued / Open',
+                  'accepted' => 'In progress',
+                  'completed' => 'Completed',
+                  'cancelled', 'rejected' => 'Cancelled',
+                  'expired' => 'Expired',
+                  default => $ref['status'] ?: 'Issued / Open',
+              };
+              $refFacility = trim((string) ($ref['facility_name'] ?? $ref['destination_facility'] ?? ''));
+              $refDate = !empty($ref['created_at']) ? date('M j, Y', strtotime((string) $ref['created_at'])) : '—';
+            ?>
             <li>
-              <strong><?= htmlspecialchars($ref['referral_type'] ?? 'Referral') ?></strong>
-              <?php if (!empty($ref['reason'])): ?><p><?= nl2br(htmlspecialchars($ref['reason'])) ?></p><?php endif; ?>
+              <strong><?= htmlspecialchars((string) ($ref['referral_type'] ?? 'Referral')) ?></strong>
+              <p class="text-xs text-muted" style="margin:4px 0 6px;">
+                <?= htmlspecialchars($refDate) ?>
+                · Status: <?= htmlspecialchars($refStatusLabel) ?>
+                <?php if ($refFacility !== ''): ?>
+                · Facility: <?= htmlspecialchars($refFacility) ?>
+                <?php endif; ?>
+              </p>
+              <?php if (!empty($ref['reason'])): ?>
+              <p><strong>Reason for referral:</strong><br><?= nl2br(htmlspecialchars((string) $ref['reason'])) ?></p>
+              <?php endif; ?>
             </li>
             <?php endforeach; ?>
           </ul>

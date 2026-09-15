@@ -460,6 +460,15 @@ function pmh_when_parts(array $entry, bool $includeCategory = false): array {
       $entry = $row;
       $who = trim((string) ($entry['added_by'] ?? $entry['bhw_name'] ?? ''));
       $title = trim((string) ($entry['type'] ?? 'Referral'));
+      $refStatusKey = strtolower((string) ($entry['status'] ?? 'pending'));
+      $refStatusLabel = match ($refStatusKey) {
+          'pending' => 'Issued / Open',
+          'accepted' => 'In progress',
+          'completed' => 'Completed',
+          'cancelled', 'rejected' => 'Cancelled',
+          'expired' => 'Expired',
+          default => (string) ($entry['status'] ?? 'Issued / Open'),
+      };
     ?>
     <article class="pmh-visit pmh-visit--record">
       <div class="pmh-visit__rail" aria-hidden="true"><span class="pmh-visit__dot"></span></div>
@@ -472,20 +481,26 @@ function pmh_when_parts(array $entry, bool $includeCategory = false): array {
             <p class="pmh-visit__meta"><?= htmlspecialchars((string) $entry['date_label']) ?></p>
             <?php endif; ?>
           </div>
-          <span class="pmh-status pmh-status--default"><?= htmlspecialchars((string) ($entry['status'] ?? 'Pending')) ?></span>
+          <span class="pmh-status pmh-status--default"><?= htmlspecialchars($refStatusLabel) ?></span>
         </header>
         <div class="pmh-visit__main">
           <div class="pmh-visit__grid">
             <?php if (!empty($entry['facility'])): ?>
             <section class="pmh-visit__block pmh-visit__block--full">
-              <h4 class="pmh-visit__label">Facility</h4>
+              <h4 class="pmh-visit__label">Facility / service</h4>
               <p><?= htmlspecialchars((string) $entry['facility']) ?></p>
             </section>
             <?php endif; ?>
             <?php if (!empty($entry['reason'])): ?>
             <section class="pmh-visit__block pmh-visit__block--full">
-              <h4 class="pmh-visit__label">Reason</h4>
+              <h4 class="pmh-visit__label">Reason for referral</h4>
               <p><?= htmlspecialchars((string) $entry['reason']) ?></p>
+            </section>
+            <?php endif; ?>
+            <?php if ($who !== ''): ?>
+            <section class="pmh-visit__block pmh-visit__block--full">
+              <h4 class="pmh-visit__label">Issued by</h4>
+              <p><?= htmlspecialchars($who) ?></p>
             </section>
             <?php endif; ?>
           </div>

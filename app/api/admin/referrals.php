@@ -1,6 +1,7 @@
 <?php
 /**
- * Digital referrals — list and status updates (Admin + Super Admin).
+ * Digital referrals — list only (Admin + Super Admin).
+ * Monitoring/viewing only: status updates are not allowed from this portal.
  */
 header('Content-Type: application/json; charset=utf-8');
 
@@ -57,31 +58,8 @@ if ($method === 'GET') {
     exit;
 }
 
-if ($method !== 'POST') {
-    http_response_code(405);
-    echo json_encode(['success' => false, 'message' => 'Method not allowed.']);
-    exit;
-}
-
-$id = (int) ($_POST['id'] ?? 0);
-$action = $_POST['action'] ?? 'update_status';
-$status = trim($_POST['status'] ?? '');
-
-if ($id <= 0 || $status === '') {
-    echo json_encode(['success' => false, 'message' => 'Referral ID and status required.']);
-    exit;
-}
-
-$allowed = ['pending', 'accepted', 'completed', 'cancelled', 'rejected'];
-if (!in_array($status, $allowed, true)) {
-    echo json_encode(['success' => false, 'message' => 'Invalid status.']);
-    exit;
-}
-
-try {
-    $stmt = $pdo->prepare('UPDATE digital_referrals SET status = ? WHERE id = ?');
-    $stmt->execute([$status, $id]);
-    echo json_encode(['success' => true, 'message' => 'Referral updated.']);
-} catch (Throwable $e) {
-    echo json_encode(['success' => false, 'message' => 'Update failed.']);
-}
+http_response_code(403);
+echo json_encode([
+    'success' => false,
+    'message' => 'Referral status is read-only for Admin and SuperAdmin. Monitoring only.',
+]);

@@ -16,6 +16,18 @@ function pmh_health_file_text(?string $value): bool
     $t = trim((string) $value);
     return $t !== '' && $t !== '—';
 }
+
+function pmh_referral_status_label(?string $status): string
+{
+    return match (strtolower(trim((string) $status))) {
+        'pending' => 'Issued / Open',
+        'accepted' => 'In progress',
+        'completed' => 'Completed',
+        'cancelled', 'rejected' => 'Cancelled',
+        'expired' => 'Expired',
+        default => trim((string) $status) !== '' ? ucfirst(trim((string) $status)) : 'Issued / Open',
+    };
+}
 ?>
 <div class="pmh-files">
   <nav class="pmh-files__filters pmh-toolbar" aria-label="Filter health files">
@@ -100,9 +112,23 @@ function pmh_health_file_text(?string $value): bool
           <a href="<?= htmlspecialchars(patient_consultation_detail_url($consultId)) ?>" class="pmh-btn pmh-btn--outline pmh-btn--sm">Full consultation details</a>
         </p>
         <?php endif; ?>
+      <?php elseif ($type === 'Referral'): ?>
+        <?php
+          $refType = (string) ($r['referral_type'] ?? '');
+          $refReason = (string) ($r['referral_reason'] ?? $r['frequency'] ?? '');
+          $refFacility = (string) ($r['referral_facility'] ?? $r['duration'] ?? '');
+          $refStatus = (string) ($r['referral_status'] ?? $r['detail'] ?? '');
+        ?>
+        <dl class="pmh-soap-list pmh-file-card__soap-list">
+          <div><dt>Referral type</dt><dd><?= htmlspecialchars($refType !== '' ? $refType : 'Referral') ?></dd></div>
+          <div><dt>Facility / service</dt><dd><?= htmlspecialchars(pmh_health_file_text($refFacility) ? $refFacility : '—') ?></dd></div>
+          <div><dt>Status</dt><dd><?= htmlspecialchars(pmh_referral_status_label($refStatus)) ?></dd></div>
+          <div><dt>Reason for referral</dt><dd><?= nl2br(htmlspecialchars(pmh_health_file_text($refReason) ? $refReason : '—')) ?></dd></div>
+        </dl>
+        <p class="pmh-file-card__meta text-xs text-muted">Issued by your doctor · Read-only</p>
       <?php else: ?>
         <?php if (!empty($r['detail']) && $r['detail'] !== '—'): ?>
-        <p class="pmh-file-card__detail"><?= htmlspecialchars($r['detail']) ?></p>
+        <p class="pmh-file-card__detail"><?= htmlspecialchars(pmh_referral_status_label((string) $r['detail'])) ?></p>
         <?php endif; ?>
         <?php if (!empty($r['frequency']) || !empty($r['duration'])): ?>
         <p class="pmh-file-card__meta text-xs text-muted">
