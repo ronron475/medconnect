@@ -596,8 +596,12 @@
 
   function close() {
     if (!els()) return;
-    if (bookingInFlight) return;
+    // Always allow dismiss so Start New Complaint / page controls are never trapped
+    // under a leftover urgency backdrop (bookingInFlight only blocks Escape/book flow).
+    bookingInFlight = false;
     modal.hidden = true;
+    modal.setAttribute('hidden', '');
+    modal.setAttribute('aria-hidden', 'true');
     document.body.classList.remove('mc-urgency-modal-open');
     hideSlots();
     hideFacility();
@@ -613,6 +617,8 @@
 
     if (t.closest('[data-mc-urgency-close]')) {
       close();
+      // Ensure page controls (e.g. Start New Complaint) receive clicks after dismiss.
+      document.body.classList.remove('mc-urgency-modal-open', 'mc-nav-closing');
       return;
     }
 

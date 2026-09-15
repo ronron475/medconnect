@@ -125,10 +125,12 @@ $followup_is_pain_scale = (bool) preg_match(
 );
 $interview_complaint_locked = $chief_complaint_locked
     || ($preliminary_payload !== null && trim((string) ($preliminary_payload['chief_complaint'] ?? '')) !== '');
-$show_start_new_consultation_btn = empty($force_new_concern) && (
-    $consultation_already_assigned
-    || (!$is_provider_locked && ($chief_complaint_locked || $interview_complaint_locked || $preliminary_payload !== null))
-);
+// Always render the control so JS can reveal it after a live preliminary assessment.
+$show_start_new_consultation_btn = empty($force_new_concern);
+$show_start_new_consultation_wrap = $consultation_already_assigned
+    || $chief_complaint_locked
+    || $interview_complaint_locked
+    || $preliminary_payload !== null;
 ?>
 <h2 class="text-h2 mb-md patient-triage-page__title">Book Consultation</h2>
 <?php if ($urgent_open_choice && $registration_chief_complaint !== ''): ?>
@@ -236,7 +238,7 @@ $show_start_new_consultation_btn = empty($force_new_concern) && (
         <?php endif; ?>
       </p>
       <?php if ($show_start_new_consultation_btn): ?>
-      <div class="patient-triage-new-consult" id="startNewConsultationWrap"<?= ($preliminary_payload || $consultation_already_assigned || $chief_complaint_locked) ? '' : ' hidden' ?>>
+      <div class="patient-triage-new-consult" id="startNewConsultationWrap"<?= $show_start_new_consultation_wrap ? '' : ' hidden' ?>>
         <button
           type="button"
           class="mc-btn mc-btn--outline"

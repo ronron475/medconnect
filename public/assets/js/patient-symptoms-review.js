@@ -209,9 +209,27 @@
   function setStartNewVisible(visible, id) {
     var wrap = document.getElementById('startNewConsultationWrap');
     var btn = document.getElementById('btnStartNewConsultation');
-    if (wrap) wrap.hidden = !visible;
-    if (btn && id != null && Number(id) > 0) {
-      btn.setAttribute('data-triage-id', String(id));
+    if (wrap) {
+      wrap.hidden = !visible;
+      if (visible) {
+        wrap.removeAttribute('hidden');
+        wrap.style.pointerEvents = 'auto';
+        wrap.style.position = 'relative';
+        wrap.style.zIndex = '6';
+      }
+    }
+    if (btn) {
+      btn.disabled = false;
+      btn.removeAttribute('aria-disabled');
+      btn.style.pointerEvents = 'auto';
+      btn.style.position = 'relative';
+      btn.style.zIndex = '7';
+      if (id != null && Number(id) > 0) {
+        btn.setAttribute('data-triage-id', String(id));
+      }
+    }
+    if (visible) {
+      document.body.classList.remove('mc-nav-closing', 'patient-booking-overlay-open');
     }
   }
 
@@ -491,6 +509,18 @@
       return;
     }
     var level = urgencyToLevel(data.triage_level || data.classification_label);
+    if (level === 'emergency') {
+      triageLevel = 'emergency';
+      awaitingSecondClick = false;
+      assessmentInProgress = false;
+      hideFollowupUi();
+      showContinueUi('emergency', data.classification_label || 'EMERGENCY');
+      if (continueHintEl) {
+        continueHintEl.textContent = 'Emergency care is recommended. You can start a new complaint if this was submitted in error.';
+      }
+      updateSubmitButtonLabel();
+      return;
+    }
     if (level !== 'non_urgent' && level !== 'urgent') return;
     triageLevel = level;
     awaitingSecondClick = triageId > 0;
@@ -708,7 +738,11 @@
         awaitingSecondClick = false;
         assessmentInProgress = false;
         hideFollowupUi();
-        hideContinueUi();
+        triageId = parseInt(payload.triage_id, 10) || triageId;
+        showContinueUi('emergency', payload.classification_label || 'EMERGENCY');
+        if (continueHintEl) {
+          continueHintEl.textContent = 'Emergency care is recommended. You can start a new complaint if this was submitted in error.';
+        }
         presentTriageOutcome(level, complaint, payload);
         showAlert('error', i18n('em_submit'));
         if (!payload.emergency) {

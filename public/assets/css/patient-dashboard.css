@@ -1418,6 +1418,16 @@
 
 .pdash-care-form__new-consult {
   margin: 8px 0 2px;
+  position: relative;
+  z-index: 6;
+  pointer-events: auto !important;
+}
+
+.pdash-care-form__new-consult #btnStartNewConsultation {
+  position: relative;
+  z-index: 7;
+  pointer-events: auto !important;
+  cursor: pointer !important;
 }
 
 .pdash-care-form__submit {
