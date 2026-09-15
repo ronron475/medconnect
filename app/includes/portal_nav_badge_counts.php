@@ -338,7 +338,8 @@ function portal_nav_admin_counts(PDO $pdo, string $role, int $userId = 0): array
     }
     try {
         if ($pdo->query("SHOW TABLES LIKE 'digital_referrals'")->rowCount()) {
-            $pendingReferrals = (int) $pdo->query("SELECT COUNT(*) FROM digital_referrals WHERE status = 'pending'")->fetchColumn();
+            // Monitoring-only: badge shows total doctor-issued referrals (not pending/follow-up status).
+            $pendingReferrals = (int) $pdo->query('SELECT COUNT(*) FROM digital_referrals')->fetchColumn();
         }
     } catch (Throwable $e) {
     }

@@ -12,7 +12,7 @@ $notif_widget_defs = [
     'unread_count' => ["Unread", ''],
     'today_appointments' => ["Today's Appointments", ''],
     'upcoming_consultations' => ['Upcoming Consultations', ''],
-    'pending_referrals' => ['Open Referrals', ''],
+    'pending_referrals' => ['Referrals', ''],
     'emergency_alerts' => ['Emergency Alerts', ' mc-notif-widget--alert'],
 ];
 

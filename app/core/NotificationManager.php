@@ -514,7 +514,8 @@ final class NotificationManager
                 $s = $pdo->query("SELECT COUNT(*) FROM digital_referrals WHERE status = 'pending'");
                 $widgets['pending_referrals'] = (int) $s->fetchColumn();
             } elseif ($role === 'admin' || $role === 'superadmin') {
-                $widgets['pending_referrals'] = (int) $pdo->query("SELECT COUNT(*) FROM digital_referrals WHERE status = 'pending'")->fetchColumn();
+                // Monitoring-only: count all doctor-issued referrals, not pending follow-up status.
+                $widgets['pending_referrals'] = (int) $pdo->query('SELECT COUNT(*) FROM digital_referrals')->fetchColumn();
                 $widgets['today_appointments'] = (int) $pdo->query("SELECT COUNT(*) FROM consultations WHERE consult_date = CURDATE()")->fetchColumn();
             }
 
