@@ -30,12 +30,12 @@ require_once __DIR__ . '/partials/layout_open.php';
 $lpConfig = $config = LandingPageConfig::all($pdo);
 ?>
 
-<link rel="stylesheet" href="<?= ASSET_BASE ?>/assets/css/admin-landing-page.css?v=4">
+<link rel="stylesheet" href="<?= ASSET_BASE ?>/assets/css/admin-landing-page.css?v=<?= (int) @filemtime(ASSETS_PATH . '/css/admin-landing-page.css') ?>">
 
 <div class="lp-mgmt" id="lpMgmt">
 
   <div class="lp-mgmt__hero-banner">
-    <div>
+    <div class="lp-mgmt__hero-banner-text">
       <h2 class="text-h2">Website Dashboard</h2>
       <p class="text-muted">Manage the public landing page — hero content, announcements, media, and section visibility.</p>
     </div>
@@ -83,7 +83,7 @@ $lpConfig = $config = LandingPageConfig::all($pdo);
 
   <div class="lp-mgmt__layout">
 
-    <div>
+    <div class="lp-mgmt__main">
       <div class="lp-mgmt__cards">
 
         <div class="mc-card lp-mgmt__card">
@@ -181,7 +181,7 @@ $lpConfig = $config = LandingPageConfig::all($pdo);
               Maintenance message
               <textarea name="maintenance_message" id="maintenanceMessage" rows="2"></textarea>
             </label>
-            <button type="submit" class="mc-btn mc-btn--primary" style="margin-top:10px;">Save Settings</button>
+            <button type="submit" class="mc-btn mc-btn--primary">Save Settings</button>
           </form>
         </div>
 
@@ -192,7 +192,7 @@ $lpConfig = $config = LandingPageConfig::all($pdo);
           <h3>Recent Activity</h3>
           <p>Recently modified announcements</p>
         </div>
-        <div style="overflow-x:auto;">
+        <div class="lp-mgmt__table-scroll">
           <table class="mc-table">
             <thead>
               <tr>

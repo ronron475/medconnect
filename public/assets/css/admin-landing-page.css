@@ -12,6 +12,11 @@
   display: flex;
   flex-direction: column;
   gap: 16px;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+  overflow-x: clip;
 }
 
 .lp-mgmt__hero-banner {
@@ -26,6 +31,14 @@
   background: linear-gradient(135deg, rgba(6, 147, 150, 0.08) 0%, rgba(1, 42, 74, 0.04) 100%);
   border: 1px solid var(--lp-border);
   box-shadow: var(--lp-shadow);
+  min-width: 0;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+.lp-mgmt__hero-banner-text {
+  min-width: 0;
+  flex: 1 1 12rem;
 }
 
 .lp-mgmt__hero-banner .text-h2 {
@@ -54,6 +67,8 @@
   grid-template-columns: repeat(7, minmax(0, 1fr));
   gap: 10px;
   margin: 0;
+  width: 100%;
+  min-width: 0;
 }
 
 .lp-mgmt__stat {
@@ -98,6 +113,8 @@
   align-items: center;
   gap: 8px;
   margin: 0;
+  width: 100%;
+  min-width: 0;
 }
 
 .lp-mgmt__quick-actions .mc-btn {
@@ -108,6 +125,11 @@
   padding: 0 14px;
   font-size: 0.8125rem;
   font-weight: 600;
+  box-sizing: border-box;
+  max-width: 100%;
+  white-space: normal;
+  text-align: center;
+  line-height: 1.25;
 }
 
 .lp-mgmt__layout {
@@ -116,12 +138,28 @@
   gap: 14px;
   align-items: start;
   margin: 0;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+}
+
+.lp-mgmt__layout > * {
+  min-width: 0;
+  max-width: 100%;
+}
+
+/* Stack cards when the main column itself is narrow (sidebar + preview) */
+.lp-mgmt__main {
+  container-type: inline-size;
+  container-name: lp-main;
 }
 
 .lp-mgmt__cards {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 12px;
+  width: 100%;
+  min-width: 0;
 }
 
 .lp-mgmt__card {
@@ -130,11 +168,14 @@
   flex-direction: column;
   gap: 8px;
   min-height: 0;
+  min-width: 0;
+  max-width: 100%;
   border-radius: var(--lp-radius);
   border: 1px solid var(--lp-border);
   box-shadow: var(--lp-shadow);
   background: var(--lp-surface);
   box-sizing: border-box;
+  overflow: hidden;
 }
 
 .lp-mgmt__card-icon {
@@ -213,6 +254,12 @@
   justify-self: start;
   min-height: 36px;
   margin-top: 2px;
+  max-width: 100%;
+}
+
+#lpSettingsForm .mc-btn {
+  margin-top: 10px;
+  max-width: 100%;
 }
 
 .lp-mgmt__form-check {
@@ -314,10 +361,13 @@
   top: 80px;
   padding: 0;
   overflow: hidden;
+  max-width: 100%;
+  min-width: 0;
   border-radius: var(--lp-radius);
   border: 1px solid var(--lp-border);
   box-shadow: var(--lp-shadow);
   background: var(--lp-surface);
+  box-sizing: border-box;
 }
 
 .lp-mgmt__preview-head {
@@ -344,8 +394,12 @@
   min-height: 140px;
   padding: 14px;
   background-size: cover;
-  background-position: left top;
+  background-position: center;
+  background-repeat: no-repeat;
   color: #fff;
+  max-width: 100%;
+  overflow: hidden;
+  box-sizing: border-box;
 }
 
 .lp-mgmt__preview-hero::before {
@@ -379,6 +433,8 @@
   font-size: 0.9375rem;
   font-weight: 800;
   line-height: 1.25;
+  overflow-wrap: anywhere;
+  word-break: break-word;
 }
 
 .lp-mgmt__preview-title .accent {
@@ -390,6 +446,8 @@
   font-size: 0.6875rem;
   line-height: 1.45;
   color: rgba(255, 255, 255, 0.82);
+  overflow-wrap: anywhere;
+  word-break: break-word;
 }
 
 .lp-mgmt__preview-ann {
@@ -426,6 +484,18 @@
   box-shadow: var(--lp-shadow);
   background: var(--lp-surface);
   overflow: hidden;
+  max-width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+}
+
+.lp-mgmt__table-scroll {
+  width: 100%;
+  max-width: 100%;
+  overflow-x: auto;
+  overflow-y: hidden;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior-x: contain;
 }
 
 .lp-mgmt__activity-head {
@@ -448,8 +518,10 @@
 
 .lp-mgmt__activity .mc-table {
   font-size: 0.8125rem;
-  width: 100%;
+  width: max-content;
+  min-width: 100%;
   border-collapse: collapse;
+  table-layout: auto;
 }
 
 .lp-mgmt__activity .mc-table thead th {
@@ -471,6 +543,7 @@
   border-bottom: 1px solid var(--lp-border);
   color: var(--lp-navy);
   line-height: 1.35;
+  white-space: nowrap;
 }
 
 .lp-mgmt__activity .mc-table tbody tr:last-child td {
@@ -516,12 +589,36 @@
   transform: translateY(0);
 }
 
-@media (max-width: 1280px) {
+/* ── Container queries: adapt to available column width ── */
+@container lp-main (max-width: 560px) {
+  .lp-mgmt__cards {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ── Laptop: 1024px–1439px (also covers slightly narrower desktops) ── */
+@media (max-width: 1439px) {
+  .lp-mgmt__layout {
+    grid-template-columns: minmax(0, 1.35fr) minmax(240px, 0.9fr);
+    gap: 12px;
+  }
+
   .lp-mgmt__stats {
     grid-template-columns: repeat(4, minmax(0, 1fr));
   }
 }
 
+@media (max-width: 1280px) {
+  .lp-mgmt__stats {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+
+  .lp-mgmt__layout {
+    grid-template-columns: minmax(0, 1.2fr) minmax(220px, 0.95fr);
+  }
+}
+
+/* Stack main + preview when content area gets tight */
 @media (max-width: 1100px) {
   .lp-mgmt__layout {
     grid-template-columns: 1fr;
@@ -536,54 +633,228 @@
   }
 }
 
-@media (max-width: 720px) {
-  .lp-mgmt__cards {
-    grid-template-columns: 1fr;
+/* ── Tablet: 768px–1023px ── */
+@media (max-width: 1023px) {
+  .lp-mgmt {
+    gap: 14px;
   }
 
   .lp-mgmt__stats {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 10px;
+  }
+
+  .lp-mgmt__cards {
+    gap: 12px;
+  }
+
+  .lp-mgmt__quick-actions {
+    gap: 8px;
   }
 
   .lp-mgmt__quick-actions .mc-btn {
     flex: 1 1 calc(50% - 8px);
+    min-width: min(100%, 160px);
   }
 }
 
-@media (max-width: 430px) {
+/* When tablet content is still two-up but cramped, prefer single-column cards */
+@media (max-width: 900px) {
+  .lp-mgmt__cards {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ── Mobile: 320px–767px ── */
+@media (max-width: 767px) {
+  .lp-mgmt {
+    gap: 12px;
+  }
+
   .lp-mgmt__hero-banner {
     padding: 12px 14px;
+    gap: 10px;
   }
 
   .lp-mgmt__hero-banner .text-h2 {
     font-size: 1.125rem;
   }
 
+  .lp-mgmt__hero-banner .text-muted {
+    font-size: 0.75rem;
+    max-width: none;
+  }
+
+  .lp-mgmt__hero-banner .mc-badge {
+    align-self: flex-start;
+  }
+
   .lp-mgmt__stats {
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 8px;
   }
 
   .lp-mgmt__stat {
-    min-height: 68px;
+    min-height: 70px;
     padding: 10px 8px;
+  }
+
+  .lp-mgmt__stat-value {
+    font-size: 1.35rem;
+  }
+
+  .lp-mgmt__stat-label {
+    font-size: 0.625rem;
+  }
+
+  .lp-mgmt__layout {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+
+  .lp-mgmt__cards {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+
+  .lp-mgmt__card {
+    padding: 12px 14px;
+  }
+
+  .lp-mgmt__quick-actions {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .lp-mgmt__quick-actions .mc-btn {
+    flex: 1 1 auto;
+    width: 100%;
+    min-width: 0;
+  }
+
+  .lp-mgmt__card-actions {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .lp-mgmt__card-actions .mc-btn {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .lp-mgmt__form-grid .mc-btn,
+  #lpSettingsForm .mc-btn {
+    width: 100%;
+    justify-self: stretch;
+    justify-content: center;
+  }
+
+  .lp-mgmt__form-grid input[type="text"],
+  .lp-mgmt__form-grid textarea,
+  .lp-mgmt__settings-msg textarea {
+    max-width: 100%;
+  }
+
+  .lp-mgmt__toggle-row {
+    gap: 10px;
+    font-size: 0.8125rem;
+  }
+
+  .lp-mgmt__toggle-row span {
+    min-width: 0;
+    flex: 1 1 auto;
+    overflow-wrap: anywhere;
+  }
+
+  .lp-mgmt__activity {
+    margin-top: 0;
+  }
+
+  .lp-mgmt__activity .mc-table {
+    font-size: 0.75rem;
+    width: max-content;
+    min-width: 100%;
+  }
+
+  .lp-mgmt__activity .mc-table thead th,
+  .lp-mgmt__activity .mc-table tbody td {
+    padding: 8px 10px;
+    white-space: nowrap;
+  }
+
+  .lp-mgmt__table-scroll {
+    /* Keep page from scrolling horizontally; only the table scrolls */
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .lp-mgmt__preview-hero {
+    min-height: 120px;
+    padding: 12px;
+  }
+
+  .lp-mgmt__preview-title {
+    font-size: 0.875rem;
+  }
+
+  .lp-mgmt__preview-badge {
+    font-size: 8px;
+    max-width: 100%;
+    overflow-wrap: anywhere;
+    white-space: normal;
+  }
+
+  .lp-mgmt__toast {
+    left: 12px;
+    right: 12px;
+    bottom: 12px;
+    max-width: none;
+    text-align: center;
+  }
+}
+
+/* Phones in the 360–430 range */
+@media (max-width: 430px) {
+  .lp-mgmt__hero-banner {
+    padding: 12px;
+  }
+
+  .lp-mgmt__stat {
+    min-height: 68px;
+    padding: 10px 6px;
   }
 
   .lp-mgmt__stat-value {
     font-size: 1.25rem;
   }
 
-  .lp-mgmt__quick-actions .mc-btn {
-    flex: 1 1 100%;
+  .lp-mgmt__card {
+    padding: 12px;
   }
 
-  .lp-mgmt__card {
-    padding: 12px 14px;
+  .lp-mgmt__ann-mini {
+    gap: 6px;
   }
 }
 
+/* Very narrow phones */
 @media (max-width: 360px) {
   .lp-mgmt__stats {
     grid-template-columns: 1fr;
+  }
+
+  .lp-mgmt__stat-label {
+    font-size: 0.6875rem;
+  }
+
+  .lp-mgmt__ann-mini {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Prefer overflow:hidden where clip is unsupported */
+@supports not (overflow-x: clip) {
+  .lp-mgmt {
+    overflow-x: hidden;
   }
 }
