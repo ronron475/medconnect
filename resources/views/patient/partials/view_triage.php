@@ -236,7 +236,7 @@ $show_start_new_consultation_btn = empty($force_new_concern) && (
         <?php endif; ?>
       </p>
       <?php if ($show_start_new_consultation_btn): ?>
-      <div class="patient-triage-new-consult" style="margin-top:12px;" id="startNewConsultationWrap"<?= ($preliminary_payload || $consultation_already_assigned || $chief_complaint_locked) ? '' : ' hidden' ?>>
+      <div class="patient-triage-new-consult" id="startNewConsultationWrap"<?= ($preliminary_payload || $consultation_already_assigned || $chief_complaint_locked) ? '' : ' hidden' ?>>
         <button
           type="button"
           class="mc-btn mc-btn--outline"

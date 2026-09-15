@@ -164,7 +164,7 @@ $placeholder = $interview_complaint_locked
       <?php endif; ?>
     </p>
     <?php if ($show_start_new_consultation_btn): ?>
-    <div class="pdash-care-form__new-consult" style="margin: 10px 0 4px;" id="startNewConsultationWrap"<?= $preliminary_payload ? '' : ' hidden' ?>>
+    <div class="pdash-care-form__new-consult" id="startNewConsultationWrap"<?= $preliminary_payload ? '' : ' hidden' ?>>
       <button
         type="button"
         class="pdash-btn pdash-btn--outline"
