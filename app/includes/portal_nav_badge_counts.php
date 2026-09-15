@@ -337,10 +337,10 @@ function portal_nav_admin_counts(PDO $pdo, string $role, int $userId = 0): array
     } catch (Throwable $e) {
     }
     try {
-        require_once __DIR__ . '/../core/NotificationManager.php';
-        // Sidebar badge = per-user unread referral notifications (not total / not clinical status).
+        require_once __DIR__ . '/admin_referral_inbox.php';
+        // Sidebar badge = per-user unread referral inbox items (distinct existing referrals).
         if ($userId > 0) {
-            $pendingReferrals = NotificationManager::countUnreadRelated($pdo, $userId, 'digital_referrals');
+            $pendingReferrals = referrals_admin_unread_count($pdo, $userId);
         }
     } catch (Throwable $e) {
     }

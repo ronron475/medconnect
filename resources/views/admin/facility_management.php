@@ -102,8 +102,9 @@ require_once __DIR__ . '/partials/layout_open.php';
       <button type="button" class="mc-btn mc-btn--outline" id="refDetailClose" aria-label="Close">&times;</button>
     </div>
     <dl id="refDetailBody" class="text-sm" style="display:grid;gap:10px;margin:0;"></dl>
-    <div style="margin-top:16px;text-align:right;">
-      <button type="button" class="mc-btn mc-btn--primary" id="refDetailDone">Close</button>
+    <div style="margin-top:16px;display:flex;justify-content:flex-end;gap:8px;flex-wrap:wrap;align-items:center;">
+      <button type="button" class="mc-btn mc-btn--primary" id="refDetailMarkRead" hidden>Mark as Read</button>
+      <button type="button" class="mc-btn mc-btn--outline" id="refDetailDone">Close</button>
     </div>
   </div>
 </div>
@@ -113,6 +114,8 @@ require_once __DIR__ . '/partials/layout_open.php';
   var api = <?= json_encode($refApi) ?>;
   var rowsById = {};
   var marking = {};
+  var activeReferralId = 0;
+
   function esc(s) { var d = document.createElement('div'); d.textContent = s == null ? '' : String(s); return d.innerHTML; }
   function stampUpdated() {
     document.getElementById('refUpdated').textContent = 'Updated ' + new Date().toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
@@ -138,12 +141,18 @@ require_once __DIR__ . '/partials/layout_open.php';
       badge.hidden = n <= 0;
       badge.setAttribute('aria-hidden', n <= 0 ? 'true' : 'false');
     });
-    // Keep live sidebar poller in sync so a stale in-flight poll cannot restore the old count.
     try {
       window.dispatchEvent(new CustomEvent('medconnect:referrals-unread', {
         detail: { unread_count: n }
       }));
     } catch (e) { /* ignore */ }
+  }
+  function setMarkReadVisible(show) {
+    var btn = document.getElementById('refDetailMarkRead');
+    if (!btn) return;
+    btn.hidden = !show;
+    btn.disabled = false;
+    btn.textContent = 'Mark as Read';
   }
   function markRead(referralId) {
     var id = parseInt(referralId, 10) || 0;
@@ -155,11 +164,14 @@ require_once __DIR__ . '/partials/layout_open.php';
     fd.append('referral_id', String(id));
     fd.append('csrf_token', document.body.dataset.csrf || '');
     marking[id] = fetch(api, { method: 'POST', credentials: 'same-origin', body: fd })
-      .then(function (r) { return r.json(); })
-      .then(function (j) {
+      .then(function (r) { return r.json().then(function (j) { return { ok: r.ok, body: j }; }); })
+      .then(function (res) {
+        var j = res && res.body ? res.body : null;
         if (j && j.success) {
           if (rowsById[id]) rowsById[id].is_unread = false;
-          if (typeof j.unread_count === 'number') refreshNavBadge(j.unread_count);
+          if (typeof j.unread_count === 'number') {
+            refreshNavBadge(j.unread_count);
+          }
           return j;
         }
         return null;
@@ -172,36 +184,34 @@ require_once __DIR__ . '/partials/layout_open.php';
     var body = document.getElementById('refDetailBody');
     var title = document.getElementById('refDetailTitle');
     var modal = document.getElementById('refDetailModal');
+    activeReferralId = parseInt(row.id, 10) || 0;
     title.textContent = (row.referral_type || 'Referral');
     var dt = row.created_at ? new Date(String(row.created_at).replace(' ', 'T')).toLocaleString() : '—';
+    var unreadLabel = row.is_unread
+      ? '<div><dt class="text-xs text-muted">Inbox</dt><dd style="margin:2px 0 0;"><span class="mc-badge">Unread</span></dd></div>'
+      : '<div><dt class="text-xs text-muted">Inbox</dt><dd style="margin:2px 0 0;" class="text-muted">Read</dd></div>';
     body.innerHTML =
       '<div><dt class="text-xs text-muted">Patient</dt><dd style="margin:2px 0 0;"><strong>' + esc(row.patient_name || 'Unknown patient') + '</strong></dd></div>' +
       '<div><dt class="text-xs text-muted">Provider</dt><dd style="margin:2px 0 0;">' + esc(row.provider_name || '—') + '</dd></div>' +
       '<div><dt class="text-xs text-muted">Facility / service</dt><dd style="margin:2px 0 0;">' + esc(row.facility_name || '—') + '</dd></div>' +
       '<div><dt class="text-xs text-muted">Reason for referral</dt><dd style="margin:2px 0 0;">' + esc(row.reason || '—') + '</dd></div>' +
-      '<div><dt class="text-xs text-muted">Date created</dt><dd style="margin:2px 0 0;">' + esc(dt) + '</dd></div>';
+      '<div><dt class="text-xs text-muted">Date created</dt><dd style="margin:2px 0 0;">' + esc(dt) + '</dd></div>' +
+      unreadLabel;
+    setMarkReadVisible(!!row.is_unread);
     modal.setAttribute('aria-hidden', 'false');
     modal.style.display = 'flex';
-
-    // Viewing details is the read action (Admin + SuperAdmin). Idempotent for already-read rows.
-    var wasUnread = !!row.is_unread;
-    markRead(row.id).then(function (j) {
-      if (!j || !j.success) return;
-      if (wasUnread) {
-        load(false);
-      } else if (typeof j.unread_count === 'number') {
-        refreshNavBadge(j.unread_count);
-      }
-    });
+    // View Details does NOT mark as read — badge stays unchanged until Mark as Read.
   }
   function closeDetail() {
     var modal = document.getElementById('refDetailModal');
     modal.setAttribute('aria-hidden', 'true');
     modal.style.display = 'none';
+    activeReferralId = 0;
+    setMarkReadVisible(false);
   }
   function load(updateStamp) {
     if (updateStamp !== false) { /* keep */ }
-    fetch(api + '?status=all', { credentials: 'same-origin' })
+    fetch(api + '?status=all', { credentials: 'same-origin', cache: 'no-store' })
       .then(function (r) { return r.json(); })
       .then(function (j) {
         var tb = document.getElementById('refTableBody');
@@ -247,6 +257,40 @@ require_once __DIR__ . '/partials/layout_open.php';
     if (!btn) return;
     var id = parseInt(btn.getAttribute('data-ref-id'), 10) || 0;
     if (id && rowsById[id]) openDetail(rowsById[id]);
+  });
+  document.getElementById('refDetailMarkRead').addEventListener('click', function () {
+    var id = activeReferralId;
+    var btn = document.getElementById('refDetailMarkRead');
+    if (!id || !btn || btn.disabled) return;
+    var row = rowsById[id];
+    if (row && !row.is_unread) {
+      setMarkReadVisible(false);
+      return;
+    }
+    btn.disabled = true;
+    btn.textContent = 'Saving…';
+    markRead(id).then(function (j) {
+      if (!j || !j.success) {
+        btn.disabled = false;
+        btn.textContent = 'Mark as Read';
+        if (window.McModal && typeof window.McModal.alert === 'function') {
+          window.McModal.alert({
+            title: 'Could not update',
+            message: 'Could not mark this referral as read. Please try again.',
+            variant: 'error',
+            icon: 'error',
+          });
+        }
+        return;
+      }
+      if (rowsById[id]) {
+        rowsById[id].is_unread = false;
+        openDetail(rowsById[id]);
+      } else {
+        setMarkReadVisible(false);
+      }
+      load(false);
+    });
   });
   document.getElementById('refDetailClose').addEventListener('click', closeDetail);
   document.getElementById('refDetailDone').addEventListener('click', closeDetail);
