@@ -184,7 +184,7 @@ $slot_waiting_count = count(array_filter($display_cases, fn($t) => !empty($t['sl
           </td>
           <td data-label="Action">
             <div class="triage-actions">
-              <button type="button" class="mc-btn mc-btn--outline triage-view-btn" style="padding: 6px 12px; font-size: 11px;" data-triage-id="<?= (int) $t['id'] ?>">View Details</button>
+              <button type="button" class="mc-btn mc-btn--outline mc-btn--info triage-view-btn mc-btn--sm" data-triage-id="<?= (int) $t['id'] ?>">View Details</button>
             </div>
           </td>
         </tr>
@@ -320,7 +320,7 @@ $slot_waiting_count = count(array_filter($display_cases, fn($t) => !empty($t['sl
     <div class="triage-modal__footer triage-modal__footer--review">
       <div class="triage-modal__footer-actions">
         <button type="button" id="modalRejectRecBtn" class="mc-btn mc-btn--danger-outline" style="display:none;" onclick="rejectRecommendationsFromModal()">Withhold Guidance</button>
-        <button type="button" id="modalApproveRecBtn" class="mc-btn mc-btn--primary" style="display:none;" onclick="approveRecommendationsFromModal()">Approve for Patient</button>
+        <button type="button" id="modalApproveRecBtn" class="mc-btn mc-btn--success" style="display:none;" onclick="approveRecommendationsFromModal()">Approve for Patient</button>
         <span id="modalReviewStatusNote" class="triage-modal__review-note" hidden></span>
       </div>
     </div>
@@ -398,8 +398,8 @@ $slot_waiting_count = count(array_filter($display_cases, fn($t) => !empty($t['sl
     </ul>
     <p class="triage-review-confirm__when">Approved recommendations will be shown to the patient in Care Tips.</p>
     <div class="triage-review-confirm__actions">
-      <button type="button" class="mc-btn mc-btn--ghost" data-triage-approve-cancel>Cancel</button>
-      <button type="button" class="mc-btn mc-btn--primary" data-triage-approve-confirm data-mc-autofocus>Approve for Patient</button>
+      <button type="button" class="mc-btn mc-btn--ghost mc-btn--neutral" data-triage-approve-cancel>Cancel</button>
+      <button type="button" class="mc-btn mc-btn--success" data-triage-approve-confirm data-mc-autofocus>Approve for Patient</button>
     </div>
   </div>
 </div>

@@ -20,7 +20,7 @@
             <p id="accountStatusModalError" class="admin-form-error" style="display:none;"></p>
         </div>
         <div class="admin-action-footer">
-            <button type="button" class="mc-btn mc-btn--outline" id="accountStatusModalCancel">Cancel</button>
+            <button type="button" class="mc-btn mc-btn--outline mc-btn--neutral" id="accountStatusModalCancel">Cancel</button>
             <button type="button" class="mc-btn mc-btn--primary" id="accountStatusModalConfirm">Confirm</button>
         </div>
     </div>

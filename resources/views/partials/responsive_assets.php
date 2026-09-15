@@ -11,6 +11,11 @@ $responsiveCssVer = ($responsiveCssPath && file_exists($responsiveCssPath)) ? (i
 if (!$scriptsOnly): ?>
 <link rel="stylesheet" href="<?= htmlspecialchars($assetBase, ENT_QUOTES) ?>/assets/css/responsive.css?v=<?= $responsiveCssVer ?>"/>
 <?php
+$actionSemCss = defined('ASSETS_PATH') ? ASSETS_PATH . '/css/mc-action-semantics.css' : '';
+$actionSemVer = ($actionSemCss && file_exists($actionSemCss)) ? (int) filemtime($actionSemCss) : time();
+?>
+<link rel="stylesheet" href="<?= htmlspecialchars($assetBase, ENT_QUOTES) ?>/assets/css/mc-action-semantics.css?v=<?= $actionSemVer ?>"/>
+<?php
 $typoCss = defined('ASSETS_PATH') ? ASSETS_PATH . '/css/medconnect-typography.css' : '';
 $typoVer = ($typoCss && file_exists($typoCss)) ? (int) filemtime($typoCss) : time();
 ?>

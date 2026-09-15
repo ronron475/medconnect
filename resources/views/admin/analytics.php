@@ -55,19 +55,19 @@ require_once __DIR__ . '/partials/layout_open.php';
         <div style="padding: 20px; border-radius: 12px; border: 1px solid var(--mc-border-thin); background: var(--mc-ice-blue);">
             <div style="font-weight: 800; color: var(--mc-navy-dark); margin-bottom: 8px;">Appointment Summary</div>
             <p class="text-xs text-muted mb-md">Complete list of all consultations, provider assignments, and completion status.</p>
-            <button onclick="exportReport('appointments')" class="mc-btn mc-btn--outline" style="width: 100%; background: #fff;">Download CSV</button>
+            <button onclick="exportReport('appointments')" class="mc-btn mc-btn--outline mc-btn--info" style="width: 100%;">Download CSV</button>
         </div>
 
         <div style="padding: 20px; border-radius: 12px; border: 1px solid var(--mc-border-thin); background: var(--mc-ice-blue);">
             <div style="font-weight: 800; color: var(--mc-navy-dark); margin-bottom: 8px;">User Demographics</div>
             <p class="text-xs text-muted mb-md">Breakdown of registered patients by age, gender, and barangay sector.</p>
-            <button onclick="exportReport('users')" class="mc-btn mc-btn--outline" style="width: 100%; background: #fff;">Download CSV</button>
+            <button onclick="exportReport('users')" class="mc-btn mc-btn--outline mc-btn--info" style="width: 100%;">Download CSV</button>
         </div>
 
         <div style="padding: 20px; border-radius: 12px; border: 1px solid var(--mc-border-thin); background: var(--mc-ice-blue);">
             <div style="font-weight: 800; color: var(--mc-navy-dark); margin-bottom: 8px;">System Audit Snapshot</div>
             <p class="text-xs text-muted mb-md">Condensed log of all security-related actions for the current billing cycle.</p>
-            <button onclick="exportReport('audit')" class="mc-btn mc-btn--outline" style="width: 100%; background: #fff;">Download CSV</button>
+            <button onclick="exportReport('audit')" class="mc-btn mc-btn--outline mc-btn--info" style="width: 100%;">Download CSV</button>
         </div>
 
     </div>

@@ -172,7 +172,7 @@ require_once __DIR__ . '/partials/layout_open.php';
         <td><?= htmlspecialchars($f['contact_number'] ?? '—') ?></td>
         <td class="text-xs"><?= htmlspecialchars(($f['latitude'] ?? '—') . ', ' . ($f['longitude'] ?? '—')) ?></td>
         <td><span class="mc-badge"><?= htmlspecialchars($f['status']) ?></span></td>
-        <td><button class="mc-btn mc-btn--outline mc-btn--sm" data-edit='<?= htmlspecialchars(json_encode($f), ENT_QUOTES) ?>'>Edit</button></td>
+        <td><button class="mc-btn mc-btn--outline mc-btn--info mc-btn--sm" data-edit='<?= htmlspecialchars(json_encode($f), ENT_QUOTES) ?>'>Edit</button></td>
       </tr>
       <?php endforeach; endif; ?>
     </tbody>

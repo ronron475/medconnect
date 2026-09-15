@@ -50,7 +50,7 @@ require_once __DIR__ . '/partials/layout_open.php';
 ?>
 
 <link rel="stylesheet" href="<?= ASSET_BASE ?>/assets/css/admin-staff-applications.css?v=1.1">
-<link rel="stylesheet" href="<?= ASSET_BASE ?>/assets/css/admin-audit-logs.css?v=1.2">
+<link rel="stylesheet" href="<?= ASSET_BASE ?>/assets/css/admin-audit-logs.css?v=<?= (int) @filemtime(ASSETS_PATH . '/css/admin-audit-logs.css') ?>">
 
 <article class="audit-logs-page staff-apps-page">
 
@@ -105,7 +105,7 @@ require_once __DIR__ . '/partials/layout_open.php';
                 >
             </div>
 
-            <select name="action" class="audit-logs-filter" aria-label="Filter by action">
+            <select name="action" class="audit-logs-filter" aria-label="Filter by action" data-mc-select-prefer-below="1">
                 <option value="all">All actions</option>
                 <?php foreach ($actionTypes as $type): ?>
                 <option value="<?= htmlspecialchars($type) ?>"<?= $actionFilter === $type ? ' selected' : '' ?>>
@@ -281,6 +281,6 @@ require_once __DIR__ . '/partials/layout_open.php';
     </div>
 </div>
 
-<script src="<?= ASSET_BASE ?>/assets/js/admin-audit-logs.js?v=1.1"></script>
+<script src="<?= ASSET_BASE ?>/assets/js/admin-audit-logs.js?v=<?= (int) @filemtime(ASSETS_PATH . '/js/admin-audit-logs.js') ?>"></script>
 
 <?php require_once __DIR__ . '/partials/layout_close.php'; ?>

@@ -254,15 +254,15 @@ require_once __DIR__ . '/partials/layout_open.php';
                 <td data-label="Actions">
                     <div class="mc-status-actions">
                         <?php if ($is_superadmin): ?>
-                        <button type="button" class="mc-btn mc-btn--primary js-archived-restore" style="padding:6px 10px;font-size:11px;" data-user-id="<?= (int) $u['id'] ?>" data-user-name="<?= $full_name ?>">Restore</button>
+                        <button type="button" class="mc-btn mc-btn--success mc-btn--sm js-archived-restore" data-user-id="<?= (int) $u['id'] ?>" data-user-name="<?= $full_name ?>">Restore</button>
                         <?php else: ?>
                         <span class="um-restore-locked" title="Only the Super Administrator can restore archived accounts.">
                             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
                             Restore (Super Admin Only)
                         </span>
                         <?php endif; ?>
-                        <button type="button" class="mc-btn mc-btn--outline js-archived-details" style="padding:6px 10px;font-size:11px;" data-user-id="<?= (int) $u['id'] ?>" data-user-name="<?= $full_name ?>">View Details</button>
-                        <button type="button" class="mc-btn mc-btn--outline js-archived-audit" style="padding:6px 10px;font-size:11px;" data-user-id="<?= (int) $u['id'] ?>" data-user-name="<?= $full_name ?>">View Audit Log</button>
+                        <button type="button" class="mc-btn mc-btn--outline mc-btn--info mc-btn--sm js-archived-details" data-user-id="<?= (int) $u['id'] ?>" data-user-name="<?= $full_name ?>">View Details</button>
+                        <button type="button" class="mc-btn mc-btn--outline mc-btn--info mc-btn--sm js-archived-audit" data-user-id="<?= (int) $u['id'] ?>" data-user-name="<?= $full_name ?>">View Audit Log</button>
                     </div>
                 </td>
                 <?php else: ?>
@@ -280,10 +280,14 @@ require_once __DIR__ . '/partials/layout_open.php';
                     <?php if (!empty($allowed_actions)): ?>
                     <div class="mc-status-actions">
                         <?php foreach ($allowed_actions as $act):
-                            $btnClass = in_array($act, ['deactivate', 'suspend', 'reject', 'archive'], true) ? 'mc-btn mc-btn--outline' : 'mc-btn mc-btn--primary';
-                            $btnStyle = in_array($act, ['deactivate', 'suspend', 'reject', 'archive'], true) ? 'color:#b91c1c;border-color:#fecaca;' : '';
+                            $btnClass = match ($act) {
+                                'approve', 'activate', 'reactivate', 'restore', 'lift_restriction' => 'mc-btn mc-btn--outline mc-btn--success',
+                                'deactivate', 'reject' => 'mc-btn mc-btn--outline mc-btn--danger',
+                                'suspend', 'restrict', 'archive' => 'mc-btn mc-btn--outline mc-btn--warning',
+                                default => 'mc-btn mc-btn--outline',
+                            };
                         ?>
-                        <button type="button" class="<?= $btnClass ?> js-account-status-action" style="padding:6px 10px;font-size:11px;cursor:pointer;<?= $btnStyle ?>"
+                        <button type="button" class="<?= $btnClass ?> mc-btn--sm js-account-status-action"
                                 data-user-id="<?= (int) $u['id'] ?>" data-user-name="<?= $full_name ?>" data-action="<?= htmlspecialchars($act) ?>">
                             <?= htmlspecialchars(user_account_status_action_label($act)) ?>
                         </button>

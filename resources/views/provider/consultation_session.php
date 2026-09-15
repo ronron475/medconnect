@@ -850,6 +850,33 @@ body.consultation-mobile-call-fullscreen .mc-provider-video-dock iframe {
 .session-btn.primary:hover {
     background: #02777f;
 }
+.session-btn.success {
+    border-color: #059669;
+    background: #059669;
+    color: #fff;
+}
+.session-btn.success:hover {
+    background: #047857;
+}
+.session-btn.danger {
+    border-color: #fca5a5;
+    background: #fef2f2;
+    color: #b91c1c;
+}
+.session-btn.danger:hover {
+    background: #fee2e2;
+    border-color: #f87171;
+}
+.session-btn.info {
+    border-color: #93c5fd;
+    background: #eff6ff;
+    color: #1d4ed8;
+}
+.session-btn.neutral {
+    border-color: #cbd5e1;
+    background: #fff;
+    color: #64748b;
+}
 .soap-grid {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -3211,9 +3238,9 @@ body.consultation-mobile-call-fullscreen .mc-provider-video-dock iframe {
                         <label>Conditions<textarea name="existing_conditions" class="pd-input" rows="2"><?= htmlspecialchars($hs_conditions) ?></textarea></label>
                         <label>Medications<textarea name="current_medications" class="pd-input" rows="2"><?= htmlspecialchars($hs_medications) ?></textarea></label>
                         <div class="hs-profile-form__actions">
-                            <button type="submit" class="session-btn primary">Approve &amp; Update</button>
-                            <button type="button" class="session-btn" id="sessionMedicalRejectBtn">Reject</button>
-                            <a href="<?= ASSET_BASE ?>/views/provider/medical_records.php?patient_id=<?= (int) $c['patient_id'] ?>" class="session-btn">Medical Records</a>
+                            <button type="submit" class="session-btn success">Approve &amp; Update</button>
+                            <button type="button" class="session-btn danger" id="sessionMedicalRejectBtn">Reject</button>
+                            <a href="<?= ASSET_BASE ?>/views/provider/medical_records.php?patient_id=<?= (int) $c['patient_id'] ?>" class="session-btn info">Medical Records</a>
                         </div>
                     </form>
                     <div id="sessionMedicalProfileAlert" class="hs-profile-alert" hidden role="alert"></div>

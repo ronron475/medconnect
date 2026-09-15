@@ -78,7 +78,7 @@ $lpConfig = $config = LandingPageConfig::all($pdo);
     <a href="<?= htmlspecialchars($portalBase) ?>/announcements.php" class="mc-btn mc-btn--outline">Create Announcement</a>
     <a href="<?= htmlspecialchars($portalBase) ?>/announcements.php" class="mc-btn mc-btn--outline">Manage Announcements</a>
     <a href="<?= htmlspecialchars($publicLanding) ?>?preview=1" target="_blank" rel="noopener" class="mc-btn mc-btn--outline">Preview Landing Page</a>
-    <button type="button" class="mc-btn mc-btn--outline" id="lpRefreshCache">Refresh Cache</button>
+    <button type="button" class="mc-btn mc-btn--outline mc-btn--info" id="lpRefreshCache">Refresh Cache</button>
   </div>
 
   <div class="lp-mgmt__layout">

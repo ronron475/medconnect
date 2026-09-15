@@ -244,6 +244,10 @@ body.mc-staff-modal-open {
   box-sizing: border-box;
 }
 
+.mc-select__menu--compact {
+  max-height: min(320px, 45vh);
+}
+
 .mc-select__menu[hidden] {
   display: none;
 }

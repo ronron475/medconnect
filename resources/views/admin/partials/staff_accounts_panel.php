@@ -252,13 +252,13 @@ $base_tab_url = $hub_views_base . '/' . $hub_base . $tab_query;
                         <?php if ($show_prc_actions): ?>
                         <div class="staff-mgmt-actions">
                             <?php if (($s['verification_status'] ?? '') !== 'verified'): ?>
-                            <button type="button" class="mc-btn mc-btn--primary mc-btn--sm js-verify-doctor"
+                            <button type="button" class="mc-btn mc-btn--success mc-btn--sm js-verify-doctor"
                                     data-user-id="<?= (int) $s['id'] ?>"
                                     data-name="<?= $staff_name ?>"
                                     data-prc="<?= htmlspecialchars($s['prc_license_number'], ENT_QUOTES) ?>">Verify</button>
                             <?php endif; ?>
                             <?php if (($s['verification_status'] ?? '') !== 'rejected'): ?>
-                            <button type="button" class="mc-btn mc-btn--outline mc-btn--sm js-reject-doctor"
+                            <button type="button" class="mc-btn mc-btn--outline mc-btn--danger mc-btn--sm js-reject-doctor"
                                     data-user-id="<?= (int) $s['id'] ?>"
                                     data-name="<?= $staff_name ?>">Reject</button>
                             <?php endif; ?>

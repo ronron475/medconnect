@@ -40,10 +40,10 @@ require_once __DIR__ . '/partials/layout_open.php';
         <td data-label="Actions">
           <?php if ($a['role'] !== 'superadmin'): ?>
           <div style="display:flex;gap:6px;flex-wrap:wrap;">
-            <button type="button" class="mc-btn mc-btn--outline btn-edit" style="padding:4px 10px;font-size:11px;" data-id="<?= (int) $a['id'] ?>" data-first="<?= htmlspecialchars($a['first_name']) ?>" data-last="<?= htmlspecialchars($a['last_name']) ?>" data-email="<?= htmlspecialchars($a['email']) ?>">Edit</button>
-            <button type="button" class="mc-btn mc-btn--outline btn-toggle" style="padding:4px 10px;font-size:11px;" data-id="<?= (int) $a['id'] ?>" data-status="<?= $a['is_active'] ? 0 : 1 ?>" data-name="<?= htmlspecialchars($a['first_name'] . ' ' . $a['last_name'], ENT_QUOTES) ?>"><?= $a['is_active'] ? 'Suspend' : 'Reactivate' ?></button>
-            <button type="button" class="mc-btn mc-btn--outline btn-reset" style="padding:4px 10px;font-size:11px;" data-id="<?= (int) $a['id'] ?>">Reset PW</button>
-            <button type="button" class="mc-btn mc-btn--outline btn-archive" style="padding:4px 10px;font-size:11px;color:#b91c1c;" data-id="<?= (int) $a['id'] ?>" data-name="<?= htmlspecialchars($a['first_name'] . ' ' . $a['last_name'], ENT_QUOTES) ?>">Archive</button>
+            <button type="button" class="mc-btn mc-btn--outline mc-btn--info mc-btn--sm btn-edit" data-id="<?= (int) $a['id'] ?>" data-first="<?= htmlspecialchars($a['first_name']) ?>" data-last="<?= htmlspecialchars($a['last_name']) ?>" data-email="<?= htmlspecialchars($a['email']) ?>">Edit</button>
+            <button type="button" class="mc-btn mc-btn--outline mc-btn--sm btn-toggle <?= $a['is_active'] ? 'mc-btn--warning' : 'mc-btn--success' ?>" data-id="<?= (int) $a['id'] ?>" data-status="<?= $a['is_active'] ? 0 : 1 ?>" data-name="<?= htmlspecialchars($a['first_name'] . ' ' . $a['last_name'], ENT_QUOTES) ?>"><?= $a['is_active'] ? 'Suspend' : 'Reactivate' ?></button>
+            <button type="button" class="mc-btn mc-btn--outline mc-btn--neutral mc-btn--sm btn-reset" data-id="<?= (int) $a['id'] ?>">Reset PW</button>
+            <button type="button" class="mc-btn mc-btn--outline mc-btn--warning mc-btn--sm btn-archive" data-id="<?= (int) $a['id'] ?>" data-name="<?= htmlspecialchars($a['first_name'] . ' ' . $a['last_name'], ENT_QUOTES) ?>">Archive</button>
           </div>
           <?php else: ?>
           <span class="text-xs text-muted">Protected</span>
@@ -65,7 +65,7 @@ require_once __DIR__ . '/partials/layout_open.php';
       <input type="email" name="email" id="adminEmail" placeholder="Email" class="mc-btn mc-btn--outline" style="background:#fff;text-align:left;" required>
       <input type="password" name="password" id="adminPassword" placeholder="Password (create / reset)" class="mc-btn mc-btn--outline" style="background:#fff;text-align:left;">
       <div style="display:flex;gap:8px;justify-content:flex-end;">
-        <button type="button" class="mc-btn mc-btn--outline" id="adminModalClose">Cancel</button>
+        <button type="button" class="mc-btn mc-btn--outline mc-btn--neutral" id="adminModalClose">Cancel</button>
         <button type="submit" class="mc-btn mc-btn--primary">Save</button>
       </div>
     </form>

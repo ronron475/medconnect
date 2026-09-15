@@ -26,9 +26,9 @@
         </div>
         <p id="bhwReviewError" class="admin-form-error"></p>
         <div class="admin-modal-actions">
-            <button type="button" class="mc-btn mc-btn--outline" id="bhwRequestDocsBtn">Request Additional Documents</button>
-            <button type="button" class="mc-btn mc-btn--outline bhw-btn-reject" id="bhwRejectBtn">Reject</button>
-            <button type="button" class="mc-btn mc-btn--primary" id="bhwApproveBtn" disabled>Approve &amp; Activate</button>
+            <button type="button" class="mc-btn mc-btn--outline mc-btn--warning" id="bhwRequestDocsBtn">Request Additional Documents</button>
+            <button type="button" class="mc-btn mc-btn--outline mc-btn--danger bhw-btn-reject" id="bhwRejectBtn">Reject</button>
+            <button type="button" class="mc-btn mc-btn--success" id="bhwApproveBtn" disabled>Approve &amp; Activate</button>
         </div>
         </div>
     </div>

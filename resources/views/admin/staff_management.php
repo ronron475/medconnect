@@ -221,8 +221,7 @@ require_once __DIR__ . '/partials/layout_open.php';
                         <div style="display: flex; gap: 8px; flex-wrap: wrap;">
                             <?php if ($s['verification_status'] !== 'verified'): ?>
                             <button type="button"
-                                    class="mc-btn mc-btn--primary js-verify-doctor"
-                                    style="padding: 6px 10px; font-size: 11px; cursor: pointer;"
+                                    class="mc-btn mc-btn--success mc-btn--sm js-verify-doctor"
                                     data-user-id="<?= (int) $s['id'] ?>"
                                     data-name="<?= $staff_name ?>"
                                     data-prc="<?= htmlspecialchars($s['prc_license_number'], ENT_QUOTES) ?>">
@@ -231,8 +230,7 @@ require_once __DIR__ . '/partials/layout_open.php';
                             <?php endif; ?>
                             <?php if ($s['verification_status'] !== 'rejected'): ?>
                             <button type="button"
-                                    class="mc-btn mc-btn--outline js-reject-doctor"
-                                    style="padding: 6px 10px; font-size: 11px; color: #b91c1c; border-color: #fecaca; cursor: pointer;"
+                                    class="mc-btn mc-btn--outline mc-btn--danger mc-btn--sm js-reject-doctor"
                                     data-user-id="<?= (int) $s['id'] ?>"
                                     data-name="<?= $staff_name ?>">
                                 Reject
@@ -240,8 +238,7 @@ require_once __DIR__ . '/partials/layout_open.php';
                             <?php endif; ?>
                             <?php foreach ($staff_actions as $act): ?>
                             <button type="button"
-                                    class="mc-btn mc-btn--outline js-account-status-action"
-                                    style="padding: 6px 10px; font-size: 11px; color: #b91c1c; border-color: #fecaca; cursor: pointer;"
+                                    class="mc-btn mc-btn--outline mc-btn--sm js-account-status-action"
                                     data-user-id="<?= (int) $s['id'] ?>"
                                     data-user-name="<?= $staff_name ?>"
                                     data-action="<?= htmlspecialchars($act) ?>">
@@ -253,8 +250,7 @@ require_once __DIR__ . '/partials/layout_open.php';
                         <div style="display: flex; gap: 8px; flex-wrap: wrap;">
                             <?php foreach ($staff_actions as $act): ?>
                             <button type="button"
-                                    class="mc-btn mc-btn--outline js-account-status-action"
-                                    style="padding: 6px 10px; font-size: 11px; color: #b91c1c; border-color: #fecaca; cursor: pointer;"
+                                    class="mc-btn mc-btn--outline mc-btn--sm js-account-status-action"
                                     data-user-id="<?= (int) $s['id'] ?>"
                                     data-user-name="<?= $staff_name ?>"
                                     data-action="<?= htmlspecialchars($act) ?>">

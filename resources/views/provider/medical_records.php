@@ -328,8 +328,8 @@ $tabs_list = ['overview' => 'Overview', 'consultations' => 'Consultations', 'cli
             <label>Conditions<textarea name="existing_conditions" class="form-control" rows="2"><?= htmlspecialchars($formConditions) ?></textarea></label>
             <label>Medications<textarea name="current_medications" class="form-control" rows="2"><?= htmlspecialchars($formMeds) ?></textarea></label>
             <div class="mr-profile-form__actions">
-              <button type="submit" class="mc-btn mc-btn--primary">Approve &amp; Update Health Summary</button>
-              <button type="button" class="mc-btn mc-btn--outline" id="mrMedicalRejectBtn">Reject Request</button>
+              <button type="submit" class="mc-btn mc-btn--success">Approve &amp; Update Health Summary</button>
+              <button type="button" class="mc-btn mc-btn--outline mc-btn--danger" id="mrMedicalRejectBtn">Reject Request</button>
             </div>
           </form>
           <div id="mrMedicalProfileAlert" class="mr-profile-alert" hidden role="alert"></div>

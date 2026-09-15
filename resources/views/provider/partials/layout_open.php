@@ -17,7 +17,7 @@ if (!headers_sent()) {
   
   <!-- Unified Aqua Clinical Design System -->
   <?php require_once VIEWS_PATH . '/partials/theme_init.php'; ?>
-  <link rel="stylesheet" href="<?= ASSET_BASE ?>/assets/css/design-system.css"/>
+  <link rel="stylesheet" href="<?= ASSET_BASE ?>/assets/css/design-system.css?v=<?= (int) @filemtime(ASSETS_PATH . '/css/design-system.css') ?>"/>
   <link rel="stylesheet" href="<?= ASSET_BASE ?>/assets/css/sidebar_aqua.css"/>
   <link rel="stylesheet" href="<?= ASSET_BASE ?>/assets/css/topbar.css"/>
   <link rel="stylesheet" href="<?= ASSET_BASE ?>/assets/css/dashboard.css"/>

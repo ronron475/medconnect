@@ -99,9 +99,9 @@
           '<div class="ml-mgmt__meta">' + esc(fmtSize(m.file_size)) + ' · ' + esc(fmtDate(m.created_at)) + '</div>' +
           (m.uploader_name ? '<div class="ml-mgmt__meta">By ' + esc(m.uploader_name) + '</div>' : '') +
           '<div class="ml-mgmt__actions">' +
-            '<button type="button" class="mc-btn mc-btn--outline ml-copy" data-url="' + esc(m.url) + '">Copy URL</button>' +
-            '<button type="button" class="mc-btn mc-btn--outline ml-alt" data-id="' + esc(String(m.id)) + '" data-alt="' + esc(m.alt_text || '') + '">Alt text</button>' +
-            '<button type="button" class="mc-btn mc-btn--outline ml-delete" data-id="' + esc(String(m.id)) + '" data-name="' + esc(m.file_name) + '">Delete</button>' +
+            '<button type="button" class="mc-btn mc-btn--outline mc-btn--neutral ml-copy" data-url="' + esc(m.url) + '">Copy URL</button>' +
+            '<button type="button" class="mc-btn mc-btn--outline mc-btn--info ml-alt" data-id="' + esc(String(m.id)) + '" data-alt="' + esc(m.alt_text || '') + '">Alt text</button>' +
+            '<button type="button" class="mc-btn mc-btn--outline mc-btn--danger ml-delete" data-id="' + esc(String(m.id)) + '" data-name="' + esc(m.file_name) + '">Delete</button>' +
           '</div>' +
         '</div>' +
       '</article>'

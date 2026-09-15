@@ -56,7 +56,7 @@ require_once __DIR__ . '/partials/layout_open.php';
   <div class="mc-card" style="padding:0;overflow:hidden;">
     <div style="padding:20px 20px 12px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;">
       <h3 class="text-h3" style="margin:0;">AI Triage Priority Rules</h3>
-      <button type="button" class="mc-btn mc-btn--outline" id="addRuleBtn">Add Rule</button>
+      <button type="button" class="mc-btn mc-btn--outline mc-btn--primary" id="addRuleBtn">Add Rule</button>
     </div>
     <div style="overflow-x:auto;">
       <table class="mc-table" id="rulesTable">
@@ -71,8 +71,8 @@ require_once __DIR__ . '/partials/layout_open.php';
             <td><input type="number" step="0.01" min="0" class="rule-weight mc-btn mc-btn--outline" value="<?= htmlspecialchars((string) $r['weight']) ?>" style="width:80px;background:#fff;"></td>
             <td><input type="checkbox" class="rule-emergency" <?= $r['is_emergency'] ? 'checked' : '' ?>></td>
             <td style="white-space:nowrap;">
-              <button type="button" class="mc-btn mc-btn--outline js-save-rule" style="padding:4px 8px;font-size:10px;">Save</button>
-              <button type="button" class="mc-btn mc-btn--outline js-delete-rule" style="padding:4px 8px;font-size:10px;">Delete</button>
+              <button type="button" class="mc-btn mc-btn--outline mc-btn--primary js-save-rule mc-btn--sm">Save</button>
+              <button type="button" class="mc-btn mc-btn--outline mc-btn--danger js-delete-rule mc-btn--sm">Delete</button>
             </td>
           </tr>
           <?php endforeach; endif; ?>
@@ -208,8 +208,8 @@ require_once __DIR__ . '/partials/layout_open.php';
     <td><input type="number" step="0.01" min="0" class="rule-weight mc-btn mc-btn--outline" value="1" style="width:80px;background:#fff;"></td>
     <td><input type="checkbox" class="rule-emergency"></td>
     <td style="white-space:nowrap;">
-      <button type="button" class="mc-btn mc-btn--outline js-save-rule" style="padding:4px 8px;font-size:10px;">Save</button>
-      <button type="button" class="mc-btn mc-btn--outline js-delete-rule" style="padding:4px 8px;font-size:10px;">Delete</button>
+      <button type="button" class="mc-btn mc-btn--outline mc-btn--primary js-save-rule mc-btn--sm">Save</button>
+      <button type="button" class="mc-btn mc-btn--outline mc-btn--danger js-delete-rule mc-btn--sm">Delete</button>
     </td>
   </tr>
 </template>

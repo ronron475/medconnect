@@ -48,8 +48,7 @@ require_once __DIR__ . '/partials/layout_open.php';
         <td><?= htmlspecialchars($row['device'] ?? '—') ?></td>
         <td class="text-xs text-muted"><?= htmlspecialchars($row['last_activity'] ?? '—') ?></td>
         <td>
-          <button type="button" class="mc-btn mc-btn--outline js-terminate" data-id="<?= (int) $row['id'] ?>"
-                  style="padding:4px 10px;font-size:11px;">Terminate</button>
+          <button type="button" class="mc-btn mc-btn--outline mc-btn--danger mc-btn--sm js-terminate" data-id="<?= (int) $row['id'] ?>">Terminate</button>
         </td>
       </tr>
       <?php endforeach; endif; ?>
@@ -86,7 +85,7 @@ require_once __DIR__ . '/partials/layout_open.php';
           tb.innerHTML = '<tr><td colspan="7"><div class="mc-table-empty"><p>No active sessions in the last 30 minutes.</p></div></td></tr>';
         } else {
           tb.innerHTML = rows.map(function (row) {
-            return '<tr><td class="text-sm">' + esc(row.email) + '</td><td>' + esc(row.role) + '</td><td>' + esc(row.ip_address) + '</td><td>' + esc(row.browser) + '</td><td>' + esc(row.device) + '</td><td class="text-xs text-muted">' + esc(row.last_activity) + '</td><td><button type="button" class="mc-btn mc-btn--outline js-terminate" data-id="' + row.id + '" style="padding:4px 10px;font-size:11px;">Terminate</button></td></tr>';
+            return '<tr><td class="text-sm">' + esc(row.email) + '</td><td>' + esc(row.role) + '</td><td>' + esc(row.ip_address) + '</td><td>' + esc(row.browser) + '</td><td>' + esc(row.device) + '</td><td class="text-xs text-muted">' + esc(row.last_activity) + '</td><td><button type="button" class="mc-btn mc-btn--outline mc-btn--danger mc-btn--sm js-terminate" data-id="' + row.id + '">Terminate</button></td></tr>';
           }).join('');
           bindTerminate();
         }
