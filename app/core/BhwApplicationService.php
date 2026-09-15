@@ -802,6 +802,49 @@ final class BhwApplicationService
     }
 
     /**
+     * Summary stats for the applications list — must match BHW hub filters:
+     * pending = pending_approval only; active = active|approved.
+     *
+     * @param list<array<string, mixed>> $rows
+     * @return array{total: int, draft: int, pending: int, active: int}
+     */
+    public function statsFromRows(array $rows): array
+    {
+        $stats = ['total' => count($rows), 'draft' => 0, 'pending' => 0, 'active' => 0];
+        foreach ($rows as $row) {
+            $status = strtolower(trim((string) ($row['status'] ?? '')));
+            if ($status === self::STATUS_DRAFT) {
+                $stats['draft']++;
+            } elseif ($status === self::STATUS_PENDING) {
+                $stats['pending']++;
+            } elseif ($status === self::STATUS_ACTIVE || $status === self::STATUS_APPROVED) {
+                $stats['active']++;
+            }
+        }
+
+        return $stats;
+    }
+
+    /**
+     * Pending Approval count for a portal actor (same scope as listForAdmin).
+     */
+    public function pendingCountForActor(int $adminId, bool $isSuperAdmin = false): int
+    {
+        if ($isSuperAdmin) {
+            return $this->pendingCount();
+        }
+
+        $stmt = $this->pdo->prepare("
+            SELECT COUNT(*) FROM bhw_applications
+            WHERE status = 'pending_approval'
+              AND (created_by = ? OR submitted_by = ?)
+        ");
+        $stmt->execute([$adminId, $adminId]);
+
+        return (int) $stmt->fetchColumn();
+    }
+
+    /**
      * @return list<array<string, mixed>>
      */
     public function listPendingForChecker(): array

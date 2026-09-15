@@ -32,18 +32,58 @@
   let allRows = [];
 
   /**
-   * Pending Approval count must match the pending_approval filter only.
-   * Internal statuses (invited / onboarding / requires_documents) remain in "All".
+   * Canonical BHW application status groups.
+   * Summary counts and the status filter/tab MUST use these same sets.
+   * Internal workflow statuses (invited / onboarding / requires_documents) stay in "All" only.
    */
+  const BHW_STATUS_GROUPS = {
+    draft: ['draft'],
+    pending_approval: ['pending_approval'],
+    active: ['active', 'approved'],
+    rejected: ['rejected'],
+  };
+
+  function normalizeBhwStatusFilter(status) {
+    const s = String(status || 'all').trim().toLowerCase();
+    if (s === 'pending' || s === 'pending_approval') return 'pending_approval';
+    if (s === 'drafts' || s === 'draft') return 'draft';
+    if (s === 'approved') return 'active';
+    return s || 'all';
+  }
+
+  function bhwStatusMatches(rowStatus, filter) {
+    const status = String(rowStatus || '').trim().toLowerCase();
+    const f = normalizeBhwStatusFilter(filter);
+    if (!f || f === 'all') return true;
+    const group = BHW_STATUS_GROUPS[f];
+    if (group) return group.indexOf(status) >= 0;
+    return status === f;
+  }
+
   function computeBhwStats(rows) {
     const stats = { total: rows.length, draft: 0, pending: 0, active: 0 };
     rows.forEach(function (r) {
       const s = r.status;
-      if (s === 'draft') stats.draft += 1;
-      else if (s === 'pending_approval') stats.pending += 1;
-      else if (s === 'active' || s === 'approved') stats.active += 1;
+      if (bhwStatusMatches(s, 'draft')) stats.draft += 1;
+      else if (bhwStatusMatches(s, 'pending_approval')) stats.pending += 1;
+      else if (bhwStatusMatches(s, 'active')) stats.active += 1;
     });
     return stats;
+  }
+
+  function filterBhwRows(rows, opts) {
+    const search = String((opts && opts.search) || '').trim().toLowerCase();
+    const status = normalizeBhwStatusFilter((opts && opts.status) || 'all');
+    return rows.filter(function (r) {
+      if (!bhwStatusMatches(r.status, status)) return false;
+      if (!search) return true;
+      const hay = [
+        r.display_name,
+        r.email,
+        r.barangay_name,
+      ].join(' ').toLowerCase();
+      return hay.indexOf(search) >= 0;
+    });
   }
 
   function setBarangayStatus(kind, message) {
@@ -92,9 +132,34 @@
     return fd;
   }
 
-  if (statusFilter && cfg.initialStatus) {
-    statusFilter.value = cfg.initialStatus;
+  function syncStatusFilterFromConfig() {
+    if (!statusFilter || !cfg.initialStatus) return;
+    const wanted = normalizeBhwStatusFilter(cfg.initialStatus);
+    if (wanted === 'all') {
+      statusFilter.value = 'all';
+      return;
+    }
+    statusFilter.value = wanted;
+    // If the option is missing, keep an explicit value so Pending/Drafts tabs never fall back to "all".
+    if (statusFilter.value !== wanted) {
+      let opt = null;
+      for (let i = 0; i < statusFilter.options.length; i += 1) {
+        if (statusFilter.options[i].value === wanted) {
+          opt = statusFilter.options[i];
+          break;
+        }
+      }
+      if (!opt) {
+        opt = document.createElement('option');
+        opt.value = wanted;
+        opt.textContent = wanted === 'pending_approval' ? 'Pending Approval' : wanted;
+        statusFilter.appendChild(opt);
+      }
+      statusFilter.value = wanted;
+    }
   }
+
+  syncStatusFilterFromConfig();
 
   if (formUtils.enhanceFileInputsIn && form) {
     formUtils.enhanceFileInputsIn(form);
@@ -135,7 +200,16 @@
       }
       fillBarangays();
       allRows = json.data.applications || [];
-      utils.updateStats(statsEl, computeBhwStats(allRows));
+      syncStatusFilterFromConfig();
+      const stats = (json.data.stats && typeof json.data.stats.pending === 'number')
+        ? {
+            total: Number.isFinite(Number(json.data.stats.total)) ? Number(json.data.stats.total) : allRows.length,
+            draft: Number.isFinite(Number(json.data.stats.draft)) ? Number(json.data.stats.draft) : 0,
+            pending: Number.isFinite(Number(json.data.stats.pending)) ? Number(json.data.stats.pending) : 0,
+            active: Number.isFinite(Number(json.data.stats.active)) ? Number(json.data.stats.active) : 0,
+          }
+        : computeBhwStats(allRows);
+      utils.updateStats(statsEl, stats);
       applyFilters();
       if (!barangaysLoaded) {
         ensureBarangays(true);
@@ -146,9 +220,9 @@
   }
 
   function applyFilters() {
-    const filtered = utils.filterRows(allRows, {
+    const filtered = filterBhwRows(allRows, {
       search: searchInput ? searchInput.value : '',
-      status: statusFilter ? statusFilter.value : 'all',
+      status: statusFilter ? statusFilter.value : (cfg.initialStatus || 'all'),
     });
     if (countEl) {
       const total = allRows.length;

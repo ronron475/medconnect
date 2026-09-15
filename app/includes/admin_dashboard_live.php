@@ -34,7 +34,13 @@ function admin_dashboard_live_payload(PDO $pdo, int $adminId): array
         : 0;
 
     $pendingDoctorApps = (int) $pdo->query("SELECT COUNT(*) FROM doctor_applications WHERE status='pending_approval'")->fetchColumn();
-    $pendingBhwApps = (int) $pdo->query("SELECT COUNT(*) FROM bhw_applications WHERE status='pending_approval'")->fetchColumn();
+    $stmt = $pdo->prepare("
+        SELECT COUNT(*) FROM bhw_applications
+        WHERE status = 'pending_approval'
+          AND (created_by = ? OR submitted_by = ?)
+    ");
+    $stmt->execute([$adminId, $adminId]);
+    $pendingBhwApps = (int) $stmt->fetchColumn();
 
     $stmt = $pdo->prepare("SELECT COUNT(*) FROM doctor_applications WHERE created_by = ? AND status IN ('draft','requires_documents','rejected')");
     $stmt->execute([$adminId]);

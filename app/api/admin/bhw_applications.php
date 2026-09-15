@@ -68,11 +68,14 @@ try {
 
         case 'list':
             header('Content-Type: application/json; charset=utf-8');
+            $applications = $service->listForAdmin($adminId, $isSuper);
             echo json_encode([
                 'success' => true,
                 'data'    => [
-                    'applications' => $service->listForAdmin($adminId, $isSuper),
-                    'barangays'    => $service->getBarangays(),
+                    'applications'  => $applications,
+                    'barangays'     => $service->getBarangays(),
+                    'stats'         => $service->statsFromRows($applications),
+                    'pending_count' => $service->pendingCountForActor($adminId, $isSuper),
                 ],
             ]);
             break;
