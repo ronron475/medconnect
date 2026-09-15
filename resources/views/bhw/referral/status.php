@@ -31,7 +31,6 @@ $bhw_subnav_active = 'referral/status.php';
             <th>Reason</th>
             <th>Facility</th>
             <th>Doctor</th>
-            <th>Status</th>
           </tr>
         </thead>
         <tbody id="bhwRefBody"></tbody>
@@ -58,20 +57,10 @@ $bhw_subnav_active = 'referral/status.php';
     return s.length > n ? s.slice(0, n - 1) + '…' : s;
   }
 
-  function statusLabel(status) {
-    var s = String(status || '').toLowerCase();
-    if (s === 'pending') return 'Issued / Open';
-    if (s === 'accepted') return 'In progress';
-    if (s === 'completed') return 'Completed';
-    if (s === 'cancelled' || s === 'rejected') return 'Cancelled';
-    if (s === 'expired') return 'Expired';
-    return status || '—';
-  }
-
   BhwPortal.get('referrals.php', { action: 'list' }).then(function (r) {
     var rows = r.referrals || [];
     if (!rows.length) {
-      tb.innerHTML = '<tr><td colspan="7" class="text-center text-muted py-4">No doctor referrals for your barangay yet.</td></tr>';
+      tb.innerHTML = '<tr><td colspan="6" class="text-center text-muted py-4">No doctor referrals for your barangay yet.</td></tr>';
       return;
     }
     tb.innerHTML = rows.map(function (x) {
@@ -82,11 +71,10 @@ $bhw_subnav_active = 'referral/status.php';
         '<td>' + esc(short(x.reason, 80)) + '</td>' +
         '<td>' + esc(x.facility_display || '—') + '</td>' +
         '<td>' + esc(x.provider_name || '—') + '</td>' +
-        '<td>' + esc(statusLabel(x.status)) + '</td>' +
         '</tr>';
     }).join('');
   }).catch(function () {
-    tb.innerHTML = '<tr><td colspan="7" class="text-center text-danger py-4">Could not load referrals.</td></tr>';
+    tb.innerHTML = '<tr><td colspan="6" class="text-center text-danger py-4">Could not load referrals.</td></tr>';
   });
 })();
 </script>
