@@ -10,6 +10,11 @@ $responsiveCssVer = ($responsiveCssPath && file_exists($responsiveCssPath)) ? (i
 
 if (!$scriptsOnly): ?>
 <link rel="stylesheet" href="<?= htmlspecialchars($assetBase, ENT_QUOTES) ?>/assets/css/responsive.css?v=<?= $responsiveCssVer ?>"/>
+<?php
+$typoCss = defined('ASSETS_PATH') ? ASSETS_PATH . '/css/medconnect-typography.css' : '';
+$typoVer = ($typoCss && file_exists($typoCss)) ? (int) filemtime($typoCss) : time();
+?>
+<link rel="stylesheet" href="<?= htmlspecialchars($assetBase, ENT_QUOTES) ?>/assets/css/medconnect-typography.css?v=<?= $typoVer ?>"/>
 <link rel="stylesheet" href="<?= htmlspecialchars($assetBase, ENT_QUOTES) ?>/assets/css/profile-menu.css"/>
 <?php
 $dashFloatCss = defined('ASSETS_PATH') ? ASSETS_PATH . '/css/dashboard-card-float.css' : '';
@@ -33,4 +38,7 @@ $floatingViewVer = ($floatingViewCss && file_exists($floatingViewCss)) ? (int) f
 <script src="<?= htmlspecialchars($assetBase, ENT_QUOTES) ?>/assets/js/profile-menu.js" defer></script>
 <?php $fullscreenToggleJsVer = (int) @filemtime(defined('ASSETS_PATH') ? ASSETS_PATH . '/js/fullscreen-toggle.js' : ''); ?>
 <script src="<?= htmlspecialchars($assetBase, ENT_QUOTES) ?>/assets/js/fullscreen-toggle.js?v=<?= $fullscreenToggleJsVer ?: time() ?>" defer></script>
+<?php $osFloatJsVer = (int) @filemtime(defined('ASSETS_PATH') ? ASSETS_PATH . '/js/os-float-shell.js' : ''); ?>
+<script src="<?= htmlspecialchars($assetBase, ENT_QUOTES) ?>/assets/js/os-float-shell.js?v=<?= $osFloatJsVer ?: time() ?>" defer></script>
 <?php endif; ?>
+

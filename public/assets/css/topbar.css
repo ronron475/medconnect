@@ -67,11 +67,11 @@
 }
 
 .topbar-title {
-  font-size: 1.05rem;
+  font-size: var(--mc-fs-h3, 1rem);
   font-weight: 700;
   color: var(--mc-navy-dark);
   letter-spacing: -0.02em;
-  line-height: 1.2;
+  line-height: 1.25;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;

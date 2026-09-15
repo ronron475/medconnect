@@ -11,10 +11,13 @@
   --error: #ef4444;
 }
 
-body {
-  font-family: 'Segoe UI', system-ui, sans-serif;
-  height: 100vh;
-  overflow: hidden;
+body.login-page {
+  font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  min-height: 100vh;
+  min-height: 100dvh;
+  height: auto;
+  overflow-x: hidden;
+  overflow-y: auto;
 }
 
 /* NAV */
@@ -63,15 +66,20 @@ body {
 .btn-consult:hover { background: #0f766e; }
 
 /* HERO */
-.hero {
+body.login-page .hero {
   position: relative;
   width: 100%;
-  height: 100vh;
+  min-height: 100vh;
+  min-height: 100dvh;
+  height: auto;
   background:
     linear-gradient(135deg, rgba(11,31,46,0.75) 0%, rgba(13,148,136,0.25) 100%),
     url('../img/background image.jpg') center/cover no-repeat;
   display: flex;
-  align-items: center;
+  align-items: flex-start;
+  padding-top: 72px;
+  padding-bottom: 32px;
+  box-sizing: border-box;
 }
 .hero-overlay {
   position: absolute;
@@ -94,10 +102,10 @@ body {
 /* LEFT */
 .hero-left { flex: 1; max-width: 520px; }
 .hero-title {
-  font-size: 38px;
+  font-size: var(--mc-fs-display, 1.375rem);
   font-weight: 800;
   color: #fff;
-  line-height: 1.2;
+  line-height: 1.25;
   margin-bottom: 16px;
 }
 .hero-accent { color: var(--teal-light); }
@@ -368,35 +376,43 @@ body {
 }
 
 @media (max-width: 768px) {
-  body {
+  body.login-page {
     overflow: auto;
     height: auto;
     min-height: 100vh;
+    min-height: 100dvh;
   }
 
-  .nav {
+  body.login-page .nav {
     padding: 12px 16px;
   }
 
-  .login-wrap {
-    padding: 24px 16px;
-    min-height: calc(100vh - 60px);
+  body.login-page .hero {
+    min-height: auto;
+    padding-top: 68px;
+    padding-bottom: 24px;
+    align-items: flex-start;
   }
 
-  .login-card {
+  body.login-page .hero-content {
+    padding: 24px 16px;
+    min-height: 0;
+  }
+
+  body.login-page .signin-card {
     width: 100%;
     max-width: 100%;
     padding: 28px 22px;
   }
 
-  .card-badges {
+  body.login-page .card-badges {
     flex-wrap: wrap;
     gap: 8px;
   }
 }
 
 @media (max-width: 480px) {
-  .login-card {
+  body.login-page .signin-card {
     padding: 22px 16px;
     border-radius: 12px;
   }

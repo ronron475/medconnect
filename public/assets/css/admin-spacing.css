@@ -1,0 +1,349 @@
+/**
+ * Admin portal spacing — body.admin-body:not(.superadmin-body) ONLY.
+ * Does not affect Sign In / Login, Patient, Provider, BHW, or SuperAdmin.
+ */
+
+/* ── Desktop / laptop: tighten page rhythm without cramping ── */
+body.admin-body:not(.superadmin-body) .portal-page-body {
+  padding: 16px 24px 24px;
+  padding-top: calc(var(--mc-header-offset, var(--portal-header-h, 64px)) + 14px);
+  gap: 16px;
+}
+
+body.admin-body:not(.superadmin-body) [data-live-dashboard] {
+  gap: 22px;
+}
+
+body.admin-body:not(.superadmin-body) [data-live-dashboard] > section {
+  gap: 12px;
+}
+
+body.admin-body:not(.superadmin-body) [data-live-dashboard] .adm-charts-section {
+  gap: 12px;
+}
+
+body.admin-body:not(.superadmin-body) [data-live-dashboard] .adm-metrics {
+  gap: 12px;
+}
+
+body.admin-body:not(.superadmin-body) [data-live-dashboard] .mc-notif-widgets--dashboard {
+  gap: 12px;
+}
+
+body.admin-body:not(.superadmin-body) [data-live-dashboard] .mc-notif-widget {
+  padding: 14px;
+  min-height: 0;
+}
+
+body.admin-body:not(.superadmin-body) .adm-banner {
+  padding: 20px 24px;
+}
+
+body.admin-body:not(.superadmin-body) .adm-banner-eyebrow {
+  margin-bottom: 6px;
+}
+
+body.admin-body:not(.superadmin-body) .adm-banner-title {
+  margin: 0 0 6px;
+}
+
+body.admin-body:not(.superadmin-body) .adm-metric {
+  padding: 16px 14px;
+  gap: 12px;
+}
+
+body.admin-body:not(.superadmin-body) .adm-metrics {
+  gap: 12px;
+}
+
+body.admin-body:not(.superadmin-body) .adm-grid {
+  gap: 14px;
+}
+
+body.admin-body:not(.superadmin-body) .adm-grid-main,
+body.admin-body:not(.superadmin-body) .adm-grid-side {
+  gap: 14px;
+}
+
+body.admin-body:not(.superadmin-body) .adm-card-head {
+  padding: 14px 16px;
+  gap: 10px;
+}
+
+body.admin-body:not(.superadmin-body) .adm-table th {
+  padding: 10px 14px;
+}
+
+body.admin-body:not(.superadmin-body) .adm-table td {
+  padding: 12px 14px;
+}
+
+body.admin-body:not(.superadmin-body) .adm-section-head {
+  margin-bottom: 0;
+}
+
+body.admin-body:not(.superadmin-body) .adm-section-title {
+  margin: 0 0 4px;
+}
+
+body.admin-body:not(.superadmin-body) .header-row {
+  margin-bottom: 16px;
+}
+
+body.admin-body:not(.superadmin-body) .stats-grid {
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+/* Filters / forms / alerts / empty states */
+body.admin-body:not(.superadmin-body) .um-filter-bar,
+body.admin-body:not(.superadmin-body) .mc-chart-filters {
+  padding: 10px 12px;
+  gap: 10px 12px;
+  margin-bottom: 8px;
+}
+
+body.admin-body:not(.superadmin-body) .alert,
+body.admin-body:not(.superadmin-body) .mc-alert {
+  margin-bottom: 12px;
+}
+
+body.admin-body:not(.superadmin-body) .admin-modal-dialog {
+  padding-top: 18px;
+  padding-bottom: 18px;
+}
+
+/* ── Charts: remove oversized empty canvas area (Admin only) ── */
+body.admin-body:not(.superadmin-body) .adm-chart-card,
+body.admin-body:not(.superadmin-body) .mc-chart-card {
+  min-height: 0;
+  height: auto;
+  padding: 14px 16px 12px;
+  gap: 0;
+}
+
+body.admin-body:not(.superadmin-body) .adm-chart-card__head,
+body.admin-body:not(.superadmin-body) .mc-chart-card__head {
+  margin-bottom: 8px;
+  gap: 10px;
+}
+
+body.admin-body:not(.superadmin-body) .adm-chart-card__sub,
+body.admin-body:not(.superadmin-body) .mc-chart-card__sub {
+  margin-top: 2px;
+}
+
+body.admin-body:not(.superadmin-body) .adm-chart-kpi,
+body.admin-body:not(.superadmin-body) .mc-chart-kpi {
+  margin: 0;
+}
+
+body.admin-body:not(.superadmin-body) .adm-chart-canvas-wrap,
+body.admin-body:not(.superadmin-body) .mc-chart-canvas-wrap {
+  flex: 0 0 auto;
+  min-height: 160px;
+  height: clamp(160px, 22vh, 220px);
+}
+
+body.admin-body:not(.superadmin-body) .mc-chart-canvas-wrap--tall {
+  min-height: 180px;
+  height: clamp(180px, 26vh, 240px);
+}
+
+body.admin-body:not(.superadmin-body) .mc-chart-canvas-wrap--ring {
+  min-height: 170px;
+  height: clamp(170px, 24vh, 220px);
+}
+
+body.admin-body:not(.superadmin-body) .adm-charts-grid,
+body.admin-body:not(.superadmin-body) .mc-charts-grid {
+  gap: 12px;
+}
+
+body.admin-body:not(.superadmin-body) .adm-charts-section,
+body.admin-body:not(.superadmin-body) .mc-charts-section {
+  gap: 12px;
+}
+
+body.admin-body:not(.superadmin-body) .adm-bar-chart {
+  min-height: 120px;
+  padding-top: 4px;
+}
+
+body.admin-body:not(.superadmin-body) .adm-line-chart {
+  min-height: 120px;
+  gap: 6px;
+}
+
+body.admin-body:not(.superadmin-body) .adm-line-chart svg {
+  height: 110px;
+}
+
+body.admin-body:not(.superadmin-body) .adm-hbar-list,
+body.admin-body:not(.superadmin-body) .adm-status-bars {
+  gap: 8px;
+  justify-content: flex-start;
+}
+
+body.admin-body:not(.superadmin-body) .adm-chart-legend {
+  margin-top: 8px;
+  padding-top: 8px;
+}
+
+/* Pagination / tables */
+body.admin-body:not(.superadmin-body) .mc-pagination,
+body.admin-body:not(.superadmin-body) .pagination {
+  margin-top: 12px;
+  gap: 6px;
+}
+
+@media (min-width: 769px) and (max-width: 1200px) {
+  body.admin-body:not(.superadmin-body) [data-live-dashboard] {
+    gap: 18px;
+  }
+
+  body.admin-body:not(.superadmin-body) [data-live-dashboard] > section {
+    gap: 10px;
+  }
+}
+
+/* ── Mobile 320–430(+768): compact cards, charts, sections ── */
+@media (max-width: 768px) {
+  body.admin-body:not(.superadmin-body) {
+    --mob-adm-pad: 12px;
+    --mob-adm-gap: 12px;
+    --mob-adm-card-gap: 10px;
+    --mob-adm-section-gap: 16px;
+  }
+
+  body.admin-body:not(.superadmin-body) .portal-page-body {
+    padding-left: var(--mob-adm-pad);
+    padding-right: var(--mob-adm-pad);
+    padding-top: calc(var(--mc-header-offset, 64px) + 8px);
+    padding-bottom: calc(var(--mob-adm-pad) * 1.25);
+    gap: var(--mob-adm-gap);
+  }
+
+  body.admin-body:not(.superadmin-body) [data-live-dashboard] {
+    gap: var(--mob-adm-section-gap);
+  }
+
+  body.admin-body:not(.superadmin-body) [data-live-dashboard] > section {
+    gap: 10px;
+  }
+
+  body.admin-body:not(.superadmin-body) [data-live-dashboard] .adm-charts-section {
+    gap: 10px;
+  }
+
+  body.admin-body:not(.superadmin-body) .adm-banner {
+    padding: 14px 14px;
+  }
+
+  body.admin-body:not(.superadmin-body) .adm-metric {
+    padding: 12px 12px;
+    gap: 10px;
+  }
+
+  body.admin-body:not(.superadmin-body) .mc-notif-widget {
+    min-height: 0;
+    padding: 12px;
+  }
+
+  body.admin-body:not(.superadmin-body) .adm-charts-section > .adm-section-head {
+    gap: 8px;
+  }
+
+  body.admin-body:not(.superadmin-body) .adm-charts-grid {
+    gap: 10px;
+  }
+
+  body.admin-body:not(.superadmin-body) .adm-chart-card,
+  body.admin-body:not(.superadmin-body) .mc-chart-card {
+    padding: 12px;
+  }
+
+  body.admin-body:not(.superadmin-body) .adm-chart-card__head,
+  body.admin-body:not(.superadmin-body) .mc-chart-card__head {
+    margin-bottom: 6px;
+  }
+
+  body.admin-body:not(.superadmin-body) .adm-chart-canvas-wrap,
+  body.admin-body:not(.superadmin-body) .mc-chart-canvas-wrap {
+    min-height: 140px;
+    height: clamp(140px, 36vw, 180px);
+  }
+
+  body.admin-body:not(.superadmin-body) .mc-chart-canvas-wrap--tall {
+    min-height: 150px;
+    height: clamp(150px, 40vw, 200px);
+  }
+
+  body.admin-body:not(.superadmin-body) .mc-chart-canvas-wrap--ring {
+    min-height: 150px;
+    height: clamp(150px, 38vw, 190px);
+  }
+
+  body.admin-body:not(.superadmin-body) .adm-card-head {
+    padding: 12px 14px;
+  }
+
+  body.admin-body:not(.superadmin-body) .adm-table th,
+  body.admin-body:not(.superadmin-body) .adm-table td {
+    padding: 10px 12px;
+  }
+
+  body.admin-body:not(.superadmin-body) table.admin-stack-table tbody tr {
+    margin: 8px;
+  }
+
+  body.admin-body:not(.superadmin-body) table.admin-stack-table td {
+    padding: 10px 12px;
+  }
+
+  body.admin-body:not(.superadmin-body) .header-row {
+    margin-bottom: 12px;
+  }
+
+  body.admin-body:not(.superadmin-body) .stats-grid {
+    gap: 10px;
+    margin-bottom: 12px;
+  }
+}
+
+@media (max-width: 430px) {
+  body.admin-body:not(.superadmin-body) {
+    --mob-adm-pad: 10px;
+    --mob-adm-gap: 10px;
+    --mob-adm-section-gap: 14px;
+  }
+
+  body.admin-body:not(.superadmin-body) .adm-chart-canvas-wrap,
+  body.admin-body:not(.superadmin-body) .mc-chart-canvas-wrap {
+    min-height: 130px;
+    height: clamp(130px, 42vw, 168px);
+  }
+
+  body.admin-body:not(.superadmin-body) .mc-chart-canvas-wrap--tall,
+  body.admin-body:not(.superadmin-body) .mc-chart-canvas-wrap--ring {
+    min-height: 140px;
+    height: clamp(140px, 44vw, 176px);
+  }
+
+  body.admin-body:not(.superadmin-body) .adm-metric-value {
+    font-size: 1.2rem;
+  }
+}
+
+@media (max-width: 360px) {
+  body.admin-body:not(.superadmin-body) .adm-metrics,
+  body.admin-body:not(.superadmin-body) .mc-notif-widgets--dashboard {
+    gap: 8px;
+  }
+
+  body.admin-body:not(.superadmin-body) .adm-chart-canvas-wrap,
+  body.admin-body:not(.superadmin-body) .mc-chart-canvas-wrap {
+    min-height: 120px;
+    height: 148px;
+  }
+}

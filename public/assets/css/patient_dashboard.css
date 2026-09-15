@@ -33,7 +33,7 @@
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
 body {
-  font-family: 'Inter', 'Segoe UI', system-ui, -apple-system, sans-serif;
+  font-family: var(--mc-font, 'Inter', 'Segoe UI', system-ui, -apple-system, sans-serif);
   background: var(--pd-canvas);
   color: var(--pd-text);
   -webkit-font-smoothing: antialiased;
@@ -973,7 +973,7 @@ body, html {
 h1, h2, h3, h4, h5, h6, .text-h1, .text-h2, .text-h3, .placeholder-title, .pi-card-title, .rd-title, .section-title, .consult-list-title {
   color: #0d1b3e !important; /* dark navy */
   font-weight: 800 !important;
-  font-family: 'Inter', sans-serif !important;
+  font-family: var(--mc-font, 'Inter', sans-serif) !important;
 }
 
 /* ── Unified Tables ── */

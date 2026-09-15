@@ -23,6 +23,8 @@
   <link rel="stylesheet" href="<?= ASSET_BASE ?>/assets/css/admin-dashboard-charts.css"/>
   <?php if (defined('MC_PORTAL_SHELL') && MC_PORTAL_SHELL === 'superadmin'): ?>
   <link rel="stylesheet" href="<?= ASSET_BASE ?>/assets/css/superadmin_dashboard.css?v=<?= (int) @filemtime(ASSETS_PATH . '/css/superadmin_dashboard.css') ?>"/>
+  <?php else: ?>
+  <link rel="stylesheet" href="<?= ASSET_BASE ?>/assets/css/admin-spacing.css?v=<?= (int) @filemtime(ASSETS_PATH . '/css/admin-spacing.css') ?>"/>
   <?php endif; ?>
   <link rel="stylesheet" href="<?= ASSET_BASE ?>/assets/css/sidebar.css"/>
   <link rel="stylesheet" href="<?= ASSET_BASE ?>/assets/css/topbar.css"/>

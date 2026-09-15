@@ -26,7 +26,7 @@
 /* ── Layout shell ── */
 body.admin-body {
   background: var(--adm-canvas);
-  font-family: 'Inter', 'Segoe UI', system-ui, -apple-system, sans-serif;
+  font-family: var(--mc-font, 'Inter', 'Segoe UI', system-ui, -apple-system, sans-serif);
   -webkit-font-smoothing: antialiased;
   margin: 0;
 }
@@ -84,11 +84,11 @@ body.admin-body {
 }
 
 .adm-logo-text {
-  font-size: 18px;
+  font-size: 1rem;
   font-weight: 800;
   color: #fff;
   letter-spacing: -0.3px;
-  line-height: 1.1;
+  line-height: 1.15;
 }
 
 .adm-logo-text span {
@@ -133,12 +133,12 @@ body.admin-body {
 .adm-nav-item {
   display: flex;
   align-items: center;
-  gap: 10px;
-  padding: 10px 13px;
+  gap: 9px;
+  padding: 8px 12px;
   border-radius: 10px;
   color: rgba(255,255,255,0.58);
   text-decoration: none;
-  font-size: 13.5px;
+  font-size: 13px;
   font-weight: 500;
   border: 1px solid transparent;
   position: relative;
@@ -364,11 +364,11 @@ body.admin-body {
 }
 
 .adm-topbar-title {
-  font-size: 18px;
-  font-weight: 800;
+  font-size: 1rem;
+  font-weight: 700;
   color: var(--adm-text);
   letter-spacing: -0.4px;
-  line-height: 1;
+  line-height: 1.25;
   margin: 0;
 }
 
@@ -567,11 +567,11 @@ body.admin-body {
 }
 
 .adm-banner-title {
-  font-size: 26px;
+  font-size: 1.375rem;
   font-weight: 800;
   color: #fff;
   letter-spacing: -0.5px;
-  line-height: 1.15;
+  line-height: 1.25;
   margin: 0 0 8px;
 }
 
@@ -633,10 +633,10 @@ body.admin-body {
 .adm-metric-body { min-width: 0; }
 
 .adm-metric-value {
-  font-size: 30px;
+  font-size: 1.5rem;
   font-weight: 800;
   color: var(--adm-text);
-  line-height: 1;
+  line-height: 1.1;
   letter-spacing: -0.5px;
 }
 
@@ -695,10 +695,10 @@ body.admin-body {
 .adm-card-head-icon--indigo { background: #f0fdfa; color: #0d9488; }
 
 .adm-card-head-title {
-  font-size: 14.5px;
-  font-weight: 800;
+  font-size: 1rem;
+  font-weight: 700;
   color: var(--adm-text);
-  line-height: 1.2;
+  line-height: 1.25;
 }
 
 .adm-card-head-sub {
@@ -979,7 +979,7 @@ body.admin-body {
 
 @media (max-width: 480px) {
   .adm-metrics { grid-template-columns: 1fr 1fr; }
-  .adm-banner-title { font-size: 20px; }
+  .adm-banner-title { font-size: 1.2rem; }
 }
 
 /* ── Dashboard overview sections ── */
@@ -988,8 +988,8 @@ body.admin-body {
 }
 
 .adm-section-title {
-  font-size: 15px;
-  font-weight: 800;
+  font-size: 1rem;
+  font-weight: 700;
   color: var(--adm-text);
   margin: 0 0 4px;
   letter-spacing: -0.2px;
