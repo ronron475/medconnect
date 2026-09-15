@@ -72,6 +72,20 @@ $soap_signed_by = $clinical_note
     : '';
 $soap_signed_at = $clinical_note ? clinical_note_signed_at_label($clinical_note) : '';
 
+$session_referral_facilities = [];
+try {
+    if ($pdo->query("SHOW TABLES LIKE 'facilities'")->rowCount()) {
+        $session_referral_facilities = $pdo->query("
+            SELECT id, facility_name, facility_type
+            FROM facilities
+            WHERE status = 'active'
+            ORDER BY facility_name
+        ")->fetchAll(PDO::FETCH_ASSOC) ?: [];
+    }
+} catch (PDOException $e) {
+    $session_referral_facilities = [];
+}
+
 $session_access = queue_session_access($c);
 $history_view = in_array(strtolower(trim((string) ($c['status'] ?? ''))), ['completed', 'cancelled', 'ended', 'closed'], true);
 if (!$session_access['allowed'] && !$history_view) {
@@ -3391,17 +3405,38 @@ body.consultation-mobile-call-fullscreen .mc-provider-video-dock iframe {
             <div class="session-card-header"><div class="session-card-title"><?= icon('arrow') ?> Referral & Follow-up</div></div>
             <div class="session-card-body">
                 <div class="side-stack">
+                    <p class="text-xs text-muted" style="margin:0 0 8px;line-height:1.45;">
+                        After assessment you may complete this visit without a referral, or issue a clinical referral when medically appropriate.
+                        AI triage does not auto-refer urgent or non-urgent cases — that decision is yours.
+                    </p>
+                    <label class="pd-label" for="referralType">Referral type / service</label>
                     <select id="referralType" class="pd-input" style="width: 100%;">
-                        <option value="">-- Issue Referral --</option>
+                        <option value="">Select referral type…</option>
+                        <option value="Hospital">Hospital / Emergency Room</option>
                         <option value="ABTC">ABTC Program</option>
                         <option value="TB-DOTS">TB-DOTS Program</option>
                         <option value="LAB">Laboratory Referral</option>
                         <option value="SPEC">Specialist Referral</option>
+                        <option value="Other">Other</option>
                     </select>
-                    <button class="session-btn primary" style="width: 100%;" onclick="issueReferral()">Generate Referral</button>
-                    
+                    <label class="pd-label" for="referralFacility" style="margin-top:8px;">Facility / destination</label>
+                    <select id="referralFacility" class="pd-input" style="width: 100%;">
+                        <option value="">Select facility or destination…</option>
+                        <?php foreach ($session_referral_facilities as $fac): ?>
+                        <option value="<?= (int) $fac['id'] ?>" data-name="<?= htmlspecialchars((string) $fac['facility_name'], ENT_QUOTES) ?>">
+                            <?= htmlspecialchars(trim(($fac['facility_name'] ?? '') . (!empty($fac['facility_type']) ? ' (' . $fac['facility_type'] . ')' : ''))) ?>
+                        </option>
+                        <?php endforeach; ?>
+                        <option value="__other">Other (specify below)</option>
+                    </select>
+                    <input type="text" id="referralFacilityOther" class="pd-input" style="width:100%;margin-top:6px;display:none;" placeholder="Facility / service destination" maxlength="255" autocomplete="off">
+                    <label class="pd-label" for="referralReason" style="margin-top:8px;">Reason for referral</label>
+                    <textarea id="referralReason" class="pd-input" rows="3" style="width:100%;resize:vertical;" placeholder="Document why this patient needs in-person care, examination, or specialty services…"></textarea>
+                    <button type="button" class="session-btn primary" style="width: 100%; margin-top:8px;" onclick="issueReferral()">Issue Referral</button>
+                    <p class="text-xs text-muted" style="margin:6px 0 0;">Issuing a referral does not change consultation completion. Finalize the SOAP note separately when the visit is done.</p>
+
                     <hr style="border: 0; border-top: 1px solid #e2edf1; margin: 10px 0;">
-                    
+
                     <label class="pd-label">Schedule Follow-up</label>
                     <input type="date" id="followUpDate" class="pd-input" style="width: 100%;">
                     <p class="text-xs text-muted" style="margin:6px 0 0;">Registered mobile: <strong><?= htmlspecialchars($patient_contact !== '' ? $patient_contact : 'Not on file') ?></strong></p>
@@ -5491,24 +5526,69 @@ async function finalizeConsultation() {
 }
 
 async function issueReferral() {
-    const type = document.getElementById('referralType').value;
-    if (!type) return alert('Select referral type.');
-    const reason = prompt('Referral reason / clinical notes:');
-    if (!reason || !reason.trim()) return;
+    const typeEl = document.getElementById('referralType');
+    const facilityEl = document.getElementById('referralFacility');
+    const facilityOtherEl = document.getElementById('referralFacilityOther');
+    const reasonEl = document.getElementById('referralReason');
+    const type = typeEl ? String(typeEl.value || '').trim() : '';
+    const reason = reasonEl ? String(reasonEl.value || '').trim() : '';
+    if (!type) return alert('Select a referral type / service.');
+    if (!reason || reason.length < 5) return alert('Enter a clear reason for referral (clinical note).');
+
+    let facilityId = 0;
+    let facilityName = '';
+    if (facilityEl) {
+        const facVal = String(facilityEl.value || '');
+        if (facVal === '__other') {
+            facilityName = facilityOtherEl ? String(facilityOtherEl.value || '').trim() : '';
+            if (!facilityName) return alert('Specify the facility / destination.');
+        } else if (facVal) {
+            facilityId = parseInt(facVal, 10) || 0;
+            const opt = facilityEl.options[facilityEl.selectedIndex];
+            facilityName = opt ? String(opt.getAttribute('data-name') || opt.textContent || '').trim() : '';
+        }
+    }
+    if (!facilityName && !facilityId) {
+        return alert('Select a facility / destination for this referral.');
+    }
+
     try {
         const fd = new FormData();
         fd.append('patient_id', sessionPatientId);
         fd.append('consultation_id', sessionConsultationId);
         fd.append('referral_type', type);
-        fd.append('reason', reason.trim());
+        fd.append('reason', reason);
+        if (facilityId > 0) fd.append('facility_id', String(facilityId));
+        if (facilityName) fd.append('facility_name', facilityName);
         fd.append('csrf_token', sessionCsrf);
         const res = await fetch('<?= ASSET_BASE ?>/app/api/provider/create_referral.php', { method: 'POST', body: fd, credentials: 'same-origin' });
         const data = await res.json();
-        showSessionChatAlert(data.message || (data.success ? 'Referral created.' : 'Could not create referral.'), data.success ? 'success' : 'error');
+        showSessionChatAlert(data.message || (data.success ? 'Referral issued.' : 'Could not create referral.'), data.success ? 'success' : 'error');
+        if (data && data.success) {
+            if (typeEl) typeEl.value = '';
+            if (facilityEl) facilityEl.value = '';
+            if (facilityOtherEl) {
+                facilityOtherEl.value = '';
+                facilityOtherEl.style.display = 'none';
+            }
+            if (reasonEl) reasonEl.value = '';
+        }
     } catch (e) {
         showSessionChatAlert('Network error creating referral.', 'error');
     }
 }
+
+(function bindReferralFacilityOther() {
+    const facilityEl = document.getElementById('referralFacility');
+    const otherEl = document.getElementById('referralFacilityOther');
+    if (!facilityEl || !otherEl) return;
+    facilityEl.addEventListener('change', function () {
+        const show = facilityEl.value === '__other';
+        otherEl.style.display = show ? 'block' : 'none';
+        if (!show) otherEl.value = '';
+        if (show) otherEl.focus();
+    });
+})();
 
 async function scheduleFollowUp() {
     const date = document.getElementById('followUpDate').value;

@@ -412,9 +412,9 @@ final class NotificationEvents
         NotificationManager::notifyAdmins($pdo, [
             'sender_id'     => $senderId,
             'type'          => NotificationManager::TYPE_REFERRAL,
-            'title'         => 'Referral Created',
-            'message'       => 'A new patient referral has been submitted.',
-            'action_url'    => '/views/admin/live_consultation_monitor.php?tab=queue',
+            'title'         => 'Referral Issued',
+            'message'       => 'A doctor has issued a patient referral. Open Referral Center to monitor the record.',
+            'action_url'    => '/views/admin/facility_management.php?tab=referral',
             'related_table' => 'digital_referrals',
             'related_id'    => $referralId,
         ]);
@@ -432,9 +432,9 @@ final class NotificationEvents
             NotificationManager::notifyProvider($pdo, $providerId, [
                 'sender_id'     => $senderId,
                 'type'          => NotificationManager::TYPE_REFERRAL,
-                'title'         => 'New Patient Referral',
-                'message'       => 'A new referral has been submitted for your review. Check Active Triage for emergency cases.',
-                'action_url'    => '/views/provider/triage.php',
+                'title'         => 'Referral Issued',
+                'message'       => 'A referral was issued for your patient. Track it under Digital Referrals.',
+                'action_url'    => '/views/provider/referrals.php',
                 'related_table' => 'digital_referrals',
                 'related_id'    => $referralId,
             ]);
@@ -442,8 +442,8 @@ final class NotificationEvents
         NotificationManager::notifyBhwForPatient($pdo, $patientId, [
             'sender_id'     => $senderId,
             'type'          => NotificationManager::TYPE_REFERRAL,
-            'title'         => 'Referral Submitted',
-            'message'       => 'A referral has been submitted for your patient.',
+            'title'         => 'Referral Issued',
+            'message'       => 'A doctor has issued a referral for your patient.',
             'action_url'    => '/views/bhw/referral/status.php',
             'related_table' => 'digital_referrals',
             'related_id'    => $referralId,
@@ -453,16 +453,26 @@ final class NotificationEvents
     public static function referralStatusChanged(PDO $pdo, int $referralId, int $patientId, string $status, ?int $providerId = null, ?int $senderId = null): void
     {
         $title = match ($status) {
-            'accepted'  => 'Referral Accepted',
-            'rejected'  => 'Referral Rejected',
+            'accepted'  => 'Referral In Progress',
+            'rejected'  => 'Referral Cancelled',
+            'cancelled' => 'Referral Cancelled',
             'completed' => 'Referral Completed',
+            'pending'   => 'Referral Issued',
             default     => 'Referral Status Updated',
+        };
+        $statusLabel = match ($status) {
+            'pending'   => 'issued / open',
+            'accepted'  => 'in progress',
+            'completed' => 'completed',
+            'cancelled', 'rejected' => 'cancelled',
+            'expired'   => 'expired',
+            default     => $status,
         };
         NotificationManager::notifyPatient($pdo, $patientId, [
             'sender_id'     => $senderId,
             'type'          => NotificationManager::TYPE_REFERRAL,
             'title'         => $title,
-            'message'       => "Your referral status is now: {$status}.",
+            'message'       => "Your referral status is now: {$statusLabel}.",
             'action_url'    => '/views/patient/dashboard.php#action-items',
             'related_table' => 'digital_referrals',
             'related_id'    => $referralId,
@@ -472,7 +482,7 @@ final class NotificationEvents
             'sender_id'     => $senderId,
             'type'          => NotificationManager::TYPE_REFERRAL,
             'title'         => $title,
-            'message'       => "Referral for your patient is now: {$status}.",
+            'message'       => "Referral for your patient is now: {$statusLabel}.",
             'action_url'    => '/views/bhw/referral/status.php',
             'related_table' => 'digital_referrals',
             'related_id'    => $referralId,

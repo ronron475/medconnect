@@ -169,6 +169,10 @@ try {
             DATE(dr.created_at)                    AS file_date,
             CONCAT(u.first_name, ' ', u.last_name) AS doctor,
             'Referral'                             AS record_type,
+            dr.referral_type                       AS referral_type,
+            dr.reason                              AS referral_reason,
+            COALESCE(dr.{$destCol}, '')            AS referral_facility,
+            dr.status                              AS referral_status,
             dr.reason                              AS frequency,
             COALESCE(dr.{$destCol}, '')            AS duration,
             dr.status                              AS detail

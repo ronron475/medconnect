@@ -32,7 +32,17 @@ $facility_id     = (int)($_POST['facility_id']    ?? 0);
 $provider_id     = (int)$_SESSION['user_id'];
 
 if (!$patient_id || !$referral_type || !$reason) {
-    echo json_encode(['success' => false, 'message' => 'Required fields missing.']);
+    echo json_encode(['success' => false, 'message' => 'Referral type and reason for referral are required.']);
+    exit;
+}
+
+if (strlen($reason) < 5) {
+    echo json_encode(['success' => false, 'message' => 'Enter a clear reason for referral.']);
+    exit;
+}
+
+if ($facility === '' && $facility_id <= 0) {
+    echo json_encode(['success' => false, 'message' => 'Select a facility or destination for this referral.']);
     exit;
 }
 

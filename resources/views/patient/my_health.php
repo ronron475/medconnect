@@ -140,9 +140,16 @@ try {
         ? 'facility_name'
         : 'destination_facility';
     $s = $pdo->prepare("
-        SELECT CONCAT(dr.referral_type, ' Referral') AS record_name, dr.reason AS frequency,
-               COALESCE(dr.{$destCol}, '') AS duration, dr.status AS detail,
-               DATE(dr.created_at) AS record_date, CONCAT(u.first_name, ' ', u.last_name) AS provider_name
+        SELECT CONCAT(dr.referral_type, ' Referral') AS record_name,
+               dr.referral_type AS referral_type,
+               dr.reason AS referral_reason,
+               COALESCE(dr.{$destCol}, '') AS referral_facility,
+               dr.status AS referral_status,
+               DATE(dr.created_at) AS record_date,
+               CONCAT(u.first_name, ' ', u.last_name) AS provider_name,
+               dr.reason AS frequency,
+               COALESCE(dr.{$destCol}, '') AS duration,
+               dr.status AS detail
         FROM digital_referrals dr
         LEFT JOIN consultations c ON c.id = dr.consultation_id
         JOIN users u ON u.id = dr.provider_id

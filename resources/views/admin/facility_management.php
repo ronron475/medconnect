@@ -46,8 +46,15 @@ require_once __DIR__ . '/partials/layout_open.php';
 
 <div class="header-row" style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:12px;margin-bottom:16px;">
   <div>
-    <h2 class="text-h2"><?= $is_referral ? 'Referral Center Management' : 'Facility Management' ?></h2>
-    <p class="text-muted"><?= $referral_count ?> total referrals · <?= $pending_referrals ?> pending review.</p>
+    <h2 class="text-h2"><?= $is_referral ? 'Referral Center' : 'Facility Management' ?></h2>
+    <?php if ($is_referral): ?>
+    <p class="text-muted"><?= (int) $referral_count ?> total referrals · <?= (int) $pending_referrals ?> open (issued, awaiting completion).</p>
+    <p class="text-xs text-muted" style="margin-top:6px;max-width:52rem;">
+      Doctors issue referrals during consultation. This center is for monitoring only — status is read-only and cannot be changed here.
+    </p>
+    <?php else: ?>
+    <p class="text-muted"><?= (int) $referral_count ?> total referrals · <?= (int) $pending_referrals ?> open.</p>
+    <?php endif; ?>
   </div>
   <?php if (!$is_referral): ?>
   <button class="mc-btn mc-btn--primary" id="facAddBtn">+ Add Facility</button>
@@ -57,7 +64,7 @@ require_once __DIR__ . '/partials/layout_open.php';
 <nav style="display:flex;gap:8px;margin-bottom:20px;flex-wrap:wrap;">
   <a href="<?= $portalBase ?>/facility_management.php" class="mc-btn <?= !$is_referral ? 'mc-btn--primary' : 'mc-btn--outline' ?>">Facilities</a>
   <a href="<?= $portalBase ?>/facility_management.php?tab=referral" class="mc-btn <?= $is_referral ? 'mc-btn--primary' : 'mc-btn--outline' ?>">
-    Referrals <?php if ($pending_referrals > 0): ?><span class="mc-badge" style="margin-left:4px;"><?= $pending_referrals ?></span><?php endif; ?>
+    Referrals <?php if ($pending_referrals > 0): ?><span class="mc-badge" style="margin-left:4px;" title="Open / issued referrals"><?= $pending_referrals ?></span><?php endif; ?>
   </a>
 </nav>
 
@@ -67,10 +74,10 @@ require_once __DIR__ . '/partials/layout_open.php';
   <label class="text-sm">Filter
     <select id="refFilter" class="mc-btn mc-btn--outline" style="background:#fff;margin-left:6px;">
       <option value="all">All</option>
-      <option value="pending">Pending</option>
-      <option value="accepted">Accepted</option>
-      <option value="completed">Completed</option>
-      <option value="cancelled">Cancelled</option>
+      <option value="pending">PENDING</option>
+      <option value="accepted">ACCEPTED</option>
+      <option value="completed">COMPLETED</option>
+      <option value="cancelled">CANCELLED</option>
     </select>
   </label>
   <span id="refUpdated" class="text-xs text-muted">Loading…</span>
@@ -79,10 +86,18 @@ require_once __DIR__ . '/partials/layout_open.php';
 <div class="mc-card" style="padding:0;overflow:hidden;">
   <table class="mc-table">
     <thead>
-      <tr><th>Patient</th><th>Provider</th><th>Type</th><th>Facility</th><th>Reason</th><th>Status</th><th>Date</th><th></th></tr>
+      <tr>
+        <th>Patient</th>
+        <th>Provider</th>
+        <th>Type</th>
+        <th>Facility</th>
+        <th>Reason</th>
+        <th>Status</th>
+        <th>Date</th>
+      </tr>
     </thead>
     <tbody id="refTableBody">
-      <tr><td colspan="8"><div class="mc-table-empty"><p>Loading referrals…</p></div></td></tr>
+      <tr><td colspan="7"><div class="mc-table-empty"><p>Loading referrals…</p></div></td></tr>
     </tbody>
   </table>
 </div>
@@ -91,6 +106,17 @@ require_once __DIR__ . '/partials/layout_open.php';
 (function () {
   var api = <?= json_encode($refApi) ?>;
   function esc(s) { var d = document.createElement('div'); d.textContent = s == null ? '' : String(s); return d.innerHTML; }
+  function statusLabel(status) {
+    var s = String(status || '').trim();
+    return s ? s.toUpperCase() : '—';
+  }
+  function statusBadgeClass(status) {
+    var s = String(status || '').toLowerCase();
+    if (s === 'completed') return ' is-completed';
+    if (s === 'pending' || s === 'accepted') return ' is-pending';
+    if (s === 'cancelled' || s === 'rejected' || s === 'expired') return ' is-archived';
+    return '';
+  }
   function stampUpdated() {
     document.getElementById('refUpdated').textContent = 'Updated ' + new Date().toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
   }
@@ -101,12 +127,12 @@ require_once __DIR__ . '/partials/layout_open.php';
       .then(function (j) {
         var tb = document.getElementById('refTableBody');
         if (!j.success) {
-          tb.innerHTML = '<tr><td colspan="8"><div class="mc-table-empty"><p>' + esc(j.message || 'Could not load referrals.') + '</p></div></td></tr>';
+          tb.innerHTML = '<tr><td colspan="7"><div class="mc-table-empty"><p>' + esc(j.message || 'Could not load referrals.') + '</p></div></td></tr>';
           stampUpdated();
           return;
         }
         if (!j.rows || !j.rows.length) {
-          tb.innerHTML = '<tr><td colspan="8"><div class="mc-table-empty"><p>No referrals found.</p></div></td></tr>';
+          tb.innerHTML = '<tr><td colspan="7"><div class="mc-table-empty"><p>No referrals found.</p></div></td></tr>';
           stampUpdated();
           return;
         }
@@ -114,20 +140,21 @@ require_once __DIR__ . '/partials/layout_open.php';
           var dt = row.created_at ? new Date(row.created_at.replace(' ', 'T')).toLocaleString() : '—';
           var patient = (row.patient_name || '').trim() || 'Unknown patient';
           var provider = (row.provider_name || '').trim() || '—';
-          return '<tr><td><strong>' + esc(patient) + '</strong></td><td>' + esc(provider) + '</td><td>' + esc(row.referral_type) + '</td><td>' + esc(row.facility_name || '—') + '</td><td class="text-sm">' + esc(row.reason) + '</td><td><span class="mc-badge">' + esc(row.status) + '</span></td><td class="text-xs text-muted">' + esc(dt) + '</td><td><select class="mc-btn mc-btn--outline ref-status" data-id="' + row.id + '" style="padding:2px 6px;font-size:10px;background:#fff;"><option value="pending"' + (row.status==='pending'?' selected':'') + '>Pending</option><option value="accepted"' + (row.status==='accepted'?' selected':'') + '>Accepted</option><option value="completed"' + (row.status==='completed'?' selected':'') + '>Completed</option><option value="cancelled"' + (row.status==='cancelled'?' selected':'') + '>Cancelled</option></select></td></tr>';
+          var status = row.status || '';
+          return '<tr>' +
+            '<td><strong>' + esc(patient) + '</strong></td>' +
+            '<td>' + esc(provider) + '</td>' +
+            '<td>' + esc(row.referral_type) + '</td>' +
+            '<td>' + esc(row.facility_name || '—') + '</td>' +
+            '<td class="text-sm">' + esc(row.reason) + '</td>' +
+            '<td><span class="mc-badge' + statusBadgeClass(status) + '">' + esc(statusLabel(status)) + '</span></td>' +
+            '<td class="text-xs text-muted">' + esc(dt) + '</td>' +
+          '</tr>';
         }).join('');
-        document.querySelectorAll('.ref-status').forEach(function (sel) {
-          sel.onchange = function () {
-            var fd = new FormData();
-            fd.append('id', sel.getAttribute('data-id'));
-            fd.append('status', sel.value);
-            fetch(api, { method: 'POST', body: fd }).then(function (r) { return r.json(); }).then(function (res) { if (!res.success) alert(res.message); else load(); });
-          };
-        });
         stampUpdated();
       })
       .catch(function () {
-        document.getElementById('refTableBody').innerHTML = '<tr><td colspan="8"><div class="mc-table-empty"><p>Could not load referrals.</p></div></td></tr>';
+        document.getElementById('refTableBody').innerHTML = '<tr><td colspan="7"><div class="mc-table-empty"><p>Could not load referrals.</p></div></td></tr>';
         stampUpdated();
       });
   }
