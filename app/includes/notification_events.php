@@ -624,6 +624,7 @@ final class NotificationEvents
         ?int $senderId = null
     ): void {
         require_once __DIR__ . '/patient_consultation_records.php';
+        require_once __DIR__ . '/bhw_nav_inbox.php';
         NotificationManager::notifyPatient($pdo, $patientId, [
             'sender_id'     => $senderId,
             'type'          => NotificationManager::TYPE_MEDICAL,
@@ -632,6 +633,16 @@ final class NotificationEvents
             'action_url'    => patient_health_files_url($consultationId),
             'related_table' => 'consultations',
             'related_id'    => $consultationId,
+            'once'          => true,
+        ]);
+        NotificationManager::notifyBhwForPatient($pdo, $patientId, [
+            'sender_id'     => $senderId,
+            'type'          => NotificationManager::TYPE_MEDICAL,
+            'title'         => 'Medical record updated',
+            'message'       => 'A patient medical record was updated. Open Records to review.',
+            'action_url'    => '/views/bhw/records/index.php?patient_id=' . $patientId,
+            'related_table' => BHW_NAV_RELATED_RECORDS,
+            'related_id'    => $consultationId > 0 ? $consultationId : $patientId,
             'once'          => true,
         ]);
     }
@@ -741,6 +752,7 @@ final class NotificationEvents
 
     public static function medicalRecordUpdated(PDO $pdo, int $patientId, ?int $providerId = null, ?int $senderId = null): void
     {
+        require_once __DIR__ . '/bhw_nav_inbox.php';
         NotificationManager::notifyAdmins($pdo, [
             'sender_id'     => $senderId,
             'type'          => NotificationManager::TYPE_MEDICAL,
@@ -770,11 +782,22 @@ final class NotificationEvents
                 'related_id'    => $patientId,
             ]);
         }
+        NotificationManager::notifyBhwForPatient($pdo, $patientId, [
+            'sender_id'     => $senderId,
+            'type'          => NotificationManager::TYPE_MEDICAL,
+            'title'         => 'Medical Record Updated',
+            'message'       => 'A patient medical record has been updated. Open Records to review.',
+            'action_url'    => '/views/bhw/records/index.php?patient_id=' . $patientId,
+            'related_table' => BHW_NAV_RELATED_RECORDS,
+            'related_id'    => $patientId,
+            'once'          => true,
+        ]);
     }
 
     public static function prescriptionAvailable(PDO $pdo, int $patientId, int $providerId, ?int $senderId = null, ?int $consultationId = null): void
     {
         require_once __DIR__ . '/patient_consultation_records.php';
+        require_once __DIR__ . '/bhw_nav_inbox.php';
         $actionUrl = $consultationId
             ? patient_consultation_detail_url($consultationId)
             : '/views/patient/my_health.php?tab=files';
@@ -795,6 +818,16 @@ final class NotificationEvents
             'title'      => 'Prescription Issued',
             'message'    => 'Prescription has been issued to patient.',
             'action_url' => '/views/provider/records.php',
+        ]);
+        NotificationManager::notifyBhwForPatient($pdo, $patientId, [
+            'sender_id'     => $senderId,
+            'type'          => NotificationManager::TYPE_MEDICAL,
+            'title'         => 'Prescription updated',
+            'message'       => 'A prescription was issued for your patient. Open Records to review.',
+            'action_url'    => '/views/bhw/records/index.php?patient_id=' . $patientId,
+            'related_table' => BHW_NAV_RELATED_RECORDS,
+            'related_id'    => ($consultationId !== null && $consultationId > 0) ? $consultationId : $patientId,
+            'once'          => true,
         ]);
     }
 
@@ -991,6 +1024,19 @@ final class NotificationEvents
                 'title'      => 'Follow-Up Scheduled',
                 'message'    => "Follow-up scheduled for {$date}.",
                 'action_url' => '/views/provider/schedule.php',
+            ]);
+        }
+        if ($followupId !== null && $followupId > 0) {
+            require_once __DIR__ . '/bhw_nav_inbox.php';
+            NotificationManager::notifyBhwForPatient($pdo, $patientId, [
+                'sender_id'     => $senderId,
+                'type'          => NotificationManager::TYPE_REMINDER,
+                'title'         => 'Appointment Follow-Up Scheduled',
+                'message'       => "A follow-up was scheduled for {$date}. Open Appointment Follow-ups to monitor.",
+                'action_url'    => '/views/bhw/followup/track.php',
+                'related_table' => BHW_NAV_RELATED_FOLLOWUPS,
+                'related_id'    => $followupId,
+                'once'          => true,
             ]);
         }
     }

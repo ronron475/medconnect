@@ -112,25 +112,26 @@ $bhw_subnav_active = 'followup/track.php';
       var rows = r.followups || [];
       if (!rows.length) {
         tb.innerHTML = '<tr><td colspan="5" class="bhw-followup-empty">No follow-ups match this filter.</td></tr>';
-        return;
-      }
-      tb.innerHTML = rows.map(function (f) {
-        var visits = (parseInt(f.home_visit_count, 10) || 0) + (f.last_home_visit ? ' (last: ' + f.last_home_visit + ')' : '');
-        return '<tr>' +
-          '<td>' + f.followup_date + '</td>' +
-          '<td>' + f.patient_name + '</td>' +
-          '<td>' + f.status + '</td>' +
-          '<td>' + visits + '</td>' +
-          '<td><button type="button" class="bhw-btn-teal bhw-log-visit" data-id="' + f.id + '">Log home visit</button></td>' +
-          '</tr>';
-      }).join('');
-      tb.querySelectorAll('.bhw-log-visit').forEach(function (btn) {
-        btn.addEventListener('click', function () {
-          var id = parseInt(btn.dataset.id, 10);
-          var row = rows.find(function (x) { return parseInt(x.id, 10) === id; });
-          if (row) openVisitModal(row);
+      } else {
+        tb.innerHTML = rows.map(function (f) {
+          var visits = (parseInt(f.home_visit_count, 10) || 0) + (f.last_home_visit ? ' (last: ' + f.last_home_visit + ')' : '');
+          return '<tr>' +
+            '<td>' + f.followup_date + '</td>' +
+            '<td>' + f.patient_name + '</td>' +
+            '<td>' + f.status + '</td>' +
+            '<td>' + visits + '</td>' +
+            '<td><button type="button" class="bhw-btn-teal bhw-log-visit" data-id="' + f.id + '">Log home visit</button></td>' +
+            '</tr>';
+        }).join('');
+        tb.querySelectorAll('.bhw-log-visit').forEach(function (btn) {
+          btn.addEventListener('click', function () {
+            var id = parseInt(btn.dataset.id, 10);
+            var row = rows.find(function (x) { return parseInt(x.id, 10) === id; });
+            if (row) openVisitModal(row);
+          });
         });
-      });
+      }
+      if (window.MedConnectNavBadgesRefresh) window.MedConnectNavBadgesRefresh();
     });
   }
 
