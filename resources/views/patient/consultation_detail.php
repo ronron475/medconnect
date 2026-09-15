@@ -360,15 +360,6 @@ $patient_page_stylesheets = [
           <h4 class="pmh-detail-docs__heading">Referrals</h4>
           <ul class="pmh-rx-list">
             <?php foreach ($referrals as $ref):
-              $refStatus = strtolower(trim((string) ($ref['status'] ?? 'pending')));
-              $refStatusLabel = match ($refStatus) {
-                  'pending' => 'Issued / Open',
-                  'accepted' => 'In progress',
-                  'completed' => 'Completed',
-                  'cancelled', 'rejected' => 'Cancelled',
-                  'expired' => 'Expired',
-                  default => $ref['status'] ?: 'Issued / Open',
-              };
               $refFacility = trim((string) ($ref['facility_name'] ?? $ref['destination_facility'] ?? ''));
               $refDate = !empty($ref['created_at']) ? date('M j, Y', strtotime((string) $ref['created_at'])) : '—';
             ?>
@@ -376,7 +367,6 @@ $patient_page_stylesheets = [
               <strong><?= htmlspecialchars((string) ($ref['referral_type'] ?? 'Referral')) ?></strong>
               <p class="text-xs text-muted" style="margin:4px 0 6px;">
                 <?= htmlspecialchars($refDate) ?>
-                · Status: <?= htmlspecialchars($refStatusLabel) ?>
                 <?php if ($refFacility !== ''): ?>
                 · Facility: <?= htmlspecialchars($refFacility) ?>
                 <?php endif; ?>

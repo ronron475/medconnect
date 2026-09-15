@@ -28,38 +28,23 @@ try {
 ?>
 
 <div class="greeting-banner" style="margin-bottom:20px;">
-  <div><h2 class="text-h2">Digital Referrals</h2><p class="text-muted text-sm">Referrals you issue during consultation. Status tracks follow-up completion — not admin approval.</p></div>
+  <div><h2 class="text-h2">Digital Referrals</h2><p class="text-muted text-sm">Referrals you issue during consultation. Patients can view these in My Health — medConnect does not track whether the patient followed the referral.</p></div>
   <a href="<?= ASSET_BASE ?>/views/provider/queue.php" class="mc-btn mc-btn--primary">+ New Referral from Queue</a>
 </div>
 
 <div class="mc-card" style="padding:0;overflow:hidden;">
   <table class="mc-table">
-    <thead><tr><th>Date</th><th>Patient</th><th>Type</th><th>Destination</th><th>Reason</th><th>Status</th></tr></thead>
+    <thead><tr><th>Date</th><th>Patient</th><th>Type</th><th>Destination</th><th>Reason</th></tr></thead>
     <tbody>
       <?php if (empty($referrals)): ?>
-      <tr><td colspan="6"><div class="mc-table-empty"><p>No referrals created yet. Start from the Live Queue during a consultation.</p></div></td></tr>
-      <?php else: foreach ($referrals as $r):
-        $statusKey = strtolower((string) ($r['status'] ?? ''));
-        $statusLabel = match ($statusKey) {
-            'pending' => 'Issued / Open',
-            'accepted' => 'In progress',
-            'completed' => 'Completed',
-            'cancelled', 'rejected' => 'Cancelled',
-            'expired' => 'Expired',
-            default => $r['status'] ?: '—',
-        };
-        $badge = 'background:#fef3c7;color:#92400e';
-        if ($statusKey === 'completed') $badge = 'background:#dcfce7;color:#16a34a';
-        elseif (in_array($statusKey, ['cancelled', 'rejected', 'expired'], true)) $badge = 'background:#fee2e2;color:#991b1b';
-        elseif ($statusKey === 'accepted') $badge = 'background:#dbeafe;color:#1e40af';
-      ?>
+      <tr><td colspan="5"><div class="mc-table-empty"><p>No referrals created yet. Start from the Live Queue during a consultation.</p></div></td></tr>
+      <?php else: foreach ($referrals as $r): ?>
       <tr>
         <td><?= date('M j, Y', strtotime($r['created_at'])) ?></td>
         <td><strong><?= htmlspecialchars(trim(($r['first_name'] ?? '') . ' ' . ($r['last_name'] ?? '')) ?: 'Patient') ?></strong></td>
         <td><span class="mc-badge"><?= htmlspecialchars($r['referral_type']) ?></span></td>
         <td><?= htmlspecialchars($r['facility_name'] ?? $r['destination_facility'] ?? '—') ?></td>
         <td class="text-sm"><?= htmlspecialchars(mb_strimwidth($r['reason'], 0, 80, '…')) ?></td>
-        <td><span class="mc-badge" style="<?= $badge ?>"><?= htmlspecialchars($statusLabel) ?></span></td>
       </tr>
       <?php endforeach; endif; ?>
     </tbody>
