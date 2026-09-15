@@ -931,11 +931,13 @@
     };
 
     providerSelect.addEventListener('change', () => {
+      // URGENT: doctor+earliest slot are set only via the doctor cards — never open the full grid.
+      if (window.BOOKING_URGENT_CHOICE === true) {
+        return;
+      }
       const providerId = resolveProviderId();
       if (!providerId) {
-        clearSlots(window.BOOKING_URGENT_CHOICE
-          ? 'Select a doctor above to see their open times today.'
-          : 'Appointment times appear after you submit your complaint.');
+        clearSlots('Appointment times appear after you submit your complaint.');
         return;
       }
       loadTodayBooking(providerId);
@@ -950,16 +952,65 @@
       clearSlots('Appointment times appear after you submit your complaint.');
     }
 
-    function loadUrgentDoctorChoice() {
+    /**
+     * URGENT only: bind that doctor's earliest slot today — do not render later times.
+     */
+    function applyUrgentEarliestSelection(opt) {
+      const providerId = String(opt.provider_id || '');
+      const slotId = String(opt.slot_id || '');
+      const timeLabel = String(opt.time_label || opt.range_label || '—');
+      const doctorName = String(opt.provider_name || 'Doctor');
+
+      providerSelect.value = providerId;
+      slotInput.value = slotId;
+
+      slotsWrap.innerHTML = '';
+      const box = document.createElement('div');
+      box.className = 'mc-urgent-selected-slot';
+      box.setAttribute('role', 'status');
+
+      const kicker = document.createElement('p');
+      kicker.className = 'mc-urgent-selected-slot__kicker';
+      kicker.textContent = 'Earliest available slot';
+
+      const title = document.createElement('p');
+      title.className = 'mc-urgent-selected-slot__title';
+      title.textContent = doctorName;
+
+      const when = document.createElement('p');
+      when.className = 'mc-urgent-selected-slot__time';
+      when.textContent = 'Today, ' + timeLabel;
+
+      const hint = document.createElement('p');
+      hint.className = 'mc-urgent-selected-slot__hint text-xs text-muted';
+      hint.textContent = slotId
+        ? 'This is the only time shown for this doctor. Click Book Appointment to confirm.'
+        : 'This doctor has no open slot right now. Choose another doctor above.';
+
+      box.appendChild(kicker);
+      box.appendChild(title);
+      box.appendChild(when);
+      box.appendChild(hint);
+      slotsWrap.appendChild(box);
+    }
+
+    function loadUrgentDoctorChoice(preserveSelection) {
       const wrap = document.getElementById('urgentDoctorChoice');
       const status = document.getElementById('urgentDoctorChoiceStatus');
       if (!wrap) {
-        if (initialProviderId) loadTodayBooking(initialProviderId);
+        clearSlots('No urgent appointment slot is currently available today. If symptoms worsen, seek emergency care.');
         return;
       }
-      wrap.innerHTML = '';
+
+      const keepProviderId = preserveSelection ? String(providerSelect.value || '') : '';
+      const keepSlotId = preserveSelection ? String(slotInput.value || '') : '';
+
+      if (!preserveSelection) {
+        wrap.innerHTML = '';
+        providerSelect.value = '';
+        clearSlots('Select a doctor above to book their earliest available time today.');
+      }
       if (status) status.textContent = 'Loading doctors with open slots today…';
-      clearSlots('Select a doctor above to see their open times today.');
 
       fetch(APP_BASE + '/app/api/patient/urgent_earliest_slots.php?_=' + Date.now(), {
         credentials: 'same-origin',
@@ -974,11 +1025,19 @@
             return;
           }
           if (!options.length) {
-            if (status) status.textContent = 'No video slots left today. Contact the health office or try again tomorrow. If symptoms worsen, go to the ER.';
+            wrap.innerHTML = '';
+            providerSelect.value = '';
+            slotInput.value = '';
+            if (status) {
+              status.textContent = 'No urgent appointment slot is currently available today. Contact the health office or try again tomorrow. If symptoms worsen, go to the ER.';
+            }
+            clearSlots('No urgent appointment slot is currently available today.');
             return;
           }
           if (status) status.textContent = '';
           wrap.innerHTML = '';
+
+          let restored = null;
           options.forEach(function (opt, idx) {
             const recommended = !!opt.recommended || idx === 0;
             if (idx === 0) {
@@ -997,6 +1056,7 @@
             card.className = 'mc-urgency-slot-card' + (recommended ? ' is-recommended' : '');
             card.setAttribute('role', 'listitem');
             card.dataset.providerId = String(opt.provider_id || '');
+            card.dataset.slotId = String(opt.slot_id || '');
             const meta = document.createElement('div');
             meta.className = 'mc-urgency-slot-card__meta';
             const name = document.createElement('strong');
@@ -1004,7 +1064,7 @@
             name.textContent = opt.provider_name || 'Doctor';
             const time = document.createElement('span');
             time.className = 'mc-urgency-slot-card__time';
-            time.textContent = 'Today, ' + (opt.time_label || opt.range_label || '—');
+            time.textContent = 'Earliest available: Today, ' + (opt.time_label || opt.range_label || '—');
             meta.appendChild(name);
             meta.appendChild(time);
             const pick = document.createElement('span');
@@ -1017,11 +1077,28 @@
                 el.classList.remove('is-selected');
               });
               card.classList.add('is-selected');
-              providerSelect.value = String(opt.provider_id || '');
-              loadTodayBooking(String(opt.provider_id || ''));
+              applyUrgentEarliestSelection(opt);
             });
             wrap.appendChild(card);
+
+            if (
+              keepProviderId
+              && String(opt.provider_id || '') === keepProviderId
+              && (!keepSlotId || String(opt.slot_id || '') === keepSlotId)
+            ) {
+              restored = { opt: opt, card: card };
+            }
           });
+
+          if (restored) {
+            restored.card.classList.add('is-selected');
+            applyUrgentEarliestSelection(restored.opt);
+          } else if (preserveSelection && keepProviderId) {
+            // Previously selected doctor no longer has a bookable slot today.
+            providerSelect.value = '';
+            slotInput.value = '';
+            clearSlots('That doctor’s earliest slot is no longer available. Please select another doctor above.');
+          }
         })
         .catch(function () {
           if (status) status.textContent = 'Network error loading doctors. Please refresh and try again.';
@@ -1030,6 +1107,11 @@
 
     const pollSlots = () => {
       if (document.hidden) return;
+      // URGENT: refresh earliest-per-doctor list only — never the full slot grid.
+      if (window.BOOKING_URGENT_CHOICE === true) {
+        loadUrgentDoctorChoice(true);
+        return;
+      }
       const providerId = resolveProviderId();
       if (!providerId) return;
       if (window.MedConnectLiveSync && Date.now() - (window.MedConnectLiveSync.lastHubAt() || 0) < 4000) return;
@@ -1045,6 +1127,10 @@
     document.addEventListener('medconnect:live-sync', (ev) => {
       const changed = (ev.detail && ev.detail.changed) || [];
       if (changed.indexOf('slots') !== -1 || changed.indexOf('schedule') !== -1) {
+        if (window.BOOKING_URGENT_CHOICE === true) {
+          loadUrgentDoctorChoice(true);
+          return;
+        }
         const providerId = resolveProviderId();
         if (!providerId) return;
         loadSlots(providerId, dateInput.value || dateDisplay?.dataset.today || localTodayYmd(), true);
@@ -1052,6 +1138,10 @@
     });
 
     window.refreshBookingPicker = function refreshBookingPicker(silent) {
+      if (window.BOOKING_URGENT_CHOICE === true) {
+        loadUrgentDoctorChoice(!!silent);
+        return;
+      }
       const lockedId = window.BOOKING_LOCKED_PROVIDER_ID;
       const providerId = lockedId ? String(lockedId) : resolveProviderId();
       if (!providerId) {
@@ -1068,6 +1158,11 @@
   window.refreshBookingPicker = function refreshBookingPicker() {
     const providerSelect = document.getElementById('booking_provider');
     if (!providerSelect || !bookingPickerReady) {
+      return;
+    }
+
+    if (window.BOOKING_URGENT_CHOICE === true) {
+      // Handled by initBookingPicker's urgent earliest-only refresh.
       return;
     }
 

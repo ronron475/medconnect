@@ -795,6 +795,50 @@ body.mc-urgency-modal-open {
   background: #fff7ed;
 }
 
+.mc-urgent-choice .mc-urgency-slot-card.is-selected {
+  outline: 2px solid #0d9488;
+  outline-offset: 1px;
+  border-color: #0d9488;
+}
+
+.mc-urgent-selected-slot {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 14px 16px;
+  border: 1px solid #99f6e4;
+  border-radius: 12px;
+  background: #f0fdfa;
+}
+
+.mc-urgent-selected-slot__kicker {
+  margin: 0;
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: #0f766e;
+}
+
+.mc-urgent-selected-slot__title {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 700;
+  color: #0f172a;
+  word-break: break-word;
+}
+
+.mc-urgent-selected-slot__time {
+  margin: 0;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #115e59;
+}
+
+.mc-urgent-selected-slot__hint {
+  margin: 4px 0 0;
+}
+
 @media (max-width: 520px) {
   .mc-urgency-slot-card {
     flex-direction: column;
@@ -803,6 +847,10 @@ body.mc-urgency-modal-open {
 
   .mc-urgency-slot-card__btn {
     width: 100%;
+  }
+
+  .mc-urgent-selected-slot {
+    padding: 12px;
   }
 }
 
