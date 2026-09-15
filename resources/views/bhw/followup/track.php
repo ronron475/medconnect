@@ -13,7 +13,7 @@ $bhw_subnav_active = 'followup/track.php';
 <div class="bhw-followup-page">
   <header class="bhw-followup-header">
     <h2 class="text-h2">Follow-Up Monitoring</h2>
-    <p>Monitor scheduled follow-ups and log home visits after seeing the patient in person.</p>
+    <p>Monitor doctor-scheduled follow-ups for residents in your barangay and log community home visits.</p>
   </header>
 
   <?php require __DIR__ . '/../partials/bhw_module_subnav.php'; ?>
@@ -26,6 +26,7 @@ $bhw_subnav_active = 'followup/track.php';
         <option value="upcoming">Upcoming</option>
         <option value="missed">Missed</option>
         <option value="completed">Completed</option>
+        <option value="unscheduled">Unscheduled</option>
       </select>
     </div>
     <div class="table-responsive bhw-followup-table-wrap">
@@ -39,8 +40,25 @@ $bhw_subnav_active = 'followup/track.php';
             <th>Actions</th>
           </tr>
         </thead>
-        <tbody id="bhwFuBody"></tbody>
+        <tbody id="bhwFuBody">
+          <tr><td colspan="5" class="bhw-followup-empty">Loading follow-ups…</td></tr>
+        </tbody>
       </table>
+    </div>
+  </div>
+</div>
+
+<div id="bhwFuDetailModal" class="bhw-feedback-overlay" style="display:none;" aria-hidden="true">
+  <div class="bhw-card bhw-followup-detail-card" role="dialog" aria-labelledby="bhwFuDetailTitle">
+    <div class="bhw-followup-detail-head">
+      <h3 id="bhwFuDetailTitle" class="text-h3">Follow-up details</h3>
+      <button type="button" class="bhw-btn-outline bhw-followup-detail-close" id="bhwFuDetailClose" aria-label="Close">Close</button>
+    </div>
+    <div id="bhwFuDetailBody" class="bhw-followup-detail-body">
+      <p class="text-muted small">Loading…</p>
+    </div>
+    <div class="bhw-followup-detail-actions">
+      <button type="button" class="bhw-btn-teal" id="bhwFuDetailLogVisit" style="display:none;">Log home visit</button>
     </div>
   </div>
 </div>
@@ -79,7 +97,7 @@ $bhw_subnav_active = 'followup/track.php';
         <label class="form-label">Notes</label>
         <textarea name="notes" class="form-control" rows="3" placeholder="Observations from home visit…"></textarea>
       </div>
-      <div class="d-flex gap-2">
+      <div class="d-flex gap-2 flex-wrap">
         <button type="submit" class="bhw-btn-teal">Save Visit Log</button>
         <button type="button" class="bhw-btn-outline" id="bhwVisitCancel">Cancel</button>
       </div>
@@ -89,51 +107,160 @@ $bhw_subnav_active = 'followup/track.php';
 
 <script>
 (function () {
-  var modal = document.getElementById('bhwVisitModal');
+  var visitModal = document.getElementById('bhwVisitModal');
+  var detailModal = document.getElementById('bhwFuDetailModal');
+  var detailBody = document.getElementById('bhwFuDetailBody');
+  var detailLogBtn = document.getElementById('bhwFuDetailLogVisit');
+  var rowsCache = [];
+  var activeDetail = null;
+
+  function esc(s) {
+    var d = document.createElement('div');
+    d.textContent = s == null ? '' : String(s);
+    return d.innerHTML;
+  }
+
+  function statusBadge(f) {
+    var key = f.display_status_key || 'unknown';
+    var label = f.display_status || f.status || 'Unknown';
+    return '<span class="bhw-fu-status bhw-fu-status--' + esc(key) + '">' + esc(label) + '</span>';
+  }
 
   function openVisitModal(f) {
     document.getElementById('bhwVisitFollowupId').value = f.id;
     document.getElementById('bhwVisitPatientId').value = f.patient_id;
-    document.getElementById('bhwVisitPatientLabel').textContent = 'Patient: ' + f.patient_name;
-    modal.style.display = 'block';
-    modal.setAttribute('aria-hidden', 'false');
+    document.getElementById('bhwVisitPatientLabel').textContent =
+      'Patient: ' + (f.patient_name || '—') + ' · Follow-up #' + f.id;
+    visitModal.style.display = 'block';
+    visitModal.setAttribute('aria-hidden', 'false');
   }
 
   function closeVisitModal() {
-    modal.style.display = 'none';
-    modal.setAttribute('aria-hidden', 'true');
+    visitModal.style.display = 'none';
+    visitModal.setAttribute('aria-hidden', 'true');
   }
 
-  document.getElementById('bhwVisitCancel').addEventListener('click', closeVisitModal);
+  function closeDetailModal() {
+    detailModal.style.display = 'none';
+    detailModal.setAttribute('aria-hidden', 'true');
+    activeDetail = null;
+    detailLogBtn.style.display = 'none';
+  }
+
+  function renderDetail(payload) {
+    var f = payload.followup || {};
+    var visits = payload.visits || [];
+    activeDetail = f;
+    var doctorNote = (f.message || f.notes || '').trim();
+    var visitsHtml;
+    if (!visits.length) {
+      visitsHtml = '<p class="bhw-followup-empty" style="padding:12px 0;">No home visits logged yet.</p>';
+    } else {
+      visitsHtml = '<ul class="bhw-fu-visit-list">' + visits.map(function (v) {
+        return '<li><strong>' + esc(v.visit_date) + '</strong> · ' + esc(v.visit_type || 'follow_up') +
+          ' · ' + esc(v.patient_status || '—') +
+          (v.notes ? '<br><span class="text-muted">' + esc(v.notes) + '</span>' : '') +
+          (v.bhw_name ? '<br><span class="text-muted">By ' + esc(v.bhw_name) + '</span>' : '') +
+          '</li>';
+      }).join('') + '</ul>';
+    }
+
+    detailBody.innerHTML =
+      '<dl class="bhw-fu-detail-grid">' +
+        '<div><dt>Patient</dt><dd>' + esc(f.patient_name || '—') + '</dd></div>' +
+        '<div><dt>Follow-up date</dt><dd>' + esc(f.followup_datetime_label || f.followup_date || 'Date TBD') + '</dd></div>' +
+        '<div><dt>Status</dt><dd>' + statusBadge(f) + '</dd></div>' +
+        '<div><dt>Doctor</dt><dd>' + esc((f.provider_name || '').trim() || '—') + '</dd></div>' +
+        '<div><dt>Reference</dt><dd>#' + esc(f.id) + '</dd></div>' +
+        '<div><dt>Home visits</dt><dd>' + esc(f.home_visit_label || '—') + '</dd></div>' +
+      '</dl>' +
+      '<div class="bhw-fu-detail-block">' +
+        '<h4>Doctor follow-up note (read-only)</h4>' +
+        '<p>' + esc(doctorNote !== '' ? doctorNote : 'No doctor note on this follow-up.') + '</p>' +
+      '</div>' +
+      '<div class="bhw-fu-detail-block">' +
+        '<h4>Community home visits</h4>' +
+        visitsHtml +
+      '</div>';
+
+    detailLogBtn.style.display = 'inline-flex';
+    detailModal.style.display = 'block';
+    detailModal.setAttribute('aria-hidden', 'false');
+  }
+
+  function openDetail(id) {
+    detailBody.innerHTML = '<p class="text-muted small">Loading…</p>';
+    detailModal.style.display = 'block';
+    detailModal.setAttribute('aria-hidden', 'false');
+    BhwPortal.get('followups.php', { action: 'get', followup_id: id }).then(function (r) {
+      if (!r.success) {
+        detailBody.innerHTML = '<p class="bhw-followup-empty bhw-followup-empty--error">' +
+          esc(r.message || 'Could not load follow-up.') + '</p>';
+        detailLogBtn.style.display = 'none';
+        return;
+      }
+      renderDetail(r);
+    }).catch(function () {
+      detailBody.innerHTML = '<p class="bhw-followup-empty bhw-followup-empty--error">Could not load follow-up.</p>';
+      detailLogBtn.style.display = 'none';
+    });
+  }
 
   function loadFu() {
+    var tb = document.getElementById('bhwFuBody');
+    tb.innerHTML = '<tr><td colspan="5" class="bhw-followup-empty">Loading follow-ups…</td></tr>';
     BhwPortal.get('followups.php', { action: 'list', status: document.getElementById('bhwFuFilter').value }).then(function (r) {
-      var tb = document.getElementById('bhwFuBody');
-      var rows = r.followups || [];
-      if (!rows.length) {
-        tb.innerHTML = '<tr><td colspan="5" class="bhw-followup-empty">No follow-ups match this filter.</td></tr>';
+      if (!r.success) {
+        tb.innerHTML = '<tr><td colspan="5" class="bhw-followup-empty bhw-followup-empty--error">' +
+          esc(r.message || 'Could not load follow-ups.') + '</td></tr>';
+        return;
+      }
+      rowsCache = r.followups || [];
+      if (!rowsCache.length) {
+        tb.innerHTML = '<tr><td colspan="5" class="bhw-followup-empty">No doctor follow-ups found for your barangay with this filter.</td></tr>';
       } else {
-        tb.innerHTML = rows.map(function (f) {
-          var visits = (parseInt(f.home_visit_count, 10) || 0) + (f.last_home_visit ? ' (last: ' + f.last_home_visit + ')' : '');
+        tb.innerHTML = rowsCache.map(function (f) {
           return '<tr>' +
-            '<td>' + f.followup_date + '</td>' +
-            '<td>' + f.patient_name + '</td>' +
-            '<td>' + f.status + '</td>' +
-            '<td>' + visits + '</td>' +
-            '<td><button type="button" class="bhw-btn-teal bhw-log-visit" data-id="' + f.id + '">Log home visit</button></td>' +
-            '</tr>';
+            '<td data-label="Date">' + esc(f.followup_datetime_label || f.followup_date || 'Date TBD') + '</td>' +
+            '<td data-label="Patient"><span class="bhw-fu-patient-name">' + esc(f.patient_name || '—') + '</span>' +
+              (f.provider_name ? '<span class="bhw-fu-patient-sub">Dr. ' + esc(String(f.provider_name).trim()) + '</span>' : '') +
+            '</td>' +
+            '<td data-label="Status">' + statusBadge(f) + '</td>' +
+            '<td data-label="Home visits">' + esc(f.home_visit_label || 'No home visits yet') + '</td>' +
+            '<td data-label="Actions"><div class="bhw-fu-actions">' +
+              '<button type="button" class="bhw-btn-outline bhw-fu-view" data-id="' + f.id + '">View</button>' +
+              '<button type="button" class="bhw-btn-teal bhw-log-visit" data-id="' + f.id + '">Log visit</button>' +
+            '</div></td>' +
+          '</tr>';
         }).join('');
+
+        tb.querySelectorAll('.bhw-fu-view').forEach(function (btn) {
+          btn.addEventListener('click', function () {
+            openDetail(parseInt(btn.dataset.id, 10));
+          });
+        });
         tb.querySelectorAll('.bhw-log-visit').forEach(function (btn) {
           btn.addEventListener('click', function () {
             var id = parseInt(btn.dataset.id, 10);
-            var row = rows.find(function (x) { return parseInt(x.id, 10) === id; });
+            var row = rowsCache.find(function (x) { return parseInt(x.id, 10) === id; });
             if (row) openVisitModal(row);
           });
         });
       }
       if (window.MedConnectNavBadgesRefresh) window.MedConnectNavBadgesRefresh();
+    }).catch(function () {
+      tb.innerHTML = '<tr><td colspan="5" class="bhw-followup-empty bhw-followup-empty--error">Could not load follow-ups.</td></tr>';
     });
   }
+
+  document.getElementById('bhwVisitCancel').addEventListener('click', closeVisitModal);
+  document.getElementById('bhwFuDetailClose').addEventListener('click', closeDetailModal);
+  detailLogBtn.addEventListener('click', function () {
+    if (activeDetail) {
+      closeDetailModal();
+      openVisitModal(activeDetail);
+    }
+  });
 
   document.getElementById('bhwFuFilter').addEventListener('change', loadFu);
 

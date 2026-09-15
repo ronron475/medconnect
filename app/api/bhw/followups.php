@@ -11,8 +11,10 @@ $bhwId = (int) ($_SESSION['user_id'] ?? 0);
 try {
     if ($action === 'list') {
         $status = $_GET['status'] ?? null;
+        if ($status === '') {
+            $status = null;
+        }
         $followups = BhwWorkflows::listFollowups($pdo, $ctx, $status);
-        // Viewing the follow-ups list marks inbox items read (existing notifications workflow).
         if ($bhwId > 0) {
             bhw_nav_mark_followups_read($pdo, $bhwId);
         }
@@ -20,9 +22,18 @@ try {
             'followups' => $followups,
             'bhw_followups' => bhw_nav_followups_unread_count($pdo, $bhwId, $ctx),
         ]);
+    } elseif ($action === 'get') {
+        $followupId = (int) ($_GET['followup_id'] ?? $_POST['followup_id'] ?? 0);
+        $payload = BhwWorkflows::getFollowup($pdo, $ctx, $followupId);
+        if ($bhwId > 0) {
+            bhw_nav_mark_followups_read($pdo, $bhwId, $followupId);
+        }
+        Api::success($payload);
     } elseif ($action === 'remind') {
-        BhwWorkflows::sendFollowupReminder($pdo, $ctx, (int) ($_POST['followup_id'] ?? 0));
-        Api::success([], 'Reminder sent.');
+        $result = BhwWorkflows::sendFollowupReminder($pdo, $ctx, (int) ($_POST['followup_id'] ?? 0));
+        Api::success([
+            'email' => $result['email'] ?? '',
+        ], (string) ($result['message'] ?? 'Reminder email sent.'));
     } elseif ($action === 'log_visit') {
         bhw_api_require_patient_in_sector($pdo, $ctx, (int) ($_POST['patient_id'] ?? 0));
         $followupId = (int) ($_POST['followup_id'] ?? 0);
