@@ -27,81 +27,99 @@ $roles = ['all' => 'All active users', 'patient' => 'Patients', 'provider' => 'P
 
 require_once __DIR__ . '/partials/layout_open.php';
 ?>
-<div class="header-row" style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:12px;margin-bottom:24px;">
-  <div>
-    <h2 class="text-h2">Notification Center</h2>
-    <p class="text-muted"><?= number_format($pending) ?> unread notifications system-wide.</p>
-  </div>
-  <div style="display:flex;gap:8px;flex-wrap:wrap;">
-    <a href="?filter=all" class="mc-btn mc-btn--outline <?= $filter === 'all' ? 'is-active' : '' ?>">All</a>
-    <a href="?filter=unread" class="mc-btn mc-btn--outline <?= $filter === 'unread' ? 'is-active' : '' ?>">Unread</a>
-    <a href="?filter=read" class="mc-btn mc-btn--outline <?= $filter === 'read' ? 'is-active' : '' ?>">Read</a>
-    <button type="button" class="mc-btn mc-btn--primary" id="markAllRead">Mark all read</button>
-  </div>
-</div>
+<link rel="stylesheet" href="<?= ASSET_BASE ?>/assets/css/admin-notification-center.css?v=<?= (int) @filemtime(ASSETS_PATH . '/css/admin-notification-center.css') ?>">
 
-<div class="mc-card mb-md">
-  <h3 class="text-h3 mb-md">Broadcast Notification</h3>
-  <form id="broadcastForm" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;">
-    <label class="text-sm">Target audience
-      <select name="target_role" class="mc-btn mc-btn--outline" style="width:100%;background:var(--mc-surface, #fff);margin-top:6px;">
-        <?php foreach ($roles as $val => $label): ?>
-        <option value="<?= $val === 'all' ? 'all' : $val ?>"><?= htmlspecialchars($label) ?></option>
-        <?php endforeach; ?>
-      </select>
-    </label>
-    <label class="text-sm">Priority
-      <select name="priority" class="mc-btn mc-btn--outline" style="width:100%;background:var(--mc-surface, #fff);margin-top:6px;">
-        <option value="normal">Normal</option>
-        <option value="high">High</option>
-        <option value="critical">Critical</option>
-      </select>
-    </label>
-    <label class="text-sm" style="grid-column:1/-1;">Title
-      <input type="text" name="title" required class="mc-btn mc-btn--outline" style="width:100%;background:var(--mc-surface, #fff);text-align:left;margin-top:6px;">
-    </label>
-    <label class="text-sm" style="grid-column:1/-1;">Message
-      <textarea name="message" required rows="3" class="mc-btn mc-btn--outline" style="width:100%;background:var(--mc-surface, #fff);text-align:left;margin-top:6px;resize:vertical;"></textarea>
-    </label>
-    <div style="grid-column:1/-1;">
-      <button type="submit" class="mc-btn mc-btn--primary">Send Broadcast</button>
+<div class="sa-nc">
+  <div class="sa-nc__header">
+    <div class="sa-nc__title-block">
+      <h2 class="text-h2">Notification Center</h2>
+      <p class="text-muted"><?= number_format($pending) ?> unread notifications system-wide.</p>
     </div>
-  </form>
-</div>
+    <div class="sa-nc__filters" role="group" aria-label="Notification filters">
+      <a href="?filter=all" class="mc-btn mc-btn--outline<?= $filter === 'all' ? ' is-active' : '' ?>">All</a>
+      <a href="?filter=unread" class="mc-btn mc-btn--outline<?= $filter === 'unread' ? ' is-active' : '' ?>">Unread</a>
+      <a href="?filter=read" class="mc-btn mc-btn--outline<?= $filter === 'read' ? ' is-active' : '' ?>">Read</a>
+      <button type="button" class="mc-btn mc-btn--primary" id="markAllRead">Mark all read</button>
+    </div>
+  </div>
 
-<div class="mc-card" style="padding:0;overflow:hidden;">
-  <table class="mc-table admin-stack-table">
-    <thead>
-      <tr><th>User</th><th>Type</th><th>Title</th><th>Priority</th><th>Read</th><th>Time</th><th></th></tr>
-    </thead>
-    <tbody>
-      <?php if (empty($recent)): ?>
-      <tr><td colspan="7"><div class="mc-table-empty"><p>No notifications found.</p></div></td></tr>
-      <?php else: foreach ($recent as $n): ?>
-      <tr data-id="<?= (int) $n['id'] ?>">
-        <td data-label="User" class="text-xs"><?= htmlspecialchars($n['email'] ?? '—') ?></td>
-        <td data-label="Type"><?= htmlspecialchars($n['type'] ?? '') ?></td>
-        <td data-label="Title">
-          <strong><?= htmlspecialchars($n['title'] ?? '') ?></strong>
-          <?php if (!empty($n['message'])): ?>
-          <div class="text-xs text-muted"><?= htmlspecialchars(mb_strimwidth($n['message'], 0, 80, '…')) ?></div>
-          <?php endif; ?>
-        </td>
-        <td data-label="Priority"><span class="mc-badge"><?= htmlspecialchars($n['priority'] ?? 'normal') ?></span></td>
-        <td data-label="Read"><?= $n['is_read'] ? 'Yes' : 'No' ?></td>
-        <td data-label="Time" class="text-xs text-muted"><?= date('M j, g:i A', strtotime($n['created_at'])) ?></td>
-        <td data-label="Actions" style="white-space:nowrap;">
-          <?php if (!$n['is_read']): ?>
-          <button type="button" class="mc-btn mc-btn--outline js-mark-read" data-id="<?= (int) $n['id'] ?>" style="padding:2px 8px;font-size:10px;">Read</button>
-          <?php else: ?>
-          <button type="button" class="mc-btn mc-btn--outline js-mark-unread" data-id="<?= (int) $n['id'] ?>" style="padding:2px 8px;font-size:10px;">Unread</button>
-          <?php endif; ?>
-          <button type="button" class="mc-btn mc-btn--outline js-delete" data-id="<?= (int) $n['id'] ?>" style="padding:2px 8px;font-size:10px;">Delete</button>
-        </td>
-      </tr>
-      <?php endforeach; endif; ?>
-    </tbody>
-  </table>
+  <div class="mc-card sa-nc__broadcast">
+    <h3 class="text-h3 sa-nc__broadcast-title">Broadcast Notification</h3>
+    <form id="broadcastForm" class="sa-nc__broadcast-form">
+      <label class="sa-nc__field">
+        <span class="sa-nc__label">Target audience</span>
+        <select name="target_role" class="sa-nc__control">
+          <?php foreach ($roles as $val => $label): ?>
+          <option value="<?= $val === 'all' ? 'all' : $val ?>"><?= htmlspecialchars($label) ?></option>
+          <?php endforeach; ?>
+        </select>
+      </label>
+      <label class="sa-nc__field">
+        <span class="sa-nc__label">Priority</span>
+        <select name="priority" class="sa-nc__control">
+          <option value="normal">Normal</option>
+          <option value="high">High</option>
+          <option value="critical">Critical</option>
+        </select>
+      </label>
+      <label class="sa-nc__field sa-nc__field--full">
+        <span class="sa-nc__label">Title</span>
+        <input type="text" name="title" required class="sa-nc__control">
+      </label>
+      <label class="sa-nc__field sa-nc__field--full">
+        <span class="sa-nc__label">Message</span>
+        <textarea name="message" required rows="3" class="sa-nc__control sa-nc__control--textarea"></textarea>
+      </label>
+      <div class="sa-nc__broadcast-actions">
+        <button type="submit" class="mc-btn mc-btn--primary">Send Broadcast</button>
+      </div>
+    </form>
+  </div>
+
+  <div class="mc-card sa-nc__table-card">
+    <div class="sa-nc__table-scroll">
+      <table class="mc-table admin-stack-table sa-nc__table">
+        <thead>
+          <tr>
+            <th>User</th>
+            <th>Type</th>
+            <th>Title</th>
+            <th>Priority</th>
+            <th>Read</th>
+            <th>Time</th>
+            <th><span class="sr-only">Actions</span></th>
+          </tr>
+        </thead>
+        <tbody>
+          <?php if (empty($recent)): ?>
+          <tr><td colspan="7"><div class="mc-table-empty"><p>No notifications found.</p></div></td></tr>
+          <?php else: foreach ($recent as $n): ?>
+          <tr data-id="<?= (int) $n['id'] ?>">
+            <td data-label="User" class="text-xs sa-nc__cell-user"><?= htmlspecialchars($n['email'] ?? '—') ?></td>
+            <td data-label="Type"><?= htmlspecialchars($n['type'] ?? '') ?></td>
+            <td data-label="Title" class="sa-nc__cell-title">
+              <strong><?= htmlspecialchars($n['title'] ?? '') ?></strong>
+              <?php if (!empty($n['message'])): ?>
+              <div class="text-xs text-muted"><?= htmlspecialchars(mb_strimwidth($n['message'], 0, 80, '…')) ?></div>
+              <?php endif; ?>
+            </td>
+            <td data-label="Priority"><span class="mc-badge"><?= htmlspecialchars($n['priority'] ?? 'normal') ?></span></td>
+            <td data-label="Read"><?= $n['is_read'] ? 'Yes' : 'No' ?></td>
+            <td data-label="Time" class="text-xs text-muted"><?= date('M j, g:i A', strtotime($n['created_at'])) ?></td>
+            <td data-label="Actions" class="sa-nc__cell-actions">
+              <?php if (!$n['is_read']): ?>
+              <button type="button" class="mc-btn mc-btn--outline sa-nc__row-btn js-mark-read" data-id="<?= (int) $n['id'] ?>">Read</button>
+              <?php else: ?>
+              <button type="button" class="mc-btn mc-btn--outline sa-nc__row-btn js-mark-unread" data-id="<?= (int) $n['id'] ?>">Unread</button>
+              <?php endif; ?>
+              <button type="button" class="mc-btn mc-btn--outline sa-nc__row-btn js-delete" data-id="<?= (int) $n['id'] ?>">Delete</button>
+            </td>
+          </tr>
+          <?php endforeach; endif; ?>
+        </tbody>
+      </table>
+    </div>
+  </div>
 </div>
 
 <script>

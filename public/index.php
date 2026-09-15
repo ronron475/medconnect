@@ -9,6 +9,7 @@ require_once dirname(__DIR__) . '/bootstrap/app.php';
 require_once CONFIG_PATH . '/db.php';
 require_once BASE_PATH . '/app/includes/announcement_service.php';
 require_once BASE_PATH . '/app/includes/landing_page_config.php';
+require_once BASE_PATH . '/app/includes/system_settings.php';
 
 AnnouncementService::ensureSchema($pdo);
 $landing_announcements = AnnouncementService::listPublic($pdo, 6);
@@ -16,7 +17,8 @@ $landing_announcements_total = AnnouncementService::countPublic($pdo);
 $landing_hero = LandingPageConfig::hero($pdo);
 $landing_sections = LandingPageConfig::sections($pdo);
 $landing_maintenance = [
-    'enabled' => LandingPageConfig::flag($pdo, 'LANDING_MAINTENANCE_BANNER'),
+    'enabled' => LandingPageConfig::flag($pdo, 'LANDING_MAINTENANCE_BANNER')
+        || (system_settings_get($pdo, 'MAINTENANCE_MODE', '0') === '1'),
     'message' => LandingPageConfig::get($pdo, 'LANDING_MAINTENANCE_MESSAGE'),
 ];
 

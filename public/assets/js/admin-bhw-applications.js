@@ -32,16 +32,18 @@
   let allRows = [];
 
   /**
-   * Canonical BHW application status groups.
+   * Canonical BHW application status groups (mirrors BhwApplicationService::HUB_STATUS_GROUPS).
    * Summary counts and the status filter/tab MUST use these same sets.
    * Internal workflow statuses (invited / onboarding / requires_documents) stay in "All" only.
    */
-  const BHW_STATUS_GROUPS = {
-    draft: ['draft'],
-    pending_approval: ['pending_approval'],
-    active: ['active', 'approved'],
-    rejected: ['rejected'],
-  };
+  const BHW_STATUS_GROUPS = (cfg.statusGroups && typeof cfg.statusGroups === 'object')
+    ? cfg.statusGroups
+    : {
+      draft: ['draft'],
+      pending_approval: ['pending_approval'],
+      active: ['active', 'approved'],
+      rejected: ['rejected'],
+    };
 
   function normalizeBhwStatusFilter(status) {
     const s = String(status || 'all').trim().toLowerCase();
@@ -60,15 +62,18 @@
     return status === f;
   }
 
+  /** Count rows for a hub filter using the same logic as the status dropdown / tabs. */
+  function countForHubFilter(rows, filter) {
+    return filterBhwRows(rows, { search: '', status: filter }).length;
+  }
+
   function computeBhwStats(rows) {
-    const stats = { total: rows.length, draft: 0, pending: 0, active: 0 };
-    rows.forEach(function (r) {
-      const s = r.status;
-      if (bhwStatusMatches(s, 'draft')) stats.draft += 1;
-      else if (bhwStatusMatches(s, 'pending_approval')) stats.pending += 1;
-      else if (bhwStatusMatches(s, 'active')) stats.active += 1;
-    });
-    return stats;
+    return {
+      total: rows.length,
+      draft: countForHubFilter(rows, 'draft'),
+      pending: countForHubFilter(rows, 'pending_approval'),
+      active: countForHubFilter(rows, 'active'),
+    };
   }
 
   function filterBhwRows(rows, opts) {
@@ -201,15 +206,7 @@
       fillBarangays();
       allRows = json.data.applications || [];
       syncStatusFilterFromConfig();
-      const stats = (json.data.stats && typeof json.data.stats.pending === 'number')
-        ? {
-            total: Number.isFinite(Number(json.data.stats.total)) ? Number(json.data.stats.total) : allRows.length,
-            draft: Number.isFinite(Number(json.data.stats.draft)) ? Number(json.data.stats.draft) : 0,
-            pending: Number.isFinite(Number(json.data.stats.pending)) ? Number(json.data.stats.pending) : 0,
-            active: Number.isFinite(Number(json.data.stats.active)) ? Number(json.data.stats.active) : 0,
-          }
-        : computeBhwStats(allRows);
-      utils.updateStats(statsEl, stats);
+      utils.updateStats(statsEl, computeBhwStats(allRows));
       applyFilters();
       if (!barangaysLoaded) {
         ensureBarangays(true);

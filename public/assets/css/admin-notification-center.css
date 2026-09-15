@@ -1,0 +1,422 @@
+/* Admin / SuperAdmin Notification Center — responsive UI only */
+
+.sa-nc {
+  --sa-nc-border: var(--border-color, var(--mc-border-thin, #e2edf1));
+  --sa-nc-muted: var(--text-muted, var(--mc-slate-muted, #608395));
+  --sa-nc-navy: var(--text-primary, var(--mc-navy-dark, #012a4a));
+  --sa-nc-surface: var(--card-bg, var(--mc-surface, #fff));
+  --sa-nc-teal: #069396;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  overflow-x: clip;
+}
+
+.sa-nc *,
+.sa-nc *::before,
+.sa-nc *::after {
+  box-sizing: border-box;
+}
+
+.sa-nc .sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* ── Header + filters ── */
+.sa-nc__header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px 16px;
+  margin: 0;
+  width: 100%;
+  min-width: 0;
+}
+
+.sa-nc__title-block {
+  min-width: 0;
+  flex: 1 1 14rem;
+}
+
+.sa-nc__title-block .text-h2 {
+  margin: 0 0 4px;
+}
+
+.sa-nc__title-block .text-muted {
+  margin: 0;
+}
+
+.sa-nc__filters {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  max-width: 100%;
+}
+
+.sa-nc__filters .mc-btn {
+  min-height: 38px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 14px;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  white-space: nowrap;
+  max-width: 100%;
+}
+
+.sa-nc__filters .mc-btn.is-active,
+.sa-nc__filters .mc-btn--outline.is-active {
+  background: rgba(6, 147, 150, 0.12);
+  border-color: var(--sa-nc-teal);
+  color: var(--sa-nc-teal);
+}
+
+/* ── Broadcast card ── */
+.sa-nc__broadcast {
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  padding: 16px 18px;
+}
+
+.sa-nc__broadcast-title {
+  margin: 0 0 14px;
+}
+
+.sa-nc__broadcast-form {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px 14px;
+  width: 100%;
+  min-width: 0;
+}
+
+.sa-nc__field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--sa-nc-navy);
+}
+
+.sa-nc__field--full {
+  grid-column: 1 / -1;
+}
+
+.sa-nc__label {
+  display: block;
+  line-height: 1.3;
+}
+
+.sa-nc__control {
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  padding: 9px 12px;
+  border: 1px solid var(--sa-nc-border);
+  border-radius: 8px;
+  background: var(--sa-nc-surface);
+  color: var(--sa-nc-navy);
+  font: inherit;
+  font-size: 0.875rem;
+  font-weight: 500;
+  line-height: 1.35;
+}
+
+.sa-nc__control:focus {
+  outline: 2px solid rgba(6, 147, 150, 0.35);
+  outline-offset: 1px;
+  border-color: var(--sa-nc-teal);
+}
+
+.sa-nc__control--textarea {
+  resize: vertical;
+  min-height: 88px;
+  text-align: left;
+}
+
+.sa-nc__broadcast-actions {
+  grid-column: 1 / -1;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.sa-nc__broadcast-actions .mc-btn {
+  min-height: 40px;
+  padding: 0 18px;
+}
+
+/* ── Table card ── */
+.sa-nc__table-card {
+  padding: 0;
+  overflow: hidden;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+}
+
+.sa-nc__table-scroll {
+  width: 100%;
+  max-width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior-x: contain;
+}
+
+.sa-nc__table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.8125rem;
+}
+
+.sa-nc__table thead th {
+  padding: 10px 14px;
+  text-align: left;
+  font-size: 0.6875rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--sa-nc-muted);
+  background: var(--bg-secondary, #f8fcfc);
+  border-bottom: 1px solid var(--sa-nc-border);
+  white-space: nowrap;
+}
+
+.sa-nc__table tbody td {
+  padding: 12px 14px;
+  vertical-align: middle;
+  border-bottom: 1px solid var(--sa-nc-border);
+  color: var(--sa-nc-navy);
+  line-height: 1.4;
+}
+
+.sa-nc__table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.sa-nc__cell-user {
+  max-width: 220px;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+.sa-nc__cell-title {
+  min-width: 0;
+  max-width: 320px;
+}
+
+.sa-nc__cell-title strong {
+  display: block;
+  font-weight: 700;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+.sa-nc__cell-title .text-muted {
+  margin-top: 2px;
+  overflow-wrap: anywhere;
+}
+
+.sa-nc__cell-actions {
+  white-space: nowrap;
+}
+
+.sa-nc__row-btn {
+  min-height: 30px;
+  padding: 0 10px;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  margin: 0 2px 0 0;
+}
+
+/* ── Laptop ── */
+@media (max-width: 1439px) and (min-width: 1024px) {
+  .sa-nc {
+    gap: 14px;
+  }
+
+  .sa-nc__broadcast {
+    padding: 14px 16px;
+  }
+
+  .sa-nc__cell-title {
+    max-width: 260px;
+  }
+}
+
+/* ── Tablet ── */
+@media (max-width: 1023px) and (min-width: 768px) {
+  .sa-nc {
+    gap: 14px;
+  }
+
+  .sa-nc__header {
+    gap: 10px 12px;
+  }
+
+  .sa-nc__filters .mc-btn {
+    flex: 0 1 auto;
+  }
+
+  .sa-nc__broadcast-form {
+    gap: 12px;
+  }
+
+  .sa-nc__table {
+    min-width: 720px;
+  }
+
+  .sa-nc__cell-title {
+    max-width: 200px;
+  }
+}
+
+/* ── Tablet + mobile: stack broadcast audience/priority when needed ── */
+@media (max-width: 900px) {
+  .sa-nc__broadcast-form {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ── Mobile (matches admin-stack-table card layout) ── */
+@media (max-width: 767px) {
+  .sa-nc {
+    gap: 12px;
+  }
+
+  .sa-nc__header {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .sa-nc__filters {
+    width: 100%;
+  }
+
+  .sa-nc__filters .mc-btn {
+    flex: 1 1 calc(50% - 8px);
+    min-width: 0;
+    justify-content: center;
+    white-space: normal;
+    text-align: center;
+    line-height: 1.25;
+    padding: 8px 10px;
+    min-height: 40px;
+  }
+
+  .sa-nc__filters .mc-btn--primary {
+    flex: 1 1 100%;
+  }
+
+  .sa-nc__broadcast {
+    padding: 14px;
+  }
+
+  .sa-nc__broadcast-form {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+
+  .sa-nc__broadcast-actions {
+    display: block;
+  }
+
+  .sa-nc__broadcast-actions .mc-btn {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .sa-nc__table-scroll {
+    overflow-x: visible;
+  }
+
+  .sa-nc__cell-user,
+  .sa-nc__cell-title {
+    max-width: none;
+  }
+
+  .sa-nc__cell-actions {
+    white-space: normal;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    justify-content: flex-end;
+  }
+
+  .sa-nc__row-btn {
+    min-height: 36px;
+    padding: 0 12px;
+    font-size: 0.75rem;
+    margin: 0;
+  }
+}
+
+@media (max-width: 480px) {
+  .sa-nc__filters .mc-btn {
+    flex: 1 1 100%;
+  }
+
+  .sa-nc__title-block .text-h2 {
+    font-size: 1.125rem;
+  }
+}
+
+@media (max-width: 360px) {
+  .sa-nc__broadcast {
+    padding: 12px;
+  }
+
+  .sa-nc__control {
+    padding: 8px 10px;
+    font-size: 0.8125rem;
+  }
+}
+
+@supports not (overflow-x: clip) {
+  .sa-nc {
+    overflow-x: hidden;
+  }
+}
+
+/* Dark mode tweaks for SuperAdmin Notification Center */
+html[data-theme-resolved='dark'] .sa-nc__control {
+  background: #0D1E30;
+  border-color: #243347;
+  color: #ffffff;
+}
+
+html[data-theme-resolved='dark'] .sa-nc__table thead th {
+  background: #0D1E30;
+  border-bottom-color: #243347;
+  color: #8FAABF;
+}
+
+html[data-theme-resolved='dark'] .sa-nc__table tbody td {
+  border-bottom-color: #243347;
+  color: #ffffff;
+}
+
+html[data-theme-resolved='dark'] .sa-nc__filters .mc-btn.is-active,
+html[data-theme-resolved='dark'] .sa-nc__filters .mc-btn--outline.is-active {
+  background: rgba(6, 147, 150, 0.2);
+  color: #5eead4;
+}

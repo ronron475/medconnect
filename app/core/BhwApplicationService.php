@@ -17,6 +17,19 @@ final class BhwApplicationService
     public const STATUS_REJECTED           = 'rejected';
     public const STATUS_REQUIRES_DOCUMENTS = 'requires_documents';
 
+    /**
+     * Visible BHW Management hub filters (Admin + SuperAdmin).
+     * Internal workflow statuses (invited, onboarding, requires_documents) appear under "All" only.
+     *
+     * @var array<string, list<string>>
+     */
+    public const HUB_STATUS_GROUPS = [
+        'draft'            => [self::STATUS_DRAFT],
+        'pending_approval' => [self::STATUS_PENDING],
+        'active'           => [self::STATUS_ACTIVE, self::STATUS_APPROVED],
+        'rejected'         => [self::STATUS_REJECTED],
+    ];
+
     public const INVITE_TTL_HOURS = 72;
     public const ONBOARDING_TTL_DAYS = 14;
 
@@ -801,28 +814,132 @@ final class BhwApplicationService
         return $rows;
     }
 
+    public static function normalizeHubStatusFilter(string $filter): string
+    {
+        $s = strtolower(trim($filter));
+        if ($s === 'pending' || $s === 'pending_approval') {
+            return 'pending_approval';
+        }
+        if ($s === 'drafts' || $s === 'draft') {
+            return 'draft';
+        }
+        if ($s === 'approved') {
+            return 'active';
+        }
+
+        return $s !== '' ? $s : 'all';
+    }
+
+    public static function rowMatchesHubStatusFilter(string $status, string $filter): bool
+    {
+        $normalized = strtolower(trim($status));
+        $f = self::normalizeHubStatusFilter($filter);
+        if ($f === 'all') {
+            return true;
+        }
+        $group = self::HUB_STATUS_GROUPS[$f] ?? null;
+        if ($group !== null) {
+            return in_array($normalized, $group, true);
+        }
+
+        return $normalized === $f;
+    }
+
+    /**
+     * @param list<array<string, mixed>> $rows
+     * @return list<array<string, mixed>>
+     */
+    public function filterRowsForHub(array $rows, string $filter, string $search = ''): array
+    {
+        $needle = strtolower(trim($search));
+        $out = [];
+        foreach ($rows as $row) {
+            $status = (string) ($row['status'] ?? '');
+            if (!self::rowMatchesHubStatusFilter($status, $filter)) {
+                continue;
+            }
+            if ($needle !== '') {
+                $hay = strtolower(trim(implode(' ', [
+                    (string) ($row['display_name'] ?? ''),
+                    (string) ($row['email'] ?? ''),
+                    (string) ($row['barangay_name'] ?? ''),
+                ])));
+                if (!str_contains($hay, $needle)) {
+                    continue;
+                }
+            }
+            $out[] = $row;
+        }
+
+        return $out;
+    }
+
+    /**
+     * @param list<array<string, mixed>> $rows
+     */
+    public function countRowsForHubFilter(array $rows, string $filter): int
+    {
+        return count($this->filterRowsForHub($rows, $filter, ''));
+    }
+
     /**
      * Summary stats for the applications list — must match BHW hub filters:
      * pending = pending_approval only; active = active|approved.
      *
      * @param list<array<string, mixed>> $rows
-     * @return array{total: int, draft: int, pending: int, active: int}
+     * @return array{total: int, draft: int, pending: int, active: int, rejected: int}
      */
     public function statsFromRows(array $rows): array
     {
-        $stats = ['total' => count($rows), 'draft' => 0, 'pending' => 0, 'active' => 0];
-        foreach ($rows as $row) {
-            $status = strtolower(trim((string) ($row['status'] ?? '')));
-            if ($status === self::STATUS_DRAFT) {
-                $stats['draft']++;
-            } elseif ($status === self::STATUS_PENDING) {
-                $stats['pending']++;
-            } elseif ($status === self::STATUS_ACTIVE || $status === self::STATUS_APPROVED) {
-                $stats['active']++;
-            }
+        return [
+            'total'    => count($rows),
+            'draft'    => $this->countRowsForHubFilter($rows, 'draft'),
+            'pending'  => $this->countRowsForHubFilter($rows, 'pending_approval'),
+            'active'   => $this->countRowsForHubFilter($rows, 'active'),
+            'rejected' => $this->countRowsForHubFilter($rows, 'rejected'),
+        ];
+    }
+
+    /**
+     * Database aggregates for hub summary cards (same scope as listForAdmin).
+     *
+     * @return array{total: int, draft: int, pending: int, active: int, rejected: int}
+     */
+    public function statsForActorFromDatabase(int $adminId, bool $isSuperAdmin = false): array
+    {
+        if ($isSuperAdmin) {
+            $stmt = $this->pdo->query("
+                SELECT
+                    COUNT(*) AS total,
+                    SUM(status = 'draft') AS draft,
+                    SUM(status = 'pending_approval') AS pending,
+                    SUM(status IN ('active', 'approved')) AS active,
+                    SUM(status = 'rejected') AS rejected
+                FROM bhw_applications
+            ");
+            $row = $stmt->fetch(PDO::FETCH_ASSOC) ?: [];
+        } else {
+            $stmt = $this->pdo->prepare("
+                SELECT
+                    COUNT(*) AS total,
+                    SUM(status = 'draft') AS draft,
+                    SUM(status = 'pending_approval') AS pending,
+                    SUM(status IN ('active', 'approved')) AS active,
+                    SUM(status = 'rejected') AS rejected
+                FROM bhw_applications
+                WHERE created_by = ? OR submitted_by = ?
+            ");
+            $stmt->execute([$adminId, $adminId]);
+            $row = $stmt->fetch(PDO::FETCH_ASSOC) ?: [];
         }
 
-        return $stats;
+        return [
+            'total'    => (int) ($row['total'] ?? 0),
+            'draft'    => (int) ($row['draft'] ?? 0),
+            'pending'  => (int) ($row['pending'] ?? 0),
+            'active'   => (int) ($row['active'] ?? 0),
+            'rejected' => (int) ($row['rejected'] ?? 0),
+        ];
     }
 
     /**

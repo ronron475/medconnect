@@ -12,6 +12,7 @@ if (!defined('BASE_PATH')) {
 require_once BASE_PATH . '/app/includes/bhw_application_schema.php';
 require_once BASE_PATH . '/app/includes/barangays_bago.php';
 require_once BASE_PATH . '/app/includes/portal_paths.php';
+require_once BASE_PATH . '/app/core/BhwApplicationService.php';
 require_once __DIR__ . '/_portal_access.php';
 
 bhw_application_ensure_schema($pdo);
@@ -342,10 +343,11 @@ window.MC_BHW_APP = {
     initialStatus: <?= json_encode($initial_app_status) ?>,
     showApplications: <?= $show_applications_panel ? 'true' : 'false' ?>,
     checkerMode: <?= $is_superadmin_checker ? 'true' : 'false' ?>,
+    statusGroups: <?= json_encode(BhwApplicationService::HUB_STATUS_GROUPS, JSON_UNESCAPED_UNICODE) ?>,
     barangays: <?= json_encode($bhw_invite_barangays, JSON_UNESCAPED_UNICODE) ?>
 };
 </script>
-<script src="<?= ASSET_BASE ?>/assets/js/admin-bhw-applications.js?v=2.6"></script>
+<script src="<?= ASSET_BASE ?>/assets/js/admin-bhw-applications.js?v=2.7"></script>
 <?php if ($is_superadmin_checker): ?>
 <script>
 window.MC_BHW_APPROVAL = {
@@ -354,7 +356,7 @@ window.MC_BHW_APPROVAL = {
     hubMode: true
 };
 </script>
-<script src="<?= ASSET_BASE ?>/assets/js/superadmin-bhw-approvals.js?v=1.3"></script>
+<script src="<?= ASSET_BASE ?>/assets/js/superadmin-bhw-approvals.js?v=1.4"></script>
 <?php endif; ?>
 
 <?php

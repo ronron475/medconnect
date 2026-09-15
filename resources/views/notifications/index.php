@@ -26,8 +26,8 @@ portal_layout_open($role);
 <div class="mc-notif-page" data-notif-page>
   <div class="mc-notif-page-header">
     <div>
-      <h2 class="text-h2" style="margin: 0 0 4px;">Notification Center</h2>
-      <p class="text-muted text-sm" style="margin: 0;">Your alerts, appointments, referrals, and system messages.</p>
+      <h2 class="text-h2 mc-notif-page-title">Notification Center</h2>
+      <p class="text-muted text-sm mc-notif-page-sub">Your alerts, appointments, referrals, and system messages.</p>
     </div>
     <button type="button" class="mc-btn mc-btn--secondary" onclick="MedConnectNotifications && MedConnectNotifications.markAllRead()">
       Mark all as read

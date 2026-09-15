@@ -69,13 +69,15 @@ try {
         case 'list':
             header('Content-Type: application/json; charset=utf-8');
             $applications = $service->listForAdmin($adminId, $isSuper);
+            $stats = $service->statsFromRows($applications);
             echo json_encode([
                 'success' => true,
                 'data'    => [
                     'applications'  => $applications,
                     'barangays'     => $service->getBarangays(),
-                    'stats'         => $service->statsFromRows($applications),
-                    'pending_count' => $service->pendingCountForActor($adminId, $isSuper),
+                    // Stats derived from the same scoped application rows as the table (single source of truth).
+                    'stats'         => $stats,
+                    'pending_count' => (int) ($stats['pending'] ?? 0),
                 ],
             ]);
             break;

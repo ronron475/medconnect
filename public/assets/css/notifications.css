@@ -327,6 +327,52 @@
 
 .mc-notif-pagination button:disabled { opacity: 0.5; cursor: not-allowed; }
 
+/* Shared Notification Center page — responsive shell */
+.mc-notif-page {
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+  overflow-x: clip;
+}
+
+.mc-notif-page-header > div {
+  min-width: 0;
+  flex: 1 1 12rem;
+}
+
+.mc-notif-filters {
+  width: 100%;
+  min-width: 0;
+}
+
+.mc-notif-filters input,
+.mc-notif-filters select {
+  flex: 1 1 160px;
+  min-width: 0;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+.mc-notif-page-list {
+  width: 100%;
+  min-width: 0;
+}
+
+.mc-notif-page-title {
+  margin: 0 0 4px;
+}
+
+.mc-notif-page-sub {
+  margin: 0;
+}
+
+@supports not (overflow-x: clip) {
+  .mc-notif-page {
+    overflow-x: hidden;
+  }
+}
+
 /* Dashboard widgets */
 .mc-notif-widgets {
   display: grid;
@@ -738,6 +784,37 @@
   .mc-notif-page-actions {
     flex-direction: column;
     gap: 6px;
+  }
+
+  .mc-notif-page-header {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .mc-notif-page-header .mc-btn {
+    width: 100%;
+    justify-content: center;
+    min-height: 44px;
+  }
+
+  .mc-notif-filters {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .mc-notif-filters input,
+  .mc-notif-filters select {
+    flex: 1 1 auto;
+    width: 100%;
+    min-height: 44px;
+  }
+
+  .mc-notif-pagination {
+    flex-wrap: wrap;
+  }
+
+  .mc-notif-pagination button {
+    min-height: 40px;
   }
 }
 
