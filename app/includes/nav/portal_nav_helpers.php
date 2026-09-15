@@ -15,7 +15,16 @@ function portal_nav_is_active(string $file, string $current, string $query, ?str
         return false;
     }
     if ($itemQuery === null || $itemQuery === '') {
-        return $query === '' || !str_contains($query, 'role=');
+        // Base route only — sibling items with itemQuery (role=, tab=referral, etc.) own those states.
+        parse_str($query, $actual);
+        if (($actual['role'] ?? '') !== '') {
+            return false;
+        }
+        $tab = trim((string) ($actual['tab'] ?? ''));
+        if ($tab !== '' && $tab !== 'facilities') {
+            return false;
+        }
+        return true;
     }
     parse_str($itemQuery, $expected);
     parse_str($query, $actual);
