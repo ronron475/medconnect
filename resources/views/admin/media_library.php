@@ -92,7 +92,7 @@ require_once __DIR__ . '/partials/layout_open.php';
         <input type="text" id="mlAltInput" maxlength="255" placeholder="Accessibility description">
       </div>
       <div class="ml-mgmt__modal-foot">
-        <button type="button" class="mc-btn mc-btn--outline" id="mlAltCancel">Cancel</button>
+        <button type="button" class="mc-btn mc-btn--outline mc-btn--neutral" id="mlAltCancel">Cancel</button>
         <button type="button" class="mc-btn mc-btn--primary" id="mlAltSave">Save</button>
       </div>
     </div>
@@ -103,8 +103,8 @@ require_once __DIR__ . '/partials/layout_open.php';
       <h3 id="mlDeleteTitle">Delete file?</h3>
       <p class="text-muted" style="margin:0;">Remove <strong id="mlDeleteName">this file</strong> from the library? This cannot be undone.</p>
       <div class="ml-mgmt__modal-foot">
-        <button type="button" class="mc-btn mc-btn--outline" id="mlDeleteCancel">Cancel</button>
-        <button type="button" class="mc-btn mc-btn--primary" id="mlDeleteConfirm" style="background:#b91c1c;border-color:#b91c1c;">Delete</button>
+        <button type="button" class="mc-btn mc-btn--outline mc-btn--neutral" id="mlDeleteCancel">Cancel</button>
+        <button type="button" class="mc-btn mc-btn--danger" id="mlDeleteConfirm">Delete</button>
       </div>
     </div>
   </div>

@@ -545,12 +545,12 @@
       const mime = utils.esc(d.mime_type || '');
       return '<li><span>' + typeLabel + ': ' + name + '</span>' +
         '<span class="bhw-doc-list__actions">' +
-        '<button type="button" class="mc-btn mc-btn--outline bhw-app-doc-view-btn" style="padding:4px 8px;font-size:11px;"' +
+        '<button type="button" class="mc-btn mc-btn--outline mc-btn--info mc-btn--sm bhw-app-doc-view-btn"' +
         ' data-doc-id="' + d.id + '"' +
         ' data-doc-name="' + name + '"' +
         ' data-doc-type="' + typeLabel + '"' +
         ' data-doc-mime="' + mime + '">View</button>' +
-        '<a class="mc-btn mc-btn--outline" style="padding:4px 8px;font-size:11px;" href="' + api + '?action=download&document_id=' + d.id + '">Download</a>' +
+        '<a class="mc-btn mc-btn--outline mc-btn--info mc-btn--sm" href="' + api + '?action=download&document_id=' + d.id + '">Download</a>' +
         '</span></li>';
     }).join('') || '<li class="text-muted">No documents uploaded.</li>';
 
@@ -628,7 +628,7 @@
       body.innerHTML =
         '<div class="bhw-doc-preview-fallback">' +
         '<p>This file type cannot be previewed in the browser.</p>' +
-        '<p><a class="mc-btn mc-btn--outline" href="' + downloadUrl + '">Download to inspect</a></p>' +
+        '<p><a class="mc-btn mc-btn--outline mc-btn--info" href="' + downloadUrl + '">Download to inspect</a></p>' +
         '</div>';
     }
 

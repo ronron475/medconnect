@@ -30,9 +30,9 @@
         </div>
         <p id="doctorReviewError" class="admin-form-error"></p>
         <div class="admin-modal-actions">
-            <button type="button" class="mc-btn mc-btn--outline" id="doctorRequestDocsBtn">Request Additional Documents</button>
-            <button type="button" class="mc-btn mc-btn--outline bhw-btn-reject" id="doctorRejectBtn">Reject</button>
-            <button type="button" class="mc-btn mc-btn--primary" id="doctorApproveBtn" disabled>Approve &amp; Activate</button>
+            <button type="button" class="mc-btn mc-btn--outline mc-btn--warning" id="doctorRequestDocsBtn">Request Additional Documents</button>
+            <button type="button" class="mc-btn mc-btn--outline mc-btn--danger bhw-btn-reject" id="doctorRejectBtn">Reject</button>
+            <button type="button" class="mc-btn mc-btn--success" id="doctorApproveBtn" disabled>Approve &amp; Activate</button>
         </div>
         </div>
     </div>

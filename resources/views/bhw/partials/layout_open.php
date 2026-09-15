@@ -21,7 +21,7 @@
   require_once VIEWS_PATH . '/partials/theme_init.php';
   ?>
   <!-- Unified Aqua Clinical Design System -->
-  <link rel="stylesheet" href="<?= ASSET_BASE ?>/assets/css/design-system.css"/>
+  <link rel="stylesheet" href="<?= ASSET_BASE ?>/assets/css/design-system.css?v=<?= (int) @filemtime(ASSETS_PATH . '/css/design-system.css') ?>"/>
   <link rel="stylesheet" href="<?= ASSET_BASE ?>/assets/css/admin_dashboard.css"/>
   <link rel="stylesheet" href="<?= ASSET_BASE ?>/assets/css/sidebar.css"/>
   <link rel="stylesheet" href="<?= ASSET_BASE ?>/assets/css/topbar.css"/>

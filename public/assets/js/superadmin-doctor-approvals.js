@@ -186,7 +186,7 @@
       '<ul class="bhw-doc-list">' +
       (app.documents || []).map(function (d) {
         return '<li><span>' + utils.esc(d.document_type.replace(/_/g, ' ')) + ': ' + utils.esc(d.original_name) + '</span>' +
-          '<a class="mc-btn mc-btn--outline" style="padding:4px 8px;font-size:11px;" target="_blank" rel="noopener" href="' + api + '?action=download&document_id=' + d.id + '">View</a></li>';
+          '<a class="mc-btn mc-btn--outline mc-btn--info" style="padding:4px 8px;font-size:11px;" target="_blank" rel="noopener" href="' + api + '?action=download&document_id=' + d.id + '">View</a></li>';
       }).join('') +
       (app.documents && app.documents.length ? '' : '<li class="text-muted">No documents uploaded.</li>') +
       '</ul>';

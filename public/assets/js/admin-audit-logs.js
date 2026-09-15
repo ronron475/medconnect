@@ -1,6 +1,20 @@
 (function () {
   'use strict';
 
+  function initAuditLogFilters() {
+    var page = document.querySelector('.audit-logs-page');
+    if (!page || !window.MCStaffForm || typeof window.MCStaffForm.enhanceModalSelectsIn !== 'function') {
+      return;
+    }
+    window.MCStaffForm.enhanceModalSelectsIn(page);
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initAuditLogFilters);
+  } else {
+    initAuditLogFilters();
+  }
+
   const modal = document.getElementById('auditLogDetailModal');
   if (!modal) return;
 

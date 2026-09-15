@@ -23,7 +23,7 @@ if (!empty($_SESSION['user_id']) && $pdo instanceof PDO) {
   <link rel="preconnect" href="https://fonts.googleapis.com"/>
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
-  <link rel="stylesheet" href="<?= ASSET_BASE ?>/assets/css/design-system.css"/>
+  <link rel="stylesheet" href="<?= ASSET_BASE ?>/assets/css/design-system.css?v=<?= (int) @filemtime(ASSETS_PATH . '/css/design-system.css') ?>"/>
   <link rel="stylesheet" href="<?= ASSET_BASE ?>/assets/css/sidebar.css"/>
   <link rel="stylesheet" href="<?= ASSET_BASE ?>/assets/css/topbar.css"/>
   <link rel="stylesheet" href="<?= ASSET_BASE ?>/assets/css/dashboard.css"/>

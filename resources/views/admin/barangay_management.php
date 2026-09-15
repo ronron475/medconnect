@@ -60,8 +60,8 @@ require_once __DIR__ . '/partials/layout_open.php';
         <td><?= htmlspecialchars($b['longitude'] ?? '—') ?></td>
         <td><?= !empty($b['is_active']) ? 'Active' : 'Inactive' ?></td>
         <td>
-          <button class="mc-btn mc-btn--outline mc-btn--sm" data-edit='<?= htmlspecialchars(json_encode($b), ENT_QUOTES) ?>'>Edit</button>
-          <button class="mc-btn mc-btn--outline mc-btn--sm" data-archive="<?= (int)$b['id'] ?>">Archive</button>
+          <button class="mc-btn mc-btn--outline mc-btn--info mc-btn--sm" data-edit='<?= htmlspecialchars(json_encode($b), ENT_QUOTES) ?>'>Edit</button>
+          <button class="mc-btn mc-btn--outline mc-btn--warning mc-btn--sm" data-archive="<?= (int)$b['id'] ?>">Archive</button>
         </td>
       </tr>
       <?php endforeach; ?>

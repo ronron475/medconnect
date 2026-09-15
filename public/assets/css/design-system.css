@@ -173,6 +173,19 @@ body {
 .mc-btn--primary:active {
     transform: translateY(0);
 }
+.mc-btn--outline.mc-btn--primary {
+    background: var(--mc-aqua-light);
+    border-color: rgba(0, 151, 167, 0.4);
+    color: var(--mc-aqua-dark);
+    box-shadow: none;
+}
+.mc-btn--outline.mc-btn--primary:hover {
+    background: #b2ebf2;
+    border-color: var(--mc-aqua);
+    color: var(--mc-aqua-dark);
+    transform: none;
+    box-shadow: none;
+}
 
 .mc-btn--outline {
     background: transparent;
@@ -192,6 +205,155 @@ body {
 .mc-btn--ghost:hover {
     background: var(--mc-ice-blue);
     color: var(--mc-navy-dark);
+}
+
+.mc-btn--sm {
+    padding: 5px 10px;
+    font-size: 0.72rem;
+    border-radius: 8px;
+    min-height: 28px;
+    gap: 5px;
+}
+
+/* --- Semantic action variants (meaning-based colors) ---
+   Solid = primary CTA for that meaning.
+   Pair with .mc-btn--outline for softer table/row actions. */
+.mc-btn--success {
+    background: #059669;
+    border-color: #059669;
+    color: #fff;
+    box-shadow: 0 2px 8px rgba(5, 150, 105, 0.22);
+}
+.mc-btn--success:hover {
+    background: #047857;
+    border-color: #047857;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 14px rgba(5, 150, 105, 0.28);
+}
+.mc-btn--outline.mc-btn--success {
+    background: #ecfdf5;
+    border-color: #6ee7b7;
+    color: #047857;
+    box-shadow: none;
+}
+.mc-btn--outline.mc-btn--success:hover {
+    background: #d1fae5;
+    border-color: #34d399;
+    color: #065f46;
+}
+
+.mc-btn--info,
+.mc-btn--edit {
+    background: #2563eb;
+    border-color: #2563eb;
+    color: #fff;
+    box-shadow: 0 2px 8px rgba(37, 99, 235, 0.22);
+}
+.mc-btn--info:hover,
+.mc-btn--edit:hover {
+    background: #1d4ed8;
+    border-color: #1d4ed8;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 14px rgba(37, 99, 235, 0.28);
+}
+.mc-btn--outline.mc-btn--info,
+.mc-btn--outline.mc-btn--edit {
+    background: #eff6ff;
+    border-color: #93c5fd;
+    color: #1d4ed8;
+    box-shadow: none;
+}
+.mc-btn--outline.mc-btn--info:hover,
+.mc-btn--outline.mc-btn--edit:hover {
+    background: #dbeafe;
+    border-color: #60a5fa;
+    color: #1e40af;
+}
+
+.mc-btn--warning {
+    background: #d97706;
+    border-color: #d97706;
+    color: #fff;
+    box-shadow: 0 2px 8px rgba(217, 119, 6, 0.22);
+}
+.mc-btn--warning:hover {
+    background: #b45309;
+    border-color: #b45309;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 14px rgba(217, 119, 6, 0.28);
+}
+.mc-btn--outline.mc-btn--warning {
+    background: #fffbeb;
+    border-color: #fcd34d;
+    color: #b45309;
+    box-shadow: none;
+}
+.mc-btn--outline.mc-btn--warning:hover {
+    background: #fef3c7;
+    border-color: #fbbf24;
+    color: #92400e;
+}
+
+.mc-btn--danger {
+    background: #dc2626;
+    border-color: #dc2626;
+    color: #fff;
+    box-shadow: 0 2px 8px rgba(220, 38, 38, 0.22);
+}
+.mc-btn--danger:hover {
+    background: #b91c1c;
+    border-color: #b91c1c;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 14px rgba(220, 38, 38, 0.28);
+}
+.mc-btn--outline.mc-btn--danger {
+    background: #fef2f2;
+    border-color: #fca5a5;
+    color: #b91c1c;
+    box-shadow: none;
+}
+.mc-btn--outline.mc-btn--danger:hover {
+    background: #fee2e2;
+    border-color: #f87171;
+    color: #991b1b;
+}
+
+.mc-btn--neutral,
+.mc-btn--secondary {
+    background: #f1f5f9;
+    border-color: #cbd5e1;
+    color: #475569;
+    box-shadow: none;
+}
+.mc-btn--neutral:hover,
+.mc-btn--secondary:hover {
+    background: #e2e8f0;
+    border-color: #94a3b8;
+    color: #334155;
+}
+.mc-btn--outline.mc-btn--neutral,
+.mc-btn--outline.mc-btn--secondary {
+    background: #fff;
+    border-color: #cbd5e1;
+    color: #64748b;
+}
+.mc-btn--outline.mc-btn--neutral:hover,
+.mc-btn--outline.mc-btn--secondary:hover {
+    background: #f8fafc;
+    border-color: #94a3b8;
+    color: #475569;
+}
+
+.mc-btn--danger-outline {
+    background: #fef2f2;
+    border-color: #fca5a5;
+    color: #b91c1c;
+    box-shadow: none;
+}
+.mc-btn--danger-outline:hover {
+    background: #fee2e2;
+    border-color: #f87171;
+    color: #991b1b;
 }
 
 /* --- Badges & Pills --- */

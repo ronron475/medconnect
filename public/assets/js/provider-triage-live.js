@@ -107,7 +107,7 @@
 
   function renderActions(t) {
     return '<div class="triage-actions">'
-      + '<button type="button" class="mc-btn mc-btn--outline triage-view-btn" style="padding: 6px 12px; font-size: 11px;" data-triage-id="'
+      + '<button type="button" class="mc-btn mc-btn--outline mc-btn--info mc-btn--sm triage-view-btn" data-triage-id="'
       + esc(t.id) + '">View Details</button>'
       + '</div>';
   }

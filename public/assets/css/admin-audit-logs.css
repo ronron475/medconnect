@@ -134,6 +134,42 @@
   cursor: pointer;
 }
 
+/* Compact custom Action/Role/Limit menus (replaces tall native picker) */
+.audit-logs-toolbar .mc-select {
+  position: relative;
+  width: auto;
+  min-width: 160px;
+  max-width: min(280px, 100%);
+  flex: 0 1 200px;
+}
+
+.audit-logs-toolbar .mc-select__toggle.audit-logs-filter {
+  width: 100%;
+  min-width: 0;
+  min-height: 42px;
+  padding: 11px 36px 11px 14px;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #334155;
+  background: #fff;
+  box-shadow: none;
+}
+
+.audit-logs-toolbar .mc-select__toggle.audit-logs-filter::after {
+  right: 14px;
+}
+
+.audit-logs-toolbar .mc-select__native.audit-logs-filter {
+  min-width: 0;
+  height: 100%;
+}
+
+.mc-select__menu--compact {
+  max-height: min(320px, 45vh) !important;
+}
+
 .audit-logs-toolbar__actions {
   display: flex;
   align-items: center;
@@ -563,6 +599,17 @@
   .audit-logs-filter {
     min-width: 0;
     width: 100%;
+  }
+
+  .audit-logs-toolbar .mc-select {
+    flex: 1 1 100%;
+    width: 100%;
+    max-width: none;
+    min-width: 0;
+  }
+
+  .mc-select__menu--compact {
+    max-height: min(280px, 40vh) !important;
   }
 
   .audit-logs-toolbar__actions {

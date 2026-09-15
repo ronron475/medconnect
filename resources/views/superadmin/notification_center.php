@@ -108,11 +108,11 @@ require_once __DIR__ . '/partials/layout_open.php';
             <td data-label="Time" class="text-xs text-muted"><?= date('M j, g:i A', strtotime($n['created_at'])) ?></td>
             <td data-label="Actions" class="sa-nc__cell-actions">
               <?php if (!$n['is_read']): ?>
-              <button type="button" class="mc-btn mc-btn--outline sa-nc__row-btn js-mark-read" data-id="<?= (int) $n['id'] ?>">Read</button>
+              <button type="button" class="mc-btn mc-btn--outline mc-btn--info sa-nc__row-btn js-mark-read" data-id="<?= (int) $n['id'] ?>">Read</button>
               <?php else: ?>
-              <button type="button" class="mc-btn mc-btn--outline sa-nc__row-btn js-mark-unread" data-id="<?= (int) $n['id'] ?>">Unread</button>
+              <button type="button" class="mc-btn mc-btn--outline mc-btn--neutral sa-nc__row-btn js-mark-unread" data-id="<?= (int) $n['id'] ?>">Unread</button>
               <?php endif; ?>
-              <button type="button" class="mc-btn mc-btn--outline sa-nc__row-btn js-delete" data-id="<?= (int) $n['id'] ?>">Delete</button>
+              <button type="button" class="mc-btn mc-btn--outline mc-btn--danger sa-nc__row-btn js-delete" data-id="<?= (int) $n['id'] ?>">Delete</button>
             </td>
           </tr>
           <?php endforeach; endif; ?>

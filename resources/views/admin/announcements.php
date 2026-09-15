@@ -33,7 +33,7 @@ $barangays = AnnouncementService::listBarangays($pdo);
 require_once __DIR__ . '/partials/layout_open.php';
 ?>
 
-<link rel="stylesheet" href="<?= ASSET_BASE ?>/assets/css/admin-announcements.css?v=2">
+<link rel="stylesheet" href="<?= ASSET_BASE ?>/assets/css/admin-announcements.css?v=<?= (int) @filemtime(ASSETS_PATH . '/css/admin-announcements.css') ?>">
 
 <div class="ann-mgmt">
   <div class="ann-mgmt__header">
@@ -78,7 +78,7 @@ require_once __DIR__ . '/partials/layout_open.php';
       </select>
       <input type="date" id="annFilterDateFrom" class="ann-input" title="Publish from">
       <input type="date" id="annFilterDateTo" class="ann-input" title="Publish to">
-      <button type="button" class="mc-btn mc-btn--outline" id="annFilterReset">Reset</button>
+      <button type="button" class="mc-btn mc-btn--outline mc-btn--neutral" id="annFilterReset">Reset</button>
     </div>
   </div>
 
@@ -88,17 +88,17 @@ require_once __DIR__ . '/partials/layout_open.php';
     <div class="ann-skeleton__row"></div>
   </div>
 
-  <div class="mc-card ann-mgmt__table-wrap" id="annTableWrap" style="padding:0;overflow:hidden;">
+  <div class="mc-card ann-mgmt__table-wrap" id="annTableWrap" style="padding:0;">
     <table class="mc-table ann-mgmt__table">
       <thead>
         <tr>
-          <th>Title</th>
-          <th>Category</th>
-          <th>Audience</th>
-          <th>Status</th>
-          <th>Publish</th>
-          <th>Views</th>
-          <th>Actions</th>
+          <th class="ann-col-title">Title</th>
+          <th class="ann-col-category">Category</th>
+          <th class="ann-col-audience">Audience</th>
+          <th class="ann-col-status">Status</th>
+          <th class="ann-col-publish">Publish</th>
+          <th class="ann-col-views">Views</th>
+          <th class="ann-col-actions">Actions</th>
         </tr>
       </thead>
       <tbody id="annTableBody"></tbody>
@@ -202,10 +202,10 @@ require_once __DIR__ . '/partials/layout_open.php';
         </div>
       </div>
       <div class="ann-modal__foot">
-        <button type="button" class="mc-btn mc-btn--outline" id="annPreviewBtn">Preview</button>
-        <button type="submit" class="mc-btn mc-btn--outline" data-save-action="draft">Save Draft</button>
-        <button type="submit" class="mc-btn mc-btn--outline" data-save-action="schedule">Schedule</button>
-        <button type="submit" class="mc-btn mc-btn--primary" data-save-action="publish">Publish</button>
+        <button type="button" class="mc-btn mc-btn--outline mc-btn--info" id="annPreviewBtn">Preview</button>
+        <button type="submit" class="mc-btn mc-btn--outline mc-btn--primary" data-save-action="draft">Save Draft</button>
+        <button type="submit" class="mc-btn mc-btn--outline mc-btn--info" data-save-action="schedule">Schedule</button>
+        <button type="submit" class="mc-btn mc-btn--success" data-save-action="publish">Publish</button>
       </div>
     </form>
   </div>

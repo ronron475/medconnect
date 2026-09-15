@@ -374,6 +374,7 @@
     else if (select.classList.contains('form-control')) classes.push('form-control');
     else if (select.classList.contains('phs-field__input')) classes.push('phs-field__input');
     else if (select.classList.contains('mc-urgency-lang__select')) classes.push('mc-urgency-lang__select');
+    else if (select.classList.contains('audit-logs-filter')) classes.push('audit-logs-filter');
     else classes.push('mc-field__input');
     return classes.join(' ');
   }
@@ -460,6 +461,23 @@
     var preferBelow = spaceBelow >= 140 || spaceBelow >= spaceAbove;
     var available = preferBelow ? spaceBelow : spaceAbove;
     var maxH = Math.min(220, Math.max(112, available));
+    var isAuditFilter = !!(select && (
+      select.classList.contains('audit-logs-filter')
+      || select.getAttribute('data-mc-select-prefer-below') === '1'
+    ));
+
+    if (isAuditFilter) {
+      // Audit Logs Action list is long — keep it compact and prefer opening downward.
+      menu.classList.add('mc-select__menu--compact');
+      if (spaceBelow >= 120) {
+        preferBelow = true;
+        available = spaceBelow;
+      } else {
+        preferBelow = spaceBelow >= spaceAbove;
+        available = preferBelow ? spaceBelow : spaceAbove;
+      }
+      maxH = Math.min(320, Math.max(160, available));
+    }
 
     if (anchored) {
       // Always open below the field for BHW invite — scroll makes room first.

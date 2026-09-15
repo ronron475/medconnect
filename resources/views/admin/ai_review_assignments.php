@@ -73,7 +73,7 @@ require_once __DIR__ . '/partials/layout_open.php';
       <option value="pending">Pending review only</option>
       <option value="approved">Approved only</option>
     </select>
-    <button type="button" class="mc-btn mc-btn--outline" id="aiReviewRefresh">Refresh</button>
+    <button type="button" class="mc-btn mc-btn--outline mc-btn--info" id="aiReviewRefresh">Refresh</button>
     <span class="staff-apps-card__count" id="aiReviewCount"></span>
     <span class="air-review-updated" id="aiReviewStatus"></span>
   </div>

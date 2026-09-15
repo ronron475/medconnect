@@ -213,14 +213,14 @@
       var tr = document.createElement('tr');
       var audiences = (row.target_audience || row.target_roles || []).join(', ');
       tr.innerHTML =
-        '<td><strong>' + esc(row.title) + '</strong>' +
+        '<td class="ann-col-title"><strong class="ann-title-text" title="' + esc(row.title) + '">' + esc(row.title) + '</strong>' +
           (row.is_pinned ? '<span class="ann-pin">PINNED</span>' : '') + '</td>' +
-        '<td>' + esc(row.category_label || row.category) + '</td>' +
-        '<td class="text-xs">' + esc(audiences) + '</td>' +
-        '<td><span class="mc-badge is-' + esc(row.status) + '">' + esc(row.status) + '</span></td>' +
-        '<td class="text-xs">' + fmtDate(row.publish_at) + '</td>' +
-        '<td>' + (row.view_count || 0) + '</td>' +
-        '<td><div class="ann-actions" data-id="' + row.id + '"></div></td>';
+        '<td class="ann-col-category">' + esc(row.category_label || row.category) + '</td>' +
+        '<td class="ann-col-audience text-xs" title="' + esc(audiences) + '">' + esc(audiences) + '</td>' +
+        '<td class="ann-col-status"><span class="mc-badge is-' + esc(row.status) + '">' + esc(row.status) + '</span></td>' +
+        '<td class="ann-col-publish text-xs">' + fmtDate(row.publish_at) + '</td>' +
+        '<td class="ann-col-views">' + (row.view_count || 0) + '</td>' +
+        '<td class="ann-col-actions"><div class="ann-actions" data-id="' + row.id + '"></div></td>';
       var actions = tr.querySelector('.ann-actions');
       addAction(actions, 'Edit', 'edit');
       if (row.status !== 'published') addAction(actions, 'Publish', 'publish');
@@ -228,7 +228,7 @@
       addAction(actions, row.is_pinned ? 'Unpin' : 'Pin', 'toggle_pin');
       if (row.status !== 'archived') addAction(actions, 'Archive', 'archive');
       else addAction(actions, 'Restore', 'restore');
-      addAction(actions, 'Delete', 'delete', true);
+      addAction(actions, 'Delete', 'delete');
       tableBody.appendChild(tr);
     });
 
@@ -253,12 +253,25 @@
     });
   }
 
-  function addAction(wrap, label, act, danger) {
+  function semanticClassForAction(act, label) {
+    if (act === 'edit') return 'mc-btn--info';
+    if (act === 'publish' || act === 'restore') return 'mc-btn--success';
+    if (act === 'unpublish' || act === 'archive') return 'mc-btn--warning';
+    if (act === 'delete') return 'mc-btn--danger';
+    if (act === 'toggle_pin') return label === 'Unpin' ? 'mc-btn--neutral' : 'mc-btn--primary';
+    return '';
+  }
+
+  function addAction(wrap, label, act) {
     var b = document.createElement('button');
     b.type = 'button';
-    b.className = 'mc-btn mc-btn--outline mc-btn--sm' + (danger ? ' ann-btn-danger' : '');
+    var semantic = semanticClassForAction(act, label);
+    b.className = 'mc-btn mc-btn--outline mc-btn--sm' + (semantic ? ' ' + semantic : '');
     b.textContent = label;
     b.dataset.act = act;
+    if (act === 'toggle_pin') {
+      b.dataset.pinState = label === 'Unpin' ? 'off' : 'on';
+    }
     wrap.appendChild(b);
   }
 

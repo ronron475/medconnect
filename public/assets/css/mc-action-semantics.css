@@ -1,0 +1,246 @@
+/**
+ * medConnect — semantic action color mappings (UI only)
+ * Maps existing data-act / data-action / known hooks to shared .mc-btn variants.
+ * Does not change handlers, routes, or permissions.
+ */
+
+/* ── Account / status actions via data-action ── */
+.mc-btn[data-action="approve"],
+.mc-btn[data-action="activate"],
+.mc-btn[data-action="reactivate"],
+.mc-btn[data-action="restore"],
+.mc-btn[data-action="lift_restriction"],
+.mc-btn[data-action="publish"],
+.mc-btn[data-act="publish"],
+.mc-btn[data-act="restore"],
+.mc-btn[data-save-action="publish"] {
+  background: #ecfdf5 !important;
+  border-color: #6ee7b7 !important;
+  color: #047857 !important;
+  box-shadow: none !important;
+}
+.mc-btn[data-action="approve"]:hover,
+.mc-btn[data-action="activate"]:hover,
+.mc-btn[data-action="reactivate"]:hover,
+.mc-btn[data-action="restore"]:hover,
+.mc-btn[data-action="lift_restriction"]:hover,
+.mc-btn[data-action="publish"]:hover,
+.mc-btn[data-act="publish"]:hover,
+.mc-btn[data-act="restore"]:hover,
+.mc-btn[data-save-action="publish"]:hover {
+  background: #d1fae5 !important;
+  border-color: #34d399 !important;
+  color: #065f46 !important;
+}
+
+/* Solid success CTAs that already use primary for approve/publish */
+.mc-btn.mc-btn--primary[data-action="approve"],
+.mc-btn.mc-btn--primary[data-action="activate"],
+.mc-btn.mc-btn--primary[data-action="reactivate"],
+.mc-btn.mc-btn--primary[data-action="restore"],
+.mc-btn.mc-btn--primary.js-archived-restore,
+#bhwApproveBtn,
+#doctorApproveBtn,
+.mc-btn.mc-btn--primary[data-save-action="publish"],
+.mc-btn.mc-btn--success:not(.mc-btn--outline) {
+  background: #059669 !important;
+  border-color: #059669 !important;
+  color: #fff !important;
+}
+
+.mc-btn[data-action="edit"],
+.mc-btn[data-act="edit"],
+.mc-btn.btn-edit,
+.mc-btn.js-archived-details,
+.mc-btn.js-archived-audit,
+.mc-btn[data-edit],
+.mc-btn.triage-view-btn,
+#annPreviewBtn,
+.mc-btn[data-save-action="schedule"] {
+  background: #eff6ff !important;
+  border-color: #93c5fd !important;
+  color: #1d4ed8 !important;
+  box-shadow: none !important;
+}
+
+.mc-btn[data-action="suspend"],
+.mc-btn[data-action="restrict"],
+.mc-btn[data-action="archive"],
+.mc-btn[data-act="unpublish"],
+.mc-btn[data-act="archive"],
+.mc-btn[data-archive],
+.mc-btn.btn-archive,
+.mc-btn.btn-toggle[data-status="0"],
+#bhwRequestDocsBtn,
+#doctorRequestDocsBtn,
+.mc-btn[data-action="unpublish"] {
+  background: #fffbeb !important;
+  border-color: #fcd34d !important;
+  color: #b45309 !important;
+  box-shadow: none !important;
+}
+.mc-btn.btn-toggle[data-status="1"] {
+  background: #ecfdf5 !important;
+  border-color: #6ee7b7 !important;
+  color: #047857 !important;
+  box-shadow: none !important;
+}
+
+.mc-btn[data-action="deactivate"],
+.mc-btn[data-action="reject"],
+.mc-btn[data-action="delete"],
+.mc-btn[data-act="delete"],
+.mc-btn.js-delete,
+.mc-btn.js-delete-rule,
+.mc-btn.js-terminate,
+.mc-btn.bhw-btn-reject,
+.mc-btn.ann-btn-danger,
+#mlDeleteConfirm,
+#bhwRejectBtn,
+#doctorRejectBtn {
+  background: #fef2f2 !important;
+  border-color: #fca5a5 !important;
+  color: #b91c1c !important;
+  box-shadow: none !important;
+}
+.mc-btn.mc-btn--danger:not(.mc-btn--outline),
+.mc-btn.mc-btn--primary#mlDeleteConfirm {
+  background: #dc2626 !important;
+  border-color: #dc2626 !important;
+  color: #fff !important;
+}
+
+.mc-btn[data-act="toggle_pin"][data-pin-state="on"] {
+  background: var(--mc-aqua-light, #e0f7fa) !important;
+  border-color: rgba(0, 151, 167, 0.35) !important;
+  color: var(--mc-aqua-dark, #006e7b) !important;
+  box-shadow: none !important;
+}
+.mc-btn[data-act="toggle_pin"][data-pin-state="off"] {
+  background: #fff !important;
+  border-color: #cbd5e1 !important;
+  color: #64748b !important;
+  box-shadow: none !important;
+}
+
+.mc-btn#annFilterReset,
+.mc-btn.btn-reset,
+.mc-btn[data-action="reset"],
+#adminModalClose,
+#accountStatusModalCancel,
+.mc-btn[data-fu-close],
+.mc-btn[data-sched-confirm-cancel],
+.mc-btn[data-sched-reschedule-cancel],
+.mc-btn.mc-btn--ghost[data-triage-report-cancel],
+.mc-btn.mc-btn--ghost[data-triage-terminate-cancel],
+.mc-btn.mc-btn--ghost[data-triage-approve-cancel],
+.mc-btn.mc-btn--ghost[data-triage-withhold-cancel] {
+  background: #fff !important;
+  border-color: #cbd5e1 !important;
+  color: #64748b !important;
+  box-shadow: none !important;
+}
+
+.mc-btn[data-save-action="draft"],
+.mc-btn.js-save-rule {
+  background: var(--mc-aqua-light, #e0f7fa) !important;
+  border-color: rgba(0, 151, 167, 0.4) !important;
+  color: var(--mc-aqua-dark, #006e7b) !important;
+  box-shadow: none !important;
+}
+
+#aiReviewRefresh {
+  background: #eff6ff !important;
+  border-color: #93c5fd !important;
+  color: #1d4ed8 !important;
+}
+
+.mc-btn.js-mark-read {
+  background: #eff6ff !important;
+  border-color: #93c5fd !important;
+  color: #1d4ed8 !important;
+  box-shadow: none !important;
+}
+#markAllRead.mc-btn--primary {
+  background: linear-gradient(135deg, var(--mc-aqua) 0%, var(--mc-aqua-dark) 100%) !important;
+  border-color: transparent !important;
+  color: #fff !important;
+}
+
+.mc-btn.js-mark-unread {
+  background: #fff !important;
+  border-color: #cbd5e1 !important;
+  color: #64748b !important;
+}
+.mc-btn.js-reject-doctor {
+  background: #fef2f2 !important;
+  border-color: #fca5a5 !important;
+  color: #b91c1c !important;
+}
+
+.mc-btn#mlAltCancel,
+.mc-btn#mlDeleteCancel {
+  background: #fff !important;
+  border-color: #cbd5e1 !important;
+  color: #64748b !important;
+}
+
+/* Notification mark-read style hooks */
+.notif-actions [data-action="read"],
+.notif-actions [data-action="unread"],
+.sa-nc__row-btn.js-mark-read {
+  color: #1d4ed8;
+}
+
+.notif-actions [data-action="archive"],
+.sa-nc [data-action="archive"] {
+  color: #b45309;
+}
+
+.notif-actions [data-action="delete"],
+.sa-nc__row-btn.js-delete {
+  color: #b91c1c;
+}
+
+/* Destructive cancel confirmations keep danger look */
+.ann-feedback__btn--danger,
+.mc-btn[data-destructive="1"],
+.mc-btn.is-destructive-cancel {
+  background: #dc2626 !important;
+  border-color: #dc2626 !important;
+  color: #fff !important;
+}
+
+/* Status badges stay state-based (separate from action colors) */
+.mc-badge.is-active,
+.mc-badge.is-approved,
+.mc-badge.is-published,
+.mc-badge.is-completed {
+  background: #dcfce7;
+  color: #166534;
+}
+.mc-badge.is-pending,
+.mc-badge.is-warning,
+.mc-badge.is-requires-action {
+  background: #fef3c7;
+  color: #92400e;
+}
+.mc-badge.is-rejected,
+.mc-badge.is-failed,
+.mc-badge.is-emergency,
+.mc-badge.is-critical {
+  background: #fee2e2;
+  color: #991b1b;
+}
+.mc-badge.is-draft,
+.mc-badge.is-inactive,
+.mc-badge.is-archived,
+.mc-badge.is-expired {
+  background: #f1f5f9;
+  color: #475569;
+}
+.mc-badge.is-scheduled,
+.mc-badge.is-info {
+  background: #dbeafe;
+  color: #1e40af;
+}

@@ -65,7 +65,7 @@
         + '<td data-label="Reason">' + esc(r.reason_label || r.reason) + '</td>'
         + '<td data-label="Date">' + formatDate(r.created_at) + '</td>'
         + '<td data-label="Status">' + statusBadge(r.status, statusLabel) + '<br><small>' + esc(entityStatus) + '</small></td>'
-        + '<td data-label="Actions"><button type="button" class="mc-btn mc-btn--outline mc-btn--sm" data-cr-view="' + esc(r.id) + '">View Report</button></td>'
+        + '<td data-label="Actions"><button type="button" class="mc-btn mc-btn--outline mc-btn--info mc-btn--sm" data-cr-view="' + esc(r.id) + '">View Report</button></td>'
         + '</tr>';
     }).join('');
   }
@@ -140,20 +140,20 @@
     var canReview = ['pending', 'under_review', 'escalated'].indexOf(String(report.status)) >= 0;
     footer.innerHTML = '';
     if (canReview) {
-      footer.innerHTML += '<button type="button" class="mc-btn mc-btn--ghost" data-cr-action="dismiss" data-id="' + esc(report.id) + '">Dismiss Report</button>';
+      footer.innerHTML += '<button type="button" class="mc-btn mc-btn--outline mc-btn--neutral" data-cr-action="dismiss" data-id="' + esc(report.id) + '">Dismiss Report</button>';
       footer.innerHTML += '<button type="button" class="mc-btn mc-btn--primary" data-cr-action="confirm" data-id="' + esc(report.id) + '">Confirm Violation</button>';
       if (isSuperadmin) {
-        footer.innerHTML += '<button type="button" class="mc-btn mc-btn--outline" data-cr-action="escalate" data-id="' + esc(report.id) + '">Escalate</button>';
+        footer.innerHTML += '<button type="button" class="mc-btn mc-btn--outline mc-btn--warning" data-cr-action="escalate" data-id="' + esc(report.id) + '">Escalate</button>';
       }
     }
     if (String(report.status) === 'confirmed' || String(report.status) === 'escalated') {
-      footer.innerHTML += '<button type="button" class="mc-btn mc-btn--outline" data-cr-restrict="' + esc(report.patient_id) + '" data-report="' + esc(report.id) + '">Restrict Patient</button>';
+      footer.innerHTML += '<button type="button" class="mc-btn mc-btn--outline mc-btn--warning" data-cr-restrict="' + esc(report.patient_id) + '" data-report="' + esc(report.id) + '">Restrict Patient</button>';
       if (isSuperadmin) {
-        footer.innerHTML += '<button type="button" class="mc-btn mc-btn--danger-outline" data-cr-suspend="' + esc(report.patient_id) + '" data-report="' + esc(report.id) + '">Suspend Patient</button>';
-        footer.innerHTML += '<button type="button" class="mc-btn mc-btn--outline" data-cr-restore="' + esc(report.patient_id) + '" data-report="' + esc(report.id) + '">Restore Patient</button>';
+        footer.innerHTML += '<button type="button" class="mc-btn mc-btn--outline mc-btn--warning" data-cr-suspend="' + esc(report.patient_id) + '" data-report="' + esc(report.id) + '">Suspend Patient</button>';
+        footer.innerHTML += '<button type="button" class="mc-btn mc-btn--outline mc-btn--success" data-cr-restore="' + esc(report.patient_id) + '" data-report="' + esc(report.id) + '">Restore Patient</button>';
       }
     }
-    footer.innerHTML += '<button type="button" class="mc-btn mc-btn--ghost" data-cr-close>Close</button>';
+    footer.innerHTML += '<button type="button" class="mc-btn mc-btn--ghost mc-btn--neutral" data-cr-close>Close</button>';
   }
 
   async function openDetail(reportId) {
