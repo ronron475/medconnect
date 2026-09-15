@@ -571,6 +571,36 @@ function patient_resolve_provider_id(PDO $pdo, int $patientId): int
 }
 
 /**
+ * Ensure doctor-created referral columns used by consultation + patient view exist.
+ */
+function digital_referrals_ensure_schema(PDO $pdo): void
+{
+    static $done = false;
+    if ($done) {
+        return;
+    }
+    $done = true;
+
+    try {
+        if (!$pdo->query("SHOW TABLES LIKE 'digital_referrals'")->rowCount()) {
+            return;
+        }
+        $cols = $pdo->query('SHOW COLUMNS FROM digital_referrals')->fetchAll(PDO::FETCH_COLUMN) ?: [];
+        $add = static function (string $name, string $ddl) use ($pdo, $cols): void {
+            if (!in_array($name, $cols, true)) {
+                $pdo->exec('ALTER TABLE digital_referrals ADD COLUMN ' . $ddl);
+            }
+        };
+        $add('consultation_id', 'consultation_id INT UNSIGNED NULL');
+        $add('facility_name', 'facility_name VARCHAR(255) NULL');
+        $add('facility_id', 'facility_id INT UNSIGNED NULL');
+        $add('provider_notes', 'provider_notes TEXT NULL');
+    } catch (PDOException $e) {
+        error_log('digital_referrals_ensure_schema: ' . $e->getMessage());
+    }
+}
+
+/**
  * Create a hospital ER referral for emergency triage (patient portal, aligned with BHW).
  */
 function patient_create_emergency_hospital_referral(PDO $pdo, int $patientId, int $providerId, string $reason): int

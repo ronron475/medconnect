@@ -288,7 +288,7 @@ foreach ($upcoming_list as $c) {
         <ol class="pdash-flow__steps">
           <li><span class="pdash-flow__num">1</span><span><strong>Register</strong> — verify your identity and share your health concern.</span></li>
           <li><span class="pdash-flow__num">2</span><span><strong>Review</strong> — for non-urgent cases, request doctor-approved self-care tips (optional).</span></li>
-          <li><span class="pdash-flow__num">3</span><span><strong>Book</strong> — choose your assigned doctor and a time slot when you need a video visit.</span></li>
+          <li><span class="pdash-flow__num">3</span><span><strong>Book</strong> — for urgent cases, choose from doctors with open slots today; for approved care tips, book with your reviewing doctor.</span></li>
           <li><span class="pdash-flow__num">4</span><span><strong>Join</strong> — enter the secure video room when your session opens.</span></li>
         </ol>
       </details>
@@ -302,7 +302,7 @@ foreach ($upcoming_list as $c) {
         </div>
         <div class="pdash-alerts">
           <div class="pdash-alert-widget" data-widget="pending_referrals">
-            <span class="pdash-alert-widget__label">Pending Referrals</span>
+            <span class="pdash-alert-widget__label">Referrals</span>
             <span class="pdash-alert-widget__value mc-notif-widget-value">0</span>
           </div>
           <div class="pdash-alert-widget pdash-alert-widget--emergency" data-widget="emergency_alerts" id="pdashEmergencyWidget">

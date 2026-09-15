@@ -195,6 +195,7 @@ require_once __DIR__ . '/partials/layout_open.php';
       '<div><dt class="text-xs text-muted">Provider</dt><dd style="margin:2px 0 0;">' + esc(row.provider_name || '—') + '</dd></div>' +
       '<div><dt class="text-xs text-muted">Facility / service</dt><dd style="margin:2px 0 0;">' + esc(row.facility_name || '—') + '</dd></div>' +
       '<div><dt class="text-xs text-muted">Reason for referral</dt><dd style="margin:2px 0 0;">' + esc(row.reason || '—') + '</dd></div>' +
+      (row.provider_notes ? '<div><dt class="text-xs text-muted">Doctor’s notes</dt><dd style="margin:2px 0 0;">' + esc(row.provider_notes) + '</dd></div>' : '') +
       '<div><dt class="text-xs text-muted">Date created</dt><dd style="margin:2px 0 0;">' + esc(dt) + '</dd></div>' +
       unreadLabel;
     setMarkReadVisible(!!row.is_unread);

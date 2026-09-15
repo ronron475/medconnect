@@ -117,11 +117,15 @@ function pmh_referral_status_label(?string $status): string
           $refType = (string) ($r['referral_type'] ?? '');
           $refReason = (string) ($r['referral_reason'] ?? $r['frequency'] ?? '');
           $refFacility = (string) ($r['referral_facility'] ?? $r['duration'] ?? '');
+          $refNotes = (string) ($r['referral_notes'] ?? '');
         ?>
         <dl class="pmh-soap-list pmh-file-card__soap-list">
           <div><dt>Referral type</dt><dd><?= htmlspecialchars($refType !== '' ? $refType : 'Referral') ?></dd></div>
           <div><dt>Facility / service</dt><dd><?= htmlspecialchars(pmh_health_file_text($refFacility) ? $refFacility : '—') ?></dd></div>
           <div><dt>Reason for referral</dt><dd><?= nl2br(htmlspecialchars(pmh_health_file_text($refReason) ? $refReason : '—')) ?></dd></div>
+          <?php if (pmh_health_file_text($refNotes)): ?>
+          <div><dt>Doctor’s notes</dt><dd><?= nl2br(htmlspecialchars($refNotes)) ?></dd></div>
+          <?php endif; ?>
         </dl>
         <p class="pmh-file-card__meta text-xs text-muted">Issued by your doctor · Read-only</p>
       <?php else: ?>

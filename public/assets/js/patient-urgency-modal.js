@@ -47,6 +47,7 @@
     eyebrow_emergency: 'EMERGENCY',
     title_non_urgent: 'Routine Care Recommended',
     title_urgent: 'Urgent Medical Attention Recommended',
+    title_urgent_consult: 'URGENT CONSULTATION',
     title_emergency: 'Emergency Symptoms Detected',
     msg_emergency: 'Your reported symptoms may require immediate medical attention. Please seek emergency care immediately.',
     msg_urgent: 'Your symptoms should be assessed by a healthcare professional promptly.',
@@ -57,13 +58,33 @@
     step_urg_triage_1: 'Your AI preliminary assessment is shown below',
     step_urg_triage_2: 'Please click "Submit patient complaint" again to continue',
     step_urg_triage_3: 'Seek ER care if symptoms suddenly worsen',
-    step_urg_book_1: 'Pick a doctor’s earliest open time today',
-    step_urg_book_2: 'Confirm to book the video visit',
+    step_urg_book_1: 'Choose from all doctors with an open slot today',
+    step_urg_book_2: 'The earliest doctor is recommended — you may book another available doctor',
     step_urg_book_3: 'Seek ER care if symptoms suddenly worsen',
     step_em_1: 'Call local emergency services if needed',
     step_em_2: 'Go to the nearest hospital or ER',
     step_em_3: 'Do not wait for online care tips or a video slot',
     click_again_continue: 'Please click "Submit patient complaint" again to continue.',
+    slots_heading: 'Doctors available today',
+    slots_heading_recommended: 'Recommended — Earliest Available',
+    slots_heading_others: 'Other Available Doctors',
+    slots_loading: 'Loading doctors with open slots today…',
+    slots_empty: 'No video slots left today. Contact the health office or try again tomorrow. If symptoms worsen, go to the ER.',
+    slots_load_fail: 'Could not load doctor times. Use “Choose another time”.',
+    slots_network: 'Network error loading slots. Use “Choose another time”.',
+    slots_earliest: 'Earliest: {time}',
+    slots_today: 'Today, {time}',
+    slots_today_video: 'Today · Video · {range}',
+    slots_book: 'Book',
+    slots_missing_complaint: 'Missing health concern. Close and submit again, or use Choose another time.',
+    slots_confirm: 'Book video with {name} at {time}?',
+    slots_booking: 'Booking…',
+    slots_book_fail: 'Could not book. Try another doctor or Choose another time.',
+    slots_emergency: 'Emergency care required — video booking is not available.',
+    slots_incomplete: 'Could not complete booking.',
+    slots_booked: 'Appointment booked. Redirecting…',
+    slots_book_network: 'Network error. Please try again.',
+    doctor: 'Doctor',
   };
 
   function i18n(key, vars) {
@@ -266,9 +287,25 @@
     }
 
     setSlotsStatus('');
-    options.forEach(function (opt) {
+    var heading = slotsWrap.querySelector('.mc-urgency-slots__heading');
+    if (heading) heading.hidden = true;
+
+    options.forEach(function (opt, idx) {
+      var recommended = !!opt.recommended || idx === 0;
+      if (idx === 0) {
+        var recHead = document.createElement('p');
+        recHead.className = 'mc-urgency-slots__heading mc-urgency-slots__heading--group';
+        recHead.textContent = i18n('slots_heading_recommended');
+        slotsList.appendChild(recHead);
+      } else if (idx === 1) {
+        var otherHead = document.createElement('p');
+        otherHead.className = 'mc-urgency-slots__heading mc-urgency-slots__heading--group';
+        otherHead.textContent = i18n('slots_heading_others');
+        slotsList.appendChild(otherHead);
+      }
+
       var card = document.createElement('div');
-      card.className = 'mc-urgency-slot-card';
+      card.className = 'mc-urgency-slot-card' + (recommended ? ' is-recommended' : '');
       card.setAttribute('role', 'listitem');
 
       var meta = document.createElement('div');
@@ -280,7 +317,7 @@
 
       var time = document.createElement('span');
       time.className = 'mc-urgency-slot-card__time';
-      time.textContent = i18n('slots_earliest', { time: opt.time_label || opt.range_label || '—' });
+      time.textContent = i18n('slots_today', { time: opt.time_label || opt.range_label || '—' });
 
       var sub = document.createElement('span');
       sub.className = 'mc-urgency-slot-card__sub';
@@ -457,7 +494,9 @@
       titleEl.textContent = opts.title
         || (kind === 'non_urgent'
           ? i18n('title_non_urgent')
-          : (kind === 'urgent' ? i18n('title_urgent') : i18n('title_emergency')));
+            : (kind === 'urgent'
+              ? (triageResult ? i18n('title_urgent') : i18n('title_urgent_consult'))
+              : i18n('title_emergency')));
     }
     if (msgEl) {
       var defaultMsg = kind === 'non_urgent'

@@ -21,8 +21,13 @@ $locked_assigned_has_slots = !empty($locked_assigned_has_slots);
 $locked_alternate_available = !empty($locked_alternate_available);
 $is_provider_locked = !empty($review_booking_ctx['locked']) && $locked_provider_id > 0;
 $has_assigned_provider = $locked_provider_id > 0;
+$urgent_open_choice = function_exists('triage_patient_is_urgent_choice_context')
+    ? triage_patient_is_urgent_choice_context($review_booking_ctx)
+    : (($review_booking_ctx['source'] ?? '') === 'urgent_choice');
+$portal_triage_urgency = strtoupper(trim((string) ($portal_triage_urgency ?? '')));
+$emergency_blocks_booking = $portal_triage_urgency === 'EMERGENCY' && empty($active_consultation);
 // Complaint already on file + doctor assigned / consultation open → do not re-submit.
-$consultation_already_assigned = $chief_complaint_locked && (
+$consultation_already_assigned = !$urgent_open_choice && !$emergency_blocks_booking && $chief_complaint_locked && (
     $has_assigned_provider
     || !empty($active_consultation)
     || (int) ($review_booking_ctx['consultation_id'] ?? 0) > 0
@@ -93,16 +98,17 @@ if ($locked_provider_id > 0) {
         $review_booking_ctx['provider_name'] = $assigned_display_name;
     }
 }
-$consultation_already_assigned = $chief_complaint_locked && (
+$consultation_already_assigned = !$urgent_open_choice && !$emergency_blocks_booking && $chief_complaint_locked && (
     $has_assigned_provider
     || !empty($active_consultation)
     || (int) ($review_booking_ctx['consultation_id'] ?? 0) > 0
 );
 $assigned_display_name = trim(preg_replace('/^dr\.?\s+/i', '', $assigned_display_name) ?? $assigned_display_name);
-$portal_triage_urgency = trim((string) ($portal_triage_urgency ?? ''));
+$portal_triage_urgency = strtoupper(str_replace('_', '-', trim((string) ($portal_triage_urgency ?? ''))));
 if ($portal_triage_urgency === '' && !empty($review_booking_ctx['triage_level'])) {
     $portal_triage_urgency = strtoupper(str_replace('_', '-', (string) $review_booking_ctx['triage_level']));
 }
+$emergency_blocks_booking = $portal_triage_urgency === 'EMERGENCY' && empty($active_consultation);
 $ai_assessment_label = (string) ($preliminary_payload['classification_label'] ?? '');
 if ($ai_assessment_label === '' && $portal_triage_urgency !== '') {
     $ai_assessment_label = strtoupper(str_replace('_', '-', $portal_triage_urgency));
@@ -125,7 +131,11 @@ $show_start_new_consultation_btn = empty($force_new_concern) && (
 );
 ?>
 <h2 class="text-h2 mb-md patient-triage-page__title">Book Consultation</h2>
-<?php if (($is_provider_locked || $consultation_already_assigned) && $assigned_display_name !== ''): ?>
+<?php if ($urgent_open_choice && $registration_chief_complaint !== ''): ?>
+<p class="text-sm text-muted patient-triage-lead">
+  URGENT consultation — choose any eligible doctor with an open slot today. The earliest available option is recommended.
+</p>
+<?php elseif (($is_provider_locked || $consultation_already_assigned) && $assigned_display_name !== ''): ?>
 <p class="text-sm text-muted patient-triage-lead">
   Your care tips doctor is <strong>Dr. <?= htmlspecialchars($assigned_display_name) ?></strong>.
   <?php if (!empty($active_consultation)): ?>
@@ -136,7 +146,7 @@ $show_start_new_consultation_btn = empty($force_new_concern) && (
 </p>
 <?php else: ?>
 <p class="text-sm text-muted patient-triage-lead">
-  Share your primary complaint. The system assigns a doctor from real available schedules — you do not choose the provider.
+  Share your primary complaint. Urgent cases show every doctor with an open slot today. Non-urgent cases may be assigned a reviewing doctor for care tips.
   <?php if (!empty($patient_has_completed_visit) || !empty($patient_has_scheduled_followup)): ?>
   Enter a new primary complaint below for a separate consultation — follow-ups and past visits stay on your record.
   <?php endif; ?>
@@ -161,6 +171,13 @@ $show_start_new_consultation_btn = empty($force_new_concern) && (
     You already have an open appointment<?= !empty($active_consultation['consult_date']) ? ' on ' . htmlspecialchars(date('M j, Y', strtotime($active_consultation['consult_date']))) : '' ?>.
     Submitting here will update it to your newly selected slot for today.
   <?php endif; ?>
+</div>
+<?php endif; ?>
+
+<?php if (!empty($emergency_blocks_booking)): ?>
+<div class="patient-triage-alert patient-triage-alert--error is-visible patient-triage-alert--spaced" role="alert">
+  Emergency symptoms were flagged. Teleconsultation is not available — please go to the nearest hospital or emergency department.
+  A hospital referral has been recorded for your care team. Do not book a video slot.
 </div>
 <?php endif; ?>
 
@@ -294,16 +311,29 @@ $show_start_new_consultation_btn = empty($force_new_concern) && (
       To describe a different health concern, use <strong>Start New Complaint</strong>.
       <?php endif; ?>
     </p>
-    <?php elseif (!$is_provider_locked): ?>
+    <?php elseif (!empty($emergency_blocks_booking)): ?>
+    <p class="text-xs text-muted patient-triage-submit-hint">
+      Video appointment booking is not available for emergency cases. Please seek in-person emergency care.
+    </p>
+    <?php elseif (!$is_provider_locked && !$urgent_open_choice): ?>
     <button type="submit" class="mc-btn mc-btn--primary patient-triage-submit" id="patientTriageSubmit">
       <?= !empty($preliminary_payload['assessment_in_progress'] ?? false) ? 'Submit answer' : 'Submit patient complaint' ?>
     </button>
     <p class="text-xs text-muted patient-triage-submit-hint">
-      Click once for the AI preliminary assessment. Click <strong>Submit patient complaint</strong> again to assign a doctor from real available slots.
+      Click once for the AI preliminary assessment. Click <strong>Submit patient complaint</strong> again to continue.
     </p>
     <?php endif; ?>
 
-    <div class="form-group" id="bookingAssignedProviderWrap">
+    <?php if ($urgent_open_choice && empty($emergency_blocks_booking)): ?>
+    <div class="form-group mc-urgent-choice" id="urgentDoctorChoiceWrap">
+      <p class="mc-urgent-choice__kicker">URGENT CONSULTATION</p>
+      <p class="text-sm" style="margin:0 0 10px;">Choose a doctor with an open slot today. The earliest available option is recommended — you may book another eligible doctor.</p>
+      <div id="urgentDoctorChoice" class="mc-urgent-choice__list" role="list"></div>
+      <p id="urgentDoctorChoiceStatus" class="text-xs text-muted" role="status">Loading doctors with open slots today…</p>
+    </div>
+    <?php endif; ?>
+
+    <div class="form-group" id="bookingAssignedProviderWrap"<?= ($urgent_open_choice || !empty($emergency_blocks_booking)) ? ' hidden' : '' ?>>
       <label class="form-label" id="bookingAssignedProviderLabel">Automatically Assigned Provider</label>
       <div
         id="bookingAssignedProvider"
@@ -375,12 +405,22 @@ $show_start_new_consultation_btn = empty($force_new_concern) && (
     <div class="form-group">
       <label class="form-label">Available time slots (today)</label>
       <div id="bookingSlotsWrap" class="booking-slots-wrap">
-        <p class="text-xs text-muted"><?= $is_provider_locked ? 'Available times for your assigned doctor today.' : 'Appointment times appear after the system assigns your doctor.' ?></p>
+        <p class="text-xs text-muted"><?php
+          if (!empty($emergency_blocks_booking)) {
+              echo 'Video slots are not available for emergency cases.';
+          } elseif ($urgent_open_choice) {
+              echo 'Select a doctor above, then pick any of that doctor’s open times today.';
+          } elseif ($is_provider_locked) {
+              echo 'Available times for your assigned doctor today.';
+          } else {
+              echo 'Appointment times appear after you submit your complaint.';
+          }
+        ?></p>
       </div>
       <input type="hidden" id="booking_slot_id" name="slot_id" value="">
     </div>
 
-    <?php if ($is_provider_locked): ?>
+    <?php if (($is_provider_locked || $urgent_open_choice) && empty($emergency_blocks_booking)): ?>
     <button type="submit" class="mc-btn mc-btn--primary patient-triage-submit" id="patientTriageSubmit">
       Book Appointment
     </button>

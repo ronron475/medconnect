@@ -2,11 +2,12 @@
 /**
  * Provider assignment for Care Tips review and consultation booking.
  *
- * NON-URGENT: real bookable slots today → weighted workload.
- * URGENT: earliest valid bookable slot today → weighted workload as tie-breaker.
+ * NON-URGENT: real bookable slots today → weighted workload (care-tips lock).
+ * URGENT: list ALL eligible doctors with a real slot today; earliest is recommended only.
  * EMERGENCY: no teleconsult assignment (existing hospital referral workflow).
  *
- * The assigned doctor is the same doctor who reviews Care Tips and sees the patient.
+ * Care-tips review and the booked visit share one doctor. Urgent booking does not
+ * lock the patient to the earliest doctor before they choose a slot.
  */
 
 declare(strict_types=1);
@@ -145,12 +146,14 @@ function triage_patient_review_booking_context(PDO $pdo, int $patientId): array
         FROM triage_results tr
         LEFT JOIN users u ON u.id = tr.assigned_provider_id
         WHERE tr.patient_id = ?
-          AND tr.assigned_provider_id IS NOT NULL
-          AND tr.assigned_provider_id > 0
           AND TRIM(COALESCE(tr.chief_complaint, '')) <> ''
           AND tr.assessed_at >= DATE_SUB(NOW(), INTERVAL 30 DAY)
           AND (
-            (" . preg_replace('/^\s*AND\s+/i', '', patient_triage_sql_active_only('tr')) . ")
+            (
+              tr.assigned_provider_id IS NOT NULL
+              AND tr.assigned_provider_id > 0
+              AND (" . preg_replace('/^\s*AND\s+/i', '', patient_triage_sql_active_only('tr')) . ")
+            )
             OR (
               LOWER(COALESCE(tr.triage_level, '')) = 'urgent'
               AND tr.assessed_at >= CURDATE()
@@ -176,6 +179,22 @@ function triage_patient_review_booking_context(PDO $pdo, int $patientId): array
     $stmt->execute([$patientId]);
     $row = $stmt->fetch(PDO::FETCH_ASSOC);
     if ($row) {
+        $level = triage_normalize_assignment_level((string) ($row['triage_level'] ?? ''));
+        $triageId = (int) ($row['id'] ?? 0);
+
+        // URGENT: patient chooses among all eligible doctors. Do not lock to one.
+        if ($level === TriageLevelService::URGENT) {
+            return [
+                'provider_id'      => 0,
+                'provider_name'    => '',
+                'locked'           => false,
+                'triage_id'        => $triageId,
+                'triage_level'     => $level,
+                'consultation_id'  => 0,
+                'source'           => 'urgent_choice',
+            ];
+        }
+
         $pid = (int) ($row['assigned_provider_id'] ?? 0);
         if ($pid > 0) {
             $displayName = triage_provider_display_name($pdo, $pid);
@@ -187,8 +206,8 @@ function triage_patient_review_booking_context(PDO $pdo, int $patientId): array
                 'provider_id'      => $pid,
                 'provider_name'    => $displayName,
                 'locked'           => true,
-                'triage_id'        => (int) ($row['id'] ?? 0),
-                'triage_level'     => triage_normalize_assignment_level((string) ($row['triage_level'] ?? '')),
+                'triage_id'        => $triageId,
+                'triage_level'     => $level,
                 'consultation_id'  => 0,
                 'source'           => 'active_triage',
             ];
@@ -196,6 +215,24 @@ function triage_patient_review_booking_context(PDO $pdo, int $patientId): array
     }
 
     return triage_patient_waitlist_booking_lock($pdo, $patientId, $empty);
+}
+
+/**
+ * True when an unbooked URGENT case should show all eligible doctors (not a lock).
+ *
+ * @param array<string, mixed> $ctx
+ */
+function triage_patient_is_urgent_choice_context(array $ctx): bool
+{
+    if (($ctx['source'] ?? '') === 'urgent_choice') {
+        return true;
+    }
+    if (!empty($ctx['locked']) || (int) ($ctx['consultation_id'] ?? 0) > 0) {
+        return false;
+    }
+
+    return triage_normalize_assignment_level((string) ($ctx['triage_level'] ?? '')) === TriageLevelService::URGENT
+        && (int) ($ctx['triage_id'] ?? 0) > 0;
 }
 
 /**
@@ -440,11 +477,117 @@ function triage_collect_bookable_candidates(PDO $pdo, int $excludeProviderId = 0
             'provider_id' => $id,
             'slot_count' => $count,
             'earliest_start' => (string) ($earliest['start_time'] ?? ''),
+            'earliest_end' => (string) ($earliest['end_time'] ?? ''),
+            'earliest_slot_id' => (int) ($earliest['id'] ?? 0),
+            'earliest_slot_date' => (string) ($earliest['slot_date'] ?? ''),
             'workload' => triage_provider_weighted_workload($pdo, $id),
         ];
     }
 
     return $out;
+}
+
+/**
+ * Sort eligible doctors by earliest bookable slot today (workload then id as ties).
+ *
+ * @param list<array{provider_id:int,slot_count?:int,earliest_start?:string,workload?:int}> $candidates
+ * @return list<array{provider_id:int,slot_count:int,earliest_start:string,workload:int}>
+ */
+function triage_sort_urgent_booking_candidates(array $candidates): array
+{
+    $eligible = [];
+    foreach ($candidates as $row) {
+        $id = (int) ($row['provider_id'] ?? 0);
+        $slots = (int) ($row['slot_count'] ?? 0);
+        if ($id <= 0 || $slots <= 0) {
+            continue;
+        }
+        $eligible[] = [
+            'provider_id' => $id,
+            'slot_count' => $slots,
+            'earliest_start' => (string) ($row['earliest_start'] ?? ''),
+            'earliest_end' => (string) ($row['earliest_end'] ?? ''),
+            'earliest_slot_id' => (int) ($row['earliest_slot_id'] ?? 0),
+            'earliest_slot_date' => (string) ($row['earliest_slot_date'] ?? ''),
+            'workload' => (int) ($row['workload'] ?? 0),
+        ];
+    }
+
+    usort($eligible, static function (array $a, array $b): int {
+        $ta = (string) $a['earliest_start'];
+        $tb = (string) $b['earliest_start'];
+        if ($ta !== '' && $tb !== '' && $ta !== $tb) {
+            return $ta <=> $tb;
+        }
+        if ($ta !== $tb) {
+            if ($ta === '') {
+                return 1;
+            }
+            if ($tb === '') {
+                return -1;
+            }
+        }
+        $load = ((int) $a['workload']) <=> ((int) $b['workload']);
+        if ($load !== 0) {
+            return $load;
+        }
+
+        return ((int) $a['provider_id']) <=> ((int) $b['provider_id']);
+    });
+
+    return $eligible;
+}
+
+/**
+ * Patient-facing URGENT options: every eligible doctor with a real slot today.
+ *
+ * @return list<array{
+ *   provider_id:int,
+ *   provider_name:string,
+ *   slot_id:int,
+ *   slot_date:string,
+ *   start_time:string,
+ *   end_time:string,
+ *   time_label:string,
+ *   range_label:string,
+ *   recommended:bool
+ * }>
+ */
+function triage_urgent_booking_options(PDO $pdo, int $onlyProviderId = 0): array
+{
+    $candidates = triage_collect_bookable_candidates($pdo);
+    if ($onlyProviderId > 0) {
+        $candidates = array_values(array_filter(
+            $candidates,
+            static fn(array $row): bool => (int) ($row['provider_id'] ?? 0) === $onlyProviderId
+        ));
+    }
+    $sorted = triage_sort_urgent_booking_candidates($candidates);
+    $options = [];
+    foreach ($sorted as $i => $row) {
+        $providerId = (int) ($row['provider_id'] ?? 0);
+        $start = (string) ($row['earliest_start'] ?? '');
+        $end = (string) ($row['earliest_end'] ?? '');
+        $startTs = $start !== '' ? strtotime($start) : false;
+        $endTs = $end !== '' ? strtotime($end) : false;
+        $timeLabel = $startTs ? date('g:i A', $startTs) : '';
+        $endLabel = $endTs ? date('g:i A', $endTs) : '';
+        $options[] = [
+            'provider_id' => $providerId,
+            'provider_name' => triage_provider_display_name($pdo, $providerId),
+            'slot_id' => (int) ($row['earliest_slot_id'] ?? 0),
+            'slot_date' => (string) ($row['earliest_slot_date'] ?? ''),
+            'start_time' => $start,
+            'end_time' => $end,
+            'time_label' => $timeLabel,
+            'range_label' => $timeLabel !== '' && $endLabel !== ''
+                ? ($timeLabel . ' – ' . $endLabel)
+                : $timeLabel,
+            'recommended' => $i === 0,
+        ];
+    }
+
+    return $options;
 }
 
 /**
@@ -628,7 +771,9 @@ function triage_find_provider_with_slots_today(PDO $pdo, int $excludeProviderId 
  *   triage_id:int,
  *   assigned_has_slots_today:bool,
  *   alternate_available:bool,
- *   triage_level:string
+ *   triage_level:string,
+ *   source:string,
+ *   urgent_choice:bool
  * }
  */
 function triage_patient_booking_slot_status(PDO $pdo, int $patientId): array
@@ -643,6 +788,8 @@ function triage_patient_booking_slot_status(PDO $pdo, int $patientId): array
         'assigned_has_slots_today' => true,
         'alternate_available' => false,
         'triage_level' => (string) ($ctx['triage_level'] ?? ''),
+        'source' => (string) ($ctx['source'] ?? ''),
+        'urgent_choice' => triage_patient_is_urgent_choice_context($ctx),
     ];
     if (!$out['locked']) {
         return $out;
@@ -796,6 +943,9 @@ function triage_assert_patient_may_book_provider(PDO $pdo, int $patientId, int $
     }
 
     $ctx = triage_patient_review_booking_context($pdo, $patientId);
+    if (triage_patient_is_urgent_choice_context($ctx)) {
+        return;
+    }
     if (empty($ctx['locked']) || (int) $ctx['provider_id'] <= 0) {
         return;
     }

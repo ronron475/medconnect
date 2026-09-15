@@ -523,31 +523,36 @@ try {
     }
 
     $provider_id   = (int) $slot['provider_id'];
+    $levelNorm = triage_normalize_assignment_level((string) $triageLevel);
 
-    $canonicalProvider = $reviewerBeforeBooking;
-    if ($canonicalProvider <= 0 && is_array($openCareTipsRow)) {
-        $canonicalProvider = (int) ($openCareTipsRow['assigned_provider_id'] ?? 0);
-    }
-    if ($canonicalProvider <= 0) {
-        $canonicalProvider = triage_select_provider_for_level($pdo, $patient_id, $triageLevel);
-        if ($canonicalProvider > 0) {
-            triage_bind_assigned_provider($pdo, $triageId, $canonicalProvider);
+    // URGENT: patient chose this slot from the shared pool — do not re-assign to
+    // the earliest doctor. NON-URGENT keeps the care-tips reviewer lock.
+    if ($levelNorm !== TriageLevelService::URGENT) {
+        $canonicalProvider = $reviewerBeforeBooking;
+        if ($canonicalProvider <= 0 && is_array($openCareTipsRow)) {
+            $canonicalProvider = (int) ($openCareTipsRow['assigned_provider_id'] ?? 0);
         }
-    }
-    if ($canonicalProvider <= 0) {
-        throw new RuntimeException(
-            'No suitable doctor schedule is currently available. You are in the waiting queue and will be notified by email when a consultation slot becomes available.'
-        );
-    }
-    if ($canonicalProvider !== $provider_id) {
-        $canonicalName = triage_provider_display_name($pdo, $canonicalProvider);
-        if ($canonicalName === '') {
-            $canonicalName = 'your assigned doctor';
+        if ($canonicalProvider <= 0) {
+            $canonicalProvider = triage_select_provider_for_level($pdo, $patient_id, $triageLevel);
+            if ($canonicalProvider > 0) {
+                triage_bind_assigned_provider($pdo, $triageId, $canonicalProvider);
+            }
         }
-        throw new RuntimeException(
-            'Your doctor is assigned automatically. Please continue with ' . $canonicalName
-            . ', who was selected from doctors with a real available slot.'
-        );
+        if ($canonicalProvider <= 0) {
+            throw new RuntimeException(
+                'No suitable doctor schedule is currently available. You are in the waiting queue and will be notified by email when a consultation slot becomes available.'
+            );
+        }
+        if ($canonicalProvider !== $provider_id) {
+            $canonicalName = triage_provider_display_name($pdo, $canonicalProvider);
+            if ($canonicalName === '') {
+                $canonicalName = 'your assigned doctor';
+            }
+            throw new RuntimeException(
+                'Please book your consultation with ' . $canonicalName
+                . ', who reviewed your self-care guidance.'
+            );
+        }
     }
 
     triage_assert_patient_may_book_provider($pdo, $patient_id, $provider_id);

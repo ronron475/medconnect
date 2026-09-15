@@ -4,6 +4,7 @@ header('Content-Type: application/json; charset=utf-8');
 require_once dirname(dirname(dirname(__DIR__))) . '/config/db.php';
 require_once dirname(dirname(dirname(__DIR__))) . '/app/includes/auth_guard.php';
 require_once dirname(dirname(dirname(__DIR__))) . '/app/includes/provider_patient_access.php';
+require_once dirname(dirname(dirname(__DIR__))) . '/app/includes/triage_assessment_schema.php';
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     http_response_code(405);
@@ -27,6 +28,7 @@ $patient_id      = (int)($_POST['patient_id']      ?? 0);
 $consultation_id = (int)($_POST['consultation_id'] ?? 0);
 $referral_type   = trim($_POST['referral_type']    ?? '');
 $reason          = trim($_POST['reason']           ?? '');
+$notes           = trim($_POST['provider_notes']   ?? ($_POST['notes'] ?? ''));
 $facility        = trim($_POST['facility_name']    ?? '');
 $facility_id     = (int)($_POST['facility_id']    ?? 0);
 $provider_id     = (int)$_SESSION['user_id'];
@@ -63,9 +65,11 @@ if ($facility_id > 0) {
 }
 
 try {
+    digital_referrals_ensure_schema($pdo);
     $has_facility_name = (bool)$pdo->query("SHOW COLUMNS FROM digital_referrals LIKE 'facility_name'")->fetch();
     $dest_col = $has_facility_name ? 'facility_name' : 'destination_facility';
     $has_facility_id = (bool)$pdo->query("SHOW COLUMNS FROM digital_referrals LIKE 'facility_id'")->fetch();
+    $has_notes = (bool)$pdo->query("SHOW COLUMNS FROM digital_referrals LIKE 'provider_notes'")->fetch();
 
     $cols = ['consultation_id', 'patient_id', 'provider_id', 'referral_type', 'reason', $dest_col];
     $vals = ['?', '?', '?', '?', '?', '?'];
@@ -81,6 +85,11 @@ try {
         $cols[] = 'facility_id';
         $vals[] = '?';
         $params[] = $facility_id ?: null;
+    }
+    if ($has_notes) {
+        $cols[] = 'provider_notes';
+        $vals[] = '?';
+        $params[] = $notes !== '' ? $notes : null;
     }
     $cols[] = 'status';
     $vals[] = "'pending'";

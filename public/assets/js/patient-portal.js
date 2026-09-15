@@ -933,17 +933,99 @@
     providerSelect.addEventListener('change', () => {
       const providerId = resolveProviderId();
       if (!providerId) {
-        clearSlots('Appointment times appear after the system assigns your doctor.');
+        clearSlots(window.BOOKING_URGENT_CHOICE
+          ? 'Select a doctor above to see their open times today.'
+          : 'Appointment times appear after you submit your complaint.');
         return;
       }
       loadTodayBooking(providerId);
     });
 
     const initialProviderId = resolveProviderId();
-    if (initialProviderId) {
+    if (window.BOOKING_URGENT_CHOICE === true) {
+      loadUrgentDoctorChoice();
+    } else if (initialProviderId) {
       loadTodayBooking(initialProviderId);
     } else {
-      clearSlots('Appointment times appear after the system assigns your doctor.');
+      clearSlots('Appointment times appear after you submit your complaint.');
+    }
+
+    function loadUrgentDoctorChoice() {
+      const wrap = document.getElementById('urgentDoctorChoice');
+      const status = document.getElementById('urgentDoctorChoiceStatus');
+      if (!wrap) {
+        if (initialProviderId) loadTodayBooking(initialProviderId);
+        return;
+      }
+      wrap.innerHTML = '';
+      if (status) status.textContent = 'Loading doctors with open slots today…';
+      clearSlots('Select a doctor above to see their open times today.');
+
+      fetch(APP_BASE + '/app/api/patient/urgent_earliest_slots.php?_=' + Date.now(), {
+        credentials: 'same-origin',
+        cache: 'no-store',
+        headers: { 'X-MC-No-Loader': '1' },
+      })
+        .then(function (res) { return res.json().catch(function () { return null; }); })
+        .then(function (data) {
+          const options = (data && data.data && data.data.options) || (data && data.options) || [];
+          if (!data || data.success === false) {
+            if (status) status.textContent = (data && data.message) || 'Could not load doctors. Please try again.';
+            return;
+          }
+          if (!options.length) {
+            if (status) status.textContent = 'No video slots left today. Contact the health office or try again tomorrow. If symptoms worsen, go to the ER.';
+            return;
+          }
+          if (status) status.textContent = '';
+          wrap.innerHTML = '';
+          options.forEach(function (opt, idx) {
+            const recommended = !!opt.recommended || idx === 0;
+            if (idx === 0) {
+              const h = document.createElement('p');
+              h.className = 'mc-urgent-choice__heading';
+              h.textContent = 'Recommended — Earliest Available';
+              wrap.appendChild(h);
+            } else if (idx === 1) {
+              const h = document.createElement('p');
+              h.className = 'mc-urgent-choice__heading';
+              h.textContent = 'Other Available Doctors';
+              wrap.appendChild(h);
+            }
+            const card = document.createElement('button');
+            card.type = 'button';
+            card.className = 'mc-urgency-slot-card' + (recommended ? ' is-recommended' : '');
+            card.setAttribute('role', 'listitem');
+            card.dataset.providerId = String(opt.provider_id || '');
+            const meta = document.createElement('div');
+            meta.className = 'mc-urgency-slot-card__meta';
+            const name = document.createElement('strong');
+            name.className = 'mc-urgency-slot-card__name';
+            name.textContent = opt.provider_name || 'Doctor';
+            const time = document.createElement('span');
+            time.className = 'mc-urgency-slot-card__time';
+            time.textContent = 'Today, ' + (opt.time_label || opt.range_label || '—');
+            meta.appendChild(name);
+            meta.appendChild(time);
+            const pick = document.createElement('span');
+            pick.className = 'mc-urgency-slot-card__btn';
+            pick.textContent = 'Select';
+            card.appendChild(meta);
+            card.appendChild(pick);
+            card.addEventListener('click', function () {
+              wrap.querySelectorAll('.mc-urgency-slot-card').forEach(function (el) {
+                el.classList.remove('is-selected');
+              });
+              card.classList.add('is-selected');
+              providerSelect.value = String(opt.provider_id || '');
+              loadTodayBooking(String(opt.provider_id || ''));
+            });
+            wrap.appendChild(card);
+          });
+        })
+        .catch(function () {
+          if (status) status.textContent = 'Network error loading doctors. Please refresh and try again.';
+        });
     }
 
     const pollSlots = () => {
@@ -1801,6 +1883,17 @@
             if (window.mcPatientUrgencyModal && typeof window.mcPatientUrgencyModal.showEmergency === 'function') {
               window.mcPatientUrgencyModal.showEmergency(contJson.message || '', {
                 facility: payload.facility || contJson.facility || null,
+              });
+            }
+            return;
+          }
+
+          if (payload.urgent) {
+            showTriageAlert(alertEl, 'success', contJson.message || 'Please book an urgent consultation.');
+            if (window.mcPatientUrgencyModal && typeof window.mcPatientUrgencyModal.showUrgent === 'function') {
+              window.mcPatientUrgencyModal.showUrgent(contJson.message || '', payload.book_url || '', {
+                complaint: complaint,
+                triageId: payload.triage_id || twoStep.triageId || 0,
               });
             }
             return;

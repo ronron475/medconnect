@@ -499,8 +499,41 @@ function patient_portal_find_active_triage_row(PDO $pdo, int $patientId): ?array
         $stmt = $pdo->prepare($sql);
         $stmt->execute([$patientId]);
         $row = $stmt->fetch(PDO::FETCH_ASSOC);
+        if ($row) {
+            return $row;
+        }
 
-        return $row ?: null;
+        $urgentStmt = $pdo->prepare("
+            SELECT id, chief_complaint, triage_level, triage_classification, urgency_label, assessed_at,
+                   recommendation_status
+            FROM triage_results tr
+            WHERE tr.patient_id = ?
+              AND TRIM(COALESCE(tr.chief_complaint, '')) <> ''
+              AND LOWER(COALESCE(tr.triage_level, '')) = 'urgent'
+              AND tr.assessed_at >= CURDATE()
+              AND NOT EXISTS (
+                SELECT 1
+                FROM consultations c_link
+                WHERE c_link.patient_id = tr.patient_id
+                  AND (
+                    c_link.triage_result_id = tr.id
+                    OR TIMESTAMP(
+                      c_link.consult_date,
+                      COALESCE(c_link.consult_time, '23:59:59')
+                    ) > tr.assessed_at
+                  )
+                  AND LOWER(COALESCE(c_link.status, '')) IN (
+                    'pending', 'scheduled', 'waiting', 'in_consultation',
+                    'completed', 'cancelled', 'canceled'
+                  )
+              )
+            ORDER BY tr.assessed_at DESC, tr.id DESC
+            LIMIT 1
+        ");
+        $urgentStmt->execute([$patientId]);
+        $urgent = $urgentStmt->fetch(PDO::FETCH_ASSOC);
+
+        return $urgent ?: null;
     } catch (Throwable $e) {
         return null;
     }

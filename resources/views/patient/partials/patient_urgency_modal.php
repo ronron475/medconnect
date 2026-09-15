@@ -61,7 +61,7 @@ $bookUrl = $asset . '/views/patient/triage.php';
     </div>
 
     <div id="mcPatientUrgencySlots" class="mc-urgency-slots" hidden>
-      <p class="mc-urgency-slots__heading" data-i18n="slots_heading">Soonest available today</p>
+      <p class="mc-urgency-slots__heading" data-i18n="slots_heading">Doctors available today</p>
       <div id="mcPatientUrgencySlotsList" class="mc-urgency-slots__list" role="list"></div>
       <p id="mcPatientUrgencySlotsStatus" class="mc-urgency-slots__status" hidden role="status"></p>
     </div>

@@ -52,7 +52,7 @@ $urgentEarlier = [
 ];
 pa_assert(
     triage_select_provider_from_candidates(TriageLevelService::URGENT, $urgentEarlier) === 11,
-    'TEST 3 URGENT: earliest slot wins over lower workload'
+    'TEST 3 URGENT recommended helper: earliest slot is the recommended doctor'
 );
 
 $urgentTie = [
@@ -83,6 +83,15 @@ pa_assert(
     triage_select_provider_from_candidates(TriageLevelService::URGENT, $none) === 0,
     'URGENT with no valid slots does not invent a doctor'
 );
+
+$listed = triage_sort_urgent_booking_candidates($three);
+pa_assert(count($listed) === 3, 'URGENT lists all 3 eligible doctors with slots');
+pa_assert((int) $listed[0]['provider_id'] === 1, 'URGENT list is ordered by earliest slot (A=14:00 first)');
+pa_assert((int) $listed[1]['provider_id'] === 3, 'URGENT list second is next earliest (C=14:10)');
+pa_assert((int) $listed[2]['provider_id'] === 2, 'URGENT list last is latest slot (B=14:30)');
+
+$listedNone = triage_sort_urgent_booking_candidates($none);
+pa_assert($listedNone === [], 'URGENT list is empty when no doctor has a slot');
 
 $keep = patient_slot_waitlist_choose_offer_provider(
     [10 => 2, 20 => 3],
