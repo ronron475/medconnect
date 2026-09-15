@@ -220,12 +220,12 @@ $show_start_new_consultation_wrap = $consultation_already_assigned
         id="chief_complaint"
         name="chief_complaint"
         class="form-control<?= $interview_complaint_locked ? ' pdash-care-form__input--locked' : '' ?>"
-        rows="<?= $interview_complaint_locked ? 2 : 3 ?>"
+        rows="<?= $interview_complaint_locked ? 1 : 2 ?>"
         placeholder="<?= $interview_complaint_locked ? 'Your submitted primary complaint…' : 'Describe your primary complaint...' ?>"
         maxlength="500"
         <?= $interview_complaint_locked ? 'readonly aria-readonly="true"' : 'required' ?>
       ><?= htmlspecialchars($registration_chief_complaint) ?></textarea>
-      <p class="text-xs text-muted" style="margin-top:6px;">
+      <p class="text-xs text-muted" style="margin-top:4px;">
         <?php if ($chief_complaint_locked): ?>
         This primary complaint is already on file and will be reviewed by your doctor. It cannot be changed while this consultation is still active.
         <?php if (empty($active_consultation) && empty($force_new_concern)): ?>
@@ -279,7 +279,7 @@ $show_start_new_consultation_wrap = $consultation_already_assigned
           id="triage_followup_answer"
           name="followup_answer"
           class="form-control pdash-followup__input"
-          rows="3"
+          rows="2"
           maxlength="500"
           placeholder="Type your answer here…"
           autocomplete="off"
