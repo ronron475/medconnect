@@ -63,9 +63,17 @@ $asset = ASSET_BASE;
   <?php $landingScrollAnimCssVer = (int) @filemtime(ASSETS_PATH . '/css/landing-scroll-animations.css'); ?>
   <link rel="stylesheet" href="<?= $asset ?>/assets/css/landing-scroll-animations.css?v=<?= $landingScrollAnimCssVer ?>" />
   <link rel="stylesheet" href="<?= $asset ?>/assets/css/landing-about-team.css?v=7" />
-  <link rel="stylesheet" href="<?= $asset ?>/assets/css/landing-responsive.css?v=10" />
-  <?php $landingThemeFabCssVer = (int) @filemtime(ASSETS_PATH . '/css/landing-theme-fab.css'); ?>
-  <link rel="stylesheet" href="<?= $asset ?>/assets/css/landing-theme-fab.css?v=<?= $landingThemeFabCssVer ?>" />
+  <link rel="stylesheet" href="<?= $asset ?>/assets/css/landing-responsive.css?v=11" />
+  <style id="landing-theme-fab-removed">
+    /* Public floating light/dark toggle removed — keep quick-menu FAB + chatbot */
+    .landing-theme-fab,
+    #landing-theme-fab,
+    #landing-theme-toggle {
+      display: none !important;
+      visibility: hidden !important;
+      pointer-events: none !important;
+    }
+  </style>
   <?php $landingDownloadCssVer = (int) @filemtime(ASSETS_PATH . '/css/landing-download-app.css'); ?>
   <link rel="stylesheet" href="<?= $asset ?>/assets/css/landing-download-app.css?v=<?= $landingDownloadCssVer ?>" />
 
@@ -421,8 +429,6 @@ require __DIR__ . '/partials/landing_navbar.php';
   <?php if (!empty($landing_sections['announcements'])): ?>
   <?php require __DIR__ . '/partials/announcements_section.php'; ?>
   <?php endif; ?>
-
-  <div id="hero-theme-sentinel" class="hero-theme-sentinel" aria-hidden="true"></div>
 
 </section>
 
@@ -1196,9 +1202,6 @@ require __DIR__ . '/partials/landing_navbar.php';
 
 
 <?php require __DIR__ . '/partials/landing_fab.php'; ?>
-<?php require __DIR__ . '/partials/landing_theme_fab.php'; ?>
-<?php $landingThemeScrollVer = (int) @filemtime(ASSETS_PATH . '/js/landing-theme-scroll.js'); ?>
-<script src="<?= $asset ?>/assets/js/landing-theme-scroll.js?v=<?= $landingThemeScrollVer ?>"></script>
 <?php require __DIR__ . '/partials/landing_fab_modals.php'; ?>
 <?php require __DIR__ . '/partials/signin_req_drawer.php'; ?>
 <?php require __DIR__ . '/partials/faq_chatbot.php'; ?>

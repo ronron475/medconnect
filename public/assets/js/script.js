@@ -136,11 +136,40 @@ if (!isLandingPage) {
     });
   }
 
+  function isScrollableEl(el) {
+    if (!el || !(el instanceof Element)) return false;
+    if (el.scrollHeight <= el.clientHeight + 1) return false;
+    const oy = window.getComputedStyle(el).overflowY;
+    return oy === 'auto' || oy === 'scroll' || oy === 'overlay';
+  }
+
+  function findLockedScrollTarget(target) {
+    if (overlay.contains(target)) {
+      let el = target instanceof Element ? target : null;
+      while (el && overlay.contains(el)) {
+        if (isScrollableEl(el)) return el;
+        if (el === overlay) break;
+        el = el.parentElement;
+      }
+      if (isScrollableEl(overlay)) return overlay;
+      const inner = overlay.querySelector('.signin-modal-inner');
+      if (isScrollableEl(inner)) return inner;
+      return null;
+    }
+    const drawerPanel = document.getElementById('signin-req-drawer-panel');
+    const drawerBody = document.getElementById('signin-req-drawer-body');
+    if (drawerPanel && drawerBody && drawerPanel.contains(target)) {
+      return isScrollableEl(drawerBody) ? drawerBody : null;
+    }
+    return null;
+  }
+
   function lockScroll() {
     if (scrollLocked) return;
 
     scrollLocked = true;
-    savedScroll = window.scrollY;
+    savedScroll = window.scrollY || window.pageYOffset || 0;
+    document.body.classList.add('signin-scroll-locked');
     document.body.style.top = `-${savedScroll}px`;
     document.body.style.position = 'fixed';
     document.body.style.left = '0';
@@ -149,31 +178,13 @@ if (!isLandingPage) {
     document.body.style.overflow = 'hidden';
     document.documentElement.style.overflow = 'hidden';
 
-    const findLockedScrollTarget = (target) => {
-      if (overlay.contains(target)) {
-        return overlay.querySelector('.signin-modal-inner');
-      }
-      const drawerPanel = document.getElementById('signin-req-drawer-panel');
-      const drawerBody = document.getElementById('signin-req-drawer-body');
-      if (drawerPanel && drawerBody && drawerPanel.contains(target)) {
-        return drawerBody;
-      }
-      return null;
-    };
-
     preventWheel = (e) => {
       const scrollable = findLockedScrollTarget(e.target);
       if (scrollable) {
-        const canScroll = scrollable.scrollHeight > scrollable.clientHeight + 1;
-        if (canScroll) {
-          const atTop = scrollable.scrollTop <= 0;
-          const atBottom = scrollable.scrollTop + scrollable.clientHeight >= scrollable.scrollHeight - 1;
-          if ((e.deltaY < 0 && !atTop) || (e.deltaY > 0 && !atBottom)) {
-            if (!scrollable.contains(e.target)) {
-              scrollable.scrollTop += e.deltaY;
-            }
-            return;
-          }
+        const atTop = scrollable.scrollTop <= 0;
+        const atBottom = scrollable.scrollTop + scrollable.clientHeight >= scrollable.scrollHeight - 1;
+        if ((e.deltaY < 0 && !atTop) || (e.deltaY > 0 && !atBottom)) {
+          return;
         }
       }
       e.preventDefault();
@@ -181,6 +192,7 @@ if (!isLandingPage) {
     document.addEventListener('wheel', preventWheel, { passive: false });
 
     preventTouchMove = (e) => {
+      if (findLockedScrollTarget(e.target)) return;
       if (overlay.contains(e.target)) return;
       const drawerPanel = document.getElementById('signin-req-drawer-panel');
       if (drawerPanel && drawerPanel.contains(e.target)) return;
@@ -200,9 +212,13 @@ if (!isLandingPage) {
       preventTouchMove = null;
     }
 
-    if (!scrollLocked) return;
+    if (!scrollLocked) {
+      document.body.classList.remove('signin-scroll-locked');
+      return;
+    }
 
     scrollLocked = false;
+    document.body.classList.remove('signin-scroll-locked');
     document.body.style.position = '';
     document.body.style.top = '';
     document.body.style.left = '';
@@ -210,7 +226,7 @@ if (!isLandingPage) {
     document.body.style.width = '';
     document.body.style.overflow = '';
     document.documentElement.style.overflow = '';
-    window.scrollTo({ top: savedScroll, behavior: 'instant' });
+    window.scrollTo(0, savedScroll);
   }
 
   function trapFocus(e) {
@@ -239,9 +255,7 @@ if (!isLandingPage) {
 
     portalSigninToBody();
     overlay.classList.add('is-viewport-pinned');
-    // Keep Sign In content scrollable — do not lock body/html overflow.
-    document.body.classList.remove('signin-scroll-locked');
-    unlockScroll();
+    lockScroll();
     overlay.removeAttribute('hidden');
     overlay.setAttribute('aria-hidden', 'false');
     document.body.classList.add('signin-active');
@@ -270,7 +284,7 @@ if (!isLandingPage) {
     overlay.removeAttribute('hidden');
     overlay.setAttribute('aria-hidden', 'false');
     document.body.classList.add('signin-active');
-    document.body.classList.remove('signin-scroll-locked');
+    lockScroll();
     if (heroSection) heroSection.classList.add('is-signin-open');
     setTriggerExpanded(true);
     signinOpenedAt = performance.now();
@@ -366,8 +380,9 @@ if (!isLandingPage) {
     document.removeEventListener('keydown', trapFocus);
 
     if (scrollLocked) {
-      scrollLocked = false;
       const y = savedScroll;
+      scrollLocked = false;
+      document.body.classList.remove('signin-scroll-locked');
       document.body.style.position = '';
       document.body.style.top = '';
       document.body.style.left = '';
@@ -376,6 +391,8 @@ if (!isLandingPage) {
       document.body.style.overflow = '';
       document.documentElement.style.overflow = '';
       requestAnimationFrame(() => window.scrollTo(0, y));
+    } else {
+      document.body.classList.remove('signin-scroll-locked');
     }
 
     restoreSigninPlacement();
