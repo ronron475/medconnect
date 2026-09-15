@@ -169,7 +169,20 @@
   if (settingsForm) {
     settingsForm.addEventListener('submit', function (e) {
       e.preventDefault();
-      postForm('save_settings', settingsForm);
+      var fd = new FormData(settingsForm);
+      fd.append('action', 'save_settings');
+      // Explicit 0/1 so an unchecked box never leaves a stale "on" value.
+      fd.set('maintenance_banner', qs('maintenanceBanner') && qs('maintenanceBanner').checked ? '1' : '0');
+      return fetch(api, { method: 'POST', body: fd, credentials: 'same-origin' })
+        .then(function (r) { return r.json(); })
+        .then(function (j) {
+          if (!j.success) throw new Error(j.message || 'Save failed.');
+          toast(j.message || 'Saved.');
+          return loadDashboard();
+        })
+        .catch(function (err) {
+          toast(err.message || 'Request failed.');
+        });
     });
   }
 
