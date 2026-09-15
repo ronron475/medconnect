@@ -21,7 +21,6 @@
   <link rel="stylesheet" href="<?= ASSET_BASE ?>/assets/css/admin_dashboard.css"/>
   <link rel="stylesheet" href="<?= ASSET_BASE ?>/assets/css/admin-dashboard-mobile.css?v=<?= (int) @filemtime(ASSETS_PATH . '/css/admin-dashboard-mobile.css') ?>"/>
   <link rel="stylesheet" href="<?= ASSET_BASE ?>/assets/css/admin-dashboard-charts.css"/>
-  <link rel="stylesheet" href="<?= ASSET_BASE ?>/assets/css/admin-spacing.css?v=<?= (int) @filemtime(ASSETS_PATH . '/css/admin-spacing.css') ?>"/>
   <?php if (defined('MC_PORTAL_SHELL') && MC_PORTAL_SHELL === 'superadmin'): ?>
   <link rel="stylesheet" href="<?= ASSET_BASE ?>/assets/css/superadmin_dashboard.css?v=<?= (int) @filemtime(ASSETS_PATH . '/css/superadmin_dashboard.css') ?>"/>
   <?php endif; ?>
@@ -50,6 +49,8 @@
   <?php require_once VIEWS_PATH . '/partials/portal_nav_badge_assets.php'; ?>
   <?php require_once VIEWS_PATH . '/partials/mc_modal_select_assets.php'; ?>
   <?php require_once VIEWS_PATH . '/partials/mobile_scroll_assets.php'; ?>
+  <!-- Compact Admin/Super Admin spacing — must load after portal_shell -->
+  <link rel="stylesheet" href="<?= ASSET_BASE ?>/assets/css/admin-spacing.css?v=<?= (int) @filemtime(ASSETS_PATH . '/css/admin-spacing.css') ?>"/>
 </head>
 <body
   class="admin-body<?= (defined('MC_PORTAL_SHELL') && MC_PORTAL_SHELL === 'superadmin') ? ' superadmin-body' : '' ?>"

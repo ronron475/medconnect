@@ -25,11 +25,7 @@ html[data-theme-resolved='dark'] body.superadmin-body .adm-sidebar--superadmin {
 }
 
 .superadmin-banner {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 16px;
-  flex-wrap: wrap;
+  display: block;
 }
 
 .superadmin-banner-actions {
@@ -37,6 +33,7 @@ html[data-theme-resolved='dark'] body.superadmin-body .adm-sidebar--superadmin {
   align-items: center;
   gap: 8px;
   flex-wrap: wrap;
+  margin-top: 12px;
   position: relative;
   z-index: 1;
 }
@@ -165,12 +162,6 @@ html[data-theme-resolved='dark'] body.superadmin-body .adm-sidebar--superadmin {
     white-space: normal;
     overflow: visible;
     text-overflow: unset;
-  }
-
-  .superadmin-banner {
-    flex-direction: column;
-    align-items: stretch;
-    gap: 12px;
   }
 
   .superadmin-banner-actions {

@@ -37,20 +37,20 @@ $admLiveJsVer = (int) @filemtime(ASSETS_PATH . '/js/admin-dashboard-live.js');
 
 <div data-live-dashboard="superadmin">
 
-<section class="adm-banner superadmin-banner" aria-label="Welcome">
+<section class="adm-banner" aria-label="Welcome">
     <div class="adm-banner-inner">
         <div class="adm-banner-eyebrow">Super Admin Control Center</div>
         <h1 class="adm-banner-title">Welcome, <?= htmlspecialchars($super_row['first_name'] ?? 'Super Admin') ?></h1>
         <p class="adm-banner-sub">Enterprise governance, security monitoring, and Maker-Checker approvals for healthcare account provisioning.</p>
+        <div class="superadmin-banner-actions">
+            <span class="mc-badge mc-badge--super">Super Administrator</span>
+            <span class="superadmin-health-pill superadmin-health-pill--<?= htmlspecialchars($healthClass) ?>" data-live-system-health>System <?= htmlspecialchars(strtoupper($stats['system_health'])) ?></span>
+            <a href="<?= ASSET_BASE ?>/views/superadmin/doctor_applications.php?tab=pending" class="adm-card-head-action superadmin-urgent-pill" data-live-pending-pill<?= $pending_checker_total > 0 ? '' : ' hidden' ?>>
+                <?= $pending_checker_total ?> approval<?= $pending_checker_total === 1 ? '' : 's' ?> pending
+            </a>
+        </div>
     </div>
-    <div class="superadmin-banner-actions">
-        <span class="mc-badge mc-badge--super">Super Administrator</span>
-        <span class="superadmin-health-pill superadmin-health-pill--<?= htmlspecialchars($healthClass) ?>" data-live-system-health>System <?= htmlspecialchars(strtoupper($stats['system_health'])) ?></span>
-        <a href="<?= ASSET_BASE ?>/views/superadmin/doctor_applications.php?tab=pending" class="adm-card-head-action superadmin-urgent-pill" data-live-pending-pill<?= $pending_checker_total > 0 ? '' : ' hidden' ?>>
-            <?= $pending_checker_total ?> approval<?= $pending_checker_total === 1 ? '' : 's' ?> pending
-        </a>
-        <span class="text-xs text-muted" data-live-sync aria-live="polite">Live</span>
-    </div>
+    <span class="text-xs text-muted" data-live-sync aria-live="polite">Live</span>
 </section>
 
 <section class="superadmin-approval-strip" data-live-approval-strip aria-label="Pending approvals"<?= $pending_checker_total > 0 ? '' : ' hidden' ?>>
