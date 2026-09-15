@@ -16,11 +16,7 @@ $landing_announcements = AnnouncementService::listPublic($pdo, 6);
 $landing_announcements_total = AnnouncementService::countPublic($pdo);
 $landing_hero = LandingPageConfig::hero($pdo);
 $landing_sections = LandingPageConfig::sections($pdo);
-$landing_maintenance = [
-    'enabled' => LandingPageConfig::flag($pdo, 'LANDING_MAINTENANCE_BANNER')
-        || (system_settings_get($pdo, 'MAINTENANCE_MODE', '0') === '1'),
-    'message' => LandingPageConfig::get($pdo, 'LANDING_MAINTENANCE_MESSAGE'),
-];
+$landing_maintenance = LandingPageConfig::maintenance($pdo);
 
 require_once BASE_PATH . '/app/includes/auth_guard.php';
 auth_redirect_if_logged_in();

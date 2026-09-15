@@ -63,7 +63,28 @@ final class LandingPageConfig
 
     public static function flag(PDO $pdo, string $key): bool
     {
-        return self::get($pdo, $key, '0') === '1';
+        $raw = strtolower(trim(self::get($pdo, $key, '0')));
+        return $raw === '1' || $raw === 'true' || $raw === 'yes' || $raw === 'on';
+    }
+
+    /**
+     * Public maintenance banner — driven only by Website Dashboard
+     * "Enable maintenance banner" (LANDING_MAINTENANCE_BANNER).
+     *
+     * @return array{enabled: bool, message: string}
+     */
+    public static function maintenance(PDO $pdo): array
+    {
+        $enabled = self::flag($pdo, 'LANDING_MAINTENANCE_BANNER');
+        $message = trim(self::get($pdo, 'LANDING_MAINTENANCE_MESSAGE', ''));
+        if ($message === '') {
+            $message = self::defaults()['LANDING_MAINTENANCE_MESSAGE'];
+        }
+
+        return [
+            'enabled' => $enabled,
+            'message' => $message,
+        ];
     }
 
     /** @return array<string, mixed> */
