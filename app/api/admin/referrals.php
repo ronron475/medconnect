@@ -9,65 +9,11 @@ header('Content-Type: application/json; charset=utf-8');
 require_once dirname(dirname(dirname(__DIR__))) . '/bootstrap.php';
 require_once dirname(dirname(dirname(__DIR__))) . '/config/db.php';
 require_once dirname(dirname(dirname(__DIR__))) . '/app/api/admin/_auth.php';
-require_once dirname(dirname(dirname(__DIR__))) . '/app/core/NotificationManager.php';
-require_once dirname(dirname(dirname(__DIR__))) . '/app/includes/notification_events.php';
+require_once dirname(dirname(dirname(__DIR__))) . '/app/includes/admin_referral_inbox.php';
 require_once dirname(dirname(dirname(__DIR__))) . '/app/includes/auth_guard.php';
 
 $method = $_SERVER['REQUEST_METHOD'] ?? 'GET';
 $userId = (int) ($_SESSION['user_id'] ?? 0);
-$relatedTable = 'digital_referrals';
-
-/**
- * Ensure one per-user referral inbox notification exists, then mark it read.
- * Does not change clinical referral data.
- */
-function referrals_mark_read_for_user(PDO $pdo, int $userId, int $referralId): int
-{
-    NotificationManager::ensureSchema($pdo);
-
-    $updated = NotificationManager::markRelatedRead($pdo, $userId, 'digital_referrals', $referralId);
-    if ($updated > 0) {
-        return NotificationManager::countUnreadRelated($pdo, $userId, 'digital_referrals');
-    }
-
-    // No unread row to flip — create a read inbox row so this view stays read for this user.
-    $existsNotif = $pdo->prepare("
-        SELECT id
-        FROM notifications
-        WHERE user_id = ?
-          AND related_table = 'digital_referrals'
-          AND related_id = ?
-          AND status = 'active'
-        LIMIT 1
-    ");
-    $existsNotif->execute([$userId, $referralId]);
-    if ((int) ($existsNotif->fetchColumn() ?: 0) > 0) {
-        return NotificationManager::countUnreadRelated($pdo, $userId, 'digital_referrals');
-    }
-
-    $roleStmt = $pdo->prepare('SELECT role FROM users WHERE id = ? LIMIT 1');
-    $roleStmt->execute([$userId]);
-    $role = strtolower(trim((string) ($roleStmt->fetchColumn() ?: '')));
-    $actionUrl = $role === 'superadmin'
-        ? '/views/superadmin/facility_management.php?tab=referral'
-        : '/views/admin/facility_management.php?tab=referral';
-
-    $newId = NotificationManager::create($pdo, $userId, [
-        'receiver_role' => $role,
-        'type'          => NotificationManager::TYPE_REFERRAL,
-        'title'         => 'Referral Issued',
-        'message'       => 'A doctor has issued a patient referral. Open Referral Center to monitor the record.',
-        'related_table' => 'digital_referrals',
-        'related_id'    => $referralId,
-        'action_url'    => $actionUrl,
-        'icon'          => 'clipboard',
-    ]);
-    if ($newId) {
-        NotificationManager::markRelatedRead($pdo, $userId, 'digital_referrals', $referralId);
-    }
-
-    return NotificationManager::countUnreadRelated($pdo, $userId, 'digital_referrals');
-}
 
 if ($method === 'GET') {
     $status = trim($_GET['status'] ?? 'all');
@@ -116,9 +62,7 @@ if ($method === 'GET') {
         $stmt->execute($params);
         $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-        $unreadIds = $userId > 0
-            ? NotificationManager::listRelatedUnreadIds($pdo, $userId, $relatedTable)
-            : [];
+        $unreadIds = $userId > 0 ? referrals_admin_unread_ids($pdo, $userId) : [];
         $unreadSet = array_fill_keys($unreadIds, true);
         foreach ($rows as &$row) {
             $rid = (int) ($row['id'] ?? 0);
@@ -127,7 +71,7 @@ if ($method === 'GET') {
         unset($row);
 
         $totalCount = (int) $pdo->query('SELECT COUNT(*) FROM digital_referrals')->fetchColumn();
-        $unreadCount = NotificationManager::countUnreadRelated($pdo, $userId, $relatedTable);
+        $unreadCount = referrals_admin_unread_count($pdo, $userId);
 
         echo json_encode([
             'success' => true,
@@ -148,7 +92,7 @@ if ($method === 'POST') {
     $action = trim((string) ($_POST['action'] ?? ''));
     $referralId = (int) ($_POST['referral_id'] ?? 0);
 
-    // Viewing = reading. No clinical mutations from this monitoring page.
+    // Explicit Mark as Read only — no clinical mutations from this monitoring page.
     if ($action === 'mark_read' && $referralId > 0 && $userId > 0) {
         try {
             if (!$pdo->query("SHOW TABLES LIKE 'digital_referrals'")->rowCount()) {
