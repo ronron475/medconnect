@@ -41,7 +41,13 @@ $urgent_triage = $pdo->query("SHOW TABLES LIKE 'triage_results'")->rowCount()
     ? (int) $pdo->query("SELECT COUNT(*) FROM triage_results WHERE level IN ('1','2') OR urgency_label LIKE '%Urgent%'")->fetchColumn() : 0;
 
 $pending_doctor_apps = (int) $pdo->query("SELECT COUNT(*) FROM doctor_applications WHERE status='pending_approval'")->fetchColumn();
-$pending_bhw_apps    = (int) $pdo->query("SELECT COUNT(*) FROM bhw_applications WHERE status='pending_approval'")->fetchColumn();
+$pending_bhw_stmt = $pdo->prepare("
+    SELECT COUNT(*) FROM bhw_applications
+    WHERE status = 'pending_approval'
+      AND (created_by = ? OR submitted_by = ?)
+");
+$pending_bhw_stmt->execute([$admin_id, $admin_id]);
+$pending_bhw_apps    = (int) $pending_bhw_stmt->fetchColumn();
 $pending_approvals   = $pending_doctor_apps + $pending_bhw_apps;
 
 $stmt = $pdo->prepare("SELECT COUNT(*) FROM doctor_applications WHERE created_by = ? AND status IN ('draft','requires_documents','rejected')");

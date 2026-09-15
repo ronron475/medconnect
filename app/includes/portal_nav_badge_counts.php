@@ -29,7 +29,7 @@ function portal_nav_badge_counts(PDO $pdo, string $role, int $userId): array
         'provider' => array_merge($counts, portal_nav_provider_counts($pdo, $userId)),
         'patient'  => array_merge($counts, portal_nav_patient_counts($pdo, $userId)),
         'bhw'      => array_merge($counts, portal_nav_bhw_counts($pdo, $userId)),
-        'admin', 'superadmin' => portal_nav_admin_counts($pdo, $role),
+        'admin', 'superadmin' => array_merge($counts, portal_nav_admin_counts($pdo, $role, $userId)),
         default    => $counts,
     };
 }
@@ -288,7 +288,7 @@ function portal_nav_bhw_counts(PDO $pdo, int $bhwId): array
 /**
  * @return array<string, int>
  */
-function portal_nav_admin_counts(PDO $pdo, string $role): array
+function portal_nav_admin_counts(PDO $pdo, string $role, int $userId = 0): array
 {
     require_once __DIR__ . '/doctor_application_schema.php';
     require_once __DIR__ . '/bhw_application_schema.php';
@@ -310,7 +310,19 @@ function portal_nav_admin_counts(PDO $pdo, string $role): array
     } catch (Throwable $e) {
     }
     try {
-        $pendingBhw = (int) $pdo->query("SELECT COUNT(*) FROM bhw_applications WHERE status='pending_approval'")->fetchColumn();
+        // Superadmin: global pending_approval queue.
+        // Admin: only applications in their authorized scope (created_by / submitted_by).
+        if ($role === 'admin' && $userId > 0) {
+            $stmt = $pdo->prepare("
+                SELECT COUNT(*) FROM bhw_applications
+                WHERE status = 'pending_approval'
+                  AND (created_by = ? OR submitted_by = ?)
+            ");
+            $stmt->execute([$userId, $userId]);
+            $pendingBhw = (int) $stmt->fetchColumn();
+        } else {
+            $pendingBhw = (int) $pdo->query("SELECT COUNT(*) FROM bhw_applications WHERE status='pending_approval'")->fetchColumn();
+        }
     } catch (Throwable $e) {
     }
     try {
