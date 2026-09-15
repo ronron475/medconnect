@@ -128,23 +128,30 @@
 
   function setFloating(on) {
     if (on && isVideoBusy()) return;
-    document.documentElement.classList.toggle('mc-floating-view', !!on);
+    var want = !!on;
+    var was = isFloatingActive();
+    if (want === was) {
+      syncAll();
+      return;
+    }
+
+    document.documentElement.classList.toggle('mc-floating-view', want);
     if (document.body) {
-      document.body.classList.toggle('mc-floating-view', !!on);
+      document.body.classList.toggle('mc-floating-view', want);
     }
     // Fixed-header offset must not reserve blank space once the navbar is in-flow.
     try {
-      if (on) {
+      if (want) {
         document.documentElement.style.setProperty('--mc-header-offset', '0px');
       } else {
         document.documentElement.style.removeProperty('--mc-header-offset');
         global.dispatchEvent(new Event('resize'));
       }
     } catch (_) { /* ignore */ }
-    writePersistedFloating(!!on);
+    writePersistedFloating(want);
     syncAll();
     try {
-      global.dispatchEvent(new CustomEvent('medconnect:floating-view', { detail: { active: !!on } }));
+      global.dispatchEvent(new CustomEvent('medconnect:floating-view', { detail: { active: want } }));
     } catch (_) { /* ignore */ }
   }
 

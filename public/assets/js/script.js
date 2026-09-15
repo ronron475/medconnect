@@ -239,8 +239,9 @@ if (!isLandingPage) {
 
     portalSigninToBody();
     overlay.classList.add('is-viewport-pinned');
-    document.body.classList.add('signin-scroll-locked');
-    lockScroll();
+    // Keep Sign In content scrollable — do not lock body/html overflow.
+    document.body.classList.remove('signin-scroll-locked');
+    unlockScroll();
     overlay.removeAttribute('hidden');
     overlay.setAttribute('aria-hidden', 'false');
     document.body.classList.add('signin-active');
