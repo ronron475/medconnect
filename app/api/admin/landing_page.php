@@ -5,6 +5,7 @@ header('Content-Type: application/json');
 require_once dirname(dirname(dirname(__DIR__))) . '/bootstrap.php';
 require_once dirname(dirname(dirname(__DIR__))) . '/config/db.php';
 require_once dirname(dirname(dirname(__DIR__))) . '/app/includes/landing_page_config.php';
+require_once dirname(dirname(dirname(__DIR__))) . '/app/includes/system_settings.php';
 require_once dirname(dirname(dirname(__DIR__))) . '/app/includes/audit_log.php';
 require_once __DIR__ . '/_auth.php';
 
@@ -57,15 +58,21 @@ try {
             if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
                 throw new RuntimeException('Method not allowed.');
             }
+            $bannerOn = !empty($_POST['maintenance_banner']) ? '1' : '0';
             $pairs = [
                 'LANDING_SECTION_ANNOUNCEMENTS' => !empty($_POST['section_announcements']) ? '1' : '0',
                 'LANDING_SECTION_SERVICES' => !empty($_POST['section_services']) ? '1' : '0',
                 'LANDING_SECTION_HOW_IT_WORKS' => !empty($_POST['section_how_it_works']) ? '1' : '0',
                 'LANDING_SECTION_CONTACT' => !empty($_POST['section_contact']) ? '1' : '0',
-                'LANDING_MAINTENANCE_BANNER' => !empty($_POST['maintenance_banner']) ? '1' : '0',
+                'LANDING_MAINTENANCE_BANNER' => $bannerOn,
                 'LANDING_MAINTENANCE_MESSAGE' => trim((string) ($_POST['maintenance_message'] ?? '')),
             ];
+            if ($pairs['LANDING_MAINTENANCE_MESSAGE'] === '') {
+                $pairs['LANDING_MAINTENANCE_MESSAGE'] = LandingPageConfig::defaults()['LANDING_MAINTENANCE_MESSAGE'];
+            }
             LandingPageConfig::save($pdo, $pairs, $userId);
+            // Keep Super Admin Maintenance Mode in sync with the landing banner toggle.
+            system_settings_set($pdo, 'MAINTENANCE_MODE', $bannerOn, $userId);
             audit_log($pdo, [
                 'patient_id' => $userId,
                 'action_type' => 'landing_page_updated',

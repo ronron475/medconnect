@@ -55,7 +55,8 @@
   }
 
   function updateStatsDisplay(stats, pendingCount) {
-    if (statsEl) {
+    // Hub uses admin-bhw-applications.js for bhwAppStats — never overwrite that panel from the legacy queue script.
+    if (statsEl && statsEl.id === 'bhwApprovalStats') {
       const map = { statTotal: stats.total, statPending: stats.pending, statDocs: stats.docs, statActive: stats.active };
       Object.keys(map).forEach(function (id) {
         const el = statsEl.querySelector('#' + id);
