@@ -19,14 +19,16 @@ $is_superadmin_portal = defined('MC_PORTAL_SHELL') && MC_PORTAL_SHELL === 'super
 $portal_eyebrow = $is_superadmin_portal ? 'Super Administration · AI Triage' : 'Administration · AI Triage';
 $cssVer = (int) @filemtime(ASSETS_PATH . '/css/admin-ai-review.css');
 $jsVer = (int) @filemtime(ASSETS_PATH . '/js/admin-ai-review.js');
+// Hard cache-bust so Actions never keep a stale provider dropdown/Save script.
+$airAssetVer = 'inbox-readonly-3-' . $cssVer . '-' . $jsVer;
 
 require_once __DIR__ . '/partials/layout_open.php';
 ?>
 
 <link rel="stylesheet" href="<?= ASSET_BASE ?>/assets/css/admin-staff-applications.css?v=1.1">
-<link rel="stylesheet" href="<?= ASSET_BASE ?>/assets/css/admin-ai-review.css?v=<?= $cssVer ?>">
+<link rel="stylesheet" href="<?= ASSET_BASE ?>/assets/css/admin-ai-review.css?v=<?= htmlspecialchars($airAssetVer) ?>">
 
-<article class="air-review-page staff-apps-page" id="airReviewRoot" data-api="<?= htmlspecialchars($apiUrl) ?>">
+<article class="air-review-page staff-apps-page" id="airReviewRoot" data-api="<?= htmlspecialchars($apiUrl) ?>" data-ui="read-unread-only">
 
 <header class="staff-apps-hero">
   <div class="staff-apps-hero__content">
@@ -99,6 +101,6 @@ require_once __DIR__ . '/partials/layout_open.php';
 
 </article>
 
-<script src="<?= ASSET_BASE ?>/assets/js/admin-ai-review.js?v=<?= $jsVer ?>"></script>
+<script src="<?= ASSET_BASE ?>/assets/js/admin-ai-review.js?v=<?= htmlspecialchars($airAssetVer) ?>"></script>
 
 <?php require_once __DIR__ . '/partials/layout_close.php'; ?>

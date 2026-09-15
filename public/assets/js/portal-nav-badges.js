@@ -247,6 +247,16 @@
     localCountGuardUntil.pending_referrals = Date.now() + 8000;
   });
 
+  global.addEventListener('medconnect:ai-review-unread', function (ev) {
+    const detail = ev && ev.detail ? ev.detail : null;
+    if (!detail || detail.unread_count == null) return;
+    const count = clamp(detail.unread_count);
+    setBadgeByKey('ai_review_pending', count);
+    if (!lastPayload) lastPayload = {};
+    lastPayload.ai_review_pending = count;
+    localCountGuardUntil.ai_review_pending = Date.now() + 8000;
+  });
+
   global.addEventListener('medconnect:nav-badges-refresh', function () {
     fetchCounts({ force: true });
   });

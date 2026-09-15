@@ -1,5 +1,9 @@
 /**
- * MedConnect Admin / SuperAdmin — AI Review Assignments (inbox / monitoring)
+ * MedConnect Admin / SuperAdmin — AI Review Assignments
+ * Inbox / monitoring only:
+ * - Assigned Provider is display-only (from triage assigned_provider_id)
+ * - Actions = Mark as Read / Mark as Unread only
+ * - NO provider dropdown, NO Save, NO provider_id submit
  */
 (function () {
   'use strict';
@@ -50,7 +54,8 @@
 
   function providerDisplay(row) {
     var name = String(row.assigned_provider_name || row.reviewer_name || '').trim();
-    if (!name || !row.assigned_provider_id) {
+    var id = parseInt(row.assigned_provider_id, 10) || 0;
+    if (id <= 0 || !name) {
       return '<span class="staff-apps-meta staff-apps-meta--muted air-review-reviewer is-unassigned">No assigned doctor</span>';
     }
     return '<span class="staff-apps-meta">' + esc(name) + '</span>';
@@ -65,16 +70,21 @@
       badge.hidden = n <= 0;
       badge.setAttribute('aria-hidden', n <= 0 ? 'true' : 'false');
     });
+    var unreadEl = document.getElementById('airStatUnread');
+    if (unreadEl) unreadEl.textContent = String(n);
+    try {
+      window.dispatchEvent(new CustomEvent('medconnect:ai-review-unread', {
+        detail: { unread_count: n }
+      }));
+    } catch (e) { /* ignore */ }
   }
 
   function updateStats(rows) {
     var pending = 0;
     var approved = 0;
-    var unread = 0;
     rows.forEach(function (row) {
       if (row.recommendation_status === 'pending_approval') pending += 1;
       if (row.recommendation_status === 'approved') approved += 1;
-      if (row.is_unread) unread += 1;
     });
     var totalEl = document.getElementById('airStatTotal');
     var pendingEl = document.getElementById('airStatPending');
@@ -83,7 +93,7 @@
     if (totalEl) totalEl.textContent = String(rows.length);
     if (pendingEl) pendingEl.textContent = String(pending);
     if (approvedEl) approvedEl.textContent = String(approved);
-    if (unreadEl) unreadEl.textContent = String(typeof unreadCount === 'number' ? unreadCount : unread);
+    if (unreadEl) unreadEl.textContent = String(Math.max(0, unreadCount));
   }
 
   function filteredRows() {
@@ -114,6 +124,19 @@
     );
   }
 
+  function actionButtonHtml(row) {
+    var unread = !!row.is_unread;
+    var label = unread ? 'Mark as Read' : 'Mark as Unread';
+    var actionClass = unread ? 'mc-btn--primary' : 'mc-btn--outline';
+    return (
+      '<button type="button" class="mc-btn ' + actionClass + ' mc-btn--sm air-review-actions__toggle ai-review-read-toggle"' +
+        ' data-triage="' + esc(row.id) + '"' +
+        ' data-unread="' + (unread ? '1' : '0') + '">' +
+        esc(label) +
+      '</button>'
+    );
+  }
+
   function renderRows(rows) {
     updateStats(allRows);
     if (countEl) {
@@ -131,8 +154,6 @@
         ? '<span class="staff-app-status staff-app-status--pending">Pending</span>'
         : '<span class="staff-app-status staff-app-status--active">Approved</span>';
       var unread = !!row.is_unread;
-      var actionLabel = unread ? 'Mark as Read' : 'Mark as Unread';
-      var actionClass = unread ? 'mc-btn--primary' : 'mc-btn--outline';
       var unreadBadge = unread
         ? ' <span class="air-review-unread-pill">Unread</span>'
         : '';
@@ -151,11 +172,7 @@
         '<td data-label="Assigned Provider">' + providerDisplay(row) + '</td>' +
         '<td data-label="Submitted"><span class="staff-apps-meta staff-apps-meta--muted">' + esc(formatSubmitted(row.assessed_at)) + '</span></td>' +
         '<td class="staff-apps-td--actions" data-label="Actions">' +
-          '<div class="air-review-actions">' +
-            '<button type="button" class="mc-btn ' + actionClass + ' mc-btn--sm air-review-actions__toggle ai-review-read-toggle" data-triage="' + esc(row.id) + '" data-unread="' + (unread ? '1' : '0') + '">' +
-              actionLabel +
-            '</button>' +
-          '</div>' +
+          '<div class="air-review-actions">' + actionButtonHtml(row) + '</div>' +
         '</td>' +
       '</tr>';
     }).join('');
@@ -188,7 +205,10 @@
 
     var status = filterEl ? filterEl.value : 'active';
     try {
-      var res = await fetch(apiUrl + '?status=' + encodeURIComponent(status), { credentials: 'same-origin' });
+      var res = await fetch(apiUrl + '?status=' + encodeURIComponent(status) + '&_=' + Date.now(), {
+        credentials: 'same-origin',
+        cache: 'no-store',
+      });
       var data = await res.json();
       if (!data.success) {
         setStatus(data.message || 'Could not load.', true);
@@ -198,6 +218,9 @@
       allRows = data.rows || [];
       if (typeof data.unread_count === 'number') {
         refreshNavBadge(data.unread_count);
+      } else {
+        unreadCount = allRows.filter(function (r) { return !!r.is_unread; }).length;
+        refreshNavBadge(unreadCount);
       }
       renderRows(filteredRows());
       setStatus('Updated ' + new Date().toLocaleTimeString(), false);
@@ -210,6 +233,9 @@
   tbody.addEventListener('click', async function (ev) {
     var btn = ev.target.closest('.ai-review-read-toggle');
     if (!btn) return;
+    // Ignore any leftover legacy provider Save controls if a cached page still has them.
+    if (ev.target.closest('.ai-review-save, .ai-review-provider-select')) return;
+
     var triageId = btn.getAttribute('data-triage');
     if (!triageId) return;
 
@@ -225,10 +251,16 @@
       fd.append('action', action);
       fd.append('triage_id', triageId);
       fd.append('csrf_token', csrf);
-      var res = await fetch(apiUrl, { method: 'POST', body: fd, credentials: 'same-origin' });
+      var res = await fetch(apiUrl, {
+        method: 'POST',
+        body: fd,
+        credentials: 'same-origin',
+        cache: 'no-store',
+      });
       var data = await res.json();
       if (!data.success) {
         notify(data.message || 'Could not update read state.', false);
+        btn.textContent = prevLabel;
         return;
       }
       if (typeof data.unread_count === 'number') {
