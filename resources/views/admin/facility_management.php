@@ -62,7 +62,7 @@ require_once __DIR__ . '/partials/layout_open.php';
 <nav style="display:flex;gap:8px;margin-bottom:20px;flex-wrap:wrap;">
   <a href="<?= $portalBase ?>/facility_management.php" class="mc-btn <?= !$is_referral ? 'mc-btn--primary' : 'mc-btn--outline' ?>">Facilities</a>
   <a href="<?= $portalBase ?>/facility_management.php?tab=referral" class="mc-btn <?= $is_referral ? 'mc-btn--primary' : 'mc-btn--outline' ?>">
-    Referrals <?php if ($referral_count > 0): ?><span class="mc-badge" style="margin-left:4px;"><?= (int) $referral_count ?></span><?php endif; ?>
+    Referrals <span id="refTabUnreadBadge" class="mc-badge" style="margin-left:4px;" hidden aria-hidden="true"></span>
   </a>
 </nav>
 
@@ -112,35 +112,61 @@ require_once __DIR__ . '/partials/layout_open.php';
 (function () {
   var api = <?= json_encode($refApi) ?>;
   var rowsById = {};
+  var marking = {};
   function esc(s) { var d = document.createElement('div'); d.textContent = s == null ? '' : String(s); return d.innerHTML; }
   function stampUpdated() {
     document.getElementById('refUpdated').textContent = 'Updated ' + new Date().toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
   }
+  function formatTabBadge(n) {
+    if (n <= 0) return '';
+    return n > 9 ? '9+' : String(n);
+  }
+  function refreshTabBadge(unread) {
+    var n = Math.max(0, parseInt(unread, 10) || 0);
+    var badge = document.getElementById('refTabUnreadBadge');
+    if (!badge) return;
+    var text = formatTabBadge(n);
+    badge.textContent = text;
+    badge.hidden = n <= 0;
+    badge.setAttribute('aria-hidden', n <= 0 ? 'true' : 'false');
+  }
   function refreshNavBadge(unread) {
     var n = Math.max(0, parseInt(unread, 10) || 0);
-    var text = n <= 0 ? '' : (n > 9 ? '9+' : String(n));
+    refreshTabBadge(n);
     document.querySelectorAll('[data-nav-badge="pending_referrals"]').forEach(function (badge) {
-      badge.textContent = text;
+      badge.textContent = formatTabBadge(n);
       badge.hidden = n <= 0;
       badge.setAttribute('aria-hidden', n <= 0 ? 'true' : 'false');
     });
+    // Keep live sidebar poller in sync so a stale in-flight poll cannot restore the old count.
+    try {
+      window.dispatchEvent(new CustomEvent('medconnect:referrals-unread', {
+        detail: { unread_count: n }
+      }));
+    } catch (e) { /* ignore */ }
   }
   function markRead(referralId) {
+    var id = parseInt(referralId, 10) || 0;
+    if (id <= 0) return Promise.resolve(null);
+    if (marking[id]) return marking[id];
+
     var fd = new FormData();
     fd.append('action', 'mark_read');
-    fd.append('referral_id', String(referralId));
+    fd.append('referral_id', String(id));
     fd.append('csrf_token', document.body.dataset.csrf || '');
-    return fetch(api, { method: 'POST', credentials: 'same-origin', body: fd })
+    marking[id] = fetch(api, { method: 'POST', credentials: 'same-origin', body: fd })
       .then(function (r) { return r.json(); })
       .then(function (j) {
         if (j && j.success) {
-          if (rowsById[referralId]) rowsById[referralId].is_unread = false;
+          if (rowsById[id]) rowsById[id].is_unread = false;
           if (typeof j.unread_count === 'number') refreshNavBadge(j.unread_count);
           return j;
         }
         return null;
       })
-      .catch(function () { return null; });
+      .catch(function () { return null; })
+      .finally(function () { delete marking[id]; });
+    return marking[id];
   }
   function openDetail(row) {
     var body = document.getElementById('refDetailBody');
@@ -156,9 +182,17 @@ require_once __DIR__ . '/partials/layout_open.php';
       '<div><dt class="text-xs text-muted">Date created</dt><dd style="margin:2px 0 0;">' + esc(dt) + '</dd></div>';
     modal.setAttribute('aria-hidden', 'false');
     modal.style.display = 'flex';
-    if (row.is_unread) {
-      markRead(row.id).then(function () { load(false); });
-    }
+
+    // Viewing details is the read action (Admin + SuperAdmin). Idempotent for already-read rows.
+    var wasUnread = !!row.is_unread;
+    markRead(row.id).then(function (j) {
+      if (!j || !j.success) return;
+      if (wasUnread) {
+        load(false);
+      } else if (typeof j.unread_count === 'number') {
+        refreshNavBadge(j.unread_count);
+      }
+    });
   }
   function closeDetail() {
     var modal = document.getElementById('refDetailModal');

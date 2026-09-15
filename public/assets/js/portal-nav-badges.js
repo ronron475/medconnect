@@ -48,6 +48,8 @@
   let inFlight = false;
   let booted = false;
   let lastPayload = null;
+  /** @type {Record<string, number>} */
+  const localCountGuardUntil = {};
 
   const bc = (typeof global.BroadcastChannel !== 'undefined')
     ? new BroadcastChannel(CHANNEL)
@@ -129,14 +131,24 @@
   function applyCounts(data, options) {
     if (!data) return;
     const opts = options || {};
-    const nextKey = payloadKey(data);
+    const merged = Object.assign({}, data);
+    const now = Date.now();
+    Object.keys(localCountGuardUntil).forEach((key) => {
+      if (now < localCountGuardUntil[key] && lastPayload && lastPayload[key] != null) {
+        // Preserve recent local unread updates against stale in-flight polls.
+        merged[key] = lastPayload[key];
+      } else if (now >= localCountGuardUntil[key]) {
+        delete localCountGuardUntil[key];
+      }
+    });
+    const nextKey = payloadKey(merged);
     if (!opts.force && lastPayload && payloadKey(lastPayload) === nextKey) return;
-    lastPayload = Object.assign({}, data);
+    lastPayload = Object.assign({}, merged);
 
     document.querySelectorAll('[data-nav-badge]').forEach((badge) => {
       const key = badge.getAttribute('data-nav-badge');
       if (!key) return;
-      setBadgeEl(badge, resolveCount(data, key));
+      setBadgeEl(badge, resolveCount(lastPayload, key));
     });
 
     if (!opts.skipBroadcast && bc) {
@@ -223,6 +235,16 @@
     const count = clamp(detail.unread_count);
     setBadgeByKey('notifications', count);
     if (lastPayload) lastPayload.notifications = count;
+  });
+
+  global.addEventListener('medconnect:referrals-unread', function (ev) {
+    const detail = ev && ev.detail ? ev.detail : null;
+    if (!detail || detail.unread_count == null) return;
+    const count = clamp(detail.unread_count);
+    setBadgeByKey('pending_referrals', count);
+    if (!lastPayload) lastPayload = {};
+    lastPayload.pending_referrals = count;
+    localCountGuardUntil.pending_referrals = Date.now() + 8000;
   });
 
   global.addEventListener('medconnect:nav-badges-refresh', function () {

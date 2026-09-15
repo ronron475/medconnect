@@ -423,7 +423,7 @@ final class NotificationEvents
             'type'          => NotificationManager::TYPE_REFERRAL,
             'title'         => 'Referral Issued',
             'message'       => 'A doctor has issued a patient referral. Open Referral Center to monitor the record.',
-            'action_url'    => '/views/admin/facility_management.php?tab=referral',
+            'action_url'    => '/views/superadmin/facility_management.php?tab=referral',
             'related_table' => 'digital_referrals',
             'related_id'    => $referralId,
         ]);
@@ -457,6 +457,90 @@ final class NotificationEvents
             'related_table' => 'digital_referrals',
             'related_id'    => $referralId,
         ]);
+    }
+
+    /**
+     * Ensure Admin/SuperAdmin has per-user Referral Center inbox rows for existing referrals.
+     * Creates missing notifications only — never resets already-read state.
+     *
+     * NOTE: Prefer calling this from Referral Center list/mark-read paths, not the global
+     * sidebar badge poller (to avoid creating large unread spikes on every nav refresh).
+     */
+    public static function ensureReferralInboxForUser(PDO $pdo, int $userId): void
+    {
+        if ($userId <= 0) {
+            return;
+        }
+        NotificationManager::ensureSchema($pdo);
+
+        try {
+            $roleStmt = $pdo->prepare('SELECT role FROM users WHERE id = ? LIMIT 1');
+            $roleStmt->execute([$userId]);
+            $role = strtolower(trim((string) ($roleStmt->fetchColumn() ?: '')));
+        } catch (Throwable $e) {
+            return;
+        }
+        if (!in_array($role, ['admin', 'superadmin'], true)) {
+            return;
+        }
+
+        try {
+            if (!$pdo->query("SHOW TABLES LIKE 'digital_referrals'")->rowCount()) {
+                return;
+            }
+            $cases = $pdo->query("
+                SELECT id
+                FROM digital_referrals
+                ORDER BY created_at DESC
+                LIMIT 200
+            ")->fetchAll(PDO::FETCH_COLUMN) ?: [];
+        } catch (Throwable $e) {
+            return;
+        }
+
+        $ids = array_values(array_filter(array_map('intval', $cases), static fn ($id) => $id > 0));
+        if (!$ids) {
+            return;
+        }
+
+        $existing = [];
+        try {
+            $placeholders = implode(',', array_fill(0, count($ids), '?'));
+            $stmt = $pdo->prepare("
+                SELECT DISTINCT related_id
+                FROM notifications
+                WHERE user_id = ?
+                  AND related_table = 'digital_referrals'
+                  AND related_id IN ({$placeholders})
+                  AND status = 'active'
+            ");
+            $stmt->execute(array_merge([$userId], $ids));
+            foreach ($stmt->fetchAll(PDO::FETCH_COLUMN) ?: [] as $rid) {
+                $existing[(int) $rid] = true;
+            }
+        } catch (Throwable $e) {
+            return;
+        }
+
+        $actionUrl = $role === 'superadmin'
+            ? '/views/superadmin/facility_management.php?tab=referral'
+            : '/views/admin/facility_management.php?tab=referral';
+
+        foreach ($ids as $referralId) {
+            if (isset($existing[$referralId])) {
+                continue;
+            }
+            NotificationManager::create($pdo, $userId, [
+                'receiver_role' => $role,
+                'type'          => NotificationManager::TYPE_REFERRAL,
+                'title'         => 'Referral Issued',
+                'message'       => 'A doctor has issued a patient referral. Open Referral Center to monitor the record.',
+                'related_table' => 'digital_referrals',
+                'related_id'    => $referralId,
+                'action_url'    => $actionUrl,
+                'icon'          => 'clipboard',
+            ]);
+        }
     }
 
     public static function referralStatusChanged(PDO $pdo, int $referralId, int $patientId, string $status, ?int $providerId = null, ?int $senderId = null): void
@@ -1080,17 +1164,152 @@ final class NotificationEvents
         int $triageId,
         ?int $senderId = null
     ): void {
-        NotificationManager::notifyProvider($pdo, $providerId, [
-            'sender_id'     => $senderId ?? $patientId,
+        if ($providerId > 0) {
+            NotificationManager::notifyProvider($pdo, $providerId, [
+                'sender_id'     => $senderId ?? $patientId,
+                'type'          => NotificationManager::TYPE_MEDICAL,
+                'title'         => 'AI Self-Care Review Required',
+                'message'       => "{$patientName} has a non-urgent case with AI-generated guidance awaiting your review.",
+                'action_url'    => '/views/provider/triage.php',
+                'related_table' => 'triage_results',
+                'related_id'    => $triageId,
+                'priority'      => 'high',
+                'icon'          => 'clipboard',
+            ]);
+        }
+
+        self::aiReviewAssignmentInbox($pdo, $patientId, $patientName, $triageId, $senderId);
+    }
+
+    /**
+     * Per-user Admin/SuperAdmin inbox item for AI Review Assignments monitoring.
+     * Does not change clinical status or provider assignment.
+     */
+    public static function aiReviewAssignmentInbox(
+        PDO $pdo,
+        int $patientId,
+        string $patientName,
+        int $triageId,
+        ?int $senderId = null
+    ): void {
+        if ($triageId <= 0) {
+            return;
+        }
+        $name = trim($patientName) !== '' ? trim($patientName) : 'A patient';
+        $payload = [
+            'sender_id'     => $senderId ?? ($patientId > 0 ? $patientId : null),
             'type'          => NotificationManager::TYPE_MEDICAL,
-            'title'         => 'AI Self-Care Review Required',
-            'message'       => "{$patientName} has a non-urgent case with AI-generated guidance awaiting your review.",
-            'action_url'    => '/views/provider/triage.php',
-            'related_table' => 'triage_results',
-            'related_id'    => $triageId,
+            'title'         => 'AI Review Assignment',
+            'message'       => "{$name} has an AI review case in the assignments inbox.",
             'priority'      => 'high',
+            'related_table' => NotificationManager::RELATED_AI_REVIEW_ASSIGNMENTS,
+            'related_id'    => $triageId,
             'icon'          => 'clipboard',
-        ]);
+            'once'          => true,
+        ];
+        NotificationManager::notifyAdmins($pdo, array_merge($payload, [
+            'action_url' => '/views/admin/ai_review_assignments.php',
+        ]));
+        NotificationManager::notifySuperadmins($pdo, array_merge($payload, [
+            'action_url' => '/views/superadmin/ai_review_assignments.php',
+        ]));
+    }
+
+    /**
+     * Ensure the current Admin/SuperAdmin has inbox notifications for active AI review cases.
+     * Creates missing per-user rows only (does not reset already-read state).
+     */
+    public static function ensureAiReviewInboxForUser(PDO $pdo, int $userId): void
+    {
+        if ($userId <= 0) {
+            return;
+        }
+        NotificationManager::ensureSchema($pdo);
+        require_once dirname(__DIR__) . '/includes/triage_assessment_schema.php';
+        triage_assessment_ensure_schema($pdo);
+
+        try {
+            $roleStmt = $pdo->prepare("SELECT role FROM users WHERE id = ? LIMIT 1");
+            $roleStmt->execute([$userId]);
+            $role = strtolower(trim((string) ($roleStmt->fetchColumn() ?: '')));
+        } catch (Throwable $e) {
+            return;
+        }
+        if (!in_array($role, ['admin', 'superadmin'], true)) {
+            return;
+        }
+
+        try {
+            if (!$pdo->query("SHOW TABLES LIKE 'triage_results'")->rowCount()) {
+                return;
+            }
+            $cases = $pdo->query("
+                SELECT tr.id, CONCAT(pt.first_name, ' ', pt.last_name) AS patient_name
+                FROM triage_results tr
+                JOIN users pt ON pt.id = tr.patient_id
+                WHERE tr.recommendation_status IN ('pending_approval', 'approved')
+                  AND tr.assessed_at >= DATE_SUB(NOW(), INTERVAL 30 DAY)
+                  AND TRIM(COALESCE(tr.chief_complaint, '')) <> ''
+                ORDER BY tr.assessed_at DESC
+                LIMIT 250
+            ")->fetchAll(PDO::FETCH_ASSOC) ?: [];
+        } catch (Throwable $e) {
+            return;
+        }
+
+        if (!$cases) {
+            return;
+        }
+
+        $existing = [];
+        try {
+            $ids = array_map(static fn ($row) => (int) ($row['id'] ?? 0), $cases);
+            $ids = array_values(array_filter($ids, static fn ($id) => $id > 0));
+            if (!$ids) {
+                return;
+            }
+            $placeholders = implode(',', array_fill(0, count($ids), '?'));
+            $stmt = $pdo->prepare("
+                SELECT DISTINCT related_id
+                FROM notifications
+                WHERE user_id = ?
+                  AND related_table = ?
+                  AND related_id IN ({$placeholders})
+                  AND status = 'active'
+            ");
+            $stmt->execute(array_merge(
+                [$userId, NotificationManager::RELATED_AI_REVIEW_ASSIGNMENTS],
+                $ids
+            ));
+            foreach ($stmt->fetchAll(PDO::FETCH_COLUMN) ?: [] as $rid) {
+                $existing[(int) $rid] = true;
+            }
+        } catch (Throwable $e) {
+            return;
+        }
+
+        $actionUrl = $role === 'superadmin'
+            ? '/views/superadmin/ai_review_assignments.php'
+            : '/views/admin/ai_review_assignments.php';
+
+        foreach ($cases as $case) {
+            $triageId = (int) ($case['id'] ?? 0);
+            if ($triageId <= 0 || isset($existing[$triageId])) {
+                continue;
+            }
+            $patientName = trim((string) ($case['patient_name'] ?? 'A patient'));
+            NotificationManager::create($pdo, $userId, [
+                'receiver_role' => $role,
+                'type'          => NotificationManager::TYPE_MEDICAL,
+                'title'         => 'AI Review Assignment',
+                'message'       => "{$patientName} has an AI review case in the assignments inbox.",
+                'priority'      => 'high',
+                'related_table' => NotificationManager::RELATED_AI_REVIEW_ASSIGNMENTS,
+                'related_id'    => $triageId,
+                'action_url'    => $actionUrl,
+                'icon'          => 'clipboard',
+            ]);
+        }
     }
 
     public static function careTipsApprovedForPatient(

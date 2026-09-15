@@ -33,7 +33,7 @@ require_once __DIR__ . '/partials/layout_open.php';
     <span class="staff-apps-hero__eyebrow"><?= htmlspecialchars($portal_eyebrow) ?></span>
     <h1 class="staff-apps-hero__title">AI Review Assignments</h1>
     <p class="staff-apps-hero__desc">
-      Reassign reviewing doctors for non-urgent self-care cases. Patients stay locked to the assigned provider when booking follow-up consultations.
+      Monitor AI review cases and mark them read or unread. Assigned providers come from each patient’s existing consultation assignment and cannot be changed here.
     </p>
   </div>
 </header>
@@ -51,15 +51,15 @@ require_once __DIR__ . '/partials/layout_open.php';
     <div class="staff-apps-stat__value" id="airStatApproved">—</div>
     <div class="staff-apps-stat__label">Approved</div>
   </div>
-  <div class="staff-apps-stat air-review-stat--unassigned">
-    <div class="staff-apps-stat__value" id="airStatUnassigned">—</div>
-    <div class="staff-apps-stat__label">Unassigned</div>
+  <div class="staff-apps-stat air-review-stat--unread">
+    <div class="staff-apps-stat__value" id="airStatUnread">—</div>
+    <div class="staff-apps-stat__label">Unread</div>
   </div>
 </div>
 
 <div class="staff-apps-note" role="note">
   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
-  <span>Choose a reviewing doctor in <strong>Actions</strong>, then click <strong>Save</strong>. The patient stays linked to that provider for follow-up booking.</span>
+  <span>Use <strong>Mark as Read</strong> / <strong>Mark as Unread</strong> for your inbox only. This does not change the assigned doctor, clinical status, or AI triage result.</span>
 </div>
 
 <div class="staff-apps-card">
@@ -85,7 +85,7 @@ require_once __DIR__ . '/partials/layout_open.php';
           <th>Patient</th>
           <th>Concern</th>
           <th>Status</th>
-          <th>Assigned reviewer</th>
+          <th>Assigned Provider</th>
           <th>Submitted</th>
           <th>Actions</th>
         </tr>

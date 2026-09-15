@@ -25,6 +25,9 @@ final class NotificationManager
     public const STATUS_ARCHIVED = 'archived';
     public const STATUS_DELETED  = 'deleted';
 
+    /** Inbox key for Admin/SuperAdmin AI Review Assignments (per-user read state). */
+    public const RELATED_AI_REVIEW_ASSIGNMENTS = 'ai_review_assignments';
+
     private static bool $schemaReady = false;
 
     /** @var array<string, string> */
@@ -511,6 +514,71 @@ final class NotificationManager
         return (int) $stmt->rowCount();
     }
 
+    /**
+     * Mark this user's notifications for a related record as unread (does not change clinical data).
+     * If no active related notification exists for the user, creates one unread inbox row.
+     *
+     * @param array{title?:string,message?:string,type?:string,action_url?:string,receiver_role?:string} $createOptions
+     */
+    public static function markRelatedUnread(PDO $pdo, int $userId, string $relatedTable, int $relatedId, array $createOptions = []): int
+    {
+        if ($userId <= 0 || $relatedId <= 0) {
+            return 0;
+        }
+        self::ensureSchema($pdo);
+        $relatedTable = trim($relatedTable);
+        if ($relatedTable === '') {
+            return 0;
+        }
+
+        $stmt = $pdo->prepare("
+            UPDATE notifications
+            SET is_read = 0, updated_at = NOW()
+            WHERE user_id = ?
+              AND related_table = ?
+              AND related_id = ?
+              AND is_read = 1
+              AND status = 'active'
+        ");
+        $stmt->execute([$userId, $relatedTable, $relatedId]);
+        $updated = (int) $stmt->rowCount();
+        if ($updated > 0) {
+            return $updated;
+        }
+
+        if (self::isRelatedUnread($pdo, $userId, $relatedTable, $relatedId)) {
+            return 0;
+        }
+
+        $exists = $pdo->prepare("
+            SELECT id
+            FROM notifications
+            WHERE user_id = ?
+              AND related_table = ?
+              AND related_id = ?
+              AND status = 'active'
+            LIMIT 1
+        ");
+        $exists->execute([$userId, $relatedTable, $relatedId]);
+        if ((int) ($exists->fetchColumn() ?: 0) > 0) {
+            return 0;
+        }
+
+        $created = self::create($pdo, $userId, [
+            'receiver_role' => $createOptions['receiver_role'] ?? self::resolveUserRole($pdo, $userId),
+            'type'          => $createOptions['type'] ?? self::TYPE_MEDICAL,
+            'title'         => $createOptions['title'] ?? 'AI Review Assignment',
+            'message'       => $createOptions['message'] ?? 'An AI review case was marked unread.',
+            'priority'      => 'high',
+            'related_table' => $relatedTable,
+            'related_id'    => $relatedId,
+            'action_url'    => $createOptions['action_url'] ?? null,
+            'icon'          => 'clipboard',
+        ]);
+
+        return $created ? 1 : 0;
+    }
+
     /** Whether this user still has an unread notification for the related record. */
     public static function isRelatedUnread(PDO $pdo, int $userId, string $relatedTable, int $relatedId): bool
     {
@@ -531,6 +599,38 @@ final class NotificationManager
         ");
         $stmt->execute([$userId, trim($relatedTable), $relatedId]);
         return (bool) $stmt->fetchColumn();
+    }
+
+    /**
+     * @return list<int>
+     */
+    public static function listRelatedUnreadIds(PDO $pdo, int $userId, string $relatedTable): array
+    {
+        if ($userId <= 0) {
+            return [];
+        }
+        self::ensureSchema($pdo);
+        $relatedTable = trim($relatedTable);
+        if ($relatedTable === '') {
+            return [];
+        }
+        try {
+            $stmt = $pdo->prepare("
+                SELECT DISTINCT related_id
+                FROM notifications
+                WHERE user_id = ?
+                  AND related_table = ?
+                  AND related_id IS NOT NULL
+                  AND related_id > 0
+                  AND is_read = 0
+                  AND status = 'active'
+                  AND (expires_at IS NULL OR expires_at > NOW())
+            ");
+            $stmt->execute([$userId, $relatedTable]);
+            return array_map('intval', $stmt->fetchAll(PDO::FETCH_COLUMN) ?: []);
+        } catch (Throwable $e) {
+            return [];
+        }
     }
 
     public static function archive(PDO $pdo, int $userId, int $notificationId): bool

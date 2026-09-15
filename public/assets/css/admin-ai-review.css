@@ -26,7 +26,7 @@
   color: rgba(255, 255, 255, 0.9);
 }
 
-.air-review-stat--unassigned .staff-apps-stat__value {
+.air-review-stat--unread .staff-apps-stat__value {
   color: #dc2626;
 }
 
@@ -75,7 +75,25 @@
   font-weight: 500;
 }
 
-/* Inline reassign — compact row actions (not full-width stacked) */
+.air-review-unread-pill {
+  display: inline-block;
+  margin-left: 6px;
+  padding: 2px 7px;
+  border-radius: 999px;
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  color: #b91c1c;
+  background: #fee2e2;
+  vertical-align: middle;
+}
+
+.air-review-table tr.is-unread .staff-apps-applicant__name {
+  font-weight: 700;
+}
+
+/* Read / unread action only */
 .air-review-actions {
   display: inline-flex;
   align-items: center;
@@ -85,15 +103,7 @@
   max-width: 100%;
 }
 
-.air-review-actions__select {
-  width: auto;
-  min-width: 148px;
-  max-width: 190px;
-  padding: 8px 32px 8px 10px;
-  font-size: 0.8125rem;
-}
-
-.air-review-actions__save {
+.air-review-actions__toggle {
   padding: 8px 14px;
   min-height: 36px;
   font-size: 0.8125rem;
@@ -102,7 +112,7 @@
   white-space: nowrap;
 }
 
-.air-review-actions__save.is-saving {
+.air-review-actions__toggle.is-saving {
   opacity: 0.65;
   pointer-events: none;
 }
@@ -124,14 +134,8 @@
     justify-content: stretch;
   }
 
-  .air-review-actions__select {
-    flex: 1 1 auto;
-    min-width: 0;
-    max-width: none;
-  }
-
-  .air-review-actions__save {
-    flex: 0 0 auto;
+  .air-review-actions__toggle {
+    width: 100%;
   }
 }
 
@@ -169,9 +173,8 @@ html[data-theme-resolved='dark'] body.superadmin-body .air-review-reviewer.is-un
   color: #71717a;
 }
 
-html[data-theme-resolved='dark'] body.admin-body .air-review-actions__select,
-html[data-theme-resolved='dark'] body.superadmin-body .air-review-actions__select {
-  background-color: #1c1c1c;
-  border-color: #334155;
-  color: #f1f5f9;
+html[data-theme-resolved='dark'] body.admin-body .air-review-unread-pill,
+html[data-theme-resolved='dark'] body.superadmin-body .air-review-unread-pill {
+  color: #fecaca;
+  background: rgba(185, 28, 28, 0.35);
 }
