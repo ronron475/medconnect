@@ -82,58 +82,148 @@ require_once __DIR__ . '/partials/layout_open.php';
         <th>Facility</th>
         <th>Reason</th>
         <th>Date</th>
+        <th>Actions</th>
       </tr>
     </thead>
     <tbody id="refTableBody">
-      <tr><td colspan="6"><div class="mc-table-empty"><p>Loading referrals…</p></div></td></tr>
+      <tr><td colspan="7"><div class="mc-table-empty"><p>Loading referrals…</p></div></td></tr>
     </tbody>
   </table>
+</div>
+
+<div id="refDetailModal" role="dialog" aria-modal="true" aria-hidden="true" aria-labelledby="refDetailTitle"
+     style="display:none;position:fixed;inset:0;z-index:1100;background:rgba(7,20,40,.55);align-items:center;justify-content:center;padding:20px;">
+  <div style="max-width:520px;width:min(520px,92vw);background:var(--mc-surface,#fff);border-radius:12px;padding:20px;box-shadow:0 24px 60px rgba(0,0,0,.2);">
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px;margin-bottom:12px;">
+      <div>
+        <p class="text-xs text-muted" style="margin:0 0 4px;">Referral details</p>
+        <h3 id="refDetailTitle" class="text-h3" style="margin:0;">Referral</h3>
+      </div>
+      <button type="button" class="mc-btn mc-btn--outline" id="refDetailClose" aria-label="Close">&times;</button>
+    </div>
+    <dl id="refDetailBody" class="text-sm" style="display:grid;gap:10px;margin:0;"></dl>
+    <div style="margin-top:16px;text-align:right;">
+      <button type="button" class="mc-btn mc-btn--primary" id="refDetailDone">Close</button>
+    </div>
+  </div>
 </div>
 
 <script>
 (function () {
   var api = <?= json_encode($refApi) ?>;
+  var rowsById = {};
   function esc(s) { var d = document.createElement('div'); d.textContent = s == null ? '' : String(s); return d.innerHTML; }
   function stampUpdated() {
     document.getElementById('refUpdated').textContent = 'Updated ' + new Date().toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
   }
-  function load() {
+  function refreshNavBadge(unread) {
+    var n = Math.max(0, parseInt(unread, 10) || 0);
+    var text = n <= 0 ? '' : (n > 9 ? '9+' : String(n));
+    document.querySelectorAll('[data-nav-badge="pending_referrals"]').forEach(function (badge) {
+      badge.textContent = text;
+      badge.hidden = n <= 0;
+      badge.setAttribute('aria-hidden', n <= 0 ? 'true' : 'false');
+    });
+  }
+  function markRead(referralId) {
+    var fd = new FormData();
+    fd.append('action', 'mark_read');
+    fd.append('referral_id', String(referralId));
+    fd.append('csrf_token', document.body.dataset.csrf || '');
+    return fetch(api, { method: 'POST', credentials: 'same-origin', body: fd })
+      .then(function (r) { return r.json(); })
+      .then(function (j) {
+        if (j && j.success) {
+          if (rowsById[referralId]) rowsById[referralId].is_unread = false;
+          if (typeof j.unread_count === 'number') refreshNavBadge(j.unread_count);
+          return j;
+        }
+        return null;
+      })
+      .catch(function () { return null; });
+  }
+  function openDetail(row) {
+    var body = document.getElementById('refDetailBody');
+    var title = document.getElementById('refDetailTitle');
+    var modal = document.getElementById('refDetailModal');
+    title.textContent = (row.referral_type || 'Referral');
+    var dt = row.created_at ? new Date(String(row.created_at).replace(' ', 'T')).toLocaleString() : '—';
+    body.innerHTML =
+      '<div><dt class="text-xs text-muted">Patient</dt><dd style="margin:2px 0 0;"><strong>' + esc(row.patient_name || 'Unknown patient') + '</strong></dd></div>' +
+      '<div><dt class="text-xs text-muted">Provider</dt><dd style="margin:2px 0 0;">' + esc(row.provider_name || '—') + '</dd></div>' +
+      '<div><dt class="text-xs text-muted">Facility / service</dt><dd style="margin:2px 0 0;">' + esc(row.facility_name || '—') + '</dd></div>' +
+      '<div><dt class="text-xs text-muted">Reason for referral</dt><dd style="margin:2px 0 0;">' + esc(row.reason || '—') + '</dd></div>' +
+      '<div><dt class="text-xs text-muted">Date created</dt><dd style="margin:2px 0 0;">' + esc(dt) + '</dd></div>';
+    modal.setAttribute('aria-hidden', 'false');
+    modal.style.display = 'flex';
+    if (row.is_unread) {
+      markRead(row.id).then(function () { load(false); });
+    }
+  }
+  function closeDetail() {
+    var modal = document.getElementById('refDetailModal');
+    modal.setAttribute('aria-hidden', 'true');
+    modal.style.display = 'none';
+  }
+  function load(updateStamp) {
+    if (updateStamp !== false) { /* keep */ }
     fetch(api + '?status=all', { credentials: 'same-origin' })
       .then(function (r) { return r.json(); })
       .then(function (j) {
         var tb = document.getElementById('refTableBody');
         if (!j.success) {
-          tb.innerHTML = '<tr><td colspan="6"><div class="mc-table-empty"><p>' + esc(j.message || 'Could not load referrals.') + '</p></div></td></tr>';
+          tb.innerHTML = '<tr><td colspan="7"><div class="mc-table-empty"><p>' + esc(j.message || 'Could not load referrals.') + '</p></div></td></tr>';
           stampUpdated();
           return;
         }
+        if (typeof j.unread_count === 'number') refreshNavBadge(j.unread_count);
+        rowsById = {};
         if (!j.rows || !j.rows.length) {
-          tb.innerHTML = '<tr><td colspan="6"><div class="mc-table-empty"><p>No referrals found.</p></div></td></tr>';
+          tb.innerHTML = '<tr><td colspan="7"><div class="mc-table-empty"><p>No referrals found.</p></div></td></tr>';
           stampUpdated();
           return;
         }
         tb.innerHTML = j.rows.map(function (row) {
+          rowsById[row.id] = row;
           var dt = row.created_at ? new Date(row.created_at.replace(' ', 'T')).toLocaleString() : '—';
           var patient = (row.patient_name || '').trim() || 'Unknown patient';
           var provider = (row.provider_name || '').trim() || '—';
-          return '<tr>' +
-            '<td><strong>' + esc(patient) + '</strong></td>' +
+          var unreadDot = row.is_unread
+            ? ' <span class="mc-badge" style="margin-left:6px;font-size:10px;">Unread</span>'
+            : '';
+          return '<tr data-ref-id="' + esc(row.id) + '"' + (row.is_unread ? ' style="font-weight:600;"' : '') + '>' +
+            '<td><strong>' + esc(patient) + '</strong>' + unreadDot + '</td>' +
             '<td>' + esc(provider) + '</td>' +
             '<td>' + esc(row.referral_type) + '</td>' +
             '<td>' + esc(row.facility_name || '—') + '</td>' +
             '<td class="text-sm">' + esc(row.reason) + '</td>' +
             '<td class="text-xs text-muted">' + esc(dt) + '</td>' +
+            '<td><button type="button" class="mc-btn mc-btn--outline mc-btn--sm js-ref-view" data-ref-id="' + esc(row.id) + '">View Details</button></td>' +
           '</tr>';
         }).join('');
         stampUpdated();
       })
       .catch(function () {
-        document.getElementById('refTableBody').innerHTML = '<tr><td colspan="6"><div class="mc-table-empty"><p>Could not load referrals.</p></div></td></tr>';
+        document.getElementById('refTableBody').innerHTML = '<tr><td colspan="7"><div class="mc-table-empty"><p>Could not load referrals.</p></div></td></tr>';
         stampUpdated();
       });
   }
+  document.getElementById('refTableBody').addEventListener('click', function (e) {
+    var btn = e.target.closest('.js-ref-view');
+    if (!btn) return;
+    var id = parseInt(btn.getAttribute('data-ref-id'), 10) || 0;
+    if (id && rowsById[id]) openDetail(rowsById[id]);
+  });
+  document.getElementById('refDetailClose').addEventListener('click', closeDetail);
+  document.getElementById('refDetailDone').addEventListener('click', closeDetail);
+  document.getElementById('refDetailModal').addEventListener('click', function (e) {
+    if (e.target === e.currentTarget) closeDetail();
+  });
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape') closeDetail();
+  });
   load();
-  setInterval(load, 45000);
+  setInterval(function () { load(); }, 45000);
 })();
 </script>
 

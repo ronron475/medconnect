@@ -453,6 +453,86 @@ final class NotificationManager
         return $stmt->execute([$userId]);
     }
 
+    /**
+     * Count distinct unread referral records for one user (per-user read state).
+     */
+    public static function countUnreadRelated(PDO $pdo, int $userId, string $relatedTable = 'digital_referrals'): int
+    {
+        if ($userId <= 0) {
+            return 0;
+        }
+        self::ensureSchema($pdo);
+        $relatedTable = trim($relatedTable);
+        if ($relatedTable === '') {
+            return 0;
+        }
+        try {
+            $stmt = $pdo->prepare("
+                SELECT COUNT(DISTINCT related_id)
+                FROM notifications
+                WHERE user_id = ?
+                  AND related_table = ?
+                  AND related_id IS NOT NULL
+                  AND related_id > 0
+                  AND is_read = 0
+                  AND status = 'active'
+                  AND (expires_at IS NULL OR expires_at > NOW())
+            ");
+            $stmt->execute([$userId, $relatedTable]);
+            return max(0, (int) $stmt->fetchColumn());
+        } catch (Throwable $e) {
+            return 0;
+        }
+    }
+
+    /**
+     * Mark this user's notifications for a related record as read (does not change clinical data).
+     */
+    public static function markRelatedRead(PDO $pdo, int $userId, string $relatedTable, int $relatedId): int
+    {
+        if ($userId <= 0 || $relatedId <= 0) {
+            return 0;
+        }
+        self::ensureSchema($pdo);
+        $relatedTable = trim($relatedTable);
+        if ($relatedTable === '') {
+            return 0;
+        }
+        $stmt = $pdo->prepare("
+            UPDATE notifications
+            SET is_read = 1, updated_at = NOW()
+            WHERE user_id = ?
+              AND related_table = ?
+              AND related_id = ?
+              AND is_read = 0
+              AND status = 'active'
+        ");
+        $stmt->execute([$userId, $relatedTable, $relatedId]);
+        return (int) $stmt->rowCount();
+    }
+
+    /** Whether this user still has an unread notification for the related record. */
+    public static function isRelatedUnread(PDO $pdo, int $userId, string $relatedTable, int $relatedId): bool
+    {
+        if ($userId <= 0 || $relatedId <= 0) {
+            return false;
+        }
+        self::ensureSchema($pdo);
+        $stmt = $pdo->prepare("
+            SELECT 1
+            FROM notifications
+            WHERE user_id = ?
+              AND related_table = ?
+              AND related_id = ?
+              AND is_read = 0
+              AND status = 'active'
+              AND (expires_at IS NULL OR expires_at > NOW())
+            LIMIT 1
+        ");
+        $stmt->execute([$userId, trim($relatedTable), $relatedId]);
+        return (bool) $stmt->fetchColumn();
+    }
+
     public static function archive(PDO $pdo, int $userId, int $notificationId): bool
     {
         self::ensureSchema($pdo);

@@ -337,9 +337,10 @@ function portal_nav_admin_counts(PDO $pdo, string $role, int $userId = 0): array
     } catch (Throwable $e) {
     }
     try {
-        if ($pdo->query("SHOW TABLES LIKE 'digital_referrals'")->rowCount()) {
-            // Monitoring-only: badge shows total doctor-issued referrals (not pending/follow-up status).
-            $pendingReferrals = (int) $pdo->query('SELECT COUNT(*) FROM digital_referrals')->fetchColumn();
+        require_once __DIR__ . '/../core/NotificationManager.php';
+        // Sidebar badge = per-user unread referral notifications (not total / not clinical status).
+        if ($userId > 0) {
+            $pendingReferrals = NotificationManager::countUnreadRelated($pdo, $userId, 'digital_referrals');
         }
     } catch (Throwable $e) {
     }
