@@ -171,7 +171,7 @@
         document.getElementById('fp-otp-note').textContent = `OTP sent to ${addr}`;
         document.getElementById('fp-otp').value = '';
         goStep(2);
-        startCountdown(60);
+        startCountdown(30);
         document.getElementById('fp-otp').focus();
       } else {
         showAlert(data.message);
@@ -188,7 +188,7 @@
       const data = await sendOtp(email);
       if (data.success) {
         showAlert('New OTP sent.', 's');
-        startCountdown(60);
+        startCountdown(30);
         document.getElementById('fp-otp').value = '';
       } else {
         showAlert(data.message);

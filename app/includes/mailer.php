@@ -41,6 +41,9 @@ function initMailer() {
         $mail->setFrom(MAIL_FROM_EMAIL, MAIL_FROM_NAME);
         $mail->CharSet    = MAIL_CHARSET;
         $mail->isHTML(true);
+        // Fail faster on stuck SMTP instead of hanging the OTP request.
+        $mail->Timeout = 12;
+        $mail->SMTPKeepAlive = false;
 
         $mail->SMTPOptions = array(
             'ssl' => array(

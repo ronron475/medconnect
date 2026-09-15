@@ -53,29 +53,44 @@ if (isset($_SESSION['reset_email']) && $_SESSION['reset_email'] === $email) {
     if ((time() - $last_sent) >= 600) $_SESSION['reset_attempts'] = 0;
 }
 
-$stmt = $pdo->prepare("SELECT id, first_name, last_name FROM users WHERE email = ? AND role = 'patient' LIMIT 1");
+// Landing forgot-password is used by patients, providers, and BHWs.
+$stmt = $pdo->prepare(
+    "SELECT id, first_name, last_name, role
+     FROM users
+     WHERE email = ?
+       AND role IN ('patient', 'provider', 'bhw')
+     LIMIT 1"
+);
 $stmt->execute([$email]);
-$user = $stmt->fetch();
+$user = $stmt->fetch(PDO::FETCH_ASSOC);
 
 if ($user) {
-    $otp    = str_pad(random_int(0, 999999), 6, '0', STR_PAD_LEFT);
+    $otp    = str_pad((string) random_int(0, 999999), 6, '0', STR_PAD_LEFT);
     $expiry = time() + 600;
 
     $_SESSION['reset_email']     = $email;
-    $_SESSION['reset_otp']       = password_hash($otp, PASSWORD_BCRYPT);
+    $_SESSION['reset_role']      = (string) $user['role'];
+    $_SESSION['reset_user_id']   = (int) $user['id'];
+    // Fast hash for short-lived OTP (bcrypt cost 12 adds hundreds of ms per request).
+    $_SESSION['reset_otp']       = hash_hmac('sha256', $otp, session_id() . '|pwreset');
     $_SESSION['reset_expiry']    = $expiry;
     $_SESSION['reset_verified']  = false;
     $_SESSION['reset_attempts']  = ($_SESSION['reset_attempts'] ?? 0) + 1;
     $_SESSION['reset_last_sent'] = time();
 
     $mail = initMailer();
-    if ($mail) {
-        try {
-            $fullName = $user['first_name'] . ' ' . $user['last_name'];
-            $mail->addAddress($email);
-            $mail->Subject = 'Your MedConnect Password Reset OTP';
-            $mail->isHTML(true);
-            $mail->Body = "
+    if (!$mail) {
+        error_log('Reset OTP: mailer init failed for ' . $email);
+        echo json_encode(['success' => false, 'message' => 'Mail service unavailable. Please try again in a moment.']);
+        exit;
+    }
+
+    try {
+        $safeName = htmlspecialchars($user['first_name'] . ' ' . $user['last_name'], ENT_QUOTES, 'UTF-8');
+        $mail->addAddress($email);
+        $mail->Subject = 'Your MedConnect Password Reset OTP';
+        $mail->isHTML(true);
+        $mail->Body = "
             <div style='font-family:Arial,sans-serif;max-width:480px;margin:0 auto'>
               <div style='background:#1a6db5;padding:24px;text-align:center;border-radius:10px 10px 0 0'>
                 <h2 style='color:#fff;margin:0'>medConnect</h2>
@@ -83,7 +98,7 @@ if ($user) {
               </div>
               <div style='background:#f8fbff;padding:32px;border-radius:0 0 10px 10px;border:1px solid #d0e4f7'>
                 <h3 style='color:#0f172a;margin-top:0'>Password Reset OTP</h3>
-                <p style='color:#475569'>Hi {$fullName},</p>
+                <p style='color:#475569'>Hi {$safeName},</p>
                 <p style='color:#475569'>Use this OTP to reset your password. Do not share it with anyone.</p>
                 <div style='background:#fff;border:2px dashed #1a6db5;border-radius:10px;padding:20px;text-align:center;margin:20px 0'>
                   <span style='font-size:38px;font-weight:800;letter-spacing:10px;color:#1a6db5'>{$otp}</span>
@@ -91,11 +106,12 @@ if ($user) {
                 <p style='color:#94a3b8;font-size:12px'>Expires in <strong>10 minutes</strong>. If you didn't request this, ignore this email.</p>
               </div>
             </div>";
-            $mail->AltBody = "Your MedConnect password reset OTP is: {$otp}. Expires in 10 minutes.";
-            $mail->send();
-        } catch (Exception $e) {
-            error_log('Reset OTP email failed: ' . $e->getMessage());
-        }
+        $mail->AltBody = "Your MedConnect password reset OTP is: {$otp}. Expires in 10 minutes.";
+        $mail->send();
+    } catch (Exception $e) {
+        error_log('Reset OTP email failed: ' . $e->getMessage());
+        echo json_encode(['success' => false, 'message' => 'Failed to send OTP. Please try again.']);
+        exit;
     }
 }
 

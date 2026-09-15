@@ -37,7 +37,12 @@ if (time() > (int) $_SESSION['reset_expiry']) {
     exit;
 }
 
-if (!password_verify($otp, (string) $_SESSION['reset_otp'])) {
+$storedOtp = (string) $_SESSION['reset_otp'];
+$otpOk = str_starts_with($storedOtp, '$2')
+    ? password_verify($otp, $storedOtp) // legacy bcrypt OTPs
+    : hash_equals($storedOtp, hash_hmac('sha256', $otp, session_id() . '|pwreset'));
+
+if (!$otpOk) {
     echo json_encode(['success' => false, 'message' => 'Incorrect OTP. Please try again.']);
     exit;
 }

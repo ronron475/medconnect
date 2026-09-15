@@ -42,11 +42,25 @@ try {
         exit;
     }
 
-    $userStmt = $pdo->prepare("SELECT id, password FROM users WHERE email = ? AND role = 'patient' LIMIT 1");
-    $userStmt->execute([$email]);
+    $allowedRoles = ['patient', 'provider', 'bhw'];
+    $role = (string) ($_SESSION['reset_role'] ?? '');
+    if ($role === '' || !in_array($role, $allowedRoles, true)) {
+        $roleStmt = $pdo->prepare(
+            "SELECT role FROM users WHERE email = ? AND role IN ('patient', 'provider', 'bhw') LIMIT 1"
+        );
+        $roleStmt->execute([$email]);
+        $role = (string) ($roleStmt->fetchColumn() ?: '');
+    }
+    if ($role === '' || !in_array($role, $allowedRoles, true)) {
+        echo json_encode(['success' => false, 'message' => 'No account found for this email.']);
+        exit;
+    }
+
+    $userStmt = $pdo->prepare('SELECT id, password FROM users WHERE email = ? AND role = ? LIMIT 1');
+    $userStmt->execute([$email, $role]);
     $user = $userStmt->fetch(PDO::FETCH_ASSOC);
     if (!$user) {
-        echo json_encode(['success' => false, 'message' => 'No patient account found for this email.']);
+        echo json_encode(['success' => false, 'message' => 'No account found for this email.']);
         exit;
     }
 
@@ -54,7 +68,7 @@ try {
     $hash   = patient_hash_password($password);
 
     $stmt = $pdo->prepare('UPDATE users SET password = ? WHERE id = ? AND role = ?');
-    $stmt->execute([$hash, $userId, 'patient']);
+    $stmt->execute([$hash, $userId, $role]);
 
     $verifyStmt = $pdo->prepare('SELECT password FROM users WHERE id = ? LIMIT 1');
     $verifyStmt->execute([$userId]);
@@ -75,6 +89,8 @@ try {
 
     unset(
         $_SESSION['reset_email'],
+        $_SESSION['reset_role'],
+        $_SESSION['reset_user_id'],
         $_SESSION['reset_otp'],
         $_SESSION['reset_expiry'],
         $_SESSION['reset_verified'],
